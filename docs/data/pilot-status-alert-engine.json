@@ -55,7 +55,7 @@
   },
 
   "phase1": {
-    "_note": "Phase 1 OPEN (2026-05-24T053000Z) — 9 sequential tasks (P1-A through P1-G), 59 ACs total. Owner: dev-alert-engine. WIP=1 sequential. Current task: P1-B1 (signal-classifier primitive + 3 scenarios). P1-A DONE 2026-05-24T052327Z.",
+    "_note": "Phase 1 ACTIVE (2026-05-24T053000Z) — 9 sequential tasks (P1-A through P1-G), 59 ACs total. Owner: dev-alert-engine. WIP=1 sequential. P1-A DONE 2026-05-24T052327Z. P1-B1 DONE 2026-05-24T053017Z (G12 streak #1). Current task: P1-B2 (dedup-key-builder primitive + 3 scenarios).",
     "status": "ACTIVE",
     "openedAt": "2026-05-24T053000Z",
     "openedBy": "pm (PM_ALERT_ENGINE_PHASE1_OPEN)",
@@ -70,9 +70,9 @@
     "task_count": 9,
     "ac_count": 59,
     "wip_limit": 1,
-    "current_task": "P1-B1",
+    "current_task": "P1-B2",
     "current_task_owner": "dev-alert-engine",
-    "current_task_handoff": "docs/handoffs/TASK_P1-AE-B1.md",
+    "current_task_handoff": "docs/handoffs/TASK_P1-AE-B2.md",
     "sequential_plan": [
       "P1-A: cmd/sandbox/main.go + ZERO-CREDS gate (1h, 7 ACs)",
       "P1-B1: signal-classifier primitive + 3 scenarios (1.5h, 8 ACs)",
