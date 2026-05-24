@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<!-- news-fetch pilot dashboard — SI-2 BOUNDARY: this file is news-fetch ONLY, never shared with docs/dashboards/index.html (stock-price exclusive) -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>news-fetch Pilot Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', monospace;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 24px;
+    }
+    h1 { font-size: 1.4rem; color: #7dd3fc; margin-bottom: 4px; }
+    .subtitle { font-size: 0.8rem; color: #64748b; margin-bottom: 28px; }
+    .panel { margin-bottom: 28px; }
+    .panel-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #94a3b8;
+      margin-bottom: 12px;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 6px;
+    }
+    .cards { display: flex; flex-wrap: wrap; gap: 12px; }
+    .card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 14px 16px;
+      min-width: 200px;
+      max-width: 280px;
+    }
+    .card-name { font-size: 0.9rem; font-weight: 600; color: #cbd5e1; margin-bottom: 4px; }
+    .card-meta { font-size: 0.75rem; color: #64748b; margin-bottom: 8px; }
+    .badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+    }
+    .badge-notrun { background: #1e293b; color: #64748b; border: 1px solid #334155; }
+    .badge-pass   { background: #14532d; color: #86efac; border: 1px solid #16a34a; }
+    .badge-fail   { background: #450a0a; color: #fca5a5; border: 1px solid #dc2626; }
+    .badge-error  { background: #431407; color: #fdba74; border: 1px solid #ea580c; }
+    .wires { font-size: 0.7rem; color: #94a3b8; margin-top: 6px; }
+    .endpoints { font-size: 0.7rem; color: #94a3b8; margin-top: 6px; line-height: 1.6; }
+    #last-run { font-size: 0.75rem; color: #475569; margin-top: 20px; }
+  </style>
+</head>
+<body>
+
+<h1>news-fetch Pilot Dashboard</h1>
+<p class="subtitle">Sandbox results — Phase 1 trust layer &nbsp;|&nbsp; port 5008 &nbsp;|&nbsp; TS/Bun</p>
+
+<!-- ═══════════════════════════════════════════════════════
+     Panel 1 — Primitives
+═══════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-primitives">
+  <div class="panel-title">Primitives</div>
+  <div class="cards" id="primitives-cards">
+
+    <div class="card" id="prim-published-at-parser">
+      <div class="card-name">published-at-parser</div>
+      <div class="card-meta">3 scenarios</div>
+      <span class="badge badge-notrun" id="badge-published-at-parser">NOT-RUN</span>
+    </div>
+
+    <div class="card" id="prim-headline-normalizer">
+      <div class="card-name">headline-normalizer</div>
+      <div class="card-meta">3 scenarios</div>
+      <span class="badge badge-notrun" id="badge-headline-normalizer">NOT-RUN</span>
+    </div>
+
+    <div class="card" id="prim-source-dedup-key">
+      <div class="card-name">source-dedup-key</div>
+      <div class="card-meta">3 scenarios</div>
+      <span class="badge badge-notrun" id="badge-source-dedup-key">NOT-RUN</span>
+    </div>
+
+    <div class="card" id="prim-article-relevance-filter">
+      <div class="card-name">article-relevance-filter</div>
+      <div class="card-meta">3 scenarios</div>
+      <span class="badge badge-notrun" id="badge-article-relevance-filter">NOT-RUN</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     Panel 2 — Module
+═══════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-module">
+  <div class="panel-title">Module</div>
+  <div class="cards">
+
+    <div class="card" id="mod-news-ingest">
+      <div class="card-name">news_ingest</div>
+      <div class="card-meta">1 scenario</div>
+      <span class="badge badge-notrun" id="badge-news_ingest">NOT-RUN</span>
+      <div class="wires">composes: published-at-parser + headline-normalizer + source-dedup-key + article-relevance-filter</div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     Panel 3 — Microservice
+═══════════════════════════════════════════════════════ -->
+<div class="panel" id="panel-microservice">
+  <div class="panel-title">Microservice</div>
+  <div class="cards">
+
+    <div class="card" id="svc-news-fetch">
+      <div class="card-name">news-fetch</div>
+      <div class="card-meta">port 5008</div>
+      <span class="badge badge-notrun" id="badge-news-fetch-svc">NOT-RUN</span>
+      <div class="endpoints">
+        GET /health<br>
+        POST /reuters/headlines<br>
+        GET /reuters/headlines<br>
+        POST /bloomberg/headlines<br>
+        GET /bloomberg/headlines
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="last-run">Last run: not yet — run sandbox to populate results.json</div>
+
+<script>
+/**
+ * Dashboard loader — reads results.json trace written by sandbox runner.
+ * Works from file:// URL with zero network calls.
+ * Populated by: bun run src/sandbox/runner.ts --output=dashboard/results.json
+ */
+
+const PRIMITIVE_NAMES = [
+  'published-at-parser',
+  'headline-normalizer',
+  'source-dedup-key',
+  'article-relevance-filter',
+];
+
+function setBadge(id, status) {
+  const el = document.getElementById('badge-' + id);
+  if (!el) return;
+  const classMap = {
+    'PASS': 'badge-pass',
+    'FAIL': 'badge-fail',
+    'ERROR': 'badge-error',
+    'NOT-RUN': 'badge-notrun',
+  };
+  el.className = 'badge ' + (classMap[status] || 'badge-notrun');
+  el.textContent = status;
+}
+
+function applyTrace(trace) {
+  if (!trace || !trace.results) return;
+
+  // Compute per-primitive status
+  const primStatus = {};
+  for (const r of trace.results) {
+    if (r.primitive) {
+      const prev = primStatus[r.primitive];
+      // Escalate: PASS < FAIL < ERROR
+      if (!prev) {
+        primStatus[r.primitive] = r.status;
+      } else if (r.status === 'ERROR') {
+        primStatus[r.primitive] = 'ERROR';
+      } else if (r.status === 'FAIL' && prev !== 'ERROR') {
+        primStatus[r.primitive] = 'FAIL';
+      }
+    }
+  }
+
+  // Update primitive badges
+  for (const name of PRIMITIVE_NAMES) {
+    setBadge(name, primStatus[name] || 'NOT-RUN');
+  }
+
+  // Module badge
+  const moduleResults = trace.results.filter(r => r.module === 'news_ingest');
+  if (moduleResults.length > 0) {
+    const anyFail = moduleResults.some(r => r.status === 'FAIL' || r.status === 'ERROR');
+    setBadge('news_ingest', anyFail ? 'FAIL' : 'PASS');
+  }
+
+  // Microservice badge — derived from overall result
+  const anyFail = trace.totals.fail > 0 || trace.totals.error > 0;
+  setBadge('news-fetch-svc', trace.totals.pass > 0 && !anyFail ? 'PASS' : anyFail ? 'FAIL' : 'NOT-RUN');
+
+  // Last run timestamp
+  const lastRunEl = document.getElementById('last-run');
+  if (lastRunEl && trace.runAt) {
+    lastRunEl.textContent = 'Last run: ' + trace.runAt + ' — ' +
+      trace.totals.pass + ' PASS, ' +
+      trace.totals.fail + ' FAIL, ' +
+      trace.totals.error + ' ERROR';
+  }
+}
+
+// Load results.json (works from file:// when results.json is in same dir)
+async function loadResults() {
+  try {
+    // Use XMLHttpRequest for file:// compatibility
+    const req = new XMLHttpRequest();
+    req.open('GET', 'results.json', false); // synchronous for simplicity
+    req.send();
+    if (req.status === 200 || req.status === 0) { // 0 = file:// success in some browsers
+      const trace = JSON.parse(req.responseText);
+      applyTrace(trace);
+    }
+  } catch {
+    // results.json not found — stay in NOT-RUN state (correct for stub)
+  }
+}
+
+loadResults();
+</script>
+</body>
+</html>
