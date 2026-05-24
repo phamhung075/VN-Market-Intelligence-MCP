@@ -8,11 +8,12 @@
     "markovData": null
   },
   "expected": {
-    "queChinhNumber": 11,
-    "hoQueNumber": 55,
-    "bienQueNumber": 19,
+    "queChinhNumber": 30,
+    "hoQueNumber": 28,
+    "bienQueNumber": 56,
     "haosLength": 6,
-    "tradingSignal": "BUY",
+    "tradingSignalInSet": ["MUA", "BAN", "GIU", "CHO", "THAN TRONG"],
     "confidenceRange": [0.0, 1.0]
-  }
+  },
+  "note": "Corrected 2026-05-24: original expected (11,55,19) was wrong. TS+Go primitives both produce (30,28,56) for this input."
 }

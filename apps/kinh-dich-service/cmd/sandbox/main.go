@@ -20,6 +20,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/vn-market-intelligence/kinh-dich-service/pkg/module/reading_composer"
 	"github.com/vn-market-intelligence/kinh-dich-service/pkg/primitive/hao_encoder"
 	"github.com/vn-market-intelligence/kinh-dich-service/pkg/primitive/hexagram_resolver"
 	"github.com/vn-market-intelligence/kinh-dich-service/pkg/primitive/ngu_hanh_classifier"
@@ -145,6 +146,13 @@ func runScenario(path string) (bool, error) {
 	var sc map[string]interface{}
 	if err := json.Unmarshal(data, &sc); err != nil {
 		return false, err
+	}
+
+	// Check if this is a module-tier scenario
+	tierVal, _ := sc["tier"].(string)
+	moduleVal, _ := sc["module"].(string)
+	if tierVal == "module" && moduleVal == "reading_composer" {
+		return runReadingComposerScenario(sc)
 	}
 
 	primitive, _ := sc["primitive"].(string)
@@ -386,6 +394,120 @@ func runNuclearHexagramScenario(input, expected map[string]interface{}, expectEr
 					return false, nil
 				}
 			}
+		}
+	}
+
+	return true, nil
+}
+
+// stubMarkovPort implements MarkovPort for sandbox testing.
+type stubMarkovPort struct {
+	data *reading_composer.MarkovData
+}
+
+func (s *stubMarkovPort) GetMarkovData(hexagramNumber int) (*reading_composer.MarkovData, error) {
+	return s.data, nil
+}
+
+func runReadingComposerScenario(sc map[string]interface{}) (bool, error) {
+	input, _ := sc["input"].(map[string]interface{})
+	expected, _ := sc["expected"].(map[string]interface{})
+
+	// Extract input fields
+	stockCode, _ := input["stockCode"].(string)
+	scoresRaw, _ := input["scores"].([]interface{})
+	scores := make([]float64, len(scoresRaw))
+	for i, v := range scoresRaw {
+		scores[i], _ = v.(float64)
+	}
+
+	// Build MarkovPort stub
+	var markovPort reading_composer.MarkovPort = &stubMarkovPort{data: nil}
+	if markovData, ok := input["markovData"].(map[string]interface{}); ok && markovData != nil {
+		transitionProb, _ := markovData["transitionProb"].(float64)
+		historicalConfidence, _ := markovData["historicalConfidence"].(float64)
+		markovPort = &stubMarkovPort{
+			data: &reading_composer.MarkovData{
+				TransitionProb:       transitionProb,
+				HistoricalConfidence: historicalConfidence,
+			},
+		}
+	}
+
+	deps := &reading_composer.ReadingComposerDependencies{
+		Markov: markovPort,
+	}
+
+	reading, err := reading_composer.ComposeReading(stockCode, scores, deps)
+	if err != nil {
+		return false, err
+	}
+
+	// Verify queChinhNumber
+	if expQueChiNh, ok := expected["queChinhNumber"].(float64); ok {
+		if reading.QueChinh.Number != int(expQueChiNh) {
+			return false, fmt.Errorf("queChinhNumber: got %d, want %d", reading.QueChinh.Number, int(expQueChiNh))
+		}
+	}
+
+	// Verify hoQueNumber
+	if expHoQue, ok := expected["hoQueNumber"].(float64); ok {
+		if reading.HoQue.Number != int(expHoQue) {
+			return false, fmt.Errorf("hoQueNumber: got %d, want %d", reading.HoQue.Number, int(expHoQue))
+		}
+	}
+
+	// Verify bienQueNumber
+	if expBienQue, ok := expected["bienQueNumber"].(float64); ok {
+		if reading.BienQue.Number != int(expBienQue) {
+			return false, fmt.Errorf("bienQueNumber: got %d, want %d", reading.BienQue.Number, int(expBienQue))
+		}
+	}
+
+	// Verify haosLength
+	if expHaosLen, ok := expected["haosLength"].(float64); ok {
+		if len(reading.Haos) != int(expHaosLen) {
+			return false, fmt.Errorf("haosLength: got %d, want %d", len(reading.Haos), int(expHaosLen))
+		}
+	}
+
+	// Verify tradingSignalInSet (signal is in allowed set)
+	if signalSet, ok := expected["tradingSignalInSet"].([]interface{}); ok {
+		// Extract base signal (before space suffix)
+		baseSignal := reading.QueChinh.TradingSignal
+		for i, c := range baseSignal {
+			if c == ' ' {
+				baseSignal = baseSignal[:i]
+				break
+			}
+		}
+		found := false
+		for _, s := range signalSet {
+			if s.(string) == baseSignal {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false, fmt.Errorf("tradingSignal %q not in allowed set %v", baseSignal, signalSet)
+		}
+	}
+
+	// Verify confidenceRange
+	if confRange, ok := expected["confidenceRange"].([]interface{}); ok && len(confRange) == 2 {
+		minConf, _ := confRange[0].(float64)
+		maxConf, _ := confRange[1].(float64)
+		if reading.QueChinh.Confidence < minConf || reading.QueChinh.Confidence > maxConf {
+			return false, fmt.Errorf("confidence %f out of range [%f, %f]", reading.QueChinh.Confidence, minConf, maxConf)
+		}
+	}
+
+	// Verify confidenceRangeWithMarkov
+	if confRange, ok := expected["confidenceRangeWithMarkov"].([]interface{}); ok && len(confRange) == 2 {
+		minConf, _ := confRange[0].(float64)
+		maxConf, _ := confRange[1].(float64)
+		if reading.QueChinh.Confidence < minConf || reading.QueChinh.Confidence > maxConf {
+			return false, fmt.Errorf("confidence with Markov %f out of range [%f, %f]", reading.QueChinh.Confidence, minConf, maxConf)
 		}
 	}
 

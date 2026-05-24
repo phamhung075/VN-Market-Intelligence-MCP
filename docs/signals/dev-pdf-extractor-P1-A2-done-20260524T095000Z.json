@@ -1,0 +1,17 @@
+{
+  "task": "P1-A2",
+  "pilot": "pdf-extractor",
+  "agent": "dev-pdf-extractor",
+  "verdict": "PASS",
+  "timestamp": "2026-05-24T09:50:00Z",
+  "commit": "3b017d63",
+  "deliverables": [
+    "scenarios/primitives/validate_financial_figures/README.md",
+    "scenarios/primitives/decimal_normalizer/README.md",
+    "scenarios/modules/financial_reports/README.md"
+  ],
+  "convention_documented": "happy/edge/failure per primitive",
+  "schema_documented": true,
+  "security_policy_included": true,
+  "next": "P1-A3 (verify only, no code change) + P1-B1"
+}

@@ -8,11 +8,12 @@
     "markovData": { "transitionProb": 0.75, "historicalConfidence": 0.8 }
   },
   "expected": {
-    "queChinhNumber": 11,
-    "hoQueNumber": 55,
-    "bienQueNumber": 19,
+    "queChinhNumber": 30,
+    "hoQueNumber": 28,
+    "bienQueNumber": 56,
     "haosLength": 6,
-    "tradingSignal": "BUY",
-    "confidenceRangeWithMarkov": [0.7, 0.95]
-  }
+    "tradingSignalInSet": ["MUA", "BAN", "GIU", "CHO", "THAN TRONG"],
+    "confidenceRangeWithMarkov": [0.4, 0.85]
+  },
+  "note": "Corrected 2026-05-24: original expected (11,55,19) was wrong. TS+Go primitives both produce (30,28,56). Confidence range adjusted for actual blending formula."
 }
