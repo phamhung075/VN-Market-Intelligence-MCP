@@ -1,5 +1,87 @@
 # QA — Notebook
 
+## cycle-101 · 2026-05-24 · rag-service P2-J (G10 close) + P2-K1 (G11) — DONE
+
+**Tasks:** P2-J close + P2-K1 2-trial coupling proof | **Verdict:** G10 VERIFIED + G11 PASS
+
+```
+date: 2026-05-24
+outcome: DONE — P2-J closed (cycle_count=1), P2-K1 G11 2-trial proof PASS
+type: pilot-task-qa (G10 close verification + G11 coupling proof)
+handoff: docs/handoffs/TASK_P2-J-K1-rag-service.md
+ssot: docs/data/pilot-status-rag-service.json (P2-J+P2-K1 → DONE, G10.cycle_count=1)
+ssot_not_mutated: true (PO-only §4.5 — no G-goal flips, no decisionMatrix, goalsEarned=0)
+goal_flips: NONE
+
+## PART 1 — P2-J G10 close
+
+injection_commit: 12d2381c
+fix_commit: 695947d6
+fix_diff: results[k:] → results[:k] (exact inverse of injection, single literal)
+masking_hack: false (exact inverse — semantic fix)
+cycle_count: 1
+baseline: 1.5
+result: BELOW BASELINE (strong G10)
+sandbox_primitive_post_fix: 16/16 EXIT:0
+sandbox_module_post_fix: 2/2 EXIT:0
+dash_check_post_fix: 24/24 EXIT:0
+module_golden_coupled: PASS (top_k_ids=["doc-1"] passed=true)
+
+## PART 2 — P2-K1 G11 2-trial coupling proof
+
+trial_1:
+  primitive: top_k_selector (P2-J injection reused)
+  mutation: results[:k] → results[k:] (head→tail slice)
+  primary_red: 3/3 top_k_selector primitive scenarios FAIL
+  coupled_red: module_golden FAIL (top_k_ids:[] vs expected ["doc-1"])
+  coupling_path: module Step 7 calls _select_top_k() — mutation propagates to module
+  fix: commit 695947d6 single-edit restore [:k]
+  post_fix: 16/16 primitive + 2/2 module EXIT:0
+  outcome_a: CONFIRMED
+
+trial_2:
+  primitive: relevance_threshold_gate (DIFFERENT — not top_k_selector)
+  mutation: <= → >= in gate() comparator (working-tree only, never committed)
+  file: apps/rag-service/domain/primitive/relevance_threshold_gate/relevance_threshold_gate.py
+  primary_red: 2/3 relevance_threshold_gate scenarios FAIL EXIT:1
+  coupled_red: BOTH module scenarios (module_golden + module_edge_no_results) FAIL EXIT:1
+    module_golden: actual top_k_ids=["doc-2"] vs expected ["doc-1"]
+    module_edge_no_results: actual top_k_ids=["doc-far-1","doc-far-2"] vs expected []
+  coupling_path: module Step 5 calls _threshold_gate() — inverted gate propagates to module
+  fix: single-edit revert >= → <= (working tree)
+  post_fix: 16/16 primitive + 2/2 module EXIT:0
+  git_diff_after_revert: EMPTY (mutation never staged or committed)
+  outcome_a: CONFIRMED
+
+g11_verdict: PASS (Outcome-(a) × 2)
+```
+
+| Check | Verdict |
+|-------|---------|
+| P2-J: fix is exact inverse of injection | PASS |
+| P2-J: cycle_count=1 (≤2, below baseline 1.5) | PASS |
+| P2-J: sandbox primitive 16/16 EXIT:0 | PASS |
+| P2-J: sandbox module 2/2 EXIT:0 | PASS |
+| P2-J: dash-check 24/24 EXIT:0 | PASS |
+| P2-J: module_golden coupled GREEN | PASS |
+| G11 Trial-1: top_k_selector primary RED | PASS |
+| G11 Trial-1: module_golden coupled RED | PASS |
+| G11 Trial-1: single-edit fix → all GREEN | PASS |
+| G11 Trial-2: relevance_threshold_gate primary RED | PASS |
+| G11 Trial-2: 2 module scenarios coupled RED | PASS |
+| G11 Trial-2: single-edit revert → all GREEN | PASS |
+| G11 Trial-2: mutation never committed | PASS |
+| SSOT P2-J.status → DONE | PASS |
+| SSOT P2-K1.status → DONE | PASS |
+| SSOT G10.cycle_count → 1 | PASS |
+| Goal flips: NONE (PO-only §4.5) | PASS |
+
+**P2-J verdict: DONE. G10 cycle_count=1 recorded.**
+**P2-K1 verdict: DONE. G11 EARNED-PENDING.**
+**NEXT:** P2-K2 (G9 Playwright headless trust contract — LAST). Owner: dev-rag-service.
+
+---
+
 ## cycle-100 · 2026-05-24 · pdf-extractor P2-K — G11 regression alarm bell — PASS
 
 **Task:** P2-K1 + P2-K2 (G11 2-trial coupling proof) | **Verdict:** G11 PASS
