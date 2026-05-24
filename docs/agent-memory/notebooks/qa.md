@@ -1,5 +1,44 @@
 # QA — Notebook
 
+## c282 cycle-74 · 2026-05-24 · rag-service Phase 1 Gate — G12 streak verification — PASS
+
+**Task:** Phase 1 gate verification (P1-B + P1-C + P1-E G12 streak) | **Verdict:** PASS
+
+```
+date: 2026-05-24
+outcome: PASS — Phase 1 gate APPROVED. G12 streak 3/3 independently verified.
+type: pilot-phase-gate (rag-service Phase 1 terminal gate)
+evidence: docs/handoffs/TASK_P1-E-rag-service-dashboard.md §[QA] Review Record
+pytest: 51/51 PASS exit 0
+sandbox_primitive: 4/4 PASS exit 0, byte-identical x2 (determinism CONFIRMED)
+sandbox_module: 1/1 PASS exit 0, byte-identical x2 (determinism CONFIRMED)
+dash_check: 17/17 PASS exit 0 (4 NOT-RUN honest, microservice NOT-RUN, zero external URLs)
+env_audit: EMPTY — zero forbidden keys
+ddd_fence: CLEAN — zero code imports of infra/model/db in primitive+module+sandbox layers
+g12_gate_baked: CONFIRMED in .claude/flows/dev-rag-service/main.md
+g12_streak_verified: P1-B (notebook evidence) + P1-C (TASK_P1-C-retrieval-module-stub.md) + P1-E (handoff)
+concurrent_commit: cfd38a3b attribution gap noted, non-blocking, files correct on main
+p1_b_handoff_gap: no standalone handoff file for P1-B — evidence in dev-rag-service notebook only (non-blocking)
+ssot_not_mutated: pilot-status-rag-service.json not touched (PO-only atomic close)
+goal_flips: NONE (Charter §4.5 honored — G12 EARNED-PENDING candidacy noted, PO flips at 12/12)
+```
+
+| Check | Command | Result |
+|-------|---------|--------|
+| ZERO model/DB | grep sentence_transformers\|lancedb\|torch\|transformers in sandbox/+primitive/+module/ | EXIT:1, PASS |
+| Sandbox primitive | `python3 -m sandbox --tier=primitive --scenario=all` | 4/4 PASS, exit 0 |
+| Sandbox module | `python3 -m sandbox --tier=module --scenario=all` | 1/1 PASS, exit 0 |
+| Determinism | diff run1 vs run2 (both tiers) | BYTE-IDENTICAL, PASS |
+| Env audit | `env \| grep -E 'DB_\|...\|OPENAI'` | EMPTY, PASS |
+| Dashboard | `python3 dash-check.py` | 17/17 PASS |
+| pytest | `python3 -m pytest -q` | 51/51, 6.51s |
+| Fence-A/B | grep infra/app/interface imports in domain layers | Comments only, PASS |
+
+**Phase 1 gate: PASS**
+**NEXT:** pm — execute Phase 1 gate in pilot-status-rag-service.json (phase1.status=APPROVED, phase=2, G12=EARNED-PENDING), open Phase 2.
+
+---
+
 ## c282 cycle-73 · 2026-05-24 · alert-engine P2-J — G8 honest-red deliberate-break proof — PASS
 
 **Task:** P2-J — G8 honest-red deliberate-break proof | **Verdict:** PASS
