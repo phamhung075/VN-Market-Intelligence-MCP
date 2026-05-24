@@ -165,7 +165,7 @@ The regression alarm bell works: mutations in primitives couple to module-level 
 **Fix Summary:**
 - Broken primitive: [fill in after diagnosis]
 - Broken file: [fill in]
-- Single-literal change: [description, e.g., "Changed seed from 5381 to 5382" OR "Flipped < to <="]
+- Single-literal change: [describe the one-literal fix you applied — fill in after you diagnose]
 
 **Sandbox Output After Fix:**
 ```
@@ -216,9 +216,7 @@ The regression alarm bell works: mutations in primitives couple to module-level 
 ## Files to Read First
 
 - `apps/alert-engine/cmd/sandbox/main.go` (understand sandbox runner — it loads scenario JSON and tests primitives)
-- `apps/alert-engine/pkg/primitive/dedup-key-builder/builder.go` (likely target — failing scenarios point here)
-- `apps/alert-engine/pkg/primitive/signal-classifier/classifier.go` (secondary suspect if needed)
-- `apps/alert-engine/pkg/primitive/cooldown-gate/gate.go` (secondary suspect if needed)
+- The primitive source files under `apps/alert-engine/pkg/primitive/*/` — inspect the one(s) whose scenarios are failing per the sandbox output (let the FAIL output guide you; do not assume a target).
 - `docs/scenarios/alert-engine/primitives/` (scenario JSON files — compare expected vs actual in FAIL output)
 
 ---
@@ -301,7 +299,7 @@ File: `docs/signals/dev-alert-engine-P2-M-g10-g11-done-<UTC>.json`
 ## Notes for Fixer
 
 - **Blind fix discipline:** You are NOT supposed to know the target file or the exact literal. The symptoms (sandbox output + dashboard RED) guide your diagnosis. This blind-fix proof is the entire point of G10.
-- **Single-literal only:** The bug is exactly one character or one operator (e.g., `5381` → `5382` OR `<` → `<=`). Do not over-engineer the fix.
+- **Single-literal only:** The bug is exactly one character or one operator (a single constant or comparison operator). Do not over-engineer the fix.
 - **Coupling is automatic:** When you fix the one-literal bug, the module scenario will also return to green because the module exercises the primitive. You don't need to fix anything in the module itself.
 - **Trial-2 is QA-led:** QA picks the second primitive to mutate and proves coupling on that one. You may watch or assist, or QA executes it solo.
 - **No goal flips:** Completing this task does NOT flip any G-goal state. Goal flips are Phase-3 PO-only at 12/12 terminal.
