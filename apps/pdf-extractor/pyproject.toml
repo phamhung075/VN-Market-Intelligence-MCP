@@ -23,6 +23,7 @@ dev = [
     "pytest>=8.1.1",
     "pytest-asyncio>=0.23.6",
     "mypy>=1.9.0",
+    "import-linter>=2.0",
 ]
 
 [tool.pytest.ini_options]
@@ -34,3 +35,30 @@ python_files = ["test_*.py"]
 python_version = "3.11"
 strict = true
 ignore_missing_imports = true
+
+[tool.importlinter]
+root_packages = ["domain", "infrastructure", "application", "interface"]
+include_external_packages = true
+
+[[tool.importlinter.contracts]]
+name = "Fence-A: primitives must not import infrastructure, application, or interface"
+type = "forbidden"
+source_modules = [
+    "domain.primitives",
+]
+forbidden_modules = [
+    "infrastructure",
+    "application",
+    "interface",
+]
+
+[[tool.importlinter.contracts]]
+name = "Fence-B: modules must not import infrastructure or interface; no cross-module imports"
+type = "forbidden"
+source_modules = [
+    "domain.modules",
+]
+forbidden_modules = [
+    "infrastructure",
+    "interface",
+]
