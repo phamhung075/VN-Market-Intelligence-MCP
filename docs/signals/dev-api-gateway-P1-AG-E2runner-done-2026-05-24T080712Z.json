@@ -5,7 +5,8 @@
   "agent": "dev-api-gateway",
   "timestamp": "2026-05-24T08:07:12Z",
   "commit": {
-    "sha": "PENDING",
+    "sha": "561e2df1f7977e9a385018329b330f96193a2829",
+    "note": "Files committed inside pdf-extractor P1-B2 commit due to concurrent-race index sweep. All 14 api-gateway files verified present via git show --stat 561e2df1.",
     "files": [
       "apps/api-gateway/cmd/sandbox/main.go",
       "apps/api-gateway/sandbox/traces/gateway-module-route-story-trace.json",
