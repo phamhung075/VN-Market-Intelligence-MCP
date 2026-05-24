@@ -3,9 +3,19 @@
   "status": "1974-CLOSED (PM close-out 2026-05-22T17:55Z). QA APPROVED (smart-skip, docker-compose.yml + data only). AC-1..AC-6 PASS (AC-6 N/A). Signals drained. WIP=0/2. Gate timestamp corrected: 1960-DAILYDASH 22T16:30Z → 22T23:30Z (cronConfig.ts:128 '30 23 * * *' UTC; logs --since 1h grep dailyDashboard = empty). Active OBSERVE: 1960-DAILYDASH 22T23:30Z, 1967-06 unlock 22T21Z, 1955e 22T21Z, 1965d 23T03Z, 1957d 23T07:05Z, 1965c 23T18Z.",
   "currentSprint": "1974 CLOSED. Dev-mcp-server lane idle (1974 DONE 2026-05-22T17:55Z). Next dispatch candidates: 1967-06 (HIGH, blocked until OBSERVE-1955e unlock 22T21Z), 1967-11 (MED, blocked until 1954c), 1967-10-ITEM18 (LOW, carryover marketScanJob finally-guard). WIP=0/2.",
   "activeTaskId": "— (1974 CLOSED, WIP=0/2, awaiting next dispatch gate).",
-  "nextAgent": "idle — await OBSERVE gates 1960-DAILYDASH 22T23:30Z (CORRECTED) or 1955e/1967-06 unlock 22T21Z. If gates pass, recommend dispatch 1967-06 (HIGH) to dev-mcp-server. Otherwise hold.",
-  "nextPrompt": "PM 1974 close complete 2026-05-22T17:55Z (signals drained, TASKS.md updated, pipeline-state gate corrected 16:30Z→23:30Z). Dev-mcp-server lane idle. WIP=0/2. No dispatch action recommended until OBSERVE gates unlock new work: 1960-DAILYDASH gate 22T23:30Z, then 1955e/1967-06 unlock 22T21Z. If you see any other dispatchable task in backlog, recommend it; else recommend idle.",
-  "updatedAt": "2026-05-22T17:55:00Z",
-  "updatedBy": "pm 2026-05-22T17:55Z — TASK_1974 CLOSED (QA APPROVED, smart-skip). Signals drained to processed/. TASKS.md: moved Backlog→Done. Pipeline-state gate corrected 1960-DAILYDASH 22T16:30Z → 22T23:30Z per PO c265 dispatcher evidence (cronConfig.ts:128 = '30 23 * * *' UTC).",
+  "nextAgent": "developer — news-fetch Phase 1 P1-A (sandbox harness) via .claude/flows/dev-news-fetch/main.md, zone apps/news-fetch/. WIP=1 (news-fetch lane). Dev-mcp-server lane separately idle (1974 CLOSED).",
+  "nextPrompt": "news-fetch SCALE pilot: Phase 0 CLOSED + Phase 1 OPEN 2026-05-24T07:34Z (PO P0-NF-EXIT sign-off; anchor news-fetch-pre-refactor @ 31483c8c local-only). Dispatch ONE task only (WIP=1): P1-A `src/sandbox/runner.ts` Bun sandbox harness to generic developer via .claude/flows/dev-news-fetch/main.md. Sequencing A→B1→B2→B3→B4→C→D→E→G5→QA. Plan: docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-1-task-plan.md. Dev-mcp-server lane idle (1974 CLOSED, await OBSERVE gates).",
+  "news_fetch_pilot": {
+    "phase": "1",
+    "phase0": "CLOSED 2026-05-24T07:34Z",
+    "phase1": "ACTIVE 2026-05-24T07:34Z",
+    "anchor_tag": "news-fetch-pre-refactor @ 31483c8c (local-only)",
+    "wip_limit": 1,
+    "dispatchable_now": "P1-A (sandbox harness)",
+    "owner": "developer (generic) via .claude/flows/dev-news-fetch/main.md",
+    "task_plan": "docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-1-task-plan.md"
+  },
+  "updatedAt": "2026-05-24T07:34:21Z",
+  "updatedBy": "po 2026-05-24T07:34Z — news-fetch P0-NF-EXIT gate sign-off. Phase 0 CLOSED, Phase 1 OPEN, anchor tag set local-only @ 31483c8c (concurrent fleet commit race noted). First WIP=1 task P1-A dispatched to developer. dev-mcp-server lane untouched (1974 CLOSED).",
   "lastCompleted": "pm 2026-05-22T17:55Z — TASK_1974 CLOSED (qa-1974-approved.json + dev-mcp-server-1974-impl-done.json drained to processed/, commits c503c774 + def46747, AC-1..AC-6 PASS, smart-skip applied, 9382/283 baseline). Prior: 1967-10 2026-05-22T14:00Z (miscellaneous MED/LOW). NOTE-CORRECTION: 1960-DAILYDASH gate timestamp 22T16:30Z → 22T23:30Z (cronConfig.ts:128)."
 }

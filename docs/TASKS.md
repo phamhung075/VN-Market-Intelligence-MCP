@@ -71,4 +71,58 @@
 - G11 (regression): P2-E1 → P2-E2 → P2-E3 (sequential, ~2 hours + 1h agent fix)
 - G12 (flow rule): P2-F2 → (gates P2-D2/E2) → P2-F3 after P2-D3+E3 complete
 - G9 (async): P2-C independent, no blocker on dev work — send DEFERRED-CYCLE-2 (ops blocker; signal po-20260522T225100Z.json)
+
+---
+
+## Phase 0 Backlog (News-Fetch SCALE Pilot) — CLOSED 2026-05-24
+
+**Status:** CLOSED 2026-05-24T07:34Z by PO (P0-NF-EXIT sign-off; PO absorbed P0-NF-4 anchor + close-out mechanics — no `pm` agent in this harness). All 5 deliverables verified DONE + architect verification signal present. Anchor tag `news-fetch-pre-refactor` set local-only @ 31483c8c (clean pre-refactor main commit, no Phase 1 scaffolding). pilot-status SSOT: status=ACTIVE, phase=1, phase0=CLOSED, phase1=ACTIVE. Phase 1 now OPEN (see below). Owner = generic `developer` (NO dev-news-fetch specialist). Charter: thin `docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-charter.md` → canonical G1–G12 in `pilot-charter.md`. Port 5008. Sprint deadline: 2026-07-05 (kickoff + 6 sprints).
+
+**BROWNFIELD DRIFT (binding for P0-NF-1):** `apps/news-fetch/src/` ALREADY has DDD layering (`domain/ application/ infrastructure/ interface/`). Charter §Deltas describes it as flat `src/` — that is STALE. This is **rewire + light extract**: thin primitive set + single `news-ingest` module. Architect must reconcile this drift in the brownfield doc.
+
+**DEV-AGENT DECISION (PO, 2026-05-24):** `dev_agent_file` = **N/A** (no new agent .md — generic developer owns; new agent would be agent-md-factory scope and adds roster surface for the smallest service). `dev_agent_flow_file` = thin **`.claude/flows/dev-news-fetch/main.md`** carrying the G12 DoD gate, zone=apps/news-fetch/, owned by generic developer (matches stock-price/macro per-service-flow precedent; keeps `flows/developer/main.md` clean).
+
+| Task ID | Title | Priority | Type | Owner | Handoff | Status | Blocked by |
+|---------|-------|----------|------|-------|---------|--------|-----------|
+| P0-NF-1 | Brownfield inventory of apps/news-fetch — RECONCILE DDD-drift (src/ already layered, not flat), identify primitive set + news-ingest module + adapter boundary | HIGH | TASK | architect | docs/handoffs/TASK_P0-NF-1-brownfield-inventory.md | DONE 2026-05-24 | — |
+| P0-NF-2 | Bug-inventory entry: news_fetch_baseline (G10 metric) — B-10 is I/O/adapter, NOT primitive-class; pick/synthesize primitive baseline | HIGH | TASK | architect | docs/handoffs/TASK_P0-NF-2-bug-inventory-entry.md | DONE 2026-05-24 (baseline 1.5) | — |
+| P0-NF-3 | Agent-father: create thin flows/dev-news-fetch/main.md with G12 DoD gate + ESLint-fence note (NO new agent .md) | HIGH | TASK | agent-father | docs/handoffs/TASK_P0-NF-3-flow-baking.md | DONE 2026-05-24 (bca30508) | — |
+| P0-NF-5 | Phase-1 task plan authoring — MORE explicit than specialist pilots (charter §Deltas pt3, generic developer carries less context) | HIGH | TASK | architect | docs/handoffs/TASK_P0-NF-5-phase1-task-plan.md | DONE 2026-05-24 (10 tasks, 68 ACs) | P0-NF-1, P0-NF-2 |
+| P0-NF-4 | Set anchor commit (news-fetch-pre-refactor tag) + update pilot-status SSOT deliverable flags | MEDIUM | TASK | po (pm absorbed) | docs/handoffs/TASK_P0-NF-4-anchor-commit.md | DONE 2026-05-24 (tag @ 31483c8c, local-only) | P0-NF-1, P0-NF-2, P0-NF-3 |
+| P0-NF-EXIT | Phase 0 exit gate verification (architect signal) | CRITICAL | GATE | architect+po | — | PASS 2026-05-24T07:34Z (PO sign-off) | P0-NF-1..5 all DONE |
+
+**Notes:**
+- **Planning sequence (SPRINT-L):** BA = N/A for Phase 0 (no user-facing requirement to decompose — structural refactor). Sequence is **architect → agent-father → pm**. architect leads (brownfield + bug-inventory + explicit phase-1 plan), agent-father bakes G12 DoD gate, pm sets anchor + sequences.
+- **Parallel dispatch eligible:** P0-NF-1 + P0-NF-2 + P0-NF-3 are independent (architect ×2 + agent-father). P0-NF-5 depends on NF-1+NF-2. P0-NF-4 depends on NF-1+NF-2+NF-3 (anchor last). WIP=2 cap.
+- **Anti-over-extract (charter §Risk 1):** mostly-I/O service. Genuine pure-function surface = headline-normalizer, source-dedup-key, article-relevance-filter, ticker-tagger, published-at-parser. RSS/API fetch + flaresolverr + VPS push = adapters, keep OUT of primitives.
+- **Anti-scope-creep:** `apps/news-fetch/` ONLY. Do NOT absorb cowork-agent coverage-sweep work (news-scout/market-watcher) per charter §Risk 4.
+- **Exit gate:** PASSED — all 5 deliverables + architect verification signal verified before PO approved Phase 0→Phase 1.
+- **Charter reference:** `docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-charter.md` + canonical `pilot-charter.md` G1–G12.
 - **Graphify decision (this cycle):** full graphify DEFERRED until Phase 2 closure. Per-task incremental `/graphify docs --update --no-viz` already enforced by `flows/developer/main.md`. Decision doc: `docs/po-decisions/2026-05-23-graphify-scope.md`.
+
+---
+
+## Phase 1 Backlog (News-Fetch SCALE Pilot) — OPEN 2026-05-24
+
+**Status:** OPEN 2026-05-24T07:34Z by PO (P0-NF-EXIT sign-off). Plan: `docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-1-task-plan.md` (10 tasks, 68 ACs). **WIP=1 strictly sequential** (per pilot-status `phase1.wip_limit`). Owner = generic `developer`, routed via `.claude/flows/dev-news-fetch/main.md`, zone `apps/news-fetch/` ONLY. Language TS/Bun (locked). G12 DoD gate (sandbox-green-before-RETURN) effective for every task since bca30508. First task: **P1-A** (only one dispatchable at a time).
+
+| Task ID | Title | Goals | Owner | Status | Blocked by |
+|---------|-------|-------|-------|--------|-----------|
+| P1-A | `src/sandbox/runner.ts` — Bun sandbox harness (--tier/--module/--scenario flags) | G7, G12 | developer | READY (FIRST — dispatch now) | — |
+| P1-B1 | Primitive: `published-at-parser` + 3 scenario JSONs + R-FENCE discovery gate (G12 streak #1) | G1, G7, G12 | developer | BLOCKED | P1-A |
+| P1-B2 | Primitive: `headline-normalizer` + 3 scenario JSONs | G1, G7, G12 | developer | BLOCKED | P1-B1 |
+| P1-B3 | Primitive: `source-dedup-key` + 3 scenario JSONs | G1, G7, G12 | developer | BLOCKED | P1-B2 |
+| P1-B4 | Primitive: `article-relevance-filter` + 3 scenario JSONs | G1, G7, G12 | developer | BLOCKED | P1-B3 |
+| P1-C | Module stub: `src/module/news_ingest/` — ports + composition + fallback-chain + multi-primitive scenario (G12 streak #2) | G2, G12 | developer | BLOCKED | P1-B4 |
+| P1-D | Dashboard stub: `dashboard/index.html` — 3 panels NOT-RUN (G12 streak #3) | G6, G8, G9, G12 | developer | BLOCKED | P1-C |
+| P1-E | Edit-rerun handler + env audit (zero DB creds, zero API keys in sandbox) | G7, G8, G12 | developer | BLOCKED | P1-D |
+| P1-G5 | G5 rewire: split `composition-root.ts`, HTTP-rewire `analysis.ts`, deprecate legacy `reuters.ts`, add `api/openapi.yaml` | G3, G5, G12 | developer | BLOCKED | P1-E |
+| P1-QA | Phase 1 close-gate: sandbox 13/13 green, dashboard renders, G12 streak 3/3 confirmed | G1,G2,G6,G7,G8,G12 | qa | BLOCKED | P1-G5 |
+
+**Notes:**
+- **WIP=1 sequential:** ONLY one task IN-PROGRESS at any time. Dispatch P1-A first; each subsequent task unblocks only when its predecessor is DONE with sandbox-green evidence in handoff. Sequencing chain: A → B1 → B2 → B3 → B4 → C → D → E → G5 → QA.
+- **G12 streak tasks:** P1-B1 (#1) + P1-C (#2) + P1-D (#3). None marked DONE without `bun run sandbox` all-green + dashboard evidence pasted into handoff. Streak rule live since bca30508.
+- **§4.5 compliance:** developer does NOT touch pilot-status goals/decisionMatrix. goalsEarned stays 0. PO-only flip at 12/12 terminal Phase 3. Phase 1 task "Goals" column is informational (goals advanced), not goal flips.
+- **Hard scope fence:** `apps/news-fetch/` ONLY (P1-G5 is the ONLY task touching `apps/mcp-server/`, for the single G5 HTTP rewire). No cowork agents (news-scout/market-watcher) per charter §Risk 4.
+- **Constraints binding Day 0:** L84 explicit-file staging (git add <path>), no --force/--no-verify, no push of source/CI, all on main, ESM `.js` import suffixes, `Bun.env` not `process.env`, sandbox exits non-zero on any FAIL.
+- **Pre-revert tags are Phase 2 work** (news-fetch-pre-ci / pre-delete / pre-inject) — NOT created in Phase 1.
