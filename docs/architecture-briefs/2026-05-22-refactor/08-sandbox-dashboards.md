@@ -97,6 +97,38 @@ interface Narrator {
 - Stack: Tailwind CDN (no build) + highlight.js for JSON syntax color.
 - No server, no build step — static HTML, open in browser directly.
 
+### 2d. Category chip display labels
+
+**This subsection is the SSOT for the fleet-wide category chip convention. All dashboards across all services must use this mapping.**
+
+Each scenario card carries a category chip — a small coloured label visible to non-technical reviewers. The scenario JSON `category` field keeps its raw data values unchanged (data contract, scenario file format unchanged). The display layer applies a lookup map before rendering:
+
+| Scenario JSON `category` value (SSOT, never changed) | Dashboard chip text (display layer only) |
+|---|---|
+| `golden`  | Valid Input |
+| `edge`    | Edge Case |
+| `failure` | Bad Input → Error |
+
+**Rationale.** The bare word "failure" on a green/PASSED card misleads non-technical readers: a `failure`-category scenario verifies that invalid input is correctly rejected, and the test **passes** when the rejection is correct. Relabelling the chip to "Bad Input → Error" preserves the semantic without changing the data contract.
+
+**Rule — data key unchanged.** The `"category"` field in every `scenarios/*.json` file continues to hold the raw values `golden`, `edge`, or `failure`. Only `render.ts` (the display layer) applies the lookup map. No scenario file, gate spec, or regression spec needs to change.
+
+**Implementation note for render.ts.** The lookup map must be applied in the chip-render path only — not in any assertion, gate, or coverage logic. Example (pseudo-code):
+
+```typescript
+const CHIP_LABELS: Record<string, string> = {
+  golden:  'Valid Input',
+  edge:    'Edge Case',
+  failure: 'Bad Input → Error',
+}
+
+function renderCategoryChip(category: string): string {
+  return CHIP_LABELS[category] ?? category  // fallback: raw value if unknown category
+}
+```
+
+**Scope.** Convention applies to all services: technical-analysis, macro-indicators, kinh-dich, stock-price, alert-engine, and any future service added to the fleet.
+
 ---
 
 ## 3. In-Memory Port Adapters

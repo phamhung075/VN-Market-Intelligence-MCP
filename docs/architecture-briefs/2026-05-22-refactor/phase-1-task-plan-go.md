@@ -460,6 +460,8 @@ All A-bucket tasks must reach this gate before any B-bucket task starts.
 8. Sandbox execution (when available): `go run ./cmd/sandbox -tier=primitive -module=technical-analysis -scenario=all` → all 25 pass
 9. Commit message references G1, G7, G12
 
+> Note: the `category` values above (`golden`, `edge`, `failure`) are the data-contract keys — they appear verbatim in scenario JSON files and are never changed. The dashboard renders them as human-facing chip text via a display-label lookup map (see `08-sandbox-dashboards.md §2d Category chip display labels`).
+
 **AC verification:**
 - `find docs/scenarios/technical-analysis/primitives -name "*.json" | wc -l` = 25
 - Each file parses: `jq . <file> > /dev/null` for all 25

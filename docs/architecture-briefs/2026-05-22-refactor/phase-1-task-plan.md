@@ -325,6 +325,8 @@ Phase 1 expands the 5 execution buckets (P1-A through P1-E) into 11 atomic tasks
 7. All 25 files valid JSON (can parse in isolation)
 8. Commit references G1, G7, G12
 
+> Note: the `category` values above (`golden`, `edge`, `failure`) are the data-contract keys — they appear verbatim in scenario JSON files and are never changed. The dashboard renders them as human-facing chip text via a display-label lookup map (see `08-sandbox-dashboards.md §2d Category chip display labels`).
+
 **AC verification steps:**
 - `find docs/scenarios/technical-analysis/primitives -name "*.json" | wc -l` = 25
 - Each file parses: `bun -e "JSON.parse(require('fs').readFileSync(...))"` for all 25
