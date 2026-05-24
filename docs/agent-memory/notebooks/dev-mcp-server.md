@@ -1,5 +1,27 @@
 # dev-mcp-server -- Notebook
 
+## c293 · 2026-05-25 (NEWS-INGEST-2b)
+
+### NEWS-INGEST-2b — Surface VN news articles in /api/news-fetch/live (DONE)
+
+**Root cause fixed:** `newsFetchLiveHandler.ts` hard-coded `WHERE source_url LIKE '%reuters%' OR source_url LIKE '%bloomberg%'` on EVERY query branch including `source=all`. VN articles (cafef/vnexpress/vneconomy) structurally invisible even though 160+ are in `rag_analyses`.
+
+**Changes:**
+- `VALID_SOURCES`: added `cafef`, `vnexpress`, `vneconomy`
+- `buildSql()`: `source=all` branch → no WHERE clause (truly unfiltered); VN source branches → LIKE '%cafef%' / '%vnexpress%' / '%vneconomy%'
+- `deriveProvider()`: extended to return `cafef | vnexpress | vneconomy | other`
+- Error message updated to list all 6 valid sources
+
+**Tests:** NF-LD-2: 9 original GREEN (non-regression) + 10 new (i–r) = 19/19. tsc exit 0. NF-LD-4 11/11 unaffected.
+
+**Commit:** `e1e08a29`
+
+**Dashboard selector follow-up:** `source=all` is sufficient for visibility. Per-source VN filter in the UI selector needs NEWS-INGEST-2c → generic developer (`apps/news-fetch/dashboard/`).
+
+Zone health: /api/news-fetch/live now returns all providers; VN articles visible in source=all; per-source VN filters working; reuters/bloomberg non-regression; tsc clean | HEALTHY
+
+---
+
 ## c292 · 2026-05-25 (NEWS-INGEST-1)
 
 ### NEWS-INGEST-1 — Confirm root cause of news-ingest all-duplicate drop (DONE)

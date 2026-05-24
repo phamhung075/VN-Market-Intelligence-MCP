@@ -157,6 +157,85 @@ All `[NEWS-INGEST-1 DEBUG]` lines REMOVED from `pollNews.ts` before commit. tsc 
 
 ---
 
+---
+
+## PO Routing Decision — NEWS-INGEST-1 ACCEPTED; zone determined; 2b scoped (2026-05-24T22:03Z)
+
+**NEWS-INGEST-1 = DONE.** Both PO hypotheses RULED OUT; root cause CONFIRMED on a real live cycle (160 articles, 160/160 already_in_db, oldest 2026-05-22). The mcp-server dedup layers (title-dedup + partial UNIQUE index) are CORRECT and MUST NOT be changed. Signal `docs/signals/dev-mcp-server-news-ingest-1-done-20260525T000006Z.json` (commit `7e350f56`).
+
+### Zone determination — WHERE the re-push originates (PO read, do NOT re-investigate)
+Traced the actual sender, not guessed. Findings:
+
+1. **`apps/news-fetch/` is NOT the source.** That Bun/TS service (port 5008) scrapes ONLY Reuters + Bloomberg (`src/infrastructure/scrapers/{reuters,bloomberg}-{rss,stealth}.ts`). The VN sources (cafef/vnexpress/vneconomy/vietstock/…) are NOT routed through it. So the dev-mcp-server handoff's named fix-zone "`apps/news-fetch/` — dev-news-fetch" is wrong on BOTH counts: (a) there is **no `dev-news-fetch` agent** (per `news-fetch-charter.md` §Deltas — generic `developer` owns `apps/news-fetch/`); (b) the VN re-push does not flow through news-fetch at all.
+
+2. **The re-push originates in `vps-scripts/fetch-vn-news.sh`** (in-repo; deployed to Vinahost as `/root/fetch-vn-news.sh`, run by `vn-news-fetch.service` every ~15m per `scripts/deploy-vinahost.sh:11`). The smoking gun is **line 180**:
+   ```
+   | jq -s 'add | [.[] | select(. != null and .url != "")] | unique_by(.url)'
+   ```
+   It fetches each source's CURRENT RSS feed (latest ~20 items each), dedups WITHIN the single cycle by URL, and POSTs **all** of them to `/api/push-news`. There is NO persistent "since" cursor / last-seen state. RSS feeds turn over slowly, so the same ~160 newest articles are re-pushed every cycle → mcp-server correctly drops all 160 as already-stored → `inserted:0` forever. The receiver (`pushNewsHandler.ts`) just forwards whatever the script sends into `pollNews`; it does not (and should not) decide novelty.
+
+3. **Zone = `cross-service/` script logic → generic `developer` for the script change; `ops` deploys + proves live.** `vps-scripts/*.sh` is in-repo crawl-script SOURCE (not `apps/<service>/` code, not Docker/infra config), so the LOGIC fix routes to the generic `developer` (same owner the charter assigns to in-repo news ingestion). The DEPLOY to Vinahost + the live-proof are `ops` (dispatch table: "VPS, Docker, network" = ops). This split: developer writes the cursor/state-file logic in `vps-scripts/fetch-vn-news.sh`; ops deploys it to the VPS and proves a live cycle now inserts NEW rows.
+
+### Two open questions — RESOLVED (they are the SAME root cause from two angles)
+
+**Q1 — rag_analyses row-count reconciliation.** ops's NEWS diagnosis reported "~1 row"; dev-mcp-server's live batch query (same 21:57:17Z cycle) found **160/160 already_in_db** against `rag_analyses`. These are NOT in conflict — they measure different things:
+- ops's "~1 row" = what the **dashboard live panel** showed (Reuters/Bloomberg-only filter — see Q2), NOT the table count.
+- dev-mcp-server's 160 = an authoritative live `SELECT` against `rag_analyses` for the pushed VN URLs → there are **≥160 VN-source rows stored** (oldest 2026-05-22).
+**Authoritative count to STATE (binding, no fabrication):** ≥160 VN-source articles ARE stored in `rag_analyses`. The exact total + breakdown (VN-source vs reuters/bloomberg) is captured AUTHORITATIVELY by ops at NEWS-INGEST-LIVE via the live container DB (named volume `market.db`) — `SELECT count(*)` total + `WHERE source_url LIKE '%reuters%' OR '%bloomberg%'` (non-VN) + remainder (VN). Local-disk `market.db` files are NOT authoritative (stale/junk per PDF-INSPECT trail). The "~1 row" claim is hereby corrected: the TABLE is not empty — the PANEL was empty.
+
+**Q2 — dashboard display filter EXCLUDES VN articles. CONFIRMED — scoped as NEWS-INGEST-2b.** `apps/mcp-server/src/interface/mcp/routes/newsFetchLiveHandler.ts`:
+- `VALID_SOURCES = ["reuters", "bloomberg", "all"]` — there is **no VN option**.
+- `buildSql()` hard-codes `WHERE source_url LIKE '%reuters%' OR source_url LIKE '%bloomberg%'` for EVERY branch including `source=all` (L67/L70/L73).
+- ⇒ The `GET /api/news-fetch/live` panel structurally returns ZERO of the ≥160 stored VN articles (cafef/vnexpress/vneconomy). Even after the cursor fix lands and NEW VN articles flow in, **this panel will still show them as invisible**. This is the MORE direct fix for the user's literal "why no stock article" — the stock articles ARE in the DB; the panel just refuses to display them.
+- **Decision: NEWS-INGEST-2b is a SIBLING task** (independent of the cursor fix, parallel-eligible, arguably higher user value). Zone = `apps/mcp-server/` → `dev-mcp-server`. Scope: surface VN-source articles in the live panel — add VN providers to the filter/enum (or default `all` to truly mean ALL providers), derive `_provider` for cafef/vnexpress/vneconomy, keep the existing reuters/bloomberg behavior as a non-regression. Must NOT touch the dedup write path (frozen-correct).
+
+### Recurring-bug guard — NOT triggered
+The `vps-scripts/fetch-vn-news.sh` cursor defect is a NEW, first-time root cause (zero prior fix commits on this script's push-selection logic). NEWS-INGEST-2 is the FIRST fix attempt → escalation threshold (≥2 fix commits, same module, unresolved) is NOT met. If a 2nd cursor-fix commit lands without resolving `inserted:0`, PO BLOCKS and calls `architect` before any 3rd attempt.
+
+---
+
+## Revised Chain (PO-owned routing, supersedes the Step 1–6 above)
+
+- **NEWS-INGEST-1** — CONFIRM root cause — `dev-mcp-server` — **DONE** (`7e350f56`).
+- **NEWS-INGEST-RECON** — quick read step: authoritative `rag_analyses` count + confirm panel filter. Q1 + Q2 already answered above by PO code-read; the AUTHORITATIVE live count is folded into NEWS-INGEST-LIVE (ops queries the live DB). No separate agent hop needed — this section IS the reconcile artifact.
+- **NEWS-INGEST-2** — FIX the re-push at source: add a persistent "since"/last-seen cursor to `vps-scripts/fetch-vn-news.sh` so it pushes ONLY articles not already pushed (e.g. a `/var/lib/vn-news/seen-urls` or `last_pushed_at` state file on the VPS; push only URLs/`publishedAt` newer than last cycle). MUST NOT weaken mcp-server dedup (it stays as the second line of defence). **Owner = `developer`** (script LOGIC, zone `cross-service/`). — BLOCKED until dispatched (NEWS-INGEST-1 done).
+- **NEWS-INGEST-2b** — FIX the dashboard display filter so the ≥160 stored VN stock articles are VISIBLE in `GET /api/news-fetch/live`. **Owner = `dev-mcp-server`**, zone `apps/mcp-server/`. SIBLING of -2 (parallel-eligible). — **DONE** (`e1e08a29`).
+- **NEWS-INGEST-3** — QA gate (covers BOTH -2 and -2b):
+  1. **-2 proof:** a real fetch/poll cycle now inserts **>0** NEW rows with DISTINCT `source_url`s; OR — if no genuinely-new upstream articles exist at test time — a deterministic test PROVES the cursor logic emits only post-cutoff items (feed the script/fn a fixture with N old + M new URLs against a known last-seen state → exactly M pushed). No fabrication.
+  2. **-2b proof:** `GET /api/news-fetch/live` (and/or `?source=all`) now returns VN-source articles (cafef/vnexpress/vneconomy) when they exist in `rag_analyses`; reuters/bloomberg still returned (non-regression); positive + negative case.
+  3. No test regression (baseline 9277 pass / 34 known fail — no NEW fails).
+  4. mcp-server dedup STILL blocks GENUINE duplicates (same `source_url` twice → 2nd dropped; same title within 24h for URL-bearing items → dropped). Positive + negative test.
+  5. Emit `docs/signals/qa-news-ingest-<UTC>.json`.
+- **NEWS-INGEST-FIX** — `fixer` (only if QA CHANGES_REQUESTED).
+- **NEWS-INGEST-CLOSE** — `po` sign-off vs ACs; main terminal commits in-tree work (commit-mutex enum defect — dev agents can't acquire).
+- **NEWS-INGEST-LIVE** — `ops` PROVE LIVE (FINAL truth gate): deploy the patched `fetch-vn-news.sh` to Vinahost; run/await a real cycle; show `inserted` > 0 in the live `pollNews` log AND `rag_analyses` row count rising with DISTINCT VN `source_url`s. ALSO paste the AUTHORITATIVE current `rag_analyses` count (total + non-VN vs VN breakdown) for Q1 closure. AND confirm the dashboard panel now shows VN stock articles (-2b live check). Disk-green is NOT enough.
+
+---
+
 ## Worklog (agents append below)
 - 2026-05-24T21:49Z [po] Task opened. Bug report captured from ops live-diagnosis. Confirmation step routed FIRST to dev-mcp-server (per-article debug logging) before any fix. Zone-of-fix deferred to Step-1 verdict.
 - 2026-05-24T21:58Z [dev-mcp-server] NEWS-INGEST-1 COMPLETE. Root cause confirmed: VPS re-pushes 160 already-stored articles every cycle. Debug logging added, real cycle captured (21:57:17Z), histogram recorded, debug removed. Fix zone = apps/news-fetch/ (or VPS push script). See histogram above.
+- 2026-05-24T22:03Z [po] NEWS-INGEST-1 ACCEPTED (verdict (c) corroborated). FIX-ZONE CORRECTED: re-push originates in `vps-scripts/fetch-vn-news.sh` L180 (no since-cursor) — NOT `apps/news-fetch/` (that service is Reuters/Bloomberg-only) and there is NO `dev-news-fetch` agent. NEWS-INGEST-2 (cursor fix) → generic `developer` (script logic) + `ops` (deploy/live). Q1 reconciled: table holds ≥160 VN rows, "~1 row" was the panel count not the table count. Q2 confirmed: live panel hard-filters reuters/bloomberg only → VN articles invisible → scoped as NEWS-INGEST-2b (`dev-mcp-server`, `apps/mcp-server/`). Recurring-bug guard NOT triggered (first fix on this script). Revised chain above.
+- 2026-05-25T00:12Z [dev-mcp-server] NEWS-INGEST-2b COMPLETE. `newsFetchLiveHandler.ts`: VALID_SOURCES extended (cafef/vnexpress/vneconomy added). `buildSql()` source=all branch changed from reuters/bloomberg-only WHERE to no WHERE (returns ALL providers). Per-VN-source filter branches added. `deriveProvider()` extended for 5 known providers + other. NF-LD-2 test suite: 9 original GREEN (non-regression); 10 new tests (i–r) covering VN visibility, per-source isolation, _provider derivation, honest-empty. 19/19 pass. tsc exit 0. Commit `e1e08a29`. Dashboard selector follow-up: see NEWS-INGEST-2c note below.
+
+---
+
+## [dev-mcp-server] NEWS-INGEST-2b Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/newsFetchLiveHandler.ts` — VALID_SOURCES + buildSql() + deriveProvider() extended for VN providers; source=all now unfiltered
+  - `apps/mcp-server/src/__tests__/NF-LD-2-news-fetch-live.test.ts` — 10 new tests (i–r) added
+- **Tests written:** NF-LD-2 tests (i)–(r) — 10 new assertions, 19/19 GREEN
+- **Git commits:** `e1e08a29` fix(news-ingest/mcp-server): NEWS-INGEST-2b surface VN news in live panel
+- **Type check:** clean (tsc exit 0)
+- **Service tests:** 19 NF-LD-2 pass / 0 fail; NF-LD-4 11/11 pass (non-regression)
+- **Docs updated:** TASK_NEWS-INGEST.md handoff updated
+- **Graphify:** skipped (no microservice docs impacted)
+
+## Follow-up: NEWS-INGEST-2c (developer zone — NOT mcp-server)
+
+The dashboard source selector in `apps/news-fetch/dashboard/index.html` (canonical) and the served copy at `apps/mcp-server/src/interface/news-fetch-dashboard/index.html` still only lists `reuters`, `bloomberg`, `all` options. The `source=all` fix already surfaces all VN rows without a selector change (user can select "All" and see them). However for per-provider filtering from the UI (cafef/vnexpress/vneconomy), the selector needs new `<option>` entries.
+
+**Recommendation:** Route NEWS-INGEST-2c to the generic `developer` (zone `apps/news-fetch/dashboard/`) to add VN source options to the selector, then re-run `sync-news-fetch-dashboard.sh` to regenerate the served copy. This is cosmetic/UX, NOT a correctness blocker — the API already returns VN rows correctly.
