@@ -343,5 +343,84 @@ The viewer page shows a dropdown of all `pdf_documents` rows. Select one → LEF
 
 ---
 
+## [QA] PI-3 Review Record — 2026-05-24T20:00Z
+
+**Verdict: PASS — all PI-3 ACs satisfied.**
+
+**Reviewer:** qa agent | **Sprint:** PDF-INSPECT | **Input commit:** `4651c080`
+
+---
+
+### AC-1: User-path acceptance (L9) — PASS
+
+Service started locally with fixture data: `DB_PATH=<fixture> PDF_DIR=<fixture> STORAGE_DIR=<fixture> uvicorn main:app --port 15001`.
+
+Playwright headless (Chromium 1.60.0) against `http://localhost:15001/inspect`:
+- `#doc-select` present, 4 options loaded (placeholder + 3 docs)
+- Status bar: "3 document(s) loaded."
+- Select `DOC_FULL` (VNM 2024 Q1 [✓PDF ✓Ext]) → LEFT pane: `<canvas width="833" height="1178">` rendered via pdf.js CDN (not fallback iframe, not crash); RIGHT pane: `OCR: 93%` + `Financial: 87%` confidence pills + `DECIMAL-SHIFT BUG` text + `Tables (1)` with `net_profit / 0.000051` row.
+
+**Screenshot evidence:** captured at `/tmp/qa-pi3-playwright-evidence.png` (embedded in notebook cycle-105).
+
+| REST check | Result |
+|---|---|
+| GET /inspect → 200 text/html with SI-2 comment, `<select>`, pdfjs-dist ref | PASS |
+| GET /inspect/pdfs → {"items": [3 docs]} | PASS |
+| GET /inspect/pdf/{full_id} → 200 application/pdf, content starts with %PDF | PASS |
+| GET /inspect/extraction/{full_id} → 200, text_content + tables + ocr_confidence + confidence_financial + extraction_time_ms | PASS |
+
+---
+
+### AC-2: Honest-degrade — PASS
+
+| Scenario | Left pane | Right pane |
+|---|---|---|
+| DOC_NO_PDF (extraction only) | `<div class="missing-msg"><strong>PDF not available on disk.</strong>...` (amber, not crash, not blank) | OCR: 90% + Financial: 100% confidence pills (extraction present) |
+| DOC_NO_EXT (PDF only) | pdf.js render (PDF exists) | `<div class="missing-msg"><strong>Extraction not available.</strong>...` (honest, not fabricated) |
+| Unknown UUID → /inspect/pdf/ | — | 404 `{"error": "pdf_not_found"}` |
+| Unknown UUID → /inspect/extraction/ | — | 404 `{"error": "extraction_not_found"}` |
+
+No fabricated content observed in any degrade path.
+
+---
+
+### AC-3: Regression + fences — PASS
+
+| Check | Result |
+|---|---|
+| `pytest apps/pdf-extractor/ -q` | **186 passed** (161 baseline-PI2 + 25 new PI-3 acceptance tests) |
+| `lint-imports` Fence-A | KEPT |
+| `lint-imports` Fence-B | KEPT |
+| `git diff HEAD -- dashboard/index.html dashboard/traces.js dashboard/trust-contract.spec.js sandbox/runner.py` | EMPTY (frozen files untouched) |
+| `docs/data/pilot-status-pdf-extractor.json` in `git diff` | EMPTY (PO-only, untouched) |
+| PI-2 commit foreign files in `git show --stat 4651c080` | 0 foreign files (8 files, all apps/pdf-extractor/) |
+
+---
+
+### AC-4: Path-traversal / safety — PASS
+
+| Test | Result |
+|---|---|
+| `GET /inspect/pdf/not-a-uuid` → 400, `{"error": "invalid_doc_id"}` | PASS |
+| `GET /inspect/extraction/not-a-uuid` → 400 | PASS |
+| `GET /inspect/pdf/../../etc/passwd` → 404 (FastAPI router rejects before handler) | PASS — not 500, no file content leaked |
+| `GET /inspect/extraction/../../etc/shadow` → 404 | PASS |
+| `_is_valid_uuid()` guard at `inspection_store.py:164` and `:180` before any `os.path.join` | CONFIRMED |
+| `os.path.join` with `doc_id` in `list_docs()` (line 143): `doc_id` sourced from DB rows, NOT user input | CONFIRMED safe |
+
+Security Clause: viewer code has zero references to `sandbox/runner.py`. `inspection_store.py`, `handlers.py`, and `viewer.html` all confirmed clean of credentials, secrets, `process.env`.
+
+---
+
+### QA-authored test committed
+
+`apps/pdf-extractor/__tests__/integration/test_pi3_served_url_acceptance.py` — 25 tests covering served-URL acceptance, honest-degrade, UUID gate, path traversal.
+
+---
+
+**PI-3 verdict: PASS. NEXT: po (PI-EXIT sign-off).**
+
+---
+
 ## Commit discipline (every committer)
 Explicit `git add <path>` per file; never `-A`/`.`. No `--force`/`--no-verify`/`--no-gpg-sign`. No `git push`. After commit, `git show --stat HEAD` MUST show only your files (heavy fleet commit-race active — if a foreign file appears, you conflated a commit; do NOT rewrite history, re-stage your own and re-commit). Commit-mutex enum defect known: claim key under `sprint-task` kind if mutex needed (per notebook carry-over).

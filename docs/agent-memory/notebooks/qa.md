@@ -1,5 +1,85 @@
 # QA — Notebook
 
+## cycle-105 · 2026-05-24 · PDF-INSPECT PI-3 served-URL acceptance — PASS
+
+**Task:** PI-3 (verify side-by-side PDF viewer) | **Verdict:** PASS — APPROVED
+
+```
+date: 2026-05-24T20:00:00Z
+outcome: PASS — all 4 AC groups satisfied, 53/53 Playwright+REST checks green
+type: sprint-qa (PDF-INSPECT PI-3 served-URL acceptance)
+handoff: docs/handoffs/TASK_PDF-INSPECT.md
+signal: docs/signals/qa-pdf-inspect-pi3-done-20260524T200000Z.json
+input_commit: 4651c080 (dev-pdf-extractor PI-2)
+ssot_not_mutated: true (pilot-status-pdf-extractor.json PO-only — untouched)
+goal_flips: NONE
+
+playwright: 53/53 PASS (Chromium headless, http://localhost:15001/inspect)
+pytest: 186 passed (161 baseline + 25 new PI-3 acceptance tests)
+import_linter: 2 KEPT, 0 broken (Fence-A + Fence-B)
+frozen_files: EMPTY diff (dashboard/index.html, traces.js, trust-contract.spec.js, sandbox/runner.py)
+security_scan: CLEAN (no process.env, no hardcoded creds, no secrets)
+ddd_scan: PASS (InspectionStore in infra layer, handlers in interface layer, no domain->infra import)
+path_traversal: PASS (400/404 for all invalid/traversal inputs, never 500)
+honest_degrade: PASS (missing PDF → amber message; missing extraction → explicit message; no fabrication)
+screenshot_evidence: /tmp/qa-pi3-playwright-evidence.png
+new_test_file: apps/pdf-extractor/__tests__/integration/test_pi3_served_url_acceptance.py (25 tests)
+
+ac1_l9_acceptance:
+  service: uvicorn main:app --port 15001 (fixture DB/PDFs/extractions)
+  playwright_browser: Chromium 1.60.0 headless
+  list_populates: yes — "3 document(s) loaded." in status bar, 4 options in dropdown
+  select_vnm_2024_q1: LEFT=<canvas width=833 height=1178> (pdf.js CDN render, not fallback)
+  right_pane: OCR: 93% + Financial: 87% pills + "DECIMAL-SHIFT BUG" in text + Tables(1) net_profit/0.000051
+
+ac2_honest_degrade:
+  no_pdf_left: "PDF not available on disk." (amber missing-msg, not crash)
+  no_ext_right: "Extraction not available." (missing-msg, not fabricated JSON)
+  404_pdf_missing: {"error":"pdf_not_found","doc_id":"..."} — confirmed
+  404_ext_missing: {"error":"extraction_not_found","doc_id":"..."} — confirmed
+
+ac3_regression:
+  pytest_186_passed: true
+  fence_a_b_kept: true
+  frozen_diff_empty: true
+  pilot_status_untouched: true
+  commit_foreign_files: 0 (git show --stat 4651c080)
+
+ac4_path_traversal:
+  invalid_uuid_pdf: 400 invalid_doc_id
+  invalid_uuid_extraction: 400 invalid_doc_id
+  traversal_pdf: 404 (FastAPI router rejects before handler)
+  traversal_extraction: 404
+  uuid_guard_lines: inspection_store.py:164 + :180
+  list_docs_doc_id_source: DB rows only (not user input) — SAFE
+```
+
+| Check | Verdict |
+|-------|---------|
+| Playwright 53/53 PASS (list + select + LEFT canvas + RIGHT extraction) | PASS |
+| AC-1 L9: served URL http://localhost:15001/inspect, headless DOM confirmed | PASS |
+| AC-1: status bar "3 document(s) loaded." | PASS |
+| AC-1: LEFT canvas rendered (pdf.js CDN, not fallback) | PASS |
+| AC-1: RIGHT confidence pills + DECIMAL-SHIFT text + table row | PASS |
+| AC-2: DOC_NO_PDF LEFT → amber "PDF not available on disk." | PASS |
+| AC-2: DOC_NO_EXT RIGHT → explicit "Extraction not available." | PASS |
+| AC-2: No fabricated content in any degrade path | PASS |
+| AC-3: pytest 186/186 PASS (161 + 25 new) | PASS |
+| AC-3: import-linter Fence-A + Fence-B KEPT | PASS |
+| AC-3: frozen files diff EMPTY | PASS |
+| AC-3: pilot-status-pdf-extractor.json untouched | PASS |
+| AC-4: invalid UUID → 400 on both routes | PASS |
+| AC-4: path traversal → 400/404, never 500 | PASS |
+| AC-4: uuid guard before os.path.join confirmed | PASS |
+| Security: no process.env, no hardcoded creds | PASS |
+| DDD: InspectionStore infra, handlers interface, no domain→infra | PASS |
+| SI-2 boundary comment on all new files | PASS |
+| Commit 4651c080: 8 files, 0 foreign | PASS |
+
+**PI-3 verdict: PASS. NEXT: po — PI-EXIT sign-off.**
+
+---
+
 ## cycle-106 · 2026-05-24 · KD-QREF-3 — 64-Quẻ Reference Panel QA — APPROVED
 
 **Task:** KD-QREF-3 (post-pilot enhancement QA gate) | **Verdict:** APPROVED
