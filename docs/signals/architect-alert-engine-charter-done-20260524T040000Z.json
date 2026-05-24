@@ -1,0 +1,36 @@
+{
+  "from": "architect",
+  "to": "architect",
+  "via": "main-router",
+  "type": "charter-done",
+  "priority": "high",
+  "createdAt": "2026-05-24T04:00:00Z",
+  "payload": {
+    "pilot": "alert-engine",
+    "fleet_pilot_number": 5,
+    "charter": "docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md",
+    "ssot": "docs/data/pilot-status-alert-engine.json",
+    "commit_sha": "da956ec0",
+    "dup_key_check": "OK — day-0 scaffold clean: goalsEarned=0, 12 goals TBD, dm all-TBD",
+    "anchor_intact": true,
+    "frozen_anchor": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+    "files_committed": [
+      "docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md",
+      "docs/data/pilot-status-alert-engine.json",
+      "docs/agent-memory/notebooks/architect.md"
+    ],
+    "foreign_paths_staged": false,
+    "headline_risk": "G7 ZERO-CREDS — TELEGRAM_BOT_TOKEN and all chat IDs must never appear in sandbox env, scenario JSON, or primitive/module path. Env audit + scenario grep + CGO_ENABLED=0 build all required for G7 PASS.",
+    "g1_primitives_chosen": [
+      "signal-classifier (severity → AlertSeverity + channel; inlined in evaluate.go L126-130)",
+      "dedup-key-builder (ComputeFingerprint/djb2 — already pure, extract with scenarios)",
+      "cooldown-gate (ShouldSuppressAlert — inject now as param for determinism)",
+      "duplicate-checker (IsDuplicate — 6 lines, needs scenario coverage)",
+      "alert-formatter (Sprintf formatter — optional, Phase 0 confirms)"
+    ],
+    "si2_exclusion_confirmed": "docs/dashboards/index.html is stock-price-EXCLUSIVE. alert-engine G6 = apps/alert-engine/dashboard/index.html ONLY.",
+    "next_work": "Author alert-engine Phase-1 task plan (mirroring stock-price/kinh-dich phase plans). Phase 0 brownfield inventory + bug baseline + agent/flow baking must land first.",
+    "next_actor": "architect",
+    "next_actor_router": "main-router"
+  }
+}
