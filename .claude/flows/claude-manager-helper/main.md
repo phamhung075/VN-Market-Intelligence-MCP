@@ -1,4 +1,4 @@
-<!-- size-justification: 152L — 10-pass audit dispatcher with JUMP-TO anchors per pass + Mon/Thu Pass-9b gate that resolves the latent "all-empty EXIT vs always-runs" contradiction; each pass body is a ≤6-line SKIP-IF stub, splitting per pass would explode file count for no gain. -->
+<!-- size-justification: 175L — 10-pass audit dispatcher with JUMP-TO anchors per pass + Mon/Thu Pass-9b gate + Pass 5b context-bloat signal consumer; each pass body is a ≤8-line SKIP-IF stub, splitting per pass would explode file count for no gain. -->
 # Claude Manager Helper — Main Flow (10 Passes)
 
 **Tools:** `.claude/tools/package/claude-manager-helper.md`
@@ -83,6 +83,22 @@ All pointer targets exist | follow tree-map paths | summaries present.
 **SKIP IF** `GROUP_ROOT` empty OR (docs/TASKS.md ≤ 80 AND docs/SPRINT_GOAL.md ≤ 30).
 docs/TASKS.md > 80 → archive Done. docs/SPRINT_GOAL.md > 30 → delete old goals.
 
+<!-- jump:pass-5b -->
+## Pass 5b: Context-Bloat Signal Consumer
+**SKIP IF** no `docs/signals/context-bloat-*.json` files exist.
+```bash
+ls docs/signals/context-bloat-*.json 2>/dev/null || true
+```
+For each breach signal:
+1. Read `payload.file`, `payload.class`, `payload.cap`, `payload.line_count`
+2. Apply prune action by class:
+   - `agent-notebook` → trim to ≤200 L (keep recent entries, archive older to `## Archive` section)
+   - `sprint-task-index` → archive DONE rows to `docs/TASKS_ARCHIVE.md`, target ≤80 L
+   - `flow-file` | `skill-file` | `agent-definition` → check for `<!-- size-justification:` comment; if absent AND still over cap → flag to architect via subagent spawn (cannot auto-split safely)
+3. Move processed signal: `mv <signal> docs/signals/processed/<signal-filename>`
+   (create `docs/signals/processed/` if absent)
+4. Log in Pass 10: "Pass 5b context-bloat: N breaches | M pruned | K escalated to architect"
+
 <!-- jump:pass-6 -->
 ## Pass 6: Memory Hygiene
 **SKIP IF** `GROUP_MEMORY` + `GROUP_KNOWLEDGE` both empty.
@@ -120,6 +136,7 @@ Pass 2 JSON drift: OK | SKIPPED | N updated
 Pass 3 Dangling:   OK | SKIPPED | N repaired
 Pass 4 CLAUDE.md:  OK | SKIPPED | N trimmed
 Pass 5 Size caps:  OK | SKIPPED | archived N
+Pass 5b Bloat:     OK | SKIPPED | N pruned | K escalated to architect
 Pass 6 Memory:     OK | SKIPPED | N removed
 Pass 7 Dedup:      OK | SKIPPED | N extracted
 Pass 8 Telegram:   OK | SKIPPED | N fixed | N → architect

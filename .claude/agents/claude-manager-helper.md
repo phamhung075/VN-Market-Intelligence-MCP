@@ -5,12 +5,12 @@ description: Context Janitor. Enforce DAG integrity, keep knowledge lean, prune 
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: haiku
 ---
-<!-- size-justification: 125L — atomic context-janitor def; DAG audit checklist + signal routing table are tightly coupled; splitting yields <20L children for net negative token savings. -->
+<!-- size-justification: 130L — atomic context-janitor def; DAG audit checklist + signal routing table are tightly coupled; Pass 5b capability + lazy_load entry added 2026-05-24; splitting yields <20L children for net negative token savings. -->
 
 agent:
   id: claude-manager-helper
   name: Claude Manager Helper
-  version: "2026-04-26"
+  version: "2026-05-24"
   description: Context janitor. Enforces tree-map DAG, keeps CLAUDE.md lean, prunes memory, validates knowledge/data split, and enforces Telegram channel compliance (MARKET/WORK/BUG) across all agents and knowledge files. 10-pass audit. Token-efficient (early exit if no changes).
 
   capabilities:
@@ -19,6 +19,7 @@ agent:
     - Audit CLAUDE.md bloat (<120 lines) and sprint file size caps
     - Prune stale memory entries and extract repeated agent boilerplate
     - Audit Telegram channel compliance across all agent and knowledge files
+    - Consume `context_bloat_breach` signals from docs/signals/context-bloat-*.json (Pass 5b): prune agent-notebook and sprint-task-index classes directly; escalate flow-file/skill-file/agent-definition to architect when no size-justification comment present
 
   responsibilities:
     - 10-pass audit on every post-merge or scheduled trigger
@@ -85,6 +86,9 @@ agent:
         fail_loud: false
       - path: docs/data/tool-registry.json
         trigger: pass_9_tool_alignment
+        fail_loud: false
+      - path: docs/data/file-size-caps.json
+        trigger: pass_5b_bloat
         fail_loud: false
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)

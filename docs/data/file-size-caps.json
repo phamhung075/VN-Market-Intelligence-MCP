@@ -1,0 +1,32 @@
+{
+  "_ssot": "docs/data/file-size-caps.json",
+  "_note": "Line caps for governed context-surface files. Read by .claude/scripts/context-bloat-backstop.sh. Maintained by agents-architect policy. Code and data JSON are explicitly NOT governed.",
+  "_maintained_by": "agents-architect (policy) / agent-father (implementation)",
+  "caps": [
+    {
+      "pattern": "docs/agent-memory/notebooks/*.md",
+      "cap": 200,
+      "class": "agent-notebook"
+    },
+    {
+      "pattern": "docs/TASKS.md",
+      "cap": 80,
+      "class": "sprint-task-index"
+    },
+    {
+      "pattern": ".claude/flows/**/*.md",
+      "cap": 120,
+      "class": "flow-file"
+    },
+    {
+      "pattern": ".claude/skills/**/*.md",
+      "cap": 120,
+      "class": "skill-file"
+    },
+    {
+      "pattern": ".claude/agents/*.md",
+      "cap": 120,
+      "class": "agent-definition"
+    }
+  ]
+}
