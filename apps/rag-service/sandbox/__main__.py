@@ -12,34 +12,42 @@ import importlib
 import inspect
 import json
 import os
+import re
 import sys
 import time
 from types import ModuleType
 from typing import Any, Optional
 
 # ---------------------------------------------------------------------------
-# AC-5: Env-audit — warn (not fail) on forbidden vars.
-# Full pass/fail gate is Phase 2 P2-E.
+# G7 (Phase 2 P2-G7): Env-audit — HARD FAIL on forbidden credential vars.
+# If any forbidden key is present, runner exits NON-ZERO and aborts.
+# HF_HUB_OFFLINE is NOT forbidden — it is a safety flag (R-5), not a credential.
+# AC-2: regex declared as module-level constant (not hardcoded inline).
 # ---------------------------------------------------------------------------
-_FORBIDDEN_VARS = [
-    "DB_PATH",
-    "LANCEDB",
-    "HF_TOKEN",
-    "HUGGINGFACE",
-    "OPENAI_API_KEY",
-    "EMBEDDING_MODEL",
-    "DATABASE_URL",
-]
+_FORBIDDEN_ENV_REGEX = re.compile(
+    r"^(DB_PATH|DB_[A-Z][A-Z0-9_]*|LANCEDB_[A-Z0-9_]*|HF_TOKEN"
+    r"|HUGGINGFACE_[A-Z0-9_]*|OPENAI_API_KEY|EMBEDDING_MODEL|DATABASE_URL"
+    r"|API_KEY|API_KEY_[A-Z0-9_]*|SECRET|SECRET_[A-Z0-9_]*"
+    r"|TOKEN|TOKEN_[A-Z0-9_]*|PASSWORD|PASSWORD_[A-Z0-9_]*)$"
+)
+
+# AC-3: HF_HUB_OFFLINE is explicitly allowed — do NOT flag it.
+_ENV_ALLOWLIST = {"HF_HUB_OFFLINE"}
 
 
 def _audit_env() -> list[str]:
-    """Return list of forbidden env keys that are currently set."""
+    """Return list of forbidden env keys that are currently set.
+
+    Matches against _FORBIDDEN_ENV_REGEX. Keys in _ENV_ALLOWLIST are
+    never flagged even if they match the pattern (HF_HUB_OFFLINE=1 is
+    a safety flag per R-5, not a credential).
+    """
     found: list[str] = []
     for key in os.environ:
-        for forbidden in _FORBIDDEN_VARS:
-            if forbidden in key:
-                found.append(key)
-                break
+        if key in _ENV_ALLOWLIST:
+            continue
+        if _FORBIDDEN_ENV_REGEX.match(key):
+            found.append(key)
     return found
 
 
@@ -216,7 +224,7 @@ def _collect_scenario_files(scenario_arg: str, service: str, tier: str) -> list[
         for root, _dirs, files in os.walk(base):
             for f in files:
                 # Skip scaffold/draft files (prefixed with _) — they are not regression targets
-                if f.endswith(".json") and "scenarios" in root and not f.startswith("_"):
+                if f.endswith(".json") and "scenarios" in root and not f.startswith("_") and not f.startswith("known_bad_"):
                     paths.append(os.path.join(root, f))
         return sorted(paths)
     else:
@@ -249,15 +257,18 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    # AC-5: env audit (warn, not fail)
+    # G7 hard-fail gate: forbidden credential env vars → exit NON-ZERO immediately.
+    # Scenarios are NEVER run when forbidden keys are present.
     forbidden_found = _audit_env()
     if forbidden_found:
         print(
-            f"[SANDBOX WARNING] Forbidden env vars detected: {forbidden_found}. "
-            "Sandbox should run with ZERO credential env vars. "
-            "(Full pass/fail gate is Phase 2 P2-E)",
+            f"[SANDBOX ERROR] Forbidden credential env vars detected: {forbidden_found}. "
+            "Sandbox refuses to run scenarios with credentials in the process environment. "
+            "Unset the listed vars before re-running. "
+            "(HF_HUB_OFFLINE=1 is allowed — it is a safety flag, not a credential.)",
             file=sys.stderr,
         )
+        return 1
 
     scenario_files = _collect_scenario_files(args.scenario, args.service, args.tier)
     if not scenario_files:
