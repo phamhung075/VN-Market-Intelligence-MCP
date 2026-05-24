@@ -9,7 +9,8 @@
     "build": "bun build src/index.ts --outdir dist",
     "start": "bun run src/index.ts",
     "test": "bun test",
-    "check": "bun tsc --noEmit"
+    "check": "bun tsc --noEmit",
+    "sandbox": "bun run src/sandbox/runner.ts"
   },
   "dependencies": {
     "hono": "^4.0.0",
