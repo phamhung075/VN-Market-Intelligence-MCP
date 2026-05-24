@@ -1,8 +1,37 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 07:44 UTC (pdf-extractor Phase-1 P1-A1 handoff + TASKS.md) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 (UTC) | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## rag-service Phase-2 task plan (2026-05-24) — Phase 2 dispatch after Phase 1 APPROVED
+
+**Task:** Author Phase-2 atomic task plan for rag-service SCALE pilot. Authorization: pilot-status-rag-service.json phase2.status=AWAITING-PLAN; Phase 1 gate APPROVED (qa cycle-74, commit 1823e716, po cycle-75). Prior attempt dropped on socket error — doc did not exist; authored clean.
+
+**Inputs loaded:** pilot-status-rag-service.json (phase2 block + G1-G12 calibration) + brownfield-inventory.md (§3-6: primitives, module, G5 rewire surface, SI-4) + phase-1-task-plan.md (format mirror) + pilot-charter.md (G1-G12 verification) + TASK_P1-E QA Review Record (gate context).
+
+**Key decisions:**
+- 14 atomic tasks (P2-B1 through P2-K2), WIP=1 sequential throughout.
+- 4 B-bucket primitives in dependency order: relevance-threshold-gate → top-k-selector → context-window-packer → temporal-decay-scorer (R-2 now-injection as `now: Optional[datetime] = None`).
+- P2-C: G2 module-full — all 5 primitives wired via ports, Fence-B clean, `now` propagated through module.retrieve() for scenario determinism.
+- P2-D: G3 composition-root verify — main.py ≤80L (from 113L), zero business logic grep, OpenAPI contract capture, port 5002 confirmed.
+- P2-E: G6 dashboard-full — all 5 primitive cards GREEN + module-full trace + honest microservice card.
+- P2-G7: G7 hard gate upgrade — env-audit warning→FAIL, forbidden key regex constant in sandbox runner, HF_HUB_OFFLINE=1 preserved (NOT forbidden), edit-JSON-rerun cycle proven.
+- P2-G8: G8 deliberate-break proof — QA corrupts golden, 5 known-bad files (permanent artefacts) all RED.
+- P2-A: G4 import-linter fence (SI-4 locked) — rag-pre-ci tag, 3 contracts (Fence-A independence, Fence-B forbidden, Fence-C layers), CI job rag-service-py-lint, R-FENCE gate (violation exits non-zero + "Fence-A" in output), QA co-sign. Ordered AFTER G8 (primitives stable).
+- P2-F: G5 delete+rewire — rag-pre-delete tag, G5a git mv {embeddings,vectorstore,retriever}.ts → _deprecated/, G5b analysis.ts+dataAuditJob.ts+index.ts rewired to ragHttpClient.ts (existing), G5c grep=0, R-1 dual-writer resolved. mcp-server bun build exits 0.
+- P2-J: G10 blind bug injection by QA (rag-pre-inject tag), dev-rag-service fixes from RED in ≤2 cycles. Recommended targets: temporal_decay_scorer exponent sign or top_k_selector slice direction.
+- P2-K1: G11 2-trial coupling proof — Trial-1 reuses G10 evidence if module scenario was coupled RED; Trial-2 = different primitive, module scenario RED, single-edit fix green. Outcome-(a)×2 PASS.
+- P2-K2: G9 Playwright headless — LAST task. playwright.config.js + trust-contract.spec.js, VERDICT JSON committed. 6 ACs: 3 panels, 5 cards, all GREEN, console_errors=0, network_calls=0.
+- §4.5 compliance section baked. goalsEarned stays 0. decisionMatrix untouched. No goal flip instructions anywhere.
+
+**Files authored this cycle (L84 — 1 plan file):**
+1. `docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-2-task-plan.md` (NEW)
+
+**Commit SHA:** TBD — staged and committed immediately after notebook update.
+**Next actor:** PO — flip phase2.status → OPEN, set taskPlan pointer, dispatch P2-B1 to dev-rag-service.
+
+---
 
 ## pdf-extractor Phase-1 first dispatch (2026-05-24T07:44Z) — P1-A1 handoff + TASKS.md chain registration
 
