@@ -1,5 +1,38 @@
 # QA — Notebook
 
+## cycle-92 · 2026-05-24 · kinh-dich P2-J — G10 bug injection DONE
+
+**Task:** P2-J (G10 bug injection for kinh-dich Go pilot) | **Verdict:** DONE — injection PASS (G12 DoD EXCEPTION: RED is correct)
+
+```
+date: 2026-05-24
+outcome: DONE — G10 bug injection committed, dashboard RED confirmed
+type: pilot-task-qa (bug-injection, pre-inject-go tag creation)
+
+inject_target: apps/kinh-dich-service/pkg/primitive/hao_encoder/hao_encoder.go
+inject_literal: THIEU_DUONG_THRESHOLD 0.10 → 0.25 (single-literal threshold flip)
+inject_commit: 234c0bef
+pre_inject_tag: kinh-dich-pre-inject-go → 10ef7fdd (BEFORE injection commit)
+ts_era_tag: kinh-dich-pre-inject → b4cdb1db (INTACT, untouched)
+
+build_exit: 0 (CGO_ENABLED=0 go build ./...)
+vet_exit: 0 (go vet ./...)
+sandbox_primitive_exit: 1 (13/15 PASS, 2 FAIL: hao-encoder-golden, hao-encoder-edge)
+sandbox_all_exit: 1 (13/17 PASS, 4 FAIL: hao-encoder-golden, hao-encoder-edge, reading-composer-golden, reading-composer-edge)
+dash_check: dotsRed=4, verdict=FAIL
+g11_trial1_coupling: reading-composer module scenarios also RED (EncodeHaos coupling confirmed)
+
+sealed_evidence: docs/qa-sealed-evidence/P2-J-kd-injection-literal.md
+dispatcher_handoff: docs/handoffs/TASK_P2-J-kd-inject-done.md
+baseline_kinh_dich: 1.5 cycles (bug-inventory.json kinh_dich_baseline — confirmed)
+g12_dod_exception: RED sandbox is CORRECT for P2-J (only task where RED = required)
+ssot_not_mutated: goalsEarned=0, decisionMatrix all TBD (§4.5 honored)
+goal_flips: NONE
+next: P2-K — dispatch dev-kinh-dich BLIND (hao_encoder RED, fix it ≤2 cycles)
+```
+
+---
+
 ## c283 cycle-91 · 2026-05-24 · rag-service P2-A (G4) + P2-G8 (G8) — deliberate-break proofs — DONE
 
 **Task:** P2-A (G4 QA co-sign) + P2-G8 (G8 deliberate-break proof) | **Verdict:** DONE — both proofs PASS
