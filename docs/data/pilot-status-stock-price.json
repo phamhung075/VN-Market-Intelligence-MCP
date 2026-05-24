@@ -17,15 +17,15 @@
   "openedBy": "po (fleet pilot-3 charter creation — after SI-1 schema landed; ratification Decision 5 step 3)",
   "closedAt": null,
   "closedBy": null,
-  "closureSignal": null,
-  "closureDecisionDoc": null,
+  "closureSignal": "docs/signals/pm-sp-phase2-closed-20260524T042019Z.json (Phase 2 close registered; Phase 3 PO terminal close pending)",
+  "closureDecisionDoc": "docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md (Phase 3 PO terminal close criteria defined in Charter §4.5)",
   "sprintKickoff": "2026-05-23",
   "sprintDeadline": "2026-07-04",
   "deadline": "kickoff + 6 sprints",
   "language": "Go",
   "languageLockSource": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md §Q2 — user 'B' verdict; Go is the implementation language for all Go microservice fractals; stock-price is natively Go (runtime go1.22+cgo per system-map)",
   "languageLockedAt": "2026-05-22 (parent decision)",
-  "phase": "1",
+  "phase": "2",
 
   "phase0": {
     "status": "CLOSED",
@@ -219,12 +219,12 @@
   },
 
   "phase2": {
-    "_note": "Phase 2 OPEN — 14 atomic tasks (P2-A..P2-Z), WIP=1 sequential, pre-revert tag discipline (L5), goal-flip FORBIDDEN (§4.5 PO-only at Phase 3)",
-    "status": "OPEN",
+    "_note": "Phase 2 CLOSED — 14 atomic tasks (P2-A..P2-Z), all DONE. P2-Z close-gate READY-FOR-PHASE-3 verdict issued 2026-05-24T04:20:19Z.",
+    "status": "CLOSED",
     "openedAt": "2026-05-24T00:00:00Z",
     "openedBy": "pm",
-    "closedAt": null,
-    "closedBy": null,
+    "closedAt": "2026-05-24T04:20:19Z",
+    "closedBy": "qa (P2-Z close-gate verification)",
     "taskPlan": "docs/architecture-briefs/2026-05-23-stock-price-factory/phase-2-task-plan-go.md",
     "taskCount": 14,
     "acCount": 66,
@@ -232,7 +232,7 @@
     "wipPolicy": "WIP=1 sequential — PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
     "wip_limit": 1,
     "current_task": "P2-Z",
-    "current_task_status": "READY",
+    "current_task_status": "DONE",
     "current_task_owner": "qa",
     "current_task_handoff": "docs/handoffs/TASK_P2-Z.md",
     "tasks": {
@@ -522,15 +522,21 @@
       "P2-Z": {
         "id": "P2-Z",
         "title": "Phase 2 close-gate verification (QA)",
-        "status": "READY",
+        "status": "DONE",
         "readyAt": "2026-05-24T02:13:53Z",
         "readyBy": "pm",
+        "completedAt": "2026-05-24T04:20:19Z",
+        "completedBy": "qa",
         "owner": "qa",
         "blocked_by": "P2-M (DONE 2026-05-24T02:13:53Z)",
         "blocks": "Phase 3 PO terminal close",
         "ac_count": 5,
+        "ac_verdicts": "AC-1 PASS (sandbox 11/11 all-tier green, build exit 0, lint exit 0), AC-2 PASS (all 6 goal evidence files present: G3/G4/G5/G8/G9/G10-G11), AC-3 PASS (G12 streak 3/3 Phase-1 + 5 Phase-2 dev tasks continuous), AC-4 PASS (3 pre-revert tags resolve + ancestry order ci<=delete<=inject), AC-5 CONDITIONAL-PASS (anchor debba8ea ancestor, goalsEarned=0, decisionMatrix all TBD, no dup keys; phase field PM-omission noted but §4.5 binding invariants intact)",
+        "verdict": "READY-FOR-PHASE-3",
         "description": "Final Phase-2 gate. QA verifies: sandbox all-green (3 tiers: primitive/module/all), all 6 Phase-2 goal evidence files present (G3/G4/G5/G8/G9/G10-G11), G12 streak carry-forward (3/3 complete), pre-revert tags ordered correctly (stock-price-pre-ci ≤ stock-price-pre-delete ≤ stock-price-pre-inject), frozen anchor debba8ea is ancestor of HEAD, SSOT unchanged (goalsEarned=0, decisionMatrix all TBD). Emits Phase-2 close-gate signal. NO goal flips — those are Phase-3 PO-only events.",
-        "handoff": "docs/handoffs/TASK_P2-Z.md"
+        "handoff": "docs/handoffs/TASK_P2-Z.md",
+        "evidence": "docs/handoffs/TASK_P2-Z-sp-close-gate-evidence.md",
+        "signal": "docs/signals/qa-sp-phase2-close-gate-20260524T042019Z.json"
       }
     }
   },
