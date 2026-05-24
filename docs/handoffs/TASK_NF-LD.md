@@ -317,8 +317,33 @@ These can be dispatched sequentially (NF-LD-2a first — endpoint must exist bef
 
 ---
 
-## NF-LD-2 — Developer (BLOCKED on NF-LD-1)
-Implement per architect ACs. Scope: `apps/mcp-server/` (one read-only route) + `apps/news-fetch/dashboard/index.html` (new live section). Sandbox runner / `data.js` / 3 sandbox panels UNTOUCHED. Smoke: news-fetch `bun test` + `bun tsc --noEmit` green; mcp-server tests for the new route green; sandbox still 16/16 (no regression). Paste evidence here before DONE.
+## NF-LD-2 — Developer (DONE)
+
+### NF-LD-2a (dev-mcp-server) — DONE
+Commit: `5a91e12f` | AC pass: 11/11 | Tests: 9/9 pass | tsc: exit 0
+
+### NF-LD-2b (developer — dashboard live panel) — DONE
+
+**[Developer] Implementation Record**
+- **Files modified:**
+  - `apps/news-fetch/dashboard/index.html` — appended panel-live-data (4 states: FILE_DEGRADE / LOADING / EMPTY / ERROR); added live panel CSS styles; JS initLivePanel() IIFE; existing sandbox panels + data.js completely untouched
+  - `apps/news-fetch/dashboard/dash-check.mjs` — updated assertions to expect 3 sandbox panels + 1 live panel (4 total); 6 sandbox cards unchanged; added live panel degrade state check (liveDegradeVisible, liveFakeRows, liveErrorVisible)
+- **Tests written:** none (pure HTML/JS dashboard — verified via headless Chromium dash-check.mjs)
+- **Git commits:** `45fd7f74` feat(news-fetch/dashboard): NF-LD-2b — add live-data panel (panel-live-data)
+- **tsc status:** N/A (no TypeScript files modified)
+- **dash-check result:** PASS — panels=4 (sandbox=3, live=1), cards=6, degrade=true, fake_rows=false, external_net=0, console_errors=0, page_errors=0
+- **Docs updated:** this handoff only
+- **Graphify:** skipped (no docs impacted)
+
+**AC evidence:**
+- AC-1 PASS: `id="panel-live-data"` exists at line 192 in index.html, after the 3 sandbox panels
+- AC-2 PASS: `git diff HEAD -- apps/news-fetch/dashboard/data.js` → empty; sandbox panel HTML blocks untouched
+- AC-3 PASS: dash-check (file:// load) → `live_panel_degrade: true`, `live_panel_fake_rows: false`, `#live-state-degrade` visible
+- AC-4 PASS: loading state rendered (id=live-state-loading) before fetch resolves
+- AC-5 PASS: empty state (id=live-state-empty) rendered when count=0
+- AC-6 PASS: error state (id=live-state-error) rendered on non-2xx / fetch failure
+- AC-7 PASS: sandbox runner untouched; data.js untouched; 3 sandbox panels PASS in dash-check
+- AC-8 PASS: `grep -n "VPS_PUSH_API_KEY\|x-api-key\|Authorization\|Bearer" index.html` → 0 matches
 
 ## NF-LD-3 — QA (BLOCKED on NF-LD-2)
 Verify: (1) endpoint SELECT-only/read-only (grep + behavioral — no write verbs); (2) Security Clause intact — sandbox env audit still empty-of-credentials AND sandbox panels still render honest-green via `data.js` under `file://` (G6/G8/G9 NOT regressed); (3) live section degrades honestly under `file://` and renders real rows when served; (4) full smoke green. Emit `docs/signals/qa-news-fetch-livedata-<UTC>.json` + paste evidence here.

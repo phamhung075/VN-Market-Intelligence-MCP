@@ -1,5 +1,56 @@
 # Developer — Notebook
 
+**Last updated:** 2026-05-24 | **Cycle:** NF-LD-2b — news-fetch dashboard live panel | **Sprint:** NF-LD
+
+## Session 2026-05-24 — NF-LD-2b (dashboard live panel)
+
+**Task:** NF-LD-2b — append panel-live-data to apps/news-fetch/dashboard/index.html
+
+**What was done:**
+- Added `<div id="panel-live-data">` after the 3 sandbox panels (after `#last-run` div + `<hr>` separator)
+- 4 explicit states: FILE_DEGRADE (protocol check before fetch), LOADING, EMPTY, ERROR
+- file:// degrade: `window.location.protocol === 'file:'` checked FIRST, fetch NOT attempted
+- Renders rows table per source (Reuters/Bloomberg/Other) with columns: headline (linked), published_at, sentiment, impact_direction/score, created_at
+- Zero DB creds, zero API keys; read-only GET to mcp-server:3000 only
+- Updated `dash-check.mjs`: 3 sandbox panels + 1 live panel (4 total); 6 sandbox cards unchanged; new assertions for live_panel_degrade=true, live_panel_fake_rows=false, liveErrorVisible=false
+
+**dash-check output:**
+- panels_rendered: 4 | sandbox_panels: 3 | live_panel_present: true
+- live_panel_degrade: true | live_panel_fake_rows: false
+- cards_total: 6 | badge_counts: PASS=6 | external_network_calls: 0
+- console_errors: 0 | page_errors: 0 | verdict: PASS
+
+**Commits:** `45fd7f74` (dashboard files only — explicit staging, no -A)
+
+**AC count:** 8/8 PASS
+
+**Next:** NF-LD-3 (QA)
+
+## Session 2026-05-24 — Commit-Mutex Structural Fix (C-1..C-4 PO ratification)
+
+**Task:** Implement fleet-wide commit-mutex advisory lock on `main`. PO-RATIFIED-WITH-CONDITIONS.
+
+**What was done:**
+- Authored `.claude/skills/commit-mutex/SKILL.md` — full acquire/critical-section/release protocol, backoff table (6 retries, exp+jitter, ~125s max), fail-CLOSED C-2 path, foreign-restore rule, give-up BUG-log
+- Amended `docs/protocols/task-lock-protocol.md` — added 4th lock kind `commit-mutex`, TTL table row, singleton rule
+- Wired skill into ALL 35 flow files containing real `git commit` operations (39 actual commit sites total; 4 files contain only comments/references — not wired, correctly skipped)
+- Batches: B1 (`2c727d9d` CLEAN) + B2 (`3eb3117c` CLEAN) + B3 (`10ef7fdd` CLEAN) + B4 (`1eee501d` CLEAN) + B5 (race-bundled into `234c0bef`) + B6 (`3afe5feda` CLEAN — private index technique)
+
+**Race incidents during impl (C-3 honest disclosure):**
+1. Skill file (`c2ca404a`) bundled into news-fetch P2-G10-inject commit by concurrent agent
+2. Batch 5 edits (`234c0bef`) bundled into kinh-dich P2-J commit — content correct, message wrong
+3. Foreign rag-service files captured under batch 5 message (`4361acc0`) — empty of own content
+4. Introduced `GIT_INDEX_FILE=<private>` technique for batch 6 to bypass race
+
+**C-1 status:** COMPLETE — all 39 real commit sites wired
+**C-2 status:** COMPLETE — fail-CLOSED path in skill Step 1
+**C-3 status:** PARTIAL — 2 race incidents; private index technique solves it post-hoc
+**C-4 status:** COMPLETE — jitter formula + BUG-log give-up in skill
+
+**Next:** PO smoke test + interim serialization lift (separate PO signal after 1 clean observed cycle)
+
+**Anchor:** `debba8eaff0724d1fb32fc9d28640201cc32d1cc` INTACT.
+
 **Last updated:** 2026-05-24 | **Cycle:** news-fetch Phase 1 P1-G5 | **Sprint:** news-fetch SCALE pilot Phase 1
 
 ## Session 2026-05-24 — news-fetch Phase 1 P1-G5 (G3 + G5 rewire)
