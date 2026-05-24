@@ -1,5 +1,23 @@
 # agents-architect — Notebook
 
+## 2026-05-24T07:25:38Z
+
+**Brief:** `docs/architecture-briefs/2026-05-24-microservice-build-standard-promotion.md`
+
+The three-tier methodology (primitives→modules→composition root, G1–G12 DoD, sandbox security,
+dashboard) existed only inside sprint-specific artefacts and was invisible to the dev-* agent
+fleet and dev-team flow. Designed a permanent SSOT at docs/standards/microservice-build-standard.md,
+lazy-load entries for all 12 dev-* agents (trigger: BUILD-STANDARD flag in handoff), a standard-
+detection clause in architect/main.md Step 5, NEW-SERVICE/NEW-FEATURE routing rows in dev-team
+Step 2, and a standard-check gate in developer/microservice-main.md Step 0c — so any future
+"build X" task automatically applies the three-tier path without user prompting. Retro-audit scope
+for DONE pilots routed to PO for decision.
+
+**Signal dropped:** `docs/signals/agents-architect-microservice-build-standard-promotion-20260524T072538Z.json` → agent-father
+**PO signal dropped:** `docs/signals/agents-architect-microservice-build-standard-po-retro-audit-20260524T072538Z.json` → po
+
+---
+
 ## 2026-05-24T06:35:59Z
 
 **Brief:** `docs/architecture-briefs/2026-05-24-fleet-size-cap-remediation.md`
