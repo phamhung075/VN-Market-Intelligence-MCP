@@ -154,7 +154,184 @@
       "2026-05-24T02:01:53Z — P1-D VERIFIED DONE (commit 7d6cd85f); all 10 ACs PASS (dashboard file://, 3 levels, 11 scenarios embedded, honest NOT-RUN, modal+aria, microservice card, rerun cmd, legend+footer, HTML valid, G12 sandbox 11/11); G12 streak 4/4 (B1+B2+B3+D all sandbox-green); SI-2 boundary held (docs/dashboards/ untouched); P1-E sequenced",
       "2026-05-24T04:30:00Z — P1-E VERIFIED DONE (commit 6fc9b721, conflated with P2-C); all 8 ACs PASS (Edit-rerun modal, zero-creds env audit PASS, zero-infra audit PASS, deliberate-break-reverted PASS, sandbox 11/11 green, SI-3 fence integrity held); G12 streak 5/5 (B1+B2+B3+D+E all sandbox-green); NOTE: commit 6fc9b721 shared-git-index conflation with stock-price P2-C files (cosmetic race, no work lost); P1-F handoff created (optional for remaining Phase 1 time)",
       "2026-05-24T05:10:00Z — P1-F VERIFIED DONE (commits 43158e5c + 3114adf7); all 6 ACs PASS (four functions exported + embedded tables, Fence-A clean, 26 unit tests pass, sandbox 12/12 primitives green, 3 scenario JSONs created, G12 DoD gate 14/14 all-tiers green); G12 streak 6/6 (B1+B2+B3+D+E+F all sandbox-green); CONTRACT DISCREPANCY NOTED: extractAction signature is (actionText: string) per faithful domain contract L443, NOT (score: number) as handoff spec stated — dev correctly preserved authentic domain contract and documented in JSDoc; graphify-skip noted (zero-creds env); P1-G close-gate ready (qa owner)"
-    ]
+    ],
+    "tasks": {
+      "P1-A": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T00:00:00Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "1e76d339",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS"
+        }
+      },
+      "P1-B1": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T01:15:00Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "50c2d2ff",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS",
+          "AC-7": "PASS",
+          "AC-8": "PASS"
+        },
+        "r_fence_discovery": "RECORDED (.js-suffixed ESM import style)"
+      },
+      "P1-B2": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T08:34:33Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "7598c113",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS"
+        }
+      },
+      "P1-B3": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T11:42:00Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "6bdabbb9",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS"
+        }
+      },
+      "P1-C": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T01:51:24Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "50069d69",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS",
+          "AC-7": "PASS",
+          "AC-8": "PASS",
+          "AC-9": "PASS"
+        }
+      },
+      "P1-D": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T02:01:53Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "7d6cd85f",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS",
+          "AC-7": "PASS",
+          "AC-8": "PASS",
+          "AC-9": "PASS",
+          "AC-10": "PASS"
+        }
+      },
+      "P1-E": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T04:30:00Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "6fc9b721",
+        "commit_conflation_note": "Shared-git-index race with stock-price P2-C files. Commit includes both P1-E changes (apps/kinh-dich-service/dashboard/index.html + P1-E handoff) and P2-C changes (P2-C.md + signal). No work lost; cosmetic; no split/rebase applied per protocol.",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS (zero-creds env audit: DB_PATH|KINH_DICH_DB|API_KEY|SECRET|TOKEN|PASSWORD grep matched only Claude Code tooling vars CTX_ADVISOR_*, not service credentials)",
+          "AC-4": "PASS (zero-infra audit: grep infrastructure|hono|SQLite|getDb|repositories returned 0 actual imports)",
+          "AC-5": "PASS (deliberate edit test: corrupted signals[5], produced [FAIL], reverted clean)",
+          "AC-6": "PASS (G12 DoD: [sandbox] PASS 11/11 scenarios)",
+          "AC-7": "PASS (SI-3 fence integrity: no new TS files, no Phase-2 tags created)",
+          "AC-8": "PASS (modal UX: Edit & Rerun button + instructions + command block + textarea + Apply)"
+        }
+      },
+      "P1-F": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T05:10:00Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "43158e5c",
+        "commit_completion_sha": "3114adf7",
+        "optional": true,
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS"
+        },
+        "sandbox_verdict": "14/14 PASS (12 primitives + 2 module)",
+        "contract_note": "extractAction signature is (actionText: string) per faithful domain contract at L443, NOT (score: number) as handoff spec stated. Dev preserved correct domain signature + documented discrepancy in JSDoc.",
+        "graphify_note": "skipped — zero-creds env unavailable in Phase 1"
+      },
+      "P1-G": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T06:30:00Z",
+        "completedBy": "qa",
+        "qa_gate_status": "CONDITIONAL-GO",
+        "qa_close_gate_criteria": "3/4 exit criteria PASS (AC-1, AC-3, AC-4, AC-5, AC-6 all PASS; AC-2 honest-RED: 5/6 card groups = 83% < 90% gate — reading-scorer 4th primitive absent from dashboard)",
+        "qa_decision_doc": "docs/signals/qa-kinh-dich-phase1-close-gate-20260524T060000Z.json",
+        "note": "Close-gate routed to PO for fix-then-clean-GO authorization"
+      },
+      "P1-KD-H": {
+        "status": "DONE",
+        "owner": "dev-kinh-dich",
+        "zone": "apps/kinh-dich-service",
+        "type": "FIX",
+        "size": "XS",
+        "handoff": "docs/handoffs/TASK_P1-KD-H.md",
+        "authorized_at": "2026-05-24T01:03:15Z",
+        "authorized_by": "po",
+        "authorization_signal": "docs/signals/po-kinh-dich-phase1-fix-then-clean-go-20260524T010315Z.json",
+        "note": "Dashboard completion — add reading-scorer 4th primitive with 3 real scenarios; update panel label to '4 pure TypeScript functions'; ensure sandbox stays 14/14 green. G12 DoD applies.",
+        "completedAt": "2026-05-24T06:45:00Z",
+        "completedBy": "dev-kinh-dich",
+        "commit_sha": "b7cb55bc",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS",
+          "AC-6": "PASS"
+        }
+      },
+      "P1-KD-QA-AC2-REVERT": {
+        "status": "DONE",
+        "owner": "qa",
+        "type": "QA-GATE",
+        "scope": "AC-2-only spot re-verify",
+        "note": "After P1-KD-H DONE: confirm 6/6 = 100% dashboard render, honest cold-open NOT-RUN preserved, file self-contained. On QA PASS -> Phase-1 = clean full GO; PM flips phase1 -> APPROVED.",
+        "depends_on": "P1-KD-H",
+        "blocks": "Phase-1 clean-GO close (status=APPROVED)",
+        "completedAt": "2026-05-24T07:00:00Z",
+        "completedBy": "qa",
+        "commit_sha": "34205c87",
+        "verdict": "PASS",
+        "evidence": "docs/handoffs/TASK_P1-KD-QA-AC2-REVERT-evidence.md"
+      }
+    }
   },
 
   "phase2": {
@@ -387,186 +564,6 @@
 
   "verdict": "TBD",
   "_verdict_note": "Mirrors decisionMatrix.verdict. TBD during ACTIVE. Set to scale | rescope | stop-MVR at terminal close.",
-
-  "phase1": {
-    "tasks": {
-      "P1-A": {
-        "status": "DONE",
-        "completedAt": "2026-05-24T00:00:00Z",
-        "completedBy": "dev-kinh-dich",
-        "commit_sha": "1e76d339",
-        "ac_verdicts": {
-          "AC-1": "PASS",
-          "AC-2": "PASS",
-          "AC-3": "PASS",
-          "AC-4": "PASS",
-          "AC-5": "PASS",
-          "AC-6": "PASS"
-        }
-      },
-      "P1-B1": {
-        "status": "DONE",
-        "completedAt": "2026-05-24T01:15:00Z",
-        "completedBy": "dev-kinh-dich",
-        "commit_sha": "50c2d2ff",
-        "ac_verdicts": {
-          "AC-1": "PASS",
-          "AC-2": "PASS",
-          "AC-3": "PASS",
-          "AC-4": "PASS",
-          "AC-5": "PASS",
-          "AC-6": "PASS",
-          "AC-7": "PASS",
-          "AC-8": "PASS"
-        },
-        "r_fence_discovery": "RECORDED (.js-suffixed ESM import style)"
-      },
-      "P1-B2": {
-        "status": "DONE",
-        "completedAt": "2026-05-24T08:34:33Z",
-        "completedBy": "dev-kinh-dich",
-        "commit_sha": "7598c113",
-        "ac_verdicts": {
-          "AC-1": "PASS",
-          "AC-2": "PASS",
-          "AC-3": "PASS",
-          "AC-4": "PASS",
-          "AC-5": "PASS"
-        }
-      },
-      "P1-B3": {
-        "status": "DONE",
-        "completedAt": "2026-05-24T11:42:00Z",
-        "completedBy": "dev-kinh-dich",
-        "commit_sha": "6bdabbb9",
-        "ac_verdicts": {
-          "AC-1": "PASS",
-          "AC-2": "PASS",
-          "AC-3": "PASS",
-          "AC-4": "PASS",
-          "AC-5": "PASS",
-          "AC-6": "PASS"
-        }
-      },
-      "P1-C": {
-        "status": "DONE",
-        "completedAt": "2026-05-24T01:51:24Z",
-        "completedBy": "dev-kinh-dich",
-        "commit_sha": "50069d69",
-        "ac_verdicts": {
-          "AC-1": "PASS",
-          "AC-2": "PASS",
-          "AC-3": "PASS",
-          "AC-4": "PASS",
-          "AC-5": "PASS",
-          "AC-6": "PASS",
-          "AC-7": "PASS",
-          "AC-8": "PASS",
-          "AC-9": "PASS"
-        }
-      },
-      "P1-D": {
-        "status": "DONE",
-        "completedAt": "2026-05-24T02:01:53Z",
-        "completedBy": "dev-kinh-dich",
-        "commit_sha": "7d6cd85f",
-        "ac_verdicts": {
-          "AC-1": "PASS",
-          "AC-2": "PASS",
-          "AC-3": "PASS",
-          "AC-4": "PASS",
-          "AC-5": "PASS",
-          "AC-6": "PASS",
-          "AC-7": "PASS",
-          "AC-8": "PASS",
-          "AC-9": "PASS",
-          "AC-10": "PASS"
-        }
-      },
-      "P1-E": {
-        "status": "DONE",
-        "completedAt": "2026-05-24T04:30:00Z",
-        "completedBy": "dev-kinh-dich",
-        "commit_sha": "6fc9b721",
-        "commit_conflation_note": "Shared-git-index race with stock-price P2-C files. Commit includes both P1-E changes (apps/kinh-dich-service/dashboard/index.html + P1-E handoff) and P2-C changes (P2-C.md + signal). No work lost; cosmetic; no split/rebase applied per protocol.",
-        "ac_verdicts": {
-          "AC-1": "PASS",
-          "AC-2": "PASS",
-          "AC-3": "PASS (zero-creds env audit: DB_PATH|KINH_DICH_DB|API_KEY|SECRET|TOKEN|PASSWORD grep matched only Claude Code tooling vars CTX_ADVISOR_*, not service credentials)",
-          "AC-4": "PASS (zero-infra audit: grep infrastructure|hono|SQLite|getDb|repositories returned 0 actual imports)",
-          "AC-5": "PASS (deliberate edit test: corrupted signals[5], produced [FAIL], reverted clean)",
-          "AC-6": "PASS (G12 DoD: [sandbox] PASS 11/11 scenarios)",
-          "AC-7": "PASS (SI-3 fence integrity: no new TS files, no Phase-2 tags created)",
-          "AC-8": "PASS (modal UX: Edit & Rerun button + instructions + command block + textarea + Apply)"
-        }
-      },
-      "P1-F": {
-        "status": "DONE",
-        "completedAt": "2026-05-24T05:10:00Z",
-        "completedBy": "dev-kinh-dich",
-        "commit_sha": "43158e5c",
-        "commit_completion_sha": "3114adf7",
-        "optional": true,
-        "ac_verdicts": {
-          "AC-1": "PASS",
-          "AC-2": "PASS",
-          "AC-3": "PASS",
-          "AC-4": "PASS",
-          "AC-5": "PASS",
-          "AC-6": "PASS"
-        },
-        "sandbox_verdict": "14/14 PASS (12 primitives + 2 module)",
-        "contract_note": "extractAction signature is (actionText: string) per faithful domain contract at L443, NOT (score: number) as handoff spec stated. Dev preserved correct domain signature + documented discrepancy in JSDoc.",
-        "graphify_note": "skipped — zero-creds env unavailable in Phase 1"
-      },
-      "P1-G": {
-        "status": "DONE",
-        "completedAt": "2026-05-24T06:30:00Z",
-        "completedBy": "qa",
-        "qa_gate_status": "CONDITIONAL-GO",
-        "qa_close_gate_criteria": "3/4 exit criteria PASS (AC-1, AC-3, AC-4, AC-5, AC-6 all PASS; AC-2 honest-RED: 5/6 card groups = 83% < 90% gate — reading-scorer 4th primitive absent from dashboard)",
-        "qa_decision_doc": "docs/signals/qa-kinh-dich-phase1-close-gate-20260524T060000Z.json",
-        "note": "Close-gate routed to PO for fix-then-clean-GO authorization"
-      },
-      "P1-KD-H": {
-        "status": "DONE",
-        "owner": "dev-kinh-dich",
-        "zone": "apps/kinh-dich-service",
-        "type": "FIX",
-        "size": "XS",
-        "handoff": "docs/handoffs/TASK_P1-KD-H.md",
-        "authorized_at": "2026-05-24T01:03:15Z",
-        "authorized_by": "po",
-        "authorization_signal": "docs/signals/po-kinh-dich-phase1-fix-then-clean-go-20260524T010315Z.json",
-        "note": "Dashboard completion — add reading-scorer 4th primitive with 3 real scenarios; update panel label to '4 pure TypeScript functions'; ensure sandbox stays 14/14 green. G12 DoD applies.",
-        "completedAt": "2026-05-24T06:45:00Z",
-        "completedBy": "dev-kinh-dich",
-        "commit_sha": "b7cb55bc",
-        "ac_verdicts": {
-          "AC-1": "PASS",
-          "AC-2": "PASS",
-          "AC-3": "PASS",
-          "AC-4": "PASS",
-          "AC-5": "PASS",
-          "AC-6": "PASS"
-        }
-      },
-      "P1-KD-QA-AC2-REVERT": {
-        "status": "DONE",
-        "owner": "qa",
-        "type": "QA-GATE",
-        "scope": "AC-2-only spot re-verify",
-        "note": "After P1-KD-H DONE: confirm 6/6 = 100% dashboard render, honest cold-open NOT-RUN preserved, file self-contained. On QA PASS -> Phase-1 = clean full GO; PM flips phase1 -> APPROVED.",
-        "depends_on": "P1-KD-H",
-        "blocks": "Phase-1 clean-GO close (status=APPROVED)",
-        "completedAt": "2026-05-24T07:00:00Z",
-        "completedBy": "qa",
-        "commit_sha": "34205c87",
-        "verdict": "PASS",
-        "evidence": "docs/handoffs/TASK_P1-KD-QA-AC2-REVERT-evidence.md"
-      }
-    }
-  },
 
   "goalsEarned": 0,
   "_goalsEarned_note": "Running counter of goals with status=YES. Incremented by whoever flips each goal. Must equal 12 at terminal close.",
