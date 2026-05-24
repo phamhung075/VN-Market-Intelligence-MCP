@@ -1416,9 +1416,36 @@ WORK-channel `send_telegram` is NOT in this PO agent's tool surface (only Read/E
 
 ---
 
-## NF-LD-5-EXIT — PO sign-off — Blocked on NF-LD-5-QA
+## NF-LD-5-EXIT — PO sign-off — SIGNED OFF 2026-05-24T21:35Z (ops PROVE = terminal gate)
 
-PO validates deliverables against the scope ruling (Option A), the Security Clause, and anti-regression rules via INDEPENDENT disk/git spot-check (not QA word alone). On APPROVED → mark NF-LD-5-dev-B/dev-A/QA/EXIT DONE, then DISPATCH ops for NF-LD-5-OPS. Never ask the user to rebuild/deploy.
+**Verdict: SIGNED OFF.** PO validated deliverables against the Option-A scope ruling + the Security Clause + anti-regression rules via an INDEPENDENT disk/git spot-check (not QA word alone), per held sign-off discipline.
+
+### PO independent verification (disk + git, pre-trust)
+
+**Commit trail (all on main, single-zone each, zero-foreign-file):**
+- `12600a1f` NF-LD-5-dev-B (developer): 1 file, ONLY `apps/news-fetch/dashboard/index.html` (+172/-93) — Refresh button + source selector; `initLivePanel()` IIFE refactored to callable `loadLiveData()`.
+- `15d9b034` NF-LD-5-dev-A (dev-mcp-server): all `apps/mcp-server/` — `sync-news-fetch-dashboard.sh` (BASE_ENDPOINT grep fix) + regenerated `src/interface/news-fetch-dashboard/index.html` + `NF-LD-4` test (h)/(i) regex update. No foreign zone.
+
+**Exit gates — independently re-verified (NOT trusted on QA word):**
+| Gate | PO check (disk/git) | Result |
+|---|---|---|
+| Button in BOTH copies | `grep live-refresh-btn` → canonical:231 + served:239; `live-source-select` → canonical:232 + served:240 | PASS |
+| Callable refactor, no reload | `function loadLiveData()` canonical:382; click(493)/selector(498)/load(502) wired; `grep -c location.reload` BOTH = 0 | PASS |
+| Relative endpoint, no host | `var BASE_ENDPOINT = '/api/news-fetch/live?limit=20'` canonical:362 + served:370; `grep -c localhost:3000` served = 0 | PASS |
+| file:// degrade kept | `window.location.protocol === 'file:'` served:377 (fires BEFORE fetch) | PASS |
+| Anti-drift (NF-LD-4 round-1 blocker class) | ran `sync-news-fetch-dashboard.sh` ×2 myself → exit 0 both; `git diff` served dir = 0 both; md5 `b1d8806f7e8ae8b7de26a78962b6550b` matches QA | PASS (idempotent, committed==generated) |
+| Zero creds | `grep VPS_PUSH_API_KEY\|x-api-key\|Authorization\|Bearer\|DB_PATH\|process.env\|Bun.env` served dir → exit 1; canonical → exit 1 | PASS |
+| data.js byte-identical | `diff` canonical vs served data.js → exit 0 | PASS |
+| Pilot NOT flipped | `pilot-status-news-fetch.json` last commit `b3407530` (pre-NF-LD-5); `goalsEarned=12 verdict=scale phase=terminal`; NOT in either NF-LD-5 commit | PASS (12/12 frozen) |
+| QA signal | `docs/signals/qa-news-fetch-refresh-button-20260524T213212Z.json` present | PASS |
+
+**Live smoke (PO, port 3000):** served URL `http://localhost:3000/dashboards/news-fetch/` = **200** and `GET /api/news-fetch/live?source=all&limit=5` = **200**, BUT the RUNNING served HTML does **NOT** yet contain `live-refresh-btn` (`curl … | grep -c live-refresh-btn` = 0) — the running mcp-server process predates `15d9b034`. Code on disk is correct + committed; this is a **deployment-currency gap** (same pattern as NF-LD-EXIT / PI-INSPECT), NOT a code defect. **Resolution = NF-LD-5-OPS rebuild** (`docker compose up -d --build mcp-server`), NOT a code change. Does NOT block sign-off.
+
+### Sign-off decision
+Option-A scope honestly met (Refresh button re-calls the existing read-only endpoint + re-renders without reload; optional source selector shipped). Security Clause intact (no new endpoint, no new write path, zero creds client+served). All 4 honest states preserved (no fabricated rows). Anti-drift gate re-proven by PO (idempotent, zero diff). Sandbox `data.js` + runner + 3 panels untouched; pilot 12/12 frozen. **APPROVED.** Tasks NF-LD-5-dev-B / dev-A / QA / EXIT → DONE. **NF-LD-5-OPS dispatched to ops** as the terminal PROVE gate.
+
+### Sign-off signal
+`docs/signals/po-nf-ld-5-signoff-20260524T213558Z.json`
 
 ---
 

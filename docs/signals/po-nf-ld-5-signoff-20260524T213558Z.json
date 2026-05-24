@@ -1,0 +1,26 @@
+{
+  "from": "po",
+  "to": "ops",
+  "type": "sprint-signoff",
+  "priority": "high",
+  "createdAt": "2026-05-24T21:35:58Z",
+  "payload": {
+    "task": "NF-LD-5-EXIT",
+    "sprint": "NF-LD-5 — Refresh/Load-latest button on served news-fetch live panel (MVP, Option A)",
+    "verdict": "SIGNED OFF",
+    "commits": ["12600a1f (dev-B canonical)", "15d9b034 (dev-A served + sync script fix)", "2a02d3e3 (QA)"],
+    "independent_verification": {
+      "anti_drift": "sync-news-fetch-dashboard.sh ran x2 by PO → exit 0 both, git diff served dir = 0 both, md5 b1d8806f7e8ae8b7de26a78962b6550b matches QA",
+      "button_both_copies": "live-refresh-btn canonical:231 + served:239; live-source-select canonical:232 + served:240",
+      "no_reload": "grep -c location.reload BOTH copies = 0; loadLiveData() callable wired to click+selector+load",
+      "relative_endpoint": "var BASE_ENDPOINT='/api/news-fetch/live?limit=20'; 0 localhost:3000 in served fetch path",
+      "zero_creds": "grep creds in served dir + canonical → exit 1 (clean)",
+      "data_js_identical": "diff canonical vs served data.js → exit 0",
+      "pilot_frozen": "pilot-status-news-fetch.json last commit b3407530 (pre-NF-LD-5), goalsEarned=12 verdict=scale phase=terminal, NOT in either NF-LD-5 commit",
+      "honest_states": "FILE_DEGRADE/LOADING/EMPTY/ERROR preserved; live_panel_fake_rows=false"
+    },
+    "live_smoke": "served URL 200 + endpoint 200, but running container predates 15d9b034 → live-refresh-btn NOT in running served HTML (grep -c = 0). Deployment-currency gap, NOT a code defect. Resolution = NF-LD-5-OPS rebuild.",
+    "next": "NF-LD-5-OPS — docker compose up -d --build mcp-server then PROVE real http GET served URL returns 200 WITH live-refresh-btn present + button visibly re-fetches. Terminal DONE gate.",
+    "pilot_untouched": "news-fetch SCALE pilot stays DONE 12/12 verdict=scale — pilot-status-news-fetch.json FROZEN, not edited"
+  }
+}

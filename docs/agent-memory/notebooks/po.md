@@ -1,24 +1,27 @@
 # PO Notebook
 
-**Cycle:** Sprint BCTC-TABLE OPENED — user `/goal` "bctc can extract correct result table for analyze" converted to a build sprint off the DONE research brief.
-**Last update:** 2026-05-24T21:27:12Z
-**Status:** PLANNED + dispatch-ready. First dispatch = BT-1 + BT-0 (parallel) to dev-pdf-extractor.
+**Cycle:** NF-LD-5-EXIT SIGNED OFF — "see new feed" Refresh button on served news-fetch live panel.
+**Last update:** 2026-05-24T21:35:58Z
+**Status:** SIGNED OFF; only NF-LD-5-OPS (rebuild + PROVE) remains → handed to ops.
 
 ---
 
-## 2026-05-24T21:27Z — BCTC-TABLE: research brief → two-track build sprint
+## 2026-05-24T21:35Z — NF-LD-5-EXIT: PO sign-off on Refresh button (Option A MVP)
 
-User mandate via main terminal. Research brief `docs/architecture-briefs/2026-05-24-bctc-table-extraction-research.md` read IN FULL — converted, no new research. Two-track: self-hosted column-aware table extractor (PP-StructureV3 favorite, evidence-gated) + self-hosted cross-check gate; external-API VLM DEFERRED/opt-in (privacy).
+Full chain PASSED: dev-B `12600a1f` (canonical `apps/news-fetch/dashboard/index.html` — Refresh btn + source selector, `initLivePanel()` IIFE → callable `loadLiveData()`, 4 honest states kept) → dev-A `15d9b034` (dev-mcp-server regenerated served copy + fixed sync script for `ENDPOINT`→`BASE_ENDPOINT` rename) → QA `2a02d3e3` APPROVED (AC-Q1..Q8 all PASS).
 
-**Verified before writing:** 14-doc gold-set on disk confirmed (`data/pdfs-local/` VCB/FPT/HPG/DHG/DIG/BSR/DGC/SHB/VEA/VNM + `data/pdfs/`). pdf-extractor source matches brief (6 pure primitives + infra adapters + sandbox). **1954c freeze CLEARED** — `372fbc91` deprecate pdfOcrWorker at HEAD = consolidation LANDED; integration builds on the consolidated path (architect BT-2 confirms no collision).
+**PO independent disk/git re-verify (NOT QA word):** anti-drift = I ran `sync-news-fetch-dashboard.sh` x2 myself → exit 0 both, `git diff` served dir = 0 both, md5 `b1d8806f…` matches QA. Button in BOTH copies (canonical:231 / served:239). `loadLiveData()` callable wired to click+selector+load; `grep -c location.reload` BOTH = 0. Relative `BASE_ENDPOINT='/api/news-fetch/live?limit=20'`, 0 localhost:3000 in served fetch. 0 creds both files. `data.js` diff exit 0 (byte-identical). pilot-status last commit `b3407530` (pre-NF-LD-5), 12/12 verdict=scale phase=terminal, NOT in either NF-LD-5 commit. Both commits single-zone, zero foreign files.
 
-**Tasks (docs/TASKS.md § Sprint BCTC-TABLE, handoff TASK_BCTC-TABLE.md):**
-BT-1 (CRITICAL, parse fix: vn_number_normalize + reconcile_figures + select_period_column, VNM/DHG anchors) + BT-0 (SPIKE, 14-doc eval, self-hosted only) FIRST + PARALLEL → BT-0-PICK (PO records pick) → BT-2 (architect blueprint) → BT-3 (integrate) + BT-4 (ops/dev-mainserver host model) → BT-5 (cross-check gate) → BT-6 (qa regression) → BT-EXIT (PO).
+**Live smoke (port 3000):** served URL 200 + endpoint 200, BUT running container predates `15d9b034` → `live-refresh-btn` NOT in running served HTML (grep -c = 0). **Deployment-currency gap, NOT a defect** (same pattern as NF-LD-EXIT/PI-INSPECT). Resolution = NF-LD-5-OPS rebuild. Does NOT block sign-off.
 
-**Guardrails enforced in goal/tasks/handoff/signal:** (1) NO off-infra data send — privacy non-negotiable, external-API VLM opt-in only; (2) Security Clause — primitives pure, model/IO = adapters, sandbox zero creds; (3) Mac = dev/eval only, prod model on main server; (4) pilot FROZEN 12/12 not edited.
+**Verdict APPROVED.** dev-B/dev-A/QA/EXIT → DONE in TASKS.md + handoff. EXIT record in `TASK_NF-LD.md`. Sign-off signal `docs/signals/po-nf-ld-5-signoff-20260524T213558Z.json`. NEXT = ops NF-LD-5-OPS (`docker compose up -d --build mcp-server` + PROVE button live).
 
-**Dispatch signal:** `docs/signals/po-20260524T212712Z.json` (dispatch_now: BT-1 + BT-0).
+**Constraint discipline:** PO-owned closing artifacts only (handoff EXIT, TASKS rows, signal, notebook). No source/served-copy edits, no pilot edit, no push. WORK-channel `send_telegram` not in PO tool surface — WORK summary relayed to main terminal in RETURN (fail-loud, no fabricated send).
 
-**Open questions to user (do NOT block):** (1) third-party API allowed or self-hosted-only [default self-hosted]; (2) main-server GPU? [BT-4 sizing]; (3) figure-accuracy bar + API budget [default ≥95% within ±0.5%].
+---
 
-**Carry-over:** Other sprints still live (KD-QREF-LANG OPEN chain, PDF-INSPECT/KD-QREF/NF-LD CLOSED, P0-SP + P2-TA pilot backlogs). WIP=2 fleet cap — BCTC-TABLE BT-1+BT-0 will occupy both slots; main terminal sequences against TA/stock-price pilot dispatch. BT-0-PICK is the next PO action once the spike scoreboard returns.
+## Carry-over (other live sprints)
+- **NF-LD-5-OPS** = the one remaining gate on this chain (ops). Terminal DONE only after real http GET proves button in rebuilt container.
+- **Sprint BCTC-TABLE** OPEN — BT-1 + BT-0 dispatch-ready (parallel, both WIP slots). BT-0-PICK is next PO action once spike scoreboard returns. Privacy guardrail binding (no off-infra send). 1954c freeze CLEARED (`372fbc91`).
+- **KD-QREF-LANG** OPEN chain (architect hop first). PDF-INSPECT / KD-QREF / NF-LD(1-4) CLOSED. P0-SP + P2-TA pilot backlogs live. WIP=2 fleet cap.
+- All news-fetch / pdf-extractor / kinh-dich pilots stay DONE 12/12 FROZEN — none reopened by any follow-on enhancement.
