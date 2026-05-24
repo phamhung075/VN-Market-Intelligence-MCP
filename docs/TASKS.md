@@ -31,12 +31,13 @@
 
 | Task ID | Title | Priority | Type | Owner | Handoff | Status | Blocked by |
 |---------|-------|----------|------|-------|---------|--------|-----------|
-| KD-QREF-1 | Design data asset (Go SSOT) + dashboard integration + render contract (trust-gate safe) | HIGH | TASK | architect | docs/handoffs/TASK_KD-QREF.md | READY | — |
-| KD-QREF-2 | Implement: populate 64-que `queReference` Go asset (translate/reframe) + emit `que-reference.js` + dashboard section | HIGH | TASK | dev-kinh-dich | docs/handoffs/TASK_KD-QREF.md | BLOCKED | KD-QREF-1 |
-| KD-QREF-3 | Verify: 64 que render + detail views + `dash-check.mjs` exit-0 + source spot-check + diff-scope | HIGH | TASK | qa | docs/handoffs/TASK_KD-QREF.md | BLOCKED | KD-QREF-2 |
-| KD-QREF-EXIT | PO sign-off vs spec; main terminal commits (commit-mutex enum defect — dev agents can't acquire) | HIGH | GATE | po | docs/handoffs/TASK_KD-QREF.md | BLOCKED | KD-QREF-3 |
+| KD-QREF-1 | Design data asset (Go SSOT) + dashboard integration + render contract (trust-gate safe) | HIGH | TASK | architect | docs/handoffs/TASK_KD-QREF.md | DONE | — |
+| KD-QREF-2 | Implement: populate 64-que `queReference` Go asset (translate/reframe) + emit `que-reference.js` + dashboard section | HIGH | TASK | dev-kinh-dich | docs/handoffs/TASK_KD-QREF.md | DONE | — |
+| KD-QREF-3 | Verify: 64 que render + detail views + `dash-check.mjs` exit-0 + source spot-check + diff-scope | HIGH | TASK | qa | docs/handoffs/TASK_KD-QREF.md | DONE | — |
+| KD-QREF-EXIT | PO sign-off vs spec; main terminal commits (commit-mutex enum defect — dev agents can't acquire) | HIGH | GATE | po | docs/handoffs/TASK_KD-QREF.md | DONE | — |
 
 **Notes:**
+- **CLOSED 2026-05-24T17:39Z** — PO signed off (DoD met, all 5 ACs + 8 QA checks PASS). Pilot stays DONE 12/12 frozen (no goal reopened). Main terminal commits the in-tree work. Sign-off record: TASK_KD-QREF.md `[PO]` section.
 - WIP=2 fleet cap still applies (stock-price + kinh-dich pilots). This enhancement is a SINGLE-ZONE chain, not a pilot; dispatch KD-QREF-1 when capacity allows.
 - Ambiguities resolved by PO: (A1) bilingual English-primary, VN name/glyph verbatim; (A2) one fixed shape for all 64 = summary + detail w/ 6-phase; (A3) Go data asset SSOT, emitted to dashboard (never hand-typed HTML); (A4) additive panel, honest-green preserved.
 

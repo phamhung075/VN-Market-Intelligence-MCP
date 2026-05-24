@@ -783,6 +783,235 @@ footer {
 
 .paste-area:focus { outline: 2px solid #2563eb; border-color: #2563eb; }
 
+/* ── 64 Quẻ Reference Section (KD-QREF-2) ───────────────────────────────── */
+/* Namespace: .qref-* ONLY — no .dot-*, no .category-chip, no "not wired" */
+
+#que-reference-section {
+  max-width: 1400px;
+  margin: 32px auto 0;
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.qref-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1.5px solid var(--border);
+  background: #f8fafc;
+}
+
+.qref-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e293b;
+}
+
+.qref-header .qref-desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.qref-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.qref-row {
+  border-bottom: 1px solid var(--border);
+}
+
+.qref-row:last-child { border-bottom: none; }
+
+.qref-row-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background 0.12s;
+  flex-wrap: wrap;
+}
+
+.qref-row-summary:hover { background: #f8fafc; }
+
+.qref-id {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #64748b;
+  min-width: 28px;
+}
+
+.qref-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #1e293b;
+  min-width: 100px;
+}
+
+.qref-meaning {
+  font-size: 0.78rem;
+  color: #374151;
+  flex: 1;
+  min-width: 150px;
+}
+
+.qref-trend-chip {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.qref-trend-favorable {
+  background: var(--green-bg);
+  border-color: var(--green-border);
+  color: var(--green);
+}
+
+.qref-trend-neutral {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #64748b;
+}
+
+.qref-trend-unfavorable {
+  background: var(--red-bg);
+  border-color: var(--red-border);
+  color: var(--red);
+}
+
+.qref-warning {
+  font-size: 0.74rem;
+  color: #9ca3af;
+  font-style: italic;
+  flex-basis: 100%;
+  margin-top: 4px;
+  padding-left: 40px;
+}
+
+.qref-row-toggle {
+  font-size: 0.7rem;
+  background: #e2e8f0;
+  border: none;
+  border-radius: 4px;
+  padding: 3px 8px;
+  cursor: pointer;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.qref-row-toggle:hover { background: #cbd5e1; }
+
+.qref-detail {
+  display: none;
+  padding: 12px 16px 16px;
+  background: #f8fafc;
+  border-top: 1px solid var(--border);
+}
+
+.qref-detail.open { display: block; }
+
+.qref-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 700px) {
+  .qref-detail-grid { grid-template-columns: 1fr; }
+}
+
+.qref-detail-section h4 {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.qref-detail-section p {
+  font-size: 0.8rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.qref-trigrams {
+  font-size: 0.78rem;
+  color: #374151;
+}
+
+.qref-phases-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  margin-top: 8px;
+}
+
+.qref-phases-table th {
+  text-align: left;
+  font-weight: 700;
+  color: #64748b;
+  padding: 6px 8px;
+  border-bottom: 1.5px solid var(--border);
+  background: #f1f5f9;
+}
+
+.qref-phases-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--border);
+  color: #374151;
+  vertical-align: top;
+}
+
+.qref-phases-table tr:last-child td { border-bottom: none; }
+
+.qref-outcome-token {
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 1px 5px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.qref-outcome-cat { background: var(--green-bg); color: var(--green); }
+.qref-outcome-hung { background: var(--red-bg); color: var(--red); }
+.qref-outcome-vocuu { background: #f1f5f9; color: #64748b; }
+.qref-outcome-hoi { background: var(--edge-bg); color: var(--edge); }
+.qref-outcome-le { background: var(--failure-bg); color: var(--failure); }
+
+.qref-action-token {
+  font-weight: 600;
+  font-size: 0.72rem;
+  color: #475569;
+}
+
+.qref-fallback {
+  padding: 20px;
+  text-align: center;
+  font-size: 0.82rem;
+  color: #64748b;
+}
+
+.qref-fallback code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  background: #1e293b;
+  color: #7dd3fc;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 .paste-actions {
   display: flex;
   gap: 8px;
@@ -911,6 +1140,22 @@ footer {
   </div>
 
 </div><!-- .levels-grid -->
+
+<!-- ============================================================ 64 QUẺ REFERENCE (KD-QREF-2) -->
+<!-- Additive panel: 64 hexagram trading reference. Rendered from window.__QUE_REFERENCE__     -->
+<!-- Trust-gate safe: no .dot-*, no .category-chip, no "not wired". Uses .qref-* namespace.    -->
+<div id="que-reference-section">
+  <div class="qref-header">
+    <h2>64 Quẻ — Trading Reference</h2>
+    <p class="qref-desc">
+      Complete I-Ching hexagram reference reframed for market trading. Click any hexagram to expand details.
+      Source: <code style="font-size:0.72rem;background:#e0f2fe;padding:1px 5px;border-radius:3px;">que_convert/*.md</code> translated to English with trading context.
+    </p>
+  </div>
+  <div class="qref-grid" id="qref-grid">
+    <!-- Rendered by renderQueReference() -->
+  </div>
+</div>
 
 <!-- ============================================================ LEGEND -->
 <div class="legend">
@@ -1060,6 +1305,12 @@ footer {
 
   </div>
 </div>
+
+<!-- ============================================================ QUE REFERENCE DATA (KD-QREF-2) -->
+<!-- Auto-generated by: CGO_ENABLED=0 go run ./cmd/sandbox -emit-reference                            -->
+<!-- This script sets window.__QUE_REFERENCE__ with 64 hexagram reference data.                       -->
+<!-- If missing, reference section shows fallback note (not an error). Graceful degradation.          -->
+<script src="que-reference.js" onerror="console.log('[dash] que-reference.js not found - reference unavailable');"></script>
 
 <!-- ============================================================ SANDBOX TRACES (G6/G9 honest-green) -->
 <!-- Auto-generated by: CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -scenario=all -emit-traces       -->
@@ -1986,6 +2237,132 @@ function applyTracesOnLoad() {
   }
 }
 
+/* ── 64 Quẻ Reference rendering (KD-QREF-2) ─────────────────────────────── */
+/* Renders from window.__QUE_REFERENCE__ (loaded from que-reference.js).      */
+/* Trust-gate safe: uses .qref-* namespace ONLY. No .dot-*, no .category-chip.*/
+
+function escapeHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function outcomeClass(outcome) {
+  const o = (outcome || '').toUpperCase();
+  if (o === 'CAT') return 'qref-outcome-cat';
+  if (o === 'HUNG') return 'qref-outcome-hung';
+  if (o === 'VO CUU') return 'qref-outcome-vocuu';
+  if (o === 'HOI') return 'qref-outcome-hoi';
+  if (o === 'LE') return 'qref-outcome-le';
+  return 'qref-outcome-vocuu';
+}
+
+function outcomeGloss(outcome) {
+  const o = (outcome || '').toUpperCase();
+  if (o === 'CAT') return 'CÁT (auspicious)';
+  if (o === 'HUNG') return 'HUNG (inauspicious)';
+  if (o === 'VO CUU') return 'VÔ CỬU (no error)';
+  if (o === 'HOI') return 'HỐI (regret)';
+  if (o === 'LE') return 'LỆ (danger)';
+  return outcome;
+}
+
+function trendClass(trend) {
+  if (trend === 'favorable') return 'qref-trend-favorable';
+  if (trend === 'unfavorable') return 'qref-trend-unfavorable';
+  return 'qref-trend-neutral';
+}
+
+function toggleQueDetail(id) {
+  const detail = document.getElementById('qref-detail-' + id);
+  const btn = document.getElementById('qref-toggle-' + id);
+  if (detail && btn) {
+    const isOpen = detail.classList.contains('open');
+    detail.classList.toggle('open');
+    btn.textContent = isOpen ? 'Expand' : 'Collapse';
+  }
+}
+
+function renderQueReference() {
+  const grid = document.getElementById('qref-grid');
+  if (!grid) return;
+
+  const data = window.__QUE_REFERENCE__;
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    grid.innerHTML = '<div class="qref-fallback">' +
+      'Reference not generated — run: <code>CGO_ENABLED=0 go run ./cmd/sandbox -emit-reference</code>' +
+      '</div>';
+    return;
+  }
+
+  let html = '';
+  data.forEach(q => {
+    const trendCls = trendClass(q.marketTrend);
+    const phasesHtml = (q.phases || []).map(p => {
+      const outCls = outcomeClass(p.outcome);
+      const outGloss = outcomeGloss(p.outcome);
+      return `<tr>
+        <td style="font-weight:600;">${p.phase}</td>
+        <td><span class="qref-action-token">${escapeHtml(p.action)}</span></td>
+        <td><span class="qref-outcome-token ${outCls}">${escapeHtml(outGloss)}</span></td>
+        <td>${escapeHtml(p.glossEn)}</td>
+      </tr>`;
+    }).join('');
+
+    html += `
+      <div class="qref-row" id="qref-row-${q.id}">
+        <div class="qref-row-summary" onclick="toggleQueDetail(${q.id})">
+          <span class="qref-id">${q.id}.</span>
+          <span class="qref-name">${escapeHtml(q.name)} ${escapeHtml(q.chinese)}</span>
+          <span class="qref-meaning">${escapeHtml(q.coreMeaningEn)}</span>
+          <span class="qref-trend-chip ${trendCls}">${escapeHtml(q.marketTrendLabel)}</span>
+          <button class="qref-row-toggle" id="qref-toggle-${q.id}" type="button" onclick="event.stopPropagation();toggleQueDetail(${q.id})">Expand</button>
+          <span class="qref-warning">${escapeHtml(q.warningEn)}</span>
+        </div>
+        <div class="qref-detail" id="qref-detail-${q.id}">
+          <div class="qref-detail-grid">
+            <div class="qref-detail-section">
+              <h4>Trigrams</h4>
+              <p class="qref-trigrams">
+                Upper: <strong>${escapeHtml(q.upper)}</strong> (${escapeHtml(q.upperElement)})<br>
+                Lower: <strong>${escapeHtml(q.lower)}</strong> (${escapeHtml(q.lowerElement)})
+              </p>
+            </div>
+            <div class="qref-detail-section">
+              <h4>Favorable Condition</h4>
+              <p>${escapeHtml(q.favorableEn)}</p>
+            </div>
+          </div>
+          <div class="qref-detail-section">
+            <h4>Market State Interpretation</h4>
+            <p>${escapeHtml(q.stateInterpretationEn)}</p>
+          </div>
+          <div class="qref-detail-section">
+            <h4>Six Phases (Hào)</h4>
+            <table class="qref-phases-table">
+              <thead>
+                <tr>
+                  <th>Phase</th>
+                  <th>Action</th>
+                  <th>Outcome</th>
+                  <th>Trading Gloss</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${phasesHtml}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  grid.innerHTML = html;
+}
+
 /* ── Init ────────────────────────────────────────────────────────────────── */
 
 // Apply traces BEFORE rendering (so initial render shows correct status)
@@ -1994,6 +2371,7 @@ applyTracesOnLoad();
 renderPrimitives();
 renderModules();
 renderService();
+renderQueReference();
 
 </script>
 </body>

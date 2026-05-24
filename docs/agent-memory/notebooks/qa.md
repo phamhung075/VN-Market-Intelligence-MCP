@@ -1,5 +1,93 @@
 # QA — Notebook
 
+## cycle-106 · 2026-05-24 · KD-QREF-3 — 64-Quẻ Reference Panel QA — APPROVED
+
+**Task:** KD-QREF-3 (post-pilot enhancement QA gate) | **Verdict:** APPROVED
+
+```
+date: 2026-05-24
+outcome: APPROVED — all 8 checks + 5 ACs PASS
+type: feature-qa (kinh-dich-service 64-que trading reference panel)
+handoff: docs/handoffs/TASK_KD-QREF.md
+
+check_1_build:
+  go_build: EXIT:0 (CGO_ENABLED=0)
+  go_vet:   EXIT:0
+  go_test:  EXIT:0 (reading_composer PASS + 4 primitives cached PASS)
+
+check_2_fence:
+  golangci_lint: 0 issues EXIT:0
+  hexagram_reference.go imports: strings only (no infra/application/interface)
+  hexagram_data.go: UNTOUCHED (git diff EMPTY)
+  fence_a_b: PASS
+
+check_3_coverage:
+  entries: 64 (ids 1..64 contiguous, no gaps)
+  placeholders: 0
+  spot_checks:
+    id01_kien: trend=favorable, warning faithful, phases from queDataMap
+    id29_tap_kham: trend=unfavorable, warning faithful, phases correct
+    id64_vi_te: trend=neutral, trigrams Li/Hoa + Kan/Thuy correct
+
+check_4_trend_map_trap:
+  id11: "THUAN LOI — manh" → favorable (HasPrefix PASS)
+  id14: "THUAN LOI — rat manh" → favorable (HasPrefix PASS)
+  id34: "THUAN LOI — rat manh" → favorable (HasPrefix PASS)
+  id50: "THUAN LOI — manh" → favorable (HasPrefix PASS)
+
+check_5_emit:
+  emit_exit: 0
+  entries_in_js: 64
+  do_not_edit_header: PRESENT
+  deterministic: IDENTICAL (excluding timestamp line across 2 runs)
+
+check_6_trust_gate:
+  dash_check_exit: 0
+  dotsGreen: 17 | dotsRed: 0 | jsErrors: 0 | pageErrors: 0
+  badLabels: []
+  verdict: PASS
+  sandbox_traces: total=17 passed=17 UNCHANGED
+
+check_7_forbidden:
+  category_chip_in_new_section: 0
+  dot_star: 0
+  not_wired: 0
+  fetch: 0
+  cdn_urls: 0
+  sandbox_traces_ref: 0
+  credentials: 0
+
+check_8_scope:
+  modified: [cmd/sandbox/main.go, dashboard/index.html]
+  new: [hexagram_reference.go, que-reference.js]
+  index_html_diff: 378 added / 0 removed (additive only)
+  foreign_zone: NONE (other working-tree changes are pre-existing parallel work)
+
+ac_verdicts: AC-1 through AC-5 all PASS
+pilot_frozen: 12/12 PASS state unchanged (sandbox-traces.js untouched)
+commit_status: in-tree, main terminal commits at KD-QREF-EXIT (commit-mutex enum defect)
+```
+
+| Check | Verdict |
+|-------|---------|
+| go build/vet/test EXIT:0 | PASS |
+| golangci-lint 0 issues | PASS |
+| hexagram_data.go untouched | PASS |
+| Fence-A/B (no infra imports) | PASS |
+| 64 entries, 1..64 contiguous, no gaps | PASS |
+| No placeholder/TODO/lorem | PASS |
+| Spot-check 3 quẻ (01/29/64) fidelity | PASS |
+| Trend-map trap (11/14/34/50) → favorable | PASS |
+| Emit deterministic, 64 entries, DO-NOT-EDIT | PASS |
+| dash-check.mjs exit 0, 17 green, 0 red | PASS |
+| Forbidden tokens: 0 | PASS |
+| Scope confined to kinh-dich-service/ | PASS |
+
+**KD-QREF-3 verdict: APPROVED.**
+**NEXT:** po — KD-QREF-EXIT (sign-off; main terminal commits per commit-mutex defect workaround).
+
+---
+
 ## cycle-105 · 2026-05-24 · rag-service P3-E (G6/G8/G9 re-verify) — AUTOMATED PROXY PASS
 
 **Task:** P3-E — Re-verify G6+G8+G9 with service tier populated | **Verdict:** G6 PASS, G8 PASS, G9 AUTOMATED-PROXY PASS (PENDING USER SIGN-OFF)
