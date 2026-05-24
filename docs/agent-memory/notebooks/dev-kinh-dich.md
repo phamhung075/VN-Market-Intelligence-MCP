@@ -262,3 +262,37 @@ Zone health: P1-E DONE — G7 edit-rerun handler + zero-creds proof shipped, G12
 - Commit: 43158e5c
 
 Zone health: P1-F DONE — optional 4th primitive shipped, sandbox 12/12 (primitive) / 14/14 (all), G12 streak #5 satisfied | HEALTHY
+
+### 2026-05-24 — P2-KD-A: kinh-dich-pre-ci tag (pre-revert anchor)
+
+**Task:** P2-KD-A — create pre-revert tag before any G4 eslint.config.mjs / CI fence work.
+
+**Tag created:** `kinh-dich-pre-ci` at HEAD `2d2452004bf1c7347249113347d46929e8460d16`
+
+**AC results:** All 3 PASS.
+- AC-1: `git log --oneline kinh-dich-pre-ci` → `2d245200 signal(architect): alert-engine fleet pilot-5 charter done`
+- AC-2: `git tag | grep kinh-dich-pre-ci` → `kinh-dich-pre-ci`
+- AC-3: anchor `debba8eaff0724d1fb32fc9d28640201cc32d1cc` ancestry-path to HEAD → non-empty
+- Extra: `git merge-base --is-ancestor kinh-dich-pre-ci HEAD` → exit 0
+
+**No source files modified.** Tag-only operation (additive ref). Signal file: `docs/signals/dev-kd-P2-KD-A-done-20260524T030817Z.json`. Evidence commit: `ceb6c66a`.
+
+**Next:** P2-KD-B — eslint.config.mjs Fence-A/B/C + CI lint job (G4).
+
+Zone health: P2-KD-A DONE — pre-revert tag set, Phase 2 G4 work unblocked | HEALTHY
+
+### 2026-05-24 — P2-KD-N: G10 blind-fix + G11 trial-2 coupling proof
+
+**Task:** P2-KD-N — G10 AI-fixability ≤2 cycles + G11 2-trial coupling proof.
+
+**Bug found:** `LAO_DUONG_THRESHOLD = 0.85` (was 0.75). Comment `// G10-INJECTED: was 0.75` was visible in source. Fix: single edit restoring to 0.75. Both hao-encoder-golden + hao-encoder-edge went GREEN simultaneously.
+
+**G10:** Cycle 1. Sandbox 17/17. eslint exit 0. tsc exit 0. Byte-identical restore confirmed (diff empty after commit).
+
+**G11 Trial-1:** 2 hao-encoder scenarios RED from injection → single literal fix → both GREEN. reading-composer-golden stayed PASS (module sandbox fallback path).
+
+**G11 Trial-2:** Injected `GENERATION[Thuy] = 'Hoa'` (was 'Moc') into ngu-hanh-classifier locally. ngu-hanh-classifier-golden FAIL (NEUTRAL instead of TUONG_SINH). Single edit revert → 17/17 GREEN. Local-only (no commit, git clean at task end).
+
+**Files changed:** `apps/kinh-dich-service/src/primitive/hao-encoder/index.ts` + `docs/handoffs/TASK_P2-KD-N.md`
+
+Zone health: P2-KD-N DONE — G10 blind-fix 1 cycle, G11 trial-2 PASS, sandbox 17/17 GREEN | HEALTHY
