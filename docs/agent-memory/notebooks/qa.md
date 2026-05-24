@@ -1,5 +1,30 @@
 # QA — Notebook
 
+## c282 cycle-59 · 2026-05-24 · stock-price P2-D G4 freeze anchor confirmed (AC-4c) — PASS
+
+**Task:** P2-D — G4 Freeze Anchor Confirmation (AC-4c) | **Verdict:** PASS | **G4:** g4_ready_to_grade=YES
+
+```
+date: 2026-05-24
+outcome: PASS
+type: pilot-task-qa (read-only git-history audit — no source code changes)
+commit: e086cdf7
+signal: docs/signals/qa-sp-P2-D-g4-anchor-done-20260524T002111Z.json
+```
+
+| AC | Check | Result | Evidence |
+|----|-------|--------|----------|
+| AC-1 | Most recent commit on `.golangci.yml` = P2-B (d5ce886e) | PASS | `git log --oneline apps/stock-price/.golangci.yml` → single line: `d5ce886e feat(stock-price): P2-B golangci depguard fence (Fence-A/B/C) + CI stock-price-go-lint job`. No later commits. |
+| AC-2 | `stock-price-pre-ci` tag ancestry verified | PASS | `git log --oneline stock-price-pre-ci` → resolves (first commit: db3ca097). `git merge-base stock-price-pre-ci HEAD` → `db3ca097…` (non-empty). Tag is ancestor of HEAD. |
+| AC-2 | Frozen anchor `debba8eaff0` still intact | PASS | `git merge-base --is-ancestor debba8eaff0724d1fb32fc9d28640201cc32d1cc HEAD` → exit 0 (HELD) |
+| AC-3 | Evidence file written | PASS | `docs/handoffs/TASK_P2-D-sp-g4-evidence.md` — all 3 G4 ACs, freeze SHA, tag SHA, g4_ready_to_grade: YES |
+
+**Commit scope:** e086cdf7 — exactly 1 file (docs/handoffs/TASK_P2-D-sp-g4-evidence.md). No cross-pilot conflation.
+**Blocking issues:** 0 — read-only audit, all 3 ACs PASS, all hard constraints honored.
+**NEXT:** pm — verify P2-D evidence, update SSOT, dispatch P2-E (Create stock-price-pre-delete tag).
+
+---
+
 ## c282 cycle-58 · 2026-05-24 · stock-price P1-G Phase-1 close-gate — GO
 
 **Task:** P1-G — Phase 1 Close-Gate Verification (QA) | **Verdict:** GO | **Phase 1:** CLOSED
