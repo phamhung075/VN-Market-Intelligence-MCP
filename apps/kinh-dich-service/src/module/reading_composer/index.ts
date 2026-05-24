@@ -19,7 +19,7 @@
  */
 
 import type { KinhDichReading } from '../../domain/models.js';
-import { computeReading } from '../../domain/services.js';
+import { computeReading } from '../../_deprecated/services_v1.js';
 import { encodeHaos } from '../../primitive/hao-encoder/index.js';
 import { resolveHexagram } from '../../primitive/hexagram-resolver/index.js';
 import type { MarkovPort } from './ports.js';

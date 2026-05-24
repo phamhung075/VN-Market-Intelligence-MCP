@@ -1,11 +1,16 @@
 /**
  * Kinh Dich Service — Application Use Cases
  *
- * Orchestrates domain services + repository ports.
+ * Orchestrates reading_composer module + repository ports.
  * No direct I/O — only ports.
+ *
+ * P2-KD-F: Rewired from domain/services.ts computeReading() to
+ * reading_composer composeReading() per G5a handoff.
+ * QUE_META sourced from domain/hexagram-data.ts (thin data module).
  */
 
-import { computeReading, QUE_META } from '../domain/services.js';
+import { composeReading, type ReadingComposerDependencies } from '../module/reading_composer/index.js';
+import { QUE_META } from '../domain/hexagram-data.js';
 import type { KinhDichRepositoryPort, PriceScorePort } from '../domain/repositories.js';
 import type { ReadingRequest, ReadingResponse, MarketReadingResponse } from './dtos.js';
 import { InsufficientDataError, HexagramNotFoundError } from '../domain/errors.js';
@@ -14,6 +19,7 @@ export class ReadingUseCase {
   constructor(
     private readonly repo: KinhDichRepositoryPort,
     private readonly priceScorePort: PriceScorePort,
+    private readonly composerDeps: ReadingComposerDependencies,
   ) {}
 
   async execute(req: ReadingRequest): Promise<ReadingResponse> {
@@ -24,8 +30,7 @@ export class ReadingUseCase {
     const scores = this.priceScorePort.computeScores(code, days);
 
     if (scores) {
-      const markov = this.repo.getMarkovData(0); // 0 = placeholder, no hexagram known yet
-      const reading = computeReading(code, scores, markov);
+      const reading = await composeReading(code, scores, this.composerDeps);
       return {
         stock: code,
         hexagram: reading.queChiNh.number,
@@ -53,9 +58,8 @@ export class ReadingUseCase {
     const storedMeta = QUE_META.find((q) => q.id === stored.hexagram_number);
     const storedName = storedMeta?.name ?? `Que ${stored.hexagram_number}`;
 
-    const markov = this.repo.getMarkovData(stored.hexagram_number);
     const fallbackScores = [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]; // neutral placeholder
-    const reading = computeReading(code, fallbackScores, markov);
+    const reading = await composeReading(code, fallbackScores, this.composerDeps);
 
     return {
       stock: code,
@@ -75,6 +79,7 @@ export class MarketHexagramUseCase {
   constructor(
     private readonly repo: KinhDichRepositoryPort,
     private readonly priceScorePort: PriceScorePort,
+    private readonly composerDeps: ReadingComposerDependencies,
   ) {}
 
   async execute(): Promise<MarketReadingResponse> {
@@ -96,7 +101,7 @@ export class MarketHexagramUseCase {
       };
     }
 
-    const reading = computeReading(code, scores);
+    const reading = await composeReading(code, scores, this.composerDeps);
     return {
       hexagram: reading.queChiNh.number,
       name: reading.queChiNh.name,

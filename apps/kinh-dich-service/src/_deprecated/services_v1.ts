@@ -15,7 +15,7 @@ import type {
   NguHanh,
   NguHanhDynamic,
   NguHanhResult,
-} from './models.js';
+} from '../domain/models.js';
 
 // ── Hexagram library (embedded, no file I/O) ─────────────────────────────────
 
