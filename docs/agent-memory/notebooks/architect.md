@@ -1,6 +1,57 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 04:00 UTC (alert-engine pilot-5 charter + Day-0 SSOT scaffold) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 05:30 UTC (alert-engine pilot-5 Phase-1 task plan) | **Sprint:** fleet-factory-rollout program
+
+## alert-engine Phase-1 task plan cycle (2026-05-24T05:30Z) — fleet pilot 5 Phase 0 deliverable D6
+
+**Task:** Author alert-engine Phase-1 task plan (Go) for fleet pilot 5. Authorization: charter-done signal `architect-alert-engine-charter-done-20260524T040000Z.json`. Structural template: stock-price `phase-1-task-plan-go.md` + kinh-dich `phase-1-task-plan-ts.md`.
+
+**Key decisions:**
+- 9 atomic tasks (P1-A through P1-G; P1-B4 optional), 59 ACs total (55 if P1-B4 skipped). WIP=1 sequential.
+- P1-A: sandbox runner (cmd/sandbox/main.go, CGO_ENABLED=0 hard gate + env audit — HEADLINE RISK gate). 7 ACs.
+- P1-B1: first primitive (`signal-classifier` — severity→AlertSeverity+TelegramChannel) + ZERO-CREDS gate (AC-4 Fence-A + AC-6 scenario JSON grep). 8 ACs. G12 streak #1.
+- P1-B2: second primitive (`dedup-key-builder` — ComputeFingerprint/djb2, seed=5381 load-bearing). 6 ACs. G12 streak #2.
+- P1-B3: third primitive (`cooldown-gate` — ShouldSuppressAlert; inject now time.Time for determinism). 7 ACs. G12 streak #3 — core-3 band complete.
+- P1-B4: optional 4th primitive (`duplicate-checker` — IsDuplicate, 8 lines). 4 ACs. PM decides at P1-B3 close.
+- P1-C: module stub (`alert_pipeline`) — ports (AlertRepositoryPort, MutePort, TelegramPort), composition of all 3 primitives, mock ports in tests. Fence-B baked. 7 ACs.
+- P1-D: dashboard stub (3-panel: primitives + module + microservice). SI-2 disavowal HTML comment baked in. 7 ACs.
+- P1-E: edit-rerun handler + G7 all-4 sub-gates (env audit + scenario grep + CGO build + edit→rerun cycle). 7 ACs.
+- P1-G: QA close-gate. 5-criterion exit gate (adds G7 ZERO-CREDS as criterion 5, unique to alert-engine). 6 ACs. Emits phase1 close-gate signal.
+
+**ZERO-CREDS headline risk baked into plan:**
+- P1-A: AC-6 (CGO_ENABLED=0 build) + AC-7 (env audit) = BLOCKER before P1-B1.
+- P1-B1: AC-6 (scenario JSON grep) = BLOCKER before P1-B2.
+- P1-E: all 4 sub-gates proven simultaneously = definitive G7 evidence for Phase 1.
+- P1-G: criterion 5 = G7 all-4 sub-gates must be CONFIRMED in close-gate signal.
+
+**Goals advanced map:**
+- G1: P1-B1+B2+B3 → EARNED-PENDING (core-3 band)
+- G2: P1-C → EARNED-PENDING (alert_pipeline stub)
+- G6: P1-D → EARNED-PENDING (dashboard stub, SI-2 disavowal)
+- G7: P1-A+P1-E → EARNED-PENDING (all 4 sub-gates)
+- G8: P1-D+P1-E → EARNED-PENDING (honest NOT-RUN)
+- G12: P1-B1+B2+B3 → EARNED-PENDING (3-task streak)
+- G3/G4/G5/G9/G10/G11: STILL-UNMET, Phase 2 work
+- goalsEarned: stays 0; decisionMatrix stays TBD; §4.5 inviolable
+
+**Phase 2 pre-revert tags noted (Phase 1 does NOT create them):**
+- alert-engine-pre-ci (Phase 2 before .golangci.yml)
+- alert-engine-pre-delete (Phase 2 before git mv to _deprecated/)
+- alert-engine-pre-inject (Phase 2 before G10 bug injection)
+
+**SI-2 boundary:** docs/dashboards/index.html is stock-price-EXCLUSIVE. alert-engine MUST NOT touch it. HTML comment baked into dashboard source (P1-D AC-6). Baked into Hard Constraints table.
+
+**Fleet serialization:** INTERIM FLEET-WIDE SINGLE-COMMITTER SERIALIZATION noted in Execution Notes + Hard Constraints. git diff --cached --name-only must be clear before staging.
+
+**Files authored this cycle (L84 — 2 files):**
+1. `docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md` (NEW — D6 deliverable)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal to emit after commit:** `docs/signals/architect-alert-engine-phase1-plan-done-<UTC>.json` (next_actor: pm, next_actor_router: main-router)
+
+**Anchor:** debba8eaff0724d1fb32fc9d28640201cc32d1cc — INTACT (verified before commit)
+
+---
 
 ## alert-engine pilot-5 charter cycle (2026-05-24T04:00Z) — fleet pilot 5 Day 0
 
