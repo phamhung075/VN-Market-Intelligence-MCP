@@ -1,0 +1,14 @@
+{
+  "scenario": "golden-normal-proxy",
+  "tier": "primitive",
+  "primitive": "proxy-path-resolver",
+  "description": "Normal real-service proxy: /:service/:rest strips the leading segment. /stock/health must resolve to /health.",
+  "input": {
+    "reqPath": "/stock/health",
+    "noProbe": false
+  },
+  "expected": {
+    "resolvedPath": "/health"
+  },
+  "verdict": "PASS"
+}

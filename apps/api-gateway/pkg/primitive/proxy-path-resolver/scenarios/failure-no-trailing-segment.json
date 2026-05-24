@@ -1,0 +1,24 @@
+{
+  "scenario": "failure-no-trailing-segment",
+  "tier": "primitive",
+  "primitive": "proxy-path-resolver",
+  "description": "FAILURE scenario — detects missing SplitN<3 guard. Input path /stock has no trailing segment. strings.SplitN(\"/stock\", \"/\", 3) yields [\"\", \"stock\"] (len=2 < 3). Without the guard, accessing parts[2] would panic (index out of range). With a wrong implementation that returns parts[1] (\"/stock\") or an empty string, routing is broken. The correct output is \"/\".",
+  "injection": {
+    "bug": "missing-splitn-length-guard",
+    "mutated_logic": "parts[2] accessed without len check, or returns empty string instead of /",
+    "effect": "path /stock incorrectly produces panic, empty string, or /stock instead of /"
+  },
+  "input": {
+    "reqPath": "/stock",
+    "noProbe": false
+  },
+  "expected": {
+    "resolvedPath": "/"
+  },
+  "wrong_output_when_bug_injected": {
+    "panic": "runtime error: index out of range [2] with length 2",
+    "or_wrong_string": ""
+  },
+  "verdict": "FAILURE_SCENARIO",
+  "note": "This scenario MUST produce RED when the len(parts)<3 guard is removed. Use as G10/G11 injection fixture for proxy-path-resolver."
+}

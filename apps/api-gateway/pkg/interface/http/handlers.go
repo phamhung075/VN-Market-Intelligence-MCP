@@ -15,6 +15,7 @@ import (
 
 	"github.com/vn-market-intelligence/api-gateway/pkg/application"
 	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
+	ppr "github.com/vn-market-intelligence/api-gateway/pkg/primitive/proxy-path-resolver"
 )
 
 // ── JSON helpers ─────────────────────────────────────────────────────────────
@@ -215,24 +216,6 @@ func BuildDashboardHTML(health *domain.AggregatedHealth) string {
 	)
 }
 
-// ── Proxy path helper ─────────────────────────────────────────────────────────
-
-// ProxyPath determines the downstream path for a proxy request.
-// Virtual alias services (NoProbe=true): pass the full request path verbatim.
-// Real services: strip the leading /:service segment.
-// Exported for testing.
-func ProxyPath(reqPath string, svc *domain.ServiceConfig) string {
-	if svc.NoProbe {
-		return reqPath
-	}
-	// Strip leading /:service segment
-	parts := strings.SplitN(reqPath, "/", 3)
-	if len(parts) < 3 {
-		return "/"
-	}
-	return "/" + parts[2]
-}
-
 // ── Handlers ─────────────────────────────────────────────────────────────────
 
 // GatewayHandlers holds all HTTP handlers for the api-gateway.
@@ -327,8 +310,8 @@ func (h *GatewayHandlers) HandleProxy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build downstream path
-	downstreamPath := ProxyPath(r.URL.Path, svc)
+	// Build downstream path via primitive (proxy-path-resolver).
+	downstreamPath := ppr.ResolveProxyPath(r.URL.Path, svc.NoProbe)
 
 	proxy := httputil.NewSingleHostReverseProxy(targetBase)
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {

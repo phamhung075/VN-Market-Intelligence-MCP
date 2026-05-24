@@ -1,0 +1,15 @@
+{
+  "scenario": "golden-virtual-alias",
+  "tier": "primitive",
+  "primitive": "proxy-path-resolver",
+  "description": "Virtual-alias service (NoProbe=true): full path must be returned verbatim without stripping the leading segment. /api/push-news must resolve to /api/push-news.",
+  "input": {
+    "reqPath": "/api/push-news",
+    "noProbe": true
+  },
+  "expected": {
+    "resolvedPath": "/api/push-news"
+  },
+  "verdict": "PASS",
+  "note": "If the noProbe guard is omitted, SplitN would strip /api/ and return /push-news — incorrect. This golden scenario validates the guard is present."
+}

@@ -15,6 +15,7 @@ import (
 	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
 	"github.com/vn-market-intelligence/api-gateway/pkg/infrastructure"
 	httphandler "github.com/vn-market-intelligence/api-gateway/pkg/interface/http"
+	ppr "github.com/vn-market-intelligence/api-gateway/pkg/primitive/proxy-path-resolver"
 )
 
 // ── Fixtures ─────────────────────────────────────────────────────────────────
@@ -369,32 +370,35 @@ func TestServiceHealth_UnknownService_404(t *testing.T) {
 	}
 }
 
-// ── Proxy path helper tests ───────────────────────────────────────────────────
+// ── Proxy path helper tests (delegated to primitive) ─────────────────────────
+// ProxyPath was extracted from handlers.go to pkg/primitive/proxy-path-resolver.
+// These tests are kept here for integration coverage and now call the primitive
+// directly via the ppr import. Exhaustive unit tests live in the primitive package.
 
 func TestProxyPath_RealService_StripPrefix(t *testing.T) {
 	svc := &domain.ServiceConfig{Name: "stock", NoProbe: false}
-	got := httphandler.ProxyPath("/stock/health", svc)
+	got := ppr.ResolveProxyPath("/stock/health", svc.NoProbe)
 	want := "/health"
 	if got != want {
-		t.Errorf("ProxyPath /stock/health: got %s, want %s", got, want)
+		t.Errorf("ResolveProxyPath /stock/health: got %s, want %s", got, want)
 	}
 }
 
 func TestProxyPath_VirtualAlias_FullPath(t *testing.T) {
 	svc := &domain.ServiceConfig{Name: "api", NoProbe: true}
-	got := httphandler.ProxyPath("/api/push-news", svc)
+	got := ppr.ResolveProxyPath("/api/push-news", svc.NoProbe)
 	want := "/api/push-news"
 	if got != want {
-		t.Errorf("ProxyPath /api/push-news: got %s, want %s", got, want)
+		t.Errorf("ResolveProxyPath /api/push-news: got %s, want %s", got, want)
 	}
 }
 
 func TestProxyPath_MultiSegment(t *testing.T) {
 	svc := &domain.ServiceConfig{Name: "macro", NoProbe: false}
-	got := httphandler.ProxyPath("/macro/indicators", svc)
+	got := ppr.ResolveProxyPath("/macro/indicators", svc.NoProbe)
 	want := "/indicators"
 	if got != want {
-		t.Errorf("ProxyPath /macro/indicators: got %s, want %s", got, want)
+		t.Errorf("ResolveProxyPath /macro/indicators: got %s, want %s", got, want)
 	}
 }
 
