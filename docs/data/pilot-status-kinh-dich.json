@@ -5,31 +5,32 @@
     "schema_source": "docs/data/pilot-status-schema.json (SI-1 fleet schema v1.0, agent-father 2026-05-23T22:01:07Z)",
     "instantiated_by": "architect (kinh-dich pilot-4 charter cycle 2026-05-24)",
     "instantiated_at": "2026-05-24T00:00:00Z",
-    "shape": "macro v2.0 field shape — all three language fields, closedAt/closedBy/closureSignal/closureDecisionDoc, openedAt/openedBy, goalsEarned, constraints_binding_day_0, lessons_baked_in"
+    "shape": "macro v2.0 field shape — all three language fields, closedAt/closedBy/closureSignal/closureDecisionDoc, openedAt/openedBy, goalsEarned, constraints_binding_day_0, lessons_baked_in",
+    "reopened_for_go_reboot": "2026-05-24T06:56:57Z",
+    "reopened_by": "po (USER-DIRECTIVE 2026-05-24 — docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md)",
+    "ts_history": "Preserved verbatim under top-level 'tsCompletionArchive'."
   },
-
   "pilot": "kinh-dich-service",
   "charterRef": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md",
   "charterVersion": "2.0",
-  "status": "DONE",
+  "status": "ACTIVE",
   "_status_enum": "Allowed values: ACTIVE | DONE | FAILED. DONE requires 12/12 goals YES + decisionMatrix terminal. FAILED is explicit PO decision.",
   "openedAt": "2026-05-24T00:00:00Z",
   "openedBy": "architect (charter cycle 2026-05-24 — po-pilot4-kinh-dich-open-20260523T223738Z.json authorization)",
-  "closedAt": "2026-05-24T05:00:08Z",
-  "closedBy": "po (Phase-3 terminal 12/12 atomic close — SECOND fleet pilot to reach terminal this session, after stock-price)",
-  "closureSignal": "docs/signals/po-kinh-dich-phase3-terminal-close-20260524T050008Z.json",
-  "closureDecisionDoc": "docs/po-decisions/2026-05-24-kinh-dich-phase3-terminal-12of12-close.md",
+  "closedAt": null,
+  "closedBy": null,
+  "closureSignal": null,
+  "closureDecisionDoc": null,
   "sprintKickoff": "2026-05-24",
   "sprintDeadline": "2026-07-05",
   "deadline": "kickoff + 6 sprints",
-  "language": "TypeScript",
-  "languageLockSource": "docs/signals/po-pilot4-kinh-dich-open-20260523T223738Z.json — kinh-dich is natively TS/Bun (language_locked: true); no rewrite step; pilot-charter.md §Language Lock",
+  "language": "Go",
+  "languageLockSource": "docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md (USER DIRECTIVE — TS/Bun -> Go reboot, mirrors TA Option-B)",
   "languageLockedAt": "2026-05-24",
-  "sprintCount": 3,
-  "_sprintCount_note": "Honest assessment: Phase 0 (sprint 1) + Phase 1 (sprint 2) + Phase 2 (sprint 3), all completed within the 2026-05-24 kickoff window. ≤ 6-sprint budget (deadline 2026-07-05). Used in Scale criterion.",
-  "phase": "3",
-  "_phase_note": "Phase 3 TERMINAL — 12/12 goals YES, decisionMatrix populated atomically (verdict=scale). Pilot CLOSED by PO. Charter complete.",
-
+  "sprintCount": 0,
+  "_sprintCount_note": "Reset for Go reboot. TS sprintCount (=3) preserved in tsCompletionArchive.",
+  "phase": "1",
+  "_phase_note": "Go REBOOT — Phase 1 restart. Re-extract 5 primitives + reading_composer module + composition root in Go; rebuild sandbox dashboard. G1-G8,G10-G12 reset to TBD; G9 held (re-confirm on Go dashboard). TS terminal history preserved in tsCompletionArchive.",
   "phase0": {
     "status": "CLOSED",
     "_status_enum": "Allowed values: OPEN | CLOSED",
@@ -115,7 +116,6 @@
       ]
     }
   },
-
   "phase1": {
     "_note": "Phase 1 APPROVED (CLEAN FULL GO) — all 9 Phase-1 tasks complete with clean sandbox green. P1-A DONE (1e76d339). P1-B1 DONE (50c2d2ff). P1-B2 DONE (7598c113). P1-B3 DONE (6bdabbb9, G12 streak #3 COMPLETE). P1-C VERIFIED DONE (50069d69, MarkovPort Option B + inline delegation). P1-D VERIFIED DONE (7d6cd85f, G6 dashboard file://). P1-E VERIFIED DONE (6fc9b721, edit-rerun + zero-creds audit). P1-F VERIFIED DONE (43158e5c + 3114adf7, reading-scorer 4th primitive). P1-G close-gate completed with CONDITIONAL-GO (QA 3/4 criteria). P1-KD-H DONE (b7cb55bc, dashboard 6/6 card groups + reading-scorer 4th primitive). P1-KD-QA-AC2-REVERT DONE (34205c87, AC-2 re-verify PASS: 6/6 = 100% + honest NOT-RUN + file self-contained). Next gate = Phase-2 authorization (PO → architect Phase-2 task plan).",
     "status": "APPROVED",
@@ -142,7 +142,19 @@
     "skeleton_in": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §Phase Skeleton",
     "task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md (DELIVERED P0-KD-4)",
     "wip_limit": 1,
-    "task_sequence": ["P1-A", "P1-B1", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G", "P1-KD-H (phase1-finalization)", "P1-KD-QA-AC2-REVERT"],
+    "task_sequence": [
+      "P1-A",
+      "P1-B1",
+      "P1-B2",
+      "P1-B3",
+      "P1-C",
+      "P1-D",
+      "P1-E",
+      "P1-F (optional)",
+      "P1-G",
+      "P1-KD-H (phase1-finalization)",
+      "P1-KD-QA-AC2-REVERT"
+    ],
     "current_task": "P1-KD-H",
     "current_task_status": "READY",
     "current_task_handoff": "docs/handoffs/TASK_P1-KD-H.md",
@@ -335,7 +347,6 @@
       }
     }
   },
-
   "phase2": {
     "_note": "Phase 2 CLOSED (2026-05-24T00:00:00Z by pm → 2026-05-24T05:00:00Z closed). 14 tasks (P2-KD-A through P2-KD-Z), 77 ACs. All 14 tasks DONE. QA verdict: READY-FOR-PHASE-3 (P2-KD-Z close-gate: 7/7 ACs PASS).",
     "status": "CLOSED",
@@ -386,7 +397,9 @@
         "blocks": "P2-KD-C",
         "est_hours": 1.0,
         "ac_count": 5,
-        "g_goals_advanced": ["G4 partial"],
+        "g_goals_advanced": [
+          "G4 partial"
+        ],
         "ac_verdicts": {
           "AC-1": "PASS",
           "AC-2": "PASS",
@@ -410,7 +423,9 @@
         "blocks": "P2-KD-D",
         "est_hours": 0.5,
         "ac_count": 5,
-        "g_goals_advanced": ["G4 full — R-FENCE gate proof"],
+        "g_goals_advanced": [
+          "G4 full — R-FENCE gate proof"
+        ],
         "note": "R-FENCE gate PROVEN: AC-4b proof produced non-zero exit + 'Fence-A: primitive must not import application layer' on real .js-suffixed ESM import style. Inline enforcement fixes applied: rule rename, pattern matching, TypeScript resolver. Violation reverted, git clean, sandbox 14/14 green.",
         "ac_verdicts": {
           "AC-1": "PASS",
@@ -474,7 +489,9 @@
         "blocks": "P2-KD-G",
         "est_hours": 1.5,
         "ac_count": 7,
-        "g_goals_advanced": ["G5a"],
+        "g_goals_advanced": [
+          "G5a"
+        ],
         "ac_verdicts": {
           "AC-1": "PASS",
           "AC-2": "PASS",
@@ -498,7 +515,9 @@
         "blocks": "P2-KD-H",
         "est_hours": 3.0,
         "ac_count": 8,
-        "g_goals_advanced": ["G5b"],
+        "g_goals_advanced": [
+          "G5b"
+        ],
         "ac_verdicts": {
           "AC-1": "PASS",
           "AC-2": "PASS",
@@ -525,7 +544,10 @@
         "completedBy": "qa",
         "commit_sha": "cd669df3",
         "signal_sha": "46df5763",
-        "g_goals_advanced": ["G5b", "G5c"],
+        "g_goals_advanced": [
+          "G5b",
+          "G5c"
+        ],
         "note": "Read-only audit: confirm zero TODO.*migrat across kinh-dich-service and mcp-server tools. Verify G5b rewire post-completion. Compile G5 evidence summary. All 5 ACs PASS.",
         "ac_verdicts": {
           "AC-1": "PASS",
@@ -547,7 +569,9 @@
         "completedAt": "2026-05-24T04:16:30Z",
         "completedBy": "dev-kinh-dich",
         "commit_sha": "db0692d3",
-        "g_goals_advanced": ["G3"],
+        "g_goals_advanced": [
+          "G3"
+        ],
         "ac_verdicts": {
           "AC-1": "PASS",
           "AC-2": "PASS",
@@ -570,7 +594,10 @@
         "completedAt": "2026-05-24T04:26:34Z",
         "completedBy": "dev-kinh-dich",
         "commit_sha": "5db652f3",
-        "g_goals_advanced": ["G6", "G1"],
+        "g_goals_advanced": [
+          "G6",
+          "G1"
+        ],
         "ac_verdicts": {
           "AC-1": "PASS",
           "AC-2": "PASS",
@@ -597,7 +624,9 @@
         "blocks": "P2-KD-L",
         "est_hours": 0.5,
         "ac_count": 5,
-        "g_goals_advanced": ["G8"],
+        "g_goals_advanced": [
+          "G8"
+        ],
         "ac_verdicts": {
           "AC-1": "PASS",
           "AC-2": "PASS",
@@ -619,7 +648,9 @@
         "blocks": "P2-KD-M",
         "est_hours": 0.5,
         "ac_count": 4,
-        "g_goals_advanced": ["G9"],
+        "g_goals_advanced": [
+          "G9"
+        ],
         "ac_verdicts": {
           "AC-1": "PASS",
           "AC-2": "PASS",
@@ -640,7 +671,9 @@
         "blocks": "P2-KD-N",
         "est_hours": 0.33,
         "ac_count": 4,
-        "g_goals_advanced": ["G10 setup"],
+        "g_goals_advanced": [
+          "G10 setup"
+        ],
         "ac_verdicts": {
           "AC-1": "PASS",
           "AC-2": "PASS",
@@ -662,7 +695,10 @@
         "completedAt": "2026-05-24T00:00:00Z",
         "completedBy": "dev-kinh-dich + qa",
         "commit_sha": "292a74de",
-        "g_goals_advanced": ["G10", "G11"],
+        "g_goals_advanced": [
+          "G10",
+          "G11"
+        ],
         "ac_verdicts": {
           "AC-1": "PASS",
           "AC-2": "PASS",
@@ -699,18 +735,17 @@
       }
     }
   },
-
   "goals": [
     {
       "_track_note": "Track A — Trust Foundation (G1-G5). Structural correctness of the DDD primitive/module/service layers.",
       "id": "G1",
       "track": "A",
       "title": "Primitives ship with scenarios",
-      "status": "YES",
+      "status": "TBD",
       "_status_enum": "Allowed values: TBD | IN-PROGRESS | YES | NO | PARTIAL | DEFER. Flipped to YES only when all AC pass and evidence is locked. PO-only authorship per Charter §4.5.",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit — sandbox re-run + filesystem confirm)",
-      "evidence": "5 primitives in apps/kinh-dich-service/src/primitive/ (hexagram-resolver, hao-encoder, ngu-hanh-classifier, reading-scorer, nuclear-hexagram-computer). 5th primitive landed P2-KD-J 5db652f3. Each has 3 scenarios (golden+edge+failure) in docs/scenarios/kinh-dich/primitives/ = 15 files; 5 carry expect_error (failure tier). PO live re-run: bun run src/sandbox/runner.ts --tier=all = PASS 17/17 exit 0. grep 'from.*infrastructure' in src/primitive/ = 0 real imports (5 hits are JSDoc comments).",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "3-5 TypeScript primitives in src/primitive/; each has ≥3 scenarios (golden + edge + failure). Candidates: hexagram-resolver, hao-encoder, ngu-hanh-classifier, reading-scorer, nuclear-hexagram-computer. dev-kinh-dich confirms exact set in Phase 0. grep src/primitive/ for infrastructure imports must return 0.",
       "phase2Bucket": null
     },
@@ -718,10 +753,10 @@
       "id": "G2",
       "track": "A",
       "title": "Module composes primitives via ports",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit)",
-      "evidence": "src/module/reading_composer/ exists (index.ts + ports.ts + index.test.ts). MarkovPort interface defined in ports.ts; infra SQLite impl injected only at composition root (src/index.ts L36-40 composerDeps.markov). P1-C 50069d69 (MarkovPort Option B inline delegation). grep src/infrastructure + cross-module imports in reading_composer = 0 real imports (3 grep hits are JSDoc comments, 1 is a test JSDoc). 2 module scenarios in docs/scenarios/kinh-dich/module/ (golden+edge).",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "One module: src/module/reading_composer/. Port: MarkovPort (infra provides SQLite impl, injected by composition root, never directly imported by module). Module must import zero infrastructure. Has ≥1 multi-primitive scenario (full KinhDichReading story: 6 scores → complete reading). grep src/module/reading_composer/ for src/infrastructure must return 0.",
       "phase2Bucket": null
     },
@@ -729,10 +764,10 @@
       "id": "G3",
       "track": "A",
       "title": "Microservice has clean composition root",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit)",
-      "evidence": "P2-KD-I db0692d3. src/index.ts = 63 lines (≤80). Only imports + DI wiring (incl. MarkovPort injection) + Hono router + server startup. grep computeReading|classifyNguHanh|resolveHexagram|encodeHaos in src/index.ts = 0. OpenAPI YAML present: src/interface/openapi.yaml (7 endpoints). Port 5005 via config (never hardcoded in index.ts).",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "src/index.ts ≤80 lines; OpenAPI YAML present in src/interface/; zero domain-op grep (computeReading/classifyNguHanh/resolveHexagram/encodeHaos must not appear in index.ts). Port = 5005 (internal == external) per system-map.json — never hardcoded.",
       "phase2Bucket": null
     },
@@ -741,10 +776,10 @@
       "track": "A",
       "title": "Architecture fence enforced (offline ESLint boundaries evidence)",
       "_title_note": "TS service: ESLint fence per SI-3 Option A (eslint-plugin-boundaries v6.0.2). NOT Go depguard. Spec LOCKED at charter v1 — SI-3 §5 'spec is final at charter v1'.",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit — honest caveat preserved)",
-      "evidence": "apps/kinh-dich-service/eslint.config.mjs Fence-A/B/C (eslint-plugin-boundaries). HONEST CAVEAT: P2-KD-B 267446e6 created the config but it was a FALSE-GREEN (3 silent bugs: deprecated rule name, pattern mismatch, missing TS resolver). Genuinely ENFORCING only as of P2-KD-C 205aa5cf (deliberate Fence-A violation → exit 1 + 'Fence-A' in output on real .js-suffixed ESM import; reverted; NEVER committed). Frozen P2-KD-D d66dcad1 (AC-4c freeze anchor = 205aa5cf, no post-anchor touch). R-2 in-Option-A fallback applied (@typescript-eslint/parser + import-resolver-typescript). Evidence: docs/handoffs/TASK_P2-KD-D-g4-evidence.md. Freeze anchor 205aa5cf is most-recent commit on eslint.config.mjs.",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "Fence tool: eslint-plugin-boundaries (Option A) in apps/kinh-dich-service/eslint.config.mjs. devDependencies: eslint + eslint-plugin-boundaries. CI command: bunx eslint src/ --max-warnings 0. Pre-revert tag: kinh-dich-pre-ci. Deliberate-violation protocol: inject Fence-A import in src/primitive/hexagram-resolver/index.ts → non-zero exit + 'Fence-A' in output → revert → exit 0 + git clean → violation NEVER committed. R-FENCE gate: AC-4b proof must succeed on real .js-suffixed ESM import style. Fallback if R-2 bites: add @typescript-eslint/parser (5-min Option-A internal fix). Full template: charter §G4 eslint.config.mjs block.",
       "phase2Bucket": null
     },
@@ -752,10 +787,10 @@
       "id": "G5",
       "track": "A",
       "title": "Old service code deleted + HTTP rewire",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit)",
-      "evidence": "G5a: P2-KD-F 5641f2a1 — git show confirms RENAME (domain/services.ts => _deprecated/services_v1.ts), atomic with usecase rewire to reading_composer; original path GONE from tree. G5b: P2-KD-G 6fc7b6b3 — 6 MCP handlers in apps/mcp-server/src/interface/mcp/tools/kinhdich/kinhDichTools.ts delegate via HTTP to port 5005; 0 live direct kinh-dich domain imports from mcp-server (grep confirmed). G5c: P2-KD-H cd669df3 — grep 'TODO.*migrat' across kinh-dich-service + mcp-server/src = 0. Evidence: docs/handoffs/TASK_P2-KD-H-g5-evidence.md.",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "Port = 5005 (internal == external) per system-map.json. G5a: superseded domain/services.ts logic moved to src/_deprecated/ (or deleted under kinh-dich-pre-delete tag). G5b: MCP tool handlers confirmed routing HTTP to port 5005 with zero direct domain imports — dev-kinh-dich confirms exact tools in Phase 0. G5c: grep TODO.*migrat = 0. Pre-delete tag: kinh-dich-pre-delete.",
       "phase2Bucket": null
     },
@@ -764,10 +799,10 @@
       "id": "G6",
       "track": "B",
       "title": "Three-level dashboard renders from JSON traces",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit + G9 Playwright cross-confirm)",
-      "evidence": "apps/kinh-dich-service/dashboard/index.html (1903 lines). 3 panels confirmed: Primitives + Module + Microservice. 5 primitive cards (hexagram-resolver, hao-encoder, ngu-hanh-classifier, reading-scorer, nuclear-hexagram-computer), reading_composer module card, microservice card. Label '5 pure TypeScript functions'. Genesis Phase-1 P1-D 7d6cd85f; completed P1-KD-H b7cb55bc (4th primitive) → finalized P2-KD-J 5db652f3 (5th primitive + OpenAPI link + deprecated notice). G9 Playwright Path B confirmed file:// render, 0 network calls, 3 panels, 17 status dots. SI-2 boundary held (docs/dashboards/index.html untouched in Phase 2).",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "Dashboard path: apps/kinh-dich-service/dashboard/index.html. 3 panels: primitives (3-5 cards) + module (reading_composer card) + microservice (service composition card). file:// works with zero network calls and zero external API calls. Renders from scenario trace JSON. NOTE: SI-2 fleet index (docs/dashboards/index.html) is stock-price's G6 deliverable — do NOT claim or touch it here.",
       "phase2Bucket": null
     },
@@ -775,10 +810,10 @@
       "id": "G7",
       "track": "B",
       "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit — live env re-confirm)",
-      "evidence": "Phase-1 P1-E 6fc9b721 — Edit & Rerun modal in dashboard (textarea + command block + Apply); zero-creds env audit PASS (env grep DB_|API_KEY|SECRET|TOKEN|PASSWORD matched only Claude tooling vars, not service creds); zero-infra audit PASS (0 infra imports in primitive/module exec path). Evidence: docs/handoffs/TASK_P1-KD-E.md + TASK_P1-E.md. PO live re-confirm at terminal: env grep for service creds (excl. CTX_ADVISOR/CLAUDE) = 0. Sandbox is pure-compute (JSON in → trace JSON out), no SQLite/network in primitive/module path.",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "Env audit: env | grep -E 'DB_|API_KEY|SECRET|TOKEN|PASSWORD' returns empty. Sandbox runner: bun run sandbox / bunx ts-node sandbox/ (or equivalent). Rerun handler invokes sandbox against edited scenario JSON. Zero SQLite connection in primitive/module execution path (hexagram logic is pure compute). No KINH_DICH_DB_PATH or equivalent in sandbox env.",
       "phase2Bucket": null
     },
@@ -786,10 +821,10 @@
       "id": "G8",
       "track": "B",
       "title": "Red/green status is honest",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit)",
-      "evidence": "P2-KD-K f70d98af. Test A: corrupt hexagram-resolver-golden (hexagram 1→99) → sandbox exit 1 + named FAIL → revert → GREEN. Test B: golden after revert → 17/17 GREEN exit 0. AC-3: 2 additional known-bad runs (ngu-hanh-classifier dynamic flip, hao-encoder state flip) each → exit 1 + named FAIL → revert clean. 3 distinct primitives independently turned sandbox RED. Evidence: docs/handoffs/TASK_P2-KD-K-g8-evidence.md. Honest-red proven at primitive tier (where computation lives); no false greens.",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "Test A = deliberate corruption of golden scenario (e.g. flip expected hexagram number in hexagram-resolver golden, or flip expected dynamic value in ngu-hanh-classifier golden) → dashboard RED, diff captured. Test B = known-good golden → dashboard GREEN, diff null. Both proven before G8 grades YES. Pattern identical across all pilots.",
       "phase2Bucket": null
     },
@@ -798,10 +833,10 @@
       "track": "B",
       "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)",
       "_title_note": "Path B (PO Playwright headless) is Day-0 default per L6 carry-over from TA cycle-19 + macro cycle-53.",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit — Path B PASS, not PARTIAL)",
-      "evidence": "P2-KD-L a2a1002f — Path B PO Playwright (1.60.0 + cached headless chromium, fully autonomous, no user delegation). Against file://apps/kinh-dich-service/dashboard/index.html: consoleErrors=0, pageErrors=0, requestFailed=0; 3 panels render; 17 status dots (15 primitive + 2 module) all dot-pending; green=0 red=0 → zero false greens; 5 group-status labels all NOT-RUN. Verdict PASS (no RED findings). Decision doc: docs/po-decisions/2026-05-24-g9-kinh-dich-playwright-trust.md.",
+      "status": "IN-PROGRESS",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": "HELD from TS pilot (Path B PO Playwright PASS — see tsCompletionArchive.goals_terminal G9). MUST be RE-CONFIRMED on the rebuilt Go dashboard before flipping YES — the TS dashboard render proof no longer applies after the Go rebuild. Path B (PO Playwright headless) is the Day-0 default re-confirm route.",
       "calibration": "Path A: user verbal YES to 'Can you tell from this dashboard whether kinh-dich hexagram resolution is working correctly?' recorded in docs/po-decisions/<date>-g9-kinh-dich-user-confirmation.md. Path B (default): PO Playwright + chromium-headless-shell against file://apps/kinh-dich-service/dashboard/index.html via Terminal.app TCC-stage (L87). Acceptance: ZERO console errors / pageerrors / requestfailed, all 3 panel cards rendered, NOT-RUN status honestly displayed.",
       "phase2Bucket": null
     },
@@ -810,12 +845,12 @@
       "id": "G10",
       "track": "C",
       "title": "AI agent fixes a primitive bug without looping (≤2 cycles)",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit — byte-identical git diff confirmed)",
-      "evidence": "P2-KD-N 292a74de. Bug injected P2-KD-M b5cf8f64 (hao-encoder LAO_DUONG_THRESHOLD 0.75→0.85 single literal, compiled but RED at runtime). dev-kinh-dich stayed BLIND, rediscovered from RED sandbox, fixed in 1 dispatch cycle (≤2, beats baseline 1.5). Sandbox 17/17 GREEN post-fix. PO byte-identical proof at terminal: git diff kinh-dich-pre-inject HEAD -- src/primitive/hao-encoder/index.ts = EMPTY (0 lines) = exact restore, no leftover injection comment.",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "Baseline: docs/data/bug-inventory.json kinh_dich_baseline.baselineCycleCount (fallback 1.5 if <2 bugs in 60d window). max_cycles_allowed=2. Inject 1 deliberate single-literal bug in a primitive (e.g., wrong threshold constant in hao-encoder: LAO_DUONG_THRESHOLD = 0.85 instead of 0.75, or flipped comparison in reading-scorer). Measure dev-kinh-dich cycles to GREEN.",
-      "cycle_count": 1,
+      "cycle_count": null,
       "max_cycles_allowed": 2,
       "phase2Bucket": null
     },
@@ -823,10 +858,10 @@
       "id": "G11",
       "track": "C",
       "title": "Regression alarm bell works",
-      "status": "YES",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal audit — graded at SAME bar as TA cycle-17 + macro cycle-57; limitation disclosed)",
-      "evidence": "P2-KD-N 292a74de. Trial-1 (hao-encoder LAO_DUONG_THRESHOLD literal): ONE source defect → TWO scenarios RED simultaneously (hao-encoder-golden + hao-encoder-edge), single-literal revert (0.85→0.75) repaired BOTH at once = outcome-(a). Trial-2 (DIFFERENT primitive, ngu-hanh-classifier GENERATION[Thuy] table mutation, local-only): ngu-hanh-classifier-golden RED, single-edit revert restored, sandbox 17/17 GREEN = outcome-(a). HONEST LIMITATION (disclosed, not hidden): module-tier scenarios (reading-composer) are STRUCTURAL-FALLBACK PASS in the runner (no live module invocation — runner.ts L533 fallback), so the cross-TIER cascade did NOT fire; the proven alarm mechanism is PRIMITIVE-TIER coupling (one source literal → multiple primitive scenario REDs → single-edit restore). Graded YES at the SAME bar the two prior pilots closed verdict=scale (TA 'ma-golden+ma-sma-vs-ema canaries'; macro '2 coupled scenarios RED'). Recommendation logged in close decision doc: future fleet pilots should make module scenarios live-invoke for true cross-tier coupling. Evidence: docs/handoffs/TASK_P2-KD-N.md §G11.",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "2-trial coupling-proof (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 alias primitive mutation + fix; verify ≥1 coupled scenario RED + single-edit fix repairs all. Trial-2 = DIFFERENT primitive mutation + fix; same coupling proof. Outcome-(a) × 2 = PASS.",
       "phase2Bucket": null
     },
@@ -835,89 +870,1003 @@
       "track": "C",
       "title": "Dev-kinh-dich agent flow requires dashboard-green before done (3-task streak)",
       "_title_note": "The dev-kinh-dich flow DoD gate (sandbox-green-before-RETURN) must be baked Day 0 in Phase 0 (agent-father flow file deliverable). Streak: 3 consecutive dev tasks shipped only after sandbox-green evidence pasted into handoff.",
-      "status": "YES",
+      "status": "TBD",
       "_status_candidacy": "Held EARNED-PENDING through Phases 1-2 per Charter §4.5; flipped YES by PO at 12/12 terminal atomic close (this commit).",
-      "verifiedAt": "2026-05-24T05:00:08Z",
-      "verifiedBy": "po (Phase-3 terminal atomic flip — streak verified by pm at task #3, extended through P1-F)",
-      "evidence": "DoD gate baked Day 0 in .claude/flows/dev-kinh-dich/main.md (P0-KD-3). Streak 3/3 COMPLETE at P1-B3 6bdabbb9, extended to 6/6 consecutive sandbox-green dev tasks (P1-B1 3/3, P1-B2 6/6, P1-B3 9/9, P1-D 11/11, P1-E 11/11, P1-F 14/14). Phase-2 dev tasks (P2-KD-F/G/I/J/N) all carried sandbox-green evidence before RETURN. Evidence: docs/handoffs/TASK_P1-KD-B1.md + B2.md + B3.md + g12Streak block below.",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
       "calibration": "Streak tasks = first-primitive task (B1) + second-primitive task (B2) + third-primitive task (B3). Rule effective after Phase 0 agent-father flow commit. All 3 tasks completed 2026-05-24 with consecutive sandbox-green evidence.",
       "phase2Bucket": null,
       "g12Streak": {
         "required": 3,
-        "completed": 6,
-        "streakComplete": true,
-        "completedAt": "2026-05-24T05:10:00Z",
-        "tasks": [
-          {
-            "taskId": "P1-B1",
-            "title": "hexagram-resolver + R-FENCE discovery",
-            "completedAt": "2026-05-24T01:15:00Z",
-            "sandboxVerdict": "PASS (3/3 scenarios green)"
-          },
-          {
-            "taskId": "P1-B2",
-            "title": "ngu-hanh-classifier",
-            "completedAt": "2026-05-24T08:34:33Z",
-            "sandboxVerdict": "PASS (6/6 scenarios green)"
-          },
-          {
-            "taskId": "P1-B3",
-            "title": "hao-encoder",
-            "completedAt": "2026-05-24T11:42:00Z",
-            "sandboxVerdict": "PASS (9/9 scenarios green)"
-          },
-          {
-            "taskId": "P1-D",
-            "title": "G6 three-level trust dashboard",
-            "completedAt": "2026-05-24T02:01:53Z",
-            "sandboxVerdict": "PASS (11/11 scenarios green)"
-          },
-          {
-            "taskId": "P1-E",
-            "title": "G7 edit-rerun handler + zero-creds env audit",
-            "completedAt": "2026-05-24T04:30:00Z",
-            "sandboxVerdict": "PASS (11/11 scenarios green)"
-          },
-          {
-            "taskId": "P1-F",
-            "title": "reading-scorer optional 4th primitive",
-            "completedAt": "2026-05-24T05:10:00Z",
-            "sandboxVerdict": "PASS (14/14 scenarios green — all tiers)"
-          }
-        ],
-        "ruleEffectiveAfter": "2026-05-24T01:15:00Z (P1-B1 DONE)"
+        "completed": 0,
+        "streakComplete": false,
+        "completedAt": null,
+        "tasks": [],
+        "ruleEffectiveAfter": "<DERIVED: Go dev-kinh-dich flow commit SHA and date>"
       }
     }
   ],
-
   "decisionMatrix": {
     "_authorship_rule": "PO-only per Charter §Constraints + §4.5. Populated ONLY after 12/12 G-goals reach terminal grade. Atomic with last G-goal flips in same commit. NO partial population. NO pre-filling before 12/12. Block stays present-but-empty (TBD) the entire pilot until terminal.",
     "_criteria_source": "Charter §Decision Matrix derivation: Speed = G10 + G11; Trust = G9 (PASS) + G8; Scale = all 12 goals YES + sprintCount ≤ 6.",
-    "speed": "YES",
+    "speed": "TBD",
     "_speed_note": "YES if G10=YES AND G11=YES. Apply mechanically — no PO discretion.",
-    "trust": "YES",
+    "trust": "TBD",
     "_trust_note": "YES if G9=YES (PASS grade, not PARTIAL) AND G8=YES.",
-    "scale": "YES",
+    "scale": "TBD",
     "_scale_note": "YES if all 12 G-goals YES AND sprintCount ≤ 6.",
-    "verdict": "scale",
+    "verdict": "TBD",
     "_verdict_enum": "TBD until matrix terminal. Then one of: scale | rescope | stop-MVR. Derived mechanically: 3×YES → scale; 2×YES → rescope; 0-1×YES → stop-MVR.",
-    "populatedAt": "2026-05-24T05:00:08Z",
-    "populatedBy": "po",
-    "populatedInCommit": "this terminal-close commit (po) — see closureSignal/closureDecisionDoc; SHA recorded in git log for docs/data/pilot-status-kinh-dich.json at 2026-05-24T05:00:08Z",
+    "populatedAt": null,
+    "populatedBy": null,
+    "populatedInCommit": null,
     "criteriaApplication": {
-      "speed": "G10=YES (1 cycle ≤ 2, beats baseline 1.5) AND G11=YES (primitive-tier coupling alarm proven both trials) → YES",
-      "trust": "G9=YES (Path B PO Playwright PASS, 0 errors, honest NOT-RUN cold-open, not PARTIAL) AND G8=YES (honest-red proven on 3 primitives) → YES",
-      "scale": "all 12 G-goals YES AND sprintCount=3 ≤ 6 → YES"
+      "speed": null,
+      "trust": null,
+      "scale": null
     },
-    "outcome": "scale — continue fleet to pilot 5 (alert-engine, Go) when WIP permits. 3×YES."
+    "outcome": null
   },
-
-  "verdict": "scale",
+  "verdict": "TBD",
   "_verdict_note": "Mirrors decisionMatrix.verdict. TBD during ACTIVE. Set to scale | rescope | stop-MVR at terminal close.",
-
-  "goalsEarned": 12,
+  "goalsEarned": 0,
   "_goalsEarned_note": "Running counter of goals with status=YES. Incremented by whoever flips each goal. Must equal 12 at terminal close.",
-
+  "tsCompletionArchive": {
+    "_note": "TS pilot completion record — PRESERVED VERBATIM. kinh-dich reached terminal 12/12 goals YES, verdict=scale, in TypeScript/Bun on 2026-05-24T05:00:08Z. Reopened DONE->ACTIVE for a USER-DIRECTED Go reboot (decision: docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md). This block is the earned TS history; the live top-level fields below now track the Go reboot.",
+    "archivedAt": "2026-05-24T06:56:57Z",
+    "archivedBy": "po (USER-DIRECTIVE Go-reboot reopen 2026-05-24)",
+    "language": "TypeScript",
+    "status_at_archive": "DONE",
+    "verdict_at_archive": "scale",
+    "goalsEarned_at_archive": 12,
+    "sprintCount": 3,
+    "charterRef": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md",
+    "charterVersion": "2.0",
+    "closedAt": "2026-05-24T05:00:08Z",
+    "closedBy": "po (Phase-3 terminal 12/12 atomic close — SECOND fleet pilot to reach terminal this session, after stock-price)",
+    "closureSignal": "docs/signals/po-kinh-dich-phase3-terminal-close-20260524T050008Z.json",
+    "closureDecisionDoc": "docs/po-decisions/2026-05-24-kinh-dich-phase3-terminal-12of12-close.md",
+    "languageLockSource": "docs/signals/po-pilot4-kinh-dich-open-20260523T223738Z.json — kinh-dich is natively TS/Bun (language_locked: true); no rewrite step; pilot-charter.md §Language Lock",
+    "languageLockedAt": "2026-05-24",
+    "phase0": {
+      "status": "CLOSED",
+      "_status_enum": "Allowed values: OPEN | CLOSED",
+      "openedAt": "2026-05-24T00:00:00Z",
+      "openedBy": "architect (charter cycle 2026-05-24)",
+      "closedAt": "2026-05-24T23:15:00Z",
+      "closedBy": "pm (exit gate verification cycle)",
+      "owner": "architect + system-auditor + agent-father (+ dev-kinh-dich R-FENCE feasibility confirmation)",
+      "deliverables": {
+        "pilot_status_ssot": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T00:00:00Z",
+          "path": "docs/data/pilot-status-kinh-dich.json",
+          "owner": "architect",
+          "handoff": "n/a (charter cycle)"
+        },
+        "brownfield_inventory": {
+          "status": "DISPATCHED",
+          "dispatchedAt": "2026-05-24T12:00:00Z",
+          "path": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md",
+          "owner": "architect + system-auditor",
+          "handoff": "docs/handoffs/TASK_P0-KD-1-brownfield-inventory.md",
+          "task_id": "P0-KD-1"
+        },
+        "bug_inventory_entry": {
+          "status": "DISPATCHED",
+          "dispatchedAt": "2026-05-24T12:00:00Z",
+          "path": "docs/data/bug-inventory.json (kinh_dich_baseline block)",
+          "owner": "system-auditor",
+          "handoff": "docs/handoffs/TASK_P0-KD-2-bug-inventory-entry.md",
+          "task_id": "P0-KD-2"
+        },
+        "dev_agent_file": {
+          "status": "DISPATCHED",
+          "dispatchedAt": "2026-05-24T12:00:00Z",
+          "path": ".claude/agents/dev-kinh-dich.md",
+          "owner": "agent-father",
+          "handoff": "docs/handoffs/TASK_P0-KD-3-agent-flow-baking.md",
+          "task_id": "P0-KD-3",
+          "note": "Skill: agent-md-factory; includes G12 DoD gate constraint"
+        },
+        "dev_agent_flow_file": {
+          "status": "DISPATCHED",
+          "dispatchedAt": "2026-05-24T12:00:00Z",
+          "path": ".claude/flows/dev-kinh-dich/main.md",
+          "owner": "agent-father",
+          "handoff": "docs/handoffs/TASK_P0-KD-3-agent-flow-baking.md",
+          "task_id": "P0-KD-3",
+          "note": "G12 DoD Gate baked Day 0; Fence-A/B/C rules; pre-revert tags (kinh-dich-pre-ci, kinh-dich-pre-delete, kinh-dich-pre-inject)"
+        },
+        "phase_1_task_plan": {
+          "status": "DISPATCHED",
+          "dispatchedAt": "2026-05-24T12:00:00Z",
+          "path": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md",
+          "owner": "architect",
+          "handoff": "docs/handoffs/TASK_P0-KD-4-phase1-task-plan.md",
+          "task_id": "P0-KD-4",
+          "note": "7-9 atomic Phase 1 tasks; ~10-12 dev-hours; 2-3 sprints; WIP=1"
+        }
+      },
+      "dispatch_signal": "docs/signals/pm-kinh-dich-phase0-dispatch-20260524T120000Z.json",
+      "exit_gate": {
+        "all_deliverables_landed": true,
+        "pilot_status_phase_0_fields_populated": true,
+        "no_code_in_service_src_primitive_yet": true,
+        "no_code_in_service_src_module_yet": true,
+        "exit_gate_status": "PASS",
+        "closedAt": "2026-05-24T23:15:00Z",
+        "verification_commit_sha_architect": "pm-verified-all-4-signals-20260524T231500Z",
+        "verification_signal": "pm-kinh-dich-p1-a-dispatch-20260524T231500Z.json",
+        "deliverable_verdicts": {
+          "D0_charter_ssot": "VERIFIED — docs/data/pilot-status-kinh-dich.json instantiated (charter v2.0 commit 4e914a81)",
+          "P0-KD-1_brownfield_inventory": "VERIFIED — docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md + signal architect-kinh-dich-p0-kd-1-done-20260524T230418Z.json + R-FENCE=VIABLE + 5 primitives confirmed",
+          "P0-KD-2_bug_inventory_baseline": "VERIFIED — docs/data/bug-inventory.json kinh_dich_baseline block + signal system-auditor-kinh-dich-p0-kd-2-done-20260524T120000Z.json + baselineCycleCount=1.5",
+          "P0-KD-3_dev_agent_flow": "VERIFIED — .claude/agents/dev-kinh-dich.md + .claude/flows/dev-kinh-dich/main.md + signal agent-father-kinh-dich-p0-kd-3-done-20260523T230414Z.json + G12 DoD gate baked + all 6 ACs PASS",
+          "P0-KD-4_phase_1_task_plan": "VERIFIED — docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md + signal architect-p0-kd-4-done-20260523T231332Z.json + 9 tasks / 54 ACs + WIP=1"
+        },
+        "expected_return_signals": [
+          "architect-kinh-dich-p0-kd-1-done-20260524T230418Z.json ✓",
+          "system-auditor-kinh-dich-p0-kd-2-done-20260524T120000Z.json ✓",
+          "agent-father-kinh-dich-p0-kd-3-done-20260523T230414Z.json ✓",
+          "architect-p0-kd-4-done-20260523T231332Z.json ✓"
+        ]
+      }
+    },
+    "phase1": {
+      "_note": "Phase 1 APPROVED (CLEAN FULL GO) — all 9 Phase-1 tasks complete with clean sandbox green. P1-A DONE (1e76d339). P1-B1 DONE (50c2d2ff). P1-B2 DONE (7598c113). P1-B3 DONE (6bdabbb9, G12 streak #3 COMPLETE). P1-C VERIFIED DONE (50069d69, MarkovPort Option B + inline delegation). P1-D VERIFIED DONE (7d6cd85f, G6 dashboard file://). P1-E VERIFIED DONE (6fc9b721, edit-rerun + zero-creds audit). P1-F VERIFIED DONE (43158e5c + 3114adf7, reading-scorer 4th primitive). P1-G close-gate completed with CONDITIONAL-GO (QA 3/4 criteria). P1-KD-H DONE (b7cb55bc, dashboard 6/6 card groups + reading-scorer 4th primitive). P1-KD-QA-AC2-REVERT DONE (34205c87, AC-2 re-verify PASS: 6/6 = 100% + honest NOT-RUN + file self-contained). Next gate = Phase-2 authorization (PO → architect Phase-2 task plan).",
+      "status": "APPROVED",
+      "_status_enum": "Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
+      "openedAt": "2026-05-24T23:15:00Z",
+      "openedBy": "pm (exit gate verification cycle)",
+      "gateVerdict": "clean full GO (PO decision fix-then-clean-GO 2026-05-24 + QA AC-2 re-verify PASS 2026-05-24)",
+      "gateVerifiedAt": "2026-05-24T07:00:00Z",
+      "gateVerifiedBy": "qa",
+      "gateCommit": "34205c87",
+      "gateDecisionDoc": "docs/po-decisions/2026-05-24-kinh-dich-phase1-close-gate-fix-then-clean-go.md",
+      "gateSignal": "docs/signals/qa-kinh-dich-P1-KD-QA-AC2-REVERT-done-20260524T070000Z.json",
+      "closedAt": "2026-05-24T07:00:00Z",
+      "closedBy": "qa (AC-2 re-verify PASS)",
+      "milestone": {
+        "verdict": "clean full GO",
+        "verifiedBy": "qa",
+        "evidence": [
+          "docs/handoffs/TASK_P1-KD-QA-AC2-REVERT-evidence.md (commit 34205c87)",
+          "docs/signals/qa-kinh-dich-P1-KD-QA-AC2-REVERT-done-20260524T070000Z.json"
+        ],
+        "date": "2026-05-24"
+      },
+      "skeleton_in": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §Phase Skeleton",
+      "task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-ts.md (DELIVERED P0-KD-4)",
+      "wip_limit": 1,
+      "task_sequence": [
+        "P1-A",
+        "P1-B1",
+        "P1-B2",
+        "P1-B3",
+        "P1-C",
+        "P1-D",
+        "P1-E",
+        "P1-F (optional)",
+        "P1-G",
+        "P1-KD-H (phase1-finalization)",
+        "P1-KD-QA-AC2-REVERT"
+      ],
+      "current_task": "P1-KD-H",
+      "current_task_status": "READY",
+      "current_task_handoff": "docs/handoffs/TASK_P1-KD-H.md",
+      "progress_notes": [
+        "2026-05-24T23:15:00Z — Phase 1 OPENED; P1-A handoff created; dev-kinh-dich ready to accept",
+        "2026-05-24T00:00:00Z — P1-A DONE (commit 1e76d339); all 6 ACs PASS (zero-creds, zero-infra, sandbox-green); P1-B1 sequenced",
+        "2026-05-24T01:15:00Z — P1-B1 DONE (commit 50c2d2ff); all 8 ACs PASS; R-FENCE discovery VIABLE; §R-FENCE Discovery section recorded in TASK_P1-KD-B1.md; G12 streak 1/3 earned; P1-B2 sequenced",
+        "2026-05-24T08:34:33Z — P1-B2 DONE (commit 7598c113); all 5 ACs PASS; sandbox 6/6 green (hexagram-resolver ×3 + ngu-hanh-classifier ×3); G12 streak 2/3 earned; P1-B3 sequenced",
+        "2026-05-24T11:42:00Z — P1-B3 DONE (commit 6bdabbb9); all 6 ACs PASS; sandbox 9/9 green (all 3 primitives); THIEU_DUONG_THRESHOLD=0.10 source-authoritative (handoff noted 0.25, corrected to 0.10); G12 streak 3/3 COMPLETE; G12 status=EARNED-PENDING (matrix stays empty pending 12/12 terminal close); P1-C sequenced",
+        "2026-05-24T01:51:24Z — P1-C VERIFIED DONE (commit 50069d69); all 9 ACs PASS (Fence-B clean: 0 infra imports, 0 cross-module); sandbox 11/11 green (9 primitive + 2 module); MarkovPort Option B inline interface; Steps 8-10: inline delegation to domain/services.ts computeReading(); tsc --noEmit clean; unit tests 6/6 pass; P1-D sequenced",
+        "2026-05-24T02:01:53Z — P1-D VERIFIED DONE (commit 7d6cd85f); all 10 ACs PASS (dashboard file://, 3 levels, 11 scenarios embedded, honest NOT-RUN, modal+aria, microservice card, rerun cmd, legend+footer, HTML valid, G12 sandbox 11/11); G12 streak 4/4 (B1+B2+B3+D all sandbox-green); SI-2 boundary held (docs/dashboards/ untouched); P1-E sequenced",
+        "2026-05-24T04:30:00Z — P1-E VERIFIED DONE (commit 6fc9b721, conflated with P2-C); all 8 ACs PASS (Edit-rerun modal, zero-creds env audit PASS, zero-infra audit PASS, deliberate-break-reverted PASS, sandbox 11/11 green, SI-3 fence integrity held); G12 streak 5/5 (B1+B2+B3+D+E all sandbox-green); NOTE: commit 6fc9b721 shared-git-index conflation with stock-price P2-C files (cosmetic race, no work lost); P1-F handoff created (optional for remaining Phase 1 time)",
+        "2026-05-24T05:10:00Z — P1-F VERIFIED DONE (commits 43158e5c + 3114adf7); all 6 ACs PASS (four functions exported + embedded tables, Fence-A clean, 26 unit tests pass, sandbox 12/12 primitives green, 3 scenario JSONs created, G12 DoD gate 14/14 all-tiers green); G12 streak 6/6 (B1+B2+B3+D+E+F all sandbox-green); CONTRACT DISCREPANCY NOTED: extractAction signature is (actionText: string) per faithful domain contract L443, NOT (score: number) as handoff spec stated — dev correctly preserved authentic domain contract and documented in JSDoc; graphify-skip noted (zero-creds env); P1-G close-gate ready (qa owner)"
+      ],
+      "tasks": {
+        "P1-A": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T00:00:00Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "1e76d339",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS"
+          }
+        },
+        "P1-B1": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T01:15:00Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "50c2d2ff",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS",
+            "AC-7": "PASS",
+            "AC-8": "PASS"
+          },
+          "r_fence_discovery": "RECORDED (.js-suffixed ESM import style)"
+        },
+        "P1-B2": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T08:34:33Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "7598c113",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS"
+          }
+        },
+        "P1-B3": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T11:42:00Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "6bdabbb9",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS"
+          }
+        },
+        "P1-C": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T01:51:24Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "50069d69",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS",
+            "AC-7": "PASS",
+            "AC-8": "PASS",
+            "AC-9": "PASS"
+          }
+        },
+        "P1-D": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T02:01:53Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "7d6cd85f",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS",
+            "AC-7": "PASS",
+            "AC-8": "PASS",
+            "AC-9": "PASS",
+            "AC-10": "PASS"
+          }
+        },
+        "P1-E": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T04:30:00Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "6fc9b721",
+          "commit_conflation_note": "Shared-git-index race with stock-price P2-C files. Commit includes both P1-E changes (apps/kinh-dich-service/dashboard/index.html + P1-E handoff) and P2-C changes (P2-C.md + signal). No work lost; cosmetic; no split/rebase applied per protocol.",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS (zero-creds env audit: DB_PATH|KINH_DICH_DB|API_KEY|SECRET|TOKEN|PASSWORD grep matched only Claude Code tooling vars CTX_ADVISOR_*, not service credentials)",
+            "AC-4": "PASS (zero-infra audit: grep infrastructure|hono|SQLite|getDb|repositories returned 0 actual imports)",
+            "AC-5": "PASS (deliberate edit test: corrupted signals[5], produced [FAIL], reverted clean)",
+            "AC-6": "PASS (G12 DoD: [sandbox] PASS 11/11 scenarios)",
+            "AC-7": "PASS (SI-3 fence integrity: no new TS files, no Phase-2 tags created)",
+            "AC-8": "PASS (modal UX: Edit & Rerun button + instructions + command block + textarea + Apply)"
+          }
+        },
+        "P1-F": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T05:10:00Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "43158e5c",
+          "commit_completion_sha": "3114adf7",
+          "optional": true,
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS"
+          },
+          "sandbox_verdict": "14/14 PASS (12 primitives + 2 module)",
+          "contract_note": "extractAction signature is (actionText: string) per faithful domain contract at L443, NOT (score: number) as handoff spec stated. Dev preserved correct domain signature + documented discrepancy in JSDoc.",
+          "graphify_note": "skipped — zero-creds env unavailable in Phase 1"
+        },
+        "P1-G": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T06:30:00Z",
+          "completedBy": "qa",
+          "qa_gate_status": "CONDITIONAL-GO",
+          "qa_close_gate_criteria": "3/4 exit criteria PASS (AC-1, AC-3, AC-4, AC-5, AC-6 all PASS; AC-2 honest-RED: 5/6 card groups = 83% < 90% gate — reading-scorer 4th primitive absent from dashboard)",
+          "qa_decision_doc": "docs/signals/qa-kinh-dich-phase1-close-gate-20260524T060000Z.json",
+          "note": "Close-gate routed to PO for fix-then-clean-GO authorization"
+        },
+        "P1-KD-H": {
+          "status": "DONE",
+          "owner": "dev-kinh-dich",
+          "zone": "apps/kinh-dich-service",
+          "type": "FIX",
+          "size": "XS",
+          "handoff": "docs/handoffs/TASK_P1-KD-H.md",
+          "authorized_at": "2026-05-24T01:03:15Z",
+          "authorized_by": "po",
+          "authorization_signal": "docs/signals/po-kinh-dich-phase1-fix-then-clean-go-20260524T010315Z.json",
+          "note": "Dashboard completion — add reading-scorer 4th primitive with 3 real scenarios; update panel label to '4 pure TypeScript functions'; ensure sandbox stays 14/14 green. G12 DoD applies.",
+          "completedAt": "2026-05-24T06:45:00Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "b7cb55bc",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS"
+          }
+        },
+        "P1-KD-QA-AC2-REVERT": {
+          "status": "DONE",
+          "owner": "qa",
+          "type": "QA-GATE",
+          "scope": "AC-2-only spot re-verify",
+          "note": "After P1-KD-H DONE: confirm 6/6 = 100% dashboard render, honest cold-open NOT-RUN preserved, file self-contained. On QA PASS -> Phase-1 = clean full GO; PM flips phase1 -> APPROVED.",
+          "depends_on": "P1-KD-H",
+          "blocks": "Phase-1 clean-GO close (status=APPROVED)",
+          "completedAt": "2026-05-24T07:00:00Z",
+          "completedBy": "qa",
+          "commit_sha": "34205c87",
+          "verdict": "PASS",
+          "evidence": "docs/handoffs/TASK_P1-KD-QA-AC2-REVERT-evidence.md"
+        }
+      }
+    },
+    "phase2": {
+      "_note": "Phase 2 CLOSED (2026-05-24T00:00:00Z by pm → 2026-05-24T05:00:00Z closed). 14 tasks (P2-KD-A through P2-KD-Z), 77 ACs. All 14 tasks DONE. QA verdict: READY-FOR-PHASE-3 (P2-KD-Z close-gate: 7/7 ACs PASS).",
+      "status": "CLOSED",
+      "_status_enum": "Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
+      "openedAt": "2026-05-24T00:00:00Z",
+      "openedBy": "pm (Phase 2 dispatch cycle)",
+      "closedAt": "2026-05-24T05:00:00Z",
+      "closedBy": "qa (P2-KD-Z close-gate READY-FOR-PHASE-3 verdict)",
+      "skeleton_in": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §Phase Skeleton",
+      "taskPlan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-ts.md",
+      "taskCount": 14,
+      "acCount": 77,
+      "wipPolicy": "WIP=1 sequential; R-FENCE gate (AC-4b deliberate-violation proof) baked into first-fence task AC as first chokepoint",
+      "wip_limit": 1,
+      "current_task": "P2-KD-Z",
+      "current_task_owner": "qa",
+      "current_task_handoff": "docs/handoffs/TASK_P2-KD-Z.md",
+      "tasks": {
+        "P2-KD-A": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T03:08:17Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "2d245200",
+          "owner": "dev-kinh-dich",
+          "title": "Create kinh-dich-pre-ci tag (pre-revert anchor before G4 work)",
+          "handoff": "docs/handoffs/TASK_P2-KD-A.md",
+          "blocked_by": null,
+          "blocks": "P2-KD-B",
+          "est_hours": 0.08,
+          "ac_count": 3,
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS"
+          },
+          "tag_sha": "2d245200",
+          "tag_name": "kinh-dich-pre-ci"
+        },
+        "P2-KD-B": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T03:15:43Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "267446e6",
+          "owner": "dev-kinh-dich",
+          "title": "eslint.config.mjs Fence-A/B/C creation + bunx eslint CI wiring",
+          "handoff": "docs/handoffs/TASK_P2-KD-B.md",
+          "blocked_by": "P2-KD-A",
+          "blocks": "P2-KD-C",
+          "est_hours": 1.0,
+          "ac_count": 5,
+          "g_goals_advanced": [
+            "G4 partial"
+          ],
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS"
+          },
+          "r2_fallback_applied": true,
+          "r2_reason": "@typescript-eslint/parser added per handoff R-2 spec (SI-3 §6.2) — stays within Option A",
+          "enforcement_caveat": "Config creation ACs were met (status=DONE). However, the fence did NOT actually enforce until P2-KD-C (commit 205aa5cf) fixed three silent-failure bugs: rule rename (boundaries/element-types→dependencies), pattern matching (src/<layer>/**/*→src/<layer>/**), and TypeScript resolver for .js-suffixed imports. Therefore, G4 enforcement is genuinely earned as of P2-KD-C (205aa5cf), not P2-KD-B."
+        },
+        "P2-KD-C": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T03:21:15Z",
+          "completedBy": "dev-kinh-dich + qa",
+          "commit_sha": "205aa5cf",
+          "owner": "dev-kinh-dich + qa",
+          "title": "G4 deliberate-violation proof (Fence-A/B/C test — reverted, NEVER committed)",
+          "handoff": "docs/handoffs/TASK_P2-KD-C-evidence.md",
+          "blocked_by": "P2-KD-B",
+          "blocks": "P2-KD-D",
+          "est_hours": 0.5,
+          "ac_count": 5,
+          "g_goals_advanced": [
+            "G4 full — R-FENCE gate proof"
+          ],
+          "note": "R-FENCE gate PROVEN: AC-4b proof produced non-zero exit + 'Fence-A: primitive must not import application layer' on real .js-suffixed ESM import style. Inline enforcement fixes applied: rule rename, pattern matching, TypeScript resolver. Violation reverted, git clean, sandbox 14/14 green.",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS"
+          }
+        },
+        "P2-KD-D": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T23:30:00Z",
+          "completedBy": "qa",
+          "commit_sha": "d66dcad1",
+          "owner": "qa",
+          "title": "G4 freeze anchor confirmation (AC-4c)",
+          "handoff": "docs/handoffs/TASK_P2-KD-D-g4-evidence.md",
+          "blocked_by": "P2-KD-C",
+          "blocks": "P2-KD-E",
+          "est_hours": 0.25,
+          "ac_count": 3,
+          "note": "Read-only audit confirms freeze anchor = 205aa5cf, tag ancestry OK, no post-anchor touch. G4 evidence chain complete (P2-KD-B config + P2-KD-C violation proof + P2-KD-D freeze confirmation). Honest caveat: fence enforcement did NOT actually work until P2-KD-C fixed 3 bugs (rule rename, pattern matching, TS resolver). G4 genuinely enforcing as of 205aa5cf.",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS"
+          },
+          "g4_ready_to_grade": true,
+          "eslint_freeze_sha": "205aa5cf",
+          "kinh_dich_pre_ci_tag_sha": "2d245200"
+        },
+        "P2-KD-E": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T23:55:00Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "90d287ad",
+          "owner": "dev-kinh-dich",
+          "title": "Create kinh-dich-pre-delete tag (pre-revert anchor before G5a work)",
+          "handoff": "docs/handoffs/TASK_P2-KD-E.md",
+          "blocked_by": "P2-KD-D",
+          "blocks": "P2-KD-F",
+          "est_hours": 0.08,
+          "ac_count": 3,
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS"
+          },
+          "tag_sha": "fdaf4be3",
+          "tag_name": "kinh-dich-pre-delete"
+        },
+        "P2-KD-F": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T03:47:00Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "5641f2a1",
+          "owner": "dev-kinh-dich",
+          "title": "G5a — git mv domain/services.ts → src/_deprecated/ + usecases rewire to reading_composer",
+          "handoff": "docs/handoffs/TASK_P2-KD-F.md",
+          "blocked_by": "P2-KD-E",
+          "blocks": "P2-KD-G",
+          "est_hours": 1.5,
+          "ac_count": 7,
+          "g_goals_advanced": [
+            "G5a"
+          ],
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS",
+            "AC-7": "PASS"
+          },
+          "note": "CRITICAL: atomic move (git mv + rewire staged together, committed as ONE commit). Self-verify post-commit: git show --stat shows RENAME (not add/delete); original domain/services.ts is GONE from tree (git ls-tree -r HEAD shows only _deprecated/ path). Hexagram data handling decision: move to hexagram-data.ts OR embed in primitives (dev chooses, documents)."
+        },
+        "P2-KD-G": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T04:06:19Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "6fc7b6b3",
+          "owner": "dev-kinh-dich",
+          "title": "G5b — MCP handler HTTP rewire: 6 tools → port 5005 + 4 new kinh-dich-service endpoints",
+          "handoff": "docs/handoffs/TASK_P2-KD-G.md",
+          "blocked_by": "P2-KD-F",
+          "blocks": "P2-KD-H",
+          "est_hours": 3.0,
+          "ac_count": 8,
+          "g_goals_advanced": [
+            "G5b"
+          ],
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS",
+            "AC-7": "PASS",
+            "AC-8": "PASS"
+          },
+          "note": "COMPLETED. Rewrite 6 MCP tool handlers from direct mcp-server domain copy imports to HTTP calls to port 5005. Added 4 new kinh-dich-service endpoints. Zero live imports from parallel copy post-completion. Score helpers remain in mcp-server. Port 5005 confirmed in clients.ts. Sandbox 14/14 green. All 8 ACs PASS."
+        },
+        "P2-KD-H": {
+          "status": "DONE",
+          "owner": "qa",
+          "title": "G5c — zero TODO.*migrat audit + G5 evidence sign-off",
+          "handoff": "docs/handoffs/TASK_P2-KD-H.md",
+          "handoff_evidence": "docs/handoffs/TASK_P2-KD-H-g5-evidence.md",
+          "blocked_by": "P2-KD-G",
+          "blocks": "P2-KD-I",
+          "est_hours": 0.5,
+          "ac_count": 5,
+          "completedAt": "2026-05-24T00:00:00Z",
+          "completedBy": "qa",
+          "commit_sha": "cd669df3",
+          "signal_sha": "46df5763",
+          "g_goals_advanced": [
+            "G5b",
+            "G5c"
+          ],
+          "note": "Read-only audit: confirm zero TODO.*migrat across kinh-dich-service and mcp-server tools. Verify G5b rewire post-completion. Compile G5 evidence summary. All 5 ACs PASS.",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS"
+          }
+        },
+        "P2-KD-I": {
+          "status": "DONE",
+          "owner": "dev-kinh-dich",
+          "title": "G3 — composition root cleanup ≤80L + OpenAPI contract",
+          "handoff": "docs/handoffs/TASK_P2-KD-I.md",
+          "blocked_by": "P2-KD-H",
+          "blocks": "P2-KD-J",
+          "est_hours": 1.5,
+          "ac_count": 6,
+          "completedAt": "2026-05-24T04:16:30Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "db0692d3",
+          "g_goals_advanced": [
+            "G3"
+          ],
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS"
+          },
+          "note": "Wire reading_composer module; ensure MarkovPort injection only in composition root (Fence-C); target ≤80 lines; create OpenAPI YAML contract for all 7 endpoints including 4 new G5b endpoints."
+        },
+        "P2-KD-J": {
+          "status": "DONE",
+          "owner": "dev-kinh-dich",
+          "title": "G6 finalization — dashboard contract-linking + nuclear-hexagram-computer 5th primitive",
+          "handoff": "docs/handoffs/TASK_P2-KD-J.md",
+          "blocked_by": "P2-KD-I",
+          "blocks": "P2-KD-K",
+          "est_hours": 2.0,
+          "ac_count": 7,
+          "completedAt": "2026-05-24T04:26:34Z",
+          "completedBy": "dev-kinh-dich",
+          "commit_sha": "5db652f3",
+          "g_goals_advanced": [
+            "G6",
+            "G1"
+          ],
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS",
+            "AC-7": "PASS"
+          },
+          "sandbox_verdict": "17/17 PASS (14 Phase-1 baseline + 3 nuclear-hexagram-computer)",
+          "dashboard_primitives_count": 5,
+          "note": "Add 5th primitive card (nuclear-hexagram-computer with 3 scenarios: golden/edge/failure); link OpenAPI contract in microservice panel; add deprecated notice for G5a; update dashboard labels to '5 pure TypeScript functions'; G12 DoD rises to 17/17 scenarios. SI-2 boundary held (no touch to docs/dashboards/)."
+        },
+        "P2-KD-K": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T23:59:00Z",
+          "completedBy": "qa",
+          "commit_sha": "f70d98af",
+          "owner": "qa",
+          "title": "G8 honest-red deliberate-break proof (bun sandbox RED on corrupted + GREEN on revert)",
+          "handoff": "docs/handoffs/TASK_P2-KD-K.md",
+          "handoff_evidence": "docs/handoffs/TASK_P2-KD-K-g8-evidence.md",
+          "blocked_by": "P2-KD-J",
+          "blocks": "P2-KD-L",
+          "est_hours": 0.5,
+          "ac_count": 5,
+          "g_goals_advanced": [
+            "G8"
+          ],
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS"
+          },
+          "note": "Two tests prove dashboard is honest: Test A = deliberately corrupt a scenario → sandbox RED + dashboard shows non-green for affected card → revert; Test B = golden scenario after revert → sandbox GREEN + dashboard shows green. Both scenarios reverted clean (no commit). Handoff evidence compiled and signal emitted. Router verified: 3 primitives corrupted → each sandbox exit 1 with named FAIL, golden revert → 17/17 GREEN, scenario tree clean (no residue)."
+        },
+        "P2-KD-L": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T04:35:45Z",
+          "completedBy": "po",
+          "commit_sha": "a2a1002f",
+          "owner": "po",
+          "title": "G9 PO Playwright Path B (chromium-headless-shell, TCC-staged via Terminal.app)",
+          "handoff": "docs/handoffs/TASK_P2-KD-L.md",
+          "blocked_by": "P2-KD-K",
+          "blocks": "P2-KD-M",
+          "est_hours": 0.5,
+          "ac_count": 4,
+          "g_goals_advanced": [
+            "G9"
+          ],
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS"
+          },
+          "note": "G9 dashboard trust contract via Path B (PO Playwright headless chromium — Day-0 default per L6). Opened file://apps/kinh-dich-service/dashboard/index.html via headless chromium. Verified: zero console/page/request errors (consoleErrors=0, pageErrors=0, requestFailed=0), all 3 panels render (3 panels, 15 primitive + 2 module + 1 service = 17 status dots), honest NOT-RUN status (green=0, red=0, pending=17). Path B fully autonomous — no user delegation required; Playwright 1.60.0 + cached chromium confirmed available. Evidence: docs/po-decisions/2026-05-24-g9-kinh-dich-playwright-trust.md (PO decision doc, not code-touching)."
+        },
+        "P2-KD-M": {
+          "status": "DONE",
+          "completedAt": "2026-05-24T00:00:00Z",
+          "completedBy": "qa",
+          "commit_sha": "b5cf8f64",
+          "owner": "qa",
+          "title": "Create kinh-dich-pre-inject tag + G10 deliberate bug injection",
+          "handoff": "docs/handoffs/TASK_P2-KD-M.md",
+          "blocked_by": "P2-KD-L",
+          "blocks": "P2-KD-N",
+          "est_hours": 0.33,
+          "ac_count": 4,
+          "g_goals_advanced": [
+            "G10 setup"
+          ],
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS"
+          },
+          "note": "Tag created FIRST (Step 0, before injection), bug injected SECOND. Single-literal defect in hao-encoder (e.g., threshold off-by-one, comparison flip, or mapping value flip). Bug compiles (tsc exit 0) but fails at runtime (hao-encoder golden scenario FAIL). Committed as real defect. G12 DoD EXCEPTION: RED sandbox after P2-KD-M is CORRECT and required (G10 baseline for fix cycle). P2-KD-N fixer stays BLIND to literal, must rediscover from RED dashboard."
+        },
+        "P2-KD-N": {
+          "status": "DONE",
+          "owner": "dev-kinh-dich + qa",
+          "title": "G10 AI-fixability proof (≤2 cycles) + G11 2-trial coupling proof",
+          "handoff": "docs/handoffs/TASK_P2-KD-N.md",
+          "handoff_evidence": "docs/handoffs/TASK_P2-KD-N-g10-g11.md",
+          "blocked_by": "P2-KD-M",
+          "blocks": "P2-KD-Z",
+          "est_hours": 1.5,
+          "ac_count": 5,
+          "completedAt": "2026-05-24T00:00:00Z",
+          "completedBy": "dev-kinh-dich + qa",
+          "commit_sha": "292a74de",
+          "g_goals_advanced": [
+            "G10",
+            "G11"
+          ],
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS"
+          },
+          "note": "G10 cycle-1 blind-fix: dev-kinh-dich rediscovered and fixed injected hao-encoder literal bug in 1 dispatch cycle (EXCEEDS baseline 1.5). Sandbox 17/17 GREEN post-fix. G11 trial-2 PASS: ngu-hanh-classifier mutation + coupling proof verified. Both G10 and G11 evidence complete. Router verified: git diff kinh-dich-pre-inject HEAD -- apps/kinh-dich-service/src/primitive/hao-encoder/index.ts is EMPTY (byte-identical restore). No leftover injection comment. Working tree clean."
+        },
+        "P2-KD-Z": {
+          "status": "DONE",
+          "owner": "qa",
+          "title": "Phase 2 close-gate verification (QA)",
+          "handoff": "docs/handoffs/TASK_P2-KD-Z.md",
+          "handoff_evidence": "docs/handoffs/TASK_P2-KD-Z-close-gate-evidence.md",
+          "blocked_by": "P2-KD-N",
+          "blocks": "Phase 3 (PO atomic close)",
+          "est_hours": 0.5,
+          "ac_count": 7,
+          "completedAt": "2026-05-24T05:00:00Z",
+          "completedBy": "qa",
+          "commit_sha": "b549d5ee",
+          "ac_verdicts": {
+            "AC-1": "PASS",
+            "AC-2": "PASS",
+            "AC-3": "PASS",
+            "AC-4": "PASS",
+            "AC-5": "PASS",
+            "AC-6": "PASS",
+            "AC-7": "PASS"
+          },
+          "verdict": "READY-FOR-PHASE-3",
+          "note": "Read-only audit + signal emission. All Phase-2 goal evidence present, sandbox 17/17 stable green, pre-revert tags ordered, anchor INTACT, SSOT unmutated (goalsEarned=0, decisionMatrix=TBD). No goal flips authorized during Phase 2. Signal directs PM to transition phase2=CLOSED and notify PO for Phase-3 terminal atomic close."
+        }
+      }
+    },
+    "goals_terminal": [
+      {
+        "_track_note": "Track A — Trust Foundation (G1-G5). Structural correctness of the DDD primitive/module/service layers.",
+        "id": "G1",
+        "track": "A",
+        "title": "Primitives ship with scenarios",
+        "status": "YES",
+        "_status_enum": "Allowed values: TBD | IN-PROGRESS | YES | NO | PARTIAL | DEFER. Flipped to YES only when all AC pass and evidence is locked. PO-only authorship per Charter §4.5.",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit — sandbox re-run + filesystem confirm)",
+        "evidence": "5 primitives in apps/kinh-dich-service/src/primitive/ (hexagram-resolver, hao-encoder, ngu-hanh-classifier, reading-scorer, nuclear-hexagram-computer). 5th primitive landed P2-KD-J 5db652f3. Each has 3 scenarios (golden+edge+failure) in docs/scenarios/kinh-dich/primitives/ = 15 files; 5 carry expect_error (failure tier). PO live re-run: bun run src/sandbox/runner.ts --tier=all = PASS 17/17 exit 0. grep 'from.*infrastructure' in src/primitive/ = 0 real imports (5 hits are JSDoc comments).",
+        "calibration": "3-5 TypeScript primitives in src/primitive/; each has ≥3 scenarios (golden + edge + failure). Candidates: hexagram-resolver, hao-encoder, ngu-hanh-classifier, reading-scorer, nuclear-hexagram-computer. dev-kinh-dich confirms exact set in Phase 0. grep src/primitive/ for infrastructure imports must return 0.",
+        "phase2Bucket": null
+      },
+      {
+        "id": "G2",
+        "track": "A",
+        "title": "Module composes primitives via ports",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit)",
+        "evidence": "src/module/reading_composer/ exists (index.ts + ports.ts + index.test.ts). MarkovPort interface defined in ports.ts; infra SQLite impl injected only at composition root (src/index.ts L36-40 composerDeps.markov). P1-C 50069d69 (MarkovPort Option B inline delegation). grep src/infrastructure + cross-module imports in reading_composer = 0 real imports (3 grep hits are JSDoc comments, 1 is a test JSDoc). 2 module scenarios in docs/scenarios/kinh-dich/module/ (golden+edge).",
+        "calibration": "One module: src/module/reading_composer/. Port: MarkovPort (infra provides SQLite impl, injected by composition root, never directly imported by module). Module must import zero infrastructure. Has ≥1 multi-primitive scenario (full KinhDichReading story: 6 scores → complete reading). grep src/module/reading_composer/ for src/infrastructure must return 0.",
+        "phase2Bucket": null
+      },
+      {
+        "id": "G3",
+        "track": "A",
+        "title": "Microservice has clean composition root",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit)",
+        "evidence": "P2-KD-I db0692d3. src/index.ts = 63 lines (≤80). Only imports + DI wiring (incl. MarkovPort injection) + Hono router + server startup. grep computeReading|classifyNguHanh|resolveHexagram|encodeHaos in src/index.ts = 0. OpenAPI YAML present: src/interface/openapi.yaml (7 endpoints). Port 5005 via config (never hardcoded in index.ts).",
+        "calibration": "src/index.ts ≤80 lines; OpenAPI YAML present in src/interface/; zero domain-op grep (computeReading/classifyNguHanh/resolveHexagram/encodeHaos must not appear in index.ts). Port = 5005 (internal == external) per system-map.json — never hardcoded.",
+        "phase2Bucket": null
+      },
+      {
+        "id": "G4",
+        "track": "A",
+        "title": "Architecture fence enforced (offline ESLint boundaries evidence)",
+        "_title_note": "TS service: ESLint fence per SI-3 Option A (eslint-plugin-boundaries v6.0.2). NOT Go depguard. Spec LOCKED at charter v1 — SI-3 §5 'spec is final at charter v1'.",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit — honest caveat preserved)",
+        "evidence": "apps/kinh-dich-service/eslint.config.mjs Fence-A/B/C (eslint-plugin-boundaries). HONEST CAVEAT: P2-KD-B 267446e6 created the config but it was a FALSE-GREEN (3 silent bugs: deprecated rule name, pattern mismatch, missing TS resolver). Genuinely ENFORCING only as of P2-KD-C 205aa5cf (deliberate Fence-A violation → exit 1 + 'Fence-A' in output on real .js-suffixed ESM import; reverted; NEVER committed). Frozen P2-KD-D d66dcad1 (AC-4c freeze anchor = 205aa5cf, no post-anchor touch). R-2 in-Option-A fallback applied (@typescript-eslint/parser + import-resolver-typescript). Evidence: docs/handoffs/TASK_P2-KD-D-g4-evidence.md. Freeze anchor 205aa5cf is most-recent commit on eslint.config.mjs.",
+        "calibration": "Fence tool: eslint-plugin-boundaries (Option A) in apps/kinh-dich-service/eslint.config.mjs. devDependencies: eslint + eslint-plugin-boundaries. CI command: bunx eslint src/ --max-warnings 0. Pre-revert tag: kinh-dich-pre-ci. Deliberate-violation protocol: inject Fence-A import in src/primitive/hexagram-resolver/index.ts → non-zero exit + 'Fence-A' in output → revert → exit 0 + git clean → violation NEVER committed. R-FENCE gate: AC-4b proof must succeed on real .js-suffixed ESM import style. Fallback if R-2 bites: add @typescript-eslint/parser (5-min Option-A internal fix). Full template: charter §G4 eslint.config.mjs block.",
+        "phase2Bucket": null
+      },
+      {
+        "id": "G5",
+        "track": "A",
+        "title": "Old service code deleted + HTTP rewire",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit)",
+        "evidence": "G5a: P2-KD-F 5641f2a1 — git show confirms RENAME (domain/services.ts => _deprecated/services_v1.ts), atomic with usecase rewire to reading_composer; original path GONE from tree. G5b: P2-KD-G 6fc7b6b3 — 6 MCP handlers in apps/mcp-server/src/interface/mcp/tools/kinhdich/kinhDichTools.ts delegate via HTTP to port 5005; 0 live direct kinh-dich domain imports from mcp-server (grep confirmed). G5c: P2-KD-H cd669df3 — grep 'TODO.*migrat' across kinh-dich-service + mcp-server/src = 0. Evidence: docs/handoffs/TASK_P2-KD-H-g5-evidence.md.",
+        "calibration": "Port = 5005 (internal == external) per system-map.json. G5a: superseded domain/services.ts logic moved to src/_deprecated/ (or deleted under kinh-dich-pre-delete tag). G5b: MCP tool handlers confirmed routing HTTP to port 5005 with zero direct domain imports — dev-kinh-dich confirms exact tools in Phase 0. G5c: grep TODO.*migrat = 0. Pre-delete tag: kinh-dich-pre-delete.",
+        "phase2Bucket": null
+      },
+      {
+        "_track_note": "Track B — Dashboard Trust (G6-G9). User-facing trust layer: honest rendering, zero-credential sandbox, user confirmation.",
+        "id": "G6",
+        "track": "B",
+        "title": "Three-level dashboard renders from JSON traces",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit + G9 Playwright cross-confirm)",
+        "evidence": "apps/kinh-dich-service/dashboard/index.html (1903 lines). 3 panels confirmed: Primitives + Module + Microservice. 5 primitive cards (hexagram-resolver, hao-encoder, ngu-hanh-classifier, reading-scorer, nuclear-hexagram-computer), reading_composer module card, microservice card. Label '5 pure TypeScript functions'. Genesis Phase-1 P1-D 7d6cd85f; completed P1-KD-H b7cb55bc (4th primitive) → finalized P2-KD-J 5db652f3 (5th primitive + OpenAPI link + deprecated notice). G9 Playwright Path B confirmed file:// render, 0 network calls, 3 panels, 17 status dots. SI-2 boundary held (docs/dashboards/index.html untouched in Phase 2).",
+        "calibration": "Dashboard path: apps/kinh-dich-service/dashboard/index.html. 3 panels: primitives (3-5 cards) + module (reading_composer card) + microservice (service composition card). file:// works with zero network calls and zero external API calls. Renders from scenario trace JSON. NOTE: SI-2 fleet index (docs/dashboards/index.html) is stock-price's G6 deliverable — do NOT claim or touch it here.",
+        "phase2Bucket": null
+      },
+      {
+        "id": "G7",
+        "track": "B",
+        "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit — live env re-confirm)",
+        "evidence": "Phase-1 P1-E 6fc9b721 — Edit & Rerun modal in dashboard (textarea + command block + Apply); zero-creds env audit PASS (env grep DB_|API_KEY|SECRET|TOKEN|PASSWORD matched only Claude tooling vars, not service creds); zero-infra audit PASS (0 infra imports in primitive/module exec path). Evidence: docs/handoffs/TASK_P1-KD-E.md + TASK_P1-E.md. PO live re-confirm at terminal: env grep for service creds (excl. CTX_ADVISOR/CLAUDE) = 0. Sandbox is pure-compute (JSON in → trace JSON out), no SQLite/network in primitive/module path.",
+        "calibration": "Env audit: env | grep -E 'DB_|API_KEY|SECRET|TOKEN|PASSWORD' returns empty. Sandbox runner: bun run sandbox / bunx ts-node sandbox/ (or equivalent). Rerun handler invokes sandbox against edited scenario JSON. Zero SQLite connection in primitive/module execution path (hexagram logic is pure compute). No KINH_DICH_DB_PATH or equivalent in sandbox env.",
+        "phase2Bucket": null
+      },
+      {
+        "id": "G8",
+        "track": "B",
+        "title": "Red/green status is honest",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit)",
+        "evidence": "P2-KD-K f70d98af. Test A: corrupt hexagram-resolver-golden (hexagram 1→99) → sandbox exit 1 + named FAIL → revert → GREEN. Test B: golden after revert → 17/17 GREEN exit 0. AC-3: 2 additional known-bad runs (ngu-hanh-classifier dynamic flip, hao-encoder state flip) each → exit 1 + named FAIL → revert clean. 3 distinct primitives independently turned sandbox RED. Evidence: docs/handoffs/TASK_P2-KD-K-g8-evidence.md. Honest-red proven at primitive tier (where computation lives); no false greens.",
+        "calibration": "Test A = deliberate corruption of golden scenario (e.g. flip expected hexagram number in hexagram-resolver golden, or flip expected dynamic value in ngu-hanh-classifier golden) → dashboard RED, diff captured. Test B = known-good golden → dashboard GREEN, diff null. Both proven before G8 grades YES. Pattern identical across all pilots.",
+        "phase2Bucket": null
+      },
+      {
+        "id": "G9",
+        "track": "B",
+        "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)",
+        "_title_note": "Path B (PO Playwright headless) is Day-0 default per L6 carry-over from TA cycle-19 + macro cycle-53.",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit — Path B PASS, not PARTIAL)",
+        "evidence": "P2-KD-L a2a1002f — Path B PO Playwright (1.60.0 + cached headless chromium, fully autonomous, no user delegation). Against file://apps/kinh-dich-service/dashboard/index.html: consoleErrors=0, pageErrors=0, requestFailed=0; 3 panels render; 17 status dots (15 primitive + 2 module) all dot-pending; green=0 red=0 → zero false greens; 5 group-status labels all NOT-RUN. Verdict PASS (no RED findings). Decision doc: docs/po-decisions/2026-05-24-g9-kinh-dich-playwright-trust.md.",
+        "calibration": "Path A: user verbal YES to 'Can you tell from this dashboard whether kinh-dich hexagram resolution is working correctly?' recorded in docs/po-decisions/<date>-g9-kinh-dich-user-confirmation.md. Path B (default): PO Playwright + chromium-headless-shell against file://apps/kinh-dich-service/dashboard/index.html via Terminal.app TCC-stage (L87). Acceptance: ZERO console errors / pageerrors / requestfailed, all 3 panel cards rendered, NOT-RUN status honestly displayed.",
+        "phase2Bucket": null
+      },
+      {
+        "_track_note": "Track C — AI-Fixability (G10-G12). Proves the agent loop can self-correct without human intervention.",
+        "id": "G10",
+        "track": "C",
+        "title": "AI agent fixes a primitive bug without looping (≤2 cycles)",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit — byte-identical git diff confirmed)",
+        "evidence": "P2-KD-N 292a74de. Bug injected P2-KD-M b5cf8f64 (hao-encoder LAO_DUONG_THRESHOLD 0.75→0.85 single literal, compiled but RED at runtime). dev-kinh-dich stayed BLIND, rediscovered from RED sandbox, fixed in 1 dispatch cycle (≤2, beats baseline 1.5). Sandbox 17/17 GREEN post-fix. PO byte-identical proof at terminal: git diff kinh-dich-pre-inject HEAD -- src/primitive/hao-encoder/index.ts = EMPTY (0 lines) = exact restore, no leftover injection comment.",
+        "calibration": "Baseline: docs/data/bug-inventory.json kinh_dich_baseline.baselineCycleCount (fallback 1.5 if <2 bugs in 60d window). max_cycles_allowed=2. Inject 1 deliberate single-literal bug in a primitive (e.g., wrong threshold constant in hao-encoder: LAO_DUONG_THRESHOLD = 0.85 instead of 0.75, or flipped comparison in reading-scorer). Measure dev-kinh-dich cycles to GREEN.",
+        "cycle_count": 1,
+        "max_cycles_allowed": 2,
+        "phase2Bucket": null
+      },
+      {
+        "id": "G11",
+        "track": "C",
+        "title": "Regression alarm bell works",
+        "status": "YES",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal audit — graded at SAME bar as TA cycle-17 + macro cycle-57; limitation disclosed)",
+        "evidence": "P2-KD-N 292a74de. Trial-1 (hao-encoder LAO_DUONG_THRESHOLD literal): ONE source defect → TWO scenarios RED simultaneously (hao-encoder-golden + hao-encoder-edge), single-literal revert (0.85→0.75) repaired BOTH at once = outcome-(a). Trial-2 (DIFFERENT primitive, ngu-hanh-classifier GENERATION[Thuy] table mutation, local-only): ngu-hanh-classifier-golden RED, single-edit revert restored, sandbox 17/17 GREEN = outcome-(a). HONEST LIMITATION (disclosed, not hidden): module-tier scenarios (reading-composer) are STRUCTURAL-FALLBACK PASS in the runner (no live module invocation — runner.ts L533 fallback), so the cross-TIER cascade did NOT fire; the proven alarm mechanism is PRIMITIVE-TIER coupling (one source literal → multiple primitive scenario REDs → single-edit restore). Graded YES at the SAME bar the two prior pilots closed verdict=scale (TA 'ma-golden+ma-sma-vs-ema canaries'; macro '2 coupled scenarios RED'). Recommendation logged in close decision doc: future fleet pilots should make module scenarios live-invoke for true cross-tier coupling. Evidence: docs/handoffs/TASK_P2-KD-N.md §G11.",
+        "calibration": "2-trial coupling-proof (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 alias primitive mutation + fix; verify ≥1 coupled scenario RED + single-edit fix repairs all. Trial-2 = DIFFERENT primitive mutation + fix; same coupling proof. Outcome-(a) × 2 = PASS.",
+        "phase2Bucket": null
+      },
+      {
+        "id": "G12",
+        "track": "C",
+        "title": "Dev-kinh-dich agent flow requires dashboard-green before done (3-task streak)",
+        "_title_note": "The dev-kinh-dich flow DoD gate (sandbox-green-before-RETURN) must be baked Day 0 in Phase 0 (agent-father flow file deliverable). Streak: 3 consecutive dev tasks shipped only after sandbox-green evidence pasted into handoff.",
+        "status": "YES",
+        "_status_candidacy": "Held EARNED-PENDING through Phases 1-2 per Charter §4.5; flipped YES by PO at 12/12 terminal atomic close (this commit).",
+        "verifiedAt": "2026-05-24T05:00:08Z",
+        "verifiedBy": "po (Phase-3 terminal atomic flip — streak verified by pm at task #3, extended through P1-F)",
+        "evidence": "DoD gate baked Day 0 in .claude/flows/dev-kinh-dich/main.md (P0-KD-3). Streak 3/3 COMPLETE at P1-B3 6bdabbb9, extended to 6/6 consecutive sandbox-green dev tasks (P1-B1 3/3, P1-B2 6/6, P1-B3 9/9, P1-D 11/11, P1-E 11/11, P1-F 14/14). Phase-2 dev tasks (P2-KD-F/G/I/J/N) all carried sandbox-green evidence before RETURN. Evidence: docs/handoffs/TASK_P1-KD-B1.md + B2.md + B3.md + g12Streak block below.",
+        "calibration": "Streak tasks = first-primitive task (B1) + second-primitive task (B2) + third-primitive task (B3). Rule effective after Phase 0 agent-father flow commit. All 3 tasks completed 2026-05-24 with consecutive sandbox-green evidence.",
+        "phase2Bucket": null,
+        "g12Streak": {
+          "required": 3,
+          "completed": 6,
+          "streakComplete": true,
+          "completedAt": "2026-05-24T05:10:00Z",
+          "tasks": [
+            {
+              "taskId": "P1-B1",
+              "title": "hexagram-resolver + R-FENCE discovery",
+              "completedAt": "2026-05-24T01:15:00Z",
+              "sandboxVerdict": "PASS (3/3 scenarios green)"
+            },
+            {
+              "taskId": "P1-B2",
+              "title": "ngu-hanh-classifier",
+              "completedAt": "2026-05-24T08:34:33Z",
+              "sandboxVerdict": "PASS (6/6 scenarios green)"
+            },
+            {
+              "taskId": "P1-B3",
+              "title": "hao-encoder",
+              "completedAt": "2026-05-24T11:42:00Z",
+              "sandboxVerdict": "PASS (9/9 scenarios green)"
+            },
+            {
+              "taskId": "P1-D",
+              "title": "G6 three-level trust dashboard",
+              "completedAt": "2026-05-24T02:01:53Z",
+              "sandboxVerdict": "PASS (11/11 scenarios green)"
+            },
+            {
+              "taskId": "P1-E",
+              "title": "G7 edit-rerun handler + zero-creds env audit",
+              "completedAt": "2026-05-24T04:30:00Z",
+              "sandboxVerdict": "PASS (11/11 scenarios green)"
+            },
+            {
+              "taskId": "P1-F",
+              "title": "reading-scorer optional 4th primitive",
+              "completedAt": "2026-05-24T05:10:00Z",
+              "sandboxVerdict": "PASS (14/14 scenarios green — all tiers)"
+            }
+          ],
+          "ruleEffectiveAfter": "2026-05-24T01:15:00Z (P1-B1 DONE)"
+        }
+      }
+    ],
+    "decisionMatrix_terminal": {
+      "_authorship_rule": "PO-only per Charter §Constraints + §4.5. Populated ONLY after 12/12 G-goals reach terminal grade. Atomic with last G-goal flips in same commit. NO partial population. NO pre-filling before 12/12. Block stays present-but-empty (TBD) the entire pilot until terminal.",
+      "_criteria_source": "Charter §Decision Matrix derivation: Speed = G10 + G11; Trust = G9 (PASS) + G8; Scale = all 12 goals YES + sprintCount ≤ 6.",
+      "speed": "YES",
+      "_speed_note": "YES if G10=YES AND G11=YES. Apply mechanically — no PO discretion.",
+      "trust": "YES",
+      "_trust_note": "YES if G9=YES (PASS grade, not PARTIAL) AND G8=YES.",
+      "scale": "YES",
+      "_scale_note": "YES if all 12 G-goals YES AND sprintCount ≤ 6.",
+      "verdict": "scale",
+      "_verdict_enum": "TBD until matrix terminal. Then one of: scale | rescope | stop-MVR. Derived mechanically: 3×YES → scale; 2×YES → rescope; 0-1×YES → stop-MVR.",
+      "populatedAt": "2026-05-24T05:00:08Z",
+      "populatedBy": "po",
+      "populatedInCommit": "this terminal-close commit (po) — see closureSignal/closureDecisionDoc; SHA recorded in git log for docs/data/pilot-status-kinh-dich.json at 2026-05-24T05:00:08Z",
+      "criteriaApplication": {
+        "speed": "G10=YES (1 cycle ≤ 2, beats baseline 1.5) AND G11=YES (primitive-tier coupling alarm proven both trials) → YES",
+        "trust": "G9=YES (Path B PO Playwright PASS, 0 errors, honest NOT-RUN cold-open, not PARTIAL) AND G8=YES (honest-red proven on 3 primitives) → YES",
+        "scale": "all 12 G-goals YES AND sprintCount=3 ≤ 6 → YES"
+      },
+      "outcome": "scale — continue fleet to pilot 5 (alert-engine, Go) when WIP permits. 3×YES."
+    },
+    "constraints_binding_day_0": [
+      "L84 explicit-file staging (git add <path> per file; NEVER -A or .)",
+      "No --force, no --no-verify, no --no-gpg-sign",
+      "No git push of source/CI changes (local-only; user owns push)",
+      "All work on main (NO branches per CLAUDE.md)",
+      "SSOT: one active dispatch per task",
+      "Anchor discipline: once frozen (eslint.config.mjs freeze, pre-revert tags), no retag/rewrite/push",
+      "Charter §4.5 matrix-authorship rule: PO-only, atomic with 12/12 terminal",
+      "SI-2 ownership: do NOT touch docs/dashboards/index.html (stock-price's G6 deliverable)",
+      "R-FENCE fence tool: eslint-plugin-boundaries (Option A) exclusively — no Go depguard, no Option C",
+      "System facts via jq on system-map.json — never hardcode port/zone/agent",
+      "Notebook + signal hygiene (agent notebook ≤200L; signals {agent}-{ISO}.json)"
+    ],
+    "lessons_baked_in": [
+      "L1: Language locked Day 0 = TypeScript/Bun (natively TS, no rewrite step)",
+      "L2: G4 offline ESLint boundaries evidence primary (pilot-scoped, no whole-project CI noise)",
+      "L3: Status enum strict — ACTIVE|DONE|FAILED only; auto-FAILED on G9-blocked deadline",
+      "L4: decisionMatrix PO-only, atomic with 12/12 terminal — no partial population",
+      "L5: Pre-revert tags Day 0 — kinh-dich-pre-ci, kinh-dich-pre-delete, kinh-dich-pre-inject",
+      "L6: G9 Playwright short-circuit Day-0 default — equal weight to user verbal",
+      "L7: SSOT + L84 + anchor discipline Day 0",
+      "L-FENCE: R-FENCE per-service gate — eslint-plugin-boundaries AC-4b proof must produce non-zero exit + Fence-A in output on real .js-suffixed ESM import style; 5-min in-Option-A fallback if R-2 bites (NOT Option C)"
+    ]
+  },
   "constraints_binding_day_0": [
     "L84 explicit-file staging (git add <path> per file; NEVER -A or .)",
     "No --force, no --no-verify, no --no-gpg-sign",
@@ -931,7 +1880,6 @@
     "System facts via jq on system-map.json — never hardcode port/zone/agent",
     "Notebook + signal hygiene (agent notebook ≤200L; signals {agent}-{ISO}.json)"
   ],
-
   "lessons_baked_in": [
     "L1: Language locked Day 0 = TypeScript/Bun (natively TS, no rewrite step)",
     "L2: G4 offline ESLint boundaries evidence primary (pilot-scoped, no whole-project CI noise)",
@@ -940,6 +1888,20 @@
     "L5: Pre-revert tags Day 0 — kinh-dich-pre-ci, kinh-dich-pre-delete, kinh-dich-pre-inject",
     "L6: G9 Playwright short-circuit Day-0 default — equal weight to user verbal",
     "L7: SSOT + L84 + anchor discipline Day 0",
-    "L-FENCE: R-FENCE per-service gate — eslint-plugin-boundaries AC-4b proof must produce non-zero exit + Fence-A in output on real .js-suffixed ESM import style; 5-min in-Option-A fallback if R-2 bites (NOT Option C)"
-  ]
+    "L-FENCE: R-FENCE per-service gate — eslint-plugin-boundaries AC-4b proof must produce non-zero exit + Fence-A in output on real .js-suffixed ESM import style; 5-min in-Option-A fallback if R-2 bites (NOT Option C)",
+    "L-REBOOT: kinh-dich TS->Go reboot is USER-DIRECTED (2026-05-24, docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md); PO reservation (discards completed TS pilot, ~900 files) acknowledged + overridden by user authority. TS terminal history preserved in tsCompletionArchive. Rescue language-agnostic scenario JSON + OpenAPI YAML through the reboot. G4 fence flips eslint-plugin-boundaries -> depguard/golangci-lint (Go path)."
+  ],
+  "userDirected": true,
+  "pivotEvent": {
+    "date": "2026-05-24",
+    "from": "TS",
+    "to": "Go",
+    "userDirected": true,
+    "decisionDoc": "docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md",
+    "precedent": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md (TA Option-B Go pivot)",
+    "rebootCharter": "docs/architecture-briefs/2026-05-22-refactor/scale/kinh-dich-charter.md",
+    "authority": "USER DIRECTIVE (explicit 2026-05-24) — overrides PO prior reco; PO reservation acknowledged + overridden",
+    "scope": "Revert/replace TS hexagram-resolver + 4 sibling primitives; re-extract in Go (pkg/primitive/); rebuild reading_composer module + composition root (cmd/server/main.go) in Go; rebuild sandbox dashboard. Preserve language-agnostic scenario JSON + OpenAPI YAML. apps/kinh-dich-service/ only.",
+    "tsCompletionPreserved": "tsCompletionArchive (12/12 YES, verdict=scale, ~900 TS files — earned history retained, not destroyed)"
+  }
 }

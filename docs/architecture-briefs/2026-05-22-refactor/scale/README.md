@@ -18,7 +18,7 @@ The fleet has advanced beyond a single-pilot view. Some services are already sca
 | technical-analysis | **DONE** (pilot) | `docs/data/pilot-status.json` | `../pilot-charter.md` | dev-technical-analysis | Go |
 | macro-indicators | **DONE** | `docs/data/pilot-status-macro-indicators.json` | factory dir | dev-macro-indicators | Go |
 | stock-price | **DONE** | `docs/data/pilot-status-stock-price.json` | factory dir | dev-stock-price | Go |
-| kinh-dich-service | **DONE** (scaled in TS) | `docs/data/pilot-status-kinh-dich.json` | `2026-05-23-kinh-dich-factory/` | dev-kinh-dich | **TypeScript** |
+| kinh-dich-service | **ACTIVE** (Go reboot — user override 2026-05-24) | `docs/data/pilot-status-kinh-dich.json` | `kinh-dich-charter.md` (reboot delta) + archived `2026-05-23-kinh-dich-factory/` (TS history) | dev-kinh-dich | **Go** (was TypeScript) |
 | alert-engine | **ACTIVE** (pilot-5 Phase 2) | `docs/data/pilot-status-alert-engine.json` | `2026-05-24-alert-engine-factory/` | dev-alert-engine | Go |
 | api-gateway | **PENDING** (fresh) | `docs/data/pilot-status-api-gateway.json` | `api-gateway-charter.md` (thin) | dev-api-gateway | Go |
 | pdf-extractor | **PENDING** (fresh) | `docs/data/pilot-status-pdf-extractor.json` | `pdf-extractor-charter.md` (thin) | dev-pdf-extractor | Python |
@@ -29,8 +29,8 @@ The fleet has advanced beyond a single-pilot view. Some services are already sca
 
 **Thin charters in this dir cover only the 6 fresh PENDING services.** The 4 DONE/ACTIVE services already have richer factory-dir charters — do not duplicate. When a fresh service kicks off, the architect should instantiate a factory charter dir (mirroring alert-engine pilot-5); the thin charter here captures interim deltas/risks/primitive candidates to fold in.
 
-## ⚠️ kinh-dich Go-pivot — REJECTED (not ratified)
-A TS→Go pivot for kinh-dich-service was proposed in this groundwork cycle but **rejected by the PO** on ground-truth: `pilot-status-kinh-dich.json` shows kinh-dich is **already a closed pilot, verdict=scale, completed in TypeScript** (`language_locked: true`, "no rewrite step", commit `4b48f3b0`). Pivoting a successfully-scaled service to Go for consistency alone would discard a completed pilot and reboot working code — not a sound PO trade. No pivot decision doc, no agent-father language-flip signal was emitted. kinh-dich stays TypeScript.
+## ✅ kinh-dich Go-pivot — RATIFIED (user override 2026-05-24)
+A TS→Go reboot for kinh-dich-service was initially **rejected by the PO** on ground-truth (kinh-dich was an already-closed pilot, verdict=scale, completed in TypeScript — rebooting a successfully-scaled service to Go for consistency alone discards a completed pilot and rewrites ~900 working files). **The user was shown that cost explicitly and directed the Go reboot anyway.** The PO's reservation is recorded as acknowledged-and-overridden by user authority. Decision: `docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md`. Reboot charter (delta-only): `kinh-dich-charter.md`. Mirrors the TA Option-B Go reboot. kinh-dich-service is now **Go** — `pilot-status-kinh-dich.json` reopened DONE→ACTIVE, language TypeScript→Go, TS completion record archived under `tsCompletionArchive`, G1–G8 + G10–G12 reset to re-earn (G9 held, must re-confirm on Go dashboard). agent-father signal emitted to flip `.claude/agents/dev-kinh-dich.md` + reconcile `system-map.json` (kinh-dich + TA + macro drift entries).
 
 ## ⚠️ mcp-server — RUN-SOLO, LAST
 mcp-server runs SOLO after every other service (shared-substrate write race + ~132-tool barrel churn). See `mcp-server-charter.md`.
