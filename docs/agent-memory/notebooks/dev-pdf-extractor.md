@@ -4,6 +4,30 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-24 — P1-B2 + P1-C + P1-D DONE (decimal-normalizer + financial-reports module + module scenario)
+
+**P1-B2 commit:** `561e2df1` | **P1-C commit:** `ce03ab35` | **P1-D commit:** `c847ea00`
+
+**Delivered:**
+- `domain/primitives/decimal_normalizer/` — normalize_decimal() pure function, corrects VNM/DHG decimal-shift via unit_hint="raw_micro" (×1_000_000). 3 scenarios GREEN.
+- `domain/modules/financial_reports/` — FinancialReportsModule composing both primitives via Protocol ports (DI). Fence-B: 0 infra imports, 0 self cross-imports.
+- `domain/modules/financial_reports/ports.py` — DecimalNormalizerPort + FinancialValidatorPort Protocols
+- `domain/modules/financial_reports/mock_ports.py` — MockDecimalNormalizerPort + MockFinancialValidatorPort for tests
+- `sandbox/runner.py` — extended with module-tier dispatch (run_module_scenario + _run_financial_reports_module)
+- `scenarios/modules/financial_reports/multi_primitive_story.json` — multi-primitive story: raw strings → normalize → validate → confidence=1.0
+
+**Gate evidence:**
+- G12 STREAK #2 OFFICIAL: 6/6 primitive scenarios GREEN (validate_financial_figures × 3, decimal_normalizer × 3)
+- Module-tier: --tier=module --scenario=multi_primitive_story.json → EXIT 0
+- 55/55 pytest PASS
+- BCTC freeze: zero mcp-server writes confirmed
+
+**Runner note:** `run_scenario(path)` refactored to `run_scenario(path, tier)`. Module runner wires real primitive adapters inline (no infra). The `decimal_normalizer` alias in `__init__.py` satisfies runner convention (module_name == callable_name).
+
+**Next:** P1-E1 (dashboard stub HTML, G12 streak #3)
+
+---
+
 ### 2026-05-24 — P1-A1 DONE (sandbox runner + scenario dirs + composition root shrink)
 
 Commits: `75ab2eae` (impl), `f72c465b` (handoff+signal)
