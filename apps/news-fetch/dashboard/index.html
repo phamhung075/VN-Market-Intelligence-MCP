@@ -312,7 +312,7 @@ if (typeof window.__NEWS_FETCH_DATA__ !== 'undefined') {
  * Does NOT touch sandbox panels, data.js, or window.__NEWS_FETCH_DATA__.
  */
 (function initLivePanel() {
-  var ENDPOINT = 'http://localhost:3000/api/news-fetch/live?source=all&limit=20';
+  var ENDPOINT = '/api/news-fetch/live?source=all&limit=20';
   var container = document.getElementById('live-data-content');
   if (!container) return;
 
