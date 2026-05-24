@@ -1,8 +1,83 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 06:26 UTC (alert-engine pilot-5 Phase-2 task plan) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 08:45 UTC (rag-service pilot Phase 0 — P0-RAG-1 + P0-RAG-2) | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## rag-service Phase-0 cycle (2026-05-24T08:45Z) — P0-RAG-1 + P0-RAG-2
+
+**Task:** P0-RAG-1 (brownfield inventory + bug-inventory baseline + SI-4 fence decision) + P0-RAG-2 (Phase 1 task plan, Python B/C/E bucket pattern). Authorization: pilot-status-rag-service.json phase0 OPEN, openedBy po cycle-71.
+
+**Service facts (verified):** port=5002 (system-map.json confirmed), language=Python (locked Day 0), zone=apps/rag-service/, DB=rag_service.db (SQLite) + LanceDB at ./data/lancedb.
+
+**Brownfield scan key findings:**
+- All 4 DDD layers present and CLEAN. domain/ has ZERO infra imports. Golden rule PASS.
+- 5 primitive candidates confirmed as pure functions: similarity-scorer (1/(1+dist) formula), relevance-threshold-gate (distance filter), temporal-decay-scorer (compute_recency_score — NEEDS `now` injection for determinism), top-k-selector (ranked[:limit] slice in application layer), context-window-packer (_build_embedding_text() in application layer).
+- Embedding model (SentenceTransformersEmbedder) + LanceDB (LanceDBVectorStore) correctly positioned as infrastructure ADAPTERS. Not primitives. Charter §Key risks #1 CONFIRMED SAFE.
+- main.py: 113L composition root (target ≤80 in Phase 2; G3 verify-only in Phase 1 — no code change needed).
+
+**G5 surface (CRITICAL FINDING — dual LanceDB + bypass):**
+- `rag_analyses` SQLite table in mcp-server is a SEPARATE analysis log — not rag-service's DB. 10+ MCP tools read it via mcp-server's own DB. NOT a G5 violation.
+- `apps/mcp-server/src/infrastructure/rag/` = parallel TS LanceDB stack (embeddings.ts + vectorstore.ts + retriever.ts). `analysis.ts` + `dataAuditJob.ts` call retriever.ts directly — G5b bypass. `ragHttpClient.ts` already exists with ragSearch()/ragIndex(); G5b rewire is surgical via this existing client.
+- G5a candidates: {embeddings,vectorstore,retriever}.ts → _deprecated/ after rewire.
+- R-1: Dual LanceDB writers (Python rag-service + TS mcp-server). Pre-existing. Resolves at G5b.
+
+**SI-4 DECISION: `import-linter` (grimp backend)**
+- Full layered + independence + forbidden contracts. pyproject.toml [tool.importlinter] or .importlinter.
+- Offline-runnable, pure Python. Mirrors Go depguard offline pattern.
+- GATE: deliberate-violation proof required before G4 ACs lock. Phase 2 gate.
+
+**Bug-inventory baseline:** baselineCycleCount=1.5 (system-wide fallback; 0 domain bugs in 60-day window; 1 ops bug excluded). G10 target: ≤2 cycles.
+
+**Phase 1 task plan:** 4 atomic tasks: P1-A (sandbox runner — shared with pdf-extractor, WIP=1 coordination), P1-B (similarity-scorer), P1-C (retrieval module stub), P1-E (dashboard stub). G12 streak = P1-B + P1-C + P1-E.
+
+**Files authored this cycle (L84 — 4 files):**
+1. `docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-brownfield-inventory.md` (NEW)
+2. `docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-1-task-plan.md` (NEW)
+3. `docs/data/bug-inventory.json` (MODIFIED — rag_service_baseline entry added)
+4. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal to emit after commit:** `docs/signals/architect-rag-service-phase0-done-<UTC>.json` (next_actor: pm)
+
+---
+
+## kinh-dich-service Go Phase-1 task plan (2026-05-24) — task P1-KD-PLAN-GO
+
+**Task:** Author Go Phase-1 task plan for kinh-dich-service TS→Go forced reboot. USER-DIRECTIVE (docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md). PO signal po-20260524T071919Z.json, commit ee7c8364.
+
+**Brownfield scan:** 0 .go files, no go.mod. 5 TS primitives + 1 module + 17 scenario JSONs (preserved). OpenAPI 7 endpoints (preserved). Port 5005 confirmed system-map.
+
+**Plan:** 14 atomic tasks WIP=1. `pkg/` layout, CGO_ENABLED=0, modernc.org/sqlite v1.29.9, chi v5.2.1. nuclear_hexagram Fence-A sister-primitive exception (OQ-6). Sandbox runner: `go run ./cmd/sandbox`. Domain contract guards baked: THIEU_DUONG_THRESHOLD=0.10 (P1-B1g), ExtractAction(actionText string) (P1-B4g).
+
+**Output:** `docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-go.md` (NEW)
+
+**Next actor:** PM — update pilot-status-kinh-dich.json phase1.task_plan pointer + handoff files + dispatch P1-A1g.
+
+---
+
+## api-gateway SCALE pilot Phase 0 (2026-05-24T11:30Z) — P0-AG-1/2/4 complete
+
+**Tasks:** P0-AG-1 (brownfield spike), P0-AG-2 (bug-inventory entry), P0-AG-4 (Phase 1 task plan)
+
+**Key findings:**
+- Confirmed primitive band: HONEST 3 (overall-status-computer, proxy-path-resolver, route-service-matcher). No 4th/5th. PO's candidates validated against real code.
+- overall-status-computer: unexported in `pkg/domain/services.go`, needs export + move to `pkg/primitive/`
+- proxy-path-resolver: already exported as `ProxyPath` in interface layer — DDD violation (pure function in wrong layer), must migrate
+- route-service-matcher: inline duplicate in HandleServiceHealth + HandleProxy (different prefix conventions); genuine dedup candidate
+- Rejected: auth-header-validator (gateway does ZERO auth), statusClass/statusLabel (view formatting), BuildDashboardHTML (interface presentation)
+- Single `gateway` module. Composition root (main.go 67L) already clean.
+- Domain/application/infrastructure layers: all clean, no rewiring needed
+- Interface layer: 2 misplaced pure functions (ProxyPath + inline service-name extraction) → migrate to primitives in Phase 1
+- G5: trivially-YES, no legacy TS gateway (retired at 75d134a7)
+- Port 4000, CGO_ENABLED=0, go.sum empty (zero external deps, stdlib only)
+- go test ./... → 45 tests, 0 failures (P0-AG-1 baseline locked)
+- Bug inventory: 1 gateway bug in 60d window (377aefbf), <2 threshold → system-wide fallback baselineCycleCount=1.5
+
+**Phase 1 task plan:** 6 tasks B/C/E pattern. WIP=1. G11 blast-radius first (B1 includes coupled-cascade design). No A-bucket (composition root already clean). Commits: P0-AG-1 b3ae0568, P0-AG-2 d5e6ea22, P0-AG-4 d9a0b84e.
+
+**Risk flags:**
+- R-1 BLAST RADIUS HIGH: gateway routes all 9 services → proxy-path or route-matcher regression breaks all upstream routing → G11 coupling proof design is mandatory in B1, not deferred
+- R-2: ProxyPath in wrong layer (interface), depguard Fence-A will catch it post-G4
 
 ## alert-engine Phase-2 task plan cycle (2026-05-24T06:26Z) — fleet pilot 5 Phase 2 dispatch
 

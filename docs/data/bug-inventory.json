@@ -307,6 +307,132 @@
     "recordedAt": "2026-05-24T12:00:00Z",
     "recordedBy": "system-auditor (phase-0 pilot kickoff, TASK P0-KD-2)"
   },
+  "news_fetch_baseline": {
+    "service": "news-fetch",
+    "module": "news-fetch",
+    "capturedAt": "2026-05-24",
+    "capturedBy": "architect (P0-NF-2 phase-0 deliverable)",
+    "windowDays": 60,
+    "windowStart": "2026-03-25",
+    "windowEnd": "2026-05-24",
+    "newsFetchBugsFound": 0,
+    "baselineCycleCount": 1.5,
+    "baselineSource": "system-wide fallback (60d window 2026-03-25 to 2026-05-24 has 0 bugs attributed to module=news-fetch; <2 threshold triggers fallback per charter §Baseline Metric Capture)",
+    "baselineFallbackRationale": "B-10-news-fetch-VPS-unhealthy (module=data-sources, fixCycles=0) is an I/O adapter bug — VPS connectivity / healthcheck failure. It is NOT a primitive-class pure-function fixability candidate (it tests infra/VPS health, not a primitive). Per charter §Baseline Metric Capture: if no service-specific primitive-class bugs exist, use system-wide averageFixCycles. System-wide averageFixCycles=1.3 as of 2026-05-22 stats block; consistent with kinh-dich (1.5) and stock-price (1.5) same-period fallbacks. Using 1.5 (median of recent pilot baselines) as news-fetch baseline — slightly conservative vs raw system-wide 1.3, matching the established fleet-wide primitive-class pilot baseline.",
+    "bugsExcluded": [
+      {
+        "id": "B-10-news-fetch-VPS-unhealthy",
+        "reason": "module=data-sources (I/O adapter / VPS health), not module=news-fetch primitive-class. fixCycles=0 (unresolved infra issue). Not a valid G10 primitive-fixability baseline candidate per PO binding correction 2026-05-24."
+      }
+    ],
+    "g10_target": "AI agent fixes news-fetch primitive bug in ≤2 cycles vs baseline 1.5",
+    "knownRiskPre_pilot": [
+      {
+        "risk": "R-1 Minimal pure-function surface",
+        "description": "news-fetch is a mostly-I/O service (RSS fetch + Playwright stealth). Pure-function surface is intentionally small (4 primitives: published-at-parser, headline-normalizer, source-dedup-key, article-relevance-filter). G10 bug injection target must be scoped to one of these 4 primitives. Recommended injection target: published-at-parser (normalizeRfcDate off-by-one or wrong timezone handling) — deterministic, unambiguous fix.",
+        "priority": "MEDIUM",
+        "phase_to_fix": "Phase 2 (QA bug injection)"
+      }
+    ]
+  },
+  "rag_service_baseline": {
+    "service": "rag-service",
+    "module": "rag-service",
+    "capturedAt": "2026-05-24",
+    "capturedBy": "architect (cycle-71 phase-0 P0-RAG-1 deliverable)",
+    "windowDays": 60,
+    "windowStart": "2026-03-25",
+    "windowEnd": "2026-05-24",
+    "ragServiceBugsFound": 1,
+    "baselineCycleCount": 1.5,
+    "baselineSource": "system-wide fallback (rag-service has only 1 infra-ops bug in 60-day window, zero domain bugs; <2 domain threshold triggers fallback per charter §Baseline Metric Capture)",
+    "baselineFallbackRationale": "Scanning bug-inventory.json + git log for last 60 days found 1 bug touching rag-service: 1958-watchdog-2-rag-health (module=ops, fixCycles=1, 76e5d1cd — healthcheck start_period bump, infra-only). This is an ops/infra bug, not a domain primitive bug. rag-service domain code (domain/services.py, application/usecases.py) has zero recorded bugs in 60-day window — codebase was clean Python DDD from initial extraction. Since <2 domain bugs, falls back to system-wide baselineCycleCount=1.5 per charter §Baseline Metric Capture fall-back rule. Consistent with kinh-dich (1.5), stock-price (1.5), api-gateway (1.5), and news-fetch (1.5) baselines.",
+    "bugsIdentified": [
+      {
+        "id": "1958-watchdog-2-rag-health",
+        "module": "ops",
+        "fixCycles": 1,
+        "date": "2026-05-20",
+        "resolved": true,
+        "evidence": "fix(ops/1958-watchdog-2): bump rag-service healthcheck start_period 30s → 60s 76e5d1cd — infra-only, not domain primitive class",
+        "excluded_from_baseline": true,
+        "exclusion_reason": "module=ops (Docker healthcheck timing). Not a primitive-class pure-function bug per charter §Baseline Metric Capture criteria."
+      }
+    ],
+    "g10_target": "AI agent fixes rag-service primitive bug in ≤2 cycles vs baseline 1.5",
+    "knownRiskPre_pilot": [
+      {
+        "risk": "R-1 Dual LanceDB writers",
+        "description": "rag-service container (Python async lancedb) + mcp-server (TS @lancedb/lancedb) both write to ./data/lancedb simultaneously. Not transactionally safe for multi-process writes. Pre-existing risk — not introduced by pilot. Resolves at G5b rewire (all writes route through rag-service HTTP). Do not expand write patterns from mcp-server side during Phase 1.",
+        "priority": "HIGH",
+        "phase_to_fix": "Phase 2 G5b (mcp-server infrastructure/rag/retriever.ts → ragHttpClient.ts rewire)"
+      },
+      {
+        "risk": "R-2 datetime.now() in compute_recency_score",
+        "description": "temporal-decay-scorer candidate calls datetime.now(tz=timezone.utc) internally — makes scenario golden outputs time-sensitive. Fix: inject `now` as Optional[datetime] parameter when extracting this primitive in Phase 2. Phase 1 similarity-scorer has no datetime dependency (safe).",
+        "priority": "MEDIUM",
+        "phase_to_fix": "Phase 2 P2-B (temporal-decay-scorer primitive extraction)"
+      }
+    ]
+  },
+  "pdf_extractor_baseline": {
+    "service": "pdf-extractor",
+    "module": "pdf-extractor",
+    "capturedAt": "2026-05-24",
+    "capturedBy": "architect (pdf-extractor phase-0 PHASE0-D2 deliverable)",
+    "windowDays": 60,
+    "windowStart": "2026-03-25",
+    "windowEnd": "2026-05-24",
+    "bugsFound": 2,
+    "baselineCycleCount": 1.5,
+    "baselineSource": "system-wide fallback (<2 bugs directly attributed to module=pdf-extractor domain in 60-day window; falls back to system-wide per charter §Baseline Metric Capture)",
+    "baselineFallbackRationale": "Scanning git log --since=2026-03-25 -- apps/pdf-extractor/ + bug-inventory.json + docs/signals/ for last 60 days: 1953-G-FAIL-BCTC-stale (fixCycles=6, module=mcp-server — root cause in BCTC pipeline write-chain, not pdf-extractor domain) and B-08-BCTC-VPS-stale-78h (module=data-sources — VPS connectivity, not a pdf-extractor domain primitive). Neither is a pdf-extractor domain primitive bug. System-wide averageFixCycles=1.3; using conservative 1.5 (consistent with stock-price, kinh-dich, api-gateway, news-fetch, rag-service baselines) per charter §Baseline Metric Capture fall-back rule.",
+    "bugsIdentified": [
+      {
+        "id": "BCTC-decimal-shift-class",
+        "bugClass": "decimal-shift",
+        "module": "pdf-extractor",
+        "description": "VNM net_profit reported as 0.000051 billion VND (should be 51.0). DHG revenue as 0.000009 (should be 9.0). Scale error: OCR text parsed as micro-units instead of billion-VND. Root cause: no decimal-normalizer primitive; normalization done ad-hoc in mcp-server parsers without systematic unit detection.",
+        "exampleTickers": ["VNM", "DHG"],
+        "exampleValues": {
+          "VNM_net_profit_raw": "0.000051",
+          "VNM_net_profit_correct_billion_vnd": 51.0,
+          "DHG_revenue_raw": "0.000009",
+          "DHG_revenue_correct_billion_vnd": 9.0
+        },
+        "fixCycles": 0,
+        "status": "open",
+        "evidence": "Documented in thin scale charter §Key risks R-2 and pilot-status-pdf-extractor.json G10.calibration. No fix commit in 60-day window — bug class not yet systematically addressed via primitive. Target primitive: decimal-normalizer (Phase 1 P1-B2).",
+        "g10InjectionCandidate": true
+      },
+      {
+        "id": "BCTC-confidence-threshold-boundary",
+        "bugClass": "confidence-threshold-handling",
+        "module": "pdf-extractor",
+        "description": "Confidence gate boundary conditions: confidence=0 must skip insert; confidence<0.2 must insert with low_confidence flag; confidence>=0.2 is normal insert. Gate logic is inlined in mcp-server BCTC parsers, not in pdf-extractor domain. Off-by-one or wrong boundary (e.g. using < vs <=) would silently change data ingestion behavior.",
+        "fixCycles": 0,
+        "status": "open",
+        "evidence": "Documented in thin scale charter §Key risks R-2 and pilot-status-pdf-extractor.json G10.calibration and G11.calibration. Logic lives in mcp-server downstream. Target primitive: low-confidence-gate (Phase 2).",
+        "g10InjectionCandidate": true,
+        "g11InjectionCandidate": true
+      }
+    ],
+    "g10_target": "AI agent fixes pdf-extractor primitive bug in ≤2 cycles vs baseline 1.5",
+    "knownRiskPre_pilot": [
+      {
+        "risk": "R-1 OCR/IO boundary — Security Clause critical",
+        "description": "pdfplumber + pytesseract are impure adapters. Any primitive that imports them violates the sandbox zero-cred guarantee and blocks G7. Sandbox env audit must include DB_PATH, VPS_, VINAHOST, STORAGE_DIR, OCR, TESSERACT in the forbidden grep.",
+        "priority": "CRITICAL",
+        "phase_to_fix": "P1-A1 (sandbox runner zero-cred gate) — BLOCKER before P1-B1"
+      },
+      {
+        "risk": "R-2 BCTC freeze blocks Phase-2 G5b rewire",
+        "description": "1953-G-FAIL / 1954c freeze ACTIVE. Phase-2 G5b tasks rewiring fetch_ssc_reports + bctc_batch_sweep MCP tools are HARD FROZEN until PO emits 1954c lift signal. All Phase-1 tasks confirmed CLEAR.",
+        "priority": "HIGH",
+        "phase_to_fix": "Phase 2 — PM must gate G5b dispatch on PO freeze-lift signal"
+      }
+    ]
+  },
   "api_gateway_baseline": {
     "service": "api-gateway",
     "module": "api-gateway",
