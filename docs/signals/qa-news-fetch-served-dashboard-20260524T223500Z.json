@@ -1,0 +1,44 @@
+{
+  "signal": "qa-review-complete",
+  "task": "NF-LD-4-QA",
+  "timestamp": "2026-05-24T22:35:00Z",
+  "gateVerdict": "APPROVED",
+  "round": 2,
+  "commits_inspected": ["6b012fc8", "e160fe04", "d32398f4"],
+  "round1_blocker_resolved": {
+    "ac": "DRY/Anti-drift",
+    "fix_commit": "6b012fc8",
+    "root_cause": "sed ordering bug: generic pattern consumed longer specific pattern; reordered in 6b012fc8",
+    "verification": {
+      "run1_git_diff": "0 differences",
+      "run2_git_diff": "0 differences — idempotent confirmed",
+      "header_path": "apps/mcp-server/sync-news-fetch-dashboard.sh (no scripts/ prefix)",
+      "served_copy_js_comment_block": "absent (removed by regeneration)",
+      "error_message": "matches script output: Could not reach the server — the live endpoint returned an error."
+    },
+    "verdict": "PASS"
+  },
+  "checks_passed": {
+    "dry_anti_drift_run1": "PASS (git diff = 0)",
+    "dry_anti_drift_run2": "PASS (git diff = 0, idempotent)",
+    "endpoint_relative": "PASS (var ENDPOINT = '/api/news-fetch/live?source=all&limit=20' at line 323)",
+    "localhost_3000_in_fetch_path": "0 (comment-only occurrence at line 310 — JSDoc only)",
+    "file_degrade_branch_kept": "PASS (window.location.protocol === 'file:' at line 328)",
+    "security_creds_in_served_dir": "PASS (grep exit 1, 0 matches)",
+    "security_handler_no_db": "PASS (line 14 is JSDoc block comment only)",
+    "security_handler_no_write_verbs": "PASS (0 matches)",
+    "ddd_handler_imports": "PASS (node:http + node:fs + node:path only)",
+    "sandbox_dash_check": "PASS (panels=4, sandbox=3, live=1, cards=6, PASS=6, degrade=true, fake_rows=false, external_net=0)",
+    "data_js_untouched": "PASS (last commit cd8d0146, not touched by 6b012fc8)",
+    "sandbox_runner_untouched": "PASS (git diff HEAD empty)",
+    "nf_ld_4_tests": "PASS (11/11, 22 expect() calls)",
+    "nf_ld_2_regression": "PASS (9/9, 37 expect() calls)",
+    "combined_test_run": "PASS (20/20, 59 expect() calls)",
+    "tsc": "PASS (exit 0)",
+    "pilot_status_frozen": "PASS (goalsEarned=12, verdict=scale, status=DONE — not touched by 6b012fc8)"
+  },
+  "blocking_issues": [],
+  "next": "po:NF-LD-4-EXIT",
+  "ops_note": "after PO EXIT: docker compose up -d --build mcp-server; PROVE http://localhost:3000/dashboards/news-fetch/ returns 200 + all 4 panels",
+  "handoff": "docs/handoffs/TASK_NF-LD.md"
+}

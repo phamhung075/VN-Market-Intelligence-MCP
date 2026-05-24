@@ -1015,6 +1015,98 @@ The change is made in the **copy** that dev-mcp-server places at `apps/mcp-serve
 
 ---
 
+## NF-LD-4-QA Round 2 — [QA] Review Record — 2026-05-24
+
+**Verdict: APPROVED**
+
+**Commits inspected:** `6b012fc8` (NF-LD-4-dev-A FIX, sync script sed-order fix + served copy regenerated) + `e160fe04` (NF-LD-4-dev-A original) + `d32398f4` (NF-LD-4-dev-B)
+
+---
+
+### DRY / ANTI-DRIFT (round-1 blocker — RE-GATE)
+
+- Run 1: `bash apps/mcp-server/sync-news-fetch-dashboard.sh` → exit 0, all 4 verification PASS lines; `git diff apps/mcp-server/src/interface/news-fetch-dashboard/` = **0 differences**
+- Run 2: `bash apps/mcp-server/sync-news-fetch-dashboard.sh` → exit 0; `git diff` = **0 differences** (idempotent, confirmed)
+- Header `To re-sync` path: `apps/mcp-server/sync-news-fetch-dashboard.sh` — no `scripts/` prefix
+- Hand-added `SERVED COPY` JS comment block: absent (removed by regeneration)
+- Error message: `Could not reach the server — the live endpoint returned an error.` — matches script output
+- **PASS — round-1 blocker RESOLVED**
+
+### ENDPOINT + file:// degrade (served copy)
+
+- `grep -n "var ENDPOINT" index.html` → line 323: `var ENDPOINT = '/api/news-fetch/live?source=all&limit=20'` — relative, no scheme/host
+- `localhost:3000` occurrences in served copy: 1 (line 310 — JSDoc comment only, not in ENDPOINT constant or fetch call)
+- `grep -n "window.location.protocol === 'file:'"` → line 328 — degrade check present, fires before fetch
+- **PASS**
+
+### Security: 0 creds in served directory + handler
+
+- `grep -rn "VPS_PUSH_API_KEY|x-api-key|Authorization|Bearer|DB_PATH|process.env|Bun.env" apps/mcp-server/src/interface/news-fetch-dashboard/` → exit 1 (0 matches)
+- `grep -n "getDb|new Database|DB_PATH|process.env|Bun.env" newsFetchDashboardHandler.ts` → line 14 is JSDoc block comment only (`*` prefix); zero real references
+- `grep -ni "INSERT|UPDATE|DELETE|CREATE|DROP|ALTER" newsFetchDashboardHandler.ts` → 0 matches
+- Handler imports: `node:http`, `node:fs`, `node:path` only — no DB, no credentials, no infrastructure
+- **PASS**
+
+### Sandbox honesty not regressed
+
+- `node apps/news-fetch/dashboard/dash-check.mjs` → **PASS**
+  - panels_rendered: 4 (sandbox=3, live=1)
+  - cards_total: 6 (primitives=4, module=1, microservice=1)
+  - badge_counts: PASS=6, FAIL=0, ERROR=0, NOT-RUN=0
+  - live_panel_degrade: true, live_panel_fake_rows: false
+  - console_errors: 0 / page_errors: 0 / external_network_calls: 0
+- `data.js` last commit: `cd8d0146` (pre-NF-LD-4) — confirmed untouched
+- `apps/news-fetch/src/sandbox/runner.ts`: diff empty vs HEAD
+- **PASS**
+
+### Tests: NF-LD-4 11/11 + NF-LD-2 9/9 + tsc exit 0
+
+- `bun test src/__tests__/NF-LD-4-news-fetch-dashboard.test.ts src/__tests__/NF-LD-2-news-fetch-live.test.ts` → **20 pass / 0 fail** (59 expect() calls combined)
+  - NF-LD-4: 11/11 (path traversal, ENDPOINT relative, degrade, creds)
+  - NF-LD-2: 9/9 (endpoint correctness, source filter, limit clamp, order)
+- `bun tsc --noEmit` → **exit 0**, 0 errors
+- **PASS**
+
+### Pilot-status frozen
+
+- `docs/data/pilot-status-news-fetch.json`: goalsEarned=12, verdict=scale, status=DONE — not touched by `6b012fc8`
+- **PASS**
+
+### DDD
+
+- `newsFetchDashboardHandler.ts` imports: `node:http`, `node:fs`, `node:path` only — 0 domain/application/infrastructure imports
+- **PASS**
+
+### Summary
+
+| Check | Verdict |
+|---|---|
+| DRY/Anti-drift: sync script PASS run 1 (git diff = 0) | PASS |
+| DRY/Anti-drift: sync script PASS run 2 — idempotent (git diff = 0) | PASS |
+| Header path: no `scripts/` prefix | PASS |
+| ENDPOINT: relative (`/api/news-fetch/live?source=all&limit=20`) | PASS |
+| 0 localhost:3000 in fetch path (comment-only occurrence) | PASS |
+| file:// degrade branch: kept at line 328 | PASS |
+| Security: 0 creds in served dir | PASS |
+| Security: handler no DB/env access | PASS |
+| Security: handler no write verbs | PASS |
+| DDD: 0 domain/infra/app imports in handler | PASS |
+| Sandbox: dash-check PASS (4 panels, 6 cards, degrade=true) | PASS |
+| data.js untouched (commit cd8d0146) | PASS |
+| sandbox runner.ts untouched | PASS |
+| NF-LD-4 tests: 11/11 | PASS |
+| NF-LD-2 tests: 9/9 (regression) | PASS |
+| tsc exit 0 | PASS |
+| Pilot-status 12/12 frozen | PASS |
+
+**Round:** 2. **Verdict: APPROVED.**
+
+**Signal:** `docs/signals/qa-news-fetch-served-dashboard-20260524T223500Z.json`
+
+**NEXT: po — NF-LD-4-EXIT sign-off. Then ops: `docker compose up -d --build mcp-server` + PROVE served URL (`http://localhost:3000/dashboards/news-fetch/` returns 200 with all 4 panels).**
+
+---
+
 ## Constraints binding NF-LD-4 (verbatim — every agent in the chain)
 - L84 explicit-file staging: `git add <path>` per file; NEVER `-A` or `.`
 - No `--force`, no `--no-verify`, no `--no-gpg-sign`

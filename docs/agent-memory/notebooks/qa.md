@@ -1,5 +1,255 @@
 # QA — Notebook
 
+## cycle-112 · 2026-05-24 · NF-LD-4-QA round 2 (sync script fix re-gate) — APPROVED
+
+**Task:** NF-LD-4 QA round 2 — re-gate after sync script sed-order fix | **Verdict:** APPROVED
+
+```
+date: 2026-05-24T22:35:00Z
+outcome: APPROVED — round-1 blocker resolved, all checks PASS
+type: feature-qa-gate re-gate (NF-LD-4: serve news-fetch dashboard same-origin from mcp-server)
+handoff: docs/handoffs/TASK_NF-LD.md
+signal: docs/signals/qa-news-fetch-served-dashboard-20260524T223500Z.json
+commits_inspected: [6b012fc8 (FIX: sed-order bug), e160fe04 (dev-A original), d32398f4 (dev-B)]
+round: 2
+
+dry_anti_drift:
+  sync_script_exit_run1: 0 (all 4 verification PASS lines)
+  git_diff_run1: 0 differences
+  sync_script_exit_run2: 0 (idempotent)
+  git_diff_run2: 0 differences
+  header_path: apps/mcp-server/sync-news-fetch-dashboard.sh (no scripts/ prefix)
+  served_copy_js_block: absent (removed by regeneration)
+  error_message: script-consistent variant confirmed
+  result: PASS — round-1 blocker RESOLVED
+
+endpoint_degrade:
+  endpoint_var: '/api/news-fetch/live?source=all&limit=20' at line 323 (relative)
+  localhost_3000_in_fetch_path: 0 (line 310 = JSDoc comment only)
+  file_degrade_check: window.location.protocol === 'file:' at line 328 (kept)
+  result: PASS
+
+security:
+  creds_in_served_dir: 0 (grep exit 1)
+  handler_db_refs: JSDoc only (line 14 = * prefix block comment)
+  handler_write_verbs: 0
+  handler_imports: node:http + node:fs + node:path only
+  result: PASS
+
+sandbox_regression:
+  dash_check: PASS (panels=4, sandbox=3+live=1, cards=6, PASS=6, degrade=true, fake_rows=false)
+  external_net: 0
+  data_js_untouched: true (last commit cd8d0146)
+  sandbox_runner_ts_diff: empty
+  result: PASS
+
+tests:
+  nf_ld_4: 11/11 PASS
+  nf_ld_2: 9/9 PASS
+  combined: 20/20 PASS (59 expect() calls)
+  tsc: exit 0
+  result: PASS
+
+pilot_status_frozen: 12/12 YES verdict=scale status=DONE (not touched by 6b012fc8)
+ddd: PASS (node stdlib imports only in handler)
+
+lesson:
+  - sed ordering matters: longer/more-specific pattern must precede shorter generic pattern
+  - idempotency check (2nd run, git diff = 0) is gold standard for sync script correctness
+  - round-2 re-gate scope: focus on specific blocker + confirm no regression on untouched paths
+```
+
+| Check | Verdict |
+|---|---|
+| DRY/Anti-drift run 1 (git diff = 0) | PASS |
+| DRY/Anti-drift run 2 — idempotent | PASS |
+| Header path no scripts/ prefix | PASS |
+| ENDPOINT relative, 0 localhost:3000 in fetch | PASS |
+| file:// degrade kept | PASS |
+| Security: 0 creds in served dir | PASS |
+| Security: handler no DB/env access | PASS |
+| Security: handler no write verbs | PASS |
+| DDD: 0 domain/infra/app imports | PASS |
+| Sandbox: dash-check PASS (4 panels, degrade=true) | PASS |
+| data.js untouched | PASS |
+| NF-LD-4 tests: 11/11 | PASS |
+| NF-LD-2 tests: 9/9 | PASS |
+| tsc exit 0 | PASS |
+| Pilot-status 12/12 frozen | PASS |
+
+**Verdict: APPROVED. NEXT: po — NF-LD-4-EXIT sign-off. Then ops rebuild + PROVE served URL.**
+
+---
+
+## cycle-111 · 2026-05-24 · KD-QREF-LANG-3 Round 2 re-verify — APPROVED
+
+**Task:** KD-QREF-LANG-3 Round-2 re-verify (1 file: dashboard/index.html) | **Verdict:** APPROVED
+
+```
+date: 2026-05-24T(round-2)
+outcome: APPROVED — all 2 blocking issues resolved, 2 spec-completion items delivered
+type: feature-qa-gate-round2 (kinh-dich-service post-pilot enhancement #2, re-verify)
+handoff: docs/handoffs/TASK_KD-QREF-LANG.md
+round: 2
+file_scope: dashboard/index.html only (fixer single-file change)
+
+b1_resolution:
+  localStorage.getItem: 'kd-qref-lang' at line 2365 — CONFIRMED
+  localStorage.setItem: 'kd-qref-lang' at line 2380 — CONFIRMED
+  both_in_try_catch: true (initQrefLang lines 2364-2371; setQrefLang lines 2379-2383)
+  old_literal_qrefLang_remaining: 0 (grep exit 1)
+
+b2_resolution:
+  OUTCOME_GLOSS.vi: 5/5 A3 exact strings matched (CÁT/HUNG/VÔ CỬU/HỐI/LỆ with diacritics)
+  ACTION_GLOSS.vi: 5/5 A3 exact strings matched (TIẾN/GIỮ/CHỜ/THẬN/LUI)
+
+nb1_resolution:
+  toggleQueDetail: reads QREF_LABELS[qrefLang].expand/.collapse (line 2450)
+  renderQueReference: initial button uses labels.expand (line 2503)
+
+nb2_resolution:
+  renderQueReference: updates .qref-header h2 + .qref-desc from QREF_LABELS on every render
+  title/desc/expand/collapse keys present in both en + vi
+
+qref_labels_parity:
+  en_keys: 14 | vi_keys: 14 | missing_in_vi: 0 | missing_in_en: 0
+
+dash_check:
+  exit: 0
+  dotsGreen: 17 / dotsRed: 0 / jsErrors: 0 / pageErrors: 0
+  verdict: PASS
+
+smoke:
+  go_build: EXIT:0
+  go_test: EXIT:0 (reading_composer + 4 primitives)
+  forbidden_tokens: 0 (grep exit 1)
+
+scope:
+  files_changed: [index.html, que-reference.js, hexagram_reference.go] (all within A5)
+  fixer_file: index.html only
+  sandbox_traces_diff: EMPTY
+  pilot_status_diff: EMPTY
+  cmd_sandbox_main_diff: EMPTY
+
+lessons:
+  - When fixer says "NB fixed" verify the key names actually used in code match the keys
+    read in the consuming function — e.g., marketState vs stateInterp are just design-doc
+    names; what matters is that en and vi blocks have identical key sets (confirmed via python3)
+  - QREF_LABELS key parity check (python3 re-extraction) is a reliable guard for
+    missing-key → undefined render bugs across any number of keys
+```
+
+| Check | Round 2 |
+|---|---|
+| B-1: localStorage 'kd-qref-lang' get+set | PASS |
+| B-1: try/catch on both paths, no throw | PASS |
+| B-1: 0 remaining 'qrefLang' literals | PASS |
+| B-2: OUTCOME_GLOSS.vi 5/5 A3 exact | PASS |
+| B-2: ACTION_GLOSS.vi 5/5 A3 exact | PASS |
+| NB-1: Expand/Collapse from QREF_LABELS | PASS |
+| NB-2: h2 + .qref-desc localized on render | PASS |
+| QREF_LABELS 14-key parity (0 missing) | PASS |
+| dash-check 17 green 0 red 0 errors | PASS |
+| go build/test EXIT:0 | PASS |
+| Forbidden tokens: 0 | PASS |
+| Frozen surfaces untouched | PASS |
+| Scope A5 only | PASS |
+
+**Round 2 Verdict: APPROVED. NEXT: po (KD-QREF-LANG-EXIT sign-off).**
+
+---
+
+## cycle-110 · 2026-05-24 · KD-QREF-LANG-3 (EN/VI language switch QA gate) — CHANGES_REQUESTED
+
+**Task:** KD-QREF-LANG-3 QA gate (64-Quẻ Trading Reference EN/VI toggle) | **Verdict:** CHANGES_REQUESTED — 2 blocking issues
+
+```
+date: 2026-05-24T19:55:19Z
+outcome: CHANGES_REQUESTED — 2 blocking issues (B-1 localStorage key, B-2 VI gloss no diacritics)
+type: feature-qa-gate (kinh-dich-service post-pilot enhancement #2)
+handoff: docs/handoffs/TASK_KD-QREF-LANG.md
+signal: docs/signals/qa-kd-qref-lang-2026-05-24T195519Z.json
+round: 1
+pilot_frozen: true (pilot-status-kinh-dich.json untouched 12/12)
+
+build:
+  go_build: EXIT:0 (CGO_ENABLED=0)
+  go_vet: EXIT:0
+  go_test: EXIT:0 (reading_composer + 4 primitives)
+  golangci_lint: 0 issues EXIT:0
+
+i18n_coverage:
+  entries: 64 (ids 1..64 sequential)
+  empty_en: 0
+  empty_vi: 0
+  placeholder_vi: 0
+  ascii_only_vi_in_data: 0
+  que_reference_js_issues: 0
+
+vi_fidelity:
+  id01_kien: MATCH (blockquote + canh_bao + xu_huong verbatim/trimmed)
+  id29_tap_kham: AUTHENTIC (lightly paraphrased)
+  id64_vi_te: AUTHENTIC (trimmed)
+
+emit:
+  exit: 0
+  entries: 64
+  nested_en_vi_shape: CONFIRMED
+  deterministic: PASS (diff = timestamp+hash only)
+  tree_restored: true (re-emitted to dev's intent state)
+
+dash_check:
+  exit: 0
+  dotsGreen: 17 / dotsRed: 0 / jsErrors: 0 / pageErrors: 0
+  verdict: PASS
+
+scope:
+  allowed_files: 3 (index.html + que-reference.js + hexagram_reference.go)
+  cmd_sandbox_main_go: UNCHANGED
+  sandbox_traces_js: UNTOUCHED
+  pilot_status: UNTOUCHED
+  foreign_zone: 0
+
+blocking_issues:
+  B-1: dashboard/index.html:2357,2372 — localStorage key 'qrefLang' vs required 'kd-qref-lang' (D2/QA-3/AC-4)
+  B-2: dashboard/index.html:2299-2323 — OUTCOME_GLOSS/ACTION_GLOSS vi values ASCII without diacritics (AC-2/D4)
+
+non_blocking:
+  NB-1: Expand/Collapse hardcoded English (QREF_LABELS.expand/collapse unused)
+  NB-2: Panel h2/qref-desc not dynamically localized on toggle
+  NB-3: initQrefLang() before applyTracesOnLoad() (no functional impact)
+
+lessons:
+  - git checkout -- file during QA test restores HEAD version, not dev working-tree version;
+    must re-emit to restore dev's intent state after any accidental restore
+  - localStorage key names are binding in PO decisions; check exact key string, not just
+    that try/catch guards are present
+  - OUTCOME/ACTION gloss maps must also carry authentic VI (not just data fields)
+```
+
+| Check | Verdict |
+|---|---|
+| go build/vet/test EXIT:0 | PASS |
+| golangci-lint 0 issues | PASS |
+| hexagram_data.go UNTOUCHED | PASS |
+| 64 entries 1..64 sequential | PASS |
+| 0 empty/placeholder/ASCII-only vi fields | PASS |
+| que-reference.js 0 field issues | PASS |
+| VI fidelity 3 spot-checks | PASS |
+| GLOSS ENUM tokens covered (VO CUU normalized) | PASS |
+| Emit exit:0 deterministic | PASS |
+| dash-check 17 green 0 red 0 errors | PASS |
+| localStorage try/catch guards | PASS |
+| Forbidden tokens 0 in new code | PASS |
+| Scope 3 files only | PASS |
+| Frozen surfaces untouched | PASS |
+| **B-1 localStorage key 'kd-qref-lang'** | **FAIL** |
+| **B-2 VI gloss diacritics** | **FAIL** |
+
+**Verdict: CHANGES_REQUESTED. NEXT: dev-kinh-dich — 2 targeted fixes (index.html only).**
+
+---
+
 ## cycle-109 · 2026-05-24 · NF-LD-4-QA (serve news-fetch dashboard from mcp-server) — CHANGES_REQUESTED
 
 **Task:** NF-LD-4 QA gate (static dashboard served at /dashboards/news-fetch/) | **Verdict:** CHANGES_REQUESTED — 1 blocking issue (AC-DRY drift)
