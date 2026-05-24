@@ -302,8 +302,10 @@
   // ── State ────────────────────────────────────────────────────────────────
   let currentDocId = null;
   let currentPage = 1;
-  let totalPages = 0;
+  let totalPages = 0;    // OCR page count (rows in pdf_extracted_text)
+  let pdfNumPages = 0;   // PDF page count (pdf.numPages from pdf.js)
   let pdfjsLib = null;
+  let usingIframeFallback = false; // true when pdf.js CDN failed → iframe used
 
   // ── DOM refs ─────────────────────────────────────────────────────────────
   const select        = document.getElementById("doc-select");
@@ -364,15 +366,16 @@
     }
     currentDocId = docId;
     currentPage = 1;
+    pdfNumPages = 0;
+    usingIframeFallback = false;
 
     const selectedOpt = select.options[select.selectedIndex];
     let item = null;
     try { item = JSON.parse(selectedOpt.dataset.item || "null"); } catch { /* */ }
 
-    await Promise.all([
-      renderPdf(docId, item),
-      renderOcr(docId, 1),
-    ]);
+    // Render PDF first so pdfNumPages is populated before nav buttons are set
+    await renderPdf(docId, item);
+    await renderOcr(docId, 1);
   });
 
   // ── Render PDF (left pane) ───────────────────────────────────────────────
@@ -402,8 +405,16 @@
       }
     }
 
-    // CDN-with-iframe fallback
-    pdfContainer.style.display = "none";
+    // CDN-with-iframe fallback: an iframe cannot be scrolled to a specific page
+    // from JS, so we degrade honestly — OCR nav still works, PDF side shows a note.
+    usingIframeFallback = true;
+    pdfContainer.style.display = "flex";
+    pdfContainer.innerHTML = `
+      <div class="missing-msg">
+        <strong>PDF rendered in iframe (pdf.js unavailable).</strong>
+        <span>Page-sync is disabled in iframe mode — OCR navigation still works.</span>
+      </div>`;
+    // Place iframe below the note so the PDF is still viewable
     pdfIframe.src = pdfUrl;
     pdfIframe.style.display = "block";
     pdfIframe.style.flex = "1";
@@ -426,13 +437,18 @@
     const arrayBuffer = await resp.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const numPages = pdf.numPages;
+    // Store PDF page count in module-level state so renderOcr can use it
+    pdfNumPages = numPages;
 
     pdfContainer.innerHTML = "";
-    // Render all pages (viewer scrolls)
+    // Render all pages stacked vertically (viewer scrolls).
+    // Each canvas is tagged so page-nav can scrollIntoView the matching page.
     for (let pageNum = 1; pageNum <= numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const viewport = page.getViewport({ scale: 1.4 });
       const canvas = document.createElement("canvas");
+      canvas.id = `pdf-page-${pageNum}`;
+      canvas.dataset.page = String(pageNum);
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       const ctx = canvas.getContext("2d");
@@ -481,10 +497,42 @@
         ocrTextContent.textContent = data.text_content;
       }
 
-      // Page navigation
-      pageIndicator.textContent = totalPages > 0 ? `${currentPage} / ${totalPages}` : "—";
+      // ── Page navigation ─────────────────────────────────────────────────
+      // Navigation bound = PDF page count when a PDF is rendered via pdf.js.
+      // If OCR has fewer or more pages than the PDF, show an honest note:
+      //   • OCR-only docs: nav bound = OCR total_pages (pdfNumPages=0).
+      //   • pdf.js rendered: nav bound = pdfNumPages; OCR may be a subset.
+      //   • iframe fallback: pdfNumPages=0 and usingIframeFallback=true — OCR
+      //     nav bound = OCR total_pages; PDF-side sync is disabled.
+      //
+      // We do NOT lie about "in sync" when counts differ. A small note below
+      // the indicator is shown whenever the counts diverge.
+      const navBound = pdfNumPages > 0 ? pdfNumPages : totalPages;
+      pageIndicator.textContent = navBound > 0 ? `${currentPage} / ${navBound}` : "—";
       btnPrev.disabled = currentPage <= 1;
-      btnNext.disabled = !data.has_more;
+      // "has_more" from the OCR endpoint governs whether OCR text exists for the
+      // next page. But the nav arrow stays enabled as long as there are more PDF
+      // pages to show — even if OCR text is absent for them.
+      btnNext.disabled = currentPage >= navBound;
+
+      // Show a note when PDF and OCR page counts are known and differ
+      const syncNote = document.getElementById("ocr-sync-note");
+      if (syncNote) syncNote.remove();
+      if (pdfNumPages > 0 && totalPages > 0 && pdfNumPages !== totalPages) {
+        const note = document.createElement("div");
+        note.id = "ocr-sync-note";
+        note.style.cssText = "font-size:10px;color:#886;padding:2px 14px 4px;background:#222;";
+        note.textContent = `Note: PDF has ${pdfNumPages} page(s), OCR text has ${totalPages} page(s) — pages beyond OCR range will show empty text.`;
+        ocrTextContent.parentElement?.insertBefore(note, ocrTextContent);
+      }
+
+      // ── PDF pane scroll-sync ─────────────────────────────────────────────
+      // Only available when pdf.js rendered canvases (not iframe fallback, not
+      // has_pdf===false). Smooth-scroll the left pane to the matching canvas.
+      if (!usingIframeFallback && pdfNumPages > 0) {
+        const targetCanvas = document.getElementById(`pdf-page-${currentPage}`);
+        targetCanvas?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
 
     } catch (err) {
       ocrTextContent.innerHTML = `<div class="missing-msg"><strong>Error: ${err.message}</strong></div>`;
@@ -549,6 +597,11 @@
   }
 
   // ── Page navigation ──────────────────────────────────────────────────────
+  // navBound helper: mirrors the logic in renderOcr so clicks stay in bounds.
+  function getNavBound() {
+    return pdfNumPages > 0 ? pdfNumPages : totalPages;
+  }
+
   btnPrev.addEventListener("click", () => {
     if (currentDocId && currentPage > 1) {
       currentPage--;
@@ -556,7 +609,7 @@
     }
   });
   btnNext.addEventListener("click", () => {
-    if (currentDocId && currentPage < totalPages) {
+    if (currentDocId && currentPage < getNavBound()) {
       currentPage++;
       renderOcr(currentDocId, currentPage);
     }
@@ -575,6 +628,9 @@
     btnNext.disabled = true;
     totalPages = 0;
     currentPage = 1;
+    pdfNumPages = 0;
+    usingIframeFallback = false;
+    document.getElementById("ocr-sync-note")?.remove();
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────
