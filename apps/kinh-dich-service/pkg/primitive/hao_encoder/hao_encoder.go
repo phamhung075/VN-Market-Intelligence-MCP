@@ -31,7 +31,7 @@ const (
 // The handoff spec listed 0.25 which was WRONG — corrected in TS pilot.
 const (
 	LAO_DUONG_THRESHOLD   = 0.75  // score > 0.75 → LAO_DUONG
-	THIEU_DUONG_THRESHOLD = 0.25  // 0.10 <= score <= 0.75 → THIEU_DUONG (NOT 0.25)
+	THIEU_DUONG_THRESHOLD = 0.10  // 0.10 <= score <= 0.75 → THIEU_DUONG
 	LAO_AM_THRESHOLD      = -0.75 // score < -0.75 → LAO_AM
 )
 
