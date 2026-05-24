@@ -1,0 +1,46 @@
+# Main-Router Session State — 2026-05-24 (factory fleet rollout)
+
+## Standing directive (/goal, Stop-hook active)
+"complete all microservice factory and make dashboard of each service working revealing functions of his microservice server." Drive EVERY in-scope microservice through the 12-G-goal factory; each ends with a working, function-revealing dashboard. Do NOT pause to ask the user — auto-continue.
+
+## Router role
+Main terminal = router ONLY. Never implement. Always delegate via Agent (correct subagent type, `run .claude/flows/<agent>/main.md`). PM/PO/architect CANNOT spawn agents — router fans out from their signals. Verify EVERY returned commit independently (stat + dup-key + anchor + index-clear) before releasing the next committer.
+
+## Active execution policy (CRITICAL)
+**INTERIM FLEET-WIDE SINGLE-COMMITTER SERIALIZATION** — at most ONE file-committing worker in flight across ALL pilots. Ratified by PO (decision doc `docs/po-decisions/2026-05-24-fleet-rollout-post-pilot3-terminal.md`). Stays in force until the commit-mutex brief lands AND is PO-ratified. Each committer: stage only own explicit paths at the very end; `git diff --cached --name-only` must be clear of foreign paths before staging; NEVER `git reset HEAD` a foreign path (WAIT instead). Tag-only ops are safe-concurrent. Root cause = shared git index; structural fix = commit-mutex on main (per-pilot worktrees REJECTED — violate NO-branches).
+
+## Hard constraints (persist)
+- NO branches (all on main). No `--force`/`--no-verify`/`--no-gpg-sign`/`git push`. No history rewrite.
+- L84 explicit-path staging (never `-A`/`.`). `docs/data/*.json` gitignored → `git add -f` by path.
+- Frozen anchor `debba8eaff0724d1fb32fc9d28640201cc32d1cc` must stay ancestor of HEAD.
+- Charter §4.5: G-goals flip + decisionMatrix populate ONLY at each pilot's Phase-3 PO terminal 12/12 atomic close (one commit). Phase milestones flip NO goals; goalsEarned stays 0 / dm all-TBD until terminal.
+- SSOT JSON duplicate-key hazard: PM Edits can create duplicate root keys (kinh-dich had dup `phase1` — fixed `45eb34e8`). After ANY SSOT edit, run the object_pairs_hook dup-key detector + assert the written field is parser-visible BEFORE commit. Router re-verifies every PM SSOT claim.
+- Do NOT touch closed/done: apps/{technical-analysis,macro-indicators,stock-price}/** + their SSOTs. SI-2 fleet index `docs/dashboards/index.html` = stock-price EXCLUSIVE.
+
+## Fleet state (2026-05-24)
+- technical-analysis, macro-indicators: CLOSED (have dashboards, linked in SI-2).
+- **stock-price (pilot-3): TERMINAL 12/12 DONE, verdict=scale** (atomic close `39260588`). Dashboard G9-Playwright-verified; SI-2 fleet index genesis. Tags: pre-ci/pre-delete/pre-inject/pre-trial2 + pre-p1b1.
+- **kinh-dich (pilot-4): TERMINAL 12/12 DONE, verdict=scale** (atomic close `4b48f3b0`, 2nd terminal pilot this session). All 12 goals YES, goalsEarned=12, dm populated, status=DONE, phase=3. Dashboard 5 primitive cards, G9-Playwright-verified. Honest caveats: G4 false-green at P2-KD-B→fixed+enforcing at P2-KD-C `205aa5cf`; G11 module-tier structural-fallback limitation (graded at TA/macro bar). Tags: pre-ci/pre-delete/pre-inject + the stock-price set. Sandbox 17/17.
+- **alert-engine (pilot-5): PHASE-1 CLOSED + PHASE-2 IN FLIGHT.** Phase-1 closed `d6eab5bf` (all 5 close-gate criteria GO; sandbox 11/11; G7 ZERO-CREDS all 4 sub-gates PASS; phase reconciled phase=1/phase0=CLOSED/phase1=DONE; goalsEarned=0, dm all-TBD). Phase-2 plan `86566eb1` (14 tasks P2-A..P2-Z, 69 ACs; G4-fence-proof=P2-C, G10 inject=P2-L/blind-fix=P2-M). Phase-2 opened `5d356e7c` (phase=2, current_task→). **P2-A DONE** (tag `alert-engine-pre-ci`@4d5b2f75). **P2-B SEQUENCED** (`f7bd9d41` SSOT+handoff; .golangci.yml Fence-A/B/C + CI lint) → dev-alert-engine next. Go, go1.22+cgo, port 5006, zone apps/alert-engine, G7 zero-creds = hard gate (PASSED Phase-1).
+- Not started: news-fetch (needs SI-5 dev-news-fetch agent), pdf-extractor (SI-4 Python fence), rag-service.
+- WIP=1 active set = {alert-engine Phase-2}.
+
+## CONCURRENCY INCIDENT (2026-05-24 ~08:44, benign — recorded for pattern)
+A background **context-bloat-backstop** workstream (agents-architect; commits 93888414/5f57b535/d8d73718/4d5b2f75) is actively adding `<!-- size-justification: NNN L -->` doc-heal comments to oversized `.claude/*.md` files + emitting `docs/signals/context-bloat-*.json`. It leaves modified `.claude/` files in the working tree. The PM's P2-B **signal commit `179f7cd1` swept in 17 such foreign `.claude/` files** (its signal-commit `git add` was over-broad). Content benign (1-line doc comments), work preserved, anchor intact, factory SSOT commit `f7bd9d41` was clean & separate. NOT fixed (history-rewrite forbidden; reverting would delete legit background work). MITIGATION going forward: every factory dispatch prompt must hammer `git add <EXACT signal path>` only (never -A/./dir), and run `git diff --cached --name-only` immediately before commit — if a non-authored path is staged, `git restore --staged <path>` it (unstaging own over-broad stage is safe; the WAIT/no-reset rule is only for *committed* foreign work). [[feedback_concurrent_commit_race]]
+
+## Pending workstreams (PO fleet-rollout signals, dispatch order)
+1. DONE: architect kinh-dich Phase-2 plan (`18b04bf5`). next_actor=pm → open Phase-2 at P2-KD-A.
+2. PENDING: architect → alert-engine pilot-5 charter + PM-owned SSOT (signal `po-20260524T023538Z-alert-engine-pilot5-charter.json`). Mirror `2026-05-23-stock-price-factory/pilot-charter.md`.
+3. PENDING: architect → commit-mutex structural-fix brief (signal `po-20260524T023538Z-commit-mutex-structural-fix-commission.json`). Design-only, must NOT block 1/2; preserves NO-branches; PO must ratify before implementation.
+
+## NEXT DISPATCH (resume here)
+**alert-engine Phase 2 IN FLIGHT — P2-B sequenced, dev-alert-engine is next committer.** Drive P2-B → P2-Z to Phase-2 close, then Phase-3 → PO terminal 12/12. Then pilots 6-8 + commit-mutex.
+IMMEDIATE next: dispatch **dev-alert-engine for P2-B** (create `apps/alert-engine/.golangci.yml` Fence-A/B/C + wire CI `alert-engine-go-lint` job; handoff `docs/handoffs/TASK_P2-B-ae-golangci-yml.md`, 5 ACs). P2-B = config + clean green run ONLY; the fence-ENFORCES proof is the separate P2-C (deliberate Fence-A violation → golangci non-zero → revert) — guard [[feedback_fence_false_green]].
+Phase-2 task order (from `phase-2-task-plan-go.md`): P2-A✅ → P2-B(.golangci) → P2-C(G4 fence-proof) → P2-D(freeze-anchor QA) → P2-E(pre-delete tag) → P2-F(git mv domain→_deprecated) → P2-G(MCP audit QA) → P2-H(G3 composition root) → P2-I(dashboard finalize G6) → P2-J(G8 honest-red QA) → P2-K(G9 PO Playwright) → P2-L(G10 inject, QA, specifics REDACTED from fixer) → P2-M(G10 blind-fix dev ≤2 cycles + G11 2-trial) → P2-Z(close-gate QA).
+Then: **architect → commit-mutex structural-fix brief** (PO signal `po-...-commit-mutex-structural-fix-commission.json`; advisory lock on main, NO branches/worktrees; PO ratifies before impl). Then **pilots 6-8** (news-fetch needs SI-5 dev-news-fetch agent; pdf-extractor SI-4 Python fence; rag-service) — each needs PO charter → architect charter+plan → execute.
+LOOP RECIPE (proven ~30 cycles, every commit verified clean): for each task — PM sequences (writes handoff + SSOT, dup-key gate) → router verifies PM commit → router fans out dev/qa/po → worker executes → router INDEPENDENTLY verifies (git show stat + own-files-only + the goal's real effect, NOT just exit-0 — see [[feedback_fence_false_green]] + [[feedback_ssot_duplicate_key]]) + anchor `debba8ea` ancestor → next. Tag-only tasks safe. G10 fixer must stay BLIND (redact bug specifics from dev handoff — router caught+redacted one leak at `a5cbb1df`). PO writes the PM-owned SSOT ONLY at the terminal 12/12 atomic close.
+NOTE: `cd` persists in Bash — run verifies from repo root or use absolute paths.
+Verified-clean tail (this resume): 2f4ee643(PM seq P1-E)→4e756d40(dev P1-E, G7 4/4)→6f989ec6(sig backfill)→d6eab5bf(PM Phase-1 CLOSE)→86566eb1(architect P2 plan)→521e0c74(sig)→5d356e7c(PM Phase-2 OPEN)→604a71f1+a002ebd3(dev P2-A tag)→f7bd9d41(PM seq P2-B, CLEAN). EXCEPTION: signal commit 179f7cd1 contaminated w/ 17 foreign .claude/ doc-heal files (benign, see CONCURRENCY INCIDENT). All factory-substantive commits own-files-only, anchor `debba8ea` intact throughout.
+
+## Verified-clean commit chain this session (for audit)
+399afe54 (P2-F remediation) → 51e34a1f → 2474b873 → 4af08c5c → 4ea0bfae → b7cb55bc → 34205c87 → 92ae7402 → 45eb34e8 (kinh-dich SSOT dedup) → 1818bd5a (P2-H) → 62c2dc79 (P2-I) → 469c047a → f1385be8 → 7e0a7699 → b960bd8f (P2-J) → 9509d55a → 4aa6a5b0 (P2-K G9) → 57d4df43 → b3f516b4 (P2-L inject) → addc94cf → 4e920ffb (P2-M G10 fix) → 2dd7f84e → ffeb138d (P2-Z) → 62a830ab (Phase-2 closed) → 39260588 (TERMINAL 12/12) → b19a1f6e (fleet rollout) → 18b04bf5 (kinh-dich P2 plan). Every commit verified: own-files-only, no foreign staged, anchor intact.
