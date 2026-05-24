@@ -169,57 +169,97 @@ go run ./cmd/sandbox -tier=all -module=stock-price -scenario=all
 
 ### §Evidence — AC-1 Violation Run
 
-[QA: Paste full `golangci-lint run` output showing non-zero exit + fence rule name + file name here]
+**File edited:** `apps/stock-price/pkg/primitive/price-quote-normalizer/normalizer.go`
+**Forbidden import injected:** `_ "github.com/vn-market-intelligence/stock-price/pkg/infrastructure"`
+**Fence rule targeted:** fence-a
 
 ```
-<paste_linter_output_here>
+pkg/primitive/price-quote-normalizer/normalizer.go:13:2: import 'github.com/vn-market-intelligence/stock-price/pkg/infrastructure' is not allowed from list 'fence-a': Fence-A: primitive must not import infrastructure layer (depguard)
+	_ "github.com/vn-market-intelligence/stock-price/pkg/infrastructure"
+	^
+1 issues:
+* depguard: 1
+EXIT_CODE: 1
 ```
+
+AC-1 PASS: non-zero exit (1), fence-a named, violating file identified.
 
 ---
 
 ### §Evidence — AC-2 Clean Run
 
-[QA: Paste full `golangci-lint run` output after revert, showing exit 0 + "0 issues" here]
+Immediately after `git checkout -- apps/stock-price/pkg/primitive/price-quote-normalizer/normalizer.go`:
 
 ```
-<paste_linter_output_here>
+0 issues.
+EXIT_CODE: 0
 ```
+
+AC-2 PASS: exit 0, 0 issues.
 
 ---
 
 ### §Evidence — AC-3 Git Status Clean
 
-[QA: Paste output of `git status --short` (should be empty or no primitives)]
+```
+(no stock-price/pkg files in working tree)
+```
 
-```
-<paste_git_status_here>
-```
+`git status --short | grep apps/stock-price/pkg/` — empty output. Violation was never staged or committed.
+
+AC-3 PASS.
 
 ---
 
 ### §Evidence — AC-4 QA Independent Reproduction
 
-[QA: Paste full violation-run + clean-run outputs for a DIFFERENT primitive file (not the one used in AC-1)]
+**File edited:** `apps/stock-price/pkg/module/price_resolution/price_resolution.go` (different from AC-1)
+**Forbidden import injected:** `_ "github.com/vn-market-intelligence/stock-price/pkg/infrastructure"` (same forbidden package, different fence rule)
+**Fence rule targeted:** fence-b (module layer, distinct from fence-a)
 
-**Violation Run (File: _____________):**
+**Violation Run (File: pkg/module/price_resolution/price_resolution.go):**
 ```
-<paste_violation_output_here>
+pkg/module/price_resolution/price_resolution.go:14:2: import 'github.com/vn-market-intelligence/stock-price/pkg/infrastructure' is not allowed from list 'fence-b': Fence-B: module must not import infrastructure layer (depguard)
+	_ "github.com/vn-market-intelligence/stock-price/pkg/infrastructure"
+	^
+1 issues:
+* depguard: 1
+EXIT_CODE: 1
 ```
 
-**Clean Run (after revert):**
+**Clean Run (after `git checkout -- apps/stock-price/pkg/module/price_resolution/price_resolution.go`):**
 ```
-<paste_clean_output_here>
+0 issues.
+EXIT_CODE: 0
 ```
+
+`git status --short | grep apps/stock-price/pkg/` — empty. No violation artifacts remain.
+
+AC-4 PASS: fence-b independently proven to bite on a different file with a different fence rule. Both fence-a AND fence-b verified.
 
 ---
 
 ### §Evidence — AC-5 G12 DoD Gate
 
-[QA: Paste final line of sandbox output showing total=11 pass=11 fail=0 status=OK]
+Full sandbox output:
 
 ```
-<paste_sandbox_summary_here>
+{"time":"2026-05-24T02:12:51.052594+02:00","level":"INFO","msg":"PASS","scenario":"price-quote-normalizer-edge.json"}
+{"time":"2026-05-24T02:12:51.054164+02:00","level":"INFO","msg":"PASS","scenario":"price-quote-normalizer-failure.json"}
+{"time":"2026-05-24T02:12:51.054817+02:00","level":"INFO","msg":"PASS","scenario":"price-quote-normalizer-golden.json"}
+{"time":"2026-05-24T02:12:51.055376+02:00","level":"INFO","msg":"PASS","scenario":"price-staleness-classifier-edge.json"}
+{"time":"2026-05-24T02:12:51.055876+02:00","level":"INFO","msg":"PASS","scenario":"price-staleness-classifier-failure.json"}
+{"time":"2026-05-24T02:12:51.056333+02:00","level":"INFO","msg":"PASS","scenario":"price-staleness-classifier-golden.json"}
+{"time":"2026-05-24T02:12:51.056927+02:00","level":"INFO","msg":"PASS","scenario":"tier-fallback-selector-edge.json"}
+{"time":"2026-05-24T02:12:51.05734+02:00","level":"INFO","msg":"PASS","scenario":"tier-fallback-selector-failure.json"}
+{"time":"2026-05-24T02:12:51.057775+02:00","level":"INFO","msg":"PASS","scenario":"tier-fallback-selector-golden.json"}
+{"time":"2026-05-24T02:12:51.058857+02:00","level":"INFO","msg":"PASS","scenario":"price-resolution-edge.json"}
+{"time":"2026-05-24T02:12:51.059333+02:00","level":"INFO","msg":"PASS","scenario":"price-resolution-golden.json"}
+total=11 pass=11 fail=0 status=OK
+EXIT_CODE: 0
 ```
+
+AC-5 PASS: total=11 pass=11 fail=0 status=OK. No code changed — violations were reverted.
 
 ---
 

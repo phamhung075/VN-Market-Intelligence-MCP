@@ -284,12 +284,57 @@ Before writing RETURN block, confirm:
 
 ---
 
+## Deliberate Edit Test Transcript (AC-5 / G8 Proof)
+
+**Edit applied to:** `docs/scenarios/kinh-dich/primitives/hexagram-resolver-golden.json`
+
+**Change (line 5):**
+```diff
+- "input": { "signals": [1, 1, 1, 1, 1, 1] },
++ "input": { "signals": [1, 1, 1, 1, 1, 0] },
+```
+
+Rationale: signals `[1,1,1,1,1,1]` → hexagram 1 (Thuần Càn). Changing last signal to `0` → lower=Qian(1,1,1), upper=mixed(1,1,0) → resolves to hexagram 43 (Quẻ Trạch Thiên Quải). Expected in scenario was still `1` — mismatch forces FAIL.
+
+**Sandbox command run:**
+```
+cd apps/kinh-dich-service && bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=hexagram-resolver-golden.json
+```
+
+**Expected FAIL output (actual):**
+```
+[FAIL] hexagram-resolver-golden.json | Expected hexagram 1 but got 43
+
+[sandbox] FAIL 0/1 scenarios (1 failed, 0 skipped)
+```
+Exit code: 1 (non-zero → honest failure).
+
+**Dashboard card effect:** card dot changes from grey (NOT-RUN) → red (fail) when NDJSON is pasted and Apply is clicked.
+
+**Revert applied:** `signals` restored to `[1, 1, 1, 1, 1, 1]`. Tree confirmed green: `[sandbox] PASS 11/11 scenarios (0 failed, 0 skipped)`.
+
+---
+
 ## Return
 
-Document completion date and status below:
+**Completion date:** 2026-05-24T04:30:00Z
+**Status:** DONE — all 8 ACs PASS
 
-**To be completed by dev-kinh-dich.**
+| AC | Verdict | Evidence |
+|----|---------|---------|
+| AC-1 | PASS | Modal opens with "Edit & Rerun (P1-E)" button; click expands inline panel with edit instructions, tier-aware command, paste-target textarea |
+| AC-2 | PASS | `--tier=primitive` and `--tier=module` commands shown in modal + footer rerun block (copy-able) |
+| AC-3 | PASS | `env \| grep -E "DB_PATH\|KINH_DICH_DB\|API_KEY\|SECRET\|PASSWORD"` → exit 1 (no matches); `TOKEN` matches are CTX_ADVISOR_* Claude Code tooling vars, not service credentials |
+| AC-4 | PASS | `grep -rn "from.*infrastructure\|from.*hono\|SQLite\|getDb\|repositories" src/primitive/ src/module/ src/sandbox/` → 0 actual import lines (comment text only) |
+| AC-5 | PASS | Corrupted `signals[5]` from 1→0 → `[FAIL] hexagram-resolver-golden.json \| Expected hexagram 1 but got 43`. Reverted before commit. Tree green. |
+| AC-6 | PASS | `[sandbox] PASS 11/11 scenarios (0 failed, 0 skipped)` confirmed before commit |
+| AC-7 | PASS | No new TS files in src/primitive/ or src/module/. eslint.config.mjs NOT created. No Phase-2 tags. |
+| AC-8 | PASS | Modal status bar + "Edit & Rerun (P1-E)" button (aria-label) + copy-able command block + paste textarea + Apply button + NDJSON parse handler |
+
+**Commit:** (see signal file for SHA)
+**Next actor:** pm
 
 ---
 
 *Handoff authored 2026-05-24T02:05:00Z by pm for kinh-dich pilot-4 Phase 1, P1-E G7 Edit-Rerun + Zero-Creds.*
+*Return completed 2026-05-24T04:30:00Z by dev-kinh-dich.*

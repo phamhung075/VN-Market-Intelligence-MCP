@@ -690,6 +690,138 @@ footer {
   line-height: 1.5;
 }
 
+/* P1-E: Edit & Rerun expanded panel */
+.edit-rerun-panel {
+  display: none;
+  border-top: 1.5px solid var(--border);
+  background: #f8fafc;
+  padding: 16px 20px;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edit-rerun-panel.open { display: flex; }
+
+.edit-rerun-instructions {
+  font-size: 0.78rem;
+  color: #374151;
+  line-height: 1.6;
+  background: #e0f2fe;
+  border: 1px solid #7dd3fc;
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.edit-rerun-instructions code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  background: #0f172a;
+  color: #7dd3fc;
+  border-radius: 3px;
+  padding: 1px 5px;
+}
+
+.edit-rerun-cmd-block {
+  background: #0f172a;
+  border-radius: 6px;
+  padding: 10px 12px;
+  position: relative;
+}
+
+.edit-rerun-cmd-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+
+.edit-rerun-cmd-text {
+  font-family: 'Courier New', monospace;
+  font-size: 0.75rem;
+  color: #7dd3fc;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+.edit-rerun-copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 0.68rem;
+  background: #1e3a5f;
+  color: #93c5fd;
+  border: 1px solid #2563eb;
+  border-radius: 4px;
+  padding: 2px 8px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.edit-rerun-copy-btn:hover { background: #2563eb; color: #fff; }
+
+.paste-label {
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #374151;
+}
+
+.paste-area {
+  width: 100%;
+  min-height: 80px;
+  border: 1.5px solid #cbd5e1;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.73rem;
+  color: #374151;
+  padding: 8px 10px;
+  resize: vertical;
+  background: #fff;
+  line-height: 1.5;
+}
+
+.paste-area:focus { outline: 2px solid #2563eb; border-color: #2563eb; }
+
+.paste-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.apply-btn {
+  font-size: 0.74rem;
+  background: #1a7f3c;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: var(--font);
+  font-weight: 600;
+}
+
+.apply-btn:hover { background: #15803d; }
+
+.clear-paste-btn {
+  font-size: 0.72rem;
+  background: none;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.clear-paste-btn:hover { background: #f3f4f6; }
+
+.paste-result-msg {
+  font-size: 0.74rem;
+  flex: 1;
+}
+
   </style>
 </head>
 <body>
@@ -698,17 +830,17 @@ footer {
   <h1>kinh-dich-service &mdash; Scenario Trust Dashboard</h1>
   <p class="subtitle">
     Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
-    P1-D &nbsp;|&nbsp; Pilot: kinh-dich &nbsp;|&nbsp; Language: TypeScript / Bun
+    P1-E &nbsp;|&nbsp; Pilot: kinh-dich &nbsp;|&nbsp; Language: TypeScript / Bun
   </p>
   <p class="meta">
-    Goals: G6 (dashboard renders) &bull; G7 (zero creds) &bull; G8 (honest NOT-RUN) &bull; G9 (trust contract) &bull; G12 (green before done)
+    Goals: G6 (dashboard renders) &bull; G7 (zero creds) &bull; G8 (honest red/green) &bull; G9 (trust contract) &bull; G12 (green before done)
     &nbsp;&bull;&nbsp;
     9 primitive scenarios + 2 module scenarios &mdash; all data embedded inline, zero production credentials.
     Open this file with <code>file://</code> in any browser &mdash; no server required.
     Service ports: internal&nbsp;5005 / external&nbsp;5005 (per <code>docs/data/system-map.json</code>).
     jq query: <code>jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json</code>
     &nbsp;&bull;&nbsp;
-    Click <strong>Edit &amp; Rerun</strong> on any scenario to preview the rerun command (P1-E implements the live handler).
+    P1-E: Click <strong>Edit &amp; Rerun (P1-E)</strong> on any scenario card &rarr; copy the terminal command &rarr; paste NDJSON output &rarr; cards update live.
   </p>
 </header>
 
@@ -788,34 +920,42 @@ footer {
   <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input &rarr; expected error</span>
 </div>
 
-<!-- ============================================================ RERUN COMMAND BLOCK (AC-7) -->
+<!-- ============================================================ RERUN COMMAND BLOCK (AC-2) -->
+<!-- P1-E: Copy-able rerun commands for both primitive and module tiers.                    -->
+<!-- Run in Terminal, then paste NDJSON output into the modal Edit & Rerun panel.           -->
 <div class="footer-rerun-block">
-  <div class="footer-rerun-label">Sandbox Rerun Command (P1-E preview &mdash; copy &amp; run, then paste output to update)</div>
+  <div class="footer-rerun-label">Sandbox Rerun Commands (P1-E &mdash; copy &amp; run in Terminal, then paste NDJSON output into scenario modal)</div>
   <pre class="footer-rerun-cmd">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</pre>
-  <button class="footer-rerun-copy-btn" id="footer-copy-btn" type="button">Copy</button>
+  <button class="footer-rerun-copy-btn" id="footer-copy-btn" type="button" aria-label="Copy all-tier rerun command">Copy</button>
   <div class="footer-rerun-note">
-    Zero DB credentials, zero API keys, zero tokens &mdash; kinh-dich is pure compute. Reads only scenario JSON fixtures.<br>
-    Per-tier: &nbsp;
-    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#94a3b8;padding:1px 5px;border-radius:3px;font-size:0.71rem;">bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=all</code>
-    &nbsp;then&nbsp;
-    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#94a3b8;padding:1px 5px;border-radius:3px;font-size:0.71rem;">bun run src/sandbox/runner.ts --tier=module --module=kinh-dich --scenario=all</code>
-    &nbsp;&bull;&nbsp; P1-E will add live paste-and-update handler.
+    <strong>G7 zero-creds:</strong> Zero DB credentials, zero API keys, zero tokens &mdash; kinh-dich is pure compute. Reads only scenario JSON fixtures.<br>
+    Per-tier commands:<br>
+    &nbsp;&nbsp;<strong>Primitives:</strong>&nbsp;
+    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#7dd3fc;padding:1px 5px;border-radius:3px;font-size:0.71rem;">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=all</code><br>
+    &nbsp;&nbsp;<strong>Module:</strong>&nbsp;
+    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#7dd3fc;padding:1px 5px;border-radius:3px;font-size:0.71rem;">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=module --module=kinh-dich --scenario=all</code><br>
+    Edit scenario JSON on disk &rarr; run command &rarr; click <strong>Edit &amp; Rerun</strong> on any card &rarr; paste NDJSON output &rarr; cards update live (P1-E handler active).
   </div>
 </div>
 
-<!-- ============================================================ FOOTER (AC-8) -->
+<!-- ============================================================ FOOTER -->
 <footer>
-  P1-D &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: kinh-dich &bull;
+  P1-E &mdash; Edit-Rerun Handler + Zero-Creds Env Audit &bull; Pilot: kinh-dich &bull;
   Ports: internal 5005 / external 5005 (source: <code>jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json</code>) &bull;
   No server required (file:// URL) &bull; No production credentials &bull;
-  G7 trust contract: edit scenario JSON &rarr; run <code>cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</code> &rarr; paste output (P1-E gate) &bull;
-  G8 contract: NOT-RUN on cold start; GREEN only after sandbox all-green &bull;
-  AC-3 (env audit): zero DB creds / API keys / tokens in sandbox process &bull;
+  G7 trust contract: edit scenario JSON &rarr; run <code>cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</code> &rarr; paste NDJSON output into modal &rarr; cards update live &bull;
+  G8 contract: NOT-RUN on cold start; honest red on failure; GREEN only after sandbox all-green &bull;
+  AC-3 (env audit): zero DB creds / API keys / tokens in sandbox process (CTX_ADVISOR vars are Claude Code tooling, not service credentials) &bull;
   All 11 scenarios embedded inline, zero external fetch &bull;
-  Next: P1-E (edit-rerun handler) &bull; P1-F (OpenAPI endpoints) &bull; P1-G (QA close-gate)
+  Next: P1-F (OpenAPI endpoints) &bull; P1-G (QA close-gate)
 </footer>
 
-<!-- ============================================================ MODAL (AC-5) -->
+<!-- ============================================================ MODAL (AC-8) -->
+<!-- P1-E: Modal includes Edit & Rerun (P1-E) button + expanded panel with:     -->
+<!--   - Status bar showing current result (NOT-RUN | PASS | FAIL)              -->
+<!--   - Edit instructions + copy-able rerun command (tier-aware)               -->
+<!--   - Paste-target textarea to accept NDJSON output                          -->
+<!--   - Apply button: parses NDJSON, updates cards, updates status dots        -->
 <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
   <div class="modal">
     <div class="modal-header">
@@ -843,12 +983,64 @@ footer {
         </div>
       </div>
     </div>
+
+    <!-- Status bar + Edit & Rerun button (AC-8) -->
     <div class="modal-status-bar" id="modal-status-bar">
       <span class="status-indicator" id="modal-status-text"></span>
       <span class="modal-note" id="modal-status-note">G8 contract: NOT-RUN until sandbox executed</span>
-      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun (P1-E)</button>
-      <div class="modal-rerun-cmd">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</div>
+      <button class="rerun-btn" id="rerun-btn" type="button"
+              aria-label="Edit scenario JSON then rerun sandbox and paste output here">
+        Edit &amp; Rerun (P1-E)
+      </button>
     </div>
+
+    <!-- P1-E: Edit & Rerun expanded panel (AC-1, AC-2, AC-8) -->
+    <!-- Opens when user clicks "Edit & Rerun (P1-E)" button   -->
+    <div class="edit-rerun-panel" id="edit-rerun-panel" aria-label="Edit and Rerun handler">
+
+      <!-- Step-by-step instructions (AC-1 user flow) -->
+      <div class="edit-rerun-instructions" id="edit-rerun-instructions">
+        <strong>Edit &amp; Rerun &mdash; P1-E Trust Loop</strong><br>
+        1. Edit the scenario JSON on disk:<br>
+        &nbsp;&nbsp;<code id="edit-rerun-file-path">docs/scenarios/kinh-dich/primitive/...</code><br>
+        2. Run this command in Terminal (copy button &rarr;):<br>
+        3. Copy the NDJSON output lines, paste below, click <strong>Apply</strong> to update card status.
+      </div>
+
+      <!-- Copy-able rerun command block (AC-2) -->
+      <div class="edit-rerun-cmd-block" id="edit-rerun-cmd-block">
+        <div class="edit-rerun-cmd-label">Terminal Command (copy &amp; paste)</div>
+        <div class="edit-rerun-cmd-text" id="edit-rerun-cmd-text">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=all</div>
+        <button class="edit-rerun-copy-btn" id="edit-rerun-copy-btn" type="button"
+                aria-label="Copy rerun command to clipboard">Copy</button>
+      </div>
+
+      <!-- Paste-target textarea for NDJSON output (AC-8) -->
+      <label class="paste-label" for="ndjson-paste-area">
+        Paste NDJSON sandbox output here (each line = one scenario result):
+      </label>
+      <textarea
+        id="ndjson-paste-area"
+        class="paste-area"
+        placeholder="Paste output here, e.g.:&#10;[PASS] hexagram-resolver-golden.json&#10;[FAIL] hexagram-resolver-edge.json | Expected hexagram 2 but got 1&#10;&#10;[sandbox] PASS 9/9 scenarios (0 failed, 0 skipped)"
+        aria-label="Paste sandbox NDJSON output to update scenario card statuses"
+        rows="5"
+      ></textarea>
+
+      <div class="paste-actions">
+        <button class="apply-btn" id="apply-paste-btn" type="button"
+                aria-label="Apply pasted sandbox output to update scenario card statuses">
+          Apply &amp; Update Cards
+        </button>
+        <button class="clear-paste-btn" id="clear-paste-btn" type="button"
+                aria-label="Clear pasted output">
+          Clear
+        </button>
+        <span class="paste-result-msg" id="paste-result-msg"></span>
+      </div>
+
+    </div><!-- .edit-rerun-panel -->
+
   </div>
 </div>
 
@@ -1305,7 +1497,22 @@ function renderService() {
   `;
 }
 
-/* ── Modal (AC-5) ─────────────────────────────────────────────────────────── */
+/* ── Modal (AC-8 P1-E) ────────────────────────────────────────────────────── */
+/* openModal now sets tier-aware rerun command and edit instructions (AC-2)    */
+
+function tierForScenario(type) {
+  return type === 'primitive' ? 'primitive' : 'module';
+}
+
+function rerunCmdForTier(tier) {
+  return 'cd apps/kinh-dich-service && bun run src/sandbox/runner.ts --tier=' + tier + ' --module=kinh-dich --scenario=all';
+}
+
+function scenarioFilePath(type, scenario) {
+  const tier = tierForScenario(type);
+  const subDir = tier === 'primitive' ? 'primitives' : 'module';
+  return 'docs/scenarios/kinh-dich/' + subDir + '/' + scenario.scenario + '.json';
+}
 
 function openModal(type, idx) {
   const scenario = type === 'primitive' ? STATE.primitives[idx] : STATE.modules[idx];
@@ -1341,12 +1548,24 @@ function openModal(type, idx) {
     statusNote.textContent = 'G8 contract: NOT-RUN until sandbox executed';
   }
 
+  // P1-E: Set tier-aware rerun command and file path in the edit-rerun panel (AC-2)
+  const tier = tierForScenario(type);
+  const cmd = rerunCmdForTier(tier);
+  document.getElementById('edit-rerun-cmd-text').textContent = cmd;
+  document.getElementById('edit-rerun-file-path').textContent = scenarioFilePath(type, scenario);
+
+  // Close the edit-rerun panel on each new scenario open (fresh state)
+  document.getElementById('edit-rerun-panel').classList.remove('open');
+  document.getElementById('ndjson-paste-area').value = '';
+  document.getElementById('paste-result-msg').textContent = '';
+
   document.getElementById('modal-overlay').classList.add('open');
   document.getElementById('modal-close-btn').focus();
 }
 
 function closeModal() {
   document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('edit-rerun-panel').classList.remove('open');
   STATE.openScenario = null;
 }
 
@@ -1375,16 +1594,150 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape') closeModal();
 });
 
+/* ── P1-E: Edit & Rerun button — expand in-modal panel (AC-8) ──────────────── */
+
 document.getElementById('rerun-btn').addEventListener('click', function() {
-  // P1-E scope: this opens the edit-rerun handler
-  // For P1-D: close modal and show the rerun command block
-  closeModal();
-  const block = document.querySelector('.footer-rerun-block');
-  if (block) {
-    block.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    block.style.outline = '2px solid #2563eb';
-    setTimeout(() => { block.style.outline = ''; }, 2000);
+  const panel = document.getElementById('edit-rerun-panel');
+  const isOpen = panel.classList.contains('open');
+  if (isOpen) {
+    panel.classList.remove('open');
+    this.textContent = 'Edit & Rerun (P1-E)';
+  } else {
+    panel.classList.add('open');
+    this.textContent = 'Hide Edit & Rerun';
+    // Scroll the panel into view within the modal
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    document.getElementById('ndjson-paste-area').focus();
   }
+});
+
+/* ── P1-E: Edit-rerun copy button (AC-2) ─────────────────────────────────── */
+
+document.getElementById('edit-rerun-copy-btn').addEventListener('click', function() {
+  const cmdEl = document.getElementById('edit-rerun-cmd-text');
+  const cmd = cmdEl.textContent;
+  navigator.clipboard.writeText(cmd).then(() => {
+    this.textContent = 'Copied!';
+    setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+  }).catch(() => {
+    this.textContent = 'Failed';
+    setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+  });
+});
+
+/* ── P1-E: Apply pasted NDJSON output — update card statuses (AC-1, AC-8) ─── */
+/* Parses each [PASS]/[FAIL] line and matches to card by scenario filename.     */
+/* AC-8 G8 contract: never fakes green — only updates on explicit PASS/FAIL.    */
+
+function parseNdjsonOutput(text) {
+  const results = {};
+  const lines = text.split('\n');
+  for (const line of lines) {
+    const trimmed = line.trim();
+    // Match: [PASS] scenario-name.json or [FAIL] scenario-name.json | error msg
+    const passMatch = trimmed.match(/^\[PASS\]\s+([^\s|]+)/);
+    const failMatch = trimmed.match(/^\[FAIL\]\s+([^\s|]+)/);
+    if (passMatch) {
+      const fname = passMatch[1].trim();
+      const scenName = fname.replace(/\.json$/, '');
+      results[scenName] = 'pass';
+    } else if (failMatch) {
+      const fname = failMatch[1].trim();
+      const scenName = fname.replace(/\.json$/, '');
+      results[scenName] = 'fail';
+    }
+  }
+  return results;
+}
+
+function applyResultsToState(results) {
+  let updated = 0;
+
+  STATE.primitives.forEach((s, idx) => {
+    if (results[s.scenario] !== undefined) {
+      s.status = results[s.scenario];
+      updated++;
+      // Update dot
+      const dot = document.getElementById('prim-dot-' + idx);
+      if (dot) {
+        dot.className = 'scenario-status-dot ' + dotClass(s.status);
+      }
+    }
+  });
+
+  STATE.modules.forEach((s, idx) => {
+    if (results[s.scenario] !== undefined) {
+      s.status = results[s.scenario];
+      updated++;
+      // Update dot
+      const dot = document.getElementById('mod-dot-' + idx);
+      if (dot) {
+        dot.className = 'scenario-status-dot ' + dotClass(s.status);
+        dot.style.width = '12px';
+        dot.style.height = '12px';
+        dot.style.borderRadius = '50%';
+      }
+      // Update status label
+      const label = document.getElementById('mod-status-label-' + idx);
+      if (label) label.innerHTML = statusLabel(s.status);
+    }
+  });
+
+  // Refresh group headers and summary chips
+  renderPrimitives();
+  updatePrimSummary();
+  updateModSummary();
+
+  // Refresh modal status if a scenario is currently open
+  if (STATE.openScenario) {
+    const { type, idx } = STATE.openScenario;
+    const s = type === 'primitive' ? STATE.primitives[idx] : STATE.modules[idx];
+    if (s) {
+      const statusText = document.getElementById('modal-status-text');
+      const statusNote = document.getElementById('modal-status-note');
+      if (s.status === 'pass') {
+        statusText.innerHTML = '<span style="color:#1a7f3c;">&#9679; PASS</span>';
+        statusNote.textContent = 'Sandbox confirmed this scenario green.';
+      } else if (s.status === 'fail') {
+        statusText.innerHTML = '<span style="color:#b91c1c;">&#9679; FAIL</span>';
+        statusNote.textContent = 'Sandbox reported this scenario red.';
+      } else {
+        statusText.innerHTML = '<span style="color:#9ca3af;">&#9679; NOT-RUN</span>';
+        statusNote.textContent = 'G8 contract: NOT-RUN until sandbox executed';
+      }
+    }
+  }
+
+  return updated;
+}
+
+document.getElementById('apply-paste-btn').addEventListener('click', function() {
+  const text = document.getElementById('ndjson-paste-area').value.trim();
+  const msgEl = document.getElementById('paste-result-msg');
+
+  if (!text) {
+    msgEl.style.color = '#b91c1c';
+    msgEl.textContent = 'Paste sandbox output first.';
+    return;
+  }
+
+  const results = parseNdjsonOutput(text);
+  const count = Object.keys(results).length;
+
+  if (count === 0) {
+    msgEl.style.color = '#b91c1c';
+    msgEl.textContent = 'No [PASS]/[FAIL] lines found. Paste the full sandbox output.';
+    return;
+  }
+
+  const updated = applyResultsToState(results);
+  msgEl.style.color = '#1a7f3c';
+  msgEl.textContent = updated + ' card' + (updated !== 1 ? 's' : '') + ' updated (' + count + ' result' + (count !== 1 ? 's' : '') + ' parsed). G8 contract honoured.';
+});
+
+document.getElementById('clear-paste-btn').addEventListener('click', function() {
+  document.getElementById('ndjson-paste-area').value = '';
+  document.getElementById('paste-result-msg').textContent = '';
 });
 
 /* ── Init ────────────────────────────────────────────────────────────────── */
@@ -1394,4 +1747,5 @@ renderModules();
 renderService();
 
 </script>
+</body>
 </html>

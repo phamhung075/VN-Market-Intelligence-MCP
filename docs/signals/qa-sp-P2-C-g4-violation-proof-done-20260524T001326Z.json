@@ -1,0 +1,22 @@
+{
+  "task": "P2-C",
+  "pilot": "stock-price",
+  "phase": "2",
+  "goal_focus": "G4",
+  "timestamp": "2026-05-24T00:13:26Z",
+  "ac_verdicts": ["AC-1 PASS", "AC-2 PASS", "AC-3 PASS", "AC-4 PASS", "AC-5 PASS"],
+  "ac_detail": {
+    "AC-1": "fence-a violation (pkg/infrastructure import in price-quote-normalizer/normalizer.go) → golangci-lint exit 1, output named fence-a",
+    "AC-2": "revert via git checkout -- → golangci-lint exit 0, 0 issues",
+    "AC-3": "git status --short shows no stock-price/pkg files in working tree (violation never staged)",
+    "AC-4": "fence-b violation (pkg/infrastructure import in pkg/module/price_resolution/price_resolution.go) → golangci-lint exit 1, output named fence-b; reverted clean, exit 0",
+    "AC-5": "sandbox total=11 pass=11 fail=0 status=OK after all reverts (exit 0)"
+  },
+  "violation_proof": "Fence-A violation introduced (normalizer.go) → non-zero exit + fence-a named + reverted clean (local-only, never committed)",
+  "independent_reproduction": "AC-4: fence-b proven on different file (price_resolution.go) with different fence rule — both fence-a AND fence-b verified",
+  "golangci_yml_intact": true,
+  "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc (type=commit, verified)",
+  "g12_dod_gate": "PASS (sandbox 11/11 all-green after exercise)",
+  "next_actor": "pm",
+  "next_action": "verify P2-C evidence, update SSOT, dispatch P2-D (G4 freeze anchor confirmation)"
+}
