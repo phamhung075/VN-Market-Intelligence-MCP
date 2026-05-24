@@ -4,6 +4,34 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-24 — BT-1 DONE (vn_number_normalize + reconcile_figures + select_period_column)
+
+**Commit:** `e74abc43` | Sprint: BCTC-TABLE
+
+**Root cause fixed:** VN number format decimal-shift. "2.840.370" was being passed directly to `float()` → 2.84 (wrong). "1.234,56" → ValueError → None. Fixed by calling `vn_number_normalize` first in the `process_report()` pipeline.
+
+**Delivered:**
+- `domain/primitives/vn_number_normalize/` — VN-format → EN-US string pre-parser
+- `domain/primitives/reconcile_figures/` — "agree"|"shift"|"low" anomaly detector (mirrors mcp-server `isDecimalShiftAnomaly` formula)
+- `domain/primitives/select_period_column/` — period column picker (keyword hint + position heuristic; TODO for BT-3 model hook)
+- 3 new ports + 3 new mocks in financial_reports module
+- `process_report()` extended with `api_bridge_revenue`, `table_cells`, `column_hint`, `column_headers` args (backward-compat — all optional)
+- `sandbox/runner.py` wires 9 adapters
+
+**Evidence:** 235 pytest PASS (186 baseline + 49 new). 9 sandbox scenarios GREEN. import-linter: 63 files, Fence-A KEPT, Fence-B KEPT, 2/0. Commit zero foreign files.
+
+**Next:** qa BT-1 verification.
+
+---
+
+### 2026-05-24 — dashboard inspector button DONE
+
+**Commit:** `9b2c3c9a`
+
+Added `<a class="inspector-btn">` to `dashboard/index.html` header. Opens `http://localhost:3000/api/bctc-inspect` in a new tab (`target="_blank" rel="noopener"`). Styled as a green sibling to `.reload-btn`. Zero JS, zero fetch(), file:// compatible. trust-contract: 7/7 PASS. Single file in commit — no contamination.
+
+---
+
 ### 2026-05-24 — PI-2 DONE (side-by-side PDF inspection viewer)
 
 **Commit:** `4651c080`
