@@ -1,5 +1,41 @@
 # QA — Notebook
 
+## c282 cycle-70 · 2026-05-24 · alert-engine P2-C — G4 Fence-A QA reproduction — PASS
+
+**Task:** P2-C AC-4 — QA independent fence reproduction | **Verdict:** PASS (fence enforces universally, not file-specific)
+
+```
+date: 2026-05-24T09:06:00Z
+outcome: PASS — Fence-A independently enforced on dedup-key-builder/builder.go
+type: pilot-task-qa (fence-enforcement reproduction, inject+revert discipline)
+signal: docs/signals/qa-ae-P2-C-repro-done-20260524T090600Z.json
+evidence: docs/handoffs/TASK_P2-C-ae-g4-fence-violation-proof.md §Evidence — QA Reproduction
+injected_file: apps/alert-engine/pkg/primitive/dedup-key-builder/builder.go
+verbatim_fence_a_line: "pkg/primitive/dedup-key-builder/builder.go:21:2: import 'github.com/vn-market-intelligence/alert-engine/pkg/infrastructure' is not allowed from list 'fence-a': Fence-A: primitive must not import infrastructure layer (depguard)"
+lint_exit_violation: 1 | lint_exit_after_revert: 0
+git_status_clean: true (violation never staged/committed)
+sandbox: 11/11 PASS exit 0
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (merge-base exit 0)
+background_files_undisturbed: true
+```
+
+| Check | Verdict |
+|---|---|
+| Fence-A fires on different file (dedup-key-builder) | PASS |
+| fence-a rule name in output | PASS |
+| Violation file named in output | PASS |
+| Lint exit non-zero on violation | PASS (exit 1) |
+| Lint exit 0 after revert | PASS |
+| git status clean (never staged/committed) | PASS |
+| Sandbox 11/11 | PASS |
+| Anchor intact | PASS |
+| Background files undisturbed | PASS |
+
+**P2-C verdict: PASS — fence is NOT file-specific. feedback_fence_false_green cross-check satisfied.**
+**NEXT:** pm — mark P2-C DONE, sequence P2-D (freeze-anchor confirmation).
+
+---
+
 ## c282 cycle-69 · 2026-05-24 · kinh-dich P2-KD-Z — Phase-2 close-gate — READY-FOR-PHASE-3
 
 **Task:** P2-KD-Z — Phase-2 Close-Gate Verification | **Verdict:** READY-FOR-PHASE-3

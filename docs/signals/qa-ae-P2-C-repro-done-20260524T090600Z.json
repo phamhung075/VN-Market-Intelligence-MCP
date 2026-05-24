@@ -1,0 +1,54 @@
+{
+  "signal": "qa-ae-P2-C-repro-done",
+  "emitted_at": "2026-05-24T09:06:00Z",
+  "task": "P2-C",
+  "pilot": "alert-engine",
+  "phase": "2",
+  "actor": "qa",
+
+  "qa_reproduction": {
+    "injected_file": "apps/alert-engine/pkg/primitive/dedup-key-builder/builder.go",
+    "layer": "pkg/primitive (fence-a)",
+    "violation_import": "github.com/vn-market-intelligence/alert-engine/pkg/infrastructure",
+    "different_from_dev_test": true,
+    "note": "dev-alert-engine used signal-classifier/classifier.go + go-sqlite3; QA used dedup-key-builder/builder.go + pkg/infrastructure — both file and import path differ"
+  },
+
+  "verbatim_fence_a_line": "pkg/primitive/dedup-key-builder/builder.go:21:2: import 'github.com/vn-market-intelligence/alert-engine/pkg/infrastructure' is not allowed from list 'fence-a': Fence-A: primitive must not import infrastructure layer (depguard)",
+  "lint_exit_code_violation_run": 1,
+  "fence_a_named_in_output": true,
+  "violating_file_named_in_output": true,
+
+  "revert_confirmed": true,
+  "revert_command": "git checkout -- apps/alert-engine/pkg/primitive/dedup-key-builder/builder.go",
+  "lint_exit_code_after_revert": 0,
+  "git_status_clean_after_revert": true,
+  "violation_never_staged": true,
+  "violation_never_committed": true,
+
+  "sandbox": {
+    "command": "CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all",
+    "total": 11,
+    "pass": 11,
+    "fail": 0,
+    "status": "OK",
+    "exit_code": 0
+  },
+
+  "anchor_intact": true,
+  "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "anchor_check": "git merge-base --is-ancestor exit 0",
+
+  "ssot_not_mutated": true,
+  "goals_earned_unchanged": true,
+  "decision_matrix_unchanged": true,
+  "si2_boundary_respected": true,
+  "background_files_undisturbed": true,
+
+  "fence_gate_status": "PASS",
+  "p2_c_verdict": "PASS",
+  "verdict_rationale": "Fence-A independently enforces on dedup-key-builder/builder.go (different file, different import, same fence rule). Proof is NOT file-specific. feedback_fence_false_green cross-check satisfied.",
+
+  "next_actor": "pm",
+  "next_action": "mark P2-C DONE in SSOT, sequence P2-D (freeze-anchor confirmation)"
+}

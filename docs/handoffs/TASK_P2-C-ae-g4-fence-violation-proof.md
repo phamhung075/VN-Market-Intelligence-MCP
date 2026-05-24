@@ -248,9 +248,48 @@ git diff --stat HEAD apps/alert-engine/pkg/primitive/signal-classifier/classifie
 Violation was NEVER staged or committed. Tree is byte-identical to pre-injection state.
 
 ### §Evidence — QA Reproduction
+
+**QA independent reproduction — different primitive file than dev-alert-engine used.**
+
+Injected file: `apps/alert-engine/pkg/primitive/dedup-key-builder/builder.go`
+Layer: `pkg/primitive/` (Fence-A)
+Violation import: `import _ "github.com/vn-market-intelligence/alert-engine/pkg/infrastructure"`
+(Different violation source AND different target file than AC-1 — AC-1 used `signal-classifier/classifier.go` + `go-sqlite3`)
+
+**Violation run (non-zero exit):**
 ```
-[QA pastes their own violation + clean run outputs here — different primitive file]
+pkg/primitive/dedup-key-builder/builder.go:21:2: import 'github.com/vn-market-intelligence/alert-engine/pkg/infrastructure' is not allowed from list 'fence-a': Fence-A: primitive must not import infrastructure layer (depguard)
+	_ "github.com/vn-market-intelligence/alert-engine/pkg/infrastructure" // DELIBERATE FENCE-A VIOLATION — P2-C QA reproduction, revert immediately
+	^
+1 issues:
+* depguard: 1
+EXIT_CODE=1
 ```
+
+Fence-A fired on `dedup-key-builder/builder.go`. Rule `fence-a` named in output. Non-zero exit confirmed.
+
+**Revert:** `git checkout -- apps/alert-engine/pkg/primitive/dedup-key-builder/builder.go`
+
+**Clean run (after revert):**
+```
+0 issues.
+EXIT_CODE=0
+```
+
+**Git status check:**
+```
+git status --short | grep "dedup-key-builder"  →  (empty — clean, violation never staged/committed)
+```
+
+**Sandbox (after revert):**
+```
+total=11 pass=11 fail=0 status=OK
+EXIT_CODE=0
+```
+
+**Anchor:** `debba8eaff0724d1fb32fc9d28640201cc32d1cc` — ancestor_intact=true (merge-base exit 0)
+
+**Background working-tree files:** NOT disturbed. No alert-engine tracked file was modified by QA beyond the injected+reverted builder.go.
 
 ### §Evidence — AC-5 Sandbox
 
