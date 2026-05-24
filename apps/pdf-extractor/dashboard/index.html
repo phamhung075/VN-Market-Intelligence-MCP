@@ -419,7 +419,8 @@
       return;
     }
 
-    setBadge(id, trace.pass === true);
+    // pass === null means "not yet run" (service-tier trace placeholder)
+    setBadge(id, trace.pass === null ? null : trace.pass === true);
 
     const name = trace.primitive || trace.module || trace.service || id;
     if (meta) meta.textContent = "scenario: " + name;

@@ -1,0 +1,46 @@
+{
+  "verdict": "PASS",
+  "capturedAt": "2026-05-24T11:39:00Z",
+  "capturedBy": "qa",
+  "method": "Playwright headless (Path B) — @playwright/test 1.53.x, Chromium, local http-server",
+  "panels_rendered": ["primitives", "module", "service"],
+  "cards_per_tier": {
+    "primitives": 6,
+    "module": 1,
+    "service": 1
+  },
+  "primitive_card_ids": [
+    "validate-financial-figures",
+    "decimal-normalizer",
+    "confidence-scorer",
+    "low-confidence-gate",
+    "ratio-computer",
+    "field-extractor"
+  ],
+  "all_green_state": {
+    "validate-financial-figures": "PASS",
+    "decimal-normalizer": "PASS",
+    "confidence-scorer": "PASS",
+    "low-confidence-gate": "PASS",
+    "ratio-computer": "PASS",
+    "field-extractor": "PASS",
+    "financial-reports": "PASS",
+    "pdf-extractor": "NOT-RUN"
+  },
+  "honest_red_proven": true,
+  "honest_red_method": "Playwright AC-4: decimal_normalizer trace injected with pass=false — card showed FAIL badge; restored to PASS",
+  "console_errors": 0,
+  "external_network_calls": 0,
+  "screenshot_path": "apps/pdf-extractor/dashboard/g9-trust-contract.png",
+  "playwright_exit_code": 0,
+  "tests_passed": "3/3",
+  "ac_verdicts": {
+    "AC-1": "PASS — npx playwright test exits 0",
+    "AC-2": "PASS — all 3 panels visible (primitives, module, service)",
+    "AC-3": "PASS — exactly 6 primitive cards rendered",
+    "AC-4": "PASS — honest-red proven: decimal_normalizer pass=false → FAIL badge; isolated (other cards still PASS)",
+    "AC-5": "PASS — zero console errors",
+    "AC-6": "PASS — zero external HTTP requests (localhost only)",
+    "AC-7": "PASS — trust-contract-verdict.json written and committed"
+  }
+}
