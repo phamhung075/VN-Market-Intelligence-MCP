@@ -98,3 +98,38 @@ Zone health: model pre-bake successful, cold-start <20s consistently, 41/41 test
 **Commit note:** Files committed in `cfd38a3b` (concurrent index contamination — api-gateway agent picked up staged rag-service files). Files are correct and green. P1-B notebook commit: see next commit SHA.
 
 **Status:** DONE. Next: P1-C retrieval module stub (G12 streak #2). WIP=1 now free.
+
+---
+
+### 2026-05-24 — TASK P1-C (retrieval module stub — G12 streak #2)
+
+**Task:** Build `retrieval` module stub: Protocol ports (EmbedderModulePort, VectorSearchPort), RetrievalModule class composing similarity_scorer primitive, mock-port unit tests, module_golden scenario.
+
+**Files created/modified:**
+- `apps/rag-service/domain/module/__init__.py` (NEW)
+- `apps/rag-service/domain/module/retrieval/__init__.py` (NEW)
+- `apps/rag-service/domain/module/retrieval/ports.py` (NEW — Protocol ports)
+- `apps/rag-service/domain/module/retrieval/module.py` (NEW — RetrievalModule + sandbox `retrieve()` entry)
+- `apps/rag-service/domain/module/retrieval/scenarios/module_golden.json` (NEW)
+- `apps/rag-service/__tests__/unit/test_retrieval_module.py` (NEW — 10 mock-port tests)
+- `apps/rag-service/sandbox/__main__.py` (MOD — asyncio.run support + _ prefix skip)
+- `mock_adder/scenarios/failure_wrong_sum.json → _failure_wrong_sum_scaffold.json` (RENAME)
+
+**Key decisions:**
+- Protocol (not ABC) for ports — structural typing per architect spec
+- Sandbox async support: `asyncio.run()` added to runner for module-tier coroutine entry points
+- Scaffold rename: `failure_wrong_sum.json` → `_failure_wrong_sum_scaffold.json` so --scenario=all exits 0
+- Inline stubs for relevance_threshold_gate, temporal_decay_scorer, top_k_selector (Phase 2 extractions)
+- `now` injection parameter in RetrievalModule.retrieve() for deterministic decay scoring
+
+**Sandbox GREEN:**
+- primitive tier --scenario=all: 4 PASS, exit 0
+- module tier --scenario=all: 1 PASS (retrieval module_golden), exit 0
+
+**Env audit:** empty.
+**Fence-B:** 0 code matches for lancedb/sentence_transformers/torch/import.*infrastructure in domain/module/retrieval/.
+**pytest:** 51/51 PASS (+10 new tests from 41 baseline).
+
+**Commit:** `8be07048`.
+
+**Status:** DONE. G12 streak #2 complete. Next: P1-E dashboard stub (G12 streak #3). WIP=1 now free.
