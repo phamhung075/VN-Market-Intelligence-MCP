@@ -161,6 +161,28 @@ jobs:
           working-directory: apps/api-gateway
           args: --config .golangci.yml
 
+  kinh-dich-go-lint:
+    name: Kinh Dich Go Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/kinh-dich-service/go.mod
+          cache-dependency-path: apps/kinh-dich-service/go.sum
+
+      # Run golangci-lint (depguard Fence-A/B/C) against the kinh-dich-service.
+      # Fence-A sister-primitive allowlist: nuclear_hexagram may import hexagram_resolver + hao_encoder (OQ-6).
+      # working-directory is equivalent to: cd apps/kinh-dich-service && golangci-lint run --config .golangci.yml
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.1
+        with:
+          working-directory: apps/kinh-dich-service
+          args: --config .golangci.yml
+
   kinh-dich-ts-lint:
     name: kinh-dich-ts-lint
     runs-on: ubuntu-latest

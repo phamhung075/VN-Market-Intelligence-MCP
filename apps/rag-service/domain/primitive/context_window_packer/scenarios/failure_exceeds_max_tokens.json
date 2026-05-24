@@ -1,0 +1,12 @@
+{
+  "primitive": "context_window_packer",
+  "input": {
+    "title": "Short Title",
+    "content": "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    "source": "SRC",
+    "max_chars": 10
+  },
+  "expected_output": {
+    "packed": "Short Title\nSRC\nABCDEFGHIJ"
+  }
+}

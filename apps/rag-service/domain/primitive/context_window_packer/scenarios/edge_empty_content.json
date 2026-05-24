@@ -1,0 +1,12 @@
+{
+  "primitive": "context_window_packer",
+  "input": {
+    "title": "Report Title",
+    "content": "",
+    "source": "HOSE",
+    "max_chars": 512
+  },
+  "expected_output": {
+    "packed": "Report Title\nHOSE\n"
+  }
+}

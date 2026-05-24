@@ -1,0 +1,83 @@
+# golangci-lint v2 configuration for apps/kinh-dich-service
+# Implements G4 (Architecture fence enforced) per pilot-charter.md.
+#
+# Linter: depguard — deny-list per package path prefix per fence rule.
+# Three fence rules enforce the three-tier DDD architecture:
+#   Fence-A: primitives → stdlib + pkg/domain + sister-primitives only
+#   Fence-B: modules   → stdlib + pkg/primitive/* + pkg/domain only
+#   Fence-C: infra     → composition root (cmd/server/main.go) only
+#
+# Fence-A Sister-Primitive Allowlist (OQ-6):
+#   nuclear_hexagram legitimately imports hexagram_resolver + hao_encoder.
+#   These are pure-function sibling primitives, NOT higher-layer imports.
+#   The allowlist permits primitive->primitive ONLY; module/application/
+#   infrastructure/interface imports from primitive remain forbidden.
+#
+# Ref: docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-go.md §OQ-6
+#
+# Task: P2-B  Goal: G4 partial  Pilot: kinh-dich-service  Language: Go
+# Format: golangci-lint v2 (linters.settings, not linters-settings)
+
+version: "2"
+
+run:
+  timeout: 120s
+
+linters:
+  default: none
+  enable:
+    - depguard
+  settings:
+    depguard:
+      rules:
+        # Fence-A: pkg/primitive/* is the bottom tier (pure-function layer).
+        # Primitives compute hao scores, hexagram resolution, ngu-hanh classification.
+        # They must NOT reach upward into module, application, interface, or infrastructure.
+        # EXCEPTION (OQ-6): sister-primitive imports (primitive->primitive) ARE allowed.
+        # nuclear_hexagram imports hexagram_resolver + hao_encoder — this is legitimate.
+        # The deny list blocks only higher-layer imports; primitive->primitive is not listed.
+        fence-a:
+          files:
+            - "**/pkg/primitive/**"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/kinh-dich-service/pkg/module"
+              desc: "Fence-A: primitive must not import module layer"
+            - pkg: "github.com/vn-market-intelligence/kinh-dich-service/pkg/application"
+              desc: "Fence-A: primitive must not import application layer"
+            - pkg: "github.com/vn-market-intelligence/kinh-dich-service/pkg/interface"
+              desc: "Fence-A: primitive must not import interface layer"
+            - pkg: "github.com/vn-market-intelligence/kinh-dich-service/pkg/infrastructure"
+              desc: "Fence-A: primitive must not import infrastructure layer"
+            - pkg: "modernc.org/sqlite"
+              desc: "Fence-A: primitive must not import modernc.org/sqlite (CGO_ENABLED=0)"
+
+        # Fence-B: pkg/module/* is the middle tier (composition layer).
+        # Modules compose multiple primitives + domain. They must NOT reach into
+        # the application layer (use cases), interface layer (HTTP handlers), or
+        # infrastructure layer (adapters/repositories). May import pkg/primitive/*.
+        fence-b:
+          files:
+            - "**/pkg/module/**"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/kinh-dich-service/pkg/application"
+              desc: "Fence-B: module must not import application layer"
+            - pkg: "github.com/vn-market-intelligence/kinh-dich-service/pkg/interface"
+              desc: "Fence-B: module must not import interface layer"
+            - pkg: "github.com/vn-market-intelligence/kinh-dich-service/pkg/infrastructure"
+              desc: "Fence-B: module must not import infrastructure layer"
+            - pkg: "modernc.org/sqlite"
+              desc: "Fence-B: module must not import modernc.org/sqlite directly"
+
+        # Fence-C: pkg/infrastructure constructors must only be wired from the
+        # composition root (cmd/server/main.go). No other non-test file may import
+        # pkg/infrastructure or modernc.org/sqlite directly. Test files (*_test.go)
+        # are exempt to allow infrastructure package self-tests.
+        fence-c:
+          files:
+            - "!**/cmd/server/main.go"
+            - "!**/*_test.go"
+          deny:
+            - pkg: "github.com/vn-market-intelligence/kinh-dich-service/pkg/infrastructure"
+              desc: "Fence-C: infrastructure wiring only allowed in cmd/server/main.go"
+            - pkg: "modernc.org/sqlite"
+              desc: "Fence-C: modernc.org/sqlite only allowed in cmd/server/main.go"

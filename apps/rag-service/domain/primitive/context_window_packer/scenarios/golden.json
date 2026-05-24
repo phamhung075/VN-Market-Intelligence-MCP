@@ -1,0 +1,12 @@
+{
+  "primitive": "context_window_packer",
+  "input": {
+    "title": "HOSE Earnings Report",
+    "content": "Earnings growth accelerated in Q3 2026.",
+    "source": "VNDirect",
+    "max_chars": 512
+  },
+  "expected_output": {
+    "packed": "HOSE Earnings Report\nVNDirect\nEarnings growth accelerated in Q3 2026."
+  }
+}

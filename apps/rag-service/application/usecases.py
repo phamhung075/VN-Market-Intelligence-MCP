@@ -19,6 +19,7 @@ from domain.models import AnalysisEntry
 from domain.repositories import VectorStorePort, EmbedderPort
 from domain.services import SearchService
 from domain.errors import SearchError, IndexError
+from domain.primitive.context_window_packer.context_window_packer import pack as _pack_context
 
 
 class SearchUseCase:
@@ -113,8 +114,25 @@ class IndexUseCase:
         Raises IndexError on failure.
         """
         try:
-            # Build rich embedding text (mirrors TypeScript buildEmbeddingText)
-            embedding_text = _build_embedding_text(request)
+            # Build rich embedding text using domain primitive (extracted to context_window_packer).
+            # Field order mirrors original _build_embedding_text for vector compatibility:
+            # action_code, title, level, tags, content — joined then passed as content to pack().
+            ordered_parts = []
+            if request.action_code:
+                ordered_parts.append(request.action_code)
+            if request.title:
+                ordered_parts.append(request.title)
+            ordered_parts.append(str(request.level))
+            if request.tags:
+                ordered_parts.append(" ".join(request.tags))
+            ordered_parts.append(request.content)
+
+            embedding_text = _pack_context(
+                title="",
+                content="\n".join(filter(None, ordered_parts)),
+                source="",
+                max_chars=2000,
+            )
 
             vector = await self.embedder.embed(embedding_text)
 
@@ -140,21 +158,5 @@ class IndexUseCase:
             raise IndexError(f"Index failed: {exc}") from exc
 
 
-def _build_embedding_text(request: IndexRequest) -> str:
-    """
-    Build a rich text for embedding from IndexRequest fields.
-
-    Combines: title, level, tags, content.
-    Truncated to 2000 chars for consistency with the TypeScript implementation.
-    """
-    parts = []
-    if request.action_code:
-        parts.append(request.action_code)
-    if request.title:
-        parts.append(request.title)
-    parts.append(f"{request.level}")
-    if request.tags:
-        parts.append(" ".join(request.tags))
-    parts.append(request.content)
-
-    return "\n".join(filter(None, parts))[:2000]
+# _build_embedding_text() was extracted to domain/primitive/context_window_packer/context_window_packer.py
+# (P2-B3 migration). Use _pack_context() imported above.
