@@ -2,7 +2,7 @@
   "agent": "qa",
   "task_id": "P2-KD-H",
   "status": "DONE",
-  "commit_sha": "pending",
+  "commit_sha": "cd669df3",
   "ac_verdicts": {
     "AC-1": "PASS",
     "AC-2": "PASS",
