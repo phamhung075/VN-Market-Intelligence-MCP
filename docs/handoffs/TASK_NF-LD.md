@@ -1320,6 +1320,102 @@ WORK-channel `send_telegram` is NOT in this PO agent's tool surface (only Read/E
 
 ---
 
+## [QA] Review Record — NF-LD-5-QA — 2026-05-24T21:32Z
+
+**Verdict: APPROVED**
+
+**Commits verified:** `12600a1f` (NF-LD-5-dev-B, developer — canonical source) + `15d9b034` (NF-LD-5-dev-A, dev-mcp-server — served copy + sync script fix)
+
+**Signal:** `docs/signals/qa-news-fetch-refresh-button-20260524T213212Z.json`
+
+### AC-Q1 — Button: re-fetch + re-render, no reload
+
+- `#live-refresh-btn` present at canonical index.html:231 and served index.html:239
+- `loadLiveData()` named function declared at canonical:382 / served:390; called on button click (canonical:493 / served:501), selector change (canonical:498 / served:506), and initial page load (canonical:502 / served:510)
+- `grep -n "location\.reload"` on both files → 0 matches (exit 1)
+- `.finally()` re-enables btn + select (canonical:484-488 / served:492-496)
+- **PASS**
+
+### AC-Q2 — 4 honest states + no fabricated rows
+
+- FILE_DEGRADE: `window.location.protocol === 'file:'` at canonical:369 / served:377 — fires BEFORE any fetch call; sets `id="live-state-degrade"` and disables btn/select; never attempts network
+- LOADING: `id="live-state-loading"` rendered at canonical:392 / served:400 (first line inside loadLiveData, before fetch resolves)
+- EMPTY: `id="live-state-empty"` rendered when `data.rows.length === 0` at canonical:407 / served:415 — honest "No rows yet…" message, not a fake table
+- ERROR: `id="live-state-error"` rendered in `.catch()` at canonical:482 / served:490 — `Server error: HTTP <status>` for non-2xx; never fabricates rows
+- dash-check: `live_panel_degrade: true`, `live_panel_fake_rows: false`, `external_network_calls: 0`
+- **PASS**
+
+### AC-Q3 — Anti-drift RE-GATE (NF-LD-4 blocker class)
+
+- Run 1: `bash apps/mcp-server/sync-news-fetch-dashboard.sh` → exit 0, all 4 PASS lines; `git diff apps/mcp-server/src/interface/news-fetch-dashboard/` → **0 differences**
+- Run 2 (idempotency): same command → exit 0, all 4 PASS lines; `git diff` → **0 differences**
+- Committed copy == script output on both runs
+- **PASS — blocker class resolved**
+
+### AC-Q4 — Security: 0 creds in served files
+
+- `grep -rn "VPS_PUSH_API_KEY|x-api-key|Authorization|Bearer|DB_PATH|process.env|Bun.env" apps/mcp-server/src/interface/news-fetch-dashboard/` → exit 1 (0 matches)
+- `grep -n "localhost:3000" apps/mcp-server/src/interface/news-fetch-dashboard/index.html` → 0 matches
+- `BASE_ENDPOINT = '/api/news-fetch/live?limit=20'` at served:370 — relative path, no host
+- Endpoint is still read-only SELECT-only (frozen from NF-LD-2a — no new write verb introduced)
+- **PASS**
+
+### AC-Q5 — No regression to frozen surfaces
+
+- `git diff HEAD -- apps/news-fetch/dashboard/data.js` → empty
+- `git diff HEAD -- apps/news-fetch/src/sandbox/runner.ts` → empty
+- `node apps/news-fetch/dashboard/dash-check.mjs` → verdict: **PASS**
+  - panels_rendered: 4 (sandbox=3, live=1)
+  - cards_total: 6 (primitives=4, module=1, microservice=1)
+  - badge_counts: PASS=6, FAIL=0, ERROR=0, NOT-RUN=0
+  - live_panel_degrade: true, live_panel_fake_rows: false
+  - console_errors: 0 / page_errors: 0 / external_network_calls: 0
+- pilot-status-news-fetch.json: last commit `b3407530` (pre NF-LD-5) — not touched by either NF-LD-5 commit
+- **PASS**
+
+### AC-Q6 — Tests + tsc
+
+- `bun test src/__tests__/NF-LD-4-news-fetch-dashboard.test.ts src/__tests__/NF-LD-2-news-fetch-live.test.ts` → **20 pass / 0 fail** (59 expect() calls)
+  - NF-LD-4: 11/11 PASS (updated tests (h)+(i) accept `var (BASE_)?ENDPOINT` regex — correct for renamed variable)
+  - NF-LD-2: 9/9 PASS (live endpoint unchanged)
+- `bun tsc --noEmit` → exit 0, 0 errors
+- **PASS**
+
+### AC-Q7 — Pilot frozen
+
+- `docs/data/pilot-status-news-fetch.json`: goalsEarned=12, verdict=scale, phase=terminal
+- Not touched by commits `12600a1f` or `15d9b034`
+- **PASS**
+
+### AC-Q8 — Signal emitted
+
+- `docs/signals/qa-news-fetch-refresh-button-20260524T213212Z.json` written
+
+### Summary
+
+| Check | Verdict |
+|---|---|
+| AC-Q1: button present BOTH files, loadLiveData() callable, click+selector+load wired, 0 location.reload | PASS |
+| AC-Q1: btn disables in-flight (.finally re-enables) | PASS |
+| AC-Q2: FILE_DEGRADE fires BEFORE fetch (protocol check), no net call | PASS |
+| AC-Q2: LOADING state before fetch resolves | PASS |
+| AC-Q2: EMPTY state on count=0, honest message | PASS |
+| AC-Q2: ERROR state on non-2xx, never fabricates rows | PASS |
+| AC-Q2: dash-check degrade=true, fake_rows=false | PASS |
+| AC-Q3: anti-drift run 1 — git diff = 0 | PASS |
+| AC-Q3: anti-drift run 2 — git diff = 0 (idempotent) | PASS |
+| AC-Q4: 0 creds in served dir (grep exit 1) | PASS |
+| AC-Q4: relative ENDPOINT only, 0 localhost:3000 in fetch | PASS |
+| AC-Q5: data.js untouched | PASS |
+| AC-Q5: sandbox runner.ts untouched | PASS |
+| AC-Q5: dash-check PASS (4 panels, 6 cards, 6 green, 0 errors) | PASS |
+| AC-Q6: NF-LD-4 tests 11/11 | PASS |
+| AC-Q6: NF-LD-2 tests 9/9 | PASS |
+| AC-Q6: tsc exit 0 | PASS |
+| AC-Q7: pilot-status-news-fetch.json 12/12 frozen | PASS |
+
+---
+
 ## NF-LD-5-EXIT — PO sign-off — Blocked on NF-LD-5-QA
 
 PO validates deliverables against the scope ruling (Option A), the Security Clause, and anti-regression rules via INDEPENDENT disk/git spot-check (not QA word alone). On APPROVED → mark NF-LD-5-dev-B/dev-A/QA/EXIT DONE, then DISPATCH ops for NF-LD-5-OPS. Never ask the user to rebuild/deploy.

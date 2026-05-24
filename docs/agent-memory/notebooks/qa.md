@@ -1,5 +1,99 @@
 # QA — Notebook
 
+## cycle-113 · 2026-05-24 · NF-LD-5-QA (Refresh button + source selector on live panel) — APPROVED
+
+**Task:** NF-LD-5 QA gate (Refresh button + source selector on news-fetch live panel) | **Verdict:** APPROVED
+
+```
+date: 2026-05-24T21:32:12Z
+outcome: APPROVED — all 7 AC groups PASS
+type: feature-qa-gate (NF-LD-5: Refresh/Load latest button + source selector on served news-fetch live panel)
+handoff: docs/handoffs/TASK_NF-LD.md
+signal: docs/signals/qa-news-fetch-refresh-button-20260524T213212Z.json
+commits_verified: [12600a1f (dev-B canonical), 15d9b034 (dev-A served copy + sync script)]
+round: 1
+
+anti_drift:
+  run1_exit: 0 (all 4 PASS lines)
+  run1_git_diff: 0 lines
+  run2_exit: 0 (idempotent)
+  run2_git_diff: 0 lines
+  result: PASS — NF-LD-4 blocker class resolved for NF-LD-5
+
+button:
+  canonical_line: 231 (id=live-refresh-btn)
+  served_line: 239 (id=live-refresh-btn)
+  both_files: true
+  loadLiveData_callable: true (declared as named function at canonical:382)
+  wired_click: true (canonical:493)
+  wired_selector_change: true (canonical:498)
+  wired_initial_load: true (canonical:502)
+  location_reload: 0 matches
+  btn_disables_inflight: true (canonical:387, re-enabled in .finally canonical:486)
+
+source_selector:
+  canonical_line: 232 (id=live-source-select)
+  served_line: 240
+  options: [all, reuters, bloomberg]
+
+honest_states:
+  file_degrade: window.location.protocol === 'file:' at canonical:369 BEFORE fetch
+  loading: id=live-state-loading at canonical:392
+  empty: id=live-state-empty on count=0 at canonical:407
+  error: id=live-state-error in .catch at canonical:482
+  fake_rows: false
+
+security:
+  creds_served_dir: 0 (grep exit 1)
+  localhost_3000_in_fetch: 0
+  base_endpoint: '/api/news-fetch/live?limit=20' (relative)
+  result: PASS
+
+sandbox_regression:
+  dash_check: PASS (panels=4, sandbox=3+live=1, cards=6, PASS=6, degrade=true, fake_rows=false, external_net=0)
+  data_js: untouched
+  runner_ts: untouched
+  result: PASS
+
+tests:
+  nf_ld_4: 11/11 PASS
+  nf_ld_2: 9/9 PASS
+  combined: 20/20 PASS (59 expect() calls)
+  tsc: exit 0
+
+pilot_status_frozen: 12/12 YES verdict=scale phase=terminal
+
+lessons:
+  - Variable rename (ENDPOINT → BASE_ENDPOINT) in canonical source requires sync script grep update;
+    dev-A correctly broadened to var (BASE_)?ENDPOINT + idempotency confirmed stable
+  - Anti-drift gate (run ×2, git diff = 0 both times) is the non-negotiable check for served-copy patterns
+```
+
+| Check | Verdict |
+|---|---|
+| Anti-drift run 1 (git diff = 0) | PASS |
+| Anti-drift run 2 — idempotent | PASS |
+| Button present BOTH files | PASS |
+| Source selector 3 options | PASS |
+| loadLiveData() callable, all 3 event wires | PASS |
+| 0 location.reload() | PASS |
+| btn disables in-flight | PASS |
+| FILE_DEGRADE fires BEFORE fetch | PASS |
+| LOADING state | PASS |
+| EMPTY state honest | PASS |
+| ERROR state | PASS |
+| dash-check PASS | PASS |
+| Security: 0 creds in served dir | PASS |
+| Security: relative ENDPOINT only | PASS |
+| data.js untouched | PASS |
+| NF-LD-4 + NF-LD-2 tests 20/20 | PASS |
+| tsc exit 0 | PASS |
+| Pilot-status 12/12 frozen | PASS |
+
+**Verdict: APPROVED. NEXT: po — NF-LD-5-EXIT sign-off. Then ops rebuild + PROVE.**
+
+---
+
 ## cycle-112 · 2026-05-24 · NF-LD-4-QA round 2 (sync script fix re-gate) — APPROVED
 
 **Task:** NF-LD-4 QA round 2 — re-gate after sync script sed-order fix | **Verdict:** APPROVED
