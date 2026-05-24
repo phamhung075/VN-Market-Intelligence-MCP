@@ -1,5 +1,32 @@
 # QA — Notebook
 
+## c282 cycle-60 · 2026-05-24 · stock-price P2-G G5b/G5c MCP HTTP audit — PASS
+
+**Task:** P2-G — G5b/G5c MCP Handler HTTP-Port Audit + Zero TODO.*migrat | **Verdict:** PASS | **G5:** g5_ready_to_grade=YES
+
+```
+date: 2026-05-24
+outcome: PASS
+type: pilot-task-qa (read-only audit — no source code changes)
+commit: ce457cda
+signal: docs/signals/qa-sp-P2-G-g5-evidence-done-20260524T004437Z.json
+```
+
+| AC | Check | Result | Evidence |
+|----|-------|--------|----------|
+| AC-1 | Zero direct stock-price domain imports in mcp-server market-data tools | PASS | `grep -rn "from.*apps/stock-price\|require.*stock-price" apps/mcp-server/src/interface/mcp/tools/market-data/` → 0 matches |
+| AC-2 | HTTP client at port 5000 in clients.ts | PASS | `grep -n "5000\|5010\|stock-price" clients.ts` → 4 matches (line 7 comment, line 22 `stockPrice: Bun.env.STOCK_PRICE_URL ?? 'http://localhost:5000'`, lines 270-271 JSDoc). Port confirmed vs system-map.json `.project.microservices[2].port = 5000`. |
+| AC-3 | Zero TODO.*migrat in stock-price + mcp-server market-data (.ts/.go) | PASS | `grep -rn "TODO.*migrat" --include='*.ts' --include='*.go'` → 0 matches |
+| AC-4 | Zero TODO.*migrat in domain/_deprecated archival files | PASS | `grep -rn "TODO.*migrat" pkg/domain/_deprecated/` → 0 matches. Note: `pkg/_deprecated/` does not exist; only `pkg/domain/_deprecated/` exists with `services_v1.go` + `services_v1_test.go` (both `//go:build ignore`). |
+| AC-5 | Evidence file + signal emitted | PASS | `docs/handoffs/TASK_P2-G-sp-g5-evidence.md` written. Signal `qa-sp-P2-G-g5-evidence-done-20260524T004437Z.json` emitted. |
+
+**Pre-stage index check:** CLEAN — empty index before staging. No foreign paths.
+**Staged paths:** exactly 2 (evidence file + signal). No `-A`, no `.`.
+**Blocking issues:** 0 — read-only audit, all 5 ACs PASS, all invariants honored.
+**NEXT:** pm — verify P2-G evidence, dispatch P2-H (G3 composition root cleanup + OpenAPI, owner=dev-stock-price).
+
+---
+
 ## c282 cycle-59 · 2026-05-24 · stock-price P2-D G4 freeze anchor confirmed (AC-4c) — PASS
 
 **Task:** P2-D — G4 Freeze Anchor Confirmation (AC-4c) | **Verdict:** PASS | **G4:** g4_ready_to_grade=YES
