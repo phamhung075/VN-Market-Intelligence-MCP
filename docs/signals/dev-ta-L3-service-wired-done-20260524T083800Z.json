@@ -1,0 +1,22 @@
+{
+  "signal": "dev-ta-L3-service-wired-done",
+  "timestamp": "2026-05-24T08:38:00Z",
+  "agent": "dev-technical-analysis",
+  "commit": "a9061db6",
+  "task": "Level 3 service tier wired + stale text fixed + render gate extended",
+  "next_actor": "qa",
+  "summary": {
+    "approach": "httptest.NewServer (in-process, no port, zero credentials)",
+    "scenarios_added": ["service/health-ok", "service/indicators-happy-path", "service/indicators-bad-request"],
+    "L1_green": 25,
+    "L2_green": 5,
+    "L3_green": 3,
+    "total_green": 33,
+    "total_failed": 0,
+    "verify_render": "PASS — 33 dot-green, 0 dot-red, 0 dot-pending, 0 JS errors",
+    "env_audit": "forbidden_matches: empty (zero DB credentials)",
+    "cgo": "CGO_ENABLED=0 confirmed",
+    "g8_honest_red_proof": "health-ok injected red → chip 2/1, FAILED group, exit 1; reverted → PASS",
+    "smoke": "go test ./...: ok | go vet: 0 | bun test: 24/24 | tsc: 0 errors"
+  }
+}

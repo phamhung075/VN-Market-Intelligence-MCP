@@ -6,6 +6,35 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-05-24 — Level 3 service tier wired (httptest.NewServer baked verdicts)
+
+**Task:** Wire Level 3 microservice to real baked verdicts — httptest.NewServer in-process runner, fix stale text, extend render gate.
+
+**Status:** DONE — commit a9061db6
+
+**Approach chosen:** httptest.NewServer (option a) — in-process, hermetic, no port binding, no creds, no running DB.
+
+**What was done:**
+- `pkg/interface/http/router.go`: handleIndicators wired to decode JSON body, validate, call useCase.Execute
+- `pkg/application/dtos.go`: ComputeTARequest gains `Closes []float64` for credential-free pure-compute path
+- `pkg/application/usecases.go`: Execute uses TACalculator.Calculate(closes, period) directly when closes provided
+- `cmd/sandbox/main.go`: -tier=service mode — httptest.NewServer; runServiceScenario fires GET/POST, asserts responses
+- 3 new service scenarios: health-ok, indicators-happy-path, indicators-bad-request
+- `dashboard/build.sh`: bakes service scenarios
+- `dashboard/app.ts`: renderServicePanel with real scenario cards; SERVICE_SCENARIOS + applyBuildVerdicts
+- `dashboard/index.html`: Level 3 chip row; all stale text fixed; __SERVICE_DATA__ embedded inline
+- `dashboard/verify-render.mjs`: asserts "3 passed" service chip, 33 dots, "not wired yet" check
+
+**Env audit:** `forbidden_matches:` empty — zero DB credentials. CGO_ENABLED=0 confirmed.
+
+**Build:** 33 passed / 0 failed. verify-render: PASS — 33 dot-green (L1:25 + L2:5 + L3:3), 0 errors.
+
+**G8 honest-red proof:** Injected health-ok=red → chip "2 passed / 1 failed", FAILED group, exit 1. Reverted → PASS.
+
+**Smoke:** go test ./...: ok all packages. go vet: 0. bun test: 24/24. tsc: 0 errors. build.sh: full PASS.
+
+---
+
 ### 2026-05-24 — Headless render gate (verify-render.mjs + build.sh wiring)
 
 **Task:** Add browser-render verification gate for TA Scenario Trust Dashboard (G8 honest red/green for the gate itself).
