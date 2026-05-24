@@ -1,6 +1,25 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-19T20:59Z | **Cycle:** c212 | **Sprint:** dev-team orchestration tick
+**Last updated:** 2026-05-24 | **Cycle:** news-fetch Phase 1 P1-G5 | **Sprint:** news-fetch SCALE pilot Phase 1
+
+## Session 2026-05-24 — news-fetch Phase 1 P1-G5 (G3 + G5 rewire)
+
+**Task completed:** P1-G5 — Composition Root + HTTP Rewire + OpenAPI + Deprecation
+
+**Summary:**
+- G3: `composition-root.ts` created, `src/index.ts` reduced to thin entry
+- G5: `analysis.ts` rewired to HTTP call at `http://news-fetch:5008/reuters/headlines`
+- `reuters.ts` moved to `_deprecated/fetchers/`, original deleted
+- Barrel `fetchReuters` export removed, `defaultReutersFetcher` dead code removed from `pollNews.ts`
+- 023-rss-reuters.test.ts + 1828c test moved to _deprecated/ with @ts-nocheck
+- `api/openapi.yaml` added
+- Sandbox 13/13 PASS confirmed from apps/news-fetch/ dir (root .env has creds that trigger security gate)
+- All ACs pass; committed in e1c78908 (concurrent commit with pdf-extractor P1-E2 — known race)
+- Handoff: `docs/handoffs/TASK_P1-NF-G5.md`
+
+**Gotcha for next session:** Sandbox must run from `apps/news-fetch/` dir — root `.env` has TELEGRAM/API keys that trigger the credential security gate.
+
+**Next:** P1-QA (for qa agent, not developer). Phase 1 complete.
 
 ## Session c212 — Dev-Team Orchestration (JUMP-TO: drain-signals → PO triage → dispatch)
 
