@@ -5,6 +5,25 @@
 
 ---
 
+## 0. Category Chip Display Convention (fleet-wide)
+
+**Adopted:** 2026-05-24. Applied first to technical-analysis pilot dashboard; retrofitted to alert-engine dashboard same day.
+
+Scenario `category` field values in JSON files (SSOT) are: `golden`, `edge`, `failure`.
+The render/display layer maps them to "Plain meaning" labels via a lookup table — never shows raw values to the user.
+
+| JSON value (SSOT) | Display label |
+|---|---|
+| `golden` | Valid Input |
+| `edge` | Edge Case |
+| `failure` | Bad Input → Error |
+
+The `Bad Input → Error` legend entry includes a `(test PASSES)` clarifier so a passing negative-test is never misread as a failure.
+
+**Implementation rule:** any new dashboard must implement a `categoryLabel(cat)` lookup map at the render layer. Do NOT rename the `category` field values in JSON — those are the SSOT consumed by the sandbox runner.
+
+---
+
 ## 1. Core Principle
 
 A sandbox process has zero DB credentials, zero external API keys. All external dependencies are replaced by in-memory port adapters that read `scenarios/*.json` files. This is not a test database — it is not a database at all. The sandbox is a pure function: JSON in → trace JSON out → HTML page out.
