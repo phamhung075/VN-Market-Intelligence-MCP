@@ -6,6 +6,29 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 P1-E — Edit-Rerun Handler + G7 ZERO-CREDS All 4 Sub-Gates DONE
+
+**Task:** P1-AE-E — finalize edit-rerun handler in dashboard + full G7 env audit
+
+**Outcome:** All 7 ACs PASS. Phase 1 CLEAR TO CLOSE.
+
+**Key finding:** P1-D already shipped the complete applyRerunOutput + parseRerunOutput + resetAllToNotRun JavaScript with full event wiring. P1-E updated "P1-D stub" labels to "P1-E complete" and baked the G7 ZERO-CREDS audit declaration into the panel subtitle/comments.
+
+**AC evidence:**
+- AC-1: 4-step UI fully wired — openRerunPanel/closeRerunPanel/parseRerunOutput/applyRerunOutput/resetAllToNotRun all implemented
+- AC-2: env | grep -iE "TELEGRAM|BOT_TOKEN|CHAT_ID|API_KEY|SECRET|PASSWORD" → 0 matches (CTX_ADVISOR_*_TOKEN are Claude tooling vars, not production credentials)
+- AC-3: grep -rniE "token|chat_id|bot|secret|api_key|password" apps/alert-engine/cmd/sandbox/ → 0 matches (exit 1)
+- AC-4: CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all → total=11 pass=11 fail=0 status=OK exit 0
+- AC-5: grep -rn "math/rand|time.Now|uuid|rand." pkg/primitive/ pkg/module/ cmd/sandbox/ → 0 matches (exit 1)
+- AC-6: grep -rn "pkg/infrastructure|mattn/go-sqlite3|TELEGRAM_BOT_TOKEN|TELEGRAM_INFO" → 1 hit (comment only in ports.go), 0 actual imports
+- AC-7: edited cooldown-gate-golden.json cooldownMinutes 30→60, reran sandbox → total=11 pass=11 fail=0 status=OK exit 0, restored to 30
+
+**Files in commit:** apps/alert-engine/dashboard/index.html (label/comment updates only — JS was already complete from P1-D)
+
+**Next:** PM P1-G close-gate verification
+
+---
+
 ### 2026-05-20 c220 — FIX-alertsource-legal-risk-enum DONE
 
 **Commit:** `09f80233 fix(alert-engine): add legal_risk to alertSource enum — Sprint c220`

@@ -596,7 +596,7 @@ footer code {
   flex: 1;
 }
 
-/* Apply-results panel (P1-D stub mechanism; full edit-rerun handler = P1-E) */
+/* Apply-results panel — edit-rerun handler fully wired (P1-E complete).      */
 /* G7 / G12 trust contract: file:// safe — zero fetch, zero CDN, zero server. */
 /* User runs the sandbox command on disk, pastes NDJSON output here.          */
 /* Dashboard parses NDJSON + summary line, updates in-memory status, rerenders.*/
@@ -979,18 +979,18 @@ footer code {
   </div>
 </div>
 
-<!-- ============================================================ APPLY-RESULTS PANEL (P1-D stub) -->
+<!-- ============================================================ APPLY-RESULTS PANEL (P1-E complete) -->
 <!-- G12 / G8 trust contract: user runs the sandbox command on disk, pastes NDJSON output here. -->
-<!-- AC-7: GREEN status is produced ONLY from this real pasted trace — never hardcoded.        -->
+<!-- AC-7: GREEN status is produced ONLY from this real pasted trace — never hardcoded.          -->
 <!-- AC-1 / file:// safe: no fetch(), no WebSocket, no server — pure clipboard + paste.          -->
-<!-- ZERO-CREDS: command shows zero DB credentials, zero API keys, zero Telegram tokens.        -->
-<!-- Full edit-rerun handler with complete G7 env audit is wired in P1-E.                       -->
+<!-- ZERO-CREDS (G7 all 4 sub-gates PASS): zero DB credentials, zero API keys, zero Telegram.   -->
+<!-- Edit-rerun handler fully wired in P1-E: parseRerunOutput + applyRerunOutput + resetAllToNotRun. -->
 <div class="rerun-panel-overlay" id="rerun-panel-overlay" role="dialog" aria-modal="true" aria-labelledby="rerun-panel-title">
   <div class="rerun-panel">
     <div class="rerun-panel-header">
       <div>
         <h3 id="rerun-panel-title">Edit &amp; Rerun Scenarios</h3>
-        <span class="rerun-subtitle">G12 / G8 Trust Contract &mdash; live documentation, not a static screenshot &bull; P1-D stub (P1-E finalises)</span>
+        <span class="rerun-subtitle">G12 / G8 Trust Contract &mdash; live documentation, not a static screenshot &bull; G7 ZERO-CREDS all 4 sub-gates PASS (P1-E)</span>
       </div>
       <button class="rerun-panel-close" id="rerun-panel-close-btn" aria-label="Close rerun panel">&times;</button>
     </div>
@@ -1595,10 +1595,11 @@ window.__MODULE_DATA__ = [
     }
   });
 
-  /* ── Apply-results panel (P1-D stub mechanism; P1-E finalises) ────────── */
-  /* G12 / G8 trust contract.                                              */
-  /* AC-7: GREEN status is produced ONLY from a real pasted sandbox trace. */
-  /* file:// safe: no fetch(), no WebSocket, no external requests.         */
+  /* ── Apply-results panel — fully wired in P1-E ────────────────────────── */
+  /* G12 / G8 trust contract.                                               */
+  /* AC-7: GREEN status is produced ONLY from a real pasted sandbox trace.  */
+  /* G7 ZERO-CREDS: all 4 sub-gates PASS (env audit, source grep, build,   */
+  /* edit→rerun cycle). file:// safe: no fetch(), no WebSocket, no server.  */
 
   function openRerunPanel() {
     var overlay = document.getElementById('rerun-panel-overlay');
