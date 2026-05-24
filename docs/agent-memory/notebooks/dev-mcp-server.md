@@ -1,5 +1,20 @@
 # dev-mcp-server -- Notebook
 
+## c285 · 2026-05-24T18:00Z
+
+### NF-LD-2a — GET /api/news-fetch/live endpoint
+
+Commit `5a91e12f`. 3 files shipped:
+- `apps/mcp-server/src/interface/mcp/routes/newsFetchLiveHandler.ts` (new)
+- `apps/mcp-server/src/__tests__/NF-LD-2-news-fetch-live.test.ts` (new, 9 tests all pass)
+- `apps/mcp-server/src/interface/mcp/server.ts` (import + 1 if-block)
+
+Key design choices: provider derived from `source_url LIKE '%reuters%'` (source_type is always "news"). No auth. DI pattern (db injected). Limit clamped 1-50. tsc clean.
+
+AC pass: 11/11.
+
+---
+
 ## c284 · 2026-05-24T11:05Z
 
 ### Task 1954c/G5b — BCTC Consolidation (pdf-extractor service as single extraction owner)
