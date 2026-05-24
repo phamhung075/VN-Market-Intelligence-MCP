@@ -1,0 +1,11 @@
+{
+  "primitive": "article-relevance-filter",
+  "function": "isRelevantArticle",
+  "input": {
+    "headline": "VIETNAM GDP SURGES IN Q1 2026",
+    "keywords": ["vietnam", "vn"]
+  },
+  "expectedOutput": true,
+  "scenarioType": "edge",
+  "note": "Case-insensitive match — uppercase headline matches lowercase keyword"
+}

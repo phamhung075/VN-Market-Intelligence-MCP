@@ -1,0 +1,10 @@
+{
+  "primitive": "article-relevance-filter",
+  "function": "isRelevantArticle",
+  "input": {
+    "headline": "Vietnam central bank holds interest rate steady",
+    "keywords": ["Vietnam", "VN", "HOSE"]
+  },
+  "expectedOutput": true,
+  "scenarioType": "golden"
+}

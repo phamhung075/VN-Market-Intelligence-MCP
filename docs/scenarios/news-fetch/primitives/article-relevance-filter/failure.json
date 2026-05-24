@@ -1,0 +1,11 @@
+{
+  "primitive": "article-relevance-filter",
+  "function": "isRelevantArticle",
+  "input": {
+    "headline": "US treasury yields climb on strong jobs data",
+    "keywords": ["Vietnam", "VN", "HOSE", "HNX"]
+  },
+  "expectedOutput": false,
+  "scenarioType": "failure",
+  "note": "No keyword match — false is the correct output, not an error"
+}
