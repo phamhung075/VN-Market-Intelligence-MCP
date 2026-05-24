@@ -1,8 +1,36 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 11:38 UTC | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 17:07 UTC | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## NF-LD-1 news-fetch live-data inspection view (2026-05-24T17:07Z) — DESIGN COMPLETE
+
+**Task:** NF-LD-1. Design a Security-Clause-safe "live data inspection" view for news-fetch dashboard. PO dispatch signal: `docs/signals/po-news-fetch-livedata-20260524T170518Z.json`.
+
+**Key brownfield findings:**
+- `source_type` column is ALWAYS `"news"` — it is a type discriminator, NOT the provider name. reuters/bloomberg provider is NOT stored in a dedicated column.
+- Provider derivable from `source_url LIKE '%reuters%'` / `source_url LIKE '%bloomberg%'` (reliable: newsHeadlinesRefreshJob passes `result.source` = "reuters"/"bloomberg" → articles get corresponding URL domains).
+- `tags` JSON array does NOT contain the source name (verified newsNormalizer rawTags construction).
+- `source-dedup-key` primitive output is in-memory only — NOT stored. Decision: omit from live view.
+- Auth posture: unauthenticated read-only — consistent with all other GET `/api/*` read routes; no credentials returned.
+- CORS: server.ts already emits `Access-Control-Allow-Origin: *` globally — no change needed.
+- file:// degrade: `window.location.protocol === 'file:'` check BEFORE fetch (deterministic, browser-independent).
+
+**Design decisions:**
+- New file: `apps/mcp-server/src/interface/mcp/routes/newsFetchLiveHandler.ts` (interface layer, DI pattern = vpsNewsHealthHandler.ts)
+- Route: `GET /api/news-fetch/live?source=reuters|bloomberg|all&limit=20`
+- SQL: parameterized LIKE filter on `source_url`; ORDER BY `created_at DESC`; no string concat
+- Dashboard: `id="panel-live-data"` appended AFTER existing 3 sandbox panels; file:// degrade before fetch attempt; 4 explicit states (loading/empty/error/degrade)
+- NF-LD-2 split: 2a=dev-mcp-server (endpoint + server.ts wiring + tests), 2b=generic developer (dashboard live panel)
+
+**Files authored this cycle (2):**
+1. `docs/handoffs/TASK_NF-LD.md` (UPDATED — [Architect] section appended with full design + 19 ACs)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** pm (or PO acting as PM) — unblock NF-LD-2a to dev-mcp-server, then NF-LD-2b to developer, then NF-LD-3 to qa.
+
+---
 
 ## pdf-extractor G5b + 1954c terminal clearance (2026-05-24T11:38Z) — APPROVED / RESOLVED
 
