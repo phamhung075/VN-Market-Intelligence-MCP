@@ -335,7 +335,7 @@
   },
 
   "phase2": {
-    "_note": "Phase 2 OPEN (2026-05-24T00:00:00Z by pm). 14 tasks (P2-KD-A through P2-KD-Z), 77 ACs. Current task: P2-KD-D (G4 freeze-anchor confirmation — freeze point = 205aa5cf where fence actually enforces).",
+    "_note": "Phase 2 OPEN (2026-05-24T00:00:00Z by pm). 14 tasks (P2-KD-A through P2-KD-Z), 77 ACs. Current task: P2-KD-E (kinh-dich-pre-delete tag creation — sequenced AFTER G4 freeze-anchor confirmation).",
     "status": "OPEN",
     "_status_enum": "Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
     "openedAt": "2026-05-24T00:00:00Z",
@@ -348,9 +348,9 @@
     "acCount": 77,
     "wipPolicy": "WIP=1 sequential; R-FENCE gate (AC-4b deliberate-violation proof) baked into first-fence task AC as first chokepoint",
     "wip_limit": 1,
-    "current_task": "P2-KD-D",
-    "current_task_owner": "qa",
-    "current_task_handoff": "docs/handoffs/TASK_P2-KD-D.md",
+    "current_task": "P2-KD-E",
+    "current_task_owner": "dev-kinh-dich",
+    "current_task_handoff": "docs/handoffs/TASK_P2-KD-E.md",
     "tasks": {
       "P2-KD-A": {
         "status": "DONE",
@@ -417,6 +417,28 @@
           "AC-4": "PASS",
           "AC-5": "PASS"
         }
+      },
+      "P2-KD-D": {
+        "status": "DONE",
+        "completedAt": "2026-05-24T23:30:00Z",
+        "completedBy": "qa",
+        "commit_sha": "d66dcad1",
+        "owner": "qa",
+        "title": "G4 freeze anchor confirmation (AC-4c)",
+        "handoff": "docs/handoffs/TASK_P2-KD-D-g4-evidence.md",
+        "blocked_by": "P2-KD-C",
+        "blocks": "P2-KD-E",
+        "est_hours": 0.25,
+        "ac_count": 3,
+        "note": "Read-only audit confirms freeze anchor = 205aa5cf, tag ancestry OK, no post-anchor touch. G4 evidence chain complete (P2-KD-B config + P2-KD-C violation proof + P2-KD-D freeze confirmation). Honest caveat: fence enforcement did NOT actually work until P2-KD-C fixed 3 bugs (rule rename, pattern matching, TS resolver). G4 genuinely enforcing as of 205aa5cf.",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS"
+        },
+        "g4_ready_to_grade": true,
+        "eslint_freeze_sha": "205aa5cf",
+        "kinh_dich_pre_ci_tag_sha": "2d245200"
       }
     }
   },
