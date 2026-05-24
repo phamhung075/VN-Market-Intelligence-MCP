@@ -6,6 +6,39 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 P2-I — G6 Dashboard Finalization (deprecated-notice + Phase-2 wired-state) DONE
+
+**Task:** P2-I — update apps/alert-engine/dashboard/index.html with G5a deprecated-notice + Phase-2 wired-state microservice panel.
+
+**Outcome:** All 5 ACs PASS. Committed. Signal emitted.
+
+**AC evidence:**
+- AC-1: PASS — file exists, file:// static (zero network)
+- AC-2: PASS — 8 matches for `_deprecated|services_v1|deprecated` (banner, comment, footer, JS pipeline info)
+- AC-3: PASS — SI-2 disavowal comment intact (lines 8-9), NOT removed
+- AC-4: PASS — zero creds grep count = 0; AC-4b zero-network confirmed
+- AC-5: PASS — sandbox total=11 pass=11 fail=0 status=OK exit 0
+
+**Changes made:**
+- Added `<!-- P2-I ... -->` comment in `<head>` anchoring AC-2 keywords
+- Added visible deprecated-notice banner (yellow, between header and levels-grid) listing `pkg/domain/_deprecated/services_v1.go` (G5a transparency)
+- Updated microservice panel pipeline info to show Phase-2 wired state: `alert_pipeline.New(...)` at `cmd/server/main.go`, deprecated path, OpenAPI `api/openapi.yaml`
+- Updated subtitle to add `P2-I (G6 Finalization)` and footer to add Phase-2 wired state + OpenAPI reference
+- CATEGORY_LABELS JS map (commit 099f8819, background relabel) NOT reverted — intact
+
+**Constraints respected:**
+- SI-2 disavowal comment NOT touched (still on lines 8-9)
+- .golangci.yml untouched
+- Anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc intact
+- Staged only 1 file (confirmed `git diff --cached --name-only`)
+- No --force/--no-verify/branch; no -A/wildcard staging
+
+**Commit:** 9d18d87ed80167c767daa0f38ce84b6f855f1c1e (1 file, 39 insertions, 6 deletions)
+**Signal:** docs/signals/dev-ae-P2-I-done-20260524T095500Z.json
+**Next:** PM sequences P2-J (G8 honest-red deliberate-break proof)
+
+---
+
 ### 2026-05-24 P2-H — G3 Composition Root Rewire + OpenAPI Contract DONE
 
 **Task:** P2-H — wire alert_pipeline module at cmd/server/main.go + create api/openapi.yaml.
