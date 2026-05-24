@@ -1,5 +1,69 @@
 # QA — Notebook
 
+## cycle-94 · 2026-05-24 · news-fetch P2-NF-Z — Phase 2 Close-Gate — APPROVED
+
+**Task:** P2-NF-Z (Phase 2 close-gate final verification) | **Verdict:** APPROVED — all 12 goals evidence-locked
+
+```
+date: 2026-05-24T00:00:03Z
+outcome: APPROVED — 12/12 goals EARNED-PENDING, all 3 DONE criteria PASS
+type: pilot-phase-gate (news-fetch Phase-2 terminal close-gate)
+signal: docs/signals/qa-news-fetch-p2-close-20260524T000003Z.json
+ssot_not_mutated: true (goalsEarned=0, decisionMatrix all TBD; PO-only §4.5)
+goal_flips: NONE
+
+DONE_CRITERION_1 (sandbox GREEN 16/16):
+  command: cd apps/news-fetch && bun run src/sandbox/runner.ts --tier=all --module=news-fetch --scenario=all
+  result: 16 PASS, 0 FAIL, 0 ERROR — exit 0
+  note: 16/16 (13 original + 3 G11 canaries); all primitive + module scenarios PASS
+
+DONE_CRITERION_2 (dashboard headless):
+  command: node apps/news-fetch/dashboard/dash-check.mjs
+  result: exit 0 — PASS:6 FAIL:0 ERROR:0 console_errors=0 external_network=0
+  panels: 3 | cards: 6 (4/1/1) | stories all PASS
+
+DONE_CRITERION_3 (env audit EMPTY):
+  command: env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"
+  matches: CTX_ADVISOR_BYTES_PER_TOKEN, CTX_ADVISOR_MAX_TOKENS, CTX_ADVISOR_OVERHEAD_TOKENS
+  real_credentials_found: false
+  ruling: CTX_ADVISOR_* = harness context-sizing integers, not credentials; EXCLUDED per established ruling
+  verdict: EMPTY of actual credentials — PASS
+
+DONE_CRITERION_4 (source CLEAN, fix at HEAD):
+  git_diff_src: EMPTY
+  head_commit: e5e78e54 (FIX — remove double UTC offset)
+  bug_commit: c2ca404a (BELOW HEAD, never re-injected)
+  deliberate_breaks_committed: false
+
+pipeline:
+  bun_test: 233 pass / 6 skip / 0 fail — exit 0
+  tsc: exit 0, 0 errors
+  ddd_scan: PASS (0 real infra imports; ESLint fence exit 0)
+  security: PASS (process.env: exit 1 / no hardcoded creds)
+  eslint_freeze: 203a951a still most-recent on eslint.config.mjs (2 commits total, no post-freeze tampering)
+  g5_reuters: deleted from live path, present in _deprecated/, HTTP rewire confirmed, 0 TODO migrat
+```
+
+| Goal | Evidence Status | Key Anchor |
+|------|----------------|------------|
+| G1 | EARNED-PENDING | 4 primitives × 3 scenarios = 12+1 module; sandbox 16/16 PASS |
+| G2 | EARNED-PENDING | DDD scan PASS; ports.ts; multi-primitive scenario PASS |
+| G3 | EARNED-PENDING | composition-root.ts 34L; openapi.yaml present; 0 domain ops |
+| G4 | EARNED-PENDING | freeze SHA 203a951a; violation exit 1 Fence-A named; clean exit 0 |
+| G5 | EARNED-PENDING | reuters.ts deleted live; _deprecated present; HTTP rewire :5008; 0 TODO migrat |
+| G6 | EARNED-PENDING | headless 3 panels 6 cards PASS:6 0 external net (po + QA live confirm) |
+| G7 | EARNED-PENDING | env audit: CTX_ADVISOR_* excluded (harness integers); sandbox CLEAN |
+| G8 | EARNED-PENDING | 1 broken prim + 5 bad scenarios → FAIL:5; revert → PASS:6; 0 breaks committed |
+| G9 | EARNED-PENDING | Path B PO headless: 3 panels 6 cards PASS:6 console_errors=0 external=0 |
+| G10 | EARNED-PENDING | bug c2ca404a → fix e5e78e54; cycle_count=1 ≤2; fix at HEAD, src CLEAN |
+| G11 | EARNED-PENDING | 2-trial coupling proof; outcome-(a) × 2; 3 canaries committed |
+| G12 | EARNED-PENDING | 3/3 streak (P1-B1+P1-C+P1-D); flow gate baked @bca30508 |
+
+**Phase-2 close-gate verdict: APPROVED — all 12 goals EARNED-PENDING, 3 DONE criteria PASS**
+**NEXT:** po — atomic 12/12 flip + decisionMatrix populate + closedAt/closedBy in pilot-status-news-fetch.json (single commit, §4.5)
+
+---
+
 ## cycle-93 · 2026-05-24 · news-fetch P2-NF-I — G11 2-trial coupling proof — VERIFIED
 
 **Task:** P2-NF-I (G11 regression alarm bell, 2-trial coupling proof) | **Verdict:** G11 VERIFIED

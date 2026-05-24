@@ -1,0 +1,183 @@
+{
+  "signal": "qa-news-fetch-p2-close-gate",
+  "pilot": "news-fetch",
+  "phase": 2,
+  "task": "P2-NF-Z",
+  "qa_agent": "qa",
+  "timestamp": "2026-05-24T00:00:03Z",
+  "verdict": "APPROVED",
+  "ssot_not_mutated": true,
+  "goal_flips": "NONE — PO-only §4.5",
+  "charter_4_5_honored": true,
+
+  "done_criteria": {
+    "criterion_1_sandbox_green": {
+      "command": "cd apps/news-fetch && bun run src/sandbox/runner.ts --tier=all --module=news-fetch --scenario=all",
+      "result": "16 PASS, 0 FAIL, 0 ERROR",
+      "exit_code": 0,
+      "scenarios": [
+        "article-relevance-filter [edge]",
+        "article-relevance-filter [failure]",
+        "article-relevance-filter [golden]",
+        "source-dedup-key [edge]",
+        "source-dedup-key [canary-whitespace-url]",
+        "source-dedup-key [failure]",
+        "source-dedup-key [golden]",
+        "published-at-parser [edge]",
+        "published-at-parser [failure]",
+        "published-at-parser [golden]",
+        "headline-normalizer [edge]",
+        "headline-normalizer [canary-attribution-hyphen]",
+        "headline-normalizer [failure]",
+        "headline-normalizer [golden]",
+        "news_ingest [multi-primitive]",
+        "news_ingest [canary-dedup-normalization]"
+      ],
+      "note": "16/16 after G11 canary addition (was 13/13 baseline); all PASS including 3 permanent canary scenarios",
+      "PASS": true
+    },
+    "criterion_2_dashboard_headless": {
+      "command": "node apps/news-fetch/dashboard/dash-check.mjs",
+      "exit_code": 0,
+      "panels_rendered": 3,
+      "cards_total": 6,
+      "cards_per_tier": {"primitives": 4, "module": 1, "microservice": 1},
+      "badge_counts": {"PASS": 6, "FAIL": 0, "ERROR": 0, "NOT-RUN": 0},
+      "console_errors": 0,
+      "page_errors": 0,
+      "external_network_calls": 0,
+      "network_requests_total": 2,
+      "stories": [
+        "published-at-parser: 3 scenarios -> PASS",
+        "headline-normalizer: 3 scenarios -> PASS",
+        "source-dedup-key: 3 scenarios -> PASS",
+        "article-relevance-filter: 3 scenarios -> PASS",
+        "news_ingest: 1 scenario -> PASS",
+        "news-fetch: port 5008 -> PASS"
+      ],
+      "PASS": true
+    },
+    "criterion_3_env_audit_empty": {
+      "command": "cd apps/news-fetch && env | grep -E 'DB_|API_KEY|SECRET|TOKEN|PASSWORD'",
+      "grep_exit": 0,
+      "matches": [
+        "CTX_ADVISOR_BYTES_PER_TOKEN=45",
+        "CTX_ADVISOR_MAX_TOKENS=200000",
+        "CTX_ADVISOR_OVERHEAD_TOKENS=43000"
+      ],
+      "real_credentials_found": false,
+      "ruling": "CTX_ADVISOR_* are Claude Code harness context-sizing metadata (integer values — no secrets, no tokens). Correctly excluded by sandbox runner CREDENTIAL_PATTERN (runner.ts lines 43-52). Inherited from Phase-1 ruling + alert-engine P2-Z ZERO-CREDS ruling (AC-6). Env audit EMPTY of actual credentials.",
+      "PASS": true
+    },
+    "criterion_4_source_clean_fix_at_head": {
+      "git_diff_apps_news_fetch_src": "EMPTY (no uncommitted changes)",
+      "published_at_parser_log": [
+        "e5e78e54 fix(news-fetch): remove double UTC offset correction in published-at-parser",
+        "c2ca404a test(news-fetch): P2-G10-inject — published-at-parser RFC offset double-apply bug",
+        "b33ee12f feat(news-fetch/P1-B1): published-at-parser primitive — G12 streak #1"
+      ],
+      "head_is_fix_not_bug": true,
+      "bug_anchor": "c2ca404a",
+      "fix_commit": "e5e78e54",
+      "fix_at_head": true,
+      "deliberate_breaks_committed": false,
+      "PASS": true
+    }
+  },
+
+  "pipeline": {
+    "bun_test": {"pass": 233, "skip": 6, "fail": 0, "exit_code": 0},
+    "tsc": {"exit_code": 0, "errors": 0},
+    "ddd_scan": {
+      "verdict": "PASS",
+      "note": "grep 'from.*infrastructure' src/primitive/ src/module/ → 0 real imports (doc-comments only, exit 1). ESLint fence bunx eslint src/ --max-warnings 0 → exit 0."
+    },
+    "security": {
+      "process_env": "PASS (exit 1 — nothing found; runner.ts CREDENTIAL_PATTERN regex literal is the detection mechanism, not a credential)",
+      "hardcoded_creds": "PASS (0 real credential patterns in src/)"
+    }
+  },
+
+  "goal_evidence_locked": {
+    "G1": {
+      "locked": true,
+      "evidence": "4 primitives × 3 scenarios (golden+edge+failure) = 12 primitive scenarios + 1 module scenario. Sandbox 16/16 PASS including 3 G11 canary additions. QA verified P1-NF-QA @c8a2f7cb.",
+      "phase": "P1 EARNED-PENDING"
+    },
+    "G2": {
+      "locked": true,
+      "evidence": "news_ingest module imports only from ../../primitive/* + ../../domain/*. DDD scan PASS. Multi-primitive scenario PASS. QA verified P1-NF-QA @c8a2f7cb.",
+      "phase": "P1 EARNED-PENDING"
+    },
+    "G3": {
+      "locked": true,
+      "evidence": "composition-root.ts 34 lines, domain-op grep 0 matches (comments only). openapi.yaml present. Port 5008. Non-blocking delta: src/index.ts 23L vs ≤15 spec — zero domain ops intent satisfied. QA P1-NF-QA @c8a2f7cb.",
+      "phase": "P1 EARNED-PENDING"
+    },
+    "G4": {
+      "locked": true,
+      "evidence": "eslint.config.mjs: 2 commits (freeze SHAs 893b17ee + 203a951a), no post-freeze tampering confirmed live. ESLint exit 0 on clean src/. Fence-A violation → exit 1 + 'Fence-A' named. Revert → exit 0. Signal qa-news-fetch-g4-evidence-20260524T000002Z.json.",
+      "phase": "P2 EARNED-PENDING",
+      "freeze_sha": "203a951a",
+      "violation_proof_exit": 1,
+      "clean_exit": 0
+    },
+    "G5": {
+      "locked": true,
+      "evidence": "reuters.ts deleted from live path (infrastructure/fetchers/reuters.ts: No such file). Present in _deprecated/fetchers/reuters.ts. HTTP rewire: analysis.ts + newsHeadlinesRefreshJob.ts fetch to ${NEWS_FETCH_BASE}/reuters/headlines. Zero TODO migrat. QA P1-NF-QA @c8a2f7cb.",
+      "phase": "P1 EARNED-PENDING"
+    },
+    "G6": {
+      "locked": true,
+      "evidence": "3 panels (primitives/module/microservice), 6 cards, all populated from window.__NEWS_FETCH_DATA__ (data.js sidecar). Headless confirmed by po 2026-05-24T08:59Z + re-confirmed live in this close-gate run (exit 0, PASS:6, FAIL:0, 0 external network). Signal po-news-fetch-g9-g6-20260524T085930Z.json.",
+      "phase": "P2 EARNED-PENDING",
+      "headless_verdict": "PASS"
+    },
+    "G7": {
+      "locked": true,
+      "evidence": "Edit-rerun cycle proven P1-NF-E. Env audit CLEAN: CTX_ADVISOR_* harness metadata only (not credentials). Sandbox runner CREDENTIAL_PATTERN correctly excludes CTX_ADVISOR_*. QA P1-NF-QA @c8a2f7cb.",
+      "phase": "P1 EARNED-PENDING"
+    },
+    "G8": {
+      "locked": true,
+      "evidence": "1 deliberate broken primitive (published-at-parser hardcoded 1970-01-01) + 5 bad scenarios → FAIL:5 dashboard, 8 sandbox FAILs, exit 1. Revert → 13/13 PASS, PASS:6. No breaks committed. Signal qa-news-fetch-g8-evidence-20260524T090530Z.json.",
+      "phase": "P2 EARNED-PENDING",
+      "bad_scenarios_count": 5,
+      "red_cards_at_peak": 5,
+      "primitive_bug_committed": false
+    },
+    "G9": {
+      "locked": true,
+      "evidence": "Path B PO headless. dash-check.mjs exit 0: 3 panels, 6 cards (4/1/1), PASS:6 FAIL:0, console_errors=0, page_errors=0, external_network=0. Screenshot apps/news-fetch/dashboard/render-check.png. Trust card proof: 'published-at-parser: 3 scenarios -> PASS' from dashboard alone. Signal po-news-fetch-g9-g6-20260524T085930Z.json. Re-confirmed live in this close-gate.",
+      "phase": "P2 EARNED-PENDING",
+      "method": "Path B PO playwright-core headless"
+    },
+    "G10": {
+      "locked": true,
+      "evidence": "Bug injected at c2ca404a (double-UTC-offset, published-at-parser edge FAIL, sandbox 12/13 exit 1, dash FAIL:2). Fix at e5e78e54 (drop offsetMatch block, d.toISOString() correct). Cycle_count=1, baseline=1.5, max=2. Working tree HEAD=e5e78e54 (FIX, not bug). Sealed signal qa-news-fetch-g10-sealed-2026-05-24T091000Z.json. G11 trial-1 re-runs confirmed fix correct (16/16 PASS).",
+      "phase": "P2 EARNED-PENDING",
+      "bug_commit": "c2ca404a",
+      "fix_commit": "e5e78e54",
+      "cycle_count": 1,
+      "max_cycles_allowed": 2
+    },
+    "G11": {
+      "locked": true,
+      "evidence": "2-trial coupling proof. Trial-1: published-at-parser (G10-alias) + source-dedup-key canary coupled RED mid-naive-fix, single-edit correct fix → 16/16. Trial-2: headline-normalizer + news_ingest canary coupled RED mid-naive-fix, single-edit correct fix → 16/16. outcome-(a) × 2 confirmed. Signal qa-news-fetch-g11-2trial-done-20260524T092100Z.json.",
+      "phase": "P2 EARNED-PENDING",
+      "trials_completed": 2,
+      "outcome_a_count": 2,
+      "canary_scenarios_committed": 3
+    },
+    "G12": {
+      "locked": true,
+      "evidence": "3-task streak COMPLETE (P1-B1 + P1-C + P1-D). Flow gate baked in .claude/flows/dev-news-fetch/main.md @bca30508. QA verified P1-NF-QA @c8a2f7cb. Streak intact through P2: no dev task merged without sandbox-green evidence. EARNED-PENDING status preserved per §4.5.",
+      "phase": "P1 EARNED-PENDING",
+      "streak": "3/3"
+    }
+  },
+
+  "goals_locked_count": 12,
+  "all_12_evidence_locked": true,
+  "next": "po — atomic 12/12 flip: flip all 12 goals status=YES, populate decisionMatrix (speed/trust/scale/verdict), set goalsEarned=12, closedAt, closedBy, closureSignal. Single commit, §4.5 terminal close."
+}
