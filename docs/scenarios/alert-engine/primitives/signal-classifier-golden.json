@@ -1,0 +1,12 @@
+{
+  "primitive": "signal_classifier",
+  "description": "Golden path: severity=high → valid=true, channel=market",
+  "input": {
+    "severity": "high"
+  },
+  "expected": {
+    "valid": true,
+    "severity": "high",
+    "channel": "market"
+  }
+}

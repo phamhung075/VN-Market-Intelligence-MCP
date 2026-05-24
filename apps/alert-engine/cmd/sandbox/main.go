@@ -34,6 +34,8 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+
+	sc "github.com/vn-market-intelligence/alert-engine/pkg/primitive/signal-classifier"
 )
 
 // ---------------------------------------------------------------------------
@@ -143,7 +145,8 @@ func executePrimitive(s Scenario) (bool, error) {
 	}
 
 	switch envelope.Primitive {
-	// P1-B1: case "signal_classifier": return executeSignalClassifier(data)
+	case "signal_classifier":
+		return executeSignalClassifier(data)
 	// P1-B2: case "dedup_key_builder": return executeDedupKeyBuilder(data)
 	// P1-B3: case "cooldown_gate":     return executeCooldownGate(data)
 	case "":
@@ -151,6 +154,45 @@ func executePrimitive(s Scenario) (bool, error) {
 	default:
 		return false, fmt.Errorf("primitive %q in %s not yet wired (add executor in P1-B1+)", envelope.Primitive, s.Name)
 	}
+}
+
+// executeSignalClassifier runs a signal-classifier scenario (P1-B1).
+// Scenario JSON shape:
+//
+//	{
+//	  "primitive": "signal_classifier",
+//	  "input":    {"severity": "<string>"},
+//	  "expected": {"valid": <bool>, "severity": "<string>", "channel": "<string>"}
+//	}
+func executeSignalClassifier(data []byte) (bool, error) {
+	var s struct {
+		Input struct {
+			Severity string `json:"severity"`
+		} `json:"input"`
+		Expected struct {
+			Valid     bool   `json:"valid"`
+			Severity  string `json:"severity"`
+			Channel   string `json:"channel"`
+		} `json:"expected"`
+	}
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("signal-classifier: unmarshal scenario: %w", err)
+	}
+
+	got := sc.Classify(s.Input.Severity)
+
+	if got.Valid != s.Expected.Valid {
+		return false, fmt.Errorf("signal-classifier: Valid=%v want=%v (severity=%q)", got.Valid, s.Expected.Valid, s.Input.Severity)
+	}
+	if s.Expected.Valid {
+		if string(got.Severity) != s.Expected.Severity {
+			return false, fmt.Errorf("signal-classifier: Severity=%q want=%q", got.Severity, s.Expected.Severity)
+		}
+		if string(got.Channel) != s.Expected.Channel {
+			return false, fmt.Errorf("signal-classifier: Channel=%q want=%q", got.Channel, s.Expected.Channel)
+		}
+	}
+	return true, nil
 }
 
 // ---------------------------------------------------------------------------

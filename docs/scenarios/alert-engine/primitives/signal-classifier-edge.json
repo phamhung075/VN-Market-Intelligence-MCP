@@ -1,0 +1,12 @@
+{
+  "primitive": "signal_classifier",
+  "description": "Edge case: severity=low → valid=true, channel=work",
+  "input": {
+    "severity": "low"
+  },
+  "expected": {
+    "valid": true,
+    "severity": "low",
+    "channel": "work"
+  }
+}

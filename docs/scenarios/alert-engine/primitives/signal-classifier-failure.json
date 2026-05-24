@@ -1,0 +1,10 @@
+{
+  "primitive": "signal_classifier",
+  "description": "Failure case: severity=INVALID → valid=false (error captured in trace, not a process crash)",
+  "input": {
+    "severity": "INVALID"
+  },
+  "expected": {
+    "valid": false
+  }
+}

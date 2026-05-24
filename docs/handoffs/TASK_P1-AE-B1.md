@@ -83,22 +83,34 @@ Extract the first primitive `signal-classifier` from existing domain logic (seve
 
 ### AC-4 (Fence-A grep output)
 ```
-[dev-alert-engine: paste grep output here or "0" if empty]
+grep_exit=1 (no output — 0 matches)
+Command: grep -rn "mattn/go-sqlite3\|pkg/infrastructure\|pkg/application\|pkg/interface\|TELEGRAM\|BOT_TOKEN" apps/alert-engine/pkg/primitive/signal-classifier/
+Result: PASS
 ```
 
 ### AC-5 (G12 DoD — Sandbox all-green trace)
 ```
-[dev-alert-engine: paste full sandbox run output here showing 3 signal-classifier scenarios PASS]
+{"time":"2026-05-24T07:29:35.061377+02:00","level":"INFO","msg":"PASS","scenario":"signal-classifier-edge.json"}
+{"time":"2026-05-24T07:29:35.061588+02:00","level":"INFO","msg":"PASS","scenario":"signal-classifier-failure.json"}
+{"time":"2026-05-24T07:29:35.061652+02:00","level":"INFO","msg":"PASS","scenario":"signal-classifier-golden.json"}
+total=3 pass=3 fail=0 status=OK
+sandbox_exit=0
+Command: cd apps/alert-engine && CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -module=alert-engine -scenario=all
+Result: PASS (G12 DoD streak #1)
 ```
 
 ### AC-6 (ZERO-CREDS scenario grep output)
 ```
-[dev-alert-engine: paste grep output here or "0" if empty]
+grep_exit=1 (no output — 0 matches)
+Command: grep -rniE "token|chat_id|bot|secret|api_key|password" docs/scenarios/alert-engine/primitives/signal-classifier-*.json
+Result: PASS
 ```
 
 ### AC-7 (CGO_ENABLED=0 build output)
 ```
-[dev-alert-engine: paste go build output here — should exit 0]
+build_exit=0 (no output — clean build)
+Command: cd apps/alert-engine && CGO_ENABLED=0 go build -o ./bin/ae-sandbox ./cmd/sandbox/
+Result: PASS
 ```
 
 ---
