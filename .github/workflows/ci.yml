@@ -114,6 +114,26 @@ jobs:
           working-directory: apps/stock-price
           args: --config .golangci.yml
 
+  kinh-dich-ts-lint:
+    name: kinh-dich-ts-lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version-file: .tool-versions
+
+      - name: Install dependencies
+        run: cd apps/kinh-dich-service && bun install
+
+      # Run eslint-plugin-boundaries fence check (Fence-A/B/C).
+      # Exit non-zero = architecture violation — PR blocked.
+      - name: Run ESLint boundaries fence
+        run: cd apps/kinh-dich-service && bunx eslint src/ --max-warnings 0
+
 # AC-8 (optional) — Branch protection setup:
 # To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule
