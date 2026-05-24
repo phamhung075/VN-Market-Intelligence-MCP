@@ -1,0 +1,7 @@
+{
+  "primitive": "published-at-parser",
+  "function": "parsePublishedAt",
+  "input": { "rfcDate": "Thu, 22 May 2026 07:00:00 +0700" },
+  "expectedOutput": "2026-05-22T00:00:00.000Z",
+  "scenarioType": "edge"
+}

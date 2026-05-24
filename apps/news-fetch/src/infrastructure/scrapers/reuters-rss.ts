@@ -18,6 +18,7 @@
 
 import type { ReutersNewsPort } from '../../domain/repositories.js';
 import { NewsSource, type Article, type FetchResult } from '../../domain/models.js';
+import { parsePublishedAt } from '../../primitive/published-at-parser/index.js';
 
 /**
  * feeds.reuters.com was decommissioned in 2020 — DNS no longer resolves.
@@ -151,7 +152,7 @@ function buildArticle(item: Element, fetchedAt: string): Article {
     source: NewsSource.REUTERS,
     headline,
     url: rawUrl !== '' ? rawUrl : null,
-    publishedAt: pubDate ? normalizeRfcDate(pubDate) : null,
+    publishedAt: pubDate ? parsePublishedAt(pubDate) : null,
     fetchedAt,
     confidence: 'HIGH',
   };
@@ -180,7 +181,7 @@ function parseRegex(xml: string, fetchedAt: string, maxItems: number): Article[]
       source: NewsSource.REUTERS,
       headline,
       url: rawUrl && rawUrl !== '' ? rawUrl : null,
-      publishedAt: pubDate ? normalizeRfcDate(pubDate) : null,
+      publishedAt: pubDate ? parsePublishedAt(pubDate) : null,
       fetchedAt,
       confidence: 'HIGH',
     });
@@ -202,25 +203,6 @@ function extractTag(xml: string, tag: string): string | null {
   return (m[1] ?? m[2] ?? '').trim();
 }
 
-// ---------------------------------------------------------------------------
-// Date normalisation
-// ---------------------------------------------------------------------------
-
-/**
- * Convert an RFC 2822 date string (Reuters standard) to ISO 8601.
- *
- * Example input:  "Mon, 13 May 2026 14:30:00 GMT"
- * Example output: "2026-05-13T14:30:00.000Z"
- *
- * Returns null if parsing fails — callers treat null publishedAt as
- * "date unknown", not as an error.
- */
-export function normalizeRfcDate(rfcDate: string): string | null {
-  try {
-    const d = new Date(rfcDate);
-    if (isNaN(d.getTime())) return null;
-    return d.toISOString();
-  } catch {
-    return null;
-  }
-}
+// normalizeRfcDate extracted to src/primitive/published-at-parser/index.ts.
+// Re-exported here for backward compatibility with existing tests.
+export { parsePublishedAt as normalizeRfcDate } from '../../primitive/published-at-parser/index.js';

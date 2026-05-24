@@ -1,0 +1,7 @@
+{
+  "primitive": "published-at-parser",
+  "function": "parsePublishedAt",
+  "input": { "rfcDate": "not-a-date-string" },
+  "expectedOutput": null,
+  "scenarioType": "failure"
+}

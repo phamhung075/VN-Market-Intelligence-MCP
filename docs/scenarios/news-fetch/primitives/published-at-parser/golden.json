@@ -1,0 +1,7 @@
+{
+  "primitive": "published-at-parser",
+  "function": "parsePublishedAt",
+  "input": { "rfcDate": "Mon, 13 May 2026 14:30:00 GMT" },
+  "expectedOutput": "2026-05-13T14:30:00.000Z",
+  "scenarioType": "golden"
+}

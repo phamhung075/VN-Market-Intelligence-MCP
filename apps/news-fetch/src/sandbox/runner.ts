@@ -55,7 +55,7 @@ if (leakedKeys.length > 0) {
 // Project root resolution
 // ---------------------------------------------------------------------------
 
-const PROJECT_ROOT = resolve(import.meta.dir, '../../../../..');
+const PROJECT_ROOT = resolve(import.meta.dir, '../../../..');
 const SCENARIOS_ROOT = resolve(PROJECT_ROOT, 'docs/scenarios/news-fetch');
 
 // ---------------------------------------------------------------------------
