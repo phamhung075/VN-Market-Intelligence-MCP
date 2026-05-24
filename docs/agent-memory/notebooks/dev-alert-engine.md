@@ -6,6 +6,22 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 Dashboard category chip relabel — "Plain meaning" convention applied
+
+**Task:** Relabel category chips on alert-engine Scenario Trust Dashboard to fleet-wide Plain Meaning convention.
+
+**Outcome:** COMPLETE. Commit 099f8819.
+
+**Changes:**
+- `apps/alert-engine/dashboard/index.html` — added `CATEGORY_LABELS` lookup map + `categoryLabel()` function; all chip render sites use `categoryLabel(sc.category)` instead of raw `sc.category`; legend block updated to new labels; "(test PASSES)" clarifier added to Bad Input → Error legend entry. JSON data SSOT (`"category": "failure"` etc.) untouched.
+- `docs/architecture-briefs/2026-05-22-refactor/08-sandbox-dashboards.md` — § 0 added recording the convention for all future dashboards.
+
+**Verification:** Headless playwright render confirmed: 9 chips = "Valid Input" x3 + "Edge Case" x3 + "Bad Input → Error" x3, 0 bare "failure" chip text, legend chips match, counts 9 NOT-RUN / 2 NOT-RUN unchanged, 0 JS errors.
+
+**Zone health:** no drift detected. Dashboard display layer clean, JSON SSOT intact.
+
+---
+
 ### 2026-05-24 P2-B — .golangci.yml Fence-A/B/C + CI go-lint job DONE
 
 **Task:** P2-B — create apps/alert-engine/.golangci.yml + wire alert-engine-go-lint CI job
