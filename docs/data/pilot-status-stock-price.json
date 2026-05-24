@@ -231,9 +231,9 @@
     "taskSequence": ["P2-A","P2-B","P2-C","P2-D","P2-E","P2-F","P2-G","P2-H","P2-I","P2-J","P2-K","P2-L","P2-M","P2-Z"],
     "wipPolicy": "WIP=1 sequential — PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
     "wip_limit": 1,
-    "current_task": "P2-E",
+    "current_task": "P2-F",
     "current_task_status": "READY",
-    "current_task_handoff": "docs/handoffs/TASK_P2-E.md",
+    "current_task_handoff": "docs/handoffs/TASK_P2-F.md",
     "tasks": {
       "P2-A": {
         "id": "P2-A",
@@ -313,15 +313,37 @@
       "P2-E": {
         "id": "P2-E",
         "title": "Create stock-price-pre-delete tag (pre-revert anchor before G5a work)",
-        "status": "READY",
+        "status": "DONE",
         "readyAt": "2026-05-24T02:20:59Z",
         "readyBy": "pm",
+        "completedAt": "2026-05-24T02:28:30Z",
+        "completedBy": "dev-stock-price",
         "owner": "dev-stock-price",
         "blocked_by": "P2-D (DONE)",
         "blocks": "P2-F",
         "ac_count": 3,
+        "ac_verdicts": "AC-1 PASS, AC-2 PASS, AC-3 PASS",
+        "tag_created": "stock-price-pre-delete",
+        "tag_sha": "d540f940f7a96fa9c09eafb8151e286211fb067b",
+        "tag_verified_by": "pm",
+        "tag_verified_at": "2026-05-24T02:28:30Z",
+        "anchor_intact": true,
         "description": "L5 pre-revert tag discipline. Create stock-price-pre-delete tag at HEAD (after P2-D evidence commit). No source changes; tag-only operation. Tag marks rollback point before P2-F git mv of superseded domain logic.",
-        "handoff": "docs/handoffs/TASK_P2-E.md"
+        "handoff": "docs/handoffs/TASK_P2-E.md",
+        "signal": "docs/signals/dev-sp-P2-E-tag-done-20260524T002559Z.json"
+      },
+      "P2-F": {
+        "id": "P2-F",
+        "title": "G5a — git mv superseded domain/application logic to pkg/_deprecated/",
+        "status": "READY",
+        "readyAt": "2026-05-24T02:28:30Z",
+        "readyBy": "pm",
+        "owner": "dev-stock-price",
+        "blocked_by": "P2-E (DONE)",
+        "blocks": "P2-G",
+        "ac_count": 6,
+        "description": "G5a git mv operations: move pkg/domain/services.go → pkg/domain/_deprecated/services_v1.go + services_test.go → services_v1_test.go; rewire FetchPriceUseCase to call price_resolution module instead of ResolvePriceService. Fence-A/B remain clean post-move. Sandbox all-green before DONE.",
+        "handoff": "docs/handoffs/TASK_P2-F.md"
       }
     }
   },

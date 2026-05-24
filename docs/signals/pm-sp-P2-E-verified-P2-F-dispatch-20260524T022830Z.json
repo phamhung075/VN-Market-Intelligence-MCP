@@ -1,0 +1,86 @@
+{
+  "agent": "pm",
+  "signal_type": "task_dispatch",
+  "pilot": "stock-price",
+  "phase": 2,
+  "timestamp": "2026-05-24T02:28:30Z",
+  "previous_task": "P2-E",
+  "previous_task_verdict": "VERIFIED-DONE",
+  "previous_task_summary": {
+    "task_id": "P2-E",
+    "title": "Create stock-price-pre-delete tag",
+    "owner": "dev-stock-price",
+    "ac_count": 3,
+    "ac_verdicts": ["AC-1 PASS", "AC-2 PASS", "AC-3 PASS"],
+    "tag_created": "stock-price-pre-delete",
+    "tag_sha": "d540f940f7a96fa9c09eafb8151e286211fb067b",
+    "anchor_status": "INTACT (debba8eaff0724d1fb32fc9d28640201cc32d1cc is ancestor of HEAD)",
+    "golangci_freeze_sha": "d5ce886e (P2-B, UNCHANGED since P2-B)",
+    "verification_evidence": [
+      "git tag -l 'stock-price-pre-delete' → stock-price-pre-delete (exactly one match)",
+      "git rev-parse stock-price-pre-delete → d540f940f7a96fa9c09eafb8151e286211fb067b (resolves)",
+      "git merge-base --is-ancestor debba8eaff0724d1fb32fc9d28640201cc32d1cc HEAD → exit 0 (frozen anchor INTACT)",
+      "apps/stock-price/.golangci.yml most-recent commit → d5ce886e (P2-B, no mutations post-P2-B)"
+    ]
+  },
+  "next_task": "P2-F",
+  "next_task_scope": {
+    "task_id": "P2-F",
+    "title": "G5a — git mv superseded domain logic to pkg/_deprecated/",
+    "owner": "dev-stock-price",
+    "goal": "G5a",
+    "blocked_by": "P2-E (DONE)",
+    "blocks": "P2-G (G5b/G5c audit)",
+    "ac_count": 6,
+    "estimated_effort": "1h",
+    "critical_actions": [
+      "git mv apps/stock-price/pkg/domain/services.go → pkg/domain/_deprecated/services_v1.go",
+      "git mv apps/stock-price/pkg/domain/services_test.go → pkg/domain/_deprecated/services_v1_test.go",
+      "Rewire FetchPriceUseCase to call price_resolution module (remove ResolvePriceService import)",
+      "go build ./... (verify no compilation breaks)",
+      "golangci-lint run (verify Fence-A/B/C remain clean)",
+      "go run ./cmd/sandbox -tier=all -module=stock-price -scenario=all (G12 DoD gate — must be GREEN before DONE)"
+    ],
+    "hard_constraints": [
+      "Pre-revert tag stock-price-pre-delete must exist before any file move",
+      "G12 DoD gate: sandbox must exit 0 before task is DONE",
+      "Fence-A/B/C must remain clean post-move (no new violations)",
+      "L84 explicit-file staging: git add <path> per file (never -A or .)",
+      ".golangci.yml must remain FROZEN (not modified)",
+      "Anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc must remain ancestor after commit",
+      "NO goal flips — decisionMatrix stays TBD, goalsEarned stays 0 (Charter §4.5)"
+    ],
+    "handoff_path": "docs/handoffs/TASK_P2-F.md"
+  },
+  "phase2_status": {
+    "tasks_completed": ["P2-A", "P2-B", "P2-C", "P2-D", "P2-E"],
+    "tasks_ready": ["P2-F"],
+    "tasks_pending": ["P2-G", "P2-H", "P2-I", "P2-J", "P2-K", "P2-L", "P2-M", "P2-Z"],
+    "wip_limit": 1,
+    "wip_current": 1,
+    "wip_available": 0
+  },
+  "ssot_update": {
+    "file": "docs/data/pilot-status-stock-price.json",
+    "changes": [
+      "phase2.tasks.P2-E.status = DONE",
+      "phase2.tasks.P2-E.completedAt = 2026-05-24T02:28:30Z",
+      "phase2.tasks.P2-E.completedBy = dev-stock-price",
+      "phase2.tasks.P2-E.tag_sha = d540f940f7a96fa9c09eafb8151e286211fb067b",
+      "phase2.tasks.P2-E.ac_verdicts = [AC-1 PASS, AC-2 PASS, AC-3 PASS]",
+      "phase2.tasks.P2-F.status = READY (NEW entry created)",
+      "phase2.current_task = P2-F",
+      "phase2.current_task_status = READY"
+    ],
+    "invariants_maintained": [
+      "goalsEarned = 0 (no goal flips)",
+      "decisionMatrix = all TBD (PO-only at Phase 3)",
+      "anchor = debba8eaff0724d1fb32fc9d28640201cc32d1cc (INTACT, no retag/rewrite/push)"
+    ]
+  },
+  "next_actor": "dev-stock-price",
+  "next_action": "Execute P2-F: git mv deprecated domain services + FetchPriceUseCase rewire + sandbox green",
+  "next_gate": "P2-G (QA audit of G5b/G5c)",
+  "notes": "P2-E was a tag-only operation (zero source changes). Pre-revert tag discipline maintained. P2-F is sequential next (WIP=1 policy). Dev-stock-price must verify stock-price-pre-delete tag exists BEFORE any file mutation in P2-F.",
+  "pm_commit_sha": "[will be updated after commit]"
+}
