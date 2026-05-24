@@ -1,0 +1,38 @@
+{
+  "signal": "dev-api-gateway-P1-AG-G10-done",
+  "agent": "dev-api-gateway",
+  "task": "G10 AI-fixability bug injection + fix",
+  "date": "2026-05-24",
+  "cycle_count": 1,
+  "root_cause": {
+    "file": "apps/api-gateway/pkg/primitive/proxy-path-resolver/resolve.go",
+    "line": 28,
+    "wrong_value": "strings.SplitN(reqPath, \"/\", 2)",
+    "fixed_value": "strings.SplitN(reqPath, \"/\", 3)",
+    "explanation": "SplitN with n=2 on '/stock/health' produces only 2 parts (['', 'stock/health']), failing the len<3 guard and returning '/'. n=3 produces 3 parts (['', 'stock', 'health']) and correctly returns '/health'."
+  },
+  "commit": {
+    "sha": "492cda60",
+    "files": [
+      "apps/api-gateway/sandbox/traces/gateway-module-route-story-trace.json",
+      "apps/api-gateway/sandbox/traces/overall-status-computer-failure-reversed-guard-trace.json",
+      "apps/api-gateway/sandbox/traces/overall-status-computer-g11-canary-cascade-trace.json",
+      "apps/api-gateway/sandbox/traces/overall-status-computer-golden-all-ok-trace.json",
+      "apps/api-gateway/sandbox/traces/overall-status-computer-golden-degraded-trace.json",
+      "apps/api-gateway/sandbox/traces/proxy-path-resolver-failure-no-trailing-segment-trace.json",
+      "apps/api-gateway/sandbox/traces/proxy-path-resolver-golden-normal-proxy-trace.json",
+      "apps/api-gateway/sandbox/traces/proxy-path-resolver-golden-virtual-alias-trace.json",
+      "apps/api-gateway/sandbox/traces/route-service-matcher-failure-empty-service-trace.json",
+      "apps/api-gateway/sandbox/traces/route-service-matcher-g11-canary-cascade-trace.json",
+      "apps/api-gateway/sandbox/traces/route-service-matcher-golden-health-prefix-trace.json",
+      "apps/api-gateway/sandbox/traces/route-service-matcher-golden-proxy-prefix-trace.json"
+    ],
+    "note": "resolve.go fix was working-tree-only (bug never committed); fix restored file to HEAD state, no diff to commit for it. Traces re-embedded."
+  },
+  "green_evidence": {
+    "sandbox_primitive": "total=11 pass=11 fail=0 status=OK",
+    "sandbox_module": "total=1 pass=1 fail=0 status=OK",
+    "go_test": "all packages pass (57 tests)",
+    "dash_check": "verdict=PASS, panels=3, cards=12, green=12, red=0, jsErrors=0"
+  }
+}

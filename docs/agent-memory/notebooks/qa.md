@@ -1,5 +1,67 @@
 # QA — Notebook
 
+## c283 cycle-83 · 2026-05-24 · alert-engine P2-Z — Phase-2 Close-Gate — PASS
+
+**Task:** P2-Z — Phase 2 Close-Gate Verification | **Verdict:** PASS — all 6 ACs green
+
+```
+date: 2026-05-24T10:40:00Z
+outcome: PASS — Phase 2 ready for PM close + PO Phase-3 terminal dispatch
+type: pilot-phase-gate (alert-engine Phase-2 close-gate — read-only audit + sandbox run)
+signal: docs/signals/qa-ae-P2-Z-close-gate-done-20260524T104000Z.json
+evidence: docs/handoffs/TASK_P2-Z-ae-phase2-close-gate.md
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (merge-base --is-ancestor exit:0)
+ssot_not_mutated: goalsEarned=0, decisionMatrix all-TBD, no goal flips (§4.5 honored)
+goal_flips: NONE
+```
+
+| AC | Verdict | Key Evidence |
+|----|---------|-------------|
+| AC-1 (sandbox all-green — 3 tiers) | PASS | primitive 9/9 + module 2/2 + all 11/11; all exit 0; status=OK |
+| AC-2 (7 goal evidence chains present) | PASS | G3/G4/G5/G6/G8/G9/G10+G11 all confirmed; G5 naming delta noted (content complete) |
+| AC-3 (G12 streak carry-forward) | PASS | Phase-1 3/3 + Phase-2 5 dev tasks — all sandbox-green-before-DONE; CONFIRMED |
+| AC-4 (pre-revert tags present + ordered) | PASS | pre-ci(4d5b2f75) <= pre-delete(ccef14fa) <= pre-inject(3326e7dd) <= HEAD — all ancestry exit 0 |
+| AC-5 (anchor intact + SSOT frozen) | PASS | anchor ancestor exit:0; phase=2; goalsEarned=0; decisionMatrix TBD; .golangci.yml @6c2edc9d |
+| AC-6 (ZERO-CREDS baseline) | PASS | env: CTX_ADVISOR_* harness metadata only (no real creds); source: type names only (no secrets) |
+
+**Phase-2 close verdict: PASS**
+**NEXT:** pm — transition pilot-status-alert-engine.json phase2.status=CLOSED, notify PO for Phase-3 12/12 atomic close.
+
+---
+
+## c283 cycle-82 · 2026-05-24 · api-gateway SCALE pilot: G3 re-verify + G10 bug injection
+
+**Task:** G3 re-verify + G10 bug injection for api-gateway SCALE pilot
+
+```
+date: 2026-05-24
+zone: apps/api-gateway/ ONLY
+
+G3 VERDICT: PASS
+  openapi.yaml: valid OpenAPI 3.1.0, 5 paths present
+  route mapping: all 5 spec paths -> real router routes (health/healthz/health-dashboard/health/{service}/catch-all)
+  main.go: 67L (<=80), zero domain ops (NewAggregateHealthService is composition wiring, not domain op)
+
+G10 BUG INJECTION:
+  file: apps/api-gateway/pkg/primitive/proxy-path-resolver/resolve.go:28
+  before: parts := strings.SplitN(reqPath, "/", 3)
+  after:  parts := strings.SplitN(reqPath, "/", 2)
+  bug type: single-literal integer change (3->2) in SplitN count
+  effect: real-service proxy path stripping always returns "/" regardless of sub-path
+
+SANDBOX CONFIRMATION:
+  primitive tier before: total=11 pass=11 fail=0 status=OK
+  primitive tier after:  total=11 pass=10 fail=1 status=FAIL (golden-normal-proxy RED)
+  module tier after:     total=1  pass=0  fail=1 status=FAIL (module-route-story RED)
+  go test ./...: proxy-path-resolver + module/gateway + http handlers all FAIL
+
+BUG STATUS: working tree only, uncommitted, HEAD=90dcc68a (clean)
+HANDOFF: docs/handoffs/TASK_P1-AG-G10-fix.md (symptom only, no fix hint)
+ssot_not_mutated: pilot-status-api-gateway.json not touched (PO-only §4.5)
+```
+
+---
+
 ## c283 cycle-81 · 2026-05-24 · news-fetch P1-QA RE-APPROVAL — APPROVED
 
 **Task:** P1-NF-QA re-approval after fixer commit c8a2f7cb | **Verdict:** APPROVED

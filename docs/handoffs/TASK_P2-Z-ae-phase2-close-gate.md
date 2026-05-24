@@ -68,7 +68,36 @@ All three exit 0. QA pastes all three outputs to close-gate doc (§Evidence sect
 **Evidence — AC-1 Sandbox All-Green:**
 
 ```
-[PASTE OUTPUT FROM ALL THREE SANDBOX RUNS HERE]
+TIER: primitive
+{"time":"2026-05-24T10:37:26.090174+02:00","level":"INFO","msg":"PASS","scenario":"cooldown-gate-edge.json"}
+{"time":"2026-05-24T10:37:26.090761+02:00","level":"INFO","msg":"PASS","scenario":"cooldown-gate-failure.json"}
+{"time":"2026-05-24T10:37:26.091438+02:00","level":"INFO","msg":"PASS","scenario":"cooldown-gate-golden.json"}
+{"time":"2026-05-24T10:37:26.092144+02:00","level":"INFO","msg":"PASS","scenario":"dedup-key-builder-edge.json"}
+{"time":"2026-05-24T10:37:26.092582+02:00","level":"INFO","msg":"PASS","scenario":"dedup-key-builder-failure.json"}
+{"time":"2026-05-24T10:37:26.093231+02:00","level":"INFO","msg":"PASS","scenario":"dedup-key-builder-golden.json"}
+{"time":"2026-05-24T10:37:26.093676+02:00","level":"INFO","msg":"PASS","scenario":"signal-classifier-edge.json"}
+{"time":"2026-05-24T10:37:26.094041+02:00","level":"INFO","msg":"PASS","scenario":"signal-classifier-failure.json"}
+{"time":"2026-05-24T10:37:26.094440+02:00","level":"INFO","msg":"PASS","scenario":"signal-classifier-golden.json"}
+total=9 pass=9 fail=0 status=OK  exit:0
+
+TIER: module
+{"time":"2026-05-24T10:37:38.296449+02:00","level":"INFO","msg":"PASS","scenario":"alert-pipeline-edge.json"}
+{"time":"2026-05-24T10:37:38.297257+02:00","level":"INFO","msg":"PASS","scenario":"alert-pipeline-golden.json"}
+total=2 pass=2 fail=0 status=OK  exit:0
+
+TIER: all
+cooldown-gate-edge.json PASS
+cooldown-gate-failure.json PASS
+cooldown-gate-golden.json PASS
+dedup-key-builder-edge.json PASS
+dedup-key-builder-failure.json PASS
+dedup-key-builder-golden.json PASS
+signal-classifier-edge.json PASS
+signal-classifier-failure.json PASS
+signal-classifier-golden.json PASS
+alert-pipeline-edge.json PASS
+alert-pipeline-golden.json PASS
+total=11 pass=11 fail=0 status=OK  exit:0
 ```
 
 ---
@@ -86,13 +115,13 @@ All 4 files exist.
 
 - **G3 evidence:** composition root clean per P2-H handoff (cmd/server/main.go wired, OpenAPI exists, ≤120 lines).
 - **G4 evidence:** TASK_P2-D-ae-g4-evidence.md (ac_4a_ci_job_wired, ac_4b_violation_proof, ac_4c_freeze_sha).
-- **G5 evidence:** TASK_P2-G-ae-g5-evidence.md (g5a_deprecated_path, g5b_zero_direct_domain_imports, g5c_zero_todo_migrat).
-- **G6 evidence:** finalized dashboard from P2-I handoff (deprecated-notice + Phase-2 wired-state display).
+- **G5 evidence:** TASK_P2-G-ae-g5b-g5c-audit.md (actual filename; template named TASK_P2-G-ae-g5-evidence.md — naming delta only, content complete: g5a_deprecated_path YES, g5b_zero_direct_domain_imports YES, g5c_zero_todo_migrat YES, g5_ready_to_grade YES). Signal qa-ae-P2-G-g5-evidence-done-20260524T073523Z.json confirms.
+- **G6 evidence:** TASK_P2-I-ae-g6-dashboard-finalization.md + commit 9d18d87e (deprecated-notice added + Phase-2 wired-state display; 5/5 ACs PASS).
 - **G8 evidence:** TASK_P2-J-ae-g8-evidence.md (Test A RED, Test B GREEN, 2 additional primitives, reverted clean).
-- **G9 evidence:** PO decision doc from P2-K (docs/po-decisions/<date>-g9-alert-engine-user-confirmation.md).
-- **G10+G11 evidence:** TASK_P2-M-ae-g10-g11.md (cycle_count ≤2, Trial-1 outcome-(a), Trial-2 outcome-(a)).
+- **G9 evidence:** docs/po-decisions/2026-05-24-g9-alert-engine-user-confirmation.md (Path B PO Playwright — PASS; ZERO console errors, ZERO pageerrors, all 3 panels rendered, NOT-RUN honest).
+- **G10+G11 evidence:** TASK_P2-M-ae-g10-g11.md (cycle_count=1 ≤2, Trial-1 outcome-(a), Trial-2 outcome-(a)).
 
-**Verdict:** [ ] PASS
+**Verdict:** [x] PASS — all 7 goal evidence chains present (G3/G4/G5/G6/G8/G9/G10+G11)
 
 ---
 
@@ -100,11 +129,20 @@ All 4 files exist.
 
 QA re-verifies: the 3 Phase-1 streak tasks (P1-B1, P1-B2, P1-B3) each have sandbox-green evidence in their Phase-1 handoff docs. Every Phase-2 dev task (P2-B, P2-F, P2-H, P2-I, P2-M) has sandbox-green evidence pasted to its handoff.
 
-G12 DoD gate was applied on every qualifying task. 
+G12 DoD gate was applied on every qualifying task.
+
+Phase-1 streak tasks: P1-B1 (sandbox 9/9, signal dev-alert-engine-P1-B1-done), P1-B2 (sandbox 9/9, commit 6c31ca13), P1-B3 (sandbox 9/9, commit 251071bd) — 3/3 CONFIRMED.
+
+Phase-2 dev tasks with sandbox-green evidence:
+- P2-B: total=11 pass=11 (handoff TASK_P2-B-ae-golangci-yml.md)
+- P2-F: total=11 pass=11 (handoff TASK_P2-F-ae-g5a-deprecation.md)
+- P2-H: total=11 pass=11 (signal dev-ae-P2-H-done AC-7: sandbox_output=total=11 pass=11 fail=0 status=OK exit 0)
+- P2-I: total=11 pass=11 (handoff TASK_P2-I-ae-g6-dashboard-finalization.md)
+- P2-M: total=11 pass=11 (handoff TASK_P2-M-ae-g10-g11.md)
 
 Records `g12_streak_carryforward: CONFIRMED` in close-gate doc below.
 
-**Verdict:** [ ] PASS — g12_streak_carryforward: CONFIRMED
+**Verdict:** [x] PASS — g12_streak_carryforward: CONFIRMED
 
 ---
 
@@ -121,10 +159,18 @@ All three tags resolve to commits (no "unknown revision" error). Tag ancestry or
 **Evidence — AC-4 Pre-Revert Tags:**
 
 ```
-[PASTE OUTPUT FROM git log --oneline FOR ALL 3 TAGS]
+Tags present (git tag | grep alert-engine-pre):
+  alert-engine-pre-ci     → SHA 4d5b2f754aa1782e870acd633abc7f316593a08e  (604a71f1 commit)
+  alert-engine-pre-delete → SHA ccef14fa5745bf58f987c3f2190dceb6360c3bd9
+  alert-engine-pre-inject → SHA 3326e7dd2032820d3d567a84ebe84f1c0c771bf5
+
+Ancestry order verification (git merge-base --is-ancestor):
+  pre-ci   <= pre-delete  exit:0  PASS
+  pre-delete <= pre-inject exit:0  PASS
+  pre-inject <= HEAD       exit:0  PASS
 ```
 
-**Verdict:** [ ] PASS
+**Verdict:** [x] PASS — all 3 tags present, ancestry order pre-ci ≤ pre-delete ≤ pre-inject ≤ HEAD confirmed
 
 ---
 
@@ -148,12 +194,34 @@ jq '{phase,goalsEarned,decisionMatrix}' docs/data/pilot-status-alert-engine.json
 **Evidence — AC-5 Anchor + SSOT Integrity:**
 
 ```
-[PASTE ANCESTRY CHECK OUTPUT]
+Ancestry check:
+  git log --oneline --ancestry-path debba8eaff0724d1fb32fc9d28640201cc32d1cc..HEAD | tail -1
+  → "df7d3d7a chore(pm/stock-price): P0-SP-4 anchor commit + SSOT — Phase 0 complete (5/5 deliverables)"
+  Non-empty output: anchor IS a proper ancestor of HEAD. PASS
 
-[PASTE jq OUTPUT FOR phase + goalsEarned + decisionMatrix]
+  git merge-base --is-ancestor debba8eaff0724d1fb32fc9d28640201cc32d1cc HEAD → exit:0  PASS
+
+SSOT jq check (docs/data/pilot-status-alert-engine.json):
+  {
+    "phase": "2",
+    "goalsEarned": 0,
+    "decisionMatrix": {
+      "speed": "TBD",
+      "trust": "TBD",
+      "scale": "TBD",
+      "verdict": "TBD",
+      "populatedAt": null,
+      "populatedBy": null
+    }
+  }
+
+  phase="2"       PASS
+  goalsEarned=0   PASS (§4.5 frozen — no agent touched this)
+  decisionMatrix speed/trust/scale/verdict all "TBD"  PASS
+  .golangci.yml most-recent commit: 6c2edc9d (P2-B, ONLY commit — frozen)  PASS
 ```
 
-**Verdict:** [ ] PASS
+**Verdict:** [x] PASS — anchor intact; SSOT goalsEarned=0; decisionMatrix all-TBD; .golangci.yml frozen @6c2edc9d
 
 ---
 
@@ -168,10 +236,24 @@ Empty output. Sandbox cred-free baseline is unchanged from Phase-1 close.
 **Evidence — AC-6 ZERO-CREDS:**
 
 ```
-[PASTE OUTPUT FROM env | grep (should be empty)]
+env | grep -iE "TELEGRAM|BOT_TOKEN|CHAT_ID|TOKEN|SECRET|API_KEY|PASSWORD" output:
+  CTX_ADVISOR_BYTES_PER_TOKEN=45
+  CTX_ADVISOR_MAX_TOKENS=200000
+  CTX_ADVISOR_OVERHEAD_TOKENS=43000
+
+Ruling: CTX_ADVISOR_* are Claude Code harness context-sizing metadata (integer token counts).
+They are NOT Telegram/bot credentials. Pattern "TOKEN" substring in a context-advisor config key
+is identical to the harness-metadata ruling applied in pdf-extractor Phase-1 gate (cycle-78).
+No TELEGRAM_BOT_TOKEN, CHAT_ID, API_KEY, SECRET, or PASSWORD present.
+Real credential env audit: CLEAN.
+
+Source tree grep (pkg/primitive/ + pkg/module/ + cmd/sandbox/):
+  All matches are: TelegramChannel type name, TelegramPort interface name, doc-comment text,
+  and mock struct names — ZERO real credential values (no token strings, no chat IDs, no keys).
+  grep_exit:0 (matches found are type names/comments only)
 ```
 
-**Verdict:** [ ] PASS
+**Verdict:** [x] PASS — ZERO-CREDS baseline confirmed; source tree has zero hardcoded credential values
 
 ---
 
@@ -179,37 +261,45 @@ Empty output. Sandbox cred-free baseline is unchanged from Phase-1 close.
 
 **Evidence — AC-1 Sandbox All-Green:**
 
-[Will be populated by QA during task execution]
+primitive tier: total=9 pass=9 fail=0 status=OK exit:0
+module tier: total=2 pass=2 fail=0 status=OK exit:0
+all tier: total=11 pass=11 fail=0 status=OK exit:0
 
 ---
 
 **Evidence — AC-4 Pre-Revert Tags:**
 
-[Will be populated by QA during task execution]
+alert-engine-pre-ci → 4d5b2f75 | alert-engine-pre-delete → ccef14fa | alert-engine-pre-inject → 3326e7dd
+Order: pre-ci ≤ pre-delete ≤ pre-inject ≤ HEAD — all ancestry checks exit 0
 
 ---
 
 **Evidence — AC-5 Anchor + SSOT Integrity:**
 
-[Will be populated by QA during task execution]
+Anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc → merge-base --is-ancestor exit:0 PASS
+SSOT: phase="2", goalsEarned=0, decisionMatrix all-TBD, .golangci.yml frozen @6c2edc9d
 
 ---
 
 **Evidence — AC-6 ZERO-CREDS:**
 
-[Will be populated by QA during task execution]
+env grep: CTX_ADVISOR_* harness metadata only — no TELEGRAM/BOT_TOKEN/CHAT_ID/API_KEY/SECRET/PASSWORD. CLEAN.
+Source tree: TelegramPort/TelegramChannel are type names only — zero credential values in primitive/module/sandbox.
 
 ---
 
 ## Close-Gate Verdict
 
-**All 6 ACs PASS:** [ ] YES [ ] NO
+**All 6 ACs PASS:** [x] YES [ ] NO
 
 **Close-Gate Overall Verdict:**
 
-[ ] PASS — Phase 2 ready for PM transition (phase2.status → CLOSED) and PO Phase 3 dispatch
+[x] PASS — Phase 2 ready for PM transition (phase2.status → CLOSED) and PO Phase 3 dispatch
 
 [ ] BLOCKED — [specify reason]
+
+**Verified by:** qa | **Verified at:** 2026-05-24T10:40:00Z
+**Signal emitted:** docs/signals/qa-ae-P2-Z-close-gate-done-20260524T104000Z.json
 
 ---
 
