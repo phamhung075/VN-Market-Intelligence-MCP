@@ -48,7 +48,7 @@
       "pilot_status_phase_0_fields_populated": true,
       "no_code_in_service_pkg_yet": false,
       "exit_gate_status": "CLOSED",
-      "closedAt": "2026-05-24T08:20:00Z",
+      "exit_gate_closedAt": "2026-05-24T08:20:00Z",
       "verification_commit_sha_architect": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
       "verification_signal": "brownfield_inventory satisfied by P1-A through P1-E artifacts; Phase 1 primitives + module + dashboard confirm brownfield 3-primitive extraction; ZERO-CREDS boundary confirmed Phase 1 exit; phase0 brownfield_inventory artifact is the complete Phase 1 task ledger (P1-A through P1-E DONE; P1-B4 SKIPPED per plan; P1-G QA close-gate pending)"
     }
@@ -116,13 +116,14 @@
     "acCount": 69,
     "wipPolicy": "WIP=1 sequential — PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
     "wip_limit": 1,
-    "current_task": "P2-B",
+    "current_task": "P2-C",
     "current_task_status": "SEQUENCED",
-    "current_task_owner": "dev-alert-engine",
-    "current_task_handoff": "docs/handoffs/TASK_P2-B-ae-golangci-yml.md",
+    "current_task_owner": "dev-alert-engine + qa",
+    "current_task_handoff": "docs/handoffs/TASK_P2-C-ae-g4-fence-violation-proof.md",
     "progress_notes": [
       "P2-A DONE 2026-05-24T084900Z — alert-engine-pre-ci tag created at commit 604a71f1 (Phase-1 close-gate signal commit, per dev-alert-engine P2-A done signal). Tag verified present via `git tag | grep alert-engine-pre-ci`. Anchor debba8ea INTACT per ancestry check. Pre-revert tag discipline (L5) satisfied. P2-A minimal 3-AC task complete.",
-      "P2-B SEQUENCED 2026-05-24T085000Z — .golangci.yml Fence-A/B/C creation + CI job wiring. Owner: dev-alert-engine. 5 ACs (config exists + 3 rules, lint exit 0, CI job wired OR offline proof, freeze anchor AC-4, G12 DoD gate). Handoff: docs/handoffs/TASK_P2-B-ae-golangci-yml.md. CRITICAL FRAMING: AC-2 green lint run is CONFIG PROOF, not FENCE-PROOF. Actual fence enforcement proof is P2-C (deliberate violation test). P2-B must establish config; P2-C must prove it works."
+      "P2-B DONE 2026-05-24T085113Z (commit 6c2edc9d) — .golangci.yml Fence-A/B/C creation + CI job wiring. Config file created (69L, 3 named rules: fence-a/b/c), CI job wired in .github/workflows/ci.yml (alert-engine-go-lint job), golangci-lint run exits 0 on current Phase-1 codebase (CONFIG PROOF established). G12 DoD gate PASS (sandbox 11/11). AC-2 green run = CONFIG-PROOF-ONLY per charter note: actual fence enforcement proof is P2-C (deliberate violation test). P2-B establishes config + proof lint runs; P2-C proves fence catches violations.",
+      "P2-C SEQUENCED 2026-05-24T085113Z — G4 Fence-A deliberate-violation proof (AC-4b). Owner: dev-alert-engine (violation creator) + qa (independent reproduction). 5 ACs: (AC-1) golangci-lint exits non-zero on violation run in fenced layer (primitive/module, NOT infrastructure), output contains 'fence-a' + file name; (AC-2) lint exits 0 after revert; (AC-3) violation never staged/committed; (AC-4) QA reproduces independently on different primitive file; (AC-5) G12 DoD gate green post-revert (11/11 PASS). CRITICAL: Violation must be injected into FENCED LAYER (pkg/primitive/ or pkg/module/) to be meaningful — pkg/infrastructure is excluded by design and falsely looks like fence is broken if green there. Handoff: docs/handoffs/TASK_P2-C-ae-g4-fence-violation-proof.md. This is the R-FENCE gate — proves the fence actually fails on real violations."
     ],
     "tasks": {
       "P2-A": {
@@ -141,11 +142,13 @@
         "owner": "dev-alert-engine",
         "blocks": "P2-C",
         "blockedBy": "P2-A",
-        "status": "SEQUENCED",
+        "status": "DONE",
         "acCount": 5,
-        "sequencedAt": "2026-05-24T085000Z"
+        "sequencedAt": "2026-05-24T085000Z",
+        "doneAt": "2026-05-24T085113Z",
+        "doneBy": "dev-alert-engine"
       },
-      "P2-C": { "title": "G4 deliberate-violation proof (AC-4b) — Fence-A violation + revert", "owner": "dev-alert-engine + qa", "status": "TBD" },
+      "P2-C": { "title": "G4 deliberate-violation proof (AC-4b) — Fence-A violation + revert", "owner": "dev-alert-engine + qa", "blocks": "P2-D", "blockedBy": "P2-B", "status": "SEQUENCED", "acCount": 5, "sequencedAt": "2026-05-24T085113Z" },
       "P2-D": { "title": "G4 freeze anchor confirmation (AC-4c)", "owner": "qa", "status": "TBD" },
       "P2-E": { "title": "Create alert-engine-pre-delete tag (pre-revert anchor before G5a work)", "owner": "dev-alert-engine", "status": "TBD" },
       "P2-F": { "title": "G5a — git mv domain/services.go → _deprecated/ + evaluate.go rewire", "owner": "dev-alert-engine", "status": "TBD" },
