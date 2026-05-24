@@ -1,5 +1,36 @@
 # QA — Notebook
 
+## c282 cycle-76 · 2026-05-24 · alert-engine P2-L — G10 bug injection (pre-inject tag + sealed spec) — DONE
+
+**Task:** P2-L — Create alert-engine-pre-inject tag + inject G10 bug | **Verdict:** DONE — all 4 ACs PASS
+
+```
+date: 2026-05-24T10:16:00Z
+outcome: DONE — 4/4 ACs PASS; G10 setup complete
+type: pilot-task-qa (tag creation + deliberate bug injection + sealed spec)
+signal: docs/signals/qa-ae-P2-L-injection-done-20260524T101600Z.json
+sealed_spec: docs/handoffs/TASK_P2-L-ae-injection-spec.md
+pre_inject_tag: alert-engine-pre-inject → commit 3326e7dd
+injection_commit: da6c71d3
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (CONFIRMED)
+fixer_blindness_enforced: true (file/line/literal in sealed spec only, NOT in signal/SSOT/P2-M handoff)
+sandbox_result: total=11 pass=7 fail=4 status=FAIL exit 1
+ssot_not_mutated: goalsEarned=0, decisionMatrix all TBD, no goal flips
+g10_goal_status: EARNED-PENDING (PO flips at Phase-3 12/12 terminal)
+```
+
+| AC | Verdict | Key Evidence |
+|----|---------|-------------|
+| AC-1 (pre-inject tag before injection) | PASS | alert-engine-pre-inject → 3326e7dd; injection commit da6c71d3 on top |
+| AC-2 (sandbox FAIL after injection) | PASS | exit 1; 4 FAILs: dedup-key-builder-{edge,failure,golden}.json + alert-pipeline-golden.json |
+| AC-3 (dashboard RED) | PASS | dedup-key-builder card RED, alert-pipeline card RED; cooldown-gate+signal-classifier GREEN |
+| AC-4 (injection commit + sealed spec) | PASS | commit subject does not reveal primitive/literal; full spec in SEALED TASK_P2-L-ae-injection-spec.md |
+
+**P2-L verdict: DONE — G10 setup complete. Fixer-blindness enforced.**
+**NEXT:** pm — assemble P2-M handoff with symptom-level instructions only (sealed spec NOT included in P2-M dispatch).
+
+---
+
 ## c282 cycle-75 · 2026-05-24 · kinh-dich-service Phase-1 Close-Gate — CONDITIONAL-GO
 
 **Task:** Phase-1 close-gate (Go reboot) — G1/G2/G3/G6/G7/G8/G9/G12 evidence | **Verdict:** CONDITIONAL-GO
