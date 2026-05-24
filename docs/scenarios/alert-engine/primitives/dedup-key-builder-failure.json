@@ -1,0 +1,12 @@
+{
+  "primitive": "dedup_key_builder",
+  "description": "Failure/degenerate case: empty stock and nil signalTypes still produce a deterministic fingerprint (BuildKey never errors)",
+  "input": {
+    "stock": "",
+    "signalTypes": null,
+    "message": "test"
+  },
+  "expected": {
+    "fingerprint": "790ecab3"
+  }
+}

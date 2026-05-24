@@ -1,0 +1,12 @@
+{
+  "primitive": "dedup_key_builder",
+  "description": "Golden path: VCB with two signals (unsorted) + message → stable djb2 fingerprint",
+  "input": {
+    "stock": "VCB",
+    "signalTypes": ["MACD_CROSS", "BB_BREAK"],
+    "message": "Stop-loss triggered at 85,000"
+  },
+  "expected": {
+    "fingerprint": "4c79b07f"
+  }
+}

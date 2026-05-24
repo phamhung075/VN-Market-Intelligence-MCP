@@ -35,6 +35,7 @@ import (
 	"os"
 	"path/filepath"
 
+	dkb "github.com/vn-market-intelligence/alert-engine/pkg/primitive/dedup-key-builder"
 	sc "github.com/vn-market-intelligence/alert-engine/pkg/primitive/signal-classifier"
 )
 
@@ -147,7 +148,8 @@ func executePrimitive(s Scenario) (bool, error) {
 	switch envelope.Primitive {
 	case "signal_classifier":
 		return executeSignalClassifier(data)
-	// P1-B2: case "dedup_key_builder": return executeDedupKeyBuilder(data)
+	case "dedup_key_builder":
+		return executeDedupKeyBuilder(data)
 	// P1-B3: case "cooldown_gate":     return executeCooldownGate(data)
 	case "":
 		return false, fmt.Errorf("scenario %q: missing 'primitive' field", s.Name)
@@ -191,6 +193,38 @@ func executeSignalClassifier(data []byte) (bool, error) {
 		if string(got.Channel) != s.Expected.Channel {
 			return false, fmt.Errorf("signal-classifier: Channel=%q want=%q", got.Channel, s.Expected.Channel)
 		}
+	}
+	return true, nil
+}
+
+// executeDedupKeyBuilder runs a dedup-key-builder scenario (P1-B2).
+// Scenario JSON shape:
+//
+//	{
+//	  "primitive": "dedup_key_builder",
+//	  "input":    {"stock": "<string>", "signalTypes": ["<string>"...], "message": "<string>"},
+//	  "expected": {"fingerprint": "<8-hex lowercase>"}
+//	}
+func executeDedupKeyBuilder(data []byte) (bool, error) {
+	var s struct {
+		Input struct {
+			Stock       string   `json:"stock"`
+			SignalTypes []string `json:"signalTypes"`
+			Message     string   `json:"message"`
+		} `json:"input"`
+		Expected struct {
+			Fingerprint string `json:"fingerprint"`
+		} `json:"expected"`
+	}
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("dedup-key-builder: unmarshal scenario: %w", err)
+	}
+
+	got := dkb.BuildKey(s.Input.Stock, s.Input.SignalTypes, s.Input.Message)
+
+	if got != s.Expected.Fingerprint {
+		return false, fmt.Errorf("dedup-key-builder: fingerprint=%q want=%q (stock=%q signals=%v)",
+			got, s.Expected.Fingerprint, s.Input.Stock, s.Input.SignalTypes)
 	}
 	return true, nil
 }

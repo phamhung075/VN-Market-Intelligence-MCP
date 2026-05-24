@@ -1,0 +1,12 @@
+{
+  "primitive": "dedup_key_builder",
+  "description": "Edge case: empty signalTypes array and empty message → known fingerprint",
+  "input": {
+    "stock": "HPG",
+    "signalTypes": [],
+    "message": ""
+  },
+  "expected": {
+    "fingerprint": "0d4096ba"
+  }
+}
