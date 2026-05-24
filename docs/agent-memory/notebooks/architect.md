@@ -1,10 +1,51 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 18:00 UTC | **Sprint:** PDF-INSPECT
+**Last updated:** 2026-05-24 17:58 UTC | **Sprint:** PDF-INSPECT-REDO
 
 [3 most recent cycles retained below. Archive in git history.]
 
-## PDF-INSPECT PI-1 — served PDF/extraction inspector design (2026-05-24T18:00Z) — DESIGN COMPLETE
+## PDF-INSPECT REOPEN / Re-ground — PI-3-redo design (2026-05-24T17:58Z) — DESIGN COMPLETE
+
+**Task:** Recurring-bug-escalation rethink. Root cause: PI-1 designed against `pdf_extractor.db pdf_documents` (15,570 junk rows, 0 real data) + `/app/data/extractions/` (0 files). Real data is in `market.db` (`financial_reports` 14 real rows + `pdf_extracted_text` 819 real OCR rows). Inspector was reading the wrong DB entirely.
+
+**Key brownfield findings:**
+- `pdf_extractor.db` table `pdf_documents`: 15,570 rows, ALL `status=failed`, 0 with `pdf_path`, almost entirely test/example.com URLs. NOT a document registry. Polluted by SCALE pilot test runs leaking into prod volume.
+- `/app/data/extractions/`: 0 files. Production never writes here (extraction output goes to `market.db pdf_extracted_text`, not JSON files).
+- `market.db financial_reports`: 14 real rows. Has `pdf_path` (absolute path, already correct, populated by `fetchParseAndStoreBctc.ts` normaliseFilename), `net_profit`, `net_profit_api_bridge`, `ocr_confidence`, `confidence_financial`, etc.
+- `market.db pdf_extracted_text`: 819 rows of real page-by-page OCR text. Join key: `basename(financial_reports.pdf_path) = pdf_extracted_text.filename`.
+- 17 real PDFs at `/app/data/pdfs/` with messy real filenames. `financial_reports.pdf_path` already contains the correct absolute path — no heuristic scan needed.
+- `bctcPdfPullJob.buildPdfSavePath()` does NOT write back to `financial_reports.pdf_path`; `fetchParseAndStoreBctc.ts` line 404 does (via `normaliseFilename`).
+
+**Ownership ruling:** OPTION B — inspector moves to mcp-server. All data (`financial_reports`, `pdf_extracted_text`, PDFs) is mcp-server's. Opening `market.db` from pdf-extractor (Option A) = ownership violation + WAL risk. Cross-service HTTP feed (Option C) = over-engineered. Implementation owner = dev-mcp-server. Pattern: `newsFetchLiveHandler.ts`.
+
+**New routes (mcp-server port 3000):**
+- `GET /api/bctc-inspect` — HTML viewer
+- `GET /api/bctc-inspect/docs` — list from `financial_reports WHERE pdf_path IS NOT NULL`
+- `GET /api/bctc-inspect/pdf/{doc_id}` — stream PDF bytes from `financial_reports.pdf_path`
+- `GET /api/bctc-inspect/ocr/{doc_id}?page=N` — OCR pages from `pdf_extracted_text WHERE filename = basename(pdf_path)`
+
+**Right pane design:**
+- Figures sub-pane: `net_profit` vs `net_profit_api_bridge` with >10x anomaly flag (decimal-shift detection).
+- OCR text sub-pane: paginated `pdf_extracted_text` pages.
+
+**PDF-filename match:** `financial_reports.pdf_path` is the authoritative path. No heuristic. Direct open.
+
+**Junk table flag:** `pdf_extractor.db pdf_documents` polluted by test data, ops follow-up. Inspector no longer reads it.
+
+**PI-2 pdf-extractor /inspect:** stays in place as deprecated dead code (186 fixture tests still pass). Mark `# DEPRECATED (PDF-INSPECT-REDO)`.
+
+**QA mandate:** PI-3-redo MUST verify against REAL `market.db` + real PDFs + real OCR text. No fixture-only acceptance. docker exec into container to confirm ≥10 real docs from `financial_reports`.
+
+**Files authored this cycle (2):**
+1. `docs/architecture-briefs/2026-05-24-pdf-inspect-reground.md` (NEW — full re-ground brief)
+2. `docs/handoffs/TASK_PDF-INSPECT.md` (UPDATED — REOPEN/Re-ground section appended, prior record preserved)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** pm — register PI-3-redo to dev-mcp-server.
+
+---
+
+## PDF-INSPECT PI-1 — served PDF/extraction inspector design (2026-05-24T18:00Z) — DESIGN COMPLETE (SUPERSEDED BY REOPEN)
 
 **Task:** PI-1. Design the 3 GET routes + viewer page + doc_id→PDF mapping + right-pane data-source ruling for the served side-by-side PDF inspector. PO kickoff signal: `docs/signals/po-pdf-inspect-kickoff-20260524T171904Z.json`.
 

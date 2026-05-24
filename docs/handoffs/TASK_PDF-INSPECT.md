@@ -456,3 +456,170 @@ This is a SERVED surface, NOT a double-click `file://` page. To use it: the pdf-
 
 ## Commit discipline (every committer)
 Explicit `git add <path>` per file; never `-A`/`.`. No `--force`/`--no-verify`/`--no-gpg-sign`. No `git push`. After commit, `git show --stat HEAD` MUST show only your files (heavy fleet commit-race active — if a foreign file appears, you conflated a commit; do NOT rewrite history, re-stage your own and re-commit). Commit-mutex enum defect known: claim key under `sprint-task` kind if mutex needed (per notebook carry-over).
+
+---
+
+## [Architect] REOPEN / Re-ground — PI-3-redo Design (2026-05-24T17:58Z)
+
+**Trigger:** Recurring-bug-escalation — 2nd "verified-against-assumed-reality-not-real-data" defect this session (1st: file:// dashboard false-green; 2nd: this — inspector reads junk data, viewer empty on real prod volume). Full brief: `docs/architecture-briefs/2026-05-24-pdf-inspect-reground.md`.
+
+**Honesty trail preserved:** prior PI-1 / PI-2 / PI-3 / PI-EXIT sections above are NOT deleted. They document what was shipped and why it was wrong. The lesson: zone and data-source must be verified against live prod state, not assumed from task spec language.
+
+---
+
+### A. Chosen Ownership/Access Model
+
+**OPTION B — Inspector moves to mcp-server. Implementation owner: dev-mcp-server.**
+
+Rationale:
+- Every data atom the viewer needs (`financial_reports`, `pdf_extracted_text`) is in mcp-server's own `market.db`.
+- PDFs at `/app/data/pdfs/` are written by mcp-server's `bctcPdfPullJob`.
+- `financial_reports.pdf_path` is set by mcp-server's `fetchParseAndStoreBctc`.
+- The viewer IS a read-only UI over mcp-server's BCTC data store.
+- Precedent pattern: `newsFetchLiveHandler.ts` in `apps/mcp-server/src/interface/mcp/routes/` — same read-only GET route family over `market.db`.
+- Opening `market.db` from a second process (pdf-extractor) risks SQLite WAL lock contention and is an ownership violation; rejected (Option A).
+- Cross-service HTTP feed (Option C) is over-engineered for a dev inspection tool; rejected.
+
+PI-1 error diagnosis: the SPRINT_GOAL.md task spec said "Zone: apps/pdf-extractor/ ONLY" — that constraint was written before anyone verified where the real data lives. Zone follows data ownership, not task spec text. Data is in mcp-server; inspector lives in mcp-server.
+
+---
+
+### B. Real Data Wiring — Which Tables Feed Which Pane
+
+**Document list (dropdown)**
+
+```sql
+SELECT id, action_code, company_name, period_year, period_quarter, period_type,
+       sort_key, pdf_path, net_revenue, gross_profit, net_profit,
+       net_profit_api_bridge, net_margin_pct, ocr_confidence,
+       confidence_financial, extraction_confidence, parsed_at
+FROM financial_reports
+WHERE pdf_path IS NOT NULL AND pdf_path != ''
+ORDER BY parsed_at DESC
+```
+
+Yields 14 real documents (not 15,552 junk entries). Label: `"{action_code} {period_type} {period_year}"`.
+
+**Left pane — PDF render**
+
+Source: `financial_reports.pdf_path` (authoritative absolute path, already stored).
+Route: `GET /api/bctc-inspect/pdf/{doc_id}` — look up `pdf_path` by `id`, stream bytes.
+No heuristic filename scan needed. `pdf_path` contains the REAL messy filename as written
+by `normaliseFilename()` in `fetchParseAndStoreBctc.ts`.
+
+Honest-degrade: file not on disk → HTTP 404, left pane shows "PDF not available at stored path" with the stored path visible for ops.
+
+**Right pane — Extraction quality**
+
+Two sub-sources:
+
+1. **Parsed figures from `financial_reports`** — display key scalars with anomaly flag:
+   - `net_revenue`, `gross_profit`, `net_profit` (OCR — often wrong), `net_profit_api_bridge` (API — reliable), `net_margin_pct`, `ocr_confidence`, `confidence_financial`, `extraction_confidence`
+   - Visual alert if `net_profit` deviates from `net_profit_api_bridge` by >10x (decimal-shift detection — the exact `VNM net_profit=0.000051` case the user wants to spot).
+
+2. **Raw OCR pages from `pdf_extracted_text`**:
+   ```sql
+   SELECT page_number, text_content, confidence
+   FROM pdf_extracted_text
+   WHERE filename = ?       -- basename(financial_reports.pdf_path)
+   ORDER BY page_number ASC LIMIT 50
+   ```
+   Join key: `basename(financial_reports.pdf_path) = pdf_extracted_text.filename`.
+   This is reliable: mcp-server writes `filename = basename(filePath)` in OCR storage.
+   Honest-degrade: no rows → "No OCR text found for this document."
+
+Route: `GET /api/bctc-inspect/ocr/{doc_id}?page=1`
+
+---
+
+### C. PDF-Filename Match Strategy
+
+**Primary (used):** `financial_reports.pdf_path` is the authoritative path. Direct `open(pdf_path)`.
+
+**No heuristic scan needed.** The PI-1 ticker-from-URL scan was needed only because PI-1 read `pdf_documents.url` (VPS URLs without stored paths). `financial_reports.pdf_path` already contains the correct absolute disk path.
+
+**Honest-degrade tiers:**
+1. `pdf_path IS NULL` or `''` → excluded from list (WHERE filter).
+2. File not found at `pdf_path` → `has_pdf: false` in list; left pane "PDF not available at stored path: {path}".
+3. No `pdf_extracted_text` rows for `basename(pdf_path)` → figures-only right pane; OCR section "OCR text not available."
+
+---
+
+### D. New Routes (mcp-server port 3000)
+
+```
+GET /api/bctc-inspect           — HTML viewer page
+GET /api/bctc-inspect/docs      — list: { items: [{doc_id, label, action_code,
+                                    period_type, period_year, has_pdf, has_ocr,
+                                    net_profit, net_profit_api_bridge,
+                                    ocr_confidence, confidence_financial}] }
+GET /api/bctc-inspect/pdf/{doc_id}   — stream application/pdf bytes
+GET /api/bctc-inspect/ocr/{doc_id}?page=N  — { filename, total_pages, page,
+                                               text_content, confidence, has_more }
+```
+
+**Files to create (mcp-server):**
+- `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` (NEW)
+- `apps/mcp-server/src/interface/bctc-inspector.html` (NEW, served by handler)
+- `apps/mcp-server/src/interface/mcp/server.ts` (MODIFY — wire 4 routes)
+
+**DDD layer:** all in `interface`. No new domain service. No new application use case.
+Single DB handle (the injected `db` already passed to all route handlers via Task 1839a).
+Pattern: `newsFetchLiveHandler.ts`.
+
+---
+
+### E. What Happens to pdf-extractor /inspect
+
+PI-2 implementation in `apps/pdf-extractor/` stays in place — do NOT delete.
+Rationale: 186 QA-authored tests cover it (with fixture data). Deleting breaks those.
+Mark files deprecated with a comment (see full brief). Routes remain functional for
+local fixture testing. They are dead on real prod data (reads junk `pdf_documents`).
+
+**Flag for dev-pdf-extractor:** add `# DEPRECATED (PDF-INSPECT-REDO)` comment to
+`infrastructure/inspection_store.py` and `interface/handlers.py`. Safe to remove after
+PI-3-redo QA confirms mcp-server viewer works end-to-end.
+
+---
+
+### F. junk `pdf_extractor.db pdf_documents` — Ops Flag
+
+15,570 `status=failed` rows, almost all `https://example.com/x.pdf` — test/pilot data
+leaked into prod volume during SCALE pilot factory runs. Ops follow-up (NOT in this scope):
+truncate `pdf_documents` or mark deprecated. Zero impact on production BCTC extraction
+(mcp-server reads `market.db`, not `pdf_extractor.db`). Inspector no longer reads it.
+
+---
+
+### G. QA Mandate for PI-3-redo (binding)
+
+PI-3-redo MUST verify against REAL `market.db` data, NOT seeded fixtures:
+1. List endpoint returns ≥10 real docs from `financial_reports` (docker exec confirms).
+2. Select a real doc → left pane renders a real PDF from `/app/data/pdfs/`.
+3. Right pane shows real parsed figures + real OCR text from `pdf_extracted_text`.
+4. Anomaly flag visible for any doc where `net_profit` deviates >10x from `net_profit_api_bridge`.
+5. Honest-degrade: a doc with no OCR text shows "OCR text not available" (not fabricated).
+
+Fixtures may supplement edge-case testing only. "QA verified under served URL" must
+mean the REAL container with REAL `market.db`, not a local uvicorn with seeded data.
+
+---
+
+### H. DDD / Fence / Security
+
+- **Zone:** `apps/mcp-server/` — single zone.
+- **Import fence:** no change to any existing fence. New interface/routes/*.ts file
+  stays in interface layer. No domain/infra import.
+- **Security Clause:** GET /api/bctc-inspect reads files from `/app/data/pdfs/`
+  via path from the DB (not from user input). Doc_id validated as UUID before SELECT.
+  Path traversal protected: path comes from `financial_reports.pdf_path` (server-side),
+  not from user-controlled input. The stored path is NOT echoed back in the list response.
+- **SI-2 boundary comment** required in all new files.
+
+---
+
+**BUILD-STANDARD:** lean (apps/mcp-server/ already exists; new feature addition).
+
+**NEXT:** pm — register PI-3-redo task to dev-mcp-server. Handoff: this file.
+
+---
