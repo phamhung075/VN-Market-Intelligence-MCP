@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<!-- SI-2: This dashboard is rag-service-EXCLUSIVE. docs/dashboards/index.html is stock-price-EXCLUSIVE. Do not merge or cross-reference. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>rag-service — Scenario Trust Dashboard (Phase 1)</title>
+  <style>
+    /* ─── Reset + base ─────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0f1117;
+      color: #e2e8f0;
+      min-height: 100vh;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ─── Header ───────────────────────────────────────────────────────────── */
+    .header {
+      max-width: 960px;
+      margin: 0 auto 2.5rem;
+    }
+    .header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #f8fafc;
+      letter-spacing: -0.02em;
+    }
+    .header .sub {
+      margin-top: 0.35rem;
+      font-size: 0.82rem;
+      color: #64748b;
+    }
+    .header .phase-badge {
+      display: inline-block;
+      margin-top: 0.6rem;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      background: #1e3a5f;
+      color: #7dd3fc;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
+
+    /* ─── Panel ─────────────────────────────────────────────────────────────── */
+    .panel {
+      max-width: 960px;
+      margin: 0 auto 2rem;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.85rem 1.25rem;
+      background: #161b27;
+      border-bottom: 1px solid #1e293b;
+    }
+    .panel-header h2 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+    .panel-header .tier-badge {
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .tier-primitive { background: #2d1b4e; color: #c084fc; }
+    .tier-module    { background: #1a3040; color: #38bdf8; }
+    .tier-service   { background: #1a2e1a; color: #4ade80; }
+
+    .panel-body {
+      padding: 1rem 1.25rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.85rem;
+    }
+
+    /* ─── Card ──────────────────────────────────────────────────────────────── */
+    .card {
+      border-radius: 8px;
+      border: 1px solid #1e293b;
+      background: #0d1320;
+      padding: 0.9rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .card-name {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #cbd5e1;
+      word-break: break-word;
+    }
+    .card-status {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.15rem;
+    }
+
+    /* ─── Status dot ─────────────────────────────────────────────────────────── */
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .dot-green   { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+    .dot-red     { background: #ef4444; box-shadow: 0 0 6px #ef444488; }
+    .dot-notrun  { background: #334155; border: 1px solid #475569; }
+
+    .status-label {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .status-green   { color: #22c55e; }
+    .status-red     { color: #ef4444; }
+    .status-notrun  { color: #64748b; }
+
+    /* ─── Trace detail (collapsed by default) ─────────────────────────────── */
+    .trace-detail {
+      margin-top: 0.35rem;
+      font-size: 0.68rem;
+      color: #475569;
+      font-family: 'Menlo', 'Courier New', monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+      background: #0a0e18;
+      border: 1px solid #1e293b;
+      border-radius: 4px;
+      padding: 0.4rem 0.5rem;
+      max-height: 7rem;
+      overflow-y: auto;
+    }
+    .trace-toggle {
+      font-size: 0.65rem;
+      color: #334155;
+      cursor: pointer;
+      border: none;
+      background: none;
+      padding: 0;
+      text-align: left;
+      text-decoration: underline;
+    }
+    .trace-toggle:hover { color: #64748b; }
+
+    /* ─── Footer ─────────────────────────────────────────────────────────────── */
+    .footer {
+      max-width: 960px;
+      margin: 2rem auto 0;
+      font-size: 0.7rem;
+      color: #334155;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <h1>rag-service — Scenario Trust Dashboard</h1>
+    <p class="sub">
+      Renders from inline-embedded sandbox trace JSON. Zero network calls. Zero CDN.
+      Open with <code>file://</code> — no server required.
+    </p>
+    <span class="phase-badge">Phase 1 &mdash; G6 / G8 / G9</span>
+  </header>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- PANEL 1: Primitives                                                    -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="panel" id="panel-primitives" aria-label="Primitives panel">
+    <div class="panel-header">
+      <h2>Primitives</h2>
+      <span class="tier-badge tier-primitive">tier: primitive</span>
+    </div>
+    <div class="panel-body" id="primitives-body">
+      <!-- Cards rendered by JS below -->
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- PANEL 2: Module                                                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="panel" id="panel-module" aria-label="Module panel">
+    <div class="panel-header">
+      <h2>Module</h2>
+      <span class="tier-badge tier-module">tier: module</span>
+    </div>
+    <div class="panel-body" id="module-body">
+      <!-- Cards rendered by JS below -->
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- PANEL 3: Microservice                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <section class="panel" id="panel-microservice" aria-label="Microservice panel">
+    <div class="panel-header">
+      <h2>Microservice</h2>
+      <span class="tier-badge tier-service">tier: service</span>
+    </div>
+    <div class="panel-body" id="microservice-body">
+      <!-- Cards rendered by JS below -->
+    </div>
+  </section>
+
+  <footer class="footer">
+    <p>
+      G8 honesty contract: a card is GREEN only when its sandbox trace file has
+      <code>passed: true</code>. Cards without a trace file are NOT-RUN (grey).
+      No hardcoded greens. No network calls to port 5002 in Phase 1.
+    </p>
+    <p style="margin-top:0.4rem;">
+      Phase 1 primitives: similarity-scorer (GREEN), four others NOT-RUN (Phase 2).
+      Phase 2 wires remaining primitives + composition-root. Phase 3 wires microservice.
+    </p>
+  </footer>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- INLINE TRACE DATA — generated by sandbox runner (zero network needed)  -->
+  <!-- G6: file:// compatible — no fetch() to remote, no CDN                 -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <script id="trace-similarity-scorer-golden" type="application/json">
+{
+  "passed": true,
+  "primitive": "similarity_scorer",
+  "actual": {
+    "similarity": 0.6666666666666666
+  },
+  "expected": {
+    "similarity": 0.6667
+  },
+  "diff": [],
+  "elapsed_ms": 0
+}
+  </script>
+
+  <script id="trace-module-golden" type="application/json">
+{
+  "passed": true,
+  "primitive": "retrieval",
+  "actual": {
+    "top_k_ids": [
+      "result-A",
+      "result-B",
+      "result-C"
+    ]
+  },
+  "expected": {
+    "top_k_ids": [
+      "result-A",
+      "result-B",
+      "result-C"
+    ]
+  },
+  "diff": [],
+  "elapsed_ms": 2
+}
+  </script>
+
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <!-- DASHBOARD LOGIC                                                        -->
+  <!-- ═══════════════════════════════════════════════════════════════════════ -->
+  <script>
+    "use strict";
+
+    // ── Helper: read inline JSON trace by script element ID ──────────────────
+    function readInlineTrace(scriptId) {
+      const el = document.getElementById(scriptId);
+      if (!el) return null;
+      try {
+        return JSON.parse(el.textContent);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // ── Helper: build a status chip ──────────────────────────────────────────
+    function statusChip(trace) {
+      if (trace === null) {
+        // No trace — honest NOT-RUN
+        return {
+          dotClass: "dot-notrun",
+          labelClass: "status-notrun",
+          labelText: "NOT-RUN",
+        };
+      }
+      if (trace.passed === true) {
+        return {
+          dotClass: "dot-green",
+          labelClass: "status-green",
+          labelText: "GREEN",
+        };
+      }
+      return {
+        dotClass: "dot-red",
+        labelClass: "status-red",
+        labelText: "FAIL",
+      };
+    }
+
+    // ── Helper: build a card element ──────────────────────────────────────────
+    function buildCard(name, trace) {
+      const chip = statusChip(trace);
+      const card = document.createElement("div");
+      card.className = "card";
+      card.dataset.primitive = name;
+
+      const nameEl = document.createElement("div");
+      nameEl.className = "card-name";
+      nameEl.textContent = name;
+
+      const statusEl = document.createElement("div");
+      statusEl.className = "card-status";
+
+      const dot = document.createElement("span");
+      dot.className = `dot ${chip.dotClass}`;
+
+      const label = document.createElement("span");
+      label.className = `status-label ${chip.labelClass}`;
+      label.textContent = chip.labelText;
+
+      statusEl.appendChild(dot);
+      statusEl.appendChild(label);
+
+      card.appendChild(nameEl);
+      card.appendChild(statusEl);
+
+      // If trace exists, add collapsible detail
+      if (trace !== null) {
+        const toggle = document.createElement("button");
+        toggle.className = "trace-toggle";
+        toggle.textContent = "show trace";
+
+        const detail = document.createElement("pre");
+        detail.className = "trace-detail";
+        detail.style.display = "none";
+        detail.textContent = JSON.stringify(trace, null, 2);
+
+        toggle.addEventListener("click", function () {
+          const hidden = detail.style.display === "none";
+          detail.style.display = hidden ? "block" : "none";
+          toggle.textContent = hidden ? "hide trace" : "show trace";
+        });
+
+        card.appendChild(toggle);
+        card.appendChild(detail);
+      } else {
+        // NOT-RUN hint
+        const hint = document.createElement("div");
+        hint.className = "trace-detail";
+        hint.style.color = "#334155";
+        hint.textContent = "no trace — not implemented / Phase 2";
+        card.appendChild(hint);
+      }
+
+      return card;
+    }
+
+    // ── Panel 1: Primitives ───────────────────────────────────────────────────
+    //
+    // 5 planned primitives per spec. Only similarity-scorer has a trace (P1-B).
+    // The other 4 are honest NOT-RUN — Phase 2 B-bucket tasks.
+    //
+    const PRIMITIVE_CARDS = [
+      {
+        name: "similarity-scorer",
+        traceId: "trace-similarity-scorer-golden",   // GREEN — P1-B done
+      },
+      {
+        name: "relevance-threshold-gate",
+        traceId: null,  // NOT-RUN — Phase 2
+      },
+      {
+        name: "temporal-decay-scorer",
+        traceId: null,  // NOT-RUN — Phase 2
+      },
+      {
+        name: "top-k-selector",
+        traceId: null,  // NOT-RUN — Phase 2
+      },
+      {
+        name: "context-window-packer",
+        traceId: null,  // NOT-RUN — Phase 2
+      },
+    ];
+
+    const primitivesBody = document.getElementById("primitives-body");
+    for (const { name, traceId } of PRIMITIVE_CARDS) {
+      const trace = traceId ? readInlineTrace(traceId) : null;
+      primitivesBody.appendChild(buildCard(name, trace));
+    }
+
+    // ── Panel 2: Module ───────────────────────────────────────────────────────
+    //
+    // retrieval module — GREEN from P1-C. Future modules NOT-RUN.
+    //
+    const MODULE_CARDS = [
+      {
+        name: "retrieval",
+        traceId: "trace-module-golden",   // GREEN — P1-C done
+      },
+      // Future modules (Phase 2+) would go here as NOT-RUN entries
+    ];
+
+    const moduleBody = document.getElementById("module-body");
+    for (const { name, traceId } of MODULE_CARDS) {
+      const trace = traceId ? readInlineTrace(traceId) : null;
+      moduleBody.appendChild(buildCard(name, trace));
+    }
+
+    // ── Panel 3: Microservice ─────────────────────────────────────────────────
+    //
+    // rag-service card is NOT-RUN — Phase 2 composition-root wiring pending.
+    // No live HTTP call to port 5002 in Phase 1 (G8 honesty).
+    //
+    const MICROSERVICE_CARDS = [
+      {
+        name: "rag-service (port 5002)",
+        traceId: null,  // NOT-RUN — Phase 2 composition-root wiring
+      },
+    ];
+
+    const microserviceBody = document.getElementById("microservice-body");
+    for (const { name, traceId } of MICROSERVICE_CARDS) {
+      const trace = traceId ? readInlineTrace(traceId) : null;
+      microserviceBody.appendChild(buildCard(name, trace));
+    }
+  </script>
+
+</body>
+</html>

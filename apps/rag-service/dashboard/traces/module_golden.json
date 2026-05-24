@@ -1,0 +1,20 @@
+{
+  "passed": true,
+  "primitive": "retrieval",
+  "actual": {
+    "top_k_ids": [
+      "result-A",
+      "result-B",
+      "result-C"
+    ]
+  },
+  "expected": {
+    "top_k_ids": [
+      "result-A",
+      "result-B",
+      "result-C"
+    ]
+  },
+  "diff": [],
+  "elapsed_ms": 2
+}

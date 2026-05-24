@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "primitive": "similarity_scorer",
+  "actual": {
+    "similarity": 0.6666666666666666
+  },
+  "expected": {
+    "similarity": 0.6667
+  },
+  "diff": [],
+  "elapsed_ms": 0
+}
