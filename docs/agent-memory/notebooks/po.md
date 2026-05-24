@@ -1,8 +1,28 @@
 # PO Notebook
 
-**Cycle:** commit-mutex SMOKE-TEST + lift decision (focused cycle). [Concurrent PO processes run other pilots in parallel — I PREPENDED; prior entries preserved, did NOT clobber.]
+**Cycle:** news-fetch TERMINAL atomic 12/12 close (§4.5). [Concurrent PO processes run other pilots in parallel — I PREPENDED; prior entries preserved, did NOT clobber.]
 **Last update:** 2026-05-24
-**Status:** HOLD — serialization STAYS. Smoke test FAILED: commit-mutex lock kind not deployed in live mcp-server. Gap→developer. Doc 2026-05-24-commit-mutex-smoke-test-hold.md, signal po-20260524T092805Z.json.
+**Status:** news-fetch SCALE pilot DONE — 12/12 YES, verdict=scale (6th pilot to SCALE). WORK telegram PENDING dispatcher (PO lacks MCP).
+
+---
+
+## 2026-05-24T09:45Z — news-fetch TERMINAL 12/12 atomic close (§4.5)
+
+### Verdict: DONE — verdict=scale (3×YES). Single atomic commit on pilot-status-news-fetch.json.
+- Input: QA P2-NF-Z close-gate APPROVED @41e4b2ce (signal qa-news-fetch-p2-close-20260524T000003Z.json). All 3 DONE criteria PASS: sandbox 16/16 green exit 0, env audit empty-of-credentials (CTX_ADVISOR_* harness metadata only), source-clean / published-at-parser fix e5e78e54 at HEAD (bug anchor c2ca404a, no deliberate breaks committed).
+- Flipped ALL 12 goals TBD/EARNED-PENDING→YES with verifiedAt/verifiedBy/evidence populated from the locked QA evidence chains. G4 freeze SHA 203a951a + fence commit 893b17ee, violation exit 1 / clean exit 0. G10 cycle_count=1 (baseline 1.5, max 2), bug c2ca404a → fix e5e78e54. G11 2-trial outcome-(a)×2. goalsEarned=12.
+- decisionMatrix populated MECHANICALLY (no PO discretion): speed=YES (G10+G11), trust=YES (G9 PASS + G8), scale=YES (12 YES + sprintCount ≤ 6 — all phases inside kickoff 2026-05-24 << deadline 2026-07-05). verdict=scale. criteriaApplication + outcome filled. populatedAt/By set.
+- Top-level: status ACTIVE→DONE, phase→terminal, phase2.status→CLOSED, closedAt/closedBy/closureSignal set. verdict mirror=scale.
+- SSOT validated post-edit: JSON valid, NO duplicate keys (recursive python check), goalsEarned=12, 12/12 status=YES, decisionMatrix.verdict=scale.
+- Emitted closure signal docs/signals/po-news-fetch-closure-20260524T094500Z.json. Updated TASKS.md (Phase-2 News-Fetch → CLOSED/PILOT DONE, all P2-NF-* rows DONE) + pipeline-state.json (news_fetch_pilot block → terminal/DONE/scale).
+
+### Significance
+- 6th pilot to SCALE. Smallest brownfield service, GENERIC developer owner (no dev-news-fetch specialist .md). Proves three-tier solves AI-fixability (1-cycle fix vs 1.5 baseline) + regression-alarm + dashboard-trust under the cheapest staffing model.
+
+### GOTCHA / carry-over
+- **populatedInCommit is self-referential** — cannot embed the closing SHA pre-commit without amend (§constraints forbid). Left a descriptive note pointing to the closure signal; the actual SHA is readable via `git log -- docs/data/pilot-status-news-fetch.json` and recorded by dispatcher.
+- **Fleet commit-race STILL LIVE** (commit-mutex not deployed per my earlier 09:28Z HOLD). Staged ONLY my files (pilot-status via `git add -f` — docs/data gitignore-advisory; signal + TASKS.md + pipeline-state.json + notebook plain add), verified `git diff --cached`, committed IMMEDIATELY. If a concurrent worker swept my files into its commit, content still lands correct on main (verify `git show HEAD:`) — do NOT amend/rebase.
+- **NEXT (next_actor=main-router/dispatcher)**: send WORK telegram (news-fetch DONE 12/12 scale). Then route next SCALE-fleet microservice per architect refactor roadmap. No open news-fetch tasks.
 
 ---
 

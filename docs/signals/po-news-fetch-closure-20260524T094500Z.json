@@ -1,0 +1,76 @@
+{
+  "signal": "po-news-fetch-terminal-closure",
+  "from": "po",
+  "to": "main-router",
+  "type": "pilot-closure",
+  "pilot": "news-fetch",
+  "charterRef": "docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-charter.md",
+  "createdAt": "2026-05-24T09:45:00Z",
+  "priority": "high",
+
+  "closure": {
+    "kind": "TERMINAL atomic 12/12 close (Charter §4.5)",
+    "status": "DONE",
+    "goalsEarned": 12,
+    "all_12_yes": true,
+    "decisionMatrix": {
+      "speed": "YES",
+      "trust": "YES",
+      "scale": "YES",
+      "verdict": "scale"
+    },
+    "verdict": "scale",
+    "outcome": "3xYES → SCALE to next microservice",
+    "phase": "terminal",
+    "phase2_status": "CLOSED",
+    "closedAt": "2026-05-24T09:45:00Z",
+    "closedBy": "po (terminal 12/12 atomic close)"
+  },
+
+  "gate_input": {
+    "qa_close_gate_signal": "docs/signals/qa-news-fetch-p2-close-20260524T000003Z.json",
+    "qa_verdict": "APPROVED",
+    "qa_close_gate_commit": "41e4b2ce",
+    "task": "P2-NF-Z",
+    "done_criteria": {
+      "sandbox_green": "16/16 PASS exit 0 (13 baseline + 3 G11 permanent canary)",
+      "env_audit": "EMPTY of real credentials (only CTX_ADVISOR_* harness metadata)",
+      "source_clean_fix_at_head": "published-at-parser fix e5e78e54 at HEAD, bug anchor c2ca404a, no deliberate breaks committed"
+    }
+  },
+
+  "goal_evidence_summary": {
+    "G1": "4 primitives × 3 scenarios = 12 + 1 module; sandbox 16/16; P1-NF-QA @c8a2f7cb",
+    "G2": "news_ingest composes via ports; DDD scan PASS; multi-primitive scenario PASS; @c8a2f7cb",
+    "G3": "composition-root.ts 34L, 0 domain-op grep; openapi.yaml; port 5008; @c8a2f7cb",
+    "G4": "eslint.config.mjs Fence-A/B/C; fence commit 893b17ee, freeze SHA 203a951a; violation exit 1 + 'Fence-A' named, revert exit 0; qa-news-fetch-g4-evidence-20260524T000002Z.json",
+    "G5": "reuters.ts deleted from live path → _deprecated/; HTTP rewire to news-fetch:5008; 0 TODO migrat; @c8a2f7cb",
+    "G6": "3 panels, 6 cards from window.__NEWS_FETCH_DATA__; headless PASS:6 FAIL:0; po-news-fetch-g9-g6-20260524T085930Z.json",
+    "G7": "edit-rerun proven P1-NF-E; env audit clean (CTX_ADVISOR_* only); @c8a2f7cb",
+    "G8": "1 broken primitive + 5 bad scenarios → FAIL:5, revert → GREEN; no false-green; qa-news-fetch-g8-evidence-20260524T090530Z.json",
+    "G9": "Path B PO headless dash-check.mjs exit 0; 3 panels, 6 cards, console_errors=0, external_network=0; po-news-fetch-g9-g6-20260524T085930Z.json",
+    "G10": "bug c2ca404a → fix e5e78e54, cycle_count=1 ≤ max 2 (baseline 1.5); qa-news-fetch-g10-sealed-2026-05-24T091000Z.json",
+    "G11": "2-trial coupling proof, outcome-(a) × 2; 3 permanent canary scenarios; qa-news-fetch-g11-2trial-done-20260524T092100Z.json",
+    "G12": "3-task streak P1-B1+P1-C+P1-D, DoD gate baked bca30508; intact through P2; @c8a2f7cb"
+  },
+
+  "significance": "6th pilot to SCALE. Smallest brownfield service, GENERIC developer owner (no specialist agent .md). Proves three-tier primitives→modules→microservices solves AI-fixability (1-cycle fix vs 1.5 baseline), regression-alarm, and dashboard-trust-contract under the cheapest staffing model.",
+
+  "ssot_validation": {
+    "json_valid": true,
+    "no_duplicate_keys": true,
+    "goalsEarned": 12,
+    "all_12_status_yes": true,
+    "decisionMatrix_verdict": "scale"
+  },
+
+  "pending_dispatcher_action": "WORK telegram: news-fetch SCALE pilot CLOSED 12/12 YES, verdict=scale (6th SCALE). PO lacks MCP — dispatcher (main-router) sends. closing commit SHA appended by dispatcher or readable via git log -- docs/data/pilot-status-news-fetch.json.",
+
+  "constraints_honored": [
+    "L84 explicit staging (pilot-status-news-fetch.json + own files only)",
+    "no --force / no --no-verify / no push",
+    "main-only",
+    "single atomic commit on pilot-status-news-fetch.json",
+    "no partial population / no pre-filling before 12/12"
+  ]
+}

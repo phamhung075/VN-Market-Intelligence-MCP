@@ -129,22 +129,22 @@
 
 ---
 
-## Phase 2 Backlog (News-Fetch SCALE Pilot) — OPEN (AWAITING-PLAN) 2026-05-24
+## Phase 2 Backlog (News-Fetch SCALE Pilot) — CLOSED / PILOT DONE 2026-05-24
 
-**Status:** OPEN 2026-05-24T08:39Z by PO (Phase-1 close-gate APPROVE → Phase-2 open). Plan: `docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-2-task-plan.md` (10 tasks, PO skeleton — dispatchable; architect AC-expansion optional/non-blocking). **WIP=1 strictly sequential.** Owner = generic `developer` (+ qa + po), routed via `.claude/flows/dev-news-fetch/main.md`, zone `apps/news-fetch/` ONLY. Closes the 5 remaining goals: **G4, G8, G9, G10, G11**. **SI-3 finding: LANDED** (eslint-plugin-boundaries Option A, commit 388703b7) — G4 fully unblocked, AC verbatim in SI-3 §5; NO architect re-design needed.
+**Status:** CLOSED 2026-05-24T09:45Z. QA P2-NF-Z close-gate APPROVED @41e4b2ce (signal `qa-news-fetch-p2-close-20260524T000003Z.json`: sandbox 16/16 PASS exit 0, env audit empty-of-credentials, source-clean / published-at-parser fix e5e78e54 at HEAD) → **PO TERMINAL 12/12 atomic close** (single commit on `pilot-status-news-fetch.json`). **All 12 goals YES, goalsEarned=12, decisionMatrix verdict=`scale` (3×YES: speed/trust/scale).** Pilot top-level `status=DONE`, `phase=terminal`. **6th pilot to SCALE** — smallest brownfield service, generic `developer` owner (no specialist), proves AI-fixability (1-cycle fix vs 1.5 baseline) + regression-alarm + dashboard-trust-contract under the cheapest staffing model. Closure signal `docs/signals/po-news-fetch-closure-20260524T094500Z.json`. SI-3 fence (eslint-plugin-boundaries Option A, 388703b7) consumed for G4.
 
 | Task ID | Title | Goals | Owner | Status | Blocked by |
 |---------|-------|-------|-------|--------|-----------|
-| P2-NF-A | Create `news-fetch-pre-ci` tag (pre-revert anchor before G4 fence) | G4-setup | developer | READY (FIRST — dispatch now) | — |
-| P2-NF-B | `eslint.config.mjs` Fence-A/B/C (verbatim SI-3 §3.2) + `eslint`+`eslint-plugin-boundaries` devDep + `lint:ci` | G4-partial | developer | BLOCKED | P2-NF-A |
-| P2-NF-C | G4 deliberate-violation proof (AC-4b) — Fence-A breach → exit non-zero + "Fence-A" → revert → exit 0, NEVER committed | G4-full | developer + qa | BLOCKED | P2-NF-B |
-| P2-NF-D | G4 freeze anchor confirm (AC-4c) + QA G4 evidence + signal | G4-finalized | qa | BLOCKED | P2-NF-C |
-| P2-NF-E | G8 honest-red — 1 deliberate broken primitive + 5 known-bad scenarios → 6 RED cards → revert GREEN; QA honesty_table | G8 | qa + developer | BLOCKED | P2-NF-D |
-| P2-NF-F | G9 dashboard trust contract — Path B PO Playwright headless (file://, 3 panels + 6 cards + honest status + console_errors=0) | G9 | po | READY (async PO track — no blocking dep) | — |
-| P2-NF-G | Create `news-fetch-pre-inject` tag + G10 bug injection in `published-at-parser` (RFC-date timezone/off-by-one); card RED before dispatch | G10-setup | qa | BLOCKED | P2-NF-D |
-| P2-NF-H | G10 AI-fix ≤2 cycles (baseline 1.5) from dashboard-RED signal only; dashboard GREEN; G12 DoD enforced | G10 | developer + qa | BLOCKED | P2-NF-G |
-| P2-NF-I | G11 regression 2-trial — Trial-1 published-at-parser, Trial-2 headline-normalizer; Outcome-(a) × 2 = PASS | G11 | qa + developer | BLOCKED | P2-NF-H |
-| P2-NF-Z | Phase 2 close-gate (QA) — confirm G4+G8+G10+G11 chains; re-confirm 7 EARNED-PENDING + G12 streak; sandbox all-green; signal. NO flips | close-gate | qa | BLOCKED | P2-NF-F, P2-NF-I |
+| P2-NF-A | Create `news-fetch-pre-ci` tag (pre-revert anchor before G4 fence) | G4-setup | developer | DONE 2026-05-24 (8f366a06) | — |
+| P2-NF-B | `eslint.config.mjs` Fence-A/B/C (verbatim SI-3 §3.2) + `eslint`+`eslint-plugin-boundaries` devDep + `lint:ci` | G4-partial | developer | DONE 2026-05-24 (893b17ee) | P2-NF-A |
+| P2-NF-C | G4 deliberate-violation proof (AC-4b) — Fence-A breach → exit non-zero + "Fence-A" → revert → exit 0, NEVER committed | G4-full | developer + qa | DONE 2026-05-24 (8f366a06) | P2-NF-B |
+| P2-NF-D | G4 freeze anchor confirm (AC-4c) + QA G4 evidence + signal | G4-finalized | qa | DONE 2026-05-24 (ea6da821) | P2-NF-C |
+| P2-NF-E | G8 honest-red — 1 deliberate broken primitive + 5 known-bad scenarios → 6 RED cards → revert GREEN; QA honesty_table | G8 | qa + developer | DONE 2026-05-24 (ca448f6b) | P2-NF-D |
+| P2-NF-F | G9 dashboard trust contract — Path B PO Playwright headless (file://, 3 panels + 6 cards + honest status + console_errors=0) | G9 | po | DONE 2026-05-24 (PASS; po-news-fetch-g9-g6-20260524T085930Z.json) | — |
+| P2-NF-G | Create `news-fetch-pre-inject` tag + G10 bug injection in `published-at-parser` (RFC-date timezone/off-by-one); card RED before dispatch | G10-setup | qa | DONE 2026-05-24 (bug c2ca404a) | P2-NF-D |
+| P2-NF-H | G10 AI-fix ≤2 cycles (baseline 1.5) from dashboard-RED signal only; dashboard GREEN; G12 DoD enforced | G10 | developer + qa | DONE 2026-05-24 (fix e5e78e54, cycle_count=1) | P2-NF-G |
+| P2-NF-I | G11 regression 2-trial — Trial-1 published-at-parser, Trial-2 headline-normalizer; Outcome-(a) × 2 = PASS | G11 | qa + developer | DONE 2026-05-24 (cd8d0146) | P2-NF-H |
+| P2-NF-Z | Phase 2 close-gate (QA) — confirm G4+G8+G10+G11 chains; re-confirm 7 EARNED-PENDING + G12 streak; sandbox all-green; signal. NO flips | close-gate | qa | DONE 2026-05-24 — APPROVED (41e4b2ce) → PO terminal 12/12 close | P2-NF-F, P2-NF-I |
 
 **Notes:**
 - **WIP=1 sequential.** Dispatch P2-NF-A first (G4 chain). P2-NF-F (G9 PO Playwright) is the async PO track — runs in parallel, no blocking dependency.
