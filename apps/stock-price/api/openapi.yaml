@@ -1,0 +1,299 @@
+openapi: "3.0.3"
+info:
+  title: Stock Price Service
+  description: |
+    3-tier price fetcher for Vietnamese stock exchanges (HOSE, HNX, UPCOM).
+    Tier-1: VnDirect api-finfo, Tier-2: VnDirect finfo-api legacy, Tier-3: SQLite cache.
+    All prices in VND. Source field indicates which tier resolved the quote.
+  version: "1.0.0"
+  contact:
+    name: VN Market Intelligence
+servers:
+  - url: "http://localhost:5000"
+    description: Local development (internal port)
+  - url: "http://localhost:5010"
+    description: Docker host (external port per system-map.json)
+
+paths:
+  /health:
+    get:
+      summary: Liveness check
+      description: Returns service health status, name, and internal port.
+      operationId: getHealth
+      tags:
+        - health
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+              example:
+                status: ok
+                service: stock-price
+                port: 5000
+
+  /price/fetch:
+    post:
+      summary: Fetch single stock price
+      description: |
+        Resolves the current price for a Vietnamese stock ticker via the 3-tier
+        fallback chain (Tier-1 VnDirect api-finfo → Tier-2 legacy → Tier-3 SQLite cache).
+        Returns the first non-nil quote with staleness annotation.
+      operationId: fetchPrice
+      tags:
+        - price
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchPriceRequest"
+            example:
+              code: "VCB"
+      responses:
+        "200":
+          description: Price quote resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceQuote"
+              example:
+                code: "VCB"
+                price: 85400.0
+                volume: 1250000.0
+                change: 400.0
+                changePercent: 0.47
+                source: "HOSE"
+                latencyMs: 142
+                fetchedAt: "2026-05-24T03:00:00Z"
+        "400":
+          description: Missing or invalid request body
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Price not available from any tier
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /price/history:
+    get:
+      summary: Fetch multi-day OHLCV history
+      description: |
+        Returns daily OHLCV (Open/High/Low/Close/Volume) aggregates for a ticker
+        from the readonly market.db SQLite cache. Defaults to 30 days if `days`
+        parameter is omitted.
+      operationId: getPriceHistory
+      tags:
+        - price
+      parameters:
+        - name: code
+          in: query
+          required: true
+          description: Stock ticker code (e.g. VCB, FPT, VNM). Case-insensitive.
+          schema:
+            type: string
+            example: "VCB"
+        - name: days
+          in: query
+          required: false
+          description: Number of calendar days of history to return (default 30, minimum 1).
+          schema:
+            type: integer
+            minimum: 1
+            default: 30
+            example: 30
+      responses:
+        "200":
+          description: OHLCV history array (may be empty if no data in cache)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PriceHistoryResponse"
+              example:
+                code: "VCB"
+                history:
+                  - date: "2026-05-23"
+                    open: 84800.0
+                    high: 85600.0
+                    low: 84500.0
+                    close: 85400.0
+                    volume: 1250000.0
+        "400":
+          description: Missing code or invalid days parameter
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - service
+        - port
+      properties:
+        status:
+          type: string
+          description: "Always 'ok' when the service is live"
+          example: ok
+        service:
+          type: string
+          description: Service identifier
+          example: stock-price
+        port:
+          type: integer
+          description: Internal listening port
+          example: 5000
+
+    FetchPriceRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+          description: Stock ticker code (HOSE/HNX/UPCOM). Uppercased internally.
+          example: "VCB"
+
+    PriceQuote:
+      type: object
+      required:
+        - code
+        - price
+        - volume
+        - change
+        - changePercent
+        - source
+        - latencyMs
+        - fetchedAt
+      properties:
+        code:
+          type: string
+          description: Stock ticker code (uppercased)
+          example: "VCB"
+        price:
+          type: number
+          format: double
+          description: Last trade price in VND
+          example: 85400.0
+        volume:
+          type: number
+          format: double
+          description: Traded volume for the session
+          example: 1250000.0
+        change:
+          type: number
+          format: double
+          description: Absolute price change vs previous close (VND)
+          example: 400.0
+        changePercent:
+          type: number
+          format: double
+          description: Percentage price change vs previous close
+          example: 0.47
+        source:
+          type: string
+          description: Exchange or tier source that resolved the price
+          enum:
+            - HOSE
+            - HNX
+            - UPCOM
+            - CACHE
+          example: HOSE
+        latencyMs:
+          type: integer
+          format: int64
+          description: Tier fetch latency in milliseconds
+          example: 142
+        fetchedAt:
+          type: string
+          format: date-time
+          description: RFC3339 UTC timestamp when the quote was fetched
+          example: "2026-05-24T03:00:00Z"
+
+    DailyOHLCV:
+      type: object
+      required:
+        - date
+        - open
+        - high
+        - low
+        - close
+        - volume
+      properties:
+        date:
+          type: string
+          format: date
+          description: Trading date (YYYY-MM-DD)
+          example: "2026-05-23"
+        open:
+          type: number
+          format: double
+          description: Opening price in VND
+          example: 84800.0
+        high:
+          type: number
+          format: double
+          description: Intraday high price in VND
+          example: 85600.0
+        low:
+          type: number
+          format: double
+          description: Intraday low price in VND
+          example: 84500.0
+        close:
+          type: number
+          format: double
+          description: Closing price in VND
+          example: 85400.0
+        volume:
+          type: number
+          format: double
+          description: Total session volume
+          example: 1250000.0
+
+    PriceHistoryResponse:
+      type: object
+      required:
+        - code
+        - history
+      properties:
+        code:
+          type: string
+          description: Stock ticker code (uppercased)
+          example: "VCB"
+        history:
+          type: array
+          description: Daily OHLCV records, ordered ascending by date
+          items:
+            $ref: "#/components/schemas/DailyOHLCV"
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "code is required"
