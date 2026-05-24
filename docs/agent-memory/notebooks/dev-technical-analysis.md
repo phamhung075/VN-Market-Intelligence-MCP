@@ -6,6 +6,49 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 [3 most recent cycles retained below. Archive in git history.]
 
+### 2026-05-24 — dash-check.mjs — AI-readable dashboard health report
+
+**Task:** Create `dashboard/dash-check.mjs` — machine-parseable health script for AI/CI.
+
+**Status:** DONE — commit fd55ef8d
+
+**Key design:**
+- One DASH-CHECK-RESULT JSON line + exit code (PASS/WARN/FAIL). Complements verify-render.mjs (strict gate), does not replace it.
+- Data-driven verdict: no hardcoded totals; reads live DOM (dots, group-status, count chips, category chips, console.error, pageerror, NOT RUN / not wired text).
+- FAIL: any red dot > 0, JS/page errors, or any invalid/legacy category chip label ("golden"/"edge"/"failure").
+- WARN: pending/NOT-RUN present but no FAIL (exit 0).
+- PASS: all green, valid labels, no errors (exit 0).
+- Security: env audit at startup aborts on any DB/API-key env var; file:// only.
+- Playwright resolver reused exactly from verify-render.mjs (TA-local first, frontend fallback with warn).
+
+**Run result:** exit 0 — `DASH-CHECK-RESULT: {"service":"technical-analysis","dotsGreen":33,"dotsRed":0,"dotsPending":0,"jsErrors":0,"pageErrors":0,"categoryChips":{"Valid Input":18,"Edge Case":8,"Bad Input -> Error":7},"badLabels":[],"verdict":"PASS"}`
+
+**Note:** Concurrent-agent git index race caused kinh-dich file to appear in same commit. Fixed via cleanup commit 04a16b9f (kinh-dich file removed from tracking; file preserved on disk for its zone agent).
+
+**Files changed:** `dashboard/dash-check.mjs` (new)
+
+---
+
+### 2026-05-24 — Category chip relabel (display-layer only)
+
+**Task:** Relabel scenario category chips so non-technical readers don't mistake passing negative-tests for failing tests.
+
+**Status:** DONE — commit 5b11bc89
+
+**Approach:** Display-label mapping at render layer only. JSON SSOT `category` field (golden/edge/failure) unchanged.
+
+**What was done:**
+- `dashboard/app.ts`: Added `CATEGORY_LABELS` lookup map (`golden→"Valid Input"`, `edge→"Edge Case"`, `failure→"Bad Input → Error"`). Updated `catLabel()` to use the map. Applies at all 4 chip render sites: primitives panel, module panel, service panel, modal cat badge.
+- `dashboard/index.html`: Updated legend block to show new chip text ("Valid Input" / "Edge Case" / "Bad Input → Error"). Added clarifying note "(test PASSES)" next to Bad Input entry.
+
+**Render gate (build.sh + verify-render.mjs):** PASS — 33 dot-green (L1:25 + L2:5 + L3:3), 0 dot-red, 0 dot-pending, all groups PASSED, 0 JS errors.
+
+**Smoke:** go test ./...: all packages ok. go vet: 0. bun test: 24/24.
+
+**Files changed (2):** dashboard/app.ts, dashboard/index.html (dist/ is gitignored).
+
+---
+
 ### 2026-05-24 — Level 3 service tier wired (httptest.NewServer baked verdicts)
 
 **Task:** Wire Level 3 microservice to real baked verdicts — httptest.NewServer in-process runner, fix stale text, extend render gate.
