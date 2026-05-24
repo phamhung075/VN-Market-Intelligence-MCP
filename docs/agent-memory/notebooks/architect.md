@@ -1,8 +1,46 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 10:30 UTC | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 14:00 UTC | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## commit-mutex structural-fix design brief (2026-05-24T14:00Z) — PO commission
+
+**Task:** Author design-only brief for commit-mutex / advisory lock on main. Commission:
+`docs/signals/po-20260524T023538Z-commit-mutex-structural-fix-commission.json`.
+
+**Problem confirmed:** 7 bundling incidents this session from verify→commit race window.
+Interim whole-worker serialization safe but over-serializes (blocks build/test phases that have
+no index conflict). Commit-mutex serializes ONLY the commit critical section (seconds).
+
+**Core mechanism:** Extend `coordination.db` with a new `task_kind: "commit-mutex"` singleton
+row (`task_id: "commit-mutex:main"`, TTL=60s). Each agent's flow commit step acquires this row
+via existing `task_claim` MCP tool before staging. Release via `task_release` after commit.
+Race window is closed: only one agent inside `git add → git diff --cached verify → git commit`
+at any time. Everything before (build/test/generate) and after (signal emit) is lock-free.
+
+**Stale-lock reclaim:** TTL=60s. Crashed holder's row expires; next `task_claim` wins. No
+heartbeat needed (commit completes in 2–10s, well within TTL). Existing mechanism covers it.
+
+**Cron agent enforcement:** Lock enforced at the shared commit step in each agent flow, not
+politely. Shared `.claude/skills/commit-mutex/SKILL.md` invoked from every flow commit step.
+Cron agents load their flow at runtime — skill update propagates automatically next tick.
+
+**Migration:** Additive. Interim whole-worker serialization stays in force until commit-mutex
+is wired in ALL flows AND one clean cycle observed. PO lifts interim policy by separate signal.
+Zero history rewrite. Zero branches. Anchor debba8ea intact.
+
+**Risk flags:** R-2 (MCP down → skip commit, don't bypass mutex); R-1 (bypass via out-of-flow
+commit — detectable in post-merge review).
+
+**Files authored this cycle (2):**
+1. `docs/architecture-briefs/2026-05-24-commit-mutex-on-main/00-design.md` (NEW)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal emitted:** `docs/signals/architect-commit-mutex-brief-done-<UTC>.json` (next_actor: po)
+**Anchor:** debba8eaff0724d1fb32fc9d28640201cc32d1cc — INTACT (verified before commit)
+
+---
 
 ## pdf-extractor Phase-2 task plan (2026-05-24) — 24-task plan covering G1-full through G5b-clearance
 
