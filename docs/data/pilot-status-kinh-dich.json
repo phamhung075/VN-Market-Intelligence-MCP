@@ -335,7 +335,7 @@
   },
 
   "phase2": {
-    "_note": "Phase 2 OPEN (2026-05-24T00:00:00Z by pm). 14 tasks (P2-KD-A through P2-KD-Z), 77 ACs. Current task: P2-KD-C (G4 deliberate-violation proof — R-FENCE gate).",
+    "_note": "Phase 2 OPEN (2026-05-24T00:00:00Z by pm). 14 tasks (P2-KD-A through P2-KD-Z), 77 ACs. Current task: P2-KD-D (G4 freeze-anchor confirmation — freeze point = 205aa5cf where fence actually enforces).",
     "status": "OPEN",
     "_status_enum": "Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
     "openedAt": "2026-05-24T00:00:00Z",
@@ -348,9 +348,9 @@
     "acCount": 77,
     "wipPolicy": "WIP=1 sequential; R-FENCE gate (AC-4b deliberate-violation proof) baked into first-fence task AC as first chokepoint",
     "wip_limit": 1,
-    "current_task": "P2-KD-C",
-    "current_task_owner": "dev-kinh-dich + qa",
-    "current_task_handoff": "docs/handoffs/TASK_P2-KD-C.md",
+    "current_task": "P2-KD-D",
+    "current_task_owner": "qa",
+    "current_task_handoff": "docs/handoffs/TASK_P2-KD-D.md",
     "tasks": {
       "P2-KD-A": {
         "status": "DONE",
@@ -393,19 +393,30 @@
           "AC-5": "PASS"
         },
         "r2_fallback_applied": true,
-        "r2_reason": "@typescript-eslint/parser added per handoff R-2 spec (SI-3 §6.2) — stays within Option A"
+        "r2_reason": "@typescript-eslint/parser added per handoff R-2 spec (SI-3 §6.2) — stays within Option A",
+        "enforcement_caveat": "Config creation ACs were met (status=DONE). However, the fence did NOT actually enforce until P2-KD-C (commit 205aa5cf) fixed three silent-failure bugs: rule rename (boundaries/element-types→dependencies), pattern matching (src/<layer>/**/*→src/<layer>/**), and TypeScript resolver for .js-suffixed imports. Therefore, G4 enforcement is genuinely earned as of P2-KD-C (205aa5cf), not P2-KD-B."
       },
       "P2-KD-C": {
-        "status": "READY",
+        "status": "DONE",
+        "completedAt": "2026-05-24T03:21:15Z",
+        "completedBy": "dev-kinh-dich + qa",
+        "commit_sha": "205aa5cf",
         "owner": "dev-kinh-dich + qa",
         "title": "G4 deliberate-violation proof (Fence-A/B/C test — reverted, NEVER committed)",
-        "handoff": "docs/handoffs/TASK_P2-KD-C.md",
+        "handoff": "docs/handoffs/TASK_P2-KD-C-evidence.md",
         "blocked_by": "P2-KD-B",
         "blocks": "P2-KD-D",
         "est_hours": 0.5,
         "ac_count": 5,
         "g_goals_advanced": ["G4 full — R-FENCE gate proof"],
-        "note": "R-FENCE gate: AC-4b proof must produce non-zero exit + 'Fence-A' in output on real .js-suffixed ESM import style"
+        "note": "R-FENCE gate PROVEN: AC-4b proof produced non-zero exit + 'Fence-A: primitive must not import application layer' on real .js-suffixed ESM import style. Inline enforcement fixes applied: rule rename, pattern matching, TypeScript resolver. Violation reverted, git clean, sandbox 14/14 green.",
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS"
+        }
       }
     }
   },
