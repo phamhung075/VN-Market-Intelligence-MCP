@@ -623,3 +623,55 @@ mean the REAL container with REAL `market.db`, not a local uvicorn with seeded d
 **NEXT:** pm — register PI-3-redo task to dev-mcp-server. Handoff: this file.
 
 ---
+
+## [Developer] PI-3-redo Implementation — 2026-05-24T20:14Z
+
+**Service:** mcp-server | **Zone:** apps/mcp-server/ (+ 1-line deprecation comment in pdf-extractor)
+**Commit:** `1b5799fb`
+
+### Files delivered
+
+| File | Action | Notes |
+|------|--------|-------|
+| `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` | Created | 4 route handlers; UUID guard; honest-degrade; isDecimalShiftAnomaly (>10x magnitude ratio) |
+| `apps/mcp-server/src/interface/bctc-inspector.html` | Created | SI-2 boundary; pdf.js CDN 4.2.67 LEFT; figures + anomaly flag + OCR text RIGHT; dark UI |
+| `apps/mcp-server/src/interface/mcp/server.ts` | Modified | 4 `if (method === "GET" && pathname...)` blocks wired (same pattern as newsFetchLiveHandler) |
+| `apps/mcp-server/src/__tests__/PI3-bctc-inspect.test.ts` | Created | 39 tests: unit (isValidUuid, isDecimalShiftAnomaly) + handler (list/pdf/ocr) — all GREEN |
+| `apps/pdf-extractor/infrastructure/inspection_store.py` | Modified | DEPRECATED comment added (3 lines) |
+| `apps/pdf-extractor/interface/handlers.py` | Modified | DEPRECATED comment added (3 lines) |
+
+### Design decisions
+
+- **Anomaly formula:** `max(|ocr|, |api|) / max(min(|ocr|, |api|), 1e-9) > 10` — correctly catches the `VNM net_profit=0.000051 vs api_bridge=51000` case (ratio ~1e9). The architect's original formula `|ocr-api|/|api|` would yield ~1.0 for that exact case (difference ≈ api value). Guard: `api_bridge == 0` → no flag (missing data).
+- **UUID validation:** `^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$` applied before any `db.prepare()` — path traversal blocked at HTTP param level.
+- **PDF path:** `financial_reports.pdf_path` read from DB (server-side) — never from user input. `has_pdf` checks `existsSync(pdfPath)` at list time.
+- **OCR join:** `basename(pdf_path) = pdf_extracted_text.filename` (architect-verified).
+- **Viewer HTML path:** `resolve(dirname(import.meta.path), "../../bctc-inspector.html")` — relative to handler file; works in both dev and container.
+
+### DoD gate
+
+| Gate | Result |
+|------|--------|
+| `bun tsc --noEmit` | 0 errors |
+| New tests (`bun test PI3-bctc-inspect.test.ts`) | 39 pass / 0 fail |
+| Reference test (`bun test NF-LD-2-news-fetch-live.test.ts`) | 9 pass / 0 fail (no regression) |
+| `git show --stat HEAD` foreign files | 0 foreign files (6 files, all expected) |
+| Explicit-file staging | Yes — no `-A`/`.` used |
+| No `--no-verify`/`--force` | Confirmed |
+| SI-2 boundary comment | Present in handler + HTML |
+| Reads real market.db | Yes — financial_reports + pdf_extracted_text, no pdf_extractor.db |
+
+### How to open the viewer
+
+**Container (normal production path):**
+```
+# mcp-server is already running — no rebuild needed for new routes
+# Open in browser:
+http://localhost:3000/api/bctc-inspect
+```
+
+If mcp-server container predates commit `1b5799fb`, a `docker compose up -d --build mcp-server` is needed for the routes to go live.
+
+**Deploy note:** The new HTML file is served from the container's file system at build time (baked into the image). A container rebuild IS required for the HTML to be present in the container.
+
+---

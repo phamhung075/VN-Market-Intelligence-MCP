@@ -1,5 +1,29 @@
 # dev-mcp-server -- Notebook
 
+## c286 · 2026-05-24T20:14Z
+
+### PI-3-redo — BCTC Inspector over real market.db (2026-05-24, IMPL_DONE)
+
+**Commit:** `1b5799fb`
+
+**Trigger:** Architect re-ground after PI-2 (pdf-extractor) read junk `pdf_documents` table (15,570 failed rows, 0 real extractions). All real data in market.db — inspector moved to mcp-server.
+
+**Files shipped (6):**
+- `bctcInspectHandler.ts` (NEW, 486L) — 4 GET routes: list/pdf-bytes/ocr/viewer-page; UUID guard; `isDecimalShiftAnomaly()` using magnitude-ratio formula
+- `bctc-inspector.html` (NEW, 584L) — SI-2 boundary; pdf.js CDN 4.2.67 LEFT; figures+anomaly+OCR RIGHT; dark UI; iframe CDN-fallback
+- `server.ts` (MODIFIED) — 4 `if-blocks` wired identical to newsFetchLiveHandler pattern
+- `PI3-bctc-inspect.test.ts` (NEW) — 39 tests: all GREEN
+
+**Key anomaly formula fix:** Architect spec `|ocr-api|/|api|` gives ~1.0 for `0.000051 vs 51000` (the core user case). Correct formula: `max(|a|,|b|) / max(min(|a|,|b|), 1e-9) > 10` → fires for ratio ~1e9. Tests lock the fix.
+
+**Tests:** 39/39 GREEN. tsc 0 errors. 9/9 reference test (NF-LD-2) unchanged.
+
+**Next:** qa — verify against REAL market.db (≥10 docs, 3 PDFs render, OCR text visible, anomaly flag live). QA mandate: REAL data only, no seeded fixtures.
+
+Zone health: BCTC inspector added (4 GET /api/bctc-inspect/* routes); reads real market.db financial_reports + pdf_extracted_text; pdf-extractor /inspect marked DEPRECATED; tsc 0 errors | HEALTHY
+
+---
+
 ## c285 · 2026-05-24T18:00Z
 
 ### NF-LD-2a — GET /api/news-fetch/live endpoint
