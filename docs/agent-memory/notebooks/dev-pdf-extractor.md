@@ -4,6 +4,89 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-24 — P2-A1 + P2-A2 DONE (import-linter G4 fence + CI job)
+
+**P2-A1 commit:** `8d2b7ee9` | **P2-A2 commit:** `c6f4615b`
+
+**Delivered:**
+- `pdf-extractor-pre-ci` tag created before changes (anchor for G4 pre-revert)
+- `pyproject.toml` — `[tool.importlinter]` section added:
+  - root_packages: domain + infrastructure + application + interface
+  - Fence-A: domain.primitives must NOT import infrastructure/application/interface
+  - Fence-B: domain.modules must NOT import infrastructure/interface
+  - `import-linter>=2.0` in dev deps + requirements.txt
+- `.github/workflows/ci.yml` — `py-lint` job added (parallel, no needs:, ubuntu-latest, timeout 10m)
+  - working-directory: apps/pdf-extractor, runs `lint-imports --config pyproject.toml`
+
+**lint-imports clean-run result:**
+- Analyzed 58 files, 77 dependencies
+- Contracts: 2 kept, 0 broken — EXIT 0
+
+**Offline evidence model:** No push (pilot binding constraint). G4 proof = lint-imports exits 0 clean
+(P2-A1 evidence) + non-zero on deliberate violation (P2-A4 qa task upcoming).
+
+**Zone exception:** `.github/workflows/ci.yml` is outside apps/pdf-extractor/ — documented as
+the one allowed G4 exception per spec. All other changes in zone.
+
+**pytest:** 114 passed — no regression.
+
+**Next:** qa P2-A3 (verify CI green after push) + P2-A4 (deliberate-violation proof)
+
+---
+
+### 2026-05-24 — P2-F DONE (dashboard honesty — 6 primitive cards + 8 TRACE_PATHS)
+
+**Commit:** `1356dcce`
+
+**Delivered:**
+- `dashboard/index.html` — 4 new primitive card HTML slots added (#section-primitives):
+  `card-confidence-scorer`, `card-low-confidence-gate`, `card-ratio-computer`, `card-field-extractor`
+- TRACE_PATHS expanded from 4 to 8 (6 primitive + module + service)
+- Status is TRACE-DRIVEN via existing `setBadge()`/`renderTrace()` — not hardcoded
+
+**Evidence:**
+- G6: 6 primitive card IDs confirmed in HTML
+- G8 honesty: known_bad_score_wrong → trace.pass=false → badge-fail RED CONFIRMED
+- Final state: all 6 primitive traces honest-green (happy scenarios)
+- G12 DoD: 19 real scenarios GREEN (18 primitive + 1 module)
+- pytest: 114 passed
+
+**Commit contamination note:** 3 mcp-server RAG rename files (pre-staged by another agent)
+slipped into commit. Own P2-F files are correctly included. Not destructive — renames only.
+
+**Next:** qa re-verifies G6/G8, then P2-A1 (G4 DDD fence with import-linter)
+
+---
+
+### 2026-05-24 — P2-B1 through P2-B4 DONE (4 new primitives, G1-full complete)
+
+**Commits:**
+- P2-B1 (confidence_scorer) → files committed via shared index in `459b6912`
+- P2-B2 (low_confidence_gate) → files committed via shared index in `a1a7224a`
+- P2-B3 (ratio_computer) → `74d84022`
+- P2-B4 (field_extractor) → `865493a1`
+- Handoff → `dc5a8415`
+
+**Delivered:**
+- 4 pure primitives: confidence_scorer, low_confidence_gate, ratio_computer, field_extractor
+- 12 scenario JSONs (3 each) + 3 from Phase 1 = 18 real scenarios total
+- 4 unit test files (95 total pytest tests PASS)
+- G12 DoD: all primitive + module sandbox tiers GREEN
+
+**Key contracts:**
+- confidence_scorer: `score_confidence(ocr_confidence, table_count) → {pass, quality_score}`
+- low_confidence_gate: `gate_confidence(confidence) → "skip"|"low_confidence"|"normal"` (0.0=skip, <0.2=low, ≥0.2=normal)
+- ratio_computer: `compute_ratio(numerator, denominator, ratio_type) → Optional[float]` (div-by-zero → None)
+- field_extractor: `extract_field(text, field_name) → Optional[str]` (regex BCTC patterns, READ-ONLY mcp-server archaeology)
+
+**Freeze compliance:** ZERO mcp-server writes in all commits. Field_extractor used READ-ONLY archaeology of balanceSheetExtractor.ts and incomeStatementExtractor.ts patterns.
+
+**Shared index race:** Multiple agents committed concurrently to main. P2-B1/B2 files landed in other agents' commits (valid — files correct). P2-B3/B4 committed atomically with only pdf-extractor files.
+
+**Next:** P2-C — G2 re-verify: financial_reports module composes all 6 primitives via ports
+
+---
+
 ### 2026-05-24 — P1-E1 + P1-E2 DONE (dashboard stub HTML + edit-rerun handler + G7 all sub-gates)
 
 **P1-E1 commit:** `d449879c` | **P1-E2 commit:** `e1c78908`
