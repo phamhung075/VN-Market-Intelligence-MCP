@@ -1,5 +1,73 @@
 # QA — Notebook
 
+## c283 cycle-91 · 2026-05-24 · rag-service P2-A (G4) + P2-G8 (G8) — deliberate-break proofs — DONE
+
+**Task:** P2-A (G4 QA co-sign) + P2-G8 (G8 deliberate-break proof) | **Verdict:** DONE — both proofs PASS
+
+```
+date: 2026-05-24
+outcome: DONE — G4 fence violation proof + G8 honest-red proof QA co-signed
+type: pilot-task-qa (deliberate-break + fence violation — inject+revert discipline)
+handoff: docs/handoffs/TASK_P2-A-G8-rag-service.md
+ssot_not_mutated: goalsEarned=0, decisionMatrix all TBD (§4.5 honored)
+goal_flips: NONE
+
+baseline_sandbox: 16/16 primitive PASS exit 0
+baseline_dash: 24/24 PASS exit 0 (5 primitive GREEN + module GREEN + microservice NOT-RUN)
+
+p2_a_clean_exit: 0 (3 contracts KEPT: Fence-A, Fence-B, Fence-C)
+p2_a_violation_file: apps/rag-service/domain/primitive/similarity_scorer/similarity_scorer.py
+p2_a_violation_type: Fence-A (similarity_scorer imports top_k_selector — primitive imports primitive)
+p2_a_violation_exit: 1
+p2_a_fence_output: "Fence-A: primitives are independent — no primitive imports another primitive BROKEN"
+p2_a_violation_staged: false
+p2_a_violation_committed: false
+p2_a_revert_exit: 0
+p2_a_git_status_post_revert: CLEAN
+p2_a_rag_pre_ci_sha: c061a740
+p2_a_rag_pre_ci_ancestor: exit 0 (IS ancestor of HEAD)
+
+p2_g8_golden_corruption: similarity_scorer/scenarios/golden.json expected_output.similarity 0.6667→9.9
+p2_g8_sandbox_fail: 15 PASS 1 FAIL exit 1 (similarity_scorer golden)
+p2_g8_dash_fail: exit 1, "Trace passed=False — not green-worthy but would display as green (G8 violation)"
+p2_g8_corruption_committed: false
+p2_g8_revert_sandbox: 16/16 PASS exit 0
+p2_g8_revert_dash: 24/24 PASS exit 0
+p2_g8_git_status_post_revert: CLEAN
+
+bad_scenarios_count: 5 (one per primitive, known_bad_ prefix)
+bad_scenarios_files:
+  - domain/primitive/similarity_scorer/scenarios/known_bad_wrong_score.json
+  - domain/primitive/relevance_threshold_gate/scenarios/known_bad_wrong_filter.json
+  - domain/primitive/top_k_selector/scenarios/known_bad_wrong_k.json
+  - domain/primitive/context_window_packer/scenarios/known_bad_wrong_pack.json
+  - domain/primitive/temporal_decay_scorer/scenarios/known_bad_wrong_decay.json
+bad_scenarios_result: all 5 exit 1 passed:false
+combined_scenario_all: 16/16 PASS (known_bad_ excluded) exit 0
+microservice_not_run_honest: true (no inline trace, dash PASS)
+```
+
+| Check | Verdict |
+|-------|---------|
+| P2-A: clean lint exit 0 (3 KEPT) | PASS |
+| P2-A: Fence-A violation exit 1 | PASS |
+| P2-A: "Fence-A" name in output + file:line | PASS |
+| P2-A: never staged/committed | PASS |
+| P2-A: revert exit 0 | PASS |
+| P2-A: git CLEAN post-revert | PASS |
+| P2-A: rag-pre-ci ancestor confirmed | PASS |
+| P2-G8: golden corruption → sandbox exit 1 | PASS |
+| P2-G8: dash-check FAIL (similarity-scorer RED) | PASS |
+| P2-G8: revert → 16/16 PASS, dash 24/24 | PASS |
+| P2-G8: corruption never committed | PASS |
+| P2-G8: 5 known-bad all exit 1 passed:false | PASS |
+| P2-G8: --scenario=all 16/16 (no false-greens) | PASS |
+| P2-G8: microservice NOT-RUN honest | PASS |
+
+**NEXT:** dev-rag-service — P2-F (G5 delete+rewire). P2-A unblocks P2-F.
+
+---
+
 ## c283 cycle-90 · 2026-05-24 · pdf-extractor P2-E1/P2-E2 — G6/G7 re-verify + G8 honesty proof — DASHBOARD-DEV-GAP
 
 **Task:** P2-E1 (G6+G7 re-verify) + P2-E2 (G8-final honesty proof) | **Verdict:** G7 PASS | G8 PASS-AT-TRACE-LEVEL | G6 PENDING-DEV-FIX
