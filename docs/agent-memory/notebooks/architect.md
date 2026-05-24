@@ -1,8 +1,29 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 10:23 UTC | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 11:38 UTC | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## pdf-extractor G5b + 1954c terminal clearance (2026-05-24T11:38Z) — APPROVED / RESOLVED
+
+**Task:** Emit terminal clearance for 1954c consolidation + flip G5b clearance BLOCKED → APPROVED. Condition precedent satisfied: 6 impl commits (2a5cc2a7/9c22c915/09e2cd70/70e75cbd/0ae87b9d/372fbc91) landed + QA gate PASS (qa-bctc-1954c-g5b-gate-20260524T113516Z.json, gateVerdict=PASS, G5b-ownership=YES, 0 new regressions).
+
+**Clearance verdicts emitted:**
+1. 1954c consolidation: LANDED/RESOLVED. Failure A (column mismatch) FIXED. Failure B (4-path OCR cache race) STRUCTURALLY_ELIMINATED by single-owner delegation to pdf-extractor service. 1953-G-FAIL code component STRUCTURALLY_RESOLVED. Residual BCTC staleness = INFRA/VPS only (not a code defect).
+2. G5b clearance: BLOCKED → APPROVED. Charter intent MET: all 4 callers route via pdf-extractor service. In-process OCR deprecated. Old path dead. C-1/C-2/C-3/C-4 all PASS.
+3. 1953-G-FAIL DASHBOARD row: updated to CLEARABLE. Code-freeze lifted by architect authority. PO/owner may close the row. VPS/infra B-08 continues in ## ops independently.
+4. p2-g5b-clearance.md brief: updated with terminal RESOLVED/APPROVED verdict + evidence chain table.
+
+**Files authored this cycle (4):**
+1. `docs/signals/architect-bctc-consolidation-1954c-clearance-20260524T113832Z.json` (NEW — 1954c LANDED/RESOLVED)
+2. `docs/signals/architect-pdf-extractor-g5b-clearance-20260524T113832Z.json` (NEW — G5b APPROVED, supersedes BLOCKED)
+3. `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/p2-g5b-clearance.md` (UPDATED — terminal APPROVED + evidence table)
+4. `docs/signals/DASHBOARD.md` (UPDATED — 1953-G-FAIL row CLEARABLE)
+5. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** PO — lift bctc_freeze_gate in pilot-status-pdf-extractor.json + grade G5=YES + close 12/12 atomic + close 1953-G-FAIL dashboard row.
+
+---
 
 ## pdf-extractor G5b-consolidation-plan (2026-05-24T10:23Z) — GO verdict, 7-task atomic plan
 

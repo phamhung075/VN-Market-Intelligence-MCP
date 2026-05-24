@@ -5,15 +5,30 @@ author: "architect"
 pilot: "pdf-extractor"
 phase: "2"
 task: "P2-G5b-clearance"
-verdict: "BLOCKED"
-clearance: "BLOCKED"
+verdict: "APPROVED"
+clearance: "APPROVED"
+supersedes_verdict: "BLOCKED (2026-05-24T10:07Z)"
+terminal_update: "2026-05-24T11:38:32Z"
 ---
 
 # P2-G5b Clearance Brief
 
 **Generated:** 2026-05-24T10:07Z by architect (P2-G5b-clearance task)
-**Verdict:** BLOCKED
-**MOOT test:** PARTIAL MOOT — `fetch_ssc_reports` tool already removed; `bctc_batch_sweep` does NOT call the frozen write-chain. BUT: the behavioral bugs anchoring the freeze are unresolved, and 1954c consolidation never landed. G5b cannot be declared MOOT in full because the freeze anchor (1953-G-FAIL fixCycles=6, unresolved) is a standing NO-DISPATCH guard on the entire BCTC write-chain path — not just on specific call paths.
+**TERMINAL UPDATE:** 2026-05-24T11:38:32Z — **Verdict FLIPPED: BLOCKED → APPROVED**
+
+> **RESOLVED.** 1954c consolidation landed (commits 2a5cc2a7/9c22c915/09e2cd70/70e75cbd/0ae87b9d/372fbc91). QA gate PASS (`docs/signals/qa-bctc-1954c-g5b-gate-20260524T113516Z.json`, gateVerdict=PASS, G5b-ownership=YES, 0 new regressions). All clearance criteria C-1 through C-4 now MET. G5b charter intent MET: pdf-extractor is the single extraction owner, in-process OCR deprecated, old path dead. PO: lift bctc_freeze_gate + grade G5=YES + close 12/12. 1953-G-FAIL NO-DISPATCH sentinel CLEARABLE (code RCA resolved; VPS/infra B-08 tracking continues independently in ## ops).
+
+**Clearance signals:**
+- `docs/signals/architect-bctc-consolidation-1954c-clearance-20260524T113832Z.json` — 1954c landed/resolved
+- `docs/signals/architect-pdf-extractor-g5b-clearance-20260524T113832Z.json` — G5b clearance APPROVED (supersedes BLOCKED signal)
+
+---
+
+> **Historical context (2026-05-24T10:07Z BLOCKED verdict):** At the time of initial clearance assessment, 1954c had not landed, the consolidation had not been implemented, and the 1953-G-FAIL freeze was active with no code fix dispatched. The BLOCKED verdict was correct at that time. The condition that blocked it — "1954c must land" — has now been satisfied.
+
+---
+
+**Original MOOT assessment (now superseded):** PARTIAL MOOT — `fetch_ssc_reports` tool already removed; `bctc_batch_sweep` does NOT call the frozen write-chain. BUT: the behavioral bugs anchoring the freeze were unresolved, and 1954c consolidation had never landed. G5b could not be declared MOOT in full because the freeze anchor (1953-G-FAIL fixCycles=6, unresolved) was a standing NO-DISPATCH guard on the entire BCTC write-chain path. **This is now superseded — G5b is MET via direct implementation, not MOOT ruling.**
 
 ---
 
@@ -186,5 +201,30 @@ G5b-dispatch is the sole 12/12 blocker.
 
 ---
 
-**Signal path:** `docs/signals/architect-pdf-extractor-g5b-clearance-20260524T1007Z.json`
-**Pilot status SSOT:** `docs/data/pilot-status-pdf-extractor.json` → `phase2.bctc_freeze_gate.lift_status` = NOT-LIFTED (confirmed, no change)
+**Original signal path:** `docs/signals/architect-pdf-extractor-g5b-clearance-20260524T1007Z.json` (BLOCKED — superseded)
+**Terminal signal path:** `docs/signals/architect-pdf-extractor-g5b-clearance-20260524T113832Z.json` (APPROVED)
+**1954c clearance signal:** `docs/signals/architect-bctc-consolidation-1954c-clearance-20260524T113832Z.json` (LANDED/RESOLVED)
+**Pilot status SSOT:** `docs/data/pilot-status-pdf-extractor.json` → `phase2.bctc_freeze_gate.lift_status` = PENDING-LIFT (PO action required)
+
+---
+
+## Terminal Clearance Summary (2026-05-24T11:38:32Z)
+
+| Criterion | Prior Verdict | Terminal Verdict | Evidence |
+|---|---|---|---|
+| C-1: 1954c resolved | FAIL | PASS | 6 commits landed; QA gate PASS; consolidation path tests 70/0 |
+| C-2: 1953-G-FAIL code component resolved | FAIL | PASS | QA signal: STRUCTURALLY_RESOLVED. Failure A fixed (2a5cc2a7). Failure B eliminated by single-owner. |
+| C-3: No new code fixCycles on BCTC path | FAIL | PASS | 0 new regressions in consolidation commits. 8 consolidation test files all GREEN. |
+| C-4: fetchParseAndStoreBctc.ts stable + not restructured | PARTIAL | PASS | UNTOUCHED per directive. All callers consolidated upstream. |
+| G5b charter intent: pdf-extractor is extraction owner | PARTIAL | MET | QA §g5b_ownership.verdict=YES. All 4 callers confirmed service-first. OCR deprecated. Old path dead. |
+
+**Clearance: APPROVED**
+
+**What this means:**
+1. G5b = DONE (charter intent MET)
+2. PO: lift `phase2.bctc_freeze_gate.lift_status` → LIFTED in `docs/data/pilot-status-pdf-extractor.json`
+3. PO: grade G5 = YES (G5a DONE + G5c PASS + G5b DONE)
+4. PO: 12/12 path is unblocked — all pilot goals now met; proceed to atomic 12/12 close
+5. 1953-G-FAIL NO-DISPATCH sentinel in DASHBOARD.md: CLEARABLE — architect has declared code RCA resolved. PO/owner closes the row. VPS/infra B-08 observation continues in ## ops (normal infra tracking, not a code-freeze trigger).
+
+**NEXT:** PO — freeze-lift + G5=YES + 12/12 close

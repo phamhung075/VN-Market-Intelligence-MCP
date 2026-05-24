@@ -1,0 +1,81 @@
+{
+  "signal": "architect-bctc-consolidation-1954c-clearance",
+  "emittedAt": "2026-05-24T11:38:32Z",
+  "emittedBy": "architect",
+  "task": "1954c terminal clearance — post-QA-PASS G5b-ownership",
+  "verdict": "LANDED",
+  "status": "RESOLVED",
+
+  "summary": "1954c '4 write-paths → 1 owner' consolidation is COMPLETE and QA-VERIFIED. pdf-extractor service is the single BCTC extraction owner. Failure A (backfill column mismatch) fixed. Failure B (4-path OCR cache race) structurally eliminated by single-owner delegation. 1953-G-FAIL code component is STRUCTURALLY RESOLVED. Residual BCTC staleness is INFRA/VPS only (surfaced by vpsProxyWatchdogJob) — not a code defect and not within architect code-freeze scope.",
+
+  "consolidation_scope": {
+    "description": "4 independent BCTC queue-entry paths each had their own OCR implementation. All now delegate extraction to pdf-extractor service (port 5001) via pdfExtractorClient.extractViaMicroservice — single owner, single path.",
+    "callers_consolidated": [
+      "pdf.ts — service-first inversion: extractViaMicroservice primary, pdf-parse Step 2 fallback only on service null",
+      "bctcPdfPullJob.triggerExtraction — direct service call, no OCR worker",
+      "pushBctcExtraction.makeProductionDeps — extractViaService wired to extractViaMicroservice",
+      "bctcReparseJob.ReparseDeps — extractViaService wired to extractViaMicroservice as Tier 1"
+    ],
+    "fetchParseAndStoreBctc_ts": "UNTOUCHED per architect directive — parse+store terminus; no consolidation needed there",
+    "pdfExtractorClient_ts": "UNTOUCHED — HTTP client to port 5001 was already correct"
+  },
+
+  "failure_resolution": {
+    "failure_a_backfill_column_mismatch": {
+      "status": "FIXED",
+      "commit": "2a5cc2a7",
+      "change": "column names ticker/year/quarter corrected to action_code/period_year/period_quarter in backfillBctcQ12026.ts"
+    },
+    "failure_b_ocr_cache_race": {
+      "status": "STRUCTURALLY_ELIMINATED",
+      "mechanism": "Single-owner delegation removes the 4-path OCR cache race entirely. No more independent extractAndStorePdfPagesWithRetry + getCachedPdfText pattern in any live caller.",
+      "residual_dead_path": "fetchParseAndStoreBctc.ts:300 contains legacy extractAndStorePdfPagesWithRetry call in dead OCR fallback branch — unreachable because all 4 callers now pass pdfTextOverride. @deprecated JSDoc added to pdfOcrWorker.ts."
+    },
+    "failure_c_scanned_pdf_quality": {
+      "status": "OUT_OF_SCOPE",
+      "note": "Quality handled by pdf-extractor service DPI/OCR pipeline. Not a code-path consolidation issue."
+    }
+  },
+
+  "1953_g_fail_code_component": {
+    "verdict": "STRUCTURALLY_RESOLVED",
+    "residual": "VPS/infra staleness (VPS pipeline 404s, bctcQueueEnricher 0 URLs) is correctly surfaced by vpsProxyWatchdogJob and is NOT a code defect. No code fix can address an offline VPS.",
+    "out_of_scope_note": "BCTC VPS stale data (B-08/1972) remains OPEN as an infra observation. It does NOT re-trigger the recurring-bug code-freeze. The freeze was on CODE fix cycles, not on infra outages."
+  },
+
+  "impl_commits_verified": [
+    "2a5cc2a7 — Task 1: backfill column fix",
+    "9c22c915 — Task 2: pdf.ts service-first inversion",
+    "09e2cd70 — Task 3: bctcPdfPullJob.triggerExtraction → service",
+    "70e75cbd — Task 4: pushBctcExtraction deps → service",
+    "0ae87b9d — Task 5: bctcReparseJob.ReparseDeps → service Tier 1",
+    "372fbc91 — Task 6: deprecate pdfOcrWorker + offline integration test"
+  ],
+
+  "qa_gate": {
+    "signal": "docs/signals/qa-bctc-1954c-g5b-gate-20260524T113516Z.json",
+    "gateVerdict": "PASS",
+    "g5b_ownership": "YES",
+    "consolidation_path_tests": "70 PASS / 0 FAIL (8 files)",
+    "new_regressions": 0,
+    "tsc_errors": 0,
+    "ddd_scan": "PASS",
+    "security_scan": "PASS",
+    "offline_integration": "3/3 PASS (Bun mock server at ephemeral localhost port, live VPS not required)"
+  },
+
+  "recurring_bug_freeze": {
+    "freeze_id": "1953-G-FAIL",
+    "prior_status": "NO-DISPATCH (active freeze sentinel in DASHBOARD.md ## po row)",
+    "code_rca_status": "STRUCTURALLY_RESOLVED",
+    "architect_authority": "Architect is the RCA owner per recurring-bug-escalation policy (≥2 fixCycles → PM blocks → architect rethink). Architect clearance here is the sign-off that code root cause is resolved.",
+    "dashboard_row_action": "1953-G-FAIL NO-DISPATCH sentinel in DASHBOARD.md ## po is now CLEARABLE. PO or owner may close this row. The code-freeze guard is lifted by this clearance. Infra/VPS observation (B-08/1972) carries forward in ## ops under normal ops tracking.",
+    "next": "PO closes 1953-G-FAIL dashboard row + emits bctc_freeze_gate lift signal in pilot-status-pdf-extractor.json"
+  },
+
+  "prior_blocked_signal": "docs/signals/architect-pdf-extractor-g5b-clearance-20260524T1007Z.json",
+  "prior_blocked_reason_resolved": "Prior BLOCKED was conditional on '1954c never landed'. 1954c has now landed (commits 2a5cc2a7/9c22c915/09e2cd70/70e75cbd/0ae87b9d/372fbc91) and QA gate PASSED.",
+
+  "next_actor": "architect (emit G5b-clearance APPROVED signal — this 1954c signal is prerequisite)",
+  "feeds_into": "docs/signals/architect-pdf-extractor-g5b-clearance-20260524T113832Z.json"
+}
