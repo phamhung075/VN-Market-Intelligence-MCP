@@ -4,6 +4,31 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-24 — P1-A1 DONE (sandbox runner + scenario dirs + composition root shrink)
+
+Commits: `75ab2eae` (impl), `f72c465b` (handoff+signal)
+
+**Delivered:**
+- `sandbox/runner.py` — JSON-in trace-JSON-out, zero creds, stdlib only
+- `sandbox/__init__.py` — package marker
+- `domain/primitives/__init__.py` + `echo_identity/` — scaffold primitive for G12 DoD
+- `scenarios/` — directory tree with .gitkeep placeholders + README + 3 echo_identity fixtures
+- `infrastructure/startup.py:ensure_dirs(cfg)` — extracted from main.py
+- `infrastructure/lifespan.py:build_lifespan(cfg)` — extracted from main.py
+- `main.py` refactored: 64 logical lines (target ≤80, was 101)
+- `__tests__/unit/test_sandbox_runner.py` — 5 new tests (TDD RED→GREEN)
+
+**Gate evidence:**
+- AC-5 PASS: sandbox env is empty of all credential vars
+- AC-6 PASS: 0 grep matches in sandbox/ for credential strings
+- G12 DoD PASS: echo_identity happy=exit 0 (GREEN), failure=exit 1 (honest RED)
+- 37 pytest tests PASS (23 pre-existing + 5 sandbox runner + 9 integration)
+
+**Next:** P1-A2 (scenario directory READMEs per-primitive)
+**P1-B1 unblocked:** zero-creds gate confirmed PASS
+
+---
+
 ### 2026-05-14 — 1908a VNM Q4 2025 low-confidence spike (c91)
 
 **Root cause: BCTC-VAL-07 hard fail due to totalAssets positional extraction error.**
