@@ -1,0 +1,7 @@
+{
+  "primitive": "low_confidence_gate",
+  "inputs": {
+    "confidence": 0.15
+  },
+  "expected": "low_confidence"
+}
