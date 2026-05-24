@@ -1,28 +1,37 @@
 # PO Notebook
 
-**Cycle:** c285 (USER-DIRECTIVE — kinh-dich TS→Go reboot RATIFIED, reversing c70 rejection)
-**Last update:** 2026-05-24T06:56:57Z
-**Status:** kinh-dich Go pivot now RATIFIED (user override). 4 deliverables doc-only, committed 89c83291.
+**Cycle:** c286 (dev-team triage — api-gateway SCALE pilot Phase 0 OPEN)
+**Last update:** 2026-05-24T07:15:14Z
+**Status:** api-gateway Phase 0 opened + G1-G12 calibrated, committed 26f7434d. Phase 0 BATCH returned to dispatcher.
 
 ---
 
-## This cycle (c285) — kinh-dich TS→Go reboot, USER-DIRECTED
+## This cycle (c286) — api-gateway SCALE pilot Phase 0 open
 
-In c70 I REJECTED this pivot on ground-truth (kinh-dich = completed TS pilot, verdict=scale, ~900 files; rebooting for consistency alone discards a completed pilot). **That reasoning was sound and is on record.** The USER was shown that cost explicitly and directed: force the Go reboot anyway. Executed as a USER-DIRECTIVE — did NOT re-litigate. Reservation recorded as acknowledged + overridden.
+Scope-locked to `apps/api-gateway/` ONLY (anti-scope-creep). Verified brownfield source before calibrating — did NOT guess.
 
-### Delivered (mirrors TA Option-B Go pivot precedent)
-1. **D1** `docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md` — decision, authority=user directive, rationale=fleet consistency, PO reservation ack+overridden, references TA precedent.
-2. **D2** `pilot-status-kinh-dich.json` — DONE→ACTIVE, lang TS→Go, userDirected=true, phase→1 (Go reboot restart), pivotEvent added (mirrors TA), **TS completion archived under `tsCompletionArchive`** (preserved, not destroyed; verdict=scale/12-of-12), G1–G8+G10–G12 reset TBD, G9 held IN-PROGRESS (re-confirm on Go dashboard). Schema-conformant; parses OK.
-3. **D3** `scale/kinh-dich-charter.md` (thin, delta-only → pilot-charter.md G1–G12) + `scale/README.md` §kinh-dich REJECTED→RATIFIED (both table row + section).
-4. **D4** agent-father signal `docs/signals/po-20260524T065657Z.json` + DASHBOARD `## agent-father` row — flip `.claude/agents/dev-kinh-dich.md` Go + reconcile **3** system-map entries: kinh-dich-service ts→go (this pivot) + technical-analysis ts→go (drift) + macro-indicators ts→go (drift). PO cannot edit agent files/system-map.
+### SSOT edits (docs/data/pilot-status-api-gateway.json, commit 26f7434d)
+- status PENDING->ACTIVE; phase pre-0->0; phase0 OPEN (openedAt 07:15:14Z).
+- sprintKickoff 2026-05-24, sprintDeadline 2026-07-05 (=alert-engine cadence).
+- All 12 goal `calibration` fields filled (no `<SERVICE:` left in goals[]; the 4 remaining are phase1/phase2 skeleton placeholders — correctly deferred until Phase 0 closes).
+- lessons_baked_in +4: honest-3, no-cgo/no-creds, blast-radius, new-not-port.
 
-Note: prior cycle wrote a DASHBOARD row + decision-doc reference but never created the files (orphan pointer `po-20260524T064702Z.json`). This cycle created all four for real and replaced the orphan row.
+### Ground-truth confirmed from source (NOT manufactured)
+- **G1 honest 3 primitives**: overall-status-computer (computeOverallStatus, domain/services.go), proxy-path-resolver (ProxyPath, handlers.go — already exported+tested), route-service-matcher (SplitN path->svc, duplicated HandleServiceHealth+HandleProxy). NO auth-header-validator — gateway does ZERO auth. Charter delta blesses honest 3.
+- **NO-CGO** (go1.22, not +cgo per system-map) + **NO-CREDS** (no DB/Telegram/keys) -> G7 trivially clean.
+- **main.go = 67L** already <=80 -> G3 mostly done; win = declarative routing + auditable wiring.
+- **NEW Go svc, not TS-port** -> G5 light-touch, may grade trivially-YES.
+- **Port 4000** (system-map api-gateway.port).
+- **Highest blast radius** (single MCP-facing iface) -> G11 HIGHEST PRIORITY.
+
+### BATCH returned (4 Phase 0 tasks)
+P0-AG-1 brownfield inventory (architect), P0-AG-2 bug-inventory entry (architect), P0-AG-3 dev-agent+flow Go three-tier + G12 DoD gate (agent-father), P0-AG-4 Phase 1 task plan (architect). All zone=apps/api-gateway/.
 
 ---
 
 ## Carry-over (next cycle)
-- **agent-father (NEW signal pending):** execute D4 — dev-kinh-dich.md→Go + 3 system-map lang flips. TA+macro are pre-existing drift folded into the same pass.
-- **architect/agent-father follow-up (PO does not block):** `.claude/flows/dev-kinh-dich/main.md` Go-awareness (go test / go vet / staticcheck / depguard); composition-root.go spec + Go primitive layout (pkg/primitive/).
-- **Go reboot must re-earn** G1–G8,G10–G12 + re-confirm G9 on rebuilt Go dashboard. Rescue language-agnostic scenario JSON + OpenAPI YAML through the reboot; cross-check Go primitives against archived TS domain contracts (THIEU_DUONG=0.10, LAO_DUONG=0.75, extractAction(actionText)).
-- **alert-engine:** Phase 2 ACTIVE (pilot-5) — untouched.
-- **DO NOT re-litigate the kinh-dich reboot** — it is user-directed and FINAL.
+- **api-gateway Phase 0 exit gate**: needs all 4 deliverables landed + architect verification commit/signal before phase0.exit_gate flips CLOSED. PO does NOT close it — architect does, then PO opens Phase 1.
+- **Phase 1 SSOT placeholders** (phase1.skeleton_in, phase1.task_plan) fill from P0-AG-4 output at Phase 0 close.
+- **G1 band re-confirm**: architect/dev-api-gateway confirm the honest-3 set in brownfield inventory; if a genuine 4th pure unit surfaces, allow up to 5 — but do NOT pad.
+- **alert-engine** Phase 2 ACTIVE (pilot-5) — untouched. **kinh-dich** Go reboot ACTIVE (user-directed, FINAL) — untouched.
+- DO NOT touch any other service's pilot-status file during api-gateway pilot.
