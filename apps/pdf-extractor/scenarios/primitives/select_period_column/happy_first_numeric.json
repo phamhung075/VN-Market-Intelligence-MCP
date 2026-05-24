@@ -1,0 +1,8 @@
+{
+  "primitive": "select_period_column",
+  "description": "Position heuristic: first non-empty numeric cell selected from a multi-column row (no hint provided).",
+  "inputs": {
+    "cells": ["2.840.370", "2.750.000", "2.600.000"]
+  },
+  "expected": [0, "2.840.370"]
+}

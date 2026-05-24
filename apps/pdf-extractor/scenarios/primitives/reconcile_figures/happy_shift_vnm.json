@@ -1,0 +1,9 @@
+{
+  "primitive": "reconcile_figures",
+  "description": "AC1 regression anchor: VNM net_profit ocr=0.000051 vs api=51000 returns 'shift'. The ratio is ~1e9 >> 10 — a clear decimal-shift anomaly.",
+  "inputs": {
+    "a": 0.000051,
+    "b": 51000.0
+  },
+  "expected": "shift"
+}

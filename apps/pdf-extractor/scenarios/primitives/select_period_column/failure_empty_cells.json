@@ -1,0 +1,8 @@
+{
+  "primitive": "select_period_column",
+  "description": "All empty cells return [null, null] — no column can be selected.",
+  "inputs": {
+    "cells": ["", "  ", ""]
+  },
+  "expected": [null, null]
+}

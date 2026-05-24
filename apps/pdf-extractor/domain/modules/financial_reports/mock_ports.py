@@ -1,13 +1,16 @@
 """
-financial_reports — mock port implementations (P1-C, extended P2-C).
+financial_reports — mock port implementations (P1-C, extended P2-C, BT-1).
 
-Provides test doubles for all 6 Protocol ports:
+Provides test doubles for all 9 Protocol ports:
     - MockDecimalNormalizerPort     (DecimalNormalizerPort)
     - MockFinancialValidatorPort    (FinancialValidatorPort)
     - MockConfidenceScorerPort      (ConfidenceScorerPort)
     - MockLowConfidenceGatePort     (LowConfidenceGatePort)
     - MockRatioComputerPort         (RatioComputerPort)
     - MockFieldExtractorPort        (FieldExtractorPort)
+    - MockVnNumberNormalizerPort    (VnNumberNormalizerPort — BT-1)
+    - MockReconcileFiguresPort      (ReconcileFiguresPort — BT-1)
+    - MockSelectPeriodColumnPort    (SelectPeriodColumnPort — BT-1)
 
 Used ONLY in unit tests — never imported in production paths.
 
@@ -22,7 +25,7 @@ Domain layer rules:
 
 from __future__ import annotations
 
-from typing import Dict, Literal, Optional
+from typing import Dict, List, Literal, Optional, Tuple
 
 
 class MockDecimalNormalizerPort:
@@ -185,3 +188,87 @@ class MockFieldExtractorPort:
         self.call_count += 1
         self.last_args = (text, field_name)
         return self._return_value
+
+
+class MockVnNumberNormalizerPort:
+    """
+    Test mock for VnNumberNormalizerPort (BT-1).
+
+    Returns a pre-configured normalized string regardless of input.
+
+    Args:
+        return_value: The string to return from normalize_vn(), or None.
+    """
+
+    def __init__(self, return_value: Optional[str] = "51000") -> None:
+        self._return_value = return_value
+        self.call_count = 0
+        self.last_raw: str = ""
+
+    def normalize_vn(self, raw: str) -> Optional[str]:
+        """Return the configured normalized string. Records call for assertion."""
+        self.call_count += 1
+        self.last_raw = raw
+        return self._return_value
+
+
+class MockReconcileFiguresPort:
+    """
+    Test mock for ReconcileFiguresPort (BT-1).
+
+    Returns a pre-configured verdict regardless of input.
+
+    Args:
+        return_verdict: One of "agree" | "shift" | "low".
+    """
+
+    def __init__(
+        self, return_verdict: Literal["agree", "shift", "low"] = "agree"
+    ) -> None:
+        self._return_verdict = return_verdict
+        self.call_count = 0
+        self.last_args: tuple[Optional[float], Optional[float], float] = (None, None, 1.0)
+
+    def reconcile(
+        self,
+        a: Optional[float],
+        b: Optional[float],
+        tol: float = 1.0,
+    ) -> Literal["agree", "shift", "low"]:
+        """Return the configured verdict. Records call for assertion."""
+        self.call_count += 1
+        self.last_args = (a, b, tol)
+        return self._return_verdict
+
+
+class MockSelectPeriodColumnPort:
+    """
+    Test mock for SelectPeriodColumnPort (BT-1).
+
+    Returns a pre-configured (index, value) tuple regardless of input.
+
+    Args:
+        return_index: The column index to return (or None).
+        return_value: The cell value string to return (or None).
+    """
+
+    def __init__(
+        self,
+        return_index: Optional[int] = 0,
+        return_value: Optional[str] = "2.840.370",
+    ) -> None:
+        self._return_index = return_index
+        self._return_value = return_value
+        self.call_count = 0
+        self.last_cells: List[str] = []
+
+    def select(
+        self,
+        cells: List[str],
+        hint: Optional[str] = None,
+        headers: Optional[List[str]] = None,
+    ) -> List:
+        """Return the configured [index, value]. Records call for assertion."""
+        self.call_count += 1
+        self.last_cells = cells
+        return [self._return_index, self._return_value]

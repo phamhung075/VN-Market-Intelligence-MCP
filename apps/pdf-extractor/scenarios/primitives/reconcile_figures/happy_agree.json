@@ -1,0 +1,9 @@
+{
+  "primitive": "reconcile_figures",
+  "description": "Identical values return 'agree' (ratio=1.0, within tol=1.0).",
+  "inputs": {
+    "a": 2840370.0,
+    "b": 2840370.0
+  },
+  "expected": "agree"
+}

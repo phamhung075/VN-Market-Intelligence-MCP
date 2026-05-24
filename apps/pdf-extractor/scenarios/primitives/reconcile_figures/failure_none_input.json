@@ -1,0 +1,9 @@
+{
+  "primitive": "reconcile_figures",
+  "description": "None input (missing OCR value) returns 'agree' — skips anomaly flag, matches mcp-server isDecimalShiftAnomaly null guard.",
+  "inputs": {
+    "a": null,
+    "b": 51000.0
+  },
+  "expected": "agree"
+}

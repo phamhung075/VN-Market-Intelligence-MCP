@@ -1,5 +1,5 @@
 """
-financial_reports — Protocol ports (P1-C, extended P2-C).
+financial_reports — Protocol ports (P1-C, extended P2-C, BT-1).
 
 Defines the abstract interfaces (Python Protocols) that the FinancialReportsModule
 depends on. The module NEVER imports concrete primitives directly — it only accepts
@@ -13,18 +13,21 @@ Domain layer rules:
 These protocols satisfy G2 re-verify (P2-C) and enforce the DDD layering rule:
 domain modules compose domain primitives via ports, not direct function calls.
 
-Ports defined here (all 6 primitives):
+Ports defined here (9 primitives — BT-1 adds 3):
     - DecimalNormalizerPort     (decimal_normalizer — P1-B2)
     - FinancialValidatorPort    (validate_financial_figures — P1-B1)
     - ConfidenceScorerPort      (confidence_scorer — P2-B1)
     - LowConfidenceGatePort     (low_confidence_gate — P2-B2)
     - RatioComputerPort         (ratio_computer — P2-B3)
     - FieldExtractorPort        (field_extractor — P2-B4)
+    - VnNumberNormalizerPort    (vn_number_normalize — BT-1)
+    - ReconcileFiguresPort      (reconcile_figures — BT-1)
+    - SelectPeriodColumnPort    (select_period_column — BT-1)
 """
 
 from __future__ import annotations
 
-from typing import Dict, Literal, Optional, Protocol
+from typing import Dict, List, Literal, Optional, Protocol, Tuple
 
 
 class DecimalNormalizerPort(Protocol):
@@ -194,5 +197,93 @@ class FieldExtractorPort(Protocol):
 
         Returns:
             Raw extracted string if found, else None.
+        """
+        ...
+
+
+class VnNumberNormalizerPort(Protocol):
+    """
+    Port for the Vietnamese number format normalization primitive (BT-1).
+
+    Converts VN-formatted numeric strings (dot=thousands, comma=decimal) to
+    clean EN-US format strings ready for float() conversion.
+
+    Implemented by:
+        - domain/primitives/vn_number_normalize/ (production)
+        - domain/modules/financial_reports/mock_ports.MockVnNumberNormalizerPort (tests)
+    """
+
+    def normalize_vn(self, raw: str) -> Optional[str]:
+        """
+        Normalize a Vietnamese-formatted numeric string to a clean EN-US string.
+
+        Args:
+            raw: Raw OCR token (e.g. "2.840.370", "1.234,56", "51000").
+
+        Returns:
+            Normalized string (e.g. "2840370", "1234.56") or None if not parseable.
+        """
+        ...
+
+
+class ReconcileFiguresPort(Protocol):
+    """
+    Port for the decimal-shift reconciliation primitive (BT-1).
+
+    Compares an extracted figure against a reference and returns a verdict.
+
+    Implemented by:
+        - domain/primitives/reconcile_figures/ (production)
+        - domain/modules/financial_reports/mock_ports.MockReconcileFiguresPort (tests)
+    """
+
+    def reconcile(
+        self,
+        a: Optional[float],
+        b: Optional[float],
+        tol: float = 1.0,
+    ) -> Literal["agree", "shift", "low"]:
+        """
+        Compare two figures and return a reconciliation verdict.
+
+        Args:
+            a:   First figure (e.g. OCR-extracted value). None = not available.
+            b:   Second figure (e.g. API-bridge reference). None = not available.
+            tol: Agreement tolerance threshold (default 1.0).
+
+        Returns:
+            Literal "agree" | "shift" | "low"
+        """
+        ...
+
+
+class SelectPeriodColumnPort(Protocol):
+    """
+    Port for the BCTC period column selector primitive (BT-1).
+
+    Picks the correct result column from a table row with multiple period columns.
+
+    Implemented by:
+        - domain/primitives/select_period_column/ (production)
+        - domain/modules/financial_reports/mock_ports.MockSelectPeriodColumnPort (tests)
+    """
+
+    def select(
+        self,
+        cells: List[str],
+        hint: Optional[str] = None,
+        headers: Optional[List[str]] = None,
+    ) -> List:
+        """
+        Select the best result column from a BCTC table row.
+
+        Args:
+            cells:   List of raw cell strings for a single data row.
+            hint:    Optional semantic hint ("consolidated" | "current" | "ytd").
+            headers: Optional list of column header strings.
+
+        Returns:
+            [index, value] list, or [None, None] if no suitable cell found.
+            List (not tuple) for JSON round-trip compatibility.
         """
         ...

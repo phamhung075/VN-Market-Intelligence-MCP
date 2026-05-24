@@ -1,0 +1,8 @@
+{
+  "primitive": "vn_number_normalize",
+  "description": "Non-numeric input 'N/A' returns None (honest fail-loud, no crash).",
+  "inputs": {
+    "raw": "N/A"
+  },
+  "expected": null
+}

@@ -213,16 +213,20 @@ def _run_financial_reports_module(inputs: dict[str, Any]) -> dict[str, Any]:
     """
     Wire FinancialReportsModule with real primitive adapters and call process_report().
 
-    Adapters wrap all 6 pure primitive functions behind the Protocol ports (P2-C).
+    Adapters wrap all 9 pure primitive functions behind the Protocol ports.
+    BT-1 adds 3 new adapters: vn_number_normalize, reconcile_figures, select_period_column.
     No infrastructure is imported — all primitives are pure stdlib functions.
 
     Primitives wired:
-        1. decimal_normalizer      → _DecimalNormalizerAdapter
+        1. decimal_normalizer         → _DecimalNormalizerAdapter
         2. validate_financial_figures → _FinancialValidatorAdapter
-        3. confidence_scorer       → _ConfidenceScorerAdapter
-        4. low_confidence_gate     → _LowConfidenceGateAdapter
-        5. ratio_computer          → _RatioComputerAdapter
-        6. field_extractor         → _FieldExtractorAdapter
+        3. confidence_scorer          → _ConfidenceScorerAdapter
+        4. low_confidence_gate        → _LowConfidenceGateAdapter
+        5. ratio_computer             → _RatioComputerAdapter
+        6. field_extractor            → _FieldExtractorAdapter
+        7. vn_number_normalize        → _VnNumberNormalizerAdapter  (BT-1)
+        8. reconcile_figures          → _ReconcileFiguresAdapter     (BT-1)
+        9. select_period_column       → _SelectPeriodColumnAdapter   (BT-1)
     """
     from domain.modules.financial_reports import FinancialReportsModule
     from domain.primitives.decimal_normalizer import normalize_decimal
@@ -231,6 +235,9 @@ def _run_financial_reports_module(inputs: dict[str, Any]) -> dict[str, Any]:
     from domain.primitives.low_confidence_gate import gate_confidence
     from domain.primitives.ratio_computer import compute_ratio
     from domain.primitives.field_extractor import extract_field
+    from domain.primitives.vn_number_normalize import vn_number_normalize
+    from domain.primitives.reconcile_figures import reconcile_figures
+    from domain.primitives.select_period_column import select_period_column
 
     class _DecimalNormalizerAdapter:
         def normalize(self, raw_string: str, unit_hint: str = "billion_vnd") -> Any:
@@ -269,6 +276,18 @@ def _run_financial_reports_module(inputs: dict[str, Any]) -> dict[str, Any]:
         def extract(self, text: str, field_name: str) -> Any:
             return extract_field(text, field_name)
 
+    class _VnNumberNormalizerAdapter:
+        def normalize_vn(self, raw: str) -> Any:
+            return vn_number_normalize(raw)
+
+    class _ReconcileFiguresAdapter:
+        def reconcile(self, a: Any, b: Any, tol: float = 1.0) -> str:
+            return reconcile_figures(a, b, tol)
+
+    class _SelectPeriodColumnAdapter:
+        def select(self, cells: list, hint: Any = None, headers: Any = None) -> tuple:
+            return select_period_column(cells, hint, headers)
+
     module = FinancialReportsModule(
         normalizer=_DecimalNormalizerAdapter(),
         validator=_FinancialValidatorAdapter(),
@@ -276,6 +295,9 @@ def _run_financial_reports_module(inputs: dict[str, Any]) -> dict[str, Any]:
         low_confidence_gate=_LowConfidenceGateAdapter(),
         ratio_computer=_RatioComputerAdapter(),
         field_extractor=_FieldExtractorAdapter(),
+        vn_normalizer=_VnNumberNormalizerAdapter(),
+        reconciler=_ReconcileFiguresAdapter(),
+        period_selector=_SelectPeriodColumnAdapter(),
     )
 
     return module.process_report(**inputs)

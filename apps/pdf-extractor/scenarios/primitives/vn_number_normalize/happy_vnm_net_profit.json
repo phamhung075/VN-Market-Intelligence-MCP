@@ -1,0 +1,8 @@
+{
+  "primitive": "vn_number_normalize",
+  "description": "AC1 regression anchor: VNM net_profit '2.840.370' (VN thousands-grouped) normalizes to '2840370'. Before BT-1 fix this caused a decimal-shift where float('2.840.370') = 2.84 instead of 2840370.",
+  "inputs": {
+    "raw": "2.840.370"
+  },
+  "expected": "2840370"
+}

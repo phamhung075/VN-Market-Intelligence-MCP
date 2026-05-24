@@ -1,0 +1,10 @@
+{
+  "primitive": "select_period_column",
+  "description": "Hint 'consolidated' matches 'Hợp nhất' header → column 1 selected.",
+  "inputs": {
+    "cells": ["1.000.000", "2.840.370"],
+    "hint": "consolidated",
+    "headers": ["Công ty mẹ", "Hợp nhất"]
+  },
+  "expected": [1, "2.840.370"]
+}

@@ -1,0 +1,8 @@
+{
+  "primitive": "vn_number_normalize",
+  "description": "AC2 regression anchor: DHG revenue '1.234,56' (VN decimal format: dot=thousands, comma=decimal) normalizes to '1234.56'. Before BT-1 fix float('1.234,56') raised ValueError causing 0 or None to propagate.",
+  "inputs": {
+    "raw": "1.234,56"
+  },
+  "expected": "1234.56"
+}
