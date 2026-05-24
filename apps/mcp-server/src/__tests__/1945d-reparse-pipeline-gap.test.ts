@@ -305,22 +305,22 @@ describe("TC-3 (AC-3): runBctcReparseJob — disk scan runs even when feedback r
 //        (extracted helper used by server.ts setImmediate callback)
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("TC-4: triggerPushBctcExtraction — calls pipeline with pdfTextOverride", () => {
-  it("passes OCR cache text as pdfTextOverride to fetchParseAndStoreBctc", async () => {
+describe("TC-4: triggerPushBctcExtraction — 1954c service delegate", () => {
+  it("passes service text as pdfTextOverride to fetchParseAndStoreBctc", async () => {
     const { triggerPushBctcExtraction } = await import(
       "../scheduler/financial-reports/pushBctcExtraction.js"
     );
 
-    const ocrText = "Báo cáo tài chính Q1 2026 " + "A".repeat(200);
+    const serviceText = "Báo cáo tài chính Q1 2026 " + "A".repeat(200);
 
     const callArgs: Record<string, unknown>[] = [];
     const deps = {
-      extractPages: async (_filePath: string, _filename: string, _code: string): Promise<void> => {
-        // simulate OCR cache population
-      },
-      getCache: (_filename: string): { text: string; confidence: number } | null => ({
-        text: ocrText,
-        confidence: 0.75,
+      extractViaService: async (_url: string) => ({
+        documentId: "doc-1",
+        tables: [],
+        textContent: serviceText,
+        ocrConfidence: 0.85,
+        status: "success" as const,
       }),
       runPipeline: async (params: Record<string, unknown>): Promise<{ id: string } | null> => {
         callArgs.push(params);
@@ -339,21 +339,20 @@ describe("TC-4: triggerPushBctcExtraction — calls pipeline with pdfTextOverrid
     });
 
     expect(callArgs.length).toBe(1);
-    expect(callArgs[0]!.pdfTextOverride).toBe(ocrText);
+    expect(callArgs[0]!.pdfTextOverride).toBe(serviceText);
     expect(callArgs[0]!.actionCode).toBe("EIB");
     expect(callArgs[0]!.year).toBe(2026);
     expect(callArgs[0]!.quarter).toBe("Q1");
   });
 
-  it("skips pipeline when OCR cache returns empty text", async () => {
+  it("skips pipeline when service returns null", async () => {
     const { triggerPushBctcExtraction } = await import(
       "../scheduler/financial-reports/pushBctcExtraction.js"
     );
 
     const callCount = { n: 0 };
     const deps = {
-      extractPages: async (): Promise<void> => {},
-      getCache: (_filename: string): null => null,
+      extractViaService: async (_url: string) => null,
       runPipeline: async (_params: unknown): Promise<null> => {
         callCount.n++;
         return null;
@@ -370,19 +369,24 @@ describe("TC-4: triggerPushBctcExtraction — calls pipeline with pdfTextOverrid
       deps,
     });
 
-    // Pipeline should NOT be called when OCR cache is empty
+    // Pipeline should NOT be called when service returns null
     expect(callCount.n).toBe(0);
   });
 
-  it("skips pipeline when OCR text is too short (< 100 chars)", async () => {
+  it("skips pipeline when service text is too short (< 100 chars)", async () => {
     const { triggerPushBctcExtraction } = await import(
       "../scheduler/financial-reports/pushBctcExtraction.js"
     );
 
     const callCount = { n: 0 };
     const deps = {
-      extractPages: async (): Promise<void> => {},
-      getCache: (_filename: string) => ({ text: "too short", confidence: 0.9 }),
+      extractViaService: async (_url: string) => ({
+        documentId: "doc-short",
+        tables: [],
+        textContent: "too short",
+        ocrConfidence: 0.5,
+        status: "success" as const,
+      }),
       runPipeline: async (_params: unknown): Promise<null> => {
         callCount.n++;
         return null;

@@ -1,42 +1,35 @@
 /**
- * Push-BCTC Extraction Helper — Task 1945d
+ * Push-BCTC Extraction Helper — Task 1945d / 1954c
  *
- * Extracted from `server.ts` push-bctc-pdf handler for testability and to
- * implement GAP-B fix: when a PDF is pushed via POST /api/push-bctc-pdf, the
- * original `setImmediate` callback called `fetchParseAndStoreBctc` with only
- * `pdfUrl: sourceUrl || file://...` — no `pdfTextOverride`. This caused:
- *   1. `downloadAndExtractPdf` to try fetching from a geo-blocked SSC URL or
- *      a VPS URL without auth headers, producing empty text.
- *   2. The OCR fallback inside `fetchParseAndStoreBctc` to also fail (no cache).
- *   3. `financial_reports` to never receive a row.
+ * Extracted from `server.ts` push-bctc-pdf handler for testability.
  *
- * Fix: extract text locally via `extractAndStorePdfPagesWithRetry` → read OCR
- * cache → call `fetchParseAndStoreBctc` with `pdfTextOverride`. Identical
- * pattern to `bctcPdfPullJob.triggerExtraction`.
+ * 1945d: Original fix — replaced the old `setImmediate → fetchParseAndStoreBctc`
+ * (which had no pdfTextOverride) with local OCR extraction → pdfTextOverride.
  *
- * Layer: interface/scheduler — dependencies on infrastructure (OCR worker,
+ * 1954c (G5b): Consolidation — replaces the OCR-based extraction pattern
+ * (`extractAndStorePdfPagesWithRetry` + `getCachedPdfText`) with a single
+ * HTTP call to the pdf-extractor microservice via `pdfExtractorClient.extractViaMicroservice`.
+ * The service is now the single extraction owner for all 4 BCTC callers.
+ *
+ * Layer: interface/scheduler — dependencies on infrastructure (pdfExtractorClient,
  *        logger) and application (fetchParseAndStoreBctc).
  */
 
 import { logger } from "../../infrastructure/logger.js";
+import type { PdfExtractorResult } from "../../infrastructure/fetchers/pdfExtractorClient.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Injectable deps — enables unit testing without real OCR or real DB
+// Injectable deps — enables unit testing without real HTTP or real DB
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface PushBctcExtractionDeps {
   /**
-   * Run OCR extraction for the PDF file and populate the OCR cache.
-   * Maps to `extractAndStorePdfPagesWithRetry` in production.
+   * Delegate PDF extraction to the pdf-extractor microservice.
+   * 1954c: replaces extractPages + getCache (OCR pattern).
+   * Returns null when service unavailable or returns error.
+   * Maps to `extractViaMicroservice` from pdfExtractorClient in production.
    */
-  extractPages: (filePath: string, filename: string, actionCode: string) => Promise<void>;
-
-  /**
-   * Read the OCR cache for the given filename.
-   * Maps to `getCachedPdfText` in production.
-   * Returns null on cache miss.
-   */
-  getCache: (filename: string) => { text: string; confidence: number } | null;
+  extractViaService: (url: string) => Promise<PdfExtractorResult | null>;
 
   /**
    * Run the full BCTC parse+store pipeline.
@@ -61,23 +54,25 @@ export interface PushBctcExtractionParams {
   deps?: PushBctcExtractionDeps;
 }
 
+// Retain PushBctcExtractionParams for backward compatibility with server.ts callers.
+// The filePath/filename params are still accepted but no longer used for OCR extraction
+// (1954c): extraction is now delegated to the service via pdfUrl.
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Production deps factory — lazy-loaded so module import never touches LanceDB
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function makeProductionDeps(): Promise<PushBctcExtractionDeps> {
-  const { extractAndStorePdfPagesWithRetry, getCachedPdfText } = await import(
-    "../../infrastructure/fetchers/pdfOcrWorker.js"
+  const { extractViaMicroservice } = await import(
+    "../../infrastructure/fetchers/pdfExtractorClient.js"
   );
   const { fetchParseAndStoreBctc } = await import(
     "../../application/usecases/fetchParseAndStoreBctc.js"
   );
 
   return {
-    extractPages: async (filePath, filename, actionCode) => {
-      await extractAndStorePdfPagesWithRetry(filePath, filename, actionCode);
-    },
-    getCache: (filename) => getCachedPdfText(filename),
+    // 1954c: service is the extraction owner — replace OCR pattern
+    extractViaService: async (url: string) => extractViaMicroservice(url, "bctc"),
     runPipeline: async (params) => fetchParseAndStoreBctc(params),
   };
 }
@@ -89,52 +84,52 @@ async function makeProductionDeps(): Promise<PushBctcExtractionDeps> {
 /**
  * Extract text from a newly-pushed BCTC PDF and run the parse+store pipeline.
  *
- * Steps:
- *   1. Call `extractPages` to populate OCR cache (handles DPI retry internally).
- *   2. Read cache via `getCache` — must be ≥ 100 chars with any confidence.
- *   3. Call `runPipeline` with `pdfTextOverride` so `fetchParseAndStoreBctc`
+ * 1954c (G5b) steps:
+ *   1. Call `extractViaService(pdfUrl)` — delegates to pdf-extractor microservice.
+ *      On success: service result textContent used as pdfTextOverride.
+ *      On service null: log warn + return (no silent fail, no OCR fallback).
+ *   2. Call `runPipeline` with `pdfTextOverride` so `fetchParseAndStoreBctc`
  *      skips the network download step entirely.
  *
  * Non-fatal — never throws. All errors are logged at WARN level.
  *
- * Used by `server.ts` POST /api/push-bctc-pdf handler (GAP-B fix).
+ * Used by `server.ts` POST /api/push-bctc-pdf handler (GAP-B fix / 1954c).
  */
 export async function triggerPushBctcExtraction(
   params: PushBctcExtractionParams,
 ): Promise<void> {
-  const { actionCode, year, quarter, filePath, filename, pdfUrl } = params;
+  const { actionCode, year, quarter, pdfUrl } = params;
   const deps = params.deps ?? (await makeProductionDeps());
 
-  // Step 1: populate OCR cache
+  // Step 1: call pdf-extractor service (1954c — service is extraction owner)
+  let serviceResult;
   try {
-    await deps.extractPages(filePath, filename, actionCode);
+    serviceResult = await deps.extractViaService(pdfUrl);
   } catch (err) {
-    logger.warn("[pushBctcExtraction] OCR extraction failed (non-fatal)", {
+    logger.warn("[pushBctcExtraction] service call threw (non-fatal)", {
       ticker: actionCode,
-      filename,
+      pdfUrl,
       error: err instanceof Error ? err.message : String(err),
-    });
-  }
-
-  // Step 2: read cache
-  const cached = deps.getCache(filename);
-  if (!cached || cached.text.trim().length < 100) {
-    logger.warn("[pushBctcExtraction] OCR cache empty after extraction — pipeline skipped", {
-      ticker: actionCode,
-      filename,
-      confidence: cached?.confidence ?? null,
-      chars: cached?.text.trim().length ?? 0,
     });
     return;
   }
 
-  // Step 3: run pipeline with text override (bypasses geo-blocked download)
+  if (!serviceResult || serviceResult.textContent.trim().length < 100) {
+    logger.warn("[pushBctcExtraction] service returned null or too-short text — pipeline skipped", {
+      ticker: actionCode,
+      pdfUrl,
+      textLength: serviceResult?.textContent.trim().length ?? 0,
+    });
+    return;
+  }
+
+  // Step 2: run pipeline with text override from service result
   try {
     const result = await deps.runPipeline({
       actionCode,
       year,
       quarter,
-      pdfTextOverride: cached.text,
+      pdfTextOverride: serviceResult.textContent,
       pdfUrl,
     });
     if (result) {
