@@ -863,7 +863,7 @@ The change is made in the **copy** that dev-mcp-server places at `apps/mcp-serve
 
 **Sync script:** `apps/mcp-server/sync-news-fetch-dashboard.sh` (also: `bun run sync-news-fetch-dashboard`)
 
-**Commit:** see git log after this commit
+**Commit:** `e160fe04`
 
 **Next:** NF-LD-4-dev-B → generic developer (1-line ENDPOINT change in `apps/news-fetch/dashboard/index.html` source)
 

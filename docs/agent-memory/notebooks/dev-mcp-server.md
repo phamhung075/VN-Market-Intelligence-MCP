@@ -4,7 +4,7 @@
 
 ### NF-LD-4-dev-A — Serve news-fetch dashboard from mcp-server (IMPL_DONE)
 
-**Commit:** TBD (staged, next)
+**Commit:** `e160fe04`
 
 **Deliverables:**
 
