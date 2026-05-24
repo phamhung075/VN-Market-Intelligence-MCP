@@ -294,21 +294,17 @@ RESULT: PASS (all scenarios green) or FAIL (any scenario red)
 
 ### Decision 1: MarkovPort Implementation (Option A vs Option B)
 
-**Your choice, document here:**
-- **Option A selected** (re-export from domain): Simpler for Phase 1; leverages existing `KinhDichRepositoryPort`
-- **Option B selected** (inline interface): Cleaner DDD separation; Phase 2 can refine further
+**Option B selected** (inline slim interface)
 
-**Rationale (fill in):**
+**Rationale:** `KinhDichRepositoryPort` exposes `getLatestReading()` which the module does not need. More importantly, the module-tier `MarkovData` shape (`transitionProb + historicalConfidence`) is distinct from the domain's `MarkovData` shape (`nextMostLikely + nextName + probability`). Inlining the interface avoids leaking the infrastructure DB row schema into the module tier. TypeScript structural typing ensures any concrete infra adapter wired at the composition root satisfies the interface without modification. Phase 2 wires the adapter — this boundary remains stable.
 
 ---
 
 ### Decision 2: Steps 8–10 Stub Strategy
 
-**Your choice, document here:**
-- **Inline delegation:** Call `domain/services.ts` helpers directly (e.g., `extractOutcomeScore()`, `majorityVote()` from domain)
-- **Stubbing:** Return hardcoded `tradingSignal` and `confidence` for Phase 1; Phase 2 extracts `reading-scorer` and `nuclear-hexagram-computer`
+**Inline delegation selected** — call `domain/services.ts computeReading()` for the full pipeline.
 
-**Rationale (fill in):**
+**Rationale:** `extractOutcomeScore()`, `majorityVote()`, `computeHoQue()`, `computeBienQue()` are all private functions in `domain/services.ts` (not exported). The only exported orchestrator is `computeReading()`. Rather than duplicate the scoring logic or export private helpers (which would pollute the domain API), the module calls `computeReading(stockCode, scores)` for steps 5–10, then post-processes confidence with the MarkovPort data. This is Fence-B compliant (domain import permitted at module tier). Phase 2 will extract `reading-scorer` and `nuclear-hexagram-computer` as standalone primitives and replace the `computeReading()` delegation here.
 
 ---
 
@@ -355,15 +351,57 @@ Before writing RETURN block, confirm:
 
 Document completion date and status below:
 
-**Completed:** [YYYY-MM-DDTHH:MM:SSZ]
+**Completed:** 2026-05-24T01:55:00Z
 
-**Status:** DONE / BLOCKED
+**Status:** DONE
 
-**Exit code:** 0 / non-zero
+**Exit code:** 0
 
-**Sandbox verdict:** PASS / FAIL
+**Sandbox verdict:** PASS 11/11 (9 primitive + 2 module)
 
-**Blocker notes (if BLOCKED):**
+**Commit SHA:** 50069d69
+
+**G12 DoD Gate Evidence:**
+
+PRIMITIVE TIER:
+```
+[PASS] hao-encoder-edge.json
+[PASS] hao-encoder-failure.json
+[PASS] hao-encoder-golden.json
+[PASS] hexagram-resolver-edge.json
+[PASS] hexagram-resolver-failure.json
+[PASS] hexagram-resolver-golden.json
+[PASS] ngu-hanh-classifier-edge.json
+[PASS] ngu-hanh-classifier-failure.json
+[PASS] ngu-hanh-classifier-golden.json
+[sandbox] PASS 9/9 scenarios (0 failed, 0 skipped)
+```
+
+MODULE TIER:
+```
+[PASS] reading-composer-edge.json
+[PASS] reading-composer-golden.json
+[sandbox] PASS 2/2 scenarios (0 failed, 0 skipped)
+```
+
+ALL TIER: `[sandbox] PASS 11/11 scenarios (0 failed, 0 skipped)`
+
+RESULT: PASS (all scenarios green)
+
+**Unit tests:** 74/74 pass (6 new in reading_composer). `bun tsc --noEmit` clean.
+
+**AC evidence:**
+- AC-1: `grep -n "MarkovPort" ports.ts` → line 39: `export interface MarkovPort`
+- AC-2: `grep -n "export.*compose"` → line 58: `export async function composeReading`
+- AC-3: `bun test src/module/reading_composer/` → 6 pass, 0 fail, exit 0
+- AC-4: No actual imports from application/interface/infrastructure (only comments)
+- AC-5: No cross-module imports (only comment reference)
+- AC-6: primitive 9/9 + module 2/2, both exit 0
+- AC-7: `ls -la docs/scenarios/kinh-dich/module/` → reading-composer-golden.json + reading-composer-edge.json
+- AC-8: all-tier 11/11, exit 0
+- AC-9: evidence above
+
+**Blocker notes:** None.
 
 ---
 
