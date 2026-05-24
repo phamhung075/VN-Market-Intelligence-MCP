@@ -1,0 +1,63 @@
+{
+  "from": "architect",
+  "to": "pm",
+  "via": "handoff",
+  "type": "phase1-task-plan-done",
+  "priority": "high",
+  "createdAt": "2026-05-24T05:30:00Z",
+  "next_actor": "pm",
+  "next_actor_router": "main-router",
+  "next_action": "open alert-engine Phase 1 at its first task (P1-A) per phase-1-task-plan-go.md — dispatch dev-alert-engine",
+  "payload": {
+    "pilot": "alert-engine",
+    "fleet_pilot_number": 5,
+    "phase": "1",
+    "file": "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md",
+    "commit_sha": "b54354e7",
+    "anchor_intact": true,
+    "frozen_anchor": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+    "foreign_paths_staged": false,
+    "files_committed": [
+      "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md",
+      "docs/agent-memory/notebooks/architect.md"
+    ],
+    "task_count": 9,
+    "ac_count": 59,
+    "ac_count_note": "55 ACs if P1-B4 (optional duplicate-checker) is skipped",
+    "goals_advanced_map": {
+      "G1": "P1-B1+B2+B3 (core-3 band: signal-classifier, dedup-key-builder, cooldown-gate) → EARNED-PENDING at Phase-1 close",
+      "G2": "P1-C (alert_pipeline module stub, ports, Fence-B) → EARNED-PENDING at Phase-1 close",
+      "G3": "STILL-UNMET — Phase 2 task",
+      "G4": "STILL-UNMET — Phase 2 tasks (pre-ci tag + .golangci.yml + violation proof + freeze anchor)",
+      "G5": "STILL-UNMET — Phase 2 tasks (pre-delete tag + git mv + MCP audit)",
+      "G6": "P1-D (dashboard stub, 3-panel, SI-2 disavowal comment baked) → EARNED-PENDING at Phase-1 close",
+      "G7": "P1-A+P1-E (all 4 ZERO-CREDS sub-gates: env audit + scenario grep + CGO_ENABLED=0 build + edit→rerun) → EARNED-PENDING at Phase-1 close",
+      "G8": "P1-D+P1-E (honest NOT-RUN at stub phase; deliberate-break proof = Phase 2 P2-J) → EARNED-PENDING at Phase-1 close",
+      "G9": "NOT-STARTED — Phase 2 PO Playwright",
+      "G10": "STILL-UNMET — Phase 2 P2-L injection + P2-M fix",
+      "G11": "STILL-UNMET — Phase 2 P2-M 2-trial coupling proof",
+      "G12": "P1-B1+P1-B2+P1-B3 (3-task streak) → EARNED-PENDING at Phase-1 close"
+    },
+    "goals_earned": 0,
+    "decision_matrix": "TBD",
+    "headline_risk": "G7 ZERO-CREDS — all 4 sub-gates required; P1-A hard gate (env audit empty + CGO_ENABLED=0 build exit 0) must pass before P1-B1 is dispatched",
+    "wip_policy": "WIP=1 sequential",
+    "g12_streak_tasks": ["P1-B1", "P1-B2", "P1-B3"],
+    "primitive_extraction_order": [
+      "signal-classifier (mandatory — severity→AlertSeverity+TelegramChannel)",
+      "dedup-key-builder (mandatory — djb2 fingerprint, seed=5381 load-bearing)",
+      "cooldown-gate (mandatory — ShouldSuppressAlert with injected now time.Time)",
+      "duplicate-checker (optional P1-B4 — IsDuplicate 8-line wrapper)"
+    ],
+    "module_name": "alert_pipeline",
+    "phase2_pre_revert_tags_noted": [
+      "alert-engine-pre-ci (Phase 2, before .golangci.yml)",
+      "alert-engine-pre-delete (Phase 2, before git mv to _deprecated/)",
+      "alert-engine-pre-inject (Phase 2, before G10 bug injection)"
+    ],
+    "si2_exclusion_confirmed": "docs/dashboards/index.html is stock-price-EXCLUSIVE per fleet ratification Decision 3 and charter §Anti-Scope-Creep Clause. alert-engine G6 = apps/alert-engine/dashboard/index.html ONLY. SI-2 disavowal HTML comment mandated in P1-D AC-6.",
+    "scope_check": "Only docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md and docs/agent-memory/notebooks/architect.md touched. No code modified. No SSOT fields modified. No other pilots' briefs touched. No SI-2 index touched.",
+    "fleet_serialization_active": true,
+    "fleet_serialization_note": "INTERIM FLEET-WIDE SINGLE-COMMITTER SERIALIZATION noted in plan Execution Notes and Hard Constraints table. git diff --cached --name-only verified clear of foreign paths before staging."
+  }
+}
