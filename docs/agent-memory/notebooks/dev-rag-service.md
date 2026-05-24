@@ -4,6 +4,41 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-05-24 — TASKS P3-A → P3-D (service-tier completion — SCALE pilot REOPEN)
+
+**Trigger:** PO cycle-78 DEFECT-REOPEN — user pilot-review rejected 12/12 close. Tier-3 (service) had zero scenario evidence, dashboard permanently NOT-RUN with dishonest hint.
+
+**P3-A — service-tier scenario path:**
+- `sandbox/__main__.py`: `--tier=service` added to choices; `_run_service_scenario()` boots `create_app(embedder=FakeEmbedder, vector_store=FakeVectorStore)` via FastAPI TestClient. FakeEmbedder: deterministic hash-seed unit vector; FakeVectorStore: in-memory L2 search. ZERO model/DB/credentials.
+- `main.py`: `create_app(embedder=None, vector_store=None)` seam added (68L, <=80L). None → real adapters (prod unchanged). Injected → fakes (test/sandbox path).
+- `app_factory.py`: `build_real_adapters(embedder_override, vector_store_override)` extracts the conditional wiring. `build_lifespan` returns factory callable, duck-types `initialize()` (fakes skip it).
+- Scenarios: `service/scenarios/search_golden.json`, `index_golden.json`, `search_empty_query_422.json` (3/3 GREEN exit 0).
+- Determinism: identical output across 2 runs (excluding elapsed_ms).
+- Env gate: same `_FORBIDDEN_ENV_REGEX` gate; `LANCEDB_PATH=/tmp/x → exit 1`.
+
+**P3-B — dashboard honesty:**
+- `dashboard/index.html`: 3 service trace scripts added (`trace-service-search-golden`, `trace-service-index-golden`, `trace-service-search-422`). MICROSERVICE_CARDS updated to 3 real traceIds (no more null). Footer "No network calls to port 5002 in Phase 1" fixed. Stale "NOT-RUN until live HTTP wiring verified" removed. Dishonest "not implemented / Phase 2" hint text deleted.
+
+**P3-C — dash-check:**
+- `dashboard/dash-check.py`: 25→30 checks. 3 service trace GREEN assertions, dishonest hint absent check, 3 service traceIds wired check. Exit 0.
+
+**P3-D — G12 DoD gate:**
+- primitive: 16/16 EXIT:0
+- module: 2/2 EXIT:0
+- service: 3/3 EXIT:0
+- env audit: EMPTY (anchored gate, no forbidden keys)
+- LANCEDB_PATH injection → EXIT:1 (gate fires)
+- dash-check: 30/30 EXIT:0
+- pytest: 81/81
+- main.py: 68L (<=80L G3 invariant)
+- create_app() production path: unchanged when both args are None.
+
+**Commits:** `a9832c5e` (code changes — contaminated into pdf-inspect architect commit, content correct per policy no-history-rewrite), `c4589c9e` (scenarios + traces JSON files — clean atomic commit).
+
+**P3-A/B/C/D status:** DONE. P3-E is QA+PO scope. Not marking pilot DONE (QA+PO own re-close).
+
+---
+
 ### 2026-05-24 — TASK P2-K2 (G9 Playwright headless trust contract — LAST Phase 2 task)
 
 **Spec:** `apps/rag-service/dashboard/trust-contract.spec.mjs` (standalone Playwright .mjs, mirrors kinh-dich dash-check.mjs pattern)
