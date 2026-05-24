@@ -65,7 +65,11 @@ Use `date -u` exclusively — same UTC source as the session log guard (1865a). 
 - ChainCatalyst: N fired | M suppressed | event_types: [list]
 - Regime: REGIME | Carry: CARRY_REGIME (CARRY_SPREAD%) | Pivot window: pivot_window_active
 ```
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/alert-commander.md]
+# intent: "chore(memory/alert-commander): notebook YYYY-MM-DD"
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/alert-commander.md
 git commit -m "chore(memory/alert-commander): notebook YYYY-MM-DD"
 ```

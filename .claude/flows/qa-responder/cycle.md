@@ -75,7 +75,11 @@ Answers → MARKET channel (/ask answers ONLY) | Cycle status → WORK | Errors 
 | exit_status | complete\|blocked\|empty |
 | token_estimate | N |
 ```
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/qa-responder.md]
+# intent: "chore(memory/qa-responder): notebook YYYY-MM-DD"
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/qa-responder.md
 git commit -m "chore(memory/qa-responder): notebook YYYY-MM-DD"
 ```

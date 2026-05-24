@@ -31,8 +31,10 @@ Run after Step 4 exits cleanly, before re-entering Step 1:
 if ctx > 25%:
   1. log_agent_work(tag="sprint-boundary", state=current_sprint_id)
   2. Write docs/agent-memory/notebooks/main.md
-  3. git add docs/agent-memory/notebooks/main.md
+  3. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+     git add docs/agent-memory/notebooks/main.md
      git commit -m "chore(memory/dev-team): notebook YYYY-MM-DD"
+     # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
   4. send_telegram(work, "Sprint boundary — offloaded state, ctx at N%")
   5. Return  # hook: ctx>40% → /compact | ctx 30-40% → decision:block | ctx<30% → silent
 ```

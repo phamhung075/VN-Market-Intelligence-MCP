@@ -37,8 +37,11 @@
 2. **Append to `docs/TASKS_ARCHIVE.md`** — preserve each task block verbatim under its sprint header.
 3. **Remove from `docs/TASKS.md`** — delete the archived rows; keep WIP, In Progress, Review, and recent Done.
 4. **Verify** — `wc -l docs/TASKS.md` returns ≤ 80.
-5. **Commit:**
+5. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
    ```
+   # own_paths: [docs/TASKS.md, docs/TASKS_ARCHIVE.md]
+   # intent: "chore(tasks): archive N completed tasks from sprint XXX"
+   # Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
    git add docs/TASKS.md docs/TASKS_ARCHIVE.md
    git commit -m "chore(tasks): archive N completed tasks from sprint XXX"
    ```

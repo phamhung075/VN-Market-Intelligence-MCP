@@ -56,7 +56,11 @@ Partial data → `N/A` | write fails → BUG channel immediately
 ### Analysis Cycle (HH:MM–HH:MM)
 - Earnings: N tickers | Processed: [list] | Signals: M fundamental_validation
 ```
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/report-analyzer.md]
+# intent: "chore(memory/report-analyzer): notebook YYYY-MM-DD"
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/report-analyzer.md
 git commit -m "chore(memory/report-analyzer): notebook YYYY-MM-DD"
 ```
