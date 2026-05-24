@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<!-- SI-2 BOUNDARY: pdf-extractor dashboard ONLY — do not merge into docs/dashboards/index.html (stock-price exclusive) -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Extractor — Sandbox Dashboard</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      background: #0f1117;
+      color: #e2e8f0;
+      padding: 24px;
+      min-height: 100vh;
+    }
+
+    header {
+      border-bottom: 1px solid #2d3748;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+
+    header h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      color: #90cdf4;
+    }
+
+    header p {
+      font-size: 0.8rem;
+      color: #718096;
+      margin-top: 4px;
+    }
+
+    .reload-btn {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 6px 14px;
+      background: #2b6cb0;
+      color: #e2e8f0;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+    }
+
+    .reload-btn:hover { background: #3182ce; }
+
+    /* ---- Edit-rerun panel ---- */
+    .rerun-panel {
+      background: #1a202c;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 16px;
+      margin-bottom: 24px;
+    }
+
+    .rerun-panel h2 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #a0aec0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .rerun-panel p {
+      font-size: 0.78rem;
+      color: #718096;
+      line-height: 1.5;
+    }
+
+    .rerun-panel code {
+      display: block;
+      background: #171923;
+      border: 1px solid #2d3748;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 0.75rem;
+      color: #68d391;
+      margin-top: 8px;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    /* ---- Section panels ---- */
+    .section {
+      margin-bottom: 28px;
+    }
+
+    .section-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #a0aec0;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+      padding-left: 4px;
+      border-left: 3px solid #4a5568;
+      padding-left: 8px;
+    }
+
+    .cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* ---- Card ---- */
+    .card {
+      background: #1a202c;
+      border: 1px solid #2d3748;
+      border-radius: 6px;
+      padding: 16px;
+      min-width: 260px;
+      flex: 1 1 260px;
+      max-width: 420px;
+    }
+
+    .card-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #90cdf4;
+      margin-bottom: 6px;
+    }
+
+    .card-tier {
+      font-size: 0.7rem;
+      color: #718096;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 10px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .badge-not-run {
+      background: #2d3748;
+      color: #718096;
+      border: 1px solid #4a5568;
+    }
+
+    .badge-pass {
+      background: #276749;
+      color: #9ae6b4;
+      border: 1px solid #38a169;
+    }
+
+    .badge-fail {
+      background: #742a2a;
+      color: #feb2b2;
+      border: 1px solid #c53030;
+    }
+
+    .card-meta {
+      font-size: 0.72rem;
+      color: #4a5568;
+      margin-top: 8px;
+    }
+
+    .card-detail {
+      font-size: 0.72rem;
+      color: #718096;
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .card-detail pre {
+      background: #171923;
+      border: 1px solid #2d3748;
+      border-radius: 4px;
+      padding: 8px;
+      margin-top: 4px;
+      overflow: auto;
+      max-height: 180px;
+      font-size: 0.7rem;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .last-run {
+      font-size: 0.68rem;
+      color: #4a5568;
+      margin-top: 8px;
+    }
+
+    /* ---- Microservice card ---- */
+    .card-microservice {
+      max-width: 100%;
+      flex: 1 1 100%;
+    }
+
+    .footer {
+      margin-top: 32px;
+      font-size: 0.68rem;
+      color: #4a5568;
+      border-top: 1px solid #1a202c;
+      padding-top: 12px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>PDF Extractor — Sandbox Dashboard</h1>
+  <p>Zone: <code style="color:#68d391">apps/pdf-extractor/</code> | Stack: Python | Pilot: Phase 1</p>
+  <button class="reload-btn" onclick="loadAllTraces()">Reload Traces</button>
+</header>
+
+<!-- Edit-rerun instructions panel -->
+<div class="rerun-panel">
+  <h2>Edit-Rerun Cycle (G7 sub-gate 4)</h2>
+  <p>To rerun after editing a scenario JSON, run from repo root:</p>
+  <code>PYTHONPATH=apps/pdf-extractor python3 apps/pdf-extractor/sandbox/runner.py \
+  --tier=primitive \
+  --scenario=apps/pdf-extractor/scenarios/primitives/&lt;name&gt;/&lt;scenario&gt;.json</code>
+  <p style="margin-top:8px">Then click <strong>Reload Traces</strong> above to refresh this dashboard.</p>
+</div>
+
+<!-- ===== PRIMITIVES PANEL ===== -->
+<div class="section" id="section-primitives">
+  <div class="section-title">Primitives</div>
+  <div class="cards">
+    <div class="card" id="card-validate-financial-figures">
+      <div class="card-name">validate-financial-figures</div>
+      <div class="card-tier">Primitive</div>
+      <span class="badge badge-not-run" id="badge-validate-financial-figures">NOT-RUN</span>
+      <div class="card-meta" id="meta-validate-financial-figures"></div>
+      <div class="card-detail" id="detail-validate-financial-figures"></div>
+      <div class="last-run" id="lastrun-validate-financial-figures"></div>
+    </div>
+
+    <div class="card" id="card-decimal-normalizer">
+      <div class="card-name">decimal-normalizer</div>
+      <div class="card-tier">Primitive</div>
+      <span class="badge badge-not-run" id="badge-decimal-normalizer">NOT-RUN</span>
+      <div class="card-meta" id="meta-decimal-normalizer"></div>
+      <div class="card-detail" id="detail-decimal-normalizer"></div>
+      <div class="last-run" id="lastrun-decimal-normalizer"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODULE PANEL ===== -->
+<div class="section" id="section-module">
+  <div class="section-title">Module</div>
+  <div class="cards">
+    <div class="card" id="card-financial-reports">
+      <div class="card-name">financial-reports</div>
+      <div class="card-tier">Module</div>
+      <span class="badge badge-not-run" id="badge-financial-reports">NOT-RUN</span>
+      <div class="card-meta" id="meta-financial-reports"></div>
+      <div class="card-detail" id="detail-financial-reports"></div>
+      <div class="last-run" id="lastrun-financial-reports"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MICROSERVICE PANEL ===== -->
+<div class="section" id="section-microservice">
+  <div class="section-title">Microservice</div>
+  <div class="cards">
+    <div class="card card-microservice" id="card-pdf-extractor">
+      <div class="card-name">pdf-extractor</div>
+      <div class="card-tier">Microservice</div>
+      <span class="badge badge-not-run" id="badge-pdf-extractor">NOT-RUN</span>
+      <div class="card-meta" id="meta-pdf-extractor">Service-tier scenarios not yet authored (Phase 2+).</div>
+      <div class="card-detail" id="detail-pdf-extractor"></div>
+      <div class="last-run" id="lastrun-pdf-extractor"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  Dashboard reads trace JSON from <code>sandbox/traces/</code> on reload (populated by runner.py --save-trace).
+  Zero network calls — all data is local file:// only.
+  &nbsp;|&nbsp; SI-2 boundary enforced: pdf-extractor zone only.
+</div>
+
+<script>
+  /*
+   * Dashboard trace loader.
+   *
+   * Zero network calls — all reads are via fetch("file://...") which works only for
+   * local traces relative to this HTML file. When opened via file://, fetch() of
+   * relative paths resolves against the HTML file's directory.
+   *
+   * Trace convention (populated by sandbox/runner.py when --save-trace is used,
+   * or by sandbox/rerun.sh):
+   *
+   *   dashboard/traces/primitives/validate_financial_figures.json
+   *   dashboard/traces/primitives/decimal_normalizer.json
+   *   dashboard/traces/modules/financial_reports.json
+   *   dashboard/traces/service/pdf_extractor.json
+   *
+   * Each trace file is the JSON object emitted to stdout by runner.py for the LAST run.
+   *
+   * If a trace file does not exist, the card stays NOT-RUN (honest default).
+   */
+
+  const TRACE_PATHS = [
+    {
+      id: "validate-financial-figures",
+      path: "traces/primitives/validate_financial_figures.json",
+      tier: "primitive",
+    },
+    {
+      id: "decimal-normalizer",
+      path: "traces/primitives/decimal_normalizer.json",
+      tier: "primitive",
+    },
+    {
+      id: "financial-reports",
+      path: "traces/modules/financial_reports.json",
+      tier: "module",
+    },
+    {
+      id: "pdf-extractor",
+      path: "traces/service/pdf_extractor.json",
+      tier: "service",
+    },
+  ];
+
+  function setBadge(id, passValue) {
+    const badge = document.getElementById("badge-" + id);
+    if (passValue === null) {
+      badge.className = "badge badge-not-run";
+      badge.textContent = "NOT-RUN";
+    } else if (passValue === true) {
+      badge.className = "badge badge-pass";
+      badge.textContent = "PASS";
+    } else {
+      badge.className = "badge badge-fail";
+      badge.textContent = "FAIL";
+    }
+  }
+
+  function renderTrace(id, trace) {
+    const meta = document.getElementById("meta-" + id);
+    const detail = document.getElementById("detail-" + id);
+    const lastrun = document.getElementById("lastrun-" + id);
+
+    if (!trace) {
+      // Trace file missing — stay NOT-RUN, honest default.
+      if (meta) meta.textContent = "";
+      if (detail) detail.innerHTML = "";
+      if (lastrun) lastrun.textContent = "";
+      setBadge(id, null);
+      return;
+    }
+
+    setBadge(id, trace.pass === true);
+
+    const name = trace.primitive || trace.module || trace.service || id;
+    if (meta) meta.textContent = "scenario: " + name;
+
+    const lines = [];
+    if (trace.inputs !== undefined) {
+      lines.push("inputs: " + JSON.stringify(trace.inputs, null, 2));
+    }
+    if (trace.expected !== undefined) {
+      lines.push("expected: " + JSON.stringify(trace.expected));
+    }
+    if (trace.actual !== undefined) {
+      lines.push("actual: " + JSON.stringify(trace.actual));
+    }
+    if (trace.error) {
+      lines.push("error: " + trace.error);
+    }
+
+    if (detail) {
+      if (lines.length > 0) {
+        detail.innerHTML = "<pre>" + escapeHtml(lines.join("\n\n")) + "</pre>";
+      } else {
+        detail.innerHTML = "";
+      }
+    }
+
+    if (lastrun) {
+      const ts = trace._loaded_at || new Date().toISOString();
+      lastrun.textContent = "loaded: " + ts;
+    }
+  }
+
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  async function loadTrace(entry) {
+    try {
+      const resp = await fetch(entry.path);
+      if (!resp.ok) {
+        // 404 or any error → card stays NOT-RUN (no throw — honest default).
+        renderTrace(entry.id, null);
+        return;
+      }
+      const trace = await resp.json();
+      trace._loaded_at = new Date().toISOString();
+      renderTrace(entry.id, trace);
+    } catch (_err) {
+      // File not found or JSON parse error → card stays NOT-RUN.
+      // This is the expected state before any sandbox run has been saved.
+      renderTrace(entry.id, null);
+    }
+  }
+
+  async function loadAllTraces() {
+    // All loads are independent — run in parallel.
+    await Promise.allSettled(TRACE_PATHS.map(loadTrace));
+  }
+
+  // On page load: attempt to load traces (most will be NOT-RUN on first open).
+  loadAllTraces();
+</script>
+
+</body>
+</html>
