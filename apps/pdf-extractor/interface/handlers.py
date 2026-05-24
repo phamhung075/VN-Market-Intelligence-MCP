@@ -1,3 +1,6 @@
+# DEPRECATED (PDF-INSPECT-REDO): This /inspect surface reads pdf_documents (junk table).
+# Real inspection viewer moved to mcp-server GET /api/bctc-inspect.
+# DO NOT extend. Safe to delete once PI-3-redo QA confirms mcp-server viewer works.
 # SI-2 BOUNDARY: PDF inspection viewer surface.
 # This file is part of the served /inspect viewer (Sprint PDF-INSPECT).
 # It is SEPARATE from the sandbox trace dashboard (dashboard/index.html).

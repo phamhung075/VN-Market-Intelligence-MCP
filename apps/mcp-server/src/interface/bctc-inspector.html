@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<!-- SI-2 BOUNDARY: PDF inspection viewer (Sprint PDF-INSPECT redo).
+     Separate surface from apps/pdf-extractor/dashboard/index.html (sandbox trace dashboard — FROZEN).
+     Do NOT add sandbox primitives, scenarios, or trace data here.
+     Do NOT merge viewer code into dashboard/index.html or dashboard/traces.js. -->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BCTC Inspector — VN Market Intelligence</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      background: #1a1a1a;
+      color: #e0e0e0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ── */
+    header {
+      background: #2a2a2a;
+      border-bottom: 1px solid #444;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 15px; font-weight: 600; color: #f0f0f0; }
+    #status-bar { font-size: 12px; color: #888; margin-left: auto; }
+
+    /* ── Controls ── */
+    .controls {
+      background: #222;
+      border-bottom: 1px solid #444;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    label { font-size: 12px; color: #aaa; }
+    select {
+      background: #333;
+      color: #e0e0e0;
+      border: 1px solid #555;
+      border-radius: 4px;
+      padding: 5px 8px;
+      font-size: 13px;
+      min-width: 320px;
+      cursor: pointer;
+    }
+    select:focus { outline: 2px solid #4a9eff; }
+
+    /* ── Main split ── */
+    .split {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+      gap: 0;
+    }
+
+    /* ── Left pane: PDF ── */
+    .left-pane {
+      flex: 1;
+      border-right: 2px solid #444;
+      overflow: auto;
+      background: #111;
+      display: flex;
+      flex-direction: column;
+    }
+    .pane-header {
+      background: #2a2a2a;
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #aaa;
+      border-bottom: 1px solid #3a3a3a;
+      flex-shrink: 0;
+    }
+    #pdf-container {
+      flex: 1;
+      overflow: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+    #pdf-container canvas {
+      box-shadow: 0 2px 8px rgba(0,0,0,.6);
+      max-width: 100%;
+    }
+    #pdf-iframe {
+      width: 100%;
+      flex: 1;
+      border: none;
+      display: none;
+    }
+
+    /* ── Right pane: Figures + OCR ── */
+    .right-pane {
+      width: 480px;
+      flex-shrink: 0;
+      overflow-y: auto;
+      background: #181818;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Figures section ── */
+    .figures-section {
+      background: #202020;
+      border-bottom: 1px solid #3a3a3a;
+      padding: 12px 14px;
+      flex-shrink: 0;
+    }
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .05em;
+      color: #888;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .figures-grid {
+      display: grid;
+      grid-template-columns: auto 1fr 1fr;
+      gap: 3px 10px;
+      font-size: 12px;
+    }
+    .figures-grid .field-label { color: #888; }
+    .figures-grid .field-ocr   { color: #e0e0e0; font-family: monospace; }
+    .figures-grid .field-api   { color: #72c8a9; font-family: monospace; }
+    .anomaly-flag {
+      background: #ff6b35;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-top: 6px;
+      display: inline-block;
+    }
+
+    /* ── Confidence pills ── */
+    .pills {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+    .pill-ok   { background: #2d4a2d; color: #72c870; }
+    .pill-warn { background: #4a3a1a; color: #d4a017; }
+    .pill-bad  { background: #4a1a1a; color: #e06060; }
+
+    /* ── OCR text section ── */
+    .ocr-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+    .ocr-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: #202020;
+      border-bottom: 1px solid #3a3a3a;
+      flex-shrink: 0;
+    }
+    .ocr-header .section-title { margin: 0; }
+    .page-nav {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .page-nav button {
+      background: #333;
+      color: #e0e0e0;
+      border: 1px solid #555;
+      border-radius: 3px;
+      padding: 2px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .page-nav button:disabled { opacity: .4; cursor: default; }
+    .page-nav button:hover:not(:disabled) { background: #444; }
+    #page-indicator { font-size: 11px; color: #888; min-width: 60px; text-align: center; }
+
+    #ocr-text-content {
+      flex: 1;
+      padding: 12px 14px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 11.5px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      word-break: break-word;
+      color: #c8c8c8;
+      overflow-y: auto;
+    }
+
+    /* ── Missing / empty states ── */
+    .missing-msg {
+      padding: 24px;
+      color: #888;
+      font-size: 13px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+    }
+    .missing-msg strong { color: #cc8800; }
+    .missing-msg code { font-size: 11px; color: #666; word-break: break-all; }
+
+    /* ── Initial states ── */
+    #placeholder {
+      padding: 40px;
+      color: #555;
+      text-align: center;
+      font-size: 15px;
+    }
+    .loading { color: #4a9eff; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>BCTC Inspector</h1>
+  <span id="status-bar">Loading...</span>
+</header>
+
+<div class="controls">
+  <label for="doc-select">Document:</label>
+  <select id="doc-select">
+    <option value="">— select a document —</option>
+  </select>
+</div>
+
+<div class="split">
+
+  <!-- LEFT: PDF viewer -->
+  <div class="left-pane">
+    <div class="pane-header">Original PDF</div>
+    <div id="pdf-container">
+      <div id="placeholder">Select a document to view its PDF.</div>
+    </div>
+    <iframe id="pdf-iframe" title="PDF fallback viewer"></iframe>
+  </div>
+
+  <!-- RIGHT: Figures + OCR -->
+  <div class="right-pane">
+
+    <div class="figures-section" id="figures-section">
+      <div class="section-title">Parsed Financial Figures</div>
+      <div id="figures-content">
+        <div class="missing-msg">No document selected.</div>
+      </div>
+    </div>
+
+    <div class="ocr-section">
+      <div class="ocr-header">
+        <span class="section-title">OCR Text</span>
+        <div class="page-nav">
+          <button id="btn-prev-page" disabled>&#8249;</button>
+          <span id="page-indicator">—</span>
+          <button id="btn-next-page" disabled>&#8250;</button>
+        </div>
+      </div>
+      <div id="ocr-text-content">
+        <div class="missing-msg">No document selected.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script type="module">
+  // ── Configuration ────────────────────────────────────────────────────────
+  const BASE = "";  // Same origin — mcp-server port 3000
+
+  // pdf.js from CDN (pinned version)
+  const PDFJS_CDN = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.mjs";
+  const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.mjs";
+
+  // ── State ────────────────────────────────────────────────────────────────
+  let currentDocId = null;
+  let currentPage = 1;
+  let totalPages = 0;
+  let pdfjsLib = null;
+
+  // ── DOM refs ─────────────────────────────────────────────────────────────
+  const select        = document.getElementById("doc-select");
+  const statusBar     = document.getElementById("status-bar");
+  const pdfContainer  = document.getElementById("pdf-container");
+  const pdfIframe     = document.getElementById("pdf-iframe");
+  const figuresContent = document.getElementById("figures-content");
+  const ocrTextContent = document.getElementById("ocr-text-content");
+  const btnPrev       = document.getElementById("btn-prev-page");
+  const btnNext       = document.getElementById("btn-next-page");
+  const pageIndicator = document.getElementById("page-indicator");
+
+  // ── Load pdf.js from CDN ─────────────────────────────────────────────────
+  let pdfJsLoaded = false;
+  try {
+    const mod = await import(PDFJS_CDN);
+    pdfjsLib = mod;
+    pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+    pdfJsLoaded = true;
+  } catch (e) {
+    console.warn("pdf.js CDN failed — using iframe fallback.", e);
+  }
+
+  // ── Load document list ───────────────────────────────────────────────────
+  async function loadDocList() {
+    statusBar.textContent = "Loading documents...";
+    try {
+      const resp = await fetch(`${BASE}/api/bctc-inspect/docs`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data = await resp.json();
+      const items = data.items || [];
+
+      select.innerHTML = `<option value="">— select a document (${items.length}) —</option>`;
+      for (const item of items) {
+        const opt = document.createElement("option");
+        opt.value = item.doc_id;
+        const pdfFlag   = item.has_pdf ? "✓PDF" : "✗PDF";
+        const ocrFlag   = item.has_ocr ? "✓OCR" : "✗OCR";
+        const anomFlag  = item.anomaly_decimal_shift ? " ⚠ANOMALY" : "";
+        opt.textContent = `${item.label} [${pdfFlag} ${ocrFlag}]${anomFlag}`;
+        // Attach full item data for quick access
+        opt.dataset.item = JSON.stringify(item);
+        select.appendChild(opt);
+      }
+      statusBar.textContent = `${items.length} document(s) loaded.`;
+    } catch (err) {
+      statusBar.textContent = `Error loading list: ${err.message}`;
+      console.error(err);
+    }
+  }
+
+  // ── Document selection ───────────────────────────────────────────────────
+  select.addEventListener("change", async () => {
+    const docId = select.value;
+    if (!docId) {
+      resetPanes();
+      return;
+    }
+    currentDocId = docId;
+    currentPage = 1;
+
+    const selectedOpt = select.options[select.selectedIndex];
+    let item = null;
+    try { item = JSON.parse(selectedOpt.dataset.item || "null"); } catch { /* */ }
+
+    await Promise.all([
+      renderPdf(docId, item),
+      renderOcr(docId, 1),
+    ]);
+  });
+
+  // ── Render PDF (left pane) ───────────────────────────────────────────────
+  async function renderPdf(docId, item) {
+    pdfContainer.innerHTML = `<div class="loading">Loading PDF...</div>`;
+    pdfIframe.style.display = "none";
+
+    // Honest-degrade: no PDF on disk
+    if (item && item.has_pdf === false) {
+      pdfContainer.innerHTML = `
+        <div class="missing-msg">
+          <strong>PDF not available on disk.</strong>
+          <span>The stored path for this document was not found on the server's filesystem.</span>
+          <span>This document's extracted text and figures may still be available on the right.</span>
+        </div>`;
+      return;
+    }
+
+    const pdfUrl = `${BASE}/api/bctc-inspect/pdf/${encodeURIComponent(docId)}`;
+
+    if (pdfJsLoaded && pdfjsLib) {
+      try {
+        await renderWithPdfJs(pdfUrl);
+        return;
+      } catch (e) {
+        console.warn("pdf.js render failed — falling back to iframe:", e);
+      }
+    }
+
+    // CDN-with-iframe fallback
+    pdfContainer.style.display = "none";
+    pdfIframe.src = pdfUrl;
+    pdfIframe.style.display = "block";
+    pdfIframe.style.flex = "1";
+  }
+
+  async function renderWithPdfJs(pdfUrl) {
+    pdfContainer.innerHTML = "";
+
+    const resp = await fetch(pdfUrl);
+    if (!resp.ok) {
+      const body = await resp.json().catch(() => ({}));
+      pdfContainer.innerHTML = `
+        <div class="missing-msg">
+          <strong>PDF not available (${resp.status}).</strong>
+          ${body.stored_path ? `<code>${body.stored_path}</code>` : ""}
+        </div>`;
+      return;
+    }
+
+    const arrayBuffer = await resp.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const numPages = pdf.numPages;
+
+    pdfContainer.innerHTML = "";
+    // Render all pages (viewer scrolls)
+    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const viewport = page.getViewport({ scale: 1.4 });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      const ctx = canvas.getContext("2d");
+      await page.render({ canvasContext: ctx, viewport }).promise;
+      pdfContainer.appendChild(canvas);
+    }
+
+    pdfContainer.style.display = "flex";
+    pdfIframe.style.display = "none";
+  }
+
+  // ── Render OCR + Figures (right pane) ────────────────────────────────────
+  async function renderOcr(docId, page) {
+    ocrTextContent.textContent = "Loading...";
+    pageIndicator.textContent = "...";
+    btnPrev.disabled = true;
+    btnNext.disabled = true;
+
+    try {
+      const resp = await fetch(
+        `${BASE}/api/bctc-inspect/ocr/${encodeURIComponent(docId)}?page=${page}`,
+      );
+      if (!resp.ok) {
+        ocrTextContent.innerHTML = `<div class="missing-msg"><strong>Error loading OCR (${resp.status}).</strong></div>`;
+        renderFigures(null);
+        return;
+      }
+
+      const data = await resp.json();
+      totalPages = data.total_pages;
+      currentPage = data.page;
+
+      // Render figures (right pane top)
+      renderFigures(data.figures);
+
+      // Render OCR text
+      if (totalPages === 0) {
+        ocrTextContent.innerHTML = `
+          <div class="missing-msg">
+            <strong>No OCR text found for this document.</strong>
+            <span>The PDF may not have been processed by the OCR pipeline yet.</span>
+          </div>`;
+      } else if (!data.text_content) {
+        ocrTextContent.innerHTML = `<div class="missing-msg">Page ${page} has no text content.</div>`;
+      } else {
+        ocrTextContent.textContent = data.text_content;
+      }
+
+      // Page navigation
+      pageIndicator.textContent = totalPages > 0 ? `${currentPage} / ${totalPages}` : "—";
+      btnPrev.disabled = currentPage <= 1;
+      btnNext.disabled = !data.has_more;
+
+    } catch (err) {
+      ocrTextContent.innerHTML = `<div class="missing-msg"><strong>Error: ${err.message}</strong></div>`;
+      renderFigures(null);
+    }
+  }
+
+  function renderFigures(figures) {
+    if (!figures) {
+      figuresContent.innerHTML = `<div class="missing-msg">No figures data.</div>`;
+      return;
+    }
+
+    const fmt = (v) => v !== null && v !== undefined ? v.toLocaleString("en-US", { maximumFractionDigits: 4 }) : "—";
+    const pct = (v) => v !== null && v !== undefined ? `${v.toFixed(2)}%` : "—";
+    const conf = (v) => v !== null && v !== undefined ? (v * 100).toFixed(1) + "%" : "—";
+
+    const anomalyHtml = figures.anomaly_decimal_shift
+      ? `<div><span class="anomaly-flag">⚠ DECIMAL-SHIFT ANOMALY — net_profit deviates &gt;10× from API bridge</span></div>`
+      : "";
+
+    const ocrConfVal = figures.ocr_confidence;
+    const finConfVal = figures.confidence_financial;
+
+    function pillClass(v) {
+      if (v === null || v === undefined) return "pill-warn";
+      if (v >= 0.8) return "pill-ok";
+      if (v >= 0.5) return "pill-warn";
+      return "pill-bad";
+    }
+
+    figuresContent.innerHTML = `
+      ${anomalyHtml}
+      <div class="figures-grid" style="margin-top:${figures.anomaly_decimal_shift ? '8px' : '0'}">
+        <span class="field-label">Net Revenue</span>
+        <span class="field-ocr" colspan="2">${fmt(figures.net_revenue)} M VND</span>
+        <span></span>
+
+        <span class="field-label">Gross Profit</span>
+        <span class="field-ocr" colspan="2">${fmt(figures.gross_profit)} M VND</span>
+        <span></span>
+
+        <span class="field-label" style="color:#ff8c6b">Net Profit (OCR)</span>
+        <span class="field-ocr" style="color:${figures.anomaly_decimal_shift ? '#ff6b35' : '#e0e0e0'}">${fmt(figures.net_profit)} M VND</span>
+        <span></span>
+
+        <span class="field-label" style="color:#72c8a9">Net Profit (API)</span>
+        <span class="field-api">${fmt(figures.net_profit_api_bridge)} M VND</span>
+        <span></span>
+
+        <span class="field-label">Net Margin</span>
+        <span class="field-ocr" colspan="2">${pct(figures.net_margin_pct)}</span>
+        <span></span>
+      </div>
+      <div class="pills">
+        <span class="pill ${pillClass(ocrConfVal)}" title="OCR Confidence">OCR: ${conf(ocrConfVal)}</span>
+        <span class="pill ${pillClass(finConfVal)}" title="Financial Confidence">Fin: ${conf(finConfVal)}</span>
+        ${figures.extraction_confidence !== null ? `<span class="pill ${pillClass(figures.extraction_confidence)}" title="Extraction Confidence">Ext: ${conf(figures.extraction_confidence)}</span>` : ""}
+      </div>
+      <div style="font-size:11px;color:#555;margin-top:6px">Parsed: ${figures.parsed_at || "—"}</div>
+    `;
+  }
+
+  // ── Page navigation ──────────────────────────────────────────────────────
+  btnPrev.addEventListener("click", () => {
+    if (currentDocId && currentPage > 1) {
+      currentPage--;
+      renderOcr(currentDocId, currentPage);
+    }
+  });
+  btnNext.addEventListener("click", () => {
+    if (currentDocId && currentPage < totalPages) {
+      currentPage++;
+      renderOcr(currentDocId, currentPage);
+    }
+  });
+
+  // ── Reset ────────────────────────────────────────────────────────────────
+  function resetPanes() {
+    currentDocId = null;
+    pdfContainer.innerHTML = `<div id="placeholder">Select a document to view its PDF.</div>`;
+    pdfContainer.style.display = "flex";
+    pdfIframe.style.display = "none";
+    figuresContent.innerHTML = `<div class="missing-msg">No document selected.</div>`;
+    ocrTextContent.innerHTML = `<div class="missing-msg">No document selected.</div>`;
+    pageIndicator.textContent = "—";
+    btnPrev.disabled = true;
+    btnNext.disabled = true;
+    totalPages = 0;
+    currentPage = 1;
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────
+  await loadDocList();
+</script>
+</body>
+</html>

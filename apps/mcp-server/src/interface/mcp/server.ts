@@ -46,6 +46,12 @@ import { handleWebhook } from "./routes/webhookHandler.js";
 import { handlePushNews } from "./routes/pushNewsHandler.js";
 import { handleVpsNewsHealth } from "./routes/vpsNewsHealthHandler.js";
 import { handleNewsFetchLive } from "./routes/newsFetchLiveHandler.js";
+import {
+  handleBctcInspectPage,
+  handleBctcInspectDocs,
+  handleBctcInspectPdf,
+  handleBctcInspectOcr,
+} from "./routes/bctcInspectHandler.js";
 import { getAccuracyStats, getSystemAccuracyDigestStats } from "../../infrastructure/db/signalOutcomeStore.js";
 
 /**
@@ -294,6 +300,30 @@ export async function createBunServer(
     // ── GET /api/news-fetch/live — live DB inspection view (no auth) ─────────
     if (method === "GET" && pathname === "/api/news-fetch/live") {
       handleNewsFetchLive(req, res, db);
+      return;
+    }
+
+    // ── BCTC Inspector — Sprint PDF-INSPECT redo (SI-2 boundary) ─────────────
+    // GET /api/bctc-inspect                  — HTML viewer page
+    // GET /api/bctc-inspect/docs             — document list (financial_reports)
+    // GET /api/bctc-inspect/pdf/{doc_id}     — stream PDF bytes
+    // GET /api/bctc-inspect/ocr/{doc_id}     — OCR text pages (pdf_extracted_text)
+    if (method === "GET" && pathname === "/api/bctc-inspect") {
+      handleBctcInspectPage(req, res);
+      return;
+    }
+    if (method === "GET" && pathname === "/api/bctc-inspect/docs") {
+      handleBctcInspectDocs(req, res, db);
+      return;
+    }
+    if (method === "GET" && pathname.startsWith("/api/bctc-inspect/pdf/")) {
+      const docId = pathname.slice("/api/bctc-inspect/pdf/".length);
+      handleBctcInspectPdf(req, res, db, docId);
+      return;
+    }
+    if (method === "GET" && pathname.startsWith("/api/bctc-inspect/ocr/")) {
+      const docId = pathname.slice("/api/bctc-inspect/ocr/".length);
+      handleBctcInspectOcr(req, res, db, docId);
       return;
     }
 
