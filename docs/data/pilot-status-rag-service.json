@@ -22,52 +22,54 @@
   "language": "Python",
   "languageLockSource": "stays Python — sentence-transformers/LanceDB ML ecosystem constraint overrides Go-first default (scale charter §Deltas)",
   "languageLockedAt": "2026-05-24",
-  "phase": "0",
+  "phase": "1",
   "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status.",
   "phase0": {
-    "status": "OPEN",
+    "status": "CLOSED",
     "_status_enum": "[FIXED] Allowed values: OPEN | CLOSED",
     "openedAt": "2026-05-24T07:18:44Z",
     "openedBy": "po cycle-71 — user /goal directive: rag-service SCALE pilot Phase 0 opened. Phase 0 deliverables dispatched (brownfield+phase-1-plan → architect; dev agent/flow G12-gate → agent-father).",
-    "closedAt": null,
-    "closedBy": null,
+    "closedAt": "2026-05-24T07:38:00Z",
+    "closedBy": "po cycle-72 — all 7 phase0 deliverables verified DONE (architect 8c7d8ca8 + 5bdb59c6, agent-father 0b5ef802). Files spot-checked present, bug-inventory rag_service_baseline=1.5 present. Exit gate CLOSED, Phase 1 opened.",
     "owner": "architect (brownfield inventory + bug-inventory entry + Phase 1 task plan) + agent-father (dev-rag-service agent verify + flow G12-gate bake)",
     "deliverables": {
       "_note": "SCALE MODEL — thin charter only (docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-charter.md). NO per-service factory dir spin-up (unlike macro pilot-2). Thin charter captures deltas + Key risks; canonical G1-G12 inherited verbatim from docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md. Brownfield inventory + Phase 1 task plan land as standalone briefs under docs/architecture-briefs/2026-05-22-refactor/scale/ or docs/handoffs/ per architect choice.",
       "factory_charter_or_thin": "DONE 2026-05-24T06:49:21Z (thin: docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-charter.md)",
       "pilot_status_ssot": "DONE 2026-05-24T06:49:21Z (this file)",
-      "brownfield_inventory": "PENDING",
-      "bug_inventory_entry": "PENDING",
+      "brownfield_inventory": "DONE 2026-05-24 commit 8c7d8ca8 — docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-brownfield-inventory.md (23970 bytes; G5 rewire surface + SI-4 fence decision + shared sandbox-runner gap §8)",
+      "bug_inventory_entry": "DONE 2026-05-24 commit 8c7d8ca8 — docs/data/bug-inventory.json rag_service_baseline key (baselineCycleCount=1.5 system-wide fallback; 1 infra-ops bug, zero domain bugs in 60d window)",
       "dev_agent_file": "DONE 2026-05-24 commit 0b5ef802 — calibrated: Python lock, three-tier refactor capabilities, determinism+env-audit constraints, lazy-load pilot refs",
       "dev_agent_flow_file": "DONE 2026-05-24 commit 0b5ef802 — G12 DoD gate baked (sandbox-green + env-audit-empty before RETURN, evidence paste mandatory); Language Mode, Smoke Checks, Security Rule, Fence Rules, Pre-Revert Tag Protocol added",
-      "phase_1_task_plan": "PENDING"
+      "phase_1_task_plan": "DONE 2026-05-24 commit 8c7d8ca8 — docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-1-task-plan.md (26511 bytes; P1-A sandbox runner → P1-B similarity-scorer → P1-C retrieval module stub → P1-E dashboard stub; WIP=1; determinism gate in every AC)"
     },
     "exit_gate": {
-      "all_deliverables_landed": false,
+      "all_deliverables_landed": true,
       "pilot_status_phase_0_fields_populated": true,
       "no_code_in_service_pkg_yet": true,
-      "exit_gate_status": "OPEN",
-      "closedAt": null,
-      "verification_commit_sha_architect": null,
-      "verification_signal": null
+      "exit_gate_status": "CLOSED",
+      "closedAt": "2026-05-24T07:38:00Z",
+      "verification_commit_sha_architect": "8c7d8ca8",
+      "verification_signal": "docs/signals/architect-rag-service-phase0-done-20260524T073203Z.json"
     }
   },
   "phase1": {
     "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 0 closes. Expand on Phase 0 exit.",
-    "status": "NOT-STARTED",
+    "status": "ACTIVE",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
-    "openedAt": null,
-    "openedBy": null,
+    "openedAt": "2026-05-24T07:38:00Z",
+    "openedBy": "po cycle-72 — Phase 0 exit gate CLOSED (all 7 deliverables landed, architect 8c7d8ca8). Phase 1 OPEN. Task ledger: P1-A sandbox runner (shared w/ pdf-extractor) → P1-B similarity-scorer → P1-C retrieval module stub → P1-E dashboard stub. G12 streak = P1-B+C+E. WIP=1. First dispatch: P1-A to dev-rag-service.",
     "gateVerdict": null,
     "gateVerifiedAt": null,
     "gateVerifiedBy": null,
     "gateCommit": null,
     "gateDecisionDoc": null,
     "gateSignal": null,
-    "skeleton_in": "<SERVICE:path to phases doc §Phase 1 — e.g. docs/architecture-briefs/2026-05-23-<svc>-factory/07-phases.md §Phase 1>",
-    "task_plan": "<SERVICE:path to Phase 1 task plan doc>",
+    "skeleton_in": "docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-1-task-plan.md §Task Ledger",
+    "task_plan": "docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-1-task-plan.md",
     "wip_limit": 1,
-    "progress_notes": []
+    "progress_notes": [
+      "2026-05-24T07:38:00Z po cycle-72 — Phase 1 opened. P1-A (Python sandbox runner) is first dispatch, owner dev-rag-service. P1-A is the shared sandbox-runner gap: rag-service builds first, pdf-extractor P1-A BLOCKED until dev-rag-service emits rag-service-sandbox-runner-ready signal. WIP=1: P1-B cannot start until P1-A proven."
+    ]
   },
   "phase2": {
     "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 1 gate passes.",
