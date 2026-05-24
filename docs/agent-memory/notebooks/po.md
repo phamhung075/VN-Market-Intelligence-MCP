@@ -1,37 +1,33 @@
 # PO Notebook
 
-**Cycle:** c282 cycle-63 (stock-price Phase-1 GO RATIFIED + Phase-2 AUTHORIZED + pilot-5 WIP HOLD)
-**Last update:** 2026-05-23T23:46:47Z
-**Status:** QA returned GO on stock-price (pilot-3) Phase-1 close-gate. Independently re-verified → RATIFIED. Phase-2 entry authorized → architect drafts plan. pilot-5 (alert-engine) ruled HOLD (WIP=2 binds). Decision doc + 2 signals emitted.
+**Cycle:** c282 cycle-64 (kinh-dich pilot-4 Phase-1 close-gate → fix-then-clean-GO)
+**Last update:** 2026-05-24T01:03:15Z
+**Status:** QA returned CONDITIONAL-GO (3/4) on kinh-dich Phase-1. Ruled fix-then-clean-GO: authorize P1-KD-H dashboard fix → QA AC-2 re-verify → clean full GO. Decision doc + signal emitted. goalsEarned=0, decisionMatrix all-TBD (unchanged).
 
 ---
 
-## This cycle (cycle-63) — 3 rulings
+## This cycle (cycle-64) — 1 ruling
 
-**Decision doc:** `docs/po-decisions/2026-05-24-stock-price-phase1-gate-ratify-phase2-authorize-pilot5-wip-ruling.md`
-**Signals:** `po-stock-price-phase2-authorize-20260523T234647Z.json` (→architect), `po-pilot5-alert-engine-wip-hold-20260523T234647Z.json` (→fleet-record)
-**QA signal:** `qa-stock-price-phase1-close-gate-20260523T234229Z.json` (commit 56fab996). HEAD at decision = 9534c117.
+**Decision doc:** `docs/po-decisions/2026-05-24-kinh-dich-phase1-close-gate-fix-then-clean-go.md`
+**Signal:** `docs/signals/po-kinh-dich-phase1-fix-then-clean-go-20260524T010315Z.json` (→ pm)
+**QA signal consumed:** `qa-kinh-dich-phase1-close-gate-20260524T060000Z.json` + evidence `TASK_P1-KD-G-evidence.md`. HEAD at decision = `2474b873`.
 
-### D1 — RATIFIED (GO sound)
-Re-verified independently: AC-1 sandbox 11/11 green (CGO_ENABLED=0); AC-2 dashboard 5/5, self-contained, honest NOT-RUN; AC-3 G12 streak 3/3; AC-4 R-CGO fence 0 matches. Anchor `debba8e…` ancestor of HEAD (exit 0), 0 tags. decisionMatrix empty (§4.5 OK).
-**G-goal posture (NO flips, goalsEarned=0):**
-- EARNED-PENDING: G1 G2 G6 G7 G8 G12
-- STILL-UNMET (Phase-2): G3 G4 G5 G9 G10 G11
-Did NOT touch pilot-status-stock-price.json (PM-owned). 12/12 terminal flip is later Phase-3 (PO-only).
-
-### D2 — Phase-2 AUTHORIZED
-No phase-2-task-plan-go.md exists (only charter + p0-brownfield + phase-1 plan). Dispatch → **architect** drafts `phase-2-task-plan-go.md`. Scope: G4 fence+violation proof+pre-ci tag, G5a/b/c deprecate+rewire MCP→HTTP 5010, G6/SI-2 fleet index (dev-stock-price OWNS docs/dashboards/index.html), G8/G9(Playwright Path B)/G10/G11, G3/G7/G12 finalize. PO did NOT author plan.
-
-### D3 — pilot-5 HOLD (Option a)
-WIP=2 counts ACTIVE charters. {stock-price Phase 2, kinh-dich Phase 1} = 2 = AT cap. Rejected "Phase-2 = lighter slot" (Phase 2 is heaviest). Unblock: pilot-5 opens ONLY when stock-price OR kinh-dich hits terminal 12/12 (DONE, matrix populated, CLOSED). Non-terminal phase boundaries free nothing. On unblock: charter alert-engine (Go, port 5006, zone apps/alert-engine, dev-alert-engine).
+### Ruling — fix-then-clean-GO (not straight CONDITIONAL-GO into P2)
+- Re-verified all 4 criteria. PASS: AC-1 sandbox 14/14, AC-3 G12 6/6, AC-4 R-FENCE, AC-5 clean, AC-6 honest NOT-RUN. FAIL: AC-2 dashboard 83% (5/6).
+- Root cause confirmed by direct read: `grep -c reading-scorer dashboard/index.html`=0; line 855 = "3 pure TypeScript functions"; `__PRIMITIVES_DATA__` (L1059) omits reading-scorer's 3 scenarios. P1-F (`43158e5c`) shipped the 4th primitive but had zero dashboard scope.
+- Material (not cosmetic): violates program goal "dashboard revealing functions of his microservice server" + P1-G handoff's own 6/6 bar. "Ship completion, not slices" → fix the ~15-min gap now vs carry honest-RED across Phase 2.
+- **Authorized P1-KD-H** (owner dev-kinh-dich, zone apps/kinh-dich-service, single file dashboard/index.html, AC-H1..H6, G12 DoD applies). Then QA AC-2-only re-verify → clean full GO, phase1→APPROVED.
+- Charter §4.5: NO G-goal flips. goalsEarned=0. decisionMatrix all-TBD. Did NOT touch PM-owned `pilot-status-kinh-dich.json`. Did NOT author handoff (PM's step). Did NOT spawn agents.
+- Anchor `debba8e…` re-verified ancestor of HEAD (exit 0), untouched.
 
 ---
 
 ## Carry-over (next cycle)
 
-- **NEXT:** main router → architect drafts stock-price `phase-2-task-plan-go.md` (per po-stock-price-phase2-authorize signal). PM owns SSOT phase2 transition (NOT PO).
-- **In parallel:** kinh-dich (pilot-4) Phase 1 in flight (PM sequencing P1-C). WIP=2 holds.
-- **WIP=2 cap:** {stock-price Phase 2, kinh-dich Phase 1} ACTIVE. pilot-5 (alert-engine) HOLD until one hits terminal 12/12.
+- **NEXT:** main router → PM (1) update SSOT pilot-status-kinh-dich.json (close-gate=fix-then-clean-GO, hold phase1=READY_FOR_CLOSE_GATE, add P1-KD-H + QA AC-2 follow-up), (2) author TASK_P1-KD-H.md. Then router fans out dev-kinh-dich.
+- **On P1-KD-H DONE:** QA AC-2-only re-verify (6/6=100%, honest NOT-RUN, self-contained). On PASS → PO records kinh-dich Phase-1 clean full GO.
+- **Phase-2 NOT authorized** here — separate later ruling once phase1 APPROVED. Still bound by WIP=2 cap {stock-price Phase 2, kinh-dich Phase 1}.
+- **Parallel:** stock-price (pilot-3) Phase-2 plan being drafted by architect (cycle-63 authorize). pilot-5 (alert-engine) HOLD until stock-price OR kinh-dich hits terminal 12/12.
 - **decisionMatrix** stays empty on all active pilots until 12/12 terminal (§4.5). PO flips G-goals only at terminal atomic close.
-- **Do NOT touch:** frozen anchor debba8e… (no retag/push), pilot-status.json (TA), pilot-status-macro-indicators.json (closed), DORMANT apps/technical-analysis/** + apps/macro-indicators/**, PM-owned stock-price + kinh-dich SSOTs.
-- **Deferred prework triggers:** SI-2 owner=dev-stock-price at G6 (Phase 2); SI-5 (dev-news-fetch) pre-pilot-6; SI-4 (Python fence) pre-pilot-7.
+- **Do NOT touch:** frozen anchor debba8e… (no retag/push), PM-owned SSOTs, foreign pilots apps/{technical-analysis,macro-indicators,stock-price}/**, DORMANT TA+macro.
+- **Single-committer serialization** active fleet-wide: stage ONLY own explicit paths, check `git diff --cached --name-only` before staging, WAIT on foreign paths (never reset them).
