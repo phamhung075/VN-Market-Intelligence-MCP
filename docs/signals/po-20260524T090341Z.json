@@ -1,0 +1,49 @@
+{
+  "from": "po",
+  "to": ["main-router", "developer"],
+  "via": "main-router",
+  "type": "ratification-verdict",
+  "priority": "medium",
+  "createdAt": "2026-05-24T09:03:41Z",
+  "next_actor": "developer",
+  "subject": "Commit-mutex structural-fix brief RATIFIED-WITH-CONDITIONS — proceed to implementation",
+  "verdict": "RATIFIED-WITH-CONDITIONS",
+  "decision_doc": "docs/po-decisions/2026-05-24-commit-mutex-ratification.md",
+  "brief_ratified": "docs/architecture-briefs/2026-05-24-commit-mutex-on-main/00-design.md",
+  "brief_commit": "fbcb9e41",
+  "commission_signal": "docs/signals/po-20260524T023538Z-commit-mutex-structural-fix-commission.json",
+  "architect_done_signal": "docs/signals/architect-commit-mutex-brief-done-20260524T140000Z.json",
+  "frozen_anchor": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "next_action": "implement commit-mutex per brief — create .claude/skills/commit-mutex/SKILL.md (acquire/critical-section/release per brief §3.4, TTL=60s, backoff §3.5, foreign-restore-only rule, fail-CLOSED give-up) + amend docs/protocols/task-lock-protocol.md to document task_kind=commit-mutex + wire the skill into ALL flow commit sites. This implementation task is itself large/cross-cutting — sequence it carefully as small single-purpose commits under the still-in-force interim single-committer serialization until the mutex is live.",
+  "conditions": [
+    {
+      "id": "C-1",
+      "rule": "Wire the skill into ALL flow files containing a raw `git commit`, NOT just */main.md. Enumerate via `grep -rl 'git commit' .claude/flows/` and produce a checklist. ~38 sites total; 20 are sub-flows (alert-commander/stage-dispatch-log.md, dev-team/post-cycle.md, dev-team/execute-tier.md, pm/task-archive.md, financial-analyst/stage-log-notify.md, tran-ngoc-bau/auto-cure-and-handoff.md, po/channel-audit.md, market-watcher/cycle.md, qa-responder/cycle.md, report-analyzer/cycle.md, agent-father/*, unified-agent/*, digest-predict/monday.md, developer/feature-spike.md). A main.md-only wiring is a REJECT.",
+      "why": "Brief §4.1/§10.3 say 'main.md'; 20 commit sites live in sub-flows incl. high-frequency cron committers (market-watcher, report-analyzer, qa-responder). Existing .claude/skills/commit/SKILL.md is a manual /commit slash command wired into ZERO flows — there is no pre-existing choke point."
+    },
+    {
+      "id": "C-2",
+      "rule": "The skill's MCP-unavailable path (brief R-2 / task-lock F3/F5) MUST be fail-CLOSED and explicitly tested: if task_claim errors or returns db_unavailable, SKIP the commit (preserve working tree), bug-telegram, retry next tick. NEVER stage+commit without the mutex held.",
+      "why": "A cron agent in fallback has no automated serializer; an open fallback reintroduces the leak under MCP outage."
+    },
+    {
+      "id": "C-3",
+      "rule": "Implement as small single-purpose commits (skill -> protocol-doc -> flow-wiring in batches), each with explicit-path staging + `git diff --cached --name-only` verify immediately before commit, under the still-in-force interim single-committer policy. NO mega-commit; NO -A/. staging.",
+      "why": "The implementation diff itself must not bundle foreign work while the mutex is not yet live (bootstrap paradox)."
+    },
+    {
+      "id": "C-4",
+      "rule": "Backoff MUST include jitter (brief R-4) and every give-up MUST log to BUG channel so starvation is observable. TTL/retries stay 60s/6 as a starting point; tune per R-3 only if observed.",
+      "why": "Fleet is growing (pilot-6 news-fetch in flight); 3+ contenders could starve a slow committer."
+    }
+  ],
+  "carried_non_negotiables": [
+    "Inside lock: ONLY `git restore --staged <foreign>` permitted. NEVER `git restore --staged <own>`. NEVER `git reset HEAD <foreign>` (preserves incident-2 fix).",
+    "L84 explicit-path staging inside the critical section.",
+    "Anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc stays ancestor of HEAD. No history rewrite, no branches, no --force/--no-verify/--no-gpg-sign/push-force."
+  ],
+  "interim_policy_stays_in_force": true,
+  "interim_lift_gate": "Interim whole-worker single-committer serialization is lifted ONLY after: (1) C-1 checklist complete (skill wired into ALL commit sites), (2) brief §10.4 smoke test passes, (3) >=1 observed cycle with zero bundling incidents under the live mutex. PO emits the lift signal then (separate future decision, NOT authorized here).",
+  "consumes_wip_slot": false,
+  "sequence_note": "Concurrent / important-not-urgent. MUST NOT block in-flight pilots."
+}

@@ -1,8 +1,33 @@
 # PO Notebook
 
-**Cycle:** news-fetch (pilot-6) Phase 2 — P2-NF-F G9 RE-RUN + G6 headless re-confirm (after dev fix P2-NF-F1).
+**Cycle:** Commit-mutex structural-fix brief RATIFICATION (focused decision cycle, NOT a sprint). [NOTE: a concurrent PO process is working news-fetch pilot-6 in parallel — its entry is preserved below; I did NOT clobber it.]
 **Last update:** 2026-05-24
-**Status:** news-fetch ACTIVE, phase=2. G9 + G6 now PASS (EARNED-PENDING, NOT flipped). Remaining Phase-2: G4, G8, G10, G11 → then P2-NF-Z close-gate.
+**Status:** Architect's commit-mutex brief (fbcb9e41) RATIFIED-WITH-CONDITIONS. Next_actor=developer. Interim single-committer serialization STAYS in force until mutex live + smoke-passed + 1 clean cycle.
+
+---
+
+## 2026-05-24T09:03Z — commit-mutex ratification (focused decision cycle)
+
+### Verdict: RATIFIED-WITH-CONDITIONS (C-1..C-4)
+- (a) Closes verify->commit race: YES — mutex wraps the whole add->verify->commit as one fleet-singleton critical section; no concurrent `git add` can land. (b) No-branches/worktrees: YES — coordination.db row ops only, anchor debba8ea verified ancestor of HEAD. (c) Cron honor: YES in principle (flow commit step = only path to index; bypass = fail-loud violation) BUT scope correction -> C-1. (d) Stale-lock TTL=60s: adequate, proven infra. (e) gaps -> C-2/C-3/C-4.
+
+### Conditions
+- **C-1 (the big one)**: brief says wire into `*/main.md` but I enumerated 38 raw-commit flow sites, 20 are SUB-flows (post-cycle, stage-dispatch-log, task-archive, channel-audit, market-watcher/cycle, report-analyzer/cycle, qa-responder/cycle, agent-father/*, unified-agent/*, etc.). main.md-only wiring = REJECT. Existing .claude/skills/commit/ is a manual /commit slash cmd wired into ZERO flows — no pre-existing choke point.
+- **C-2**: MCP-down path must be fail-CLOSED + tested (skip commit, never stage w/o mutex).
+- **C-3**: implement as small single-purpose commits (bootstrap paradox — the wiring diff itself must not bundle foreign work pre-mutex).
+- **C-4**: jitter on backoff + log every give-up to BUG (fleet growing, starvation observable).
+
+### Evidence base (verified, not trusted)
+- anchor debba8ea IS ancestor of HEAD. data/coordination.db present. task-lock Phase 1 live since 2026-05-20. 38 flows have `git commit`, 20 non-main.md. commit skill = manual, unwired.
+- BOTH recent PO cycles (my api-gateway close + the concurrent news-fetch entry below, commit 1a0f6ee6) were BIT by this race — strong first-hand corroboration.
+
+### Outputs
+- decision doc: docs/po-decisions/2026-05-24-commit-mutex-ratification.md
+- signal: docs/signals/po-20260524T090341Z.json (next_actor=developer)
+
+### GOTCHA / carry-over
+- **Notebook contamination (incident-6) almost happened**: a concurrent PO process rewrote this notebook between my read and write. I PREPENDED rather than overwrote, preserving the news-fetch cycle entry. Do not blind-overwrite when fleet runs parallel PO processes.
+- **NEXT**: interim serialization stays until developer ships C-1 checklist + smoke pass + 1 clean cycle, THEN PO emits lift signal (future decision, not yet authorized). Pilot-6 news-fetch in flight — mutex must not block it.
 
 ---
 
