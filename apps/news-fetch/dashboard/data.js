@@ -2,12 +2,12 @@
 // Inline sidecar: replaces XHR for file:// compatibility (zero CORS).
 // Regenerate: bun run src/sandbox/runner.ts --tier=all --module=news-fetch --scenario=all --output=dashboard/results.json
 window.__NEWS_FETCH_DATA__ = {
-  "runAt": "2026-05-24T09:09:09.463Z",
+  "runAt": "2026-05-24T09:11:31.139Z",
   "tier": "all",
   "module": "news-fetch",
   "totals": {
-    "pass": 12,
-    "fail": 1,
+    "pass": 13,
+    "fail": 0,
     "error": 0
   },
   "results": [
@@ -49,10 +49,9 @@ window.__NEWS_FETCH_DATA__ = {
     },
     {
       "file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/scenarios/news-fetch/primitives/published-at-parser/edge.json",
-      "status": "FAIL",
+      "status": "PASS",
       "primitive": "published-at-parser",
-      "scenarioType": "edge",
-      "diff": "expected: \"2026-05-22T00:00:00.000Z\" | got: \"2026-05-22T07:00:00.000Z\""
+      "scenarioType": "edge"
     },
     {
       "file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/scenarios/news-fetch/primitives/published-at-parser/failure.json",
