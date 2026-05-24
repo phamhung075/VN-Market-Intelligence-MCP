@@ -1,0 +1,19 @@
+{
+  "primitive": "reading-scorer",
+  "tier": "primitive",
+  "name": "reading-scorer-edge",
+  "description": "Edge cases: mixed diacritic/ASCII forms, tie in majority vote, unrecognised trend keyword, empty action text.",
+  "input": {
+    "outcomeTexts": ["HOI — Nhỏ hối", "LE", "CAT"],
+    "trendTexts": ["TRUNG TINH — Không rõ", "UNKNOWN TREND"],
+    "actionTexts": ["", "CHỜ — chờ đợi"],
+    "voteInput": ["GIU", "CHO"]
+  },
+  "expected": {
+    "outcomeScores": [-0.15, -0.1, 0.3],
+    "trendScores": [0.0, 0.0],
+    "actions": ["GIU", "CHO"],
+    "majorityAction": "GIU"
+  },
+  "notes": "Empty action string defaults to GIU; unknown trend defaults to 0.0; tied majority returns first counted (GIU)."
+}

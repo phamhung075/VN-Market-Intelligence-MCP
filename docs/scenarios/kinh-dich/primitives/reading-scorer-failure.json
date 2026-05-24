@@ -1,0 +1,20 @@
+{
+  "primitive": "reading-scorer",
+  "tier": "primitive",
+  "name": "reading-scorer-failure",
+  "description": "Failure / boundary inputs: empty arrays, all-unknown keywords, and majority vote on empty list — all should resolve to safe defaults (Option A: no exceptions thrown).",
+  "input": {
+    "outcomeTexts": ["", "UNKNOWN_OUTCOME_XYZ_999"],
+    "trendTexts": ["", "GIBBERISH TREND TEXT 9999"],
+    "actionTexts": ["GIBBERISH_ACTION_TEXT_999"],
+    "voteInput": []
+  },
+  "expected": {
+    "outcomeScores": [0.0, 0.0],
+    "trendScores": [0.0, 0.0],
+    "actions": ["GIU"],
+    "majorityAction": "GIU"
+  },
+  "expect_error": false,
+  "notes": "Input Validation Strategy: Option A (return default). No exceptions thrown for unknown inputs. Empty voteInput returns GIU."
+}

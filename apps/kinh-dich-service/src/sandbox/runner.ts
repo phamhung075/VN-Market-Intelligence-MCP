@@ -19,6 +19,12 @@ import { resolve, join } from 'path';
 import { resolveHexagram } from '../primitive/hexagram-resolver/index.js';
 import { classifyNguHanh } from '../primitive/ngu-hanh-classifier/index.js';
 import { encodeHaos } from '../primitive/hao-encoder/index.js';
+import {
+  extractOutcomeScore,
+  extractTrendScore,
+  extractAction,
+  majorityVote,
+} from '../primitive/reading-scorer/index.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -279,6 +285,107 @@ function runHaoEncoderScenario(fileName: string, scenario: ScenarioFile): Scenar
   }
 }
 
+/**
+ * Execute a reading-scorer scenario.
+ * Dispatched when scenario.primitive === 'reading-scorer'.
+ *
+ * Input shape:
+ *   input.outcomeTexts  string[]   — fed to extractOutcomeScore()
+ *   input.trendTexts    string[]   — fed to extractTrendScore()
+ *   input.actionTexts   string[]   — fed to extractAction()
+ *   input.voteInput     string[]   — fed to majorityVote()
+ *
+ * Expected shape (all optional; omit to skip assertion):
+ *   expected.outcomeScores  number[]
+ *   expected.trendScores    number[]
+ *   expected.actions        string[]
+ *   expected.majorityAction string
+ */
+function runReadingScorerScenario(fileName: string, scenario: ScenarioFile): ScenarioResult {
+  const input = scenario.input as Record<string, unknown>;
+  const expected = scenario.expected as Record<string, unknown> | undefined;
+
+  const outcomeTexts = (input['outcomeTexts'] as string[] | undefined) ?? [];
+  const trendTexts   = (input['trendTexts']   as string[] | undefined) ?? [];
+  const actionTexts  = (input['actionTexts']  as string[] | undefined) ?? [];
+  const voteInput    = (input['voteInput']    as string[] | undefined) ?? [];
+
+  try {
+    // Compute all outputs
+    const outcomeScores  = outcomeTexts.map(extractOutcomeScore);
+    const trendScores    = trendTexts.map(extractTrendScore);
+    const actions        = actionTexts.map(extractAction);
+    const majorityAction = majorityVote(voteInput);
+
+    // Assertions against expected (all optional)
+    if (expected !== undefined) {
+      const expOutcomeScores = expected['outcomeScores'] as number[] | undefined;
+      if (Array.isArray(expOutcomeScores)) {
+        for (let i = 0; i < expOutcomeScores.length; i++) {
+          if (outcomeScores[i] !== expOutcomeScores[i]) {
+            return {
+              file: fileName,
+              status: 'FAIL',
+              error: `outcomeScores[${i}]: expected ${expOutcomeScores[i]} but got ${outcomeScores[i]}`,
+              output: { outcomeScores, trendScores, actions, majorityAction },
+            };
+          }
+        }
+      }
+
+      const expTrendScores = expected['trendScores'] as number[] | undefined;
+      if (Array.isArray(expTrendScores)) {
+        for (let i = 0; i < expTrendScores.length; i++) {
+          if (trendScores[i] !== expTrendScores[i]) {
+            return {
+              file: fileName,
+              status: 'FAIL',
+              error: `trendScores[${i}]: expected ${expTrendScores[i]} but got ${trendScores[i]}`,
+              output: { outcomeScores, trendScores, actions, majorityAction },
+            };
+          }
+        }
+      }
+
+      const expActions = expected['actions'] as string[] | undefined;
+      if (Array.isArray(expActions)) {
+        for (let i = 0; i < expActions.length; i++) {
+          if (actions[i] !== expActions[i]) {
+            return {
+              file: fileName,
+              status: 'FAIL',
+              error: `actions[${i}]: expected ${expActions[i]} but got ${actions[i]}`,
+              output: { outcomeScores, trendScores, actions, majorityAction },
+            };
+          }
+        }
+      }
+
+      const expMajority = expected['majorityAction'] as string | undefined;
+      if (expMajority !== undefined && majorityAction !== expMajority) {
+        return {
+          file: fileName,
+          status: 'FAIL',
+          error: `majorityAction: expected ${expMajority} but got ${majorityAction}`,
+          output: { outcomeScores, trendScores, actions, majorityAction },
+        };
+      }
+    }
+
+    return {
+      file: fileName,
+      status: 'PASS',
+      output: { outcomeScores, trendScores, actions, majorityAction },
+    };
+  } catch (err) {
+    if (scenario.expect_error === true) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      return { file: fileName, status: 'PASS', output: { error: errMsg } };
+    }
+    return { file: fileName, status: 'FAIL', error: `Unexpected error: ${err}` };
+  }
+}
+
 // ── Scenario execution ────────────────────────────────────────────────────────
 
 function runScenario(filePath: string): ScenarioResult {
@@ -318,6 +425,10 @@ function runScenario(filePath: string): ScenarioResult {
 
   if (scenario.primitive === 'hao-encoder') {
     return runHaoEncoderScenario(fileName, scenario);
+  }
+
+  if (scenario.primitive === 'reading-scorer') {
+    return runReadingScorerScenario(fileName, scenario);
   }
 
   // Fallback: well-formed scenario with no known primitive → structural PASS.

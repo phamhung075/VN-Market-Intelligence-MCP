@@ -1,0 +1,19 @@
+{
+  "primitive": "reading-scorer",
+  "tier": "primitive",
+  "name": "reading-scorer-golden",
+  "description": "Happy path: well-known outcome strings, trend strings, action texts, and a majority vote with clear winner.",
+  "input": {
+    "outcomeTexts": ["Đại CÁT — Hanh thông", "HUNG — Hung hãn", "VÔ CỬU"],
+    "trendTexts": ["Thuận Lợi — Thị trường tăng", "BẤT LỢI — Thị trường giảm"],
+    "actionTexts": ["Tiến — Mua vào", "Lui — Bán ra", "Giữ vững"],
+    "voteInput": ["MUA", "MUA", "GIU", "BAN"]
+  },
+  "expected": {
+    "outcomeScores": [0.3, -0.3, 0.0],
+    "trendScores": [0.5, -0.5],
+    "actions": ["MUA", "BAN", "GIU"],
+    "majorityAction": "MUA"
+  },
+  "notes": "All golden-path inputs resolve to known values; majority is MUA with count=2."
+}
