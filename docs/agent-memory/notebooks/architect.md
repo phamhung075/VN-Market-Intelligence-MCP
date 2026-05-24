@@ -1,6 +1,52 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 03:00 UTC (kinh-dich Phase-2 task plan, 14 tasks / 77 ACs) | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 04:00 UTC (alert-engine pilot-5 charter + Day-0 SSOT scaffold) | **Sprint:** fleet-factory-rollout program
+
+## alert-engine pilot-5 charter cycle (2026-05-24T04:00Z) — fleet pilot 5 Day 0
+
+**Task:** Author alert-engine factory charter v2.0 and instantiate Day-0 SSOT. Authorization: `po-20260524T023538Z-alert-engine-pilot5-charter.json`.
+
+**Service facts (jq-verified):** port=5006 (internal==external), zone=apps/alert-engine/, language=Go, runtime=go1.22+cgo, specialist=dev-alert-engine, DB=alert_engine.db.
+
+**Brownfield scan findings:**
+- All 4 DDD layers present. `domain/services.go` is 151 lines — already remarkably clean: 3 pure functions (ComputeFingerprint/djb2, IsDuplicate, ShouldSuppressAlert). Zero infra imports in domain or application layers.
+- Infrastructure: sqlite.go uses mattn/go-sqlite3 (CGO), telegram.go uses net/http Telegram Bot API with 4 env vars (TELEGRAM_BOT_TOKEN + 3 chat IDs loaded from config.go).
+- NO pkg/primitive/, NO pkg/module/, NO cmd/sandbox/, NO dashboard/ — RED verdict.
+- G7 ZERO-CREDS is the headline risk: Telegram credentials must never appear in sandbox environment, scenario JSON, or primitive/module path.
+- CGO boundary identical to stock-price: mattn/go-sqlite3 must not leak into primitive/module/sandbox; CGO_ENABLED=0 sandbox build proves fences.
+
+**G1 primitives (3-5 band — narrowest domain yet):**
+1. `signal-classifier` — severity string → AlertSeverity + channel selection (inlined in evaluate.go L126-130)
+2. `dedup-key-builder` — ComputeFingerprint extracted as standalone primitive with scenarios
+3. `cooldown-gate` — ShouldSuppressAlert extracted; inject `now` as param for determinism
+4. `duplicate-checker` — IsDuplicate wrapper (6 lines, needs scenario coverage)
+5. `alert-formatter` — Sprintf formatter inlined in evaluate.go L130 (optional, Phase 0 confirms)
+
+**G7 zero-creds calibration (HEADLINE RISK):**
+- Env audit: `env | grep -iE "TELEGRAM|BOT_TOKEN|CHAT_ID|TOKEN|SECRET|API_KEY|PASSWORD"` must return empty.
+- Scenario JSON grep: `grep -rniE "token|chat_id|bot|secret|api_key|password" apps/alert-engine/cmd/sandbox/` must return 0.
+- Sandbox: CGO_ENABLED=0 build exits 0.
+- Edit→rerun cycle: works end-to-end.
+- All 4 sub-gates required for G7 PASS.
+
+**Key design decisions:**
+- Module: `alert_pipeline` (single module, mute_gate deferred post-pilot).
+- SI-2 boundary HARD: alert-engine builds ONLY apps/alert-engine/dashboard/index.html. docs/dashboards/index.html is stock-price-EXCLUSIVE. HTML comment baked into dashboard source.
+- Pre-revert tags: alert-engine-pre-ci → alert-engine-pre-delete → alert-engine-pre-inject.
+- Frozen anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc must remain ancestor of HEAD.
+- Fleet-wide single-committer serialization noted in charter Execution Notes.
+- Next actor = architect (Phase-1 task plan). main-router fans out via signal.
+
+**SSOT check:** python3 dup-key check → "OK — day-0 scaffold clean: goalsEarned=0, 12 goals TBD, dm all-TBD"
+
+**Files authored this cycle (L84 — 3 files):**
+1. `docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md` (NEW)
+2. `docs/data/pilot-status-alert-engine.json` (NEW — git add -f for gitignored SSOT)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Signal to emit after commit:** `docs/signals/architect-alert-engine-charter-done-<UTC>.json`
+
+---
 
 ## kinh-dich Phase-2 task plan cycle (2026-05-24T03:00Z) — fleet pilot 4 Phase 2 dispatch
 

@@ -1,0 +1,277 @@
+{
+  "_maintained_by": "po",
+  "_note": "alert-engine pilot SSOT — Factory v2, fleet pilot 5. Instantiated from SI-1 fleet schema docs/data/pilot-status-schema.json (agent-father v1.0). Separate file from all closed pilot SSOTs — none are touched by this file.",
+  "_schema_source": "docs/data/pilot-status-schema.json (SI-1 fleet schema v1.0, 2026-05-23T22:01:07Z) — macro v2 field shape canonical",
+  "_authorship_rule": "decisionMatrix fields (speed/trust/scale/verdict) are PO-ONLY. Populated ONLY after 12/12 G-goals reach terminal state, in ONE atomic commit alongside the final goal flip. Any agent other than PO writing these fields is a VIOLATION of charter §4.5.",
+  "_criteria_source": "Charter §Decision Matrix (mechanical derivation): Speed = G10 AND G11. Trust = G9 (PASS not PARTIAL) AND G8. Scale = all-12 YES AND sprintCount ≤ 6. No agent may reinterpret these formulae.",
+  "_creds_boundary_gate": "Charter §ZERO-CREDS Boundary Clause — TELEGRAM_BOT_TOKEN, TELEGRAM_INFO_MARKET_GROUP_ID, TELEGRAM_INFO_WORK_CHANNEL_ID, TELEGRAM_REPORT_BUG_CHANNEL_ID must NOT appear in pkg/primitive, pkg/module, or cmd/sandbox; sandbox builds and runs under CGO_ENABLED=0 with zero TELEGRAM_* env vars. This is the G7 HARD GATE for alert-engine.",
+  "_si2_boundary": "docs/dashboards/index.html is stock-price-EXCLUSIVE per fleet ratification Decision 3. alert-engine MUST NOT touch that file. G6 = apps/alert-engine/dashboard/index.html ONLY.",
+  "_frozen_anchor": "debba8eaff0724d1fb32fc9d28640201cc32d1cc must remain ancestor of HEAD throughout this pilot. Do not rebase, reset, or force-push past this commit.",
+  "_fleet_serialization": "INTERIM FLEET-WIDE SINGLE-COMMITTER SERIALIZATION active at SSOT creation. Verify git diff --cached --name-only clear of foreign paths before staging.",
+
+  "pilot": "alert-engine",
+  "charterRef": "docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md",
+  "charterVersion": "2.0",
+  "status": "ACTIVE",
+  "openedAt": "2026-05-24T02:40:00Z",
+  "openedBy": "architect (fleet pilot-5 charter creation — PO authorization signal po-20260524T023538Z-alert-engine-pilot5-charter.json)",
+  "closedAt": null,
+  "closedBy": null,
+  "closureSignal": null,
+  "closureDecisionDoc": null,
+  "sprintKickoff": "2026-05-24",
+  "sprintDeadline": "2026-07-05",
+  "deadline": "kickoff + 6 sprints",
+  "language": "Go",
+  "languageLockSource": "docs/po-decisions/2026-05-22-language-pivot-technical-analysis.md §Q2 — user 'B' verdict; Go is the implementation language for all Go microservice fractals; alert-engine is natively Go (runtime go1.22+cgo per system-map.json)",
+  "languageLockedAt": "2026-05-22",
+  "phase": "0",
+
+  "phase0": {
+    "status": "OPEN",
+    "openedAt": "2026-05-24T02:40:00Z",
+    "openedBy": "architect (fleet pilot-5 charter creation)",
+    "closedAt": null,
+    "closedBy": null,
+    "owner": "architect + system-auditor + agent-father (+ dev-alert-engine for ZERO-CREDS + CGO-free sandbox feasibility confirmation)",
+    "deliverables": {
+      "_note": "Per charter §Phase 0 exit gate. ZERO-CREDS confirmation is added to brownfield_inventory scope (alert-engine-specific G7 hard gate).",
+      "pilot_status_ssot": "DONE 2026-05-24T02:40:00Z (this file)",
+      "brownfield_inventory": "TBD — docs/architecture-briefs/2026-05-24-alert-engine-factory/p0-brownfield-inventory.md",
+      "bug_inventory_entry": "TBD — docs/data/bug-inventory.json alert_engine_baseline block",
+      "dev_agent_file": "TBD — .claude/agents/dev-alert-engine.md confirmed factory-ready (Go primary, G12 DoD, ZERO-CREDS-boundary lazy-load)",
+      "dev_agent_flow_file": "TBD — .claude/flows/dev-alert-engine/main.md with G12 DoD Gate Day-0 + ZERO-CREDS/Fence-A/B/C + pre-revert tag protocol",
+      "phase_1_task_plan": "TBD — docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md"
+    },
+    "exit_gate": {
+      "all_deliverables_landed": false,
+      "pilot_status_phase_0_fields_populated": false,
+      "no_code_in_service_pkg_yet": true,
+      "exit_gate_status": "OPEN",
+      "closedAt": null,
+      "verification_commit_sha_architect": null,
+      "verification_signal": null
+    }
+  },
+
+  "phase1": {
+    "_note": "Phase 1 NOT-STARTED — awaiting Phase 0 exit gate. Owner: dev-alert-engine. WIP=1 sequential.",
+    "status": "NOT-STARTED",
+    "openedAt": null,
+    "openedBy": null,
+    "gateVerdict": null,
+    "gateVerifiedAt": null,
+    "gateVerifiedBy": null,
+    "gateCommit": null,
+    "gateDecisionDoc": null,
+    "gateSignal": null,
+    "skeleton_in": "docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md §Phase Skeleton",
+    "task_plan": "TBD — docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-1-task-plan-go.md",
+    "task_count": null,
+    "ac_count": null,
+    "wip_limit": 1,
+    "sequential_plan": [],
+    "progress_notes": [],
+    "tasks": {}
+  },
+
+  "phase2": {
+    "_note": "Phase 2 NOT-STARTED — awaiting Phase 1 exit gate. Owner: dev-alert-engine + qa + po. WIP=1 sequential.",
+    "status": "NOT-STARTED",
+    "openedAt": null,
+    "openedBy": null,
+    "gateVerdict": null,
+    "gateVerifiedAt": null,
+    "gateVerifiedBy": null,
+    "gateCommit": null,
+    "gateDecisionDoc": null,
+    "gateSignal": null,
+    "taskPlan": "TBD — docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-2-task-plan-go.md",
+    "taskCount": null,
+    "acCount": null,
+    "wipPolicy": "WIP=1 sequential — PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
+    "wip_limit": 1,
+    "current_task": null,
+    "current_task_status": null,
+    "current_task_owner": null,
+    "current_task_handoff": null,
+    "tasks": {}
+  },
+
+  "goalsEarned": 0,
+  "_goalsEarned_note": "Running counter incremented ONLY by PO at terminal atomic close. Starts 0. Must reach 12 before decisionMatrix is populated.",
+
+  "goals": [
+    {
+      "_track_note": "Track A — Trust Foundation (G1-G5). Structural correctness of the DDD primitive/module/service layers.",
+      "id": "G1",
+      "track": "A",
+      "title": "Primitives ship with scenarios",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "3-5 Go primitives in apps/alert-engine/pkg/primitive/ (candidates: signal-classifier, dedup-key-builder, cooldown-gate, duplicate-checker, alert-formatter — dev-alert-engine confirms exact set Phase 0). Each ≥3 scenarios (golden + edge + failure). Verify: CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -scenario=all exits 0; ≥1 failure scenario; grep mattn/go-sqlite3 in pkg/primitive = 0; grep -iE 'token|chat_id|bot|secret|api_key' in pkg/primitive = 0 (ZERO-CREDS gate). Min 9 scenario files (3 prim × 3).",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G2",
+      "track": "A",
+      "title": "Module composes primitives via ports",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "ONE module: apps/alert-engine/pkg/module/alert_pipeline/. Composes primitives via interface + injected AlertRepositoryPort + MutePort + TelegramPort (infra impls, never imported directly). Multi-primitive scenario = alert pipeline story (classify → fingerprint → dedup → cooldown → format → route). Fence-B + ZERO-CREDS + CGO: grep pkg/module/ imports (cross-module=0) + grep mattn/go-sqlite3|pkg/infrastructure in module = 0 + grep -iE 'telegram|bot_token|chat_id' in module = 0. mute_gate module deferred post-pilot.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G3",
+      "track": "A",
+      "title": "Microservice has clean composition root",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "cmd/server/main.go wires module + adapters; CGO SQLite repo + TelegramClient injected HERE as infra impls of AlertRepositoryPort/MutePort/TelegramPort. Zero domain logic in root. OpenAPI YAML in pkg/interface/http/. Port = 5006 internal AND external (system-map.json, never hardcoded). grep ComputeFingerprint|IsDuplicate|ShouldSuppressAlert|joinSignalTypes in main.go = 0.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G4",
+      "track": "A",
+      "title": "Architecture fence enforced (offline depguard evidence)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Go service → depguard via golangci-lint (SAME mechanism as TA+macro+stock-price, NO SI-3/TS-fence dependency). apps/alert-engine/.golangci.yml: Fence-A (pkg/primitive must not import application/infrastructure/interface OR mattn/go-sqlite3 OR Telegram client), Fence-B (pkg/module must not import infrastructure OR mattn/go-sqlite3), Fence-C (infra importable ONLY from cmd/server/main.go; exclusions !cmd/server/main.go, !*_test.go). CI job alert-engine-go-lint working-directory=apps/alert-engine OR offline proof. Pre-revert tag alert-engine-pre-ci. AC-4a CI job, AC-4b deliberate Fence-A violation reproduces non-zero exit with 'Fence-A' + reverted + never committed (QA independent), AC-4c .golangci.yml freeze anchor most-recent commit on file at close.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G5",
+      "track": "A",
+      "title": "Old alert-engine domain leak deleted + HTTP rewire",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "G5a: superseded domain/services.go functions moved to pkg/_deprecated/ or deleted under alert-engine-pre-delete tag after module ships. G5b: mcp-server tool handlers invoking alert-engine verified routed via HTTP port 5006 — zero direct domain imports. G5c: grep TODO.*migrat in apps/alert-engine/ + mcp-server alert tool dirs = 0. Pre-delete tag alert-engine-pre-delete MUST precede any git mv.",
+      "phase2Bucket": null
+    },
+    {
+      "_track_note": "Track B — Dashboard Trust Layer (G6-G9). User-facing transparency contract.",
+      "id": "G6",
+      "track": "B",
+      "title": "Three-level dashboard renders from JSON traces (3-panel standard)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "apps/alert-engine/dashboard/index.html — 3 panels (primitives, module, microservice). file:// standalone, ZERO network calls, ZERO CGO, ZERO TELEGRAM_* vars, ZERO credential-shaped data. Renders from scenario trace JSON. HTML comment baked in disavowing docs/dashboards/index.html (SI-2 is stock-price-EXCLUSIVE). SI-2 is NOT a G6 deliverable for alert-engine.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G7",
+      "track": "B",
+      "title": "Edit-JSON-and-rerun works (ZERO credentials, ZERO CGO in sandbox)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "HEADLINE RISK. User edits scenario JSON, refreshes dashboard, sees updated result. ALL 4 sub-gates must PASS: (1) env audit: env | grep -iE 'TELEGRAM|BOT_TOKEN|CHAT_ID|TOKEN|SECRET|API_KEY|PASSWORD' returns empty; (2) scenario JSON grep -rniE 'token|chat_id|bot|secret|api_key|password' apps/alert-engine/cmd/sandbox/ = 0; (3) sandbox compiles under CGO_ENABLED=0; (4) edit→rerun→updated-trace cycle works end-to-end. All 4 required — missing any one = G7 NOT PASS.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G8",
+      "track": "B",
+      "title": "Red/green status is honest (honest-red contract)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "Two tests proven before G8 grades YES: Test A (deliberately corrupted scenario e.g. flip expected suppress:false → suppress:true in cooldown-gate golden) → dashboard RED, diff captured; Test B (known-good golden after revert) → dashboard GREEN, diff=null. No false green tolerated.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G9",
+      "track": "B",
+      "title": "Dashboard is the trust contract — short-circuit via PO Playwright (Day-0 default, L6)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "G9 PASS = Path A (user verbal YES) OR Path B (PO Playwright PASS via chromium-headless-shell against file://apps/alert-engine/dashboard/index.html). Path B Day-0 default (L6). Acceptance: ZERO console errors, ZERO pageerrors, ZERO requestfailed, all 3 panels rendered, NOT-RUN status honest. Either path equal weight. PO records verdict in docs/po-decisions/<date>-g9-alert-engine-user-confirmation.md.",
+      "phase2Bucket": null
+    },
+    {
+      "_track_note": "Track C — AI-Fixability Proof (G10-G12). Proving the sandbox accelerates dev loops.",
+      "id": "G10",
+      "track": "C",
+      "title": "AI agent fixes a primitive bug without looping (≤2 cycles)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "QA injects 1 deliberate single-literal bug into an alert-engine primitive (e.g. wrong djb2 seed constant in dedup-key-builder, or flipped comparison in cooldown-gate). dev-alert-engine fixes in ≤2 dispatch cycles. Baseline from docs/data/bug-inventory.json alert_engine_baseline block (fallback 1.5 if no 60d history). Pre-inject tag alert-engine-pre-inject MUST precede injection commit. Dashboard turns GREEN post-fix.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G11",
+      "track": "C",
+      "title": "Regression alarm bell works",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": "2-trial coupling proof (identical to TA/macro/stock-price). Trial-1 = G10 injection + fix; verify ≥1 coupled scenario RED, single-edit fix repairs all. Trial-2 = DIFFERENT primitive mutation + fix; same coupling proof. Both trials outcome-(a) = PASS. Alarm-mechanism-functional.",
+      "phase2Bucket": null
+    },
+    {
+      "id": "G12",
+      "track": "C",
+      "title": "Dev-alert-engine flow requires dashboard-green before 'done' (3-task streak)",
+      "status": "TBD",
+      "verifiedAt": null,
+      "verifiedBy": null,
+      "evidence": null,
+      "calibration": ".claude/flows/dev-alert-engine/main.md updated with G12 DoD-Gate rule (sandbox-green-before-RETURN) baked Day 0 by agent-father. 3 consecutive dev tasks verified following the rule (streak = first-primitive + module-stub + dashboard-stub Phase 1 tasks). EARNED-PENDING candidacy after streak; PO flips YES only at 12/12 terminal atomic close.",
+      "phase2Bucket": null
+    }
+  ],
+
+  "goalsEarned_note": "Counter starts 0. Each YES flip by PO at terminal close increments by 1. Only PO may increment.",
+
+  "decisionMatrix": {
+    "_authorship_rule": "PO-ONLY. Populated ONLY after 12/12 G-goals are terminal (all YES or explicit NO/PARTIAL). Populated in ONE atomic commit alongside the final goal flip + verdict. ANY other agent writing these fields is a charter §4.5 VIOLATION.",
+    "_criteria_source": "Charter §Decision Matrix: Speed = G10 AND G11. Trust = G9 (PASS not PARTIAL) AND G8. Scale = all-12 YES AND sprintCount ≤ 6.",
+    "speed": "TBD",
+    "trust": "TBD",
+    "scale": "TBD",
+    "verdict": "TBD",
+    "populatedAt": null,
+    "populatedBy": null
+  },
+
+  "lessons_baked_in_v1": [
+    "L1: Language lock Go Day 0 — service is natively Go, no rewrite step",
+    "L2: G4 offline depguard evidence — pilot-scoped CI or offline proof, no whole-project CI noise",
+    "L3: Hard deadline enum ACTIVE|DONE|FAILED — no operational labels",
+    "L4: §4.5 matrix authorship PO-only after 12/12 terminal",
+    "L5: Pre-revert tags Day 0 (alert-engine-pre-ci/-delete/-inject)",
+    "L6: G9 Path B PO Playwright Day-0 default, equal weight to user verbal",
+    "L7: L84 explicit-file staging, no-force, no-verify, anchor-hold",
+    "L-CREDS: ZERO-CREDS boundary — TELEGRAM_* vars never in sandbox; scenario JSON credential-free; CGO_ENABLED=0 sandbox"
+  ],
+
+  "constraints_binding_day_0": [
+    "L84 explicit-file staging — git add <path> per file, NEVER -A or .",
+    "No --force, --no-verify, --no-gpg-sign",
+    "All work on main — NO branches",
+    "DORMANT/CLOSED freeze — apps/technical-analysis/**, apps/macro-indicators/**, apps/stock-price/** + closed SSOTs untouched",
+    "ZERO-CREDS boundary — TELEGRAM_* only in infra + cmd/server/main.go, never in primitive/module/sandbox",
+    "SI-2 exclusion — docs/dashboards/index.html is stock-price-EXCLUSIVE, alert-engine MUST NOT touch",
+    "§4.5 matrix-authorship — decisionMatrix PO-only after 12/12 terminal",
+    "Frozen anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc must remain ancestor of HEAD",
+    "Fleet-wide single-committer serialization — verify git diff --cached --name-only clear of foreign paths before staging"
+  ]
+}
