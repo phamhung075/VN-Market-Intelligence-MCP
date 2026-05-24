@@ -1,0 +1,45 @@
+{
+  "signalType": "qa-g10-bug-injection-sealed",
+  "pilot": "news-fetch",
+  "charterGoal": "G10",
+  "generatedAt": "2026-05-24T09:10:00.000Z",
+  "injectedBy": "qa",
+  "audience": "qa-only — NEVER shown to developer agent under test",
+  "preInjectTag": "news-fetch-pre-inject",
+  "preInjectSHA": "04b82fb4bcf304b83c06687e8333de527966d3c3",
+  "injectionCommit": "c2ca404a",
+  "injectionState": "committed-anchor",
+  "targetFile": "apps/news-fetch/src/primitive/published-at-parser/index.ts",
+  "targetFunction": "parsePublishedAt",
+  "mutationSite": {
+    "description": "Lines 24–38. Added an explicit offset-extraction block AFTER `new Date(rfcDate)` already correctly parsed the timezone-aware RFC 2822 string into UTC. The block re-extracts the numeric offset from the raw string and adds it a second time to the already-correct UTC epoch, doubling the offset shift.",
+    "beforeLines": "    const d = new Date(rfcDate);\n    if (isNaN(d.getTime())) return null;\n    return d.toISOString();",
+    "afterLines": "    const d = new Date(rfcDate);\n    if (isNaN(d.getTime())) return null;\n    // Normalise explicit UTC offset to UTC epoch.\n    const offsetMatch = rfcDate.match(/([+-])(\\d{2})(\\d{2})\\s*$/);\n    if (offsetMatch) {\n      const sign = offsetMatch[1] === '+' ? 1 : -1;\n      const offsetMinutes = sign * (parseInt(offsetMatch[2], 10) * 60 + parseInt(offsetMatch[3], 10));\n      const adjusted = new Date(d.getTime() + offsetMinutes * 60_000);\n      return adjusted.toISOString();\n    }\n    return d.toISOString();",
+    "bugClass": "double-application of UTC offset — JavaScript Date constructor already converts RFC 2822 timezone offsets to UTC; the injected block re-applies the offset a second time, shifting the result by +offsetMinutes again",
+    "signBias": "the bug applies with the CORRECT sign direction, so it is not a sign-flip; it is a double-count. For +0700 the result is 7 hours LATER than correct, not earlier.",
+    "fixRecipe": "SEALED — remove the injected offsetMatch block entirely; the original single-line `return d.toISOString()` is correct"
+  },
+  "expectedFailureSignature": {
+    "scenario": "docs/scenarios/news-fetch/primitives/published-at-parser/edge.json",
+    "input": "Thu, 22 May 2026 07:00:00 +0700",
+    "expectedOutput": "2026-05-22T00:00:00.000Z",
+    "actualOutput": "2026-05-22T07:00:00.000Z",
+    "deltaMinutes": 420,
+    "deltaDescription": "result is 7 hours LATER than the correct UTC value — the +0700 offset was applied twice"
+  },
+  "scopeProof": {
+    "golden_scenario_affected": false,
+    "golden_reason": "input has no explicit ±HHMM offset (uses 'GMT' string); the injected offsetMatch regex does not fire; path falls through to original d.toISOString() — unaffected",
+    "failure_scenario_affected": false,
+    "failure_reason": "invalid input returns null before reaching the new code block",
+    "cross_primitive_affected": false
+  },
+  "baselineCycles": 1.5,
+  "targetMaxCycles": 2,
+  "dashboardEvidence": {
+    "sandboxResult": "12 PASS, 1 FAIL, 0 ERROR",
+    "failingCard": "published-at-parser",
+    "dashCheckVerdict": "FAIL",
+    "badgeCounts": { "PASS": 4, "FAIL": 2, "ERROR": 0 }
+  }
+}
