@@ -107,7 +107,16 @@ Create or update this file with the following evidence summary:
 
 ## G4 Evidence Summary
 
-(QA: paste evidence table here and fill in actual SHAs from AC-1 and AC-2)
+| Field | Value | Evidence |
+|-------|-------|----------|
+| `ac_4a_ci_job_wired` | `YES` | From P2-B AC-3: `alert-engine-go-lint` job added to `.github/workflows/ci.yml` with `working-directory: apps/alert-engine` |
+| `ac_4b_violation_proof` | `YES` | From P2-C: Fence-A violation (mattn/go-sqlite3 import into signal-classifier/classifier.go) produced non-zero lint exit with 'fence-a' in output; violation reverted cleanly; QA independently reproduced on dedup-key-builder/builder.go (different file, different import path) with same fence-a enforcement. Verdict: R-FENCE gate PASS (fence is universal, not file-specific) |
+| `ac_4c_freeze_sha` | `6c2edc9d` | From AC-1: `git log --oneline apps/alert-engine/.golangci.yml` most-recent (and only) commit; confirmed no subsequent commit has touched the file |
+| `alert_engine_pre_ci_tag_sha` | `4d5b2f754aa1782e870acd633abc7f316593a08e` | From AC-2: `git rev-list -n 1 alert-engine-pre-ci`; tag is ancestor of HEAD (`git merge-base --is-ancestor` exit 0) |
+| `r_fence_gate` | `PASS` | AC-4b proof succeeded with non-zero exit + 'fence-a' in output. Violation on Fence-A layer (pkg/primitive/) was caught. Revert confirmed clean. QA independent repro confirmed non-file-specific enforcement. |
+| `g4_ready_to_grade` | `YES` | All AC-1, AC-2, AC-3 verified. G4 evidence chain complete. Ready for PO Phase-3 goal flip decision. G4 stays EARNED-PENDING — only PO flips goals at Phase-3 terminal 12/12 close. |
+
+**No goal flips:** `goalsEarned` stays 0. `decisionMatrix` stays all-TBD. §4.5 SSOT authorship rule preserved.
 
 ---
 
@@ -175,11 +184,11 @@ chore(pm/alert-engine): P2-D G4 evidence compiled (freeze anchor confirmed, R-FE
 
 ## Done Checklist
 
-- [ ] AC-1: Freeze anchor verified (most-recent commit on `.golangci.yml` is P2-B commit 6c2edc9d)
-- [ ] AC-2: Tag ancestry confirmed (`alert-engine-pre-ci` is ancestor of HEAD)
-- [ ] AC-3: G4 evidence summary compiled with all 6 fields completed
-- [ ] Signal emitted: `docs/signals/qa-ae-P2-D-g4-evidence-done-<UTC>.json`
-- [ ] No SSOT mutations (goalsEarned=0, decisionMatrix all-TBD)
-- [ ] No foreign file changes (verify `git status` clean of non-qa paths)
-- [ ] Anchor debba8ea INTACT
-- [ ] Commit staged (explicit paths) + message follows convention
+- [x] AC-1: Freeze anchor verified (most-recent commit on `.golangci.yml` is P2-B commit 6c2edc9d)
+- [x] AC-2: Tag ancestry confirmed (`alert-engine-pre-ci` is ancestor of HEAD, tag SHA 4d5b2f754aa1782e870acd633abc7f316593a08e)
+- [x] AC-3: G4 evidence summary compiled with all 6 fields completed
+- [x] Signal emitted: `docs/signals/qa-ae-P2-D-g4-evidence-done-20260524T092000Z.json`
+- [x] No SSOT mutations (goalsEarned=0, decisionMatrix all-TBD)
+- [x] No foreign file changes (verified `git status` — zero non-qa paths staged)
+- [x] Anchor debba8ea INTACT (merge-base --is-ancestor exit 0)
+- [x] Commit staged (explicit paths) + message follows convention

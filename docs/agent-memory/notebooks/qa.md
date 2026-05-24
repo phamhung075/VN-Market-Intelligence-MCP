@@ -1,5 +1,34 @@
 # QA — Notebook
 
+## c282 cycle-71 · 2026-05-24 · alert-engine P2-D — G4 freeze-anchor confirmation + evidence compilation — PASS
+
+**Task:** P2-D AC-1/AC-2/AC-3 — G4 evidence compilation | **Verdict:** PASS
+
+```
+date: 2026-05-24T09:20:00Z
+outcome: PASS — freeze anchor confirmed, tag ancestry verified, G4 evidence table complete
+type: pilot-task-qa (read-only verification + evidence writing)
+signal: docs/signals/qa-ae-P2-D-g4-evidence-done-20260524T092000Z.json
+evidence: docs/handoffs/TASK_P2-D-ae-g4-evidence.md §G4 Evidence Summary
+ac_1_freeze_sha: 6c2edc9d (only commit on .golangci.yml — P2-B commit, no subsequent touch)
+ac_2_tag_sha: 4d5b2f754aa1782e870acd633abc7f316593a08e (alert-engine-pre-ci ancestor of HEAD, exit 0)
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (merge-base --is-ancestor exit 0)
+foreign_paths_staged: 0 (staging discipline verified pre-commit)
+ssot_not_mutated: goalsEarned=0, decisionMatrix all TBD, no goal flips
+g4_goal_status: EARNED-PENDING (evidence complete; PO flips at Phase-3 terminal 12/12 close)
+```
+
+| AC | Verdict | Key Evidence |
+|----|---------|-------------|
+| AC-1 (freeze anchor) | PASS | `git log --oneline apps/alert-engine/.golangci.yml` → 1 commit: 6c2edc9d P2-B. No subsequent touch. |
+| AC-2 (tag ancestry) | PASS | `git merge-base --is-ancestor alert-engine-pre-ci HEAD` exit 0; tag SHA 4d5b2f75 |
+| AC-3 (G4 evidence table) | PASS | 6-field table written to handoff; all fields populated with real SHAs |
+
+**P2-D verdict: PASS — G4 evidence complete. G4 stays EARNED-PENDING.**
+**NEXT:** pm — mark P2-D DONE, sequence P2-E (pre-delete tag).
+
+---
+
 ## c282 cycle-70 · 2026-05-24 · alert-engine P2-C — G4 Fence-A QA reproduction — PASS
 
 **Task:** P2-C AC-4 — QA independent fence reproduction | **Verdict:** PASS (fence enforces universally, not file-specific)
