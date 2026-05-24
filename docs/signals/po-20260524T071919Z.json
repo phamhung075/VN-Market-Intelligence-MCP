@@ -1,0 +1,20 @@
+{
+  "from": "po",
+  "to": "architect",
+  "type": "dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-24T07:19:19Z",
+  "payload": {
+    "task_id": "P1-KD-PLAN-GO",
+    "title": "Author kinh-dich Go phase-1 task plan (mirror TA Option-B Go reboot)",
+    "zone": "apps/kinh-dich-service/",
+    "decision": "Go reboot EXECUTION start. Pivot is FINAL (docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md) — not re-litigated.",
+    "why": "SSOT pilot-status-kinh-dich.json status=ACTIVE/language=Go/phase=1, decisionMatrix+goalsEarned reset, goals G1-G8/G10-G12=TBD, G9=IN-PROGRESS (held, re-confirm on Go dashboard). On-disk = 894 .ts / 0 .go / no go.mod — Go reboot has NOT started. SSOT phase1.task_plan still points to phase-1-task-plan-ts.md (TS). No Go task plan exists. This is the single execution blocker.",
+    "ask": "Author docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-go.md mirroring docs/architecture-briefs/2026-05-22-refactor/phase-1-task-plan-go.md (TA precedent). Must include: (1) pkg/primitive Go layout for the 5 primitives (hexagram-resolver, hao-encoder, ngu-hanh-classifier, reading-scorer, nuclear-hexagram-computer) as pure funcs; (2) cmd/server/main.go composition-root spec (<=80L, DI wiring, port 5005, zero domain ops); (3) reading_composer module via MarkovPort Go interface (infra injected only at composition root); (4) go.mod/go.sum + pkg/ DDD scaffold task; (5) scenario-JSON preservation task (docs/scenarios/kinh-dich/ + src/interface/openapi.yaml are language-agnostic, PRESERVE); (6) goal-mapping table re-earning G1-G8,G10-G12 + G9 re-confirm; (7) architect open-questions resolution.",
+    "preserve_contracts": "extractAction(actionText string) NOT (score), THIEU_DUONG_THRESHOLD=0.10, LAO_DUONG_THRESHOLD=0.75. Cross-check rescued scenario JSON + tsCompletionArchive.",
+    "flow_go_awareness": "VERIFIED Go-aware (.claude/flows/dev-kinh-dich/main.md: go test/vet/build, golangci-lint depguard Fence-A/B/C, CGO_ENABLED=0 sandbox). agent-father flip ad84b629 confirmed. NO blocker to agent-father.",
+    "anti_scope": "apps/kinh-dich-service/ ONLY. Do not touch other services. Do not block on stock-price/TA/api-gateway pilots.",
+    "wip": 1,
+    "on_completion": "architect emits done-signal -> PM/dispatcher updates SSOT phase1.task_plan ref TS->Go -> dev-kinh-dich begins Go scaffold (go.mod + pkg/ DDD) as first dev task. Goals stay TBD until earned on Go evidence (PO-only flip)."
+  }
+}

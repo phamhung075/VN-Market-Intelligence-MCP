@@ -1,37 +1,31 @@
 # PO Notebook
 
-**Cycle:** c286 (dev-team triage — api-gateway SCALE pilot Phase 0 OPEN)
-**Last update:** 2026-05-24T07:15:14Z
-**Status:** api-gateway Phase 0 opened + G1-G12 calibrated, committed 26f7434d. Phase 0 BATCH returned to dispatcher.
+**Cycle:** c287 (dev-team triage — kinh-dich Go reboot EXECUTION start)
+**Last update:** 2026-05-24T07:19:19Z
+**Status:** Triaged kinh-dich Go reboot. Pivot FINAL (not re-litigated). RETURN=NEXT: route architect to author Go phase-1 task plan. Signal po-20260524T071919Z.json.
 
 ---
 
-## This cycle (c286) — api-gateway SCALE pilot Phase 0 open
+## This cycle (c287) — kinh-dich Go reboot triage
 
-Scope-locked to `apps/api-gateway/` ONLY (anti-scope-creep). Verified brownfield source before calibrating — did NOT guess.
+Scope-locked to `apps/kinh-dich-service/` ONLY. Drove EXECUTION; did NOT re-evaluate the pivot.
 
-### SSOT edits (docs/data/pilot-status-api-gateway.json, commit 26f7434d)
-- status PENDING->ACTIVE; phase pre-0->0; phase0 OPEN (openedAt 07:15:14Z).
-- sprintKickoff 2026-05-24, sprintDeadline 2026-07-05 (=alert-engine cadence).
-- All 12 goal `calibration` fields filled (no `<SERVICE:` left in goals[]; the 4 remaining are phase1/phase2 skeleton placeholders — correctly deferred until Phase 0 closes).
-- lessons_baked_in +4: honest-3, no-cgo/no-creds, blast-radius, new-not-port.
+### Ground truth verified (NOT assumed)
+- Decision doc EXISTS (8202B, FINAL user directive) — docs/po-decisions/2026-05-24-language-pivot-kinh-dich.md.
+- SSOT pilot-status-kinh-dich.json: status=ACTIVE, language=Go, phase=1. decisionMatrix ALL TBD (verdict/speed/trust/scale), goalsEarned=0. goals G1-G8,G10-G12=TBD; G9=IN-PROGRESS (held — re-confirm on Go dashboard). tsCompletionArchive present.
+- phase0/phase1/phase2 blocks = ARCHIVED TS history (CLOSED/APPROVED w/ TS commits). Correctly preserved; reset lives in goals[]/decisionMatrix/goalsEarned. NO PO action needed there.
+- On-disk: 894 .ts, 0 .go, NO go.mod, NO pkg/primitive, NO cmd/server. **Go reboot NOT started.**
+- Flow .claude/flows/dev-kinh-dich/main.md = Go-aware (go test/vet/build, golangci-lint depguard Fence-A/B/C, CGO_ENABLED=0 sandbox). agent-father flip ad84b629 confirmed. **No blocker to agent-father.**
+- TA precedent Go plan EXISTS (phase-1-task-plan-go.md) — template to mirror.
+- GAP: SSOT phase1.task_plan still points to phase-1-task-plan-ts.md. NO kinh-dich Go plan. = single execution blocker.
 
-### Ground-truth confirmed from source (NOT manufactured)
-- **G1 honest 3 primitives**: overall-status-computer (computeOverallStatus, domain/services.go), proxy-path-resolver (ProxyPath, handlers.go — already exported+tested), route-service-matcher (SplitN path->svc, duplicated HandleServiceHealth+HandleProxy). NO auth-header-validator — gateway does ZERO auth. Charter delta blesses honest 3.
-- **NO-CGO** (go1.22, not +cgo per system-map) + **NO-CREDS** (no DB/Telegram/keys) -> G7 trivially clean.
-- **main.go = 67L** already <=80 -> G3 mostly done; win = declarative routing + auditable wiring.
-- **NEW Go svc, not TS-port** -> G5 light-touch, may grade trivially-YES.
-- **Port 4000** (system-map api-gateway.port).
-- **Highest blast radius** (single MCP-facing iface) -> G11 HIGHEST PRIORITY.
-
-### BATCH returned (4 Phase 0 tasks)
-P0-AG-1 brownfield inventory (architect), P0-AG-2 bug-inventory entry (architect), P0-AG-3 dev-agent+flow Go three-tier + G12 DoD gate (agent-father), P0-AG-4 Phase 1 task plan (architect). All zone=apps/api-gateway/.
+### Decision
+RETURN=NEXT (sequential, WIP=1): architect authors Go phase-1 task plan -> docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-go.md. Signal po-20260524T071919Z.json emitted. No goal flips (goals stay TBD until earned on Go evidence — PO-only).
 
 ---
 
 ## Carry-over (next cycle)
-- **api-gateway Phase 0 exit gate**: needs all 4 deliverables landed + architect verification commit/signal before phase0.exit_gate flips CLOSED. PO does NOT close it — architect does, then PO opens Phase 1.
-- **Phase 1 SSOT placeholders** (phase1.skeleton_in, phase1.task_plan) fill from P0-AG-4 output at Phase 0 close.
-- **G1 band re-confirm**: architect/dev-api-gateway confirm the honest-3 set in brownfield inventory; if a genuine 4th pure unit surfaces, allow up to 5 — but do NOT pad.
-- **alert-engine** Phase 2 ACTIVE (pilot-5) — untouched. **kinh-dich** Go reboot ACTIVE (user-directed, FINAL) — untouched.
-- DO NOT touch any other service's pilot-status file during api-gateway pilot.
+- After architect delivers Go plan: PM/dispatcher updates SSOT phase1.task_plan ref TS->Go, then dev-kinh-dich begins Go scaffold (go.mod + pkg/ DDD) as first dev task.
+- Goal flips remain PO-only; G9 re-confirm on Go dashboard (was Path B PO Playwright on TS dashboard — invalid after Go rebuild).
+- PRESERVE through reboot: scenario JSON docs/scenarios/kinh-dich/, src/interface/openapi.yaml. Authentic contracts: extractAction(actionText), THIEU_DUONG=0.10, LAO_DUONG=0.75.
+- Other pilots untouched: api-gateway Phase 0, alert-engine Phase 2, stock-price/TA. DO NOT touch their pilot-status files.
