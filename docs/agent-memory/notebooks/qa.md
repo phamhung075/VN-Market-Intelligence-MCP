@@ -1,5 +1,70 @@
 # QA — Notebook
 
+## cycle-100 · 2026-05-24 · pdf-extractor P2-K — G11 regression alarm bell — PASS
+
+**Task:** P2-K1 + P2-K2 (G11 2-trial coupling proof) | **Verdict:** G11 PASS
+
+```
+date: 2026-05-24T09:55:43Z
+outcome: G11 PASS — 2-trial coupling proof, outcome-(a) × 2
+type: pilot-task-qa (G11 regression alarm bell)
+signal: docs/signals/qa-pdf-extractor-P2-K-g11-20260524T095543Z.json
+ship_record: docs/handoffs/TASK_pdf-extractor-P2-K.md
+ssot_not_mutated: true (PO-only §4.5)
+goal_flips: NONE
+
+baseline: 18 primitive PASS, 1 module PASS, 114 pytest PASS, DDD 2 KEPT 0 broken
+
+trial_1:
+  primitive: decimal_normalizer (_UNIT_MULTIPLIERS["billion_vnd"]: 1.0 → 0.0)
+  primitive_red: happy_normal.json (actual=0.0, expected=1234.5)
+  coupling: all module normalized values=0.0 → validate_financial_figures BCTC-VAL-05 → confidence=0.8 ≠ 1.0
+  module_red: multi_primitive_story.json pass=false
+  single_edit_fix: restore billion_vnd: 1.0
+  post_fix: primitive 3/3 PASS + module PASS
+  git_diff_after_restore: EMPTY
+  outcome_a: CONFIRMED
+
+trial_2:
+  primitive: validate_financial_figures (BCTC-VAL-01: < → >)
+  primitive_red: happy.json + edge_vnm_val01.json (2 scenarios RED)
+  coupling: validate_financial_figures → confidence=0.0 → low_confidence_gate.gate(0.0)=skip ≠ normal
+  module_red: multi_primitive_story.json pass=false (disposition=skip, confidence=0.0)
+  single_edit_fix: restore < comparator
+  post_fix: primitive 3/3 PASS + module PASS
+  git_diff_after_restore: EMPTY
+  outcome_a: CONFIRMED
+
+final_state:
+  primitive_scenarios: 18 PASS / 0 FAIL
+  module_scenario: PASS
+  pytest: 114 passed 0 failed
+  ddd_fence: 2 KEPT 0 broken exit 0
+  mutations_committed: false
+  honest_green: true
+```
+
+| Check | Verdict |
+|-------|---------|
+| Trial-1: primitive happy_normal.json RED after mutation | PASS |
+| Trial-1: module multi_primitive_story.json coupled RED | PASS |
+| Trial-1: single-edit fix → both GREEN | PASS |
+| Trial-1: git diff domain/ EMPTY after restore | PASS |
+| Trial-2: primitive happy.json + edge RED | PASS |
+| Trial-2: module multi_primitive_story.json coupled RED | PASS |
+| Trial-2: single-edit fix → both GREEN | PASS |
+| Trial-2: git diff domain/ EMPTY after restore | PASS |
+| Final 18 primitive PASS | PASS |
+| Final module PASS | PASS |
+| 114 pytest PASS | PASS |
+| DDD fence PASS | PASS |
+| No mutations committed | PASS |
+
+**G11 verdict: PASS. EARNED-PENDING.**
+**NEXT:** P2-G5a (dev-pdf-extractor: pre-delete tag + _deprecated/ move) then P2-G5c (qa: zero TODO.*migrat grep) then P2-G5b-clearance (architect).
+
+---
+
 ## cycle-99 · 2026-05-24 · rag-service P2-J — G10 bug injection — DONE
 
 **Task:** P2-J (G10 AI-fixability bug injection for rag-service) | **Verdict:** INJECTION DONE — RED confirmed
