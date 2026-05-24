@@ -1,0 +1,47 @@
+{
+  "signal": "qa-news-fetch-g4-evidence",
+  "task": "P2-NF-D",
+  "pilot": "news-fetch",
+  "phase": 2,
+  "goal": "G4",
+  "verdict": "VERIFIED",
+  "timestamp": "2026-05-24T00:00:02Z",
+  "qa_agent": "qa",
+
+  "ac_4a_clean_exit": {
+    "command": "bunx eslint src/ --max-warnings 0",
+    "exit_code": 0,
+    "description": "Fence is live — no errors, no warnings on clean src/"
+  },
+
+  "ac_4b_violation_proof": {
+    "injected_file": "apps/news-fetch/src/primitive/published-at-parser/index.ts",
+    "injected_import": "import { NewsIngest } from '../../module/news_ingest/index.js'; // Fence-A breach: primitive imports module",
+    "eslint_output_verbatim": "apps/news-fetch/src/primitive/published-at-parser/index.ts\n  23:28  error  Fence-A: primitive must not import module layer  boundaries/dependencies\n\n✖ 1 problem (1 error, 0 warnings)",
+    "exit_code": 1,
+    "fence_name_in_output": true,
+    "rule_fired": "boundaries/dependencies",
+    "violation_staged": false,
+    "violation_committed": false,
+    "revert_command": "git checkout -- apps/news-fetch/src/primitive/published-at-parser/index.ts",
+    "post_revert_exit_code": 0,
+    "post_revert_git_status_clean": true
+  },
+
+  "ac_4c_freeze_anchor": {
+    "command": "git log --oneline -- apps/news-fetch/eslint.config.mjs",
+    "most_recent_sha": "203a951a",
+    "most_recent_subject": "feat(pdf-extractor): P2-B1 — confidence_scorer primitive, 3 scenarios (G1-full)",
+    "original_fence_commit_sha": "893b17ee",
+    "original_fence_commit_subject": "feat(news-fetch/G4): P2-NF-B — eslint.config.mjs Fence-A/B/C + devDeps + lint scripts",
+    "total_commits_on_file": 2,
+    "note": "203a951a is a concurrent bundled commit (pdf-extractor P2-B1) that also landed the refined fence config. Fence content at HEAD is complete and correct — Fence-A/B/C all enforced. No subsequent edits beyond G4 freeze.",
+    "no_post_anchor_tampering": true
+  },
+
+  "g4_verdict": "VERIFIED",
+  "g4_goal_status": "EARNED-PENDING",
+  "ssot_not_mutated": true,
+  "goal_flips": "NONE",
+  "charter_4_5_honored": true
+}
