@@ -1,0 +1,22 @@
+{
+  "task": "P1-B1",
+  "pilot": "pdf-extractor",
+  "agent": "dev-pdf-extractor",
+  "verdict": "PASS",
+  "timestamp": "2026-05-24T10:00:00Z",
+  "commit": "b4765faa",
+  "g12_streak": "#1 EARNED",
+  "scenario_count": 3,
+  "scenarios": {
+    "happy": "PASS (EXIT 0)",
+    "edge_vnm_val01": "PASS (EXIT 0)",
+    "failure_negative_assets": "PASS (EXIT 0)"
+  },
+  "honest_red": "CONFIRMED (EXIT 1 on wrong-expected)",
+  "pytest": "37/37 PASS",
+  "a3_verified_logical_lines": 64,
+  "a3_verdict": "PASS (64 <= 80, no code change needed)",
+  "zero_infra_imports": true,
+  "bctc_freeze": "CLEAR",
+  "next": "P1-B2"
+}
