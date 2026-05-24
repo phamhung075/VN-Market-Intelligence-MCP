@@ -6,6 +6,37 @@ Zone: `apps/alert-engine/` | Stack: Go 1.22 (migrated from TS/Bun) | DB: alert_e
 
 ## Working Memory
 
+### 2026-05-24 P2-M — G10 Blind Fix (dedup-key-builder djb2Seed) DONE
+
+**Task:** P2-M — diagnose injected single-literal bug from sandbox FAIL output only and fix in ≤2 attempts.
+
+**Diagnosis (from FAIL output alone):**
+- Sandbox showed fingerprint mismatches in all 3 dedup-key-builder scenarios + alert-pipeline-golden.json
+- Actual fingerprints differed consistently from expected — consistent offset implies a constant, not a logic path
+- Opened `pkg/primitive/dedup-key-builder/builder.go` — the comment block and package doc both declare `seed=5381` but `const djb2Seed uint32 = 5382` (off by 1)
+- Single-literal fix: `5382` → `5381` on line 23
+
+**Attempt count:** 1 (first fix was correct)
+
+**AC evidence:**
+- AC-1: total=11 pass=11 fail=0 status=OK exit 0
+- AC-2: dedup-key-builder card GREEN, alert-pipeline card GREEN, all cards GREEN
+- AC-3: 1 dispatch cycle (≤2 — exceeds baseline)
+- AC-4: sandbox green before RETURN (confirmed above)
+
+**Anchor:** debba8eaff0724d1fb32fc9d28640201cc32d1cc intact (confirmed)
+
+**Files changed:**
+- `apps/alert-engine/pkg/primitive/dedup-key-builder/builder.go` — `djb2Seed` 5382→5381 (single literal)
+- `docs/agent-memory/notebooks/dev-alert-engine.md` — this entry
+- `docs/signals/dev-ae-P2-M-g10-fix-done-20260524T082530Z.json` — signal
+
+**Forbidden files:** NOT read (pilot-status-alert-engine.json, phase-2-task-plan-go.md, commit da6c71d3, TASK_P2-L-ae-injection-spec.md, qa.md notebook)
+
+**Next:** qa for G11 2-trial coupling proof (AC-5..AC-7)
+
+---
+
 ### 2026-05-24 P2-I — G6 Dashboard Finalization (deprecated-notice + Phase-2 wired-state) DONE
 
 **Task:** P2-I — update apps/alert-engine/dashboard/index.html with G5a deprecated-notice + Phase-2 wired-state microservice panel.
