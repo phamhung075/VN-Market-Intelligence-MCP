@@ -1,0 +1,59 @@
+{
+  "signal_id": "dev-kd-P1-E-done-20260524T001417Z",
+  "task_id": "P1-E",
+  "pilot": "kinh-dich",
+  "phase": "1",
+  "status": "DONE",
+  "timestamp": "2026-05-24T00:14:17Z",
+  "from_agent": "dev-kinh-dich",
+  "next_actor": "pm",
+  "commit_sha": "6fc9b721",
+  "commit_note": "Commit includes TASK_P2-C.md and qa signal file from prior agent pre-staged index — kinh-dich P1-E deliverables (dashboard + handoff) are correct and isolated",
+  "g12_sandbox": "[sandbox] PASS 11/11 scenarios (0 failed, 0 skipped)",
+  "ac_verdicts": {
+    "AC-1": {
+      "verdict": "PASS",
+      "evidence": "Modal opens with Edit & Rerun (P1-E) button; click expands inline panel with edit instructions, file path, tier-aware command, paste textarea and Apply button"
+    },
+    "AC-2": {
+      "verdict": "PASS",
+      "evidence": "Modal panel shows cd apps/kinh-dich-service && bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=all (primitive) and --tier=module variant (module). Footer shows both --tier=primitive and --tier=module copy-able commands."
+    },
+    "AC-3": {
+      "verdict": "PASS",
+      "evidence": "env | grep -E 'DB_PATH|KINH_DICH_DB|API_KEY|SECRET|PASSWORD' -> exit 1, zero matches. CTX_ADVISOR_*TOKEN vars are Claude Code tooling injections, not service credentials. No kinh-dich runtime requires any DB/API/SECRET/TOKEN/PASSWORD."
+    },
+    "AC-4": {
+      "verdict": "PASS",
+      "evidence": "grep -rn 'from.*infrastructure|from.*hono|SQLite|getDb|repositories' src/primitive/ src/module/ src/sandbox/ -> 0 actual import lines (only JSDoc comment text)"
+    },
+    "AC-5": {
+      "verdict": "PASS",
+      "evidence": "Corrupted hexagram-resolver-golden.json: signals[5] changed 1->0. Sandbox: [FAIL] hexagram-resolver-golden.json | Expected hexagram 1 but got 43. Exit code 1. Reverted. Tree confirmed green at 11/11."
+    },
+    "AC-6": {
+      "verdict": "PASS",
+      "evidence": "[sandbox] PASS 11/11 scenarios (0 failed, 0 skipped) — confirmed before commit"
+    },
+    "AC-7": {
+      "verdict": "PASS",
+      "evidence": "No new TypeScript files added to src/primitive/ or src/module/. eslint.config.mjs not created. No Phase-2 tags. Fence-A and Fence-B intact."
+    },
+    "AC-8": {
+      "verdict": "PASS",
+      "evidence": "Modal status bar shows NOT-RUN|PASS|FAIL. Button 'Edit & Rerun (P1-E)' has aria-label='Edit scenario JSON then rerun sandbox and paste output here'. Copy-able command block. Textarea #ndjson-paste-area with aria-label. Apply & Update Cards + Clear buttons. parseNdjsonOutput() + applyResultsToState() handlers update cards honestly."
+    }
+  },
+  "env_audit_detail": {
+    "command": "env | grep -E 'DB_PATH|KINH_DICH_DB|API_KEY|SECRET|PASSWORD'",
+    "result": "exit 1 (no matches)",
+    "token_note": "CTX_ADVISOR_BYTES_PER_TOKEN / CTX_ADVISOR_MAX_TOKENS / CTX_ADVISOR_OVERHEAD_TOKENS are Claude Code context-advisor hook variables, not kinh-dich service credentials"
+  },
+  "g8_deliberate_break": {
+    "file": "docs/scenarios/kinh-dich/primitives/hexagram-resolver-golden.json",
+    "change": "signals[5]: 1 -> 0",
+    "sandbox_output": "[FAIL] hexagram-resolver-golden.json | Expected hexagram 1 but got 43",
+    "reverted": true,
+    "tree_after_revert": "PASS 11/11"
+  }
+}
