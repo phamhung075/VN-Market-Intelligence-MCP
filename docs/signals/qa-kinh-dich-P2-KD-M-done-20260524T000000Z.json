@@ -1,0 +1,32 @@
+{
+  "signal": "qa-kinh-dich-P2-KD-M-done",
+  "task_id": "P2-KD-M",
+  "timestamp": "2026-05-24T00:00:00Z",
+  "status": "DONE",
+  "tag_created": "kinh-dich-pre-inject",
+  "tag_points_to": "b4cdb1db",
+  "frozen_tags_untouched": ["kinh-dich-pre-ci", "kinh-dich-pre-delete"],
+  "injection": {
+    "file": "apps/kinh-dich-service/src/primitive/hao-encoder/index.ts",
+    "option": "A",
+    "literal_before": "const LAO_DUONG_THRESHOLD = 0.75;",
+    "literal_after": "const LAO_DUONG_THRESHOLD = 0.85; // G10-INJECTED: was 0.75"
+  },
+  "sandbox_result": {
+    "exit_code": 1,
+    "total": 17,
+    "passed": 15,
+    "failed": 2,
+    "failing_scenarios": [
+      "[FAIL] hao-encoder-golden.json | result[0].state: expected LAO_DUONG but got THIEU_DUONG",
+      "[FAIL] hao-encoder-edge.json | result[4].state: expected LAO_DUONG but got THIEU_DUONG"
+    ]
+  },
+  "tsc_exit": 0,
+  "injection_commit": "b5cf8f64",
+  "anchor_intact": true,
+  "ssot_untouched": true,
+  "g12_exception": "RED sandbox is CORRECT — G10 baseline, not a defect",
+  "next_actor": "pm",
+  "next_action": "verify P2-KD-M (tag + RED sandbox), then sequence P2-KD-N (dev-kinh-dich blind-fix G10 byte-identical ≤2 cycles + G11 trial-2)"
+}
