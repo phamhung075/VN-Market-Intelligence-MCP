@@ -26,6 +26,10 @@ class PDFDocumentRepository(ABC):
     async def find_pending(self) -> list[PDFDocument]:
         """Return all documents with status='pending'."""
 
+    @abstractmethod
+    async def find_all(self) -> list[PDFDocument]:
+        """Return all documents (any status), ordered by extracted_at DESC."""
+
 
 class PDFStorageRepository(ABC):
     """Port: file storage — fetch raw bytes + persist extracted JSON."""

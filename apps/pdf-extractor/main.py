@@ -8,6 +8,7 @@ Port: 5001 (configurable via $PORT env var)
 """
 
 import logging
+import os
 
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
@@ -20,6 +21,7 @@ from infrastructure.repositories import (
     HTTPPDFStorageRepository,
 )
 from infrastructure.extraction_engine import PdfplumberExtractionEngine
+from infrastructure.inspection_store import InspectionStore
 from domain.services import ExtractPDFService
 from application.usecases import ExtractPDFUseCase
 from interface.handlers import register_routes
@@ -51,6 +53,13 @@ def create_app() -> FastAPI:
     # --- Application use case ---
     extract_usecase = ExtractPDFUseCase(extract_service=extract_service)
 
+    # --- Inspection store (SI-2: PDF viewer surface) ---
+    inspection_store = InspectionStore(
+        db_path=cfg.db_path,
+        pdf_dir=os.getenv("PDF_DIR", "/app/data/pdfs"),
+        extraction_dir=cfg.storage_dir,
+    )
+
     # --- FastAPI app ---
     app = FastAPI(
         title="PDF Extractor",
@@ -67,7 +76,7 @@ def create_app() -> FastAPI:
     )
 
     router = APIRouter()
-    register_routes(router, extract_usecase)
+    register_routes(router, extract_usecase, inspection_store)
     app.include_router(router)
 
     return app

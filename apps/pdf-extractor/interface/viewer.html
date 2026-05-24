@@ -1,0 +1,542 @@
+<!-- SI-2 BOUNDARY: PDF inspection viewer (Sprint PDF-INSPECT).
+     Separate surface from dashboard/index.html (sandbox trace dashboard — FROZEN).
+     Do NOT add sandbox primitives, scenarios, or trace data here. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BCTC PDF Inspector</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f4f4f5;
+      color: #18181b;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    header {
+      background: #1e40af;
+      color: #fff;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    header h1 { font-size: 1.1rem; font-weight: 600; }
+    header small { opacity: 0.75; font-size: 0.8rem; }
+    #controls {
+      padding: 10px 20px;
+      background: #fff;
+      border-bottom: 1px solid #e4e4e7;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+    #doc-select {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: #fff;
+      max-width: 520px;
+    }
+    #status-bar {
+      font-size: 0.8rem;
+      color: #6b7280;
+      min-width: 160px;
+    }
+    #panes {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    .pane {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      border-right: 2px solid #e4e4e7;
+    }
+    .pane:last-child { border-right: none; }
+    .pane-header {
+      padding: 8px 14px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: #f1f5f9;
+      border-bottom: 1px solid #e4e4e7;
+      color: #475569;
+      flex-shrink: 0;
+    }
+    .pane-body {
+      flex: 1;
+      overflow: auto;
+      background: #fff;
+      padding: 0;
+      position: relative;
+    }
+
+    /* Left pane — PDF canvas */
+    #pdf-canvas-container {
+      width: 100%;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #pdf-canvas-container canvas {
+      width: 100%;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      border-radius: 2px;
+    }
+    #pdf-fallback {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Right pane — extraction */
+    #extraction-body {
+      padding: 14px;
+    }
+    .conf-bar {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 14px;
+      font-size: 0.82rem;
+    }
+    .conf-pill {
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .conf-high   { background: #dcfce7; color: #166534; }
+    .conf-medium { background: #fef9c3; color: #854d0e; }
+    .conf-low    { background: #fee2e2; color: #991b1b; }
+
+    .section-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+      margin: 12px 0 6px;
+    }
+    #text-content {
+      white-space: pre-wrap;
+      font-size: 0.82rem;
+      line-height: 1.6;
+      color: #374151;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 10px;
+      max-height: 320px;
+      overflow: auto;
+    }
+    #tables-container table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.78rem;
+      margin-bottom: 12px;
+    }
+    #tables-container th {
+      background: #f1f5f9;
+      border: 1px solid #d1d5db;
+      padding: 5px 8px;
+      text-align: left;
+      font-weight: 600;
+    }
+    #tables-container td {
+      border: 1px solid #e5e7eb;
+      padding: 4px 8px;
+      word-break: break-word;
+    }
+    #tables-container tr:nth-child(even) td { background: #f9fafb; }
+
+    /* Empty / error states */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      gap: 8px;
+      color: #9ca3af;
+      font-size: 0.9rem;
+      padding: 40px;
+      text-align: center;
+    }
+    .empty-state .icon { font-size: 2.5rem; }
+    .missing-msg {
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      border-radius: 8px;
+      padding: 16px;
+      color: #9a3412;
+      font-size: 0.85rem;
+      margin: 20px;
+    }
+    .error-msg {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 16px;
+      color: #991b1b;
+      font-size: 0.85rem;
+      margin: 20px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>BCTC PDF Inspector</h1>
+      <small>Side-by-side: original PDF vs extracted content</small>
+    </div>
+  </header>
+
+  <div id="controls">
+    <select id="doc-select">
+      <option value="">— Loading documents… —</option>
+    </select>
+    <span id="status-bar"></span>
+  </div>
+
+  <div id="panes">
+    <!-- LEFT: original PDF -->
+    <div class="pane" id="left-pane">
+      <div class="pane-header">Original PDF</div>
+      <div class="pane-body" id="left-body">
+        <div class="empty-state">
+          <span class="icon">📄</span>
+          <span>Select a document above to view the PDF.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: extracted content -->
+    <div class="pane" id="right-pane">
+      <div class="pane-header">Extracted Content</div>
+      <div class="pane-body" id="right-body">
+        <div class="empty-state">
+          <span class="icon">🔍</span>
+          <span>Select a document above to view its extraction.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- pdf.js from CDN (pinned version 4.2.67) -->
+  <script type="module">
+    // -----------------------------------------------------------------------
+    // SI-2 BOUNDARY: viewer logic for /inspect surface only.
+    // -----------------------------------------------------------------------
+
+    const PDF_JS_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.mjs';
+    const PDF_WORKER_URL = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.mjs';
+
+    // ── DOM refs ──
+    const docSelect   = document.getElementById('doc-select');
+    const statusBar   = document.getElementById('status-bar');
+    const leftBody    = document.getElementById('left-body');
+    const rightBody   = document.getElementById('right-body');
+
+    // ── State ──
+    let pdfJsLib = null;   // loaded lazily on first selection
+    let currentRenderTask = null;
+
+    // ── Bootstrap: load document list ──
+    async function loadDocList() {
+      try {
+        const res = await fetch('/inspect/pdfs');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const items = data.items || [];
+
+        docSelect.innerHTML = '';
+        if (items.length === 0) {
+          const opt = document.createElement('option');
+          opt.value = '';
+          opt.textContent = '— No documents found —';
+          docSelect.appendChild(opt);
+          setStatus('No documents available.');
+          return;
+        }
+
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = `— Select a document (${items.length} available) —`;
+        docSelect.appendChild(placeholder);
+
+        for (const item of items) {
+          const opt = document.createElement('option');
+          opt.value = item.doc_id;
+          const flags = [
+            item.has_pdf ? '✓PDF' : '✗PDF',
+            item.has_extraction ? '✓Ext' : '✗Ext',
+          ].join(' ');
+          const label = item.period
+            ? `${item.ticker} ${item.period}`
+            : (item.filename || item.doc_id.slice(0, 8));
+          opt.textContent = `${label}  [${flags}]`;
+          opt.dataset.hasPdf = item.has_pdf;
+          opt.dataset.hasExtraction = item.has_extraction;
+          opt.dataset.filename = item.filename || '';
+          docSelect.appendChild(opt);
+        }
+        setStatus(`${items.length} document(s) loaded.`);
+      } catch (err) {
+        docSelect.innerHTML = '<option value="">— Error loading list —</option>';
+        setStatus('Failed to load document list.');
+        console.error('[inspector] list error:', err);
+      }
+    }
+
+    // ── Selection handler ──
+    docSelect.addEventListener('change', async () => {
+      const docId = docSelect.value;
+      if (!docId) {
+        resetPanes();
+        return;
+      }
+      const sel = docSelect.selectedOptions[0];
+      const hasPdf = sel.dataset.hasPdf === 'true';
+      const hasExtraction = sel.dataset.hasExtraction === 'true';
+
+      setStatus('Loading…');
+      await Promise.all([
+        renderLeft(docId, hasPdf),
+        renderRight(docId, hasExtraction),
+      ]);
+      setStatus('Ready.');
+    });
+
+    // ── Left pane: render PDF ──
+    async function renderLeft(docId, hasPdf) {
+      leftBody.innerHTML = '';
+
+      if (!hasPdf) {
+        leftBody.innerHTML = `<div class="missing-msg">
+          <strong>PDF not available on disk.</strong><br>
+          The original PDF for this document was not found at the expected path
+          (<code>/app/data/pdfs/</code>). It may not have been downloaded yet,
+          or the filename pattern could not be resolved.
+        </div>`;
+        return;
+      }
+
+      // Try pdf.js first; fall back to <iframe> if CDN unavailable
+      try {
+        if (!pdfJsLib) {
+          pdfJsLib = await import(PDF_JS_URL);
+          pdfJsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER_URL;
+        }
+
+        setStatus('Fetching PDF bytes…');
+        const pdfUrl = `/inspect/pdf/${docId}`;
+        const resp = await fetch(pdfUrl);
+        if (!resp.ok) {
+          throw new Error(`PDF fetch failed: HTTP ${resp.status}`);
+        }
+        const arrayBuffer = await resp.arrayBuffer();
+
+        setStatus('Rendering pages…');
+        const pdfDoc = await pdfJsLib.getDocument({ data: arrayBuffer }).promise;
+
+        const container = document.createElement('div');
+        container.id = 'pdf-canvas-container';
+
+        for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+          const page = await pdfDoc.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 1.4 });
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const ctx = canvas.getContext('2d');
+          await page.render({ canvasContext: ctx, viewport }).promise;
+          container.appendChild(canvas);
+        }
+
+        leftBody.appendChild(container);
+      } catch (pdfJsErr) {
+        // Graceful degradation: use browser built-in PDF renderer
+        console.warn('[inspector] pdf.js failed, falling back to <iframe>:', pdfJsErr);
+        const iframe = document.createElement('iframe');
+        iframe.id = 'pdf-fallback';
+        iframe.src = `/inspect/pdf/${docId}`;
+        iframe.title = 'PDF viewer (browser built-in)';
+        leftBody.appendChild(iframe);
+      }
+    }
+
+    // ── Right pane: render extraction ──
+    async function renderRight(docId, hasExtraction) {
+      rightBody.innerHTML = '';
+
+      if (!hasExtraction) {
+        rightBody.innerHTML = `<div class="missing-msg">
+          <strong>Extraction not available.</strong><br>
+          No extraction JSON was found for this document
+          (<code>/app/data/extractions/${docId}.json</code>).
+          Run <code>POST /extract</code> for this document first.
+        </div>`;
+        return;
+      }
+
+      try {
+        const res = await fetch(`/inspect/extraction/${docId}`);
+        if (res.status === 404) {
+          rightBody.innerHTML = `<div class="missing-msg">
+            <strong>Extraction not available.</strong><br>
+            The extraction file was not found on the server.
+          </div>`;
+          return;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+        const data = await res.json();
+        const body = document.createElement('div');
+        body.id = 'extraction-body';
+
+        // Confidence pills
+        const confBar = document.createElement('div');
+        confBar.className = 'conf-bar';
+
+        const ocrConf = data.ocr_confidence ?? null;
+        const finConf = data.confidence_financial ?? null;
+
+        if (ocrConf !== null) {
+          const pill = document.createElement('span');
+          pill.className = 'conf-pill ' + confClass(ocrConf);
+          pill.textContent = `OCR: ${(ocrConf * 100).toFixed(0)}%`;
+          confBar.appendChild(pill);
+        }
+        if (finConf !== null) {
+          const pill = document.createElement('span');
+          pill.className = 'conf-pill ' + confClass(finConf);
+          pill.textContent = `Financial: ${(finConf * 100).toFixed(0)}%`;
+          confBar.appendChild(pill);
+        }
+        const ms = data.extraction_time_ms;
+        if (ms != null) {
+          const t = document.createElement('span');
+          t.style.color = '#6b7280';
+          t.style.fontSize = '0.8rem';
+          t.textContent = `${ms} ms`;
+          confBar.appendChild(t);
+        }
+        body.appendChild(confBar);
+
+        // Text content
+        if (data.text_content) {
+          const st = document.createElement('div');
+          st.className = 'section-title';
+          st.textContent = 'Extracted Text';
+          body.appendChild(st);
+          const pre = document.createElement('div');
+          pre.id = 'text-content';
+          pre.textContent = data.text_content;
+          body.appendChild(pre);
+        } else {
+          const st = document.createElement('div');
+          st.className = 'section-title';
+          st.textContent = 'Extracted Text';
+          body.appendChild(st);
+          const empty = document.createElement('div');
+          empty.style.cssText = 'color:#9ca3af;font-size:0.85rem;margin:6px 0 12px';
+          empty.textContent = '(no text content)';
+          body.appendChild(empty);
+        }
+
+        // Tables
+        const tables = data.tables || [];
+        const tSt = document.createElement('div');
+        tSt.className = 'section-title';
+        tSt.textContent = `Tables (${tables.length})`;
+        body.appendChild(tSt);
+
+        const tablesContainer = document.createElement('div');
+        tablesContainer.id = 'tables-container';
+
+        if (tables.length === 0) {
+          const empty = document.createElement('div');
+          empty.style.cssText = 'color:#9ca3af;font-size:0.85rem;';
+          empty.textContent = '(no tables extracted)';
+          tablesContainer.appendChild(empty);
+        } else {
+          for (const tbl of tables) {
+            const label = document.createElement('div');
+            label.style.cssText = 'font-size:0.78rem;color:#6b7280;margin:8px 0 4px;';
+            label.textContent = `Table ${tbl.table_index + 1}  (page ${tbl.page_number})`;
+            tablesContainer.appendChild(label);
+
+            const table = document.createElement('table');
+            // Headers
+            if (tbl.headers && tbl.headers.length > 0) {
+              const thead = table.createTHead();
+              const tr = thead.insertRow();
+              for (const h of tbl.headers) {
+                const th = document.createElement('th');
+                th.textContent = h ?? '';
+                tr.appendChild(th);
+              }
+            }
+            // Rows
+            const tbody = table.createTBody();
+            for (const row of (tbl.rows || [])) {
+              const tr = tbody.insertRow();
+              for (const cell of row) {
+                const td = tr.insertCell();
+                td.textContent = cell ?? '';
+              }
+            }
+            tablesContainer.appendChild(table);
+          }
+        }
+        body.appendChild(tablesContainer);
+        rightBody.appendChild(body);
+
+      } catch (err) {
+        rightBody.innerHTML = `<div class="error-msg">
+          <strong>Error loading extraction.</strong><br>${err.message}
+        </div>`;
+        console.error('[inspector] extraction error:', err);
+      }
+    }
+
+    // ── Helpers ──
+    function confClass(v) {
+      if (v >= 0.8) return 'conf-high';
+      if (v >= 0.4) return 'conf-medium';
+      return 'conf-low';
+    }
+
+    function setStatus(msg) {
+      statusBar.textContent = msg;
+    }
+
+    function resetPanes() {
+      leftBody.innerHTML = `<div class="empty-state">
+        <span class="icon">📄</span>
+        <span>Select a document above to view the PDF.</span>
+      </div>`;
+      rightBody.innerHTML = `<div class="empty-state">
+        <span class="icon">🔍</span>
+        <span>Select a document above to view its extraction.</span>
+      </div>`;
+      setStatus('');
+    }
+
+    // ── Init ──
+    loadDocList();
+  </script>
+</body>
+</html>

@@ -34,12 +34,23 @@ CREATE TABLE IF NOT EXISTS pdf_documents (
 );
 """
 
+_MIGRATION_PDF_PATH = """
+ALTER TABLE pdf_documents ADD COLUMN pdf_path TEXT;
+"""
+
 
 def _ensure_schema(db_path: str) -> None:
-    """Create table if it does not exist yet (idempotent)."""
+    """Create table + apply migrations if not already present (idempotent)."""
     conn = sqlite3.connect(db_path)
     try:
         conn.execute(_DDL)
+        # Migration: add pdf_path column (nullable, lazy-backfilled at list time).
+        existing_cols = {
+            row[1]
+            for row in conn.execute("PRAGMA table_info(pdf_documents)").fetchall()
+        }
+        if "pdf_path" not in existing_cols:
+            conn.execute(_MIGRATION_PDF_PATH)
         conn.commit()
     finally:
         conn.close()
@@ -73,6 +84,18 @@ class SQLitePDFDocumentRepository(PDFDocumentRepository):
                 "INSERT OR REPLACE INTO pdf_documents "
                 "(id, url, source_type, status, extracted_at) VALUES (?, ?, ?, ?, ?)",
                 (doc.id, doc.url, doc.source_type, doc.status, extracted_at_str),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+
+    async def set_pdf_path(self, doc_id: str, pdf_path: str) -> None:
+        """Lazy-backfill the pdf_path column for a known doc_id."""
+        conn = sqlite3.connect(self.db_path)
+        try:
+            conn.execute(
+                "UPDATE pdf_documents SET pdf_path = ? WHERE id = ?",
+                (pdf_path, doc_id),
             )
             conn.commit()
         finally:
@@ -113,6 +136,36 @@ class SQLitePDFDocumentRepository(PDFDocumentRepository):
             rows = conn.execute(
                 "SELECT id, url, source_type, status, extracted_at "
                 "FROM pdf_documents WHERE status = 'pending'",
+            ).fetchall()
+        finally:
+            conn.close()
+
+        result = []
+        for row in rows:
+            extracted_at = None
+            if row[4]:
+                try:
+                    extracted_at = datetime.fromisoformat(row[4])
+                except ValueError:
+                    extracted_at = None
+            result.append(
+                PDFDocument(
+                    id=row[0],
+                    url=row[1],
+                    source_type=row[2],
+                    status=row[3],
+                    extracted_at=extracted_at,
+                )
+            )
+        return result
+
+    async def find_all(self) -> list[PDFDocument]:
+        """Return all documents ordered by extracted_at DESC (NULLs last)."""
+        conn = sqlite3.connect(self.db_path)
+        try:
+            rows = conn.execute(
+                "SELECT id, url, source_type, status, extracted_at "
+                "FROM pdf_documents ORDER BY extracted_at DESC",
             ).fetchall()
         finally:
             conn.close()
