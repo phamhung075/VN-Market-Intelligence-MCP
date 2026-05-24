@@ -1,5 +1,34 @@
 # QA — Notebook
 
+## c282 cycle-72 · 2026-05-24 · alert-engine P2-G — G5b/G5c audit — PASS
+
+**Task:** P2-G — G5b/G5c audit (brownfield deprecation integration regression check) | **Verdict:** PASS
+
+```
+date: 2026-05-24T07:35:23Z
+outcome: PASS — 5/5 ACs PASS; G5 evidence complete
+type: pilot-task-qa (read-only audit + evidence writing, no code changes)
+signal: docs/signals/qa-ae-P2-G-g5-evidence-done-20260524T073523Z.json
+evidence: docs/handoffs/TASK_P2-G-ae-g5b-g5c-audit.md §[QA] Review Record
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (merge-base --is-ancestor exit 0)
+foreign_paths_staged: 0 (staging discipline enforced)
+ssot_not_mutated: goalsEarned/decisionMatrix untouched; G5 stays EARNED-PENDING
+```
+
+| AC | Command | Count | Verdict |
+|----|---------|-------|---------|
+| AC-1 (zero direct domain imports) | grep vn-market-intelligence/alert-engine\|apps/alert-engine/pkg in mcp-server/src/ | 0 matches (exit 1) | PASS |
+| AC-2 (HTTP client at port 5006) | grep 5006\|alert-engine\|alertEngine clients.ts | 2 matches (lines 13, 28) | PASS |
+| AC-3 (zero TODO.*migrat in alert-engine/) | grep TODO.*migrat *.go | 0 matches (exit 1) | PASS |
+| AC-4 (zero TODO.*migrat in _deprecated/) | grep TODO.*migrat _deprecated/ | 0 matches (exit 1) | PASS |
+| AC-5 (G5 evidence compiled) | handoff updated + signal emitted | g5_ready_to_grade=YES | PASS |
+
+**G5 status:** EARNED-PENDING (evidence complete; PO flips at Phase-3 terminal 12/12 close)
+**P2-G verdict: PASS**
+**NEXT:** pm — mark P2-G DONE, sequence P2-H (G3 composition root).
+
+---
+
 ## c282 cycle-71 · 2026-05-24 · alert-engine P2-D — G4 freeze-anchor confirmation + evidence compilation — PASS
 
 **Task:** P2-D AC-1/AC-2/AC-3 — G4 evidence compilation | **Verdict:** PASS

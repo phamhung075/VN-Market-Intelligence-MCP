@@ -15,11 +15,11 @@ QA verifies G5b/G5c: zero direct alert-engine domain imports in mcp-server handl
 
 - **Zone:** apps/alert-engine (audit scope only; mcp-server scanned for cross-imports)
 - **Acceptance Criteria:**
-  - [ ] AC-1: Zero direct alert-engine domain imports in mcp-server (`grep -rn "vn-market-intelligence/alert-engine|apps/alert-engine/pkg" apps/mcp-server/src/ --include="*.ts"` returns 0)
-  - [ ] AC-2: HTTP client confirmed at correct port (`grep -n "5006|alert-engine|alertEngine" apps/mcp-server/src/infrastructure/microservices/clients.ts` returns ≥1)
-  - [ ] AC-3: Zero `TODO.*migrat` in alert-engine zone (`grep -rn "TODO.*migrat" apps/alert-engine/ --include="*.go"` returns 0)
-  - [ ] AC-4: Zero `TODO.*migrat` in deprecated path (`grep -rn "TODO.*migrat" apps/alert-engine/pkg/domain/_deprecated/ 2>/dev/null` returns 0)
-  - [ ] AC-5: G5 evidence compiled (TASK_P2-G-ae-g5b-g5c-audit.md handoff updated + signal emitted)
+  - [x] AC-1: Zero direct alert-engine domain imports in mcp-server (`grep -rn "vn-market-intelligence/alert-engine|apps/alert-engine/pkg" apps/mcp-server/src/ --include="*.ts"` returns 0)
+  - [x] AC-2: HTTP client confirmed at correct port (`grep -n "5006|alert-engine|alertEngine" apps/mcp-server/src/infrastructure/microservices/clients.ts` returns ≥1)
+  - [x] AC-3: Zero `TODO.*migrat` in alert-engine zone (`grep -rn "TODO.*migrat" apps/alert-engine/ --include="*.go"` returns 0)
+  - [x] AC-4: Zero `TODO.*migrat` in deprecated path (`grep -rn "TODO.*migrat" apps/alert-engine/pkg/domain/_deprecated/ 2>/dev/null` returns 0)
+  - [x] AC-5: G5 evidence compiled (TASK_P2-G-ae-g5b-g5c-audit.md handoff updated + signal emitted)
 
 - **Files to read first:**
   - `apps/mcp-server/src/infrastructure/microservices/clients.ts` (lines around 28 for alertEngine HTTP client declaration)
@@ -112,52 +112,90 @@ QA emits `docs/signals/qa-ae-P2-G-g5-evidence-done-<UTC>.json`.
 ### AC-1 Evidence — Zero direct alert-engine domain imports
 
 ```
-[PASTE grep output here — should be empty]
+[no output — grep returned 0 matches]
+grep exit code: 1 (no match = zero lines)
 ```
 
-**Verdict:** PASS / FAIL
+**Verdict:** PASS — 0 matches. mcp-server contains zero TypeScript files importing alert-engine Go packages directly.
 
 ---
 
 ### AC-2 Evidence — HTTP client at port 5006
 
 ```
-[PASTE grep output here — should show 5006 and/or alertEngine]
+13: *   - alert-engine (5006): alert dedup + cooldown + Telegram
+28:  alertEngine: Bun.env.ALERT_ENGINE_URL ?? 'http://localhost:5006',
 ```
 
-**Verdict:** PASS / FAIL
+**Verdict:** PASS — 2 matches. Line 13 (JSDoc comment) and line 28 (`alertEngine: Bun.env.ALERT_ENGINE_URL ?? 'http://localhost:5006'`) confirm the HTTP client is declared at the correct port.
 
 ---
 
 ### AC-3 Evidence — Zero TODO.*migrat in alert-engine/
 
 ```
-[PASTE grep output here — should be empty]
+[no output — grep returned 0 matches]
+grep exit code: 1 (no match = zero lines)
 ```
 
-**Verdict:** PASS / FAIL
+**Verdict:** PASS — 0 matches. No migration TODOs remain in the alert-engine zone.
 
 ---
 
 ### AC-4 Evidence — Zero TODO.*migrat in _deprecated/
 
 ```
-[PASTE grep output here — should be empty]
+[no output — grep returned 0 matches]
+grep exit code: 1 (no match = zero lines)
+_deprecated/ contains: services_v1.go, services_v1_test.go (no migration TODOs)
 ```
 
-**Verdict:** PASS / FAIL
+**Verdict:** PASS — 0 matches. Deprecated code is clean.
 
 ---
 
 ### AC-5 Summary — G5 Evidence Compiled
 
-**G5a (P2-F):** G5a complete — services.go moved to _deprecated/services_v1.go, evaluate.go rewired to alert_pipeline module. All 7 ACs PASS.
+**G5a (P2-F):** G5a complete — services.go moved to _deprecated/services_v1.go, evaluate.go rewired to alert_pipeline module. All 7 ACs PASS. (from P2-F)
 
-**G5b (P2-G AC-1,2):** Zero direct domain imports in mcp-server; HTTP client at port 5006 declared.
+**G5b (P2-G AC-1,2):** CONFIRMED. AC-1: 0 direct domain imports in mcp-server (exit 1 = zero matches). AC-2: alertEngine HTTP client at `http://localhost:5006` declared in clients.ts:28.
 
-**G5c (P2-G AC-3,4):** Zero migration TODOs in alert-engine zone or deprecated path.
+**G5c (P2-G AC-3,4):** CONFIRMED. AC-3: 0 TODO.*migrat in alert-engine/*.go (exit 1). AC-4: 0 TODO.*migrat in _deprecated/ (exit 1).
 
 **G5 Ready to Grade:** YES
+
+| Field | Value |
+|---|---|
+| g5a_deprecated_path | apps/alert-engine/pkg/domain/_deprecated/services_v1.go |
+| g5b_zero_direct_domain_imports | YES (AC-1: 0 matches) |
+| g5b_http_client_present | YES (clients.ts:28 — port 5006) |
+| g5b_scope | NARROW (HTTP client declared; no tool handler imports alert-engine Go pkg) |
+| g5c_zero_todo_migrat | YES (AC-3: 0 matches, AC-4: 0 matches) |
+| g5_ready_to_grade | YES |
+
+**NOTE:** g5_ready_to_grade=YES means evidence complete — G5 stays EARNED-PENDING. PO flips G5 only at Phase-3 terminal 12/12 close.
+
+---
+
+## [QA] Review Record — P2-G
+
+**Date:** 2026-05-24T07:35:23Z
+**QA Agent:** qa
+**Task:** P2-G — G5b/G5c audit (alert-engine brownfield deprecation integration regression check)
+**Verdict:** PASS
+
+| AC | Command | Result | Verdict |
+|---|---|---|---|
+| AC-1 | `grep -rn "vn-market-intelligence/alert-engine\|apps/alert-engine/pkg" apps/mcp-server/src/ --include="*.ts"` | 0 matches (exit 1) | PASS |
+| AC-2 | `grep -n "5006\|alert-engine\|alertEngine" apps/mcp-server/src/infrastructure/microservices/clients.ts` | 2 matches (lines 13, 28) | PASS |
+| AC-3 | `grep -rn "TODO.*migrat" apps/alert-engine/ --include="*.go"` | 0 matches (exit 1) | PASS |
+| AC-4 | `grep -rn "TODO.*migrat" apps/alert-engine/pkg/domain/_deprecated/ 2>/dev/null` | 0 matches (exit 1) | PASS |
+| AC-5 | Evidence table compiled + signal emitted | g5_ready_to_grade=YES | PASS |
+
+**anchor_intact:** debba8eaff0724d1fb32fc9d28640201cc32d1cc (merge-base --is-ancestor exit 0 confirmed)
+**foreign_paths_staged:** 0 (staging discipline enforced — only own paths staged)
+**ssot_not_mutated:** goalsEarned/decisionMatrix untouched; G5 stays EARNED-PENDING
+**signal:** docs/signals/qa-ae-P2-G-g5-evidence-done-20260524T073523Z.json
 
 ---
 
