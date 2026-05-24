@@ -10,14 +10,20 @@
     "start": "bun run src/index.ts",
     "test": "bun test",
     "check": "bun tsc --noEmit",
-    "sandbox": "bun run src/sandbox/runner.ts"
+    "sandbox": "bun run src/sandbox/runner.ts",
+    "lint": "eslint src/",
+    "lint:fence": "eslint src/ --rule 'boundaries/element-types: error'",
+    "lint:ci": "eslint src/ --max-warnings 0"
   },
   "dependencies": {
     "hono": "^4.0.0",
     "playwright": "^1.44.0"
   },
   "devDependencies": {
+    "@typescript-eslint/parser": "^8.59.4",
     "bun-types": "^1.3.11",
+    "eslint": "^10.4.0",
+    "eslint-plugin-boundaries": "^6.0.2",
     "typescript": "^5.4.0"
   }
 }
