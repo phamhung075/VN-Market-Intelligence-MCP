@@ -20,7 +20,9 @@
 // Scenario JSON fixtures stand in for all live data.
 //
 // P1-A  — sandbox harness CLI with full flag/discovery/dispatch framework.
-//          No primitive executors yet (wired in P1-B1+).
+//
+//	No primitive executors yet (wired in P1-B1+).
+//
 // P1-B1 — wire executePrimitive to signal-classifier.Classify.
 // P1-B2 — wire executePrimitive to dedup-key-builder.BuildKey.
 // P1-B3 — wire executePrimitive to cooldown-gate.Check.
@@ -28,6 +30,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -37,6 +40,8 @@ import (
 
 	"time"
 
+	"github.com/vn-market-intelligence/alert-engine/pkg/domain"
+	ap "github.com/vn-market-intelligence/alert-engine/pkg/module/alert_pipeline"
 	cg "github.com/vn-market-intelligence/alert-engine/pkg/primitive/cooldown-gate"
 	dkb "github.com/vn-market-intelligence/alert-engine/pkg/primitive/dedup-key-builder"
 	sc "github.com/vn-market-intelligence/alert-engine/pkg/primitive/signal-classifier"
@@ -176,9 +181,9 @@ func executeSignalClassifier(data []byte) (bool, error) {
 			Severity string `json:"severity"`
 		} `json:"input"`
 		Expected struct {
-			Valid     bool   `json:"valid"`
-			Severity  string `json:"severity"`
-			Channel   string `json:"channel"`
+			Valid    bool   `json:"valid"`
+			Severity string `json:"severity"`
+			Channel  string `json:"channel"`
 		} `json:"expected"`
 	}
 	if err := json.Unmarshal(data, &s); err != nil {
@@ -335,12 +340,151 @@ func executeModule(s Scenario) (bool, error) {
 	}
 
 	switch envelope.Module {
-	// P1-C: case "alert_pipeline": return executeAlertPipeline(data)
+	case "alert_pipeline":
+		return executeAlertPipeline(data)
 	case "":
 		return false, fmt.Errorf("scenario %q: missing 'module' field", s.Name)
 	default:
 		return false, fmt.Errorf("module %q in %s not yet wired (add executor in P1-C+)", envelope.Module, s.Name)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// Module executor — alert_pipeline (P1-C)
+// ---------------------------------------------------------------------------
+
+// sandboxRepo is an in-memory AlertRepositoryPort. No SQLite, no network.
+// Recent alerts and the duplicate flag are seeded from the scenario JSON.
+type sandboxRepo struct {
+	recent    []domain.StoredAlert
+	duplicate bool
+}
+
+func (r *sandboxRepo) GetRecentAlerts(stock string, withinMinutes int) ([]domain.StoredAlert, error) {
+	return r.recent, nil
+}
+func (r *sandboxRepo) HasDuplicateFingerprint(fingerprint string, withinMinutes int) (bool, error) {
+	return r.duplicate, nil
+}
+func (r *sandboxRepo) StoreAlert(alert domain.StoredAlert) (int64, error) { return 1, nil }
+
+// sandboxMute is an in-memory MutePort seeded from the scenario JSON.
+type sandboxMute struct{ muted bool }
+
+func (m *sandboxMute) IsStockMuted(stock string) (bool, error) { return m.muted, nil }
+
+// sandboxTelegram is an in-memory TelegramPort. It never calls a real API and
+// holds no credential — it only records the channel it would have routed to.
+type sandboxTelegram struct{ lastChannel domain.TelegramChannel }
+
+func (t *sandboxTelegram) Send(ctx context.Context, channel domain.TelegramChannel, text string) (bool, error) {
+	t.lastChannel = channel
+	return true, nil
+}
+
+// executeAlertPipeline runs an alert_pipeline module scenario (P1-C) through the
+// real module composed over in-memory mock ports.
+//
+// Scenario JSON shape:
+//
+//	{
+//	  "module": "alert_pipeline",
+//	  "input": {
+//	    "alert": {"stock","severity","message","signalTypes":[...],"actionCode"},
+//	    "recentAlerts": [{"stocks","signalTypes","triggeredAt"}...],
+//	    "duplicate": <bool>,
+//	    "muted": <bool>,
+//	    "cfg": {"cooldownMinutes","maxAlertsPerStockPerDay"},
+//	    "now": "<RFC3339>"
+//	  },
+//	  "expected": {"fired": <bool>, "fingerprint": "<8-hex>", "channel": "<string>", "reason": "<string>"}
+//	}
+//
+// fingerprint and channel are only asserted when fired=true (a suppressed alert
+// routes nothing). now is injected so the cooldown decision is deterministic.
+func executeAlertPipeline(data []byte) (bool, error) {
+	var s struct {
+		Input struct {
+			Alert struct {
+				Stock       string   `json:"stock"`
+				Severity    string   `json:"severity"`
+				Message     string   `json:"message"`
+				SignalTypes []string `json:"signalTypes"`
+				ActionCode  string   `json:"actionCode"`
+			} `json:"alert"`
+			RecentAlerts []struct {
+				Stocks      string `json:"stocks"`
+				SignalTypes string `json:"signalTypes"`
+				TriggeredAt string `json:"triggeredAt"`
+			} `json:"recentAlerts"`
+			Duplicate bool `json:"duplicate"`
+			Muted     bool `json:"muted"`
+			Cfg       struct {
+				CooldownMinutes         int `json:"cooldownMinutes"`
+				MaxAlertsPerStockPerDay int `json:"maxAlertsPerStockPerDay"`
+			} `json:"cfg"`
+			Now string `json:"now"`
+		} `json:"input"`
+		Expected struct {
+			Fired       bool   `json:"fired"`
+			Fingerprint string `json:"fingerprint"`
+			Channel     string `json:"channel"`
+			Reason      string `json:"reason"`
+		} `json:"expected"`
+	}
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("alert-pipeline: unmarshal scenario: %w", err)
+	}
+
+	now, err := time.Parse(time.RFC3339, s.Input.Now)
+	if err != nil {
+		return false, fmt.Errorf("alert-pipeline: parse now %q: %w", s.Input.Now, err)
+	}
+
+	recent := make([]domain.StoredAlert, len(s.Input.RecentAlerts))
+	for i, r := range s.Input.RecentAlerts {
+		recent[i] = domain.StoredAlert{
+			Stocks:      r.Stocks,
+			SignalTypes: r.SignalTypes,
+			TriggeredAt: r.TriggeredAt,
+		}
+	}
+
+	repo := &sandboxRepo{recent: recent, duplicate: s.Input.Duplicate}
+	mute := &sandboxMute{muted: s.Input.Muted}
+	tg := &sandboxTelegram{}
+
+	pipeline := ap.New(repo, mute, tg, domain.CooldownConfig{
+		CooldownMinutes:         s.Input.Cfg.CooldownMinutes,
+		MaxAlertsPerStockPerDay: s.Input.Cfg.MaxAlertsPerStockPerDay,
+	})
+
+	res, err := pipeline.Run(context.Background(), domain.AlertRequest{
+		Stock:       s.Input.Alert.Stock,
+		Severity:    domain.AlertSeverity(s.Input.Alert.Severity),
+		Message:     s.Input.Alert.Message,
+		SignalTypes: s.Input.Alert.SignalTypes,
+		ActionCode:  s.Input.Alert.ActionCode,
+	}, now)
+	if err != nil {
+		return false, fmt.Errorf("alert-pipeline: run: %w", err)
+	}
+
+	if res.Fired != s.Expected.Fired {
+		return false, fmt.Errorf("alert-pipeline: Fired=%v want=%v (reason=%q)", res.Fired, s.Expected.Fired, res.Reason)
+	}
+	if res.Reason != s.Expected.Reason {
+		return false, fmt.Errorf("alert-pipeline: Reason=%q want=%q", res.Reason, s.Expected.Reason)
+	}
+	if s.Expected.Fired {
+		if res.Fingerprint != s.Expected.Fingerprint {
+			return false, fmt.Errorf("alert-pipeline: Fingerprint=%q want=%q", res.Fingerprint, s.Expected.Fingerprint)
+		}
+		if string(res.Channel) != s.Expected.Channel {
+			return false, fmt.Errorf("alert-pipeline: Channel=%q want=%q", res.Channel, s.Expected.Channel)
+		}
+	}
+	return true, nil
 }
 
 // ---------------------------------------------------------------------------

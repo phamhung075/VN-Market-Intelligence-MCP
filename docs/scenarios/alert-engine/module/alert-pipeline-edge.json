@@ -1,0 +1,31 @@
+{
+  "module": "alert_pipeline",
+  "description": "Edge: cooldown suppression — same stock + overlapping signal (MACD_CROSS) fired 15min before now, within the 30min window → cooldown-gate suppresses, pipeline short-circuits, fired=false, routes nothing",
+  "input": {
+    "alert": {
+      "stock": "VCB",
+      "severity": "high",
+      "message": "MACD bullish cross on VCB",
+      "signalTypes": ["MACD_CROSS"],
+      "actionCode": "TA"
+    },
+    "recentAlerts": [
+      {
+        "stocks": "VCB",
+        "signalTypes": "MACD_CROSS",
+        "triggeredAt": "2026-05-24T09:45:00Z"
+      }
+    ],
+    "duplicate": false,
+    "muted": false,
+    "cfg": {
+      "cooldownMinutes": 30,
+      "maxAlertsPerStockPerDay": 3
+    },
+    "now": "2026-05-24T10:00:00Z"
+  },
+  "expected": {
+    "fired": false,
+    "reason": "cooldown: same signal within 30min"
+  }
+}
