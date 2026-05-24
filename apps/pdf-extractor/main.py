@@ -8,14 +8,13 @@ Port: 5001 (configurable via $PORT env var)
 """
 
 import logging
-import os
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
 
 from infrastructure.config import Config
+from infrastructure.lifespan import build_lifespan
+from infrastructure.startup import ensure_dirs
 from infrastructure.repositories import (
     SQLitePDFDocumentRepository,
     HTTPPDFStorageRepository,
@@ -24,7 +23,6 @@ from infrastructure.extraction_engine import PdfplumberExtractionEngine
 from domain.services import ExtractPDFService
 from application.usecases import ExtractPDFUseCase
 from interface.handlers import register_routes
-from fastapi import APIRouter
 
 
 def create_app() -> FastAPI:
@@ -36,9 +34,7 @@ def create_app() -> FastAPI:
     """
     cfg = Config.from_env()
 
-    # Ensure storage directory exists
-    os.makedirs(cfg.storage_dir, exist_ok=True)
-    os.makedirs(os.path.dirname(cfg.db_path) or ".", exist_ok=True)
+    ensure_dirs(cfg)
 
     # --- Infrastructure layer ---
     doc_repo = SQLitePDFDocumentRepository(db_path=cfg.db_path)
@@ -56,20 +52,11 @@ def create_app() -> FastAPI:
     extract_usecase = ExtractPDFUseCase(extract_service=extract_service)
 
     # --- FastAPI app ---
-    @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-        logging.basicConfig(level=getattr(logging, cfg.log_level.upper(), logging.INFO))
-        logging.getLogger(__name__).info(
-            "pdf-extractor starting on %s:%d", cfg.host, cfg.port
-        )
-        yield
-        logging.getLogger(__name__).info("pdf-extractor shutting down")
-
     app = FastAPI(
         title="PDF Extractor",
         version="1.0.0",
         description="Extracts structured content from Vietnamese BCTC financial PDFs.",
-        lifespan=lifespan,
+        lifespan=build_lifespan(cfg),
     )
 
     app.add_middleware(

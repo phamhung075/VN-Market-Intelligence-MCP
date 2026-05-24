@@ -1,0 +1,5 @@
+{
+  "primitive": "echo_identity",
+  "inputs": { "value": "hello" },
+  "expected": "hello"
+}

@@ -1,0 +1,5 @@
+{
+  "primitive": "echo_identity",
+  "inputs": { "value": 42 },
+  "expected": 99
+}
