@@ -205,3 +205,75 @@ Test 2e — Health endpoint (NF-LD-2 regression):
 
 **Status:** ✓ ALL GATES PASS — Refresh button feature is now live on http://localhost:3000/dashboards/news-fetch/
 
+
+## 2026-05-24 · News Pipeline Diagnosis — "Why no articles?"
+
+**Incident:** User reported news-fetch live dashboard shows only ~1 article total (Bloomberg source), Reuters completely empty. Asked why the news pipeline has almost no articles.
+
+**Investigation:**
+
+1. **Database State:**
+   - rag_analyses table: 0 rows (completely empty)
+   - Schema intact with UNIQUE INDEX on source_url (partial: WHERE source_url IS NOT NULL AND source_url != '')
+
+2. **Recent Activity Logs:**
+   - 2026-05-24T21:40:59Z: VPS push received 205 news articles from 8 sources (vietstock:40, cafef:20, nhandan:28, nld:20, vietnambiz:20, vnbusiness:20, vneconomy:37, vnexpress:20)
+   - 2026-05-24T21:41:01Z: pollNews processed — fetched=160, **inserted=0, duplicates=160** (all 160 articles rejected)
+   - 2026-05-24T21:45:00Z: Next pollNews cycle — fetched=0 (all sources returned empty, expected off-hours)
+
+3. **Root Cause Analysis:**
+
+   Articles are being REJECTED at the INSERT OR IGNORE step despite table being empty. This happens when:
+   - tryInsertEntry() returns false (line 928 in pollNews.ts)
+   - Which occurs when isTitleDuplicate() OR INSERT OR IGNORE fails
+   
+   Since table is empty, isTitleDuplicate() would normally return false. Therefore the INSERT OR IGNORE must be silently ignoring rows due to:
+   
+   **PRIMARY KEY OR UNIQUE constraint violations.**
+   
+   The UNIQUE INDEX on source_url is the culprit: if all 160 articles share the same source_url, then INSERT OR IGNORE silently ignores duplicates after the first, resulting in 0 inserts and 160 duplicate counts.
+
+4. **Why This Happens:**
+
+   The VPS push sends articles from 8 Vietnamese sources (Vietstock, CafeF, VnEconomy, etc.). These articles likely have:
+   - A generic or missing source_url field, OR
+   - A shared fallback URL placeholder
+   
+   When the news-fetch microservice or VPS proxy prepares articles for `/api/push-news`, it may be:
+   - Not extracting individual article URLs correctly, OR
+   - Using a cached/generic URL for all items from the same source, OR
+   - Leaving source_url NULL or empty for VPS-sourced items (bypassing the UNIQUE index entirely)
+
+5. **Evidence:**
+   - pollNews reports: "fetched:160, inserted:0, duplicates:160"
+   - Indicates all articles attempted INSERT, but all failed dedup
+   - No errors/exceptions logged → constraint violation (silent INSERT OR IGNORE behavior)
+   - rag_analyses empty → no articles ever succeeded in writing
+
+**Classification:** INFRASTRUCTURE + CODE
+
+- **INFRASTRUCTURE issue:** The VPS push pipeline or news-fetch service is not properly extracting/preserving individual article URLs
+- **CODE issue:** The INSERT OR IGNORE + UNIQUE INDEX pattern silently swallows duplicates without surfacing the root cause (article URL extraction failure)
+
+**Recommended Actions:**
+
+1. **Inspect VPS Push Payload (requires VPS access):**
+   - SSH to Vinahost VPS and check what URLs are being sent in the POST body to `/api/push-news`
+   - Verify if articles have unique URLs or if they're all NULL/identical
+
+2. **Add Logging to VPS Push Handler:**
+   - Modify pushNewsHandler.ts to log the first 3 articles received, specifically their URLs
+   - This will prove whether articles are arriving with URLs or not
+   - Decision point: if URLs are missing, fix the VPS scraper; if identical, fix news-fetch extraction
+
+3. **Improve Duplicate Detection Signal:**
+   - The "duplicates" count conflates two distinct failures:
+     a) Title fingerprint dedup (intentional, article seen within 24h)
+     b) URL constraint violation (likely unintentional, broken extractor)
+   - Add DEBUG logging to tryInsertEntry() before/after INSERT to log actual changes count
+   - This will distinguish between intentional dedup and constraint failures
+
+4. **Do NOT change code yet** — need to first confirm the VPS payload is the source of the issue
+
+**Status:** DIAGNOSED — awaiting VPS investigation to confirm article URL extraction issue.
+
