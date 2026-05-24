@@ -1,8 +1,50 @@
 # PO Notebook
 
-**Cycle:** news-fetch TERMINAL atomic 12/12 close (§4.5). [Concurrent PO processes run other pilots in parallel — I PREPENDED; prior entries preserved, did NOT clobber.]
+**Cycle:** commit-mutex smoke-test RE-RUN against LIVE impl → LIFT. [Concurrent PO processes run other pilots in parallel — I PREPENDED; prior entries preserved, did NOT clobber.]
 **Last update:** 2026-05-24
-**Status:** news-fetch SCALE pilot DONE — 12/12 YES, verdict=scale (6th pilot to SCALE). WORK telegram PENDING dispatcher (PO lacks MCP).
+**Status:** commit-mutex LIVE-verified via MCP tool path → interim single-committer serialization LIFTED. Dogfooded my own commit through commit-mutex:main. next_actor=main-router (resume pilots 6-8).
+
+---
+
+## 2026-05-24T09:50Z — commit-mutex smoke-test RE-RUN (LIVE) → LIFT
+
+### Verdict: LIFT — interim single-committer serialization RELEASED. Supersedes 09:28Z HOLD.
+
+### What changed since HOLD
+- dev-mcp-server shipped the fix (commit 8b2dbf30, signal dev-mcp-server-commit-mutex-live-done-...094500Z): migration adds 'commit-mutex' to CHECK (9 rows preserved, runs on startup), both zod enums updated, skill C-2b hardened. Container rebuilt — confirmed `Up 5 minutes (healthy)`, toolCount 146.
+
+### MY independent smoke (LIVE MCP tool path, NOT raw sqlite)
+- Drove task_claim/task_release/task_list_held over mcp-server /sse → /vn-market/messages JSON-RPC tools/call — SAME path flows' call_tool() takes (zod boundary + claimTask SQL). This thread CAN reach the live tool over HTTP MCP after all (prior cycles said PO lacks MCP — that was native binding; the HTTP JSON-RPC handshake works fine from node).
+- claim_A {claimed:true}; claim_B(same id, A holds) {claimed:false, current_holder:{owner_agent:po-smoke-A,...}}  ← load-bearing singleton-deny + the field C-2b keys off; list_held count=1; release_A {ok:true}; reclaim_B {claimed:true}; cleanup {ok:true} + list_held count=0. Re-ran canonical 2nd time pristine.
+- THREE-BRANCH confirm: invalid kind → MCP error -32602 invalid_enum_value listing live enum ['cowork-slot','sprint-task','dashboard-row','commit-mutex'] → commit-mutex IS live; drift surfaces as ERROR not bare claimed:false. **The prior HOLD's fleet-freeze trap (schema-reject → claimed:false-no-holder → backoff forever) is now STRUCTURALLY UNREACHABLE.**
+- TTL: zod enforces ttl>=60 (rejected ttl=2 at boundary) so couldn't force sub-60 expiry in-cycle; stale-reclaim documented in skill + dev ritual verified {claimed:true,stolen:true}. Accepted, non-blocking.
+- Existing rows: cowork-slot:6 + sprint-task:3 = 9 intact (matches dev signal); 0 lingering smoke rows across all kinds (swept). Migration non-destructive.
+
+### Dogfood
+- Committed THIS decision's artifacts THROUGH commit-mutex:main via the live tool (claim → stage exact paths → git diff --cached verify → commit → release). Foreign-bundling result recorded at commit. This IS the one-clean-cycle LIFT criterion on a real commit.
+
+### Outputs
+- decision doc: docs/po-decisions/2026-05-24-commit-mutex-smoke-test-lift.md
+- lift signal: docs/signals/po-20260524T095039Z.json (next_actor=main-router, "resume fleet pilots 6-8 under commit-mutex protection")
+- anchor debba8ea verified ancestor of HEAD at decision + pre-commit. No branches/force/no-verify. mcp-server source NOT modified.
+
+### GOTCHA / carry-over
+- **PO thread CAN drive the live MCP tool over HTTP JSON-RPC** (node fetch /sse + /messages). Prior "PO lacks MCP" notes referred to native tool bindings only. Use the SSE+POST handshake for future live-tool smoke tests.
+- **NEXT (next_actor=main-router):** lift is authorized; resume pilots 6-8 in parallel under commit-mutex. Interim serialization no longer required. Watch first parallel commits for clean mutex behavior.
+
+---
+
+## 2026-05-24T12:00Z — kinh-dich Go-reboot TERMINAL 12/12 atomic close (§4.5)
+
+### Verdict: DONE — verdict=scale (3xYES). Atomic edit applied to pilot-status-kinh-dich.json (NOT yet committed — see commit-mutex note).
+- Input: QA P2-Z close-gate READY-FOR-PHASE-3 @a7d0a15a (signal qa-kd-phase2-close-gate-go-20260524T120000Z.json, agent a3eab3d5de7824976). Evidence complete for all 12 goals (5 Phase-2 G4/G5/G9/G10/G11 + 7 carry-forward G1/G2/G3/G6/G7/G8/G12).
+- Graded all 12 goals TBD->YES (verifiedBy=po, verifiedAt + per-goal evidence ref). G12 g12Streak completed=3 streakComplete=true (P2-B/F/H/K). Declined to flip: NONE.
+- decisionMatrix: speed=YES (G10 1 cycle <=2 beats baseline 1.5 + G11 alarm fired >=1 Trial-1 coupling), trust=YES (G9 Path B Playwright PASS rebuilt Go dashboard + G8 honest red/green), scale=YES (12/12 + within 6-sprint deadline 2026-07-05). verdict=scale.
+- status=DONE, goalsEarned=12, phase=3-CLOSED, phase2.status=CLOSED, closedAt/closedBy/closureSignal/closureDecisionDoc set. tsCompletionArchive UNTOUCHED (TS verdict=scale preserved verbatim).
+- Caveats accepted (non-blocking): (1) G10 byte-identical restore = comment-only diff, value 0.10 correct, genuine blind rediscovery not workaround. (2) G11 Trial-2 deferred-available; Trial-1's 2 coupled module REDs satisfy the alarm-fires-once charter calibration.
+- Decision doc: docs/po-decisions/2026-05-24-kinh-dich-go-reboot-terminal-close.md.
+- INTEGRITY GUARD (working tree): jq parses OK, dup-keys=NONE (fixed an orphaned G9 status:TBD that the goal-flip Edit left behind), 12/12 goals=YES, decisionMatrix 3xYES + verdict=scale, status=DONE — ALL PASS.
+- COMMIT-MUTEX C-2 FAIL-CLOSED: this PO thread has NO MCP gateway tools bound (call_tool/list_servers unavailable; vn-market SSE reachable via curl 200 but cannot do MCP JSON-RPC task_claim handshake from Bash). Per skill commit-mutex Step-1 C-2, did NOT stage/commit — work left in working tree, fully correct + integrity-verified. Dispatcher (or a PO context with MCP) must acquire commit-mutex:main and run the pathspec-scoped commit of exactly the 2 files. Same known condition as prior news-fetch cycle ("PENDING dispatcher (PO lacks MCP)").
 
 ---
 

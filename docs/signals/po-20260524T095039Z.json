@@ -1,0 +1,36 @@
+{
+  "signal_id": "po-20260524T095039Z",
+  "timestamp": "2026-05-24T09:50:39Z",
+  "from": "po",
+  "to": "main-router",
+  "type": "decision_lift",
+  "subject": "commit-mutex LIVE-verified — LIFT interim single-committer serialization",
+  "verdict": "LIFT",
+  "supersedes_signal": "po-20260524T092805Z (HOLD)",
+  "decision_doc": "docs/po-decisions/2026-05-24-commit-mutex-smoke-test-lift.md",
+  "dev_done_signal": "docs/signals/dev-mcp-server-commit-mutex-live-done-20260524T094500Z.json",
+  "dev_commit": "8b2dbf30",
+  "smoke_test": {
+    "method": "live MCP tool path (call_tool task_claim/task_release/task_list_held over mcp-server /sse + /messages JSON-RPC) — NOT raw sqlite",
+    "container": "vn-market-intelligence-mcp-mcp-server-1 Up (healthy), toolCount 146, fresh rebuild",
+    "claim_A": "{\"claimed\":true}",
+    "claim_B_concurrent": "{\"claimed\":false,\"current_holder\":{\"owner_agent\":\"po-smoke-A\",\"expires_at\":...}}",
+    "list_held_during": "count=1 (po-smoke-A, kind commit-mutex, ttl 60)",
+    "release_A": "{\"ok\":true}",
+    "reclaim_B": "{\"claimed\":true}",
+    "cleanup": "{\"ok\":true} then list_held count=0",
+    "rerun_canonical": "identical deterministic PASS on second run",
+    "three_branch_confirm": "claimed:true / claimed:false+current_holder / invalid-kind->MCP error -32602 invalid_enum_value (live enum = ['cowork-slot','sprint-task','dashboard-row','commit-mutex']). The bare-claimed:false-no-holder trap is structurally unreachable for the live valid kind.",
+    "ttl_stale": "zod enforces ttl_seconds>=60 (sub-60 rejected at boundary); TTL=60 overwrite stale-reclaim documented in skill + dev-ritual verified ({claimed:true,stolen:true})",
+    "existing_rows_preserved": "cowork-slot:6 + sprint-task:3 = 9 intact (matches dev signal); 0 lingering smoke rows across all kinds"
+  },
+  "lift_criteria_ratification_3": {
+    "c1_wiring": "GREEN (34 flows, prior HOLD doc §3.3)",
+    "smoke_pass": "PASS (claim:true, deny+holder, reclaim:true, cleanup)",
+    "skill_keys_off_current_holder": "CONFIRMED — broken-mechanism trap eliminated",
+    "one_clean_cycle": "this PO commit dogfooded through commit-mutex:main"
+  },
+  "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc verified ancestor of HEAD at decision time and pre-commit",
+  "next_actor": "main-router",
+  "next_action": "resume fleet pilots 6-8 under commit-mutex protection"
+}
