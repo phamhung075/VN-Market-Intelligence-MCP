@@ -126,3 +126,34 @@
 - **Hard scope fence:** `apps/news-fetch/` ONLY (P1-G5 is the ONLY task touching `apps/mcp-server/`, for the single G5 HTTP rewire). No cowork agents (news-scout/market-watcher) per charter §Risk 4.
 - **Constraints binding Day 0:** L84 explicit-file staging (git add <path>), no --force/--no-verify, no push of source/CI, all on main, ESM `.js` import suffixes, `Bun.env` not `process.env`, sandbox exits non-zero on any FAIL.
 - **Pre-revert tags are Phase 2 work** (news-fetch-pre-ci / pre-delete / pre-inject) — NOT created in Phase 1.
+
+---
+
+## Phase 1 Backlog (pdf-extractor SCALE Pilot) — OPEN 2026-05-24
+
+**Status:** OPEN 2026-05-24T09:30Z (PO Phase-0 exit gate close; pilot-status phase=1 ACTIVE). Plan: `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-1-task-plan-python.md` (10 tasks, est 9.3h). **WIP=1 strictly sequential** (pilot-status `phase1.wip_limit`). Owner = `dev-pdf-extractor`, zone `apps/pdf-extractor/` ONLY. Language Python (locked Day 0). G12 DoD gate effective for every streak task. BCTC freeze: all 10 tasks CLEAR.
+
+**HARD GATE — P1-B1 (and all primitives) MUST NOT dispatch until:**
+- AC-5 PASS: `env | grep -iE "DB_PATH|VPS_|VINAHOST|STORAGE_DIR|OCR|TESSERACT|TOKEN|SECRET|API_KEY|PASSWORD"` returns EMPTY in sandbox process env.
+- AC-6 PASS: `grep -rniE "db_path|vps|vinahost|storage_dir|token|secret|api_key|password" apps/pdf-extractor/sandbox/` returns 0 matches.
+- dev-pdf-extractor pastes both AC-5 + AC-6 terminal output (literal) into `docs/handoffs/TASK_P1-A1.md` before any P1-B1 dispatch.
+
+| Task ID | Title | Goals | Owner | Status | Blocked by |
+|---------|-------|-------|-------|--------|-----------|
+| **P1-A1** | Sandbox runner `apps/pdf-extractor/sandbox/runner.py` (JSON-in → trace-JSON-out, zero credentials, zero pdfplumber/pytesseract) + scenario dir layout. FastAPI composition root ≤80 logical lines. 7 ACs. **ZERO-CREDS gate before P1-B1.** | G7, G12 | dev-pdf-extractor | **Todo** | — |
+| P1-A2 | Scenario directory layout: `scenarios/{primitives,modules,service}/` + README | G1, G7 | dev-pdf-extractor | Blocked | P1-A1 |
+| P1-A3 | `main.py` shrink ≤80 logical lines (extract `os.makedirs` → `infrastructure/startup.py`, lifespan → `infrastructure/lifespan.py`) | G3 | dev-pdf-extractor | Blocked | P1-A2 |
+| P1-B1 | First primitive `validate-financial-figures` — move from `domain/services.py`, 3 scenario JSONs. G12 streak #1. **Blocked until P1-A1 zero-creds gate (AC-5+AC-6) confirmed PASS.** | G1, G12 | dev-pdf-extractor | Blocked | P1-A3 + P1-A1-zero-creds-gate |
+| P1-B2 | Second primitive `decimal-normalizer` — READ-ONLY mcp-server archaeology for fixture values, ZERO mcp-server write. 3 scenario JSONs. | G1, G12 | dev-pdf-extractor | Blocked | P1-B1 |
+| P1-C | Module stub `financial-reports` — Protocol ports + `FinancialReportsModule` + mock ports in tests. G12 streak #2. | G2, G12 | dev-pdf-extractor | Blocked | P1-B2 |
+| P1-D | Module scenario JSON `scenarios/modules/financial_reports/` — ≥1 multi-primitive story. | G2, G7, G12 | dev-pdf-extractor | Blocked | P1-C |
+| P1-E1 | Dashboard stub `apps/pdf-extractor/dashboard/index.html` — 3 panels NOT-RUN, SI-2 boundary comment. G12 streak #3. | G6, G8, G9, G12 | dev-pdf-extractor | Blocked | P1-C, P1-D |
+| P1-E2 | Edit-rerun handler + G7 all-4 sub-gates (env audit + scenario grep + zero-infra import + edit→rerun cycle). Evidence in handoff. | G7, G8, G12 | dev-pdf-extractor | Blocked | P1-E1 |
+| P1-G | QA close-gate: sandbox all-green, zero-creds audit PASS, dashboard 3-panel PASS, G12 streak-3 confirmed. Emits `qa-pdf-extractor-phase1-gate-<UTC>.json`. | closes Phase 1 | qa | Blocked | P1-E2 |
+
+**Notes:**
+- **WIP=1 sequential:** dispatch one task at a time. Each unblocks only when predecessor is DONE with evidence in handoff.
+- **G12 streak tasks:** P1-B1 (streak#1) + P1-C (streak#2) + P1-E1 (streak#3). None marked DONE without sandbox-green evidence pasted in handoff.
+- **P1-B2 READ-ONLY rule:** if any `apps/mcp-server/` file appears in `git diff --cached`, task is BLOCKED — dev must unstage before commit.
+- **Handoff:** `docs/handoffs/TASK_P1-A1.md` (created this cycle — full ACs + Architect design notes).
+- **Charter ref:** `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/pilot-charter.md`. Plan: `phase-1-task-plan-python.md`.

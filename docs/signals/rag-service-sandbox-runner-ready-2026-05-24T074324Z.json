@@ -1,0 +1,28 @@
+{
+  "signal": "rag-service-sandbox-runner-ready",
+  "emitted_at": "2026-05-24T07:43:24Z",
+  "emitted_by": "dev-rag-service",
+  "task": "P1-A",
+  "next_actor": "pm",
+  "message": "Python sandbox runner DONE. pdf-extractor P1-A unblocked. WIP=1 now free.",
+  "runner_path": "apps/rag-service/sandbox/__main__.py",
+  "invoke": "python -m sandbox --service=<service> --tier=<primitive|module> --scenario=<path>",
+  "evidence": {
+    "green_trace": {
+      "passed": true,
+      "primitive": "mock_adder",
+      "actual": {"sum": 7.0},
+      "expected": {"sum": 7.0},
+      "diff": [],
+      "elapsed_ms": 0
+    },
+    "env_audit": "empty (grep -E 'DB_PATH|LANCEDB|HF_TOKEN|HUGGINGFACE|OPENAI_API_KEY|EMBEDDING_MODEL' returns no output)",
+    "ac4_grep": "exit 1 (no matches) — no forbidden imports in sandbox/",
+    "tests": "41/41 passed"
+  },
+  "wip_coordination": {
+    "pdf_extractor_p1a_status": "BLOCKED until this signal",
+    "wip_limit": 1,
+    "next_task": "P1-B similarity-scorer primitive"
+  }
+}

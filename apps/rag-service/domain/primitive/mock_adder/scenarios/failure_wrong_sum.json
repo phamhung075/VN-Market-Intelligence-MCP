@@ -1,0 +1,5 @@
+{
+  "primitive": "mock_adder",
+  "input": {"a": 1.0, "b": 1.0},
+  "expected_output": {"sum": 999.0}
+}
