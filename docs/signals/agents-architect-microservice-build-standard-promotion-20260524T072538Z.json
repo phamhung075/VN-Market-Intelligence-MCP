@@ -1,0 +1,91 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "priority": "high",
+  "createdAt": "2026-05-24T07:25:38Z",
+  "brief": "docs/architecture-briefs/2026-05-24-microservice-build-standard-promotion.md",
+  "slug": "microservice-build-standard-promotion",
+  "payload": "Promote three-tier microservice refactor methodology to permanent engineering standard. 7 file edits: F1=create docs/standards/microservice-build-standard.md, F2=register in tree-map.md, F3=add lazy-load to all 12 dev-* agents (8 frontmatter + 4 knowledge.md children), F4=BUILD-STANDARD detection in architect/main.md Step 5, F5=NEW-SERVICE/NEW-FEATURE rows in dev-team/main.md Step 2, F6=standard-check clause in developer/microservice-main.md Step 0c, F7=tree-map Write Ownership row verification. Parallel-safe: explicit file staging only, no pilot-status-*.json writes, lock-retry on index.lock. PO signal raised separately for retro-audit question.",
+  "edit_list": [
+    {
+      "id": "F1",
+      "action": "create",
+      "file": "docs/standards/microservice-build-standard.md",
+      "description": "New SSOT file: six sections (trigger clause, three-tier sequence pointer, G1-G12 pointer, sandbox security inline, dashboard requirement inline, pilot-status SSOT convention). ≤120L. DRY — no verbatim G1-G12 duplication.",
+      "commit_message": "docs(standards): add microservice-build-standard — three-tier methodology SSOT"
+    },
+    {
+      "id": "F2",
+      "action": "edit",
+      "file": "docs/references/tree-map.md",
+      "description": "Add docs/standards/microservice-build-standard.md under docs/ARCHITECTURE.md subtree. Add Write Ownership row: maintainer=Architect, trigger=methodology rule change or new closed pilot lesson.",
+      "commit_message": "docs(tree-map): register microservice-build-standard under ARCHITECTURE subtree"
+    },
+    {
+      "id": "F3a",
+      "action": "edit",
+      "files": [
+        ".claude/agents/dev-technical-analysis.md",
+        ".claude/agents/dev-macro-indicators.md",
+        ".claude/agents/dev-stock-price.md",
+        ".claude/agents/dev-api-gateway.md",
+        ".claude/agents/dev-frontend.md",
+        ".claude/agents/dev-mainserver-crawls.md",
+        ".claude/agents/dev-vps-crawls.md",
+        ".claude/agents/dev-rag-service.md"
+      ],
+      "description": "Add lazy-load entry to knowledge.lazy_load block in each agent frontmatter: path=docs/standards/microservice-build-standard.md, trigger=new_service_or_feature_build, fail_loud=true.",
+      "commit_message": "chore(agents/dev-*): add microservice-build-standard lazy-load to 8 frontmatter agents"
+    },
+    {
+      "id": "F3b",
+      "action": "edit",
+      "files": [
+        "docs/agents/dev-mcp-server/knowledge.md",
+        "docs/agents/dev-alert-engine/knowledge.md",
+        "docs/agents/dev-pdf-extractor/knowledge.md",
+        "docs/agents/dev-kinh-dich/knowledge.md"
+      ],
+      "description": "Add lazy-load entry to lazy_load table in each knowledge.md child: same entry as F3a.",
+      "commit_message": "chore(agents/dev-*): add microservice-build-standard lazy-load to 4 knowledge.md children"
+    },
+    {
+      "id": "F4",
+      "action": "edit",
+      "file": ".claude/flows/architect/main.md",
+      "description": "Insert BUILD-STANDARD detection block in Step 5, immediately before the [Architect] Brownfield Findings template. Block: if task type is NEW-SERVICE/NEW-FEATURE/REBUILD → append BUILD-STANDARD: required + BUILD-STANDARD-REF + PILOT-STATUS-SSOT to handoff. Else → BUILD-STANDARD: not-applicable.",
+      "commit_message": "feat(flows/architect): BUILD-STANDARD detection clause in brownfield handoff output"
+    },
+    {
+      "id": "F5",
+      "action": "edit",
+      "file": ".claude/flows/dev-team/main.md",
+      "description": "Add two rows to Step 2 Planning Matrix table: NEW-SERVICE row (ba→architect→pm, BUILD-STANDARD required) and NEW-FEATURE row (same, architect judges cross-service scope).",
+      "commit_message": "feat(flows/dev-team): NEW-SERVICE/NEW-FEATURE build-standard routing in Step 2 matrix"
+    },
+    {
+      "id": "F6",
+      "action": "edit",
+      "file": ".claude/flows/developer/microservice-main.md",
+      "description": "Insert standard-check clause in Step 0c, after the existing 'Read docs/architecture/microservice/<service>.md...' line. If handoff contains BUILD-STANDARD: required → load standard (fail_loud: true) + verify pilot-status SSOT + apply three-tier and G1-G12 as mandatory gates. If absent/not-applicable → skip (maintenance mode).",
+      "commit_message": "feat(flows/developer): standard-check clause in microservice-main Step 0c"
+    },
+    {
+      "id": "F7",
+      "action": "verify",
+      "file": "docs/references/tree-map.md",
+      "description": "Verify F2 already covers the Write Ownership row for microservice-build-standard.md. If not, add the row. No duplicate rows.",
+      "commit_message": "no separate commit needed if F2 covered it; else: docs(tree-map): write-ownership row for microservice-build-standard"
+    }
+  ],
+  "parallel_safe_constraints": [
+    "Explicit file staging only: git add <path> per file, never -A or .",
+    "Do NOT write to any active pilot-status-*.json (active terminals own those files)",
+    "Use lock-retry idiom (F4 per head-lock-self-cure.md §F4) on all commits",
+    "No --amend, no --force-push — new commit for each change",
+    "Read each target file before editing (scoped reads)"
+  ],
+  "po_signal": "docs/signals/agents-architect-microservice-build-standard-po-retro-audit-20260524T072538Z.json",
+  "do_not_block_on_po_response": true
+}
