@@ -94,4 +94,15 @@ rm -f "$TMPFILE"
 echo "trace written → $TRACE_FILE" >&2
 cat "$TRACE_FILE"
 
+# Regenerate dashboard/traces.js so index.html works under file:// (double-click).
+# <script src="traces.js"> is not subject to fetch() CORS restriction that blocks
+# file:// origins in Chrome/Safari. gen_traces_js.py reads all existing trace JSONs
+# and emits window.__TRACES = {...} into dashboard/traces.js.
+GEN_SCRIPT="$SCRIPT_DIR/gen_traces_js.py"
+if [[ -f "$GEN_SCRIPT" ]]; then
+  python3 "$GEN_SCRIPT" >&2
+else
+  echo "WARNING: gen_traces_js.py not found at $GEN_SCRIPT — traces.js not regenerated" >&2
+fi
+
 exit $RUNNER_EXIT
