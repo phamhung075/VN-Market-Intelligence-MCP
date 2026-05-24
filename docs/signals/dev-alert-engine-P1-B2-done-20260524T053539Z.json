@@ -1,0 +1,44 @@
+{
+  "signal": "P1-B2-done",
+  "agent": "dev-alert-engine",
+  "task": "P1-AE-B2",
+  "timestamp": "2026-05-24T05:35:39Z",
+  "commit": "6c31ca1",
+  "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "gates": {
+    "AC1_buildkey_exported": "PASS",
+    "AC2_unit_tests_5_cases": "PASS",
+    "AC3_go_test_exit0": "PASS",
+    "AC4_fence_a_grep_0_matches": "PASS",
+    "AC5_scenario_json_creds_grep_0": "PASS",
+    "AC6_sandbox_all_green_g12_streak2": "PASS"
+  },
+  "build": {
+    "command": "CGO_ENABLED=0 go build ./...",
+    "exit": 0
+  },
+  "test": {
+    "command": "go test ./...",
+    "exit": 0,
+    "primitive_tests": 7
+  },
+  "zero_creds_grep": {
+    "command": "grep -rniE 'token|chat_id|bot|secret|api_key|password' (primitive dir + 3 scenarios)",
+    "matches": 0
+  },
+  "sandbox_result": {
+    "command": "CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all",
+    "total": 6,
+    "pass": 6,
+    "fail": 0,
+    "status": "OK"
+  },
+  "primitive": "dedup-key-builder (BuildKey, djb2 seed=5381)",
+  "scenarios": [
+    "docs/scenarios/alert-engine/primitives/dedup-key-builder-golden.json",
+    "docs/scenarios/alert-engine/primitives/dedup-key-builder-edge.json",
+    "docs/scenarios/alert-engine/primitives/dedup-key-builder-failure.json"
+  ],
+  "next_actor": "pm",
+  "next_action": "verify P1-B2 (dedup-key-builder, G12 streak #2), then sequence P1-B3 (cooldown-gate)"
+}
