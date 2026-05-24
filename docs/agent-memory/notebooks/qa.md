@@ -1,5 +1,33 @@
 # QA — Notebook
 
+## c282 cycle-63 · 2026-05-24 · stock-price P2-J — G8 honest-red deliberate-break proof — 5/5 ACs PASS
+
+**Task:** P2-J — G8 honest-red deliberate-break proof | **Verdict:** APPROVED — G8 PROVEN | **Commit:** b960bd8f
+
+```
+date: 2026-05-24T01:49:00Z
+outcome: 5/5 ACs PASS — G8 honest-red contract proven
+type: pilot-task-qa (deliberate-break proof, read-only + revert discipline)
+evidence: docs/handoffs/TASK_P2-J-sp-g8-evidence.md
+signal: docs/signals/qa-sp-P2-J-g8-done-20260524T014900Z.json
+anchor_intact: debba8eaff0724d1fb32fc9d28640201cc32d1cc (CONFIRMED)
+ssot_not_mutated: docs/data/pilot-status-stock-price.json (not touched)
+goal_flips: NONE (Charter §4.5)
+```
+
+| AC | Verdict | Key Evidence |
+|----|---------|-------------|
+| AC-1 (Test A) | PASS | tier-fallback-selector-golden source hnx → exit 1, fail=1, dashboard RED |
+| AC-2 (Test B) | PASS | after revert → exit 0, total=11 pass=11 fail=0 status=OK, dashboard GREEN |
+| AC-3 Run 1 | PASS | price-quote-normalizer-golden changePercent 9.99 → exit 1, reverted clean |
+| AC-3 Run 2 | PASS | price-staleness-classifier-golden STALE→FRESH flip → exit 1, reverted clean |
+| AC-4 | PASS | git status --short grep scenarios = empty (zero scenario mutations remaining) |
+| AC-5 | PASS | evidence file + signal emitted + committed |
+
+**Next:** PM sequences P2-K (G9 PO Playwright Path B).
+
+---
+
 ## c282 cycle-62 · 2026-05-24 · kinh-dich P1-KD-QA-AC2-REVERT AC-2 spot re-verify — PASS (clean full GO)
 
 **Task:** P1-KD-QA-AC2-REVERT — AC-2 only spot re-verify (fix-then-clean-GO loop) | **Verdict:** AC-2 PASS | **Phase 1:** clean full GO
