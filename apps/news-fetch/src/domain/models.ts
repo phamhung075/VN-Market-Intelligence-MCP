@@ -40,7 +40,7 @@ export interface FetchResult {
   /** ISO 8601 timestamp set when the scrape completed. */
   fetchedAt: string;
   /** Technique used for this fetch cycle. */
-  method: 'rss' | 'playwright-stealth';
+  method: 'rss' | 'playwright-stealth' | 'module';
   /**
    * null on success.
    * Populated with a short error key on partial or full failure
