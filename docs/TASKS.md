@@ -4,6 +4,23 @@
 
 ---
 
+## Follow-On Enhancement — Kinh-Dich 64-Quẻ Trading Reference (KD-QREF)
+
+**Status:** Opened 2026-05-24 (PO dispatch signal `po-kinh-dich-que-reference-20260524T170814Z.json`). POST-PILOT ENHANCEMENT — kinh-dich pilot stays DONE 12/12 + frozen; does NOT reopen any goal. User request: add a browsable 64-Quẻ reference with market-trading descriptions (translated from `kinhdich_logic/que_convert/`) to `apps/kinh-dich-service/dashboard/index.html`. Decision: `docs/po-decisions/2026-05-24-kinh-dich-que-reference-dashboard.md`. Spec + ACs: `docs/handoffs/TASK_KD-QREF.md`. Zone: `apps/kinh-dich-service/` (single). Binding trust gate: `dash-check.mjs` must stay exit-0 (no red dots / JS errors / category-chip leaks).
+
+| Task ID | Title | Priority | Type | Owner | Handoff | Status | Blocked by |
+|---------|-------|----------|------|-------|---------|--------|-----------|
+| KD-QREF-1 | Design data asset (Go SSOT) + dashboard integration + render contract (trust-gate safe) | HIGH | TASK | architect | docs/handoffs/TASK_KD-QREF.md | READY | — |
+| KD-QREF-2 | Implement: populate 64-que `queReference` Go asset (translate/reframe) + emit `que-reference.js` + dashboard section | HIGH | TASK | dev-kinh-dich | docs/handoffs/TASK_KD-QREF.md | BLOCKED | KD-QREF-1 |
+| KD-QREF-3 | Verify: 64 que render + detail views + `dash-check.mjs` exit-0 + source spot-check + diff-scope | HIGH | TASK | qa | docs/handoffs/TASK_KD-QREF.md | BLOCKED | KD-QREF-2 |
+| KD-QREF-EXIT | PO sign-off vs spec; main terminal commits (commit-mutex enum defect — dev agents can't acquire) | HIGH | GATE | po | docs/handoffs/TASK_KD-QREF.md | BLOCKED | KD-QREF-3 |
+
+**Notes:**
+- WIP=2 fleet cap still applies (stock-price + kinh-dich pilots). This enhancement is a SINGLE-ZONE chain, not a pilot; dispatch KD-QREF-1 when capacity allows.
+- Ambiguities resolved by PO: (A1) bilingual English-primary, VN name/glyph verbatim; (A2) one fixed shape for all 64 = summary + detail w/ 6-phase; (A3) Go data asset SSOT, emitted to dashboard (never hand-typed HTML); (A4) additive panel, honest-green preserved.
+
+---
+
 ## Phase 0 Backlog (Stock-Price Fleet Pilot 3)
 
 **Status:** Opened 2026-05-23 (PO dispatch signal po-pilot3-stock-price-chartered-20260523T220944Z.json). Phase 0 scope: 6 deliverables (brownfield inventory, R-CGO confirmation, bug-inventory entry, agent-flow + G12 DoD baking, anchor commit, phase-1 task plan). WIP limit enforced: max 2 In Progress. Sprint deadline: 1 sprint (2026-05-24 delivery expected). Exit gate: all 6 deliverables + architect verification signal before PO approval of Phase 0→Phase 1 transition.

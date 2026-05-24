@@ -1,0 +1,36 @@
+{
+  "from": "po",
+  "to": "architect",
+  "type": "task-dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-24T17:08:14Z",
+  "payload": {
+    "task": "KD-QREF-1",
+    "feature": "kinh-dich 64-Quẻ trading reference on the dashboard (follow-on enhancement, NOT a pilot reopen)",
+    "handoff": "docs/handoffs/TASK_KD-QREF.md",
+    "decision": "docs/po-decisions/2026-05-24-kinh-dich-que-reference-dashboard.md",
+    "ledger": "docs/TASKS.md § Follow-On Enhancement — Kinh-Dich 64-Quẻ Trading Reference (KD-QREF)",
+    "zone": "apps/kinh-dich-service/",
+    "chain": "architect(KD-QREF-1) -> dev-kinh-dich(KD-QREF-2) -> qa(KD-QREF-3) -> po(KD-QREF-EXIT)",
+    "source_read_only": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/kinhdich_logic/que_convert/ (64 que .md + SCHEMA.md)",
+    "key_findings": [
+      "hexagram_data.go (pkg/module/reading_composer) ALREADY holds the Go SSOT: queMetaList (64 x id/name/chinese/upper/lower) + queDataMap (64 x coreMeaning/trend/lines[6]{outcome,action}). New reframed content EXTENDS this asset; reuse trigrams + action/outcome tokens, do not re-derive.",
+      "dashboard/index.html is lang=en, file:// load, zero fetch/CDN/creds, data embedded as window.__*_DATA__, 3 trust panels. sandbox-traces.js is auto-generated real results — FROZEN.",
+      "dash-check.mjs is the binding trust verifier: FAILS on any dot-red, JS console error, page error, any .category-chip text not in {Valid Input, Edge Case, Bad Input -> Error}, or body text 'not wired'/'not_wired'. New reference section must use NO dot-* classes, emit NO .category-chip, contain NO 'not wired'.",
+      "Pilot CLOSED 12/12 + frozen. Enhancement is additive, does not reopen any goal."
+    ],
+    "po_decisions": {
+      "A1_language": "BILINGUAL, English-primary. VN name + Chinese glyph verbatim (proper nouns). Trading prose in English. Trend label bilingual e.g. 'Favorable (THUAN LOI)'. Hao outcome tokens VN + English gloss.",
+      "A2_depth": "ONE fixed shape for all 64. Summary row (number+name+glyph+core meaning EN+trend chip+warning clause) + Detail (trigrams+element, market-state interpretation, favorable line, warning line, 6-phase sequence from the existing lines[] action/outcome + new English gloss).",
+      "A3_data_home": "Structured Go data asset = SSOT (PO pref: new queReference struct in a new hexagram_reference.go in reading_composer, leaving lean queData untouched). Emitted to dashboard like sandbox-traces.js (PO pref: Go command emits dashboard/que-reference.js = window.__QUE_REFERENCE__ with generated/DO-NOT-EDIT header). NEVER hand-typed into HTML. Shape must not preclude later /hexagram/{number}/explain serving (do not wire now).",
+      "A4_trust_contract": "POST-PILOT ENHANCEMENT. Additive panel below the 3 trust panels. Binding DoD: dash-check.mjs stays exit-0 (PASS/WARN). 3 trust panels + sandbox-traces.js + modal + edit-rerun handler UNCHANGED."
+    },
+    "architect_deliverable": "Confirm/override data-home + emit-path + render-contract; specify exact DOM/CSS the dashboard JS builds for the new section ensuring no category-chip/dot-*/'not wired' leak; confirm fence-clean (stays in reading_composer module tier) + zero new fetch/CDN/cred; hand dev-kinh-dich a concrete file list + queReference struct definition; append design note + finalize KD-QREF-2/3 ACs in the handoff; RETURN handing KD-QREF-2 to dev-kinh-dich.",
+    "constraints": [
+      "Stay inside apps/kinh-dich-service/. Reading external que_convert/ is fine; all output lands in repo (content copied in, no runtime dep on external dir).",
+      "Pure Go, CGO_ENABLED=0, port 5005. dev-kinh-dich implements; main terminal does not implement.",
+      "Static / file:// / zero-creds preserved.",
+      "commit-mutex enum defect: dev-team agents cannot acquire the mutex -> keep work in-tree, main terminal commits at KD-QREF-EXIT. Do not treat uncommitted as failure."
+    ]
+  }
+}

@@ -6,6 +6,20 @@
 
 ---
 
+## 2026-05-24T17:08Z — KD-QREF: kinh-dich 64-Quẻ trading reference scoped + dispatched to architect
+
+POST-PILOT ENHANCEMENT (kinh-dich pilot stays DONE 12/12 frozen — NOT a reopen). User want: list all 64 Quẻ + trading-reframed descriptions on apps/kinh-dich-service/dashboard/index.html, translated from external kinhdich_logic/que_convert/.
+
+KEY: hexagram_data.go (pkg/module/reading_composer) is ALREADY the Go SSOT — queMetaList (64×id/name/chinese/upper/lower) + queDataMap (64×coreMeaning/trend/lines[6]{outcome,action}); new content EXTENDS it, reuse trigrams+tokens. Dashboard = lang=en, file:// load, zero fetch/CDN/creds, window.__*_DATA__ embed; sandbox-traces.js FROZEN. dash-check.mjs binding gate FAILS on dot-red/JS error/page error/.category-chip bad label/"not wired" — new section uses NO dot-*, NO category-chip, no "not wired".
+
+PO rulings: A1 bilingual English-primary (VN name+glyph verbatim). A2 one fixed shape all 64 = summary row + detail w/ 6-phase. A3 Go data asset SSOT (new queReference struct + emit que-reference.js like sandbox-traces.js), never hand-typed HTML; must not preclude future /hexagram/{n}/explain. A4 additive panel, dash-check.mjs stays exit-0, 3 trust panels frozen.
+
+Outputs: docs/po-decisions/2026-05-24-kinh-dich-que-reference-dashboard.md, docs/handoffs/TASK_KD-QREF.md, docs/TASKS.md (Follow-On KD-QREF block, 4 tasks), docs/signals/po-kinh-dich-que-reference-20260524T170814Z.json.
+
+NEXT: main terminal spawns architect KD-QREF-1 (data-home+emit-path+render-contract) → dev-kinh-dich KD-QREF-2 → qa KD-QREF-3 → PO KD-QREF-EXIT. HARD: never touch sandbox-traces.js/3 trust panels/modal/edit-rerun; dash-check.mjs exit-0; Go SSOT not hand-typed HTML. COMMIT: commit-mutex enum defect — dev agents can't acquire → keep in-tree, main terminal commits at EXIT.
+
+---
+
 ## 2026-05-24T17:07Z — pdf-extractor dashboard FALSE-GREEN: caught, fixed, re-closed honestly
 
 ### What happened (recorded honestly, not papered over):
