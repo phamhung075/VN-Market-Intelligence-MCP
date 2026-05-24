@@ -1,0 +1,23 @@
+{
+  "primitive": "nuclear-hexagram-computer",
+  "tier": "primitive",
+  "scenario": "golden",
+  "name": "nuclear-hexagram-computer-golden",
+  "description": "Happy path: all-yang signals [1,1,1,1,1,1] → hoQue=1 (Thuần Càn). All-stable-yang haos (THIEU_DUONG, no changing lines) → bienQue=1 (unchanged, queChinh=queBien). Tests the most common stable market reading where inner structure mirrors the outer.",
+  "input": {
+    "signals": [1, 1, 1, 1, 1, 1],
+    "haos": [
+      { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 1" },
+      { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 2" },
+      { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 3" },
+      { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 4" },
+      { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 5" },
+      { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 6" }
+    ]
+  },
+  "expected": {
+    "hoQue": 1,
+    "bienQue": 1
+  },
+  "notes": "Signals [1,1,1,1,1,1]: hoSignals=[1,1,1,1,1,1] (indices 1-4) → Qian lower + Qian upper → hexagram 1. All THIEU_DUONG haos: no changing lines → transformed=[1,1,1,1,1,1] → hexagram 1 (same as queChinh). Both hoQue and bienQue=1 in pure yang market reading."
+}

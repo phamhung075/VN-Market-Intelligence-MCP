@@ -1,0 +1,22 @@
+{
+  "primitive": "nuclear-hexagram-computer",
+  "tier": "primitive",
+  "scenario": "failure",
+  "name": "nuclear-hexagram-computer-failure",
+  "description": "Failure case: signals array length 2 (not 6) → computeHoQue throws Error. haos array length 2 (not 6) → computeBienQue throws Error. Tests input validation guard — both functions must throw descriptive errors on invalid input length.",
+  "input": {
+    "signals": [1, 0],
+    "haos": [
+      { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 1" },
+      { "state": "THIEU_AM",    "binary": 0, "isChanging": false, "label": "Hao 2" }
+    ]
+  },
+  "expected": {
+    "hoQue": null,
+    "bienQue": null,
+    "error_hoQue": "computeHoQue requires exactly 6 signals, got 2",
+    "error_bienQue": "computeBienQue requires exactly 6 HaoReading objects, got 2"
+  },
+  "expect_error": true,
+  "notes": "Both computeHoQue([1,0]) and computeBienQue([hao1, hao2]) must throw Errors. The sandbox catches the thrown error and records PASS (expected error path). Validates that the primitives fail loudly on malformed input rather than silently producing wrong results."
+}

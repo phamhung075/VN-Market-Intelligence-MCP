@@ -25,6 +25,11 @@ import {
   extractAction,
   majorityVote,
 } from '../primitive/reading-scorer/index.js';
+import {
+  computeHoQue,
+  computeBienQue,
+} from '../primitive/nuclear-hexagram-computer/index.js';
+import type { HaoReading } from '../primitive/hao-encoder/index.js';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -386,6 +391,96 @@ function runReadingScorerScenario(fileName: string, scenario: ScenarioFile): Sce
   }
 }
 
+/**
+ * Execute a nuclear-hexagram-computer scenario.
+ * Dispatched when scenario.primitive === 'nuclear-hexagram-computer'.
+ *
+ * Input shape:
+ *   input.signals  number[]      — 6 binary values fed to computeHoQue()
+ *   input.haos     HaoReading[]  — 6 HaoReading objects fed to computeBienQue()
+ *
+ * Expected shape (all optional; omit to skip assertion):
+ *   expected.hoQue   number   — expected nuclear hexagram id (1–64)
+ *   expected.bienQue number   — expected transformed hexagram id (1–64)
+ *
+ * For failure scenarios (expect_error=true): verifies that at least one of
+ * computeHoQue(signals) or computeBienQue(haos) throws as expected.
+ */
+function runNuclearHexagramComputerScenario(fileName: string, scenario: ScenarioFile): ScenarioResult {
+  const input = scenario.input as Record<string, unknown>;
+  const expected = scenario.expected as Record<string, unknown> | undefined;
+  const expectError = scenario.expect_error === true;
+
+  const signals = input['signals'] as number[] | undefined;
+  const haos = input['haos'] as HaoReading[] | undefined;
+
+  // ── Failure path: at least one of the two calls must throw ──────────────────
+  if (expectError) {
+    let hoThrew = false;
+    let bienThrew = false;
+
+    try {
+      if (Array.isArray(signals)) computeHoQue(signals);
+    } catch (_) {
+      hoThrew = true;
+    }
+
+    try {
+      if (Array.isArray(haos)) computeBienQue(haos);
+    } catch (_) {
+      bienThrew = true;
+    }
+
+    if (hoThrew || bienThrew) {
+      return { file: fileName, status: 'PASS', output: { hoThrew, bienThrew } };
+    }
+    return {
+      file: fileName,
+      status: 'FAIL',
+      error: 'Expected at least one of computeHoQue/computeBienQue to throw, but neither did',
+    };
+  }
+
+  // ── Happy path ───────────────────────────────────────────────────────────────
+  if (!Array.isArray(signals)) {
+    return { file: fileName, status: 'FAIL', error: 'nuclear-hexagram-computer scenario missing input.signals array' };
+  }
+  if (!Array.isArray(haos)) {
+    return { file: fileName, status: 'FAIL', error: 'nuclear-hexagram-computer scenario missing input.haos array' };
+  }
+
+  try {
+    const hoQue = computeHoQue(signals);
+    const bienQue = computeBienQue(haos);
+
+    if (expected !== undefined) {
+      const expectedHoQue = expected['hoQue'] as number | undefined;
+      if (expectedHoQue !== undefined && expectedHoQue !== null && hoQue !== expectedHoQue) {
+        return {
+          file: fileName,
+          status: 'FAIL',
+          error: `hoQue: expected ${expectedHoQue} but got ${hoQue}`,
+          output: { hoQue, bienQue },
+        };
+      }
+
+      const expectedBienQue = expected['bienQue'] as number | undefined;
+      if (expectedBienQue !== undefined && expectedBienQue !== null && bienQue !== expectedBienQue) {
+        return {
+          file: fileName,
+          status: 'FAIL',
+          error: `bienQue: expected ${expectedBienQue} but got ${bienQue}`,
+          output: { hoQue, bienQue },
+        };
+      }
+    }
+
+    return { file: fileName, status: 'PASS', output: { hoQue, bienQue } };
+  } catch (err) {
+    return { file: fileName, status: 'FAIL', error: `Unexpected error: ${err}` };
+  }
+}
+
 // ── Scenario execution ────────────────────────────────────────────────────────
 
 function runScenario(filePath: string): ScenarioResult {
@@ -429,6 +524,10 @@ function runScenario(filePath: string): ScenarioResult {
 
   if (scenario.primitive === 'reading-scorer') {
     return runReadingScorerScenario(fileName, scenario);
+  }
+
+  if (scenario.primitive === 'nuclear-hexagram-computer') {
+    return runNuclearHexagramComputerScenario(fileName, scenario);
   }
 
   // Fallback: well-formed scenario with no known primitive → structural PASS.

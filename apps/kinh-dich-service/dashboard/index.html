@@ -830,14 +830,15 @@ footer {
   <h1>kinh-dich-service &mdash; Scenario Trust Dashboard</h1>
   <p class="subtitle">
     Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
-    P1-E &nbsp;|&nbsp; Pilot: kinh-dich &nbsp;|&nbsp; Language: TypeScript / Bun
+    P2-KD-J &nbsp;|&nbsp; Pilot: kinh-dich &nbsp;|&nbsp; Language: TypeScript / Bun
   </p>
   <p class="meta">
-    Goals: G6 (dashboard renders) &bull; G7 (zero creds) &bull; G8 (honest red/green) &bull; G9 (trust contract) &bull; G12 (green before done)
+    Goals: G1 (5/5 primitives) &bull; G6 (dashboard finalized) &bull; G7 (zero creds) &bull; G8 (honest red/green) &bull; G9 (trust contract) &bull; G12 (green before done)
     &nbsp;&bull;&nbsp;
-    9 primitive scenarios + 2 module scenarios &mdash; all data embedded inline, zero production credentials.
+    15 primitive scenarios + 2 module scenarios = 17 total &mdash; all data embedded inline, zero production credentials.
     Open this file with <code>file://</code> in any browser &mdash; no server required.
     Service ports: internal&nbsp;5005 / external&nbsp;5005 (per <code>docs/data/system-map.json</code>).
+    OpenAPI contract: <code>src/interface/openapi.yaml</code> (OpenAPI 3.0.3 &mdash; P2-KD-I).
     jq query: <code>jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json</code>
     &nbsp;&bull;&nbsp;
     P1-E: Click <strong>Edit &amp; Rerun (P1-E)</strong> on any scenario card &rarr; copy the terminal command &rarr; paste NDJSON output &rarr; cards update live.
@@ -852,16 +853,17 @@ footer {
       <span class="level-badge badge-primitives">Level 1</span>
       <h2>Primitives</h2>
       <p class="panel-desc">
-        4 pure TypeScript functions: <strong>hao-encoder</strong>,
+        5 pure TypeScript functions: <strong>hao-encoder</strong>,
         <strong>hexagram-resolver</strong>,
         <strong>ngu-hanh-classifier</strong>,
-        <strong>reading-scorer</strong>.
+        <strong>reading-scorer</strong>,
+        <strong>nuclear-hexagram-computer</strong>.
         Each is a stdlib-only pure function (Fence-A: zero infra imports).
-        3 scenarios each = 12 total. Click any scenario to inspect input &harr; expectedOutput.
+        3 scenarios each = 15 total. Click any scenario to inspect input &harr; expectedOutput.
       </p>
       <div class="panel-summary">
-        <span class="summary-chip chip-total">12 scenarios</span>
-        <span class="summary-chip chip-notrun" id="prim-notrun-chip">12 NOT-RUN</span>
+        <span class="summary-chip chip-total">15 scenarios</span>
+        <span class="summary-chip chip-notrun" id="prim-notrun-chip">15 NOT-RUN</span>
         <span class="summary-chip chip-green" id="prim-green-chip" style="display:none">0 passed</span>
         <span class="summary-chip chip-red"   id="prim-red-chip"   style="display:none">0 failed</span>
       </div>
@@ -941,14 +943,15 @@ footer {
 
 <!-- ============================================================ FOOTER -->
 <footer>
-  P1-E &mdash; Edit-Rerun Handler + Zero-Creds Env Audit &bull; Pilot: kinh-dich &bull;
+  P2-KD-J &mdash; G6 Finalization: 5th primitive (nuclear-hexagram-computer) + OpenAPI link + Deprecated notice &bull; Pilot: kinh-dich &bull;
   Ports: internal 5005 / external 5005 (source: <code>jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json</code>) &bull;
+  OpenAPI contract: <code>src/interface/openapi.yaml</code> (OpenAPI 3.0.3 &mdash; P2-KD-I) &bull;
   No server required (file:// URL) &bull; No production credentials &bull;
   G7 trust contract: edit scenario JSON &rarr; run <code>cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</code> &rarr; paste NDJSON output into modal &rarr; cards update live &bull;
   G8 contract: NOT-RUN on cold start; honest red on failure; GREEN only after sandbox all-green &bull;
-  AC-3 (env audit): zero DB creds / API keys / tokens in sandbox process (CTX_ADVISOR vars are Claude Code tooling, not service credentials) &bull;
-  All 11 scenarios embedded inline, zero external fetch &bull;
-  Next: P1-F (OpenAPI endpoints) &bull; P1-G (QA close-gate)
+  G5a deprecated: <code>src/_deprecated/services_v1.ts</code> preserved for audit trail (visible in microservice panel) &bull;
+  17 scenarios embedded inline (15 primitive + 2 module), zero external fetch &bull;
+  Next: P2-KD-K (G8 honest-red)
 </footer>
 
 <!-- ============================================================ MODAL (AC-8) -->
@@ -1258,6 +1261,71 @@ window.__PRIMITIVES_DATA__ = [
       "majorityAction": "GIU"
     },
     "status": "not-run"
+  },
+  /* ── nuclear-hexagram-computer ───────────────────────────────────────────── */
+  {
+    "primitive": "nuclear-hexagram-computer",
+    "category": "golden",
+    "scenario": "nuclear-hexagram-computer-golden",
+    "description": "Happy path: all-yang signals [1,1,1,1,1,1] → hoQue=1 (Thuần Càn). All-stable-yang haos (THIEU_DUONG, no changing lines) → bienQue=1. Stable market reading: nuclear structure mirrors outer hexagram.",
+    "input": {
+      "signals": [1, 1, 1, 1, 1, 1],
+      "haos": [
+        { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 1" },
+        { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 2" },
+        { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 3" },
+        { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 4" },
+        { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 5" },
+        { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 6" }
+      ]
+    },
+    "expectedOutput": {
+      "hoQue": 1,
+      "bienQue": 1
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "nuclear-hexagram-computer",
+    "category": "edge",
+    "scenario": "nuclear-hexagram-computer-edge",
+    "description": "Edge case: all-yin signals [0,0,0,0,0,0] → hoQue=2 (Thuần Khôn). All-changing-yang haos (LAO_DUONG, binary=1) flip to yin → bienQue=2. Tests minimum-value boundary: both functions yield pure yin hexagram.",
+    "input": {
+      "signals": [0, 0, 0, 0, 0, 0],
+      "haos": [
+        { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 1" },
+        { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 2" },
+        { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 3" },
+        { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 4" },
+        { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 5" },
+        { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 6" }
+      ]
+    },
+    "expectedOutput": {
+      "hoQue": 2,
+      "bienQue": 2
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "nuclear-hexagram-computer",
+    "category": "failure",
+    "scenario": "nuclear-hexagram-computer-failure",
+    "description": "Failure case: signals length 2 (not 6) → computeHoQue throws Error. haos length 2 (not 6) → computeBienQue throws Error. Both functions validate input length and fail loudly with descriptive messages.",
+    "input": {
+      "signals": [1, 0],
+      "haos": [
+        { "state": "THIEU_DUONG", "binary": 1, "isChanging": false, "label": "Hao 1" },
+        { "state": "THIEU_AM",    "binary": 0, "isChanging": false, "label": "Hao 2" }
+      ]
+    },
+    "expectedOutput": {
+      "hoQue": null,
+      "bienQue": null,
+      "error_hoQue": "computeHoQue requires exactly 6 signals, got 2",
+      "error_bienQue": "computeBienQue requires exactly 6 HaoReading objects, got 2"
+    },
+    "status": "not-run"
   }
 ];
 
@@ -1522,35 +1590,60 @@ function renderService() {
         <span class="ddd-tag">interface</span>
       </div>
 
-      <!-- Endpoints -->
+      <!-- Endpoints — OpenAPI contract (P2-KD-I: openapi.yaml in place) -->
       <div class="service-endpoints">
-        <h4>HTTP Endpoints (P1-F: OpenAPI spec pending)</h4>
+        <h4>HTTP Endpoints &mdash; <a href="../src/interface/openapi.yaml" style="color:#be185d;text-decoration:underline;font-size:0.76rem;" title="OpenAPI contract (src/interface/openapi.yaml)">OpenAPI spec &rarr; src/interface/openapi.yaml</a></h4>
         <div class="endpoint-row">
           <span class="method-badge method-get">GET</span>
-          <span class="endpoint-path">/readings</span>
-          <span class="endpoint-desc">Get hexagram reading for a stock</span>
+          <span class="endpoint-path">/reading/{code}</span>
+          <span class="endpoint-desc">Hexagram reading for a stock (operationId: getReading)</span>
         </div>
         <div class="endpoint-row">
-          <span class="method-badge method-post">POST</span>
-          <span class="endpoint-path">/readings/batch</span>
-          <span class="endpoint-desc">Batch hexagram readings</span>
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/market</span>
+          <span class="endpoint-desc">Market-level VNINDEX hexagram (operationId: getMarketHexagram)</span>
         </div>
         <div class="endpoint-row">
           <span class="method-badge method-get">GET</span>
           <span class="endpoint-path">/health</span>
-          <span class="endpoint-desc">Service health check</span>
+          <span class="endpoint-desc">Service health check (operationId: getHealth)</span>
         </div>
-        <div style="font-size:0.72rem;color:#9ca3af;margin-top:6px;">Full OpenAPI spec: P1-F gate (pending)</div>
+        <div class="endpoint-row">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/readings/{code}/history</span>
+          <span class="endpoint-desc">Historical hexagram readings (operationId: getReadingHistory)</span>
+        </div>
+        <div class="endpoint-row">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/hexagram/{number}/transitions</span>
+          <span class="endpoint-desc">Markov transition probabilities (operationId: getHexagramTransitions)</span>
+        </div>
+        <div class="endpoint-row">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/backtest/{code}</span>
+          <span class="endpoint-desc">Backtest signal accuracy (operationId: getBacktest)</span>
+        </div>
+        <div style="font-size:0.72rem;color:#9ca3af;margin-top:6px;">
+          Full contract: <code style="font-size:0.71rem;background:#fce7f3;border-radius:3px;padding:1px 4px;">src/interface/openapi.yaml</code> (OpenAPI 3.0.3 &mdash; created P2-KD-I)
+        </div>
       </div>
 
       <!-- Composition note (G7: zero creds) -->
       <div class="service-note">
         <strong>Composition:</strong> Microservice composes <code>reading_composer</code> module via HTTP routes
-        (<code>src/interface/handlers.ts</code>).<br>
-        Pipeline: <code>hao-encoder</code> &rarr; <code>hexagram-resolver</code> &rarr; <code>ngu-hanh-classifier</code> &rarr; <code>reading_composer</code> &rarr; <code>KinhDichReading</code>.<br>
+        (<code>src/interface/handlers.ts</code>). 5 primitives: <code>hao-encoder</code>, <code>hexagram-resolver</code>, <code>ngu-hanh-classifier</code>, <code>reading-scorer</code>, <code>nuclear-hexagram-computer</code>.<br>
+        Pipeline: <code>hao-encoder</code> &rarr; <code>hexagram-resolver</code> + <code>nuclear-hexagram-computer</code> &rarr; <code>ngu-hanh-classifier</code> &rarr; <code>reading_composer</code> &rarr; <code>KinhDichReading</code>.<br>
         <strong>G7 zero-creds:</strong> kinh-dich is pure compute &mdash; no DB credentials, no external API keys, no secrets.
         Reads only in-memory market data (scores, markovData) from caller.<br>
         <code>env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"</code> must return empty.
+      </div>
+
+      <!-- Deprecated notice (G5a trust-layer visibility) -->
+      <div class="service-note" style="background:#fffbcc;border-top:1px solid #c4a800;">
+        <strong style="color:#7c6b00;">Deprecated (G5a):</strong>
+        <code>src/_deprecated/services_v1.ts</code> &mdash; legacy monolithic domain service moved from <code>src/domain/services.ts</code>.
+        Preserved for audit trail only; no imports from active code. All logic extracted into 5 primitives + <code>reading_composer</code> module.
+        Trust signal: deprecated code visible here so that no ghost import can sneak in unnoticed.
       </div>
     </div>
   `;

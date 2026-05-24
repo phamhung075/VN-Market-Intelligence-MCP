@@ -1,0 +1,23 @@
+{
+  "primitive": "nuclear-hexagram-computer",
+  "tier": "primitive",
+  "scenario": "edge",
+  "name": "nuclear-hexagram-computer-edge",
+  "description": "Edge case: all-yin signals [0,0,0,0,0,0] → hoQue=2 (Thuần Khôn). All-changing-yang haos (LAO_DUONG) flip to yin → bienQue=2 (Thuần Khôn). Tests minimum-value boundary: inner nuclear structure and full transformation both yield pure yin hexagram.",
+  "input": {
+    "signals": [0, 0, 0, 0, 0, 0],
+    "haos": [
+      { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 1" },
+      { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 2" },
+      { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 3" },
+      { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 4" },
+      { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 5" },
+      { "state": "LAO_DUONG", "binary": 1, "isChanging": true, "label": "Hao 6" }
+    ]
+  },
+  "expected": {
+    "hoQue": 2,
+    "bienQue": 2
+  },
+  "notes": "Signals [0,0,0,0,0,0]: hoSignals=[0,0,0,0,0,0] (indices 1-4) → Kun lower + Kun upper → hexagram 2. All LAO_DUONG haos (binary=1, changing): flipped to 0 → transformed=[0,0,0,0,0,0] → hexagram 2. Both are the minimum-signal (all-yin) boundary case."
+}
