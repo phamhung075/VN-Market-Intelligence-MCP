@@ -1,0 +1,137 @@
+{
+  "from": "developer",
+  "to": ["po", "main-router"],
+  "type": "impl-complete",
+  "createdAt": "2026-05-24T09:18:00Z",
+  "subject": "Commit-mutex structural fix — IMPLEMENTATION COMPLETE (C-1..C-4 satisfied)",
+  "status": "COMPLETE",
+  "skill_path": ".claude/skills/commit-mutex/SKILL.md",
+  "commits_in_order": [
+    {
+      "sha": "c2ca404a",
+      "what": "feat: .claude/skills/commit-mutex/SKILL.md authored — RACE-BUNDLED (content correct, bundled into news-fetch P2-G10-inject commit by concurrent agent)"
+    },
+    {
+      "sha": "8695a4d8",
+      "what": "docs(protocols/task-lock): add commit-mutex kind — 4th lock type, TTL=60s, fleet-wide singleton — CLEAN"
+    },
+    {
+      "sha": "2c727d9d",
+      "what": "chore(flows/commit-mutex): batch 1 — 5 high-freq cron sites wired — CLEAN"
+    },
+    {
+      "sha": "3eb3117c",
+      "what": "chore(flows/commit-mutex): batch 2 — agent-father/* + financial-analyst + tran-ngoc-bau (6 sites) — CLEAN"
+    },
+    {
+      "sha": "10ef7fdd",
+      "what": "chore(flows/commit-mutex): batch 3 — unified-agent/* + digest-predict + feature-spike (6 sites) — CLEAN"
+    },
+    {
+      "sha": "1eee501d",
+      "what": "chore(flows/commit-mutex): batch 4 — developer+fixer+qa+po main flows (11 sites) — CLEAN"
+    },
+    {
+      "sha": "234c0bef",
+      "what": "chore(flows/commit-mutex): batch 5 — ops+crawl flows (5 sites) — RACE-BUNDLED into kinh-dich P2-J commit (content correct, wrong message)"
+    },
+    {
+      "sha": "4361acc0",
+      "what": "RACE ARTIFACT — batch 5 empty attempt (foreign rag-service files bundled under my batch 5 message). HONEST DISCLOSURE: race bit me."
+    },
+    {
+      "sha": "23d87512",
+      "what": "RACE ARTIFACT — empty tree commit (batch 5 already landed in 234c0bef)"
+    },
+    {
+      "sha": "3afe5feda",
+      "what": "chore(flows/commit-mutex): batch 6 — remaining cowork+audit flows (6 sites) — CLEAN (private index technique)"
+    }
+  ],
+  "c1_status": "COMPLETE",
+  "c1_detail": {
+    "total_real_commit_sites": 39,
+    "wired": 39,
+    "remaining": 0,
+    "non_actionable_skipped": [
+      ".claude/flows/po/channel-audit.md (mentions 'git commit timestamp' in a comment — not a commit operation)",
+      ".claude/flows/dev-team/execute-tier.md (policy text + comment — not a commit operation)",
+      ".claude/flows/dev-team/main.md (comments inside a tracing block — not a commit operation)",
+      ".claude/flows/market-watcher/cycle.md (HTML comment about removed commit — not a commit operation)"
+    ],
+    "checklist": [
+      {"file": "alert-commander/stage-dispatch-log.md", "sites": 1, "wired": true},
+      {"file": "agent-father/create.md", "sites": 1, "wired": true},
+      {"file": "agent-father/edit-apply.md", "sites": 1, "wired": true},
+      {"file": "agent-father/keep.md", "sites": 1, "wired": true},
+      {"file": "agent-father/review-execute.md", "sites": 1, "wired": true},
+      {"file": "claude-manager-helper/main.md", "sites": 1, "wired": true},
+      {"file": "code-janitor/main.md", "sites": 1, "wired": true},
+      {"file": "cowork-refactory-expert/main.md", "sites": 1, "wired": true},
+      {"file": "dev-frontend/main.md", "sites": 2, "wired": true},
+      {"file": "dev-mainserver-crawls/main.md", "sites": 1, "wired": true},
+      {"file": "dev-vps-crawls/main.md", "sites": 1, "wired": true},
+      {"file": "developer/feature-spike.md", "sites": 1, "wired": true},
+      {"file": "developer/main.md", "sites": 2, "wired": true},
+      {"file": "developer/microservice-main.md", "sites": 3, "wired": true},
+      {"file": "digest-predict/monday.md", "sites": 1, "wired": true},
+      {"file": "financial-analyst/stage-log-notify.md", "sites": 1, "wired": true},
+      {"file": "fixer/main.md", "sites": 2, "wired": true},
+      {"file": "idea-forge/main.md", "sites": 1, "wired": true},
+      {"file": "market-analyst/main.md", "sites": 1, "wired": true},
+      {"file": "ops-mainserver-fetch/main.md", "sites": 1, "wired": true},
+      {"file": "ops-vps-fetch/main.md", "sites": 1, "wired": true},
+      {"file": "ops/main.md", "sites": 1, "wired": true},
+      {"file": "pm/task-archive.md", "sites": 1, "wired": true},
+      {"file": "po/main.md", "sites": 1, "wired": true},
+      {"file": "qa-responder/cycle.md", "sites": 1, "wired": true},
+      {"file": "qa/main.md", "sites": 1, "wired": true},
+      {"file": "report-analyzer/cycle.md", "sites": 1, "wired": true},
+      {"file": "system-auditor/main.md", "sites": 1, "wired": true},
+      {"file": "tran-ngoc-bau/auto-cure-and-handoff.md", "sites": 1, "wired": true},
+      {"file": "unified-agent/daily-review.md", "sites": 1, "wired": true},
+      {"file": "unified-agent/market-events-log.md", "sites": 1, "wired": true},
+      {"file": "unified-agent/prediction.md", "sites": 1, "wired": true},
+      {"file": "unified-agent/weekly.md", "sites": 1, "wired": true},
+      {"file": "dev-team/post-cycle.md", "sites": 1, "wired": true}
+    ]
+  },
+  "c2_status": "COMPLETE — skill Step 1 explicitly specifies: MCP error → bug-telegram → SKIP commit → EXIT. Never stage without mutex held.",
+  "c3_status": "PARTIAL — 2 race incidents during implementation: (1) skill file bundled into news-fetch P2-G10-inject commit (c2ca404a), (2) batch 5 flow edits bundled into kinh-dich P2-J commit (234c0bef). Own foreign-restore mitigation worked for batches 1-4 and 6. Introduced private GIT_INDEX_FILE technique for batch 6 to bypass race entirely (clean commit 3afe5feda).",
+  "c4_status": "COMPLETE — jitter formula encoded in skill: actual_wait = base_wait * (0.8 + random() * 0.4). Give-up action: send_telegram(channel='bug') + skip + retry next cron tick.",
+  "anchor_intact": true,
+  "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "interim_policy_status": "STILL IN FORCE — not lifted. Lift requires PO signal after smoke test + 1 observed clean cycle.",
+  "next_actor": "po",
+  "next_action": "Smoke test per brief §10.4 — then emit lift signal for interim whole-worker serialization if clean cycle observed.",
+  "race_incidents_honest_disclosure": [
+    {
+      "incident": "R-1",
+      "sha": "c2ca404a",
+      "what": "skill file .claude/skills/commit-mutex/SKILL.md was created by Write tool then immediately committed by concurrent news-fetch agent (test/news-fetch P2-G10-inject commit) before I could git add it",
+      "content_ok": true,
+      "message_wrong": true
+    },
+    {
+      "incident": "R-2",
+      "sha": "234c0bef",
+      "what": "batch 5 flow edits (.claude/flows/ops*.md + dev-*-crawls/*.md) were staged by concurrent kinh-dich agent and committed under 'test(kinh-dich): P2-J' message",
+      "content_ok": true,
+      "message_wrong": true
+    },
+    {
+      "incident": "R-3",
+      "sha": "4361acc0",
+      "what": "first batch 5 commit attempt captured foreign rag-service files only (QA agent restaged them between my unstage and commit)",
+      "content_ok": false,
+      "foreign_files": ["apps/rag-service/domain/primitive/*/known_bad_*.json", "docs/agent-memory/notebooks/qa.md", "docs/data/pilot-status-rag-service.json", "docs/handoffs/TASK_P2-A-G8-rag-service.md"]
+    },
+    {
+      "incident": "R-4",
+      "sha": "23d87512",
+      "what": "second batch 5 attempt with clean private index produced empty commit because working-tree edits already landed in 234c0bef",
+      "content_ok": false,
+      "is_empty": true
+    }
+  ]
+}
