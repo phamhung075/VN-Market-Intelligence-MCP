@@ -178,15 +178,17 @@ call_tool(server="vn-market", tool="task_release", arguments={ task_id: triage_k
 <!-- jump:planning -->
 ## Step 2 — Planning
 
-| Type | Sequence | Notes |
-|---|---|---|
-| FIX | (skip) | direct to Step 3 |
-| SPIKE | (skip) | direct to developer with `feature-spike.md`; throwaway branch, findings doc only |
-| SPRINT-S | architect → pm | each reads own flow |
-| SPRINT-M | ba → architect → pm | sequential |
-| SPRINT-L | ba → architect → pm; post-merge architect review | sequential |
-| UNBLOCK | S4: see dispatch block below | `send_telegram(work, "Unblocked: [brief]")` → EXIT |
-| CLEAN | S4: see dispatch block below | qa flow handles cleanup → EXIT |
+| Type | Tag emitted | Sequence | Notes |
+|---|---|---|---|
+| FIX | — | (skip) | direct to Step 3 |
+| SPIKE | — | (skip) | direct to developer with `feature-spike.md`; throwaway branch, findings doc only |
+| SPRINT-S | — | architect → pm | each reads own flow |
+| SPRINT-M | — | ba → architect → pm | sequential |
+| SPRINT-L | — | ba → architect → pm; post-merge architect review | sequential |
+| NEW-SERVICE | `BUILD-STANDARD: full` | ba → architect → pm → dev-`<svc>` → qa | Full relay + G1–G12 + three-level dashboard. dev-`<svc>` loads standard at Step 0c. |
+| NEW-FEATURE | `BUILD-STANDARD: lean` | pm → dev-`<svc>` | One dev-`<svc>` agent, no relay. Fence + sandbox/replay DoD mandatory. dev-`<svc>` loads standard at Step 0c. |
+| UNBLOCK | — | S4: see dispatch block below | `send_telegram(work, "Unblocked: [brief]")` → EXIT |
+| CLEAN | — | S4: see dispatch block below | qa flow handles cleanup → EXIT |
 
 **S4 UNBLOCK dispatch:**
 ```
