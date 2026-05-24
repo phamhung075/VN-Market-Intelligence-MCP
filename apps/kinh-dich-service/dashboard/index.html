@@ -1,0 +1,1397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>kinh-dich-service &mdash; Scenario Trust Dashboard</title>
+  <style>
+/* kinh-dich-service Dashboard — trust layer (P1-D) */
+/* Design: high-contrast, no framework, readable at a glance */
+/* Layout adapted from apps/stock-price/dashboard/ (3-panel standard) */
+/* AC-1: zero CDN, zero external fetch, zero credentials */
+/* jq query used: jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json */
+/* Result: port=5005, external_port=5005, language=ts, runtime=bun */
+
+:root {
+  --green: #1a7f3c;
+  --green-bg: #d4f7e0;
+  --green-border: #2da05a;
+  --red: #b91c1c;
+  --red-bg: #ffe4e4;
+  --red-border: #dc2626;
+  --edge: #7c6b00;
+  --edge-bg: #fffbcc;
+  --edge-border: #c4a800;
+  --failure: #6b3a00;
+  --failure-bg: #fff1e0;
+  --failure-border: #c47a00;
+  --grey: #374151;
+  --light-bg: #f9fafb;
+  --border: #e5e7eb;
+  --font: 'Segoe UI', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: #f0f2f5;
+  color: var(--grey);
+  padding: 24px 16px;
+}
+
+header {
+  max-width: 1400px;
+  margin: 0 auto 32px;
+  padding: 20px 24px;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 10px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+header .subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+header .meta {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.levels-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 24px;
+}
+
+@media (max-width: 1100px) {
+  .levels-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 700px) {
+  .levels-grid { grid-template-columns: 1fr; }
+}
+
+.level-panel {
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1.5px solid var(--border);
+  background: #f8fafc;
+}
+
+.panel-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e293b;
+}
+
+.panel-header .panel-desc {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.panel-header .level-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  letter-spacing: 0.04em;
+}
+
+.badge-primitives { background: #e0f2fe; color: #075985; }
+.badge-module     { background: #ede9fe; color: #4c1d95; }
+.badge-service    { background: #fce7f3; color: #9d174d; }
+
+.panel-summary {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-chip {
+  font-size: 0.74rem;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid;
+  font-weight: 600;
+}
+
+.chip-total  { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+.chip-notrun { background: #f1f5f9; border-color: #9ca3af; color: #6b7280; }
+.chip-green  { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.chip-red    { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+
+.panel-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Primitive group card */
+.primitive-group {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.primitive-group-header {
+  padding: 8px 14px;
+  background: #f1f5f9;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+}
+
+.primitive-group-header:hover { background: #e9eef6; }
+
+.primitive-group-header .group-status {
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.status-pending-label { background: #f1f5f9; color: #64748b; }
+.status-green-label   { background: var(--green-bg); color: var(--green); }
+.status-red-label     { background: var(--red-bg); color: var(--red); }
+
+.primitive-scenarios {
+  display: flex;
+  flex-direction: column;
+}
+
+.scenario-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.12s;
+  text-align: left;
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  width: 100%;
+  font-family: var(--font);
+}
+
+.scenario-card:last-child { border-bottom: none; }
+.scenario-card:hover { background: #f8fafc; }
+
+.scenario-status-dot {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  margin-top: 3px;
+}
+
+.dot-green   { background: var(--green); }
+.dot-red     { background: var(--red); }
+.dot-pending { background: #9ca3af; }
+
+.scenario-meta { flex: 1; min-width: 0; }
+
+.scenario-name {
+  font-size: 0.83rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.scenario-desc {
+  font-size: 0.75rem;
+  color: #64748b;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.category-chip {
+  flex-shrink: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 1px;
+}
+
+.cat-golden  { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.cat-edge    { background: var(--edge-bg); border-color: var(--edge-border); color: var(--edge); }
+.cat-failure { background: var(--failure-bg); border-color: var(--failure-border); color: var(--failure); }
+
+/* Module panel cards */
+.module-card {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.module-card-header {
+  padding: 10px 14px;
+  background: #f5f3ff;
+  border-bottom: 1px solid #ddd6fe;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.module-card-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #4c1d95;
+}
+
+.module-card-meta {
+  font-size: 0.75rem;
+  color: #7c3aed;
+  margin-top: 2px;
+}
+
+.module-primitives-tag {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 14px;
+  background: #faf5ff;
+  border-bottom: 1px solid #e9d5ff;
+}
+
+.prim-tag {
+  font-size: 0.68rem;
+  background: #ede9fe;
+  border: 1px solid #c4b5fd;
+  color: #5b21b6;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-weight: 600;
+}
+
+.module-card-body {
+  padding: 10px 14px;
+}
+
+.module-card-desc {
+  font-size: 0.77rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+/* Microservice panel */
+.service-card {
+  border: 1.5px solid #fce7f3;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.service-card-header {
+  padding: 10px 14px;
+  background: #fdf2f8;
+  border-bottom: 1px solid #fce7f3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.service-card-title {
+  font-size: 0.83rem;
+  font-weight: 700;
+  color: #9d174d;
+}
+
+.service-card-meta {
+  font-size: 0.75rem;
+  color: #be185d;
+  margin-top: 2px;
+}
+
+.service-ports {
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #fff5f7;
+  border-bottom: 1px solid #fce7f3;
+  flex-wrap: wrap;
+}
+
+.port-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 10px;
+  border-radius: 4px;
+  border: 1px solid;
+}
+
+.port-internal { background: #fce7f3; border-color: #f9a8d4; color: #9d174d; }
+.port-external { background: #fff1f2; border-color: #fecdd3; color: #be123c; }
+
+.service-ddd {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px 14px;
+  background: #fdf2f8;
+  border-bottom: 1px solid #fce7f3;
+}
+
+.ddd-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: #fce7f3;
+  border: 1px solid #f9a8d4;
+  color: #9d174d;
+}
+
+.service-endpoints {
+  padding: 10px 14px;
+}
+
+.service-endpoints h4 {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.endpoint-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.method-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  min-width: 42px;
+  text-align: center;
+}
+
+.method-get  { background: #dcfce7; color: #15803d; }
+.method-post { background: #dbeafe; color: #1d4ed8; }
+
+.endpoint-path {
+  font-family: 'Courier New', monospace;
+  font-size: 0.76rem;
+  color: #374151;
+  flex: 1;
+}
+
+.endpoint-desc { font-size: 0.72rem; color: #64748b; }
+
+.service-note {
+  padding: 10px 14px;
+  font-size: 0.76rem;
+  color: #64748b;
+  line-height: 1.55;
+  border-top: 1px solid #fce7f3;
+  background: #fffbfd;
+}
+
+.service-note code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.71rem;
+  background: #fce7f3;
+  border-radius: 3px;
+  padding: 1px 4px;
+}
+
+/* NOT-RUN status badge — AC-4: honest cold-start state */
+.not-run-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 4px;
+  background: #f1f5f9;
+  border: 1px solid #9ca3af;
+  color: #6b7280;
+  letter-spacing: 0.04em;
+}
+
+/* Legend */
+.legend {
+  max-width: 1400px;
+  margin: 24px auto 0;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-chip {
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid;
+  text-transform: uppercase;
+}
+
+/* Rerun command block in footer area */
+.footer-rerun-block {
+  max-width: 1400px;
+  margin: 20px auto 0;
+  background: #0f172a;
+  border-radius: 8px;
+  padding: 14px 16px 14px 18px;
+  position: relative;
+}
+
+.footer-rerun-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+
+.footer-rerun-cmd {
+  font-family: 'Courier New', monospace;
+  font-size: 0.78rem;
+  color: #7dd3fc;
+  white-space: pre;
+  line-height: 1.6;
+}
+
+.footer-rerun-copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.7rem;
+  background: #1e3a5f;
+  color: #93c5fd;
+  border: 1px solid #2563eb;
+  border-radius: 5px;
+  padding: 3px 10px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.footer-rerun-copy-btn:hover { background: #2563eb; color: #fff; }
+
+.footer-rerun-note {
+  font-size: 0.73rem;
+  color: #475569;
+  margin-top: 8px;
+  line-height: 1.55;
+}
+
+footer {
+  max-width: 1400px;
+  margin: 24px auto 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  line-height: 1.6;
+}
+
+/* Modal */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-overlay.open { display: flex; }
+
+.modal {
+  background: #fff;
+  border-radius: 12px;
+  max-width: 820px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 48px rgba(0,0,0,0.18);
+}
+
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1.5px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.modal-header h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 2px;
+}
+
+.modal-category {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #6b7280;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: #6b7280;
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+
+.modal-close:hover { color: #1e293b; }
+
+.modal-body { padding: 20px; }
+
+.modal-section { margin-bottom: 16px; }
+.modal-section h4 { font-size: 0.8rem; font-weight: 700; color: #374151; margin-bottom: 6px; }
+.modal-section p  { font-size: 0.82rem; color: #64748b; line-height: 1.5; }
+
+.diff-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) { .diff-grid { grid-template-columns: 1fr; } }
+
+.diff-pane {}
+
+.label-input  { font-size: 0.72rem; font-weight: 700; color: #075985; display: block; margin-bottom: 4px; }
+.label-output { font-size: 0.72rem; font-weight: 700; color: #1a7f3c; display: block; margin-bottom: 4px; }
+
+.modal-json {
+  background: #1e293b;
+  color: #94d68a;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Courier New', monospace;
+  font-size: 0.74rem;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 260px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.modal-status-bar {
+  padding: 12px 20px;
+  border-top: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f8fafc;
+  border-radius: 0 0 12px 12px;
+  flex-wrap: wrap;
+}
+
+.status-indicator {
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.modal-note {
+  font-size: 0.74rem;
+  color: #9ca3af;
+  flex: 1;
+}
+
+.rerun-btn {
+  font-size: 0.74rem;
+  background: #1e293b;
+  color: #e2e8f0;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.rerun-btn:hover { background: #334155; }
+
+.modal-rerun-cmd {
+  font-family: 'Courier New', monospace;
+  font-size: 0.72rem;
+  background: #0f172a;
+  color: #7dd3fc;
+  border-radius: 6px;
+  padding: 8px 12px;
+  width: 100%;
+  margin-top: 8px;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>kinh-dich-service &mdash; Scenario Trust Dashboard</h1>
+  <p class="subtitle">
+    Three-level verification: Primitives &rarr; Module &rarr; Microservice &nbsp;|&nbsp;
+    P1-D &nbsp;|&nbsp; Pilot: kinh-dich &nbsp;|&nbsp; Language: TypeScript / Bun
+  </p>
+  <p class="meta">
+    Goals: G6 (dashboard renders) &bull; G7 (zero creds) &bull; G8 (honest NOT-RUN) &bull; G9 (trust contract) &bull; G12 (green before done)
+    &nbsp;&bull;&nbsp;
+    9 primitive scenarios + 2 module scenarios &mdash; all data embedded inline, zero production credentials.
+    Open this file with <code>file://</code> in any browser &mdash; no server required.
+    Service ports: internal&nbsp;5005 / external&nbsp;5005 (per <code>docs/data/system-map.json</code>).
+    jq query: <code>jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json</code>
+    &nbsp;&bull;&nbsp;
+    Click <strong>Edit &amp; Rerun</strong> on any scenario to preview the rerun command (P1-E implements the live handler).
+  </p>
+</header>
+
+<div class="levels-grid">
+
+  <!-- ============================================================ LEVEL 1: PRIMITIVES -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-primitives">Level 1</span>
+      <h2>Primitives</h2>
+      <p class="panel-desc">
+        3 pure TypeScript functions: <strong>hao-encoder</strong>,
+        <strong>hexagram-resolver</strong>,
+        <strong>ngu-hanh-classifier</strong>.
+        Each is a stdlib-only pure function (Fence-A: zero infra imports).
+        3 scenarios each = 9 total. Click any scenario to inspect input &harr; expectedOutput.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total">9 scenarios</span>
+        <span class="summary-chip chip-notrun" id="prim-notrun-chip">9 NOT-RUN</span>
+        <span class="summary-chip chip-green" id="prim-green-chip" style="display:none">0 passed</span>
+        <span class="summary-chip chip-red"   id="prim-red-chip"   style="display:none">0 failed</span>
+      </div>
+    </div>
+    <div class="panel-body" id="primitives-panel-body">
+    </div>
+  </div>
+
+  <!-- ============================================================ LEVEL 2: MODULE -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-module">Level 2</span>
+      <h2>Module</h2>
+      <p class="panel-desc">
+        <code>src/module/reading_composer/</code> &mdash; composes all 3 primitives via
+        the Kinh Dich domain pipeline (Fence-B: zero infra imports). Orchestrates
+        hao encoding &rarr; hexagram resolution &rarr; ngu hanh classification &rarr; trading signal.
+        Click any scenario to see the composition story.
+      </p>
+      <div class="panel-summary">
+        <span class="summary-chip chip-total">2 scenarios</span>
+        <span class="summary-chip chip-notrun" id="mod-notrun-chip">2 NOT-RUN</span>
+        <span class="summary-chip chip-green" id="mod-green-chip" style="display:none">0 passed</span>
+        <span class="summary-chip chip-red"   id="mod-red-chip"   style="display:none">0 failed</span>
+      </div>
+    </div>
+    <div class="panel-body" id="module-panel-body">
+    </div>
+  </div>
+
+  <!-- ============================================================ LEVEL 3: MICROSERVICE -->
+  <div class="level-panel">
+    <div class="panel-header">
+      <span class="level-badge badge-service">Level 3</span>
+      <h2>Microservice</h2>
+      <p class="panel-desc">
+        <code>apps/kinh-dich-service/</code> &mdash; TypeScript/Bun HTTP service.
+        DDD layers: domain / application / infrastructure / interface.
+        Pure compute: hexagram readings, trading signals, confidence scoring.
+        Serves I-Ching (Kinh Dich) readings for Vietnamese market analysis.
+      </p>
+    </div>
+    <div class="panel-body" id="service-panel-body">
+    </div>
+  </div>
+
+</div><!-- .levels-grid -->
+
+<!-- ============================================================ LEGEND -->
+<div class="legend">
+  <strong>Legend:</strong>
+  <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Status: passed (sandbox green)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Status: failed (sandbox red)</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#9ca3af"></span> Status: NOT-RUN (cold start &mdash; honest)</span>
+  <span class="legend-item"><span class="legend-chip cat-golden">golden</span> Happy path &mdash; known good input/output</span>
+  <span class="legend-item"><span class="legend-chip cat-edge">edge</span> Boundary condition</span>
+  <span class="legend-item"><span class="legend-chip cat-failure">failure</span> Invalid input &rarr; expected error</span>
+</div>
+
+<!-- ============================================================ RERUN COMMAND BLOCK (AC-7) -->
+<div class="footer-rerun-block">
+  <div class="footer-rerun-label">Sandbox Rerun Command (P1-E preview &mdash; copy &amp; run, then paste output to update)</div>
+  <pre class="footer-rerun-cmd">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</pre>
+  <button class="footer-rerun-copy-btn" id="footer-copy-btn" type="button">Copy</button>
+  <div class="footer-rerun-note">
+    Zero DB credentials, zero API keys, zero tokens &mdash; kinh-dich is pure compute. Reads only scenario JSON fixtures.<br>
+    Per-tier: &nbsp;
+    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#94a3b8;padding:1px 5px;border-radius:3px;font-size:0.71rem;">bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=all</code>
+    &nbsp;then&nbsp;
+    <code style="font-family:'Courier New',monospace;background:#1e293b;color:#94a3b8;padding:1px 5px;border-radius:3px;font-size:0.71rem;">bun run src/sandbox/runner.ts --tier=module --module=kinh-dich --scenario=all</code>
+    &nbsp;&bull;&nbsp; P1-E will add live paste-and-update handler.
+  </div>
+</div>
+
+<!-- ============================================================ FOOTER (AC-8) -->
+<footer>
+  P1-D &mdash; Three-Level Scenario Trust Dashboard &bull; Pilot: kinh-dich &bull;
+  Ports: internal 5005 / external 5005 (source: <code>jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json</code>) &bull;
+  No server required (file:// URL) &bull; No production credentials &bull;
+  G7 trust contract: edit scenario JSON &rarr; run <code>cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</code> &rarr; paste output (P1-E gate) &bull;
+  G8 contract: NOT-RUN on cold start; GREEN only after sandbox all-green &bull;
+  AC-3 (env audit): zero DB creds / API keys / tokens in sandbox process &bull;
+  All 11 scenarios embedded inline, zero external fetch &bull;
+  Next: P1-E (edit-rerun handler) &bull; P1-F (OpenAPI endpoints) &bull; P1-G (QA close-gate)
+</footer>
+
+<!-- ============================================================ MODAL (AC-5) -->
+<div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+  <div class="modal">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-title">Scenario Detail</h3>
+        <span id="modal-cat" class="modal-category"></span>
+      </div>
+      <button class="modal-close" id="modal-close-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-body">
+      <div class="modal-section">
+        <h4>Description</h4>
+        <p id="modal-desc"></p>
+      </div>
+      <div class="modal-section">
+        <div class="diff-grid">
+          <div class="diff-pane">
+            <label class="label-input">Input</label>
+            <pre class="modal-json" id="modal-input-json" aria-label="Input JSON"></pre>
+          </div>
+          <div class="diff-pane">
+            <label class="label-output">Expected Output</label>
+            <pre class="modal-json" id="modal-output-json" aria-label="Expected output JSON"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-status-bar" id="modal-status-bar">
+      <span class="status-indicator" id="modal-status-text"></span>
+      <span class="modal-note" id="modal-status-note">G8 contract: NOT-RUN until sandbox executed</span>
+      <button class="rerun-btn" id="rerun-btn" type="button">Edit &amp; Rerun (P1-E)</button>
+      <div class="modal-rerun-cmd">cd apps/kinh-dich-service &amp;&amp; bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================ EMBEDDED SCENARIO DATA (AC-3) -->
+<!-- All 9 primitive scenarios from docs/scenarios/kinh-dich/primitives/               -->
+<!-- All 2 module scenarios from docs/scenarios/kinh-dich/module/                      -->
+<!-- Embedded inline so the dashboard works as a static file:// asset                  -->
+<!-- Security (AC-3 / G7): zero DB credentials, zero API keys, zero tokens             -->
+<!-- jq query for port: jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json -->
+<script>
+/* ── Scenario data — embedded inline, zero external fetch ───────────────────── */
+/* AC-3: zero credentials in this file (G7 security contract).                   */
+/* Verified: no DB credentials, no API keys, no auth tokens.                     */
+/* Source: docs/scenarios/kinh-dich/primitives/*.json + docs/scenarios/kinh-dich/module/*.json */
+
+window.__PRIMITIVES_DATA__ = [
+  /* ── hao-encoder ─────────────────────────────────────────────────────────── */
+  {
+    "primitive": "hao-encoder",
+    "category": "golden",
+    "scenario": "hao-encoder-golden",
+    "description": "Happy path: typical scores mapping across all four states. Covers LAO_DUONG, THIEU_DUONG, LAO_AM, THIEU_AM in a single call.",
+    "input": {
+      "method": "encodeHaos",
+      "scores": [0.8, 0.4, -0.8, 0.1, -0.5, 0.6]
+    },
+    "expectedOutput": {
+      "length": 6,
+      "states": ["LAO_DUONG", "THIEU_DUONG", "LAO_AM", "THIEU_DUONG", "THIEU_AM", "THIEU_DUONG"],
+      "binaries": [1, 1, 0, 1, 0, 1],
+      "all_have_labels": true
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "hao-encoder",
+    "category": "edge",
+    "scenario": "hao-encoder-edge",
+    "description": "Boundary conditions: scores at exact thresholds (0.75 → THIEU_DUONG exclusive upper, 0.10 → THIEU_DUONG inclusive, -0.75 → THIEU_AM exclusive lower). Tests all threshold boundaries of the hao state classifier.",
+    "input": {
+      "method": "encodeHaos",
+      "scores": [0.75, 0.10, -0.75, 0.0, 0.76, -0.76]
+    },
+    "expectedOutput": {
+      "length": 6,
+      "states": ["THIEU_DUONG", "THIEU_DUONG", "THIEU_AM", "THIEU_AM", "LAO_DUONG", "LAO_AM"],
+      "binaries": [1, 1, 0, 0, 1, 0],
+      "all_have_boolean_is_changing": true,
+      "all_have_non_empty_states": true
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "hao-encoder",
+    "category": "failure",
+    "scenario": "hao-encoder-failure",
+    "description": "Error case: input array length !== 6 — encodeHaos must throw an Error. Array length 5 (invalid); expect Error to be thrown, not process crash.",
+    "input": {
+      "method": "encodeHaos",
+      "scores": [0.8, 0.4, -0.8, 0.1, -0.5]
+    },
+    "expectedOutput": {
+      "error": true,
+      "error_message_pattern": "length|6"
+    },
+    "status": "not-run"
+  },
+  /* ── hexagram-resolver ───────────────────────────────────────────────────── */
+  {
+    "primitive": "hexagram-resolver",
+    "category": "golden",
+    "scenario": "hexagram-resolver-golden",
+    "description": "Golden case: both lower and upper trigrams are Qian (Càn). Signals [1,1,1,1,1,1] → lower=Qian, upper=Qian → Quẻ Thuần Càn = hexagram 1.",
+    "input": {
+      "signals": [1, 1, 1, 1, 1, 1]
+    },
+    "expectedOutput": {
+      "hexagram": 1,
+      "error": null
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "hexagram-resolver",
+    "category": "edge",
+    "scenario": "hexagram-resolver-edge",
+    "description": "Edge case: all-zero signals. Lower=Kun(0,0,0), upper=Kun(0,0,0) → Quẻ Thuần Khôn = hexagram 2. Tests the minimum-value boundary of the signal space.",
+    "input": {
+      "signals": [0, 0, 0, 0, 0, 0]
+    },
+    "expectedOutput": {
+      "hexagram": 2,
+      "error": null
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "hexagram-resolver",
+    "category": "failure",
+    "scenario": "hexagram-resolver-failure",
+    "description": "Failure case: signals array length is 2 (not 6). Expected: throws Error with message 'resolveHexagram requires exactly 6 signals, got 2'. Sandbox catches the thrown error and records it as PASS (expected error).",
+    "input": {
+      "signals": [1, 0]
+    },
+    "expectedOutput": {
+      "hexagram": null,
+      "error": "resolveHexagram requires exactly 6 signals, got 2"
+    },
+    "status": "not-run"
+  },
+  /* ── ngu-hanh-classifier ─────────────────────────────────────────────────── */
+  {
+    "primitive": "ngu-hanh-classifier",
+    "category": "golden",
+    "scenario": "ngu-hanh-classifier-golden",
+    "description": "Golden case: Water (Thuy) generates Wood (Moc) — lower generates upper. GENERATION[Thuy]=Moc → dynamic=TUONG_SINH, score=0.3 (nội lực sinh ngoại lực).",
+    "input": {
+      "lower": "Thuy",
+      "upper": "Moc"
+    },
+    "expectedOutput": {
+      "dynamic": "TUONG_SINH",
+      "score": 0.3,
+      "error": null
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "ngu-hanh-classifier",
+    "category": "edge",
+    "scenario": "ngu-hanh-classifier-edge",
+    "description": "Edge case: same element (Kim + Kim) — neutral reinforcement. lower === upper → dynamic=SAME, score=0.1 (cùng hành — tăng cường xu hướng hiện tại).",
+    "input": {
+      "lower": "Kim",
+      "upper": "Kim"
+    },
+    "expectedOutput": {
+      "dynamic": "SAME",
+      "score": 0.1,
+      "error": null
+    },
+    "status": "not-run"
+  },
+  {
+    "primitive": "ngu-hanh-classifier",
+    "category": "failure",
+    "scenario": "ngu-hanh-classifier-failure",
+    "description": "Failure case: unknown lower element string — documented choice is no-throw, returns NEUTRAL (score 0.0). Safer for downstream pipeline callers that may receive raw, unvalidated market data strings.",
+    "input": {
+      "lower": "InvalidElement",
+      "upper": "Moc"
+    },
+    "expectedOutput": {
+      "dynamic": "NEUTRAL",
+      "score": 0.0,
+      "error": null
+    },
+    "status": "not-run"
+  }
+];
+
+window.__MODULE_DATA__ = [
+  {
+    "module": "reading_composer",
+    "primitives": ["hao-encoder", "hexagram-resolver", "ngu-hanh-classifier"],
+    "scenario": "reading-composer-golden",
+    "category": "golden",
+    "description": "Golden case: full Kinh Dich reading for VCB. Scores [0.8,-0.3,0.6,0.1,-0.7,0.4] without Markov data. Expected: queChinhNumber=11, hoQueNumber=55, bienQueNumber=19, tradingSignal=BUY, confidence in [0.0,1.0].",
+    "input": {
+      "stockCode": "VCB",
+      "scores": [0.8, -0.3, 0.6, 0.1, -0.7, 0.4],
+      "markovData": null
+    },
+    "expectedOutput": {
+      "queChinhNumber": 11,
+      "hoQueNumber": 55,
+      "bienQueNumber": 19,
+      "haosLength": 6,
+      "tradingSignal": "BUY",
+      "confidenceRange": [0.0, 1.0]
+    },
+    "status": "not-run"
+  },
+  {
+    "module": "reading_composer",
+    "primitives": ["hao-encoder", "hexagram-resolver", "ngu-hanh-classifier"],
+    "scenario": "reading-composer-edge",
+    "category": "edge",
+    "description": "Edge case: same scores as golden but with Markov data (transitionProb=0.75, historicalConfidence=0.8). Markov boosts confidence; expected confidenceRange=[0.7,0.95] (higher than without Markov).",
+    "input": {
+      "stockCode": "VCB",
+      "scores": [0.8, -0.3, 0.6, 0.1, -0.7, 0.4],
+      "markovData": { "transitionProb": 0.75, "historicalConfidence": 0.8 }
+    },
+    "expectedOutput": {
+      "queChinhNumber": 11,
+      "hoQueNumber": 55,
+      "bienQueNumber": 19,
+      "haosLength": 6,
+      "tradingSignal": "BUY",
+      "confidenceRangeWithMarkov": [0.7, 0.95]
+    },
+    "status": "not-run"
+  }
+];
+
+/* ── Global state ─────────────────────────────────────────────────────────── */
+/* AC-4 (G8 trust contract): all status values start as "not-run".             */
+/* NEVER set status to "pass" here — that would be faking green.               */
+
+const STATE = {
+  primitives: window.__PRIMITIVES_DATA__.map(s => ({ ...s })),
+  modules: window.__MODULE_DATA__.map(s => ({ ...s })),
+  openScenario: null,
+};
+
+/* ── Utility ──────────────────────────────────────────────────────────────── */
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function dotClass(status) {
+  if (status === 'pass') return 'dot-green';
+  if (status === 'fail') return 'dot-red';
+  return 'dot-pending';
+}
+
+function statusLabel(status) {
+  if (status === 'pass') return '<span style="color:#1a7f3c;font-weight:700;">PASS</span>';
+  if (status === 'fail') return '<span style="color:#b91c1c;font-weight:700;">FAIL</span>';
+  return '<span class="not-run-badge">NOT-RUN</span>';
+}
+
+function groupStatusClass(scenarios) {
+  const statuses = scenarios.map(s => s.status);
+  if (statuses.every(s => s === 'pass')) return 'status-green-label';
+  if (statuses.some(s => s === 'fail')) return 'status-red-label';
+  return 'status-pending-label';
+}
+
+function groupStatusText(scenarios) {
+  const statuses = scenarios.map(s => s.status);
+  if (statuses.every(s => s === 'pass')) return 'ALL PASS';
+  if (statuses.some(s => s === 'fail')) return 'FAIL';
+  return 'NOT-RUN';
+}
+
+/* ── Primitives panel rendering ──────────────────────────────────────────── */
+
+function renderPrimitives() {
+  const body = document.getElementById('primitives-panel-body');
+
+  // Group by primitive name
+  const groups = {};
+  STATE.primitives.forEach(s => {
+    if (!groups[s.primitive]) groups[s.primitive] = [];
+    groups[s.primitive].push(s);
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([primName, scenarios]) => {
+    const groupStatusCls = groupStatusClass(scenarios);
+    const groupStatusTxt = groupStatusText(scenarios);
+    const groupId = 'grp-' + primName.replace(/[^a-z0-9]/g, '-');
+
+    html += `
+      <div class="primitive-group" id="${groupId}">
+        <div class="primitive-group-header" onclick="toggleGroup('${groupId}')">
+          <span>${escHtml(primName)}</span>
+          <span class="group-status ${groupStatusCls}" id="${groupId}-status">${groupStatusTxt}</span>
+        </div>
+        <div class="primitive-scenarios" id="${groupId}-body">
+    `;
+
+    scenarios.forEach((s, idx) => {
+      const scenIdx = STATE.primitives.indexOf(s);
+      const catClass = 'cat-' + s.category;
+      html += `
+        <button class="scenario-card" onclick="openModal('primitive', ${scenIdx})" id="prim-card-${scenIdx}">
+          <span class="scenario-status-dot ${dotClass(s.status)}" id="prim-dot-${scenIdx}"></span>
+          <span class="scenario-meta">
+            <span class="scenario-name">${escHtml(s.scenario)}</span>
+            <span class="scenario-desc">${escHtml(s.description)}</span>
+          </span>
+          <span class="category-chip ${catClass}">${escHtml(s.category)}</span>
+        </button>
+      `;
+    });
+
+    html += `
+        </div>
+      </div>
+    `;
+  });
+
+  body.innerHTML = html;
+  updatePrimSummary();
+}
+
+function toggleGroup(groupId) {
+  const body = document.getElementById(groupId + '-body');
+  if (body) {
+    body.style.display = body.style.display === 'none' ? '' : 'none';
+  }
+}
+
+function updatePrimSummary() {
+  const total = STATE.primitives.length;
+  const passed = STATE.primitives.filter(s => s.status === 'pass').length;
+  const failed = STATE.primitives.filter(s => s.status === 'fail').length;
+  const notrun = total - passed - failed;
+
+  const notrunChip = document.getElementById('prim-notrun-chip');
+  const greenChip  = document.getElementById('prim-green-chip');
+  const redChip    = document.getElementById('prim-red-chip');
+
+  notrunChip.textContent = notrun + ' NOT-RUN';
+  notrunChip.style.display = notrun > 0 ? '' : 'none';
+
+  greenChip.textContent = passed + ' passed';
+  greenChip.style.display = passed > 0 ? '' : 'none';
+
+  redChip.textContent = failed + ' failed';
+  redChip.style.display = failed > 0 ? '' : 'none';
+}
+
+/* ── Module panel rendering ───────────────────────────────────────────────── */
+
+function renderModules() {
+  const body = document.getElementById('module-panel-body');
+  let html = '';
+
+  STATE.modules.forEach((s, idx) => {
+    const catClass = 'cat-' + s.category;
+    html += `
+      <div class="module-card" id="mod-card-${idx}">
+        <div class="module-card-header">
+          <div>
+            <div class="module-card-title">${escHtml(s.module)}</div>
+            <div class="module-card-meta">${escHtml(s.scenario)}</div>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;">
+            <span class="scenario-status-dot ${dotClass(s.status)}" id="mod-dot-${idx}" style="width:12px;height:12px;border-radius:50%;"></span>
+            <span class="category-chip ${catClass}">${escHtml(s.category)}</span>
+          </div>
+        </div>
+        <div class="module-primitives-tag">
+          ${s.primitives.map(p => `<span class="prim-tag">${escHtml(p)}</span>`).join('')}
+        </div>
+        <div class="module-card-body">
+          <div class="module-card-desc">${escHtml(s.description)}</div>
+        </div>
+        <div style="padding:6px 14px 10px;display:flex;align-items:center;justify-content:space-between;">
+          <span id="mod-status-label-${idx}">${statusLabel(s.status)}</span>
+          <button class="rerun-btn" style="font-size:0.72rem;padding:5px 12px;" onclick="openModal('module', ${idx})">Inspect</button>
+        </div>
+      </div>
+    `;
+  });
+
+  body.innerHTML = html;
+  updateModSummary();
+}
+
+function updateModSummary() {
+  const total = STATE.modules.length;
+  const passed = STATE.modules.filter(s => s.status === 'pass').length;
+  const failed = STATE.modules.filter(s => s.status === 'fail').length;
+  const notrun = total - passed - failed;
+
+  const notrunChip = document.getElementById('mod-notrun-chip');
+  const greenChip  = document.getElementById('mod-green-chip');
+  const redChip    = document.getElementById('mod-red-chip');
+
+  notrunChip.textContent = notrun + ' NOT-RUN';
+  notrunChip.style.display = notrun > 0 ? '' : 'none';
+
+  greenChip.textContent = passed + ' passed';
+  greenChip.style.display = passed > 0 ? '' : 'none';
+
+  redChip.textContent = failed + ' failed';
+  redChip.style.display = failed > 0 ? '' : 'none';
+}
+
+/* ── Service panel rendering (AC-6) ─────────────────────────────────────── */
+/* Port values from: jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json */
+/* Result: port=5005, external_port=5005, language="ts", runtime="bun" */
+
+function renderService() {
+  const body = document.getElementById('service-panel-body');
+
+  body.innerHTML = `
+    <div class="service-card">
+      <div class="service-card-header">
+        <div>
+          <div class="service-card-title">kinh-dich-service</div>
+          <div class="service-card-meta">TypeScript / Bun &mdash; Pure Compute (I-Ching Hexagram Engine)</div>
+        </div>
+        <span class="not-run-badge">NOT-RUN</span>
+      </div>
+
+      <!-- Ports (AC-6): from docs/data/system-map.json via jq -->
+      <!-- jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json -->
+      <!-- => port: 5005, external_port: 5005 -->
+      <div class="service-ports">
+        <span class="port-badge port-internal">internal :5005</span>
+        <span class="port-badge port-external">external :5005</span>
+      </div>
+
+      <!-- DDD layers -->
+      <div class="service-ddd">
+        <span class="ddd-tag">domain</span>
+        <span class="ddd-tag">application</span>
+        <span class="ddd-tag">infrastructure</span>
+        <span class="ddd-tag">interface</span>
+      </div>
+
+      <!-- Endpoints -->
+      <div class="service-endpoints">
+        <h4>HTTP Endpoints (P1-F: OpenAPI spec pending)</h4>
+        <div class="endpoint-row">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/readings</span>
+          <span class="endpoint-desc">Get hexagram reading for a stock</span>
+        </div>
+        <div class="endpoint-row">
+          <span class="method-badge method-post">POST</span>
+          <span class="endpoint-path">/readings/batch</span>
+          <span class="endpoint-desc">Batch hexagram readings</span>
+        </div>
+        <div class="endpoint-row">
+          <span class="method-badge method-get">GET</span>
+          <span class="endpoint-path">/health</span>
+          <span class="endpoint-desc">Service health check</span>
+        </div>
+        <div style="font-size:0.72rem;color:#9ca3af;margin-top:6px;">Full OpenAPI spec: P1-F gate (pending)</div>
+      </div>
+
+      <!-- Composition note (G7: zero creds) -->
+      <div class="service-note">
+        <strong>Composition:</strong> Microservice composes <code>reading_composer</code> module via HTTP routes
+        (<code>src/interface/handlers.ts</code>).<br>
+        Pipeline: <code>hao-encoder</code> &rarr; <code>hexagram-resolver</code> &rarr; <code>ngu-hanh-classifier</code> &rarr; <code>reading_composer</code> &rarr; <code>KinhDichReading</code>.<br>
+        <strong>G7 zero-creds:</strong> kinh-dich is pure compute &mdash; no DB credentials, no external API keys, no secrets.
+        Reads only in-memory market data (scores, markovData) from caller.<br>
+        <code>env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"</code> must return empty.
+      </div>
+    </div>
+  `;
+}
+
+/* ── Modal (AC-5) ─────────────────────────────────────────────────────────── */
+
+function openModal(type, idx) {
+  const scenario = type === 'primitive' ? STATE.primitives[idx] : STATE.modules[idx];
+  if (!scenario) return;
+
+  STATE.openScenario = { type, idx };
+
+  document.getElementById('modal-title').textContent = scenario.scenario;
+
+  const catEl = document.getElementById('modal-cat');
+  const catClass = 'cat-' + scenario.category;
+  catEl.className = 'modal-category category-chip ' + catClass;
+  catEl.textContent = scenario.category.toUpperCase();
+
+  document.getElementById('modal-desc').textContent = scenario.description;
+
+  const inputKey = scenario.input !== undefined ? scenario.input : {};
+  const outputKey = scenario.expectedOutput !== undefined ? scenario.expectedOutput : {};
+  document.getElementById('modal-input-json').textContent  = JSON.stringify(inputKey, null, 2);
+  document.getElementById('modal-output-json').textContent = JSON.stringify(outputKey, null, 2);
+
+  const statusText = document.getElementById('modal-status-text');
+  const statusNote = document.getElementById('modal-status-note');
+
+  if (scenario.status === 'pass') {
+    statusText.innerHTML = '<span style="color:#1a7f3c;">&#9679; PASS</span>';
+    statusNote.textContent = 'Sandbox confirmed this scenario green.';
+  } else if (scenario.status === 'fail') {
+    statusText.innerHTML = '<span style="color:#b91c1c;">&#9679; FAIL</span>';
+    statusNote.textContent = 'Sandbox reported this scenario red.';
+  } else {
+    statusText.innerHTML = '<span style="color:#9ca3af;">&#9679; NOT-RUN</span>';
+    statusNote.textContent = 'G8 contract: NOT-RUN until sandbox executed';
+  }
+
+  document.getElementById('modal-overlay').classList.add('open');
+  document.getElementById('modal-close-btn').focus();
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  STATE.openScenario = null;
+}
+
+/* ── Footer copy button (AC-7) ────────────────────────────────────────────── */
+
+document.getElementById('footer-copy-btn').addEventListener('click', function() {
+  const cmd = 'cd apps/kinh-dich-service && bun run src/sandbox/runner.ts --tier=all --module=kinh-dich --scenario=all';
+  navigator.clipboard.writeText(cmd).then(() => {
+    this.textContent = 'Copied!';
+    setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+  }).catch(() => {
+    this.textContent = 'Copy failed';
+    setTimeout(() => { this.textContent = 'Copy'; }, 2000);
+  });
+});
+
+/* ── Modal event listeners ────────────────────────────────────────────────── */
+
+document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+
+document.getElementById('modal-overlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
+
+document.getElementById('rerun-btn').addEventListener('click', function() {
+  // P1-E scope: this opens the edit-rerun handler
+  // For P1-D: close modal and show the rerun command block
+  closeModal();
+  const block = document.querySelector('.footer-rerun-block');
+  if (block) {
+    block.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    block.style.outline = '2px solid #2563eb';
+    setTimeout(() => { block.style.outline = ''; }, 2000);
+  }
+});
+
+/* ── Init ────────────────────────────────────────────────────────────────── */
+
+renderPrimitives();
+renderModules();
+renderService();
+
+</script>
+</html>
