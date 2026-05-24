@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-24T06:35:59Z
+
+**Brief:** `docs/architecture-briefs/2026-05-24-fleet-size-cap-remediation.md`
+
+Triage of 22 agent-system files over the 120 L soft cap: 5 SPLIT (genuine multi-responsibility bloat — chef.md telemetry extraction, dev-mainserver/vps-crawls research sub-flows, dev-stock-price/kinh-dich pilot-gate extractions), 14+1 JUSTIFY (coherent single-responsibility files needing only a size-justification comment), 0 LEAVE. Staged rollout: Pilot 1 = chef.md + dev-mainserver-crawls, Pilot 2 = dev-vps-crawls + pilot-gates trio.
+
+**Signal dropped:** `docs/signals/agents-architect-fleet-size-cap-remediation-20260524T063559Z.json` → agent-father
+
+---
+
 ## 2026-05-24T06:23:02Z
 
 **Brief:** `docs/architecture-briefs/2026-05-24-context-bloat-backstop-hook.md`
