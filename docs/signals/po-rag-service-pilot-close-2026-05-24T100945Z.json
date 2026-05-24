@@ -1,0 +1,56 @@
+{
+  "signal": "pilot-close",
+  "pilot": "rag-service",
+  "model": "SCALE (thin charter; canonical G1-G12 inherited from pilot-charter.md)",
+  "emittedBy": "po cycle-77",
+  "emittedAt": "2026-05-24T10:09:45Z",
+  "status": "DONE",
+  "verdict": "scale",
+  "goalsEarned": 12,
+  "phase2": {
+    "taskCount": 14,
+    "tasksDone": 14,
+    "status": "CLOSED"
+  },
+  "goals": {
+    "G1": "YES", "G2": "YES", "G3": "YES", "G4": "YES", "G5": "YES", "G6": "YES",
+    "G7": "YES", "G8": "YES", "G9": "YES", "G10": "YES", "G11": "YES", "G12": "YES"
+  },
+  "decisionMatrix": {
+    "speed": "YES",
+    "trust": "YES",
+    "scale": "YES",
+    "verdict": "scale",
+    "derivation": {
+      "speed": "G10=YES (cycle_count=1 <=2, below 1.5 baseline) AND G11=YES (2-trial coupled alarm PASS)",
+      "trust": "G9=YES (Path B Playwright LIVE verdict PASS, accepted by G9 owner po) AND G8=YES (honest red/green, 5 known-bad RED, no false greens)",
+      "scale": "all 12 goals YES AND sprintCount=1 <= 6 (kickoff 2026-05-24, terminal-close same day, well within 6-sprint deadline 2026-07-05)"
+    },
+    "outcome": "3 x YES -> scale to next microservice"
+  },
+  "independentVerification": {
+    "verifiedBy": "po cycle-77 — did NOT trust task summary; spot-checked artifacts + re-ran cheap checks",
+    "G1": "python3 -m sandbox --service=rag-service --tier=primitive --scenario=all -> 16/16 GREEN exit 0; 5 primitive dirs present; each primitive has golden+edge+failure(+known_bad) scenarios; failure scenario confirmed (similarity_scorer ValueError, failure_negative_distance.json)",
+    "G2": "python3 -m sandbox --service=rag-service --tier=module --scenario=all -> 2/2 GREEN exit 0; .importlinter Fence-B (retrieval cannot import infrastructure) KEPT",
+    "G3": "wc -l main.py = 74 (<=80); zero domain ops in main.py (only 'decay' inside FastAPI description string); interface/openapi.json present (7874 bytes)",
+    "G4": "ran fence EXACTLY as CI (bare 'lint-imports' from apps/rag-service): clean = 3 contracts KEPT exit 0 ('Analyzed 32 files, 26 dependencies'); injected deliberate Fence-A violation (similarity_scorer imports top_k_selector) -> Fence-A BROKEN exit 1 NAMED + dependency count rose to 27 (proves real source scan); reverted -> exit 0, file clean, never committed. Non-trivial fence PROVEN (guards against fence-false-green).",
+    "G5": "3 TS files (embeddings.ts, retriever.ts, vectorstore.ts) in apps/mcp-server/src/infrastructure/rag/_deprecated/; ragHttpClient.ts -> http://localhost:5002 via RAG_SERVICE_URL with /search + /index; grep 'TODO.*migrat' returns none; callers (analysis.ts, dataAuditJob.ts, index.ts, usecases) route via ragHttpClient",
+    "G6": "apps/rag-service/dashboard/index.html present (18975 bytes); zero-network (no remote http/cdn/fetch; only comment lines mention 'no fetch'); renders from inline trace JSON via file://",
+    "G7": "Sandbox env-audit uses ANCHORED regex ^(...|TOKEN|TOKEN_[A-Z0-9_]*|...)$ in sandbox/__main__.py — correctly EXCLUDES CTX_ADVISOR_*TOKENS (budget config, not credentials); sandbox ran scenarios to completion (gate did NOT trip = env clean per real audit); HF_HUB_OFFLINE preserved (R-5, not forbidden)",
+    "G8": "known_bad_*.json scenarios present per primitive (excluded from --scenario=all by design); QA-proven corrupt-golden->RED->revert->GREEN + 5 known-bad all RED, microservice NOT-RUN honest (commit evidence in TASK_P2-A-G8-rag-service.md)",
+    "G9": "trust-contract-result.json verdict=PASS, console_errors=0, network_calls=0, 3 panels, 5 cards all GREEN, microservice NOT-RUN; all G9 artifacts (spec.mjs, result.json, screenshot.png) TRACKED on main in commit fa1b7773 (commit subject mislabeled 'pdf-extractor' due to concurrent-pilot index contamination, but --stat confirms rag-service files committed). G9 owner (PO) ACCEPTS the LIVE Path B Playwright verdict.",
+    "G10": "injection 12d2381c + blind fix 695947d6 both ANCESTOR-OF-HEAD; fix reverses top_k_selector slice (results[k:]->results[:k]); cycle_count=1 <= 2, below 1.5 baseline; QA-verified 49c98dc2",
+    "G11": "2-trial coupling: Trial-1 top_k_selector->module RED; Trial-2 relevance_threshold_gate <=->>= -> both module scenarios RED + single-edit revert->GREEN (working-tree only, never committed); Outcome-(a)x2 PASS; QA-verified 49c98dc2",
+    "G12": "flow DoD gate baked 0b5ef802 (ANCESTOR-OF-HEAD); 3-task streak P1-B+P1-C+P1-E verified by QA cycle-74; EARNED-PENDING since Phase 1, flipped YES atomically at terminal close",
+    "commitSHAsOnMain": "All 17 evidence commits confirmed ANCESTOR-OF-HEAD; pre-revert tags rag-pre-ci/rag-pre-delete/rag-pre-inject all exist",
+    "evidenceLabelDriftNoted": "Charter directive cited 4361acc0 as G4-QA (actually a commit-mutex batch commit); QA co-sign for G4 fence is recorded in TASK_P2-A-G8-rag-service.md qaNote. PO independently re-proved the fence so G4 stands on PO's own verification. NON-BLOCKING."
+  },
+  "scaleRecommendation": "3 x YES -> scale. rag-service is the second SCALE pilot (after macro) to reach 12/12. Next microservice target per backlog: architect to nominate (news-fetch brownfield brief already present under scale/).",
+  "constraintsHonored": [
+    "Atomic terminal close: 12/12 goal flips + decisionMatrix + closure in ONE commit",
+    "Explicit-file staging (pilot-status + this signal only); no -A",
+    "No --force / --no-verify / --no-gpg-sign",
+    "main only (no branches)",
+    "commit-mutex acquired for atomic index safety"
+  ]
+}
