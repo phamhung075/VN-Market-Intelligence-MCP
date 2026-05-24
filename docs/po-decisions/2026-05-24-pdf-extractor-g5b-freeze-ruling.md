@@ -104,5 +104,61 @@ atomic with the 12/12 terminal grade (Charter §4.5). This ruling does not flip 
 
 ---
 
-**Recorded in:** `docs/data/pilot-status-pdf-extractor.json` → `phase2.bctc_freeze_gate` (ruling=split-G5)
-+ `phase2.g5_split`.
+## TERMINAL G5 RULING (po, 2026-05-24T10:14:08Z) — NO, pilot holds at 11/12
+
+After 10 goals reached verified-ready and G12 earned, the only open question was G5. Architect
+emitted a BLOCKED clearance (`docs/signals/architect-pdf-extractor-g5b-clearance-20260524T1007Z.json`,
+brief `p2-g5b-clearance.md`) with a *narrow* MOOT observation: the two G5b TARGET entry-points
+(`fetch_ssc_reports`, `bctc_batch_sweep`) are already gone/orthogonal. The terminal question put to PO:
+is the charter G5 intent **satisfied-by-absence** — i.e. is there NO live in-server handler still
+performing PDF/BCTC extraction in-process, bypassing the pdf-extractor service?
+
+I required a confirming check before any YES. I ran it directly (grep + read of the live extraction
+path). **The check FAILED.** A live in-server extraction path exists and bypasses the service:
+
+| Evidence | Finding |
+|---|---|
+| `apps/mcp-server/src/infrastructure/fetchers/pdf.ts` `downloadAndExtractPdf` | PRIMARY extraction is **in-process**: axios download → `extractPdfText` (pdf-parse) → in-process Tesseract OCR fallback (`ocrPdfBuffer`, pdf.ts:102 — spawns `pdftoppm`+`tesseract` child processes). The pdf-extractor microservice (`extractViaMicroservice` → port 5001) is invoked ONLY as a **low-confidence fallback** (`if (result.confidence < PDF_MICROSERVICE_FALLBACK_THRESHOLD)`, pdf.ts:358), NOT the primary route. |
+| Live (non-test) callers of `fetchParseAndStoreBctc` → that path | `bctcReparseJob.ts:555/572`, `pushBctcExtraction.ts:81`, `bctcPdfPullJob.ts:168`, `checkSscReports.ts:228` — all live. `checkSscReports` is the cron that *replaced* the removed `fetch_ssc_reports` tool; it still drives the in-process write-chain. |
+| `apps/mcp-server/src/scheduler/startScheduler.ts:254 / :286` | `cron.schedule(CRONS.bctcReparseJob, …)` and `bctcPdfPullJob` are **live-registered cron jobs**, operational. |
+
+### Why NO-by-merits, not YES-by-absence
+
+The architect's MOOT was correct for the two *named tool entry-points* but did not (and could not, by
+scope) answer the broader charter intent. The G5 charter intent is "old service code deleted + **all
+callers route to the new microservice** + no TODO-migrat" (charter §G5 / `G5_yes_condition`). That intent
+is **genuinely NOT met**:
+
+1. The pdf-extractor service is a *fallback*, not the extraction owner. Four live cron jobs still run the
+   in-process pdf-parse + Tesseract path on the primary route. The service does not own extraction.
+2. This is precisely the BCTC write-chain under the active behavioral freeze (1953-G-FAIL fixCycles=6,
+   1954c never landed). The rewire that would make the service the owner is exactly the frozen,
+   collision-prone work — it cannot be declared satisfied-by-absence while the path is live AND frozen.
+3. `G5_yes_condition` (i) requires G5b completed-after-freeze-lift, or (ii) architect MOOT *at
+   1954c-landing*. Neither holds. 1954c never started. Forcing a third "satisfied-by-absence" path now
+   would (a) contradict the live evidence, and (b) lift the behavioral RCA freeze by PO fiat — prohibited
+   by the §"Why (c) over (a)" reasoning above.
+
+### Disposition
+
+- **G5a** = DONE (dev `d339303f`: tag `pdf-extractor-pre-delete` + leftover scaffold → `_deprecated/`).
+- **G5c** = PASS (qa `ba1dcc82`: `TODO.*migrat` grep = 0 across `apps/pdf-extractor/` + `apps/mcp-server/src/`).
+- **G5b** = BLOCKED — live in-server extraction path persists; HARD FROZEN unchanged.
+- **G5 overall = PARTIAL (NOT YES).** Pilot holds **honestly at 11/12**. G5 is the sole 12/12 blocker.
+
+The behavioral BCTC freeze remains **in force and is NOT orthogonal** here — it governs the very
+write-chain that the live extraction path runs through. No freeze-lift signal emitted.
+`phase2.bctc_freeze_gate.lift_status` = NOT-LIFTED (unchanged).
+
+**Re-open condition:** after 1954b+1954c land (consolidation merged + QA APPROVED) and 1953-G-FAIL is
+confirmed resolved, architect re-runs the G5b clearance. Expected outcome at that point: either a genuine
+HTTP rewire makes the service the extraction owner, or a *true* MOOT (consolidation routed all BCTC calls
+through the service). Only then can G5 → YES and the 12/12 matrix close.
+
+The decisionMatrix stays unpopulated (Charter §4.5: PO-only, atomic with the 12/12 terminal grade — no
+partial population). No goal flipped to YES by this ruling.
+
+---
+
+**Recorded in:** `docs/data/pilot-status-pdf-extractor.json` → `phase2.bctc_freeze_gate` (ruling=split-G5,
+lift_status=NOT-LIFTED, terminal G5 = PARTIAL/11-of-12) + `phase2.g5_split` + goal G5 evidence note.

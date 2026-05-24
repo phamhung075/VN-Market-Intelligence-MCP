@@ -130,10 +130,12 @@
       "G5b": {
         "scope": "HTTP-rewire fetch_ssc_reports (reports.ts + fetchParseAndStoreBctc.ts) + bctc_batch_sweep (bctcBatchSweepJob.ts) to call pdf-extractor port 5001.",
         "freeze_status": "HARD FROZEN",
-        "disposition": "HELD. Sequenced LAST in Phase 2. PM MUST NOT dispatch/stage/commit until architect 1954c-clearance signal AND PO freeze-lift signal (recorded in bctc_freeze_gate).",
-        "rationale": "Touches fetchParseAndStoreBctc.ts — the exact file the 1954c 4-write-path consolidation is restructuring. NOT orthogonal to the frozen behavioral surface; file collision makes a unilateral structural-only carve-out unsafe."
+        "disposition": "HELD + BLOCKED. Sequenced LAST in Phase 2. PM MUST NOT dispatch/stage/commit until architect 1954c-clearance signal AND PO freeze-lift signal (recorded in bctc_freeze_gate).",
+        "rationale": "Touches fetchParseAndStoreBctc.ts — the exact file the 1954c 4-write-path consolidation is restructuring. NOT orthogonal to the frozen behavioral surface; file collision makes a unilateral structural-only carve-out unsafe.",
+        "clearance_result": "BLOCKED (architect signal architect-pdf-extractor-g5b-clearance-20260524T1007Z.json). Narrow MOOT: fetch_ssc_reports removed (reports.ts:222), bctc_batch_sweep getBctcFull() read-only SELECT. BUT MOOT-path unavailable: 1954c never landed; behavioral freeze (1953-G-FAIL fixCycles=6) unresolved.",
+        "po_terminal_confirming_check": "FAILED (po 2026-05-24T10:14:08Z). Broader check per terminal directive — is there a live in-server extraction handler bypassing the service? YES: downloadAndExtractPdf (pdf.ts) primary path is in-process pdf-parse + Tesseract OCR (ocrPdfBuffer pdf.ts:102); pdf-extractor port 5001 (extractViaMicroservice) is ONLY a low-confidence fallback (pdf.ts:358), NOT the extraction owner. Four LIVE cron callers via fetchParseAndStoreBctc: bctcReparseJob.ts:555/572, pushBctcExtraction.ts:81, bctcPdfPullJob.ts:168, checkSscReports.ts:228 (replaced removed fetch_ssc_reports tool). startScheduler.ts:254/:286 live-registers bctcReparseJob + bctcPdfPullJob crons. Charter G5 intent 'all callers route to the new microservice' is genuinely NOT met → NOT satisfied-by-absence."
       },
-      "G5_yes_condition": "G5 flips YES only when G5a + G5c done AND G5b either (i) completed after 1954c freeze-lift, or (ii) architect rules at 1954c-landing the rewire is moot because consolidation already routed the handler through the microservice."
+      "G5_yes_condition": "G5 flips YES only when G5a + G5c done AND G5b either (i) completed after 1954c freeze-lift, or (ii) architect rules at 1954c-landing the rewire is moot because consolidation already routed the handler through the microservice. TERMINAL RULING po 2026-05-24T10:14:08Z: neither holds — live in-server extraction path persists (service is fallback, not owner). G5 = PARTIAL. Pilot holds at 11/12. No satisfied-by-absence path available while extraction runs in-process under the active BCTC freeze."
     },
     "bctc_freeze_gate": {
       "_warning": "DO NOT LOSE — recorded by po cycle-291 at Phase-0 close so the Phase-2 freeze constraint survives across cycles. RULED by po cycle-292 at Phase-1 close: ruling (c) SPLIT G5.",
@@ -149,11 +151,21 @@
         "G5b rewire bctc_batch_sweep → apps/mcp-server/src/.../bctcBatchSweepJob.ts"
       ],
       "lift_precondition": "BOTH required before PM may dispatch G5b: (1) architect emits 1954c-clearance signal (1953-G-FAIL/1954c consolidation landed + verified); AND (2) PO emits explicit freeze-LIFT signal scoped to the G5b rewire, recorded here. No silent lift. No structural-only carve-out before architect clearance — file collision with the 1954c consolidation target (fetchParseAndStoreBctc.ts) makes that unsafe to apply unilaterally. Until BOTH: HARD FROZEN — no dispatch, no stage, no commit touching the named mcp-server BCTC paths.",
-      "lift_status": "NOT-LIFTED (awaiting architect 1954c-clearance, then PO freeze-lift)",
+      "lift_status": "NOT-LIFTED (architect clearance BLOCKED 2026-05-24T10:07Z; PO terminal G5 ruling NO 2026-05-24T10:14:08Z — freeze remains in force, IS NOT orthogonal: it governs the very write-chain the live in-process extraction path runs through)",
       "phase1_impact": "NONE — all 10 Phase-1 tasks were BCTC-CLEAR (P1-B2 was READ-ONLY mcp-server archaeology, zero mcp-server write). Phase 1 dispatched + closed APPROVED with zero BCTC touch.",
       "phase2_impact": "G5a (pure Python _deprecated/ move) + G5c (read-only TODO.*migrat grep) are CLEAR — dispatch normally. Only G5b is gated.",
-      "recorded_by": "po cycle-291; ruled by po cycle-292",
-      "recorded_at": "2026-05-24T09:30:00Z"
+      "terminal_g5_ruling": {
+        "ruling": "NO — G5 = PARTIAL; pilot holds HONESTLY at 11/12",
+        "ruledBy": "po cycle (terminal G5 ruling)",
+        "ruledAt": "2026-05-24T10:14:08Z",
+        "decisionDoc": "docs/po-decisions/2026-05-24-pdf-extractor-g5b-freeze-ruling.md §TERMINAL G5 RULING",
+        "confirming_check_result": "LIVE in-server extraction handler bypassing the service = YES (FOUND). downloadAndExtractPdf (pdf.ts) primary path = in-process pdf-parse + Tesseract OCR; pdf-extractor port 5001 only a low-confidence fallback (pdf.ts:358). Live cron callers: bctcReparseJob/pushBctcExtraction/bctcPdfPullJob/checkSscReports via fetchParseAndStoreBctc; startScheduler.ts:254/:286 live-registers crons.",
+        "rationale": "Charter G5 intent ('all callers route to the new microservice') is genuinely NOT met. Service is a fallback, not the extraction owner. Not satisfied-by-absence. Architect narrow-MOOT (named tool entry-points gone) does not answer the broader intent. Forcing YES would lift the behavioral RCA freeze by fiat — prohibited. No goal flipped; decisionMatrix stays unpopulated (Charter §4.5 atomic-at-12/12).",
+        "no_12_12_close": true,
+        "reopen_condition": "After 1954b+1954c land (consolidation merged + QA APPROVED) and 1953-G-FAIL confirmed resolved → architect re-runs G5b clearance → genuine rewire (service becomes extraction owner) OR true MOOT → then G5 may → YES and 12/12 matrix close."
+      },
+      "recorded_by": "po cycle-291; ruled by po cycle-292; terminal G5 ruled by po 2026-05-24T10:14:08Z",
+      "recorded_at": "2026-05-24T10:14:08Z"
     },
     "tasks": {}
   },
@@ -218,6 +230,7 @@
       "title": "Old service code deleted + HTTP rewire",
       "_title_note": "[FIXED] G5a: old TS/legacy source moved to _deprecated/. G5b: MCP tool handlers rewired HTTP to service port. G5c: zero TODO.*migrat refs.",
       "status": "TBD",
+      "phase2_state": "PARTIAL — NOT YES (TERMINAL G5 RULING po 2026-05-24T10:14:08Z). G5a DONE (dev d339303f: pdf-extractor-pre-delete tag + scaffold→_deprecated/). G5c PASS (qa ba1dcc82: TODO.*migrat grep=0). G5b BLOCKED — architect clearance BLOCKED (architect-pdf-extractor-g5b-clearance-20260524T1007Z.json) + PO confirming-check FOUND a live in-server extraction handler bypassing the service: downloadAndExtractPdf (pdf.ts) primary path is in-process pdf-parse + Tesseract OCR (ocrPdfBuffer pdf.ts:102); pdf-extractor port 5001 only a low-confidence fallback (pdf.ts:358); four live cron callers via fetchParseAndStoreBctc (bctcReparseJob/pushBctcExtraction/bctcPdfPullJob/checkSscReports), startScheduler.ts:254/:286. Charter intent 'all callers route to the new microservice' NOT met → not satisfied-by-absence. Pilot holds at 11/12. G5 is sole 12/12 blocker. Behavioral BCTC freeze (1953-G-FAIL/1954c) IN FORCE and NOT orthogonal. Do NOT flip — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
