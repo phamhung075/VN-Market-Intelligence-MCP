@@ -1,0 +1,36 @@
+{
+  "signal": "architect-pdf-extractor-g5b-clearance",
+  "emittedAt": "2026-05-24T10:07Z",
+  "emittedBy": "architect (P2-G5b-clearance task)",
+  "pilot": "pdf-extractor",
+  "phase": "2",
+  "task": "P2-G5b-clearance",
+  "clearance": "BLOCKED",
+  "brief": "docs/architecture-briefs/2026-05-24-pdf-extractor-factory/p2-g5b-clearance.md",
+  "criteria": {
+    "C1_1954c_resolved": false,
+    "C1_evidence": "resolved=false in bug-inventory.json. 1954b design never dispatched. No TASK_1954b.md. No consolidation commit in git.",
+    "C2_1953_G_FAIL_resolved": false,
+    "C2_evidence": "resolved=false in bug-inventory.json. fixCycles=6. NO-DISPATCH sentinel active in DASHBOARD.md. BCTC stale 78.9h as of 2026-05-22. Multiple DEFER-FREEZE rulings confirm active freeze.",
+    "C3_no_open_fixcycles_bctc_30d": false,
+    "C3_evidence": "1953-G-FAIL open (fixCycles=6). B-08-BCTC-VPS-stale-78h open. No fix dispatched — all triaged as DEFER-FREEZE by PO.",
+    "C4_fetchParseAndStoreBctc_stable": "PARTIAL",
+    "C4_evidence": "File is stable because frozen, NOT because 1954c consolidation landed. 1954c was never started. No TASK_1954c.md exists."
+  },
+  "moot_test": {
+    "verdict": "PARTIAL_MOOT_INSUFFICIENT",
+    "fetch_ssc_reports_tool_exists": false,
+    "fetch_ssc_reports_evidence": "reports.ts:222 comment 'REMOVED sprint-036 task 230'. registerReportTools() has zero server.tool('fetch_ssc_reports') call. Tool was decommissioned before the freeze, independently of 1954c.",
+    "bctc_batch_sweep_calls_write_chain": false,
+    "bctc_batch_sweep_evidence": "bctcBatchSweepJob.ts production deps getBctcFull() is a read-only SQLite SELECT. Does NOT call fetchParseAndStoreBctc. No HTTP rewire to pdf-extractor needed for this path.",
+    "fetchParseAndStoreBctc_already_routed_via_pdf_extractor": false,
+    "fetchParseAndStoreBctc_evidence": "Step 4 (LanceDB embed) was rewired to ragIndex/ragHttpClient.ts (rag-service port 5002) by commit d29da3a8 (rag P2-F). PDF extraction path uses pdfExtractorClient.ts as a secondary lazy-import fallback inside pdf.ts, but this is NOT a full rewire of the BCTC pipeline through pdf-extractor port 5001.",
+    "moot_available": false,
+    "moot_blocked_reason": "PO ruling §G5_yes_condition requires MOOT to be declared 'at 1954c-landing'. 1954c never landed. Call paths changed due to earlier independent work (sprint-036 removal, rag P2-F rewire), NOT because the 4-path consolidation was completed. Behavioral freeze anchor (1953-G-FAIL, fixCycles=6) is unresolved. Declaring MOOT now would lift the behavioral RCA freeze unilaterally — prohibited by PO ruling."
+  },
+  "recommended_next_action": "FREEZE MAINTAINED. PM confirms G5b-dispatch HARD FROZEN. PO does NOT emit freeze-lift. Re-activate 1954b+1954c sprint when VPS push pipeline is restored and BCTC behavioral issues are ready to re-open. After 1954c lands+QA APPROVED, architect re-runs this clearance — expected outcome: MOOT (call paths already gone, consolidation confirmed landed).",
+  "pilot_12_12_impact": "Pilot holds at maximum 11/12 until G5b resolves. G5b is the sole 12/12 blocker. All other 23 tasks (P2-B1 through P2-K2, P2-A1/A2/A3/A4, P2-G, P2-J0 through P2-J3, P2-G5a, P2-G5c) remain BCTC-CLEAR and dispatchable per phase-2-task-plan-python.md BCTC freeze assessment.",
+  "g5_impact": "G5 cannot reach YES. G5a+G5c graded when done. G5b = BLOCKED. G5 overall = PARTIAL until G5b resolves.",
+  "freeze_gate_status": "NOT-LIFTED — no change to pilot-status-pdf-extractor.json phase2.bctc_freeze_gate.lift_status",
+  "next_actor": "pm (no action on G5b; continue dispatching BCTC-CLEAR tasks P2-B1..P2-G5c in normal sequence)"
+}

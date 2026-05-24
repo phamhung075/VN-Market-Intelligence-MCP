@@ -1,8 +1,29 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 14:00 UTC | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 10:07 UTC | **Sprint:** fleet-factory-rollout program
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## pdf-extractor P2-G5b-clearance (2026-05-24T10:07Z) — BLOCKED verdict
+
+**Task:** Assess G5b clearance criteria C-1..C-4 and MOOT test per PO ruling (c) SPLIT G5. Blocked-by: P2-G5c + 1954c-landing.
+
+**Evidence loaded:** bug-inventory.json (1953-G-FAIL fixCycles=6 unresolved + 1954-BCTC-write-chain-rca fixCycles=0 unresolved) + reports.ts (fetch_ssc_reports REMOVED sprint-036 task 230 — tool deregistered) + bctcBatchSweepJob.ts (getBctcFull = read-only SQLite SELECT, does not call fetchParseAndStoreBctc) + fetchParseAndStoreBctc.ts (Step 4 LanceDB rewired to ragHttpClient/rag-service port 5002 by d29da3a8, G5b comments present, no 1954c consolidation work) + pdfExtractorClient.ts (extractViaMicroservice already calls port 5001 as lazy-import fallback, not full rewire) + handoffs search (no TASK_1954b/c/d exists) + git log (zero 1954b/c/d commits post-2026-05-19) + DASHBOARD.md (NO-DISPATCH sentinel + DEFER-FREEZE rulings active) + SPRINT_GOAL.md ("1954c is the next structural unlock" repeated) + TASKS.md.bak (1954b-f described as BLOCKED, unstarted).
+
+**Verdict: BLOCKED.** C-1 FAIL (1954c unresolved). C-2 FAIL (1953-G-FAIL unresolved). C-3 FAIL (open fixCycles). C-4 PARTIAL (file frozen, not consolidated). MOOT test: PARTIAL_MOOT_INSUFFICIENT — the specific tool entry-points G5b targeted are gone or read-only (fetch_ssc_reports deregistered, bctcBatchSweep read-only), BUT MOOT cannot be declared because it requires 1954c landing per PO ruling §G5_yes_condition. Behavioral freeze anchor unresolved.
+
+**Key architectural finding:** fetch_ssc_reports was decommissioned independently (sprint-036 task 230) before this clearance. bctc_batch_sweep production path is read-only (no write-chain call). The SPECIFIC rewire targets are gone — but the 1953-G-FAIL/1954c behavioral freeze anchor is still live. Declaring MOOT now would lift a behavioral RCA freeze that has not been resolved, which is architecturally dishonest and prohibited by PO ruling.
+
+**12/12 impact:** Pilot holds at 11/12. G5b is the sole blocker. All 23 BCTC-CLEAR tasks remain dispatchable. After 1954c lands + QA APPROVED, re-run clearance — expected MOOT at that point.
+
+**Files authored this cycle (3):**
+1. `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/p2-g5b-clearance.md` (NEW)
+2. `docs/signals/architect-pdf-extractor-g5b-clearance-20260524T1007Z.json` (NEW)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** pm (no G5b action; continue BCTC-CLEAR tasks P2-B1..P2-G5c)
+
+---
 
 ## commit-mutex structural-fix design brief (2026-05-24T14:00Z) — PO commission
 
