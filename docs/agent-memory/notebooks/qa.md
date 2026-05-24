@@ -1,5 +1,44 @@
 # QA — Notebook
 
+## c282 cycle-78 · 2026-05-24 · pdf-extractor Phase-1 Close-Gate — PASS
+
+**Task:** P1-G — Phase-1 close-gate (5-criterion exit gate) | **Verdict:** PASS
+
+```
+date: 2026-05-24T08:28:34Z
+outcome: PASS — all 5 criteria PASS; Phase 1 ready for PO close + Phase 2 open
+type: pilot-phase-gate (pdf-extractor Phase-1 terminal gate)
+signal: docs/signals/qa-pdf-extractor-phase1-gate-20260524T082834Z.json
+pytest: 55/55 PASS exit 0
+primitive_scenarios_total: 9 (validate_financial_figures×3 + decimal_normalizer×3 + echo_identity×3)
+primitive_scenarios_required: 6 (validate_financial_figures×3 + decimal_normalizer×3) — ALL exit 0
+module_scenarios: 1/1 PASS exit 0 (multi_primitive_story.json)
+echo_identity_failure_mismatch: exit 1 INTENTIONAL — G8 honest-red scaffold fixture, not in required ≥6
+env_audit_harness: CTX_ADVISOR_* present in harness shell (TOKEN substring) but are integer sizing metadata
+env_audit_env_i: EMPTY — 0 matches in truly clean subprocess
+g7_sg1_ruling: CTX_ADVISOR_* excluded as harness metadata; sandbox-process credential audit CLEAN
+g7_sg2: rerun.sh:23 comment match (word VPS in doc comment) — not a real credential, PASS
+g7_sg3: import domain.primitives.validate_financial_figures → IMPORT OK exit 0
+g7_sg4: edit→rerun cycle confirmed (0.9→FAIL→1.0→PASS; trace written)
+dashboard: 3 panels (Primitives×2, Module×1, Microservice×1) — NOT-RUN honest on load; traces generated
+g12_streak: B1(b4765faa)+C(ce03ab35)+E1(d449879c) — 3 consecutive, all sandbox-green-before-commit
+ddd_fence: 0 infra/app/interface imports in domain/ or sandbox/ layers
+ssot_not_mutated: pilot-status not touched (PO-only close)
+```
+
+| Criterion | Result |
+|-----------|--------|
+| C1 primitive tier ≥6 exit 0 | 6/6 required PASS; echo_identity/failure_mismatch intentional exit 1 |
+| C2 module tier | 1/1 PASS exit 0 |
+| C3 G7 all 4 sub-gates | PASS (CTX_ADVISOR harness-excluded ruling) |
+| C4 dashboard | PASS (3 panels, NOT-RUN honest, traces→green) |
+| C5 G12 streak-3 | PASS (B1+C+E1 all sandbox-green before commit) |
+
+**Phase 1 close-gate: PASS**
+**NEXT:** po — authorize Phase 1 close + Phase 2 open for pdf-extractor pilot.
+
+---
+
 ## c282 cycle-77 · 2026-05-24 · alert-engine P2-M — G11 2-trial coupling proof — PASS
 
 **Task:** P2-M — G11 regression alarm coupling proof (2 trials) | **Verdict:** DONE — AC-5 + AC-6 + AC-7 PASS

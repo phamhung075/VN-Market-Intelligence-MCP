@@ -1,0 +1,99 @@
+{
+  "signal": "qa-pdf-extractor-phase1-gate",
+  "emittedAt": "2026-05-24T08:28:34Z",
+  "pilot": "pdf-extractor",
+  "phase": "1",
+  "gateVerdict": "PASS",
+  "primitiveScenarioCount": 9,
+  "requiredPrimitiveScenarioCount": 6,
+  "requiredPrimitivesAllExit0": true,
+  "criteria": {
+    "C1_primitive_tier": {
+      "verdict": "PASS",
+      "detail": "9 primitive scenarios total (validate_financial_figures×3 + decimal_normalizer×3 + echo_identity×3). All 6 required scenarios exit 0. echo_identity/failure_mismatch.json exits 1 by design (G8 honest-red fixture — not counted in required ≥6). decimal_normalizer: 3/3 PASS. validate_financial_figures: 3/3 PASS.",
+      "evidence": {
+        "validate_financial_figures/happy.json": "pass=true exit=0",
+        "validate_financial_figures/edge_vnm_val01.json": "pass=true exit=0",
+        "validate_financial_figures/failure_negative_assets.json": "pass=true exit=0",
+        "decimal_normalizer/happy_normal.json": "pass=true exit=0",
+        "decimal_normalizer/edge_decimal_shift_vnm.json": "pass=true exit=0",
+        "decimal_normalizer/failure_non_numeric.json": "pass=true exit=0",
+        "echo_identity/happy.json": "pass=true exit=0",
+        "echo_identity/happy_string.json": "pass=true exit=0",
+        "echo_identity/failure_mismatch.json": "pass=false exit=1 [INTENTIONAL — G8 honest-red fixture]"
+      }
+    },
+    "C2_module_tier": {
+      "verdict": "PASS",
+      "detail": "1/1 module scenario exit 0. multi_primitive_story.json: financial_reports module exercising 2 primitives (decimal_normalizer + validate_financial_figures). confidence=1.0 actual matches expected.",
+      "evidence": {
+        "financial_reports/multi_primitive_story.json": "pass=true exit=0"
+      }
+    },
+    "C3_g7_zero_creds": {
+      "verdict": "PASS",
+      "subGates": {
+        "G7_sg1_env_audit": {
+          "verdict": "PASS",
+          "ruling": "CTX_ADVISOR_EXCLUDED",
+          "detail": "Sandbox Python process contains CTX_ADVISOR_BYTES_PER_TOKEN=45, CTX_ADVISOR_MAX_TOKENS=200000, CTX_ADVISOR_OVERHEAD_TOKENS=43000 matching TOKEN substring. These are Claude Code harness context-window sizing integers — NOT credentials. No DB_PATH, VPS_, VINAHOST, STORAGE_DIR, OCR, TESSERACT, SECRET, API_KEY, or PASSWORD present. env -i subprocess audit: EMPTY (0 matches). Harness-var exclusion documented. Sandbox-process credential audit: CLEAN.",
+          "env_i_result": "EMPTY — 0 matches",
+          "ctx_advisor_classification": "Claude Code harness metadata (integer sizing config, not auth material)"
+        },
+        "G7_sg2_scenario_json_grep": {
+          "verdict": "PASS",
+          "detail": "grep -rniE 'db_path|vps|vinahost|storage_dir|token|secret|api_key|password' apps/pdf-extractor/sandbox/ → 1 match: rerun.sh:23 comment line '# It must be called with zero DB/VPS/OCR credentials in env.' — VPS in code comment, not a real VPS address or credential. Zero scenario JSON files in sandbox/. Semantically CLEAN.",
+          "match": "rerun.sh:23 — comment text only, not a credential"
+        },
+        "G7_sg3_zero_infra_import": {
+          "verdict": "PASS",
+          "detail": "PYTHONPATH=apps/pdf-extractor python3 -c 'import domain.primitives.validate_financial_figures; print(IMPORT OK)' → exit 0 — pure stdlib import confirmed without pdfplumber/pytesseract/aiohttp"
+        },
+        "G7_sg4_edit_rerun_cycle": {
+          "verdict": "PASS",
+          "detail": "Evidence in TASK_pdf-extractor-P1-E2.md: happy.json edited 1.0→0.9 → rerun.sh → pass=false exit 1 (FAIL shown). Restored 1.0 → rerun.sh → pass=true exit 0 (PASS shown). Dashboard trace written to dashboard/traces/primitive/validate_financial_figures.json. QA independently confirmed: rerun.sh writes traces correctly (3 traces generated in this gate run)."
+        }
+      }
+    },
+    "C4_dashboard": {
+      "verdict": "PASS",
+      "detail": "apps/pdf-extractor/dashboard/index.html: 3 panels verified structurally (Primitives with 2 cards validate-financial-figures+decimal-normalizer, Module with financial-reports card, Microservice with pdf-extractor card). SI-2 boundary comment on line 2. All cards default badge-not-run (honest NOT-RUN before run). Zero network calls (relative fetch() only, file:// compatible). After rerun.sh: traces written to dashboard/traces/primitive/validate_financial_figures.json + decimal_normalizer.json + module/financial_reports.json — cards would show PASS (green) on Reload Traces. Microservice card stays NOT-RUN (service-tier not yet authored — Phase 2). Zero console errors by structural analysis (no undefined IDs, no missing DOM references, no undefined functions). No Playwright available — structural + trace-write verification used.",
+      "panels": 3,
+      "cards": ["validate-financial-figures (primitive)", "decimal-normalizer (primitive)", "financial-reports (module)", "pdf-extractor (microservice — NOT-RUN honest)"],
+      "traces_generated_by_qa": [
+        "dashboard/traces/primitive/validate_financial_figures.json — pass=true",
+        "dashboard/traces/primitive/decimal_normalizer.json — pass=true",
+        "dashboard/traces/module/financial_reports.json — pass=true"
+      ]
+    },
+    "C5_g12_streak3": {
+      "verdict": "PASS",
+      "detail": "3 consecutive G12 streak tasks confirmed. Each handoff contains sandbox-green evidence + sandbox-check-before-commit step.",
+      "streak": {
+        "P1-B1": {
+          "commit": "b4765faa",
+          "sandbox_evidence": "3/3 validate_financial_figures scenarios GREEN + honest RED confirmed",
+          "sandbox_check_before_commit": "CONFIRMED in handoff §G12 DoD Gate Evidence"
+        },
+        "P1-C": {
+          "commit": "ce03ab35",
+          "sandbox_evidence": "6/6 primitive-tier scenarios GREEN (all validate_financial_figures + decimal_normalizer)",
+          "sandbox_check_before_commit": "CONFIRMED in handoff §G12 DoD Gate Evidence — STREAK #2"
+        },
+        "P1-E1": {
+          "commit": "d449879c",
+          "sandbox_evidence": "7/7 scenarios GREEN (6 primitives + 1 module) before staging",
+          "sandbox_check_before_commit": "CONFIRMED in handoff — 'All 7/7 SCENARIOS GREEN before staging'"
+        }
+      }
+    }
+  },
+  "additionalEvidence": {
+    "pytest": "55/55 PASS exit 0",
+    "ddd_fence_domain": "0 infrastructure/application/interface imports in domain/ or sandbox/ layers",
+    "git_log_streak_order": "b4765faa (B1) → ce03ab35 (C) → d449879c (E1) — consecutive, in order"
+  },
+  "phase1ReadyForClose": true,
+  "phase2Open": true,
+  "nextStep": "po — authorize Phase 1 close + open Phase 2 for pdf-extractor pilot"
+}
