@@ -30,6 +30,23 @@ Code + tests on `task/NNN-*` branch | `[Developer] Implementation Record` in han
 
 **Step 0c — Load service documentation** → read `docs/architecture/microservice/<service>.md` for service context. Lazy-load other docs as needed per DDD layer touched.
 
+**Standard check (three-branch dispatch on BUILD-STANDARD tag in handoff):**
+```
+if handoff contains `BUILD-STANDARD: full`:
+  → Load docs/standards/microservice-build-standard.md (fail_loud: true)
+  → Load docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md (fail_loud: true)
+  → Load docs/architecture-briefs/2026-05-22-refactor/07-phases.md (fail_loud: false)
+  → Verify docs/data/pilot-status-<svc>.json exists; create from schema if absent (Phase 0)
+  → Apply full three-tier sequence + G1–G12 as mandatory task gates
+  → Engage QA at Phase 2 gate (relay required)
+if handoff contains `BUILD-STANDARD: lean`:
+  → Load docs/standards/microservice-build-standard.md (fail_loud: true)
+  → Apply three-tier placement + fence + sandbox/replay + honest red/green DoD
+  → Drive end-to-end solo; no relay required
+if BUILD-STANDARD: not-applicable or tag absent:
+  → Skip standard load (default maintenance mode)
+```
+
 **Pre-code checklist**
 1. Confirm task status in docs/TASKS.md
 2. Branch setup — run exactly one of:
