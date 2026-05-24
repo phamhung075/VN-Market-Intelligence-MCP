@@ -139,6 +139,28 @@ jobs:
           working-directory: apps/alert-engine
           args: --config .golangci.yml
 
+  api-gateway-go-lint:
+    name: API Gateway Go Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/api-gateway/go.mod
+          cache-dependency-path: apps/api-gateway/go.sum
+
+      # Run golangci-lint (depguard Fence-A/B/C) against the api-gateway service.
+      # Fence-A also bans net/http + net/http/httputil in pkg/primitive/ (pure-compute tier).
+      # working-directory is equivalent to: cd apps/api-gateway && golangci-lint run --config .golangci.yml
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.1
+        with:
+          working-directory: apps/api-gateway
+          args: --config .golangci.yml
+
   kinh-dich-ts-lint:
     name: kinh-dich-ts-lint
     runs-on: ubuntu-latest

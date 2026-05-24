@@ -112,13 +112,14 @@
     "acCount": 69,
     "wipPolicy": "WIP=1 sequential \u2014 PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
     "wip_limit": 1,
-    "current_task": "P2-L",
+    "current_task": "P2-M",
     "current_task_status": "SEQUENCED",
-    "current_task_owner": "qa",
-    "current_task_handoff": "docs/handoffs/TASK_P2-L-ae-pre-inject-and-injection.md",
+    "current_task_owner": "dev-alert-engine + qa",
+    "current_task_handoff": "docs/handoffs/TASK_P2-M-ae-g10-g11.md",
     "progress_notes": [
       "P2-J DONE 2026-05-24T080002Z (signal qa-ae-P2-J-g8-done-20260524T080002Z.json) - G8 honest-red deliberate-break proof PASS. All 5 ACs PASS: AC-1 sandbox exit 1 + dashboard RED on cooldown-gate corrupt (suppress false to true), AC-2 sandbox exit 0 after revert all 11 scenarios green, AC-3 2 more primitives corrupted both exit non-zero (signal-classifier + dedup-key-builder), AC-4 all scenario files reverted/git status clean, AC-5 G8 evidence compiled (TASK_P2-J-ae-g8-evidence.md + signal). Router-verified: 3 scenarios tested (cooldown-gate/signal-classifier/dedup-key-builder), each corruption to RED verified, each revert to GREEN verified, zero residue left, anchor debba8ea INTACT. G8 advances EARNED-PENDING. Ready for P2-K (G9 PO Playwright Path B dashboard verification).",
       "P2-K DONE 2026-05-24T080917Z (signal po-ae-P2-K-g9-done-20260524T080917Z.json) - G9 PO Playwright Path B dashboard verification PASS. All 4 ACs PASS: AC-1 Playwright chromium-headless-shell loaded file://apps/alert-engine/dashboard/index.html, 3 panels (primitives/module/microservice) rendered in DOM, AC-2 ZERO console errors, ZERO pageerrors, ZERO requestfailed in Playwright log, AC-3 all 5 cards visible (signal-classifier, dedup-key-builder, cooldown-gate, alert_pipeline module, alert-engine microservice), honest NOT-RUN state (11 pending, 0 green, 0 red, falseGreen=false), AC-4 verdict doc + signal emitted. Router-verified: Path B (PO Playwright Day-0 default L6) satisfied; trust contract proven. G9 advances EARNED-PENDING (goal flip deferred to Phase-3 12/12 terminal). Ready for P2-L (G10 bug injection with fixer-blindness guarantee).",
+      "P2-L DONE 2026-05-24T101600Z (signal qa-ae-P2-L-injection-done-20260524T101600Z.json) — G10 setup complete: bug injected into dedup-key-builder primitive (single-literal change in seed constant or comparison operator). Injection commit da6c71d3 SEALED with spec in TASK_P2-L-ae-injection-spec.md (QA-only, NOT disclosed to P2-M fixer). Pre-inject tag alert-engine-pre-inject created at 3326e7dd (one commit before injection). Sandbox post-injection exits 1: total=11 pass=7 fail=4 (all 3 dedup-key-builder scenarios FAIL + alert-pipeline-golden.json FAIL due to coupling); dashboard dedup-key-builder card RED, alert-pipeline card RED, other cards GREEN. Fixer blindness enforced: P2-M handoff contains SYMPTOM-LEVEL ONLY (failing scenario NAMES + sandbox exit 1 + dashboard RED). Fixer is EXPLICITLY FORBIDDEN from reading the sealed spec, Phase-2 plan, P2-L injection commit, SSOT calibration example, or QA notebook. Ready for P2-M (blind fix ≤2 cycles + G11 2-trial coupling proof).",
       "P2-I DONE 2026-05-24T095500Z (commit 9d18d87e) \u2014 G6 finalization: dashboard deprecated-notice added + Phase-2 wired-state display. All 5 ACs PASS: AC-1 file:// static (zero network), AC-2 deprecated-notice visible (grep \u22651), AC-3 SI-2 disavowal intact (grep \u22651), AC-4 zero credentials (grep=0), AC-5 G12 DoD sandbox green (11/11 PASS). Background category-relabel (commit 099f8819) preserved WITHOUT revert (golden/edge/failure relabeled to Valid Input/Edge Case/Bad Input\u2192Error). Anchor debba8ea INTACT. No SSOT/SI-2/other-pilot touch. Ready for P2-J (G8 honest-red deliberate-break proof).",
       "P2-H DONE 2026-05-24T094753Z (commit 7ecb6f34) \u2014 G3 complete: cmd/server/main.go composition root rewired to alert_pipeline module + api/openapi.yaml OpenAPI contract created. All 7 ACs PASS: AC-1 zero domain-operation references in composition root (grep ComputeFingerprint|IsDuplicate|ShouldSuppressAlert|joinSignalTypes|isToday|djb2Hash = 0), AC-2 alert_pipeline module wired (grep alertpipeline \u22651), AC-3 infra adapters injected at root (grep infrastructure|SQLite|mattn|Telegram \u22651), AC-4 OpenAPI contract exists (apps/alert-engine/api/openapi.yaml FOUND, python3 yaml.safe_load exit 0), AC-5 build+lint clean (go build ./... && golangci-lint run both exit 0), AC-6 composition root \u2264120 lines (101L \u2264120), AC-7 G12 DoD sandbox green (CGO_ENABLED=0 sandbox all-tier total=11 pass=11 fail=0 status=OK). Anchor debba8ea INTACT. No SSOT/SI-2/other-pilot touch. Ready for P2-I (G6 dashboard finalization: deprecated-notice + Phase-2 wired-state display).",
       "P2-G DONE 2026-05-24T073523Z \u2014 G5b/G5c complete: MCP handler HTTP-port audit + zero TODO.*migrat verification (QA-only). All 5 ACs PASS: AC-1 zero direct alert-engine domain imports in mcp-server (grep returns 0), AC-2 HTTP client at port 5006 confirmed in clients.ts (grep \u22651), AC-3 zero TODO.*migrat in alert-engine zone (grep=0), AC-4 zero TODO.*migrat in _deprecated path (grep=0), AC-5 G5 evidence compiled (g5a_deprecated_path + g5b_zero_direct_domain_imports YES + g5b_http_client_present YES + g5c_zero_todo_migrat YES + g5_ready_to_grade YES). Signal qa-ae-P2-G-g5-evidence-done-20260524T073523Z.json emitted. Anchor debba8ea INTACT. Ready for P2-H (G3 composition root rewire: alert_pipeline module wiring + OpenAPI contract).",
@@ -254,16 +255,23 @@
       "P2-L": {
         "title": "Create alert-engine-pre-inject tag + G10 bug injection (QA only)",
         "owner": "qa",
-        "status": "SEQUENCED",
+        "status": "DONE",
         "blocks": "P2-M",
         "blockedBy": "P2-K",
         "acCount": 4,
-        "sequencedAt": "2026-05-24T080917Z"
+        "sequencedAt": "2026-05-24T080917Z",
+        "doneAt": "2026-05-24T101600Z",
+        "doneBy": "qa",
+        "notes": "G10 setup complete: bug injected into dedup-key-builder primitive (single-literal change); sandbox exits 1 with 4 FAIL scenarios (all dedup-key-builder related + alert-pipeline module); dashboard RED for dedup-key-builder and alert-pipeline cards; pre-inject tag alert-engine-pre-inject created at commit 3326e7dd (one before injection commit da6c71d3); injection spec SEALED in TASK_P2-L-ae-injection-spec.md (QA-only, NOT disclosed to fixer)"
       },
       "P2-M": {
         "title": "G10 AI-fixability fix \u22642 cycles (blind fix) + G11 2-trial coupling proof",
         "owner": "dev-alert-engine + qa",
-        "status": "TBD"
+        "status": "SEQUENCED",
+        "blockedBy": "P2-L",
+        "blocks": "P2-Z",
+        "acCount": 6,
+        "sequencedAt": "2026-05-24T101600Z"
       },
       "P2-Z": {
         "title": "Phase 2 close-gate verification (QA) \u2014 all Phase-2 goal evidence chain confirmed",
