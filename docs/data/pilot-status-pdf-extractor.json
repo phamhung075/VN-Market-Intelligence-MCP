@@ -2,10 +2,12 @@
   "pilot": "pdf-extractor",
   "charterRef": "docs/architecture-briefs/2026-05-22-refactor/scale/pdf-extractor-charter.md",
   "charterVersion": "scale-1.0 (thin charter → canonical pilot-charter.md G1–G12)",
-  "status": "PENDING",
+  "status": "ACTIVE",
   "_status_enum": "[FIXED] Allowed values: ACTIVE | DONE | FAILED. DONE requires 12/12 goals YES + decisionMatrix terminal. FAILED is explicit PO decision. No other values.",
   "openedAt": "2026-05-24T06:49:21Z",
   "openedBy": "po cycle-70 (SCALE pre-step — fleet status file instantiated from pilot-status-schema.json; PENDING until architect opens Phase 0 / factory charter)",
+  "activatedAt": "2026-05-24T07:18:11Z",
+  "activatedBy": "po cycle-71 (SCALE pilot kickoff — Phase 0 opened, kickoff BATCH dispatched to dev-team; inherits macro v2.0 L1–L7)",
   "closedAt": null,
   "_closedAt_note": "[DERIVED] Populated at terminal close (12/12 YES + decisionMatrix). Null during ACTIVE.",
   "closedBy": null,
@@ -14,58 +16,74 @@
   "_closureSignal_note": "[DERIVED] Path to closure signal JSON. Null during ACTIVE.",
   "closureDecisionDoc": null,
   "_closureDecisionDoc_note": "[DERIVED] Path to PO decision doc for closure (if authored). Null during ACTIVE or if inline.",
-  "sprintKickoff": "TBD",
-  "sprintDeadline": "TBD",
+  "sprintKickoff": "2026-05-24",
+  "sprintDeadline": "2026-07-05",
   "deadline": "kickoff + 6 sprints",
   "language": "Python",
   "languageLockSource": "stays Python — OCR/PDF ecosystem constraint overrides Go-first default (scale charter §Deltas)",
   "languageLockedAt": "2026-05-24",
-  "phase": "pre-0",
-  "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status.",
+  "phase": "1",
+  "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status. Advanced 0→1 at Phase-0 exit-gate close (po cycle-291).",
   "phase0": {
-    "status": "PENDING",
+    "status": "CLOSED",
     "_status_enum": "[FIXED] Allowed values: OPEN | CLOSED",
-    "openedAt": null,
-    "openedBy": null,
-    "closedAt": null,
-    "closedBy": null,
-    "owner": "TBD — architect (factory charter + brownfield) + agent-father (dev agent/flow) at kickoff",
+    "openedAt": "2026-05-24T07:18:11Z",
+    "openedBy": "po cycle-71 (SCALE pilot kickoff BATCH — architect owns brownfield+factory-charter+phase-1-plan+bug-inventory; agent-father owns G12 DoD gate bake)",
+    "closedAt": "2026-05-24T09:30:00Z",
+    "closedBy": "po cycle-291 (Phase-0 exit gate — all 5 deliverables verified landed: brownfield+phase-1-plan+bug-inventory @31483c8c, G12 DoD gate @e7541786; architect done-signal @dc7f6b96; SHAs + files confirmed present on main before close)",
+    "owner": "architect (factory charter + brownfield + phase-1 plan + bug-inventory baseline) + agent-father (dev flow G12 DoD gate)",
     "deliverables": {
-      "_note": "PENDING — architect instantiates a per-service factory charter dir (pattern: docs/architecture-briefs/<date>-<svc>-factory/) at kickoff, mirroring alert-engine pilot-5. Thin scale charter at .charterRef captures interim deltas/risks.",
-      "factory_charter_or_thin": "DONE 2026-05-24T06:49:21Z (thin: docs/architecture-briefs/2026-05-22-refactor/scale/pdf-extractor-charter.md)",
+      "_note": "ALL LANDED. Architect instantiated per-service factory charter dir docs/architecture-briefs/2026-05-24-pdf-extractor-factory/. Thin scale charter at .charterRef captures interim deltas/risks.",
+      "factory_charter_or_thin": "DONE 2026-05-24T06:49:21Z (thin: docs/architecture-briefs/2026-05-22-refactor/scale/pdf-extractor-charter.md; canonical: docs/architecture-briefs/2026-05-24-pdf-extractor-factory/pilot-charter.md @31483c8c)",
       "pilot_status_ssot": "DONE 2026-05-24T06:49:21Z (this file)",
-      "brownfield_inventory": "PENDING",
-      "bug_inventory_entry": "PENDING",
-      "dev_agent_file": "PENDING",
-      "dev_agent_flow_file": "PENDING",
-      "phase_1_task_plan": "PENDING"
+      "brownfield_inventory": "DONE 2026-05-24 (docs/architecture-briefs/2026-05-24-pdf-extractor-factory/p0-brownfield-inventory.md @31483c8c)",
+      "bug_inventory_entry": "DONE 2026-05-24 (pdf_extractor_baseline block in docs/data/bug-inventory.json @31483c8c; baselineCycleCount=1.5)",
+      "dev_agent_file": "N/A — no new agent .md (dev-pdf-extractor uses generic developer/microservice identity; smallest agent-surface for service pilot, consistent with macro/stock-price precedent)",
+      "dev_agent_flow_file": "DONE 2026-05-24 (G12 sandbox-green DoD gate baked into .claude/flows/dev-pdf-extractor/main.md @e7541786)",
+      "phase_1_task_plan": "DONE 2026-05-24 (docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-1-task-plan-python.md @31483c8c)"
     },
     "exit_gate": {
-      "all_deliverables_landed": false,
+      "all_deliverables_landed": true,
       "pilot_status_phase_0_fields_populated": true,
       "no_code_in_service_pkg_yet": true,
-      "exit_gate_status": "OPEN",
-      "closedAt": null,
-      "verification_commit_sha_architect": null,
-      "verification_signal": null
+      "exit_gate_status": "CLOSED",
+      "closedAt": "2026-05-24T09:30:00Z",
+      "verification_commit_sha_architect": "31483c8c",
+      "verification_signal": "docs/signals/architect-pdf-extractor-phase0-done-20260524T091000Z.json"
     }
   },
   "phase1": {
-    "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 0 closes. Expand on Phase 0 exit.",
-    "status": "NOT-STARTED",
+    "_note": "Phase 1 OPEN at Phase-0 exit (po cycle-291). All 10 Phase-1 tasks confirmed BCTC-CLEAR (plan §BCTC Freeze Assessment). WIP=1 single dev-pdf-extractor agent.",
+    "status": "ACTIVE",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
-    "openedAt": null,
-    "openedBy": null,
+    "openedAt": "2026-05-24T09:30:00Z",
+    "openedBy": "po cycle-291 (Phase-0 exit gate close → Phase-1 open; first dispatch P1-A1 sandbox runner via PM → dev-pdf-extractor, WIP=1)",
     "gateVerdict": null,
     "gateVerifiedAt": null,
     "gateVerifiedBy": null,
     "gateCommit": null,
     "gateDecisionDoc": null,
     "gateSignal": null,
-    "skeleton_in": "<SERVICE:path to phases doc §Phase 1 — e.g. docs/architecture-briefs/2026-05-23-<svc>-factory/07-phases.md §Phase 1>",
-    "task_plan": "<SERVICE:path to Phase 1 task plan doc>",
+    "skeleton_in": "docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-1-task-plan-python.md §Task Ledger",
+    "task_plan": "docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-1-task-plan-python.md",
     "wip_limit": 1,
-    "progress_notes": []
+    "headline_risk": "Python sandbox scenario runner does NOT exist yet. P1-A1 builds it (FastAPI composition-root scaffold ≤80L + sandbox runner zero-creds + scenario dir). P1-B1 (first primitive) is HARD-BLOCKED until P1-A1 zero-creds gate PASSES: AC-5 env audit empty + AC-6 scenario-JSON grep 0 matches. PM must not dispatch P1-B1 until dev-pdf-extractor pastes both AC-5/AC-6 PASS evidence.",
+    "task_order": [
+      "P1-A1 (sandbox runner — HEADLINE RISK, first, blocks all)",
+      "P1-A2 (scenario dirs; blockedBy P1-A1)",
+      "P1-A3 (main.py shrink ≤80L; blockedBy P1-A2)",
+      "P1-B1 (validate-financial-figures primitive, G12 streak#1; blockedBy P1-A3 AND P1-A1 zero-creds gate AC-5+AC-6 PASS)",
+      "P1-B2 (decimal-normalizer; READ-ONLY mcp-server archaeology, ZERO mcp-server write; blockedBy P1-B1)",
+      "P1-C (financial-reports module stub, G12 streak#2; blockedBy P1-B2)",
+      "P1-D (module scenario JSON; blockedBy P1-C)",
+      "P1-E1 (dashboard stub, G12 streak#3; blockedBy P1-C+P1-D)",
+      "P1-E2 (edit-rerun + G7 all-sub-gates; blockedBy P1-E1)",
+      "P1-G (QA close-gate, owner=qa; blockedBy P1-E2)"
+    ],
+    "g12_streak_tasks": ["P1-B1 (streak#1)", "P1-C (streak#2)", "P1-E1 (streak#3)"],
+    "progress_notes": [
+      "2026-05-24T09:30:00Z po cycle-291: Phase 1 OPEN. First dispatch = P1-A1 routed via PM → dev-pdf-extractor. WIP=1. P1-B1 blocked-until P1-A1 zero-creds gate (AC-5 env audit empty + AC-6 scenario grep 0) PASS."
+    ]
   },
   "phase2": {
     "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 1 gate passes.",
@@ -80,6 +98,19 @@
     "taskCount": null,
     "wipPolicy": "<SERVICE:WIP=1 default; specialised ordering if R-type risks require specific first task>",
     "wip_limit": 1,
+    "bctc_freeze_gate": {
+      "_warning": "DO NOT LOSE — recorded by po cycle-291 at Phase-0 close so the Phase-2 freeze constraint survives across cycles.",
+      "frozen": true,
+      "freeze_anchor": "1953-G-FAIL / 1954c (BCTC write-chain consolidation, recurring-bug-escalation freeze)",
+      "frozen_g5b_tasks": [
+        "G5b rewire fetch_ssc_reports → apps/mcp-server/src/.../reports.ts + fetchParseAndStoreBctc.ts",
+        "G5b rewire bctc_batch_sweep → apps/mcp-server/src/.../bctcBatchSweepJob.ts"
+      ],
+      "lift_precondition": "PO must emit an explicit 1954c freeze-LIFT signal (clears 1953-G-FAIL/1954c) BEFORE PM may dispatch either G5b rewire task. Until lifted these Phase-2 tasks are HARD FROZEN — no dispatch, no stage, no commit touching the named mcp-server BCTC paths.",
+      "phase1_impact": "NONE — all 10 Phase-1 tasks are BCTC-CLEAR (P1-B2 is READ-ONLY mcp-server archaeology, zero mcp-server write). Phase 1 dispatches immediately.",
+      "recorded_by": "po cycle-291",
+      "recorded_at": "2026-05-24T09:30:00Z"
+    },
     "tasks": {}
   },
   "goals": [
@@ -97,7 +128,7 @@
       "_verifiedBy_note": "[DERIVED] Agent + cycle that verified. Null until YES.",
       "evidence": null,
       "_evidence_note": "[DERIVED] Evidence chain populated at flip. Links: commit SHAs, signal paths, AC results, sandbox counts.",
-      "calibration": "<SERVICE:service-specific expected primitive count, module name, scenario count structure — e.g. '5-7 Go primitives in pkg/primitive/; each has ≥3 scenarios (golden + edge + failure).'>",
+      "calibration": "LOCKED (architect Phase-0 @31483c8c): 6 Python primitives (pure post-OCR transforms) in apps/pdf-extractor/domain/primitives/: validate-financial-figures, confidence-scorer, decimal-normalizer (fixes decimal-shift bug class), low-confidence-gate, ratio-computer, field-extractor. Each has ≥3 scenario JSON (golden + edge + failure). Phase-1 extracts core-2 (validate-financial-figures P1-B1, decimal-normalizer P1-B2); Phase-2 extracts remaining 4. CRITICAL BOUNDARY: OCR call + VPS PDF pull are IMPURE adapters → stay in infrastructure/, NEVER primitives. Sandbox runs scenario JSON only, never touches VPS/model/DB. Run: python apps/pdf-extractor/sandbox/runner.py --tier=primitive --scenario=<file>.",
       "phase2Bucket": null
     },
     {
@@ -108,7 +139,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:module name(s), port/DI pattern, expected primitive wire count, sandbox scenario count>",
+      "calibration": "LOCKED (architect Phase-0): pilot ONE module only — financial-reports (module name locked). Composes the 6 primitives via Python Protocol ports/DI (constructor injection — language-equivalent of Go interface ports). Zero cross-module imports; primitives imported only from pdf-extractor domain. Phase-1 stub (P1-C) composes the first 2 primitives (validate-financial-figures + decimal-normalizer) via DecimalNormalizerPort/FinancialValidatorPort. ≥1 multi-primitive scenario (OCR-text fixture → normalize → validate → expected confidence sequence) at module tier (P1-D). Sandbox module-tier runner green.",
       "phase2Bucket": null
     },
     {
@@ -119,7 +150,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:cmd/server/main.go ≤80 lines; OpenAPI YAML present; zero domain op grep. Port number = service port from system-map.json.>",
+      "calibration": "apps/pdf-extractor/main.py (FastAPI composition root) ≤80 lines: imports + DI wiring + uvicorn startup only, zero domain ops. OpenAPI present (FastAPI auto-generates /openapi.json — confirm served). Port 5001 (system-map.json + docker-compose.yml + Dockerfile EXPOSE 5001). grep main.py for primitive op names (normalize/score/compute-ratio/extract) → 0 matches.",
       "phase2Bucket": null
     },
     {
@@ -131,7 +162,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:fence tool (depguard for Go / ESLint for TS / per-SI-4 for Python), CI job name, working-directory, pre-revert tag name, deliberate-violation protocol reference (Fence-A violation proven + reverted + never committed)>",
+      "calibration": "PYTHON FENCE LOCKED = import-linter (SI-4 SETTLED, architect Phase-0). NOT Go depguard, NOT ESLint. Tool: PyPI import-linter, CLI lint-imports; contracts declared in apps/pdf-extractor/pyproject.toml [tool.importlinter]; CI job scoped working-directory=apps/pdf-extractor. Fence-A: domain/primitives import zero infrastructure/application/interface (no OCR/IO/DB into pure primitives). Fence-B: module imports primitives via ports only, zero cross-module. Pre-revert tag: pdf-extractor-pre-ci before fence-CI task lands (Phase-2). Deliberate-violation protocol: inject 1 fence breach → lint-imports exit non-zero proven → revert → never committed (TA/macro P2-A2 precedent). SI-4 GATE: CLEARED — G4 AC may be locked.",
       "phase2Bucket": null
     },
     {
@@ -143,7 +174,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:port number from system-map.json; MCP tools affected (list); pre-delete tag name; _deprecated/ target path in apps/mcp-server/src/>",
+      "calibration": "DIFFERENT FROM TA/macro: pdf-extractor is ALREADY a clean Python service (not legacy TS in mcp-server) — this is rewire+extract, NOT delete-and-rebuild. G5a: any pre-refactor in-service code superseded by primitives/module moved to _deprecated/ (likely minimal — confirm in brownfield). G5b: MCP tool handlers that call pdf-extractor (BCTC/financial-report tools — architect lists exact set in brownfield) verified HTTP-routed to port 5001, zero direct domain imports. G5c: zero TODO.*migrat. Pre-delete tag: pdf-extractor-pre-delete. CAUTION: BCTC-freeze overlap — G5b rewire MUST NOT touch frozen BCTC code paths (1953-G-FAIL / 1954c) until architect clears overlap.",
       "phase2Bucket": null
     },
     {
@@ -155,7 +186,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:dashboard path (apps/<svc>/dashboard/index.html), expected panel count (primitives + module + microservice), file:// works with zero network calls>",
+      "calibration": "apps/pdf-extractor/dashboard/index.html — 3 panels: primitives (5 cards) + module (financial-reports) + microservice. Opens via file:// with ZERO network calls. Clones TA/macro dashboard pattern. Honest NOT-RUN status before sandbox run.",
       "phase2Bucket": null
     },
     {
@@ -166,7 +197,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:env audit forbidden key list (include any service-specific API keys such as FRED_API_KEY, plus standard DB/SECRET/PASSWORD); sandbox runner command pattern; edit-rerun handler type (rerun-handler.js for Go/TS, equivalent for Python)>",
+      "calibration": "SECURITY CLAUSE CRITICAL (this service touches VPS + OCR + DB). Env audit forbidden grep MUST include: DB_|API_KEY|SECRET|TOKEN|PASSWORD + service-specific: VPS_|VINAHOST|PDF_EXTRACTOR_DB|pdf_extractor.db creds + any OCR/model API keys. Sandbox process MUST have ZERO of these — it runs scenario JSON only, never the VPS pull or OCR model or pdf_extractor.db. Sandbox runner command: python <sandbox runner> --tier=primitive --scenario=<file>. Edit-rerun handler: Python/JS equivalent of rerun-handler.js (architect/dev decides; dashboard reads regenerated trace JSON). Env audit returns empty = the user goal's 'sandbox env audit returns empty'.",
       "phase2Bucket": null
     },
     {
@@ -177,7 +208,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:Test A = deliberate corruption of golden scenario → dashboard RED; Test B = known golden → dashboard GREEN. Pattern identical across all pilots.>",
+      "calibration": "Test A = deliberate corruption of a golden scenario (e.g. decimal-normalizer golden expected value) → dashboard RED; Test B = known-good golden → dashboard GREEN. Pattern identical across all pilots (TA/macro precedent). QA captures honesty_table + test_a/test_b evidence in GREEN signal.",
       "phase2Bucket": null
     },
     {
@@ -189,7 +220,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:verification path (Path A or Path B); Playwright headless command if Path B; trust-contract VERDICT fields to capture>",
+      "calibration": "Path B (PO Playwright headless) is Day-0 default per L6 carry-over (TA cycle-19 + macro cycle-53). Playwright headless renders apps/pdf-extractor/dashboard/index.html via file://, asserts panel/card render + honest status. Path A (user verbal) preferred if user available — either satisfies G9. Capture trust-contract VERDICT fields: panels_rendered, cards_per_tier, status_honest, console_errors=0.",
       "phase2Bucket": null
     },
     {
@@ -201,7 +232,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:baseline cycle count from bug-inventory.json entry for this service; max_cycles_allowed=2; inject 1 deliberate single-literal bug in a primitive, measure cycles to GREEN>",
+      "calibration": "baselineCycleCount from bug-inventory.json pdf_extractor_baseline entry (Phase 0 deliverable). Real bug classes available for realistic injection: decimal-shift (VNM net_profit=0.000051, DHG rev=0.000009 — a single literal/scale error in decimal-normalizer) and confidence-threshold handling (0 skips insert; <0.2 low-confidence flag; ≥0.2 normal — single-literal boundary in low-confidence-gate). Inject 1 deliberate single-literal bug in a primitive, measure cycles to dashboard-GREEN. max_cycles_allowed=2.",
       "cycle_count": null,
       "max_cycles_allowed": 2,
       "phase2Bucket": null
@@ -214,7 +245,7 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:2-trial coupling-proof rubric (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 alias primitive mutation + fix. Trial-2 = DIFFERENT primitive mutation + fix. Both must show ≥1 coupled scenario RED + single-edit fix. Outcome-(a) × 2 = PASS per rubric.>",
+      "calibration": "2-trial coupling-proof rubric (TA cycle-17 / macro cycle-57 precedent). Trial-1 = G10 alias: decimal-normalizer mutation + fix. Trial-2 = DIFFERENT primitive: low-confidence-gate (or confidence-scorer) mutation + fix. Both must show ≥1 coupled scenario RED + single-edit fix. Outcome-(a) × 2 = PASS per rubric.",
       "phase2Bucket": null
     },
     {
@@ -227,15 +258,15 @@
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
-      "calibration": "<SERVICE:streak tasks = first-primitive task + module stub task + dashboard stub task (Phase 1 B/C/E bucket pattern). Rule effective after Phase 0 agent-father flow commit.>",
+      "calibration": "agent-father bakes G12 sandbox-green-before-RETURN DoD gate into .claude/flows/dev-pdf-extractor/main.md Day-0 (Phase 0 deliverable — current flow is a thin 18-line pointer to developer/microservice-main.md and does NOT yet bake the gate). Python sandbox variant: 'Do not RETURN/mark DONE until the Python sandbox runner shows all pdf-extractor scenarios green for the touched tier.' 3-task streak uses Phase 1 first-primitive task + module stub task + dashboard stub task (B/C/E bucket pattern). Rule effective after agent-father flow commit SHA.",
       "phase2Bucket": null,
       "g12Streak": {
         "required": 3,
         "completed": 0,
         "streakComplete": false,
         "completedAt": null,
-        "tasks": [],
-        "ruleEffectiveAfter": "<DERIVED:agent-father flow commit SHA and date>"
+        "tasks": ["P1-B1 (streak#1)", "P1-C (streak#2)", "P1-E1 (streak#3)"],
+        "ruleEffectiveAfter": "e7541786 / 2026-05-24"
       }
     }
   ],

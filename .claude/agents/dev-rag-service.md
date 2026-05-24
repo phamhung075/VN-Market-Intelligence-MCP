@@ -136,6 +136,10 @@ agent:
       - path: docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md
         trigger: g12_gate_or_goal_verification
         note: "Canonical G1-G12 goals — load only when verifying DoD or goal evidence"
+      - path: docs/standards/microservice-build-standard.md
+        trigger: new_service_or_feature_build
+        note: "Size-gated build standard. Load when handoff contains BUILD-STANDARD: full or lean. FULL profile also lazy-loads pilot-charter.md + 07-phases.md (see standard § 1)."
+        fail_loud: true
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 

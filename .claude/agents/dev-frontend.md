@@ -129,6 +129,10 @@ agent:
         trigger: vn_financial_terms
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search
+      - path: docs/standards/microservice-build-standard.md
+        trigger: new_service_or_feature_build
+        note: "Size-gated build standard. Load when handoff contains BUILD-STANDARD: full or lean. FULL profile also lazy-loads pilot-charter.md + 07-phases.md (see standard § 1)."
+        fail_loud: true
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
