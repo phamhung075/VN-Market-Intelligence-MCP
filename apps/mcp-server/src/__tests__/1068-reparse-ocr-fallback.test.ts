@@ -146,14 +146,14 @@ describe("Bug 1068 — reparseSingle OCR cache fallback", () => {
 // (the fixed version of reparseSingle that consults the OCR cache).
 
 describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
-  it("uses OCR cache text when extractPdfText returns low confidence", async () => {
+  it("uses OCR cache text (Tier 3) when service and pdf-parse both return low-confidence", async () => {
     const { reparseSingleWithOcrFallback } = await import(
       "../scheduler/financial-reports/bctcReparseJob.js"
     );
 
     const ocrText = "A".repeat(200); // well above 100-char threshold
 
-    // Stub getCachedPdfText to return warm cache
+    // 1954c: service Tier 1 → null, pdf-parse Tier 2 → empty, OCR cache Tier 3 → used
     const result = await reparseSingleWithOcrFallback(
       {
         ticker: "VNM",
@@ -161,9 +161,11 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
         filePath: "/nonexistent/path.pdf",
       },
       {
-        // Simulate empty pdf-parse extraction
+        // Tier 1: service returns null (unavailable)
+        extractViaService: async (_url: string) => null,
+        // Tier 2: pdf-parse returns empty
         extractText: async () => ({ text: "   ", confidence: 0 }),
-        // Simulate warm OCR cache
+        // Tier 3: warm OCR cache
         getOcrCache: (_filename: string) => ({
           text: ocrText,
           pages: 61,
@@ -180,7 +182,7 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
     expect(result).toBe(true);
   });
 
-  it("returns false when OCR cache also empty", async () => {
+  it("returns false when service, pdf-parse, AND OCR cache all fail", async () => {
     const { reparseSingleWithOcrFallback } = await import(
       "../scheduler/financial-reports/bctcReparseJob.js"
     );
@@ -192,6 +194,7 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
         filePath: "/nonexistent/path.pdf",
       },
       {
+        extractViaService: async (_url: string) => null,
         extractText: async () => ({ text: "   ", confidence: 0 }),
         getOcrCache: (_filename: string) => null,
         pipeline: async (_params: unknown) => null,
@@ -204,7 +207,7 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
     expect(result).toBe(false);
   });
 
-  it("returns false when OCR cache confidence is below 0.3", async () => {
+  it("returns false when OCR cache confidence is below 0.3 (all tiers exhausted)", async () => {
     const { reparseSingleWithOcrFallback } = await import(
       "../scheduler/financial-reports/bctcReparseJob.js"
     );
@@ -216,6 +219,7 @@ describe("Bug 1068 — reparseSingleWithOcrFallback unit tests", () => {
         filePath: "/nonexistent/path.pdf",
       },
       {
+        extractViaService: async (_url: string) => null,
         extractText: async () => ({ text: "   ", confidence: 0 }),
         getOcrCache: (_filename: string) => ({ text: "A".repeat(200), pages: 5, confidence: 0.2 }),
         pipeline: async (_params: unknown) => null,

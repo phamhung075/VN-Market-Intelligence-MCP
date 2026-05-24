@@ -126,6 +126,8 @@ describe("296 OCR pipeline e2e smoke test", () => {
           filePath: "/nonexistent/path.pdf",
         },
         {
+          // 1954c Tier 1: service unavailable → falls through to Tier 2/3
+          extractViaService: async (_url: string) => null,
           extractText: async () => ({ text: "   ", confidence: 0 }),
           getOcrCache: (_filename: string) => ({
             text: ocrText,
@@ -163,6 +165,8 @@ describe("296 OCR pipeline e2e smoke test", () => {
           filePath: "/nonexistent/path.pdf",
         },
         {
+          // 1954c Tier 1: service unavailable → falls through to Tier 2/3
+          extractViaService: async (_url: string) => null,
           extractText: async () => ({ text: "", confidence: 0 }),
           getOcrCache: (_filename: string) => null,
           pipeline: async () => null,

@@ -39,6 +39,8 @@ import {
 
 function makeDeps(overrides: Partial<ReparseDeps> = {}): ReparseDeps {
   return {
+    // 1954c Tier 1: service returns null → falls through to pdf-parse Tier 2
+    extractViaService: async (_url) => null,
     extractText: async (_buf) => ({ text: "dummy text ".repeat(20), confidence: 0.9 }),
     getOcrCache: (_filename) => null,
     pipeline: async (_params) => ({ id: "test-report-id" }),

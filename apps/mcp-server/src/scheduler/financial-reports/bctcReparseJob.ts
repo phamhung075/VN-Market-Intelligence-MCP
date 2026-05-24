@@ -29,6 +29,7 @@ import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 import { extractPdfText } from "../../infrastructure/fetchers/pdf.js";
 import { getCachedPdfText } from "../../infrastructure/fetchers/pdfOcrWorker.js";
 import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
+import type { PdfExtractorResult } from "../../infrastructure/fetchers/pdfExtractorClient.js";
 import type { Database } from "bun:sqlite";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -192,9 +193,20 @@ export function parseYearQuarterFromFilename(
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface ReparseDeps {
-  /** Extract text from a PDF buffer (pdf-parse path). */
+  /**
+   * Delegate PDF extraction to the pdf-extractor microservice.
+   * 1954c (Tier 1 — service-first): replaces the old extractText (pdf-parse) as Tier 1.
+   * Returns null when service unavailable or extraction fails.
+   * Maps to `extractViaMicroservice` from pdfExtractorClient in production.
+   */
+  extractViaService: (url: string) => Promise<PdfExtractorResult | null>;
+  /**
+   * Extract text from a PDF buffer (pdf-parse — Tier 2 fallback).
+   * 1954c: demoted from Tier 1 to Tier 2 (service unavailable fallback).
+   * Reads the local file buffer passed by reparseSingleWithOcrFallback.
+   */
   extractText: (buf: Buffer) => Promise<{ text: string; confidence: number }>;
-  /** Read OCR cache for a given filename. Returns null on cache miss. */
+  /** Read OCR cache for a given filename (Tier 3 — last resort). Returns null on cache miss. */
   getOcrCache: (filename: string) => { text: string; pages: number; confidence: number } | null;
   /** Run the full BCTC parse+store pipeline. Returns null on failure. */
   pipeline: (params: {
@@ -215,20 +227,23 @@ export interface ReparseDeps {
     quarter: "Q1" | "Q2" | "Q3" | "Q4";
   }) => Promise<void>;
   /**
-   * Bug 1352a: Run high-DPI (300 DPI) OCR retry for pages with confidence < 0.3.
-   * Calls extractAndStorePdfPagesWithRetry under the hood.
-   * Optional — when not injected, the high-DPI retry is skipped.
+   * @deprecated 1954c (G5b): extractHighDpiRetry removed — high-DPI OCR is now
+   * owned by the pdf-extractor service. Kept optional to avoid breaking callers
+   * that still inject it; field is no longer consulted in reparseSingleWithOcrFallback.
    */
   extractHighDpiRetry?: (filePath: string, filename: string, actionCode: string) => Promise<void>;
 }
 
+/** VPS base URL for deriving service URL from stranded PDF filenames (1954c). */
+const VPS_BCTC_BASE_URL = Bun.env.VPS_BCTC_BASE_URL ?? "http://125.212.251.27:8765/bctc-files";
+
 /**
  * Attempt to re-parse a single stranded PDF.
  *
- * Bug 1068 fix — two-tier text extraction:
- *   Tier 1: pdf-parse via extractText (fast, works for text-native PDFs)
- *   Tier 2: OCR cache via getOcrCache (for scanned/image PDFs already processed
- *            by pdfOcrWorker — same fallback pattern as fetchParseAndStoreBctc)
+ * 1954c three-tier text extraction:
+ *   Tier 1: pdf-extractor microservice (service-first — calls extractViaService)
+ *   Tier 2: pdf-parse via extractText (service unavailable fallback)
+ *   Tier 3: OCR cache via getOcrCache (for scanned PDFs already OCR-processed)
  *
  * Returns true iff the pipeline produced a persisted FinancialReport.
  *
@@ -256,108 +271,101 @@ export async function reparseSingleWithOcrFallback(
 
   let rawText: string | null = null;
 
-  // ── Tier 1: pdf-parse ──────────────────────────────────────────────────────
+  // ── Tier 1: pdf-extractor service (1954c — service-first) ─────────────────
+  // Derive the VPS URL from ticker + filename so the service can fetch the PDF.
+  // If the service cannot reach the URL (PDF no longer on VPS) → null → Tier 2.
+  const derivedVpsUrl = `${VPS_BCTC_BASE_URL}/${payload.ticker}/${payload.filename}`;
   try {
-    const buf = deps.readFile(payload.filePath);
-    const { text, confidence } = await deps.extractText(buf);
-    if (text && text.trim().length >= 100 && confidence >= 0.3) {
-      rawText = text;
-      logger.info("[bctc-reparse-job] pdf-parse succeeded", {
+    const serviceResult = await deps.extractViaService(derivedVpsUrl);
+    if (serviceResult !== null && serviceResult.status === "success" &&
+        serviceResult.textContent.trim().length >= 100) {
+      rawText = serviceResult.textContent;
+      logger.info("[bctc-reparse-job] service extraction succeeded (Tier 1)", {
         filename: payload.filename,
-        chars: text.length,
-        confidence,
+        chars: serviceResult.textContent.length,
+        confidence: serviceResult.ocrConfidence,
       });
     } else {
-      logger.info("[bctc-reparse-job] pdf-parse yielded too little text — trying OCR cache", {
+      logger.info("[bctc-reparse-job] service Tier 1 null/short — trying pdf-parse Tier 2", {
         filename: payload.filename,
-        chars: text?.trim().length ?? 0,
-        confidence,
+        serviceStatus: serviceResult?.status ?? null,
+        textLength: serviceResult?.textContent.trim().length ?? 0,
       });
     }
-  } catch (err) {
-    logger.warn("[bctc-reparse-job] pdf-parse threw — trying OCR cache", {
+  } catch (svcErr) {
+    logger.warn("[bctc-reparse-job] service Tier 1 threw — trying pdf-parse Tier 2", {
       filename: payload.filename,
-      error: err instanceof Error ? err.message : String(err),
+      error: svcErr instanceof Error ? svcErr.message : String(svcErr),
     });
   }
 
-  // ── Tier 2: OCR cache fallback (Bug 1068) ──────────────────────────────────
+  // ── Tier 2: pdf-parse (service unavailable) ────────────────────────────────
+  if (rawText === null) {
+    try {
+      const buf = deps.readFile(payload.filePath);
+      const { text, confidence } = await deps.extractText(buf);
+      if (text && text.trim().length >= 100 && confidence >= 0.3) {
+        rawText = text;
+        logger.info("[bctc-reparse-job] pdf-parse Tier 2 succeeded", {
+          filename: payload.filename,
+          chars: text.length,
+          confidence,
+        });
+      } else {
+        logger.info("[bctc-reparse-job] pdf-parse Tier 2 yielded too little text — trying OCR cache Tier 3", {
+          filename: payload.filename,
+          chars: text?.trim().length ?? 0,
+          confidence,
+        });
+      }
+    } catch (err) {
+      logger.warn("[bctc-reparse-job] pdf-parse Tier 2 threw — trying OCR cache Tier 3", {
+        filename: payload.filename,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  // ── Tier 3: OCR cache (last resort — Bug 1068, kept for pre-existing OCR data) ──
   if (rawText === null) {
     const cached = deps.getOcrCache(payload.filename);
     if (cached !== null && cached.confidence >= 0.3 && cached.text.trim().length >= 100) {
       rawText = cached.text;
-      logger.info("[bctc-reparse-job] using OCR cache", {
+      logger.info("[bctc-reparse-job] using OCR cache Tier 3", {
         filename: payload.filename,
         pages: cached.pages,
         confidence: cached.confidence,
         chars: cached.text.length,
       });
     } else {
-      logger.warn("[bctc-reparse-job] OCR cache miss or too low confidence", {
+      logger.warn("[bctc-reparse-job] all tiers exhausted — inserting DA_NOP fallback", {
         filename: payload.filename,
         cached: cached ? { pages: cached.pages, confidence: cached.confidence } : null,
       });
 
-      // ── Bug 1352a: DPI 300 retry for low-confidence pages ───────────────
-      // When OCR cache confidence < 0.3, attempt a high-DPI re-extraction.
-      // extractAndStorePdfPagesWithRetry already handles DPI 200 → DPI 300 logic.
-      if (deps.extractHighDpiRetry) {
-        logger.info("[bctc-reparse-job] attempting DPI 300 retry for low-confidence extract", {
-          filename: payload.filename,
-          cachedConfidence: cached?.confidence ?? null,
+      // ── SPRINT-1330: DA_NOP Fallback ───────────────────────────────────────
+      // When all extraction tiers fail, insert a minimal fallback record to
+      // prevent QUA_HAN in the earnings calendar.
+      try {
+        await deps.insertFallbackRecord({
+          ticker: payload.ticker,
+          year: yq.year,
+          quarter: yq.quarter,
         });
-        try {
-          await deps.extractHighDpiRetry(payload.filePath, payload.filename, payload.ticker);
-          // Re-check cache after high-DPI run
-          const retried = deps.getOcrCache(payload.filename);
-          if (retried !== null && retried.confidence >= 0.3 && retried.text.trim().length >= 100) {
-            rawText = retried.text;
-            logger.info("[bctc-reparse-job] DPI 300 retry succeeded", {
-              filename: payload.filename,
-              confidence: retried.confidence,
-              chars: retried.text.length,
-            });
-          } else {
-            logger.warn("[bctc-reparse-job] DPI 300 retry still too low confidence", {
-              filename: payload.filename,
-              confidence: retried?.confidence ?? null,
-            });
-          }
-        } catch (retryErr) {
-          logger.warn("[bctc-reparse-job] DPI 300 retry threw", {
-            filename: payload.filename,
-            error: retryErr instanceof Error ? retryErr.message : String(retryErr),
-          });
-        }
+
+        logger.info("[bctc-reparse-job] inserted DA_NOP fallback record", {
+          ticker: payload.ticker,
+          period: `${yq.year}-${yq.quarter}`,
+          reason: "all extraction tiers failed",
+        });
+      } catch (fallbackErr) {
+        logger.warn("[bctc-reparse-job] fallback record insert failed", {
+          ticker: payload.ticker,
+          error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
+        });
       }
 
-      // If DPI 300 retry succeeded, rawText is now populated — fall through to pipeline.
-      // If not, insert DA_NOP fallback and return false.
-      if (rawText === null) {
-        // ── SPRINT-1330: DA_NOP Fallback ──────────────────────────────────
-        // When extraction fails with low confidence (even after DPI 300 retry),
-        // insert a minimal fallback record to prevent QUA_HAN in the earnings calendar.
-        try {
-          await deps.insertFallbackRecord({
-            ticker: payload.ticker,
-            year: yq.year,
-            quarter: yq.quarter,
-          });
-
-          logger.info("[bctc-reparse-job] inserted DA_NOP fallback record", {
-            ticker: payload.ticker,
-            period: `${yq.year}-${yq.quarter}`,
-            reason: "extraction failed with low confidence",
-          });
-        } catch (fallbackErr) {
-          logger.warn("[bctc-reparse-job] fallback record insert failed", {
-            ticker: payload.ticker,
-            error: fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr),
-          });
-        }
-
-        return false;
-      }
+      return false;
     }
   }
 
@@ -526,56 +534,25 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
   const { fetchParseAndStoreBctc } = await import(
     "../../application/usecases/fetchParseAndStoreBctc.js"
   );
-  const { extractAndStorePdfPagesWithRetry } = await import(
-    "../../infrastructure/fetchers/pdfOcrWorker.js"
+  const { extractViaMicroservice } = await import(
+    "../../infrastructure/fetchers/pdfExtractorClient.js"
   );
   return {
+    // 1954c Tier 1: pdf-extractor service is primary extraction owner
+    extractViaService: async (url: string) => extractViaMicroservice(url, "bctc"),
+    // 1954c Tier 2: pdf-parse fallback when service unavailable
     extractText: async (buf: Buffer) => extractPdfText(buf),
+    // 1954c Tier 3: OCR cache (pre-existing OCR data from pdfOcrWorker runs)
     getOcrCache: (filename: string) => getCachedPdfText(filename),
     pipeline: async (params) => {
-      // Bug 2 fix: when pdfUrl is a file:// URL, axios (used by
-      // downloadAndExtractPdf) cannot handle it and silently returns
-      // { text: "", confidence: 0 }. This caused FPT and any ticker whose
-      // PDF was on disk but not yet extracted to return null with no error log.
-      //
-      // If the caller already supplied pdfTextOverride, pass through directly —
-      // reparseSingleWithOcrFallback always sets this when extraction succeeded,
-      // so the file:// URL in pdfUrl is only there for source.pdfPath stamping.
-      //
-      // If pdfTextOverride is absent but pdfUrl is a file:// URL (legacy callers
-      // or edge cases), read and extract the file locally before calling the
-      // pipeline so the download step is bypassed.
-      if (!params.pdfTextOverride && params.pdfUrl?.startsWith("file://")) {
-        const localPath = params.pdfUrl.replace(/^file:\/\//, "");
-        if (existsSync(localPath)) {
-          try {
-            const buf = readFileSync(localPath);
-            const { text, confidence } = await extractPdfText(buf);
-            if (text.trim().length >= 100 && confidence >= 0.3) {
-              return fetchParseAndStoreBctc({ ...params, pdfTextOverride: text });
-            }
-          } catch (err) {
-            logger.warn("[bctc-reparse-job] local file read failed in pipeline dep", {
-              localPath,
-              error: err instanceof Error ? err.message : String(err),
-            });
-          }
-          // Local read failed or text too short — let fetchParseAndStoreBctc
-          // attempt its own OCR fallback using the file path context.
-          // It will return null if OCR also fails, which is the correct outcome.
-        } else {
-          logger.warn("[bctc-reparse-job] file:// path does not exist in pipeline dep", {
-            pdfUrl: params.pdfUrl,
-          });
-        }
-      }
+      // reparseSingleWithOcrFallback always sets pdfTextOverride before calling
+      // pipeline — the file:// URL in pdfUrl is only for source.pdfPath stamping.
+      // Pass through directly; fetchParseAndStoreBctc handles pdfTextOverride path.
       return fetchParseAndStoreBctc(params);
     },
     fileExists: (path: string) => existsSync(path),
     readFile: (path: string) => readFileSync(path),
-    extractHighDpiRetry: async (filePath: string, filename: string, actionCode: string) => {
-      await extractAndStorePdfPagesWithRetry(filePath, filename, actionCode);
-    },
+    // extractHighDpiRetry deprecated (1954c) — not wired in production
     insertFallbackRecord: async (payload) => {
       const db = getDb();
       const now = new Date().toISOString();

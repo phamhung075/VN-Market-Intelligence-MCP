@@ -28,6 +28,8 @@ function makeDepsCapture(captured: { period_type?: string; sort_key?: string }):
   return {
     fileExists: () => true,
     readFile: () => Buffer.from(""),
+    // 1954c Tier 1: service unavailable → falls through to Tier 2/3
+    extractViaService: async (_url) => null,
     extractText: async () => ({ text: "", confidence: 0 }),
     getOcrCache: () => null,
     pipeline: async () => null,
