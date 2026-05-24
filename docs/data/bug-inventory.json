@@ -306,5 +306,37 @@
     "observedFixCount": null,
     "recordedAt": "2026-05-24T12:00:00Z",
     "recordedBy": "system-auditor (phase-0 pilot kickoff, TASK P0-KD-2)"
+  },
+  "api_gateway_baseline": {
+    "service": "api-gateway",
+    "module": "api-gateway",
+    "capturedAt": "2026-05-24",
+    "capturedBy": "architect (TASK P0-AG-2 phase-0 deliverable)",
+    "windowDays": 60,
+    "windowStart": "2026-03-25",
+    "windowEnd": "2026-05-24",
+    "apiGatewayBugsFound": 1,
+    "baselineCycleCount": 1.5,
+    "baselineSource": "system-wide fallback (api-gateway has only 1 bug in 60-day window; <2 threshold triggers fallback per charter §Baseline Metric Capture)",
+    "baselineFallbackRationale": "Scanning git log --since=2026-03-25 -- apps/api-gateway/ found 3 fix commits: (1) 377aefbf fix(fetch-dashboard): 404s on /news+/macro routes via gateway — genuine routing bug, 1 fix cycle; (2) b7a3600e fix(1841a): test count update after registry grew 6→8 services — test maintenance, not a domain bug; (3) 4c089cfb fix(docker): Dockerfile TLS-proxy patch — infrastructure-wide, not gateway-specific. Genuine gateway bugs in window = 1 (below <2 threshold). Falls back to system-wide baselineCycleCount=1.5 per charter §Baseline Metric Capture. Consistent with stock-price and kinh-dich baselines.",
+    "bugsIdentified": [
+      {
+        "id": "fetch-dashboard-404-routes",
+        "module": "api-gateway",
+        "fixCycles": 1,
+        "date": "2026-05-17",
+        "resolved": true,
+        "evidence": "fix(fetch-dashboard): fix 404s on /news and /macro routes via gateway 377aefbf — root cause: upstream services registered routes WITH prefix, gateway strips prefix before proxying"
+      }
+    ],
+    "g10_target": "AI agent fixes api-gateway primitive bug in ≤2 cycles vs baseline 1.5",
+    "knownRiskPre_pilot": [
+      {
+        "risk": "R-1 Blast radius",
+        "description": "api-gateway routes to all 9 services. A primitive regression (proxy-path-resolver or route-service-matcher) breaks ALL upstream routing. G11 coupled-scenario design must pair a path-strip bug with cascading proxy + health-route scenarios. Highest blast-radius service in the rollout.",
+        "priority": "HIGH",
+        "phase_to_fix": "P0-AG-4 (G11 regression-canary scenario design) + P1-B (first primitive task)"
+      }
+    ]
   }
 }
