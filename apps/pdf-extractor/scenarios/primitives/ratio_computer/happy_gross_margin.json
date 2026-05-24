@@ -1,0 +1,9 @@
+{
+  "primitive": "ratio_computer",
+  "inputs": {
+    "numerator": 300.0,
+    "denominator": 1000.0,
+    "ratio_type": "gross_margin"
+  },
+  "expected": 0.3
+}

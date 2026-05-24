@@ -1,0 +1,9 @@
+{
+  "primitive": "ratio_computer",
+  "inputs": {
+    "numerator": 100.0,
+    "denominator": 0.0,
+    "ratio_type": "debt_equity"
+  },
+  "expected": null
+}
