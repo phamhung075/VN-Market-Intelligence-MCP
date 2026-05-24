@@ -1,0 +1,29 @@
+{
+  "signal": "dev-sp-P2-H-done",
+  "task": "P2-H",
+  "pilot": "stock-price",
+  "actor": "dev-stock-price",
+  "timestamp": "2026-05-24T01:29:51Z",
+  "commit": "1818bd5a",
+  "status": "DONE",
+  "sandbox_evidence": "total=11 pass=11 fail=0 status=OK",
+  "ac_verdicts": {
+    "AC-1": "PASS — grep -c FetchPrice|tierResult|normalize|SelectWinning|Classify cmd/server/main.go = 0",
+    "AC-2": "PASS — mattn/go-sqlite3 + pkg/infrastructure imported in cmd/server/main.go (8 matches)",
+    "AC-3": "PASS — cmd/server/main.go = 73 lines (≤100)",
+    "AC-4": "PASS — apps/stock-price/api/openapi.yaml exists, python3 yaml.safe_load exits 0",
+    "AC-5": "PASS — go build ./... exit 0, golangci-lint run exit 0 (0 issues)",
+    "AC-6": "PASS — sandbox total=11 pass=11 fail=0 status=OK"
+  },
+  "files_committed": [
+    "apps/stock-price/cmd/server/main.go",
+    "apps/stock-price/cmd/server/wire.go",
+    "apps/stock-price/api/openapi.yaml"
+  ],
+  "foreign_files_staged": false,
+  "ssot_touched": false,
+  "anchor_intact": true,
+  "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "next_actor": "pm",
+  "next_action": "verify P2-H (G3 composition root + OpenAPI), then sequence P2-I (G6 dashboard + SI-2 fleet index genesis)"
+}
