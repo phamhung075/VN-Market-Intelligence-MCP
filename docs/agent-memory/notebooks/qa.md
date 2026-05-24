@@ -1,5 +1,43 @@
 # QA — Notebook
 
+## c283 cycle-89 · 2026-05-24 · news-fetch P2-NF-G — G10 bug injection (pre-inject tag + sealed signal) — DONE
+
+**Task:** P2-NF-G (G10 AI-fixability bug injection) | **Verdict:** DONE — bug injected, RED confirmed
+
+```
+date: 2026-05-24T09:10:00Z
+outcome: DONE — pre-inject tag created, bug committed, sandbox 1 FAIL, dash RED confirmed
+type: pilot-task-qa (pre-inject tag + deliberate bug injection + sealed signal)
+sealed_signal: docs/signals/qa-news-fetch-g10-sealed-2026-05-24T091000Z.json
+pre_inject_tag: news-fetch-pre-inject → commit 04b82fb4
+injection_commit: c2ca404a
+target_file: apps/news-fetch/src/primitive/published-at-parser/index.ts
+bug_class: RFC-date UTC offset double-application (SEALED — details in signal)
+sandbox_result: 12 PASS, 1 FAIL, 0 ERROR — exit 1
+failing_scenario: docs/scenarios/news-fetch/primitives/published-at-parser/edge.json
+dash_check_verdict: FAIL (badge_counts PASS:4 FAIL:2 ERROR:0)
+dash_red_card: published-at-parser
+baseline_cycles: 1.5
+target_max_cycles: 2
+ssot_not_mutated: pilot-status-news-fetch.json not touched (PO-only §4.5)
+goal_flips: NONE
+fixer_blindness_enforced: true (file/line sealed in signal — not in symptom dispatch)
+```
+
+| Check | Verdict |
+|-------|---------|
+| pre-inject tag at HEAD before injection | PASS (04b82fb4) |
+| Injection committed as atomic anchor | PASS (c2ca404a) |
+| Sandbox: published-at-parser edge FAIL | PASS (exit 1, 1 FAIL) |
+| Dashboard card published-at-parser RED | PASS (FAIL:2 badge) |
+| golden + failure scenarios unaffected | PASS (12 PASS) |
+| Sealed signal written (not shown to dev) | PASS |
+
+**Symptom for developer:** published-at-parser card RED; edge scenario FAIL; +offset input returns wrong UTC time.
+**NEXT:** dispatch developer with SYMPTOM ONLY (no fix hint). Cycle count starts at 0.
+
+---
+
 ## c283 cycle-88 · 2026-05-24 · news-fetch P2-NF-E — G8 honest-red proof — VERIFIED
 
 **Task:** P2-NF-E (G8 honest-red dashboard proof) | **Verdict:** G8 VERIFIED
