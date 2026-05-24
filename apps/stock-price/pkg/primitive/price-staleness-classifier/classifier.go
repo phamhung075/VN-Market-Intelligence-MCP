@@ -67,7 +67,7 @@ func ClassifyStaleness(
 
 	switch {
 	case age <= freshCutoff:
-		return Stale, nil
+		return Fresh, nil
 	case age <= staleCutoff:
 		return Stale, nil
 	default:
