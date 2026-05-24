@@ -1,30 +1,31 @@
 # PO Notebook
 
-**Cycle:** PI-EXIT — final PO sign-off on Sprint PDF-INSPECT (served side-by-side PDF/extraction inspector).
-**Last update:** 2026-05-24T17:47:10Z
-**Status:** PDF-INSPECT CLOSED (RATIFIED). PILOT frozen 12/12 untouched. Pipeline complete.
+**Cycle:** NF-LD-EXIT — final sign-off on news-fetch live-data inspection view.
+**Last update:** 2026-05-24T17:58:27Z
+**Status:** NF-LD chain SIGNED OFF + CLOSED. Pilot frozen 12/12 untouched. Pipeline complete.
 
 ---
 
-## 2026-05-24T17:47Z — PI-EXIT: RATIFIED, Sprint PDF-INSPECT DONE + CLOSED
+## 2026-05-24T17:58Z — NF-LD-EXIT: SIGNED OFF, chain CLOSED
 
-Chain: po(scope)→architect(PI-1 design)→dev-pdf-extractor(PI-2 impl)→qa(PI-3 PASS)→po(PI-EXIT). I validated against the USER acceptance condition + PI-3 ACs, not just the QA word.
+Chain: po(scope)→architect(NF-LD-1)→dev-mcp-server(NF-LD-2a 5a91e12f)→developer(NF-LD-2b 45fd7f74)→qa(NF-LD-3 59bd79f7 APPROVED)→po(NF-LD-EXIT). Held sign-off discipline: verified disk+git BEFORE trusting QA word.
 
-USER ACCEPTANCE MET: select PDF → LEFT rendered original + RIGHT extracted text/tables/confidence, side-by-side, under the REAL served URL (Playwright headless `:15001/inspect` = actual route shape, L9). The VNM `net_profit 0.000051` decimal-shift bug shows beside the rendered page — the literal user goal (spot bad extraction by eye). Honest-degrade fires (amber PDF/ext-missing, 404s, UUID-400, traversal rejected).
+PO INDEPENDENT SPOT-CHECK (all PASS):
+- 5a91e12f: 3 files ALL apps/mcp-server/ (handler 132L + test 286L + server.ts +7). SELECT-only confirmed (grep -nwiE write verbs → 0 real; earlier hits were `created_at` substrings). 0 creds in handler.
+- 45fd7f74: 2 files ALL apps/news-fetch/dashboard/ (index.html +217 panel-live-data@192 + dash-check.mjs). data.js NOT in commit (last touch cd8d0146 pre-NF-LD). 0 creds in dashboard.
+- 59bd79f7 (qa): 3 own files, zero-foreign.
+- pilot-status-news-fetch.json: goalsEarned=12, verdict=scale, status=DONE — NOT touched. Frozen held.
+- Sandbox honest-green not regressed (QA dash-check: 4 panels =3 sandbox+1 live, 6 cards, PASS:6, 0 console/page errors, 0 external net).
 
-PO INDEPENDENT CHECK (disk + git, pre-trust): viewer.html(17KB), inspection_store.py(11.6KB), handlers.py has 4 `/inspect*` routes + SI-2 comment, PI-3 test(11.8KB). QA commit `0d10f310` = 4 own files, zero foreign. PI-1/PI-2 = `4651c080`, 8 files all apps/pdf-extractor/. 186 pytest, Fence-A/B KEPT.
+DEPLOY GAP (non-blocking, surfaced): mcp-server /health=200 BUT GET /api/news-fetch/live=404 on RUNNING process — route correct in source on main, running process predates 5a91e12f. Same pattern as PI-INSPECT. Fix = ops `docker compose up -d --build mcp-server` (dispatch ops, never ask user). Code is correct + tested; not a defect. Until reloaded, live panel honestly shows EMPTY/ERROR — by design, never fakes.
 
-CLASSIFICATION HELD: POST-PILOT NEW SURFACE. pilot-status-pdf-extractor.json NOT edited; SCALE pilot stays DONE 12/12 frozen. Sandbox dashboard surface (index.html/traces.js/trust-contract.spec.js/runner) untouched — distinct surface, SI-2 honored. (One stray untracked artifact `dashboard/trust-contract-result.json` = test-run output, NOT a frozen-source mod, left alone — not my zone.)
+TELEGRAM (fail-loud, honest): send_telegram MCP tool NOT in PO agent tool surface (only Read/Edit/Write/Bash/semble) + no CLI sender. Did NOT fabricate a sent WORK message. Summary text handed to main terminal in RETURN for relay via gateway.
 
-DEPLOY (surfaced to user): SERVED surface, NOT file:// double-click. URL `http://localhost:5001/inspect`. Routes live on next `docker compose up`; if running container predates 4651c080 → `docker compose up -d --build pdf-extractor` (dispatch OPS, never ask user).
-
-LESSON recorded (carry-over): served-viewer = correct model when data lives in a Docker named volume — the deliberate counterpoint to the file:// sandbox dashboard. L9 (verify-under-real-served-path) was baked into the QA gate from PI-1, not bolted on; that's why acceptance was provable, not asserted.
-
-OUTPUTS: TASK_PDF-INSPECT.md `[PO]` sign-off section; TASKS.md PI-* rows → DONE + sprint DONE+CLOSED; SPRINT_GOAL.md → DONE+CLOSED; signal `po-20260524T174710Z.json`; this notebook. Commit left to main terminal (commit-mutex enum defect — claim under 'sprint-task' kind if needed; re-commit never rewrite under fleet race).
+OUTPUTS: TASK_NF-LD.md `## NF-LD-EXIT` sign-off section; TASKS.md NF-LD rows → DONE + sprint DONE+CLOSED; signal po-20260524T175827Z.json; this notebook. Commit = own close-out artifacts ONLY (commit-mutex enum defect → main terminal commits in-tree PO docs; watch fleet race).
 
 ## Carry-over
-- PDF-INSPECT: CLOSED RATIFIED. Pilot frozen 12/12. OPS may need `docker compose up -d --build pdf-extractor` for /inspect routes to go live (container predating 4651c080).
-- PATTERN (reuse): Docker-volume data → SERVE it (FastAPI read routes + pdf.js CDN render); file:// only when data is co-located with the page. NF-LD (news-fetch) followed same served-read-route precedent.
-- LESSON (fleet): sign-off discipline = VERIFY files on disk (ls + git status + grep route count) + `git show --stat <commit>` zero-foreign BEFORE trusting upstream APPROVED. Held this cycle.
-- commit-mutex enum defect persists: dev agents can't acquire 'commit-mutex' kind → claim under 'sprint-task'. Main terminal commits in-tree PO docs.
-- Concurrent (other crons): rag-service REOPENED 10/12 (P3-A); news-fetch NF-LD served-route; kinh-dich KD-QREF CLOSED.
+- NF-LD: CLOSED SIGNED OFF. Pilot frozen 12/12. OPS needs `docker compose up -d --build mcp-server` for /api/news-fetch/live to go live (running process predates 5a91e12f).
+- PATTERN (recurring, now 2x): new served read-route on a Docker service = 404 until container reloads the image. PI-INSPECT (pdf-extractor) + NF-LD (mcp-server) both hit it. Sign-off can proceed (code correct + tested); surface ops redeploy, never block.
+- LESSON (held this cycle): verify files on disk (ls + grep route + git show --stat zero-foreign) BEFORE trusting upstream APPROVED. Live-smoke the actual route too — caught the 404 deploy gap QA's in-memory tests can't see.
+- commit-mutex enum defect persists: claim under 'sprint-task' kind; main terminal commits in-tree PO docs; never rewrite history under fleet race.
+- Concurrent crons: stock-price Phase-0 backlog READY; TA Phase-2 in flight; rag-service P3 active.

@@ -432,8 +432,38 @@ Commit: `5a91e12f` | AC pass: 11/11 | Tests: 9/9 pass | tsc: exit 0
 
 **Signal:** `docs/signals/qa-news-fetch-livedata-20260524T200000Z.json`
 
-## NF-LD-EXIT — PO sign-off (BLOCKED on NF-LD-3)
-PO validates deliverables against the product shape + Security Clause + anti-regression rules, then signs off.
+## NF-LD-EXIT — PO sign-off — SIGNED OFF / CHAIN CLOSED 2026-05-24T17:58Z
+
+**Verdict: SIGNED OFF. NF-LD chain CLOSED.** PO validated deliverables against the product shape + Security Clause + anti-regression rules via an INDEPENDENT disk/git spot-check (not QA word alone), per held sign-off discipline.
+
+### PO independent verification (disk + git, pre-trust)
+
+**Commit trail (all on main, all zero-foreign-file):**
+- `5a91e12f` NF-LD-2a (dev-mcp-server): 3 files, ALL `apps/mcp-server/` — `newsFetchLiveHandler.ts` (132L) + `NF-LD-2-news-fetch-live.test.ts` (286L) + `server.ts` (+7L wiring). 425 insertions, 0 deletions.
+- `45fd7f74` NF-LD-2b (developer): 2 files, BOTH `apps/news-fetch/dashboard/` — `index.html` (+217, `panel-live-data` at line 192) + `dash-check.mjs` (assertions). `data.js` NOT in this commit.
+- `59bd79f7` QA: 3 own files (qa notebook + this handoff + signal). Zero foreign.
+
+**Exit gates — independently re-verified (not trusted on QA word):**
+| Gate | PO check (disk/git) | Result |
+|---|---|---|
+| Endpoint SELECT-only | `grep -nwiE 'INSERT\|UPDATE\|DELETE\|DROP\|ALTER'` on handler → 0 real write verbs (earlier hits were `created_at` column substrings + doc comments) | PASS |
+| No creds in handler | `grep VPS_PUSH_API_KEY\|x-api-key\|new Database\|DB_PATH\|process.env` handler → 0 | PASS |
+| No creds in dashboard | `grep VPS_PUSH_API_KEY\|x-api-key\|Authorization\|Bearer` index.html → 0 | PASS |
+| Sandbox `data.js` untouched | last commit on `data.js` = `cd8d0146` (P2-NF-I, pre-NF-LD); NOT in `5a91e12f`/`45fd7f74` | PASS |
+| Pilot NOT flipped | `pilot-status-news-fetch.json`: `goalsEarned=12`, `verdict=scale`, `status=DONE` — not touched by either NF-LD commit | PASS (12/12 frozen) |
+| Sandbox honest-green | QA dash-check PASS: 4 panels (sandbox=3 + live=1), 6 cards, PASS:6/FAIL:0, 0 console/page errors, 0 external net | PASS (no regression) |
+| Endpoint tests | QA: `bun test NF-LD-2` 9/9 PASS; full suite 0 NF-LD regressions; `tsc` exit 0 | PASS |
+
+**Live smoke (PO, port 3000):** `mcp-server /health` = 200, but `GET /api/news-fetch/live` returns **404 on the RUNNING process** — the route is correct in source (`5a91e12f` on main, verified on disk) but the running mcp-server container/process **predates the commit**, so the new route is not yet loaded. This is a deployment-currency gap (same pattern as PI-INSPECT), NOT a code defect: tests pass against in-memory DB, code is correct, Security Clause intact. **Resolution = ops redeploy** (`docker compose up -d --build mcp-server`), NOT a code change. Does NOT block sign-off.
+
+### Sign-off decision
+All product-shape ACs met, Security Clause intact (read-only SELECT, zero creds client+server), pilot 12/12 untouched, sandbox honest-green not regressed. **APPROVED.** Tasks NF-LD-1/2a/2b/3 + NF-LD-EXIT → DONE. Chain CLOSED.
+
+### Deploy note (surfaced to user via main terminal)
+The live-data panel goes live the moment the running mcp-server reloads the new code. If the running container predates `5a91e12f`, ops must `docker compose up -d --build mcp-server` (dispatch ops — never ask the user). Until then the dashboard live panel will honestly show its EMPTY/ERROR state (never fake rows) — by design.
+
+### Telegram (fail-loud, honest)
+WORK-channel `send_telegram` MCP tool is NOT in this PO agent's tool surface (only Read/Edit/Write/Bash/semble) and no CLI sender exists. Per fail-loud I did NOT fabricate a sent message — the WORK summary text is handed to the main terminal in the RETURN for relay via the gateway.
 
 ---
 
