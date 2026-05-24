@@ -1,0 +1,70 @@
+{
+  "from": "po",
+  "to": "fleet",
+  "type": "pilot-terminal-close",
+  "pilot": "pdf-extractor",
+  "createdAt": "2026-05-24T11:44:03Z",
+  "signal": "po-pdf-extractor-pilot-DONE",
+
+  "headline": "pdf-extractor SCALE pilot TERMINAL CLOSE — 12/12 all YES, decisionMatrix verdict=scale, status=DONE. Atomic close in single SSOT commit.",
+
+  "status": "DONE",
+  "goalsEarned": 12,
+  "verdict": "scale",
+
+  "goals_all_yes": {
+    "G1": "YES — 6 pure primitives × ≥3 scenarios = 18 real scenarios (459b6912/a1a7224a/74d84022/865493a1/b4765faa/561e2df1; QA phase1 + P2-A gate)",
+    "G2": "YES — financial-reports module composes all 6 via ports, cross-import grep 0 (04b82fb4)",
+    "G3": "YES — comp root ≤80 LOC (20 logical), OpenAPI present, domain-op grep 0 (249cbe06)",
+    "G4": "YES — import-linter Fence-A/B + py-lint CI; deliberate-violation exit 1 'Fence-A BROKEN' reverted (8d2b7ee9/c6f4615b; qa-pdf-extractor-P2-A-G6-G8)",
+    "G5": "YES — G5a d339303f + G5c ba1dcc82 + G5b 1954c consolidation (2a5cc2a7/9c22c915/09e2cd70/70e75cbd/0ae87b9d/372fbc91): service IS extraction owner (pdf.ts service-first inversion), in-process OCR deprecated, all 4 callers route via service. QA gate qa-bctc-1954c-g5b-gate PASS; architect clearance 82aec082 APPROVED",
+    "G6": "YES — dashboard 6 primitive cards + module + service, file:// zero-net, honest NOT-RUN (1356dcce; qa-pdf-extractor-P2-A-G6-G8)",
+    "G7": "YES — canonical clean audit env -i isolated runner exit 0 + forbidden-grep EMPTY (QA phase1 + P2-E1/E2; PO terminal re-run)",
+    "G8": "YES — 6 card-level RED demonstrable (1 broken primitive + 5 known-bad), reverted honest-green (a39d8a53)",
+    "G9": "YES — Playwright Path B trust contract PASS (3 panels, 6 cards, honest_red_proven, console_errors=0, external_network_calls=0) (3e7f476c; qa-pdf-extractor-P2-G-g9)",
+    "G10": "YES — AI blind fix in 1 cycle vs baseline 1.5 (1a678571)",
+    "G11": "YES — regression alarm 2 trials, coupled module RED + single-edit fix, Outcome-(a)×2 (qa-pdf-extractor-P2-K-g11)",
+    "G12": "YES — DoD gate baked e7541786; 3-task streak B1 b4765faa → C ce03ab35 → E1 d449879c"
+  },
+
+  "decisionMatrix": {
+    "speed": "YES",
+    "speed_application": "G10=YES (1 cycle ≤ max 2, vs baseline 1.5) AND G11=YES (2-trial coupling Outcome-(a)×2) → Speed=YES",
+    "trust": "YES",
+    "trust_application": "G9=YES at PASS grade (NOT PARTIAL) AND G8=YES (6 card-level RED) → Trust=YES",
+    "scale": "YES",
+    "scale_application": "all 12 goals YES AND sprintCount=2 ≤ 6 → Scale=YES",
+    "verdict": "scale",
+    "verdict_derivation": "3×YES → scale (mechanical, no PO discretion)",
+    "populatedBy": "po (terminal atomic close — no pre-fill before 12/12 per Charter §4.5)"
+  },
+
+  "freeze_lift": {
+    "gate": "phase2.bctc_freeze_gate",
+    "lift_status": "LIFTED",
+    "liftedAt": "2026-05-24T11:44:03Z",
+    "preconditions_met": {
+      "architect_1954c_clearance": "docs/signals/architect-bctc-consolidation-1954c-clearance-20260524T113832Z.json + docs/signals/architect-pdf-extractor-g5b-clearance-20260524T113832Z.json (commit 82aec082) — code RCA STRUCTURALLY_RESOLVED, G5b intent_met=true",
+      "po_explicit_freeze_lift": "this signal + pilot-status-pdf-extractor.json phase2.bctc_freeze_gate.lift_status=LIFTED"
+    },
+    "qa_gate": "docs/signals/qa-bctc-1954c-g5b-gate-20260524T113516Z.json PASS (g5b_ownership=YES; 70/0 consolidation-path tests; 0 new regressions; tsc 0; DDD PASS; security PASS; offline integration 3/3)",
+    "residual_infra_note": "BCTC VPS staleness (B-08/1972) remains OPEN as INFRA observation under ## ops normal tracking — NOT a code defect, NOT a code-freeze trigger."
+  },
+
+  "prior_no_ruling_superseded": "po 2026-05-24T10:14:08Z held G5=PARTIAL (11/12) because at that time 1954c had not landed and the in-process OCR path was primary (service was a low-confidence fallback). The recorded reopen_condition ('after 1954b+1954c land + 1953-G-FAIL resolved → architect re-runs G5b clearance → genuine rewire OR true MOOT → G5 may → YES') is NOW MET. 1954c landed (architect+QA verified), pdf.ts inverted to service-first, in-process OCR deprecated, all 4 callers route via service. G5 reopened YES by proper clearance, never by fiat.",
+
+  "final_done_conditions": {
+    "a_sandbox_env_audit": "EMPTY — `env -i PYTHONPATH=apps/pdf-extractor python3 apps/pdf-extractor/sandbox/runner.py --tier=primitive --scenario=apps/pdf-extractor/scenarios/primitives/validate_financial_figures/happy.json` → exit 0 (pass=true); forbidden-grep (DB_|API_KEY|SECRET|TOKEN|PASSWORD|VPS_|VINAHOST|PDF_EXTRACTOR_DB|pdf_extractor.db|OCR) on isolated process env → EMPTY (only PYTHONPATH/PATH + macOS Xcode toolchain vars, zero credentials)",
+    "b_dashboard_honest_green": "CONFIRMED — 6 primitive traces pass=True + module financial_reports pass=True + service pdf_extractor pass=None (honest NOT-RUN); index.html references NOT-RUN; zero external network calls"
+  },
+
+  "dashboard_row_closed": "1953-G-FAIL CLOSED in docs/signals/DASHBOARD.md ## po (code-freeze lifted; recurring-bug RCA resolved by architect)",
+
+  "closure_checklist": "docs/architecture-briefs/2026-05-22-refactor/closure-checklist-audit.md is the TA-pilot prior artifact; its recommendations (charter-valid status ACTIVE→DONE; decisionMatrix PO-authored mechanically, atomic at 12/12) are HONORED by this close. No new pdf-extractor checklist edit required.",
+
+  "commit_discipline": "single atomic SSOT commit via commit-mutex skill; EXPLICIT-FILE staging; no --force/--no-verify; on main; no push.",
+
+  "atomicCommit": "PENDING-SHA-RECORDED-IN-RETURN",
+  "ssotFile": "docs/data/pilot-status-pdf-extractor.json",
+  "closureDecisionDoc": "docs/po-decisions/2026-05-24-pdf-extractor-g5b-freeze-ruling.md §TERMINAL CLOSE"
+}
