@@ -1,0 +1,16 @@
+{
+  "module": "financial_reports",
+  "description": "Multi-primitive story: raw OCR strings → decimal_normalizer (P1-B2) → validate_financial_figures (P1-B1) → composite confidence. All values are synthetic fixtures.",
+  "primitives_exercised": ["decimal_normalizer", "validate_financial_figures"],
+  "inputs": {
+    "raw_assets": "10000.0",
+    "raw_equity": "4000.0",
+    "raw_liabilities": "6000.0",
+    "raw_margin": "0.15",
+    "raw_revenue": "5000.0",
+    "unit_hint": "billion_vnd"
+  },
+  "expected": {
+    "confidence": 1.0
+  }
+}
