@@ -129,6 +129,72 @@ function renderCategoryChip(category: string): string {
 
 **Scope.** Convention applies to all services: technical-analysis, macro-indicators, kinh-dich, stock-price, alert-engine, and any future service added to the fleet.
 
+### 2e. AI-runnable dash-check.mjs
+
+**Adopted:** 2026-05-24. Fleet-wide SSOT for the AI-inspector convention.
+
+#### Purpose
+
+Each dashboard zone ships `apps/<service>/dashboard/dash-check.mjs` — a Node ESM script an AI (or CI) runs to read the LIVE rendered dashboard DOM and emit a machine-parseable health report. It COMPLEMENTS `verify-render.mjs` (the strict full-green build gate); `dash-check.mjs` is the general-purpose AI inspector: it reports actual state and is tolerant of pending/stub results via WARN rather than hard-failing.
+
+| Script | Role | Failure model |
+|---|---|---|
+| `verify-render.mjs` | Strict build gate — all green required | Any non-green = non-zero exit |
+| `dash-check.mjs` | AI inspector — reports actual state | WARN on pending/stub (exit 0), FAIL on errors or red dots |
+
+#### Placement
+
+One file per zone: `apps/<service>/dashboard/dash-check.mjs`.
+
+Invocation from the service root:
+
+```
+node dashboard/dash-check.mjs
+```
+
+#### Hard Rules
+
+1. **Self-derived paths.** All paths derived from `import.meta.url` — no hardcoded absolute paths anywhere in the script.
+2. **Playwright resolver.** Resolve `playwright-core` from the local service `node_modules` first; fall back to `apps/frontend/node_modules`. Use CommonJS `require` via `createRequire(import.meta.url)` because playwright-core is a CommonJS package.
+3. **File-protocol load.** Load `index.html` via `file://` headless Chromium — no HTTP server required, no server started.
+4. **Zero credentials.** Security contract: no DB credentials, no API keys, no environment secrets are read or required. The `file://` + headless approach works entirely without a server or credentials in the sandbox environment.
+
+#### Output Contract
+
+Emit exactly one line to stdout in this format:
+
+```
+DASH-CHECK-RESULT: {"service":"...","dotsGreen":N,"dotsRed":N,"dotsPending":N,"jsErrors":N,"pageErrors":N,"categoryChips":{"Valid Input":N,"Edge Case":N,"Bad Input → Error":N},"badLabels":[],"verdict":"PASS|WARN|FAIL"}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `service` | string | Service name (e.g. `technical-analysis`) |
+| `dotsGreen` | number | Count of green status dots |
+| `dotsRed` | number | Count of red status dots |
+| `dotsPending` | number | Count of pending/NOT-RUN/stub dots |
+| `jsErrors` | number | JS console error count |
+| `pageErrors` | number | Page crash/load error count |
+| `categoryChips` | object | Count per display label (the three plain-meaning labels from §2d) |
+| `badLabels` | string[] | Any chip labels found that are NOT in the approved set |
+| `verdict` | string | `PASS`, `WARN`, or `FAIL` |
+
+Exit 0 on `PASS` or `WARN`. Non-zero exit on `FAIL`.
+
+#### Verdict Logic (data-driven — no hardcoded totals)
+
+| Condition | Verdict |
+|---|---|
+| Any red dot, OR any JS error, OR any page error, OR any entry in `badLabels` | `FAIL` |
+| Any pending/NOT-RUN/stub dot with zero red dots and zero errors | `WARN` |
+| All dots green, zero errors, zero bad labels | `PASS` |
+
+**Bad label definition.** A label is "bad" if it is a bare legacy raw value (`golden`, `edge`, `failure`) or any chip text outside the three approved display labels (`Valid Input`, `Edge Case`, `Bad Input → Error`). This enforces §2d fleet-wide at inspection time.
+
+#### DRY Stance
+
+Where `verify-render.mjs` already exists in a zone (currently: `technical-analysis`, `kinh-dich`), `dash-check.mjs` reuses the same in-zone playwright resolver pattern. Per-zone copies are accepted — zone enforcement forbids cross-zone shared code, so duplication of the resolver across zones is intentional and correct.
+
 ---
 
 ## 3. In-Memory Port Adapters
