@@ -157,6 +157,35 @@
 
 ---
 
+## Follow-On Enhancement (news-fetch live-data inspection view) — OPEN 2026-05-24
+
+**Status:** OPEN 2026-05-24T17:02Z (PO self-initiated from user request, signal `po-news-fetch-livedata-20260524T170200Z.json`). User (config admin, France/GMT+7) wants to eyeball the actual fetched article rows per source pulled from the DB, on the news-fetch dashboard, to judge whether the live pipeline output is correct. **NOT a pilot reopen** — the SCALE pilot stays DONE (12/12, verdict=scale). This is a small additive feature behind the closed pilot. Owner = generic `developer`. Handoff chain: **architect → developer → qa** (NO `pm`/`ba` agent in this harness — PO absorbs close-out: TASKS.md, handoffs, exit gate).
+
+**CRITICAL ARCHITECTURE FINDING (binding, drives the whole design):** `apps/news-fetch/` is a STATELESS scraper. It has NO database, NO repository in `src/domain/repositories.ts` (only scraper ports). Verified end-to-end: news-fetch (port 5008) scrapes → returns JSON over HTTP → `newsHeadlinesRefreshJob.ts` (in mcp-server) POSTs to `/api/push-news` (auth: `x-api-key` = `VPS_PUSH_API_KEY`) → `pushNewsHandler.ts` runs `pollNews` → rows persist in **mcp-server's `rag_analyses` table** (`apps/mcp-server/src/infrastructure/db/schema-news.ts`). Therefore the live-DB view **CANNOT** be served by news-fetch (would require giving the stateless scraper DB creds it has never had — a design regression). It MUST be a read-only endpoint on **mcp-server (port 3000 / `/api/*`)**, which legitimately owns `rag_analyses` and has DB access. The news-fetch dashboard's new live section fetches from that mcp-server endpoint over http.
+
+**SECURITY CLAUSE (binding, carried from pilot):** The sandbox process AND the existing sandbox dashboard panels (Primitives / Module / Microservice, fed by `data.js` under `file://`) MUST stay zero-DB-creds / zero-API-keys and MUST NOT be touched. G6/G8/G9 honest-green sandbox panel is frozen. The live view is a SEPARATE, clearly-labelled dashboard section that talks http to mcp-server only — it never runs in the credential-free sandbox harness and never reads a DB directly. The `data.js` / `file://` sidecar mechanism is for the sandbox panels ONLY; the live section is http-fetch (works only when served, degrades honestly to "live view unavailable — open via served dashboard" under `file://`, never fakes data).
+
+**PRODUCT SHAPE (PO decision):**
+- **Source of truth:** mcp-server `rag_analyses` rows where `source_type`/`source` ∈ {reuters, bloomberg} (the two news-fetch sources). Per-source grouping; user can eyeball each source independently.
+- **Fields per row (from `rag_analyses`):** source (reuters/bloomberg), headline (`source_title`), url (`source_url`), published-at (`published_at`, parsed/ISO), relevance/sentiment verdict (`sentiment` + `impact_direction`/`impact_score` if present), fetched/ingested-at (`created_at`). Dedup-key is computed in news-fetch and NOT persisted in `rag_analyses` — architect decides whether to surface a derived dedup hint or omit (do not fabricate a stored column).
+- **Row count:** last **N=20** rows per source (most-recent-first by `created_at`). Cheap query, enough to eyeball correctness.
+- **Live vs cached:** **live query** on each section load (read-only `SELECT … ORDER BY created_at DESC LIMIT 20`). No caching layer — the whole point is "see live data". Endpoint is read-only (SELECT only; never writes).
+
+| Task ID | Title | Priority | Type | Owner | Handoff | Status | Blocked by |
+|---------|-------|----------|------|-------|---------|--------|-----------|
+| NF-LD-1 | Architect: Security-Clause-safe design of read-only live endpoint on **mcp-server** (`GET /api/news-fetch/live?source=&limit=`, SELECT-only on `rag_analyses`, no new write path) + the SEPARATED news-fetch dashboard live section (http-fetch, honest degrade under `file://`, sandbox panels untouched). Confirm exact `rag_analyses` columns → display fields mapping; decide dedup-key surface or omit. Output: design notes appended to handoff + per-task ACs for NF-LD-2/NF-LD-3. | HIGH | TASK | architect | docs/handoffs/TASK_NF-LD.md | READY | — |
+| NF-LD-2 | Developer: implement per architect design — (a) mcp-server read-only `/api/news-fetch/live` route (SELECT-only, source filter, LIMIT 20, no creds in response beyond data) + (b) news-fetch `dashboard/index.html` NEW live section (separate panel, http-fetch the endpoint, render rows table per source, honest "unavailable under file://" degrade). Sandbox panels + `data.js` path UNTOUCHED. Smoke: `bun test` + `bun tsc --noEmit` green; sandbox still 16/16 green (no regression). | HIGH | TASK | developer | docs/handoffs/TASK_NF-LD.md | BLOCKED | NF-LD-1 |
+| NF-LD-3 | QA: verify — (1) endpoint is SELECT-only / read-only (no INSERT/UPDATE/DELETE; grep + behavior), (2) Security Clause intact: sandbox env audit still empty-of-credentials, sandbox panels still render honest-green via `data.js` under `file://` (G6/G8/G9 NOT regressed), (3) live section degrades honestly under `file://` (no fake rows), renders real rows when served, (4) full smoke green. Emit `qa-news-fetch-livedata-<UTC>.json`. | HIGH | TASK | qa | docs/handoffs/TASK_NF-LD.md | BLOCKED | NF-LD-2 |
+| NF-LD-EXIT | PO sign-off against acceptance criteria | CRITICAL | GATE | po | — | BLOCKED | NF-LD-1..3 |
+
+**Notes:**
+- **Scope fence:** touches `apps/news-fetch/dashboard/` (new live section only) + `apps/mcp-server/` (one new read-only route — precedent: G5 already established exactly-one mcp-server task is allowed for the HTTP boundary). Do NOT touch the sandbox runner, `data.js`, or the existing 3 sandbox panels. Do NOT absorb cowork-agent (news-scout/market-watcher) work.
+- **Constraints binding Day 0 (verbatim):** L84 explicit-file staging (`git add <path>` per file; NEVER `-A` or `.`); no `--force`/`--no-verify`/`--no-gpg-sign`; local-only — do NOT git push source/CI (user owns push); all work on `main` (NO branches); ESM `.js` import suffixes; `Bun.env` not `process.env`; never ask the user — PO decides and continues.
+- **Anti-regression:** the SCALE pilot is DONE and stays DONE. This enhancement must NOT flip/alter any pilot goal or `decisionMatrix` in `pilot-status-news-fetch.json` (that file is frozen at 12/12). The live view is product surface, not a pilot goal.
+- **Honest-degrade rule (G8 spirit carried forward):** the live section must NEVER fabricate rows. Under `file://` (no server) it shows an explicit "live view requires the served dashboard" message; when served and the endpoint errors it shows the error, not stale/fake data.
+
+---
+
 ## Phase 1 Backlog (pdf-extractor SCALE Pilot) — OPEN 2026-05-24
 
 **Status:** OPEN 2026-05-24T09:30Z (PO Phase-0 exit gate close; pilot-status phase=1 ACTIVE). Plan: `docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-1-task-plan-python.md` (10 tasks, est 9.3h). **WIP=1 strictly sequential** (pilot-status `phase1.wip_limit`). Owner = `dev-pdf-extractor`, zone `apps/pdf-extractor/` ONLY. Language Python (locked Day 0). G12 DoD gate effective for every streak task. BCTC freeze: all 10 tasks CLEAR.

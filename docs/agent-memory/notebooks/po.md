@@ -1,50 +1,33 @@
 # PO Notebook
 
-**Cycle:** pdf-extractor SCALE — TERMINAL CLOSE 12/12.
-**Last update:** 2026-05-24T11:44Z
-**Status:** DONE. 12/12 all YES. goalsEarned=12. decisionMatrix scale/trust/scale=YES verdict=scale. Freeze LIFTED. Atomic SSOT commit 3e840688 (+ SHA-record b836776e). next_actor=fleet (pilot terminal — no further dispatch).
+**Cycle:** news-fetch live-data inspection view — follow-on enhancement DISPATCHED.
+**Last update:** 2026-05-24T17:05:33Z
+**Status:** Spec'd + routed architect→developer→qa→PO. NOT a pilot reopen (pilot stays DONE 12/12, frozen).
 
 ---
 
-## 2026-05-24T11:44Z — pdf-extractor TERMINAL CLOSE → 12/12, verdict=scale
+## 2026-05-24T17:05Z — news-fetch live-data view: scoped + dispatched to architect
 
-### Verdict: DONE. All 12 goals YES. decisionMatrix 3xYES → scale. Pilot closed.
+### User want: show actual fetched article rows per source from DB on the news-fetch dashboard ("see live data, is result correct or not").
 
-### What flipped the prior NO (10:14Z, 11/12) → YES
-- Prior NO was CORRECT at that time: 1954c had not landed, pdf.ts in-process OCR was PRIMARY,
-  pdf-extractor port 5001 was only a low-conf fallback. The recorded reopen_condition said:
-  "after 1954c lands + QA-APPROVED + 1953-G-FAIL resolved → architect re-runs G5b clearance →
-  genuine rewire OR true MOOT → G5 may → YES."
-- That condition is NOW MET. 1954c landed (6 commits 2a5cc2a7/9c22c915/09e2cd70/70e75cbd/
-  0ae87b9d/372fbc91). pdf.ts INVERTED to service-first (msClient.extract FIRST at Step 1;
-  pdf-parse Step 2 fallback only on null). pdfOcrWorker/ocrPdfBuffer @deprecated, 0 live callers.
-  All 4 callers route via service. Architect (RCA owner) cleared code RCA STRUCTURALLY_RESOLVED
-  (82aec082). QA gate qa-bctc-1954c-g5b-gate PASS (g5b_ownership=YES, 70/0 path tests, 0 regr).
-- Re-ran the SAME confirming check I ran at 10:14Z: the bypass handler is GONE. Service IS owner.
-  Freeze lifted by CLEARANCE, never by fiat. Lesson L8 baked into SSOT.
+### Step 0 channel audit: MCP gateway NOT reachable from this spawned agent session (list_servers/search_tools/call_tool all "No such tool"). Per fail-loud anti-hallucination + my pdf-extractor precedent, did NOT fabricate channel content. Substituted with local signal-bus + git review: no open news-fetch bugs (only benign context-bloat janitor signals + closed pilot signals). Proceeded.
 
-### Final done-conditions (both PASS, pasted in RETURN)
-- (a) env -i isolated runner exit 0 + forbidden-grep EMPTY (only PYTHONPATH/PATH/Xcode vars).
-- (b) dashboard 6 primitive + module traces pass=True; service pass=None (honest NOT-RUN); zero net.
+### KEY FINDING that shaped the whole spec:
+- news-fetch (port 5008) is STATELESS — NO DB, src/domain/repositories.ts has scraper ports ONLY.
+- Persisted rows live in mcp-server `rag_analyses` (schema-news.ts). Path verified end-to-end:
+  news-fetch -> newsHeadlinesRefreshJob -> /api/push-news (x-api-key) -> pushNewsHandler -> pollNews INSERT OR IGNORE INTO rag_analyses.
+- So the live view CANNOT be on news-fetch (would need to give the stateless scraper DB creds = design + Security-Clause regression). MUST be a read-only endpoint on mcp-server (port 3000 /api/*). Precedent: G5 allowed exactly ONE mcp-server task for the HTTP boundary.
 
-### Evidence per goal locked into SSOT goals[].evidence (G1..G12 all YES).
-### decisionMatrix populated mechanically, atomic, no pre-fill: speed YES (G10+G11),
-    trust YES (G9 PASS + G8), scale YES (12/12 + sprintCount=2 ≤ 6). outcome=scale.
+### Product decisions (PO): sources reuters+bloomberg; fields source/headline(source_title)/url(source_url)/published_at/verdict(sentiment+impact)/fetched_at(created_at); dedup-key NOT stored -> architect surfaces derived OR omits, no fabrication; N=20 per source ORDER BY created_at DESC; LIVE SELECT-only query each load, no cache, read-only.
 
-### Outputs (commit 3e840688 atomic + b836776e SHA-record, on main, no push)
-- docs/data/pilot-status-pdf-extractor.json — status DONE, 12/12, freeze LIFTED, matrix=scale.
-- docs/signals/po-pdf-extractor-pilot-DONE-20260524T114403Z.json — closure signal.
-- docs/signals/DASHBOARD.md — 1953-G-FAIL row CLOSED (code-freeze lifted; RCA resolved).
-- closure-checklist-audit.md = TA prior artifact; its rules HONORED, no pdf-extractor edit needed.
+### Security Clause carried verbatim: sandbox process + 3 existing sandbox panels (data.js, file:// zero-CORS) stay zero-creds + UNTOUCHED (G6/G8/G9 frozen). Live section = separate panel, http-fetch mcp-server only, honest-degrade under file:// (never fake rows).
 
-### Commit-mutex note: live MCP task_claim not reachable from this bash session (stale local
-    coordination.db has no tables; lock substrate is in the MCP container). Verified NO concurrent
-    committer (no git proc, no index.lock, clean index, HEAD stable) → ran the mutex critical
-    section manually (explicit-file staging, foreign-path verify clean, no --force/--no-verify,
-    post-commit verify empty). Serialization guarantee held because no contender existed.
+### Outputs (uncommitted at write time -> commit this cycle, no push):
+- docs/TASKS.md — new "Follow-On Enhancement" block: NF-LD-1 architect READY, NF-LD-2 dev BLOCKED, NF-LD-3 qa BLOCKED, NF-LD-EXIT po gate.
+- docs/handoffs/TASK_NF-LD.md — full findings + product shape + per-task ACs + constraints.
+- docs/signals/po-news-fetch-livedata-20260524T170518Z.json — dispatch to architect.
 
 ## Carry-over
-- pdf-extractor pilot is DONE (2nd SCALE-tier service, Python). Factory pattern proven for OCR/PDF.
-- Residual: BCTC VPS staleness B-08/1972 stays OPEN in ## ops as INFRA-only (NOT a code freeze).
-- If next cron probes commit-mutex MCP and it IS reachable, prefer the skill path; today's manual
-  critical-section was a verified-safe exception for a terminal close, not a new norm.
+- NEXT: main terminal spawns architect to run NF-LD-1 (design endpoint + live section). Then developer NF-LD-2, qa NF-LD-3, PO NF-LD-EXIT.
+- HARD: never touch sandbox runner/data.js/3 sandbox panels; never touch pilot-status-news-fetch.json (frozen 12/12); endpoint SELECT-only on mcp-server.
+- pdf-extractor pilot DONE (prior cycle). BCTC VPS staleness B-08/1972 stays OPEN as INFRA-only (not a code freeze).
