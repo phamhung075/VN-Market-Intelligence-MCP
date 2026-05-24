@@ -1,5 +1,99 @@
 # QA — Notebook
 
+## cycle-105 · 2026-05-24 · rag-service P3-E (G6/G8/G9 re-verify) — AUTOMATED PROXY PASS
+
+**Task:** P3-E — Re-verify G6+G8+G9 with service tier populated | **Verdict:** G6 PASS, G8 PASS, G9 AUTOMATED-PROXY PASS (PENDING USER SIGN-OFF)
+
+```
+date: 2026-05-24
+outcome: AUTOMATED PROXY PASS — all 3 goals re-verified with service tier GREEN
+type: pilot-task-qa (rag-service P3-E re-verify G6+G8+G9)
+ssot: docs/data/pilot-status-rag-service.json (P3-E status → DONE, goal flips = PO-ONLY)
+ssot_not_mutated: true (PO-only §4.5 — no G-goal flips, no decisionMatrix, goalsEarned unchanged)
+goal_flips: NONE
+commit_qa: 9d9e99c8 (updated trust-contract.spec.mjs + result.json + screenshot)
+
+sandbox_primitive: 16/16 EXIT:0
+sandbox_module: 2/2 EXIT:0
+sandbox_service: 3/3 EXIT:0
+dash_check: 30/30 PASS EXIT:0
+env_audit: EMPTY (process environment — no forbidden keys)
+negative_control: LANCEDB_PATH=/tmp/x -> EXIT:1 (gate fires)
+determinism_service: PASS — byte-identical across 2 runs (excluding elapsed_ms)
+main_py_lines: 68 (<=80 G3 invariant preserved)
+corruption_revert: CONFIRMED (search_golden.json restored, git diff EMPTY)
+playwright: PASS — all 7 TCs pass, console_errors=0, network_calls=0
+
+G6_detail_view_proof:
+  primitive_panel: toggle+detail present on all 5 primitive cards
+  module_panel: toggle+detail present on retrieval card
+  microservice_panel: toggle clicked -> trace-detail visible (TC-5b CONFIRMED)
+
+G8_tier3_honest_red:
+  corruption: search_golden expected_response_subset.total 1->999
+  sandbox_result: 2/3 PASS 1 FAIL EXIT:1 (search_golden RED)
+  sandbox_exit: 1
+  revert_result: 3/3 PASS EXIT:0
+  git_diff_after_revert: EMPTY
+  spot_check_primitive: known_bad_wrong_score exit 1 passed=false (still works)
+  known_bad_excluded: 16/16 --scenario=all excludes known_bad_ (no false greens)
+
+G9_playwright_proxy:
+  TC-1: 3 panels PASS
+  TC-2: 5 primitive cards all GREEN PASS
+  TC-3: retrieval module GREEN PASS
+  TC-4: 3 service cards all GREEN (NOT NOT-RUN — defect assertion REPLACED) PASS
+  TC-5b: detail-view toggle click on service card -> trace-detail visible PASS
+  TC-5a: primitive honest-red via page.route() (similarity-scorer FAIL after patch) PASS
+  TC-5b-svc: service honest-red via page.route() (/search golden FAIL after patch) PASS
+  TC-6: console_errors=0 PASS
+  TC-7: network_calls=0 PASS
+  verdict: PASS
+  CRITICAL_NOTE: FINAL G9 YES PENDING USER VERBAL SIGN-OFF (pilot-charter.md L192-194)
+
+fence_false_green_compliance: CONFIRMED — G8 corrupt+revert proves service tier gate is real
+```
+
+| Check | Verdict |
+|-------|---------|
+| sandbox primitive 16/16 EXIT:0 | PASS |
+| sandbox module 2/2 EXIT:0 | PASS |
+| sandbox service 3/3 EXIT:0 | PASS |
+| dash-check 30/30 PASS | PASS |
+| env audit EMPTY | PASS |
+| negative control LANCEDB_PATH EXIT:1 | PASS |
+| determinism service tier | PASS |
+| main.py 68L (<=80) | PASS |
+| G6: primitive detail-view toggle | PASS |
+| G6: module detail-view toggle | PASS |
+| G6: microservice detail-view toggle (click confirmed) | PASS |
+| G8: service golden corrupt -> EXIT:1 RED | PASS |
+| G8: service golden revert -> EXIT:0 GREEN | PASS |
+| G8: git diff EMPTY after revert | PASS |
+| G8: known_bad_ spot check exit 1 | PASS |
+| G8: --scenario=all excludes known_bad_ | PASS |
+| G9: TC-1 3 panels | PASS |
+| G9: TC-2 5 primitive GREEN | PASS |
+| G9: TC-3 module GREEN | PASS |
+| G9: TC-4 3 service cards GREEN (not NOT-RUN) | PASS |
+| G9: TC-5b detail-view click confirmed | PASS |
+| G9: TC-5a primitive honest-red | PASS |
+| G9: TC-5b-svc service honest-red | PASS |
+| G9: TC-6 console_errors=0 | PASS |
+| G9: TC-7 network_calls=0 | PASS |
+| Prior defect assertion (microservice_not_run=true) REMOVED | PASS |
+| search_golden.json NOT staged/committed | PASS |
+| SSOT not mutated | PASS |
+| Goal flips: NONE (PO-only §4.5) | PASS |
+
+**G6 verdict: PASS — all 3 panels have clickable detail view.**
+**G8 verdict: PASS — service tier tier-3 honest-red proven (corrupt->RED->revert->GREEN).**
+**G9 automated proxy: PASS — all 7 TCs pass, service panel honest-GREEN with 3 service cards.**
+**G9 FINAL: PENDING USER VERBAL SIGN-OFF (not auto-proxy — pilot-charter.md L192-194).**
+**Recommendation to PO: ready for 12/12 re-close once USER gives verbal G9 sign-off.**
+
+---
+
 ## cycle-104 · 2026-05-24 · pdf-extractor dashboard file:// false-green repair — PASS
 
 **Task:** P2-REOPEN — Dashboard file:// false-green fix (commit a9fdf056) + G9 harden | **Verdict:** PASS — APPROVED
