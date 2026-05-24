@@ -14,7 +14,7 @@
       - Zero external CDN, zero network calls, zero fetch()
       - Zero credentials, zero API keys, zero tokens
       - Self-contained file:// accessible
-      - All 8+ service rows present (ACTIVE | ARCHIVED-CLOSED | NOT-YET-ACTIVE)
+      - All 11 service rows present (ACTIVE | ARCHIVED-CLOSED | DASHBOARD LIVE | NOT-YET-ACTIVE)
   -->
   <style>
 /* SI-2 Fleet Dashboard Index — dev-stock-price exclusive (Decision 3) */
@@ -222,6 +222,12 @@ td {
   color: #6b7280;
 }
 
+.badge-dash-live {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
 /* Legend */
 .legend {
   max-width: 1100px;
@@ -279,7 +285,7 @@ footer {
 <header>
   <h1>VN Market Intelligence &mdash; Fleet Dashboard Index</h1>
   <p class="subtitle">
-    SI-2 Genesis &nbsp;&bull;&nbsp; One row per microservice in the fleet &nbsp;&bull;&nbsp; Status: ACTIVE | ARCHIVED-CLOSED | NOT-YET-ACTIVE
+    SI-2 Genesis &nbsp;&bull;&nbsp; One row per microservice in the fleet &nbsp;&bull;&nbsp; Status: ACTIVE | ARCHIVED-CLOSED | DASHBOARD LIVE (Phase-1 GO) | NOT-YET-ACTIVE
   </p>
   <p class="meta">
     Created by: dev-stock-price (P2-I &mdash; G6 finalization, Decision 3 exclusive) &nbsp;&bull;&nbsp;
@@ -295,7 +301,8 @@ footer {
     <div class="fleet-meta-chips">
       <span class="fleet-chip chip-active">1 ACTIVE</span>
       <span class="fleet-chip chip-archived">2 ARCHIVED-CLOSED</span>
-      <span class="fleet-chip chip-pending">8 NOT-YET-ACTIVE</span>
+      <span class="fleet-chip" style="background:#eff6ff;border-color:#93c5fd;color:#1d4ed8;border:1px solid #93c5fd;">1 DASHBOARD LIVE</span>
+      <span class="fleet-chip chip-pending">7 NOT-YET-ACTIVE</span>
       <span class="fleet-chip chip-ssot">SSOT: system-map.json</span>
     </div>
   </div>
@@ -362,9 +369,10 @@ footer {
       </tr>
 
       <!-- ================================================================ -->
-      <!-- NOT-YET-ACTIVE: kinh-dich-service                                -->
-      <!-- Pilot is ACTIVE (Phase 0) but has not reached G6 yet.            -->
-      <!-- Dashboard artifact exists on disk but G6 not yet earned.         -->
+      <!-- DASHBOARD LIVE: kinh-dich-service                                -->
+      <!-- Phase-1 GO (6/6 card groups, all 4 primitives, honest NOT-RUN    -->
+      <!-- cold-open). Dashboard verified working 2026-05-24 (commits        -->
+      <!-- 92ae7402/45eb34e8). G6 NOT yet earned (PO-only gate at 12/12).   -->
       <!-- Port facts: port 5005 / 5005 per system-map.json                 -->
       <!-- ================================================================ -->
       <tr>
@@ -372,10 +380,10 @@ footer {
         <td class="td-zone">apps/kinh-dich-service</td>
         <td class="td-port">5005&nbsp;/&nbsp;5005</td>
         <td class="td-dashboard">
-          <!-- G6 not yet earned — no link to dashboard until pilot reaches G6 -->
-          <span class="no-dashboard">pending / not yet built</span>
+          <!-- Dashboard exists and Phase-1 is GO — link active -->
+          <a href="../../apps/kinh-dich-service/dashboard/index.html">apps/kinh-dich-service/dashboard/index.html</a>
         </td>
-        <td><span class="status-badge badge-pending">NOT-YET-ACTIVE</span></td>
+        <td><span class="status-badge badge-dash-live">DASHBOARD LIVE (Phase-1 GO)</span></td>
       </tr>
 
       <!-- ================================================================ -->
@@ -491,6 +499,10 @@ footer {
     Pilot DONE + FROZEN — dashboard is read-only reference
   </span>
   <span class="legend-item">
+    <span class="status-badge badge-dash-live" style="font-size:0.65rem;padding:2px 7px;">DASHBOARD LIVE (Phase-1 GO)</span>
+    Dashboard verified working, Phase-1 complete — G6 not yet earned (PO-only gate)
+  </span>
+  <span class="legend-item">
     <span class="status-badge badge-pending" style="font-size:0.65rem;padding:2px 7px;">NOT-YET-ACTIVE</span>
     Service not yet at G6 — no dashboard link yet (honest: no fake greens)
   </span>
@@ -504,6 +516,7 @@ footer {
   <strong>Status semantics:</strong>
   ACTIVE = pilot has earned G6 (three-level dashboard with sandbox evidence) per pilot charter.
   ARCHIVED-CLOSED = pilot window DONE + FROZEN (all goals YES, decisionMatrix terminal).
+  DASHBOARD LIVE (Phase-1 GO) = dashboard exists and Phase-1 clean-pass confirmed; G6 not yet earned (PO-only gate at 12/12 terminal close).
   NOT-YET-ACTIVE = service has not yet started or completed its G6 dashboard milestone.
   <br>
   <strong>Ownership:</strong>
@@ -516,7 +529,7 @@ footer {
   SI-2 Fleet Dashboard Index &bull; VN Market Intelligence MCP &bull;
   Created: dev-stock-price P2-I (2026-05-24) &bull; Decision 3 exclusive &bull;
   11 microservices tracked (source: docs/data/system-map.json) &bull;
-  1 ACTIVE &bull; 2 ARCHIVED-CLOSED &bull; 8 NOT-YET-ACTIVE &bull;
+  1 ACTIVE &bull; 2 ARCHIVED-CLOSED &bull; 1 DASHBOARD LIVE (Phase-1 GO) &bull; 7 NOT-YET-ACTIVE &bull;
   No server required (file:// URL) &bull; Zero credentials &bull; Zero CDN &bull; Zero external fetch
 </footer>
 
