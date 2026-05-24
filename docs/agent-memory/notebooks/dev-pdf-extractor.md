@@ -4,6 +4,21 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-24 — P2-J3 DONE (G10 regression repair — low_confidence_gate threshold)
+
+**Fix commit:** `1a678571` | **Cycle count:** 1
+
+**Defect:** `_LOW_CONF_THRESHOLD` injected as `0.1` (canonical: `0.2`) at `primitive.py:40`.
+`confidence=0.15` → `0.15 < 0.1 → False` → returned `"normal"` instead of `"low_confidence"`.
+
+**Fix:** One-literal restore `0.1 → 0.2`. Diagnosed from sandbox failing scenario only (sealed spec NOT read).
+
+**Evidence:** 3/3 non-known_bad low_confidence_gate scenarios GREEN; 20/20 primitive tier non-known_bad GREEN; 114 pytest pass.
+
+**G10 measurement integrity:** PRESERVED. Next: P2-K1/K2 (G11 regression alarm).
+
+---
+
 ### 2026-05-24 — P2-A1 + P2-A2 DONE (import-linter G4 fence + CI job)
 
 **P2-A1 commit:** `8d2b7ee9` | **P2-A2 commit:** `c6f4615b`
