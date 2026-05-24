@@ -1153,3 +1153,137 @@ WORK-channel `send_telegram` is NOT in this PO agent's tool surface (only Read/E
 - the file:// degrade branch STAYS in the HTML (graceful fallback) — do NOT delete it
 - ZONE: architect rules single (`apps/mcp-server/` for B, `apps/news-fetch/` for A) or `multi` if the dashboard tweak + Docker change straddle two services. If `multi`, dev-mcp-server is the SOLE committer of any `apps/mcp-server/` file.
 - DONE only when ops PROVES (real http GET) the served URL returns the page AND the live endpoint is reachable from that origin AND the user sees sandbox panels + live rows with zero manual serve step.
+
+---
+
+# TASK NF-LD-5 — "Refresh / Load latest" button on the served news-fetch live panel (MVP)
+
+**Opened:** 2026-05-24T21:20Z by PO (self-initiated from explicit user feature request). **Type:** small follow-on to the CLOSED NF-LD-4 chain (served dashboard LIVE — PO verified this cycle: `http://localhost:3000/dashboards/news-fetch/` → 200 AND `GET /api/news-fetch/live?source=all&limit=5` → 200). NOT a pilot reopen — news-fetch SCALE pilot stays DONE 12/12, verdict=scale; `pilot-status-news-fetch.json` FROZEN. **Chain:** developer (NF-LD-5-dev-B, canonical source) → dev-mcp-server (NF-LD-5-dev-A, regenerate served copy) → qa (NF-LD-5-QA) → fixer if CHANGES_REQUESTED → PO close (NF-LD-5-EXIT) → ops rebuild + PROVE. No `pm`/`ba` agent in this harness — PO owns TASKS.md / this handoff / exit gate.
+
+---
+
+## User request (verbatim)
+> "need button to see new feed on http://localhost:3000/dashboards/news-fetch/"
+
+(User also has the canonical source open at `file:///…/apps/news-fetch/dashboard/index.html`.)
+
+---
+
+## PO SCOPE RULING — Option (A) MVP (PO owns this decision; not bounced to the non-technical user)
+
+**Current state (PO-verified this cycle, do NOT re-derive):**
+- The served dashboard's live panel (`#panel-live-data`) already shows REAL `rag_analyses` rows. It fetches ONCE on page load via the IIFE `initLivePanel()` at `apps/news-fetch/dashboard/index.html:314`, hitting the relative endpoint `GET /api/news-fetch/live?source=all&limit=20` (SELECT-only, reads `rag_analyses`, frozen from NF-LD-2a). The endpoint already supports `source=reuters|bloomberg|all` and `limit` (1–50 clamped).
+- The panel renders 4 honest states (FILE_DEGRADE / LOADING / EMPTY / ERROR) + the per-source data table. **There is NO button** — the only way to pull fresh rows is a full page reload.
+
+**Two readings of "see new feed":**
+- **(A) MVP** — a "Refresh / Load latest" button that re-calls the EXISTING endpoint and re-renders rows (cheap, zero backend change, honest). Optional source selector reusing `source=`.
+- **(B) Heavier** — a "Fetch now" button that triggers the stateless news-fetch service to actually scrape sources for NEW articles (new trigger/POST path into the pipeline; touches stateless-service boundary + Security Clause; larger scope).
+
+**RULING: Option (A).** "See new feed" is honestly satisfied by re-querying the endpoint that already returns the most-recent rows. The user is looking at a panel that fetched once on load and now wants to pull the latest without reloading — a Refresh button is exactly that, with zero new endpoint, zero new security surface, and **no new architect design** (reuses the NF-LD-4 Option-B same-origin contract). **Option (B) is DEFERRED, NOT this task** — the user has not asked for on-demand re-scraping, and it would require a new POST trigger into the stateless scraper (a stateless-service-boundary + Security-Clause change). If the user later confirms they want live re-scraping, open NF-LD-6 and spawn **architect first**.
+
+---
+
+## SECURITY CLAUSE (binding, carried from the pilot/NF-LD chain)
+- Sandbox PROCESS (`apps/news-fetch/src/sandbox/runner.ts`) stays credential-free — UNCHANGED.
+- `data.js` `window.__NEWS_FETCH_DATA__` sidecar + the 3 sandbox panels (Primitives/Module/Microservice) — UNCHANGED (G6/G8/G9 honest-green must NOT regress).
+- Served dashboard files contain ZERO DB creds / ZERO API keys. The button only RE-CALLS the read-only SELECT-only endpoint — it never adds a write path, never carries creds client-side.
+- The file:// degrade branch STAYS (graceful fallback) — do NOT delete it.
+- Dashboard-honesty ethos: no false-greens, no fabricated rows. EMPTY feed must say so; ERROR must not invent rows.
+
+---
+
+## NF-LD-5-dev-B — generic developer (canonical source) — OPEN (dispatch FIRST)
+
+**Zone:** `apps/news-fetch/dashboard/index.html` only (canonical source, generic developer owns it).
+
+**AC-1 Button added:** `#panel-live-data` contains a visible, clearly-labelled "Refresh / Load latest" button (suggested `id="live-refresh-btn"`). Placed in the panel title row or directly under it — does NOT displace or alter the 3 sandbox panels.
+
+**AC-2 One-shot fetch refactored to callable:** the current one-shot `initLivePanel()` fetch+render logic is refactored into a named callable (e.g. `loadLiveData()`) that runs (a) once on load (preserving today's auto-fetch behaviour) AND (b) on button click. No duplicated render logic — the button reuses the same render path. The relative `ENDPOINT` (`/api/news-fetch/live?source=all&limit=20`) is unchanged (no scheme/host).
+
+**AC-3 Re-render without page reload:** clicking the button re-queries the endpoint and replaces `#live-data-content` with fresh rows — NO `location.reload()`, NO full page reload. While the re-fetch is in-flight, the LOADING state shows (button may disable during fetch).
+
+**AC-4 All 4 honest states preserved:** FILE_DEGRADE (still fires BEFORE any fetch via `window.location.protocol === 'file:'` — under file:// the button either is hidden or shows the degrade message; never attempts a network call), LOADING, EMPTY (`count===0` → "No rows yet…"), ERROR (non-2xx / fetch failure → "Server error…"). No fabricated rows in any state.
+
+**AC-5 (OPTIONAL) Source selector:** a `reuters | bloomberg | all` selector that rebuilds the `source=` query param and re-calls `loadLiveData()`. If implemented, it reuses the endpoint's existing param — NO new endpoint. Acceptable to omit for MVP; if omitted, default `source=all` stays.
+
+**AC-6 Sandbox panels + data.js untouched:** `git diff HEAD -- apps/news-fetch/dashboard/data.js` → empty. `git diff` of `index.html` shows ONLY additions/changes inside the live-panel markup + its JS — no edits to `panel-primitives`/`panel-module`/`panel-microservice` or their card logic.
+
+**AC-7 No creds:** `grep -n "VPS_PUSH_API_KEY\|x-api-key\|Authorization\|Bearer\|process.env\|Bun.env" apps/news-fetch/dashboard/index.html` → 0 matches.
+
+**AC-8 dash-check still passes:** `node apps/news-fetch/dashboard/dash-check.mjs` → PASS (panels=4, sandbox=3, live=1, cards=6, PASS=6, live_panel_degrade=true under file://, live_panel_fake_rows=false, console_errors=0, external_network_calls=0). NOTE: dash-check runs the file:// flow, so the button renders the degrade state there — that is correct.
+
+**NEXT after DONE:** hand to dev-mcp-server for NF-LD-5-dev-A.
+
+---
+
+## NF-LD-5-dev-A — dev-mcp-server (regenerate served copy) — Blocked on NF-LD-5-dev-B
+
+**Zone:** `apps/mcp-server/` only (SOLE committer). NO hand-edits to the served copy.
+
+**AC-1 Regenerated, not hand-edited:** run `bash apps/mcp-server/sync-news-fetch-dashboard.sh`. The served copy `apps/mcp-server/src/interface/news-fetch-dashboard/index.html` is produced by the script — NOT hand-edited.
+
+**AC-2 Committed == generated (anti-drift, the NF-LD-4 round-1 blocker):** after running the script, `git diff -- apps/mcp-server/src/interface/news-fetch-dashboard/` shows ZERO differences between the script output and what gets committed. If the canonical source gained markup the script does not reproduce → FIX THE SCRIPT (e.g. add the needed sed/inject), do NOT hand-edit the served copy.
+
+**AC-3 Idempotent:** two consecutive script runs produce byte-identical `index.html` (md5 identical; 2nd-run `git diff` = 0). Paste the md5 into this handoff.
+
+**AC-4 Button + relative ENDPOINT present in served copy:** the served `index.html` contains the Refresh button (AC from dev-B) AND `var ENDPOINT = '/api/news-fetch/live?source=all&limit=20'` (relative, no `localhost:3000` in the fetch path). file:// degrade branch present.
+
+**AC-5 No creds in served dir:** `grep -rn "VPS_PUSH_API_KEY\|x-api-key\|Authorization\|Bearer\|DB_PATH\|process.env\|Bun.env" apps/mcp-server/src/interface/news-fetch-dashboard/` → 0 matches.
+
+**AC-6 data.js byte-identical + no Dockerfile change:** served `data.js` byte-identical to canonical source (`diff` exits 0); `git diff HEAD -- apps/mcp-server/Dockerfile` → empty (existing `COPY src/` covers the served dir).
+
+**AC-7 Tests + tsc green:** `bun test src/__tests__/NF-LD-4-news-fetch-dashboard.test.ts src/__tests__/NF-LD-2-news-fetch-live.test.ts` → all PASS; `bun tsc --noEmit` → exit 0. If the static-serve handler needs no new test, note it. No new regressions.
+
+**AC-8 Pilot frozen:** `docs/data/pilot-status-news-fetch.json` not touched.
+
+**NEXT after DONE:** hand to qa for NF-LD-5-QA.
+
+---
+
+## NF-LD-5-QA — qa — Blocked on NF-LD-5-dev-A
+
+**AC-Q1 Button works (re-fetch + re-render, no reload):** verify (in-process or headless) that clicking `#live-refresh-btn` re-invokes the endpoint fetch and replaces `#live-data-content` — no `location.reload`, no full page reload.
+
+**AC-Q2 All 4 honest states preserved + no fabricated rows:** FILE_DEGRADE / LOADING / EMPTY / ERROR intact; `live_panel_fake_rows=false`. EMPTY state shows the honest "No rows yet…" message, not a fake table.
+
+**AC-Q3 Anti-drift (RE-GATE the NF-LD-4 blocker):** `bash apps/mcp-server/sync-news-fetch-dashboard.sh` ×2 → `git diff -- apps/mcp-server/src/interface/news-fetch-dashboard/` = 0 on both runs (committed == generated, idempotent). FAIL here → CHANGES_REQUESTED.
+
+**AC-Q4 Security: 0 creds in served files:** `grep -rn "VPS_PUSH_API_KEY\|x-api-key\|Authorization\|Bearer\|DB_PATH\|process.env\|Bun.env" apps/mcp-server/src/interface/news-fetch-dashboard/` → 0 matches. Endpoint still read-only SELECT (no new write verb introduced anywhere).
+
+**AC-Q5 No regression to frozen surfaces:** `git diff HEAD -- apps/news-fetch/dashboard/data.js` empty; `git diff HEAD -- apps/news-fetch/src/sandbox/runner.ts` empty; served `data.js` byte-identical to source; 3 sandbox panels render. `node apps/news-fetch/dashboard/dash-check.mjs` → PASS.
+
+**AC-Q6 Tests + tsc:** NF-LD-4 + NF-LD-2 tests PASS; `bun tsc --noEmit` exit 0; 0 new regressions.
+
+**AC-Q7 Pilot frozen:** `pilot-status-news-fetch.json` not touched.
+
+**AC-Q8 Emit signal:** `docs/signals/qa-news-fetch-refresh-button-<UTC>.json` with verdict + AC evidence + commit SHAs.
+
+**If any AC FAIL → CHANGES_REQUESTED → fixer = the OWNING dev of the flagged zone** (dev-B issue → generic developer; dev-A/drift issue → dev-mcp-server). Then re-gate.
+
+**NEXT after APPROVED:** hand to PO for NF-LD-5-EXIT.
+
+---
+
+## NF-LD-5-EXIT — PO sign-off — Blocked on NF-LD-5-QA
+
+PO validates deliverables against the scope ruling (Option A), the Security Clause, and anti-regression rules via INDEPENDENT disk/git spot-check (not QA word alone). On APPROVED → mark NF-LD-5-dev-B/dev-A/QA/EXIT DONE, then DISPATCH ops for NF-LD-5-OPS. Never ask the user to rebuild/deploy.
+
+---
+
+## NF-LD-5-OPS — ops (terminal DONE gate) — Blocked on NF-LD-5-EXIT
+
+`docker compose up -d --build mcp-server` then PROVE (real http GET): `http://localhost:3000/dashboards/news-fetch/` → 200 with the Refresh button present in the served HTML; live endpoint reachable same-origin; button visibly re-fetches/re-renders. **Chain NOT DONE until ops proves this on a REAL rebuilt container.**
+
+---
+
+## Constraints binding NF-LD-5 (verbatim — every agent in the chain)
+- L84 explicit-file staging: `git add <path>` per file; NEVER `-A` or `.`. Sequential commits (fleet commit-race).
+- No `--force`, no `--no-verify`, no `--no-gpg-sign`. NO git push (user owns push). All on `main` (NO branches).
+- `Bun.env` not `process.env`; ESM `.js` import suffixes (no new TS expected for Option A).
+- never ask the user — decide and continue; never ask the user to run/build/deploy — dispatch ops/dev.
+- `pilot-status-news-fetch.json` FROZEN at 12/12 — NOT touched.
+- Sandbox runner credential-free + `data.js` + 3 sandbox panels FROZEN (G6/G8/G9) — do NOT regress.
+- file:// degrade branch STAYS (graceful fallback) — do NOT delete it.
+- ANTI-DRIFT: committed served copy MUST equal `sync-news-fetch-dashboard.sh` output (idempotent). dev-mcp-server regenerates via the script; NO hand-edits to the served copy.
+- ZONE `multi`: generic developer owns `apps/news-fetch/dashboard/`; dev-mcp-server is SOLE committer of any `apps/mcp-server/` file.
+- DONE only when ops PROVES (real http GET) the served URL returns the page WITH the button AND the button re-fetches/re-renders the live feed with no manual serve step.

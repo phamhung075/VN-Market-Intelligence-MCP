@@ -1,24 +1,23 @@
 # PO Notebook
 
-**Cycle:** NF-LD-4-EXIT — served-dashboard enhancement SIGNED OFF (QA round-2 APPROVED). Only NF-LD-4-OPS (ops rebuild + PROVE live URL) remains.
-**Last update:** 2026-05-24T20:05:22Z
-**Status:** SIGNED OFF. Source correct on main; terminal DONE gate = ops PROVE of `http://localhost:3000/dashboards/news-fetch/`. PIPELINE: ops next.
+**Cycle:** NF-LD-5 OPENED — "Refresh / Load latest" button on the served news-fetch live panel (MVP). New user feature request.
+**Last update:** 2026-05-24T21:20:00Z
+**Status:** PLANNED + dispatched. PIPELINE: developer (NF-LD-5-dev-B) first → dev-mcp-server → qa → PO close → ops PROVE.
 
 ---
 
-## 2026-05-24T20:05Z — NF-LD-4-EXIT: served-dashboard sign-off (Option B, mcp-server same-origin)
+## 2026-05-24T21:20Z — NF-LD-5: "see new feed" button (scope ruled Option A — MVP)
 
-User wanted "open ONE url → see sandbox panels + live rows, no manual serve, no file://". Architect ruled **Option B**: serve dashboard from mcp-server:3000 at `/dashboards/news-fetch/` (same-origin as the live endpoint → relative fetch, zero CORS). Delivered: dev-A `e160fe04` (static-serve handler no-DB + served dir + server.ts wiring + anti-drift sync script + 11 tests), dev-B `d32398f4` (source ENDPOINT→relative). QA round 1 caught DRY drift (committed copy ≠ sync output: stale `scripts/` header path + hand-added comment block + 3rd error-string variant from sed-order bug) → dev FIX `6b012fc8` (reversed sed order, specific-before-generic). QA round 2 APPROVED `a315ac99`.
+User (verbatim): *"need button to see new feed on http://localhost:3000/dashboards/news-fetch/"*. Small follow-on to CLOSED NF-LD-4 (served dashboard). PO verified live this cycle: served URL → 200, live endpoint `?source=all&limit=5` → 200 (running container already has the NF-LD-4 route).
 
-PO independent disk/git re-verify (not QA word): sync idempotent (2 runs → git diff=0 each, committed==generated); 0 creds served dir (grep exit 1); handler 0 write verbs / no `db` param; ENDPOINT relative line 323; file:// degrade kept line 328; data.js BYTE-IDENTICAL src vs served copy; pilot `goalsEarned=12 verdict=scale status=DONE` last touched `b3407530` (predates NF-LD-4). All 3 commits zero-foreign-file. APPROVED.
+**Current state (read, not re-derived):** live panel `#panel-live-data` already shows REAL `rag_analyses` rows but fetches ONCE on load via IIFE `initLivePanel()` (`apps/news-fetch/dashboard/index.html:314`), relative `GET /api/news-fetch/live?source=all&limit=20`, 4 honest states (FILE_DEGRADE/LOADING/EMPTY/ERROR). NO button — only a full reload pulls fresh rows. That's the gap.
 
-OUTPUTS: TASKS.md NF-LD-4 block (header→PO SIGNED OFF; dev-A/dev-B/QA/EXIT→DONE; OPS→OPEN final gate, UNBLOCKED); handoff `## NF-LD-4-EXIT` sign-off section (commit trail + 9-row gate table + ops terminal-gate note); this notebook. NO pilot-status edit. NO send_telegram (not PO surface — handed to main terminal in RETURN).
+**SCOPE RULING — Option (A) MVP** (PO owns it, didn't bounce to non-technical user): Refresh button re-calls the EXISTING endpoint + re-renders. Zero backend change, zero new endpoint, zero new security surface, **NO new architect design** (reuses NF-LD-4 Option-B same-origin contract). Optional source selector reuses `source=` param. **Option (B) on-demand re-scrape DEFERRED** — needs new POST trigger into stateless news-fetch + touches Security Clause; user didn't ask for scraping. If later confirmed → NF-LD-6 + spawn architect first.
 
-## Carry-over
-- TERMINAL GATE: NF-LD-4 chain NOT done until ops PROVES the served URL on a REAL rebuilt container. Running mcp-server predates `e160fe04` → `/dashboards/news-fetch/` would 404 on the live process now (deploy-currency gap, NOT a code defect — same pattern as PI-INSPECT). Ops: `docker compose up -d --build mcp-server` then real http GET 200 on `/dashboards/news-fetch/` + `/data.js` + same-origin `/api/news-fetch/live` + 4 panels render. Dispatch ops — never ask user.
-- LESSON (reinforced): served/data-bound features sign off in SOURCE but are only DONE on a real deployed-container PROVE. Keep file:// degrade as fallback (don't delete) — it just won't fire in the served flow.
-- COMMIT: my NF-LD-4 close-out = explicit-file staging ONLY of TASKS.md + handoff + this notebook. QA round-2 signal + handoff QA record already committed at `a315ac99`. Heavy fleet race in tree (foreign M/?? — api-gateway/kinh-dich/pdf-extractor/stock-price + other agents' notebooks) — NEVER -A/.; if foreign files appear staged, unstage them.
-- CONCURRENT PO CYCLE PENDING (KD-QREF-LANG-EXIT, 20:04Z — manifest handed to main terminal, do NOT lose): 10 files explicit-stage: apps/kinh-dich-service/{dashboard/index.html, dashboard/que-reference.js, pkg/module/reading_composer/hexagram_reference.go}; docs/handoffs/TASK_KD-QREF-LANG.md; docs/po-decisions/2026-05-24-kinh-dich-que-reference-language-switch.md; docs/signals/{po-kd-qref-lang-20260524T185115Z.json, qa-kd-qref-lang-2026-05-24T195519Z.json}; docs/agent-memory/notebooks/{architect.md, fixer.md, po.md}. Commit msg: `feat(kinh-dich/dashboard): KD-QREF-LANG EN/VI language switch on 64-Quẻ Trading Reference panel`. (My notebook overwrite here supersedes the KD-QREF-LANG po.md content — that cycle's record lives in handoff TASK_KD-QREF-LANG.md + its signals.)
-- PDF-INSPECT META-LESSON still live: DATA-BOUND features validate design+QA against REAL store (row counts + null-rates), not fixtures.
-- news-fetch + kinh-dich pilots both stay DONE 12/12 verdict=scale FROZEN — NF-LD-4 and KD-QREF-LANG are POST-PILOT enhancements; pilot-status never touched.
-- Other open: KD-QREF-LANG-1 i18n design done (chain closed); pdf-extractor Phase-1 OPEN; stock-price Phase-0 READY; TA Phase-2 in flight.
+**Chain (WIP=1 sequential):** developer NF-LD-5-dev-B (canonical `apps/news-fetch/dashboard/index.html`: button + refactor one-shot fetch → callable `loadLiveData()` wired to click, keep file:// degrade + EMPTY/ERROR honest states) → dev-mcp-server NF-LD-5-dev-A (regenerate served copy via `sync-news-fetch-dashboard.sh`, prove committed==generated + idempotent md5, NO hand-edits) → qa (button works, no drift, 0 creds, honest states, frozen surfaces, tests) → fixer if CHANGES_REQUESTED → PO NF-LD-5-EXIT → ops rebuild + PROVE button live.
+
+**Anti-drift gate carried from NF-LD-4 round 1:** served copy MUST equal sync-script output. If source gains markup the script can't reproduce → fix the SCRIPT, not the served copy.
+
+OUTPUTS: TASKS.md `## Sprint NF-LD-5` block (5 rows + scope ruling + DONE def + notes); handoff `# TASK NF-LD-5` (scope ruling + Security Clause + per-task ACs dev-B 8 / dev-A 8 / QA 8 + EXIT + OPS + constraints); this notebook. NO pilot-status edit (frozen 12/12). NO send_telegram (not PO surface — WORK summary handed to main terminal in RETURN).
+
+**Carry-over:** NF-LD-4-OPS may still be the prior chain's open terminal gate, but served URL returns 200 this cycle → likely already rebuilt; if NF-LD-5 ops rebuild runs, it supersedes. NF-LD-5 is dispatch-ready: developer goes FIRST.
