@@ -95,9 +95,11 @@ Loaders call `app/lib/api/` — never call api-gateway `fetch` directly inside a
 **After code**
 1. `cd apps/frontend && npx vitest run` — all tests pass (0 failures)
 2. `cd apps/frontend && npx tsc --noEmit` — 0 errors
-3. `git add -p && git commit -m "..."` — format per `docs/policies/commit-convention.md`
+3. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+   `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m "..."` — format per `docs/policies/commit-convention.md`
    Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse).
    **NEVER use `git commit -am` or `git commit -a`**
+   Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 
 **Documentation review** (after code passes, before QA):
 → Run flow: `.claude/flows/developer/doc-review.md` with `SERVICE=frontend`
@@ -125,8 +127,10 @@ Before calling notebook-write, compose one "Zone health:" line:
 Zone health: <e.g. "test coverage ~65%, Tier 3 api layer complete, Tier 4 routes 2/8 done"> | HEALTHY
 ```
 
-**Commit notebook**:
+**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash
+# own_paths: [docs/agent-memory/notebooks/dev-frontend.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/dev-frontend.md
 git commit -m "chore(memory/dev-frontend): notebook YYYY-MM-DD"
 ```

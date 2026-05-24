@@ -98,12 +98,16 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 **After code — TypeScript/Bun**
 1. `cd apps/<service> && bun test` — service tests pass
 2. `bun tsc --noEmit` — 0 errors
-3. `git add -p && git commit` — format per `docs/policies/commit-convention.md`
+3. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+   `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit` — format per `docs/policies/commit-convention.md`
+   Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 
 **After code — Python/FastAPI**
 1. `cd apps/<service> && python -m pytest` — service tests pass
 2. Type check if configured (mypy/pyright)
-3. `git add -p && git commit` — format per `docs/policies/commit-convention.md`
+3. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+   `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit` — format per `docs/policies/commit-convention.md`
+   Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 
 **Documentation review** (after code passes, before QA):
 → Run flow: `.claude/flows/developer/doc-review.md` with `SERVICE=<service>`
@@ -122,8 +126,10 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 - **Graphify:** updated ✓ | skipped (no docs impacted)
 ```
 
-**Commit notebook** (before QA):
+**Commit notebook** (before QA) — **mutex-guarded** → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash
+# own_paths: [docs/agent-memory/notebooks/developer.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/developer.md
 git commit -m "chore(memory/developer): notebook YYYY-MM-DD"
 ```

@@ -127,8 +127,10 @@ Do not inline these workflows here — that's the whole point of the split.
 
 > Invariant: timestamp = current UTC, never future, never speculative. ALWAYS get via `date -u +"%Y-%m-%dT%H:%M:%SZ"` before any ACK append or notebook header.
 
-**Commit notebook**:
+**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash
+# own_paths: [docs/agent-memory/notebooks/po.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/po.md
 git commit -m "chore(memory/po): notebook YYYY-MM-DD"
 ```

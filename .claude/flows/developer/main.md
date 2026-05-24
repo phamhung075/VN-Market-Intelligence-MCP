@@ -88,9 +88,11 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 1. `bun test src/__tests__/NNN-*.test.ts` — task tests pass
 2. `bun test` — no regressions
 3. `bun tsc --noEmit` — 0 errors
-4. `git add -p && git commit -m "..."` — format per `docs/policies/commit-convention.md`
+4. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+   `git add <exact own paths>` (NEVER `-A`/`.`) then `git commit -m "..."` — format per `docs/policies/commit-convention.md`
    Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse). Omit all three only for no-sprint commits (§ No-Sprint Rule).
    **NEVER use `git commit -am` or `git commit -a`** — `-a` greedily absorbs staged index content from other sources, violating C2 atomicity (root cause: c47 incident, SHA `8bec73d3`).
+   Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → git diff --cached verify → git commit → task_release
 
 **Doc update + graphify** (after code passes, before QA):
 1. Identify related docs touched by this task — check:
@@ -122,8 +124,10 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 
 **Notebook write** (before QA) → skill: `.claude/skills/notebook-write/SKILL.md` (section-overwrite — append new c<NNN> section; skill handles prune + blank-state init).
 
-**Commit notebook**:
+**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash
+# own_paths: [docs/agent-memory/notebooks/developer.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/developer.md
 git commit -m "chore(memory/developer): notebook YYYY-MM-DD"
 ```

@@ -167,8 +167,10 @@ PIPELINE: continue
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-**Commit notebook**:
+**Commit notebook** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`:
 ```bash
+# own_paths: [docs/agent-memory/notebooks/qa.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/qa.md
 git commit -m "chore(memory/qa): notebook YYYY-MM-DD"
 ```

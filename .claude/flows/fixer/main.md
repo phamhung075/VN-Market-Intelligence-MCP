@@ -58,7 +58,9 @@ Read handoff using delta-read skill:
 4. bun test <affected test> — PASS
 5. bun test — full regression PASS
 6. bun tsc --noEmit — 0 errors
-7. git add -p && git commit
+7. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
+   git add <exact own paths> (NEVER -A/.) then git commit
+   Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 ```
 
 **Constraints**: fix 1-2 files max.
@@ -76,7 +78,10 @@ Needs: public API change | >2 files | breaks other tests → **ESCALATE to PM**:
 
 **Notebook commit**: append task summary to `docs/agent-memory/notebooks/fixer.md` — task name, fix applied, status.
 Then:
+**Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
+# own_paths: [docs/agent-memory/notebooks/fixer.md]
+# Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
 git add docs/agent-memory/notebooks/fixer.md
 git commit -m "chore(memory/fixer): notebook YYYY-MM-DD"
 ```
