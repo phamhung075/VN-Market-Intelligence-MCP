@@ -10,7 +10,7 @@
 /* Layout adapted from apps/stock-price/dashboard/ (3-panel standard) */
 /* AC-1: zero CDN, zero external fetch, zero credentials */
 /* jq query used: jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json */
-/* Result: port=5005, external_port=5005, language=ts, runtime=bun */
+/* Result: port=5005, external_port=5005, language=go, runtime=go1.22+ (CGO_ENABLED=0) */
 
 :root {
   --green: #1a7f3c;
@@ -1575,7 +1575,7 @@ function updateModSummary() {
 
 /* ── Service panel rendering (AC-6) ─────────────────────────────────────── */
 /* Port values from: jq '[.project.microservices[] | select(.id | contains("kinh"))]' docs/data/system-map.json */
-/* Result: port=5005, external_port=5005, language="ts", runtime="bun" */
+/* Result: port=5005, external_port=5005, language="go", runtime="go1.22+ (CGO_ENABLED=0)" */
 
 function renderService() {
   const body = document.getElementById('service-panel-body');
