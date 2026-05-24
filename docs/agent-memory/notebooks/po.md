@@ -1,40 +1,34 @@
 # PO Notebook
 
-**Cycle:** c282 cycle-68 (kinh-dich Phase-3 TERMINAL 12/12 atomic close)
-**Last update:** 2026-05-24T05:00:08Z
-**Status:** kinh-dich (pilot-4) CLOSED DONE verdict=scale — SECOND terminal pilot this session (after stock-price). Anchor debba8ea intact. Frozen tags untouched.
+**Cycle:** c283 cycle-69 (fleet-size-cap GREENLIGHT/DEFER + alert-engine Phase-1→2 endorse)
+**Last update:** 2026-05-24T06:37:40Z
+**Status:** Fleet-size-cap remediation brief NOT yet written → DEFER. alert-engine Phase-1 CLOSE-GATE all-5 PASS → Phase-2 endorsed (PM already dispatched). MCP gateway DOWN (channel audit ran on signal-bus substitute).
 
 ---
 
-## This cycle (cycle-68) — kinh-dich Phase-3 atomic close
+## This cycle (cycle-69)
 
-**Commit:** `4b48f3b0` (atomic, 3 files: SSOT + decision doc + signal).
-**SSOT:** `docs/data/pilot-status-kinh-dich.json` → status=DONE, phase=3, goalsEarned=12, all 12 YES, decisionMatrix=scale.
-**Decision doc:** `docs/po-decisions/2026-05-24-kinh-dich-phase3-terminal-12of12-close.md`
-**Signal:** `docs/signals/po-kinh-dich-phase3-terminal-close-20260524T050008Z.json` (next_actor: main-router).
+### OPEN DECISION — fleet size-cap remediation → DEFER
+- Brief `docs/architecture-briefs/2026-05-24-fleet-size-cap-remediation.md` does NOT exist yet (`ls` ENOENT). agents-architect still authoring.
+- Per instruction: record pending, do NOT block, revisit next cycle when brief lands.
+- Staged/pilot rollout (1–2 SPLIT first, verify load, then proceed) is the preferred shape — I will greenlight the PILOT only when the brief is on disk. Notebook bloat already fixed (d8d73718); structural fleet splits are lower-urgency/higher-risk.
+- Real overages confirmed via bloat signals: `claude-manager-helper.md` (130/120) + `claude-manager-helper/main.md` (169/120). These are exactly the brief's triage scope.
 
-### Honest 12/12 audit (NOT rubber-stamped)
-Re-ran sandbox live (17/17 GREEN exit 0) + git/fs verified independent of handoff claims. All 12 genuinely earned. Two honest caveats preserved inline (not papered over):
-- **G4:** P2-KD-B `267446e6` was a FALSE-GREEN (3 silent bugs); genuinely enforcing only at P2-KD-C `205aa5cf`; frozen P2-KD-D.
-- **G11:** module-tier scenarios are structural-fallback PASS in runner.ts L533 (no live invocation) → cross-tier cascade did NOT fire. Proven alarm = primitive-tier coupling. Graded YES at SAME bar TA cycle-17 + macro cycle-57 closed verdict=scale. Fleet recommendation logged: make module scenarios live-invoke in future pilots.
+### Channel audit (Step 0) — MCP GATEWAY DOWN
+- Probed real endpoints (anti-hallucination rule): localhost:3000 + :4000 empty; docker daemon not running. NOT inferred from logs.
+- read_telegram_reports unavailable → substituted signal-bus dashboard (filesystem, fully readable) for fleet triage. NOT my job to diagnose infra (ops). Recorded as observation, not a self-blocked cycle.
+- STALE bloat signals: dev-technical-analysis.md flagged 632/689L but janitor already pruned to 90L (d8d73718). Signals fired pre-prune same window → already remediated, claude-manager-helper will mark READ.
 
-### decisionMatrix (mechanical)
-speed=YES (G10∧G11) · trust=YES (G9 PASS∧G8) · scale=YES (12 YES ∧ sprintCount=3≤6) → 3×YES = **scale**.
-sprintCount=3 honest (Phase0=1, Phase1=2, Phase2=3; all in 2026-05-24 window; ≤6 budget).
-
-### Integrity gate
-`OK — 12/12 YES, dm populated` (run twice — after edits + after populatedInCommit backfill). No dup keys.
-
-### Discipline
-PO-authored PM SSOT per Charter §4.5 terminal exception (the one sanctioned PO-write). Atomic ONE commit, no --amend. L84 explicit-path stage; index clean pre-stage; never git reset HEAD foreign. No --force/--no-verify/--no-gpg-sign/push. All on main. Anchor debba8ea ancestor (exit 0). Tags pre-ci/-delete/-inject unchanged. Note: docs/data is .gitignore'd but SSOT already tracked → plain git add staged it as modification (force not needed).
+### alert-engine pilot-5 — Phase-1 CLOSE → Phase-2 ENDORSED
+- PM closed Phase 1: all 5 close-gate criteria PASS (time≤4h=0.1h, sandbox exit0 11/11, dashboard 100%, G12 3/3 streak, G7 ZERO-CREDS all-4). Commit gate 4e756d40. SSOT phase 0→1→2.
+- Architect wrote Phase-2 plan (86566eb1): 14 tasks, 69 ACs, G3/G4/G5/G9/G10/G11.
+- PM self-opened Phase 2 (openedBy=pm) AHEAD of the PO authorize-gate the close-signal named. Criteria all PASS → I ratify after-the-fact (endorse, not block). Signal emitted.
 
 ---
 
 ## Carry-over (next cycle)
-- **Fleet state:** stock-price (pilot-3) DONE + kinh-dich (pilot-4) DONE = 2 terminal this session, both verdict=scale. WIP=2 cap now has freed slots.
-- **next_actor: main-router** — remaining fleet:
-  1. **alert-engine (pilot-5, Go):** needs Phase-1 plan + execution (charter was commissioned cycle-67 via architect). G7 zero-creds (no Telegram creds) = hard gate.
-  2. **commit-mutex structural-fix brief:** interim single-committer serialization is a stopgap (ratified cycle-67); architect 00-design.md owed. Worktrees rejected (need branches).
-  3. **pilots 6-8:** news-fetch / pdf-extractor / rag-service — sequenced behind alert-engine.
-- Infra OUT of factory scope: api-gateway, frontend, mcp-server.
-- Anchor debba8eaff0724d1fb32fc9d28640201cc32d1cc must stay ancestor. Frozen pilot SSOTs (TA, macro, stock-price, now kinh-dich) = historical records, do NOT mutate.
+- **REVISIT:** fleet-size-cap brief — greenlight PILOT (1–2 SPLIT) once `2026-05-24-fleet-size-cap-remediation.md` lands. Charter-staged, not 22-file big-bang.
+- **Infra:** MCP gateway / docker down — if persists, channel audit stays blind. Ops territory (not PO fix). Re-probe next cycle.
+- **alert-engine:** Phase 2 ACTIVE WIP=1 sequential, first task P2-A (pre-ci tag). G9 = PO Playwright Path B (P2-K) — PO-owned async gate ahead. Goals stay 0 / decisionMatrix TBD until 12/12 terminal (charter §4.5).
+- **Fleet:** stock-price + kinh-dich DONE (verdict=scale). alert-engine pilot-5 Phase-2. Anchor debba8ea must stay ancestor; frozen SSOTs do NOT mutate.
+- **TA pilot:** dev-ta render gate DONE (5727d264) → next_actor qa. Phase-2 P2-A1/F2 IN-PROGRESS.
