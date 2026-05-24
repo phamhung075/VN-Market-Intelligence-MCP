@@ -24,6 +24,7 @@
 | `docs/policies/alert-policy.md` | alert_implementation |
 | `docs/references/kinh-dich-layer.md` | hexagram_integration |
 | `.claude/skills/semble-search/SKILL.md` | code_search |
+| `docs/standards/microservice-build-standard.md` | new_service_or_feature_build — fail_loud: true — Size-gated build standard. Load when handoff contains BUILD-STANDARD: full or lean. FULL profile also lazy-loads pilot-charter.md + 07-phases.md (see standard § 1). |
 
 ---
 
