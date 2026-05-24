@@ -231,10 +231,10 @@
     "taskSequence": ["P2-A","P2-B","P2-C","P2-D","P2-E","P2-F","P2-G","P2-H","P2-I","P2-J","P2-K","P2-L","P2-M","P2-Z"],
     "wipPolicy": "WIP=1 sequential — PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
     "wip_limit": 1,
-    "current_task": "P2-K",
+    "current_task": "P2-L",
     "current_task_status": "READY",
-    "current_task_owner": "po",
-    "current_task_handoff": "docs/handoffs/TASK_P2-K.md",
+    "current_task_owner": "qa",
+    "current_task_handoff": "docs/handoffs/TASK_P2-L.md",
     "tasks": {
       "P2-A": {
         "id": "P2-A",
@@ -451,16 +451,39 @@
       "P2-K": {
         "id": "P2-K",
         "title": "G9 PO Playwright dashboard-trust verification (Path B)",
-        "status": "READY",
+        "status": "DONE",
         "readyAt": "2026-05-24T02:55:00Z",
         "readyBy": "pm",
+        "completedAt": "2026-05-24T01:56:55Z",
+        "completedBy": "po",
         "owner": "po",
         "blocked_by": "P2-J (DONE 2026-05-24T01:49:00Z)",
         "blocks": "P2-L",
         "ac_count": 4,
-        "description": "G9 dashboard-trust verification via PO Playwright headless browser (Path B). Render dashboard in chromium-headless-shell; confirm zero console errors, all panels visible, status honest (GREEN/NOT-RUN correctly displayed). Alternative Path A (user verbal confirm) acceptable with equal weight. Document verdict in po-decisions file.",
+        "ac_verdicts": "AC-1 PASS (3 panels rendered via DOM IDs primitives-panel-body/module-panel-body/service-panel-body), AC-2 PASS (0 console errors, 0 pageerrors, 0 requestfailed), AC-3 PASS (11 cold-open cards all honest NOT-RUN, zero false greens), AC-4 PASS (verdict recorded in decision doc + signal emitted)",
+        "description": "G9 dashboard-trust verification via PO Playwright headless browser (Path B). Rendered dashboard in chromium-headless-shell; confirmed zero console errors, all panels visible, status honest (GREEN/NOT-RUN correctly displayed). Real headless-chromium run validated per decision doc 2026-05-24-g9-stock-price-user-confirmation.md.",
         "handoff": "docs/handoffs/TASK_P2-K.md",
-        "path_b_default": true
+        "decision_doc": "docs/po-decisions/2026-05-24-g9-stock-price-user-confirmation.md",
+        "signal": "docs/signals/po-sp-P2-K-g9-done-20260524T015655Z.json",
+        "path_b_default": true,
+        "selector_note": "Handoff step-1 template used stale [data-panel]/[data-card-type] selectors; finalized dashboard uses element IDs (primitives-panel-body, module-panel-body, service-panel-body). PO wrote runner against actual IDs (QA-confirmed) — this is correct, not a defect."
+      },
+      "P2-L": {
+        "id": "P2-L",
+        "title": "Create stock-price-pre-inject tag + G10 bug injection",
+        "status": "READY",
+        "readyAt": "2026-05-24T02:59:00Z",
+        "readyBy": "pm",
+        "owner": "qa",
+        "blocked_by": "P2-K (DONE 2026-05-24T01:56:55Z)",
+        "blocks": "P2-M",
+        "ac_count": 4,
+        "description": "L5 pre-revert tag discipline + G10 bug injection setup. Create stock-price-pre-inject tag at HEAD (after P2-K evidence commit, before bug injection). Inject ONE single-literal bug into price-staleness-classifier primitive. Bug must be committed (real defect for P2-M fix-cycle discovery). Sandbox exits non-zero after injection (RED dashboard state expected/intended for G10 test cycle). Pre-inject tag marks byte-identical baseline that P2-M fix will be compared against.",
+        "handoff": "docs/handoffs/TASK_P2-L.md",
+        "pre_inject_tag": "stock-price-pre-inject",
+        "injection_target": "apps/stock-price/pkg/primitive/price-staleness-classifier/classifier.go",
+        "injection_type": "single-literal (off-by-one comparison, constant swap, return flip, or field assignment)",
+        "g12_dod_exception": "Sandbox RED expected/intended for injection task (not a DoD violation); P2-M fix cycle starts from RED baseline"
       }
     }
   },
