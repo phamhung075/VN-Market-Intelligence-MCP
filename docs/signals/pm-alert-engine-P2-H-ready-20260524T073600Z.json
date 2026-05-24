@@ -1,0 +1,88 @@
+{
+  "signal_type": "pm-task-dispatch",
+  "timestamp": "2026-05-24T073600Z",
+  "pilot": "alert-engine",
+  "phase": "2",
+  "task_id": "P2-H",
+  "task_title": "G3 — Composition Root Rewire to alert_pipeline Module + OpenAPI Contract",
+  "owner": "dev-alert-engine",
+  "blocked_by": "P2-G",
+  "blocks": "P2-I",
+  "previous_task": "P2-G",
+  "previous_task_status": "DONE",
+  "current_task_status": "SEQUENCED",
+  "ssot_updated": true,
+  "ssot_path": "docs/data/pilot-status-alert-engine.json",
+  "ssot_fields_updated": [
+    "phase2.current_task (P2-G → P2-H)",
+    "phase2.current_task_owner (qa → dev-alert-engine)",
+    "phase2.current_task_handoff (updated path)",
+    "phase2.tasks['P2-G'].status (SEQUENCED → DONE)",
+    "phase2.tasks['P2-G'].doneAt",
+    "phase2.tasks['P2-G'].doneBy",
+    "phase2.tasks['P2-H'].status (TBD → SEQUENCED)",
+    "phase2.tasks['P2-H'].sequencedAt",
+    "phase2.progress_notes (appended P2-G DONE + P2-H SEQUENCED)"
+  ],
+  "handoff_file": "docs/handoffs/TASK_P2-H-ae-g3-composition-root.md",
+  "ac_count": 7,
+  "acceptance_criteria": [
+    {
+      "id": "AC-1",
+      "title": "Zero domain-operation references in composition root",
+      "command": "grep -c \"ComputeFingerprint|IsDuplicate|ShouldSuppressAlert|joinSignalTypes|isToday|djb2Hash\" apps/alert-engine/cmd/server/main.go",
+      "expected_result": "0"
+    },
+    {
+      "id": "AC-2",
+      "title": "alert_pipeline module wired at composition root",
+      "command": "grep -n \"alert_pipeline|alertpipeline|AlertPipeline\" apps/alert-engine/cmd/server/main.go",
+      "expected_result": "≥1 match"
+    },
+    {
+      "id": "AC-3",
+      "title": "Infra adapters still injected at composition root (Fence-C confirmed)",
+      "command": "grep -n \"infrastructure|SQLite|mattn|Telegram\" apps/alert-engine/cmd/server/main.go",
+      "expected_result": "≥1 match per infra adapter"
+    },
+    {
+      "id": "AC-4",
+      "title": "OpenAPI contract exists and covers live endpoints",
+      "command": "test -f apps/alert-engine/api/openapi.yaml && echo FOUND",
+      "expected_result": "FOUND, yaml.safe_load exit 0"
+    },
+    {
+      "id": "AC-5",
+      "title": "Build + lint still clean",
+      "command": "cd apps/alert-engine && go build ./... && golangci-lint run",
+      "expected_result": "both exit 0"
+    },
+    {
+      "id": "AC-6",
+      "title": "Composition root ≤120 lines",
+      "command": "wc -l apps/alert-engine/cmd/server/main.go",
+      "expected_result": "≤120"
+    },
+    {
+      "id": "AC-7",
+      "title": "G12 DoD gate (sandbox green)",
+      "command": "cd apps/alert-engine && CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all",
+      "expected_result": "exit 0, ≥11 scenarios PASS"
+    }
+  ],
+  "files_touched": [
+    "apps/alert-engine/cmd/server/main.go (MODIFY)",
+    "apps/alert-engine/api/openapi.yaml (CREATE)"
+  ],
+  "g3_goal_advances": true,
+  "g3_goal_flips": false,
+  "ssot_goals_earned_frozen": true,
+  "ssot_decision_matrix_frozen": true,
+  "anchor_frozen": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "anchor_intact": true,
+  "plan_reference": "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-2-task-plan-go.md §P2-H",
+  "next_actor": "dev-alert-engine",
+  "next_action": "Execute P2-H: rewire cmd/server/main.go to use alert_pipeline module; create api/openapi.yaml; verify all 7 ACs PASS; emit dev-ae-P2-H-done signal",
+  "emitted_by": "pm",
+  "pm_notebook_updated": true
+}
