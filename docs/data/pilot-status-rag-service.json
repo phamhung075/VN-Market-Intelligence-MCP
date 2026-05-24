@@ -76,16 +76,16 @@
   },
   "phase2": {
     "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 1 gate passes. Phase 1 gate PASSED (qa cycle-74, commit 1823e716) — Phase 2 now AWAITING-PLAN. The Phase 1 task plan has NO sequenced Phase 2 task ledger (only scattered refs: P2-A CI fence, P2-B git mv delete, P2-E env gate, P2-L bug inject + brownfield primitive list/R-2 now-injection/SI-4 gate). Phase 2 scope is LARGE (4 primitive extractions + module-full + dashboard-full + 7 cross-cutting gates) — requires a dedicated architect-authored phase-2-task-plan.md with per-task ACs before any dev dispatch.",
-    "status": "AWAITING-PLAN",
+    "status": "OPEN",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
-    "openedAt": "2026-05-24",
-    "openedBy": "po cycle-75 — Phase 2 set AWAITING-PLAN on Phase 1 gate pass. Architect dispatch issued: author docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-2-task-plan.md (per-task ACs, dependency-ordered, mirroring Phase 1 plan rigor). Phase 2 OPENs (status→OPEN, taskPlan pointer + tasks map populated) only after architect plan lands + PO approves the spec.",
+    "openedAt": "2026-05-24T08:42:00Z",
+    "openedBy": "po cycle-76 — Phase 2 OPENED on architect plan approval. Reviewed docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-2-task-plan.md (commit f2d15494, signal architect-rag-service-phase2-plan-done-20260524T082833Z.json): 14 atomic tasks (4 B-bucket primitives + 10 cross-cutting gates), per-task ACs (7-9 each), determinism gate + determinism note in every task, §4.5 compliance section present (no goal-flip instructions, decisionMatrix untouched, goalsEarned=0), service facts verified against system-map (Python/port 5002/apps/rag-service/dev-rag-service). SPEC APPROVED. Execution authorized to main-terminal dev-team dispatcher: drive dev-rag-service P2-B1→P2-K2 in WIP=1, QA pulled at proof gates (P2-G8/P2-A/P2-J/P2-K1/P2-K2). PO returns only for terminal 12/12 atomic flip + decisionMatrix population, or blocker/CHANGES_REQUESTED escalation. Recurring-bug-escalation armed: ≥2 fix commits on any single task → block + architect root-cause rethink before new fix.",
     "closedAt": null,
     "closedBy": null,
-    "skeleton_in": "docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-2-task-plan.md (TO BE AUTHORED by architect — does not exist yet)",
-    "taskPlan": null,
-    "_taskPlan_note": "[DERIVED] Populated when architect Phase 2 plan lands + PO approves. Until then null (AWAITING-PLAN).",
-    "taskCount": null,
+    "skeleton_in": "docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-2-task-plan.md §Task Ledger",
+    "taskPlan": "docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-phase-2-task-plan.md",
+    "_taskPlan_note": "[DERIVED] Populated when architect Phase 2 plan lands + PO approves. Set po cycle-76 (commit f2d15494, signal architect-rag-service-phase2-plan-done-20260524T082833Z.json).",
+    "taskCount": 14,
     "wipPolicy": "WIP=1 default. Dependency order (per PO sequencing, to be ratified in architect plan): primitives (relevance-threshold-gate, top-k-selector, context-window-packer, temporal-decay-scorer w/ now-injection per R-2) → module-full (G2 wire all 5 via ports) → G3 composition-root trim ≤80L verify → dashboard-full cards (G6) → G7 edit-JSON-rerun + full env-audit gate (P2-E) → G8 deliberate-break proof → G4 import-linter deliberate-violation fence (P2-A, SI-4-gated, rag-pre-ci tag) → G5 old-code delete + HTTP rewire (retriever.ts→ragHttpClient.ts, rag-pre-delete tag) → G10 single-literal bug injection ≤2 cycles (rag-pre-inject tag, needs primitives stable) → G11 2-trial regression alarm → G9 Playwright headless trust contract LAST (Path B Day-0 default).",
     "wip_limit": 1,
     "phase2_scope_inventory": {
@@ -103,7 +103,24 @@
       "g10_bug_injection": "1 deliberate single-literal primitive bug → dev-rag-service reaches dashboard-GREEN in ≤2 cycles (baseline 1.5). rag-pre-inject tag. Needs primitives stable.",
       "g11_regression_alarm": "2-trial coupling proof: Trial-1 (e.g. similarity-scorer mutation) + Trial-2 (DIFFERENT primitive e.g. top-k-selector) each flip ≥1 COUPLED module scenario RED, single-edit fix restores green. Outcome-(a)×2 = PASS."
     },
-    "tasks": {}
+    "tasks": {
+      "_note": "[DERIVED] 14 atomic tasks from rag-service-phase-2-task-plan.md (commit f2d15494). Dependency order, WIP=1. Status enum: NOT-STARTED | IN-PROGRESS | DONE | BLOCKED. Task DONE does NOT flip any G-goal (§4.5 — PO-only atomic flip at 12/12 terminal). goalsAdvanced is informational (which goals the task contributes evidence toward), NOT a flip instruction.",
+      "_status_enum": "[FIXED] Allowed values per task: NOT-STARTED | IN-PROGRESS | DONE | BLOCKED",
+      "P2-B1": {"title": "relevance-threshold-gate primitive", "goalsAdvanced": ["G1"], "owner": "dev-rag-service", "acCount": 7, "preRevertTag": null, "blockedBy": [], "blocks": ["P2-B2"], "status": "NOT-STARTED"},
+      "P2-B2": {"title": "top-k-selector primitive", "goalsAdvanced": ["G1"], "owner": "dev-rag-service", "acCount": 7, "preRevertTag": null, "blockedBy": ["P2-B1"], "blocks": ["P2-B3"], "status": "NOT-STARTED"},
+      "P2-B3": {"title": "context-window-packer primitive", "goalsAdvanced": ["G1"], "owner": "dev-rag-service", "acCount": 8, "preRevertTag": null, "blockedBy": ["P2-B2"], "blocks": ["P2-B4"], "status": "NOT-STARTED"},
+      "P2-B4": {"title": "temporal-decay-scorer primitive + now-injection (R-2)", "goalsAdvanced": ["G1"], "owner": "dev-rag-service", "acCount": 9, "preRevertTag": null, "blockedBy": ["P2-B3"], "blocks": ["P2-C"], "status": "NOT-STARTED"},
+      "P2-C": {"title": "G2 module-full: wire all 5 primitives via ports", "goalsAdvanced": ["G2"], "owner": "dev-rag-service", "acCount": 8, "preRevertTag": null, "blockedBy": ["P2-B4"], "blocks": ["P2-D"], "status": "NOT-STARTED"},
+      "P2-D": {"title": "G3 composition-root verify: main.py <=80L", "goalsAdvanced": ["G3"], "owner": "dev-rag-service", "acCount": 7, "preRevertTag": null, "blockedBy": ["P2-C"], "blocks": ["P2-E"], "status": "NOT-STARTED"},
+      "P2-E": {"title": "G6 dashboard-full: 5 primitive cards + module + microservice", "goalsAdvanced": ["G6"], "owner": "dev-rag-service", "acCount": 7, "preRevertTag": null, "blockedBy": ["P2-D"], "blocks": ["P2-G7"], "status": "NOT-STARTED"},
+      "P2-G7": {"title": "G7 full gate: edit-JSON-rerun + env-audit hard gate", "goalsAdvanced": ["G7"], "owner": "dev-rag-service", "acCount": 6, "preRevertTag": null, "blockedBy": ["P2-E"], "blocks": ["P2-G8"], "status": "NOT-STARTED"},
+      "P2-G8": {"title": "G8 deliberate-break proof: 5 known-bad -> 5 RED", "goalsAdvanced": ["G8"], "owner": "qa (co-owner: dev-rag-service)", "acCount": 6, "preRevertTag": null, "blockedBy": ["P2-G7"], "blocks": ["P2-A"], "status": "NOT-STARTED"},
+      "P2-A": {"title": "G4 import-linter fence + CI job + deliberate-violation proof", "goalsAdvanced": ["G4"], "owner": "dev-rag-service + qa", "acCount": 9, "preRevertTag": "rag-pre-ci", "blockedBy": ["P2-G8"], "blocks": ["P2-F"], "status": "NOT-STARTED"},
+      "P2-F": {"title": "G5 delete+rewire: git mv -> _deprecated/ + retriever.ts -> ragHttpClient.ts", "goalsAdvanced": ["G5"], "owner": "dev-rag-service", "acCount": 9, "preRevertTag": "rag-pre-delete", "blockedBy": ["P2-A"], "blocks": ["P2-J"], "status": "NOT-STARTED"},
+      "P2-J": {"title": "G10 bug injection <=2 cycles (QA injects, dev fixes blind)", "goalsAdvanced": ["G10"], "owner": "qa (inject) + dev-rag-service (fix)", "acCount": 7, "preRevertTag": "rag-pre-inject", "blockedBy": ["P2-F"], "blocks": ["P2-K1"], "status": "NOT-STARTED"},
+      "P2-K1": {"title": "G11 regression alarm: 2-trial coupling proof", "goalsAdvanced": ["G11"], "owner": "dev-rag-service + qa", "acCount": 7, "preRevertTag": null, "blockedBy": ["P2-J"], "blocks": ["P2-K2"], "status": "NOT-STARTED"},
+      "P2-K2": {"title": "G9 Playwright headless trust contract (LAST)", "goalsAdvanced": ["G9"], "owner": "dev-rag-service", "acCount": 6, "preRevertTag": null, "blockedBy": ["P2-K1"], "blocks": [], "status": "NOT-STARTED"}
+    }
   },
   "goals": [
     {
