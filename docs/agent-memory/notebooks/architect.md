@@ -1,8 +1,65 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 20:50 UTC | **Sprint:** PDF-INSPECT-REOPEN-2
+**Last updated:** 2026-05-24 21:10 UTC | **Sprint:** KD-QREF-LANG-1
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## KD-QREF-LANG-1 — i18n design for 64-Quẻ Trading Reference EN/VI Switch (2026-05-24T~UTC) — DESIGN COMPLETE
+
+**Task:** KD-QREF-LANG-1. Design i18n shape for the EN/VI language toggle on the shipped `.qref-*` panel (KD-QREF, commit `0b401124`). PO dispatch signal: `docs/signals/po-kd-qref-lang-20260524T185115Z.json`. Decision record: `docs/po-decisions/2026-05-24-kinh-dich-que-reference-language-switch.md` (D1–D5 binding).
+
+**Key decisions:**
+
+1. **Go i18n shape — breaking rename to nested `localized{en,vi}`:** Add `type localized struct`. Replace 5 EN-only fields (`CoreMeaningEn`, `StateInterpretationEn`, `FavorableEn`, `WarningEn`, `GlossEn`) and the single-string `MarketTrendLabel` with `localized` pairs. Language-neutral fields (ID/Name/Chinese/Upper/Lower/*Element/MarketTrend/Action/Outcome) stay unchanged.
+
+2. **Emit shape — nested objects, no additive fallback:** `window.__QUE_REFERENCE__` entries emit `coreMeaning: {en:..., vi:...}` etc. `cmd/sandbox/main.go` emitReferenceFile() needs NO code change — struct tags handle serialization automatically.
+
+3. **Outcome/action gloss — closed-enum JS lookup maps:** `OUTCOME_GLOSS[lang][token]` and `ACTION_GLOSS[lang][token]` in-script. 5 tokens × 2 langs each. VI gloss: CAT→"CÁT (cát lành)", HUNG→"HUNG (hung hiểm)", VO CUU→"VÔ CỬU (không lỗi)", HOI→"HỐI (hối tiếc)", LE→"LỆ (nguy hiểm)". Action VI: pure labels (TIẾN/GIỮ/CHỜ/THẬN/LUI).
+
+4. **Render/toggle contract:** Module-level `let qrefLang = 'en'`. `initQrefLang()` reads localStorage `try/catch` → called before first render. `setQrefLang(lang)` writes localStorage `try/catch` → re-renders + syncs `.qref-lang-btn.active`. `loc(field, lang)` helper falls back `en`. `QREF_LABELS[lang]` covers all static chrome. Buttons: `<button class="qref-lang-btn">` in `.qref-header`, `.active` class only (dash-check safe).
+
+5. **File set (exact 4 files):** `hexagram_reference.go`, `que-reference.js` (regenerated), `index.html`, `cmd/sandbox/main.go` (NO change expected — confirm via `go build`).
+
+6. **VI source field mapping documented** in handoff A5-supplement: 6-row extraction table for dev reading `que_convert/NN_*.md`. Self-check: `grep '"vi": ""' hexagram_reference.go` → 0 results.
+
+**Risk flags:**
+- R-1 CONTENT VOLUME: 704 localized strings (64 × 5 fields + 64 × 6 phase glosses). No-gap grep mandatory before handoff.
+- R-2 Struct rename compile break: `grep -r "CoreMeaningEn\|GlossEn\|StateInterpretationEn\|FavorableEn\|WarningEn"` must return 0 after rename.
+- R-3 localStorage throw: `try/catch` guard on all read/write paths.
+
+**Files authored this cycle (2):**
+1. `docs/handoffs/TASK_KD-QREF-LANG.md` (UPDATED — [Design notes] section filled, all 5 ACs addressed)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** dev-kinh-dich (KD-QREF-LANG-2).
+
+---
+
+## NF-LD-4 — news-fetch served dashboard design (2026-05-24T18:56Z) — DESIGN COMPLETE
+
+**Task:** NF-LD-4-design. Rule Option A vs B for serving the news-fetch dashboard from a running container. PO signal: `docs/signals/po-20260524T185027Z.json`.
+
+**Key brownfield findings:**
+- mcp-server Dockerfile `COPY apps/mcp-server/src/ ./src/` already covers any subdirectory added under `apps/mcp-server/src/interface/` — NO Dockerfile change needed (confirmed by `bctc-inspector.html` precedent at `src/interface/bctc-inspector.html`).
+- mcp-server already has static-HTML serving pattern in `bctcInspectHandler.ts` (`readFileSync` + `text/html`) — Option B extends existing infrastructure.
+- news-fetch Dockerfile does NOT copy `dashboard/` (build context `apps/news-fetch`, no `COPY dashboard` line) — Option A requires new Dockerfile line + new static-serve route (more scope).
+- mcp-server compose context is repo root (`context: .`) — can reach `apps/news-fetch/dashboard/` but the cleaner approach is to place copies under `src/interface/news-fetch-dashboard/` to keep the image self-contained.
+- news-fetch live panel ENDPOINT is hardcoded absolute `http://localhost:3000/api/news-fetch/live?source=all&limit=20` — must change to relative `/api/news-fetch/live?source=all&limit=20` under Option B.
+- file:// degrade branch (`window.location.protocol === 'file:'`) stays untouched — fires before fetch, graceful fallback.
+
+**Ruling: Option B.** Rationale: the PI-INSPECT precedent is "serve from the service that OWNS the data and endpoint." mcp-server owns `rag_analyses` + `GET /api/news-fetch/live`. Option B is same-origin, zero CORS reliance, no Dockerfile change, extends existing handler pattern. Option A is cross-origin (reproduces the CORS/file:// risk class), requires new Dockerfile COPY + new static-serve route in news-fetch, no existing pattern to extend.
+
+**Served URL:** `http://localhost:3000/dashboards/news-fetch/`
+
+**Zone: multi** — dev-mcp-server (`apps/mcp-server/`) + generic developer (`apps/news-fetch/dashboard/index.html` 1-line change).
+
+**Files authored this cycle:**
+1. `docs/handoffs/TASK_NF-LD.md` — [Architect] NF-LD-4-design section appended (A-vs-B ruling + static-serve design + URL strategy + security clause + per-task ACs for dev-A/dev-B/qa/ops)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** dev-mcp-server (NF-LD-4-dev-A) + generic developer (NF-LD-4-dev-B) in parallel.
+
+---
 
 ## PDF-INSPECT REOPEN-2 / pdf_path gap — Re-Root-Cause Design (2026-05-24T~UTC) — DESIGN COMPLETE
 

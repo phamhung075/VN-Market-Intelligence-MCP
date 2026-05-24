@@ -1,0 +1,27 @@
+{
+  "from": "po",
+  "to": "architect",
+  "type": "sprint-dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-24T18:51:15Z",
+  "payload": {
+    "sprint": "KD-QREF-LANG",
+    "title": "64-Quẻ Trading Reference EN/VI language switch (follow-on #2 to KD-QREF)",
+    "classification": "post-pilot-enhancement (kinh-dich pilot DONE 12/12 FROZEN — no goal reopened)",
+    "zone": "apps/kinh-dich-service/",
+    "chain": "architect (KD-QREF-LANG-1 i18n design) -> dev-kinh-dich (KD-QREF-LANG-2) -> qa (KD-QREF-LANG-3) -> po (KD-QREF-LANG-EXIT)",
+    "next_hop": "KD-QREF-LANG-1 (architect, DESIGN ONLY)",
+    "decision": "docs/po-decisions/2026-05-24-kinh-dich-que-reference-language-switch.md",
+    "handoff": "docs/handoffs/TASK_KD-QREF-LANG.md",
+    "decisions_resolved": {
+      "D1": "default language = EN",
+      "D2": "persistence = localStorage[kd-qref-lang], file:// safe, try/catch -> EN fallback",
+      "D3": "toggle scope = .qref-* panel ONLY; 3 trust panels stay frozen English",
+      "D4": "both languages in Go SSOT hexagram_reference.go -> emitted que-reference.js; nested {en,vi} recommended; never fetched/hand-typed",
+      "D5": "EN|VI control in .qref-header; static labels/headers/legend localize; no dot-*/category-chip/'not wired'/fetch/CDN"
+    },
+    "binding_dod": "node dashboard/dash-check.mjs exit-0 with toggle present (EN+VI states); 3 trust panels + 17 sandbox dots + modal + sandbox-traces.js UNCHANGED; all 64 entries BOTH EN and VI for every textual field, no gaps/placeholders/TODO; VI reused from que_convert/*.md, not machine-retranslated.",
+    "vi_source": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/kinhdich_logic/que_convert/ (read-only, schema verified consistent across 01/29/SCHEMA.md)",
+    "commit_reality": "dev-team agents cannot acquire commit-mutex (gateway absent + task_claim enum lacks kind). Work stays IN-TREE; commit manifest at EXIT; MAIN TERMINAL commits (as KD-QREF 0b401124)."
+  }
+}

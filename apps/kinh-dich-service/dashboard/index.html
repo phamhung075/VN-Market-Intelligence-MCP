@@ -1012,6 +1012,43 @@ footer {
   border-radius: 4px;
 }
 
+/* ── Language toggle for 64-Quẻ Reference (KD-QREF-LANG) ───────────────────── */
+.qref-lang-switch {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+.qref-lang-btn {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  color: #475569;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.12s, border-color 0.12s;
+}
+
+.qref-lang-btn:hover {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+}
+
+.qref-lang-btn.active {
+  background: #1e293b;
+  border-color: #1e293b;
+  color: #f8fafc;
+}
+
+.qref-lang-btn.active:hover {
+  background: #334155;
+  border-color: #334155;
+}
+
 .paste-actions {
   display: flex;
   gap: 8px;
@@ -1146,10 +1183,15 @@ footer {
 <!-- Trust-gate safe: no .dot-*, no .category-chip, no "not wired". Uses .qref-* namespace.    -->
 <div id="que-reference-section">
   <div class="qref-header">
-    <h2>64 Quẻ — Trading Reference</h2>
+    <h2>64 Quẻ — Trading Reference
+      <span class="qref-lang-switch">
+        <button class="qref-lang-btn active" id="qref-lang-en" type="button" onclick="setQrefLang('en')">EN</button>
+        <button class="qref-lang-btn" id="qref-lang-vi" type="button" onclick="setQrefLang('vi')">VI</button>
+      </span>
+    </h2>
     <p class="qref-desc">
       Complete I-Ching hexagram reference reframed for market trading. Click any hexagram to expand details.
-      Source: <code style="font-size:0.72rem;background:#e0f2fe;padding:1px 5px;border-radius:3px;">que_convert/*.md</code> translated to English with trading context.
+      Source: <code style="font-size:0.72rem;background:#e0f2fe;padding:1px 5px;border-radius:3px;">que_convert/*.md</code> — bilingual EN/VI with trading context.
     </p>
   </div>
   <div class="qref-grid" id="qref-grid">
@@ -2237,9 +2279,130 @@ function applyTracesOnLoad() {
   }
 }
 
-/* ── 64 Quẻ Reference rendering (KD-QREF-2) ─────────────────────────────── */
-/* Renders from window.__QUE_REFERENCE__ (loaded from que-reference.js).      */
-/* Trust-gate safe: uses .qref-* namespace ONLY. No .dot-*, no .category-chip.*/
+/* ── 64 Quẻ Reference rendering (KD-QREF-2 + KD-QREF-LANG) ─────────────────── */
+/* Renders from window.__QUE_REFERENCE__ (loaded from que-reference.js).          */
+/* Trust-gate safe: uses .qref-* namespace ONLY. No .dot-*, no .category-chip.    */
+/* KD-QREF-LANG: EN⇄VI toggle with localStorage persistence (file:// safe).       */
+
+/* Language state (KD-QREF-LANG) */
+let qrefLang = 'en';
+
+/* Outcome glosses by language */
+const OUTCOME_GLOSS = {
+  en: {
+    CAT: 'CAT (auspicious)',
+    HUNG: 'HUNG (inauspicious)',
+    VOCUU: 'VO CUU (no error)',
+    HOI: 'HOI (regret)',
+    LE: 'LE (danger)'
+  },
+  vi: {
+    CAT: 'CÁT (cát lành)',
+    HUNG: 'HUNG (hung hiểm)',
+    VOCUU: 'VÔ CỬU (không lỗi)',
+    HOI: 'HỐI (hối tiếc)',
+    LE: 'LỆ (nguy hiểm)'
+  }
+};
+
+/* Action glosses by language */
+const ACTION_GLOSS = {
+  en: {
+    GIU: 'GIU (hold)',
+    TIEN: 'TIEN (advance)',
+    LUI: 'LUI (retreat)',
+    THAN: 'THAN (caution)',
+    CHO: 'CHO (wait)'
+  },
+  vi: {
+    GIU: 'GIỮ',
+    TIEN: 'TIẾN',
+    LUI: 'LUI',
+    THAN: 'THẬN',
+    CHO: 'CHỜ'
+  }
+};
+
+/* QREF labels by language */
+const QREF_LABELS = {
+  en: {
+    title: '64 Quẻ — Trading Reference',
+    desc: 'Complete I-Ching hexagram reference reframed for market trading. Click any hexagram to expand details.',
+    trigrams: 'Trigrams',
+    upper: 'Upper',
+    lower: 'Lower',
+    favorable: 'Favorable Condition',
+    marketState: 'Market State Interpretation',
+    sixPhases: 'Six Phases (Hao)',
+    phase: 'Phase',
+    action: 'Action',
+    outcome: 'Outcome',
+    tradingGloss: 'Trading Gloss',
+    expand: 'Expand',
+    collapse: 'Collapse'
+  },
+  vi: {
+    title: '64 Quẻ — Tham Chiếu Giao Dịch',
+    desc: 'Tham chiếu 64 quẻ Kinh Dịch được diễn giải theo ngữ cảnh thị trường. Nhấn vào quẻ để xem chi tiết.',
+    trigrams: 'Quẻ Đơn',
+    upper: 'Ngoại quẻ',
+    lower: 'Nội quẻ',
+    favorable: 'Điều Kiện Thuận Lợi',
+    marketState: 'Phân Tích Trạng Thái Thị Trường',
+    sixPhases: 'Sáu Hào',
+    phase: 'Hào',
+    action: 'Hành Động',
+    outcome: 'Kết Quả',
+    tradingGloss: 'Diễn Giải Giao Dịch',
+    expand: 'Mở rộng',
+    collapse: 'Thu gọn'
+  }
+};
+
+/* Initialize qrefLang from localStorage (file:// safe) */
+function initQrefLang() {
+  try {
+    const stored = localStorage.getItem('kd-qref-lang');
+    if (stored === 'en' || stored === 'vi') {
+      qrefLang = stored;
+    }
+  } catch (e) {
+    // localStorage unavailable (file:// or privacy mode) - use default 'en'
+  }
+  syncLangButtons();
+}
+
+/* Set qrefLang and persist (file:// safe) */
+function setQrefLang(lang) {
+  if (lang !== 'en' && lang !== 'vi') return;
+  qrefLang = lang;
+  try {
+    localStorage.setItem('kd-qref-lang', lang);
+  } catch (e) {
+    // localStorage unavailable - ignore
+  }
+  syncLangButtons();
+  renderQueReference();
+}
+
+/* Sync toggle button active state */
+function syncLangButtons() {
+  const enBtn = document.getElementById('qref-lang-en');
+  const viBtn = document.getElementById('qref-lang-vi');
+  if (enBtn) {
+    enBtn.classList.toggle('active', qrefLang === 'en');
+  }
+  if (viBtn) {
+    viBtn.classList.toggle('active', qrefLang === 'vi');
+  }
+}
+
+/* Localized text helper */
+function loc(obj) {
+  if (!obj) return '';
+  if (typeof obj === 'string') return obj;
+  return obj[qrefLang] || obj.en || '';
+}
 
 function escapeHtml(str) {
   return String(str)
@@ -2250,23 +2413,25 @@ function escapeHtml(str) {
 }
 
 function outcomeClass(outcome) {
-  const o = (outcome || '').toUpperCase();
+  const o = (outcome || '').toUpperCase().replace(/\s+/g, '');
   if (o === 'CAT') return 'qref-outcome-cat';
   if (o === 'HUNG') return 'qref-outcome-hung';
-  if (o === 'VO CUU') return 'qref-outcome-vocuu';
+  if (o === 'VOCUU') return 'qref-outcome-vocuu';
   if (o === 'HOI') return 'qref-outcome-hoi';
   if (o === 'LE') return 'qref-outcome-le';
   return 'qref-outcome-vocuu';
 }
 
 function outcomeGloss(outcome) {
-  const o = (outcome || '').toUpperCase();
-  if (o === 'CAT') return 'CÁT (auspicious)';
-  if (o === 'HUNG') return 'HUNG (inauspicious)';
-  if (o === 'VO CUU') return 'VÔ CỬU (no error)';
-  if (o === 'HOI') return 'HỐI (regret)';
-  if (o === 'LE') return 'LỆ (danger)';
-  return outcome;
+  const o = (outcome || '').toUpperCase().replace(/\s+/g, '');
+  const glossMap = OUTCOME_GLOSS[qrefLang] || OUTCOME_GLOSS.en;
+  return glossMap[o] || outcome;
+}
+
+function actionGloss(action) {
+  const a = (action || '').toUpperCase();
+  const glossMap = ACTION_GLOSS[qrefLang] || ACTION_GLOSS.en;
+  return glossMap[a] || action;
 }
 
 function trendClass(trend) {
@@ -2281,13 +2446,29 @@ function toggleQueDetail(id) {
   if (detail && btn) {
     const isOpen = detail.classList.contains('open');
     detail.classList.toggle('open');
-    btn.textContent = isOpen ? 'Expand' : 'Collapse';
+    const labels = QREF_LABELS[qrefLang] || QREF_LABELS.en;
+    btn.textContent = isOpen ? labels.expand : labels.collapse;
   }
 }
 
 function renderQueReference() {
   const grid = document.getElementById('qref-grid');
   if (!grid) return;
+
+  const labels = QREF_LABELS[qrefLang] || QREF_LABELS.en;
+
+  // Update panel header and description
+  const titleElem = document.querySelector('.qref-header h2');
+  const descElem = document.querySelector('.qref-desc');
+  if (titleElem) {
+    titleElem.innerHTML = `${escapeHtml(labels.title)}<span class="qref-lang-switch">
+      <button class="qref-lang-btn active" id="qref-lang-en" type="button" onclick="setQrefLang('en')">EN</button>
+      <button class="qref-lang-btn" id="qref-lang-vi" type="button" onclick="setQrefLang('vi')">VI</button>
+    </span>`;
+  }
+  if (descElem) {
+    descElem.textContent = labels.desc;
+  }
 
   const data = window.__QUE_REFERENCE__;
   if (!data || !Array.isArray(data) || data.length === 0) {
@@ -2303,11 +2484,12 @@ function renderQueReference() {
     const phasesHtml = (q.phases || []).map(p => {
       const outCls = outcomeClass(p.outcome);
       const outGloss = outcomeGloss(p.outcome);
+      const phaseGloss = loc(p.gloss);
       return `<tr>
         <td style="font-weight:600;">${p.phase}</td>
-        <td><span class="qref-action-token">${escapeHtml(p.action)}</span></td>
+        <td><span class="qref-action-token">${escapeHtml(actionGloss(p.action))}</span></td>
         <td><span class="qref-outcome-token ${outCls}">${escapeHtml(outGloss)}</span></td>
-        <td>${escapeHtml(p.glossEn)}</td>
+        <td>${escapeHtml(phaseGloss)}</td>
       </tr>`;
     }).join('');
 
@@ -2316,38 +2498,38 @@ function renderQueReference() {
         <div class="qref-row-summary" onclick="toggleQueDetail(${q.id})">
           <span class="qref-id">${q.id}.</span>
           <span class="qref-name">${escapeHtml(q.name)} ${escapeHtml(q.chinese)}</span>
-          <span class="qref-meaning">${escapeHtml(q.coreMeaningEn)}</span>
-          <span class="qref-trend-chip ${trendCls}">${escapeHtml(q.marketTrendLabel)}</span>
-          <button class="qref-row-toggle" id="qref-toggle-${q.id}" type="button" onclick="event.stopPropagation();toggleQueDetail(${q.id})">Expand</button>
-          <span class="qref-warning">${escapeHtml(q.warningEn)}</span>
+          <span class="qref-meaning">${escapeHtml(loc(q.coreMeaning))}</span>
+          <span class="qref-trend-chip ${trendCls}">${escapeHtml(loc(q.marketTrendLabel))}</span>
+          <button class="qref-row-toggle" id="qref-toggle-${q.id}" type="button" onclick="event.stopPropagation();toggleQueDetail(${q.id})">${escapeHtml(labels.expand)}</button>
+          <span class="qref-warning">${escapeHtml(loc(q.warning))}</span>
         </div>
         <div class="qref-detail" id="qref-detail-${q.id}">
           <div class="qref-detail-grid">
             <div class="qref-detail-section">
-              <h4>Trigrams</h4>
+              <h4>${escapeHtml(labels.trigrams)}</h4>
               <p class="qref-trigrams">
-                Upper: <strong>${escapeHtml(q.upper)}</strong> (${escapeHtml(q.upperElement)})<br>
-                Lower: <strong>${escapeHtml(q.lower)}</strong> (${escapeHtml(q.lowerElement)})
+                ${escapeHtml(labels.upper)}: <strong>${escapeHtml(q.upper)}</strong> (${escapeHtml(q.upperElement)})<br>
+                ${escapeHtml(labels.lower)}: <strong>${escapeHtml(q.lower)}</strong> (${escapeHtml(q.lowerElement)})
               </p>
             </div>
             <div class="qref-detail-section">
-              <h4>Favorable Condition</h4>
-              <p>${escapeHtml(q.favorableEn)}</p>
+              <h4>${escapeHtml(labels.favorable)}</h4>
+              <p>${escapeHtml(loc(q.favorable))}</p>
             </div>
           </div>
           <div class="qref-detail-section">
-            <h4>Market State Interpretation</h4>
-            <p>${escapeHtml(q.stateInterpretationEn)}</p>
+            <h4>${escapeHtml(labels.marketState)}</h4>
+            <p>${escapeHtml(loc(q.stateInterpretation))}</p>
           </div>
           <div class="qref-detail-section">
-            <h4>Six Phases (Hào)</h4>
+            <h4>${escapeHtml(labels.sixPhases)}</h4>
             <table class="qref-phases-table">
               <thead>
                 <tr>
-                  <th>Phase</th>
-                  <th>Action</th>
-                  <th>Outcome</th>
-                  <th>Trading Gloss</th>
+                  <th>${escapeHtml(labels.phase)}</th>
+                  <th>${escapeHtml(labels.action)}</th>
+                  <th>${escapeHtml(labels.outcome)}</th>
+                  <th>${escapeHtml(labels.tradingGloss)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -2361,9 +2543,13 @@ function renderQueReference() {
   });
 
   grid.innerHTML = html;
+  syncLangButtons();
 }
 
 /* ── Init ────────────────────────────────────────────────────────────────── */
+
+// Initialize language preference from localStorage (KD-QREF-LANG)
+initQrefLang();
 
 // Apply traces BEFORE rendering (so initial render shows correct status)
 applyTracesOnLoad();

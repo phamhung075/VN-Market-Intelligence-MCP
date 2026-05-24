@@ -1,0 +1,186 @@
+{
+  "signal": "qa-kd-qref-lang",
+  "task": "KD-QREF-LANG-3",
+  "timestamp": "2026-05-24T19:55:19Z",
+  "verdict": "CHANGES_REQUESTED",
+  "agent": "qa",
+  "round": 1,
+
+  "check_1_build": {
+    "go_build": "EXIT:0 (CGO_ENABLED=0)",
+    "go_vet": "EXIT:0",
+    "go_test": "EXIT:0 (reading_composer PASS + primitives cached PASS)",
+    "verdict": "PASS"
+  },
+
+  "check_2_fence": {
+    "golangci_lint": "0 issues EXIT:0",
+    "hexagram_reference_go_imports": "strings only — no infra/application/interface",
+    "hexagram_data_go": "UNTOUCHED (git diff empty)",
+    "fence_a_b": "PASS",
+    "verdict": "PASS"
+  },
+
+  "check_3_i18n_coverage": {
+    "entries": 64,
+    "entry_ids": "1..64 contiguous sequential",
+    "localized_struct_count": "643 (64×10 data + 3 mapTrendToEnum variants)",
+    "empty_en_fields": 0,
+    "empty_vi_fields": 0,
+    "placeholder_vi_fields": 0,
+    "ascii_only_vi_fields_in_go_data": 0,
+    "que_reference_js_issues": 0,
+    "verdict": "PASS"
+  },
+
+  "check_4_vi_fidelity_spot_check": {
+    "id01_kien": {
+      "coreMeaning_vi": "Sức sáng tạo nguyên thủy, năng lượng dương cương kiện không ngừng vận hành",
+      "source_blockquote": "MATCH (verbatim trimmed)",
+      "warning_vi": "Dương cực sinh âm — ở đỉnh cao nhất thì suy thoái đã bắt đầu. Đừng kiêu căng tự mãn.",
+      "source_canh_bao": "MATCH (verbatim)",
+      "favorable_vi": "Năng lượng dương cực mạnh, vạn sự hanh thông nếu giữ chính đạo.",
+      "source_xu_huong": "MATCH (after THUẬN LỢI—)",
+      "phase1_gloss_vi": "Tích lũy năng lực, chưa nên xuất đầu lộ diện",
+      "source_hanh_dong": "MATCH"
+    },
+    "id29_tap_kham": {
+      "coreMeaning_vi": "Hiểm trở chồng hiểm trở, hố sâu nối hố sâu",
+      "source_blockquote": "MATCH (trimmed)",
+      "warning_vi": "Hoảng loạn hoặc liều lĩnh trong nguy hiểm làm xấu đi tình hình nghiêm trọng.",
+      "source_canh_bao": "SEMANTICALLY_EQUIVALENT (lightly paraphrased from source)",
+      "marketTrend": "unfavorable → Bất lợi (BẤT LỢI)",
+      "verdict": "AUTHENTIC"
+    },
+    "id64_vi_te": {
+      "coreMeaning_vi": "Chưa hoàn thành với tiềm năng phía trước",
+      "source_blockquote": "LIGHTLY TRIMMED (authentic)",
+      "marketTrend": "neutral → Trung tính (TRUNG TÍNH)",
+      "verdict": "AUTHENTIC"
+    },
+    "overall_verdict": "PASS — authentic Vietnamese from source, not machine-retranslated"
+  },
+
+  "check_5_gloss_enum": {
+    "outcome_tokens_in_data": ["CAT", "HUNG", "VO CUU", "HOI", "LE"],
+    "action_tokens_in_data": ["CHO", "GIU", "LUI", "THAN", "TIEN"],
+    "key_normalization": "outcomeGloss() applies .replace(/\\s+/g,'') — VO CUU → VOCUU matches map key VOCUU",
+    "tokens_render_blank": false,
+    "BLOCKING_vi_gloss_no_diacritics": {
+      "issue": "OUTCOME_GLOSS vi and ACTION_GLOSS vi values use ASCII approximations without Vietnamese diacritics",
+      "examples": {
+        "CAT.vi_actual": "CAT (tot lanh)",
+        "CAT.vi_required": "CÁT (cát lành)",
+        "HUNG.vi_actual": "HUNG (xau)",
+        "HUNG.vi_required": "HUNG (hung hiểm)",
+        "TIEN.vi_actual": "TIEN (tien len)",
+        "TIEN.vi_required": "TIẾN"
+      },
+      "file_line": "dashboard/index.html:2299-2323",
+      "ac_violated": "AC-2 (no English/non-authentic text in VI field), D4 (authentic VN)",
+      "severity": "BLOCKING"
+    }
+  },
+
+  "check_6_emit_determinism": {
+    "emit_exit": 0,
+    "entries": 64,
+    "do_not_edit_header": "PRESENT",
+    "nested_en_vi_shape": "CONFIRMED",
+    "re_emit_diff": "timestamp + commit hash only (data identical)",
+    "verdict": "PASS",
+    "note": "QA re-emitted during test then restored via go run emit — tree matches dev intent"
+  },
+
+  "check_7_trust_gate": {
+    "dash_check_exit": 0,
+    "dotsGreen": 17,
+    "dotsRed": 0,
+    "jsErrors": 0,
+    "pageErrors": 0,
+    "categoryChips": {"Valid Input": 6, "Edge Case": 6, "Bad Input -> Error": 5},
+    "badLabels": [],
+    "verdict": "PASS",
+    "vi_state_static_check": {
+      "localStorage_try_catch": "PRESENT (lines 2356-2363, 2371-2375)",
+      "loc_fallback": "PRESENT (obj[qrefLang] || obj.en || '')",
+      "setQrefLang_guard": "PRESENT (lang !== 'en' && lang !== 'vi' → return)"
+    }
+  },
+
+  "check_8_persistence_default": {
+    "default_lang": "en (let qrefLang = 'en' line 2288)",
+    "BLOCKING_wrong_localStorage_key": {
+      "key_implemented": "qrefLang",
+      "key_required": "kd-qref-lang",
+      "file_line": "dashboard/index.html:2357 (getItem) + 2372 (setItem)",
+      "ac_violated": "D2 (binding), QA-3 (persistence), AC-4",
+      "severity": "BLOCKING"
+    },
+    "try_catch_guards": "PRESENT — storage error never throws",
+    "fallback_to_en": "PRESENT"
+  },
+
+  "check_9_forbidden_tokens": {
+    "new_code_dot_star": 0,
+    "new_code_category_chip": 0,
+    "new_code_not_wired": 0,
+    "new_code_fetch": 0,
+    "new_code_cdn_url": 0,
+    "new_code_sandbox_traces_touch": 0,
+    "new_code_localStorage_outside_try_catch": 0,
+    "verdict": "PASS"
+  },
+
+  "check_10_scope": {
+    "modified": ["apps/kinh-dich-service/dashboard/index.html", "apps/kinh-dich-service/dashboard/que-reference.js", "apps/kinh-dich-service/pkg/module/reading_composer/hexagram_reference.go"],
+    "cmd_sandbox_main_go": "UNCHANGED",
+    "sandbox_traces_js": "UNTOUCHED",
+    "pilot_status_kinh_dich_json": "UNTOUCHED",
+    "foreign_zone_files": 0,
+    "verdict": "PASS"
+  },
+
+  "non_blocking_notes": [
+    {
+      "id": "NB-1",
+      "file_line": "dashboard/index.html:2481 (toggleQueDetail:2441)",
+      "issue": "Expand/Collapse button text hardcoded English — QREF_LABELS has expand/collapse keys but toggleQueDetail() uses hardcoded strings",
+      "severity": "NON-BLOCKING (minor UX, not a data gap)"
+    },
+    {
+      "id": "NB-2",
+      "file_line": "dashboard/index.html:1186,1192",
+      "issue": "Panel h2 title and .qref-desc text not dynamically updated on toggle — QREF_LABELS has title/desc keys but renderQueReference() does not update those DOM elements",
+      "severity": "NON-BLOCKING (D5 calls for full localization; minor chrome items)"
+    },
+    {
+      "id": "NB-3",
+      "file_line": "dashboard/index.html:2528-2537",
+      "issue": "initQrefLang() called before applyTracesOnLoad() — architect spec says traces first; no functional impact since they are independent",
+      "severity": "NON-BLOCKING"
+    }
+  ],
+
+  "blocking_issues": [
+    {
+      "id": "B-1",
+      "file_line": "dashboard/index.html:2357,2372",
+      "issue": "localStorage key is 'qrefLang' — PO decision D2 and QA-3 binding spec require 'kd-qref-lang'",
+      "fix": "Change localStorage.getItem('qrefLang') and localStorage.setItem('qrefLang', lang) to use 'kd-qref-lang'",
+      "ac_violated": "D2, QA-3, AC-4"
+    },
+    {
+      "id": "B-2",
+      "file_line": "dashboard/index.html:2299-2323",
+      "issue": "OUTCOME_GLOSS.vi and ACTION_GLOSS.vi use ASCII approximations without Vietnamese diacritics (e.g. 'CAT (tot lanh)' instead of 'CÁT (cát lành)', 'TIEN (tien len)' instead of 'TIẾN')",
+      "fix": "Replace all vi values in OUTCOME_GLOSS and ACTION_GLOSS with architect-specified authentic Vietnamese strings with proper diacritics",
+      "ac_violated": "AC-2, D4 (authentic VN), QA-2 (spot-check 8 que)"
+    }
+  ],
+
+  "overall_verdict": "CHANGES_REQUESTED",
+  "blocking_count": 2,
+  "non_blocking_count": 3,
+  "next": "dev-kinh-dich"
+}

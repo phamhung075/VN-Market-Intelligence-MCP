@@ -1,25 +1,24 @@
 # PO Notebook
 
-**Cycle:** PDF-INSPECT REOPEN-2 FINAL RE-SIGN — DONE on REAL data after a premature first close + 2 real-data reopens.
-**Last update:** 2026-05-24T19:36:04Z
-**Status:** RATIFIED. User-facing URL `http://localhost:3000/api/bctc-inspect` LIVE NOW. Meta-lesson recorded. PIPELINE complete.
+**Cycle:** KD-QREF-LANG-EXIT — final PO sign-off on EN/VI language switch (64-Quẻ Trading Reference). APPROVED.
+**Last update:** 2026-05-24T20:04:51Z
+**Status:** SIGNED OFF. Manifest handed to MAIN TERMINAL to commit in-tree. PIPELINE complete.
 
 ---
 
-## 2026-05-24T19:34Z — PDF-INSPECT: final re-sign on REAL data (3rd close, the honest one)
+## 2026-05-24T20:04Z — KD-QREF-LANG sign-off (POST-PILOT ENHANCEMENT #2)
 
-QA REOPEN-2 PASS (`3098c69d`) on the REAL deployed container (mcp-server rebuilt from `69da9d01`, port 3000): `/api/bctc-inspect/docs` count=14 real BCTC docs (NOT 0, NOT 15,552 junk), 12 has_pdf, 14 has_ocr, 7 decimal-shift flags. Playwright: select VNM Q4 2025 → LEFT real 4.1MB VNM PDF rendered (signed cover), RIGHT decimal-shift banner (OCR 0.0001 vs API 2,840,370 M VND) + real Vietnamese OCR. Safety/regression/write-safety PASS, 64 tests, tsc 0. PO independent spot-check (disk+git): `69da9d01`/`0245ff4c`/`3098c69d` all zero-foreign; deliverable files on disk.
+Closed the dev-team chain architect → dev-kinh-dich → qa(CHANGES_REQUESTED) → fixer → qa(Round-2 APPROVED) → PO(EXIT). EN ⇄ VI toggle on `.qref-*` panel: full EN + full VI views, persisted `localStorage["kd-qref-lang"]`, default EN. QA Round-2 APPROVED corroborated by my independent re-check.
 
-USER ACCEPTANCE GENUINELY MET: the VNM decimal-shift bug is visible BY EYE beside the rendered real PDF — the literal user intent ("select a PDF → original LEFT, extracted RIGHT, side-by-side, to compare").
+PO re-verification: `git diff --name-only HEAD -- apps/kinh-dich-service/` = exactly 3 A5 files (index.html, que-reference.js, hexagram_reference.go). sandbox-traces.js / cmd/sandbox/main.go / docs/data/pilot-status-kinh-dich.json all diff-EMPTY (FROZEN intact). dash-check 17green/0red/0JS/0page; go build+test EXIT:0; A3 VI diacritics exact; QREF_LABELS 14-key en/vi parity. All D1–D5 + ACs PASS.
 
-HONEST TRAIL (not erased in TASKS.md/SPRINT_GOAL.md): premature first close `97cd5763` (17:47Z) proven on FIXTURES (uvicorn localhost:15001) → empty on deploy → REOPEN-1 (inspector read wrong DB `pdf_extractor.db` 15,570 junk rows; MOVED pdf-extractor→mcp-server, owner dev-pdf-extractor→dev-mcp-server, built `/api/bctc-inspect` `1b5799fb`; QA found all 14 rows pdf_path=NULL, count:0 `127cb347`) → REOPEN-2 (backfill `pdf_path` 14→17 PDFs + all-rows LIST + secondary OCR join `69da9d01`; QA PASS `3098c69d`).
+GOTCHA caught: QA draft manifest listed `qa.md` but `git status` shows qa.md CLEAN (not dirty) — excluded. Also `dev-kinh-dich.md` CLEAN — excluded. Only architect.md + fixer.md notebooks dirty this chain. Untracked `apps/kinh-dich-service/sandbox` is an unrelated parallel-pilot artifact — excluded.
 
-OUTPUTS this cycle: TASKS.md PDF-INSPECT block (corrected done-condition + reopen trail + 11-row task table); SPRINT_GOAL.md "Prior Sprint Closure — PDF-INSPECT" section (KD-QREF-LANG vision kept); handoff `[QA] REOPEN-2 PASS` already on record; sign-off signal `po-pdf-inspect-reopen2-signoff-20260524T193604Z.json` (supersedes `po-20260524T174710Z.json`); this notebook. NO pilot-status edit. NO send_telegram (not PO surface).
+Outputs: handoff TASK_KD-QREF-LANG.md PO sign-off block + task table flipped DONE; this notebook. NO pilot-status edit, NO sprint goal touched (single-zone follow-on, not a sprint). Commit deferred to MAIN TERMINAL (commit-mutex enum defect — gateway absent + vn-market enum gap; same path as KD-QREF `0b401124`).
 
 ## Carry-over
-- LESSON (META — the important one, 3 straight defects same root): for any DATA-BOUND feature, BOTH the DESIGN and the QA gate MUST be validated against a live sample of the REAL store — real row counts AND null-rates of the relied-upon columns AND the ingest path that populated current rows — not schema-existence or seeded fixtures. Premature sign-off happened because acceptance was proven on FIXTURES, not the deployed real-data path. Same FAMILY as file:// L9 (verify under the user's REAL path). Bake into every architect design that reads an existing table: before specifying a `WHERE col IS NOT NULL` filter, `docker exec` the null-rate on REAL data first; if >0, design the degrade path first.
-- PDF-INSPECT out-of-scope follow-ups (surfaced, do NOT block): (i) `fetchParseAndStoreBctc.ts:645 tryNewsChainFallback` inserts pdfPath:null even when a PDF exists → dev-mcp-server pipeline task (findExistingPdf at insert time); (ii) `pdf_extractor.db` 15,570 junk test rows in prod volume → ops/dev cleanup. Both recorded in signal + TASKS.md.
-- PDF-INSPECT live NOW at `http://localhost:3000/api/bctc-inspect` (no further deploy needed; QA already rebuilt mcp-server). Old `localhost:15001`/`5001/inspect` are fixture-only/deprecated.
-- COMMIT: dev agents can't acquire commit-mutex (gateway absent + task_claim enum lacks kind). My docs staged-clean in-tree; MAIN TERMINAL serializes the commit (heavy fleet race — many foreign M/?? in tree). Explicit-file staging only.
-- KD-QREF-LANG: still BLOCKED behind architect KD-QREF-LANG-1 (i18n design). NF-LD-4 OPEN behind architect; stock-price Phase-0 READY; TA Phase-2 in flight; pdf-extractor Phase-1 OPEN.
-- PATTERN: pdf-extractor SCALE pilot stays DONE 12/12 frozen — this inspector is a POST-PILOT dev tool on mcp-server, NOT a pilot task; pilot-status never touched.
+- COMMIT MANIFEST handed to main terminal (10 files, explicit-file staging, NO -A/.): apps/kinh-dich-service/{dashboard/index.html, dashboard/que-reference.js, pkg/module/reading_composer/hexagram_reference.go}; docs/handoffs/TASK_KD-QREF-LANG.md; docs/po-decisions/2026-05-24-kinh-dich-que-reference-language-switch.md; docs/signals/{po-kd-qref-lang-20260524T185115Z.json, qa-kd-qref-lang-2026-05-24T195519Z.json}; docs/agent-memory/notebooks/{architect.md, fixer.md, po.md}. Commit msg: `feat(kinh-dich/dashboard): KD-QREF-LANG EN/VI language switch on 64-Quẻ Trading Reference panel`.
+- Kinh-dich pilot stays DONE 12/12 verdict=scale FROZEN — both KD-QREF (`0b401124`) and KD-QREF-LANG are POST-PILOT enhancements, pilot-status never touched.
+- LESSON: at every sign-off run my OWN `git status --porcelain` on each manifest file — upstream agents over-list (QA listed clean qa.md). Stage only genuinely-dirty AND in-scope. Heavy fleet working tree (api-gateway traces, pdf-extractor, stock-price, hundreds of context-bloat signals) — never -A/.
+- Prior cycle (PDF-INSPECT) META-LESSON still live: DATA-BOUND features must validate design+QA against REAL store (row counts + null-rates), not fixtures. Bake into architect designs reading existing tables.
+- Other in-flight (not mine to act this cycle): NF-LD-4 OPEN behind architect; stock-price Phase-0 READY; TA Phase-2 in flight; pdf-extractor Phase-1 OPEN.
