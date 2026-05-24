@@ -1,0 +1,8 @@
+{
+  "primitive": "decimal_normalizer",
+  "inputs": {
+    "raw_string": "1234.5",
+    "unit_hint": "billion_vnd"
+  },
+  "expected": 1234.5
+}

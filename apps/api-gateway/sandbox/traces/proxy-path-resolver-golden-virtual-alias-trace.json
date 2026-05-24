@@ -1,0 +1,19 @@
+{
+  "scenario": "golden-virtual-alias",
+  "scenario_file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/api-gateway/pkg/primitive/proxy-path-resolver/scenarios/golden-virtual-alias.json",
+  "tier": "primitive",
+  "primitive": "proxy-path-resolver",
+  "status": "PASS",
+  "intentional_failure_fixture": false,
+  "inputs": {
+    "reqPath": "/api/push-news",
+    "noProbe": true
+  },
+  "expected": {
+    "resolvedPath": "/api/push-news"
+  },
+  "actual": {
+    "resolvedPath": "/api/push-news"
+  },
+  "run_at": "2026-05-24T08:06:49Z"
+}

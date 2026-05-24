@@ -1,0 +1,13 @@
+{
+  "scenario": "g11-canary-cascade",
+  "scenario_file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/api-gateway/pkg/primitive/route-service-matcher/scenarios/g11-canary-cascade.json",
+  "tier": "primitive",
+  "primitive": "route-service-matcher",
+  "status": "PASS",
+  "intentional_failure_fixture": true,
+  "doc_only": true,
+  "inputs": null,
+  "expected": null,
+  "actual": null,
+  "run_at": "2026-05-24T08:06:49Z"
+}

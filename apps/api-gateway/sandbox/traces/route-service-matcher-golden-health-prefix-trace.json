@@ -1,0 +1,19 @@
+{
+  "scenario": "golden-health-prefix",
+  "scenario_file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/api-gateway/pkg/primitive/route-service-matcher/scenarios/golden-health-prefix.json",
+  "tier": "primitive",
+  "primitive": "route-service-matcher",
+  "status": "PASS",
+  "intentional_failure_fixture": false,
+  "inputs": {
+    "path": "/health/macro",
+    "prefixToStrip": "/health/"
+  },
+  "expected": {
+    "serviceName": "macro"
+  },
+  "actual": {
+    "serviceName": "macro"
+  },
+  "run_at": "2026-05-24T08:06:49Z"
+}

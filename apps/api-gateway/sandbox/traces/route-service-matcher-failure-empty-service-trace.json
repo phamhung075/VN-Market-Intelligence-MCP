@@ -1,0 +1,19 @@
+{
+  "scenario": "failure-empty-service",
+  "scenario_file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/api-gateway/pkg/primitive/route-service-matcher/scenarios/failure-empty-service.json",
+  "tier": "primitive",
+  "primitive": "route-service-matcher",
+  "status": "PASS",
+  "intentional_failure_fixture": true,
+  "inputs": {
+    "path": "/health/",
+    "prefixToStrip": "/health/"
+  },
+  "expected": {
+    "serviceName": ""
+  },
+  "actual": {
+    "serviceName": ""
+  },
+  "run_at": "2026-05-24T08:06:49Z"
+}

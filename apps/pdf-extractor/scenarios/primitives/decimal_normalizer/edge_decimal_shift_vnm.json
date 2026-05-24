@@ -1,0 +1,8 @@
+{
+  "primitive": "decimal_normalizer",
+  "inputs": {
+    "raw_string": "0.000051",
+    "unit_hint": "raw_micro"
+  },
+  "expected": 51.0
+}

@@ -1,0 +1,32 @@
+{
+  "scenario": "module-route-story",
+  "scenario_file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/api-gateway/pkg/module/gateway/scenarios/module-route-story.json",
+  "tier": "module",
+  "module": "gateway",
+  "status": "PASS",
+  "intentional_failure_fixture": false,
+  "inputs": {
+    "prefixToStrip": "/",
+    "reqPath": "/macro/indicators",
+    "statuses": {
+      "macro": "ok",
+      "stock": "ok",
+      "ta": "ok"
+    }
+  },
+  "expected": {
+    "serviceName": "macro",
+    "downstreamPath": "/indicators",
+    "targetURL": "http://macro-service:8081",
+    "found": true,
+    "overall": "ok"
+  },
+  "actual": {
+    "serviceName": "macro",
+    "downstreamPath": "/indicators",
+    "targetURL": "http://macro-service:8081",
+    "found": true,
+    "overall": "ok"
+  },
+  "run_at": "2026-05-24T08:06:49Z"
+}

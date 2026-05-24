@@ -1,0 +1,22 @@
+{
+  "scenario": "golden-degraded",
+  "scenario_file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/api-gateway/pkg/primitive/overall-status-computer/scenarios/golden-degraded.json",
+  "tier": "primitive",
+  "primitive": "overall-status-computer",
+  "status": "PASS",
+  "intentional_failure_fixture": false,
+  "inputs": {
+    "statuses": {
+      "mcp": "ok",
+      "stock": "down",
+      "ta": "ok"
+    }
+  },
+  "expected": {
+    "overall": "degraded"
+  },
+  "actual": {
+    "overall": "degraded"
+  },
+  "run_at": "2026-05-24T08:06:49Z"
+}
