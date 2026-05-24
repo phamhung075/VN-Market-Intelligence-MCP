@@ -87,3 +87,34 @@ Pre-baked `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` into Doc
 - Commit: `95f9f539`
 
 **Final zone health:** 81/81 tests GREEN, 16/16 primitive scenarios GREEN, 2/2 module scenarios GREEN, 24/24 dash-check PASS, env audit empty. main.py 74L. All 5 primitives wired in module. Dashboard full Phase 2. Next: P2-G7 (G7 env-audit hard gate + edit-JSON-rerun).
+
+---
+
+### 2026-05-24 — TASKS P2-G7 + P2-A dev-side (SCALE pilot Phase 2)
+
+**P2-G7 — G7 env-audit HARD gate + edit-JSON-and-rerun proof**
+
+- `sandbox/__main__.py`: upgraded env-audit from WARN-only (Phase 1) to HARD FAIL. If any forbidden credential env var present → exits 1 immediately, no scenarios run.
+- `_FORBIDDEN_ENV_REGEX`: anchored regex constant covering DB_PATH/DB_*/LANCEDB_*/HF_TOKEN/HUGGINGFACE_*/OPENAI_API_KEY/EMBEDDING_MODEL/DATABASE_URL/API_KEY/SECRET/TOKEN/PASSWORD families.
+- `_ENV_ALLOWLIST = {"HF_HUB_OFFLINE"}`: R-5 safety flag preserved — NOT blocked. CTX_ADVISOR_* also unblocked (not credentials).
+- `_collect_scenario_files`: added `known_bad_` prefix to exclusion filter (prep for G8 known-bad artefacts).
+- `sandbox/README.md`: documented hard-fail gate, forbidden key list, proof commands, edit-rerun cycle, known-bad naming.
+- Edit-JSON-rerun proof: `similarity_scorer/golden.json` distance changed 0.5→0.7 (similarity 0.6667→0.5882), then reverted. Dashboard trace regenerated, dash-check 25/25 PASS (was 24).
+- Proofs: (a) clean env → EXIT:0 16/16 GREEN; (b) `LANCEDB_PATH=/tmp/x` → EXIT:1 "[SANDBOX ERROR] Forbidden credential env vars detected: ['LANCEDB_PATH']"; (c) `HF_HUB_OFFLINE=1` → EXIT:0 16/16 GREEN.
+- Commit: `fd775e55` | sandbox: 16/16+2/2 GREEN | pytest: 81/81 | env audit: empty | dash-check: 25/25
+
+**P2-A dev-side — G4 import-linter fence infrastructure**
+
+- `apps/rag-service/.importlinter`: 3 contracts (INI format):
+  - `fence-c-layered-ddd`: layers type, order interface>application>domain
+  - `fence-a-primitive-independence`: independence type, 5 primitives mutual independence
+  - `fence-b-retrieval-no-infra`: forbidden type, domain.module.retrieval cannot import infrastructure
+- `apps/rag-service/domain/primitive/__init__.py`: created (was missing — import-linter needs proper Python packages to traverse)
+- `apps/rag-service/pyproject.toml`: `import-linter>=2.11` added to dev extras; `[tool.importlinter]` section mirrors contracts
+- `.github/workflows/rag-service-py-lint.yml`: CI job, working-directory=apps/rag-service, runs lint-imports
+- `rag-pre-ci` tag: `c061a740` (created before P2-A commit per protocol)
+- lint-imports: `Contracts: 3 kept, 0 broken` EXIT:0. 32 files analyzed, 19 dependencies.
+- Status: IN-PROGRESS (dev-fence-built). Awaiting QA for violation proof (AC-4/AC-8 co-sign).
+- Commit: `8a410685` | sandbox: 16/16+2/2 GREEN | pytest: 81/81 | env audit: empty
+
+**Final zone health (P2-G7+P2-A cycle):** 81/81 tests GREEN, 16/16+2/2 sandbox GREEN, 25/25 dash-check PASS, env audit empty. Fence: 3 contracts KEPT. Next: QA does P2-A violation proof + P2-G8 deliberate-break proof.
