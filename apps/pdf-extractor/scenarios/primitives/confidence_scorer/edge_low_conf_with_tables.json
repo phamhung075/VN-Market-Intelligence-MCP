@@ -1,0 +1,11 @@
+{
+  "primitive": "confidence_scorer",
+  "inputs": {
+    "ocr_confidence": 0.3,
+    "table_count": 3
+  },
+  "expected": {
+    "pass": true,
+    "quality_score": 0.3
+  }
+}

@@ -1,37 +1,30 @@
 # PO Notebook
 
-**Cycle:** c294 (news-fetch SCALE) — Phase-1 CLOSED/APPROVED + Phase-2 OPEN + PO skeleton task plan.
+**Cycle:** c295 (news-fetch SCALE Phase-2) — P2-NF-F G9 Path-B verification.
 **Last update:** 2026-05-24
-**Status:** news-fetch Phase-1 = APPROVED (QA gate PASS @c8a2f7cb). Phase-2 = OPEN AWAITING-PLAN, PO skeleton 10 tasks (P2-NF-A..Z). SI-3 LANDED → G4 unblocked. Next dispatch = P2-NF-A to developer (WIP=1).
+**Status:** news-fetch Phase-2 OPEN. P2-NF-F G9 verdict = **FAIL** (honest). Dashboard CORS-blocked under file://. NEW dev task P2-NF-F1 needed before G9 can grade PASS. G9 NOT flipped (TBD); decisionMatrix untouched (§4.5). Commit a0ae2c58.
 
 ---
 
-## c294 · 2026-05-24T08:45Z — news-fetch Phase-1 close + Phase-2 open
+## c295 · 2026-05-24T08:49Z — P2-NF-F G9 Path-B (PO headless capture)
 
-### Verified BEFORE close (ground truth)
-- QA signal qa-news-fetch-p1-approved-20260524T000001Z.json verdict=APPROVED round2; handoff TASK_P1-NF-QA.md verdict APPROVED. Fixer @c8a2f7cb (models.ts:43 FetchResult.method union +'module') = commit (git cat-file). Checks: sandbox 13/13 exit0, bun test 233 pass, tsc exit0 (was exit2/5 TS2769), DDD fence PASS, security/env-audit PASS (CTX_ADVISOR_* excluded), G12 streak 3/3 (P1-B1+P1-C+P1-D).
-- SI-3 LANDED @388703b7 (signal architect-si3-ts-fence-done; design 2026-05-23-ts-fence-spike/00-design.md FINAL, Option A eslint-plugin-boundaries). G4 AC verbatim in §5. G4 unblocked — NO architect re-design.
+### What I did
+- Ran G9 NOW in clean all-green pre-injection state (sandbox 13/13 PASS regenerated first).
+- No dash-check.mjs existed for news-fetch → CREATED apps/news-fetch/dashboard/dash-check.mjs (mirrors fleet precedent apps/kinh-dich-service/dashboard/dash-check.mjs; adapted to news-fetch DOM: badge classes + panel/card IDs; asserts 3 panels, 6 cards, badge honesty, ≥1 green primitive story, console_errors, external network calls). playwright-core local; node v22.22.2; chromium in ~/Library/Caches/ms-playwright.
 
-### CHARTER READING (§4.5) — EARNED-PENDING, NOT YES
-- Decisive precedent: pdf-extractor + kinh-dich both kept goal status=TBD at Phase-1 close, goalsEarned=0; evidence recorded in goals[].phase1_state. Flip to YES is PO-only ATOMIC at 12/12 terminal Phase-3. Did the same here. Intent said "YES or EARNED-PENDING — your call"; §4.5 + fleet precedent = HOLD as EARNED-PENDING.
+### VERDICT = FAIL (honest, NOT false-green)
+- Structure PASSES: 3 panels (primitives/module/microservice), 6 cards (4/1/1), honest NOT-RUN, 0 external net, 0 page errors. Screenshot apps/news-fetch/dashboard/render-check.png confirms clean layout.
+- BLOCKER: loader uses synchronous XMLHttpRequest('results.json'). Headless Chromium (and ALL modern browsers) BLOCK it by CORS under origin 'null' (file://→file:// is cross-origin). 2 console errors. Result: all 6 badges STUCK at NOT-RUN despite valid 13/13 PASS results.json in same dir; footer 'Last run: not yet'. HTML comment 'works from file:// zero network' + 'status 0 = file:// success' is FALSE for Chromium.
+- G8 honesty intact (shows NOT-RUN, not fake green) BUT G9 fails: cannot point to a green card proving a primitive works from dashboard alone via canonical file:// method.
 
-### Actions taken (SSOT pilot-status-news-fetch.json)
-- phase1 ACTIVE→APPROVED + gate fields (PASS/qa/c8a2f7cb/signal/handoff). phase 1→2. phase2 NOT-STARTED→AWAITING-PLAN (openedAt/By + si3_dependency_finding + skeletonTaskLedger 10 tasks + dispatchOrder + preRevertTags).
-- goals[].phase1_state on 8: G1/G2/G3/G5/G6/G7/G12 EARNED-PENDING, G8 PARTIAL. phase2Bucket on 5: G4(A-D)/G8(E)/G9(F)/G10(G,H)/G11(I). G12 g12Streak completed=3 streakComplete=true. NO status flip. goalsEarned=0, decisionMatrix all TBD (verified).
-- G4 calibration: SI-3 §5 verbatim, SINGULAR src/primitive patterns (dev-flow plural is STALE), R-2 fallback noted, pre-revert tag news-fetch-pre-ci.
-- Authored docs/architecture-briefs/2026-05-22-refactor/scale/news-fetch-phase-2-task-plan.md (PO skeleton — dispatchable). TASKS.md Phase-1→CLOSED + new Phase-2 backlog. pipeline-state news_fetch_pilot block + dispatch fields.
+### ROOT CAUSE vs precedent (key learning)
+- kinh-dich PASSED G9 because index.html INLINES trace (window.__PRIMITIVES_DATA__ = [...] <script>) — zero XHR, renders green headlessly, no flags. news-fetch diverged to external XHR-fetch → CORS-blocked. Fix = inline-trace pattern (developer, zone apps/news-fetch/). PO does NOT write the fix.
 
-### SI-3 FINDING (intent question)
-- EXISTS + LANDED. No dependency block. Owner = developer (fence) + qa (violation proof). NO new SI-3 task.
+### Actions (SSOT pilot-status-news-fetch.json)
+- goals[G9].phase2 = full trustContractVerdict + blocker + fixOwner/fixDispatch. phase2.progressNotes appended. G9 status STAYS TBD; decisionMatrix all TBD (verified via node JSON.parse). goalsEarned still 0.
+- Signal docs/signals/po-20260524T084949Z.json (type g9-verdict, recommends NEW task P2-NF-F1 → developer).
 
-### GOTCHA
-- news-fetch src dirs SINGULAR (src/primitive/, src/module/) — matches SI-3 §3.2 verbatim. dev-news-fetch/main.md Fence note uses PLURAL (src/primitives/) = STALE. Dev must use SI-3 §5 not the flow note.
-- G5 already DONE in Phase 1 (P1-G5) → news-fetch-pre-delete tag NOT needed in Phase 2.
-- Fleet commit-race active — explicit-file stage + verify-HEAD-stat every commit.
-
----
-
-## Carry-over
-- news-fetch: WAITING dispatcher to route P2-NF-A (news-fetch-pre-ci tag) → developer (WIP=1). Then B→C→D (G4) → E(G8) + G→H(G10) → I(G11); F(G9 PO Playwright) async PO track; Z close-gate. PO owns P2-NF-F (G9) — Playwright headless render apps/news-fetch/dashboard/index.html. WORK telegram note PENDING dispatcher (PO lacks MCP) — signal po-20260524T084509Z.json.
-- news-fetch 12/12 remaining: G4, G8-full, G9, G10, G11. 7 EARNED-PENDING + G8 PARTIAL carry forward. Matrix close PO-only atomic Phase-3 (Speed=G10+G11; Trust=G9+G8; Scale=all12+sprint≤6).
-- Parallel pilots: pdf-extractor Phase-2 AWAITING-PLAN (architect Python plan); kinh-dich Go Phase-2; rag-service Phase-2; alert-engine 13/14; macro/stock-price/TA terminal.
+### GOTCHA / carry-over
+- **G6 retro-flag**: G6 was EARNED-PENDING via static analysis + results.json inspection, NOT headless render. G9 just proved the headless render path is broken — re-confirm G6 after P2-NF-F1 fix.
+- **Fleet commit-race LIVE**: index repeatedly picked up foreign staged files mid-cycle (kinh-dich _deprecated batch, then pdf-extractor confidence_scorer). Had to `git reset HEAD <dir>` twice + restage my 5 files immediately before commit. Verify `git show --stat HEAD` = only my files. docs/data is gitignored → pilot-status needs `git add -f` (file is tracked).
+- **NEXT**: dispatch P2-NF-F1 (developer) to fix dashboard file:// rendering (inline-trace), then PO re-runs P2-NF-F via dash-check.mjs to earn G9 PASS. P2-NF-Z close-gate blocks on P2-NF-F + P2-NF-I.
