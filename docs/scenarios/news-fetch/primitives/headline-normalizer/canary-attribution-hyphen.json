@@ -1,0 +1,8 @@
+{
+  "primitive": "headline-normalizer",
+  "function": "normalizeHeadline",
+  "input": { "raw": "Vietnam-US trade agreement signed - Reuters" },
+  "expectedOutput": "Vietnam-US trade agreement signed",
+  "scenarioType": "edge",
+  "note": "G11 regression canary (Trial-2): headline contains an internal hyphen (Vietnam-US) that must NOT be stripped. Only the trailing attribution suffix ' - Reuters' should be removed. Coupled to source-dedup-key via module layer: if headline-normalizer over-strips (removes at first hyphen), the dedup key built from the stripped headline diverges — multi-source-ingest module scenario flips RED."
+}

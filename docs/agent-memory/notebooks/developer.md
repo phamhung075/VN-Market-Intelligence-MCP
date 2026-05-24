@@ -1,32 +1,5 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-24 | **Cycle:** commit-mutex structural fix | **Sprint:** concurrent / important-not-urgent
-
-## Session 2026-05-24 — Commit-Mutex Structural Fix (C-1..C-4 PO ratification)
-
-**Task:** Implement fleet-wide commit-mutex advisory lock on `main`. PO-RATIFIED-WITH-CONDITIONS.
-
-**What was done:**
-- Authored `.claude/skills/commit-mutex/SKILL.md` — full acquire/critical-section/release protocol, backoff table (6 retries, exp+jitter, ~125s max), fail-CLOSED C-2 path, foreign-restore rule, give-up BUG-log
-- Amended `docs/protocols/task-lock-protocol.md` — added 4th lock kind `commit-mutex`, TTL table row, singleton rule
-- Wired skill into ALL 35 flow files containing real `git commit` operations (39 actual commit sites total; 4 files contain only comments/references — not wired, correctly skipped)
-- Batches: B1 (`2c727d9d` CLEAN) + B2 (`3eb3117c` CLEAN) + B3 (`10ef7fdd` CLEAN) + B4 (`1eee501d` CLEAN) + B5 (race-bundled into `234c0bef`) + B6 (`3afe5feda` CLEAN — private index technique)
-
-**Race incidents during impl (C-3 honest disclosure):**
-1. Skill file (`c2ca404a`) bundled into news-fetch P2-G10-inject commit by concurrent agent
-2. Batch 5 edits (`234c0bef`) bundled into kinh-dich P2-J commit — content correct, message wrong
-3. Foreign rag-service files captured under batch 5 message (`4361acc0`) — empty of own content
-4. Introduced `GIT_INDEX_FILE=<private>` technique for batch 6 to bypass race
-
-**C-1 status:** COMPLETE — all 39 real commit sites wired
-**C-2 status:** COMPLETE — fail-CLOSED path in skill Step 1
-**C-3 status:** PARTIAL — 2 race incidents; private index technique solves it post-hoc
-**C-4 status:** COMPLETE — jitter formula + BUG-log give-up in skill
-
-**Next:** PO smoke test + interim serialization lift (separate PO signal after 1 clean observed cycle)
-
-**Anchor:** `debba8eaff0724d1fb32fc9d28640201cc32d1cc` INTACT.
-
 **Last updated:** 2026-05-24 | **Cycle:** news-fetch Phase 1 P1-G5 | **Sprint:** news-fetch SCALE pilot Phase 1
 
 ## Session 2026-05-24 — news-fetch Phase 1 P1-G5 (G3 + G5 rewire)

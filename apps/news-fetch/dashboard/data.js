@@ -2,11 +2,11 @@
 // Inline sidecar: replaces XHR for file:// compatibility (zero CORS).
 // Regenerate: bun run src/sandbox/runner.ts --tier=all --module=news-fetch --scenario=all --output=dashboard/results.json
 window.__NEWS_FETCH_DATA__ = {
-  "runAt": "2026-05-24T09:11:31.139Z",
+  "runAt": "2026-05-24T09:20:57.863Z",
   "tier": "all",
   "module": "news-fetch",
   "totals": {
-    "pass": 13,
+    "pass": 16,
     "fail": 0,
     "error": 0
   },
@@ -31,6 +31,12 @@ window.__NEWS_FETCH_DATA__ = {
     },
     {
       "file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/scenarios/news-fetch/primitives/source-dedup-key/edge.json",
+      "status": "PASS",
+      "primitive": "source-dedup-key",
+      "scenarioType": "edge"
+    },
+    {
+      "file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/scenarios/news-fetch/primitives/source-dedup-key/canary-whitespace-url.json",
       "status": "PASS",
       "primitive": "source-dedup-key",
       "scenarioType": "edge"
@@ -72,6 +78,12 @@ window.__NEWS_FETCH_DATA__ = {
       "scenarioType": "edge"
     },
     {
+      "file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/scenarios/news-fetch/primitives/headline-normalizer/canary-attribution-hyphen.json",
+      "status": "PASS",
+      "primitive": "headline-normalizer",
+      "scenarioType": "edge"
+    },
+    {
       "file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/scenarios/news-fetch/primitives/headline-normalizer/failure.json",
       "status": "PASS",
       "primitive": "headline-normalizer",
@@ -88,6 +100,12 @@ window.__NEWS_FETCH_DATA__ = {
       "status": "PASS",
       "module": "news_ingest",
       "scenarioType": "multi-primitive"
+    },
+    {
+      "file": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/docs/scenarios/news-fetch/module/canary-dedup-normalization.json",
+      "status": "PASS",
+      "module": "news_ingest",
+      "scenarioType": "edge"
     }
   ]
 };

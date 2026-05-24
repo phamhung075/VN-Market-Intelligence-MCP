@@ -1,0 +1,33 @@
+{
+  "module": "news_ingest",
+  "function": "processArticleBatch",
+  "description": "G11 regression canary (Trial-2): two articles from different sources share the same base headline but with MULTI-WORD attribution suffixes. After normalizeHeadline strips the suffix, both become identical, and url-absent dedup key is identical → articleCount must be 1. A naive fix that only strips single-word attributions (/ - \\w+$/) fails to strip 'The Financial Times' or 'Nikkei Asia Review', leaving the two normalized headlines different → dedup key diverges → articleCount becomes 2, FAILING this scenario.",
+  "input": {
+    "articles": [
+      {
+        "source": "reuters",
+        "headline": "Vietnam GDP rises 6.8% in Q1 2026 - The Financial Times",
+        "url": null,
+        "publishedAt": "2026-05-24T07:00:00.000Z",
+        "fetchedAt": "2026-05-24T07:01:00.000Z",
+        "confidence": "HIGH"
+      },
+      {
+        "source": "reuters",
+        "headline": "Vietnam GDP rises 6.8% in Q1 2026 - Nikkei Asia Review",
+        "url": null,
+        "publishedAt": "2026-05-24T07:02:00.000Z",
+        "fetchedAt": "2026-05-24T07:03:00.000Z",
+        "confidence": "HIGH"
+      }
+    ]
+  },
+  "expectedOutput": {
+    "articleCount": 1,
+    "normalized": true,
+    "deduped": true
+  },
+  "scenarioType": "edge",
+  "primitivesExercised": ["headline-normalizer", "source-dedup-key"],
+  "note": "Both articles normalize to 'Vietnam GDP rises 6.8% in Q1 2026'. Same source='reuters', url=null → dedup key = 'headline:reuters:vietnam gdp rises 6.8% in q1 2026' → first-wins dedup removes second. articleCount=1 ONLY if normalization correctly strips MULTI-WORD attributions like ' - The Financial Times' and ' - Nikkei Asia Review'. A naive single-word-only fix misses these, producing different normalized strings → articleCount=2."
+}

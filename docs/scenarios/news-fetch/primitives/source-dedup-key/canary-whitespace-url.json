@@ -1,0 +1,14 @@
+{
+  "primitive": "source-dedup-key",
+  "function": "computeArticleKey",
+  "input": {
+    "article": {
+      "url": "   ",
+      "headline": "Vietnam GDP grows 6.8%",
+      "source": "reuters"
+    }
+  },
+  "expectedOutput": "headline:reuters:vietnam gdp grows 6.8%",
+  "scenarioType": "edge",
+  "note": "G11 regression canary (Trial-1): whitespace-only URL must be treated as absent and fall through to headline-based key. Coupled to published-at-parser via shared guard pattern (both normalize empty/whitespace string inputs). A naive fix to published-at-parser that copies .trim() === '' guard changes to source-dedup-key risks altering the url-absent branch logic."
+}

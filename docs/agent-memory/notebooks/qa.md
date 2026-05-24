@@ -1,5 +1,75 @@
 # QA — Notebook
 
+## cycle-93 · 2026-05-24 · news-fetch P2-NF-I — G11 2-trial coupling proof — VERIFIED
+
+**Task:** P2-NF-I (G11 regression alarm bell, 2-trial coupling proof) | **Verdict:** G11 VERIFIED
+
+```
+date: 2026-05-24T09:21:00Z
+outcome: VERIFIED — outcome-(a) observed in BOTH trials; G11 PASS
+type: pilot-task-qa (coupling proof — 2 trials, canary scenarios added as permanent coverage)
+signal: docs/signals/qa-news-fetch-g11-2trial-done-20260524T092100Z.json
+
+baseline: 13/13 PASS (original) → 16/16 PASS (with 3 canary scenarios)
+dash_baseline: PASS:6 FAIL:0 verdict=PASS
+
+trial_1:
+  primitive: published-at-parser (G10-alias)
+  bug: double-UTC-offset (re-subtract offset already normalised by Date())
+  primary_red: published-at-parser edge FAIL (15/16 sandbox, PASS:4 FAIL:2 dashboard)
+  canary_at_injection: source-dedup-key/canary-whitespace-url GREEN (not yet triggered)
+  naive_fix: fixed published-at-parser correctly + accidentally removed .trim() from source-dedup-key URL guard
+  coupled_red: source-dedup-key/canary-whitespace-url FAIL (expected 'headline:...' got 'url:   ')
+  coupled_dashboard: source-dedup-key card RED (PASS:4 FAIL:2 verdict=FAIL)
+  correct_fix: single edit — restore url.trim() !== '' guard in source-dedup-key
+  post_fix: 16/16 PASS PASS:6 FAIL:0
+  outcome_a: OBSERVED
+
+trial_2:
+  primitive: headline-normalizer (different from Trial-1)
+  bug: greedy regex /\s*[-–].*$/ strips at first hyphen → internal hyphens stripped
+  primary_red: headline-normalizer/canary-attribution-hyphen FAIL ('Vietnam-US' → 'Vietnam')
+  canary_at_injection: news_ingest/canary-dedup-normalization GREEN (greedy still strips multi-word attributions)
+  naive_fix: regex / - \w+$/ (single-word only) — fixes primary but fails multi-word attributions
+  coupled_red: canary-dedup-normalization FAIL (articleCount:2 instead of 1 — different normalized strings)
+  coupled_dashboard: news_ingest module card RED (PASS:4 FAIL:2 verdict=FAIL)
+  correct_fix: single edit — restore /\s+[-–]\s+\w[\w\s.]*$/ (original regex)
+  post_fix: 16/16 PASS PASS:6 FAIL:0
+  outcome_a: OBSERVED
+
+final_state:
+  sandbox: 16/16 PASS exit 0
+  bun_test: 233 pass / 6 skip / 0 fail exit 0
+  tsc: exit 0, 0 errors
+  ddd_scan: PASS (0 infra imports in primitive/module)
+  security: PASS (no process.env)
+  dashboard: PASS:6 FAIL:0 verdict=PASS
+  source_code: CLEAN — all mutations reverted (git diff apps/news-fetch/src/ = empty)
+  permanent_scenarios: 3 canary files committed (strengthen coverage)
+
+ssot_not_mutated: pilot-status-news-fetch.json not touched (PO-only §4.5)
+goal_flips: NONE
+g11_goal_status: EARNED-PENDING (PO flips at 12/12 terminal)
+```
+
+| Check | Verdict |
+|-------|---------|
+| Trial-1 primary RED (published-at-parser edge) | PASS |
+| Trial-1 coupled RED mid-naive-fix (source-dedup-key canary) | PASS |
+| Trial-1 single-edit correct fix → all-green | PASS |
+| Trial-2 primary RED (headline-normalizer canary-attribution-hyphen) | PASS |
+| Trial-2 coupled RED mid-naive-fix (news_ingest module canary) | PASS |
+| Trial-2 single-edit correct fix → all-green | PASS |
+| Final sandbox 16/16 PASS | PASS |
+| Final dashboard PASS:6 FAIL:0 | PASS |
+| Source code CLEAN (no mutations) | PASS |
+| SSOT not mutated | PASS |
+
+**G11 verdict: VERIFIED. EARNED-PENDING.**
+**NEXT:** po — P2-NF-Z (close-gate → 12/12 atomic close).
+
+---
+
 ## cycle-92 · 2026-05-24 · kinh-dich P2-J — G10 bug injection DONE
 
 **Task:** P2-J (G10 bug injection for kinh-dich Go pilot) | **Verdict:** DONE — injection PASS (G12 DoD EXCEPTION: RED is correct)
