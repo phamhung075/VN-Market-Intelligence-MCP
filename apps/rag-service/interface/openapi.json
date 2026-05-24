@@ -1,0 +1,272 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RAG Service",
+    "description": "Vector search + temporal decay ranking for VN Market Intelligence.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5002",
+      "description": "Local development (port 5002)"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "description": "Liveness probe — returns ok when the service is running.",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                },
+                "example": {
+                  "status": "ok",
+                  "service": "rag-service"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "post": {
+        "summary": "Semantic search with temporal decay",
+        "description": "Embed the query, search the vector store, apply temporal decay ranking, and return top-k results.",
+        "operationId": "search",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              },
+              "example": {
+                "query": "VN-Index earnings growth Q1 2026",
+                "limit": 5,
+                "decay_half_life_days": 7.0,
+                "max_distance": 0.8
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Search results ranked by temporal-decay score",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/index": {
+      "post": {
+        "summary": "Index a document",
+        "description": "Embed the document content and store it in the vector store with metadata.",
+        "operationId": "index",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IndexRequest"
+              },
+              "example": {
+                "id": "vnm-news-2026-05-24-001",
+                "content": "Vietcombank reports 18% YoY profit growth in Q1 2026.",
+                "title": "VCB Q1 2026 Earnings",
+                "summary": "Strong earnings beat driven by NIM expansion.",
+                "tags": ["banking", "VCB"],
+                "level": "action",
+                "action_code": "VCB"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Document indexed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IndexResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "default": "ok"
+          },
+          "service": {
+            "type": "string",
+            "default": "rag-service"
+          }
+        }
+      },
+      "SearchRequest": {
+        "type": "object",
+        "required": ["query"],
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Search query text"
+          },
+          "limit": {
+            "type": "integer",
+            "default": 5,
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Max results to return"
+          },
+          "decay_half_life_days": {
+            "type": "number",
+            "default": 7.0,
+            "minimum": 0.1,
+            "description": "Temporal decay half-life in days"
+          },
+          "max_distance": {
+            "type": "number",
+            "default": 0.8,
+            "minimum": 0.0,
+            "maximum": 2.0,
+            "description": "Max L2 distance for results"
+          },
+          "level": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by level (global/country/domain/action)"
+          },
+          "action_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Filter by stock ticker (e.g. VCB)"
+          }
+        }
+      },
+      "SearchResultItem": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string"},
+          "title": {"type": "string"},
+          "summary": {"type": "string"},
+          "content": {"type": "string"},
+          "tags": {"type": "array", "items": {"type": "string"}},
+          "level": {"type": "string"},
+          "action_code": {"type": "string"},
+          "distance": {"type": "number", "description": "L2 distance from query vector"},
+          "recency_score": {"type": "number", "description": "Temporal decay weighted score"},
+          "created_at": {"type": "string", "format": "date-time"}
+        }
+      },
+      "SearchResponse": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {"$ref": "#/components/schemas/SearchResultItem"}
+          },
+          "total": {"type": "integer"}
+        }
+      },
+      "IndexRequest": {
+        "type": "object",
+        "required": ["id", "content"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Unique entry ID"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Text content to index"
+          },
+          "tags": {
+            "type": "array",
+            "items": {"type": "string"},
+            "default": [],
+            "description": "Semantic tags"
+          },
+          "level": {
+            "type": "string",
+            "default": "global",
+            "description": "Hierarchy level"
+          },
+          "title": {
+            "type": "string",
+            "default": "",
+            "description": "Short title / headline"
+          },
+          "summary": {
+            "type": "string",
+            "default": "",
+            "description": "Paragraph summary"
+          },
+          "action_code": {
+            "type": "string",
+            "nullable": true,
+            "description": "Stock ticker if action-level"
+          }
+        }
+      },
+      "IndexResponse": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string", "example": "ok"},
+          "indexed": {"type": "integer", "example": 1},
+          "entry_id": {"type": "string"}
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string", "example": "failed"},
+          "error": {"type": "string"}
+        }
+      }
+    }
+  }
+}
