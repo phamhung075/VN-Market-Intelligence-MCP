@@ -365,7 +365,7 @@
     "_verdict_enum": "[FIXED] TBD until matrix terminal. Then one of: scale | rescope | stop-MVR. Derived mechanically: 3×YES → scale; 2×YES → rescope; 0-1×YES → stop-MVR.",
     "populatedAt": "2026-05-24T11:44:03Z",
     "populatedBy": "po (terminal atomic close — mechanical application of charter criteria to finalized 12/12 goal grades; no pre-fill before this commit)",
-    "populatedInCommit": "PENDING-ATOMIC-SHA",
+    "populatedInCommit": "3e840688 (terminal atomic close — SSOT + closure signal + 1953-G-FAIL dashboard row, single commit)",
     "criteriaApplication": {
       "speed": "G10=YES (AI fix 1 cycle ≤ max 2, vs baseline 1.5) AND G11=YES (2-trial coupling Outcome-(a)×2) → Speed=YES",
       "trust": "G9=YES at PASS grade (Playwright Path B, 6 cards, honest_red_proven, console_errors=0 — NOT PARTIAL) AND G8=YES (6 card-level RED demonstrable, reverted honest-green) → Trust=YES",

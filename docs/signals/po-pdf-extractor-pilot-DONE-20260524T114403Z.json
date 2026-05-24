@@ -64,7 +64,7 @@
 
   "commit_discipline": "single atomic SSOT commit via commit-mutex skill; EXPLICIT-FILE staging; no --force/--no-verify; on main; no push.",
 
-  "atomicCommit": "PENDING-SHA-RECORDED-IN-RETURN",
+  "atomicCommit": "3e840688",
   "ssotFile": "docs/data/pilot-status-pdf-extractor.json",
   "closureDecisionDoc": "docs/po-decisions/2026-05-24-pdf-extractor-g5b-freeze-ruling.md §TERMINAL CLOSE"
 }
