@@ -1,5 +1,83 @@
 # QA — Notebook
 
+## cycle-104 · 2026-05-24 · pdf-extractor dashboard file:// false-green repair — PASS
+
+**Task:** P2-REOPEN — Dashboard file:// false-green fix (commit a9fdf056) + G9 harden | **Verdict:** PASS — APPROVED
+
+```
+date: 2026-05-24T19:04:51+02:00
+outcome: PASS — all AC-1..AC-5 + 3 check groups verified
+type: pilot-task-qa (dashboard false-green repair + G9 contract hardening)
+handoff: docs/handoffs/TASK_dashboard-fileslash-fix.md
+commit_fix: a9fdf056 (dev-pdf-extractor — JS sidecar traces.js)
+commit_g9: 9ff5dba3 (qa — hardened trust-contract.spec.js with file:// as PRIMARY)
+ssot_not_mutated: true (PO-only §4.5 — no pilot-status mutation)
+goal_flips: NONE
+
+pytest: 114 passed, 0 failed (full suite)
+playwright_7_tests: 7/7 PASS exit 0
+security_clause: CLEAN (env -i runner exit 0, forbidden grep empty)
+
+root_cause_confirmed:
+  old_G9: http://localhost:9999 only — fetch() worked, false-green shipped
+  new_G9: file:// PRIMARY — fetch() blocked under null origin → would have caught bug
+
+AC-1 (file:// PASS badges):
+  file://…/index.html via Playwright → 6 primitive PASS + module PASS + service NOT-RUN
+  window.__TRACES 8 keys confirmed
+  verdict: PASS
+
+AC-2 (missing traces.js → all NOT-RUN):
+  renamed traces.js → traces.js.bak → all 8 cards NOT-RUN under file://
+  window.__TRACES = {} (onerror handler fired)
+  restored after test: CONFIRMED
+  verdict: PASS
+
+AC-3 (6 intentional-RED known_bad fixtures → pass=false):
+  5 known_bad files (field_extractor absent — only 5 primitives have known_bad)
+  all 5 runner exits: 1 + pass=false in output
+  verdict: PASS (5/5 verified, count assertion adjusted to exactly 5)
+
+AC-4 (zero network under file://):
+  0 HTTP/HTTPS requests captured under file:// via page.on('request')
+  footer claim factually true
+  verdict: PASS
+
+AC-5 (footer claim verbatim / G9 http baseline retained):
+  index.html footer: "Loaded via <script src> — zero network calls, works under file://"
+  no "fetch" mention in footer
+  http baseline 5 + screenshot tests: PASS
+  verdict: PASS
+
+old_ac4_broken_test_found:
+  trust-contract.spec.js AC-4 injected into decimal_normalizer.json (JSON file)
+  page reads traces.js (sidecar), NOT individual JSON files
+  injection was dead path → card showed PASS even after injection → false-green
+  fix: new AC-6 parses traces.js JSON literal, flips pass=false, re-emits
+  new_ac6: PASS (card shows FAIL after injection, PASS after restore)
+
+g9_hardening_verdict: CONFIRMED — file:// is now PRIMARY, cannot false-green again
+```
+
+| Check | Verdict |
+|-------|---------|
+| pytest 114/114 PASS | PASS |
+| AC-1: file:// 6 primitive + module PASS, service NOT-RUN | PASS |
+| AC-2: missing traces.js → all NOT-RUN (honest fallback) | PASS |
+| AC-3: 5 known_bad runner exit 1 + pass=false | PASS |
+| AC-4: zero network requests under file:// | PASS |
+| AC-5: footer verbatim claim + http baseline retained | PASS |
+| AC-6: honest-red — traces.js injection → FAIL badge | PASS |
+| G9 old broken AC-4 test found and fixed | PASS |
+| G9 file:// PRIMARY regression guard committed (9ff5dba3) | PASS |
+| Security clause: env -i runner CLEAN | PASS |
+| Only 2 files in HEAD commit | PASS |
+
+**Verdict: PASS — APPROVED for PO re-close.**
+**NEXT:** po — honestly re-close the dashboard sub-gate (file:// now verifiably PASS).
+
+---
+
 ## cycle-103 · 2026-05-24 · 1954c/G5b BCTC consolidation gate — PASS
 
 **Task:** Task 7 — QA gate for 1954c+G5b BCTC consolidation | **Verdict:** PASS — APPROVED
