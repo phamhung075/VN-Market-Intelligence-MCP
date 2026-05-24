@@ -83,7 +83,8 @@
     "openedAt": "2026-05-24T08:39:28Z",
     "openedBy": "po (Phase-1 close-gate APPROVE → Phase-2 open AWAITING-PLAN; PO authored Phase-2 skeleton task plan + dispatch BATCH inline — see skeletonTaskLedger + dispatchOrder)",
     "progressNotes": [
-      "2026-05-24T08:49:49Z po: P2-NF-F G9 Path-B verification run NOW (clean all-green pre-injection state, sandbox 13/13 PASS). VERDICT=FAIL — recorded in goals[G9].phase2 (NOT flipped; decisionMatrix untouched per §4.5). Structure PASSES (3 panels + 6 cards render honestly), BUT dashboard CANNOT turn green under file://: synchronous XMLHttpRequest('results.json') is CORS-blocked by Chromium (origin null), so all 6 badges stay NOT-RUN despite valid 13/13 results.json. Honest failure (no false-green; G8 honesty intact) but G9 trust contract unverifiable from dashboard alone. Root cause: news-fetch fetches external results.json via XHR; kinh-dich (G9 PASS) inlines trace into HTML (window.__PRIMITIVES_DATA__). NEW dev task needed: P2-NF-F1 (developer, zone apps/news-fetch/ — make dashboard render green under file://, mirror kinh-dich inline-trace pattern) blocking a P2-NF-F re-verify. Also retro-flags G6 (was EARNED-PENDING via static analysis, NOT headless render). PO does NOT write the fix. Signal: docs/signals/po-20260524T084949Z.json. Evidence screenshot: apps/news-fetch/dashboard/render-check.png. dash-check.mjs created (mirrors fleet precedent)."
+      "2026-05-24T08:49:49Z po: P2-NF-F G9 Path-B verification run NOW (clean all-green pre-injection state, sandbox 13/13 PASS). VERDICT=FAIL — recorded in goals[G9].phase2 (NOT flipped; decisionMatrix untouched per §4.5). Structure PASSES (3 panels + 6 cards render honestly), BUT dashboard CANNOT turn green under file://: synchronous XMLHttpRequest('results.json') is CORS-blocked by Chromium (origin null), so all 6 badges stay NOT-RUN despite valid 13/13 results.json. Honest failure (no false-green; G8 honesty intact) but G9 trust contract unverifiable from dashboard alone. Root cause: news-fetch fetches external results.json via XHR; kinh-dich (G9 PASS) inlines trace into HTML (window.__PRIMITIVES_DATA__). NEW dev task needed: P2-NF-F1 (developer, zone apps/news-fetch/ — make dashboard render green under file://, mirror kinh-dich inline-trace pattern) blocking a P2-NF-F re-verify. Also retro-flags G6 (was EARNED-PENDING via static analysis, NOT headless render). PO does NOT write the fix. Signal: docs/signals/po-20260524T084949Z.json. Evidence screenshot: apps/news-fetch/dashboard/render-check.png. dash-check.mjs created (mirrors fleet precedent).",
+      "2026-05-24T08:59:30Z po: P2-NF-F RE-RUN after dev fix P2-NF-F1 landed (XHR→inline data.js sidecar). G9 VERDICT=PASS + G6 RE-CONFIRM=PASS (headless-confirmed) — recorded in goals[G9].phase2 + goals[G6].phase2 (EARNED-PENDING, NOT flipped to YES; decisionMatrix untouched per §4.5). Independent po headless re-capture node dashboard/dash-check.mjs exit 0: 3 panels, 6 cards (4/1/1), 6 PASS / 0 FAIL / 0 ERROR / 0 NOT-RUN, 4 green primitive stories, 0 console errors, 0 page errors, 2 network requests both file:// (index.html + data.js), 0 external. Trust card proof: PO can point to 'published-at-parser: 3 scenarios -> PASS' from dashboard alone. Screenshot apps/news-fetch/dashboard/render-check.png updated (visual all-green confirmed). Signal: docs/signals/po-news-fetch-g9-g6-20260524T085930Z.json. Remaining Phase-2 goals: G4 (P2-NF-D DONE per recent commit — verify), G8 (P2-NF-E), G10 (P2-NF-G/H), G11 (P2-NF-I), then P2-NF-Z close-gate."
     ],
     "closedAt": null,
     "closedBy": null,
@@ -209,7 +210,30 @@
       "verifiedBy": null,
       "evidence": null,
       "calibration": "<SERVICE:dashboard path (apps/<svc>/dashboard/index.html), expected panel count (primitives + module + microservice), file:// works with zero network calls>",
-      "phase2Bucket": null
+      "phase2Bucket": null,
+      "phase2": {
+        "_note": "G6 RE-CONFIRM via ACTUAL HEADLESS RENDER (Phase-1 EARNED-PENDING was static-analysis-only; the first P2-NF-F G9 run 2026-05-24T08:49Z exposed that the headless render path was broken by XHR/CORS). After dev fix P2-NF-F1 (data.js sidecar), G6 re-confirmed by po 2026-05-24T08:59Z. EARNED-PENDING, NOT flipped to YES, decisionMatrix untouched per §4.5.",
+        "grade": "PASS",
+        "verdict": "PASS (headless-confirmed)",
+        "verifiedAt": "2026-05-24T08:59:30Z",
+        "verifiedBy": "po (Path B headless render via apps/news-fetch/dashboard/dash-check.mjs — supersedes Phase-1 static-analysis-only confirmation)",
+        "method": "Actual headless Chromium render of index.html via file:// (not static analysis)",
+        "renderEvidence": {
+          "panels_rendered": 3,
+          "panel_ids": ["panel-primitives", "panel-module", "panel-microservice"],
+          "all_panels_open": true,
+          "cards_total": 6,
+          "cards_per_tier": {"primitives": 4, "module": 1, "microservice": 1},
+          "rendered_from_json_trace": "window.__NEWS_FETCH_DATA__ (data.js sidecar, 13/13 PASS trace) — all 3 levels (primitive/module/microservice) populated from the JSON trace, not hardcoded",
+          "status_honest": true,
+          "badge_counts": {"PASS": 6, "FAIL": 0, "ERROR": 0, "NOT-RUN": 0},
+          "console_errors": 0,
+          "page_errors": 0,
+          "external_network_calls": 0,
+          "screenshot": "apps/news-fetch/dashboard/render-check.png"
+        },
+        "note": "Three-level dashboard renders all 3 panels open from the JSON trace under file:// with zero network calls — G6 DOM shape + render path now PROVEN by headless capture, not inferred from source. Confirmed jointly with the G9 re-run (same capture)."
+      }
     },
     {
       "id": "G7",
@@ -247,13 +271,13 @@
       "calibration": "Path B (PO Playwright headless) is Day-0 default per L6 carry-over (TA cycle-19 + macro cycle-53). PO renders apps/news-fetch/dashboard/index.html via file:// headless; asserts 3 panels + 6 cards render + honest status + console_errors=0. Path A (user verbal) preferred if user available — either satisfies G9. Capture trust-contract VERDICT fields: panels_rendered, cards_per_tier, status_honest, console_errors=0. Owner: PO. Phase-2 task P2-NF-F (async PO track, no blocking dependency).",
       "phase2Bucket": "P2-NF-F",
       "phase2": {
-        "_note": "P2-NF-F G9 Path-B verification run by po 2026-05-24T08:49Z while dashboard in clean all-green state (sandbox 13/13 PASS pre-injection). Verdict recorded here per Charter §4.5 — NOT flipped to YES, status stays TBD, decisionMatrix untouched. PO does NOT write the fix (developer zone apps/news-fetch/).",
-        "verifiedAt": "2026-05-24T08:49:49Z",
-        "verifiedBy": "po (Path B PO headless capture via apps/news-fetch/dashboard/dash-check.mjs — newly created, mirrors fleet precedent apps/kinh-dich-service/dashboard/dash-check.mjs)",
-        "verdict": "FAIL",
-        "grade": "FAIL",
-        "method": "Path B (PO Playwright/playwright-core headless Chromium, file:// load of apps/news-fetch/dashboard/index.html)",
-        "tool": "apps/news-fetch/dashboard/dash-check.mjs (created this cycle; node v22.22.2; playwright-core local apps/news-fetch/node_modules)",
+        "_note": "P2-NF-F RE-RUN after dev fix P2-NF-F1 landed. G9 Path-B verification re-run by po 2026-05-24T08:59Z against clean all-green state (data.js sidecar carries 13/13 PASS trace). Verdict recorded here per Charter §4.5 — EARNED-PENDING, NOT flipped to YES, status stays TBD, decisionMatrix untouched. PO did NOT write the fix (developer zone apps/news-fetch/).",
+        "grade": "PASS",
+        "verdict": "PASS",
+        "verifiedAt": "2026-05-24T08:59:30Z",
+        "verifiedBy": "po (Path B PO headless re-capture via apps/news-fetch/dashboard/dash-check.mjs; node, playwright-core local apps/news-fetch/node_modules; mirrors fleet precedent apps/kinh-dich-service/dashboard/dash-check.mjs)",
+        "method": "Path B (PO playwright-core headless Chromium, file:// load of apps/news-fetch/dashboard/index.html)",
+        "tool": "apps/news-fetch/dashboard/dash-check.mjs",
         "screenshot": "apps/news-fetch/dashboard/render-check.png",
         "trustContractVerdict": {
           "panels_rendered": 3,
@@ -261,18 +285,18 @@
           "cards_total": 6,
           "cards_per_tier": {"primitives": 4, "module": 1, "microservice": 1},
           "status_honest": true,
-          "badge_counts": {"PASS": 0, "FAIL": 0, "ERROR": 0, "NOT-RUN": 6},
-          "green_primitive_count": 0,
-          "console_errors": 2,
+          "badge_counts": {"PASS": 6, "FAIL": 0, "ERROR": 0, "NOT-RUN": 0},
+          "green_primitive_count": 4,
+          "console_errors": 0,
           "page_errors": 0,
-          "external_network_calls": 0
+          "network_requests_total": 2,
+          "external_network_calls": 0,
+          "last_run_line": "Last run: 2026-05-24T08:48:46.056Z — 13 PASS, 0 FAIL, 0 ERROR"
         },
-        "structurePass": "3 panels + 6 cards (4 prim / 1 module / 1 microservice) render correctly with names, scenario counts, wiring narrative + endpoint lists. Layout is clean and honest. Structure satisfies G6 DOM shape.",
-        "blocker": "DASHBOARD CANNOT TURN GREEN UNDER file:// — the loader does a synchronous XMLHttpRequest('results.json') which headless Chromium (and any modern browser) BLOCKS by CORS policy under origin 'null' (file:// -> file:// is cross-origin). 2 console errors: 'Access to XMLHttpRequest at file://.../results.json from origin null has been blocked by CORS policy' + 'Failed to load resource: net::ERR_FAILED'. Result: all 6 badges stuck at NOT-RUN and footer 'Last run: not yet' DESPITE a valid 13/13 PASS results.json in the same dir. The HTML comment 'Works from file:// URL with zero network calls' + 'status 0 = file:// success in some browsers' is FALSE for Chromium. A PO/user opening index.html directly (no server) can never see green — the trust contract is unverifiable from the dashboard alone.",
-        "honestyNote": "This is an HONEST failure, NOT a false-green. The dashboard correctly renders NOT-RUN rather than fabricating PASS, so G8 honesty is intact. But G9 (point-to-a-card-proving-a-primitive-works from dashboard alone) FAILS because no card ever reaches green via the canonical file:// method.",
-        "rootCauseVsPrecedent": "Fleet precedent apps/kinh-dich-service/dashboard/index.html PASSED G9 because it INLINES its trace into the HTML (window.__PRIMITIVES_DATA__ = [...] in a <script> block) — zero XHR, zero external fetch, renders green headlessly with no launch flags. news-fetch diverged by fetching an external results.json via XHR, which is the exact pattern Chromium blocks on file://.",
-        "fixOwner": "developer (zone apps/news-fetch/) — PO does NOT write production code. Recommended fix options: (A) inline the trace into index.html like kinh-dich (sandbox runner writes a <script>window.__TRACE__=...</script> block instead of / in addition to results.json) — PROVEN pattern, no flags; OR (B) embed results.json content directly via build step; OR (C, weakest) document that the dashboard requires a local static server (breaks the 'open file directly' trust promise — not recommended). Re-run P2-NF-F after fix to earn G9 PASS.",
-        "fixDispatch": "NEW Phase-2 task required before G9 can grade PASS — recommend P2-NF-F1 (developer: make dashboard render green under file://, mirror kinh-dich inline-trace pattern) blocking a P2-NF-F re-verify. This also retroactively strengthens G6 (which was EARNED-PENDING via static analysis + results.json inspection, NOT headless render — G9 just proved the headless render path is broken)."
+        "trustCardProof": "A PO/user can point to a specific green card proving a primitive works directly from the dashboard, no terminal: 'published-at-parser: 3 scenarios -> PASS' (also headline-normalizer / source-dedup-key / article-relevance-filter, all 3/3 PASS). Module card 'news_ingest: 1 scenario -> PASS' shows wiring narrative (composes all 4 primitives). Microservice card 'news-fetch: port 5008 -> PASS' lists 5 endpoints. Trust contract SATISFIED.",
+        "fixVerified": "P2-NF-F1 (developer) confirmed: index.html no longer does XHR('results.json'); instead reads window.__NEWS_FETCH_DATA__ from a same-dir <script src=\"data.js\"></script> sidecar (a <script src> tag is NOT subject to Chromium's file:// CORS origin-null block, unlike XHR). Sandbox runner emits dashboard/data.js. 2 network requests observed, both file:// (index.html + data.js); 0 external. Matches kinh-dich inline-trace G9 PASS precedent.",
+        "honestyNote": "G8 honesty intact and re-confirmed: cards reflect the real 13/13 PASS trace; data.js absence (cold start) leaves cards NOT-RUN (no fabricated green). Now turns green via the canonical file:// open-directly method — the prior HONEST FAIL is resolved.",
+        "priorRun": "First P2-NF-F run 2026-05-24T08:49:49Z graded FAIL (HONEST, not false-green): structure passed (3 panels + 6 cards) but XMLHttpRequest('results.json') was CORS-blocked under file:// origin null → all 6 badges stuck NOT-RUN + 2 console errors. Root cause vs precedent: kinh-dich inlines trace (window.__PRIMITIVES_DATA__), news-fetch fetched external results.json via XHR. Triggered dev task P2-NF-F1 (inline-trace fix). This RE-RUN supersedes that FAIL."
       }
     },
     {

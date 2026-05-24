@@ -1,5 +1,62 @@
 # QA — Notebook
 
+## c283 cycle-87 · 2026-05-24 · kinh-dich P2-G — G5b/G5c MCP handler audit + G5a hold — PASS
+
+**Task:** P2-G (G5b/G5c read-only audit + G5a hold confirmation) | **Verdict:** PASS
+
+```
+date: 2026-05-24T14:00:00Z
+outcome: PASS — 5/5 ACs green; G5 evidence complete
+type: pilot-task-qa (read-only audit + G5a hold confirmation)
+signal: docs/signals/qa-kd-P2-G-g5-evidence-done-20260524T140000Z.json
+evidence: docs/handoffs/TASK_P2-G-kd-g5-evidence.md
+
+ac_1_zero_direct_domain_imports: PASS (exit:1, 0 matches)
+ac_2_http_client_port_5005: PASS (8 matches, Bun.env.KINH_DICH_URL config-sourced)
+ac_3_zero_todo_migrat: PASS (exit:1, 0 matches)
+ac_4_deprecated_zero_todo_migrat: PASS (exit:1)
+ac_5_g5_evidence_compiled: PASS
+
+g5a_live_ts_outside_deprecated: 0 files (CLEAN)
+g5b_zero_direct_domain_imports: YES
+g5b_http_client_present: YES (port 5005 in clients.ts line 27)
+g5b_port_sourced_from_config: YES (Bun.env.KINH_DICH_URL ?? 'http://localhost:5005')
+g5b_6_tools_routed_via_http: YES
+g5c_zero_todo_migrat: YES
+g5_ready_to_grade: YES
+
+go_build_exit: 0
+go_test_exit: 0 (39/39)
+sandbox_primitive: 15/15 GREEN exit 0
+sandbox_module: 2/2 GREEN exit 0
+sandbox_combined: 17/17 GREEN
+
+dashboard_state: WARN/NOT-RUN (honest cold-start — static file:// asset, no auto-fetch)
+dashboard_stale_ts_count: 0 (P2-H cleanup confirmed already applied)
+p2h_cleanup_already_applied: true
+
+ssot_not_mutated: true
+goal_flips: NONE
+g5_goal_status: EARNED-PENDING
+```
+
+| AC | Verdict | Key Evidence |
+|----|---------|-------------|
+| AC-1 (zero direct domain imports) | PASS | grep "from.*apps/kinh-dich-service" mcp-server kinhdich/ → 0 matches exit:1 |
+| AC-2 (HTTP client at port 5005) | PASS | clients.ts:27 Bun.env.KINH_DICH_URL ?? 'http://localhost:5005'; 8 matches |
+| AC-3 (zero TODO.*migrat) | PASS | grep --include=*.ts --include=*.go → 0 matches exit:1 |
+| AC-4 (_deprecated/ zero TODO.*migrat) | PASS | grep _deprecated/ → 0 matches exit:1 |
+| AC-5 (G5 evidence compiled) | PASS | TASK_P2-G-kd-g5-evidence.md written + signal emitted |
+
+**6 kinh-dich MCP tools confirmed (all HTTP to port 5005):** get_kinhdich_reading, get_market_hexagram, get_hexagram_history, get_transition_probabilities, run_hexagram_backtest, explain_hexagram
+
+**Allowed glue helpers noted (NOT flagged):** computeHaoScores, computeSentimentScore, computeFundamentalsScore, computePriceScore, computeForeignFlowScore, computeSectorScore, computeMacroScore, tickerJitter, computeMacroIndicatorScore, formatKinhDichTradingContext — all mcp-server-local (AC-8 architecture)
+
+**P2-G verdict: PASS**
+**NEXT:** po — P2-I (G9 PO Playwright Path B). Sandbox output (17/17 GREEN) available from this run. PO must: run sandbox → open dashboard in browser → paste output via Apply UI → Playwright captures green dots.
+
+---
+
 ## c283 cycle-86 · 2026-05-24 · news-fetch P2-NF-D — G4 R-FENCE QA reproduction + freeze anchor — VERIFIED
 
 **Task:** P2-NF-D (G4 freeze anchor + evidence compile) | **Verdict:** G4 VERIFIED
