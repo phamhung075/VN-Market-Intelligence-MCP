@@ -2,7 +2,7 @@
 // Inline sidecar: replaces XHR for file:// compatibility (zero CORS).
 // Regenerate: bun run src/sandbox/runner.ts --tier=all --module=news-fetch --scenario=all --output=dashboard/results.json
 window.__NEWS_FETCH_DATA__ = {
-  "runAt": "2026-05-24T08:48:46.056Z",
+  "runAt": "2026-05-24T09:05:01.755Z",
   "tier": "all",
   "module": "news-fetch",
   "totals": {

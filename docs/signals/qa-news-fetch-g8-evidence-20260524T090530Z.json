@@ -1,0 +1,108 @@
+{
+  "signal": "qa-news-fetch-g8-evidence",
+  "timestamp": "2026-05-24T09:05:30Z",
+  "service": "news-fetch",
+  "task": "P2-NF-E",
+  "goal": "G8",
+  "qa_agent": "qa",
+  "verdict": "VERIFIED",
+  "g8_goal_status": "EARNED-PENDING",
+  "ssot_not_mutated": true,
+  "goal_flips": "NONE",
+  "charter_section_honored": "4.5",
+
+  "baseline": {
+    "sandbox_total": 13,
+    "sandbox_pass": 13,
+    "sandbox_fail": 0,
+    "sandbox_exit": 0,
+    "dash_check_verdict": "PASS",
+    "badge_counts": { "PASS": 6, "FAIL": 0, "ERROR": 0, "NOT-RUN": 0 },
+    "dash_check_exit": 0
+  },
+
+  "primitive_bug": {
+    "file": "apps/news-fetch/src/primitive/published-at-parser/index.ts",
+    "type": "hardcoded_wrong_return",
+    "description": "parsePublishedAt returns hardcoded '1970-01-01T00:00:00.000Z' for all non-empty inputs",
+    "sandbox_exit": 1,
+    "sandbox_fail": 3,
+    "dash_check_exit": 1,
+    "badge_counts": { "PASS": 4, "FAIL": 2, "ERROR": 0, "NOT-RUN": 0 },
+    "red_cards": ["published-at-parser", "news-fetch-svc"],
+    "committed": false
+  },
+
+  "bad_scenarios": [
+    {
+      "id": "g8-bad-1",
+      "file": "docs/scenarios/news-fetch/primitives/published-at-parser/g8-bad-1.json",
+      "primitive": "published-at-parser",
+      "wrong_expected": "WRONG-VALUE-G8-BAD-1",
+      "actual_correct": "2026-05-13T14:30:00.000Z"
+    },
+    {
+      "id": "g8-bad-2",
+      "file": "docs/scenarios/news-fetch/primitives/headline-normalizer/g8-bad-2.json",
+      "primitive": "headline-normalizer",
+      "wrong_expected": "WRONG-VALUE-G8-BAD-2",
+      "actual_correct": "VN-Index Rises 1.2% on Banking Stocks"
+    },
+    {
+      "id": "g8-bad-3",
+      "file": "docs/scenarios/news-fetch/primitives/source-dedup-key/g8-bad-3.json",
+      "primitive": "source-dedup-key",
+      "wrong_expected": "WRONG-VALUE-G8-BAD-3",
+      "actual_correct": "url:bloomberg.com/fed-rates"
+    },
+    {
+      "id": "g8-bad-4",
+      "file": "docs/scenarios/news-fetch/primitives/article-relevance-filter/g8-bad-4.json",
+      "primitive": "article-relevance-filter",
+      "wrong_expected": false,
+      "actual_correct": true
+    },
+    {
+      "id": "g8-bad-5",
+      "file": "docs/scenarios/news-fetch/primitives/headline-normalizer/g8-bad-5.json",
+      "primitive": "headline-normalizer",
+      "wrong_expected": "WRONG-HEADLINE-G8-BAD-5",
+      "actual_correct": "Fed raises rates"
+    }
+  ],
+
+  "combined_breaks": {
+    "sandbox_total": 18,
+    "sandbox_pass": 10,
+    "sandbox_fail": 8,
+    "sandbox_exit": 1,
+    "dash_check_exit": 1,
+    "badge_counts": { "PASS": 1, "FAIL": 5, "ERROR": 0, "NOT-RUN": 0 },
+    "red_cards": [
+      "published-at-parser",
+      "headline-normalizer",
+      "source-dedup-key",
+      "article-relevance-filter",
+      "news-fetch-svc"
+    ],
+    "green_cards": ["news_ingest"],
+    "screenshot": "apps/news-fetch/dashboard/render-check.png"
+  },
+
+  "post_revert": {
+    "sandbox_total": 13,
+    "sandbox_pass": 13,
+    "sandbox_fail": 0,
+    "sandbox_exit": 0,
+    "dash_check_verdict": "PASS",
+    "badge_counts": { "PASS": 6, "FAIL": 0, "ERROR": 0, "NOT-RUN": 0 },
+    "dash_check_exit": 0,
+    "git_status_primitive_source": "CLEAN",
+    "git_status_scenario_files": "CLEAN"
+  },
+
+  "evidence": {
+    "handoff": "docs/handoffs/TASK_P2-NF-ABC.md",
+    "section": "[QA] Review Record — P2-NF-E (G8 honest-red proof)"
+  }
+}
