@@ -1,6 +1,32 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-24 | **Cycle:** NF-LD-4-dev-B — ENDPOINT relative path | **Sprint:** NF-LD-4
+**Last updated:** 2026-05-24 | **Cycle:** NF-LD-5-dev-B — Refresh button + source selector | **Sprint:** NF-LD-5
+
+## Session 2026-05-24 — NF-LD-5-dev-B (Refresh button + source selector)
+
+**Task:** NF-LD-5-dev-B — add "Refresh / Load latest" button and source selector to `#panel-live-data` in `apps/news-fetch/dashboard/index.html`
+
+**What was done:**
+- Added CSS block for `.live-panel-controls`, `.live-refresh-btn`, `.live-source-select` (matching surrounding vanilla-JS/dark style)
+- Added `.live-panel-controls` div with `#live-refresh-btn` button + `#live-source-select` (all|reuters|bloomberg) into the panel, above `#live-data-content`
+- Refactored one-shot `initLivePanel()` IIFE → `loadLiveData()` named function inside the IIFE:
+  - reads `sourceSelect.value` → appends `&source=<value>` to `BASE_ENDPOINT`
+  - disables btn+select during in-flight fetch (re-enables in `.finally()`)
+  - called on page load AND on button click AND on selector change
+- file:// degrade: `window.location.protocol === 'file:'` fires BEFORE any fetch; btn+select set disabled; degrade message rendered; no network call
+- data.js, sandbox panels, dash-check.mjs — all untouched
+
+**dash-check result:** PASS — panels=4 (sandbox=3+live=1), cards=6, PASS=6, live_panel_degrade=true, live_panel_fake_rows=false, console_errors=0, external_net=0
+
+**Commits:** `12600a1f` (index.html only — explicit staging, no -A), `d136279d` (handoff only)
+
+**AC count:** 8/8 PASS
+
+**ENDPOINT constant:** `BASE_ENDPOINT = '/api/news-fetch/live?limit=20'` (relative, source appended per selector value) — no localhost:3000 in fetch path
+
+**Next:** NF-LD-5-dev-A → dev-mcp-server (sync script regeneration)
+
+---
 
 ## Session 2026-05-24 — NF-LD-4-dev-B (ENDPOINT relative path)
 
