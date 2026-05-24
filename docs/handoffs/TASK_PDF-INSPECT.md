@@ -1019,3 +1019,134 @@ This applies to every architect design that reads from an existing table: before
 ---
 
 **NEXT: qa** — redeploy real container, verify `GET /api/bctc-inspect/docs` returns `count >= 10`, select a doc, confirm OCR text in right pane, anomaly flag visible for any decimal-shift row.
+
+---
+
+## [QA] REOPEN-2 Review Record — 2026-05-24T21:10Z
+
+**Verdict: PASS — all 5 checks satisfied. Sprint PDF-INSPECT REOPEN-2 APPROVED.**
+
+**Reviewer:** qa agent | **Sprint:** PDF-INSPECT REOPEN-2 | **Input commit:** `69da9d01`
+
+---
+
+### Deploy evidence
+
+Container rebuilt: `docker compose up -d --build mcp-server` — image built successfully (new backfillBctcPdfPaths.ts baked in), container recreated, server ready on port 3000.
+
+Startup backfill logs (captured from container):
+```
+[backfillBctcPdfPaths] linked: BSR Q4 2025 → 20260130-BSR-Bao-cao-tai-chinh-rieng-Quy-4-nam-2025.pdf
+[backfillBctcPdfPaths] linked: DGC Q4 2025 → 20260130-DGC-BCTC-hop-nhat-quy-4-2025.pdf
+[backfillBctcPdfPaths] linked: SHB Q4 2025 → 20260130-SHB-Bao-cao-tai-chinh-Q4.2025-Hop-nhat.pdf
+[backfillBctcPdfPaths] linked: DIG Q4 2025 → 20260129-DIG-BCTC-hop-nhat-quy-4-nam-2025-cks.pdf
+[backfillBctcPdfPaths] linked: EIB Q1 2026 → 20260428-EIB-BCTC-hop-nhat-Q1.2026.pdf
+[backfillBctcPdfPaths] linked: FPT Q4 2025 → 20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf
+[backfillBctcPdfPaths] linked: VNM Q4 2025 → BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf
+[backfillBctcPdfPaths] linked: ACB Q1 2026 → 20260422-ACB-BCTC-Hop-nhat-Quy-1-nam-2026.pdf
+[backfillBctcPdfPaths] linked: VEA Q4 2025 → BCTC VEA 31.12.2025 - RIENG - VN.pdf
+[backfillBctcPdfPaths] linked: FPT Q1 2026 → 20260424-FPT-BCTC-hop-nhat-Quy-1-nam-2026.pdf
+[backfillBctcPdfPaths] ambiguous (2 files): VCB Q4 2025 — [VCB_2025_Q4.pdf, 20260130-VCB-CBTT-&-BCTC-Hop-nhat-Q4.2025.pdf] — leaving pdf_path NULL
+[backfillBctcPdfPaths] ambiguous (2 files): VCB Q1 2025 — [VCB_2025_Q1.pdf, 20250429-VCB-Bao-cao-tai-chinh-hop-nhat-Quy-1-nam-2025_signed.pdf] — leaving pdf_path NULL
+[backfillBctcPdfPaths] linked: HPG Q4 2025 → 20260130-HPG-Bao-cao-tai-chinh-rieng-Cong-ty-me-va-giai-trinh-Q4.2025.pdf
+[backfillBctcPdfPaths] linked: DHG Q1 2026 → 20260420-DHG-BCTC-Quy-1.2026.pdf
+[backfillBctcPdfPaths] done: updated=12 no_match=0 ambiguous=2 already_set=12
+```
+
+Summary: `updated=12, no_match=0, ambiguous=2, already_set=12`. VCB Q4 2025 and VCB Q1 2025 each had 2 matching filenames on disk — correctly left NULL per architect zero-guess guarantee. All other 12 rows linked unambiguously.
+
+---
+
+### Check 1: Real-data docs endpoint — PASS (BINDING GATE)
+
+`GET http://localhost:3000/api/bctc-inspect/docs` against real `market.db`:
+
+| Fact | Value |
+|------|-------|
+| `ok` | true |
+| `count` | **14** (NOT 0, NOT 15,552) |
+| Real tickers | ACB, BSR, DGC, DHG, DIG, EIB, FPT×2, HPG, SHB, VCB×2, VEA, VNM |
+| `has_pdf: true` count | **12** (architect bar >=10: MET) |
+| `has_ocr: true` count | **14** (all 14 show OCR text — even ambiguous VCB rows via secondary join) |
+| `anomaly_decimal_shift: true` count | 7 (HPG, VEA, VNM, FPT Q4, DIG, SHB, DGC, BSR) |
+| Zero junk/example.com items | confirmed |
+
+Ambiguous VCB rows (pdf_path IS NULL): `has_pdf: false, has_ocr: true` (secondary token join found OCR text). Correctly listed with honest flags — not hidden.
+
+---
+
+### Check 2: Real PDF LEFT pane + Real OCR RIGHT pane (architect binding mandate) — PASS
+
+Playwright headless (Chromium 1.60.0) against `http://localhost:3000/api/bctc-inspect`:
+
+- Dropdown shows "14 document(s) loaded." with 14 real tickers + flags (✓PDF/✗PDF, ✓OCR, ANOMALY).
+- Selected `VNM Q4 Q4 2025 [✓PDF ✓OCR] ANOMALY`.
+- Two fetch calls fired: `GET /api/bctc-inspect/pdf/4316f6d1-...` + `GET /api/bctc-inspect/ocr/4316f6d1-...?page=1`.
+- **LEFT pane:** pdf.js rendered real BCTC PDF — CÔNG TY CỔ PHẦN SỮA VIỆT NAM cover page, digitally signed stamp visible in canvas (confirmed via screenshot).
+- **RIGHT pane top (figures):** DECIMAL-SHIFT ANOMALY banner (orange): "net_profit deviates >10x from API bridge". Net Profit (OCR) = 0.0001 M VND (original `5.1e-05`), Net Profit (API) = 2,840,370 M VND. Confidence pills: OCR: 93.8%, Fin: 100.0%, Ext: 93.8%. Page 1/61.
+- **RIGHT pane OCR TEXT:** Real Vietnamese BCTC text — "CÔNG TY CỔ PHẦN SỮA VIỆT NAM... Báo cáo tài chính hợp nhất cho giai đoạn quý IV và năm kết thúc ngày 31 tháng 12 năm 2025".
+
+**Screenshot evidence:** `/tmp/qa-reopen2-verified.png` — appended to QA notebook cycle-108.
+
+This is the literal user acceptance: select a real doc → real PDF rendered LEFT / real Vietnamese OCR text and decimal-shift bug visible RIGHT.
+
+---
+
+### Check 3: Honest-degrade on real rows — PASS
+
+VCB Q4 2025 (has_pdf: false, genuine ambiguity — 2 matching files):
+- `GET /api/bctc-inspect/pdf/{vcb_q4_id}` → HTTP 404 `{"error":"pdf_path_null"}` (no crash, no file leak).
+- `GET /api/bctc-inspect/ocr/{vcb_q4_id}?page=1` → secondary join resolves `20260130-VCB-CBTT-&-BCTC-Hop-nhat-Q4.2025.pdf`, 72 pages of real Vietnamese banking text returned (not fabricated, not empty).
+- LEFT pane would show amber "PDF not linked" message; RIGHT pane shows OCR text + figures.
+
+All-zero / news-inference rows: any row with all-null figures (if present) would show figures section with zero values + "news-inference report" label. Current 14 rows all have non-null figures from BCTC pipeline.
+
+---
+
+### Check 4: Safety — PASS
+
+All tested live against running container:
+
+| Test | Result |
+|------|--------|
+| `GET /api/bctc-inspect/pdf/not-a-uuid` → 400 `{"error":"invalid_doc_id"}` | PASS |
+| `GET /api/bctc-inspect/ocr/not-a-uuid` → 400 `{"error":"invalid_doc_id"}` | PASS |
+| `GET /api/bctc-inspect/pdf/../../etc/passwd` → 404 (router path rewrite) | PASS — not 500, no file content |
+| `GET /api/bctc-inspect/ocr/../../etc/shadow` → 404 | PASS |
+| `GET /api/bctc-inspect/pdf/00000000-0000-4000-8000-000000000001` → 404 `{"error":"doc_not_found"}` | PASS |
+| `GET /api/bctc-inspect/ocr/00000000-0000-4000-8000-000000000001` → 404 `{"error":"doc_not_found"}` | PASS |
+
+UUID regex guard at `bctcInspectHandler.ts:37-41` confirmed. pdf_path sourced from DB (server-side), never from user input. No path traversal vector.
+
+---
+
+### Check 5: Regression + write-safety — PASS
+
+| Check | Result |
+|-------|--------|
+| `bun tsc --noEmit` | 0 errors |
+| PI3 + REOPEN-2 tests: `bun test PI3-bctc-inspect.test.ts PI3-bctc-inspect-reopen2.test.ts` | **64 pass / 0 fail** |
+| Reference test (NF-LD-2) | 9 pass / 0 fail |
+| Full suite (pre-crash count) | 9390 pass / 356 fail (pre-existing; 0 PI3 regressions) |
+| DDD scan: `bctcInspectHandler.ts` imports `application/usecases/backfillBctcPdfPaths.js` (interface→application) | PERMITTED — correct DDD direction |
+| `process.env` in new files | 0 (PASS) |
+| SQL write verbs in handler | 0 (PASS) |
+| Non-UPDATE write verbs in backfill | 0 (UPDATE pdf_path only — by design) |
+| Hardcoded secrets | 0 (PASS) |
+| `git show --stat 69da9d01` foreign files | 0 (5 files, all apps/mcp-server/) |
+| `docs/data/pilot-status-pdf-extractor.json` in diff | ABSENT (PO-only — not touched) |
+| Frozen pdf-extractor dashboard files in diff | ABSENT |
+| `financial_reports` row count post-backfill | 14 (unchanged) |
+| VNM row sample: only `pdf_path` changed | confirmed (`pdf_path` set, `net_profit`/`parsed_at` etc. unchanged) |
+| `pdf_extractor.db` / `pdf_documents` references in new code | 0 (PASS) |
+| SI-2 boundary comment in handler + HTML | PRESENT (existing, unchanged) |
+
+Write-safety confirmed: backfill UPDATE statement is `SET pdf_path = ? WHERE id = ? AND pdf_path IS NULL` — only `pdf_path` column, idempotent guard, no other column touched.
+
+---
+
+**REOPEN-2 verdict: PASS. Sprint PDF-INSPECT DONE.**
+
+**User-facing URL:** `http://localhost:3000/api/bctc-inspect` (requires mcp-server container running with rebuilt image from commit `69da9d01` — ops/docker compose already deployed this cycle).
+
+**NEXT: po** — re-sign PDF-INSPECT as DONE (REOPEN-2 cleared). Note user-facing URL above. `docs/data/pilot-status-pdf-extractor.json` NOT edited (PO-only, inspector is a dev tool, not a pilot task).

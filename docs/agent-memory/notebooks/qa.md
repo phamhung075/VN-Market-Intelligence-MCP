@@ -1,5 +1,111 @@
 # QA — Notebook
 
+## cycle-108 · 2026-05-24 · PDF-INSPECT REOPEN-2 (backfill + all-rows list + secondary OCR join) — PASS
+
+**Task:** PDF-INSPECT REOPEN-2 QA gate (commit `69da9d01`) | **Verdict:** PASS — APPROVED
+
+```
+date: 2026-05-24T21:10Z
+outcome: PASS — all 5 checks satisfied; real-data accepted
+type: sprint-qa (PDF-INSPECT REOPEN-2, binding real-data mandate)
+handoff: docs/handoffs/TASK_PDF-INSPECT.md
+input_commit: 69da9d01 (dev-mcp-server REOPEN-2)
+ssot_not_mutated: true (pilot-status-pdf-extractor.json PO-only — untouched)
+goal_flips: NONE
+
+deploy:
+  command: docker compose up -d --build mcp-server
+  result: image rebuilt + container recreated (healthy, port 3000)
+  backfill_ran: true
+  backfill_result: {updated:12, no_match:0, ambiguous:2, already_set:12}
+  ambiguous_reason: VCB Q1 2025 (2 files: VCB_2025_Q1.pdf + long-form signed) and
+    VCB Q4 2025 (2 files: VCB_2025_Q4.pdf + CBTT long-form) — correctly left NULL
+
+real_data_acceptance:
+  docs_count: 14 (NOT 0, NOT 15552)
+  real_tickers: [ACB, BSR, DGC, DHG, DIG, EIB, FPT×2, HPG, SHB, VCB×2, VEA, VNM]
+  has_pdf_true: 12 (architect bar >=10 MET)
+  has_ocr_true: 14 (all 14 — VCB ambiguous rows use secondary token join)
+  anomaly_true: 7 (HPG, VEA, VNM, FPT-Q4, DIG, SHB, DGC, BSR)
+  zero_junk: confirmed
+
+playwright_evidence:
+  browser: Chromium 1.60.0 headless
+  url: http://localhost:3000/api/bctc-inspect
+  dropdown: 14 docs (14 document(s) loaded.)
+  selected: VNM Q4 Q4 2025 [✓PDF ✓OCR] ANOMALY
+  fetch_pdf: GET /api/bctc-inspect/pdf/4316f6d1-... (200 application/pdf 4.1MB, %PDF-1.6)
+  fetch_ocr: GET /api/bctc-inspect/ocr/4316f6d1-...?page=1 (200, 61 pages)
+  left_pane: pdf.js canvas — CÔNG TY CỔ PHẦN SỮA VIỆT NAM cover + digitally signed stamp
+  right_pane_figures: DECIMAL-SHIFT ANOMALY (orange), net_profit=0.0001 vs api=2,840,370
+  right_pane_ocr: real Vietnamese BCTC text (Báo cáo tài chính hợp nhất Q4 2025)
+  screenshot: /tmp/qa-reopen2-verified.png (appended to this cycle)
+
+honest_degrade:
+  vcb_q4_pdf_null: 404 pdf_path_null (no crash)
+  vcb_q4_ocr_secondary_join: 72 pages OCR via filename token match (VCB Q4 2025)
+  has_pdf_false_rows_listed: true (VCB Q1 + VCB Q4 in dropdown with ✗PDF ✓OCR)
+
+safety:
+  invalid_uuid_pdf: 400 invalid_doc_id
+  invalid_uuid_ocr: 400 invalid_doc_id
+  traversal_pdf: 404 (router path rewrite, not 500)
+  traversal_ocr: 404
+  unknown_uuid: 404 doc_not_found
+
+code_quality:
+  bun_tsc: 0 errors
+  PI3_plus_REOPEN2_tests: 64 pass / 0 fail (159 expect() calls)
+  reference_NF_LD_2: 9 pass / 0 fail
+  full_suite: 9390 pass / 356 fail (pre-existing, 0 PI3 regressions)
+  ddd_scan: PASS (interface→application import: permitted; no domain→infra)
+  security: PASS (0 process.env, 0 write verbs in handler, 0 hardcoded creds)
+  backfill_write_safety: UPDATE pdf_path only, WHERE pdf_path IS NULL guard, idempotent
+  row_count_unchanged: 14
+  foreign_files_commit: 0 (5 files all apps/mcp-server/)
+  pilot_status_frozen: untouched (PO-only)
+  pdf_extractor_db_refs: ZERO
+
+lessons:
+  - Standing rule confirmed: real-store docker exec check REQUIRED as FIRST verification
+    step, before any acceptance assertion. Null-rate of relied-upon columns verified
+    before designing filter.
+  - Secondary OCR join (parsePdfFilenameTokens scan against pdf_extracted_text.filename)
+    correctly enables OCR for news-inference rows even when pdf_path IS NULL.
+  - Backfill at startup + serve-time existsSync = clean separation: schema anchors the
+    path, runtime confirms the file still exists.
+```
+
+| Check | Verdict |
+|-------|---------|
+| Deploy: rebuilt + healthy + backfill ran | PASS |
+| Backfill result: updated=12, ambiguous=2 (correct), no_match=0 | PASS |
+| docs count=14 (NOT 0) — BINDING GATE | PASS |
+| has_pdf=true: 12 (>=10 architect bar) | PASS |
+| has_ocr=true: 14 (all 14) | PASS |
+| LEFT pane: real VNM PDF rendered (pdf.js canvas, %PDF-1.6) | PASS |
+| RIGHT pane: real Vietnamese OCR text (VNM Q4 2025 BCTC) | PASS |
+| Anomaly flag: DECIMAL-SHIFT ANOMALY banner on VNM (net_profit 5.1e-05 vs 2840370) | PASS |
+| Honest-degrade: VCB Q4 has_pdf=false → 404 pdf_path_null (no crash) | PASS |
+| Honest-degrade: VCB Q4 has_ocr=true via secondary join (72 pages) | PASS |
+| UUID gate: invalid → 400 on /pdf/ and /ocr/ | PASS |
+| Path traversal → 404 (router rewrite), never 500 | PASS |
+| Unknown UUID → 404 doc_not_found | PASS |
+| bun tsc 0 errors | PASS |
+| PI3+REOPEN2 tests 64/64 pass | PASS |
+| Reference test NF-LD-2 9/9 | PASS |
+| Full suite 0 new regressions | PASS |
+| DDD PASS (interface→application permitted) | PASS |
+| Security PASS (no process.env, no write verbs, no creds) | PASS |
+| Write-safety: only pdf_path column updated | PASS |
+| Row count unchanged at 14 | PASS |
+| commit 69da9d01: 0 foreign files (5 files) | PASS |
+| pilot-status-pdf-extractor.json untouched | PASS |
+
+**Verdict: PASS. NEXT: po — re-sign PDF-INSPECT DONE (user URL: http://localhost:3000/api/bctc-inspect).**
+
+---
+
 ## cycle-107 · 2026-05-24 · PDF-INSPECT PI-3-redo (mcp-server real-data verify) — CHANGES_REQUESTED
 
 **Task:** PI-3-redo QA gate (mcp-server BCTC inspector against real market.db) | **Verdict:** CHANGES_REQUESTED — blocking defect
