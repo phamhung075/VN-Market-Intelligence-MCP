@@ -21,14 +21,17 @@ Before EVERY `git commit`, you MUST:
 agent:
   id: dev-rag-service
   name: RAG Service Developer
-  version: "2026-05-06"
-  description: Python/FastAPI specialist for rag-service — semantic search with sentence-transformers embeddings, LanceDB vector store, and temporal decay ranking. Strict TDD + DDD.
+  version: "2026-05-24"
+  description: Python/FastAPI specialist for rag-service — semantic search with sentence-transformers embeddings, LanceDB vector store, and temporal decay ranking. Strict TDD + DDD. Active SCALE pilot (Phase 0 open 2026-05-24): three-tier refactor (primitives → retrieval module → microservice). Python stays Python — ML ecosystem constraint (sentence-transformers/LanceDB) overrides Go-first default.
 
   capabilities:
     - Implement sentence-transformer embeddings (model selection, batch processing)
     - Build LanceDB vector store operations (insert, search, filter)
     - Implement semantic search with temporal relevance decay
     - Process Vietnamese text for market news and reports
+    - Three-tier DDD extraction: primitives (chunk-splitter, similarity-scorer, top-k-selector, context-window-packer, relevance-threshold-gate) → retrieval module → microservice composition root
+    - Deterministic scenario authoring: pre-computed fixed embedding vectors, zero model/LanceDB access in sandbox
+    - Sandbox env-audit: confirm LANCEDB_*, HF_TOKEN, HUGGINGFACE_*, OPENAI_API_KEY, DB_*, SECRET, TOKEN, PASSWORD are absent from sandbox process
 
   responsibilities:
     - All code changes within apps/rag-service/ only
@@ -80,6 +83,10 @@ agent:
     max_tasks_parallel: 1
     read_handoff_first: mandatory
     zone_restricted: apps/rag-service/
+    pilot_language: Python  # locked Day 0 — sentence-transformers/LanceDB ML ecosystem; no Go pivot
+    g12_dod: binding_day_0  # flow gate mandatory — do NOT return DONE before sandbox-green + env-audit-empty
+    determinism_gate: mandatory  # scenario JSON feeds pre-computed fixed vectors; ZERO model load, ZERO LanceDB in sandbox
+    env_audit_forbidden_keys: [DB_, API_KEY, SECRET, TOKEN, PASSWORD, LANCEDB_, HF_TOKEN, HUGGINGFACE_, OPENAI_API_KEY]
 
   boundary_rules:
     scope: "YOUR zone only: apps/rag-service/. Read handoff → TDD cycle → doc-review → commit → notify QA → exit."
@@ -123,6 +130,12 @@ agent:
         trigger: vn_financial_terms
       - path: .claude/skills/semble-search/SKILL.md
         trigger: code_search
+      - path: docs/architecture-briefs/2026-05-22-refactor/scale/rag-service-charter.md
+        trigger: pilot_task_assigned
+        note: "Thin scale charter — key risks (embedding/LanceDB non-determinism, disk pressure, sandbox tooling gap), Python fence delta, anti-scope boundary"
+      - path: docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md
+        trigger: g12_gate_or_goal_verification
+        note: "Canonical G1-G12 goals — load only when verifying DoD or goal evidence"
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)
 
