@@ -93,9 +93,30 @@ jobs:
           working-directory: apps/macro-indicators
           args: --config .golangci.yml
 
+  stock-price-go-lint:
+    name: Stock Price Go Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/stock-price/go.mod
+          cache-dependency-path: apps/stock-price/go.sum
+
+      # Run golangci-lint (depguard Fence-A/B/C) against the stock-price service.
+      # working-directory is equivalent to: cd apps/stock-price && golangci-lint run --config .golangci.yml
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v6.1.1
+        with:
+          working-directory: apps/stock-price
+          args: --config .golangci.yml
+
 # AC-8 (optional) — Branch protection setup:
 # To require CI jobs before merging to main, go to:
 #   GitHub repo > Settings > Branches > Add branch protection rule
 #   Branch name pattern: main
 #   Check: "Require status checks to pass before merging"
-#   Search for and add status checks: "bun test", "go-lint", "macro-go-lint"
+#   Search for and add status checks: "bun test", "go-lint", "macro-go-lint", "stock-price-go-lint"

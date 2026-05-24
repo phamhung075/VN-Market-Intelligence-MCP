@@ -14,6 +14,8 @@ import (
 	"os"
 	"strconv"
 
+	_ "github.com/mattn/go-sqlite3" // CGO driver — registered once at composition root (Fence-C)
+
 	"github.com/vn-market-intelligence/stock-price/pkg/application"
 	"github.com/vn-market-intelligence/stock-price/pkg/domain"
 	"github.com/vn-market-intelligence/stock-price/pkg/infrastructure"

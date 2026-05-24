@@ -12,8 +12,6 @@ import (
 	"net/http"
 	"time"
 
-	_ "github.com/mattn/go-sqlite3" // CGO driver
-
 	"github.com/vn-market-intelligence/stock-price/pkg/domain"
 )
 
