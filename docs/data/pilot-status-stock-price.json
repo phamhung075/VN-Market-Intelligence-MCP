@@ -231,7 +231,7 @@
     "taskSequence": ["P2-A","P2-B","P2-C","P2-D","P2-E","P2-F","P2-G","P2-H","P2-I","P2-J","P2-K","P2-L","P2-M","P2-Z"],
     "wipPolicy": "WIP=1 sequential — PM dispatches ONE task at a time; pre-revert tag discipline binds task sequence (L5); L84 explicit-file staging mandatory",
     "wip_limit": 1,
-    "current_task": "P2-B",
+    "current_task": "P2-C",
     "current_task_status": "READY",
     "current_task_handoff": "docs/handoffs/TASK_P2-B.md",
     "tasks": {
@@ -257,14 +257,34 @@
       "P2-B": {
         "id": "P2-B",
         "title": ".golangci.yml Fence-A/B/C creation + CI job wiring",
-        "status": "READY",
+        "status": "DONE",
         "readyAt": "2026-05-24T00:00:00Z",
         "readyBy": "pm",
+        "completedAt": "2026-05-24T02:08:41Z",
+        "completedBy": "dev-stock-price",
         "owner": "dev-stock-price",
         "blocked_by": "P2-A (DONE)",
         "blocks": "P2-C",
         "ac_count": 5,
+        "ac_verdicts": "AC-1 PASS (3 fence rules, 73 lines), AC-2 PASS (golangci-lint exit 0), AC-3 PASS (CI job wired), AC-4 PASS (freeze anchor d5ce886e), AC-5 PASS (sandbox 11/11)",
+        "commit_sha": "d5ce886e",
+        "fence_c_implementation_detail": "mattn/go-sqlite3 blank import relocated from pkg/infrastructure/fetchers.go → cmd/server/main.go (composition root, line 17). Satisfies Fence-C exclusion rules.",
+        "verifier": "pm",
+        "verified_at": "2026-05-24T02:08:41Z",
         "handoff": "docs/handoffs/TASK_P2-B.md"
+      },
+      "P2-C": {
+        "id": "P2-C",
+        "title": "G4 deliberate-violation proof (AC-4b) — Fence-A violation, non-zero exit, reverted",
+        "status": "READY",
+        "readyAt": "2026-05-24T02:08:41Z",
+        "readyBy": "pm",
+        "owner": "qa",
+        "blocked_by": "P2-B (DONE)",
+        "blocks": "P2-D",
+        "ac_count": 5,
+        "description": "QA deliberately introduces forbidden import (e.g., pkg/infrastructure or mattn into primitive) → golangci-lint fails → prove fence catches violation → revert → confirm lint green + sandbox green. Violation NEVER committed.",
+        "handoff": "docs/handoffs/TASK_P2-C.md"
       }
     }
   },
