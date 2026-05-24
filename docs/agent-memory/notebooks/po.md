@@ -1,8 +1,62 @@
 # PO Notebook
 
-**Cycle:** Commit-mutex structural-fix brief RATIFICATION (focused decision cycle, NOT a sprint). [NOTE: a concurrent PO process is working news-fetch pilot-6 in parallel — its entry is preserved below; I did NOT clobber it.]
+**Cycle:** commit-mutex SMOKE-TEST + lift decision (focused cycle). [Concurrent PO processes run other pilots in parallel — I PREPENDED; prior entries preserved, did NOT clobber.]
 **Last update:** 2026-05-24
-**Status:** Architect's commit-mutex brief (fbcb9e41) RATIFIED-WITH-CONDITIONS. Next_actor=developer. Interim single-committer serialization STAYS in force until mutex live + smoke-passed + 1 clean cycle.
+**Status:** HOLD — serialization STAYS. Smoke test FAILED: commit-mutex lock kind not deployed in live mcp-server. Gap→developer. Doc 2026-05-24-commit-mutex-smoke-test-hold.md, signal po-20260524T092805Z.json.
+
+---
+
+## 2026-05-24T09:28Z — commit-mutex smoke-test (focused decision, design brief §10.4)
+
+### Verdict: HOLD — DO NOT LIFT. Interim single-committer serialization stays in force.
+
+### The load-bearing finding (BLOCKER)
+- The skill + protocol doc + 34-site flow wiring are CORRECT. But the **commit-mutex lock kind does NOT exist in the live deployed mcp-server.** Dev amended the markdown protocol + authored skill + wired flows, but NEVER touched the MCP server that *implements* task_claim, and never rebuilt the container. This is exactly the "Deployment-verified Ritual" class of gap (task-lock-protocol.md L139-152): source-doc reg ≠ live tool.
+- Live container `mcp-server-1` (built ~40h ago, code @ b144f560 Phase 1): schema `CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row'))` — commit-mutex ABSENT. zod enum coordinationTools.ts L82+L188 — ABSENT. `grep commit-mutex apps/mcp-server/src/` = ZERO hits.
+
+### Actual tool outputs (against LIVE /app/data/coordination.db in-container, throwaway ids, cleaned)
+- plain INSERT commit-mutex → `REJECTED: CHECK constraint failed: task_kind IN (...)`.
+- INSERT OR IGNORE (the real claimTask Step 1) → `changes=0` — CHECK violation SILENTLY swallowed, no error.
+- full claimTask() sim → `task_claim("commit-mutex:main") = {"claimed": false}` — NO current_holder, NO error.
+- **Singleton-deny + stale-reclaim test = UNREACHABLE**: claimant-A never succeeds, so no first holder to deny B against, no TTL row to reclaim. Smoke test FAIL at step 1.
+
+### Why worse than clean fail (the trap)
+- Skill maps claimed:false → BACKOFF (transient contention), not the C-2 fail-closed branch (which keys off error/db_unavailable). Live server returns claimed:false WITHOUT error → skill takes backoff branch. If wired live + serialization lifted: EVERY commit → claimed:false forever → ~125s backoff → give-up → skip + BUG telegram per cycle → **fleet-wide permanent commit freeze**. Fail-safe direction, non-functional mutex.
+
+### Gates reviewed (these are GREEN — gap is solely the live DB)
+- Skill critical-section ORDER: CORRECT (claim before add, release after commit; foreign-restore-only; L84 explicit paths; post-commit empty-verify).
+- C-2 fail-closed: correct as written, but BLIND to the live claimed:false-no-holder state → recommend a guard.
+- C-1 wiring: LANDED — 34 flows; report-analyzer:59 / qa-responder:78 / pm/task-archive:40 / dev-team/post-cycle:34 all reference skill at commit step; market-watcher per-cycle commit was REMOVED (eod batch); the 4 "unwired" raw-commit files are prose/comment false-positives.
+
+### Outputs
+- decision doc: docs/po-decisions/2026-05-24-commit-mutex-smoke-test-hold.md
+- signal: docs/signals/po-20260524T092805Z.json (next_actor=developer, 5-step fix list)
+- anchor debba8ea verified ancestor of HEAD b5b7bdd8. coordination.db touches = throwaway, cleaned. mcp-server source NOT modified (PO cycle, not impl).
+
+### GOTCHA / carry-over
+- **Dev fix list (must clear before re-test+lift):** (1) add commit-mutex to CHECK + TaskKind union — NOTE `CREATE TABLE IF NOT EXISTS` will NOT alter the existing live table, needs a migration to recreate/alter task_locks; (2) add to both zod enums L82/L188; (3) rebuild+redeploy mcp-server + Deployment-verified Ritual; (4) harden skill: claimed:false+no-holder ⇒ fail-CLOSED, not 6 contention retries; (5) re-run smoke + re-signal PO.
+- Dev's noted C-3 "race bit its own commits twice" is consistent with my 09:12Z + 09:03Z cycles — re-confirms serialization MUST stay; does NOT count as the mutex working.
+- **NEXT (next_actor=developer):** ship the live mcp-server lock kind + rebuild, then PO re-runs singleton+reclaim smoke for the lift decision. Pilots 6-8 stay under interim serialization until then.
+
+---
+
+## 2026-05-24T09:12Z — P2-I G9 Playwright Path B on Go dashboard
+
+### Verdict: PASS — G9 EARNED-PENDING
+- AC-1: `-emit-traces` regen run exit 0, 17/17 GREEN, traces commit c2ca404a @ 09:09:08Z.
+- AC-2: PO Playwright 1.60 headless chromium rev 1223 — consoleErrors=0, pageErrors=0, requestFailed=0.
+- AC-3: 3 panels render (primitives/module/microservice); 15 primitive + module + service cards; "5 pure Go functions" label + all 5 primitive names; dots 17 GREEN / 0 RED / 0 PENDING (honest — sandbox-backed); provenance block visible (generatedAt + commitHash); ts/bun residue=0 (only the truthful "rebooted from TypeScript/Bun to Go" historical note remains — correct, preserved).
+- AC-4: trust-contract proof — non-technical user can verify the hexagram engine from 17 green dots + auditable provenance alone.
+- Corroborated by independent dash-check.mjs DOM inspector: PASS, 17 green / 0 red / 0 pending / 0 errors, category chips 6/6/5.
+
+### Outputs
+- decision doc: docs/po-decisions/2026-05-24-g9-kinh-dich-go-playwright-trust.md
+- committed (pathspec-scoped): doc + regenerated dashboard/sandbox-traces.js — commit 31dd60a7
+- SSOT pilot-status-kinh-dich.json NOT touched (last PM commit 3529c7f2). G9 stays in goals_pending_phase2.
+
+### GOTCHA / carry-over
+- **Commit-mutex race HIT AGAIN (the very thing I ratified earlier this cycle).** First `git add` of my 2 paths was raced by the news-fetch pilot's `git add` on the shared index → my `git commit` swept in 4 foreign apps/news-fetch/ files (commit d4ca0646). Recovered: soft-reset to parent, restore --staged the foreign paths; a 2nd race then let news-fetch commit e5e78e54 (correctly absorbing their files) while clearing my index. Final clean commit 31dd60a7 = exactly my 2 paths, no foreign. Interim single-committer serialization is clearly still needed — the developer C-1 fix has NOT yet landed. Throwaway /tmp Playwright runner deleted post-run.
+- **NEXT**: dispatcher → QA for P2-J (kinh-dich-pre-inject-go tag + G10 single-literal bug injection: hao_encoder THIEU_DUONG_THRESHOLD 0.10→0.25).
 
 ---
 

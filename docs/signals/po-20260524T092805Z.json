@@ -1,0 +1,46 @@
+{
+  "from": "po",
+  "to": "developer",
+  "next_actor": "developer",
+  "ts": "2026-05-24T09:28:05Z",
+  "type": "commit-mutex-smoke-test-result",
+  "verdict": "HOLD",
+  "decision": "DO-NOT-LIFT-SERIALIZATION",
+  "gap_severity": "BLOCKER",
+  "interim_policy": "FLEET-WIDE-SINGLE-COMMITTER-SERIALIZATION stays IN FORCE",
+  "decision_doc": "docs/po-decisions/2026-05-24-commit-mutex-smoke-test-hold.md",
+  "payload": {
+    "summary": "Skill+protocol-doc+34-site flow wiring are correct, but the commit-mutex lock kind does NOT exist in the live deployed mcp-server. Smoke test cannot acquire even one claim -> singleton-deny + stale-reclaim proofs unreachable -> smoke test FAILS.",
+    "smoke_test_result": "FAIL — claim unreachable",
+    "live_db_proof": {
+      "container": "vn-market-intelligence-mcp-mcp-server-1 (Up, healthy, built ~40h ago)",
+      "schema_check_constraint": "CHECK(task_kind IN ('cowork-slot','sprint-task','dashboard-row')) — commit-mutex ABSENT",
+      "zod_enum": "coordinationTools.ts lines 82 & 188 enum excludes commit-mutex",
+      "source_grep": "grep -rn 'commit-mutex' apps/mcp-server/src/ = ZERO hits",
+      "plain_insert": "REJECTED: CHECK constraint failed: task_kind IN ('cowork-slot','sprint-task','dashboard-row')",
+      "insert_or_ignore": "changes=0 (CHECK violation SILENTLY swallowed, no error)",
+      "task_claim_returns": "{\"claimed\": false} with NO current_holder and NO error field"
+    },
+    "why_worse_than_clean_fail": "Skill maps claimed:false -> backoff (transient contention), NOT the C-2 fail-closed branch (which keys off error/db_unavailable). So if wired live + serialization lifted, EVERY commit returns claimed:false forever -> ~125s backoff -> give-up -> skip -> BUG telegram per cycle. Fleet-wide permanent commit freeze. Fail-safe direction, but non-functional mutex.",
+    "gates_reviewed": {
+      "skill_critical_section_order": "CORRECT — claim before git add, release after commit; foreign-restore-only; L84 explicit paths",
+      "fail_closed_C2": "CORRECT as written for error/db_unavailable, but BLIND to live {claimed:false}-no-holder state",
+      "C1_wiring": "LANDED — 34 flows wired; report-analyzer:59, qa-responder:78, pm/task-archive:40, dev-team/post-cycle:34 all reference skill at commit step; market-watcher commit removed (eod batch); 4 raw-commit non-wired files are prose false-positives"
+    },
+    "developer_actions_required": [
+      "1. Add 'commit-mutex' to CHECK constraint in coordinationStore.ts (+ TaskKind union + ClaimInput). NOTE: CREATE TABLE IF NOT EXISTS will NOT alter the existing live table — needs migration to recreate/alter the already-created task_locks table.",
+      "2. Add 'commit-mutex' to both zod enums in coordinationTools.ts (lines 82 & 188) — else tool-boundary rejects before SQL.",
+      "3. docker compose up -d --build mcp-server + run Deployment-verified Ritual (task-lock-protocol.md L139-152): verify Up<minutes>+healthy, call live tools, record outputs.",
+      "4. Harden skill: claimed:false WITH no current_holder => treat as mechanism-broken => fail-CLOSED skip + distinct BUG msg, NOT 6 contention retries.",
+      "5. Re-run singleton-deny + stale-reclaim smoke test with real tool outputs; re-signal PO for lift decision."
+    ],
+    "lift_conditions_unchanged": "Lift requires (ratification sec3): working commit-mutex live AND singleton+reclaim smoke passes AND one clean cycle with zero bundling. Future PO decision, unauthorized now.",
+    "constraints_honored": {
+      "anchor_debba8ea_ancestor_of_head": true,
+      "head_at_decision": "b5b7bdd87cf777191627b02664a79afa7bd69480",
+      "no_branches_force_rewrite_noverify": true,
+      "coordination_db_touches": "throwaway task_ids inside container, cleaned up — no real lock disturbed",
+      "mcp_server_source_not_modified": "PO decision cycle, not implementation — server fix is developer's job"
+    }
+  }
+}
