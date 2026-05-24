@@ -117,11 +117,26 @@
     }
   },
   "phase1": {
-    "_note": "Phase 1 GO REBOOT — ACTIVE ledger. The prior TS Phase-1 (APPROVED, 11 TS tasks) is PRESERVED VERBATIM under tsCompletionArchive.phase1 (do not delete). This block now tracks the Go reboot per docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-go.md (architect, READY-FOR-DISPATCH). 14 atomic Go tasks (5 A-bucket + 5 B-bucket + 1 C + 1 D + 2 E). WIP=1. current_task=P1-KD-A1g (go.mod + go.sum). All 14 tasks re-earn G1-G12 on Go evidence — TS evidence is NOT the baseline. ROUTING OVERRIDE (po): all apps/kinh-dich-service/ tasks incl. service-local sandbox dashboard owned by dev-kinh-dich; dev-frontend owns only the Remix app (TS-pilot precedent: dev-kinh-dich built the dashboard at P1-D/P1-KD-H).",
-    "status": "ACTIVE",
+    "_note": "Phase 1 GO REBOOT — APPROVED (CONDITIONAL-GO close gate; 'conditional' = Phase-1 scope boundary only, NOT a quality defect). The prior TS Phase-1 is PRESERVED VERBATIM under tsCompletionArchive.phase1 (do not delete). Go Phase-1 delivered all primitives + reading_composer module + composition root + Go sandbox + dashboard, with COMPLETE evidence for 7 goals (G1, G2, G3, G6, G7, G8, G12). 5 goals PENDING Phase-2 by design (G4 depguard fence, G5 TS-deletion+HTTP-rewire, G9 Playwright re-confirm on rebuilt Go dashboard, G10 AI-fix bug injection, G11 regression alarm). Goals[] G1..G12 remain TBD per Charter §4.5 — goal flips are PO atomic action at TERMINAL close (12/12), NOT at Phase-1 close. Next gate = Phase-2 (PO -> architect Go Phase-2 task plan).",
+    "status": "APPROVED",
     "_status_enum": "Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
     "openedAt": "2026-05-24T12:00:00Z",
     "openedBy": "po (PM-substitution cycle — pm agent type not spawnable; po owns this SSOT; architect Go plan delivered)",
+    "approvedAt": "2026-05-24T08:18:35Z",
+    "approvedBy": "po (Phase-1 Go close gate — PM-substitution; QA CONDITIONAL-GO verdict ratified)",
+    "gateVerdict": "CONDITIONAL-GO (conditional = Phase-1 scope boundary only; QA confirms NO quality defect)",
+    "gateVerifiedBy": "qa (agent a91b5031f178bde88)",
+    "gateVerifiedAt": "2026-05-24",
+    "closeGateEvidence": {
+      "build": "CGO_ENABLED=0 go build ./... exit 0; go vet exit 0; go test ./... = 39 PASS / 0 FAIL",
+      "sandbox": "17/17 GREEN (15 primitive + 2 module); env audit EMPTY (zero credentials); CGO_ENABLED=0",
+      "goals_complete_phase1": ["G1", "G2", "G3", "G6", "G7", "G8", "G12"],
+      "goals_pending_phase2": ["G4", "G5", "G9", "G10", "G11"],
+      "g8_honest_red": "QA independently re-verified: corrupt -> RED exit 1 -> revert -> 17/17 GREEN, zero residue",
+      "scenario_correction": "module golden 11,55,19 -> 30,28,56 mathematically validated by QA as LEGITIMATE domain correction (THIEU_DUONG=0.10 authentic contract), NOT a regression mask",
+      "go_files_on_main": "25 tracked (23 .go + go.mod + go.sum) confirmed on main via git ls-files; shared-git-index commit-race conflation into 2ac5e096/fec4a0e0 is cosmetic — history NOT rewritten per policy",
+      "non_blocking_cleanup": "Two stale 'language=ts, runtime=bun' comments in dashboard/index.html (~L13, ~L1578) — not user-visible; clean in Phase 2 for honest-green"
+    },
     "language": "Go",
     "skeleton_in": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §Phase Skeleton",
     "task_plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-1-task-plan-go.md",
@@ -149,7 +164,8 @@
     "current_task_status": "READY",
     "current_task_handoff": "docs/handoffs/TASK_P1-KD-A1g.md",
     "progress_notes": [
-      "2026-05-24T12:00:00Z — Go reboot Phase-1 OPENED (PM-substitution by po). task_plan repointed TS -> Go (phase-1-task-plan-go.md). 14 Go tasks installed, all NOT-STARTED except current P1-KD-A1g=READY. TS phase1/phase2 ledgers retained in tsCompletionArchive. Goals G1-G12 reset to TBD (G9 held — see goals[]). Routing override: dev-kinh-dich owns ALL apps/kinh-dich-service/ tasks incl. dashboard (E-bucket). P1-KD-A1g handoff created; dev-kinh-dich ready to accept."
+      "2026-05-24T12:00:00Z — Go reboot Phase-1 OPENED (PM-substitution by po). task_plan repointed TS -> Go (phase-1-task-plan-go.md). 14 Go tasks installed, all NOT-STARTED except current P1-KD-A1g=READY. TS phase1/phase2 ledgers retained in tsCompletionArchive. Goals G1-G12 reset to TBD (G9 held — see goals[]). Routing override: dev-kinh-dich owns ALL apps/kinh-dich-service/ tasks incl. dashboard (E-bucket). P1-KD-A1g handoff created; dev-kinh-dich ready to accept.",
+      "2026-05-24T08:18:35Z — Go reboot Phase-1 CLOSE GATE: status ACTIVE -> APPROVED (PM-substitution by po). QA (agent a91b5031f178bde88) delivered CONDITIONAL-GO — the 'conditional' reflects ONLY the Phase-1 scope boundary, NOT a quality defect. Build clean (CGO_ENABLED=0 go build ./... exit 0; go vet exit 0; go test 39 PASS/0 FAIL). Sandbox 17/17 GREEN (15 primitive + 2 module), env audit EMPTY. COMPLETE Phase-1 evidence for 7 goals: G1, G2, G3, G6, G7, G8, G12. G8 honest-RED independently re-verified by QA (corrupt->RED->revert->17/17 GREEN, zero residue). Module golden scenario correction (11,55,19 -> 30,28,56) validated by QA as LEGITIMATE domain correction (THIEU_DUONG=0.10 authentic), NOT a regression mask. All 25 Go files (23 .go + go.mod + go.sum) confirmed committed on main; commit-race conflation into 2ac5e096/fec4a0e0 cosmetic, history NOT rewritten. PENDING Phase-2 by design: G4, G5, G9, G10, G11 + dashboard stale-comment cleanup. Goals[] G1..G12 STAY TBD — flips are PO atomic action at 12/12 TERMINAL close per Charter §4.5. Phase 2 OPENED -> AWAITING-PLAN; architect dispatched to author phase-2-task-plan-go.md."
     ],
     "tasks": {
       "P1-KD-A1g": {
@@ -329,17 +345,31 @@
     }
   },
   "phase2": {
-    "_note": "Phase 2 (Go reboot) NOT-STARTED. The prior TS Phase-2 (CLOSED, 14 tasks P2-KD-A..Z, depguard->eslint-boundaries fence) is PRESERVED VERBATIM under tsCompletionArchive.phase2 (do not delete). Go Phase-2 awaits Phase-1 Go close-gate + PO Phase-2 authorization (PO -> architect Go Phase-2 task plan). Go fence tool = depguard via golangci-lint (NOT eslint-plugin-boundaries).",
-    "status": "NOT-STARTED",
+    "_note": "Phase 2 (Go reboot) OPENED -> AWAITING-PLAN at Phase-1 close gate (2026-05-24T08:18:35Z, po). The prior TS Phase-2 (CLOSED, 14 tasks P2-KD-A..Z, eslint-boundaries fence) is PRESERVED VERBATIM under tsCompletionArchive.phase2 (do not delete). Go Phase-2 awaits architect-authored phase-2-task-plan-go.md (PO -> architect dispatch emitted this cycle). Go fence tool = depguard via golangci-lint (NOT eslint-plugin-boundaries). Scope = G4, G5, G9, G10, G11 + dashboard stale-comment cleanup. On plan landing: PO reviews -> AWAITING-PLAN -> OPEN (taskPlan ptr + tasks map). WIP=1.",
+    "status": "AWAITING-PLAN",
     "_status_enum": "Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
-    "openedAt": null,
-    "openedBy": null,
+    "openedAt": "2026-05-24T08:18:35Z",
+    "openedBy": "po (Phase-1 close gate -> Phase-2 open; PM-substitution)",
     "closedAt": null,
     "closedBy": null,
     "skeleton_in": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md §Phase Skeleton",
     "taskPlan": null,
+    "_taskPlan_note": "AWAITING architect: docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-go.md (dispatched 2026-05-24T08:18:35Z). On landing, PO repoints taskPlan + installs tasks map -> status OPEN.",
     "taskPlan_prior_ts": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-ts.md (ARCHIVED — TS ledger preserved in tsCompletionArchive.phase2)",
     "wip_limit": 1,
+    "phase2_scope": {
+      "goals": ["G4", "G5", "G9", "G10", "G11"],
+      "G4": "depguard fence via golangci-lint (Fence-A/B/C) + deliberate-violation R-FENCE gate (non-zero exit on injected violation) -> revert -> never committed; freeze anchor confirmation",
+      "G5": "G5a git mv superseded TS domain logic -> _deprecated/ (kinh-dich-pre-delete tag) + G5b MCP handler HTTP rewire to port 5005 + G5c zero TODO.*migrat audit",
+      "G9": "Playwright Path B re-confirm on REBUILT Go dashboard (TS render proof no longer applies post-Go-rebuild); zero console/page/request errors, 3 panels, honest NOT-RUN",
+      "G10": "kinh-dich-pre-inject tag + single-literal bug injection in a Go primitive + blind AI-fix <=2 cycles (baseline 1.5)",
+      "G11": "2-trial regression coupling proof (two different primitive mutations, each flips >=1 coupled module scenario RED)",
+      "dashboard_comment_cleanup": "Remove two stale 'language=ts, runtime=bun' comments in apps/kinh-dich-service/dashboard/index.html (~L13, ~L1578) for honest-green",
+      "pre_revert_tags": ["kinh-dich-pre-ci (G4)", "kinh-dich-pre-delete (G5a)", "kinh-dich-pre-inject (G10)"],
+      "earned_pending_carry_forward": ["G1", "G2", "G3", "G6", "G7", "G8", "G12"],
+      "note": "G1/G2/G3/G6/G7/G8/G12 carry Phase-1 Go evidence (re-confirmed at Phase-2 close-gate); no new code tasks for them. ALL goal flips PO-only atomic at 12/12 terminal (Charter §4.5)."
+    },
+    "phase2_dispatch_signal": "docs/signals/po-20260524T081835Z.json (po -> architect, Go Phase-2 task plan)",
     "current_task": null,
     "current_task_owner": null,
     "current_task_handoff": null,
@@ -812,10 +842,11 @@
       "track": "B",
       "title": "Dashboard is the trust contract (Path A user verbal OR Path B PO Playwright)",
       "_title_note": "Path B (PO Playwright headless) is Day-0 default per L6 carry-over from TA cycle-19 + macro cycle-53.",
-      "status": "IN-PROGRESS",
+      "status": "TBD",
+      "_g9_reset_note": "Reset IN-PROGRESS -> TBD at Phase-1 Go close gate (2026-05-24, po). The TS-held Playwright PASS does NOT carry to the Go rebuild — G9 has zero Go evidence yet (Go-dashboard Playwright re-confirm is Phase-2 pending work). Per Charter §4.5 + USER-DIRECTIVE 'keep goals = TBD for now', G9 stays TBD until PO flips at 12/12 terminal close. Held-evidence note preserved below for Phase-2 re-confirm context.",
       "verifiedAt": null,
       "verifiedBy": null,
-      "evidence": "HELD from TS pilot (Path B PO Playwright PASS — see tsCompletionArchive.goals_terminal G9). MUST be RE-CONFIRMED on the rebuilt Go dashboard before flipping YES — the TS dashboard render proof no longer applies after the Go rebuild. Path B (PO Playwright headless) is the Day-0 default re-confirm route.",
+      "evidence": "HELD from TS pilot (Path B PO Playwright PASS — see tsCompletionArchive.goals_terminal G9). MUST be RE-CONFIRMED on the rebuilt Go dashboard before flipping YES — the TS dashboard render proof no longer applies after the Go rebuild. Path B (PO Playwright headless) is the Day-0 default re-confirm route. (Status reset to TBD at Phase-1 close — see _g9_reset_note.)",
       "calibration": "Path A: user verbal YES to 'Can you tell from this dashboard whether kinh-dich hexagram resolution is working correctly?' recorded in docs/po-decisions/<date>-g9-kinh-dich-user-confirmation.md. Path B (default): PO Playwright + chromium-headless-shell against file://apps/kinh-dich-service/dashboard/index.html via Terminal.app TCC-stage (L87). Acceptance: ZERO console errors / pageerrors / requestfailed, all 3 panel cards rendered, NOT-RUN status honestly displayed.",
       "phase2Bucket": null
     },

@@ -1,0 +1,44 @@
+{
+  "from": "po",
+  "to": "architect",
+  "via": "caveman",
+  "type": "phase-2-task-plan-request",
+  "priority": "high",
+  "createdAt": "2026-05-24T08:18:35Z",
+  "pilot": "kinh-dich-service",
+  "language": "Go",
+  "charterRef": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/pilot-charter.md",
+  "ssotRef": "docs/data/pilot-status-kinh-dich.json",
+  "ssotCommit": "<PENDING-COMMIT>",
+  "payload": "kinh-dich Go reboot: Phase-1 CLOSED = APPROVED (QA CONDITIONAL-GO ratified; conditional = scope boundary only, NOT a quality defect). Phase-2 OPENED -> AWAITING-PLAN. Author the Go Phase-2 task plan at docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-go.md, mirroring the TA/stock-price Phase-2 Go pattern (docs/architecture-briefs/2026-05-23-stock-price-factory/phase-2-task-plan-go.md). WIP=1 sequential. NO goal flips in Phase 2 (Charter §4.5 — PO-only atomic at 12/12 terminal).",
+  "phase1_close": {
+    "verdict": "CONDITIONAL-GO (Phase-1 scope boundary only)",
+    "qa_agent": "a91b5031f178bde88",
+    "build": "CGO_ENABLED=0 go build ./... exit 0; go vet exit 0; go test 39 PASS / 0 FAIL",
+    "sandbox": "17/17 GREEN (15 primitive + 2 module); env audit EMPTY; CGO_ENABLED=0",
+    "goals_complete_phase1": ["G1", "G2", "G3", "G6", "G7", "G8", "G12"],
+    "go_files_on_main": "25 tracked (23 .go + go.mod + go.sum); commit-race conflation 2ac5e096/fec4a0e0 cosmetic, history NOT rewritten"
+  },
+  "phase2_scope": {
+    "goals": ["G4", "G5", "G9", "G10", "G11"],
+    "G4": "depguard fence via golangci-lint — Fence-A (pkg/primitive/* stdlib only) / Fence-B (pkg/module/* primitives+stdlib only) / Fence-C (SQLite+CGO only from cmd/server/main.go composition root). CI command + deliberate-violation R-FENCE gate (inject Fence-A import -> non-zero exit + 'Fence-A' in output -> revert -> exit 0 + git clean -> violation NEVER committed). Freeze anchor confirmation (AC-4c). Pre-revert tag kinh-dich-pre-ci created in the gating task, Step 0, before any mutation.",
+    "G5": "G5a: git mv superseded TS domain logic -> _deprecated/ under kinh-dich-pre-delete tag (atomic move+rewire, single commit, git show --stat shows RENAME). G5b: MCP tool handlers HTTP-rewired to kinh-dich-service port 5005, zero direct domain imports. G5c: grep TODO.*migrat = 0.",
+    "G9": "Playwright Path B re-confirm on the REBUILT Go dashboard (apps/kinh-dich-service/dashboard/index.html) — TS render proof no longer applies post-Go-rebuild. Acceptance: zero console/page/request errors, all 3 panels render, honest NOT-RUN cold-open. Day-0 default Path B (PO Playwright headless chromium via Terminal.app TCC-stage).",
+    "G10": "kinh-dich-pre-inject tag (Step 0, before injection) + single-literal bug injected in a Go primitive (compiles, fails at runtime/golden) + blind dev-kinh-dich fix <=2 cycles (baseline 1.5). Fixer stays BLIND to literal.",
+    "G11": "2-trial regression coupling proof — Trial-1 (G10 alias primitive mutation, >=1 coupled module scenario RED, single-edit fix repairs all) + Trial-2 (DIFFERENT primitive mutation, same coupling proof). Outcome-(a) x 2 = PASS.",
+    "dashboard_comment_cleanup": "Remove two stale 'language=ts, runtime=bun' comments in dashboard/index.html (~L13, ~L1578) for honest-green — fold into the G9 or dashboard-finalization task.",
+    "pre_revert_tags": ["kinh-dich-pre-ci (G4 gating task Step 0)", "kinh-dich-pre-delete (G5a gating task Step 0)", "kinh-dich-pre-inject (G10 gating task Step 0)"],
+    "earned_pending_carry_forward": ["G1", "G2", "G3", "G6", "G7", "G8", "G12"],
+    "fence_tool": "depguard via golangci-lint (NOT eslint-plugin-boundaries — that was the TS pilot). Go fences only.",
+    "service_port": 5005
+  },
+  "constraints": [
+    "WIP=1 sequential — no parallel dispatch within Phase 2",
+    "NO goal flips in Phase 2 — Charter §4.5 PO-only atomic at 12/12 terminal",
+    "decisionMatrix stays TBD; goalsEarned stays 0 throughout Phase 2",
+    "Anti-scope: apps/kinh-dich-service/ ONLY",
+    "Explicit-file git staging (git add <path>); no -A/./dir; no --force/--no-verify/--no-gpg-sign; no push of source/CI files",
+    "Do NOT modify docs/data/pilot-status-kinh-dich.json (PO-owned)"
+  ],
+  "expected_return": "architect emits docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-go.md (status READY-FOR-DISPATCH, per-task ACs, dependency-ordered, WIP=1) + done-signal. PO reviews -> repoints phase2.taskPlan + installs tasks map -> phase2 AWAITING-PLAN -> OPEN -> dispatch first Phase-2 task."
+}
