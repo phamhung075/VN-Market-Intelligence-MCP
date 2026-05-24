@@ -30,6 +30,17 @@ Authored NO pilot SSOT (no goal flip, no decisionMatrix — §4.5 terminal-only)
 
 ---
 
+## cycle-68 — P2-KD-L G9 dashboard-trust EVIDENCE (kinh-dich pilot-4, Path B Playwright)
+- **Path B headless chromium run = clean.** console=0, pageerror=0, requestfailed=0.
+- Selectors: dashboard has **NO data-testid** (handoff examples stale). Used real classes: `.scenario-card` (15), `.module-card` (2), `.service-card` (1); `h2:has-text` panels (3=1 each); `.scenario-status-dot.dot-green/.dot-red/.dot-pending`; `#prim/mod-notrun-chip`; `.group-status`.
+- 17 status dots (15 prim + 2 module = SSOT) ALL `dot-pending`. green=0 red=0 → **zero false greens**. 5 group labels all NOT-RUN. Chips "15/2 NOT-RUN".
+- **4 ACs all PASS** → G9 overall **PASS (no RED findings)**.
+- npx-module gotcha: `0b9ff77…` expects chromium rev 1179 (absent) → fail; `e41f203…` aligns w/ cached 1217/1223 → works. NODE_PATH+PLAYWRIGHT_BROWSERS_PATH set; `.cjs` require.
+- §4.5: G9 evidence ONLY, NOT flipped. Did NOT edit PM SSOT pilot-status-kinh-dich.json. /tmp runner deleted. Committed ONLY decision doc + signal. Anchor debba8ea ancestor.
+- Decision: `docs/po-decisions/2026-05-24-g9-kinh-dich-playwright-trust.md`. Signal: `po-kinh-dich-P2-KD-L-g9-done-20260524T043545Z.json` (next_actor pm → P2-KD-M).
+
+---
+
 ## Carry-over (NEXT actor = main-router → architect ×3, ordered)
 - **Order 1:** architect → `docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-ts.md` (mirror stock-price phase-2-task-plan-go.md).
 - **Order 2:** architect → `docs/architecture-briefs/2026-05-24-alert-engine-factory/pilot-charter.md` + `docs/data/pilot-status-alert-engine.json` (git add -f; gitignored).
