@@ -1,0 +1,22 @@
+{
+  "signal": "qa-news-fetch-p1-approved",
+  "timestamp": "2026-05-24T00:00:01Z",
+  "pilot": "news-fetch",
+  "phase": 1,
+  "verdict": "APPROVED",
+  "round": 2,
+  "fixer_commit": "c8a2f7cb",
+  "fix_applied": "apps/news-fetch/src/domain/models.ts:43 — FetchResult.method union extended to 'rss' | 'playwright-stealth' | 'module'",
+  "checks": {
+    "bun_tsc_noEmit": "exit 0 (was exit 2 / 5 TS2769)",
+    "sandbox": "13/13 PASS exit 0",
+    "ddd_fence": "PASS",
+    "security": "PASS",
+    "g12_streak": "3/3 CONFIRMED"
+  },
+  "goals_evidence_locked": ["G1", "G2", "G3", "G5", "G6", "G7", "G12"],
+  "goals_phase2": ["G4", "G8", "G9", "G10", "G11"],
+  "next": "po — flip pilot-status-news-fetch.json G1/G2/G3/G5/G6/G7/G12 to EARNED-PENDING/YES, close Phase 1, open Phase 2",
+  "handoff": "docs/handoffs/TASK_P1-NF-QA.md",
+  "ssot_not_mutated": true
+}

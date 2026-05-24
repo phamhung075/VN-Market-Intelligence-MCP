@@ -1,5 +1,51 @@
 # QA — Notebook
 
+## c283 cycle-81 · 2026-05-24 · news-fetch P1-QA RE-APPROVAL — APPROVED
+
+**Task:** P1-NF-QA re-approval after fixer commit c8a2f7cb | **Verdict:** APPROVED
+
+```
+date: 2026-05-24
+outcome: APPROVED — Phase 1 close-gate PASSED (round 2)
+type: pilot-phase-gate re-approval (news-fetch Phase 1 close-gate)
+fixer_commit: c8a2f7cb — apps/news-fetch/src/domain/models.ts:43 'module' added to union
+tsc: EXIT:0 (was EXIT:2 / 5 TS2769)
+sandbox: 13/13 PASS EXIT:0
+ddd_fence: PASS
+security: PASS
+g12_streak: 3/3 CONFIRMED
+signal: docs/signals/qa-news-fetch-p1-approved-20260524T000001Z.json
+handoff: docs/handoffs/TASK_P1-NF-QA.md — verdict flipped to APPROVED
+tasks_md: P1-QA → DONE 2026-05-24
+goals_evidence_locked: G1/G2/G3/G5/G6/G7/G12 (PO flips at Phase 1 close — §4.5 honored)
+ssot_not_mutated: pilot-status-news-fetch.json not touched
+```
+
+---
+
+## c283 cycle-80 · 2026-05-24 · news-fetch P1-QA Phase 1 close-gate — CHANGES_REQUESTED
+
+**Task:** P1-NF-QA — Phase 1 close-gate verification | **Verdict:** CHANGES_REQUESTED — 1 blocking TSC issue
+
+```
+date: 2026-05-24
+outcome: CHANGES_REQUESTED — TSC exit 2, 5 errors
+type: pilot-phase-gate (news-fetch Phase 1 close-gate)
+sandbox: 13/13 PASS EXIT:0
+bun_test: 233 pass / 6 skip / 0 fail EXIT:0
+tsc: EXIT:2 — 5 TS2769 errors (FetchResult.method type gap)
+ddd_fence: PASS — zero infra imports in primitive/module/sandbox
+security: PASS — no process.env, no hardcoded creds, Bun.env CLEAN from apps/news-fetch/
+g12_streak: 3/3 CONFIRMED (P1-B1+P1-C+P1-D handoff evidence verified)
+ssot_not_mutated: pilot-status-news-fetch.json not touched (PO-only §4.5)
+signal: docs/signals/qa-news-fetch-p1-close-gate-20260524T000000Z.json
+handoff: docs/handoffs/TASK_P1-NF-QA.md
+blocking: apps/news-fetch/src/domain/models.ts:43 — method type missing 'module'
+goals_evidence_locked: G1/G2/G3/G5/G6/G7/G12
+```
+
+---
+
 ## c283 cycle-79 · 2026-05-24 · api-gateway SCALE pilot — G1/G2/G3/G5/G6/G7/G8/G11/G12 gate run
 
 ```

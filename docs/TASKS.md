@@ -117,7 +117,7 @@
 | P1-D | Dashboard stub: `dashboard/index.html` — 3 panels NOT-RUN (G12 streak #3) | G6, G8, G9, G12 | developer | BLOCKED | P1-C |
 | P1-E | Edit-rerun handler + env audit (zero DB creds, zero API keys in sandbox) | G7, G8, G12 | developer | BLOCKED | P1-D |
 | P1-G5 | G5 rewire: split `composition-root.ts`, HTTP-rewire `analysis.ts`, deprecate legacy `reuters.ts`, add `api/openapi.yaml` | G3, G5, G12 | developer | BLOCKED | P1-E |
-| P1-QA | Phase 1 close-gate: sandbox 13/13 green, dashboard renders, G12 streak 3/3 confirmed | G1,G2,G6,G7,G8,G12 | qa | BLOCKED | P1-G5 |
+| P1-QA | Phase 1 close-gate: sandbox 13/13 green, dashboard renders, G12 streak 3/3 confirmed | G1,G2,G6,G7,G8,G12 | qa | DONE 2026-05-24 — APPROVED (tsc exit 0, sandbox 13/13, G1/G2/G3/G5/G6/G7/G12 evidence-locked; see TASK_P1-NF-QA.md) | P1-G5 |
 
 **Notes:**
 - **WIP=1 sequential:** ONLY one task IN-PROGRESS at any time. Dispatch P1-A first; each subsequent task unblocks only when its predecessor is DONE with sandbox-green evidence in handoff. Sequencing chain: A → B1 → B2 → B3 → B4 → C → D → E → G5 → QA.
