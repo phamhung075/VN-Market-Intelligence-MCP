@@ -1,0 +1,44 @@
+{
+  "signal": "dev-api-gateway-P1-AG-B3-done",
+  "task": "P1-AG-B3",
+  "timestamp": "2026-05-24T09:55:37Z",
+  "agent": "dev-api-gateway",
+  "status": "DONE",
+  "commit": {
+    "sha": "c21dd48c698538fffa649e3ec855a75dc3d36a6b",
+    "short": "c21dd48c",
+    "branch": "main",
+    "files": [
+      "apps/api-gateway/docs/g11-coupling-design.md",
+      "apps/api-gateway/pkg/interface/http/handlers.go",
+      "apps/api-gateway/pkg/primitive/route-service-matcher/match.go",
+      "apps/api-gateway/pkg/primitive/route-service-matcher/match_test.go",
+      "apps/api-gateway/pkg/primitive/route-service-matcher/scenarios/failure-empty-service.json",
+      "apps/api-gateway/pkg/primitive/route-service-matcher/scenarios/g11-canary-cascade.json",
+      "apps/api-gateway/pkg/primitive/route-service-matcher/scenarios/golden-health-prefix.json",
+      "apps/api-gateway/pkg/primitive/route-service-matcher/scenarios/golden-proxy-prefix.json"
+    ],
+    "files_count": 8
+  },
+  "acceptance_criteria": {
+    "AC-1": "PASS — grep net/http|httputil pkg/primitive/ = comments only (zero real imports)",
+    "AC-2": "PASS — 3 scenarios: golden-proxy-prefix, golden-health-prefix, failure-empty-service (genuine failure); plus g11-canary-cascade",
+    "AC-3": "PASS — both inline extraction blocks removed from handlers.go; both call sites rewired to rsm.ExtractServiceName; HTTP behaviour + 404 path unchanged",
+    "AC-4": "PASS — go test ./... all PASS (49 top-level, +1 new TestExtractServiceName), go vet exit 0",
+    "AC-5": "PASS — g11-coupling-design.md Trial-2 section marked REALIZED, cascade scenario cited, verification commands documented",
+    "AC-6": "PASS — go test ./... PASS output in RETURN message"
+  },
+  "smoke": {
+    "go_test": "PASS — 7 packages, all ok",
+    "go_vet": "PASS — exit 0",
+    "purity_grep": "EMPTY — only comment lines, no real net/http or httputil imports in pkg/primitive/"
+  },
+  "primitives_under_pkg_primitive": [
+    "overall-status-computer",
+    "proxy-path-resolver",
+    "route-service-matcher"
+  ],
+  "inline_blocks_removed": true,
+  "g11_trial2_realized": true,
+  "next_actor": "qa"
+}
