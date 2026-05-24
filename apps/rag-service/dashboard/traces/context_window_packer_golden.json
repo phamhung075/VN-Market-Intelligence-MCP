@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "primitive": "context_window_packer",
+  "actual": {
+    "packed": "HOSE Earnings Report\nVNDirect\nEarnings growth accelerated in Q3 2026."
+  },
+  "expected": {
+    "packed": "HOSE Earnings Report\nVNDirect\nEarnings growth accelerated in Q3 2026."
+  },
+  "diff": [],
+  "elapsed_ms": 0
+}

@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "primitive": "temporal_decay_scorer",
+  "actual": {
+    "score": 0.2
+  },
+  "expected": {
+    "score": 0.2
+  },
+  "diff": [],
+  "elapsed_ms": 0
+}

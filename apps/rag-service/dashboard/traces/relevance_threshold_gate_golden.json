@@ -1,0 +1,22 @@
+{
+  "passed": true,
+  "primitive": "relevance_threshold_gate",
+  "actual": {
+    "result": [
+      {
+        "id": "doc-1",
+        "distance": 0.3
+      }
+    ]
+  },
+  "expected": {
+    "result": [
+      {
+        "id": "doc-1",
+        "distance": 0.3
+      }
+    ]
+  },
+  "diff": [],
+  "elapsed_ms": 0
+}

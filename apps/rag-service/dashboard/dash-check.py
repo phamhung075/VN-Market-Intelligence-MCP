@@ -5,9 +5,9 @@ dash-check.py — AI/CI health inspector for rag-service Scenario Trust Dashboar
 Parses apps/rag-service/dashboard/index.html statically:
   - Verifies 3 panels exist (Primitives, Module, Microservice)
   - Reads inline <script type="application/json"> trace blocks
-  - Confirms similarity-scorer trace: passed=true
-  - Confirms retrieval module trace: passed=true
-  - Confirms NOT-RUN primitives have no trace (no false-greens)
+  - Confirms all 5 primitive traces: passed=true (GREEN — Phase 2 full)
+  - Confirms module-full trace: passed=true
+  - Confirms microservice card has no trace (honest NOT-RUN, no false-green)
   - Confirms SI-2 boundary comment is present
   - Zero network calls — reads only the local file
 
@@ -32,25 +32,37 @@ DASHBOARD_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_HTML = os.path.join(DASHBOARD_DIR, "index.html")
 
 # ── Expected honesty contract ────────────────────────────────────────────────
-# These trace IDs must have passed=true
+# Phase 2: all 5 primitive traces + module-full trace must have passed=true
 EXPECTED_GREEN = {
-    "trace-similarity-scorer-golden": "similarity_scorer",
-    "trace-module-golden": "retrieval",
+    "trace-similarity-scorer-golden": "similarity_scorer",          # P1-B
+    "trace-relevance-threshold-gate-golden": "relevance_threshold_gate",  # P2-B1
+    "trace-top-k-selector-golden": "top_k_selector",                # P2-B2
+    "trace-context-window-packer-golden": "context_window_packer",  # P2-B3
+    "trace-temporal-decay-scorer-golden": "temporal_decay_scorer",  # P2-B4
+    "trace-module-full-golden": "retrieval",                        # P2-C full pipeline
 }
 
-# These primitive names must NOT have a green trace (honest NOT-RUN)
-EXPECTED_NOT_RUN = [
-    "relevance-threshold-gate",
-    "temporal-decay-scorer",
-    "top-k-selector",
-    "context-window-packer",
-]
+# Phase 2: all primitives have traces now — EXPECTED_NOT_RUN is empty for primitives.
+# Only microservice is NOT-RUN.
+EXPECTED_NOT_RUN_PRIMITIVES: list[str] = []  # Phase 2: all 5 are GREEN
+
+# Microservice must NOT have a trace (honest NOT-RUN)
+EXPECTED_MICROSERVICE_NOT_RUN = "trace-microservice-rag-service"
 
 # Required panel ids
 EXPECTED_PANELS = [
     "panel-primitives",
     "panel-module",
     "panel-microservice",
+]
+
+# Required primitive card names in HTML
+EXPECTED_PRIMITIVE_NAMES = [
+    "similarity-scorer",
+    "relevance-threshold-gate",
+    "temporal-decay-scorer",
+    "top-k-selector",
+    "context-window-packer",
 ]
 
 # SI-2 boundary marker
@@ -110,14 +122,7 @@ def check_dashboard() -> bool:
             fails.append(f"Panel {panel_id!r} NOT found in HTML")
 
     # ── 3. Five primitive card names ─────────────────────────────────────────
-    five_prims = [
-        "similarity-scorer",
-        "relevance-threshold-gate",
-        "temporal-decay-scorer",
-        "top-k-selector",
-        "context-window-packer",
-    ]
-    for pname in five_prims:
+    for pname in EXPECTED_PRIMITIVE_NAMES:
         if pname in html:
             passes.append(f"Primitive card name {pname!r} found")
         else:
@@ -128,7 +133,7 @@ def check_dashboard() -> bool:
     parser.feed(html)
     extracted = parser.scripts
 
-    # ── 5. Verify green traces are actually passed=true ──────────────────────
+    # ── 5. Verify all 5 primitive traces + module-full are GREEN (passed=true) ─
     for trace_id, expected_primitive in EXPECTED_GREEN.items():
         raw = extracted.get(trace_id)
         if raw is None:
@@ -153,18 +158,15 @@ def check_dashboard() -> bool:
                 f"not green-worthy but would display as green (G8 violation)"
             )
 
-    # ── 6. Verify NOT-RUN primitives have no inline trace ────────────────────
-    for pname in EXPECTED_NOT_RUN:
-        # Derive expected trace-id pattern (normalise name)
-        norm = pname.replace("-", "_")
-        potential_id = f"trace-{norm}-golden"
-        if potential_id in extracted:
-            fails.append(
-                f"NOT-RUN primitive {pname!r} has an inline trace {potential_id!r} — "
-                "this could be a false-green (G8 violation)"
-            )
-        else:
-            passes.append(f"Primitive {pname!r}: no inline trace (honest NOT-RUN)")
+    # ── 6. Microservice card must NOT have a live trace (honest NOT-RUN) ──────
+    # The microservice panel shows NOT-RUN until live HTTP wiring is proven.
+    if EXPECTED_MICROSERVICE_NOT_RUN in extracted:
+        fails.append(
+            f"Microservice has an inline trace {EXPECTED_MICROSERVICE_NOT_RUN!r} — "
+            "check if this is a false-green (G8 violation if trace not from live run)"
+        )
+    else:
+        passes.append("Microservice card: no inline trace (honest NOT-RUN — G8 policy)")
 
     # ── 7. Zero external URLs ─────────────────────────────────────────────────
     # Check for CDN-style URLs in HTML (data: and file: are fine)
@@ -185,13 +187,27 @@ def check_dashboard() -> bool:
         passes.append("Zero external URLs in HTML (G6 file:// compatible)")
 
     # ── 8. No hardcoded port-5002 HTTP call ──────────────────────────────────
+    # Microservice panel is honest NOT-RUN — no fetch() to port 5002
     if "localhost:5002" in html or "127.0.0.1:5002" in html:
-        fails.append("Live HTTP call to port 5002 detected — microservice panel must be NOT-RUN in Phase 1 (G8)")
+        fails.append(
+            "Live HTTP call to port 5002 detected — microservice panel must remain "
+            "NOT-RUN until live trace is available (G8 honesty)"
+        )
     else:
         passes.append("No live HTTP call to port 5002 (microservice panel is honestly NOT-RUN)")
 
+    # ── 9. Phase 2: all 5 primitive trace IDs are wired in JS ─────────────────
+    # Verify the traceId strings appear in the JS PRIMITIVE_CARDS array
+    for trace_id in EXPECTED_GREEN:
+        if "retrieval" in trace_id:
+            continue  # Module traces checked separately
+        if trace_id in html:
+            passes.append(f"Primitive traceId {trace_id!r} wired in JS PRIMITIVE_CARDS")
+        else:
+            fails.append(f"Primitive traceId {trace_id!r} NOT found in HTML — JS not wired")
+
     # ── Summary ───────────────────────────────────────────────────────────────
-    print("\n[dash-check] rag-service Dashboard Analysis")
+    print("\n[dash-check] rag-service Dashboard Analysis (Phase 2)")
     print("=" * 60)
     for p in passes:
         print(f"  PASS  {p}")
@@ -204,17 +220,17 @@ def check_dashboard() -> bool:
     print(f"  {len(passes)} checks passed, {len(fails)} checks failed")
 
     if verdict == "PASS":
-        print("\n[dash-check] Panel summary:")
+        print("\n[dash-check] Panel summary (Phase 2 full):")
         print("  Primitives panel:")
-        print("    similarity-scorer     GREEN  (trace passed=true)")
-        print("    relevance-threshold-gate  NOT-RUN  (Phase 2)")
-        print("    temporal-decay-scorer     NOT-RUN  (Phase 2)")
-        print("    top-k-selector            NOT-RUN  (Phase 2)")
-        print("    context-window-packer     NOT-RUN  (Phase 2)")
+        print("    similarity-scorer          GREEN  (trace passed=true — P1-B)")
+        print("    relevance-threshold-gate   GREEN  (trace passed=true — P2-B1)")
+        print("    temporal-decay-scorer      GREEN  (trace passed=true — P2-B4)")
+        print("    top-k-selector             GREEN  (trace passed=true — P2-B2)")
+        print("    context-window-packer      GREEN  (trace passed=true — P2-B3)")
         print("  Module panel:")
-        print("    retrieval             GREEN  (trace passed=true)")
+        print("    retrieval                  GREEN  (trace passed=true — P2-C full pipeline)")
         print("  Microservice panel:")
-        print("    rag-service (port 5002)  NOT-RUN  (Phase 2 composition-root)")
+        print("    rag-service (port 5002)    NOT-RUN  (honest — no live HTTP trace)")
 
     return verdict == "PASS"
 

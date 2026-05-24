@@ -1,0 +1,30 @@
+{
+  "passed": true,
+  "primitive": "top_k_selector",
+  "actual": {
+    "result": [
+      {
+        "id": "doc-1",
+        "score": 0.9
+      },
+      {
+        "id": "doc-2",
+        "score": 0.7
+      }
+    ]
+  },
+  "expected": {
+    "result": [
+      {
+        "id": "doc-1",
+        "score": 0.9
+      },
+      {
+        "id": "doc-2",
+        "score": 0.7
+      }
+    ]
+  },
+  "diff": [],
+  "elapsed_ms": 0
+}

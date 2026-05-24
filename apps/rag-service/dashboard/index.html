@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>rag-service — Scenario Trust Dashboard (Phase 1)</title>
+  <title>rag-service — Scenario Trust Dashboard (Phase 2)</title>
   <style>
     /* ─── Reset + base ─────────────────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -174,7 +174,7 @@
       Renders from inline-embedded sandbox trace JSON. Zero network calls. Zero CDN.
       Open with <code>file://</code> — no server required.
     </p>
-    <span class="phase-badge">Phase 1 &mdash; G6 / G8 / G9</span>
+    <span class="phase-badge">Phase 2 &mdash; G6-full / G8 / G9</span>
   </header>
 
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -223,8 +223,9 @@
       No hardcoded greens. No network calls to port 5002 in Phase 1.
     </p>
     <p style="margin-top:0.4rem;">
-      Phase 1 primitives: similarity-scorer (GREEN), four others NOT-RUN (Phase 2).
-      Phase 2 wires remaining primitives + composition-root. Phase 3 wires microservice.
+      Phase 2 primitives: all 5 GREEN (similarity-scorer, relevance-threshold-gate,
+      temporal-decay-scorer, top-k-selector, context-window-packer).
+      Module: retrieval GREEN (all 5 primitives wired via ports, P2-C). Microservice: NOT-RUN until live HTTP wiring verified.
     </p>
   </footer>
 
@@ -247,6 +248,79 @@
 }
   </script>
 
+  <!-- P2-B1 trace: relevance-threshold-gate golden (distance <= 0.5 filter) -->
+  <script id="trace-relevance-threshold-gate-golden" type="application/json">
+{
+  "passed": true,
+  "primitive": "relevance_threshold_gate",
+  "actual": {
+    "result": [{"id": "doc-1", "distance": 0.3}]
+  },
+  "expected": {
+    "result": [{"id": "doc-1", "distance": 0.3}]
+  },
+  "diff": [],
+  "elapsed_ms": 0
+}
+  </script>
+
+  <!-- P2-B2 trace: top-k-selector golden (k=2 from 3-element list) -->
+  <script id="trace-top-k-selector-golden" type="application/json">
+{
+  "passed": true,
+  "primitive": "top_k_selector",
+  "actual": {
+    "result": [{"id": "doc-1", "score": 0.9}, {"id": "doc-2", "score": 0.7}]
+  },
+  "expected": {
+    "result": [{"id": "doc-1", "score": 0.9}, {"id": "doc-2", "score": 0.7}]
+  },
+  "diff": [],
+  "elapsed_ms": 0
+}
+  </script>
+
+  <!-- P2-B3 trace: context-window-packer golden (title+source+content assembly) -->
+  <script id="trace-context-window-packer-golden" type="application/json">
+{
+  "passed": true,
+  "primitive": "context_window_packer",
+  "actual": {
+    "packed": "HOSE Earnings Report\nVNDirect\nEarnings growth accelerated in Q3 2026."
+  },
+  "expected": {
+    "packed": "HOSE Earnings Report\nVNDirect\nEarnings growth accelerated in Q3 2026."
+  },
+  "diff": [],
+  "elapsed_ms": 0
+}
+  </script>
+
+  <!-- P2-B4 trace: temporal-decay-scorer golden (14-day age, 7-day half-life → 0.2) -->
+  <script id="trace-temporal-decay-scorer-golden" type="application/json">
+{
+  "passed": true,
+  "primitive": "temporal_decay_scorer",
+  "actual": {"score": 0.2},
+  "expected": {"score": 0.2},
+  "diff": [],
+  "elapsed_ms": 0
+}
+  </script>
+
+  <!-- P2-C trace: retrieval module full pipeline (all 5 primitives, doc-2 filtered by threshold) -->
+  <script id="trace-module-full-golden" type="application/json">
+{
+  "passed": true,
+  "primitive": "retrieval",
+  "actual": {"top_k_ids": ["doc-1"]},
+  "expected": {"top_k_ids": ["doc-1"]},
+  "diff": [],
+  "elapsed_ms": 1
+}
+  </script>
+
+  <!-- Phase 1 module trace (preserved for backward compatibility) -->
   <script id="trace-module-golden" type="application/json">
 {
   "passed": true,
@@ -371,29 +445,29 @@
 
     // ── Panel 1: Primitives ───────────────────────────────────────────────────
     //
-    // 5 planned primitives per spec. Only similarity-scorer has a trace (P1-B).
-    // The other 4 are honest NOT-RUN — Phase 2 B-bucket tasks.
+    // Phase 2 full: all 5 primitives GREEN, each backed by a passing sandbox trace.
+    // G8 honesty: GREEN only when trace.passed === true. No false-greens.
     //
     const PRIMITIVE_CARDS = [
       {
         name: "similarity-scorer",
-        traceId: "trace-similarity-scorer-golden",   // GREEN — P1-B done
+        traceId: "trace-similarity-scorer-golden",       // GREEN — P1-B cfd38a3b
       },
       {
         name: "relevance-threshold-gate",
-        traceId: null,  // NOT-RUN — Phase 2
+        traceId: "trace-relevance-threshold-gate-golden", // GREEN — P2-B1 37dd6956
       },
       {
         name: "temporal-decay-scorer",
-        traceId: null,  // NOT-RUN — Phase 2
+        traceId: "trace-temporal-decay-scorer-golden",    // GREEN — P2-B4 0324ba1b
       },
       {
         name: "top-k-selector",
-        traceId: null,  // NOT-RUN — Phase 2
+        traceId: "trace-top-k-selector-golden",           // GREEN — P2-B2 dd26b146
       },
       {
         name: "context-window-packer",
-        traceId: null,  // NOT-RUN — Phase 2
+        traceId: "trace-context-window-packer-golden",    // GREEN — P2-B3 696572b3
       },
     ];
 
@@ -405,14 +479,14 @@
 
     // ── Panel 2: Module ───────────────────────────────────────────────────────
     //
-    // retrieval module — GREEN from P1-C. Future modules NOT-RUN.
+    // Phase 2 full: retrieval module GREEN from full 5-primitive pipeline trace (P2-C).
+    // trace-module-full-golden: all 5 primitives wired — doc-2 filtered by threshold.
     //
     const MODULE_CARDS = [
       {
         name: "retrieval",
-        traceId: "trace-module-golden",   // GREEN — P1-C done
+        traceId: "trace-module-full-golden",  // GREEN — P2-C dc0c28f9 (all 5 primitives)
       },
-      // Future modules (Phase 2+) would go here as NOT-RUN entries
     ];
 
     const moduleBody = document.getElementById("module-body");
@@ -423,13 +497,14 @@
 
     // ── Panel 3: Microservice ─────────────────────────────────────────────────
     //
-    // rag-service card is NOT-RUN — Phase 2 composition-root wiring pending.
-    // No live HTTP call to port 5002 in Phase 1 (G8 honesty).
+    // rag-service card is NOT-RUN — no live HTTP trace available.
+    // Honest state: NOT-RUN until live HTTP wiring is proven (G8 policy).
+    // No hardcoded GREEN. No fetch() to port 5002 in file:// mode.
     //
     const MICROSERVICE_CARDS = [
       {
         name: "rag-service (port 5002)",
-        traceId: null,  // NOT-RUN — Phase 2 composition-root wiring
+        traceId: null,  // NOT-RUN — honest (no live trace; G8 policy: no false-green)
       },
     ];
 
