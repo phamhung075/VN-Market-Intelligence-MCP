@@ -152,7 +152,9 @@
           "goalsAdvanced": ["G3", "G6", "G9"],
           "blockedBy": [],
           "blocks": ["P3-B"],
-          "status": "NOT-STARTED",
+          "status": "DONE",
+          "doneAt": "2026-05-24",
+          "doneNote": "sandbox/__main__.py: choices extended to [primitive,module,service]; service tier boots create_app(embedder=FakeEmbedder, vector_store=FakeVectorStore) via FastAPI TestClient. main.py gains create_app(embedder=None, vector_store=None) seam (68L, <=80L). Fake adapters in sandbox runner: FakeEmbedder (deterministic hash seed -> unit vector), FakeVectorStore (in-memory L2 search). 3 service scenarios: search_golden, index_golden, search_empty_query_422. sandbox service tier: 3/3 GREEN exit 0. LANCEDB_PATH injection -> exit 1 (gate fires). Determinism: identical across 2 runs (excluding elapsed_ms). ZERO sentence-transformers, ZERO LanceDB, ZERO credentials. Seam in app_factory.py build_real_adapters(); production path unchanged (both args None -> real adapters from Config). pytest: 81/81.",
           "acceptanceCriteria": [
             "AC-1: sandbox/__main__.py --tier choices extended to [primitive, module, service]; --tier=service routes to a new service-tier runner path. The other two tiers behave IDENTICALLY (no regression: primitive 16/16 + module 2/2 still exit 0).",
             "AC-2: Composition root main.py gains an OPTIONAL adapter-override seam: create_app(embedder=None, vector_store=None) — None defaults to the REAL adapters (prod behavior unchanged); when injected, uses the fakes. main.py stays <=80L (G3 invariant; currently 74L) — move any fake wiring into the sandbox runner / a test helper, NOT into main.py.",
@@ -170,7 +172,9 @@
           "goalsAdvanced": ["G6"],
           "blockedBy": ["P3-A"],
           "blocks": ["P3-C"],
-          "status": "NOT-STARTED",
+          "status": "DONE",
+          "doneAt": "2026-05-24",
+          "doneNote": "dashboard/index.html: 3 service trace script blocks added (trace-service-search-golden, trace-service-index-golden, trace-service-search-422). MICROSERVICE_CARDS updated to 3 cards each wired to a real traceId (no more null). Dishonest hint 'not implemented / Phase 2' deleted (replaced with generic 'NOT-RUN (no scenario data available)' for genuinely traceless cards). Footer line fixed: 'No network calls to port 5002 in Phase 1' -> 'No network calls to port 5002'; Phase-2-complete description of service tier added. Stale 'NOT-RUN until live HTTP wiring verified' note removed. dash-check: 30/30 PASS.",
           "acceptanceCriteria": [
             "AC-1: dashboard/index.html MICROSERVICE_CARDS (L504-509) wired to render the >=3 service-tier traces from P3-A as real cards — GREEN when trace.passed===true, RED when false (G8 honesty: no hardcoded GREEN). traceId no longer null.",
             "AC-2: DELETE the dishonest NOT-RUN hint 'no trace — not implemented / Phase 2' (L435-440 else-branch). The composition root IS implemented (74L) — 'not implemented' is a lie. A NOT-RUN card may still render grey ONLY for a card that genuinely has no trace, but the rag-service service card now HAS traces.",
@@ -186,7 +190,9 @@
           "goalsAdvanced": ["G6"],
           "blockedBy": ["P3-B"],
           "blocks": ["P3-D"],
-          "status": "NOT-STARTED",
+          "status": "DONE",
+          "doneAt": "2026-05-24",
+          "doneNote": "dash-check.py: check count 25->30 (5 new checks: 3 service trace passed=true, dishonest hint absent, 3 service traceIds wired in MICROSERVICE_CARDS). EXPECTED_MICROSERVICE_NOT_RUN check replaced with EXPECTED_SERVICE_TRACES assertions. Port-5002 fetch check updated to reflect inline traces. Exit: 0 (30/30 PASS).",
           "acceptanceCriteria": [
             "AC-1: dash-check.py asserts the Microservice panel renders >=1 service card (not a NOT-RUN stub) with status derived from a trace.",
             "AC-2: dash-check.py asserts the microservice card has a clickable detail view (toggle element + trace-detail content) — satisfies canonical G6 'click a card in each panel -> detail view renders' for ALL THREE panels (primitive, module, microservice).",
@@ -200,7 +206,9 @@
           "goalsAdvanced": ["G12"],
           "blockedBy": ["P3-C"],
           "blocks": ["P3-E"],
-          "status": "NOT-STARTED",
+          "status": "DONE",
+          "doneAt": "2026-05-24",
+          "doneNote": "G12 evidence: primitive 16/16 EXIT:0 + module 2/2 EXIT:0 + service 3/3 EXIT:0. Env audit: anchored gate returns empty. Negative control: LANCEDB_PATH=/tmp/x -> EXIT:1 gate fires. dash-check: 30/30 PASS EXIT:0. pytest: 81/81. create_app() production path: unchanged when adapters not injected (both args None -> real adapters from Config.from_env() in build_real_adapters()). main.py: 68L.",
           "acceptanceCriteria": [
             "AC-1: Handoff pastes: python -m sandbox --tier=primitive --scenario=all (GREEN exit 0), --tier=module --scenario=all (GREEN exit 0), --tier=service --scenario=all (GREEN exit 0) — ALL THREE tiers proven before RETURN.",
             "AC-2: Handoff pastes env-audit-empty: anchored forbidden-key grep returns empty in the service-tier runner process (proves Security Clause held at service tier).",

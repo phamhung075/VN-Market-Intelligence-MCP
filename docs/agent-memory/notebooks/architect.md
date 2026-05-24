@@ -1,8 +1,67 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 17:07 UTC | **Sprint:** fleet-factory-rollout program
+**Last updated:** 2026-05-24 18:00 UTC | **Sprint:** PDF-INSPECT
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## PDF-INSPECT PI-1 — served PDF/extraction inspector design (2026-05-24T18:00Z) — DESIGN COMPLETE
+
+**Task:** PI-1. Design the 3 GET routes + viewer page + doc_id→PDF mapping + right-pane data-source ruling for the served side-by-side PDF inspector. PO kickoff signal: `docs/signals/po-pdf-inspect-kickoff-20260524T171904Z.json`.
+
+**Key brownfield findings:**
+- `HTTPPDFStorageRepository.fetch_pdf()` downloads PDF bytes via HTTP but does NOT save the PDF to disk — only `/app/data/extractions/{doc_id}.json` is written locally. PDF bytes are consumed in-memory by the extraction engine.
+- `pdf_documents.url` stores the VPS source URL (e.g. `http://125.212.251.27:8765/bctc-files/...`), NOT a local path. No `pdf_path` column exists.
+- mcp-server's `bctcPdfPullJob.buildPdfSavePath()` saves PDFs to `/app/data/pdfs/{TICKER}_{YEAR}_Q{QUARTER}.pdf`. Both containers mount `market_data:/app/data` → pdf-extractor CAN read these files.
+- `PDFDocumentRepository` port has no `find_all()` method — must add.
+- `register_routes(router, extract_usecase)` in `interface/handlers.py` — must extend signature to include `InspectionStore`.
+- Fence-A and Fence-B in `pyproject.toml` are unaffected by new `interface/` → `infrastructure/` reads.
+- `dashboard/` is FROZEN (index.html, traces.js, trust-contract.spec.js) — new viewer goes to `interface/viewer.html` + `/inspect` routes ONLY.
+
+**Design decisions:**
+- Routes: `GET /inspect` (viewer HTML), `GET /inspect/pdfs` (list), `GET /inspect/pdf/{doc_id}` (PDF bytes), `GET /inspect/extraction/{doc_id}` (extraction JSON).
+- PDF-bytes mapping: add nullable `pdf_path TEXT` column to `pdf_documents` via `_ensure_schema()` migration. Lazy backfill at list time by scanning `/app/data/pdfs/*.pdf` and matching ticker from `pdf_documents.url`. Fallback: in-memory map rebuilt each list call.
+- Right-pane RULING: SINGLE ZONE. This service's `text_content` + `tables[]` from extraction JSONs. No mcp-server route. User can see extraction quality directly from the extractor output.
+- Left pane: pdf.js from CDN (jsdelivr, pin to 4.2.67). Iframe fallback if CDN unreachable.
+- New infra: `infrastructure/inspection_store.py` — `InspectionStore` class (list_docs, get_pdf_bytes, get_extraction). No new application use case needed for MVP.
+- SI-2 boundary comment baked into `interface/viewer.html` and any new `interface/` file.
+
+**Risk flags:** R-1 pdf_path join ambiguity (MEDIUM), R-5 path traversal guard on doc_id (MEDIUM).
+
+**Files authored this cycle (2):**
+1. `docs/handoffs/TASK_PDF-INSPECT.md` (UPDATED — [Architect] section appended, PI-1 design complete)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** dev-pdf-extractor (PI-2) — implement InspectionStore + 3 routes + viewer.html + find_all port + pdf_path migration.
+
+---
+
+## KD-QREF-1 kinh-dich 64-Quẻ trading reference design (2026-05-24T17:30Z) — DESIGN COMPLETE
+
+**Task:** KD-QREF-1. Design data asset + emit path + render contract for the 64-Quẻ trading reference panel. PO dispatch signal: `docs/signals/po-kinh-dich-que-reference-20260524T170814Z.json`.
+
+**Key brownfield findings:**
+- `hexagram_data.go` holds two unexported structs (`queMeta`, `queData`) + unexported maps + 64-entry lists. Trend strings in `queDataMap` use ASCII without diacritics (e.g. `"THUAN LOI"`, `"THUAN LOI — manh"`) — prefix-contains matching required in MarketTrend mapping.
+- `cmd/sandbox/main.go` `-emit-traces` flag is the canonical emit pattern (generates `window.__SANDBOX_TRACES__`). Mirror exactly for `-emit-reference`.
+- `dash-check.mjs` FAILs on: any `[class*="dot-"]` with `dot-red`, any `.category-chip` with unknown label, JS console errors, page errors, body text `"not wired"`/`"not_wired"`. Reference section must use fully separate CSS class namespace (`.qref-*`).
+- `index.html` modal + scenario dots + `.levels-grid` are FROZEN. New additive panel inserts between `<!-- .levels-grid -->` close and `<!-- LEGEND -->`.
+- External source `/Users/admin/.../kinhdich_logic/que_convert/` — 64 Markdown files. Structure confirmed: `Xu hướng` row → trend enum, `Cảnh báo` row → warning, `Nghề nghiệp` row → career→trade reframe, `Sáu Hào` → 6 phases with `Kết quả`/`Hành động` tokens.
+
+**Design decisions:**
+- Data home: NEW file `hexagram_reference.go` in `reading_composer` package (hexagram_data.go untouched).
+- Struct: `queReference` + `phaseReference` (unexported; exported accessors `GetQueReference()`, `GetAllQueReferences()`). Phases reuse action/outcome tokens from `queDataMap` verbatim; add `GlossEn` string per phase.
+- Emit: extend `cmd/sandbox/main.go` with `-emit-reference` flag (NOT a new cmd/ entry). Writes `dashboard/que-reference.js` as `window.__QUE_REFERENCE__ = [...]` with DO-NOT-EDIT header.
+- Render: additive `<div id="que-reference-section">` with `.qref-*` CSS class namespace. Inline expand/collapse (NOT modal). Colors via existing CSS vars only. NO `dot-*`, NO `.category-chip`, NO "not wired" text.
+- Future-proof: `GetQueReference(id int)` returns `*queReference` directly usable by future `/hexagram/{number}/explain` handler without restructure.
+
+**Risk flags:** R-1 content quality (64 translations, user-facing), R-2 "not wired" body text avoidance, R-3 absent que-reference.js graceful fallback (no JS error), R-4 trend string prefix matching, R-5 Fence-B.
+
+**Files authored this cycle (2):**
+1. `docs/handoffs/TASK_KD-QREF.md` (UPDATED — [Architect] Brownfield Findings section appended)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** dev-kinh-dich (KD-QREF-2) — implement hexagram_reference.go + emit command + dashboard section.
+
+---
 
 ## NF-LD-1 news-fetch live-data inspection view (2026-05-24T17:07Z) — DESIGN COMPLETE
 

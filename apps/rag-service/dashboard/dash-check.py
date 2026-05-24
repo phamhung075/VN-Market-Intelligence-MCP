@@ -7,7 +7,8 @@ Parses apps/rag-service/dashboard/index.html statically:
   - Reads inline <script type="application/json"> trace blocks
   - Confirms all 5 primitive traces: passed=true (GREEN — Phase 2 full)
   - Confirms module-full trace: passed=true
-  - Confirms microservice card has no trace (honest NOT-RUN, no false-green)
+  - Confirms microservice panel has >=3 service traces: each passed=true (Phase 3)
+  - Confirms microservice card detail view is present (toggle + trace JSON baked in)
   - Confirms SI-2 boundary comment is present
   - Zero network calls — reads only the local file
 
@@ -42,12 +43,16 @@ EXPECTED_GREEN = {
     "trace-module-full-golden": "retrieval",                        # P2-C full pipeline
 }
 
-# Phase 2: all primitives have traces now — EXPECTED_NOT_RUN is empty for primitives.
-# Only microservice is NOT-RUN.
-EXPECTED_NOT_RUN_PRIMITIVES: list[str] = []  # Phase 2: all 5 are GREEN
+# Phase 3: service tier traces — all must have passed=true
+# G8 honesty: GREEN iff trace.passed === true
+EXPECTED_SERVICE_TRACES = [
+    "trace-service-search-golden",   # P3-A /search golden
+    "trace-service-index-golden",    # P3-A /index golden
+    "trace-service-search-422",      # P3-A /search empty query -> 422
+]
 
-# Microservice must NOT have a trace (honest NOT-RUN)
-EXPECTED_MICROSERVICE_NOT_RUN = "trace-microservice-rag-service"
+# Phase 2: all primitives have traces now — EXPECTED_NOT_RUN is empty for primitives.
+EXPECTED_NOT_RUN_PRIMITIVES: list[str] = []  # Phase 2: all 5 are GREEN
 
 # Required panel ids
 EXPECTED_PANELS = [
@@ -158,18 +163,64 @@ def check_dashboard() -> bool:
                 f"not green-worthy but would display as green (G8 violation)"
             )
 
-    # ── 6. Microservice card must NOT have a live trace (honest NOT-RUN) ──────
-    # The microservice panel shows NOT-RUN until live HTTP wiring is proven.
-    if EXPECTED_MICROSERVICE_NOT_RUN in extracted:
+    # ── 6. Microservice panel: >=3 service traces must exist (Phase 3 — P3-A/B) ─
+    # P3-B: Microservice panel now HAS real service traces (no longer NOT-RUN).
+    # Each trace must have passed=true (G8 honesty: GREEN only when trace.passed===true).
+    # AC-1 (P3-C): panel renders >=1 service card not a NOT-RUN stub.
+    for svc_trace_id in EXPECTED_SERVICE_TRACES:
+        raw = extracted.get(svc_trace_id)
+        if raw is None:
+            fails.append(
+                f"Service trace #{svc_trace_id!r} NOT found in HTML — "
+                "Microservice panel missing scenario (P3-B defect)"
+            )
+            continue
+        try:
+            svc_trace: dict[str, Any] = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            fails.append(f"Service trace #{svc_trace_id!r} invalid JSON: {exc}")
+            continue
+
+        if svc_trace.get("passed") is True:
+            scen = svc_trace.get("scenario", "?")
+            passes.append(
+                f"Service trace #{svc_trace_id!r}: passed=true, scenario={scen!r} — GREEN"
+            )
+        else:
+            fails.append(
+                f"Service trace #{svc_trace_id!r}: passed={svc_trace.get('passed')!r} — "
+                "not GREEN (G8 violation in service tier)"
+            )
+
+    # ── 7. Microservice panel: dishonest hint must be gone (P3-B AC-2) ────────
+    # The phrase "not implemented / Phase 2" is a lie — composition root IS implemented.
+    dishonest_hint = "not implemented / Phase 2"
+    if dishonest_hint in html:
         fails.append(
-            f"Microservice has an inline trace {EXPECTED_MICROSERVICE_NOT_RUN!r} — "
-            "check if this is a false-green (G8 violation if trace not from live run)"
+            f"Dishonest hint {dishonest_hint!r} still present (P3-B AC-2: DELETE it — "
+            "composition root IS implemented, 74L)"
         )
     else:
-        passes.append("Microservice card: no inline trace (honest NOT-RUN — G8 policy)")
+        passes.append("Dishonest 'not implemented / Phase 2' hint removed (P3-B AC-2)")
 
-    # ── 7. Zero external URLs ─────────────────────────────────────────────────
-    # Check for CDN-style URLs in HTML (data: and file: are fine)
+    # ── 8. Microservice card detail view present (P3-C AC-2 — canonical G6) ───
+    # Each service trace is baked inline -> buildCard() with trace!=null adds
+    # a <button class="trace-toggle"> + <pre class="trace-detail">.
+    # We verify the traceId strings appear in JS MICROSERVICE_CARDS so the
+    # detail-view toggle path is wired (not null).
+    for svc_trace_id in EXPECTED_SERVICE_TRACES:
+        if svc_trace_id in html:
+            passes.append(
+                f"Service traceId {svc_trace_id!r} wired in JS MICROSERVICE_CARDS "
+                "(detail view toggle path active — not null)"
+            )
+        else:
+            fails.append(
+                f"Service traceId {svc_trace_id!r} NOT found in HTML — "
+                "MICROSERVICE_CARDS may not be wired (detail view toggle won't activate)"
+            )
+
+    # ── 9. Zero external URLs ─────────────────────────────────────────────────
     cdn_patterns = [
         r'https?://',  # Any http/https URL
     ]
@@ -186,18 +237,16 @@ def check_dashboard() -> bool:
     else:
         passes.append("Zero external URLs in HTML (G6 file:// compatible)")
 
-    # ── 8. No hardcoded port-5002 HTTP call ──────────────────────────────────
-    # Microservice panel is honest NOT-RUN — no fetch() to port 5002
+    # ── 10. No hardcoded port-5002 HTTP call ──────────────────────────────────
     if "localhost:5002" in html or "127.0.0.1:5002" in html:
         fails.append(
-            "Live HTTP call to port 5002 detected — microservice panel must remain "
-            "NOT-RUN until live trace is available (G8 honesty)"
+            "Live HTTP call to port 5002 detected — service panel uses inline traces, "
+            "NOT live HTTP (G8 honesty)"
         )
     else:
-        passes.append("No live HTTP call to port 5002 (microservice panel is honestly NOT-RUN)")
+        passes.append("No live HTTP call to port 5002 (service panel uses inline traces)")
 
-    # ── 9. Phase 2: all 5 primitive trace IDs are wired in JS ─────────────────
-    # Verify the traceId strings appear in the JS PRIMITIVE_CARDS array
+    # ── 11. Phase 2 + 3: all trace IDs are wired in JS ─────────────────────────
     for trace_id in EXPECTED_GREEN:
         if "retrieval" in trace_id:
             continue  # Module traces checked separately
@@ -207,7 +256,7 @@ def check_dashboard() -> bool:
             fails.append(f"Primitive traceId {trace_id!r} NOT found in HTML — JS not wired")
 
     # ── Summary ───────────────────────────────────────────────────────────────
-    print("\n[dash-check] rag-service Dashboard Analysis (Phase 2)")
+    print("\n[dash-check] rag-service Dashboard Analysis (Phase 2 + P3)")
     print("=" * 60)
     for p in passes:
         print(f"  PASS  {p}")
@@ -220,7 +269,7 @@ def check_dashboard() -> bool:
     print(f"  {len(passes)} checks passed, {len(fails)} checks failed")
 
     if verdict == "PASS":
-        print("\n[dash-check] Panel summary (Phase 2 full):")
+        print("\n[dash-check] Panel summary (Phase 2 + P3 complete):")
         print("  Primitives panel:")
         print("    similarity-scorer          GREEN  (trace passed=true — P1-B)")
         print("    relevance-threshold-gate   GREEN  (trace passed=true — P2-B1)")
@@ -230,7 +279,10 @@ def check_dashboard() -> bool:
         print("  Module panel:")
         print("    retrieval                  GREEN  (trace passed=true — P2-C full pipeline)")
         print("  Microservice panel:")
-        print("    rag-service (port 5002)    NOT-RUN  (honest — no live HTTP trace)")
+        print("    /search golden             GREEN  (service trace passed=true — P3-A)")
+        print("    /index golden              GREEN  (service trace passed=true — P3-A)")
+        print("    /search 422 edge           GREEN  (service trace passed=true — P3-A)")
+        print("  Service tier: 3/3 traces GREEN, detail view wired (canonical G6 all 3 panels)")
 
     return verdict == "PASS"
 

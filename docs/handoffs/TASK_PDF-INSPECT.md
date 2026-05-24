@@ -67,5 +67,224 @@ PO validates deliverables against the user acceptance condition + all PI-3 ACs, 
 
 ---
 
+## [Architect] Brownfield Findings — PI-1 Design (2026-05-24T18:00Z)
+
+**Zone:** `apps/pdf-extractor/` — SINGLE ZONE (confirmed; no mcp-server route required — see §3 ruling).
+
+**BUILD-STANDARD:** lean (apps/pdf-extractor/ already exists, Phase-2 SCALE pilot DONE 12/12).
+
+---
+
+### Brownfield scan — verified paths
+
+| Path | Finding |
+|------|---------|
+| `apps/pdf-extractor/main.py` | Composition root, 89L. `create_app()` factory wires Config → infra → domain → usecase → `register_routes(router, extract_usecase)`. |
+| `apps/pdf-extractor/interface/handlers.py` | `register_routes(router, extract_usecase)` — currently 2 routes: `GET /health`, `POST /extract`. New routes wire here. |
+| `apps/pdf-extractor/infrastructure/repositories.py` | `SQLitePDFDocumentRepository` — `find_by_id(doc_id)`, `find_pending()`. `HTTPPDFStorageRepository` — `store_extraction(doc_id, content)` writes `/app/data/extractions/{doc_id}.json`. |
+| `apps/pdf-extractor/infrastructure/config.py` | `Config.db_path` = `/app/data/pdf_extractor.db`, `Config.storage_dir` = `/app/data/extractions`. No PDF dir config. |
+| `apps/pdf-extractor/domain/models.py` | `PDFDocument(id, url, source_type, status, extracted_at)`. `ExtractedContent(document_id, tables, text_content, ocr_confidence, extraction_time_ms, confidence_financial)`. |
+| `apps/pdf-extractor/domain/repositories.py` | `PDFDocumentRepository` port — only `save`, `find_by_id`, `find_pending`. No `find_all` method (must add). |
+| `apps/pdf-extractor/pyproject.toml` | Fence-A (primitives no infra/app/interface), Fence-B (modules no infra/interface). No Fence on interface imports. New infra reads are CLEAN. |
+| `apps/pdf-extractor/dashboard/` | Frozen: `index.html`, `traces.js`, `trust-contract.spec.js`. NOT touched. |
+| `docker-compose.yml` | Both mcp-server and pdf-extractor mount `market_data:/app/data`. mcp-server writes PDFs to `/app/data/pdfs/{TICKER}_{YEAR}_Q{QUARTER}.pdf`. pdf-extractor container sees the same volume. |
+| `apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts` | `buildPdfSavePath()` — convention: `data/pdfs/{TICKER}_{YEAR}_Q{QUARTER}.pdf`, e.g. `VCB_2025_Q4.pdf`. |
+| `apps/mcp-server/bctc-schema.ts` | `financial_reports` table has `action_code`, `period_year`, `period_quarter`, `net_profit` (scalar). No join to `pdf_documents`. |
+
+---
+
+### 1. Routes — exact paths and shapes
+
+**Viewer HTML page** — served via a dedicated FastAPI route (not StaticFiles mount):
+
+```
+GET /inspect
+```
+Returns `text/html`. The viewer page HTML is returned inline by the handler (or read from a small template file at `interface/viewer.html`). Rationale: keeps zero new static-mount infrastructure; a single GET route is identical to the existing pattern. The handler is OUTSIDE `dashboard/` — use `interface/viewer.html` as the template location.
+
+**Route A — List**
+```
+GET /inspect/pdfs
+```
+Response `application/json`:
+```json
+{
+  "items": [
+    {
+      "doc_id": "<uuid>",
+      "filename": "VCB_2025_Q4.pdf",
+      "ticker": "VCB",
+      "period": "2025 Q4",
+      "has_extraction": true,
+      "has_pdf": true
+    }
+  ]
+}
+```
+Fields: `doc_id` (UUID from `pdf_documents.id`), `filename` (derived from path), `ticker` + `period` (parsed from filename), `has_extraction` (bool — `/app/data/extractions/{doc_id}.json` exists), `has_pdf` (bool — `/app/data/pdfs/{filename}` exists). Degrade: items with `has_pdf=false` OR `has_extraction=false` still appear in the list with their flags — the viewer shows an explicit message for each missing side.
+
+**Route B — PDF bytes**
+```
+GET /inspect/pdf/{doc_id}
+```
+Response `application/pdf` streaming. Reads the on-disk PDF at the path stored in the `InspectorDocumentRead` infra adapter (see §2 mapping). If file not found: HTTP 404 with `{"error": "pdf_not_found", "doc_id": "<id>"}`.
+
+**Route C — Extracted content**
+```
+GET /inspect/extraction/{doc_id}
+```
+Response `application/json`:
+```json
+{
+  "doc_id": "<uuid>",
+  "text_content": "...",
+  "tables": [...],
+  "ocr_confidence": 0.95,
+  "confidence_financial": 1.0,
+  "extraction_time_ms": 1234
+}
+```
+Source: `/app/data/extractions/{doc_id}.json`. If file not found: HTTP 404 with `{"error": "extraction_not_found", "doc_id": "<id>"}`.
+
+---
+
+### 2. PDF-on-disk mapping (the resolved unknown)
+
+**Root cause of the unknown:** `pdf_documents.url` stores the VPS source URL (e.g. `http://125.212.251.27:8765/bctc-files/...`) — confirmed in `infrastructure/repositories.py` `save()`. There is NO local file path column in `pdf_documents`. The extraction JSON at `/app/data/extractions/{doc_id}.json` is keyed by UUID `doc_id` only.
+
+**What IS on disk:** mcp-server's `bctcPdfPullJob.buildPdfSavePath()` saves PDFs to `data/pdfs/{TICKER}_{YEAR}_Q{QUARTER}.pdf` in the mcp-server container's working directory — which resolves to `/app/data/pdfs/{TICKER}_{YEAR}_Q{QUARTER}.pdf` in the shared Docker volume. Example: `VCB_2025_Q4.pdf`.
+
+**Resolved mapping — Option D (filesystem-primary join, no schema change):**
+
+The list endpoint enumerates `/app/data/pdfs/*.pdf` (files present on disk) and `/app/data/extractions/*.json` (extractions present) independently. The join key between them is NOT a UUID — it must be constructed. Here is the deterministic algorithm:
+
+1. Scan `/app/data/pdfs/*.pdf` → for each filename parse `(TICKER, YEAR, QUARTER)` from the `{TICKER}_{YEAR}_Q{QUARTER}.pdf` pattern.
+2. Query `pdf_documents` (SQLite) → `SELECT id, url FROM pdf_documents WHERE status = 'success'`.
+3. For each `pdf_documents` row, match its URL tail against the VPS filename pattern: the VPS URL `http://125.212.251.27:8765/bctc-files/{TICKER}/filename.pdf` encodes the ticker. However, there is NO guaranteed 1:1 between the VPS URL and the `{TICKER}_{YEAR}_Q{QUARTER}.pdf` stem without further parsing.
+
+**Practical resolution — add one column, avoid guessing:**
+
+The cleanest implementation with zero ambiguity is to add `pdf_local_path TEXT` column to `pdf_documents` (nullable, backfilled on next pull). However, this requires a schema migration and touches the existing extraction pipeline — developer work out of scope for the viewer.
+
+**Alternative that works TODAY with zero schema change:** the list is built from the FILESYSTEM, not from `pdf_documents`. The list endpoint:
+
+1. Scans `/app/data/pdfs/*.pdf` — each file IS a registerable doc with a human-readable name.
+2. Scans `/app/data/extractions/*.json` — each file is `{doc_id}.json`, contains `document_id`.
+3. Cross-references: reads each extraction JSON to get its `document_id`, then queries `pdf_documents` for that `id` to get the `url`. The VPS URL often encodes the ticker in its path (`/bctc-files/VCB/...`). Parses ticker from URL if possible; falls back to extraction filename for period.
+4. For the PDF filename, maps via: parse the extraction JSON `document_id`, find the `pdf_documents.url`, derive ticker from URL, scan `/app/data/pdfs/` for files matching that ticker and period.
+
+**VERDICT — recommended approach (implementable in one task, zero schema migration):**
+
+The list endpoint is **extraction-JSON-primary** (reads `/app/data/extractions/*.json`):
+- Each extraction JSON → `document_id` (UUID) + `text_content` present = we know this doc has extraction.
+- Query `pdf_documents` for that UUID → get `url` → parse ticker from URL path suffix (e.g. last path component before the filename contains the ticker directory, or the filename itself).
+- The PDF file is located by scanning `/app/data/pdfs/` for `{TICKER}_{YEAR}_Q{QUARTER}.pdf`. The year/quarter can be parsed from `pdf_documents.extracted_at` combined with the URL pattern, OR simply exposed as the raw filename in the list if parsing fails.
+
+**For the PDF-bytes endpoint specifically:** the `doc_id`→PDF path mapping is stored in a NEW in-process `dict[str, str]` built at list-request time (not persisted). The list endpoint builds and returns `pdf_path` per item; the PDF-bytes endpoint reconstructs the same path by scanning `/app/data/pdfs/` for the filename that contains the ticker derived from `pdf_documents.url` for that `doc_id`.
+
+**Minimal addition required (flag for dev to implement):** add a `pdf_path TEXT` column to `pdf_documents` — nullable, populated by the new infra read adapter on first `GET /inspect/pdfs` call if the file can be found, or by the PDF-bytes handler. This is a one-migration, one-column, read-the-disk addition. Dev must add this migration to `infrastructure/repositories.py` `_ensure_schema()`. Backfill: at list time, for each `pdf_documents` row with `status='success'` and `pdf_path IS NULL`, scan `/app/data/pdfs/` and attempt match by ticker substring in URL; write back if unambiguous match found.
+
+**If the pdf_path column approach is too much for PI-2:** the fallback (simpler, slightly less robust) is: the `doc_id` in the list is the extraction JSON stem, and the `filename` field in the list response is the matched PDF filename from `/app/data/pdfs/`. The PDF-bytes route takes `doc_id` and looks up the filename from an in-memory map populated by the last list call. Since this is a single-user tool, that is acceptable.
+
+**Dev decision point (PI-2):** choose ONE of these two approaches and implement consistently. Recommended: the `pdf_path TEXT` column (one migration in `_ensure_schema`, lazy backfill at list time). Simpler fallback: in-memory map rebuilt each time `GET /inspect/pdfs` is called.
+
+---
+
+### 3. Data-source ruling — RIGHT pane (R4)
+
+**RULING: SINGLE ZONE. Right pane = this service's own extraction data only.**
+
+Evidence:
+- `/app/data/extractions/{doc_id}.json` contains `text_content` (full OCR/extracted text) and `tables[]` (structured tabular data). This is exactly what the user needs to eyeball extraction quality — the raw extracted text is what the extractor sees; if it shows `net_profit=0.000051` in the text, the user spots the bad extraction.
+- mcp-server's `financial_reports.net_profit` is the PARSED figure (after `parseBctcReport` use case runs downstream). That parsed figure is what the user is checking against. BUT the user wants to compare PDF source vs extractor output — not extractor output vs parser output. The extractor's `text_content` is the correct right-pane source.
+- The schema comment in `schema-financial-reports.ts` explicitly labels `financial_reports.net_profit` as "BCTC OCR/PDF extraction, often wrong" — this is the same signal that lives in the extraction JSON. The user can spot `VNM net_profit=0.000051` by looking at the `text_content` or `tables[]` from the extraction JSON directly.
+- No cross-service route is needed. Zone stays `apps/pdf-extractor/` ONLY.
+
+---
+
+### 4. Left pane — render approach
+
+**Choice: pdf.js from CDN.**
+
+The viewer is a served FastAPI page, not a `file://` sandbox. CDN access is permitted. Use:
+```
+https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.min.mjs
+https://cdn.jsdelivr.net/npm/pdfjs-dist@4.2.67/build/pdf.worker.min.mjs
+```
+The pdf-bytes route (`GET /inspect/pdf/{doc_id}`) returns `application/pdf` bytes. The viewer page fetches this URL, passes the ArrayBuffer to pdf.js `getDocument()`, renders pages into a `<canvas>` in the left pane. This approach: no vendored assets, no server-rendered images, no additional Python dependencies.
+
+Fallback: if CDN is unreachable (offline env), the left pane shows a plain `<iframe src="/inspect/pdf/{doc_id}">` — the browser's built-in PDF renderer as a graceful degradation path. Dev implements the pdf.js path first; the iframe is the honest-degrade for CDN failure.
+
+---
+
+### 5. DDD placement
+
+| New piece | Layer | File |
+|-----------|-------|------|
+| `GET /inspect` (viewer HTML) | interface | `interface/handlers.py` — new route in `register_routes()` |
+| `GET /inspect/pdfs` (list) | interface | `interface/handlers.py` |
+| `GET /inspect/pdf/{doc_id}` (PDF bytes) | interface | `interface/handlers.py` |
+| `GET /inspect/extraction/{doc_id}` (content) | interface | `interface/handlers.py` |
+| Viewer HTML template | interface | `interface/viewer.html` (new file, read by the `/inspect` handler) |
+| PDF file read + path resolution | infrastructure | `infrastructure/inspection_store.py` (new file): `InspectionStore` class with `list_docs()`, `get_pdf_bytes(doc_id)`, `get_extraction(doc_id)`. Reads filesystem + SQLite. |
+| Application orchestration | application | NOT NEEDED — the infra reads are simple enough that the handler can call `InspectionStore` directly via dependency injection, same pattern as `extract_usecase`. If LOC grows, wrap in `InspectUseCase` (application layer). Start without it. |
+| `pdf_documents` `find_all()` method | domain/infra | Add `find_all() -> list[PDFDocument]` to `PDFDocumentRepository` abstract port (`domain/repositories.py`) + implement in `SQLitePDFDocumentRepository` (`infrastructure/repositories.py`). |
+| `pdf_path` column migration | infrastructure | Inside `_ensure_schema()` in `infrastructure/repositories.py` — `ALTER TABLE pdf_documents ADD COLUMN pdf_path TEXT` if not exists. |
+| `pdf_path` lazy backfill | infrastructure | Inside `InspectionStore.list_docs()` — for each doc with `pdf_path IS NULL`, attempt filesystem match and UPDATE. |
+
+**Import-fence impact:** NONE on existing fences. The new `interface/` → `infrastructure/` import (handlers → InspectionStore) is already permitted (no fence covers this direction). `domain/repositories.py` adding `find_all` is a pure abstract method — zero infra imports. Fence-A and Fence-B remain GREEN without modification.
+
+**main.py wiring:** `create_app()` constructs `InspectionStore(db_path=cfg.db_path, pdf_dir="/app/data/pdfs", extraction_dir=cfg.storage_dir)` and passes it to `register_routes()`. `register_routes()` signature extends to `register_routes(router, extract_usecase, inspection_store)`. This keeps the composition root as the sole wire-up point. main.py will grow slightly — check against 80L cap; if exceeded, extract viewer registration to a helper in `interface/`.
+
+---
+
+### 6. SI-2 boundary
+
+The new viewer surface is at `GET /inspect` and its 3 sub-routes. It is DISTINCT from:
+- `dashboard/index.html` — the frozen sandbox trace dashboard (accessed via `file://` or a separate static mount). NOT touched.
+- `GET /extract` — the extraction API route.
+
+Every new file in `interface/` that belongs to the viewer must carry this HTML/Python comment at the top:
+
+```python
+# SI-2 BOUNDARY: PDF inspection viewer surface.
+# This file is part of the served /inspect viewer (Sprint PDF-INSPECT).
+# It is SEPARATE from the sandbox trace dashboard (dashboard/index.html).
+# Do NOT merge viewer code into dashboard/index.html or dashboard/traces.js.
+```
+
+The viewer template `interface/viewer.html` gets an equivalent HTML comment:
+```html
+<!-- SI-2 BOUNDARY: PDF inspection viewer (Sprint PDF-INSPECT).
+     Separate surface from dashboard/index.html (sandbox trace dashboard — FROZEN).
+     Do NOT add sandbox primitives, scenarios, or trace data here. -->
+```
+
+---
+
+### 7. Security-Clause distinction
+
+The viewer's `GET /inspect/pdf/{doc_id}` and `GET /inspect/extraction/{doc_id}` read files from `/app/data/pdfs/` and `/app/data/extractions/` — these are the app process's own data directories, mounted via Docker volume, accessed by the same process that runs extraction; this is by-design application file access and is NOT a zero-credential sandbox violation (the Security Clause governs the sandbox runner's environment isolation, not the serving app's legitimate read of its own data store).
+
+---
+
+### Risk flags
+
+| Risk | Severity | Note |
+|------|----------|------|
+| R-1: pdf_path join ambiguity | MEDIUM | Filename-to-doc_id join requires either a new column OR filesystem scan + heuristic match. Heuristic match can mis-identify if two docs share the same ticker/period. Dev must choose and document the approach. |
+| R-2: `/app/data/pdfs/` not visible to pdf-extractor | LOW | Both containers mount `market_data:/app/data`. Confirmed in docker-compose. But if mcp-server saves to a sub-path different from `/app/data/pdfs`, the scan fails silently. Dev must verify at runtime with a smoke test. |
+| R-3: main.py LOC cap | LOW | Adding `InspectionStore` wire-up may push main.py past 80L. Extract `register_inspector_routes()` helper to keep cap. |
+| R-4: pdf.js CDN version pin | LOW | Pin to a specific pdfjs-dist version in the HTML template; floating latest = unexpected breakage. |
+| R-5: path traversal in PDF-bytes route | MEDIUM | `doc_id` is a UUID and file path is constructed by the server (not taken from user input), but dev must validate `doc_id` is a valid UUID pattern before constructing the filesystem path. Never pass user input directly to `os.path.join`. |
+
+---
+
+### Dev task registration (PI-2)
+
+**Assignee:** dev-pdf-extractor. **Task id:** PI-2. **Handoff:** this file. **Input:** PI-1 design above. **Sequence:** implements after this PI-1 commit lands.
+
+---
+
 ## Commit discipline (every committer)
 Explicit `git add <path>` per file; never `-A`/`.`. No `--force`/`--no-verify`/`--no-gpg-sign`. No `git push`. After commit, `git show --stat HEAD` MUST show only your files (heavy fleet commit-race active — if a foreign file appears, you conflated a commit; do NOT rewrite history, re-stage your own and re-commit). Commit-mutex enum defect known: claim key under `sprint-task` kind if mutex needed (per notebook carry-over).

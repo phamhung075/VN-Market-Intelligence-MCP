@@ -220,12 +220,15 @@
     <p>
       G8 honesty contract: a card is GREEN only when its sandbox trace file has
       <code>passed: true</code>. Cards without a trace file are NOT-RUN (grey).
-      No hardcoded greens. No network calls to port 5002 in Phase 1.
+      No hardcoded greens. No network calls to port 5002.
     </p>
     <p style="margin-top:0.4rem;">
-      Phase 2 primitives: all 5 GREEN (similarity-scorer, relevance-threshold-gate,
+      Phase 2 complete. Primitives: all 5 GREEN (similarity-scorer, relevance-threshold-gate,
       temporal-decay-scorer, top-k-selector, context-window-packer).
-      Module: retrieval GREEN (all 5 primitives wired via ports, P2-C). Microservice: NOT-RUN until live HTTP wiring verified.
+      Module: retrieval GREEN (all 5 primitives wired via ports, P2-C).
+      Microservice: 3 service scenarios GREEN via in-process FastAPI TestClient + injected fake
+      adapters (P3-A) — zero credentials, zero model load, zero LanceDB. Matches TA gold-standard
+      &ldquo;L3: 3 service scenarios&rdquo; bar.
     </p>
   </footer>
 
@@ -344,6 +347,73 @@
 }
   </script>
 
+  <!-- P3-A service traces: 3 scenarios run via FastAPI TestClient + injected fake adapters -->
+  <!-- ZERO credentials, ZERO sentence-transformers model load, ZERO LanceDB access       -->
+
+  <!-- Service scenario 1: /search golden (1 doc seeded, query returns doc-vnm-001) -->
+  <script id="trace-service-search-golden" type="application/json">
+{
+  "passed": true,
+  "scenario": "search_golden",
+  "endpoint": "/search",
+  "actual_status": 200,
+  "expected_status": 200,
+  "actual_response_subset": {
+    "total": 1,
+    "results_min_count": 1,
+    "first_result_id": "doc-vnm-001"
+  },
+  "expected_response_subset": {
+    "total": 1,
+    "results_min_count": 1,
+    "first_result_id": "doc-vnm-001"
+  },
+  "diff": [],
+  "error": null,
+  "elapsed_ms": 32
+}
+  </script>
+
+  <!-- Service scenario 2: /index golden (accepts doc, returns {status:ok, indexed:1}) -->
+  <script id="trace-service-index-golden" type="application/json">
+{
+  "passed": true,
+  "scenario": "index_golden",
+  "endpoint": "/index",
+  "actual_status": 200,
+  "expected_status": 200,
+  "actual_response_subset": {
+    "status": "ok",
+    "indexed": 1,
+    "entry_id": "doc-vcb-001"
+  },
+  "expected_response_subset": {
+    "status": "ok",
+    "indexed": 1,
+    "entry_id": "doc-vcb-001"
+  },
+  "diff": [],
+  "error": null,
+  "elapsed_ms": 52
+}
+  </script>
+
+  <!-- Service scenario 3: edge — empty query -> HTTP 422 (Pydantic min_length=1) -->
+  <script id="trace-service-search-422" type="application/json">
+{
+  "passed": true,
+  "scenario": "search_empty_query_422",
+  "endpoint": "/search",
+  "actual_status": 422,
+  "expected_status": 422,
+  "actual_response_subset": {},
+  "expected_response_subset": {},
+  "diff": [],
+  "error": null,
+  "elapsed_ms": 42
+}
+  </script>
+
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
   <!-- DASHBOARD LOGIC                                                        -->
   <!-- ═══════════════════════════════════════════════════════════════════════ -->
@@ -432,11 +502,11 @@
         card.appendChild(toggle);
         card.appendChild(detail);
       } else {
-        // NOT-RUN hint
+        // NOT-RUN placeholder — shown only for cards that genuinely have no trace.
         const hint = document.createElement("div");
         hint.className = "trace-detail";
         hint.style.color = "#334155";
-        hint.textContent = "no trace — not implemented / Phase 2";
+        hint.textContent = "no trace — NOT-RUN (no scenario data available)";
         card.appendChild(hint);
       }
 
@@ -497,14 +567,25 @@
 
     // ── Panel 3: Microservice ─────────────────────────────────────────────────
     //
-    // rag-service card is NOT-RUN — no live HTTP trace available.
-    // Honest state: NOT-RUN until live HTTP wiring is proven (G8 policy).
-    // No hardcoded GREEN. No fetch() to port 5002 in file:// mode.
+    // P3-A: 3 service-tier scenarios run via FastAPI TestClient + injected fake adapters.
+    // ZERO credentials, ZERO sentence-transformers model load, ZERO LanceDB.
+    // GREEN iff trace.passed === true (G8 honesty: no hardcoded greens).
+    // Detail view: clicking a card toggles show/hide trace (same buildCard path as
+    // primitive/module) — satisfies canonical G6 "click a card in EACH panel".
+    // No fetch() to port 5002. file:// compatible.
     //
     const MICROSERVICE_CARDS = [
       {
-        name: "rag-service (port 5002)",
-        traceId: null,  // NOT-RUN — honest (no live trace; G8 policy: no false-green)
+        name: "/search golden (P3-A)",
+        traceId: "trace-service-search-golden",  // GREEN — search happy path
+      },
+      {
+        name: "/index golden (P3-A)",
+        traceId: "trace-service-index-golden",   // GREEN — index happy path
+      },
+      {
+        name: "/search 422 edge (P3-A)",
+        traceId: "trace-service-search-422",     // GREEN — empty query -> HTTP 422 expected
       },
     ];
 
