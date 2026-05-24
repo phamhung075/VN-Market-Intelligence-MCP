@@ -130,11 +130,26 @@ Task: P2-KD-G
 
 ## Sandbox Evidence Section
 
-(To be filled by dev-kinh-dich before RETURN block; paste full `bun run src/sandbox/runner.ts` output here to satisfy AC-7)
+```
+[PASS] hao-encoder-edge.json
+[PASS] hao-encoder-failure.json
+[PASS] hao-encoder-golden.json
+[PASS] hexagram-resolver-edge.json
+[PASS] hexagram-resolver-failure.json
+[PASS] hexagram-resolver-golden.json
+[PASS] ngu-hanh-classifier-edge.json
+[PASS] ngu-hanh-classifier-failure.json
+[PASS] ngu-hanh-classifier-golden.json
+[PASS] reading-scorer-edge.json
+[PASS] reading-scorer-failure.json
+[PASS] reading-scorer-golden.json
+[PASS] reading-composer-edge.json
+[PASS] reading-composer-golden.json
 
+[sandbox] PASS 14/14 scenarios (0 failed, 0 skipped)
 ```
-[Paste sandbox output showing ≥14 scenarios PASS]
-```
+
+AC-7: PASS. bun tsc --noEmit: EXIT 0. bunx eslint src/ --max-warnings 0: EXIT 0.
 
 ---
 

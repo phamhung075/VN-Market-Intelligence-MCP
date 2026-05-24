@@ -9,8 +9,10 @@
  *   - run_hexagram_backtest      — accuracy report for stored readings
  *   - explain_hexagram           — full Vietnamese explanation for hexagram 1-64
  *
- * Score computation is best-effort: each hao dimension tries to read from
- * the local SQLite DB. Any missing data defaults to 0.0 (neutral).
+ * P2-KD-G: All 6 tool handlers rewired to HTTP calls to kinh-dich-service
+ * (port 5005). Zero direct domain imports from mcp-server parallel copy.
+ * Score computation helpers (computeHaoScores etc.) remain in mcp-server
+ * as integration glue — they are NOT migrated (AC-8).
  *
  * Layer: interface/mcp/tools/kinhdich
  */
@@ -25,26 +27,17 @@ import { getSectorPeers } from "../../../../domain/services/sectorPeers.js";
 import type { DomainType } from "../../../../../bctc-schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import {
-  computeReading,
-  type MarkovData,
-} from "../../../../domain/services/kinhDich/kinhDichReading.js";
-import { formatReading } from "../../../../domain/services/kinhDich/kinhDichFormatter.js";
-import { QUE_META, QUE_DATA } from "../../../../domain/services/kinhDich/hexagramLibrary.js";
-import {
-  storeReading,
-  getLatestReading,
-  recordTransition,
-  getTopTransitions,
-  getReadingsForBacktest,
-} from "../../../../infrastructure/db/hexagramStore.js";
-import {
-  computeBacktest,
-  type BacktestRow,
-  type PriceRow,
-} from "../../../../domain/services/kinhDich/hexagramBacktester.js";
+  getKinhDichReading,
+  getMarketHexagram,
+  getKinhDichHistory,
+  getHexagramTransitions,
+  runKinhDichBacktest,
+  explainHexagram,
+} from "../../../../infrastructure/microservices/clients.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Score computation helpers (best-effort, all wrapped in try/catch)
+// These stay in mcp-server as integration glue — NOT migrated (AC-8).
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -375,53 +368,9 @@ export function computeHaoScores(
   );
 }
 
-/**
- * Attempt to retrieve Markov data for a stock given its current hexagram.
- */
-function getMarkovData(code: string, currentHexagram: number): MarkovData | null {
-  try {
-    const tops = getTopTransitions(currentHexagram, code, 1);
-    if (tops.length === 0) return null;
-    const top = tops[0]!;
-    if (top.probability === 0) return null;
-    const meta = QUE_META.find((q) => q.id === top.toHexagram);
-    return {
-      nextMostLikely: top.toHexagram,
-      nextName: meta?.name ?? `Que ${top.toHexagram}`,
-      probability: top.probability,
-    };
-  } catch {
-    return null;
-  }
-}
-
 // ─────────────────────────────────────────────────────────────────────────────
-// VN-Index + macro composite scores for market hexagram
+// VN-Index + macro composite scores for market hexagram (local helpers)
 // ─────────────────────────────────────────────────────────────────────────────
-
-function computeVnIndexScore(momentumDays: number): number {
-  try {
-    const db = getDb();
-    const rows = db
-      .query<{ price: number; updated_at: string }, [number]>(
-        `SELECT price, updated_at FROM market_prices_history
-         WHERE code = 'VNINDEX'
-         ORDER BY updated_at DESC LIMIT ?`,
-      )
-      .all(momentumDays + 1) as Array<{ price: number; updated_at: string }>;
-
-    if (rows.length < 2) return 0.0;
-
-    const latest = rows[0]!.price;
-    const oldest = rows[rows.length - 1]!.price;
-    if (oldest === 0) return 0.0;
-
-    const ret = (latest - oldest) / oldest;
-    return Math.max(-1, Math.min(1, ret / 0.05));
-  } catch {
-    return 0.0;
-  }
-}
 
 /**
  * Derives a z-score for a single indicator from its recent history.
@@ -499,7 +448,6 @@ export function registerKinhDichTools(server: McpServer): void {
       try {
         await initDatabase();
 
-
         // Verify stock is on watchlist
         const db = getDb();
         const watchlistRow = db
@@ -519,43 +467,26 @@ export function registerKinhDichTools(server: McpServer): void {
           };
         }
 
-        // Compute 6 hao scores
+        // Compute local hao scores (integration glue — stays in mcp-server, AC-8)
         const scores = computeHaoScores(code);
 
-        // Get previous reading for Markov data
-        const previousReading = getLatestReading(code);
+        // Delegate reading computation + storage to kinh-dich-service (port 5005)
+        const reading = await getKinhDichReading(code, 30);
 
-        // Compute reading (without Markov first, to get current hexagram)
-        const prelimReading = computeReading(code, scores, null);
-        const currentHexagram = prelimReading.queChiNh.number;
-
-        // Get Markov transition data
-        const markovData = getMarkovData(code, currentHexagram);
-
-        // Final reading with Markov
-        const reading = computeReading(code, scores, markovData);
-
-        // Store reading
-        storeReading({
-          stockCode: code,
-          hexagramNumber: reading.queChiNh.number,
-          hoQueNumber: reading.hoQue.number,
-          bienQueNumber: reading.bienQue.number,
-          haoStates: JSON.stringify(reading.haos.map((h) => h.state)),
-          rawScores: JSON.stringify(scores),
-          nguHanhDynamic: reading.nguHanh.dynamic,
-          tradingSignal: reading.queChiNh.tradingSignal,
-          confidence: reading.queChiNh.confidence,
-          actionNote: reading.actionNote,
-        });
-
-        // Record transition if we had a previous reading
-        if (previousReading) {
-          recordTransition(previousReading.hexagramNumber, reading.queChiNh.number, code);
-        }
+        const lines: string[] = [];
+        lines.push(`=== KINH DỊCH: ${code} ===`);
+        lines.push(`Quẻ ${reading.hexagram} — ${reading.name}`);
+        lines.push(`Xu hướng: ${reading.trend}`);
+        lines.push(`Tín hiệu: ${reading.signal}`);
+        lines.push(`Độ tin cậy: ${Math.round(reading.confidence * 100)}%`);
+        lines.push(`${reading.actionNote}`);
+        lines.push('');
+        lines.push(reading.overallReading);
+        lines.push('');
+        lines.push(`Điểm Hào (tham khảo): [${scores.map((s) => s.toFixed(2)).join(', ')}]`);
 
         return {
-          content: [{ type: "text" as const, text: formatReading(reading) }],
+          content: [{ type: "text" as const, text: lines.join("\n") }],
         };
       } catch (err) {
         logger.error("[get_kinhdich_reading] Error", {
@@ -584,34 +515,19 @@ export function registerKinhDichTools(server: McpServer): void {
       try {
         await initDatabase();
 
+        // Delegate to kinh-dich-service (port 5005)
+        const reading = await getMarketHexagram();
 
-        const scores = [
-          computeVnIndexScore(5),   // Hao 1: 5-day momentum
-          computeVnIndexScore(20),  // Hao 2: 20-day momentum
-          computeVnIndexScore(60),  // Hao 3: 60-day momentum
-          computeMacroIndicatorScore("usd_vnd"), // Hao 4: USD/VND
-          computeMacroIndicatorScore("oil"),     // Hao 5: oil
-          computeMacroIndicatorScore("gold"),    // Hao 6: gold
-        ];
-
-        const reading = computeReading("VNINDEX", scores, null);
-
-        // Store market reading
-        storeReading({
-          stockCode: "VNINDEX",
-          hexagramNumber: reading.queChiNh.number,
-          hoQueNumber: reading.hoQue.number,
-          bienQueNumber: reading.bienQue.number,
-          haoStates: JSON.stringify(reading.haos.map((h) => h.state)),
-          rawScores: JSON.stringify(scores),
-          nguHanhDynamic: reading.nguHanh.dynamic,
-          tradingSignal: reading.queChiNh.tradingSignal,
-          confidence: reading.queChiNh.confidence,
-          actionNote: reading.actionNote,
-        });
+        const lines: string[] = [];
+        lines.push(`=== QUẺ THỊ TRƯỜNG (VN-Index + Vĩ mô) ===`);
+        lines.push(`Quẻ ${reading.hexagram} — ${reading.name}`);
+        lines.push(`Xu hướng: ${reading.trend}`);
+        lines.push(`Tín hiệu: ${reading.signal}`);
+        lines.push(`Độ tin cậy: ${Math.round(reading.confidence * 100)}%`);
+        lines.push(`Cập nhật: ${reading.timestamp}`);
 
         return {
-          content: [{ type: "text" as const, text: formatReading(reading) }],
+          content: [{ type: "text" as const, text: lines.join("\n") }],
         };
       } catch (err) {
         logger.error("[get_market_hexagram] Error", {
@@ -653,10 +569,10 @@ export function registerKinhDichTools(server: McpServer): void {
       try {
         await initDatabase();
 
+        // Delegate to kinh-dich-service /readings/{code}/history (port 5005)
+        const result = await getKinhDichHistory(code, days);
 
-        const readings = getReadingsForBacktest(code, days);
-
-        if (readings.length === 0) {
+        if (result.total === 0) {
           return {
             content: [
               {
@@ -669,23 +585,20 @@ export function registerKinhDichTools(server: McpServer): void {
 
         const lines: string[] = [];
         lines.push(`=== LỊCH SỬ KINH DỊCH: ${code} (${days} ngày) ===`);
-        lines.push(`Tổng số lần đọc: ${readings.length}`);
+        lines.push(`Tổng số lần đọc: ${result.total}`);
         lines.push("");
 
-        for (const r of readings) {
-          const meta = QUE_META.find((q) => q.id === r.hexagramNumber);
-          const queName = meta?.name ?? `Que ${r.hexagramNumber}`;
-          const chinese = meta?.chinese ?? "";
+        for (const r of result.readings) {
           const ts = r.timestamp.slice(0, 16).replace("T", " ");
           const confPct = Math.round(r.confidence * 100);
           lines.push(
-            `${ts} | Quẻ ${r.hexagramNumber} ${queName} ${chinese} | Tín hiệu: ${r.tradingSignal} | Độ tin cậy: ${confPct}%`,
+            `${ts} | Quẻ ${r.hexagram} ${r.name} | Tín hiệu: ${r.signal} | Độ tin cậy: ${confPct}%`,
           );
         }
 
         lines.push("");
         lines.push(
-          `Quẻ phổ biến nhất: ${getMostFrequentHexagram(readings)} | Cập nhật: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
+          `Quẻ phổ biến nhất: ${result.mostFrequent} | Cập nhật: ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC`,
         );
 
         return {
@@ -732,18 +645,15 @@ export function registerKinhDichTools(server: McpServer): void {
       try {
         await initDatabase();
 
+        // Delegate to kinh-dich-service /hexagram/{number}/transitions (port 5005)
+        const result = await getHexagramTransitions(hexagram_number, code, 10);
 
-        const meta = QUE_META.find((q) => q.id === hexagram_number);
-        const fromName = meta?.name ?? `Que ${hexagram_number}`;
-
-        const transitions = getTopTransitions(hexagram_number, code, 10);
-
-        if (transitions.length === 0) {
+        if (result.transitions.length === 0) {
           return {
             content: [
               {
                 type: "text" as const,
-                text: `Chưa có dữ liệu chuyển quẻ cho Quẻ ${hexagram_number} (${fromName}). Cần thêm lịch sử đọc quẻ.`,
+                text: `Chưa có dữ liệu chuyển quẻ cho Quẻ ${hexagram_number} (${result.name}). Cần thêm lịch sử đọc quẻ.`,
               },
             ],
           };
@@ -751,26 +661,16 @@ export function registerKinhDichTools(server: McpServer): void {
 
         const lines: string[] = [];
         lines.push(
-          `=== XÁC SUẤT CHUYỂN QUẺ: Từ Quẻ ${hexagram_number} (${fromName}) ===`,
+          `=== XÁC SUẤT CHUYỂN QUẺ: Từ Quẻ ${hexagram_number} (${result.name}) ===`,
         );
         lines.push(`Cổ phiếu: ${code}`);
         lines.push("");
         lines.push("Xác suất chuyển sang (top 10):");
 
-        for (const t of transitions) {
-          const toMeta = QUE_META.find((q) => q.id === t.toHexagram);
-          const toName = toMeta?.name ?? `Que ${t.toHexagram}`;
+        for (const t of result.transitions) {
           const pct = Math.round(t.probability * 100);
-          const avgChange =
-            t.avgPriceChange !== 0
-              ? ` | Thay đổi TB: ${t.avgPriceChange >= 0 ? "+" : ""}${(t.avgPriceChange * 100).toFixed(1)}%`
-              : "";
-          const winRateStr =
-            t.winRate > 0
-              ? ` | Tỷ lệ thắng: ${Math.round(t.winRate * 100)}%`
-              : "";
           lines.push(
-            `  → Que ${t.toHexagram} ${toName}: ${pct}% (${t.count} lan)${avgChange}${winRateStr}`,
+            `  → Que ${t.toHexagram} ${t.name}: ${pct}% (${t.count} lan)`,
           );
         }
 
@@ -819,10 +719,10 @@ export function registerKinhDichTools(server: McpServer): void {
       try {
         await initDatabase();
 
+        // Delegate to kinh-dich-service /backtest/{code} (port 5005)
+        const result = await runKinhDichBacktest(code, days);
 
-        const readings = getReadingsForBacktest(code, days);
-
-        if (readings.length === 0) {
+        if (result.totalReadings === 0) {
           return {
             content: [
               {
@@ -832,39 +732,6 @@ export function registerKinhDichTools(server: McpServer): void {
             ],
           };
         }
-
-        // Fetch price history from market_prices_history (fetched_at column)
-        const db = getDb();
-        const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .slice(0, 10);
-
-        let priceRows: PriceRow[] = [];
-        try {
-          const rawPriceRows = db
-            .query<{ price: number; fetched_at: string }, [string, string]>(
-              `SELECT price, fetched_at FROM market_prices_history
-               WHERE code = ? AND fetched_at >= ?
-               ORDER BY fetched_at ASC`,
-            )
-            .all(code, since);
-          priceRows = rawPriceRows.map((r) => ({
-            price: r.price,
-            timestamp: r.fetched_at,
-          }));
-        } catch {
-          // Table may not exist — proceed with empty prices (backtest will show 0 returns)
-          priceRows = [];
-        }
-
-        const backtestReadings: BacktestRow[] = readings.map((r) => ({
-          timestamp: r.timestamp,
-          hexagramNumber: r.hexagramNumber,
-          tradingSignal: r.tradingSignal,
-          confidence: r.confidence,
-        }));
-
-        const result = computeBacktest(backtestReadings, priceRows);
 
         const lines: string[] = [];
         lines.push(`=== BACKTEST KINH DỊCH: ${code} (${days} ngày) ===`);
@@ -876,22 +743,14 @@ export function registerKinhDichTools(server: McpServer): void {
         );
 
         if (result.bestHexagram) {
-          const bestMeta = QUE_META.find(
-            (q) => q.id === result.bestHexagram!.number,
-          );
-          const bestName = bestMeta?.name ?? `Que ${result.bestHexagram.number}`;
           lines.push(
-            `Quẻ tốt nhất: ${result.bestHexagram.number} ${bestName} (tỷ lệ thắng: ${Math.round(result.bestHexagram.winRate * 100)}%, ${result.bestHexagram.count} lần)`,
+            `Quẻ tốt nhất: ${result.bestHexagram.number} ${result.bestHexagram.name} (tỷ lệ thắng: ${Math.round(result.bestHexagram.winRate * 100)}%, ${result.bestHexagram.count} lần)`,
           );
         }
 
         if (result.worstHexagram) {
-          const worstMeta = QUE_META.find(
-            (q) => q.id === result.worstHexagram!.number,
-          );
-          const worstName = worstMeta?.name ?? `Que ${result.worstHexagram.number}`;
           lines.push(
-            `Quẻ xấu nhất: ${result.worstHexagram.number} ${worstName} (tỷ lệ thắng: ${Math.round(result.worstHexagram.winRate * 100)}%, ${result.worstHexagram.count} lần)`,
+            `Quẻ xấu nhất: ${result.worstHexagram.number} ${result.worstHexagram.name} (tỷ lệ thắng: ${Math.round(result.worstHexagram.winRate * 100)}%, ${result.worstHexagram.count} lần)`,
           );
         }
 
@@ -935,67 +794,20 @@ export function registerKinhDichTools(server: McpServer): void {
     },
     async ({ number }) => {
       try {
-        const meta = QUE_META.find((q) => q.id === number);
-        if (!meta) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: `Lỗi: Quẻ ${number} không tồn tại. Quẻ Kinh Dịch chỉ có số từ 1 đến 64.`,
-              },
-            ],
-          };
-        }
-
-        const data = QUE_DATA[number];
-        if (!data) {
-          return {
-            content: [
-              {
-                type: "text" as const,
-                text: `Lỗi: Không có dữ liệu giải thích cho Quẻ ${number} (${meta.name}).`,
-              },
-            ],
-          };
-        }
+        // Delegate to kinh-dich-service /hexagram/{number}/explain (port 5005)
+        const data = await explainHexagram(number);
 
         const lines: string[] = [];
         lines.push(
-          `=== QUE ${number}: ${meta.name} ${meta.chinese} ===`,
+          `=== QUE ${data.number}: ${data.name} ${data.chinese} ===`,
         );
-        lines.push(`Thượng quán (trên): ${meta.upper} | Hạ quán (dưới): ${meta.lower}`);
+        lines.push(`Thượng quán (trên): ${data.upper} | Hạ quán (dưới): ${data.lower}`);
         lines.push("");
-
         lines.push(`Ý nghĩa chính: ${data.coreMeaning}`);
         lines.push("");
-
-        lines.push(`Hào từ (Phán quyết): ${data.judgment.vietnamese}`);
-        lines.push(`  ${data.judgment.interpretation}`);
+        lines.push(`Xu hướng: ${data.trend}`);
         lines.push("");
-
-        lines.push(`Tượng truyện (Hình tượng): ${data.image.description}`);
-        lines.push(`  Hành động: ${data.image.action}`);
-        lines.push("");
-
-        lines.push(`Tình trạng quẻ:`);
-        lines.push(`  Xu hướng: ${data.state.trend}`);
-        lines.push(`  Sự nghiệp: ${data.state.career}`);
-        lines.push(`  Cảnh báo: ${data.state.warning}`);
-        lines.push("");
-
-        lines.push("6 Hào (từng đường):");
-        for (const line of data.lines) {
-          lines.push(
-            `  Hao ${line.position} (${line.name}): ${line.vietnamese}`,
-          );
-          lines.push(`    Kết quả: ${line.outcome} | Hành động: ${line.action}`);
-          lines.push(`    ${line.interpretation.slice(0, 150)}`);
-        }
-
-        lines.push("");
-
-        // Trading summary
-        lines.push(formatKinhDichTradingContext(data.state.trend));
+        lines.push(data.tradingContext);
 
         return {
           content: [{ type: "text" as const, text: lines.join("\n") }],
@@ -1016,27 +828,4 @@ export function registerKinhDichTools(server: McpServer): void {
       }
     },
   );
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Internal helpers
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Return the name of the most frequently occurring hexagram in readings.
- */
-function getMostFrequentHexagram(
-  readings: Array<{ hexagramNumber: number }>,
-): string {
-  const counts = new Map<number, number>();
-  for (const r of readings) {
-    counts.set(r.hexagramNumber, (counts.get(r.hexagramNumber) ?? 0) + 1);
-  }
-  if (counts.size === 0) return "N/A";
-
-  const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
-  if (!top) return "N/A";
-
-  const meta = QUE_META.find((q) => q.id === top[0]);
-  return `Quẻ ${top[0]} ${meta?.name ?? ""} (${top[1]} lần)`;
 }

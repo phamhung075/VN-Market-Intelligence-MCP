@@ -389,17 +389,79 @@ export async function indexRAG(req: IndexRequest): Promise<{ id: string }> {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface KinhDichReadingResponse {
-  code: string;
-  hexagram_number: number;
-  hexagram_name: string;
+  stock: string;
+  hexagram: number;
+  name: string;
   trend: string;
-  next_hexagram?: number;
-  next_hexagram_name?: string;
+  signal: string;
+  confidence: number;
+  actionNote: string;
+  overallReading: string;
+  timestamp: string;
+}
+
+export interface KinhDichMarketResponse {
+  hexagram: number;
+  name: string;
+  trend: string;
+  signal: string;
+  confidence: number;
+  timestamp: string;
+}
+
+export interface KinhDichHistoryEntry {
+  timestamp: string;
+  hexagram: number;
+  name: string;
+  signal: string;
   confidence: number;
 }
 
-export async function getKinhDichReading(code: string): Promise<KinhDichReadingResponse> {
-  const url = `${BASE_URLS.kinhDich}/reading/${code}?days=30`;
+export interface KinhDichHistoryResponse {
+  stock: string;
+  days: number;
+  total: number;
+  readings: KinhDichHistoryEntry[];
+  mostFrequent: string;
+}
+
+export interface KinhDichTransitionEntry {
+  toHexagram: number;
+  name: string;
+  probability: number;
+  count: number;
+}
+
+export interface KinhDichTransitionsResponse {
+  hexagram: number;
+  name: string;
+  stock: string;
+  transitions: KinhDichTransitionEntry[];
+}
+
+export interface KinhDichBacktestResponse {
+  stock: string;
+  days: number;
+  totalReadings: number;
+  accuracy: number;
+  avgReturn5d: number;
+  bestHexagram: { number: number; name: string; winRate: number; count: number } | null;
+  worstHexagram: { number: number; name: string; winRate: number; count: number } | null;
+}
+
+export interface KinhDichExplainResponse {
+  number: number;
+  name: string;
+  chinese: string;
+  upper: string;
+  lower: string;
+  coreMeaning: string;
+  trend: string;
+  tradingContext: string;
+}
+
+export async function getKinhDichReading(code: string, days = 30): Promise<KinhDichReadingResponse> {
+  const url = `${BASE_URLS.kinhDich}/reading/${code}?days=${days}`;
   const response = await fetchWithRetry(url, { method: 'GET' });
   if (!response.ok) {
     throw new Error(`[Kinh Dich Service] ${response.status}: ${await response.text()}`);
@@ -407,8 +469,48 @@ export async function getKinhDichReading(code: string): Promise<KinhDichReadingR
   return response.json();
 }
 
-export async function getMarketHexagram(): Promise<KinhDichReadingResponse> {
+export async function getMarketHexagram(): Promise<KinhDichMarketResponse> {
   const url = `${BASE_URLS.kinhDich}/market`;
+  const response = await fetchWithRetry(url, { method: 'GET' });
+  if (!response.ok) {
+    throw new Error(`[Kinh Dich Service] ${response.status}: ${await response.text()}`);
+  }
+  return response.json();
+}
+
+export async function getKinhDichHistory(code: string, days = 30): Promise<KinhDichHistoryResponse> {
+  const url = `${BASE_URLS.kinhDich}/readings/${code}/history?days=${days}`;
+  const response = await fetchWithRetry(url, { method: 'GET' });
+  if (!response.ok) {
+    throw new Error(`[Kinh Dich Service] ${response.status}: ${await response.text()}`);
+  }
+  return response.json();
+}
+
+export async function getHexagramTransitions(
+  hexagramNumber: number,
+  stock = 'VNINDEX',
+  topN = 10,
+): Promise<KinhDichTransitionsResponse> {
+  const url = `${BASE_URLS.kinhDich}/hexagram/${hexagramNumber}/transitions?stock=${stock}&topN=${topN}`;
+  const response = await fetchWithRetry(url, { method: 'GET' });
+  if (!response.ok) {
+    throw new Error(`[Kinh Dich Service] ${response.status}: ${await response.text()}`);
+  }
+  return response.json();
+}
+
+export async function runKinhDichBacktest(code: string, days = 30): Promise<KinhDichBacktestResponse> {
+  const url = `${BASE_URLS.kinhDich}/backtest/${code}?days=${days}`;
+  const response = await fetchWithRetry(url, { method: 'GET' });
+  if (!response.ok) {
+    throw new Error(`[Kinh Dich Service] ${response.status}: ${await response.text()}`);
+  }
+  return response.json();
+}
+
+export async function explainHexagram(hexagramNumber: number): Promise<KinhDichExplainResponse> {
+  const url = `${BASE_URLS.kinhDich}/hexagram/${hexagramNumber}/explain`;
   const response = await fetchWithRetry(url, { method: 'GET' });
   if (!response.ok) {
     throw new Error(`[Kinh Dich Service] ${response.status}: ${await response.text()}`);

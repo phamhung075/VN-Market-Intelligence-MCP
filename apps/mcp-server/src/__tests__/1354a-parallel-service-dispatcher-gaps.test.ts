@@ -49,11 +49,12 @@ const okMacro = async () => ({
 });
 const okGateway  = async () => ({ status: "ok" as const, services: {} as Record<string, "healthy" | "unhealthy" | "unreachable"> });
 const okKinhDich = async () => ({
-  code: "MARKET",
-  hexagram_number: 1,
-  hexagram_name: "Can",
-  trend: "bullish",
+  hexagram: 1,
+  name: "Kiền",
+  trend: "THUẬN LỢI",
+  signal: "MUA (tích cực)",
   confidence: 0.85,
+  timestamp: new Date().toISOString(),
 });
 const noTelegram: (msg: string) => Promise<void> = async () => {};
 

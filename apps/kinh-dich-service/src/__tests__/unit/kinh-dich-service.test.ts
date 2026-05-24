@@ -24,6 +24,9 @@ function makeRepo(overrides?: Partial<KinhDichRepositoryPort>): KinhDichReposito
   return {
     getLatestReading: mock(() => null),
     getMarkovData: mock(() => null),
+    getReadingsHistory: mock(() => []),
+    getTopTransitions: mock(() => []),
+    getPriceHistory: mock(() => []),
     ...overrides,
   };
 }

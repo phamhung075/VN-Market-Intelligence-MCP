@@ -6,7 +6,13 @@
  */
 
 import type { Database } from 'bun:sqlite';
-import type { KinhDichRepositoryPort, PriceScorePort } from '../domain/repositories.js';
+import type {
+  KinhDichRepositoryPort,
+  PriceScorePort,
+  KinhDichHistoryRow,
+  KinhDichTransitionRow,
+  KinhDichPriceRow,
+} from '../domain/repositories.js';
 import type { KinhDichStoredRow, MarkovData } from '../domain/models.js';
 
 interface PriceRow {
@@ -61,6 +67,61 @@ export class SQLiteKinhDichRepository implements KinhDichRepositoryPort {
       };
     } catch {
       return null;
+    }
+  }
+
+  getReadingsHistory(stockCode: string, days: number): KinhDichHistoryRow[] {
+    try {
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+      return this.db
+        .prepare<KinhDichHistoryRow, [string, string]>(`
+          SELECT timestamp, hexagram_number, trading_signal, confidence
+          FROM kinhdich_readings
+          WHERE stock_code = ? AND timestamp >= ?
+          ORDER BY timestamp DESC
+        `)
+        .all(stockCode, since);
+    } catch {
+      return [];
+    }
+  }
+
+  getTopTransitions(fromHexagram: number, stockCode: string, topN: number): KinhDichTransitionRow[] {
+    try {
+      // hexagram_transitions table: from_hexagram, to_hexagram, stock_code, count, probability
+      // stock_code filter: if 'VNINDEX' treat as all-stocks aggregation
+      const rows = this.db
+        .prepare<KinhDichTransitionRow, [number, number]>(`
+          SELECT to_hexagram, SUM(count) as count,
+                 CAST(SUM(count) AS REAL) / (SELECT SUM(count) FROM hexagram_transitions WHERE from_hexagram = ?) AS probability
+          FROM hexagram_transitions
+          WHERE from_hexagram = ?
+          GROUP BY to_hexagram
+          ORDER BY count DESC
+          LIMIT ${Math.max(1, Math.min(topN, 64))}
+        `)
+        .all(fromHexagram, fromHexagram);
+      return rows;
+    } catch {
+      // Table may not exist yet — return empty
+      return [];
+    }
+  }
+
+  getPriceHistory(stockCode: string, days: number): KinhDichPriceRow[] {
+    try {
+      const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const rows = this.db
+        .prepare<{ price: number; fetched_at: string }, [string, string]>(`
+          SELECT price, fetched_at
+          FROM market_prices_history
+          WHERE code = ? AND fetched_at >= ?
+          ORDER BY fetched_at ASC
+        `)
+        .all(stockCode, since);
+      return rows.map((r) => ({ price: r.price, timestamp: r.fetched_at }));
+    } catch {
+      return [];
     }
   }
 }

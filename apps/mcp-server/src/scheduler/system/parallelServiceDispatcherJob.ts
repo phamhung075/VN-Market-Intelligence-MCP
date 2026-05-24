@@ -27,7 +27,7 @@ import type {
   ComputeTAResponse,
   MacroSnapshotResponse,
   HealthStatus,
-  KinhDichReadingResponse,
+  KinhDichMarketResponse,
 } from '../../infrastructure/microservices/clients.js';
 import { sendTelegramWork } from '../../infrastructure/notifiers/telegram.js';
 import { getDb } from '../../infrastructure/db/schema.js';
@@ -37,7 +37,7 @@ export interface DispatcherDeps {
   computeTAFn?:    (req: ComputeTARequest) => Promise<ComputeTAResponse>;
   getMacroFn?:     () => Promise<MacroSnapshotResponse>;
   getGatewayFn?:   () => Promise<HealthStatus>;
-  getKinhDichFn?:  () => Promise<KinhDichReadingResponse>;
+  getKinhDichFn?:  () => Promise<KinhDichMarketResponse>;
   sendTelegramFn?: (msg: string) => Promise<void>;
   getDbFn?:        () => Database;
   nowFn?:          () => Date;
@@ -130,7 +130,7 @@ export async function runParallelServiceDispatcher(deps?: DispatcherDeps): Promi
         return {
           status: 'ok' as const,
           duration: Date.now() - t0,
-          message: `Market Hexagram: ${reading.hexagram_number} (${reading.hexagram_name})`,
+          message: `Market Hexagram: ${reading.hexagram} (${reading.name})`,
         };
       } catch (err) {
         throw new Error(`Kinh Dich: ${err instanceof Error ? err.message : String(err)}`);
