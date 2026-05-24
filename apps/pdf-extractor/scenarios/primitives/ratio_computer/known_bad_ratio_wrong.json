@@ -1,0 +1,10 @@
+{
+  "primitive": "ratio_computer",
+  "inputs": {
+    "numerator": 300.0,
+    "denominator": 1000.0,
+    "ratio_type": "gross_margin"
+  },
+  "_note": "G8 honesty fixture — expected is INTENTIONALLY WRONG (actual is 0.3, not 99.9). Will always show RED.",
+  "expected": 99.9
+}

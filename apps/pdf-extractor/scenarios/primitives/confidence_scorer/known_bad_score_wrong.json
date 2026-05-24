@@ -1,0 +1,12 @@
+{
+  "primitive": "confidence_scorer",
+  "inputs": {
+    "ocr_confidence": 0.85,
+    "table_count": 2
+  },
+  "_note": "G8 honesty fixture — expected is INTENTIONALLY WRONG (actual is pass=true/quality_score=0.85, not pass=false/quality_score=0.0). Will always show RED.",
+  "expected": {
+    "pass": false,
+    "quality_score": 0.0
+  }
+}

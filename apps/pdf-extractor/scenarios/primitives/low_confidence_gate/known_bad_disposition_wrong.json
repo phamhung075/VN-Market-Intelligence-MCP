@@ -1,0 +1,8 @@
+{
+  "primitive": "low_confidence_gate",
+  "inputs": {
+    "confidence": 0.85
+  },
+  "_note": "G8 honesty fixture — expected is INTENTIONALLY WRONG (actual is 'normal', not 'skip'). Will always show RED.",
+  "expected": "skip"
+}

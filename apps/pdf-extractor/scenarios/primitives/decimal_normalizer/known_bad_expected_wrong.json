@@ -1,0 +1,9 @@
+{
+  "primitive": "decimal_normalizer",
+  "inputs": {
+    "raw_string": "1234.5",
+    "unit_hint": "billion_vnd"
+  },
+  "_note": "G8 honesty fixture — expected is INTENTIONALLY WRONG (actual is 1234.5, not 999.9). Will always show RED.",
+  "expected": 999.9
+}

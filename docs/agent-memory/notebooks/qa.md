@@ -1,5 +1,83 @@
 # QA — Notebook
 
+## c283 cycle-90 · 2026-05-24 · pdf-extractor P2-E1/P2-E2 — G6/G7 re-verify + G8 honesty proof — DASHBOARD-DEV-GAP
+
+**Task:** P2-E1 (G6+G7 re-verify) + P2-E2 (G8-final honesty proof) | **Verdict:** G7 PASS | G8 PASS-AT-TRACE-LEVEL | G6 PENDING-DEV-FIX
+
+```
+date: 2026-05-24
+outcome: G7 VERIFIED; G8 proven at sandbox/trace level; G6 BLOCKED by dashboard static-HTML dev gap
+type: pilot-task-qa (dashboard render audit + env audit + honesty injection)
+handoff: docs/handoffs/TASK_P2-D-ae-g4-evidence.md (reused for signal reference)
+signal: docs/signals/qa-pdf-extractor-P2-E1-E2-evidence-20260524.json (to be emitted)
+pytest: 105/105 PASS exit 0
+ddd_fence: PASS (0 actual infra/app/interface imports in domain/)
+primitive_scenarios_all: 18/18 exit 0 (6 primitives x 3 scenarios each)
+module_scenarios: 1/1 exit 0 (multi_primitive_story.json)
+ssot_not_mutated: true (PO-only per §4.5)
+goal_flips: NONE
+
+G6_verdict: PENDING-DEV-FIX
+  dashboard_is_static: true (Phase-1 stub — 2 primitive card slots only)
+  cards_in_html: 2 (validate-financial-figures, decimal-normalizer)
+  cards_missing_from_html: 4 (confidence-scorer, low-confidence-gate, ratio-computer, field-extractor)
+  trace_paths_in_js: 4 entries (2 primitive + 1 module + 1 service) — missing 4 primitive entries
+  rendering_mode: STATIC (hardcoded HTML card elements, not trace-driven dynamic rendering)
+  gap: dashboard/index.html line 237–254 has only 2 .card divs in #section-primitives; TRACE_PATHS has 4 entries but only 2 are for primitives
+  dev_task_scope: P2-F must add 4 HTML card slots + 4 TRACE_PATHS entries for the new primitives
+
+G7_verdict: PASS
+  env_i_runner_exit: 0
+  forbidden_grep_matches: 0 (EMPTY)
+  sandbox_match_comment: rerun.sh:23 — doc comment only ("zero DB/VPS/OCR credentials") — pre-existing Phase-1 ruling PASS
+  canonical_form_confirmed: env -i PYTHONPATH=apps/pdf-extractor python3 ... → forbidden-grep EMPTY
+
+G8_verdict: PASS-AT-TRACE-LEVEL (card-level RED blocked by G6 dev gap for 4 missing primitives)
+  sandbox_known_bad_5: all 5 exit 1 (pass=False)
+    decimal_normalizer/known_bad_expected_wrong.json: actual=1234.5 expected=999.9 → FAIL exit 1
+    validate_financial_figures/known_bad_threshold_wrong.json: actual=1.0 expected=0.0 → FAIL exit 1
+    confidence_scorer/known_bad_score_wrong.json: actual={pass:True,quality_score:0.85} expected={pass:False,...} → FAIL exit 1
+    low_confidence_gate/known_bad_disposition_wrong.json: actual=normal expected=skip → FAIL exit 1
+    ratio_computer/known_bad_ratio_wrong.json: actual=0.3 expected=99.9 → FAIL exit 1
+  broken_primitive: decimal_normalizer hardcoded return -99999.0 → happy_normal exit 1 (actual=-99999.0) CONFIRMED
+  broken_primitive_trace_written: dashboard/traces/primitive/decimal_normalizer.json pass=false
+  primitive_reverted: CONFIRMED (decimal_normalizer returns raw_float*multiplier again; git status CLEAN for domain/)
+  post_revert_decimal_trace: pass=True actual=1234.5 (trace updated after revert)
+  card_level_red: 1 card visible (decimal_normalizer badge=FAIL when trace written; 2 of 2 visible primitives were RED at peak)
+  note: 4 new primitive cards not renderable until P2-F fixes dashboard HTML — honesty contract proven at trace level
+
+known_bad_files_created: 5 (permanent fixtures — never delete)
+  apps/pdf-extractor/scenarios/primitives/decimal_normalizer/known_bad_expected_wrong.json
+  apps/pdf-extractor/scenarios/primitives/validate_financial_figures/known_bad_threshold_wrong.json
+  apps/pdf-extractor/scenarios/primitives/confidence_scorer/known_bad_score_wrong.json
+  apps/pdf-extractor/scenarios/primitives/low_confidence_gate/known_bad_disposition_wrong.json
+  apps/pdf-extractor/scenarios/primitives/ratio_computer/known_bad_ratio_wrong.json
+```
+
+| Check | Verdict | Evidence |
+|-------|---------|---------|
+| G7 env-i run exit 0 | PASS | exit 0 confirmed |
+| G7 forbidden env grep EMPTY | PASS | 0 matches in cleaned subprocess |
+| G7 sandbox grep (rerun.sh doc comment) | PASS | Line 23 = comment only (Phase-1 ruling inherited) |
+| 18 primitive scenarios all exit 0 | PASS | 6 primitives × 3 scenarios |
+| Module scenario exit 0 | PASS | multi_primitive_story.json |
+| 105 pytest pass | PASS | exit 0 |
+| DDD fence | PASS | 0 actual infra/app/interface imports |
+| G8 known-bad 5 scenarios all exit 1 | PASS | all 5 pass=False |
+| G8 broken primitive fires (exit 1) | PASS | decimal_normalizer -99999.0 exit 1 |
+| G8 primitive reverted (git CLEAN) | PASS | domain/ no staged changes |
+| G6 dashboard renders 6 primitive cards | FAIL-DEV-GAP | Only 2 card slots in HTML |
+
+**P2-F dev gap:**
+- `apps/pdf-extractor/dashboard/index.html`: Add 4 HTML card `<div>` elements (confidence-scorer, low-confidence-gate, ratio-computer, field-extractor) to `#section-primitives`
+- `apps/pdf-extractor/dashboard/index.html`: Add 4 entries to `TRACE_PATHS` JS array with corresponding primitive trace paths
+- Dashboard rendering is STATIC (hardcoded HTML), not dynamic — P2-F must make it trace-driven or at minimum add the 4 missing static card slots
+- Trace convention: `dashboard/traces/primitive/confidence_scorer.json`, `low_confidence_gate.json`, `ratio_computer.json`, `field_extractor.json`
+
+**Recommendation:** Proceed to P2-F (dev task — dashboard honesty implementation) before P2-A1. G7 is independently verified (PASS). G8 is proven at sandbox/trace level — the honesty contract holds; the card-rendering gap is a dashboard issue, not a sandbox/runner issue.
+
+---
+
 ## c283 cycle-89 · 2026-05-24 · news-fetch P2-NF-G — G10 bug injection (pre-inject tag + sealed signal) — DONE
 
 **Task:** P2-NF-G (G10 AI-fixability bug injection) | **Verdict:** DONE — bug injected, RED confirmed

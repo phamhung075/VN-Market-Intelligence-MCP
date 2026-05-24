@@ -1,0 +1,12 @@
+{
+  "primitive": "validate_financial_figures",
+  "inputs": {
+    "total_assets": 10000.0,
+    "total_equity": 4000.0,
+    "total_liabilities": 6000.0,
+    "operating_margin": 0.15,
+    "net_revenue": 5000.0
+  },
+  "_note": "G8 honesty fixture — expected is INTENTIONALLY WRONG (actual is 1.0, not 0.0). Will always show RED.",
+  "expected": 0.0
+}
