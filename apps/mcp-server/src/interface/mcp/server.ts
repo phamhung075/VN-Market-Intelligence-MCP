@@ -45,6 +45,7 @@ import { handlePushForeignFlow } from "./routes/pushForeignFlowHandler.js";
 import { handleWebhook } from "./routes/webhookHandler.js";
 import { handlePushNews } from "./routes/pushNewsHandler.js";
 import { handleVpsNewsHealth } from "./routes/vpsNewsHealthHandler.js";
+import { handleNewsFetchLive } from "./routes/newsFetchLiveHandler.js";
 import { getAccuracyStats, getSystemAccuracyDigestStats } from "../../infrastructure/db/signalOutcomeStore.js";
 
 /**
@@ -287,6 +288,12 @@ export async function createBunServer(
     // ── GET /api/health/vps-news — VPS news push liveness (no auth) ─────────
     if (method === "GET" && pathname === "/api/health/vps-news") {
       handleVpsNewsHealth(req, res, db);
+      return;
+    }
+
+    // ── GET /api/news-fetch/live — live DB inspection view (no auth) ─────────
+    if (method === "GET" && pathname === "/api/news-fetch/live") {
+      handleNewsFetchLive(req, res, db);
       return;
     }
 
