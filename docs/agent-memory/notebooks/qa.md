@@ -1,5 +1,56 @@
 # QA — Notebook
 
+## c283 cycle-88 · 2026-05-24 · news-fetch P2-NF-E — G8 honest-red proof — VERIFIED
+
+**Task:** P2-NF-E (G8 honest-red dashboard proof) | **Verdict:** G8 VERIFIED
+
+```
+date: 2026-05-24T09:05:30Z
+outcome: G8 VERIFIED — honest-red contract proven, no false greens
+type: pilot-task-qa (deliberate-break proof — primitive bug + 5 bad scenarios + revert discipline)
+signal: docs/signals/qa-news-fetch-g8-evidence-20260524T090530Z.json
+handoff: docs/handoffs/TASK_P2-NF-ABC.md [QA] Review Record P2-NF-E appended
+commit: ca448f6b
+ssot_not_mutated: pilot-status-news-fetch.json not touched (PO-only §4.5)
+goal_flips: NONE (Charter §4.5 honored)
+g8_goal_status: EARNED-PENDING
+
+baseline_sandbox: 13/13 PASS exit 0
+baseline_dash: PASS:6 FAIL:0 exit 0
+
+primitive_bug_file: apps/news-fetch/src/primitive/published-at-parser/index.ts
+primitive_bug_type: hardcoded return '1970-01-01T00:00:00.000Z'
+primitive_bug_sandbox: 3 FAILs exit 1
+primitive_bug_dash: FAIL:2 exit 1 (published-at-parser RED + svc RED)
+primitive_bug_committed: false
+
+bad_scenarios_count: 5 (across all 4 primitives)
+combined_sandbox: 18 run, 8 FAIL, exit 1
+combined_dash: FAIL:5 exit 1 (4 primitive cards RED + svc card RED)
+screenshot_with_reds: apps/news-fetch/dashboard/render-check.png
+bad_scenarios_committed: false
+
+post_revert_sandbox: 13/13 PASS exit 0
+post_revert_dash: PASS:6 FAIL:0 exit 0
+git_status_post_revert: CLEAN (primitive source + scenario files)
+```
+
+| Check | Verdict |
+|-------|---------|
+| Baseline 13/13 PASS, dash PASS:6 | PASS |
+| Primitive bug fires: 3 FAILs, exit 1, published-at-parser RED | PASS |
+| Dash shows RED on primitive card | PASS |
+| 5 bad scenarios: all 5 FAIL in sandbox | PASS |
+| Combined: 5 RED cards on dashboard (FAIL:5) | PASS |
+| Screenshot captured with RED state | PASS |
+| Revert: sandbox 13/13, dash PASS:6 | PASS |
+| git CLEAN post-revert (no breaks committed) | PASS |
+
+**G8 verdict: VERIFIED. EARNED-PENDING.**
+**NEXT:** po — G8 evidence locked; G10 inject (P2-NF-F inject spec + pre-inject tag).
+
+---
+
 ## c283 cycle-87 · 2026-05-24 · kinh-dich P2-G — G5b/G5c MCP handler audit + G5a hold — PASS
 
 **Task:** P2-G (G5b/G5c read-only audit + G5a hold confirmation) | **Verdict:** PASS
