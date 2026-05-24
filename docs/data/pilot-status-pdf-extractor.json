@@ -22,8 +22,8 @@
   "language": "Python",
   "languageLockSource": "stays Python — OCR/PDF ecosystem constraint overrides Go-first default (scale charter §Deltas)",
   "languageLockedAt": "2026-05-24",
-  "phase": "1",
-  "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status. Advanced 0→1 at Phase-0 exit-gate close (po cycle-291).",
+  "phase": "2",
+  "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status. Advanced 0→1 at Phase-0 exit-gate close (po cycle-291). Advanced 1→2 at Phase-1 close-gate APPROVE (po cycle-292, QA gate PASS @7247fd08).",
   "phase0": {
     "status": "CLOSED",
     "_status_enum": "[FIXED] Allowed values: OPEN | CLOSED",
@@ -53,17 +53,19 @@
     }
   },
   "phase1": {
-    "_note": "Phase 1 OPEN at Phase-0 exit (po cycle-291). All 10 Phase-1 tasks confirmed BCTC-CLEAR (plan §BCTC Freeze Assessment). WIP=1 single dev-pdf-extractor agent.",
-    "status": "ACTIVE",
+    "_note": "Phase 1 OPEN at Phase-0 exit (po cycle-291). All 10 Phase-1 tasks confirmed BCTC-CLEAR (plan §BCTC Freeze Assessment). WIP=1 single dev-pdf-extractor agent. CLOSED/APPROVED by po cycle-292 on QA close-gate PASS.",
+    "status": "APPROVED",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
     "openedAt": "2026-05-24T09:30:00Z",
     "openedBy": "po cycle-291 (Phase-0 exit gate close → Phase-1 open; first dispatch P1-A1 sandbox runner via PM → dev-pdf-extractor, WIP=1)",
-    "gateVerdict": null,
-    "gateVerifiedAt": null,
-    "gateVerifiedBy": null,
-    "gateCommit": null,
-    "gateDecisionDoc": null,
-    "gateSignal": null,
+    "gateVerdict": "PASS",
+    "gateVerifiedAt": "2026-05-24T08:32:16Z",
+    "gateVerifiedBy": "qa",
+    "gateCommit": "7247fd08",
+    "gateDecisionDoc": "docs/po-decisions/2026-05-24-pdf-extractor-g5b-freeze-ruling.md",
+    "gateSignal": "docs/signals/qa-pdf-extractor-phase1-gate-20260524T082834Z.json",
+    "gateClosedBy": "po cycle-292 (Phase-1 close-gate APPROVE: QA gate signal verified PASS — all 5 criteria PASS [C1 6/6 required primitive scenarios exit 0 + C2 1/1 module scenario exit 0 + C3 G7 all-4-sub-gates PASS + C4 dashboard 3 panels honest NOT-RUN→green + C5 G12 streak-3]; env -i clean-audit form baked into Phase-2 G7/closure spec)",
+    "g7_env_audit_canonical_form": "env -i PYTHONPATH=. python3 <sandbox runner> → forbidden-grep EMPTY. CTX_ADVISOR_* are Claude Code harness context-sizing integers (NOT credentials) — excluded per QA durable ruling. This command form is the unambiguous FINAL goal-gate check for 'sandbox env audit returns empty' and MUST be baked into Phase-2 G7/closure specs.",
     "skeleton_in": "docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-1-task-plan-python.md §Task Ledger",
     "task_plan": "docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-1-task-plan-python.md",
     "wip_limit": 1,
@@ -82,33 +84,75 @@
     ],
     "g12_streak_tasks": ["P1-B1 (streak#1)", "P1-C (streak#2)", "P1-E1 (streak#3)"],
     "progress_notes": [
-      "2026-05-24T09:30:00Z po cycle-291: Phase 1 OPEN. First dispatch = P1-A1 routed via PM → dev-pdf-extractor. WIP=1. P1-B1 blocked-until P1-A1 zero-creds gate (AC-5 env audit empty + AC-6 scenario grep 0) PASS."
+      "2026-05-24T09:30:00Z po cycle-291: Phase 1 OPEN. First dispatch = P1-A1 routed via PM → dev-pdf-extractor. WIP=1. P1-B1 blocked-until P1-A1 zero-creds gate (AC-5 env audit empty + AC-6 scenario grep 0) PASS.",
+      "2026-05-24T08:32:16Z po cycle-292: Phase 1 CLOSED/APPROVED. QA close-gate signal verified PASS @7247fd08 — all 5 criteria PASS (C1 6/6 required primitive scenarios exit 0; C2 1/1 module scenario exit 0; C3 G7 all-4-sub-gates PASS; C4 dashboard 3 panels honest NOT-RUN→green; C5 G12 streak-3). Earned-pending (NOT flipped to YES): G1 core-2 band, G2, G6, G7, G8 partial, G12 streak-3; G3 partial (≤80 LOC). Top-level phase 1→2. Phase 2 opened AWAITING-PLAN. G5b freeze ruling (c) SPLIT recorded."
     ]
   },
   "phase2": {
-    "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 1 gate passes.",
-    "status": "NOT-STARTED",
+    "_note": "Phase 2 OPEN (AWAITING-PLAN) at Phase-1 close (po cycle-292). Architect must author the Phase-2 task plan (see taskPlan path) before PM dispatches. Covers deferred goals G1-full + G3-full + G4 + G5(split) + G8-final + G9 + G10 + G11, then matrix close at 12/12.",
+    "status": "AWAITING-PLAN",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
-    "openedAt": null,
-    "openedBy": null,
+    "openedAt": "2026-05-24T08:32:16Z",
+    "openedBy": "po cycle-292 (Phase-1 close-gate APPROVE → Phase-2 open AWAITING-PLAN; architect directed to author phase-2-task-plan-python.md)",
     "closedAt": null,
     "closedBy": null,
-    "skeleton_in": "<SERVICE:path to phases doc §Phase 2>",
-    "taskPlan": null,
+    "skeleton_in": "docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-2-task-plan-python.md §Task Ledger (TO BE AUTHORED by architect)",
+    "taskPlan": "docs/architecture-briefs/2026-05-24-pdf-extractor-factory/phase-2-task-plan-python.md",
+    "taskPlanStatus": "AWAITING-ARCHITECT",
     "taskCount": null,
-    "wipPolicy": "<SERVICE:WIP=1 default; specialised ordering if R-type risks require specific first task>",
+    "wipPolicy": "WIP=1 single dev-pdf-extractor agent; G5b sequenced LAST and HARD-FROZEN (freeze-lift gated). G4/G10 require pre-revert tags Day-0 of their task (pdf-extractor-pre-ci, pdf-extractor-pre-inject by qa). G5a requires pdf-extractor-pre-delete tag.",
     "wip_limit": 1,
+    "deferred_goals_for_phase2": {
+      "_note": "Goals NOT fully earned in Phase 1. Phase-2 task plan must cover all of these to reach 12/12.",
+      "G1-full": "Extract remaining 4 primitives (confidence-scorer, low-confidence-gate, ratio-computer, field-extractor), each ≥3 scenarios. Phase-1 shipped core-2 (validate-financial-figures + decimal-normalizer = 6 scenarios). Total target = 6 primitives × ≥3 = ≥18 scenarios.",
+      "G3-full": "OpenAPI served (FastAPI /openapi.json confirm) + composition-root grep: main.py ≤80L + grep primitive-op names (normalize/score/compute-ratio/extract) → 0 matches. Phase-1 partial: main.py shrink ≤80L only (R-6).",
+      "G4": "import-linter CI fence (Fence-A + Fence-B contracts in pyproject.toml) + deliberate-violation proof (inject 1 breach → lint-imports exit non-zero → revert, never committed) + pre-revert tag pdf-extractor-pre-ci.",
+      "G5": "PER FREEZE RULING (c) SPLIT — see phase2.g5_split. G5a (delete dead code, pre-delete tag) + G5c (zero TODO.*migrat) dispatch normally; G5b (frozen handler rewire) HELD LAST, requires architect 1954c-clearance + PO freeze-lift.",
+      "G8-final": "5 known-bad scenarios + 1 deliberate broken primitive → honest-red (6 red cards). QA captures honesty_table + test_a/test_b in GREEN signal.",
+      "G9": "Playwright headless Path B trust contract — render apps/pdf-extractor/dashboard/index.html via file://, assert panels/cards/honest-status, console_errors=0.",
+      "G10": "AI blind bug fix ≤2 cycles vs baselineCycleCount=1.5 (bug-inventory pdf_extractor_baseline). Inject 1 single-literal bug (decimal-shift or confidence-threshold). Pre-inject tag pdf-extractor-pre-inject by qa.",
+      "G11": "Regression alarm 2-trial coupling (Trial-1 = G10 alias decimal-normalizer; Trial-2 = different primitive low-confidence-gate or confidence-scorer). Outcome-(a) × 2 = PASS."
+    },
+    "g5_split": {
+      "_ruling": "PO ruling (c) SPLIT G5 — decision doc docs/po-decisions/2026-05-24-pdf-extractor-g5b-freeze-ruling.md",
+      "ruledBy": "po cycle-292",
+      "ruledAt": "2026-05-24T08:32:16Z",
+      "G5a": {
+        "scope": "Move superseded in-service code (post-primitive-extraction domain/services.py remnants, brownfield R-1) to _deprecated/. Pure apps/pdf-extractor/ Python.",
+        "freeze_status": "CLEAR",
+        "disposition": "Dispatch normally in Phase 2. Pre-delete tag pdf-extractor-pre-delete created first."
+      },
+      "G5c": {
+        "scope": "grep TODO.*migrat across apps/mcp-server/src/ + apps/pdf-extractor/ → 0. Read-only verification.",
+        "freeze_status": "CLEAR",
+        "disposition": "Dispatch normally in Phase 2."
+      },
+      "G5b": {
+        "scope": "HTTP-rewire fetch_ssc_reports (reports.ts + fetchParseAndStoreBctc.ts) + bctc_batch_sweep (bctcBatchSweepJob.ts) to call pdf-extractor port 5001.",
+        "freeze_status": "HARD FROZEN",
+        "disposition": "HELD. Sequenced LAST in Phase 2. PM MUST NOT dispatch/stage/commit until architect 1954c-clearance signal AND PO freeze-lift signal (recorded in bctc_freeze_gate).",
+        "rationale": "Touches fetchParseAndStoreBctc.ts — the exact file the 1954c 4-write-path consolidation is restructuring. NOT orthogonal to the frozen behavioral surface; file collision makes a unilateral structural-only carve-out unsafe."
+      },
+      "G5_yes_condition": "G5 flips YES only when G5a + G5c done AND G5b either (i) completed after 1954c freeze-lift, or (ii) architect rules at 1954c-landing the rewire is moot because consolidation already routed the handler through the microservice."
+    },
     "bctc_freeze_gate": {
-      "_warning": "DO NOT LOSE — recorded by po cycle-291 at Phase-0 close so the Phase-2 freeze constraint survives across cycles.",
+      "_warning": "DO NOT LOSE — recorded by po cycle-291 at Phase-0 close so the Phase-2 freeze constraint survives across cycles. RULED by po cycle-292 at Phase-1 close: ruling (c) SPLIT G5.",
       "frozen": true,
+      "ruling": "(c) SPLIT G5 — G5a + G5c CLEAR (dispatch normally); G5b HARD FROZEN, sequenced LAST",
+      "ruledBy": "po cycle-292",
+      "ruledAt": "2026-05-24T08:32:16Z",
+      "rulingDecisionDoc": "docs/po-decisions/2026-05-24-pdf-extractor-g5b-freeze-ruling.md",
       "freeze_anchor": "1953-G-FAIL / 1954c (BCTC write-chain consolidation, recurring-bug-escalation freeze)",
+      "freeze_surface": "Behavioral bug-fix freeze on BCTC write-chain: OCR-completes-but-store-strands (78h stale), missing ACK token, 4 write paths → 1 consolidation. Anchors: 1953-G-FAIL-BCTC-stale (fixCycles=6, mcp-server, unresolved) + 1954-BCTC-write-chain-rca (fixCycles=0, mcp-server, design phase).",
       "frozen_g5b_tasks": [
         "G5b rewire fetch_ssc_reports → apps/mcp-server/src/.../reports.ts + fetchParseAndStoreBctc.ts",
         "G5b rewire bctc_batch_sweep → apps/mcp-server/src/.../bctcBatchSweepJob.ts"
       ],
-      "lift_precondition": "PO must emit an explicit 1954c freeze-LIFT signal (clears 1953-G-FAIL/1954c) BEFORE PM may dispatch either G5b rewire task. Until lifted these Phase-2 tasks are HARD FROZEN — no dispatch, no stage, no commit touching the named mcp-server BCTC paths.",
-      "phase1_impact": "NONE — all 10 Phase-1 tasks are BCTC-CLEAR (P1-B2 is READ-ONLY mcp-server archaeology, zero mcp-server write). Phase 1 dispatches immediately.",
-      "recorded_by": "po cycle-291",
+      "lift_precondition": "BOTH required before PM may dispatch G5b: (1) architect emits 1954c-clearance signal (1953-G-FAIL/1954c consolidation landed + verified); AND (2) PO emits explicit freeze-LIFT signal scoped to the G5b rewire, recorded here. No silent lift. No structural-only carve-out before architect clearance — file collision with the 1954c consolidation target (fetchParseAndStoreBctc.ts) makes that unsafe to apply unilaterally. Until BOTH: HARD FROZEN — no dispatch, no stage, no commit touching the named mcp-server BCTC paths.",
+      "lift_status": "NOT-LIFTED (awaiting architect 1954c-clearance, then PO freeze-lift)",
+      "phase1_impact": "NONE — all 10 Phase-1 tasks were BCTC-CLEAR (P1-B2 was READ-ONLY mcp-server archaeology, zero mcp-server write). Phase 1 dispatched + closed APPROVED with zero BCTC touch.",
+      "phase2_impact": "G5a (pure Python _deprecated/ move) + G5c (read-only TODO.*migrat grep) are CLEAR — dispatch normally. Only G5b is gated.",
+      "recorded_by": "po cycle-291; ruled by po cycle-292",
       "recorded_at": "2026-05-24T09:30:00Z"
     },
     "tasks": {}
@@ -122,6 +166,7 @@
       "_title_note": "[FIXED] Title is canonical per Charter. Service-specific calibration lives in 'calibration' field only.",
       "status": "TBD",
       "_status_enum": "[FIXED] Allowed values: TBD | IN-PROGRESS | YES | NO | PARTIAL | DEFER. Starts TBD. Flipped to YES only when all AC pass and evidence is locked. PO-only authorship per Charter §4.5.",
+      "phase1_state": "EARNED-PENDING (core-2 band): validate-financial-figures (3 scenarios) + decimal-normalizer (3 scenarios) extracted + GREEN @ Phase-1 gate. Remaining 4 primitives (confidence-scorer, low-confidence-gate, ratio-computer, field-extractor) DEFERRED to Phase-2 (G1-full). NOT YES until all 6 primitives × ≥3 scenarios land. Do NOT flip — §4.5 PO-only at 12/12 terminal.",
       "verifiedAt": null,
       "_verifiedAt_note": "[DERIVED] ISO-8601 UTC. Null until YES.",
       "verifiedBy": null,
@@ -136,6 +181,7 @@
       "track": "A",
       "title": "Module composes primitives via ports",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING: financial-reports module stub (P1-C @ce03ab35) composes core-2 primitives via DecimalNormalizerPort/FinancialValidatorPort; multi_primitive_story.json module-tier scenario GREEN (confidence=1.0). Re-verify at 12/12 once all 6 primitives composed. Do NOT flip — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -147,6 +193,7 @@
       "track": "A",
       "title": "Microservice has clean composition root",
       "status": "TBD",
+      "phase1_state": "PARTIAL: main.py shrink ≤80 LOC achieved in Phase-1 scaffold (R-6 addressed). REMAINING for Phase-2 (G3-full): OpenAPI served confirm (FastAPI /openapi.json) + composition-root grep for primitive-op names (normalize/score/compute-ratio/extract) → 0 matches. Do NOT flip — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -183,6 +230,7 @@
       "track": "B",
       "title": "Three-level dashboard renders from JSON traces",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING: dashboard/index.html 3 panels verified structurally (Primitives 2 cards + Module financial-reports + Microservice pdf-extractor NOT-RUN honest), zero network calls, file://-compatible. P1-E1 @d449879c. QA gate C4 PASS. Microservice card stays NOT-RUN until service-tier authored (Phase-2). Do NOT flip — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -194,6 +242,7 @@
       "track": "B",
       "title": "Edit-JSON-and-rerun works (zero credentials in sandbox)",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING: all 4 G7 sub-gates PASS at Phase-1 gate (sg1 env-audit, sg2 scenario-JSON grep, sg3 zero-infra-import, sg4 edit-rerun cycle). P1-E2. QA gate C3 PASS. DURABLE RULING (bake into Phase-2 closure spec): canonical clean audit = `env -i PYTHONPATH=. python3 <runner>` → forbidden-grep EMPTY. CTX_ADVISOR_* are Claude Code harness context-sizing integers, NOT credentials — excluded. Do NOT flip — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -205,6 +254,7 @@
       "track": "B",
       "title": "Red/green status is honest",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING (partial): honest-red proven in Phase-1 — echo_identity/failure_mismatch.json exits 1 by design (G8 honest-red fixture) + sg4 edit-rerun showed 1.0→0.9 → pass=false exit 1 → restore → pass=true exit 0. REMAINING for Phase-2 (G8-final): 5 known-bad scenarios + 1 deliberate broken primitive = 6 red cards, QA honesty_table + test_a/test_b. Do NOT flip — §4.5.",
       "verifiedAt": null,
       "verifiedBy": null,
       "evidence": null,
@@ -254,6 +304,7 @@
       "title": "Dev-* agent flow requires dashboard-green before done (3-task streak)",
       "_title_note": "[FIXED] The dev-<svc> flow DoD gate (sandbox-green-before-RETURN) must be baked Day 0 in Phase 0 (agent-father flow file deliverable). Streak: 3 consecutive dev tasks shipped only after sandbox-green evidence pasted into handoff.",
       "status": "TBD",
+      "phase1_state": "EARNED-PENDING: 3-task streak COMPLETE (P1-B1 b4765faa → P1-C ce03ab35 → P1-E1 d449879c), all consecutive + in order, each with sandbox-green-before-commit evidence. QA gate C5 PASS. Do NOT flip — §4.5 PO-only at 12/12 terminal.",
       "_status_candidacy": "May be held as EARNED-PENDING per Charter §4.5 once streak is complete. PO flips YES only at 12/12 terminal atomic close.",
       "verifiedAt": null,
       "verifiedBy": null,
@@ -262,11 +313,18 @@
       "phase2Bucket": null,
       "g12Streak": {
         "required": 3,
-        "completed": 0,
-        "streakComplete": false,
-        "completedAt": null,
-        "tasks": ["P1-B1 (streak#1)", "P1-C (streak#2)", "P1-E1 (streak#3)"],
-        "ruleEffectiveAfter": "e7541786 / 2026-05-24"
+        "completed": 3,
+        "streakComplete": true,
+        "completedAt": "2026-05-24T08:32:16Z",
+        "tasks": [
+          {"task": "P1-B1", "streak": 1, "commit": "b4765faa", "evidence": "3/3 validate_financial_figures scenarios GREEN + honest RED; sandbox-check-before-commit CONFIRMED in handoff §G12 DoD Gate Evidence"},
+          {"task": "P1-C", "streak": 2, "commit": "ce03ab35", "evidence": "6/6 primitive-tier scenarios GREEN; sandbox-check-before-commit CONFIRMED — STREAK #2"},
+          {"task": "P1-E1", "streak": 3, "commit": "d449879c", "evidence": "7/7 scenarios GREEN (6 primitives + 1 module) before staging; sandbox-check-before-commit CONFIRMED"}
+        ],
+        "verifiedBy": "qa (gate signal C5_g12_streak3 PASS); confirmed by po cycle-292",
+        "git_log_streak_order": "b4765faa (B1) → ce03ab35 (C) → d449879c (E1) — consecutive, in order",
+        "ruleEffectiveAfter": "e7541786 / 2026-05-24",
+        "_status_note": "Streak COMPLETE (3/3). G12 goal status stays EARNED-PENDING (not YES) per Charter §4.5 — PO flips YES only at 12/12 terminal atomic close."
       }
     }
   ],
