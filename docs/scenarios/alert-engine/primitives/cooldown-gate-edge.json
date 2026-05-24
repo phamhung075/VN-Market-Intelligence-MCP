@@ -1,0 +1,28 @@
+{
+  "primitive": "cooldown_gate",
+  "description": "Edge: same stock + overlapping signal within 30min window → Rule 1 suppresses",
+  "input": {
+    "alert": {
+      "stock": "VCB",
+      "severity": "medium",
+      "signalTypes": ["MACD_CROSS"],
+      "actionCode": "TA"
+    },
+    "recentAlerts": [
+      {
+        "stocks": "VCB",
+        "signalTypes": "MACD_CROSS",
+        "triggeredAt": "2026-05-24T09:45:00Z"
+      }
+    ],
+    "cfg": {
+      "cooldownMinutes": 30,
+      "maxAlertsPerStockPerDay": 3
+    },
+    "now": "2026-05-24T10:00:00Z"
+  },
+  "expected": {
+    "suppress": true,
+    "reason": "cooldown: same signal within 30min"
+  }
+}

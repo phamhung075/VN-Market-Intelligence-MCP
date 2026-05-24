@@ -1,0 +1,28 @@
+{
+  "primitive": "cooldown_gate",
+  "description": "Failure-path / bypass: critical severity + non-MACRO actionCode bypasses cooldown despite a recent overlapping alert",
+  "input": {
+    "alert": {
+      "stock": "VCB",
+      "severity": "critical",
+      "signalTypes": ["MACD_CROSS"],
+      "actionCode": "TA"
+    },
+    "recentAlerts": [
+      {
+        "stocks": "VCB",
+        "signalTypes": "MACD_CROSS",
+        "triggeredAt": "2026-05-24T09:55:00Z"
+      }
+    ],
+    "cfg": {
+      "cooldownMinutes": 30,
+      "maxAlertsPerStockPerDay": 3
+    },
+    "now": "2026-05-24T10:00:00Z"
+  },
+  "expected": {
+    "suppress": false,
+    "reason": "critical severity bypasses cooldown"
+  }
+}

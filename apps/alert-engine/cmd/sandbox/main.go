@@ -35,6 +35,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"time"
+
+	cg "github.com/vn-market-intelligence/alert-engine/pkg/primitive/cooldown-gate"
 	dkb "github.com/vn-market-intelligence/alert-engine/pkg/primitive/dedup-key-builder"
 	sc "github.com/vn-market-intelligence/alert-engine/pkg/primitive/signal-classifier"
 )
@@ -150,7 +153,8 @@ func executePrimitive(s Scenario) (bool, error) {
 		return executeSignalClassifier(data)
 	case "dedup_key_builder":
 		return executeDedupKeyBuilder(data)
-	// P1-B3: case "cooldown_gate":     return executeCooldownGate(data)
+	case "cooldown_gate":
+		return executeCooldownGate(data)
 	case "":
 		return false, fmt.Errorf("scenario %q: missing 'primitive' field", s.Name)
 	default:
@@ -225,6 +229,85 @@ func executeDedupKeyBuilder(data []byte) (bool, error) {
 	if got != s.Expected.Fingerprint {
 		return false, fmt.Errorf("dedup-key-builder: fingerprint=%q want=%q (stock=%q signals=%v)",
 			got, s.Expected.Fingerprint, s.Input.Stock, s.Input.SignalTypes)
+	}
+	return true, nil
+}
+
+// executeCooldownGate runs a cooldown-gate scenario (P1-B3).
+// Scenario JSON shape:
+//
+//	{
+//	  "primitive": "cooldown_gate",
+//	  "input": {
+//	    "alert":        {"stock", "severity", "signalTypes": [...], "actionCode"},
+//	    "recentAlerts": [{"stocks", "signalTypes", "triggeredAt"}...],
+//	    "cfg":          {"cooldownMinutes", "maxAlertsPerStockPerDay"},
+//	    "now":          "<RFC3339>"
+//	  },
+//	  "expected": {"suppress": <bool>, "reason": "<string>"}
+//	}
+//
+// now is an RFC3339 string parsed into time.Time and injected into Check —
+// the primitive never reads the wall clock, so the scenario is deterministic.
+func executeCooldownGate(data []byte) (bool, error) {
+	var s struct {
+		Input struct {
+			Alert struct {
+				Stock       string   `json:"stock"`
+				Severity    string   `json:"severity"`
+				SignalTypes []string `json:"signalTypes"`
+				ActionCode  string   `json:"actionCode"`
+			} `json:"alert"`
+			RecentAlerts []struct {
+				Stocks      string `json:"stocks"`
+				SignalTypes string `json:"signalTypes"`
+				TriggeredAt string `json:"triggeredAt"`
+			} `json:"recentAlerts"`
+			Cfg struct {
+				CooldownMinutes         int `json:"cooldownMinutes"`
+				MaxAlertsPerStockPerDay int `json:"maxAlertsPerStockPerDay"`
+			} `json:"cfg"`
+			Now string `json:"now"`
+		} `json:"input"`
+		Expected struct {
+			Suppress bool   `json:"suppress"`
+			Reason   string `json:"reason"`
+		} `json:"expected"`
+	}
+	if err := json.Unmarshal(data, &s); err != nil {
+		return false, fmt.Errorf("cooldown-gate: unmarshal scenario: %w", err)
+	}
+
+	now, err := time.Parse(time.RFC3339, s.Input.Now)
+	if err != nil {
+		return false, fmt.Errorf("cooldown-gate: parse now %q: %w", s.Input.Now, err)
+	}
+
+	recent := make([]cg.RecentAlert, len(s.Input.RecentAlerts))
+	for i, r := range s.Input.RecentAlerts {
+		recent[i] = cg.RecentAlert{Stocks: r.Stocks, SignalTypes: r.SignalTypes, TriggeredAt: r.TriggeredAt}
+	}
+
+	got := cg.Check(
+		cg.AlertInput{
+			Stock:       s.Input.Alert.Stock,
+			Severity:    s.Input.Alert.Severity,
+			SignalTypes: s.Input.Alert.SignalTypes,
+			ActionCode:  s.Input.Alert.ActionCode,
+		},
+		recent,
+		cg.CooldownConfig{
+			CooldownMinutes:         s.Input.Cfg.CooldownMinutes,
+			MaxAlertsPerStockPerDay: s.Input.Cfg.MaxAlertsPerStockPerDay,
+		},
+		now,
+	)
+
+	if got.Suppress != s.Expected.Suppress {
+		return false, fmt.Errorf("cooldown-gate: Suppress=%v want=%v (reason=%q)", got.Suppress, s.Expected.Suppress, got.Reason)
+	}
+	if got.Reason != s.Expected.Reason {
+		return false, fmt.Errorf("cooldown-gate: Reason=%q want=%q", got.Reason, s.Expected.Reason)
 	}
 	return true, nil
 }

@@ -1,0 +1,22 @@
+{
+  "primitive": "cooldown_gate",
+  "description": "Golden path: no recent alerts → no suppression",
+  "input": {
+    "alert": {
+      "stock": "VCB",
+      "severity": "high",
+      "signalTypes": ["MACD_CROSS"],
+      "actionCode": "TA"
+    },
+    "recentAlerts": [],
+    "cfg": {
+      "cooldownMinutes": 30,
+      "maxAlertsPerStockPerDay": 3
+    },
+    "now": "2026-05-24T10:00:00Z"
+  },
+  "expected": {
+    "suppress": false,
+    "reason": ""
+  }
+}
