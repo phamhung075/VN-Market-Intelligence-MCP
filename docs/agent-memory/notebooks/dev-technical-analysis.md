@@ -4,6 +4,69 @@ Zone: `apps/technical-analysis/` | Stack: **Go** (pilot active, 2026-05-22) | DB
 
 ## Working Memory
 
+### 2026-05-24 — Headless render gate (verify-render.mjs + build.sh wiring)
+
+**Task:** Add browser-render verification gate for TA Scenario Trust Dashboard (G8 honest red/green for the gate itself).
+
+**Status:** DONE
+
+**What was done:**
+- Created `dashboard/verify-render.mjs` (Node ESM). Launches headless Chromium via playwright-core, loads `file://...index.html`, reads live rendered DOM: count chips, `.group-status` labels, dot classes. Asserts 30 dot-green / 0 dot-red / 0 dot-pending / 0 JS errors / no NOT RUN text. Writes screenshot to `dashboard/dist/render-check.png`. Resolves repo root from `import.meta.url` — no hardcoded paths. Exits 0 on pass, non-zero with clear message on fail.
+- Added `playwright-core ^1.60.0` as devDependency of TA package (`bun add -d playwright-core`). Resolves locally from `apps/technical-analysis/node_modules/playwright-core` (zone-clean, no cross-app boundary reach). Falls back to frontend with warning if missing.
+- Wired as final gate in `dashboard/build.sh`: after bake step, runs `node dashboard/verify-render.mjs`. Build fails if gate exits non-zero.
+
+**Pass evidence (build.sh run):**
+- Bake: 30 passed / 0 failed
+- verify-render: Primitives chip "25 passed / 0 failed", Module "5 passed / 0 failed", 5/5 groups PASSED, 30 dot-green, 0 dot-red, 0 dot-pending, 0 JS errors — PASS exit 0
+
+**Deliberate-break fail evidence (G8 honest red/green proof):**
+- Injected `"bb-expansion": "red"` into scenario-results.js manually
+- verify-render: Primitives chip "24 passed / 1 failed", Group statuses includes "FAILED", 29 dot-green / 1 dot-red
+- FAIL exit 1: `Expected primitives chip "25 passed", got "24 passed"` — gate is honest
+- Reverted to green state
+
+**Smoke:**
+- `go test ./...` → 7 packages ok, exit 0
+- `go vet ./...` → exit 0
+- `bun tsc --project dashboard/tsconfig.dashboard.json --noEmit` → 0 errors
+- `bun test` → 24 pass / 0 fail
+- `build.sh` (full end-to-end including render gate) → exit 0
+
+**Files changed (3):** dashboard/verify-render.mjs (new), dashboard/build.sh (gate wired), package.json + bun.lock (playwright-core devDep)
+
+---
+
+### 2026-05-24 — Dashboard bake-verdicts (auto-green/red on open)
+
+**Task:** Make dashboard show real pass/fail verdicts without manual paste or server.
+
+**Status:** DONE — commit db63e6eb
+
+**What was done:**
+- Extended `dashboard/build.sh` with a bake step: runs `CGO_ENABLED=0 go run ./cmd/sandbox` over all 30 scenarios (25 primitive + 5 module), captures `status` from each JSON result, writes `dashboard/dist/scenario-results.js` (sets `window.__SCENARIO_RESULTS__`).
+- Added `applyBuildVerdicts()` to `dashboard/app.ts`: reads `window.__SCENARIO_RESULTS__`, applies `status: "green"|"red"` to each scenario in PRIMITIVES/MODULE_SCENARIOS before render.
+- Added `<script src="dist/scenario-results.js"></script>` to `dashboard/index.html` (before `dist/app.js`).
+- Manual paste-back path (rerun-handler.js) preserved unchanged.
+
+**Env audit:** `forbidden_matches:` empty — zero DB credentials in sandbox env. PASS.
+
+**Build result:** 30 passed / 0 failed. scenario-results.js: 34 lines, all "green".
+
+**Smoke:**
+- `go test ./...` → 7 packages ok, exit 0
+- `go vet ./...` → exit 0
+- `bun tsc --project dashboard/tsconfig.dashboard.json --noEmit` → 0 errors
+- `bun test` → 24 pass / 0 fail
+- `build.sh` → 30 passed / 0 failed
+
+**Files changed (3):** dashboard/build.sh, dashboard/app.ts, dashboard/index.html
+
+**G6:** dashboard renders file:// PASS
+**G8:** honest red/green from sandbox PASS
+**G12:** 30/30 GREEN PASS
+
+---
+
 ### 2026-05-23 — P2-B3 Remove TODO:migrate comments (cycle-26 — confirmed no-op)
 
 **Task:** P2-B3 — Remove all "TODO: migrate" comments from mcp-server + technical-analysis.

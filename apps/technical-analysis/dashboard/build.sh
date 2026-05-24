@@ -123,3 +123,17 @@ echo "Results file: ${RESULTS_FILE}"
 echo ""
 echo "Build complete. Outputs:"
 ls -lh "${SCRIPT_DIR}/dist/"
+
+# ---------------------------------------------------------------------------
+# Render gate — headless browser check (G8 honest red/green proof).
+#
+# Loads file://...index.html in headless Chromium via playwright-core,
+# reads the live rendered DOM, and asserts full-green state:
+#   30 dot-green, 0 dot-red, 0 dot-pending, 0 JS errors, no NOT RUN text.
+#
+# Exits non-zero (and fails the build) if any assertion fails.
+# Screenshot saved to dashboard/dist/render-check.png as evidence.
+# ---------------------------------------------------------------------------
+echo ""
+echo "Running headless render check (verify-render.mjs)..."
+node "${SCRIPT_DIR}/verify-render.mjs"
