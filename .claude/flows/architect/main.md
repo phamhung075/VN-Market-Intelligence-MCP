@@ -78,6 +78,25 @@ For multi-zone tasks, repeat for each zone. Rule: existing interface covers need
 - **Scan clean:** true ✓
 ```
 
+**Standard Detection (mandatory — emit FULL or LEAN tag):**
+```
+Classify task against apps/ directory:
+  NEW SERVICE (apps/<svc>/ does not exist in repo):
+    → BUILD-STANDARD: full
+    → BUILD-STANDARD-REF: docs/standards/microservice-build-standard.md
+    → PILOT-STATUS-SSOT: docs/data/pilot-status-<svc>.json (create from schema on Phase 0)
+    → ROLE-RELAY: PO → BA → architect → PM → dev-<svc> → QA
+  NEW FEATURE (apps/<svc>/ already exists):
+    → BUILD-STANDARD: lean
+    → BUILD-STANDARD-REF: docs/standards/microservice-build-standard.md
+    → NOTE: dev-<svc> drives end-to-end; no relay required
+  BUG-FIX / REFACTOR (in-zone, no new primitives) / MAINTENANCE:
+    → BUILD-STANDARD: not-applicable (skip)
+```
+Classification is architect's decision. If scope is ambiguous, default to `lean` and note the
+ambiguity in the handoff for PM visibility. Append the emitted tag to `[Architect] Brownfield
+Findings` so PM can propagate it verbatim into the dev-* task spec.
+
 ### Header update (required every cycle)
 Before the end-of-cycle skill writes the notebook, update line 3 of `docs/agent-memory/notebooks/architect.md`:
 ```
