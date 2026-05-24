@@ -348,9 +348,9 @@
     "acCount": 77,
     "wipPolicy": "WIP=1 sequential; R-FENCE gate (AC-4b deliberate-violation proof) baked into first-fence task AC as first chokepoint",
     "wip_limit": 1,
-    "current_task": "P2-KD-N",
-    "current_task_owner": "dev-kinh-dich + qa",
-    "current_task_handoff": "docs/handoffs/TASK_P2-KD-N.md",
+    "current_task": "P2-KD-Z",
+    "current_task_owner": "qa",
+    "current_task_handoff": "docs/handoffs/TASK_P2-KD-Z.md",
     "tasks": {
       "P2-KD-A": {
         "status": "DONE",
@@ -646,6 +646,40 @@
           "AC-4": "PASS"
         },
         "note": "Tag created FIRST (Step 0, before injection), bug injected SECOND. Single-literal defect in hao-encoder (e.g., threshold off-by-one, comparison flip, or mapping value flip). Bug compiles (tsc exit 0) but fails at runtime (hao-encoder golden scenario FAIL). Committed as real defect. G12 DoD EXCEPTION: RED sandbox after P2-KD-M is CORRECT and required (G10 baseline for fix cycle). P2-KD-N fixer stays BLIND to literal, must rediscover from RED dashboard."
+      },
+      "P2-KD-N": {
+        "status": "DONE",
+        "owner": "dev-kinh-dich + qa",
+        "title": "G10 AI-fixability proof (≤2 cycles) + G11 2-trial coupling proof",
+        "handoff": "docs/handoffs/TASK_P2-KD-N.md",
+        "handoff_evidence": "docs/handoffs/TASK_P2-KD-N-g10-g11.md",
+        "blocked_by": "P2-KD-M",
+        "blocks": "P2-KD-Z",
+        "est_hours": 1.5,
+        "ac_count": 5,
+        "completedAt": "2026-05-24T00:00:00Z",
+        "completedBy": "dev-kinh-dich + qa",
+        "commit_sha": "292a74de",
+        "g_goals_advanced": ["G10", "G11"],
+        "ac_verdicts": {
+          "AC-1": "PASS",
+          "AC-2": "PASS",
+          "AC-3": "PASS",
+          "AC-4": "PASS",
+          "AC-5": "PASS"
+        },
+        "note": "G10 cycle-1 blind-fix: dev-kinh-dich rediscovered and fixed injected hao-encoder literal bug in 1 dispatch cycle (EXCEEDS baseline 1.5). Sandbox 17/17 GREEN post-fix. G11 trial-2 PASS: ngu-hanh-classifier mutation + coupling proof verified. Both G10 and G11 evidence complete. Router verified: git diff kinh-dich-pre-inject HEAD -- apps/kinh-dich-service/src/primitive/hao-encoder/index.ts is EMPTY (byte-identical restore). No leftover injection comment. Working tree clean."
+      },
+      "P2-KD-Z": {
+        "status": "READY",
+        "owner": "qa",
+        "title": "Phase 2 close-gate verification (QA)",
+        "handoff": "docs/handoffs/TASK_P2-KD-Z.md",
+        "blocked_by": "P2-KD-N",
+        "blocks": "Phase 3 (PO atomic close)",
+        "est_hours": 0.5,
+        "ac_count": 7,
+        "note": "Read-only audit + signal emission. Verify all Phase-2 goal evidence present, sandbox 17/17 stable green, pre-revert tags ordered, anchor INTACT, SSOT unmutated (goalsEarned=0, decisionMatrix=TBD). No goal flips authorized. Signal directs PM to transition phase2=CLOSED and notify PO for Phase-3 terminal atomic close."
       }
     }
   },
