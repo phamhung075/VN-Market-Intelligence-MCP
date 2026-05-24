@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-24T06:23:02Z
+
+**Brief:** `docs/architecture-briefs/2026-05-24-context-bloat-backstop-hook.md`
+
+Agents running on haiku skip advisory prune steps in skills/flows, causing governed context files (notebooks, TASKS.md) to blow past their line caps and load ~50k extra tokens per cycle. Designed a deterministic PostToolUse backstop hook (Write|Edit|NotebookEdit, non-blocking || true) that classifies written files against a dedicated SSOT (`docs/data/file-size-caps.json`), measures line count only for governed paths, and drops a `context_bloat_breach` signal to claude-manager-helper for async pruning. 5 implementation files for agent-father (F1 settings.local.json, F2 new script, F3 new SSOT, F4 janitor Pass 5b, F5 janitor agent.md).
+
+**Signal dropped:** `docs/signals/agents-architect-context-bloat-backstop-20260524T062302Z.json` → agent-father
+
+---
+
 ## 2026-05-20T08:54:19Z
 
 **Brief:** `docs/architecture-briefs/2026-05-20-task-lock-system.md`
