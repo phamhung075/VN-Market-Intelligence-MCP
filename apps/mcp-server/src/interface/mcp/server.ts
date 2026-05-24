@@ -52,6 +52,7 @@ import {
   handleBctcInspectPdf,
   handleBctcInspectOcr,
 } from "./routes/bctcInspectHandler.js";
+import { backfillBctcPdfPaths } from "../../application/usecases/backfillBctcPdfPaths.js";
 import { getAccuracyStats, getSystemAccuracyDigestStats } from "../../infrastructure/db/signalOutcomeStore.js";
 
 /**
@@ -194,6 +195,23 @@ export async function createBunServer(
   // One shared DB instance for all route handlers — opened once at startup.
   // Eliminates 16 per-request calls; server lifetime matches startScheduler.
   const db = getDb();
+
+  // ── REOPEN-2: Backfill pdf_path for financial_reports rows where pdf_path IS NULL ─
+  // Idempotent: only touches NULL rows; same input → same result.
+  // Links 14 real rows (inserted via news-inference fallback) to on-disk PDFs
+  // so GET /api/bctc-inspect/docs returns real data instead of count:0.
+  // pdfDir matches the convention used by bctcPdfPullJob + push-bctc-pdf handler.
+  try {
+    const { resolve } = await import("node:path");
+    const pdfDir = resolve(process.cwd(), "data", "pdfs");
+    const backfillResult = backfillBctcPdfPaths(db, pdfDir);
+    log.info("[startup] backfillBctcPdfPaths complete", backfillResult as unknown as Record<string, unknown>);
+  } catch (backfillErr) {
+    // Non-fatal: log and continue — inspector still shows rows with has_pdf:false
+    log.warn("[startup] backfillBctcPdfPaths failed (non-fatal)", {
+      error: backfillErr instanceof Error ? backfillErr.message : String(backfillErr),
+    });
+  }
 
   // ── Session manager handles SSE + message routing ──────────────────────
   // Detect path prefix for Cloudflare Tunnel (e.g., "/vn-market")

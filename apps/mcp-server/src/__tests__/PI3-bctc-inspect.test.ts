@@ -3,7 +3,8 @@
  *
  * Covers all acceptance criteria from the architect's re-ground design:
  *   AC-1  list endpoint returns correct shape from financial_reports
- *   AC-2  list excludes rows with null/empty pdf_path
+ *   AC-2  list includes rows with null/empty pdf_path (REOPEN-2: filter removed)
+ *          has_pdf=false when pdf_path IS NULL or file missing on disk
  *   AC-3  list has_pdf reflects file existence (no real fs call — mocked via has_pdf logic)
  *   AC-4  has_ocr reflects pdf_extracted_text rows for basename(pdf_path)
  *   AC-5  anomaly_decimal_shift fires when |ocr - api| / |api| > 10
@@ -288,7 +289,9 @@ describe("PI-3 AC-1/2 — GET /api/bctc-inspect/docs — list shape", () => {
     expect(body.items).toHaveLength(1);
   });
 
-  test("AC-2: excludes rows with null pdf_path", () => {
+  test("AC-2 (REOPEN-2): rows with null pdf_path ARE included — has_pdf=false", () => {
+    // REOPEN-2 change: LIST_SQL no longer filters WHERE pdf_path IS NOT NULL.
+    // All real rows appear. pdf_path IS NULL → has_pdf:false (data quality signal).
     insertReport(db, {
       id: "e2e2e2e2-aaaa-4bbb-8ccc-222222222222",
       pdf_path: null,
@@ -299,11 +302,13 @@ describe("PI-3 AC-1/2 — GET /api/bctc-inspect/docs — list shape", () => {
     const { res, getBody } = mockRes();
     handleBctcInspectDocs(mockReq("/api/bctc-inspect/docs"), res, db);
 
-    const body = getBody() as { count: number };
-    expect(body.count).toBe(0);
+    const body = getBody() as { count: number; items: DocListItem[] };
+    expect(body.count).toBe(1); // row IS returned
+    expect(body.items[0]!.has_pdf).toBe(false); // but has_pdf=false
   });
 
-  test("AC-2: excludes rows with empty string pdf_path", () => {
+  test("AC-2 (REOPEN-2): rows with empty string pdf_path ARE included — has_pdf=false", () => {
+    // Same as null — empty string also means no PDF on disk.
     insertReport(db, {
       id: "e3e3e3e3-aaaa-4bbb-8ccc-333333333333",
       pdf_path: "",
@@ -313,8 +318,9 @@ describe("PI-3 AC-1/2 — GET /api/bctc-inspect/docs — list shape", () => {
 
     const { res, getBody } = mockRes();
     handleBctcInspectDocs(mockReq("/api/bctc-inspect/docs"), res, db);
-    const body = getBody() as { count: number };
-    expect(body.count).toBe(0);
+    const body = getBody() as { count: number; items: DocListItem[] };
+    expect(body.count).toBe(1); // row IS returned
+    expect(body.items[0]!.has_pdf).toBe(false); // has_pdf=false
   });
 
   test("AC-14: label format is '{action_code} {period_type} {period_year}'", () => {

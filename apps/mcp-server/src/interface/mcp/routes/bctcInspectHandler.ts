@@ -30,6 +30,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
 import { readFileSync, existsSync } from "node:fs";
 import { resolve, dirname, basename } from "node:path";
+import { parsePdfFilenameTokens } from "../../../application/usecases/backfillBctcPdfPaths.js";
 
 // ─── UUID validation ──────────────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ interface FinancialReportRow {
   period_year: number;
   period_quarter: number | null;
   sort_key: string;
+  pdf_path: string | null;
   net_revenue: number | null;
   gross_profit: number | null;
   net_profit: number | null;
@@ -102,16 +104,19 @@ interface OcrPageRow {
 
 // ─── List endpoint ────────────────────────────────────────────────────────────
 
+// REOPEN-2: removed `WHERE pdf_path IS NOT NULL` — all 14 real rows are shown.
+// has_pdf is computed at serve time via existsSync(pdf_path).
+// Rows with pdf_path IS NULL are still shown (has_pdf: false) so user can see
+// news-inference reports (data quality signal). Junk exclusion kept.
 const LIST_SQL = `
   SELECT
     id, action_code, company_name, period_type, period_year, period_quarter, sort_key,
+    pdf_path,
     net_revenue, gross_profit, net_profit, net_profit_api_bridge,
     net_margin_pct, ocr_confidence, confidence_financial, extraction_confidence,
     parsed_at
   FROM financial_reports
-  WHERE pdf_path IS NOT NULL
-    AND pdf_path != ''
-    AND action_code NOT LIKE '%example%'
+  WHERE action_code NOT LIKE '%example%'
     AND action_code NOT LIKE '%error%'
     AND action_code NOT LIKE '%missing%'
   ORDER BY parsed_at DESC
@@ -154,33 +159,45 @@ export function handleBctcInspectDocs(
   try {
     const rows = db.prepare(LIST_SQL).all() as FinancialReportRow[];
 
-    // For each row we need to check: (1) PDF file on disk, (2) OCR rows exist.
-    // Batch the has_ocr check per filename to avoid N+1 queries.
-    const pdfPathRows = db.prepare(
-      `SELECT id, pdf_path FROM financial_reports
-       WHERE pdf_path IS NOT NULL AND pdf_path != ''
-         AND action_code NOT LIKE '%example%'
-         AND action_code NOT LIKE '%error%'
-         AND action_code NOT LIKE '%missing%'
-       ORDER BY parsed_at DESC`,
-    ).all() as { id: string; pdf_path: string }[];
+    // REOPEN-2: pdf_path is now included in each row (see LIST_SQL above).
+    // No need for a second query to fetch pdf_path — it comes from the main SELECT.
 
-    // Build a map: id -> pdf_path
-    const pdfPathMap = new Map<string, string>(
-      pdfPathRows.map((r) => [r.id, r.pdf_path]),
-    );
-
-    // Check which basenames have OCR rows — single query with GROUP BY
+    // Load all OCR filenames in one query for O(1) has_ocr lookups
     const ocrFilenames = db.prepare(
       `SELECT DISTINCT filename FROM pdf_extracted_text`,
     ).all() as { filename: string }[];
     const ocrFilenameSet = new Set(ocrFilenames.map((r) => r.filename));
 
     const items: DocListItem[] = rows.map((row) => {
-      const pdfPath = pdfPathMap.get(row.id) ?? null;
-      const hasPdf = pdfPath !== null && existsSync(pdfPath);
-      const filename = pdfPath ? basename(pdfPath) : null;
-      const hasOcr = filename !== null && ocrFilenameSet.has(filename);
+      const pdfPath = row.pdf_path;
+
+      // has_pdf: path stored AND file actually exists on disk at serve time
+      const hasPdf = pdfPath !== null && pdfPath !== "" && existsSync(pdfPath);
+
+      // has_ocr primary: filename from stored pdf_path (the authoritative join key)
+      let hasOcr = false;
+      if (pdfPath && pdfPath !== "") {
+        hasOcr = ocrFilenameSet.has(basename(pdfPath));
+      }
+
+      // has_ocr secondary: when pdf_path IS NULL, apply token matcher against
+      // pdf_extracted_text filenames to find OCR rows by (ticker, year, quarter).
+      // This lets the right pane show OCR text even for news-inference rows.
+      if (!hasOcr && (!pdfPath || pdfPath === "") && row.period_quarter !== null) {
+        const actionCodeUpper = row.action_code.toUpperCase().trim();
+        for (const ocrFilename of ocrFilenameSet) {
+          const tokens = parsePdfFilenameTokens(ocrFilename, ocrFilename);
+          if (
+            tokens &&
+            tokens.ticker === actionCodeUpper &&
+            tokens.year === row.period_year &&
+            tokens.quarter === row.period_quarter
+          ) {
+            hasOcr = true;
+            break;
+          }
+        }
+      }
 
       return {
         doc_id: row.id,
@@ -356,7 +373,49 @@ export function handleBctcInspectOcr(
     }
 
     const pdfPath = pathRow.pdf_path;
-    const filename = pdfPath ? basename(pdfPath) : null;
+
+    // Primary join key: basename of the stored pdf_path
+    let filename: string | null = pdfPath ? basename(pdfPath) : null;
+
+    // REOPEN-2: Secondary OCR join — when pdf_path IS NULL, scan
+    // pdf_extracted_text filenames for a token match on (action_code, period_year,
+    // period_quarter). This lets the right pane show OCR text for news-inference rows.
+    if (!filename) {
+      // Need action_code + period info for the secondary join
+      interface FullReportRow extends FiguresRow {
+        action_code: string;
+        period_year: number;
+        period_quarter: number | null;
+      }
+      const fullRow = db
+        .prepare(
+          `SELECT action_code, period_year, period_quarter,
+                  net_revenue, gross_profit, net_profit, net_profit_api_bridge,
+                  net_margin_pct, ocr_confidence, confidence_financial,
+                  extraction_confidence, parsed_at
+           FROM financial_reports WHERE id = ?`,
+        )
+        .get(docId) as FullReportRow | null;
+
+      if (fullRow && fullRow.period_quarter !== null) {
+        const actionCodeUpper = fullRow.action_code.toUpperCase().trim();
+        const allOcrFilenames = db
+          .prepare(`SELECT DISTINCT filename FROM pdf_extracted_text`)
+          .all() as { filename: string }[];
+        for (const row of allOcrFilenames) {
+          const tokens = parsePdfFilenameTokens(row.filename, row.filename);
+          if (
+            tokens &&
+            tokens.ticker === actionCodeUpper &&
+            tokens.year === fullRow.period_year &&
+            tokens.quarter === fullRow.period_quarter
+          ) {
+            filename = row.filename;
+            break;
+          }
+        }
+      }
+    }
 
     // Fetch parsed figures from financial_reports
     const figRow = db
