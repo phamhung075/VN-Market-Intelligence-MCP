@@ -330,6 +330,13 @@ export function getCachedPdfText(
  *
  * Server stability: Uses same timeout (45s per page), same priority (nice 19),
  * same yield timing (2s between pages). Retry only triggers for rare low-confidence PDFs.
+ *
+ * @deprecated 1954c (G5b) — in-process Tesseract OCR is now owned by the
+ * pdf-extractor microservice (port 5001). All 4 BCTC callers (bctcPdfPullJob,
+ * pushBctcExtraction, bctcReparseJob, checkSscReports) have been rewired to
+ * call pdfExtractorClient.extractViaMicroservice instead. This function is kept
+ * to avoid breaking any remaining test imports but is no longer called in
+ * production. Scheduled for removal in a future cleanup pass.
  */
 export async function extractAndStorePdfPagesWithRetry(
   pdfPath: string,
