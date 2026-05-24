@@ -1,5 +1,30 @@
 # Agent Father — Notebook
 
+## c266 · 2026-05-24
+
+**Task:** F1–F7 — Microservice Build Standard Promotion (size-gated FULL/LEAN profiles)
+**Signal:** docs/signals/agents-architect-microservice-build-standard-promotion-20260524T073308Z.json (CLOSED)
+
+**F1 (create):** `docs/standards/microservice-build-standard.md` — 7 sections, 90L (≤120L). Profile Selection gate at top with FULL/LEAN decision logic. Thin pointers to pilot-charter.md and 07-phases.md (no duplication). Sandbox clause inline. Commit: 63fe61b0.
+
+**F2 (edit):** `docs/references/tree-map.md` — added microservice-build-standard.md entry before ARCHITECTURE.md in tree (sibling/child of ARCHITECTURE subtree). Added Write Ownership row (Architect, methodology change or closed pilot lesson). Commit: ceb6cf19.
+
+**F3a (edit):** 8 dev-* frontmatter agents — added single lazy-load entry each (trigger: new_service_or_feature_build, fail_loud: true). Agents: dev-technical-analysis, dev-macro-indicators, dev-stock-price, dev-api-gateway, dev-frontend, dev-mainserver-crawls, dev-vps-crawls, dev-rag-service. Commit: 9482958a.
+
+**F3b (edit):** 4 knowledge.md children — added same lazy-load entry to lazy_load table in each. Files: docs/agents/dev-mcp-server/knowledge.md, dev-alert-engine/knowledge.md, dev-pdf-extractor/knowledge.md, dev-kinh-dich/knowledge.md. Commit: 8d136928.
+
+**F4 (edit):** `.claude/flows/architect/main.md` Step 5 — added Standard Detection block with three-branch emit (NEW SERVICE → full + PILOT-STATUS-SSOT + ROLE-RELAY; NEW FEATURE → lean + solo-dev note; BUG-FIX/MAINTENANCE → not-applicable). Commit: 11a07b09.
+
+**F5 (edit):** `.claude/flows/dev-team/main.md` Step 2 matrix — added Tag emitted column + NEW-SERVICE row (full, ba→architect→pm→dev-svc→qa) + NEW-FEATURE row (lean, pm→dev-svc only). Commit: 6122b934.
+
+**F6 (edit):** `.claude/flows/developer/microservice-main.md` Step 0c — replaced single-branch with three-branch dispatch (full/lean/absent). Commit: 176fcf6c.
+
+**F7 (verify):** No-op — F2 Write Ownership row already covers microservice-build-standard.md. No separate commit needed.
+
+**Git safety:** Explicit `git add <path>` for every commit. No `git add -A`. No pilot-status-*.json touched. No --amend used. Signal CLOSED.
+
+---
+
 ## c265 · 2026-05-24
 
 **Task:** P0-AG-3 — Reconcile dev-api-gateway agent + flow for SCALE Go three-tier pilot (api-gateway)
