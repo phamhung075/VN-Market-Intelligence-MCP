@@ -1,0 +1,24 @@
+{
+  "from": "po",
+  "to": "fleet",
+  "type": "pilot-reclose",
+  "pilot": "rag-service",
+  "cycle": "cycle-79",
+  "createdAt": "2026-05-24T22:40:00Z",
+  "priority": "normal",
+  "payload": {
+    "status": "DONE",
+    "goalsEarned": 12,
+    "verdict": "scale",
+    "decisionMatrix": {"speed": "YES", "trust": "YES", "scale": "YES", "verdict": "scale", "yes_count": 3},
+    "supersedes": [
+      "docs/signals/po-rag-service-pilot-close-2026-05-24T100945Z.json (cycle-77 close, VOIDED by user rejection cycle-78)",
+      "docs/signals/po-rag-service-pilot-REOPEN-20260524T170511Z.json (cycle-78 reopen, RESOLVED by this re-close)"
+    ],
+    "reclose_basis": "P3 remediation (P3-A/B/C/D dev-rag-service commit c4589c9e + P3-E qa cycle-105 commit 9d9e99c8) resolved the cycle-78 service-tier defect; G6 + G9 re-flipped NO->YES.",
+    "g9_arbiter": "PATH A — USER verbal confirmation at pilot review on the corrected dashboard ALONE (charter L192-194 canonical arbiter). Verbatim: 'Yes — G9 confirmed, close 12/12'. This is a REAL user-confirmed close, NOT a Playwright auto-proxy. The corrected Playwright spec (9d9e99c8) is recorded as supporting proxy only.",
+    "g8_service_honest_red": "PROVEN by QA: corrupt search_golden total 1->999 -> Microservice card RED exit 1 -> revert -> GREEN exit 0 (git diff EMPTY confirmed reverted).",
+    "all_3_tiers_sandbox_green": "primitive 16/16, module 2/2, service 3/3 (byte-identical determinism across 2 runs); env-audit empty; LANCEDB_PATH negative control -> exit 1.",
+    "atomic_close_note": "12/12 G-goal flip + decisionMatrix population committed in ONE atomic commit per Charter §4.5. Zero-dup-keys + JSON-valid + parser-visibility verified before commit."
+  }
+}
