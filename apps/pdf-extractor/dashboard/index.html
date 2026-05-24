@@ -216,7 +216,7 @@
 
 <header>
   <h1>PDF Extractor — Sandbox Dashboard</h1>
-  <p>Zone: <code style="color:#68d391">apps/pdf-extractor/</code> | Stack: Python | Pilot: Phase 1</p>
+  <p>Zone: <code style="color:#68d391">apps/pdf-extractor/</code> | Stack: Python | Pilot: Phase 2</p>
   <button class="reload-btn" onclick="loadAllTraces()">Reload Traces</button>
 </header>
 
@@ -250,6 +250,42 @@
       <div class="card-meta" id="meta-decimal-normalizer"></div>
       <div class="card-detail" id="detail-decimal-normalizer"></div>
       <div class="last-run" id="lastrun-decimal-normalizer"></div>
+    </div>
+
+    <div class="card" id="card-confidence-scorer">
+      <div class="card-name">confidence-scorer</div>
+      <div class="card-tier">Primitive</div>
+      <span class="badge badge-not-run" id="badge-confidence-scorer">NOT-RUN</span>
+      <div class="card-meta" id="meta-confidence-scorer"></div>
+      <div class="card-detail" id="detail-confidence-scorer"></div>
+      <div class="last-run" id="lastrun-confidence-scorer"></div>
+    </div>
+
+    <div class="card" id="card-low-confidence-gate">
+      <div class="card-name">low-confidence-gate</div>
+      <div class="card-tier">Primitive</div>
+      <span class="badge badge-not-run" id="badge-low-confidence-gate">NOT-RUN</span>
+      <div class="card-meta" id="meta-low-confidence-gate"></div>
+      <div class="card-detail" id="detail-low-confidence-gate"></div>
+      <div class="last-run" id="lastrun-low-confidence-gate"></div>
+    </div>
+
+    <div class="card" id="card-ratio-computer">
+      <div class="card-name">ratio-computer</div>
+      <div class="card-tier">Primitive</div>
+      <span class="badge badge-not-run" id="badge-ratio-computer">NOT-RUN</span>
+      <div class="card-meta" id="meta-ratio-computer"></div>
+      <div class="card-detail" id="detail-ratio-computer"></div>
+      <div class="last-run" id="lastrun-ratio-computer"></div>
+    </div>
+
+    <div class="card" id="card-field-extractor">
+      <div class="card-name">field-extractor</div>
+      <div class="card-tier">Primitive</div>
+      <span class="badge badge-not-run" id="badge-field-extractor">NOT-RUN</span>
+      <div class="card-meta" id="meta-field-extractor"></div>
+      <div class="card-detail" id="detail-field-extractor"></div>
+      <div class="last-run" id="lastrun-field-extractor"></div>
     </div>
   </div>
 </div>
@@ -321,6 +357,26 @@
     {
       id: "decimal-normalizer",
       path: "traces/primitive/decimal_normalizer.json",
+      tier: "primitive",
+    },
+    {
+      id: "confidence-scorer",
+      path: "traces/primitive/confidence_scorer.json",
+      tier: "primitive",
+    },
+    {
+      id: "low-confidence-gate",
+      path: "traces/primitive/low_confidence_gate.json",
+      tier: "primitive",
+    },
+    {
+      id: "ratio-computer",
+      path: "traces/primitive/ratio_computer.json",
+      tier: "primitive",
+    },
+    {
+      id: "field-extractor",
+      path: "traces/primitive/field_extractor.json",
       tier: "primitive",
     },
     {
