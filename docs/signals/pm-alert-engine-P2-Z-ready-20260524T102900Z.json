@@ -1,0 +1,122 @@
+{
+  "signal": "pm-alert-engine-P2-Z-ready",
+  "from": "pm",
+  "to": "qa",
+  "via": "handoff",
+  "type": "task-dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-24T10:29:00Z",
+  "payload": {
+    "pilot": "alert-engine",
+    "fleet_pilot_number": 5,
+    "phase": "2",
+    "task_id": "P2-Z",
+    "task_title": "Phase 2 close-gate verification (QA) — all Phase-2 goal evidence chain confirmed",
+    "task_owner": "qa",
+    "task_type": "read-only audit + signal emit",
+    "handoff_file": "docs/handoffs/TASK_P2-Z-ae-phase2-close-gate.md",
+    "blocked_by": "P2-M DONE (2026-05-24T10:29:00Z)",
+    "blocks": "phase-3-po-terminal",
+    "wip_status": "WIP=1 enforced (P2-Z is final Phase-2 task before PM transitions phase2=CLOSED)",
+    "acceptance_criteria": [
+      {
+        "id": "AC-1",
+        "title": "Sandbox all-green (Phase-2 terminal state)",
+        "description": "All three sandbox tiers (primitive/module/all-tier) exit 0 with ≥11 scenarios PASS",
+        "commands": [
+          "cd apps/alert-engine && CGO_ENABLED=0 go run ./cmd/sandbox -tier=primitive -module=alert-engine -scenario=all",
+          "cd apps/alert-engine && CGO_ENABLED=0 go run ./cmd/sandbox -tier=module -module=alert-engine -scenario=all",
+          "cd apps/alert-engine && CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all"
+        ]
+      },
+      {
+        "id": "AC-2",
+        "title": "All 6 Phase-2 goal evidence files present",
+        "description": "G3, G4, G5, G6, G8, G9, G10, G11 evidence files exist and are readable",
+        "files_to_verify": [
+          "docs/handoffs/TASK_P2-D-ae-g4-evidence.md (G4 evidence)",
+          "docs/handoffs/TASK_P2-G-ae-g5-evidence.md (G5 evidence)",
+          "docs/handoffs/TASK_P2-J-ae-g8-evidence.md (G8 evidence)",
+          "docs/handoffs/TASK_P2-M-ae-g10-g11.md (G10+G11 evidence)",
+          "P2-H handoff (G3 composition root)",
+          "P2-I handoff (G6 dashboard finalization)",
+          "P2-K handoff (G9 PO Playwright)"
+        ]
+      },
+      {
+        "id": "AC-3",
+        "title": "G12 streak carry-forward (EARNED-PENDING re-confirmed)",
+        "description": "All Phase-1 streak tasks + all Phase-2 dev tasks have sandbox-green evidence; DoD gate applied on each",
+        "note": "Record g12_streak_carryforward: CONFIRMED in close-gate doc"
+      },
+      {
+        "id": "AC-4",
+        "title": "Pre-revert tags all present and ordered correctly",
+        "description": "All three pre-revert tags exist and are ordered: alert-engine-pre-ci ≤ alert-engine-pre-delete ≤ alert-engine-pre-inject",
+        "command": "git log --oneline alert-engine-pre-ci alert-engine-pre-delete alert-engine-pre-inject 2>/dev/null"
+      },
+      {
+        "id": "AC-5",
+        "title": "Frozen anchor INTACT and SSOT not mutated",
+        "description": "Anchor debba8ea is proper ancestor of HEAD; goalsEarned=0, decisionMatrix all-TBD, §4.5 untouched",
+        "commands": [
+          "git log --oneline --ancestry-path debba8eaff0724d1fb32fc9d28640201cc32d1cc..HEAD | tail -1",
+          "jq '{phase,goalsEarned,decisionMatrix}' docs/data/pilot-status-alert-engine.json"
+        ]
+      },
+      {
+        "id": "AC-6",
+        "title": "ZERO-CREDS baseline re-confirmed",
+        "description": "Environment variables for TELEGRAM_* and secrets are empty; Phase-1 cred-free baseline unchanged",
+        "command": "env | grep -iE 'TELEGRAM|BOT_TOKEN|CHAT_ID|TOKEN|SECRET|API_KEY|PASSWORD'"
+      }
+    ],
+    "phase_2_goal_evidence_coverage": {
+      "G1": "EARNED-PENDING (Phase-1 carry-forward; re-confirmed sandbox 11/11 in P2-Z AC-1)",
+      "G2": "EARNED-PENDING (Phase-1 carry-forward; re-confirmed sandbox 11/11 in P2-Z AC-1)",
+      "G3": "STILL-UNMET → evidence in P2-H handoff (composition root wired + OpenAPI contract)",
+      "G4": "STILL-UNMET → evidence in TASK_P2-D-ae-g4-evidence.md (CI job + violation proof + freeze anchor)",
+      "G5": "STILL-UNMET → evidence in TASK_P2-G-ae-g5-evidence.md (git mv + HTTP audit + zero TODO-migrat)",
+      "G6": "EARNED-PENDING (Phase-1 genesis; finalized in P2-I: deprecated-notice + wired-state)",
+      "G7": "EARNED-PENDING (Phase-1 carry-forward; re-confirmed ZERO-CREDS baseline in P2-Z AC-6)",
+      "G8": "EARNED-PENDING (Phase-1 genesis; deliberate-break proof in P2-J evidence file)",
+      "G9": "STILL-UNMET → evidence in docs/po-decisions from P2-K (PO Playwright Path B PASS)",
+      "G10": "STILL-UNMET → evidence in TASK_P2-M-ae-g10-g11.md (cycle_count=1 EXCEEDS baseline 1.5)",
+      "G11": "STILL-UNMET → evidence in TASK_P2-M-ae-g10-g11.md (Trial-1 + Trial-2 both outcome-(a))",
+      "G12": "EARNED-PENDING (Phase-1 streak 3/3; Phase-2 DoD gate re-confirmed per P2-Z AC-3)"
+    },
+    "charter_section_45_compliance": {
+      "rule": "decisionMatrix fields (speed/trust/scale/verdict) are PO-ONLY. Populated ONLY after 12/12 G-goals reach terminal state, in ONE atomic commit alongside the final goal flip. Any agent other than PO writing these fields is a charter §4.5 VIOLATION.",
+      "p2_z_compliance": "P2-Z does NOT flip any G-goal fields. P2-Z does NOT write decisionMatrix. goalsEarned stays 0. This close-gate signal authorizes PM to transition phase2.status only (not G-goal fields). PO executes Phase-3 atomic close (12/12 terminal + decisionMatrix + verdict) at their cadence."
+    },
+    "ssot_constraints": {
+      "no_goal_flips": "✓ Confirmed",
+      "goals_earned_stays_zero": "✓ Confirmed (currently 0, will remain 0 until Phase-3 PO terminal)",
+      "decision_matrix_stays_tbd": "✓ Confirmed (speed/trust/scale/verdict all TBD, will remain TBD until Phase-3 PO terminal)",
+      "anchor_frozen": "✓ Confirmed (debba8eaff0724d1fb32fc9d28640201cc32d1cc remains ancestor of HEAD)"
+    },
+    "pre_revert_tag_discipline": {
+      "alert_engine_pre_ci": "Created P2-A (before .golangci.yml lands)",
+      "alert_engine_pre_delete": "Created P2-E (before git mv to _deprecated/)",
+      "alert_engine_pre_inject": "Created P2-L (before G10 bug-injection commit)",
+      "status": "All three tags present and ordered correctly per AC-4"
+    },
+    "phase_2_exit_gate_criteria": {
+      "sandbox_all_green": "AC-1 (≥11 scenarios PASS on all 3 tiers)",
+      "goal_evidence_complete": "AC-2 (6 evidence files present: G4/G5/G8/G10-G11 files + G3/G6/G9 handoffs)",
+      "g12_streak_carry": "AC-3 (Phase-1 + Phase-2 sandbox-green re-confirmed)",
+      "tags_ordered": "AC-4 (pre-ci ≤ pre-delete ≤ pre-inject)",
+      "anchor_intact_ssot_clean": "AC-5 (debba8ea ancestor + goalsEarned=0 + decisionMatrix TBD)",
+      "zero_creds_confirmed": "AC-6 (env grep empty, Phase-1 baseline unchanged)"
+    },
+    "after_p2_z_done": {
+      "pm_action": "Transition SSOT phase2.status = CLOSED (this is PM's role, not QA's)",
+      "pm_action_location": "PM will update phase2.gateVerdict, phase2.gateVerifiedAt, phase2.gateVerifiedBy, phase2.gateCommit, phase2.gateDecisionDoc, phase2.gateSignal in next PM cycle",
+      "pm_notification": "PM notifies PO that Phase 2 is CLOSED and Phase-3 atomic close is ready (12/12 terminal + decisionMatrix + verdict)",
+      "po_action": "PO executes Phase-3 atomic close in single commit: flip all G-goals to YES/NO, populate decisionMatrix, set verdict, close pilot"
+    },
+    "next_actor": "qa",
+    "next_task": "P2-Z (Phase 2 close-gate verification)",
+    "next_action": "Execute P2-Z read-only audit: verify all 6 ACs (AC-1 through AC-6), paste evidence to TASK_P2-Z handoff, emit close-gate signal docs/signals/qa-ae-phase2-close-gate-<UTC>.json"
+  }
+}

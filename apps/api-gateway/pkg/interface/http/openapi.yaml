@@ -1,0 +1,350 @@
+openapi: "3.1.0"
+
+info:
+  title: VN Market Intelligence — API Gateway
+  version: "1.0.0"
+  description: |
+    Central routing and health-aggregation layer for the VN Market Intelligence
+    microservice fleet. Routes: health aggregation, per-service health, HTML
+    health dashboard, and transparent reverse-proxy forwarding to downstream
+    services.
+
+servers:
+  - url: http://localhost:8080
+    description: Local development / default port
+
+paths:
+
+  /health:
+    get:
+      operationId: getAggregatedHealth
+      summary: Aggregated health across all downstream services
+      description: |
+        Probes every registered downstream service and returns the rolled-up
+        status. HTTP 200 when status is "ok" or "degraded"; HTTP 503 when
+        status is "down".
+      responses:
+        "200":
+          description: Fleet is healthy or degraded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AggregatedHealth"
+        "503":
+          description: Fleet is down (all probed services failing)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AggregatedHealth"
+        "500":
+          description: Internal gateway error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /healthz:
+    get:
+      operationId: getLivenessProbe
+      summary: Kubernetes liveness alias for /health
+      description: |
+        Identical behaviour to GET /health. Provided as a k8s-compatible
+        liveness probe endpoint (AC-11).
+      responses:
+        "200":
+          description: Fleet is healthy or degraded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AggregatedHealth"
+        "503":
+          description: Fleet is down
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AggregatedHealth"
+        "500":
+          description: Internal gateway error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health/{service}:
+    get:
+      operationId: getServiceHealth
+      summary: Health of a single downstream service
+      description: |
+        Probes the named downstream service and returns its individual health
+        result. HTTP 200 on ok/degraded; HTTP 503 on down; HTTP 404 when the
+        service name is not in the registry.
+      parameters:
+        - name: service
+          in: path
+          required: true
+          description: |
+            Registered service identifier (e.g. mcp, pdf, rag, ta, macro,
+            stock, kinh-dich, alert, news).
+          schema:
+            type: string
+            example: ta
+      responses:
+        "200":
+          description: Service is healthy or degraded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceHealthResult"
+        "404":
+          description: Unknown service name
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "503":
+          description: Service is down
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceHealthResult"
+        "500":
+          description: Internal gateway error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /health-dashboard:
+    get:
+      operationId: getHealthDashboard
+      summary: Self-contained HTML health dashboard
+      description: |
+        Returns a standalone HTML page displaying a service-status grid for all
+        9 downstream services. Auto-refreshes every 60 seconds. Suitable for
+        browser access (file:// or HTTP). No JavaScript dependencies.
+      responses:
+        "200":
+          description: HTML dashboard page
+          content:
+            text/html:
+              schema:
+                type: string
+                description: Standalone HTML document
+        "500":
+          description: Internal gateway error (plain text)
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /{service}/{path}:
+    parameters:
+      - name: service
+        in: path
+        required: true
+        description: |
+          Registered service identifier. The gateway strips the leading
+          /{service} segment and forwards the remainder to the service's
+          BaseURL via a single-host reverse proxy.
+        schema:
+          type: string
+          example: ta
+      - name: path
+        in: path
+        required: true
+        description: Remaining path forwarded verbatim to the downstream service.
+        schema:
+          type: string
+          example: "alerts/latest"
+    get:
+      operationId: proxyGetServicePath
+      summary: Transparent GET proxy to a downstream service
+      description: |
+        Forwards any GET request to the matching registered downstream service.
+        HTTP 404 when the service name is not in the registry; HTTP 502 when
+        the upstream is unreachable.
+      responses:
+        "200":
+          description: Upstream response (pass-through)
+          content:
+            application/json:
+              schema:
+                type: object
+                description: Upstream response body — schema varies by service
+        "404":
+          description: Unknown service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Upstream service unreachable or proxy error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      operationId: proxyPostServicePath
+      summary: Transparent POST proxy to a downstream service
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Upstream response (pass-through)
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          description: Unknown service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Upstream unreachable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: proxyPutServicePath
+      summary: Transparent PUT proxy to a downstream service
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Upstream response (pass-through)
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          description: Unknown service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Upstream unreachable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: proxyDeleteServicePath
+      summary: Transparent DELETE proxy to a downstream service
+      responses:
+        "200":
+          description: Upstream response (pass-through)
+          content:
+            application/json:
+              schema:
+                type: object
+        "404":
+          description: Unknown service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "502":
+          description: Upstream unreachable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+
+    HealthStatus:
+      type: string
+      enum:
+        - ok
+        - degraded
+        - down
+      description: |
+        Health state of a service or fleet.
+        - ok: all probes passed
+        - degraded: some probes failed but not all
+        - down: all probes failed
+
+    ServiceHealthResult:
+      type: object
+      description: Health result for a single downstream service.
+      required:
+        - service
+        - status
+        - latencyMs
+      properties:
+        service:
+          type: string
+          description: Service identifier
+          example: ta
+        status:
+          $ref: "#/components/schemas/HealthStatus"
+        latencyMs:
+          type: integer
+          format: int64
+          description: Round-trip latency of the health probe in milliseconds
+          example: 42
+        error:
+          type: string
+          description: Error message when status is down (omitted on success)
+          example: "connection refused"
+
+    AggregatedHealth:
+      type: object
+      description: |
+        Aggregated health result across all registered downstream services.
+        Returned by GET /health and GET /healthz.
+      required:
+        - status
+        - services
+        - latencies
+        - checkedAt
+      properties:
+        status:
+          $ref: "#/components/schemas/HealthStatus"
+        services:
+          type: object
+          description: Map of service name → HealthStatus
+          additionalProperties:
+            $ref: "#/components/schemas/HealthStatus"
+          example:
+            mcp: ok
+            ta: ok
+            pdf: degraded
+            rag: down
+        latencies:
+          type: object
+          description: Map of service name → probe latency in milliseconds
+          additionalProperties:
+            type: integer
+            format: int64
+          example:
+            mcp: 12
+            ta: 38
+        checkedAt:
+          type: string
+          description: RFC 3339 timestamp when the aggregate probe was executed
+          example: "2026-05-24T09:00:00Z"
+
+    ErrorResponse:
+      type: object
+      description: Standard gateway error envelope
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message
+          example: "Unknown service: foo"
