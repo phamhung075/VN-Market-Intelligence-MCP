@@ -1,5 +1,51 @@
 # QA — Notebook
 
+## c283 cycle-86 · 2026-05-24 · news-fetch P2-NF-D — G4 R-FENCE QA reproduction + freeze anchor — VERIFIED
+
+**Task:** P2-NF-D (G4 freeze anchor + evidence compile) | **Verdict:** G4 VERIFIED
+
+```
+date: 2026-05-24T00:00:02Z
+outcome: G4 VERIFIED — fence R-FENCE QA reproduction + freeze anchor confirmed
+type: pilot-task-qa (fence reproduction + freeze anchor — inject+revert discipline)
+signal: docs/signals/qa-news-fetch-g4-evidence-20260524T000002Z.json
+handoff: docs/handoffs/TASK_P2-NF-ABC.md [QA] section appended
+commit: ea6da821
+ssot_not_mutated: pilot-status-news-fetch.json not touched (PO-only §4.5)
+goal_flips: NONE (Charter §4.5 honored)
+g4_goal_status: EARNED-PENDING
+
+ac_4a_clean_exit: 0
+ac_4b_violation_file: apps/news-fetch/src/primitive/published-at-parser/index.ts
+ac_4b_violation_exit: 1
+ac_4b_fence_output: "Fence-A: primitive must not import module layer  boundaries/dependencies"
+ac_4b_violation_staged: false
+ac_4b_violation_committed: false
+ac_4b_revert_exit: 0
+ac_4b_git_status_post_revert: CLEAN
+ac_4c_freeze_sha: 203a951a
+ac_4c_original_fence_sha: 893b17ee
+ac_4c_total_commits_on_file: 2
+ac_4c_no_post_anchor_tampering: true
+```
+
+| Check | Verdict |
+|-------|---------|
+| AC-4a: clean lint exit 0 | PASS |
+| AC-4b: violation exit 1 | PASS |
+| AC-4b: Fence-A name in output | PASS |
+| AC-4b: boundaries/dependencies rule fired | PASS |
+| AC-4b: never staged/committed | PASS |
+| AC-4b: revert exit 0 | PASS |
+| AC-4b: git status CLEAN post-revert | PASS |
+| AC-4c: freeze SHA confirmed (203a951a) | PASS |
+| AC-4c: no post-anchor tampering | PASS |
+
+**G4 verdict: VERIFIED. EARNED-PENDING.**
+**NEXT:** pm — mark P2-NF-D DONE; G4 evidence locked.
+
+---
+
 ## c283 cycle-85 · 2026-05-24 · kinh-dich P2-C/P2-D — G4 R-FENCE reproduction + freeze anchor — PASS
 
 **Task:** P2-C (AC-4 QA independent reproduction) + P2-D (G4 freeze anchor — read-only) | **Verdict:** PASS
