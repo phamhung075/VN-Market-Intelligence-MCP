@@ -38,8 +38,8 @@
       "pilot_status_ssot": "DONE 2026-05-24T06:49:21Z (this file)",
       "brownfield_inventory": "PENDING",
       "bug_inventory_entry": "PENDING",
-      "dev_agent_file": "PENDING",
-      "dev_agent_flow_file": "PENDING",
+      "dev_agent_file": "DONE 2026-05-24 commit 0b5ef802 — calibrated: Python lock, three-tier refactor capabilities, determinism+env-audit constraints, lazy-load pilot refs",
+      "dev_agent_flow_file": "DONE 2026-05-24 commit 0b5ef802 — G12 DoD gate baked (sandbox-green + env-audit-empty before RETURN, evidence paste mandatory); Language Mode, Smoke Checks, Security Rule, Fence Rules, Pre-Revert Tag Protocol added",
       "phase_1_task_plan": "PENDING"
     },
     "exit_gate": {
@@ -237,7 +237,7 @@
         "streakComplete": false,
         "completedAt": null,
         "tasks": [],
-        "ruleEffectiveAfter": "<DERIVED:agent-father flow commit SHA and date>"
+        "ruleEffectiveAfter": "0b5ef802 2026-05-24 — G12 DoD gate baked into .claude/flows/dev-rag-service/main.md (sandbox-green + env-audit-empty mandatory before RETURN)"
       }
     }
   ],

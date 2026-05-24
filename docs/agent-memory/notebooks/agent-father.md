@@ -1,5 +1,32 @@
 # Agent Father — Notebook
 
+## c263 · 2026-05-24
+
+**Task:** P0-PDF-4 — Bake G12 DoD gate into dev-pdf-extractor flow (SCALE pilot Phase 0 deliverable)
+
+**Action:** Service-specific gate added to `.claude/flows/dev-pdf-extractor/main.md`. File expanded from 18L → 88L (within 120L cap; size-justification comment present). Gate structure mirrors `dev-macro-indicators/main.md` with Python-correct substitutions: `python sandbox_runner.py` instead of `go run ./cmd/sandbox`, pdf-extractor-specific Security Clause credential list (adds VPS_|VINAHOST|PDF_EXTRACTOR_DB to base pattern). Shared `microservice-main.md` confirmed NOT to contain a G12 gate — service-specific override is correct (not duplication).
+
+**Gate outcome:** SERVICE-SPECIFIC override (not inheritance). The shared flow has no G12 gate. Macro pattern followed verbatim.
+
+**Commit:** e7541786
+**Staged:** `.claude/flows/dev-pdf-extractor/main.md` only — explicit git add per L84 constraint.
+**Note:** agent-md-factory skill referenced in project memory but file does not exist at `.claude/skills/agent-md-factory/SKILL.md` — proceeded using guide patterns directly; flagged for BUG if needed.
+
+---
+
+## c262 · 2026-05-24
+
+**Task:** claude-manager-helper.md — Pass-5b carve-out in forbidden_outputs (contradiction fix)
+
+**Change:** Single-line edit to line 74 `forbidden_outputs`. Blanket "NEVER modify other agents' notebooks" contradicted the Pass-5b capability granted at line 22. Added explicit exception: "EXCEPT size-driven Pass-5b pruning of agent-notebook class (authorized at line 22)".
+
+**Scope check:** No cascade — no routing, roster, dispatch, or CLAUDE.md impact. Single file.
+**Size:** 130L, size-justification present (comment says 130L — exact match post-edit).
+**Commit:** b7d647a6 (note: commit swept existing untracked working-tree files — agent-file change is included)
+**Outcome:** Contradiction resolved. Zero new capability. Guide §5.7 boundary_rules compliant.
+
+---
+
 ## c261 · 2026-05-24
 
 **Task:** Fleet size-cap remediation — STAGE 1 (JUSTIFY) + STAGE 2 pilot splits
@@ -136,6 +163,17 @@ Commit: 6becd6b0
 - Commit SHA: 83770aa1 (changes landed in HEAD via P0-SP-5 session)
 
 **AC status:** AC-1 through AC-7 PASS.
+
+## c263 · 2026-05-24
+
+**Task:** P0-NF-3 — Bake G12 DoD Gate into dev-news-fetch per-service flow (NO new agent .md)
+
+**Actions:**
+- Created `.claude/flows/dev-news-fetch/main.md` (135L, size-justification present). Thin pointer + TS/Bun pilot enforcement: Language Mode (TS-only), Smoke Checks (bun test + bun tsc + sandbox), G12 DoD gate (blocking, `bun run sandbox --tier=all --module=news-fetch`), Security Clause (NEWS_API_KEY named), Fence Rules (ESLint G4 AC gated on SI-3 — documented, not blocking), Pre-Revert Tag Protocol (news-fetch-pre-ci/-delete/-inject).
+- Updated `docs/data/pilot-status-news-fetch.json`: `dev_agent_flow_file` DONE + `g12Streak.ruleEffectiveAfter` = bca30508 2026-05-24.
+- Updated `docs/handoffs/TASK_P0-NF-3-flow-baking.md`: completion + all 6 AC verdicts.
+- AC-1 verified: NO dev-news-fetch.md agent file created (confirmed absent). All 6 ACs PASS.
+**Commit:** bca30508 (flow); docs updated in follow-up commit.
 
 ## Carry-over
 
