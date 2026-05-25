@@ -1,10 +1,11 @@
 """
-application/extract_tables_usecase.py — BT-3-B
+application/extract_tables_usecase.py — BT-3-B + BT-5
 
-ExtractTablesUseCase: orchestrates TEXT-path table extraction + balance check + push.
+ExtractTablesUseCase: orchestrates TEXT-path table extraction + balance check +
+cross-check gate (BT-5) + push.
 
 Application layer rules (DDD):
-    - Imports ONLY from domain/ (domain ports, errors) and the standard library.
+    - Imports ONLY from domain/ (domain ports, primitives) and the standard library.
     - ZERO imports from infrastructure/, interface/ — all concrete adapters are
       injected at the composition root (main.py).
     - No HTTP or DB knowledge here — only orchestration via port calls.
@@ -12,12 +13,29 @@ Application layer rules (DDD):
 Ports injected:
     - TableAssemblerPort  (concrete: infrastructure.text_table_extractor.TextTableExtractor)
     - TablePushClientPort (concrete: infrastructure.table_push_client.TablePushClient)
+    - AlertPort           (concrete: infrastructure.alert_adapter.TelegramAlertAdapter) [BT-5]
+                          (fake: FakeAlertPort in tests)
 
 Balance-check logic (pure):
     Total Assets (code 270) == Total Liabilities (code 300) + Total Equity (code 400)
     within a tolerance of 1 VND (absolute delta). Any row with value_current=None
     is skipped for balance purposes. If none of the three codes are present,
     balance_check is returned as None (income statement / cash flow docs).
+
+BT-5 Cross-check Gate (reconciliation gate — BEFORE push):
+    Two blocking conditions (either triggers a block):
+    1. balance_check is available AND balance_pass=False
+       (accounting identity fails beyond 1 VND tolerance)
+    2. reconcile_figures(total_assets, liab_plus_equity) returns "shift"
+       (ratio > 10× — decimal-shift / unit anomaly)
+
+    If BLOCKED: push is skipped; blocked_reason="cross_check_fail" returned;
+    WORK alert emitted via injected AlertPort (no Telegram credentials in this layer).
+
+    If PASSED: push proceeds normally; blocked_reason=None in result.
+
+    Non-balance-sheet sections (income_statement / cash_flow): no gate applied
+    (balance identity does not apply; push proceeds unconditionally).
 
 BCTC balance-sheet codes used for the identity check:
     - "270" → Total Assets (TỔNG CỘNG TÀI SẢN)
@@ -29,6 +47,7 @@ FPT golden balance-check (regression anchor from BT-0 spike eval):
     Total Assets:       88,089,621,779,862 VND  → balance_pass=True  delta=0.0
     Total Liabilities:  44,338,155,487,272 VND
     Total Equity:       43,751,466,292,590 VND
+    reconcile_figures(total_assets, liab+equity) → "agree" (same value) → gate PASS
 """
 
 from __future__ import annotations
@@ -40,6 +59,8 @@ from domain.modules.financial_reports.ports import (
     TableAssemblerPort,
     TablePushClientPort,
 )
+from domain.primitives.reconcile_figures import reconcile_figures
+from domain.repositories import AlertPort
 
 logger = logging.getLogger(__name__)
 
@@ -129,9 +150,72 @@ def _compute_balance_check(rows: List[Dict]) -> Optional[Dict]:
 # ---------------------------------------------------------------------------
 
 
+def _run_reconciliation_gate(
+    balance_check: Optional[Dict],
+    rows: List[Dict],
+) -> Optional[str]:
+    """
+    BT-5 cross-check gate (pure — no I/O).
+
+    Runs two checks in order:
+    1. Balance identity: if balance_check is available and balance_pass=False → block.
+    2. Decimal-shift anomaly: compare total_assets (code 270) against
+       (liab+equity) using reconcile_figures. Ratio >10× → block.
+
+    Args:
+        balance_check: Result of _compute_balance_check(), or None.
+        rows:          Structured rows from TableAssemblerPort.assemble().
+
+    Returns:
+        "cross_check_fail" if the gate fires (push must be blocked).
+        None if the gate passes (push may proceed).
+    """
+    # Check 1: Balance identity failure
+    if balance_check is not None and not balance_check["balance_pass"]:
+        logger.warning(
+            "BT-5 gate: balance identity FAIL — delta=%s (tolerance=1 VND)",
+            balance_check.get("balance_delta"),
+        )
+        return "cross_check_fail"
+
+    # Check 2: Decimal-shift anomaly between total_assets and (liab+equity sum)
+    total_assets: Optional[float] = None
+    total_liabilities: Optional[float] = None
+    total_equity: Optional[float] = None
+
+    for row in rows:
+        code = row.get("code")
+        val = row.get("value_current")
+        if val is None:
+            continue
+        if code == _CODE_TOTAL_ASSETS:
+            total_assets = float(val)
+        elif code == _CODE_TOTAL_LIABILITIES:
+            total_liabilities = float(val)
+        elif code in (_CODE_TOTAL_EQUITY, _CODE_TOTAL_EQUITY_ALT):
+            if total_equity is None:
+                total_equity = float(val)
+
+    # Only run reconcile if we have all three values
+    if total_assets is not None and total_liabilities is not None and total_equity is not None:
+        liab_plus_equity = total_liabilities + total_equity
+        verdict = reconcile_figures(total_assets, liab_plus_equity, tol=1.0)
+        if verdict == "shift":
+            logger.warning(
+                "BT-5 gate: reconcile_figures SHIFT — total_assets=%s liab+equity=%s "
+                "(ratio >10×, decimal-shift anomaly)",
+                total_assets,
+                liab_plus_equity,
+            )
+            return "cross_check_fail"
+
+    return None
+
+
 class ExtractTablesUseCase:
     """
-    Application use case: TEXT-path table extraction → balance check → push to mcp-server.
+    Application use case: TEXT-path table extraction → balance check →
+    cross-check gate (BT-5) → push to mcp-server.
 
     Separate from ExtractPDFUseCase (no 1954c collision — different trigger,
     different endpoint, different data store).
@@ -139,13 +223,26 @@ class ExtractTablesUseCase:
     Wiring (composition root — main.py):
         table_extractor  = TextTableExtractor()
         table_push_client = TablePushClient(mcp_server_url=cfg.mcp_server_url)
-        extract_tables_usecase = ExtractTablesUseCase(table_extractor, table_push_client)
+        alert_adapter     = TelegramAlertAdapter()
+        extract_tables_usecase = ExtractTablesUseCase(
+            table_extractor, table_push_client, alert_adapter
+        )
+
+    BT-5 gate:
+        After balance-check, before push — runs _run_reconciliation_gate().
+        If gate fires: push is SKIPPED, blocked_reason="cross_check_fail" returned,
+        WORK alert emitted via injected alert_port.
+        If gate passes: push proceeds, blocked_reason=None in result.
+
+    Backward-compat: alert_port defaults to None (no alert emitted in that case).
+    Existing callers (BT-3-B tests, BT-3-C integration tests) are unaffected.
     """
 
     def __init__(
         self,
         table_extractor: TableAssemblerPort,
         table_push_client: TablePushClientPort,
+        alert_port: Optional[AlertPort] = None,
     ) -> None:
         """
         Args:
@@ -153,9 +250,13 @@ class ExtractTablesUseCase:
                                Converts PDF OCR text → structured rows.
             table_push_client: Injected TablePushClientPort implementation.
                                POSTs rows + balance check to mcp-server.
+            alert_port:        Injected AlertPort implementation (BT-5).
+                               Emits WORK-channel alert when gate blocks.
+                               Default None → no alert (backward-compat).
         """
         self._extractor = table_extractor
         self._push_client = table_push_client
+        self._alert_port = alert_port
 
     async def execute(
         self,
@@ -164,7 +265,8 @@ class ExtractTablesUseCase:
         statement_section: str,
     ) -> Dict:
         """
-        Orchestrate: assemble rows → compute balance check → push to mcp-server.
+        Orchestrate: assemble rows → compute balance check →
+        cross-check gate (BT-5) → push to mcp-server (if gate passes).
 
         Args:
             report_id:         UUID string matching financial_reports.id on mcp-server.
@@ -173,9 +275,12 @@ class ExtractTablesUseCase:
 
         Returns:
             dict with keys:
-                rows_stored (int):    Number of rows stored (echoed from push client).
-                balance_pass (bool):  True when accounting identity holds within tolerance.
-                balance_delta (float): assets - (liab + equity); 0.0 when identity N/A.
+                rows_stored (int):      Number of rows stored (echoed from push client).
+                                        0 when gate blocks (push skipped).
+                balance_pass (bool):    True when accounting identity holds within tolerance.
+                balance_delta (float):  assets - (liab + equity); 0.0 when identity N/A.
+                blocked_reason (str|None): "cross_check_fail" when gate blocks;
+                                            None when gate passes (BT-5).
         """
         logger.info(
             "ExtractTablesUseCase.execute: report_id=%s section=%s pdf_path=%s",
@@ -223,7 +328,55 @@ class ExtractTablesUseCase:
                 )
 
         # ------------------------------------------------------------------
-        # Step 3: Push rows + balance check to mcp-server
+        # Step 3 (BT-5): Cross-check gate — BEFORE push
+        #   Applies only to balance_sheet sections (income_statement / cash_flow
+        #   have no balance identity to check).
+        # ------------------------------------------------------------------
+        blocked_reason: Optional[str] = None
+        if statement_section == "balance_sheet" and balance_check is not None:
+            blocked_reason = _run_reconciliation_gate(
+                balance_check=balance_check,
+                rows=rows,
+            )
+
+        if blocked_reason is not None:
+            # Gate fired — emit WORK alert and skip push
+            alert_msg = (
+                f"BT-5 cross-check GATE BLOCKED: report_id={report_id} "
+                f"reason={blocked_reason} "
+                f"balance_pass={balance_check['balance_pass'] if balance_check else 'N/A'} "
+                f"balance_delta={balance_check['balance_delta'] if balance_check else 'N/A'}"
+            )
+            logger.warning(alert_msg)
+
+            if self._alert_port is not None:
+                try:
+                    self._alert_port.send_work_alert(alert_msg)
+                except Exception as exc:  # noqa: BLE001
+                    # Alert failure must NOT disrupt the extraction pipeline result
+                    logger.error("AlertPort.send_work_alert failed: %s", exc)
+
+            # Return blocked result — rows_stored=0 (nothing pushed)
+            balance_pass_result: bool = (
+                balance_check["balance_pass"] if balance_check is not None else False
+            )
+            balance_delta_result: float = (
+                balance_check["balance_delta"] if balance_check is not None else 0.0
+            )
+            logger.info(
+                "ExtractTablesUseCase.execute BLOCKED: report_id=%s blocked_reason=%s",
+                report_id,
+                blocked_reason,
+            )
+            return {
+                "rows_stored": 0,
+                "balance_pass": balance_pass_result,
+                "balance_delta": balance_delta_result,
+                "blocked_reason": blocked_reason,
+            }
+
+        # ------------------------------------------------------------------
+        # Step 4: Push rows + balance check to mcp-server (gate passed)
         # ------------------------------------------------------------------
         push_result = await self._push_client.push_table(
             report_id=report_id,
@@ -237,7 +390,7 @@ class ExtractTablesUseCase:
         rows_stored: int = push_result.get("rows_stored", 0)
 
         # ------------------------------------------------------------------
-        # Step 4: Return summary
+        # Step 5: Return summary
         # ------------------------------------------------------------------
         balance_pass: bool = (
             balance_check["balance_pass"] if balance_check is not None else False
@@ -257,4 +410,5 @@ class ExtractTablesUseCase:
             "rows_stored": rows_stored,
             "balance_pass": balance_pass,
             "balance_delta": balance_delta,
+            "blocked_reason": None,
         }

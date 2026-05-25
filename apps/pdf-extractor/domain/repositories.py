@@ -3,10 +3,15 @@ Domain — Abstract port definitions (repositories / engines).
 
 All infrastructure implementations MUST satisfy these interfaces.
 Domain layer: never imports infrastructure/ or interface/.
+
+BT-5: AlertPort added — pure Protocol for WORK-channel alert emission.
+Injected into ExtractTablesUseCase at the composition root.
+Concrete adapter (infrastructure/) sends Telegram WORK alerts; test fake
+records messages without I/O.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional
+from typing import Optional, Protocol
 
 from domain.models import PDFDocument, ExtractedContent, ExtractedTable
 
@@ -58,3 +63,36 @@ class PDFExtractionEngine(ABC):
         Returns:
             (text, confidence) where confidence in [0.0, 1.0]
         """
+
+
+class AlertPort(Protocol):
+    """
+    Pure Protocol — BT-5 cross-check gate alert emission (WORK channel).
+
+    Domain layer rule: this is a pure Protocol (typing.Protocol).
+    Zero imports from infrastructure/, application/, interface/.
+    Zero I/O, zero Telegram credentials.
+
+    Concrete adapter (production): infrastructure/alert_adapter.py
+        → sends Telegram message to WORK channel using project alert mechanism.
+    Fake adapter (tests): FakeAlertPort in test files
+        → records messages in a list, no network.
+
+    DDD compliance: AlertPort is injected at the composition root (main.py).
+    The use case calls send_work_alert() — it has no knowledge of Telegram
+    or credentials (those live only in the infrastructure adapter).
+    """
+
+    def send_work_alert(self, message: str) -> None:
+        """
+        Send a WORK-channel alert message.
+
+        Args:
+            message: Plain-text alert message (≤ 4096 chars for Telegram compatibility).
+                     Must include report_id and reason for WORK-channel diagnosis.
+
+        Note: fire-and-forget — implementations must NOT raise on Telegram failure.
+              Log the error internally and return normally to avoid disrupting the
+              extraction pipeline.
+        """
+        ...

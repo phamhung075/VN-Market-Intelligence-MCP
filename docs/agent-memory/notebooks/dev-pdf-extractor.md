@@ -396,3 +396,29 @@ DDD invariants maintained: application layer imports ONLY domain ports + stdlib.
 sandbox scenario `structured_table_extraction` DEFERRED to PO decision (see handoff BT-3-C).
 
 **NEXT:** BT-3i → dev-mcp-server (schema + push handler + inspector GET route + HTML render).
+
+---
+
+### 2026-05-25 — BT-5 DONE (cross-check confidence gate)
+
+**Commit:** TBD | Sprint: BCTC-TABLE
+
+5 files: `application/extract_tables_usecase.py` (MODIFY), `domain/repositories.py` (MODIFY — AlertPort Protocol), `infrastructure/alert_adapter.py` (CREATE), `main.py` (MODIFY), `__tests__/unit/test_extract_tables_cross_check.py` (CREATE, 6 tests).
+
+**275 pytest PASS (269 baseline + 6 new). Fence-A/B KEPT (68 files, 119 deps, 0 broken). Zero creds.**
+
+**What was delivered:**
+- `_run_reconciliation_gate()` pure function: balance_pass=False OR reconcile_figures >10x → "cross_check_fail"
+- Gate runs BEFORE push in Step 3 of `execute()` (balance_sheet only)
+- `AlertPort(Protocol)` in domain/repositories.py — pure, zero infra imports
+- `TelegramAlertAdapter` in infrastructure/alert_adapter.py — reads env creds, fire-and-forget, never raises
+- `blocked_reason: str | None` added to execute() return (None when pass, "cross_check_fail" when blocked)
+- `alert_port: Optional[AlertPort] = None` constructor param (backward-compat — existing 10 tests unaffected)
+
+**Red→Green:** 6 failed (TypeError: unexpected keyword arg 'alert_port') → 6 passed after implementation.
+
+**FPT golden gate:** balance_pass=True + reconcile_figures("agree") → gate PASS → push called once. Regression anchors confirmed.
+
+**BT-5i DEFERRED:** blocked_reason in GET /api/bctc-inspect/table/{doc_id} response is mcp-server zone. Appended deferred note routing BT-5i to dev-mcp-server in handoff.
+
+**NEXT:** BT-4 (ops/dev-mainserver-crawls deploy) → BT-4b (one-shot re-extraction) → BT-6 (qa).

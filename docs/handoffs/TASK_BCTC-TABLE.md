@@ -1680,3 +1680,99 @@ The `/api/bctc-inspect` viewer now:
 - BT-4: ops + dev-mainserver-crawls — deploy pdf-extractor TEXT-path to main server; add MCP_SERVER_URL env var to docker-compose; confirm CPU sizing.
 - BT-5: dev-pdf-extractor — wire reconcile_figures cross-check gate into ExtractTablesUseCase; block push + WORK alert on >10× ratio.
 - After BT-4+BT-5: BT-4b one-shot re-extraction of 14 stranded docs → then BT-6 QA.
+
+---
+
+## [Developer] BT-5 — dev-pdf-extractor — DONE
+
+**Commit:** TBD (below) | **Branch:** main | **Date:** 2026-05-25
+
+### What was delivered
+
+5 files (exact BT-5 file list, zero foreign):
+
+1. **`application/extract_tables_usecase.py`** (MODIFY — BT-5 cross-check gate)
+   - Added `_run_reconciliation_gate(balance_check, rows) -> Optional[str]`:
+     - Check 1: `balance_check.balance_pass == False` → "cross_check_fail"
+     - Check 2: `reconcile_figures(total_assets, liab_plus_equity, tol=1.0) == "shift"` → "cross_check_fail"
+   - Added `alert_port: Optional[AlertPort] = None` constructor param (backward-compat — existing callers unaffected)
+   - Gate runs in Step 3 (after balance-check, before push) — only for `balance_sheet` section
+   - If blocked: push skipped, alert emitted, `blocked_reason="cross_check_fail"` in result, `rows_stored=0`
+   - If passed: push proceeds, `blocked_reason=None` in result
+   - Extended return shape: adds `blocked_reason: str | None` key
+   - Imports: `reconcile_figures` from `domain.primitives` (pure — Fence-A safe), `AlertPort` from `domain.repositories`
+
+2. **`domain/repositories.py`** (MODIFY — add AlertPort Protocol)
+   - Added `AlertPort(Protocol)`: `send_work_alert(message: str) -> None`
+   - Pure Protocol — zero infra imports (DDD clean)
+   - Docstring covers fire-and-forget contract, test fake pattern
+
+3. **`infrastructure/alert_adapter.py`** (CREATE — BT-5 concrete alert adapter)
+   - `TelegramAlertAdapter` — implements `AlertPort` via duck-typing
+   - Reads `TELEGRAM_BOT_TOKEN` + `TELEGRAM_INFO_WORK_CHANNEL_ID` from env
+   - `send_work_alert()`: fire-and-forget POST to Telegram Bot API `/sendMessage`
+   - On error: logs and returns (never raises, never disrupts pipeline)
+   - Uses stdlib `urllib.request` (zero extra dependencies)
+
+4. **`main.py`** (MODIFY — wire alert adapter into composition root)
+   - Imports `TelegramAlertAdapter`
+   - Instantiates `alert_adapter = TelegramAlertAdapter()`
+   - Passes to `ExtractTablesUseCase(alert_port=alert_adapter)`
+
+5. **`__tests__/unit/test_extract_tables_cross_check.py`** (CREATE — 6 tests)
+   - TC-GW1: FPT golden → gate PASS → push called once, no alert
+   - TC-GW2: Unbalanced fixture (delta=10 VND) → gate BLOCK → push NOT called, alert emitted
+   - TC-GW3: Decimal-shift fixture (1,000,000× ratio) → gate BLOCK → push NOT called
+   - TC-GW4: Alert message contains report_id
+   - TC-GW5: blocked_reason = "cross_check_fail" (exact string)
+   - TC-GW6: blocked_reason = None when gate passes
+
+### Red→Green evidence
+
+- **Baseline:** 269 passed (all prior tests)
+- **New tests initial run (RED confirmed):** 6 failed — `TypeError: ExtractTablesUseCase.__init__() got an unexpected keyword argument 'alert_port'`
+- **After implementation:** 6/6 GREEN
+- **Full suite (unit + integration):** 275 passed, 0 failed
+
+### Fence status
+
+- Fence-A: KEPT — primitives do not import infra/app/interface (68 files, 119 deps)
+- Fence-B: KEPT — domain.modules do not import infrastructure/interface
+- 2 kept, 0 broken
+
+### Sandbox status
+
+- Primitive-tier: `reconcile_figures/happy_shift_vnm.json` → PASS, `happy_agree.json` → PASS
+- Module-tier: `financial_reports/multi_primitive_story.json` → PASS
+- Zero creds confirmed
+
+### AC verification
+
+- AC-1: `reconcile_figures` called for summary-row gate (total_assets vs liab+equity). PASS.
+- AC-2: >10× ratio OR balance_pass=False → push blocked + alert emitted. PASS (TC-GW2/GW3).
+- AC-3: `blocked_reason="cross_check_fail"` in result when blocked. PASS (TC-GW5).
+- AC-4: FPT sentinels (balance_pass=True, delta=0.0) → gate PASS. PASS (TC-GW1).
+- AC-5: 1,000,000× artificial shift → reconcile returns "shift" → block fires. PASS (TC-GW3).
+- AC-6 (extended): Alert contains report_id; FakeAlertPort records call. PASS (TC-GW4).
+- AC-7 (extended): Non-balance-sheet section → gate not applied. Covered by TC-GW6 (cash_flow path in existing TC6 of prior test file).
+
+### BT-5i DEFERRED to dev-mcp-server
+
+Per zone discipline (pdf-extractor zone only), the `blocked_reason` field in
+`GET /api/bctc-inspect/table/{doc_id}` response was NOT touched here (mcp-server zone).
+The mcp-server GET endpoint currently returns `{has_table: false}` for blocked reports
+(because no rows are stored when push is blocked — this is the correct behavior).
+
+**Routing a follow-up task:** dev-mcp-server should add `blocked_reason` to the GET
+response so the inspector can surface the gate-blocked state explicitly. Suggested task ID:
+**BT-5i** (mcp-server zone). Impact: small — one additional field in `handleBctcInspectTable()`.
+
+### Post-commit check
+
+`git show --stat HEAD` — verify exactly 5 files, zero foreign files.
+
+### Handoff to BT-4b / BT-6
+
+- BT-4: ops + dev-mainserver-crawls — deploy (if not done in parallel)
+- BT-4b: one-shot re-extraction of 14 stranded docs (after BT-3+BT-3i+BT-5 all live)
+- BT-6: qa regression gate (after BT-4b)

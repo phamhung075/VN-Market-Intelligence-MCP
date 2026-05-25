@@ -54,10 +54,45 @@ statement_section: str  # "balance_sheet" | "income_statement" | "cash_flow"
 - Returns `None` if no BS codes found (income-statement / cash-flow docs)
 - FPT golden anchor: 88,089,621,779,862 == 44,338,155,487,272 + 43,751,466,292,590 → delta=0.0, pass=True
 
+### BT-5 Cross-check Gate (added to ExtractTablesUseCase.execute())
+
+After Step 2 (balance-check), before Step 3 (push), the gate runs if `statement_section == "balance_sheet"`:
+
+**Blocking conditions (either triggers block):**
+1. `balance_check.balance_pass == False` (identity fails beyond 1 VND tolerance)
+2. `reconcile_figures(total_assets, liab_plus_equity, tol=1.0) == "shift"` (ratio >10× — decimal-shift anomaly)
+
+**When BLOCKED:**
+- `push_table()` is NOT called
+- `blocked_reason = "cross_check_fail"` set in result
+- WORK alert emitted via injected `AlertPort` (`TelegramAlertAdapter` in production)
+- `rows_stored = 0`
+
+**When PASSED:**
+- Push proceeds normally
+- `blocked_reason = None` in result
+
+**BT-5 extended output shape:**
+```python
+{
+    "rows_stored": int,
+    "balance_pass": bool,
+    "balance_delta": float,
+    "blocked_reason": str | None,  # BT-5: "cross_check_fail" | None
+}
+```
+
+**AlertPort (domain/repositories.py):**
+- Pure `Protocol` — zero infra imports
+- `send_work_alert(message: str) -> None`
+- Concrete: `infrastructure/alert_adapter.TelegramAlertAdapter` (reads TELEGRAM_BOT_TOKEN + TELEGRAM_INFO_WORK_CHANNEL_ID from env)
+- Test fake: `FakeAlertPort` in test files (records messages in list, no network)
+
 ### DDD constraints
-- Zero infra imports — only domain ports + stdlib
-- Concrete adapters injected via constructor
+- Zero infra imports — only domain ports + stdlib + domain primitives (reconcile_figures)
+- Concrete adapters injected via constructor (`alert_port: Optional[AlertPort] = None` — backward-compat)
 - No HTTP/DB knowledge
+- `reconcile_figures` imported from `domain.primitives` (pure function, Fence-A safe)
 
 ---
 

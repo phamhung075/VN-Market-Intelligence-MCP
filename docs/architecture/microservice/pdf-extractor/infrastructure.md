@@ -93,6 +93,29 @@ The extractor auto-detects two page layouts per page:
 
 balance_pass = True (delta = 0.0)
 
+## TelegramAlertAdapter (BT-5)
+- **File:** `apps/pdf-extractor/infrastructure/alert_adapter.py`
+- **Implements:** `AlertPort` Protocol (domain/repositories.py)
+
+### Purpose
+Concrete WORK-channel Telegram alert adapter. Injected into `ExtractTablesUseCase` at the
+composition root. Fires when the BT-5 cross-check gate blocks a push.
+
+### Configuration (from environment)
+```
+TELEGRAM_BOT_TOKEN               — Telegram bot token
+TELEGRAM_INFO_WORK_CHANNEL_ID    — WORK channel chat ID (negative for groups)
+```
+
+### Behaviour
+- `send_work_alert(message)` — fire-and-forget POST to Telegram Bot API `/sendMessage`
+- On failure (network, invalid token): logs error and returns normally — never disrupts caller
+- If creds not set: logs warning and returns (safe default — no crash)
+
+### DDD placement
+- Infrastructure layer (correct — I/O, network, credentials)
+- Domain never imports this file; application layer only knows the `AlertPort` Protocol
+
 ## Configuration
 ```python
 class Config:
