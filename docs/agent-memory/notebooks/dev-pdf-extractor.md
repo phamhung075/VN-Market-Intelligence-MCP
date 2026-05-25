@@ -4,6 +4,33 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-25 — BT-3-D DONE (wire real OCR into /extract-tables production path)
+
+**Commit:** TBD | Sprint: BCTC-TABLE | Task: BT-3-D
+
+**Root bug:** `ExtractTablesUseCase.execute()` built `pages=[{"page_number": 0, "path": pdf_path}]` with no `"text"` key. `TextTableExtractor.assemble()` reads `page.get("text", "")` → `""` → 0 rows. Every doc returned `{rows_stored: 0, balance_pass: false}`.
+
+**BT-3-C FALSE-GREEN lesson:** BT-3-C's integration test used `PreloadedTextTableExtractor` which IGNORED the pages argument and pre-supplied OCR text from a session-cached `_get_fpt_pages()` call. It never exercised the real production wiring. This is the canonical false-green pattern: if the adapter ignores the use case's input, you only test the adapter in isolation, not the integration.
+
+**Fix delivered:**
+- `domain/repositories.py` — `OcrPort` Protocol added (pure, no infra imports). Two methods: `locate_balance_sheet_pages(pdf_path)` + `ocr_pages(pdf_path, page_numbers)`.
+- `infrastructure/ocr_adapter.py` — `PdfOcrAdapter` implements `OcrPort`. `locate_balance_sheet_pages()` uses pdfplumber native text (no Tesseract) to find BS section via Vietnamese markers. `ocr_pages()` uses pdf2image + pytesseract vie+eng, strictly sequential (D6 host safety — 16GB Mac).
+- `application/extract_tables_usecase.py` — `ocr_port: Optional[OcrPort] = None` added to `__init__`. `execute()` gets new optional `pre_supplied_pages` param. Priority: pre-supplied text → ocr_port auto-locate+OCR → empty (backward-compat unit test path).
+- `interface/handlers.py` — `ExtractTablesRequestSchema` gets optional `pages` field. Route passes it through as `pre_supplied_pages`.
+- `main.py` — `PdfOcrAdapter()` instantiated and injected into `ExtractTablesUseCase`.
+- `__tests__/integration/test_extract_tables_bt3d_real_ocr.py` — NEW slow test: drives real production wiring (no pre-supplied text, no fake extractor), asserts rows_stored≥80, balance_pass=True, golden anchors 270/300/400.
+
+**BT-4b-2 DEFERRED to dev-mcp-server:** mcp-server backfillBctcTables should populate `pages` from `pdf_extracted_text` before calling `/extract-tables`, to avoid re-OCR on the 16GB Mac.
+
+**Evidence:**
+- RED (before fix): `ModuleNotFoundError: No module named 'infrastructure.ocr_adapter'` — test confirmed BT-3-D gap
+- GREEN (after fix): 1 passed, 17.65s — real Tesseract, auto-located pages, FPT golden anchors verified
+- Full suite: 276 passed (275 baseline + 1 new), 0 failed
+- lint-imports: 70 files, 126 deps, 2 kept, 0 broken (Fence-A/B intact)
+- Sandbox: primitive + module tiers PASS, zero creds
+
+---
+
 ### 2026-05-24 — BT-1 DONE (vn_number_normalize + reconcile_figures + select_period_column)
 
 **Commit:** `e74abc43` | Sprint: BCTC-TABLE

@@ -11,7 +11,7 @@ records messages without I/O.
 """
 
 from abc import ABC, abstractmethod
-from typing import Optional, Protocol
+from typing import Dict, List, Optional, Protocol
 
 from domain.models import PDFDocument, ExtractedContent, ExtractedTable
 
@@ -63,6 +63,67 @@ class PDFExtractionEngine(ABC):
         Returns:
             (text, confidence) where confidence in [0.0, 1.0]
         """
+
+
+class OcrPort(Protocol):
+    """
+    Pure Protocol — BT-3-D: OCR a PDF file into per-page text.
+
+    Domain layer rule: pure Protocol, zero infra imports, zero I/O here.
+    Concrete adapter: infrastructure/ocr_adapter.PdfOcrAdapter
+    (uses pdf2image + pytesseract vie+eng — self-hosted only, zero external API).
+
+    HOST SAFETY (D6 — 16GB Mac kernel-panic risk):
+        - Implementations MUST OCR only the pages specified in page_numbers.
+        - Caller (ExtractTablesUseCase) provides only the located balance-sheet
+          pages, NEVER blindly passes the full PDF page range.
+        - OCR is sequential (one page at a time) — never parallel/batch.
+
+    Privacy: self-hosted Tesseract only. Zero external API. Zero data leaves machine.
+    """
+
+    def ocr_pages(
+        self,
+        pdf_path: str,
+        page_numbers: List[int],
+    ) -> List[Dict]:
+        """
+        Run Tesseract (vie+eng) on the specified pages of a PDF.
+
+        Args:
+            pdf_path:     Absolute path to the PDF file on disk.
+            page_numbers: 1-indexed page numbers to OCR (e.g. [4, 5, 6, 7]).
+                          MUST be a small, located subset (not the full PDF).
+
+        Returns:
+            list of dicts: [{"page_number": int, "text": str}, ...]
+            Ordered by page_numbers. Pages that fail OCR get text="".
+        """
+        ...
+
+    def locate_balance_sheet_pages(
+        self,
+        pdf_path: str,
+    ) -> List[int]:
+        """
+        Auto-locate balance-sheet section pages in a BCTC PDF.
+
+        Scans page text for Vietnamese markers:
+            - "BẢNG CÂN ĐỐI KẾ TOÁN"
+            - "TÀI SẢN"
+            - "NGUỒN VỐN"
+            - "TỔNG CỘNG TÀI SẢN"
+            - "TỔNG CỘNG NGUỒN VỐN"
+
+        Returns 1-indexed page numbers of the located balance-sheet section.
+        If nothing is found, returns pages 4..7 as a safe FPT-derived fallback
+        (flagged in log as a heuristic fallback — not guaranteed correct for
+        all BCTC layouts).
+
+        HOST SAFETY: this method uses pdfplumber native text (fast, no Tesseract)
+        to locate the pages. Only the located pages are then passed to ocr_pages().
+        """
+        ...
 
 
 class AlertPort(Protocol):

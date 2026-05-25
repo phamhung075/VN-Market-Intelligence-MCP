@@ -1,8 +1,21 @@
 """
-application/extract_tables_usecase.py — BT-3-B + BT-5
+application/extract_tables_usecase.py — BT-3-B + BT-5 + BT-3-D
 
 ExtractTablesUseCase: orchestrates TEXT-path table extraction + balance check +
 cross-check gate (BT-5) + push.
+
+BT-3-D fix: OcrPort injected so the production path actually runs Tesseract.
+The BT-3-C integration test gave a FALSE-GREEN by pre-supplying OCR text via a
+PreloadedTextTableExtractor subclass that ignored the pages arg entirely. In
+production, execute() built pages=[{"page_number": 0, "path": pdf_path}] with
+no "text" key, so assemble() got empty strings → 0 rows.
+
+Fixed wiring (BT-3-D):
+  1. If caller supplies pages with "text" already (from mcp-server pre-supply via
+     BT-4b-2 DEFERRED), use them directly — no OCR needed (host-safe).
+  2. Otherwise, call ocr_port.locate_balance_sheet_pages(pdf_path) to auto-find
+     the section, then ocr_port.ocr_pages() to OCR only those pages (host-safe:
+     sequential, small page range, self-hosted Tesseract only).
 
 Application layer rules (DDD):
     - Imports ONLY from domain/ (domain ports, primitives) and the standard library.
@@ -15,6 +28,10 @@ Ports injected:
     - TablePushClientPort (concrete: infrastructure.table_push_client.TablePushClient)
     - AlertPort           (concrete: infrastructure.alert_adapter.TelegramAlertAdapter) [BT-5]
                           (fake: FakeAlertPort in tests)
+    - OcrPort             (concrete: infrastructure.ocr_adapter.PdfOcrAdapter) [BT-3-D]
+                          (fake: FakeOcrPort in tests — returns pre-built pages)
+                          (default None → falls back to empty pages, preserves backward-compat
+                           with existing unit tests that inject fake assemblers)
 
 Balance-check logic (pure):
     Total Assets (code 270) == Total Liabilities (code 300) + Total Equity (code 400)
@@ -60,7 +77,7 @@ from domain.modules.financial_reports.ports import (
     TablePushClientPort,
 )
 from domain.primitives.reconcile_figures import reconcile_figures
-from domain.repositories import AlertPort
+from domain.repositories import AlertPort, OcrPort
 
 logger = logging.getLogger(__name__)
 
@@ -224,9 +241,16 @@ class ExtractTablesUseCase:
         table_extractor  = TextTableExtractor()
         table_push_client = TablePushClient(mcp_server_url=cfg.mcp_server_url)
         alert_adapter     = TelegramAlertAdapter()
+        ocr_adapter       = PdfOcrAdapter()          # BT-3-D
         extract_tables_usecase = ExtractTablesUseCase(
-            table_extractor, table_push_client, alert_adapter
+            table_extractor, table_push_client, alert_adapter, ocr_adapter
         )
+
+    BT-3-D OCR wiring:
+        execute() now accepts an optional pre_supplied_pages argument. When pages
+        already have "text" (pre-supplied from mcp-server, BT-4b-2 DEFERRED), they
+        are used directly. When pages are absent or have no "text", the injected
+        ocr_port auto-locates the balance-sheet section and OCRs only those pages.
 
     BT-5 gate:
         After balance-check, before push — runs _run_reconciliation_gate().
@@ -234,8 +258,8 @@ class ExtractTablesUseCase:
         WORK alert emitted via injected alert_port.
         If gate passes: push proceeds, blocked_reason=None in result.
 
-    Backward-compat: alert_port defaults to None (no alert emitted in that case).
-    Existing callers (BT-3-B tests, BT-3-C integration tests) are unaffected.
+    Backward-compat: alert_port and ocr_port default to None.
+    Existing unit tests (BT-3-B, BT-5) use fake assemblers and are unaffected.
     """
 
     def __init__(
@@ -243,6 +267,7 @@ class ExtractTablesUseCase:
         table_extractor: TableAssemblerPort,
         table_push_client: TablePushClientPort,
         alert_port: Optional[AlertPort] = None,
+        ocr_port: Optional[OcrPort] = None,
     ) -> None:
         """
         Args:
@@ -253,25 +278,37 @@ class ExtractTablesUseCase:
             alert_port:        Injected AlertPort implementation (BT-5).
                                Emits WORK-channel alert when gate blocks.
                                Default None → no alert (backward-compat).
+            ocr_port:          Injected OcrPort implementation (BT-3-D).
+                               Auto-locates BS pages + runs Tesseract.
+                               Default None → no OCR (backward-compat for
+                               unit tests that inject fake assemblers with
+                               pre-built row fixtures).
         """
         self._extractor = table_extractor
         self._push_client = table_push_client
         self._alert_port = alert_port
+        self._ocr_port = ocr_port
 
     async def execute(
         self,
         report_id: str,
         pdf_path: str,
         statement_section: str,
+        pre_supplied_pages: Optional[List[Dict]] = None,
     ) -> Dict:
         """
-        Orchestrate: assemble rows → compute balance check →
+        Orchestrate: OCR (if needed) → assemble rows → compute balance check →
         cross-check gate (BT-5) → push to mcp-server (if gate passes).
 
         Args:
-            report_id:         UUID string matching financial_reports.id on mcp-server.
-            pdf_path:          Absolute path to the PDF file on disk.
-            statement_section: One of "balance_sheet" | "income_statement" | "cash_flow".
+            report_id:           UUID string matching financial_reports.id on mcp-server.
+            pdf_path:            Absolute path to the PDF file on disk.
+            statement_section:   One of "balance_sheet" | "income_statement" | "cash_flow".
+            pre_supplied_pages:  Optional list of {page_number, text} dicts.
+                                 When present AND all pages have a "text" key, used directly
+                                 without calling OCR (host-safe reuse of stored OCR text).
+                                 BT-4b-2 DEFERRED: mcp-server backfill will populate this
+                                 from pdf_extracted_text to avoid re-OCR on the 16GB Mac.
 
         Returns:
             dict with keys:
@@ -290,13 +327,51 @@ class ExtractTablesUseCase:
         )
 
         # ------------------------------------------------------------------
-        # Step 1: Assemble structured rows from OCR text
+        # Step 1: Build pages list with OCR text
+        #
+        # Priority order (host-safety — avoid redundant OCR on 16GB Mac):
+        #   A) pre_supplied_pages with "text" → use as-is (zero Tesseract calls)
+        #   B) ocr_port available → auto-locate BS pages + OCR only those pages
+        #   C) Neither available → pass empty pages (backward-compat for unit tests
+        #      that inject fake assemblers; real rows come from the fake assemble())
         # ------------------------------------------------------------------
-        # Build pages list — the concrete TextTableExtractor reads the PDF
-        # directly from pdf_path when pages=[{"page_number": 0, "path": pdf_path}].
-        # The port contract requires pages: list[dict] with at least page_number + text.
-        # TextTableExtractor interprets an empty pages list as a "read-from-path" signal.
-        pages: List[Dict] = [{"page_number": 0, "path": pdf_path}]
+        pages: List[Dict]
+
+        if pre_supplied_pages and all(p.get("text") is not None for p in pre_supplied_pages):
+            # Path A: caller pre-supplied OCR text (e.g. mcp-server backfill from
+            # pdf_extracted_text) — no Tesseract needed. Host-safe.
+            pages = pre_supplied_pages
+            logger.info(
+                "ExtractTablesUseCase: using %d pre-supplied pages (no OCR needed)",
+                len(pages),
+            )
+        elif self._ocr_port is not None:
+            # Path B: auto-locate BS pages + OCR (BT-3-D production path).
+            # locate_balance_sheet_pages() uses pdfplumber native text (fast, no OCR).
+            # ocr_pages() uses Tesseract vie+eng on the located pages only (sequential).
+            bs_page_numbers = self._ocr_port.locate_balance_sheet_pages(pdf_path)
+            logger.info(
+                "ExtractTablesUseCase: auto-located %d BS pages: %s",
+                len(bs_page_numbers),
+                bs_page_numbers,
+            )
+            pages = self._ocr_port.ocr_pages(pdf_path, bs_page_numbers)
+            logger.info(
+                "ExtractTablesUseCase: OCR complete — %d pages, total chars=%d",
+                len(pages),
+                sum(len(p.get("text", "")) for p in pages),
+            )
+        else:
+            # Path C: no OCR port, no pre-supplied text — backward-compat for unit tests.
+            # Unit tests inject a FakeTableAssembler that returns pre-built rows regardless
+            # of the pages argument. This path yields 0 rows in production (intentionally
+            # not supported without an OcrPort).
+            pages = []
+            logger.warning(
+                "ExtractTablesUseCase: no ocr_port and no pre_supplied_pages — "
+                "passing empty pages (backward-compat unit-test path; "
+                "production MUST inject ocr_port)"
+            )
 
         assembled = self._extractor.assemble(pages=pages, statement_section=statement_section)
         rows: List[Dict] = assembled.get("rows", [])

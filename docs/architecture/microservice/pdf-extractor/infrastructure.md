@@ -93,6 +93,43 @@ The extractor auto-detects two page layouts per page:
 
 balance_pass = True (delta = 0.0)
 
+## PdfOcrAdapter (BT-3-D)
+- **File:** `apps/pdf-extractor/infrastructure/ocr_adapter.py`
+- **Implements:** `OcrPort` Protocol (domain/repositories.py)
+
+### Purpose
+Concrete OCR adapter that wires Tesseract into the production `/extract-tables` path.
+Injected into `ExtractTablesUseCase` at the composition root (BT-3-D fix for the false-green
+BT-3-C integration test, which pre-supplied OCR text and never exercised real Tesseract).
+
+### locate_balance_sheet_pages(pdf_path) → list[int]
+- Uses pdfplumber native text extraction (FAST — no Tesseract, no image rendering)
+- Scans each page for Vietnamese BCTC balance-sheet markers (case-insensitive):
+  - "bảng cân đối kế toán", "tài sản ngắn hạn", "tài sản dài hạn"
+  - "nguồn vốn", "tổng cộng tài sản", "tổng cộng nguồn vốn"
+  - Unaccented fallbacks for OCR-mangled text
+- Allows 1-page gap within section (some pages are mostly numeric, no markers)
+- Stops after 2 consecutive non-marker pages (section ended)
+- Safety cap: max 8 pages collected
+- Fallback to [4, 5, 6, 7] if no markers found (FPT heuristic — logged as warning)
+
+### ocr_pages(pdf_path, page_numbers) → list[dict]
+- D6 HOST SAFETY: converts ONE page at a time via `pdf2image.convert_from_path(first_page=n, last_page=n)`
+- Tesseract via `pytesseract.image_to_string(img, lang="vie+eng")` (self-hosted)
+- Sequential loop — no threading, no batching
+- Returns `[{"page_number": int, "text": str}, ...]` — failed pages get `text=""`
+- DPI=200 (same as integration test helper `_ocr_pdf_pages()`)
+
+### DDD placement
+- Infrastructure layer (correct — does I/O: pdfplumber, pdf2image, Tesseract subprocess)
+- Domain never imports this; application layer only knows the `OcrPort` Protocol
+- Fence-A/B: both KEPT (70 files, 126 deps, 2 kept 0 broken after BT-3-D)
+
+### Privacy
+- Self-hosted Tesseract only. Zero external API calls. Zero data leaves machine.
+
+---
+
 ## TelegramAlertAdapter (BT-5)
 - **File:** `apps/pdf-extractor/infrastructure/alert_adapter.py`
 - **Implements:** `AlertPort` Protocol (domain/repositories.py)

@@ -25,6 +25,7 @@ from infrastructure.inspection_store import InspectionStore
 from infrastructure.text_table_extractor import TextTableExtractor
 from infrastructure.table_push_client import TablePushClient
 from infrastructure.alert_adapter import TelegramAlertAdapter  # BT-5
+from infrastructure.ocr_adapter import PdfOcrAdapter  # BT-3-D
 from domain.services import ExtractPDFService
 from application.usecases import ExtractPDFUseCase
 from application.extract_tables_usecase import ExtractTablesUseCase
@@ -64,14 +65,16 @@ def create_app() -> FastAPI:
         extraction_dir=cfg.storage_dir,
     )
 
-    # --- BT-3-B + BT-5: TEXT-path table extraction use case + cross-check gate ---
+    # --- BT-3-B + BT-5 + BT-3-D: TEXT-path table extraction use case + cross-check gate ---
     table_extractor = TextTableExtractor()
     table_push_client = TablePushClient(mcp_server_url=cfg.mcp_server_url)
     alert_adapter = TelegramAlertAdapter()  # BT-5: WORK-channel alert (creds from env)
+    ocr_adapter = PdfOcrAdapter()           # BT-3-D: auto-locate BS pages + Tesseract OCR
     extract_tables_usecase = ExtractTablesUseCase(
         table_extractor=table_extractor,
         table_push_client=table_push_client,
-        alert_port=alert_adapter,  # BT-5: injected AlertPort
+        alert_port=alert_adapter,   # BT-5: injected AlertPort
+        ocr_port=ocr_adapter,       # BT-3-D: injected OcrPort (real Tesseract path)
     )
 
     # --- FastAPI app ---

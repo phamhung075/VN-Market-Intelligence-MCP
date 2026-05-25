@@ -35,11 +35,23 @@ _VIEWER_HTML_PATH = Path(__file__).parent / "viewer.html"
 
 
 class ExtractTablesRequestSchema(BaseModel):
-    """Pydantic model: validates incoming POST /extract-tables request body."""
+    """
+    Pydantic model: validates incoming POST /extract-tables request body.
+
+    BT-3-D: Added optional `pages` field for pre-supplied per-page OCR text.
+    When supplied by the caller (e.g. mcp-server backfill — BT-4b-2 DEFERRED),
+    the use case reuses the stored OCR text instead of running Tesseract again
+    (host-safe — avoids redundant OCR on the 16GB Mac).
+
+    BT-4b-2 DEFERRED: mcp-server backfillBctcTables job should populate pages
+    from pdf_extracted_text for each doc before calling /extract-tables, so that
+    re-extraction never re-OCRs a doc that already has stored OCR text.
+    """
 
     report_id: str
     pdf_path: str
     statement_section: str = "balance_sheet"
+    pages: Optional[list] = None  # BT-3-D: optional pre-supplied [{page_number, text}]
 
     @property
     def valid_sections(self):
@@ -108,6 +120,7 @@ def register_routes(
                 report_id=body.report_id,
                 pdf_path=body.pdf_path,
                 statement_section=body.statement_section,
+                pre_supplied_pages=body.pages,  # BT-3-D: pass through pre-supplied text
             )
             return {
                 "ok": True,

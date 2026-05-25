@@ -88,9 +88,34 @@ After Step 2 (balance-check), before Step 3 (push), the gate runs if `statement_
 - Concrete: `infrastructure/alert_adapter.TelegramAlertAdapter` (reads TELEGRAM_BOT_TOKEN + TELEGRAM_INFO_WORK_CHANNEL_ID from env)
 - Test fake: `FakeAlertPort` in test files (records messages in list, no network)
 
+### BT-3-D OCR Wiring (Production Path Fix)
+
+**Bug diagnosed (BT-4b):** `execute()` built `pages=[{"page_number": 0, "path": pdf_path}]` with no `"text"` key. `TextTableExtractor.assemble()` reads `page.get("text", "")` → `""` → 0 rows. The BT-3-C integration test gave a FALSE-GREEN: it used `PreloadedTextTableExtractor` that ignored the pages arg entirely and pre-supplied OCR text.
+
+**Fix (BT-3-D):** `OcrPort` injected. Priority order:
+1. `pre_supplied_pages` with "text" (BT-4b-2 DEFERRED from mcp-server) → no OCR needed
+2. `ocr_port` available → `locate_balance_sheet_pages()` + `ocr_pages()` (sequential, located pages only)
+3. Neither → empty pages (backward-compat for unit tests with fake assemblers)
+
+**New constructor param:** `ocr_port: Optional[OcrPort] = None` (backward-compat)
+
+**New execute() param:** `pre_supplied_pages: Optional[list[dict]] = None` (for mcp-server pre-supply)
+
+**BT-4b-2 DEFERRED:** mcp-server backfillBctcTables job should populate `pages` from `pdf_extracted_text` before calling `/extract-tables`, to avoid re-OCR on the 16GB Mac.
+
+**OcrPort (domain/repositories.py):**
+- Pure Protocol — `ocr_pages(pdf_path, page_numbers) -> list[dict]`
+- Pure Protocol — `locate_balance_sheet_pages(pdf_path) -> list[int]`
+- Concrete: `infrastructure/ocr_adapter.PdfOcrAdapter`
+  - `locate_balance_sheet_pages()`: uses pdfplumber native text (fast, no Tesseract) to scan for Vietnamese BS markers
+  - `ocr_pages()`: pdf2image + pytesseract vie+eng, sequential, one page at a time (D6 host safety)
+  - Falls back to pages 4-7 if no markers found (heuristic, logged as warning)
+
+**Integration test (BT-3-D):** `__tests__/integration/test_extract_tables_bt3d_real_ocr.py` — drives real production wiring (no pre-supplied text, no fake extractor), asserts rows_stored≥80, balance_pass=True, golden anchors 270/300/400.
+
 ### DDD constraints
 - Zero infra imports — only domain ports + stdlib + domain primitives (reconcile_figures)
-- Concrete adapters injected via constructor (`alert_port: Optional[AlertPort] = None` — backward-compat)
+- Concrete adapters injected via constructor (`alert_port: Optional[AlertPort] = None`, `ocr_port: Optional[OcrPort] = None` — backward-compat)
 - No HTTP/DB knowledge
 - `reconcile_figures` imported from `domain.primitives` (pure function, Fence-A safe)
 
