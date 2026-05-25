@@ -32,6 +32,7 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 # Copy built artifacts from builder stage
 COPY --from=bun-builder /app/node_modules ./node_modules
 COPY --from=bun-builder /app/src ./src
+COPY --from=bun-builder /app/composition-root.ts ./
 COPY package.json tsconfig.json ./
 
 EXPOSE 5008
