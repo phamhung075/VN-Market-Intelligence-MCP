@@ -3116,3 +3116,54 @@ No separate ops step needed before dev starts. The fix itself removes `pre_suppl
 **Next:** pm — create BT3-FIX-3 dev handoff for dev-pdf-extractor
 
 **PIPELINE:** continue → ops BT3-DEPLOY → QA BT3-QA → PO BT3-EXIT
+
+---
+
+## [Developer] BT3-FIX3-DEP — dev-pdf-extractor — DONE (2026-05-26)
+
+**Task:** BT3-FIX3-DEP | Sprint: BCTC-TABLE-3 | Atomic dependency fix
+
+### Root cause confirmed
+
+`apps/pdf-extractor/requirements.txt` was missing `pdf2image`. The ocr_adapter.py Strategy (c) fresh-OCR path (`PdfOcrAdapter.ocr_pages()`) does `from pdf2image import convert_from_path` at line 197 inside a try/except ImportError — without the package installed it silently returns `text=""` for every page, causing `rows_stored=0` and `balance_pass=false` on every fresh-OCR POST to `/extract-tables`.
+
+Rasterizer dual-path drift confirmed: the OLD path (`extraction_engine.py:129`) uses pdfplumber `page.to_image()` (pytesseract via Pillow — already in requirements). The NEW path (`ocr_adapter.py`, used by `ExtractTablesUseCase` Strategy c) uses `pdf2image` — the Python wrapper for poppler's `pdftoppm`. The system binary `poppler-utils` is already installed in the Dockerfile (line 19), so only the Python wheel was missing.
+
+### Change
+
+**File:** `apps/pdf-extractor/requirements.txt`
+
+Added `pdf2image>=1.16.0` in the production section alongside `Pillow` and `pytesseract`:
+
+```
+Pillow>=10.2.0
++pdf2image>=1.16.0
+ pytesseract>=0.3.10
+```
+
+Version floor `1.16.0` is the last major release before the 1.17/1.18 series; compatible with Python 3.12 and the installed poppler-utils.
+
+### Dependency chain audit (fresh-OCR path: ocr_adapter → extract_tables_usecase)
+
+All imports in the Strategy (c) path accounted for:
+
+| Import | Location | In requirements.txt |
+|---|---|---|
+| `pdfplumber` | `ocr_adapter.py:89` (locate_bs_pages) | YES — `pdfplumber>=0.10.3` |
+| `pdf2image` | `ocr_adapter.py:197` (ocr_pages) | NOW ADDED — `pdf2image>=1.16.0` |
+| `pytesseract` | `ocr_adapter.py:203` (ocr_pages) | YES — `pytesseract>=0.3.10` |
+| `PIL/Pillow` | passed as `images[0]` to pytesseract | YES — `Pillow>=10.2.0` |
+| `aiohttp` | `table_push_client.py` | YES — `aiohttp>=3.9.3` |
+| `fastapi` / `pydantic` | interface layer | YES |
+
+No other missing dependency found in the chain.
+
+### Files changed
+
+- `apps/pdf-extractor/requirements.txt` — added `pdf2image>=1.16.0`
+
+Files are UNSTAGED per task spec. Main terminal commits.
+
+### Status note
+
+Dependency is added. Container has NOT been rebuilt yet — ops must run `docker compose up -d --build pdf-extractor` to install the wheel into the running container. Until then the live endpoint still returns `rows_stored=0`. Do NOT declare the extraction bug fixed until ops confirms the rebuilt container and a successful POST to `/extract-tables` returns `rows_stored>0`.

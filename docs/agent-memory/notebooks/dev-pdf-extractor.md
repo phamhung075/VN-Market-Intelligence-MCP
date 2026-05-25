@@ -4,6 +4,24 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — BT3-FIX3-DEP DONE (add pdf2image to requirements.txt)
+
+**Task:** BT3-FIX3-DEP | Sprint: BCTC-TABLE-3 | Atomic dependency fix
+
+**Root cause:** `requirements.txt` was missing `pdf2image`. `ocr_adapter.py:197` does `from pdf2image import convert_from_path` inside a try/except ImportError — without the package the except branch returns `text=""` for every page → `rows_stored=0` on every fresh-OCR POST.
+
+**Dual-path drift context:** OLD path (`extraction_engine.py:129`) uses pdfplumber `page.to_image()` (Pillow+pytesseract — already present). NEW path (`ocr_adapter.py`, Strategy c used by `ExtractTablesUseCase`) uses `pdf2image` — Python wrapper for poppler's `pdftoppm`. System binary `poppler-utils` already in Dockerfile line 19; only Python wheel was missing.
+
+**Fix:** added `pdf2image>=1.16.0` in production section of `requirements.txt` alongside Pillow/pytesseract.
+
+**Dependency chain audit (fresh-OCR path):** pdfplumber YES, pdf2image NOW ADDED, pytesseract YES, Pillow YES, aiohttp YES. No other missing import found.
+
+**Files changed (1):** `apps/pdf-extractor/requirements.txt` — UNSTAGED per task spec.
+
+**NEXT:** ops must `docker compose up -d --build pdf-extractor` to install the wheel, then re-POST to `/extract-tables` to confirm `rows_stored>0`. Do NOT declare bug fixed until live endpoint verified.
+
+---
+
 ### 2026-05-26 — BT3-FIX-3 DONE (architect ruling: three-block label alignment + company-header junk filter + dedup guard)
 
 **Task:** BT3-FIX-3 | Sprint: BCTC-TABLE-3 | Recurring-bug escalation (≥2 fix commits on text_table_extractor.py)
