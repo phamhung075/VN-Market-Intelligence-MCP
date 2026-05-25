@@ -2586,3 +2586,67 @@ Key signals to verify:
 5. Period detection still wrong for SHB/VEA/ACB/DGC/DHG/EIB — residual dev-pdf-extractor work needed.
 
 NEXT: qa | BT-6 re-verify live → PO final BT-EXIT sign-off
+
+---
+
+## [PO] BT-EXIT FINAL — Sign-Off Decision (supersedes the PARTIAL hold)
+
+**Date:** 2026-05-25T20:51Z | **Verdict:** DONE — FPT consolidated balance-sheet goal SIGNED OFF | **Decided by:** po (full autonomy) | **Supersedes:** [PO] BT-EXIT 2026-05-25T20:18Z (PARTIAL, BT-7 required)
+
+### What I verified against the prior PARTIAL hold
+
+The PARTIAL hold had exactly two named blockers on the user's target (FPT consolidated balance sheet):
+1. **Noise:** 2170 rows / 44 pages (only 96 coded) — buried result table, not a clean one.
+2. **Wrong period:** `period_current = "26/01/2026"` (the digital-signature timestamp), not the reporting period.
+
+BT-7 (`210a0a62`) + the deploy+re-backfill (`29efb93c`, HEAD) closed BOTH on the live target, confirmed by deterministic read-only DB/API reads (`GET /api/bctc-inspect/table/{e71f845d-ffa5-48f9-8f09-30ac2cd09c65}`):
+- **Noise eliminated:** 2170 → **150 rows** (Path-A BS section filter now unifies with Path-B auto-locate).
+- **Period fixed:** `period_current` "26/01/2026" → **"31/12/2025"** (signature-date leak rejected by the two-pass `_detect_periods()`); `period_prior` = "31/12/2024".
+- **Identity exact + balanced:** `balanced=true`, `delta=0`; anchors 270=88,089,621,779,862 / 300=44,338,155,487,272 / 400=43,751,466,292,590 / 440=88,089,621,779,862 ALL EXACT.
+- **Second clean BS proof:** HPG Q4 = 117 rows, `period_current=31/12/2025`, `balanced=true`.
+- Inspector renders the Code|Label|2025|2024 table + green balance badge next to OCR text. The `/goal` "extract correct result table for analyze" is demonstrably MET for the consolidated balance sheet — a *clean, analyzable* result table, not figures buried in noise.
+
+### QA re-gate decision: NOT required — evidence suffices
+
+I did NOT order a formal QA re-gate. Rationale (recorded for honesty, not as a shortcut):
+- BT-6 was already APPROVED on the full sprint (`acd0d61e`): security/DDD/privacy/commit-hygiene/fence-genuine all PASS, 276/276 pdf-extractor + 38/38 mcp-server BCTC tests.
+- BT-7 is a narrow, well-tested change: +281 passing tests (271 baseline + 10 new), including a Path-A end-to-end that asserts the 44→4-page filter, ≤96 rows, `period_current=31/12/2025`, golden anchors exact, and OCR-never-called; fence LIVE (deliberate-violation → exit 1, restored).
+- The live numbers above were produced by the **dev-mcp-server deploy agent against the running container** (independent of the dev-pdf-extractor author who wrote the fix) via deterministic DB/API reads — not self-attested by the fix author. This is exactly the kind of independent live verification a QA re-gate would re-run.
+- The change closed the two specific PARTIAL blockers and introduced no schema/endpoint change (filter on supplied text + period scoping only) — minimal regression surface; QA's prior APPROVED structural verdict carries forward.
+
+Per `feedback_scale_pilot_done_bar.md`: this is NOT a scale-pilot terminal (no pilot-status edit, no G9 user sign-off gate) — it is a post-pilot correctness build behind a frozen DONE pilot. The DONE bar here is "user's explicit target proven clean live," which is met.
+
+### What I am signing off — and what I am explicitly NOT
+
+**SIGNED OFF (DONE):** the user's explicit target — the **FPT consolidated balance sheet** (page-4-first then 4-5-6 stitch) extracts to a clean, correct, analyzable result table, live in `/api/bctc-inspect`, with the correct reporting period and an exact balance identity. HPG Q4 is a second independent clean balance proof. Privacy PASS (self-hosted Tesseract only, zero external-API/VLM in the extraction path — re-confirmed in the BT-7 deploy: Path A = zero Tesseract, host-safe).
+
+**NOT claimed (honest residual coverage gaps — all dev-pdf-extractor zone, NOT BT-7 regressions, NOT FPT-goal blockers):**
+- (a) **FPT Q1 = 0 rows.** Quarterly "Báo cáo tình hình tài chính" reuses code 270 for a different line → BT-5 cross-check gate CORRECTLY blocks (270≠300+400 in that format). Needs a quarterly code-map. The gate behaving correctly here is a feature, not a defect.
+- (b) **Period-detection residual bugs on non-FPT layouts:** VEA `01/01/2025` (period-start leak), SHB `22/04/2025` (stray date). Distinct failure mode from the FIXED signature-date leak.
+- (c) **ACB/DGC/DHG/EIB `period_current` EMPTY** (no date pair found in the BS header by the assembler).
+- (d) **balance_pass=N/A docs** (no 270/300/400 detected → identity unverifiable; rows still stored + rendered). VNM 29 rows / EIB 68 rows look low vs a ~80-row full BS → possible partial extraction.
+
+I am explicitly NOT overclaiming "all 14 docs perfect." Multi-ticker / quarterly coverage is INCOMPLETE. Of the eligible docs: FPT Q4 + HPG Q4 are clean+balanced; the rest have residual period/coverage gaps that are visibility-acceptable but not analysis-grade.
+
+### Decision
+
+- **BT-EXIT verdict = DONE** for the FPT consolidated-balance-sheet goal. The PARTIAL hold is LIFTED — both named blockers are closed live.
+- **Sprint BCTC-TABLE is CLOSED** (the chartered goal is met and proven). It does NOT stay open for the residuals — keeping a closed-goal sprint open to chase coverage would conflate "the user's ask is done" with "the extractor is perfect across all layouts," which is dishonest framing.
+- **Follow-up sprint BCTC-TABLE-2 OPENED** (separate sprint, not a reopen) to carry residuals (a)-(d): quarterly code-map + period-detection hardening across non-FPT layouts + partial-extraction investigation for low-row docs (VNM/EIB). Routed to dev-pdf-extractor. NOT blocking; lower priority than active reliability/pilot work.
+
+### Privacy audit — PASS (re-confirmed for BT-7)
+
+Zero external-API/VLM in the live extraction path. BT-7 Path-A filter operates on already-stored OCR text (zero Tesseract, host-safe — docker stats stable at ~50 MiB, no swap pressure). Only external HTTP in the path = `api.telegram.org` (WORK-alert text only) + the Vinahost VPS BCTC file PULL (deprecated `inspection_store.py`, not the table path). No financial PDF/page-image sent off-infra.
+
+### Commit handoff (MCP gateway / task_claim UNCALLABLE in this PO subagent harness)
+
+`call_tool` / `search_tools` both error "No such tool available" in this harness (same as the ffe17028 hand-off). Per the fail-closed mutex guardrail I did NOT bypass it. Files written to the working tree, NOTHING staged. Main terminal commits:
+
+```
+git add docs/handoffs/TASK_BCTC-TABLE.md docs/SPRINT_GOAL.md docs/TASKS.md docs/po-decisions/2026-05-25-bctc-table-bt-exit-final-fpt-done.md
+git commit -m "docs(bctc-table): BT-EXIT FINAL — FPT consolidated BS goal SIGNED OFF (sprint CLOSED); BCTC-TABLE-2 opened for residual coverage gaps"
+```
+
+(po notebook committed separately under the standard notebook-commit convention.)
+
+NEXT: dev-pdf-extractor (BCTC-TABLE-2, follow-up, not blocking) | sprint BCTC-TABLE CLOSED
