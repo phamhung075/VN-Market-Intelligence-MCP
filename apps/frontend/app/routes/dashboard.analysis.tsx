@@ -40,6 +40,9 @@ import {
 } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { StockChart } from "~/components/charts/StockChart";
+import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
+import { formatChangePct } from "~/domain/formatters/change-pct.js";
+import { formatSignalTypeLabel } from "~/domain/formatters/signal-type-label.js";
 
 export const meta: MetaFunction = () => [
   { title: "Market Analysis — VN Market Intelligence" },
@@ -210,15 +213,6 @@ function indicatorLabel(indicator: string): string {
     case "usd_vnd": return "USD/VND";
     default: return indicator;
   }
-}
-
-function directionArrow(direction: "up" | "down" | "flat" | string): {
-  symbol: string;
-  cls: string;
-} {
-  if (direction === "up") return { symbol: "↑", cls: "text-green-400" };
-  if (direction === "down") return { symbol: "↓", cls: "text-red-400" };
-  return { symbol: "—", cls: "text-slate-500" };
 }
 
 // --------------------------------------------------------------------------
@@ -439,7 +433,8 @@ function WatchlistTile({
   stock: WatchlistStock;
   tile: WatchlistTileData | undefined;
 }) {
-  const arrow = tile ? directionArrow(tile.direction) : { symbol: "—", cls: "text-slate-600" };
+  const arrow = tile ? formatDirectionArrow(tile.direction) : { symbol: "—", cls: "text-slate-600" };
+  const changePctDisplay = tile ? formatChangePct(tile.changePct) : null;
   const hasPrice = tile !== undefined;
 
   return (
@@ -469,10 +464,9 @@ function WatchlistTile({
             <span suppressHydrationWarning className="text-sm font-semibold text-slate-100">
               {tile.close.toLocaleString("vi-VN")}
             </span>
-            <span className={`text-xs font-semibold ${arrow.cls}`}>
-              {arrow.symbol}{" "}
-              {tile.changePct > 0 ? "+" : ""}
-              {tile.changePct.toFixed(1)}%
+            <span className={`text-xs font-semibold ${changePctDisplay!.cls}`}>
+              {changePctDisplay!.symbol}{" "}
+              {changePctDisplay!.formatted}
             </span>
           </>
         ) : (
@@ -574,7 +568,8 @@ function SectorPeersBar({
       <div className="flex flex-wrap gap-2">
         {peers.map((peer) => {
           const tile = tiles[peer.ticker];
-          const arrow = tile ? directionArrow(tile.direction) : { symbol: "—", cls: "text-slate-600" };
+          const arrow = tile ? formatDirectionArrow(tile.direction) : { symbol: "—", cls: "text-slate-600" };
+          const peerChangePct = tile ? formatChangePct(tile.changePct) : null;
           return (
             <Link
               key={peer.ticker}
@@ -585,8 +580,8 @@ function SectorPeersBar({
                 {peer.ticker}
               </span>
               {tile ? (
-                <span className={`text-xs font-semibold ${arrow.cls}`}>
-                  {arrow.symbol} {tile.changePct > 0 ? "+" : ""}{tile.changePct.toFixed(1)}%
+                <span className={`text-xs font-semibold ${peerChangePct!.cls}`}>
+                  {arrow.symbol} {peerChangePct!.formatted}
                 </span>
               ) : (
                 <span className="text-xs text-slate-600">—</span>
@@ -1156,20 +1151,6 @@ function confidenceLabel(confidence: number): { text: string; cls: string } {
   return { text, cls: "text-slate-400" };
 }
 
-function signalTypeLabel(signalType: string): string {
-  switch (signalType) {
-    case "chain_catalyst": return "cascade";
-    case "urgent_news": return "news";
-    case "price_anomaly": return "price";
-    case "cross_validate": return "validate";
-    case "fundamental_validation": return "BCTC";
-    case "price_confirmation": return "confirm";
-    case "verified_chain": return "verified";
-    case "signal_feedback": return "feedback";
-    default: return signalType;
-  }
-}
-
 /**
  * Render an accuracy badge inline.
  * - absent accuracy → dash
@@ -1233,7 +1214,7 @@ function StockSignalsPanel({ signals }: { signals: AgentSignal[] | null }) {
                     </td>
                     <td className="py-1.5 pr-3">
                       <span className="rounded bg-slate-800 px-1.5 py-0.5 text-slate-300">
-                        {signalTypeLabel(sig.signalType)}
+                        {formatSignalTypeLabel(sig.signalType)}
                       </span>
                     </td>
                     <td className={`py-1.5 pr-3 font-semibold ${dir.cls}`}>
