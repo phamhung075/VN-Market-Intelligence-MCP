@@ -1,0 +1,523 @@
+{
+  "doc_key": "FPT",
+  "ticker": "FPT",
+  "period": "Q4_2025",
+  "statement": "consolidated_balance_sheet",
+  "report_date": "31/12/2025",
+  "unit": "VND",
+  "source_pages_doc": [4, 5, 6, 7],
+  "source_pages_0idx": [3, 4, 5, 6],
+  "column_current": "q4_2025",
+  "column_prior": "q4_2024",
+  "notes": "FPT Consolidated Balance Sheet (BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT) Q4 2025. Figures in VND (full, not millions). Source: 20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf. Page 4=current-assets, Page 5=non-current-assets+total-assets, Page 6=liabilities, Page 7=equity+total-equity.",
+  "page4_rows": [
+    {
+      "row_code": "100",
+      "label": "TÀI SẢN NGẮN HẠN",
+      "q4_2025": 58102970741619,
+      "q4_2024": 45535942846453
+    },
+    {
+      "row_code": "110",
+      "label": "Tiền và các khoản tương đương tiền",
+      "q4_2025": 10540181640920,
+      "q4_2024": 9315440438884
+    },
+    {
+      "row_code": "111",
+      "label": "Tiền",
+      "q4_2025": 8084826991114,
+      "q4_2024": 6725619929289
+    },
+    {
+      "row_code": "112",
+      "label": "Các khoản tương đương tiền",
+      "q4_2025": 2455354649806,
+      "q4_2024": 2589820509595
+    },
+    {
+      "row_code": "120",
+      "label": "Các khoản đầu tư tài chính ngắn hạn",
+      "q4_2025": 29612986737440,
+      "q4_2024": 21785213686808
+    },
+    {
+      "row_code": "123",
+      "label": "Đầu tư nắm giữ đến ngày đáo hạn",
+      "q4_2025": 29612986737440,
+      "q4_2024": 21785213686808
+    },
+    {
+      "row_code": "130",
+      "label": "Các khoản phải thu ngắn hạn",
+      "q4_2025": 14400800569076,
+      "q4_2024": 11381523992803
+    },
+    {
+      "row_code": "131",
+      "label": "Phải thu ngắn hạn của khách hàng",
+      "q4_2025": 12733504688522,
+      "q4_2024": 10537019113380
+    },
+    {
+      "row_code": "132",
+      "label": "Trả trước cho người bán ngắn hạn",
+      "q4_2025": 915176652285,
+      "q4_2024": 610379845664
+    },
+    {
+      "row_code": "134",
+      "label": "Phải thu theo tiến độ kế hoạch hợp đồng xây dựng",
+      "q4_2025": 200405269967,
+      "q4_2024": 136097256629
+    },
+    {
+      "row_code": "135",
+      "label": "Phải thu về cho vay ngắn hạn",
+      "q4_2025": 9195910819,
+      "q4_2024": 9808117590
+    },
+    {
+      "row_code": "136",
+      "label": "Phải thu ngắn hạn khác",
+      "q4_2025": 1128684791757,
+      "q4_2024": 707751585399
+    },
+    {
+      "row_code": "137",
+      "label": "Dự phòng phải thu ngắn hạn khó đòi",
+      "q4_2025": -586166744274,
+      "q4_2024": -619531925859
+    },
+    {
+      "row_code": "140",
+      "label": "Hàng tồn kho",
+      "q4_2025": 2167188682919,
+      "q4_2024": 1856756949030
+    },
+    {
+      "row_code": "141",
+      "label": "Hàng tồn kho (gross)",
+      "q4_2025": 2250812490757,
+      "q4_2024": 1990224486513
+    },
+    {
+      "row_code": "149",
+      "label": "Dự phòng giảm giá hàng tồn kho",
+      "q4_2025": -83623807838,
+      "q4_2024": -133467537483
+    },
+    {
+      "row_code": "150",
+      "label": "Tài sản ngắn hạn khác",
+      "q4_2025": 1381813111264,
+      "q4_2024": 1197007778928
+    },
+    {
+      "row_code": "151",
+      "label": "Chi phí trả trước ngắn hạn",
+      "q4_2025": 641070240596,
+      "q4_2024": 479707218558
+    },
+    {
+      "row_code": "152",
+      "label": "Thuế giá trị gia tăng được khấu trừ",
+      "q4_2025": 609517465104,
+      "q4_2024": 648697117785
+    },
+    {
+      "row_code": "153",
+      "label": "Thuế và các khoản khác phải thu Nhà nước",
+      "q4_2025": 131225405564,
+      "q4_2024": 68603442585
+    }
+  ],
+  "page5_rows": [
+    {
+      "row_code": "200",
+      "label": "TÀI SẢN DÀI HẠN",
+      "q4_2025": 29986651038243,
+      "q4_2024": 26464052832167
+    },
+    {
+      "row_code": "210",
+      "label": "Các khoản phải thu dài hạn",
+      "q4_2025": 564342065270,
+      "q4_2024": 331646166008
+    },
+    {
+      "row_code": "215",
+      "label": "Phải thu về cho vay dài hạn",
+      "q4_2025": 5278733014,
+      "q4_2024": 2509722351
+    },
+    {
+      "row_code": "216",
+      "label": "Phải thu dài hạn khác",
+      "q4_2025": 611435814893,
+      "q4_2024": 381508926294
+    },
+    {
+      "row_code": "219",
+      "label": "Dự phòng phải thu dài hạn khó đòi",
+      "q4_2025": -52372482637,
+      "q4_2024": -52372482637
+    },
+    {
+      "row_code": "220",
+      "label": "Tài sản cố định",
+      "q4_2025": 17330033606586,
+      "q4_2024": 14816131186204
+    },
+    {
+      "row_code": "221",
+      "label": "Tài sản cố định hữu hình",
+      "q4_2025": 15385816846287,
+      "q4_2024": 12774567961718
+    },
+    {
+      "row_code": "222",
+      "label": "Nguyên giá TSCĐ hữu hình",
+      "q4_2025": 29148692599137,
+      "q4_2024": 24457733666511
+    },
+    {
+      "row_code": "223",
+      "label": "Giá trị hao mòn lũy kế TSCĐ hữu hình",
+      "q4_2025": -13762875752850,
+      "q4_2024": -11683165704793
+    },
+    {
+      "row_code": "224",
+      "label": "Tài sản cố định thuê tài chính",
+      "q4_2025": 1277212606,
+      "q4_2024": 2042708364
+    },
+    {
+      "row_code": "227",
+      "label": "Tài sản cố định vô hình",
+      "q4_2025": 1942939547693,
+      "q4_2024": 2039520516122
+    },
+    {
+      "row_code": "228",
+      "label": "Nguyên giá TSCĐ vô hình",
+      "q4_2025": 3868884070908,
+      "q4_2024": 3656302027788
+    },
+    {
+      "row_code": "229",
+      "label": "Giá trị hao mòn lũy kế TSCĐ vô hình",
+      "q4_2025": -1925944523215,
+      "q4_2024": -1616781511666
+    },
+    {
+      "row_code": "240",
+      "label": "Tài sản dở dang dài hạn",
+      "q4_2025": 1604915957419,
+      "q4_2024": 2559766724411
+    },
+    {
+      "row_code": "242",
+      "label": "Chi phí xây dựng cơ bản dở dang",
+      "q4_2025": 1604915957419,
+      "q4_2024": 2559766724411
+    },
+    {
+      "row_code": "250",
+      "label": "Các khoản đầu tư tài chính dài hạn",
+      "q4_2025": 4737863994182,
+      "q4_2024": 3318095237260
+    },
+    {
+      "row_code": "252",
+      "label": "Đầu tư vào công ty liên doanh liên kết",
+      "q4_2025": 3581128517425,
+      "q4_2024": 2281222436752
+    },
+    {
+      "row_code": "253",
+      "label": "Đầu tư góp vốn vào đơn vị khác",
+      "q4_2025": 3823762975906,
+      "q4_2024": 3393737969842
+    },
+    {
+      "row_code": "254",
+      "label": "Dự phòng đầu tư tài chính dài hạn",
+      "q4_2025": -2667027499149,
+      "q4_2024": -2357065169334
+    },
+    {
+      "row_code": "260",
+      "label": "Tài sản dài hạn khác",
+      "q4_2025": 5749495414786,
+      "q4_2024": 5438413518284
+    },
+    {
+      "row_code": "261",
+      "label": "Chi phí trả trước dài hạn",
+      "q4_2025": 4200230383066,
+      "q4_2024": 3765187625417
+    },
+    {
+      "row_code": "262",
+      "label": "Tài sản thuế thu nhập hoãn lại",
+      "q4_2025": 533534765559,
+      "q4_2024": 575767686189
+    },
+    {
+      "row_code": "269",
+      "label": "Lợi thế thương mại",
+      "q4_2025": 1015730266161,
+      "q4_2024": 1097458206678
+    },
+    {
+      "row_code": "270",
+      "label": "TỔNG CỘNG TÀI SẢN",
+      "q4_2025": 88089621779862,
+      "q4_2024": 71999995678620
+    }
+  ],
+  "page6_rows": [
+    {
+      "row_code": "300",
+      "label": "NỢ PHẢI TRẢ",
+      "q4_2025": 44338155487272,
+      "q4_2024": 36272455573820
+    },
+    {
+      "row_code": "310",
+      "label": "Nợ ngắn hạn",
+      "q4_2025": 41552785100161,
+      "q4_2024": 34836184067740
+    },
+    {
+      "row_code": "311",
+      "label": "Phải trả người bán ngắn hạn",
+      "q4_2025": 3837081438126,
+      "q4_2024": 4423912840298
+    },
+    {
+      "row_code": "312",
+      "label": "Người mua trả tiền trước ngắn hạn",
+      "q4_2025": 761332738428,
+      "q4_2024": 562066755666
+    },
+    {
+      "row_code": "313",
+      "label": "Thuế và các khoản phải nộp Nhà nước",
+      "q4_2025": 2192156678455,
+      "q4_2024": 2298821801748
+    },
+    {
+      "row_code": "314",
+      "label": "Phải trả người lao động",
+      "q4_2025": 5678410841285,
+      "q4_2024": 4341013546853
+    },
+    {
+      "row_code": "315",
+      "label": "Chi phí phải trả ngắn hạn",
+      "q4_2025": 1843426377372,
+      "q4_2024": 1241089122260
+    },
+    {
+      "row_code": "317",
+      "label": "Phải thu theo tiến độ kế hoạch hợp đồng xây dựng",
+      "q4_2025": 85650109236,
+      "q4_2024": 92738882375
+    },
+    {
+      "row_code": "318",
+      "label": "Doanh thu chưa thực hiện ngắn hạn",
+      "q4_2025": 4230708251601,
+      "q4_2024": 4224649366399
+    },
+    {
+      "row_code": "319",
+      "label": "Phải trả ngắn hạn khác",
+      "q4_2025": 1014673786632,
+      "q4_2024": 874015837328
+    },
+    {
+      "row_code": "320",
+      "label": "Vay và nợ thuê tài chính ngắn hạn",
+      "q4_2025": 19169697497955,
+      "q4_2024": 14446238451323
+    },
+    {
+      "row_code": "321",
+      "label": "Dự phòng phải trả ngắn hạn",
+      "q4_2025": 578298384069,
+      "q4_2024": 496600145127
+    },
+    {
+      "row_code": "322",
+      "label": "Quỹ khen thưởng phúc lợi",
+      "q4_2025": 2161348997002,
+      "q4_2024": 1835037318363
+    },
+    {
+      "row_code": "330",
+      "label": "Nợ dài hạn",
+      "q4_2025": 2785370387111,
+      "q4_2024": 1436271506080
+    },
+    {
+      "row_code": "336",
+      "label": "Doanh thu chưa thực hiện dài hạn",
+      "q4_2025": 127529003367,
+      "q4_2024": 131344534204
+    },
+    {
+      "row_code": "337",
+      "label": "Phải trả dài hạn khác",
+      "q4_2025": 149213186822,
+      "q4_2024": 183788442785
+    },
+    {
+      "row_code": "338",
+      "label": "Vay và nợ thuê tài chính dài hạn",
+      "q4_2025": 1903789988184,
+      "q4_2024": 501115537075
+    },
+    {
+      "row_code": "341",
+      "label": "Thuế thu nhập hoãn lại phải trả",
+      "q4_2025": 198787701984,
+      "q4_2024": 356966680614
+    },
+    {
+      "row_code": "342",
+      "label": "Dự phòng phải trả dài hạn",
+      "q4_2025": 405858410471,
+      "q4_2024": 262864215119
+    },
+    {
+      "row_code": "343",
+      "label": "Quỹ phát triển khoa học và công nghệ",
+      "q4_2025": 192096283,
+      "q4_2024": 192096283
+    }
+  ],
+  "page7_rows": [
+    {
+      "row_code": "400",
+      "label": "VỐN CHỦ SỞ HỮU",
+      "q4_2025": 43751466292590,
+      "q4_2024": 35727540104800
+    },
+    {
+      "row_code": "410",
+      "label": "Vốn chủ sở hữu",
+      "q4_2025": 43748716292590,
+      "q4_2024": 35724790104800
+    },
+    {
+      "row_code": "411",
+      "label": "Vốn góp của chủ sở hữu",
+      "q4_2025": 17035071210000,
+      "q4_2024": 14710691830000
+    },
+    {
+      "row_code": "412",
+      "label": "Thặng dư vốn cổ phần",
+      "q4_2025": 49713213411,
+      "q4_2024": 49713213411
+    },
+    {
+      "row_code": "414",
+      "label": "Vốn khác của chủ sở hữu",
+      "q4_2025": 3499547369952,
+      "q4_2024": 1929012703454
+    },
+    {
+      "row_code": "417",
+      "label": "Chênh lệch tỷ giá hối đoái",
+      "q4_2025": -70194908319,
+      "q4_2024": -49485560860
+    },
+    {
+      "row_code": "418",
+      "label": "Quỹ đầu tư phát triển",
+      "q4_2025": 1556932891952,
+      "q4_2024": 2033289141535
+    },
+    {
+      "row_code": "420",
+      "label": "Quỹ khác thuộc vốn chủ sở hữu",
+      "q4_2025": 88263628887,
+      "q4_2024": 87730484825
+    },
+    {
+      "row_code": "421",
+      "label": "Lợi nhuận sau thuế chưa phân phối",
+      "q4_2025": 14324284500434,
+      "q4_2024": 11030528671431
+    },
+    {
+      "row_code": "421a",
+      "label": "LNST chưa phân phối lũy kế đến cuối kỳ trước",
+      "q4_2025": 7399799985311,
+      "q4_2024": 5458228109134
+    },
+    {
+      "row_code": "421b",
+      "label": "Lợi nhuận sau thuế chưa phân phối kỳ này",
+      "q4_2025": 6924484515123,
+      "q4_2024": 5572300562297
+    },
+    {
+      "row_code": "429",
+      "label": "Lợi ích cổ đông không kiểm soát",
+      "q4_2025": 7265098386273,
+      "q4_2024": 5933309621004
+    },
+    {
+      "row_code": "430",
+      "label": "Nguồn kinh phí và quỹ khác",
+      "q4_2025": 2750000000,
+      "q4_2024": 2750000000
+    },
+    {
+      "row_code": "431",
+      "label": "Nguồn kinh phí",
+      "q4_2025": 2750000000,
+      "q4_2024": 2750000000
+    },
+    {
+      "row_code": "440",
+      "label": "TỔNG CỘNG NGUỒN VỐN",
+      "q4_2025": 88089621779862,
+      "q4_2024": 71999995678620
+    }
+  ],
+  "key_figures_page4": {
+    "TÀI SẢN NGẮN HẠN (100)": 58102970741619,
+    "Tiền và tương đương tiền (110)": 10540181640920,
+    "Đầu tư tài chính ngắn hạn (120)": 29612986737440,
+    "Phải thu ngắn hạn (130)": 14400800569076,
+    "Hàng tồn kho (140)": 2167188682919,
+    "Tài sản ngắn hạn khác (150)": 1381813111264
+  },
+  "key_figures_page5": {
+    "TÀI SẢN DÀI HẠN (200)": 29986651038243,
+    "TỔNG CỘNG TÀI SẢN (270)": 88089621779862
+  },
+  "key_figures_page6": {
+    "NỢ PHẢI TRẢ (300)": 44338155487272,
+    "Nợ ngắn hạn (310)": 41552785100161,
+    "Nợ dài hạn (330)": 2785370387111
+  },
+  "key_figures_page7": {
+    "VỐN CHỦ SỞ HỮU (400)": 43751466292590,
+    "TỔNG CỘNG NGUỒN VỐN (440)": 88089621779862
+  },
+  "balance_check": {
+    "total_assets": 88089621779862,
+    "total_liabilities": 44338155487272,
+    "total_equity": 43751466292590,
+    "liabilities_plus_equity": 88089621779862,
+    "balanced": true
+  }
+}
