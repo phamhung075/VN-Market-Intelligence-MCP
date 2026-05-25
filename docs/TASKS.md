@@ -222,7 +222,11 @@
 
 ---
 
-### Sprint BCTC-TABLE-3 — REOPEN: row table is garbage (false-green correction)
+### Sprint BCTC-TABLE-3 — REOPEN: row table is garbage (false-green correction) → BT3-RETHINK (FALSE-GREEN #6)
+
+**Status:** **BT3-FIX4 REVOKED 2026-05-25T23:29Z — FALSE-GREEN #6 — RECURRING-BUG ESCALATION → ARCHITECT (BT3-RETHINK).** The BT3-DESIGN→BT3-FIX→…→BT3-FIX4-PARSE sub-chain SHIPPED (`1ab1f7a6`→`3e47ccf3`→`8dbb19e3`→`c66a7ff7`; psm-6 root-cause `3b722462`; pdf2image dep `4dabeb55`) and DID improve the table (orphans 44→23, dup codes gone, "Test Row" gone, balance_delta=0, ~72/95 rows clean) — but it is STILL broken on LIVE. dev's BT3-FIX4-PARSE "DONE" claimed *"Zero orphan rows, value_prior 78/78=100%"* against the SPIKE PyMuPDF OCR **fixture** (`fpt_q4_2025_pages_4-7.txt`, 79 rows). PO re-verified the **LIVE poppler-OCR** endpoint independently: **95 rows, 23 ORPHANS** (code=null), value_prior null on those 23, codes 222/223/226/131/319/421b ABSENT-or-orphan, header/date/signature junk rows survive. `text_table_extractor.py` = **5 `fix(` commits in 30d** AND the architect's OWN FIX4 ruling false-greened → **per `feedback_recurring_bug_escalation.md`, NO MORE BLIND DEV PATCHES.** Escalated to **architect (BT3-RETHINK)** for a FILTER-STRATEGY root-cause ruling (negative-skip vs POSITIVE-keep vs POSITIONAL-cutoff + embedded-code split). **Acceptance moves to the LIVE endpoint row-by-row; the fixture is FORBIDDEN as the gate + MUST be regenerated from live poppler OCR.** Full record + revised ladder + HARD CONSTRAINTS: `docs/handoffs/TASK_BCTC-TABLE.md § [PO] BT3-FIX4 REVOKED → BT3-RETHINK`. Decision: `docs/po-decisions/2026-05-26-bctc-table-bt3-fix4-false-green-rethink.md`.
+
+<details><summary>SUPERSEDED — REOPENED 2026-05-25T21:10Z (BCTC-TABLE-3 original, superseded by BT3-RETHINK)</summary>
 
 **Status:** REOPENED 2026-05-25T21:10Z by PO (self-initiated; supersedes the revoked BT-EXIT FINAL). **Severity:** CRITICAL. **User `/goal`:** *"http://localhost:3000/api/bctc-inspect need present correct data table for recheck."* **Zone:** primary `apps/pdf-extractor/` (`text_table_extractor.py` row-assembler); dev-mcp-server only if row contract must change (it should not). **Privacy:** self-hosted Tesseract only, zero external API. **Re-backfill:** host-safe pre-supplied-stored-OCR path (`bctcBatchTableBackfillJob`), sequential, zero Tesseract ([[project_host_memory_panic]]). Full spec + AC-1..AC-7 + live evidence + root cause: `docs/handoffs/TASK_BCTC-TABLE.md § SPRINT BCTC-TABLE-3`.
 
@@ -237,6 +241,24 @@
 | BT3-EXIT | **[po]** Sign-off vs AC-1..AC-7 on LIVE curl evidence + privacy audit. This time inspect ROW COMPOSITION (zero junk, zero orphan, code 100 present, no dups, value_prior filled), not just the badge. | CRITICAL | GATE | po | docs/handoffs/TASK_BCTC-TABLE.md § SPRINT BCTC-TABLE-3 | BLOCKED | BT3-QA |
 
 **Dispatch order:** BT3-DESIGN (architect) → BT3-FIX (dev-pdf-extractor) → BT3-DEPLOY (ops) → BT3-QA (qa) → BT3-EXIT (po). Strictly serial — single zone, single doc, correctness-critical.
+
+</details>
+
+**BT3-RETHINK ladder (active — supersedes the BT3-DESIGN..BT3-EXIT rows above):**
+
+| Task ID | Title | Priority | Type | Owner | Handoff | Status | Blocked by |
+|---------|-------|----------|------|-------|---------|--------|-----------|
+| BT3-RETHINK | **Architect FILTER-STRATEGY root-cause ruling (DESIGN ONLY — recurring-bug escalation).** DO NOT propose another regex patch. Rule on: (A) filter strategy — negative-skip-list (proven inadequate) vs POSITIVE-keep (emit row only if valid code OR recognized BCTC section label) vs POSITIONAL-cutoff (drop after last summary code 440/270) vs combination; (B) embedded-code split — replace layout-specific regexes with a structural code-finder (find 2-3-digit[a-z]? token anywhere → split label-left/values-right)? Must justify against the 3 LIVE poppler-OCR root-cause classes, NOT the spike fixture. Output: brief under `docs/architecture-briefs/` + revised ACs appended to handoff. First instruction to dev: regenerate fixture from LIVE poppler OCR. | CRITICAL | TASK | architect | docs/handoffs/TASK_BCTC-TABLE.md § [PO] BT3-FIX4 REVOKED → BT3-RETHINK | **READY (dispatch FIRST)** | — |
+| BT3-FIX5 | **[dev-pdf-extractor]** Implement EXACTLY the architect's BT3-RETHINK strategy (no freelance regex). **HARD AC: REGENERATE the test fixture from LIVE poppler OCR** (re-OCR e71f845d via the production poppler path / pull stored poppler text) — NOT the spike PyMuPDF text. Fence-A/B intact, sandbox exit-0, FROZEN surfaces untouched. Leave files UNSTAGED, list exact paths in RETURN. | CRITICAL | TASK | dev-pdf-extractor | docs/handoffs/TASK_BCTC-TABLE.md § [PO] BT3-FIX4 REVOKED → BT3-RETHINK | BLOCKED | BT3-RETHINK |
+| BT3-DEPLOY2 | **[ops]** `docker compose up -d --build pdf-extractor` (separate docker session, 16GB cap) + re-extract **ONLY e71f845d** via `POST http://localhost:5001/extract-tables`, single-doc sequential. **NEVER run `bctcBatchTableBackfillJob`** (host kernel-panic risk). | HIGH | TASK | ops | docs/handoffs/TASK_BCTC-TABLE.md § [PO] BT3-FIX4 REVOKED → BT3-RETHINK | BLOCKED | BT3-FIX5 |
+| BT3-QA2 | **[qa] LIVE endpoint row-by-row gate (NOT the fixture; `balance_pass` alone FORBIDDEN as gate).** `GET /api/bctc-inspect/table/e71f845d-...`: orphans ≤2; ZERO header/date/signature junk; codes 222/223/226/131/319/421b present + code-split with values; 4 sentinels exact (270/100/300/400); value_prior populated; no dup codes; balance_delta=0. Emit `qa-bctc-table-<UTC>.json`. | CRITICAL | GATE | qa | docs/handoffs/TASK_BCTC-TABLE.md § [PO] BT3-FIX4 REVOKED → BT3-RETHINK | BLOCKED | BT3-DEPLOY2 |
+| BT3-EXIT2 | **[po]** Independently re-verify the LIVE endpoint row-by-row (do NOT trust QA claim or fixture) vs the BT3-QA2 bar. Main terminal commits in-tree work after sign-off. | CRITICAL | GATE | po | docs/handoffs/TASK_BCTC-TABLE.md § [PO] BT3-FIX4 REVOKED → BT3-RETHINK | BLOCKED | BT3-QA2 |
+
+**Dispatch order:** BT3-RETHINK (architect) → BT3-FIX5 (dev-pdf-extractor) → BT3-DEPLOY2 (ops) → BT3-QA2 (qa) → BT3-EXIT2 (po). Strictly serial — single zone, single doc, correctness-critical.
+
+**HARD CONSTRAINTS (all agents):** QA acceptance = LIVE endpoint row-by-row (fixture forbidden as gate; fixture regenerated from live poppler OCR). HOST KERNEL-PANIC: single-doc OCR only, NEVER batch backfill. PRIVACY: self-hosted local OCR only, zero third-party API. FROZEN: `apps/pdf-extractor/dashboard/{index.html,traces.js,trust-contract.spec.js}` + `sandbox/runner.py` + `pilot-status-pdf-extractor.json`. COMMITS: subagents leave files UNSTAGED + list paths; main terminal commits explicitly on `main`, no push, `git show --stat HEAD` zero foreign.
+
+**DEFERRED (AFTER goal met, separate dev-mcp-server task — do NOT block the goal):** (a) `pushBctcTableHandler.ts` `rows_stored: rows.length` is an input echo not a DB count (false-success that masked the write-wedge); (b) a test wrote to the LIVE `/app/data/market.db` + seeded the "Test Row" (test-isolation breach).
 
 ---
 

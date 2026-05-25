@@ -3424,3 +3424,81 @@ Total fixture rows: 79 (IMPROVEMENT: 78 code rows vs 76 pre-fix; 1 header row vs
 ### NEXT
 
 ops must `docker compose up -d --build pdf-extractor` then trigger re-backfill for FPT Q4 (report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65). QA verifies live endpoint: `GET /api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` rows_count in [82, 92], AC-1..AC-7 from architect ruling pass.
+
+---
+
+## [PO] BT3-FIX4 REVOKED — RECURRING-BUG ESCALATION → BT3-RETHINK (2026-05-25T23:29Z)
+
+**Verdict: BT3-FIX4-PARSE DONE is REVOKED — FALSE-GREEN #6.** The container WAS rebuilt + FPT Q4 re-extracted (pdf-extractor created 2026-05-26 01:08, healthy; CHANGE-2 `[a-z]?` regex + CHANGE-4 junk list confirmed deployed — these orphans are the HARDENED parser's OUTPUT, not a stale image). So the dev work shipped; the problem is that it shipped the WRONG STRATEGY, verified on the WRONG SUBSTRATE.
+
+**The false-green mechanism (proven):** dev's AC-NR-1 evidence (this handoff L3404-3409) reads *"Zero orphan rows, value_prior 78/78=100%, total fixture rows 79"* — measured against fixture `fpt_q4_2025_pages_4-7.txt`, which is **SPIKE PyMuPDF OCR** (clean "421b", "tháng" with diacritic). The architect's RULING (L3256, "orphan floor 1-2, hard AC ≤5") was written against that same fixture. But PRODUCTION uses **poppler OCR** (different diacritics + signature-area noise). PO re-verified the LIVE endpoint independently (anti-hallucination, did NOT trust the dev claim):
+
+```
+GET /api/bctc-inspect/table/e71f845d-...  (live, poppler OCR substrate)
+  total rows: 95     ORPHANS (code=null): 23     DUP codes: none
+  value_prior NULL: 23 (= the 23 orphans)        balance_delta: 0   balance_pass: true
+  sentinels: 270=88,089,621,779,862 / 100=58,102,970,741,619 / 300=44,338,155,487,272 / 400=43,751,466,292,590 — ALL EXACT, label-aligned
+  codes 222/223/226/131/319/421b: ABSENT-or-orphan
+  orphan examples: row1 "BANG CÂN ĐỐI KẾ TOÁN HỢP NHẬT" · row27 "Tai ngày 31 thang 12 năm 2025" · row28 "minh" · row9 "1. Phải thu ngắn han của khách hàng 131 7 12.733.504.688.522"
+```
+
+So fixture=79 rows/0 orphans, LIVE=95 rows/23 orphans. balance_pass=true is the 6th false-green — the badge is REAL but is NOT the gate ([[feedback_fence_false_green]]).
+
+**RECURRING-BUG-ESCALATION TRIGGER (binding, `feedback_recurring_bug_escalation.md`):** `apps/pdf-extractor/infrastructure/text_table_extractor.py` carries **5 `fix(` commits in 30d** — BT-7 `210a0a62`, BT3-FIX `1ab1f7a6`, BT3-FIX-2 `3e47ccf3`, BT3-FIX-3 `8dbb19e3`, BT3-FIX4 `c66a7ff7` — far past the ≥2 threshold, AND the architect's OWN FIX4 ruling false-greened. Per the rule: **NO MORE BLIND DEV PATCHES.** This is no longer a regex-tweak problem; it is a FILTER-STRATEGY architecture problem. Escalate to architect for a root-cause rethink BEFORE any dev touches the file again.
+
+### The 3 concrete root-cause classes the architect must rule on (all because the FIX4 fixture used spike OCR while live uses poppler OCR)
+
+1. **DIACRITICS-MISMATCH in the negative skip-list.** CHANGE-4 added literal `"bang can doi"` (unaccented) → never matches live `"BANG CÂN ĐỐI KẾ TOÁN HỢP NHẬT"` (accented). The date regex `ngày\s+\d{1,2}\s+tháng` requires "tháng" but live OCR is `"...ngày 31 thang 12..."` ("thang", no diacritic) → 3 header rows + 2 date rows survive as orphans.
+2. **GARBLED SIGNATURE-AREA NOISE** survives any literal list: `": \:| /PTP) 7), y2"`, `"ụ So i ide"`, `"gUẶu OO by se."`, `"Lê Varetrung Mioàng Hữu Chiến"`, `"minh"`. A negative skip-list can NEVER enumerate arbitrary OCR garbage. → needs an ARCHITECTURE decision: **POSITIVE-keep** (emit a row ONLY if it has a valid code OR a recognized section label) and/or **POSITIONAL-cutoff** (drop everything after the last summary code 440/270), instead of the negative skip-list.
+3. **EMBEDDED-CODE DATA ROWS still orphaned** (code present mid-line, never split): dash-prefix 222/223/226 (`"- Nguyên giá 222 29.148.692.599.137 24.457.733.666.511"`) and numbered+note-ref 131/319/421b (`"1. Phải thu ngắn han của khách hàng 131 7 12.733.504.68..."` — note-ref column "7"/"22" sits between code and values). CHANGE-1/2/3 were supposed to fix these on the fixture but live OCR variance defeats them — the architect must rule whether a structural code-finder (scan for a 2-3 digit code token anywhere in the line, then split label-left / values-right) replaces the layout-specific regexes.
+
+### BT3-RETHINK — Architect root-cause ruling on FILTER STRATEGY · architect · CRITICAL · READY (dispatch FIRST)
+
+**DO NOT propose another regex patch. RULE on the strategy class:**
+- **(A) Filter strategy:** negative-skip-list (current, proven inadequate) vs **POSITIVE-keep** (row emitted only with a valid code OR a recognized BCTC section label like "TÀI SẢN"/"NỢ PHẢI TRẢ"/"VỐN CHỦ SỞ HỮU") vs **POSITIONAL-cutoff** (drop everything after the last real summary code, e.g. 440/270 = end of the balance sheet) vs a COMBINATION. Pick one, justify it against all 3 root-cause classes above, and against the diacritics/noise variance of poppler OCR (NOT the spike fixture).
+- **(B) Embedded-code split:** rule whether the layout-specific regexes are replaced by a single structural code-finder (find a 2-3-digit[a-z]? token anywhere in the line → split label-left / note-ref-and-values-right).
+- **(C) Output:** an architecture brief (under `docs/architecture-briefs/`) + revised per-task ACs appended HERE. Time-box: design-only, no code.
+
+**Architect MUST NOT design against the spike fixture.** The ruling must be validated mentally against the LIVE poppler-OCR orphan examples quoted above. The first instruction to dev MUST be: regenerate the test fixture from LIVE poppler OCR before claiming any AC.
+
+### BT3-FIX5 — dev-pdf-extractor implements the revised ruling · dev-pdf-extractor · CRITICAL · BLOCKED (← BT3-RETHINK)
+
+- Implement EXACTLY the strategy the architect rules at BT3-RETHINK. NO freelance regex additions beyond the ruling.
+- **REGENERATE the test fixture from LIVE poppler OCR** (re-OCR e71f845d via the production poppler path, or pull the stored poppler OCR text for that report) — NOT the spike PyMuPDF text. The fixture that false-greened FIX4 (`fpt_q4_2025_pages_4-7.txt`) must be replaced/supplemented so the unit+integration tests run on the SAME OCR variant production sees. This is a HARD AC: if the fixture is still spike-OCR, the next fix false-greens identically.
+- Fence-A/B intact (`lint-imports` exit 0); sandbox exit-0, zero creds. FROZEN surfaces untouched (see constraints).
+- Leave files UNSTAGED; list exact paths in RETURN.
+
+### BT3-DEPLOY2 — ops redeploy + single-doc re-extract · ops · CRITICAL · BLOCKED (← BT3-FIX5)
+
+- `docker compose up -d --build pdf-extractor` in the SEPARATE docker session (host 16GB cap).
+- Re-extract **ONLY e71f845d**, sequential, single-doc OCR: `POST http://localhost:5001/extract-tables` for that one report_id. **NEVER run `bctcBatchTableBackfillJob`** (host kernel-panic risk — see HARD CONSTRAINTS).
+
+### BT3-QA2 — QA live-endpoint row-by-row gate · qa · CRITICAL · BLOCKED (← BT3-DEPLOY2)
+
+**Acceptance is the LIVE endpoint `GET /api/bctc-inspect/table/e71f845d-...`, row-by-row — NOT the test fixture (the fixture is what false-greened FIX4).** `balance_pass` ALONE is FORBIDDEN as the gate (would be the 6th false-green). All of:
+- orphans (code=null) ≤ 2
+- ZERO header/date/signature junk rows (no "BANG CÂN ĐỐI...", no "ngày...tháng/thang...", no signature garble)
+- codes 222 / 223 / 226 / 131 / 319 / 421b PRESENT and code-split with their values
+- the 4 sentinels still EXACT (270=88,089,621,779,862 / 100=58,102,970,741,619 / 300=44,338,155,487,272 / 400=43,751,466,292,590)
+- value_prior populated (not null on data rows)
+- no duplicate codes
+- balance_delta = 0
+- emit `qa-bctc-table-<UTC>.json`.
+
+### BT3-EXIT2 — PO sign-off · po · CRITICAL · BLOCKED (← BT3-QA2)
+
+PO INDEPENDENTLY re-verifies the LIVE endpoint row-by-row (does NOT trust QA's claim or the fixture) against the BT3-QA2 bar above. Main terminal commits in-tree work after sign-off.
+
+### HARD CONSTRAINTS (pass these down the WHOLE chain — architect → dev → ops → qa)
+
+- **QA acceptance = LIVE endpoint row-by-row, NOT the fixture.** `balance_pass` alone is FORBIDDEN as the gate.
+- **The FIX4 test fixture MUST be regenerated from LIVE poppler OCR**, not spike PyMuPDF OCR. Hard AC on BT3-FIX5.
+- **HOST KERNEL-PANIC RISK ([[project_host_memory_panic]]):** single-doc OCR only, sequential. NEVER run `bctcBatchTableBackfillJob` for verification. Re-extract ONLY e71f845d via `POST http://localhost:5001/extract-tables`.
+- **PRIVACY (non-negotiable):** self-hosted local OCR ONLY (Tesseract/poppler). NEVER send the PDF or page-images to any third-party API (no Claude/Gemini/GPT/Textract/Document-AI).
+- **FROZEN pilot surfaces — must NOT touch:** `apps/pdf-extractor/dashboard/{index.html,traces.js,trust-contract.spec.js}`, `apps/pdf-extractor/sandbox/runner.py`, `docs/data/pilot-status-pdf-extractor.json`.
+- **COMMITS:** subagents can't acquire the commit-mutex (harness limit) — leave changed files UNSTAGED and list exact paths in the RETURN. The MAIN TERMINAL commits explicitly (`git reset -q` → `git add <exact paths>` → verify `git show --stat HEAD` zero foreign). No branches (all on `main`). No `git push` (user owns).
+
+### DEFERRED (note in handoff; do NOT block the user's goal on these — separate dev-mcp-server task AFTER the goal is met)
+
+- (a) `pushBctcTableHandler.ts` returns `rows_stored: rows.length` (input echo, NOT a DB-verified count) — false-success that masked the write-wedge. Fix: return the actual DB COUNT after insert.
+- (b) a test writes to the LIVE `/app/data/market.db` and seeded the clobbering "Test Row" — test-isolation breach. Fix: tests must use an isolated/in-memory DB, never the live one.
