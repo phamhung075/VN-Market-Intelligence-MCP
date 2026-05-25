@@ -16,7 +16,7 @@ Expanded 142L → 192L (size-justification updated). Sections added between "Aft
 
 2. **ESLint Fence (G4 — Phase 2 concern for MVR track):** Phase 1 defers G4. Phase 2 target = eslint-plugin-import or eslint-plugin-boundaries blocking domain/formatters → lib/api imports. Explicitly noted as TS-service → ESLint (NOT depguard which is Go-only, per SI-3 design). Lazy-load trigger documented. Hard gate: DO NOT implement ESLint fence during Phase 1 tasks.
 
-**Commit:** (see SHA below)
+**Commit:** e4812778
 **Template used:** dev-kinh-dich/main.md G12 gate pattern adapted for MVR/Playwright/Vitest context.
 **Note:** agent-md-factory skill does not exist at .claude/skills/agent-md-factory/SKILL.md — proceeded from guide + factory template patterns directly (same as c263/c264/c265).
 
