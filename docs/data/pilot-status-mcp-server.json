@@ -144,18 +144,25 @@
     ]
   },
   "phase2": {
-    "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 1 gate passes.",
-    "status": "NOT-STARTED",
+    "_note": "Phase-2 task plan AUTHORED 2026-05-25T17:55Z by architect (P2-MCP-PLAN). 13 tasks P2-A→P2-Z. Awaiting PO dispatch to dev-mcp-server RUN-SOLO.",
+    "status": "AWAITING-PLAN",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
     "openedAt": null,
     "openedBy": null,
     "closedAt": null,
     "closedBy": null,
-    "skeleton_in": "<SERVICE:path to phases doc §Phase 2>",
-    "taskPlan": null,
-    "taskCount": null,
-    "wipPolicy": "<SERVICE:WIP=1 default; specialised ordering if R-type risks require specific first task>",
+    "skeleton_in": "docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-2-task-plan.md",
+    "taskPlan": "docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-2-task-plan.md",
+    "taskCount": 13,
+    "wipPolicy": "WIP=1 sequential, RUN-SOLO throughout Phase 2 (same constraint as Phase 1). P2-I (G9 USER verbal) is the only USER-gated step — no developer work needed, PO presents dashboard.",
     "wip_limit": 1,
+    "remainingGoals": ["G3","G4","G5a","G9","G10","G11"],
+    "preRevertTags": {
+      "mcp-server-pre-ci": "P2-A — before G4 ESLint fence work",
+      "mcp-server-pre-delete": "P2-F — before kinhDichWrapper git mv",
+      "mcp-server-pre-inject": "P2-J — before G10 bug injection"
+    },
+    "userGatedSteps": ["P2-I (G9 verbal sign-off — PO presents file:// dashboard, user says YES/NO, NEVER ask user to run commands)"],
     "tasks": {}
   },
   "goals": [
