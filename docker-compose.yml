@@ -79,6 +79,7 @@ services:
     - DB_PATH=/app/data/pdf_extractor.db
     - STORAGE_DIR=/app/data/extractions
     - LOG_LEVEL=INFO
+    - MCP_SERVER_URL=http://mcp-server:3000
     restart: unless-stopped
     healthcheck:
       test:
