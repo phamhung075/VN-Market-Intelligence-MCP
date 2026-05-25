@@ -9,7 +9,7 @@
   "activatedAt": "2026-05-25T08:40:43Z",
   "activatedBy": "po (UNBLOCK verdict — Phase-0 authorized; HELD-LAST-SOLO conditions all MET, see sequencingGate.unblockVerdict). status PENDING→ACTIVE on Phase-0 open, mirroring alert-engine/api-gateway lifecycle.",
   "sequencingGate": {
-    "decision": "UNBLOCKED-PHASE0-OPEN (was HELD-LAST-SOLO 2026-05-25T07:06:25Z → cleared 2026-05-25T08:40:43Z)",
+    "decision": "PHASE0-CLOSED-PHASE1-READY-SOLO-DEFERRED (HELD-LAST-SOLO 2026-05-25T07:06:25Z → UNBLOCKED-PHASE0-OPEN 2026-05-25T08:40:43Z → PHASE0-CLOSED + phase 0→1 at P0-MCP-EXIT 2026-05-25T10:50:00Z). WAVE B BUILD remains SOLO-LAST and is DEFERRED to a separate docker session (see phase1.buildWave).",
     "unblockVerdict": {
       "verdict": "UNBLOCK",
       "decidedAt": "2026-05-25T08:40:43Z",
@@ -54,52 +54,71 @@
   "language": "TypeScript (Bun)",
   "languageLockSource": "stays TS — single MCP interface + scheduler host (scale charter §Deltas; RUN-SOLO/LAST)",
   "languageLockedAt": "2026-05-24",
-  "phase": "0",
-  "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status.",
+  "phase": "1",
+  "_phase_note": "Tracks current phase as string integer. Advanced 0→1 at P0-MCP-EXIT 2026-05-25T10:50Z (Phase-0 CLOSED, Phase-1 plan READY-FOR-DISPATCH). Do not use DONE/ACTIVE here — use top-level status.",
   "phase0": {
-    "status": "OPEN",
+    "status": "CLOSED",
     "_status_enum": "[FIXED] Allowed values: OPEN | CLOSED",
     "openedAt": "2026-05-25T08:40:43Z",
     "openedBy": "po (UNBLOCK verdict — 3-condition HELD gate cleared; Phase-0 chartering authorized, BUILD wave stays SOLO-LAST). Next dispatch: architect P0-MCP-1 brownfield scan first.",
-    "closedAt": null,
-    "closedBy": null,
-    "owner": "architect (brownfield P0-MCP-1/-2 + Phase-1 plan P0-MCP-5 + exit-gate P0-MCP-EXIT) + agent-father (dev-mcp-server agent/flow P0-MCP-3); po absorbs anchor + flip (P0-MCP-4) + exit sign-off",
+    "closedAt": "2026-05-25T10:50:00Z",
+    "closedBy": "po (P0-MCP-EXIT sign-off — all 4 Phase-0 deliverables verified DONE in git log; P0-MCP-4 anchor tag mcp-server-pre-refactor created at 7d78abb1; phase advanced 0→1; WAVE B set READY-SOLO-DEFERRED). PO is sole authority to edit pilot-status.",
+    "owner": "architect (brownfield P0-MCP-1 + Phase-1 plan P0-MCP-5) + qa (bug-inventory baseline P0-MCP-2) + agent-father (dev-mcp-server flow G12 gate P0-MCP-3); po absorbs anchor + flip (P0-MCP-4) + exit sign-off (P0-MCP-EXIT)",
     "deliverables": {
-      "_note": "PENDING — architect instantiates a per-service factory charter dir (pattern: docs/architecture-briefs/<date>-<svc>-factory/) at kickoff, mirroring alert-engine pilot-5. Thin scale charter at .charterRef captures interim deltas/risks.",
+      "_note": "ALL Phase-0 deliverables COMPLETE — verified each commit exists in git log before crediting. P0-MCP-5 (Phase-1 plan) used in lieu of a factory-charter dir; thin scale charter at .charterRef captures deltas/risks. dev_agent_file = N/A (dev-mcp-server agent pre-existed; P0-MCP-3 baked the G12 DoD gate into its flow file).",
       "factory_charter_or_thin": "DONE 2026-05-24T06:49:21Z (thin: docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-charter.md)",
       "pilot_status_ssot": "DONE 2026-05-24T06:49:21Z (this file)",
-      "brownfield_inventory": "ACTIVE — FIRST Phase-0 deliverable (P0-MCP-1). Gate cleared 2026-05-25T08:40:43Z; architect dispatched to run the brownfield scan first (read-only inventory of ~132 tools / 10-module barrels + barrel-decomposition seams + candidate primitives + G5-inverse HTTP-route map). Handoff: docs/handoffs/TASK_P0-MCP-1-brownfield-inventory.md.",
-      "bug_inventory_entry": "PENDING",
-      "dev_agent_file": "PENDING",
-      "dev_agent_flow_file": "PENDING",
-      "phase_1_task_plan": "PENDING"
+      "brownfield_inventory": "DONE — P0-MCP-1 architect, commit 44530a26, docs/handoffs/TASK_P0-MCP-1-brownfield-inventory.md (verdict FULL, 12 barrels, 146 tools, G5-inverse map + barrel-decomposition seams).",
+      "bug_inventory_entry": "DONE — P0-MCP-2 qa, commit 05dc494a, docs/handoffs/TASK_P0-MCP-2-bug-inventory-baseline.md (~9408 pass / ~348 fail / 35 skip; 7 open bugs incl. R-CRITICAL G5-inverse BUG-5).",
+      "dev_agent_file": "N/A — dev-mcp-server agent pre-existed; P0-MCP-3 confirmed it and baked the G12 DoD gate into the flow file (below).",
+      "dev_agent_flow_file": "DONE — P0-MCP-3 agent-father, commit 0a4f1f28, .claude/flows/dev-mcp-server/main.md (G12 DoD Gate + RUN-SOLO discipline baked Day-0; G12 streak = P1-B/P1-C/P1-D).",
+      "phase_1_task_plan": "DONE — P0-MCP-5 architect, commit 7d78abb1, docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-1-task-plan.md (FULL scope, 10 tasks P1-A..P1-EXIT, 78 ACs, G12 streak P1-B/P1-C/P1-D)."
     },
+    "anchor_tag": "mcp-server-pre-refactor",
+    "anchor_commit": "7d78abb1d30f677712ce81060f61678bd7bc6064",
+    "_anchor_note": "P0-MCP-4: annotated tag created local-only (no --force/push) at HEAD 7d78abb1 — the clean pre-refactor baseline after all 4 Phase-0 deliverables landed. Convention <service>-pre-refactor (mirrors news-fetch-pre-refactor). Phase-1 barrel + G5-inverse waves diff/revert against this anchor. Anchor discipline: once frozen, no retag/rewrite/push.",
     "exit_gate": {
-      "all_deliverables_landed": false,
+      "all_deliverables_landed": true,
       "pilot_status_phase_0_fields_populated": true,
       "no_code_in_service_pkg_yet": true,
-      "exit_gate_status": "OPEN",
-      "closedAt": null,
-      "verification_commit_sha_architect": null,
-      "verification_signal": null
+      "exit_gate_status": "CLOSED",
+      "closedAt": "2026-05-25T10:50:00Z",
+      "verification_commit_sha_architect": "7d78abb1 (P0-MCP-5 Phase-1 plan = the architectural confirmation; P0-MCP-1 brownfield 44530a26 = the FULL-scope verdict). No fresh-architect re-review required — zero unresolved design question, FULL scope BINDING+rationalized, G5-inverse map carried to P1-F/P1-G.",
+      "verification_signal": null,
+      "_verification_signal_note": "Inline PO sign-off (P0-MCP-EXIT) — no separate closure-signal JSON emitted; close-out is host-side bookkeeping per the BUILD-deferred constraint."
     }
   },
   "phase1": {
-    "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 0 closes. Expand on Phase 0 exit.",
-    "status": "NOT-STARTED",
+    "_note": "Expanded on Phase-0 exit (P0-MCP-EXIT 2026-05-25T10:50Z). Plan is READY-FOR-DISPATCH but the BUILD wave (WAVE B / dev-mcp-server) is DEFERRED to a later SOLO cycle — see buildWave below.",
+    "status": "ACTIVE",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
-    "openedAt": null,
-    "openedBy": null,
-    "gateVerdict": null,
-    "gateVerifiedAt": null,
-    "gateVerifiedBy": null,
-    "gateCommit": null,
-    "gateDecisionDoc": null,
+    "openedAt": "2026-05-25T10:50:00Z",
+    "openedBy": "po (P0-MCP-EXIT — Phase-0 CLOSED, phase advanced 0→1, Phase-1 task plan READY-FOR-DISPATCH). status=ACTIVE means the phase is live + plan locked; the BUILD wave itself is NOT yet dispatched to dev (DEFERRED-SOLO, see buildWave).",
+    "gateVerdict": "AUTHORIZED — Phase-0 exit gate CLOSED, Phase-1 FULL-scope plan locked (7d78abb1). Dispatch of P1-A is gated on WAVE-B SOLO conditions + separate-session docker cadence, NOT on any further architectural review.",
+    "gateVerifiedAt": "2026-05-25T10:50:00Z",
+    "gateVerifiedBy": "po (P0-MCP-EXIT sign-off)",
+    "gateCommit": "7d78abb1d30f677712ce81060f61678bd7bc6064",
+    "gateDecisionDoc": "docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-1-task-plan.md",
     "gateSignal": null,
-    "skeleton_in": "<SERVICE:path to phases doc §Phase 1 — e.g. docs/architecture-briefs/2026-05-23-<svc>-factory/07-phases.md §Phase 1>",
-    "task_plan": "<SERVICE:path to Phase 1 task plan doc>",
+    "skeleton_in": "docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-1-task-plan.md §Phase 1 Overview",
+    "task_plan": "docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-1-task-plan.md",
     "wip_limit": 1,
-    "progress_notes": []
+    "buildWave": {
+      "wave": "WAVE B (dev-mcp-server)",
+      "readiness": "READY",
+      "dispatchMode": "RUN-SOLO",
+      "dispatchState": "DEFERRED",
+      "_dispatchState_note": "READY-SOLO-DEFERRED. Phase-1 plan is locked and the SOLO conditions are MET host-side, but P1-A is intentionally NOT dispatched this cycle. Reason: every Phase-1 wave (barrel splits + G5-inverse) is QA-gated against the live server (health 200 + tool count 146 + scheduler 68) and is finalized with a docker rebuild — both belong in the SEPARATE docker session (16GB host memory cap / kernel-panic constraint applies to BUILDS; host-side TS/Bun edits + Vitest are memory-safe but the QA gate + container rebuild are not). Per Phase-1 plan §Build Wave Docker Rebuild — Deferred + § BUILD-WAVE SEQUENCING WAVE B/C.",
+      "soloConstraint": "No other dev/scale terminal may touch the mcp-server zone (barrels / docs/signals / docs/data / scheduler) while any Phase-1 task is in flight. SOLO-LAST is non-negotiable (charter §Scheduling Mandate).",
+      "firstTask": "P1-A (sandbox runner + scenario scaffolding) — no predecessor; dispatch FIRST when the SOLO docker session opens.",
+      "blockedReason": null
+    },
+    "progress_notes": [
+      "2026-05-25T10:50Z (P0-MCP-EXIT): Phase-0 CLOSED, phase 0→1, anchor mcp-server-pre-refactor @7d78abb1 frozen. Phase-1 plan locked: 10 tasks (P1-A..P1-EXIT), 78 ACs, FULL scope. WAVE B = READY-SOLO-DEFERRED.",
+      "G5-INVERSE CARRY (R-CRITICAL — NOT lost at phase boundary): the 3 G5-inverse violations from P0-MCP-1 §9 / P0-MCP-2 BUG-5 are carried into Phase-1 as P1-F + P1-G. P1-F = kinhDichWrapper.appendKinhDich() bypass in marketTools.ts + news-analysis/analysis.ts (R-CRITICAL) + portfolioTools.ts QUE_META import from hexagramLibrary.ts (R-CRITICAL). P1-G = pdf.ts / pdfOcrWorker.ts post-1954c verify (R-MEDIUM). Both end with 'every handler proven HTTP-routed' evidence gate. Confirmed present in plan Task Ledger + §G5-Inverse Remediation Track table.",
+      "G12 streak tasks = P1-B / P1-C / P1-D (per .claude/flows/dev-mcp-server/main.md §G12 Streak Rule + plan §G12 Streak Tasks). Streak rule effective after agent-father flow commit 0a4f1f28.",
+      "Phase-1 dependency edges (plan Task Ledger): P1-A→P1-B→P1-C→P1-D→P1-E→P1-F→P1-G→P1-H→P1-QA→P1-EXIT, strictly sequential WIP=1. P1-A is the only READY task; all others BLOCKED on their predecessor."
+    ]
   },
   "phase2": {
     "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 1 gate passes.",
@@ -268,8 +287,8 @@
         "completed": 0,
         "streakComplete": false,
         "completedAt": null,
-        "tasks": [],
-        "ruleEffectiveAfter": "<DERIVED:agent-father flow commit SHA and date>"
+        "tasks": ["P1-B (three-tier dashboard stub)", "P1-C (barrel wave 1: system/)", "P1-D (barrel wave 2: macro/)"],
+        "ruleEffectiveAfter": "0a4f1f28 (P0-MCP-3 agent-father — G12 DoD Gate baked into .claude/flows/dev-mcp-server/main.md, 2026-05-25)"
       }
     }
   ],
