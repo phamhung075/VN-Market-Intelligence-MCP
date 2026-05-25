@@ -1335,3 +1335,96 @@ Owner: dev-pdf-extractor | Task: BT-3-B — Usecase + Routes
 - BT-3-B creates `application/extract_tables_usecase.py` + wires `POST /extract-tables` route + composition root in `main.py`
 - Tests: inject fakes for both ports; FPT balance-check assertion (Total Assets 88089621.779862 = Liab + Equity)
 - Fence constraint: `application/extract_tables_usecase.py` must NOT import from `infrastructure/` (domain + ports only)
+
+---
+
+## [Developer] BT-3-B — dev-pdf-extractor — DONE
+
+**Commit:** `6adc6a97` | **Branch:** main | **Date:** 2026-05-25
+
+### What was delivered
+
+4 files (exact BT-3-B file list, zero foreign):
+
+1. **`application/extract_tables_usecase.py`** (CREATE)
+   - `ExtractTablesUseCase` class — application layer, zero infra imports.
+   - Constructor: `__init__(table_extractor: TableAssemblerPort, table_push_client: TablePushClientPort)`
+   - `async def execute(report_id, pdf_path, statement_section) → dict`
+   - Step 1: calls `table_extractor.assemble(pages, statement_section)` → rows + periods
+   - Step 2 (balance_sheet only): pure `_compute_balance_check(rows)` — searches codes 270/300/400
+     - Code 270 = Total Assets, 300 = Total Liabilities, 400/440 = Total Equity
+     - Tolerance 1 VND absolute
+     - Returns None if no BS codes found (income-statement / cash-flow docs)
+   - Step 3: `await table_push_client.push_table(...)` → echoes rows_stored from response
+   - Returns `{rows_stored: int, balance_pass: bool, balance_delta: float}`
+   - SEPARATE from ExtractPDFUseCase — no 1954c collision
+
+2. **`interface/handlers.py`** (MODIFY — add route)
+   - `ExtractTablesRequestSchema(BaseModel)` — Pydantic model for `POST /extract-tables`
+   - `register_routes()` — new optional `extract_tables_usecase` param (backward-compat)
+   - `POST /extract-tables` route — validates section, calls usecase, returns `{ok, rows_stored, balance_pass, balance_delta}`
+   - Returns HTTP 503 if usecase not injected (graceful degrade)
+   - Existing `/extract` route UNTOUCHED
+
+3. **`main.py`** (MODIFY — composition root)
+   - Imports `TextTableExtractor`, `TablePushClient`, `ExtractTablesUseCase`
+   - Instantiates: `table_extractor = TextTableExtractor()`, `table_push_client = TablePushClient(mcp_server_url=cfg.mcp_server_url)`
+   - Instantiates: `extract_tables_usecase = ExtractTablesUseCase(table_extractor, table_push_client)`
+   - Passes `extract_tables_usecase` to `register_routes()`
+
+4. **`__tests__/unit/test_extract_tables_usecase.py`** (CREATE — 10 tests)
+   - TC1: happy path — all adapters called, return shape correct
+   - TC2: FPT golden balance-check (Total Assets 88,089,621,779,862 = Liab + Equity) → balance_pass=True
+   - TC3: deliberately unbalanced fixture (100 = 50+40? No → 90) → balance_pass=False
+   - TC4: return shape has required keys {rows_stored, balance_pass, balance_delta}
+   - TC5: push_table receives correct payload (report_id, rows, balance_check, periods)
+   - TC6: empty rows handled gracefully, push called with empty rows, rows_stored=0
+   - TC7: push_client rows_stored=42 → execute() echoes 42
+   - TC8: assembler called with correct statement_section arg
+   - TC9: balance_delta sign = assets - (liab + equity)
+   - TC10: exact match delta=0.0 → balance_pass=True
+
+### Red→Green evidence
+
+- Baseline: 255 passed (BT-3-A final state)
+- New tests run before implementation: ImportError (ModuleNotFoundError: extract_tables_usecase) — RED confirmed
+- After implementation: 10/10 passed — GREEN
+- Full suite: 265 passed (255 pre-existing + 10 new), 0 failed
+
+### Fence status
+
+- Fence-A: KEPT — primitives do not import infra/app/interface
+- Fence-B: KEPT — domain.modules do not import infrastructure/interface
+- 67 files analyzed, 112 dependencies
+- Application layer verified: `grep "^from infrastructure\|^from interface"` → zero matches in `extract_tables_usecase.py`
+
+### Sandbox status
+
+- Primitive-tier: `confidence_scorer/happy_high_conf.json` → PASS
+- Module-tier: `financial_reports/multi_primitive_story.json` → PASS
+- Zero creds in env (security clause satisfied)
+
+### AC verification
+
+- AC-1: `ExtractTablesUseCase` class defined; `execute()` is async and returns `{rows_stored, balance_pass, balance_delta}`. PASS.
+- AC-2: `extract_tables_usecase.py` imports ONLY from `domain/` + stdlib. Zero infra/interface imports. PASS.
+- AC-3: `POST /extract-tables` route registered in `interface/handlers.py`. PASS.
+- AC-4: Composition root (`main.py`) wires all 3: `TextTableExtractor`, `TablePushClient`, `ExtractTablesUseCase`. PASS.
+- AC-5: 10 unit tests with injected fakes; happy path + error/edge cases. PASS.
+- AC-6: `lint-imports --config pyproject.toml` exit-0, 2 kept 0 broken. PASS.
+- AC-7: Sandbox runner.py exit-0 (primitive + module tiers). PASS.
+
+### Post-commit check
+
+`git show --stat 6adc6a97` — exactly 4 files, zero foreign files confirmed.
+
+### Handoff to BT-3-C
+
+Owner: dev-pdf-extractor | Task: BT-3-C — Integration: `process_report()` → Structured Table Output
+- BT-3-B use case + route DONE: `ExtractTablesUseCase`, `POST /extract-tables`, `main.py` wired
+- BT-3-C wires the new usecase into `domain/modules/financial_reports/module.py` `process_report()`:
+  - Add NEW return keys `structured_table_rows` + `balance_check` (backward-compat — no existing keys removed)
+  - Make `table_extractor` + `table_push_client` optional in `FinancialReportsModule.__init__`
+  - Integration test on real FPT data: ≥70 rows, balance_pass=True
+  - Sandbox scenario: `structured_table_extraction` key
+- Fence constraint: module.py stays in domain layer; imports only ports, not concrete adapters

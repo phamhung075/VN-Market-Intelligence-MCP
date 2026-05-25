@@ -329,4 +329,36 @@ SHA: 57cd4352 | Branch: worktree-agent-abcb87d17b89cec2e
 
 **Diagnostic output:** `docs/signals/dev-pdf-extractor-1951d-pipeline-diagnostic.json`
 
+---
+
+### 2026-05-25 — BT-3-A DONE (TextTableExtractor + TablePushClient + ports + config)
+
+**Commit:** `8f6d6c50` | Sprint: BCTC-TABLE
+
+5 files: `infrastructure/text_table_extractor.py`, `infrastructure/table_push_client.py`, `domain/modules/financial_reports/ports.py` (+2 protocols), `infrastructure/config.py` (+mcp_server_url), `__tests__/unit/test_text_table_extractor.py` (20 tests).
+
+255 pytest PASS (235 baseline + 20 new). Fence-A/B KEPT (66 files). R-5 deliberate-violation test confirmed fence is LIVE (non-false-green).
+
+KEY INSIGHT: BCTC OCR has two layouts — code-first ("100 label value") and label-first ("A. label 100 value"). Both handled by two regex patterns in `_try_parse_code_row()`. FPT code 100 = 58,102,970,741,619 VND exact (golden anchor).
+
+---
+
+### 2026-05-25 — BT-3-B DONE (ExtractTablesUseCase + POST /extract-tables route + composition root)
+
+**Commit:** `6adc6a97` | Sprint: BCTC-TABLE
+
+4 files: `application/extract_tables_usecase.py` (CREATE), `interface/handlers.py` (MODIFY), `main.py` (MODIFY), `__tests__/unit/test_extract_tables_usecase.py` (CREATE, 10 tests).
+
+**265 pytest PASS (255 baseline + 10 new). Fence-A/B KEPT (67 files, 112 deps, 0 broken).**
+
+Balance-check logic (pure, in application layer):
+- Code 270 = Total Assets, 300 = Total Liabilities, 400/440 = Total Equity
+- Tolerance 1 VND absolute
+- Returns None for non-balance-sheet sections
+- FPT golden: 88,089,621,779,862 = 44,338,155,487,272 + 43,751,466,292,590 → delta=0.0, pass=True
+
+DDD invariants maintained: application layer imports ONLY domain ports + stdlib.
+
+**Next:** BT-3-C — wire new usecase into `process_report()` → add `structured_table_rows` + `balance_check` return keys to `FinancialReportsModule` (backward-compat).
+
 **Remediation owner:** ops (VPS must cache SSC-URL PDFs + Dockerfile must restore poppler-utils+tesseract). Flag to po for combined decision with ops-1951d diagnostic.
