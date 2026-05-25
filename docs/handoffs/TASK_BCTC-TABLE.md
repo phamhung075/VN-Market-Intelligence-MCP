@@ -2239,3 +2239,97 @@ All BCTC-TABLE sprint tasks verified:
 - Commit hygiene: all 11 sprint commits verified clean
 
 **NEXT: po — BT-EXIT sign-off**
+
+---
+
+## [PO] BT-EXIT — Sign-Off Decision
+
+**Date:** 2026-05-25T20:18Z | **Verdict:** PARTIAL — gap functionally closed but NOT clean → **BT-7 required before final sign-off** | **Decided by:** po (full autonomy)
+
+### Did NOT rubber-stamp QA APPROVED. Ran read-only live verification.
+
+Containers healthy (mcp-server + pdf-extractor `Up (healthy)`). All queries read-only against live `/app/data/market.db` (bun:sqlite, readonly) + live `GET /api/bctc-inspect/table/{doc_id}`.
+
+### Live row-count findings — per-doc, authoritative (current state)
+
+| report_id (short) | rows | rows-with-a-code | summary-rows | period_current (stored) |
+|---|---|---|---|---|
+| VEA b48f7e6a | 2804 | 25 | 6 | 01/01/2025 |
+| VNM 4316f6d1 | 2540 | 29 | 3 | 31/12/2025 |
+| FPT-Q4 e71f845d | 2170 | **96** | 6 | **26/01/2026** |
+| DGC 0c6f0535 | 2037 | 18 | 1 | *(empty)* |
+| SHB 59212e0d | 1638 | 29 | 0 | 29/1/2026 |
+| ACB fea19bae | 1270 | 2 | 0 | *(empty)* |
+| EIB 549d458a | 1174 | 12 | 0 | 31/12/2014 |
+| DHG 620a9d00 | 1080 | 67 | 6 | 20/4/2026 |
+| HPG d6f1885f | 858 | 48 | 4 | 22/12/2014 |
+
+TOTAL 15,571 rows across 9 distinct docs.
+
+### 74 → 2170 root cause: ALL-PAGES NOISE, not accumulation
+
+- **NOT an idempotency/accumulation defect.** The live counts match the BT-4b-2 backfill table EXACTLY (VEA 2804, VNM 2540, FPT 2170, DGC 2037, SHB 1638, ACB 1270, EIB 1174, DHG 1080, HPG 858). DELETE+INSERT idempotency works. The "EIB/ACB not in earlier outcomes" concern resolves: they WERE in the BT-4b-2 backfill (`6d7839be`), just not in the abandoned BT-4b first attempt (`0b4b3699`, which returned rows_stored=0 because BT-3-D wired OCR after it).
+- **The "74" was the clean in-process integration extraction** (BT-3-D auto-locates the balance-sheet pages only). The **"2170" is the BT-4b-2 pre-supply backfill** feeding ALL stored OCR pages to the assembler. FPT Q4: 2170 rows span **44 distinct pages (p1..p46)** — the WHOLE financial report, not the ~4-page balance sheet. Confirmed gap (a) from the BT-EXIT mandate: the pre-supply path has NO balance-sheet section filter; BT-3-D's auto-locate only runs on the in-process OCR path (Path B), not the pre-supply path (Path A) used by the backfill.
+- **Of 2170 FPT rows, only 96 carry a BCTC code; only 6 are summary rows.** The other ~2074 are OCR noise. Live `GET /api/bctc-inspect/table/e71f845d...` first rows: `"Digitally signed by"`, `"CÔNG TY CỔ CÔNG TY CỔ PHAN"`, `"A FPT"`, `"PHAN FPT Date: 2026.01.26"`, `"16:18:09 +07'00'"`. That is signature-block + cover-page text, not a result table.
+- **`period_current` is corrupted by the noise:** FPT Q4 = `26/01/2026` (the digital-signature timestamp, scraped from page 1), EIB = `31/12/2014`, HPG = `22/12/2014`, DGC/ACB = empty. Only VNM happens to be correct (`31/12/2025`). A "correct result table for analyze" cannot carry the wrong reporting period.
+
+### What IS proven correct (functional close)
+
+- FPT Q4 golden anchors EXACT to the dong: code 270=88,089,621,779,862 / 300=44,338,155,487,272 / 400=43,751,466,292,590, balance_delta=0, balance_pass=true. has_table=true. The user's literal complaint ("inspector shows only text, not a detected table") IS technically closed — a table renders with a balance badge.
+- VEA genuinely balances (270=440=20,730,341,630,587, delta=0, balance_pass=1) — second independent clean balance proof.
+- QA's gate explanation CONFIRMED: DGC + ACB have `balance_check=null` (no codes 270/300/400 in their noisy rows) → BT-5 gate's `balance_check is not None` guard correctly skips them. The gate is sound, not buggy.
+
+### Why NOT a full sign-off
+
+The `/goal` is "extract correct **result table** for analyze" — emphasis on a *result table*. The current store is the figures buried in ~2000 noise rows per doc with a wrong reporting period. The data is present but the table is not clean/analyzable. Per the BT-EXIT mandate decision matrix, this is the NO branch: functionally closed, not CLEAN → do NOT fully sign off; queue BT-7, re-prove FPT clean, then final sign-off.
+
+### Privacy audit — PASS (zero external-API / VLM in extraction path)
+
+- Live OCR engine = self-hosted Tesseract (vie+eng) via pdf2image/pytesseract + pdfplumber page-location (`infrastructure/ocr_adapter.py` — docstring: "self-hosted Tesseract only. Zero external API calls. Zero data leaves machine.").
+- Zero `openai|anthropic|gemini|azure|textract|vertex|claude|gpt-` SDK in production code. The only `paddleocr_vl` references are in `spike/eval/harness.py` (BT-0 eval-only tooling, scored 0/6, DEFERRED — self-hosted anyway).
+- Only external HTTP in the live path: `api.telegram.org` (WORK-alert text only — never a PDF/page-image) + `125.212.251.27:8765` (our own Vinahost VPS Vietnam BCTC file PULL, in deprecated `inspection_store.py`, not the table path). No financial PDF or page-image is sent off-infra. PASS.
+
+### Honest gaps folded into verdict
+
+- **4 zero-row docs (FPT Q1 / BSR / DIG):** same root cause as the noise — FPT Q1's balance sheet IS in stored OCR (page 3) but the 35-page pre-supply confuses the assembler; BSR/DIG likely income-statement-only. BT-7's section filter is expected to fix FPT Q1 too. (Accepted as part of BT-7, not a separate blocker.)
+- **balance_pass=false / null docs (DGC/SHB/EIB/ACB etc.):** rows stored but no verifiable identity (no codes 270/300/400 found, or wrong positions). Acceptable for visibility; BT-7's clean filtering will improve code-row recall.
+- **Low cell-F1 (0.07-0.12) + FPT p5 95.8% / p7 86.7% sub-bar rows:** ACCEPTED per BT-0-PICK (PP-StructureV3 IMAGE deferred remedy, self-hosted only). NOT reopened.
+- **14 docs' OLD `financial_reports` scalars are separate from `bctc_table_rows`:** acknowledged — orthogonal store, not in BT-7 scope.
+
+### Decision
+
+Sprint BCTC-TABLE stays OPEN. BT-EXIT held at PARTIAL. **BT-7 queued** (see task below). Final BT-EXIT sign-off gates on BT-7 re-proving FPT Q4 stores a clean ~74-80 row balance-sheet table with `period_current=31/12/2025`.
+
+---
+
+## BT-7 — Clean balance-sheet section filtering on the pre-supply path + idempotent re-backfill
+
+**Owner:** dev-pdf-extractor (primary — section-filter on supplied page texts) + dev-mcp-server (if DELETE-scope/period needs a fix on the read/store side) · **Priority:** HIGH · **Blocks:** BT-EXIT final sign-off · **Opened:** 2026-05-25T20:18Z by PO · **Zone:** `apps/pdf-extractor/` (primary) + `apps/mcp-server/` (only if needed for the GET period field)
+
+### Problem (from PO BT-EXIT live verification)
+
+The pre-supply backfill path (Path A, `bctcBatchTableBackfillJob.ts` → `POST /extract-tables` with `pages[]` from `pdf_extracted_text`) feeds ALL stored OCR pages (e.g. FPT Q4 = 44 pages, ~2170 rows) to `TextTableExtractor.assemble()` with NO balance-sheet page filter. The auto-locate (`PdfOcrAdapter.locate_balance_sheet_pages`, BT-3-D) only runs on the in-process OCR path (Path B). Result: the stored table is the whole report (figures correct but buried in ~2074 noise rows) and `period_current` is scraped from a signature/cover page (FPT Q4 = "26/01/2026", not 31/12/2025).
+
+### Scope
+
+1. **Section filter on pre-supplied pages (dev-pdf-extractor).** Before assembly, filter `pre_supplied_pages` to the balance-sheet page range using the SAME Vietnamese-marker logic as `locate_balance_sheet_pages` (operate on the supplied `text` per page, not by re-reading the PDF — host-safe, zero Tesseract). Only the located balance-sheet pages reach the assembler. Unify Path A and Path B so both apply the section filter.
+2. **Period detection from the filtered section only (dev-pdf-extractor).** `period_current` / `period_prior` must be derived from the balance-sheet header rows (DD/MM/YYYY adjacent to "TÀI SẢN" / column headers), NOT the first date found across all pages. FPT Q4 must store `period_current=31/12/2025`.
+3. **Idempotent re-backfill (dev-mcp-server + ops).** Re-run `backfillBctcTables()` for the eligible docs. DELETE+INSERT per report_id already idempotent — confirm scope is correct (no row leakage from prior fat rows; verify `SELECT COUNT(*)` drops from ~2170 to ~74-80 for FPT Q4 after re-run). Host-safe (Path A reuses stored OCR, zero Tesseract).
+4. **FPT Q1 re-validation (folds in the zero-row gap).** After the section filter, FPT Q1 (`e8ea3df5`) should yield > 0 rows (its balance sheet is on page 3 of the stored OCR). Confirm.
+
+### Acceptance Criteria
+
+- **AC-1:** `GET /api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` (FPT Q4) returns `rows_count` between ~60 and ~120 (clean balance-sheet section, NOT ~2170), `has_table:true`, `balance_pass:true`, golden anchors 270=88,089,621,779,862 / 300=44,338,155,487,272 / 400=43,751,466,292,590 still exact (delta=0).
+- **AC-2:** FPT Q4 `period_current` = `31/12/2025` (the reporting period, not a signature date). No row labelled "Digitally signed by" / signature-block text in the stored rows.
+- **AC-3:** Path A (pre-supply) and Path B (in-process OCR) apply the IDENTICAL balance-sheet section filter — a unit/integration test drives Path A and asserts the page set is filtered.
+- **AC-4:** Re-backfill is idempotent: running twice leaves the per-doc row count unchanged; FPT Q4 count drops from 2170 to the AC-1 range after the FIRST clean re-run (proves DELETE-scope is correct, no leakage).
+- **AC-5:** FPT Q1 (`e8ea3df5`) yields > 0 rows after the section filter (zero-row gap closed for the balance-sheet-bearing doc).
+- **AC-6:** Re-run on the eligible gold-set: the genuinely-balancing docs (FPT Q4, VEA, HPG) keep `balance_pass:true`; no regression on golden anchors.
+- **AC-7:** Privacy intact (zero external API; Path A = zero Tesseract, host-safe); Fence-A/B intact (`lint-imports` exit 0); frozen surfaces (`pilot-status-pdf-extractor.json`, `sandbox/runner.py`, dashboards) diff empty; explicit-file staging, zero foreign files.
+- **AC-8:** QA re-verifies AC-1..AC-7 live, then PO does final BT-EXIT sign-off.
+
+### Flow
+
+dev-pdf-extractor (section filter + period fix) → dev-mcp-server/ops (re-backfill, only if a store/read change is needed) → qa (re-verify live) → po (final BT-EXIT sign-off). Build ON the existing pipeline — no schema change, no new endpoint; this is a filter on the supplied page texts + period-detection scoping.
+
+---

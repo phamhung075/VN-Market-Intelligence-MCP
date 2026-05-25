@@ -1,27 +1,26 @@
 # PO Notebook
 
-**Cycle:** P1-EXIT (mcp-server SCALE, FINAL pilot) — honest grade REJECTED the 12/12 premise. Flipped 7/12, pilot stays Phase-1-COMPLETE (not terminal). Rollout NOT 11/11.
-**Last update:** 2026-05-25T17:48Z
-**Status:** mcp-server pilot ACTIVE @ Phase-1 close-gate APPROVED, goalsEarned=7. Phase-2 (G3/G4/G9/G10/G11 + G5a) outstanding.
+**Cycle:** BCTC-TABLE BT-EXIT — QA APPROVED, I held final sign-off at PARTIAL. Opened BT-7.
+**Last update:** 2026-05-25T20:18Z
+**Status:** Sprint BCTC-TABLE OPEN. BT-EXIT HELD. NEXT = dev-pdf-extractor BT-7.
 
 ---
 
-## 2026-05-25T17:48Z — P1-EXIT honest grade
+## 2026-05-25T20:18Z — BCTC-TABLE BT-EXIT (did NOT rubber-stamp)
 
-**Dispatch wanted:** QA P1-MCP-QA PASS (3ea944b6) ⇒ flip all 12 YES + scale verdict + phase=terminal/DONE; "rollout 11/11 COMPLETE".
-**I REJECTED it.** Dispatch itself said "no pre-flip, no rubber-stamp — if a goal lacks evidence, do NOT flip; report the gap." Premise was FALSE.
+**Dispatch:** QA APPROVED (`acd0d61e`) ⇒ final PO sign-off. Mandate: verify the live result is a CLEAN result table, not figures buried in noise.
 
-**Why (verified, not assumed):**
-- QA PASS is the Phase-1 CLOSE-GATE (task P1-QA per phase-1-task-plan), NOT a Phase-2 terminal verify. pilot-status was phase=1, phase2=NOT-STARTED.
-- Architect's OWN Phase-1 plan §Goals Roadmap (L708-725) marks G3/G4/G9/G10/G11 STILL-UNMET (Phase-2). §Overview: "Phase 1 does NOT install G4 fence / execute G10/G11 injection."
-- Live checks: composition-root.ts ABSENT + index.ts=199L (G3); no eslint-plugin-boundaries on disk (G4); no user-verbal/no Playwright (G9); no bug-inject cycle + mcp-server-pre-inject tag absent (G10); no 2-trial coupling proof (G11).
+**Ran read-only live verification** (containers healthy; bun:sqlite readonly + GET /api/bctc-inspect/table):
+- Per-doc row counts STABLE = match BT-4b-2 backfill table exactly → **74→2170 is all-pages NOISE, NOT accumulation.** Idempotent DELETE+INSERT works. (EIB/ACB were in BT-4b-2 `6d7839be`, not the abandoned BT-4b `0b4b3699` which returned 0 rows pre-BT-3-D.)
+- FPT Q4 = 2170 rows over 44 pages (p1..p46), only **96 coded / 6 summary**. First rows = "Digitally signed by", signature/cover text. `period_current=26/01/2026` (signature date, not 31/12/2025). Pre-supply path (Path A) has NO BS-section filter; BT-3-D auto-locate only runs on Path B.
+- Golden anchors EXACT (270/300/400, delta=0); VEA + HPG also balance true. QA gate explanation CONFIRMED (DGC/ACB balance_check=null → gate correctly skips).
+- **Privacy PASS:** self-hosted Tesseract only; zero openai/anthropic/gemini/azure SDK in prod; paddleocr_vl only in spike eval (deferred). Only external HTTP = Telegram alert text + our own Vinahost VPS file-pull. No PDF/page-image off-infra.
 
-**Graded 7/12 YES** (G1/G2/G5/G6/G7/G8/G12 — real on-disk evidence, commits 195ef1a3..a9212ad2). **5 DEFER-to-Phase-2** with absence-notes. goalsEarned=7. phase1.status=APPROVED (close-gate, full QA evidence block). status stays ACTIVE. decisionMatrix UNTOUCHED (schema forbids partial fill before 12/12). verdict=TBD.
+**VERDICT = PARTIAL, BT-7-required-first.** Gap functionally closed (table renders, anchors exact) but `/goal` is "correct RESULT TABLE" — ~2000 noise rows + wrong period ≠ analyzable. Did NOT fully sign off.
 
-**Integrity:** edited ONLY pilot-status-mcp-server.json among pilot files (scope guard verified). JSON valid, zero dup keys. Also: DASHBOARD header + ## po row, pipeline-state.json (status=IDLE-rollout-incomplete), new closure-report signal po-20260525T174842Z.json. explicit-file staging; no -A/-am; no --force/--no-verify; no push; main. Did NOT expand TASKS.md.
+**Wrote:** [PO] BT-EXIT record + BT-7 task in TASK_BCTC-TABLE.md; BT-6 DONE / BT-EXIT PARTIAL / BT-7 READY rows in TASKS.md; SPRINT_GOAL build-status. Explicit-file staging, mutex under sprint-task kind, zero foreign.
 
 ## Carry-over
-- **Rollout is NOT 11/11.** mcp-server = Phase-1-COMPLETE only. NEXT = architect authors mcp-server Phase-2 plan (G3/G4/G9/G10/G11 + G5a delete; tags pre-ci/pre-delete/pre-inject) → dev-mcp-server RUN-SOLO → qa → PO 12/12 terminal flip + decisionMatrix. ONLY THEN 11/11.
-- LESSON: a "QA PASS" gate may be a PHASE close-gate, not a pilot terminal. Always reconcile pilot phase + architect Goals-Roadmap STILL-UNMET list before any 12/12 flip. A dispatch SAYING "flip 12/12" does not make 12 goals true.
-- frontend = AWAITING-USER-G9 (visual only, NEVER a user command).
-- Open backlog (claude-manager-helper): signal backlog 719 files + runaway size-cap hook; TASKS.md over 80-cap.
+- **BT-7 = dev-pdf-extractor:** filter pre_supplied_pages to BS section (same VN markers, on supplied text — host-safe zero Tesseract), unify Path A+B, scope period detection to BS header → FPT Q4 ~74-80 rows + period 31/12/2025, anchors still exact. Folds in 4-zero-row gap (FPT Q1 BS on stored page 3). Then QA re-verify → PO final BT-EXIT.
+- LESSON: "has_table:true + balance delta=0" ≠ clean table. A correct figure inside 2000 noise rows with a wrong period is not "a result table for analyze". Always inspect row composition (coded vs noise) + period sanity, not just the anchor values.
+- mcp-server pilot still Phase-1-COMPLETE (not 11/11); frontend AWAITING-USER-G9.
