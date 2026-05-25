@@ -3019,4 +3019,100 @@ The existing `apps/pdf-extractor/__tests__/integration/test_extract_tables_fpt.p
 
 **NEXT:** ops (BT3-DEPLOY) — rebuild pdf-extractor Docker image + trigger one-shot `bctcBatchTableBackfillJob` to re-extract 14 stranded docs (sequential, one at a time). See Backfill Sequence above.
 
+---
+
+## [Architect] BT3-FIX-3-DESIGN — Fourth False-Green Root-Cause Ruling
+
+**Authored:** 2026-05-26 | **Zone:** `apps/pdf-extractor/` | **Brief:** `docs/architecture-briefs/2026-05-26-bctc-table-bt3-fix3-root-cause-ruling.md`
+
+**Escalation trigger:** recurring-bug policy (≥2 fix commits on `infrastructure/text_table_extractor.py`; BT3-FIX commit 1ab1f7a6 + BT3-FIX-2 commit 3e47ccf3). Architect rules before any 3rd code fix.
+
+**Live failure confirmed:** `/api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` returns 138 rows with scrambled labels on pages 4+6 and null value_prior + company-address junk on pages 5+7. `balance_pass=True` because 270/300/400 totals carry correct numbers — fourth false-green (balance arithmetic passes with scrambled interior).
+
+---
+
+### Defect 1 — Three-block parser off-by-one (pages 4 and 6)
+
+Root cause: the label-collection filter in `_parse_three_block_layout()` Phase 2 includes a guard that skips lines matching all-uppercase and length ≤20. "TÀI SAN NGAN HAN" (16 chars, all caps) matches this guard and is silently dropped from `labels[]`. This shifts every subsequent label assignment down by one: `code[0]=100` gets `label[1]` (which belongs to code 110), `code[1]=110` gets `label[2]` (code 111's), etc. The last code on the page gets `label=""` (no label remains).
+
+Same on page 6: "NỢ PHẢI TRẢ" is filtered out, so code 300 gets the wrong label.
+
+Fix: remove the all-caps short-line skip entirely from Phase 2 label collection. Keep only the provably-noise skips (company name, address, form number, date-range lines). Every item in the label block corresponds to exactly one code in document order — "TÀI SAN NGAN HAN" IS the correct label for code 100. After the fix, `len(labels)` should equal `len(codes)`; add a WARNING log if they diverge by >1.
+
+---
+
+### Defect 2 — Line parser label-split + null value_prior (pages 5 and 7) — stored OCR vs. fresh OCR mismatch
+
+Root cause (CONFIRMED): the production pipeline consumes **stored OCR** from `fpt_q4_full_ocr.json` (the `pdf_extracted_text` table). This stored OCR was produced by a different earlier ingestion pass that rendered pages 5 and 7 in a **column-separated layout**: labels appear in a left-column block with no codes, prior-year values appear in a center block, and current-year codes+values appear in a right block. Example from stored OCR page 5:
+
+```
+B. TÀI SẢN ĐÀI HẠN           ← label-only line (no code)
+Il. Các khoản phải thu dài hạn ← label-only line
+...
+31/12/2024                     ← prior date header
+26.464.052.832.167             ← prior values only
+...
+ays) yeyvet 31/12/2025         ← garbled "Thuyết minh + 31/12/2025"
+minh
+200 29.986.651.038.243         ← code+current value only (no label, no prior)
+210 564.342.065.270
+```
+
+The spike's `fpt_balance_sheet_eval.py` ran **fresh Tesseract at 200 DPI** on the PDF and produced the inline layout where code + label + values are on the same line — the format `_parse_lines_to_rows()` handles correctly. The `.txt` fixture (`fpt_q4_2025_pages_4-7.txt`) is the spike's fresh-OCR output. The integration tests that showed a clean result fed this fixture, not the stored OCR. That is why BT3-FIX and BT3-FIX-2 passed integration tests but failed in production.
+
+---
+
+### Strategy — Option (c): Force fresh Tesseract in the backfill path
+
+**Selected strategy:** The backfill job (`bctcBatchTableBackfillJob.ts`) currently passes `pre_supplied_pages` from `pdf_extracted_text` (stored OCR) to the use case. Removing `pre_supplied_pages` makes `ExtractTablesUseCase.execute()` call `PdfOcrAdapter` for fresh Tesseract OCR at 200 DPI (psm 6, vie+eng). This path was already proven correct in `test_extract_tables_bt3d_real_ocr.py` (BT-3-D). Fresh OCR produces the inline layout; `_parse_lines_to_rows()` then handles it cleanly.
+
+Options (a) (re-OCR FPT only) and (b) (fix parser for stored-OCR column layout) both rejected: (a) only fixes one document while all 14 gold-set documents have the same stored-OCR column separation; (b) reconstructing cross-column row associations from column-separated OCR is the state-machine complexity that caused this entire failure cascade.
+
+---
+
+### Files dev-pdf-extractor must change
+
+1. `apps/pdf-extractor/infrastructure/text_table_extractor.py` — fix three-block label alignment (remove all-caps skip from Phase 2); add company-header junk filter to `_parse_lines_to_rows()` for "CÔNG TY CỔ PHẦN FPT" / address lines
+2. Backfill caller (mcp-server `bctcBatchTableBackfillJob.ts` or the BT-4b trigger) — stop passing `pre_supplied_pages`; pass `pdf_path` only
+3. `apps/pdf-extractor/__tests__/integration/test_bt3_fix3_row_fidelity.py` — NEW test, 12 mandatory ACs (see full spec in brief)
+
+No schema changes. No domain layer changes. No frozen surfaces touched.
+
+---
+
+### BT3-FIX-3 Acceptance Criteria (ALL required — balance_pass alone is FORBIDDEN as sole gate)
+
+**AC-1:** Codes {100, 200, 270, 300, 400, 440} all present.
+
+**AC-2:** Sentinel value_current exact (±1 VND): 100→58,102,970,741,619 | 200→29,986,651,038,243 | 270→88,089,621,779,862 | 300→44,338,155,487,272 | 400→43,751,466,292,590 | 440→88,089,621,779,862.
+
+**AC-3:** Sentinel value_prior populated (±1 VND): 100→45,535,942,846,453 | 270→71,999,995,678,620 | 300→36,272,455,573,820 | 400→35,727,540,104,800 | 440→71,999,995,678,620.
+
+**AC-4:** Label fidelity — code 110 label contains "tiền" (case-insensitive); code 300 label is NOT "NGUỒN VỐN"; code 100 label is NOT "Tiền và các khoản tương đương tiền".
+
+**AC-5:** No label shift — page 4 code 100 label is the section-header equivalent, NOT 110's label. Page 6 code 300 label is "NỢ PHẢI TRẢ" equivalent, NOT "NGUỒN VỐN".
+
+**AC-6:** Orphan count == 0 (rows where code=None AND label="").
+
+**AC-7:** Header-only row count ≤ 8 total across 4 pages.
+
+**AC-8:** Zero duplicate codes. `len(unique_codes) == len(all_code_rows)`.
+
+**AC-9:** value_prior population rate ≥ 90% for code rows (raised from prior 50% threshold).
+
+**AC-10:** Zero company-address junk rows (no label matching "CÔNG TY CỔ PHẦN FPT", "Số 10 phố", "Phường Cầu Giấy", "Thành phố Hà Nội").
+
+**AC-11:** balance_pass=True, balance_delta=0 (retained — necessary but insufficient alone).
+
+**AC-12:** Total row count in [80, 110]. (Current broken: 138. Spike gold: 89.)
+
+---
+
+### Fresh OCR step required?
+
+No separate ops step needed before dev starts. The fix itself removes `pre_supplied_pages` from the backfill call, which automatically triggers `PdfOcrAdapter` (fresh Tesseract). The PDF is already on the host at `data/pdfs-local/`. ~16s per document, sequential, safe on the Mac.
+
+**Implementing agent:** dev-pdf-extractor
+**Next:** pm — create BT3-FIX-3 dev handoff for dev-pdf-extractor
+
 **PIPELINE:** continue → ops BT3-DEPLOY → QA BT3-QA → PO BT3-EXIT

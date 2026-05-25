@@ -1,8 +1,36 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-25 23:30 UTC | **Sprint:** BCTC-TABLE-3
+**Last updated:** 2026-05-26 04:30 UTC | **Sprint:** BCTC-TABLE-3
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## BT3-FIX-3-DESIGN — Fourth false-green root-cause ruling (2026-05-26T04:30Z) — DESIGN COMPLETE
+
+**Task:** BT3-FIX-3-DESIGN. Recurring-bug escalation: 3rd fix cycle on `text_table_extractor.py`. Live `/api/bctc-inspect` returns 138 rows with scrambled labels (pages 4+6), null value_prior, company-address junk (pages 5+7). balance_pass=True despite scrambled interior — fourth false-green.
+
+**Key findings:**
+
+1. **Defect 1 — three-block off-by-one:** `_parse_three_block_layout()` Phase 2 has an all-caps short-line filter (len ≤20) that silently drops the section-header label "TÀI SAN NGAN HAN" (code 100's label) and "NỢ PHẢI TRẢ" (code 300's label). Every subsequent code gets the wrong label (shifted down by one). Fix: remove the all-caps skip from Phase 2. Only skip provably-noise lines (company/address/form patterns).
+
+2. **Defect 2 — stored OCR vs. fresh OCR mismatch (root cause of page 5+7 failures):** The production backfill passes `pre_supplied_pages` from `pdf_extracted_text` (stored OCR). This stored OCR renders pages 5 and 7 in column-separated layout (labels in left block, prior-values in center block, code+current-value in right block). The spike ran fresh Tesseract at 200 DPI (psm 6) which produces inline layout (code+label+values on same line). All integration tests used the spike's inline `.txt` fixture — so they passed while production failed. This is dual-path drift #3.
+
+3. **Strategy (c) selected:** Remove `pre_supplied_pages` from the backfill call. `ExtractTablesUseCase.execute()` with `pdf_path` only calls `PdfOcrAdapter` for fresh Tesseract OCR — the proven path from BT-3-D. No re-OCR by ops required as prerequisite.
+
+4. **balance_pass FORBIDDEN as sole gate.** 12 mandatory row-level ACs specified for BT3-FIX-3's test (sentinel values, sentinel priors, label fidelity, no shift, orphan=0, header≤8, zero dups, prior≥90%, no junk, row count [80,110]).
+
+**Files authored this cycle (3):**
+1. `docs/architecture-briefs/2026-05-26-bctc-table-bt3-fix3-root-cause-ruling.md` (NEW — full ruling)
+2. `docs/handoffs/TASK_BCTC-TABLE.md` — [Architect] BT3-FIX-3-DESIGN section appended
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Risk flags:**
+- R-MEDIUM: All 14 gold-set BCTC documents have same stored-OCR column-separated layout — BT-6 QA must run row-fidelity assertions across all 14, not just FPT.
+- R-MEDIUM: Fresh Tesseract backfill ~16s/doc × 14 docs = ~224s total — enforce sequential execution in backfill job.
+- R-LOW: Code 222/223 OCR misread may persist on fresh Tesseract — add de-duplication guard.
+
+**Next actor:** pm — create BT3-FIX-3 handoff for dev-pdf-extractor.
+
+---
 
 ## BT3-DESIGN — BCTC-TABLE-3 parser fix ruling (2026-05-25T23:30Z) — DESIGN COMPLETE
 
