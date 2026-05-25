@@ -1,27 +1,30 @@
 # PO Notebook
 
-**Cycle:** NF-LD-5-EXIT SIGNED OFF — "see new feed" Refresh button on served news-fetch live panel.
-**Last update:** 2026-05-24T21:35:58Z
-**Status:** SIGNED OFF; only NF-LD-5-OPS (rebuild + PROVE) remains → handed to ops.
+**Cycle:** USER `/goal` "do both last refactor services + rebuild + verify". Set mcp-server Phase-0 + build-wave sequencing governance.
+**Last update:** 2026-05-25T07:06Z
+**Status:** mcp-server Phase-0 HELD pre-0 (analysis-only track parallel-safe NOW); BUILD serialized A→B→C→D. frontend Phase-0 OPEN (architect-FE owns).
 
 ---
 
-## 2026-05-24T21:35Z — NF-LD-5-EXIT: PO sign-off on Refresh button (Option A MVP)
+## 2026-05-25T07:06Z — mcp-server Phase-0 + build-wave governance (USER "do both")
 
-Full chain PASSED: dev-B `12600a1f` (canonical `apps/news-fetch/dashboard/index.html` — Refresh btn + source selector, `initLivePanel()` IIFE → callable `loadLiveData()`, 4 honest states kept) → dev-A `15d9b034` (dev-mcp-server regenerated served copy + fixed sync script for `ENDPOINT`→`BASE_ENDPOINT` rename) → QA `2a02d3e3` APPROVED (AC-Q1..Q8 all PASS).
+**Channel audit:** Telegram read NOT performable from this agent harness (no `read_telegram_reports`/`call_tool` exposed; attempted real call → "No such tool", a capability gap not an MCP outage). Board audit done instead: TASKS.md + git log + container-clean check.
+- mcp-server SOURCE tree CLEAN (no uncommitted barrel edits, nothing staged). Only my pilot-status + accumulated docs/signals junk files dirty.
+- NEWS-INGEST-2/-2b still READY (open) in mcp zone → zone NOT quiesced.
+- Scale WIP=2 FULL (P2-F2 + P2-A1). frontend Phase-0 just opened (P0-FE-1/-2 dispatched).
 
-**PO independent disk/git re-verify (NOT QA word):** anti-drift = I ran `sync-news-fetch-dashboard.sh` x2 myself → exit 0 both, `git diff` served dir = 0 both, md5 `b1d8806f…` matches QA. Button in BOTH copies (canonical:231 / served:239). `loadLiveData()` callable wired to click+selector+load; `grep -c location.reload` BOTH = 0. Relative `BASE_ENDPOINT='/api/news-fetch/live?limit=20'`, 0 localhost:3000 in served fetch. 0 creds both files. `data.js` diff exit 0 (byte-identical). pilot-status last commit `b3407530` (pre-NF-LD-5), 12/12 verdict=scale phase=terminal, NOT in either NF-LD-5 commit. Both commits single-zone, zero foreign files.
+**DECISION 1 — mcp-server Phase-0 = HELD pre-0 (NOT opened now).** Charter §Sequencing RUN-SOLO/LAST is non-negotiable. 3 unmet unblock conditions: (a) frontend Phase 0→1 not done, (b) mcp zone not quiesced (NEWS-INGEST open), (c) WIP full. User "do both" honored by SEQUENCING not parallel-open. Recorded auditably in `sequencingGate` (decidedBy=user-directive, user_directive_handling block) + phase0.brownfield_inventory note.
 
-**Live smoke (port 3000):** served URL 200 + endpoint 200, BUT running container predates `15d9b034` → `live-refresh-btn` NOT in running served HTML (grep -c = 0). **Deployment-currency gap, NOT a defect** (same pattern as NF-LD-EXIT/PI-INSPECT). Resolution = NF-LD-5-OPS rebuild. Does NOT block sign-off.
+**DECISION 2 — analysis-only architect track runs NOW in parallel (allowed).** Read-only brownfield over ~132 tools = zero write contention. Front-loads highest-risk service. Does NOT open Phase 0. Pre-seeded P0-MCP-1..5+EXIT backlog in TASKS.md (HELD).
 
-**Verdict APPROVED.** dev-B/dev-A/QA/EXIT → DONE in TASKS.md + handoff. EXIT record in `TASK_NF-LD.md`. Sign-off signal `docs/signals/po-nf-ld-5-signoff-20260524T213558Z.json`. NEXT = ops NF-LD-5-OPS (`docker compose up -d --build mcp-server` + PROVE button live).
+**DECISION 3 — BUILD concurrency = SERIALIZED.** Analysis/planning parallelizes; BUILD does not. mcp BUILD must be SOLO (commit-race + SSOT-dup-key history). Final waves: A frontend-build → B mcp-server-build-SOLO → C ops rebuild+live-health → D qa regression. Gates between each. Authored § BUILD-WAVE SEQUENCING in TASKS.md.
 
-**Constraint discipline:** PO-owned closing artifacts only (handoff EXIT, TASKS rows, signal, notebook). No source/served-copy edits, no pilot edit, no push. WORK-channel `send_telegram` not in PO tool surface — WORK summary relayed to main terminal in RETURN (fail-loud, no fabricated send).
+**Committed (mutex-guarded, kind=sprint-task):** pilot-status-mcp-server.json + docs/TASKS.md + this notebook. Architects own scale/*.md — I did NOT touch them.
 
 ---
 
-## Carry-over (other live sprints)
-- **NF-LD-5-OPS** = the one remaining gate on this chain (ops). Terminal DONE only after real http GET proves button in rebuilt container.
-- **Sprint BCTC-TABLE** OPEN — BT-1 + BT-0 dispatch-ready (parallel, both WIP slots). BT-0-PICK is next PO action once spike scoreboard returns. Privacy guardrail binding (no off-infra send). 1954c freeze CLEARED (`372fbc91`).
-- **KD-QREF-LANG** OPEN chain (architect hop first). PDF-INSPECT / KD-QREF / NF-LD(1-4) CLOSED. P0-SP + P2-TA pilot backlogs live. WIP=2 fleet cap.
-- All news-fetch / pdf-extractor / kinh-dich pilots stay DONE 12/12 FROZEN — none reopened by any follow-on enhancement.
+## Carry-over
+- mcp-server Phase-0 opens in a FUTURE cycle (P0-MCP-4) ONLY when 3-condition gate clears. PO flips phase0.status OPEN then.
+- Main terminal NEXT: let architect-FE (P0-FE-1/-2) + architect-mcp (P0-MCP-1 analysis-only) run. Dispatch P0-FE-3 when P2-F2 frees (agent-father lane). Drive NEWS-INGEST-2/-2b→LIVE to quiesce mcp zone.
+- WAVE B (mcp build) dispatch only after WAVE A settles + gate clears + Phase-0 opened/closed.
+- Other live work untouched: BCTC-TABLE (BT-1+BT-0), KD-QREF-LANG, P2-TA, P0-SP. WIP=2 fleet cap honored.

@@ -6,6 +6,25 @@
   "_status_enum": "[FIXED] Allowed values: ACTIVE | DONE | FAILED. DONE requires 12/12 goals YES + decisionMatrix terminal. FAILED is explicit PO decision. No other values.",
   "openedAt": "2026-05-24T06:49:21Z",
   "openedBy": "po cycle-70 (SCALE pre-step — fleet status file instantiated from pilot-status-schema.json; PENDING until architect opens Phase 0 / factory charter)",
+  "sequencingGate": {
+    "decision": "HELD-LAST-SOLO",
+    "decidedAt": "2026-05-25T07:06:25Z",
+    "decidedBy": "po (USER-DIRECTIVE 'fan out subagents in parallel, complete the 2 last refactor services [frontend + mcp-server], rebuild the container(s), and verify' — main terminal already fanned out architect-FE + architect-mcp-analysis this cycle). PO RE-AFFIRMS HOLD pre-0 for mcp-server Phase-0 CHARTERING; the user's 'do both' is satisfied by SEQUENCING (frontend now, mcp-server SOLO-last), NOT by parallel Phase-0 opening.",
+    "reason": "Charter §Sequencing mandate (mcp-server-charter.md L26-62) is non-negotiable: RUN-SOLO, SCHEDULE LAST, after EVERY other service charter complete. ~132-tool barrel blast radius + writes shared substrates (docs/signals, docs/data, scheduler) → concurrent-commit-race + SSOT-duplicate-key risk if Phase-0 brownfield-over-132-barrels runs while ANY other terminal touches that zone. Two architects committing concurrently THIS cycle (architect-FE on apps/frontend/ + architect-mcp on ANALYSIS-ONLY brownfield, NO source/barrel/charter edits) is acceptable ONLY because mcp's track is read-only inventory — opening Phase-0 would license source/barrel churn, which is forbidden until quiesced.",
+    "user_directive_handling": "User said 'do both'. PO interpretation (auditable): BOTH services WILL reach the user's end-state (containers rebuilt + verified) THIS rollout. The architect-mcp analysis-only track may run in parallel NOW (zero write contention). But the mcp-server BUILD wave is SERIALIZED after frontend's build wave + WIP-free + zone-quiesced. 'Parallel' applies to ANALYSIS/PLANNING; 'serial-solo' applies to BUILD. This honors the directive without reproducing the repo's known commit-race corruption.",
+    "unblock_conditions": [
+      "Frontend Phase 0→Phase 1 transition complete (frontend = last 'every other service' to charter) — currently P0-FE-1/-2 dispatched, P0-FE-EXIT pending.",
+      "apps/mcp-server/ quiesced: NEWS-INGEST-2/-2b CLOSED + NEWS-INGEST-LIVE proven + ops Docker-network fix settled (a5b6203d landed) + no active dev/ops sprint touching mcp-server barrels / docs/signals / docs/data / scheduler.",
+      "Scale dev WIP=2 cap FREES (currently FULL: P2-F2 agent-father + P2-A1 dev-technical-analysis in-flight)."
+    ],
+    "parallel_analysis_track_allowed": {
+      "agent": "architect (mcp-server brownfield/analysis-only)",
+      "scope": "READ-ONLY inventory of ~132 tools / 10-module barrels — NO source edits, NO barrel edits, NO pilot-status edits, NO charter/scale-doc edits beyond the brownfield doc the architect owns.",
+      "rationale": "Zero write contention with frontend lane or active dev WIP. Front-loads the highest-risk service's brownfield so its Phase-0 chartering is fast once unblock_conditions clear.",
+      "note": "If/when this brownfield doc lands + conditions clear, PO opens Phase-0 in a FUTURE cycle by flipping phase0.status OPEN + adding the mcp-server Phase-0 backlog tasks. This file's phase0 stays PENDING until then."
+    },
+    "tracked_in": "docs/TASKS.md § 'mcp-server SCALE Pilot — SEQUENCED LAST / SOLO' + § 'BUILD-WAVE SEQUENCING (final waves to containers-rebuilt+verified)'"
+  },
   "closedAt": null,
   "_closedAt_note": "[DERIVED] Populated at terminal close (12/12 YES + decisionMatrix). Null during ACTIVE.",
   "closedBy": null,
@@ -34,7 +53,7 @@
       "_note": "PENDING — architect instantiates a per-service factory charter dir (pattern: docs/architecture-briefs/<date>-<svc>-factory/) at kickoff, mirroring alert-engine pilot-5. Thin scale charter at .charterRef captures interim deltas/risks.",
       "factory_charter_or_thin": "DONE 2026-05-24T06:49:21Z (thin: docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-charter.md)",
       "pilot_status_ssot": "DONE 2026-05-24T06:49:21Z (this file)",
-      "brownfield_inventory": "PENDING",
+      "brownfield_inventory": "IN-PROGRESS (architect ANALYSIS-ONLY track dispatched by main terminal 2026-05-25 per user 'do both' directive — read-only inventory of ~132 tools, parallel-safe; Phase-0 does NOT open on this landing alone, see sequencingGate.unblock_conditions)",
       "bug_inventory_entry": "PENDING",
       "dev_agent_file": "PENDING",
       "dev_agent_flow_file": "PENDING",
