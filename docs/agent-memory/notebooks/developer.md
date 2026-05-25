@@ -1,6 +1,29 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-24 | **Cycle:** NF-LD-5-dev-B — Refresh button + source selector | **Sprint:** NF-LD-5
+**Last updated:** 2026-05-25 | **Cycle:** BT-4 AC-2 — MCP_SERVER_URL explicit in docker-compose | **Sprint:** BCTC-TABLE
+
+## Session 2026-05-25 — BT-4 AC-2 (infra-as-code hygiene)
+
+**Task:** BT-4 AC-2 — make MCP_SERVER_URL explicit in docker-compose.yml for pdf-extractor service.
+
+**What was done:**
+- Confirmed pdf-extractor `environment:` block (lines 79-82) had no MCP_SERVER_URL
+- Confirmed `apps/pdf-extractor/infrastructure/config.py` reads `MCP_SERVER_URL`, default `http://mcp-server:3000`
+- Added single line `- MCP_SERVER_URL=http://mcp-server:3000` to pdf-extractor environment block (4-space list indent, matching peers)
+- Committed `7d4a447b` (docker-compose.yml only — explicit staging, no -A)
+- Recreated ONLY the pdf-extractor container: `docker compose up -d pdf-extractor`
+- Verified: `printenv MCP_SERVER_URL` = `http://mcp-server:3000` inside container
+- Verified: container status = `Up (healthy)` within 7s
+- Verified: `curl http://mcp-server:3000/health` from inside pdf-extractor = HTTP 200
+- Appended [Developer] BT-4 AC-2 record to handoff, committed `628a12c9`
+
+**AC-2 status:** DONE. Zero runtime behaviour change (was already defaulting to this value).
+
+**Gotcha:** `docker compose up -d <service>` recreates only that service — safe, light load. Do NOT `docker compose up -d` without a service name (would touch the full fleet).
+
+**NEXT:** BT-4b — one-shot re-extraction of 14 stranded docs. Sequential task, separate dispatch. Requires BT-3+BT-3i+BT-5 all live in prod first (they are per ops confirmation). dev-pdf-extractor creates `bctcBatchTableBackfillJob.ts`, ops executes.
+
+---
 
 ## Session 2026-05-24 — NF-LD-5-dev-B (Refresh button + source selector)
 
