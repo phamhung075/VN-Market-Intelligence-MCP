@@ -1,7 +1,8 @@
 {
   "mcpServers": {
     "vn-market": {
-      "url": "https://zenmidi.com/vn-market/sse"
+      "type": "http",
+      "url": "https://zenmidi.com/vn-market/mcp"
     }
   }
 }
