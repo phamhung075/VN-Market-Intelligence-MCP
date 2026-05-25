@@ -2730,8 +2730,226 @@ Align the production row-assembler to the spike's `lines_to_rows()` one-line-per
 
 | Task | Title | Owner | Status | Dep |
 |---|---|---|---|---|
-| BT3-DESIGN | Architect ruling: re-parse stored OCR (preferred) vs zone-OCR; pin the exact parser change in `text_table_extractor.py` (kill block-column path, port spike `lines_to_rows` line-join); confirm row contract unchanged; sequence backfill. DESIGN ONLY. | architect | READY (dispatch FIRST) | — |
-| BT3-FIX | Fix `text_table_extractor.py` row-assembler to one-line-per-row join (label+code+current+prior together). Drop/repair the block-column positional-zip. Unit test drives REAL adapter on REAL stored FPT OCR text (no bypass), asserts AC-1..AC-5 against the gold. Fence-A/B intact, sandbox exit-0. | dev-pdf-extractor | BLOCKED ← BT3-DESIGN | BT3-DESIGN |
+| BT3-DESIGN | Architect ruling: re-parse stored OCR (preferred) vs zone-OCR; pin the exact parser change in `text_table_extractor.py` (kill block-column path, port spike `lines_to_rows` line-join); confirm row contract unchanged; sequence backfill. DESIGN ONLY. | architect | DONE | — |
+| BT3-FIX | Fix `text_table_extractor.py` row-assembler to one-line-per-row join (label+code+current+prior together). Drop/repair the block-column positional-zip. Unit test drives REAL adapter on REAL stored FPT OCR text (no bypass), asserts AC-1..AC-5 against the gold. Fence-A/B intact, sandbox exit-0. | dev-pdf-extractor | READY ← BT3-DESIGN done | BT3-DESIGN |
 | BT3-DEPLOY | docker-compose redeploy pdf-extractor (+ mcp-server if contract touched) + idempotent host-safe re-backfill of FPT Q4 via `bctcBatchTableBackfillJob` (zero Tesseract, sequential). | ops | BLOCKED ← BT3-FIX | BT3-FIX |
 | BT3-QA | LIVE curl verify AC-1..AC-7 on FPT Q4 doc against spike gold (no mock). Emit `qa-bctc-table-3-<UTC>.json`. | qa | BLOCKED ← BT3-DEPLOY | BT3-DEPLOY |
 | BT3-EXIT | PO sign-off vs AC-1..AC-7 on LIVE curl evidence + privacy audit. This time I inspect ROW COMPOSITION, not just the badge. | po | BLOCKED ← BT3-QA | BT3-QA |
+
+---
+
+## [Architect] BT3-DESIGN — Technical Ruling
+
+**Authored:** 2026-05-25 | **Zone:** `apps/pdf-extractor/` (fix-only) | **BUILD-STANDARD:** not-applicable (bug-fix / refactor, no new primitives)
+
+---
+
+### Brownfield Findings
+
+**Zone:** `apps/pdf-extractor/`
+
+**Confirmed evidence (read-verified, not from memory):**
+
+1. `apps/pdf-extractor/spike/eval/results/FPT_page4_balance_sheet.md` § "Sample OCR Lines" — stored Tesseract OCR is already ONE-LINE-PER-ROW. Line 60: `A. TÀI SẢN NGAN HAN 100 58.102.970.741.619 45.535.942.846.453` — label + code + current-value + prior-value on a SINGLE line. Every coded row in pages 4-7 follows this pattern. The label, code, and both value columns co-exist on the same OCR output line.
+
+2. `apps/pdf-extractor/spike/eval/results/FPT_balance_sheet_4-7.md` § "Full Stitched Table" — spike's `lines_to_rows()` produced ~80 correct gold rows from this exact text. All 6 sentinel codes (100/200/270/300/400/440) present, both period columns filled, balance_delta = 0 VND to the dong.
+
+3. `apps/pdf-extractor/spike/fpt_balance_sheet_eval.py` L187-211 — the proven parser: for each line, scan for all VN-number tokens + last code candidate on that same line, emit one `{code, values[current, prior]}` dict. No state machine. No block-column detection. Zero page-crossing needed.
+
+4. `apps/pdf-extractor/infrastructure/text_table_extractor.py` L359-518 — the broken production state machine: `_detect_block_column_layout()` triggers on ≥5 consecutive pure-code-only lines → `_extract_block_columns()` separates code, value-current, and value-prior into three parallel lists across different line regions → `_build_rows_from_block_columns()` positional-zips them → hardcodes `label: ""` (L511). This produces 44 orphan rows (code + value, no label), drops code 100, duplicates 222, leaves value_prior null on 118/150 rows.
+
+5. `apps/pdf-extractor/infrastructure/text_table_extractor.py` L606-619 — the inline path's `else` branch (when `_try_parse_code_row` returns None) emits EVERY non-code line as a `{code: None, value_current: None}` junk row, including company name, address, header text. This produces the 94 junk rows.
+
+6. `apps/pdf-extractor/infrastructure/text_table_extractor.py` L268-322 — `_try_parse_code_row()` with Layouts 1-4 IS the correct inline line parser already in production. It correctly handles label-first (`A. TÀI SẢN NGAN HAN  100  58.102...`), code-first, single-space, and code-value-column layouts. The inline path `_parse_page_lines()` (L521-623) that uses it is sound. Only the block-column detection + state machine is wrong.
+
+**Verified paths:**
+- `apps/pdf-extractor/infrastructure/text_table_extractor.py` — sole file changed (737 lines)
+- `apps/pdf-extractor/__tests__/integration/test_extract_tables_fpt.py` — integration test file to replace (false-green due to `PreloadedTextTableExtractor` subclass bypass)
+- `apps/pdf-extractor/spike/fpt_balance_sheet_eval.py` L187-211 — canonical reference for the proven `lines_to_rows` logic; DO NOT modify the spike
+- `apps/pdf-extractor/spike/eval/results/FPT_page4_balance_sheet.md` — gold reference for OCR text format and expected per-page results (read-only)
+- `apps/pdf-extractor/spike/eval/results/FPT_balance_sheet_4-7.md` — gold reference for full-stitch expected output (read-only)
+
+**Contract files (confirmed UNCHANGED — mcp-server side):**
+- `apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts` — `bctc_table_rows` DDL unchanged
+- `apps/mcp-server/src/interface/mcp/routes/pushBctcTableHandler.ts` — push handler unchanged
+- `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` — GET handler unchanged
+- `apps/mcp-server/src/interface/bctc-inspector.html` — render unchanged
+
+---
+
+### Ruling 1 — RE-PARSE vs ZONE-OCR
+
+**RULING: RE-PARSE the existing stored OCR text. Zone-OCR is NOT required.**
+
+Justification:
+
+The stored OCR text (from `pdf_extracted_text` table, Tesseract vie+eng) is already one-line-per-row. The FPT balance sheet pages 4-7 produce lines of the form `{label} {code} {value_current} {value_prior}` — all four fields on the same line, separated by spaces. The spike's `lines_to_rows()` proved this: reading ONLY the stored text, with no re-OCR, it produced 80 perfect gold rows matching all 6 sentinel codes, both period columns, and a zero-delta balance check.
+
+Zone-OCR (coordinate-aware extraction: render PDF page to image, detect table bounding box, then OCR within the box) adds: PyMuPDF/pdf2image → PNG render overhead, coordinate model complexity, a page-render subprocess, and non-trivial host memory. Under the kernel-panic constraint (`project_host_memory_panic`: 16GB Mac watchdog-kills under concurrent heavy Tesseract), the re-parse path is the only host-safe choice — it runs zero Tesseract on the stored text backfill path.
+
+The user's suggestion "ocr zone table first then line by line" addresses the problem WHERE the label, code, and value columns are on separate visual columns but on the SAME OCR line — which is already what Tesseract delivers for FPT. The zone-OCR step is already done (Tesseract already ran and stored the text). The "line by line" part is the correct fix direction. Zone-OCR as a separate step would only be needed if the stored text had label, code, and value on DIFFERENT OCR lines — and the evidence proves they are NOT (line 60 of the OCR sample shows all four fields together).
+
+Zone-OCR is DEFERRED. There is no concrete blocker preventing the re-parse from recovering full label↔code↔value alignment. Introducing zone-OCR now would be over-engineering that adds host-panic risk without solving the actual bug.
+
+---
+
+### Ruling 2 — EXACT CHANGE in `text_table_extractor.py`
+
+**DELETE the block-column state machine. KEEP the existing inline path. Add a shared pure `_parse_lines_to_rows()` function used by BOTH the live call path AND the backfill path.**
+
+**What to DELETE (the broken code):**
+
+- `_detect_block_column_layout()` (L359-383) — DELETE entirely. This function triggers the wrong code path for FPT pages 4-6 by pattern-matching on OCR artifact lines that are NOT actually in separate blocks.
+- `_extract_block_columns()` (L386-471) — DELETE entirely. The positional-zip state machine that separates labels, codes, and values across regions and loses the label association.
+- `_build_rows_from_block_columns()` (L474-518) — DELETE entirely. The positional-zip row builder that hardcodes `label: ""`.
+- The `if _detect_block_column_layout(lines): ... else: ...` branch in `TextTableExtractor.assemble()` (L693-720) — collapse to the inline path only (remove the `if` branch entirely, keep `_parse_page_lines` as the sole call).
+
+**What to FIX in `_parse_page_lines()` (L606-619 else-branch):**
+
+The else-branch that emits every non-code line as a junk row must be TIGHTENED. A non-code line should only be emitted as a header/separator row if it passes a meaningful filter: contains at least one Vietnamese alphabetic character OR is a recognized section header keyword. Lines containing only ASCII digits, punctuation, company addresses, OCR noise, or generic short strings must be skipped. The existing comment "Skip purely numeric lines and very short lines (likely OCR noise)" partially captures this — but the filter is too loose (it admits company names, addresses, and date strings). The fix: skip any non-code line where `len(stripped) < 4` OR `not re.search(r'[A-ZÀÁẢÃẠĂẮẶẰẲẴÂẤẶẦẨẪĐÈÉẺẼẸÊẾỀỂỄỆÍÌỈĨỊÓÒỎÕỌÔỐỒỔỖỘƠỚỜỞỠỢÙÚỦŨỤƯỨỪỬỮỰÝỲỶỸỴ]', stripped, re.IGNORECASE)` — i.e. no Vietnamese/alphabetic content. This eliminates company name/address/header junk rows while preserving genuine section-header rows like `"A. TÀI SẢN NGẮN HẠN"` (which will also be parsed as a code row anyway via `_try_parse_code_row` Layout 2).
+
+**What to ADD — shared pure function `_parse_lines_to_rows()`:**
+
+Extract the core per-line parsing logic from `_parse_page_lines()` into a module-level pure function with this signature:
+
+```python
+def _parse_lines_to_rows(
+    lines: List[str],
+    page_num: int,
+    unit: str,
+    period_current: Optional[str],
+    period_prior: Optional[str],
+    row_order_start: int,
+) -> tuple[List[Dict], int]:
+```
+
+This function is identical to the current `_parse_page_lines()` body but accepts `row_order_start` and returns `(rows, next_row_order)`. It has NO I/O, NO Tesseract, NO HTTP. It is pure: given text lines, it emits structured row dicts. This is the SINGLE canonical row parser.
+
+`_parse_page_lines()` becomes a one-line wrapper:
+```python
+def _parse_page_lines(...) -> tuple[List[Dict], int]:
+    return _parse_lines_to_rows(lines, page_num, unit, period_current, period_prior, row_order_start)
+```
+
+The `TextTableExtractor.assemble()` method calls `_parse_lines_to_rows()` directly (after deleting the block-column branch).
+
+The backfill path (when called with pre-supplied stored OCR text via `pages[n]["text"]`) calls the SAME `_parse_lines_to_rows()` — zero Tesseract, zero re-OCR, host-safe. This kills dual-path drift permanently: there is ONE canonical parser for all call sites.
+
+**DDD layer assignment:**
+
+- `_parse_lines_to_rows()` — pure function, no I/O → lives in `infrastructure/text_table_extractor.py` (it belongs to the adapter file, not domain, because it is an implementation detail of the `TextTableExtractor` adapter). It is NOT moved to domain because it references infrastructure regexes and uses `_parse_value()` which calls `vn_number_normalize`. If a future sprint wants to make it independently testable as a domain primitive, that is a separate refactor task.
+- `TextTableExtractor.assemble()` — infrastructure adapter method, unchanged in location.
+- Import-linter fence: no change. `_parse_lines_to_rows()` imports from `domain/primitives` (OK for infrastructure). Zero application/interface imports.
+
+---
+
+### Ruling 3 — ROW CONTRACT
+
+**CONFIRMED UNCHANGED. The fix is pure pdf-extractor-side.**
+
+The row contract (`bctc_table_rows` columns: `code, label, value_current, value_prior, unit, is_summary_row, row_order, page_number, statement_section, period_current, period_prior`) was defined in BT-2 and implemented in BT-3i-A. The production parser produces rows in this exact shape already — the bug is that the field VALUES are wrong (label blank, code missing, value_prior null), not that the contract shape is wrong.
+
+The fix changes the algorithm that FILLS the contract fields. The contract shape stays identical.
+
+mcp-server side effects:
+- `POST /api/push-bctc-table` — unchanged. Handler receives same JSON shape.
+- `GET /api/bctc-inspect/table/{doc_id}` — unchanged. Returns same JSON shape.
+- `bctc-inspector.html` — unchanged. Renders same fields.
+- `schema-financial-reports.ts` — unchanged. DDL already correct.
+
+NO mcp-server subtask is needed. All changes are in `apps/pdf-extractor/` only.
+
+**mcp-server zone is NOT touched in this sprint.** If at BT3-FIX a contract gap is found (architect believes there is none), dev-pdf-extractor must flag it immediately and halt — do not invent a contract change without routing through architect first.
+
+---
+
+### Ruling 4 — TEST MANDATE
+
+**The integration test must drive the REAL adapter on the REAL stored FPT Q4 OCR text.**
+
+The existing `apps/pdf-extractor/__tests__/integration/test_extract_tables_fpt.py` is a confirmed false-green: it uses `PreloadedTextTableExtractor(TextTableExtractor)` which overrides `assemble()` to ignore the pages argument and return pre-cached OCR. This NEVER exercised the production data flow. It must be replaced or rewritten.
+
+**New integration test specification (`test_extract_tables_fpt.py`):**
+
+1. Load the REAL stored FPT Q4 OCR text from the database OR from a committed fixture file containing the EXACT text that `pdf_extracted_text` stores (no transformation). The fixture must be the raw Tesseract output string — the same string the live `POST /extract-tables` handler passes to `TextTableExtractor.assemble()`.
+
+2. Instantiate `TextTableExtractor()` directly (no subclass, no override). Call `assemble(pages=[{"page_number": 4, "text": fpt_p4_text}, ...], statement_section="balance_sheet")` with the REAL stored text for pages 4-7.
+
+3. Assert against spike gold (`FPT_balance_sheet_4-7.md`):
+   - AC-INT-1: `len(rows)` in range [70, 120] (spike produced ~80; after junk removal expect ~80-90).
+   - AC-INT-2: ZERO rows where `code is None AND value_current is None AND label` is company name/address/noise. (was 94 → 0)
+   - AC-INT-3: ZERO rows where `label == ""` and `value_current is not None`. (was 44 → 0)
+   - AC-INT-4: code `"100"` present exactly once in the result. (was missing)
+   - AC-INT-5: NO duplicate codes (unique code values among rows where `code is not None`). (was 222×2)
+   - AC-INT-6: Among rows with `value_current is not None`, `value_prior is not None` for at least 90% of them. (was 118/150 null → near-0)
+   - AC-INT-7: code `"270"` row: `value_current == 88089621779862.0` (± float tolerance 1.0). Balance sentinel.
+   - AC-INT-8: code `"300"` row: `value_current == 44338155487272.0` (± 1.0).
+   - AC-INT-9: code `"400"` row: `value_current == 43751466292590.0` (± 1.0).
+   - AC-INT-10: code `"100"` row: `label` contains `"TÀI SẢN"` (label is not blank).
+   - AC-INT-11 (balance check, computed in test): rows with code "270" value_current equals rows code "300" value_current + rows code "400" value_current within tolerance 1.0 VND.
+
+4. The test MUST NOT subclass `TextTableExtractor`, MUST NOT pass synthetic fixture text that does not match production, MUST NOT mock `assemble()`. If the FPT stored OCR text is not committed as a test fixture, the test reads it from the SQLite DB (the real `pdf_extracted_text` table) — this is the ONLY acceptable non-mock I/O for this integration test.
+
+**Fixture strategy (recommended):** commit a companion fixture file `apps/pdf-extractor/__tests__/fixtures/fpt_q4_2025_pages_4-7.txt` containing the EXACT Tesseract output for pages 4-7. This is deterministic (same Tesseract run, same input PDF, same output). The test reads this file. This makes the test hermetic (no live DB required) while still testing the REAL adapter on the REAL text.
+
+---
+
+### Finalized Per-Task ACs for BT3-FIX
+
+**BT3-FIX — dev-pdf-extractor — `apps/pdf-extractor/infrastructure/text_table_extractor.py`**
+
+- **AC-1 (zero orphan rows):** `result["rows"]` contains ZERO rows where `code is not None AND label == ""`. (was 44)
+- **AC-2 (zero junk rows):** `result["rows"]` contains ZERO rows where `code is None AND value_current is None AND label` matches any of: company name, address, date-only string, numeric-only string. Filter: junk = `(code is None) AND (value_current is None) AND (not re.search(r'[A-Za-zÀ-ỹ]{3,}', label))`. (was 94)
+- **AC-3 (code 100 present):** `result["rows"]` contains exactly one row with `code == "100"`. (was missing)
+- **AC-4 (no duplicate codes):** Among rows where `code is not None`, each code value appears at most once. (was 222×2)
+- **AC-5 (value_prior populated):** Among rows where `value_current is not None`, at least 90% also have `value_prior is not None`. (was 118/150 null)
+- **AC-6 (balance sentinel):** code "270" row has `value_current == 88089621779862.0` ± 1.0. Code "300" has `value_current == 44338155487272.0` ± 1.0. Code "400" has `value_current == 43751466292590.0` ± 1.0. Balance holds: 270 == 300 + 400 within 1.0 VND tolerance.
+- **AC-7 (label on code "100"):** code "100" row has `label` containing `"TÀI SẢN"` (not blank, not address).
+- **AC-8 (block-column path deleted):** `text_table_extractor.py` contains NONE of the identifiers `_detect_block_column_layout`, `_extract_block_columns`, `_build_rows_from_block_columns`. A `grep` for any of these names returns no match.
+- **AC-9 (shared parser):** A module-level function `_parse_lines_to_rows` exists in `text_table_extractor.py`. `TextTableExtractor.assemble()` calls it (no direct `_parse_page_lines` in the assemble loop). Both the live call path (from `assemble()`) and any pre-supplied-text path use the same function.
+- **AC-10 (fence intact):** `lint-imports --config pyproject.toml` exit 0. Fence-A (primitives) and Fence-B (modules) both KEPT. No new infra imports in domain layer.
+- **AC-11 (integration test, no bypass):** `apps/pdf-extractor/__tests__/integration/test_extract_tables_fpt.py` uses `TextTableExtractor()` directly (no subclass). The test text is the real FPT Tesseract OCR output (committed fixture or live DB read). All AC-INT-1..AC-INT-11 pass. `pytest __tests__/integration/test_extract_tables_fpt.py -v` = GREEN.
+- **AC-12 (sandbox exit-0):** `env -i PYTHONPATH=. python3 sandbox/runner.py` exit 0; no new creds in env.
+- **AC-13 (no mcp-server changes):** `git diff apps/mcp-server/` = empty for this commit. All changes are in `apps/pdf-extractor/` only.
+
+---
+
+### Files to Create / Modify (BT3-FIX)
+
+**apps/pdf-extractor/ — ALL changes:**
+- MODIFY `infrastructure/text_table_extractor.py` — delete `_detect_block_column_layout`, `_extract_block_columns`, `_build_rows_from_block_columns`; add `_parse_lines_to_rows`; tighten else-branch junk filter in `_parse_page_lines`; remove block-column branch from `assemble()`
+- REPLACE `__tests__/integration/test_extract_tables_fpt.py` — remove `PreloadedTextTableExtractor` subclass; drive real adapter on real text; assert AC-INT-1..AC-INT-11
+- CREATE `__tests__/fixtures/fpt_q4_2025_pages_4-7.txt` — committed fixture of FPT pages 4-7 raw Tesseract OCR text (copy from `apps/pdf-extractor/spike/eval/results/FPT_page4_balance_sheet.md` OCR sample, extended to pages 5-7 from the stored DB text)
+
+**apps/mcp-server/ — UNTOUCHED. Zero changes.**
+
+**Post-commit check:** `git show --stat HEAD` lists only the 3 pdf-extractor files above (zero mcp-server, zero foreign files).
+
+---
+
+### Backfill Sequence
+
+1. BT3-FIX lands (pdf-extractor fixed, tests green, Docker image rebuilt by ops).
+2. BT3-DEPLOY: ops rebuilds `pdf-extractor` Docker image (no mcp-server rebuild needed — contract unchanged). Then triggers `bctcBatchTableBackfillJob` (already in `apps/mcp-server/src/application/usecases/bctcBatchTableBackfillJob.ts`) in ONE-SHOT mode. The backfill calls `POST pdf-extractor:5001/extract-tables` for each of the 14 financial_reports rows with `pdf_path IS NOT NULL`. Each call supplies the PDF path; the pdf-extractor handler runs Tesseract on that PDF and sends the structured rows to `POST /api/push-bctc-table`.
+3. **HOST-SAFETY for backfill:** backfill must be SEQUENTIAL (one doc at a time, await each before next). Concurrent Tesseract on the Mac triggers the kernel panic. `bctcBatchTableBackfillJob` already processes sequentially (for-of loop, await per POST). Ops must confirm sequential execution before triggering. If running on the main server (not the Mac), concurrency cap of 1 still applies until ops validates CPU headroom.
+4. BT3-QA: QA runs `GET /api/bctc-inspect/table/e71f845d-...` live curl, verifies AC-1..AC-7 against spike gold. Emits `qa-bctc-table-3-<UTC>.json`.
+5. BT3-EXIT: PO verifies ROW COMPOSITION this time (not just balance badge), signs off.
+
+**Zero re-parse on the Mac via Tesseract** — all backfill Tesseract runs happen on the production Docker service. The Mac only runs unit/integration tests (hermetic, no Tesseract subprocess in tests if fixture file is used).
+
+---
+
+### Risk Flags
+
+**R-1 (MEDIUM) — FPT pages 5-7 OCR text structure.** The gold output in `FPT_balance_sheet_4-7.md` shows that page 5 (Non-Current Assets) scored 95.8% and page 7 (Equity) scored 86.7%. The one-line-per-row join must handle multi-line label wraps (e.g., line 69-70 of the OCR sample: `Sabb lay theo tien dekethgach  134  200.405.269.967  136.097.256.629` / `hợp đồng xây dựng \`). The spike's `lines_to_rows()` handled this by accepting that the second line fragment without numbers simply produces no row — the first line carries the code and values correctly. dev-pdf-extractor must verify pages 5 and 7 produce correct code coverage (not just page 4). The integration test fixture must include pages 5-7 text.
+
+**R-2 (LOW) — `_PURE_CODE_LINE_RE` false-triggers.** The block-column detection fired because pages 4-6 contain lines like `"100"`, `"110"`, etc. (code-only OCR fragments from the Mã số column rendering). After deleting `_detect_block_column_layout`, these lines will reach `_try_parse_code_row` and return None (no VN number on the line = not a code row). They will then hit the tightened else-branch junk filter and be skipped (no alphabetic content, length < 4). This is correct behavior. dev-pdf-extractor must verify: code-only lines (`"100"` alone) do NOT produce rows and do NOT eat the label from the next line.
+
+**R-3 (LOW) — Tesseract note-number columns.** Some OCR lines have a "Thuyết minh" note reference number between the code and the values (e.g., `"I. Tiền và các khoản tương đương tiền  110  5  10.540.181.640.920  9.315.440.438.884"` — the `5` is the footnote ref). `_parse_value_cells()` must filter the footnote digit out and pick the two large VN numbers as current/prior. The existing `_parse_value_cells` splits on 2+ spaces; if the footnote is separated by single space from the value, the split may combine them. dev-pdf-extractor must verify this case with a unit test: `"5  10.540.181.640.920"` → values `["5", "10.540.181.640.920"]` → `_parse_value()` on `"5"` = `5.0` (not the right value). This edge case may require the `select_period_column` heuristic to pick the LARGER number as `value_current`. The existing `select_period_column` with `hint="consolidated"` prefers the first non-empty cell — this may need verification on the actual fixture text. Flag for dev: run through the footnote-bearing lines and verify the output.
+
+**Scan clean:**
+- Fence-A: SAFE — `_parse_lines_to_rows` has zero domain/modules imports (only domain/primitives = allowed).
+- Fence-B: SAFE — no module files touched.
+- 1954c collision: NONE — `ExtractPDFUseCase`, `ExtractTablesUseCase`, `pushBctcTableHandler` all untouched.
+- Pilot frozen: `pilot-status-pdf-extractor.json`, `sandbox/runner.py`, `dashboard/` untouched.
+- mcp-server: UNTOUCHED. Contract verified UNCHANGED.

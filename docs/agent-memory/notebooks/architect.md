@@ -1,8 +1,40 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-25 22:00 UTC | **Sprint:** mcp-server-phase-2
+**Last updated:** 2026-05-25 23:30 UTC | **Sprint:** BCTC-TABLE-3
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## BT3-DESIGN — BCTC-TABLE-3 parser fix ruling (2026-05-25T23:30Z) — DESIGN COMPLETE
+
+**Task:** BT3-DESIGN. Produce the technical ruling for Sprint BCTC-TABLE-3. Root cause pre-pinned by PO: production `text_table_extractor.py` introduced a fabricated block-column state machine that (a) hardcodes `label=""` → 44 orphan rows, (b) positionally zips separated code/value lists → drops code 100, duplicates 222, nulls value_prior on 118/150 rows, (c) else-branch emits company name / address as junk rows → 94 junk rows. Spike's `lines_to_rows()` on the SAME stored OCR text produced ~80 perfect gold rows.
+
+**Key decisions:**
+
+1. **RE-PARSE, not zone-OCR.** Stored Tesseract OCR is already one-line-per-row. Spike proved it. Zone-OCR adds host-panic risk (kernel watchdog under concurrent Tesseract on 16GB Mac). Backfill path must be zero-Tesseract.
+
+2. **Delete 3 functions** from `text_table_extractor.py`: `_detect_block_column_layout`, `_extract_block_columns`, `_build_rows_from_block_columns`. Collapse the `if block_column else inline` dispatch to inline-only for every page.
+
+3. **Add shared pure `_parse_lines_to_rows()`** used by BOTH the live `assemble()` path AND the backfill path. Kills dual-path drift permanently. One canonical parser.
+
+4. **Tighten else-branch junk filter**: only emit non-code lines as header/separator rows if they contain ≥3 consecutive alphabetic characters. Rejects company name/address/date/numeric noise.
+
+5. **Row contract UNCHANGED.** `bctc_table_rows` schema, `push-bctc-table` handler, `bctcInspectHandler`, `bctc-inspector.html` — all untouched. Fix is pure pdf-extractor-side.
+
+6. **Integration test mandate: no subclass bypass.** Replace `PreloadedTextTableExtractor` false-green with real `TextTableExtractor()` on committed FPT pages 4-7 fixture text. Assert 11 ACs against spike gold (0 orphan/junk rows, code 100 present, no dups, value_prior ≥90%, sentinels exact).
+
+**Files authored this cycle (3):**
+1. `docs/handoffs/TASK_BCTC-TABLE.md` — BT3-DESIGN ruling appended (§ [Architect] BT3-DESIGN), task ladder updated (BT3-DESIGN=DONE, BT3-FIX=READY)
+2. `docs/architecture-briefs/2026-05-25-bctc-table-3-parser-fix-ruling.md` (NEW — full ruling with decision table, exact change spec, risk register)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Risk flags surfaced:**
+- R-MEDIUM: Pages 5-7 multi-line label wraps (p7 scored 86.7%). Integration fixture must cover pages 5-7. Spike already handles gracefully.
+- R-LOW: Pure-code-only OCR fragment lines (`"100"` alone) now reach the else-branch but will be filtered by the tightened length/alphabetic guard.
+- R-LOW: Footnote note-number column (single digit between code and value) may be consumed as value_current by `_parse_value_cells`. Dev must unit-test this case.
+
+**Next actor:** dev-pdf-extractor — BT3-FIX.
+
+---
 
 ## P2-MCP-G9-CONTRACT-FIX — P2-H + P2-I plan correction (2026-05-25T22:00Z) — DESIGN COMPLETE
 
