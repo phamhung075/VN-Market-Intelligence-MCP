@@ -1,5 +1,36 @@
 # dev-mcp-server -- Notebook
 
+## c304 · 2026-05-25 (mcp-server Phase-2 P2-H-FIX — G9 inline data model, no addInitScript)
+
+### P2-H-FIX — G9 Trust-Contract Corrective Re-implementation DONE
+
+**Commit:** `5ab1711f` | 4 files staged | tsc EXIT 0 | bun test 9421 pass / 350 fail (350 = pre-existing drift; HTML/JSON/JS-only changes cannot affect TS tests) | toolCount=146 | sched=68
+
+**Problem fixed:** Original P2-H was a Potemkin gate. addInitScript injected window.__MCP_TRACES__/window.__MCP_MODULES__ globals — Playwright tested a code path the user never sees. Under real file:// double-click, Chromium blocks fetch() and both panels render empty. sparkline-regression-tripwire.json (synthetic always-fail) also tainted P2-I: user would see a permanent red card during sign-off.
+
+**Delivered (inline data model):**
+- MODIFY `dashboard/index.html` — inline mcp-traces-data + mcp-modules-data as `<script type="application/json">` blocks in `<head>`. JS reads from DOM (getInlineTraces/getInlineModules via getElementById + JSON.parse). DOMContentLoaded init. No fetch(), no window.__ globals. KNOWN_TRACES array removed. microservice file:// guard kept.
+- MODIFY `dashboard/tests/trust-contract.spec.js` — removed addInitScript entirely; removed loadTracesFromDisk/loadModulesFromDisk helpers; assertion-5 respec'd as pure in-page renderCard() call (proves RED path, no on-disk fixture).
+- DELETE `dashboard/traces/sparkline-regression-tripwire.json` — synthetic always-fail fixture forbidden; real RED proof at G10/P2-J-K.
+- REGENERATE `dashboard/playwright-verdict.json` — fresh run post-fix, 7/7 pass.
+
+**Playwright verdict:** passingTests=7 | failingTests=0 | consoleErrors=0 | networkRequests=0 (structurally guaranteed — no fetch() calls at all)
+
+**AC evidence (all 9 ACs):**
+- AC-1: grep mcp-traces-data=3 hits, mcp-modules-data=3 hits, window.__MCP_*=0 functional refs PASS
+- AC-2: tripwire file deleted, 9 real traces remain PASS
+- AC-3: inline JSON parses to 9 traces (all pass) + 12 modules; renders correctly under file:// PASS
+- AC-4: trust-contract.spec.js has NO addInitScript; npx playwright test exits 0 PASS
+- AC-5: assertion-5 calls renderCard({status:\"fail\"}) in-page, asserts HTML includes mcp-dot-fail PASS
+- AC-6: 0 HTTP(S) requests captured by Playwright listener PASS
+- AC-7: 0 console errors PASS
+- AC-8: playwright-verdict.json regenerated and committed PASS
+- AC-9: bun test 9421/350 (drift); tsc exit 0; toolCount=146; sched=68 PASS
+
+**Zone health:** P2-H-FIX complete; inline data model seals file:// fidelity gap; 7/7 Playwright; tsc clean; tools=146; sched=68 | HEALTHY
+
+---
+
 ## c303 · 2026-05-25 (mcp-server Phase-2 P2-H — G9 Playwright trust-contract artifact)
 
 ### P2-H — G9 Playwright Trust-Contract Artifact DONE
