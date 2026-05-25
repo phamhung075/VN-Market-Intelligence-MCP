@@ -1,5 +1,31 @@
 # dev-mcp-server -- Notebook
 
+## c297 · 2026-05-25 (BT-4b — one-shot BCTC table backfill job)
+
+### BT-4b — One-shot backfill (PARTIAL / DEFERRED: BT-3-D blocker)
+
+**Commit:** `0b4b3699` | 2 files | 8 tests GREEN | tsc EXIT 0 | tools=148 | sched=68
+
+**Delivered:**
+- `bctcBatchTableBackfillJob.ts` (application usecase, NOT cron): sequential iterator over financial_reports with pdf_path + existsSync gate. UUID-validates each doc_id before any HTTP call. Returns {success, gate_blocked, failed, skipped_no_file, skipped_null_path, outcomes[]}.
+- `bctcBatchTableBackfillJob.test.ts`: 8 tests — skip-no-file, gate-blocked, network error, HTTP 500, null-path, missing-file, idempotent, invalid-UUID.
+
+**FPT proof attempt — BLOCKED:**
+- `POST /extract-tables` for FPT Q4 2025 → `{rows_stored:0, balance_pass:false}`
+- Root cause: `ExtractTablesUseCase.execute()` in pdf-extractor builds `pages=[{page_number:0, path:pdf_path}]` — no `"text"` key. `TextTableExtractor.assemble()` reads `page.get("text","")` → empty → 0 rows.
+- **Tesseract OCR never called in the `/extract-tables` production path.** Different from integration test which pre-ran OCR.
+- Fix is in pdf-extractor zone (dev-pdf-extractor). DEFERRED as BT-3-D.
+
+**BT-3-D scope (dev-pdf-extractor):**
+1. Wire Tesseract (pdf2image + pytesseract) in `/extract-tables` route OR in `ExtractTablesUseCase.execute()` via injected `OcrPort`.
+2. Auto-locate balance-sheet page range by scanning ALL pages for TÀI SẢN/NGUỒN VỐN markers.
+3. Re-validate FPT golden anchors: 270=88,089,621,779,862; 300=44,338,155,487,272; 400=43,751,466,292,590.
+4. Then re-run backfillBctcTables() across all 12 eligible docs.
+
+**Zone health:** bctcBatchTableBackfillJob ready; 34 BCTC tests GREEN; tsc clean; tools/sched unchanged | HEALTHY — blocked externally (BT-3-D)
+
+---
+
 ## c296 · 2026-05-25 (mcp-server Phase-2 P2-A/B/C — ESLint fence foundation)
 
 ### P2-A/B/C — ESLint Fence Foundation DONE
