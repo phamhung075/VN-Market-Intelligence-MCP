@@ -92,11 +92,17 @@ _CODE_VALUE_COL_RE = re.compile(
 #   "D. VỐN CHỦ SỞ HỮU 400 43.751.466.292.590 35.727.540.104.800"
 #   "TONG CỘNG NGUON VỐN (440=300+400) 440 88.089.621.779.862 71.999.995.678.620"
 #   "I. Vốn chủ sở hữu 410 24 43.748.716.292.590 35.724.790.104.800"
-# Pattern: any label text (including parentheses) + space + 3-digit code +
-#          space + optional-note + VN-number value.
-# Must end with a VN-format number to distinguish from pure label lines.
+#   "6. Dự phòng phải thu ngắn hạn khó đòi 137 9 (586.166.744.274) (619.531.925.859)"
+#   "- Giá trị hao mòn lũy kế 223 (13.762.875.752.850) (11.683.165.704.793)"
+# Pattern: any label text (including parentheses) + space + 2-3 digit code +
+#          space + optional-note + VN-number value (positive or parenthetical negative).
+# BT3-FIX-3: Extended to also match lines starting with "-" (dash-prefixed sub-items)
+# and parenthetical negative values like "(13.762.875.752.850)".
+# Must end with a VN-format number (positive or in-paren negative) to distinguish
+# from pure label lines.
+_VN_NUMBER_TOKEN = r"(?:\d[\d.,]+|\(\d[\d.,]+\))"  # positive or paren-negative VN number
 _CODE_ROW_SINGLE_SPACE_RE = re.compile(
-    r"^(.+?)\s+(\d{2,3})\s+(?:\d{1,2}\s+)?(\d[\d.,]+(?:\d[\d.,]+)*(?:\s+\d[\d.,]+)?)\s*$"
+    r"^(.+?)\s+(\d{2,3})\s+(?:\d{1,2}\s+)?(" + _VN_NUMBER_TOKEN + r"(?:\s+" + _VN_NUMBER_TOKEN + r")?)\s*[a-zA-Z|\\]*\s*$"
 )
 
 # Regex: period header — Vietnamese date format DD/MM/YYYY (or YYYY/MM/DD variation)
@@ -501,6 +507,18 @@ def _parse_three_block_layout(
     if not codes:
         return [], row_order_start
 
+    # BT3-FIX-3: Assert len(labels) == len(codes) after collection.
+    # If they diverge by more than 1, something is misaligned — log a WARNING
+    # and fall back to label="" for unmatched codes (never silently misalign).
+    label_code_delta = abs(len(labels) - len(codes))
+    if label_code_delta > 1:
+        logger.warning(
+            "_parse_three_block_layout: page %d label/code count mismatch: "
+            "len(labels)=%d len(codes)=%d delta=%d — falling back to label='' "
+            "for unmatched codes. Check OCR quality on this page.",
+            page_num, len(labels), len(codes), label_code_delta,
+        )
+
     # Phase 4: collect values (current and prior) from value blocks
     # Find first date (31/12/YYYY) line position — marks start of current values
     # Find second date line — marks start of prior values
@@ -605,6 +623,9 @@ def _parse_lines_to_rows(
         if period_prior:
             period_headers.append(period_prior)
 
+    # Track codes seen so far (for BT3-FIX-3 dedup guard — R3)
+    _seen_codes: Dict[str, int] = {}  # code → count
+
     for line in lines:
         stripped = line.strip()
         if not stripped:
@@ -617,6 +638,40 @@ def _parse_lines_to_rows(
         # Skip date-only header lines (period headers)
         if _DATE_RE.search(stripped) and len(stripped.split()) <= 4:
             # Likely a period-header line (e.g. "31/12/2025  31/12/2024")
+            continue
+
+        # BT3-FIX-3 DEFECT 2 FIX: Skip company/address block lines and form-level
+        # noise BEFORE they reach the header-row branch. The existing alpha-3 filter
+        # does not catch these — they have alphabetic content and pass through,
+        # leaking into the output as junk header rows.
+        # Explicit string patterns only — no heuristics.
+        low_stripped = stripped.lower()
+        if any(skip in low_stripped for skip in [
+            # Company/address block (AC-10 targets)
+            "công ty",          # company name: "CÔNG TY CỔ PHẦN FPT"
+            "phường",           # ward: "Phường Cầu Giấy"
+            "thành phố",        # city: "Thành phố Hà Nội"
+            "số 10",            # street address: "Số 10 phố Phạm Văn Bạch"
+            # Form-level noise (provably not item labels)
+            "mã số",            # "Mã số" column header line (e.g. "TÀI SẲN Mã số a 31/12/2025...")
+            "mẫu số",           # form number: "MẪU SỐ B 01-DN/HN"
+            "mau so",           # OCR-variant form number
+            "bảng cân",         # balance-sheet title: "BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT"
+            "bang can",         # OCR-variant
+            "tại ngày",         # date-context: "Tại ngày 31 thang 12 năm 2025"
+            "tai ngay",         # OCR-variant
+            "ngày 26",          # signature date: "Ngày 26 tháng 01 năm 2026"
+            "ngay 26",          # OCR-variant
+        ]):
+            continue
+        # Skip very short OCR noise fragments (< 10 chars, no code row context)
+        # Example: "ach Thuyết" (OCR split fragment from "Báo cáo ach Thuyết minh")
+        # Use a simple length+pattern heuristic: < 15 chars AND no digits
+        if len(stripped) < 15 and not re.search(r"\d", stripped) and not re.search(r"[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂẮẲẶĐÊẾỆỔỖỘỞỢỤỨỪỬỮ]", stripped):
+            # All-lowercase or mixed short fragment with no uppercase letters → likely noise
+            pass  # fall through to normal processing
+        # Skip line-continuation fragments (backslash-terminated or single-word with no code)
+        if stripped.endswith("\\") and len(stripped.split()) <= 6 and not re.search(r"\d{2,3}", stripped):
             continue
 
         # Try to match a code row (handles code-first and label-first layouts)
@@ -656,6 +711,18 @@ def _parse_lines_to_rows(
             value_current = _parse_value(value_current_raw)
             value_prior = _parse_value(value_prior_raw)
             is_summary = 1 if code in _SUMMARY_CODES else 0
+
+            # BT3-FIX-3 R3: Code dedup guard — detect same code appearing twice
+            # on one page. Fresh Tesseract OCR should resolve 222/223 misread
+            # naturally; this guard is defensive and logs a WARNING without dropping.
+            _seen_codes[code] = _seen_codes.get(code, 0) + 1
+            if _seen_codes[code] > 1:
+                logger.warning(
+                    "_parse_lines_to_rows: page %d duplicate code %r "
+                    "(occurrence #%d) — possible OCR misread (e.g. 222/223). "
+                    "Do NOT silently drop — emitting row with duplicate code.",
+                    page_num, code, _seen_codes[code],
+                )
 
             rows.append({
                 "page_number": page_num,

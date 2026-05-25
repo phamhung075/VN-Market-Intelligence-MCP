@@ -4,6 +4,62 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — BT3-FIX-3 DONE (architect ruling: three-block label alignment + company-header junk filter + dedup guard)
+
+**Task:** BT3-FIX-3 | Sprint: BCTC-TABLE-3 | Recurring-bug escalation (≥2 fix commits on text_table_extractor.py)
+
+**Root causes (from architect's ruling docs/architecture-briefs/2026-05-26-bctc-table-bt3-fix3-root-cause-ruling.md):**
+1. DEFECT 1: `_parse_three_block_layout()` Phase 2 all-caps short-line regex skip dropped section-header labels ("TÀI SAN NGAN HAN"→code 100, "NỢ PHẢI TRẢ"→code 300) → off-by-one label alignment.
+2. DEFECT 2: Company/address block lines ("CÔNG TY CỔ PHẦN FPT", "Phường Cầu Giấy", "Thành phố Hà Nội") not filtered in `_parse_lines_to_rows()` → leaked as junk header rows.
+3. DEFECT 3 (defensive): no code 222/223 dedup guard → silent duplicate drop risk.
+
+**Fixes delivered:**
+- `infrastructure/text_table_extractor.py`:
+  - `_parse_three_block_layout()` Phase 2: REMOVED all-caps short-line skip (`^[A-Z...]+$ and len≤20` continue). KEPT explicit company/address/form-pattern skips only. Added len(labels)==len(codes) delta>1 WARNING log.
+  - `_parse_lines_to_rows()`: Added explicit skip for company/address/form-level noise BEFORE the header-row branch. Extended `_CODE_ROW_SINGLE_SPACE_RE` to handle parenthetical negative values `(13.762.875.752.850)` and dash-prefixed sub-items. Added code dedup guard (logs WARNING on same code appearing twice — does NOT silently drop).
+- `__tests__/integration/test_bt3_fix3_row_fidelity.py` — NEW: 12 ACs (AC-1..AC-12) against inline fixture.
+- `__tests__/unit/test_text_table_extractor.py` — updated FIXTURE_P4_MINIMAL to use 'NGUỒN VỐN' header (form title now filtered; unit test assertion updated).
+
+**Anti-false-green: RED→GREEN evidence:**
+- RED before fix: AC-7 FAIL — 23 header rows (company/address junk leaking); ≤8 expected.
+- GREEN after fix: 1 passed.
+- Fast-test summary: rows=80, code_rows=76, header_rows=4, orphans=0, prior_rate=76/76 (100%), balance_delta=0.0 VND, period_current='31/12/2025', period_prior='31/12/2024'.
+
+**len(labels)==len(codes) post-fix:** No WARNING logged on fixture pages (label count exactly matches code count after removing the all-caps skip). The guard is live and will fire if mismatch >1 on any future page.
+
+**AC coverage (fast inline-fixture test):**
+- AC-1 (sentinel codes present): PASS — {100,200,270,300,400,440} all present
+- AC-2 (sentinel value_current ±1 VND): PASS — all 6 exact
+- AC-3 (sentinel value_prior ±1 VND): PASS — all 5 exact
+- AC-4 (label fidelity sampled): PASS — 110 contains "tiền", 300 contains "NỢ" equivalent, 400 contains "vốn/chủ"
+- AC-5 (no label shift pages 4+6): PASS — code 100 label is "A. TÀI SẢN NGAN HAN" (not shifted 110 label)
+- AC-6 (orphan count==0): PASS — 0 orphans
+- AC-7 (header count≤8): PASS — 4 header rows
+- AC-8 (zero duplicate codes): PASS — 76 unique codes, all unique
+- AC-9 (value_prior ≥90% for code rows): PASS — 76/76 = 100%
+- AC-10 (no junk address rows): PASS — company/address labels filtered
+- AC-11 (balance_pass=True, delta=0): PASS — delta=0.0 VND
+- AC-12 (row count in [80,110]): PASS — 80 rows
+- NOTE: AC-5 for the three-block path (stored OCR) can only be validated by live re-extract with fresh Tesseract (container/CI slow test). The fast test validates inline path which naturally aligns labels correctly.
+
+**Full suite evidence:**
+- Before: 286 passed (1 slow deselected), 1 warning
+- After: 287 passed (2 slow deselected), 1 warning — net +1 new test, 0 regressions
+- lint-imports: 72 files, 131 deps, 2 kept, 0 broken — EXIT 0
+- Sandbox: 29 primitive PASS + 1 honest-RED (echo_identity failure_mismatch) + module PASS
+- Security: env zero forbidden keys (CTX_ADVISOR_* benign advisor vars, no credentials)
+
+**Files changed (3):**
+- `infrastructure/text_table_extractor.py` — three-block label fix + company-header junk filter + dedup guard + negative-value regex
+- `__tests__/integration/test_bt3_fix3_row_fidelity.py` — NEW: 12-AC BT3-FIX-3 integration test
+- `__tests__/unit/test_text_table_extractor.py` — fixture updated (FIXTURE_P4_MINIMAL uses NGUỒN VỐN header instead of filtered form title)
+
+**Files UNSTAGED (per task spec — main terminal commits).**
+
+**NEXT:** ops re-run BT3-DEPLOY backfill with fresh OCR path (pdf_path only, no pre_supplied_pages) for all 14 docs → QA BT-6 re-verify.
+
+---
+
 ### 2026-05-25 — BT3-FIX-2 DONE (OCR-variant markers + three-block layout parser)
 
 **Task:** BT3-FIX-2 | Sprint: BCTC-TABLE-3

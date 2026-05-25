@@ -23,11 +23,15 @@ from infrastructure.text_table_extractor import TextTableExtractor
 # Shared fixture text helpers
 # ---------------------------------------------------------------------------
 
-# Minimal FPT p4 fixture (6 rows: 2 header, 4 code rows)
+# Minimal FPT p4 fixture (1 header row + 4 code rows)
+# BT3-FIX-3: Form title ("BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT") and the "Mã số"
+# column-header line are now filtered as form-level noise per the architect's spec.
+# The legitimate section header "NGUỒN VỐN" (not a form/company/address pattern)
+# is used here to test the header-row passthrough behavior.
 FIXTURE_P4_MINIMAL = """\
-BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT
+NGUỒN VỐN
 Đơn vị: VND
-TÀI SẲN Mã số  31/12/2025  31/12/2024
+31/12/2025  31/12/2024
 A. TÀI SẢN NGAN HAN  100  58.102.970.741.619  45.535.942.846.453
 I. Tiền và các khoản tương đương tiền  110  10.540.181.640.920  9.315.440.438.884
 1. Tiền  111  8.084.826.991.114  6.725.619.929.289
@@ -102,14 +106,19 @@ class TestTextTableExtractor:
     # --- TC2: header/separator row passthrough ---
 
     def test_header_row_code_is_none(self) -> None:
-        """Header/separator rows have code=None and value_current=None."""
+        """Header/separator rows have code=None and value_current=None.
+
+        BT3-FIX-3: fixture uses 'NGUỒN VỐN' (genuine section header, not form noise)
+        because form titles and 'Mã số' column headers are now filtered per the
+        architect's company-header junk filter spec.
+        """
         pages = [{"page_number": 4, "text": FIXTURE_P4_MINIMAL}]
         result = self.extractor.assemble(pages, "balance_sheet")
         rows = result["rows"]
 
         header_rows = [r for r in rows if r["code"] is None]
-        # At minimum "BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT" and the column header line
-        assert len(header_rows) >= 1, "At least one header row expected"
+        # "NGUỒN VỐN" is the genuine section header in the fixture
+        assert len(header_rows) >= 1, "At least one header row expected (NGUỒN VỐN)"
         for r in header_rows:
             assert r["value_current"] is None
             assert r["value_prior"] is None
