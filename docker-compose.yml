@@ -30,7 +30,7 @@ services:
       STOCK_PRICE_URL: http://stock-price:5000
       RAG_SERVICE_URL: http://rag-service:5002
       TA_SERVICE_URL: http://technical-analysis:5003
-      MACRO_SERVICE_URL: http://macro-indicators:5004
+      MACRO_INDICATORS_URL: http://macro-indicators:5004
       KINH_DICH_URL: http://kinh-dich-service:5005
       ALERT_ENGINE_URL: http://alert-engine:5006
       VPS_HOST: 125.212.251.27
