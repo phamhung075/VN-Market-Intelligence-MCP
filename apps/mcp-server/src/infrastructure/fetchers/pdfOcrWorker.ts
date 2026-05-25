@@ -1,3 +1,10 @@
+// G5-DEBT: live caller found — deprecation deferred to Phase 2.
+// P1-G audit (2026-05-25): 2 live callers found:
+//   - bctcReparseJob.ts:getCachedPdfText (Tier 3 OCR cache fallback) → KEEP
+//   - fetchParseAndStoreBctc.ts:getCachedPdfText (architect-frozen 1954c) → KEEP
+// These are legitimate OCR cache fallbacks in the 3-tier extraction pipeline.
+// Phase 2 G5 task: remove local OCR cache path after pdf-extractor service is proven stable.
+// Note: extractAndStorePdfPagesWithRetry is @deprecated (1954c — see notebook c284).
 /**
  * Infrastructure — PDF OCR Background Worker
  *

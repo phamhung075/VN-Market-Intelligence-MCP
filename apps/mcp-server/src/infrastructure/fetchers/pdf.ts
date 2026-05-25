@@ -1,3 +1,9 @@
+// G5-DEBT: live caller found — deprecation deferred to Phase 2.
+// P1-G audit (2026-05-25): 2 live callers found:
+//   - bctcReparseJob.ts:extractPdfText (Tier 2 local fallback after HTTP) → KEEP
+//   - fetchParseAndStoreBctc.ts:downloadAndExtractPdf (architect-frozen 1954c) → KEEP
+// These are legitimate local fallbacks in the 3-tier extraction pipeline.
+// Phase 2 G5 task: remove local fallback paths after pdf-extractor service is proven stable.
 /**
  * Infrastructure — PDF Downloader + Text Extractor
  *
