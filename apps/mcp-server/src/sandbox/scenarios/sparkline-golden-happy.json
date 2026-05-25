@@ -1,0 +1,9 @@
+{
+  "scenario": "sparkline-golden-happy",
+  "primitive": "generateSparkline",
+  "input": {
+    "prices": [80000, 82000, 81000, 85000, 84000],
+    "width": 5
+  },
+  "expected": "▁▄▂█▇"
+}

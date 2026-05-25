@@ -1,0 +1,9 @@
+{
+  "scenario": "sparkline-golden-empty",
+  "primitive": "generateSparkline",
+  "input": {
+    "prices": [],
+    "width": 5
+  },
+  "expected": "—"
+}

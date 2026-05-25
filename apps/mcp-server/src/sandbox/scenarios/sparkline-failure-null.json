@@ -1,0 +1,8 @@
+{
+  "scenario": "sparkline-failure-null",
+  "primitive": "generateSparkline",
+  "input": null,
+  "expected": {
+    "error": true
+  }
+}
