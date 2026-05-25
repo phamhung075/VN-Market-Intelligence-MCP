@@ -1,5 +1,22 @@
 # Agent Father — Notebook
 
+## c270 · 2026-05-25
+
+**Task:** Institutionalize user directive "rebuild container if dev team changes microservice code" — Restart ≠ Rebuild close-gate.
+
+**SSOT placed:** `docs/protocols/docker-deployment-runbook.md` § Microservice Code-Change Close Gate (new section, 28L). Canonical rule: microservice code change is NOT done until ops rebuilds the container (`docker compose up -d --build <svc>`, ONE at a time, 8 GB cap, ops-not-user) AND qa verifies live container build-time > commit-time + /health + tool count. 6-step close-gate table with actor column. Delegation rule explicit.
+
+**References wired (DRY — no prose duplication):**
+1. `.claude/flows/po/sprint-signoff.md` — pre-approve container rebuild check block added before approve/reject branch. Points to SSOT section. 46L → 51L (well under 120L cap).
+2. `.claude/flows/developer/microservice-main.md` — `REBUILD_REQUIRED: true` line + SSOT pointer added to RETURN block. 159L → 160L (size-justification present at line 1, unchanged).
+
+**Commit:** 6a919ea4 (3 files: docker-deployment-runbook.md + sprint-signoff.md + microservice-main.md)
+**Cap compliance:** protocols/ has no cap; sprint-signoff.md 51L ≤ 120L; microservice-main.md 160L size-justified.
+**No agent .md files touched** — no Cowork refresh prompt needed.
+**Note:** agent-md-factory skill confirmed absent (see c263/c264/c265/c269 notes); proceeded from guide directly.
+
+---
+
 ## c269 · 2026-05-25
 
 **Task:** P0-FE-3 — Bake G12 DoD gate into dev-frontend flow (SCALE pilot Phase 0 deliverable)
