@@ -1,5 +1,5 @@
 """
-infrastructure/text_table_extractor.py — BT-3-A + BT3-FIX-2
+infrastructure/text_table_extractor.py — BT-3-A + BT3-FIX-2 + BT3-FIX4
 
 TEXT-path table assembler adapter.
 
@@ -64,7 +64,9 @@ _SUMMARY_CODES = frozenset({"100", "200", "270", "300", "400", "440"})
 
 # Regex: BCTC code row — code appears AT START of line (code-first format, 2+ spaces):
 #   "100  TÀI SẢN NGAN HAN  58.102.970.741.619"
-_CODE_ROW_START_RE = re.compile(r"^\s*(\d{2,3})\s{2,}(.+)$")
+# BT3-FIX4 CHANGE-2: code group extended to \d{2,3}[a-z]? to accept letter-suffix codes
+#   like "421b" (clean OCR) or "411q" (OCR character error for "411a").
+_CODE_ROW_START_RE = re.compile(r"^\s*(\d{2,3}[a-z]?)\s{2,}(.+)$")
 
 # Regex: BCTC code row — code appears AFTER label, followed by optional values (label-first format):
 #   "A. TÀI SẢN NGAN HAN  100  58.102.970.741.619  45.535.942.846.453"
@@ -72,8 +74,10 @@ _CODE_ROW_START_RE = re.compile(r"^\s*(\d{2,3})\s{2,}(.+)$")
 #   "1. Tiền  111  8.084.826.991.114  6.725.619.929.289"
 #   "Một khoản mục không có số liệu  999"  (code at end, no values)
 # Pattern: (non-empty label text) + 2+spaces + (2-3 digit code) + optional trailing
+# BT3-FIX4 CHANGE-2: code group extended to \d{2,3}[a-z]? to accept letter-suffix codes
+#   (e.g. "421b" for sub-items, "411q" for OCR character errors).
 _CODE_ROW_LABEL_FIRST_RE = re.compile(
-    r"^(.+?)\s{2,}(\d{2,3})\s*(.*?)$"
+    r"^(.+?)\s{2,}(\d{2,3}[a-z]?)\s*(.*?)$"
 )
 
 # Regex: BCTC "code-only column" row — code at start with single space then value(s).
@@ -94,15 +98,26 @@ _CODE_VALUE_COL_RE = re.compile(
 #   "I. Vốn chủ sở hữu 410 24 43.748.716.292.590 35.724.790.104.800"
 #   "6. Dự phòng phải thu ngắn hạn khó đòi 137 9 (586.166.744.274) (619.531.925.859)"
 #   "- Giá trị hao mòn lũy kế 223 (13.762.875.752.850) (11.683.165.704.793)"
+#   "- Lợi nhuận sau thuế chưa phân phối kỳ này 421b 6.924.484.515.123 5.572.300.562.297"
 # Pattern: any label text (including parentheses) + space + 2-3 digit code +
 #          space + optional-note + VN-number value (positive or parenthetical negative).
 # BT3-FIX-3: Extended to also match lines starting with "-" (dash-prefixed sub-items)
 # and parenthetical negative values like "(13.762.875.752.850)".
 # Must end with a VN-format number (positive or in-paren negative) to distinguish
 # from pure label lines.
+#
+# BT3-FIX4 CHANGES:
+#   CHANGE-1: trailing anchor relaxed from [a-zA-Z|\\]* (zero-or-more) to [a-zA-Z|\\]?
+#             (at most one) — allows lines ending with ")" (parenthetical negative prior
+#             value) or a digit to match. Unblocks dash sub-items (A1) and note-ref
+#             lines (A2) where the last character is not a letter.
+#   CHANGE-2: code group extended to \d{2,3}[a-z]? — accepts letter-suffix codes
+#             like "421b". Suffix is kept in the code field value.
+#   CHANGE-3: optional note-number group extended from \d{1,2} to \d{1,3} — handles
+#             up to 3-digit Thuyết minh note ref numbers (defensive future-proofing).
 _VN_NUMBER_TOKEN = r"(?:\d[\d.,]+|\(\d[\d.,]+\))"  # positive or paren-negative VN number
 _CODE_ROW_SINGLE_SPACE_RE = re.compile(
-    r"^(.+?)\s+(\d{2,3})\s+(?:\d{1,2}\s+)?(" + _VN_NUMBER_TOKEN + r"(?:\s+" + _VN_NUMBER_TOKEN + r")?)\s*[a-zA-Z|\\]*\s*$"
+    r"^(.+?)\s+(\d{2,3}[a-z]?)\s+(?:\d{1,3}\s+)?(" + _VN_NUMBER_TOKEN + r"(?:\s+" + _VN_NUMBER_TOKEN + r")?)\s*[a-zA-Z|\\]?\s*$"
 )
 
 # Regex: period header — Vietnamese date format DD/MM/YYYY (or YYYY/MM/DD variation)
@@ -645,6 +660,10 @@ def _parse_lines_to_rows(
         # does not catch these — they have alphabetic content and pass through,
         # leaking into the output as junk header rows.
         # Explicit string patterns only — no heuristics.
+        #
+        # BT3-FIX4 CHANGE-4: Extended with signature-block keywords and column-header
+        # fragments that slip through the existing filter. The 18 junk orphan rows
+        # from the live FPT fixture are all caught by the new entries below.
         low_stripped = stripped.lower()
         if any(skip in low_stripped for skip in [
             # Company/address block (AC-10 targets)
@@ -658,11 +677,25 @@ def _parse_lines_to_rows(
             "mau so",           # OCR-variant form number
             "bảng cân",         # balance-sheet title: "BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT"
             "bang can",         # OCR-variant
+            "bang can doi",     # unaccented fallback for balance-sheet title continuation
             "tại ngày",         # date-context: "Tại ngày 31 thang 12 năm 2025"
             "tai ngay",         # OCR-variant
             "ngày 26",          # signature date: "Ngày 26 tháng 01 năm 2026"
             "ngay 26",          # OCR-variant
+            # BT3-FIX4 CHANGE-4: Column-header fragments (split across OCR lines)
+            "thuyết",           # "Thuyết" / "Thuyết minh" column header fragment
+            # BT3-FIX4 CHANGE-4: Signature-block keywords (appear at bottom of last page)
+            "người lập",        # signature: "Người lập"
+            "kế toán trưởng",   # signature: "Kế toán trưởng"
+            "phó tổng",         # signature: "Phó Tổng giám đốc" (covers all variants)
+            "hà nội, ngày",     # signature date location line: "Hà Nội, ngày 23 tháng 01..."
+            "ha noi",           # unaccented fallback for signature location
         ]):
+            continue
+        # BT3-FIX4 CHANGE-4: Regex skip for signature dates with any day-of-month.
+        # Covers "Hà Nội, ngày 23 tháng 01 năm 2025" and all day variants (1-31).
+        # This is more robust than enumerating individual "ngày 01"/"ngày 23" entries.
+        if re.search(r"ngày\s+\d{1,2}\s+tháng", low_stripped):
             continue
         # Skip very short OCR noise fragments (< 10 chars, no code row context)
         # Example: "ach Thuyết" (OCR split fragment from "Báo cáo ach Thuyết minh")
