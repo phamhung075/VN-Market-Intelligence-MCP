@@ -1,5 +1,56 @@
 # QA — Notebook
 
+## cycle-115 · 2026-05-25 · P0-MCP-2 (mcp-server bug-inventory baseline) — COMPLETE
+
+**Task:** P0-MCP-2 bug-inventory baseline (Phase-0, read-only analysis) | **Result:** COMPLETE — baseline captured, 7 bugs inventoried, commit 05dc494a
+
+```
+date: 2026-05-25
+type: phase0-baseline (read-only analysis, no source edits)
+handoff: docs/handoffs/TASK_P0-MCP-2-bug-inventory-baseline.md
+commit: 05dc494a
+
+test_baseline:
+  run_1: 9411 pass / 345 fail / 35 skip / 9791 total / 911 files
+  run_2: 9408 pass / 348 fail / 35 skip / 9791 total / 911 files
+  bun_crash: pre-existing C++ exception AFTER results print — Bun 1.3.13 bug, results complete
+  verdict: HONEST BASELINE — ~9408-9411 pass, ~345-348 fail, 35 skip
+
+tsc: EXIT:0 PASS
+
+tool_count:
+  ssot_project_stats: 146
+  live_grep: 146
+  drift: NONE
+
+scheduler_count:
+  ssot_project_stats: 77 (STALE — flagged)
+  cron_config_keys: 73
+  start_scheduler_cron_schedule: 68 (Gate 2d probe — matches dev-mcp-server flow baseline)
+  drift: THREE-WAY MISMATCH flagged (77 vs 73 vs 68)
+
+ssot_drift_flags:
+  project_stats_testBaselineFail: 34 (stale, real=~345-348)
+  project_stats_cronJobCount: 77 (stale, real Gate2d=68 / cronConfig=73)
+
+open_bugs_inventoried: 7
+  BUG-1: commit-mutex enum drift (OPEN, blocking workaround required per commit)
+  BUG-2: dailyDashboardJob ENOENT class — 60% fn coverage, write path uncovered
+  BUG-3: tasksMdJanitorJob 0% fn coverage — new job, no tests
+  BUG-4: sscCheckerJob 0% fn coverage
+  BUG-5: kinhDichWrapper G5-inverse violation (marketTools + analysis.ts bypass HTTP)
+  BUG-6: ~345-348 pre-existing fail (BCTC/fixture tech debt, known JANITOR-TBD)
+  BUG-7: DEPLOY-DRIFT MCP 404s (container stale, separate track)
+
+lessons:
+  - bun test total (9791) and skip (35) are stable between runs; pass/fail variance ±3 is flaky BCTC fixture pattern
+  - Gate 2d (grep -c "cron.schedule" startScheduler.ts) = 68 is the operative post-refactor probe, not cronJobCount SSOT
+  - Three-way scheduler count mismatch should be reconciled in TASKS.md as a po/pm tracking item before Phase-1 build
+  - tasksMdJanitorJob has 0% test coverage — high operational risk given it parses TASKS.md + calls task_list_held
+```
+
+---
+
 ## cycle-114 · 2026-05-25 · P1-FE-WAVE-A (frontend Phase 1 MVR close-gate) — APPROVED
 
 **Task:** P1-QA close-gate (frontend Phase 1 MVR: 4 formatters + view-model stub + Playwright render-gate) | **Verdict:** APPROVED
