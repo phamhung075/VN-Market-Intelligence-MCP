@@ -1,4 +1,4 @@
-<!-- size-justification: 142L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, implementation record template, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
+<!-- size-justification: 192L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, G12 DoD Gate (MVR render-gate + streak rule, blocking from Day 0), ESLint fence Phase-2 note, implementation record template, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
 # dev-frontend — Main Flow
 
 **Zone:** `apps/frontend/`
@@ -100,6 +100,51 @@ Loaders call `app/lib/api/` — never call api-gateway `fetch` directly inside a
    Mandatory trailers for task commits: `Sprint:`, `Task:`, `AC:` (slash-separated, terse).
    **NEVER use `git commit -am` or `git commit -a`**
    Protocol: task_claim commit-mutex:main (TTL=60s) → git add <own_paths> → verify → git commit → task_release
+
+---
+
+## G12 DoD Gate (MVR — Playwright render-green — mandatory — blocking from Day 0)
+
+**Do not mark any task DONE / do not write the RETURN block until BOTH gates pass:**
+
+| Gate | Command | Must show |
+|------|---------|-----------|
+| Vitest (unit) | `cd apps/frontend && npm test` | 0 failures — all formatter + view-model tests PASS |
+| Playwright (render) | `cd apps/frontend && npm run test:e2e` | 3/3 render checks PASS (`npm run test:e2e` via `tests/e2e/render-check.spec.ts`) |
+
+Both commands must exit 0 before the task is DONE.
+
+If Vitest exits non-zero:
+- The task is NOT done.
+- Fix the failing test before re-running.
+- Each fix attempt that does not result in all-GREEN = 1 cycle (counted for G10/G11 evidence).
+
+If Playwright exits non-zero:
+- The task is NOT done even if Vitest is green.
+- A formatter extraction that breaks the render gate is a regression — fix the route file import before DONE.
+
+**Evidence requirement:** paste the `npm test` summary line AND the Playwright summary line into the task handoff doc before writing the RETURN block. No evidence = task is NOT accepted.
+
+**MVR Streak Rule (G12 — 3-task streak):**
+The three G12 streak tasks are P1-B1, P1-B2, and P1-C (see `docs/architecture-briefs/2026-05-22-refactor/scale/frontend-phase-1-task-plan.md` §G12 Streak Tasks). Each must carry Playwright render-gate evidence pasted into its handoff before it is marked DONE. The streak is broken if ANY task in the sequence ships without render-green evidence. If the streak is broken, reopen the task, re-run both gates, and re-paste evidence before re-marking DONE.
+
+Reference: `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G12; `docs/architecture-briefs/2026-05-22-refactor/scale/frontend-phase-1-task-plan.md` §MVR-vs-FULL Scope Verdict
+
+---
+
+## ESLint Fence (G4 — Phase 2 concern for MVR track)
+
+**Phase 1 does NOT require ESLint fence enforcement.** Goal G4 is STILL-UNMET after Phase 1 (see task plan §Goals Roadmap).
+
+**Phase 2 target:** An ESLint rule (via `eslint-plugin-import` or `eslint-plugin-boundaries`) that blocks cross-layer imports — specifically preventing `app/domain/formatters/` from importing anything in `app/lib/api/`. This is the TypeScript/Remix equivalent of the `depguard` fence used in Go services (SI-3 design; NOT `depguard` which is Go-only).
+
+**When Phase 2 fence work begins:** lazy-load `docs/architecture-briefs/2026-05-22-refactor/scale/frontend-charter.md` (trigger: `g4_eslint_fence_task`). The fence config lives at `apps/frontend/.eslintrc.cjs` or `apps/frontend/eslint.config.js` depending on the Remix version in use. Verify existing config before creating a new one.
+
+**Do not implement the ESLint fence during Phase 1 MVR tasks** — any ESLint config change in Phase 1 is out of scope and will be rejected by QA.
+
+Reference: `docs/architecture-briefs/2026-05-22-refactor/scale/frontend-phase-1-task-plan.md` §Goals Roadmap (G4 row); `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G4
+
+---
 
 **Documentation review** (after code passes, before QA):
 → Run flow: `.claude/flows/developer/doc-review.md` with `SERVICE=frontend`

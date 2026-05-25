@@ -1,5 +1,60 @@
 # Agent Father — Notebook
 
+## c269 · 2026-05-25
+
+**Task:** P0-FE-3 — Bake G12 DoD gate into dev-frontend flow (SCALE pilot Phase 0 deliverable)
+
+**Agent registration check (.claude/agents/dev-frontend.md):**
+- Line 1 = `---` (PASS)
+- name: dev-frontend, color: cyan, description present, tools: Read/Edit/Write/Glob/Grep/Bash, model: sonnet (all PASS)
+- No fix required — already compliant.
+
+**Flow file (.claude/flows/dev-frontend/main.md):**
+Expanded 142L → 192L (size-justification updated). Sections added between "After code" commit block and "Documentation review":
+
+1. **G12 DoD Gate (MVR — Playwright render-green — mandatory — blocking from Day 0):** Two-command gate table (npm test Vitest + npm run test:e2e Playwright 3/3), both must exit 0. Blocking logic for Vitest non-zero AND Playwright non-zero separately stated. Evidence requirement: paste both summary lines into handoff before RETURN. MVR Streak Rule: P1-B1/P1-B2/P1-C each must carry render-gate evidence before marked DONE; broken streak = reopen + re-paste. References pilot-charter §G12 and frontend-phase-1-task-plan §MVR-vs-FULL + §G12 Streak Tasks.
+
+2. **ESLint Fence (G4 — Phase 2 concern for MVR track):** Phase 1 defers G4. Phase 2 target = eslint-plugin-import or eslint-plugin-boundaries blocking domain/formatters → lib/api imports. Explicitly noted as TS-service → ESLint (NOT depguard which is Go-only, per SI-3 design). Lazy-load trigger documented. Hard gate: DO NOT implement ESLint fence during Phase 1 tasks.
+
+**Commit:** (see SHA below)
+**Template used:** dev-kinh-dich/main.md G12 gate pattern adapted for MVR/Playwright/Vitest context.
+**Note:** agent-md-factory skill does not exist at .claude/skills/agent-md-factory/SKILL.md — proceeded from guide + factory template patterns directly (same as c263/c264/c265).
+
+---
+
+## c268 · 2026-05-25
+
+### Edit (market-analyst) — tools frontmatter defect fix
+
+- Change: Added `mcp__claude_ai_gateway__call_tool` to `tools:` frontmatter line
+- Files modified: 1 (`.claude/agents/market-analyst.md`)
+- Cascade: none — tools-only change, no name/routing/flow path/inter_agent impact; tool package already documents MCP usage
+- Validation: 5/5 passed — YAML frontmatter valid, head-1=`---`, tools line correct, all knowledge.always_load paths intact, version date bumped to 2026-05-25
+- Decision: Genuine defect. Flow calls 9 MCP tools (get_macro_snapshot, fetch_and_analyze, run_impact_chain, get_alerts, get_bctc_full, get_financial_summary, get_sector_comparison, compare_backtest_runs, export_backtest_run_csv) all via call_tool(server="vn-market"). Guide §5.1 cowork analysis tool set = `Read, Write, mcp__claude_ai_gateway__call_tool`. Missing MCP tool blocked ALL live analysis calls at the allowlist.
+
+---
+
+## c267 · 2026-05-25
+
+**Task:** Frontmatter-ordering fix — 7 cowork agents unregistrable (line-1 HTML comment)
+
+**Root cause:** c261 Stage-1 JUSTIFY pass (claude-manager-helper) inserted `<!-- size-justification: -->` on line 1 of agent files, pushing the YAML `---` opener to line 2. Claude Code agent loader requires frontmatter to start on byte 0 (line 1 = `---`). Affected agents had no name/tools visible to the loader and were never registered as spawnable subagent types.
+
+**Files fixed (7 total — comment moved from line 1 to immediately after closing `---`):**
+- `.claude/agents/financial-analyst.md`
+- `.claude/agents/news-scout.md`
+- `.claude/agents/market-watcher.md`
+- `.claude/agents/report-analyzer.md`
+- `.claude/agents/ba.md` (additional — same defect class, found by full-dir scan)
+- `.claude/agents/pm.md` (additional)
+- `.claude/agents/system-auditor.md` (additional)
+
+**Verification:** `head -1` on all 7 = `---`. Full `.claude/agents/*.md` scan = zero remaining defects.
+**Cascade:** None — no name, routing, tools, or content change. Comment text preserved verbatim.
+**No commit made** — flow edit-apply notebook step only; commit not instructed by task.
+
+---
+
 ## c266 · 2026-05-24
 
 **Task:** F1–F7 — Microservice Build Standard Promotion (size-gated FULL/LEAN profiles)
