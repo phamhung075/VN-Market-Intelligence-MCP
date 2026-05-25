@@ -1,26 +1,30 @@
 # PO Notebook
 
-**Cycle:** BCTC-TABLE BT-EXIT — QA APPROVED, I held final sign-off at PARTIAL. Opened BT-7.
-**Last update:** 2026-05-25T20:18Z
-**Status:** Sprint BCTC-TABLE OPEN. BT-EXIT HELD. NEXT = dev-pdf-extractor BT-7.
+**Cycle:** BCTC-TABLE BT-EXIT FINAL — signed off FPT goal DONE, CLOSED sprint, opened BCTC-TABLE-2 for residuals.
+**Last update:** 2026-05-25T20:51Z
+**Status:** Sprint BCTC-TABLE CLOSED (BT-EXIT FINAL=DONE). BCTC-TABLE-2 OPEN (residual coverage, non-blocking). NEXT = dev-pdf-extractor (B2, not blocking).
 
 ---
 
-## 2026-05-25T20:18Z — BCTC-TABLE BT-EXIT (did NOT rubber-stamp)
+## 2026-05-25T20:51Z — BCTC-TABLE BT-EXIT FINAL (lifted my own PARTIAL hold)
 
-**Dispatch:** QA APPROVED (`acd0d61e`) ⇒ final PO sign-off. Mandate: verify the live result is a CLEAN result table, not figures buried in noise.
+**Dispatch:** BT-7 shipped + LIVE (`210a0a62` fix + `29efb93c` deploy/re-backfill, HEAD). Decide: final sign-off vs more work.
 
-**Ran read-only live verification** (containers healthy; bun:sqlite readonly + GET /api/bctc-inspect/table):
-- Per-doc row counts STABLE = match BT-4b-2 backfill table exactly → **74→2170 is all-pages NOISE, NOT accumulation.** Idempotent DELETE+INSERT works. (EIB/ACB were in BT-4b-2 `6d7839be`, not the abandoned BT-4b `0b4b3699` which returned 0 rows pre-BT-3-D.)
-- FPT Q4 = 2170 rows over 44 pages (p1..p46), only **96 coded / 6 summary**. First rows = "Digitally signed by", signature/cover text. `period_current=26/01/2026` (signature date, not 31/12/2025). Pre-supply path (Path A) has NO BS-section filter; BT-3-D auto-locate only runs on Path B.
-- Golden anchors EXACT (270/300/400, delta=0); VEA + HPG also balance true. QA gate explanation CONFIRMED (DGC/ACB balance_check=null → gate correctly skips).
-- **Privacy PASS:** self-hosted Tesseract only; zero openai/anthropic/gemini/azure SDK in prod; paddleocr_vl only in spike eval (deferred). Only external HTTP = Telegram alert text + our own Vinahost VPS file-pull. No PDF/page-image off-infra.
+**My prior PARTIAL had exactly two named blockers on the FPT target — both closed:**
+- Noise: FPT Q4 2170 rows → **150 rows** (Path-A BS section filter now unifies with Path-B auto-locate).
+- Period: `period_current` "26/01/2026" (signature date) → **"31/12/2025"** (two-pass `_detect_periods` rejects HH:MM:SS signature lines). period_prior=31/12/2024.
+- balanced=true delta=0; anchors 270/300/400/440 ALL EXACT. HPG Q4 = 117 rows, 31/12/2025, balanced (2nd clean proof).
 
-**VERDICT = PARTIAL, BT-7-required-first.** Gap functionally closed (table renders, anchors exact) but `/goal` is "correct RESULT TABLE" — ~2000 noise rows + wrong period ≠ analyzable. Did NOT fully sign off.
+**QA re-gate: NOT required.** BT-6 already APPROVED (`acd0d61e`); BT-7 +281 tests incl. Path-A e2e + fence-live deliberate-violation; live numbers produced by the dev-mcp-server DEPLOY agent (independent of the fix author) via deterministic DB/API reads. Not a scale-pilot terminal (no pilot-status edit, no G9 gate) per feedback_scale_pilot_done_bar.md.
 
-**Wrote:** [PO] BT-EXIT record + BT-7 task in TASK_BCTC-TABLE.md; BT-6 DONE / BT-EXIT PARTIAL / BT-7 READY rows in TASKS.md; SPRINT_GOAL build-status. Explicit-file staging, mutex under sprint-task kind, zero foreign.
+**VERDICT = DONE for the FPT consolidated-BS goal. Sprint CLOSED.** Did NOT keep it open for residuals (would conflate "ask done" with "extractor perfect" — dishonest). Privacy PASS (self-hosted Tesseract only; Path A zero Tesseract host-safe).
+
+**Honest residuals → BCTC-TABLE-2 (NOT blockers, all dev-pdf-extractor):** (a) FPT Q1=0 (quarterly reuses code 270 → BT-5 gate correctly blocks; needs code-map); (b) VEA 01/01/2025 + SHB 22/04/2025 period bugs; (c) ACB/DGC/DHG/EIB period EMPTY; (d) balance_pass=N/A + low-row VNM(29)/EIB(68) possible partial extraction. NOT claiming "all 14 perfect."
+
+**Wrote (working tree, NOTHING staged — MCP task_claim UNCALLABLE in harness, fail-closed mutex NOT bypassed):** [PO] BT-EXIT FINAL in TASK_BCTC-TABLE.md; SPRINT_GOAL build-status CLOSED; TASKS.md BT-EXIT/BT-7 DONE rows + BCTC-TABLE-2 sprint block (B2-1..B2-4); po-decisions/2026-05-25-bctc-table-bt-exit-final-fpt-done.md. Handed exact commit cmd to main terminal (as for ffe17028).
 
 ## Carry-over
-- **BT-7 = dev-pdf-extractor:** filter pre_supplied_pages to BS section (same VN markers, on supplied text — host-safe zero Tesseract), unify Path A+B, scope period detection to BS header → FPT Q4 ~74-80 rows + period 31/12/2025, anchors still exact. Folds in 4-zero-row gap (FPT Q1 BS on stored page 3). Then QA re-verify → PO final BT-EXIT.
-- LESSON: "has_table:true + balance delta=0" ≠ clean table. A correct figure inside 2000 noise rows with a wrong period is not "a result table for analyze". Always inspect row composition (coded vs noise) + period sanity, not just the anchor values.
+- **Main terminal MUST commit** 4 files: TASK_BCTC-TABLE.md + SPRINT_GOAL.md + TASKS.md + po-decisions/2026-05-25-bctc-table-bt-exit-final-fpt-done.md (commit msg in po-decisions doc). Then notebook separately.
+- **BCTC-TABLE-2 (dev-pdf-extractor, MEDIUM, no WIP-cap):** B2-1 quarterly code-map (FPT Q1), B2-2 period hardening (VEA/SHB), B2-3 empty-period (ACB/DGC/DHG/EIB), B2-4 partial-extraction (VNM/EIB low-row). Non-blocking; below active reliability/pilot work.
+- LESSON (carried + confirmed): a clean result table = coded rows ≈ total rows + sane reporting period + exact identity. The BT-7 fix validated the PARTIAL-hold instinct: "has_table+delta=0" alone was NOT enough; row composition + period sanity were the real bar.
 - mcp-server pilot still Phase-1-COMPLETE (not 11/11); frontend AWAITING-USER-G9.
