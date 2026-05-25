@@ -1,5 +1,108 @@
 # QA — Notebook
 
+## cycle-114 · 2026-05-25 · P1-FE-WAVE-A (frontend Phase 1 MVR close-gate) — APPROVED
+
+**Task:** P1-QA close-gate (frontend Phase 1 MVR: 4 formatters + view-model stub + Playwright render-gate) | **Verdict:** APPROVED
+
+```
+date: 2026-05-25T10:30Z
+outcome: APPROVED — all 12 checks PASS, 0 blocking issues
+type: pilot-qa-gate (frontend Phase 1 MVR — P1-A+B1+B2+B3+B4+C+E)
+handoff: docs/handoffs/TASK_P1-FE-WAVE-A-20260525T1020Z.md
+commits_verified: [3ef797d0 (P1-A), eeb4d2f8 (P1-B1..B4), 9b55a086 (P1-C), 94f12fd0 (memory)]
+branch: main (no-branch policy)
+round: 1
+
+vitest:
+  files: 18 passed (18)
+  tests: 179 passed (179)
+  duration: 13.05s
+  independently_run: true
+  claimed: 179/179 — CONFIRMED
+
+playwright:
+  tests: 4 passed (4)
+  duration: 6.7s
+  server: reused existing container on :3001 (200 response confirmed)
+  independently_run: true
+  claimed: 4/4 — CONFIRMED
+
+honest_green:
+  only_tests: 0
+  skip_tests: 0
+  commented_out: 0
+  render_gate_depth: SUBSTANTIVE (nav text + link count >=4 + Vietnamese header + ticker badge + no-error-body + title regex)
+  verdict: PASS — no deception
+
+behavior_preservation:
+  local_directionArrow_removed: true (0 grep matches in route)
+  local_signalTypeLabel_removed: true (0 grep matches in route)
+  route_imports_formatters: [direction-arrow.js, change-pct.js, signal-type-label.js]
+  formatter_spec_match: EXACT (all 3 formatters match task plan spec byte-for-byte)
+  playwright_4_4_regression: PASS
+
+market_data_policy:
+  test_name: "never returns bare number — market-data policy"
+  file: apps/frontend/app/domain/formatters/change-pct.test.ts:44
+  named_test_present: true
+  passes: true
+  view_model_policy_test: "market-data-policy: view model output includes direction + delta, never bare snapshot"
+  view_model_policy_passes: true
+
+scope_guard:
+  eslint_fence_present: false (G4 correctly absent — Phase-2 scope)
+  import_linter_config: false
+  no_restricted_imports: false
+  verdict: PASS — scope clean
+
+ddd_scan:
+  formatters_no_api_imports: PASS (0 matches)
+  view_models_no_api_imports: PASS (0 matches)
+  no_infrastructure_imports: PASS
+  vite_config_process_env: infra config (server.port) — exempt from domain scan
+
+security_scan:
+  creds_in_tests: 0 (grep exit 1)
+  process_env_in_domain: 0 (grep exit 1)
+  api_client_in_domain: 0 (grep exit 1)
+
+regression:
+  pre_existing_tests: all 179 pass (18 files including legacy __tests__/)
+  new_test_locations_wired: true (vite.config.ts include patterns extended)
+  0_new_failures: true
+
+g12_streak:
+  p1_b1: CONFIRMED (direction-arrow, 5 tests)
+  p1_b2: CONFIRMED (change-pct, 6 tests)
+  p1_c: CONFIRMED (analysis-vm, 6 tests)
+  streak: 3/3 COMPLETE
+
+lessons:
+  - reuseExistingServer in playwright.config.ts means container on :3001 is sufficient — no separate dev server needed for QA run
+  - tsconfig-paths parse warnings in Vitest output are pre-existing infrastructure noise (bun cache @ljharb/tsconfig resolution) — do not block QA gate
+  - process.env in vite.config.ts server.port is infra-layer config, not domain — correct to exempt from domain security scan
+  - All formatter tests readable end-to-end in Vitest verbose output — honest green confirmed without needing separate fixture corruption test
+```
+
+| Check | Verdict |
+|---|---|
+| Vitest 179/179 independently re-run | PASS |
+| Playwright 4/4 independently re-run | PASS |
+| 0 deceptive tests (.only/.skip/commented) | PASS |
+| Render-gate asserts substantive content | PASS |
+| Behavior-preservation: pure refactor | PASS |
+| Market-data policy test present + named | PASS |
+| change-pct: direction + % never bare number | PASS |
+| Scope: no G4 ESLint fence (correctly absent) | PASS |
+| DDD: 0 forbidden imports in domain + view-models | PASS |
+| Security: 0 creds in tests, 0 process.env in domain | PASS |
+| 0 new regressions in existing suite | PASS |
+| G12 streak 3/3 confirmed | PASS |
+
+**Verdict: APPROVED. NEXT: po — P1-FE-WAVE-A-EXIT sign-off + G9 verbal confirmation + frontend container deploy.**
+
+---
+
 ## cycle-113 · 2026-05-24 · NF-LD-5-QA (Refresh button + source selector on live panel) — APPROVED
 
 **Task:** NF-LD-5 QA gate (Refresh button + source selector on news-fetch live panel) | **Verdict:** APPROVED
