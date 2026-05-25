@@ -1,5 +1,5 @@
 """
-infrastructure/text_table_extractor.py — BT-3-A
+infrastructure/text_table_extractor.py — BT-3-A + BT3-FIX-2
 
 TEXT-path table assembler adapter.
 
@@ -16,10 +16,15 @@ Algorithm per page:
     1. Detect unit header ("Đơn vị tính") → unit = "billion_vnd" or "vnd".
     2. Detect period header (Vietnamese date pattern DD/MM/YYYY) → extract
        period_current and period_prior strings.
-    3. Parse each text line:
-       - Code row: regex matches code + label in code-first or label-first layout,
-         then extracts value columns using vn_number_normalize + select_period_column.
-       - Header/separator row: no code — code=None, label=line text, values=None.
+    3. Detect page layout:
+       a) Three-block layout (BT3-FIX-2): page has "Mã số" header followed by
+          standalone code integers in their own block. Labels, codes, and values
+          appear in 3 separate OCR blocks. Detected by presence of "mã số" in text
+          and isolated code-only lines after it. Handle with _parse_three_block_layout().
+          Example: FPT pages 4 and 6 — current-assets and liabilities sections.
+       b) Inline layout: code + label + values on the same line (or 2-column layout).
+          Handled by _parse_lines_to_rows() using 4-pattern _try_parse_code_row().
+          Example: FPT pages 5 and 7.
     4. Stitch multi-page sections (p4-7 pattern): list concatenation with global row_order.
 
 BCTC summary codes (is_summary_row=1): {100, 200, 270, 300, 400, 440}.
@@ -29,6 +34,14 @@ FPT golden balance-check (from BT-0 spike eval, used as regression anchor in tes
     Total Liabilities:  44,338,155,487,272 VND  (= 44338155.487272 billion VND)
     Total Equity:       43,751,466,292,590 VND  (= 43751466.292590 billion VND)
     balance_delta = 0.0 (identity holds to the dong)
+
+BT3-FIX-2: Three-block layout fix (2026-05-25)
+    FPT Q4 pages 4 (current assets, code 100) and 6 (liabilities, code 300) use a
+    3-block OCR layout where labels, codes, and values are in separate text blocks.
+    The original line-by-line parser could not pair them → codes 100 and 300 were
+    missing from assembled rows → balance_pass=False → BT-5 gate blocked the push.
+    Fix: _parse_three_block_layout() detects the "Mã số" header, collects codes in
+    order, then collects current and prior values in order, and pairs them positionally.
 """
 
 from __future__ import annotations
@@ -345,6 +358,221 @@ def _parse_value_cells(values_rest: str) -> List[str]:
     return tokens
 
 
+def _is_three_block_layout(lines: List[str]) -> bool:
+    """
+    Detect the three-block OCR layout used on FPT Q4 pages 4 and 6.
+
+    In this layout, labels, codes, and values appear in separate OCR blocks:
+      - Labels block: free text lines (item descriptions)
+      - Code block: "Mã số" header followed by standalone code integers (one per line)
+      - Value block: date header followed by numeric values (one per line)
+
+    Detected by: the text contains "mã số" (case-insensitive) AND there is at
+    least one standalone code integer (2-3 digits on its own line) appearing
+    AFTER the "mã số" marker. Distinguish from the period-detection note refs
+    (1-2 digit "Thuyết minh" codes) by requiring the isolated integer to be
+    ≥100 (a BCTC structural code) — or to appear before any "thuyết minh" header.
+
+    Returns True if three-block layout detected.
+    """
+    text_lower = "\n".join(lines).lower()
+    if "mã số" not in text_lower:
+        return False
+
+    # Find the position of "mã số" line
+    ma_so_idx = None
+    for i, line in enumerate(lines):
+        if "mã số" in line.lower():
+            ma_so_idx = i
+            break
+
+    if ma_so_idx is None:
+        return False
+
+    # After "Mã số", count standalone code-looking integers (2-3 digits, ≥100)
+    # before any "thuyết" or "minh" keyword (which starts the note-ref block)
+    count_codes = 0
+    for i in range(ma_so_idx + 1, len(lines)):
+        stripped = lines[i].strip()
+        if not stripped:
+            continue
+        low = stripped.lower()
+        # Stop at "thuyết" / "minh" header
+        if "thuy" in low or low == "minh":
+            break
+        # Count standalone 3-digit BCTC code (100-440 range)
+        if re.match(r"^\d{3}$", stripped) and 100 <= int(stripped) <= 999:
+            count_codes += 1
+
+    return count_codes >= 1
+
+
+def _parse_three_block_layout(
+    lines: List[str],
+    page_num: int,
+    unit: str,
+    period_current: Optional[str],
+    period_prior: Optional[str],
+    row_order_start: int,
+) -> tuple[List[Dict], int]:
+    """
+    Parse the three-block OCR layout (BT3-FIX-2 fix).
+
+    Layout structure (FPT Q4 pages 4 and 6):
+      Block 1 — Labels:  free text lines (item descriptions)
+      "Mã số" header
+      Block 2 — Codes:   standalone 3-digit BCTC codes (100, 110, 111, ...)
+      "Thuyết minh" header + note refs (1-2 digit, ignored for pairing)
+      "Tại ngày..." context line
+      Block 3a — Values current: date header (31/12/2025) followed by numeric values
+      form ref + unit lines (ignored)
+      Block 3b — Values prior: date header (31/12/2024) followed by numeric values
+
+    Algorithm:
+      1. Collect labels (free text lines before "Mã số")
+      2. Collect codes (standalone 3-digit integers after "Mã số", before "Thuyết")
+      3. Collect current values (numeric lines after first date)
+      4. Collect prior values (numeric lines after second date)
+      5. Pair: code[i] → label[i], value_current[i], value_prior[i]
+         (positional pairing — same row count in each block)
+
+    Note reference codes (1-2 digit integers after "Thuyết minh") are detected
+    and skipped — they appear at the end of the code block, not paired with labels.
+
+    Returns (rows, next_row_order_start).
+    """
+    rows: List[Dict] = []
+    row_order = row_order_start
+
+    # Phase 1: find "Mã số" header line index
+    ma_so_idx = None
+    for i, line in enumerate(lines):
+        if "mã số" in line.lower():
+            ma_so_idx = i
+            break
+
+    if ma_so_idx is None:
+        # Fallback: should not happen given _is_three_block_layout check
+        return [], row_order_start
+
+    # Phase 2: collect labels (free text before "Mã số")
+    labels: List[str] = []
+    for i in range(0, ma_so_idx):
+        stripped = lines[i].strip()
+        if not stripped:
+            continue
+        # Skip company header lines and form reference lines
+        low = stripped.lower()
+        if any(skip in low for skip in [
+            "công ty", "số 10", "phường", "thành phố", "báo cáo",
+            "cho kỳ", "đến ngày", "bang c", "bảng c", "mẫu số", "mau so",
+            "tài sản\n", "tai san\n",  # standalone asset section header
+        ]):
+            continue
+        # Skip very short lines (noise)
+        if len(stripped) < 3:
+            continue
+        # Skip if the line is ONLY a capital acronym / section header that has
+        # a corresponding code-row entry (e.g., "TÀI SẲN" is not an item label)
+        if re.match(r"^[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂẮẲẶĐÊẾỆỔỖỘỞỢỤỨỪỬỮ\s]+$", stripped) and len(stripped) <= 20:
+            continue
+        labels.append(stripped)
+
+    # Phase 3: collect BCTC codes (3-digit standalone integers after "Mã số",
+    # before "Thuyết minh" header)
+    codes: List[str] = []
+    in_note_refs = False
+    for i in range(ma_so_idx + 1, len(lines)):
+        stripped = lines[i].strip()
+        if not stripped:
+            continue
+        low = stripped.lower()
+        # Detect "Thuyết minh" block start
+        if "thuy" in low or low == "minh":
+            in_note_refs = True
+            continue
+        # Once in note-ref block, stop collecting codes
+        if in_note_refs:
+            break
+        # Collect 3-digit BCTC structural code
+        if re.match(r"^\d{3}$", stripped) and 100 <= int(stripped) <= 999:
+            codes.append(stripped)
+
+    if not codes:
+        return [], row_order_start
+
+    # Phase 4: collect values (current and prior) from value blocks
+    # Find first date (31/12/YYYY) line position — marks start of current values
+    # Find second date line — marks start of prior values
+    date_positions: List[int] = []
+    for i in range(ma_so_idx, len(lines)):
+        stripped = lines[i].strip()
+        if re.match(r"^\d{1,2}/\d{1,2}/\d{4}$", stripped):
+            date_positions.append(i)
+        if len(date_positions) >= 2:
+            break
+
+    _VN_VALUE_RE = re.compile(
+        r"^\(?\d[\d.,]*\d\)?$"  # VN-format number, possibly negative in parens
+    )
+
+    def _collect_values_after(start_idx: int, stop_idx: Optional[int]) -> List[str]:
+        """Collect value-like lines between two index boundaries."""
+        vals: List[str] = []
+        end = stop_idx if stop_idx is not None else len(lines)
+        for i in range(start_idx + 1, end):
+            stripped = lines[i].strip()
+            if not stripped:
+                continue
+            if _VN_VALUE_RE.match(stripped) and len(stripped) > 2:
+                # Only accept tokens that look like real numeric values
+                # (reject single or two-digit note refs)
+                if re.match(r"^\d{1,2}$", stripped):
+                    continue  # note reference — skip
+                vals.append(stripped)
+        return vals
+
+    # Find end-of-page sentinel (second date start / end of lines)
+    current_values: List[str] = []
+    prior_values: List[str] = []
+
+    if len(date_positions) >= 2:
+        current_values = _collect_values_after(date_positions[0], date_positions[1])
+        prior_values = _collect_values_after(date_positions[1], None)
+    elif len(date_positions) == 1:
+        current_values = _collect_values_after(date_positions[0], None)
+    # else: no dates found — no values available; codes still get emitted with None values
+
+    # Phase 5: pair codes with values positionally
+    # codes[i] → current_values[i], prior_values[i]
+    for i, code in enumerate(codes):
+        value_current_raw = current_values[i] if i < len(current_values) else None
+        value_prior_raw = prior_values[i] if i < len(prior_values) else None
+
+        value_current = _parse_value(value_current_raw)
+        value_prior = _parse_value(value_prior_raw)
+        is_summary = 1 if code in _SUMMARY_CODES else 0
+
+        # Use label at corresponding position (may be None if fewer labels than codes)
+        # Labels and codes don't always have 1:1 correspondence due to multi-line labels
+        # and section headers, so we use "" as label for unmatched codes.
+        label = labels[i] if i < len(labels) else ""
+
+        rows.append({
+            "page_number": page_num,
+            "row_order": row_order,
+            "code": code,
+            "label": label,
+            "value_current": value_current,
+            "value_prior": value_prior,
+            "unit": unit,
+            "is_summary_row": is_summary,
+        })
+        row_order += 1
+
+    return rows, row_order
+
+
 def _parse_lines_to_rows(
     lines: List[str],
     page_num: int,
@@ -546,23 +774,44 @@ class TextTableExtractor:
                 unit = _detect_unit(line)
                 break
 
-        # Parse each page using the single canonical line-by-line parser.
-        # No layout dispatch — _parse_lines_to_rows() handles all FPT layouts
-        # (code-first, label-first, single-space, code-value-column) via the
-        # four-Layout _try_parse_code_row() function.
+        # Parse each page, dispatching to the correct layout handler.
+        #
+        # Layout A (BT3-FIX-2): Three-block layout — labels, codes, values in
+        #   separate OCR blocks. Detected by "Mã số" header + standalone 3-digit
+        #   integers on their own lines. Handler: _parse_three_block_layout().
+        #   Example: FPT Q4 pages 4 (current assets, code 100) and 6 (liabilities,
+        #   code 300).
+        #
+        # Layout B: Inline layout — code + label + values on same line (or 2-column).
+        #   Handler: _parse_lines_to_rows() with 4-pattern _try_parse_code_row().
+        #   Example: FPT Q4 pages 5 (non-current assets + total) and 7 (equity).
         for page in pages:
             page_num = page.get("page_number", 0)
             text = page.get("text", "")
             lines = text.splitlines()
 
-            page_rows, global_row_order = _parse_lines_to_rows(
-                lines=lines,
-                page_num=page_num,
-                unit=unit,
-                period_current=period_current,
-                period_prior=period_prior,
-                row_order_start=global_row_order,
-            )
+            if _is_three_block_layout(lines):
+                page_rows, global_row_order = _parse_three_block_layout(
+                    lines=lines,
+                    page_num=page_num,
+                    unit=unit,
+                    period_current=period_current,
+                    period_prior=period_prior,
+                    row_order_start=global_row_order,
+                )
+                logger.info(
+                    "TextTableExtractor: page %d → three-block layout detected",
+                    page_num,
+                )
+            else:
+                page_rows, global_row_order = _parse_lines_to_rows(
+                    lines=lines,
+                    page_num=page_num,
+                    unit=unit,
+                    period_current=period_current,
+                    period_prior=period_prior,
+                    row_order_start=global_row_order,
+                )
 
             logger.info(
                 "TextTableExtractor: page %d → %d rows",

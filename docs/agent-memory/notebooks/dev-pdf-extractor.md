@@ -4,6 +4,53 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-25 — BT3-FIX-2 DONE (OCR-variant markers + three-block layout parser)
+
+**Task:** BT3-FIX-2 | Sprint: BCTC-TABLE-3
+
+**Root cause (third false-green — diagnosed from container logs):**
+- `select_balance_sheet_section` returned only 3 of FPT Q4's 4 BS pages.
+- Page 4 (current assets, code 100) was dropped because OCR renders "BANG CÂN ĐỐI" (not "BẢNG CÂN ĐỐI") and "TÀI SAN NGAN HAN" (not "TÀI SẢN NGẮN HẠN") — diacritic artifacts in real stored OCR, not matching any marker in `_BS_STRONG_MARKERS`.
+- Page 6 (liabilities, code 300) WAS included (it has "nguồn vốn" + "nợ phải trả") but with page 4 dropped, code 300's value_current failed to parse → the "at least one value missing" branch of `_compute_balance_check` set `balance_pass=False, delta=0.0` → BT-5 gate BLOCKED.
+- ADDITIONAL BUG: Even with page 4 included via the section-filter fix, codes 100 and 300 still weren't extracted because pages 4 and 6 use a **three-block OCR layout** where labels, codes, and values are in completely separate text blocks. The inline line-by-line parser saw standalone "100" or "300" on their own lines (no adjacent label or value) and couldn't match any of the 4 layout patterns.
+
+**Fix 1 — `select_balance_sheet_section` (OCR-variant markers):**
+- Added 4 new markers to `_BS_STRONG_MARKERS` in `primitive.py`:
+  - `"bang cân đối"` — matches "BANG CÂN ĐỐI KẾ TOÁN" on all 4 FPT BS pages
+  - `"cân đối kế toán"` — substring present on all 4 pages
+  - `"tài san ngan han"` — OCR variant: tài correct, san/ngan/han missing diacritics
+  - `"mau so b 01"` — form reference on all BS pages
+- Section filter now returns pages [4, 5, 6, 7] from the real 46-page FPT Q4 OCR.
+
+**Fix 2 — `TextTableExtractor` (three-block layout parser):**
+- Added `_is_three_block_layout(lines)` — detects "Mã số" header followed by standalone 3-digit code integers.
+- Added `_parse_three_block_layout(...)` — extracts codes from code block (after "Mã số", before "Thuyết minh"), then pairs them positionally with current values (after date 1) and prior values (after date 2).
+- `assemble()` now dispatches to `_parse_three_block_layout()` when three-block layout is detected, falling back to `_parse_lines_to_rows()` for inline layouts.
+- Pages 4 and 6 now correctly produce codes 100 and 300 with correct values.
+
+**Anti-false-green proof:**
+- New fixture `__tests__/fixtures/fpt_q4_full_ocr.json` — REAL 46-page FPT Q4 OCR from mcp-server `pdf_extracted_text` table (zero Tesseract, host-safe).
+- New test `test_pre_fix_section_filter_drops_page_4`: directly tests section filter on real OCR → FAILED before fix (page 4 not in {5,6,7}), PASSES after.
+- New test `test_full_pipeline_real_fpt_q4_ocr_balance_pass`: full production pipeline (46 pages → section filter → assemble → balance check → BT-5 gate → push) → FAILED before fix (gate BLOCKED, balance_pass=False, delta=0.0), PASSES after (gate PASSES, balance_pass=True, codes 100/270/300/400 exact).
+
+**Evidence:**
+- RED before fix: page 4 NOT in filtered set {5,6,7}; gate BLOCKED; balance_pass=False
+- GREEN after fix: pages [4,5,6,7] selected; 138 rows; codes 100=58,102,970,741,619 VND; 270=88,089,621,779,862; 300=44,338,155,487,272; 400=43,751,466,292,590; balance_pass=True, delta=0.0
+- Full suite: 287 passed (284 baseline + 2 new BT3-FIX-2), 1 skipped (slow real-Tesseract), 0 failed
+- lint-imports: 72 files, 131 deps, Fence-A/B KEPT, 0 broken
+- Sandbox: 29 primitive PASS + 1 honest-RED (echo_identity failure_mismatch), module PASS
+- Security: env zero forbidden keys
+
+**Files changed (4):**
+- `domain/primitives/select_balance_sheet_section/primitive.py` — +4 OCR-variant markers
+- `infrastructure/text_table_extractor.py` — +3-block layout detector + parser + dispatch
+- `__tests__/fixtures/fpt_q4_full_ocr.json` — NEW: real 46-page FPT Q4 OCR (host-safe)
+- `__tests__/integration/test_bt3_fix2_full_pipeline.py` — NEW: full-pipeline integration test
+
+**NEXT:** ops re-run BT3-DEPLOY backfill for FPT Q4 (report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65) → gate should PASS → stale rows overwritten → QA re-verify.
+
+---
+
 ### 2026-05-25 — BT-7 DONE (Path-A section filter + period detection hardening)
 
 **Commit:** `210a0a62` | Sprint: BCTC-TABLE | Task: BT-7

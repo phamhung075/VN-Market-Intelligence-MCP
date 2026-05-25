@@ -1,5 +1,5 @@
 """
-domain/primitives/select_balance_sheet_section/primitive.py — BT-7
+domain/primitives/select_balance_sheet_section/primitive.py — BT-7 + BT3-FIX-2
 
 Pure function: select_balance_sheet_section(page_texts) -> list[dict]
 
@@ -30,6 +30,21 @@ Vietnamese BS markers (strong indicators — require at least 1 hit):
     "nợ phải trả" / "no phai tra"                     — liabilities header
     "vốn chủ sở hữu" / "von chu so huu"               — equity header
 
+OCR-VARIANT MARKERS (BT3-FIX-2):
+    Real FPT Q4 stored OCR (20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf, 46 pages)
+    has imperfect diacritics on page 4 (current assets section):
+        "BANG CÂN ĐỐI KẾ TOÁN" (not "BẢNG CÂN ĐỐI") — missing ả in BẢNG
+        "TÀI SAN NGAN HAN"     (not "TÀI SẢN NGẮN HẠN") — ẢN→AN, ẮN→N, Ạ→A
+    These OCR artifacts made page 4 invisible to the section filter, causing:
+        - Filter selected only pages 5/6/7 (3 of 4 BS pages)
+        - Code 400 (equity) was present, but the balance identity required all
+          three of 270/300/400 with parseable values → balance_pass=False (delta=0)
+        - BT-5 gate BLOCKED the push → old stale rows never overwritten
+    Fix: add mixed-diacritic variant markers that DO appear in the real OCR:
+        "bang cân đối"    — matches "BANG CÂN ĐỐI" (all 4 BS pages have "(tiếp theo)")
+        "cân đối kế toán" — substring present in all 4 BS pages
+        "tài san ngan han" — mixed: tài correct, san/ngan/han missing diacritics
+
 Fallback: if NO marker is found in any page, return ALL pages unchanged (to avoid
 silently losing all data for docs with non-standard layouts). This is logged at
 caller level. The primitive returns the full list in that case.
@@ -38,6 +53,10 @@ FPT Q4 2025 example (the BT-7 bug fix):
     44-page pre-supply → markers found on pages 6-9 only →
     filtered result = 4 BS pages → assembler produces ~8 code rows →
     period_current from BS header ("31/12/2025"), not signature page ("26/01/2026").
+
+FPT Q4 2025 example (the BT3-FIX-2 bug fix):
+    46-page real stored OCR → OCR-variant markers now catch page 4 →
+    filtered result = 4 BS pages (4/5/6/7) → balance_pass=True → gate PASSES.
 """
 
 from __future__ import annotations
@@ -69,6 +88,15 @@ _BS_STRONG_MARKERS = [
     # Additional strong markers to catch variant spellings
     "tình hình tài chính",        # "tình hình tài chính" appears in some header formats
     "tinh hinh tai chinh",
+    # BT3-FIX-2: OCR-variant markers for real stored FPT Q4 OCR (diacritic artifacts)
+    # Real OCR renders "BANG CÂN ĐỐI KẾ TOÁN" (missing ả in BẢNG) and
+    # "TÀI SAN NGAN HAN" (missing ẢN→AN etc.) on the current-assets page (page 4).
+    # Without these, page 4 was invisible to the filter → only 3/4 BS pages selected
+    # → balance_pass=False (at least one code value missing) → BT-5 gate blocked.
+    "bang cân đối",               # matches "BANG CÂN ĐỐI KẾ TOÁN" on all 4 FPT BS pages
+    "cân đối kế toán",            # substring present on all 4 FPT BS pages (page headers)
+    "tài san ngan han",           # OCR variant: tài correct, san/ngan/han missing diacritics
+    "mau so b 01",                # "MẪU SỐ B 01-DN/HN" form code present on all BS pages
 ]
 
 # Maximum balance-sheet section length in pages
