@@ -213,6 +213,57 @@
       margin-top: -2px;
     }
     .mcp-reload-btn:hover { background: #30363d; }
+
+    /* Module rows */
+    .mcp-module-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 6px;
+      background: #0d1117;
+      border: 1px solid #21262d;
+      margin-bottom: 6px;
+      flex-wrap: wrap;
+    }
+    .mcp-module-row:last-child { margin-bottom: 0; }
+    .mcp-module-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #f0f6fc;
+      min-width: 110px;
+    }
+    .mcp-module-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .mcp-chip {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: #1c2d45;
+      color: #58a6ff;
+      font-weight: 500;
+    }
+    .mcp-module-filecount {
+      font-size: 11px;
+      color: #6e7681;
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    /* Microservice live stat */
+    .mcp-stat-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+    .mcp-indicator-live { background: #3fb950; }
+    .mcp-indicator-offline { background: #d29922; }
   </style>
 </head>
 <body>
@@ -241,15 +292,11 @@
   <div class="mcp-panel">
     <div class="mcp-panel-title">
       Modules
-      <span class="mcp-panel-badge mcp-badge-pending">PHASE 2</span>
+      <span class="mcp-panel-badge mcp-badge-live">LIVE</span>
+      <button class="mcp-reload-btn" onclick="loadModules()">Reload</button>
     </div>
-    <div class="mcp-placeholder">
-      <div class="mcp-placeholder-icon">&#128736;</div>
-      <div class="mcp-placeholder-title">Phase 2 — not yet extracted</div>
-      <div class="mcp-placeholder-text">
-        Module barrel decomposition (system/, macro/, sector/) completes in Phase 1.<br>
-        Module-level scenario scenarios land in Phase 2.
-      </div>
+    <div id="mcp-modules-content">
+      <div class="mcp-empty-state">Loading modules...</div>
     </div>
   </div>
 
@@ -257,15 +304,14 @@
   <div class="mcp-panel">
     <div class="mcp-panel-title">
       Microservice
-      <span class="mcp-panel-badge mcp-badge-static">STATIC</span>
+      <span class="mcp-panel-badge mcp-badge-live" id="mcp-ms-badge">LIVE</span>
     </div>
-    <div class="mcp-stat">
-      <span class="mcp-stat-number">~146</span>
+    <div class="mcp-stat" id="mcp-ms-stat">
+      <span class="mcp-stat-number" id="mcp-ms-toolcount">
+        <span class="mcp-dot mcp-dot-loading" style="display:inline-block;margin-right:6px;vertical-align:middle;"></span>
+      </span>
       <span class="mcp-stat-label">tools registered</span>
-      <div class="mcp-stat-note">
-        Static count &mdash; Phase 2 live link via GET /health<br>
-        Source: docs/data/project-stats.json#toolCount
-      </div>
+      <div class="mcp-stat-note" id="mcp-ms-note">Fetching from localhost:3000/health...</div>
     </div>
     <div style="margin-top: 14px; font-size: 12px; color: #8b949e; line-height: 1.7;">
       <div>&#x25CB; 68 cron jobs (startScheduler.ts)</div>
@@ -377,6 +423,64 @@
 
   // Load on page open
   loadTraces();
+
+  // ── Module panel ──────────────────────────────────────────────
+
+  function renderModuleRow(mod) {
+    const chips = mod.subBarrels.length > 0
+      ? mod.subBarrels.map(s => `<span class="mcp-chip">${escapeHtml(s)}</span>`).join("")
+      : "";
+    return `
+      <div class="mcp-module-row">
+        <span class="mcp-module-name">${escapeHtml(mod.barrel)}</span>
+        <div class="mcp-module-chips">${chips}</div>
+        <span class="mcp-module-filecount">${mod.fileCount} files</span>
+      </div>
+    `;
+  }
+
+  async function loadModules() {
+    const el = document.getElementById("mcp-modules-content");
+    el.innerHTML = '<div class="mcp-empty-state">Loading...</div>';
+    try {
+      const res = await fetch("data/modules.json");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      if (!data.modules || data.modules.length === 0) {
+        el.innerHTML = '<div class="mcp-empty-state">No modules found in data/modules.json</div>';
+        return;
+      }
+      el.innerHTML = data.modules.map(renderModuleRow).join("");
+    } catch (err) {
+      el.innerHTML = `<div class="mcp-empty-state">Failed to load modules.json: ${escapeHtml(String(err))}</div>`;
+    }
+  }
+
+  // ── Microservice panel ────────────────────────────────────────
+
+  async function loadMicroservice() {
+    const tcEl = document.getElementById("mcp-ms-toolcount");
+    const noteEl = document.getElementById("mcp-ms-note");
+    const badgeEl = document.getElementById("mcp-ms-badge");
+    try {
+      const res = await fetch("http://localhost:3000/health");
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const data = await res.json();
+      const count = data.toolCount !== undefined ? data.toolCount : "?";
+      tcEl.innerHTML = `<span class="mcp-stat-indicator mcp-indicator-live"></span>${escapeHtml(String(count))}`;
+      noteEl.textContent = "Live — GET http://localhost:3000/health";
+      badgeEl.className = "mcp-panel-badge mcp-badge-live";
+      badgeEl.textContent = "LIVE";
+    } catch {
+      tcEl.innerHTML = `<span class="mcp-stat-indicator mcp-indicator-offline"></span>146`;
+      noteEl.textContent = "146 tools (server offline — last known)";
+      badgeEl.className = "mcp-panel-badge mcp-badge-pending";
+      badgeEl.textContent = "OFFLINE";
+    }
+  }
+
+  loadModules();
+  loadMicroservice();
 </script>
 
 </body>

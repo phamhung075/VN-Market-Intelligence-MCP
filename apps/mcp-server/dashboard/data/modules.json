@@ -1,0 +1,18 @@
+{
+  "generated": "2026-05-25",
+  "source": "P1-C/D/E barrel decomposition",
+  "modules": [
+    { "barrel": "system", "subBarrels": ["memory","coordination","ops-debug","observability","vps"], "fileCount": 21 },
+    { "barrel": "macro", "subBarrels": ["http-proxy","local-computation"], "fileCount": 14 },
+    { "barrel": "sector", "subBarrels": ["domestic","market","cross-cutting"], "fileCount": 15 },
+    { "barrel": "market-data", "subBarrels": [], "fileCount": 9 },
+    { "barrel": "news-analysis", "subBarrels": [], "fileCount": 9 },
+    { "barrel": "alerts", "subBarrels": [], "fileCount": 9 },
+    { "barrel": "financial-reports", "subBarrels": [], "fileCount": 8 },
+    { "barrel": "portfolio", "subBarrels": [], "fileCount": 7 },
+    { "barrel": "briefings", "subBarrels": [], "fileCount": 5 },
+    { "barrel": "backtesting", "subBarrels": [], "fileCount": 2 },
+    { "barrel": "analysis", "subBarrels": [], "fileCount": 1 },
+    { "barrel": "kinhdich", "subBarrels": [], "fileCount": 1 }
+  ]
+}
