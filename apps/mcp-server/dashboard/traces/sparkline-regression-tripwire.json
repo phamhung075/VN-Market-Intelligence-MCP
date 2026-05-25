@@ -1,0 +1,11 @@
+{
+  "scenario": "sparkline-regression-tripwire",
+  "primitive": "generateSparkline",
+  "status": "fail",
+  "actual": "▁▄▂█▇",
+  "expected": "INTENTIONAL_FAIL",
+  "match": false,
+  "error": "Regression tripwire: mismatch on expected output (intentional RED indicator for trust-contract G9 P2-H)",
+  "timestamp": "2026-05-25T00:00:00.000Z",
+  "durationMs": 0
+}
