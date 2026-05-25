@@ -1,5 +1,57 @@
 # QA — Notebook
 
+## cycle-119 · 2026-05-26 · P2-H-QA (mcp-server G9 trust-contract gate) — GO
+
+**Task:** P2-H-QA — gate-keeper verification of P2-H-FIX (commit 5ab1711f) | **Verdict:** GO for P2-I
+
+```
+date: 2026-05-26T00:00:00Z
+type: scale-pilot-qa-gate (mcp-server Phase-2 G9 dashboard trust contract)
+report: reports/TASK_REPORT_P2-H-QA.md
+commit: 5aad6041
+
+check_A_inline_data:
+  mcp-traces-data block: PRESENT (9 real traces, all pass)
+  mcp-modules-data block: PRESENT (12 barrels)
+  window.__MCP_* in code: 0 (2 in comments only)
+  fetch() for trace/module: 0 (1 only in file:// guarded loadMicroservice)
+  KNOWN_TRACES: ABSENT
+  sparkline-regression-tripwire.json: DELETED
+  spot_check_3_traces: MATCH (sparkline-golden-happy, sector-classifier-golden-known-ticker, signal-bus-failure-missing-required)
+
+check_B_file_path_render:
+  method: headless Chromium page.goto("file://...index.html")
+  panels: 3
+  cards: 9
+  greenDots: 9
+  moduleRows: 12
+  hasPhase2placeholder: false
+  consoleErrors: 0
+  httpRequests: 0
+  screenshot: apps/mcp-server/dashboard/render-check.png
+
+check_C_playwright:
+  run: npx playwright test trust-contract.spec.js --reporter=json (independent)
+  result: 7/7 PASS (expected:7, unexpected:0, skipped:0, errors:[])
+  addInitScript: ABSENT
+  assertion_5: pure page.evaluate() renderCard({status:fail}) -> mcp-dot-fail, no fixture
+  console_errors: 0
+  network_requests: 0
+
+check_D_regression:
+  bun_test: 9751 tests / 907 files (mcp-server suite); Bun C++ crash in stats phase (known bug, not test failure)
+  dashboard_failures: ZERO
+  pre_existing_failures: Task 1332, 1345a, 178, 089 (E2E timeouts), 1414/1416 (diacritics), 1837a (schema)
+  tsc: exit 2 — pre-existing BCTC drift (bctcBatchTableBackfillJob.test.ts, trigger-backfill.ts); introduced by 6d7839be BEFORE 5ab1711f
+  toolCount: 146
+  scheduler: 68
+  files_changed_in_5ab1711f: dashboard/index.html, dashboard/playwright-verdict.json, dashboard/tests/trust-contract.spec.js, dashboard/traces/sparkline-regression-tripwire.json (deleted)
+```
+
+**GO: PO may proceed to P2-I — present file:// dashboard to user for verbal G9 sign-off.**
+
+---
+
 ## cycle-118 · 2026-05-25 · BT-6 (BCTC-TABLE sprint QA regression gate) — APPROVED
 
 **Task:** BT-6 — BCTC-TABLE sprint full regression gate | **Verdict:** APPROVED — BT-EXIT cleared for po
