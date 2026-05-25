@@ -1,8 +1,47 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-25 00:00 UTC | **Sprint:** P0-MCP-1
+**Last updated:** 2026-05-25 12:00 UTC | **Sprint:** P0-MCP-5
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## P0-MCP-5 — mcp-server Phase-1 task plan (2026-05-25T~UTC) — DESIGN COMPLETE
+
+**Task:** P0-MCP-5. Last Phase-0 analysis deliverable before mcp-server pilot Phase-0 close. FULL-scope plan (not MVR) — domain host rationale restated. Inputs: P0-MCP-1 brownfield + P0-MCP-2 bug baseline + mcp-server-charter.md + pilot-charter.md + frontend-phase-1-task-plan.md (format template) + dev-mcp-server/main.md (G12 streak rule).
+
+**Key design decisions:**
+
+1. **FULL verdict confirmed.** mcp-server IS the domain host; MVR is inappropriate (no upstream delegate, 146-tool blast radius, G5-inverse R-CRITICAL violations live, G4 fence doesn't exist, G6 trust dashboard doesn't exist).
+
+2. **G12 streak tasks confirmed: P1-B / P1-C / P1-D** — aligned with `.claude/flows/dev-mcp-server/main.md` §G12 Streak Rule. P1-B = dashboard stub (streak #1), P1-C = system/ barrel wave (streak #2), P1-D = macro/ barrel wave (streak #3).
+
+3. **Barrel decomposition waves ordered smallest-blast-radius first:** SEAM-1 `system/` 21→5 sub-barrels (P1-C), SEAM-2 `macro/` 14→HTTP-proxy+local-computation (P1-D), SEAM-3 `sector/` 15→3 cluster cuts (P1-E). Each QA-gated against full 146-tool surface before next.
+
+4. **G5-inverse remediation track (P1-F + P1-G):** Explicit tasks for kinhDichWrapper bypass (marketTools.ts + analysis.ts + portfolioTools.ts QUE_META), and pdf.ts/pdfOcrWorker.ts post-1954c verify. Each ends with "every handler proven HTTP-routed" grep evidence.
+
+5. **G1 primitive scaffolding (P1-H, secondary):** signal-bus-helper (signalBuilders.ts) + sector-classifier (sectorPeers.ts). Both pure, zero-IO confirmed. ≥3 scenario JSON each. severityLabels.ts annotated as G1-PRIMITIVE-CANDIDATE in P1-E.
+
+6. **Regression tripwires carried from P0-MCP-2:** tool count ≥146, Gate 2d=68, tsc EXIT:0, bun test ≥9408/≤348, BCTC+news-fetch dashboards HTTP 200, no new domain→infra imports — re-checked after EVERY wave.
+
+7. **Carried-debt note:** cronJobCount SSOT=77 vs live=68/73 (stale). testBaselinePass SSOT=9277 vs live=9408-9411 (stale). PO reconciles at P1-EXIT, NOT in Phase-1 scope.
+
+8. **Docker rebuild deferred** to separate session (memory cap). Phase-1 verified host-side only.
+
+9. **10 tasks total** (P1-A through P1-EXIT): 9 dev tasks + 1 PO close-out. WIP=1, RUN-SOLO, ~30h dev effort.
+
+**Risk flags:**
+- R-CRITICAL: kinhDichWrapper bypass → P1-F (remediation task)
+- R-MEDIUM: pdf.ts/pdfOcrWorker not in _deprecated/ → P1-G (verify task)
+- R-HIGH: 146-tool blast radius per barrel wave — QA-gated after each
+- R-HIGH: BUG-1 commit-mutex enum drift — workaround: kind=sprint-task, key=commit-mutex:main
+- R-LOW: bctc-schema.ts monorepo-root relative import (deferred to Phase 2)
+
+**Files authored this cycle (2):**
+1. `docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-1-task-plan.md` (REWRITTEN — full FULL-scope plan, 10 tasks, 78 ACs)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** PO — P0-MCP-EXIT (Phase-0 close). dev-mcp-server scheduled LAST after all other service pilots complete.
+
+---
 
 ## P0-MCP-1 — mcp-server brownfield inventory (2026-05-25T~UTC) — DESIGN COMPLETE
 

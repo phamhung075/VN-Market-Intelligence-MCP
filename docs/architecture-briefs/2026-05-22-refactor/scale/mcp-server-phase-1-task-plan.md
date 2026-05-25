@@ -1,40 +1,45 @@
 ---
-title: "Phase 1 Task Plan — mcp-server (RUN-SOLO, SCHEDULE-LAST)"
+title: "Phase 1 Task Plan — mcp-server (TypeScript/Bun) — FULL Track"
 date: "2026-05-25"
-author: "architect"
+author: "architect (P0-MCP-5)"
 pilot: "mcp-server"
+fleet_pilot_number: 11
 phase: "1"
-status: "READY-FOR-DISPATCH — pending PO sequencing signal"
-zone: "apps/mcp-server/"
+status: "READY-FOR-DISPATCH — pending PO sequencing signal (RUN-SOLO, SCHEDULE LAST)"
+sprint_kickoff: "TBD — PO sequencing signal required"
+sprint_deadline: "TBD + 6 sprints"
 charter_ref: "docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-charter.md"
 canonical_goals_ref: "docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md"
-brownfield_ref: "docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-brownfield.md"
+brownfield_ref: "docs/handoffs/TASK_P0-MCP-1-brownfield-inventory.md"
+bug_baseline_ref: "docs/handoffs/TASK_P0-MCP-2-bug-inventory-baseline.md"
 language: "TypeScript"
-runtime: "bun"
+runtime: "Bun 1.3.13 / Ubuntu 22.04"
 owner: "dev-mcp-server"
 wip_limit: 1
-schedule_constraint: "RUN-SOLO — zero other scale terminals active. LAST after all other service pilots complete."
+schedule_constraint: "RUN-SOLO — zero other scale terminals active. LAST after ALL other service pilots complete."
 risk: "HIGHEST"
+mvr_verdict: "FULL"
 ---
 
-# Phase 1 Task Plan — `mcp-server` (RUN-SOLO / HIGHEST-RISK)
+# Phase 1 Task Plan — `mcp-server` (TypeScript/Bun) — FULL Track
 
-**Generated:** 2026-05-25 by architect (Phase 0)  
-**Zone:** `apps/mcp-server/` ONLY  
-**Owner:** `dev-mcp-server` specialist  
-**Language:** TypeScript / Bun (locked — not a rewrite candidate)  
-**WIP:** 1 task at a time, SOLO terminal, throughout entire Phase 1  
-**Status:** READY-FOR-DISPATCH — awaiting PO sequencing signal (schedule LAST)
+**Generated:** 2026-05-25 by architect (Phase 0, task P0-MCP-5)
+**Zone:** `apps/mcp-server/` ONLY (anti-scope-creep clause binding)
+**Owner:** `dev-mcp-server` specialist
+**Language:** TypeScript / Bun 1.3.13 (locked — not a rewrite candidate; sole MCP interface + scheduler host)
+**WIP:** 1 task at a time, SOLO terminal, throughout entire Phase 1
+**Status:** READY-FOR-DISPATCH — awaiting PO sequencing signal
 
 ---
 
 ## CRITICAL SCHEDULING CONSTRAINT — READ BEFORE DISPATCHING
 
-This service runs **LAST** and **SOLO**. No other scale terminal may be active while any mcp-server phase is in progress. This is non-negotiable per the charter. Rationale:
+This service runs **LAST** and **SOLO**. No other scale terminal may be active while any mcp-server Phase 1 task is in progress. This is non-negotiable per the charter (`docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-charter.md` §Scheduling Mandate).
 
-1. **Shared-substrate write surface.** mcp-server writes `docs/signals/`, `docs/data/`, the scheduler state, and `market.db`. Other active terminals writing the same paths produce concurrent-commit-race + SSOT-duplicate-key class failures.
-2. **132-tool blast radius.** Any barrel edit can silently break many tools. The QA gate covers all 132 tools after each wave.
-3. **73-cron-job coupling.** Scheduler job registrations are import-coupled to every subdirectory. A broken import in any scheduler subdirectory silences that cron without a startup error.
+Rationale:
+1. **Shared-substrate write surface.** mcp-server writes `docs/signals/`, `docs/data/`, the scheduler state, and `market.db`. Other active terminals writing the same paths produce the concurrent-commit-race + SSOT-duplicate-key class of failures already documented in this repo.
+2. **146-tool blast radius.** Any barrel edit in the 12-module interface-layer tree can silently break multiple tools. QA gate covers all 146 tools after every wave.
+3. **68-cron-job coupling.** Scheduler job registrations are import-coupled to every barrel file. A broken import in any barrel silences that cron at startup with no visible error.
 
 **PO must emit a sequencing signal confirming all other service pilots are DONE (or at minimum all active scale terminals are stopped) before dispatching P1-A.**
 
@@ -44,477 +49,683 @@ This service runs **LAST** and **SOLO**. No other scale terminal may be active w
 
 These rules are non-negotiable. Violations in this zone have caused 26-file over-staging incidents.
 
-1. **Explicit-file staging ONLY.** `git add <exact-path>` per file. NEVER `git add -A`, `git add .`, or `git add -am`. NEVER use flags that auto-stage all changes.
-2. **Pre-commit diff review.** Always run `git diff --cached` and verify ONLY the intended files appear before committing.
-3. **Acquire commit-mutex** (kind='sprint-task', key='commit-mutex:main') before staging. Release after commit. This prevents concurrent-commit-race with any parallel terminals.
+1. **Explicit-file staging ONLY.** `git add <exact-path>` per file. NEVER `git add -A`, `git add .`, `git add -am`, or any wildcard flag.
+2. **Pre-commit diff review.** Run `git diff --cached --name-only` and verify ONLY the intended files appear before committing.
+3. **Acquire commit-mutex** before staging → skill: `.claude/skills/commit-mutex/SKILL.md` (kind='sprint-task', key='commit-mutex:main', TTL=60s per BUG-1 enum-drift workaround). Stage → verify diff → commit → release.
 4. **No --force, --no-verify, --no-gpg-sign.**
-5. **All work on main.** No branches.
-6. **SOLO terminal.** Confirm no other scale terminal is active before each commit.
+5. **All work on main. No branches.**
+6. **SOLO terminal confirmation.** Confirm no other scale terminal is active before each commit wave.
+7. **Pre-commit: verify no `.git/index.lock` and no live git process** (`ps aux | grep git`) before staging.
+
+**BUG-1 workaround reminder (commit-mutex enum drift):** The `task_claim` tool enum lacks `commit-mutex` kind. Acquire mutex using `kind='sprint-task'`, `task_id='commit-mutex:main'`. This is the binding workaround until the enum is extended.
+
+---
+
+## MVR-vs-FULL Scope Verdict — BINDING
+
+**VERDICT: FULL (Minimum Viable Refactor path is NOT appropriate for mcp-server)**
+
+**Rationale from brownfield (P0-MCP-1 §9):** mcp-server IS the domain host. It does not delegate to itself. The MVR path (dashboards + scenarios only, skip primitive extraction and barrel decomposition) is correct for services whose business logic was already extracted upstream. mcp-server is the opposite: it IS the orchestration host, the scheduler host, the single MCP interface, and the trust gateway for all 146 tools. Every G1-G12 goal must be proven here directly.
+
+Specific factors that make FULL mandatory:
+- **No upstream service to fall back to.** If a barrel edit silences a tool, there is no fallback service. The blast radius is the entire user-visible tool surface.
+- **G5-inverse is the dominant risk.** Two live R-CRITICAL violations exist (`kinhDichWrapper` bypass in 2 tool files + `QUE_META` import in `portfolioTools.ts`). These must be remediated with "every handler proven HTTP-routed" evidence — this is FULL scope work, not MVR.
+- **G4 ESLint fence does not exist.** The only current architecture fence is a single lint test (`no-local-project-root.test.ts`). Installing `eslint-plugin-boundaries` is a FULL G4 deliverable.
+- **G6 trust dashboard does not exist.** The existing BCTC inspector and news-fetch dashboard are operational dashboards, not the G6 three-tier trust layer. The trust dashboard must be built from scratch.
+- **3 barrel seams require decomposition waves.** `system/` (21 files), `macro/` (14 files), `sector/` (15 files) are Priority-1 barrel violations — each requires its own QA-gated wave.
 
 ---
 
 ## Phase 1 Overview
 
-Phase 1 has two equal-weight tracks:
+Phase 1 for `mcp-server` has **four equal-weight tracks** that run sequentially (WIP=1):
 
-**Track A — Barrel Decomposition (dominant work):**  
-Shrink `domain/services/index.ts` (139L, 84-file surface, Priority-1 violation) into bounded sub-barrels. Each wave is a safe, QA-gated split that reduces the mega-barrel without breaking any of the ~132 tool handlers that import from it.
+**Track A — Sandbox + Dashboard Foundation (P1-A, P1-B):**
+Build the mcp-server sandbox runner and the three-tier trust dashboard stub. This enables G1/G6 in Phase 2 and establishes the G12 DoD gate evidence infrastructure.
 
-**Track B — G5-Inverse Routing Verification:**  
-Audit every tool handler file that imports from `domain/services/` and verify whether the import is: (a) legitimate domain logic that stays, (b) dead migrated code to delete, or (c) integration glue that needs a routing decision. Produce a verified routing map.
+**Track B — Barrel Decomposition Waves (P1-C, P1-D, P1-E):**
+Decompose the 3 Priority-1 barrel seams identified by P0-MCP-1: `system/` (21 files → 5 sub-barrels), `macro/` (14 files → HTTP-proxy vs local-computation split), `sector/` (15 files → 3 cluster cuts). Each wave is QA-gated against the full 146-tool surface before the next wave starts. These are the **G12 streak tasks** (P1-B/P1-C/P1-D per `.claude/flows/dev-mcp-server/main.md` §G12 Streak Rule).
+
+**Track C — G5-Inverse Remediation (P1-F, P1-G):**
+Remediate the R-CRITICAL `kinhDichWrapper` bypass, resolve `portfolioTools.ts QUE_META` import, and verify the `pdf.ts`/`pdfOcrWorker.ts` post-1954c state. Each task ends with "every handler proven HTTP-routed" evidence.
+
+**Track D — G1 Primitive Scaffolding (P1-H):**
+Extract the secondary primitive candidates (signal-bus helper, sector-classifier) as scenario-JSON-testable pure functions. Validates that the barrel decomposition produced clean seams.
+
+**Closing tasks:** P1-QA (Phase 1 close-gate), P1-EXIT (PO SSOT reconciliation + pilot-status flip).
 
 Phase 1 does NOT:
-- Activate the architecture fence (Phase 2)
-- Delete any files (Phase 2)
-- Add new primitive packages (Phase 2)
-- Start G4/G5/G10/G11 goals (Phase 2)
+- Install the G4 ESLint architecture fence (Phase 2)
+- Delete any files from `domain/services/kinhDich/` (Phase 2 G5 delete)
+- Promote primitives to `packages/primitives/` (Phase 2 G1-full)
+- Execute G10/G11 bug injection cycles (Phase 2)
 
 Phase 1 DOES:
-- Shrink the Priority-1 barrel violation
-- Document the G5-inverse routing map
-- Verify all cron job imports survive each barrel change
-- Add sandbox runner scaffolding (P1-A1, enables G1 in Phase 2)
-- Establish the three-level dashboard stub (P1-B, enables G6 in Phase 2)
-- Add bug-inventory baseline entry (P0-MCP-3 — part of this Phase 0/1 cycle)
+- Establish the three-tier trust dashboard stub (enables G6 Phase 2 readiness)
+- Decompose the 3 Priority-1 barrel seams into bounded sub-barrels
+- Verify the G5-inverse routing state for every handler touching kinh-dich, macro, and pdf-extractor
+- Prove the kinhDichWrapper bypass is remediated with HTTP-route evidence
+- Scaffold 2 primitive candidates (scenario-JSON-testable, pure, zero I/O)
+- Demonstrate G12 streak (3 consecutive tasks dashboard/test-green before DONE)
 
 ---
 
 ## Pre-Revert Tags
 
-These tags are created by `dev-mcp-server` at the relevant task boundary. None exist yet.
-
 | Tag | Created at | Purpose |
 |---|---|---|
-| `mcp-server-pre-barrel-wave1` | Start of P1-C | Rollback anchor before first barrel split |
-| `mcp-server-pre-barrel-wave2` | Start of P1-D | Rollback anchor before second barrel split |
-| `mcp-server-pre-barrel-wave3` | Start of P1-E | Rollback anchor before third barrel split |
-| `mcp-server-pre-ci` | Phase 2, P2-A | G4 fence freeze anchor before `eslint.config.mjs` |
+| `mcp-server-pre-barrel-wave1` | Start of P1-C | Rollback anchor before system/ barrel split |
+| `mcp-server-pre-barrel-wave2` | Start of P1-D | Rollback anchor before macro/ barrel split |
+| `mcp-server-pre-barrel-wave3` | Start of P1-E | Rollback anchor before sector/ barrel split |
+| `mcp-server-pre-g5-remediation` | Start of P1-F | G5-inverse rollback anchor before kinhDichWrapper rewire |
+| `mcp-server-pre-ci` | Phase 2, P2-A | G4 ESLint fence freeze anchor |
 | `mcp-server-pre-delete` | Phase 2, P2-G5a | G5 rollback anchor before `_deprecated/` moves |
 | `mcp-server-pre-inject` | Phase 2, QA task | G10 rollback anchor before bug injection |
 
+No Phase 1 tags other than the three barrel wave tags need to be created. The G5-inverse remediation tag (`mcp-server-pre-g5-remediation`) is created at P1-F start.
+
 ---
 
-## G12 Streak Tasks (3-Task Streak Definition)
+## G12 Streak Tasks (3-Task Streak — Binding)
 
-G12 requires 3 consecutive tasks where dev-mcp-server demonstrates dashboard-green-before-DONE discipline. For Phase 1, the streak tasks are:
+Per `.claude/flows/dev-mcp-server/main.md` §G12 Streak Rule, the three G12 streak tasks for Phase 1 are:
 
-1. **P1-B** (dashboard stub) — streak task #1
-2. **P1-C** (barrel wave 1 with full-tool-suite QA gate) — streak task #2
-3. **P1-D** (barrel wave 2 with full-tool-suite QA gate) — streak task #3
+1. **P1-B** (three-tier dashboard stub) — G12 streak task #1
+2. **P1-C** (barrel wave 1: system/ decomposition) — G12 streak task #2
+3. **P1-D** (barrel wave 2: macro/ split) — G12 streak task #3
 
-The G12 DoD rule for mcp-server: do not mark task DONE until (a) `bun test` passes all existing tests, and (b) sandbox tool count matches pre-task tool count (no tool silenced by broken import).
+**Streak rule (binding):** Each of these tasks must carry BOTH gate evidence pasted into its handoff before it is marked DONE:
+- Gate 1: `bun test` showing pass ≥9408 / fail ≤348
+- Gate 2: Tool-suite probe showing tsc EXIT:0 + server health 200 + tool count ≥146 + scheduler count 68
+
+The streak is broken if ANY task in the sequence ships without this evidence. If broken: reopen the task, re-run both gates, re-paste evidence before re-marking DONE.
+
+**G12 Canonical source:** `docs/architecture-briefs/2026-05-22-refactor/pilot-charter.md` §G12.
 
 ---
 
 ## Task Ledger
 
-| ID | Name | Deps | Owner | Est | WIP order |
-|---|---|---|---|---|---|
-| P0-MCP-3 | Bug-inventory baseline entry | none | architect | done | 0 (this cycle) |
-| P1-A1 | Sandbox runner scaffolding (mcp-server tier) | P0-MCP-3 | dev-mcp-server | 3h | 1 |
-| P1-B | Three-level dashboard stub | P1-A1 | dev-mcp-server | 4h | 2 |
-| P1-C | Barrel wave 1 — domain/services alert + financial-reports sub-barrels | P1-B | dev-mcp-server | 5h | 3 |
-| P1-D | Barrel wave 2 — domain/services market-analysis + sector sub-barrels | P1-C | dev-mcp-server | 5h | 4 |
-| P1-E | Barrel wave 3 — domain/services macro + news/sentiment + portfolio sub-barrels | P1-D | dev-mcp-server | 5h | 5 |
-| P1-F | Barrel wave 4 — domain/services thematic + utility + VPS sub-barrels | P1-E | dev-mcp-server | 4h | 6 |
-| P1-G | G5-inverse routing audit — produce verified tool routing map | P1-C | dev-mcp-server | 4h | 7 (parallel with P1-D allowed, same terminal sequential) |
-| P1-H | KinhDich domain residual ruling — route or keep glue (2 callers) | P1-G | dev-mcp-server | 2h | 8 |
-| P1-J | Macro domain sub-module audit — verify scheduler jobs route via HTTP | P1-G | dev-mcp-server | 2h | 9 |
-| P1-K | DDD layer migration — move rateLimiter/resilientFetcher/vpsHealthPoller to infrastructure | P1-F, P1-J | dev-mcp-server | 3h | 10 |
+| ID | Title | Goals advanced | Blocks | Blocked by | Est | AC count |
+|----|-------|----------------|--------|------------|-----|----------|
+| **P1-A** | Sandbox runner + scenario scaffolding | G1, G7 | P1-B | — | 3h | 7 |
+| **P1-B** | Three-tier trust dashboard stub | G6, G8, G9, G12 | P1-C | P1-A | 3h | 8 |
+| **P1-C** | Barrel wave 1: `system/` (21 files → 5 sub-barrels) | G2, G12 | P1-D | P1-B | 5h | 10 |
+| **P1-D** | Barrel wave 2: `macro/` (14 files → HTTP-proxy vs local-computation) | G2, G12 | P1-E | P1-C | 5h | 10 |
+| **P1-E** | Barrel wave 3: `sector/` (15 files → 3 cluster cuts) | G2 | P1-F | P1-D | 4h | 9 |
+| **P1-F** | G5-inverse remediation: kinhDichWrapper bypass + QUE_META | G5 | P1-G | P1-E | 4h | 11 |
+| **P1-G** | G5-inverse remediation: pdf.ts / pdfOcrWorker.ts post-1954c verify | G5 | P1-H | P1-F | 2h | 6 |
+| **P1-H** | G1 primitive scaffolding: signal-bus-helper + sector-classifier | G1, G7 | P1-QA | P1-E | 3h | 8 |
+| **P1-QA** | Phase 1 close-gate verification | G1, G2, G5, G6, G7, G8, G12 | P1-EXIT | P1-H | 1h | 9 |
+| **P1-EXIT** | PO: SSOT reconciliation note + pilot-status Phase 1 close | — | — | P1-QA | — | — |
 
-**Total estimated Phase 1:** ~37h (1.5-2 sprints at RUN-SOLO pace)  
-**WIP=1 throughout.** No task starts until prior task is DONE (QA-gated, not just "submitted").
-
----
-
-## Detailed Task Specifications
+**Total atomic tasks:** 10 (9 dev + 1 PO close-out)
+**Total estimated dev effort:** ~30h (1.5-2 sprints at RUN-SOLO pace)
+**Total AC count:** 78
 
 ---
 
-### P0-MCP-3 — Bug-Inventory Baseline Entry
+## Regression Tripwires — Re-Checked After EVERY Wave
 
-**Owner:** architect (completed in this Phase 0 cycle)  
-**Output:** `mcp_server_baseline` entry added to `docs/data/bug-inventory.json`
+The following probes are carried from P0-MCP-2 bug-inventory baseline. They MUST be re-run and compared after every barrel wave (P1-C, P1-D, P1-E) and after every G5-inverse task (P1-F, P1-G). A deviation from any tripwire is a **blocking regression**.
 
-See §Bug-Inventory Entry in this document and the companion signal.
+| Tripwire | Baseline | Probe Command | Block if |
+|----------|----------|---------------|----------|
+| **Tool count** | ≥146 | `grep -rn "server\.tool(" apps/mcp-server/src --include="*.ts" \| grep -v "//" \| wc -l` | < 146 |
+| **Gate 2c tool count** | ≥146 | `grep -rc "server.tool\|addTool" apps/mcp-server/src/interface/mcp/tools/ \| awk -F: '{sum+=$2} END {print sum}'` | drops vs pre-wave |
+| **Scheduler (Gate 2d)** | 68 | `grep -c "cron.schedule" apps/mcp-server/src/scheduler/startScheduler.ts` | ≠ 68 |
+| **cronConfig.ts keys** | 73 | `grep -E "^\s+\w+:" apps/mcp-server/src/scheduler/cronConfig.ts \| grep "Bun\.env" \| wc -l` | < 73 |
+| **TypeScript** | EXIT:0 | `cd apps/mcp-server && bun run check` | non-zero exit |
+| **bun test pass** | ≥9408 | `cd apps/mcp-server && bun test` | < 9408 pass |
+| **bun test fail** | ≤348 | `cd apps/mcp-server && bun test` | > 348 fail |
+| **Dashboard BCTC inspect** | HTTP 200 | `curl -s http://localhost:3000/api/bctc-inspect \| head -5` | 500 or empty |
+| **Dashboard news-fetch** | HTTP 200 | `curl -s http://localhost:3000/dashboards/news-fetch/ \| head -5` | 500 or empty |
+| **No new domain→infra import** | 0 matches | `grep -r "from.*infrastructure" apps/mcp-server/src/domain/ --include="*.ts"` | any match |
 
-**ACs:**
-- AC-1: `docs/data/bug-inventory.json` has a `mcp_server_baseline` root key.
-- AC-2: `baselineCycleCount` = 2.5 (estimated from mcp-server-attributed bugs in inventory: `1960-DAILYDASH-ENOENT`, `A-21c`, `1974-DAILYDASH-HOST-VISIBILITY`, `1965d-JANITOR-PATHFIX`, `1958a-alertDigestJob-catchup`, `1955b-zombie-cron-rows`; average fix cycles 2-3, rounded to 2.5).
-- AC-3: G10 target for mcp-server: ≤2 cycles (must beat baseline).
-- AC-4: Zero duplicate root keys in the JSON file (python3 verify).
+These tripwires are SSOT-binding baselines from P0-MCP-2. Post-barrel evidence must be pasted into each task handoff before RETURN.
 
 ---
 
-### P1-A1 — Sandbox Runner Scaffolding
+## Barrel Decomposition Waves — Sequencing and Rationale
 
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/src/sandbox/` (NEW directory)  
-**Deps:** P0-MCP-3
+The barrel-decomposition waves are ordered **smallest-blast-radius first**. Each wave is QA-gated against all 146 tools before the next wave starts.
 
-This task creates the sandbox runner harness for the mcp-server trust tier. The mcp-server sandbox is distinct from the Go/Python service sandboxes — it tests domain service functions in isolation, not HTTP endpoints.
+### Why This Ordering
 
-**Context:** The mcp-server sandbox runner verifies pure-function domain services (the candidates that will become primitives in Phase 2). It DOES NOT exercise HTTP routes or the full MCP server. The runner reads scenario JSON, calls a domain function, compares output to expected, writes trace JSON.
+**Wave 1 (`system/`, 21 files):** Largest file count but most self-contained sub-domains. The 5 natural clusters (memory/coordination/ops-debug/observability/VPS) have minimal import fan-in from tool handlers outside `system/`. A wrong import in `system/` produces a visible startup error (the coordination tools are scaffolded at startup), making regression detection fast.
 
+**Wave 2 (`macro/`, 14 files):** Chosen second because the HTTP-proxy vs local-computation split is structurally well-defined (P0-MCP-1 §2 SEAM-2). The `macroHttpClient.ts` + `macroSnapshotGuard.ts` routing helpers are already isolated, so the split seam is clean. The macro barrel has medium import fan-in (mainly from `macro/` tool handlers and the `macroIndicatorRefreshJob`).
+
+**Wave 3 (`sector/`, 15 files):** Third because sector files are largely self-contained per-topic files with low cross-domain fan-in. Each cluster cut (domestic/market/cross-cutting) can be verified independently. `severityLabels.ts` is extracted as a primitive candidate at this wave.
+
+**After Wave 3:** G5-inverse remediation (P1-F, P1-G) runs against the now-stable barrel structure. Primitive scaffolding (P1-H) runs last, using the clean barrel seams as extraction targets.
+
+---
+
+## Per-Task Acceptance Criteria
+
+---
+
+### P1-A — Sandbox Runner + Scenario Scaffolding
+
+**Goals advanced:** G1 (primitive scenarios), G7 (edit-JSON-rerun)
+**Blocks:** P1-B
+**Blocked by:** none (first task)
+**Estimated:** 3h
 **Files to create:**
-- `apps/mcp-server/src/sandbox/runner.ts` — scenario loader + dispatch
+- `apps/mcp-server/src/sandbox/runner.ts` — scenario loader + dispatch + `--emit-traces` flag
 - `apps/mcp-server/src/sandbox/types.ts` — `ScenarioInput`, `TraceOutput` interfaces
-- `apps/mcp-server/src/sandbox/scenarios/` — directory for scenario JSON files
-- `apps/mcp-server/src/sandbox/scenarios/sparkline-golden-happy.json` — first scenario (use `sparkline.ts` pure function)
-- `apps/mcp-server/src/sandbox/scenarios/sparkline-golden-empty.json` — edge case
-- `apps/mcp-server/src/sandbox/scenarios/sparkline-failure-null.json` — failure case
-- `apps/mcp-server/dashboard/index.html` — scaffold (three-panel stub, no data yet)
-
-**Bun run command:** `bun run src/sandbox/runner.ts --scenario=src/sandbox/scenarios/sparkline-golden-happy.json`
-
-**Security clause (mandatory):** The sandbox runner MUST have zero DB credentials and zero external API keys in its process environment. Verify: `env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"` returns empty when running the sandbox runner in isolation. The runner uses ONLY pure-function domain services — no infrastructure imports allowed inside `src/sandbox/runner.ts`.
-
-**ACs:**
-- AC-1: `src/sandbox/runner.ts` created. Imports ONLY from `src/domain/services/` (pure functions, no I/O). ZERO infrastructure imports.
-- AC-2: 3 scenario JSON files created for `sparkline` (happy + edge + failure). All pass.
-- AC-3: `bun run src/sandbox/runner.ts --scenario=<file>` exits 0 for happy/edge; exits non-zero for failure scenario with expected output matched.
-- AC-4: `env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"` returns empty in sandbox runner context.
-- AC-5: Existing `bun test` suite passes (no regressions).
-- AC-6: `git diff --cached` before commit shows ONLY the new sandbox files.
-
-**G12 gate:** Not yet effective (streak starts at P1-B).
-
----
-
-### P1-B — Three-Level Dashboard Stub
-
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/dashboard/index.html` (NEW)  
-**Deps:** P1-A1
-
-Extend the dashboard stub to show three panels: Primitives (linked to sandbox scenario traces), Module (stub — no module yet), Microservice (overall tool health summary — count of green/red from last scenario run).
-
-**Context:** This is a STUB — no live data in Phase 1. The dashboard reads from static `traces/` JSON files that the sandbox runner writes. The microservice panel shows a static "awaiting Phase 2" placeholder.
-
-**Files to create/modify:**
-- `apps/mcp-server/dashboard/index.html` — three-panel stub
+- `apps/mcp-server/src/sandbox/scenarios/` — directory
+- `apps/mcp-server/src/sandbox/scenarios/sparkline-golden-happy.json`
+- `apps/mcp-server/src/sandbox/scenarios/sparkline-golden-empty.json`
+- `apps/mcp-server/src/sandbox/scenarios/sparkline-failure-null.json`
 - `apps/mcp-server/dashboard/traces/` — directory (sandbox runner writes here)
-- `apps/mcp-server/src/sandbox/runner.ts` — add `--emit-traces` flag that writes trace JSON to `dashboard/traces/`
 
-**Dashboard must NOT use any `dot-*` CSS classes or `.category-chip` patterns** (dash-check conventions carried from Go services). Use safe CSS class namespace: `.mcp-*`.
+**Background:** The mcp-server sandbox verifies pure-function domain services (candidates for Phase 2 primitive extraction). It does NOT exercise HTTP routes or the full MCP server. The first target is `domain/services/sparkline.ts` — a pure bar-chart generator with zero I/O, zero imports from infrastructure.
 
-**ACs:**
-- AC-1: `dashboard/index.html` opens via file:// URL in a browser. Three panels visible.
-- AC-2: Panel-1 (Primitives) shows at least 1 sparkline scenario card (from trace JSON).
-- AC-3: Panel-2 (Module) shows "Phase 2 — not yet extracted" placeholder. No JavaScript errors.
-- AC-4: Panel-3 (Microservice) shows "~132 tools registered" static count.
-- AC-5: `bun run src/sandbox/runner.ts --emit-traces` writes trace JSON to `dashboard/traces/`. Dashboard reloads and shows the new trace.
-- AC-6: No JavaScript console errors on file:// open.
-- AC-7: `bun test` passes.
+**Security clause (mandatory):** The sandbox runner MUST have zero DB credentials and zero external API keys in its process environment. Verify: `env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"` returns empty when running the sandbox runner in isolation.
 
-**G12 gate (streak #1):** Task DONE only after dashboard shows green for all 3 sparkline scenarios. Screenshot of three-panel dashboard pasted into handoff before RETURN.
+**AC-1:** `src/sandbox/runner.ts` exists. Imports ONLY from `src/domain/services/` pure functions. ZERO infrastructure imports (`grep -r "from.*infrastructure" src/sandbox/runner.ts` returns 0).
+
+**AC-2:** `src/sandbox/types.ts` exports `ScenarioInput` and `TraceOutput` interfaces. Both are pure-data types (no class instances, no I/O types).
+
+**AC-3:** 3 scenario JSON files created for `sparkline`: happy path (valid price array → sparkline string), empty input ([] → empty sparkline), null input (null → expected error output). Scenario schema: `{ "scenario": "...", "input": {...}, "expected": {...} }`.
+
+**AC-4:** `bun run src/sandbox/runner.ts --scenario=src/sandbox/scenarios/sparkline-golden-happy.json` exits 0 and writes trace to `dashboard/traces/`.
+`bun run src/sandbox/runner.ts --scenario=src/sandbox/scenarios/sparkline-failure-null.json` exits non-zero with expected output matched.
+
+**AC-5 (zero-creds audit):** `env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"` returns empty in sandbox runner process context. Evidence pasted in handoff.
+
+**AC-6 (regression tripwires):** `bun test` passes (pass ≥9408, fail ≤348). `bun run check` exits 0. Tool count unchanged. Scheduler count 68. Evidence pasted.
+
+**AC-7:** `git diff --cached --name-only` before commit shows ONLY the new sandbox files. No scheduler, no tool handler, no infra files staged.
+
+**G12 gate:** NOT yet in effect (streak starts at P1-B). But both tripwires must still pass.
 
 ---
 
-### P1-C — Barrel Wave 1: Alert + Financial-Reports Sub-Barrels
+### P1-B — Three-Tier Trust Dashboard Stub
 
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/src/domain/services/`  
-**Deps:** P1-B  
-**Pre-revert tag:** `mcp-server-pre-barrel-wave1` (create before any file edit)
+**Goals advanced:** G6 (trust layer renders), G8 (honest red/green), G9 (dashboard trust contract), G12 (streak #1)
+**Blocks:** P1-C
+**Blocked by:** P1-A
+**Estimated:** 3h
+**Files to create/modify:**
+- `apps/mcp-server/dashboard/index.html` (CREATE — three-panel stub)
+- `apps/mcp-server/src/sandbox/runner.ts` (MODIFY — confirm `--emit-traces` writes to `dashboard/traces/`)
 
-**Rationale for this wave first:** The alert services (9 files) and financial-reports sub-folder (9 files) are the most naturally bounded groups in the mega-barrel. They already have a partial `financial-reports/` subdirectory. Splitting these out reduces the 139L barrel by approximately 30-35 lines without touching market-analysis or cross-cutting utilities.
+**Background:** This is the G6 trust layer for mcp-server. The dashboard reads from static `traces/` JSON written by the sandbox runner. Phase 1 delivers a functional stub; Phase 2 fills in the module and microservice panels. The dashboard must open via `file://` URL with zero network dependency.
+
+**CSS namespace rule:** Use `.mcp-*` class namespace. NEVER use `dot-*`, `.category-chip`, or `"not wired"` / `"not_wired"` text (dash-check conventions carried from Go service pilots).
+
+**Three panels required:**
+1. **Primitives panel** — reads `dashboard/traces/*.json`, shows one card per scenario trace. Green dot = pass, red dot = fail.
+2. **Module panel** — "Phase 2 — not yet extracted" placeholder. No JavaScript errors.
+3. **Microservice panel** — "146 tools registered (static — Phase 2 live link)" static label.
+
+**AC-1:** `dashboard/index.html` opens via `file://` URL. Three panels visible without server dependency.
+
+**AC-2:** Primitives panel shows sparkline scenario cards loaded from `dashboard/traces/` JSON files. At least 1 card with green dot (happy path), 1 card with red dot (failure scenario).
+
+**AC-3:** Module panel shows "Phase 2 — not yet extracted" placeholder. Zero JavaScript console errors.
+
+**AC-4:** Microservice panel shows "~146 tools registered" static text. No live HTTP call to mcp-server from the dashboard (file:// mode, no CORS).
+
+**AC-5 (G8 honest red/green):** Dev deliberately edits `sparkline-golden-happy.json` `expected` value to a wrong output, reruns sandbox, refreshes dashboard — card flips red. Reverts expected, reruns — card returns green. Evidence (before/after screenshots or trace JSON diff) pasted in handoff.
+
+**AC-6:** `bun run src/sandbox/runner.ts --emit-traces` writes `dashboard/traces/<scenario-name>.json`. Dashboard reloads and shows updated trace.
+
+**AC-7 (regression tripwires):** `bun test` pass ≥9408, fail ≤348. `bun run check` exits 0. Tool count ≥146. Scheduler count 68. Dashboard routes BCTC+news-fetch HTTP 200. Evidence pasted.
+
+**AC-8:** `git diff --cached --name-only` before commit shows ONLY dashboard files and sandbox runner. No unintended files.
+
+**G12 gate (streak #1 — binding):** Task DONE only after AC-5 (honest red/green proof) AND AC-7 (all tripwires green) evidence is pasted into handoff. Screenshot of three-panel dashboard with at least one red and one green card required before RETURN.
+
+---
+
+### P1-C — Barrel Wave 1: `system/` (21 files → 5 sub-barrels)
+
+**Goals advanced:** G2 (module composes from bounded sub-barrels), G12 (streak #2)
+**Blocks:** P1-D
+**Blocked by:** P1-B
+**Estimated:** 5h
+**Pre-revert tag:** `mcp-server-pre-barrel-wave1` (create BEFORE any file edit)
+**Zone files touched:**
+- `apps/mcp-server/src/interface/mcp/tools/system/index.ts` (MODIFY — split into 5 sub-barrel index files)
+- `apps/mcp-server/src/interface/mcp/tools/system/memory/index.ts` (CREATE)
+- `apps/mcp-server/src/interface/mcp/tools/system/coordination/index.ts` (CREATE)
+- `apps/mcp-server/src/interface/mcp/tools/system/ops-debug/index.ts` (CREATE)
+- `apps/mcp-server/src/interface/mcp/tools/system/observability/index.ts` (CREATE)
+- `apps/mcp-server/src/interface/mcp/tools/system/vps/index.ts` (CREATE)
+- `apps/mcp-server/src/interface/mcp/tools/index.ts` (MODIFY — re-point system import)
+
+**Background (from P0-MCP-1 §2 SEAM-1):** The `system/` barrel contains 21 tool files spanning 5 logically distinct sub-domains:
+- `memory/` — `agentMemoryTools.ts`, `agentMemoryUpdateTools.ts`, `agentWorkLogTools.ts`
+- `coordination/` — `coordinationTools.ts`, `askQueueTools.ts`
+- `ops-debug/` — `bctcDebugTriggerTool.ts`, `foreignFlowDebugTriggerTool.ts`, `newsDebugTriggerTool.ts`, `priceDebugTriggerTool.ts`, `sbvDebugTriggerTool.ts`
+- `observability/` — `slaStatusTools.ts`, `signalDiagnosticsTools.ts`, `cronHealthTools.ts`, plus any system-monitoring files
+- `vps/` — `vpsHealthTools.ts`, `vpsProxyTools.ts`, `vpsServiceRestartTool.ts`
+
+The root `system/index.ts` becomes a thin re-exporter of 5 sub-barrel `index.ts` files. The tool files themselves do NOT move — only `index.ts` files are created/modified.
 
 **What to do:**
-1. Create `src/domain/services/_barrels/alerts.ts` — re-export ONLY the alert service files (`alertCooldown`, `alertDedup`, `alertGenerator`, `alertGrouper`, `alertMuteChecker`, `alertPolicyChecker`, and the selective exports for `alertOutcomeScorer` and `alertBatchGrouper`).
-2. Create `src/domain/services/_barrels/financial-reports.ts` — re-export ONLY the financial-reports sub-folder files.
-3. Update `src/domain/services/index.ts` to import from `_barrels/alerts.js` and `_barrels/financial-reports.js` instead of listing each file.
-4. Run `bun tsc --noEmit` — must pass.
-5. Run `bun test` — must pass.
-6. Run full-tool-suite smoke test: start the server (`bun run src/index.ts`) and verify `GET /health` returns 200. Do NOT run `bun run start` in the container (this is a dev verification).
+1. Create `mcp-server-pre-barrel-wave1` git tag.
+2. Read the full list of files in `src/interface/mcp/tools/system/` to confirm the exact 21 files before any edit.
+3. Create 5 sub-barrel `index.ts` files, each re-exporting only the tool files belonging to that cluster. File format: same as existing barrel index (re-export all named exports, no logic).
+4. Update root `system/index.ts` to import from the 5 sub-barrel index files instead of listing all 21 tool files directly.
+5. Verify that the root `tools/index.ts` still imports from `./system/index.js` (no path change needed at the root level).
+6. Run all regression tripwires.
 
-**ACs:**
-- AC-1: `src/domain/services/_barrels/alerts.ts` created.
-- AC-2: `src/domain/services/_barrels/financial-reports.ts` created.
-- AC-3: `src/domain/services/index.ts` updated. Line count reduced by ≥25 lines.
-- AC-4: `bun tsc --noEmit` exits 0.
-- AC-5: `bun test` passes (all existing tests).
-- AC-6: `bun run src/index.ts` starts without import errors. Log line `[bootstrap] Database ready` appears.
-- AC-7: Tool count probe: `grep -r "server.tool\|server.addTool" src/interface/mcp/tools/ | wc -l` — count matches pre-task count (no tool silenced).
-- AC-8: `git diff --cached` before commit shows ONLY `src/domain/services/index.ts` + 2 new barrel files. No scheduler files, no tool handlers, no infra files.
+**AC-1:** `mcp-server-pre-barrel-wave1` git tag created before any file edit. Tag SHA recorded in handoff.
 
-**G12 gate (streak #2):** Task DONE only after AC-4 through AC-8 all pass. Evidence pasted into handoff before RETURN.
+**AC-2:** All 5 sub-barrel `index.ts` files created under `system/memory/`, `system/coordination/`, `system/ops-debug/`, `system/observability/`, `system/vps/`. Each file contains ONLY re-exports (no logic, no new imports from infrastructure).
+
+**AC-3:** Root `system/index.ts` updated. Line count reduced (previously listing 21 individual files → now 5 import lines).
+
+**AC-4:** `bun run check` (tsc --noEmit) exits 0.
+
+**AC-5:** `bun test` pass ≥9408, fail ≤348.
+
+**AC-6:** Server startup check: `bun run src/index.ts` starts without import errors. `curl -s http://localhost:3000/health` returns `{"ok":true}`.
+
+**AC-7 (tool count probe):** `grep -rc "server.tool\|addTool" apps/mcp-server/src/interface/mcp/tools/ | awk -F: '{sum+=$2} END {print sum}'` — count ≥146 (no tool silenced by the split).
+
+**AC-8:** Scheduler count probe: `grep -c "cron.schedule" apps/mcp-server/src/scheduler/startScheduler.ts` = 68.
+
+**AC-9:** Dashboard routes intact: `curl http://localhost:3000/api/bctc-inspect | head -5` returns HTML. `curl http://localhost:3000/dashboards/news-fetch/ | head -5` returns HTML. No 500.
+
+**AC-10:** `git diff --cached --name-only` before commit shows ONLY `system/index.ts` + 5 new sub-barrel index files + root `tools/index.ts` if changed. No scheduler files, no domain files, no infra files.
+
+**G12 gate (streak #2 — binding):** Task DONE only after AC-4 through AC-9 all pass with evidence pasted into handoff. Pre-revert tag SHA recorded. Both gates (bun test + tool-suite) confirmed before RETURN.
 
 ---
 
-### P1-D — Barrel Wave 2: Market-Analysis + Sector Sub-Barrels
+### P1-D — Barrel Wave 2: `macro/` (14 files → HTTP-proxy vs local-computation)
 
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/src/domain/services/`  
-**Deps:** P1-C  
+**Goals advanced:** G2, G12 (streak #3)
+**Blocks:** P1-E
+**Blocked by:** P1-C
+**Estimated:** 5h
 **Pre-revert tag:** `mcp-server-pre-barrel-wave2`
+**Zone files touched:**
+- `apps/mcp-server/src/interface/mcp/tools/macro/index.ts` (MODIFY)
+- `apps/mcp-server/src/interface/mcp/tools/macro/http-proxy/index.ts` (CREATE)
+- `apps/mcp-server/src/interface/mcp/tools/macro/local-computation/index.ts` (CREATE)
+
+**Background (from P0-MCP-1 §2 SEAM-2):** The `macro/` barrel (14 files) has a natural split between:
+- **HTTP-proxy tools** (delegate to `macro-indicators:5004` via `clients.ts`): `macroTools.ts`, `carryTools.ts`, `dinhGiaTools.ts`, `policyTools.ts`, `calibrationTools.ts`, `rateLimitTools.ts`, and any tools that call `getMacroSnapshot()` or `getMacroExternal()` from `clients.ts`.
+- **Local-computation tools** (legitimately owned by mcp-server, NOT G5 targets): `investmentClockTools.ts`, `imfSignals.ts` (IMF fetch via `imfDataFetcher.ts`), `getFedLiquiditySpreadTool.ts`, `getIsmSubcomponentsTool.ts`, `evidenceTools.ts`, `predictionTools.ts`, and any tools that call local domain services in `domain/services/macro/`.
+
+The split is NOT a DDD violation — local-computation tools are legitimately mcp-server-owned domain logic. The sub-barrel split makes the routing boundary explicit and reviewable.
+
+**Routing helpers:** `macroSnapshotGuard.ts` belongs in `http-proxy/` (guards stale HTTP responses). Verify zero-IO before assigning.
 
 **What to do:**
-1. Create `src/domain/services/_barrels/market-analysis.ts` — re-export signal detection, cascade, chain, intraday, order book, price alerts, conviction, decision note, signal class weighter, volatility (selective, PricePoint collision), performance attribution (selective).
-2. Create `src/domain/services/_barrels/sector.ts` — re-export correlation, sectorPeers, sectorRotation, sectorValuation.
-3. Update `src/domain/services/index.ts` to import from `_barrels/market-analysis.js` and `_barrels/sector.js`.
+1. Create `mcp-server-pre-barrel-wave2` git tag.
+2. Read all 14 tool files in `src/interface/mcp/tools/macro/` to confirm the HTTP-proxy vs local-computation classification for each.
+3. Create `macro/http-proxy/index.ts` re-exporting HTTP-proxy tool files.
+4. Create `macro/local-computation/index.ts` re-exporting local-computation tool files.
+5. Update `macro/index.ts` to import from both sub-barrels.
+6. Run all regression tripwires (same as P1-C AC-4 through AC-9 pattern).
 
-**ACs:**
-- AC-1 through AC-7: Same pattern as P1-C (tsc, bun test, server start, tool count probe, git diff).
-- AC-8: `src/domain/services/index.ts` line count now ≤ 90 lines.
+**AC-1:** `mcp-server-pre-barrel-wave2` git tag created before any file edit.
 
-**G12 gate (streak #3):** Task DONE only after all ACs pass. Streak complete. G12 evidence: three handoffs (P1-B + P1-C + P1-D) each show dashboard/test-green before DONE.
+**AC-2:** `macro/http-proxy/index.ts` created. All tools in this sub-barrel verified to call HTTP clients (import from `infrastructure/microservices/clients.ts` or `infrastructure/fetchers/`). Zero direct domain service calls.
+
+**AC-3:** `macro/local-computation/index.ts` created. All tools in this sub-barrel confirmed as legitimate local computation (call `domain/services/macro/` functions). Added `// LOCAL-COMPUTATION: legitimately mcp-server-owned — not a G5 violation` comment at top of file.
+
+**AC-4:** Root `macro/index.ts` updated. Re-exports both sub-barrels.
+
+**AC-5:** `bun run check` exits 0.
+
+**AC-6:** `bun test` pass ≥9408, fail ≤348.
+
+**AC-7:** Server start + health 200 confirmed.
+
+**AC-8:** Tool count probe ≥146. Scheduler count 68. Dashboard routes HTTP 200.
+
+**AC-9:** `macroIndicatorRefreshJob.ts` scheduler coupling verified: grep confirms it imports from `infrastructure/microservices/clients.ts` (HTTP path), NOT from `domain/services/macro/macroIndicatorFetcher.ts` directly. Result documented in handoff.
+
+**AC-10:** `git diff --cached --name-only` shows ONLY `macro/index.ts` + 2 new sub-barrel files.
+
+**G12 gate (streak #3 — STREAK COMPLETE — binding):** Task DONE only after AC-5 through AC-8 evidence pasted in handoff. Streak complete: 3 consecutive tasks (P1-B + P1-C + P1-D) each showing dashboard/test-green before DONE. G12 streak completion evidence: 3 handoff links referenced in P1-QA.
 
 ---
 
-### P1-E — Barrel Wave 3: Macro + News/Sentiment + Portfolio Sub-Barrels
+### P1-E — Barrel Wave 3: `sector/` (15 files → 3 cluster cuts)
 
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/src/domain/services/`  
-**Deps:** P1-D  
+**Goals advanced:** G2
+**Blocks:** P1-F
+**Blocked by:** P1-D
+**Estimated:** 4h
 **Pre-revert tag:** `mcp-server-pre-barrel-wave3`
+**Zone files touched:**
+- `apps/mcp-server/src/interface/mcp/tools/sector/index.ts` (MODIFY)
+- `apps/mcp-server/src/interface/mcp/tools/sector/domestic/index.ts` (CREATE)
+- `apps/mcp-server/src/interface/mcp/tools/sector/market/index.ts` (CREATE)
+- `apps/mcp-server/src/interface/mcp/tools/sector/cross-cutting/index.ts` (CREATE)
+
+**Background (from P0-MCP-1 §2 SEAM-3):** The `sector/` barrel (15 files) splits into 3 topic clusters:
+- **`domestic/`** — `pharmaEventTools.ts`, `legalRiskTools.ts`, `leadershipSignalTools.ts`, `publicInvestmentTools.ts` (Vietnam-domestic sector topics)
+- **`market/`** — `sectorRotationTools.ts`, `sectorComparisonTools.ts`, `correlationTools.ts` (market-structure topics)
+- **`cross-cutting/`** — `creditFlowTools.ts`, `crisisPatternTools.ts`, `supplyChainTools.ts`, `climateImpactTools.ts`, `energyMarketTools.ts`, `brokerCredibilityTools.ts`, `bondMaturityTools.ts`, `severityLabels.ts` (thematic cross-cutting topics)
+
+`severityLabels.ts` is a pure data-in→label-out helper with zero I/O. It is a G1 primitive candidate (Phase 2); for Phase 1, place in `cross-cutting/` and add `// G1-PRIMITIVE-CANDIDATE: pure data mapping` comment.
 
 **What to do:**
-1. Create `src/domain/services/_barrels/macro.ts` — re-export `macroIndicatorScorer`, `macroOutlierGuard`, `macroThresholds`, `predictionCascadeMapper`, `predictionSignalDetector`, `forecastConfidenceScore`, `baseRateComputer`.
-2. Create `src/domain/services/_barrels/news-sentiment.ts` — re-export `newsNormalizer`, `sentimentClassifier`, `sentimentTrend`, `recencyWeighter`, `vnRelevanceFilter`, `embeddingTextBuilder`.
-3. Create `src/domain/services/_barrels/portfolio.ts` — re-export `portfolioPnlCalculator`, `portfolioRiskCalculator`, `rebalancingCalculator`, `stopLossComputer`.
-4. Update `src/domain/services/index.ts`.
+1. Create `mcp-server-pre-barrel-wave3` git tag.
+2. Read all 15 files in `src/interface/mcp/tools/sector/` to confirm cluster classification.
+3. Create 3 sub-barrel `index.ts` files.
+4. Update root `sector/index.ts` to import from 3 sub-barrels.
+5. Run all regression tripwires (same pattern as P1-C/D).
 
-**ACs:** Same QA pattern as P1-C/D. Target: `index.ts` ≤ 60 lines after this wave.
+**AC-1 through AC-9:** Same QA pattern as P1-C (pre-revert tag, 3 sub-barrel files, root index update, tsc EXIT:0, bun test pass/fail bounds, server start + health, tool count ≥146, scheduler count 68, dashboard routes HTTP 200, git diff clean staging).
+
+**AC-10 (severity-labels annotation):** `src/interface/mcp/tools/sector/cross-cutting/index.ts` re-exports `severityLabels.ts` with `// G1-PRIMITIVE-CANDIDATE: pure data mapping — no I/O, zero infra imports` comment in the file header.
+
+**Note:** G12 streak is already complete after P1-D. P1-E still requires both regression tripwire gates to pass before DONE, but is not a streak task.
 
 ---
 
-### P1-F — Barrel Wave 4: Thematic + Utility + VPS Sub-Barrels
+### P1-F — G5-Inverse Remediation: kinhDichWrapper Bypass + QUE_META Import
 
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/src/domain/services/`  
-**Deps:** P1-E
+**Goals advanced:** G5 (old code routed via HTTP)
+**Blocks:** P1-G
+**Blocked by:** P1-E
+**Estimated:** 4h
+**Pre-revert tag:** `mcp-server-pre-g5-remediation`
+**Risk class:** R-CRITICAL (from P0-MCP-1 §9 and P0-MCP-2 BUG-5)
+
+**Background:** Three R-CRITICAL G5-inverse violations identified by P0-MCP-1:
+
+1. **`marketTools.ts` imports `appendKinhDich()` from `domain/services/kinhDich/kinhDichWrapper.ts`** — bypasses `kinh-dich-service:5005` HTTP path. The correct call is `clients.ts getKinhDichReading()` (already used by `kinhDichTools.ts`).
+
+2. **`news-analysis/analysis.ts` imports `appendKinhDich()` from `domain/services/kinhDich/kinhDichWrapper.ts`** — same bypass, same fix.
+
+3. **`portfolioTools.ts` imports `QUE_META` from `domain/services/kinhDich/hexagramLibrary.ts`** — `QUE_META` is a static hexagram metadata constant. Ruling: move `QUE_META` to a reference file or re-export from `kinhDichTools.ts` barrel; do NOT import directly from the domain kinhDich module.
+
+**Remediation mandate:** Every handler that previously imported from `domain/services/kinhDich/` must either:
+- Route via `infrastructure/microservices/clients.ts` (for runtime calls), OR
+- Import from a sanctioned reference export (for static data), OR
+- Have a `// GLUE: intentional — reviewed P0-MCP-1 G5-inverse, kept because <reason>` comment (for integration glue that cannot be HTTP-routed)
+
+**Zone files touched:**
+- `apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts` (MODIFY — replace `appendKinhDich()` import with HTTP client call)
+- `apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts` (MODIFY — same)
+- `apps/mcp-server/src/interface/mcp/tools/portfolio/portfolioTools.ts` (MODIFY — replace `QUE_META` import)
+- `apps/mcp-server/src/domain/services/kinhDich/kinhDichWrapper.ts` (MODIFY — add `// DEPRECATED: direct callers must use kinh-dich-service:5005 via clients.ts — see P1-F`)
 
 **What to do:**
-1. Create `src/domain/services/_barrels/thematic.ts` — re-export `bondMaturityTracker`, `catalystCalendar`, `customAlertEvaluator`, `earningsCalendar`, `reputationScorer`, `sourceHealthTracker`, `stockAliases`, `stockSearch`, `tradeRelationships`, plus all selective thematic exports (climateImpactMapper, creditFlowAnalyzer, crisisPatternDetector, energyMarketAnalyzer, foreignFlowAnalyzer, leadershipSignal, legalRiskDetector, pharmaEventMapper, policyImpactMapper, supplyChainAnalyzer, supplyChainEventDetector).
-2. Create `src/domain/services/_barrels/utils.ts` — re-export `rateLimiter`, `sparkline`, `timeConstants`, `tradingWindow`, `vnNumberParser`, `priceBackfillService`.
-3. Create `src/domain/services/_barrels/vps-sla.ts` — re-export `vpsHealthPoller`, `freshnessSlaChecker` selective.
-4. Update `src/domain/services/index.ts`. The macro sub-module (`kinhDich/index.js`, `kinhDich/kinhDichWrapper.js`, `macro/index.js`) remains as-is (ruling deferred to P1-H/J).
+1. Create `mcp-server-pre-g5-remediation` git tag.
+2. Read `marketTools.ts` and `analysis.ts` to identify the exact call sites for `appendKinhDich()`. Determine whether the call is pre/post HTTP response (i.e., does it augment the response after the main tool logic, or is it the main logic).
+3. Replace `appendKinhDich()` calls with the equivalent call to `clients.ts getKinhDichReading()`. The function signature from `clients.ts` should provide the same data that `appendKinhDich()` injected locally. If the HTTP call is async and the current code is sync, adapt the call sites accordingly.
+4. For `QUE_META` in `portfolioTools.ts`: determine if it is used for display labels only. If so, inline the needed subset as a local constant (pure static data, no domain module import needed) or re-export from a dedicated reference file.
+5. Add `// DEPRECATED` comment to `kinhDichWrapper.ts`.
+6. Run all regression tripwires.
 
-**Target:** `domain/services/index.ts` ≤ 30 lines (just sub-barrel re-exports + KD/macro sub-module re-exports + comment header).
+**AC-1:** `mcp-server-pre-g5-remediation` tag created before any file edit.
 
-**ACs:** Same QA pattern. Add: run `grep -c "cron.schedule" src/scheduler/startScheduler.ts` — count must match pre-task count (68). Scheduler imports must not be affected.
+**AC-2:** `marketTools.ts` — `appendKinhDich` import from `domain/services/kinhDich/kinhDichWrapper.ts` REMOVED. Replaced with HTTP client call via `clients.ts`. `grep "from.*kinhDichWrapper" apps/mcp-server/src/interface/mcp/tools/market-data/marketTools.ts` returns 0.
+
+**AC-3:** `news-analysis/analysis.ts` — same. `grep "from.*kinhDichWrapper" apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts` returns 0.
+
+**AC-4:** `portfolioTools.ts` — `QUE_META` import from `hexagramLibrary.ts` REMOVED. `grep "from.*hexagramLibrary" apps/mcp-server/src/interface/mcp/tools/portfolio/portfolioTools.ts` returns 0.
+
+**AC-5 (every-handler-proven-HTTP-routed evidence):** Run: `grep -r "from.*domain/services/kinhDich" apps/mcp-server/src/interface/mcp/tools/ --include="*.ts"` — must return 0 results or ONLY lines with `// GLUE:` comment annotations. This is the "every handler proven HTTP-routed" evidence gate. Paste output in handoff.
+
+**AC-6:** `kinhDichWrapper.ts` has `// DEPRECATED` comment at top of file (NOT deleted — deletion is Phase 2 G5 task).
+
+**AC-7:** `bun run check` exits 0.
+
+**AC-8:** `bun test` pass ≥9408, fail ≤348.
+
+**AC-9:** Server start + health 200. Tool count ≥146. Scheduler 68. Dashboard routes HTTP 200.
+
+**AC-10:** Verify `kinhDichTools.ts` (the `kinhdich/` barrel) still routes via `clients.ts` — confirm not broken by P1-F changes. `grep "from.*infrastructure/microservices/clients" apps/mcp-server/src/interface/mcp/tools/kinhdich/kinhDichTools.ts` must return ≥1 result.
+
+**AC-11:** `git diff --cached --name-only` shows ONLY the 4 modified files + pre-G5 tag creation. No domain files deleted. No scheduler files touched.
 
 ---
 
-### P1-G — G5-Inverse Routing Audit
+### P1-G — G5-Inverse Remediation: pdf.ts / pdfOcrWorker.ts Post-1954c Verify
 
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/src/interface/mcp/tools/` (read-only audit)  
-**Deps:** P1-C (barrel wave 1 done, imports stabilized)
+**Goals advanced:** G5
+**Blocks:** P1-H
+**Blocked by:** P1-F
+**Estimated:** 2h
+**Risk class:** R-MEDIUM (from P0-MCP-1 §9)
+
+**Background:** Per P0-MCP-1 §4, the 1954c consolidation brief rewired 4 BCTC callers to route via `pdf-extractor:5001`. However, `infrastructure/fetchers/pdf.ts` and `pdfOcrWorker.ts` themselves were NOT moved to `_deprecated/` as of the P0-MCP-1 scan. This task verifies the post-1954c state and closes the R-MEDIUM flag.
+
+**Zone files audited/touched:**
+- `apps/mcp-server/src/infrastructure/fetchers/pdf.ts` (AUDIT + possibly MODIFY)
+- `apps/mcp-server/src/infrastructure/fetchers/pdfOcrWorker.ts` (AUDIT + possibly MODIFY)
+- `apps/mcp-server/src/infrastructure/_deprecated/` (POSSIBLY MOVE to)
 
 **What to do:**
-Systematically audit all 101 tool handler files. For each file that imports from `../../../../domain/services/`:
-- Classify the import as: ROUTE (should go via HTTP service), KEEP (legitimate local domain logic), GLUE (integration helper that wraps service call), or DEAD (migrated to microservice, can delete).
-- Produce a routing map document.
+1. `grep -rn "from.*fetchers/pdf" apps/mcp-server/src/ --include="*.ts"` — find all callers of `pdf.ts`.
+2. `grep -rn "from.*pdfOcrWorker" apps/mcp-server/src/ --include="*.ts"` — find all callers of `pdfOcrWorker.ts`.
+3. If zero live callers exist: move both files to `infrastructure/_deprecated/` with `// DEPRECATED: 1954c — callers now route via pdfExtractorClient.ts` comment. Update any barrel that re-exported them.
+4. If live callers still exist: document each caller, classify as ROUTE (should use HTTP client) or KEEP (legitimate local fallback). Flag any ROUTE callers as Phase 2 G5 targets.
+5. Run regression tripwires regardless of action taken.
 
-**Output:**
-- `docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-tool-routing-map.md` — table of all 101 handlers, import classification, recommended action.
+**AC-1:** `grep` commands above run and output pasted in handoff. Zero ambiguity about caller state.
 
-This is a READ-ONLY audit. No file changes in this task. The routing map is the Phase 2 input for G5-inverse deletions.
+**AC-2 (if zero callers — expected post-1954c):** `pdf.ts` and `pdfOcrWorker.ts` moved to `infrastructure/_deprecated/`. `// DEPRECATED: 1954c — all BCTC callers now route via pdfExtractorClient.ts` comment added to both files. Files exist in `_deprecated/` directory.
 
-**Key items to audit:**
-- `market-data/marketTools.ts` — imports `kinhDichWrapper.appendKinhDich` (line 26). GLUE or ROUTE?
-- `news-analysis/analysis.ts` — imports `kinhDichWrapper.appendKinhDich` (line 22). GLUE or ROUTE?
-- `portfolio/portfolioTools.ts` — imports `QUE_META` from `hexagramLibrary.ts`. KEEP (static data) or move to reference file?
-- `macro/macroTools.ts` — verify HTTP-routed (confirmed); document as ROUTE.
-- All `sector/` tool handlers — many import directly from domain services (thematic functions). Audit each.
+**AC-2 (if live callers found):** Each caller documented with classification (ROUTE/KEEP). Phase 2 G5 tasks registered for any ROUTE callers. `pdf.ts` and `pdfOcrWorker.ts` remain in place with `// G5-DEBT: live caller found — deprecation deferred to Phase 2` comment.
 
-**ACs:**
-- AC-1: `mcp-server-tool-routing-map.md` created and committed.
-- AC-2: All 101 tool handler files appear in the map.
-- AC-3: Each handler classified as ROUTE / KEEP / GLUE / DEAD.
-- AC-4: Summary counts: how many DEAD (candidates for Phase 2 G5 delete), how many GLUE (need routing decision).
-- AC-5: No file edits — this is analysis only.
+**AC-3 (every-handler-proven evidence):** `grep -r "from.*fetchers/pdf" apps/mcp-server/src/interface/ --include="*.ts"` returns 0 (no tool handler directly imports the OCR path). Paste output.
+
+**AC-4:** `bun run check` exits 0. `bun test` pass ≥9408, fail ≤348. Tool count ≥146. Scheduler 68.
+
+**AC-5:** `bctcPdfPullJob.ts` verified: `grep "from.*pdfExtractorClient" apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts` returns ≥1 result (confirms 1954c routing is in place for the scheduler job).
+
+**AC-6:** `git diff --cached --name-only` shows ONLY the deprecated files (if moved) or annotated files (if kept). No scheduler files modified.
 
 ---
 
-### P1-H — KinhDich Domain Residual Ruling
+### P1-H — G1 Primitive Scaffolding: signal-bus-helper + sector-classifier
 
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/src/` (analysis + minimal change)  
-**Deps:** P1-G
+**Goals advanced:** G1 (primitives ship with scenarios), G7 (edit-JSON-rerun)
+**Blocks:** P1-QA
+**Blocked by:** P1-E (barrel waves complete — clean seams available as extraction targets)
+**Estimated:** 3h
 
-**What to do:**
-Based on P1-G routing map, make the architectural ruling for the two `kinhDichWrapper` callers:
-- `market-data/marketTools.ts` — appends kinh-dich reading to market scan output. Does this routing make sense via the kinh-dich-service HTTP endpoint, or is it appropriate integration glue?
-- `news-analysis/analysis.ts` — same pattern.
+**Background:** Phase 1 delivers 2 primitive scaffolds as secondary work relative to barrel decomposition (per charter). These are scenario-JSON-testable, pure-function, zero-I/O extractions from the now-stable barrel structure. Phase 2 promotes them to `packages/primitives/`.
 
-If the ruling is ROUTE: update callers to use `clients.ts getKinhDichReading()` instead of the local wrapper.  
-If the ruling is KEEP GLUE: document the decision and add a `// GLUE: intentional — not a G5 violation` comment.
+**Target 1 — `signal-bus-helper`**
+- Source: `apps/mcp-server/src/domain/signals/signalBuilders.ts`
+- Type: Pure signal-envelope construction (input: raw signal data → output: normalized `SignalEnvelope`)
+- Zero infra imports (verified P0-MCP-1 §3)
+- Files to create:
+  - `apps/mcp-server/src/sandbox/scenarios/signal-bus-golden-valid.json`
+  - `apps/mcp-server/src/sandbox/scenarios/signal-bus-golden-minimal.json`
+  - `apps/mcp-server/src/sandbox/scenarios/signal-bus-failure-missing-required.json`
 
-**ACs:**
-- AC-1: Ruling documented (either as code comment or in routing map).
-- AC-2: If ROUTE: callers updated, `kinhDichWrapper.ts` marked as `// DEPRECATED — use kinh-dich-service HTTP endpoint`.
-- AC-3: `bun tsc --noEmit` passes.
-- AC-4: `bun test` passes.
+**Target 2 — `sector-classifier`**
+- Source: `apps/mcp-server/src/domain/services/sectorPeers.ts`
+- Type: Maps stock code → sector peer group (pure lookup, static data)
+- Zero infra imports (verified P0-MCP-1 §3)
+- Files to create:
+  - `apps/mcp-server/src/sandbox/scenarios/sector-classifier-golden-known-ticker.json`
+  - `apps/mcp-server/src/sandbox/scenarios/sector-classifier-golden-unknown-ticker.json`
+  - `apps/mcp-server/src/sandbox/scenarios/sector-classifier-failure-null-input.json`
 
----
+**AC-1:** 3 scenario JSON files created for `signal-bus-helper`. All 3 pass through sandbox runner: `bun run src/sandbox/runner.ts --scenario=<file>`. Happy/edge exit 0 with correct trace; failure exits non-zero with expected output.
 
-### P1-J — Macro Domain Sub-Module Audit
+**AC-2:** 3 scenario JSON files created for `sector-classifier`. Same verification.
 
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/src/domain/services/macro/` (read-heavy, possible minor changes)  
-**Deps:** P1-G
+**AC-3 (G7 edit-JSON-rerun):** Dev edits `signal-bus-golden-valid.json` expected output (change one field value), reruns sandbox runner, observes trace changes (output no longer matches expected → exit non-zero). Reverts expected value, reruns → exit 0. Evidence pasted in handoff.
 
-**What to do:**
-Audit `domain/services/macro/` (10 files: `carryTradeSignal`, `computeFedLiquiditySpread`, `investmentClock`, `ismRegimeSignal`, `macroCalendar`, `macroIndicatorFetcher`, `marketEarningYield`, `pyramidTier`, `yieldSpreadSignal`, plus `index.ts`).
+**AC-4 (zero-creds audit):** Sandbox runner with these scenarios: `env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD"` returns empty. Zero infra imports in scenario dispatch path for these two primitives.
 
-Key question: does `macroIndicatorFetcher.ts` still fetch external APIs directly, or does it delegate to the macro-indicators microservice? If it fetches directly: is it called by `macroIndicatorRefreshJob.ts` in the scheduler? If so, this is a G5-inverse violation — the scheduler bypasses the microservice.
+**AC-5:** `grep -r "from.*infrastructure" apps/mcp-server/src/domain/signals/signalBuilders.ts` returns 0.
+`grep -r "from.*infrastructure" apps/mcp-server/src/domain/services/sectorPeers.ts` returns 0.
+(Confirms these ARE pure-function primitive candidates for Phase 2.)
 
-Verify:
-1. `grep -n "from.*domain/services/macro" apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts`
-2. `grep -n "from.*infrastructure/microservices/clients" apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts`
+**AC-6:** `bun test` pass ≥9408, fail ≤348. `bun run check` exits 0.
 
-Expected: macro scheduler jobs use `clients.ts getMacroSnapshot/getMacroExternal`. Confirm or flag.
+**AC-7:** Tool count ≥146. Scheduler 68. Dashboard routes HTTP 200.
 
-**ACs:**
-- AC-1: Audit result documented in routing map (append to `mcp-server-tool-routing-map.md`).
-- AC-2: If direct-fetch bypass found: flag as HIGH-priority Phase 2 G5-inverse task.
-- AC-3: If already HTTP-routed: confirm and document.
-- AC-4: No file changes required if routed correctly.
-
----
-
-### P1-K — DDD Layer Migration: Infrastructure Utilities Out of Domain
-
-**Owner:** dev-mcp-server  
-**Zone:** `apps/mcp-server/src/domain/services/` → `src/infrastructure/`  
-**Deps:** P1-F, P1-J (barrel waves complete, macro audit done)
-
-**What to do:**
-Move three misplaced files from `domain/services/` to `infrastructure/`:
-- `domain/services/rateLimiter.ts` → `infrastructure/rateLimiter.ts`
-- `domain/services/resilientFetcher.ts` → `infrastructure/resilientFetcher.ts`
-- `domain/services/vpsHealthPoller.ts` → `infrastructure/vpsHealthPoller.ts`
-
-Update all import paths that reference these files. Since these are re-exported from the domain barrel, the barrel must be updated too.
-
-**ACs:**
-- AC-1: Files moved (not copied). Original paths do not exist.
-- AC-2: Domain barrel `index.ts` updated — no longer exports these three.
-- AC-3: All callers updated to import from `infrastructure/`.
-- AC-4: `bun tsc --noEmit` passes.
-- AC-5: `bun test` passes.
-- AC-6: Scheduler import count probe: `grep -c "cron.schedule" src/scheduler/startScheduler.ts` = 68 (unchanged).
+**AC-8:** `git diff --cached --name-only` shows ONLY new scenario JSON files. No domain service files modified. No infra files touched.
 
 ---
 
-## QA Gate — Per-Wave Full-Tool-Suite Verification
+### P1-QA — Phase 1 Close-Gate Verification
 
-After each barrel wave (P1-C, P1-D, P1-E, P1-F), QA (or dev-mcp-server acting as QA) must run:
+**Owner:** qa
+**Blocks:** P1-EXIT
+**Blocked by:** P1-H
+**Files touched:** None (read-only verification; `docs/data/pilot-status-mcp-server.json` update is PO-only at P1-EXIT)
 
-```bash
-# Gate 1: TypeScript check
-bun tsc --noEmit
+**AC-1:** `bun run check` exits 0. Evidence: tsc output pasted.
 
-# Gate 2: Full test suite
-bun test
+**AC-2:** `bun test` pass ≥9408, fail ≤348. Evidence: full test summary pasted.
 
-# Gate 3: Server startup check
-bun run src/index.ts &
-sleep 5
-curl -s http://localhost:3000/health
-kill %1
+**AC-3:** Tool count: `grep -rn "server\.tool(" apps/mcp-server/src --include="*.ts" | grep -v "//" | wc -l` = 146 (or higher — no regression). Evidence pasted.
 
-# Gate 4: Tool count probe (no tool silenced)
-grep -rc "server.tool\|addTool" apps/mcp-server/src/interface/mcp/tools/ | awk -F: '{sum+=$2} END {print sum}'
-# Count must match pre-wave baseline
+**AC-4:** Scheduler: `grep -c "cron.schedule" apps/mcp-server/src/scheduler/startScheduler.ts` = 68. Evidence pasted.
 
-# Gate 5: Scheduler count probe
-grep -c "cron.schedule" apps/mcp-server/src/scheduler/startScheduler.ts
-# Must be 68
+**AC-5:** G12 streak confirmed: QA reads handoffs for P1-B, P1-C, P1-D. Each handoff has bun test green evidence + tool-suite probe evidence pasted before RETURN. No evidence = streak broken, task reopened.
+
+**AC-6:** G5-inverse evidence: `grep -r "from.*domain/services/kinhDich" apps/mcp-server/src/interface/mcp/tools/ --include="*.ts"` returns 0 (or only GLUE-annotated lines). Paste output.
+
+**AC-7:** Three-tier dashboard: `dashboard/index.html` opens via file://, three panels visible, Primitives panel shows ≥6 scenario cards (3 sparkline + 3 signal-bus or sector-classifier from P1-H), at least 1 red and 1 green card. Screenshot attached to handoff.
+
+**AC-8:** Barrel decomposition verified: root `tools/index.ts` imports `system/index.ts`, `macro/index.ts`, `sector/index.ts`. Each has sub-barrel structure. `grep -c "^import" apps/mcp-server/src/interface/mcp/tools/system/index.ts` returns ≤6 (5 sub-barrels + possible 1 direct re-export).
+
+**AC-9:** No new domain→infra imports introduced: `grep -r "from.*infrastructure" apps/mcp-server/src/domain/ --include="*.ts"` returns 0 matches. Evidence pasted.
+
+---
+
+### P1-EXIT — PO: SSOT Reconciliation + Pilot-Status Phase 1 Close
+
+**Owner:** PO (NOT dev-mcp-server — PO-owned per anti-scope-creep clause)
+**Blocked by:** P1-QA
+
+This task is a PO action item, not a dev task. It is documented here as a dependency in the chain for visibility.
+
+PO actions at P1-EXIT:
+1. Update `docs/data/pilot-status-mcp-server.json` phase1 fields (PO-only flip).
+2. Reconcile stale SSOT baselines (see §Carried-Debt / SSOT Reconciliation Note below).
+3. Emit sequencing signal for Phase 2 dispatch.
+
+---
+
+## G5-Inverse Remediation Track — Explicit Evidence Requirements
+
+For complete traceability, this section summarizes all three G5-inverse targets, their current violation state, and the "every handler proven HTTP-routed" evidence gate that closes each.
+
+| Target | Violation | Remediation task | Evidence gate |
+|--------|-----------|-----------------|---------------|
+| `kinhDichWrapper.appendKinhDich()` bypass in `marketTools.ts` | R-CRITICAL: imports local TS domain service, bypasses kinh-dich-service:5005 | P1-F AC-2 | `grep "from.*kinhDichWrapper" .../marketTools.ts` = 0 |
+| `kinhDichWrapper.appendKinhDich()` bypass in `analysis.ts` | R-CRITICAL: same | P1-F AC-3 | `grep "from.*kinhDichWrapper" .../analysis.ts` = 0 |
+| `QUE_META` import from `hexagramLibrary.ts` in `portfolioTools.ts` | R-CRITICAL: imports from kinh-dich domain module | P1-F AC-4 | `grep "from.*hexagramLibrary" .../portfolioTools.ts` = 0 |
+| Full tool-layer kinh-dich bypass scan | Verify no other tool files bypass kinhDich service | P1-F AC-5 | `grep -r "from.*domain/services/kinhDich" .../tools/` = 0 or GLUE-annotated |
+| `pdf.ts` / `pdfOcrWorker.ts` not in `_deprecated/` post-1954c | R-MEDIUM: in-process OCR fallback path may still be live | P1-G AC-2 | Files in `_deprecated/` OR documented as KEEP with `// G5-DEBT` annotation |
+| BCTC callers route via pdfExtractorClient | Post-1954c verification | P1-G AC-5 | `grep "from.*pdfExtractorClient" bctcPdfPullJob.ts` ≥1 |
+
+---
+
+## G1 Primitive Candidates — Scenario-JSON-Testable, Pure
+
+Per charter, primitive extraction is SECONDARY to barrel decomposition for mcp-server. The following candidates are addressed in Phase 1 (scaffolded in P1-H) and promoted in Phase 2.
+
+| Candidate | Source file | Pure? | Scaffolded in | Phase 2 promotion |
+|-----------|-------------|-------|---------------|-------------------|
+| `signal-bus-helper` | `domain/signals/signalBuilders.ts` | YES — zero infra imports confirmed | P1-H | P2-B1 |
+| `sector-classifier` | `domain/services/sectorPeers.ts` | YES — pure lookup table | P1-H | P2-B2 |
+| `severity-label-mapper` | `interface/mcp/tools/sector/severityLabels.ts` | YES — pure string→label | P1-E (annotation only) | P2-B3 |
+| `portfolio-aggregator` | `domain/services/portfolioRiskCalculator.ts` + `portfolioPnlCalculator.ts` | YES — pure number-in→metrics-out | Not in Phase 1 (post-G5-cleanup first) | P2-B4 |
+| `macro-snapshot-guard` | `interface/mcp/tools/macro/macroSnapshotGuard.ts` | Likely (verify zero-IO in P1-D) | P1-D annotation if zero-IO confirmed | P2-B5 |
+
+**ops-debug-trigger is NOT a primitive candidate** — all 5 debug trigger files perform I/O (cron runs, VPS fetches). They belong in the ops-debug sub-barrel, not `packages/primitives/`.
+
+---
+
+## Carried-Debt / SSOT Reconciliation Note
+
+The following baseline drifts were identified in P0-MCP-2 and are **NOT in scope for Phase 1 dev tasks**. They are flagged for PO action at P1-EXIT.
+
+| SSOT field | Current SSOT value | Live value (P0-MCP-2) | Action |
+|------------|-------------------|----------------------|--------|
+| `docs/data/project-stats.json#cronJobCount` | 77 | 73 (cronConfig.ts keys) / 68 (startScheduler.ts probe) | PO: update to 68 or 73 (choose which is canonical) at P1-EXIT after confirming post-refactor count |
+| `docs/data/project-stats.json#testBaselinePass` | 9277 | 9408-9411 | PO: update to 9408 (conservative floor) at P1-EXIT |
+| `docs/data/project-stats.json#testBaselineFail` | 34 | 345-348 | PO: update to 348 (conservative ceiling) at P1-EXIT |
+| `docs/data/system-map.json` MCP tool count | 125 | 146 | PO: update system-map to 146 at P1-EXIT (curation lag) |
+
+**These reconciliations are PO-owned.** dev-mcp-server must NOT touch `project-stats.json` or `pilot-status-mcp-server.json` as part of any Phase 1 task. Touching them during barrel waves is a scope violation and will be rejected by QA.
+
+---
+
+## Build Wave Docker Rebuild — Deferred
+
+The Docker rebuild for `mcp-server` is **deferred to a separate session** (memory cap constraint noted in charter). The Phase 1 barrel and G5-inverse work is verified at the host level (`bun test` + tsc + health probe on local server start). The container rebuild occurs only after Phase 1 QA gate passes, as a separate PO-sequenced session. This is consistent with the RUN-SOLO constraint (the rebuild session is itself solo).
+
+---
+
+## Sequencing Diagram
+
+```
+P1-A (sandbox runner + scenarios)
+  └─► P1-B (three-tier trust dashboard stub)         ← G12 streak #1
+        └─► P1-C (barrel wave 1: system/ 21→5)       ← G12 streak #2
+              └─► P1-D (barrel wave 2: macro/ 14→2)  ← G12 streak #3
+                    └─► P1-E (barrel wave 3: sector/ 15→3)
+                          ├─► P1-F (G5-inverse: kinhDichWrapper + QUE_META)
+                          │     └─► P1-G (G5-inverse: pdf.ts / pdfOcrWorker post-1954c)
+                          │           └─► P1-H (G1 primitives: signal-bus + sector-classifier)
+                          │                 └─► P1-QA (Phase 1 close-gate)
+                          │                       └─► P1-EXIT (PO: SSOT reconcile)
+                          └─► (P1-H also depends on P1-E via barrel stability)
 ```
 
-Only when all 5 gates pass is the wave task DONE. Gate failures trigger rollback to the pre-wave tag and a Phase 2 rethink.
+All tasks are strictly sequential. WIP=1 throughout. No task starts until the prior task is DONE (QA-gated, not just "submitted").
 
 ---
 
-## Scheduler / Cron Verification Protocol
+## Hard Constraints
 
-This protocol applies to any task that modifies files under `src/scheduler/` or any file imported by scheduler jobs.
-
-After each barrel split, check that scheduler imports resolve:
-```bash
-# Verify no broken imports in scheduler
-bun build src/scheduler/startScheduler.ts --target=bun --no-bundle 2>&1 | grep -E "error|Cannot find"
-```
-Must return 0 errors.
-
-Additionally, for cron-critical jobs (those with highest-frequency or user-visible outputs):
-- `foreignFlowFetch` (1-min interval): verify `src/scheduler/market-data/foreignFlowFetcherJob.ts` still imports correctly.
-- `vnIndexRefresh` (5-min interval): verify `src/scheduler/market-data/vnIndexRefreshJob.ts`.
-- `intelligenceCycle` (15-min interval): verify `src/scheduler/news-analysis/intelligenceCycleJob.ts`.
-
----
-
-## Dashboard Circular Dependency Protocol
-
-After any barrel wave that changes import paths, verify the 5 served dashboards still function:
-
-```bash
-# Server startup and dashboard health
-curl -s http://localhost:3000/api/bctc-inspect | head -5       # should return HTML
-curl -s http://localhost:3000/dashboards/news-fetch/ | head -5  # should return HTML
-curl -s http://localhost:3000/api/news-fetch/live?source=all\&limit=1  # should return JSON
-```
-
-If any returns 500 or empty, the barrel change broke a dashboard route handler import. Rollback to pre-wave tag.
+| Constraint | Source |
+|---|---|
+| WIP=1 sequential throughout Phase 1 | RUN-SOLO policy |
+| Anti-scope-creep: `apps/mcp-server/` ONLY | charter |
+| No `pilot-status-mcp-server.json` edits by dev | §4.5 compliance |
+| No `docs/TASKS.md` edits by dev (PO-owned this cycle) | scope rule |
+| Explicit-file staging ONLY (`git add <exact-path>`) | HIGHEST-RISK zone discipline |
+| Commit-mutex acquired (kind=`sprint-task` per enum-drift workaround) before any add/commit | BUG-1 workaround |
+| Both gate evidence pasted before RETURN on every task | G12 DoD rule |
+| G12 streak tasks (P1-B, P1-C, P1-D): DONE only with dashboard + tripwire evidence | streak rule |
+| No ESLint fence changes in Phase 1 | Phase 2 scope only |
+| No files deleted from domain/ in Phase 1 | Phase 2 G5 scope only |
+| Docker rebuild deferred to separate session | memory cap constraint |
+| No --force, no --no-verify, no --no-gpg-sign | CLAUDE.md |
+| No branch creation — all work on main | CLAUDE.md |
 
 ---
 
-## Phase 2 Scope Preview (Not Phase 1 Work)
+## Goals Roadmap — Phase 1 Contributions
 
-Phase 2 begins only after Phase 1 is QA-gated complete. Phase 2 deliverables:
-- G4: Architecture fence (`eslint-plugin-boundaries`) activated in CI
-- G5: G5-inverse deletions (per routing map from P1-G): remove dead migrated domain code
-- G1: Promote 4+ candidates from barrel sub-modules to `packages/primitives/`
-- G2: Module package under `packages/modules/mcp-core/`
-- G10: QA bug injection into a primitive; dev-mcp-server fixes in ≤2 cycles
-- G11: Regression alarm bell proof
-- G9: User verifies mcp-server trust dashboard (user verbal confirmation)
+| Goal | Status after Phase 1 | Verification source |
+|---|---|---|
+| G1 (primitives + scenarios) | EARNED-PENDING | 2 primitive candidates scaffolded (P1-H): signal-bus-helper + sector-classifier, ≥3 scenarios each |
+| G2 (module composes from bounded sub-barrels) | EARNED-PENDING | 3 barrel splits into 5+2+3 sub-barrels (P1-C/D/E) |
+| G5 (G5-inverse: HTTP-routed handlers) | EARNED-PENDING | kinhDichWrapper bypass remediated (P1-F), pdf.ts/pdfOcrWorker verified (P1-G) |
+| G6 (trust layer renders) | EARNED-PENDING | Three-tier dashboard stub renders via file:// (P1-B) |
+| G7 (edit-JSON-rerun, zero creds) | EARNED-PENDING | P1-A + P1-H scenario edit cycles + P1-A zero-creds audit |
+| G8 (honest red/green) | EARNED-PENDING | P1-B deliberate-fail proof (scenario expected value mutated → red card) |
+| G12 (streak 3/3) | EARNED-PENDING | P1-B + P1-C + P1-D streak with evidence in handoffs |
+| G3 (clean composition root) | STILL-UNMET | Phase 2: composition-root.ts does not exist yet — current entry is `src/index.ts` (≥200L); Phase 2 extracts it |
+| G4 (architecture fence) | STILL-UNMET | Phase 2: ESLint + eslint-plugin-boundaries config |
+| G9 (trust contract verbal) | STILL-UNMET | Phase 2: user verbal confirmation of dashboard |
+| G10 (AI fixes bug ≤2 cycles) | STILL-UNMET | Phase 2: QA injects bug in primitive |
+| G11 (regression alarm) | STILL-UNMET | Phase 2: 2-trial coupling proof |
 
----
-
-## Bug-Inventory Entry (P0-MCP-3)
-
-This entry is written to `docs/data/bug-inventory.json` as part of the Phase 0 commit.
-
-```json
-"mcp_server_baseline": {
-  "service": "mcp-server",
-  "baselineCapturedAt": "2026-05-25T00:00:00Z",
-  "windowDays": 60,
-  "baselineCycleCount": 2.5,
-  "g10Target": 2,
-  "notes": "Estimated from mcp-server-attributed bugs in inventory (1960-DAILYDASH-ENOENT, A-21c, 1974-DAILYDASH-HOST-VISIBILITY, 1965d-JANITOR-PATHFIX, 1958a-alertDigestJob-catchup, 1955b-zombie-cron-rows). Cluster in two categories: daily-dashboard file-path issues and scheduler correctness. Average fix cycles 2-3, rounded to 2.5. System-wide baseline is 1.5.",
-  "bugs": [
-    { "id": "1960-DAILYDASH-ENOENT", "module": "system/dailyDashboardJob", "fixCycles": 3, "status": "resolved" },
-    { "id": "A-21c-dailyDashboardJob-ENOENT", "module": "system/dailyDashboardJob", "fixCycles": 2, "status": "resolved" },
-    { "id": "1974-DAILYDASH-HOST-VISIBILITY", "module": "system/dailyDashboardJob", "fixCycles": 2, "status": "resolved" },
-    { "id": "1965d-JANITOR-PATHFIX", "module": "system/tasksMdJanitorJob", "fixCycles": 2, "status": "resolved" },
-    { "id": "1958a-alertDigestJob-catchup", "module": "alerts/alertDigestJob", "fixCycles": 3, "status": "resolved" },
-    { "id": "1955b-zombie-cron-rows", "module": "infrastructure/db/cronJobRunStore", "fixCycles": 2, "status": "resolved" }
-  ]
-}
-```
+**goalsEarned:** stays 0. PO-only flip at 12/12 terminal Phase 2 (§4.5 compliance — dev-mcp-server does NOT update pilot-status goal fields).
 
 ---
 
-## Recommended G10 Primitive Target for Phase 2
+## §4.5 Compliance
 
-Based on brownfield scan, the best G10 target primitive is `sparkline.ts` (pure function, zero dependencies, currently at `domain/services/sparkline.ts`). Bug injection candidate: change the fill character or bar-width threshold literal. Realistic bug, single-literal fix, cycle-count measurable.
-
-Second candidate: `vnNumberParser.ts` — parse VN number format (billions/trillions). Bug injection: off-by-3 for the trillion suffix. Single literal.
-
----
-
-## Anti-Scope-Creep Clause
-
-This task plan covers `apps/mcp-server/` ONLY. Forbidden while this plan is active:
-- Editing any `apps/frontend/` files
-- Editing any `pilot-status-*.json` (PO owns those)
-- Editing `docs/TASKS.md` (PO owns it this cycle)
-- Touching any `apps/<other-service>/` directories
-- Adding new MCP tools (that is a feature, not a refactor)
-- Changing scheduler cron expressions (that is an ops concern)
+NO goal-flip instructions in any task. `dev-mcp-server` does NOT update `pilot-status-mcp-server.json` goal fields. `goalsEarned` stays 0. `decisionMatrix` stays all-TBD throughout Phase 1. Phase 1 tasks carry only `goals advanced` labels (informational). PO is the sole authority for terminal goal state transitions.
