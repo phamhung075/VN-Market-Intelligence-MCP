@@ -2650,3 +2650,88 @@ git commit -m "docs(bctc-table): BT-EXIT FINAL — FPT consolidated BS goal SIGN
 (po notebook committed separately under the standard notebook-commit convention.)
 
 NEXT: dev-pdf-extractor (BCTC-TABLE-2, follow-up, not blocking) | sprint BCTC-TABLE CLOSED
+
+---
+
+# SPRINT BCTC-TABLE-3 — REOPEN: row-table is GARBAGE (my BT-EXIT was a FALSE-GREEN)
+
+**Sprint:** BCTC-TABLE-3 · **Opened:** 2026-05-25T21:10Z by PO (self-initiated reopen) · **Severity:** CRITICAL
+**User `/goal`:** *"http://localhost:3000/api/bctc-inspect need present correct data table for recheck."*
+**Supersedes:** my BT-EXIT FINAL=DONE (2026-05-25T20:51Z) — REVOKED. The FPT-goal sign-off was a FALSE-GREEN.
+
+## Why I'm reopening (PO own-error admission)
+
+My BT-EXIT checked the BALANCE ANCHORS + row COUNT (150) + period (31/12/2025) and called it DONE. I never inspected row COMPOSITION the way the user's complaint demands. My own carry-over LESSON last cycle even warned "has_table+delta=0 alone was NOT enough" — and I still shipped it. This is exactly the BT-7 false-green lesson [[feedback_fence_false_green]] [[project_bctc_table_sprint]], repeated.
+
+## HARD live evidence (PO re-verified via curl this cycle — anti-hallucination, not from memory)
+
+`GET http://localhost:3000/api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` (FPT Q4 2025) returned 150 stored rows. jq breakdown:
+
+| Metric | Live value | Gold target |
+|---|---|---|
+| total rows | 150 | ~80 clean coded rows |
+| **well-formed** (code + label + value all present) | **11** | ~80 |
+| **junk** (code=null AND value_current=null — company name/address/headers as rows) | **94** | 0 |
+| **orphan** (value_current present BUT blank label) | **44** | 0 |
+| value_prior NULL | **118 / 150** | ~0 on coded rows |
+| code "100" present | **NO** | YES |
+| duplicate codes | **222 ×2** | none |
+| balance_check | delta=0, anchors 270/300/400/440 EXACT (PASS) | (unchanged — keep) |
+
+Row_order 0 is literally `{code:null, label:"CÔNG TY CỔ PHẦN FPT", value:null}` — the company name as table row 1. The green balance badge is REAL; the row table beside it is garbage. This is the user's "pack of column is no sense."
+
+## ROOT CAUSE (PO-diagnosed — confirmed by reading both parsers; hand to architect)
+
+**DUAL-PATH DRIFT round 2.** The production `apps/pdf-extractor/infrastructure/text_table_extractor.py` row-assembler DIVERGED from the PROVEN spike line-parser.
+
+- **Stored OCR text is ALREADY one-line-per-row.** Proof: `apps/pdf-extractor/spike/eval/results/FPT_page4_balance_sheet.md` § "Sample OCR Lines" line 60: `A. TÀI SẢN NGAN HAN 100 58.102.970.741.619 45.535.942.846.453` — label + code + current + prior, ONE LINE.
+- **The spike produced a PERFECT joined table from exactly this text.** Gold = `apps/pdf-extractor/spike/eval/results/FPT_balance_sheet_4-7.md` (~80 rows, every row = Code|Label|31/12/2025|31/12/2024, balanced to the dong). The spike's gold-producing parser is `apps/pdf-extractor/spike/fpt_balance_sheet_eval.py::lines_to_rows()` (L187-211): for EACH line, find all VN-numbers + the code on that SAME line, emit one row, keep label/code/values together. Dead simple. No state machine.
+- **Production broke it.** `text_table_extractor.py` introduced a fabricated `_detect_block_column_layout()` (L359) → when it sees ≥5 consecutive pure-code lines it switches to `_extract_block_columns()` (L386), a positional-zip STATE MACHINE that:
+  1. Hardcodes `label: ""` (L511) → throws labels away → the **44 orphan rows**.
+  2. Positionally zips a code-block list against value-block lists across separate regions → misaligns → **drops code 100, duplicates 222, leaves value_prior null**.
+  3. Plus the inline path's else-branch (L606-619) dumps every non-code line (`code=null, value=null`) as a row → the **94 junk rows** (company name, address, headers).
+- This block-column layout model does NOT match the real OCR (which is line-aligned). The spike never needed it.
+
+## REQUIRED FIX DIRECTION (architect decides specifics — but evidence is strong)
+
+Align the production row-assembler to the spike's `lines_to_rows()` one-line-per-row parser so each emitted row = `{code, label, value_current, value_prior}` kept TOGETHER from the same OCR line.
+
+**The decision the ARCHITECT MUST make (BT3-DESIGN):** Is coordinate/zone OCR actually needed (user's "ocr zone table on page first then extract line table line by line"), OR does RE-PARSING the EXISTING stored OCR text with the proven spike line-parser already recover the join?
+
+> PO prior: the spike evidence strongly says re-parsing the stored text is SUFFICIENT and is HOST-SAFE (zero re-OCR — critical under [[project_host_memory_panic]]: the host kernel-panics under concurrent heavy OCR). PREFER re-parsing the stored OCR text. Only escalate to coordinate/zone OCR if architect proves line-parsing genuinely cannot recover label↔code↔value alignment. If architect picks zone-OCR, it MUST be self-hosted Tesseract only, sequential, and justify the host-panic risk vs the zero-OCR re-parse.
+
+## ACCEPTANCE CRITERIA — QA verifies LIVE via curl on the FPT Q4 doc, NOT a mocked test
+
+`GET http://localhost:3000/api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65`:
+
+- **AC-1:** ZERO rows with a value_current but empty/blank label. (live: was 44 → must be 0)
+- **AC-2:** ZERO pure-junk text rows (company name / address / headers must NOT appear as table rows). (live: was 94 → must be 0)
+- **AC-3:** code "100" present; NO duplicate codes; codes match the gold map in `FPT_balance_sheet_4-7.md`. (live: 100 missing + 222 dup → fixed)
+- **AC-4:** value_prior populated for the SAME rows that have value_current (both period columns filled). (live: 118 null → near-0 on coded rows)
+- **AC-5:** each row aligned `{code,label,value_current,value_prior}`, matching the gold in `FPT_balance_sheet_4-7.md` (spot-check anchors + a sample of detail rows: e.g. 110/120/130/220/222/223/410/421).
+- **AC-6:** balance still passes — delta=0, anchors 270=88,089,621,779,862 / 300=44,338,155,487,272 / 400=43,751,466,292,590 / 440=88,089,621,779,862 EXACT.
+- **AC-7:** re-verified against the SPIKE GOLD as ground truth. **NO subclass / no preloaded-text bypass** in the integration test — drive the REAL adapter on the REAL stored OCR text (per the false-green lesson). The test that "proves" the fix must read what the live endpoint reads.
+
+## ZONE / ROUTING (binding)
+
+- **Fix lives in dev-pdf-extractor zone:** `text_table_extractor.py` (the row-assembler — kill/fix the block-column path), `application/extract_tables_usecase.py`, and the backfill re-parse path. This is the primary owner.
+- **dev-mcp-server zone** (`bctc_table_rows`, `/api/push-bctc-table`, `/api/bctc-inspect/table`, `bctc-inspector.html`): touch ONLY if the row contract must change. The row CONTRACT (code, label, value_current, value_prior) already exists and is correct — the bug is the producer filling it wrong, not the contract. Do NOT redesign storage/render unless the architect finds a contract gap.
+- **Re-backfill:** reuse the host-safe pre-supplied-stored-OCR path (`bctcBatchTableBackfillJob`) → ZERO Tesseract. Sequential. NEVER concurrent heavy OCR ([[project_host_memory_panic]]).
+
+## CONSTRAINTS (non-negotiable)
+
+- **PRIVACY:** self-hosted Tesseract only. NEVER send PDFs/page-images to any external API (Claude/Gemini/GPT/Textract/Document-AI). External-API VLM stays DEFERRED unless user gives explicit consent.
+- **FROZEN — do NOT touch:** `apps/pdf-extractor/dashboard/{index.html,traces.js,trust-contract.spec.js}`, `apps/pdf-extractor/sandbox/runner.py`, `docs/data/pilot-status-pdf-extractor.json`.
+- **Git:** all on `main`, NO branches. Explicit-file staging. NO `git push`. `git show --stat HEAD` zero foreign files.
+- **HARNESS LIMIT:** PO + dev/qa subagents CANNOT call MCP gateway `task_claim`/`commit-mutex` in this harness. Per fail-closed: do all file work, leave changes UNSTAGED in the working tree, and RETURN exact file paths per commit-logical-unit + commit message(s). MAIN TERMINAL stages + commits. Do NOT `git commit` yourself.
+- **Drive to COMPLETION** [[feedback_ship_completion]], not smallest slice.
+
+## Task ladder (architect finalizes per-task ACs at BT3-DESIGN)
+
+| Task | Title | Owner | Status | Dep |
+|---|---|---|---|---|
+| BT3-DESIGN | Architect ruling: re-parse stored OCR (preferred) vs zone-OCR; pin the exact parser change in `text_table_extractor.py` (kill block-column path, port spike `lines_to_rows` line-join); confirm row contract unchanged; sequence backfill. DESIGN ONLY. | architect | READY (dispatch FIRST) | — |
+| BT3-FIX | Fix `text_table_extractor.py` row-assembler to one-line-per-row join (label+code+current+prior together). Drop/repair the block-column positional-zip. Unit test drives REAL adapter on REAL stored FPT OCR text (no bypass), asserts AC-1..AC-5 against the gold. Fence-A/B intact, sandbox exit-0. | dev-pdf-extractor | BLOCKED ← BT3-DESIGN | BT3-DESIGN |
+| BT3-DEPLOY | docker-compose redeploy pdf-extractor (+ mcp-server if contract touched) + idempotent host-safe re-backfill of FPT Q4 via `bctcBatchTableBackfillJob` (zero Tesseract, sequential). | ops | BLOCKED ← BT3-FIX | BT3-FIX |
+| BT3-QA | LIVE curl verify AC-1..AC-7 on FPT Q4 doc against spike gold (no mock). Emit `qa-bctc-table-3-<UTC>.json`. | qa | BLOCKED ← BT3-DEPLOY | BT3-DEPLOY |
+| BT3-EXIT | PO sign-off vs AC-1..AC-7 on LIVE curl evidence + privacy audit. This time I inspect ROW COMPOSITION, not just the badge. | po | BLOCKED ← BT3-QA | BT3-QA |
