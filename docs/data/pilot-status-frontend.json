@@ -22,52 +22,57 @@
   "language": "TypeScript (Remix)",
   "languageLockSource": "stays TS — Remix SSR/React ecosystem constraint overrides Go-first default (scale charter §Deltas)",
   "languageLockedAt": "2026-05-24",
-  "phase": "0",
-  "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status.",
+  "phase": "1",
+  "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status. Advanced 0→1 at P0-FE-EXIT (2026-05-25, Phase 0 CLOSED + Phase 1 AUTHORIZED).",
   "phase0": {
-    "status": "OPEN",
+    "status": "CLOSED",
     "_status_enum": "[FIXED] Allowed values: OPEN | CLOSED",
     "openedAt": "2026-05-25T06:56:11Z",
     "openedBy": "po (USER-DIRECTIVE 'refactor continue'). TASKS.md § 'Phase 0 Backlog (Frontend SCALE Pilot)' carries the 6-task chain (P0-FE-1..5 + EXIT).",
-    "closedAt": null,
-    "closedBy": null,
-    "owner": "architect (brownfield + bug-inventory + MVR scope verdict + phase-1 plan) + agent-father (dev-frontend flow, GATED on P2-F2) + po (anchor + exit gate, pm absorbed)",
+    "closedAt": "2026-05-25T08:00:00Z",
+    "closedBy": "po (P0-FE-4 anchor + P0-FE-EXIT gate). All 6 Phase-0 deliverables landed: charter (thin) + pilot-status SSOT + brownfield (architect, COMPLETE) + bug-inventory baseline + dev-frontend agent confirmed + dev-frontend flow w/ G12 gate (agent-father e4812778) + Phase-1 task plan (architect, READY-FOR-DISPATCH). Exit gate signed off PO-self (architect deliverables ARE the architectural confirmation — both marked terminal by architect; zero unresolved design question).",
+    "owner": "architect (brownfield + bug-inventory + MVR scope verdict + phase-1 plan) + agent-father (dev-frontend flow, baked e4812778) + po (anchor + exit gate, pm absorbed)",
     "deliverables": {
-      "_note": "OPEN — thin scale charter at .charterRef governs (frontend is least-DDD UI service; architect evaluates MVR-vs-full extraction per charter §Risk 4 in P0-FE-1).",
+      "_note": "CLOSED 2026-05-25 — all landed. Thin scale charter at .charterRef governs (frontend is least-DDD UI service; architect verdict = MVR per charter §Risk 4, recorded in brownfield §8 + task-plan §MVR-vs-FULL).",
       "factory_charter_or_thin": "DONE 2026-05-24T06:49:21Z (thin: docs/architecture-briefs/2026-05-22-refactor/scale/frontend-charter.md)",
       "pilot_status_ssot": "DONE 2026-05-24T06:49:21Z (this file)",
-      "brownfield_inventory": "READY → architect (P0-FE-1, dispatch NOW, zero contention)",
-      "bug_inventory_entry": "READY → architect (P0-FE-2, dispatch NOW, parallel)",
-      "dev_agent_file": "dev-frontend (agent-father to CONFIRM in P0-FE-3, GATED on P2-F2)",
-      "dev_agent_flow_file": ".claude/flows/dev-frontend/main.md (agent-father to BAKE w/ G12 Playwright-render DoD gate in P0-FE-3, GATED on P2-F2)",
-      "phase_1_task_plan": "BLOCKED on P0-FE-1+P0-FE-2 (architect P0-FE-5)"
+      "brownfield_inventory": "DONE (architect, COMPLETE) — docs/architecture-briefs/2026-05-22-refactor/scale/frontend-brownfield.md. Verdict MVR; port 3001; 13 pure fns scanned, 4 formatter primitives identified; G5=N/A (no prior mcp-server location). Committed c4def776.",
+      "bug_inventory_entry": "DONE — frontend_baseline G10 metric synthesized (formatter primitive-class baseline; B-class render/IO noted NOT primitive per news-fetch precedent).",
+      "dev_agent_file": "DONE — dev-frontend agent CONFIRMED registered (.claude/agents/dev-frontend.md; registration verified PASS in P0-FE-3).",
+      "dev_agent_flow_file": "DONE — .claude/flows/dev-frontend/main.md baked w/ blocking G12 render-green DoD gate (npm test Vitest + npm run test:e2e Playwright 3/3 both exit 0 before DONE) + MVR streak rule. Committed e4812778 (agent-father, P0-FE-3).",
+      "phase_1_task_plan": "DONE (architect, READY-FOR-DISPATCH) — docs/architecture-briefs/2026-05-22-refactor/scale/frontend-phase-1-task-plan.md. mvr_verdict=MVR; 8 atomic tasks, 43 ACs; delivers 4 formatters → app/domain/formatters/ + Vitest tests + view-model stub (analysis-vm.ts) + Playwright render-gate (3 checks). Committed c4def776."
     },
     "exit_gate": {
-      "all_deliverables_landed": false,
+      "all_deliverables_landed": true,
       "pilot_status_phase_0_fields_populated": true,
       "no_code_in_service_pkg_yet": true,
-      "exit_gate_status": "OPEN",
-      "closedAt": null,
-      "verification_commit_sha_architect": null,
-      "verification_signal": null
+      "exit_gate_status": "CLOSED",
+      "closedAt": "2026-05-25T08:00:00Z",
+      "verification_commit_sha_architect": "c4def776",
+      "_verification_commit_note": "Architect's brownfield (COMPLETE) + Phase-1 task plan (READY-FOR-DISPATCH) both committed in c4def776 — these terminal-state deliverables ARE the architectural sign-off for the architect+PO exit gate. No separate fresh-architect re-confirmation required: no unresolved design question, R-1..R-4 all addressed in task plan, G5=N/A settled, MVR-vs-FULL BINDING + rationalized.",
+      "verification_signal": "inline (PO decision recorded in this SSOT + TASKS.md P0-FE-EXIT; no separate signal doc)",
+      "verdict": "AUTHORIZED",
+      "_verdict_note": "PO Phase 0→1 gate verdict: AUTHORIZED. Phase 0 CLOSED, Phase 1 OPEN. dev-frontend CLEARED to receive WAVE-A MVR build dispatch (P1-A first, WIP=1 sequential)."
     }
   },
   "phase1": {
-    "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 0 closes. Expand on Phase 0 exit.",
-    "status": "NOT-STARTED",
+    "_note": "[OPTIONAL-PHASE] OPENED at Phase 0 exit (2026-05-25). WAVE-A MVR build by dev-frontend, WIP=1 sequential. Goals advance EARNED-PENDING; PO-only terminal flip at 12/12 Phase 2 close (§4.5).",
+    "status": "ACTIVE",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | ACTIVE | READY_FOR_CLOSE_GATE | APPROVED | ARCHIVED",
-    "openedAt": null,
-    "openedBy": null,
-    "gateVerdict": null,
-    "gateVerifiedAt": null,
-    "gateVerifiedBy": null,
-    "gateCommit": null,
-    "gateDecisionDoc": null,
+    "openedAt": "2026-05-25T08:00:00Z",
+    "openedBy": "po (P0-FE-EXIT gate verdict=AUTHORIZED). Phase 1 OPEN; dev-frontend CLEARED for WAVE-A MVR build dispatch.",
+    "gateVerdict": "AUTHORIZED",
+    "gateVerifiedAt": "2026-05-25T08:00:00Z",
+    "gateVerifiedBy": "po-self (architect+PO exit gate — architect's COMPLETE brownfield + READY-FOR-DISPATCH Phase-1 plan serve as the architectural confirmation; PO signs off the gate. No fresh-architect re-review required: zero unresolved design question, MVR scope BINDING+rationalized, R-1..R-4 addressed, G5=N/A settled, G12 flow-gate baked e4812778 + agent registration verified PASS).",
+    "gateCommit": "<DERIVED:populated with this cycle's commit SHA at commit>",
+    "gateDecisionDoc": "inline (this SSOT phase0.exit_gate + TASKS.md P0-FE-EXIT)",
     "gateSignal": null,
-    "skeleton_in": "<SERVICE:path to phases doc §Phase 1 — e.g. docs/architecture-briefs/2026-05-23-<svc>-factory/07-phases.md §Phase 1>",
-    "task_plan": "<SERVICE:path to Phase 1 task plan doc>",
+    "skeleton_in": "docs/architecture-briefs/2026-05-22-refactor/scale/frontend-phase-1-task-plan.md §Phase 1 Overview",
+    "task_plan": "docs/architecture-briefs/2026-05-22-refactor/scale/frontend-phase-1-task-plan.md (READY-FOR-DISPATCH, mvr_verdict=MVR, 8 tasks / 43 ACs, sequencing P1-A→B1→B2→B3→B4→C→E→QA)",
     "wip_limit": 1,
-    "progress_notes": []
+    "progress_notes": [
+      "2026-05-25: Phase 1 OPENED. First dispatch = P1-A (Playwright render-gate, 3 checks). WIP=1 sequential. WAVE-A in BUILD-WAVE SEQUENCING governance (A frontend → B mcp-server-SOLO → C ops rebuild → D qa regression)."
+    ]
   },
   "phase2": {
     "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 1 gate passes.",
@@ -237,7 +242,7 @@
         "streakComplete": false,
         "completedAt": null,
         "tasks": [],
-        "ruleEffectiveAfter": "<DERIVED:agent-father flow commit SHA and date>"
+        "ruleEffectiveAfter": "e4812778 (2026-05-25) — agent-father baked G12 render-green DoD gate + MVR streak rule into .claude/flows/dev-frontend/main.md (P0-FE-3). Streak tasks per Phase-1 plan: P1-B1 (formatDirectionArrow) + P1-B2 (formatChangePct) + P1-C (view-model stub)."
       }
     }
   ],
