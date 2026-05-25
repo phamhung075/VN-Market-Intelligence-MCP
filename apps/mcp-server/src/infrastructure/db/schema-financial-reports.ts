@@ -95,6 +95,46 @@ export function initFinancialReportsTables(db: Database): void {
     // fresh DB — CREATE TABLE already included the columns
   }
 
+  // ── BT-3 BCTC table rows ─────────────────────────────────────────────────
+  // Structured table rows produced by the TEXT-path extractor (BT-3).
+  // Stored per doc (report_id FK → financial_reports.id) + page + row_order.
+  // Additive on top of the consolidated 1954c write path (no collision).
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_table_rows (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id        TEXT    NOT NULL,
+      page_number      INTEGER NOT NULL,
+      statement_section TEXT   NOT NULL,
+      row_order        INTEGER NOT NULL,
+      code             TEXT,
+      label            TEXT    NOT NULL,
+      period_current   TEXT    NOT NULL,
+      value_current    REAL,
+      period_prior     TEXT,
+      value_prior      REAL,
+      unit             TEXT    NOT NULL DEFAULT 'billion_vnd',
+      is_summary_row   INTEGER NOT NULL DEFAULT 0,
+      extracted_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_btr_report ON bctc_table_rows(report_id, statement_section, row_order)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_btr_code   ON bctc_table_rows(report_id, code)`);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_balance_checks (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id        TEXT    NOT NULL UNIQUE,
+      statement_section TEXT   NOT NULL,
+      total_assets     REAL,
+      total_liabilities REAL,
+      total_equity     REAL,
+      balance_delta    REAL,
+      balance_pass     INTEGER NOT NULL DEFAULT 0,
+      checked_at       TEXT    NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bbc_report ON bctc_balance_checks(report_id)`);
+
   // ── PDF OCR Cache (Sprint 048 / Task 292) ──────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS pdf_extracted_text (
