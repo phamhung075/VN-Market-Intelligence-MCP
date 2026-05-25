@@ -1,5 +1,94 @@
 # QA — Notebook
 
+## cycle-116 · 2026-05-25 · P1-MCP-QA (mcp-server SCALE Phase-1 full-gate) — PASS
+
+**Task:** P1-MCP-QA — live full-tool-suite gate on freshly-rebuilt mcp-server (image 0a617df1, container healthy) | **Verdict:** PASS — po cleared for P1-EXIT
+
+```
+date: 2026-05-25T17:58:00Z
+type: pilot-qa-gate (mcp-server SCALE Phase-1, P1-A..P1-H committed 195ef1a3..a9212ad2)
+signal: docs/signals/qa-p1-mcp-qa-pass-20260525T175800Z.json
+container: image 0a617df1, healthy, port 3000
+round: 1
+
+bun_test:
+  pass: 9411
+  fail: 345
+  skip: 35
+  total: 9791
+  files: 911
+  acceptance_bar: pass >= 9408 AND fail <= 348
+  result: PASS (9411 >= 9408, 345 <= 348)
+  note: Bun 1.3.13 C++ panic fires AFTER results — pre-existing runtime bug, results complete
+
+tsc: EXIT:0 PASS
+
+toolCount:
+  live_curl_result: 146
+  probe: curl http://localhost:3000/health
+  result: PASS
+
+schedulerCronCount:
+  count: 68
+  path: apps/mcp-server/src/scheduler/startScheduler.ts (path UNCHANGED post Phase-1)
+  probe: grep -c cron.schedule startScheduler.ts
+  result: PASS
+
+dashboard:
+  path: apps/mcp-server/dashboard/index.html
+  three_tier_panels: PRESENT (Primitives live + Modules phase2 + Services phase2)
+  file_url_zero_network: PASS (all fetch() calls use local relative paths traces/*.json)
+  traces_present: 9/9 (sparkline x3 + signal-bus x3 + sector-classifier x3)
+  result: PASS
+
+g5_inverse:
+  P1_F_970f4b38: marketTools.ts + analysis.ts kinhDichWrapper bypass eliminated
+    - marketTools appendMarketHexagram/appendStockHexagram -> clients.ts:5005 HTTP
+    - analysis appendStockHexagramHttp -> clients.ts:5005 HTTP
+    - kinhDichWrapper.ts DEPRECATED comment added
+  P1_G_2148d2be: pdf.ts + pdfOcrWorker.ts audit — 4 KEEP callers (architect-frozen 1954c)
+    - G5-DEBT comments added to both files
+    - grep interface/tools 'from.*fetchers/pdf' = 0 CONFIRMED
+  result: PASS
+
+ddd_scan:
+  real_import_domain_infra: 0 (comment-only grep matches, not import statements)
+  real_import_domain_app: 0
+  result: PASS
+
+security_scan:
+  process_env_p1_scope: 0 (server.ts:221 is pre-existing, server.ts NOT in 195ef1a3..a9212ad2)
+  hardcoded_creds: 0
+  result: PASS
+
+acceptance_bar_all_met: true
+po_cleared_for_p1_exit: true
+
+lessons:
+  - All 5 acceptance criteria (bun_test/toolCount/scheduler/dashboard/g5_inverse) satisfied
+  - Scheduler startScheduler.ts path UNCHANGED after Phase-1 barrel refactors (P1-C..P1-E)
+  - Dashboard traces/ has exactly 9 JSON files matching KNOWN_TRACES in index.html (P1-H added 6)
+  - G5-inverse confirmed: 0 tool-handler direct imports of kinhDichWrapper after P1-F
+  - Pre-existing process.env in server.ts:221 is interface-layer infra config, not domain — exempt
+  - Bun 1.3.13 C++ crash pattern post-results remains stable (3rd consecutive observation)
+```
+
+| Criterion | Target | Actual | Verdict |
+|---|---|---|---|
+| bun test pass | >= 9408 | 9411 | PASS |
+| bun test fail | <= 348 | 345 | PASS |
+| toolCount | = 146 | 146 | PASS |
+| scheduler cron count | = 68 | 68 | PASS |
+| dashboard file:// renders | 3 panels, all traces | 3 panels, 9/9 traces | PASS |
+| G5-inverse HTTP routing | P1-F + P1-G confirmed | 0 direct imports, HTTP confirmed | PASS |
+| tsc | 0 errors | 0 errors | PASS |
+| DDD scan | 0 violations | 0 violations | PASS |
+| Security scan | 0 new violations | 0 new P1 violations | PASS |
+
+**Verdict: PASS. po cleared for P1-EXIT (12/12 atomic flip). Signal: docs/signals/qa-p1-mcp-qa-pass-20260525T175800Z.json**
+
+---
+
 ## cycle-115 · 2026-05-25 · P0-MCP-2 (mcp-server bug-inventory baseline) — COMPLETE
 
 **Task:** P0-MCP-2 bug-inventory baseline (Phase-0, read-only analysis) | **Result:** COMPLETE — baseline captured, 7 bugs inventoried, commit 05dc494a
