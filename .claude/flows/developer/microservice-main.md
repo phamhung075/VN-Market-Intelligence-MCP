@@ -154,6 +154,7 @@ If nothing noteworthy: `Zone health: no drift detected`. This line is consumed b
 ## RETURN
 DONE: Implementation complete — SERVICE=<service>, CHANGED=[...], NEW_PASS=N, type-check clean
 NEXT: qa | run full QA pipeline on branch task/NNN-kebab
+REBUILD_REQUIRED: true — PO must dispatch ops (docker compose up -d --build <svc>) then qa (live verify) before marking DONE. See docs/protocols/docker-deployment-runbook.md § Microservice Code-Change Close Gate.
 HANDOFF: docs/handoffs/TASK_NNN.md
 PIPELINE: continue
 ```

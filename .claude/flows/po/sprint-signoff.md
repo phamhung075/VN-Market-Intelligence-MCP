@@ -8,6 +8,11 @@
 
 ## When QA Signals Sprint Complete
 
+**Pre-approve container rebuild check (microservice tasks only):**
+If the sprint touched any `apps/<service>/` zone, verify the close-gate was completed before signing off:
+→ `docs/protocols/docker-deployment-runbook.md` § Microservice Code-Change Close Gate
+The gate is: ops rebuilt the container (`docker compose up -d --build <svc>`) + qa confirmed build timestamp > commit timestamp + /health + tool count. If not done, dispatch ops → qa before approving.
+
 Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent market output) to validate the merged work behaves end-to-end.
 
 - **Approve** → update `docs/TASKS.md` + `docs/SPRINT_GOAL.md` (mark sprint Done) → release umbrella lock → return:

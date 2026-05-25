@@ -103,8 +103,36 @@ If any service fails with I/O errors or ENOSPC:
 
 ---
 
+## Microservice Code-Change Close Gate ("Restart ≠ Rebuild" rule)
+
+**CANONICAL RULE — referenced by `po/sprint-signoff.md` and `developer/microservice-main.md`.**
+
+A microservice code change is NOT shipped until its container is rebuilt with the new image AND the live container is verified to carry that new code. This rule applies to every dev-team task that touches `apps/<service>/`.
+
+### Why restart is not enough
+
+`docker compose restart <svc>` relaunches the LAST-BUILT image. Code committed to the repo after the last build is silently absent from the running container. The MCP tools will succeed, return data, and report healthy — but the committed logic does not execute. This is the **Restart ≠ Rebuild gotcha** (memory: `project_host_memory_panic`, `feedback_ship_completion`).
+
+### Close-gate sequence (mandatory, in order)
+
+| Step | Actor | Action |
+|------|-------|--------|
+| 1 | ops | Check free Docker memory: `docker stats --no-stream` + `free -m` (8 GB Docker cap — memory: `project_host_memory_panic`). If used > 7 GB, report to BUG and WAIT. |
+| 2 | ops | Rebuild the changed service only: `docker compose up -d --build <svc>` (ONE service at a time — never `--build` the full stack unless explicitly instructed). |
+| 3 | ops | Verify container started: `docker compose ps <svc>` → state = `running (healthy)`. |
+| 4 | qa | Verify live container carries the new code: compare `docker inspect --format '{{.Created}}' <container>` (build time) against the git commit timestamp. Build time MUST be after the commit. |
+| 5 | qa | Hit `/health` endpoint for the service + verify tool count / key behaviour matches the new code (not a pre-build snapshot). |
+| 6 | po | Only after Steps 1–5 pass: mark the sprint task DONE in `docs/TASKS.md`. |
+
+### Delegation rule
+
+ops performs the rebuild (Steps 1–3). qa verifies liveness (Steps 4–5). The user NEVER runs docker commands. If ops is unavailable, PO signals to BUG and holds the DONE gate open.
+
+---
+
 ## Related
 
 - RCA: `docs/signals/ops-1958-rca.json`
 - Disk relief signal: `docs/signals/ops-1958-disk-relief.json`
 - Dockerfile volume policy: `docs/standards/dockerfile-volume-policy.md` (baked-asset placement rules — named-volume shadow prevention)
+- Memory (Restart ≠ Rebuild context): `project_host_memory_panic` (8 GB Docker cap) · `feedback_ship_completion` (code committed ≠ shipped)
