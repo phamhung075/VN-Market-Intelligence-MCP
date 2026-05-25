@@ -6,7 +6,7 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ### 2026-05-25 — BT-7 DONE (Path-A section filter + period detection hardening)
 
-**Commit:** TBD | Sprint: BCTC-TABLE | Task: BT-7
+**Commit:** `210a0a62` | Sprint: BCTC-TABLE | Task: BT-7
 
 **Root cause (confirmed by PO):**
 - Path A (mcp-server backfill pre-supplying all stored OCR pages) fed ALL 44 FPT Q4 pages to assembler → 2170 rows (2074 noise).

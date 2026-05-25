@@ -2336,7 +2336,7 @@ dev-pdf-extractor (section filter + period fix) → dev-mcp-server/ops (re-backf
 
 ## [Developer] BT-7 — dev-pdf-extractor — DONE
 
-**Commit:** TBD | **Branch:** main | **Date:** 2026-05-25
+**Commit:** `210a0a62` | **Branch:** main | **Date:** 2026-05-25
 
 ### Root cause confirmed
 
