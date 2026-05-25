@@ -1,5 +1,61 @@
 # dev-mcp-server -- Notebook
 
+## c299 · 2026-05-25 (BT-4b-2 — host-safe pages pre-supply for BCTC backfill)
+
+### BT-4b-2 — OCR pre-supply to zero Tesseract on 16GB Mac — DONE
+
+**Commit:** `6d7839be` | 2 files | tsc EXIT 0 | 12 tests pass / 0 fail | tools=148 | sched=68
+
+**Delivered:**
+- `bctcBatchTableBackfillJob.ts` extended: pre-compiled OCR query on `pdf_extracted_text` (join by `basename(pdf_path)`); docs with stored OCR pages get them appended as `pages:[{page_number,text}]` to the `/extract-tables` POST body (Path A — zero Tesseract); docs with no stored OCR are now `skipped_no_ocr` (host safety guardrail).
+- `bctcBatchTableBackfillJob.test.ts` extended: `makeDb()` gains second `ocrRows[]` param creating `pdf_extracted_text` table; TC2/TC3/TC4 updated to pass OCR fixture rows; TC8 inline DB gets `CREATE TABLE pdf_extracted_text`; 4 new tests TC9-TC12.
+
+**Red→Green evidence (TC9-TC12):**
+- TC9: doc with stored OCR → POST body contains `pages` with correct `page_number`+`text`; `success=1`
+- TC10: doc with NO stored OCR → `skipped_no_ocr`; fetch NOT called
+- TC11: OCR rows for different filename → `skipped_no_ocr` (basename join proven)
+- TC12: 4 OCR pages inserted out-of-order → pages ordered by `page_number ASC`; `text` == `text_content`
+
+**Backfill run (12 docs, sequential, zero Tesseract):**
+
+| Doc | Status | rows_stored | balance_pass |
+|---|---|---|---|
+| FPT 2025Q4 | success | 74 | true |
+| FPT 2025Q3 | success | 56 | true |
+| FPT 2025Q1 | success | 0 | false |
+| HPG 2025Q4 | success | 46 | true |
+| HPG 2025Q3 | success | 0 | false |
+| DGC 2025Q3 | success | 52 | true |
+| DHG 2026Q1 | success | 71 | true |
+| BSR 2025Q4 | success | 0 | false |
+| DIG 2025Q4 | success | 0 | false |
+| SHB 2025Q4 | success | 50 | true |
+| VNM 2025Q3 | success | 53 | true |
+| VEA 2025Q3 | success | 47 | true |
+| VCB 2025Q4 | skipped_no_file | — | — |
+| VCB 2025Q3 | skipped_no_file | — | — |
+
+**FPT live proof (GET /api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65):**
+- `has_table: true`, `balance_pass: true`
+- Code 270 = 88,089,621,779,862 CONFIRMED
+- Code 300 = 44,338,155,487,272 CONFIRMED
+- Code 400 = 43,751,466,292,590 CONFIRMED
+
+**Host memory (zero Tesseract, sequential):**
+- mcp-server: 228.7 MiB (stable, no spike)
+- pdf-extractor: 50.96 MiB (Path A = text-only, no Tesseract, no image decode)
+- No kernel panic, no swap spike
+
+**G12 gate:** tsc EXIT 0 | bun test 38/0 (bctcBatch + pushBctcTable + bctcInspect) | tools=148 | sched=68
+
+**Foreign-file guard:** `git show --stat HEAD` = 2 files only (bctcBatchTableBackfillJob.ts + bctcBatchTableBackfillJob.test.ts). Zero foreign files.
+
+**NEXT:** BT-6 QA — regression gate across 14-doc gold-set.
+
+Zone health: host-safe backfill complete; 74 FPT BS rows stored + balance_check passes; golden anchors 270/300/400 live in inspector; 12/14 docs processed (2 VCB skipped_no_file — expected); zero Tesseract invoked | HEALTHY
+
+---
+
 ## c298 · 2026-05-25 (mcp-server Phase-2 P2-E — G3 composition-root extraction)
 
 ### P2-E — G3 Composition-Root Extraction DONE
