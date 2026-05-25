@@ -1,5 +1,30 @@
 # dev-mcp-server -- Notebook
 
+## c298 · 2026-05-25 (mcp-server Phase-2 P2-E — G3 composition-root extraction)
+
+### P2-E — G3 Composition-Root Extraction DONE
+
+**Commit:** `82ebb314` | 2 files | tsc EXIT 0 | bun test 9442/348 (≥9408/≤348 PASS) | tools=148 | sched=68
+
+**Delivered:**
+- `apps/mcp-server/src/index.ts` slimmed to 41L (thin entry point: LanceDB env suppression + imports + `const cfg = loadConfig(); const log = createLogger(cfg.logLevel);` + startup log + `await bootstrapMcpServer(cfg, log);`)
+- `apps/mcp-server/src/composition-root.ts` created at 120L: exports `bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<void>` containing all startup sections (env-check, DB+WAL+vnstock-migrations, trade-seed, HTTP server, Telegram env check, webhook, pdf-extractor health, scheduler, background OCR setTimeout [4 KEEP/G5-DEBT callers], graceful shutdown, signal handlers, unhandledRejection handler)
+
+**AC evidence:**
+- AC-1: index.ts=41L≤80 PASS; composition-root.ts=120L≤120 PASS
+- AC-2: `grep -E "calculate|compute|classify|resolve|encode|format|detect" composition-root.ts` → exit 1 (0 matches) PASS
+- AC-3: composition-root.ts contains ONLY imports, wiring calls, log statements, signal handler registrations — no data-value if conditions, no domain calculations, no bare SQL
+- AC-4: server starts (port 3000 occupied by Docker container — existing service returned toolCount=146, startup log shows WAL checkpoint + DB ready before EADDRINUSE)
+- AC-5: `bun run check` exit 0; bun test 9442/348; toolCount=148 (≥146); sched=68
+- AC-6: `git diff --cached --name-only` empty (post-commit clean)
+- FENCE SELF-CHECK: `bunx eslint src/ --max-warnings 0` exit 0
+
+**Type name fix:** `Config` → `AppConfig` (actual export from infrastructure/config.ts)
+
+**Zone health:** composition-root.ts extracted; index.ts=41L; G3 DONE; tsc clean; bun test 9442/348 PASS; ESLint fence exit 0 | HEALTHY
+
+---
+
 ## c297 · 2026-05-25 (BT-4b — one-shot BCTC table backfill job)
 
 ### BT-4b — One-shot backfill (PARTIAL / DEFERRED: BT-3-D blocker)
