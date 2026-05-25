@@ -136,4 +136,3 @@ export {
 
 // --- Kinh Dich sub-module ---
 export * from "./kinhDich/index.js";
-export * from "./kinhDich/kinhDichWrapper.js";

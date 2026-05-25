@@ -34,7 +34,8 @@ import {
   checkPositionDanger,
   checkWatchlistOpportunity,
 } from "../domain/services/alertPolicyChecker.js";
-import { appendKinhDich } from "../domain/services/kinhDich/kinhDichWrapper.js";
+// DEPRECATED-TEST: testing the deprecated wrapper — import path updated post-G5a move
+import { appendKinhDich } from "../infrastructure/_deprecated/kinhDichWrapper.js";
 
 // Interface layer
 import { handleTelegramCommand, type TelegramUpdate } from "../infrastructure/notifiers/telegramCommands.js";

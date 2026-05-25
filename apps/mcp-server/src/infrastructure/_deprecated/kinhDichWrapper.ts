@@ -1,3 +1,4 @@
+// DEPRECATED: 1954c G5a — direct callers moved to HTTP clients (P1-F). No live callers. Moved from domain/services/kinhDich/.
 // DEPRECATED: direct callers must use kinh-dich-service:5005 via clients.ts — see P1-F
 // G5-INVERSE REMEDIATION: appendKinhDich() callers (marketTools.ts, analysis.ts) have
 // been rewired to use getKinhDichReading() / getMarketHexagram() from clients.ts.
@@ -13,7 +14,7 @@
 //   const text = await appendKinhDich("VCB", baseText, db);
 
 import type { Database } from "bun:sqlite";
-import { QUE_META } from "./hexagramLibrary.js";
+import { QUE_META } from "../../domain/services/kinhDich/hexagramLibrary.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Row type for kinhdich_readings table queries
