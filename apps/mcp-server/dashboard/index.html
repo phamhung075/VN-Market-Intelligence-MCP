@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <!--
-  mcp-server Three-Tier Trust Dashboard — Phase 1 Stub (P1-B)
+  mcp-server Three-Tier Trust Dashboard — Phase 2 (P2-H-FIX)
   Opens via file:// URL — zero network dependency.
   CSS namespace: .mcp-*
-  Scenario traces read from: dashboard/traces/*.json (same directory as runner writes)
+  Inline data model: trace + module data embedded as <script type="application/json"> blocks.
+  No fetch(), no window.__MCP_* globals. test-path == user-path.
 -->
 <html lang="en">
 <head>
@@ -265,12 +266,156 @@
     .mcp-indicator-live { background: #3fb950; }
     .mcp-indicator-offline { background: #d29922; }
   </style>
+
+  <!-- AUTO-GENERATED: run 'bun run src/sandbox/runner.ts --emit-traces' to refresh -->
+  <script type="application/json" id="mcp-traces-data">
+  {
+    "traces": {
+      "sparkline-golden-happy": {
+        "scenario": "sparkline-golden-happy",
+        "primitive": "generateSparkline",
+        "status": "pass",
+        "actual": "▁▄▂█▇",
+        "expected": "▁▄▂█▇",
+        "match": true,
+        "error": null,
+        "timestamp": "2026-05-25T10:27:55.726Z",
+        "durationMs": 0.27
+      },
+      "sparkline-golden-empty": {
+        "scenario": "sparkline-golden-empty",
+        "primitive": "generateSparkline",
+        "status": "pass",
+        "actual": "—",
+        "expected": "—",
+        "match": true,
+        "error": null,
+        "timestamp": "2026-05-25T10:27:55.727Z",
+        "durationMs": 0
+      },
+      "sparkline-failure-null": {
+        "scenario": "sparkline-failure-null",
+        "primitive": "generateSparkline",
+        "status": "pass",
+        "actual": null,
+        "expected": { "error": true },
+        "match": true,
+        "error": "generateSparkline: input must not be null/undefined",
+        "timestamp": "2026-05-25T10:27:55.727Z",
+        "durationMs": 0.12
+      },
+      "signal-bus-golden-valid": {
+        "scenario": "signal-bus-golden-valid",
+        "primitive": "buildCrossValidateSignal",
+        "status": "pass",
+        "actual": {
+          "direction": "bullish",
+          "confidence": 0.8,
+          "summary": "Sector rotation confirmed by volume"
+        },
+        "expected": {
+          "direction": "bullish",
+          "confidence": 0.8,
+          "summary": "Sector rotation confirmed by volume"
+        },
+        "match": true,
+        "error": null,
+        "timestamp": "2026-05-25T10:27:55.730Z",
+        "durationMs": 0.05
+      },
+      "signal-bus-golden-minimal": {
+        "scenario": "signal-bus-golden-minimal",
+        "primitive": "buildCrossValidateSignal",
+        "status": "pass",
+        "actual": {
+          "direction": "neutral",
+          "confidence": 0.5,
+          "summary": "No clear directional bias"
+        },
+        "expected": {
+          "direction": "neutral",
+          "confidence": 0.5,
+          "summary": "No clear directional bias"
+        },
+        "match": true,
+        "error": null,
+        "timestamp": "2026-05-25T10:27:55.730Z",
+        "durationMs": 1.49
+      },
+      "signal-bus-failure-missing-required": {
+        "scenario": "signal-bus-failure-missing-required",
+        "primitive": "buildCrossValidateSignal",
+        "status": "pass",
+        "actual": null,
+        "expected": { "error": true },
+        "match": true,
+        "error": "buildCrossValidateSignal: direction, confidence, and summary are required",
+        "timestamp": "2026-05-25T10:27:55.728Z",
+        "durationMs": 0.06
+      },
+      "sector-classifier-golden-known-ticker": {
+        "scenario": "sector-classifier-golden-known-ticker",
+        "primitive": "classifySectorMovement",
+        "status": "pass",
+        "actual": "sector_wide",
+        "expected": "sector_wide",
+        "match": true,
+        "error": null,
+        "timestamp": "2026-05-25T10:27:55.727Z",
+        "durationMs": 0.09
+      },
+      "sector-classifier-golden-unknown-ticker": {
+        "scenario": "sector-classifier-golden-unknown-ticker",
+        "primitive": "classifySectorMovement",
+        "status": "pass",
+        "actual": "stock_specific",
+        "expected": "stock_specific",
+        "match": true,
+        "error": null,
+        "timestamp": "2026-05-25T10:27:55.728Z",
+        "durationMs": 0
+      },
+      "sector-classifier-failure-null-input": {
+        "scenario": "sector-classifier-failure-null-input",
+        "primitive": "classifySectorMovement",
+        "status": "pass",
+        "actual": null,
+        "expected": { "error": true },
+        "match": true,
+        "error": "classifySectorMovement: input must not be null/undefined",
+        "timestamp": "2026-05-25T10:27:55.728Z",
+        "durationMs": 0.01
+      }
+    }
+  }
+  </script>
+
+  <script type="application/json" id="mcp-modules-data">
+  {
+    "generated": "2026-05-25",
+    "source": "P1-C/D/E barrel decomposition",
+    "modules": [
+      { "barrel": "system", "subBarrels": ["memory","coordination","ops-debug","observability","vps"], "fileCount": 21 },
+      { "barrel": "macro", "subBarrels": ["http-proxy","local-computation"], "fileCount": 14 },
+      { "barrel": "sector", "subBarrels": ["domestic","market","cross-cutting"], "fileCount": 15 },
+      { "barrel": "market-data", "subBarrels": [], "fileCount": 9 },
+      { "barrel": "news-analysis", "subBarrels": [], "fileCount": 9 },
+      { "barrel": "alerts", "subBarrels": [], "fileCount": 9 },
+      { "barrel": "financial-reports", "subBarrels": [], "fileCount": 8 },
+      { "barrel": "portfolio", "subBarrels": [], "fileCount": 7 },
+      { "barrel": "briefings", "subBarrels": [], "fileCount": 5 },
+      { "barrel": "backtesting", "subBarrels": [], "fileCount": 2 },
+      { "barrel": "analysis", "subBarrels": [], "fileCount": 1 },
+      { "barrel": "kinhdich", "subBarrels": [], "fileCount": 1 }
+    ]
+  }
+  </script>
 </head>
 <body>
 
 <div class="mcp-header">
   <h1>mcp-server Trust Dashboard</h1>
-  <div class="mcp-subtitle">Phase 1 stub &middot; file:// mode &middot; Auto-reads dashboard/traces/*.json</div>
+  <div class="mcp-subtitle">Phase 2 (P2-H-FIX) &middot; file:// mode &middot; Inline data model &mdash; zero fetch, zero globals</div>
 </div>
 
 <div class="mcp-panels">
@@ -325,41 +470,12 @@
 
 <script>
   /**
-   * Known trace file names — matches the scenario files in src/sandbox/scenarios/.
-   * This list is updated as new scenarios are added.
-   *
-   * For file:// mode: fetch() with relative paths works in Chromium-based browsers.
-   * For Firefox file:// with security.fileuri.strict_origin_policy=true, use a local
-   * HTTP server (e.g., `python3 -m http.server 8080` in apps/mcp-server/).
+   * Inline data model (P2-H-FIX):
+   * Trace and module data are embedded as <script type="application/json"> blocks in <head>.
+   * Dashboard JS reads from the DOM via document.getElementById(...).textContent + JSON.parse.
+   * No fetch(), no window.__MCP_* globals. test-path == user-path.
+   * Works under file://, http://, and Playwright headless — identical code path.
    */
-  const KNOWN_TRACES = [
-    "sparkline-golden-happy",
-    "sparkline-golden-empty",
-    "sparkline-failure-null",
-    // P1-H primitives (added in P1-H):
-    "signal-bus-golden-valid",
-    "signal-bus-golden-minimal",
-    "signal-bus-failure-missing-required",
-    "sector-classifier-golden-known-ticker",
-    "sector-classifier-golden-unknown-ticker",
-    "sector-classifier-failure-null-input",
-    // P2-H trust-contract regression tripwire (intentional RED indicator):
-    "sparkline-regression-tripwire",
-  ];
-
-  async function fetchTrace(name) {
-    // Check for pre-injected test data (injected by Playwright addInitScript)
-    if (window.__MCP_TRACES__ && window.__MCP_TRACES__[name]) {
-      return window.__MCP_TRACES__[name];
-    }
-    try {
-      const res = await fetch(`traces/${name}.json`);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch {
-      return null;
-    }
-  }
 
   function escapeHtml(str) {
     if (str === null || str === undefined) return "";
@@ -368,6 +484,26 @@
       .replace(/</g, "&lt;")
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;");
+  }
+
+  /**
+   * Read trace data from the inline <script type="application/json" id="mcp-traces-data"> block.
+   * Returns an object keyed by scenario name.
+   */
+  function getInlineTraces() {
+    const el = document.getElementById('mcp-traces-data');
+    if (!el) return {};
+    try { return JSON.parse(el.textContent).traces ?? {}; } catch { return {}; }
+  }
+
+  /**
+   * Read module data from the inline <script type="application/json" id="mcp-modules-data"> block.
+   * Returns the modules object or null.
+   */
+  function getInlineModules() {
+    const el = document.getElementById('mcp-modules-data');
+    if (!el) return null;
+    try { return JSON.parse(el.textContent); } catch { return null; }
   }
 
   function renderCard(trace) {
@@ -390,15 +526,15 @@
     `;
   }
 
-  async function loadTraces() {
+  function loadTraces() {
     const contentEl = document.getElementById("mcp-primitives-content");
     const summaryEl = document.getElementById("mcp-primitives-summary");
 
     contentEl.innerHTML = '<div class="mcp-empty-state">Loading...</div>';
     summaryEl.style.display = "none";
 
-    const results = await Promise.all(KNOWN_TRACES.map(fetchTrace));
-    const loaded = results.filter(Boolean);
+    const tracesMap = getInlineTraces();
+    const loaded = Object.values(tracesMap);
 
     if (loaded.length === 0) {
       contentEl.innerHTML = `
@@ -422,13 +558,10 @@
         <div class="mcp-summary-dot mcp-summary-fail"></div>
         <span style="color:#f85149">${failCount} fail</span>
       </div>
-      <span style="color:#6e7681">&middot; ${loaded.length}/${KNOWN_TRACES.length} scenarios found</span>
+      <span style="color:#6e7681">&middot; ${loaded.length} scenarios</span>
     `;
     summaryEl.style.display = "flex";
   }
-
-  // Load on page open
-  loadTraces();
 
   // ── Module panel ──────────────────────────────────────────────
 
@@ -445,27 +578,15 @@
     `;
   }
 
-  async function loadModules() {
+  function loadModules() {
     const el = document.getElementById("mcp-modules-content");
     el.innerHTML = '<div class="mcp-empty-state">Loading...</div>';
-    try {
-      // Check for pre-injected test data (injected by Playwright addInitScript)
-      let data;
-      if (window.__MCP_MODULES__) {
-        data = window.__MCP_MODULES__;
-      } else {
-        const res = await fetch("data/modules.json");
-        if (!res.ok) throw new Error("HTTP " + res.status);
-        data = await res.json();
-      }
-      if (!data.modules || data.modules.length === 0) {
-        el.innerHTML = '<div class="mcp-empty-state">No modules found in data/modules.json</div>';
-        return;
-      }
-      el.innerHTML = data.modules.map(renderModuleRow).join("");
-    } catch (err) {
-      el.innerHTML = `<div class="mcp-empty-state">Failed to load modules.json: ${escapeHtml(String(err))}</div>`;
+    const data = getInlineModules();
+    if (!data || !data.modules || data.modules.length === 0) {
+      el.innerHTML = '<div class="mcp-empty-state">No modules found in inline data block</div>';
+      return;
     }
+    el.innerHTML = data.modules.map(renderModuleRow).join("");
   }
 
   // ── Microservice panel ────────────────────────────────────────
@@ -502,8 +623,12 @@
     }
   }
 
-  loadModules();
-  loadMicroservice();
+  // Initialize all panels when DOM is ready
+  document.addEventListener('DOMContentLoaded', function() {
+    loadTraces();
+    loadModules();
+    loadMicroservice();
+  });
 </script>
 
 </body>
