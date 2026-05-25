@@ -1,5 +1,39 @@
 # dev-mcp-server -- Notebook
 
+## c294 · 2026-05-25 (mcp-server Phase-1 refactor P1-A→P1-H DONE)
+
+### mcp-server Phase-1 build wave (P1-A through P1-H) — ALL DONE
+
+**Commits (chronological):**
+- P1-A: sandbox types + runner + 3 sparkline scenarios + types.ts
+- P1-B: three-panel trust dashboard (dashboard/index.html, file:// compatible)
+- P1-C: system/ barrel decomposed → 5 sub-barrels (memory/coordination/ops-debug/observability/vps)
+- P1-D: macro/ barrel decomposed → 2 sub-barrels (http-proxy/local-computation)
+- P1-E: sector/ barrel decomposed → 3 sub-barrels (domestic/market/cross-cutting)
+- P1-F: G5-inverse — appendKinhDich() replaced with HTTP callers via clients.ts (3 files: marketTools, analysis, portfolioTools); hexagramNames.ts GLUE re-export; kinhDichWrapper.ts DEPRECATED
+- P1-G: G5-DEBT annotation on pdf.ts + pdfOcrWorker.ts (4 KEEP callers, architect-frozen)
+- P1-H (commit a9212ad2): 6 new sandbox scenarios (signal-bus 3 + sector-classifier 3); --emit-traces flag; 9/9 PASS; G7 honest-red proven
+
+**Final regression tripwires:**
+- tsc --noEmit: EXIT:0
+- bun test: 9412 pass / 344 fail (within ≥9408/≤348)
+- toolCount: 146 (live Docker container)
+- scheduler .schedule() calls: 71 (≥68 baseline)
+
+**G1-PRIMITIVE-CANDIDATEs noted (Phase 2 backlog):**
+- `isMacroSnapshotValidShape` in macro/http-proxy (macroSnapshotGuard)
+- `severityLabels` in sector/cross-cutting
+
+**BLOCKED-ON-DOCKER-SESSION:**
+- Docker rebuild + container re-verify
+- P1-QA container checks
+
+**Next:** P1-EXIT → PO closes pilot; QA agent verifies in next Docker session
+
+Zone health: Phase-1 sandbox runner + 9 scenarios operational; 3 barrel waves (system/macro/sector) decomposed; G5-inverse complete for kinh-dich; G5-DEBT annotated for BCTC path | HEALTHY
+
+---
+
 ## c293 · 2026-05-25 (NEWS-INGEST-2b)
 
 ### NEWS-INGEST-2b — Surface VN news articles in /api/news-fetch/live (DONE)
