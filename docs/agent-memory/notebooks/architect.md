@@ -1,8 +1,48 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-24 21:10 UTC | **Sprint:** KD-QREF-LANG-1
+**Last updated:** 2026-05-25 00:00 UTC | **Sprint:** P0-MCP-1
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## P0-MCP-1 — mcp-server brownfield inventory (2026-05-25T~UTC) — DESIGN COMPLETE
+
+**Task:** P0-MCP-1. Read-only brownfield inventory of the mcp-server scale pilot (LAST factory microservice, RUN-SOLO / HIGHEST-RISK). Phase-0 UNBLOCKED by PO (HELD pre-0 → ACTIVE 2026-05-25T08:40:43Z, commit 15134e72-area). Mirrors frontend P0 pattern.
+
+**Key brownfield findings:**
+
+1. **12 barrel modules confirmed:** system(21), sector(15), macro(14), market-data(9), news-analysis(9), alerts(9), financial-reports(8), portfolio(7), briefings(5), backtesting(2), analysis(1), kinhdich(1). Total tool files: 115 non-index .ts files across tools/.
+
+2. **Tool count SSOT:** `docs/data/project-stats.json#toolCount` = 146. **Cron count SSOT:** `docs/data/project-stats.json#cronJobCount` = 77. System-map.json shows 125 tools / 65 crons (curation lag vs live stats).
+
+3. **G5-inverse headline:** TA ✓, stock-price ✓, RAG ✓ fully HTTP-routed. kinh-dich PARTIAL (kinhDichWrapper bypassed by marketTools.ts + analysis.ts — R-CRITICAL). macro PARTIAL (8+ local computation tools legitimately owned, only get_macro_snapshot routes via HTTP). pdf-extractor PARTIAL (1954c consolidation landed but pdf.ts + pdfOcrWorker.ts not yet in _deprecated/).
+
+4. **R-CRITICAL (kinhDichWrapper bypass):** `marketTools.ts` and `news-analysis/analysis.ts` directly import `appendKinhDich()` from `domain/services/kinhDich/kinhDichWrapper.ts`. `portfolioTools.ts` imports `QUE_META` from `hexagramLibrary.ts`. These bypass kinh-dich-service:5005 — live G5-inverse violation flagged.
+
+5. **Top 3 barrel-decomposition seams:** SEAM-1 = `system/` (21 files, 5 sub-domain clusters); SEAM-2 = `macro/` (HTTP-proxy vs local-computation split); SEAM-3 = `sector/` (15 topic files, pure domain clusters).
+
+6. **Scheduler coupling risk:** `dailyDashboardJob.ts` reads `docs/agent-memory/sessions/` + `docs/TASKS.md` + `docs/data/project-stats.json` via `getProjectRoot()` — ENOENT class on any path change. `bctcPdfPullJob.ts` in 1954c consolidation zone.
+
+7. **Dashboards served:** bctc-inspector.html + news-fetch-dashboard/ via 8 HTTP route handlers. NOT G6 trust layer — G6 three-tier trust dashboard must be built fresh in Phase 1.
+
+8. **Test harness:** 905 Bun test files (`bun test`). No ESLint layer fence. One lint test (`no-local-project-root`). G4 fence = ESLint + `eslint-plugin-boundaries` or `no-restricted-imports` — must be installed in Phase 1.
+
+9. **bctc-schema.ts monorepo-root coupling:** Dockerfile COPY + relative import path from `src/infrastructure/db/` — fragile, must resolve during barrel reorganization.
+
+10. **MVR-vs-FULL verdict: FULL.** mcp-server IS the domain host; no upstream service to delegate to. Full G1-G12 scope mandatory.
+
+**Risk flags:**
+- R-CRITICAL: kinhDichWrapper bypass in marketTools.ts + analysis.ts (live G5 debt pre-existing)
+- R-MEDIUM: pdf.ts + pdfOcrWorker.ts not in _deprecated/ (post-1954c cleanup pending)
+- R-HIGH: 146-tool blast radius on any barrel split — QA-gate required per barrel before proceeding
+- R-HIGH: 77 cron jobs — regression silently breaks daily operational data (dailyDashboardJob ENOENT class)
+- R-LOW: bctc-schema.ts monorepo-root relative import (fragile path)
+- R-LOW: 905 test files must not regress the 9277 passing baseline
+
+**Files authored this cycle (2):**
+1. `docs/handoffs/TASK_P0-MCP-1-brownfield-inventory.md` (NEW)
+2. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** PO — P0-MCP-2 (bug-inventory baseline) + P0-MCP-3 (dev-mcp-server agent/flow confirm) + P0-MCP-5 (Phase-1 task plan) gated on this inventory.
 
 ## KD-QREF-LANG-1 — i18n design for 64-Quẻ Trading Reference EN/VI Switch (2026-05-24T~UTC) — DESIGN COMPLETE
 
