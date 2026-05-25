@@ -302,3 +302,82 @@ Test 2e — Health endpoint (NF-LD-2 regression):
 
 **Status:** DIAGNOSED + DOCUMENTED. Ready for developer to add logging and investigate INSERT behavior.
 
+
+## 2026-05-25 · MCP Service Connectivity Incident — Docker Network Hostname Resolution
+
+**Incident Report:**
+- 4 cowork agents reported service unavailable errors:
+  - `get_macro_snapshot` → "macro-indicators service unavailable"
+  - `get_macro_calendar` → "macro-indicators service unavailable"
+  - `get_market_hexagram` → "unable to connect"
+  - `get_kinhdich_reading` → "unable to connect"
+
+**Root Cause Diagnosis:**
+
+MCP server container was using hardcoded `localhost:5004` and `localhost:5005` as default fallbacks for macro-indicators and kinh-dich services. From inside a Docker container, `localhost` resolves to the container's own network interface (127.0.0.1), NOT the host or other containers.
+
+**Evidence:**
+1. Both services were running and healthy:
+   - `docker ps`: macro-indicators UP 22 min (healthy), kinh-dich UP 22 min (healthy)
+   - `curl http://localhost:5004/health`: 200 OK ✓
+   - `curl http://localhost:5005/health`: 200 OK ✓
+
+2. API gateway could reach them correctly (uses proper Docker hostnames):
+   - docker-compose.yml line 233: `MACRO_URL=http://macro-indicators:5004`
+   - docker-compose.yml line 235: `KINH_DICH_URL=http://kinh-dich-service:5005`
+
+3. MCP server code uses environment variable fallbacks:
+   - `apps/mcp-server/src/infrastructure/microservices/clients.ts` lines 20-29
+   - `MACRO_SERVICE_URL ?? 'http://localhost:5004'` (WRONG from inside container)
+   - `KINH_DICH_URL ?? 'http://localhost:5005'` (WRONG from inside container)
+
+4. docker-compose.yml was missing environment variables for MCP server:
+   - Had PDF_EXTRACTOR_URL set (line 28) — this worked because fallback is also localhost
+   - Missing: GATEWAY_URL, STOCK_PRICE_URL, RAG_SERVICE_URL, TA_SERVICE_URL, MACRO_SERVICE_URL, KINH_DICH_URL, ALERT_ENGINE_URL
+
+**Resolution:**
+1. Updated docker-compose.yml (lines 29-35) to add missing microservice URLs:
+   ```yaml
+   GATEWAY_URL: http://api-gateway:4000
+   STOCK_PRICE_URL: http://stock-price:5000
+   RAG_SERVICE_URL: http://rag-service:5002
+   TA_SERVICE_URL: http://technical-analysis:5003
+   MACRO_SERVICE_URL: http://macro-indicators:5004
+   KINH_DICH_URL: http://kinh-dich-service:5005
+   ALERT_ENGINE_URL: http://alert-engine:5006
+   ```
+
+2. Restarted mcp-server container:
+   - `docker-compose down mcp-server && docker-compose up -d mcp-server`
+   - Container healthy in 13 seconds
+
+**Post-Fix Verification:**
+1. Environment variables confirmed in container:
+   ```
+   docker exec vn-market-intelligence-mcp-mcp-server-1 env | grep MACRO
+   MACRO_SERVICE_URL=http://macro-indicators:5004 ✓
+   ```
+
+2. Microservice endpoints accessible from MCP server container:
+   - `docker exec mcp-server curl http://macro-indicators:5004/snapshot` → 200 + data ✓
+   - `docker exec mcp-server curl http://kinh-dich-service:5005/market` → 200 + hexagram ✓
+
+3. Gateway proxies working:
+   - `curl http://localhost:4000/macro/snapshot` → 200 + data ✓
+   - `curl http://localhost:4000/kinh-dich/market` → 200 + hexagram ✓
+
+4. All containers UP:
+   - `docker ps | grep -v pause` shows 12 services all running
+
+**Impact:**
+- **Severity:** HIGH (4 MCP tools broken for all downstream agents)
+- **Duration:** Unknown (incident was reported but time-to-first-occurrence unclear)
+- **Recovery:** Complete — all services now accessible
+
+**Lessons Learned:**
+1. Docker Compose environment variables must use service hostnames (e.g., `macro-indicators:5004`), NOT localhost
+2. Fallback hardcoded values in code should match Docker network topology, not local development
+3. All microservice URLs should be explicitly set in docker-compose for clarity (no relying on fallbacks)
+
+**Status:** RESOLVED — MCP server can now reach all downstream microservices. Cowork agents should no longer see service unavailable errors.
+
