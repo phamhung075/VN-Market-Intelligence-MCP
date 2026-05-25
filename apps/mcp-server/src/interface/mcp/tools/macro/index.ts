@@ -1,23 +1,13 @@
 /**
- * Macro module barrel — Sprint 210
- * Public API: macro indicators, policy, predictions, calibration, evidence
+ * Macro module barrel — Phase 1 P1-D barrel wave 2
+ * Decomposed into 2 sub-barrels: http-proxy, local-computation
+ *
+ * http-proxy: tools that delegate to macro-indicators:5004 via HTTP
+ * local-computation: tools with legitimate local domain ownership (NOT G5 targets)
+ *
+ * Tool files themselves do NOT move — only index.ts files are created/modified.
  */
-export { registerMacroTools } from "./macroTools.js";
-export { registerPolicyTools } from "./policyTools.js";
-export { registerPredictionTools } from "./predictionTools.js";
-export { registerCalibrationTools } from "./calibrationTools.js";
-export { registerEvidenceTools } from "./evidenceTools.js";
-export { registerRateLimitTools } from "./rateLimitTools.js";
-// Task 1296b: IMF sentiment signals tool
-export { registerImfSignalsTool } from "./imfSignals.js";
-// Task 1423e: macro calendar tool
-export { registerCarryTools } from "./carryTools.js";
-// Task 1426b: yield spread signal tool (Báu Phase 2 — Dinh Gia)
-export { registerDinhGiaTools } from "./dinhGiaTools.js";
-// Task 1880a: Investment Clock phase tool
-// Task 1880b: Pyramid tier tool
-export { registerInvestmentClockTools, registerPyramidTierTool } from "./investmentClockTools.js";
-// Task 1879b: Fed Liquidity Spread tool
-export { registerFedLiquiditySpreadTool } from "./getFedLiquiditySpreadTool.js";
-// Task 1910a: ISM sub-components tool
-export { registerGetIsmSubcomponentsTool } from "./getIsmSubcomponentsTool.js";
+// HTTP-proxy: macro/carry/dinhGia tools + routing helpers (macroHttpClient, macroSnapshotGuard)
+export * from "./http-proxy/index.js";
+// Local-computation: policy, calibration, rateLimiter, IMF, investmentClock, fedLiquidity, ISM, evidence, prediction
+export * from "./local-computation/index.js";
