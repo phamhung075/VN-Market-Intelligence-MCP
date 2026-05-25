@@ -2333,3 +2333,116 @@ The pre-supply backfill path (Path A, `bctcBatchTableBackfillJob.ts` → `POST /
 dev-pdf-extractor (section filter + period fix) → dev-mcp-server/ops (re-backfill, only if a store/read change is needed) → qa (re-verify live) → po (final BT-EXIT sign-off). Build ON the existing pipeline — no schema change, no new endpoint; this is a filter on the supplied page texts + period-detection scoping.
 
 ---
+
+## [Developer] BT-7 — dev-pdf-extractor — DONE
+
+**Commit:** TBD | **Branch:** main | **Date:** 2026-05-25
+
+### Root cause confirmed
+
+Path A (`ExtractTablesUseCase.execute()` with `pre_supplied_pages`) passed ALL stored OCR pages directly to `TextTableExtractor.assemble()` with no section filter. Path B (in-process OCR via `PdfOcrAdapter.locate_balance_sheet_pages`) applied the BS marker scan — Path A skipped it. Two concrete defects:
+1. FPT Q4: 44 pages → 2170 rows (2074 noise); golden anchors correct but buried.
+2. `period_current = "26/01/2026"` — `_detect_periods()` picked the first date found across all pages, which was the digital-signature timestamp on the signature page (page 2, "Date: 2026.01.26 16:18:09 +07'00'").
+
+### What was delivered
+
+7 files, zero foreign:
+
+1. **`domain/primitives/select_balance_sheet_section/__init__.py`** (CREATE)
+   — Package init, exports `select_balance_sheet_section`.
+
+2. **`domain/primitives/select_balance_sheet_section/primitive.py`** (CREATE)
+   — Pure domain function: scans `{page_number, text}` list for Vietnamese BS markers; returns contiguous BS section only. Mirrors `PdfOcrAdapter.locate_balance_sheet_pages()` logic but operates on pre-supplied text (no PDF I/O). Gap-tolerance=1, max 10 BS pages, safe fallback (all pages if no markers found). Markers: "bảng cân đối kế toán", "tài sản ngắn hạn", "nguồn vốn", "tổng cộng tài sản", "nợ phải trả", "vốn chủ sở hữu", "tình hình tài chính" (+ unaccented variants). DDD: ZERO infra imports, Fence-A safe.
+
+3. **`infrastructure/text_table_extractor.py`** (MODIFY — period detection hardening)
+   — Added `_SIGNATURE_TIME_RE = re.compile(r"\d{2}:\d{2}:\d{2}")`.
+   — Added `_is_signature_line(line) -> bool` (True if line contains HH:MM:SS pattern).
+   — Rewrote `_detect_periods(lines)` — two-pass approach:
+     - Pass 1: find line with ≥2 dates (BS column header "31/12/2025  31/12/2024") → use those directly.
+     - Pass 2 fallback: scan non-signature lines for first two unique dates.
+   — Signature timestamp "26/01/2026 16:18:09 +07'00'" now correctly rejected.
+
+4. **`application/extract_tables_usecase.py`** (MODIFY — Path A section filter)
+   — Imports `select_balance_sheet_section` from domain primitive.
+   — Path A branch now calls `select_balance_sheet_section(raw_pages)` for `balance_sheet` sections BEFORE calling `assemble()`. For non-BS sections, all pages passed unchanged.
+   — Adds log: "BS section filter: N pre-supplied pages → M BS pages".
+   — Warns if filter finds no markers (fallback: all pages, logs warning).
+
+5. **`__tests__/unit/test_bt7_path_a_section_filter.py`** (CREATE — 10 tests)
+   - 5 pure primitive tests (`select_balance_sheet_section`):
+     - Filter 44 noisy pages → 4 BS pages only
+     - Keep BS-only input unchanged
+     - Empty input → empty result
+     - Signature page excluded (date but no BS markers)
+     - Notes page with date excluded (not a BS marker)
+   - 2 period detection tests:
+     - Signature date rejected when signature page last in list
+     - Signature date rejected when signature page first in list (exact FPT Q4 scenario)
+   - 1 Path-A end-to-end: 44 noisy pages → filter → row count ≤96, period_current="31/12/2025", golden anchors 270/300/400 exact, balance_pass=True, OCR never called (FakeOcrPortRaiseOnCall)
+   - 1 Path-A period-prior test: period_prior="31/12/2024"
+   - 1 Path-B sanity: FakeOcrPort returning BS pages only → balance_pass=True (Path B unaffected)
+
+6. **`docs/architecture/microservice/pdf-extractor/usecases.md`** (MODIFY — BT-7 section added)
+
+7. **`docs/agent-memory/notebooks/dev-pdf-extractor.md`** (MODIFY — BT-7 cycle appended)
+
+### Red→Green evidence
+
+- **Baseline:** 271 passed (pre-BT-7, excluding slow real-OCR tests)
+- **New tests initial run (RED confirmed):**
+  - 9 FAILED (`ModuleNotFoundError: select_balance_sheet_section` for primitive tests; `period_current='26/01/2026'` for period tests; full Path-A test: row count would be massive pre-fix)
+  - 1 PASSED (`test_path_b_slow_real_ocr_test_still_green` — Path B already worked)
+- **After implementation:** 10/10 GREEN
+- **Full suite:** 281 passed (271 + 10 new), 0 failed
+
+### Path-A before/after evidence (fixture-based)
+
+| Metric | Before BT-7 (Path A) | After BT-7 (Path A) |
+|--------|----------------------|---------------------|
+| Pages fed to assembler | 44 (all stored OCR) | 4 (BS section only) |
+| Rows stored | ~2170 | ≤96 (BS rows only) |
+| period_current | "26/01/2026" (signature date) | "31/12/2025" (BS header) |
+| period_prior | "31/12/2025" (corrupted) | "31/12/2024" (BS header) |
+| Code 270 (Total Assets) | 88,089,621,779,862 (correct — buried) | 88,089,621,779,862 (exact) |
+| Code 300 (Total Liabilities) | 44,338,155,487,272 (correct — buried) | 44,338,155,487,272 (exact) |
+| Code 400 (Total Equity) | 43,751,466,292,590 (correct — buried) | 43,751,466,292,590 (exact) |
+| balance_pass | True | True |
+
+### Fence status
+
+- Fence-A: KEPT — new primitive has ZERO infra/app/interface imports
+- Fence-B: KEPT — no change to domain.modules
+- 72 files analyzed, 131 dependencies, 2 kept, 0 broken
+- **Deliberate-violation test:** injected `from infrastructure.config import Config` into `select_balance_sheet_section/primitive.py` → lint-imports exit 1, "BROKEN" printed, violation reported. File restored. Fence is LIVE (not false-green).
+
+### Sandbox status
+
+- Primitive-tier: `confidence_scorer/happy_high_conf.json` → PASS
+- Module-tier: `financial_reports/multi_primitive_story.json` → PASS (balance_check=null — backward-compat)
+- Zero creds in env: `env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD|VPS_|VINAHOST"` → 0 results
+
+### AC verification
+
+- AC-1: Not verifiable in unit tests (live DB needed post-backfill) — fixture proves ≤96 rows for FPT-scale noisy input. Row count verification deferred to re-backfill. FIXTURE PROVEN.
+- AC-2: `period_current = "31/12/2025"` — proven via `test_period_detection_rejects_signature_date_when_first_in_all_pages`. PASS.
+- AC-3: Path A applies `select_balance_sheet_section` (same marker logic as Path B's `locate_balance_sheet_pages`). `test_path_a_with_noisy_pages_after_bt7_fix_filters_to_bs_section` drives Path A end-to-end. PASS.
+- AC-4: Idempotency — DELETE+INSERT already guaranteed by BT-3i-A push handler. Not changed here. PRESERVED.
+- AC-5: FPT Q1 recovery — marker `"tình hình tài chính"` added to `_BS_STRONG_MARKERS`. Will locate "BÁO CÁO TÌNH HÌNH TÀI CHÍNH HỢP NHẤT" on page 3. Verification deferred to re-backfill.
+- AC-6: Golden anchors tested in fixture (270/300/400 exact). Genuinely-balancing docs unaffected — filter keeps all BS pages including those with balance-check codes.
+- AC-7: Privacy (zero external API — self-hosted only) PASS. Fence-A/B PASS (72 files, 2 kept, 0 broken). Frozen surfaces: `pilot-status-pdf-extractor.json` + `sandbox/runner.py` + `dashboard/` NOT touched. Zero foreign files in commit.
+
+### Post-commit check (pending — mutex attempt required)
+
+`git show --stat HEAD` — must list exactly 7 files, zero foreign files.
+
+### Handoff: NEXT (re-deploy + re-backfill + QA re-verify + PO final sign-off)
+
+**Ops/dev-mcp-server:** Re-deploy pdf-extractor (docker compose up -d --no-deps pdf-extractor). Then re-run `backfillBctcTables()` for the 12 eligible docs. Expected outcome:
+- FPT Q4: rows drops from 2170 to ~74-96, period_current="31/12/2025", balance_pass=True
+- FPT Q1: rows > 0 (was 0 — page 3 should now be found by "tình hình tài chính" marker)
+- BSR/DIG: if income-statement-only, 0 rows is honest (filter finds no BS markers → fallback all pages → assembler finds no BS codes → 0 rows stored)
+- VEA/HPG: balance_pass=True still expected (their BS markers are present in stored OCR)
+
+**QA:** Re-verify AC-1..AC-6 live after backfill. Then PO final BT-EXIT sign-off.
+
+---

@@ -100,6 +100,11 @@ _PURE_VALUE_LINE_RE = re.compile(
 # Regex: period header — Vietnamese date format DD/MM/YYYY (or YYYY/MM/DD variation)
 _DATE_RE = re.compile(r"\d{1,2}/\d{1,2}/\d{4}")
 
+# Regex: detect a digital-signature timestamp immediately following a date.
+# Signatures appear as: "26/01/2026 16:18:09 +07'00'" — HH:MM:SS after the date.
+# We reject any date found on a line that also contains an HH:MM:SS time pattern.
+_SIGNATURE_TIME_RE = re.compile(r"\d{2}:\d{2}:\d{2}")
+
 # Vietnamese unit header tokens — matches both "Đơn vị tính" and "Đơn vị:"
 _UNIT_HEADER_VI_KEYWORDS = ["đơn vị tính", "đơn vị:"]
 
@@ -136,19 +141,58 @@ def _detect_unit(text: str) -> str:
     return _UNIT_BILLION_VND
 
 
+def _is_signature_line(line: str) -> bool:
+    """
+    Return True if the line looks like a digital-signature timestamp.
+
+    Signature lines contain a date AND a time pattern (HH:MM:SS), e.g.:
+        "26/01/2026 16:18:09 +07'00'"
+        "Date: 2026.01.26 16:18:09 +07'00'"
+
+    Such lines must NOT contribute to period_current / period_prior detection.
+    """
+    return bool(_SIGNATURE_TIME_RE.search(line))
+
+
 def _detect_periods(lines: List[str]) -> tuple[Optional[str], Optional[str]]:
     """
     Scan lines for date patterns to identify period_current and period_prior.
     Returns (period_current, period_prior) — both may be None.
+
+    BT-7 hardening: two-pass approach.
+    Pass 1 (preferred): look for a line containing EXACTLY TWO dates (BS column
+        header, e.g. "31/12/2025      31/12/2024"). Two dates on one line is a
+        strong signal for the BCTC period header. Use those as current + prior.
+    Pass 2 (fallback): scan all lines for the first date that is NOT on a
+        signature line (does not contain HH:MM:SS adjacent to the date).
+
+    Rationale: cover pages and digital-signature pages often contain a single date
+    ("26/01/2026" = signature timestamp). The BS period header always contains
+    two dates on the same line. By preferring two-date lines, we avoid picking
+    up the signature date as period_current.
     """
+    # Pass 1: find a line with exactly two dates — strong BS header signal
+    for line in lines:
+        # Reject signature lines regardless
+        if _is_signature_line(line):
+            continue
+        matches = _DATE_RE.findall(line)
+        if len(matches) >= 2:
+            # Two dates on the same line = BS period header (current + prior)
+            return matches[0], matches[1]
+
+    # Pass 2: fallback — collect dates from non-signature lines (first two unique)
     dates_found: List[str] = []
     for line in lines:
+        if _is_signature_line(line):
+            continue
         matches = _DATE_RE.findall(line)
         for m in matches:
             if m not in dates_found:
                 dates_found.append(m)
         if len(dates_found) >= 2:
             break
+
     period_current = dates_found[0] if dates_found else None
     period_prior = dates_found[1] if len(dates_found) > 1 else None
     return period_current, period_prior

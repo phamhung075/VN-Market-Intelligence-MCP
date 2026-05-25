@@ -1,5 +1,5 @@
 """
-application/extract_tables_usecase.py — BT-3-B + BT-5 + BT-3-D
+application/extract_tables_usecase.py — BT-3-B + BT-5 + BT-3-D + BT-7
 
 ExtractTablesUseCase: orchestrates TEXT-path table extraction + balance check +
 cross-check gate (BT-5) + push.
@@ -77,6 +77,7 @@ from domain.modules.financial_reports.ports import (
     TablePushClientPort,
 )
 from domain.primitives.reconcile_figures import reconcile_figures
+from domain.primitives.select_balance_sheet_section import select_balance_sheet_section
 from domain.repositories import AlertPort, OcrPort
 
 logger = logging.getLogger(__name__)
@@ -340,9 +341,40 @@ class ExtractTablesUseCase:
         if pre_supplied_pages and all(p.get("text") is not None for p in pre_supplied_pages):
             # Path A: caller pre-supplied OCR text (e.g. mcp-server backfill from
             # pdf_extracted_text) — no Tesseract needed. Host-safe.
-            pages = pre_supplied_pages
+            #
+            # BT-7 fix: apply balance-sheet section filter BEFORE assembling.
+            # Without this filter, ALL stored OCR pages (including cover, signature,
+            # notes) flood the assembler → ~2000+ noise rows and a corrupted
+            # period_current (e.g., "26/01/2026" from digital-signature timestamp
+            # instead of "31/12/2025" from the BS column header).
+            #
+            # select_balance_sheet_section() is a pure domain primitive that scans
+            # each page's text for Vietnamese BS markers and returns only the
+            # contiguous BS section pages. Applied here (Path A) so both paths
+            # (A and B) feed only BS pages to the assembler.
+            raw_pages = pre_supplied_pages
+            if statement_section == "balance_sheet":
+                pages = select_balance_sheet_section(raw_pages)
+                logger.info(
+                    "ExtractTablesUseCase: BS section filter: %d pre-supplied pages → "
+                    "%d BS pages (section=%s)",
+                    len(raw_pages),
+                    len(pages),
+                    statement_section,
+                )
+                if len(pages) == len(raw_pages):
+                    # No filter applied (fallback: no markers found — non-standard layout)
+                    logger.warning(
+                        "ExtractTablesUseCase: BS section filter found no markers in "
+                        "pre-supplied pages — using all %d pages (non-standard layout). "
+                        "Row count may be noisy.",
+                        len(pages),
+                    )
+            else:
+                # Non-balance-sheet sections: no section filter needed
+                pages = raw_pages
             logger.info(
-                "ExtractTablesUseCase: using %d pre-supplied pages (no OCR needed)",
+                "ExtractTablesUseCase: using %d pre-supplied pages after filtering (no OCR needed)",
                 len(pages),
             )
         elif self._ocr_port is not None:

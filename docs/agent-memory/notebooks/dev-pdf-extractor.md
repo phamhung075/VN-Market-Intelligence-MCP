@@ -4,6 +4,43 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-25 — BT-7 DONE (Path-A section filter + period detection hardening)
+
+**Commit:** TBD | Sprint: BCTC-TABLE | Task: BT-7
+
+**Root cause (confirmed by PO):**
+- Path A (mcp-server backfill pre-supplying all stored OCR pages) fed ALL 44 FPT Q4 pages to assembler → 2170 rows (2074 noise).
+- `period_current` picked `"26/01/2026"` from digital-signature timestamp on page 2 (not the BS header `"31/12/2025"`).
+- Path B (in-process OCR via `PdfOcrAdapter.locate_balance_sheet_pages`) only processed BS pages → clean ~74-96 rows. Path A skipped the auto-locate entirely.
+
+**Fix 1 — `select_balance_sheet_section` pure domain primitive:**
+- `domain/primitives/select_balance_sheet_section/primitive.py` — pure function, zero I/O.
+- Scans each page's text for Vietnamese BS markers (same list as `ocr_adapter._BS_MARKERS`).
+- Returns only the contiguous BS section pages (gap-tolerance=1, max 10 pages, safe fallback = all pages if no markers found).
+- Applied in `application/extract_tables_usecase.py` Path A BEFORE assembler call (only for `balance_sheet` section).
+- DDD clean: pure domain primitive, imported by application layer — Fence-A safe.
+
+**Fix 2 — `_detect_periods()` hardened in `text_table_extractor.py`:**
+- Two-pass: Pass 1 finds line with TWO dates (BS column header) → use as current+prior.
+- Pass 2 fallback: scan non-signature lines (`_is_signature_line()` rejects lines containing HH:MM:SS pattern).
+- `_SIGNATURE_TIME_RE = re.compile(r"\d{2}:\d{2}:\d{2}")` added.
+- Signature date "26/01/2026 16:18:09 +07'00'" rejected correctly.
+
+**Evidence (fixture-based, HOST-SAFE):**
+- RED before fix: `test_path_a_with_noisy_pages_after_bt7_fix_filters_to_bs_section` → 44 pages fed, massive row count, period="26/01/2026"
+- GREEN after fix: 10/10 BT-7 tests pass. BS filter → 4 pages → golden anchors 270/300/400 exact → balance_pass=True → period_current="31/12/2025"
+- Full suite: 281 passed (271 baseline + 10 new), 0 failed
+- Fence-A/B: 72 files, 131 deps, 2 kept, 0 broken
+- Deliberate-violation: inject infra import → fence exit 1 confirmed LIVE
+
+**FPT Q1 recovery:** marker `"tình hình tài chính"` added to `_BS_STRONG_MARKERS`. Expected to locate FPT Q1 page 3 ("BÁO CÁO TÌNH HÌNH TÀI CHÍNH HỢP NHẤT") on next backfill.
+
+**Files:** 5 source + 1 doc (usecases.md) + 1 notebook = 7 staged files.
+
+**NEXT:** ops re-deploy pdf-extractor (docker compose up -d pdf-extractor) + re-run backfillBctcTables → QA re-verify (row counts ≤96 per BS doc, period_current correct, anchors exact) → PO final BT-EXIT.
+
+---
+
 ### 2026-05-25 — BT-3-D DONE (wire real OCR into /extract-tables production path)
 
 **Commit:** TBD | Sprint: BCTC-TABLE | Task: BT-3-D

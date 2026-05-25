@@ -107,6 +107,25 @@ After Step 2 (balance-check), before Step 3 (push), the gate runs if `statement_
 - Pure Protocol — `ocr_pages(pdf_path, page_numbers) -> list[dict]`
 - Pure Protocol — `locate_balance_sheet_pages(pdf_path) -> list[int]`
 - Concrete: `infrastructure/ocr_adapter.PdfOcrAdapter`
+
+### BT-7 Path-A Section Filter + Period Detection Hardening
+
+**Root cause (BT-EXIT partial):** Path A (pre-supplied pages from mcp-server backfill) fed ALL stored OCR pages to `TextTableExtractor.assemble()`. FPT Q4: 44 pages → 2170 rows (2074 noise). `period_current` picked `"26/01/2026"` from digital-signature timestamp on cover/signature pages.
+
+**Fix (BT-7) — two changes:**
+
+1. `select_balance_sheet_section(page_texts)` — NEW pure domain primitive (`domain/primitives/select_balance_sheet_section/primitive.py`). Scans each page's text for Vietnamese BS markers, returns only the contiguous BS section. Applied in `execute()` Path A BEFORE passing pages to the assembler (only for `balance_sheet` section). Mirrors the same logic as `PdfOcrAdapter.locate_balance_sheet_pages()` but operates on plain text.
+
+2. `_detect_periods()` hardened in `TextTableExtractor` — two-pass approach:
+   - Pass 1: find a line containing TWO dates (BS column header `"31/12/2025  31/12/2024"`) — strong signal, use those as current+prior.
+   - Pass 2 fallback: scan non-signature lines (lines with HH:MM:SS time pattern are rejected as digital-signature timestamps).
+   - `_is_signature_line(line)` helper: returns True if line contains `HH:MM:SS` pattern (signature timestamp context).
+
+**Result after BT-7:** Path A with 44 noisy FPT Q4 pages → filtered to 4 BS pages → ~8 code rows stored → `period_current="31/12/2025"` → golden anchors 270/300/400 exact → `balance_pass=True`.
+
+**DDD:** `select_balance_sheet_section` is a pure domain primitive (Fence-A safe — zero infra imports). Imported by `application/extract_tables_usecase.py` (application layer imports from domain — correct per DDD).
+
+**FPT Q1 recovery:** FPT Q1's balance-sheet is on stored page 3 ("BÁO CÁO TÌNH HÌNH TÀI CHÍNH HỢP NHẤT"). The marker `"tình hình tài chính"` is in `_BS_STRONG_MARKERS` — the section filter selects page 3 and adjacent BS pages. Expected to recover from 0-row to valid extraction on next backfill.
   - `locate_balance_sheet_pages()`: uses pdfplumber native text (fast, no Tesseract) to scan for Vietnamese BS markers
   - `ocr_pages()`: pdf2image + pytesseract vie+eng, sequential, one page at a time (D6 host safety)
   - Falls back to pages 4-7 if no markers found (heuristic, logged as warning)
