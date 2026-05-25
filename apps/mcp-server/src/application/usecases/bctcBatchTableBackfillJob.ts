@@ -1,18 +1,29 @@
 /**
- * BT-4b — One-shot BCTC table backfill job
+ * BT3-FIX-3 — One-shot BCTC table backfill job (fresh Tesseract OCR strategy)
  *
  * NOT a cron. Run ONCE after BT-3+BT-3i+BT-5 are live, BEFORE BT-6 QA.
  *
  * Purpose: iterate all financial_reports rows with a real PDF on disk,
- * POST each to pdf-extractor /extract-tables so the extractor OCRs the doc,
- * assembles structured rows, and pushes them back via /api/push-bctc-table.
+ * POST each to pdf-extractor /extract-tables so the extractor runs FRESH Tesseract
+ * OCR (PdfOcrAdapter, 200 DPI, vie+eng, psm 6) inside the 8GB-capped container,
+ * assembles structured rows using the proven inline-layout parser, and pushes them
+ * back via /api/push-bctc-table.
+ *
+ * Strategy change (BT3-FIX-3, was BT-4b-2):
+ *   PREVIOUS: pre-supply stored OCR from pdf_extracted_text to avoid host Tesseract.
+ *   NOW:      NO pre-supplied pages. The extractor uses the fresh-OCR path (BT-3-D /
+ *             PdfOcrAdapter) entirely inside the pdf-extractor Docker container, which
+ *             is bounded to 8GB RAM. The stored OCR in pdf_extracted_text used a
+ *             column-separated layout incompatible with the line parser, causing label
+ *             splits, null prior-column values, and address junk. Fresh Tesseract at
+ *             200 DPI produces the proven inline layout.
  *
  * Skips:
  *   - Rows where pdf_path IS NULL or '' (news-inference rows — no PDF to re-extract)
  *   - Rows where the PDF file does NOT exist on disk at the stored path
  *
  * Ordering: SEQUENTIAL — one doc at a time. Never parallel.
- * OCR is CPU-bound (~4s/page) and the host Mac is memory-constrained.
+ * OCR runs in the container (~4s/page); sequential execution enforces R1 risk mitigation.
  *
  * Idempotency: the /extract-tables → /push-bctc-table pipeline does DELETE+INSERT
  * per report_id, so re-running is safe.
@@ -23,7 +34,6 @@
 
 import type { Database } from "bun:sqlite";
 import { existsSync } from "node:fs";
-import { basename } from "node:path";
 
 // ─── UUID validation ──────────────────────────────────────────────────────────
 
@@ -44,18 +54,13 @@ interface FinancialReportPdfRow {
   pdf_path: string;
 }
 
-interface OcrPageRow {
-  page_number: number;
-  text_content: string;
-}
-
 export interface DocOutcome {
   doc_id: string;
   action_code: string;
   period_year: number;
   period_quarter: number | null;
   pdf_path: string;
-  status: "success" | "gate_blocked" | "error" | "skipped_no_file" | "skipped_no_ocr";
+  status: "success" | "gate_blocked" | "error" | "skipped_no_file";
   /** Number of rows stored, if status=success */
   rows_stored?: number;
   /** Whether accounting identity holds, if status=success */
@@ -77,12 +82,6 @@ export interface BackfillBctcTablesResult {
   skipped_no_file: number;
   /** Docs skipped because pdf_path was NULL or empty (news-inference rows) */
   skipped_null_path: number;
-  /**
-   * Docs skipped because no OCR text is stored in pdf_extracted_text for this doc.
-   * BT-4b-2: host-safety guardrail — without pre-supplied OCR, the pdf-extractor
-   * would run Tesseract in-process on the 16GB Mac (kernel-panic risk). Skip instead.
-   */
-  skipped_no_ocr: number;
   /** Per-doc outcomes (for reporting) */
   outcomes: DocOutcome[];
 }
@@ -92,6 +91,11 @@ export interface BackfillBctcTablesResult {
 /**
  * backfillBctcTables — one-shot extraction for all stored financial_reports docs
  * that have a real PDF on disk.
+ *
+ * Posts report_id + pdf_path + statement_section only to /extract-tables.
+ * The pdf-extractor container runs fresh Tesseract OCR via PdfOcrAdapter (BT-3-D path).
+ * No stored OCR is passed; the stored OCR in pdf_extracted_text used a column-separated
+ * layout that caused label misalignment (BT3-FIX-3 root cause, architect ruling §2).
  *
  * @param db              Injected market.db Database instance
  * @param extractTableUrl Base URL of the pdf-extractor service, e.g. http://pdf-extractor:5001
@@ -147,19 +151,11 @@ export async function backfillBctcTables(
     ).n;
 
   console.log(
-    `[bctcBatchTableBackfillJob] Starting one-shot backfill: ` +
+    `[bctcBatchTableBackfillJob] Starting one-shot backfill (BT3-FIX-3 fresh-OCR): ` +
       `${eligibleRows.length} eligible (PDF on disk), ` +
       `${missingFileRows.length} skipped (file not found), ` +
       `${nullPathCount} skipped (pdf_path NULL — news-inference rows). ` +
-      `OCR pre-supply enabled (BT-4b-2) — docs without stored OCR will be skipped.`,
-  );
-
-  // ── Prepare OCR query (BT-4b-2: pre-supply stored OCR text to avoid Tesseract) ────
-  const ocrQuery = db.prepare(
-    `SELECT page_number, text_content
-     FROM pdf_extracted_text
-     WHERE filename = ?
-     ORDER BY page_number ASC`,
+      `Fresh Tesseract runs inside pdf-extractor container (8GB-capped, no host OCR).`,
   );
 
   // ── Sequential extraction — one doc at a time ─────────────────────────────
@@ -167,7 +163,6 @@ export async function backfillBctcTables(
   let successCount = 0;
   let gateBlockedCount = 0;
   let failedCount = 0;
-  let skippedNoOcrCount = 0;
 
   for (const row of eligibleRows) {
     const docLabel = `${row.action_code} ${row.period_year}Q${row.period_quarter ?? "?"}`;
@@ -191,40 +186,12 @@ export async function backfillBctcTables(
       continue;
     }
 
-    // ── BT-4b-2: Query stored OCR text for this doc (join by basename) ────────
-    // HOST SAFETY: we only POST with pre-supplied pages so that pdf-extractor uses
-    // Path A (no Tesseract). If no OCR is stored, skip the doc — forcing in-process
-    // OCR on the 16GB Mac risks kernel-panic from swap exhaustion.
-    const pdfBasename = basename(row.pdf_path);
-    const ocrPages = ocrQuery.all(pdfBasename) as OcrPageRow[];
-
-    if (ocrPages.length === 0) {
-      console.warn(
-        `[bctcBatchTableBackfillJob] SKIP no-ocr: doc_id=${docId} ` +
-          `(${docLabel}) — no stored OCR text for filename=${pdfBasename}. ` +
-          `Skipping to avoid in-process Tesseract on host Mac (kernel-panic risk).`,
-      );
-      outcomes.push({
-        doc_id: docId,
-        action_code: row.action_code,
-        period_year: row.period_year,
-        period_quarter: row.period_quarter,
-        pdf_path: row.pdf_path,
-        status: "skipped_no_ocr",
-      });
-      skippedNoOcrCount++;
-      continue;
-    }
-
-    // Map OCR rows to the pages format expected by /extract-tables (BT-3-D schema)
-    const pages = ocrPages.map((p) => ({
-      page_number: p.page_number,
-      text: p.text_content,
-    }));
-
+    // BT3-FIX-3: POST report_id + pdf_path + statement_section ONLY.
+    // No pages / pre_supplied_pages — the pdf-extractor container runs fresh
+    // Tesseract via PdfOcrAdapter (the proven BT-3-D path, inline-layout OCR).
     console.log(
       `[bctcBatchTableBackfillJob] Extracting ${docLabel} (${docId}) ` +
-        `— ${pages.length} pre-supplied OCR pages (zero Tesseract) ...`,
+        `— fresh Tesseract OCR via container PdfOcrAdapter ...`,
     );
 
     try {
@@ -235,7 +202,7 @@ export async function backfillBctcTables(
           report_id: docId,
           pdf_path: row.pdf_path,
           statement_section: statementSection,
-          pages, // BT-4b-2: pre-supplied OCR text → pdf-extractor uses Path A, no Tesseract
+          // No pages / pre_supplied_pages: forces fresh Tesseract in container (BT3-FIX-3)
         }),
       });
 
@@ -333,15 +300,13 @@ export async function backfillBctcTables(
     failed: failedCount,
     skipped_no_file: missingFileRows.length,
     skipped_null_path: nullPathCount,
-    skipped_no_ocr: skippedNoOcrCount,
     outcomes,
   };
 
   console.log(
     `[bctcBatchTableBackfillJob] DONE: success=${successCount} ` +
       `gate_blocked=${gateBlockedCount} failed=${failedCount} ` +
-      `skipped_no_file=${missingFileRows.length} skipped_null_path=${nullPathCount} ` +
-      `skipped_no_ocr=${skippedNoOcrCount}`,
+      `skipped_no_file=${missingFileRows.length} skipped_null_path=${nullPathCount}`,
   );
 
   return result;
