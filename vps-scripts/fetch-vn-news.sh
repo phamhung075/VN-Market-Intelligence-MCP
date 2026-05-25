@@ -7,6 +7,7 @@
 API_URL="__MCP_BASE__/api/push-news"
 API_KEY="__API_KEY__"
 LOG="/var/log/vn-news-fetch.log"
+CURSOR_FILE="${VN_NEWS_CURSOR_FILE:-/var/lib/vn-news/cursor}"
 
 # ── Log rotation (10 MB cap) ──────────────────────────────────────────────
 # Source shared constants (LOG_ROTATE_BYTES) from vps-lib.sh
@@ -18,6 +19,53 @@ if [ "$LOG_SIZE" -gt $LOG_ROTATE_BYTES ]; then mv "$LOG" "$LOG.old"; fi
 TS() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 START_S=$(date -u +%s)
 echo "$(TS) [NEWS  ] INFO  === START ===" >> "$LOG"
+
+# ── Since-cursor helpers ──────────────────────────────────────────────────
+# parse_epoch_s DATE_STR — convert RFC-2822 or ISO-8601 pubDate to epoch seconds.
+# Returns 0 on any parse failure (treat as epoch-0, i.e. older than everything).
+parse_epoch_s() {
+  python3 -c "
+import sys
+from email.utils import parsedate_to_datetime
+from datetime import datetime, timezone
+s = sys.argv[1].strip()
+try:
+    dt = parsedate_to_datetime(s)
+    print(int(dt.timestamp()))
+    sys.exit(0)
+except Exception:
+    pass
+try:
+    # ISO-8601 fallback (e.g. '2026-05-25T08:00:00Z' or with offset)
+    s2 = s.replace('Z','+00:00')
+    dt = datetime.fromisoformat(s2)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    print(int(dt.timestamp()))
+except Exception:
+    print(0)
+" "$1" 2>/dev/null || echo 0
+}
+
+# ── Load / initialise cursor ──────────────────────────────────────────────
+# Cursor format (single line): integer epoch seconds of last max-publishedAt pushed.
+# First-run (no file): cursor = 0 → all current articles qualify → seeds the cursor.
+CURSOR_EPOCH=0
+CURSOR_DIR=$(dirname "$CURSOR_FILE")
+mkdir -p "$CURSOR_DIR" 2>/dev/null || true
+if [ -f "$CURSOR_FILE" ]; then
+  RAW_CURSOR=$(cat "$CURSOR_FILE" 2>/dev/null | tr -d '[:space:]')
+  # Validate: must be a non-negative integer
+  if [[ "$RAW_CURSOR" =~ ^[0-9]+$ ]]; then
+    CURSOR_EPOCH="$RAW_CURSOR"
+  else
+    echo "$(TS) [NEWS  ] WARN  cursor file corrupt (value='$RAW_CURSOR') — resetting to 0" >> "$LOG"
+    CURSOR_EPOCH=0
+  fi
+  echo "$(TS) [NEWS  ] INFO  cursor loaded epoch=$CURSOR_EPOCH ($(date -u -d @"$CURSOR_EPOCH" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -r "$CURSOR_EPOCH" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo 'unknown-date'))" >> "$LOG"
+else
+  echo "$(TS) [NEWS  ] INFO  cursor first-run (no cursor file) — will push current window and seed" >> "$LOG"
+fi
 
 # ── Human-like delay between requests (2-6s random) ─────────────────────
 # Mimics a person reading/clicking between news sites — avoids rate-limiting
@@ -179,11 +227,57 @@ ALL_JSON=$(echo \
   "$NLD_JSON" \
   | jq -s 'add | [.[] | select(. != null and .url != "")] | unique_by(.url)' 2>/dev/null)
 
+TOTAL_BEFORE_CURSOR=$(echo "$ALL_JSON" | jq 'length' 2>/dev/null || echo 0)
+echo "$(TS) [NEWS  ] INFO  Step 2: merged total=$TOTAL_BEFORE_CURSOR unique items" >> "$LOG"
+
+# ── Apply since-cursor filter ─────────────────────────────────────────────
+# Keep only articles whose publishedAt epoch > CURSOR_EPOCH.
+# Items with unparseable dates (epoch=0) are treated as older than cursor unless
+# cursor is also 0 (first-run) — in that case epoch-0 articles pass through once
+# to seed the cursor, and will be filtered on subsequent runs.
+echo "$(TS) [NEWS  ] INFO  Step 3: applying cursor filter (cursor_epoch=$CURSOR_EPOCH)" >> "$LOG"
+ALL_JSON=$(echo "$ALL_JSON" | python3 -u -c "
+import sys, json
+from email.utils import parsedate_to_datetime
+from datetime import datetime, timezone
+
+def to_epoch(s):
+    s = (s or '').strip()
+    if not s:
+        return 0
+    try:
+        return int(parsedate_to_datetime(s).timestamp())
+    except Exception:
+        pass
+    try:
+        s2 = s.replace('Z', '+00:00')
+        dt = datetime.fromisoformat(s2)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return int(dt.timestamp())
+    except Exception:
+        return 0
+
+cursor = int('$CURSOR_EPOCH')
+try:
+    items = json.load(sys.stdin)
+except Exception:
+    items = []
+
+filtered = [item for item in items if to_epoch(item.get('publishedAt','')) > cursor]
+print(json.dumps(filtered))
+" 2>/dev/null || echo "$ALL_JSON")
+
 TOTAL=$(echo "$ALL_JSON" | jq 'length' 2>/dev/null || echo 0)
-echo "$(TS) [NEWS  ] INFO  Step 2: merged total=$TOTAL unique items" >> "$LOG"
+FILTERED_OUT=$(( TOTAL_BEFORE_CURSOR - TOTAL ))
+echo "$(TS) [NEWS  ] INFO  Step 3: cursor filtered out=$FILTERED_OUT already-seen, new_to_push=$TOTAL" >> "$LOG"
 
 if [ "$TOTAL" = "0" ]; then
-  echo "$(TS) [NEWS  ] ERROR all RSS sources returned 0 items — sending heartbeat sentinel" >> "$LOG"
+  if [ "$TOTAL_BEFORE_CURSOR" -gt 0 ]; then
+    echo "$(TS) [NEWS  ] INFO  no new items after cursor filter (all $TOTAL_BEFORE_CURSOR already seen) — sending heartbeat sentinel" >> "$LOG"
+  else
+    echo "$(TS) [NEWS  ] ERROR all RSS sources returned 0 items — sending heartbeat sentinel" >> "$LOG"
+  fi
   # Send a heartbeat sentinel so vps_push_log registers a row (satisfies suppression gate).
   # The MCP server rejects an empty array with 400, so we wrap in a single sentinel item
   # that pollNews will treat as a no-op (unknown source key, no URL → de-duped / skipped).
@@ -223,6 +317,57 @@ echo "$(TS) [NEWS  ] INFO  PUSH $TOTAL items → /api/push-news http=$HTTP_CODE 
 
 if [ "$HTTP_CODE" != "200" ]; then
   echo "$(TS) [NEWS  ] ERROR MCP push failed http=$HTTP_CODE resp=$(echo $RESP_BODY | head -c 200)" >> "$LOG"
+else
+  # ── Advance cursor after successful push ─────────────────────────────────
+  # Compute max publishedAt epoch from the batch we just pushed (already filtered
+  # and stored in TMP_JSON before the rm).  We re-read from ALL_JSON in memory
+  # (TMP_JSON was already rm'd above, so we use ALL_JSON which still holds the same data).
+  NEW_CURSOR=$(echo "$ALL_JSON" | python3 -u -c "
+import sys, json
+from email.utils import parsedate_to_datetime
+from datetime import datetime, timezone
+
+def to_epoch(s):
+    s = (s or '').strip()
+    if not s:
+        return 0
+    try:
+        return int(parsedate_to_datetime(s).timestamp())
+    except Exception:
+        pass
+    try:
+        s2 = s.replace('Z', '+00:00')
+        dt = datetime.fromisoformat(s2)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return int(dt.timestamp())
+    except Exception:
+        return 0
+
+try:
+    items = json.load(sys.stdin)
+except Exception:
+    items = []
+epochs = [to_epoch(item.get('publishedAt','')) for item in items]
+print(max(epochs) if epochs else 0)
+" 2>/dev/null || echo 0)
+
+  # Only advance if new cursor is strictly greater than the old one
+  # (guards against a batch of epoch-0 items resetting progress).
+  if [[ "$NEW_CURSOR" =~ ^[0-9]+$ ]] && [ "$NEW_CURSOR" -gt "$CURSOR_EPOCH" ]; then
+    mkdir -p "$CURSOR_DIR" 2>/dev/null || true
+    echo "$NEW_CURSOR" > "$CURSOR_FILE"
+    echo "$(TS) [NEWS  ] INFO  cursor advanced from $CURSOR_EPOCH to $NEW_CURSOR ($(date -u -d @"$NEW_CURSOR" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || date -u -r "$NEW_CURSOR" +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo 'unknown-date'))" >> "$LOG"
+  elif [ "$CURSOR_EPOCH" = "0" ] && [ "$TOTAL" -gt 0 ]; then
+    # First-run: even if all publishedAt are epoch-0 (unparseable), record current
+    # time so next cycle will treat all current articles as already-seen.
+    FALLBACK_CURSOR=$(date -u +%s)
+    mkdir -p "$CURSOR_DIR" 2>/dev/null || true
+    echo "$FALLBACK_CURSOR" > "$CURSOR_FILE"
+    echo "$(TS) [NEWS  ] INFO  cursor seeded (first-run, all dates unparseable) epoch=$FALLBACK_CURSOR" >> "$LOG"
+  else
+    echo "$(TS) [NEWS  ] INFO  cursor unchanged epoch=$CURSOR_EPOCH (new_max=$NEW_CURSOR not greater)" >> "$LOG"
+  fi
 fi
 
 ELAPSED=$(( $(date -u +%s) - START_S ))

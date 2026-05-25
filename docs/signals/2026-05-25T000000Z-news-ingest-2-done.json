@@ -1,0 +1,10 @@
+{
+  "from": "developer",
+  "to": "po",
+  "type": "task-done",
+  "payload": {
+    "taskId": "NEWS-INGEST-2",
+    "commit": "PENDING",
+    "note": "deploy pending ops NEWS-INGEST-LIVE"
+  }
+}
