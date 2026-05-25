@@ -23,3 +23,5 @@ coverage = true
 # Default per-test timeout (ms) — SSC Puppeteer mock has ~5.8 s of setTimeout delays
 timeout = 30000
 preload = ["./src/__tests__/setup.ts"]
+# Limit test discovery to src/ only — excludes dashboard/tests/ (Playwright specs)
+root = "./src"

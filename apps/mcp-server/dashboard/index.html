@@ -343,9 +343,15 @@
     "sector-classifier-golden-known-ticker",
     "sector-classifier-golden-unknown-ticker",
     "sector-classifier-failure-null-input",
+    // P2-H trust-contract regression tripwire (intentional RED indicator):
+    "sparkline-regression-tripwire",
   ];
 
   async function fetchTrace(name) {
+    // Check for pre-injected test data (injected by Playwright addInitScript)
+    if (window.__MCP_TRACES__ && window.__MCP_TRACES__[name]) {
+      return window.__MCP_TRACES__[name];
+    }
     try {
       const res = await fetch(`traces/${name}.json`);
       if (!res.ok) return null;
@@ -443,9 +449,15 @@
     const el = document.getElementById("mcp-modules-content");
     el.innerHTML = '<div class="mcp-empty-state">Loading...</div>';
     try {
-      const res = await fetch("data/modules.json");
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const data = await res.json();
+      // Check for pre-injected test data (injected by Playwright addInitScript)
+      let data;
+      if (window.__MCP_MODULES__) {
+        data = window.__MCP_MODULES__;
+      } else {
+        const res = await fetch("data/modules.json");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        data = await res.json();
+      }
       if (!data.modules || data.modules.length === 0) {
         el.innerHTML = '<div class="mcp-empty-state">No modules found in data/modules.json</div>';
         return;
@@ -462,6 +474,17 @@
     const tcEl = document.getElementById("mcp-ms-toolcount");
     const noteEl = document.getElementById("mcp-ms-note");
     const badgeEl = document.getElementById("mcp-ms-badge");
+
+    // In file:// mode (trust-contract + static open), skip the HTTP probe
+    // and go directly to offline fallback — zero network requests.
+    if (window.location.protocol === "file:") {
+      tcEl.innerHTML = `<span class="mcp-stat-indicator mcp-indicator-offline"></span>146`;
+      noteEl.textContent = "146 tools (server offline — last known)";
+      badgeEl.className = "mcp-panel-badge mcp-badge-pending";
+      badgeEl.textContent = "OFFLINE";
+      return;
+    }
+
     try {
       const res = await fetch("http://localhost:3000/health");
       if (!res.ok) throw new Error("HTTP " + res.status);
