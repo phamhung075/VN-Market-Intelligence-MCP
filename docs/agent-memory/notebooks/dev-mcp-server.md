@@ -1,5 +1,32 @@
 # dev-mcp-server -- Notebook
 
+## c303 · 2026-05-25 (mcp-server Phase-2 P2-H — G9 Playwright trust-contract artifact)
+
+### P2-H — G9 Playwright Trust-Contract Artifact DONE
+
+**Commit:** `2ddd8b6c` | 5 files (2 new specs + 1 trace + 2 modifications) | tsc EXIT 0 | bun test 9412/359 (≥9408 PASS; 359 fail = baseline drift) | tools=148 | sched=68
+
+**Delivered:**
+- CREATE `dashboard/tests/trust-contract.spec.js` — 7 Playwright assertions, all pass. Uses `page.addInitScript()` to inject window.__MCP_TRACES__ + window.__MCP_MODULES__ before page scripts run (Playwright sandboxed Chromium blocks file:// fetch calls; addInitScript is the correct bypass pattern).
+- CREATE `dashboard/playwright.config.js` — headless:true, file:// baseURL, no webServer block, testDir: ./tests, Chromium-only.
+- CREATE `dashboard/traces/sparkline-regression-tripwire.json` — status:fail tripwire (all 9 real traces are pass; tripwire enables assertion 5 RED-dot verify).
+- MODIFY `dashboard/index.html` — fetchTrace/loadModules check __MCP_TRACES__/__MCP_MODULES__ globals first; loadMicroservice() skips HTTP probe in file:// mode (zero network calls).
+- MODIFY `bunfig.toml` — root=./src in [test] excludes dashboard/tests/ from bun test scanner.
+
+**Playwright verdict (local run for po baseline):**
+passingTests=7 | failingTests=0 | consoleErrors=0 | networkRequests=0 | ts=2026-05-25T21:00:10.880Z
+
+**AC evidence:**
+- AC-1: playwright.config.js headless+no-server PASS
+- AC-2: 7/7 assertions exit 0 PASS
+- AC-3: 0 console errors PASS
+- AC-4: 0 HTTP(S) requests PASS
+- AC-6: bun test ≥9408 PASS; bun run check exit 0 PASS
+
+**Zone health:** P2-H done; playwright-verdict.json left unstaged (po owns verdict commit); tsc clean; ESLint exit 0 | HEALTHY
+
+---
+
 ## c302 · 2026-05-25 (BT-7 deploy + re-backfill — pdf-extractor rebuild + backfillBctcTables)
 
 ### BT-7 deploy+re-backfill DONE
