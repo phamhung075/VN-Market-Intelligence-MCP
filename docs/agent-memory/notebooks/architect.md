@@ -1,8 +1,40 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 04:30 UTC | **Sprint:** BCTC-TABLE-3
+**Last updated:** 2026-05-26 06:00 UTC | **Sprint:** BCTC-TABLE-3
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## BT3-FIX4-PARSE — Parser hardening ruling (2026-05-26T06:00Z) — DESIGN COMPLETE
+
+**Task:** BT3-FIX4-PARSE. After BT3-FIX3-PSM (psm 6 fix, commit `3b722462`): 71 clean code rows, 29 orphans. Recurring-bug threshold crossed. Architect rules on parser hardening scope, rasterizer question, and achievable orphan floor before dev implements.
+
+**Key findings:**
+
+1. **29 orphans split into 2 categories:** Category A (11 real data rows — dash sub-items, note-ref column, letter-suffix codes, 1-2 OCR char errors); Category B (18 junk lines — signature block, date lines, column-header fragments not caught by existing skip list).
+
+2. **Root cause of Category A:** `_CODE_ROW_SINGLE_SPACE_RE` trailing anchor `[a-zA-Z|\\]*\s*$` rejects `)` in parenthetical negatives (e.g., code 223 line). `*` allows empty but the regex engine fails to match `)`. Changing to `?` unblocks the match. Letter-suffix codes (`421b`, `411q`) fail because `(\d{2,3})` group rejects the trailing letter.
+
+3. **4 changes in scope** — all confined to `_parse_lines_to_rows()` and regex constants (pure logic, no I/O): CHANGE-1 anchor relax (`*→?`), CHANGE-2 letter-suffix code group (`\d{2,3}→\d{2,3}[a-z]?`), CHANGE-3 wider note-number pattern (`\d{1,2}→\d{1,3}`), CHANGE-4 extended junk skip list (signature keywords + date regex).
+
+4. **Rasterizer verdict: NO SWAP.** Do not replace pdf2image/poppler with PyMuPDF/fitz. 5-row gap (fixture vs live) attributable to OCR char errors, not rasterizer quality. New dependency violates HOST SAFETY (D6). Accept 1-2 unrecoverable rows as irreducible OCR floor.
+
+5. **Achievable orphan floor: 1-2.** `421a→"4214"` is unrecoverable (OCR reads "a" as "4", produces 4-digit number). After CHANGE-1 through CHANGE-4: expected ~82-85 code rows total. Hard AC: orphans ≤ 5, soft target ≤ 2.
+
+6. **Non-regression invariant (BLOCKING):** All 71 currently-clean code rows, balance_pass=true, delta=0, zero dup codes must not regress. AC-NR-1 must run before any other AC is claimed.
+
+**Files authored this cycle (3):**
+1. `docs/architecture-briefs/2026-05-26-bctc-table-bt3-fix4-parser-hardening.md` (NEW — full ruling)
+2. `docs/handoffs/TASK_BCTC-TABLE.md` — [Architect] BT3-FIX4-PARSE section appended
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Risk flags:**
+- R-HIGH: If CHANGE-2 is applied only to Layout 4 regex and not equivalently to Layouts 1/2/3, letter-suffix codes will still orphan on those layouts. Dev must audit all 4 layout regexes.
+- R-MEDIUM: CHANGE-4 junk filter must not false-positive on real label lines (only applied after code-match already failed — structurally safe, but verify in unit tests).
+- R-LOW: `411q` (OCR char error for `411a`) accepted faithfully — downstream callers will store `code="411q"`. If a future reconciliation step does code-lookup against BCTC standard table, this will not find `411q`. Accept for now; note as technical debt.
+
+**Next actor:** dev-pdf-extractor — implement CHANGE-1 through CHANGE-4. Run AC-NR-1 first (non-regression gate). Then AC-1 through AC-12. Rebuild container after code change. Verify live endpoint row-count in [82, 92].
+
+---
 
 ## BT3-FIX-3-DESIGN — Fourth false-green root-cause ruling (2026-05-26T04:30Z) — DESIGN COMPLETE
 
@@ -61,39 +93,6 @@
 - R-LOW: Footnote note-number column (single digit between code and value) may be consumed as value_current by `_parse_value_cells`. Dev must unit-test this case.
 
 **Next actor:** dev-pdf-extractor — BT3-FIX.
-
----
-
-## P2-MCP-G9-CONTRACT-FIX — P2-H + P2-I plan correction (2026-05-25T22:00Z) — DESIGN COMPLETE
-
-**Task:** P2-MCP-G9-CONTRACT-FIX. Correct two falsified assumptions in the mcp-server Phase-2 plan that would make the upcoming G9 USER sign-off (P2-I) a Potemkin/dishonest gate. Router-verified ground truth: (1) P2-H used addInitScript injection — test-path ≠ user-path; file:// double-click shows empty panels. (2) synthetic sparkline-regression-tripwire.json fixture = permanent red card that taints the "all tools working" verbal sign-off.
-
-**Key design decisions:**
-
-1. **G9 presentation contract: inline-data model.** Trace and module data inlined as `<script type="application/json">` blocks in index.html. Dashboard JS reads from DOM via `document.getElementById`. No fetch(), no window.__MCP_* globals. test-path == user-path. file:// promise genuinely honored. Simpler than local-HTTP alternative; no PO/user server overhead.
-
-2. **Assertion-5 resolution: option (i) pure unit assertion.** All 9 real traces are `status: "pass"` (ground truth). Synthetic fixture deleted. Assertion-5 re-specified as: `renderCard({status:"fail",...})` called IN-MEMORY in the spec, assert returned HTML contains `mcp-dot-fail`. No on-disk fixture. Real RED→GREEN proof properly deferred to G10/P2-J-K (genuine bug injection).
-
-3. **Files dev-mcp-server must touch in P2-H-FIX:**
-   - `apps/mcp-server/dashboard/index.html` — add inline JSON blocks, remove fetch()/window.__ paths
-   - `apps/mcp-server/dashboard/traces/sparkline-regression-tripwire.json` — DELETE
-   - `apps/mcp-server/dashboard/tests/trust-contract.spec.js` — remove addInitScript, re-spec assertion-5
-   - `apps/mcp-server/dashboard/playwright-verdict.json` — re-generate and commit
-
-4. **P2-I corrected.** PO must verify file:// opens real populated panels (P2-H-FIX AC-3) before presenting to user. "No server needed" claim is now genuinely honored (inline data = zero fetch).
-
-5. **Legitimate P2-H parts kept unchanged:** playwright.config.js (headless:true, no webServer), bunfig.toml root="./src", assertions 1/2/3/4/6, assertion-7 now structurally stronger (no fetch() at all).
-
-**Files authored this cycle (4):**
-1. `docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-2-task-plan.md` (MODIFIED — P2-H rewritten, P2-I corrected, Task Ledger + Sequencing updated, Correction Log appended, P2-Z AC-4 updated)
-2. `docs/pipeline-state.json` (UPDATED — P2-H-FIX required, nextAgent dev-mcp-server, activeTaskId P2-H-FIX)
-3. `docs/signals/architect-mcp-g9-contract-fix-2026-05-25T220000Z.json` (NEW — contract decision + assertion-5 resolution + files dev must touch)
-4. `docs/agent-memory/notebooks/architect.md` (this entry)
-
-**Risk flags surfaced:**
-- If dev-mcp-server re-implements P2-H-FIX without verifying that KNOWN_TRACES array is fully removed and all 9 inline traces match the actual on-disk sandbox output, the inline block will silently drift from reality. The `<!-- AUTO-GENERATED: run bun run src/sandbox/runner.ts --emit-traces to refresh -->` comment is the only guard; architect recommends a follow-up build-step automation as technical debt.
-
-**Next actor:** dev-mcp-server — implement P2-H-FIX per corrected P2-H section. After AC-3 confirmed: PO dispatches P2-I. Then qa P2-J onward per existing plan.
 
 ---
 

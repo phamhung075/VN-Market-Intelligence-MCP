@@ -3250,3 +3250,117 @@ Patch strategy: pre-populate minimal stubs for `pdf2image` and `pytesseract` in 
 ### Status note
 
 Code fix is complete and fast suite is green. The container must be rebuilt and a fresh re-extract run before the live `/api/bctc-inspect` table can be verified. MAIN TERMINAL self-verifies the live endpoint row-by-row against the 89-row spike gold after ops rebuilds. Do NOT declare the bug fixed until live endpoint is confirmed clean.
+
+---
+
+## [Architect] BT3-FIX4-PARSE — Parser hardening ruling (2026-05-26T~06:00Z)
+
+**Status:** DESIGN COMPLETE — awaiting dev-pdf-extractor implementation
+
+**Brief:** `docs/architecture-briefs/2026-05-26-bctc-table-bt3-fix4-parser-hardening.md`
+
+### Current state entering this cycle
+
+After BT3-FIX3-PSM (commit `3b722462`):
+- 71 clean code rows, balance_pass=true, delta=0, zero dup codes, value_prior populated on all 71
+- 29 orphan rows (code=None) — split into Category A (11 real data rows) and Category B (18 junk lines)
+- Spike gold target: 89 rows
+
+This is a recurring-bug escalation (threshold crossed). Architect must rule before any new fix.
+
+### Orphan categorization
+
+**Category A — 11 real data rows (parseable with heuristic changes):**
+1. Dash sub-item lines: `"- Nguyên giá 222 ..."`, `"- Giá trị hao mòn lũy kế 223 ..."` — fail because `_CODE_ROW_SINGLE_SPACE_RE` trailing anchor `[a-zA-Z|\\]*\s*$` rejects `)` in parenthetical negatives
+2. Note-ref column: `"1. Phải thu ngắn hạn của khách hàng 131 7 12.733..."` — note number `7` between code and value jams the anchor
+3. Letter-suffix codes: `421b` (OCR reads correctly), `411q` (OCR char error `11→11q` likely, accept faithfully)
+4. OCR char error (irreducible): `421a→"4214"` — OCR reads "a" as "4", producing a 4-digit number that no regex can match as code
+
+**Category B — 18 junk lines (parseable with junk filter extension):**
+- Signature-block keywords: "Người lập biểu", "Kế toán trưởng", "Phó Tổng Giám đốc"
+- Date lines: "Hà Nội, ngày 26 tháng 01 năm 2026" (current junk filter misses "hà nội, ngày")
+- Column-header fragments: "Thuyết", "minh" (partially filtered but not all instances)
+
+### RULING 1 — Parser hardening (4 changes, in-scope)
+
+All 4 changes are confined to `_parse_lines_to_rows()` and its regex constants. Pure logic, no I/O. Fence-A/B untouched.
+
+**CHANGE-1** — Relax `_CODE_ROW_SINGLE_SPACE_RE` trailing anchor.
+
+Current: `[a-zA-Z|\\]*\s*$`
+Replace with: `[a-zA-Z|\\]?\s*$`
+
+Rationale: `*` (zero-or-more) matches empty string but greedily anchors the regex engine against `)`, failing the match. `?` (zero-or-one) is semantically identical for the intended purpose (optional trailing letter) but unblocks parenthetical endings.
+
+**CHANGE-2** — Accept letter-suffix codes.
+
+Extend `(\d{2,3})` to `(\d{2,3}[a-z]?)` in `_CODE_ROW_SINGLE_SPACE_RE` and its equivalents. This captures `421b`, `411a`, `411q` as valid codes. The suffix is preserved verbatim in `code` field — no normalization.
+
+**CHANGE-3** — Accept wider note-number column.
+
+Extend optional note-number group from `\d{1,2}` to `\d{1,3}`. Future-proof; no regression risk.
+
+**CHANGE-4** — Extend junk-line skip list.
+
+Add to `_parse_lines_to_rows()` skip set:
+```python
+"người lập", "kế toán trưởng", "phó tổng", "hà nội, ngày",
+"thuyết minh", "bang can doi",
+```
+Plus a regex guard for date patterns: `re.search(r"ngày\s+\d{1,2}\s+tháng", low_stripped)`.
+
+### RULING 2 — Rasterizer (verdict: NO SWAP)
+
+Do NOT replace pdf2image/poppler with PyMuPDF/fitz.
+
+Evidence: the 5-row gap (76 fixture-rows vs 71 live-rows) is attributable to known OCR character errors (`421a→"4214"`), not to DPI or rasterizer quality. PyMuPDF at the same 200 DPI yields no material improvement for Vietnamese BCTC tables from empirical spike data. Introducing a new dependency (PyMuPDF) with uncertain environment-specific gains on the 16GB Mac host violates HOST SAFETY principle (D6). Privacy constraint also unchanged: self-hosted Tesseract only.
+
+The 1-2 unrecoverable rows (`421a→"4214"`, possibly `411a`) are accepted as the irreducible OCR-character-error floor.
+
+### RULING 3 — Achievable orphan floor
+
+After CHANGE-1 through CHANGE-4:
+- Expected code rows: ~82-85 (approaching spike gold 89)
+- Irreducible orphans: 1-2 (OCR char errors: `421a→"4214"`, possibly one other)
+- Junk rows: 0 (all Category B filtered)
+
+Hard AC: orphan count (code=None rows) ≤ 5 after fix. Soft target ≤ 2.
+
+### Files to modify
+
+| File | Change |
+|---|---|
+| `apps/pdf-extractor/infrastructure/text_table_extractor.py` | CHANGE-1, CHANGE-2, CHANGE-3, CHANGE-4 (regex constants + skip list) |
+| `apps/pdf-extractor/__tests__/unit/test_parse_lines_to_rows_*.py` | 5 new unit tests (one per new heuristic) |
+| `apps/pdf-extractor/__tests__/integration/test_extract_tables_fpt.py` | Re-run integration assertions; add AC-1 through AC-7 |
+
+**FROZEN — do not touch:** dashboard files, sandbox/runner.py, pilot-status JSON.
+
+### Acceptance criteria
+
+**Non-regression gate (must pass before any new AC):**
+- AC-NR-1: All 12 BT3-FIX3 ACs remain passing (71 code rows still clean, balance_pass=true, delta=0, zero dup codes)
+
+**New ACs:**
+- AC-1: Code `222` present, value_current exact (29,148,692,599,137 ±1 VND)
+- AC-2: Code `223` present, value_current exact (negative parenthetical, sign preserved)
+- AC-3: Code `131` present with correct value (note-ref column absorbed, not emitted as value)
+- AC-4: Code `421b` present with correct value
+- AC-5: Code `411q` present (OCR char error accepted faithfully)
+- AC-6: Total orphan count ≤ 5 (hard), target ≤ 2
+- AC-7: Zero junk rows matching signature-block keywords ("người lập", "kế toán trưởng", "phó tổng")
+- AC-8: Zero column-header fragment rows ("thuyết", "minh" standalone)
+- AC-9: 5 new unit tests green (one per CHANGE)
+- AC-10: Existing fixture-based integration test still passes (zero regression)
+- AC-11: `lint-imports` exit 0 — Fence-A/B intact
+- AC-12: Live verification after re-backfill: rows_count in [82, 92], all BT3-FIX3 sentinel values exact
+
+### DDD risk register
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| CHANGE-2 letter-suffix bleeds into `code` field downstream | LOW | Downstream callers (`vn_number_normalize`, reconcile) ignore non-numeric suffix — no behavioral impact |
+| CHANGE-4 junk filter false-positive drops real Vietnamese company label containing "người lập" | LOW | Only applied to lines that also lack a code match — code rows already captured before junk filter |
+| Non-regression: 71 clean rows silently drops if regex is over-tightened | HIGH | AC-NR-1 is a BLOCKING gate; run before merging |
+
+**Next actor:** dev-pdf-extractor — implement CHANGE-1 through CHANGE-4 per this ruling. AC-NR-1 must be validated RED→GREEN (not just green-on-new) before any other AC claimed.
