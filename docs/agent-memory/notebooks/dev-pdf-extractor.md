@@ -401,7 +401,7 @@ sandbox scenario `structured_table_extraction` DEFERRED to PO decision (see hand
 
 ### 2026-05-25 — BT-5 DONE (cross-check confidence gate)
 
-**Commit:** TBD | Sprint: BCTC-TABLE
+**Commit:** `603e7994` | Sprint: BCTC-TABLE
 
 5 files: `application/extract_tables_usecase.py` (MODIFY), `domain/repositories.py` (MODIFY — AlertPort Protocol), `infrastructure/alert_adapter.py` (CREATE), `main.py` (MODIFY), `__tests__/unit/test_extract_tables_cross_check.py` (CREATE, 6 tests).
 

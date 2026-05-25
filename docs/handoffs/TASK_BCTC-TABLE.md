@@ -1685,7 +1685,7 @@ The `/api/bctc-inspect` viewer now:
 
 ## [Developer] BT-5 — dev-pdf-extractor — DONE
 
-**Commit:** TBD (below) | **Branch:** main | **Date:** 2026-05-25
+**Commit:** `603e7994` | **Branch:** main | **Date:** 2026-05-25
 
 ### What was delivered
 
