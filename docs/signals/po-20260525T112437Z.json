@@ -1,0 +1,22 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "triage-batch",
+  "priority": "high",
+  "createdAt": "2026-05-25T11:24:37Z",
+  "payload": "dev-team Step-1 PO triage. BATCH=1 TASK (NEWS-INGEST-2, developer, vps-scripts/fetch-vn-news.sh since-cursor fix, general dev lane, no WIP-cap consume). Everything else verified NOT dev-team-dispatchable this tick: (1) mcp-server Phase-1 host-side BUILD COMPLETE — P1-A→P1-H all SHIPPED SOLO (195ef1a3→a9212ad2, zone clean); remaining P1-QA+P1-EXIT are docker-session-only. (2) BCTC-TABLE: BT-1 DONE (e74abc43), BT-0 IN-FLIGHT (f6dd2e83 09:09Z + uncommitted gold-set) — re-dispatch would collide. (3) DEPLOY-DRIFT DRIFT-1 (macro Go Dockerfile f85ad1d9 + calendar handler at HEAD) + DRIFT-2 (kinh-dich Go reboot at HEAD) both collapse to ops docker-rebuilds — routed to WORK + DASHBOARD ## ops DOCKER-SESSION-QUEUE; DRIFT-3 = architect-design (deferrable). (4) NEWS-INGEST-2b HELD (targets mcp-server zone; would muddy frozen Phase-1 host-side provenance before docker-session P1-QA). TASKS.md + pipeline-state.json reconciled to ground truth. PO this session LACKED the MCP gateway tool (probed get_macro_snapshot + get_market_hexagram → 'No such tool' x2) so could NOT send the pending WORK telegrams (news-fetch closure still PENDING since 2026-05-24) NOR live-probe the down services — dispatcher must clear the telegram debt + handle docker-session routing.",
+  "batch": [
+    {
+      "type": "FIX",
+      "id": "NEWS-INGEST-2",
+      "title": "since-cursor for fetch-vn-news.sh (stop ~160-article re-push every cycle)",
+      "desc": "Add a persistent last-seen cursor (VPS state file) to vps-scripts/fetch-vn-news.sh; push ONLY URLs/publishedAt newer than prior cycle. MUST NOT weaken mcp-server dedup (2nd line). fetch-vn-news.sh last touched 2026-05-12; cursor fix never attempted. ops deploys+proves live afterward.",
+      "files": ["vps-scripts/fetch-vn-news.sh"],
+      "baseline_pass": 9408,
+      "zone": "cross-service/"
+    }
+  ],
+  "docker_session_routing": ["DRIFT-1 macro rebuild", "DRIFT-2 kinh-dich rebuild", "mcp-server P1-QA + rebuild", "frontend rebuild (AWAITING-USER-G9)"],
+  "maintenance_routing": "719-file docs/signals backlog + runaway size-cap hook → claude-manager-helper/code-janitor (self-cron, NOT dev-team)",
+  "cross_team_note": "tnb-bug chef-frozen 72h+ → cowork-team domain; left on disk"
+}

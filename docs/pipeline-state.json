@@ -1,10 +1,10 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "1974-CLOSED (PM close-out 2026-05-22T17:55Z). QA APPROVED (smart-skip, docker-compose.yml + data only). AC-1..AC-6 PASS (AC-6 N/A). Signals drained. WIP=0/2. Gate timestamp corrected: 1960-DAILYDASH 22T16:30Z → 22T23:30Z (cronConfig.ts:128 '30 23 * * *' UTC; logs --since 1h grep dailyDashboard = empty). Active OBSERVE: 1960-DAILYDASH 22T23:30Z, 1967-06 unlock 22T21Z, 1955e 22T21Z, 1965d 23T03Z, 1957d 23T07:05Z, 1965c 23T18Z.",
-  "currentSprint": "1974 CLOSED. Dev-mcp-server lane idle (1974 DONE 2026-05-22T17:55Z). Next dispatch candidates: 1967-06 (HIGH, blocked until OBSERVE-1955e unlock 22T21Z), 1967-11 (MED, blocked until 1954c), 1967-10-ITEM18 (LOW, carryover marketScanJob finally-guard). WIP=0/2.",
-  "activeTaskId": "— (1974 CLOSED, WIP=0/2, awaiting next dispatch gate).",
-  "nextAgent": "main-router (dispatcher) — news-fetch pilot DONE (12/12 SCALE). PENDING dispatcher action: send WORK telegram (PO lacks MCP). Then route next SCALE-fleet pilot per architect refactor roadmap. No open news-fetch tasks. Dev-mcp-server lane idle (1974 CLOSED).",
-  "nextPrompt": "news-fetch SCALE pilot TERMINAL-CLOSED 2026-05-24T09:45Z: status=DONE, goalsEarned=12, all 12 goals YES, decisionMatrix verdict=scale (3×YES speed/trust/scale). QA P2-NF-Z close-gate APPROVED @41e4b2ce (sandbox 16/16, env audit clean, fix e5e78e54 at HEAD) → PO terminal 12/12 atomic close on pilot-status-news-fetch.json. Closure signal docs/signals/po-news-fetch-closure-20260524T094500Z.json. 6th pilot to SCALE (generic developer owner, no specialist). PENDING dispatcher action: WORK telegram (PO lacks MCP). NEXT: dispatch next SCALE-fleet microservice per architect refactor roadmap; no open news-fetch tasks remain. Dev-mcp-server lane idle (1974 CLOSED, await OBSERVE gates).",
+  "status": "IDLE-NO-DEV-DISPATCH (2026-05-25T11:20Z PO triage). mcp-server Phase-1 host-side BUILD COMPLETE (P1-A→P1-H shipped SOLO; zone clean). All remaining mcp-server work (P1-QA + P1-EXIT) is docker-session-only. DEPLOY-DRIFT DRIFT-1/-2 collapsed to ops docker-rebuilds (code at HEAD). No dev-team-dispatchable code work this tick except DRIFT-3 architect-design (deferrable). WIP=0/2.",
+  "currentSprint": "mcp-server SCALE pilot Phase-1 — host-side BUILD COMPLETE 2026-05-25T11:20Z (P1-A 195ef1a3 → P1-H a9212ad2, all SOLO). NEXT for this pilot = docker-session-only (P1-QA live full-tool-suite verify + container rebuild + P1-EXIT terminal flip). NOT dispatchable from a dev agent (16GB host cap). frontend pilot AWAITING-USER-G9 + container rebuild (docker session).",
+  "activeTaskId": "— (no active dev task; mcp-server host-side build done, all remaining work docker-session-gated). WIP=0/2.",
+  "nextAgent": "main-router (dispatcher). PENDING dispatcher/MCP action: (1) news-fetch SCALE-pilot closure WORK telegram STILL PENDING since 2026-05-24 (PO this session ALSO lacked the MCP gateway tool — could not clear it); (2) route DEPLOY-DRIFT DRIFT-1/-2 ops rebuilds + mcp-server P1-QA + frontend rebuild into the SEPARATE docker session via WORK + DASHBOARD ## ops. NO dev code dispatch this tick.",
+  "nextPrompt": "mcp-server Phase-1 host-side BUILD COMPLETE 2026-05-25T11:20Z — P1-A→P1-H all committed (195ef1a3/3bc85cf7/d053b0d4/d7f4129f/9da207fc/970f4b38/2148d2be/a9212ad2, handoff bce7c559, ops notebook ee1b77a4). mcp-server zone CLEAN. Remaining for the pilot = P1-QA (live full-tool-suite ≥9408/≤348 + tool 146 + scheduler 68 + dashboard) + P1-EXIT (PO 12/12 terminal flip) — BOTH require the live docker fleet → SEPARATE docker session only, NOT a dev agent. DEPLOY-DRIFT: DRIFT-1 (macro Go Dockerfile f85ad1d9 + calendar handler at HEAD) + DRIFT-2 (kinh-dich Go reboot at HEAD) both collapse to ops `docker compose --build` in the docker session; DRIFT-3 (CI image-SHA-drift guard) is architect-design, deferrable. No dev-team-dispatchable code work this tick → triage BATCH=NOTHING for the dev lane.",
   "news_fetch_pilot": {
     "phase": "terminal",
     "status": "DONE",
@@ -15,14 +15,31 @@
     "all_12_yes": true,
     "decisionMatrix": {"speed": "YES", "trust": "YES", "scale": "YES", "verdict": "scale"},
     "verdict": "scale",
-    "outcome": "SCALE (3×YES) — 6th pilot to SCALE; generic developer owner, no specialist agent",
+    "outcome": "SCALE (3xYES) — 6th pilot to SCALE; generic developer owner, no specialist agent",
     "anchor_tag": "news-fetch-pre-refactor @ 31483c8c (local-only, INTACT)",
     "closure_signal": "docs/signals/po-news-fetch-closure-20260524T094500Z.json",
     "qa_close_gate_signal": "docs/signals/qa-news-fetch-p2-close-20260524T000003Z.json (@41e4b2ce)",
-    "pending_dispatcher_action": "WORK telegram (PO lacks MCP — dispatcher sends)",
+    "pending_dispatcher_action": "WORK telegram STILL PENDING (PO lacks the MCP gateway tool across 2026-05-24 AND this 2026-05-25T11:20Z session) — dispatcher must send",
     "goalflip_rule": "§4.5 — all 12 flipped TBD/EARNED-PENDING→YES in ONE atomic terminal-close commit; matrix populated same commit"
   },
-  "updatedAt": "2026-05-24T09:45:00Z",
-  "updatedBy": "po 2026-05-24T09:45Z — news-fetch SCALE pilot TERMINAL 12/12 atomic close (§4.5). All 12 goals flipped to YES, goalsEarned=12, decisionMatrix verdict=scale (speed/trust/scale all YES). On QA P2-NF-Z close-gate APPROVED @41e4b2ce. Single atomic commit on pilot-status-news-fetch.json. SSOT validated: JSON valid, no duplicate keys, goalsEarned=12, 12/12 YES, verdict=scale. Closure signal po-news-fetch-closure-20260524T094500Z.json. WORK telegram PENDING dispatcher (PO lacks MCP). NEXT: dispatcher sends telegram + routes next SCALE-fleet pilot. Dev-mcp-server lane untouched.",
-  "lastCompleted": "pm 2026-05-22T17:55Z — TASK_1974 CLOSED (qa-1974-approved.json + dev-mcp-server-1974-impl-done.json drained to processed/, commits c503c774 + def46747, AC-1..AC-6 PASS, smart-skip applied, 9382/283 baseline). Prior: 1967-10 2026-05-22T14:00Z (miscellaneous MED/LOW). NOTE-CORRECTION: 1960-DAILYDASH gate timestamp 22T16:30Z → 22T23:30Z (cronConfig.ts:128)."
+  "mcp_server_pilot": {
+    "phase": "1",
+    "status": "HOST-SIDE-BUILD-COMPLETE",
+    "phase0": "CLOSED 2026-05-25T10:50Z (P0-MCP-EXIT)",
+    "phase1_host_side": "COMPLETE 2026-05-25T11:20Z — P1-A→P1-H all SHIPPED SOLO",
+    "commits": ["195ef1a3 P1-A", "3bc85cf7 P1-B", "d053b0d4 P1-C", "d7f4129f P1-D", "9da207fc P1-E", "970f4b38 P1-F", "2148d2be P1-G", "a9212ad2 P1-H", "bce7c559 handoff", "ee1b77a4 ops-notebook"],
+    "anchor_tag": "mcp-server-pre-refactor @ 7d78abb1 (local-only)",
+    "remaining": "P1-QA (live full-tool-suite verify) + container rebuild + P1-EXIT (PO 12/12 terminal flip) — DOCKER-SESSION-ONLY, NOT dev-agent-dispatchable (16GB host cap)",
+    "rollout_position": "FINAL pilot; host-side code closes the 2026-05-22 three-tier rollout at 11/11 pending docker-session QA"
+  },
+  "deploy_drift": {
+    "DRIFT-1": "macro get_macro_calendar 404 — PATH RESOLVED to (a) deploy Go (Dockerfile f85ad1d9 + handlers_calendar.go at HEAD). Collapses to ops docker-rebuild. NOT dev-dispatchable.",
+    "DRIFT-2": "kinh-dich stale TS image — Go reboot at HEAD. Pure ops redeploy. NOT dev-dispatchable.",
+    "DRIFT-3": "CI/CD image-SHA-drift guard — architect-design lane (deferrable; dispatch when architect lane free).",
+    "routing": "DRIFT-1 + DRIFT-2 → ops docker session via WORK + DASHBOARD ## ops (already-NEW rows RENEW-MACRO-INDICATORS-DOWN + RENEW-KINH-DICH-DOWN)."
+  },
+  "signal_backlog": "719 files in docs/signals/ undrained since 2026-05-22 (~449 stale terminal receipts + ~265 context-bloat hook noise; runaway size-cap hook re-firing on TASKS.md/qa-notebook/architect-notebook every edit). NONE are new dev work not already in TASKS.md. Routed to claude-manager-helper/code-janitor (self-cron maintenance, NOT dev-team-spawnable) via DASHBOARD. Runaway hook flagged.",
+  "cross_team_note": "signal tnb-bug-...-chef-frozen.json (unified-agent notebook frozen 72h+) is COWORK-team domain (chef downstream of macro/kinh-dich outage). Left on disk for cowork-team drain. NOT dev-team's lane.",
+  "updatedAt": "2026-05-25T11:20:00Z",
+  "updatedBy": "po 2026-05-25T11:20Z dev-team Step-1 triage — reconciled from 25h-stale 1974-CLOSED ground truth to current state: mcp-server Phase-1 host-side BUILD COMPLETE (P1-A→P1-H shipped, git-verified), DEPLOY-DRIFT DRIFT-1/-2 collapsed to ops docker-rebuilds, no dev-dispatchable code work this tick → dev-lane BATCH=NOTHING. WIP=0/2. PO this session ALSO lacked the MCP gateway tool (probed get_macro_snapshot + get_market_hexagram → 'No such tool' ×2) so could NOT send the pending WORK telegrams or live-probe the down services — flagged to dispatcher."
 }
