@@ -67,6 +67,7 @@ _Updated: 2026-05-25T17:55Z (architect **P2-MCP-PLAN — mcp-server Phase-2 task
 ## dev-mcp-server
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
+| P2-A-B-C-DONE | 2026-05-25T18:35Z | dev-mcp-server | impl_done | **P2-A/B/C COMPLETE.** P2-A: `mcp-server-pre-ci` tag created at ba38dbe0. P2-B: `eslint.config.mjs` authored (Fence-A/B, eslint-plugin-boundaries v6, R-2 fallback TS parser+resolver); `lint:ci` script added; devDeps: eslint + boundaries + @typescript-eslint/parser + @typescript-eslint/eslint-plugin + eslint-import-resolver-typescript; FENCE-LEGACY on pollNews.ts; clean exit 0. Commits 5e34c7fe + 4e6f89ab. P2-C: deliberate Fence-A violation in sparkline.ts exits 1 + "Fence-A: domain must not import infrastructure layer"; reverted; exit 0 confirmed; violation NOT committed. **NEXT: P2-D (qa gate — freeze anchor confirm + G4 evidence signal).** Regression tripwires: bun test 9437/345 (≥9408/≤348 PASS), tsc exit 0, tools=148 (≥146), sched=68. | NEW | — |
 <!-- 1968c-P03-QA-PENDING pruned 2026-05-21T23:21Z po c243 cron-2307Z — DONE+QA-APPROVED 2026-05-22T00:00Z (commit c3b18e8c, qa-1968c-p03-done.json); Sprint 1968c CLOSED 2026-05-21T22:52:44Z. -->
 <!-- 1967-02-QA-PENDING pruned 2026-05-21T22:21Z po c242 cron-2207Z — DONE+QA-APPROVED 21:30Z (commit 257d92bf). -->
 <!-- 1968c-P03-GATED pruned 2026-05-21T22:21Z po c242 cron-2207Z — superseded by 1968c-P03-QA-PENDING row above; P01-done signal received 21:46Z, dev-mcp-server self-claimed and shipped at 21:43Z. -->

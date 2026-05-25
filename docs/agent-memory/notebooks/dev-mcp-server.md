@@ -1,5 +1,34 @@
 # dev-mcp-server -- Notebook
 
+## c296 · 2026-05-25 (mcp-server Phase-2 P2-A/B/C — ESLint fence foundation)
+
+### P2-A/B/C — ESLint Fence Foundation DONE
+
+**P2-A:** `mcp-server-pre-ci` tag created at HEAD ba38dbe0. local-only, no push.
+
+**P2-B:** `eslint.config.mjs` authored (88L). R-2 fallback applied:
+- `eslint-plugin-boundaries` v6 requires `eslint-import-resolver-typescript` for `.js` ESM → `.ts` resolution
+- Without resolver, `describeDependency` gets `to: undefined` → element unclassified → no violation fires (fence false-green trap)
+- Added `@typescript-eslint/eslint-plugin` for brownfield disable comments; `reportUnusedDisableDirectives: "off"`
+- Fence-A: `domain` must not import `infrastructure`, `interface`, `scheduler`
+- Fence-B: `application` must not import `interface`, `scheduler`
+- `interface/` and `scheduler/` → `infrastructure` ALLOWED (brownfield: 460+ such imports)
+- FENCE-LEGACY on `pollNews.ts:32` for pre-existing application→interface import
+- Commits: 5e34c7fe + 4e6f89ab
+
+**P2-C deliberate-violation evidence (NEVER committed):**
+- Injected `import { getDb } from "../../infrastructure/db/schema.js"` in `sparkline.ts`
+- Exit code: 1; output: `Fence-A: domain must not import infrastructure layer  boundaries/dependencies`
+- Reverted via Edit tool; exit 0 confirmed; git status clean; violation never staged
+
+**Regression tripwires:** tsc EXIT:0 | bun test 9437/345 (≥9408/≤348) | tools=148 | sched=68
+
+**NEXT:** P2-D is qa gate (freeze anchor confirm + G4 evidence signal). Stopping here per dispatch.
+
+Zone health: ESLint Fence-A/B operational; deliberate-violation proof confirmed; clean exit 0 on brownfield | HEALTHY
+
+---
+
 ## c295 · 2026-05-25 (BT-3i-A + BT-3i-B — BCTC-TABLE structured table storage + inspector render)
 
 ### BT-3i-A — Schema DDL + Push Handler (DONE)
