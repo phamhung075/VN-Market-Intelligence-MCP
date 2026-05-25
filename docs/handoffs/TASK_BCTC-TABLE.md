@@ -1875,3 +1875,92 @@ This is a pdf-extractor zone issue (dev-pdf-extractor owns `ExtractTablesUseCase
 Owner: dev-pdf-extractor | Task: BT-3-D — Wire Tesseract OCR + auto-locate balance sheet pages in `/extract-tables` production path.
 
 After BT-3-D: re-run `backfillBctcTables()` (the function in mcp-server is ready; just needs the extractor to actually OCR). Then BT-6 QA.
+
+---
+
+## [Developer] BT-3-D — dev-pdf-extractor — DONE
+
+**Commit:** `3f0589af` | **Branch:** main | **Date:** 2026-05-25
+
+### Bug fixed
+
+`ExtractTablesUseCase.execute()` (BT-3-B) built `pages=[{"page_number": 0, "path": pdf_path}]` with no `"text"` key. `TextTableExtractor.assemble()` reads `page.get("text", "")` → `""` → 0 rows. Every production call to `/extract-tables` returned `{rows_stored: 0, balance_pass: false}`.
+
+**BT-3-C FALSE-GREEN lesson (recorded for QA):** The BT-3-C integration test used `PreloadedTextTableExtractor(TextTableExtractor)` — a subclass that overrode `assemble()` to ignore the pages arg from the use case and instead returned `_get_fpt_pages()` (session-cached real OCR). This NEVER exercised the use case → adapter data flow. The test only verified the assembler in isolation, not the production wiring. The integration test gave a false-green that hid the production bug for 3 tasks. Lesson: integration tests must drive the exact same code path as production, including the same adapter instantiation and the same argument flow.
+
+### What was delivered
+
+9 files (exact BT-3-D file list, zero foreign):
+
+1. **`domain/repositories.py`** (MODIFY — add OcrPort Protocol)
+   - `OcrPort(Protocol)` — pure, zero infra imports.
+   - `locate_balance_sheet_pages(pdf_path) -> list[int]` — scan native PDF text for Vietnamese BS markers.
+   - `ocr_pages(pdf_path, page_numbers) -> list[dict]` — run Tesseract on specified pages only.
+
+2. **`infrastructure/ocr_adapter.py`** (CREATE — PdfOcrAdapter)
+   - `locate_balance_sheet_pages()`: pdfplumber native text (no Tesseract); Vietnamese markers: "bảng cân đối kế toán", "tài sản ngắn hạn", "tài sản dài hạn", "nguồn vốn", "tổng cộng tài sản", "tổng cộng nguồn vốn" + unaccented fallbacks.
+   - Allows 1-page gap within section; stops after 2 consecutive non-marker pages.
+   - Fallback: pages [4,5,6,7] if no markers found (logged as heuristic warning).
+   - `ocr_pages()`: pdf2image + pytesseract vie+eng, DPI=200, strictly sequential (D6 host safety — one page at a time, never batched).
+
+3. **`application/extract_tables_usecase.py`** (MODIFY — BT-3-D OCR wiring)
+   - `__init__` param: `ocr_port: Optional[OcrPort] = None` (backward-compat).
+   - `execute()` param: `pre_supplied_pages: Optional[list[dict]] = None`.
+   - Priority order: pre-supplied text (host-safe) → ocr_port auto-locate+OCR → empty (backward-compat for unit tests with fake assemblers).
+
+4. **`interface/handlers.py`** (MODIFY — add optional pages field)
+   - `ExtractTablesRequestSchema.pages: Optional[list] = None` — accepts pre-supplied per-page OCR text from mcp-server (BT-4b-2 DEFERRED).
+   - Route passes through as `pre_supplied_pages` to `execute()`.
+
+5. **`main.py`** (MODIFY — wire PdfOcrAdapter)
+   - `ocr_adapter = PdfOcrAdapter()` instantiated.
+   - Injected into `ExtractTablesUseCase(ocr_port=ocr_adapter)`.
+
+6. **`__tests__/integration/test_extract_tables_bt3d_real_ocr.py`** (CREATE — BT-3-D real OCR test)
+   - `@pytest.mark.slow` — drives real production wiring (no pre-supplied text, no fake extractor subclass).
+   - Asserts: `rows_stored ≥ 80`, `balance_pass=True`, golden anchors code 270/300/400.
+   - FAILED before fix (ModuleNotFoundError → confirmed RED). PASSED after fix in 17.65s.
+
+7-9. **`docs/architecture/microservice/pdf-extractor/usecases.md`** + **`infrastructure.md`** + **`docs/agent-memory/notebooks/dev-pdf-extractor.md`** (MODIFY — doc update).
+
+### Red→Green evidence
+
+- **RED (before fix):** `ModuleNotFoundError: No module named 'infrastructure.ocr_adapter'` — confirmed the gap (ocr_adapter didn't exist, test couldn't even import)
+- **GREEN (after fix):** 1 passed, 17.65s — real Tesseract ran on auto-located FPT balance-sheet pages, golden anchors 270/300/400 verified
+- **Full suite:** 276 passed (275 baseline + 1 new BT-3-D test), 0 failed
+
+### FPT golden anchors verified via REAL OCR path
+
+| Code | Value (VND) | Tolerance |
+|------|-------------|-----------|
+| 270 (Total Assets) | 88,089,621,779,862 | ±1 VND |
+| 300 (Total Liabilities) | 44,338,155,487,272 | ±1 VND |
+| 400 (Total Equity) | 43,751,466,292,590 | ±1 VND |
+| balance_pass | True (delta=0.0) | — |
+
+### Fence status
+
+- Fence-A: KEPT (primitives do not import infra/app/interface)
+- Fence-B: KEPT (domain.modules do not import infrastructure/interface)
+- 70 files analyzed, 126 dependencies, 2 kept, 0 broken
+
+### BT-4b-2 DEFERRED to dev-mcp-server
+
+mcp-server `backfillBctcTables` job should populate `pages` from `pdf_extracted_text` before calling `/extract-tables`, so that re-extraction reuses already-stored OCR text instead of re-running Tesseract on the 16GB Mac. The `/extract-tables` schema now accepts optional `pages: [{page_number, text}]` in the request body. When mcp-server sends stored OCR text, no Tesseract call is made (Path A: pre-supplied). When text is absent, Tesseract runs on located pages only (Path B: OCR, host-safe).
+
+### OCR strategy (host-memory)
+
+- locate_balance_sheet_pages(): pdfplumber native text only (fast, no images, no Tesseract)
+- ocr_pages(): called ONCE per `/extract-tables` invocation, on 3-5 located pages, sequential
+- Re-OCR is only needed when no stored text is pre-supplied — after BT-4b-2, mcp-server will pre-supply for the 12 eligible docs
+
+### Post-commit check
+
+`git show --stat 3f0589af` — exactly 9 files, zero foreign files confirmed.
+
+### Handoff to BT-4b re-run / BT-6 QA
+
+- BT-3-D DONE: `/extract-tables` production path now actually OCRs the PDF → rows_stored > 0
+- BT-4b re-run: `backfillBctcTables()` in mcp-server is ready. Re-run it now that the extractor works. Expected: 12 eligible docs (those with pdf_path on disk) → bctc_table_rows populated.
+- BT-4b-2 DEFERRED: dev-mcp-server should add `pages` population from `pdf_extracted_text` to `backfillBctcTables` before the run (to avoid 12× Tesseract re-runs on the Mac).
+- BT-6: QA regression gate (after BT-4b backfill completes).
