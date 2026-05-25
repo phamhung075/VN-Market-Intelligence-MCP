@@ -22,12 +22,16 @@ export default defineConfig({
     tsconfigPaths(),
   ],
   server: {
-    port: 3001,
+    port: process.env.PORT ? parseInt(process.env.PORT) : 3001,
   },
   test: {
     environment: "jsdom",
     globals: true,
     setupFiles: ["./app/__tests__/setup.ts"],
-    include: ["./app/__tests__/**/*.test.{ts,tsx}"],
+    include: [
+      "./app/__tests__/**/*.test.{ts,tsx}",
+      "./app/domain/formatters/**/*.test.{ts,tsx}",
+      "./app/lib/view-models/**/*.test.{ts,tsx}",
+    ],
   },
 });

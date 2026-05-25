@@ -5,11 +5,14 @@ import { defineConfig, devices } from "@playwright/test";
  * Tests live in tests/e2e/.
  * Run: npm run test:e2e
  */
+const PORT = process.env.PLAYWRIGHT_PORT ?? "3001";
+const BASE_URL = `http://localhost:${PORT}`;
+
 export default defineConfig({
   testDir: "tests/e2e",
   reporter: "list",
   use: {
-    baseURL: "http://localhost:3001",
+    baseURL: BASE_URL,
     trace: "on-first-retry",
   },
   projects: [
@@ -19,9 +22,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3001",
+    command: `PORT=${PORT} npm run dev`,
+    url: BASE_URL,
     reuseExistingServer: !process.env.CI,
-    timeout: 60_000,
+    timeout: 90_000,
   },
 });
