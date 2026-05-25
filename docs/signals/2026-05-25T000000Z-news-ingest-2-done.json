@@ -4,7 +4,7 @@
   "type": "task-done",
   "payload": {
     "taskId": "NEWS-INGEST-2",
-    "commit": "PENDING",
+    "commit": "9711ca72",
     "note": "deploy pending ops NEWS-INGEST-LIVE"
   }
 }
