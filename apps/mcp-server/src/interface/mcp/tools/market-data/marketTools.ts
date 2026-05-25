@@ -23,7 +23,12 @@ import { fetchHnxPrices, fetchUpcomPrices } from "../../../../infrastructure/fet
 import { getPatternSummary } from "../../../../application/usecases/getPatternSummary.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import type { HttpClient } from "../../../../infrastructure/fetchers/ssc.js";
-import { appendKinhDich } from "../../../../domain/services/kinhDich/kinhDichWrapper.js";
+// G5-INVERSE REMEDIATION (P1-F): appendKinhDich replaced with HTTP client calls.
+// kinhDichWrapper.ts is DEPRECATED — callers must use kinh-dich-service:5005 via clients.ts.
+import {
+  getKinhDichReading,
+  getMarketHexagram,
+} from "../../../../infrastructure/microservices/clients.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal types
@@ -32,6 +37,46 @@ import { appendKinhDich } from "../../../../domain/services/kinhDich/kinhDichWra
 interface MarketPriceRow {
   code: string;
   exchange: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// G5-inverse helpers: HTTP-routed kinh-dich block formatters
+// Replaces appendKinhDich() which was reading from local SQLite (G5 violation).
+// Now routes via kinh-dich-service:5005 via clients.ts.
+// Never throws — on error returns baseOutput + fallback line.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const KINH_DICH_FALLBACK = "\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ.";
+
+function formatKinhDichBlock(name: string, hexagram: number, signal: string, confidence: number): string {
+  const confStr = confidence != null && !isNaN(confidence) ? `${Math.round(confidence * 100)}%` : "";
+  const lines = [
+    `\n---`,
+    `Kinh Dịch: ${name} (${hexagram}) — ${signal}`,
+    ...(confStr ? [`Độ tin cậy: ${confStr}`] : []),
+  ];
+  return lines.join("\n");
+}
+
+/** Append market-wide hexagram reading to baseOutput via HTTP (replaces appendKinhDich("MARKET", ...)). */
+async function appendMarketHexagram(baseOutput: string): Promise<string> {
+  try {
+    const reading = await getMarketHexagram();
+    return baseOutput + formatKinhDichBlock(reading.name, reading.hexagram, reading.trend, reading.confidence ?? 0);
+  } catch {
+    return baseOutput + KINH_DICH_FALLBACK;
+  }
+}
+
+/** Append per-stock hexagram reading to baseOutput via HTTP (replaces appendKinhDich(code, ...)). */
+async function appendStockHexagram(code: string, baseOutput: string): Promise<string> {
+  if (!code) return baseOutput;
+  try {
+    const reading = await getKinhDichReading(code, 30);
+    return baseOutput + formatKinhDichBlock(reading.name, reading.hexagram, reading.signal, reading.confidence);
+  } catch {
+    return baseOutput + KINH_DICH_FALLBACK;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -237,16 +282,15 @@ export function registerMarketTools(server: McpServer): void {
         lines.push(`Generated: ${generatedAt}`);
 
         // ── Append Kinh Dich: MARKET-wide hexagram ───────────────────────────────
-        // Append the VN-Index / market aggregate hexagram to the full snapshot.
-        // Per-stock hexagram readings are appended as a Kinh Dich section block.
+        // G5-INVERSE (P1-F): now routes via kinh-dich-service:5005 HTTP — not local SQLite.
         let text = lines.join("\n");
-        text = await appendKinhDich("MARKET", text, db);
+        text = await appendMarketHexagram(text);
 
-        // Per-stock hexagram readings for all requested codes (best-effort)
+        // Per-stock hexagram readings for all requested codes (best-effort, HTTP-routed)
         if (codesProvided.length > 0) {
           for (const code of codesProvided) {
             const stockSummary = `${code}`;
-            const withHex = await appendKinhDich(code, stockSummary, db);
+            const withHex = await appendStockHexagram(code, stockSummary);
             // Only append if there is actual hexagram data (not just fallback repeated)
             if (withHex !== stockSummary) {
               text = text + "\n" + withHex.slice(stockSummary.length);

@@ -1,3 +1,7 @@
+// DEPRECATED: direct callers must use kinh-dich-service:5005 via clients.ts — see P1-F
+// G5-INVERSE REMEDIATION: appendKinhDich() callers (marketTools.ts, analysis.ts) have
+// been rewired to use getKinhDichReading() / getMarketHexagram() from clients.ts.
+// This file is NOT deleted in Phase 1 — deletion is Phase 2 G5 task.
 // src/domain/services/kinhDich/kinhDichWrapper.ts
 // Task 1077 — Kinh Dich Default Layer
 //

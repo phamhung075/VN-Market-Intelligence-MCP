@@ -23,7 +23,10 @@ import { listOpenPositions } from "../../../../infrastructure/db/positionStore.j
 import { fetchHosePrices, type MarketPrice } from "../../../../infrastructure/fetchers/hose.js";
 import { fetchHnxPrices, fetchUpcomPrices } from "../../../../infrastructure/fetchers/hnx.js";
 import { logger } from "../../../../infrastructure/logger.js";
-import { QUE_META } from "../../../../domain/services/kinhDich/hexagramLibrary.js";
+// G5-INVERSE REMEDIATION (P1-F): QUE_META now imported from interface-layer reference file.
+// Moved from domain/services/kinhDich/hexagramLibrary.ts → kinhdich/hexagramNames.ts
+// (GLUE: static display data only — runtime reads still use clients.ts HTTP)
+import { QUE_META } from "../kinhdich/hexagramNames.js";
 import type { DomainType } from "../../../../../bctc-schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────

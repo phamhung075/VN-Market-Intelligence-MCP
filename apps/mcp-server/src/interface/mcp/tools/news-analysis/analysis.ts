@@ -19,7 +19,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 
 import { getDb, initDatabase } from "../../../../infrastructure/db/schema.js";
-import { appendKinhDich } from "../../../../domain/services/kinhDich/kinhDichWrapper.js";
+// G5-INVERSE REMEDIATION (P1-F): appendKinhDich replaced with HTTP client call.
+// kinhDichWrapper.ts is DEPRECATED — callers must use kinh-dich-service:5005 via clients.ts.
+import { getKinhDichReading } from "../../../../infrastructure/microservices/clients.js";
 import { fetchCafeF } from "../../../../infrastructure/fetchers/cafef.js";
 import { fetchVnExpress } from "../../../../infrastructure/fetchers/vnexpress.js";
 // fetchReuters removed — rewired to news-fetch microservice HTTP (G5b, Phase 1)
@@ -46,6 +48,33 @@ interface WatchlistRow {
   code: string;
   exchange: string;
   domain: string;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// G5-inverse: HTTP-routed kinh-dich block formatter
+// Replaces appendKinhDich() which was reading from local SQLite (G5 violation).
+// Now routes via kinh-dich-service:5005 via clients.ts.
+// Never throws — on error returns baseOutput + fallback line.
+// ─────────────────────────────────────────────────────────────────────────────
+
+const KINH_DICH_FALLBACK_ANALYSIS = "\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ.";
+
+/** Append per-stock hexagram reading to baseOutput via HTTP (replaces appendKinhDich). */
+async function appendStockHexagramHttp(code: string, baseOutput: string): Promise<string> {
+  if (!code) return baseOutput;
+  try {
+    const reading = await getKinhDichReading(code, 30);
+    const confStr = reading.confidence != null && !isNaN(reading.confidence)
+      ? `${Math.round(reading.confidence * 100)}%` : "";
+    const block = [
+      `\n---`,
+      `Kinh Dịch: ${reading.name} (${reading.hexagram}) — ${reading.signal}`,
+      ...(confStr ? [`Độ tin cậy: ${confStr}`] : []),
+    ].join("\n");
+    return baseOutput + block;
+  } catch {
+    return baseOutput + KINH_DICH_FALLBACK_ANALYSIS;
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -356,8 +385,8 @@ export function registerAnalysisTools(server: McpServer): void {
               `${impact.actionCode.padEnd(6)} [${impact.domain}] ${icon} ` +
               `Confidence: ${(impact.confidence * 100).toFixed(0)}%\n` +
               `  ${impact.reasoning.slice(0, 160)}`;
-            // Append Kinh Dich hexagram reading for this stock (best-effort, never throws)
-            stockSummary = await appendKinhDich(impact.actionCode, stockSummary, db);
+            // G5-INVERSE (P1-F): HTTP-routed via kinh-dich-service:5005 (was local SQLite)
+            stockSummary = await appendStockHexagramHttp(impact.actionCode, stockSummary);
             lines.push(stockSummary);
           }
           lines.push("");
