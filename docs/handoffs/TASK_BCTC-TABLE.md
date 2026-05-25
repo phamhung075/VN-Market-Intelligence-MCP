@@ -3502,3 +3502,67 @@ PO INDEPENDENTLY re-verifies the LIVE endpoint row-by-row (does NOT trust QA's c
 
 - (a) `pushBctcTableHandler.ts` returns `rows_stored: rows.length` (input echo, NOT a DB-verified count) — false-success that masked the write-wedge. Fix: return the actual DB COUNT after insert.
 - (b) a test writes to the LIVE `/app/data/market.db` and seeded the clobbering "Test Row" — test-isolation breach. Fix: tests must use an isolated/in-memory DB, never the live one.
+
+---
+
+## [Architect] BT3-RETHINK — Filter Strategy Ruling (2026-05-26)
+
+**Ruling brief:** `docs/architecture-briefs/2026-05-26-bctc-table-bt3-rethink-filter-strategy.md`
+**Status:** DESIGN COMPLETE — supersedes BT3-FIX4 ruling
+
+### Why FIX4 False-Greened (root cause, final verdict)
+
+FIX4's fixture `fpt_q4_2025_pages_4-7.txt` captured PyMuPDF/spike rasterizer OCR text. Production uses poppler. These two rasterizers produce different diacritics and different noise. Every skip-string and regex in FIX4 was calibrated against PyMuPDF characters and silently failed on poppler's output. This is an OCR-substrate mismatch in the test layer — not a parser-complexity problem.
+
+**Three live failure classes on poppler:**
+1. Diacritics mismatch — skip key `"bảng cân"` does not match poppler's `"BANG CÂN"` (different Unicode). Date regex `ngày.*tháng` does not match poppler's `"thang"` (diacritic stripped). 5 orphan rows.
+2. Garbled signature noise — arbitrary OCR garbage in the digital-signature block that no literal list can enumerate. ~8-12 orphan rows.
+3. Embedded-code rows not split — codes 222/223/226/131/319/421b present in the line but Layout 2/4 regexes fail when label portion has different characters. 6 codes absent.
+
+### Ruling A — Filter Strategy: POSITIVE-KEEP + POSITIONAL CUTOFF
+
+**Negative skip-list RETIRED as primary filter.** Two-strategy combination:
+
+**POSITIONAL CUTOFF:** `_apply_positional_cutoff(rows, statement_section)` — drop all rows after the last occurrence of a summary sentinel code (270 or 440 for balance sheets). Called in `TextTableExtractor.assemble()` after all pages parsed. Eliminates the entire signature block and post-table noise without any keyword enumeration. Robust to any OCR noise.
+
+**POSITIVE-KEEP gate in else-branch:** when `_try_parse_code_row()` returns None, only emit the line as a header row if `_is_recognized_section_header(stripped)` returns True. Otherwise DROP SILENTLY — no orphan row created. `_is_recognized_section_header()` is a narrow function: matches only section-letter headers (A./B./C./D./E. + capital word) and roman-numeral sub-sections (I./II./III./IV./V. + capital word). Uses `_norm()` (diacritic-insensitive) internally.
+
+### Ruling B — Embedded-Code Split: Layout 5 Scan-and-Extract
+
+New `_find_code_in_line(stripped: str) -> tuple[str, str, str] | None` added as **Layout 5** in `_try_parse_code_row()`, called only when Layouts 1-4 all fail.
+
+`_BCTC_CODE_SCAN_RE`: scans for a 2-3 digit integer (not preceded by a digit) followed optionally by a note-ref integer and then a VN-format number. Label = everything before the match. Diacritic-insensitive: the label content does not affect code finding. Rejects code integers < 100 (eliminates note-ref false positives). Non-regression: Layout 5 is only reached when Layouts 1-4 return None, so zero existing matches are disrupted.
+
+### Ruling C — Diacritics Robustness
+
+New `_norm(s: str) -> str` helper: `unicodedata.normalize("NFD") + strip Mn category + uppercase`. Module-level constant `_JUNK_SKIP_KEYS` extracted from inline list. All skip-list comparisons: `_norm(skip) in _norm(stripped)`. Date regex: `re.search(r"NGAY\s+\d{1,2}\s+THANG", norm_stripped)`. All keyword checks in `_is_three_block_layout`, `_parse_three_block_layout`, `_detect_unit` normalized. Makes the parser immune to poppler vs PyMuPDF diacritic variation.
+
+### Ruling D — Fixture Mandate (BLOCKING AC-0)
+
+`__tests__/fixtures/fpt_q4_2025_pages_4-7.txt` MUST be replaced with a fixture generated from LIVE poppler OCR of e71f845d (via `POST localhost:5001/extract-tables` with `debug_dump_ocr=true` flag). Fixture must include a header comment naming the source and substrate. This is AC-0 — no other AC can be claimed until AC-0 is satisfied.
+
+### Ruling E — Acceptance Criteria (live endpoint ONLY, not fixture)
+
+Measured against `GET /api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` after single-doc re-extraction. `balance_pass` alone is FORBIDDEN as the gate.
+
+- **AC-0 (BLOCKING):** fixture replaced with poppler substrate, header comment present
+- **AC-1:** orphans (code=null) ≤ 2
+- **AC-2:** ZERO junk rows (no balance-sheet title, no date-context, no signature keywords, no garbled noise — all filtered by positional cutoff + POSITIVE-KEEP gate)
+- **AC-3:** codes 222/223/226-or-229/131/319/421b all present with correct values (±1 VND)
+- **AC-4:** 4 sentinels unchanged (270/100/300/400 exact)
+- **AC-5:** value_prior populated on code rows (null count ≤ 2, matching orphan floor)
+- **AC-6:** zero duplicate codes
+- **AC-7:** balance_delta = 0
+- **AC-8:** 10-assertion diacritics unit tests in `test_bt3rethink_diacritics.py` pass
+- **AC-9:** positional cutoff unit test passes
+- **AC-10:** lint-imports exit 0 (Fence-A/B intact; `unicodedata` is stdlib, safe)
+- **AC-11:** non-regression: sentinel values correct on regenerated fixture, total code rows ≥ 72
+
+### Files to Create / Modify (BT3-FIX5)
+
+- MODIFY `apps/pdf-extractor/infrastructure/text_table_extractor.py` (Rulings A/B/C — all changes listed in brief §7)
+- REPLACE `apps/pdf-extractor/__tests__/fixtures/fpt_q4_2025_pages_4-7.txt` (poppler substrate — AC-0)
+- CREATE `apps/pdf-extractor/__tests__/unit/test_bt3rethink_diacritics.py` (AC-8/AC-9)
+- MODIFY `apps/pdf-extractor/__tests__/unit/test_bt3fix4_parser_hardening.py` (update for poppler char forms)
+
+No mcp-server changes. No schema changes. Frozen surfaces untouched.
