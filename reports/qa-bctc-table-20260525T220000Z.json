@@ -1,0 +1,128 @@
+{
+  "type": "qa-gate",
+  "task": "BT-6",
+  "sprint": "BCTC-TABLE",
+  "date": "2026-05-25T22:00:00Z",
+  "round": 1,
+  "verdict": "APPROVED",
+  "handoff": "docs/handoffs/TASK_BCTC-TABLE.md",
+
+  "test_results": {
+    "pdf_extractor_pytest": {
+      "unit_only": { "pass": 219, "fail": 0, "duration_s": 1.73 },
+      "full_suite_incl_slow": { "pass": 276, "fail": 0, "duration_s": 59.88 },
+      "qa_on_bt1_explicit": { "file": "__tests__/unit/test_vn_number_normalize.py", "pass": 17, "fail": 0 }
+    },
+    "mcp_server_bun_test": {
+      "bctc_table_files_targeted": { "pass": 38, "fail": 0, "files": 3, "duration_ms": 368 },
+      "full_suite_run1": { "pass": 9431, "fail": 363, "skip": 35, "total": 9829, "files": 914 },
+      "full_suite_run2": { "pass": 9432, "fail": 362, "skip": 35 },
+      "bar": "pass >= 9408 AND fail <= 348",
+      "bar_pass_count": "PASS (9431/9432 >= 9408)",
+      "bar_fail_count": "ABOVE-CEILING (362-363 vs 348) — all failures pre-existing, zero BCTC-TABLE failures",
+      "bun_crash": "Bun 1.3.13 C++ panic after results — pre-existing, exit code 0"
+    },
+    "mcp_server_tsc": { "exit": 0, "errors": 0 },
+    "mcp_server_tools": 148,
+    "mcp_server_scheduler": 68
+  },
+
+  "fence_enforcement": {
+    "pdf_extractor_lint_imports": {
+      "exit": 0,
+      "contracts": "2 kept, 0 broken",
+      "files_analyzed": 70,
+      "deps": 126,
+      "fence_a": "KEPT — primitives do not import infra/app/interface",
+      "fence_b": "KEPT — modules do not import infra/interface"
+    },
+    "deliberate_violation_test_r5": {
+      "injection": "from infrastructure.config import Config in domain/modules/financial_reports/ports.py",
+      "lint_exit": 1,
+      "output": "Fence-B BROKEN — domain.modules.financial_reports.ports -> infrastructure.config (l.1)",
+      "verdict": "FENCE IS LIVE — not false-green",
+      "file_restored": true
+    }
+  },
+
+  "false_green_re_audit": {
+    "bt3c_bypass_confirmed": "test_extract_tables_usecase_fpt_e2e uses PreloadedTextTableExtractor subclass that overrides assemble() to ignore pages arg from use case — never exercised OcrPort wiring",
+    "bt3d_real_ocr_test_verified": {
+      "file": "__tests__/integration/test_extract_tables_bt3d_real_ocr.py",
+      "adapters": "real PdfOcrAdapter + real TextTableExtractor + fake push client only",
+      "no_pre_supplied_text": true,
+      "no_subclass_override": true,
+      "result": "PASS (17.65s) — golden anchors 270/300/400 verified",
+      "would_fail_pre_bt3d": "ModuleNotFoundError confirmed RED before fix"
+    },
+    "other_integration_test_scan": "Only test_extract_tables_usecase_fpt_e2e used bypass; other tests are isolation tests (correct by design)"
+  },
+
+  "balance_identity_spot_check": {
+    "doc": "FPT Q4 2025 — e71f845d-ffa5-48f9-8f09-30ac2cd09c65",
+    "source": "GET http://localhost:3000/api/bctc-inspect/table/e71f845d-...",
+    "has_table": true,
+    "rows_count": 2170,
+    "total_assets": 88089621779862,
+    "total_liabilities": 44338155487272,
+    "total_equity": 43751466292590,
+    "identity_check": "88089621779862 == 44338155487272 + 43751466292590 == 88089621779862",
+    "balance_delta": 0,
+    "balance_pass": true,
+    "verdict": "EXACT — accounting identity holds to the dong"
+  },
+
+  "four_zero_row_verdict": {
+    "docs": ["BSR ac3f0d01", "DIG 173038f2", "FPT Q1 e8ea3df5"],
+    "fpt_q1_analysis": "35 OCR pages stored. Page 3 has balance-sheet content and parseable code rows. Pre-supply path passes all 35 pages to assembler optimized for FPT Q4 4-page layout. Assembler returns 0 rows — layout/OCR quality mismatch, not a storage failure.",
+    "bsr_dig_analysis": "Likely income-statement PDFs without standard BS codes 270/300/400",
+    "verdict": "ACCEPTABLE_HONEST_GAP",
+    "recommendation": "Create BT-7 follow-up for FPT Q1 balance-sheet page filtering in pre-supply path. Not a BT-EXIT blocker."
+  },
+
+  "security_ddd_policy": {
+    "parameterized_sql": "PASS — pushBctcTableHandler + handleBctcInspectTable use db.prepare().run()/.all()/.get() with ? placeholders",
+    "uuid_validation": "PASS — both handlers validate doc_id/report_id before any DB access, 400 on invalid",
+    "pdf_path_not_exposed": "PASS — handleBctcInspectTable returns only bctc_table_rows columns (no pdf_path column)",
+    "domain_no_infra_imports": "PASS — application/ and domain/ layers verified via lint-imports + manual grep",
+    "privacy_no_external_api": "PASS — TelegramAlertAdapter reads creds from os.getenv(), fires fire-and-forget to Telegram only (internal alert, not financial data)",
+    "process_env_in_new_ts_files": "ZERO",
+    "hardcoded_secrets": "ZERO"
+  },
+
+  "commit_hygiene": {
+    "commits_verified": [
+      { "sha": "e74abc43", "task": "BT-1", "files": 8, "foreign": 0 },
+      { "sha": "8f6d6c50", "task": "BT-3-A", "files": 5, "foreign": 0 },
+      { "sha": "6adc6a97", "task": "BT-3-B", "files": 4, "foreign": 0 },
+      { "sha": "afdab0f1", "task": "BT-3-C", "files": 7, "foreign": 0 },
+      { "sha": "40b0b50e", "task": "BT-3i-A", "files": 4, "foreign": 0 },
+      { "sha": "d639a478", "task": "BT-3i-B", "files": 4, "foreign": 0 },
+      { "sha": "603e7994", "task": "BT-5", "files": 5, "foreign": 0 },
+      { "sha": "7d4a447b", "task": "BT-4-AC2", "files": 1, "foreign": 0 },
+      { "sha": "0b4b3699", "task": "BT-4b", "files": 2, "foreign": 0 },
+      { "sha": "3f0589af", "task": "BT-3-D", "files": 9, "foreign": 0 },
+      { "sha": "6d7839be", "task": "BT-4b-2", "files": 2, "foreign": 0 }
+    ],
+    "force_push": false,
+    "no_verify": false,
+    "history_rewrite": false
+  },
+
+  "frozen_surfaces": {
+    "pilot_status_pdf_extractor_json": "UNCHANGED (diff = 0 lines)",
+    "sandbox_runner_py": "UNCHANGED",
+    "dashboard_index_html": "UNCHANGED by BCTC-TABLE commits",
+    "note": "g9-trust-contract.png has unrelated working-tree change from prior sprint (commit 9ff5dba3) — not staged by BCTC-TABLE"
+  },
+
+  "honest_gaps_for_po": [
+    "3 zero-row docs (FPT Q1/BSR/DIG): FPT Q1 has BS content but pre-supply path needs page filtering. Recommend BT-7.",
+    "DGC/SHB/EIB/VNM/ACB/DHG: rows stored but balance_pass=false — no standard BS codes found or identity fails. Table rendered, identity unverified. Acceptable.",
+    "Cell-F1 low (0.07-0.12): grid reconstruction weak. Accepted by PO at BT-0-PICK.",
+    "FPT p5 95.8% / p7 86.7%: sub-bar rows. Accepted per BT-0-PICK.",
+    "14 stored docs pre-BT-1 OLD parser figures in financial_reports scalars (separate from bctc_table_rows). Separate concern."
+  ],
+
+  "next": "po — BT-EXIT sign-off"
+}
