@@ -23,6 +23,7 @@
 
 import type { Database } from "bun:sqlite";
 import { existsSync } from "node:fs";
+import { basename } from "node:path";
 
 // ─── UUID validation ──────────────────────────────────────────────────────────
 
@@ -43,13 +44,18 @@ interface FinancialReportPdfRow {
   pdf_path: string;
 }
 
+interface OcrPageRow {
+  page_number: number;
+  text_content: string;
+}
+
 export interface DocOutcome {
   doc_id: string;
   action_code: string;
   period_year: number;
   period_quarter: number | null;
   pdf_path: string;
-  status: "success" | "gate_blocked" | "error" | "skipped_no_file";
+  status: "success" | "gate_blocked" | "error" | "skipped_no_file" | "skipped_no_ocr";
   /** Number of rows stored, if status=success */
   rows_stored?: number;
   /** Whether accounting identity holds, if status=success */
@@ -71,6 +77,12 @@ export interface BackfillBctcTablesResult {
   skipped_no_file: number;
   /** Docs skipped because pdf_path was NULL or empty (news-inference rows) */
   skipped_null_path: number;
+  /**
+   * Docs skipped because no OCR text is stored in pdf_extracted_text for this doc.
+   * BT-4b-2: host-safety guardrail — without pre-supplied OCR, the pdf-extractor
+   * would run Tesseract in-process on the 16GB Mac (kernel-panic risk). Skip instead.
+   */
+  skipped_no_ocr: number;
   /** Per-doc outcomes (for reporting) */
   outcomes: DocOutcome[];
 }
@@ -138,7 +150,16 @@ export async function backfillBctcTables(
     `[bctcBatchTableBackfillJob] Starting one-shot backfill: ` +
       `${eligibleRows.length} eligible (PDF on disk), ` +
       `${missingFileRows.length} skipped (file not found), ` +
-      `${nullPathCount} skipped (pdf_path NULL — news-inference rows)`,
+      `${nullPathCount} skipped (pdf_path NULL — news-inference rows). ` +
+      `OCR pre-supply enabled (BT-4b-2) — docs without stored OCR will be skipped.`,
+  );
+
+  // ── Prepare OCR query (BT-4b-2: pre-supply stored OCR text to avoid Tesseract) ────
+  const ocrQuery = db.prepare(
+    `SELECT page_number, text_content
+     FROM pdf_extracted_text
+     WHERE filename = ?
+     ORDER BY page_number ASC`,
   );
 
   // ── Sequential extraction — one doc at a time ─────────────────────────────
@@ -146,6 +167,7 @@ export async function backfillBctcTables(
   let successCount = 0;
   let gateBlockedCount = 0;
   let failedCount = 0;
+  let skippedNoOcrCount = 0;
 
   for (const row of eligibleRows) {
     const docLabel = `${row.action_code} ${row.period_year}Q${row.period_quarter ?? "?"}`;
@@ -169,8 +191,40 @@ export async function backfillBctcTables(
       continue;
     }
 
+    // ── BT-4b-2: Query stored OCR text for this doc (join by basename) ────────
+    // HOST SAFETY: we only POST with pre-supplied pages so that pdf-extractor uses
+    // Path A (no Tesseract). If no OCR is stored, skip the doc — forcing in-process
+    // OCR on the 16GB Mac risks kernel-panic from swap exhaustion.
+    const pdfBasename = basename(row.pdf_path);
+    const ocrPages = ocrQuery.all(pdfBasename) as OcrPageRow[];
+
+    if (ocrPages.length === 0) {
+      console.warn(
+        `[bctcBatchTableBackfillJob] SKIP no-ocr: doc_id=${docId} ` +
+          `(${docLabel}) — no stored OCR text for filename=${pdfBasename}. ` +
+          `Skipping to avoid in-process Tesseract on host Mac (kernel-panic risk).`,
+      );
+      outcomes.push({
+        doc_id: docId,
+        action_code: row.action_code,
+        period_year: row.period_year,
+        period_quarter: row.period_quarter,
+        pdf_path: row.pdf_path,
+        status: "skipped_no_ocr",
+      });
+      skippedNoOcrCount++;
+      continue;
+    }
+
+    // Map OCR rows to the pages format expected by /extract-tables (BT-3-D schema)
+    const pages = ocrPages.map((p) => ({
+      page_number: p.page_number,
+      text: p.text_content,
+    }));
+
     console.log(
-      `[bctcBatchTableBackfillJob] Extracting ${docLabel} (${docId}) ...`,
+      `[bctcBatchTableBackfillJob] Extracting ${docLabel} (${docId}) ` +
+        `— ${pages.length} pre-supplied OCR pages (zero Tesseract) ...`,
     );
 
     try {
@@ -181,6 +235,7 @@ export async function backfillBctcTables(
           report_id: docId,
           pdf_path: row.pdf_path,
           statement_section: statementSection,
+          pages, // BT-4b-2: pre-supplied OCR text → pdf-extractor uses Path A, no Tesseract
         }),
       });
 
@@ -278,13 +333,15 @@ export async function backfillBctcTables(
     failed: failedCount,
     skipped_no_file: missingFileRows.length,
     skipped_null_path: nullPathCount,
+    skipped_no_ocr: skippedNoOcrCount,
     outcomes,
   };
 
   console.log(
     `[bctcBatchTableBackfillJob] DONE: success=${successCount} ` +
       `gate_blocked=${gateBlockedCount} failed=${failedCount} ` +
-      `skipped_no_file=${missingFileRows.length} skipped_null_path=${nullPathCount}`,
+      `skipped_no_file=${missingFileRows.length} skipped_null_path=${nullPathCount} ` +
+      `skipped_no_ocr=${skippedNoOcrCount}`,
   );
 
   return result;
