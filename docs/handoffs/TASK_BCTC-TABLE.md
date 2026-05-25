@@ -1428,3 +1428,106 @@ Owner: dev-pdf-extractor | Task: BT-3-C — Integration: `process_report()` → 
   - Integration test on real FPT data: ≥70 rows, balance_pass=True
   - Sandbox scenario: `structured_table_extraction` key
 - Fence constraint: module.py stays in domain layer; imports only ports, not concrete adapters
+
+---
+
+## [Developer] BT-3-C — dev-pdf-extractor — DONE
+
+**Commit:** `afdab0f1` | **Branch:** main | **Date:** 2026-05-25
+
+### What was delivered
+
+7 files staged and committed, zero foreign files:
+
+1. **`domain/modules/financial_reports/module.py`** (MODIFY — BT-3-C)
+   - New optional `__init__` param: `table_assembler: Optional[TableAssemblerPort] = None`
+   - New optional `process_report()` params: `pages: Optional[list] = None`, `statement_section: str = "balance_sheet"`
+   - New Step 8: calls `table_assembler.assemble(pages, statement_section)` when wired
+   - Pure `_compute_table_balance_check()` helper (codes 270/300/400, 1 VND tolerance)
+   - 2 new additive return keys: `structured_table_rows` (list|None) + `balance_check` (dict|None)
+   - All 14 existing keys preserved (backward-compat — callers unaffected)
+   - DDD: imports only TableAssemblerPort from ports.py (zero infra imports)
+
+2. **`infrastructure/text_table_extractor.py`** (MODIFY — block-column layout + OCR fixes required by red→green integration test)
+   - Added `_detect_block_column_layout()` — detects FPT pages 4-6 block-column OCR format (≥5 consecutive pure-code-only lines)
+   - Added `_extract_block_columns()` — extracts code list + dual value lists from block layout; reconstructs rows by positional zip
+   - Added `_coerce_ocr_number()` — fixes OCR comma artifact: "44,338.155.487.272" → "44.338.155.487.272" (Total Liabilities parse)
+   - Added Layout 3 regex `_CODE_VALUE_COL_RE` — "270 88.089.621.779.862" (code + single-space + value)
+   - Added Layout 4 regex `_CODE_ROW_SINGLE_SPACE_RE` — "D. VỐN CHỦ SỞ HỮU 400 43.751.466.292.590..." (FPT page 7)
+   - Updated `_parse_value_cells()` — single-space fallback for two VN numbers joined by one space
+   - `assemble()` now auto-detects layout per page; block-column pages use reconstruction path, inline pages use existing parser
+
+3. **`__tests__/integration/test_extract_tables_fpt.py`** (CREATE — 4 tests, real FPT PDF)
+
+4. **`pyproject.toml`** (MODIFY — `slow` pytest marker registered per D6 HOST SAFETY)
+
+5. **`docs/architecture/microservice/pdf-extractor/usecases.md`** (doc update)
+
+6. **`docs/architecture/microservice/pdf-extractor/infrastructure.md`** (doc update — new extractor layouts documented)
+
+7. **`docs/agent-memory/notebooks/dev-pdf-extractor.md`** (notebook append)
+
+### Red→Green evidence
+
+- **Pre-task baseline:** 265 passed (unit tests only)
+- **Integration test initial run (RED confirmed):** `balance_check should not be None` — OCR block-column layout not yet handled; code 270/300/400 not found in any rows
+- **After block-column reconstruction + OCR coercion + Layout 4 regex:**
+  - All 4 integration tests GREEN
+  - Real-FPT rows: 171 rows extracted from 4 pages (≥70 AC-2 met)
+  - FPT balance_pass=True (delta=0.0 to the dong)
+- **Final full suite:** 269 passed (265 unit + 4 integration), 0 failed
+
+### FPT golden anchors verified
+
+| Code | Value (VND) | Source |
+|------|-------------|--------|
+| 100 | 58,102,970,741,619 | Block-column page 4 |
+| 200 | 29,986,651,038,243 | Page 5 (layout 3) |
+| 270 | 88,089,621,779,862 | Page 5 (layout 3) |
+| 300 | 44,338,155,487,272 | Block-column page 6 (OCR coercion applied) |
+| 400 | 43,751,466,292,590 | Page 7 (layout 4) |
+| 440 | 88,089,621,779,862 | Page 7 (layout 4) |
+
+balance_check: total_assets=270 == liabilities=300 + equity=400 → balance_pass=True, delta=0.0
+
+### Fence status
+
+- Fence-A: KEPT — primitives do not import infra/app/interface
+- Fence-B: KEPT — domain.modules do not import infrastructure/interface
+- 67 files analyzed, 112 dependencies, 2 kept, 0 broken
+
+### Sandbox status
+
+- Primitive-tier: `confidence_scorer/happy_high_conf.json` → PASS
+- Module-tier: `financial_reports/multi_primitive_story.json` → PASS (includes `balance_check: null` in output — backward-compat)
+- Zero creds confirmed: `env | grep -E "DB_|API_KEY|SECRET..."` → empty
+
+### Critical override: sandbox/runner.py NOT modified
+
+Per architect override in BT-3-C task spec: `sandbox/runner.py` is a FROZEN pilot surface. No sandbox scenario `structured_table_extraction` added. The sandbox scenario is DEFERRED — decision routed to PO. This is explicitly flagged.
+
+**DEFERRED:** Sandbox scenario `structured_table_extraction` not added to `runner.py`. Reason: frozen pilot surface (architect override). Routed to PO for decision on whether to add a post-pilot scenario.
+
+### AC verification
+
+- AC-1: `process_report()` returns `structured_table_rows` + `balance_check` in addition to existing keys. PASS.
+- AC-2: Real-FPT integration test: rows_stored = 171 ≥ 70. PASS.
+- AC-3: Push request shape verified (mock push client records call). PASS.
+- AC-4: `select_period_column` called with real FPT header cells (period_current="31/12/2025" detected). PASS.
+- AC-5: `vn_number_normalize` applied to every value cell; OCR coercion handles "44,338.155..." → correct float. PASS.
+- AC-6: Re-run idempotency: second call to extract returns same rows (block-column reconstruction is deterministic). PASS.
+- AC-7: sandbox/runner.py exit-0, existing scenarios GREEN. PASS. (New scenario DEFERRED — see override above.)
+- AC-8: Zero creds in sandbox env. PASS.
+
+### Post-commit check
+
+`git show --stat afdab0f1` — exactly 7 files, zero foreign files confirmed.
+
+### Handoff to BT-3i (dev-mcp-server)
+
+Owner: dev-mcp-server | Task: BT-3i-A — Schema Migration + Push Handler
+- BT-3-C DONE: extraction produces structured rows + balance_check
+- BT-3i-A creates `bctc_table_rows` + `bctc_balance_checks` DDL in `schema-financial-reports.ts`
+- BT-3i-A creates `pushBctcTableHandler.ts` + registers `POST /api/push-bctc-table` in `server.ts`
+- BT-3i-B adds `GET /api/bctc-inspect/table/{doc_id}` + `#table-section` HTML render
+- Report ID for FPT tests: any UUID matching `financial_reports.id` on mcp-server market.db
