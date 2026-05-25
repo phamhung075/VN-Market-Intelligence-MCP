@@ -14,11 +14,14 @@ HTTP concerns (status codes, serialization) are handled here.
 
 import os
 from pathlib import Path
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import HTMLResponse, Response
+from pydantic import BaseModel
 
 from application.usecases import ExtractPDFUseCase
+from application.extract_tables_usecase import ExtractTablesUseCase
 from infrastructure.inspection_store import InspectionStore
 from interface.serializers import ExtractPDFRequestSchema, HealthResponse
 
@@ -26,10 +29,40 @@ from interface.serializers import ExtractPDFRequestSchema, HealthResponse
 _VIEWER_HTML_PATH = Path(__file__).parent / "viewer.html"
 
 
+# ---------------------------------------------------------------------------
+# BT-3-B: POST /extract-tables request schema
+# ---------------------------------------------------------------------------
+
+
+class ExtractTablesRequestSchema(BaseModel):
+    """Pydantic model: validates incoming POST /extract-tables request body."""
+
+    report_id: str
+    pdf_path: str
+    statement_section: str = "balance_sheet"
+
+    @property
+    def valid_sections(self):
+        return {"balance_sheet", "income_statement", "cash_flow"}
+
+    def validate_section(self) -> None:
+        if self.statement_section not in self.valid_sections:
+            raise ValueError(
+                f"statement_section must be one of {self.valid_sections}, "
+                f"got: {self.statement_section!r}"
+            )
+
+
+# ---------------------------------------------------------------------------
+# Route registration
+# ---------------------------------------------------------------------------
+
+
 def register_routes(
     router: APIRouter,
     extract_usecase: ExtractPDFUseCase,
     inspection_store: InspectionStore,
+    extract_tables_usecase: Optional[ExtractTablesUseCase] = None,
 ) -> None:
     """Attach all routes to the given APIRouter."""
 
@@ -41,6 +74,52 @@ def register_routes(
     async def health() -> HealthResponse:
         """Liveness probe."""
         return HealthResponse()
+
+    @router.post("/extract-tables")
+    async def extract_tables(body: ExtractTablesRequestSchema) -> dict:
+        """
+        POST /extract-tables
+
+        BT-3-B: Extract structured BCTC table rows from a PDF file and push them
+        to mcp-server for storage.
+
+        Accepts: {report_id: str, pdf_path: str, statement_section: str}
+        Returns: {ok: bool, rows_stored: int, balance_pass: bool, balance_delta: float}
+
+        Requires: extract_tables_usecase injected at composition root (main.py).
+        Returns HTTP 503 if the use case is not wired (graceful degrade).
+        """
+        if extract_tables_usecase is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"status": "failed", "error": "extract_tables_usecase not configured"},
+            )
+
+        try:
+            body.validate_section()
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={"status": "failed", "error": str(exc)},
+            ) from exc
+
+        try:
+            result = await extract_tables_usecase.execute(
+                report_id=body.report_id,
+                pdf_path=body.pdf_path,
+                statement_section=body.statement_section,
+            )
+            return {
+                "ok": True,
+                "rows_stored": result.get("rows_stored", 0),
+                "balance_pass": result.get("balance_pass", False),
+                "balance_delta": result.get("balance_delta", 0.0),
+            }
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={"status": "failed", "error": str(exc)},
+            ) from exc
 
     @router.post("/extract")
     async def extract_pdf(body: ExtractPDFRequestSchema) -> dict:

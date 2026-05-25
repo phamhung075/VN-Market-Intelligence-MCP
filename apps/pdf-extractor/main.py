@@ -22,8 +22,11 @@ from infrastructure.repositories import (
 )
 from infrastructure.extraction_engine import PdfplumberExtractionEngine
 from infrastructure.inspection_store import InspectionStore
+from infrastructure.text_table_extractor import TextTableExtractor
+from infrastructure.table_push_client import TablePushClient
 from domain.services import ExtractPDFService
 from application.usecases import ExtractPDFUseCase
+from application.extract_tables_usecase import ExtractTablesUseCase
 from interface.handlers import register_routes
 
 
@@ -60,6 +63,14 @@ def create_app() -> FastAPI:
         extraction_dir=cfg.storage_dir,
     )
 
+    # --- BT-3-B: TEXT-path table extraction use case ---
+    table_extractor = TextTableExtractor()
+    table_push_client = TablePushClient(mcp_server_url=cfg.mcp_server_url)
+    extract_tables_usecase = ExtractTablesUseCase(
+        table_extractor=table_extractor,
+        table_push_client=table_push_client,
+    )
+
     # --- FastAPI app ---
     app = FastAPI(
         title="PDF Extractor",
@@ -76,7 +87,7 @@ def create_app() -> FastAPI:
     )
 
     router = APIRouter()
-    register_routes(router, extract_usecase, inspection_store)
+    register_routes(router, extract_usecase, inspection_store, extract_tables_usecase)
     app.include_router(router)
 
     return app
