@@ -2,12 +2,27 @@
   "pilot": "mcp-server",
   "charterRef": "docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-charter.md",
   "charterVersion": "scale-1.0 (thin charter → canonical pilot-charter.md G1–G12)",
-  "status": "PENDING",
+  "status": "ACTIVE",
   "_status_enum": "[FIXED] Allowed values: ACTIVE | DONE | FAILED. DONE requires 12/12 goals YES + decisionMatrix terminal. FAILED is explicit PO decision. No other values.",
   "openedAt": "2026-05-24T06:49:21Z",
   "openedBy": "po cycle-70 (SCALE pre-step — fleet status file instantiated from pilot-status-schema.json; PENDING until architect opens Phase 0 / factory charter)",
+  "activatedAt": "2026-05-25T08:40:43Z",
+  "activatedBy": "po (UNBLOCK verdict — Phase-0 authorized; HELD-LAST-SOLO conditions all MET, see sequencingGate.unblockVerdict). status PENDING→ACTIVE on Phase-0 open, mirroring alert-engine/api-gateway lifecycle.",
   "sequencingGate": {
-    "decision": "HELD-LAST-SOLO",
+    "decision": "UNBLOCKED-PHASE0-OPEN (was HELD-LAST-SOLO 2026-05-25T07:06:25Z → cleared 2026-05-25T08:40:43Z)",
+    "unblockVerdict": {
+      "verdict": "UNBLOCK",
+      "decidedAt": "2026-05-25T08:40:43Z",
+      "decidedBy": "po (focused unblock re-evaluation; PO is sole authority to edit pilot-status). Authorizes mcp-server Phase-0 (brownfield inventory + charter confirmation + phase planning) ONLY. The mcp-server BUILD wave (WAVE B) stays SOLO-LAST per BUILD-WAVE SEQUENCING — Phase-0 is analysis/planning, charter-explicit parallel-safe.",
+      "conditionsAssessment": {
+        "condition_1_frontend_phase_0to1_done": "MET — pilot-status-frontend.json: phase0=CLOSED, phase1.status=ACTIVE, gateVerdict=AUTHORIZED, qaVerdict=APPROVED (cycle-114, commit c85f577c), close-out committed 65b1d361. Vitest 179/0 + Playwright 4/0 green, goalsEarned=4. Frontend refactor CODE is COMPLETE; lingering status=ACTIVE is EARNED-PENDING bookkeeping awaiting USER verbal G9 sign-off + a Wave-C container rebuild — NEITHER is a scale REFACTOR terminal, so neither occupies the scale lane.",
+        "condition_2_mcp_zone_quiesced": "MET — apps/mcp-server/ working tree CLEAN (zero uncommitted edits, verified git status --porcelain). NEWS-INGEST-2b (the ONLY NEWS-INGEST task in the mcp-server zone) CODE LANDED e1e08a29 (~10h prior) + notebook 9e850fbf. ops Docker-network fix a5b6203d landed. NEWS-INGEST-2 (vps-scripts/fetch-vn-news.sh) + NEWS-INGEST-LIVE (ops deploy-prove) remain open but live OUTSIDE apps/mcp-server/ barrels/source/docs-signals/docs-data/scheduler — they are NOT shared-substrate write contenders against an mcp-server Phase-0 brownfield/charter track. DEPLOY-DRIFT (DRIFT-1 macro / DRIFT-2 kinh-dich / DRIFT-3 cross-service CI) touch other zones. No active dev/ops sprint touching the mcp-server shared-write surface.",
+        "condition_3_scale_wip_free": "MET — the prior HELD claim ('WIP FULL: P2-F2 + P2-A1 in-flight') is STALE. P2-A1 LANDED (9561fee9 .golangci.yml depguard config; file on disk; follow-up 9d364329 cycle-20 G4 unblock). P2-F2 LANDED (cc7578f1 insert G12 dashboard-green DoD step into dev-technical-analysis flow); TASKS.md P0-FE-3 row itself states 'P2-F2 (cleared)'. TA Phase-2 has progressed past these to G11/G12 (P2-E2/E3 committed); last apps/technical-analysis/ commit 2026-05-24 09:04 (~25h prior) — that refactor terminal is QUIET. Moreover the operative RUN-SOLO constraint binds the mcp-server zone/shared-substrates, not a global pilot count; any residual TA-zone Go work is a different zone and does NOT contend with mcp-server Phase-0 analysis/planning."
+      },
+      "scopeAuthorized": "Phase-0 ONLY: brownfield inventory (P0-MCP-1, already analysis-only IN-PROGRESS) → bug-inventory entry (P0-MCP-2) → dev-mcp-server agent+flow confirm (P0-MCP-3) → Phase-1 task plan (P0-MCP-5) → anchor tag + flip exit (P0-MCP-4) → Phase-0 exit gate (P0-MCP-EXIT). The eventual Docker BUILD (WAVE B+C) is DEFERRED to the separate docker session (8GB-cap / host-kernel-panic constraint applies to BUILDS only — host-side TS/Bun edits + Vitest run outside the Docker VM and are memory-safe now).",
+      "discipline_reaffirmed": "RUN-SOLO for the BUILD wave (no other dev/scale terminal touching mcp zone during WAVE B). explicit-file staging (git add <path>, NEVER -A/-am — load-bearing given this zone's 26-file over-staging history). commit-mutex via kind=sprint-task (enum-drift workaround). NO --force/--no-verify/--no-gpg-sign. All on main. Touch ONLY pilot-status-mcp-server.json among pilot files. smart-skip / explicit-add discipline binding day-0. Every barrel split QA-gated against the FULL tool suite before proceeding.",
+      "nextDispatch": "architect runs P0-MCP-1 brownfield scan FIRST (mirrors frontend P0 pattern: P0 brownfield → charter confirm → phase plan). First deliverable: docs/handoffs/TASK_P0-MCP-1-brownfield-inventory.md — read-only inventory of ~132 tools / 10-module barrels + barrel-decomposition seams + candidate primitives (signal-bus / sector-classifier / portfolio-aggregator / ops-debug) + G5-INVERSE map (dead/migrated tool code now living in microservices, each MCP tool handler proven to route via HTTP). Then P0-MCP-2 (bug-inventory baseline) + P0-MCP-3 (agent-father dev-mcp-server flow confirm) + P0-MCP-5 (Phase-1 plan) gated on P0-MCP-1."
+    },
     "decidedAt": "2026-05-25T07:06:25Z",
     "decidedBy": "po (USER-DIRECTIVE 'fan out subagents in parallel, complete the 2 last refactor services [frontend + mcp-server], rebuild the container(s), and verify' — main terminal already fanned out architect-FE + architect-mcp-analysis this cycle). PO RE-AFFIRMS HOLD pre-0 for mcp-server Phase-0 CHARTERING; the user's 'do both' is satisfied by SEQUENCING (frontend now, mcp-server SOLO-last), NOT by parallel Phase-0 opening.",
     "reason": "Charter §Sequencing mandate (mcp-server-charter.md L26-62) is non-negotiable: RUN-SOLO, SCHEDULE LAST, after EVERY other service charter complete. ~132-tool barrel blast radius + writes shared substrates (docs/signals, docs/data, scheduler) → concurrent-commit-race + SSOT-duplicate-key risk if Phase-0 brownfield-over-132-barrels runs while ANY other terminal touches that zone. Two architects committing concurrently THIS cycle (architect-FE on apps/frontend/ + architect-mcp on ANALYSIS-ONLY brownfield, NO source/barrel/charter edits) is acceptable ONLY because mcp's track is read-only inventory — opening Phase-0 would license source/barrel churn, which is forbidden until quiesced.",
@@ -21,7 +36,7 @@
       "agent": "architect (mcp-server brownfield/analysis-only)",
       "scope": "READ-ONLY inventory of ~132 tools / 10-module barrels — NO source edits, NO barrel edits, NO pilot-status edits, NO charter/scale-doc edits beyond the brownfield doc the architect owns.",
       "rationale": "Zero write contention with frontend lane or active dev WIP. Front-loads the highest-risk service's brownfield so its Phase-0 chartering is fast once unblock_conditions clear.",
-      "note": "If/when this brownfield doc lands + conditions clear, PO opens Phase-0 in a FUTURE cycle by flipping phase0.status OPEN + adding the mcp-server Phase-0 backlog tasks. This file's phase0 stays PENDING until then."
+      "note": "CLEARED 2026-05-25T08:40:43Z — all unblock_conditions MET (see sequencingGate.unblockVerdict.conditionsAssessment). phase0.status flipped PENDING→OPEN; the analysis-only brownfield (P0-MCP-1) is now the FIRST Phase-0 deliverable and may proceed to source/charter editing under Phase-0 scope. The mcp-server BUILD wave (WAVE B) remains SOLO-LAST."
     },
     "tracked_in": "docs/TASKS.md § 'mcp-server SCALE Pilot — SEQUENCED LAST / SOLO' + § 'BUILD-WAVE SEQUENCING (final waves to containers-rebuilt+verified)'"
   },
@@ -39,21 +54,21 @@
   "language": "TypeScript (Bun)",
   "languageLockSource": "stays TS — single MCP interface + scheduler host (scale charter §Deltas; RUN-SOLO/LAST)",
   "languageLockedAt": "2026-05-24",
-  "phase": "pre-0",
+  "phase": "0",
   "_phase_note": "Tracks current phase as string integer. Starts '0' (Phase 0 open). Advances to '1' (Phase 1), '2' (Phase 2). Do not use DONE/ACTIVE here — use top-level status.",
   "phase0": {
-    "status": "PENDING",
+    "status": "OPEN",
     "_status_enum": "[FIXED] Allowed values: OPEN | CLOSED",
-    "openedAt": null,
-    "openedBy": null,
+    "openedAt": "2026-05-25T08:40:43Z",
+    "openedBy": "po (UNBLOCK verdict — 3-condition HELD gate cleared; Phase-0 chartering authorized, BUILD wave stays SOLO-LAST). Next dispatch: architect P0-MCP-1 brownfield scan first.",
     "closedAt": null,
     "closedBy": null,
-    "owner": "TBD — architect (factory charter + brownfield) + agent-father (dev agent/flow) at kickoff",
+    "owner": "architect (brownfield P0-MCP-1/-2 + Phase-1 plan P0-MCP-5 + exit-gate P0-MCP-EXIT) + agent-father (dev-mcp-server agent/flow P0-MCP-3); po absorbs anchor + flip (P0-MCP-4) + exit sign-off",
     "deliverables": {
       "_note": "PENDING — architect instantiates a per-service factory charter dir (pattern: docs/architecture-briefs/<date>-<svc>-factory/) at kickoff, mirroring alert-engine pilot-5. Thin scale charter at .charterRef captures interim deltas/risks.",
       "factory_charter_or_thin": "DONE 2026-05-24T06:49:21Z (thin: docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-charter.md)",
       "pilot_status_ssot": "DONE 2026-05-24T06:49:21Z (this file)",
-      "brownfield_inventory": "IN-PROGRESS (architect ANALYSIS-ONLY track dispatched by main terminal 2026-05-25 per user 'do both' directive — read-only inventory of ~132 tools, parallel-safe; Phase-0 does NOT open on this landing alone, see sequencingGate.unblock_conditions)",
+      "brownfield_inventory": "ACTIVE — FIRST Phase-0 deliverable (P0-MCP-1). Gate cleared 2026-05-25T08:40:43Z; architect dispatched to run the brownfield scan first (read-only inventory of ~132 tools / 10-module barrels + barrel-decomposition seams + candidate primitives + G5-inverse HTTP-route map). Handoff: docs/handoffs/TASK_P0-MCP-1-brownfield-inventory.md.",
       "bug_inventory_entry": "PENDING",
       "dev_agent_file": "PENDING",
       "dev_agent_flow_file": "PENDING",
