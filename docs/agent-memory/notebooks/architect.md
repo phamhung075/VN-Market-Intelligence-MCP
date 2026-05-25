@@ -1,8 +1,41 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-25 18:05 UTC | **Sprint:** mcp-server-phase-2
+**Last updated:** 2026-05-25 22:00 UTC | **Sprint:** mcp-server-phase-2
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## P2-MCP-G9-CONTRACT-FIX — P2-H + P2-I plan correction (2026-05-25T22:00Z) — DESIGN COMPLETE
+
+**Task:** P2-MCP-G9-CONTRACT-FIX. Correct two falsified assumptions in the mcp-server Phase-2 plan that would make the upcoming G9 USER sign-off (P2-I) a Potemkin/dishonest gate. Router-verified ground truth: (1) P2-H used addInitScript injection — test-path ≠ user-path; file:// double-click shows empty panels. (2) synthetic sparkline-regression-tripwire.json fixture = permanent red card that taints the "all tools working" verbal sign-off.
+
+**Key design decisions:**
+
+1. **G9 presentation contract: inline-data model.** Trace and module data inlined as `<script type="application/json">` blocks in index.html. Dashboard JS reads from DOM via `document.getElementById`. No fetch(), no window.__MCP_* globals. test-path == user-path. file:// promise genuinely honored. Simpler than local-HTTP alternative; no PO/user server overhead.
+
+2. **Assertion-5 resolution: option (i) pure unit assertion.** All 9 real traces are `status: "pass"` (ground truth). Synthetic fixture deleted. Assertion-5 re-specified as: `renderCard({status:"fail",...})` called IN-MEMORY in the spec, assert returned HTML contains `mcp-dot-fail`. No on-disk fixture. Real RED→GREEN proof properly deferred to G10/P2-J-K (genuine bug injection).
+
+3. **Files dev-mcp-server must touch in P2-H-FIX:**
+   - `apps/mcp-server/dashboard/index.html` — add inline JSON blocks, remove fetch()/window.__ paths
+   - `apps/mcp-server/dashboard/traces/sparkline-regression-tripwire.json` — DELETE
+   - `apps/mcp-server/dashboard/tests/trust-contract.spec.js` — remove addInitScript, re-spec assertion-5
+   - `apps/mcp-server/dashboard/playwright-verdict.json` — re-generate and commit
+
+4. **P2-I corrected.** PO must verify file:// opens real populated panels (P2-H-FIX AC-3) before presenting to user. "No server needed" claim is now genuinely honored (inline data = zero fetch).
+
+5. **Legitimate P2-H parts kept unchanged:** playwright.config.js (headless:true, no webServer), bunfig.toml root="./src", assertions 1/2/3/4/6, assertion-7 now structurally stronger (no fetch() at all).
+
+**Files authored this cycle (4):**
+1. `docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-2-task-plan.md` (MODIFIED — P2-H rewritten, P2-I corrected, Task Ledger + Sequencing updated, Correction Log appended, P2-Z AC-4 updated)
+2. `docs/pipeline-state.json` (UPDATED — P2-H-FIX required, nextAgent dev-mcp-server, activeTaskId P2-H-FIX)
+3. `docs/signals/architect-mcp-g9-contract-fix-2026-05-25T220000Z.json` (NEW — contract decision + assertion-5 resolution + files dev must touch)
+4. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Risk flags surfaced:**
+- If dev-mcp-server re-implements P2-H-FIX without verifying that KNOWN_TRACES array is fully removed and all 9 inline traces match the actual on-disk sandbox output, the inline block will silently drift from reality. The `<!-- AUTO-GENERATED: run bun run src/sandbox/runner.ts --emit-traces to refresh -->` comment is the only guard; architect recommends a follow-up build-step automation as technical debt.
+
+**Next actor:** dev-mcp-server — implement P2-H-FIX per corrected P2-H section. After AC-3 confirmed: PO dispatches P2-I. Then qa P2-J onward per existing plan.
+
+---
 
 ## P2-MCP-PLAN — mcp-server Phase-2 task plan (2026-05-25T18:05Z) — DESIGN COMPLETE
 

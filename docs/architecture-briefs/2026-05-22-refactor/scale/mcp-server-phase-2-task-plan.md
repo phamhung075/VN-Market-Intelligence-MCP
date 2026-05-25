@@ -275,8 +275,8 @@ or a separate `mcp-server-pre-inject-2` tag if Trial-2 is a separate inject comm
 | **P2-E** | G3 composition-root extraction — src/index.ts split into index.ts (≤80L) + composition-root.ts (≤120L) | dev-mcp-server | G3 | P2-D | P2-F | 1.5h | — |
 | **P2-F** | G5a domain-file deletion — git mv kinhDichWrapper.ts → _deprecated/, remove re-export from index, update 2 test files | dev-mcp-server | G5a | P2-E | P2-G | 1h | mcp-server-pre-delete |
 | **P2-G** | G9 dashboard live panels — module panel filled (sub-barrel JSON data), microservice panel live-fetch /health with offline fallback | dev-mcp-server | G9-partial | P2-F | P2-H | 1h | — |
-| **P2-H** | G9 Playwright trust contract — headless file:// 3-panel assert + 9 cards + honest red/green + 0 console errors + 0 network calls. Verdict JSON committed | dev-mcp-server + po | G9 | P2-G | P2-I | 1h | — |
-| **P2-I** | G9 USER verbal sign-off (USER-gated) — PO presents dashboard, user confirms. Recorded in pilot-status G9 evidence | po (present) + USER | G9-terminal | P2-H | P2-J | — | — |
+| **P2-H** | G9 Playwright trust contract — CORRECTED (P2-H-FIX): inline data blocks in index.html (no fetch/no addInitScript); updated spec; delete sparkline-regression-tripwire.json; assertion-5 pure unit. Verdict JSON re-committed | dev-mcp-server | G9 | P2-G | P2-I | 1h | — |
+| **P2-I** | G9 USER verbal sign-off (USER-gated) — PO verifies file:// opens real panels (P2-H-FIX AC-3), then presents dashboard to user, user confirms. Recorded in pilot-status G9 evidence | po (present) + USER | G9-terminal | P2-H | P2-J | — | — |
 | **P2-J** | Create `mcp-server-pre-inject` tag + G10 bug injection (single-literal in signal-bus-helper). Dashboard card RED before dev dispatch. | qa | G10-setup | P2-I | P2-K | 20m | mcp-server-pre-inject |
 | **P2-K** | G10 AI-fixability — dev-mcp-server fixes signal-bus-helper bug in ≤2 cycles from RED dashboard signal ONLY. Dashboard GREEN | dev-mcp-server + qa | G10 | P2-J | P2-L | 1h | — |
 | **P2-L** | G11 regression alarm — 2-trial coupling proof. Trial-1 = G10 alias (or dedicated). Trial-2 = sector-classifier ticker mutation. Outcome-(a)×2 | qa + dev-mcp-server | G11 | P2-K | P2-Z | 1.5h | — |
@@ -305,9 +305,11 @@ P2-F (G5a — git mv kinhDichWrapper to _deprecated/, re-export cleanup, test up
   ↓
 P2-G (G9 dashboard live panels)
   ↓
-P2-H (G9 Playwright trust contract artifact committed)
+P2-H (G9 Playwright trust contract — P2-H-FIX: inline data blocks, no addInitScript,
+       delete sparkline-regression-tripwire.json, assertion-5 pure unit, re-run verdict JSON)
   ↓
-P2-I (G9 USER verbal sign-off ← ONLY USER-GATED STEP; PO presents, user confirms)
+P2-I (G9 USER verbal sign-off ← ONLY USER-GATED STEP; PO verifies file:// real panels
+       then presents to user, user confirms)
   ↓
 P2-J (mcp-server-pre-inject tag + G10 bug injection committed by QA)
   ↓
@@ -620,46 +622,176 @@ offline fallback message when server is not running. No broken layout or JS exce
 
 ### P2-H — G9 Playwright Trust Contract Artifact
 
-**Owner:** dev-mcp-server + po (po runs the playwright test and commits the verdict JSON)
+> **CORRECTED 2026-05-25 (P2-MCP-G9-CONTRACT-FIX).**
+> The original P2-H shipped 7/7 Playwright assertions via `addInitScript` injection
+> (window.__MCP_TRACES__ / window.__MCP_MODULES__). That approach is a **Potemkin gate**:
+> test-path ≠ user-path. When the user opens index.html via file:// double-click,
+> those globals do not exist, Chromium blocks file:// fetch(), and two of three panels
+> render empty. This P2-H-FIX corrective re-implementation seals the gap.
+> See "## Correction Log" section at end of this plan for the full diagnosis.
+
+**Owner:** dev-mcp-server (P2-H-FIX corrective re-implementation)
 **Blocks:** P2-I
 **Blocked by:** P2-G
-**Estimated:** 1h
-**Files to create:**
-- `apps/mcp-server/dashboard/tests/trust-contract.spec.js` (CREATE — headless assertions)
-- `apps/mcp-server/dashboard/playwright.config.js` (CREATE — file:// baseURL, headless)
-- `apps/mcp-server/dashboard/playwright-verdict.json` (CREATE — committed from test run output)
+**Estimated:** 1h (re-implementation)
+**Files to modify/delete/recreate (P2-H-FIX):**
+- `apps/mcp-server/dashboard/index.html` (MODIFY — inline trace + module data; remove fetch + window.__ globals)
+- `apps/mcp-server/dashboard/tests/trust-contract.spec.js` (MODIFY — remove addInitScript injection; test real DOM)
+- `apps/mcp-server/dashboard/playwright-verdict.json` (REGENERATE — re-run after fix; committed from output)
+- `apps/mcp-server/dashboard/traces/sparkline-regression-tripwire.json` (DELETE — synthetic fixture forbidden in P2-I context, see assertion-5 below)
 
-**Playwright run command:**
+**CANONICAL G9 PRESENTATION CONTRACT (binding for P2-H-FIX):**
+
+The dashboard MUST render real populated panels for both the Playwright headless run AND
+the user's raw file:// double-click — using the SAME path, with zero server and zero
+window-global injection.
+
+**Chosen approach: inline data blocks in index.html.**
+
+Dev-mcp-server MUST inline trace and module data as `<script type="application/json">` blocks
+inside `index.html`. The dashboard JS reads from the DOM (`document.getElementById(...).textContent`)
+instead of `fetch()` or `window.__MCP_*` globals. This achieves:
+- Zero fetch calls (no `file://` restriction to hit).
+- Zero `window.__MCP_*` globals (no `addInitScript` crutch needed).
+- test-path == user-path (true G9 fidelity: Playwright opens the same HTML the user double-clicks).
+- Honoring line 4's promise: "Opens via file:// URL — zero network dependency."
+
+**Implementation spec:**
+
+1. In `index.html`, just before `</body>`, add two `<script type="application/json">` blocks:
+   ```html
+   <script type="application/json" id="mcp-traces-data">
+   { "traces": { ... } }
+   </script>
+   <script type="application/json" id="mcp-modules-data">
+   { "generated": "...", "modules": [ ... ] }
+   </script>
+   ```
+   The `traces` object is keyed by scenario name (same shape as the old `window.__MCP_TRACES__`).
+   The `modules` object is the same shape as `dashboard/data/modules.json`.
+
+2. In the dashboard JS, replace both data-loading paths:
+   - `fetchTrace(name)`: remove the `window.__MCP_TRACES__` branch AND the `fetch('traces/*.json')` branch.
+     Instead, read from `document.getElementById('mcp-traces-data')`:
+     ```js
+     function getInlineTraces() {
+       const el = document.getElementById('mcp-traces-data');
+       if (!el) return {};
+       try { return JSON.parse(el.textContent).traces ?? {}; } catch { return {}; }
+     }
+     ```
+     `loadTraces()` calls `getInlineTraces()` once; no async fetch loop.
+   - `loadModules()`: remove the `window.__MCP_MODULES__` branch AND the `fetch('data/modules.json')` branch.
+     Instead, read from `document.getElementById('mcp-modules-data')`:
+     ```js
+     function getInlineModules() {
+       const el = document.getElementById('mcp-modules-data');
+       if (!el) return null;
+       try { return JSON.parse(el.textContent); } catch { return null; }
+     }
+     ```
+
+3. Remove `dashboard/traces/sparkline-regression-tripwire.json` from disk (it must not appear
+   in the inlined traces, see assertion-5 ruling below).
+
+4. The inline trace data MUST contain the 9 real scenario traces (sparkline x3, signal-bus x3,
+   sector-classifier x3). All 9 have `status: "pass"`. This is correct and honest for a
+   pre-G10 "all working correctly" sign-off.
+
+5. Remove the `KNOWN_TRACES` array from index.html (no longer needed; inline block replaces it).
+
+6. Keep the microservice panel's `window.location.protocol === 'file:'` guard intact — it still
+   correctly skips the HTTP probe and shows the offline fallback. Assertion-7 (zero HTTP) stays
+   trivially satisfied because there are no fetch() calls at all in the new design.
+
+**Sync strategy (inline data staying current with src/sandbox):**
+The inline trace block is regenerated by running the sandbox runner with `--emit-traces` and
+copying the output to the `<script>` block. This is a MANUAL regen step whenever new scenarios
+are added. Dev-mcp-server MUST add a comment above the `<script id="mcp-traces-data">` block:
+`<!-- AUTO-GENERATED: run 'bun run src/sandbox/runner.ts --emit-traces' to refresh -->`
+This is sufficient for the scale pilot. A build-step auto-regen is out of scope here; the
+manual comment establishes the obligation.
+
+**Assertion-5 ruling — RED-card story (corrected):**
+
+The original assertion 5 ("≥1 RED status indicator from existing failure scenarios") was
+falsified by the ground truth: ALL 9 real scenarios have `status: "pass"` (including the
+named "failure" scenarios — they correctly handle bad input, so they pass). The P2-H agent
+added `sparkline-regression-tripwire.json` (a synthetic always-fail fixture) solely to
+satisfy the assertion. That fixture poisons P2-I: the user would see a permanent red card
+matching no real failure and be asked "do you confirm all tools are working correctly?"
+
+**Resolution chosen: OPTION (i) — pure unit assertion in trust-contract.spec.js.**
+
+Assertion 5 is re-specified as:
+> "renderCard() produces a `.mcp-dot-fail` element when given a trace with `status: 'fail'`."
+
+This is a pure DOM-unit test: construct a synthetic trace object IN-MEMORY inside the spec,
+call `renderCard()` directly, assert the returned HTML string contains `mcp-dot-fail`. No
+on-disk fixture required. Proves the RED render path works without polluting the live dashboard.
+
+The `sparkline-regression-tripwire.json` fixture MUST be deleted from `dashboard/traces/`
+and MUST NOT appear in the inlined trace block.
+
+The real RED→GREEN visual proof belongs at G10/P2-J-K, where a genuine bug injection
+produces a genuine red card, and the dev fix turns it green. That is the honest
+demonstration of the RED render path under real-world conditions.
+
+**Updated assertions (7 total, assertion-5 re-specified):**
+1. Three panels present (`#mcp-panel-primitives`, module panel, microservice panel).
+2. Module panel contains no "Phase 2" placeholder text.
+3. Primitives panel contains ≥9 scenario cards (9 real scenarios, all GREEN).
+4. At least 1 card with GREEN (`mcp-dot-pass`) status indicator (all 9 are GREEN = trivially satisfied).
+5. `renderCard({status:"fail",...})` returns HTML containing `.mcp-dot-fail` (pure unit call in spec, no fixture).
+6. Zero console errors during load + 2-second settle period.
+7. Zero network requests (no fetch() calls at all in the new inline-data design — trivially satisfied).
+
+**`addInitScript` removal:** The corrected spec MUST NOT use `page.addInitScript()` to inject
+window globals. Data comes from the inline `<script>` blocks already present in index.html.
+The spec opens `DASHBOARD_FILE` (same file:// URL), waits for panels to render, asserts on
+real DOM state. `playwright.config.js` stays unchanged (`headless: true`, no server spawn,
+`bunfig.toml root="./src"` keeps Playwright specs excluded from `bun test`).
+
+**Playwright run command (unchanged):**
 ```bash
 npx playwright test apps/mcp-server/dashboard/tests/trust-contract.spec.js --reporter=json
 ```
 
-**Assertions:**
-1. Three panels present: `#mcp-panel-primitives` (or equivalent), module panel element, microservice panel element.
-2. Module panel contains no "Phase 2" placeholder text.
-3. Primitives panel contains ≥9 scenario cards (9 scenarios on disk from P1-A + P1-H).
-4. At least 1 card with GREEN status indicator.
-5. At least 1 card with RED status indicator (from existing failure scenarios).
-6. Zero console errors during load + 2-second settle period.
-7. Zero network requests (file:// mode — Playwright network listener captures 0 HTTP calls;
-   the microservice panel offline fallback is expected to fire in this mode).
+**AC-1 (inline data blocks present):** `grep -c "mcp-traces-data" apps/mcp-server/dashboard/index.html` ≥ 1.
+`grep -c "mcp-modules-data" apps/mcp-server/dashboard/index.html` ≥ 1.
+No `window.__MCP_TRACES__` or `window.__MCP_MODULES__` references remain in index.html.
+No `fetch(` calls remain in index.html (for the traces/modules paths).
 
-**AC-1:** `playwright.config.js` exists with `use: { headless: true }` and no server spawn.
+**AC-2 (tripwire deleted):**
+`ls apps/mcp-server/dashboard/traces/sparkline-regression-tripwire.json` returns "No such file".
+9 real traces remain (sparkline x3 + signal-bus x3 + sector-classifier x3).
 
-**AC-2:** Trust-contract spec assertions 1-7 all PASS. `npx playwright test` exits 0.
+**AC-3 (real data renders without injection):**
+Open `apps/mcp-server/dashboard/index.html` in a browser (or `python3 -m http.server` for Firefox).
+All 9 scenario cards render GREEN. Module panel shows 12 barrels. No "No traces found" message.
+Screenshot pasted in handoff. This is the test-path == user-path confirmation.
 
-**AC-3 (zero console errors):** Playwright console listener captures 0 errors during the run.
-Paste the listener output (or "0 errors captured") in handoff.
+**AC-4 (Playwright assertions 1-7 pass without addInitScript):**
+`trust-contract.spec.js` does NOT contain `addInitScript`. `npx playwright test` exits 0.
+Paste the 7/7 pass output.
 
-**AC-4 (zero network calls):** Playwright network listener captures 0 HTTP requests.
-The microservice panel offline fallback fires but uses no HTTP (it falls back synchronously).
-Paste the listener output in handoff.
+**AC-5 (assertion-5 pure unit):** The spec contains a test that calls `renderCard()` with
+`{status:"fail", scenario:"test", primitive:"test", durationMs:0, actual:null, error:null}`
+and asserts the returned HTML string includes `mcp-dot-fail`. No on-disk `sparkline-regression-tripwire.json`
+fixture is referenced.
 
-**AC-5 (verdict JSON committed):** `apps/mcp-server/dashboard/playwright-verdict.json`
-committed via explicit `git add apps/mcp-server/dashboard/playwright-verdict.json`.
-The JSON contains: `{passingTests, failingTests, consolErrors, networkRequests, timestamp}`.
+**AC-6 (zero network — trivially stronger):** Playwright network listener captures 0 HTTP requests.
+With no fetch() calls in index.html, this is structurally guaranteed (not just behaviorally).
+Paste listener output.
 
-**AC-6:** Regression tripwires: `bun test` pass ≥9408, fail ≤348. `bun run check` exits 0.
+**AC-7 (zero console errors):** Playwright console listener captures 0 errors.
+
+**AC-8 (verdict JSON regenerated):** `apps/mcp-server/dashboard/playwright-verdict.json`
+re-generated from the corrected run and committed via explicit `git add`.
+JSON contains: `{passingTests:7, failingTests:0, consoleErrors:0, networkRequests:0, timestamp}`.
+
+**AC-9 (regression tripwires):** `bun test` pass ≥9408, fail ≤348. `bun run check` exits 0.
+Tool count ≥146. Scheduler 68.
 
 ---
 
@@ -667,23 +799,43 @@ The JSON contains: `{passingTests, failingTests, consolErrors, networkRequests, 
 
 **Owner:** po (present) + USER (verbal response)
 **Blocks:** P2-J
-**Blocked by:** P2-H
+**Blocked by:** P2-H (corrected — P2-H-FIX must pass AC-3 before P2-I begins)
 **Estimated:** N/A — user's decision, no code work
 
 **This is the ONLY USER-gated step in Phase 2.**
 
-**PO action:** Open `apps/mcp-server/dashboard/index.html` in a browser (file:// URL).
+**CORRECTED presentation path (2026-05-25, P2-MCP-G9-CONTRACT-FIX):**
+The original P2-I instructed PO to open `index.html` via `file://` and asserted "no server needed."
+This was internally contradicted: index.html line 332-333 itself notes that Firefox blocks file://
+fetch, and the original dashboard used fetch() for data loading. The corrected dashboard (post-P2-H-FIX)
+uses inline data blocks — no fetch() at all — so the file:// double-click promise is now genuinely
+honored. The presentation path below uses file:// and is now honest.
+
+**PO MUST verify P2-H-FIX AC-3 was met before proceeding:**
+Confirm that `apps/mcp-server/dashboard/index.html` shows all 9 scenario cards GREEN and
+the module panel populated when opened via file:// (double-click or `open` command).
+If the panels are empty or show "No traces found", P2-H-FIX is incomplete — block P2-I and
+return to dev-mcp-server.
+
+**PO action:** Open `apps/mcp-server/dashboard/index.html` in a browser (file:// — double-click
+the file, or use `open apps/mcp-server/dashboard/index.html` on macOS).
 Show the user the dashboard (screenshot or screen-share). Ask:
 "Can you confirm the MCP server dashboard shows all tools are working correctly?"
+
+**What the user will see (post-P2-H-FIX):**
+- Panel 1 (Primitives): 9 scenario cards, ALL GREEN. No red cards. No "No traces found" message.
+- Panel 2 (Modules): 12 barrel rows with sub-barrel chips. No "Phase 2" placeholder.
+- Panel 3 (Microservice): "146 tools (server offline — last known)" with OFFLINE badge.
+  This is correct and honest for file:// mode — the server is not needed for the sign-off.
 
 **The user must answer YES or indicate approval.** If the user says NO or asks for changes,
 that feedback gates G9 and is captured in pilot-status.
 
 **FORBIDDEN:** Asking the user to run any command, restart Docker, or interact with a terminal.
-The dashboard operates in file:// mode — no server needed.
+The dashboard operates in file:// mode — no server needed (all data is inline in the HTML).
 
 **PO records in pilot-status G9 evidence field:**
-`"User verbal sign-off: [USER name/handle] confirmed YES [ISO timestamp]. Dashboard shown: apps/mcp-server/dashboard/index.html (file:// mode, 3 panels visible)."`
+`"User verbal sign-off: [USER name/handle] confirmed YES [ISO timestamp]. Dashboard shown: apps/mcp-server/dashboard/index.html (file:// mode, 9 GREEN cards, 12 barrel modules, microservice OFFLINE fallback). Post-P2-H-FIX inline-data build: no fetch(), no window.__MCP_* injection."`
 
 **AC-1:** PO updates `docs/data/pilot-status-mcp-server.json` goals G9 calibration.evidence field
 with the verbal sign-off record. (§4.5 binding: status field stays DEFER until PO 12/12 terminal flip).
@@ -834,9 +986,14 @@ Tool count ≥146. Scheduler 68.
 `grep -r "from.*kinhDichWrapper" apps/mcp-server/src/interface/ apps/mcp-server/src/scheduler/ --include="*.ts"` returns 0.
 `grep -r "from.*infrastructure" apps/mcp-server/src/domain/ --include="*.ts"` returns 0.
 
-**AC-4 (G9 verified):** `apps/mcp-server/dashboard/playwright-verdict.json` committed.
-Playwright trust-contract spec passes (QA re-runs to confirm). USER verbal sign-off signal
-`docs/signals/po-mcp-server-g9-verbal-<ISO>Z.json` exists.
+**AC-4 (G9 verified — post-P2-H-FIX):**
+`apps/mcp-server/dashboard/playwright-verdict.json` committed (re-generated by P2-H-FIX).
+`trust-contract.spec.js` does NOT contain `addInitScript`. QA re-runs spec (exits 0, 7/7 pass).
+`index.html` contains `<script type="application/json" id="mcp-traces-data">` and
+`<script type="application/json" id="mcp-modules-data">` blocks — no `fetch(` calls for data.
+`dashboard/traces/sparkline-regression-tripwire.json` does NOT exist on disk.
+File:// double-click of `index.html` shows 9 GREEN cards + 12 barrel modules (QA screenshot).
+USER verbal sign-off signal `docs/signals/po-mcp-server-g9-verbal-<ISO>Z.json` exists.
 
 **AC-5 (G10 verified):** `git log --oneline` between `mcp-server-pre-inject` and GREEN state shows
 ≤2 dev-mcp-server fix commits. Final dashboard shows `signal-bus-golden-valid` card GREEN.
@@ -923,3 +1080,55 @@ atomic Phase-3 commit:
 | `docs/data/system-map.json` MCP tool count = 125 (stale, live=146) | P0-MCP-1 | PO action at 12/12 terminal close |
 | kinhDich domain computation path in intelligenceCycleJob (KEEP — not G5) | P1-F brownfield | Not a debt — legitimate in-process path |
 | pdf.ts / pdfOcrWorker.ts KEEP callers (4 callers, G5-DEBT commented) | P1-G | Not Phase-2 scope; tracked in G5 phase2Bucket |
+
+---
+
+## Correction Log
+
+### 2026-05-25 — P2-MCP-G9-CONTRACT-FIX (architect)
+
+**Task that triggered this correction:** P2-MCP-G9-CONTRACT-FIX (router finding, ground-truth verified)
+**Sections corrected:** P2-H (full rewrite), P2-I (presentation path + PO pre-check added)
+**Signal:** `docs/signals/architect-mcp-g9-contract-fix-2026-05-25T220000Z.json`
+
+**Falsified assumption 1 — test-path ≠ user-path (P2-H):**
+The shipped P2-H used Playwright `addInitScript` to inject `window.__MCP_TRACES__` and
+`window.__MCP_MODULES__` globals before the page loaded. The dashboard JS checked for these
+globals FIRST, bypassing all `fetch()` calls. The 7/7 assertions passed in headless Chromium.
+
+However, when the user opens `index.html` via file:// double-click (as P2-I instructed),
+no globals are injected. Chromium blocks `file://` fetch() calls ("URL scheme 'file' is not
+supported" — confirmed empirically by P2-H agent). Result: primitives panel shows "No traces
+found", modules panel shows "Failed to load modules.json". Two of three panels render empty
+for the user. The Playwright test was a Potemkin gate: it passed a code-path the user never
+exercises.
+
+The internal contradiction in index.html itself: line 4 claims "zero network dependency" but
+lines 332-333 acknowledge Firefox blocks file:// fetch and suggest running a local HTTP server.
+The design was never truly zero-network; the addInitScript workaround hid this from the test.
+
+**Falsified assumption 2 — synthetic RED fixture taints sign-off (P2-H assertion 5):**
+The original assertion 5 required "≥1 RED card from existing failure scenarios." Ground truth
+(jq scan of all 9 dashboard/traces/*.json): ALL 9 real scenarios have `status: "pass"` —
+including the three named "failure" scenarios (they correctly handle bad input, which is a pass).
+The P2-H agent added `sparkline-regression-tripwire.json` (a synthetic `status: "fail"` fixture)
+solely to satisfy assertion 5. This fixture is permanently on disk, rendering a persistent red
+card. In P2-I, the user would see a red card while being asked "do all tools work correctly?"
+— a direct contradiction.
+
+**Corrections applied:**
+1. P2-H-FIX: inline trace + module data as `<script type="application/json">` blocks in
+   index.html. No fetch(), no window.__MCP_* injection. test-path == user-path.
+2. Assertion 5 re-specified as a pure in-spec DOM unit call to `renderCard({status:"fail",...})`
+   — proves RED render path without an on-disk fixture.
+3. `sparkline-regression-tripwire.json` must be deleted from `dashboard/traces/`.
+4. P2-I updated: PO must verify file:// opens real populated panels (P2-H-FIX AC-3) before
+   presenting to user.
+5. P2-I "no server needed" claim is now genuinely honored (inline data = zero fetch).
+
+**Legitimate P2-H parts retained unchanged:**
+- `playwright.config.js` `headless: true`, no `webServer` block.
+- `bunfig.toml` `root="./src"` excludes dashboard Playwright specs from `bun test`.
+- Assertions 1 (3 panels), 2 (no "Phase 2" text), 3 (≥9 cards), 4 (≥1 GREEN), 6 (0 console errors).
+- Assertion 7 (0 HTTP network) — now STRONGER (no fetch() calls at all, not just behavior-based).
+- The overall 7-assertion structure is preserved; only assertion 5 is re-specified.
