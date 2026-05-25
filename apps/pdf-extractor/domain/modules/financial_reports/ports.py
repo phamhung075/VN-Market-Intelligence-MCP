@@ -1,5 +1,5 @@
 """
-financial_reports — Protocol ports (P1-C, extended P2-C, BT-1).
+financial_reports — Protocol ports (P1-C, extended P2-C, BT-1, BT-3-A).
 
 Defines the abstract interfaces (Python Protocols) that the FinancialReportsModule
 depends on. The module NEVER imports concrete primitives directly — it only accepts
@@ -13,7 +13,7 @@ Domain layer rules:
 These protocols satisfy G2 re-verify (P2-C) and enforce the DDD layering rule:
 domain modules compose domain primitives via ports, not direct function calls.
 
-Ports defined here (9 primitives — BT-1 adds 3):
+Ports defined here (11 ports — BT-1 adds 3; BT-3-A adds 2):
     - DecimalNormalizerPort     (decimal_normalizer — P1-B2)
     - FinancialValidatorPort    (validate_financial_figures — P1-B1)
     - ConfidenceScorerPort      (confidence_scorer — P2-B1)
@@ -23,6 +23,8 @@ Ports defined here (9 primitives — BT-1 adds 3):
     - VnNumberNormalizerPort    (vn_number_normalize — BT-1)
     - ReconcileFiguresPort      (reconcile_figures — BT-1)
     - SelectPeriodColumnPort    (select_period_column — BT-1)
+    - TableAssemblerPort        (text_table_extractor — BT-3-A)
+    - TablePushClientPort       (table_push_client — BT-3-A)
 """
 
 from __future__ import annotations
@@ -285,5 +287,100 @@ class SelectPeriodColumnPort(Protocol):
         Returns:
             [index, value] list, or [None, None] if no suitable cell found.
             List (not tuple) for JSON round-trip compatibility.
+        """
+        ...
+
+
+class TableAssemblerPort(Protocol):
+    """
+    Port for the TEXT-path table assembler (BT-3-A).
+
+    The concrete adapter (infrastructure/text_table_extractor.py) uses Tesseract
+    (vie+eng) + BT-1 primitives to convert OCR page output into structured rows.
+
+    Domain layer rules:
+        - Zero imports from infrastructure/, application/, interface/
+        - Pure Protocol — no concrete logic here.
+
+    Implemented by:
+        - infrastructure/text_table_extractor.TextTableExtractor (production)
+        - Fake/stub in tests (injected)
+    """
+
+    def assemble(
+        self,
+        pages: List[Dict],
+        statement_section: str,
+    ) -> Dict:
+        """
+        Assemble OCR page output into ordered structured rows.
+
+        Args:
+            pages: list of dicts, each with keys:
+                   {page_number: int, text: str}
+                   The text is raw Tesseract output for that page.
+            statement_section: One of "balance_sheet" | "income_statement"
+                               | "cash_flow".
+
+        Returns:
+            dict with keys:
+                rows (list[dict]):      Each row has:
+                    page_number (int)
+                    row_order (int)     — sequential across all pages
+                    code (str | None)   — BCTC line code e.g. "100", "270"
+                    label (str)         — Vietnamese label text
+                    value_current (float | None)  — billion VND or VND
+                    value_prior (float | None)     — billion VND or VND, or None
+                    unit (str)          — "billion_vnd" or "vnd"
+                    is_summary_row (int) — 1 for major subtotal codes
+                period_current (str):  e.g. "31/12/2025"
+                period_prior (str | None): e.g. "31/12/2024", or None
+        """
+        ...
+
+
+class TablePushClientPort(Protocol):
+    """
+    Port for the HTTP push client that delivers assembled table rows to mcp-server
+    (BT-3-A).
+
+    The concrete adapter (infrastructure/table_push_client.py) posts to
+    POST /api/push-bctc-table on mcp-server (internal Docker network).
+
+    Domain layer rules:
+        - Zero imports from infrastructure/, application/, interface/
+        - Pure Protocol — no concrete logic here.
+
+    Implemented by:
+        - infrastructure/table_push_client.TablePushClient (production)
+        - Fake/stub in tests (injected)
+    """
+
+    async def push_table(
+        self,
+        report_id: str,
+        statement_section: str,
+        rows: List[Dict],
+        balance_check: Optional[Dict],
+        period_current: str,
+        period_prior: Optional[str],
+    ) -> Dict:
+        """
+        Deliver assembled table rows to mcp-server for storage.
+
+        Args:
+            report_id:         UUID string matching financial_reports.id.
+            statement_section: "balance_sheet" | "income_statement" | "cash_flow".
+            rows:              list of structured row dicts (output of TableAssemblerPort).
+            balance_check:     dict with total_assets, total_liabilities, total_equity,
+                               balance_delta, balance_pass — or None if no balance check.
+            period_current:    Current period label e.g. "31/12/2025".
+            period_prior:      Prior period label or None.
+
+        Returns:
+            dict with at least keys: ok (bool), rows_stored (int).
+
+        Raises:
+            Exception: on HTTP error or network failure (caller handles).
         """
         ...
