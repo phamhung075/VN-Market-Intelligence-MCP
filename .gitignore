@@ -18,3 +18,5 @@ dist/
 docs/agent-memory/sessions/preflight-lsof-*.log
 apps/*/server
 docs/data/cycle-snapshot-*.json
+docs/data/.cycle-snapshot-*.stage
+docs/data/cycle-snapshot-*.json.tmp
