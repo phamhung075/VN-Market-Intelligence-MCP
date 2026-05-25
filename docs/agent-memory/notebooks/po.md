@@ -1,32 +1,29 @@
 # PO Notebook
 
-**Cycle:** mcp-server SCALE pilot — Phase-0 CLOSE (P0-MCP-4 anchor + P0-MCP-EXIT). Host-side bookkeeping only; NO docker build (memory cap → separate session).
-**Last update:** 2026-05-25T10:50:43Z
-**Status:** mcp-server status=ACTIVE, phase=1, phase0.status=CLOSED, exit_gate=CLOSED, phase1.status=ACTIVE, sequencingGate.decision=PHASE0-CLOSED-PHASE1-READY-SOLO-DEFERRED, verdict=TBD. Commit ad495c3e. LAST factory pilot — 2026-05-22 rollout now 11/11 through Phase-0.
+**Cycle:** mcp-server WAVE-B dispatch DECISION — AUTHORIZE-HOST-SIDE-NOW. Host-side bookkeeping only; NO docker build.
+**Last update:** 2026-05-25T09:18Z
+**Status:** mcp-server status=ACTIVE, phase=1, phase1.buildWave.dispatchState=DEFERRED→ACTIVE-HOST-SIDE, sequencingGate.decision=PHASE0-CLOSED-PHASE1-WAVE-B-ACTIVE-HOST-SIDE, verdict=TBD. Commit 68de127d.
 
 ---
 
-## 2026-05-25T10:50Z — mcp-server Phase-0 CLOSED (anchor + exit)
+## 2026-05-25T09:18Z — WAVE-B DEFERRED→ACTIVE-HOST-SIDE (decision request)
 
-**Trigger:** explicit PO task — close Phase-0. Verified each of the 4 deliverable commits exists in git log BEFORE crediting (did not trust the task note blindly):
-- P0-MCP-1 brownfield `44530a26` (architect) — verdict FULL, 12 barrels, 146 tools, G5-inverse map.
-- P0-MCP-2 bug-inventory `05dc494a` (qa) — ~9408 pass/~348 fail/35 skip; 7 open bugs (BUG-5 = R-CRITICAL G5-inverse).
-- P0-MCP-3 dev-mcp-server flow G12 gate `0a4f1f28` (agent-father). dev_agent_file = N/A (agent pre-existed; flow baked the gate).
-- P0-MCP-5 Phase-1 plan `7d78abb1` (architect) — FULL, 10 tasks P1-A..P1-EXIT, 78 ACs.
+**Decision:** AUTHORIZE-HOST-SIDE-NOW. Binary call hinged on the Gate-2 docker-coupling question (item #3 of the request). Read the SOURCE, not the prior cycle's blanket "every wave QA-gated against live server" assumption — which was over-conservative.
 
-**P0-MCP-4 anchor:** annotated tag `mcp-server-pre-refactor` @ `7d78abb1` (the clean pre-refactor HEAD after all 4 deliverables landed). Convention `<service>-pre-refactor` (checked `git tag -l` → matches news-fetch-pre-refactor). Local-only, NO push. Recorded in pilot-status §phase0.anchor_tag (SSOT, mirrors news-fetch). Tag now 1 commit behind HEAD (bookkeeping commit ad495c3e sits on top — correct).
+**Gate-2 host-side-vs-docker FINDING (load-bearing):**
+- Gate-2b `/health` (apps/mcp-server/src/interface/mcp/server.ts:298-311) = PURE in-process liveness probe. Returns {status:ok, toolCount, sessions, uptime} from registration-time state. ZERO downstream ping/proxy (no TA:5000/macro:5004/kinh-dich:5005 touch).
+- Server boot (src/index.ts:77-142) = downstream-DECOUPLED. ONLY downstream touch = pdf-extractor health check (L117-138), explicitly try/catch NON-FATAL ("never crashes the server", "may not be reachable in development"). Bun HTTP bind + scheduler + Telegram-env = all local.
+- ∴ `bun run src/index.ts &` + `curl localhost:3000/health` SELF-CERTIFIES host-side with zero live fleet. Gate-2a tsc / 2c tool-count grep / 2d scheduler grep / bun test all host-side = memory-safe (only `docker compose build` is the kernel-panic risk).
+- Architect ALREADY designed this split: Phase-1 plan §"Build Wave Docker Rebuild — Deferred" + §Hard Constraints "Docker rebuild deferred to separate session". My decision aligns with the locked plan + USER directive "continue refactory HERE".
 
-**SSOT reconcile (project-stats.json, from P0-MCP-2 live baseline):** cronJobCount 77→68 (= startScheduler.ts `cron.schedule` = dev-mcp-server Gate-2d probe + Phase-1 tripwire; cronConfig.ts=73 noted as broader named-config map). testBaselinePass 9277→9408, testBaselineFail+testFailures 34→348 (live ~9408-9411/~345-348/35 skip, 9791 total; +312 fail = pre-existing BCTC/fixture debt per QA cycles 106-108, NOT new regressions). toolCount=146 UNCHANGED (correct). Added _cronJobCountNote + expanded _testBaselineNote.
+**SOLO verified at authorization:** zero active git/bun/tsc/vitest/go-test procs, no .git/index.lock, `git status --porcelain apps/mcp-server/` EMPTY. frontend = AWAITING-USER-G9 bookkeeping + pending container rebuild → NOT an active scale REFACTOR terminal → lane free. RUN-SOLO satisfiable now.
 
-**G5-inverse R-CRITICAL CARRY (NOT lost at phase boundary):** confirmed carried as P1-F (kinhDichWrapper.appendKinhDich() bypass in marketTools.ts + news-analysis/analysis.ts + portfolioTools.ts QUE_META import — all R-CRITICAL) + P1-G (pdf.ts/pdfOcrWorker post-1954c — R-MEDIUM). Both end with "every handler proven HTTP-routed" evidence gate. Logged in pilot-status phase1.progress_notes + TASKS.md Phase-1 backlog.
+**BINDING RULE on dev-mcp-server:** host-side memory-safe ops ONLY (barrel splits, G5-inverse rewire, primitive extraction, unit/scenario bun test w/ injected fakes, tsc, host server-start health probe). Any DoD step genuinely needing the live docker fleet → mark BLOCKED-ON-DOCKER-SESSION (HONEST, NEVER fake-green) and stop cleanly. docker rebuild + cross-service integration-verify + P1-QA container re-verify + P1-EXIT flip → user's separate docker session.
 
-**WAVE B = READY-SOLO-DEFERRED:** plan locked + SOLO conditions met host-side, but P1-A NOT dispatched — every wave QA-gated against live server + closes with docker rebuild → separate docker session (memory cap). phase1.buildWave records readiness=READY/dispatchMode=RUN-SOLO/dispatchState=DEFERRED.
-
-**Integrity:** both JSON re-validated zero-dup-keys (object_pairs_hook) post-edit. Explicit per-file staging (NEVER -A/-am); docs/data tracked-but-dir-ignored → advisory noise harmless (files tracked, index updated, confirmed via `git show :path`). No index.lock + no live git verified before staging; HEAD scope = EXACTLY 3 files; no --force/--no-verify/--no-gpg-sign; local-only. Commit ad495c3e. MCP gateway tools NOT exposed this session → commit-mutex via MCP unavailable; mitigated by SOLO single-writer + immediate pre-commit concurrency recheck (intent of mutex preserved).
+**Integrity:** edited ONLY pilot-status-mcp-server.json (sole pilot file PO may touch). Explicit per-file staging (git add <path>, confirmed `git diff --cached --name-only` = exactly 1 file; docs/data dir-ignored → advisory noise harmless, file tracked + staged). No lock + no live git pre-check. No --force/--no-verify/--no-gpg-sign; local-only, no push. Commit 68de127d. SOLO single-writer preserves commit-mutex intent (kind=sprint-task workaround N/A — no contender).
 
 ## Carry-over
-- mcp-server WAVE B (dev-mcp-server) is READY-SOLO-DEFERRED: dispatch P1-A FIRST in the separate docker session, no other dev/scale terminal touching mcp zone. WIP=1 sequential A→B→C→D→E→F→G→H→QA→EXIT. G12 streak = P1-B/C/D. Pre-revert tags created per-wave at P1-C/D/E/F start.
-- Anchor `mcp-server-pre-refactor` @ 7d78abb1 FROZEN — no retag/rewrite/push (anchor discipline).
-- frontend pilot: AWAITING-USER-G9-SIGNOFF (Path-A verbal) + Wave-C container rebuild (ops, separate docker session). goalsEarned=4, terminal fields TBD until 12/12.
-- BUILD-WAVE order to user end-state: A(frontend build, done) → B(mcp-server build SOLO, ready-deferred) → C(ops rebuild containers + live health) → D(qa whole-fleet regression). Live health is the truth gate, not disk-green.
-- BUG-1 commit-mutex enum drift still binding (kind=sprint-task workaround). This session: MCP gateway not callable at all from PO agent context — flag if a future cycle needs MCP.
+- mcp-server WAVE B = ACTIVE-HOST-SIDE. Spawn dev-mcp-server to run P1-A FIRST (sandbox runner + scenarios). WIP=1 sequential P1-A→B→C→D→E→F→G→H, then STOP at docker boundary. G12 streak = P1-B/C/D. Pre-revert tags per-wave at P1-C/D/E/F start. Anchor mcp-server-pre-refactor @7d78abb1 FROZEN.
+- DOCKER SESSION queue (separate, user-driven, one-at-a-time 8GB cap): (1) frontend container rebuild (code QA-APPROVED c85f577c), (2) mcp-server container rebuild after P1-QA host-side passes + cross-service dashboard-route integration-verify, (3) DEPLOY-DRIFT DRIFT-1/-2/-3.
+- frontend pilot: AWAITING-USER-G9-SIGNOFF (Path-A verbal). goalsEarned=4, terminal fields TBD until 12/12.
+- P1-EXIT (PO-owned): SSOT reconcile already done at Phase-0 close (cronJobCount 68, testBaselinePass 9408, fail 348, toolCount 146); pilot-status goal-flip stays PO-only at 12/12 terminal.
