@@ -1237,3 +1237,101 @@ Final PO verification: the user's complaint is CLOSED (live `/api/bctc-inspect` 
 **Next agent:** dev-pdf-extractor (BT-3-A first)
 
 **All tasks ready to dispatch:** BT-2 complete → PM creates handoff docs (THIS FILE, sections above) → Main terminal spawns dev-pdf-extractor with BT-3-A handoff.
+
+---
+
+## [Developer] BT-3-A — dev-pdf-extractor — DONE
+
+**Commit:** `8f6d6c50` | **Branch:** main | **Date:** 2026-05-25
+
+### What was delivered
+
+5 files (exact BT-3-A file list, zero foreign):
+
+1. **`infrastructure/text_table_extractor.py`** (CREATE)
+   - `TextTableExtractor` class implements `TableAssemblerPort`.
+   - Handles two BCTC OCR layouts: code-first (`100  label  value`) and label-first (`A. label  100  value`).
+   - Unit detection from "Đơn vị:" header (vnd vs billion_vnd).
+   - Period detection via DD/MM/YYYY date regex across all pages.
+   - VN dot-thousands parsing via `vn_number_normalize` (BT-1 primitive).
+   - Parenthesis-negative BCTC notation: `(586.166.744.274)` → -586166744274.0.
+   - Summary-code flagging: codes {100, 200, 270, 300, 400, 440} → is_summary_row=1.
+   - Multi-page stitching with global row_order (no reset per page).
+   - FPT p4 golden anchor: code 100 = 58,102,970,741,619 VND exact (to float precision).
+
+2. **`infrastructure/table_push_client.py`** (CREATE)
+   - `TablePushClient` class implements `TablePushClientPort`.
+   - `async def push_table(...)` — POST to `/api/push-bctc-table` on mcp-server.
+   - Uses stdlib urllib (injectable/fakeable; aiohttp drop-in possible in BT-3-B).
+   - Configurable `mcp_server_url` — default `http://mcp-server:3000`.
+
+3. **`domain/modules/financial_reports/ports.py`** (MODIFY — add 2 protocols)
+   - `TableAssemblerPort(Protocol)` — `assemble(pages, statement_section) -> dict`. Zero infra imports.
+   - `TablePushClientPort(Protocol)` — `async def push_table(...)`. Zero infra imports.
+   - Docstring updated (11 ports total).
+
+4. **`infrastructure/config.py`** (MODIFY — add field)
+   - `mcp_server_url: str` from env `MCP_SERVER_URL`, default `http://mcp-server:3000`.
+
+5. **`__tests__/unit/test_text_table_extractor.py`** (CREATE — 20 tests)
+   - TC1: code-row parse (code, label, value_current, value_prior)
+   - TC2: header/separator row has code=None, value_current=None
+   - TC3: code row with no numeric values → value_current=None
+   - TC4: summary codes {100, 200, 270, 300, 400, 440} → is_summary_row=1
+   - TC5: non-summary codes (110, 111, 112) → is_summary_row=0
+   - TC6: VN dot-thousands parsing (58.102.970.741.619 → 58102970741619.0)
+   - TC7: parenthesis-negative (586.166.744.274) → -586166744274.0
+   - TC8: multi-page row_order is globally monotone + unique
+   - TC9: page_number preserved per page
+   - TC10: period_current = "31/12/2025" detected
+   - TC11: period_prior = "31/12/2024" detected
+   - TC12: empty pages → empty rows
+   - TC13: empty text → empty rows
+   - TC14: FPT code 100 golden anchor (exact float)
+   - TC15: FPT code 112 golden value (2,455,354,649,806)
+   - TC16: return dict has rows/period_current/period_prior keys
+   - TC17: every row dict has all 8 required fields
+   - TC18-20: TablePushClient instantiation + async check
+
+### Red→Green evidence
+
+- Baseline: 235 passed
+- New tests initial run: 7 failed, 13 passed (RED confirmed — layout regex too strict)
+- Fix: added label-first BCTC layout support (`^(.+?)\s{2,}(\d{2,3})\s*(.*?)$`)
+- After fix: 20 passed, 0 failed (GREEN)
+- Full suite: 255 passed (235 pre-existing + 20 new), 0 failed
+
+### Fence status
+
+- Fence-A: KEPT (primitives do not import infra/app/interface)
+- Fence-B: KEPT (domain.modules do not import infrastructure/interface)
+- 66 files analyzed, 105 dependencies
+- R-5 deliberate-violation test: inject `from infrastructure.config import Config` into ports.py → Fence-B fires with exit code 1, "BROKEN" printed → fence is LIVE (not a false-green)
+
+### Sandbox status
+
+- Primitive-tier: all non-canary scenarios PASS; G8 honesty canaries (known_bad_*) remain intentionally RED (pre-existing behavior)
+- Module-tier: `multi_primitive_story.json` PASS
+- Zero creds in env (`env | grep -E "DB_|API_KEY|..."` = empty)
+
+### AC verification
+
+- AC-1: TextTableExtractor.assemble() instantiates, returns correct shape. PASS.
+- AC-2: TablePushClient.push_table() is async. PASS.
+- AC-3: Both classes in infrastructure/. Domain primitives only imported (vn_number_normalize, select_period_column). PASS.
+- AC-4: TableAssemblerPort + TablePushClientPort defined as pure Protocols. Fence-B verifies zero infra imports. PASS.
+- AC-5: 20 unit tests covering code-row, header-row, None-value cases. PASS.
+- AC-6: lint-imports exit 0, 2 kept 0 broken. PASS.
+- AC-7: Sandbox module scenario PASS; imports resolve. PASS.
+
+### Post-commit check
+
+`git show --stat 8f6d6c50` — exactly 5 files, zero foreign files confirmed.
+
+### Handoff to BT-3-B
+
+Owner: dev-pdf-extractor | Task: BT-3-B — Usecase + Routes
+- BT-3-A adapters ready: `TextTableExtractor` (TableAssemblerPort) + `TablePushClient` (TablePushClientPort)
+- BT-3-B creates `application/extract_tables_usecase.py` + wires `POST /extract-tables` route + composition root in `main.py`
+- Tests: inject fakes for both ports; FPT balance-check assertion (Total Assets 88089621.779862 = Liab + Equity)
+- Fence constraint: `application/extract_tables_usecase.py` must NOT import from `infrastructure/` (domain + ports only)
