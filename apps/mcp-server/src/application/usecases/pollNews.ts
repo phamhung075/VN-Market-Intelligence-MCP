@@ -28,6 +28,7 @@ import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
+// eslint-disable-next-line boundaries/element-types -- FENCE-LEGACY: pre-existing before G4 fence — reviewed: globalSourceTracker is shared state tied to interface layer; refactor to domain/application deferred
 import { globalSourceTracker, _resetGlobalSourceTracker } from "../../interface/mcp/tools/news-analysis/sourceHealthTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
