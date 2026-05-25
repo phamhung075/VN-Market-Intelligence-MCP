@@ -30,6 +30,9 @@ dev = [
 asyncio_mode = "auto"
 testpaths = ["__tests__"]
 python_files = ["test_*.py"]
+markers = [
+    "slow: marks tests as slow (one-shot real OCR — do not run in CI loops)",
+]
 
 [tool.mypy]
 python_version = "3.11"

@@ -1,5 +1,26 @@
 # pdf-extractor — Use Cases
 
+## FinancialReportsModule.process_report() — BT-3-C additive keys
+
+BT-3-C adds two optional return keys to `process_report()` when `table_assembler` is wired:
+
+| Key | Type | Description |
+|-----|------|-------------|
+| `structured_table_rows` | `list[dict] \| None` | Structured BCTC table rows (code, label, value_current, value_prior, unit, is_summary_row) |
+| `balance_check` | `dict \| None` | `{total_assets, total_liabilities, total_equity, balance_delta, balance_pass}` |
+
+All 14 existing keys are preserved (backward-compat). New keys return `None` when `table_assembler` is not wired.
+
+New optional `__init__` param: `table_assembler: Optional[TableAssemblerPort] = None`
+
+New optional `process_report()` params:
+- `pages: Optional[list] = None` — page list for table assembler `[{page_number, text}]`
+- `statement_section: str = "balance_sheet"` — BCTC section for balance-check
+
+Integration test: `__tests__/integration/test_extract_tables_fpt.py` — real FPT PDF, 4 tests, ≥70 rows, balance_pass=True.
+
+---
+
 ## ExtractTablesUseCase (BT-3-B)
 - **File:** `apps/pdf-extractor/application/extract_tables_usecase.py`
 - **Route:** `POST /extract-tables` (wired in `interface/handlers.py`)

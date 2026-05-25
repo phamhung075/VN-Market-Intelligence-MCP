@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 # BCTC standard major subtotal codes (is_summary_row = 1)
 _SUMMARY_CODES = frozenset({"100", "200", "270", "300", "400", "440"})
 
-# Regex: BCTC code row — code appears AT START of line (code-first format):
+# Regex: BCTC code row — code appears AT START of line (code-first format, 2+ spaces):
 #   "100  TÀI SẢN NGAN HAN  58.102.970.741.619"
 _CODE_ROW_START_RE = re.compile(r"^\s*(\d{2,3})\s{2,}(.+)$")
 
@@ -61,6 +61,40 @@ _CODE_ROW_START_RE = re.compile(r"^\s*(\d{2,3})\s{2,}(.+)$")
 # Pattern: (non-empty label text) + 2+spaces + (2-3 digit code) + optional trailing
 _CODE_ROW_LABEL_FIRST_RE = re.compile(
     r"^(.+?)\s{2,}(\d{2,3})\s*(.*?)$"
+)
+
+# Regex: BCTC "code-only column" row — code at start with single space then value(s).
+# FPT pages 4-5 render codes in a separate OCR column:
+#   "270 88.089.621.779.862"         (Total Assets)
+#   "300 44.338.155.487.272"         (Total Liabilities)
+#   "221 — 11 15.385.816.846.287"    (note ref between code and value — strip it)
+# This pattern: code + single space + optional note fragment + value numeric token.
+# Constraint: line must contain a VN-format number (dot-thousands or plain digits).
+# The label is stored as "" (code-column block; no label on same line).
+_CODE_VALUE_COL_RE = re.compile(
+    r"^\s*(\d{2,3})\s+(?:[-—\w\s]*?)(\d[\d.,]+(?:\.\d+)?|\(\d[\d.,]+\))\s*$"
+)
+
+# Regex: detect a pure BCTC code-only line (3-digit code alone on a line, possibly
+# followed only by optional note-number or whitespace). Used for block-column layout.
+# Examples: "100", "300", "310 ", "311"
+_PURE_CODE_LINE_RE = re.compile(r"^\s*(\d{2,3})\s*(?:\d{1,2})?\s*$")
+
+# Regex: BCTC label-code-value on same line with single spaces (FPT page 7 layout):
+#   "D. VỐN CHỦ SỞ HỮU 400 43.751.466.292.590 35.727.540.104.800"
+#   "TONG CỘNG NGUON VỐN (440=300+400) 440 88.089.621.779.862 71.999.995.678.620"
+#   "I. Vốn chủ sở hữu 410 24 43.748.716.292.590 35.724.790.104.800"
+# Pattern: any label text (including parentheses) + space + 3-digit code +
+#          space + optional-note + VN-number value.
+# Must end with a VN-format number to distinguish from pure label lines.
+_CODE_ROW_SINGLE_SPACE_RE = re.compile(
+    r"^(.+?)\s+(\d{2,3})\s+(?:\d{1,2}\s+)?(\d[\d.,]+(?:\d[\d.,]+)*(?:\s+\d[\d.,]+)?)\s*$"
+)
+
+# Regex: detect a pure VN-format numeric value line (no code, no label).
+# Examples: "58.102.970.741.619", "44,338.155.487.272", "(586.166.744.274)"
+_PURE_VALUE_LINE_RE = re.compile(
+    r"^\s*\(?\d[\d.,]+\)?\s*$"
 )
 
 # Regex: period header — Vietnamese date format DD/MM/YYYY (or YYYY/MM/DD variation)
@@ -120,14 +154,52 @@ def _detect_periods(lines: List[str]) -> tuple[Optional[str], Optional[str]]:
     return period_current, period_prior
 
 
+def _coerce_ocr_number(raw: str) -> Optional[str]:
+    """
+    Attempt to coerce an OCR-mangled number into a parseable form.
+
+    Handles common OCR artifacts in VN financial PDFs:
+    - "44,338.155.487.272" — OCR renders first separator as comma, rest as dots.
+      In VN format all separators should be dots (dot = thousands). Replace first
+      comma with a dot if the rest of the string uses dots as thousands.
+    - "1,381.813.111.264" — same pattern.
+
+    Returns a cleaned string ready for vn_number_normalize, or None if no
+    correction can be applied.
+    """
+    if "," not in raw:
+        return None  # No comma → standard path
+
+    # Check if it looks like: digits,digits.digits.digits... (VN with first-sep comma)
+    # Pattern: number before comma + "," + three-digit group + rest with dots
+    m = re.match(r"^(\d+),(\d{3})((?:\.\d{3})*)$", raw.strip())
+    if m:
+        # Replace the leading comma with a dot → fully VN dot-thousands format
+        return m.group(1) + "." + m.group(2) + m.group(3)
+
+    # Negative variant: "(44,338.155.487.272)"
+    m2 = re.match(r"^\((\d+),(\d{3})((?:\.\d{3})*)\)$", raw.strip())
+    if m2:
+        return "-" + m2.group(1) + "." + m2.group(2) + m2.group(3)
+
+    return None
+
+
 def _parse_value(raw: Optional[str]) -> Optional[float]:
     """
     Apply vn_number_normalize then convert to float.
+    On failure, try OCR-coercion for mixed comma/dot numbers.
     Returns None on any failure.
     """
     if raw is None:
         return None
-    normalized = vn_number_normalize(str(raw).strip())
+    cleaned = str(raw).strip()
+    normalized = vn_number_normalize(cleaned)
+    if normalized is None:
+        # Try OCR-coercion (e.g. "44,338.155.487.272" → "44.338.155.487.272")
+        coerced = _coerce_ocr_number(cleaned)
+        if coerced is not None:
+            normalized = vn_number_normalize(coerced)
     if normalized is None:
         return None
     try:
@@ -153,10 +225,13 @@ def _try_parse_code_row(stripped: str) -> Optional[tuple[str, str, str]]:
     """
     Try to extract (code, label, values_rest) from a stripped line.
 
-    Handles two BCTC OCR layouts:
-    1. Code-first: "100  TÀI SẢN NGAN HAN  58.102..."
-    2. Label-first: "A. TÀI SẢN NGAN HAN  100  58.102..."
-                    "1. Tiền  111  8.084.826.991.114  6.725.619.929.289"
+    Handles three BCTC OCR layouts:
+    1. Code-first (2+ spaces): "100  TÀI SẢN NGAN HAN  58.102..."
+    2. Label-first (2+ spaces): "A. TÀI SẢN NGAN HAN  100  58.102..."
+                                "1. Tiền  111  8.084.826.991.114  6.725.619.929.289"
+    3. Code-value column (single space, no label on line):
+       "270 88.089.621.779.862"  (FPT separate-column OCR layout)
+       "221 — 11 15.385.816.846.287"  (note ref stripped)
 
     Returns (code, label, values_rest) or None if not a code row.
     """
@@ -180,15 +255,223 @@ def _try_parse_code_row(stripped: str) -> Optional[tuple[str, str, str]]:
         values_rest = m2.group(3).strip()
         return (code, label, values_rest)
 
+    # Layout 3: code-value column — code + single space + optional note fragment + numeric value
+    # Used when Tesseract renders the code column separately from the label column.
+    # Example: "270 88.089.621.779.862" → code="270", label="", values="88.089.621.779.862"
+    m3 = _CODE_VALUE_COL_RE.match(stripped)
+    if m3:
+        code = m3.group(1)
+        value_token = m3.group(2).strip()
+        return (code, "", value_token)
+
+    # Layout 4: label + single space + code + single space + values (FPT page 7 inline).
+    # Example: "D. VỐN CHỦ SỞ HỮU 400 43.751.466.292.590 35.727.540.104.800"
+    # More permissive than Layout 2 (accepts single space separation).
+    # Guard: line must end with a VN-format numeric block.
+    m4 = _CODE_ROW_SINGLE_SPACE_RE.match(stripped)
+    if m4:
+        label = m4.group(1).strip()
+        code = m4.group(2)
+        values_rest = m4.group(3).strip()
+        return (code, label, values_rest)
+
     return None
 
 
 def _parse_value_cells(values_rest: str) -> List[str]:
-    """Split a value string into individual value tokens (split on 2+ spaces)."""
+    """
+    Split a value string into individual value tokens.
+
+    Primary: split on 2+ spaces (standard BCTC inline layout).
+    Fallback: when result is 1 token that contains a single space between two
+    VN-format numbers (layout 4 single-space separation), split on that space.
+
+    Example:
+      "43.751.466.292.590 35.727.540.104.800" → ["43.751.466.292.590", "35.727.540.104.800"]
+    """
     if not values_rest.strip():
         return []
     parts = re.split(r"\s{2,}", values_rest.strip())
-    return [p.strip() for p in parts if p.strip()]
+    tokens = [p.strip() for p in parts if p.strip()]
+
+    # Fallback: single token that may be two VN numbers joined by a single space
+    if len(tokens) == 1 and " " in tokens[0]:
+        # Try splitting on single space; check each half looks like a VN number
+        sub = tokens[0].split(" ")
+        # Filter to at most 2 candidate value tokens (current + prior)
+        candidates = [s.strip() for s in sub if s.strip()]
+        vn_like = [
+            s for s in candidates
+            if re.match(r"^\(?[\d.,]+\)?$", s)
+        ]
+        if len(vn_like) >= 2:
+            return vn_like[:2]
+        elif len(vn_like) == 1:
+            return vn_like
+
+    return tokens
+
+
+def _detect_block_column_layout(lines: List[str]) -> bool:
+    """
+    Detect if a page uses "block-column" OCR layout.
+
+    In this layout (common for FPT pages 4-6), labels, codes, and values
+    appear in separate sequential blocks rather than on the same line.
+    Detection heuristic: ≥5 consecutive pure-code-only lines (2-3 digit numbers
+    alone on a line) within the first 100 non-empty lines.
+    """
+    consecutive = 0
+    count = 0
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+        count += 1
+        if count > 150:
+            break
+        if _PURE_CODE_LINE_RE.match(stripped):
+            consecutive += 1
+            if consecutive >= 5:
+                return True
+        else:
+            consecutive = 0
+    return False
+
+
+def _extract_block_columns(
+    lines: List[str],
+) -> tuple[List[str], List[str], List[str]]:
+    """
+    From a block-column page, extract code list and value list(s) by scanning
+    each "region" of the page.
+
+    Strategy:
+    1. Scan for the code block: consecutive pure-code-only lines.
+    2. After the code block, scan for the value block: consecutive pure-numeric lines
+       (skipping "Thuyết minh" note numbers, dates, and header words).
+    3. Return (codes, values_current, values_prior) — lists of raw strings.
+
+    The code and value lists are matched positionally (zip).
+    """
+    codes: List[str] = []
+    values_current: List[str] = []
+    values_prior: List[str] = []
+
+    # State machine: "pre" | "codes" | "post_codes" | "values_current" | "values_prior"
+    state = "pre"
+    in_code_block = False
+    code_block_start = False
+    after_codes = False
+    hit_date_current = False
+    hit_date_prior = False
+
+    for line in lines:
+        stripped = line.strip()
+        if not stripped:
+            continue
+
+        lower = stripped.lower()
+
+        # Skip unit header lines
+        if any(kw in lower for kw in _UNIT_HEADER_VI_KEYWORDS):
+            continue
+
+        # Detect "Mã số" header — code block follows
+        if lower in ("mã số", "ma so"):
+            in_code_block = True
+            code_block_start = True
+            continue
+
+        # In code block: collect pure code numbers
+        if in_code_block:
+            m = _PURE_CODE_LINE_RE.match(stripped)
+            if m:
+                codes.append(m.group(1))
+                continue
+            # Non-code line ends the code block
+            in_code_block = False
+            after_codes = True
+
+        # After codes: look for "Thuyết minh" note block, then value blocks
+        if after_codes:
+            # Date line → mark value block start
+            if _DATE_RE.match(stripped) and not hit_date_current:
+                hit_date_current = True
+                continue
+            if _DATE_RE.match(stripped) and hit_date_current and not hit_date_prior:
+                hit_date_prior = True
+                continue
+
+            # Skip "Thuyết minh", "minh", "MAU SO", note numbers (1-2 digits alone)
+            if lower in ("thuyết", "thuyế", "minh", "thuyét"):
+                continue
+            if re.match(r"^\d{1,2}$", stripped):
+                continue
+            if stripped.startswith("MAU") or stripped.startswith("MẪU"):
+                continue
+            if "ngày 31 tháng" in lower or "tai ngay" in lower:
+                continue
+
+            # Value line
+            if _PURE_VALUE_LINE_RE.match(stripped):
+                if hit_date_prior:
+                    values_prior.append(stripped)
+                elif hit_date_current:
+                    values_current.append(stripped)
+                continue
+
+            # Fallback: not a recognized structure line, skip
+            continue
+
+    return codes, values_current, values_prior
+
+
+def _build_rows_from_block_columns(
+    page_num: int,
+    codes: List[str],
+    values_current: List[str],
+    values_prior: List[str],
+    unit: str,
+    row_order_start: int,
+) -> tuple[List[Dict], int]:
+    """
+    Build structured row dicts by positional zip of codes and values.
+
+    Each code maps to values_current[i] and optionally values_prior[i].
+    Rows without a matching value get value_current=None.
+    """
+    rows: List[Dict] = []
+    row_order = row_order_start
+
+    max_rows = max(len(codes), len(values_current))
+
+    for i in range(max_rows):
+        code = codes[i] if i < len(codes) else None
+        if code is None:
+            row_order += 1
+            continue
+
+        val_curr_raw = values_current[i] if i < len(values_current) else None
+        val_prior_raw = values_prior[i] if i < len(values_prior) else None
+
+        value_current = _parse_value(val_curr_raw)
+        value_prior = _parse_value(val_prior_raw)
+        is_summary = 1 if code in _SUMMARY_CODES else 0
+
+        rows.append({
+            "page_number": page_num,
+            "row_order": row_order,
+            "code": code,
+            "label": "",           # label not available in separate-block layout
+            "value_current": value_current,
+            "value_prior": value_prior,
+            "unit": unit,
+            "is_summary_row": is_summary,
+        })
+        row_order += 1
+
+    return rows, row_order
 
 
 def _parse_page_lines(
@@ -357,20 +640,40 @@ class TextTableExtractor:
                 unit = _detect_unit(line)
                 break
 
-        # Parse each page
+        # Parse each page — auto-detect block-column vs inline layout per page
         for page in pages:
             page_num = page.get("page_number", 0)
             text = page.get("text", "")
             lines = text.splitlines()
 
-            page_rows, global_row_order = _parse_page_lines(
-                page_num=page_num,
-                lines=lines,
-                unit=unit,
-                period_current=period_current,
-                period_prior=period_prior,
-                row_order_start=global_row_order,
-            )
+            if _detect_block_column_layout(lines):
+                # Block-column layout (FPT pages 4-6): codes and values in separate blocks.
+                # Reconstruct rows by positional zip of code list and value list.
+                codes, values_current, values_prior = _extract_block_columns(lines)
+                page_rows, global_row_order = _build_rows_from_block_columns(
+                    page_num=page_num,
+                    codes=codes,
+                    values_current=values_current,
+                    values_prior=values_prior,
+                    unit=unit,
+                    row_order_start=global_row_order,
+                )
+                logger.info(
+                    "TextTableExtractor: page %d block-column layout → "
+                    "%d codes, %d cur-values, %d prior-values → %d rows",
+                    page_num, len(codes), len(values_current), len(values_prior), len(page_rows),
+                )
+            else:
+                # Inline layout (FPT page 7, fixture texts): code+value on same line.
+                page_rows, global_row_order = _parse_page_lines(
+                    page_num=page_num,
+                    lines=lines,
+                    unit=unit,
+                    period_current=period_current,
+                    period_prior=period_prior,
+                    row_order_start=global_row_order,
+                )
+
             all_rows.extend(page_rows)
 
         logger.info(

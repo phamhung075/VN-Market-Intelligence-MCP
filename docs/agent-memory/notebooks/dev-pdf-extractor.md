@@ -362,3 +362,37 @@ DDD invariants maintained: application layer imports ONLY domain ports + stdlib.
 **Next:** BT-3-C — wire new usecase into `process_report()` → add `structured_table_rows` + `balance_check` return keys to `FinancialReportsModule` (backward-compat).
 
 **Remediation owner:** ops (VPS must cache SSC-URL PDFs + Dockerfile must restore poppler-utils+tesseract). Flag to po for combined decision with ops-1951d diagnostic.
+
+---
+
+### 2026-05-25 — BT-3-C DONE (module integration + real-FPT integration test)
+
+**Commit:** TBD | Sprint: BCTC-TABLE
+
+**3 files staged:** `domain/modules/financial_reports/module.py` (MODIFY), `infrastructure/text_table_extractor.py` (MODIFY — block-column layout + OCR coercion), `__tests__/integration/test_extract_tables_fpt.py` (CREATE), `pyproject.toml` (MODIFY — slow mark). Also docs: `docs/architecture/microservice/pdf-extractor/usecases.md`, `docs/architecture/microservice/pdf-extractor/infrastructure.md`.
+
+**269 pytest PASS (265 unit + 4 integration). Fence-A/B KEPT (0 broken). Sandbox pass=true. Zero creds.**
+
+**What was delivered:**
+- `process_report()` now returns 2 additive keys: `structured_table_rows` (list|None) + `balance_check` (dict|None) when `table_assembler` optional port is wired.
+- New optional params: `table_assembler: Optional[TableAssemblerPort] = None` in `__init__`; `pages: Optional[list] = None` + `statement_section: str` in `process_report()`.
+- `_compute_table_balance_check()` pure helper (codes 270/300/400, 1 VND tolerance) in domain layer.
+- Integration test on REAL FPT PDF (pages 4-7, Tesseract vie+eng): 171 rows, balance_pass=True.
+
+**CRITICAL OCR LAYOUT WORK (extractor fixes needed to pass real-FPT test):**
+- Added block-column detection (`_detect_block_column_layout()`) — FPT pages 4-6 render labels/codes/values in separate OCR blocks, NOT on same line.
+- `_extract_block_columns()` reconstructs rows by positional zip of code list + value list.
+- `_coerce_ocr_number()` fixes OCR comma artifact: "44,338.155.487.272" → "44.338.155.487.272" (Total Liabilities parse).
+- Layout 4 regex for single-space label-code-value: "D. VỐN CHỦ SỞ HỮU 400 43.751.466.292.590..." (FPT page 7).
+- `_parse_value_cells()` fallback: single-space split for two VN numbers joined by one space.
+
+**FPT golden anchors verified in integration test:**
+- Code 270 Total Assets: 88,089,621,779,862 VND ✓
+- Code 300 Total Liabilities: 44,338,155,487,272 VND ✓ (OCR coercion applied)
+- Code 400 Total Equity: 43,751,466,292,590 VND ✓
+- balance_pass = True, delta = 0.0 ✓
+
+**sandbox/runner.py: NOT MODIFIED (frozen pilot surface — architect override).**
+sandbox scenario `structured_table_extraction` DEFERRED to PO decision (see handoff BT-3-C).
+
+**NEXT:** BT-3i → dev-mcp-server (schema + push handler + inspector GET route + HTML render).
