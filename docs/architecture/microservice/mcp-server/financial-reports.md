@@ -58,3 +58,62 @@ Individual tool signatures: `.claude/tools/list/<tool>.md`
 - Unit conversion mandatory: multiply by 1000.0 (1 tỷ = 1000 triệu).
 
 **Downstream:** unblocks 1878b `compute_accruals`, 1885a Beneish/Piotroski, 1886a BTN forensics.
+
+---
+
+## BT-3i: Structured Table Storage + Inspector Render (BCTC-TABLE sprint)
+
+### New Tables (BT-3i-A, commit `40b0b50e`)
+
+**`bctc_table_rows`** — per-doc per-row structured BCTC table data.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `report_id` | TEXT | FK → financial_reports.id (UUID) |
+| `page_number` | INTEGER | 1-indexed PDF page |
+| `statement_section` | TEXT | "balance_sheet" / "income_statement" / "cash_flow" |
+| `row_order` | INTEGER | Global row order (monotone across pages) |
+| `code` | TEXT nullable | BCTC line code (100, 110, 270…); NULL for header rows |
+| `label` | TEXT | Vietnamese label |
+| `period_current` | TEXT | e.g. "31/12/2025" |
+| `value_current` | REAL nullable | Full VND (not millions) |
+| `period_prior` | TEXT nullable | e.g. "31/12/2024" |
+| `value_prior` | REAL nullable | Full VND (not millions) |
+| `unit` | TEXT | "vnd" or "billion_vnd" |
+| `is_summary_row` | INTEGER | 1 for major subtotal codes {100,200,270,300,400,440} |
+
+**`bctc_balance_checks`** — per-doc balance sheet identity check.
+
+| Column | Type | Notes |
+|--------|------|-------|
+| `report_id` | TEXT UNIQUE | FK → financial_reports.id |
+| `statement_section` | TEXT | Always "balance_sheet" |
+| `total_assets` | REAL | Code 270 value (full VND) |
+| `total_liabilities` | REAL | Code 300 value (full VND) |
+| `total_equity` | REAL | Code 400 value (full VND) |
+| `balance_delta` | REAL | Assets − (Liab + Equity), 0.0 = perfectly balanced |
+| `balance_pass` | INTEGER | 1 = identity holds within 1 VND tolerance |
+
+### New Endpoints
+
+**`POST /api/push-bctc-table`** — receives structured rows from pdf-extractor.
+- Handler: `src/interface/mcp/routes/pushBctcTableHandler.ts`
+- Idempotent: DELETE+INSERT per report_id; UPSERT balance_check.
+- UUID-validates report_id before any DB write.
+- Parameterized SQL only (no string interpolation).
+
+**`GET /api/bctc-inspect/table/{doc_id}`** — returns stored table rows + balance check.
+- Handler: `handleBctcInspectTable()` in `bctcInspectHandler.ts`
+- Returns `{has_table: false, rows: []}` with HTTP 200 when no rows stored (not 404).
+- UUID-validates doc_id.
+
+### HTML Inspector (BT-3i-B, commit `d639a478`)
+
+`src/interface/bctc-inspector.html` updated with:
+- `#table-section` div between `.figures-section` and `.ocr-section`.
+- `renderTable(docId)` JS function: fetches `/api/bctc-inspect/table/{doc_id}`, renders HTML `<table>` with Code|Label|Current|Prior columns.
+- Summary rows (is_summary_row=true) displayed bold.
+- Header rows (code=null) displayed italic with colspan.
+- Balance badge: green "BALANCE PASS" or red "BALANCE FAIL" with delta.
+- "No structured table yet — re-extract pending (BT-4b)" shown for legacy docs.
+- Called automatically on document selection after renderOcr().

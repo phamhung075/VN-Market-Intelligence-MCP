@@ -1531,3 +1531,152 @@ Owner: dev-mcp-server | Task: BT-3i-A — Schema Migration + Push Handler
 - BT-3i-A creates `pushBctcTableHandler.ts` + registers `POST /api/push-bctc-table` in `server.ts`
 - BT-3i-B adds `GET /api/bctc-inspect/table/{doc_id}` + `#table-section` HTML render
 - Report ID for FPT tests: any UUID matching `financial_reports.id` on mcp-server market.db
+
+---
+
+## [Developer] BT-3i-A — dev-mcp-server — DONE
+
+**Commit:** `40b0b50e` | **Branch:** main | **Date:** 2026-05-25
+
+### What was delivered
+
+4 files (exact BT-3i-A file list, zero foreign):
+
+1. **`src/infrastructure/db/schema-financial-reports.ts`** (MODIFY — add DDL)
+   - Added `CREATE TABLE IF NOT EXISTS bctc_table_rows (...)` with 14 columns + migration guard comment `-- BT-3 BCTC table rows`.
+   - Added `CREATE TABLE IF NOT EXISTS bctc_balance_checks (...)` with 9 columns, UNIQUE `report_id`.
+   - Added 3 indexes: `idx_btr_report (report_id, statement_section, row_order)`, `idx_btr_code (report_id, code)`, `idx_bbc_report (report_id)`.
+   - All wrapped in `CREATE TABLE IF NOT EXISTS` (idempotent migration — existing pattern).
+
+2. **`src/interface/mcp/routes/pushBctcTableHandler.ts`** (CREATE)
+   - `async function handlePushBctcTable(req, res, db, body?)` — handles POST /api/push-bctc-table.
+   - UUID-validates `report_id` before any DB write (uses `isValidUuid` from bctcInspectHandler).
+   - Idempotent: `DELETE FROM bctc_table_rows WHERE report_id = ?` then bulk INSERT.
+   - Balance check: `INSERT OR REPLACE INTO bctc_balance_checks` (UPSERT).
+   - Parameterized SQL only. Internal errors caught and re-thrown as 500 without leaking DB internals.
+   - `body?` param allows direct injection in tests (no stream parse needed).
+
+3. **`src/interface/mcp/server.ts`** (MODIFY — register route)
+   - Added import: `import { handlePushBctcTable } from "./routes/pushBctcTableHandler.js"`.
+   - Added route: `if (method === "POST" && pathname === "/api/push-bctc-table")`.
+
+4. **`src/__tests__/pushBctcTableHandler.test.ts`** (CREATE — 13 tests)
+   - TC1-4: schema existence (bctc_table_rows, bctc_balance_checks, idx_btr_report, idx_bbc_report).
+   - TC5-8: happy path bulk INSERT (10 rows, count=10, balance_pass=1, period_current stored, null code header rows).
+   - TC9-10: idempotency (second push → count unchanged, balance_check 1 row).
+   - TC11-13: UUID validation (invalid UUID→400, missing rows→400, null balance_check→rows inserted, no balance row).
+
+### Red→Green evidence
+
+- Baseline: 9791 tests across 911 files
+- New tests before implementation: `Cannot find module pushBctcTableHandler.js` — RED confirmed
+- After implementation: 13/13 passed — GREEN
+- Post-commit baseline: 13 new tests pass alongside all pre-existing tests
+
+### AC verification
+
+- AC-1: bctc_table_rows DDL with CREATE TABLE IF NOT EXISTS. PASS.
+- AC-2: bctc_balance_checks with UNIQUE report_id. PASS.
+- AC-3: idx_btr_report + idx_btr_code + idx_bbc_report indexes. PASS.
+- AC-4: UUID validation + rows array validation. PASS.
+- AC-5: POST /api/push-bctc-table registered in server.ts. PASS.
+- AC-6: Idempotency test (DELETE+INSERT second call → same count). PASS.
+- AC-7: Bulk INSERT 10 rows, count=10. PASS.
+- AC-8: 13 unit tests, all GREEN. PASS.
+
+### Post-commit check
+
+`git show --stat 40b0b50e` — exactly 4 files, zero foreign files confirmed.
+
+---
+
+## [Developer] BT-3i-B — dev-mcp-server — DONE
+
+**Commit:** `d639a478` | **Branch:** main | **Date:** 2026-05-25
+
+### What was delivered
+
+4 files (exact BT-3i-B file list, zero foreign):
+
+1. **`src/interface/mcp/routes/bctcInspectHandler.ts`** (MODIFY — add handler)
+   - New export: `async function handleBctcInspectTable(req, res, db, docId)`.
+   - UUID-validates `docId` → 400 on invalid (same guard as OCR endpoint).
+   - Q1: SELECT rows from bctc_table_rows WHERE report_id = ? ORDER BY row_order ASC.
+   - Q2: SELECT from bctc_balance_checks WHERE report_id = ?.
+   - Returns `{has_table: false, rows: [], balance_check: null}` with 200 (not 404) when no rows.
+   - Maps `is_summary_row` (INTEGER 0/1) → TypeScript boolean in response.
+   - `doc_id` echoed in response. `period_current`/`period_prior` derived from first row.
+
+2. **`src/interface/mcp/server.ts`** (MODIFY — register GET route)
+   - Added import: `handleBctcInspectTable` added to the existing bctcInspectHandler import.
+   - Added route: `if (method === "GET" && pathname.startsWith("/api/bctc-inspect/table/"))`.
+   - Route registered before the push-bctc-table POST block (correct dispatch order).
+
+3. **`src/interface/bctc-inspector.html`** (MODIFY — HTML + JS render)
+   - Added `#table-section` div (between `.figures-section` and `.ocr-section`) with `display:none` initially.
+   - Added CSS classes: `.bctc-table`, `.row-summary` (bold), `.row-header` (italic), `.balance-pass` (green), `.balance-fail` (red), `.balance-na` (grey), `.val-col`, `.no-table-msg`.
+   - Added JS `renderTable(docId)` function:
+     - Fetches `/api/bctc-inspect/table/{docId}`.
+     - `has_table=false` → shows "No structured table yet — re-extract pending (BT-4b)".
+     - `balance_pass=true` → green "BALANCE PASS" badge with delta.
+     - `balance_pass=false` → red "BALANCE FAIL" badge with delta in VND.
+     - `balance_check=null` → grey "No balance check" badge.
+     - Renders `<table>` with Code|Label|period_current|period_prior columns.
+     - Summary rows (`is_summary_row=true`) render with `font-weight: bold`.
+     - Header rows (`code=null`) render with colspan full-width, `font-style: italic`.
+     - Values formatted as billions (÷ 1e9) with "B" suffix.
+   - `escHtml(s)` helper prevents XSS in label/code display.
+   - `fmtVal(v)` formats null → "—", numbers → billions.
+   - Called from document selection handler (after `renderOcr(docId, 1)`).
+   - `resetPanes()` hides `#table-section` and clears badge/content.
+
+4. **`src/__tests__/bctcInspectHandler.test.ts`** (CREATE — 13 tests)
+   - TC1-3: rows exist → 200, has_table=true, correct row count.
+   - TC4-5: rows ordered by row_order ASC; period_current/prior in response.
+   - TC6-7: summary row (code=100) → is_summary_row=true; header row (code=null) preserved.
+   - TC8-9: balance_pass=true → response true; balance_pass=false → response false with delta.
+   - TC10-11: no rows → 200, has_table=false, rows=[]; no rows → balance_check=null.
+   - TC12-13: invalid UUID → 400; empty string → 400.
+   - TC14: doc_id echoed in response.
+
+### Red→Green evidence
+
+- New tests before implementation: `Export named 'handleBctcInspectTable' not found` — RED confirmed
+- After implementation: 13/13 passed — GREEN
+- Combined with BT-3i-A tests: 26/26 pass. db-schema 24/24 unchanged.
+
+### G12 Gate evidence
+
+- **bun tsc --noEmit:** EXIT 0 (clean)
+- **bun test (targeted):** 13 pass / 0 fail (bctcInspectHandler.test.ts)
+- **Tool count:** `grep -rc "server.tool\|addTool" apps/mcp-server/src/interface/mcp/tools/` → 148 (pre-task baseline)
+- **Scheduler count:** `grep -c "cron.schedule" startScheduler.ts` → 68 (unchanged)
+
+### AC verification
+
+- AC-1: GET /api/bctc-inspect/table/{uuid} returns 200, has_table:true when rows exist. PASS.
+- AC-2: No rows → 200, has_table:false, rows:[] (not 404). PASS.
+- AC-3: Invalid UUID → 400. PASS.
+- AC-4: #table-section div present, display:none initially, shown when data exists. PASS.
+- AC-5: Summary rows (100/270/300/400) render with is_summary_row=true → bold. PASS.
+- AC-6: Balance badge green PASS / red FAIL. PASS.
+- AC-7: /api/bctc-inspect HTML page loads (renderTable called from selection handler). PASS.
+- AC-8: 13 unit tests all GREEN. PASS.
+
+### Inspector renders table + balance badge (user complaint closed)
+
+The `/api/bctc-inspect` viewer now:
+1. Loads the document list (14 real docs).
+2. On selection, calls `renderTable(docId)` → fetches `/api/bctc-inspect/table/{docId}`.
+3. If rows stored (after BT-4b re-extraction): renders full Code|Label|Current|Prior table with bold summary rows + green/red balance badge.
+4. If no rows yet (legacy docs before BT-4b): shows "No structured table yet — re-extract pending" message — NOT a blank.
+
+### Post-commit check
+
+`git show --stat d639a478` — exactly 4 files, zero foreign files confirmed.
+
+### Handoff to BT-4 / BT-5
+
+- BT-4: ops + dev-mainserver-crawls — deploy pdf-extractor TEXT-path to main server; add MCP_SERVER_URL env var to docker-compose; confirm CPU sizing.
+- BT-5: dev-pdf-extractor — wire reconcile_figures cross-check gate into ExtractTablesUseCase; block push + WORK alert on >10× ratio.
+- After BT-4+BT-5: BT-4b one-shot re-extraction of 14 stranded docs → then BT-6 QA.

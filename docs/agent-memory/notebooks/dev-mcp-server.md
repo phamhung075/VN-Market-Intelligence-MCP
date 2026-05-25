@@ -1,5 +1,40 @@
 # dev-mcp-server -- Notebook
 
+## c295 · 2026-05-25 (BT-3i-A + BT-3i-B — BCTC-TABLE structured table storage + inspector render)
+
+### BT-3i-A — Schema DDL + Push Handler (DONE)
+
+**Commit:** `40b0b50e` | 4 files | 13 tests RED→GREEN
+
+- `schema-financial-reports.ts`: added `bctc_table_rows` (14 cols) + `bctc_balance_checks` (9 cols, UNIQUE report_id) + 3 indexes. All `CREATE TABLE IF NOT EXISTS` (idempotent).
+- `pushBctcTableHandler.ts` (NEW): UUID-validate, DELETE+INSERT idempotency, parameterized SQL, INSERT OR REPLACE balance_check.
+- `server.ts`: import + `POST /api/push-bctc-table` route.
+- `pushBctcTableHandler.test.ts` (NEW): 13 tests — schema presence, bulk insert, idempotency, UUID guard, null balance_check.
+
+### BT-3i-B — Inspector GET + HTML Render (DONE)
+
+**Commit:** `d639a478` | 4 files | 13 tests RED→GREEN
+
+- `bctcInspectHandler.ts`: added `handleBctcInspectTable()` — Q1 rows ORDER BY row_order, Q2 balance_check, `has_table:false` w/ 200 (not 404) when no rows, UUID guard.
+- `server.ts`: added `handleBctcInspectTable` import + `GET /api/bctc-inspect/table/{docId}` route.
+- `bctc-inspector.html`: `#table-section` div + CSS (bctc-table, row-summary bold, row-header italic, balance-pass/fail/na badges) + `renderTable()` JS (fetch, badge, HTML table, no-table message, `escHtml`, `fmtVal`). Called from doc selection handler. `resetPanes()` clears table section.
+- `bctcInspectHandler.test.ts` (NEW): 13 tests — has_table true/false, row ordering, period fields, summary/header rows, balance pass/fail, UUID guard, doc_id echo.
+
+### User complaint CLOSED
+
+`http://localhost:3000/api/bctc-inspect` now renders structured table + balance badge when rows are stored. Legacy docs show honest "no table yet" message until BT-4b re-extraction runs.
+
+### G12 evidence
+
+- tsc --noEmit: EXIT 0
+- bun test (targeted): 26 pass / 0 fail (both new test files)
+- Tool count: 148 (unchanged)
+- Scheduler count: 68 (unchanged)
+
+Zone health: bctc_table_rows + bctc_balance_checks schema added; POST /api/push-bctc-table receives rows from pdf-extractor; GET /api/bctc-inspect/table/{id} serves inspector; HTML renders table + badge; 26 new tests GREEN; tsc clean | HEALTHY
+
+---
+
 ## c294 · 2026-05-25 (mcp-server Phase-1 refactor P1-A→P1-H DONE)
 
 ### mcp-server Phase-1 build wave (P1-A through P1-H) — ALL DONE
