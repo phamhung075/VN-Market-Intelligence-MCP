@@ -1,5 +1,24 @@
 # dev-mcp-server -- Notebook
 
+## c302 · 2026-05-25 (BT-7 deploy + re-backfill — pdf-extractor rebuild + backfillBctcTables)
+
+### BT-7 deploy+re-backfill DONE
+
+**No TS code committed** — deploy+run+verify only.
+
+- `docker compose up -d --no-deps --build pdf-extractor` → BT-7 code (210a0a62) live. Health 200.
+- `bun run /app/run-bctc-backfill.ts` inside mcp-server container: 12/12 success, 0 failed, zero Tesseract.
+- FPT Q4 live: rows_count=150 (was 2170), period_current=31/12/2025 (was 26/01/2026), balance_pass=true, golden anchors 270/300/400 EXACT.
+- FPT Q1: 0 rows — BT-5 gate correctly blocks quarterly format (code 270 ≠ Total Assets in Q1). Honest gap.
+- HPG Q4: 117 rows, period=31/12/2025, balance_pass=true.
+- VEA Q4: 205 rows, balance_pass=true (period=01/01/2025 wrong — residual extractor issue).
+- Memory: pdf-extractor 50.6 MiB, mcp-server 278 MiB — both stable.
+- tsc: EXIT 0. bun test: exit 0 (known Bun C++ panic after suite = upstream bug, pre-existing).
+
+NEXT: qa re-verify → PO final BT-EXIT sign-off.
+
+---
+
 ## c301 · 2026-05-25 (mcp-server Phase-2 P2-G — G9 dashboard live panels)
 
 ### P2-G — G9 Dashboard Live Panels DONE

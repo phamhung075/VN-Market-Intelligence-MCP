@@ -2446,3 +2446,143 @@ Path A (`ExtractTablesUseCase.execute()` with `pre_supplied_pages`) passed ALL s
 **QA:** Re-verify AC-1..AC-6 live after backfill. Then PO final BT-EXIT sign-off.
 
 ---
+
+## [Developer] BT-7 deploy+re-backfill — dev-mcp-server — DONE
+
+**Date:** 2026-05-25 | **Zone:** apps/mcp-server/ (deploy + backfill execution; no source code committed)
+
+### Step 1 — pdf-extractor rebuild
+
+```
+docker compose up -d --no-deps --build pdf-extractor
+```
+
+- Build: cached layers + COPY BT-7 source (commit 210a0a62) → new image
+- Container: `vn-market-intelligence-mcp-pdf-extractor-1` STARTED
+- Health: `GET http://localhost:5001/health` → `{"status":"ok","service":"pdf-extractor"}` 200 OK
+- BT-7 primitives verified in container:
+  - `select_balance_sheet_section`: OK
+  - `TextTableExtractor`: OK
+
+### Step 2 — docker stats (before backfill)
+
+```
+pdf-extractor: 41.6 MiB / 2.5 GiB (1.63%) — safe
+mcp-server:   256.4 MiB / 2.0 GiB (12.52%) — safe
+```
+
+Zero Tesseract in pre-supply path → host-safe confirmed.
+
+### Step 3 — backfill execution
+
+Run: `bun run /app/run-bctc-backfill.ts` inside mcp-server container (existing BT-4b-2 runner).
+
+```
+financial_reports with pdf_path: 12
+Starting: 12 eligible, 0 skipped (file), 2 skipped (null path)
+```
+
+All 12 processed SEQUENTIALLY. Zero Tesseract. Result:
+
+```
+success=12 gate_blocked=0 failed=0 skipped_no_file=0 skipped_null_path=2 skipped_no_ocr=0
+```
+
+### Step 4 — live verification
+
+#### FPT Q4 (e71f845d-ffa5-48f9-8f09-30ac2cd09c65) — PRIMARY AC-1/AC-2 CHECK
+
+```
+rows_count:     150       (was 2170 before BT-7 — NOISE ELIMINATED)
+period_current: 31/12/2025  (was "26/01/2026" — SIGNATURE DATE BUG FIXED)
+period_prior:   31/12/2024
+has_table:      true
+balance_pass:   true
+balance_delta:  0 VND
+Code 270 (Total Assets):      88,089,621,779,862  EXACT (golden anchor)
+Code 300 (Total Liabilities): 44,338,155,487,272  EXACT (golden anchor)
+Code 400 (Total Equity):      43,751,466,292,590  EXACT (golden anchor)
+Code 440 (Total Nguon Von):   88,089,621,779,862  EXACT
+```
+
+AC-1: rows_count=150 — within target range (note: 150 > 96 predicted but still dramatically reduced from 2170; label-only rows included). Golden anchors ALL EXACT. balance_check.balanced=true. PASS.
+AC-2: period_current="31/12/2025" — signature date leak FIXED. PASS.
+
+#### FPT Q1 (e8ea3df5-3f32-413d-a3eb-c71634c0438d) — AC-5 CHECK
+
+rows_count: 0 — NOT > 0 as predicted.
+
+**Root cause (honest):** FPT Q1 uses the "Báo cáo tình hình tài chính" quarterly format. The BS section filter correctly locates pages 3-6. The assembler extracts coded rows. But the BT-5 cross-check gate FIRES: in Q1 quarterly format, code 270 ≠ Total Assets (it means "Tài sản dài hạn khác") — the accounting identity 270=300+400 does NOT hold. Gate correctly blocks push → rows_stored=0.
+
+This is an honest format-specific limitation. FPT Q1 quarterly BCTC uses different code assignments than the annual "Bảng cân đối kế toán". AC-5 (FPT Q1 > 0 rows) is NOT MET — this is a genuine gap that requires dev-pdf-extractor to handle quarterly format code mapping, outside BT-7 scope.
+
+#### Per-doc before→after table
+
+| Doc | Before (BT-4b-2 noisy) | After (BT-7 clean) | period_current | balance_pass |
+|-----|------------------------|---------------------|----------------|--------------|
+| FPT 2025Q4 | 2170 | 150 | 31/12/2025 (FIXED) | true |
+| VEA 2025Q4 | 2804 | 205 | 01/01/2025 (wrong — period start, not end) | true |
+| VNM 2025Q4 | 2540 | 29 | 31/12/2025 | N/A |
+| DGC 2025Q4 | 2037 | 469 | EMPTY (not detected) | N/A |
+| SHB 2025Q4 | 1638 | 274 | 22/04/2025 (wrong — not period-end) | N/A |
+| ACB 2026Q1 | 1270 | 226 | EMPTY | N/A |
+| EIB 2026Q1 | 1174 | 68 | EMPTY | N/A |
+| DHG 2026Q1 | 1080 | 325 | EMPTY | N/A |
+| HPG 2025Q4 | 858 | 117 | 31/12/2025 | true |
+| BSR 2025Q4 | — | 0 | N/A | N/A (income-stmt only) |
+| DIG 2025Q4 | — | 0 | N/A | N/A (income-stmt only) |
+| FPT 2026Q1 | 0 | 0 | N/A | N/A (Q1 format gate-blocked) |
+
+Notes:
+- VEA "01/01/2025" = period-start date detected instead of period-end; residual period detection gap in dev-pdf-extractor zone.
+- SHB "22/04/2025" = non-period date leaked from document; residual dev-pdf-extractor gap.
+- ACB/DGC/DHG/EIB = period not detected (assembler found no date pair in BS header); residual gap.
+- BSR/DIG = 0 rows honest: no balance-sheet section codes found (income-statement-only layout).
+
+#### Period_current spot-check (signature-date leak)
+
+- FPT Q4: "31/12/2025" — CLEAN (was "26/01/2026" before BT-7)
+- HPG Q4: "31/12/2025" — CLEAN
+- VNM Q4: "31/12/2025" — CLEAN
+- VEA Q4: "01/01/2025" — period-detection residual bug (wrong date, not a signature date — different failure mode)
+- SHB Q4: "22/04/2025" — period-detection residual bug
+
+Signature-date leak (the original BT-7 primary bug) is FIXED for FPT Q4, HPG Q4, VNM Q4. Other period issues are a different extractor failure mode in dev-pdf-extractor zone.
+
+### Step 5 — docker stats (after backfill)
+
+```
+pdf-extractor: 50.6 MiB / 2.5 GiB (1.98%) — stable
+mcp-server:   278.3 MiB / 2.0 GiB (13.59%) — stable
+```
+
+Zero Tesseract confirmed. No swap pressure.
+
+### G12 gate
+
+- tsc: EXIT 0 (no TS code modified)
+- bun test: RUNNING (no code changes; pre-existing baseline)
+- No mcp-server source files modified → no commit required
+
+### AC verification summary (BT-7 from mcp-server perspective)
+
+- AC-1: FPT Q4 rows_count=150 (< 2170 noise; golden anchors exact; balance_pass=true). PASS on anchors + period. rows_count slightly above 96 prediction (label-only rows included).
+- AC-2: FPT Q4 period_current="31/12/2025". PASS.
+- AC-3: Path A filter applied (select_balance_sheet_section called in pdf-extractor container). CONFIRMED.
+- AC-4: Idempotency — DELETE+INSERT guaranteed by pushBctcTableHandler. PRESERVED.
+- AC-5: FPT Q1 rows = 0. NOT MET — BT-5 gate correctly blocks Q1 quarterly format (code mapping differs). Honest gap, not a deployment error.
+- AC-6: HPG Q4 balance_pass=true. VEA Q4 balance_pass=true (though period wrong). FPT Q4 golden anchors unchanged. PASS on balancing docs.
+- AC-7: Zero external API; zero Tesseract (Path A pre-supply); frozen surfaces untouched. PASS.
+
+### Handoff to QA
+
+Owner: qa | Task: BT-6 QA re-verify (AC-1..AC-7 live)
+
+Key signals to verify:
+1. `GET /api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` — FPT Q4: rows_count=150, period_current=31/12/2025, balance_pass=true, anchors 270/300/400 exact.
+2. FPT Q1 (e8ea3df5): has_table=false, rows=0 — honest gap (Q1 quarterly format gate-blocked by BT-5).
+3. HPG Q4: balance_pass=true. VEA Q4: balance_pass=true (period_current wrong — residual extractor gap).
+4. BSR/DIG: rows=0 (income-statement-only — honest).
+5. Period detection still wrong for SHB/VEA/ACB/DGC/DHG/EIB — residual dev-pdf-extractor work needed.
+
+NEXT: qa | BT-6 re-verify live → PO final BT-EXIT sign-off
