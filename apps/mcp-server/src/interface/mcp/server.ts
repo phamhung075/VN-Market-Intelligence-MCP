@@ -52,6 +52,7 @@ import {
   handleBctcInspectDocs,
   handleBctcInspectPdf,
   handleBctcInspectOcr,
+  handleBctcInspectTable,
 } from "./routes/bctcInspectHandler.js";
 import { handlePushBctcTable } from "./routes/pushBctcTableHandler.js";
 import { backfillBctcPdfPaths } from "../../application/usecases/backfillBctcPdfPaths.js";
@@ -359,6 +360,12 @@ export async function createBunServer(
     if (method === "GET" && pathname.startsWith("/api/bctc-inspect/ocr/")) {
       const docId = pathname.slice("/api/bctc-inspect/ocr/".length);
       handleBctcInspectOcr(req, res, db, docId);
+      return;
+    }
+    // BT-3i-B: Get structured table rows for inspector render
+    if (method === "GET" && pathname.startsWith("/api/bctc-inspect/table/")) {
+      const docId = pathname.slice("/api/bctc-inspect/table/".length);
+      await handleBctcInspectTable(req, res, db, docId);
       return;
     }
     // BT-3i-A: Push structured table rows from pdf-extractor

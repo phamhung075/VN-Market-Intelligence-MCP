@@ -522,6 +522,130 @@ export function handleBctcInspectOcr(
   }
 }
 
+// ─── BT-3i-B: Structured table GET endpoint ──────────────────────────────────
+
+interface BctcTableRowDbRow {
+  page_number: number;
+  row_order: number;
+  code: string | null;
+  label: string;
+  period_current: string;
+  value_current: number | null;
+  period_prior: string | null;
+  value_prior: number | null;
+  unit: string;
+  is_summary_row: number;
+}
+
+interface BctcBalanceCheckDbRow {
+  total_assets: number | null;
+  total_liabilities: number | null;
+  total_equity: number | null;
+  balance_delta: number | null;
+  balance_pass: number;
+  statement_section: string;
+}
+
+/**
+ * handleBctcInspectTable — GET /api/bctc-inspect/table/{doc_id}
+ *
+ * Returns structured table rows + balance check for a given doc_id (report_id).
+ * When no rows stored: returns {has_table: false} with HTTP 200 (not 404).
+ * UUID-validates doc_id before any DB access (same guard as OCR endpoint).
+ *
+ * Response shape matches the BctcTableResponse interface defined by the architect.
+ */
+export async function handleBctcInspectTable(
+  _req: IncomingMessage,
+  res: ServerResponse,
+  db: Database,
+  docId: string,
+): Promise<void> {
+  // UUID validation — guard before any DB access
+  if (!isValidUuid(docId)) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid_doc_id", doc_id: docId }));
+    return;
+  }
+
+  try {
+    // Q1: fetch rows ordered by row_order
+    const rows = db
+      .prepare<BctcTableRowDbRow, [string]>(`
+        SELECT page_number, row_order, code, label,
+               period_current, value_current, period_prior, value_prior,
+               unit, is_summary_row
+        FROM bctc_table_rows
+        WHERE report_id = ?
+        ORDER BY row_order ASC
+      `)
+      .all(docId);
+
+    // Q2: fetch balance check (single row or null)
+    const balanceRow = db
+      .prepare<BctcBalanceCheckDbRow, [string]>(`
+        SELECT total_assets, total_liabilities, total_equity,
+               balance_delta, balance_pass, statement_section
+        FROM bctc_balance_checks
+        WHERE report_id = ?
+      `)
+      .get(docId);
+
+    const hasTable = rows.length > 0;
+
+    // Derive period columns from first row (all rows share the same periods)
+    const firstRow = rows[0];
+    const periodCurrent = firstRow?.period_current ?? "";
+    const periodPrior = firstRow?.period_prior ?? null;
+    const statementSection = balanceRow?.statement_section ?? "balance_sheet";
+
+    // Build balance_check payload
+    const balanceCheck = balanceRow
+      ? {
+          total_assets: balanceRow.total_assets,
+          total_liabilities: balanceRow.total_liabilities,
+          total_equity: balanceRow.total_equity,
+          balance_delta: balanceRow.balance_delta,
+          balance_pass: balanceRow.balance_pass === 1,
+        }
+      : null;
+
+    // Map DB rows to response shape
+    const mappedRows = rows.map((r) => ({
+      page_number: r.page_number,
+      row_order: r.row_order,
+      code: r.code ?? null,
+      label: r.label,
+      value_current: r.value_current ?? null,
+      value_prior: r.value_prior ?? null,
+      unit: r.unit,
+      is_summary_row: r.is_summary_row === 1,
+    }));
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        doc_id: docId,
+        report_id: docId,
+        statement_section: statementSection,
+        period_current: periodCurrent,
+        period_prior: periodPrior,
+        rows: mappedRows,
+        balance_check: balanceCheck,
+        has_table: hasTable,
+      }),
+    );
+  } catch (err) {
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        error: "server_error",
+        detail: err instanceof Error ? err.message : String(err),
+      }),
+    );
+  }
+}
+
 // ─── Viewer HTML page ─────────────────────────────────────────────────────────
 
 export function handleBctcInspectPage(
