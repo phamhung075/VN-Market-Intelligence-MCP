@@ -1776,3 +1776,24 @@ response so the inspector can surface the gate-blocked state explicitly. Suggest
 - BT-4: ops + dev-mainserver-crawls — deploy (if not done in parallel)
 - BT-4b: one-shot re-extraction of 14 stranded docs (after BT-3+BT-3i+BT-5 all live)
 - BT-6: qa regression gate (after BT-4b)
+
+---
+
+## [Developer] BT-4 AC-2 — Infra-as-code: MCP_SERVER_URL explicit in docker-compose
+
+**Date:** 2026-05-25 | **Branch:** main | **Commit:** `7d4a447b`
+
+- **Files modified:** `docker-compose.yml:82` — added `- MCP_SERVER_URL=http://mcp-server:3000` to pdf-extractor `environment:` block (1 line insertion, matching existing 4-space list indent)
+- **Tests written:** NONE — zero runtime behaviour change; config.py already defaults to identical value
+- **Git commits:** `7d4a447b` chore(infra/pdf-extractor): BT-4 AC-2 make MCP_SERVER_URL explicit in docker-compose
+- **tsc status:** N/A (Python service, no TS)
+- **Container verification:**
+  - `docker compose up -d pdf-extractor` → recreated + Started in ~6s
+  - `docker compose exec pdf-extractor printenv MCP_SERVER_URL` → `http://mcp-server:3000` CONFIRMED
+  - `docker compose ps pdf-extractor` → STATUS `Up (healthy)`
+  - `curl http://mcp-server:3000/health` from pdf-extractor container → HTTP 200 CONFIRMED
+- **Docs updated:** NONE (infra-only, no knowledge file change)
+- **Graphify:** skipped (no docs impacted)
+- **AC-2 status:** DONE
+
+**NEXT:** BT-4b — one-shot re-extraction of the 14 stranded docs. Run SEQUENTIALLY after BT-3+BT-3i+BT-5 all confirmed live (they are). Trigger: dev-pdf-extractor creates `bctcBatchTableBackfillJob.ts`, ops executes. Host-safe: 14 sequential HTTP POSTs to pdf-extractor:5001 (no heavy model, no Mac risk). Do NOT run BT-4b in this cycle — it is a separate task.
