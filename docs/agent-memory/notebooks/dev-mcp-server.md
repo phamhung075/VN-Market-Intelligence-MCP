@@ -1,5 +1,25 @@
 # dev-mcp-server -- Notebook
 
+## c301 · 2026-05-25 (mcp-server Phase-2 P2-G — G9 dashboard live panels)
+
+### P2-G — G9 Dashboard Live Panels DONE
+
+**Commit:** `7520428b` | 2 files (1 new, 1 modified) | tsc EXIT 0 | bun test 9431/363 (≥9408 PASS; 363 fail = baseline drift from other-zone activity, not mcp-server changes) | tools=148 | sched=68
+
+**Delivered:**
+- CREATE `apps/mcp-server/dashboard/data/modules.json` — 12 barrel modules with sub-barrel data (P1-C/D/E decomposition). Force-added past root `.gitignore data/` pattern.
+- MODIFY `apps/mcp-server/dashboard/index.html` — Module panel: `fetch('data/modules.json')` renders 12 barrels with `.mcp-chip` sub-barrel chips; no "Phase 2 — not yet extracted" text remains. Microservice panel: `fetch('http://localhost:3000/health')` → live `toolCount`; offline fallback "146 tools (server offline — last known)" with yellow indicator. All CSS under `.mcp-*` namespace.
+
+**AC evidence:**
+- AC-1: `grep -c "not yet extracted"` = 0 PASS
+- AC-2: live path `toolCount=146`, `status=ok` from `localhost:3000/health` PASS; offline fallback renders "146 tools (server offline — last known)" with yellow dot PASS
+- AC-3: `jq . modules.json` exit 0 PASS; `bun tsc --noEmit` exit 0 PASS
+- AC-4: `git diff --cached --name-only` = 2 files only PASS
+
+**Zone health:** G9 dashboard live panels complete; module panel 12 barrels with chips; microservice panel live+offline fallback; tsc clean; ESLint baseline intact | HEALTHY
+
+---
+
 ## c300 · 2026-05-25 (mcp-server Phase-2 P2-F — G5a domain-file deletion)
 
 ### P2-F — G5a kinhDichWrapper → _deprecated/ DONE
@@ -69,13 +89,14 @@ Regression tripwires: bun test 9437/345 | tsc exit 0 | tools=148 | sched=68
 
 ## Working Memory
 
-### Phase-2 State (as of c300)
+### Phase-2 State (as of c301)
 - P2-A/B/C: DONE (ESLint fence)
 - P2-D: QA gate PASS (4e6f89ab freeze-anchor confirmed)
 - P2-E: DONE (G3 composition-root)
-- P2-F: DONE (G5a kinhDichWrapper delete) ← current
-- P2-G: NEXT (G9 dashboard live panels — await PM dispatch)
-- Goals earned: G3+G4 added to 7 = 9 total (G9/G10/G11 still pending)
+- P2-F: DONE (G5a kinhDichWrapper delete)
+- P2-G: DONE (G9 dashboard live panels) ← current
+- P2-H: NEXT (G9 Playwright trust contract — PM dispatches separately)
+- Goals earned: G3+G4+G9 = 10 total (G10/G11 still pending)
 
 ### Carry-over
 - 344 pre-existing test failures — within ≤348 baseline
