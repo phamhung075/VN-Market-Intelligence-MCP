@@ -1,28 +1,36 @@
-# Macro Indicators Service — Bun/TypeScript
+# Macro Indicators Service — Go multi-stage build
+# No CGO required: pure-Go SQLite via modernc.org/sqlite
 # Port 5004
 
-FROM oven/bun:1.3.13-alpine AS builder
-
-WORKDIR /app
-COPY package.json bun.lock* ./
-RUN NODE_TLS_REJECT_UNAUTHORIZED=0 bun install --frozen-lockfile
-
-COPY . .
-
-# ── Runtime ──
-FROM oven/bun:1.3.13-alpine
+# Stage 1: build
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-# Install Python + curl_cffi, beautifulsoup4, lxml for investing.com adapter
-RUN apk add --no-cache python3 py3-pip python3-dev gcc musl-dev libxml2-dev libxslt-dev && \
-    pip install --break-system-packages --no-cache-dir requests curl_cffi beautifulsoup4 lxml
+# Cache module downloads before copying source
+COPY go.mod go.sum ./
+RUN go mod download
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/src ./src
-COPY package.json tsconfig.json ./
+COPY cmd/ cmd/
+COPY pkg/ pkg/
+COPY api/ api/
+
+RUN CGO_ENABLED=0 GOOS=linux go build -o /out/server ./cmd/server/
+
+# Stage 2: minimal runtime
+FROM alpine:3.20
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+
+COPY --from=builder /out/server /app/server
+COPY api/ /app/api/
+
+RUN mkdir -p /app/data
 
 EXPOSE 5004
+
 ENV PORT=5004
 
-CMD ["bun", "run", "src/index.ts"]
+ENTRYPOINT ["/app/server"]

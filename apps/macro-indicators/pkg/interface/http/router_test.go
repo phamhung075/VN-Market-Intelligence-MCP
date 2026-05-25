@@ -56,8 +56,8 @@ func TestCarryTradeSignalRoute(t *testing.T) {
 	if !strings.Contains(string(body), "regime") {
 		t.Errorf("GET /carry-trade-signal: body missing 'regime' field: %s", body)
 	}
-	if !strings.Contains(string(body), "HOT_MONEY_INFLOW") {
-		t.Errorf("GET /carry-trade-signal: body missing 'HOT_MONEY_INFLOW': %s", body)
+	if !strings.Contains(string(body), "FII_OUTFLOW_RISK") {
+		t.Errorf("GET /carry-trade-signal: body missing 'FII_OUTFLOW_RISK': %s", body)
 	}
 }
 
@@ -81,8 +81,8 @@ func TestYieldSpreadSignalRoute(t *testing.T) {
 	if !strings.Contains(string(body), "label") {
 		t.Errorf("GET /yield-spread-signal: body missing 'label' field: %s", body)
 	}
-	if !strings.Contains(string(body), "VN_ATTRACTIVE") {
-		t.Errorf("GET /yield-spread-signal: body missing 'VN_ATTRACTIVE': %s", body)
+	if !strings.Contains(string(body), "CHEAP") {
+		t.Errorf("GET /yield-spread-signal: body missing 'CHEAP': %s", body)
 	}
 }
 
