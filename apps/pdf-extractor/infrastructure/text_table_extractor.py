@@ -75,11 +75,6 @@ _CODE_VALUE_COL_RE = re.compile(
     r"^\s*(\d{2,3})\s+(?:[-—\w\s]*?)(\d[\d.,]+(?:\.\d+)?|\(\d[\d.,]+\))\s*$"
 )
 
-# Regex: detect a pure BCTC code-only line (3-digit code alone on a line, possibly
-# followed only by optional note-number or whitespace). Used for block-column layout.
-# Examples: "100", "300", "310 ", "311"
-_PURE_CODE_LINE_RE = re.compile(r"^\s*(\d{2,3})\s*(?:\d{1,2})?\s*$")
-
 # Regex: BCTC label-code-value on same line with single spaces (FPT page 7 layout):
 #   "D. VỐN CHỦ SỞ HỮU 400 43.751.466.292.590 35.727.540.104.800"
 #   "TONG CỘNG NGUON VỐN (440=300+400) 440 88.089.621.779.862 71.999.995.678.620"
@@ -89,12 +84,6 @@ _PURE_CODE_LINE_RE = re.compile(r"^\s*(\d{2,3})\s*(?:\d{1,2})?\s*$")
 # Must end with a VN-format number to distinguish from pure label lines.
 _CODE_ROW_SINGLE_SPACE_RE = re.compile(
     r"^(.+?)\s+(\d{2,3})\s+(?:\d{1,2}\s+)?(\d[\d.,]+(?:\d[\d.,]+)*(?:\s+\d[\d.,]+)?)\s*$"
-)
-
-# Regex: detect a pure VN-format numeric value line (no code, no label).
-# Examples: "58.102.970.741.619", "44,338.155.487.272", "(586.166.744.274)"
-_PURE_VALUE_LINE_RE = re.compile(
-    r"^\s*\(?\d[\d.,]+\)?\s*$"
 )
 
 # Regex: period header — Vietnamese date format DD/MM/YYYY (or YYYY/MM/DD variation)
@@ -356,171 +345,9 @@ def _parse_value_cells(values_rest: str) -> List[str]:
     return tokens
 
 
-def _detect_block_column_layout(lines: List[str]) -> bool:
-    """
-    Detect if a page uses "block-column" OCR layout.
-
-    In this layout (common for FPT pages 4-6), labels, codes, and values
-    appear in separate sequential blocks rather than on the same line.
-    Detection heuristic: ≥5 consecutive pure-code-only lines (2-3 digit numbers
-    alone on a line) within the first 100 non-empty lines.
-    """
-    consecutive = 0
-    count = 0
-    for line in lines:
-        stripped = line.strip()
-        if not stripped:
-            continue
-        count += 1
-        if count > 150:
-            break
-        if _PURE_CODE_LINE_RE.match(stripped):
-            consecutive += 1
-            if consecutive >= 5:
-                return True
-        else:
-            consecutive = 0
-    return False
-
-
-def _extract_block_columns(
+def _parse_lines_to_rows(
     lines: List[str],
-) -> tuple[List[str], List[str], List[str]]:
-    """
-    From a block-column page, extract code list and value list(s) by scanning
-    each "region" of the page.
-
-    Strategy:
-    1. Scan for the code block: consecutive pure-code-only lines.
-    2. After the code block, scan for the value block: consecutive pure-numeric lines
-       (skipping "Thuyết minh" note numbers, dates, and header words).
-    3. Return (codes, values_current, values_prior) — lists of raw strings.
-
-    The code and value lists are matched positionally (zip).
-    """
-    codes: List[str] = []
-    values_current: List[str] = []
-    values_prior: List[str] = []
-
-    # State machine: "pre" | "codes" | "post_codes" | "values_current" | "values_prior"
-    state = "pre"
-    in_code_block = False
-    code_block_start = False
-    after_codes = False
-    hit_date_current = False
-    hit_date_prior = False
-
-    for line in lines:
-        stripped = line.strip()
-        if not stripped:
-            continue
-
-        lower = stripped.lower()
-
-        # Skip unit header lines
-        if any(kw in lower for kw in _UNIT_HEADER_VI_KEYWORDS):
-            continue
-
-        # Detect "Mã số" header — code block follows
-        if lower in ("mã số", "ma so"):
-            in_code_block = True
-            code_block_start = True
-            continue
-
-        # In code block: collect pure code numbers
-        if in_code_block:
-            m = _PURE_CODE_LINE_RE.match(stripped)
-            if m:
-                codes.append(m.group(1))
-                continue
-            # Non-code line ends the code block
-            in_code_block = False
-            after_codes = True
-
-        # After codes: look for "Thuyết minh" note block, then value blocks
-        if after_codes:
-            # Date line → mark value block start
-            if _DATE_RE.match(stripped) and not hit_date_current:
-                hit_date_current = True
-                continue
-            if _DATE_RE.match(stripped) and hit_date_current and not hit_date_prior:
-                hit_date_prior = True
-                continue
-
-            # Skip "Thuyết minh", "minh", "MAU SO", note numbers (1-2 digits alone)
-            if lower in ("thuyết", "thuyế", "minh", "thuyét"):
-                continue
-            if re.match(r"^\d{1,2}$", stripped):
-                continue
-            if stripped.startswith("MAU") or stripped.startswith("MẪU"):
-                continue
-            if "ngày 31 tháng" in lower or "tai ngay" in lower:
-                continue
-
-            # Value line
-            if _PURE_VALUE_LINE_RE.match(stripped):
-                if hit_date_prior:
-                    values_prior.append(stripped)
-                elif hit_date_current:
-                    values_current.append(stripped)
-                continue
-
-            # Fallback: not a recognized structure line, skip
-            continue
-
-    return codes, values_current, values_prior
-
-
-def _build_rows_from_block_columns(
     page_num: int,
-    codes: List[str],
-    values_current: List[str],
-    values_prior: List[str],
-    unit: str,
-    row_order_start: int,
-) -> tuple[List[Dict], int]:
-    """
-    Build structured row dicts by positional zip of codes and values.
-
-    Each code maps to values_current[i] and optionally values_prior[i].
-    Rows without a matching value get value_current=None.
-    """
-    rows: List[Dict] = []
-    row_order = row_order_start
-
-    max_rows = max(len(codes), len(values_current))
-
-    for i in range(max_rows):
-        code = codes[i] if i < len(codes) else None
-        if code is None:
-            row_order += 1
-            continue
-
-        val_curr_raw = values_current[i] if i < len(values_current) else None
-        val_prior_raw = values_prior[i] if i < len(values_prior) else None
-
-        value_current = _parse_value(val_curr_raw)
-        value_prior = _parse_value(val_prior_raw)
-        is_summary = 1 if code in _SUMMARY_CODES else 0
-
-        rows.append({
-            "page_number": page_num,
-            "row_order": row_order,
-            "code": code,
-            "label": "",           # label not available in separate-block layout
-            "value_current": value_current,
-            "value_prior": value_prior,
-            "unit": unit,
-            "is_summary_row": is_summary,
-        })
-        row_order += 1
-
-    return rows, row_order
-
-
-def _parse_page_lines(
-    page_num: int,
-    lines: List[str],
     unit: str,
     period_current: Optional[str],
     period_prior: Optional[str],
@@ -528,6 +355,15 @@ def _parse_page_lines(
 ) -> tuple[List[Dict], int]:
     """
     Parse text lines from one OCR page into structured row dicts.
+
+    Pure: no I/O, no Tesseract, no HTTP.
+    Used by BOTH the live TextTableExtractor.assemble() path
+    AND the pre-supplied-text backfill path.
+
+    Tightened else-branch junk filter: only emit a non-code line as a
+    header/separator row when it contains ≥3 consecutive alphabetic characters
+    (Vietnamese or ASCII). This kills address/number/noise lines (94 junk rows
+    on FPT) while preserving genuine section headers like "TÀI SẢN NGẮN HẠN".
 
     Returns (rows, next_row_order_start).
     """
@@ -604,9 +440,11 @@ def _parse_page_lines(
                 "is_summary_row": is_summary,
             })
         else:
-            # Header / separator row — no code
-            # Skip purely numeric lines and very short lines (likely OCR noise)
-            if stripped and not stripped.isdigit() and len(stripped) > 1:
+            # Header / separator row — no code.
+            # Tightened filter: only emit if stripped text contains ≥3 consecutive
+            # alphabetic chars (Vietnamese or ASCII). Kills numeric-only noise,
+            # company addresses, short OCR fragments, and date strings.
+            if stripped and len(stripped) > 3 and re.search(r"[A-Za-zÀ-ỹ]{3,}", stripped):
                 rows.append({
                     "page_number": page_num,
                     "row_order": row_order,
@@ -621,6 +459,30 @@ def _parse_page_lines(
         row_order += 1
 
     return rows, row_order
+
+
+def _parse_page_lines(
+    page_num: int,
+    lines: List[str],
+    unit: str,
+    period_current: Optional[str],
+    period_prior: Optional[str],
+    row_order_start: int,
+) -> tuple[List[Dict], int]:
+    """
+    Thin wrapper around _parse_lines_to_rows for backward-compat.
+
+    Preserves the positional-argument signature so existing callers and unit
+    tests that import _parse_page_lines directly continue to work without change.
+    """
+    return _parse_lines_to_rows(
+        lines=lines,
+        page_num=page_num,
+        unit=unit,
+        period_current=period_current,
+        period_prior=period_prior,
+        row_order_start=row_order_start,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -684,39 +546,28 @@ class TextTableExtractor:
                 unit = _detect_unit(line)
                 break
 
-        # Parse each page — auto-detect block-column vs inline layout per page
+        # Parse each page using the single canonical line-by-line parser.
+        # No layout dispatch — _parse_lines_to_rows() handles all FPT layouts
+        # (code-first, label-first, single-space, code-value-column) via the
+        # four-Layout _try_parse_code_row() function.
         for page in pages:
             page_num = page.get("page_number", 0)
             text = page.get("text", "")
             lines = text.splitlines()
 
-            if _detect_block_column_layout(lines):
-                # Block-column layout (FPT pages 4-6): codes and values in separate blocks.
-                # Reconstruct rows by positional zip of code list and value list.
-                codes, values_current, values_prior = _extract_block_columns(lines)
-                page_rows, global_row_order = _build_rows_from_block_columns(
-                    page_num=page_num,
-                    codes=codes,
-                    values_current=values_current,
-                    values_prior=values_prior,
-                    unit=unit,
-                    row_order_start=global_row_order,
-                )
-                logger.info(
-                    "TextTableExtractor: page %d block-column layout → "
-                    "%d codes, %d cur-values, %d prior-values → %d rows",
-                    page_num, len(codes), len(values_current), len(values_prior), len(page_rows),
-                )
-            else:
-                # Inline layout (FPT page 7, fixture texts): code+value on same line.
-                page_rows, global_row_order = _parse_page_lines(
-                    page_num=page_num,
-                    lines=lines,
-                    unit=unit,
-                    period_current=period_current,
-                    period_prior=period_prior,
-                    row_order_start=global_row_order,
-                )
+            page_rows, global_row_order = _parse_lines_to_rows(
+                lines=lines,
+                page_num=page_num,
+                unit=unit,
+                period_current=period_current,
+                period_prior=period_prior,
+                row_order_start=global_row_order,
+            )
+
+            logger.info(
+                "TextTableExtractor: page %d → %d rows",
+                page_num, len(page_rows),
+            )
 
             all_rows.extend(page_rows)
 

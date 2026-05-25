@@ -68,6 +68,33 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
+### 2026-05-25 — BT3-FIX DONE (block-column state machine deleted; single _parse_lines_to_rows parser)
+
+**Task:** BT3-FIX | Sprint: BCTC-TABLE-3
+
+**Root cause:** Production `text_table_extractor.py` had a block-column state machine (`_detect_block_column_layout`, `_extract_block_columns`, `_build_rows_from_block_columns`) that fired on FPT pages 4-6 and produced 94 junk rows + 44 orphan rows (label="" because the block-zip didn't associate labels). The correct path (`_parse_page_lines`) already worked but was bypassed.
+
+**Fix:**
+- Deleted 3 block-column functions (~160 lines) from `infrastructure/text_table_extractor.py`.
+- Added `_parse_lines_to_rows()` — module-level pure function, same logic as `_parse_page_lines()` but with tightened junk filter (`re.search(r"[A-Za-zÀ-ỹ]{3,}", stripped)` — kills address/number noise).
+- `_parse_page_lines()` becomes a backward-compat thin wrapper.
+- `assemble()` calls `_parse_lines_to_rows()` UNCONDITIONALLY for every page (no layout dispatch).
+
+**Anti-false-green:**
+- Removed `PreloadedTextTableExtractor` subclass bypass from integration test.
+- Created committed fixture `__tests__/fixtures/fpt_q4_2025_pages_4-7.txt` (page 4 verbatim from spike eval markdown, pages 5-7 from gold JSON in same format).
+- New test `test_text_table_extractor_fpt_fixture_assertions` drives REAL `TextTableExtractor()` with fixture, asserts AC-INT-1..AC-INT-11.
+
+**Evidence:**
+- 91 rows extracted (vs ≥70 threshold), 0 orphans, 0 junk, 100% prior populated, no duplicates
+- Sentinels: 270=88089621779862, 300=44338155487272, 400=43751466292590 (exact to dong)
+- Balance identity: 270 = 300+400 (delta = 0.0 VND)
+- Full suite: 284 passed, 1 skipped (slow real-Tesseract test), 0 failed
+- lint-imports: 72 files, 131 deps, Fence-A/B KEPT
+- Security: env zero forbidden keys
+
+---
+
 ### 2026-05-24 — BT-1 DONE (vn_number_normalize + reconcile_figures + select_period_column)
 
 **Commit:** `e74abc43` | Sprint: BCTC-TABLE

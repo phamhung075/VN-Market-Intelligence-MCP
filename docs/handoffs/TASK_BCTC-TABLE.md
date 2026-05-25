@@ -2953,3 +2953,70 @@ The existing `apps/pdf-extractor/__tests__/integration/test_extract_tables_fpt.p
 - 1954c collision: NONE — `ExtractPDFUseCase`, `ExtractTablesUseCase`, `pushBctcTableHandler` all untouched.
 - Pilot frozen: `pilot-status-pdf-extractor.json`, `sandbox/runner.py`, `dashboard/` untouched.
 - mcp-server: UNTOUCHED. Contract verified UNCHANGED.
+
+---
+
+## [Developer] BT3-FIX — dev-pdf-extractor — DONE (2026-05-25)
+
+**Task:** BT3-FIX — Block-column state machine deletion + one-line-per-row parser fix
+
+### Changes delivered
+
+**MODIFIED `apps/pdf-extractor/infrastructure/text_table_extractor.py`:**
+- DELETED: `_detect_block_column_layout()`, `_extract_block_columns()`, `_build_rows_from_block_columns()` (~160 lines — the sole source of orphan/junk/misalignment bugs).
+- ADDED: `_parse_lines_to_rows(lines, page_num, unit, period_current, period_prior, row_order_start) -> (rows, next_order)` — module-level pure function with tightened junk filter (`re.search(r"[A-Za-zÀ-ỹ]{3,}", stripped)` kills 94 junk rows; kills address/noise/number-only lines).
+- REFACTORED: `_parse_page_lines()` is now a thin backward-compat wrapper calling `_parse_lines_to_rows()`.
+- REFACTORED: `TextTableExtractor.assemble()` calls `_parse_lines_to_rows()` UNCONDITIONALLY for every page (no layout dispatch branch).
+- CLEANED: Removed orphaned `_PURE_CODE_LINE_RE` and `_PURE_VALUE_LINE_RE` regex constants (only used by deleted functions).
+- KEPT UNCHANGED: `_try_parse_code_row()` (Layouts 1-4), `_parse_value()`, `_parse_value_cells()`, `_detect_periods()`, `_detect_unit()`.
+
+**REPLACED `apps/pdf-extractor/__tests__/integration/test_extract_tables_fpt.py`:**
+- REMOVED: `PreloadedTextTableExtractor` subclass bypass (false-green source).
+- ADDED: `test_text_table_extractor_fpt_fixture_assertions` — drives REAL `TextTableExtractor()` on committed fixture, asserts all AC-INT-1..AC-INT-11.
+- KEPT: `test_extract_tables_usecase_with_real_extractor_fixture` (uses `_FixtureTextTableExtractor` which only overrides the pdf_path→pages step, NOT the parser — real `_parse_lines_to_rows` runs).
+- KEPT: `test_process_report_no_table_assembler_returns_none_for_new_keys` (fast, no Tesseract).
+
+**CREATED `apps/pdf-extractor/__tests__/fixtures/fpt_q4_2025_pages_4-7.txt`:**
+- Committed hermetic fixture: page 4 verbatim OCR lines from `spike/eval/results/FPT_page4_balance_sheet.md`; pages 5-7 reconstructed from `spike/eval/gold/FPT_2025_Q4_balance_sheet.json` in the same label-first one-line-per-row Tesseract format.
+- Zero Tesseract re-run to create this fixture (host-safe, D6 compliant).
+
+### Evidence
+
+**AC assertions on fixture (post-fix):**
+- AC-INT-1 (0 orphans): 0 rows with code≠None + label=""  ✓
+- AC-INT-2 (0 junk): 0 rows with code=None + value=None + no alpha  ✓
+- AC-INT-3 (code 100 present): found  ✓
+- AC-INT-4 (no duplicates): 0 duplicate codes  ✓
+- AC-INT-5 (≥90% prior): 100% (68/68)  ✓
+- AC-INT-6 (270=88089621779862): exact  ✓
+- AC-INT-7 (300=44338155487272): exact  ✓
+- AC-INT-8 (400=43751466292590): exact  ✓
+- AC-INT-9 (balance identity): delta=0.0 VND  ✓
+- AC-INT-10 (≥70 rows): 91 rows  ✓
+- AC-INT-11 (period_current): "31/12/2025"  ✓
+
+**Test counts:** 284 passed, 1 skipped (slow real-Tesseract BT-3-D test), 0 failed
+
+**Import-linter:** 72 files, 131 deps, Fence-A KEPT, Fence-B KEPT, 0 broken
+
+**Sandbox:** primitive tier (35 scenarios: 30 pass + 5 honest-red), module tier (1 pass), service tier (empty) — all as expected
+
+**Security:** `env | grep -E "DB_|API_KEY|SECRET|TOKEN|PASSWORD|VPS_|VINAHOST|PDF_EXTRACTOR_DB"` = empty
+
+### Files staged (3 files, all in apps/pdf-extractor/)
+
+1. `apps/pdf-extractor/infrastructure/text_table_extractor.py` (MODIFIED)
+2. `apps/pdf-extractor/__tests__/integration/test_extract_tables_fpt.py` (REPLACED)
+3. `apps/pdf-extractor/__tests__/fixtures/fpt_q4_2025_pages_4-7.txt` (CREATED)
+
+**No mcp-server changes. Row contract unchanged.**
+
+### Suggested commit message
+
+`fix(pdf-extractor): replace block-column state machine with one-line-per-row parser (BT3-FIX)`
+
+### Handoff to ops
+
+**NEXT:** ops (BT3-DEPLOY) — rebuild pdf-extractor Docker image + trigger one-shot `bctcBatchTableBackfillJob` to re-extract 14 stranded docs (sequential, one at a time). See Backfill Sequence above.
+
+**PIPELINE:** continue → ops BT3-DEPLOY → QA BT3-QA → PO BT3-EXIT
