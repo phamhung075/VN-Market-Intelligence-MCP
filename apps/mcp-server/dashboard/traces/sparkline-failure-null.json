@@ -1,0 +1,13 @@
+{
+  "scenario": "sparkline-failure-null",
+  "primitive": "generateSparkline",
+  "status": "pass",
+  "actual": null,
+  "expected": {
+    "error": true
+  },
+  "match": true,
+  "error": "generateSparkline: input must not be null/undefined",
+  "timestamp": "2026-05-25T10:27:55.727Z",
+  "durationMs": 0.12
+}

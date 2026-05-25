@@ -1,0 +1,14 @@
+{
+  "scenario": "signal-bus-golden-valid",
+  "primitive": "buildCrossValidateSignal",
+  "input": {
+    "direction": "bullish",
+    "confidence": 0.8,
+    "summary": "Sector rotation confirmed by volume"
+  },
+  "expected": {
+    "direction": "bullish",
+    "confidence": 0.8,
+    "summary": "Sector rotation confirmed by volume"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "scenario": "sparkline-golden-empty",
+  "primitive": "generateSparkline",
+  "status": "pass",
+  "actual": "—",
+  "expected": "—",
+  "match": true,
+  "error": null,
+  "timestamp": "2026-05-25T10:27:55.727Z",
+  "durationMs": 0
+}

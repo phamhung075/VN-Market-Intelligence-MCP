@@ -1,0 +1,9 @@
+{
+  "scenario": "sector-classifier-golden-known-ticker",
+  "primitive": "classifySectorMovement",
+  "input": {
+    "stockChangePct": 2.5,
+    "sectorAvgPct": 2.3
+  },
+  "expected": "sector_wide"
+}

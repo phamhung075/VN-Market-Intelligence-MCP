@@ -1,0 +1,19 @@
+{
+  "scenario": "signal-bus-golden-valid",
+  "primitive": "buildCrossValidateSignal",
+  "status": "pass",
+  "actual": {
+    "direction": "bullish",
+    "confidence": 0.8,
+    "summary": "Sector rotation confirmed by volume"
+  },
+  "expected": {
+    "direction": "bullish",
+    "confidence": 0.8,
+    "summary": "Sector rotation confirmed by volume"
+  },
+  "match": true,
+  "error": null,
+  "timestamp": "2026-05-25T10:27:55.730Z",
+  "durationMs": 0.05
+}

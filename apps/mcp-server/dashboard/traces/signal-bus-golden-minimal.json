@@ -1,0 +1,19 @@
+{
+  "scenario": "signal-bus-golden-minimal",
+  "primitive": "buildCrossValidateSignal",
+  "status": "pass",
+  "actual": {
+    "direction": "neutral",
+    "confidence": 0.5,
+    "summary": "No clear directional bias"
+  },
+  "expected": {
+    "direction": "neutral",
+    "confidence": 0.5,
+    "summary": "No clear directional bias"
+  },
+  "match": true,
+  "error": null,
+  "timestamp": "2026-05-25T10:27:55.730Z",
+  "durationMs": 1.49
+}

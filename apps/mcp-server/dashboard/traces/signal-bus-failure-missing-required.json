@@ -1,0 +1,13 @@
+{
+  "scenario": "signal-bus-failure-missing-required",
+  "primitive": "buildCrossValidateSignal",
+  "status": "pass",
+  "actual": null,
+  "expected": {
+    "error": true
+  },
+  "match": true,
+  "error": "buildCrossValidateSignal: direction, confidence, and summary are required",
+  "timestamp": "2026-05-25T10:27:55.728Z",
+  "durationMs": 0.06
+}

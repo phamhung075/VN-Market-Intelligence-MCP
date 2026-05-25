@@ -26,6 +26,10 @@ import { resolve, dirname, basename } from "path";
 
 // ── Domain imports (pure functions only — zero infrastructure) ────────────────
 import { generateSparkline } from "../domain/services/sparkline.js";
+// P1-H: signal-bus-helper primitive (createCrossValidateBuilder fluent API)
+import { createCrossValidateBuilder } from "../domain/signals/signalBuilders.js";
+// P1-H: sector-classifier primitive (classifyMovement pure function)
+import { classifyMovement } from "../domain/services/sectorPeers.js";
 
 import type { ScenarioInput, TraceOutput } from "./types.js";
 
@@ -51,6 +55,45 @@ const PRIMITIVES: Record<string, PrimitiveFn> = {
       throw new Error("generateSparkline: input.prices must be an array");
     }
     return generateSparkline(prices, width);
+  },
+
+  // P1-H: signal-bus-helper — build a CrossValidate signal envelope
+  // Input: { direction: "bullish"|"bearish"|"neutral", confidence: number, summary: string }
+  // Output: CrossValidateFindingData (pure data struct)
+  buildCrossValidateSignal: (input: PrimitiveInput): PrimitiveOutput => {
+    if (input === null || input === undefined) {
+      throw new Error("buildCrossValidateSignal: input must not be null/undefined");
+    }
+    const { direction, confidence, summary } = input as {
+      direction: "bullish" | "bearish" | "neutral";
+      confidence: number;
+      summary: string;
+    };
+    if (!direction || confidence === undefined || !summary) {
+      throw new Error("buildCrossValidateSignal: direction, confidence, and summary are required");
+    }
+    return createCrossValidateBuilder()
+      .setDirection(direction)
+      .setConfidence(confidence)
+      .setSummary(summary)
+      .build();
+  },
+
+  // P1-H: sector-classifier — classify stock movement vs sector average
+  // Input: { stockChangePct: number, sectorAvgPct: number | null }
+  // Output: "sector_wide" | "stock_specific" | "no_sector_data"
+  classifySectorMovement: (input: PrimitiveInput): PrimitiveOutput => {
+    if (input === null || input === undefined) {
+      throw new Error("classifySectorMovement: input must not be null/undefined");
+    }
+    const { stockChangePct, sectorAvgPct } = input as {
+      stockChangePct: number;
+      sectorAvgPct: number | null;
+    };
+    if (stockChangePct === undefined) {
+      throw new Error("classifySectorMovement: stockChangePct is required");
+    }
+    return classifyMovement(stockChangePct, sectorAvgPct ?? null);
   },
 };
 

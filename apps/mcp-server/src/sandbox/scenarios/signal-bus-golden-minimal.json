@@ -1,0 +1,14 @@
+{
+  "scenario": "signal-bus-golden-minimal",
+  "primitive": "buildCrossValidateSignal",
+  "input": {
+    "direction": "neutral",
+    "confidence": 0.5,
+    "summary": "No clear directional bias"
+  },
+  "expected": {
+    "direction": "neutral",
+    "confidence": 0.5,
+    "summary": "No clear directional bias"
+  }
+}

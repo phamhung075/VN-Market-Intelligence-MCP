@@ -1,0 +1,10 @@
+{
+  "scenario": "signal-bus-failure-missing-required",
+  "primitive": "buildCrossValidateSignal",
+  "input": {
+    "direction": "bullish"
+  },
+  "expected": {
+    "error": true
+  }
+}

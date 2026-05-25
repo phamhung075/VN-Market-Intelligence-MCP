@@ -1,0 +1,8 @@
+{
+  "scenario": "sector-classifier-failure-null-input",
+  "primitive": "classifySectorMovement",
+  "input": null,
+  "expected": {
+    "error": true
+  }
+}
