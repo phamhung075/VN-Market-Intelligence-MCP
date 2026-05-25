@@ -1,27 +1,29 @@
 # PO Notebook
 
-**Cycle:** dev-team Step-1 triage — BATCH=1 TASK (NEWS-INGEST-2). Reconciled TASKS.md + pipeline-state.json to ground truth.
-**Last update:** 2026-05-25T11:24Z
-**Status:** mcp-server Phase-1 host-side BUILD COMPLETE (P1-A→P1-H shipped SOLO). DEPLOY-DRIFT collapsed to ops rebuilds. WIP=0/2 dev lane.
+**Cycle:** BCTC-TABLE BT-0-PICK gate — recorded production pick, advanced chain to BT-2, reframed core gap from user finding.
+**Last update:** 2026-05-25T17:17Z
+**Status:** Phase-0 CLOSED. BT-1 + BT-0 + BT-0-PICK all DONE. NEXT = architect BT-2 blueprint.
 
 ---
 
-## 2026-05-25T11:24Z — dev-team Step-1 PO triage
+## 2026-05-25T17:17Z — BT-0-PICK + chain advance
 
-**BATCH = 1 TASK: NEWS-INGEST-2** (developer, `vps-scripts/fetch-vn-news.sh` since-cursor; general dev lane, NO WIP-cap consume, zone clean, fetch-vn-news.sh untouched since 2026-05-12). Reliability tier, top of PO order. Dispatched.
+**Trigger:** user inspected live `/api/bctc-inspect`, reported "data always only text, not table detect". Router confirmed (read `bctcInspectHandler.ts`): viewer reads ONLY `pdf_extracted_text` (raw OCR) + `financial_reports` (4 summary figures). NO structured code→value table storage exists anywhere in prod → inspector physically cannot show a detected table. User is CORRECT — this is the core production gap, not a parse bug.
 
-**Verified NOT dispatchable this tick (git ground truth):**
-- **mcp-server Phase-1 HOST-SIDE BUILD COMPLETE** — P1-A→P1-H ALL SHIPPED SOLO (`195ef1a3`→`a9212ad2`, handoff `bce7c559`, ops nb `ee1b77a4`). Zone CLEAN. RUN-SOLO host-side authorization (68de127d Gate-2b finding) was correct; dev-mcp-server delivered the full chain. Remaining P1-QA (live full-suite) + P1-EXIT = DOCKER-SESSION-ONLY.
-- **BCTC-TABLE** — BT-1 DONE (`e74abc43`); BT-0 IN-FLIGHT (`f6dd2e83` 09:09Z + uncommitted gold-set VNM/DHG/BSR + spike/eval/harness.py). Re-dispatch = concurrent-commit-race. Leave running.
-- **DEPLOY-DRIFT** — DRIFT-1 PATH RESOLVED to deploy-Go (Dockerfile `f85ad1d9` 08:35Z + `handlers_calendar.go` at HEAD) → ops rebuild only. DRIFT-2 = kinh-dich Go reboot at HEAD → ops redeploy only. Both routed to DASHBOARD ## ops DOCKER-SESSION-QUEUE. DRIFT-3 = architect-design (deferrable).
-- **NEWS-INGEST-2b** HELD — targets mcp-server zone; would muddy frozen Phase-1 host-side provenance before docker-session P1-QA. Dispatch after P1-QA.
+**BT-0-PICK DECISION (verified against eval results on disk, did NOT re-run):**
+- PICK = **TEXT path (Tesseract vie+eng + BT-1 primitives).** FPT page-4 100% (20/20 ±0.5%) @3.4s/page; full stitch p4-7 balances to the dong (Assets 88.09T = Liab 44.34T + Equity 43.75T); ≥95%±0.5% bar MET.
+- PP-StructureV3 IMAGE = DEFERRED optional self-hosted cross-check (0/6 VNM @45s/page; revisit ONLY for sub-bar p5 95.8%/p7 86.7% + low cell-F1 0.07-0.12). External-API VLM = OUT (privacy).
+- Decision note: `docs/po-decisions/2026-05-25-bctc-table-bt0-pick-text-path.md`.
 
-**MCP-GAP (flag to dispatcher):** PO this session had NO `mcp__claude_ai_gateway__call_tool` — probed get_macro_snapshot + get_market_hexagram → "No such tool" ×2 (honest per anti-hallucination rule). Could NOT (a) send pending WORK telegrams — news-fetch closure STILL PENDING since 2026-05-24; (b) live-probe macro/kinh-dich. Dispatcher must clear telegram debt + own docker-session routing.
+**Chain advanced** (TASKS.md + handoff + SPRINT_GOAL + durable memory):
+- BT-2 architect blueprint REFRAMED to close produce→store→render: (a) emit structured table + balance check; (b) NEW `bctc_table_rows` schema; (c) `/api/bctc-inspect` render contract + balance badge.
+- BT-3 produce+store (dev-pdf-extractor) → NEW **BT-3i** inspector render (dev-mcp-server, SI-2 boundary) → BT-4 host (CPU, main server) → NEW **BT-4b** one-shot re-extract 14 stranded docs (pre-QA) → BT-5 cross-check → BT-6 QA (wider gold-set + closes QA-on-BT1) → BT-EXIT.
+- Open Q1/Q2/Q3 RESOLVED with PO defaults (self-hosted only / no GPU for TEXT / ≥95%±0.5%).
 
-**Integrity:** edited only TASKS.md + pipeline-state.json + DASHBOARD.md + own notebook + own signal file. NO pilot-status touched. No docker triggered. No cowork/maintenance agents spawned.
+**Integrity:** edited only TASKS.md + TASK_BCTC-TABLE.md + SPRINT_GOAL.md + new po-decisions file + durable memory + this notebook. NO pilot-status touched. NO production code. No frozen pilot surfaces. No docker. No agents spawned.
 
 ## Carry-over
-- DOCKER SESSION QUEUE (one-at-a-time, 8GB): DRIFT-1 macro, DRIFT-2 kinh-dich, mcp-server P1-QA+rebuild, frontend rebuild (AWAITING-USER-G9). After mcp P1-QA passes live → PO flips P1-EXIT 12/12 terminal (closes 2026-05-22 rollout 11/11).
-- Signal backlog 719 files + runaway size-cap hook → claude-manager-helper/code-janitor (DASHBOARD ## ops row filed).
-- tnb chef-frozen 72h → cowork-team lane (downstream of macro/kinh-dich outage); left on disk.
-- frontend pilot: AWAITING-USER-G9 (Path-A verbal) + container rebuild. goalsEarned=4.
+- **NEXT = spawn architect for BT-2** (design-only blueprint; gates all integration). bctc-inspect render = SI-2 → route to dev-mcp-server at BT-3i.
+- Deferred: FPT p5/p7 sub-bar rows + low cell-F1 (IMAGE remedy); QA-on-BT1 (folded into BT-6); 14 stranded docs re-extract ONCE at BT-4b.
+- Prior-cycle carry (still open): DOCKER SESSION QUEUE (DRIFT-1 macro, DRIFT-2 kinh-dich, mcp P1-QA+rebuild, frontend rebuild AWAITING-USER-G9); signal backlog 719 files → janitor; tnb chef-frozen 72h → cowork lane.
+- MCP-GAP: this session had no `call_tool` gateway access (no telegram send). Dispatcher owns WORK-channel debt.

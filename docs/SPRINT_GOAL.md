@@ -1,61 +1,72 @@
-# Sprint KD-QREF-LANG Goal — 64-Quẻ Trading Reference EN/VI Language Switch
+# Sprint BCTC-TABLE — Correct Result-Table Extraction for BCTC Analysis
 
-**Status:** OPEN 2026-05-24T18:51Z (PO self-initiated from explicit user feature request, routed via main terminal). **Severity:** MEDIUM (product surface — i18n on a shipped reference panel; no incident). **Owner chain:** architect (KD-QREF-LANG-1 i18n design) → dev-kinh-dich (KD-QREF-LANG-2 implement) → qa (KD-QREF-LANG-3 verify) → PO (KD-QREF-LANG-EXIT sign-off). **Zone:** `apps/kinh-dich-service/` ONLY (single zone). **WIP:** sequential within the chain (fleet WIP=2 cap still applies).
+**Status:** OPEN 2026-05-24T21:24Z (PO from explicit user `/goal`: *"bctc can extract correct result table for analyze"*). **Phase-0 CLOSED 2026-05-25T17:17Z:** BT-1 parse fix shipped (`e74abc43`); BT-0 spike DONE (`f6dd2e83` + eval results on disk); **BT-0-PICK DONE — PICK = TEXT path (Tesseract vie+eng + BT-1 primitives), ≥95%±0.5% MET on FPT reference, balance check passes to the dong.** IMAGE path (PP-StructureV3) DEFERRED as optional self-hosted cross-check only. **NEXT = BT-2 architect blueprint.** Decision: `docs/po-decisions/2026-05-25-bctc-table-bt0-pick-text-path.md`. **Core gap reframed by user finding 2026-05-25:** `/api/bctc-inspect` shows only OCR text + 4 summary figures because production has NO structured table storage — fix = produce table → store NEW schema → render in inspector + balance badge. **Severity:** HIGH. **Owner chain:** Phase-0 SPIKE [DONE] → architect blueprint → dev-pdf-extractor (produce+store) + dev-mcp-server (inspector render, SI-2) + ops/dev-mainserver-crawls (hosting) → qa → PO. **Zone:** `apps/pdf-extractor/` (extraction+store) + `apps/mcp-server/` (inspector, SI-2 boundary); hosting = main-server infra. **WIP:** 2 fleet cap.
 
-> FOLLOW-ON #2 to KD-QREF (the bilingual EN-primary panel shipped `0b401124`, data regenerated `e9608167`). POST-PILOT enhancement on the SAME `.qref-*` panel. The kinh-dich Go-reboot SCALE pilot is DONE 12/12 (verdict=scale) and STAYS DONE + frozen; this does NOT reopen, alter, or touch any pilot goal, `decisionMatrix`, or `pilot-status-kinh-dich.json`.
+> Research is DONE: `docs/architecture-briefs/2026-05-24-bctc-table-extraction-research.md` (read in full by PO). This sprint converts the brief's two-track recommendation into a build, EVIDENCE-GATED by a Phase-0 spike on the 14-doc real gold-set. No new research.
 
 ---
 
 ## Vision
 
-The user (France-based, monitors the VN market) shipped the 64-Quẻ Trading Reference panel and now wants to read it in EITHER full English OR full Vietnamese, by their own choice. Today the panel is bilingual EN-primary (English prose + VN names/glyphs verbatim + bilingual trend labels). The user wants a real LANGUAGE SWITCH: a full EN view and a full VI view, toggled in the panel header, with their choice remembered across reloads. The Vietnamese view reuses the authoritative rich VN source (`que_convert/*.md`) — the original market-framed text — not a machine round-trip of the English.
+BCTC result tables (income statement + balance sheet) carry the figures every downstream analysis trusts — net revenue, gross/net profit, total assets, equity — across multiple columns (consolidated vs parent; current-quarter vs YTD vs prior-period; merged spanning headers). Today the pipeline reads **free text with a blind regex** that grabs the *first* numeric token after a Vietnamese label, with **no concept of which column** the number belongs to, and parses Vietnamese-formatted numbers through Python `float()` (which misreads `1.234.567,89`). The result is silently-wrong figures — proven by the decimal-shift bug (VNM `net_profit=0.000051`, DHG `rev=0.000009`).
+
+The user wants extraction that produces the **correct result table** for analysis, and explicitly asked for an **image-flow-vs-text-flow comparison** to measure it objectively. This sprint delivers: (1) the literal parse fix that immediately stops the decimal-shift class; (2) an evidence-based pick of a **self-hosted, column-aware table-structure extractor** (the comparison the user asked for, measured on real docs); (3) integration of the winner into the pdf-extractor pipeline with a confidence gate that would have caught the decimal-shift bug at write time. All on self-hosted infrastructure — financial PDFs never leave our infra.
 
 ## Scope
 
 **IN:**
-- An **EN | VI toggle control** in the `.qref-header`, inside the `.qref-*` namespace, trust-gate safe.
-- **Both languages carried in the Go SSOT** (`hexagram_reference.go`) for every textual field — core meaning, market-state interpretation, favorable condition, warning, market-trend label, all 6 per-phase glosses — emitted to `que-reference.js` (never fetched, never hand-typed in HTML).
-- **Localized static chrome:** panel title/description, section headers (Trigrams / Favorable Condition / Market State Interpretation / Six Phases), phase-table column headers, trend legend — all swap with the toggle (a real VI view, not VI prose in English chrome).
-- **localStorage persistence** (`kd-qref-lang`, file:// safe, try/catch guarded → EN fallback).
-- VI text reused/lightly-trimmed from `que_convert/*.md` — verbatim VN, authentic, no machine retranslation.
+- **Vietnamese number normalization** — a deterministic adapter-side normalizer (`.`=thousands, `,`=decimal) feeding the pure `decimal_normalizer` clean strings; plus a new pure `reconcile_figures` primitive (generalizes `isDecimalShiftAnomaly` >10× rule) and a pure `select_period_column` primitive. Regression-anchored on VNM/DHG.
+- **Phase-0 SPIKE (gates everything else)** — evaluate 2–3 SELF-HOSTED table extractors (PP-StructureV3, PaddleOCR-VL-0.9B, plus one of Surya/Marker or TATR as backup) on the **14 real BCTC gold-set docs already on disk** (`data/pdfs-local/`, `data/pdfs/`). Score TEDS-Content + GriTS + cell-F1 + **figure-level accuracy** (the business metric). Build the gold-set with VNM/DHG as red→green regression anchors. PO picks the production winner from the scoreboard.
+- **Architect blueprint** — technical design for integrating the spike winner as an infrastructure adapter (PURE primitives unchanged; OCR/model calls + PDF I/O = adapters; sandbox holds ZERO credentials per Security Clause). Coordinate main-server model hosting with ops; flag any overlap with the (now-landed) 1954c BCTC consolidation paths.
+- **Integration** — wire the winning extractor through an `ExtractTablesUseCase`; replace blind regex column-picking with `select_period_column` over real cells; deploy the model to the main server; re-run the harness as a regression gate.
+- **Cross-check confidence gate (self-hosted track)** — `reconcile_figures` wired into the application layer so >10× divergence → block insert + WORK-channel alert; surface in `/api/bctc-inspect`. Image-track cross-check uses the SELF-HOSTED VLM (PaddleOCR-VL on main server) only; external-API VLM is DEFERRED (open question, opt-in only).
 
-**OUT:**
-- Whole-dashboard i18n — the 3 trust panels, sandbox runner, `sandbox-traces.js`, modal, edit-rerun handler stay FROZEN and English (panel-only scope, D3).
-- Any 3rd language, runtime translation pipeline, or language fetch.
-- Wiring `/hexagram/{number}/explain` to serve the localized data (future; the `{en,vi}` shape must merely not preclude it).
-- Re-deriving any que line-data scoring (`queDataMap` action/outcome stay as-is).
+**OUT (this sprint):**
+- **Any task that sends financial PDFs or page-images to a third-party API.** The external-API VLM cross-check (Claude/Gemini/Mistral) is DEFERRED and requires EXPLICIT user consent — recorded as an open question / opt-in, NEVER an active task. Phase-0 and the self-hosted track need zero external data flow.
+- Fine-tuning PaddleOCR on annotated BCTC (Phase 4 — defer unless Phase-0 numbers demand it).
+- Re-architecting the (now-landed) 1954c write-chain consolidation — this sprint ADDS table-structure extraction on top of the consolidated path, it does not reopen it.
+- New BCTC source fetching, queue/pull-job changes, OCR cache work — orthogonal to extraction correctness.
 
-## Decisions (PO authority — final; full rationale in the decision note)
+## Decisions (PO authority — final)
 
-D1 default EN · D2 localStorage persistence (file:// safe, EN fallback) · D3 `.qref-*` panel ONLY · D4 both langs in Go SSOT → emitted JS, nested `{en,vi}` recommended · D5 EN|VI control in `.qref-header`, static labels localize, no `dot-*`/`.category-chip`/"not wired"/fetch/CDN.
+- **D1 — Self-hosted only for the build.** Primary extractor + cross-check both run on our infra (main server). No third-party API task is authorized in this sprint. (Privacy guardrail, non-negotiable.)
+- **D2 — Evidence gate.** PO picks the production extractor from the Phase-0 scoreboard (measured figure-accuracy + TEDS), not from the brief's prior. PP-StructureV3 is the favorite, not the foregone conclusion.
+- **D3 — Parse fix is independent and ships first.** `vn_number_normalize` + `reconcile_figures` need no model and immediately fix the parse-half of the decimal-shift bug. Dispatch in parallel with the spike.
+- **D4 — Primitives stay pure.** Vietnamese-format normalization lives in the infrastructure adapter (feeds clean strings to the pure `decimal_normalizer`); model/OCR calls + PDF render = adapters; sandbox = zero credentials (Security Clause / import-linter fence intact).
+- **D5 — Architect hop REQUIRED before any integration code.** The adapter boundary, the new-primitive contracts, and main-server hosting (CPU vs GPU sizing) must be designed once. PO → Architect → dev chain. Spike findings feed the blueprint.
+- **D6 — Mac is dev/eval only.** Phase-0 spike runs on the Intel Mac (CPU, the 14-doc set). Production extractor runs on the main server. No heavy model in production on the Mac.
+- **D7 — Freeze coordination.** The 1954c BCTC consolidation (recurring-bug-escalation freeze) has LANDED (`372fbc91` task-6 deprecate pdfOcrWorker at HEAD-side; service is sole extraction owner). Integration builds ON the consolidated path; architect must confirm no collision before dev touches shared write paths.
 
 ## Binding DoD
 
-`node dashboard/dash-check.mjs` stays exit-0 with the toggle present (EN and VI states); 3 trust panels + 17 sandbox dots + modal + `sandbox-traces.js` + edit-rerun handler UNCHANGED; all 64 entries carry BOTH a non-empty EN and a non-empty VI for EVERY textual field (no gap, no placeholder, no "TODO translate", no English in a VI field); proper nouns (name VN + glyph) + action/outcome tokens identical in both views.
+- **Parse fix (Phase 1):** pure `vn_number_normalize` + `reconcile_figures` + `select_period_column` primitives land with unit tests; VNM (`0.000051`) and DHG (`0.000009`) flip red→green (correct value OR caught by `reconcile_figures` as `"shift"`); sandbox stays exit-0; import-linter fence intact (primitives import zero infrastructure).
+- **Phase-0 spike:** scoreboard (CSV/HTML) covering all 14 gold-set docs × {PP-StructureV3, PaddleOCR-VL-0.9B, + 1 backup} on TEDS-Content + GriTS + cell-F1 + figure-accuracy; gold-set JSON committed with VNM/DHG anchors; PO reads scoreboard and records the production pick with a measured pass-bar verdict.
+- **Integration:** winning extractor wired as an infrastructure adapter through `ExtractTablesUseCase`; blind regex column-picking replaced by `select_period_column`; harness re-run as regression gate meets the agreed figure-accuracy bar; model deployed to main server (ops PROVES it live); zero credentials in `sandbox/`.
+- **Cross-check gate:** `reconcile_figures` wired into the app layer; >10× divergence blocks insert + raises WORK alert; visible in `/api/bctc-inspect`; self-hosted VLM track only (zero external API).
+- **No privacy breach:** grep/audit proves no task sends a PDF or page-image off-infra.
 
 ## References
 
-- Decision: `docs/po-decisions/2026-05-24-kinh-dich-que-reference-language-switch.md`
-- Spec + per-task ACs: `docs/handoffs/TASK_KD-QREF-LANG.md`
-- VI source (read-only, outside repo): `/Users/admin/Documents/Hung/__works__/__PROJET/__labo/kinhdich_logic/que_convert/`
-- Current SSOT extended: `apps/kinh-dich-service/pkg/module/reading_composer/hexagram_reference.go`
-- Render contract: `apps/kinh-dich-service/dashboard/index.html` (`renderQueReference()` @ ~2288, `.qref-*` styles @ ~787) + emit `cmd/sandbox/main.go -emit-reference`
+- Research brief (SSOT for this sprint): `docs/architecture-briefs/2026-05-24-bctc-table-extraction-research.md`
+- Spec + per-task ACs: `docs/handoffs/TASK_BCTC-TABLE.md` (architect appends design + ACs)
+- Gold-set on disk: `data/pdfs-local/` (VCB, FPT, HPG, DHG, DIG, BSR, DGC, SHB + VEA, VNM), `data/pdfs/` (VNM, VEA)
+- pdf-extractor pure primitives: `apps/pdf-extractor/domain/primitives/` (decimal_normalizer, field_extractor, validate_financial_figures, confidence_scorer, low_confidence_gate, ratio_computer)
+- Adapters: `apps/pdf-extractor/infrastructure/extraction_engine.py`; composition `apps/pdf-extractor/domain/modules/financial_reports/module.py`; sandbox `apps/pdf-extractor/sandbox/runner.py` (Security Clause — zero creds)
+- Existing decimal-shift seed: `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` `isDecimalShiftAnomaly()`
+- Pilot charter / Security Clause: `docs/architecture-briefs/2026-05-22-refactor/scale/pdf-extractor-charter.md`
+- Pilot stays DONE 12/12 FROZEN — `pilot-status-pdf-extractor.json` NOT edited (this is a post-pilot correctness build behind the closed pilot, not a pilot reopen).
 
 ---
 
-## Prior Sprint Closure — PDF-INSPECT (Side-by-Side PDF / Extracted-Text Inspector) — DONE+CLOSED (RE-SIGNED) 2026-05-24T19:34Z
+## OPEN QUESTIONS — RESOLVED with PO defaults (full autonomy, no user override needed)
 
-**Verdict: DONE on REAL data, after a premature first close + TWO real-data reopens.** Full task table + reopen trail + corrected done-condition: `docs/TASKS.md` § Sprint PDF-INSPECT. Spec + every agent record: `docs/handoffs/TASK_PDF-INSPECT.md`.
+1. **Privacy — RESOLVED: self-hosted ONLY.** No financial PDF or page-image leaves our infra. The external-API VLM cross-check stays a DEFERRED opt-in follow-on, never an active task. Re-open only on explicit user "yes".
+2. **Main-server GPU — RESOLVED for figures path: NOT required.** The TEXT path (Tesseract) is CPU-feasible at 4s/page; the pick does not depend on a GPU. ops confirms main-server CPU sizing at BT-4. GPU re-enters scope ONLY if the deferred self-hosted image cross-check (PaddleOCR-VL) is later activated for the sub-bar p5/p7 rows.
+3. **Figure-accuracy pass-bar — RESOLVED: ≥95% within ±0.5%.** Adopted and MET on the FPT reference doc (page-level 100% on 3/4 sections, sentinels 6/6, accounting identity balanced). BT-6 QA validates across the wider 14-doc gold-set. API budget N/A (Q1 = self-hosted only).
 
-**Honest history (not erased):**
-- **Premature first close (`97cd5763`, 17:47Z):** signed off against FIXTURE data on a local uvicorn (`localhost:15001`). At deploy the viewer was EMPTY on real data → REOPEN.
-- **REOPEN-1:** inspector read the WRONG store (pdf-extractor `pdf_extractor.db` = 15,570 junk rows). Real BCTC data is in mcp-server's `market.db`. Inspector **MOVED to mcp-server** (impl owner dev-pdf-extractor → **dev-mcp-server**); built `/api/bctc-inspect` (`1b5799fb`). QA found all 14 `financial_reports` rows had `pdf_path=NULL` → list count:0 (`127cb347`).
-- **REOPEN-2:** `backfillBctcPdfPaths` token-matches 14 rows → 17 on-disk PDFs + all-rows LIST + secondary OCR join (`69da9d01`). QA re-verify on REAL `market.db`: count=14, 12 has_pdf, 14 has_ocr, 7 decimal-shift flags; VNM real PDF rendered LEFT + Vietnamese OCR + decimal-shift banner RIGHT (`3098c69d`). PASS.
+## DEFERRED / HONESTLY-FLAGGED (not closed by the BT-0-PICK)
 
-**Corrected done-condition (supersedes premature close):** "DONE" = the served viewer renders REAL rows from the deployed container's `market.db` (verified row count + non-null-rate of relied-upon columns), NOT fixtures, NOT schema-existence.
-
-**User-facing URL (LIVE NOW):** `http://localhost:3000/api/bctc-inspect` (mcp-server rebuilt from `69da9d01`; container running). The old `localhost:15001/inspect` (and the pdf-extractor `localhost:5001/inspect`) are fixture-only/deprecated.
-
-**Out-of-scope follow-ups (surfaced, non-blocking):** (i) pipeline defect `fetchParseAndStoreBctc.ts:645 tryNewsChainFallback` inserts `pdfPath:null` even when a PDF exists — dev-mcp-server pipeline task; (ii) `pdf_extractor.db` polluted with 15,570 test rows in the prod volume — ops/dev cleanup.
-
-**Meta-lesson (3 straight defects, same root):** for any data-bound feature, BOTH the design AND the QA gate must be validated against a live sample of the REAL store — real row counts AND null-rates of the columns relied upon AND the ingest path that populated the current rows — not schema-existence or seeded fixtures. Same family as the file:// L9 lesson (verify under the user's REAL path). Pilot UNTOUCHED — pdf-extractor SCALE pilot stays DONE 12/12 frozen; `pilot-status-pdf-extractor.json` not edited.
+- **Sub-bar rows:** FPT p5 95.8% (marginal) + p7 86.7% (below bar); low cell-F1 (0.07-0.12 — grid reconstruction poor even where figures are right). PP-StructureV3 IMAGE path is the deferred remedy — self-hosted, revisit ONLY for these rows + cell-grid fidelity, never for figures, never external-API.
+- **QA-on-BT1 still pending** — folded into BT-6.
+- **14 stranded docs hold OLD-parser figures** — re-extract ONCE at BT-4b (post-integration, pre-QA), not twice.
+- **Single-doc evidence** — pass-bar proven on FPT only; BT-6 proves it across the 14-doc gold-set.

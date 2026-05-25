@@ -51,31 +51,60 @@
 
 ---
 
-## BT-0-PICK — PO records production pick · po · GATE · BLOCKED (← BT-0)
+## BT-0 — Phase-0 SPIKE · dev-pdf-extractor · DONE (2026-05-25, `f6dd2e83` + eval results on disk)
 
-PO reads the scoreboard, records the production extractor pick with a measured verdict against the pass-bar (default **≥95% of result-column figures within ±0.5%** if no user answer to Open Q3). Decision note → `docs/po-decisions/`.
+Eval results committed under `apps/pdf-extractor/spike/eval/results/`. TEXT path (Tesseract vie+eng) cleared the ±0.5% bar at ~4s/page CPU; PP-StructureV3 IMAGE path scored 0/6 on its one VNM run at 45s/page and was skipped on the figures path. Full FPT balance sheet (p4-7) stitched, accounting identity balances to the dong. Do NOT re-run.
+
+## BT-0-PICK — PO records production pick · po · GATE · DONE (2026-05-25T17:17Z)
+
+**PICK = TEXT path (Tesseract vie+eng + BT-1 primitives).** PP-StructureV3 IMAGE = DEFERRED optional cross-check only (revisit ONLY for sub-bar p5/p7 rows + low cell-F1; self-hosted, never external-API). Decision note: `docs/po-decisions/2026-05-25-bctc-table-bt0-pick-text-path.md`. Pass-bar ≥95% within ±0.5% MET on FPT reference (page-level 100% on 3/4 sections, sentinels 6/6, balance True). BT-6 QA must re-run across the wider gold-set, not just FPT.
+
+**Open-Q resolutions (PO defaults):** Q1 self-hosted ONLY; Q2 GPU not required (TEXT is CPU-feasible at 4s/page — ops confirms CPU sizing at BT-4); Q3 ≥95% within ±0.5% adopted + met.
 
 ---
 
-## BT-2 — Architect integration blueprint (DESIGN ONLY) · architect · HIGH · BLOCKED (← BT-0-PICK)
+## BT-2 — Architect integration blueprint (DESIGN ONLY) · architect · HIGH · READY (← BT-0-PICK DONE)
 
-Design the integration of the spike winner. Append the blueprint + finalized per-task ACs (BT-3/4/5/6) here. Cover:
-- Adapter boundary: `PpStructureTableAdapter` (or winner) + `PdfPageRenderer` (PyMuPDF/pdf2image → PNG) as `infrastructure/` adapters.
-- `ExtractTablesUseCase` (application, DI) orchestration; how `select_period_column` consumes real cells.
-- Main-server hosting: CPU vs GPU sizing (Open Q2 — confirm with ops); Docker placement; the existing `PdfplumberExtractionEngine` kept as native-PDF fast path.
-- Cross-check gate wiring: `reconcile_figures` → app-layer route → block insert + WORK alert + `/api/bctc-inspect` surface; image-track = self-hosted VLM only.
-- **Confirm no collision with 1954c frozen write paths** (`372fbc91` and the 1954c task-2..6 series) before BT-3 touches shared code.
+**Frame the design to close the user's exact complaint:** at `localhost:3000/api/bctc-inspect` the viewer right-pane only ever shows OCR `text` (from `pdf_extracted_text`) + 4 summary figures (from `financial_reports`). There is **NO structured code→value table storage anywhere in production**, so the inspector physically cannot render a detected table. The design must close the produce → store → render gap end-to-end:
+
+1. **PRODUCE** (dev-pdf-extractor zone) — the TEXT-path extractor (Tesseract vie+eng + BT-1 primitives) must emit a structured code→value table (rows like 100/110/270…, both period columns, billion-VND normalized, with the consolidated-current-quarter column tagged via `select_period_column`) during `process_report()`, plus a balance-check result (Total Assets == Liabilities + Equity).
+2. **STORE** (dev-pdf-extractor zone) — define a NEW schema for structured table rows, persisted per doc+page (e.g. a `bctc_table_rows` table: doc id, page, code, label, period-label, value, plus a per-doc balance-check pass/fail + balance delta). This is the missing storage; without it the inspector has nothing to read.
+3. **RENDER** (dev-mcp-server zone — SI-2 boundary) — `bctcInspectHandler.ts` + the `/api/bctc-inspect` viewer read the new schema and render the structured table NEXT TO the existing OCR text, plus a **balance-check PASS/FAIL badge**. Define the read contract (DB columns → JSON shape → render) so dev-mcp-server can build the inspector side without guessing.
+
+Append the blueprint + finalized per-task ACs (BT-3/4/5/6) here. Also cover:
+- Adapter boundary: text-table assembler + `PdfPageRenderer` (PyMuPDF/pdf2image → PNG, only if the DEFERRED image cross-check is ever activated) as `infrastructure/` adapters. The figures path needs no model/render — Tesseract text + primitives only.
+- `ExtractTablesUseCase` (application, DI) orchestration; how `select_period_column` consumes real cells; how the stitched multi-page table (p4-7 pattern) assembles into stored rows.
+- **Schema migration plan:** the new `bctc_table_rows` schema + migration; how it coexists with the 1954c-consolidated `financial_reports` write path (additive, not a rewrite).
+- Main-server hosting: TEXT path is CPU-feasible at 4s/page (no GPU needed — Open Q2 resolved for the figures path); confirm CPU sizing with ops at BT-4; Docker placement; existing `PdfplumberExtractionEngine` kept as native-PDF fast path. Production extractor runs on the MAIN SERVER, NOT the Mac (Mac is eval-only, kernel-panics under load — D6).
+- Cross-check gate wiring: `reconcile_figures` → app-layer route → block insert + WORK alert + surface in `/api/bctc-inspect`; image-track cross-check (if ever activated) = self-hosted VLM only, DEFERRED.
+- **Confirm no collision with 1954c frozen write paths** (`372fbc91` and the 1954c task-2..6 series) before BT-3 touches shared code. The new table-rows store is ADDITIVE on top of the consolidated path.
+- **Re-extraction plan:** the 14 already-stored docs hold OLD-parser figures (pre-BT-1). They must be re-extracted ONCE after integration lands (not twice — sequence the backfill so it runs after BT-3+BT-5, before BT-6 QA). Architect specifies the one-shot backfill trigger.
 - Security Clause: sandbox zero creds, import-linter fence (`domain.primitives` must not import `infrastructure`).
 
 ---
 
-## BT-3 — Integrate winning extractor · dev-pdf-extractor · HIGH · BLOCKED (← BT-2, BT-1)
-## BT-4 — Deploy model to main server · ops + dev-mainserver-crawls · HIGH · BLOCKED (← BT-2)
-## BT-5 — Cross-check confidence gate (self-hosted) · dev-pdf-extractor · MEDIUM · BLOCKED (← BT-3, BT-4)
-## BT-6 — QA regression gate · qa · HIGH · BLOCKED (← BT-5)
-## BT-EXIT — PO sign-off · po · CRITICAL · BLOCKED (← BT-6)
+## BT-3 — Integrate extractor: produce + store structured table · dev-pdf-extractor · HIGH · BLOCKED (← BT-2, BT-1)
+TEXT-path extractor emits the structured code→value table + balance check during `process_report()`; persists rows to the NEW `bctc_table_rows` schema per doc+page. Zero creds in sandbox; import-linter fence intact.
 
-ACs for BT-3..BT-EXIT finalized by architect at BT-2 (depend on the spike winner). High-level intent in `docs/TASKS.md` § Sprint BCTC-TABLE and `docs/SPRINT_GOAL.md` § Binding DoD.
+## BT-3i — Inspector schema read + table render · dev-mcp-server · HIGH · BLOCKED (← BT-2, BT-3)
+SI-2 boundary: `bctcInspectHandler.ts` + `/api/bctc-inspect` viewer read the new schema and render the structured table next to OCR text + balance-check PASS/FAIL badge. **This is the surface that closes the user's exact complaint.** Routed to dev-mcp-server (bctc-inspect viewer = SI-2 boundary, NOT dev-pdf-extractor).
+
+## BT-4 — Deploy extractor to main server · ops + dev-mainserver-crawls · HIGH · BLOCKED (← BT-2)
+Host the TEXT-path extractor on the MAIN SERVER (CPU-feasible at 4s/page, no GPU needed — Open Q2 resolved for figures path). NO heavy model on the Mac in prod (D6, kernel-panic risk).
+
+## BT-4b — One-shot re-extraction of stranded docs · dev-pdf-extractor + ops · MEDIUM · BLOCKED (← BT-3, BT-3i, BT-5)
+The 14 already-stored docs hold OLD-parser figures (pre-BT-1). Re-extract ONCE after produce/store/render + cross-check land, BEFORE BT-6 QA (not twice). Architect specifies the trigger at BT-2.
+
+## BT-5 — Cross-check confidence gate (self-hosted) · dev-pdf-extractor · MEDIUM · BLOCKED (← BT-3, BT-4)
+Wire `reconcile_figures` into the app layer: >10× divergence → block insert + WORK alert; surface in `/api/bctc-inspect`. Image-track cross-check = SELF-HOSTED VLM only, DEFERRED. NO external API.
+
+## BT-6 — QA regression gate · qa · HIGH · BLOCKED (← BT-4b, BT-5)
+Re-run BT-0 harness across the WIDER 14-doc gold-set (not just FPT): figure-accuracy meets ≥95%±0.5% bar; VNM/DHG green; structured rows stored + rendered in inspector with balance badge; cross-check fires on >10×; sandbox exit-0 + zero creds; import-linter fence intact; pilot-status diff empty; zero off-infra data send. Also closes QA-on-BT1 (still pending). Emit `qa-bctc-table-<UTC>.json`.
+
+## BT-EXIT — PO sign-off · po · CRITICAL · BLOCKED (← BT-6)
+Sign off vs DoD on REAL gold-set + verify the live `/api/bctc-inspect` viewer now shows a detected table + balance badge (the user's complaint, closed). Privacy audit. Main terminal commits in-tree work.
+
+ACs for BT-3..BT-EXIT finalized by architect at BT-2. High-level intent in `docs/TASKS.md` § Sprint BCTC-TABLE and `docs/SPRINT_GOAL.md` § Binding DoD.
 
 ---
 
@@ -160,8 +189,15 @@ Owner: qa | Task: verify BT-1 green signal
 
 ---
 
-## OPEN QUESTIONS for the user (recorded — do NOT block; Phase-0 proceeds)
+## OPEN QUESTIONS — RESOLVED with PO defaults (no user override needed; full autonomy)
 
-1. **Privacy:** third-party API ever acceptable for financial PDFs/images, or self-hosted only? **Default = self-hosted only.** "Yes" unlocks the external-API VLM cross-check as an opt-in follow-on. Until explicit "yes," no PDF/image leaves our infra.
-2. **Main-server GPU?** Needed for BT-4 sizing + self-hosted-VLM feasibility. Not needed for BT-0.
-3. **Figure-accuracy pass-bar + API budget:** proposed ≥95% within ±0.5% (PO default). API cost cap only relevant if Q1 = yes.
+1. **Privacy — RESOLVED: self-hosted ONLY.** No PDF/image leaves our infra. External-API VLM stays a deferred opt-in follow-on, never an active task. (Re-open only on explicit user "yes".)
+2. **Main-server GPU — RESOLVED for figures path: NOT required.** TEXT path is CPU-feasible at 4s/page. ops confirms main-server CPU sizing at BT-4. GPU only re-enters scope if the DEFERRED image cross-check (PaddleOCR-VL self-hosted) is ever activated for the sub-bar p5/p7 rows.
+3. **Figure-accuracy pass-bar — RESOLVED: ≥95% within ±0.5%.** Adopted + MET on FPT reference. BT-6 QA validates across the wider 14-doc gold-set. API budget N/A (Q1 = self-hosted only).
+
+## DEFERRED / HONESTLY-FLAGGED (not closed by this pick)
+
+- **Sub-bar rows:** FPT p5 95.8% (marginal) + p7 86.7% (below bar). Low cell-F1 (0.07-0.12 — grid reconstruction poor even where figures are right). PP-StructureV3 IMAGE path is the deferred remedy — self-hosted, revisit ONLY here, never for figures, never external-API.
+- **QA-on-BT1 still pending** — BT-1 (`e74abc43`) shipped but QA never verified its green signal. Folded into BT-6.
+- **14 stranded docs hold OLD-parser figures** — re-extract ONCE at BT-4b (post-integration, pre-QA), not twice.
+- **Single-doc evidence** — pass-bar proven on FPT only; BT-6 QA must prove it across the 14-doc gold-set.
