@@ -1,10 +1,43 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 06:00 UTC | **Sprint:** BCTC-TABLE-3
+**Last updated:** 2026-05-26 09:30 UTC | **Sprint:** BCTC-TABLE-3
 
 [3 most recent cycles retained below. Archive in git history.]
 
-## BT3-FIX4-PARSE — Parser hardening ruling (2026-05-26T06:00Z) — DESIGN COMPLETE
+## BT3-RETHINK — Filter strategy ruling (2026-05-26T09:30Z) — DESIGN COMPLETE
+
+**Task:** BT3-RETHINK. PO revoked BT3-FIX4 ruling (false-green #6). Root cause: FIX4 fixture used PyMuPDF/spike OCR; production uses poppler. Character set mismatch caused all skip-strings and diacritic-sensitive regexes to silently miss live poppler output. 23 orphan rows on live, 0 on fixture.
+
+**Three live failure classes:**
+1. Diacritics mismatch — `"bảng cân"` skip key misses poppler's `"BANG CÂN"`. Date regex `tháng` misses poppler's `"thang"`. 5 orphan rows.
+2. Garbled signature noise — arbitrary poppler OCR garbage in digital-cert block. Literal skip-list cannot enumerate. ~8-12 orphan rows.
+3. Embedded-code rows (222/223/226/131/319/421b) — Layout 2/4 label-boundary regexes fail on poppler's diacritic-variant label text.
+
+**Four rulings:**
+
+**Ruling A (Filter Strategy): POSITIVE-KEEP + POSITIONAL CUTOFF.** Negative skip-list retired as primary filter. (1) `_apply_positional_cutoff()` drops all rows after last sentinel code (270/440) — eliminates signature block without enumeration. (2) else-branch POSITIVE-KEEP gate: non-code lines only emitted if `_is_recognized_section_header()` returns True (narrow: section-letter A-E or roman numeral I-V headers only). Everything else dropped silently.
+
+**Ruling B (Embedded-Code Split): Layout 5 scan-and-extract.** New `_find_code_in_line()` + `_BCTC_CODE_SCAN_RE` added as Layout 5 in `_try_parse_code_row()`. Scans for 2-3 digit code token regardless of label content. Rejects code_int < 100. Diacritic-agnostic (label text not used for matching). Non-regression: only reached when Layouts 1-4 all fail.
+
+**Ruling C (Diacritics Robustness): `_norm()` helper everywhere.** `unicodedata.normalize("NFD") + strip Mn + uppercase`. Applied to both sides of all skip-list comparisons and date regexes. Poppler `"BANG CAN"` and PyMuPDF `"BẢNG CÂN"` both normalize to `"BANG CAN"`. Immune to rasterizer variation.
+
+**Ruling D (Fixture Mandate — BLOCKING AC-0): Replace fixture with poppler substrate.** `fpt_q4_2025_pages_4-7.txt` must be regenerated from live poppler OCR of e71f845d via `POST localhost:5001/extract-tables` with `debug_dump_ocr=true`. Any fixture from a different substrate will false-green again. AC-0 is the gate — no other AC claimable until fixture is replaced.
+
+**Files authored this cycle (3):**
+1. `docs/architecture-briefs/2026-05-26-bctc-table-bt3-rethink-filter-strategy.md` (NEW — full ruling)
+2. `docs/handoffs/TASK_BCTC-TABLE.md` — [Architect] BT3-RETHINK section appended
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Risk flags:**
+- R-MEDIUM: POSITIVE-KEEP drops legitimate multi-line section labels (e.g. "NGUỒN VỐN") — cosmetic only, does not affect code rows or balance_pass
+- R-LOW: Layout 5 `_find_code_in_line` false-positive on note-ref lines — mitigated by `code_int < 100` guard + positional cutoff removing footnote block
+- R-LOW: Positional cutoff sentinel-set must be extended for income/cash-flow statements before BT-6 multi-doc QA
+
+**Next actor:** dev-pdf-extractor (BT3-FIX5) — implement Rulings A/B/C/D. AC-0 (fixture regeneration) is blocking. Single-doc re-extract only: `POST localhost:5001/extract-tables` for e71f845d. NEVER bctcBatchTableBackfillJob (host kernel-panic risk).
+
+---
+
+## BT3-FIX4-PARSE — Parser hardening ruling (2026-05-26T06:00Z) — DESIGN COMPLETE (REVOKED by PO)
 
 **Task:** BT3-FIX4-PARSE. After BT3-FIX3-PSM (psm 6 fix, commit `3b722462`): 71 clean code rows, 29 orphans. Recurring-bug threshold crossed. Architect rules on parser hardening scope, rasterizer question, and achievable orphan floor before dev implements.
 
