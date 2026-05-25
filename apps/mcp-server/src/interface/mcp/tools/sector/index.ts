@@ -1,18 +1,16 @@
 /**
- * Sector module barrel — Sprint 210
- * Public API: sector comparison, rotation, correlation, thematic tools
+ * Sector module barrel — Phase 1 P1-E barrel wave 3
+ * Decomposed into 3 sub-barrels: domestic, market, cross-cutting
+ *
+ * domestic: Vietnam-domestic sector topics (pharma, legal, leadership, public-investment)
+ * market: market-structure topics (rotation, comparison, correlation)
+ * cross-cutting: thematic topics (credit, crisis, supply-chain, climate, energy, broker, bond, severity)
+ *
+ * Tool files themselves do NOT move — only index.ts files are created/modified.
  */
-export { registerSectorComparisonTools } from "./sectorComparisonTools.js";
-export { registerSectorRotationTools } from "./sectorRotationTools.js";
-export { registerCorrelationTools } from "./correlationTools.js";
-export { registerBrokerCredibilityTools } from "./brokerCredibilityTools.js";
-export { registerBondMaturityTools } from "./bondMaturityTools.js";
-export { registerSupplyChainTools } from "./supplyChainTools.js";
-export { registerLegalRiskTools } from "./legalRiskTools.js";
-export { registerClimateTools } from "./climateTools.js";
-export { registerEnergyTools } from "./energyTools.js";
-export { registerPharmaTools } from "./pharmaTools.js";
-export { registerPublicInvestmentTools } from "./publicInvestmentTools.js";
-export { registerCreditFlowTools } from "./creditFlowTools.js";
-export { registerLeadershipTools } from "./leadershipTools.js";
-export { registerCrisisTools } from "./crisisTools.js";
+// domestic: pharma, legal, leadership, public-investment
+export * from "./domestic/index.js";
+// market: sector rotation, comparison, correlation
+export * from "./market/index.js";
+// cross-cutting: credit, crisis, supply-chain, climate, energy, broker, bond, severity labels
+export * from "./cross-cutting/index.js";
