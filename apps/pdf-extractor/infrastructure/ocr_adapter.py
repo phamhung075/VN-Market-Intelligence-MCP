@@ -8,8 +8,9 @@ Responsibilities:
      no Tesseract) for Vietnamese BCTC balance-sheet markers to identify the page
      range. Falls back to pages 4-7 if markers are absent (logged as heuristic).
 
-  2. ocr_pages(pdf_path, page_numbers) — run Tesseract (vie+eng) via pdf2image on
-     the specified pages ONLY. Sequential, one page at a time (HOST SAFETY, D6).
+  2. ocr_pages(pdf_path, page_numbers) — run Tesseract (vie+eng, --psm 6) via
+     pdf2image on the specified pages ONLY. Sequential, one page at a time
+     (HOST SAFETY, D6).
 
 DDD: infrastructure layer (does PDF I/O + Tesseract subprocess). Must NOT be imported
      from domain/ or application/ directly. Injected at composition root (main.py).
@@ -20,6 +21,16 @@ HOST SAFETY (D6 — 16GB Mac kernel-panic risk):
   - Never OCR the full PDF. Only call ocr_pages() with the page list from
     locate_balance_sheet_pages() (typically 3-5 pages).
   - OCR is sequential (one page per call, no thread pool).
+
+PAGE SEGMENTATION MODE (dual-path-drift lesson, BT3-FIX3-PSM):
+  - ocr_pages() uses --psm 6 (single uniform block, strict line-by-line layout).
+  - This matches spike/fpt_balance_sheet_eval.py:160 and spike/eval/harness.py:193
+    exactly. WITHOUT --psm 6 Tesseract defaults to psm 3 (auto column segmentation),
+    which reads BCTC three-block layouts column-by-column, scrambling labels,
+    codes, and values into separate interleaved blocks (observed: 47 orphan rows,
+    off-by-one labels, dup code 222 despite balance_pass=true).
+  - Never remove the config="--psm 6" argument; doing so silently re-introduces
+    dual-path drift at the PSM level (drift #4).
 
 Reuses the same Tesseract invocation pattern as:
   - infrastructure/extraction_engine.py PdfplumberExtractionEngine._ocr_page()
@@ -235,7 +246,13 @@ class PdfOcrAdapter:
                     pages_out.append({"page_number": page_num, "text": ""})
                     continue
 
-                text: str = pytesseract.image_to_string(images[0], lang="vie+eng")
+                # --psm 6: single uniform block — reads line-by-line (inline layout).
+                # Matches spike/fpt_balance_sheet_eval.py:160 exactly.
+                # DO NOT remove config= arg: psm 3 (Tesseract default) triggers
+                # column segmentation → scrambled BCTC output (drift #4).
+                text: str = pytesseract.image_to_string(
+                    images[0], lang="vie+eng", config="--psm 6"
+                )
                 pages_out.append({"page_number": page_num, "text": text})
                 logger.debug(
                     "PdfOcrAdapter: page %d → %d chars of OCR text",

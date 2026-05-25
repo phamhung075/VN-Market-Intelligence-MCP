@@ -4,6 +4,41 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — BT3-FIX3-PSM DONE (add --psm 6 to Tesseract call in ocr_adapter + extraction_engine)
+
+**Task:** BT3-FIX3-PSM | Sprint: BCTC-TABLE-3 | Drift #4 — PSM-level dual-path drift
+
+**Root cause (fifth false-green, confirmed by main terminal):**
+- Live container ran fresh OCR (pdf2image 1.17.0) and stored 124 rows with balance_pass=true — BUT the live /api/bctc-inspect table was STILL scrambled: code 100 label="Tiền và các khoản tương đương tiền" (should be "TÀI SẢN NGẮN HẠN"); labels off-by-one; 47 ORPHAN rows; dup code 222; 24/77 code rows missing value_prior.
+- CAUSE: `ocr_adapter.py:238` called `pytesseract.image_to_string(images[0], lang="vie+eng")` with NO `config=` arg → Tesseract defaulted to psm 3 (auto column segmentation) → reads BCTC three-block layout column-by-column → labels, codes, and values scrambled into separate interleaved blocks.
+- Spike (`spike/fpt_balance_sheet_eval.py:160`, `spike/eval/harness.py:193`) used `config="--psm 6"` (single uniform block, line-by-line) → 89 clean rows. Production dropped this argument — drift #4 at PSM level.
+- `extraction_engine.py:130` had the identical latent bug (legacy OCR path, same missing arg).
+- The prior fast integration test passed because its fixture was "produced by the spike's psm 6 run" — inline text that the line parser handled correctly. The live container used psm 3 output. This gap = false-green pattern #5.
+
+**Fixes delivered:**
+- `infrastructure/ocr_adapter.py`: changed `pytesseract.image_to_string(images[0], lang="vie+eng")` to `pytesseract.image_to_string(images[0], lang="vie+eng", config="--psm 6")`. Updated module docstring with full dual-path-drift lesson and DO NOT REMOVE warning.
+- `infrastructure/extraction_engine.py`: same fix to `_ocr_page()` legacy path.
+- `__tests__/unit/test_ocr_adapter_psm6_guard.py` — NEW: 3-test regression guard (TestOcrAdapterPsm6Guard):
+  - `test_ocr_pages_passes_psm6_config` — monkeypatches pdf2image + pytesseract, asserts config="--psm 6" kwarg (GUARD — fails if arg removed).
+  - `test_ocr_pages_passes_psm6_for_every_page` — asserts psm 6 applied to every page in a multi-page call.
+  - `test_ocr_pages_output_contains_tesseract_text` — smoke: text propagates to result dicts.
+
+**Patch strategy (host-safe):** Pre-populate minimal stubs for pdf2image + pytesseract in sys.modules before SUT import (no real binary needed). Use `patch(..., create=True)` so mock swaps the stub attribute. Zero Tesseract/poppler required on host.
+
+**Full suite evidence:**
+- Guard: 3 passed (test_ocr_adapter_psm6_guard.py)
+- Fast suite: 290 passed, 2 deselected (slow), 1 warning, 0 failed
+- Net: +3 new tests, 0 regressions
+
+**Files changed (3) — UNSTAGED per task spec (main terminal commits):**
+- `infrastructure/ocr_adapter.py` — added config="--psm 6" + updated docstring
+- `infrastructure/extraction_engine.py` — added config="--psm 6" to legacy _ocr_page()
+- `__tests__/unit/test_ocr_adapter_psm6_guard.py` — NEW: 3-test PSM regression guard
+
+**NEXT:** ops must `docker compose up -d --build pdf-extractor` to deploy the fix, then re-POST to `/extract-tables` for all stored docs (or re-run backfill). MAIN TERMINAL self-verifies live endpoint row-by-row against 89-row spike gold. Do NOT declare bug fixed until live endpoint confirmed clean.
+
+---
+
 ### 2026-05-26 — BT3-FIX3-DEP DONE (add pdf2image to requirements.txt)
 
 **Task:** BT3-FIX3-DEP | Sprint: BCTC-TABLE-3 | Atomic dependency fix

@@ -3167,3 +3167,86 @@ Files are UNSTAGED per task spec. Main terminal commits.
 ### Status note
 
 Dependency is added. Container has NOT been rebuilt yet — ops must run `docker compose up -d --build pdf-extractor` to install the wheel into the running container. Until then the live endpoint still returns `rows_stored=0`. Do NOT declare the extraction bug fixed until ops confirms the rebuilt container and a successful POST to `/extract-tables` returns `rows_stored>0`.
+
+---
+
+## [Developer] BT3-FIX3-PSM — dev-pdf-extractor — DONE (2026-05-26)
+
+**Task:** BT3-FIX3-PSM | Sprint: BCTC-TABLE-3 | Drift #4 — PSM-level dual-path drift (fifth false-green)
+
+### Root cause confirmed (dual-path drift #4 at PSM level)
+
+Live container ran fresh OCR (pdf2image 1.17.0) and stored 124 rows with `balance_pass=true` — BUT the live `/api/bctc-inspect` table was STILL scrambled:
+
+- code 100 label = "Tiền và các khoản tương đương tiền" (correct label for code 111 — off-by-one)
+- 47 ORPHAN rows (labels stripped of codes: "B. TÀI SẢN DÀI HẠN", "II. Các khoản phải thu dài hạn", etc.)
+- dup code 222
+- 24/77 code rows missing `value_prior`
+- Values and codes bind correctly (270=88,089,621,779,862 ✓) — the defect is layout scrambling, not value parsing.
+
+**Root cause:** `infrastructure/ocr_adapter.py` line 238 called `pytesseract.image_to_string(images[0], lang="vie+eng")` with NO `config=` argument. Tesseract defaults to `--psm 3` (automatic page segmentation with column detection). BCTC balance-sheet pages use a three-block OCR layout (labels / codes / values in separate text blocks). PSM 3 reads these column-by-column, mixing the three blocks — producing scrambled output.
+
+The spike (`spike/fpt_balance_sheet_eval.py:160` and `spike/eval/harness.py:193`) used `config="--psm 6"` (single uniform block, strict line-by-line). This matches the inline layout assumed by the line parser, producing the clean 89-row gold output. Production dropped the argument — drift #4.
+
+`infrastructure/extraction_engine.py` line 130 (`_ocr_page()`, the legacy Pillow+pdfplumber path) had the identical latent bug.
+
+The prior fast integration test (`test_bt3_fix3_row_fidelity.py`) passed because its fixture was documented as "produced by the spike's psm 6 run" — it exercised psm-6-aligned inline text while the live runtime used psm-3 column text. This gap = false-green pattern #5.
+
+### Changes
+
+**`infrastructure/ocr_adapter.py`** (production fresh-OCR path):
+
+```diff
+-                text: str = pytesseract.image_to_string(images[0], lang="vie+eng")
++                # --psm 6: single uniform block — reads line-by-line (inline layout).
++                # Matches spike/fpt_balance_sheet_eval.py:160 exactly.
++                # DO NOT remove config= arg: psm 3 (Tesseract default) triggers
++                # column segmentation → scrambled BCTC output (drift #4).
++                text: str = pytesseract.image_to_string(
++                    images[0], lang="vie+eng", config="--psm 6"
++                )
+```
+
+Module docstring updated with the full dual-path-drift lesson and a DO NOT REMOVE warning.
+
+**`infrastructure/extraction_engine.py`** (legacy `_ocr_page()` path):
+
+```diff
+-            text: str = pytesseract.image_to_string(
+-                img.original, lang="vie+eng"
+-            )
++            # --psm 6: single uniform block — reads line-by-line (inline layout).
++            # Matches spike/fpt_balance_sheet_eval.py:160 and ocr_adapter.py.
++            # DO NOT remove config= arg: psm 3 (Tesseract default) triggers
++            # column segmentation → scrambled BCTC output (drift #4).
++            text: str = pytesseract.image_to_string(
++                img.original, lang="vie+eng", config="--psm 6"
++            )
+```
+
+**`__tests__/unit/test_ocr_adapter_psm6_guard.py`** — NEW: 3-test regression guard (`TestOcrAdapterPsm6Guard`):
+
+| Test | Purpose |
+|---|---|
+| `test_ocr_pages_passes_psm6_config` | Asserts `config="--psm 6"` kwarg present for single-page call — FAILS if removed |
+| `test_ocr_pages_passes_psm6_for_every_page` | Asserts psm 6 applied to ALL pages in multi-page call |
+| `test_ocr_pages_output_contains_tesseract_text` | Smoke: text propagates to result dicts |
+
+Patch strategy: pre-populate minimal stubs for `pdf2image` and `pytesseract` in `sys.modules` before SUT import; use `patch(..., create=True)`. Zero Tesseract/poppler binary required on host.
+
+### Evidence — RED→GREEN
+
+- Guard tests: 3 PASSED (new)
+- Fast suite: **290 passed, 2 deselected (slow), 0 failed**
+  - Baseline before this task: 287 passed (per BT3-FIX-3 notebook entry)
+  - Net: +3 new guard tests, 0 regressions
+
+### Files changed (3) — UNSTAGED per task spec
+
+- `infrastructure/ocr_adapter.py`
+- `infrastructure/extraction_engine.py`
+- `__tests__/unit/test_ocr_adapter_psm6_guard.py`
+
+### Status note
+
+Code fix is complete and fast suite is green. The container must be rebuilt and a fresh re-extract run before the live `/api/bctc-inspect` table can be verified. MAIN TERMINAL self-verifies the live endpoint row-by-row against the 89-row spike gold after ops rebuilds. Do NOT declare the bug fixed until live endpoint is confirmed clean.
