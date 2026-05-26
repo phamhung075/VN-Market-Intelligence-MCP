@@ -1,8 +1,36 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 16:12 UTC | **Sprint:** MD-EXTRACT-8 / income-statement-anchor-root-cause
+**Last updated:** 2026-05-26 17:45 UTC | **Sprint:** MD-EXTRACT-9 / income-label-ordinal-reconstruction
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## MD-EXTRACT-9 — Label-Row Ordinal Reconstruction (2026-05-26T17:45Z) — DESIGN COMPLETE
+
+**Task:** MD-EXTRACT-9. Recurring-bug escalation (many fix commits on `generic_md_table_extractor.py`). LIVE-VERIFY-8 showed income value columns FIXED (MD-EXTRACT-8) but label-row STILL BROKEN: label-row over-merge (`2 1 Doanh Các khoản thu giảm bán hàng trừ…`) + ordinal offset (code-02 values under code-01 label). Mandate: diagnostic-gate-first, live OCR token dump, root-cause classify, design. NOT a patch.
+
+**Diagnostic completed (live, local Tesseract, single page 7 of FPT Q4 2025, no batch):**
+- h_med=18px, label_pitch=36px (median), value_pitch=36px (uniform, col@1182 21 tokens)
+- LABEL_BAND_FACTOR×h_med = 27px. 2×band=54px > label_pitch=36px → OVER-MERGE confirmed
+- Ordinal grid rows: 24. Physical label lines: 24. COUNT MATCHES — zero count mismatch
+- Band over-reach is the SOLE root cause. live simulation: rank=0 band=[474,528] captures 15 tokens from 2 consecutive label lines → exact LIVE-VERIFY-8 defect reproduced mechanically
+- Fix-path-D dropped in 7-REV on wrong comparator (`band < pitch` checked; correct gate is `2×band > pitch`)
+
+**Fix designed:**
+- ADD Step C10.5: `_cluster_text_into_label_lines(text_tokens, gap=15px)` — sort by (top,left), greedy line grouping by gap threshold. Separates line-1 (top 488-496) from line-2 (top 522-524) on 26px gap >> 15px threshold.
+- ADD Step C10.6: `_exclude_pre_data_label_lines` — exclude lines with y_med < first_value_top - 20px. Removes column-header fragments.
+- MODIFY `_attach_labels_ordinal` — replace band body with ordinal-rank pairing (data_label_lines[k] ↔ grid[k], direct index). Signature UNCHANGED (backward compat with 12+ TestOrdinalReconstruction tests).
+- MODIFY `_process_page` — insert C10.5+C10.6 between C10 and C11.
+
+**Non-regression:** AC-8-SEG / AC-8-BALANCE / AC-8-VALUE-COLUMNS all structurally guaranteed (value ordinal reconstruction Steps C6-C10 untouched; segment has no pure-code cols so ordinal labeling path is identical; balance pitch >> gap threshold).
+
+**Files authored this cycle:**
+1. `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` — §MD-EXTRACT-9 appended (~220 lines: §9.1 diagnostic, §9.2 root cause, §9.3 post-mortem, §9.4 design, §9.5 functions, §9.6 non-regression, §9.7 ACs, §9.8 fixture proof, §9.9 risks, §9.10 files, §9.11 constraints)
+2. `docs/handoffs/TASK_BCTC-MD-TABLE.md` — §[Architect] MD-EXTRACT-9 appended
+3. `docs/agent-memory/notebooks/architect.md` — this entry
+
+**Next actor:** main terminal → re-trace §9.8 fixture proof → dispatch dev-pdf-extractor MD-EXTRACT-9 → ops MD-DEPLOY-9 (single doc, full UUID `e71f845d`) → main-terminal live-verify → qa MD-QA-9 → po MD-EXIT.
+
+---
 
 ## MD-EXTRACT-8 — Root-Cause Rethink: Anchor Gap Oracle (2026-05-26T16:12Z) — DESIGN COMPLETE
 
