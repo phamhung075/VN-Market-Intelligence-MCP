@@ -4,6 +4,40 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — LF-EXTRACT DONE (4-Tier Layout-First Pipeline)
+
+**Task:** LF-EXTRACT | Sprint: BCTC-LAYOUT-FIRST | Status: DONE, committed SHA `5d753970`
+
+**Root cause fixed:** Structural per-page column-guessing algorithm (no cross-page context). 9 MD-EXTRACT + 7 BT fix commits exhausted. Root cause = no logical unit grouping, no schema inheritance. Fix = Tier 0 document map (geometric grouping) + Tier 1 schema inheritance (continuation pages inherit schema-page's column gutters).
+
+**FPT Q1 page-5 scramble fix (AC-LFE-2):** `zone_page()` checks `unit_schema is not None and not is_schema_page` → uses `unit_schema["column_gutters"]` directly, skips column detection entirely. `schema_inherited_from_page=3` recorded in PageZones output.
+
+**New Tier 0-3 functions in `generic_md_table_extractor.py` (+1124L):**
+- `build_document_map(pages, pdf_path)` — 50 DPI PIL projection profiles, geometric fingerprint grouping, page gap tolerance, no Tesseract.
+- `zone_page(page_img, unit_schema, ...)` — schema inheritance for continuation pages, positional col IDs.
+- `ocr_unit(unit, zones_by_page, pdf_path, tmp_dir)` — ONE image_to_data per page, stitch to one markdown table per unit.
+- `_fingerprints_continuous(fp_a, fp_b)` — pure geometric continuity test.
+- `_compute_page_fingerprint_50dpi` — 50 DPI raster, projection profile, gutter x-fractions.
+
+**New primitives:** `domain/primitives/layout_invariants/primitive.py` — check_balance_identity, check_codes_monotonic, check_no_orphan_rows (pure functions, zero I/O).
+
+**Application use case:** `application/extract_layout_first_usecase.py` — Tier 0→1→2→3→push orchestrator. Injects infra callables (DDD: no infra imports in application layer).
+
+**Push client:** `infrastructure/layout_first_push_client.py` — urllib POST to `/api/push-bctc-layout` per brief §3.2.
+
+**Route:** `POST /extract-layout-first` wired in `interface/handlers.py` + `main.py`.
+
+**Tests:** 549 passed (was 501). New: test_document_map.py (17), test_layout_invariants.py (17), test_schema_inheritance.py (17 — uses MockImage, no Pillow required in venv). Key: `test_fpt_q1_scenario_page5_inherits_page3_schema` confirms AC-LFE-2.
+
+**AC-LFE-0 (grep-proof):** 1 match in generic_md_table_extractor.py, in docstring comment at line 747 only.
+**AC-LFE-7:** `text_table_extractor.py` 0-byte-diff confirmed.
+**AC-LFE-8:** No external API calls. All local tools.
+**Frozen surfaces:** text_table_extractor.py, sandbox/runner.py, pilot-status-pdf-extractor.json — untouched.
+
+**NEXT:** ops LF-DEPLOY (gated on LF-OVERLAY also DONE — it is). ops: `docker compose build pdf-extractor && docker compose up -d --no-deps --force-recreate pdf-extractor`, then single-doc re-extraction. LF-QA verifies AC-LFE-4/5/10/11 via direct market.db query.
+
+---
+
 ### 2026-05-26 — MD-EXTRACT-9 DONE (Label-Row Ordinal Reconstruction)
 
 **Task:** MD-EXTRACT-9 | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED

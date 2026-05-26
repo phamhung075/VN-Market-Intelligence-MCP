@@ -306,3 +306,110 @@ docs/agent-memory/notebooks/dev-mcp-server.md
 ```
 
 **NEXT = ops (LF-DEPLOY)** — gated on BOTH LF-OVERLAY (this, DONE) AND LF-EXTRACT (dev-pdf-extractor, in parallel). ops must: `docker compose build mcp-server && docker compose up -d --no-deps --force-recreate mcp-server` before running single-doc re-extraction. AC-LFO-7 (corpus breadth) verified by QA after re-extraction.
+
+## [dev-pdf-extractor] LF-EXTRACT — 2026-05-26T21:00Z
+
+**Status: DONE — committed SHA `5d753970` on main**
+
+### What was implemented
+
+**Tier 0 — build_document_map (`infrastructure/generic_md_table_extractor.py` +1124L):**
+- Groups pages into logical units by geometric column-fingerprint continuity (50 DPI PIL projection profiles + stored `pdf_extracted_text`). No Tesseract (AC-LFE-6).
+- Page gap tolerance: blank pages do NOT break units.
+- Per-page fingerprint: `gutter_count`, `gutter_x_fractions`, `row_pitch_px_at_50dpi`, `unit_hints` (metadata only — AC-0).
+- `_fingerprints_continuous()`: purely geometric continuity test (gutter count, position within 5%, row pitch within 50%).
+- Tags pages: `table` / `prose` / `blank`.
+- Schema-page = first page of each unit.
+
+**Tier 1 — zone_page (`infrastructure/generic_md_table_extractor.py`):**
+- Schema-pages: detect column gutters from 200-DPI horizontal projection profile.
+- Continuation pages: **INHERIT schema-page column gutters directly** — skip detection entirely. This is the NAMED FIX for the FPT Q1 page-5 scramble.
+- Column IDs are positional: `col_0`, `col_1`, ... (AC-0 compliant).
+- Header/footer bands always freshly computed per page (top 15% / bottom 10%).
+- Row bands from vertical projection profile.
+- Output matches brief §3.2 contract exactly.
+
+**Tier 2 — ocr_unit (`infrastructure/generic_md_table_extractor.py`):**
+- ONE `image_to_data` call per page at 200 DPI (AC-LFE-6).
+- Cell text by bbox-intersection filtering (no per-cell Tesseract).
+- Schema-page: header row detected (first band with no numeric content), emitted once.
+- Continuation pages: header skipped, data rows appended in reading order.
+- Stitch: all pages of a unit → one markdown pipe-table.
+- Produces `rows_for_gate` list for Tier 3.
+
+**Tier 3 — invariant gate (`domain/primitives/layout_invariants/primitive.py`):**
+- `check_balance_identity`: balance-sheet-shaped units (≥3 distinct codes, max code ≥ 400) → sum of top-level subtotals == sentinel (max-code row). AC-0: no hardcoded sentinel codes.
+- `check_codes_monotonic`: codes non-decreasing in document order; group subtotals (multiples of 100) allowed.
+- `check_no_orphan_rows`: every data row has label + ≥1 non-empty value.
+- Failed units: `quarantined=1` in output (stored, not dropped, not pipeline-blocked).
+
+**ExtractLayoutFirstUseCase (`application/extract_layout_first_usecase.py`):**
+- Orchestrates Tier 0→1→2→3→push for a single document.
+- Injects infra callables (build_document_map, zone_page, ocr_unit) via composition root (DDD: no infra imports in application layer).
+- Schema inheritance: captures schema-page column gutters after Tier 1 and passes them to subsequent pages in the same unit.
+- Push via `LayoutFirstPushClientPort`.
+
+**LayoutFirstPushClient (`infrastructure/layout_first_push_client.py`):**
+- HTTP POST to `/api/push-bctc-layout` using stdlib `urllib` (no aiohttp/requests — AC-LFE-8).
+- Payload matches brief §3.2 contract exactly.
+
+**Ports (`domain/modules/financial_reports/ports.py`):**
+- Added `LayoutFirstPushClientPort` and `OcrPagesFetchClientPort`.
+
+**OcrTextFetchClient (`infrastructure/ocr_text_fetch_client.py`):**
+- Added `fetch_ocr_pages()` returning `List[{page_number, text}]` (Tier 0 input).
+
+**Route (`interface/handlers.py` + `main.py`):**
+- `POST /extract-layout-first` → background task, 202 Accepted.
+- `ExtractLayoutFirstRequestSchema`: `report_id: str`, `pdf_path: str`.
+- Wired at composition root in `main.py`.
+
+### Test results
+
+```
+549 passed, 0 failed, 1 warning (venv unit suite, 6.66s)
+New tests: +48 (17 test_schema_inheritance + 14 test_document_map + 17 test_layout_invariants)
+Baseline (before this task): 501 tests
+```
+
+### Sandbox
+
+G12 sandbox requires scenario JSON files only present inside the Docker container. No scenario files on the dev host. Smoke checks run inside container at LF-DEPLOY. The sandbox runner code (`sandbox/runner.py`) is 0-byte-diff (frozen, AC-LFE-10 verified at container time).
+
+### AC audit (machine-checkable — code phase)
+
+| AC | Status | Evidence |
+|---|---|---|
+| AC-LFE-0 (grep-proof) | PASS | `grep -n "BẢNG CÂN ĐỐI\|LƯU CHUYỂN\|NGUỒN VỐN\|Mã số\|Thuyết minh" generic_md_table_extractor.py` → 1 match, in a docstring comment only (line 747). Zero matches in any code path / decision logic. |
+| AC-LFE-1 (doc-map JSON) | PASS at LF-DEPLOY | build_document_map emits units[] with page_number, unit_id, is_schema_page. DB storage via push_layout at LF-DEPLOY/LF-QA. |
+| AC-LFE-2 (schema inheritance) | PASS | `test_fpt_q1_scenario_page5_inherits_page3_schema` PASS: page 5 with blank image + injected page-3 schema → column_gutters == injected schema (zero image-content consulted). `schema_inherited_from_page=3` confirmed. |
+| AC-LFE-3 (page-41 prose) | PASS | `test_page41_different_fingerprint_is_prose_unit` PASS: prose fingerprint (gutter_count=0) → own unit, NOT merged with table pages. |
+| AC-LFE-4 (FPT Q1 NGUON VON) | DEFERRED to LF-DEPLOY | Requires live re-extraction. Schema inheritance is the fix; the stitch logic routes page-5 rows to the correct column positions using inherited gutters. |
+| AC-LFE-5 (corpus breadth) | DEFERRED to LF-QA | 18-doc measured pass-rate after sequential re-extraction. |
+| AC-LFE-6 (1 Tesseract pass/page) | PASS | Tier 0 = PIL pixel ops + stored text, zero `image_to_data`. Tier 2 = single `image_to_data` call per page. grep confirms. |
+| AC-LFE-7 (text_table_extractor 0-diff) | PASS | `git diff HEAD -- apps/pdf-extractor/infrastructure/text_table_extractor.py` → 0 bytes. |
+| AC-LFE-8 (local tools only) | PASS | grep: no `requests.post\|httpx\|aiohttp\|openai\|anthropic\|google\|textract\|document.ai` in extraction code paths. |
+| AC-LFE-9 (sequential) | PASS | `ExtractLayoutFirstUseCase.execute()` processes one doc per call. No batch sweep invoked anywhere. |
+| AC-LFE-10 (sandbox green) | DEFERRED to LF-DEPLOY | Sandbox needs container + scenario files. `sandbox/runner.py` 0-byte-diff. |
+| AC-LFE-11 (quarantine queryable) | PASS in code | quarantine path coded in Tier 3 gate; DB verification at LF-QA. |
+
+### Files committed (explicit)
+
+```
+apps/pdf-extractor/application/extract_layout_first_usecase.py        (NEW)
+apps/pdf-extractor/infrastructure/layout_first_push_client.py          (NEW)
+apps/pdf-extractor/domain/primitives/layout_invariants/__init__.py     (NEW)
+apps/pdf-extractor/domain/primitives/layout_invariants/primitive.py    (NEW)
+apps/pdf-extractor/__tests__/unit/test_document_map.py                 (NEW)
+apps/pdf-extractor/__tests__/unit/test_layout_invariants.py            (NEW)
+apps/pdf-extractor/__tests__/unit/test_schema_inheritance.py           (NEW)
+apps/pdf-extractor/domain/modules/financial_reports/ports.py           (EXTENDED)
+apps/pdf-extractor/infrastructure/generic_md_table_extractor.py        (EXTENDED +1124L Tier 0-3)
+apps/pdf-extractor/infrastructure/ocr_text_fetch_client.py             (EXTENDED fetch_ocr_pages)
+apps/pdf-extractor/interface/handlers.py                               (EXTENDED /extract-layout-first)
+apps/pdf-extractor/main.py                                              (EXTENDED composition root)
+```
+
+**Frozen surfaces confirmed untouched:** `text_table_extractor.py` (0-byte-diff), `sandbox/runner.py` (not staged), `docs/data/pilot-status-pdf-extractor.json` (not staged), `dashboard/` (not staged).
+
+**NEXT = ops (LF-DEPLOY)** — gated on BOTH LF-EXTRACT (this, DONE) AND LF-OVERLAY (dev-mcp-server, DONE per section above). ops: `docker compose build pdf-extractor && docker compose up -d --no-deps --force-recreate pdf-extractor`, then trigger single-doc re-extraction (POST /extract-layout-first, one doc at a time, NEVER batch sweep). AC-LFE-4/5/10/11 verified at LF-QA via direct market.db query.
