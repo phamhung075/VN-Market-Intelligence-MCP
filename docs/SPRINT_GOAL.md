@@ -1,4 +1,73 @@
+# Sprint PEK-INTEGRATE — Re-engine apps/pdf-extractor on PDF-Extract-Kit (OpenDataLab), CPU-only, 8GB-safe
+
+**BUILD STATUS 2026-05-26T20:37Z — OPEN (PO kickoff from an EXPLICIT USER DIRECTIVE — full autonomy, no further user approval needed to plan/dispatch).** User decided to "rewrite apps/pdf-extractor to use this sub repo" and explicitly picked **Architect-led** integration over a direct in-place rewrite. The pristine upstream engine is already cloned at `apps/pdf-extractor/PDF-Extract-Kit` (89MB, depth-1, retains its own `.git`) — DO NOT re-clone, DO NOT modify a single line of it (it is published upstream code; treat it as a library/engine only).
+
+**WHY NOW (candidate fix, not greenfield):** the current `text_table_extractor.py` / `generic_md_table_extractor.py` / `ocr_adapter.py` extraction path is KNOWN-BROKEN — it OCRs each page independently then GUESSES columns by clustering number-token x-positions, and SCRAMBLES multi-column continuation pages with no header (live `/api/bctc-inspect` table garbage: 94 junk rows + 44 orphan values of 150 — memory `project_bctc_table_sprint` BCTC-TABLE-3, REOPENED 2026-05-25 + `project_bctc_ocr_psm_drift`). PDF-Extract-Kit's **layout-aware** table parsing (DocLayout-YOLO layout detection → table-region detection → table-recognition model into structured rows) is the intended REPLACEMENT for the broken dual-path OCR/line-parser. This is the engine the prior in-house LAYOUT-FIRST rewrite was approximating by hand.
+
+**RELATIONSHIP TO Sprint BCTC-LAYOUT-FIRST (SUPERSESSION — binding, read carefully):** Sprint BCTC-LAYOUT-FIRST (immediately below) was an IN-HOUSE attempt to hand-build a layout-first engine in pure local PIL/OpenCV/Tesseract, explicitly keeping "heavy local CV (PP-Structure/Table-Transformer/img2table) as fallback only." The user has now chosen the heavy-local-CV path directly: **PDF-Extract-Kit IS that engine.** Therefore:
+- **PEK-INTEGRATE SUPERSEDES the ENGINE LAYER of BCTC-LAYOUT-FIRST** (`LF-EXTRACT` — the Tier 0-3 hand-built `generic_md_table_extractor.py` redesign). The architect decides in the brief whether the PEK engine fully replaces or wraps the hand-built tiers; the user's privacy guardrail (LOCAL ONLY, no off-machine page images / cloud VLM) is PRESERVED — PDF-Extract-Kit + all its models run fully on-host, so this is compatible.
+- **PEK-INTEGRATE PRESERVES the UX LAYER of BCTC-LAYOUT-FIRST** (`LF-OVERLAY` — the geometric-zone overlay toggle on `/api/bctc-inspect`). That overlay is engine-agnostic: PDF-Extract-Kit's layout-detection output (bounding boxes per zone) feeds the same `bctc_page_zones` / `bctc_layout_units` overlay contract. The architect SHOULD reuse the LF-OVERLAY contract (brief `2026-05-26-bctc-layout-first-pipeline.md` §3) for PEK's layout bboxes rather than reinventing it.
+- **HANDOFF TO THE PARALLEL SESSION:** if the BCTC-LAYOUT-FIRST owner session is still live, its `LF-EXTRACT`/`LF-DEPLOY`/`LF-QA` chain is PAUSED pending PEK-INTEGRATE's architect brief (which reconciles the two). `LF-OVERLAY` work, if already in flight, is NOT wasted — it is absorbed. The structured `bctc_table_rows` path (`text_table_extractor.py`, 0-byte-diff, SSOT for analyzable figures) stays UNTOUCHED + UNREGRESSED under BOTH sprints.
+
+## Vision
+
+apps/pdf-extractor extracts CORRECT, layout-aware financial-statement tables from EVERY BCTC PDF by delegating table detection + table recognition to the published PDF-Extract-Kit engine (used pristine, as a library), running CPU-only and fully on-host within the 8GB Docker ceiling, WITHOUT re-triggering host kernel-panics and WITHOUT breaking the existing FastAPI `/api` PULL contract that mcp-server depends on.
+
+## Binding Session Goal (verbatim, ARMED + UNMET)
+
+> "rewrite apps/pdf-extractor to use this sub repo" — and (carried from BCTC-LAYOUT-FIRST, still ARMED) "table on pdf on all bctc need correct extract text and convert to md style".
+
+Meaning: PDF-Extract-Kit becomes the extraction engine; live BCTC rows come out CLEAN across the multi-doc corpus. NOT DONE until (a) live BCTC rows are clean (the BCTC-TABLE-3 bar) verified by DIRECT market.db query (the endpoint CAN be stale — never the arbiter), (b) the fleet stays within the 8GB Docker cap with NO kernel panic under load, AND (c) USER gives verbal G9 sign-off. 5 prior false-greens on this surface; NOT-RUN panels are not green.
+
+## Scope
+
+**IN:**
+- Architect technical blueprint for embedding PDF-Extract-Kit as a pristine engine behind the existing FastAPI interface (brief ONLY → `docs/architecture-briefs/`).
+- dev-pdf-extractor: wire the engine in as the table-extraction path; keep `/api` contract intact; keep `text_table_extractor.py` structured `bctc_table_rows` path 0-byte-diff/unregressed (augment, not replace) unless the architect explicitly routes it through PEK with a migration plan.
+- Trimmed task set (architect-confirmed): `layout_detection` + `table_parsing` + `ocr` ONLY.
+- Docker build hygiene: `.dockerignore` + `apps/pdf-extractor/.gitignore` so the 89MB pristine repo + its `.git` + multi-GB model weights are NOT naively `COPY . .`'d into the image (current Dockerfile DOES `COPY . .` and current `.dockerignore` does NOT exclude `PDF-Extract-Kit/` — this WILL bloat the image as-is).
+- Model-weight strategy: where weights live, how cached, runtime-download vs baked-in.
+- ops REBUILD (not restart) of the pdf-extractor container after dev change.
+
+**OUT:**
+- `formula_detection` + `formula_recognition` (UniMERNet ~1.4GB — heaviest model, NOT needed for financial-statement tables). SKIP.
+- ANY edit to files inside `apps/pdf-extractor/PDF-Extract-Kit/` (pristine upstream — read-only).
+- GPU variant / `paddlepaddle-gpu` / `lmdeploy` (impossible on this NVIDIA-free Apple-Silicon host).
+- Cloud/off-machine OCR or VLM (privacy guardrail carried from BCTC-LAYOUT-FIRST — local only).
+- Batch backfill / `run_bctc_batch_sweep` (host kernel-panic risk — single-doc sequential only).
+- mcp-server market.db write-path changes beyond the (preserved) LF-OVERLAY zone-render contract.
+
+## HARD CONSTRAINTS (non-negotiable — these GATE the architecture; architect must address each with a RAM number)
+
+1. **CPU-ONLY.** Host = 16GB Mac, Apple Silicon, NO NVIDIA GPU. Use `requirements-cpu.txt` as the STARTING point — but NOTE (verified by PO): even `requirements-cpu.txt` still pulls `unimernet==0.2.1` (~1.4GB formula model, OUT of scope) and `struct-eqtable` (the StructEqTable table model = an InternVL2-1B foundation model, ~2GB+ on CPU). The architect MUST trim further than the stock CPU file: drop unimernet entirely, and CHOOSE the table-recognition model deliberately — PDF-Extract-Kit offers `PaddleOCR+TableMaster` (lighter CNN) vs `StructEqTable` (1B VLM); the current `configs/table_parsing.yaml` defaults to StructEqTable, which is the single biggest RAM risk on an 8GB-capped CPU host. Architect picks + justifies with a RAM budget.
+2. **8GB Docker cap is a HARD ceiling.** Memory `project_host_memory_panic`: this Mac kernel-panics (watchdog timeout) under full fleet load from swap exhaustion; Docker capped 8GB on 2026-05-25. The integration MUST NOT risk re-triggering kernel panics. Architect must produce an EXPLICIT per-option RAM budget (model resident set + inference peak + FastAPI base + concurrent-fleet headroom) and confirm it fits under 8GB while the rest of the fleet runs.
+3. **Keep the FastAPI `/api` contract intact.** mcp-server PULLS extractions via the existing `/api` endpoints (PULL-based pipeline, memory `reference_pdf_ocr_vps_architecture`). Do NOT break push/pull BCTC pipeline.
+
+## Architect MUST DECIDE in the brief (each with a RAM number)
+
+- **(a) Trimmed task set.** RECOMMEND `layout_detection` + `table_parsing` + `ocr` ONLY; SKIP `formula_detection`/`formula_recognition`. Configs in `PDF-Extract-Kit/configs/`. Architect also picks the table model (TableMaster vs StructEqTable) per the 8GB budget.
+- **(b) Topology: in-process (inside the existing always-on 8GB container) vs a separate ON-DEMAND worker container** (spun up per-job, given a higher transient mem ceiling, torn down after). Pick based on the 8GB budget + the kernel-panic history. An always-resident multi-GB model inside the shared container is the riskiest option; an on-demand torn-down worker bounds peak RSS.
+- **(c) Clone embedding strategy:** git submodule vs vendored+gitignored vs pip-install-from-path — AND the Docker-build implication. Current Dockerfile `COPY . .` + current `.dockerignore` (does NOT list `PDF-Extract-Kit/`) would copy the 89MB pristine repo + its `.git` into the image. Decide `.dockerignore` / `apps/pdf-extractor/.gitignore` handling so the pristine repo + multi-GB model weights are managed correctly. Model weights download at runtime from HF/ModelScope — decide WHERE they live (named volume? baked layer? runtime cache dir?) + how cached so they download ONCE, not per-build/per-run.
+- **(d) Lazy model loading + per-process memory caps** — models load on first use, not at container boot; explicit per-process RSS cap so a runaway inference cannot exhaust swap.
+
+## Success Metric (DoD — do NOT close early; scale-pilot bar applies, memory `feedback_scale_pilot_done_bar`)
+
+1. Live BCTC rows are CLEAN across the multi-doc corpus (the BCTC-TABLE-3 bar) — measured by DIRECT market.db query, never the (stale-capable) endpoint; NOT-RUN panels are not green; measured corpus pass-rate, not one doc.
+2. The fleet stays within the 8GB Docker cap with NO kernel panic under load — ops verifies resident + peak RSS during a real single-doc extraction with the rest of the fleet running.
+3. `/api` PULL contract unbroken (mcp-server still pulls extractions end-to-end); structured `bctc_table_rows` path unregressed (unless architect explicitly migrates it with a plan).
+4. NOT A SINGLE LINE of `apps/pdf-extractor/PDF-Extract-Kit/` was modified (grep/git-diff proof: that subtree's own `.git` shows zero local commits/diffs).
+5. ops REBUILT (not restarted) the pdf-extractor container after the dev change (memory `feedback_rebuild_after_dev_change`).
+6. USER verbal G9 sign-off. Goal stays ARMED until then.
+
+## Owner Chain (dev sprint, architect-led)
+
+BA (REQ decomposition + PO approval gate) → architect (PEK-DESIGN — technical blueprint + the 4 (a)-(d) decisions w/ RAM budget + clone/Docker strategy + LF-OVERLAY reconciliation, brief ONLY) → dev-pdf-extractor (SOLE implementer of the `apps/pdf-extractor/` zone — wire engine, keep `/api` contract, Docker hygiene, microservice docs) → qa (live clean-rows via direct market.db + RAM/no-panic verification — tier-3 real scenarios, no NOT-RUN green) → ops (REBUILD + force-recreate, single-doc sequential re-extract) → PO (PEK-EXIT, independent live re-verify) → USER (verbal G9). **Zone:** `apps/pdf-extractor/` (single-zone for code — dev-pdf-extractor is sole owner) + `docs/architecture/microservice/pdf-extractor/`; architect writes ONLY `docs/architecture-briefs/`. If the architect determines the overlay-render half genuinely needs mcp-server changes, that half splits to dev-mcp-server and the zone becomes `multi` — architect makes that call in the brief.
+
+---
+
 # Sprint BCTC-LAYOUT-FIRST — Document-Structure-First BCTC Table Extraction + Geometric Zone Review Overlay
+
+> **SUPERSESSION NOTICE (2026-05-26T20:37Z, PO):** The ENGINE layer of this sprint (`LF-EXTRACT` — hand-built Tier 0-3 `generic_md_table_extractor.py`) is SUPERSEDED by Sprint PEK-INTEGRATE (above), per explicit user directive to re-engine on PDF-Extract-Kit. The UX layer (`LF-OVERLAY` — geometric-zone overlay) is PRESERVED and absorbed by PEK-INTEGRATE (engine-agnostic). `LF-EXTRACT`/`LF-DEPLOY`/`LF-QA` are PAUSED pending PEK-INTEGRATE's architect brief, which reconciles the two. The structured `bctc_table_rows` path stays untouched under both. See PEK-INTEGRATE § "RELATIONSHIP TO Sprint BCTC-LAYOUT-FIRST".
 
 **BUILD STATUS 2026-05-26T18:07Z — OPEN (PO kickoff from a multi-round design brainstorm CO-AUTHORED WITH THE USER; user has given the go to build).** This sprint is the architect-grade ROOT-CAUSE RETHINK mandated by the recurring-bug guard: `generic_md_table_extractor.py` carries 9 `MD-EXTRACT-*` fix/feat commits and `text_table_extractor.py` carries 7 `BT*` commits — the per-page-OCR-then-cluster-columns approach is overfit to a single doc (FPT Q4 2025, the ONLY doc ever run through the bbox engine, row id=11) and SCRAMBLES multi-column continuation pages because it loses cross-page document context. The prior Sprint BCTC-MD-TABLE (superseded below) proved that approach PASSES on FPT Q4 but does NOT generalize — exactly the failure mode the user rejected. **This sprint REPLACES the column-guessing engine with a LAYOUT-FIRST / DOCUMENT-STRUCTURE-FIRST pipeline (Tier 0→3)** and adds a **user-requested geometric-zone review overlay** on `/api/bctc-inspect` so the user can validate the GEOMETRY (easy) before trusting OCR text (hard) — the antidote to the false-green cycle (5 prior false-greens). **Owner chain (dev sprint):** BA (REQ decomposition) → architect (LF-DESIGN — root-cause rethink + 4-tier blueprint + service-boundary split, brief only) → dev-pdf-extractor (Tier 0-3 layout-first engine + zone-geometry JSON emit) + dev-mcp-server (zone-overlay toggle render on /api/bctc-inspect) → ops (single-doc re-extract + rebuild/recreate, host-safe sequential) → qa (Tier-3 invariant gate across multi-doc corpus via DIRECT market.db query) → PO (LF-EXIT, live multi-doc row-by-row) → USER (verbal G9). **Goal record + ACs:** this file + `docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md` (BA + architect append). **Zone:** extraction + zone-geometry JSON = `apps/pdf-extractor/` (dev-pdf-extractor, sole owner; redesign target = `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py`) + `docs/architecture/microservice/pdf-extractor/`; inspector zone-overlay toggle render = `apps/mcp-server/` (dev-mcp-server, sole market.db write-owner; target = `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts`); architect writes ONLY `docs/architecture-briefs/`. This is a **`multi`-zone sprint — architect MUST split the contract at the pdf-extractor↔mcp-server service boundary.** **WIP:** general dev lane (post-pilot correctness/feature build); does NOT consume scale-pilot fleet cap.
 

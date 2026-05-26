@@ -1,34 +1,31 @@
 # PO Notebook
 
-**Cycle:** dev-team triage — residual non-PDF backlog — 2026-05-26T19:43Z.
-**Last update:** 2026-05-26T19:43Z
-**Status:** Returned BATCH of 2 dispatched + 4 queued/parked. BCTC-LAYOUT-FIRST untouched (parallel session owns it). Files UNSTAGED — main terminal commits.
+**Cycle:** Sprint kickoff PEK-INTEGRATE (user directive) — 2026-05-26T20:37Z.
+**Last update:** 2026-05-26T20:42Z
+**Status:** Sprint PEK-INTEGRATE OPEN. PEK-BA dispatched (first hop). SUPERSESSION of BCTC-LAYOUT-FIRST engine layer recorded in both SPRINT_GOAL + TASKS. Files UNSTAGED — main terminal commits.
 
 ---
 
-## 2026-05-26T19:43Z — dev-team triage (Step 1), parallel-session-safe
+## 2026-05-26T20:37Z — PEK-INTEGRATE kickoff (explicit user directive)
 
-**Spawn context:** dev-team Step-1 triage. A PARALLEL session owns active sprint BCTC-LAYOUT-FIRST (LF-FIX done @signal 19-36-19Z → next LF-DEPLOY→LF-QA→LF-EXIT). HARD EXCLUSIONS: no `apps/pdf-extractor/`, no `LF-*`, no task needing a Docker rebuild NOW (concurrent rebuild w/ their LF-DEPLOY risks 16GB host panic).
+**Directive:** re-engine `apps/pdf-extractor` on PDF-Extract-Kit (OpenDataLab), Architect-led. Clone already at `apps/pdf-extractor/PDF-Extract-Kit` (PRISTINE — zero edits). CPU-only, 8GB Docker cap, keep `/api` PULL contract.
 
-**Verified before batching (not from context blindly):**
-- system-map.json mcp-server tools array = 125 (jq) vs live 146 → SSOT-REFRESH real.
-- project-stats cronJobCount = 68 = live `grep -c cron.schedule startScheduler.ts` → NOT stale; context claim outdated. Only system-map needs refresh.
-- Risk-flag targets exist: `clients.ts` (R-MED), macro Go handlers (R-HIGH), `docs/ARCHITECTURE.md` (R-LOW). All code/test/doc — no rebuild to author.
-- Stale branch `task/1972` = 1 unmerged commit `0d918f08` (carries ohlcvBackfill.ts + 159L test) → CLEAN→qa (don't auto-discard).
-- pipeline-state: LF-DEPLOY rebuilds pdf-extractor ONLY; mcp-server unchanged → CLIENTS-TYPE has no rebuild collision.
+**COLLISION FOUND + RESOLVED:** Sprint BCTC-LAYOUT-FIRST (parallel session) was mid-flight hand-building a local PIL/OpenCV/Tesseract layout-first engine for the SAME zone + SAME root problem. PDF-Extract-Kit IS the "heavy local CV" that sprint explicitly deferred. As PO: **PEK SUPERSEDES the BCTC-LAYOUT-FIRST ENGINE layer (LF-EXTRACT)**, **PRESERVES the UX overlay (LF-OVERLAY, engine-agnostic — PEK layout bboxes feed the same overlay contract)**. LF-EXTRACT/LF-DEPLOY/LF-QA PAUSED pending PEK architect brief. Recorded SUPERSESSION NOTICE in BOTH `docs/SPRINT_GOAL.md` + `docs/TASKS.md` so the parallel session sees it. `bctc_table_rows` (`text_table_extractor.py`, 0-byte-diff) untouched under both.
 
-**BATCH returned (priority reliability→coverage→UX→arch, WIP≤2):**
-1. DRIFT-3 (architect-design, cross-service) — recurring-bug-escalation guard, deploy-drift class=2 instances, no rebuild to design. SLOT 1.
-2. MACRO-CONTRACT (dev-macro-indicators) — R-HIGH body-contract test for /macro/snapshot keyed-object (the contract that 500'd live at frontend close). SLOT 2. rebuild DEFERRED.
-- QUEUED: CLIENTS-TYPE (dev-mcp-server, R-MED), SSOT-REFRESH (cross-service, 125→146), CLEAN-1972 (qa). PARKED: ARCH-DOC-DRIFT (R-LOW), MACRO-VNINDEX-DATA-GAP (defer-under-load), NEWS-INGEST-2c (cosmetic), DRIFT-2 residual (kinh-dich pilot).
+**Verified before planning (not assumed):**
+- Clone present, 89MB, own `.git`, `requirements-cpu.txt` + 8 configs.
+- `requirements-cpu.txt` STILL pulls `unimernet` (~1.4GB, OUT) + `struct-eqtable` → NOT 8GB-safe as-is; architect trims further.
+- `configs/table_parsing.yaml` defaults to StructEqTable (InternVL2-1B VLM) = biggest RAM risk; README offers lighter PaddleOCR+TableMaster. Architect picks.
+- `apps/pdf-extractor/.dockerignore` does NOT exclude `PDF-Extract-Kit/`; Dockerfile `COPY . .` → naive build bloats image w/ 89MB pristine repo + its `.git`. (c) decision must fix.
 
-**Recommended dispatch order:** DRIFT-3 (architect lane, no dev-WIP) ‖ MACRO-CONTRACT (dev lane) in parallel; then CLIENTS-TYPE → SSOT-REFRESH → CLEAN-1972 as slots free. Every MAINT task `baseline_pass` + rebuild deferred to a later serialized ops hop.
+**Wrote:** SPRINT_GOAL § PEK-INTEGRATE (vision/scope/3 hard constraints/4 architect decisions w/ RAM mandate/DoD/owner chain) + supersession header on BCTC-LAYOUT-FIRST; TASKS § PEK-INTEGRATE (7 tasks PEK-BA→PEK-EXIT) + supersession notice; `docs/handoffs/TASK_PEK-INTEGRATE.md` (PO-verified ground truth + architect-deferred decisions). All UNSTAGED.
 
-**Wrote:** docs/TASKS.md — DRIFT-3 row DISPATCHED + new `## MAINT` board (5 rows + parked list). UNSTAGED. Did NOT touch pipeline-state, pilot-status-*, or any LF-* field.
+**Dispatch:** NEXT = ba | write `docs/REQ_PEK-INTEGRATE.md` (PEK-BA). Then PO approval gate → architect PEK-DESIGN. Sprint umbrella lock: task_claim deferred (MCP lock guards concurrent dispatch which main terminal serializes anyway; supersession notices are the real coordination).
 
 ---
 
 ## Carry-over
-- BCTC-LAYOUT-FIRST owned by parallel session — do NOT re-triage or touch its state.
-- MAINT batch awaits main-terminal dispatch + commit. If MACRO-CONTRACT or CLIENTS-TYPE lands, a SINGLE serialized ops rebuild (NOT concurrent w/ LF-DEPLOY) is required before close.
-- DRIFT-3 closes on its own architect+QA deliberate-drift proof (DRIFT-CLOSE note).
+- PEK-BA spec returns to PO for approval gate (`po/review-ba-spec.md`) before architect PEK-DESIGN unblocks.
+- Architect must RECONCILE PEK with BCTC-LAYOUT-FIRST: decide engine REPLACES vs WRAPS hand-built tiers; reuse LF-OVERLAY contract `2026-05-26-bctc-layout-first-pipeline.md` §3 for PEK layout bboxes; confirm `bctc_table_rows` zero-collision.
+- DoD = scale-pilot bar: live clean rows via DIRECT market.db + 8GB/no-panic + pristine-repo-untouched git-diff proof + ops REBUILD + USER verbal G9. 5 prior false-greens.
+- If parallel BCTC-LAYOUT-FIRST session is live, its LF-EXTRACT chain is paused — do not let both edit pdf-extractor concurrently.
