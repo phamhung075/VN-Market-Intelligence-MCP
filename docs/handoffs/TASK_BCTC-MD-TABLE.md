@@ -1793,3 +1793,50 @@ ops MD-DEPLOY-9 (`a448aa84`) returned: new code live in rebuilt image (`_attach_
 3. Balance total line carries an OCR-mismatched label (`1, Nguồn kinh phí 431`) — balance geometry "mostly works"; identity VALUE present satisfies the non-regress gate.
 
 **NEXT:** qa MD-QA-9 (independent live re-read of row id=11 — guard against false-green #5) → po MD-EXIT + user verbal G9 sign-off. Goal STILL ARMED until user confirms (income labels now clean on live; segment ✅; balance ✅ non-regress; income values ✅ non-regress).
+
+---
+
+## [PO] MD-EXIT — BCTC-MD-TABLE CLOSED (pending user G9 sign-off) (2026-05-26T17:30Z)
+
+I (PO) read the full task ladder + the LIVE-VERIFY-9 (main-terminal, this file ↑) and MD-QA-9 (qa notebook, committed `6821d853`) records. I make NO code changes; I record the product-level acceptance against **Decision D** + the sprint Success Metric. This is a TASK close-out **within the already-SCALED pdf-extractor pilot** — NOT a new pilot scale decision; no `pilot-status-*.json` touched.
+
+### Chain (verifiable, end-to-end)
+
+| Step | Owner | Evidence | Verdict |
+|---|---|---|---|
+| MD-EXTRACT-9 design (brief §9.x) | architect | `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md §MD-EXTRACT-9` — diagnostic gate on LIVE OCR tokens (single page, no batch): root cause = `_attach_labels_ordinal` 27px y-band spans 1.5× the 36px label pitch → 2 label lines fuse into one rank | DESIGN COMPLETE |
+| §9.8 design re-trace | main-terminal | independent re-trace vs LIVE code; all symbols/integration points confirmed; fixture arithmetic re-traced by hand | APPROVED (binding FLAGS A–E) |
+| MD-EXTRACT-9 impl | dev-pdf-extractor | commit `7e6bff6a` — 3 NEW fns (`_cluster_text_into_label_lines`, `_exclude_pre_data_label_lines`, `_attach_labels_by_rank`) + 2 constants; old `_attach_labels_ordinal` 0-diff (FLAG-A honored); 466 unit tests pass (main-terminal .venv re-run) | APPROVED, committed |
+| MD-DEPLOY-9 | ops | commit `a448aa84` — container rebuilt, new code proven live (`_attach_labels_by_rank`×3, `_LABEL_LINE_GAP_PX`×7), single FPT doc `e71f845d-…` re-extracted → `bctc_md_tables` row **id=11** (extracted_at 2026-05-26 17:21:28 UTC, after rebuild) | DEPLOYED |
+| LIVE-VERIFY-9 | main-terminal | direct `market.db` read of row id=11 `md_tables_json` (NOT inspect endpoint) — all **5 binding ACs PASS** | PASS |
+| MD-QA-9 | qa | independent live re-read of row id=11; all **12 AC/scope gates PASS**; notebook committed `6821d853` (guard against false-green #5) | PASS |
+
+### Product-level acceptance vs Decision D (binding)
+
+**ACCEPTED.** The generic table-detection → markdown-presentation path satisfies all three Decision-D legs on LIVE DB evidence (row id=11), from a SINGLE generic code path with NO BCTC-specific semantics:
+
+- **D-(1) ZERO per-table hardcoded constants — AC-0 grep-clean ✅.** qa-attested: 11 `segment`/BCTC string matches in the new module are all in comments/docstrings, ZERO in branching logic. The detector is geometry/structure-driven (column-anchor detection, y-band/line clustering, ordinal rank pairing), not balance-sheet line parsing. AC-3F: `text_table_extractor.py` 0-byte diff (the hardcoded legacy path is untouched — AUGMENT, not replace, per Decision A).
+- **D-(2) Generic across ALL THREE BCTC table geometries from the SAME path ✅.** Proven on live row id=11:
+  - **Narrow balance sheet** (table[7]) — balance identity `88.089.621.779.862` present; codes/labels/values/priors columnar.
+  - **Wide segment-matrix "Báo cáo bộ phận"** (table[17]) — 3 segment revenues `35.381.667 / 9.092.934 / 18.701.876` on ONE pipe-row in 3 DISTINCT cells (segments-as-columns).
+  - **Dense income statement** (table[8]) — the headline fix: row-0 = clean `Doanh thu bán hàng và cung cấp dịch vụ` ↔ `20.258.866.135.395`; row-1 = SEPARATE `Các khoản giảm trừ` (code 02) ↔ `33.415.777.986`; the 4 period value columns columnar. The income-statement label-interleave defect (5th attempt; prior 4 were FALSE-GREENS) is CONFIRMED FIXED on live — no ordinal drift, no count-mismatch escape (FLAG-C cleared).
+- **D-(3) OCR-as-markdown live ✅.** Each detected table renders as a markdown pipe-table from the OCR token stream; surfaced via the inspector md path. balance_pass / fixture-green alone was NOT the gate — main terminal + qa BOTH independently read LIVE `market.db` (direct bun:sqlite, not the stale-able inspect endpoint).
+
+**Why this clears the false-green discipline:** the gate arbiter was the LIVE direct-DB render of the single re-extracted doc (NEVER a batch sweep, NEVER fixture-only), independently re-read by TWO parties (main-terminal LIVE-VERIFY-9 + qa MD-QA-9). The fixtures are live-substrate-derived with an old-logic-reproduces-the-bug fidelity test (FLAG-B honored). This is exactly the protocol that the prior 4 false-greens lacked.
+
+### Accepted out-of-scope known limitations (NON-BLOCKING, DEFERRED — NOT part of this task's done-bar)
+
+These are NOT regressions and do NOT block MD-EXIT. The table STRUCTURE is correct; the binding ACs are met. Logged as accepted follow-ups for a future, separate task — they were never in scope for BCTC-MD-TABLE (whose done-bar is generic detection + correct geometry/label-pairing, not pixel-perfect OCR or dense-row code-column isolation):
+
+1. **Code-column absorption on dense rows** — on some dense income rows the dual interspersed code columns are partly absorbed into the label cell (e.g. `... 10 25`, `... 10 11 25 26`). Characteristic of this table's interspersed-code geometry; pre-existing, not introduced by MD-EXTRACT-9. Deferred.
+2. **Tesseract char-level OCR glitches** — local-OCR pixel-recognition misreads (`thuần`→`thưần`, `lãi vay`→`Idi vay`, `Chi phí`→`Chỉ phí`; balance total line carries an OCR-mismatched label). These are local-Tesseract limits (privacy-mandated, no cloud OCR), NOT a table-detection / md-conversion defect. Deferred.
+
+### Closure status — PENDING USER VERBAL G9 SIGN-OFF
+
+The binding session goal requires USER confirmation. The full agent chain has PASSED on live evidence and I record product-level acceptance of Decision D above — but **I do NOT declare the session goal cleared myself.** Per the project's trust-verification + scale-pilot-done-bar discipline, final closure is the user's verbal G9 sign-off on the live rendered income statement (clean label↔value pairing for all three geometries).
+
+**Goal remains ARMED until the user confirms.** No further dev/architect dispatch is warranted — the income-label defect is fixed and the deferred items are out of scope. If the user G9-rejects on the deferred OCR/code-column items, those become a NEW scoped task (not a reopen of this done-bar).
+
+Files left UNSTAGED (this handoff edit + po notebook) — main terminal commits.
+
+**NEXT:** user verbal G9 sign-off → goal cleared. (PO does not self-clear.)
