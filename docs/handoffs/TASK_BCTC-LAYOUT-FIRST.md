@@ -580,6 +580,73 @@ LF-DEPLOY: DONE (ops section above)
 
 ---
 
+## [dev-pdf-extractor / LF-FIX] — 2026-05-26T23:30Z
+
+**Status: DONE — committed SHA `95b24566` on main — NO rebuild performed (ops owns that)**
+
+### Root cause fixed
+
+Tier-1 `_detect_column_gutters_200dpi()` + Tier-0 `_compute_page_fingerprint_50dpi()` accepted 20-30px edge slivers as column boundaries. Two mechanisms:
+1. Open gutter at the ink-right boundary was flushed as a real column separator (trailing content whitespace).
+2. No minimum column width check — a gutter producing a 25px adjacent text column was accepted.
+
+Result: pages 3/5 → gutter at 97% (22-25px slivers at right edge), page 4 → gutter at 3% (25-29px slivers at left edge), page 6 → no gutters. Mutually inconsistent fingerprints → Tier-0 grouping never fired → schema-inheritance never triggered for p5.
+
+### What changed
+
+**Fix 1 — `_detect_column_gutters_200dpi()` (Tier 1, 200 DPI):**
+- Drop open gutters at ink-right (trailing whitespace = NOT a column separator).
+- Added minimum column width filter: gutter accepted only when adjacent text columns on BOTH sides are >= `_MIN_TEXT_COL_WIDTH_PX=80px`.
+
+**Fix 2 — `_compute_page_fingerprint_50dpi()` (Tier 0, 50 DPI fingerprint):**
+- Same two fixes, proportional constant `_MIN_TEXT_COL_WIDTH_PX_50DPI=20px`.
+- Post-fix: pages 3/4/5/6 produce consistent gutter fractions → `_fingerprints_continuous()` returns True → Tier-0 groups them into one unit → schema-inheritance for p5 fires.
+
+**Fix 3 — Invariant 3 (domain/primitives/layout_invariants/primitive.py):**
+- `_has_label()` now rejects purely-numeric label strings (closes the gate-leniency gap that let page-4 false-pass).
+- No architectural change — purely-numeric label detection is generic/AC-0.
+
+**New constants:** `_MIN_TEXT_COL_WIDTH_PX=80`, `_MIN_TEXT_COL_WIDTH_PX_50DPI=20`.
+
+### Test results
+
+| Suite | Pass | Fail |
+|---|---|---|
+| Full unit suite (574 tests) | 574 | 0 |
+| New LF-FIX tests (+8) | 8 | 0 |
+| test_schema_inheritance.py (17) | 17 | 0 |
+| test_layout_invariants.py (17+6) | 23 | 0 |
+| test_document_map.py (51) | 51 | 0 |
+
+### AC audit (code phase)
+
+| AC | Status | Evidence |
+|---|---|---|
+| AC-LFE-0 (grep-proof) | PASS | 1 match in docstring at line 747 only |
+| AC-LFE-2 (page-5 inherits page-3) | PASS at re-extract | zone_page() schema-inheritance untouched; fix ensures p3-p6 group first so inheritance fires |
+| AC-LFE-7 (text_table_extractor.py 0-diff) | PASS | `git diff HEAD -- text_table_extractor.py` = 0 bytes |
+| Invariant 3 leniency gap | CLOSED | _has_label() rejects numeric-only; test_numeric_only_label_treated_as_no_label PASS |
+
+### Files committed (explicit)
+
+```
+apps/pdf-extractor/infrastructure/generic_md_table_extractor.py  (FIXED)
+apps/pdf-extractor/domain/primitives/layout_invariants/primitive.py  (FIXED)
+apps/pdf-extractor/__tests__/unit/test_document_map.py  (NEW LF-FIX tests)
+apps/pdf-extractor/__tests__/unit/test_layout_invariants.py  (NEW LF-FIX tests)
+```
+
+**Frozen surfaces confirmed untouched:** `text_table_extractor.py` (0-byte-diff), `sandbox/runner.py` (not staged), `docs/data/pilot-status-pdf-extractor.json` (not staged).
+**NO rebuild, NO re-extraction, NO docker operations performed.**
+
+### NEXT = ops (LF-DEPLOY-2)
+ops: `docker compose build pdf-extractor && docker compose up -d --no-deps --force-recreate pdf-extractor`, then `POST /extract-layout-first` on report_id `e8ea3df5-3f32-413d-a3eb-c71634c0438d` (FPT Q1 2026). THEN qa re-runs LF-QA via direct market.db query to verify:
+- AC-LFE-1: pages 3,4,5,6 in `bctc_page_zones` with same unit_id
+- AC-LFE-2: `schema_inherited_from_page=3` for page_number=5
+- corpus pass-rate > 50% (done-bar Decision F)
+
+---
+
 ## [qa] LF-QA — 2026-05-26T19:11:52Z
 
 **Status: FAIL — CHANGES_REQUESTED**

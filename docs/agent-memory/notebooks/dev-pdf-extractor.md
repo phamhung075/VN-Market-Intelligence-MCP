@@ -4,6 +4,32 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — LF-FIX DONE (zone_page() gutter-detection edge-sliver fix)
+
+**Task:** LF-FIX | Sprint: BCTC-LAYOUT-FIRST | Status: DONE, committed SHA `95b24566`
+
+**Root cause confirmed (per qa-lf-2026-05-26T191152Z.json):** `_detect_column_gutters_200dpi()` accepted 20-30px edge slivers as column boundaries. Trailing content whitespace (open gutter at ink-right) was flushed as a real gutter. This produced one vast pseudo-column (~97%) and mutually inconsistent fingerprints for pages 3/4/5/6 (gutters at 97-99% vs 2-3%), preventing Tier-0 grouping and cascading into schema-inheritance never firing (AC-LFE-2 FAIL).
+
+**Fix 1 — _detect_column_gutters_200dpi() (Tier 1, 200 DPI):**
+- Removed `if in_gutter: flush at ink-right` — trailing whitespace is NOT a column separator.
+- Added minimum column width filter: gutter accepted only when text column on BOTH sides >= `_MIN_TEXT_COL_WIDTH_PX=80px`.
+- New constants: `_MIN_TEXT_COL_WIDTH_PX=80`, `_MIN_TEXT_COL_WIDTH_PX_50DPI=20`.
+
+**Fix 2 — _compute_page_fingerprint_50dpi() (Tier 0, 50 DPI):**
+- Same two fixes applied proportionally. Post-fix: pages 3/4/5/6 all produce consistent gutter fractions (e.g. [0.35, 0.47, 0.75]) → fingerprints continuous → Tier-0 grouping fires → schema-inheritance for p5 triggers.
+
+**Fix 3 — Invariant 3 leniency gap:**
+- `_has_label()` in `primitive.py` now rejects purely-numeric strings (regex `[\d.,\(\)\-\s]+`) as genuine labels. Closes the gate-leniency gap that let page-4 (all content in one wide column) pass as false-green.
+- `check_no_orphan_rows()` elif-branch: value-without-label → orphan.
+
+**Tests:** 574 passed (was 566 baseline before LF-FIX session, +8 new tests in TestGutterDetectionEdgeSliverFix + TestInvariant3DistinctLabelValueRequirement).
+**text_table_extractor.py 0-byte-diff confirmed.**
+**AC-LFE-0 (grep-proof):** 1 match in docstring comment only (line 747).
+
+**NEXT:** ops rebuilds pdf-extractor container + re-extracts FPT Q1 2026. qa re-runs LF-QA. No rebuild done here.
+
+---
+
 ### 2026-05-26 — LF-EXTRACT DONE (4-Tier Layout-First Pipeline)
 
 **Task:** LF-EXTRACT | Sprint: BCTC-LAYOUT-FIRST | Status: DONE, committed SHA `5d753970`

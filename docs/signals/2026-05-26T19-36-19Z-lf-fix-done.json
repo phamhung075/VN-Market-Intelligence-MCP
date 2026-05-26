@@ -1,0 +1,52 @@
+{
+  "signal": "lf-fix-done",
+  "sprint": "BCTC-LAYOUT-FIRST",
+  "task": "LF-FIX",
+  "timestamp": "2026-05-26T19:36:19Z",
+  "agent": "dev-pdf-extractor",
+  "commit_sha": "95b24566",
+  "status": "DONE",
+  "rebuild_performed": false,
+  "re_extraction_performed": false,
+
+  "fixes": {
+    "zone_page_gutter_detection": {
+      "file": "apps/pdf-extractor/infrastructure/generic_md_table_extractor.py",
+      "functions": ["_detect_column_gutters_200dpi", "_compute_page_fingerprint_50dpi"],
+      "root_cause": "Open gutter at ink-right boundary accepted as column separator + no minimum column width filter — 20-30px edge slivers accepted as columns",
+      "fix": "Drop open gutters at ink-right. Reject gutters where adjacent text column < _MIN_TEXT_COL_WIDTH_PX=80px (200DPI) or _MIN_TEXT_COL_WIDTH_PX_50DPI=20px (50DPI)",
+      "expected_outcome": "pages 3/4/5/6 produce consistent gutter fractions — Tier-0 groups them into one unit — schema-inheritance for p5 triggers"
+    },
+    "invariant3_tightening": {
+      "file": "apps/pdf-extractor/domain/primitives/layout_invariants/primitive.py",
+      "function": "_has_label",
+      "fix": "Reject purely-numeric label strings — closes page-4 false-green gate-leniency gap"
+    },
+    "tier0_tolerance_recalibration": {
+      "note": "No change needed — 5% tolerance is correct once gutters are at real positions. The wide variance was gutter-detection noise, not real structural difference."
+    }
+  },
+
+  "test_results": {
+    "total_passed": 574,
+    "total_failed": 0,
+    "new_tests_added": 8,
+    "baseline_before_fix": 566
+  },
+
+  "frozen_surfaces_confirmed": {
+    "text_table_extractor_py_0_diff": true,
+    "sandbox_runner_py_not_staged": true,
+    "pilot_status_json_not_staged": true
+  },
+
+  "files_committed": [
+    "apps/pdf-extractor/infrastructure/generic_md_table_extractor.py",
+    "apps/pdf-extractor/domain/primitives/layout_invariants/primitive.py",
+    "apps/pdf-extractor/__tests__/unit/test_document_map.py",
+    "apps/pdf-extractor/__tests__/unit/test_layout_invariants.py"
+  ],
+
+  "next": "ops — docker compose build pdf-extractor && force-recreate, then POST /extract-layout-first on e8ea3df5-3f32-413d-a3eb-c71634c0438d. qa re-runs LF-QA.",
+  "ac_lfe_2_expected": "page_number=5 schema_inherited_from_page=3 in bctc_page_zones after re-extract"
+}
