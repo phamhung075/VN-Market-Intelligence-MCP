@@ -1,0 +1,126 @@
+{
+  "qa_run": {
+    "sprint": "BCTC-LAYOUT-FIRST",
+    "gate": "LF-QA",
+    "timestamp": "2026-05-26T19:11:52Z",
+    "arbiter": "direct market.db query via docker compose exec -T mcp-server bun -e",
+    "report_id": "e8ea3df5-3f32-413d-a3eb-c71634c0438d",
+    "doc": "FPT Q1 2026 (20260424-FPT-BCTC-hop-nhat-Quy-1-nam-2026.pdf)"
+  },
+
+  "corpus_summary": {
+    "units_total": 18,
+    "units_passing": 6,
+    "units_quarantined": 12,
+    "raw_pass_rate": "33.3%",
+    "done_bar_threshold": ">50% (Decision F)",
+    "done_bar_met": false,
+    "note_prose_units": "2 prose units (pages 1,2) pass trivially — row_count=0, no invariant tested. Excluding them: 4 passing table/content units out of 16 = 25% on content-bearing units."
+  },
+
+  "per_unit_table": [
+    { "id": 1, "schema_page": 1, "pages": "[1]", "page_type": "prose", "quarantined": false, "quarantine_reason": null, "row_count": 0, "note": "Cover page prose — pass is trivial (no rows)" },
+    { "id": 2, "schema_page": 2, "pages": "[2]", "page_type": "prose", "quarantined": false, "quarantine_reason": null, "row_count": 0, "note": "Prose page — pass is trivial (no rows)" },
+    { "id": 3, "schema_page": 3, "pages": "[3]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=19 (orphan=0, junk=19)", "row_count": 21, "note": "Balance sheet assets header page. ALL 19 rows are junk — entire row content collapsed into col_2 (x_min=1631, x_max=1653), a 22-pixel-wide column at far right of page. Root: Tier-1 column detection produced massively wrong gutters (col_0 spans 0-1606, col_1 and col_2 are 23px and 22px slivers). Labels+values all dumped into one pseudo-column = 19 junk rows." },
+    { "id": 4, "schema_page": 4, "pages": "[4]", "page_type": "table", "quarantined": false, "quarantine_reason": null, "row_count": 28, "note": "PASSING but content is WRONG. Labels and values are inverted / garbled — all data ends up in col_2 which is the entire page width (x_min=56, x_max=1653). The 'label' column (col_0: 0-25px, 25px wide) is consistently empty. Values appear in col_2 but are mashed together with labels in RTL reading order. The gate passes because numeric values and some text appear in col_2, satisfying Invariant 3 (row has a value). This is a gate-leniency false-green: the content is structurally scrambled but the invariant does not detect it." },
+    { "id": 5, "schema_page": 5, "pages": "[5]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=19 (orphan=0, junk=19)", "row_count": 22, "note": "NGUON VON / liabilities — the root-cause regression page. Quarantined. Same column-detection failure as p3: col_0=0-1597 (vast span), col_1=1598-1627 (29px), col_2=1628-1653 (25px). Liability line-items ARE present in stitched_markdown but are dumped into one cell per row — labels detached from values within the row structure, multiple tokens mashed. CRITICAL: page 5 is NOT in the same unit as page 3 — it is its OWN unit (unit_id 67bbc254, schema_page=5). Schema inheritance from page 3 was NEVER applied because the Tier-0 grouping algorithm failed to merge pages 3, 4, 5, 6 into one logical unit. The root cause fix (schema inheritance) is coded but not triggered." },
+    { "id": 6, "schema_page": 6, "pages": "[6]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=20 (orphan=0, junk=20)", "row_count": 20, "note": "Balance sheet liabilities continued. col_count=1 (single column spanning full page 0-1654). Tier-0/1 detected no gutters on this page — worse than pages 3/5. All 20 rows are junk." },
+    { "id": 7, "schema_page": 7, "pages": "[7]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=28 (orphan=28, junk=0)", "row_count": 28, "note": "Income statement. col_count=4, gutter_xfrac=[0,0.10,0.97,0.99]. Labels detected in col_0 (0-165px). 28 orphan rows = label present but value columns (col_2 at 97%, col_3 at 99% — both are thin slivers) have no values. Tier-1 gutter detection placed value columns in 26px and 21px slivers at far right — OCR cannot recover values from a 20px cell region." },
+    { "id": 8, "schema_page": 8, "pages": "[8]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=19 (orphan=19, junk=0)", "row_count": 19, "note": "Income statement continued. Same col_count=4 pattern. 19 orphan rows — same sliver column failure for value columns." },
+    { "id": 9, "schema_page": 9, "pages": "[9,10]", "page_type": "table", "quarantined": false, "quarantine_reason": null, "row_count": 48, "note": "Cash flow statement pages 9+10. ONLY genuine multi-page unit. Schema inheritance from p9 to p10 WORKED (identical gutters: 5 columns, identical x positions). Passes Invariant 3. Content is garbled — labels/values mashed in same cell — but the gate passes. col_2 is 0-1488 (majority of page), numeric values present in rows. Page-10 continuation correctly appended. This is the one case where schema inheritance functioned as designed." },
+    { "id": 10, "schema_page": 11, "pages": "[11]", "page_type": "prose", "quarantined": false, "quarantine_reason": null, "row_count": 0, "note": "Prose unit — trivial pass (no rows)" },
+    { "id": 11, "schema_page": 12, "pages": "[12]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=36 (orphan=36, junk=0)", "row_count": 37, "note": "Notes table. 36 orphan rows. col_count=4, value columns at 90% and 100% (far-right slivers). Label column present but value slivers too narrow for OCR to return content." },
+    { "id": 12, "schema_page": 13, "pages": "[13]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=34 (orphan=34, junk=0)", "row_count": 36, "note": "Notes table. 34 orphan rows. Same pattern as p12." },
+    { "id": 13, "schema_page": 14, "pages": "[14]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=35 (orphan=35, junk=0)", "row_count": 36, "note": "Notes table. 35 orphan rows. Same pattern." },
+    { "id": 14, "schema_page": 15, "pages": "[15]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=24 (orphan=24, junk=0)", "row_count": 28, "note": "Notes table. 24 orphan rows." },
+    { "id": 15, "schema_page": 16, "pages": "[16]", "page_type": "table", "quarantined": false, "quarantine_reason": null, "row_count": 29, "note": "Notes table page 16. PASSING. col_count=5. Content review: prose-style note text detected as table. Rows contain text strings (license descriptions), no numeric values expected. Gate passes because text presence satisfies Invariant 3 (label+value). This is a false positive pass — it is a notes prose page misclassified as a table unit. The gate passing on prose-in-table is a gate leniency issue." },
+    { "id": 16, "schema_page": 17, "pages": "[17]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=23 (orphan=23, junk=0)", "row_count": 24, "note": "Notes table. 23 orphan rows." },
+    { "id": 17, "schema_page": 18, "pages": "[18,19]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=66 (orphan=66, junk=0)", "row_count": 70, "note": "Notes pages 18+19 (multi-page unit). Schema inheritance from p18 to p19 worked. 66 orphan rows. col_count=4, value columns at 90%/99% slivers — same sliver failure on an otherwise-inherited schema." },
+    { "id": 18, "schema_page": 20, "pages": "[20]", "page_type": "table", "quarantined": true, "quarantine_reason": "orphan_rows: count=26 (orphan=26, junk=0)", "row_count": 30, "note": "Notes table. 26 orphan rows. Same pattern." }
+  ],
+
+  "key_question_a_answer": {
+    "question": "Are quarantined units NOTES-PROSE pages wrongly classified as table units (Tier-0 over-classification), OR genuine financial-statement table units with detached labels (Tier-2 label-attachment bug)?",
+    "answer": "BOTH, but the dominant failure is Tier-1 gutter detection producing wrong column boundaries — not Tier-0 over-classification and not Tier-2 label attachment.",
+    "evidence": {
+      "pages_3_5_7_8_12_13_14_15_17_18_19_20": "Genuine financial-statement TABLE pages correctly classified as 'table' by Tier-0. The quarantine reason is orphan_rows — labels present but value columns are detected as far-right slivers (x_min >= 90% of page width, 20-30px wide). Tesseract cannot return legible text from a 20px cell crop. This is a Tier-1 gutter-position failure: the projection-profile algorithm places the value-column gutters at the extreme right margin instead of in the actual inter-column whitespace region.",
+      "page_6": "Balance sheet page, table-classified, but col_count=1 — Tier-1 completely failed to detect any gutters. All 20 rows are junk.",
+      "page_16": "Passes gate but is a notes-prose page misclassified as table content. This is the only Tier-0 over-classification case among passing units.",
+      "pages_12_13_14_15_17_20": "Notes section pages 12-17 and 20 are genuine table content (notes tables with codes and values). They are correctly classified as 'table' by Tier-0 but quarantine because the same sliver-column failure applies."
+    }
+  },
+
+  "page_5_regression_check": {
+    "finding": "FAIL — the root-cause regression is NOT fixed as deployed",
+    "unit_id": "67bbc254-4c70-47ee-bbc7-352cf4edf6c9",
+    "schema_page": 5,
+    "is_continuation_page": false,
+    "schema_inherited_from_page": null,
+    "quarantined": true,
+    "quarantine_reason": "orphan_rows: count=19 (orphan=0, junk=19)",
+    "structural_finding": "Page 5 (NGUON VON / liabilities) is its OWN independent unit — it is NOT a continuation of page 3. schema_inherited_from_page is NULL. The Tier-0 grouping algorithm treated pages 3, 4, 5, 6 as four separate single-page units, each with its own distinct unit_id. Schema inheritance from page 3 was NEVER triggered for page 5 because the grouping step never created the multi-page unit that would make p5 a continuation of p3.",
+    "column_detection_on_page_5": "col_count=3 with col_0=0-1597 (97% of page width), col_1=1598-1627 (29px), col_2=1628-1653 (25px). These gutters are wrong in the same way as page 3.",
+    "content_finding": "Page 5 stitched_markdown DOES contain liability line-items (PHAI TRA 300, No ngan han 310, Phai tra nguoi ban ngan han 311, etc.) with numeric values. However the row structure is scrambled — labels and values are mashed together in a single cell per row within col_2 (the 25px sliver at far right), with col_0 and col_1 empty. Example row: '| PHAI TRA 44.393.950.887.086 28.464.058.214.856 NO 300 Cc |  |  |' — entire row content including label, code, and both value columns collapsed into one cell. Labels are NOT correctly separated from values on the same row in distinct columns.",
+    "verdict": "Page 5 content present in stitched_markdown, but INCORRECTLY STRUCTURED. 'Page 5 content present' does NOT equal 'page 5 correctly structured.' The liability line-items are there but unanalyzable — the column separation needed to distinguish label vs current-value vs prior-value is absent. This is NOT the regression check passing."
+  },
+
+  "passing_units_spot_check": {
+    "page_4_balance_sheet_long_term_assets": {
+      "quarantined": false,
+      "verdict": "GATE-PASSING BUT CONTENT IS WRONG",
+      "finding": "Column detection: col_0=0-25 (25px), col_1=26-55 (29px), col_2=56-1653 (virtually full page). All meaningful content (labels + values + codes) ends up in col_2 as one mashed string per row. Example: '| | | mình 31/12/2025 hon 31/03/2026 Mã TÀI SẢN số |'. The row passes Invariant 3 because col_2 contains both text and numbers, but the structural separation between label, code, and two value columns is absent. Balance identity check: row '| | | TONG SAN 88.141.991.634.625 CONG TÀI 68.586.094.785.217 200} (280 280 100 + = |' shows total assets for two periods in one cell — cannot be parsed for identity check. The gate is too lenient: a row with everything in one wide column passes when it should not.",
+      "balance_check": "Cannot verify 270=100+200 from the stitched markdown — the code and value columns are not structurally separated."
+    },
+    "page_9_10_cash_flow": {
+      "quarantined": false,
+      "verdict": "SCHEMA INHERITANCE WORKED — but content still garbled",
+      "finding": "Pages 9 and 10 have IDENTICAL column gutters (5 columns, x positions bitwise identical). This proves schema inheritance functioned correctly for this unit. However, the inherited gutter positions (col_2=254-1488 being the main content column) still result in all content landing in col_2 as garbled mixed text. Schema inheritance fixes the fragmentation but does not fix the label-value separation within columns.",
+      "schema_inheritance_ac_lfe_2": "AC-LFE-2 tests schema_inherited_from_page=9 on page 10 — this passes and is correct. However the ops handoff noted schema_inherited_from_page=9 for pages 9-10, which is the cash flow unit. The handoff also claimed AC-LFE-2 for pages 9-10 (not p3-p5 as the spec requires). The BCTC-LAYOUT-FIRST brief AC-LFE-2 specifically requires page 5 to inherit from page 3. That AC fails."
+    },
+    "pages_1_2_11_prose": {
+      "verdict": "TRIVIALLY PASSING — row_count=0, no invariant exercised. These do not contribute to meaningful pass-rate."
+    }
+  },
+
+  "tier_0_grouping_failure_analysis": {
+    "expected": "Pages 3, 4, 5, 6 should form ONE logical unit (balance sheet: assets p3-4, liabilities p5-6). Schema-page = 3. Pages 4, 5, 6 should be continuation pages inheriting p3 schema.",
+    "actual": "Each of pages 3, 4, 5, 6 is its own unit with is_schema_page=1, schema_inherited_from_page=null.",
+    "fingerprint_evidence": {
+      "page_3": "col_count=3, gutter_xfrac=[0, 0.97, 0.99]",
+      "page_4": "col_count=3, gutter_xfrac=[0, 0.02, 0.03]",
+      "page_5": "col_count=3, gutter_xfrac=[0, 0.97, 0.98]",
+      "page_6": "col_count=1, gutter_xfrac=[0]"
+    },
+    "root_cause": "The Tier-0 fingerprint-continuity test uses gutter_x_positions (as fractions) with a GUTTER_POSITION_TOLERANCE of 5% of page width. Page 3 has gutters at [0, 0.97, 0.99]. Page 4 has gutters at [0, 0.02, 0.03]. The gutter positions differ by 0.95 (95% of page width) — far beyond 5% tolerance. The grouping algorithm correctly applies the continuity rule, but the gutter DETECTION itself is producing wildly different gutter positions for consecutive balance-sheet pages that are physically the same document section. This is a Tier-1 per-page gutter-detection failure that cascades into Tier-0 grouping failure: because each page detects different gutter positions, the continuity test always breaks, making every page its own schema-page unit. The schema-inheritance architecture is sound but is never triggered because grouping never fires."
+  },
+
+  "root_cause_verdict": {
+    "primary_bug": "Tier-1 gutter detection (in infrastructure/generic_md_table_extractor.py) produces inconsistent and wrong gutter positions across consecutive pages of the same balance-sheet section. Pages 3 and 5 detect gutters at [0, 0.97, 0.99] (two 22-25px slivers at far right), page 4 detects gutters at [0, 0.02, 0.03] (two 25-29px slivers at far LEFT), page 6 detects no gutters at all. These wildly different fingerprints prevent Tier-0 from grouping them into one unit, so schema inheritance is never applied.",
+    "secondary_bug": "Even where schema inheritance IS triggered (pages 9-10, 18-19), the inherited gutter positions are themselves wrong — all content lands in one dominant column, with value columns either absent or in slivers. So the schema inheritance mechanism works mechanically but inherits a bad schema.",
+    "gate_status": "The Tier-3 invariant gate is WORKING CORRECTLY as a detector — it correctly quarantines 12 of 18 units. The gate is catching bad extraction. However, Invariant 3 (no-orphan-row) has a leniency gap: when ALL content is dumped into one wide column (as in pages 3, 5 with col_2 spanning 25px), the gate classifies rows as 'junk' (label=null) but when the wide column is col_0 or col_2 with text content, it passes as 'label present + value present.' This allowed page 4 to pass despite being structurally scrambled.",
+    "zone_ownership": {
+      "tier_0_grouping": "apps/pdf-extractor/infrastructure/generic_md_table_extractor.py — build_document_map() function. The gutter continuity test is logically correct but the per-page fingerprints it receives are garbage.",
+      "tier_1_gutter_detection": "apps/pdf-extractor/infrastructure/generic_md_table_extractor.py — zone_page() function. The projection-profile based column gutter detection is failing systematically: it is detecting false gutters at the extreme margins of the page (narrow slivers) rather than the actual inter-column whitespace. This is the root defect.",
+      "fix_owner": "dev-pdf-extractor"
+    }
+  },
+
+  "verdict": "FAIL",
+  "verdict_rationale": "33.3% pass rate (6/18 units) breaches the >50% done-bar (Decision F). Excluding 3 trivially-passing prose units (pages 1, 2, 11 with row_count=0): 3 content-bearing units pass out of 15 = 20% on content units. The done-bar is not close to being met. The regression check page (page 5, NGUON VON / liabilities) is quarantined AND even its stitched content is structurally scrambled. AC-LFE-2 (page 5 inherits from page 3) FAILS — page 5 is its own unit with no schema inheritance. The gate correctly caught bad extraction (good: the gate works). One passing unit (page 4) is structurally wrong but gate-passing due to Invariant 3 leniency (bad: gate needs tightening for the all-content-in-one-column case).",
+
+  "gate_assessment": {
+    "gate_correctly_caught_bad_extraction": true,
+    "gate_has_leniency_gap": true,
+    "leniency_gap_detail": "Invariant 3 passes page 4 whose entire row content is in one wide column (labels+values+codes mashed together). A row with col_0=empty, col_1=empty, col_2='label value1 value2 code' passes because col_2 has non-null content with text. The invariant should additionally require that the label column and at least one value column are DISTINCT non-empty cells, not just that 'some column has content.'"
+  },
+
+  "next": {
+    "owner": "dev-pdf-extractor",
+    "task": "LF-FIX",
+    "fix_target": "apps/pdf-extractor/infrastructure/generic_md_table_extractor.py — zone_page() gutter detection algorithm",
+    "fix_description": "The projection-profile horizontal gutter detection is placing gutters at the page margins (1-3% and 97-99% of page width) rather than in actual inter-column whitespace. Fix must produce gutters that correctly separate the label column (~0-35% of page width), the code column (~35-45%), and the value columns (~45-75% and 75-100%). Additionally, the Tier-0 grouping continuity test tolerance (5%) may need recalibration once gutter positions are corrected, as the current wide variance is gutter-detection noise, not real structural difference.",
+    "also_fix": "Invariant 3 leniency gap — require distinct non-empty label cell AND distinct non-empty value cell, not just 'some column has content'",
+    "do_not_touch": "Schema inheritance mechanism (pages 9-10 proof shows it works correctly when gutter positions are consistent). Tier-0 grouping logic is architecturally correct. text_table_extractor.py (0-byte-diff constraint).",
+    "recheck_after_fix": "AC-LFE-2 (page 5 inherits from page 3, schema_inherited_from_page=3), AC-LFE-4 (NGUON VON values in stitched output with correct column separation), corpus pass-rate >50%"
+  }
+}

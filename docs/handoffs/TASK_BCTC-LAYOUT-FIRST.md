@@ -577,3 +577,72 @@ LF-OVERLAY: DONE (`2326ebb6`)
 LF-EXTRACT: DONE (`5d753970`)
 LF-DEPLOY: DONE (ops section above)
 **→ NEXT = qa (LF-QA)**
+
+---
+
+## [qa] LF-QA — 2026-05-26T19:11:52Z
+
+**Status: FAIL — CHANGES_REQUESTED**
+**Report:** `docs/qa/qa-lf-2026-05-26T191152Z.json`
+**Arbiter:** direct market.db query via `docker compose exec -T mcp-server bun -e` (bun:sqlite readonly)
+
+### Pass-Rate (FPT Q1 2026, report_id e8ea3df5)
+
+| Metric | Value |
+|---|---|
+| Units total | 18 |
+| Units passing | 6 (33.3%) |
+| Units quarantined | 12 (66.7%) |
+| Done-bar threshold | >50% (Decision F) |
+| Done-bar met | **NO — FAIL** |
+| Content-bearing units passing | 3/15 (20%) excluding 3 trivially-passing prose units with row_count=0 |
+
+### Page-5 Regression Check (make-or-break)
+
+**FAIL.** Page 5 (NGUỒN VỐN / liabilities) is its OWN independent unit (`unit_id=67bbc254`, `schema_page=5`, `is_continuation_page=0`, `schema_inherited_from_page=NULL`). The Tier-0 grouping algorithm treated pages 3, 4, 5, 6 as four separate single-page units — schema inheritance from page 3 was NEVER triggered for page 5. AC-LFE-2 (page 5 inherits from page 3, `schema_inherited_from_page=3`) **FAILS**.
+
+Page 5 stitched_markdown contains liability line-items (PHAI TRA 300, No ngan han 310, Phai tra nguoi ban ngan han 311, etc.) with numeric values — but the row structure is scrambled. All row content is mashed into a single cell: `| PHAI TRA 44.393.950.887.086 28.464.058.214.856 NO 300 Cc |  |  |`. Labels are NOT separated from values in distinct columns. Content present ≠ content correctly structured.
+
+### Root Cause (precise)
+
+**Tier-1 gutter detection in `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — `zone_page()` function.**
+
+The projection-profile algorithm places column gutters at the extreme page margins rather than actual inter-column whitespace:
+- Page 3: col_0 spans 0-1606 (97% of page), col_1/col_2 are 23px and 22px slivers at far right
+- Page 4: col_0 spans 0-25 (1.5% of page), col_1 is 29px, col_2 spans 56-1653 (virtually full page)
+- Page 5: col_0 spans 0-1597 (97%), col_1/col_2 are 29px and 25px slivers at far right
+- Page 6: col_count=1 (no gutters detected)
+
+These wildly inconsistent gutter positions (95% drift between pages 3 and 4) cause the Tier-0 continuity test to always break (5% tolerance), making every page its own unit. Schema inheritance is never triggered.
+
+**Secondary:** Even where schema inheritance IS triggered (pages 9-10, 18-19), the inherited gutter schema is itself wrong — all content still lands in one dominant column.
+
+**Gate assessment:** The Tier-3 invariant gate is working correctly as a detector — it correctly quarantines 12/18 bad units. The gate caught bad extraction (good). One leniency gap: page 4 passes with all content in one wide column (Invariant 3 fires on label+value presence without requiring they are in DISTINCT cells).
+
+### Blocking Issues
+
+1. `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — `zone_page()`: gutter detection places gutters at extreme page margins (1-3% and 97-99% of page width). Must correctly detect the actual inter-column whitespace between the label column (~0-35%), code column (~35-45%), and value columns (~45-75%, 75-100%).
+
+2. `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — `build_document_map()`: fingerprint continuity test correctly implemented but receives garbage fingerprints from `zone_page()`. Will self-heal when issue 1 is fixed. No standalone change needed here — validate after issue 1 is fixed.
+
+3. Invariant 3 leniency gap (lower priority — fix after issues 1+2): require distinct non-empty label cell AND distinct non-empty value cell in separate columns, not just "some column has content."
+
+### AC Audit (LF-QA phase)
+
+| AC | Status | Evidence |
+|---|---|---|
+| AC-LFE-1 (doc-map JSON emitted) | PASS | 20 rows in bctc_page_zones for e8ea3df5 |
+| AC-LFE-2 (schema inheritance page 5 ← page 3) | **FAIL** | page 5 is_continuation_page=0, schema_inherited_from_page=NULL — separate unit |
+| AC-LFE-4 (NGUON VON in stitched output) | PARTIAL/FAIL | Values present but structurally scrambled — not correctly labeled |
+| AC-LFE-5 (corpus breadth 18 docs) | DEFERRED | Only 1 doc extracted; 17 more docs blocked pending gutter fix |
+| AC-LFE-7 (text_table_extractor.py 0-diff) | PASS | Not touched by LF-EXTRACT |
+| AC-LFO-0 through AC-LFO-6 (overlay) | PASS | All LF-OVERLAY ACs confirmed in dev-mcp-server verification |
+| AC-LFO-7 (18 docs in bctc_page_zones) | DEFERRED | Only 1 doc in DB |
+
+### Verdict
+
+**CHANGES_REQUESTED — FAIL**
+
+The gate correctly caught bad extraction (gate works; do not change the gate architecture). The extractor's gutter detection is the defect. Next: dev-pdf-extractor (LF-FIX) — fix `zone_page()` gutter detection in `generic_md_table_extractor.py`, then re-run single-doc extraction on FPT Q1 2026 and re-verify AC-LFE-2 + page-5 column structure before corpus sweep.
+
+**NEXT = dev-pdf-extractor (LF-FIX)**
