@@ -961,3 +961,22 @@ D4b (code `100` concatenated with value `58.102.970.741.619` in one cell): routi
 
 **NEXT: dev-pdf-extractor** — implement MD-EXTRACT-5 per revised brief §3-§9. Verify AC-3F (non-regression) FIRST. Leave files UNSTAGED. Then ops MD-DEPLOY-5 (single doc, full UUID) → main-terminal live-verify → qa MD-QA-5 → po MD-EXIT.
 
+---
+
+## [Main-Terminal] LIVE-VERIFY-5 — MD-EXTRACT-5 verdict = FAIL (partial) (2026-05-26)
+
+Deployed (ops MD-DEPLOY-5): image rebuilt, new code live (20 grep matches), D2 pattern gone, structured path intact. Ground truth read DIRECTLY from `bctc_md_tables` DB row (id=7, report e71f845d, extracted_at=`2026-05-26 08:07:58` UTC = this run, md_tables_json=25,620 bytes, 37 tables). NOTE: the `/api/bctc-inspect/md` endpoint + ops's `/tmp/md_tables_v5.json` were STALE (captured ~2min pre-commit, showed old 07:20:10 / doubled-pipe MD-DEPLOY-4 output) — verdict based on DB, not endpoint. (Endpoint-cache staleness is a separate minor flag, not the blocker.)
+
+**RESULT MATRIX (DB ground truth):**
+- **D2 / AC-5-GFM = ✅ FIXED.** 36/37 tables valid single-pipe `|---|---|`. The 1 mismatch (table[11]) is an OCR-garbled cell with a stray literal `\|` (`62.848.794\|`), cosmetic — separator itself is valid.
+- **D1 / AC-5-SEG = ❌ FAIL.** Segment revenues STILL cascade-split into a DIAGONAL (table[31]): `35.381.667` on row1/col1, `9.092.934` on row2/col2, `18.701.876` on row3/col3. Label fragments ("Doanh thu theo bộ phận"→"bộ phận"→"") + `{1.193.275)` number bleeds into label cell (D3 leak).
+- **D1 / AC-5-INC = ❌ FAIL (same disease).** Income statement (table[10], 90 money-rows): line item "1 Doanh thu bán hàng" 4 values (20.258.866.135.395 / 17.651.065.378.939 / 70.207.689.409.081 / 62.962.652.134.635) split across 4 rows diagonally; label fragments "cung dịch vụ"→"cung vụ"→"vụ".
+- **D4b = ❌ FAIL.** 22 balance-sheet cells STILL concatenate code+value (`100 58.102.970.741.619`, `110 10.540.181.640.920`, ...) in table[0]. Unit test PASSED but live FAILED — another test-vs-live substrate gap (the test's synthetic x-anchors didn't represent live column geometry).
+- **AC-3F = ✅ PASS.** structured `bctc_table_rows` = 79, balance_pass=true, balance_delta=0.
+
+**DIAGNOSIS (mechanically certain):** The DIAGONAL cascade across BOTH wide tables = the signature of within-row x-drift → y-drift > tol (leftmost value lowest `top`, rightmost highest; drift across row exceeds tolerance → split; different x-columns → diagonal scatter). Output is ~identical to MD-EXTRACT-4 → the large-gap-mode almost certainly returned `row_pitch=0` on live wide-table regions (no distinguishable large gap because within-row drift gaps ≈ inter-row gaps) → fell back to `SAME_LINE_TOL=4` → same cascade. This EMPIRICALLY CONFIRMS the architect's documented precondition `inter-row gap > within-row drift` is VIOLATED on the real FPT wide tables. (Could not read exact row_pitch from logs — `logger.debug` suppressed at INFO level; MD-EXTRACT-6 must surface it at INFO or via a diagnostic.)
+
+**ESCALATION: scalar-y-tolerance family is EXHAUSTED — 5 attempts (MD-EXTRACT-1/2/3/4/5) all defeated by the same diagonal.** Per recurring-bug rule, do NOT authorize a 6th scalar-tolerance retry. Routed to architect MD-EXTRACT-6 for a FUNDAMENTALLY DIFFERENT approach.
+
+**NEXT: architect MD-EXTRACT-6** — choose between (A) image deskew preprocessing (PIL/OpenCV — architect's own documented true-fix for drift≈gap; flatten baseline curve BEFORE OCR so y-clustering works) and/or (B) column-anchor-FIRST ordinal reconstruction (assign each NUMBER token to nearest x-column-anchor; within each column sort by y; align rows by ORDINAL RANK across columns, NOT absolute y — robust to arbitrary drift, the direct defeat of the diagonal). PLUS: re-fix D4b with a LIVE-substrate test (regenerate fixture from live poppler image_to_data x-anchors, not synthetic). PLUS: specify a row_pitch/token-tops diagnostic (logged at INFO) so the regime is confirmed with hard numbers before any implementation. D2 fix is DONE — keep it. Goal stays armed.
+
