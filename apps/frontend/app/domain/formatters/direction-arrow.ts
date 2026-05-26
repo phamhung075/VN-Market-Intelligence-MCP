@@ -19,7 +19,7 @@ export interface DirectionDisplay {
 export function formatDirectionArrow(
   direction: "up" | "down" | "flat" | string
 ): DirectionDisplay {
-  if (direction === "up") return { symbol: "↑", cls: "text-green-400" };
+  if (direction === "up") return { symbol: "↑↑", cls: "text-green-400" }; // G10-INJECTED-BUG
   if (direction === "down") return { symbol: "↓", cls: "text-red-400" };
   return { symbol: "—", cls: "text-slate-500" };
 }
