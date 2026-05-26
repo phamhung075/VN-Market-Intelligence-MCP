@@ -103,6 +103,12 @@ from infrastructure.generic_md_table_extractor import (  # noqa: E402
     LABEL_BAND_FACTOR,
     _COL_ASSIGN_MAX_DIST_FACTOR,
     _MIN_WORD_CONF_ORDINAL,
+    # MD-EXTRACT-7-REV additions:
+    _find_first_value_row_top,
+    _exclude_header_tokens,
+    _identify_pure_code_columns,
+    PURE_CODE_COL_THRESHOLD,
+    DENSE_COL_THRESHOLD,
 )
 
 
@@ -2446,4 +2452,468 @@ class TestOrdinalReconstruction:
         # "Label" should appear at most once
         assert labels.count("Label") <= 1, (
             f"Label reused across adjacent rows: {labels}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-7-REV additions
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# TestHeaderCutoff — AC-7-REV-HEADER
+# ---------------------------------------------------------------------------
+
+
+class TestHeaderCutoff:
+    """
+    Tests for _find_first_value_row_top and _exclude_header_tokens.
+    AC-7-REV-HEADER (BLOCKING).
+    """
+
+    def test_find_first_value_row_top_normal(self):
+        """
+        With a mix of code tokens and value tokens, returns the minimum top
+        among VALUE_TOKEN_RE matches (money-group pattern only).
+        """
+        tokens = [
+            # code tokens (2-3 digits, no dot groups) — excluded from cutoff logic
+            {"text": "01", "left": 258, "top": 200, "width": 18, "height": 16, "conf": 85},
+            {"text": "31", "left": 959, "top": 200, "width": 18, "height": 16, "conf": 85},
+            # value token — this is the first match
+            {"text": "20.258.866", "left": 1182, "top": 495, "width": 160, "height": 17, "conf": 92},
+            {"text": "17.651.065", "left": 1477, "top": 530, "width": 160, "height": 17, "conf": 91},
+        ]
+        result = _find_first_value_row_top(tokens)
+        assert result == 495.0, f"Expected 495.0, got {result}"
+
+    def test_find_first_value_row_top_no_values(self):
+        """
+        When no token matches VALUE_TOKEN_RE (all are code/short tokens),
+        returns 0.0 (safe fallback — no cutoff applied).
+        """
+        tokens = [
+            {"text": "01", "left": 258, "top": 200, "width": 18, "height": 16, "conf": 85},
+            {"text": "10", "left": 258, "top": 300, "width": 18, "height": 16, "conf": 85},
+        ]
+        result = _find_first_value_row_top(tokens)
+        assert result == 0.0, f"Expected 0.0 (no value tokens), got {result}"
+
+    def test_exclude_header_tokens_removes_above_cutoff(self):
+        """
+        AC-7-REV-HEADER: fixture with 3 header tokens (top=200) + 5 data tokens
+        (top >= 495, including a VALUE_TOKEN_RE match at top=495).
+        _find_first_value_row_top returns 495.0.
+        _exclude_header_tokens(..., 495.0) returns only the 5 data tokens.
+        len(result) == 5.
+        """
+        header_tokens = [
+            {"text": "01", "left": 258,  "top": 200, "width": 18,  "height": 16, "conf": 85},
+            {"text": "31", "left": 959,  "top": 200, "width": 18,  "height": 16, "conf": 85},
+            {"text": "12", "left": 1330, "top": 200, "width": 20,  "height": 16, "conf": 85},
+        ]
+        data_tokens = [
+            {"text": "01",          "left": 258,  "top": 495, "width": 18,  "height": 17, "conf": 90},
+            {"text": "30",          "left": 959,  "top": 495, "width": 18,  "height": 17, "conf": 88},
+            {"text": "20.258.866",  "left": 1182, "top": 495, "width": 160, "height": 17, "conf": 92},
+            {"text": "17.651.065",  "left": 1477, "top": 495, "width": 160, "height": 17, "conf": 91},
+            {"text": "70.207.689",  "left": 1768, "top": 495, "width": 155, "height": 17, "conf": 90},
+        ]
+        all_tokens = header_tokens + data_tokens
+
+        first_value_top = _find_first_value_row_top(all_tokens)
+        assert first_value_top == 495.0, (
+            f"Expected 495.0 as first_value_top, got {first_value_top}"
+        )
+
+        result = _exclude_header_tokens(all_tokens, first_value_top)
+        assert len(result) == 5, (
+            f"Expected 5 data tokens after exclusion, got {len(result)}"
+        )
+        # Verify all returned tokens are at top >= 495
+        for tok in result:
+            assert float(tok["top"]) >= 495.0, (
+                f"Token '{tok['text']}' at top={tok['top']} should have been excluded"
+            )
+
+
+# ---------------------------------------------------------------------------
+# TestPureCodeColumnDetector — AC-7-REV-DETECTOR
+# ---------------------------------------------------------------------------
+
+
+class TestPureCodeColumnDetector:
+    """
+    Tests for _identify_pure_code_columns.
+    AC-7-REV-DETECTOR (BLOCKING).
+    """
+
+    def _make_tok(self, text: str, left: int = 0, top: int = 500) -> dict:
+        return {"text": text, "left": left, "top": top, "width": 20, "height": 17, "conf": 90}
+
+    def test_all_value_cols_returns_empty_code_list(self):
+        """
+        Segment-report-like buckets (all value tokens, no code tokens).
+        code_col_indices must be [] — proves non-regression on segment path.
+        AC-7-REV-SEG-NOREGRESS.
+        """
+        # Simulate 3 value columns (money-group tokens only)
+        col_buckets = [
+            [self._make_tok("35.381.667"), self._make_tok("10.000.000")],
+            [self._make_tok("9.092.934"),  self._make_tok("5.000.000")],
+            [self._make_tok("18.701.876"), self._make_tok("8.000.000")],
+        ]
+        col_anchors = [1000.0, 1300.0, 1600.0]
+        code_indices, value_indices = _identify_pure_code_columns(col_buckets, col_anchors)
+        assert code_indices == [], (
+            f"Expected no pure-code columns for all-value buckets, got {code_indices}"
+        )
+        assert value_indices == [0, 1, 2], (
+            f"Expected all indices as value, got {value_indices}"
+        )
+
+    def test_detects_two_pure_code_cols(self):
+        """
+        AC-7-REV-DETECTOR: use col_buckets from the REV-8 fixture (6 buckets,
+        col[0] and col[1] are pure-code, col[2..5] are value columns).
+        _identify_pure_code_columns returns code_col_indices=[0,1],
+        value_col_indices=[2,3,4,5].
+        """
+        col0 = [
+            self._make_tok("01", left=258, top=495),
+            self._make_tok("10", left=258, top=530),
+            self._make_tok("20", left=258, top=565),
+            self._make_tok("30", left=258, top=600),
+        ]
+        col1 = [
+            self._make_tok("30", left=959, top=495),
+            self._make_tok("31", left=959, top=530),
+            self._make_tok("32", left=959, top=565),
+            self._make_tok("33", left=959, top=600),
+        ]
+        col2 = [
+            self._make_tok("20.258.866", left=1182, top=495),
+            self._make_tok("43.247",     left=1182, top=530),
+            self._make_tok("17.607.818", left=1182, top=565),
+            self._make_tok("14.000.000", left=1182, top=600),
+        ]
+        col3 = [
+            self._make_tok("17.651.065", left=1477, top=495),
+            self._make_tok("8.804.827",  left=1477, top=530),
+            self._make_tok("9.092.934",  left=1477, top=565),
+            self._make_tok("13.200.000", left=1477, top=600),
+        ]
+        col4 = [
+            self._make_tok("70.207.689", left=1768, top=495),
+            self._make_tok("18.701.876", left=1768, top=565),
+            self._make_tok("11.500.000", left=1768, top=600),
+        ]
+        col5 = [
+            self._make_tok("62.962.652", left=2061, top=496),
+            self._make_tok("30.412.233", left=2061, top=530),
+            self._make_tok("9.800.000",  left=2061, top=600),
+        ]
+        col_buckets = [col0, col1, col2, col3, col4, col5]
+        col_anchors = [258.0, 959.0, 1182.0, 1477.0, 1768.0, 2061.0]
+
+        code_indices, value_indices = _identify_pure_code_columns(col_buckets, col_anchors)
+        assert code_indices == [0, 1], (
+            f"Expected code_col_indices=[0,1], got {code_indices}"
+        )
+        assert value_indices == [2, 3, 4, 5], (
+            f"Expected value_col_indices=[2,3,4,5], got {value_indices}"
+        )
+
+    def test_mixed_col_stays_value(self):
+        """
+        A column with mostly code tokens but ONE value token is NOT pure-code
+        (value_count == 0 condition fails).
+        """
+        col_buckets = [
+            [
+                self._make_tok("01"),
+                self._make_tok("10"),
+                self._make_tok("20.000.000"),  # value token — disqualifies pure-code
+            ],
+        ]
+        col_anchors = [258.0]
+        code_indices, value_indices = _identify_pure_code_columns(col_buckets, col_anchors)
+        assert code_indices == [], (
+            f"Column with value token should not be pure-code, got code_indices={code_indices}"
+        )
+        assert value_indices == [0]
+
+    def test_sparse_code_col_with_noise_still_pure(self):
+        """
+        A column with 9 code tokens and 1 non-matching noise token (TEXT that
+        falls through as neither code nor value): code_fraction = 9/10 = 0.9 >=
+        PURE_CODE_COL_THRESHOLD, value_count = 0 → still pure-code.
+        """
+        # 9 code tokens + 1 non-code/non-value token (single digit "1" — matches _NUMBER_TOKEN_RE
+        # as single char? No — _CODE_TOKEN_RE requires 2-3 digits. "1" = 1 digit → fails CODE_RE.
+        # _VALUE_TOKEN_RE requires dot groups → "1" fails that too. So "1" adds to total but
+        # is neither code nor value → code_fraction = 9/10 = 0.9, value_count = 0 → PURE CODE.
+        col_buckets = [
+            [self._make_tok("01")] * 9 + [{"text": "1", "left": 258, "top": 495, "width": 10, "height": 17, "conf": 80}],
+        ]
+        col_anchors = [258.0]
+        code_indices, value_indices = _identify_pure_code_columns(col_buckets, col_anchors)
+        assert code_indices == [0], (
+            f"9/10 code tokens with zero value tokens should be pure-code, got {code_indices}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TestDenseIncomeStatement — AC-7-REV-FIX
+# ---------------------------------------------------------------------------
+
+# Full 29-token fixture from REV-8.1 (live-regime mirror for income statement)
+FIXTURE_TOKENS_REV = [
+    # HEADER ZONE (top=200, to be EXCLUDED by _exclude_header_tokens)
+    {"text": "01",  "left": 258,  "top": 200, "width": 18, "height": 16, "conf": 85},  # H1
+    {"text": "31",  "left": 959,  "top": 200, "width": 18, "height": 16, "conf": 85},  # H2
+    {"text": "12",  "left": 1330, "top": 200, "width": 20, "height": 16, "conf": 85},  # H3 (contaminator)
+
+    # DATA ZONE (top >= 495)
+    # Row-0 (top=495)
+    {"text": "Doanh",       "left": 0,    "top": 495, "width": 60,  "height": 18, "conf": 90},  # T00 TEXT
+    {"text": "01",          "left": 258,  "top": 495, "width": 18,  "height": 17, "conf": 90},  # T01 code col[0]
+    {"text": "30",          "left": 959,  "top": 495, "width": 18,  "height": 17, "conf": 88},  # T02 code col[1]
+    {"text": "20.258.866",  "left": 1182, "top": 495, "width": 160, "height": 17, "conf": 92},  # T03 val col[2]
+    {"text": "17.651.065",  "left": 1477, "top": 495, "width": 160, "height": 17, "conf": 91},  # T04 val col[3]
+    {"text": "70.207.689",  "left": 1768, "top": 495, "width": 155, "height": 17, "conf": 90},  # T05 val col[4]
+    {"text": "62.962.652",  "left": 2061, "top": 496, "width": 155, "height": 17, "conf": 91},  # T06 val col[5]
+
+    # Row-1 (top=530)
+    {"text": "Giam",        "left": 0,    "top": 530, "width": 55,  "height": 18, "conf": 88},  # T10 TEXT
+    {"text": "10",          "left": 258,  "top": 530, "width": 18,  "height": 17, "conf": 89},  # T11 code col[0]
+    {"text": "31",          "left": 959,  "top": 530, "width": 18,  "height": 17, "conf": 87},  # T12 code col[1]
+    {"text": "43.247",      "left": 1182, "top": 530, "width": 70,  "height": 17, "conf": 88},  # T13 val col[2]
+    {"text": "8.804.827",   "left": 1477, "top": 530, "width": 140, "height": 17, "conf": 89},  # T14 val col[3]
+    # col[4] (val) ABSENT for row-1
+    {"text": "30.412.233",  "left": 2061, "top": 530, "width": 150, "height": 17, "conf": 90},  # T16 val col[5]
+
+    # Row-2 (top=565)
+    {"text": "Thuan",       "left": 0,    "top": 565, "width": 55,  "height": 18, "conf": 91},  # T20 TEXT
+    {"text": "20",          "left": 258,  "top": 565, "width": 18,  "height": 17, "conf": 90},  # T21 code col[0]
+    {"text": "32",          "left": 959,  "top": 565, "width": 18,  "height": 17, "conf": 86},  # T22 code col[1]
+    {"text": "17.607.818",  "left": 1182, "top": 565, "width": 160, "height": 17, "conf": 91},  # T23 val col[2]
+    {"text": "9.092.934",   "left": 1477, "top": 565, "width": 140, "height": 17, "conf": 90},  # T24 val col[3]
+    {"text": "18.701.876",  "left": 1768, "top": 565, "width": 155, "height": 17, "conf": 92},  # T25 val col[4]
+    # col[5] (val) ABSENT for row-2
+
+    # Row-3 (top=600)
+    {"text": "Gia",         "left": 0,    "top": 600, "width": 40,  "height": 18, "conf": 89},  # T30 TEXT
+    {"text": "30",          "left": 258,  "top": 600, "width": 18,  "height": 17, "conf": 87},  # T31 code col[0]
+    {"text": "33",          "left": 959,  "top": 600, "width": 18,  "height": 17, "conf": 85},  # T32 code col[1]
+    {"text": "14.000.000",  "left": 1182, "top": 600, "width": 155, "height": 17, "conf": 90},  # T33 val col[2]
+    {"text": "13.200.000",  "left": 1477, "top": 600, "width": 155, "height": 17, "conf": 91},  # T34 val col[3]
+    {"text": "11.500.000",  "left": 1768, "top": 600, "width": 155, "height": 17, "conf": 89},  # T35 val col[4]
+    {"text": "9.800.000",   "left": 2061, "top": 600, "width": 140, "height": 17, "conf": 88},  # T36 val col[5]
+]
+
+
+class TestDenseIncomeStatement:
+    """
+    End-to-end unit test for the MD-EXTRACT-7-REV dense income statement fixture.
+    AC-7-REV-FIX (BLOCKING).
+    """
+
+    def test_dense_income_rev7(self):
+        """
+        Full 10-assertion test using FIXTURE_TOKENS_REV (29 tokens: 25 number + 4 text).
+        Tests the complete pipeline: header cutoff → anchor detection (min metric) →
+        pure-code-column detection → ordinal reconstruction → skip slot insertion →
+        label attachment.
+
+        CARRY-FORWARD FLAG: Assertion 9 (grid[1][2]==" ", grid[2][3]==" ") references
+        the PRE-label VALUE-ONLY grid (Stage C10, 4 value cols indexed 0-3), NOT the
+        final label+4 grid. The value grid is built directly via _build_ordinal_grid and
+        checked before _attach_labels_ordinal is called.
+        """
+        # ------------------------------------------------------------------
+        # Stage A: classify tokens
+        # ------------------------------------------------------------------
+        number_tokens, text_tokens = _classify_tokens(FIXTURE_TOKENS_REV)
+
+        # Assertion 1 (MUST VERIFY FIRST — count arithmetic)
+        assert len(number_tokens) == 25, (
+            f"Expected 25 number tokens, got {len(number_tokens)}"
+        )
+        assert len(text_tokens) == 4, (
+            f"Expected 4 text tokens, got {len(text_tokens)}"
+        )
+
+        # ------------------------------------------------------------------
+        # Stage C5: header cutoff
+        # ------------------------------------------------------------------
+        first_value_top = _find_first_value_row_top(number_tokens)
+
+        # Assertion 2: first_value_top == 495.0 (T03 is the first VALUE-class token)
+        assert first_value_top == 495.0, (
+            f"Expected first_value_top=495.0 (T03 at top=495), got {first_value_top}"
+        )
+
+        clean_number_tokens = _exclude_header_tokens(number_tokens, first_value_top)
+
+        # Assertion 3: 3 header tokens excluded → 22 clean tokens remain
+        assert len(clean_number_tokens) == 22, (
+            f"Expected 22 clean_number_tokens (25 - 3 header), got {len(clean_number_tokens)}"
+        )
+
+        # ------------------------------------------------------------------
+        # Stage C6: anchor detection (min metric)
+        # ------------------------------------------------------------------
+        # Compute w_med from clean_number_tokens (matches Stage B of REV-8.2)
+        widths = sorted(float(t["width"]) for t in clean_number_tokens)
+        n = len(widths)
+        if n % 2 == 1:
+            w_med = widths[n // 2]
+        else:
+            w_med = (widths[n // 2 - 1] + widths[n // 2]) / 2.0
+
+        col_anchors = _detect_column_anchors_from_tokens(clean_number_tokens, w_med)
+
+        # Assertion 4: 6 anchors at [258, 959, 1182, 1477, 1768, 2061] (±5px)
+        assert len(col_anchors) == 6, (
+            f"Expected 6 anchors, got {len(col_anchors)}: {col_anchors}"
+        )
+        expected_anchors = [258, 959, 1182, 1477, 1768, 2061]
+        for i, (got, exp) in enumerate(zip(col_anchors, expected_anchors)):
+            assert abs(got - exp) <= 5, (
+                f"Anchor[{i}] expected ~{exp}, got {got} (diff={abs(got - exp)})"
+            )
+
+        # ------------------------------------------------------------------
+        # Stage C7: assign tokens to columns
+        # ------------------------------------------------------------------
+        col_buckets = _assign_tokens_to_columns(clean_number_tokens, col_anchors, w_med)
+
+        # ------------------------------------------------------------------
+        # Stage C7.5: pure-code-column detection
+        # ------------------------------------------------------------------
+        code_col_indices, value_col_indices = _identify_pure_code_columns(
+            col_buckets, col_anchors
+        )
+
+        # Assertion 5: code_col_indices=[0,1], value_col_buckets=4, code_note_tokens=8
+        assert len(code_col_indices) == 2, (
+            f"Expected 2 pure-code col indices, got {code_col_indices}"
+        )
+        assert len(value_col_indices) == 4, (
+            f"Expected 4 value col indices, got {value_col_indices}"
+        )
+        code_note_tokens = [t for i in code_col_indices for t in col_buckets[i]]
+        value_col_buckets = [col_buckets[i] for i in value_col_indices]
+        assert len(code_note_tokens) == 8, (
+            f"Expected 8 code_note_tokens (4 from col[0] + 4 from col[1]), got {len(code_note_tokens)}"
+        )
+        assert len(value_col_buckets) == 4, (
+            f"Expected 4 value_col_buckets, got {len(value_col_buckets)}"
+        )
+
+        # Assertion 6: value_col_buckets[2] has 3 tokens (row-1 absent),
+        #              value_col_buckets[3] has 3 tokens (row-2 absent)
+        assert len(value_col_buckets[2]) == 3, (
+            f"Expected 3 tokens in value_col_buckets[2] (col[4], row-1 absent), "
+            f"got {len(value_col_buckets[2])}"
+        )
+        assert len(value_col_buckets[3]) == 3, (
+            f"Expected 3 tokens in value_col_buckets[3] (col[5], row-2 absent), "
+            f"got {len(value_col_buckets[3])}"
+        )
+
+        # ------------------------------------------------------------------
+        # Stage C8.5: skip slot insertion (check assertions 7 and 8)
+        # ------------------------------------------------------------------
+        # Compute ref_pitch for manual slot verification
+        # ref_pitch = median of local pitches across cols with >= 3 tokens
+        # Per REV-8.2: ref_pitch = 43.5px
+
+        n_value_cols = 4
+        grid, col_y_medians = _build_ordinal_grid(value_col_buckets, n_value_cols)
+
+        # Assertion 7: value_col_buckets[2] → after skip slots, slot[1] is None (row-1 absent)
+        # The grid is built by _build_ordinal_grid which calls _insert_skip_slots internally.
+        # grid[rank][col] where col is 0-indexed into value cols (0-3).
+        # col[2] in the value grid (originally col[4] in the 6-col arrangement):
+        # row-1 should be absent → grid[1][2] == " "
+        assert grid[1][2] == " ", (
+            f"Expected grid[1][2]==' ' (col[4] row-1 absent), got {repr(grid[1][2])}"
+        )
+
+        # Assertion 8: value_col_buckets[3] → slot[2] is None (row-2 absent)
+        # col[3] in the value grid (originally col[5] in the 6-col arrangement):
+        # row-2 should be absent → grid[2][3] == " "
+        assert grid[2][3] == " ", (
+            f"Expected grid[2][3]==' ' (col[5] row-2 absent), got {repr(grid[2][3])}"
+        )
+
+        # ------------------------------------------------------------------
+        # Stage C11: label attachment
+        # ------------------------------------------------------------------
+        label_pool = text_tokens + code_note_tokens
+        h_med_val = 17.0  # from REV-8.2 Stage B (13th value of 25 = 17)
+
+        final_grid = _attach_labels_ordinal(grid, col_y_medians, label_pool, h_med_val)
+
+        # Assertion 10: labels do NOT interleave (band=25.5px, pitch=35px → no over-reach)
+        # label of r=0 does NOT contain "Giam" or "Thuan"
+        # label of r=1 does NOT contain "Doanh" or "Thuan"
+        assert len(final_grid) == 4, (
+            f"Expected 4 rows in final_grid, got {len(final_grid)}"
+        )
+        label_r0 = final_grid[0][0]
+        label_r1 = final_grid[1][0]
+        assert "Giam" not in label_r0, (
+            f"r=0 label should not contain 'Giam' (interleave bug): {label_r0!r}"
+        )
+        assert "Thuan" not in label_r0, (
+            f"r=0 label should not contain 'Thuan' (interleave bug): {label_r0!r}"
+        )
+        assert "Doanh" not in label_r1, (
+            f"r=1 label should not contain 'Doanh' (interleave bug): {label_r1!r}"
+        )
+        assert "Thuan" not in label_r1, (
+            f"r=1 label should not contain 'Thuan' (interleave bug): {label_r1!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TestMinClusterAnchor — AC-7-REV-ANCHOR
+# ---------------------------------------------------------------------------
+
+
+class TestMinClusterAnchor:
+    """
+    AC-7-REV-ANCHOR (BLOCKING): min(cluster) anchor metric.
+    Verifies that anchor detection returns the leftmost left-edge of a cluster,
+    not the centroid. Critical for correct column alignment when OCR produces
+    slight left-edge variation within a column.
+    """
+
+    def test_min_anchor_vs_centroid(self):
+        """
+        Cluster [1182, 1187, 1192] → min = 1182, centroid = 1187.
+        _detect_column_anchors_from_tokens must return 1182 (not 1187).
+        """
+        # Build tokens with left-edges [1182, 1187, 1192] — slight OCR variation
+        # within one column. All have a value-group text to qualify as NUMBER tokens.
+        tokens = [
+            {"text": "20.258.866", "left": 1182, "top": 495, "width": 160, "height": 17, "conf": 90},
+            {"text": "17.607.818", "left": 1187, "top": 530, "width": 160, "height": 17, "conf": 90},
+            {"text": "14.000.000", "left": 1192, "top": 565, "width": 160, "height": 17, "conf": 90},
+        ]
+        # w_med: all widths = 160 → median = 160
+        # bin_width = max(1.0, 0.3 × 160) = 48px
+        # All three lefts [1182, 1187, 1192] span 10px < 48px → ONE cluster
+        # cluster_anchors = [min([1182, 1187, 1192])] = [1182]
+        # col_gap = 1.5 × 160 = 240 → only 1 anchor, no merge needed
+        anchors = _detect_column_anchors_from_tokens(tokens, median_word_width=160.0)
+        assert len(anchors) == 1, (
+            f"Expected 1 anchor from single cluster, got {len(anchors)}: {anchors}"
+        )
+        assert anchors[0] == 1182, (
+            f"Expected anchor=1182 (min of cluster), got {anchors[0]}. "
+            f"Centroid would be {sum([1182,1187,1192])/3:.1f}."
         )

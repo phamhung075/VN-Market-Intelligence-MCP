@@ -218,6 +218,26 @@ LABEL_BAND_FACTOR = 1.5
 
 
 # ---------------------------------------------------------------------------
+# MD-EXTRACT-7-REV — Dense income-statement reconstruction constants
+#
+# AC-0: all constants below are GENERIC geometry parameters.
+# ZERO BCTC-specific string literals or semantics.
+# ---------------------------------------------------------------------------
+
+# Threshold for classifying a column bucket as a pure-code column.
+# A bucket is pure-code when: code_fraction >= this AND value_count == 0.
+# Default=0.90: allows up to 10% OCR-noise non-code tokens in code columns.
+# AC-0: uses _CODE_TOKEN_RE and _VALUE_TOKEN_RE, both generic numeric patterns.
+PURE_CODE_COL_THRESHOLD = 0.90
+
+# Dense-column threshold: when a value column has fewer than this many tokens,
+# prefer the cross-column ref_pitch over its own local pitch in _insert_skip_slots.
+# Prevents local_pitch contamination from large intra-column skip gaps.
+# AC-0: pure geometry. Non-regressing on segment report (columns have 7+ tokens).
+DENSE_COL_THRESHOLD = 6
+
+
+# ---------------------------------------------------------------------------
 # Pure helper: OCR text → readable markdown (§2.3)
 # ---------------------------------------------------------------------------
 
@@ -705,7 +725,11 @@ def _detect_column_anchors_from_tokens(
             current_cluster = [left]
     clusters.append(current_cluster)
 
-    cluster_anchors = [sum(c) / len(c) for c in clusters]
+    # REV-5: use min(cluster) instead of centroid → left-edge-aligned anchors.
+    # For homogeneous clusters (all same left) min == centroid. For slight OCR
+    # left-edge variation, min aligns to the column's true left boundary.
+    # AC-0: pure geometry. Non-regressing on segment report (min ≈ centroid there).
+    cluster_anchors = [min(c) for c in clusters]
 
     col_gap = _COL_GAP_FACTOR * median_word_width
     merged: List[float] = [cluster_anchors[0]]
@@ -775,6 +799,7 @@ def _assign_tokens_to_columns(
 def _insert_skip_slots(
     sorted_tokens: List[Optional[Dict]],
     ref_pitch: Optional[float] = None,
+    prefer_ref_pitch: bool = False,
 ) -> List[Optional[Dict]]:
     """
     Step C8.5 — Detect within-column rank gaps and insert None sentinel slots.
@@ -793,12 +818,23 @@ def _insert_skip_slots(
     median([delta]) = delta and threshold = 1.5 × delta. Since delta < threshold
     always, no skip would be detected. Fix: use ref_pitch when only 1 gap exists.
 
+    Dense-multi-gap fix (REV-6, §MD-EXTRACT-7 §5): when prefer_ref_pitch=True,
+    use ref_pitch as working pitch even for columns with ≥2 gaps. This prevents
+    local_pitch contamination on sparse value columns (e.g. columns with 3-4 tokens
+    where one delta is a large skip gap — the local median is then inflated by that
+    very gap, causing the threshold to miss it). Columns with fewer tokens than
+    DENSE_COL_THRESHOLD are candidates for prefer_ref_pitch=True in _build_ordinal_grid.
+
     AC-0: geometry only — ZERO BCTC-specific string literals.
 
     Args:
-        sorted_tokens: Tokens sorted by top ascending. May be None if already slots.
-        ref_pitch:     Cross-column reference pitch (median of local pitches from
-                       columns with ≥ 3 tokens). Used when len(sorted_tokens) < 3.
+        sorted_tokens:    Tokens sorted by top ascending. May be None if already slots.
+        ref_pitch:        Cross-column reference pitch (median of local pitches from
+                          columns with ≥ 3 tokens). Used when len(sorted_tokens) < 3
+                          or when prefer_ref_pitch=True.
+        prefer_ref_pitch: When True, always use ref_pitch as working_pitch (overrides
+                          local median). Applies to sparse columns that would otherwise
+                          compute a contaminated local_pitch.
 
     Returns:
         List of token dicts interspersed with None sentinels. Same token objects,
@@ -817,12 +853,17 @@ def _insert_skip_slots(
     ]
 
     # Determine local_pitch
-    if len(deltas) >= 2:
+    if prefer_ref_pitch and ref_pitch is not None and ref_pitch > 0:
+        # Dense-multi-gap fix: override local median with cross-column ref_pitch.
+        # Used for sparse value columns (< DENSE_COL_THRESHOLD tokens) where the
+        # local median of deltas is contaminated by the very skip gaps we need to detect.
+        local_pitch: Optional[float] = ref_pitch
+    elif len(deltas) >= 2:
         # Two or more gaps — use median of deltas as local_pitch
         sorted_deltas = sorted(deltas)
         n = len(sorted_deltas)
         mid = n // 2
-        local_pitch: Optional[float] = (
+        local_pitch = (
             (sorted_deltas[mid - 1] + sorted_deltas[mid]) / 2.0
             if n % 2 == 0
             else float(sorted_deltas[mid])
@@ -923,10 +964,16 @@ def _build_ordinal_grid(
             "Mid-column empty cells may misalign (R-MEDIUM per brief §10)."
         )
 
-    # C8.5 (continued): insert skip slots per column
-    col_slots: List[List[Optional[Dict]]] = [
-        _insert_skip_slots(col, ref_pitch) for col in sorted_cols
-    ]
+    # C8.5 (continued): insert skip slots per column.
+    # Dense-multi-gap fix (REV-6): for sparse columns (< DENSE_COL_THRESHOLD tokens),
+    # prefer the cross-column ref_pitch over the column's own contaminated local pitch.
+    # This prevents skip-insertion failures when a column's local_pitch is inflated
+    # by the very large gaps we need to detect as missing rows.
+    col_slots: List[List[Optional[Dict]]] = []
+    for col in sorted_cols:
+        prefer = (ref_pitch is not None and ref_pitch > 0 and
+                  len(col) < DENSE_COL_THRESHOLD)
+        col_slots.append(_insert_skip_slots(col, ref_pitch, prefer_ref_pitch=prefer))
 
     # C9: total rows
     if not col_slots:
@@ -1445,7 +1492,7 @@ def _detect_column_anchors(rows: List[List[Dict]], median_word_width: float) -> 
     clusters.append(current_cluster)
 
     # Cluster anchor = mean of the cluster
-    cluster_anchors = [sum(c) / len(c) for c in clusters]
+    cluster_anchors = [min(c) for c in clusters]
 
     # Merge clusters that are within gap_threshold of each other
     col_gap = _COL_GAP_FACTOR * median_word_width
@@ -1718,6 +1765,112 @@ def _coalesce_label_columns(grid: List[List[str]]) -> List[List[str]]:
 
 
 # ---------------------------------------------------------------------------
+# MD-EXTRACT-7-REV — Pure functions for header cutoff and code-col detection
+# ---------------------------------------------------------------------------
+
+
+def _find_first_value_row_top(number_tokens: List[Dict]) -> float:
+    """
+    Return the `top` coordinate of the first token (lowest top value) that
+    matches _VALUE_TOKEN_RE (a money-group / multi-digit number).
+
+    Used as a positional cutoff: tokens with top < this value are in the
+    column-header / page-section zone above the first data row and must be
+    excluded from anchor detection and ordinal grid construction.
+
+    If no value token is found (page has only code tokens), returns 0.0
+    (no cutoff — all tokens pass). This is the safe fallback.
+
+    AC-0: purely geometric (top coordinate comparison). Zero BCTC-specific
+    string constants. Does not use label text or table-type knowledge.
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    Args:
+        number_tokens: List of number-token word dicts (from _classify_tokens).
+
+    Returns:
+        Minimum top coordinate among VALUE-class tokens, or 0.0 if none.
+    """
+    value_tops = [
+        float(w["top"]) for w in number_tokens
+        if _VALUE_TOKEN_RE.match(w["text"].strip())
+    ]
+    return min(value_tops) if value_tops else 0.0
+
+
+def _exclude_header_tokens(
+    number_tokens: List[Dict],
+    first_value_top: float,
+) -> List[Dict]:
+    """
+    Exclude number tokens whose top coordinate is strictly less than
+    first_value_top. These tokens are in the column-header / page-section
+    zone above the first data row.
+
+    AC-0: top-coordinate comparison only. No label string matching.
+    Zero Tesseract calls. Pure in-memory filter.
+
+    Args:
+        number_tokens:    List of number-token word dicts.
+        first_value_top:  Cutoff top coordinate (from _find_first_value_row_top).
+
+    Returns:
+        Filtered list. If first_value_top <= 0.0, returns unchanged (safe fallback).
+    """
+    if first_value_top <= 0.0:
+        return number_tokens  # safe fallback: no cutoff
+    return [w for w in number_tokens if float(w["top"]) >= first_value_top]
+
+
+def _identify_pure_code_columns(
+    col_buckets: List[List[Dict]],
+    col_anchors: List[float],
+) -> tuple:
+    """
+    Classifies each column bucket as pure-code or value.
+
+    A bucket is pure-code if:
+        (code_count / total_count >= PURE_CODE_COL_THRESHOLD) AND (value_count == 0)
+
+    Returns:
+        (code_col_indices, value_col_indices) — two lists of column indices.
+
+    Non-regression proof for segment report: all segment buckets have value_count > 0
+    → the condition value_count == 0 is FALSE for every bucket → code_col_indices = []
+    → Step C7.5 takes the ELSE branch → pipeline IDENTICAL to MD-EXTRACT-6.
+
+    AC-0: uses _CODE_TOKEN_RE and _VALUE_TOKEN_RE (generic numeric patterns).
+    Zero BCTC-specific string constants. Pure function — no I/O, no Tesseract.
+
+    Args:
+        col_buckets:  List of token buckets (one per column, from _assign_tokens_to_columns).
+        col_anchors:  Column anchor x-positions (same length as col_buckets).
+
+    Returns:
+        (code_col_indices, value_col_indices) — indices into col_buckets.
+    """
+    code_col_indices: List[int] = []
+    value_col_indices: List[int] = []
+    for i, bucket in enumerate(col_buckets):
+        if not bucket:
+            value_col_indices.append(i)
+            continue
+        code_count = sum(
+            1 for w in bucket if _CODE_TOKEN_RE.match(w["text"].strip())
+        )
+        value_count = sum(
+            1 for w in bucket if _VALUE_TOKEN_RE.match(w["text"].strip())
+        )
+        total_count = len(bucket)
+        if value_count == 0 and (code_count / total_count) >= PURE_CODE_COL_THRESHOLD:
+            code_col_indices.append(i)
+        else:
+            value_col_indices.append(i)
+    return code_col_indices, value_col_indices
+
+
+# ---------------------------------------------------------------------------
 # Public class — implements GenericMdTableExtractorPort
 # ---------------------------------------------------------------------------
 
@@ -1874,39 +2027,83 @@ class GenericMdTableExtractor:
                 if (region_top - h_med) <= t["top"] <= (region_bot + h_med)
             ]
 
-            # Step C6 — Column anchor detection from NUMBER token x-positions.
-            # Reuse existing _detect_column_anchors_from_tokens (unchanged from MD-EXTRACT-4/5).
+            # Step C5 (REV-3) — Header/date token exclusion.
+            # Exclude number tokens above the first value-bearing row. These are
+            # column-header date band and page-section number tokens that contaminate
+            # anchor detection and produce phantom top grid rows.
+            # AC-0: uses _VALUE_TOKEN_RE (generic money-group pattern) + top coordinate.
+            first_value_top = _find_first_value_row_top(region_num_tokens)
+            clean_number_tokens = _exclude_header_tokens(region_num_tokens, first_value_top)
+
+            if not clean_number_tokens:
+                # Fallback: all tokens were header tokens → use original set
+                clean_number_tokens = region_num_tokens
+
+            # Step C6 — Column anchor detection from CLEAN NUMBER token x-positions.
+            # min(cluster) metric (REV-5): aligns anchors to true column left-edges.
             col_anchors = _detect_column_anchors_from_tokens(
-                region_num_tokens, median_word_width
+                clean_number_tokens, median_word_width
             )
             n_cols = len(col_anchors)
             if n_cols == 0:
                 continue
 
             # Guard: too few number tokens to build a meaningful grid
-            if len(region_num_tokens) < 4:
+            if len(clean_number_tokens) < 4:
                 continue
 
-            # Step C7 — Assign each NUMBER token to nearest x-column-anchor.
+            # Step C7 — Assign each CLEAN NUMBER token to nearest x-column-anchor.
             # NO y-comparison. The entire row assignment is deferred to ordinal ranking.
             col_buckets = _assign_tokens_to_columns(
-                region_num_tokens, col_anchors, median_word_width
+                clean_number_tokens, col_anchors, median_word_width
             )
 
             # Guard: all tokens filtered as noise → no grid possible
             if not any(col_buckets):
                 continue
 
+            # Step C7.5 (REV-4) — Pure-code-column detection.
+            # Identify column buckets that are pure-code (no value tokens) and split.
+            # code_note_tokens: re-attached to text pool before C11 as label companions.
+            # value_col_buckets + value_anchors: continue the ordinal pipeline.
+            # ELSE branch (no pure-code columns): pipeline IDENTICAL to MD-EXTRACT-6.
+            code_col_indices, value_col_indices = _identify_pure_code_columns(
+                col_buckets, col_anchors
+            )
+
+            if code_col_indices:
+                # Income-statement path: 2 pure-code columns detected.
+                code_note_tokens = [
+                    t for i in code_col_indices for t in col_buckets[i]
+                ]
+                value_col_buckets = [col_buckets[i] for i in value_col_indices]
+                value_anchors = [col_anchors[i] for i in value_col_indices]
+            else:
+                # Segment-report / balance-sheet path: no pure-code columns.
+                # Pipeline is IDENTICAL to MD-EXTRACT-6 (ELSE branch).
+                code_note_tokens = []
+                value_col_buckets = col_buckets
+                value_anchors = col_anchors
+
+            if not value_col_buckets or not any(value_col_buckets):
+                continue
+
+            n_value_cols = len(value_col_buckets)
+
             # Steps C8+C8.5+C9+C10 — Build 2D grid via ordinal rank-alignment.
             # Handles mid/trailing empty cells via within-column gap detection.
-            grid, col_y_medians = _build_ordinal_grid(col_buckets, n_cols)
+            # Dense-multi-gap fix (REV-6): prefer_ref_pitch=True for sparse columns.
+            grid, col_y_medians = _build_ordinal_grid(value_col_buckets, n_value_cols)
             if not grid:
                 continue
 
             # Step C11 — Attach labels: for each ordinal row, find TEXT tokens
             # within LABEL_BAND_FACTOR × h_med of the row's y_median.
+            # code_note_tokens from pure-code columns are appended to the text pool
+            # so that line codes appear in the label cell (not as standalone value columns).
             # Greedy removal prevents same label token from appearing on adjacent rows.
-            grid = _attach_labels_ordinal(grid, col_y_medians, region_text_tokens, h_med)
+            label_pool = region_text_tokens + code_note_tokens
+            grid = _attach_labels_ordinal(grid, col_y_medians, label_pool, h_med)
             if not grid:
                 continue
 
