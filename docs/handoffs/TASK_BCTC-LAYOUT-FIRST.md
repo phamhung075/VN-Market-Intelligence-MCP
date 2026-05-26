@@ -142,3 +142,97 @@ LF-EXTRACT and LF-OVERLAY CAN run in parallel — the JSON contract (§3.2), DDL
 - architect writes only: `docs/architecture-briefs/2026-05-26-bctc-layout-first-pipeline.md` + this handoff entry + TASKS.md + notebook
 
 **NEXT = PM dispatches dev-pdf-extractor (LF-EXTRACT) + dev-mcp-server (LF-OVERLAY) in parallel.**
+
+## [PM] LF-PM — Task Decomposition & Dispatch Recommendation — 2026-05-26T19:45Z
+
+**DECOMPOSITION MANDATE:** architect blueprint (LF-DESIGN, 593 lines, 2026-05-26-bctc-layout-first-pipeline.md) specifies:
+- **Tiers 0–3 pipeline** → `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` redesign + new `extract_layout_first_usecase.py` + new `layout_first_push_client.py` + domain primitives
+- **Zone geometry JSON push + schema** → `apps/mcp-server/` new `POST /api/push-bctc-layout` handler + `bctc_layout_units` + `bctc_page_zones` DDL + overlay toggle in `bctcInspectHandler.ts`
+- **Service boundary:** fully specified JSON contract in brief §3.2; both dev agents implement against contract independently
+
+**ATOMIC TASK SPLIT (PARALLEL-READY):**
+
+### LF-EXTRACT — dev-pdf-extractor (~2h baseline, one use case + three tier functions + three unit test files)
+**ZONE:** `apps/pdf-extractor/` (sole owner)
+**WHAT:** Implement Tiers 0–3 layout-first pipeline per brief §2 + §4.1
+- **Tier 0:** `build_document_map()` (geometric fingerprint grouping, page tagging, 50-DPI projection raster)
+- **Tier 1:** `zone_page()` (per-page layout zoning, schema inheritance for continuation pages)
+- **Tier 2:** `ocr_unit()` (OCR into fixed grid, cross-page stitch to one markdown table per unit)
+- **Tier 3:** `gate_unit()` (balance identity, codes monotonic, orphan-row check; quarantine on fail)
+- **New files:** `application/extract_layout_first_usecase.py` (orchestrator) + `infrastructure/layout_first_push_client.py` (HTTP client) + `domain/primitives/layout_invariants/primitive.py` (pure gate functions)
+- **Extend:** `domain/modules/financial_reports/ports.py` (add port interfaces) + `main.py` (wire composition root, add `POST /extract-layout-first` route)
+- **Tests:** `test_document_map.py` + `test_schema_inheritance.py` + `test_layout_invariants.py` (injected fakes, zero Tesseract)
+- **FROZEN (0-byte-diff):** `text_table_extractor.py`, `sandbox/runner.py`, `docs/data/pilot-status-pdf-extractor.json`
+
+**ACCEPTANCE CRITERIA (ACs AC-LFE-0 through AC-LFE-11 from brief §4.1):**
+- AC-LFE-0: grep-proof (zero BCTC semantics in zone/grid logic)
+- AC-LFE-1: document-map JSON emitted + stored in `bctc_page_zones`
+- AC-LFE-2: schema inheritance (page 5 inherits from page 3)
+- AC-LFE-3: page 41 tagged prose (geometry is the spine)
+- AC-LFE-4: FPT Q1 NGUỒN VỐN present in stitched output
+- AC-LFE-5: corpus breadth (18 docs, measured pass-rate)
+- AC-LFE-6: one Tesseract pass per page (Tier 0 uses stored OCR + PIL only)
+- AC-LFE-7: `text_table_extractor.py` zero-diff
+- AC-LFE-8: local tools only (no external API)
+- AC-LFE-9: sequential re-extract (no batch sweep)
+- AC-LFE-10: sandbox green
+- AC-LFE-11: quarantine path exercised
+
+### LF-OVERLAY — dev-mcp-server (~2h baseline, schema + handler + overlay rendering)
+**ZONE:** `apps/mcp-server/` (sole market.db write-owner)
+**WHAT:** Consume zone-geometry JSON per contract (brief §3.2); add DB schema + push handler + overlay toggle
+- **Schema:** `bctc_layout_units` (per-unit stitched markdown + quarantine flag) + `bctc_page_zones` (per-page zone geometry)
+- **Handler:** `POST /api/push-bctc-layout` in new `pushBctcLayoutHandler.ts` (validates UUID, writes to both tables, idempotent)
+- **Overlay:** extend `bctcInspectHandler.ts` with zone-toggle rendering (column gutters, row bands, header/footer bands, unit boundaries)
+- **New files:** `pushBctcLayoutHandler.ts` (handler logic)
+- **Extend:** `schema-financial-reports.ts` (DDL) + `server.ts` (register route) + `bctcInspectHandler.ts` (overlay route + rendering)
+- **Tests:** `1272-push-bctc-layout.test.ts` (handler validity + idempotency + isolation) + `1273-bctc-inspect-overlay.test.ts` (zone rendering + non-regression)
+- **FROZEN:** structured `bctc_table_rows` read path, balance badge, existing md-tables endpoints
+
+**ACCEPTANCE CRITERIA (ACs AC-LFO-0 through AC-LFO-7 from brief §4.2):**
+- AC-LFO-0: toggle present in HTML
+- AC-LFO-1: zones endpoint returns positional col_id data
+- AC-LFO-2: zero pdf-extractor import (DB-read only)
+- AC-LFO-3: structured path non-regression (balance_pass=true for FPT Q4)
+- AC-LFO-4: new tables exist, zero cross-write to `bctc_table_rows`
+- AC-LFO-5: idempotent push (same report_id + unit_id = one row after duplicate)
+- AC-LFO-6: zone types visually distinct (≥2 colors/styles)
+- AC-LFO-7: corpus breadth (18 docs have zone data)
+
+**DISPATCH RECOMMENDATION:**
+
+**✓ DISPATCH BOTH IN PARALLEL IMMEDIATELY** (recommended)
+
+**RATIONALE:**
+1. **Contract fully specified:** brief §3.2 defines exact JSON schema, DDL (§3.1), and endpoint name (`POST /api/push-bctc-layout`). Both dev agents can implement independently against this SSOT without waiting for the other's code.
+2. **Zero inter-agent code dependency:** pdf-extractor uses HTTP to push; mcp-server reads from DB only. No Python import, no TypeScript dependency.
+3. **Independent test verification:** mcp-server tests use injected in-memory SQLite DB — do NOT require pdf-extractor to be running. Both can pass their own test suites before either is deployed.
+4. **WIP gate:** max 2 In Progress. Assigning both now keeps WIP at exactly 2 (one per zone specialist).
+5. **Serial deployment gate:** LF-DEPLOY is gated on BOTH being done (developer submits pull, code merged, image rebuilt for each). But implementation can proceed in parallel.
+
+**HOST RISK ASSESSMENT (16GB Mac, 8GB Docker cap, known kernel-panic on swap):**
+- **Recommendation: PARALLEL DISPATCH is HOST-SAFE** because:
+  - Dev-pdf-extractor works on source files in the repo (no runtime container impact yet)
+  - Dev-mcp-server works on schema + TypeScript compilation (zero OCR, zero Tesseract during dev)
+  - Both write NO runtime state until LF-DEPLOY (rebuild + re-extract) — that step is serialized by ops
+  - Peak resource contention is at LF-DEPLOY single-doc re-extract: one container running, one Tesseract pass/page (per design), no batch → fits 8GB cap
+
+**HOST-RISK ALTERNATIVE (if conservative):** serialize LF-EXTRACT → LF-OVERLAY (adds ~2h latency, no functional benefit, developer lane idle during the second task)
+
+**FINAL DISPATCH DIRECTIVE TO MAIN TERMINAL:**
+```
+DISPATCH LF-EXTRACT (dev-pdf-extractor) + LF-OVERLAY (dev-mcp-server) PARALLEL NOW
+
+GATE (sequential after both DONE):
+  LF-DEPLOY (ops rebuild both, sequential single-doc re-extract, gated on both code merged)
+  LF-QA (qa, direct market.db verification, parallel with QA flow)
+  LF-FIX (fixer, if QA routes fixes)
+  LF-EXIT (po final verification)
+
+WATCHLIST (pm):
+  - WIP count = 2 (LF-EXTRACT + LF-OVERLAY). Any blocker surfaces → escalate immediately.
+  - Dev-pdf-extractor dependency: brief §2 is the SSOT. No deviations. AC-LFE-0 grep-proof is non-negotiable.
+  - Dev-mcp-server dependency: brief §3.1 + §3.2 are the SSOT. No deviations. Schema immutable until LF-DEPLOY.
+  - Host kernel-panic: LF-DEPLOY single-doc only, NEVER batch sweep. Sequential on ops lane.
+  - Blockers escalate to architect for routing.
+```

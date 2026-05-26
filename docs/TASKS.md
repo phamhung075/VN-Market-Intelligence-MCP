@@ -44,6 +44,7 @@
 | LF-EXIT | **PO sign-off vs Decisions A-F + Success Metric.** Main terminal independently re-verifies LIVE (multi-doc Tier-3 pass via direct DB + zone overlay ON/OFF + scramble fixed); main terminal commits in-tree work. Goal stays ARMED until USER verbal G9. | HIGH | GATE | po | docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md | BLOCKED | LF-QA |
 
 **Notes:**
+- **[PM] Task Decomposition (LF-PM, 2026-05-26T19:45Z):** LF-EXTRACT (dev-pdf-extractor, ~2h, Tiers 0–3 + 3 test files) + LF-OVERLAY (dev-mcp-server, ~2h, schema + handler + overlay toggle) DISPATCHED PARALLEL (full JSON contract in brief §3.2 enables independent implementation; zero inter-agent code dependency). **Recommendation:** PARALLEL is host-safe (repo-source dev, no runtime container until LF-DEPLOY re-extract). LF-DEPLOY gates on BOTH done (sequential single-doc, never batch). See handoff § [PM] LF-PM for full decomposition + atomic task breakdown + WIP enforcement.
 - **Recurring-bug discipline (binding):** `generic_md_table_extractor.py` carries 9 MD-EXTRACT commits + `text_table_extractor.py` 7 BT commits — LF-DESIGN IS the architect root-cause rethink per `feedback_recurring_bug_escalation.md`. No more blind dev patches to the column-guessing logic; the redesign replaces it.
 - **Augment, not replace (Decision B):** the structured `bctc_table_rows` path (`text_table_extractor.py`) is the user-confirmed working surface feeding financial analysis — 0-byte-diff, must not regress. Layout-first markdown is the human-recheck layer.
 - **Multi-zone split is mandatory:** zone = `multi`; architect splits the contract at the pdf-extractor↔mcp-server service boundary before any dev dispatch.
@@ -199,36 +200,15 @@ Full per-task ledgers (frontend P0-FE-1..5/EXIT + P1 WAVE-A + P2-A..Z; mcp-serve
 
 ---
 
-## Sprint BCTC-TABLE-2 — Multi-ticker / Quarterly BCTC Coverage Hardening (FOLLOW-UP)
+## Sprint BCTC-TABLE-2 — Multi-ticker / Quarterly BCTC Coverage (FOLLOW-UP) → QUEUED
 
-**Status:** OPEN 2026-05-25T20:51Z (PO follow-up, NOT a reopen of BCTC-TABLE — that sprint's chartered FPT goal is DONE+CLOSED). **Priority:** MEDIUM (below active reliability + scale-pilot work; does NOT consume the WIP=2 fleet cap — general dev-pdf-extractor lane). **Zone:** `apps/pdf-extractor/` (sole BCTC extraction owner). **Goal:** extend the proven clean-extraction beyond the FPT annual consolidated balance sheet to non-FPT layouts + the quarterly "Báo cáo tình hình tài chính" format, so multi-ticker BCTC tables become analysis-grade. Build ON the BT-7 pipeline — section filter + period scoping already land cleanly for FPT/HPG; this sprint closes the residual extractor failure modes.
-
-**Why a SEPARATE sprint, not a BCTC-TABLE reopen:** the user's explicit `/goal` ("bctc can extract correct result table for analyze") was scoped to the FPT consolidated balance sheet (page-4-first then 4-5-6 stitch) and is proven clean live. Keeping the original sprint open to chase wider coverage would conflate "user's ask is done" with "extractor is perfect across all 14 docs" — dishonest framing. These are real, honestly-flagged coverage gaps, carried forward transparently.
-
-| Task ID | Title | Priority | Type | Owner | Status | Blocked by |
-|---------|-------|----------|------|-------|--------|-----------|
-| B2-1 | **Quarterly code-map for "Báo cáo tình hình tài chính".** FPT Q1 (`e8ea3df5`) = 0 rows because the quarterly format reuses code 270 for a different line (not Total Assets) → BT-5 cross-check gate correctly blocks (270≠300+400). Add a format-aware code-map / statement-type detection so quarterly BCTC extracts without false gate-blocks, while keeping the annual identity gate intact. AC: FPT Q1 > 0 rows with correct labels; annual docs (FPT Q4/HPG Q4) unchanged. | MEDIUM | TASK | dev-pdf-extractor | READY | — |
-| B2-2 | **Period-detection hardening on non-FPT layouts.** VEA `period_current=01/01/2025` (period-start leak, should be period-end), SHB `22/04/2025` (stray non-period date). Generalize the BT-7 two-pass `_detect_periods()` beyond the FPT BS-header shape. AC: VEA + SHB store the correct reporting period-end; no regression on FPT Q4/HPG Q4/VNM Q4 (already correct). | MEDIUM | TASK | dev-pdf-extractor | READY | — |
-| B2-3 | **Empty-period docs.** ACB/DGC/DHG/EIB `period_current` EMPTY (assembler found no date pair in BS header). Investigate header-row parse on these layouts; derive period or honestly flag has_table-without-period. AC: each of the 4 either stores a verified period or is explicitly flagged. | MEDIUM | TASK | dev-pdf-extractor | READY | — |
-| B2-4 | **Partial-extraction investigation for low-row docs.** VNM (29 rows) + EIB (68 rows) look low vs a ~80-row full balance sheet, and several docs show `balance_pass=N/A` (no 270/300/400 detected → identity unverifiable). Investigate whether the section filter is truncating valid BS rows or these are genuinely partial sources. AC: per-doc verdict (truncation-bug-fixed vs honest-partial-source); raise code-row recall where a fix applies. | MEDIUM | TASK | dev-pdf-extractor | READY | — |
-
-**Notes (BCTC-TABLE-2):**
-- Binding constraints carry over from BCTC-TABLE: explicit-file staging; no `--force`/`--no-verify`; NO `git push`; all on `main`; zero foreign files; privacy = self-hosted Tesseract ONLY, zero external-API/VLM; Fence-A/B intact; frozen pilot surfaces (`pilot-status-pdf-extractor.json`, `sandbox/runner.py`, dashboards) untouched.
-- Deferred items from BCTC-TABLE remain deferred (not in B2 scope unless re-prioritized): PP-StructureV3 IMAGE cross-check for sub-bar p5/p7 rows + low cell-F1 (self-hosted only); external-API VLM (opt-in, user-yes only).
-- Not chartered as a scale-pilot (no pilot-status edit, no G9 gate) — this is post-pilot correctness coverage work behind the frozen DONE pilot.
+**Status:** QUEUED (PO follow-up, NOT active; carries BCTC-TABLE-3 verified FPT goal forward to wider multi-ticker + quarterly coverage). Does NOT consume WIP=2 fleet cap. Zone: `apps/pdf-extractor/` (sole BCTC owner). Goals: B2-1 (quarterly code-map for "Báo cáo tình hình tài chính" / FPT Q1) + B2-2 (period-detection hardening on VEA/SHB layouts) + B2-3 (empty-period docs ACB/DGC/DHG/EIB) + B2-4 (low-row investigation VNM/EIB). Bindings: self-hosted Tesseract ONLY; frozen surfaces (`pilot-status-pdf-extractor.json`, sandbox, dashboards) untouched; all work on `main`, explicit-file staging. **NEXT:** dispatch AFTER LF-EXTRACT + LF-OVERLAY close (prioritize active pipeline stability).
 
 ---
 
-## Sprint MCPZONE-HARDEN-1 — push-bctc-table write-path trust + test isolation (FOLLOW-UP) → CLOSED 2026-05-26T18:04Z (PO MCPZONE-BATCH-1 sign-off)
+## Sprint MCPZONE-HARDEN-1 → CLOSED 2026-05-26T18:04Z
 
-**Status: CLOSED / DONE.** Both deferred mcp-server-zone integrity gaps from the BCTC-TABLE-3 false-green chain are fixed: MZH-1 (DB-verified `rows_stored`) + MZH-2 (prod-db test guard) shipped `2d4f71d9` + doc `7e34c2b7` (dev-mcp-server) → ops MCPZONE-DEPLOY-1 = PASS (G9 arbiter, live): image build-time 18:02:43Z > commit-time 18:00:37Z (proves recreate, RESTART≠REBUILD cleared); /health 200, toolCount 146/146 (SSOT match), uptime fresh; **MZH-1 live proof** — handler returned `rows_stored:1` verified against direct `market.db` COUNT (write-wedge gone); dead-upstream FA-FIX timeouts non-regressed; all 8 containers healthy; Docker mem 2.6GB/8GB. Baseline improved: full suite 9441 pass / 354 fail / 35 skip (was 9434/360/35) — +7 passes, −6 pre-existing fails, 0 NEW failures, TS clean. Net-reduced from this board; ledger in close signal `docs/signals/po-20260526T180433Z.json` + notebook. NOT a pilot — no `pilot-status-*.json` touched.
-
-| Task ID | Title | Priority | Type | Owner | Status | Blocked by |
-|---------|-------|----------|------|-------|--------|-----------|
-| MZH-1 | **`pushBctcTableHandler.ts` returns DB-verified row count, not input echo.** After the DELETE+INSERT transaction, `SELECT COUNT(*) FROM bctc_table_rows WHERE report_id = ?` is returned as `rows_stored` (was `rows.length` input echo — the false-success that masked the BCTC write-wedge). | MEDIUM | TASK | dev-mcp-server | **DONE / CLOSED** (code `2d4f71d9` + doc `7e34c2b7`; deploy verified by ops MCPZONE-DEPLOY-1 — live `rows_stored:1` matched direct DB COUNT) | — |
-| MZH-2 | **Test isolation — no test writes to the live `/app/data/market.db`.** BCTC push/inspect tests use an isolated in-memory/temp-file SQLite DB + a guard that fails the suite if a test opens the production DB path; zero test references to the prod path; no stray "Test Row" can reach a live table. | MEDIUM | TASK | dev-mcp-server | **DONE / CLOSED** (prod-db guard in `2d4f71d9`; rode the batch rebuild, no own rebuild) | — |
-
-**Notes (MCPZONE-HARDEN-1):** Not a scale-pilot (no pilot-status edit, no G9 gate) — post-incident reliability hardening. mcp-server RUN-SOLO charter honored (no concurrent rebuild). Files left UNSTAGED; dispatcher commits under commit-mutex.
+**Status: ✅ DONE / CLOSED.** MZH-1 (DB-verified `rows_stored`) + MZH-2 (prod-db test guard) shipped `2d4f71d9` → ops MCPZONE-DEPLOY-1 PASS (live: handler `rows_stored:1` matched direct DB COUNT; write-wedge gone; health 200, 146 tools, 2.6GB/8GB; +7 baseline passes). Close signal `docs/signals/po-20260526T180433Z.json`.
 
 ---
 
