@@ -3566,3 +3566,79 @@ Measured against `GET /api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c
 - MODIFY `apps/pdf-extractor/__tests__/unit/test_bt3fix4_parser_hardening.py` (update for poppler char forms)
 
 No mcp-server changes. No schema changes. Frozen surfaces untouched.
+
+---
+
+## [dev-pdf-extractor] BT3-FIX5 — DONE (commit `81970243`)
+
+Implemented the architect's BT3-RETHINK ruling EXACTLY (no freelance regex):
+- **Ruling A** — POSITIVE-keep gate + positional cutoff (`_apply_positional_cutoff` drops everything after the last summary sentinel code 270/440; else-branch emits a header row only if `_is_recognized_section_header` returns True, otherwise drops silently). Negative skip-list retired as primary filter.
+- **Ruling B** — Layout-5 structural code-finder (`_find_code_in_line` / `_BCTC_CODE_SCAN_RE`), reached only when Layouts 1-4 fail → recovers embedded codes 222/223/226/131/319/421b regardless of label diacritic fidelity.
+- **Ruling C** — diacritic-insensitive `_norm()` (NFD + strip Mn + uppercase) applied to all skip-list / date-regex / keyword comparisons → parser immune to poppler-vs-PyMuPDF diacritic variance.
+- **Ruling D (AC-0, BLOCKING)** — `__tests__/fixtures/fpt_q4_2025_pages_4-7.txt` REGENERATED from LIVE poppler OCR of e71f845d (via `docker exec` + `PdfOcrAdapter.ocr_pages()`, pdf2image 200DPI, pytesseract vie+eng --psm 6), header comment names the substrate.
+
+Tests: 285 unit tests pass (incl. NEW `test_bt3rethink_diacritics.py` 32/32, regression `test_text_table_extractor.py` 20/20, `test_vn_number_normalize.py` 17/17). Fence-A/B kept (lint-imports exit 0). Sandbox exit-0, zero creds. Frozen surfaces untouched. Files UNSTAGED for main terminal.
+
+## [ops] BT3-DEPLOY2 — DONE
+
+`docker compose up -d --build pdf-extractor` in the separate docker session (16GB host cap). Single-doc re-extract of **ONLY e71f845d** via `POST http://localhost:5001/extract-tables` — sequential, no batch backfill (host kernel-panic guard honored). 3 deploy markers verified live in the running container. `bctcBatchTableBackfillJob` NOT run.
+
+## [qa] BT3-QA2 — PASS / APPROVED (commit `9f829289`, report `reports/TASK_REPORT_BT3-QA2.md`)
+
+LIVE endpoint `GET /api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` verified row-by-row (NOT the fixture); in-container `bun:sqlite` SELECT confirmed the real DB count (79). All 11 ACs PASS:
+
+| AC | Criterion | Observed | Verdict |
+|---|---|---|---|
+| AC-1 | orphans (code IS NULL) ≤ 2 | 0 | PASS |
+| AC-2 | zero junk rows (header/date/signature/garbled-null) | 0 | PASS |
+| AC-3 | codes 222/223/226/131/319/421b present + code-split + values | all 6 exact | PASS |
+| AC-4 | sentinels 100/270/300/400/440 exact, label-aligned | all 5 exact | PASS |
+| AC-5 | value_prior populated on coded rows | 0 NULL (except 418, accounting-valid) | PASS |
+| AC-6 | no duplicate codes | 0 dups | PASS |
+| AC-7 | balance_delta = 0 | 0 | PASS |
+| AC-8 | diacritics robustness unit tests | 32/32 | PASS |
+| AC-9 | positional-cutoff unit test | 5/5 | PASS |
+| AC-10 | import-linter fence exit 0 | 0 broken | PASS |
+| AC-11 | non-regression: code rows ≥ 72 | 79 | PASS |
+
+Forbidden-gate compliance confirmed: `balance_pass` alone NOT used as gate; fixture-green NOT used as gate; `rows_stored` echo NOT used (in-container DB count verified). Two labels (code 134, code 317) OCR-garbled TEXT but correct code+values — accepted per brief as local-Tesseract character-quality blemish, NOT structural. `code 418`: value_current=None / value_prior populated — accounting reality (development-investment fund fully disbursed in Q4 2025), AC-5 tests value_prior nulls only.
+
+---
+
+## [PO] BT3-EXIT2 — SPRINT CLOSED ✅ (2026-05-26T00:12Z)
+
+**Verdict: DONE — SIGNED OFF. The user's `/goal` ("bctc can extract correct result table for analyze") is MET. The user has been shown the corrected live table.**
+
+### Chain summary (the 7-attempt arc, finally held)
+
+`BT3-FIX4 false-green #6` (verified on the SPIKE PyMuPDF fixture, broke on LIVE poppler OCR — 95 rows / 23 orphans) → **recurring-bug escalation** (`text_table_extractor.py` carried 5 `fix(` in 30d AND the architect's own FIX4 ruling false-greened) → **BT3-RETHINK** (architect, DESIGN-ONLY filter-strategy ruling: POSITIVE-keep + positional-cutoff + diacritic-insensitive `_norm()` + Layout-5 embedded-code scan + AC-0 live-substrate fixture mandate) → **BT3-FIX5** (`81970243`, dev-pdf-extractor — the 7th attempt, the one that held) → **BT3-DEPLOY2** (ops — image rebuilt + container recreated, 3 markers verified live, single-doc re-extract of e71f845d only) → **BT3-QA2** (`9f829289`, PASS — all 11 ACs honest-green) → **BT3-EXIT2** (this sign-off).
+
+### Final verified state — report_id `e71f845d-ffa5-48f9-8f09-30ac2cd09c65` (FPT Q4 2025 balance sheet)
+
+- **79 rows, 0 orphans, 0 duplicate codes, 0 NULL value_prior** (except code 418, which is accounting-valid: development-investment fund fully disbursed in Q4 2025, prior populated).
+- **Sentinels exact + label-aligned:** 100=58102970741619, 270=88089621779862, 300=44338155487272, 400=43751466292590, 440=88089621779862.
+- **6 embedded codes recovered & code-split:** 222 / 223 / 226 / 131 / 319 / 421b.
+- **balance_delta=0:** total_liabilities (44338155487272) + total_equity (43751466292590) = total_assets (88089621779862).
+- **Two labels (code 134, code 317)** OCR-garbled TEXT but correct code+values — accepted as OCR character-quality blemish (local Tesseract; cloud OCR forbidden by privacy rule), NOT a structural fault.
+- **ROOT CAUSE of the 6 prior false-greens eliminated:** the test fixture now uses the LIVE poppler OCR substrate (architect Ruling D / AC-0), not the spike's PyMuPDF OCR. The substrate mismatch in the test layer was the recurring trap.
+
+### Verification method (independent — did NOT rubber-stamp QA)
+
+Main terminal independently re-verified the LIVE endpoint `GET http://localhost:3000/api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` AND a direct in-container DB count, against the BT3-QA2 bar (live row-by-row; `balance_pass` alone FORBIDDEN as the gate; fixture FORBIDDEN as the gate). State matches QA's APPROVED report exactly. My BT3-EXIT2 bar (orphans ≤2, zero junk, 6 embedded codes present+split, sentinels exact, value_prior filled, no dups, balance_delta=0 — NEVER the fixture, NEVER balance_pass alone) is satisfied.
+
+### Privacy audit
+
+Self-hosted local OCR only (poppler/Tesseract). Zero off-infra send. QA confirmed zero `process.env`, zero credentials, no new external I/O in the modified file. PASS.
+
+### Durable lesson (binding for future BCTC / OCR-parse work)
+
+**Positive-keep + positional-cutoff + diacritic-insensitive matching + embedded-code recovery BEAT the literal negative-skip-list.** A skip-list can never enumerate arbitrary OCR garbage and silently fails on diacritic variance between rasterizers. **AC-0 — the test fixture MUST be generated from the LIVE production OCR substrate (poppler), never the spike's (PyMuPDF) — is mandatory.** Substrate mismatch in the test layer was the single mechanism behind all 6 false-greens. `balance_pass` (or any proxy: row count, badge, fixture-green, `rows_stored` echo) is FORBIDDEN as the sole acceptance gate — acceptance is the LIVE endpoint, row by row.
+
+### Follow-ups (non-blocking, post-goal)
+
+- **Sprint MCPZONE-HARDEN-1** (NEW, dev-mcp-server) — the two deferred mcp-server-zone hardening items: (a) `pushBctcTableHandler.ts` returns input-echo `rows_stored` not a DB-verified count (the false-success that masked the write-wedge); (b) a test wrote to the live `market.db` and seeded the clobbering "Test Row" (test-isolation breach). Both scheduled in `docs/TASKS.md § Sprint MCPZONE-HARDEN-1`.
+- **Sprint BCTC-TABLE-2** (already OPEN) — wider multi-ticker / quarterly coverage residuals. Stays open, non-blocking.
+
+### Commits
+
+All subagent work already on `main`: BT3-FIX5 `81970243`, BT3-QA2 `9f829289`. This PO close-out touches `docs/` only (SPRINT_GOAL.md, TASKS.md, this handoff, the BT3-EXIT2 decision doc, the PO notebook) — left UNSTAGED for the main terminal to stage + commit explicitly. No branches, no `git push`.
