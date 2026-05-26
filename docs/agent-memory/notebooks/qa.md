@@ -1,5 +1,97 @@
 # QA — Notebook
 
+## cycle-120 · 2026-05-26 · BT3-QA2 (BCTC table FIX5 formal acceptance sign-off) — APPROVED
+
+**Task:** BT3-QA2 — formal acceptance sign-off for BT3-FIX5 (commit 81970243) | **Verdict:** APPROVED — BT3-EXIT2 cleared for po
+
+```
+date: 2026-05-26
+type: sprint-qa-gate (BCTC-TABLE-3, FIX5 formal acceptance)
+report: reports/TASK_REPORT_BT3-QA2.md
+commit: 81970243
+report_id: e71f845d (FPT Q4 2025 consolidated balance sheet)
+round: 1
+
+live_endpoint:
+  total_rows: 79
+  http_status: 200
+  in_container_db_count: 79 (bun:sqlite SELECT, readonly)
+
+ac1_orphans: 0 (limit <=2) => PASS
+ac2_junk_rows: 0 => PASS
+ac3_embedded_codes:
+  222: PASS (curr=29148692599137, prior=24457733666511)
+  223: PASS (curr=-13762875752850, prior=-11683165704793)
+  226: PASS (curr=-4593793590, prior=-3673326424)
+  131: PASS (curr=12733504688522, prior=10537019113380)
+  319: PASS (curr=1014673786632, prior=874015837328)
+  421b: PASS (curr=6924484515123, prior=5572300562297)
+ac4_sentinels:
+  100=58102970741619: PASS
+  270=88089621779862: PASS
+  300=44338155487272: PASS
+  400=43751466292590: PASS
+  440=88089621779862: PASS
+ac5_null_value_prior_coded: 0 => PASS
+ac6_dup_codes: NONE => PASS
+ac7_balance_delta: 0 => PASS
+ac8_diacritics_unit_tests: 32/32 PASS (test_bt3rethink_diacritics.py)
+ac9_positional_cutoff_unit_test: 5/5 PASS (included in ac8 suite)
+ac10_lint_imports: exit 0, Fence-A KEPT, Fence-B KEPT (73 files, 132 deps) => PASS
+ac11_nonregression_coded_rows: 79 >= 72 => PASS
+ruling_d_fixture: poppler substrate header confirmed, no PyMuPDF substrate => PASS
+
+pdf_extractor_unit_suite: 285 pass / 0 fail
+ddd: PASS (infra imports domain primitives only — correct direction)
+security: PASS (0 process.env, 0 creds, 0 hardcoded secrets)
+code_label_alignment: PASS (all 10 structural spot-checks pass)
+ocr_garbled_accepted: code=134 + code=317 (correct codes+values, garbled label text only)
+code_418_note: value_current=None is accounting reality (fund=0 in Q4 2025), value_prior populated — NOT structural fault
+forbidden_gates_bypassed: balance_pass NOT sole gate, fixture NOT sole gate, rows_stored echo NOT used
+
+files_changed_in_81970243:
+  - __tests__/fixtures/fpt_q4_2025_pages_4-7.txt (replaced — poppler substrate)
+  - __tests__/unit/test_bt3rethink_diacritics.py (new — 32 tests)
+  - __tests__/unit/test_text_table_extractor.py (updated)
+  - infrastructure/text_table_extractor.py (Rulings A/B/C/D implemented)
+  mcp_server_changed: false
+  schema_changed: false
+  frozen_surfaces_changed: false
+```
+
+| Check | Verdict |
+|---|---|
+| Live endpoint 200, 79 rows | PASS |
+| In-container DB 79 rows, 0 orphans, 0 dups, 0 NULL priors | PASS |
+| AC-1 orphans <= 2 | PASS (0) |
+| AC-2 zero junk rows | PASS |
+| AC-3 all 6 embedded codes recovered with exact values | PASS |
+| AC-4 all 5 sentinels exact | PASS |
+| AC-5 value_prior populated for all coded rows | PASS |
+| AC-6 zero duplicate codes | PASS |
+| AC-7 balance_delta = 0 | PASS |
+| AC-8 diacritics unit tests 32/32 | PASS |
+| AC-9 positional cutoff unit tests | PASS |
+| AC-10 import-linter fence exit 0 | PASS |
+| AC-11 coded rows >= 72 | PASS (79) |
+| Ruling D fixture substrate confirmed | PASS |
+| pdf-extractor unit suite 285/285 | PASS |
+| DDD scan: 0 violations | PASS |
+| Security: 0 violations | PASS |
+| Code-label alignment spot-checks | PASS |
+| Frozen surfaces untouched | PASS |
+| Forbidden gates bypassed | PASS |
+
+**Verdict: APPROVED. NEXT: po — BT3-EXIT2 sprint close-out.**
+
+lessons:
+  - code 418 (Quy dau tu phat trien) value_current=None is a legitimate accounting entry: fund fully disbursed in current period. value_prior populated. AC-5 tests only value_prior nulls on coded rows — this does not trigger AC-5 failure.
+  - 6 prior false-greens all traced to substrate mismatch (PyMuPDF fixture vs live poppler). Ruling D fixture regeneration is the decisive change that makes all ACs honest-green.
+  - balance_pass=True remains necessary-not-sufficient: code 418 null current value demonstrates that balance can pass while individual rows have accounting-valid nulls. Row-by-row structural verification is the correct gate.
+  - OCR-garbled labels (code 134 + 317): correct codes + correct values despite garbled label text. The positive-keep gate lets these through because code-path fires first; POSITIVE-KEEP only governs null-code lines.
+
+---
+
 ## cycle-119 · 2026-05-26 · P2-H-QA (mcp-server G9 trust-contract gate) — GO
 
 **Task:** P2-H-QA — gate-keeper verification of P2-H-FIX (commit 5ab1711f) | **Verdict:** GO for P2-I
