@@ -1,0 +1,36 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "fix-close",
+  "id": "po-fa-exit-20260526T161000Z",
+  "parent": "FA-FIX",
+  "timestamp": "2026-05-26T16:10:00.000Z",
+  "verdict": "SIGN-OFF",
+  "closed": true,
+  "not_a_pilot": true,
+  "pilot_status_untouched": true,
+  "wip": "0/2",
+  "commits": {
+    "fix": "3c00c17a",
+    "ops_verdict": "c41efb94",
+    "dev_done_signal": "9045dfa2"
+  },
+  "evidence_refs": [
+    "docs/signals/dev-mcp-server-fa-fix-done-20260526T1600Z.json",
+    "docs/signals/ops-fa-ops-verdict-20260526T155904Z.json",
+    "docs/protocols/docker-deployment-runbook.md#microservice-code-change-close-gate"
+  ],
+  "done_condition_assessment": {
+    "rec2_allSettled_step1": "MET — analysis.ts:218 Promise.allSettled (verified in 3c00c17a)",
+    "rec1_per_source_budgets": "MET — cafef=10s, vnexpress=10s, vneconomy=12s, reuters 30→15s via withSourceTimeout + inner AbortSignal.timeout(15_000) (verified in 3c00c17a)",
+    "rec3_rag_abort": "MET — AbortSignal.timeout(8_000) on ragSearch (ragHttpClient.ts:96) + ragIndex (ragHttpClient.ts:123); Step-4 fan-out allSettled (analysis.ts:300)",
+    "tests": "MET — tsc exit 0; 7/7 new scenarios; bun 9449 pass / 345 fail = 0 new vs ≤348 pre-existing baseline",
+    "ops_rebuild_and_prove": "MET — image 15:54:04Z is +158s newer than commit 15:51:26Z (new code in running image, not stale); /health 200; toolCount 146 (no regression); live fetch_and_analyze with Reuters dead (50 consecutive upstream fails) returned via surviving sources with no 60s-ceiling regression"
+  },
+  "g9_arbiter_ruling": "ops live-recheck IS the G9 arbiter per feedback-trust-verification-is-system-job (NOT user visual sign-off). The build-newer-than-commit + toolCount + /health checks are hard-verified; the dead-upstream resilience proof clears DONE CONDITION (no 60s-wall regression) and is structurally bounded by the verified per-source budgets + allSettled isolation. ops PASS accepted WITHOUT a re-probe.",
+  "residuals": [
+    "OPS-PROSE-COSMETIC: ops verdict mis-labelled the per-source budgets as '3s each' (actual 10/10/12/15s, confirmed in 3c00c17a; 3s is the separate ragHealthCheck guard at ragHttpClient.ts:142) and reported the dead-upstream proof qualitatively rather than as a hard fa_elapsed_seconds number. Cosmetic only — does NOT change the verdict; a hard elapsed number is nice-to-have telemetry, the 60s-wall regression tripwire was checked and is clear.",
+    "FETCH-ANALYZE-2 (backlog, NOT dispatched): REC-4 P2 use_ingested SQLite read-path — read-path optimization, not reliability. Reopen only if user wants the <50ms cached read path.",
+    "Same-zone HELD for a future tick (apps/mcp-server/): NEWS-INGEST-2b (UX display filter), MCPZONE-HARDEN-1."
+  ]
+}
