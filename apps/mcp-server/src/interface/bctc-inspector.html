@@ -253,6 +253,85 @@
       padding: 8px 0;
     }
 
+    /* ── Markdown Tables section (MD-INSPECT) ── */
+    #md-tables-section {
+      border-bottom: 1px solid #3a3a3a;
+      padding: 12px 14px;
+      flex-shrink: 0;
+      background: #1a1c20;
+    }
+    #md-tables-content {
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .md-table-block {
+      margin-bottom: 14px;
+    }
+    .md-table-index {
+      font-size: 10px;
+      font-weight: 700;
+      color: #5a8a9f;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .md-html-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+    .md-html-table th {
+      background: #252c35;
+      color: #9ac5d8;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .03em;
+      padding: 3px 7px;
+      text-align: left;
+      border-bottom: 1px solid #3a4a55;
+      border-right: 1px solid #3a3a3a;
+    }
+    .md-html-table td {
+      padding: 2px 7px;
+      border-bottom: 1px solid #252525;
+      border-right: 1px solid #2a2a2a;
+      color: #c0c8d0;
+      vertical-align: top;
+    }
+    .md-table-no-data {
+      font-size: 12px;
+      color: #666;
+      padding: 8px 0;
+    }
+    #md-ocr-markdown-block {
+      margin-top: 10px;
+    }
+    .md-ocr-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      margin-bottom: 4px;
+    }
+    #md-ocr-markdown-pre {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      color: #a8b8c0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
     /* ── OCR text section ── */
     .ocr-section {
       flex: 1;
@@ -369,6 +448,18 @@
       <div id="table-content"></div>
     </div>
 
+    <!-- MD-INSPECT: Generic Markdown Tables section -->
+    <div id="md-tables-section" style="display:none">
+      <div class="section-title" style="margin-bottom:6px">Markdown Tables</div>
+      <div id="md-tables-content">
+        <div class="md-table-no-data">No markdown tables yet.</div>
+      </div>
+      <div id="md-ocr-markdown-block" style="display:none">
+        <div class="md-ocr-label">OCR as Markdown</div>
+        <pre id="md-ocr-markdown-pre"></pre>
+      </div>
+    </div>
+
     <div class="ocr-section">
       <div class="ocr-header">
         <span class="section-title">OCR Text</span>
@@ -473,6 +564,8 @@
     await renderOcr(docId, 1);
     // BT-3i-B: load and render structured table next to OCR text
     await renderTable(docId);
+    // MD-INSPECT: load and render generic markdown tables panel
+    await renderMdTables(docId);
   });
 
   // ── Render PDF (left pane) ───────────────────────────────────────────────
@@ -698,6 +791,12 @@
   const balanceBadge   = document.getElementById("balance-badge");
   const tableContent   = document.getElementById("table-content");
 
+  // ── MD-INSPECT: DOM refs for Markdown Tables panel ────────────────────────
+  const mdTablesSection      = document.getElementById("md-tables-section");
+  const mdTablesContent      = document.getElementById("md-tables-content");
+  const mdOcrMarkdownBlock   = document.getElementById("md-ocr-markdown-block");
+  const mdOcrMarkdownPre     = document.getElementById("md-ocr-markdown-pre");
+
   async function renderTable(docId) {
     if (!tableSection || !balanceBadge || !tableContent) return;
 
@@ -776,6 +875,125 @@
     }
   }
 
+  // ── MD-INSPECT: Render generic markdown tables panel ─────────────────────
+  //
+  // Fetches GET /api/bctc-inspect/md/{doc_id}.
+  // When has_md_tables: true, parses each pipe-table string and renders it
+  // as an actual HTML <table> — NOT raw pipe syntax.
+  // ocr_as_markdown is shown in a scrollable <pre> block.
+  //
+  // Pipe-table parser:
+  //   Line 0:          header row  "| Col1 | Col2 |"
+  //   Line 1:          separator   "|---|---|"  (skipped)
+  //   Lines 2..N:      data rows
+  //
+  async function renderMdTables(docId) {
+    if (!mdTablesSection || !mdTablesContent) return;
+
+    try {
+      const resp = await fetch(`${BASE}/api/bctc-inspect/md/${encodeURIComponent(docId)}`);
+      if (!resp.ok) {
+        mdTablesSection.style.display = "block";
+        mdTablesContent.innerHTML = `<div class="md-table-no-data">Markdown table data unavailable (${resp.status}).</div>`;
+        return;
+      }
+
+      const data = await resp.json();
+
+      if (!data.has_md_tables) {
+        // No md tables stored yet — hide section silently
+        mdTablesSection.style.display = "none";
+        return;
+      }
+
+      mdTablesSection.style.display = "block";
+
+      // Render each markdown pipe-table as HTML
+      const tables = Array.isArray(data.md_tables) ? data.md_tables : [];
+      if (tables.length === 0) {
+        mdTablesContent.innerHTML = `<div class="md-table-no-data">No markdown tables stored (table_count=0).</div>`;
+      } else {
+        let html = "";
+        for (let i = 0; i < tables.length; i++) {
+          const tblHtml = parsePipeTableToHtml(tables[i]);
+          html += `<div class="md-table-block">
+            <div class="md-table-index">Table ${i + 1} of ${tables.length}</div>
+            ${tblHtml}
+          </div>`;
+        }
+        mdTablesContent.innerHTML = html;
+      }
+
+      // Render ocr_as_markdown in a scrollable pre block
+      if (data.ocr_as_markdown && data.ocr_as_markdown.trim()) {
+        if (mdOcrMarkdownBlock) mdOcrMarkdownBlock.style.display = "block";
+        if (mdOcrMarkdownPre) mdOcrMarkdownPre.textContent = data.ocr_as_markdown;
+      } else {
+        if (mdOcrMarkdownBlock) mdOcrMarkdownBlock.style.display = "none";
+      }
+
+    } catch (err) {
+      if (mdTablesSection) mdTablesSection.style.display = "block";
+      if (mdTablesContent) mdTablesContent.innerHTML = `<div class="md-table-no-data">Error loading markdown tables: ${escHtml(err.message)}</div>`;
+    }
+  }
+
+  /**
+   * parsePipeTableToHtml — converts a GitHub-style pipe-table string to an HTML table.
+   *
+   * Format expected:
+   *   | Header 0 | Header 1 | Header 2 |
+   *   |---|---|---|
+   *   | cell      | cell      | cell      |
+   *   ...
+   *
+   * Returns a rendered <table class="md-html-table"> string.
+   * Cells with only whitespace are rendered as non-breaking space to avoid collapsing.
+   */
+  function parsePipeTableToHtml(mdTable) {
+    if (!mdTable || typeof mdTable !== "string") {
+      return `<div class="md-table-no-data">(empty table)</div>`;
+    }
+
+    const lines = mdTable.split("\n").map(l => l.trim()).filter(l => l.startsWith("|"));
+    if (lines.length === 0) {
+      return `<pre style="font-size:11px;color:#666;white-space:pre-wrap">${escHtml(mdTable)}</pre>`;
+    }
+
+    // Parse cells from a pipe-delimited line
+    function parseCells(line) {
+      return line
+        .replace(/^\|/, "")
+        .replace(/\|$/, "")
+        .split("|")
+        .map(c => c.trim() || " ");
+    }
+
+    // Line 0 = header, Line 1 = separator (skip), Lines 2+ = data
+    const headerCells = parseCells(lines[0]);
+    const dataLines = lines.slice(2); // skip separator row
+
+    let html = `<table class="md-html-table"><thead><tr>`;
+    for (const h of headerCells) {
+      html += `<th>${escHtml(h)}</th>`;
+    }
+    html += `</tr></thead><tbody>`;
+
+    for (const line of dataLines) {
+      const isSeparator = /^\|[-| :]+\|$/.test(line);
+      if (isSeparator) continue;
+      const cells = parseCells(line);
+      html += `<tr>`;
+      for (const c of cells) {
+        html += `<td>${escHtml(c)}</td>`;
+      }
+      html += `</tr>`;
+    }
+
+    html += `</tbody></table>`;
+    return html;
+  }
+
   function escHtml(s) {
     if (s == null) return "";
     return String(s)
@@ -831,6 +1049,11 @@
     if (tableSection) tableSection.style.display = "none";
     if (balanceBadge) balanceBadge.innerHTML = "";
     if (tableContent) tableContent.innerHTML = "";
+    // MD-INSPECT: reset markdown tables section
+    if (mdTablesSection) mdTablesSection.style.display = "none";
+    if (mdTablesContent) mdTablesContent.innerHTML = "";
+    if (mdOcrMarkdownBlock) mdOcrMarkdownBlock.style.display = "none";
+    if (mdOcrMarkdownPre) mdOcrMarkdownPre.textContent = "";
   }
 
   // ── Init ─────────────────────────────────────────────────────────────────

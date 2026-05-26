@@ -55,6 +55,8 @@ import {
   handleBctcInspectTable,
 } from "./routes/bctcInspectHandler.js";
 import { handlePushBctcTable } from "./routes/pushBctcTableHandler.js";
+import { handlePushBctcMdTables } from "./routes/pushBctcMdTablesHandler.js";
+import { handleBctcInspectMd } from "./routes/bctcInspectMdHandler.js";
 import { backfillBctcPdfPaths } from "../../application/usecases/backfillBctcPdfPaths.js";
 import { getAccuracyStats, getSystemAccuracyDigestStats } from "../../infrastructure/db/signalOutcomeStore.js";
 
@@ -371,6 +373,17 @@ export async function createBunServer(
     // BT-3i-A: Push structured table rows from pdf-extractor
     if (method === "POST" && pathname === "/api/push-bctc-table") {
       await handlePushBctcTable(req, res, db);
+      return;
+    }
+    // MD-INSPECT: Push generic markdown tables from pdf-extractor
+    if (method === "POST" && pathname === "/api/push-bctc-md-tables") {
+      await handlePushBctcMdTables(req, res, db);
+      return;
+    }
+    // MD-INSPECT: Get generic markdown tables for inspector render
+    if (method === "GET" && pathname.startsWith("/api/bctc-inspect/md/")) {
+      const docId = pathname.slice("/api/bctc-inspect/md/".length);
+      await handleBctcInspectMd(req, res, db, docId);
       return;
     }
 

@@ -135,6 +135,25 @@ export function initFinancialReportsTables(db: Database): void {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bbc_report ON bctc_balance_checks(report_id)`);
 
+  // ── MD-INSPECT: Generic markdown table storage (Sprint BCTC-MD-TABLE) ─────
+  // Additive on top of the structured bctc_table_rows path (Decision A).
+  // Zero mutation to bctc_table_rows / bctc_balance_checks.
+  // report_id is UNIQUE — INSERT OR REPLACE is the idempotency mechanism.
+  // md_tables_json stores JSON array of markdown pipe-table strings.
+  // ocr_as_markdown stores OCR text converted to readable markdown form.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_md_tables (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id        TEXT    NOT NULL UNIQUE,
+      md_tables_json   TEXT    NOT NULL,
+      ocr_as_markdown  TEXT    NOT NULL,
+      table_count      INTEGER NOT NULL DEFAULT 0,
+      page_count       INTEGER NOT NULL DEFAULT 0,
+      extracted_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bmt_report ON bctc_md_tables(report_id)`);
+
   // ── PDF OCR Cache (Sprint 048 / Task 292) ──────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS pdf_extracted_text (
