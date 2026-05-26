@@ -1,23 +1,27 @@
 # PO Notebook
 
-**Cycle:** BT3-EXIT2 — BCTC-TABLE-3 SIGNED OFF / SPRINT CLOSED. User's `/goal` MET, user shown the corrected live table.
-**Last update:** 2026-05-26T00:12Z
-**Status:** Sprint BCTC-TABLE-3 CLOSED. NEXT = idle (next cron tick triages). Two follow-up sprints OPEN, both non-blocking.
+**Cycle:** MD-KICKOFF — NEW Sprint BCTC-MD-TABLE opened from user feature directive (generic table detection → markdown).
+**Last update:** 2026-05-26T04:36Z
+**Status:** Sprint BCTC-MD-TABLE OPEN. MD-DESIGN READY → handing to architect NEXT. BCTC-TABLE stays CLOSED.
 
 ---
 
-## 2026-05-26T00:12Z — BT3-EXIT2 sign-off
+## 2026-05-26T04:36Z — MD-KICKOFF
 
-**Verdict: DONE.** BT3-FIX5 (`81970243`, dev-pdf-extractor — 7th attempt, the one that held) fixed the live BCTC table scramble + the FIX4 false-green. Ops BT3-DEPLOY2 (image rebuilt + container recreated, 3 markers live, single-doc re-extract of e71f845d only). QA BT3-QA2 = APPROVED (`9f829289`, `reports/TASK_REPORT_BT3-QA2.md`, 11/11 ACs honest-green). Main terminal independently re-verified the LIVE endpoint + in-container DB count — matches QA. My BT3-EXIT2 bar (orphans ≤2, zero junk, 6 embedded codes split, sentinels exact, value_prior filled, no dups, balance_delta=0 — NEVER fixture/badge alone) satisfied.
+**User mandated a NEW feature** (HOW scoped, IF approved). Structured balance-sheet table is confirmed working ("i see table now"). Three follow-ups → one sprint: (2) render raw OCR text as markdown; (3) segment report "Báo cáo bộ phận" + other BCTC tables NOT detected; (4) GENERIC table-detection → markdown tables. The bespoke `text_table_extractor.py` is hardcoded to the balance sheet (codes 100/270/300/400/440 + section headers + embedded-code recovery 222/223/226/131/319/421b) and carries 7 fix commits — recurring-bug discipline binding → NEW generic module, not a patch.
 
-**Final state** (e71f845d, FPT Q4 BS): 79 rows, 0 orphans, 0 dup, 0 NULL value_prior (except 418 accounting-valid). Sentinels 100/270/300/400/440 exact. 6 embedded codes (222/223/226/131/319/421b) recovered+split. balance_delta=0. Codes 134/317 OCR-garbled label but correct code+values (local-Tesseract blemish, NOT structural). Privacy PASS (self-hosted only).
+**Resolved A/B/C/D (PO authority, user trusts PO):**
+- **A — AUGMENT not replace.** Generic markdown ALONGSIDE structured `bctc_table_rows` (which feeds financial analysis + is the user-confirmed working surface; must not regress). Markdown = additive human-recheck of ALL tables.
+- **B — v1 = balance sheet + segment report** as two different-shape proof cases on a generic detector. Income/cashflow/notes bonus, not blocking.
+- **C — surfacing = new inspector field**, markdown per table + OCR-as-markdown. Extraction = pdf-extractor; route/render = mcp-server; store-vs-compute = architect's call.
+- **D — acceptance = LIVE markdown, generic by construction** (grep-proof zero per-table constants; same path renders BOTH tables; OCR-as-md live). balance_pass/fixture-green alone FORBIDDEN as sole gate — main terminal verifies LIVE.
 
-**Root cause of 6 false-greens, eliminated:** test fixture used SPIKE PyMuPDF OCR while prod uses poppler — substrate mismatch in the test layer. Fix = architect Ruling D / AC-0 (fixture regenerated from live poppler) + Ruling A (POSITIVE-keep + positional-cutoff) + Ruling C (diacritic-insensitive `_norm`) + Ruling B (Layout-5 embedded-code scan).
+**Candidate direction handed to architect (NOT a mandate):** Tesseract `image_to_data`/TSV → per-word bboxes → geometric row(y-band)/column(x-gap) clustering → generic grid → markdown pipe-table + table-boundary detection. Architect evaluates vs pdfplumber/camelot (likely non-viable: scanned image-only). Privacy: local Tesseract only.
 
-**Wrote (working tree, NOTHING staged — commit-mutex uncallable):** SPRINT_GOAL.md (DONE header), TASKS.md (CLOSED + ladder DONE + NEW Sprint MCPZONE-HARDEN-1), TASK_BCTC-TABLE.md (§ dev/ops/qa records + § BT3-EXIT2 CLOSED), po-decisions/2026-05-26-bctc-table-bt3-exit2-done.md.
+**Wrote (working tree, NOTHING staged — commit-mutex uncallable by me):** SPRINT_GOAL.md (new sprint prepended, BCTC-TABLE kept CLOSED), TASKS.md (new sprint block), docs/handoffs/TASK_BCTC-MD-TABLE.md (NEW, ladder + ACs + constraints), this notebook.
 
 ## Carry-over
-- **Main terminal MUST commit the 4 docs** (SPRINT_GOAL.md + TASKS.md + TASK_BCTC-TABLE.md + the BT3-EXIT2 decision; notebook separately). All on `main`, explicit `git add`, no push, `git show --stat HEAD` zero foreign. Frozen surfaces (dashboard/*, sandbox/runner.py, pilot-status json) NOT touched.
-- **NEW follow-up = Sprint MCPZONE-HARDEN-1** (dev-mcp-server, MEDIUM, non-blocking): MZH-1 = `pushBctcTableHandler.ts` return DB-verified row count not input echo; MZH-2 = test isolation (no test writes live market.db / "Test Row"). Dispatch only when mcp-server zone is idle (RUN-SOLO charter).
-- **Sprint BCTC-TABLE-2** (multi-ticker/quarterly residuals B2-1..B2-4) stays OPEN, non-blocking.
-- **DURABLE LESSON (binding):** positive-keep + positional-cutoff + diacritic-insensitive + embedded-code recovery beat the literal skip-list; AC-0 live-substrate fixture mandatory; balance_pass / any proxy FORBIDDEN as sole gate — acceptance is the LIVE endpoint row-by-row. 3rd false-green on this surface taught it.
+- **Main terminal MUST commit the 3 docs** (SPRINT_GOAL.md + TASKS.md + TASK_BCTC-MD-TABLE.md; notebook separately). All on `main`, explicit `git add`, no push, zero foreign in `git show --stat HEAD`. Frozen pdf-extractor surfaces (dashboard/*, sandbox/runner.py, pilot-status json) NOT touched.
+- **NEXT = architect (MD-DESIGN)** — generic detector blueprint, brief in `docs/architecture-briefs/`. Then dev-pdf-extractor (MD-EXTRACT, new module) + dev-mcp-server (MD-INSPECT) → ops (MD-DEPLOY, single-doc host-safe) → qa (MD-QA live) → PO (MD-EXIT, live row-by-row + segment report).
+- **Sprint MCPZONE-HARDEN-1** (dev-mcp-server, non-blocking) + **Sprint BCTC-TABLE-2** (multi-ticker/quarterly residuals) stay OPEN + SEPARATE — not folded in.
+- **BINDING:** NEW generic module, never patch `text_table_extractor.py` (7 fix commits); local Tesseract only (no cloud); single-doc OCR only (never batch backfill for verify); LIVE markdown is the gate, not fixture/balance_pass.
