@@ -1569,3 +1569,38 @@ I independently re-traced the diagnostic + design (not trusting the RETURN). Ver
 6. Frozen surfaces unchanged (AC-3F text_table_extractor.py; dashboard/sandbox/pilot-status; mcp-server). Privacy: local-only. Leave files UNSTAGED (main terminal commits). Acceptance gate = LIVE direct-DB render, NOT fixture tests.
 
 **NEXT:** dev-pdf-extractor (MD-EXTRACT-8 implementation). Goal still armed.
+
+---
+
+## [Main-Terminal] MD-EXTRACT-8 IMPL VERIFIED + COMMITTED (2026-05-26)
+
+dev-pdf-extractor returned. I re-reviewed the diff (not the RETURN) and re-ran the tests myself in `.venv`. **VERDICT: APPROVED, committed.**
+
+**Diff review:**
+- `_MIN_INTER_COLUMN_GAP_PX = 80` added with DPI-calibration docstring. Pass-1 bin_width now from CODE-token widths (fallback `_LEFT_EDGE_BIN_FACTOR×w_med` for code-less pages → segment non-regress). Pass-2 merge uses fixed 80px replacing `_COL_GAP_FACTOR×w_med`. Matches brief §MD-EXTRACT-8 exactly.
+- Merge trace re-verified BOTH directions: new(80px) keeps all 10 clusters (tightest real gap 92px, 12px headroom) → recovers {1182,1477,1768,2061}; old(250.5px) reproduces broken [255,957,1330,1642,1916]. Exact.
+- **FLAG-2 SATISFIED:** fixture `_build_income_fixture()` uses LIVE left-edge coords + live w_med=167. The function consumes only `left`/`width`/`text` — fabricated `top`/row-value-strings are inert. Decisive: `test_old_formula_produces_wrong_anchors` reproduces the live failure under old code (the 4 prior false-greens used short-token fixtures that masked w_med inflation; this one fails-under-old, proving fidelity).
+- FLAG-3 (R-8-HIGH): dev confirmed negatives `(73.049.924.176)` match neither VALUE nor CODE regex → not stripped → survive. `_VALUE_TOKEN_RE` NOT extended speculatively (FLAG-3 honored). Caveat: a column of only `(868)`-style 3-digit parentheticals WOULD match CODE → could be stripped; that's an EPS-row secondary imperfection (R-MEDIUM), non-blocking for AC-8-INC main line items.
+
+**Gates (re-run by me, not trusting RETURN):** AC-3F text_table_extractor.py = 0-byte diff ✅ | AC-0 zero BCTC semantics ✅ | Fence-A zero app/interface imports ✅ | Privacy zero network egress ✅ | 444 unit tests pass (.venv pytest) ✅ | 127 in generic_md file (+5 V8) ✅.
+
+**Committed:** work files (generic_md_table_extractor.py + test) one commit, dev notebook separate. Zero foreign files in each.
+
+---
+
+## [Main-Terminal → ops] MD-DEPLOY-8 — rebuild + single-doc re-extract + DIRECT-DB report
+
+**Why:** pdf-extractor builds from BUILD-CONTEXT (no source mount). A plain restart runs the STALE image. The fix lives in `generic_md_table_extractor.py` (committed) and is INERT until the container is rebuilt.
+
+**Steps (sequential, single-doc — host kernel-panic risk; NEVER batch / NEVER run_bctc_batch_sweep):**
+1. `docker compose build pdf-extractor` then `docker compose up -d --no-deps --force-recreate pdf-extractor`.
+2. **Prove new code is live** before extracting: `docker compose exec -T pdf-extractor grep -c "_MIN_INTER_COLUMN_GAP_PX" /app/infrastructure/generic_md_table_extractor.py` → must be ≥2 (constant def + Pass-2 use). If 0, the build used a stale layer — rebuild `--no-cache` and re-prove. DO NOT proceed to extract on a stale image.
+3. Re-extract the SINGLE FPT doc (NEVER batch):
+   - `POST http://localhost:5001/extract-md-tables` with report_id `e71f845d-ffa5-48f9-8f09-30ac2cd09c65` (path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`). Returns 202; OCR runs ~3-4 min via BackgroundTasks.
+   - Poll for completion by watching for a FRESH `bctc_md_tables` row (new `extracted_at` UTC), NOT the `/api/bctc-inspect/md/{id}` endpoint (can be STALE).
+4. **Report via DIRECT DB query** (sqlite3 NOT in containers — use bun):
+   `docker compose exec -T mcp-server bun -e 'const db=require("bun:sqlite").Database; const d=new db("/app/data/market.db",{readonly:true}); const r=d.query("SELECT id,report_id,table_count,page_count,extracted_at,length(md_tables_json) AS json_len FROM bctc_md_tables ORDER BY extracted_at DESC LIMIT 3").all(); console.log(JSON.stringify(r,null,2));'`
+   Report: the newest row id, table_count, page_count, extracted_at, json_len. Confirm extracted_at is AFTER the rebuild timestamp (fresh, not the prior MD-DEPLOY-7 row id=8).
+5. Leave all files UNSTAGED. Do NOT commit (main terminal commits if needed — but ops makes no code changes here). Do NOT touch frozen surfaces. Local-only, no third-party API.
+
+**Hand back to:** Main-Terminal for AC-8 live-verify (direct market.db read of `md_tables_json`): AC-8-INC (income main line items: label+code+note+4 period values per row, `20.258.866.135.395` in the SAME row as `Doanh thu bán hàng`, no interleave with `Các khoản giảm trừ`) + AC-8-SEG-NOREGRESS (3 segment revenues on one pipe-row) + AC-8-BALANCE-NOREGRESS (no new corruption).
