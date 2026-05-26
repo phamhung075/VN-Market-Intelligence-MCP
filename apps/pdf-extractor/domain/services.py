@@ -12,9 +12,9 @@ from domain.models import PDFDocument, ExtractedContent
 from domain.repositories import PDFDocumentRepository, PDFStorageRepository, PDFExtractionEngine
 from domain.errors import PDFProcessingError, PDFNotFoundError, PDFLowQualityError
 
-# validate_financial_figures moved to domain/primitives/validate_financial_figures/ (P1-B1).
-# Re-exported here so existing callers do not break.
-from domain.primitives.validate_financial_figures import validate_financial_figures  # noqa: F401
+# validate_financial_figures lives in domain/primitives/validate_financial_figures/ (P1-B1).
+# Used below (content.confidence_financial). External callers must import from domain.primitives directly.
+from domain.primitives.validate_financial_figures import validate_financial_figures
 
 # Minimum OCR confidence below which we require at least one table to be found.
 # If both conditions fail simultaneously the extraction is considered too low quality.
