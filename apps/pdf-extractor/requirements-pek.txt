@@ -38,7 +38,7 @@ PyMuPDF
 
 # Layout detection (DocLayout-YOLO, CPU)
 ultralytics>=8.2.85
-doclayout-yolo==0.0.2
+doclayout-yolo==0.0.3
 
 # OCR + table structure (CPU, no GPU variant)
 # paddlepaddle CPU build (not paddlepaddle-gpu)

@@ -57,18 +57,20 @@ RUN pip3 install --no-cache-dir --break-system-packages \
 # .dockerignore excludes PDF-Extract-Kit/.git/, PDF-Extract-Kit/models/, PDF-Extract-Kit/outputs/
 COPY . .
 
-# Install PDF-Extract-Kit as editable package (source present at /app/PDF-Extract-Kit/)
-# This makes pdf_extract_kit importable without copying to site-packages.
-# AC-PEK-3a: source tree IS present (required for editable install).
+# PDF-Extract-Kit is made importable via PYTHONPATH instead of pip editable install.
+# pyproject.toml in the pristine PEK subtree contains invalid TOML (opencv-python key=value
+# inside a PEP 508 dependencies array), which causes `pip install -e` to fail on Python 3.12.
+# PYTHONPATH extension is equivalent: editable install only adds the source dir to sys.path.
+# AC-PEK-3a: source tree IS present at /app/PDF-Extract-Kit/.
 #             .git/ NOT present (excluded by .dockerignore).
 #             model weights NOT baked in (downloaded to named volume at runtime).
-# AC-PEK-0a: git -C apps/pdf-extractor/PDF-Extract-Kit diff returns EMPTY (zero edits).
-RUN pip3 install --no-cache-dir --break-system-packages -e ./PDF-Extract-Kit
+# AC-PEK-0a: PEK subtree is pristine — NOT edited (pyproject.toml left as-is).
 
 # Ensure extraction storage directory + model cache dir exist
 RUN mkdir -p /app/data/extractions /app/data /app/pek_models
 
-ENV PYTHONPATH=/app
+# /app/PDF-Extract-Kit added so pdf_extract_kit package is importable (replaces editable install).
+ENV PYTHONPATH=/app:/app/PDF-Extract-Kit
 ENV HOST=0.0.0.0
 ENV PORT=5001
 ENV DB_PATH=/app/data/pdf_extractor.db
