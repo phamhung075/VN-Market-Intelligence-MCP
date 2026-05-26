@@ -113,13 +113,20 @@ func (r *SBVRateRepository) GetRate(
 // Reads the most recent VN-Index level from the local market.db SQLite database
 // (mounted at DB_PATH env var, default /app/data/market.db, readonly).
 //
-// Query strategy mirrors the deprecated TS SQLiteMacroRepository.fetchVnIndex():
-// SELECT value FROM macro_indicators WHERE indicator_name LIKE '%VN-Index%' OR
-// indicator_name LIKE '%VNINDEX%' ORDER BY fetched_at DESC LIMIT 1.
+// Query strategy (two-tier, ordered by data freshness):
 //
-// Returns (0, nil) when the DB is not present or has no matching rows; the
-// application layer treats 0 as "no data" and falls back to the fixture default.
-// This ensures safe degradation in environments where market.db is not mounted.
+//  1. PRIMARY: market_prices WHERE code = 'VNINDEX'
+//     Populated every 5 min by mcp-server's vnIndexRefreshJob (Task 1397) via
+//     VnDirect vnmarket_prices API. This is the same source as get_market_snapshot
+//     and is the authoritative live value. The column is `price` (REAL).
+//
+//  2. SECONDARY (fallback): macro_indicators WHERE indicator_name LIKE '%VN-Index%'
+//     Populated by the macro indicator daily refresh job. Kept as a safety net
+//     for deployments where the primary table is absent (schema not yet migrated).
+//
+// Returns (0, nil) when the DB is not present or both tables have no matching
+// rows; the application layer treats 0 as "no data" and falls back to the
+// fixture default. This ensures safe degradation.
 type SQLiteMarketIndexRepository struct {
 	dbPath string
 }
@@ -135,6 +142,11 @@ func NewSQLiteMarketIndexRepository() *SQLiteMarketIndexRepository {
 }
 
 // FetchVNIndex returns the most recent VN-Index value from market.db.
+//
+// Resolution order:
+//  1. market_prices.price WHERE code = 'VNINDEX' (live, updated by vnIndexRefreshJob every 5 min)
+//  2. macro_indicators.value WHERE indicator_name LIKE '%VN-Index%' (daily, legacy fallback)
+//
 // Returns (0, nil) on missing DB, no rows, or query error (safe degradation).
 func (repo *SQLiteMarketIndexRepository) FetchVNIndex(ctx context.Context) (float64, error) {
 	// Open read-only to respect the charter security clause and DB_READONLY=true.
@@ -145,16 +157,31 @@ func (repo *SQLiteMarketIndexRepository) FetchVNIndex(ctx context.Context) (floa
 	}
 	defer db.Close()
 
-	const query = `
+	// --- PRIMARY: market_prices table (vnIndexRefreshJob, live, ~5 min cadence) ---
+	// This is the same data source as get_market_snapshot (VnDirect vnmarket_prices API).
+	const primaryQuery = `
+		SELECT price FROM market_prices
+		WHERE code = 'VNINDEX' AND price IS NOT NULL AND price > 0
+		ORDER BY updated_at DESC LIMIT 1`
+
+	var value float64
+	err = db.QueryRowContext(ctx, primaryQuery).Scan(&value)
+	if err == nil && value > 0 {
+		return value, nil
+	}
+
+	// --- SECONDARY: macro_indicators table (legacy daily-refresh fallback) ---
+	// Kept as a safety net when market_prices.VNINDEX is absent (schema not yet migrated).
+	const secondaryQuery = `
 		SELECT value FROM macro_indicators
 		WHERE indicator_name LIKE '%VN-Index%' OR indicator_name LIKE '%VNINDEX%'
 		ORDER BY fetched_at DESC LIMIT 1`
 
-	var value float64
-	err = db.QueryRowContext(ctx, query).Scan(&value)
-	if err != nil {
-		// No rows or scan error — degrade gracefully.
-		return 0, nil //nolint:nilerr // intentional: caller uses fixture fallback
+	err = db.QueryRowContext(ctx, secondaryQuery).Scan(&value)
+	if err == nil && value > 0 {
+		return value, nil
 	}
-	return value, nil
+
+	// Both tables empty or unavailable — return 0 for graceful fixture fallback.
+	return 0, nil
 }

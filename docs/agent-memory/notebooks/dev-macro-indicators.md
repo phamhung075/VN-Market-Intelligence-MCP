@@ -224,3 +224,111 @@ Zone health: P2-X4 DONE; dashboard 6/6 primitives + module + microservice panel 
 **Files changed:** 1 (apps/macro-indicators/dashboard/index.html, +13/-6)
 
 Zone health: category chip relabeling DONE; render gate PASS (0 bare failure chips, 7+7+6 labelled chips correct); G12 20/20 GREEN; fleet convention aligned with TA dashboard | HEALTHY
+
+### Session 2026-05-26 — MACRO-SEED-WIRING: VNIndex wired to live market.db
+
+**Task:** MACRO-SEED-WIRING (FIX, size S) — end the seed-data leak where VNIndex was always 1280.5 instead of the live ~1880 value.
+
+**Root cause (confirmed, not assumed):**
+`fixtureVNIndex = 1280.5` constant in `pkg/application/usecases.go` was always assigned to `MacroSnapshotResponse.VNIndex` at line 122 — no port for market index data existed, no resolution path. `CommodityFetcherPort` covered OIL/GOLD/USDVND but not VNINDEX. The `docker-compose.yml` already had `DB_PATH=/app/data/market.db` wired for the service but the Go code never read that env var.
+
+**Fix (5 files):**
+1. `pkg/domain/ports.go` — new `MarketIndexPort` interface: `FetchVNIndex(ctx) (float64, error)`
+2. `pkg/application/usecases.go` — `ComputeMacroUseCase` gains `marketIndex MarketIndexPort` field; `NewComputeMacroUseCase` takes 3rd arg; `Execute()` calls `resolveVNIndex()` → port first, fixture fallback only when port returns 0
+3. `pkg/application/usecases_test.go` (NEW) — `TestVNIndexSourcedFromPort`: fails if fixture constant leaks; `TestVNIndexFallsBackToFixtureWhenPortReturnsZero`: verifies degraded-mode safety. Both use in-package stubs (Fence-C compliant).
+4. `pkg/infrastructure/repositories.go` — new `SQLiteMarketIndexRepository`: reads `macro_indicators` WHERE indicator_name LIKE '%VN-Index%' ORDER BY fetched_at DESC LIMIT 1. Opens DB as `file:$DB_PATH?mode=ro`. Degrades gracefully (returns 0,nil) when DB absent or no rows.
+5. `cmd/server/main.go` — `NewSQLiteMarketIndexRepository()` wired as 3rd arg to `NewComputeMacroUseCase`.
+
+**Test results:**
+- `go test ./...`: all 8 packages pass (2 new application tests GREEN)
+- `go vet ./...`: clean
+- `go build ./cmd/...`: clean
+- G12 sandbox primitive-tier: total=18 pass=18 fail=0 status=OK
+- G12 sandbox module-tier: total=2 pass=2 fail=0 status=OK
+- Fence-A: exit 1 (zero real cross-layer imports in primitives)
+- Fence-B: exit 1 (zero infra imports in module)
+- Fence-C: exit 1 (zero infra imports in pkg/)
+
+**Commit:** a148db3d (5 files changed, 213 insertions, 6 deletions)
+**Note:** commit-mutex MCP tool was unavailable in this session (tool-not-found); committed under task's explicit authorization. C-2 path documented for fleet awareness.
+
+**CODE CHANGED:** YES — ops REBUILD required for macro-indicators container.
+
+**Unblocks:** ops rebuild of macro-indicators container → VNIndex will reflect latest macro_indicators table row (~1880 live value when market data is fresh).
+
+Zone health: MACRO-SEED-WIRING DONE; VNIndex wired to live DB port; fixture fallback preserved for degraded-mode safety; all tests pass; G12 20/20 GREEN | HEALTHY
+
+### Session 2026-05-26 — MACRO-VNINDEX-DATA-GAP: wire MarketIndexPort to market_prices table
+
+**Task:** MACRO-VNINDEX-DATA-GAP (DIAGNOSE-FIRST + FIX, size S-M)
+
+**Diagnosis — Three-value reconciliation (root cause confirmed):**
+
+The three divergent VN-Index values come from THREE completely separate tables/sources:
+
+1. **1280.5 (get_macro_snapshot — fixture fallback):**
+   `SQLiteMarketIndexRepository.FetchVNIndex()` queried `macro_indicators WHERE indicator_name LIKE '%VN-Index%'`. That table is populated by mcp-server's `macroIndicatorRefreshJob` (calls the macro-indicators service itself for CPI/PMI/rates — NOT for VN-Index). The `macro_indicators` table has NO VN-Index row. Port returns 0 → graceful fixture fallback → 1280.5.
+
+2. **~1884 (get_market_snapshot — live API):**
+   `fetchVnIndex()` in mcp-server/hose.ts calls VnDirect vnmarket_prices API live. The result is upserted into `market_prices WHERE code = 'VNINDEX'` (column: `price`) every 5 min by `vnIndexRefreshJob` (Task 1397). This is the authoritative live value.
+
+3. **1909 (get_system_status auto-tracked indicators):**
+   `tracked_indicators WHERE indicator = 'vnindex'` — populated by `commodityTracker.ts` extractAndStoreIndicators(), which regex-extracts VN-Index from news text. A third completely independent table. Value is article-text-extracted, not a market API call.
+
+**Root cause:** The previous fix (a148db3d) correctly added `MarketIndexPort` + `resolveVNIndex()` but wired the repository to query `macro_indicators` — a table that receives NO VN-Index rows. The fix was structurally correct but pointed at the wrong table.
+
+**Fix path chosen (PREFERRED — read live source directly):**
+Updated `SQLiteMarketIndexRepository.FetchVNIndex()` to use a two-tier resolution:
+1. PRIMARY: `market_prices WHERE code = 'VNINDEX'` (column: `price`) — same data as `get_market_snapshot`. Updated every 5 min by `vnIndexRefreshJob`. This is the live authoritative source.
+2. SECONDARY: `macro_indicators WHERE indicator_name LIKE '%VN-Index%'` — kept as legacy safety fallback for deployments where `market_prices` has no VNINDEX row.
+3. FINAL: return 0 → application layer uses `fixtureVNIndex` (graceful degradation intact).
+
+**Files changed (2):**
+1. `apps/macro-indicators/pkg/infrastructure/repositories.go` — `FetchVNIndex()` rewritten with two-tier query (primary=market_prices, secondary=macro_indicators)
+2. `apps/macro-indicators/pkg/infrastructure/repositories_test.go` (NEW) — 4 in-package unit tests using in-memory SQLite:
+   - `TestFetchVNIndex_MarketPricesTable` — PRIMARY path
+   - `TestFetchVNIndex_FallsBackToMacroIndicators` — SECONDARY path
+   - `TestFetchVNIndex_ReturnsZeroWhenBothEmpty` — FINAL FALLBACK path
+   - `TestFetchVNIndex_PrefersMarketPricesOverMacroIndicators` — priority assertion
+
+**Test results:**
+- `go test ./...`: all packages pass (4 new infra tests GREEN, 2 existing application tests GREEN)
+- `go vet ./...`: clean
+- `go build ./cmd/...`: clean
+- Fence-A: exit 0 (comments only, no real imports)
+- Fence-B: exit 0
+- Fence-C: exit 0
+- G12 primitive-tier: total=18 pass=18 fail=0 status=OK
+- G12 module-tier: total=2 pass=2 fail=0 status=OK
+
+**Graceful degradation intact:** if `market_prices.VNINDEX` is missing AND `macro_indicators` has no matching row, returns 0 → application uses fixtureVNIndex (1280.5). No regression.
+
+**CODE CHANGED:** YES — ops REBUILD required for macro-indicators container.
+
+**After rebuild live-verify:** `get_macro_snapshot` vnIndex must match `get_market_snapshot` VN-Index (both should be the same live market_prices.price for code=VNINDEX, e.g. ~1884).
+
+Zone health: MACRO-VNINDEX-DATA-GAP FIXED; MarketIndexPort now queries market_prices (live, 5-min cadence); 4 new infra tests GREEN; G12 20/20 GREEN | HEALTHY
+
+### Session 2026-05-25 — Docker crash-loop fix (Dockerfile TS→Go + router_test.go assertion fix)
+
+**Task:** Fix crash-loop: container exited with `Module not found "src/index.ts"` after fleet DDD refactor.
+
+**Root cause (verified, not assumed):** The Dockerfile was an `oven/bun:1.3.13-alpine` TypeScript build that ran `CMD ["bun", "run", "src/index.ts"]`. After the DDD refactor, `src/index.ts` was moved to `src/_deprecated/index.ts`. The Go rewrite (`cmd/server/main.go` + `pkg/`) was complete but the Dockerfile was never updated to build the Go binary. Additional finding: `router_test.go` had two wrong assertion values (`HOT_MONEY_INFLOW` instead of `FII_OUTFLOW_RISK`, `VN_ATTRACTIVE` instead of `CHEAP`) that had been failing silently.
+
+**Files changed (2):**
+1. `apps/macro-indicators/Dockerfile` — replaced bun/TS Dockerfile with Go 1.25 multi-stage build (golang:1.25-alpine → alpine:3.20 runtime, CGO_ENABLED=0, builds `./cmd/server/` → `/app/server`). Note: `golang:1.22` rejected by go.mod `go 1.25.0` directive — upgraded to golang:1.25-alpine.
+2. `apps/macro-indicators/pkg/interface/http/router_test.go` — corrected two assertions: `HOT_MONEY_INFLOW` → `FII_OUTFLOW_RISK` (fixture VND=4.7% < Fed=5.33% → spread=-0.63pp → FII_OUTFLOW_RISK); `VN_ATTRACTIVE` (non-existent label) → `CHEAP` (earningYield=8.2%, depositRate=4.7% → spread=3.5pp > 2.0pp threshold → CHEAP).
+
+**Verification:**
+- go test ./...: all pass (exit 0)
+- go vet ./...: clean
+- go build ./cmd/...: clean
+- sandbox primitive-tier: total=18 pass=18 fail=0 status=OK
+- sandbox module-tier: total=2 pass=2 fail=0 status=OK
+- docker compose build macro-indicators: exit 0
+- docker ps: `Up (healthy)` on port 5004
+- GET /health: `{"status":"ok","service":"macro-indicators","port":5004}`
+
+**Commit:** f85ad1d9
+
+Zone health: crash-loop resolved; Go Dockerfile live; all tests pass; sandbox 20/20 GREEN; container healthy on port 5004 | HEALTHY
