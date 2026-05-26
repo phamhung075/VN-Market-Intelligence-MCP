@@ -1,5 +1,5 @@
 """
-financial_reports — Protocol ports (P1-C, extended P2-C, BT-1, BT-3-A).
+financial_reports — Protocol ports (P1-C, extended P2-C, BT-1, BT-3-A, MD-EXTRACT).
 
 Defines the abstract interfaces (Python Protocols) that the FinancialReportsModule
 depends on. The module NEVER imports concrete primitives directly — it only accepts
@@ -13,18 +13,20 @@ Domain layer rules:
 These protocols satisfy G2 re-verify (P2-C) and enforce the DDD layering rule:
 domain modules compose domain primitives via ports, not direct function calls.
 
-Ports defined here (11 ports — BT-1 adds 3; BT-3-A adds 2):
-    - DecimalNormalizerPort     (decimal_normalizer — P1-B2)
-    - FinancialValidatorPort    (validate_financial_figures — P1-B1)
-    - ConfidenceScorerPort      (confidence_scorer — P2-B1)
-    - LowConfidenceGatePort     (low_confidence_gate — P2-B2)
-    - RatioComputerPort         (ratio_computer — P2-B3)
-    - FieldExtractorPort        (field_extractor — P2-B4)
-    - VnNumberNormalizerPort    (vn_number_normalize — BT-1)
-    - ReconcileFiguresPort      (reconcile_figures — BT-1)
-    - SelectPeriodColumnPort    (select_period_column — BT-1)
-    - TableAssemblerPort        (text_table_extractor — BT-3-A)
-    - TablePushClientPort       (table_push_client — BT-3-A)
+Ports defined here (13 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2):
+    - DecimalNormalizerPort         (decimal_normalizer — P1-B2)
+    - FinancialValidatorPort        (validate_financial_figures — P1-B1)
+    - ConfidenceScorerPort          (confidence_scorer — P2-B1)
+    - LowConfidenceGatePort         (low_confidence_gate — P2-B2)
+    - RatioComputerPort             (ratio_computer — P2-B3)
+    - FieldExtractorPort            (field_extractor — P2-B4)
+    - VnNumberNormalizerPort        (vn_number_normalize — BT-1)
+    - ReconcileFiguresPort          (reconcile_figures — BT-1)
+    - SelectPeriodColumnPort        (select_period_column — BT-1)
+    - TableAssemblerPort            (text_table_extractor — BT-3-A)
+    - TablePushClientPort           (table_push_client — BT-3-A)
+    - GenericMdTableExtractorPort   (generic_md_table_extractor — MD-EXTRACT)
+    - MdTablePushClientPort         (md_table_push_client — MD-EXTRACT)
 """
 
 from __future__ import annotations
@@ -379,6 +381,84 @@ class TablePushClientPort(Protocol):
 
         Returns:
             dict with at least keys: ok (bool), rows_stored (int).
+
+        Raises:
+            Exception: on HTTP error or network failure (caller handles).
+        """
+        ...
+
+
+class GenericMdTableExtractorPort(Protocol):
+    """
+    Port for the generic bbox-based markdown table detector (MD-EXTRACT).
+
+    Receives page image paths (absolute paths to 200-DPI PNGs already rasterized
+    by pdf2image) and optional flat OCR text. Returns per-document markdown tables
+    and an OCR-as-markdown string.
+
+    DDD: domain port — zero infrastructure imports. Pure Protocol.
+
+    Implemented by:
+        - infrastructure/generic_md_table_extractor.GenericMdTableExtractor (production)
+        - FakeGenericMdTableExtractor (tests — injected)
+    """
+
+    def extract_md_tables(
+        self,
+        page_image_paths: List[str],
+        doc_ocr_text: Optional[str] = None,
+    ) -> Dict:
+        """
+        Run bbox-based generic table detection on the supplied page images.
+
+        Args:
+            page_image_paths: Absolute paths to 200-DPI page PNG files.
+            doc_ocr_text:     Optional flat OCR text (from pdf_extracted_text)
+                              used only for the ocr_as_markdown conversion.
+                              When None, an empty string is returned for that field.
+
+        Returns:
+            {
+                "md_tables":      List[str],   # one markdown pipe-table per detected region
+                "ocr_as_markdown": str,        # doc_ocr_text converted to readable markdown
+                "table_count":    int,         # number of tables detected
+            }
+        """
+        ...
+
+
+class MdTablePushClientPort(Protocol):
+    """
+    Port for pushing generic markdown tables to mcp-server (MD-EXTRACT).
+
+    Concrete adapter: infrastructure/md_table_push_client.MdTablePushClient
+    Target endpoint: POST /api/push-bctc-md-tables
+
+    DDD: domain port — zero infrastructure imports. Pure Protocol.
+
+    Implemented by:
+        - infrastructure/md_table_push_client.MdTablePushClient (production)
+        - FakeMdTablePushClient (tests — injected)
+    """
+
+    async def push_md_tables(
+        self,
+        report_id: str,
+        md_tables: List[str],
+        ocr_as_markdown: str,
+        page_count: int,
+    ) -> Dict:
+        """
+        POST markdown tables to mcp-server for storage.
+
+        Args:
+            report_id:        UUID string matching financial_reports.id.
+            md_tables:        List of markdown pipe-table strings (one per detected table).
+            ocr_as_markdown:  Full OCR text rendered as readable markdown.
+            page_count:       Total number of pages processed.
+
+        Returns:
+            dict with keys: ok (bool), tables_stored (int).
 
         Raises:
             Exception: on HTTP error or network failure (caller handles).
