@@ -45,7 +45,7 @@ WORKDIR /app
 # PyTorch CPU-only build FIRST (separate layer — avoids pulling GPU variant later)
 # REQ-PEK-2: CPU-only. paddlepaddle_gpu must never appear in sys.modules.
 RUN pip3 install --no-cache-dir --break-system-packages \
-    torch torchvision --index-url https://download.pytorch.org/whl/cpu
+    torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
 
 # Install trimmed PDF-Extract-Kit requirements (CPU-only, no unimernet/struct-eqtable/gpu)
 COPY requirements-pek.txt .
@@ -83,6 +83,24 @@ ENV HUGGINGFACE_HUB_CACHE=/app/pek_models/huggingface
 ENV MODELSCOPE_CACHE=/app/pek_models/modelscope
 ENV YOLO_CONFIG_DIR=/app/pek_models/yolo
 ENV PADDLEOCR_HOME=/app/pek_models/paddleocr
+
+# PEK-DEP-RECONCILE: build-time native import smoke gate.
+# Fails the build immediately if any binary wheel is ABI-incompatible with numpy.
+# This catches the entire class of "works in host venv, crashes in container" errors.
+# Note: actual model weights are NOT loaded here (lazy-load at runtime per REQ-PEK-4).
+# PYTHONPATH is already set to /app:/app/PDF-Extract-Kit from the ENV step above.
+RUN python3 -c "\
+import numpy; \
+print('numpy', numpy.__version__); \
+import cv2; \
+print('cv2', cv2.__version__); \
+from paddleocr import PaddleOCR; \
+print('paddleocr import OK'); \
+from doclayout_yolo import YOLOv10; \
+print('doclayout_yolo import OK'); \
+import torch; \
+print('torch', torch.__version__); \
+print('pek-native-imports: ALL OK')"
 
 EXPOSE 5001
 

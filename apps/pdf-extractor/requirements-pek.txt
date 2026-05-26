@@ -1,17 +1,23 @@
 # apps/pdf-extractor/requirements-pek.txt
-# PEK-INTEGRATE trimmed requirements (CPU-only, 8GB-safe)
+# PEK-DEP-RECONCILE: numpy-2 ABI coherent pin set (2026-05-27)
 # Base: Ubuntu 24.04, Python 3.12
+#
+# NUMPY ABI POLICY (PEK-DEP-RECONCILE):
+#   ALL binary deps MUST be compiled against numpy 2.x ABI.
+#   numpy>=2.0.0,<2.3.0 enforces this at install time — pip cannot select
+#   a wheel compiled against numpy 1.x (those declare numpy<2.0 or no upper
+#   bound but link against older C API). Ceiling <2.3.0 is opencv 4.12's limit.
 #
 # EXCLUDED intentionally (REQ-PEK-1 / REQ-PEK-2 — CPU-only, 8GB-safe):
 #   unimernet==0.2.1         (formula model, ~1.4GB, OUT OF SCOPE)
 #   struct-eqtable           (StructEqTable VLM, GPU-only, crashes on CPU import)
-#   paddlepaddle-gpu         (NVIDIA GPU only — not on this Apple Silicon host)
-#   lmdeploy                 (GPU serving framework — impossible on CPU)
+#   paddlepaddle-gpu         (NVIDIA GPU only)
+#   lmdeploy                 (GPU serving framework)
 #
 # torch + torchvision MUST be installed as CPU-only builds.
 # Install separately BEFORE this file to use CPU index-url:
 #   pip3 install --no-cache-dir --break-system-packages \
-#       torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#       torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cpu
 # (Dockerfile handles this as a separate RUN step before -r requirements-pek.txt)
 
 # FastAPI service runtime
@@ -36,17 +42,38 @@ omegaconf
 matplotlib
 PyMuPDF
 
+# NumPy — ABI floor (PEK-DEP-RECONCILE)
+# >=2.0.0 forces pip to reject all numpy-1.x-compiled binary wheels (cv2 4.6, etc.)
+# <2.3.0 satisfies opencv-python 4.12.0.88 ceiling (numpy<2.3.0 for py3.9+)
+numpy>=2.0.0,<2.3.0
+
+# OpenCV — explicitly pinned to numpy-2-native build (PEK-DEP-RECONCILE fix #2)
+# 4.12.0.88 = first version compiled against numpy 2.x ABI (declares numpy>=2.0,<2.3 for py3.9+)
+# Do NOT use 4.6.0.66 (cp36-abi3, numpy 1.x compiled) — ABI 0x1000009 vs 0x2000000 crash.
+opencv-python==4.12.0.88
+
 # Layout detection (DocLayout-YOLO, CPU)
-ultralytics>=8.2.85
+# doclayout-yolo 0.0.3 has no numpy pin itself; its ultralytics dep is constrained below.
+# huggingface_hub: required by doclayout_yolo.models.yolov10.model (PyTorchModelHubMixin)
+# but NOT declared in doclayout-yolo 0.0.3 requires_dist — must be pinned explicitly.
+huggingface_hub>=0.20.0
 doclayout-yolo==0.0.3
+
+# ultralytics >= 8.3.10 (PEK-DEP-RECONCILE fix)
+# 8.2.85–8.3.0: declared numpy<2.0.0 in requires_dist → BLOCKED numpy 2.x
+# 8.3.10+: removed numpy<2.0 from core requires → numpy-2 compatible
+# doclayout-yolo 0.0.3 requires ultralytics>=8.2.85 with no upper; we floor at 8.3.10.
+ultralytics>=8.3.10
 
 # OCR + table structure (CPU, no GPU variant)
 # paddlepaddle CPU build (not paddlepaddle-gpu)
-paddlepaddle
-paddleocr==2.7.3
-
-# NumPy (required by PaddleOCR + image processing)
-numpy>=1.24.0
+# paddlepaddle 3.3.1 cp312 wheel declares numpy>=1.21 (no upper) and is numpy-2 compatible
+# (confirmed: paddlepaddle 3.0.0 + numpy 2.3.5 = working on host).
+paddlepaddle==3.3.1
+# paddleocr 2.10.0: first 2.x version with no opencv upper bound and no numpy<2.0 constraint.
+# paddleocr 2.7.3 declared opencv-python<=4.6.0.66 — directly conflicts with ==4.12.0.88.
+# 2.10.0 retains the same PP-StructureV2 table-mode API; paddlepaddle 3.3.1 remains the backend.
+paddleocr==2.10.0
 
 # Dev / testing
 pytest>=8.1.1

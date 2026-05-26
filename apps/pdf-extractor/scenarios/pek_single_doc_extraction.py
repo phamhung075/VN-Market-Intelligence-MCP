@@ -524,28 +524,21 @@ class TestPekOcrBackendInjectionScenario:
         }
         page_dims = {1: (2338, 3308)}
 
-        fake_page_arr = {"__class__": "fake", "size": 1000}
-        # Use numpy array for realistic crop behaviour
-        fake_np = type("FakeNp", (), {
-            "__getitem__": lambda self, _: self,
-            "size": 1000,
-        })()
+        import numpy as np2
+        from PIL import Image as PILImage
 
-        with patch("infrastructure.pek_engine_adapter.convert_from_path") as mock_convert:
-            import numpy as np2
-            pil_like = MagicMock()
-            # np.array(pil_like) must return a non-empty ndarray
-            with patch("infrastructure.pek_engine_adapter.np") as mock_np:
-                mock_arr = np2.zeros((3308, 2338, 3), dtype="uint8")
-                mock_np.array.return_value = mock_arr
+        # Use a real PIL image so np.array() inside _run_table_extraction works
+        # without patching numpy (np is a local import in _run_table_extraction).
+        fake_page_img = np2.zeros((3308, 2338, 3), dtype="uint8")
+        pil_img = PILImage.fromarray(fake_page_img)
 
-                mock_convert.return_value = [pil_like]
-                result = adapter._run_table_extraction(
-                    paddle_table=None,
-                    pdf_path="/fake/path.pdf",
-                    pages_bboxes=pages_bboxes,
-                    page_dims=page_dims,
-                )
+        with patch("pdf2image.convert_from_path", return_value=[pil_img]):
+            result = adapter._run_table_extraction(
+                paddle_table=None,
+                pdf_path="/fake/path.pdf",
+                pages_bboxes=pages_bboxes,
+                page_dims=page_dims,
+            )
 
         # If call_count >= 1, result page 1 must have a cell with the fake text
         if fake_ocr.call_count >= 1:
