@@ -38,7 +38,7 @@ const okMacro = async () => ({
   oilUsd: 85.3,
   goldUsd: 2300.0,
   usdVnd: 25100,
-  signals: [] as Array<{ indicator: string; value: number; unit: string; direction: string; impact: string }>,
+  signals: {} as Record<string, { direction?: string; regime?: string; [key: string]: unknown }>,
   fetchedAt: new Date().toISOString(),
   // Legacy aliases preserved for backward compatibility
   brentPrice: 85.3,

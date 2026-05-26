@@ -111,6 +111,34 @@ export async function computeTAIndicators(req: ComputeTARequest): Promise<Comput
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
+ * Per-entry shape for a single macro signal in the snapshot.
+ *
+ * The macro-indicators service returns a keyed object with 6 named signals:
+ *   "investment-clock", "oil", "gold", "usdvnd", "carry", "yield"
+ *
+ * Each entry is a JSON object consumed by the frontend via:
+ *   Object.entries(snapshot.signals).map(([key, entry]) =>
+ *     entry.direction ?? entry.regime ?? entry.label ?? "")
+ *
+ * Locked contract: commit 80c776de
+ *   apps/macro-indicators/pkg/interface/http/handlers_snapshot_contract_test.go
+ */
+export interface MacroSignalEntry {
+  /** Primary directional signal (e.g. "EXPANSION", "UP", "RISK-OFF"). */
+  direction?: string;
+  /** Regime label (e.g. "GROWTH", "POSITIVE_CARRY"). */
+  regime?: string;
+  /** Human-readable label for the indicator. */
+  label?: string;
+  /** Numeric value for the indicator (when applicable). */
+  value?: number;
+  /** Unit string for the value (e.g. "score", "%"). */
+  unit?: string;
+  /** Forward-compat: allow extra fields the server may add in future. */
+  [key: string]: unknown;
+}
+
+/**
  * MacroSnapshotResponse — aligned with macro-indicators service DTO
  * (apps/macro-indicators/src/application/dtos.ts MacroSnapshotResponse).
  *
@@ -127,14 +155,19 @@ export interface MacroSnapshotResponse {
   goldUsd: number | null;
   /** USD/VND exchange rate (null if unavailable) */
   usdVnd: number | null;
-  /** Macro price signals array */
-  signals: Array<{
-    indicator: string;
-    value: number;
-    unit: string;
-    direction: string;
-    impact: string;
-  }>;
+  /**
+   * Macro price signals — keyed object (NOT an array).
+   *
+   * Keys: "investment-clock" | "oil" | "gold" | "usdvnd" | "carry" | "yield"
+   * Value: MacroSignalEntry (fields: direction, regime, label, value, unit, ...)
+   *
+   * Frontend consumes via Object.entries(snapshot.signals).
+   * An array would produce numeric-index pairs and break indicatorLabel() lookup.
+   *
+   * Locked contract: commit 80c776de
+   *   apps/macro-indicators/.../handlers_snapshot_contract_test.go
+   */
+  signals: Record<string, MacroSignalEntry>;
   fetchedAt: string;
   // Legacy aliases — populated by getMacroSnapshot() for backward compatibility
   /** @deprecated use oilUsd */
@@ -223,7 +256,7 @@ export async function getMacroSnapshot(): Promise<MacroSnapshotResponse> {
     oilUsd: raw.oilUsd ?? null,
     goldUsd: raw.goldUsd ?? null,
     usdVnd: raw.usdVnd ?? null,
-    signals: raw.signals ?? [],
+    signals: raw.signals ?? {},
     fetchedAt: raw.fetchedAt ?? new Date().toISOString(),
     // Legacy aliases
     brentPrice: raw.oilUsd ?? 0,
