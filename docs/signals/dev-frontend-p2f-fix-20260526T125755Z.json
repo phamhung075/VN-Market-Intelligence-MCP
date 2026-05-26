@@ -4,7 +4,7 @@
   "agent": "dev-frontend",
   "task": "P2-F",
   "timestamp": "2026-05-26T12:57:55Z",
-  "fix_commit_sha": "TBD",
+  "fix_commit_sha": "c1df64ac",
   "cycles_used": 1,
   "diagnosis": "G10-injected bug in apps/frontend/app/domain/formatters/direction-arrow.ts line 22: formatDirectionArrow(\"up\") returned symbol '↑↑' (double arrow) instead of '↑' (single arrow). Comment marker // G10-INJECTED-BUG present.",
   "verify_gates": {
