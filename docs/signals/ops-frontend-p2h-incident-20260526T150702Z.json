@@ -1,0 +1,75 @@
+{
+  "to": ["po", "dev-team"],
+  "type": "incident-blocker",
+  "gate": "G9-P2H",
+  "task": "P2-H",
+  "pilot": "frontend",
+  "phase": 2,
+  "emitted_at": "2026-05-26T150702Z",
+  "emitted_by": "ops",
+  "severity": "BLOCKER",
+  
+  "verdict": "P2-H BLOCKED — API contract drift in POST /macro/snapshot",
+  "summary": "Frontend Playwright render-gate cannot run: POST /macro/snapshot response format mismatch. API returns signals as Object, frontend expects Array. Breaks all 3 dashboard tests. Issue originates from macro-indicators service (not frontend code).",
+  
+  "container_health": {
+    "status": "HEALTHY",
+    "port": 3001,
+    "http_response": "200 OK",
+    "uptime_seconds": 45,
+    "reason": "Container started cleanly; all frontend code unchanged since Phase-1"
+  },
+  
+  "rebuild_decision": {
+    "rebuild_needed": false,
+    "rationale": "frontend app/ runtime code identical to Phase-1 tag frontend-pre-ci. Changes in Phase-2 (P2-A through P2-G) are ESLint config + test infrastructure only, not runtime code. Container serves the exact same bundle as Phase-1.",
+    "code_verification": "git diff frontend-pre-ci HEAD -- 'apps/frontend/app/**/*.ts' 'apps/frontend/app/**/*.tsx' = empty"
+  },
+  
+  "playwright_result": "1/4 PASS (FAILED)",
+  "playwright_failures": [
+    {
+      "test": "dashboard nav renders",
+      "status": "FAIL",
+      "error": "locator('nav').toContainText('VN Market Intelligence') timed out — element(s) not found",
+      "cause": "Server returned 500 in MacroSignalPanel.tsx:59 snapshot.signals.map is not a function"
+    },
+    {
+      "test": "analysis stock selector renders",
+      "status": "FAIL",
+      "error": "locator('text=Chọn cổ phiếu').toBeVisible() timed out — element(s) not found",
+      "cause": "Same: MacroSignalPanel 500 error prevents rendering"
+    },
+    {
+      "test": "graceful degrade on API error",
+      "status": "FAIL",
+      "error": "page.title == '' (empty) instead of matching /VN Market Intelligence/i",
+      "cause": "Same: MacroSignalPanel 500 error prevents page title from rendering"
+    }
+  ],
+  
+  "api_contract_mismatch": {
+    "endpoint": "POST /macro/snapshot",
+    "expected_format": {
+      "signals": [
+        {"indicator": "string", "value": "number", "unit": "string", "direction": "string", "impact": "string"}
+      ]
+    },
+    "actual_format": {
+      "signals": {
+        "investment-clock": {"tier": "string", "score": "number", "phase": "string"},
+        "oil": {"impact": "string", "priceUSD": "number", "reasoning": "string"},
+        "gold": {"direction": "string", "priceUSD": "number", "reasoning": "string"},
+        "usdvnd": {"direction": "string", "rateVND": "number", "reasoning": "string"},
+        "carry": {"regime": "string", "carrySpread": "number"},
+        "yield": {"label": "string", "spread": "number"}
+      }
+    },
+    "root_cause": "macro-indicators service refactored from TypeScript to Go (commit f85ad1d9, 2026-05-24). Response format changed; frontend domain/market.ts MacroSignal[] interface not updated to match."
+  },
+  
+  "action_required": "Architect + dev-macro-indicators must reconcile API response format. Frontend code is correct; the API contract broke. P2-H cannot proceed until POST /macro/snapshot returns signals as array of MacroSignal objects, not as object with signal names as keys.",
+  
+  "circuit_status": "macro-indicators.signals CIRCUIT OPEN: 100% error rate (all snapshot requests fail at server-side serialization)",
+  "telegram_reports": "None observed in last 5m; this is a NEW infrastructure failure post-rebuild on 2026-05-26 ~13:05Z (macro-indicators commit 3e4a00c4, rebuild a148db3d)"
+}

@@ -1957,3 +1957,102 @@ NEXT: Escalate data-pipeline gap to dev-team (follow-up task); no further ops ac
 - Accept/reject based on MD quality
 - Do NOT commit or edit code (ops role boundary)
 
+
+---
+## Session: 2026-05-26 (P2-H)
+
+**Task:** Frontend Phase-2 G9 ops live-recheck (Playwright render-gate at :3001)
+
+### Cycle Summary
+- Started frontend container (previously not running)
+- Container healthy at :3001, HTTP 200 OK
+- Ran Playwright render-gate: 1/4 PASS (3 FAIL)
+- Failure root cause: API contract mismatch in POST /macro/snapshot — macro-indicators service changed response format after refactor to Go
+- **CONCLUSION:** P2-H BLOCKED (infrastructure issue, not frontend code issue)
+
+### Execution Timeline
+- 2026-05-26 15:04:00 UTC — P2-H task started: verify frontend at :3001 + run Playwright 4/4
+- 2026-05-26 15:05:05 UTC — Host memory check: 24GB free, Docker 8GB cap, no ENOSPC issue
+- 2026-05-26 15:05:35 UTC — docker-compose up -d frontend (container was not running)
+- 2026-05-26 15:05:45 UTC — Waited 8s for startup + health check
+- 2026-05-26 15:05:53 UTC — Frontend container HEALTHY, curl :3001 → HTTP 200
+- 2026-05-26 15:05:55 UTC — Ran npm run test:e2e from apps/frontend/
+- 2026-05-26 15:06:15 UTC — Test results: 1/4 PASS, 3/4 FAIL
+
+### Test Results (Playwright)
+```
+Running 4 tests using 2 workers
+
+  ✓  1 [chromium] › tests/e2e/smoke.spec.ts:7:1 › homepage renders with a meaningful title (832ms)
+  ✘  2 [chromium] › tests/e2e/render-check.spec.ts:12:1 › dashboard nav renders (5.8s)
+  ✘  3 [chromium] › tests/e2e/render-check.spec.ts:25:1 › analysis stock selector renders (5.4s)
+  ✘  4 [chromium] › tests/e2e/render-check.spec.ts:35:1 › graceful degrade on API error (5.5s)
+
+3 failed (20.0s)
+```
+
+**Why 3 failed:** All three tests navigate to `/dashboard/analysis`, which triggers GET /macro/snapshot. Server error: `snapshot.signals.map is not a function` at MacroSignalPanel.tsx:59 → 500 Internal Server Error → Tests timeout waiting for DOM elements.
+
+### API Contract Mismatch (Root Cause)
+
+**Endpoint:** POST /macro/snapshot (via api-gateway:4000)
+
+**Expected format (frontend expects):** MacroSignal[]
+```typescript
+signals: [
+  { indicator: string, value: number, unit: string, direction: "BULLISH|BEARISH|NEUTRAL", impact: "HIGH|MEDIUM|LOW" },
+  ...
+]
+```
+
+**Actual format (macro-indicators now returns):** signals as object
+```json
+{
+  "signals": {
+    "investment-clock": {"tier": "VN_DIRECT", "score": 8, "phase": "CORE_VN"},
+    "oil": {"impact": "NEUTRAL", "priceUSD": 82.5, "reasoning": "..."},
+    "gold": {"direction": "BULLISH", "priceUSD": 2350, "reasoning": "..."},
+    "usdvnd": {"direction": "NEUTRAL", "rateVND": 24500, "reasoning": "..."},
+    "carry": {"regime": "FII_OUTFLOW_RISK", "carrySpread": -0.63, ...},
+    "yield": {"label": "CHEAP", "spread": 3.5, ...}
+  }
+}
+```
+
+**Timeline of change:**
+- 2026-05-25 10:20Z: Phase-1 frontend closed. Playwright 4/4 PASS (all tests passed).
+- 2026-05-24 ~12:00Z: macro-indicators refactored from TypeScript to Go (commit f85ad1d9)
+- 2026-05-26 ~13:05Z: macro-indicators container rebuilt with commit 3e4a00c4 (wire VNIndex from market_prices)
+- **NOW:** 2026-05-26 15:06Z: P2-H discovers API contract broken
+
+### Rebuild Decision (Per task instruction)
+**REBUILD NEEDED: NO**
+
+Rationale per task:
+- "Net committed Phase-2 change to runtime app code (app/**/*.ts,tsx) vs tag frontend-pre-ci = EMPTY"
+- git diff frontend-pre-ci HEAD -- 'apps/frontend/app/**/*.ts' 'apps/frontend/app/**/*.tsx' = **empty**
+- Phase-2 changes (P2-A through P2-G): ESLint config (eslint.config.mjs, package.json devDeps) + test infrastructure only
+- Frontend **bundle is functionally identical to Phase-1**
+- Container **healthy and serving correct bundle**
+
+**The problem is NOT the frontend.** It's that POST /macro/snapshot changed its response format after macro-indicators refactor. Frontend code still expects the old format.
+
+### Incident Signal Emitted
+- **File:** docs/signals/ops-frontend-p2h-incident-20260526T150702Z.json
+- **Type:** incident-blocker
+- **Severity:** BLOCKER (P2-H cannot proceed)
+- **Action required:** Architect + dev-macro-indicators must fix API contract (either change macro-indicators response back to array, or update frontend MacroSnapshot interface + MacroSignalPanel to handle new object format)
+
+### Circuit Breaker Status
+- macro-indicators service container: HEALTHY
+- macro-indicators.signals circuit: OPEN (100% error rate — all frontend requests fail at serialization)
+- All other services: OK (kinh-dich, stock, ta, etc.)
+
+### Constraints Verified
+- No git tags touched
+- No pilot-status-frontend.json modified (P2-H was read-only verification)
+- Zone respected: ops infra operations + docs/signals/ + notebook
+
+### Next Action
+P2-H **ESCALATION:** Signal sent to po + dev-team. Architect to triage API contract mismatch and assign fix (macro-indicators endpoint, or frontend consumer update). P2-Z terminal close gate cannot proceed until G9 backend dependency resolved.
+
