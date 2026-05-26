@@ -159,3 +159,39 @@ The current OCR path uses `pytesseract.image_to_string(config="--psm 6")` → fl
 **AC-Q-5 (test baseline):** `bun test` (mcp-server) passes at or above pre-sprint passing count. `pytest` (pdf-extractor) passes all existing tests. balance_pass badge ALONE is FORBIDDEN as the QA gate.
 
 **QA report:** `reports/TASK_REPORT_MD-QA-<UTC>.json` — all ACs individually confirmed.
+
+---
+
+## [dev-pdf-extractor] MD-EXTRACT Implementation — 2026-05-26
+
+**Status:** DONE — all files created, 334 unit tests pass, AC-0 PASS.
+
+**Files created (UNSTAGED — main terminal commits):**
+- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — NEW: GenericMdTableExtractor + ocr_text_to_markdown()
+- `apps/pdf-extractor/infrastructure/md_table_push_client.py` — NEW: MdTablePushClient
+- `apps/pdf-extractor/application/extract_md_tables_usecase.py` — NEW: ExtractMdTablesUseCase (MAX_PAGES=20, fire-and-forget)
+- `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` — NEW: AC-2 unit tests (49 tests, all pass)
+- `apps/pdf-extractor/__tests__/unit/test_ocr_text_to_markdown.py` — NEW: pure function unit tests
+- `apps/pdf-extractor/__tests__/unit/test_extract_md_tables_usecase.py` — NEW: AC-4 + AC-6 unit tests
+- `apps/pdf-extractor/__tests__/integration/test_extract_md_tables_fpt.py` — NEW: AC-3 integration test (skips if PDF not on disk)
+
+**Files modified (UNSTAGED):**
+- `apps/pdf-extractor/domain/modules/financial_reports/ports.py` — ADD GenericMdTableExtractorPort + MdTablePushClientPort
+- `apps/pdf-extractor/interface/handlers.py` — ADD POST /extract-md-tables route (202 background task)
+- `apps/pdf-extractor/main.py` — Wire GenericMdTableExtractor + MdTablePushClient + ExtractMdTablesUseCase at composition root
+
+**AC-0 result:** `grep -r "bao.cao.bo.phan\|segment_report\|SEGMENT\|BAO_CAO\|BCTC_LABEL" generic_md_table_extractor.py` → ZERO matches (exit 1). PASS.
+
+**AC-1 result:** `grep -rn "from application\|from interface" generic_md_table_extractor.py` → ZERO matches. PASS.
+
+**AC-Q-4 result:** `grep -rn "claude\|openai\|gemini\|api.mistral\|textract\|document.ai\|requests.post\|httpx.post" generic_md_table_extractor.py extract_md_tables_usecase.py` → ZERO matches. PASS.
+
+**Test summary:** 334 passed, 0 failed (334 unit tests, sandbox scenarios green with PYTHONPATH set).
+
+**AC-7 (non-regression):** test_extract_tables_usecase.py + test_text_table_extractor.py all pass. Structured path untouched.
+
+**Sandbox (G12):**
+- `PYTHONPATH=apps/pdf-extractor python sandbox/runner.py --tier=primitive --scenario=scenarios/primitives/confidence_scorer/happy_high_conf.json` → pass: True
+- `PYTHONPATH=apps/pdf-extractor python sandbox/runner.py --tier=module --scenario=scenarios/modules/financial_reports/multi_primitive_story.json` → pass: True
+
+**NEXT:** ops MD-DEPLOY (rebuild pdf-extractor container; then dev-mcp-server MD-INSPECT must also be done before deploy).
