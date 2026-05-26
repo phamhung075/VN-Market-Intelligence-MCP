@@ -29,7 +29,7 @@ import type {
   KinhDichMarket,
   KinhDichReading,
   MacroSnapshot,
-  MacroSignal,
+  MacroSignalEntry,
   PricePoint,
   TASnapshot,
   WatchlistStock,
@@ -208,9 +208,17 @@ function confidenceBar(confidence: number) {
 
 function indicatorLabel(indicator: string): string {
   switch (indicator) {
+    // legacy underscore-keyed names
     case "oil_usd": return "Dầu thô (WTI)";
     case "gold_usd": return "Vàng";
     case "usd_vnd": return "USD/VND";
+    // canonical keyed-object keys from Go SignalResult (dtos.go)
+    case "oil": return "Dầu thô (WTI)";
+    case "gold": return "Vàng";
+    case "usdvnd": return "USD/VND";
+    case "investment-clock": return "Investment Clock";
+    case "carry": return "Carry Trade";
+    case "yield": return "Yield Spread";
     default: return indicator;
   }
 }
@@ -695,6 +703,11 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 
 function MacroSignalPanel({ snapshot }: { snapshot: MacroSnapshot }) {
   const valueMap: Record<string, number | null> = {
+    // canonical keyed-object keys
+    oil: snapshot.oilUsd,
+    gold: snapshot.goldUsd,
+    usdvnd: snapshot.usdVnd,
+    // legacy underscore-keyed names (backward-compat)
     oil_usd: snapshot.oilUsd,
     gold_usd: snapshot.goldUsd,
     usd_vnd: snapshot.usdVnd,
@@ -702,37 +715,39 @@ function MacroSignalPanel({ snapshot }: { snapshot: MacroSnapshot }) {
 
   return (
     <div className="grid gap-3 sm:grid-cols-3">
-      {snapshot.signals.map((sig) => {
-        const isBullish = sig.direction === "BULLISH";
-        const isBearish = sig.direction === "BEARISH";
+      {Object.entries(snapshot.signals).map(([key, entry]: [string, MacroSignalEntry]) => {
+        const direction = entry.direction ?? entry.regime ?? entry.label ?? "";
+        const impact = entry.impact ?? entry.tier ?? "LOW";
+        const numericValue = entry.priceUSD ?? entry.rateVND ?? entry.score ?? valueMap[key];
+        const isBullish = direction === "BULLISH";
+        const isBearish = direction === "BEARISH";
         const dirColor = isBullish
           ? "text-green-400"
           : isBearish
             ? "text-red-400"
             : "text-slate-400";
         const impactClass =
-          sig.impact === "HIGH"
+          impact === "HIGH"
             ? "border-red-800"
-            : sig.impact === "MEDIUM"
+            : impact === "MEDIUM"
               ? "border-yellow-800"
               : "border-slate-700";
 
         return (
           <div
-            key={sig.indicator}
+            key={key}
             className={`rounded-lg border bg-slate-800 p-4 ${impactClass}`}
           >
-            <p className="text-xs text-slate-500">{indicatorLabel(sig.indicator)}</p>
+            <p className="text-xs text-slate-500">{indicatorLabel(key)}</p>
             <p suppressHydrationWarning className="mt-1 text-xl font-bold text-slate-100">
-              {valueMap[sig.indicator] != null
-                ? Number(valueMap[sig.indicator]).toLocaleString("vi-VN")
+              {numericValue != null
+                ? Number(numericValue).toLocaleString("vi-VN")
                 : "—"}
             </p>
-            <p className="text-xs text-slate-500">{sig.unit}</p>
             <div className={`mt-2 flex items-center gap-1 text-sm font-semibold ${dirColor}`}>
               {isBullish ? "↑" : isBearish ? "↓" : "—"}
-              <span>{sig.direction}</span>
-              <span className="ml-auto text-xs font-normal text-slate-500">{sig.impact}</span>
+              <span>{direction}</span>
+              <span className="ml-auto text-xs font-normal text-slate-500">{impact}</span>
             </div>
           </div>
         );
@@ -1063,21 +1078,27 @@ function InfoSourcePanel({
     ),
   });
 
-  // Macro row — highest impact signal
-  if (snapshot && snapshot.signals.length > 0) {
-    const impactRank = (s: MacroSignal) =>
-      s.impact === "HIGH" ? 3 : s.impact === "MEDIUM" ? 2 : 1;
-    const topSignal = [...snapshot.signals].sort((a, b) => impactRank(b) - impactRank(a))[0];
+  // Macro row — highest impact signal (keyed-object contract)
+  if (snapshot && Object.values(snapshot.signals).length > 0) {
+    const impactRank = (entry: MacroSignalEntry) => {
+      const imp = entry.impact ?? entry.tier ?? "LOW";
+      return imp === "HIGH" ? 3 : imp === "MEDIUM" ? 2 : 1;
+    };
+    const [[topKey, topEntry]] = Object.entries(snapshot.signals).sort(
+      ([, a], [, b]) => impactRank(b) - impactRank(a)
+    );
+    const topDirection = topEntry.direction ?? topEntry.regime ?? topEntry.label ?? "—";
+    const topImpact = topEntry.impact ?? topEntry.tier ?? "LOW";
     rows.push({
       source: "Macro",
-      indicator: indicatorLabel(topSignal.indicator),
+      indicator: indicatorLabel(topKey),
       value: (
         <span className="text-slate-200">
-          <span className={topSignal.direction === "BULLISH" ? "text-green-400" : topSignal.direction === "BEARISH" ? "text-red-400" : "text-slate-400"}>
-            {topSignal.direction}
+          <span className={topDirection === "BULLISH" ? "text-green-400" : topDirection === "BEARISH" ? "text-red-400" : "text-slate-400"}>
+            {topDirection}
           </span>
           {" · "}
-          <span className="text-slate-400">{topSignal.impact}</span>
+          <span className="text-slate-400">{topImpact}</span>
         </span>
       ),
     });

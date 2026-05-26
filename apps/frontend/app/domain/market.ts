@@ -114,21 +114,47 @@ export interface KinhDichReading extends KinhDichMarket {
 // Macro snapshot types
 // --------------------------------------------------------------------------
 
-export interface MacroSignal {
-  indicator: string;
-  value: number;
-  unit: string;
-  direction: "BULLISH" | "BEARISH" | "NEUTRAL" | string;
-  impact: "HIGH" | "MEDIUM" | "LOW" | string;
+/**
+ * A single macro signal entry from the keyed-object returned by
+ * POST /macro/snapshot. Each key is a signal name (e.g. "oil", "gold").
+ * Fields vary by signal type; optional fields may be absent.
+ * New primitives may add new keys — use the index signature for forward-compat.
+ */
+export interface MacroSignalEntry {
+  // investment-clock fields
+  tier?: string;
+  score?: number;
+  phase?: string;
+  // oil / gold / usdvnd fields
+  impact?: string;
+  direction?: string;
+  priceUSD?: number;
+  rateVND?: number;
+  reasoning?: string;
+  // carry fields
+  regime?: string;
+  carrySpread?: number;
+  // yield fields
+  label?: string;
+  spread?: number;
+  // forward-compat catch-all
+  [key: string]: unknown;
 }
 
-/** Macro snapshot from POST /macro/snapshot */
+/**
+ * Keyed-object map of macro signal entries.
+ * Keys: "investment-clock" | "oil" | "gold" | "usdvnd" | "carry" | "yield"
+ * Shape is intentional — macro-indicators Go DTO SignalResult (dtos.go).
+ */
+export type MacroSignals = Record<string, MacroSignalEntry>;
+
+/** Macro snapshot from POST /macro/snapshot (macro-indicators Go service). */
 export interface MacroSnapshot {
   vnIndex: number | null;
   oilUsd: number | null;
   goldUsd: number | null;
   usdVnd: number | null;
-  signals: MacroSignal[];
+  signals: MacroSignals;
   fetchedAt: string;
 }
 

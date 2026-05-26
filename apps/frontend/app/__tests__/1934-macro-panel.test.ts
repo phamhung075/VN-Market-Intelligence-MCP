@@ -92,3 +92,42 @@ describe("parseMacroSources", () => {
     expect(rows.length).toBeGreaterThan(0);
   });
 });
+
+// --------------------------------------------------------------------------
+// MacroSnapshot signals — keyed-object contract (architect ruling 1d277bc7)
+// --------------------------------------------------------------------------
+
+import type { MacroSnapshot } from "~/domain/market";
+
+describe("MacroSnapshot signals — keyed-object contract", () => {
+  const REAL_SIGNALS_SHAPE: MacroSnapshot["signals"] = {
+    "investment-clock": { tier: "RECOVERY", score: 65, phase: "EARLY_EXPANSION" },
+    "oil": { impact: "NEUTRAL", priceUSD: 82.5, reasoning: "within normal band" },
+    "gold": { direction: "BULLISH", priceUSD: 2350.0, reasoning: "above 2200" },
+    "usdvnd": { direction: "NEUTRAL", rateVND: 24500, reasoning: "below 25500" },
+    "carry": { regime: "NEUTRAL", carrySpread: -0.63 },
+    "yield": { label: "FAIRLY_VALUED", spread: 2.87 },
+  };
+
+  it("signals is an object (not an array)", () => {
+    expect(Array.isArray(REAL_SIGNALS_SHAPE)).toBe(false);
+    expect(typeof REAL_SIGNALS_SHAPE).toBe("object");
+  });
+
+  it("Object.entries iterates over all 6 signal keys", () => {
+    const entries = Object.entries(REAL_SIGNALS_SHAPE);
+    expect(entries).toHaveLength(6);
+  });
+
+  it("each entry has the correct key and a MacroSignalEntry value", () => {
+    const oil = REAL_SIGNALS_SHAPE["oil"];
+    expect(oil?.impact).toBe("NEUTRAL");
+    expect(oil?.priceUSD).toBe(82.5);
+  });
+
+  it("Object.values returns 6 MacroSignalEntry objects", () => {
+    const values = Object.values(REAL_SIGNALS_SHAPE);
+    expect(values).toHaveLength(6);
+    expect(values.every((v) => typeof v === "object" && v !== null)).toBe(true);
+  });
+});

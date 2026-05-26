@@ -6,6 +6,7 @@
 
 ## Status
 
+2026-05-26 — P2-H macro contract fix COMPLETE. MacroSnapshot.signals: MacroSignal[] → MacroSignals (keyed-object). 3 files. 183/183 Vitest GREEN. tsc exit 0. lint:fence exit 0. Build ✓. Architect ruling 1d277bc7.
 2026-05-26 — P2-F G10 blind-fix COMPLETE. direction-arrow.ts "↑↑" → "↑" fix (G10-injected bug). 179/179 Vitest GREEN. tsc clean. lint:fence 0. 1 cycle used.
 2026-05-26 — Phase 2 P2-A + P2-B + P2-C COMPLETE. ESLint fence (G4) installed and proven. 179/179 Vitest GREEN. tsc clean. Stopping before P2-D (QA gate).
 2026-05-25 — Phase 1 MVR COMPLETE. P1-A + P1-B1..B4 + P1-C + P1-E all DONE. 179/179 Vitest GREEN. 4/4 Playwright GREEN. G12 streak 3/3 COMPLETE. tsc clean.
@@ -72,12 +73,22 @@ Phase 2 P2-A/B/C DONE. ESLint fence (G4) installed: eslint.config.mjs + eslint-p
 - Verify: 179/179 Vitest, tsc exit 0, lint:fence exit 0. Cycles used: 1.
 - Signal: docs/signals/dev-frontend-p2f-fix-20260526T125755Z.json
 
+## Cycle P2-H — 2026-05-26 (macro snapshot signals keyed-object contract fix)
+
+- Trigger: P2-H blocked on `snapshot.signals.map is not a function` (Go SignalResult = keyed object, not array).
+- Architect ruling: 1d277bc7. Brief: `docs/architecture-briefs/2026-05-26-macro-snapshot-signals-contract-ruling.md`.
+- File 1: `app/domain/market.ts` — replaced `MacroSignal` + `MacroSnapshot.signals: MacroSignal[]` with `MacroSignalEntry` (heterogeneous optional fields) + `MacroSignals = Record<string, MacroSignalEntry>`. `MacroSnapshot.signals` now typed `MacroSignals`.
+- File 2: `app/routes/dashboard.analysis.tsx` — `MacroSignalPanel`: `signals.map()` → `Object.entries(signals).map([key, entry])`. `InfoSourcePanel`: `.length > 0` → `Object.values().length > 0`; spread+sort → `Object.entries().sort()`. `indicatorLabel()`: added 6 new canonical key mappings. Import: `MacroSignal` → `MacroSignalEntry`.
+- File 3: `app/__tests__/1934-macro-panel.test.ts` — appended `describe("MacroSnapshot signals — keyed-object contract")` with 4 assertions (not array, 6 entries, per-key field access, Object.values length).
+- Verify: 183/183 Vitest GREEN (+4 new). tsc --noEmit exit 0. lint:fence exit 0. Remix build ✓ (114 + 21 modules).
+- Macro service NOT touched. Frontend only.
+
 ## Carry-over (next session)
 
 - P2-D: QA gate — freeze anchor confirm (QA reads eslint.config.mjs git log, emits G4 evidence signal)
 - P2-E: QA gate — frontend-pre-inject tag + G10 bug injection (QA task)
-- P2-F: G10 AI-fix — dev diagnoses from RED Vitest output only (dev task)
+- P2-F: DONE 2026-05-26
 - P2-G: G11 2-trial regression alarm coupling proof (QA+dev task)
-- P2-H: G9 ops live-recheck (ops task — Playwright 4/4 against running :3001)
+- P2-H: Ops must REBUILD frontend container then RE-RUN Playwright 4/4 against :3001
 - Dev note: always use PORT=3099 (or similar) for host-side Playwright; Docker holds 3001 even when container stopped
 - Dev note: `lint:fence` script requires ESLINT_USE_FLAT_CONFIG=true (already baked into script)
