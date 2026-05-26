@@ -1,8 +1,20 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-22T05:10Z | **Sprint:** 1968d (c250)
+**Last updated:** 2026-05-26T18:30Z | **Sprint:** BCTC-LAYOUT-FIRST (LF-BA)
 
 > Archive: `docs/archive/notebooks/ba-2026-05-21.md`
+
+## LF-BA · 2026-05-26T18:30Z
+
+Sprint BCTC-LAYOUT-FIRST decomposition complete. REQ file: `docs/REQ_BCTC-LAYOUT-FIRST.md`. Handoff appended: `docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md`. Files left UNSTAGED per commit-discipline. NEXT = PO approval gate; architect LF-DESIGN BLOCKED until PO approves.
+
+Key decisions encoded as requirements:
+- REQ-LF-0: AC-0 generic-by-construction — geometry is the spine, anchors are hints only; grep-proof clause baked into ACs.
+- REQ-LF-1: Root-cause fix named requirement — FPT Q1 2026 page 5 scramble fixed by Tier-0 logical-unit grouping (schema inheritance path). Page 41 anchor-overload case encoded as a testable AC.
+- REQ-LF-4: Tier-3 invariant gate as anti-false-green mechanism; DIRECT market.db arbiter clause (never the endpoint); quarantine path required.
+- REQ-LF-7/8: Deliverable 2 split at service boundary — pdf-extractor emits JSON, mcp-server renders toggle. 3 architect-open questions flagged (schema, JSON contract, quarantine storage).
+- No PO blockers. All 6 PO decisions (A-F) pre-resolved.
+- Done-bar encoded as 7-point gate including user verbal G9.
 
 ## c250 · 2026-05-22T05:10Z
 
