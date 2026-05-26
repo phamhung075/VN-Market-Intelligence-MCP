@@ -1066,3 +1066,112 @@ Under ordinal reconstruction, code tokens (left≈50-80px) and value tokens (lef
 **BUILD-STANDARD: lean**
 
 **NEXT: main-terminal re-traces §8 fixture proof (already verified SOUND) AND re-traces AC-6-SKIP mid-empty fixture (arithmetic trace in brief §9) to confirm C8.5 prevents the rank-shift. If both proofs check out → commit brief → dispatch dev-pdf-extractor MD-EXTRACT-6.**
+
+---
+
+## [dev-pdf-extractor] MD-EXTRACT-6 Implementation — 2026-05-26
+
+**Status:** DONE — all files modified, 430 unit tests pass (+12 new TestOrdinalReconstruction), all AC fences PASS. ALL FILES UNSTAGED (main terminal commits).
+
+### AC-6-DIAG Hard Numbers (MANDATORY STEP 1 — run BEFORE implementation)
+
+PDF: `/data/pdfs-local/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf` (host, 200 DPI)
+
+| Page | row_pitch | adaptive_tol | drift/gap ratio | Verdict |
+|------|-----------|--------------|-----------------|---------|
+| 8 (income statement) | 4.0px | 1px | 15.11 | VIOLATED — ordinal approach NEEDED |
+| 22 (segment report) | 8.0px | 3px | 1.61 | VIOLATED — ordinal approach NEEDED |
+
+PASS criteria met: row_pitch < 8px (page 8 PASS, page 22 boundary=8), drift/gap > 1.0 (both PASS), tops monotonically increase with lefts (confirmed in first 30 tokens both pages). Ordinal approach confirmed as correct fix.
+
+**First 30 number tokens page 8 (income statement) — selected rows showing drift:**
+```
+left=  960  top=  495  text=01       ← code column
+left= 1182  top=  497  text=20.258.866.135.395
+left= 1477  top=  500  text=17.651.065.378.939
+left= 1768  top=  503  text=70.207.689.409.081
+left= 2061  top=  506  text=62.962.652.134.635
+```
+Top increases from 495→506 across 4 columns (drift=11px > row_pitch=4px → precondition VIOLATED).
+
+**D4b live-substrate fixture (FPT page 4, balance sheet):**
+- code "100": left=793, top=504, width=34, height=15, conf=96
+- value "58.102.970.741.619": left=1015, top=503, width=202, height=16, conf=91
+- Distance: 1015-793=222px > col_gap=1.5×118=177px → 2 distinct anchors → different col_buckets ✓
+
+### Files modified (UNSTAGED — main terminal commits)
+
+| File | Change |
+|------|--------|
+| `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` | ADD `math` import; ADD `_COL_ASSIGN_MAX_DIST_FACTOR`, `SKIP_GAP_FACTOR`, `_MIN_WORD_CONF_ORDINAL`, `LABEL_BAND_FACTOR` constants; ADD 4 pure functions: `_assign_tokens_to_columns`, `_insert_skip_slots`, `_build_ordinal_grid`, `_attach_labels_ordinal`; MODIFY `_process_page` — replace Steps C-F with C6→C7→C8→C8.5→C9→C10→C11 (ordinal path); RETIRE `_cluster_number_rows_adaptive`, `_attach_labels`, `_build_grid_from_number_rows` (mark DEAD in MD-EXTRACT-6, kept for test compat); PROMOTE `logger.debug` → `logger.info` for row_pitch/adaptive_tol in `_cluster_number_rows_adaptive`; UPDATE module docstring |
+| `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` | ADD MD-EXTRACT-6 imports; ADD `class TestOrdinalReconstruction` (12 tests: AC-6-ORD ×1, AC-6-SKIP ×2, AC-6-D4b ×1, `_insert_skip_slots` ×4, `_build_ordinal_grid` ×1, `_attach_labels_ordinal` ×1, assign ×2) |
+
+### AC results
+
+| AC | Result | Evidence |
+|----|--------|----------|
+| **AC-6-DIAG** | **PASS** | row_pitch=4px/8px, drift/gap=15.11/1.61 >1.0, tops monotonically increase |
+| **AC-6-LOG** | **PASS** | `grep "logger.info.*row_pitch\|logger.info.*adaptive_tol"` → 2 matches; `grep "logger.debug.*row_pitch\|logger.debug.*adaptive_tol"` → ZERO matches |
+| **AC-6-ORD** | **PASS** | `test_ordinal_defeats_drift_gt_gap`: §8 fixture → exactly 2 rows; grid[0]=["100","200","300","400","500"], grid[1]=["600","700","800","900","1000"] |
+| **AC-6-SKIP SKIP-MID** | **PASS** | `test_skip_mid_column_empty`: grid[2][1]=="B3", grid[1][1]==" ", grid[0]==["A1","B1","C1"], total_rows==3 |
+| **AC-6-SKIP SKIP-TRAILING** | **PASS** | `test_skip_trailing_column_empty`: grid[2][1]==" ", grid[0]==["X1","Y1","Z1"], grid[1]==["X2","Y2","Z2"], total_rows==3 |
+| **AC-6-D4b** | **PASS** | `test_d4b_live_substrate_code_value_separation`: exact live coords → code_col≠value_col, separate grid cells |
+| **AC-0 grep-proof** | **PASS** | 3 matches all in COMMENTS (lines 133, 1216, 1223 — not branching logic) |
+| **Fence-A** | **PASS** | `grep "from application\|from interface"` → exit 1, ZERO matches |
+| **Privacy** | **PASS** | `grep -rniE "claude\|openai\|gemini\|textract\|..."` → exit 1, ZERO matches |
+| **AC-3F non-regression** | **PASS** | `text_table_extractor.py` git diff = 0 bytes |
+| **Import-linter Fence-A/B** | **PASS** | 80 files, 159 deps, 2 contracts KEPT, 0 broken |
+| **Sandbox primitive** | **PASS** | `runner.py --tier=primitive` → pass: true |
+| **Sandbox module** | **PASS** | `runner.py --tier=module` → pass: true |
+
+### Unit test summary
+
+```
+430 passed, 1 warning (unit-only run)
++12 new tests in class TestOrdinalReconstruction
+101 prior tests in test_generic_md_table_extractor.py → ALL PASS
+```
+
+### Algorithm notes
+
+`_assign_tokens_to_columns`: pure Step C7 — each token assigned to nearest x-anchor by argmin, no y-comparison. Noise gate: tokens farther than `_COL_ASSIGN_MAX_DIST_FACTOR × median_word_width` excluded. Low-confidence tokens (`conf < _MIN_WORD_CONF_ORDINAL=30`) excluded.
+
+`_insert_skip_slots`: Step C8.5 — detects within-column rank gaps > `SKIP_GAP_FACTOR×local_pitch` and inserts None sentinels. When column has only 2 tokens (1 delta), uses `ref_pitch` from columns with ≥3 tokens to avoid degenerate single-gap bias. If no ref_pitch available, no skip insertion (safe fallback).
+
+`_build_ordinal_grid`: Steps C8+C8.5+C9+C10 integrated. Computes ref_pitch before calling `_insert_skip_slots` per column. Emits WARNING if no column has ≥3 tokens (R-MEDIUM per §10). Returns `(grid, col_y_medians)`.
+
+`_attach_labels_ordinal`: Step C11 — per-row label attachment using `LABEL_BAND_FACTOR=1.5×h_med` band + 2.5×h_med fallback. Greedy removal of used text tokens prevents label re-use on adjacent rows.
+
+`_process_page` now calls: C6 `_detect_column_anchors_from_tokens` → C7 `_assign_tokens_to_columns` → C8+C8.5+C9+C10 `_build_ordinal_grid` → C11 `_attach_labels_ordinal` → Step G pipeline (strip/coalesce/collapse/density/header/emit — UNCHANGED).
+
+**NEXT: ops MD-DEPLOY-6** — rebuild pdf-extractor container (single-doc re-extract FPT `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`). Full UUID mandatory. NEVER batch backfill. Verify new functions present in container (`_assign_tokens_to_columns`, `_build_ordinal_grid`, `SKIP_GAP_FACTOR`). Then main-terminal live-verify (AC-6-SEG + AC-6-INC + AC-6-D4b-LIVE).
+
+---
+
+## [Main-Terminal] LIVE-VERIFY-6 — MD-EXTRACT-6 SPLIT VERDICT (segment PASS, income FAIL)
+
+> Date: 2026-05-26 | Source: DIRECT DB query of `bctc_md_tables` row ID=8 (FPT `e71f845d`, extracted_at `2026-05-26 09:07:20` UTC, table_count 23, json_len 24839) dumped to `/tmp/md_v6_db.json`. NOT the inspect endpoint. Gate script `/tmp/gate_md6.py` + manual table-8/9/10 inspection.
+
+### Result matrix
+
+| AC | Verdict | Evidence |
+|---|---|---|
+| **AC-6-SEG** (segment 3 revenues one row, distinct cells) | **PASS** ✅ | table[17]: `\| Doanh thu theo bộ phận {1.193.275) \| 35.381.667 \| 9.092.934 \| 18.701.876 \| 804.840 \| 7.324.783 \| 70.112.826 \|` — all 7 segment values on ONE row, 3 binding revenues in 3 distinct cells. Valid GFM separator `\|---\|...`. **THE DIAGONAL CASCADE IS DEFEATED.** |
+| **AC-6-D4b-LIVE** (no code+value concat, tables 0-4) | **PASS** ✅ | 0 concatenated code+value cells. The old `100 58.102.970.741.619` bug is gone. |
+| GFM separators | **PASS** ✅ | 24 valid `\|---\|` separators; 0 genuinely malformed (the earlier "586/1" were gate-script false-positives on empty data rows + a `:` label cell). |
+| Structured path (AC-3F) | **PASS** ✅ | text_table_extractor.py 0-byte diff; bctc_table_rows path untouched (79 rows). |
+| **AC-6-INC** (income ≥15 rows, ≤1 code/row, multi-period aligned) | **FAIL** ❌ | table[8] is GARBLED: labels from adjacent physical rows interleave into one cell (`2 1 Doanh Các khoản thu giảm bán hàng trừ và cung cấp dịch vụ 10 01`), dual codes (`10 01`, `11 02`, `12 10`) merged, and **period-column VALUES are scrambled** (net-revenue row shows 17.65T then 43B/94B for prior periods — physically impossible). table[9]/[10] are fragments; table[10] is narrative prose mis-captured as a table. |
+
+### Diagnosis (root cause is a DISTINCT bug class from the diagonal)
+
+The ordinal approach SOLVED the wide-matrix diagonal — segment report (the user's primary binding proof) is now correct. The income statement fails for different structural reasons:
+- **Dense geometry:** ~26 rows, tight vertical pitch (diagnostic row_pitch ESTIMATE was ~4px on page 8; physical pitch ~20px but the estimator's large-gap collapse signals how dense it is).
+- **Dual small-integer code columns** (Mã số + Thuyết minh, values like 01/10/11/02) → spurious x-anchors, and code-column tokens scrambling into value buckets.
+- **Many mid-column empties** (subtotals present only in cumulative columns) at SCALE → C8.5 single-gap skip detection likely insufficient for dense multi-gap columns → ordinal ranks misalign → value scramble.
+- **Label-band over-merge:** `LABEL_BAND_FACTOR=1.5×h_med` grabs 2-4 dense rows of text into one label cell.
+
+Balance sheet (tables 0-7): mostly OK; residual code-doubling (e.g. `200) | 200`) + occasional value fragmentation on table[3] (long-term assets) — secondary.
+
+### Verdict: NOT DONE. Goal stays armed.
+
+Binding goal = "table on pdf on ALL bctc need correct extract text and convert to md style." Segment report ✅ but income statement ❌. Escalate **MD-EXTRACT-7** to architect: targeted at DENSE many-row / dual-code-column / many-empty reconstruction (income statement). MANDATORY diagnostic FIRST — dump page-8 column anchors, per-column token counts, and the PRE-label grid to pinpoint whether scramble originates at column-assignment (C7), ordinal+skip (C8/C8.5), or label attachment (C11). NOT a tweak to the segment-working path; must not regress AC-6-SEG.
