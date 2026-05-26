@@ -118,15 +118,15 @@ A microservice code change is NOT shipped until its container is rebuilt with th
 | Step | Actor | Action |
 |------|-------|--------|
 | 1 | ops | Check free Docker memory: `docker stats --no-stream` + `free -m` (8 GB Docker cap — memory: `project_host_memory_panic`). If used > 7 GB, report to BUG and WAIT. |
-| 2 | ops | Rebuild the changed service only: `docker compose up -d --build <svc>` (ONE service at a time — never `--build` the full stack unless explicitly instructed). |
+| 2 | ops | Rebuild the changed service: `docker compose build --build-arg GIT_SHA="$(git rev-parse HEAD)" <svc>` then `docker compose up -d <svc>` (ONE service at a time — never rebuild the full stack unless explicitly instructed). |
 | 3 | ops | Verify container started: `docker compose ps <svc>` → state = `running (healthy)`. |
-| 4 | qa | Verify live container carries the new code: compare `docker inspect --format '{{.Created}}' <container>` (build time) against the git commit timestamp. Build time MUST be after the commit. |
+| 4 | ops | **SHA gate (authoritative deploy-complete check):** `bash scripts/verify-deploy-sha.sh <svc>` — **MUST exit 0**. Any non-zero exit (SHA drift or label absent) = deploy is **BLOCKED**; do NOT declare the deploy complete. Re-investigate: rebuild the service with the `--build-arg GIT_SHA` flag above. Full sequence: `docker compose build --build-arg GIT_SHA="$(git rev-parse HEAD)" <svc> && docker compose up -d <svc> && bash scripts/verify-deploy-sha.sh <svc>`. **First-run note:** containers built before this guard was introduced carry no `vn.market.git_sha` label; the script will exit 1 with "label absent — rebuild required". This is correct behavior: rebuild the container to acquire the label. **`flaresolverr` is skipped** (pulled image, no local Dockerfile — the SHA gate does not apply). **`pdf-extractor` SHA gate is DEFERRED to Phase B** (its Dockerfile does not yet carry the `vn.market.git_sha` label; the label will be added once the active BCTC-LAYOUT-FIRST session closes). |
 | 5 | qa | Hit `/health` endpoint for the service + verify tool count / key behaviour matches the new code (not a pre-build snapshot). |
 | 6 | po | Only after Steps 1–5 pass: mark the sprint task DONE in `docs/TASKS.md`. |
 
 ### Delegation rule
 
-ops performs the rebuild (Steps 1–3). qa verifies liveness (Steps 4–5). The user NEVER runs docker commands. If ops is unavailable, PO signals to BUG and holds the DONE gate open.
+ops performs the rebuild and SHA gate (Steps 1–4). qa verifies liveness (Step 5). The user NEVER runs docker commands. If ops is unavailable, PO signals to BUG and holds the DONE gate open.
 
 ---
 
