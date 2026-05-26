@@ -1,8 +1,80 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 09:15 UTC | **Sprint:** BCTC-MD-TABLE / MD-EXTRACT-5
+**Last updated:** 2026-05-26 12:30 UTC | **Sprint:** BCTC-MD-TABLE / MD-EXTRACT-6 AUGMENTATION
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## MD-EXTRACT-6 AUGMENTATION — Mid/Leading Empty-Cell Reconciliation (2026-05-26T12:30Z) — DESIGN COMPLETE
+
+**Task:** MD-EXTRACT-6 targeted augmentation (same design task, NOT a new attempt number). Main-terminal verified §8 drift>gap proof is SOUND. Gap identified: pure ordinal rank-alignment silently corrupts on mid-column and leading-column empty cells — a missing cell at row-k shifts all cells below it up one rank in that column.
+
+**Failing scenario (concrete):** 3 columns × 3 physical rows, col-1 missing row-1. Pure ordinal: col-1 sorted tokens [(top=103,"B1"),(top=143,"B3")] → rank-0="B1", rank-1="B3". grid[1][1]="B3" (WRONG — should be " "); grid[2][1]=" " (WRONG — should be "B3"). The rank-shift corrupts silently: AC-6-SEG checks only the revenue row (rank-0, always present in all columns), and AC-6-INC checks row COUNT + codes-per-row — neither detects value misalignment in rows below rank-0. False-green risk was live.
+
+**Why this is endemic to BCTC tables:** Segment report has 7 columns with elimination/inter-segment columns absent for specific line items. Income statement has prior-period columns blank for certain rows. Both tables will hit mid-column empties below revenue.
+
+**Step C8.5 — `_insert_skip_slots` algorithm:** After Step C8 sort, per column: compute local_pitch = median(consecutive top-deltas). Walk consecutive tokens; if delta > SKIP_GAP_FACTOR × local_pitch, insert ceil(delta/local_pitch)-1 None sentinel slots before the next token. Degenerate case (2-token column, only 1 delta): use ref_pitch = median(local_pitch_c for columns with ≥3 tokens) instead of local_pitch. `SKIP_GAP_FACTOR = 1.5` (generic geometry, AC-0 compliant).
+
+**Key geometric justification for safety:** Intra-column drift over ~150px column width ≈ 2px (vs ~16-28px cross-column drift over ~1800px). Within-column top-deltas reliably reflect physical row separations — a delta of ~20px = one row, ~40px = one skipped row. SKIP_GAP_FACTOR=1.5 threshold = 30px >> 2px noise ceiling. This is the same within-column reliability invariant that makes the ordinal approach work. C8.5 extends it to gap-magnitude detection, which is safe for the same geometric reason.
+
+**Leading-column skip decision: KNOWN LIMITATION.** Cannot be detected by within-column gap analysis (no preceding token). Cross-column-y detection would reintroduce the diagonal. Documented in §13.4 risk register with rationale: BCTC first data rows (revenue/total assets/etc.) are always present in all columns — leading skip is structurally rare in this document class.
+
+**AC-6-SKIP fixture (AC-6-SKIP, hand-traceable):**
+Sub-fixture SKIP-MID: col-1 missing physical row-1 (middle). Tokens: col-0=[top=100/"A1",top=120/"A2",top=140/"A3"], col-1=[top=103/"B1",top=143/"B3"] (2-token column), col-2=[top=106/"C1",top=126/"C2",top=146/"C3"]. ref_pitch from col-0+col-2 = median([20,20]) = 20. threshold=30. col-1 delta=40 > 30 → 1 None slot inserted → col-1 slots = ["B1", None, "B3"]. total_rows=3. grid[1][1]=" ". grid[2][1]="B3". Asserts: (a) grid[2][1]=="B3", (b) grid[1][1]==" ", (c) grid[0]==["A1","B1","C1"] and grid[2]==["A3","B3","C3"], (d) total_rows==3.
+Sub-fixture SKIP-TRAILING: col-1 missing row-2 (trailing). col-1=[top=103/"Y1",top=123/"Y2"], delta=20 < threshold=30 → no slot inserted. total_rows=max(3,2,3)=3. grid[2][1]=" " by initialization. Regression proof.
+
+**Strengthened ACs:** AC-6-SEG now requires a SECOND multi-column row below revenue to verify lower-rank alignment. AC-6-INC now requires at least one multi-period row with all values on ONE pipe-row. Both changes are live-verify assertions (live curl), generic phrasing (no hardcoded VN labels in code/ACs), AC-0 compliant.
+
+**CPU budget confirmed:** `_insert_skip_slots` is a pure in-memory list pass. Zero Tesseract calls, zero PIL ops. Per-page budget unchanged.
+
+**Files modified this cycle:**
+1. `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` — §3.1 flow updated (C8.5 added), §4 updated (pure-ordinal limitation documented), §5 function table updated (new function + constant), §9 ACs updated (AC-6-SKIP added, AC-6-SEG/INC strengthened), §10 risk register updated (3 new rows), §11 DDD table updated, §12 ROLE-RELAY updated to §3-§13, §13 new section added.
+2. `docs/handoffs/TASK_BCTC-MD-TABLE.md` — [Architect] MD-EXTRACT-6 section updated (status, augmentation reason, functions table, ACs, NEXT).
+3. `docs/agent-memory/notebooks/architect.md` (this entry).
+
+**Risk flags (new):**
+- R-MEDIUM: 2-token column degenerate case — delta equals the skip gap itself → local_pitch is unreliable. Mitigated by ref_pitch fallback from columns with ≥3 tokens. If no column has ≥3 tokens, skip insertion disabled for that column (log WARNING).
+- R-LOW: Leading-column skip is a known limitation. Accepted for BCTC document class.
+- R-LOW: SKIP_GAP_FACTOR=1.5 may falsely trigger on sparse 3-row pages. Tunable; 1.5 is conservative given 20px pitch vs 2px intra-column noise.
+
+**Next actor:** main-terminal re-traces AC-6-SKIP SKIP-MID arithmetic by hand. If proof confirms rank-shift prevention → commit both files → dispatch dev-pdf-extractor MD-EXTRACT-6.
+
+---
+
+## MD-EXTRACT-6 — Column-Anchor-First Ordinal Reconstruction (2026-05-26T10:45Z) — DESIGN COMPLETE
+
+**Task:** MD-EXTRACT-6. Recurring-bug escalation: 5 scalar-y-tolerance attempts (MD-EXTRACT-1/2/3/4/5) all produce the same diagonal failure on wide tables (segment report, income statement). Root cause: within-row x-drift → y-drift that exceeds inter-row gap. No y-threshold, however derived, can separate a row from its neighbor when drift > gap. The scalar-y-tolerance family is structurally exhausted.
+
+**Root cause (geometric):** On the live FPT wide-table pages (segment report p22, income statement p8), each successive column's number token has a `top` value ~4px higher than the previous column's token in the same logical row (scanner skew). With 7 columns across ~1800px, total drift ≈ 28px. Inter-row gap ≈ 16px. drift (28) > gap (16) → the rightmost column's row-k token is closer in y to the next row's leftmost token than to its own row's leftmost token. No y-threshold resolves this. MD-EXTRACT-5 large-gap-mode returned row_pitch=0 on live data (within-row drift gaps ≈ inter-row gaps → large_gaps was empty → fallback to tol=4 → cascade). Confirmed by §8 fixture trace.
+
+**Chosen approach: Column-Anchor-First Ordinal Reconstruction.** Assign each NUMBER token to its nearest x-column-anchor by argmin(left distance). Within each column, sort by top → assign ordinal rank [0, 1, ...]. Reconstruct grid by rank alignment across columns. Cross-column y-comparison NEVER occurs. The diagonal is structurally impossible. Geometric guarantee: within a single column, the printer always places row-k above row-(k+1) regardless of inter-column skew — within-column y-ordering is ALWAYS correct.
+
+**§8 fixture proof (constructed, main-terminal must re-trace):**
+10 tokens: row-0 tops=[100,104,108,112,116], row-1 tops=[118,122,126,130,134], 5 columns each. Drift=16px, gap=2px. Ordinal trace: col_anchors=[100,400,700,1000,1300] from x. Each token maps to its column by argmin. Within col-4: [(top=116,rank=0,"500"), (top=134,rank=1,"1000")]. Within col-0: [(top=100,rank=0,"100"), (top=118,rank=1,"600")]. total_rows=2. grid[0]=["100","200","300","400","500"], grid[1]=["600","700","800","900","1000"]. EXACTLY 2 rows. The 2px gap between top=116 and top=118 is irrelevant — these tokens are in DIFFERENT COLUMNS and their comparison never occurs. MD-EXTRACT-5 on same fixture: large_gaps=[] → row_pitch=0 → tol=4 → 5+ rows (diagonal).
+
+**New functions added:** `_assign_tokens_to_columns`, `_build_ordinal_grid`, `_attach_labels_ordinal`. New constants: `LABEL_BAND_FACTOR=1.5`, `_COL_ASSIGN_MAX_DIST_FACTOR=3.0`, `_MIN_WORD_CONF_ORDINAL=30`. Functions retired (marked DEAD): `_cluster_number_rows_adaptive`, `_attach_labels`, `_build_grid_from_number_rows`. Log promotion: `logger.debug` → `logger.info` for row_pitch/tol in `_cluster_number_rows_adaptive`.
+
+**Mandatory diagnostic gate (STEP 1 of dev work):** Dev must run `diagnostic_gate_md6.py` (inline in brief §6) against FPT pages 8 and 22 before writing any code. Reports: row_pitch, adaptive_tol, drift/gap ratio, first-30 number token (left, top). Pass: row_pitch < 8px AND drift/gap > 1.0. If unexpected values, dev stops and reports.
+
+**D4b fix:** Under ordinal reconstruction, code tokens and value tokens land in different col_buckets by x-distance → separate cells by construction. D4b test fixture MUST use exact `left`/`top` from diagnostic script output (lesson from BT3 false-greens).
+
+**Approach evaluation:**
+- (A) Image deskew: REJECTED. Would double Tesseract budget (+100s on 20 pages). OpenCV not in requirements.txt. PIL-only implementation requires Hough-line detection from scratch.
+- (B) Token-space deskew: VIABLE but not chosen. Still relies on y-tolerance post-correction; if correction is imprecise, cascade recurs.
+- (C) Column-anchor-first ordinal: CHOSEN. Eliminates cross-column y-comparison by construction. No new dependency. No Dockerfile change.
+
+**Files authored this cycle:**
+1. `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` — §MD-EXTRACT-6 appended (§1 exhaustion proof, §2 approach eval, §3 algorithm, §4 empty-cell analysis, §5 function table, §6 diagnostic gate, §7 D4b live-substrate, §8 fixture+proof, §9 ACs, §10 risks, §11 DDD, §12 build-standard)
+2. `docs/handoffs/TASK_BCTC-MD-TABLE.md` — [Architect] MD-EXTRACT-6 section prepended before LIVE-VERIFY-5
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Risk flags:**
+- R-HIGH: Extra noise tokens in a column inflate total_rows by 1. Mitigated by _MIN_WORD_CONF_ORDINAL=30 filter and _NUMBER_TOKEN_RE gate.
+- R-HIGH: Label attachment uses y_med_k of rank-k tokens. On severely skewed pages, y_med_k may miss the label's top. Fallback (nearest TEXT token within 2.5×h_med) catches it.
+- R-MEDIUM: Close column anchors (code col + first value col) may merge → code+value concatenation. Mitigated by _COL_ASSIGN_MAX_DIST_FACTOR; ordinal approach structurally separates them when anchors are distinct.
+
+**Next actor:** main-terminal re-traces §8 fixture proof. If provably defeats drift>gap → commit brief → dispatch dev-pdf-extractor MD-EXTRACT-6.
+
+---
 
 ## MD-EXTRACT-5 — REVISED: Large-Gap Mode Pitch + Corrected Fixture (2026-05-26T09:15Z) — DESIGN COMPLETE
 
