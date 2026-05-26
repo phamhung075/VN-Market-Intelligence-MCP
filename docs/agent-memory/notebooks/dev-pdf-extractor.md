@@ -4,6 +4,63 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — MD-EXTRACT-4 DONE (number-token-only y-clustering — Candidate 3 ELEVATED)
+
+**Task:** MD-EXTRACT-4 | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
+
+**Root cause fixed (Dual-Path Drift #5):**
+MD-EXTRACT-1/2/3 all failed on wide tables (segment report, income statement) because `_cluster_rows_by_gap` (and predecessors) clustered ALL tokens (labels + numbers) by y. Vietnamese diacritics inflate label token `top` by 2-4px, causing value tokens to scatter across y-bands when inter-row gap ≈ 8-12px overlaps with the diacritic jitter range.
+
+**Candidate 3 (CHOSEN — architect ruling 2026-05-26):**
+`image_to_data` per-word bbox IS the correct substrate. The failure was clustering strategy:
+- Classify tokens into NUMBER tokens (money-groups + 2-3 digit codes — clean baselines, ≤2px jitter) and TEXT tokens (labels — diacritic-inflated).
+- Cluster NUMBER tokens ONLY by y using `SAME_LINE_TOL=4px` → clean row separation.
+- Derive column anchors from NUMBER token x (left) positions.
+- Attach TEXT label tokens to each row by y-band proximity AFTER rows are formed.
+
+**Algorithm changes in `_process_page`:**
+- Step A2: classify tokens → `(number_tokens, text_tokens)` via `_classify_tokens`.
+- Step B: detect table regions on NUMBER tokens only.
+- Step C (replaced): `_cluster_number_rows(region_num_tokens, SAME_LINE_TOL)` — pure y-grouping of numbers.
+- Step D (replaced): `_detect_column_anchors_from_tokens(region_num_tokens, median_word_width)` — anchors from number left-edges only.
+- Step F (new): `_attach_labels(row_groups, region_text_tokens, h_med)` — nearest TEXT token per row y-band.
+- Step E (new): `_build_grid_from_number_rows(labeled_rows, col_anchors)` — 2D grid with label as col 0.
+- Post-processing pipeline unchanged: strip_header_bands → coalesce_labels → collapse_empty → density_gate → header_detect → emit_markdown.
+
+**Functions added:**
+- `_NUMBER_TOKEN_RE` (constant) — money-group + 2-3 digit code classifier
+- `SAME_LINE_TOL: int = 4` (constant) — number-token y-clustering tolerance
+- `_classify_tokens(words)` — pure, splits word list into number/text buckets
+- `_cluster_number_rows(number_tokens, same_line_tol)` — pure y-grouping of numbers
+- `_attach_labels(row_groups, text_tokens, h_med)` — pure label attachment
+- `_build_grid_from_number_rows(labeled_rows, col_anchors)` — pure grid assembly
+- `_detect_column_anchors_from_tokens(tokens, median_word_width)` — flat-list variant of column anchor detection
+
+**Functions retired (DEAD in MD-EXTRACT-4, kept for test compatibility):**
+- `_cluster_rows` — marked `# DEAD in MD-EXTRACT-4`
+- `_cluster_rows_by_gap` — marked `# DEAD in MD-EXTRACT-4`
+
+**Files modified (2 files, UNSTAGED):**
+- `infrastructure/generic_md_table_extractor.py` — +constants, +5 new pure functions, +1 helper, modified `_process_page`.
+- `__tests__/unit/test_generic_md_table_extractor.py` — +8 imports, +20 new tests (TestClassifyTokens × 6, TestClusterNumberRows × 5, TestAttachLabels × 5, TestAc4aEveryMoneyRowHasLabel × 1, TestSegmentMatrixCorrectness × 3).
+
+**AC fences:**
+- AC-0 PASS: grep for BCTC-specific branching keywords → ZERO logic matches (comments only, exit 1)
+- Fence-A PASS: no application/interface imports in generic_md_table_extractor.py (exit 1)
+- Privacy PASS: no cloud OCR/VLM refs (exit 1)
+- Cancelled-functions-absent PASS: grep for cancelled Candidate-2 function names → exit 1 (zero matches)
+- AC-3F non-regression PASS: text_table_extractor.py untouched (zero diff)
+- Import-linter PASS: 80 files, 159 deps, 2 contracts KEPT, 0 broken
+
+**Suite evidence:**
+- 462 passed, 4 failed (full suite — same 4 pre-existing integration tests needing real PDFs on disk)
+- Unit-only: 402 passed (prior baseline was 382 unit-only; net +20 new tests)
+- Sandbox primitive + module tiers: GREEN (pass: true)
+
+**NEXT:** ops MD-DEPLOY-4 (single doc only, full UUID e71f845d-ffa5-48f9-8f09-30ac2cd09c65, path /app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf, NEVER batch).
+
+---
+
 ### 2026-05-26 — MD-EXTRACT-3 DONE (DEFECT-D row-reconstruction + DEFECT-E empty-col collapse)
 
 **Task:** MD-EXTRACT-3 | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
