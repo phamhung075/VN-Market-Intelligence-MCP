@@ -89,6 +89,24 @@ class TestFingerprintsContinuous:
         fp_b = self._fp()
         assert _fingerprints_continuous(fp_a, fp_b) is False
 
+    def test_page_type_change_prose_to_table_breaks_unit(self):
+        """Prose→table transition = structural section boundary = new unit."""
+        fp_a = self._fp(page_type="prose", gutter_count=0, gutter_x_fractions=[])
+        fp_b = self._fp(page_type="table", gutter_count=0, gutter_x_fractions=[])
+        assert _fingerprints_continuous(fp_a, fp_b) is False
+
+    def test_page_type_change_table_to_prose_breaks_unit(self):
+        """Table→prose transition = structural section boundary = new unit."""
+        fp_a = self._fp(page_type="table", gutter_count=3)
+        fp_b = self._fp(page_type="prose", gutter_count=3)
+        assert _fingerprints_continuous(fp_a, fp_b) is False
+
+    def test_same_prose_page_type_continuous_when_gutters_match(self):
+        """Two prose pages with same gutter signature are continuous."""
+        fp_a = self._fp(page_type="prose", gutter_count=0, gutter_x_fractions=[])
+        fp_b = self._fp(page_type="prose", gutter_count=0, gutter_x_fractions=[])
+        assert _fingerprints_continuous(fp_a, fp_b) is True
+
     def test_mismatched_gutter_count_in_fractions_not_continuous(self):
         fp_a = self._fp(gutter_count=3, gutter_x_fractions=[0.31, 0.55, 0.72])
         fp_b = self._fp(gutter_count=3, gutter_x_fractions=[0.31, 0.55])  # length mismatch
@@ -811,6 +829,128 @@ class TestGutterDetectionEdgeSliverFix:
         assert not _fingerprints_continuous(fp_pre_fix_p3, fp_pre_fix_p4), (
             "Pre-fix fingerprints (edge slivers at opposite margins) must NOT be "
             "continuous — confirms the pre-fix bug is the cause of unit fragmentation."
+        )
+
+
+class TestIsGutterFlagAndCompoundGutterMerging:
+    """
+    LF-FIX: compound gutter merging + is_gutter flag.
+
+    When consecutive raw gutter candidates are separated by <= _MAX_INTER_GUTTER_GAP_PX
+    ink-bearing pixels (e.g. OCR artifacts within the whitespace zone), they should be
+    merged into one compound gutter. The returned column dict must include 'is_gutter'
+    so callers can distinguish text cells from whitespace separators.
+    """
+
+    def _profile_with_fragmented_gutter(self, width: int = 1654) -> list:
+        """
+        Build a profile where the structural column separator between
+        the label column and value column is fragmented: two 30px dark
+        sub-bands separated by a 40px whitespace sub-band, within a
+        large whitespace region (total compound gutter ~280px).
+
+        Layout (all values in px):
+            left_margin:     0-55  (56px, zero ink)
+            label_col:      56-745  (690px, ink=90)
+            gutter_part1:  746-775  (30px, ink=0)
+            ink_speck:     776-815  (40px, ink=15 — OCR artifact)
+            gutter_part2:  816-1035  (220px, ink=0)
+            value_col1:   1036-1230  (195px, ink=85)
+            narrow_gutter: 1231-1270  (40px, ink=0)
+            value_col2:   1271-1597  (327px, ink=80)
+            right_margin: 1598-1653  (56px, zero ink)
+        """
+        profile = [0] * width
+        # label column
+        for x in range(56, 746):
+            profile[x] = 90
+        # ink speck within the compound gutter (OCR artifact)
+        for x in range(776, 816):
+            profile[x] = 15
+        # value col 1
+        for x in range(1036, 1231):
+            profile[x] = 85
+        # value col 2
+        for x in range(1271, 1598):
+            profile[x] = 80
+        return profile
+
+    def test_compound_gutter_merged_produces_correct_columns(self):
+        """
+        A fragmented whitespace zone (two gutter sub-bands with a 40px ink speck
+        between them) must be merged into one compound gutter. The result should
+        have 3 text columns and 2 gutter separators (total 5 entries), with no
+        single text column spanning >50% of the page.
+        """
+        width = 1654
+        profile = self._profile_with_fragmented_gutter(width)
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+
+        text_cols = [c for c in columns if not c.get("is_gutter", False)]
+        gutter_cols = [c for c in columns if c.get("is_gutter", False)]
+
+        # Expect 3 text columns (label | value1 | value2)
+        assert len(text_cols) == 3, (
+            f"Expected 3 text columns after compound gutter merge, got {len(text_cols)}. "
+            f"All columns: {columns}"
+        )
+
+        # Expect 2 gutter separators
+        assert len(gutter_cols) == 2, (
+            f"Expected 2 gutter columns, got {len(gutter_cols)}. "
+            f"All columns: {columns}"
+        )
+
+    def test_is_gutter_true_on_whitespace_columns(self):
+        """
+        Column entries that represent whitespace separators must have is_gutter=True.
+        Text column entries must have is_gutter=False (or absent).
+        """
+        width = 800
+        # Simple 2-text-column layout with one gutter
+        profile = [0] * 50 + [80] * 300 + [0] * 50 + [75] * 300 + [0] * 100
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+
+        for col in columns:
+            assert "is_gutter" in col, f"Missing is_gutter key in column: {col}"
+            col_width = col["x_max"] - col["x_min"] + 1
+            if col_width >= 80:
+                assert col.get("is_gutter") is False, (
+                    f"Wide column ({col_width}px) should NOT be marked as gutter: {col}"
+                )
+
+    def test_fallback_single_column_has_is_gutter_false(self):
+        """
+        Fallback single-column result (no gutters found) must have is_gutter=False.
+        """
+        columns = _detect_column_gutters_200dpi(col_dark=[], width=0)
+        assert len(columns) == 1
+        assert columns[0].get("is_gutter") is False
+
+    def test_no_merge_when_inter_gap_exceeds_threshold(self):
+        """
+        Two gutter sub-bands separated by more than _MAX_INTER_GUTTER_GAP_PX should
+        NOT be merged — they are separate structural gutters.
+        """
+        from infrastructure.generic_md_table_extractor import _MAX_INTER_GUTTER_GAP_PX
+        width = 1000
+        # Create a profile with 3 text columns separated by 2 wide gutters (80px each)
+        # Text columns: 100px each, gutters: 80px each
+        # Ink speck in the second gutter is > _MAX_INTER_GUTTER_GAP_PX from the start
+        profile = [0] * 50          # left margin
+        profile += [80] * 200       # col 0
+        profile += [0] * 80         # gutter 1 (no ink artifact — clean gutter)
+        profile += [80] * 200       # col 1
+        profile += [0] * 80         # gutter 2 (no ink artifact)
+        profile += [80] * 340       # col 2
+        profile += [0] * 50         # right margin
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+
+        text_cols = [c for c in columns if not c.get("is_gutter", False)]
+        # Should have 3 separate text columns (gutters are clean, no merging needed)
+        assert len(text_cols) == 3, (
+            f"Expected 3 text columns from 2 separate gutters, got {len(text_cols)}. "
+            f"All columns: {columns}"
         )
 
 

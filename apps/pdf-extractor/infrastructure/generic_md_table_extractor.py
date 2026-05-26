@@ -2501,9 +2501,22 @@ _MIN_GUTTER_WIDTH_PX: int = 20
 # as column boundaries (the root cause of the pre-fix 97%-wide col_0 defect).
 _MIN_TEXT_COL_WIDTH_PX: int = 80
 
+# LF-FIX: compound gutter merging threshold (200 DPI, Tier 1).
+# Consecutive raw gutter candidates separated by <= this many ink-bearing pixels
+# are merged into one combined gutter. This handles the case where the whitespace
+# between text columns contains light OCR artifacts (descending tails, faint ink)
+# that break the gutter into sub-segments; each sub-segment is individually too
+# narrow or produces too-narrow columns, but the compound gap is a real structural
+# column separator. Value ~60px covers the typical intra-column-separator noise
+# without merging genuine adjacent columns (which are at least 200px+ apart).
+_MAX_INTER_GUTTER_GAP_PX: int = 60
+
 # LF-FIX: same threshold scaled to 50 DPI (Tier 0 fingerprint).
 # 80px at 200 DPI → 80 * 50/200 = 20px at 50 DPI.
-_MIN_TEXT_COL_WIDTH_PX_50DPI: int = 20
+# Raised to 30px to suppress noise gutters (1-px whitespace gaps within dense
+# text blocks that pass the 20px bar accidentally). At 50 DPI a genuine structural
+# column separator must have ≥30px of text on each side to be credible.
+_MIN_TEXT_COL_WIDTH_PX_50DPI: int = 30
 
 # Tier 0 gutter threshold for the 50-DPI FINGERPRINT only.
 # Uses a HIGHER fraction (40%) than Tier 1 (15%) so that only the deepest
@@ -2511,7 +2524,7 @@ _MIN_TEXT_COL_WIDTH_PX_50DPI: int = 20
 # Smaller intra-column gaps (e.g. between sparse number rows within one column)
 # don't reach this level and are correctly ignored. This keeps the fingerprint
 # consistent across consecutive pages of the same logical document section.
-_GUTTER_DARK_FRACTION_50DPI: float = 0.40
+_GUTTER_DARK_FRACTION_50DPI: float = 0.15
 
 # Tier 1 header band: top fraction of page typically containing headers.
 _HEADER_BAND_FRACTION: float = 0.15
@@ -2824,14 +2837,20 @@ def _compute_page_fingerprint_50dpi(
         # Row pitch: estimate from vertical projection by finding peak-to-peak spacing
         row_pitch = _estimate_row_pitch(row_dark)
 
-        # Page type: table if gutter_count >= _TABLE_MIN_GUTTER_COUNT
-        # AND stored text has enough money-group tokens
+        # Page type: "table" if stored text has enough money-group tokens.
+        # The gutter_count is NOT required for page_type — the 50-DPI projection
+        # profile is too noisy for dense BCTC pages to reliably produce gutter
+        # valleys. Money-group density (from pre-stored OCR text) is a more
+        # stable "tabular content" signal.
+        # "blank" → empty stored text.
+        # "table" → money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS.
+        # "prose" → everything else (cover, notes, headers).
         money_group_count = len(_MONEY_GROUP_RE.findall(stored_text or ""))
         gutter_count = len(gutter_x_positions)
 
         if not stored_text or stored_text.strip() == "":
             page_type = "blank"
-        elif gutter_count >= _TABLE_MIN_GUTTER_COUNT and money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS:
+        elif money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS:
             page_type = "table"
         else:
             page_type = "prose"
@@ -2983,7 +3002,8 @@ def _fingerprints_continuous(fp_a: Dict, fp_b: Dict) -> bool:
     Test if two page fingerprints belong to the same logical unit.
 
     Continuity test (AC-0 — purely geometric):
-        1. gutter_count must be equal.
+        0. page_type must match (prose→table or table→prose = always new unit).
+        1. gutter_count must be equal (within same page_type).
         2. Each gutter x-fraction must be within GUTTER_POSITION_TOLERANCE.
         3. row_pitch must not change by more than ROW_PITCH_CHANGE_TOLERANCE.
 
@@ -2995,10 +3015,17 @@ def _fingerprints_continuous(fp_a: Dict, fp_b: Dict) -> bool:
     if fp_a.get("page_type") == "blank" or fp_b.get("page_type") == "blank":
         return False
 
+    # Page type change = structural section boundary = new unit.
+    # Prose pages (cover, notes, headers) and table pages are always separate units.
+    pt_a = fp_a.get("page_type", "prose")
+    pt_b = fp_b.get("page_type", "prose")
+    if pt_a != pt_b:
+        return False
+
     gc_a = fp_a.get("gutter_count", 0)
     gc_b = fp_b.get("gutter_count", 0)
 
-    # Gutter count change = new unit
+    # Gutter count change = new unit (fine-grained layout shift within page_type)
     if gc_a != gc_b:
         return False
 
@@ -3178,7 +3205,7 @@ def _detect_column_gutters_200dpi(
     """
     if not col_dark or width == 0:
         # Fallback: single full-width column
-        return [{"col_id": "col_0", "x_min": 0, "x_max": width}]
+        return [{"col_id": "col_0", "x_min": 0, "x_max": width, "is_gutter": False}]
 
     # ------------------------------------------------------------------
     # Clamp search to the ink bounding box.
@@ -3194,7 +3221,7 @@ def _detect_column_gutters_200dpi(
     ink_region = col_dark[x_left:x_right + 1]
 
     if not ink_region:
-        return [{"col_id": "col_0", "x_min": 0, "x_max": width}]
+        return [{"col_id": "col_0", "x_min": 0, "x_max": width, "is_gutter": False}]
 
     # Threshold relative to the max within the ink region (not global median).
     # Valleys inside the ink bbox that drop below this level are real gutters.
@@ -3228,7 +3255,22 @@ def _detect_column_gutters_200dpi(
     if not raw_gutter_ranges:
         # No inter-column gutters found within the ink bbox.
         # Return a single column spanning the ink bounding box.
-        return [{"col_id": "col_0", "x_min": x_left, "x_max": x_right}]
+        return [{"col_id": "col_0", "x_min": x_left, "x_max": x_right, "is_gutter": False}]
+
+    # LF-FIX: Merge consecutive raw gutters that are close together.
+    # The whitespace between BCTC table columns may contain light OCR artifacts
+    # (descending character tails, faint ink) that break one structural column
+    # separator into several sub-gaps. Merging gaps separated by ≤ _MAX_INTER_GUTTER_GAP_PX
+    # reconstructs the correct compound column separator.
+    merged_gutter_ranges: List[Tuple[int, int]] = [raw_gutter_ranges[0]]
+    for cur_start, cur_end in raw_gutter_ranges[1:]:
+        prev_start, prev_end = merged_gutter_ranges[-1]
+        inter_gap = cur_start - prev_end - 1  # ink-bearing pixels between the two gutters
+        if inter_gap <= _MAX_INTER_GUTTER_GAP_PX:
+            # Extend the previous gutter to absorb the inter-gap and current gutter
+            merged_gutter_ranges[-1] = (prev_start, cur_end)
+        else:
+            merged_gutter_ranges.append((cur_start, cur_end))
 
     # LF-FIX: Filter out gutters that would produce sub-threshold text columns.
     # A gutter at position G is valid only if the text column on BOTH sides of G
@@ -3237,11 +3279,11 @@ def _detect_column_gutters_200dpi(
     # with 25px width) that caused the schema-inheritance cascade failure.
     gutter_ranges: List[Tuple[int, int]] = []
     prev_col_start = x_left
-    for gi, (g_start, g_end) in enumerate(raw_gutter_ranges):
+    for gi, (g_start, g_end) in enumerate(merged_gutter_ranges):
         left_col_width = g_start - prev_col_start
         # Right column ends at the next gutter start or at ink right
-        if gi + 1 < len(raw_gutter_ranges):
-            right_col_end = raw_gutter_ranges[gi + 1][0] - 1
+        if gi + 1 < len(merged_gutter_ranges):
+            right_col_end = merged_gutter_ranges[gi + 1][0] - 1
         else:
             right_col_end = x_right
         right_col_width = right_col_end - g_end
@@ -3253,12 +3295,14 @@ def _detect_column_gutters_200dpi(
     if not gutter_ranges:
         # All candidate gutters were adjacent to sub-threshold columns (edge noise).
         # Return a single column spanning the ink bounding box.
-        return [{"col_id": "col_0", "x_min": x_left, "x_max": x_right}]
+        return [{"col_id": "col_0", "x_min": x_left, "x_max": x_right, "is_gutter": False}]
 
     # Build text column regions from the ink-bbox edges and the validated gutters.
     # The first column starts at x_left (ink left edge), the last ends at x_right.
     # Encoding: alternate text columns and gutter-whitespace columns so the OCR
     # layer can identify which regions contain text vs. whitespace.
+    # Each dict includes "is_gutter": True/False so callers can distinguish text
+    # cells from whitespace separators when building row-gate entries.
     columns: List[Dict] = []
     col_idx = 0
 
@@ -3269,6 +3313,7 @@ def _detect_column_gutters_200dpi(
             "col_id": f"col_{col_idx}",
             "x_min": x_left,
             "x_max": first_gutter_start - 1,
+            "is_gutter": False,
         })
         col_idx += 1
 
@@ -3279,6 +3324,7 @@ def _detect_column_gutters_200dpi(
             "col_id": f"col_{col_idx}",
             "x_min": g_start,
             "x_max": g_end,
+            "is_gutter": True,
         })
         col_idx += 1
 
@@ -3290,6 +3336,7 @@ def _detect_column_gutters_200dpi(
                 "col_id": f"col_{col_idx}",
                 "x_min": g_end + 1,
                 "x_max": next_start - 1,
+                "is_gutter": False,
             })
             col_idx += 1
 
@@ -3554,19 +3601,29 @@ def ocr_unit(
                     if any(c.strip() for c in row_cells):
                         page_rows.append(row_cells)
 
-                        # Build rows_for_gate entry
-                        # First non-empty cell as code, second as label, rest as values
-                        code_val: Optional[str] = None
+                        # Build rows_for_gate entry from TEXT columns only
+                        # (gutter columns are whitespace separators — skip them).
+                        # Mapping for text columns (non-gutter, in order):
+                        #   text_col_0 → label  (leftmost: contains descriptive text + code)
+                        #   text_col_1+ → values (remaining columns: monetary amounts)
+                        # Note: code extraction is omitted — code values may be embedded
+                        # within the label column in scrambled OCR order. Treating the
+                        # full leftmost text column as "label" ensures _has_label() fires
+                        # correctly when there is real textual content in that column.
+                        code_val: Optional[str] = None  # No code extraction in layout-first path
                         label_val: Optional[str] = None
                         value_cells: List[Optional[str]] = []
+                        text_col_idx = 0
 
                         for c_idx, cell in enumerate(row_cells):
-                            if c_idx == 0:
-                                code_val = cell.strip() or None
-                            elif c_idx == 1:
+                            col_meta = column_gutters[c_idx] if c_idx < len(column_gutters) else {}
+                            if col_meta.get("is_gutter", False):
+                                continue  # Skip whitespace separator columns
+                            if text_col_idx == 0:
                                 label_val = cell.strip() or None
                             else:
                                 value_cells.append(cell.strip() or None)
+                            text_col_idx += 1
 
                         rows_for_gate.append({
                             "code": code_val,
