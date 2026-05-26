@@ -1,0 +1,64 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "triage_verdict",
+  "priority": "medium",
+  "createdAt": "2026-05-26T17:23:00Z",
+  "payload": {
+    "tick": "2026-05-26T17:23Z (:07 cron triage, 19:23 CEST)",
+    "verdict": "BATCH",
+    "batch_id": "MCPZONE-BATCH-1",
+    "wip_before": "0/2",
+    "zone": "apps/mcp-server/",
+    "owner": "dev-mcp-server",
+    "ops_rebuild_required": true,
+    "rebuild_note": "ONE shared ops rebuild covers all three tasks. After dev lands the code on main, dispatch ops MCPZONE-DEPLOY-1: docker compose build mcp-server + up -d --no-deps --force-recreate (RESTART != REBUILD gate, commit 6a919ea4); prove new code is live before close (grep handler source in-container); /health 200 + 146 tools; live dead-Reuters probe must NOT regress to 60s wall (FA-FIX non-regression).",
+    "reason": "Prior-tick (16:23Z) HOLD condition is now SATISFIED. (1) FA-FIX rebuild DURABLE: mcp-server uptime 1h31m, survived the 16:00Z 2/2-GENUINE cowork fan-out + every silent tick since, 0 open / 0 half-open across all 16 breakers, DB 173MB/WAL 2.77MB, rag-insert timeout CLEAR. (2) CONTENTION RESOLVED with fresher evidence than dispatcher had: BCTC MD-DEPLOY-9 ops rebuild is ALREADY COMPLETE (ops a448aa84 ~17:17:48Z; fresh re-extract row id=11 17:21:28Z; LIVE-VERIFY-9 818910a9 PASS all 5 ACs) — it is NOT pending, so dispatching the mcp-server batch now does NOT create two concurrent rebuilds. (3) Host idle/stable at 17:25Z probe AFTER both rebuilds settled; next cowork fan-out 20:00Z (~2.7h off-hours quiet window) = the safest possible single-rebuild slot before live traffic resumes. Holding again would defer past the resolution of the exact blocker I named.",
+    "tasks": [
+      {
+        "id": "NEWS-INGEST-2b",
+        "tier": "UX (HIGH within news-ingest chain, P3 fleet-wide)",
+        "file": "apps/mcp-server/src/interface/mcp/routes/newsFetchLiveHandler.ts",
+        "spec": "Surface VN providers (cafef/vnexpress/vneconomy) in GET /api/news-fetch/live. Handler hard-codes WHERE source_url LIKE '%reuters%' OR '%bloomberg%' for ALL branches incl source=all, and VALID_SOURCES has no VN option => the >=160 stored VN stock articles are invisible. Add VN source enum + branch; keep reuters/bloomberg returned (non-regression). Do NOT touch the dedup write path.",
+        "handoff": "docs/handoffs/TASK_NEWS-INGEST.md",
+        "blocks": "NEWS-INGEST-3 (qa gate, covers -2 AND -2b)"
+      },
+      {
+        "id": "MZH-1",
+        "tier": "hardening (P2) — write-path trust",
+        "file": "apps/mcp-server/src/interface/mcp/routes/pushBctcTableHandler.ts",
+        "spec": "Handler returns rows_stored = rows.length (echo of POST body), NOT a real DB count — this false-success masked the write-wedge. Fix: after the DELETE+INSERT transaction, SELECT COUNT(*) FROM bctc_table_rows WHERE report_id = ? and return THAT. AC: a deliberately wedged write (rollback/zero-commit) makes rows_stored reflect real DB count (0/partial), not input length; happy-path idempotency test still green.",
+        "blocks": "—"
+      },
+      {
+        "id": "MZH-2",
+        "tier": "hardening (P2) — test isolation",
+        "file": "apps/mcp-server/src/__tests__/pushBctcTableHandler.test.ts (+ any sibling BCTC push/inspect tests in apps/mcp-server/src/__tests__/)",
+        "ops_rebuild_required": false,
+        "spec": "No test may write to the live /app/data/market.db (a test seeded the clobbering 'Test Row' that polluted real inspector output). BCTC push/inspect tests use isolated in-memory or per-test temp-file SQLite; add a guard that FAILS the suite if a test opens the production market.db path. AC: zero test refs to the production market.db path; suite cannot write to /app/data/market.db; no stray 'Test Row' reaches a live table. Test-only — no own rebuild, rides the batch.",
+        "blocks": "—"
+      }
+    ],
+    "sequence_within_batch": "Reliability/trust first (MZH-1 write-path trust), then test-isolation guard (MZH-2), then UX (NEWS-INGEST-2b). All land in ONE dev cycle, ONE commit set on main (explicit per-file git add), ONE ops rebuild.",
+    "baseline_pass": "9277 pass / 34 known-skip (news-ingest baseline per NEWS-INGEST-3) — no NEW failures. MZH-1 happy-path idempotency test still green. MZH-2 adds isolation + production-db-path guard tests.",
+    "after_dev_qa_gate": "NEWS-INGEST-3 (qa) becomes dispatchable once -2b + -2 both land: -2b => /api/news-fetch/live returns VN articles when present, reuters/bloomberg still returned (pos+neg). Then ops PROVES LIVE.",
+    "priority_caveat": "These are UX + hardening (below reliability in PO order reliability->coverage->UX->arch). They are the highest dev-team-dispatchable items only because nothing reliability-grade is in the dev lane this tick (DEPLOY-DRIFT = ops/architect lane).",
+    "host_state_at_decision": "STABLE @ 17:25Z probe: 0 open / 0 half-open / 16 breakers OK; DB 173MB (WAL 2.77MB); rag-insert timeout CLEARED; Reuters + TradingEconomics 'Ngung' = known dead-upstream the FA-FIX defends against (NOT a regression). Both this-hour rebuilds (15:54Z FA + ~17:17Z pdf-extractor) already settled.",
+    "standing_items_reconfirmed_not_redispatched": [
+      "HSG-FIRE-SEVERITY-RECAL — alert-commander lane (downgrade #3948), NOT dev",
+      "MARKET-SLOTS-DARK — Option B /cron-cowork-team re-arm, main-terminal lane, NOT a dev spawn",
+      "HOLLOW-RUN-20260525 — agent-father lane",
+      "RESTART-NEQ-REBUILD-GATE — already implemented commit 6a919ea4",
+      "CHEF-EOD-MACRO-MISATTRIB + cow-20260525 schedule-drift — cowork/schedule hygiene LOW, NOT dev code",
+      "context-bloat TASKS.md pings (16:26/16:27Z) — PostToolUse hook noise from my own last-tick commit, claude-manager-helper/code-janitor lane",
+      "4x cowork-fire (16:33/16:48/17:03/17:18Z) — expected-silent off-hours heartbeats, no spawn/probe"
+    ],
+    "pilot_status_touched": false,
+    "files_touched_unstaged": [
+      "docs/TASKS.md",
+      "docs/signals/po-20260526T172300Z.json",
+      "docs/agent-memory/notebooks/po.md"
+    ],
+    "commit_note": "Dispatcher commits all 3 in-tree docs under commit-mutex on main, EXPLICIT git add per file (never -A/./-am), index.lock retry (NEVER rm a peer's lock — BCTC session commits on main ~every 10 min). No --force/--no-verify/--no-gpg-sign, no push, main only. Leave dev code edits UNSTAGED for the separate dev cycle."
+  }
+}
