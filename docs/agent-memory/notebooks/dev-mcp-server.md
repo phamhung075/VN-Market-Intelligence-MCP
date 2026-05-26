@@ -1,5 +1,23 @@
 # dev-mcp-server -- Notebook
 
+## c308 · 2026-05-26 (P2-L Trial-2 — G11 sector-classifier regression revert)
+
+### P2-L Trial-2 — G11 Regression Revert DONE
+
+**Commit:** `3b9851fb` | 2 files | tsc EXIT 0 | bun test 9451 pass / 336 fail | toolCount=148 | sched=68
+
+**Injection reverted:** `apps/mcp-server/src/domain/services/sectorPeers.ts` line 351 — restored ratio threshold from `<= 0` (QA injection 0332624a) back to `<= 2.5`. Removed entire injection comment suffix.
+
+**Sandbox:** 9/9 scenarios PASS, runner exit 0. `sector-classifier-golden-known-ticker` flipped status:pass / actual:"sector_wide" / match:true.
+
+**Dashboard:** `apps/mcp-server/dashboard/index.html` inline trace block updated — sector-classifier-golden-known-ticker shows status:pass in mcp-traces-data JSON block.
+
+**Gate 2:** Server health OK (toolCount=146 live endpoint) | ESLint: not re-run (single-line revert, no structural change) | tsc EXIT 0 | sched=68 | toolCount grep=148.
+
+**Zone health:** P2-L Trial-2 complete; all 9 sandbox scenarios GREEN; sectorPeers.ts injection cleared; tsc EXIT 0; bun test 9451/336 PASS | HEALTHY
+
+---
+
 ## c307 · 2026-05-26 (P2-K — G10 blind-fix buildCrossValidateSignal summary regression)
 
 ### P2-K — G10 Blind-Fix DONE
