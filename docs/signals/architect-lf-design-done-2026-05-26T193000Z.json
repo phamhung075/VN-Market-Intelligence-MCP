@@ -1,0 +1,34 @@
+{
+  "signal_type": "task_complete",
+  "agent": "architect",
+  "task_id": "LF-DESIGN",
+  "sprint": "BCTC-LAYOUT-FIRST",
+  "task_name": "Root-cause rethink + 4-tier blueprint + service-boundary split",
+  "status": "DONE",
+  "timestamp": "2026-05-26T19:30:00Z",
+  "brief": "docs/architecture-briefs/2026-05-26-bctc-layout-first-pipeline.md",
+  "handoff": "docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md",
+  "build_standard": "lean",
+  "zone": {
+    "LF-EXTRACT": "apps/pdf-extractor/",
+    "LF-OVERLAY": "apps/mcp-server/"
+  },
+  "parallelism": "LF-EXTRACT and LF-OVERLAY can dispatch in parallel (contract fully specified in brief §3.2). LF-DEPLOY gated on both.",
+  "brownfield": {
+    "redesign_target": "apps/pdf-extractor/infrastructure/generic_md_table_extractor.py",
+    "zero_collision_confirmed": true,
+    "frozen_boundary": "apps/pdf-extractor/infrastructure/text_table_extractor.py (0-byte-diff)",
+    "scan_clean": true
+  },
+  "architect_open_questions_resolved": {
+    "Q1_market_db_schema": "Two new tables: bctc_layout_units (per-unit, quarantine flag) + bctc_page_zones (per-page, zones_json). DDL in brief §3.1. Zero overlap with bctc_table_rows or bctc_balance_checks.",
+    "Q2_boundary_json_contract": "Full contract in brief §3.2. Coordinate origin top-left, unit px at 200 DPI. Column IDs positional (col_0/col_1). Continuation pages emit identical gutters as schema-page. New endpoint POST /api/push-bctc-layout.",
+    "Q3_quarantine_storage": "quarantined=1 in bctc_layout_units. QA counts via direct bun:sqlite SELECT. Pass-rate = COUNT(*) WHERE quarantined=0 / COUNT(*) total."
+  },
+  "per_task_acs": {
+    "LF-EXTRACT": "AC-LFE-0 through AC-LFE-11 in brief §4.1",
+    "LF-OVERLAY": "AC-LFO-0 through AC-LFO-7 in brief §4.2"
+  },
+  "root_cause_rethink": "generic_md_table_extractor.py per-page OCR + column-guessing has no cross-page unit context. Continuation pages with no column header have no schema anchor → scrambles. Fix: Tier 0 groups pages into logical units by geometric fingerprint; Tier 1 continuation pages inherit schema-page column grid (schema inheritance). This replaces the clustering approach entirely.",
+  "next": "pm dispatches dev-pdf-extractor (LF-EXTRACT) + dev-mcp-server (LF-OVERLAY) in parallel"
+}
