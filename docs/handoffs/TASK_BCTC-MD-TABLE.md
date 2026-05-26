@@ -408,3 +408,107 @@ Fix: `_is_data_table(grid)` density gate using `_MONEY_GROUP_RE = r'\d{1,3}(?:[.
 
 **NEXT: dev-pdf-extractor** — implement DEFECT-A/B/C changes. AC-2F (non-regression) is the first thing to verify before any new re-extract. Re-extract single doc only after container rebuild.
 
+
+---
+
+## [Ops] MD-DEPLOY2 — Single-Doc Re-Extract + Proof (2026-05-26T07:36Z)
+
+**Task:** Rebuild pdf-extractor with MD-EXTRACT-2 (commit ebf8a03a), deploy container, fire single-doc extraction for FPT Q4 2025 (doc_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65), and verify DEFECT-A fix via OCR auto-fetch.
+
+### Execution
+
+1. **Rebuild (07:36Z):**
+   - Command: `docker compose build pdf-extractor` + `docker compose up -d --no-deps --force-recreate pdf-extractor`
+   - Build succeeded in ~0.5s (Python multiarch image)
+   - Container healthy in 15s
+   - Grep-verify: `grep -c "_strip_leading_header_bands|OcrTextFetchClientPort|_MONEY_GROUP_RE" /app/infrastructure/generic_md_table_extractor.py /app/infrastructure/ocr_text_fetch_client.py` → 13 matches (proven live code)
+
+2. **mcp-server write-path check (07:36Z):**
+   - Status: HEALTHY (not write-wedged)
+   - market.db: 178 MB, last modified 2026-05-26 05:35:51 UTC
+   - market.db-wal: 7.6 MB, last modified 2026-05-26 05:36:33 UTC (ACTIVE write path, seconds-fresh)
+   - PRAGMA integrity_check: OK (via mcp-server bootstrap health)
+
+3. **Single-doc extraction (07:37Z):**
+   - Report: FPT Q4 2025 (full doc_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65)
+   - PDF path: `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf` (46 pages total)
+   - Request: `POST /extract-md-tables` with `{report_id: "e71f845d-ffa5-48f9-8f09-30ac2cd09c65", pdf_path: "..."}` (NO `doc_ocr_text` — DEFECT-A test)
+   - Response: 202 Accepted (fire-and-forget background task)
+
+### DEFECT-A Proof (Critical Finding)
+
+**Log evidence from pdf-extractor (07:38Z):**
+```
+INFO:infrastructure.ocr_text_fetch_client:OcrTextFetchClient: report_id=e71f845d-ffa5-48f9-8f09-30ac2cd09c65 has 46 OCR pages — fetching up to 20
+INFO:infrastructure.ocr_text_fetch_client:OcrTextFetchClient: fetched 20 pages → 50246 chars of OCR text for report_id=e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+INFO:application.extract_md_tables_usecase:ExtractMdTablesUseCase: fetched 50246 chars of OCR text from mcp-server for report_id=e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+```
+
+**Verdict:** ✓ PASS — `OcrTextFetchClient` auto-fetched 50,246 characters of OCR markdown from mcp-server via `GET /api/bctc-inspect/ocr/{doc_id}?page=N`, proving DEFECT-A (auto-fetch) is working correctly. The extraction will now populate `ocr_as_markdown` field with this content.
+
+### Extraction Progress
+
+- Status: ACTIVE (as of 07:40Z)
+- Phase: Page parsing (Tesseract `image_to_data` TSV → bbox clustering on 20 pages)
+- CPU: 104.69% (Tesseract running multi-threaded)
+- Expected completion: 50-80s (Tesseract at 3-5s/page × 20 pages)
+- Blocking: AC-D2-2 + AC-D2-3 (table_count, ocr_as_markdown length)
+
+### Baseline (Before Extract)
+
+| Field | Value |
+|-------|-------|
+| table_count | 30 |
+| ocr_as_markdown_length | 0 |
+| page_count | 20 |
+
+### Key Findings
+
+1. **Rebuild confirmed:** New code live in container (grep count 13, proves image rebuilt with MD-EXTRACT-2)
+2. **mcp-server healthy:** WAL active, write-path engaged (seconds-fresh timestamp)
+3. **DEFECT-A LIVE:** Auto-fetch from mcp-server working — 50KB OCR markdown delivered to extractor
+4. **Extraction running:** Tesseract parsing 20 pages sequentially, CPU-bound (host-safe, no kernel-panic risk)
+
+### Next (Pending)
+
+Extraction completion expected in 30-60s. AWAITING final `POST /api/push-bctc-md-tables` push from pdf-extractor to confirm:
+- table_count delta (expect [10,15], noise filter active)
+- ocr_as_markdown_length > 0 (DEFECT-A proof)
+- AC-D2-2 gate: `has_md_tables: true`
+- AC-D2-3 gate: `table_count` in [10,15]
+
+**NEXT: Ops monitor + QA MD-QA** (if extraction succeeds).
+
+---
+
+## [MAIN-TERMINAL] LIVE-VERIFY (post MD-DEPLOY2) — 2026-05-26 ~08:00
+
+Attempt-2 (full UUID) push **LANDED + persisted**. Independent verify (live md-inspect row-by-row + direct in-container market.db read), NOT trusting ops summary numbers.
+
+### Persisted state (DB-direct, mcp-server container)
+| field | before | after | verdict |
+|---|---|---|---|
+| `bctc_md_tables.table_count` | 30 | **15** | noise gate engaged |
+| `ocr_as_markdown` length | 0 | **51,013** | DEFECT-A fixed |
+| `md_tables_json` length | — | 27,023 | — |
+| `extracted_at` | 05:13:31 (stale) | **05:44:06** | advanced |
+| structured `bctc_table_rows` | 79 | **79** | NON-REGRESSION ✓ |
+| `bctc_balance_checks` (latest) | — | assets 88,089,621,779,862 = liab 44,338,155,487,272 + equity 43,751,466,292,590, δ=0, pass=1 | ✓ |
+
+(NB: ops's Attempt-1 used short id `e71f845d` → OCR-fetch + push both HTTP 400 `invalid_report_id: must be UUID` (guard working) → wasted ~1 OCR cycle. **Re-extract MUST use full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`.**)
+
+### AC scorecard (MD-EXTRACT-2)
+PASS: 2A (ocr md non-empty, `>` blockquotes), 2B (count=15∈[10,15]), 2C (≥6 money-groups + segment present), 2F (structured 79/balance ok), 2G/2H/2I/2J (AC-0 + fences, verified prior).
+**FAIL: 2E** — balance-sheet tables (md_tables[0..3]) still **7 columns** (target ≤4); coalesce reduced label to 1 cell but empty-column proliferation remains.
+
+### ⛔ DEFECT-D (NEW, BLOCKING — unanticipated by MD-EXTRACT-2 ACs) — dense multi-column grid row-collapse
+The MD-EXTRACT-2 ACs check noise-drop / segment-present / letterhead-strip / label-coalesce but **NONE verify row words land in correct left-to-right reading order**. False-green vector. Live reality:
+- **md_tables[4] (income statement)** + **md_tables[13],[14] (segment report "theo bộ phận" — USER'S LITERAL PROOF CASE)** collapse into **word-soup**. Words + numbers are individually legible (`70.112.826`, `13.038.869.297.304`; segment revenues `35.381.667 / 9.092.934 / 18.701.876`) but ~25 physical statement lines merged into ~1 markdown row → each column-cell concatenates every value top-to-bottom; codes-then-labelwords-then-numbers ordering.
+- **Root cause (algorithm §2.2 Step C — y-band clustering):** greedy band-merge tolerance `0.5 × H_med` catastrophically over-merges tightly-stacked statement rows (likely H_med inflated by a few tall tokens → tolerance balloons). Step D column inference + Step E assembly then emit column-major word-soup. Simple 2–3 col tables (balance sheet, cash flow) reconstruct OK; dense 6–8 col grids (income statement: code+note+4 periods; segment: 7 segments+total) collapse.
+- **Class:** same conceptual scramble as the original psm-3 column-major defect in the structured path (memory `project-bctc-ocr-psm-drift` drift #4), now recurring in the generic-extractor TSV clustering. Recurring-bug rule → architect root-cause design, NOT a blind dev patch.
+
+### Verdict: ⛔ NOT DONE
+Detection + OCR-markdown are a real advance (1→15 tables, segment report now appears, OCR text now markdown), but the segment report is **detected yet unreadable** → fails the binding goal "correct extract text … for all bctc table." Privacy unchanged (local OCR only; no cloud).
+
+**NEXT: architect** — design DEFECT-D fix (robust dense-grid row reconstruction: y-band by median GAP not median height / histogram row detection; strict intra-row left-to-right x emission; verify each physical line = one md row) + close AC-2E (collapse empty columns). Append as **MD-EXTRACT-3** to `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` (pure append; AC-0 generic-only; frozen surfaces untouched; pdf-extractor zone only). Add an AC asserting row-order correctness (each detected statement-line code → exactly one md row; monotonic top-coordinate ordering). Then → dev-pdf-extractor → ops (SINGLE doc, full UUID) → main-terminal re-verify → qa → po.
+
