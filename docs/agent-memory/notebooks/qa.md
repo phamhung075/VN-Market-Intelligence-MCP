@@ -1,5 +1,84 @@
 # QA — Notebook
 
+## cycle-128 · 2026-05-26 · LF-QA (BCTC-LAYOUT-FIRST focused diagnostic gate) — FAIL / CHANGES_REQUESTED
+
+**Task:** LF-QA — focused diagnostic gate on BCTC-LAYOUT-FIRST sprint, FPT Q1 2026 extraction | **Verdict:** CHANGES_REQUESTED
+
+```
+date: 2026-05-26T19:11:52Z
+type: sprint-qa-gate (BCTC-LAYOUT-FIRST, LF-QA focused diagnostic)
+report: docs/qa/qa-lf-2026-05-26T191152Z.json
+report_id: e8ea3df5-3f32-413d-a3eb-c71634c0438d (FPT Q1 2026)
+arbiter: direct market.db bun:sqlite readonly (never endpoint)
+method: diagnostic read-only — no extraction triggered
+
+pass_rate:
+  units_total: 18
+  units_passing: 6 (33.3%)
+  units_quarantined: 12 (66.7%)
+  done_bar: >50% (Decision F)
+  done_bar_met: false
+  content_bearing_pass_rate: 3/15 = 20% (excl. 3 prose trivial-pass units)
+
+page_5_regression_check:
+  is_continuation_page: false
+  schema_inherited_from_page: null
+  schema_inheritance_applied: false
+  content_present: true
+  content_correctly_structured: false
+  row_sample: "| PHAI TRA 44.393.950.887.086 28.464.058.214.856 NO 300 Cc |  |  |"
+  verdict: FAIL — labels and values mashed in single cell; separate column structure absent
+
+tier_0_grouping:
+  pages_3_4_5_6_same_unit: false
+  each_page_own_unit: true
+  root_cause: Tier-1 gutter detection produces wildly inconsistent positions between consecutive pages
+    (p3 col_0=0-1606 vs p4 col_0=0-25 vs p5 col_0=0-1597 vs p6 col_count=1)
+    → 95% gutter position drift breaks Tier-0 continuity test (5% tolerance) on every page boundary
+
+schema_inheritance_where_triggered:
+  pages_9_10: WORKED (cash flow, gutters bitwise identical — mechanism is correct)
+  pages_18_19: WORKED (notes, gutters identical)
+  pages_3_5: NOT TRIGGERED (separate units; schema inheritance architecture is sound)
+
+gate_assessment:
+  gate_caught_bad_extraction: true (correct — gate works)
+  gate_leniency_gap: page 4 passes with all content in single col_2 cell (Invariant 3 weak)
+
+ac_audit:
+  AC-LFE-2 (p5 inherits p3): FAIL — schema_inherited_from_page=NULL for page 5
+  AC-LFE-4 (NGUON VON in stitched): PARTIAL/FAIL — values present, not column-separated
+  AC-LFE-7 (text_table_extractor.py 0-diff): PASS
+  AC-LFO-0..AC-LFO-6 (overlay): ALL PASS (confirmed from dev-mcp-server verification)
+
+blocking_issues:
+  1. apps/pdf-extractor/infrastructure/generic_md_table_extractor.py — zone_page():
+     gutter detection places gutters at extreme margins (1-3% and 97-99% page width)
+     instead of actual inter-column whitespace (~35%, ~45%, ~75%)
+  2. Tier-0 grouping will self-heal when issue 1 fixed (fingerprints currently wrong input)
+  3. Invariant 3 leniency: require distinct label cell AND distinct value cell (lower priority)
+
+root_cause_zone: apps/pdf-extractor/infrastructure/generic_md_table_extractor.py zone_page()
+verdict: FAIL — CHANGES_REQUESTED
+next: dev-pdf-extractor (LF-FIX)
+```
+
+key_learnings:
+  - Schema inheritance architecture is CORRECT and proven (pages 9-10, 18-19 inherit correctly)
+  - The defect is UPSTREAM: wrong gutter positions from zone_page() corrupt the fingerprints
+    that Tier-0 uses for grouping — the cascade is zone_page→build_document_map→unit_grouping
+  - "Page 5 content present" (24 lines in stitched_markdown) is NOT the same as "page 5
+    correctly structured" — always verify column separation, not just text presence
+  - Ops handoff claimed AC-LFE-2 PASS using pages 9-10 as evidence, not pages 3-5 as
+    the spec requires (p9→p10 is cash flow, p3→p5 is the regression check). This was
+    a wrong AC mapping — always re-check which pages the spec names
+  - 3 trivially-passing prose units (row_count=0) inflate the raw pass rate; honest pass
+    rate on content-bearing units is 20% (3/15), not 33% (6/18)
+  - The Tier-3 gate is WORKING correctly as a detector — quarantining 12 bad units
+    is the RIGHT behavior; do not weaken the gate
+
+---
+
 ## cycle-127 · 2026-05-26 · NEWS-INGEST-3 (cursor re-push fix + VN surface gate) — APPROVED
 
 **Task:** NEWS-INGEST-3 — QA gate on NEWS-INGEST-2 (cursor fix) + NEWS-INGEST-2b (VN surface) | **Verdict:** APPROVED
