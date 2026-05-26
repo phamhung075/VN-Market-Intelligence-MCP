@@ -514,6 +514,73 @@ Detection + OCR-markdown are a real advance (1→15 tables, segment report now a
 
 ---
 
+## [Developer] MD-EXTRACT-3 Implementation — 2026-05-26
+
+**Status:** DONE — all files modified, 442 unit tests pass (+18 new), AC-0/Fence-A/privacy PASS. ALL FILES UNSTAGED (main terminal commits).
+
+### Files modified (UNSTAGED — zero new files, zero mcp-server changes)
+
+| File | Change | Lines (after) |
+|---|---|---|
+| `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` | ADD `_SAME_LINE_FACTOR=0.3`, `_ROW_PITCH_MULTIPLIER=1.2` constants; ADD `_cluster_rows_by_gap()` (gap-histogram row detection, DEFECT-D fix); ADD `_collapse_empty_columns()` (DEFECT-E / AC-2E fix); MODIFY `_process_page()` — call `_cluster_rows_by_gap` at Step C, insert `_collapse_empty_columns` after `_coalesce_label_columns` + before `_is_data_table`; KEEP `_cluster_rows` as DEPRECATED fallback | 1033 |
+| `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` | ADD `_cluster_rows_by_gap`, `_collapse_empty_columns`, `_SAME_LINE_FACTOR`, `_ROW_PITCH_MULTIPLIER` to imports; ADD `TestClusterRowsByGap` (9 tests — AC-3A/3B/3D/3H); ADD `TestCollapseEmptyColumns` (9 tests — AC-3E/R-MEDIUM #1) | 1255 |
+
+### AC results
+
+| AC | Result | Evidence |
+|----|--------|----------|
+| **AC-0 grep-proof** | **PASS** | `grep -rn "bao.cao.bo.phan\|segment_report\|SEGMENT\|BAO_CAO\|bo_phan\|bao_phan" generic_md_table_extractor.py` → exit 1, ZERO matches |
+| **Fence-A** | **PASS** | `grep -rn "from application\|from interface" generic_md_table_extractor.py` → exit 1, ZERO matches |
+| **Privacy** | **PASS** | `grep -rn "claude\|openai\|gemini\|textract\|document.ai\|requests.post\|httpx.post" generic_md_table_extractor.py` → exit 1, ZERO matches |
+| **AC-3F non-regression** | **PASS** | `test_text_table_extractor.py` + `test_extract_tables_usecase.py` → 30/30 PASS; structured `bctc_table_rows` path code path NOT touched |
+| Import-linter Fence-A/B | **PASS** | `lint-imports --config pyproject.toml` → 80 files, 159 deps, 2 contracts KEPT, 0 broken |
+| Sandbox primitive tier | **PASS** | `runner.py --tier=primitive` → pass: true |
+| Sandbox module tier | **PASS** | `runner.py --tier=module` → pass: true |
+
+### Grep output (exact terminal output)
+
+**AC-0:**
+```
+$ grep -rn "bao.cao.bo.phan|segment_report|SEGMENT|BAO_CAO|bo_phan|bao_phan" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py
+(no output)
+Exit code: 1
+```
+
+**Fence-A:**
+```
+$ grep -rn "from application|from interface" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py
+(no output)
+Exit code: 1
+```
+
+**Privacy:**
+```
+$ grep -rn "claude|openai|gemini|textract|document.ai|requests.post|httpx.post" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py
+(no output)
+Exit code: 1
+```
+
+### Unit test summary
+
+```
+382 passed (unit-only run, --ignore=integration)
+442 passed, 4 failed, 1 skipped (full suite including integration)
+```
+
+The 4 failed integration tests are identical pre-existing failures (require real PDF on disk at Docker path `/app/data/pdfs/` or live Tesseract binary). They were failing before MD-EXTRACT-3 and are unrelated to this change. Baseline was 424 before this task.
+
+**New tests added:** 18 (9 `TestClusterRowsByGap` + 9 `TestCollapseEmptyColumns`)
+
+### Algorithm notes
+
+`_cluster_rows_by_gap` key design decision: each candidate physical line (words grouped by same-line tolerance) becomes exactly one grid row. The gap-histogram computes `row_pitch` from the median inter-line gap — this value is available for fallback and logging but is NOT used as a split threshold (the brief's §3.1 Step 5/6 split-threshold logic would have incorrectly merged all rows since consecutive gaps are always < `row_pitch × 1.2`). The correct interpretation: candidate lines → grid rows, 1:1. Section-break detection is already handled by `_detect_table_regions` (Step B). This matches the brief's stated goal: "each physical OCR scan line becomes exactly one grid row."
+
+`_collapse_empty_columns` faithfully implements brief §4 — columns blank across ALL rows (including header) are dropped. R-MEDIUM #1 mitigation: if header cell has text, column is kept.
+
+### RETURN NEXT: ops (MD-DEPLOY-3 — single doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`)
+
+---
+
 ## [Architect] MD-EXTRACT-3 — DEFECT-D Dense-Grid Row Reconstruction (DESIGN COMPLETE) — 2026-05-26
 
 > Design authored in brief `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` lines **855–1204** (committed `d7a2b505`). Architect agent hit a 529 before writing this handoff stub + RETURN; main terminal verified the design is complete/compliant (AC-0 generic-only, privacy deny-lists, Fence-A, pdf-extractor zone) and recorded this pointer.
@@ -529,4 +596,47 @@ Detection + OCR-markdown are a real advance (1→15 tables, segment report now a
 **Binding ACs (brief §6/§7):** AC-3A (≤1 three-digit code per md row, BLOCKING), AC-3B (monotonic top + left-sort), AC-3C (segment report: 3 segment revenues `35.381.667/9.092.934/18.701.876` in DIFFERENT rows), AC-3D (income statement ≥10 data rows), AC-3E (balance ≤4 cols), AC-3F (non-regression: structured 79 rows/balance δ=0 + all MD-EXTRACT-2 PASS ACs), AC-3G (privacy grep ZERO), AC-3H (live-substrate fixtures). Build-standard: lean.
 
 **NEXT: dev-pdf-extractor** — implement MD-EXTRACT-3 per brief lines 855–1204. Verify AC-3F (non-regression) BEFORE any re-extract. Leave files UNSTAGED (main terminal commits). Then ops MD-DEPLOY-3 (SINGLE doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`) → main-terminal re-verify → qa MD-QA-3 → po MD-EXIT.
+
+
+---
+
+## [Ops] MD-DEPLOY-3 — 2026-05-26 08:27–08:31 UTC
+
+**Deployment:** pdf-extractor rebuild with MD-EXTRACT-3 code (commit 0807a58d)
+
+**Summary:**
+- Image rebuilt successfully; MD-EXTRACT-3 functions verified in container (_cluster_rows_by_gap present, 8 occurrences)
+- Single-document re-extraction triggered via HTTP 202 POST /extract-md-tables
+- Background job completed in 3m44s: 15 tables detected from FPT Q4 2025 BCTC report
+- All tables pushed to mcp-server and persisted in market.db
+
+**Evidence:**
+- Build exit code: 0
+- Container health: healthy in <5s
+- Extraction DONE log: "tables_detected=15 pushed=True"
+- DB query result: {extracted_at: 2026-05-26 06:31:37, table_count: 15, ocr_len: 51013, json_len: 43617}
+
+**Next Step:** Main terminal (user) verifies row order correctness via md-inspect viewer, confirms MD-QA-3 gate.
+
+
+---
+
+## [MAIN-TERMINAL] LIVE-VERIFY-3 (post MD-DEPLOY-3) — 2026-05-26 — VERDICT: **FAIL** (route to architect, recurring-bug rule)
+
+Pulled `md_tables_json` (47.7 KB, 15 tables) + `ocr_as_markdown` (51,013) direct from live `market.db` `bctc_md_tables` (report e71f845d, extracted_at 2026-05-26 06:31:37).
+
+**Non-regression OK (AC-3F holds):** structured `bctc_table_rows`=79, balance δ=0 pass=1 (checked_at 00:04:18, untouched — `/extract-md-tables` does not touch structured path). `ocr_as_markdown`=51013 still populated. `text_table_extractor.py` untouched.
+
+**Improvement (partial):** MD-EXTRACT-3 fixed the DENSE-COLLAPSE word-soup — dense statements no longer fuse ~25 lines into 1 row (income-statement table now 74 pipe-rows vs the old single collapsed row). `_cluster_rows_by_gap` present in container (8 occ).
+
+**STILL BROKEN (the goal is NOT met):** multi-column MATRIX reconstruction failed on the two hard tables —
+- **Income statement (table 4):** each statement line SPLIT across 3–4 physical rows. e.g. "cung vụ 01 | 20.258.866.135.395" then its other 3 value-columns (`17.651.065.378.939`, `70.207.689.409.081`, `62.962.652.134.635`) land on SEPARATE rows below with empty labels. FPT's 4 value-columns (parent/consolidated × current/prior) sit on different y-bands → each becomes its own "row".
+- **Segment report (table 13) — USER'S PROOF CASE:** matrix scatter. Revenue line's 3 segment values `35.381.667/9.092.934/18.701.876` are on row 0 (different columns — correct intent) but with NO label cell, and the rest of that same line (`7.324.783/{1.193.275)/70.112.826`) spilled to row 2. Labels DETACHED from values (off-by-one: "Chi phi theo bộ phận (i)" alone, its values `(30.412.233)/(8.804.827)/...` on next row). 16 sparse columns — `_collapse_empty_columns` couldn't collapse (every column has a value somewhere). Footnote prose fragmented word-by-word.
+- **Balance sheet (table 0):** partially readable but label↔value OFF-BY-ONE ("I. và các tương đương 110 5 | 10.540.181.640.920" while its prior `9.315.440.438.884` sits on the row ABOVE with empty label); section labels wrapped across rows.
+
+**ROOT CAUSE (hypothesis for architect):** DUAL-PATH DRIFT recurs (same class as drift #4). The STRUCTURED path (`text_table_extractor.py`) works because it consumes **psm-6 OCR line-text** where label+code+all values are ALREADY on one line. The GENERIC MD path consumes **`image_to_data` per-word bboxes** and re-clusters — which re-scatters because (a) number tokens and their row-label sit on DIFFERENT baselines (label top ≠ number top), so a row anchored on the label loses its numbers, and (b) one logical row's value-columns span y-jitter wider than any same-line tolerance. Gap-histogram row-pitch (MD-EXTRACT-3) cannot fix this — the words genuinely sit on different y-bands.
+
+**ESCALATION:** 2nd failed render attempt on `generic_md_table_extractor.py` (MD-EXTRACT-2 word-soup → MD-EXTRACT-3 scattered-matrix). Per recurring-bug-escalation rule → **architect root-cause rethink BEFORE any new dev patch.** Candidate directions for architect to evaluate (do NOT pre-commit a solution): (1) feed the generic MD path the SAME psm-6 line-text the structured path already uses, split each line into columns by whitespace-run gaps (reuse the proven line-aligned substrate); (2) row-anchor on the label/code column with a WIDE vertical band + detect value-columns by global x-clustering of NUMBER tokens only, then pull nearest number per column per anchor; (3) hybrid. Must preserve genericity (no segment/balance special-casing), privacy (local OCR only), AC-3F non-regression.
+
+**NEXT: architect** — root-cause rethink for multi-column matrix reconstruction; append redesign to brief; then dev → ops MD-DEPLOY-4 → main-terminal re-verify → qa → po. Goal `table on pdf on all bctc need correct extract text and convert to md style` REMAINS ARMED (segment report + income statement not yet human-readable).
 
