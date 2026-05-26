@@ -171,9 +171,17 @@ export async function handlePushBctcTable(
       }
     })();
 
-    // Return success with count of rows stored
+    // DB-verified count: SELECT COUNT(*) after the write to detect silent no-ops
+    // (e.g. WAL frozen / write-wedge scenario). Never echo input length back.
+    const verifiedCount = db
+      .prepare<{ cnt: number }, [string]>(
+        "SELECT COUNT(*) AS cnt FROM bctc_table_rows WHERE report_id = ?",
+      )
+      .get(reportId)?.cnt ?? 0;
+
+    // Return success with DB-verified count of rows stored
     res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify({ ok: true, rows_stored: rows.length }));
+    res.end(JSON.stringify({ ok: true, rows_stored: verifiedCount }));
   } catch (err) {
     // Never expose internal DB errors to caller
     const msg = err instanceof Error ? err.message : String(err);

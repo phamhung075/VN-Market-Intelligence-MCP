@@ -9,9 +9,13 @@
  *   - Missing rows array returns 400
  *
  * Uses in-memory SQLite (DB_PATH=:memory:) for full isolation.
+ *
+ * MZH-2 guard: FAILS suite if any test would open the production market.db path.
+ * The DB_PATH env is verified at module load — setup.ts sets it to :memory:,
+ * so if this assertion fires, a test or import inadvertently reset DB_PATH.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, beforeAll } from "bun:test";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import type { Database } from "bun:sqlite";
 
@@ -95,8 +99,46 @@ const VALID_PAYLOAD = {
 
 // ── Tests ──────────────────────────────────────────────────────────────────────
 
+// ── MZH-2: production DB path guard ───────────────────────────────────────────
+//
+// Canary patterns for the production market.db path. The guard checks DB_PATH
+// at suite load time. If a test (or a module-level import) resets DB_PATH to a
+// production path this assertion fires BEFORE any DB operation, making the
+// contamination visible rather than silently writing real data.
+const PRODUCTION_DB_PATTERNS = [
+  /market\.db/,
+  /\/app\/data\//,
+  /apps\/mcp-server\/data\//,
+];
+
+function assertNotProductionDb(path: string): void {
+  for (const pattern of PRODUCTION_DB_PATTERNS) {
+    if (pattern.test(path)) {
+      throw new Error(
+        `[MZH-2 guard] BLOCKED: attempt to open production DB path "${path}". ` +
+        `Tests MUST use :memory: SQLite only. Check DB_PATH env and openTestDb() calls.`,
+      );
+    }
+  }
+}
+
+// Check the env at suite-load time (before any test runs)
+assertNotProductionDb(Bun.env["DB_PATH"] ?? "");
+
 describe("BT-3i-A — handlePushBctcTable", () => {
   let db: Database;
+
+  // Enforce guard at runtime for each beforeEach-created DB
+  beforeAll(() => {
+    // Verify DB_PATH has not been mutated away from :memory: by the time tests run
+    const dbPath = Bun.env["DB_PATH"] ?? "";
+    assertNotProductionDb(dbPath);
+    if (dbPath !== ":memory:") {
+      throw new Error(
+        `[MZH-2 guard] DB_PATH must be :memory: in test suite, got: "${dbPath}"`,
+      );
+    }
+  });
 
   beforeEach(() => {
     db = openTestDb();
@@ -252,6 +294,51 @@ describe("BT-3i-A — handlePushBctcTable", () => {
     await handlePushBctcTable(mockReq(badPayload), res, db, badPayload as any);
 
     expect(captured.statusCode).toBe(400);
+  });
+
+  // ── MZH-1: DB-verified count — silent no-op detection ───────────────────────
+  //
+  // Injects a fake DB where the INSERT silently does nothing (no error thrown,
+  // but no rows committed). Previously rows_stored would echo input length (10)
+  // even though 0 rows landed in the DB — masking the write-wedge.
+  // After MZH-1 fix: rows_stored must reflect the DB-verified COUNT, i.e. 0.
+
+  it("MZH-1: silent-noop DB — rows_stored=0 (not input length)", async () => {
+    // Build a fake DB: prepare() returns a statement whose run() is a no-op,
+    // and whose all() / get() returns 0 rows / cnt=0.
+    const fakeDb = {
+      transaction: (fn: () => void) => {
+        return () => fn(); // execute fn synchronously — but inserts are no-ops
+      },
+      prepare: (sql: string) => {
+        // DELETE + INSERT are no-ops (return without error)
+        if (sql.trim().startsWith("DELETE") || sql.trim().startsWith("INSERT")) {
+          return {
+            run: (..._args: unknown[]) => ({ changes: 0 }),
+          };
+        }
+        // SELECT COUNT(*) returns cnt=0 to simulate empty table after silent no-op
+        if (sql.includes("COUNT(*)")) {
+          return {
+            get: (..._args: unknown[]): { cnt: number } => ({ cnt: 0 }),
+          };
+        }
+        // Fallback: no-op
+        return {
+          run: (..._args: unknown[]) => ({ changes: 0 }),
+          get: (..._args: unknown[]) => null,
+        };
+      },
+    } as unknown as Database;
+
+    const { res, captured } = mockRes();
+    await handlePushBctcTable(mockReq(VALID_PAYLOAD), res, fakeDb, VALID_PAYLOAD);
+
+    expect(captured.statusCode).toBe(200);
+    const respObj = JSON.parse(captured.body) as { ok: boolean; rows_stored: number };
+    expect(respObj.ok).toBe(true);
+    // Must be 0 (DB-verified count), NOT 10 (input rows.length)
+    expect(respObj.rows_stored).toBe(0);
   });
 
   it("no balance_check: rows still inserted, no bctc_balance_checks row", async () => {
