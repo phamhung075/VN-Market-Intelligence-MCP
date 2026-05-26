@@ -104,6 +104,14 @@ _SECTION_GAP_FACTOR = 2.5
 # Column detection: gap > this × median_word_width between left-edge clusters.
 _COL_GAP_FACTOR = 1.5
 
+# Minimum pixel gap between two distinct column clusters (at 200 DPI).
+# Derived from A4 BCTC printing: columns are always separated by ≥1cm whitespace.
+# At 200 DPI: 1cm = 79px. Using 80px as a round number with 1px headroom.
+# DPI-DEPENDENT constant: calibrated at 200 DPI (the rasterization DPI used in
+# extract_md_tables_usecase.py). If DPI changes, rescale this constant proportionally.
+# AC-0: generic 200-DPI print geometry. No BCTC column semantics.
+_MIN_INTER_COLUMN_GAP_PX = 80
+
 # Histogram bin width for left-edge clustering: fraction of median word width.
 _LEFT_EDGE_BIN_FACTOR = 0.3
 
@@ -686,25 +694,46 @@ def _detect_column_anchors_from_tokens(
     median_word_width: float,
 ) -> List[float]:
     """
-    Column anchor detection from a flat list of word tokens (not row-grouped).
+    Column anchor detection — two-pass implementation (MD-EXTRACT-8).
 
-    Used in the MD-EXTRACT-4 number-token path where column anchors are derived
-    from NUMBER tokens only (not ALL tokens). The original _detect_column_anchors
-    takes row-grouped word lists; this variant accepts a flat token list.
+    Pass 1: Form raw left-edge clusters using fine bin_width derived from CODE
+            token widths (short, uniform ~20-30px at 200 DPI) rather than ALL
+            token widths. Falls back to _LEFT_EDGE_BIN_FACTOR × median_word_width
+            if no code tokens present (maintains backward compatibility for sparse
+            pages without a code column).
 
-    Algorithm: same as _detect_column_anchors but accepts List[Dict] directly.
-    Collects all token left-edges, bins them, clusters by gap threshold.
+    Pass 2: Merge adjacent clusters whose gap < _MIN_INTER_COLUMN_GAP_PX (80px).
+            This replaces the w_med-derived col_gap oracle that inflated to 250px
+            on long-string income statement tokens (root cause of MD-EXTRACT-8
+            failure). _MIN_INTER_COLUMN_GAP_PX = 80px is fixed for 200 DPI output
+            (1cm whitespace — the rasterization DPI used in extract_md_tables_usecase.py).
 
-    Pure function.
+    Root cause fixed: on pages with long cumulative money strings (18-char figures
+    like "20.258.866.135.395"), w_med inflates to ~167px → old col_gap = 1.5×167 =
+    250.5px, which absorbs the 225px gap between the code-column anchor (957) and
+    the first value column (1182), causing all 4 real value columns to be lost.
+    The fixed 80px threshold correctly separates all clusters (smallest real gap = 92px
+    between Thuyết minh col at 1049 and Val-A at 1182, after code exclusion at C7.5).
 
-    AC-0: geometry only.
+    Non-regression (segment report):
+        Segment value tokens are short (8-10 chars, ~70-80px wide), producing
+        w_med ≈ 75px → old col_gap ≈ 112px. Segment inter-column whitespace is
+        ≥150px. Both old and new algorithms correctly separate segment columns.
+        The two-pass approach is strictly more accurate on long-string pages and
+        at least as accurate on short-string pages.
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    AC-0: _CODE_TOKEN_RE is a generic 2-3 digit pattern. _MIN_INTER_COLUMN_GAP_PX is
+          a generic 200-DPI geometry constant. Zero BCTC-specific string constants.
 
     Args:
-        tokens:            Flat list of word dicts (each has "left" key).
-        median_word_width: Median word width (pixels) for gap threshold.
+        tokens:            Flat list of word dicts (each has "left", optionally "width").
+        median_word_width: Median word width (pixels). Used for Pass-1 fallback bin_width.
 
     Returns:
-        Sorted list of column anchor x-positions. Returns [0.0] if no tokens.
+        Sorted list of column anchor x-positions (min of each surviving cluster).
+        Returns [0.0] if no tokens supplied.
     """
     if not tokens or median_word_width <= 0:
         return [0.0]
@@ -713,7 +742,23 @@ def _detect_column_anchors_from_tokens(
     if not all_lefts:
         return [0.0]
 
-    bin_width = max(1.0, _LEFT_EDGE_BIN_FACTOR * median_word_width)
+    # Pass 1 — form fine-grained left-edge clusters.
+    # Use CODE token width for bin_width (short, uniform ~20-30px at 200 DPI).
+    # Code tokens like "01", "10", "100" have widths ≈ 20-30px → bin_width ≈ 6-9px.
+    # This produces tighter, more accurate clusters than 0.3 × 167px = 50px bins.
+    # Fallback: _LEFT_EDGE_BIN_FACTOR × median_word_width (unchanged from prior impl)
+    # for pages with no code column (e.g. pure summary tables or segment report).
+    code_widths = [
+        float(w["width"])
+        for w in tokens
+        if _CODE_TOKEN_RE.match(w.get("text", "").strip()) and w.get("width", 0) > 0
+    ]
+    if code_widths:
+        sorted_cw = sorted(code_widths)
+        code_w_med = sorted_cw[len(sorted_cw) // 2]
+        bin_width = max(1.0, _LEFT_EDGE_BIN_FACTOR * code_w_med)
+    else:
+        bin_width = max(1.0, _LEFT_EDGE_BIN_FACTOR * median_word_width)
 
     clusters: List[List[float]] = []
     current_cluster = [all_lefts[0]]
@@ -728,14 +773,18 @@ def _detect_column_anchors_from_tokens(
     # REV-5: use min(cluster) instead of centroid → left-edge-aligned anchors.
     # For homogeneous clusters (all same left) min == centroid. For slight OCR
     # left-edge variation, min aligns to the column's true left boundary.
-    # AC-0: pure geometry. Non-regressing on segment report (min ≈ centroid there).
-    cluster_anchors = [min(c) for c in clusters]
+    cluster_mins = [min(c) for c in clusters]
 
-    col_gap = _COL_GAP_FACTOR * median_word_width
-    merged: List[float] = [cluster_anchors[0]]
-    for anchor in cluster_anchors[1:]:
-        if anchor - merged[-1] > col_gap:
+    # Pass 2 — merge clusters whose gap < _MIN_INTER_COLUMN_GAP_PX.
+    # This is the core MD-EXTRACT-8 fix: column gap is now a fixed physical constant
+    # (80px at 200 DPI = 1cm whitespace) rather than a function of median token width.
+    # On income statement pages: old col_gap=250.5px absorbed Val-A (225px from code);
+    # new 80px threshold keeps all 10 fine clusters, producing correct value anchors.
+    merged: List[float] = [cluster_mins[0]]
+    for anchor in cluster_mins[1:]:
+        if anchor - merged[-1] > _MIN_INTER_COLUMN_GAP_PX:
             merged.append(anchor)
+        # else: within same column group — absorbed under merged[-1]
 
     return merged
 

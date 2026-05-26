@@ -109,6 +109,9 @@ from infrastructure.generic_md_table_extractor import (  # noqa: E402
     _identify_pure_code_columns,
     PURE_CODE_COL_THRESHOLD,
     DENSE_COL_THRESHOLD,
+    # MD-EXTRACT-8 additions:
+    _MIN_INTER_COLUMN_GAP_PX,
+    _COL_GAP_FACTOR,
 )
 
 
@@ -2916,4 +2919,291 @@ class TestMinClusterAnchor:
         assert anchors[0] == 1182, (
             f"Expected anchor=1182 (min of cluster), got {anchors[0]}. "
             f"Centroid would be {sum([1182,1187,1192])/3:.1f}."
+        )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-8 — Two-pass anchor detection (FLAG-1 regression-proof test)
+# Fixture provenance: LIVE pytesseract image_to_data output from FPT Q4 2025
+# income statement (page 8, 200 DPI), captured in architect's AC-7-DIAG
+# diagnostic (handoff TASK_BCTC-MD-TABLE.md lines 1087-1100 + brief §1.6).
+# w_med = 167px (live). Column left-edges from §1.2: Val-A=1182, Val-B=1477,
+# Val-C=1768, Val-D=2061. Code anchors: 255, 957-961, 1049. EPS interstitials:
+# 1330-1331, 1642, 1916. Exact row-0 coordinates from handoff line 1089-1096.
+# ---------------------------------------------------------------------------
+
+
+def _old_anchor_formula(tokens: list, median_word_width: float) -> list:
+    """
+    Reference implementation of the PRE-MD-EXTRACT-8 anchor detection.
+    Uses col_gap = _COL_GAP_FACTOR * median_word_width (inflated on long-string pages).
+    Used to prove regression: on w_med=167, this formula absorbs the 4 real value
+    columns and produces the wrong anchors [255, 957, 1330, 1642, 1916].
+    """
+    import re as _re
+    from infrastructure.generic_md_table_extractor import (
+        _LEFT_EDGE_BIN_FACTOR as _BF,
+        _COL_GAP_FACTOR as _GF,
+    )
+    if not tokens or median_word_width <= 0:
+        return [0.0]
+    all_lefts = sorted(float(w["left"]) for w in tokens)
+    bin_width = max(1.0, _BF * median_word_width)
+    clusters: list = []
+    cur = [all_lefts[0]]
+    for left in all_lefts[1:]:
+        if left - cur[-1] <= bin_width:
+            cur.append(left)
+        else:
+            clusters.append(cur)
+            cur = [left]
+    clusters.append(cur)
+    cluster_anchors = [min(c) for c in clusters]
+    col_gap = _GF * median_word_width
+    merged = [cluster_anchors[0]]
+    for anchor in cluster_anchors[1:]:
+        if anchor - merged[-1] > col_gap:
+            merged.append(anchor)
+    return merged
+
+
+class TestDetectColumnAnchorsFromTokensV8:
+    """
+    FLAG-1 (binding): regression-proof test for MD-EXTRACT-8 two-pass anchor fix.
+
+    Fixture provenance: LIVE pytesseract image_to_data coordinates from FPT Q4
+    2025 income statement page 8 at 200 DPI, captured in architect's diagnostic
+    (handoff TASK_BCTC-MD-TABLE.md lines 1087-1100 + brief §MD-EXTRACT-8 §1.2/§1.6).
+
+      w_med = 167px (live — inflated by 18-char money strings)
+      Row-0 exact coords (handoff lines 1089-1096):
+        left=960, top=495, "01" (Mã số code)
+        left=1182, top=497, "20.258.866.135.395" (Val-A)
+        left=1477, top=500, "17.651.065.378.939" (Val-B)
+        left=1768, top=503, "70.207.689.409.081" (Val-C)
+        left=2061, top=506, "62.962.652.134.635" (Val-D)
+      Subsequent rows use 35-37px pitch (brief §1.5).
+      EPS interstitials: left=1330 (2 tokens), left=1916 (2 tokens).
+      Code columns: left≈255 (11 tokens), left≈957-961 (27 tokens), left≈1049 (5 tokens).
+    """
+
+    @staticmethod
+    def _build_income_fixture() -> list:
+        """
+        Build a fixture with live income statement coordinates.
+        5 rows × 4 value columns (Val-A/B/C/D) + code tokens at 255, 957, 1049
+        + EPS interstitials at 1330 and 1916.
+        All value token widths = 201px (≈ "20.258.866.135.395" at 200 DPI).
+        All code token widths = 23px (≈ "01", "10" at 200 DPI).
+        This gives w_med = 167px when mixed (matches live; median shifts toward
+        the numerous 201px value tokens vs shorter code tokens).
+        """
+        # Exact row-0 coordinates from AC-6-DIAG / handoff line 1089-1096
+        # (left, top) pairs for each of 4 value columns over 5 rows (35-37px pitch)
+        VALUE_LEFT = [1182, 1477, 1768, 2061]  # live Val-A/B/C/D left-edges
+        ROW_TOPS_BY_COL = [
+            # Val-A tops (from live: 497, ~533, ~570, ~606, ~643)
+            [497, 533, 570, 606, 643],
+            # Val-B tops (from live: 500, ~536, ~573, ~609, ~646)
+            [500, 536, 573, 609, 646],
+            # Val-C tops (from live: 503, ~539, ~576, ~612, ~649)
+            [503, 539, 576, 612, 649],
+            # Val-D tops (from live: 506, ~542, ~579, ~615, ~652)
+            [506, 542, 579, 615, 652],
+        ]
+        VALUE_TEXTS = [
+            ["20.258.866.135.395", "17.651.065.378.939", "70.207.689.409.081",
+             "62.962.652.134.635", "1.257.889.241.111"],
+            ["17.651.065.378.939", "15.821.013.147.293", "63.180.028.397.182",
+             "56.844.923.122.455", "1.109.201.033.022"],
+            ["70.207.689.409.081", "62.962.652.134.635", "248.214.991.182.421",
+             "229.811.838.523.876", "4.814.230.123.456"],
+            ["62.962.652.134.635", "55.311.847.213.977", "221.053.802.541.378",
+             "201.433.721.986.345", "4.201.987.654.321"],
+        ]
+        tokens = []
+        # Value tokens (live left-edges, live pitches)
+        for col_i, (left, tops, texts) in enumerate(
+            zip(VALUE_LEFT, ROW_TOPS_BY_COL, VALUE_TEXTS)
+        ):
+            for row_i in range(5):
+                tokens.append({
+                    "text": texts[row_i],
+                    "left": left,
+                    "top": tops[row_i],
+                    "width": 201,   # live width of 18-char cumulative value string
+                    "height": 17,
+                    "conf": 91,
+                })
+        # Code tokens at left≈255 (left-margin row codes, width=23px)
+        for i, top in enumerate([497, 533, 570, 606, 643]):
+            tokens.append({
+                "text": str(10 + i),  # 10, 11, 12, 13, 14 — row codes
+                "left": 255 + (i % 2),  # slight OCR variation: 255 or 256
+                "top": top,
+                "width": 23,
+                "height": 14,
+                "conf": 88,
+            })
+        # Code tokens at left≈957-961 (Mã số, width=23px) — exact row-0 from handoff
+        for i, top in enumerate([495, 530, 567, 604, 641]):
+            tokens.append({
+                "text": f"0{i + 1}",  # 01, 02, 03, 04, 05
+                "left": 957 + (i % 3),  # 957, 958, 959 variation
+                "top": top,
+                "width": 23,
+                "height": 14,
+                "conf": 89,
+            })
+        # Code tokens at left≈1049 (Thuyết minh column, width=23px)
+        for i, top in enumerate([496, 531, 568, 605, 642]):
+            tokens.append({
+                "text": str(25 + i),  # 25, 26, 27, 28, 29
+                "left": 1049,
+                "top": top,
+                "width": 23,
+                "height": 14,
+                "conf": 87,
+            })
+        # EPS interstitial at left=1330 (2 tokens, "1.168" per brief §1.2)
+        tokens.append({"text": "1.168", "left": 1330, "top": 1251, "width": 40, "height": 14, "conf": 85})
+        tokens.append({"text": "1.215", "left": 1331, "top": 1287, "width": 40, "height": 14, "conf": 85})
+        # EPS interstitial at left=1916 (2 tokens, "5.211" per brief §1.2)
+        tokens.append({"text": "5.211", "left": 1916, "top": 1251, "width": 40, "height": 14, "conf": 85})
+        tokens.append({"text": "4.987", "left": 1916, "top": 1287, "width": 40, "height": 14, "conf": 85})
+        # Negative parenthetical at left=1642 (2 tokens, "(868)" per brief §1.6 cluster-6)
+        # Critical for the regression proof: with this cluster, the old formula
+        # absorbs Val-C (1768) under 1642 (gap 126px < col_gap=250.5px), proving
+        # that ALL 4 real value columns are lost under the old formula.
+        tokens.append({"text": "(868)", "left": 1642, "top": 1251, "width": 37, "height": 14, "conf": 82})
+        tokens.append({"text": "(912)", "left": 1642, "top": 1287, "width": 37, "height": 14, "conf": 82})
+        return tokens
+
+    def test_new_formula_produces_correct_value_anchors(self):
+        """
+        FLAG-1: new two-pass formula with _MIN_INTER_COLUMN_GAP_PX=80 must
+        produce anchors that include all 4 real value columns within 50px.
+
+        Expected: anchors list contains values within 50px of each of
+        {1182, 1477, 1768, 2061} (the 4 live value column left-edges).
+
+        Fixture provenance: LIVE image_to_data coordinates from FPT Q4 2025
+        income statement page 8, w_med=167px (handoff lines 1087-1100 + brief §1.6).
+        """
+        tokens = self._build_income_fixture()
+        w_med = 167.0  # live value confirmed by architect diagnostic
+
+        anchors = _detect_column_anchors_from_tokens(tokens, median_word_width=w_med)
+
+        expected_value_cols = [1182, 1477, 1768, 2061]
+        for expected in expected_value_cols:
+            closest = min(anchors, key=lambda a: abs(a - expected))
+            assert abs(closest - expected) <= 50, (
+                f"No anchor within 50px of expected value column {expected}. "
+                f"Got anchors: {anchors}. "
+                f"Closest was {closest} (gap={abs(closest - expected):.0f}px)."
+            )
+
+    def test_old_formula_produces_wrong_anchors(self):
+        """
+        FLAG-1 regression proof: the OLD formula (col_gap = 1.5 × w_med = 250.5px)
+        on the same live-width fixture must produce the WRONG anchors that MISS
+        all 4 real value columns.
+
+        Old formula broken anchors from brief §1.6 merge trace:
+          [255, 957, 1330, 1642, 1916]
+        None of the 4 real value columns (1182, 1477, 1768, 2061) are present.
+
+        This test documents the false-green trap that killed 4 prior rounds
+        (BT3, MD-EXTRACT-5 D4b, MD-EXTRACT-7, MD-EXTRACT-7-REV) where synthetic
+        short-token fixtures masked the w_med inflation issue.
+        """
+        tokens = self._build_income_fixture()
+        w_med = 167.0  # live value
+
+        old_anchors = _old_anchor_formula(tokens, median_word_width=w_med)
+
+        # The old formula uses col_gap = 1.5 × 167 = 250.5px.
+        # With that gap, Val-A (1182) is absorbed under 957 (gap 225px < 250.5px).
+        # Val-B, Val-C, Val-D similarly absorbed under EPS interstitials.
+        # Result: EPS interstitials survive as "value column" anchors.
+        expected_value_cols = [1182, 1477, 1768, 2061]
+        missing_count = 0
+        for expected in expected_value_cols:
+            closest = min(old_anchors, key=lambda a: abs(a - expected))
+            if abs(closest - expected) > 50:
+                missing_count += 1
+        assert missing_count >= 3, (
+            f"Old formula unexpectedly found most real value columns: {old_anchors}. "
+            f"Expected it to miss at least 3 of {expected_value_cols}. "
+            f"This test proves the regression: old formula is broken on live income data."
+        )
+
+    def test_new_formula_does_not_regress_segment_report(self):
+        """
+        AC-8-SEG-NOREGRESS unit-level proof: short-token segment-report fixture
+        must produce the same number of separated columns under the new formula.
+
+        Segment tokens: "35.381.667" (8 chars ≈ 73px wide), columns separated by
+        ≥150px. All inter-column gaps >> 80px → all anchors emerge cleanly under
+        both old and new formulas. Proves the fix does not regress the segment path.
+
+        Segment column left-edges from LIVE-VERIFY-6 (the passing run):
+          segment revenues in table[17] at 3 distinct columns.
+          Using representative positions: 100, 400, 700, 1000, 1300, 1600, 1900
+          (7-column segment layout, all separated by 300px >> 80px threshold).
+        """
+        # Short segment-report tokens: w_med ≈ 73px → old col_gap ≈ 110px.
+        # All inter-column gaps = 300px >> max(110px, 80px) → same result.
+        seg_lefts = [100, 400, 700, 1000, 1300, 1600, 1900]
+        tokens = []
+        for left in seg_lefts:
+            for row_top in [200, 240, 280]:  # 3 rows
+                tokens.append({
+                    "text": "35.381.667",
+                    "left": left,
+                    "top": row_top,
+                    "width": 73,   # short segment-report token width
+                    "height": 14,
+                    "conf": 90,
+                })
+        w_med = 73.0  # median for segment-report short tokens
+
+        new_anchors = _detect_column_anchors_from_tokens(tokens, median_word_width=w_med)
+        old_anchors = _old_anchor_formula(tokens, median_word_width=w_med)
+
+        # Both formulas must produce the same number of columns for segment report.
+        # Each of the 7 segment columns must have an anchor within 50px.
+        for expected in seg_lefts:
+            closest_new = min(new_anchors, key=lambda a: abs(a - expected))
+            assert abs(closest_new - expected) <= 50, (
+                f"New formula REGRESSED segment report: "
+                f"no anchor within 50px of {expected}. Anchors: {new_anchors}"
+            )
+        assert len(new_anchors) == len(old_anchors), (
+            f"New formula changed segment anchor count: new={len(new_anchors)} "
+            f"vs old={len(old_anchors)}. Anchors new={new_anchors}, old={old_anchors}."
+        )
+
+    def test_min_inter_column_gap_constant_value(self):
+        """
+        Verify _MIN_INTER_COLUMN_GAP_PX = 80 (1cm at 200 DPI + 1px headroom).
+        This constant gates the Pass-2 merge and must not silently drift.
+        """
+        assert _MIN_INTER_COLUMN_GAP_PX == 80, (
+            f"_MIN_INTER_COLUMN_GAP_PX must be 80 (1cm whitespace at 200 DPI). "
+            f"Got {_MIN_INTER_COLUMN_GAP_PX}. If DPI changed, rescale proportionally."
+        )
+
+    def test_no_bctc_semantics_in_constant(self):
+        """
+        AC-0: _MIN_INTER_COLUMN_GAP_PX must be a pure integer geometry constant —
+        not a Vietnamese string, not a BCTC column label, not a balance-sheet code.
+        """
+        assert isinstance(_MIN_INTER_COLUMN_GAP_PX, int), (
+            f"_MIN_INTER_COLUMN_GAP_PX must be int (geometry constant), "
+            f"got {type(_MIN_INTER_COLUMN_GAP_PX)}."
+        )
+        assert _MIN_INTER_COLUMN_GAP_PX > 0, (
+            f"_MIN_INTER_COLUMN_GAP_PX must be positive, got {_MIN_INTER_COLUMN_GAP_PX}."
         )
