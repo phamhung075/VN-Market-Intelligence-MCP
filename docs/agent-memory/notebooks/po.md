@@ -1,29 +1,30 @@
 # PO Notebook
 
-**Cycle:** PEK-INTEGRATE spec-approval gate — 2026-05-26T20:49Z.
-**Last update:** 2026-05-26T20:49:25Z
-**Status:** PEK-BA spec APPROVED. PEK-DESIGN UNBLOCKED → architect. Files UNSTAGED — main terminal commits.
+**Cycle:** PEK-INTEGRATE REQ amendment (post-PEK-DESIGN, architect R-CRIT flags) — 2026-05-26T21:03Z.
+**Last update:** 2026-05-26T21:03:47Z
+**Status:** REQ AMENDED + re-stamped APPROVED. PEK-IMPL UNBLOCKED → dev-pdf-extractor. Files UNSTAGED — main terminal commits (scoped add, never -A).
 
 ---
 
-## 2026-05-26T20:49Z — PEK-BA spec-approval gate PASSED → architect
+## 2026-05-26T21:03Z — PEK-INTEGRATE REQ amended (2 PO-owned blockers resolved) → dev-pdf-extractor
 
-**Reviewed:** `docs/REQ_PEK-INTEGRATE.md` (10 reqs, 35 ACs, commit `22bc3d54`) vs `SPRINT_GOAL § PEK-INTEGRATE`. APPROVED.
+Architect (PEK-DESIGN, brief `2026-05-26-pek-integrate-design.md`, commit `1fbf017f`) surfaced 3 CRITICAL flags. 2 were PO-only REQ amendments blocking PEK-IMPL; resolved this cycle.
 
-**4 checks, all PASS (ground-truth-verified, not assumed):**
-- **Decisions (a)-(d) still OPEN:** every decision-bearing req (1=a, 2=a+b, 3=c, 4=d) ends with an "Architect-deferred" block naming the open call. Decision (b) in-process vs on-demand worker (the biggest kernel-panic-risk var) is genuinely deferred — BA did NOT pre-answer RAM topology; each option requires its own RAM budget. "Blockers for PO" restates all 5 as architect-level.
-- **Hard constraints → ACs:** CPU-only (AC-2a/2d), 8GB RSS-under-load (AC-2b/2c/4c), `/api` PULL unbroken (REQ-5 all), ZERO PDF-Extract-Kit edits git-diff-proof (AC-0a/0b/0c). Live-verified: `git -C apps/pdf-extractor/PDF-Extract-Kit diff` empty; clone has own `.git`; Dockerfile `COPY . .` + `.dockerignore` gap confirmed (the (c) target).
-- **Scale-pilot done-bar:** direct market.db is arbiter (AC-7d, endpoint never gate), FPT Q4 2025 sentinels (AC-7e, report_id `e71f845d-...`, 4 values cross-verified vs closed BCTC-TABLE record), ops REBUILD (REQ-10), USER verbal G9. 6-cond bar = SPRINT_GOAL verbatim.
-- **REQ-PEK-8 reuses LF-OVERLAY §3:** `bctc_page_zones`/`bctc_layout_units` + `POST /api/push-bctc-layout` confirmed present in `2026-05-26-bctc-layout-first-pipeline.md` §3.1/§3.2; AC-8d forbids duplicate tables. Reuse, not reinvent.
+**AC-PEK-3a REWRITTEN (R-CRIT-1):** prior literal demanded source tree ABSENT (`ls /app/PDF-Extract-Kit` = No such file) — mutually exclusive with the architect's chosen `pip install -e ./PDF-Extract-Kit` editable install (source MUST be present at runtime for `pdf_extract_kit` import). New invariant = **zero-diff, NOT absence**: (a) `.git/` excluded from image, (b) weights NEVER baked (image < 2GB via `docker image inspect`), (c) `git -C apps/pdf-extractor/PDF-Extract-Kit diff` EMPTY. User constraint "repo publish, dont touch" = zero-diff, not absent.
 
-**Wrote:** `status: APPROVED` + gate rationale in REQ header; TASKS PEK-BA→DONE, PEK-DESIGN→TODO(UNBLOCKED), gate-record note in sprint Notes. All UNSTAGED.
+**REQ-PEK-11 APPENDED (AC-PEK-NEW-1 + NEW-2, verbatim brief §10):** market-hours isolation, user hard constraint "pdf service never run on market open." NEW-1 = `POST /pek-extract` HTTP 503 + no RSS rise at Mon 03:00 UTC sim-open; NEW-2 = `bctcReparseJob` cron not 02:00–08:59 UTC weekdays (`CRON_BCTC_REPARSE_JOB=0 21 * * *`). Done-Bar now SEVEN cond (#6 market-hours). Spec = 11 reqs, 37 ACs.
 
-**Dispatch:** NEXT = architect | run PEK-DESIGN (blueprint, brief ONLY → `docs/architecture-briefs/`).
+**R-CRIT-2 + R-CRIT-3 — no REQ change (architect resolved in-brief), NOTED for dev:** R-CRIT-2 no TableMaster in clone → PaddleOCR PP-StructureV2 table mode directly. R-CRIT-3 StructEqTable hard-asserts CUDA → import guard, NEVER `TableParsingTask`/`FormulaDetectionTask`, unit test asserts no CUDA import.
+
+**Wrote (all UNSTAGED):** REQ header re-stamp + amendment note + AC-PEK-3a rewrite + REQ-PEK-11 + DDD-table row + Done-Bar #6; handoff [PO] append; TASKS PEK-IMPL row + amendment Note.
+
+**Dispatch:** NEXT = dev-pdf-extractor | PEK-IMPL against amended spec.
 
 ---
 
 ## Carry-over
-- Architect (PEK-DESIGN) must resolve (a)-(d) each with a RAM number; (b) topology is the kernel-panic-risk lever; reconcile PEK with BCTC-LAYOUT-FIRST (engine REPLACES vs WRAPS hand-built tiers); reuse LF-OVERLAY §3 for PEK layout bboxes; confirm `bctc_table_rows` zero-collision; if overlay-render needs mcp-server → zone flips to `multi`.
-- DoD = scale-pilot bar: live clean rows via DIRECT market.db + 8GB/no-panic + pristine-repo-untouched git-diff + ops REBUILD + USER verbal G9. 5 prior false-greens — NOT-RUN ≠ green.
-- BCTC-LAYOUT-FIRST LF-EXTRACT chain PAUSED — do not let both sessions edit pdf-extractor concurrently.
-- Next PO hop after architect = none until PEK-QA returns → PEK-EXIT (independent live re-verify).
+- PEK-IMPL ground truth for dev: editable install (source present, zero-diff), layout+ocr only via PaddleOCR PP-Struct (no TableMaster/StructEqTable), import guard, lazy-load singleton + Semaphore(1), market-hours guard 503 + cron 0 21 * * *, `.dockerignore` `.git/`+`models/`, weight cache named volume `pek_model_cache`, image < 2GB.
+- Pipeline: PEK-IMPL → PEK-DEPLOY (ops REBUILD not restart, AC-10) → PEK-QA (direct market.db rows + FPT sentinel `e71f845d-...` + RSS + pristine git-diff + market-hours 503) → PEK-EXIT (po) → USER G9.
+- DoD = scale-pilot bar, 5 prior false-greens; NOT-RUN ≠ green; measured corpus pass-rate not one doc.
+- BCTC-LAYOUT-FIRST LF-EXTRACT chain PAUSED — do not let both sessions edit pdf-extractor concurrently. Concurrent docker rebuild = 16GB host kernel-panic risk; serialize ops hops.
+- Next PO hop = PEK-EXIT after PEK-QA returns (independent LIVE re-verify, then main terminal commits in-tree work).

@@ -1,6 +1,13 @@
 # REQ_PEK-INTEGRATE — Re-engine apps/pdf-extractor on PDF-Extract-Kit (CPU-only, 8GB-safe)
 
-**status: APPROVED** — PO spec-approval gate PASSED 2026-05-26T20:49:25Z. Architect PEK-DESIGN is UNBLOCKED. Rationale: all 4 architect-deferred decisions (a)-(d) remain OPEN (RAM topology NOT pre-answered — decision (b) in-process vs on-demand worker genuinely deferred with per-option RAM budget required); hard constraints encoded as ACs (CPU-only AC-PEK-2a/2d, 8GB RSS-under-load AC-PEK-2b/2c/4c, /api PULL AC-PEK-5a–5d, ZERO PDF-Extract-Kit edits AC-PEK-0a–0c git-diff-proof — live subtree diff confirmed empty); scale-pilot done-bar held (direct market.db arbiter AC-PEK-7d, FPT Q4 2025 sentinels AC-PEK-7e cross-verified against closed BCTC-TABLE record, ops REBUILD REQ-PEK-10, USER verbal G9); REQ-PEK-8 reuses LF-OVERLAY §3 contract (tables/handler confirmed present in `2026-05-26-bctc-layout-first-pipeline.md` §3.1/§3.2), no duplicate-table reinvention (AC-PEK-8d).
+**status: APPROVED (AMENDED 2026-05-26T21:03:47Z)** — PO spec-approval gate PASSED 2026-05-26T20:49:25Z; AMENDED post-PEK-DESIGN per architect risk flags. Architect PEK-DESIGN is UNBLOCKED; PEK-IMPL (dev-pdf-extractor) UNBLOCKED against this amended spec.
+
+**AMENDMENT NOTE (2026-05-26T21:03:47Z, PO — resolves architect brief §8 R-CRIT-1 + §10 new ACs):**
+- **AC-PEK-3a REWRITTEN (R-CRIT-1 — contradiction resolved):** the prior literal ("`ls /app/PDF-Extract-Kit` returns No such file") contradicted the architect's chosen `pip install -e ./PDF-Extract-Kit` editable-install strategy, which REQUIRES the source tree present in the container at runtime. Pristine invariant is now preserved by **zero-diff, NOT absence**: (a) `.git/` subdirectory excluded from image, (b) model weights NEVER baked into image (verify image size < 2GB via `docker image inspect`), (c) `git -C apps/pdf-extractor/PDF-Extract-Kit diff` returns EMPTY. User hard constraint "do not change any code here, it repo publish, dont touch" honored as zero-diff.
+- **AC-PEK-NEW-1 + AC-PEK-NEW-2 APPENDED (new REQ-PEK-11):** market-hours isolation, verbatim from brief §10. Enforces user hard constraint "this pdf service never run on market open time." NEW-1 = `POST /pek-extract` returns HTTP 503 + no RSS rise during a simulated VN market-open instant (Mon 03:00 UTC); NEW-2 = `bctcReparseJob` cron must not fire 02:00–08:59 UTC weekdays (`CRON_BCTC_REPARSE_JOB=0 21 * * *`). Added to the Done-Bar as condition #6 (bar is now SEVEN conditions).
+- **R-CRIT-2 (no TableMaster → use PaddleOCR PP-StructureV2 directly) + R-CRIT-3 (StructEqTable CUDA assert → import guard, never import `TableParsingTask`/`FormulaDetectionTask`):** RESOLVED by architect in-brief §2.1 / §8. No REQ change required — NOTED here for dev-pdf-extractor to implement exactly as designed.
+
+Original approval rationale: all 4 architect-deferred decisions (a)-(d) remain OPEN (RAM topology NOT pre-answered — decision (b) in-process vs on-demand worker genuinely deferred with per-option RAM budget required); hard constraints encoded as ACs (CPU-only AC-PEK-2a/2d, 8GB RSS-under-load AC-PEK-2b/2c/4c, /api PULL AC-PEK-5a–5d, ZERO PDF-Extract-Kit edits AC-PEK-0a–0c git-diff-proof — live subtree diff confirmed empty); scale-pilot done-bar held (direct market.db arbiter AC-PEK-7d, FPT Q4 2025 sentinels AC-PEK-7e cross-verified against closed BCTC-TABLE record, ops REBUILD REQ-PEK-10, USER verbal G9); REQ-PEK-8 reuses LF-OVERLAY §3 contract (tables/handler confirmed present in `2026-05-26-bctc-layout-first-pipeline.md` §3.1/§3.2), no duplicate-table reinvention (AC-PEK-8d).
 
 **Sprint:** PEK-INTEGRATE | **BA Agent:** ba | **Created:** 2026-05-26T21:00Z
 **Source vision:** `docs/SPRINT_GOAL.md § Sprint PEK-INTEGRATE`
@@ -111,7 +118,10 @@ The current `apps/pdf-extractor/Dockerfile` runs `COPY . .` and `apps/pdf-extrac
 
 ### Testable acceptance criteria
 
-- [ ] **AC-PEK-3a (PDF-Extract-Kit excluded from image layer):** After `docker compose build pdf-extractor`, `docker run --rm <built-image> ls /app/PDF-Extract-Kit` returns "No such file or directory" (or equivalent) — the pristine subtree source tree is NOT present inside the built image. The engine is consumed via the mechanism chosen by the architect (pip-from-path, submodule, or other — architect decides).
+- [ ] **AC-PEK-3a (pristine-engine invariant via editable install — AMENDED 2026-05-26, R-CRIT-1):** The architect-chosen embedding strategy is `pip install -e ./PDF-Extract-Kit` (editable install), which REQUIRES the PDF-Extract-Kit source tree to be PRESENT in the container at `/app/PDF-Extract-Kit/` for `pdf_extract_kit` to be importable at runtime. The pristine-engine invariant is therefore preserved by **zero-diff**, NOT by absence. The previous wording ("`ls /app/PDF-Extract-Kit` returns No such file or directory") is RETRACTED — it contradicted the editable-install strategy and is mutually exclusive with it. The amended invariant is satisfied iff ALL THREE hold:
+  - **(a) `.git/` subdirectory excluded from the image:** `docker run --rm <built-image> ls /app/PDF-Extract-Kit/.git` returns "No such file or directory" (the pristine subtree's `.git` is NOT copied into the image layer — see `.dockerignore` `PDF-Extract-Kit/.git/`). The source `.py`/`.yaml`/config files ARE present (required for editable install to function).
+  - **(b) model weights NEVER baked into the image:** `docker image inspect <built-image>` reports an image size BELOW 2GB. No multi-GB model weight files (`PDF-Extract-Kit/models/`, `paddleocr`, `doclayout-yolo`, HuggingFace caches) are present in any image layer. Weights live ONLY in the runtime-mounted named volume `pek_model_cache` (per REQ-PEK-3 §2.3(c)), downloaded once on first use.
+  - **(c) zero-diff on the pristine clone (the unchanged-source invariant):** `git -C apps/pdf-extractor/PDF-Extract-Kit diff` returns EMPTY output — zero edits to the pristine clone. This is the user's hard constraint "do not change any code here, it repo publish, dont touch" — pristine means **zero-diff, NOT absent**. (This restates AC-PEK-0a as the binding form of the pristine invariant; the editable install reads the source but never writes to it.)
 - [ ] **AC-PEK-3b (model weights NOT baked into image):** The built image size does not include multi-GB model weight files. `docker image inspect <built-image>` confirms image size is within reason (architect specifies the bound). Model weights are stored in the location specified by the architect (named volume, runtime cache dir, or other) and are NOT re-downloaded on every container start after the first download.
 - [ ] **AC-PEK-3c (build succeeds cleanly):** `docker compose build pdf-extractor` exits 0 with no warnings about missing `.dockerignore` entries. The build does not copy `.git` of the pristine subtree into the image.
 - [ ] **AC-PEK-3d (.gitignore hygiene):** `apps/pdf-extractor/.gitignore` is updated (if necessary) so that the model-weight cache directory (wherever the architect places it) is NOT accidentally committed to the repo. `git status` after a weight-download shows no new untracked weight files staged for commit.
@@ -285,16 +295,34 @@ After PEK-IMPL ships new code to `apps/pdf-extractor/`, ops must rebuild the Doc
 
 ---
 
+## REQ-PEK-11 — Market-Hours Isolation (Hard Constraint — APPENDED 2026-05-26)
+
+**DDD Layer:** Interface (route-level HTTP guard) + Infrastructure (cron schedule)
+**Priority:** CRITICAL — enforces the user's hard constraint "this pdf service never run on market open time"
+
+### Goal statement
+
+The pdf-extractor heavy-model extraction MUST NEVER run during VN HOSE trading hours (Mon–Fri 02:00–08:59 UTC = 09:00–15:59 ICT). Two-layer enforcement per architect brief §4: Layer 1 (cron timing — the `bctcReparseJob` schedule fires only off-market) + Layer 2 (runtime HTTP guard — `POST /pek-extract` returns HTTP 503 during market hours, before any model load). The model RSS must stay at cold-start baseline during a market-open instant. Source: architect brief `docs/architecture-briefs/2026-05-26-pek-integrate-design.md` §10 (verbatim below).
+
+### Testable acceptance criteria
+
+- [ ] **AC-PEK-NEW-1 (market-hours guard prevents model load during session):** During a simulated VN market-open window (e.g. a test call sent at 03:00 UTC Monday), `POST /pek-extract` returns HTTP 503 with `{"error": "market_open"}` and the container RSS (measured by `docker stats pdf-extractor`) does not rise above the cold-start baseline (~100 MB). No model weight is loaded. No HuggingFace or PaddleHub download log appears. Verifiable by ops: call the endpoint manually with a spoofed time parameter OR at an actual open-hours instant; confirm 503 + no RSS spike.
+
+- [ ] **AC-PEK-NEW-2 (cron fires off-market only):** `docker compose exec mcp-server bun -e 'const {CRONS} = require("./src/scheduler/cronConfig.js"); console.log(CRONS.bctcReparseJob)'` returns a cron expression that does NOT fire between 02:00 and 08:59 UTC on weekdays. Verifiable by parsing the cron expression: hour field must not include values 2-8 for weekday entries. Target value: `CRON_BCTC_REPARSE_JOB=0 21 * * *` (21:00 UTC = 04:00 ICT next day, deep off-market).
+
+---
+
 ## Done-Bar (Scale-Pilot Bar — Do NOT Close Early)
 
-The sprint is NOT done until ALL six conditions hold simultaneously. No partial green is accepted. The 5 prior false-greens on this surface mandate this bar.
+The sprint is NOT done until ALL SEVEN conditions hold simultaneously. No partial green is accepted. The 5 prior false-greens on this surface mandate this bar.
 
 1. **Live BCTC rows are CLEAN** across the multi-doc corpus (AC-PEK-7a through 7e) — measured by DIRECT market.db query, never the (stale-capable) endpoint; NOT-RUN panels are not green; measured corpus pass-rate, not one doc.
 2. **Fleet within 8GB / NO kernel panic** under load — ops captures resident + peak RSS during a real single-doc extraction with the full fleet running (AC-PEK-2b, AC-PEK-2c).
 3. **`/api` PULL contract unbroken** (mcp-server still pulls extractions end-to-end — AC-PEK-5a through 5d) and **`bctc_table_rows` unregressed** (AC-PEK-6a through 6d).
-4. **ZERO lines of `PDF-Extract-Kit/` modified** — git-diff proof on the subtree's own `.git` (AC-PEK-0a through 0c).
+4. **ZERO lines of `PDF-Extract-Kit/` modified** — git-diff proof on the subtree's own `.git` (AC-PEK-0a through 0c, AC-PEK-3a(c)). Editable install reads the source; never writes to it. Source tree PRESENT + zero-diff; `.git/` excluded from image; weights NOT baked (image < 2GB — AC-PEK-3a(a)/(b)).
 5. **ops REBUILT** (not restarted) the pdf-extractor container after the dev change (AC-PEK-10a through 10c).
-6. **USER verbal G9 sign-off.** Goal stays ARMED until the user says so.
+6. **Market-hours isolation enforced** — heavy extraction NEVER runs during VN HOSE session (Mon–Fri 02:00–08:59 UTC); two-layer guard verified (AC-PEK-NEW-1 runtime 503 + no RSS rise, AC-PEK-NEW-2 cron off-market only).
+7. **USER verbal G9 sign-off.** Goal stays ARMED until the user says so.
 
 ---
 
@@ -325,6 +353,7 @@ The sprint is NOT done until ALL six conditions hold simultaneously. No partial 
 | REQ-PEK-8 (LF-OVERLAY contract reuse) | — | — | Zone-geometry storage | Overlay rendering contract |
 | REQ-PEK-9 (privacy + locality) | — | Execution mode (sequential) | Tool selection (local-only) | — |
 | REQ-PEK-10 (ops REBUILD) | — | — | Deployment pipeline | — |
+| REQ-PEK-11 (market-hours isolation) | — | — | Cron schedule | Route-level HTTP 503 guard |
 
 ---
 

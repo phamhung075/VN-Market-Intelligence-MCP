@@ -139,3 +139,26 @@ Re-engine the BCTC table-extraction path of `apps/pdf-extractor` onto the publis
 - **LF-OVERLAY zone:** **single** — no new mcp-server code. mcp-server overlay handler from LF-OVERLAY brief §3.2 is reused as-is (or implemented as part of PEK-IMPL if LF-OVERLAY is still PAUSED).
 
 **Next:** PM decomposes PEK-IMPL into atomic tasks for dev-pdf-extractor. PM also includes the `docker-compose.yml` schedule fix (Layer-1 market-hours constraint) in scope. dev-pdf-extractor is the sole code implementer for the pdf-extractor zone.
+
+---
+
+### [PO] PEK-INTEGRATE — REQ AMENDED 2026-05-26T21:03:47Z (resolves architect R-CRIT-1 + §10 new ACs)
+
+**Spec file:** `docs/REQ_PEK-INTEGRATE.md` — `status: APPROVED (AMENDED 2026-05-26T21:03:47Z)`.
+**PEK-IMPL is UNBLOCKED against the amended spec.** Two REQ amendments (PO-owned, BLOCKING PEK-IMPL until now) are resolved:
+
+1. **AC-PEK-3a REWRITTEN (R-CRIT-1):** the prior wording ("`ls /app/PDF-Extract-Kit` = No such file/dir") CONTRADICTED the architect's chosen `pip install -e ./PDF-Extract-Kit` editable install (which REQUIRES the source tree present in the container at `/app/PDF-Extract-Kit/`). Pristine invariant is now preserved by **zero-diff, NOT absence**:
+   - (a) `.git/` subdirectory excluded from the image (`docker run --rm <img> ls /app/PDF-Extract-Kit/.git` → No such file; source `.py`/`.yaml` ARE present).
+   - (b) model weights NEVER baked into the image (`docker image inspect <img>` size < 2GB; weights only in named volume `pek_model_cache`).
+   - (c) `git -C apps/pdf-extractor/PDF-Extract-Kit diff` returns EMPTY (zero edits to the pristine clone — user hard constraint "repo publish, dont touch" = zero-diff).
+
+2. **AC-PEK-NEW-1 + AC-PEK-NEW-2 APPENDED (new REQ-PEK-11):** market-hours isolation, verbatim from brief §10. Enforces user hard constraint "this pdf service never run on market open time."
+   - NEW-1 (runtime guard): `POST /pek-extract` returns HTTP 503 `{"error":"market_open"}` + container RSS stays at cold-start baseline (no model load, no HF/PaddleHub download) during a simulated VN market-open instant (Mon 03:00 UTC).
+   - NEW-2 (cron timing): `bctcReparseJob` cron must NOT fire 02:00–08:59 UTC weekdays. Target `CRON_BCTC_REPARSE_JOB=0 21 * * *`.
+   - Added to Done-Bar as condition #6 (bar is now SEVEN conditions, was six).
+
+**R-CRIT-2 + R-CRIT-3 — RESOLVED by architect in-brief; NOTED for dev-pdf-extractor (no REQ change needed):**
+- **R-CRIT-2:** no `TableMaster` model class exists in the pristine clone — table extraction uses `PaddleOCR` PP-StructureV2 table mode DIRECTLY (the `paddleocr==2.7.3` package from application code, NOT via the PEK task framework). This is NOT an edit to PDF-Extract-Kit.
+- **R-CRIT-3:** `struct_eqtable.py` hard-asserts `torch.cuda.is_available()` (fails on this CPU-only host). `pek_engine_adapter.py` must import ONLY `LayoutDetectionTask` + `OCRTask` explicitly — NEVER `TableParsingTask` or `FormulaDetectionTask` (both fail at import on CPU). Unit test must assert no CUDA import in the extraction path.
+
+**Pipeline state:** PEK-IMPL (dev-pdf-extractor) → PEK-DEPLOY (ops, REBUILD not restart per REQ-PEK-10 + AC-PEK-10a–c) → PEK-QA (qa: direct market.db row check + FPT Q4 2025 sentinel report_id `e71f845d-ffa5-48f9-8f09-30ac2cd09c65` + RSS sampling + pristine git-diff + market-hours 503 check) → PEK-EXIT (po) → USER verbal G9.
