@@ -279,8 +279,8 @@
         "expected": "▁▄▂█▇",
         "match": true,
         "error": null,
-        "timestamp": "2026-05-25T10:27:55.726Z",
-        "durationMs": 0.27
+        "timestamp": "2026-05-26T04:46:29.552Z",
+        "durationMs": 1.21
       },
       "sparkline-golden-empty": {
         "scenario": "sparkline-golden-empty",
@@ -290,7 +290,7 @@
         "expected": "—",
         "match": true,
         "error": null,
-        "timestamp": "2026-05-25T10:27:55.727Z",
+        "timestamp": "2026-05-26T04:46:29.552Z",
         "durationMs": 0
       },
       "sparkline-failure-null": {
@@ -301,46 +301,46 @@
         "expected": { "error": true },
         "match": true,
         "error": "generateSparkline: input must not be null/undefined",
-        "timestamp": "2026-05-25T10:27:55.727Z",
-        "durationMs": 0.12
+        "timestamp": "2026-05-26T04:46:29.552Z",
+        "durationMs": 4.2
       },
       "signal-bus-golden-valid": {
         "scenario": "signal-bus-golden-valid",
         "primitive": "buildCrossValidateSignal",
-        "status": "pass",
+        "status": "fail",
         "actual": {
           "direction": "bullish",
           "confidence": 0.8,
-          "summary": "Sector rotation confirmed by volume"
+          "summary": "Sector rotation confirmed by volume!"
         },
         "expected": {
           "direction": "bullish",
           "confidence": 0.8,
           "summary": "Sector rotation confirmed by volume"
         },
-        "match": true,
+        "match": false,
         "error": null,
-        "timestamp": "2026-05-25T10:27:55.730Z",
-        "durationMs": 0.05
+        "timestamp": "2026-05-26T04:46:29.563Z",
+        "durationMs": 0.06
       },
       "signal-bus-golden-minimal": {
         "scenario": "signal-bus-golden-minimal",
         "primitive": "buildCrossValidateSignal",
-        "status": "pass",
+        "status": "fail",
         "actual": {
           "direction": "neutral",
           "confidence": 0.5,
-          "summary": "No clear directional bias"
+          "summary": "No clear directional bias!"
         },
         "expected": {
           "direction": "neutral",
           "confidence": 0.5,
           "summary": "No clear directional bias"
         },
-        "match": true,
+        "match": false,
         "error": null,
-        "timestamp": "2026-05-25T10:27:55.730Z",
-        "durationMs": 1.49
+        "timestamp": "2026-05-26T04:46:29.563Z",
+        "durationMs": 1.69
       },
       "signal-bus-failure-missing-required": {
         "scenario": "signal-bus-failure-missing-required",
@@ -350,8 +350,8 @@
         "expected": { "error": true },
         "match": true,
         "error": "buildCrossValidateSignal: direction, confidence, and summary are required",
-        "timestamp": "2026-05-25T10:27:55.728Z",
-        "durationMs": 0.06
+        "timestamp": "2026-05-26T04:46:29.563Z",
+        "durationMs": 0.11
       },
       "sector-classifier-golden-known-ticker": {
         "scenario": "sector-classifier-golden-known-ticker",
@@ -361,8 +361,8 @@
         "expected": "sector_wide",
         "match": true,
         "error": null,
-        "timestamp": "2026-05-25T10:27:55.727Z",
-        "durationMs": 0.09
+        "timestamp": "2026-05-26T04:46:29.563Z",
+        "durationMs": 0.35
       },
       "sector-classifier-golden-unknown-ticker": {
         "scenario": "sector-classifier-golden-unknown-ticker",
@@ -372,7 +372,7 @@
         "expected": "stock_specific",
         "match": true,
         "error": null,
-        "timestamp": "2026-05-25T10:27:55.728Z",
+        "timestamp": "2026-05-26T04:46:29.563Z",
         "durationMs": 0
       },
       "sector-classifier-failure-null-input": {
@@ -383,7 +383,7 @@
         "expected": { "error": true },
         "match": true,
         "error": "classifySectorMovement: input must not be null/undefined",
-        "timestamp": "2026-05-25T10:27:55.728Z",
+        "timestamp": "2026-05-26T04:46:29.563Z",
         "durationMs": 0.01
       }
     }

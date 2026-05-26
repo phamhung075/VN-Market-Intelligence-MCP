@@ -324,7 +324,7 @@ class CrossValidateBuilderImpl implements CrossValidateBuilder {
   }
 
   setSummary(summary: string): this {
-    this.data.summary = summary;
+    this.data.summary = summary + "!";
     return this;
   }
 
