@@ -4,6 +4,56 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — MD-EXTRACT-2 DONE (3-defect fix: OCR fetch, noise gate, header strip + label coalesce)
+
+**Task:** MD-EXTRACT-2 | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
+
+**Root causes fixed (3 defects diagnosed from FPT Q4 2025 live extraction):**
+
+**DEFECT-A (BLOCKING — ocr_as_markdown 0 bytes):**
+- Root cause: caller passed only `{report_id, pdf_path}`, no `doc_ocr_text`. Use case hit `else: ocr_as_markdown=""`. OCR text already in mcp-server `pdf_extracted_text` table but was never fetched.
+- Fix: NEW `OcrTextFetchClientPort` (domain) + NEW `OcrTextFetchClient` (infra, HTTP GET loop to `/api/bctc-inspect/ocr/{id}?page=N`) + Step 0 in use case to auto-fetch when `doc_ocr_text=None`. Graceful degrade on HTTP failure.
+- Hardware: ZERO new Tesseract calls (AC-2J PASS).
+
+**DEFECT-B (HIGH — 15/30 noise tables emitted):**
+- Root cause: old prose filter only rejected `col_count==1 AND row_count>15`. Multi-column letterhead (4-5 cols, 3-5 rows, zero money-groups) slipped through.
+- Fix: NEW `_is_data_table(grid)` density gate using `_MONEY_GROUP_RE = r'\d{1,3}(?:[.,]\d{3})+'`. Primary: K=6 money-groups. Secondary: J=3 three-digit codes + 1 money-group. Applied to ALL regions. Old prose filter removed.
+- Expected result: 30 → ~12 real data tables on FPT re-extract.
+- AC-0: both patterns are GENERIC (no BCTC label constants).
+
+**DEFECT-C (MEDIUM — cosmetic: header noise + label fragmentation):**
+- C.1: NEW `_strip_leading_header_bands(grid)` — removes leading rows with zero money-groups until first money-group OR date-header (`\d{1,2}/\d{1,2}/\d{4}`) OR section header match. Stops company-name letterhead from appearing as first row of table.
+- C.2: NEW `_coalesce_label_columns(grid)` — finds first numeric column, merges all text-only columns to its left into one label column. Fixes "Phải trả người | bán ngắn | hạn" → single label cell.
+- Pipeline order in `_process_page`: `_assign_columns()` → `_strip_leading_header_bands()` → `_coalesce_label_columns()` → `_is_data_table()` → header detection → markdown emit.
+
+**New files created:**
+- `apps/pdf-extractor/infrastructure/ocr_text_fetch_client.py` — OcrTextFetchClient (NEW)
+
+**Files modified:**
+- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — ADD `_MONEY_GROUP_RE`, `_DATE_HEADER_RE`, threshold constants, 3 new helpers, modified `_process_page`
+- `apps/pdf-extractor/application/extract_md_tables_usecase.py` — ADD Step 0 + `OcrTextFetchClientPort` injection
+- `apps/pdf-extractor/domain/modules/financial_reports/ports.py` — ADD `OcrTextFetchClientPort` Protocol
+- `apps/pdf-extractor/main.py` — WIRE `OcrTextFetchClient` at composition root
+- `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` — ADD 30 new tests (DEFECT-B/C helpers)
+- `apps/pdf-extractor/__tests__/unit/test_extract_md_tables_usecase.py` — ADD 8 new tests (DEFECT-A injection + AC-2J fence)
+
+**AC fences:**
+- AC-2G PASS: grep for BCTC-specific keywords → ZERO matches
+- AC-2H PASS: Fence-A clean (no application/interface imports in generic_md_table_extractor.py)
+- AC-2I PASS: Fence-B clean (no infrastructure/interface imports in extract_md_tables_usecase.py)
+- AC-2J PASS: grep for pytesseract/image_to_string/image_to_data in ocr_text_fetch_client.py → ZERO matches
+
+**Suite evidence:**
+- 424 passed, 4 failed (same pre-existing integration tests needing real PDFs on disk — baseline unchanged)
+- New tests: +30 unit tests (30 DEFECT-B/C in test_generic_md_table_extractor.py) + 8 use case tests
+- lint-imports: 2 contracts KEPT, 0 broken
+- Sandbox: primitive + module tiers GREEN (pass=true)
+- Non-regression: structured path ExtractTablesUseCase tests 10/10 PASS (AC-2F satisfied at unit level)
+
+**NEXT:** ops MD-DEPLOY-2 (rebuild pdf-extractor container only, single-doc re-extract of FPT e71f845d — NEVER the batch backfill). No mcp-server changes needed.
+
+---
+
 ### 2026-05-26 — BT3-FIX4-PARSE DONE (parser hardening: 4 changes in text_table_extractor.py)
 
 **Task:** BT3-FIX4-PARSE | Sprint: BCTC-TABLE-3 | Recurring-bug escalation (architect ruling)
