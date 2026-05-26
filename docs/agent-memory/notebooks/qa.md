@@ -1,5 +1,80 @@
 # QA — Notebook
 
+## cycle-125 · 2026-05-26 · P2-Z (frontend Phase-2 close-gate) — APPROVED
+
+**Task:** P2-Z — Phase-2 close-gate verification | **Verdict:** APPROVED — PO authorized for 12/12 terminal flip
+
+```
+date: 2026-05-26T15:30:00Z
+type: scale-pilot-close-gate (frontend Phase-2 final verification)
+task: P2-Z
+signal: docs/signals/qa-frontend-p2-close-2026-05-26T153000Z.json
+
+run_results:
+  vitest:     183/183 PASS (18 files) — independently re-run. EXIT:0
+  tsc:        exit 0 (0 errors)
+  lint_fence: exit 0 (deprecation warnings non-blocking; Fence-A/B/C enforced)
+
+tags_intact:
+  frontend-pre-ci:     3fbbd5e021c1b5a611a96ca23ed72ed0790a841a (PRESENT)
+  frontend-pre-inject: 5eb73272560bc39c1b9d5daac1636d614a8ce1f8 (PRESENT)
+
+gate_verdicts:
+  G4 (fence enforced):
+    lint:fence EXIT:0; freeze-anchor 9cc11a31 (no newer commit)
+    violation proof: Fence-A exit 1 + "Fence-A" in output → revert → exit 0 (never staged)
+    signal: qa-frontend-g4-p2d-2026-05-26T125100Z.json
+    verdict: PASS
+
+  G7 (edit-rerun / zero-creds):
+    EARNED from Phase-1 P1-E (docs/handoffs/TASK_P1-FE-WAVE-A-20260525T1020Z.md)
+    edit-rerun: direction-arrow.test.ts expect '▲' → RED → revert → GREEN
+    zero-creds: grep API_KEY|TOKEN|SECRET|PASSWORD|DB_PATH in app/__tests__/ + tests/ → exit 1
+    app/lib/api/client.ts process.env['API_GATEWAY_URL'] = infrastructure SSR config, exempt
+    verdict: PASS
+
+  G9 (ops live-recheck 4/4):
+    signal: ops-frontend-p2h-rerun-2026-05-26T13-24Z.json
+    image: ca0bad818411 → 13fe4167 (includes a0364390 macro-contract fix)
+    Playwright: 4/4 PASS against port 3001
+    analysis route: /dashboard/analysis HTTP 200 (was 500 signals.map error)
+    macro signals: keyed-object 6 keys (architect ruling 1d277bc7)
+    verdict: PASS
+
+  G10 (AI fixes bug ≤2 cycles):
+    inject: 4aef229c (direction-arrow.ts ↑→↑↑ + G10-INJECTED-BUG comment)
+    fix: c1df64ac (1 cycle — blind diagnosis from test output only)
+    G10-INJECTED-BUG grep: exit 1 (comment removed); git diff pre-inject..fix = empty
+    verdict: PASS (1 cycle ≤ 2)
+
+  G11 (regression alarm 2-trial):
+    signal: qa-frontend-g11-p2g-2026-05-26T130213Z.json
+    trial-1: direction-arrow ↑→↑↑ (P2-E/F alias) → analysis-vm.test.ts 2 tests RED → fix → 179/179
+    trial-2: change-pct.ts ↑→+ (working-tree only, never staged) → analysis-vm.test.ts 2 RED → revert → 179/179
+    outcome-(a)×2; both source files canonical
+    verdict: PASS
+
+  G1/G2/G6/G8 (Phase-1 YES — reconfirmed):
+    vitest 183/183; playwright 4/4 (P2-H); honest-green grep exit 1; DDD fence exit 0
+    verdict: RECONFIRMED
+
+  G12 (EARNED-PENDING — reconfirmed):
+    grep -c render-green .claude/flows/dev-frontend/main.md = 2; streak 3/3 intact
+    verdict: EARNED-PENDING (PO flips YES at 12/12 terminal close)
+
+  G3: N/A (Remix IS composition root; app/root.tsx 60L layout only). CONFIRMED N/A.
+  G5: N/A (no prior mcp-server location). CONFIRMED N/A.
+
+constraints:
+  pilot_status_touched: false
+  no_goal_flips: true
+  zone: read-only apps/frontend/ + docs/ (wrote signal + notebook only)
+
+NEXT: po → terminal atomic 12/12 flip + decisionMatrix + verdict=scale + status=DONE
+```
+
+---
+
 ## cycle-124 · 2026-05-26 · P2-G (frontend G11 regression-alarm 2-trial coupling proof) — PASS
 
 **Task:** P2-G — G11 regression alarm, 2-trial coupling proof | **Verdict:** G11 outcome-(a)x2 PASS — P2-H READY

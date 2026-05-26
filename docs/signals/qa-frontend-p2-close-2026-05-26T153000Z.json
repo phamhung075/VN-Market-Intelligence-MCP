@@ -1,0 +1,283 @@
+{
+  "type": "close-gate-signal",
+  "from": "qa",
+  "to": "po",
+  "task_id": "P2-Z",
+  "pilot": "frontend",
+  "verdict": "APPROVED",
+  "emitted_at": "2026-05-26T15:30:00Z",
+  "qa_cycle": 125,
+  "no_goal_flip": true,
+  "pilot_status_untouched": true,
+  "note": "QA independently verified all P2-Z ACs. PO is authorized to perform terminal 12/12 atomic flip.",
+
+  "run_results": {
+    "vitest": {
+      "command": "cd apps/frontend && npm test",
+      "test_files": 18,
+      "tests_pass": 183,
+      "tests_fail": 0,
+      "exit_code": 0,
+      "breakdown": "179 Phase-1 tests + 4 keyed-object contract tests (1934-macro-panel.test.ts, MacroSnapshot signals describe block) from a0364390",
+      "verdict": "PASS"
+    },
+    "tsc": {
+      "command": "cd apps/frontend && npm run typecheck",
+      "exit_code": 0,
+      "errors": 0,
+      "verdict": "PASS"
+    },
+    "lint_fence": {
+      "command": "cd apps/frontend && npm run lint:fence",
+      "exit_code": 0,
+      "errors": 0,
+      "warnings": "deprecated rule name + legacy selector syntax (non-blocking — exit 0 confirmed)",
+      "verdict": "PASS"
+    }
+  },
+
+  "tags_intact": {
+    "frontend-pre-ci": {
+      "sha": "3fbbd5e021c1b5a611a96ca23ed72ed0790a841a",
+      "exists": true
+    },
+    "frontend-pre-inject": {
+      "sha": "5eb73272560bc39c1b9d5daac1636d614a8ce1f8",
+      "exists": true
+    },
+    "verdict": "PASS — both pre-revert tags intact"
+  },
+
+  "phase2_commit_range_check": {
+    "range": "frontend-pre-ci..ad06fdd0",
+    "frontend_zone_commits": [
+      "437e8514 feat(p2-fe/frontend): P2-B eslint-plugin-boundaries Fence-A/B/C + lint:fence script",
+      "9cc11a31 fix(p2-fe/frontend): P2-B fence config — mode:full + TS resolver + rule order",
+      "4aef229c test(p2-fe/frontend): P2-E G10 deliberate primitive bug injection [QA ONLY]",
+      "c1df64ac fix(p2-fe/frontend): P2-F G10 blind-fix formatDirectionArrow",
+      "a0364390 fix(p2-fe/frontend): adapt MacroSnapshot.signals to keyed-object contract"
+    ],
+    "concurrent_non_frontend_commit": {
+      "sha": "3e4a00c4",
+      "scope": "apps/macro-indicators/",
+      "note": "Concurrent fix by dev-macro-indicators (different agent/zone). Not a frontend scope violation — all work on main per no-branch policy. Frontend anti-scope-creep clause governs dev-frontend agent output only."
+    },
+    "verdict": "PASS — no frontend agent scope-creep detected"
+  },
+
+  "honest_green": {
+    "probe": "grep -rn .only/.skip/xit/xtest/describe.skip across apps/frontend/app/__tests__/ app/domain/ app/lib/ tests/",
+    "result": "0 matches (grep exit 1)",
+    "injected_bug_markers_in_source": "0 matches (G10-INJECTED-BUG grep exit 1)",
+    "verdict": "PASS — zero test deception"
+  },
+
+  "gate_evidence": {
+
+    "G4_architecture_fence_enforced": {
+      "gate": "G4",
+      "status": "VERIFIED",
+      "probe_eslint_config_exists": "apps/frontend/eslint.config.mjs — PRESENT (commit 437e8514, fixed 9cc11a31)",
+      "probe_lint_fence_exit": "npm run lint:fence → EXIT:0 (0 errors, 0 warnings-as-errors)",
+      "freeze_anchor": {
+        "probe": "git log --oneline -- apps/frontend/eslint.config.mjs | head -1",
+        "result": "9cc11a31 fix(p2-fe/frontend): P2-B fence config — mode:full + TS resolver + rule order",
+        "no_newer_commit": true,
+        "signal_ref": "docs/signals/qa-frontend-g4-p2d-2026-05-26T125100Z.json"
+      },
+      "deliberate_violation_proof": {
+        "task": "P2-D (cycle-123, also P2-C cycle confirmed in ac2_fence_honesty_proof of P2-D signal)",
+        "violation_line": "import type { ApiResponse } from '~/lib/api/client.js'; // DELIBERATE-VIOLATION-TEST QA P2-D",
+        "injected_in": "apps/frontend/app/domain/formatters/direction-arrow.ts",
+        "exit_code_with_violation": 1,
+        "fence_a_in_output": "Fence-A: domain/formatters must not import api-client layer  boundaries/element-types",
+        "post_revert_exit": 0,
+        "git_status_after_revert": "empty (CLEAN — never staged)",
+        "never_committed": true,
+        "signal_ref": "docs/signals/qa-frontend-g4-p2d-2026-05-26T125100Z.json"
+      },
+      "verdict": "PASS"
+    },
+
+    "G7_edit_json_rerun_zero_creds": {
+      "gate": "G7",
+      "status": "VERIFIED (EARNED from Phase-1 P1-E evidence)",
+      "calibration_note": "Per Phase-2 task plan §G7 Calibration: G7 was EARNED from P1-E (Phase-1). Phase-2 build work not required.",
+      "p1e_handoff_ref": "docs/handoffs/TASK_P1-FE-WAVE-A-20260525T1020Z.md",
+      "edit_rerun_proof": {
+        "ac1_edit_rerun": "Edited direction-arrow.test.ts expected '▲' instead of '↑'. Vitest RED: 1 failed/178 passed. Reverted → 179 GREEN. PRESENT in handoff §G7 Proof.",
+        "verdict": "PASS"
+      },
+      "zero_creds_proof": {
+        "ac3_grep": "grep -rE 'API_KEY|TOKEN|SECRET|PASSWORD|DB_PATH' apps/frontend/app/__tests__/ apps/frontend/tests/ → Exit 1 (0 matches)",
+        "ac4_domain_process_env": "grep -rE 'process\\.env\\.' apps/frontend/app/domain/formatters/ → Exit 1 (0 matches)",
+        "api_client_process_env_note": "process.env['API_GATEWAY_URL'] at app/lib/api/client.ts:20-21 is infrastructure-layer SSR config — exempt from domain security scan per cycle-114 precedent. Not a secret, not in test or domain directories.",
+        "verdict": "PASS"
+      },
+      "independent_rescan": {
+        "probe": "grep -rn API_KEY|TOKEN|SECRET|PASSWORD|DB_PATH|process.env across app/__tests__/ app/domain/ app/lib/ tests/",
+        "result": "Only match: app/lib/api/client.ts lines 20-21 (infrastructure layer, SSR config, non-secret). 0 matches in test or domain directories.",
+        "verdict": "PASS"
+      },
+      "verdict": "PASS"
+    },
+
+    "G9_dashboard_trust_contract": {
+      "gate": "G9",
+      "status": "VERIFIED",
+      "grading_basis": "ops live-recheck (NOT user verbal sign-off — per MEMORY feedback_trust_verification_is_system_job; awaitingUserG9Signoff gate RETIRED 2026-05-26T08:30Z)",
+      "signal_ref": "docs/signals/ops-frontend-p2h-rerun-2026-05-26T13-24Z.json",
+      "container_rebuild": {
+        "prior_image": "ca0bad818411",
+        "new_image": "13fe4167dbf243d73a460bc5bb2fe072d9bed8f58ec5c099c7bdbbd05c6eaa2d",
+        "commit_included": "a0364390 (MacroSnapshot.signals keyed-object adaptation)"
+      },
+      "playwright_results": {
+        "total": 4,
+        "passed": 4,
+        "failed": 0,
+        "tests": [
+          "homepage renders with a meaningful title — PASS",
+          "dashboard nav renders — PASS",
+          "analysis stock selector renders — PASS",
+          "graceful degrade on API error — PASS"
+        ]
+      },
+      "analysis_route": {
+        "route": "/dashboard/analysis",
+        "http_status": 200,
+        "note": "Previously 500 (snapshot.signals.map is not a function). Fixed by a0364390 adapting to keyed-object contract per architect ruling 1d277bc7."
+      },
+      "macro_contract": {
+        "signals_type": "object (keyed-object Record<string, MacroSignalEntry>)",
+        "signals_key_count": 6,
+        "signal_keys": ["investment-clock", "oil", "gold", "usdvnd", "carry", "yield"],
+        "verdict": "PASS — matches canonical contract"
+      },
+      "incident_resolved": {
+        "incident_signal": "docs/signals/ops-frontend-p2h-incident-20260526T150702Z.json",
+        "resolution": "Architect ruling 1d277bc7 (keyed-object IS canonical) + dev-frontend a0364390 (frontend adapts) + ops rerun PASS"
+      },
+      "verdict": "PASS"
+    },
+
+    "G10_ai_fixes_bug_le2_cycles": {
+      "gate": "G10",
+      "status": "VERIFIED",
+      "inject_task": "P2-E",
+      "fix_task": "P2-F",
+      "inject_commit": "4aef229c",
+      "fix_commit": "c1df64ac",
+      "cycles_used": 1,
+      "max_cycles_allowed": 2,
+      "signal_refs": [
+        "docs/signals/qa-frontend-p2e-inject-2026-05-26T125333Z.json",
+        "docs/signals/dev-frontend-p2f-fix-20260526T125755Z.json"
+      ],
+      "g10_injected_bug_comment_removed": {
+        "probe": "grep 'G10-INJECTED-BUG' apps/frontend/app/domain/formatters/direction-arrow.ts",
+        "result": "0 matches (grep exit 1)",
+        "verdict": "PASS"
+      },
+      "exact_restoration_proof": {
+        "probe": "git diff frontend-pre-inject..c1df64ac -- apps/frontend/app/domain/formatters/direction-arrow.ts",
+        "result": "empty (no diff output — exact canonical state restored)",
+        "verdict": "PASS"
+      },
+      "blind_fix_confirmed": {
+        "dispatch_note": "Dev dispatched with only 'Vitest is RED — 3 tests failing. Fix it.' No file/line/mutation hint provided.",
+        "diagnosis_source": "Vitest failure output (expected '↑' to be '↑↑') only",
+        "verdict": "PASS"
+      },
+      "vitest_green_after_fix": "183/183 PASS (independently re-run by QA P2-Z gate)",
+      "verdict": "PASS"
+    },
+
+    "G11_regression_alarm_bell": {
+      "gate": "G11",
+      "status": "VERIFIED",
+      "task": "P2-G",
+      "signal_ref": "docs/signals/qa-frontend-g11-p2g-2026-05-26T130213Z.json",
+      "trial_1": {
+        "primitive": "apps/frontend/app/domain/formatters/direction-arrow.ts",
+        "mutation": "symbol 'up' → '↑↑' (P2-E/P2-F alias)",
+        "inject_commit": "4aef229c",
+        "fix_commit": "c1df64ac",
+        "coupled_consumer_file": "app/lib/view-models/analysis-vm.test.ts",
+        "coupled_tests_red": 2,
+        "coupled_test_names": [
+          "buildWatchlistTileVM > direction up returns upward arrow symbol and green class",
+          "buildWatchlistTileVM > multi-formatter: both formatChangePct and formatDirectionArrow outputs present in view model"
+        ],
+        "total_files_red": 2,
+        "single_edit_fix": true,
+        "post_fix": "179/179 GREEN",
+        "outcome": "outcome-(a)"
+      },
+      "trial_2": {
+        "primitive": "apps/frontend/app/domain/formatters/change-pct.ts",
+        "mutation": "symbol '↑' → '+' for positive changePct (working-tree only — never staged, never committed)",
+        "committed": false,
+        "coupled_consumer_file": "app/lib/view-models/analysis-vm.test.ts",
+        "coupled_tests_red": 2,
+        "coupled_test_names": [
+          "buildWatchlistTileVM > tile with price returns hasPrice=true and formatted display",
+          "buildWatchlistTileVM > market-data-policy: view model output includes direction + delta, never bare snapshot"
+        ],
+        "total_files_red": 2,
+        "single_edit_fix": true,
+        "post_fix": "179/179 GREEN",
+        "git_status": "clean (nothing staged, nothing committed)",
+        "outcome": "outcome-(a)"
+      },
+      "outcome_a_x2": true,
+      "coupling_boundary": "domain/formatters → lib/view-models (analysis-vm.ts)",
+      "both_mutations_reverted": true,
+      "verdict": "PASS"
+    },
+
+    "G1_G2_G6_G8_reconfirmed": {
+      "gate": "G1+G2+G6+G8",
+      "status": "RECONFIRMED",
+      "basis": "Originally verified by QA cycle-114 (commit c85f577c). Regression tripwires re-run by QA P2-Z.",
+      "vitest_rerun": "183/183 PASS (18 files) — direction-arrow/change-pct/signal-type-label/stale-badge/analysis-vm formatters + view-model all GREEN",
+      "playwright_rerun_via_p2h": "4/4 PASS (ops P2-H signal) — render-gate: nav/links/Vietnamese/ticker/no-error-strings/title",
+      "market_data_policy_test": "change-pct.test.ts 'never returns bare number — market-data policy' + analysis-vm.test.ts 'market-data-policy: view model output includes direction + delta' both PASS in 183-test run",
+      "ddd_scan": {
+        "formatters_no_api_imports": "grep 'from.*lib/api' apps/frontend/app/domain/formatters/ → 0 (Fence-A guarantees this)",
+        "view_models_no_api_imports": "Fence-B enforces; lint:fence exits 0",
+        "verdict": "PASS"
+      },
+      "verdict": "RECONFIRMED"
+    },
+
+    "G12_earned_pending_streak_reconfirmed": {
+      "gate": "G12",
+      "status": "EARNED-PENDING — reconfirmed",
+      "streak": "3/3 COMPLETE (P1-B1 + P1-B2 + P1-C)",
+      "flow_gate_intact": {
+        "probe": "grep -c 'render-green' .claude/flows/dev-frontend/main.md",
+        "result": "2 matches",
+        "verdict": "PASS — DoD gate baked"
+      },
+      "terminal_note": "PO flips YES at 12/12 terminal close only (per §4.5)",
+      "verdict": "RECONFIRMED — EARNED-PENDING"
+    },
+
+    "G3_na_justification": {
+      "gate": "G3",
+      "status": "CONFIRMED N/A",
+      "justification": "Remix IS the composition root for a UI service. app/root.tsx is 60 lines, layout+error-boundary only, zero domain operations. Brownfield §8 + Phase-2 plan §N/A Calibrations both confirm G3=N/A. Forced extraction of composition-root.ts would be empty boilerplate.",
+      "verdict": "N/A — justified"
+    },
+
+    "G5_na_justification": {
+      "gate": "G5",
+      "status": "CONFIRMED N/A",
+      "justification": "Frontend has no prior mcp-server location. It has always been a standalone Remix app at apps/frontend/. No G5a (deprecated source) to delete, no G5b HTTP rewire needed (already fetches from api-gateway:4000 via lib/api/client.ts). Brownfield §6 + Phase-2 plan §N/A Calibrations confirm G5=N/A.",
+      "verdict": "N/A — justified"
+    }
+  },
+
+  "next": "PO performs terminal atomic 12/12 flip + decisionMatrix + verdict=scale + status=DONE in ONE commit on docs/data/pilot-status-frontend.json."
+}
