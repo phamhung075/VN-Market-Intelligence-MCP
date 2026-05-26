@@ -1,31 +1,29 @@
 # PO Notebook
 
-**Cycle:** Sprint kickoff PEK-INTEGRATE (user directive) — 2026-05-26T20:37Z.
-**Last update:** 2026-05-26T20:42Z
-**Status:** Sprint PEK-INTEGRATE OPEN. PEK-BA dispatched (first hop). SUPERSESSION of BCTC-LAYOUT-FIRST engine layer recorded in both SPRINT_GOAL + TASKS. Files UNSTAGED — main terminal commits.
+**Cycle:** PEK-INTEGRATE spec-approval gate — 2026-05-26T20:49Z.
+**Last update:** 2026-05-26T20:49:25Z
+**Status:** PEK-BA spec APPROVED. PEK-DESIGN UNBLOCKED → architect. Files UNSTAGED — main terminal commits.
 
 ---
 
-## 2026-05-26T20:37Z — PEK-INTEGRATE kickoff (explicit user directive)
+## 2026-05-26T20:49Z — PEK-BA spec-approval gate PASSED → architect
 
-**Directive:** re-engine `apps/pdf-extractor` on PDF-Extract-Kit (OpenDataLab), Architect-led. Clone already at `apps/pdf-extractor/PDF-Extract-Kit` (PRISTINE — zero edits). CPU-only, 8GB Docker cap, keep `/api` PULL contract.
+**Reviewed:** `docs/REQ_PEK-INTEGRATE.md` (10 reqs, 35 ACs, commit `22bc3d54`) vs `SPRINT_GOAL § PEK-INTEGRATE`. APPROVED.
 
-**COLLISION FOUND + RESOLVED:** Sprint BCTC-LAYOUT-FIRST (parallel session) was mid-flight hand-building a local PIL/OpenCV/Tesseract layout-first engine for the SAME zone + SAME root problem. PDF-Extract-Kit IS the "heavy local CV" that sprint explicitly deferred. As PO: **PEK SUPERSEDES the BCTC-LAYOUT-FIRST ENGINE layer (LF-EXTRACT)**, **PRESERVES the UX overlay (LF-OVERLAY, engine-agnostic — PEK layout bboxes feed the same overlay contract)**. LF-EXTRACT/LF-DEPLOY/LF-QA PAUSED pending PEK architect brief. Recorded SUPERSESSION NOTICE in BOTH `docs/SPRINT_GOAL.md` + `docs/TASKS.md` so the parallel session sees it. `bctc_table_rows` (`text_table_extractor.py`, 0-byte-diff) untouched under both.
+**4 checks, all PASS (ground-truth-verified, not assumed):**
+- **Decisions (a)-(d) still OPEN:** every decision-bearing req (1=a, 2=a+b, 3=c, 4=d) ends with an "Architect-deferred" block naming the open call. Decision (b) in-process vs on-demand worker (the biggest kernel-panic-risk var) is genuinely deferred — BA did NOT pre-answer RAM topology; each option requires its own RAM budget. "Blockers for PO" restates all 5 as architect-level.
+- **Hard constraints → ACs:** CPU-only (AC-2a/2d), 8GB RSS-under-load (AC-2b/2c/4c), `/api` PULL unbroken (REQ-5 all), ZERO PDF-Extract-Kit edits git-diff-proof (AC-0a/0b/0c). Live-verified: `git -C apps/pdf-extractor/PDF-Extract-Kit diff` empty; clone has own `.git`; Dockerfile `COPY . .` + `.dockerignore` gap confirmed (the (c) target).
+- **Scale-pilot done-bar:** direct market.db is arbiter (AC-7d, endpoint never gate), FPT Q4 2025 sentinels (AC-7e, report_id `e71f845d-...`, 4 values cross-verified vs closed BCTC-TABLE record), ops REBUILD (REQ-10), USER verbal G9. 6-cond bar = SPRINT_GOAL verbatim.
+- **REQ-PEK-8 reuses LF-OVERLAY §3:** `bctc_page_zones`/`bctc_layout_units` + `POST /api/push-bctc-layout` confirmed present in `2026-05-26-bctc-layout-first-pipeline.md` §3.1/§3.2; AC-8d forbids duplicate tables. Reuse, not reinvent.
 
-**Verified before planning (not assumed):**
-- Clone present, 89MB, own `.git`, `requirements-cpu.txt` + 8 configs.
-- `requirements-cpu.txt` STILL pulls `unimernet` (~1.4GB, OUT) + `struct-eqtable` → NOT 8GB-safe as-is; architect trims further.
-- `configs/table_parsing.yaml` defaults to StructEqTable (InternVL2-1B VLM) = biggest RAM risk; README offers lighter PaddleOCR+TableMaster. Architect picks.
-- `apps/pdf-extractor/.dockerignore` does NOT exclude `PDF-Extract-Kit/`; Dockerfile `COPY . .` → naive build bloats image w/ 89MB pristine repo + its `.git`. (c) decision must fix.
+**Wrote:** `status: APPROVED` + gate rationale in REQ header; TASKS PEK-BA→DONE, PEK-DESIGN→TODO(UNBLOCKED), gate-record note in sprint Notes. All UNSTAGED.
 
-**Wrote:** SPRINT_GOAL § PEK-INTEGRATE (vision/scope/3 hard constraints/4 architect decisions w/ RAM mandate/DoD/owner chain) + supersession header on BCTC-LAYOUT-FIRST; TASKS § PEK-INTEGRATE (7 tasks PEK-BA→PEK-EXIT) + supersession notice; `docs/handoffs/TASK_PEK-INTEGRATE.md` (PO-verified ground truth + architect-deferred decisions). All UNSTAGED.
-
-**Dispatch:** NEXT = ba | write `docs/REQ_PEK-INTEGRATE.md` (PEK-BA). Then PO approval gate → architect PEK-DESIGN. Sprint umbrella lock: task_claim deferred (MCP lock guards concurrent dispatch which main terminal serializes anyway; supersession notices are the real coordination).
+**Dispatch:** NEXT = architect | run PEK-DESIGN (blueprint, brief ONLY → `docs/architecture-briefs/`).
 
 ---
 
 ## Carry-over
-- PEK-BA spec returns to PO for approval gate (`po/review-ba-spec.md`) before architect PEK-DESIGN unblocks.
-- Architect must RECONCILE PEK with BCTC-LAYOUT-FIRST: decide engine REPLACES vs WRAPS hand-built tiers; reuse LF-OVERLAY contract `2026-05-26-bctc-layout-first-pipeline.md` §3 for PEK layout bboxes; confirm `bctc_table_rows` zero-collision.
-- DoD = scale-pilot bar: live clean rows via DIRECT market.db + 8GB/no-panic + pristine-repo-untouched git-diff proof + ops REBUILD + USER verbal G9. 5 prior false-greens.
-- If parallel BCTC-LAYOUT-FIRST session is live, its LF-EXTRACT chain is paused — do not let both edit pdf-extractor concurrently.
+- Architect (PEK-DESIGN) must resolve (a)-(d) each with a RAM number; (b) topology is the kernel-panic-risk lever; reconcile PEK with BCTC-LAYOUT-FIRST (engine REPLACES vs WRAPS hand-built tiers); reuse LF-OVERLAY §3 for PEK layout bboxes; confirm `bctc_table_rows` zero-collision; if overlay-render needs mcp-server → zone flips to `multi`.
+- DoD = scale-pilot bar: live clean rows via DIRECT market.db + 8GB/no-panic + pristine-repo-untouched git-diff + ops REBUILD + USER verbal G9. 5 prior false-greens — NOT-RUN ≠ green.
+- BCTC-LAYOUT-FIRST LF-EXTRACT chain PAUSED — do not let both sessions edit pdf-extractor concurrently.
+- Next PO hop after architect = none until PEK-QA returns → PEK-EXIT (independent live re-verify).

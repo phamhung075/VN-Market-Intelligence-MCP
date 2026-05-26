@@ -1,9 +1,11 @@
 # REQ_PEK-INTEGRATE — Re-engine apps/pdf-extractor on PDF-Extract-Kit (CPU-only, 8GB-safe)
 
+**status: APPROVED** — PO spec-approval gate PASSED 2026-05-26T20:49:25Z. Architect PEK-DESIGN is UNBLOCKED. Rationale: all 4 architect-deferred decisions (a)-(d) remain OPEN (RAM topology NOT pre-answered — decision (b) in-process vs on-demand worker genuinely deferred with per-option RAM budget required); hard constraints encoded as ACs (CPU-only AC-PEK-2a/2d, 8GB RSS-under-load AC-PEK-2b/2c/4c, /api PULL AC-PEK-5a–5d, ZERO PDF-Extract-Kit edits AC-PEK-0a–0c git-diff-proof — live subtree diff confirmed empty); scale-pilot done-bar held (direct market.db arbiter AC-PEK-7d, FPT Q4 2025 sentinels AC-PEK-7e cross-verified against closed BCTC-TABLE record, ops REBUILD REQ-PEK-10, USER verbal G9); REQ-PEK-8 reuses LF-OVERLAY §3 contract (tables/handler confirmed present in `2026-05-26-bctc-layout-first-pipeline.md` §3.1/§3.2), no duplicate-table reinvention (AC-PEK-8d).
+
 **Sprint:** PEK-INTEGRATE | **BA Agent:** ba | **Created:** 2026-05-26T21:00Z
 **Source vision:** `docs/SPRINT_GOAL.md § Sprint PEK-INTEGRATE`
 **Handoff doc:** `docs/handoffs/TASK_PEK-INTEGRATE.md`
-**Gate:** PO must approve this spec BEFORE architect begins PEK-DESIGN. Architect (PEK-DESIGN) is BLOCKED until PO approval is received.
+**Gate:** PO must approve this spec BEFORE architect begins PEK-DESIGN. Architect (PEK-DESIGN) is BLOCKED until PO approval is received. — **GATE CLEARED 2026-05-26T20:49:25Z (PO APPROVED).**
 
 ---
 
