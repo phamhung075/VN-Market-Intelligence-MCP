@@ -1,0 +1,53 @@
+{
+  "signal_id": "qa-frontend-p2e-inject-2026-05-26T125333Z",
+  "type": "qa-g10-inject",
+  "task": "P2-E",
+  "pilot": "frontend",
+  "goal": "G10",
+  "date": "2026-05-26T12:53:33Z",
+
+  "pre_inject_tag": "frontend-pre-inject",
+  "pre_inject_tag_sha": "5eb73272560bc39c1b9d5daac1636d614a8ce1f8",
+
+  "injected_file": "apps/frontend/app/domain/formatters/direction-arrow.ts",
+  "mutation_description": "Changed return symbol for direction=='up' from '↑' to '↑↑' (one extra arrow character). Added comment: // G10-INJECTED-BUG",
+  "mutation_line": 22,
+  "mutation_before": "if (direction === \"up\") return { symbol: \"↑\", cls: \"text-green-400\" };",
+  "mutation_after": "if (direction === \"up\") return { symbol: \"↑↑\", cls: \"text-green-400\" }; // G10-INJECTED-BUG",
+
+  "failing_tests": [
+    {
+      "file": "app/domain/formatters/direction-arrow.test.ts",
+      "test_name": "formatDirectionArrow > up direction returns upward arrow with green class",
+      "failure": "AssertionError: expected '↑↑' to be '↑'"
+    },
+    {
+      "file": "app/lib/view-models/analysis-vm.test.ts",
+      "test_name": "buildWatchlistTileVM > direction up returns upward arrow symbol and green class",
+      "failure": "AssertionError: expected '↑↑' to be '↑'"
+    },
+    {
+      "file": "app/lib/view-models/analysis-vm.test.ts",
+      "test_name": "buildWatchlistTileVM > multi-formatter: both formatChangePct and formatDirectionArrow outputs present in view model",
+      "failure": "AssertionError: expected '↑↑' to be '↑'"
+    }
+  ],
+
+  "vitest_result": {
+    "test_files_failed": 2,
+    "test_files_passed": 16,
+    "tests_failed": 3,
+    "tests_passed": 176,
+    "exit_code": 1,
+    "note": "npm test exits non-zero (vitest exit 1). tsc --noEmit exits 0 (no type error — correct: mutation is same type string)."
+  },
+
+  "g11_coupling_bonus": {
+    "note": "2 files RED: direction-arrow.test.ts (primitive's own tests) + analysis-vm.test.ts (view-model consumer tests). This directly proves G11 Trial-1 coupling — formatter mutation cascades to view-model layer tests.",
+    "coupled_consumer_file": "app/lib/view-models/analysis-vm.test.ts",
+    "coupled_consumer_tests_red": 2
+  },
+
+  "p2f_ready": true,
+  "p2f_dev_dispatch_note": "Dev-frontend dispatched for P2-F blind-fix. Dev receives ONLY: 'Vitest is RED — 3 tests failing. Fix it. You have ≤2 cycles.' No file name, no line number, no mutation type hint provided."
+}

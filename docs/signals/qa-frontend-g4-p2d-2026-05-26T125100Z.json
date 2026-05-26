@@ -1,0 +1,62 @@
+{
+  "signal_id": "qa-frontend-g4-p2d-2026-05-26T125100Z",
+  "type": "qa-gate",
+  "task": "P2-D",
+  "pilot": "frontend",
+  "goal": "G4",
+  "date": "2026-05-26T12:51:00Z",
+  "verdict": "PASS",
+
+  "ac1_freeze_anchor": {
+    "probe": "git log --oneline -- apps/frontend/eslint.config.mjs | head -1",
+    "result": "9cc11a31 fix(p2-fe/frontend): P2-B fence config — mode:full + TS resolver + rule order",
+    "expected_sha": "9cc11a31",
+    "no_newer_commit": true,
+    "verdict": "PASS"
+  },
+
+  "ac2_fence_honesty_proof": {
+    "baseline": {
+      "command": "cd apps/frontend && npm run lint:fence",
+      "exit_code": 0,
+      "output_summary": "0 problems — exit 0",
+      "verdict": "PASS"
+    },
+    "violation_injection": {
+      "target_file": "apps/frontend/app/domain/formatters/direction-arrow.ts",
+      "injected_line": "import type { ApiResponse } from '~/lib/api/client.js'; // DELIBERATE-VIOLATION-TEST QA P2-D",
+      "command": "cd apps/frontend && npm run lint:fence",
+      "exit_code": 1,
+      "matched_error_line": "  7:34  error  Fence-A: domain/formatters must not import api-client layer  boundaries/element-types",
+      "fence_a_in_output": true,
+      "verdict": "PASS — exit 1 + Fence-A literal confirmed"
+    },
+    "post_revert": {
+      "exit_code": 0,
+      "git_status_direction_arrow": "empty (file CLEAN — no staged/unstaged changes)",
+      "violation_staged": false,
+      "violation_committed": false,
+      "verdict": "PASS"
+    }
+  },
+
+  "ac3_regression_tripwires": {
+    "vitest": {
+      "command": "cd apps/frontend && npm test",
+      "test_files": 18,
+      "tests_pass": 179,
+      "tests_fail": 0,
+      "exit_code": 0,
+      "verdict": "PASS"
+    },
+    "typecheck": {
+      "command": "cd apps/frontend && npm run typecheck",
+      "exit_code": 0,
+      "errors": 0,
+      "verdict": "PASS"
+    }
+  },
+
+  "all_ac_met": true,
+  "next": "P2-E (G10 bug injection — QA creates frontend-pre-inject tag then injects 1-literal bug in direction-arrow.ts)"
+}
