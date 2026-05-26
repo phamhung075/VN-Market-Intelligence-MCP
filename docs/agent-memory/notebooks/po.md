@@ -1,46 +1,44 @@
 # PO Notebook
 
-**Cycle:** :11 2026-05-26T18:11Z — Sprint BCTC-LAYOUT-FIRST KICKOFF (user-co-authored brief, go-to-build).
-**Last update:** 2026-05-26T18:11Z
-**Status:** Sprint opened; goal + ladder + handoff written; BA chain seeded. SUPERSEDES BCTC-MD-TABLE. No code, no pilot-status, no frozen surface touched.
+**Cycle:** :20 2026-05-26T18:20Z — Sprint BCTC-LAYOUT-FIRST, LF-BA approval gate.
+**Last update:** 2026-05-26T18:20Z
+**Status:** LF-BA spec APPROVED; architect LF-DESIGN UNBLOCKED. Scope this cycle = approval gate + next dispatch ONLY (no re-design, did NOT answer architect-open Qs).
 
 ---
 
-## 2026-05-26T18:11Z — :11 (LF-KICKOFF)
+## 2026-05-26T18:20Z — :20 (LF-BA APPROVAL GATE = APPROVED)
 
-**Action:** Authored `docs/SPRINT_GOAL.md § Sprint BCTC-LAYOUT-FIRST` (replaced BCTC-MD-TABLE header), TASKS.md ladder LF-BA→LF-EXIT, handoff `docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md`, kickoff signal `po-20260526T181140Z.json`.
+Reviewed BA spec `docs/REQ_BCTC-LAYOUT-FIRST.md` vs my binding Decisions A–F + the two hard-constraint blocks. **Verdict: APPROVED — faithful on every Decision:**
+- **A** (generic/grep-proof) → REQ-LF-0 hard invariant (AC-0a grep, AC-0b corpus, AC-0c structured untouched); inherited by REQ-LF-7c overlay JSON (positional `col_0` descriptors).
+- **B** (replace column-guesser / augment structured) → REQ-LF-5a `text_table_extractor.py` 0-byte-diff; redesign target = `generic_md_table_extractor.py`; REQ-LF-5c no new write to `bctc_table_rows`.
+- **D** (schema inheritance = named fix) → REQ-LF-1 ROOT-CAUSE ANCHOR (FPT Q1 pages 3-6 one unit; page 41 anchor-collide proves geometry-spine), REQ-LF-2b page-5 inherits page-3 grid.
+- **E** (pdf-extractor JSON / mcp-server toggle / boundary split) → REQ-LF-7 + REQ-LF-8 + REQ-LF-8f no Python import (DB read only).
+- **F** (done-bar) → REQ-LF-4e DIRECT market.db arbiter (endpoint NEVER), 7-pt Done-Bar incl. USER verbal G9.
+- **Privacy/host** → REQ-LF-6 (no external API, sequential single-doc, never `run_bctc_batch_sweep`) + NFR-1/2.
 
-**Why:** User co-authored a multi-round design brainstorm + gave go-to-build. This IS the architect-grade recurring-bug rethink: `generic_md_table_extractor.py` = 9 MD-EXTRACT commits + `text_table_extractor.py` = 7 BT commits. The bbox column-guessing engine passed ONLY FPT Q4 (id=11), does NOT generalize.
+**3 architect-open Qs CORRECTLY DEFERRED** (recorded, NOT answered by me): zone+md schema vs `bctc_table_rows`; exact boundary JSON contract; quarantined-unit storage for QA direct-DB count. Architect resolves in LF-DESIGN.
 
-**Two deliverables:** (1) layout-first Tier 0-3 (document map by geometric fingerprint → page zoning + schema inheritance → cross-page stitch → per-unit invariant gate) REPLACING the column-guessing logic; (2) geometric-zone ON/OFF overlay on /api/bctc-inspect (pdf-extractor emits zone-geometry JSON; mcp-server renders toggle). zone=`multi` — architect splits at pdf-extractor↔mcp-server boundary.
-
-**Root cause anchored:** FPT Q1 2026 p5 (NGUỒN VỐN) has NO column header → engine guesses → scramble. Tier-0/1 SCHEMA INHERITANCE = direct fix. Anchors hint-only (geometry is spine; notes p41 matched all 4 statement titles).
-
-**Decisions A-F binding:** A generic/AC-0 grep-proof; B replace-engine/augment-`bctc_table_rows` (text_table_extractor.py 0-byte-diff); C Tier-0 cheap; D schema-inheritance; E geometry-before-text overlay; F DONE=Tier-3 invariants across 18-doc corpus via DIRECT market.db (endpoint stale, never arbiter) + USER verbal G9. 5 prior false-greens.
-
-**Lock:** task_claim NOT acquirable from this thread (MCP call_tool proxy not surfaced as a callable function here; gateway ✓ Connected but thread tool set = Read/Edit/Write/Bash + semble only). Single-user autonomous, no competing PO session → non-fatal; chain dispatch is what matters. Attempted the actual call per anti-hallucination rule — did NOT hallucinate a failure.
+Recurring-bug guard cleared — this redesign IS the root-cause rethink (9 MD-EXTRACT + 7 BT commits).
 
 **Edits (working tree, NOTHING staged — main terminal commits):**
-- docs/SPRINT_GOAL.md (BCTC-LAYOUT-FIRST goal, supersedes BCTC-MD-TABLE)
-- docs/TASKS.md (LF-BA→LF-EXIT ladder, replaced BCTC-MD-TABLE block)
-- docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md (new chain ledger)
-- docs/signals/po-20260526T181140Z.json (kickoff signal to BA)
+- docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md (PO approval entry)
+- docs/TASKS.md (LF-BA DONE / LF-DESIGN READY)
 - docs/agent-memory/notebooks/po.md (this)
 
-**No code, no pilot-status JSON, no frozen surface, no re-extract/batch touched.**
+**No code, no pilot-status JSON, no frozen surface touched.**
 
 ---
 
 ## Carry-over (next cycle)
 
-- **NEXT = BA writes LF-BA REQ spec** → returns to PO approval gate (review-ba-spec.md) BEFORE architect LF-DESIGN dispatches. Approve only if spec carries: both deliverables, 4-tier behavior contract, AC-0 grep-proof clause, privacy + host + multi-doc-corpus + DIRECT-DB-arbiter constraints, service-boundary split note.
-- **LF chain order:** BA→PO-approve→architect(LF-DESIGN multi-split)→dev-pdf-extractor(LF-EXTRACT)+dev-mcp-server(LF-OVERLAY)→ops(LF-DEPLOY seq single-doc rebuild/recreate)→qa(LF-QA Tier-3 corpus via direct DB)→PO(LF-EXIT)→USER G9.
-- **Goal ARMED** (verbatim "table on pdf on all bctc need correct extract text and convert to md style") — clears ONLY on USER verbal G9 across the multi-doc corpus, never on one doc / endpoint. This SUPERSEDES the prior BCTC-MD-TABLE G9 wait (same binding goal, broader corpus bar).
-- Re-attempt sprint umbrella task_claim when next in a thread that surfaces the MCP call_tool proxy (kind=sprint-task; workaround kind per commit-mutex enum-drift note if rejected).
+- **NEXT = architect LF-DESIGN** (zone=`multi`, design-only no code): 4-tier blueprint, split at pdf-extractor↔mcp-server boundary, resolve the 3 open Qs, per-task ACs for LF-EXTRACT + LF-OVERLAY, brief → `docs/architecture-briefs/`.
+- **At LF-EXIT (my next gate on this sprint):** do NOT rubber-stamp. Re-verify LIVE via DIRECT market.db (`docker compose exec -T mcp-server bun -e` + `bun:sqlite`) — endpoint can be stale. Check multi-doc Tier-3 pass-rate (not one doc), FPT Q1 p5 scramble fixed, `text_table_extractor.py` 0-byte-diff, overlay ON/OFF. **5 prior false-greens** on this surface — goal stays ARMED until USER verbal G9.
+- **LF chain order:** architect(LF-DESIGN)→dev-pdf-extractor(LF-EXTRACT)+dev-mcp-server(LF-OVERLAY)→ops(LF-DEPLOY seq single-doc rebuild/recreate)→qa(LF-QA Tier-3 corpus via direct DB)→PO(LF-EXIT)→USER G9.
+- **Lock note:** task_claim NOT acquirable from this thread (gateway ✓ but thread toolset = Read/Edit/Write/Bash + semble only). Single-user autonomous, non-fatal; chain dispatch is what matters. Re-attempt umbrella claim when next in a thread that surfaces the MCP call_tool proxy.
 
-## Standing context (carry-over from :04 MCPZONE-BATCH-1, NOT re-dispatch)
-- **NEWS-INGEST-3 (qa) — NEXT-READY** (both -2 + -2b landed). **NEWS-INGEST-LIVE (ops)** still OPEN (real VPS cycle inserts >0 NEW distinct VN rows). **NEWS-INGEST-2c (developer)** cosmetic UI backlog. MCPZONE-HARDEN-1 CLOSED. FETCH-ANALYZE CLOSED.
-- DEPLOY-DRIFT (-1/-2 ops-rebuild lanes, -3 architect guard) standing. BCTC-TABLE-3 CLOSED (BT3-EXIT2, 79 clean rows). Standing routed: HSG-FIRE-SEVERITY-RECAL, MARKET-SLOTS-DARK (cron re-arm), HOLLOW-RUN-20260525, CHEF-EOD-MACRO-MISATTRIB, context-bloat janitor, cowork-fire (expected-silent off-hours).
+## Standing context (carry-over, NOT re-dispatch)
+- **NEWS-INGEST-3 (qa) NEXT-READY**; **NEWS-INGEST-LIVE (ops)** OPEN (real VPS cycle inserts >0 NEW distinct VN rows); **NEWS-INGEST-2c (developer)** cosmetic UI backlog.
+- DEPLOY-DRIFT (-1/-2 ops-rebuild, -3 architect guard) standing. BCTC-TABLE-3 CLOSED (BT3-EXIT2, 79 clean rows). BCTC-TABLE-2 + MCPZONE-HARDEN-1 stay SEPARATE — NOT folded into LAYOUT-FIRST. Standing routed: HSG-FIRE-SEVERITY-RECAL, MARKET-SLOTS-DARK, HOLLOW-RUN-20260525, CHEF-EOD-MACRO-MISATTRIB, context-bloat janitor, cowork-fire (expected-silent off-hours).
 
 ## PO order (binding): reliability → coverage → UX → architecture
-- Self-initiate; full autonomy. Subagents leave files UNSTAGED; dispatcher commits under commit-mutex. Recurring-bug guard: ≥2 fix commits same module → BLOCK + architect rethink. HONEST counts only — verify SHAs/build-time.
+- Self-initiate; full autonomy. Subagents leave files UNSTAGED; dispatcher commits under commit-mutex. Recurring-bug guard: ≥2 fix commits same module → BLOCK + architect rethink. HONEST counts only — verify SHAs/build-time. NOT-RUN panels are not green.
