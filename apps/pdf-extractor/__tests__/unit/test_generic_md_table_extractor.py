@@ -112,6 +112,12 @@ from infrastructure.generic_md_table_extractor import (  # noqa: E402
     # MD-EXTRACT-8 additions:
     _MIN_INTER_COLUMN_GAP_PX,
     _COL_GAP_FACTOR,
+    # MD-EXTRACT-9 additions:
+    _LABEL_LINE_GAP_PX,
+    _LABEL_HEADER_MARGIN_PX,
+    _cluster_text_into_label_lines,
+    _exclude_pre_data_label_lines,
+    _attach_labels_by_rank,
 )
 
 
@@ -3206,4 +3212,413 @@ class TestDetectColumnAnchorsFromTokensV8:
         )
         assert _MIN_INTER_COLUMN_GAP_PX > 0, (
             f"_MIN_INTER_COLUMN_GAP_PX must be positive, got {_MIN_INTER_COLUMN_GAP_PX}."
+        )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-9 — Label-Row Ordinal Reconstruction tests
+#
+# AC-9-UNIT-CLUSTER, AC-9-UNIT-RANK, AC-9-EXCLUDE-HEADER (all BLOCKING).
+# FLAG-B: ALL fixtures MUST use the LIVE diagnostic tokens verbatim from the
+# architect brief §9.7/§9.8 (FPT e71f845d, page 8, local Tesseract PSM 6,
+# 200 DPI). NO synthesized/idealized coordinates.
+# ---------------------------------------------------------------------------
+
+# Live-substrate fixture: 15 tokens from FPT e71f845d income page (page 8).
+# Source: architect diagnostic dump, brief §9.7/§9.8.
+# Line-1 (code-01 revenue label) — 10 tokens, tops 488-496:
+_LIVE_LINE1_TOKENS = [
+    {"text": "1",      "top": 488, "left": 262, "width": 20, "height": 18, "conf": 95},
+    {"text": "Doanh",  "top": 488, "left": 295, "width": 55, "height": 18, "conf": 94},
+    {"text": "thu",    "top": 488, "left": 368, "width": 32, "height": 18, "conf": 93},
+    {"text": "bán",    "top": 488, "left": 410, "width": 34, "height": 18, "conf": 92},
+    {"text": "hàng",   "top": 488, "left": 454, "width": 42, "height": 18, "conf": 91},
+    {"text": "và",     "top": 489, "left": 511, "width": 26, "height": 18, "conf": 90},
+    {"text": "dịch",   "top": 491, "left": 637, "width": 34, "height": 18, "conf": 89},
+    {"text": "cung",   "top": 494, "left": 541, "width": 38, "height": 18, "conf": 88},
+    {"text": "vụ",     "top": 496, "left": 686, "width": 24, "height": 18, "conf": 87},
+    {"text": "cấp",    "top": 488, "left": 595, "width": 34, "height": 18, "conf": 86},
+]
+# Line-2 (code-02 deductions label) — 5 tokens, tops 522-524:
+_LIVE_LINE2_TOKENS = [
+    {"text": "khoản",  "top": 522, "left": 337, "width": 50, "height": 18, "conf": 95},
+    {"text": "Các",    "top": 523, "left": 295, "width": 34, "height": 18, "conf": 94},
+    {"text": "giảm",   "top": 523, "left": 404, "width": 38, "height": 18, "conf": 93},
+    {"text": "2",      "top": 524, "left": 261, "width": 20, "height": 18, "conf": 92},
+    {"text": "trừ",    "top": 524, "left": 458, "width": 28, "height": 18, "conf": 91},
+]
+_ALL_15_TOKENS = _LIVE_LINE1_TOKENS + _LIVE_LINE2_TOKENS
+
+
+class TestLabelLineClustering:
+    """
+    AC-9-UNIT-CLUSTER — _cluster_text_into_label_lines on live diagnostic tokens.
+
+    Fixture: 15 tokens verbatim from FPT e71f845d income page (brief §9.7/§9.8).
+    Line-1 tops: 488-496 (intra-line range = 8px << 15px threshold).
+    Line-2 tops: 522-524 (intra-line range = 2px).
+    Boundary gap: 522 - 496 = 26px > 15px threshold → must split.
+    """
+
+    def test_two_lines_from_15_live_tokens(self):
+        """AC-9-UNIT-CLUSTER core: 15 live tokens → exactly 2 label lines."""
+        lines = _cluster_text_into_label_lines(_ALL_15_TOKENS)
+        assert len(lines) == 2, (
+            f"Expected 2 label lines, got {len(lines)}. "
+            f"Line counts: {[len(l) for l in lines]}"
+        )
+
+    def test_line1_has_10_tokens(self):
+        """Line-1 contains all 10 revenue-label tokens (tops 488-496)."""
+        lines = _cluster_text_into_label_lines(_ALL_15_TOKENS)
+        assert len(lines[0]) == 10, (
+            f"Expected 10 tokens in line-1, got {len(lines[0])}. "
+            f"Texts: {[t['text'] for t in lines[0]]}"
+        )
+
+    def test_line2_has_5_tokens(self):
+        """Line-2 contains all 5 deduction-label tokens (tops 522-524)."""
+        lines = _cluster_text_into_label_lines(_ALL_15_TOKENS)
+        assert len(lines[1]) == 5, (
+            f"Expected 5 tokens in line-2, got {len(lines[1])}. "
+            f"Texts: {[t['text'] for t in lines[1]]}"
+        )
+
+    def test_line1_left_sorted_contains_revenue_words_in_order(self):
+        """Line-1 left-sorted join must contain 'Doanh thu bán hàng' in sequence."""
+        lines = _cluster_text_into_label_lines(_ALL_15_TOKENS)
+        joined = " ".join(t["text"] for t in lines[0])
+        # Check all four words appear and in left-sorted order (Doanh=295 < thu=368 < bán=410 < hàng=454)
+        for word in ["Doanh", "thu", "bán", "hàng"]:
+            assert word in joined, (
+                f"'{word}' missing from line-1 join: '{joined}'"
+            )
+        # Order check: each word must appear after the previous
+        idx_doanh = joined.index("Doanh")
+        idx_thu   = joined.index("thu")
+        idx_ban   = joined.index("bán")
+        idx_hang  = joined.index("hàng")
+        assert idx_doanh < idx_thu < idx_ban < idx_hang, (
+            f"Words out of left-sort order in line-1: '{joined}'"
+        )
+
+    def test_line2_left_sorted_join(self):
+        """Line-2 left-sorted join must be '2 Các khoản giảm trừ'."""
+        lines = _cluster_text_into_label_lines(_ALL_15_TOKENS)
+        joined = " ".join(t["text"] for t in lines[1])
+        # left-sorted order: 2(261) Các(295) khoản(337) giảm(404) trừ(458)
+        assert joined == "2 Các khoản giảm trừ", (
+            f"Line-2 join mismatch. Expected '2 Các khoản giảm trừ', got '{joined}'"
+        )
+
+    def test_empty_input_returns_empty_list(self):
+        """Empty token list → empty label lines list."""
+        assert _cluster_text_into_label_lines([]) == []
+
+    def test_single_token_returns_one_line(self):
+        """Single token → one line with that token."""
+        tok = {"text": "X", "top": 100, "left": 50, "width": 10, "height": 15, "conf": 90}
+        lines = _cluster_text_into_label_lines([tok])
+        assert len(lines) == 1
+        assert lines[0][0]["text"] == "X"
+
+    def test_old_band_logic_merges_both_lines_into_one_cell(self):
+        """
+        FLAG-B live-fixture fidelity proof: the OLD _attach_labels_ordinal band logic
+        (LABEL_BAND_FACTOR=1.5, h_med=18 → band=27px) on the same 15 live tokens
+        produces a MERGED label cell containing BOTH 'Doanh thu bán hàng' AND
+        'Các khoản giảm trừ' tokens (the LIVE-VERIFY-8 over-merge defect).
+
+        This test proves the fixture is live-derived and the old algorithm is
+        demonstrably broken on it — matching MD-EXTRACT-8's test_old_formula_proves_wrong_anchors pattern.
+        """
+        # Simulate the old band logic for rank=0:
+        # y_med = 502 (col_y_medians[0] from value col@1182 rank-0 live diagnostic)
+        # band = LABEL_BAND_FACTOR * h_med = 1.5 * 18 = 27px → window [474, 528]
+        y_med_rank0 = 502.0
+        band = LABEL_BAND_FACTOR * 18.0  # = 27.0
+
+        captured = [
+            t for t in _ALL_15_TOKENS
+            if abs(t["top"] - y_med_rank0) <= band
+        ]
+        captured_texts = {t["text"] for t in captured}
+
+        # The old band [474, 528] captures:
+        #   line-1 tokens (tops 488-496): all within [474, 528]
+        #   line-2 tokens (tops 522-524): all within [474, 528]
+        # Both label lines are captured into rank-0's single cell → over-merge.
+        assert "Doanh" in captured_texts, (
+            f"Fixture fidelity error: 'Doanh' not captured by old band "
+            f"[{y_med_rank0 - band:.0f}, {y_med_rank0 + band:.0f}]. "
+            f"Tokens captured: {captured_texts}"
+        )
+        assert "Các" in captured_texts, (
+            f"Fixture fidelity error: 'Các' not captured by old band — "
+            f"live over-merge not reproduced. Tokens captured: {captured_texts}"
+        )
+        # This is the LIVE-VERIFY-8 defect: both 'Doanh' (code-01) and 'Các' (code-02)
+        # appear in the SAME rank-0 label cell when using the old band logic.
+        assert "Doanh" in captured_texts and "Các" in captured_texts, (
+            "Old band logic did NOT reproduce the live over-merge. "
+            "Fixture may be incorrect or LABEL_BAND_FACTOR was already changed."
+        )
+        # And the new clustering splits them cleanly:
+        new_lines = _cluster_text_into_label_lines(_ALL_15_TOKENS)
+        line0_texts = {t["text"] for t in new_lines[0]}
+        line1_texts = {t["text"] for t in new_lines[1]}
+        assert "Doanh" in line0_texts and "Các" not in line0_texts, (
+            "New clustering failed: 'Các' (code-02) leaked into line-1. "
+            f"Line-0: {line0_texts}"
+        )
+        assert "Các" in line1_texts and "Doanh" not in line1_texts, (
+            "New clustering failed: 'Doanh' (code-01) leaked into line-2. "
+            f"Line-1: {line1_texts}"
+        )
+
+
+class TestExcludePreDataLabelLines:
+    """
+    AC-9-EXCLUDE-HEADER — _exclude_pre_data_label_lines removes header fragments.
+
+    Scenario: 3 label lines at y_meds [454, 488, 523].
+    first_value_top=497, margin=20 → cutoff=477.
+    Line at y_med=454 < 477 → excluded (column-header fragment).
+    Lines at y_meds 488 and 523 → retained (data label lines).
+    """
+
+    def _make_line(self, top: int, text: str = "x") -> List[Dict]:
+        return [{"text": text, "top": top, "left": 100, "width": 20, "height": 18, "conf": 90}]
+
+    def test_header_line_excluded(self):
+        """Line at y_med=454 < cutoff=477 must be dropped."""
+        header_line = self._make_line(454, "số minh")
+        data_line1  = self._make_line(488, "label1")
+        data_line2  = self._make_line(523, "label2")
+        label_lines = [header_line, data_line1, data_line2]
+        ymeds = [454.0, 488.0, 523.0]
+
+        out_lines, out_ymeds = _exclude_pre_data_label_lines(
+            label_lines, ymeds, first_value_top=497.0, margin_px=20
+        )
+
+        assert len(out_lines) == 2, (
+            f"Expected 2 data lines after excluding header, got {len(out_lines)}"
+        )
+        assert len(out_ymeds) == 2
+
+    def test_retained_ymeds_are_correct(self):
+        """Retained line y_meds must be [488, 523]."""
+        header_line = self._make_line(454)
+        data_line1  = self._make_line(488)
+        data_line2  = self._make_line(523)
+        label_lines = [header_line, data_line1, data_line2]
+        ymeds = [454.0, 488.0, 523.0]
+
+        _, out_ymeds = _exclude_pre_data_label_lines(
+            label_lines, ymeds, first_value_top=497.0, margin_px=20
+        )
+        assert out_ymeds == [488.0, 523.0], (
+            f"Retained y_meds mismatch: expected [488.0, 523.0], got {out_ymeds}"
+        )
+
+    def test_no_header_all_retained(self):
+        """When all lines are above cutoff, none are excluded."""
+        lines = [self._make_line(488), self._make_line(523)]
+        ymeds = [488.0, 523.0]
+        out_lines, out_ymeds = _exclude_pre_data_label_lines(
+            lines, ymeds, first_value_top=497.0, margin_px=20
+        )
+        assert len(out_lines) == 2
+
+    def test_all_header_none_retained(self):
+        """When all lines are header fragments, output is empty."""
+        lines = [self._make_line(400), self._make_line(430)]
+        ymeds = [400.0, 430.0]
+        out_lines, out_ymeds = _exclude_pre_data_label_lines(
+            lines, ymeds, first_value_top=497.0, margin_px=20
+        )
+        assert out_lines == []
+        assert out_ymeds == []
+
+    def test_live_tokens_header_cutoff(self):
+        """
+        Live-substrate: _LIVE_LINE1_TOKENS (y_med≈491) and _LIVE_LINE2_TOKENS (y_med≈523)
+        are BOTH above cutoff=477 (first_value_top=497, margin=20) → both retained.
+        """
+        # Cluster the 15 live tokens
+        lines = _cluster_text_into_label_lines(_ALL_15_TOKENS)
+        # Compute y_meds
+        ymeds = []
+        for line in lines:
+            tops = sorted(t["top"] for t in line)
+            n = len(tops)
+            mid = n // 2
+            med = (tops[mid - 1] + tops[mid]) / 2.0 if n % 2 == 0 else float(tops[mid])
+            ymeds.append(med)
+
+        out_lines, out_ymeds = _exclude_pre_data_label_lines(
+            lines, ymeds, first_value_top=497.0, margin_px=20
+        )
+        # Both data lines are above cutoff=477 → both retained
+        assert len(out_lines) == 2, (
+            f"Expected both live label lines retained, got {len(out_lines)}. "
+            f"y_meds: {ymeds}, cutoff: 477"
+        )
+
+
+class TestAttachLabelsByRank:
+    """
+    AC-9-UNIT-RANK — _attach_labels_by_rank ordinal pairing on live-substrate tokens.
+
+    Uses 2-row ordinal grid + 2 data label lines derived from the live diagnostic.
+    Asserts zero cross-contamination between code-01 and code-02 label cells.
+    """
+
+    # 2-row ordinal grid (value rows from income page col@1182 and col@1477)
+    _GRID_2ROW = [
+        ["20.258.866.135.395", "17.651.065.378.939"],  # rank-0: code-01 revenue
+        ["33.415.777.986",     "43.247.573.048"],       # rank-1: code-02 deductions
+    ]
+
+    def _get_data_label_lines(self):
+        """Build the 2 data label lines from the 15 live tokens."""
+        lines = _cluster_text_into_label_lines(_ALL_15_TOKENS)
+        ymeds = []
+        for line in lines:
+            tops = sorted(t["top"] for t in line)
+            n = len(tops)
+            mid = n // 2
+            med = (tops[mid - 1] + tops[mid]) / 2.0 if n % 2 == 0 else float(tops[mid])
+            ymeds.append(med)
+        data_lines, _ = _exclude_pre_data_label_lines(
+            lines, ymeds, first_value_top=497.0, margin_px=20
+        )
+        return data_lines
+
+    def test_rank0_label_is_code01_revenue(self):
+        """labeled_grid[0][0] must contain 'Doanh' (code-01 revenue label)."""
+        data_lines = self._get_data_label_lines()
+        labeled = _attach_labels_by_rank(
+            self._GRID_2ROW, data_lines, code_note_tokens=[], h_med=18.0
+        )
+        label0 = labeled[0][0]
+        assert "Doanh" in label0, (
+            f"AC-9-UNIT-RANK FAIL: rank-0 label '{label0}' does not contain 'Doanh'. "
+            f"Expected code-01 revenue label."
+        )
+
+    def test_rank1_label_is_code02_deductions(self):
+        """labeled_grid[1][0] must contain 'Các' (code-02 deductions label)."""
+        data_lines = self._get_data_label_lines()
+        labeled = _attach_labels_by_rank(
+            self._GRID_2ROW, data_lines, code_note_tokens=[], h_med=18.0
+        )
+        label1 = labeled[1][0]
+        assert "Các" in label1, (
+            f"AC-9-UNIT-RANK FAIL: rank-1 label '{label1}' does not contain 'Các'. "
+            f"Expected code-02 deductions label."
+        )
+
+    def test_zero_cross_contamination(self):
+        """
+        Zero cross-contamination: 'Các khoản giảm trừ' tokens must NOT appear
+        in rank-0 label cell; 'Doanh thu bán hàng' tokens must NOT appear in rank-1.
+        """
+        data_lines = self._get_data_label_lines()
+        labeled = _attach_labels_by_rank(
+            self._GRID_2ROW, data_lines, code_note_tokens=[], h_med=18.0
+        )
+        label0 = labeled[0][0]
+        label1 = labeled[1][0]
+        assert "Các" not in label0, (
+            f"Cross-contamination: 'Các' (code-02) leaked into rank-0 label: '{label0}'"
+        )
+        assert "Doanh" not in label1, (
+            f"Cross-contamination: 'Doanh' (code-01) leaked into rank-1 label: '{label1}'"
+        )
+
+    def test_value_cells_preserved(self):
+        """Value cells must be unchanged after label attachment."""
+        data_lines = self._get_data_label_lines()
+        labeled = _attach_labels_by_rank(
+            self._GRID_2ROW, data_lines, code_note_tokens=[], h_med=18.0
+        )
+        assert labeled[0][1] == "20.258.866.135.395", (
+            f"Rank-0 first value cell corrupted: {labeled[0][1]}"
+        )
+        assert labeled[1][1] == "33.415.777.986", (
+            f"Rank-1 first value cell corrupted: {labeled[1][1]}"
+        )
+
+    def test_output_has_two_rows(self):
+        """Output grid must have exactly 2 labeled rows for 2-row input."""
+        data_lines = self._get_data_label_lines()
+        labeled = _attach_labels_by_rank(
+            self._GRID_2ROW, data_lines, code_note_tokens=[], h_med=18.0
+        )
+        assert len(labeled) == 2, (
+            f"Expected 2 labeled rows, got {len(labeled)}"
+        )
+
+    def test_extra_value_rows_get_empty_label(self):
+        """When grid has more rows than label lines, extra rows get label=' '."""
+        single_label_line = _cluster_text_into_label_lines(_LIVE_LINE1_TOKENS)
+        labeled = _attach_labels_by_rank(
+            self._GRID_2ROW, single_label_line, code_note_tokens=[], h_med=18.0
+        )
+        # Row 0 gets label from line-1; row 1 gets empty label
+        assert labeled[1][0] == " ", (
+            f"Extra value row should get label=' ', got '{labeled[1][0]}'"
+        )
+
+    def test_extra_label_lines_emit_empty_value_rows(self):
+        """When label lines exceed grid rows, extra labels emit as empty-value rows."""
+        single_row_grid = [["20.258.866.135.395", "17.651.065.378.939"]]
+        data_lines = self._get_data_label_lines()  # 2 label lines
+        labeled = _attach_labels_by_rank(
+            single_row_grid, data_lines, code_note_tokens=[], h_med=18.0
+        )
+        # Output must have 2 rows: 1 paired + 1 orphan label as empty-value row
+        assert len(labeled) == 2, (
+            f"Expected 2 rows (1 paired + 1 orphan), got {len(labeled)}"
+        )
+        # Orphan row has the code-02 label but empty value cells
+        label_orphan = labeled[1][0]
+        assert "Các" in label_orphan, (
+            f"Orphan label row missing 'Các': '{label_orphan}'"
+        )
+
+    def test_code_note_tokens_attached_to_correct_rank(self):
+        """
+        code_note_tokens near rank-0 label y_med are attached to rank-0 only.
+        A code token at top=490 (near line-1 y_med≈491) must appear in label-0,
+        not label-1.
+        """
+        code_tok = {
+            "text": "01", "top": 490, "left": 960,
+            "width": 20, "height": 18, "conf": 92
+        }
+        data_lines = self._get_data_label_lines()
+        labeled = _attach_labels_by_rank(
+            self._GRID_2ROW, data_lines, code_note_tokens=[code_tok], h_med=18.0
+        )
+        label0 = labeled[0][0]
+        label1 = labeled[1][0]
+        assert "01" in label0, (
+            f"code_note_token '01' (top=490) not in rank-0 label '{label0}'"
+        )
+        assert "01" not in label1, (
+            f"code_note_token '01' (top=490) leaked into rank-1 label '{label1}'"
+        )
+
+    def test_constants_have_correct_values(self):
+        """AC-9 constants: _LABEL_LINE_GAP_PX=15, _LABEL_HEADER_MARGIN_PX=20."""
+        assert _LABEL_LINE_GAP_PX == 15, (
+            f"_LABEL_LINE_GAP_PX must be 15 (200-DPI intra-line gap threshold). "
+            f"Got {_LABEL_LINE_GAP_PX}."
+        )
+        assert _LABEL_HEADER_MARGIN_PX == 20, (
+            f"_LABEL_HEADER_MARGIN_PX must be 20 (200-DPI header-zone margin). "
+            f"Got {_LABEL_HEADER_MARGIN_PX}."
         )

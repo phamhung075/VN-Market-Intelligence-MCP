@@ -1,5 +1,5 @@
 """
-infrastructure/generic_md_table_extractor.py — MD-EXTRACT-6
+infrastructure/generic_md_table_extractor.py — MD-EXTRACT-9
 
 GenericMdTableExtractor: number-token-2D generic table detector + markdown emitter.
 
@@ -19,9 +19,12 @@ Algorithm (per-page) — MD-EXTRACT-6 COLUMN-ANCHOR-FIRST ORDINAL RECONSTRUCTION
                 (_insert_skip_slots + ref_pitch from columns with ≥3 tokens).
     Step C9 — total_rows = max slot-list length across all columns.
     Step C10 — Reconstruct 2D grid: grid[rank][col] = token text, None→" ".
-    Step C11 — Attach labels: for each ordinal row k, find TEXT tokens within
-               LABEL_BAND_FACTOR × h_med of the row's y_median; space-join left-sorted
-               (_attach_labels_ordinal). Greedy removal prevents label re-use.
+    Step C10.5 — Cluster text tokens into physical label lines by top-gap threshold
+                 (_cluster_text_into_label_lines, gap=15px).
+    Step C10.6 — Exclude column-header label lines above first_value_top - 20px
+                 (_exclude_pre_data_label_lines).
+    Step C10.7 — Ordinal-rank label assignment: data_label_lines[k] ↔ grid[k] by
+                 direct index, no y-comparison (_attach_labels_by_rank).
     Step G — Post-processing: strip_header_bands → coalesce_labels → collapse_empty
              → density gate → header detection → markdown emission.
              Separator row: valid GFM |---|---|---| (D2 fix, kept from MD-EXTRACT-5).
@@ -243,6 +246,32 @@ PURE_CODE_COL_THRESHOLD = 0.90
 # Prevents local_pitch contamination from large intra-column skip gaps.
 # AC-0: pure geometry. Non-regressing on segment report (columns have 7+ tokens).
 DENSE_COL_THRESHOLD = 6
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-9 — Label-Row Ordinal Reconstruction constants
+#
+# AC-0: both constants are GENERIC 200-DPI print geometry. Zero BCTC label
+# string semantics. Names derive from physical line-spacing geometry:
+#   _LABEL_LINE_GAP_PX: any two OCR words within 15px vertical distance share
+#       one physical print line (intra-line top variance ≤8px; inter-line gap
+#       is 33-38px on dense A4 financial statements at 200 DPI).
+#   _LABEL_HEADER_MARGIN_PX: a 20px margin above the first value row is the
+#       zone containing column-header / date-band text fragments that are NOT
+#       data label lines; 20px << typical inter-row pitch (36px) ensures no
+#       data label line is accidentally excluded.
+# DPI-DEPENDENT: calibrated at 200 DPI (rasterization DPI in
+# extract_md_tables_usecase.py). If DPI changes, rescale proportionally.
+# ---------------------------------------------------------------------------
+
+# Vertical gap threshold (pixels) for greedy label-line clustering.
+# Two consecutive text tokens whose top-gap exceeds this value belong to
+# DIFFERENT physical print lines.
+_LABEL_LINE_GAP_PX: int = 15
+
+# Margin (pixels) above the first value-bearing row used to exclude column-header
+# text fragments from the data label lines.
+_LABEL_HEADER_MARGIN_PX: int = 20
 
 
 # ---------------------------------------------------------------------------
@@ -1146,6 +1175,190 @@ def _attach_labels_ordinal(
             label = " "
 
         result.append([label] + list(row))
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-9 — Label-Row Ordinal Reconstruction pure functions
+# ---------------------------------------------------------------------------
+
+
+def _cluster_text_into_label_lines(
+    text_tokens: List[Dict],
+    label_line_gap_px: int = _LABEL_LINE_GAP_PX,
+) -> List[List[Dict]]:
+    """
+    Step C10.5 — Cluster text tokens into physical label lines.
+
+    Sorts tokens by (top, left) and greedily groups them: when the gap between
+    the current token's top and the previous token's top in the current line
+    exceeds label_line_gap_px, a new line is started.
+
+    Robustness (FLAG-D): compares each new token's top against the running
+    minimum top of the current line (first-token anchor) rather than the
+    previous token, to handle OCR baseline slope without false splits.
+    Within a physical print line, all token tops stay within ≤8px of each
+    other (200-DPI intra-line variance). Inter-line gaps are 33-38px on
+    dense A4 financial statements at 200 DPI — far above the 15px threshold.
+
+    AC-0: uses ONLY top/left coordinates and the generic label_line_gap_px
+    threshold. Zero BCTC string constants, zero label string matching.
+    Pure function: no I/O, no Tesseract, no DB.
+
+    Args:
+        text_tokens:       List of text-token word dicts with 'top' and 'left'.
+        label_line_gap_px: Vertical gap threshold (pixels) to start a new line.
+                           Default: _LABEL_LINE_GAP_PX (= 15px at 200 DPI).
+
+    Returns:
+        List of label lines; each line is a list of token dicts sorted by left.
+    """
+    if not text_tokens:
+        return []
+
+    # Sort all tokens by (top, left) so we scan in reading order
+    sorted_tokens = sorted(text_tokens, key=lambda t: (t["top"], t["left"]))
+
+    label_lines: List[List[Dict]] = []
+    current_line: List[Dict] = [sorted_tokens[0]]
+    current_line_min_top: int = sorted_tokens[0]["top"]
+
+    for tok in sorted_tokens[1:]:
+        gap = tok["top"] - current_line_min_top
+        if gap <= label_line_gap_px:
+            current_line.append(tok)
+            # Update running min so a drifting baseline does not chain-merge lines
+            current_line_min_top = min(current_line_min_top, tok["top"])
+        else:
+            # Flush completed line (left-sorted)
+            label_lines.append(sorted(current_line, key=lambda t: t["left"]))
+            current_line = [tok]
+            current_line_min_top = tok["top"]
+
+    # Flush last line
+    if current_line:
+        label_lines.append(sorted(current_line, key=lambda t: t["left"]))
+
+    return label_lines
+
+
+def _exclude_pre_data_label_lines(
+    label_lines: List[List[Dict]],
+    label_line_ymeds: List[float],
+    first_value_top: float,
+    margin_px: int = _LABEL_HEADER_MARGIN_PX,
+) -> tuple:
+    """
+    Step C10.6 — Remove label lines in the column-header zone above the data region.
+
+    Any label line whose y-median falls below (first_value_top - margin_px) is a
+    column-header text fragment (e.g., date band, note-number header) and must not
+    be paired with a data row.
+
+    The margin_px (default 20px) is strictly less than the inter-row pitch on dense
+    A4 financial statements (36px at 200 DPI), guaranteeing that no actual data label
+    line is excluded.
+
+    AC-0: uses ONLY top coordinates (first_value_top from number-token scan) and the
+    generic margin_px geometry constant. Zero BCTC string constants.
+    Pure function: no I/O, no Tesseract, no DB.
+
+    Args:
+        label_lines:        List of label lines from _cluster_text_into_label_lines.
+        label_line_ymeds:   Parallel list of y-medians for each label line.
+        first_value_top:    Top coordinate of the first value-bearing number token.
+        margin_px:          Grace margin above first_value_top for the cutoff.
+
+    Returns:
+        (data_label_lines, data_label_ymeds) — header-stripped parallel lists.
+    """
+    cutoff = first_value_top - margin_px
+    data_label_lines: List[List[Dict]] = []
+    data_label_ymeds: List[float] = []
+    for line, ymed in zip(label_lines, label_line_ymeds):
+        if ymed >= cutoff:
+            data_label_lines.append(line)
+            data_label_ymeds.append(ymed)
+    return data_label_lines, data_label_ymeds
+
+
+def _attach_labels_by_rank(
+    grid: List[List[str]],
+    data_label_lines: List[List[Dict]],
+    code_note_tokens: List[Dict],
+    h_med: float,
+) -> List[List[str]]:
+    """
+    Step C10.7 — Attach labels to ordinal rows by direct index (rank-based pairing).
+
+    Pairs data_label_lines[k] with grid[k] by rank index — NO y-distance comparison.
+    This eliminates the band-over-reach defect in _attach_labels_ordinal (which used
+    a 27px scalar band that spans 1.5× the 36px label-line pitch, merging adjacent
+    label lines into a single cell).
+
+    Label construction for rank k:
+      1. Sort data_label_lines[k] by left, space-join → base label text.
+      2. Append any code_note_tokens whose top is within _LABEL_LINE_GAP_PX * 2
+         of the label line's y-median (per-rank code re-attachment, replacing the
+         global label_pool injection at C11).
+      3. Sort merged token set by left, space-join.
+
+    Count-mismatch handling:
+      - len(data_label_lines) < len(grid): trailing value rows get label = " ".
+      - len(data_label_lines) > len(grid): extra label lines are emitted as
+        empty-value rows (one extra row per orphan label line).
+
+    AC-0: uses ONLY top/left coordinates and _LABEL_LINE_GAP_PX geometry constant.
+    Zero BCTC string constants.
+    Pure function: no I/O, no Tesseract, no DB.
+
+    Args:
+        grid:              2D grid from _build_ordinal_grid (no label column yet).
+        data_label_lines:  Header-stripped label lines from _exclude_pre_data_label_lines.
+        code_note_tokens:  Tokens from pure-code columns (re-attached as label companions).
+        h_med:             Median word height (pixels) — kept for API symmetry.
+
+    Returns:
+        Grid with label prepended as column 0.  May have additional rows if
+        len(data_label_lines) > len(grid).
+    """
+    if not grid and not data_label_lines:
+        return grid
+
+    n_value_rows = len(grid)
+    n_label_lines = len(data_label_lines)
+    result: List[List[str]] = []
+
+    # Pair value rows with label lines (up to the minimum of the two counts)
+    for rank in range(max(n_value_rows, n_label_lines)):
+        value_row = grid[rank] if rank < n_value_rows else None
+        label_line = data_label_lines[rank] if rank < n_label_lines else None
+
+        if label_line is None:
+            # Extra value rows beyond label line count → empty label
+            label = " "
+        else:
+            # Compute y-median of this label line for code_note_tokens attachment
+            tops = [t["top"] for t in label_line]
+            y_med_label = float(sum(tops)) / len(tops) if tops else 0.0
+
+            # Merge label line tokens with nearby code_note_tokens
+            nearby_codes = [
+                t for t in code_note_tokens
+                if abs(t["top"] - y_med_label) <= _LABEL_LINE_GAP_PX * 2
+            ]
+            merged_tokens = label_line + nearby_codes
+            label = " ".join(
+                t["text"] for t in sorted(merged_tokens, key=lambda t: t["left"])
+            ).strip() or " "
+
+        if value_row is not None:
+            result.append([label] + list(value_row))
+        else:
+            # Extra label lines beyond value row count → empty-value row
+            n_cols = len(grid[0]) if grid else 0
+            result.append([label] + [" "] * n_cols)
 
     return result
 
@@ -2146,13 +2359,40 @@ class GenericMdTableExtractor:
             if not grid:
                 continue
 
-            # Step C11 — Attach labels: for each ordinal row, find TEXT tokens
-            # within LABEL_BAND_FACTOR × h_med of the row's y_median.
-            # code_note_tokens from pure-code columns are appended to the text pool
-            # so that line codes appear in the label cell (not as standalone value columns).
-            # Greedy removal prevents same label token from appearing on adjacent rows.
-            label_pool = region_text_tokens + code_note_tokens
-            grid = _attach_labels_ordinal(grid, col_y_medians, label_pool, h_med)
+            # Step C10.5 (MD-EXTRACT-9) — Cluster text tokens into physical label lines.
+            # Greedy line grouping by top-gap threshold (15px). Sorts by (top, left).
+            # Result: each entry is one physical print line (left-sorted token list).
+            all_label_lines = _cluster_text_into_label_lines(region_text_tokens)
+
+            # Compute y-median for each label line (used by C10.6 header exclusion).
+            label_line_ymeds: List[float] = []
+            for line in all_label_lines:
+                tops = [t["top"] for t in line]
+                n = len(tops)
+                if n == 0:
+                    label_line_ymeds.append(0.0)
+                else:
+                    sorted_tops = sorted(tops)
+                    mid = n // 2
+                    ymed = (
+                        (sorted_tops[mid - 1] + sorted_tops[mid]) / 2.0
+                        if n % 2 == 0
+                        else float(sorted_tops[mid])
+                    )
+                    label_line_ymeds.append(ymed)
+
+            # Step C10.6 (MD-EXTRACT-9) — Exclude column-header label lines.
+            # Drops label lines whose y-median falls below first_value_top - margin.
+            # first_value_top already computed at Step C5 (line ~2084, in scope).
+            data_label_lines, _data_ymeds = _exclude_pre_data_label_lines(
+                all_label_lines, label_line_ymeds, first_value_top
+            )
+
+            # Step C10.7 / C11 (MD-EXTRACT-9) — Ordinal-rank label assignment.
+            # Replaces the scalar-band _attach_labels_ordinal for this call site.
+            # data_label_lines[k] pairs with grid[k] by direct index — no y-comparison.
+            # code_note_tokens are re-attached per-rank (within 30px of label y-median).
+            grid = _attach_labels_by_rank(grid, data_label_lines, code_note_tokens, h_med)
             if not grid:
                 continue
 
