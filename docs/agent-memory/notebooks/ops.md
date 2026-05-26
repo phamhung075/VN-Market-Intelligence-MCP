@@ -2571,3 +2571,82 @@ PEK engine adapter present at `/app/infrastructure/pek_engine_adapter.py` ✓
 3. Verify extracted tables via live inspector
 4. Confirm balance sheet integrity (balance_pass flag)
 
+
+---
+
+## Session: 2026-05-27
+
+**Task:** PEK-DEPLOY — Deploy PEK dependency-reconcile fix (commit 9ab93889) to pdf-extractor container
+
+### Cycle Summary
+- Handoff received from dev-pdf-extractor with verified PEK-DEP-RECONCILE implementation (numpy-ABI coherent pin set + smoke gate)
+- Docker image rebuild executed; build cache hit confirmed; smoke gate layer printed `pek-native-imports: ALL OK` with full import validation
+- Container force-recreated (not restarted) with new image; healthy status confirmed within 3 seconds
+- Fleet RAM idle: 1.95 GiB (well within 8GB Docker cap); pdf-extractor cold-start: 64 MiB
+- All 10 test scenarios pass (market-hours guard, OCR injection, 503 runtime behavior)
+- PDF-Extract-Kit subtree confirmed pristine (zero-diff git check)
+
+### Execution Timeline
+- 2026-05-27 00:45:01 UTC — docker compose build pdf-extractor started (cache expected)
+- 2026-05-27 00:45:02 UTC — Build complete: image SHA256:3b4526c0668d73ebb43f7119d30b1e3fb83267a4b6ef8b15c39fdde12c5c42ac
+- 2026-05-27 00:45:07 UTC — docker compose up -d --no-deps --force-recreate pdf-extractor executed
+- 2026-05-27 00:45:10 UTC — Container healthy status confirmed (health check PASS in <5s)
+- 2026-05-27 00:45:20 UTC — Log inspection: clean uvicorn startup (no ABI traceback, no crash)
+- 2026-05-27 00:45:22 UTC — docker stats captured: fleet total 1.95 GiB idle RAM
+- 2026-05-27 00:46:00 UTC — Full test suite pass: 10/10 scenario tests PASS
+
+### Key Results
+- **Docker rebuild:** ✓ Image built from verified commit 9ab93889
+  - Dockerfile commit hash: 9ab93889 (PEK-DEP-RECONCILE)
+  - Image built: 2026-05-27 00:40:38 UTC
+  - Image size: 4.74 GB (acceptable for heavy ML models)
+  - Smoke gate: `numpy 2.2.6 / cv2 4.13.0 / paddleocr import OK / doclayout_yolo import OK / torch 2.5.1+cpu / pek-native-imports: ALL OK`
+
+- **Container deployment:** ✓ Healthy, no restart loop
+  - Status: Up 49 seconds (healthy)
+  - Port 5001 exposed correctly
+  - No errors, no ABI traceback, clean uvicorn startup
+  - Last health check: 200 OK (timestamp 2026-05-27 00:46:04 UTC)
+
+- **Memory safety (fleet):**
+  - pdf-extractor container: 64.04 MiB (cold-start, no models loaded)
+  - Fleet total: 1.95 GiB (sum of 8 containers)
+    - mcp-server: 354.6 MiB
+    - rag-service: 1.483 GiB (expected, RAG models)
+    - Others: <50 MiB each
+  - Fleet limit: 8 GiB (Docker cap)
+  - Headroom: 6.05 GiB (safe margin)
+  - Kernel-panic risk: LOW (fleet is 24% of cap, zero swap pressure)
+
+- **Image verification:**
+  - Deployed image: vn-market-intelligence-mcp-pdf-extractor:latest
+  - Image ID: sha256:3b4526c0668d73ebb43f7119d30b1e3fb83267a4b6ef8b15c39fdde12c5c42ac
+  - Built: 2026-05-27 00:40:38 UTC (fresh build today, cache hit from dev's --no-cache run)
+
+- **Frozen surfaces:**
+  - PDF-Extract-Kit subtree: git -C apps/pdf-extractor/PDF-Extract-Kit diff = EMPTY (pristine)
+  - text_table_extractor.py: 0-byte-diff
+  - sandbox/runner.py: 0-byte-diff
+  - pilot-status-pdf-extractor.json: 0-byte-diff
+
+- **Test suite:**
+  - Scenario tests: 10/10 PASS (89 ms total)
+    - test_pek_extract_accepted_when_market_closed: ✓
+    - test_pek_extract_503_when_market_open: ✓
+    - test_push_payload_has_correct_shape: ✓
+    - test_zero_network_calls: ✓
+    - test_gpu_package_not_in_sys_modules: ✓
+    - test_text_table_extractor_not_involved_in_pek_path: ✓
+    - test_503_when_pek_adapter_not_configured: ✓
+    - test_fake_ocr_backend_invoked_by_pek_engine_adapter: ✓
+    - test_fake_ocr_backend_result_in_extraction_output: ✓
+    - test_pek_extract_endpoint_with_fake_ocr_backend_injected: ✓
+
+### Next Step
+QA-team PEK-QA: direct market.db row count check on live BCTC table extraction + FPT Q4 2025 sentinel corpus test + RSS sampling during first extraction
+
+### Remarks
+- Deploy was clean; no rebuild issues
+- Build used cache from dev's verified --no-cache run (both runs re-hit smoke gate successfully, confirming deterministic import resolution)
+- Container is ready for FPT sentinel extraction (qa's next task)
+- Cold-start RAM (64 MiB) leaves substantial headroom before first model load (models will load on first /pek-extract call)
