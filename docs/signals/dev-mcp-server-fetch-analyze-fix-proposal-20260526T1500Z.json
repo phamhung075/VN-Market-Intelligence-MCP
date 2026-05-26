@@ -1,0 +1,55 @@
+{
+  "from": "dev-mcp-server",
+  "to": "po",
+  "type": "fix-proposal",
+  "id": "dev-mcp-server-fetch-analyze-fix-proposal-20260526T1500Z",
+  "parent_spike": "FETCH-ANALYZE-PROFILE",
+  "createdAt": "2026-05-26T15:00:00Z",
+  "title": "fix(mcp): fetch_and_analyze timeout — per-source budget + allSettled + ragIndex guard",
+  "zone": "apps/mcp-server/",
+  "owner": "dev-mcp-server",
+  "mode": "FIX",
+  "ops_rebuild_required": true,
+  "files_to_change": [
+    {
+      "path": "apps/mcp-server/src/interface/mcp/tools/news-analysis/analysis.ts",
+      "changes": [
+        "Replace Promise.all(fetchPromises) with Promise.allSettled (REC-2).",
+        "Add per-source timeout wrappers: cafef=10s, vnexpress=10s, vneconomy=12s, reuters=15s (from 30s) (REC-1).",
+        "Add optional use_ingested: z.boolean().default(false) + since_minutes: z.coerce.number().default(120) params (REC-4).",
+        "When use_ingested=true: read rag_analyses WHERE created_at >= datetime('now', '-N minutes') and skip Steps 1+4."
+      ]
+    },
+    {
+      "path": "apps/mcp-server/src/infrastructure/rag/ragHttpClient.ts",
+      "changes": [
+        "Add signal: AbortSignal.timeout(8_000) to ragIndex() fetch() call (REC-3).",
+        "Add signal: AbortSignal.timeout(8_000) to ragSearch() fetch() call (REC-3)."
+      ]
+    }
+  ],
+  "test_files_to_create": [
+    {
+      "path": "apps/mcp-server/src/__tests__/NNNN-fetch-analyze-timeout.test.ts",
+      "scenarios": [
+        "Inject slow source mock (sleeps 20s via delayed Promise) — verify tool returns within 20s with partial results from other sources.",
+        "Inject slow ragIndex mock (sleeps 15s) — verify Step 4 completes within 10s (AbortSignal fires).",
+        "use_ingested=true — verify ragIndex NOT called, SQLite read path used, rows within since_minutes window returned.",
+        "use_ingested=false default — verify existing network path unchanged (non-regression)."
+      ]
+    }
+  ],
+  "qa_gate": {
+    "description": "Integration test with injected slow mocks must pass before merge. No Playwright required. No ops rebuild until tests green.",
+    "pass_criteria": [
+      "bun test NNNN-fetch-analyze-timeout.test.ts: 4/4 scenarios PASS.",
+      "bun tsc --noEmit: EXIT 0.",
+      "fetch_and_analyze(all sources, limit=20) wall clock <= 25s under normal conditions (down from 55-60s worst case).",
+      "fetch_and_analyze(use_ingested=true) wall clock < 50ms."
+    ]
+  },
+  "ops_rebuild_note": "After merge and tests green, ops must rebuild + restart mcp-server container to deploy. The fix is in interface + infrastructure layers — no schema change, no migration.",
+  "priority": "high",
+  "estimated_effort": "1 dev cycle (120 min)",
+  "dispatch_constraint": "Do NOT run this alongside other apps/mcp-server/ tasks. Zone-exclusive. Sequential dispatch."
+}

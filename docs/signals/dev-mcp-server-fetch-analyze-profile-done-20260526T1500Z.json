@@ -1,0 +1,67 @@
+{
+  "from": "dev-mcp-server",
+  "to": ["po", "qa"],
+  "type": "spike-done",
+  "id": "dev-mcp-server-fetch-analyze-profile-done-20260526T1500Z",
+  "task_ref": "FETCH-ANALYZE-PROFILE",
+  "source_signals": [
+    "docs/signals/cowork-team-fetch-analyze-recur-20260526T0407Z.json",
+    "docs/signals/news-scout-2026-05-26T0007Z-escalation.json"
+  ],
+  "createdAt": "2026-05-26T15:00:00Z",
+  "shipped_code": false,
+  "commit_sha": null,
+  "findings": {
+    "root_cause": "fetch_and_analyze Step 1 (4-source fan-out) + Step 4 (ragIndex fan-out) can together reach 55-65 s wall clock, exceeding the ~60 s MCP tool response budget.",
+    "step1_ceiling_s": 30,
+    "step4_ceiling_s": 30,
+    "combined_worst_case_s": 60,
+    "primary_offender": "reuters slot: AbortSignal.timeout(30_000) was correct for the old direct external RSS call but is now a local Docker HTTP call to news-fetch:5008 — 30 s budget is 2x too large for an in-network call. Any concurrent load on news-fetch causes the slot to hold at 25-30 s.",
+    "secondary_offender": "vneconomy fetcher runs 2 feeds serially inside one Promise (2x 15 s axios = up to 30 s per slot). No outer per-source timeout guard.",
+    "tertiary_offender": "ragHttpClient ragIndex() and ragSearch() have NO AbortSignal. Under post-OOM rag-service restart, each call can hang 30-60 s. Promise.all waits for the slowest individual ragIndex call.",
+    "promise_all_vs_allSettled": "Step 1 uses Promise.all — a hung reuters slot holds all results until timeout, preventing partial delivery from cafef/vnexpress/vneconomy.",
+    "ingestion_redundancy": "VPS push pipeline already ingests all 4 sources every 15 min into rag_analyses (normalised + indexed). Off-hours news-scout re-fetches live from the same sources, duplicating network work unnecessarily.",
+    "false_positive_cleared": "ingestion pipeline (VPS -> push-news -> pollNews -> rag_analyses) is FULLY GREEN — confirmed by cowork probe at 04:10Z. The timeout is isolated to the on-demand fetch_and_analyze MCP tool path only."
+  },
+  "recommendations": [
+    {
+      "id": "REC-1",
+      "title": "Per-source timeout budget",
+      "priority": "P0",
+      "shape": "Wrap each fetchPromises.push(...) call in Promise.race([sourceFn(), timeoutToEmpty(budgetMs)]). Proposed budgets: cafef=10s, vnexpress=10s, vneconomy=12s, reuters=15s (from 30s). On timeout resolve to [] (match existing .catch()=>[] pattern). Total Step 1 ceiling drops from 30s to 15s.",
+      "risk": "low — timeout-to-empty is already the reuters error path. No new failure modes."
+    },
+    {
+      "id": "REC-2",
+      "title": "Promise.allSettled fan-out for Step 1",
+      "priority": "P0",
+      "shape": "Replace Promise.all(fetchPromises) with Promise.allSettled(fetchPromises) and flatMap fulfilled results. Mechanics: settled.flatMap(r => r.status==='fulfilled' ? r.value : []).slice(0, limit). One hung slot can no longer stall the entire batch.",
+      "risk": "zero — already handle partial arrays throughout Steps 2-5."
+    },
+    {
+      "id": "REC-3",
+      "title": "AbortSignal guard on ragIndex and ragSearch",
+      "priority": "P1",
+      "shape": "Add signal: AbortSignal.timeout(8_000) to both ragIndex() and ragSearch() fetch() calls in ragHttpClient.ts. 8 s is generous for a local Docker call and eliminates the infinite-hang path under rag-service restart. Also add signal: AbortSignal.timeout(15_000) to the outer Promise.all in Step 4 (belt+suspenders).",
+      "risk": "low — ragIndex errors are already caught and logged in the per-entry try/catch; missing an index entry on timeout is non-fatal."
+    },
+    {
+      "id": "REC-4",
+      "title": "Lighter already-ingested DB read path",
+      "priority": "P2",
+      "shape": "Add optional use_ingested: boolean + since_minutes: number (default 120) params to fetch_and_analyze. When use_ingested=true skip Steps 1+4 entirely; read rag_analyses WHERE created_at >= datetime('now', '-N minutes') ORDER BY created_at DESC LIMIT ?. Wall clock drops from 30s to <5ms. Off-hours news-scout should use this path.",
+      "qa_gate": "Unit test: ragIndex NOT called when use_ingested=true. Integration test: since_minutes filter returns only rows within window. Non-regression: existing call with use_ingested=false (default) unchanged."
+    }
+  ],
+  "one_line_safe_fix_shipped": false,
+  "rationale_for_no_ship": "REC-1 and REC-2 together require editing analysis.ts (interface layer) — simple mechanical changes but they modify the live tool handler. Per spike constraint, no production fix without a QA gate. REC-3 touches ragHttpClient.ts (infrastructure layer). None qualifies as a 'one-line obviously safe bound' because all three touch the live call path of a tool that is currently deployed and in use by the scheduler (intelligenceCycleJob pollNews is stubbed to [] but fetch_and_analyze is called by the cowork agents directly). The combined REC-1+2+3 fix is a single small PR but requires a real QA scenario (inject a slow mock source, verify timeout fires, verify partial results returned).",
+  "follow_up_fix_dispatch_required": true,
+  "fix_proposal_signal": "docs/signals/dev-mcp-server-fetch-analyze-fix-proposal-20260526T1500Z.json",
+  "qa_required_for_fix": [
+    "Inject a mock source that sleeps 20s — verify fetch_and_analyze returns within 20s with partial results from other sources (REC-1+2).",
+    "Inject a slow ragIndex mock that sleeps 15s — verify Step 4 completes within 10s (REC-3).",
+    "Call fetch_and_analyze(use_ingested=true) — verify ragIndex NOT called, SQLite read path used, result contains rows from last 2h.",
+    "Non-regression: existing fetch_and_analyze(use_ingested=false default) call path unchanged."
+  ],
+  "notebook_updated": "docs/agent-memory/notebooks/dev-mcp-server.md"
+}
