@@ -6,6 +6,7 @@
 
 ## Status
 
+2026-05-26 — Phase 2 P2-A + P2-B + P2-C COMPLETE. ESLint fence (G4) installed and proven. 179/179 Vitest GREEN. tsc clean. Stopping before P2-D (QA gate).
 2026-05-25 — Phase 1 MVR COMPLETE. P1-A + P1-B1..B4 + P1-C + P1-E all DONE. 179/179 Vitest GREEN. 4/4 Playwright GREEN. G12 streak 3/3 COMPLETE. tsc clean.
 2026-05-19 — Task 1956 emergency route rename complete. 2026-05-18 — Task 1945b-frontend complete. 20/20 tests GREEN. 144/144 full suite GREEN. 0 tsc errors.
 
@@ -20,7 +21,7 @@
 
 ## Zone health
 
-Phase 1 MVR complete. 179/179 Vitest + 4/4 Playwright GREEN. G12 streak 3/3 DONE. 4 pure formatters extracted (domain/formatters/), 1 view-model stub (lib/view-models/), render-gate Playwright spec. tsc clean. | HEALTHY
+Phase 2 P2-A/B/C DONE. ESLint fence (G4) installed: eslint.config.mjs + eslint-plugin-boundaries@6.0.2 + TS resolver. Fence-A/B/C proven via deliberate-violation (exit 1, "Fence-A" in output), clean run exits 0. 179/179 Vitest, tsc clean. Stopped at P2-D (QA gate). | HEALTHY
 
 ## Cycle P1-FE — 2026-05-25 (Phase 1 MVR — formatter extraction + render-gate)
 
@@ -50,10 +51,24 @@ Phase 1 MVR complete. 179/179 Vitest + 4/4 Playwright GREEN. G12 streak 3/3 DONE
 - unknown + type guards (no `any`) in all API response parsers
 - Remix .server suffix in route files with default export = Remix v7+ code-split violation
 
+## Cycle P2-FE — 2026-05-26 (Phase 2 — ESLint fence G4)
+
+- P2-A: `frontend-pre-ci` annotated tag created at fd6bc6a4. Tag SHA: 3fbbd5e021c1b5a611a96ca23ed72ed0790a841a. Local-only.
+- P2-B: `eslint.config.mjs` created with Fence-A/B/C adapted for Remix app/ layout. devDeps: eslint@8.57.1, eslint-plugin-boundaries@6.0.2, @typescript-eslint/parser@8.60.0, @typescript-eslint/eslint-plugin@8.60.0, eslint-import-resolver-typescript@4.4.4. `lint:fence` script added. Initial commit: 437e8514. Fix commit (mode:full + TS resolver + rule order): 9cc11a31.
+- P2-C: Deliberate Fence-A violation proof (NEVER committed). Added `import type { GatewayHealth } from '../../lib/api/client.js'` to direction-arrow.ts. ESLint exit 1, output: "Fence-A: domain/formatters must not import api-client layer". Reverted. Post-revert exit 0. git status clean.
+- Key learnings:
+  - eslint-plugin-boundaries v6 FOLDER mode appends /**/* to pattern for segment matching — files directly in a folder (not subdirectory) need mode:"full"
+  - .js-suffixed ESM imports not resolved by default resolver; need eslint-import-resolver-typescript
+  - ~ Remix alias requires tsconfig.json paths + TS resolver to resolve correctly
+  - last-write-wins: put most-specific fence rule LAST in rules array to control error message
+  - checkUnknownLocals:true needed as fallback for any remaining unresolved imports
+
 ## Carry-over (next session)
 
-- Phase 2: ESLint fence (G4) — eslint-plugin-boundaries blocking domain/formatters/ → lib/api/ imports
-- Phase 2: G9 verbal sign-off from user on Playwright output
-- Phase 2: G10 (AI fixes bug ≤2 cycles) via QA bug injection
-- Phase 2: G11 (regression alarm) — 2-trial coupling proof
+- P2-D: QA gate — freeze anchor confirm (QA reads eslint.config.mjs git log, emits G4 evidence signal)
+- P2-E: QA gate — frontend-pre-inject tag + G10 bug injection (QA task)
+- P2-F: G10 AI-fix — dev diagnoses from RED Vitest output only (dev task)
+- P2-G: G11 2-trial regression alarm coupling proof (QA+dev task)
+- P2-H: G9 ops live-recheck (ops task — Playwright 4/4 against running :3001)
 - Dev note: always use PORT=3099 (or similar) for host-side Playwright; Docker holds 3001 even when container stopped
+- Dev note: `lint:fence` script requires ESLINT_USE_FLAT_CONFIG=true (already baked into script)
