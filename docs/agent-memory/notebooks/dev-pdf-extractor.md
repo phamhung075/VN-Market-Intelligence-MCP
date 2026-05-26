@@ -4,6 +4,37 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — MD-EXTRACT-9 DONE (Label-Row Ordinal Reconstruction)
+
+**Task:** MD-EXTRACT-9 | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
+
+**Root cause fixed:** `_attach_labels_ordinal` band (27px = 1.5×h_med=18) spanned 1.5× the label pitch (36px). Two adjacent label lines' tokens fell inside the same band → merged into one cell → ordinal drift cascade. Zero count mismatch (24 label lines = 24 value ranks).
+
+**Fix (FLAG-A binding):** Added NEW `_attach_labels_by_rank(grid, data_label_lines, code_note_tokens, h_med)` — no y-comparison at all. Left `_attach_labels_ordinal` 100% untouched (12 TestOrdinalReconstruction tests still pass).
+
+**New constants:** `_LABEL_LINE_GAP_PX=15` (200-DPI intra-line gap), `_LABEL_HEADER_MARGIN_PX=20` (200-DPI header-zone margin). Both AC-0 compliant: zero BCTC string semantics.
+
+**New pure functions:**
+- `_cluster_text_into_label_lines(text_tokens, label_line_gap_px)` — Step C10.5: greedy sort-by-(top,left) + running-min-top anchor (FLAG-D robustness), returns List[List[Dict]].
+- `_exclude_pre_data_label_lines(label_lines, ymeds, first_value_top, margin_px)` — Step C10.6: drops lines with y_med < first_value_top - 20px.
+- `_attach_labels_by_rank(grid, data_label_lines, code_note_tokens, h_med)` — Step C10.7: direct index pairing, code_note_tokens re-attached per-rank within 30px.
+
+**`_process_page` C11 call site:** Replaced `label_pool + _attach_labels_ordinal` with C10.5→C10.6→`_attach_labels_by_rank`. `first_value_top` (already in scope from C5) passed to C10.6.
+
+**Fixture (FLAG-B live-substrate, verbatim):** 15 tokens from FPT e71f845d income page (brief §9.7/§9.8). Line-1: 10 tokens tops 488-496. Line-2: 5 tokens tops 522-524. Boundary gap 26px > 15px → split.
+
+**pytest results:** 466 passed / 0 failed (full unit/ suite) | 149 passed (target file) | 12 TestOrdinalReconstruction PASS (FLAG-A intact) | 8 TestLabelLineClustering + 5 TestExcludePreDataLabelLines + 9 TestAttachLabelsByRank = 22 new tests.
+
+**AC fences:** AC-0 PASS (all BCTC matches in comments only) | Fence-A PASS (zero from application/interface) | Privacy PASS (zero creds) | AC-3F PASS (text_table_extractor.py 0-byte diff) | Sandbox primitive 29/29 PASS (6 known_bad by design) | Module tier 1/1 PASS.
+
+**Files modified (UNSTAGED):**
+- `infrastructure/generic_md_table_extractor.py` — +2 constants, +3 pure functions, modified `_process_page` (C11 site → C10.5+C10.6+C10.7), docstring updated.
+- `__tests__/unit/test_generic_md_table_extractor.py` — +5 MD-EXTRACT-9 imports, +3 test classes (TestLabelLineClustering, TestExcludePreDataLabelLines, TestAttachLabelsByRank) + live fixture module-level constants.
+
+**NEXT:** ops MD-DEPLOY-9 (rebuild pdf-extractor container, single doc e71f845d re-extract, NEVER batch) → main-terminal live-verify AC-9-LABEL + AC-9-PAIR via direct market.db query.
+
+---
+
 ### 2026-05-26 — MD-EXTRACT-7-REV DONE (Dense Income Statement Reconstruction)
 
 **Task:** MD-EXTRACT-7-REV | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
