@@ -1,5 +1,76 @@
 # QA — Notebook
 
+## cycle-124 · 2026-05-26 · P2-G (frontend G11 regression-alarm 2-trial coupling proof) — PASS
+
+**Task:** P2-G — G11 regression alarm, 2-trial coupling proof | **Verdict:** G11 outcome-(a)x2 PASS — P2-H READY
+
+```
+date: 2026-05-26T130213Z
+type: qa-gate (frontend Phase-2 G11)
+signal: docs/signals/qa-frontend-g11-p2g-2026-05-26T130213Z.json
+
+trial_1_summary:
+  alias: P2-E/P2-F committed cycle
+  primitive: apps/frontend/app/domain/formatters/direction-arrow.ts
+  mutation: symbol "up" → "↑↑" (inject 4aef229c)
+  coupled_consumer_file: app/lib/view-models/analysis-vm.test.ts
+  coupled_tests_red: 2 (direction-up + multi-formatter)
+  primitive_tests_red: 1
+  total_red: 3
+  fix_commit: c1df64ac (single-edit: ↑↑ → ↑)
+  post_fix: 179/179 GREEN
+  outcome: outcome-(a)
+
+trial_2_summary:
+  primitive: apps/frontend/app/domain/formatters/change-pct.ts
+  mutation: symbol "↑" → "+" for positive changePct (working-tree ONLY — never staged, never committed)
+  baseline_before: 179/179 GREEN
+  coupled_consumer_file: app/lib/view-models/analysis-vm.test.ts
+  coupled_tests_red:
+    - "buildWatchlistTileVM > tile with price returns hasPrice=true and formatted display"
+      assertion: changePctDisplay contains '↑' — received '+ +1.5%'
+    - "buildWatchlistTileVM > market-data-policy: view model output includes direction + delta, never bare snapshot"
+      assertion: changePctDisplay matches /[↑↓—]/ — received '+ +1.5%'
+  primitive_tests_red:
+    - "formatChangePct > positive change returns upward arrow with + prefix and green class"
+      expected '↑', received '+'
+    - "formatChangePct > large positive change formats correctly"
+      expected '↑', received '+'
+  total_test_files_red: 2
+  total_tests_red: 4
+  tests_passing_during_mutation: 175
+  single_edit_fix: "'+' → '↑' in change-pct.ts (1 literal restore)"
+  post_fix: 179/179 GREEN
+  git_status_change_pct_ts: CLEAN (nothing staged, nothing committed)
+  outcome: outcome-(a)
+
+coupling_boundary:
+  primitive_layer: apps/frontend/app/domain/formatters/
+  view_model_layer: apps/frontend/app/lib/view-models/
+  path: change-pct.ts → analysis-vm.ts (import formatChangePct) → buildWatchlistTileVM → changePctDisplay composed → analysis-vm.test.ts asserts symbol content
+
+g11_verdict: PASS — outcome-(a) x 2 confirmed
+next: P2-H (ops G9 live-recheck Playwright 4/4 port 3001) — READY
+
+constraints:
+  change_pct_ts_committed: false
+  change_pct_ts_staged: false
+  pilot_status_touched: false
+  git_tags_touched: false
+  zone: apps/frontend/ + docs/signals/ + notebook ONLY
+
+key_learnings:
+  - analysis-vm.test.ts is the natural "coupled consumer" sensor: it asserts the COMPOSED changePctDisplay
+    string which embeds the symbol output from formatChangePct — any symbol mutation percolates through
+    the composition → view-model test fails even though analysis-vm.ts source is untouched
+  - "↑" → "+" mutation is ideal for coupling proof: type-safe (both string), deterministic RED on
+    symbol assertions, and the "+" character produces distinctive "expected '↑', received '+'" diffs
+  - Two different primitives (direction-arrow + change-pct) both couple into same analysis-vm.test.ts
+    consumer, proving the view-model is a genuine coupling sensor for the formatter layer
+```
+
+---
+
 ## cycle-123 · 2026-05-26 · P2-D + P2-E (frontend Phase-2 fence freeze + G10 inject) — PASS
 
 **Task:** P2-D (G4 fence freeze anchor confirm) + P2-E (G10 bug injection) | **Verdict:** P2-D PASS; P2-E inject committed; P2-F READY

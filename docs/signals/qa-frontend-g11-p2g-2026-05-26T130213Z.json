@@ -1,0 +1,112 @@
+{
+  "to": ["po", "dev-team"],
+  "type": "gate-evidence",
+  "gate": "G11",
+  "task": "P2-G",
+  "pilot": "frontend",
+  "phase": 2,
+  "emitted_at": "2026-05-26T130213Z",
+  "emitted_by": "qa",
+  "qa_cycle": 124,
+
+  "verdict": "G11 outcome-(a)x2 PASS",
+  "summary": "Two independent primitive mutations each caused ≥1 COUPLED consumer scenario in analysis-vm.test.ts to go RED. Each was repaired by a single-edit revert restoring 179/179 GREEN. Regression alarm coupling is proven across the primitive→view-model boundary for 2 distinct primitives.",
+
+  "trial_1": {
+    "alias": "P2-E/P2-F committed cycle",
+    "primitive_file": "apps/frontend/app/domain/formatters/direction-arrow.ts",
+    "mutation_description": "symbol 'up' return changed from '↑' to '↑↑' (one extra arrow character) — committed as inject 4aef229c, G10-INJECTED-BUG comment",
+    "inject_commit": "4aef229c",
+    "fix_commit": "c1df64ac",
+    "coupled_consumer_scenario_file": "app/lib/view-models/analysis-vm.test.ts",
+    "coupled_consumer_scenarios_red": [
+      "buildWatchlistTileVM > direction up returns upward arrow symbol and green class",
+      "buildWatchlistTileVM > multi-formatter: both formatChangePct and formatDirectionArrow outputs present in view model"
+    ],
+    "primitive_own_scenarios_red": [
+      "formatDirectionArrow > up direction returns upward arrow with green class"
+    ],
+    "total_test_files_failed": 2,
+    "total_tests_failed": 3,
+    "single_edit_fix": "↑↑ → ↑ in direction-arrow.ts (1 character removed)",
+    "post_fix_result": "179/179 GREEN",
+    "git_diff_pre_inject_to_fix": "empty (exact restoration of canonical state)",
+    "outcome": "outcome-(a)"
+  },
+
+  "trial_2": {
+    "primitive_file": "apps/frontend/app/domain/formatters/change-pct.ts",
+    "mutation_description": "symbol for positive changePct changed from '↑' to '+' (working-tree only — never staged, never committed)",
+    "mutation_type": "literal-value substitution (string symbol swap)",
+    "working_tree_only": true,
+    "committed": false,
+    "staged": false,
+    "baseline_before_mutation": "179/179 GREEN (confirmed at 15:01:07)",
+    "coupled_consumer_scenario_file": "app/lib/view-models/analysis-vm.test.ts",
+    "coupled_consumer_scenarios_red": [
+      {
+        "test": "buildWatchlistTileVM > tile with price returns hasPrice=true and formatted display",
+        "assertion": "expect(vm.changePctDisplay).toContain('↑')",
+        "expected": "'↑'",
+        "received": "'+ +1.5%'",
+        "error": "AssertionError: expected '+ +1.5%' to contain '↑'"
+      },
+      {
+        "test": "buildWatchlistTileVM > market-data-policy: view model output includes direction + delta, never bare snapshot",
+        "assertion": "expect(vm.changePctDisplay).toMatch(/[↑↓—]/)",
+        "expected": "match /[↑↓—]/",
+        "received": "'+ +1.5%'",
+        "error": "AssertionError: expected '+ +1.5%' to match /[↑↓—]/"
+      }
+    ],
+    "primitive_own_scenarios_red": [
+      {
+        "test": "formatChangePct > positive change returns upward arrow with + prefix and green class",
+        "assertion": "expect(result.symbol).toBe('↑')",
+        "expected": "'↑'",
+        "received": "'+'",
+        "error": "AssertionError: expected '+' to be '↑'"
+      },
+      {
+        "test": "formatChangePct > large positive change formats correctly",
+        "assertion": "expect(result.symbol).toBe('↑')",
+        "expected": "'↑'",
+        "received": "'+'",
+        "error": "AssertionError: expected '+' to be '↑'"
+      }
+    ],
+    "total_test_files_failed": 2,
+    "total_tests_failed": 4,
+    "tests_passed_during_mutation": 175,
+    "single_edit_fix": "'+' → '↑' in change-pct.ts (symbol literal restore — 1 edit)",
+    "post_fix_result": "179/179 GREEN",
+    "git_status_after_revert": "clean — nothing to commit, working tree clean",
+    "outcome": "outcome-(a)"
+  },
+
+  "coupling_mechanism": {
+    "primitive_layer": "apps/frontend/app/domain/formatters/",
+    "consumer_layer": "apps/frontend/app/lib/view-models/analysis-vm.ts",
+    "coupling_path": "analysis-vm.ts imports formatChangePct from change-pct.ts → buildWatchlistTileVM composes pctDisplay.symbol into changePctDisplay → analysis-vm.test.ts asserts changePctDisplay contains '↑'",
+    "cross_boundary": true,
+    "boundary_crossed": "domain/formatters → lib/view-models"
+  },
+
+  "regression_alarm_verdict": {
+    "trial_1": "PASS — direction-arrow primitive mutation cascaded RED into analysis-vm.test.ts (2 coupled tests) + single-edit revert → 179/179 GREEN",
+    "trial_2": "PASS — change-pct primitive mutation cascaded RED into analysis-vm.test.ts (2 coupled tests) + single-edit revert → 179/179 GREEN",
+    "outcome_a_x2": true,
+    "g11_verdict": "PASS"
+  },
+
+  "next_task": "P2-H (ops G9 live-recheck Playwright 4/4 against running container port 3001) — READY",
+
+  "constraints_verified": {
+    "change_pct_ts_clean": true,
+    "trial_2_mutation_never_staged": true,
+    "trial_2_mutation_never_committed": true,
+    "pilot_status_frontend_untouched": true,
+    "no_git_tags_touched": true,
+    "zone_respected": "apps/frontend/ + docs/signals/ + notebook only"
+  }
+}
