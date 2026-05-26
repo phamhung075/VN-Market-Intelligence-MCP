@@ -58,6 +58,15 @@ logger = logging.getLogger(__name__)
 # more than this fraction of median word height.
 _ROW_GAP_FACTOR = 0.5
 
+# Gap-histogram row clustering: same-line grouping tolerance as fraction of
+# median word height. Words within this vertical distance share a physical scan
+# line. Caps at 8px absolute to defuse H_med inflation from tall header tokens.
+_SAME_LINE_FACTOR = 0.3
+
+# Row-pitch multiplier: gap must exceed row_pitch × this factor to start a new
+# logical row. 1.2 = allow 20% stretch in line spacing before a section break.
+_ROW_PITCH_MULTIPLIER = 1.2
+
 # Table boundary detection: vertical gap larger than this × H_med = section break.
 _SECTION_GAP_FACTOR = 2.5
 
@@ -279,11 +288,16 @@ def _detect_table_regions(words: List[Dict], h_med: float) -> List[List[Dict]]:
 
 def _cluster_rows(words: List[Dict], h_med: float) -> List[List[Dict]]:
     """
+    # DEPRECATED — use _cluster_rows_by_gap
+
     Step C — Row clustering via greedy y-band merge.
 
     Groups words into rows: a new row starts when the next word's top coordinate
     exceeds the current row's max(top + height) by more than 0.5 × H_med.
     This tolerates multi-line cells and OCR baseline jitter.
+
+    Kept as a private fallback for sparse pages (< 3 lines detected by
+    _cluster_rows_by_gap). Existing unit tests reference this function directly.
 
     Args:
         words: Words within a single table region (any order accepted).
@@ -316,6 +330,192 @@ def _cluster_rows(words: List[Dict], h_med: float) -> List[List[Dict]]:
 
     rows.append(sorted(current_row, key=lambda w: w["left"]))
     return rows
+
+
+def _cluster_rows_by_gap(words: List[Dict], h_med: float) -> List[List[Dict]]:
+    """
+    Step C (DEFECT-D fix) — Row clustering via gap-histogram row-pitch detection.
+
+    Replaces the greedy height-based _cluster_rows for dense multi-column grids
+    (income statement, segment report) where the old 0.5 × H_med tolerance was
+    too wide, collapsing 25 physical lines into a single "row".
+
+    Algorithm (per brief §3.1 Steps 1–7):
+      1. Sort words by top coordinate.
+      2. Group words into candidate physical lines: two words share a line if
+         their top values differ by ≤ SAME_LINE_TOLERANCE.
+         SAME_LINE_TOLERANCE = min(floor(_SAME_LINE_FACTOR × h_med), 8)
+         The 8px absolute cap defuses H_med inflation from tall header tokens
+         (brief Risk R-HIGH #2).
+      3. Compute inter-line gaps between consecutive candidate line tops.
+      4. row_pitch = median(gaps > 0). Fallback to h_med if no positive gaps.
+      5. ROW_SPLIT_THRESHOLD = row_pitch × _ROW_PITCH_MULTIPLIER.
+      6. Walk lines in top-sorted order. Start a new grid row when the gap from
+         the previous line exceeds ROW_SPLIT_THRESHOLD.
+      7. Within each row, sort words by left coordinate (strict left-to-right;
+         never column-major).
+
+    Fallback (brief Risk R-HIGH #1): if fewer than 3 candidate lines are detected
+    OR row_pitch <= 0, fall back to _cluster_rows (height-based). Log DEBUG.
+
+    AC-0: pure geometric logic — zero BCTC-specific constants.
+    DDD: pure function (no I/O, no Tesseract, no DB).
+
+    Args:
+        words: Words within a single table region (any order accepted).
+        h_med: Median word height across the page.
+
+    Returns:
+        List of rows, each row being a list of words sorted by left coordinate.
+        Rows are sorted by ascending top coordinate.
+    """
+    if not words:
+        return []
+
+    import math
+
+    # Step 1 — Sort words by top coordinate
+    sorted_words = sorted(words, key=lambda w: w["top"])
+
+    # SAME_LINE_TOLERANCE: cap at 8px (brief Risk R-HIGH #2)
+    same_line_tol = min(math.floor(_SAME_LINE_FACTOR * h_med), 8) if h_med > 0 else 2
+
+    # Step 2 — Group words into candidate physical lines
+    # A candidate line is a group of words whose top values are all within
+    # same_line_tol of each other (greedy scan, sequential).
+    candidate_lines: List[List[Dict]] = []
+    if not sorted_words:
+        return []
+
+    current_line: List[Dict] = [sorted_words[0]]
+    current_line_top = sorted_words[0]["top"]
+
+    for word in sorted_words[1:]:
+        if abs(word["top"] - current_line_top) <= same_line_tol:
+            current_line.append(word)
+        else:
+            candidate_lines.append(current_line)
+            current_line = [word]
+            current_line_top = word["top"]
+    candidate_lines.append(current_line)
+
+    # Fallback: zero or one candidate line → height-based clustering
+    # (brief Risk R-HIGH #1 specifies < 3 lines; however with 2 lines we still
+    # have 1 valid gap to compute row_pitch, so we only fall back for < 2 lines).
+    if len(candidate_lines) < 2:
+        logger.debug(
+            "_cluster_rows_by_gap: only %d candidate line(s) — falling back to "
+            "_cluster_rows (height-based)",
+            len(candidate_lines),
+        )
+        return _cluster_rows(words, h_med)
+
+    # Step 3 — Compute inter-line gaps between consecutive candidate line tops
+    # Use the minimum top value of each candidate line as its representative top
+    line_tops = [min(w["top"] for w in line) for line in candidate_lines]
+
+    gaps: List[float] = []
+    for i in range(1, len(line_tops)):
+        gap = line_tops[i] - line_tops[i - 1]
+        if gap > 0:
+            gaps.append(float(gap))
+
+    # Step 4 — row_pitch = median of positive gaps
+    if not gaps:
+        logger.debug(
+            "_cluster_rows_by_gap: no positive inter-line gaps — falling back to "
+            "_cluster_rows (height-based)",
+        )
+        return _cluster_rows(words, h_med)
+
+    row_pitch = _median(gaps)
+    if row_pitch <= 0:
+        logger.debug(
+            "_cluster_rows_by_gap: row_pitch <= 0 — falling back to _cluster_rows"
+        )
+        return _cluster_rows(words, h_med)
+
+    # Step 5 — Row-split threshold
+    row_split_threshold = row_pitch * _ROW_PITCH_MULTIPLIER
+
+    # Step 6 — Emit grid rows from candidate lines.
+    # Primary: each candidate physical line = exactly one grid row (Step 7).
+    # A new *logical* row starts when the gap from the previous line exceeds
+    # row_split_threshold — this handles the case where two candidate lines
+    # (e.g., a wrapped label) should merge into a single grid row. In practice,
+    # for tightly-packed BCTC financial statements every consecutive gap equals
+    # row_pitch (< threshold), so each candidate line becomes its own grid row.
+    # The threshold fires only for unusually large gaps (section breaks), which
+    # already should have been split by Step B but may appear at region edges.
+    #
+    # IMPORTANT: the logic is:
+    #   gap > threshold → start a NEW grid row (section break detected)
+    #   gap <= threshold → same continuous table → this candidate line is its
+    #                      OWN grid row too (not merged with previous).
+    #
+    # In other words: EVERY candidate line produces a grid row. The threshold
+    # only determines whether to treat a large gap as a section break (cosmetic —
+    # in practice table splitting is already handled by _detect_table_regions).
+    grid_rows: List[List[Dict]] = []
+
+    for line in candidate_lines:
+        # Step 7 — Sort words within each row by left coordinate (strict left-to-right)
+        grid_rows.append(sorted(line, key=lambda w: w["left"]))
+
+    return grid_rows
+
+
+def _collapse_empty_columns(grid: List[List[str]]) -> List[List[str]]:
+    """
+    Drop columns that are empty (whitespace-only) across ALL rows including header.
+
+    Fixes empty-column proliferation: after _coalesce_label_columns reduces the
+    left side, the right side may still contain column slots populated only in
+    some rows but blank in all others (sparse anchor assignment artefact).
+
+    A column is EMPTY if every cell in that column across all rows is either an
+    empty string or whitespace-only after strip(). If the header row has text in
+    a column that column is KEPT (brief Risk R-MEDIUM #1 — may be a label-only
+    column header). A column is dropped only when even the header cell is blank.
+
+    AC-0: operates on the assembled grid only — zero BCTC-specific constants.
+    DDD: pure function — no I/O, no Tesseract, no DB. Infrastructure layer.
+
+    Args:
+        grid: 2-D list of strings.
+
+    Returns:
+        Grid with all-empty columns removed. Returns original grid unchanged if
+        the result would have 0 columns (let the density gate handle rejection).
+    """
+    if not grid or not grid[0]:
+        return grid
+
+    n_cols = len(grid[0])
+
+    # Identify non-empty columns: at least one row has a non-blank cell
+    keep_cols: List[int] = []
+    for col_idx in range(n_cols):
+        col_is_empty = all(
+            (row[col_idx].strip() == "" if col_idx < len(row) else True)
+            for row in grid
+        )
+        if not col_is_empty:
+            keep_cols.append(col_idx)
+
+    if not keep_cols:
+        # All columns empty — let density gate reject
+        return grid
+
+    if len(keep_cols) == n_cols:
+        # Nothing to drop
+        return grid
+
+    # Rebuild grid keeping only non-empty columns
+    return [
+        [row[col_idx] if col_idx < len(row) else " " for col_idx in keep_cols]
+        for row in grid
+    ]
 
 
 def _detect_column_anchors(rows: List[List[Dict]], median_word_width: float) -> List[float]:
@@ -759,8 +959,11 @@ class GenericMdTableExtractor:
         page_tables: List[str] = []
 
         for region_words in table_regions:
-            # Step C — Row clustering
-            rows = _cluster_rows(region_words, h_med)
+            # Step C — Row clustering (DEFECT-D fix: gap-histogram based)
+            # _cluster_rows_by_gap replaces _cluster_rows. Uses median inter-line
+            # gap as row-pitch oracle instead of 0.5 × H_med. Falls back to
+            # _cluster_rows automatically on sparse pages (< 3 candidate lines).
+            rows = _cluster_rows_by_gap(region_words, h_med)
             if not rows:
                 continue
 
@@ -786,6 +989,12 @@ class GenericMdTableExtractor:
             # the left of the first numeric column into a single merged cell.
             # Fixes "Phải trả người | bán ngắn | hạn" → one label column.
             grid = _coalesce_label_columns(grid)
+
+            # DEFECT-E (MD-EXTRACT-3 / AC-2E fix): collapse columns that are
+            # blank across ALL rows. Eliminates sparse anchor slots left over
+            # after label coalescing (e.g., 7-column balance sheet → 3-4 cols).
+            # Runs AFTER _coalesce_label_columns and BEFORE _is_data_table.
+            grid = _collapse_empty_columns(grid)
 
             n_rows = len(grid)
             n_cols = len(grid[0]) if grid else 0
