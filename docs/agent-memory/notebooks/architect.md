@@ -1,8 +1,41 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 14:30 UTC | **Sprint:** BCTC-MD-TABLE / MD-EXTRACT-4
+**Last updated:** 2026-05-26 09:15 UTC | **Sprint:** BCTC-MD-TABLE / MD-EXTRACT-5
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## MD-EXTRACT-5 — REVISED: Large-Gap Mode Pitch + Corrected Fixture (2026-05-26T09:15Z) — DESIGN COMPLETE
+
+**Task:** MD-EXTRACT-5 REVISION. Main-terminal traced the original §3 algorithm against the §8 AC-5-SEG fixture and proved it FAILS: Step 2 computed median of all adjacent inter-bin gaps (dominated by within-row micro-gaps), yielding row_pitch=2 and tol=0. Greedy with tol=0 produced ~14 groups from 14 tokens. Two compounding root errors identified and corrected.
+
+**Root error 1 — wrong quantity in Step 2:** `median(all adjacent inter-bin gaps)` estimates the within-row micro-gap (2px), NOT the inter-row pitch (14-16px). Fix: large-gap mode. Compute all inter-bin gaps. `gap_median = median(gaps)`. `large_gaps = [g for g in gaps if g > gap_median]`. `row_pitch = min(large_gaps)`. These are the row-boundary gaps — the within-row micro-gaps are filtered out by the median threshold.
+
+**Root error 2 — pathological fixture:** Original fixture had row0 drift=14px and row1 starting at top=115 (gap = 1px from row0's top=114). Drift ≈ gap → NO y-only algorithm can separate these rows. The boundary is invisible in the 2px histogram (top=114 and top=115 both bin to 114). Fixture replaced with realistic BCTC parameters: drift ≤ 6px, inter-row gap = 14px (ratio 2.3×).
+
+**Corrected algorithm trace on revised fixture** (row0=[100..106], row1=[120..121], left=[100..1900]):
+- Step 2: unique_bins=[100,102,104,106,120], gaps=[2,2,2,14], median=2, large_gaps=[14], row_pitch=14
+- Step 3: tol = min(int(0.45×14),8) = 6
+- Step 4: all 7 row0 tokens (top 100→106) admitted, centroid reaches 103. First row1 token (top=120): |120-103|=17 > 6 → new group. All 7 row1 tokens admitted. RESULT: 2 groups, 7+7. AC PASSES.
+
+**New helper function:** `_estimate_inter_row_pitch(number_tokens, same_line_tol) → int`. Pure. Implements large-gap mode: bins tops, computes adjacent inter-bin gaps, returns min(large_gaps) or 0 to trigger fallback. Called by `_cluster_number_rows_adaptive`. Added to §7 function table and §11 DDD table.
+
+**`_cluster_number_rows_adaptive`:** unchanged in structure (sort → pitch estimate → tol → greedy centroid). Only Step 2 logic (delegated to `_estimate_inter_row_pitch`) is the corrected implementation.
+
+**Design precondition (explicit in brief):** inter-row gap > within-row drift. For well-scanned BCTC documents at 200 DPI: drift ≤ 8px, gap ≥ 12px. Documents violating this (severe distortion) fall back to same_line_tol=4 — no worse than current behavior. Deskew is the correct pre-processing fix for severe cases (out of scope).
+
+**Files revised this cycle:**
+1. `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` — §3 rewritten (large-gap mode, full trace), §7 updated (`_estimate_inter_row_pitch` added), §8 AC-5-SEG fixture replaced + arithmetic proof added, §11 DDD table updated
+2. `docs/handoffs/TASK_BCTC-MD-TABLE.md` — `[Architect] MD-EXTRACT-5` section replaced with revised design
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Risk flags (updated):**
+- R-HIGH: large-gap mode requires at least 2 distinct inter-bin gap magnitudes (small micro-gap + large row-boundary gap). If all gaps are equal (perfectly uniform table) or there are < 2 unique bins → fallback to same_line_tol=4 (log DEBUG).
+- R-HIGH: 8px tol cap is the architectural ceiling. Documents with drift > 8px require pre-processing deskew (out of scope).
+- R-MEDIUM: if within-row gaps are heterogeneous (some large within-row gaps from merged OCR tokens), the large-gap filter may include them, inflating pitch. Mitigated by the min() function (takes the smallest large gap).
+
+**NEXT: dev-pdf-extractor** — implement MD-EXTRACT-5 per REVISED brief §3-§9. AC-3F (non-regression) FIRST. Leave files UNSTAGED. Then ops MD-DEPLOY-5 (single doc, full UUID) → main-terminal live-verify → qa MD-QA-5 → po MD-EXIT.
+
+---
 
 ## MD-EXTRACT-4 REVISED — Number-Token 2D Reconstruction (2026-05-26T~UTC) — DESIGN REVISED
 
