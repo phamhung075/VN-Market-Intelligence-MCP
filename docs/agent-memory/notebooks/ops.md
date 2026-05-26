@@ -1428,3 +1428,46 @@ EXECUTING — Awaiting extraction completion (expected 50-80s from 07:37Z). Back
 
 NEXT: Monitor extraction → verify table_count + ocr_as_markdown → report results to QA for MD-QA gate.
 
+
+---
+
+## Session: 2026-05-26
+
+**Task:** MD-DEPLOY-3 — Deploy MD-EXTRACT-3 dense-grid fix and re-extract one document
+
+### Cycle Summary
+- Deployed pdf-extractor rebuild with MD-EXTRACT-3 code (commit 0807a58d)
+- _cluster_rows_by_gap + _collapse_empty_columns functions verified in running container
+- Single-document re-extraction triggered and completed successfully
+- Target report (FPT Q4 2025) extracted 15 structured tables, pushed to mcp-server
+
+### Execution Timeline
+- 2026-05-26 08:27:45 UTC — docker compose build pdf-extractor started
+- 2026-05-26 08:27:50 UTC — Build complete, image hash sha256:a014544e169a457c6740dd5f635c1a49cf06fd3c9f5fd4a4eb383f0e5273d5b9
+- 2026-05-26 08:27:50 UTC — docker compose up -d --force-recreate --no-deps pdf-extractor
+- 2026-05-26 08:27:53 UTC — Container healthy, code verification passed (8 occurrences of _cluster_rows_by_gap)
+- 2026-05-26 08:27:56 UTC — HTTP 202 POST /extract-md-tables (report_id=e71f845d..., pdf_path=FPT-20260126-Q4-2025.pdf)
+- 2026-05-26 08:31:37 UTC — Background job DONE: tables_detected=15, pushed=True
+- 2026-05-26 08:34:04 UTC — DB verification: extracted_at=2026-05-26 06:31:37, table_count=15, ocr_len=51013, json_len=43617
+
+### Key Results
+- **Image rebuild:** ✓ Build succeeded, pdf-extractor image tag latest
+- **Code presence:** ✓ grep count=8 (_cluster_rows_by_gap function live in container)
+- **HTTP endpoint:** ✓ 202 Accepted (background job queued)
+- **Extraction completion:** ✓ DONE log seen with tables_detected=15, pushed=True
+- **DB persistence:** ✓ Live query confirms:
+  - extracted_at advanced to 2026-05-26 06:31:37 (from prior 2026-05-26 05:44:06)
+  - table_count = 15 (expected range [10,15], within bounds)
+  - ocr_len = 51013 bytes (OCR text present and substantial)
+  - json_len = 43617 bytes (structured JSON tables present)
+
+### Acceptance Criteria (All PASS)
+- AC-1: Image rebuilt = TRUE (sha256:a014544e169a457c6740dd5f635c1a49cf06fd3c9f5fd4a4eb383f0e5273d5b9)
+- AC-2: New function present grep count = 8 (MD-EXTRACT-3 code loaded in container)
+- AC-3: HTTP status = 202 (request accepted, background job queued)
+- AC-4: DONE-or-FAILED log = DONE (completion confirmed with tables_detected metric)
+- AC-5: Final DB row = {extracted_at: 2026-05-26 06:31:37, table_count: 15, ocr_len: 51013, json_len: 43617} ✓
+
+### Status
+COMPLETE — MD-DEPLOY-3 rebuild successful. New code loaded and verified in running container. Single-document re-extraction completed with 15 tables detected and persisted. Ready for main-terminal md-inspect row-order verification (MD-QA-3).
+
