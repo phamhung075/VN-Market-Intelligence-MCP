@@ -1,0 +1,70 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "triage-close",
+  "id": "po-20260526T143000Z",
+  "createdAt": "2026-05-26T14:30:00Z",
+  "tick": "dev-team cron :07 tick 2026-05-26T~14:30Z (triage)",
+  "head_at_triage": "c7f184ad (+ no new commits in the prior 60 min except the frontend close-out 723ef803/2f33d871/c7f184ad)",
+  "wip_before": "0/2",
+  "wip_after": "1/2",
+  "verdict": "BATCH(1) — FETCH-ANALYZE-PROFILE spike dispatched; 2 close-outs reconciled; DEPLOY-DRIFT held (ops/architect lane)",
+  "closed_this_cycle": [
+    {
+      "id": "FRONTEND-SCALE-PILOT",
+      "state": "DONE / verdict=scale (10/12 YES + G3/G5 N/A-justified)",
+      "evidence": "PO terminal close 2f33d871 + pipeline-state c7f184ad; QA P2-Z 723ef803. pilot-status-frontend.json is the correct SSOT (status=DONE, decisionMatrix 3xYES, phase2.status=CLOSED) — NOT touched (already terminal + correct). Reconciled TASKS.md: collapsed the 3 stale sections (Frontend Phase-0 Backlog 'AWAITING USER G9' + mcp-server pilot 'AWAITING DOCKER-SESSION' + BUILD-WAVE SEQUENCING) into one compact 'Deep-Module Refactor Rollout COMPLETE 11/11 + Frontend' summary; full per-task ledgers archived to docs/TASKS_ARCHIVE.md. TASKS.md NET-REDUCED 684->572 (-112 lines).",
+      "did_NOT": "re-open or re-grade; did NOT touch any pilot-status file (all CLOSED)."
+    },
+    {
+      "id": "MACRO-VNINDEX-DATA-GAP",
+      "state": "DONE + LIVE-VERIFIED",
+      "evidence": "production fix 3e4a00c4 (wire MarketIndexPort to market_prices table, Go, in-zone apps/macro-indicators/, +214-line repo test). ops rebuild+live-verify 91c1184d: get_macro_snapshot.vnIndex=1884.18 (was 1280.5 fixture) == get_market_snapshot.VN-Index=1884.18. Dispatcher independently re-confirmed LIVE this tick (vnIndex=1884.18). The after_fix clause (ops rebuild + live-verify vnIndex matches live source) is SATISFIED — truth gate met per trust-is-system's-job. No TASKS.md row existed for it (signal-tracked FIX from the 12:25Z batch); recorded DONE here + in notebook.",
+      "out_of_scope_note": "oil=82.5/gold=2350 seed staleness flagged by cowork agents is a SEPARATE issue, NOT MACRO-VNINDEX — not conflated, not closed here."
+    }
+  ],
+  "batch": [
+    {
+      "type": "SPIKE",
+      "id": "FETCH-ANALYZE-PROFILE",
+      "title": "fetch-analyze-profile",
+      "question": "fetch_and_analyze MCP tool recurring timeout (TRUE-positive, isolated to the tool — ingestion pipeline FULLY GREEN). Profile the synchronous call path; recommend a per-source timeout budget + parallel allSettled + a lighter already-ingested-DB read path so one slow upstream (Reuters) cannot stall the whole batch.",
+      "mode": "spike",
+      "timebox": 120,
+      "zone": "apps/mcp-server/",
+      "owner": "dev-mcp-server",
+      "signal_ref": "docs/signals/cowork-team-fetch-analyze-recur-20260526T0407Z.json (+ news-scout-2026-05-26T0007Z-escalation.json)",
+      "dispatch_rationale": "HOLD reasons from 12:25Z BOTH cleared. (1) ZONE COLD: last commit on apps/mcp-server/ = 3b9851fb @ 05:28Z (~9h ago); BCTC churn MOVED to apps/pdf-extractor/ (last 8c725496 @ 09:02Z, ~5.4h ago) — neither <15 min, both several hours quiet. (2) WIP FREE: 0/2 after both 12:25Z batch items done. SPIKE is read-only/diagnostic profiling (no container build, no heavy compute) → adds NO host-memory load, safe under the 16GB OOM-flap constraint. 10h+ old TRUE-positive recurring tool degradation; off-hours; isolated to the one tool.",
+      "constraints": "SPIKE = profile + recommend ONLY (no production fix this dispatch unless a one-line bound is obviously safe). Explicit-file git staging (git add <path>, never -A/./-am); no --force/--no-verify/--no-gpg-sign; no push; main only; do NOT touch any pilot-status-*.json (all CLOSED); do NOT touch the frozen mcp-server Phase-1 host-side surfaces beyond what the profiling requires. If a fix is warranted, route a follow-up FIX task with its own QA gate."
+    }
+  ],
+  "held": [
+    {
+      "id": "DEPLOY-DRIFT (DRIFT-1 macro / DRIFT-2 kinh-dich / DRIFT-3 guard)",
+      "hold_reason": "NOT dev-team-dispatchable from this lane. DRIFT-1 = ops rebuild (OPS-REBUILD-READY, docker session); DRIFT-2 = ops rebuild (kinh-dich); DRIFT-3 = architect design-lane. Could NOT claim DRIFT-1 moot: the 05:25Z cowork signal reports macro-indicators flapped DOWN AGAIN at 05:23Z (host-OOM/stack-cycle, mcp-server restarted ~05:06Z) — even though the dispatcher re-confirmed macro RECOVERED (vnIndex live), I have no get_macro_calendar 200 proof as a subagent (no call_tool in harness). DRIFT-1 stays OPS-REBUILD-READY pending get_macro_calendar 200 end-to-end verify. RELIABILITY WATCH: the macro/rag flap-after-recovery + co-casualty points at recurring OOM, not just stale-image drift — ops+architect (memory budget) concern, surfaced to WORK, not a dev-team fix."
+    },
+    {
+      "id": "BCTC-MD-TABLE (MD-EXTRACT-6 / LIVE-VERIFY-6)",
+      "hold_reason": "Owned by the parallel BCTC session (apps/pdf-extractor/), NOT this dispatcher's lane. Self-managed by dev-pdf-extractor + architect. Not mine to triage."
+    },
+    {
+      "id": "NEWS-INGEST-2b",
+      "hold_reason": "targets apps/mcp-server/. mcp-server Phase-1 host-side build is now CLOSED 12/12 (8972a155) so the provenance-freeze reason from 12:25Z has lapsed — but it is a user-visible display fix, not urgent this tick, and dispatching it alongside the FETCH-ANALYZE-PROFILE spike (same apps/mcp-server/ zone) would self-contend. Hold to the next tick after the spike clears the zone; OR dispatch then if the spike is read-only and finishes fast. Do NOT run both in apps/mcp-server/ concurrently."
+    }
+  ],
+  "acknowledged_not_dispatched": [
+    "cowork-team-stack-cycle-macro-rag-down-20260526T0525Z.json — HIGH ops/architect (host-OOM recurrence + rag co-casualty); NOT dev-team-spawnable. Surfaced to WORK as a reliability watch; ops owns rebuild + OOM investigation.",
+    "tnb-bug-2026-05-25T20:13:00Z-chef-frozen.json + tnb-2026-05-25T21:13:00Z-c79.json — COWORK LANE (unified-agent / tran-ngoc-bau NOT dev-team-spawnable). On DASHBOARD ## cowork.",
+    "~930-file docs/signals/ backlog — stale terminal receipts + context-bloat hook noise; routed to claude-manager-helper / code-janitor self-cron (NOT dev-team-spawnable). Not my concern per dispatcher."
+  ],
+  "tasks_md_reconciliation": {
+    "net_change": "684 -> 572 lines (-112), satisfies the NET-REDUCE constraint (cap 80; still over but moving the right direction; further trim is claude-manager-helper janitor lane).",
+    "archived_to": "docs/TASKS_ARCHIVE.md § Archive — Added 2026-05-26T14:30Z (Deep-Module Refactor Rollout 11/11 + Frontend, 3 sections)",
+    "sections_removed": ["Phase 0 Backlog (Frontend SCALE Pilot) full ledger", "mcp-server SCALE Pilot full ledger", "BUILD-WAVE SEQUENCING governance"],
+    "replaced_with": "one compact 'Deep-Module Refactor Rollout COMPLETE 11/11 + Frontend' summary pointing at the 2 pilot-status SSOT files",
+    "details_tags_balanced": "1/1 (the legit BCTC-TABLE-3 SUPERSEDED block; the temporary wrapping <details> was fully removed, content lives in archive)"
+  },
+  "commit_note": "All working-tree edits left to the dispatcher (main terminal) to stage+commit under commit-mutex with EXPLICIT-FILE git add (never -A/./-am), index.lock retry (NEVER rm a peer's lock — a parallel BCTC session commits on main), no --force/--no-verify/--no-gpg-sign, no push, on main. PO has no call_tool/commit-mutex/task_claim/send_telegram in subagent harness. Files touched this tick: docs/TASKS.md (-112L), docs/TASKS_ARCHIVE.md (+archive section), docs/agent-memory/notebooks/po.md, this signal. Touched ZERO pilot-status files (all CLOSED).",
+  "work_notify": "FETCH-ANALYZE-PROFILE spike dispatched (dev-mcp-server). Frontend SCALE pilot + MACRO-VNINDEX-DATA-GAP both DONE/closed; deep-module rollout 11/11 COMPLETE. DEPLOY-DRIFT (macro/kinh-dich rebuild) + macro/rag host-OOM flap held on ops/architect lane (reliability watch). WIP 1/2.",
+  "priority_order_applied": "reliability->coverage->UX->arch. Reliability items (DEPLOY-DRIFT macro 404 + macro/rag OOM flap) rank highest by impact but are ops/architect-lane, not dev-team-dispatchable — surfaced to WORK. FETCH-ANALYZE-PROFILE (recurring tool-degradation, reliability/coverage) is the highest-impact DEV-lane item with a now-clear zone + free WIP → dispatched."
+}

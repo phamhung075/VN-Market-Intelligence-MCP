@@ -47,3 +47,17 @@ Active board → `TASKS.md`
 ## Done
 
 (80+ Done rows archived from TASKS.md. See git history for full content prior to 2026-05-24.)
+
+---
+
+## Archive — Added 2026-05-26T14:30Z by PO (dev-team triage) — Deep-Module Refactor Rollout 11/11 + Frontend (3 closed sections)
+
+**Period:** 2026-05-25 → 2026-05-26 | **Sections archived:** 3 (Frontend SCALE Pilot Phase-0/1/2 full ledger; mcp-server SCALE Pilot Phase-0/1 full ledger; BUILD-WAVE SEQUENCING governance). Reason: the 2026-05-22 three-tier deep-module+DDD rollout reached its end-state — both remaining pre-0 pilots terminally closed verdict=scale; the "rebuild + verify the 2 last services" goal is ACHIEVED. Authoritative state = the two pilot-status SSOT files (NOT the board). Full per-task detail in git history at HEAD~ of this archive commit.
+
+| Sprint / Section | Terminal state | Close SHA | SSOT |
+|---|---|---|---|
+| Frontend SCALE Pilot (Phase 0 + Phase 1 MVR WAVE-A + Phase 2 P2-A..Z) | **DONE — 10/12 YES + G3/G5 N/A-justified, verdict=scale, decisionMatrix 3×YES.** G9 graded via ops live-recheck (Playwright 4/4 vs live :3001 + macro keyed-object fix a0364390), NOT user verbal sign-off (awaitingUserG9Signoff RETIRED). Container rebuilt FE-REBUILD 2026-05-25T19:31Z (605035cf) + P2-H 13fe4167. | `2f33d871` (PO close) + `c7f184ad` (pipeline-state) ; QA P2-Z `723ef803` | `docs/data/pilot-status-frontend.json` |
+| mcp-server SCALE Pilot (Phase 0 + Phase 1 host-side P1-A..H + P1-QA/EXIT) — FINAL/11th | **DONE — 12/12 YES, verdict=scale.** Deep-module rollout 11/11 COMPLETE. | `8972a155` (2026-05-26T07:40Z) | `docs/data/pilot-status-mcp-server.json` |
+| BUILD-WAVE SEQUENCING (PO governance) | **EXECUTED — A frontend → B mcp-server-SOLO → C ops rebuild → D QA all complete.** No open wave remains. Concurrency policy (serialized BUILD, mcp-server RUN-SOLO) honored throughout. | — | — |
+
+**Lessons preserved:** frontend is the FIRST pilot with terminal N/A-with-justification goals (G3 Remix=composition-root; G5 no prior mcp-server location) — N/A excluded from the YES tally, 12-goal set reduces to 10 gradeable, all YES. mcp-server G5 was the INVERSE goal (remove dead/migrated tool code, every handler proven HTTP-routed). G9 trust-verification = ops live-recheck per `feedback_trust_verification_is_system_job` (NOT user verbal sign-off) — applied consistently to both terminal closes.
