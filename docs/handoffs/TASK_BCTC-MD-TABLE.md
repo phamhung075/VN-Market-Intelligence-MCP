@@ -811,3 +811,79 @@ Single doc only. NEVER batch. Full UUID mandatory.
 - Poll `GET http://localhost:3000/api/bctc-inspect/md/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` until `extracted_at` advances past MD-EXTRACT-3 timestamp (`2026-05-26 06:31:37`)
 - Non-regression: `GET http://localhost:3000/api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` → rows_length in [70,90], balance_pass: true, balance_delta: 0
 
+
+---
+
+## [Ops] MD-DEPLOY-4 — 2026-05-26 09:16–09:20 UTC
+
+**Deployment:** pdf-extractor rebuild with MD-EXTRACT-4 code (commit 074d82a3 work, 893c7bf6 notebook)
+
+**Summary:**
+- Image rebuilt successfully; MD-EXTRACT-4 new functions verified in container (28 grep matches for _classify_tokens, _cluster_number_rows, _attach_labels, SAME_LINE_TOL)
+- Single-document re-extraction triggered via HTTP 202 POST /extract-md-tables (full UUID mandatory)
+- Background job completed in ~3m45s: 37 tables detected from FPT Q4 2025 BCTC report (20 processed pages out of 46 total)
+- All tables pushed to mcp-server and persisted in market.db (row id=6, replacing old id=5)
+
+**Evidence:**
+- Build exit code: 0
+- Container health: healthy in <5s, health endpoint confirms service "ok"
+- New code presence: `grep -c "_classify_tokens|_cluster_number_rows|_attach_labels|SAME_LINE_TOL"` → 28 matches
+- Cancelled functions absent: `grep -nE "_process_page_from_text|_split_by_whitespace_gap|..."` → exit 1, ZERO matches
+- Extraction DONE log: "ExtractMdTablesUseCase.execute DONE: tables_detected=37 pushed=True"
+- DB query result: {id: 6, table_count: 37, page_count: 20, md_json_len: 19274, ocr_len: 51013, extracted_at: 2026-05-26 07:20:10}
+
+**AC scorecard:**
+- AC-D-0 (rebuild + health): ✓ PASS
+- AC-D-1 (mcp-server healthy): ✓ PASS
+- AC-D-2 (202 → completion): ✓ PASS  
+- AC-D-3 (table_count >= 1): ✓ PASS (actual: 37)
+- Non-regression (bctc_table_rows): ✓ PASS (79 rows, balance δ=0, pass=true)
+- New code live: ✓ PASS (28 matches for new functions)
+- Cancelled absent: ✓ PASS (0 matches for old functions)
+
+**md_tables_v4.json artifact:** Saved to `/tmp/md_tables_v4.json` (21 KB, 37 table entries). First table detected: Balance sheet ("A. TÀI SẢN NGAN HẠN").
+
+**Key observation:** Table count increased from 15 (MD-DEPLOY-3) to 37 (MD-DEPLOY-4). This reflects the algorithmic change (MD-EXTRACT-3: greedy-cluster with density gate K=6; MD-EXTRACT-4: number-token-only clustering). Main-terminal to verify if increase is signal (more honest detection) or noise (tuning drift).
+
+**NEXT:** main-terminal live-verify (segment report + income statement + balance sheet markdown correctness, row-order, label↔value alignment). Then qa MD-QA-4.
+
+---
+
+## [Main-Terminal] LIVE-VERIFY-4 — 2026-05-26 — VERDICT: **FAIL (partial improvement; NOT done)**
+
+Inspected the live `/tmp/md_tables_v4.json` (37 tables, dumped by ops). Independent row-by-row read, not trusting the deploy summary.
+
+### What MD-EXTRACT-4 FIXED (real wins, keep)
+- **Number/text token separation works.** Diacritic-inflated label tokens no longer poison row clustering the way MD-EXTRACT-3 did.
+- **Segment report first-3 columns now align.** Table[31]: `| bộ phận … | 35.381.667 | 9.092.934 | 18.701.876 | … |` — the three lead segment revenues are on ONE row in THREE columns (MD-EXTRACT-3 scattered all of them onto separate lines). Column assignment by x-anchor is correct.
+- **Structured path non-regressed:** `bctc_table_rows` = 79, balance_delta = 0, balance_pass = true. AC-3F holds.
+
+### BLOCKING DEFECTS (why this is still FAIL)
+
+**D1 — Wide rows cascade-split (the core remaining bug).**
+The segment revenue line has **7** segment values; only the first 3 land on the main row. The rest split onto follow-on rows:
+```
+Table[33] "Doanh thụ theo bộ phận":
+| Doanh thụ theo bộ phận | 30.952.512 | 8.157.364 | 16.905.897 |   |   |   |   |
+| phận |   |   |   | 704.503 | 7.444.159 | (1.315.641) |   |
+| phận |   |   |   |   |   |   | 62.848.794 |   ← total, on a 3rd row
+```
+Income statement Table[10] fragments the SAME way — each line item's 4 value-columns spread across 3 rows with label fragments ("cung dịch vụ", "vụ") emitted as their own rows.
+**Root cause (read at `generic_md_table_extractor.py:298-312`):** `_cluster_number_rows` is a **greedy single-pass** that fixes `current_top` to a row's FIRST token and admits later tokens only within a fixed `SAME_LINE_TOL=4px` of that anchor. On a wide BCTC row whose tokens span the full page width, OCR baseline drift accumulates past 4px → the row cascade-splits into 2-3 y-bands (exactly the observed 3/2/1 / 3/2/2 splits). **Not tunable by the constant:** widening `SAME_LINE_TOL` to span page-width drift would merge genuinely-separate rows (BCTC rows sit ~8-12px apart). Needs an algorithm change — adaptive tolerance derived from inter-row pitch, OR centroid-tracking (compare to running row centroid, not fixed first-token top), OR column-anchored row assignment (k row-bands from densest column's token count, assign each token to nearest band + nearest column).
+
+**D2 — Malformed GFM separator on EVERY table (trivial, isolated).**
+`generic_md_table_extractor.py:982`:
+```python
+separator = "|" + "|".join(["---|"] * n_cols)   # → |---||---||---|
+```
+Joining `"---|"` (already trailing-piped) with `"|"` produces doubled pipes `||` → invalid GFM → no table renders as a clean grid in any standard renderer. Fix: `"|" + "|".join(["---"] * n_cols) + "|"` → `|---|---|---|`. One line.
+
+**D3 — Label leakage / fragment-rows (symptom of D1).** Number tokens bleed into the label cell (Table[31] label = `bộ phận {1.193.275)`); label fragments ("phận", "vụ", "trực", "-") are emitted as standalone rows because each cascade-split fragment gets its own `_attach_labels` pass.
+
+**D4 — Balance sheet over-split + code merged into value cell.** Balance sheet fragmented into 10 separate tables (Table[0..9]); rows like `| A. TÀI SẢN NGAN HẠN | 100 58.102.970.741.619 | … |` merge the code `100` into the first value cell instead of its own column. Region detection is over-splitting and the code column isn't separated for narrow tables.
+
+### ROUTING — recurring-bug escalation (4th attempt → architect, not dev patch)
+MD-EXTRACT-1/2/3/4 are 4 fix attempts on `generic_md_table_extractor.py`. Per the ≥2-commit rule, the wide-row reconstruction goes back to **architect** for a root-cause rethink of the row-grouping strategy (D1), bundling the trivial separator fix (D2) and label/region cleanups (D3/D4) as ACs in the same brief. Goal stays armed.
+
+**NEXT:** architect MD-EXTRACT-5 (rethink wide-table row grouping).
+
