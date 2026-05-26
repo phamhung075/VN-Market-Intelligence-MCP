@@ -1,5 +1,37 @@
 # dev-mcp-server -- Notebook
 
+## c311 · 2026-05-26 (LF-OVERLAY — BCTC-LAYOUT-FIRST zone overlay)
+
+### LF-OVERLAY DONE
+
+**Tests:** 29 pass / 0 fail (1272 + 1273) | tsc EXIT 0 | existing suite non-regressed (14 pushBctcTableHandler pass)
+
+**Files changed (all UNSTAGED — main terminal commits):**
+- `apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts` — two new tables: `bctc_layout_units` + `bctc_page_zones` with DDL exactly per brief §3.1
+- `apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts` — NEW: handles POST /api/push-bctc-layout; writes both tables; DB-verified count; idempotent via INSERT OR REPLACE
+- `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` — EXTENDED: new `handleBctcInspectZones` for GET /api/bctc-inspect/zones/{doc_id}?page=N; pure DB read, zero pdf-extractor import
+- `apps/mcp-server/src/interface/mcp/server.ts` — EXTENDED: registered POST /api/push-bctc-layout + GET /api/bctc-inspect/zones/* routes; imported new handlers
+- `apps/mcp-server/src/interface/bctc-inspector.html` — EXTENDED: zone overlay toggle control (id="zone-overlay-toggle", data-zone-toggle="true"); 5-color ZONE_COLORS; SVG overlay renderer with coordinate scaling; zone cache + clearAllOverlays
+- `apps/mcp-server/src/__tests__/1272-push-bctc-layout.test.ts` — NEW: 20 tests for push handler
+- `apps/mcp-server/src/__tests__/1273-bctc-inspect-overlay.test.ts` — NEW: 9 tests for zones endpoint
+
+**AC audit:**
+- AC-LFO-0 PASS: id="zone-overlay-toggle" + data-zone-toggle="true" in HTML
+- AC-LFO-1 PASS: zones endpoint returns zones_json with positional col_0/col_1 col_ids (test 1273)
+- AC-LFO-2 PASS: grep returns zero actual import lines of pdf-extractor in bctcInspectHandler.ts
+- AC-LFO-3 PASS: bctc_table_rows read path in bctcInspectHandler.ts is untouched (Decision B); pushBctcTableHandler.test.ts 14/14 green
+- AC-LFO-4 PASS: test 1272(f) — SELECT COUNT(*) FROM bctc_table_rows = 0 after layout push
+- AC-LFO-5 PASS: test 1272(c) — two identical pushes result in 2 rows, not 4 (INSERT OR REPLACE)
+- AC-LFO-6 PASS: ZONE_COLORS defines 5 distinct entries (headerBand/footerBand/gutterEven/gutterOdd/rowBand/unitBoundary) — code-inspectable
+- AC-LFO-7 DEFERRED: requires corpus re-extraction (LF-DEPLOY gate); verified at QA step
+
+**Carry-over from c310:**
+- 345 pre-existing test failures within baseline; Bun C++ panic after full suite = upstream bug
+
+**ops_rebuild_required: true** — route added to server.ts, new handler wired; docker compose build + up -d --no-deps --force-recreate mcp-server required before LF-DEPLOY can test live.
+
+---
+
 ## c310 · 2026-05-26 (FA-FIX — fetch_and_analyze timeout reliability)
 
 ### FA-FIX DONE
@@ -41,17 +73,15 @@ Sandbox 9/9 PASS. Phase-2 SCALE pilot CLOSED at 8972a155. P2 FROZEN.
 
 ## Working Memory
 
-### Phase-2 State (as of c308)
-- P2-A/B/C/D/E/F/G/H/I/J/K/L: ALL DONE — SCALE pilot 12/12 CLOSED at 8972a155
-- Phase-2 is FROZEN — do NOT disturb graded surfaces
-
 ### Active Work
+- LF-OVERLAY: DONE (c311). Files UNSTAGED — awaiting main terminal commit.
+  NEXT = ops (LF-DEPLOY) — gated on LF-EXTRACT also done.
 - FA-FIX: DONE (c310). ops rebuild required before live fix takes effect.
-- NEWS-INGEST-2b: still HELD (pending zone clearance after FA-FIX lands)
 
 ### Carry-over
 - 345 pre-existing test failures — within ≤348 baseline
 - Bun v1.3.13 C++ panic after full suite = known upstream bug (exit code 0, tests pass)
+- AC-LFO-7 deferred to QA step (requires corpus re-extraction)
 
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db (write)
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`
