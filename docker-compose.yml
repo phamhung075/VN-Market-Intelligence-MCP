@@ -75,6 +75,7 @@ services:
     - 5001:5001
     volumes:
     - market_data:/app/data
+    - ./data/pdfs-local:/app/data/pdfs-local:ro
     environment:
     - DB_PATH=/app/data/pdf_extractor.db
     - STORAGE_DIR=/app/data/extractions
