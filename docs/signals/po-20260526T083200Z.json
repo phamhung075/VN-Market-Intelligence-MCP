@@ -1,0 +1,48 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "triage-batch",
+  "priority": "high",
+  "createdAt": "2026-05-26T08:32:00Z",
+  "payload": "dev-team triage BATCH=2. mcp-server 12/12 close VERIFIED on ground truth (commit 8972a155 + qa P2-Z signal qa-mcp-server-p2-close-2026-05-26T073000Z.json APPROVED c323a8f5 + pilot-status DONE) — NOT reopened. RAG-down already dispatched to ops by dispatcher (not double-dispatched). Items: (1) FIX MACRO-SEED-WIRING dev-macro-indicators apps/macro-indicators/ MED — macro service is UP but serving seed data (vnIndex 1280.5 vs live ~1909), Go source-wiring gap not outage. (2) SPRINT-S P2-FE-PLAN architect — open frontend Phase-2 planning; retired obsolete awaitingUserG9Signoff gate (G9=ops-live-recheck per feedback_trust_verification_is_system_job); pilot stays ACTIVE not DONE (G3/G4/G5/G7/G10/G11 genuinely TBD). (3) SPIKE FETCH-ANALYZE-PROFILE dev-mcp-server queued not-dispatched-this-tick (WIP). DASHBOARD reconciled: P1-EXIT-7of12 -> CLOSED/superseded. Cowork-lane items (HSG-FIRE/MARKET-SLOTS-DARK/CHEF-KINHDICH/NEWSFETCH-FALSECRIT/TNB-C79) acknowledged NOT dev-dispatched. JANITOR BACKLOG flagged: TASKS.md 684L (cap 80) + 904 signals -> code-janitor (self-cron, not dev-team-spawnable). No git write by PO this cycle (working-tree edits left unstaged; commit-mutex not needed). Parallel BCTC-MD-TABLE session committing every ~10min — main terminal must claim commit-mutex before staging in-tree docs.",
+  "batch": [
+    {
+      "type": "FIX",
+      "id": "MACRO-SEED-WIRING",
+      "title": "macro-indicators serving seed data — wire Go source to live macro feeds",
+      "desc": "get_macro_snapshot returns status:ok but seed values (vnIndex 1280.5 vs live ~1909, oil 82.5 vs ~96, gold 2350 vs 4536, usdVnd 24500). Service is UP (ops rebuilt 2026-05-25T19:19Z); this is the known Go source-wiring gap from the TS->Go rewrite, NOT an outage. Wire the live data source(s) into the Go service so the snapshot/calendar serve real values. END-TO-END through mcp-server get_macro_snapshot (false-green guard: direct /snapshot bypass gave false green before). Container flap (OOM/restart) RCA belongs to the ops half of the rag dispatch (host-memory-panic suspect) — coordinate, do not duplicate.",
+      "size": "S",
+      "files": ["apps/macro-indicators/"],
+      "baseline_pass": "9408",
+      "zone": "apps/macro-indicators/"
+    },
+    {
+      "type": "SPRINT-S",
+      "id": "P2-FE-PLAN",
+      "title": "Frontend Phase-2 task plan (architect authors)",
+      "desc": "Backend rollout 11/11 COMPLETE; frontend is the next refactor pilot. Architect authors the Phase-2 task plan in docs/architecture-briefs/2026-05-22-refactor/scale/. Build targets = genuinely-TBD goals: G3 (composition root — calibrate for Remix; may be N/A or thin entry-composition), G4 (ESLint boundaries fence, TS per SI-3), G5 (calibrate — likely N/A, no mcp-server old-code location), G7 (edit-fixture-rerender sandbox), G10/G11 (inject+blind-fix a formatter primitive + 2-trial coupling). G9 grades via ops live-recheck (NOT user verbal — obsolete gate retired). G12 flips at terminal. Phase-1 already earned G1/G2/G6/G8. Planning lane = does NOT consume dev WIP=2 cap. pilot-status-frontend.json phase2=AWAITING-PLAN set this cycle.",
+      "size": "S",
+      "files": ["docs/architecture-briefs/2026-05-22-refactor/scale/", "docs/data/pilot-status-frontend.json"],
+      "baseline_pass": "n/a (planning doc)",
+      "zone": "apps/frontend/"
+    },
+    {
+      "type": "SPIKE",
+      "id": "FETCH-ANALYZE-PROFILE",
+      "title": "Profile fetch_and_analyze timeout (per-source budget / skip slow source)",
+      "question": "Why does fetch_and_analyze time out (2nd in 4h) while ingestion stays green — which source(s) blow the budget, and what is the fix (per-source timeout budget vs skip-slow-source vs stream-vs-buffer)?",
+      "mode": "spike",
+      "zone": "apps/mcp-server/",
+      "timebox": 120
+    }
+  ],
+  "reconciliations": [
+    "DASHBOARD ## po row P1-EXIT-7of12 -> CLOSED (superseded by verified mcp-server 12/12 terminal close 8972a155)",
+    "DASHBOARD ## po row STACK-CYCLE-MACRO-RAG-DOWN -> TRIAGED (rag->ops handled; macro->dev-macro-indicators FIX MACRO-SEED-WIRING)",
+    "DASHBOARD ## po row FETCH-ANALYZE-RECUR -> TRIAGED (SPIKE FETCH-ANALYZE-PROFILE queued)",
+    "pilot-status-frontend.json: awaitingUserG9Signoff RETIRED-OBSOLETE-GATE; phase2.status NOT-STARTED -> AWAITING-PLAN; JSON valid zero-dup-keys; top-level status stays ACTIVE (pilot NOT DONE)"
+  ],
+  "janitorBacklog": "TASKS.md 684 lines (cap 80) + docs/signals/ 904 top-level json -> claude-manager-helper / code-janitor (self-cron maintenance, NOT dev-team-spawnable). Schedule once the parallel BCTC-MD-TABLE session quiets.",
+  "wip": "WIP discipline honored: 2 dispatchable (MACRO-SEED-WIRING dev lane + P2-FE-PLAN architect planning lane — different lanes); FETCH-ANALYZE-PROFILE held queued.",
+  "gitWrite": "NONE by PO this cycle — all edits left UNSTAGED in working tree; commit-mutex not required. Main terminal commits in-tree docs under commit-mutex (parallel BCTC session active)."
+}

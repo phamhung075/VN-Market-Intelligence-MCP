@@ -90,20 +90,23 @@
     ]
   },
   "awaitingUserG9Signoff": {
-    "_note": "Set 2026-05-25T08:32Z by po close-out. Per 'Scale pilot DONE bar' rule (feedback_scale_pilot_done_bar.md): a UI MVR is NOT DONE until the user gives verbal G9 sign-off. Phase-1 MVR build is QA-APPROVED (c85f577c); PO Path-B Playwright render-gate evidence is captured (G9 PARTIAL). Top-level status stays ACTIVE + verdict TBD until user verbal G9 + (separately) frontend container rebuild in the docker session both land.",
-    "state": "AWAITING-USER-G9-SIGNOFF",
+    "_note": "RETIRED 2026-05-26T08:30Z (po dev-team triage). This gate is OBSOLETE per the binding user directive 2026-05-26 (MEMORY feedback_trust_verification_is_system_job): G9 trust-verification = ops live-recheck (live tool calls + Telegram-failure monitoring), NOT user verbal sign-off. The mcp-server pilot's G9 was graded PASS on exactly this ops-live-recheck basis at its 2026-05-26T07:36Z terminal close (commit 8972a155). For consistency, frontend G9 will ALSO be graded via ops live-recheck of the rendered trust contract during Phase-2 — NOT by soliciting a user verbal sign-off. The frontend container was ALREADY rebuilt with Phase-1 QA-approved code (ops FE-REBUILD 2026-05-25T19:31:25Z, image sha256:605035cf, curl :3001 → 200 'VN Market Intelligence'), so containerRebuildPending is also satisfied. The OLD note below is preserved for history. NOTE: retiring this gate does NOT make the pilot DONE — G3/G4/G5/G7/G10/G11 were never built (genuinely TBD, Phase-2 work). Phase-2 must build + verify them; G9 then grades via ops live-recheck like mcp-server.",
+    "state": "RETIRED-OBSOLETE-GATE",
+    "_old_note": "Set 2026-05-25T08:32Z by po close-out. Per 'Scale pilot DONE bar' rule (feedback_scale_pilot_done_bar.md): a UI MVR is NOT DONE until the user gives verbal G9 sign-off. Phase-1 MVR build is QA-APPROVED (c85f577c); PO Path-B Playwright render-gate evidence is captured (G9 PARTIAL). Top-level status stays ACTIVE + verdict TBD until user verbal G9 + (separately) frontend container rebuild in the docker session both land.",
     "setAt": "2026-05-25T08:32:34Z",
+    "retiredAt": "2026-05-26T08:30:00Z",
+    "retiredBy": "po (dev-team triage — gate obsolete per feedback_trust_verification_is_system_job; G9 now grades via ops live-recheck in Phase-2, mirroring mcp-server terminal close)",
     "setBy": "po (frontend MVR Phase-1 close-out bookkeeping)",
     "pathBEvidence": "Playwright render-gate 4/4 against live app port 3001 (substantive content assertions) — QA cycle-114 independently re-ran; report reports/TASK_REPORT_P1-FE-WAVE-A.md",
-    "pathAPending": "user verbal G9 sign-off on the rendered frontend trust contract",
-    "containerRebuildPending": "frontend container currently runs PRE-Phase-1 code; code committed + QA-passed → CLEAR to rebuild in the SEPARATE docker session (NOT done by po). One-at-a-time, 8GB Docker cap, host memory-panic constraint."
+    "pathAPending": "OBSOLETE — user verbal G9 sign-off NO LONGER required (trust-verification-is-system's-job); G9 grades via ops live-recheck in Phase-2",
+    "containerRebuildPending": "SATISFIED — frontend container rebuilt with Phase-1 code (ops FE-REBUILD 2026-05-25T19:31:25Z, image sha256:605035cf, curl :3001 → 200 'VN Market Intelligence')."
   },
   "phase2": {
-    "_note": "[OPTIONAL-PHASE] Block absent or stubbed until Phase 1 gate passes.",
-    "status": "NOT-STARTED",
+    "_note": "[OPTIONAL-PHASE] OPENED-FOR-PLANNING 2026-05-26T08:30Z (po dev-team triage). With the backend deep-module rollout 11/11 COMPLETE (mcp-server closed 12/12 at 8972a155), frontend is the natural next refactor pilot. Phase-1 MVR earned G1/G2/G6/G8 (4/12) + G12 EARNED-PENDING streak 3/3; the obsolete awaitingUserG9Signoff gate is RETIRED (G9 now grades via ops live-recheck). Phase-2 builds the genuinely-TBD goals: G3 (composition root for a Remix app — architect to calibrate; may be N/A like the MVR's G3=N/A or a thin entry-composition), G4 (ESLint boundaries fence — TS service per SI-3), G5 (calibrate — frontend has no mcp-server old-code location, likely N/A), G7 (edit-fixture-rerender sandbox mechanism), G10/G11 (AI-fixability: inject+blind-fix a formatter primitive + 2-trial coupling), and flips G9 (ops live-recheck) + G12 (terminal). ARCHITECT authors the Phase-2 task plan FIRST (planning lane — does NOT consume the dev WIP=2 cap). Frontend zone apps/frontend/ is fully isolated from the active BCTC-MD-TABLE churn (apps/pdf-extractor/ + apps/mcp-server/), so no contention. BUILD waves are sequential WIP=1 on the dev-frontend lane after the plan lands.",
+    "status": "AWAITING-PLAN",
     "_status_enum": "[FIXED] Allowed values: NOT-STARTED | AWAITING-PLAN | OPEN | CLOSED",
-    "openedAt": null,
-    "openedBy": null,
+    "openedAt": "2026-05-26T08:30:00Z",
+    "openedBy": "po (dev-team triage — frontend Phase-2 PLANNING opened; architect to author the task plan; obsolete user-G9 gate retired; G3/G4/G5/G7/G10/G11 are the remaining build targets)",
     "closedAt": null,
     "closedBy": null,
     "skeleton_in": "<SERVICE:path to phases doc §Phase 2>",
