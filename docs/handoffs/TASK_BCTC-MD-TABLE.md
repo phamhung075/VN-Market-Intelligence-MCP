@@ -195,3 +195,216 @@ The current OCR path uses `pytesseract.image_to_string(config="--psm 6")` → fl
 - `PYTHONPATH=apps/pdf-extractor python sandbox/runner.py --tier=module --scenario=scenarios/modules/financial_reports/multi_primitive_story.json` → pass: True
 
 **NEXT:** ops MD-DEPLOY (rebuild pdf-extractor container; then dev-mcp-server MD-INSPECT must also be done before deploy).
+
+---
+
+## [Ops] MD-DEPLOY Execution — 2026-05-26T07:10Z
+
+### Hard Constraints Applied
+- REBUILD images, do NOT restart (sequential, one service at a time)
+- Docker volume mount added for pdfs-local to enable pdf-extractor access to PDFs
+- Single-doc re-extract ONLY (NEVER batch backfill job)
+- MAX_PAGES=20 guard verified in pdf-extractor logs
+
+### Acceptance Criteria Results
+
+**AC-D-0: pdf-extractor rebuild + health** ✓ PASS
+- `docker-compose build pdf-extractor` completed successfully
+- `GET http://localhost:5001/health` → 200, `{"status": "ok", "service": "pdf-extractor"}`
+
+**AC-D-1: mcp-server rebuild + health + migration** ✓ PASS
+- `docker-compose build mcp-server` completed successfully
+- `GET http://localhost:3000/health` → 200, healthy
+- DB migration verified: `SELECT name FROM sqlite_master WHERE name='bctc_md_tables'` → 1 row (table exists)
+
+**AC-D-2: Single-doc re-extract (FPT Q4 2025)** ✓ PASS
+- Report ID: `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`
+- PDF path (container): `/app/data/pdfs-local/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`
+- `POST http://localhost:5001/extract-md-tables` → HTTP 202 Accepted
+- Background task completed:
+  - PDF has 46 pages (MAX_PAGES=20 guard applied; processed pages 4-23, skipping first 3 preamble)
+  - **30 tables detected** from 20 pages
+  - Push to mcp-server successful: `tables_stored=1`
+
+**AC-D-3: Verify table_count >= 1 and content** ✓ PASS
+- `GET http://localhost:3000/api/bctc-inspect/md/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` response:
+  ```json
+  {
+    "doc_id": "e71f845d-ffa5-48f9-8f09-30ac2cd09c65",
+    "report_id": "e71f845d-ffa5-48f9-8f09-30ac2cd09c65",
+    "has_md_tables": true,
+    "table_count": 30,
+    "page_count": 20,
+    "md_tables": [
+      "| Thành CÔNG Số Phường 10 | phố TY phố Cầu | CỔ Phạm Hà Giấy PHẦN Nội, | ... |---|...",
+      "... (29 more tables)"
+    ],
+    "ocr_as_markdown": "",
+    "extracted_at": "2026-05-26 05:09:48"
+  }
+  ```
+- table_count: **30** ✓ (>= 1)
+- md_tables[0]: valid markdown pipe-table (contains | and |---| separators) ✓
+- All 30 markdown strings persisted in bctc_md_tables.md_tables_json (65261 bytes) ✓
+
+### Non-Regression Verification
+
+**Structured path (bctc_table_rows)** — zero regression:
+- `GET http://localhost:3000/api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65`:
+  ```json
+  {
+    "has_table": true,
+    "rows_length": 79,
+    "balance_pass": true,
+    "balance_delta": 0
+  }
+  ```
+- Rows: 79 (matching pre-sprint state)
+- Balance pass: true ✓
+- Balance delta: 0 ✓
+
+### Direct DB Verification
+
+```sql
+SELECT table_count, page_count, length(md_tables_json), length(ocr_as_markdown) 
+FROM bctc_md_tables WHERE report_id='e71f845d-ffa5-48f9-8f09-30ac2cd09c65'
+```
+
+Result:
+```
+table_count: 30
+page_count: 20
+length(md_tables_json): 65261
+length(ocr_as_markdown): 0
+```
+
+### Summary
+- All ACs passed (D-0, D-1, D-2, D-3)
+- Single-doc extraction executed host-safe (sequential, MAX_PAGES=20)
+- 30 markdown tables detected from generic bbox path (no segment-report-specific constants)
+- Zero regression on structured balance-sheet path
+- Database writes verified (not just push handler response)
+
+**NEXT:** qa-team (MD-QA live verification gate — curl test + grep proofs + browser inspector render)
+
+---
+
+## [dev-pdf-extractor] MD-EXTRACT-2 Implementation — 2026-05-26
+
+**Status:** DONE — all files modified/created, 424 unit tests pass (+30 new), AC fences PASS. ALL FILES UNSTAGED (main terminal commits).
+
+### Files created (UNSTAGED)
+
+- `apps/pdf-extractor/infrastructure/ocr_text_fetch_client.py` — NEW: OcrTextFetchClient (HTTP GET loop to `/api/bctc-inspect/ocr/{id}?page=N`, concatenate pages, graceful degrade on failure)
+
+### Files modified (UNSTAGED)
+
+- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — ADD `_MONEY_GROUP_RE`, `_DATE_HEADER_RE`, `_CODE_LIKE_RE`, threshold constants (`_MIN_MONEY_GROUPS=6`, `_MIN_CODE_HITS=3`, `_MIN_MONEY_THIN=1`); ADD `_is_data_table()`, `_strip_leading_header_bands()`, `_coalesce_label_columns()`; MODIFY `_process_page()` pipeline (strip → coalesce → density gate replaces old prose filter)
+- `apps/pdf-extractor/application/extract_md_tables_usecase.py` — ADD `OcrTextFetchClientPort` to imports; ADD optional `ocr_fetch_client` ctor param; ADD Step 0 (auto-fetch OCR text when `doc_ocr_text=None`)
+- `apps/pdf-extractor/domain/modules/financial_reports/ports.py` — ADD `OcrTextFetchClientPort` Protocol (port count 13 → 14)
+- `apps/pdf-extractor/main.py` — ADD `OcrTextFetchClient` import + instantiation + injection into `ExtractMdTablesUseCase`
+- `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` — ADD `_is_data_table`, `_strip_leading_header_bands`, `_coalesce_label_columns` to imports; ADD 3 test classes: `TestIsDataTable` (8 tests), `TestStripLeadingHeaderBands` (7 tests), `TestCoalesceLabelColumns` (7 tests) = 22 new unit tests
+- `apps/pdf-extractor/__tests__/unit/test_extract_md_tables_usecase.py` — ADD `FakeOcrTextFetchClient`; ADD `TestOcrFetchClientInjection` (6 tests); ADD `TestOcrFetchClientFenceAC2J` (2 tests) = 8 new unit tests
+
+### AC results
+
+| AC | Result | Evidence |
+|----|--------|----------|
+| AC-2G grep-proof | PASS | `grep -r "bao.cao.bo.phan\|..."` → exit 1, zero matches |
+| AC-2H Fence-A | PASS | AST check: no application/interface imports in generic_md_table_extractor.py |
+| AC-2I Fence-B | PASS | AST check: no infrastructure/interface imports in extract_md_tables_usecase.py |
+| AC-2J hardware | PASS | No pytesseract/image_to_string/image_to_data in ocr_text_fetch_client.py |
+| AC-2F non-regression | PASS (unit level) | test_extract_tables_usecase.py: 10/10 PASS; structured path untouched |
+| lint-imports fence | PASS | 2 contracts KEPT, 0 broken |
+
+### Suite evidence
+
+- **424 passed, 4 failed** (same 4 pre-existing integration tests that require real PDFs on disk — unchanged from baseline 394 → 424 with +30 new tests)
+- Sandbox primitive tier: `pass: True`
+- Sandbox module tier: `pass: True`
+
+### What DEFECT-A/B/C fix means at re-extract time
+
+- **DEFECT-A:** `POST /extract-md-tables` without `doc_ocr_text` will now automatically call `GET /api/bctc-inspect/ocr/{report_id}` to fetch all stored OCR pages and populate `ocr_as_markdown`. Field will be non-empty after re-extract.
+- **DEFECT-B:** 30 tables → ~12. Noise letterhead/title regions rejected by density gate (K=6 money-groups). Real data tables (balance sheet, income statement, segment report) pass gate (typically 8-20 money-groups).
+- **DEFECT-C:** Segment table first row will no longer contain scrambled letterhead. Balance sheet label column will be single merged cell ("Phải trả người bán ngắn hạn") not 3 split columns.
+
+**NEXT: ops MD-DEPLOY-2** — rebuild pdf-extractor container, single-doc re-extract of FPT e71f845d ONLY (NEVER batch backfill). Request body: `{"report_id": "e71f845d-ffa5-48f9-8f09-30ac2cd09c65", "pdf_path": "/app/data/pdfs-local/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf"}` — no `doc_ocr_text` field (use case auto-fetches it). Verify: `table_count` in [10,15], `ocr_as_markdown` length > 0.
+
+---
+
+## [Architect] MD-EXTRACT-2 — Live-Verify Fix Design (2026-05-26T11:30Z)
+
+**Status:** DESIGN COMPLETE — READY for dev-pdf-extractor
+
+**Context:** MD-EXTRACT (commit 3bdd6a82) + MD-INSPECT shipped and deployed. Main terminal verified LIVE output for FPT Q4 2025 (`e71f845d-ffa5-48f9-8f09-30ac2cd09c65`). Core geometry approach is sound (30 tables detected including segment report at md_tables[28]/[29]). Three concrete defects remain.
+
+**Zone:** `apps/pdf-extractor/` ONLY (zero mcp-server changes needed).
+
+**Full design:** `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md § MD-EXTRACT-2 — Live-Verify Fix Design`
+
+### Three defects diagnosed
+
+**DEFECT-A (BLOCKING — ocr_as_markdown = 0 bytes live):**
+Root cause: ops re-extract call passed `{report_id, pdf_path}` only — no `doc_ocr_text`. Use case hit the `else` branch → empty string stored. The OCR text already exists in mcp-server's `pdf_extracted_text` table (per-page, queryable via `GET /api/bctc-inspect/ocr/{doc_id}?page=N`). Fix: add `OcrTextFetchClientPort` (domain) + `OcrTextFetchClient` (infra, HTTP GET → concatenate pages) + inject into use case as optional Step 0. Zero extra Tesseract calls. Graceful degrade if mcp-server unreachable.
+
+**DEFECT-B (HIGH — 15 pure-noise + 3 thin tables emitted of 30):**
+Fix: `_is_data_table(grid)` density gate using `_MONEY_GROUP_RE = r'\d{1,3}(?:[.,]\d{3})+'`. Threshold K=6 money-groups (primary) OR J=3 three-digit codes + 1 money-group (secondary). Live split is clean: real tables have >=6, noise <= 3. Prose mis-classification fix: remove old `col_count==1` prose filter; apply density gate to ALL regions regardless of column count.
+
+**DEFECT-C (MEDIUM — cosmetic):**
+- C.1: `_strip_leading_header_bands(grid)` — strip rows with 0 money-groups from top until first row with a money-group OR date-pattern (`\d{1,2}/\d{1,2}/\d{4}`) OR `_is_recognized_section_header` match.
+- C.2: `_coalesce_label_columns(grid)` — merge leading text-only columns (zero money-groups) to the left of the first numeric column into a single label column. Fixes "Phải trả người | bán ngắn | hạn" → single label cell.
+
+### Files to touch (pdf-extractor only)
+
+| File | Change |
+|---|---|
+| `infrastructure/generic_md_table_extractor.py` | ADD `_MONEY_GROUP_RE`, `_DATE_HEADER_RE`, threshold constants, `_is_data_table()`, `_strip_leading_header_bands()`, `_coalesce_label_columns()`; MODIFY `_process_page()` pipeline order |
+| `application/extract_md_tables_usecase.py` | ADD `OcrTextFetchClientPort` injection; ADD Step 0 (auto-fetch OCR text) |
+| `infrastructure/ocr_text_fetch_client.py` | NEW: HTTP GET client to `/api/bctc-inspect/ocr/{id}?page=N`, concatenate pages |
+| `domain/modules/financial_reports/ports.py` | ADD `OcrTextFetchClientPort` Protocol |
+| `main.py` | WIRE `OcrTextFetchClient`, inject into `ExtractMdTablesUseCase` |
+| `__tests__/unit/test_generic_md_table_extractor.py` | ADD density gate + strip + coalesce unit tests |
+| `__tests__/unit/test_extract_md_tables_usecase.py` | ADD OCR fetch injection tests |
+
+**Zero mcp-server changes.** Existing `GET /api/bctc-inspect/ocr/{doc_id}?page=N` already wired.
+
+### ACs for MD-EXTRACT-2
+
+**AC-2A (BLOCKING):** `ocr_as_markdown` non-empty after re-extract. Length > 0. Contains `## ` and `> ` markers.
+
+**AC-2B:** `table_count` in [10, 15] after re-extract. Must be < 20 (noise filter engaged), >= 10 (real tables retained).
+
+**AC-2C:** At least 2 distinct tables retained with >= 6 money-groups each. Segment report still present.
+
+**AC-2D:** Segment table first row is NOT garbled letterhead. First row has date-pattern or code or money-group cells.
+
+**AC-2E:** Balance sheet table first-column cells are multi-word Vietnamese labels (not 1-word fragments). Table column count <= 4 (from ~6 before fix).
+
+**AC-2F (BLOCKING non-regression):** Structured path: `rows_length` in [70,90], `balance_pass: true`, `balance_delta: 0`.
+
+**AC-2G (BLOCKING grep-proof):** `grep -r "bao.cao.bo.phan\|segment_report\|SEGMENT\|BAO_CAO\|bo_phan\|bao_phan" generic_md_table_extractor.py` → ZERO matches.
+
+**AC-2H:** Fence-A: `grep "from application\|from interface" generic_md_table_extractor.py` → ZERO matches.
+
+**AC-2I:** Fence-B: `grep "from infrastructure\|from interface" extract_md_tables_usecase.py` → ZERO matches.
+
+**AC-2J (hardware):** `grep "pytesseract\|image_to_string\|image_to_data" ocr_text_fetch_client.py` → ZERO matches.
+
+### MD-DEPLOY-2 ACs (single-doc only, NEVER batch)
+
+- **AC-D2-0:** `docker-compose build pdf-extractor` → healthy.
+- **AC-D2-1:** `POST /extract-md-tables` with `{report_id, pdf_path}` only (no `doc_ocr_text`) → 202. Use case auto-fetches OCR from mcp-server.
+- **AC-D2-2:** Poll until `has_md_tables: true`. `ocr_as_markdown` length > 0.
+- **AC-D2-3:** `table_count` in [10,15].
+
+### Risk flags
+
+- R-HIGH: K=6 is single-doc calibrated. Other BCTC docs may need K=4 after QA. Tuning parameter, not logic change.
+- R-MEDIUM: `OcrTextFetchClient` gracefully returns `""` if mcp-server unreachable — `ocr_as_markdown` stays empty. Acceptable.
+- R-MEDIUM: Header strip may keep one legitimate section-header row at top if it has a `_is_recognized_section_header` match. Acceptable — section headers are valid table context.
+
+**BUILD-STANDARD: lean (existing service, fix within existing module)**
+
+**NEXT: dev-pdf-extractor** — implement DEFECT-A/B/C changes. AC-2F (non-regression) is the first thing to verify before any new re-extract. Re-extract single doc only after container rebuild.
+
