@@ -451,6 +451,395 @@ These are the binding ACs for the dev tasks. Also appended directly to `docs/han
 
 ---
 
+## MD-EXTRACT-2 — Live-Verify Fix Design
+
+> **Task:** MD-EXTRACT-2 | **Author:** architect | **Date:** 2026-05-26T11:30Z
+> **Status:** DESIGN COMPLETE — ready for dev-pdf-extractor
+> **Input:** Live FPT Q4 2025 output from `GET /api/bctc-inspect/md/e71f845d-ffa5-48f9-8f09-30ac2cd09c65`
+> **Zone:** `apps/pdf-extractor/` only (changes confined to `infrastructure/generic_md_table_extractor.py` + `application/extract_md_tables_usecase.py`). Zero changes to mcp-server — the storage contract is correct.
+
+### Constraint restatement (binding for this task)
+
+- **Privacy:** local Tesseract/poppler ONLY, zero cloud OCR/VLM.
+- **AC-0 grep-proof generality (unchanged):** `grep -r "bao.cao.bo.phan\|segment_report\|SEGMENT\|BAO_CAO\|bao_phan\|bo_phan"` in `generic_md_table_extractor.py` → ZERO matches. `_is_recognized_section_header()` helpers are allowed (they are diacritic-insensitive geometry helpers, not logic literals for any specific table type). No BCTC-specific string constants anywhere — geometry/density only.
+- **Fence-A import-linter clean:** `generic_md_table_extractor.py` must never import from `application/` or `interface/`. Verified by grep.
+- **MAX_PAGES=20 unchanged.** No Tesseract pass multiplication beyond one `image_to_data` pass per page (DEFECT-A fix uses stored text — no extra Tesseract call at all).
+- **Host kernel-panic risk:** DEFECT-A adds zero new Tesseract calls. DEFECT-B/C are post-processing changes on already-collected bbox data. Zero hardware risk increase.
+
+---
+
+### DEFECT-A — Root Cause and Fix (BLOCKING)
+
+**Root cause (verified from source):**
+
+The ops agent invoked `POST /extract-md-tables` with only `{ "report_id": ..., "pdf_path": ... }` — no `doc_ocr_text` field. The `ExtractMdTablesRequestSchema` accepts `doc_ocr_text: Optional[str] = None` so this is valid. The use case then runs `Step 3` and hits the `else` branch (`ocr_as_markdown = ""`). The push call stores empty string in `bctc_md_tables.ocr_as_markdown`. The live DB confirms: `length(ocr_as_markdown) = 0`.
+
+The `pdf_extracted_text` table in mcp-server already holds the psm-6 poppler OCR for every processed BCTC doc, stored per page under the filename key. This is the same OCR text the structured `extract-tables` path uses. The live endpoint `GET /api/bctc-inspect/ocr/{doc_id}?page=N` already surfaces per-page OCR text to callers. The OCR text is available — it was never fetched by the caller.
+
+**Why not re-run `image_to_string` per page inside the use case:**
+That would add one full Tesseract pass per page on top of the `image_to_data` pass already done — doubling Tesseract calls. This is unnecessary and increases host risk. The OCR text is already stored in mcp-server's `pdf_extracted_text` table, retrieved by `GET /api/bctc-inspect/ocr/{doc_id}`. The correct fix is for the use case to source the OCR text from the DB before running extraction.
+
+**Fix design — two-part:**
+
+**Part A (use case):** `ExtractMdTablesUseCase.execute()` must fetch the document's concatenated OCR text from mcp-server before launching the background task. The existing mcp-server endpoint `GET /api/bctc-inspect/ocr/{doc_id}?page=N` returns one page at a time. The use case iterates pages 1..N (where N = `total_pages` from the endpoint when `total_pages > 0`) and concatenates `text_content` fields into a single `doc_ocr_text` string separated by `\n\n---\n\n` (page break marker, human-readable).
+
+The `MdTablePushClientPort` already exists as the infra boundary for outbound HTTP to mcp-server. A second port for inbound read is needed:
+
+```python
+class OcrTextFetchClientPort(Protocol):
+    """
+    Port for fetching stored per-page OCR text from mcp-server.
+    Concrete adapter: infrastructure/ocr_text_fetch_client.py (NEW)
+    Source: GET /api/bctc-inspect/ocr/{doc_id}?page=N
+    """
+
+    async def fetch_ocr_text(self, report_id: str) -> str:
+        """
+        Concatenate all pages of stored OCR text for the given doc.
+        Returns empty string when no OCR text is stored (graceful degrade).
+        """
+        ...
+```
+
+DDD layer: domain port definition in `domain/modules/financial_reports/ports.py`. Concrete implementation in `infrastructure/ocr_text_fetch_client.py` (new file). Wired at composition root in `main.py`.
+
+The use case is extended:
+
+```python
+class ExtractMdTablesUseCase:
+    def __init__(
+        self,
+        md_extractor: GenericMdTableExtractorPort,
+        md_push_client: MdTablePushClientPort,
+        ocr_fetch_client: Optional[OcrTextFetchClientPort] = None,  # DEFECT-A fix
+    ) -> None: ...
+
+    async def execute(self, report_id, pdf_path, doc_ocr_text=None):
+        # Step 0 (NEW): if doc_ocr_text not provided by caller, fetch from mcp-server
+        if doc_ocr_text is None and self._ocr_fetch_client is not None:
+            doc_ocr_text = await self._ocr_fetch_client.fetch_ocr_text(report_id)
+            if doc_ocr_text:
+                logger.info("ExtractMdTablesUseCase: fetched %d chars of OCR text from mcp-server", len(doc_ocr_text))
+            else:
+                logger.warning("ExtractMdTablesUseCase: no stored OCR text for report_id=%s — ocr_as_markdown will be empty", report_id)
+        # ... rest of use case unchanged
+```
+
+**Part B (OcrTextFetchClient concrete adapter):**
+
+`infrastructure/ocr_text_fetch_client.py` (NEW):
+- Uses `aiohttp.ClientSession` (same pattern as `MdTablePushClient`).
+- GET `{mcp_server_url}/api/bctc-inspect/ocr/{report_id}` first to get `total_pages`.
+- If `total_pages == 0`: return `""`.
+- Loop pages 1..`min(total_pages, MAX_PAGES)`: GET `?page=N`, append `text_content`.
+- Separator between pages: `"\n\n---\n\n"`.
+- On any HTTP error: log warning, return partial accumulated text or `""`.
+- Zero retry — graceful degrade on failure.
+
+**Part C (composition root):**
+
+`main.py`: instantiate `OcrTextFetchClient(mcp_server_url=cfg.mcp_server_url)` and inject into `ExtractMdTablesUseCase`.
+
+**No mcp-server changes required.** The endpoint already exists. The DB already has the data. This fix is entirely within pdf-extractor.
+
+---
+
+### DEFECT-B — Noise Table Filtering (HIGH)
+
+**Live density profile (from task context, 30 tables emitted, FPT Q4 2025):**
+
+```
+PURE-NOISE (0 money-groups):  idx 0,2,4,5,7,11,15,19,21,22,23,24,25,26,27  → 15 tables
+THIN (1-3 money-groups):      idx 14,18,20                                  → 3 tables
+REAL DATA (>=6 money-groups): idx 1,3,6,8,9,10,12,13,16,17,28,29           → 12 tables
+```
+
+The clean split at money-groups >= 6 vs <= 3 means the threshold K = 6 is the correct primary gate. There is no ambiguous case (4-5 money-group tables in the live data). The thin (1-3) group is also noise — letterhead with isolated numbers.
+
+**Money-group definition (generic, not BCTC-specific):**
+
+```python
+_MONEY_GROUP_RE = re.compile(r'\d{1,3}(?:[.,]\d{3})+')
+```
+
+This matches `1,234,567` / `1.234.567` / `1,234` (at least one separator-group). It is deliberately NOT BCTC-specific: any financial document with Vietnamese/international number formatting produces this pattern. This satisfies AC-0 grep-proof.
+
+**Section-header code detection (secondary gate, also generic):**
+
+```python
+_CODE_LIKE_RE = re.compile(r'(?<!\d)\d{3}(?!\d)')
+```
+
+Three-digit standalone codes (100, 200, 270, 300, 400, 440 etc.) appear in BCTC but also in income statement and segment report codes. Any financial table with 3-digit codes qualifies. Not BCTC-specific.
+
+**New acceptance gate function (to add in `generic_md_table_extractor.py`):**
+
+```python
+def _is_data_table(grid: List[List[str]]) -> bool:
+    """
+    Generic density gate: emit grid as a pipe-table only if it contains
+    financial data. Two conditions (OR — either is sufficient):
+      1. money_groups >= _MIN_MONEY_GROUPS:  at least K cells match the
+         N,NNN,NNN or N.NNN.NNN number format (locale-agnostic financial).
+      2. code_hits >= _MIN_CODE_HITS and money_groups >= _MIN_MONEY_THIN:
+         at least J three-digit standalone codes AND at least 1 money-group
+         (section-header-only pages with a few numbers also qualify).
+
+    Returns False for letterhead / title / prose blocks.
+
+    AC-0: zero BCTC-specific constants. Geometry and generic number patterns only.
+    """
+    flat = " ".join(cell for row in grid for cell in row)
+    money_groups = len(_MONEY_GROUP_RE.findall(flat))
+    if money_groups >= _MIN_MONEY_GROUPS:
+        return True
+    code_hits = len(_CODE_LIKE_RE.findall(flat))
+    return code_hits >= _MIN_CODE_HITS and money_groups >= _MIN_MONEY_THIN
+```
+
+**Threshold constants (add to module-level constants block):**
+
+```python
+# Numeric density gate — generic financial table acceptance (DEFECT-B fix).
+# K: minimum money-group matches for a region to be emitted as a table.
+# Derived from live FPT density profile: real tables have >= 6, noise <= 3.
+# No BCTC-specific semantics — applies to ANY financial document.
+_MIN_MONEY_GROUPS = 6
+
+# J: minimum 3-digit standalone codes when money-groups < K (secondary gate).
+# Allows section-header tables with code column + a few values to pass.
+_MIN_CODE_HITS = 3
+
+# Money-group floor for secondary gate (code-rich + some numbers).
+_MIN_MONEY_THIN = 1
+```
+
+**Prose mis-classification fix:**
+
+The existing prose filter `(col_count == 1 AND row_count > _PROSE_ROW_THRESHOLD)` catches only 1-column pages. Live data shows prose blobs at idx 20,24,25,26,27 had 4-5 columns. The fix: **remove the column-count condition from the prose test**. Instead, apply the density gate `_is_data_table(grid)` as the sole acceptance gate for ALL regions (not just 1-column ones). If a region fails `_is_data_table()`, it is treated as prose regardless of column count.
+
+**Updated `_process_page` control flow (replacing lines 594-616 in current file):**
+
+```python
+# After grid assembly (Step E):
+# DEFECT-B fix: density gate replaces the old col_count==1 prose filter.
+if not _is_data_table(grid):
+    logger.debug(
+        "GenericMdTableExtractor: density gate rejected region: "
+        "rows=%d cols=%d — treating as non-table",
+        n_rows, n_cols,
+    )
+    continue
+
+# Step F — Header row detection
+# Step G — Markdown emission
+```
+
+The old `_PROSE_ROW_THRESHOLD` constant and its check can be removed (or kept as a dead constant — prefer removal for clarity).
+
+**Expected outcome on FPT Q4 2025 re-extract:** 15 pure-noise + 3 thin tables dropped → ~12 real data tables retained. `table_count` drops from 30 to approximately 12. Segment report tables at idx 28/29 (in the current 0-indexed numbering) pass the density gate because they carry many money-group values (per-segment revenue, cost, profit figures).
+
+---
+
+### DEFECT-C — Header Noise Strip + Label Column Coalescing (MEDIUM)
+
+**C.1 — Leading header band stripping (noise glued to top of real tables)**
+
+Live example: `md_tables[28]` first row is `"Số Thành THUYẾT CÔNG Các Phường 10..."` (page letterhead OCR fragments scrambled into the first row of the segment table).
+
+**Root cause:** Step B (vertical gap) sometimes fails to split a large-gap preamble from the table body when the physical gap between letterhead and the first table row is less than `2.5 × H_med`. This happens when letterhead text and the first data row are in adjacent typographic regions without a clear whitespace gap.
+
+**Fix — Strip leading non-data rows from grid:**
+
+After Step E (grid assembly) and BEFORE the `_is_data_table` density gate, apply a leading-row strip:
+
+```python
+def _strip_leading_header_bands(grid: List[List[str]]) -> List[List[str]]:
+    """
+    Remove leading rows that contain ZERO money-group tokens.
+    Stop stripping at the first row that has at least one money-group match
+    OR that looks like a table column header (date pattern or all-caps
+    Vietnamese section name detected by _is_recognized_section_header).
+
+    This strips page letterhead and company name rows glued to the top of
+    real table data regions.
+
+    AC-0: no BCTC label constants — generic money-group and date detection only.
+    """
+    start = 0
+    for i, row in enumerate(grid):
+        flat = " ".join(row)
+        has_money = bool(_MONEY_GROUP_RE.search(flat))
+        has_date = bool(_DATE_HEADER_RE.search(flat))
+        is_section_hdr = _is_recognized_section_header(flat)
+        if has_money or has_date or is_section_hdr:
+            start = i
+            break
+    return grid[start:]
+```
+
+Add a date-header detection regex (generic, not BCTC-specific):
+
+```python
+# Generic date pattern for column headers (31/12/2025 style, any locale).
+_DATE_HEADER_RE = re.compile(r'\d{1,2}/\d{1,2}/\d{4}')
+```
+
+Apply `grid = _strip_leading_header_bands(grid)` after `_assign_columns()` and before `_is_data_table()`. If the stripped grid is empty, skip the region.
+
+**C.2 — Adjacent text-only column coalescing (label over-segmentation)**
+
+Live example: `md_tables[6]` has `"Phải trả người | bán ngắn | hạn"` as 3 columns for one label phrase.
+
+**Root cause:** The x-gap column detector finds gaps between word clusters in the label area where words happen to be separated by column-anchor-sized whitespace. These are false column boundaries inside what is semantically one label cell.
+
+**Coalescing rule:** After Step E (grid assembly), identify the leftmost column-group that contains NO money-group matches across ALL rows in that column, and where the next column to the right DOES contain money-groups or codes. Merge all such leading text-only columns into a single label column by space-joining the cell texts.
+
+```python
+def _coalesce_label_columns(grid: List[List[str]]) -> List[List[str]]:
+    """
+    Merge adjacent TEXT-ONLY columns at the left of the first numeric column
+    into a single label column.
+
+    A column is TEXT-ONLY if it has zero money-group matches across all rows.
+    The first column that contains at least one money-group match is the
+    boundary — it and all columns to the right are kept separate.
+
+    If all columns are text-only (no numeric column found), the grid is
+    returned unchanged (let the density gate handle rejection).
+
+    AC-0: uses _MONEY_GROUP_RE (generic financial number pattern) only.
+    """
+    if not grid or not grid[0]:
+        return grid
+    n_cols = len(grid[0])
+
+    # Find the first numeric column index
+    first_numeric = None
+    for col_idx in range(n_cols):
+        col_text = " ".join(row[col_idx] for row in grid if col_idx < len(row))
+        if _MONEY_GROUP_RE.search(col_text):
+            first_numeric = col_idx
+            break
+
+    if first_numeric is None or first_numeric <= 1:
+        # No numeric column found, or label is already single-column
+        return grid
+
+    # Merge columns 0..first_numeric-1 into a single label column
+    merged: List[List[str]] = []
+    for row in grid:
+        label = " ".join(row[i].strip() for i in range(first_numeric) if i < len(row) and row[i].strip())
+        rest = list(row[first_numeric:]) if first_numeric < len(row) else []
+        merged.append([label] + rest)
+    return merged
+```
+
+Apply `grid = _coalesce_label_columns(grid)` after `_strip_leading_header_bands()` and before `_is_data_table()`.
+
+**DDD compliance:** both helper functions are pure (no I/O, no Tesseract, no DB). They operate only on the already-assembled `grid` structure. Layer: infrastructure module (same file, existing layer). No imports from application or interface layers. AC-0: no BCTC constants in either function — `_MONEY_GROUP_RE` and `_DATE_HEADER_RE` are generic financial document patterns.
+
+---
+
+### MD-EXTRACT-2 Acceptance Criteria
+
+**AC-2A (BLOCKING — ocr_as_markdown non-empty):**
+
+After re-extract with the fix, `GET /api/bctc-inspect/md/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` returns `ocr_as_markdown` with `length > 0`. Verified by: `curl ... | python3 -c "import sys,json; d=json.load(sys.stdin); assert len(d['ocr_as_markdown']) > 0, 'FAIL: ocr_as_markdown empty'"`. Any empty string → FAIL immediately.
+
+**AC-2B (table count noise drop):**
+
+After re-extract, `table_count` is in [10, 15] (target: ~12). Before fix: 30. At minimum, `table_count` must be strictly less than 20 (confirming noise filter engaged). Verified by the same curl.
+
+**AC-2C (real tables retained — segment report present):**
+
+`md_tables` response includes at least one table with `>= 6` money-group matches (verified by: `len(re.findall(r'\d{1,3}(?:[.,]\d{3})+', md_table_text)) >= 6`). At least two distinct tables must be present (by different column counts or different first-row header content). The user-confirmed segment report must still be present — verified by: any `md_tables[i]` contains a cell that matches a 4-digit segment figure (e.g. a number like "1,234" or "12,345").
+
+**AC-2D (header noise stripped from segment table):**
+
+For the segment report table (expected near the end of `md_tables` list), the FIRST ROW of the markdown must NOT contain garbled letterhead fragments. Verified by: first row of the identified table must have at least 2 cells where each non-empty cell is either a date pattern (`\d{1,2}/\d{1,2}/\d{4}`), a 3-digit code, or a money-group value. Not a raw string of random Vietnamese syllables.
+
+**AC-2E (balance sheet label coalescing):**
+
+For the balance sheet table, label cells in the first column must be readable multi-word Vietnamese labels (e.g. "Phải trả người bán ngắn hạn" as one cell, not split across 3 columns). Verified by: the first column of the balance sheet table has cells with `>= 2` space-separated Vietnamese words, and the column count of the balance sheet table is `<= 4` (current: likely 5-6 before fix, target: 3-4 after coalescing).
+
+**AC-2F (non-regression — structured path):**
+
+`GET /api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` → `rows_length` in [70, 90], `balance_pass: true`, `balance_delta: 0`. Same values as pre-sprint state. Any change → BLOCKING failure.
+
+**AC-2G (AC-0 grep-proof — restate for this task):**
+
+`grep -r "bao.cao.bo.phan\|segment_report\|SEGMENT\|BAO_CAO\|bo_phan\|bao_phan" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches. Strictly generic constants only in the new functions.
+
+**AC-2H (Fence-A):**
+
+`grep -rn "from application\|from interface" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+**AC-2I (new port Fence-B):**
+
+`grep -rn "from infrastructure\|from interface" apps/pdf-extractor/application/extract_md_tables_usecase.py` → ZERO matches.
+
+**AC-2J (hardware — zero Tesseract multiplication):**
+
+`OcrTextFetchClient.fetch_ocr_text()` MUST use only HTTP GET requests to mcp-server. MUST NOT call `pytesseract.image_to_string` or `pytesseract.image_to_data` (those are in the extractor, not the fetch client). Verify by grep: `grep -n "pytesseract\|image_to_string\|image_to_data" apps/pdf-extractor/infrastructure/ocr_text_fetch_client.py` → ZERO matches.
+
+---
+
+### MD-DEPLOY-2 ACs (ops — SINGLE DOC ONLY, NEVER batch)
+
+**AC-D2-0:** pdf-extractor container rebuilt (`docker-compose build pdf-extractor`). Container health: `GET http://localhost:5001/health` → 200. NEVER rebuild both services simultaneously — rebuild pdf-extractor first, confirm healthy, then stop.
+
+**AC-D2-1:** Single-doc re-extract: `POST http://localhost:5001/extract-md-tables` with `{ "report_id": "e71f845d-ffa5-48f9-8f09-30ac2cd09c65", "pdf_path": "/app/data/pdfs-local/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf" }`. Response: HTTP 202. No `doc_ocr_text` in the request body — the use case fetches it automatically from mcp-server. SINGLE DOC ONLY.
+
+**AC-D2-2:** Poll `GET http://localhost:3000/api/bctc-inspect/md/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` until `has_md_tables: true` (the row is replaced, not duplicated — `INSERT OR REPLACE` semantics already in the push handler). Confirm `ocr_as_markdown` field has `length > 0`.
+
+**AC-D2-3:** Confirm `table_count < 20` (noise filter engaged). Confirm `table_count >= 10` (real tables retained).
+
+---
+
+### MD-QA-2 ACs (qa — live verification gate)
+
+All MD-QA ACs from the original design remain binding. The following are AMENDED or ADDED for MD-EXTRACT-2:
+
+**AC-Q2-0 (BLOCKING — ocr_as_markdown live):** `GET .../md/{fpt_doc_id}` → `ocr_as_markdown` non-empty. Contains `## ` (section header promoted by `ocr_text_to_markdown`). Contains `> ` blockquote lines (numeric rows). This AC supersedes the original AC-Q-0 `ocr_as_markdown` clause.
+
+**AC-Q2-1 (BLOCKING — noise drop):** `table_count < 20` (noise filter engaged). `table_count >= 10` (real tables retained). The original AC-Q-0 "`>= 2` tables" clause is SUPERSEDED by this more specific range.
+
+**AC-Q2-2 (segment report still present and header-noise-free):** At least one `md_tables[i]` entry is identifiable as the segment report by its content (per-segment numeric figures). The first row of that table must not contain garbled company-name/letterhead fragments. Verified by human inspection of the first row's cell content.
+
+**AC-Q2-3 (balance sheet label coalescing):** A markdown table identified as the balance sheet (by presence of high money-group density) has a first-column cell that reads as a coherent Vietnamese phrase, not as a 1-word fragment. Verify by reading the first 5 data rows of the balance sheet table.
+
+**AC-Q2-4 (non-regression — all original AC-Q-2 through AC-Q-5 unchanged):** Structured path: rows in [70,90], balance_pass=true, balance_delta=0. Privacy grep ZERO. Test baseline unregressed. balance_pass alone FORBIDDEN as sole gate.
+
+---
+
+### Files to modify (pdf-extractor only — zero mcp-server changes)
+
+| File | Change | DDD Layer |
+|---|---|---|
+| `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` | ADD `_MONEY_GROUP_RE`, `_DATE_HEADER_RE`, `_MIN_MONEY_GROUPS`, `_MIN_CODE_HITS`, `_MIN_MONEY_THIN` constants; ADD `_is_data_table()`, `_strip_leading_header_bands()`, `_coalesce_label_columns()` functions; MODIFY `_process_page()` to apply new pipeline (strip → coalesce → density gate); REMOVE old `_PROSE_ROW_THRESHOLD` check (superseded) | infrastructure |
+| `apps/pdf-extractor/application/extract_md_tables_usecase.py` | ADD `OcrTextFetchClientPort` injection (optional); ADD Step 0 (fetch OCR text from mcp-server before running); MODIFY `__init__` to accept optional `ocr_fetch_client` | application |
+| `apps/pdf-extractor/infrastructure/ocr_text_fetch_client.py` | NEW: `OcrTextFetchClient` — HTTP client to GET `/api/bctc-inspect/ocr/{report_id}?page=N`, concatenate pages | infrastructure |
+| `apps/pdf-extractor/domain/modules/financial_reports/ports.py` | ADD `OcrTextFetchClientPort` Protocol | domain |
+| `apps/pdf-extractor/main.py` | WIRE `OcrTextFetchClient` at composition root, inject into `ExtractMdTablesUseCase` | composition root |
+| `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` | ADD unit tests for `_is_data_table`, `_strip_leading_header_bands`, `_coalesce_label_columns` with synthetic grids. ADD test: noise grid → `_is_data_table` returns False. ADD test: real grid with 8 money-groups → returns True. | unit |
+| `apps/pdf-extractor/__tests__/unit/test_extract_md_tables_usecase.py` | ADD test: `ocr_fetch_client` is called when `doc_ocr_text=None`; returned string becomes `ocr_as_markdown` in push. ADD test: `ocr_fetch_client` not called when `doc_ocr_text` provided by caller. | unit |
+
+**No new files in mcp-server.** The `OcrTextFetchClient` calls the existing `GET /api/bctc-inspect/ocr/{doc_id}?page=N` endpoint (already wired in `server.ts`). Zero schema changes. Zero handler changes.
+
+---
+
+### Risk Register (MD-EXTRACT-2 specific)
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| R-HIGH: Density threshold K=6 is derived from ONE document (FPT Q4 2025). Other BCTC documents (VCB, VNM, etc.) may have different page layouts with fewer money-groups in legitimate tables. | HIGH | K=6 is a FLOOR (not a ceiling). The secondary gate (code_hits >= 3 AND money_groups >= 1) catches code-heavy pages. If QA finds real tables being dropped on other docs, lower K to 4 — the gap between 6 (real) and 3 (noise) in the live data gives 2 margin units. This is a tuning parameter, not a logic change. |
+| R-MEDIUM: `_strip_leading_header_bands` may overly strip the first real data row if it has no money-groups (e.g. a pure-text section header row that is part of the table). | MEDIUM | The strip STOPS at the first row containing a money-group OR a date-header OR a `_is_recognized_section_header` match. Section header rows (A-E, I-V) are preserved. Pure letterhead with no recognizable financial structure is stripped. |
+| R-MEDIUM: `OcrTextFetchClient` calls mcp-server HTTP endpoint. If mcp-server is unreachable during the background task, `fetch_ocr_text` returns `""` and `ocr_as_markdown` stays empty. This is the same behavior as before the fix — graceful degrade, not a crash. | MEDIUM | Acceptable. Log a WARNING. The detection (md_tables) still runs and completes. |
+| R-LOW: `_coalesce_label_columns` may incorrectly merge a legitimate multi-column text header (two separate label columns) into one. | LOW | Occurs only when BOTH candidate columns are text-only AND there is at least one numeric column to the right. For BCTC documents, text-left / numbers-right is the canonical layout. If a document has two independent label columns (unusual), the first column data is still readable — just concatenated. |
+
+---
+
 ## 10. Brownfield Findings Summary
 
 - **Zone:** `apps/pdf-extractor/` (extraction) + `apps/mcp-server/` (inspector/storage)
