@@ -78,4 +78,22 @@ Requirement spec written. NEXT = PO approval gate (architect LF-DESIGN is BLOCKE
 - Done-bar (Decision F) encoded verbatim as 7-point gate
 - No PO blockers. 3 architect-open questions (schema, JSON contract, quarantine storage) flagged for LF-DESIGN resolution.
 
+## [PO] LF-BA APPROVAL GATE — 2026-05-26T18:20Z — APPROVED
+
+Spec `docs/REQ_BCTC-LAYOUT-FIRST.md` reviewed against binding Decisions A–F + the two hard-constraint blocks. **VERDICT: APPROVED.** Architect LF-DESIGN is now UNBLOCKED.
+
+**Faithfulness check (each Decision → its requirement, all PASS):**
+- **A — GENERIC / grep-proof (hard invariant):** REQ-LF-0 — AC-0a grep-proof (zero `BẢNG CÂN ĐỐI`/`LƯU CHUYỂN`/`NGUỒN VỐN`/`Mã số`/`Thuyết minh` matches in any zone-boundary or column-grid decision path; anchors permitted only in hint comment blocks), AC-0b corpus-breadth (FPT-Q4-only ≠ green), AC-0c structured-path untouched. Inherited into the overlay JSON by REQ-LF-7c (positional `col_0`/`col_1` descriptors, no semantic labels). FAITHFUL.
+- **B — REPLACE column-guessing engine, AUGMENT structured path:** REQ-LF-5a names `text_table_extractor.py` 0-byte-diff (`git diff HEAD` = zero output at LF-QA); REQ-LF-0/redesign target = `generic_md_table_extractor.py`; REQ-LF-5c forbids any new write path to `bctc_table_rows` (separate table/column — architect decides). FAITHFUL.
+- **D — schema inheritance is the named fix:** REQ-LF-1 explicitly tagged ROOT-CAUSE ANCHOR — REQ-LF-1b (FPT Q1 pages 3-6 = one unit, page 5 same `unit_id`), REQ-LF-1d (page 41 anchors-collide → assigned prose/blank, proving geometry-is-spine), REQ-LF-2b (page 5 OCRs with page-3's inherited grid). FAITHFUL.
+- **E — pdf-extractor emits JSON, mcp-server renders toggle, split at boundary:** REQ-LF-7 (pdf-extractor zone-geometry JSON), REQ-LF-8 (mcp-server ON/OFF overlay on `/api/bctc-inspect`), REQ-LF-8f enforces the boundary (no pdf-extractor Python import — DB read only). FAITHFUL.
+- **F — done-bar, no false-greens:** REQ-LF-4e DIRECT market.db arbitration (`bun:sqlite`, endpoint NEVER the arbiter); 7-point Done-Bar pt-1 = direct DB corpus pass-rate, pt-7 = USER verbal G9; NOT-RUN/fixture-green forbidden. FAITHFUL.
+- **PRIVACY + HOST (hard):** REQ-LF-6a no external endpoint, REQ-LF-6b sequential single-doc + never `run_bctc_batch_sweep`, REQ-LF-3e cloud-SDK grep, NFR-1 batch-sweep ban, NFR-2 build-context deploy. FAITHFUL.
+
+**3 architect-open questions — CORRECTLY DEFERRED (recorded, NOT answered by PO):** the REQ "Architect-open questions" block records (1) market.db schema for zone-geometry + new md output with zero `bctc_table_rows` collision, (2) exact JSON contract at the pdf-extractor↔mcp-server boundary, (3) quarantined-unit storage for QA's direct-DB count — all tagged "technical design questions, NOT PO-level blockers; architect resolves in LF-DESIGN." Confirmed recorded for the architect; PO does NOT pre-answer.
+
+**Recurring-bug guard:** this redesign IS the root-cause rethink the guard requires (`generic_md_table_extractor.py` = 9 MD-EXTRACT + `text_table_extractor.py` = 7 BT fix commits). Guard cleared — architect proceeds to LF-DESIGN.
+
+**NEXT = architect (LF-DESIGN).** Formalize the 4-tier blueprint; split the work at the pdf-extractor↔mcp-server service boundary (zone=`multi`); resolve the 3 open questions; write per-task ACs for LF-EXTRACT + LF-OVERLAY; brief → `docs/architecture-briefs/`. Design-only — no code.
+
 <!-- architect appends LF-DESIGN blueprint + per-task ACs below -->
