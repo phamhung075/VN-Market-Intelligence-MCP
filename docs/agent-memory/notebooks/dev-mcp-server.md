@@ -1,5 +1,81 @@
 # dev-mcp-server -- Notebook
 
+## c306 · 2026-05-26 (MD-INSPECT — generic markdown table storage + inspector panel)
+
+### MD-INSPECT DONE (UNSTAGED — main terminal commits)
+
+**tsc noEmit:** EXIT 0 | **New tests:** 16 pass / 0 fail | **Full suite:** 9822 tests / 0 fail
+
+**Task:** Sprint BCTC-MD-TABLE / MD-INSPECT. Additive receiving + storage + inspect surface
+for generic markdown tables. Decision A — zero contact with structured bctc_table_rows path.
+
+**Files created/modified (all UNSTAGED):**
+- `apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts` — ADD `bctc_md_tables`
+  DDL (CREATE TABLE IF NOT EXISTS + idx_bmt_report). Zero mutation to existing tables.
+- `apps/mcp-server/src/interface/mcp/routes/pushBctcMdTablesHandler.ts` — NEW handler for
+  `POST /api/push-bctc-md-tables`. UUID validate → INSERT OR REPLACE → tables_stored from
+  DB .changes (write-wedge guard).
+- `apps/mcp-server/src/interface/mcp/routes/bctcInspectMdHandler.ts` — NEW handler for
+  `GET /api/bctc-inspect/md/{doc_id}`. Pure DB read. {has_md_tables:false} when no row.
+  UUID → 400 guard.
+- `apps/mcp-server/src/interface/mcp/server.ts` — ADD two route registrations (additive).
+  No change to pushBctcTableHandler or existing inspect-table route.
+- `apps/mcp-server/src/interface/bctc-inspector.html` — ADD "Markdown Tables" panel section
+  (CSS + HTML + JS renderMdTables + parsePipeTableToHtml). Renders pipe-tables as HTML tables.
+  ocr_as_markdown in scrollable pre block. CONFIRMED: this is the mcp-server inspector, NOT
+  the frozen apps/pdf-extractor/dashboard/index.html.
+- `apps/mcp-server/src/__tests__/1270-push-bctc-md-tables.test.ts` — 9 tests (valid payload,
+  DB persistence, idempotency, UUID 400, non-array 400, empty array).
+- `apps/mcp-server/src/__tests__/1271-bctc-inspect-md.test.ts` — 7 tests (full contract,
+  has_md_tables:false, UUID 400, JSON round-trip, AC-I-3 non-regression import).
+
+**AC-I-0:** push idempotency (COUNT=1 after 2 pushes) PASS | UUID 400 PASS
+**AC-I-1:** has_md_tables:false when no row | full contract when row | UUID 400 PASS
+**AC-I-3:** handleBctcInspectTable still importable (function type assertion PASS)
+**AC-I-4:** pushBctcTableHandler untouched (zero edits, tsc clean PASS)
+**Decision A zero-collision:** bctc_md_tables separate table, separate endpoints, no cross-reads
+
+**Inspector HTML:** `apps/mcp-server/src/interface/bctc-inspector.html` (mcp-server-side).
+NOT the frozen `apps/pdf-extractor/dashboard/index.html`.
+
+**Zone health:** MD-INSPECT complete; tsc EXIT 0; 16 new tests GREEN; 9822 total tests 0 fail | HEALTHY
+
+NEXT: dev-pdf-extractor ships MD-EXTRACT (POST /api/push-bctc-md-tables caller) → ops rebuild
+→ qa live verification.
+
+---
+
+## c305 · 2026-05-26 (BT3-FIX-3 — remove pre-supplied OCR, adopt fresh Tesseract path)
+
+### BT3-FIX-3 mcp-server portion DONE (UNSTAGED — main terminal commits)
+
+**Typecheck:** EXIT 0 | **Tests:** 12/12 pass (100% coverage) | **tsc noEmit:** EXIT 0
+
+**Root cause:** `bctcBatchTableBackfillJob.ts` (BT-4b-2) was pre-supplying stored OCR from
+`pdf_extracted_text` to `/extract-tables`. Stored OCR uses column-separated layout (different
+DPI/psm from spike's fresh Tesseract) → label splits, null prior column, address junk.
+Architect ruling §2: fix = stop pre-supplying; let container PdfOcrAdapter run fresh Tesseract.
+
+**Files edited (all UNSTAGED):**
+- `apps/mcp-server/src/application/usecases/bctcBatchTableBackfillJob.ts` — removed
+  `OcrPageRow` interface, `ocrQuery` prep, OCR pre-fetch block, `skipped_no_ocr` from
+  `DocOutcome.status` union and `BackfillBctcTablesResult`, `skipped_no_ocr` counter.
+  POST body now: `{report_id, pdf_path, statement_section}` only. Header comment updated
+  to BT3-FIX-3 fresh-OCR strategy. Removed `basename` import (unused).
+- `apps/mcp-server/src/__tests__/bctcBatchTableBackfillJob.test.ts` — TC9-TC12 fully
+  rewritten: TC9=no pages field in POST body, TC10=fetch called even with no stored OCR,
+  TC11=exact 3-key body shape, TC12=no skipped_no_ocr on result type.
+- `apps/mcp-server/trigger-backfill.ts` — removed `skipped_no_ocr` branch from outcome report.
+
+**Path discrepancy flagged:** architect brief §5 names
+`apps/mcp-server/src/interface/scheduler/bctcBatchTableBackfillJob.ts` but actual file is at
+`apps/mcp-server/src/application/usecases/bctcBatchTableBackfillJob.ts` (application layer,
+DDD-correct per BT-2 blueprint §Files to Create/Modify).
+
+**Zone health:** BT3-FIX-3 mcp-server changes DONE; tsc EXIT 0; 12/12 tests GREEN | HEALTHY
+
+---
+
 ## c304 · 2026-05-25 (mcp-server Phase-2 P2-H-FIX — G9 inline data model, no addInitScript)
 
 ### P2-H-FIX — G9 Trust-Contract Corrective Re-implementation DONE
