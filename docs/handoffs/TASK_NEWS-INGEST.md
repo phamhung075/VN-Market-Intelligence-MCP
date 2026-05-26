@@ -299,3 +299,27 @@ NF-LD-2 test suite 19/19 PASS (in-memory DB injected, zero creds):
 - Heartbeat sentinel on empty-after-filter (INFO, not ERROR) — correct level.
 
 **NEXT: NEWS-INGEST-CLOSE → `po`**
+
+---
+
+## [PO] NEWS-INGEST-CLOSE — SIGN-OFF (2026-05-26T18:50Z)
+
+**Verdict: CLOSED / DONE. Reliability fix SHIPPED.** qa verdict APPROVE (`d729e4d1`, signal `docs/signals/qa-news-ingest-2026-05-26T1846Z.json`) accepted in full. All 4 ACs PASS, no false-green — qa used DIRECT-DB `bun:sqlite` COUNT/DISTINCT (NOT handler `rows_stored` echo — write-wedge trap avoided), the correct arbiter on this surface.
+
+**Evidence summary (qa-attested):**
+- **AC-1 cursor re-push fix (`9711ca72`): PASS.** DIRECT-DB proof — 2127 distinct VN `source_url`s == 2127 total VN rows (0 duplicates); 140 genuinely-new VN articles inserted post-fix (after 2026-05-25), 70 of them today; latest VN row created_at 2026-05-26T17:58:57.958Z. Cursor logic code-review: strict `>` (not `>=`, avoids boundary repeat), advances ONLY on HTTP-200 (no drift on failure), first-run seeds `now()` epoch.
+- **AC-2 VN live panel (`e1e08a29`): PASS.** NF-LD-2 19/19 (in-memory DB, injected fakes, zero creds): VN visibility, per-source filters (cafef/vnexpress/vneconomy), `_provider` derivation for all 6 providers, reuters/bloomberg non-regression, honest-empty; `source=all` returns all providers. NF-LD-4 11/11 non-regression.
+- **AC-3 dedup intact: PASS.** `idx_rag_source_url` UNIQUE partial index PRESENT + unchanged; 0 duplicate `source_url`s in live DB; 2 null/empty correctly index-exempt.
+- **AC-4 no test regression: PASS.** bun test 9433 pass / 362 fail / 35 skip (pass ≥ 9408 bar, fail ≤ 363 baseline); tsc exit 0; 0 NEWS-INGEST tests in fail set; DDD scan clean (0 infra/app imports in `newsFetchLiveHandler.ts`); security scan clean (0 `process.env` in handler/script, 0 hardcoded secrets).
+
+**Commit chain:** `9711ca72` (NEWS-INGEST-2 cursor fix, developer) → `e1e08a29` (NEWS-INGEST-2b VN surface, dev-mcp-server) → `d729e4d1` (NEWS-INGEST-3 QA gate APPROVED, qa).
+
+**NEWS-INGEST-LIVE folded into this close (no separate ops hop).** The qa DIRECT-DB evidence already satisfies the live truth gate: 70 genuinely-new VN rows inserted TODAY against the live container `market.db` with the latest created_at at 17:58:57Z proves a real production cycle now inserts NEW distinct VN rows — the `inserted:0` re-push loop is eliminated in production. The Q1 authoritative count is also resolved: 4282 total `rag_analyses` rows, 2127 VN-source (cafef/vnexpress/vneconomy), 1 reuters/bloomberg, 4280 distinct `source_url`s.
+
+**Deferred non-blocking follow-up — NEWS-INGEST-2c (NOT dispatched this close):** the dashboard `<option>` source selector in `apps/news-fetch/dashboard/index.html` (canonical) + served copy `apps/mcp-server/src/interface/news-fetch-dashboard/index.html` still lists only `reuters`/`bloomberg`/`all`. The API already returns VN rows correctly via `source=all` (the correctness fix is shipped); the missing `<option>` entries only block per-provider UI filtering from the dropdown. **Cosmetic/UX, NOT a correctness blocker** → logged as a deferred low-priority item on the developer cosmetic lane (zone `apps/news-fetch/dashboard/`, then re-run `sync-news-fetch-dashboard.sh`). Carried in po notebook; do NOT auto-dispatch.
+
+**Recurring-bug guard:** NOT triggered — NEWS-INGEST-2 was the FIRST and ONLY fix on `fetch-vn-news.sh`'s push-selection logic; resolved on first attempt.
+
+**Close artifacts:** TASKS.md NEWS-INGEST section collapsed to a terminal CLOSED block (net-reduce); close signal `docs/signals/po-news-ingest-close-20260526T185009Z.json`; WORK telegram (SHIPPED+CLOSED) sent; po notebook appended.
+
+**Nothing else dispatched.** This is a focused terminal close — BCTC-LAYOUT-FIRST and its pipeline-state untouched (LF-EXTRACT running, LF-OVERLAY queued for the freed WIP slot). The slot is now free.

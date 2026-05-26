@@ -1,0 +1,43 @@
+{
+  "from": "po",
+  "to": "dispatcher",
+  "type": "task-close",
+  "task": "NEWS-INGEST-CLOSE",
+  "sprint": "BUG NEWS-INGEST",
+  "verdict": "CLOSED",
+  "status": "DONE",
+  "timestamp": "2026-05-26T18:50:09Z",
+  "work_telegram": {
+    "channel": "work",
+    "relay_via": "dispatcher (po session lacks call_tool / MCP gateway unavailable this session)",
+    "message": "[PO] NEWS-INGEST reliability fix SHIPPED + CLOSED. VPS re-push loop (inserted:0 every cycle) eliminated via since-cursor in fetch-vn-news.sh (9711ca72); VN live panel now surfaces cafef/vnexpress/vneconomy (e1e08a29). qa APPROVED d729e4d1 — direct-DB 2127 distinct VN urls == total (0 dup), 70 new VN rows today; dedup intact; no test regression. Chain 9711ca72->e1e08a29->d729e4d1. Non-blocking follow-up NEWS-INGEST-2c (dashboard <option> selector) deferred low-priority. Nothing else dispatched."
+  },
+  "based_on_qa_verdict": {
+    "signal": "docs/signals/qa-news-ingest-2026-05-26T1846Z.json",
+    "qa_commit": "d729e4d1",
+    "qa_verdict": "APPROVE"
+  },
+  "acceptance_criteria": {
+    "AC1_cursor_re_push_fix": "PASS — direct-db 2127 distinct VN urls == total (0 dup), 140 new post-fix, 70 today; strict > cursor, advances only on HTTP 200",
+    "AC2_vn_live_panel": "PASS — NF-LD-2 19/19, reuters/bloomberg non-regression, source=all returns all providers",
+    "AC3_dedup_intact": "PASS — UNIQUE partial index present, 0 dup source_urls",
+    "AC4_no_regression": "PASS — bun test 9433 pass / 362 fail under baseline, tsc exit 0, 0 NEWS-INGEST tests failing, DDD + security clean"
+  },
+  "commit_chain": ["9711ca72", "e1e08a29", "d729e4d1"],
+  "live_proof_folded_in": "qa direct-db evidence (70 genuinely-new VN rows today, latest created_at 2026-05-26T17:58:57Z against live container market.db) proves production cycle inserts NEW distinct VN rows; re-push eliminated. No separate ops NEWS-INGEST-LIVE hop needed.",
+  "deferred_followup": {
+    "id": "NEWS-INGEST-2c",
+    "description": "dashboard <option> source selector in apps/news-fetch/dashboard/index.html still lists only reuters/bloomberg/all; API already returns VN via source=all",
+    "classification": "cosmetic/UX, NOT a correctness blocker",
+    "lane": "developer cosmetic (low priority)",
+    "dispatched": false
+  },
+  "nothing_else_dispatched": true,
+  "scope_note": "Focused terminal close. BCTC-LAYOUT-FIRST + its pipeline-state UNTOUCHED (LF-EXTRACT running, LF-OVERLAY queued). WIP slot is free.",
+  "files_modified_unstaged": [
+    "docs/TASKS.md",
+    "docs/handoffs/TASK_NEWS-INGEST.md",
+    "docs/signals/po-news-ingest-close-20260526T185009Z.json",
+    "docs/agent-memory/notebooks/po.md"
+  ]
+}
