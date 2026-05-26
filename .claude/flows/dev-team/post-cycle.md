@@ -43,3 +43,19 @@ After compact: resume from Step 1 via smart-compact-protocol.md.
 **If ctx ≤ 25%:** skip → Step 1.
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
+---
+
+## Step 4.9 — Cycle Elapsed Announce
+
+Run once, at the very end of every post-cycle exit path (after Step 4 idle/monitoring exits and after Step 4.5 compact checkpoint):
+
+```
+end_epoch   = $(date +%s)
+elapsed_s   = end_epoch - start_epoch          # start_epoch set in Step 0-PREFLIGHT, same session
+elapsed_min = elapsed_s / 60
+elapsed_sec = elapsed_s % 60
+send_telegram(channel="work", message="[dev-team] cycle DONE — elapsed {elapsed_s}s / {elapsed_min}m {elapsed_sec}s")
+```
+
+Note: `start_epoch` is a session-scoped variable defined in Step 0-PREFLIGHT of `main.md`. Sub-flows run within the same main-terminal session so the variable is available here without file I/O.

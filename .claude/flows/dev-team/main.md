@@ -1,4 +1,4 @@
-<!-- size-justification: 167L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. -->
+<!-- size-justification: 172L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 ## Team Boundary (Sprint 1951c)
@@ -48,7 +48,10 @@ JUMP-TO convention → skill: `.claude/skills/jump-to/SKILL.md`
 > Full algorithm + escalation tree → `docs/protocols/head-lock-self-cure.md`
 
 ```
-ts = $(date -u +%Y%m%dT%H%M%SZ)
+ts          = $(date -u +%Y%m%dT%H%M%SZ)
+start_epoch = $(date +%s)
+ts_human    = $(date "+%Y-%m-%d %H:%M:%S %Z")   # local wall-clock for readability
+send_telegram(channel="work", message="[dev-team] cron START — actual fire {ts_human} ({ts})")
 
 if .git/HEAD.lock not exists:
   # T5: worktree prune (always, lock absent branch)
