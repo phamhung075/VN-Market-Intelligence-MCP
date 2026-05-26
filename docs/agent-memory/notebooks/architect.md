@@ -1,8 +1,45 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 09:30 UTC | **Sprint:** BCTC-TABLE-3
+**Last updated:** 2026-05-26 10:30 UTC | **Sprint:** BCTC-MD-TABLE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## MD-DESIGN — Generic table detection blueprint (2026-05-26T10:30Z) — DESIGN COMPLETE
+
+**Task:** MD-DESIGN. New sprint BCTC-MD-TABLE. Design a generic PDF table detector → markdown emitter that works on ANY BCTC table (segment report, balance sheet, income statement, cash flow) from a single generic code path. Decision A: augment, not replace the structured `bctc_table_rows` path.
+
+**Algorithm chosen:** `pytesseract.image_to_data` TSV → per-word bbox → y-band row clustering + x-gap column detection → generic grid → markdown pipe-table. pdfplumber/Camelot disqualified (BCTC = image-only scans, no native text layer).
+
+**Key decisions:**
+
+1. **New module: `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py`** — separate from `text_table_extractor.py` (frozen, 7 fix commits). Zero BCTC-specific constants (geometry/structure only — Decision D grep-proof).
+
+2. **New port: `GenericMdTableExtractorPort`** added to `domain/modules/financial_reports/ports.py`. New port `MdTablePushClientPort` added alongside.
+
+3. **New use case: `apps/pdf-extractor/application/extract_md_tables_usecase.py`** — runs on ALL pages (not just BS section), MAX_PAGES=20 guard, fire-and-forget 202 Accepted (background task).
+
+4. **Storage in mcp-server: `bctc_md_tables` table** (new, `CREATE TABLE IF NOT EXISTS`). Stores `md_tables_json` (JSON array of markdown strings) + `ocr_as_markdown` per `report_id`. Inspector is pure-read. No compute-on-read.
+
+5. **New mcp-server endpoints:** `POST /api/push-bctc-md-tables` + `GET /api/bctc-inspect/md/{doc_id}` + markdown panel in `bctc-inspector.html` (mcp-server side only).
+
+6. **Decision A zero-collision confirmed:** separate use cases, separate infra, separate DB table, separate endpoints. `bctc_table_rows` + `bctc_balance_checks` + all existing handlers UNTOUCHED.
+
+7. **OCR-as-markdown:** pure `ocr_text_to_markdown(text: str) -> str` function — converts stored flat OCR text to readable markdown with section headers, blockquoted numeric lines, blank lines. No re-OCR.
+
+**Files authored this cycle (3):**
+1. `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` (NEW — full blueprint)
+2. `docs/handoffs/TASK_BCTC-MD-TABLE.md` — [Architect] Brownfield Findings + Per-Task ACs appended
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Risk flags:**
+- R-HIGH: `image_to_data` on 20 pages ≈ 60-100s sequential on Intel Mac. Mitigated by 202 async + MAX_PAGES=20.
+- R-HIGH: Low OCR confidence → ragged markdown cell text. Acceptable: markdown is human-recheck layer.
+- R-MEDIUM: Inspector HTML — must be mcp-server-side `bctc-inspector.html` (not frozen pdf-extractor dashboard). dev-mcp-server must verify file path.
+- R-MEDIUM: 1-column prose pages falsely detected as tables. Mitigated by post-filter (col_count==1 + row_count>15 → prose path).
+
+**Next actors:** dev-pdf-extractor (MD-EXTRACT, BLOCKED → READY now) in parallel with dev-mcp-server (MD-INSPECT, BLOCKED → READY now). MD-INSPECT can start immediately — the DB schema and API contract are fully specified. MD-EXTRACT and MD-INSPECT are independent (no shared implementation dependency). MD-DEPLOY waits for both.
+
+---
 
 ## BT3-RETHINK — Filter strategy ruling (2026-05-26T09:30Z) — DESIGN COMPLETE
 
