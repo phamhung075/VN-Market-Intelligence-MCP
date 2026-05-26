@@ -76,8 +76,10 @@ from __future__ import annotations
 
 import logging
 import math
+import os
 import re
-from typing import Dict, List, Optional
+import uuid
+from typing import Any, Dict, List, Optional, Tuple
 
 # Infra-to-infra import: reuse module-level helpers (not class methods — safe).
 from infrastructure.text_table_extractor import _norm, _is_recognized_section_header
@@ -2442,3 +2444,1124 @@ class GenericMdTableExtractor:
                 )
 
         return page_tables
+
+
+# =============================================================================
+# LF-EXTRACT — Tier 0/1/2 infrastructure functions (layout-first pipeline)
+#
+# These are module-level functions injected into ExtractLayoutFirstUseCase via
+# the composition root. They live in the infrastructure layer because they use
+# PIL, Tesseract, and pdf2image (impure I/O).
+#
+# AC-0 compliance: ZERO BCTC semantic strings in any zone-boundary or column-grid
+#     decision path. Geometry is the sole spine. Unit hints are metadata only.
+#
+# AC-LFE-6: Tesseract (image_to_data) is called ONLY in ocr_unit() (Tier 2).
+#     build_document_map() uses only PIL pixel ops + stored OCR text — no Tesseract.
+#     zone_page() uses only PIL pixel ops — no Tesseract.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# LF constants — AC-0 compliant geometry parameters
+# ---------------------------------------------------------------------------
+
+# Tier 0 low-DPI rasterization: 50 DPI.
+# An A4 page at 50 DPI ≈ 280×396 px ≈ 110KB RAM — cheap.
+_TIER0_DPI: int = 50
+
+# Gutter detection threshold: a column is a gutter if its dark-pixel sum
+# drops below this fraction of the median column dark-pixel sum.
+_GUTTER_DARK_FRACTION: float = 0.05
+
+# Gutter position tolerance: two pages belong to the same unit if all gutter
+# x-fractions differ by less than this value (as fraction of page width).
+_GUTTER_POSITION_TOLERANCE: float = 0.05
+
+# Row pitch change tolerance: a unit break fires if row_pitch changes by more
+# than this fraction (50% change = significantly different row density).
+_ROW_PITCH_CHANGE_TOLERANCE: float = 0.50
+
+# Tier 1 minimum gutter width at 200 DPI (≈2.5mm at 200 DPI).
+_MIN_GUTTER_WIDTH_PX: int = 20
+
+# Tier 1 header band: top fraction of page typically containing headers.
+_HEADER_BAND_FRACTION: float = 0.15
+
+# Tier 1 footer band: bottom fraction of page typically containing footers.
+_FOOTER_BAND_FRACTION: float = 0.10
+
+# Row band darkness threshold: a row band is "text-dense" if its dark-pixel
+# mean (in the vertical profile) exceeds this fraction of the maximum.
+_ROW_BAND_DARKNESS_THRESHOLD: float = 0.20
+
+# Tier 0 OCR text density gate: a page is considered "table" if it has
+# at least this many money-group tokens in its stored OCR text.
+_TABLE_PAGE_MIN_MONEY_GROUPS: int = 3
+
+# Minimum number of gutter columns to classify a page as a table (Tier 0).
+_TABLE_MIN_GUTTER_COUNT: int = 1
+
+
+# ---------------------------------------------------------------------------
+# Tier 0 — build_document_map
+# ---------------------------------------------------------------------------
+
+
+def build_document_map(pages: List[Dict], pdf_path: str) -> Dict:
+    """
+    Tier 0: Scan all pages, group consecutive pages into logical units by
+    geometric column-fingerprint continuity as the SOLE spine.
+
+    Title anchors are hints attached to metadata only — they do NOT influence
+    unit grouping (AC-0). Geometry decides.
+
+    Algorithm:
+        1. For each page, compute 50-DPI projection-profile fingerprint.
+        2. Scan stored OCR text for GENERIC hint vocabulary (not BCTC-specific
+           labels — any line with unusual patterns). Attached as metadata only.
+        3. Group pages into units by fingerprint continuity test:
+           - New unit when: gutter_count changes OR any gutter_x_fraction
+             shifts by > GUTTER_POSITION_TOLERANCE OR row_pitch changes > 50%.
+           - Page gaps (blank pages) do NOT break a unit.
+        4. Tag pages: "table" / "prose" / "blank".
+        5. Schema-page = first page of each unit.
+
+    Args:
+        pages: List of {page_number, text} dicts from OcrPagesFetchClientPort.
+               text = stored OCR text from pdf_extracted_text.
+        pdf_path: Absolute path to the PDF for 50-DPI rasterization.
+
+    Returns:
+        DocumentMap dict: {
+            "report_id": "<uuid>",
+            "total_pages": N,
+            "units": [
+                {
+                    "unit_id": "<uuid>",
+                    "schema_page": N,
+                    "pages": [N, N+1, N+2],
+                    "page_type": "table|prose|blank"
+                }
+            ]
+        }
+
+    AC-LFE-6: NO Tesseract calls. PIL pixel ops only for low-DPI rasters.
+    AC-0: gutter_x_fractions and row_pitch are purely geometric. Hints are metadata.
+    """
+    try:
+        from pdf2image import convert_from_path  # type: ignore
+    except ImportError:
+        logger.error("build_document_map: pdf2image not installed")
+        return {"report_id": str(uuid.uuid4()), "total_pages": 0, "units": []}
+
+    # Build page text index from the stored OCR pages list
+    page_text_by_num: Dict[int, str] = {}
+    for p in pages:
+        pn = p.get("page_number", 0)
+        pt = p.get("text", "") or ""
+        page_text_by_num[pn] = pt
+
+    # Determine total pages from OCR record or count
+    total_pages = len(pages)
+    if pages:
+        total_pages = max(p.get("page_number", 0) for p in pages)
+
+    if total_pages == 0:
+        logger.warning("build_document_map: no pages found — returning empty map")
+        return {
+            "report_id": str(uuid.uuid4()),
+            "total_pages": 0,
+            "units": [],
+        }
+
+    # ------------------------------------------------------------------
+    # Step 1: Compute per-page fingerprints at 50 DPI
+    # ------------------------------------------------------------------
+    page_fingerprints: Dict[int, Dict] = {}
+
+    for page_num in range(1, total_pages + 1):
+        text = page_text_by_num.get(page_num, "")
+        fingerprint = _compute_page_fingerprint_50dpi(
+            pdf_path=pdf_path,
+            page_num=page_num,
+            stored_text=text,
+            convert_from_path=convert_from_path,
+        )
+        page_fingerprints[page_num] = fingerprint
+
+    # ------------------------------------------------------------------
+    # Step 2 + 3: Group pages into units by fingerprint continuity
+    # ------------------------------------------------------------------
+    units: List[Dict] = []
+    current_unit_pages: List[int] = []
+    current_fp: Optional[Dict] = None
+
+    def _flush_unit() -> None:
+        """Close the current unit and append to units list."""
+        if not current_unit_pages:
+            return
+        # Determine unit page_type from the majority of page types
+        type_counts: Dict[str, int] = {}
+        for pn in current_unit_pages:
+            pt = page_fingerprints[pn].get("page_type", "prose")
+            type_counts[pt] = type_counts.get(pt, 0) + 1
+        dominant_type = max(type_counts, key=lambda t: type_counts[t])
+
+        unit_id = str(uuid.uuid4())
+        units.append({
+            "unit_id": unit_id,
+            "schema_page": current_unit_pages[0],
+            "pages": list(current_unit_pages),
+            "page_type": dominant_type,
+        })
+
+    for page_num in range(1, total_pages + 1):
+        fp = page_fingerprints[page_num]
+        page_type = fp.get("page_type", "prose")
+
+        if page_type == "blank":
+            # Blank page: does NOT break a unit (page-gap tolerance).
+            # Just append to current unit if one is open.
+            if current_unit_pages:
+                current_unit_pages.append(page_num)
+            continue
+
+        if current_fp is None:
+            # Start first unit
+            current_unit_pages = [page_num]
+            current_fp = fp
+            continue
+
+        # Continuity test (AC-0: purely geometric)
+        if _fingerprints_continuous(current_fp, fp):
+            current_unit_pages.append(page_num)
+            # Update current_fp with the latest (schema-page fingerprint stays
+            # anchored — only used to test against continuation pages)
+        else:
+            # Break: close current unit, start new one
+            _flush_unit()
+            current_unit_pages = [page_num]
+            current_fp = fp
+
+    # Flush the last unit
+    _flush_unit()
+
+    doc_map = {
+        "report_id": str(uuid.uuid4()),
+        "total_pages": total_pages,
+        "units": units,
+    }
+
+    logger.info(
+        "build_document_map: %d pages → %d units (pdf_path=%s)",
+        total_pages,
+        len(units),
+        pdf_path,
+    )
+    return doc_map
+
+
+def _compute_page_fingerprint_50dpi(
+    pdf_path: str,
+    page_num: int,
+    stored_text: str,
+    convert_from_path: Any,
+) -> Dict:
+    """
+    Compute a geometric column-fingerprint for a page at 50 DPI.
+
+    Uses PIL horizontal projection profile to find gutter x-positions.
+    Uses vertical projection profile to estimate row pitch.
+
+    AC-LFE-6: NO Tesseract calls. PIL pixel ops only.
+    AC-0: all outputs are geometric descriptors. No BCTC semantic strings.
+
+    Returns:
+        {
+            "page_number": N,
+            "page_type": "table|prose|blank",
+            "gutter_count": int,
+            "gutter_x_fractions": [float, ...],
+            "row_pitch_px_at_50dpi": float,
+            "unit_hints": [str, ...],  # raw OCR text lines — metadata only
+        }
+    """
+    try:
+        images = convert_from_path(
+            pdf_path,
+            dpi=_TIER0_DPI,
+            first_page=page_num,
+            last_page=page_num,
+            fmt="png",
+        )
+        if not images:
+            return _blank_fingerprint(page_num)
+
+        img = images[0]
+    except Exception as exc:
+        logger.debug(
+            "_compute_page_fingerprint_50dpi: rasterize failed page %d: %s — blank",
+            page_num,
+            exc,
+        )
+        return _blank_fingerprint(page_num)
+
+    try:
+        # Convert to grayscale numpy-like computation via PIL
+        # We use PIL's getdata() to avoid numpy dependency
+        gray = img.convert("L")
+        width, height = gray.size
+
+        if width == 0 or height == 0:
+            img.close()
+            return _blank_fingerprint(page_num)
+
+        pixels = list(gray.getdata())
+
+        # Horizontal projection: dark pixel count per column
+        # dark pixel = value < 128
+        col_dark = [0] * width
+        for y in range(height):
+            for x in range(width):
+                if pixels[y * width + x] < 128:
+                    col_dark[x] += 1
+
+        # Vertical projection: dark pixel count per row
+        row_dark = [0] * height
+        for y in range(height):
+            for x in range(width):
+                if pixels[y * width + x] < 128:
+                    row_dark[y] += 1
+
+        img.close()
+
+        # Detect gutters: columns where dark-pixel sum < 5% of median
+        median_col_dark = sorted(col_dark)[len(col_dark) // 2] or 1
+        gutter_threshold = median_col_dark * _GUTTER_DARK_FRACTION
+
+        gutter_x_positions: List[int] = []
+        in_gutter = False
+        gutter_start = 0
+        for x in range(width):
+            if col_dark[x] <= gutter_threshold:
+                if not in_gutter:
+                    in_gutter = True
+                    gutter_start = x
+            else:
+                if in_gutter:
+                    gutter_center = (gutter_start + x) // 2
+                    gutter_x_positions.append(gutter_center)
+                    in_gutter = False
+        # Final gutter at right edge
+        if in_gutter:
+            gutter_x_positions.append((gutter_start + width) // 2)
+
+        # Convert to fractions of page width
+        gutter_x_fractions = [x / width for x in gutter_x_positions]
+
+        # Row pitch: estimate from vertical projection by finding peak-to-peak spacing
+        row_pitch = _estimate_row_pitch(row_dark)
+
+        # Page type: table if gutter_count >= _TABLE_MIN_GUTTER_COUNT
+        # AND stored text has enough money-group tokens
+        money_group_count = len(_MONEY_GROUP_RE.findall(stored_text or ""))
+        gutter_count = len(gutter_x_positions)
+
+        if not stored_text or stored_text.strip() == "":
+            page_type = "blank"
+        elif gutter_count >= _TABLE_MIN_GUTTER_COUNT and money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS:
+            page_type = "table"
+        else:
+            page_type = "prose"
+
+        # Unit hints: lines from stored OCR text that contain unusual patterns.
+        # These are attached as metadata ONLY — never used in grouping decisions (AC-0).
+        unit_hints = _extract_unit_hints(stored_text or "")
+
+        return {
+            "page_number": page_num,
+            "page_type": page_type,
+            "gutter_count": gutter_count,
+            "gutter_x_fractions": gutter_x_fractions,
+            "row_pitch_px_at_50dpi": row_pitch,
+            "unit_hints": unit_hints,
+        }
+
+    except Exception as exc:
+        logger.debug(
+            "_compute_page_fingerprint_50dpi: processing failed page %d: %s — blank",
+            page_num,
+            exc,
+        )
+        return _blank_fingerprint(page_num)
+
+
+def _blank_fingerprint(page_num: int) -> Dict:
+    """Return a blank-page fingerprint when rasterization fails."""
+    return {
+        "page_number": page_num,
+        "page_type": "blank",
+        "gutter_count": 0,
+        "gutter_x_fractions": [],
+        "row_pitch_px_at_50dpi": 0.0,
+        "unit_hints": [],
+    }
+
+
+def _estimate_row_pitch(row_dark: List[int]) -> float:
+    """
+    Estimate row pitch from a vertical projection profile.
+
+    Finds alternating dark (text) and light (gap) bands.
+    Returns the median peak-to-peak spacing (in pixels).
+    If no clear pattern, returns 0.0.
+
+    AC-0: purely geometric — no BCTC semantics.
+    """
+    if not row_dark or max(row_dark) == 0:
+        return 0.0
+
+    max_dark = max(row_dark)
+    threshold = max_dark * 0.3  # 30% of maximum = text-bearing row
+
+    # Find transitions from "light" to "dark" rows
+    peaks: List[int] = []
+    was_dark = False
+    for y, count in enumerate(row_dark):
+        is_dark = count > threshold
+        if is_dark and not was_dark:
+            peaks.append(y)
+        was_dark = is_dark
+
+    if len(peaks) < 2:
+        return 0.0
+
+    spacings = [peaks[i + 1] - peaks[i] for i in range(len(peaks) - 1)]
+    # Median spacing
+    spacings.sort()
+    return float(spacings[len(spacings) // 2])
+
+
+def _extract_unit_hints(text: str) -> List[str]:
+    """
+    Extract lines from stored OCR text that could be unit hints.
+
+    These are short lines (< 100 chars) that appear at the top of a section
+    and may indicate a new section boundary. Used ONLY as metadata — never
+    as grouping criteria (AC-0).
+
+    AC-0: attaches raw OCR text lines as metadata. The hint strings are NOT
+    used in any branching or decision logic (only stored for overlay display).
+    """
+    if not text:
+        return []
+
+    hints: List[str] = []
+    lines = text.splitlines()
+    for line in lines[:20]:  # Only look at top 20 lines for efficiency
+        stripped = line.strip()
+        if 3 <= len(stripped) <= 80:
+            # Short-ish line near the top of the page — could be a section title
+            # Only include lines that are not purely numeric (table data is not a hint)
+            if not re.fullmatch(r"[\d.,\s]+", stripped):
+                hints.append(stripped)
+                if len(hints) >= 5:
+                    break
+    return hints
+
+
+def _fingerprints_continuous(fp_a: Dict, fp_b: Dict) -> bool:
+    """
+    Test if two page fingerprints belong to the same logical unit.
+
+    Continuity test (AC-0 — purely geometric):
+        1. gutter_count must be equal.
+        2. Each gutter x-fraction must be within GUTTER_POSITION_TOLERANCE.
+        3. row_pitch must not change by more than ROW_PITCH_CHANGE_TOLERANCE.
+
+    If either fingerprint is blank, continuity is False (blank pages handled
+    separately as page-gap tolerance in build_document_map).
+
+    Returns True if the pages are in the same unit, False if a unit break fires.
+    """
+    if fp_a.get("page_type") == "blank" or fp_b.get("page_type") == "blank":
+        return False
+
+    gc_a = fp_a.get("gutter_count", 0)
+    gc_b = fp_b.get("gutter_count", 0)
+
+    # Gutter count change = new unit
+    if gc_a != gc_b:
+        return False
+
+    # Gutter position shift > tolerance = new unit
+    gx_a = fp_a.get("gutter_x_fractions", [])
+    gx_b = fp_b.get("gutter_x_fractions", [])
+    if len(gx_a) != len(gx_b):
+        return False
+    for xa, xb in zip(gx_a, gx_b):
+        if abs(xa - xb) > _GUTTER_POSITION_TOLERANCE:
+            return False
+
+    # Row pitch change > 50% = new unit
+    pitch_a = fp_a.get("row_pitch_px_at_50dpi", 0.0)
+    pitch_b = fp_b.get("row_pitch_px_at_50dpi", 0.0)
+    if pitch_a > 0 and pitch_b > 0:
+        change = abs(pitch_a - pitch_b) / max(pitch_a, pitch_b)
+        if change > _ROW_PITCH_CHANGE_TOLERANCE:
+            return False
+
+    return True
+
+
+# ---------------------------------------------------------------------------
+# Tier 1 — zone_page
+# ---------------------------------------------------------------------------
+
+
+def zone_page(
+    page_img: Any,  # PIL Image
+    unit_schema: Optional[Dict],
+    page_num: int,
+    unit_id: str,
+    unit_page_type: str,
+    is_schema_page: bool,
+    schema_inherited_from_page: Optional[int],
+) -> Dict:
+    """
+    Tier 1: Decompose a page into geometric zones.
+
+    For schema-pages (is_schema_page=True, unit_schema=None):
+        - Detect column gutters from 200-DPI projection profile.
+        - Detect header/footer bands.
+        - Detect row bands.
+
+    For continuation pages (is_schema_page=False, unit_schema provided):
+        - SKIP column gutter detection entirely.
+        - Use unit_schema.column_gutters directly (the schema-inheritance mechanism).
+        - Still detect header/footer bands and row bands independently.
+
+    AC-0: Column IDs are positional (col_0, col_1, ...). No semantic labels.
+    AC-LFE-6: NO Tesseract calls. PIL pixel ops only.
+
+    Args:
+        page_img:                  PIL Image at 200 DPI.
+        unit_schema:               Dict with column_gutters list for inheritance,
+                                   or None for schema-pages.
+        page_num:                  Page number (1-indexed).
+        unit_id:                   UUID of the logical unit.
+        unit_page_type:            "table" | "prose" | "blank".
+        is_schema_page:            True for the first page of the unit.
+        schema_inherited_from_page: Page number of schema-page (None if schema-page itself).
+
+    Returns:
+        PageZones dict matching the brief §3.2 contract.
+    """
+    try:
+        width, height = page_img.size
+        gray = page_img.convert("L")
+        pixels = list(gray.getdata())
+
+        # Horizontal projection (dark pixels per column)
+        col_dark = [0] * width
+        for y in range(height):
+            for x in range(width):
+                if pixels[y * width + x] < 128:
+                    col_dark[x] += 1
+
+        # Vertical projection (dark pixels per row)
+        row_dark = [0] * height
+        for y in range(height):
+            for x in range(width):
+                if pixels[y * width + x] < 128:
+                    row_dark[y] += 1
+
+    except Exception as exc:
+        logger.warning("zone_page: pixel processing failed for page %d: %s", page_num, exc)
+        width, height = getattr(page_img, "size", (0, 0))
+        if isinstance(width, tuple):
+            width, height = 0, 0
+        col_dark = []
+        row_dark = []
+
+    # ------------------------------------------------------------------
+    # Header and footer bands (always re-detected — not inherited)
+    # ------------------------------------------------------------------
+    header_y_max = int(height * _HEADER_BAND_FRACTION)
+    footer_y_min = int(height * (1.0 - _FOOTER_BAND_FRACTION))
+
+    header_band = {"y_min": 0, "y_max": header_y_max}
+    footer_band = {"y_min": footer_y_min, "y_max": height}
+
+    # ------------------------------------------------------------------
+    # Column gutters: detected for schema-pages, INHERITED for continuation
+    # ------------------------------------------------------------------
+    if unit_schema is not None and not is_schema_page:
+        # Schema inheritance — use schema-page's column gutters directly.
+        # This is the NAMED FIX for the missing-header continuation-page scramble.
+        column_gutters = unit_schema.get("column_gutters", [])
+        logger.debug(
+            "zone_page: page %d inherits %d column gutters from schema-page",
+            page_num,
+            len(column_gutters),
+        )
+    else:
+        # Schema-page: detect column gutters from 200-DPI projection profile
+        column_gutters = _detect_column_gutters_200dpi(
+            col_dark=col_dark,
+            width=width,
+        )
+
+    # ------------------------------------------------------------------
+    # Row bands (always re-detected from vertical projection)
+    # ------------------------------------------------------------------
+    row_bands = _detect_row_bands(
+        row_dark=row_dark,
+        y_start=header_y_max,
+        y_end=footer_y_min,
+    )
+
+    # Build unit_hints from the zones (no hints from this tier — hints are
+    # from Tier 0's stored OCR text scan; we leave it empty here)
+    unit_hints: List[str] = []
+
+    zones = {
+        "image_width_px": width,
+        "image_height_px": height,
+        "image_dpi": 200,
+        "coordinate_origin": "top-left",
+        "coordinate_unit": "px",
+        "header_band": header_band,
+        "footer_band": footer_band,
+        "column_gutters": column_gutters,
+        "row_bands": row_bands,
+        "unit_hints": unit_hints,
+        "unit_boundary_after_page": False,  # Set by use case (last page of unit)
+    }
+
+    return {
+        "page_number": page_num,
+        "unit_id": unit_id,
+        "page_type": unit_page_type,
+        "is_schema_page": is_schema_page,
+        "is_continuation_page": not is_schema_page,
+        "schema_inherited_from_page": schema_inherited_from_page,
+        "zones": zones,
+    }
+
+
+def _detect_column_gutters_200dpi(
+    col_dark: List[int],
+    width: int,
+) -> List[Dict]:
+    """
+    Detect text column regions from a 200-DPI horizontal projection profile.
+
+    Column gutters (whitespace gaps between text columns) are x-positions where
+    the dark-pixel column sum is below a threshold AND the gap width > MIN_GUTTER_WIDTH_PX.
+
+    Returns text COLUMN regions (the areas between gutters), NOT the gutters themselves.
+    col_0 is always the leftmost text column.
+
+    Output format matches brief §3.2: each dict has col_id, x_min, x_max.
+    Column IDs are positional: col_0, col_1, col_2, ... (AC-0 compliant).
+
+    AC-0: positional column IDs only. No BCTC semantic labels.
+    """
+    if not col_dark or width == 0:
+        # Fallback: single full-width column
+        return [{"col_id": "col_0", "x_min": 0, "x_max": width}]
+
+    # Find gutter x-ranges (whitespace between text columns)
+    median_dark = sorted(col_dark)[len(col_dark) // 2] or 1
+    gutter_threshold = median_dark * _GUTTER_DARK_FRACTION
+
+    # Identify contiguous gutter runs
+    gutter_ranges: List[Tuple[int, int]] = []
+    in_gutter = False
+    gutter_start = 0
+    for x in range(width):
+        if col_dark[x] <= gutter_threshold:
+            if not in_gutter:
+                in_gutter = True
+                gutter_start = x
+        else:
+            if in_gutter:
+                gutter_end = x - 1
+                gap_width = gutter_end - gutter_start + 1
+                if gap_width >= _MIN_GUTTER_WIDTH_PX:
+                    gutter_ranges.append((gutter_start, gutter_end))
+                in_gutter = False
+    if in_gutter:
+        gutter_end = width - 1
+        gap_width = gutter_end - gutter_start + 1
+        if gap_width >= _MIN_GUTTER_WIDTH_PX:
+            gutter_ranges.append((gutter_start, gutter_end))
+
+    if not gutter_ranges:
+        # No gutters found — single full-width column
+        return [{"col_id": "col_0", "x_min": 0, "x_max": width}]
+
+    # Build text column regions from the gaps between gutters
+    columns: List[Dict] = []
+    col_idx = 0
+
+    # Column before the first gutter
+    first_gutter_start = gutter_ranges[0][0]
+    if first_gutter_start > 0:
+        columns.append({
+            "col_id": f"col_{col_idx}",
+            "x_min": 0,
+            "x_max": first_gutter_start - 1,
+        })
+        col_idx += 1
+
+    # Include gutter as a column boundary, then text region after it
+    for i, (g_start, g_end) in enumerate(gutter_ranges):
+        # Add the gutter itself as a (very narrow) boundary column
+        columns.append({
+            "col_id": f"col_{col_idx}",
+            "x_min": g_start,
+            "x_max": g_end,
+        })
+        col_idx += 1
+
+        # Text region after this gutter (up to next gutter or page edge)
+        next_start = gutter_ranges[i + 1][0] if i + 1 < len(gutter_ranges) else width
+        if next_start > g_end + 1:
+            columns.append({
+                "col_id": f"col_{col_idx}",
+                "x_min": g_end + 1,
+                "x_max": next_start - 1,
+            })
+            col_idx += 1
+
+    return columns
+
+
+def _detect_row_bands(
+    row_dark: List[int],
+    y_start: int,
+    y_end: int,
+) -> List[Dict]:
+    """
+    Detect alternating text-dense and text-sparse horizontal strips between
+    y_start and y_end.
+
+    Returns a list of row-band dicts: [{y_min, y_max, row_density}].
+    row_density is the ratio of dark pixels in this band to the maximum band density.
+
+    AC-0: purely geometric — no BCTC semantics.
+    """
+    if not row_dark or y_end <= y_start:
+        return []
+
+    # Slice to the content area (between header and footer)
+    content_rows = row_dark[y_start:y_end]
+    if not content_rows:
+        return []
+
+    max_dark = max(content_rows) or 1
+    threshold = max_dark * _ROW_BAND_DARKNESS_THRESHOLD
+
+    # Group consecutive rows by above/below threshold
+    bands: List[Dict] = []
+    in_band = False
+    band_start = y_start
+    band_dark_sum = 0
+    band_count = 0
+
+    for i, dark_count in enumerate(content_rows):
+        y = y_start + i
+        is_text = dark_count > threshold
+
+        if is_text and not in_band:
+            in_band = True
+            band_start = y
+            band_dark_sum = dark_count
+            band_count = 1
+        elif is_text and in_band:
+            band_dark_sum += dark_count
+            band_count += 1
+        elif not is_text and in_band:
+            # End of text band
+            band_end = y - 1
+            avg_density = (band_dark_sum / band_count / max_dark) if band_count > 0 else 0
+            bands.append({
+                "y_min": band_start,
+                "y_max": band_end,
+                "row_density": round(avg_density, 3),
+            })
+            in_band = False
+            band_dark_sum = 0
+            band_count = 0
+
+    # Flush final band
+    if in_band and band_count > 0:
+        avg_density = (band_dark_sum / band_count / max_dark)
+        bands.append({
+            "y_min": band_start,
+            "y_max": y_end - 1,
+            "row_density": round(avg_density, 3),
+        })
+
+    return bands
+
+
+# ---------------------------------------------------------------------------
+# Tier 2 — ocr_unit
+# ---------------------------------------------------------------------------
+
+
+def ocr_unit(
+    unit: Dict,
+    zones_by_page: Dict[int, Dict],
+    pdf_path: str,
+    tmp_dir: str,
+) -> Dict:
+    """
+    Tier 2: OCR each page of a logical unit into the known column grid, then
+    stitch all pages into a single markdown pipe-table.
+
+    ONE image_to_data call per page (AC-LFE-6 — one Tesseract pass per page).
+    Cell text is derived by filtering the resulting word dictionary by bbox
+    intersection with the cell region.
+
+    For table units:
+        - Schema-page: detect header row (first row band with no numeric tokens).
+          Emit header once.
+        - Continuation pages: skip header detection. Append data rows directly.
+        - Stitch: concatenate pages in reading order (page ASC, row_band_idx ASC).
+
+    For prose units:
+        - Concatenate OCR text across page breaks as plain paragraph text.
+
+    Args:
+        unit:          Logical unit dict from DocumentMap.units.
+        zones_by_page: Dict[page_number → PageZones] from Tier 1.
+        pdf_path:      Absolute path to PDF.
+        tmp_dir:       Temporary directory for intermediate PNGs.
+
+    Returns:
+        UnitOcrResult dict:
+        {
+            "unit_id":         "<uuid>",
+            "page_numbers":    [3, 4, 5, 6],
+            "stitched_markdown": "| col_0 | col_1 | ...",
+            "row_count":       42,
+            "page_row_spans":  [{"page": 3, "row_start": 0, "row_end": 14}, ...],
+            "rows_for_gate":   [{"code": str, "label": str, "values": [...], "page": N}, ...],
+        }
+    """
+    try:
+        import pytesseract  # type: ignore
+        from pdf2image import convert_from_path  # type: ignore
+    except ImportError as exc:
+        raise RuntimeError(f"ocr_unit: missing dependency: {exc}")
+
+    unit_id = unit.get("unit_id", str(uuid.uuid4()))
+    pages_in_unit: List[int] = unit.get("pages", [])
+    unit_page_type: str = unit.get("page_type", "table")
+
+    if not pages_in_unit:
+        return _empty_unit_result(unit_id, [])
+
+    # ------------------------------------------------------------------
+    # Prose units: concatenate stored OCR text (no new Tesseract pass)
+    # Tier 2 for prose = no table structure, just text concatenation.
+    # ------------------------------------------------------------------
+    if unit_page_type != "table":
+        prose_lines: List[str] = []
+        for page_num in sorted(pages_in_unit):
+            page_zones = zones_by_page.get(page_num, {})
+            # For prose, we don't need to do any OCR — stored text suffices
+            # (the use case already has stored text; we emit an empty result
+            # so Tier 3 doesn't quarantine prose units on balance-identity).
+        return {
+            "unit_id": unit_id,
+            "page_numbers": pages_in_unit,
+            "stitched_markdown": "\n".join(prose_lines),
+            "row_count": 0,
+            "page_row_spans": [],
+            "rows_for_gate": [],
+        }
+
+    # ------------------------------------------------------------------
+    # Table units: OCR into the column grid, then stitch
+    # ------------------------------------------------------------------
+    schema_page_num = unit.get("schema_page", pages_in_unit[0])
+    all_header_cells: List[str] = []
+    all_data_rows: List[List[str]] = []
+    page_row_spans: List[Dict] = []
+    rows_for_gate: List[Dict] = []
+    current_row_idx = 0
+    col_count = 0
+
+    for page_num in sorted(pages_in_unit):
+        page_zones_entry = zones_by_page.get(page_num)
+        if page_zones_entry is None:
+            logger.warning("ocr_unit: no zone data for page %d — skipping", page_num)
+            continue
+
+        zones = page_zones_entry.get("zones", {})
+        column_gutters: List[Dict] = zones.get("column_gutters", [])
+        row_bands: List[Dict] = zones.get("row_bands", [])
+        header_band: Dict = zones.get("header_band", {"y_min": 0, "y_max": 0})
+        footer_band: Dict = zones.get("footer_band", {"y_min": 99999, "y_max": 99999})
+
+        is_schema = (page_num == schema_page_num)
+
+        if not column_gutters or not row_bands:
+            logger.debug(
+                "ocr_unit: page %d has no column_gutters or row_bands — skipping",
+                page_num,
+            )
+            continue
+
+        # Set col_count from first page with column data
+        if col_count == 0:
+            col_count = len(column_gutters)
+
+        # Rasterize page at 200 DPI for OCR
+        try:
+            images = convert_from_path(
+                pdf_path,
+                dpi=200,
+                first_page=page_num,
+                last_page=page_num,
+                fmt="png",
+            )
+            if not images:
+                logger.warning("ocr_unit: no image for page %d", page_num)
+                continue
+            page_img = images[0]
+        except Exception as exc:
+            logger.warning("ocr_unit: rasterize failed for page %d: %s", page_num, exc)
+            continue
+
+        try:
+            img_width, img_height = page_img.size
+
+            # ONE Tesseract pass per page (AC-LFE-6)
+            # image_to_data returns word-level bounding boxes
+            try:
+                ocr_data = pytesseract.image_to_data(
+                    page_img,
+                    lang="vie+eng",
+                    config="--psm 6",
+                    output_type=pytesseract.Output.DICT,
+                )
+            except Exception as exc:
+                logger.warning("ocr_unit: Tesseract failed for page %d: %s", page_num, exc)
+                page_img.close()
+                continue
+
+            # Build word records from OCR data
+            word_records = _build_word_records(ocr_data)
+
+            # Skip header row detection if this is a continuation page
+            page_rows: List[List[str]] = []
+
+            row_span_start = current_row_idx
+
+            for band_idx, band in enumerate(row_bands):
+                band_y_min = band.get("y_min", 0)
+                band_y_max = band.get("y_max", img_height)
+
+                # Classify as header row (first band on schema-page with no numeric content)
+                is_header_band = (
+                    is_schema
+                    and band_idx == 0
+                    and not _band_has_numeric_content(word_records, band_y_min, band_y_max)
+                )
+
+                # Extract cell text for each column in this row band
+                row_cells: List[str] = []
+                for col in column_gutters:
+                    col_x_min = col.get("x_min", 0)
+                    col_x_max = col.get("x_max", img_width)
+                    cell_text = _extract_cell_text(
+                        word_records=word_records,
+                        x_min=col_x_min,
+                        x_max=col_x_max,
+                        y_min=band_y_min,
+                        y_max=band_y_max,
+                    )
+                    row_cells.append(cell_text)
+
+                if is_header_band:
+                    if not all_header_cells:
+                        all_header_cells = row_cells
+                else:
+                    # Data row
+                    if any(c.strip() for c in row_cells):
+                        page_rows.append(row_cells)
+
+                        # Build rows_for_gate entry
+                        # First non-empty cell as code, second as label, rest as values
+                        code_val: Optional[str] = None
+                        label_val: Optional[str] = None
+                        value_cells: List[Optional[str]] = []
+
+                        for c_idx, cell in enumerate(row_cells):
+                            if c_idx == 0:
+                                code_val = cell.strip() or None
+                            elif c_idx == 1:
+                                label_val = cell.strip() or None
+                            else:
+                                value_cells.append(cell.strip() or None)
+
+                        rows_for_gate.append({
+                            "code": code_val,
+                            "label": label_val,
+                            "values": value_cells,
+                            "page": page_num,
+                        })
+
+            all_data_rows.extend(page_rows)
+
+            row_span_end = current_row_idx + len(page_rows) - 1
+            if page_rows:
+                page_row_spans.append({
+                    "page": page_num,
+                    "row_start": row_span_start,
+                    "row_end": row_span_end,
+                })
+                current_row_idx += len(page_rows)
+
+        finally:
+            page_img.close()
+
+    # ------------------------------------------------------------------
+    # Stitch into markdown pipe-table
+    # ------------------------------------------------------------------
+    if not col_count and all_data_rows:
+        col_count = max(len(r) for r in all_data_rows)
+    if not col_count and all_header_cells:
+        col_count = len(all_header_cells)
+
+    if col_count == 0:
+        return _empty_unit_result(unit_id, pages_in_unit)
+
+    # Pad/truncate rows to uniform column count
+    if not all_header_cells:
+        all_header_cells = [f"col_{i}" for i in range(col_count)]
+
+    header_cells = (all_header_cells + [""] * col_count)[:col_count]
+    data_rows_padded = [
+        (row + [""] * col_count)[:col_count]
+        for row in all_data_rows
+    ]
+
+    # Build GFM pipe-table
+    header_line = "| " + " | ".join(header_cells) + " |"
+    separator_line = "| " + " | ".join(["---"] * col_count) + " |"
+    data_lines = [
+        "| " + " | ".join(row) + " |"
+        for row in data_rows_padded
+    ]
+    stitched = "\n".join([header_line, separator_line] + data_lines)
+
+    return {
+        "unit_id": unit_id,
+        "page_numbers": pages_in_unit,
+        "stitched_markdown": stitched,
+        "row_count": len(all_data_rows),
+        "page_row_spans": page_row_spans,
+        "rows_for_gate": rows_for_gate,
+    }
+
+
+def _build_word_records(ocr_data: Dict) -> List[Dict]:
+    """
+    Convert pytesseract image_to_data output dict to a list of word record dicts.
+
+    Filters out words with conf <= 0 or empty text.
+
+    Returns: [{text, left, top, width, height, conf}, ...]
+    """
+    records: List[Dict] = []
+    n = len(ocr_data.get("text", []))
+    for i in range(n):
+        text = str(ocr_data["text"][i]).strip()
+        conf = int(ocr_data["conf"][i])
+        if not text or conf <= 0:
+            continue
+        records.append({
+            "text": text,
+            "left": int(ocr_data["left"][i]),
+            "top": int(ocr_data["top"][i]),
+            "width": int(ocr_data["width"][i]),
+            "height": int(ocr_data["height"][i]),
+            "conf": conf,
+        })
+    return records
+
+
+def _band_has_numeric_content(
+    word_records: List[Dict],
+    y_min: int,
+    y_max: int,
+) -> bool:
+    """
+    Return True if any word in the given y-band contains a numeric value token.
+
+    Used to detect header rows (no numeric content = column-name row).
+    AC-0: uses _VALUE_TOKEN_RE (generic financial number pattern).
+    """
+    for w in word_records:
+        top = w.get("top", 0)
+        bottom = top + w.get("height", 0)
+        # Word overlaps with band
+        if top < y_max and bottom > y_min:
+            if _VALUE_TOKEN_RE.match(w.get("text", "")):
+                return True
+    return False
+
+
+def _extract_cell_text(
+    word_records: List[Dict],
+    x_min: int,
+    x_max: int,
+    y_min: int,
+    y_max: int,
+) -> str:
+    """
+    Extract and concatenate OCR text from words that fall within the cell region.
+
+    A word is included if its center x falls within [x_min, x_max] AND
+    its center y falls within [y_min, y_max].
+
+    Sorts matched words by (top, left) for natural reading order.
+
+    AC-0: positional filtering only — no BCTC semantic matching.
+    """
+    cell_words: List[Dict] = []
+    for w in word_records:
+        left = w.get("left", 0)
+        top = w.get("top", 0)
+        w_width = w.get("width", 0)
+        w_height = w.get("height", 0)
+        center_x = left + w_width // 2
+        center_y = top + w_height // 2
+        if x_min <= center_x <= x_max and y_min <= center_y <= y_max:
+            cell_words.append(w)
+
+    if not cell_words:
+        return ""
+
+    # Sort by (top, left) for reading order
+    cell_words.sort(key=lambda w: (w.get("top", 0), w.get("left", 0)))
+    return " ".join(w.get("text", "") for w in cell_words).strip()
+
+
+def _empty_unit_result(unit_id: str, page_numbers: List[int]) -> Dict:
+    """Return an empty UnitOcrResult for units with no extractable content."""
+    return {
+        "unit_id": unit_id,
+        "page_numbers": page_numbers,
+        "stitched_markdown": "",
+        "row_count": 0,
+        "page_row_spans": [],
+        "rows_for_gate": [],
+    }

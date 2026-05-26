@@ -1,5 +1,5 @@
 """
-financial_reports — Protocol ports (P1-C, extended P2-C, BT-1, BT-3-A, MD-EXTRACT).
+financial_reports — Protocol ports (P1-C, extended P2-C, BT-1, BT-3-A, MD-EXTRACT, LF-EXTRACT).
 
 Defines the abstract interfaces (Python Protocols) that the FinancialReportsModule
 depends on. The module NEVER imports concrete primitives directly — it only accepts
@@ -13,7 +13,8 @@ Domain layer rules:
 These protocols satisfy G2 re-verify (P2-C) and enforce the DDD layering rule:
 domain modules compose domain primitives via ports, not direct function calls.
 
-Ports defined here (14 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; MD-EXTRACT-2 adds 1):
+Ports defined here (16 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; MD-EXTRACT-2 adds 1;
+    LF-EXTRACT adds 2):
     - DecimalNormalizerPort         (decimal_normalizer — P1-B2)
     - FinancialValidatorPort        (validate_financial_figures — P1-B1)
     - ConfidenceScorerPort          (confidence_scorer — P2-B1)
@@ -28,6 +29,8 @@ Ports defined here (14 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; 
     - GenericMdTableExtractorPort   (generic_md_table_extractor — MD-EXTRACT)
     - MdTablePushClientPort         (md_table_push_client — MD-EXTRACT)
     - OcrTextFetchClientPort        (ocr_text_fetch_client — MD-EXTRACT-2)
+    - LayoutFirstPushClientPort     (layout_first_push_client — LF-EXTRACT)
+    - OcrPagesFetchClientPort       (ocr_text_fetch_client pages-variant — LF-EXTRACT)
 """
 
 from __future__ import annotations
@@ -500,5 +503,76 @@ class OcrTextFetchClientPort(Protocol):
             Concatenated OCR text for all pages, separated by
             "\\n\\n---\\n\\n" page-break markers. Returns empty string
             when no OCR text is stored or on HTTP failure.
+        """
+        ...
+
+
+class OcrPagesFetchClientPort(Protocol):
+    """
+    Port for fetching stored per-page OCR text as structured page records (LF-EXTRACT).
+
+    Returns a list of page records: [{page_number, text}] so Tier 0 can use the
+    stored text per-page for projection fingerprint + hint scanning.
+
+    Source endpoint: GET /api/bctc-inspect/ocr/{report_id} (existing) or equivalent.
+
+    DDD: domain port — zero infrastructure imports. Pure Protocol.
+
+    Implemented by:
+        - infrastructure/ocr_text_fetch_client.OcrTextFetchClient (extended)
+        - FakeOcrPagesFetchClient (tests — injected)
+    """
+
+    async def fetch_ocr_pages(self, report_id: str) -> List[Dict]:
+        """
+        Fetch stored per-page OCR text as a list of page records.
+
+        Args:
+            report_id: UUID string matching financial_reports.id on mcp-server.
+
+        Returns:
+            List of dicts: [{"page_number": int, "text": str}, ...]
+            Sorted by page_number ascending. Returns [] on failure.
+        """
+        ...
+
+
+class LayoutFirstPushClientPort(Protocol):
+    """
+    Port for pushing layout-first extraction results to mcp-server (LF-EXTRACT).
+
+    Concrete adapter: infrastructure/layout_first_push_client.LayoutFirstPushClient
+    Target endpoint: POST /api/push-bctc-layout
+
+    DDD: domain port — zero infrastructure imports. Pure Protocol.
+
+    Implemented by:
+        - infrastructure/layout_first_push_client.LayoutFirstPushClient (production)
+        - FakeLayoutFirstPushClient (tests — injected)
+    """
+
+    async def push_layout(
+        self,
+        report_id: str,
+        document_map: Dict,
+        units: List[Dict],
+        page_zones: List[Dict],
+        pass_rate_report: Dict,
+    ) -> Dict:
+        """
+        POST layout-first extraction results to mcp-server.
+
+        Args:
+            report_id:        UUID string matching financial_reports.id.
+            document_map:     Tier 0 DocumentMap JSON (total_pages, units list).
+            units:            List of UnitOcrResult dicts (stitched_markdown, quarantined, etc.).
+            page_zones:       List of PageZones dicts (one per page, zones JSON).
+            pass_rate_report: Tier 3 gate summary (units_total, passing, quarantined).
+
+        Returns:
+            dict with keys: ok (bool), units_stored (int), pages_stored (int).
+
+        Raises:
+            Exception: on HTTP error or network failure (caller handles).
         """
         ...

@@ -1,10 +1,13 @@
 """
-infrastructure/ocr_text_fetch_client.py — MD-EXTRACT-2 (DEFECT-A fix)
+infrastructure/ocr_text_fetch_client.py — MD-EXTRACT-2 (DEFECT-A fix) + LF-EXTRACT
 
 OcrTextFetchClient: HTTP GET client that reads stored per-page OCR text from
-mcp-server and concatenates all pages into a single string.
+mcp-server. Provides two methods:
+    - fetch_ocr_text(report_id) → concatenated str (MD-EXTRACT-2 / OcrTextFetchClientPort)
+    - fetch_ocr_pages(report_id) → List[{page_number, text}] (LF-EXTRACT / OcrPagesFetchClientPort)
 
-Implements OcrTextFetchClientPort (domain/modules/financial_reports/ports.py).
+Implements OcrTextFetchClientPort + OcrPagesFetchClientPort
+    (domain/modules/financial_reports/ports.py).
 
 Source endpoint: GET /api/bctc-inspect/ocr/{report_id}?page=N
     Response shape (per page):
@@ -14,12 +17,17 @@ Source endpoint: GET /api/bctc-inspect/ocr/{report_id}?page=N
             "page": 1
         }
 
-Algorithm:
+Algorithm (fetch_ocr_text):
     1. GET /api/bctc-inspect/ocr/{report_id} (no page param) to read total_pages.
     2. Loop pages 1..min(total_pages, MAX_PAGES), GET ?page=N.
     3. Concatenate text_content fields with "\\n\\n---\\n\\n" separator.
     4. On any HTTP failure: log WARNING, return partial text accumulated so far.
     5. Returns empty string when total_pages == 0 or first request fails.
+
+Algorithm (fetch_ocr_pages — LF-EXTRACT Tier 0):
+    Same fetching strategy but returns a list of
+    [{"page_number": N, "text": "..."}, ...] for Tier 0 fingerprinting.
+    No Tesseract calls added. Host-safe.
 
 DDD layer: infrastructure (makes outbound HTTP via aiohttp — impure).
     Fence-A: must NOT import from application/ or interface/.
@@ -35,7 +43,7 @@ Hardware: no Tesseract subprocess calls added (HTTP only). Zero kernel-panic ris
 from __future__ import annotations
 
 import logging
-from typing import Optional
+from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -179,3 +187,94 @@ class OcrTextFetchClient:
                 exc,
             )
             return ""
+
+    async def fetch_ocr_pages(self, report_id: str) -> List[Dict]:
+        """
+        Fetch stored per-page OCR text as structured page records for Tier 0 (LF-EXTRACT).
+
+        Implements OcrPagesFetchClientPort.
+
+        Returns a list of dicts: [{"page_number": int, "text": str}, ...]
+        sorted by page_number ascending. Returns [] on failure.
+
+        Hardware safe: no Tesseract calls. HTTP only.
+        """
+        try:
+            import aiohttp  # type: ignore
+        except ImportError:
+            logger.error(
+                "OcrTextFetchClient: aiohttp not installed — cannot fetch OCR pages"
+            )
+            return []
+
+        base_url = f"{self._mcp_url}/api/bctc-inspect/ocr/{report_id}"
+
+        try:
+            async with aiohttp.ClientSession() as session:
+                # Fetch page 1 to learn total_pages
+                first_url = f"{base_url}?page=1"
+                try:
+                    async with session.get(first_url, timeout=aiohttp.ClientTimeout(total=15)) as resp:
+                        if resp.status != 200:
+                            logger.warning(
+                                "OcrTextFetchClient.fetch_ocr_pages: GET %s returned HTTP %d",
+                                first_url,
+                                resp.status,
+                            )
+                            return []
+                        first_data = await resp.json()
+                except Exception as exc:
+                    logger.warning(
+                        "OcrTextFetchClient.fetch_ocr_pages: request failed %s: %s",
+                        first_url,
+                        exc,
+                    )
+                    return []
+
+                total_pages: int = int(first_data.get("total_pages", 0))
+                if total_pages == 0:
+                    return []
+
+                pages_to_fetch = min(total_pages, _MAX_FETCH_PAGES)
+                result: List[Dict] = []
+
+                # Include page 1
+                first_text = str(first_data.get("text_content", "")).strip()
+                result.append({"page_number": 1, "text": first_text})
+
+                # Fetch remaining pages
+                for page_num in range(2, pages_to_fetch + 1):
+                    page_url = f"{base_url}?page={page_num}"
+                    try:
+                        async with session.get(
+                            page_url, timeout=aiohttp.ClientTimeout(total=15)
+                        ) as page_resp:
+                            if page_resp.status != 200:
+                                # Missing page — include as empty (page gap)
+                                result.append({"page_number": page_num, "text": ""})
+                                continue
+                            page_data = await page_resp.json()
+                            page_text = str(page_data.get("text_content", "")).strip()
+                            result.append({"page_number": page_num, "text": page_text})
+                    except Exception as exc:
+                        logger.warning(
+                            "OcrTextFetchClient.fetch_ocr_pages: page %d failed: %s — marking blank",
+                            page_num,
+                            exc,
+                        )
+                        result.append({"page_number": page_num, "text": ""})
+
+                logger.info(
+                    "OcrTextFetchClient.fetch_ocr_pages: report_id=%s fetched %d pages",
+                    report_id,
+                    len(result),
+                )
+                return result
+
+        except Exception as exc:
+            logger.error(
+                "OcrTextFetchClient.fetch_ocr_pages: unexpected error for %s: %s",
+                report_id,
+                exc,
+            )
+            return []

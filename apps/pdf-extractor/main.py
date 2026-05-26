@@ -27,12 +27,19 @@ from infrastructure.table_push_client import TablePushClient
 from infrastructure.alert_adapter import TelegramAlertAdapter  # BT-5
 from infrastructure.ocr_adapter import PdfOcrAdapter  # BT-3-D
 from infrastructure.generic_md_table_extractor import GenericMdTableExtractor  # MD-EXTRACT
+from infrastructure.generic_md_table_extractor import (  # LF-EXTRACT
+    build_document_map,
+    zone_page,
+    ocr_unit,
+)
 from infrastructure.md_table_push_client import MdTablePushClient  # MD-EXTRACT
-from infrastructure.ocr_text_fetch_client import OcrTextFetchClient  # MD-EXTRACT-2
+from infrastructure.ocr_text_fetch_client import OcrTextFetchClient  # MD-EXTRACT-2 + LF-EXTRACT
+from infrastructure.layout_first_push_client import LayoutFirstPushClient  # LF-EXTRACT
 from domain.services import ExtractPDFService
 from application.usecases import ExtractPDFUseCase
 from application.extract_tables_usecase import ExtractTablesUseCase
 from application.extract_md_tables_usecase import ExtractMdTablesUseCase  # MD-EXTRACT
+from application.extract_layout_first_usecase import ExtractLayoutFirstUseCase  # LF-EXTRACT
 from interface.handlers import register_routes
 
 
@@ -91,6 +98,17 @@ def create_app() -> FastAPI:
         ocr_fetch_client=ocr_fetch_client,  # MD-EXTRACT-2: auto-fetch OCR text
     )
 
+    # --- LF-EXTRACT: layout-first Tier 0-3 extraction use case ---
+    layout_push_client = LayoutFirstPushClient(mcp_server_url=cfg.mcp_server_url)
+    # ocr_fetch_client already instantiated above; reuse (implements both ports)
+    extract_layout_first_usecase = ExtractLayoutFirstUseCase(
+        push_client=layout_push_client,
+        ocr_pages_client=ocr_fetch_client,  # implements OcrPagesFetchClientPort
+        build_document_map_fn=build_document_map,
+        zone_page_fn=zone_page,
+        ocr_unit_fn=ocr_unit,
+    )
+
     # --- FastAPI app ---
     app = FastAPI(
         title="PDF Extractor",
@@ -113,6 +131,7 @@ def create_app() -> FastAPI:
         inspection_store,
         extract_tables_usecase,
         extract_md_tables_usecase,
+        extract_layout_first_usecase=extract_layout_first_usecase,  # LF-EXTRACT
     )
     app.include_router(router)
 
