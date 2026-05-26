@@ -512,3 +512,21 @@ Detection + OCR-markdown are a real advance (1→15 tables, segment report now a
 
 **NEXT: architect** — design DEFECT-D fix (robust dense-grid row reconstruction: y-band by median GAP not median height / histogram row detection; strict intra-row left-to-right x emission; verify each physical line = one md row) + close AC-2E (collapse empty columns). Append as **MD-EXTRACT-3** to `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` (pure append; AC-0 generic-only; frozen surfaces untouched; pdf-extractor zone only). Add an AC asserting row-order correctness (each detected statement-line code → exactly one md row; monotonic top-coordinate ordering). Then → dev-pdf-extractor → ops (SINGLE doc, full UUID) → main-terminal re-verify → qa → po.
 
+---
+
+## [Architect] MD-EXTRACT-3 — DEFECT-D Dense-Grid Row Reconstruction (DESIGN COMPLETE) — 2026-05-26
+
+> Design authored in brief `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` lines **855–1204** (committed `d7a2b505`). Architect agent hit a 529 before writing this handoff stub + RETURN; main terminal verified the design is complete/compliant (AC-0 generic-only, privacy deny-lists, Fence-A, pdf-extractor zone) and recorded this pointer.
+
+**Root cause:** Step C `_cluster_rows` greedy merge `next.top > prev_bottom + 0.5×H_med`. H_med inflated by tall header/diacritic tokens (~12px→22px) → tolerance (~11px) >> real inter-row gap (3–5px) on dense statements → ~25 lines merge into 1 row → column-major word-soup. AC-2E balance-sheet 7-col residual = empty-column proliferation from sparse anchor assignment.
+
+**Fix (pdf-extractor zone ONLY — `infrastructure/generic_md_table_extractor.py`, zero mcp-server changes):**
+- ADD `_cluster_rows_by_gap(words, h_med)` — same-line grouping (tol `min(0.3×H_med, 8px)` — 8px cap defuses H_med inflation) → gap-histogram row-pitch (`median` of inter-line gaps) → new-row when gap > `row_pitch × 1.2` → strict intra-row left-sort. Replaces `_cluster_rows` call in `_process_page` (keep old fn as DEPRECATED fallback for sparse pages <3 lines).
+- ADD `_collapse_empty_columns(grid)` — drop columns blank across ALL rows (incl. header). Runs after `_coalesce_label_columns`, before `_is_data_table`.
+- ADD constants `_SAME_LINE_FACTOR=0.3`, `_ROW_PITCH_MULTIPLIER=1.2` (generic geometry).
+- Tests: `__tests__/unit/test_generic_md_table_extractor.py` — synthetic dense word-lists (25×6), code-per-row, monotonic-top, empty-col collapse; fixtures from LIVE `image_to_data` substrate (AC-3H), NOT PyMuPDF spike.
+
+**Binding ACs (brief §6/§7):** AC-3A (≤1 three-digit code per md row, BLOCKING), AC-3B (monotonic top + left-sort), AC-3C (segment report: 3 segment revenues `35.381.667/9.092.934/18.701.876` in DIFFERENT rows), AC-3D (income statement ≥10 data rows), AC-3E (balance ≤4 cols), AC-3F (non-regression: structured 79 rows/balance δ=0 + all MD-EXTRACT-2 PASS ACs), AC-3G (privacy grep ZERO), AC-3H (live-substrate fixtures). Build-standard: lean.
+
+**NEXT: dev-pdf-extractor** — implement MD-EXTRACT-3 per brief lines 855–1204. Verify AC-3F (non-regression) BEFORE any re-extract. Leave files UNSTAGED (main terminal commits). Then ops MD-DEPLOY-3 (SINGLE doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`) → main-terminal re-verify → qa MD-QA-3 → po MD-EXIT.
+
