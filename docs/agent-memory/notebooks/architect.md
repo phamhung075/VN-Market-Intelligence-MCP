@@ -1,8 +1,40 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 10:30 UTC | **Sprint:** BCTC-MD-TABLE
+**Last updated:** 2026-05-26 11:30 UTC | **Sprint:** BCTC-MD-TABLE / MD-EXTRACT-2
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## MD-EXTRACT-2 — Live-verify fix design (2026-05-26T11:30Z) — DESIGN COMPLETE
+
+**Task:** MD-EXTRACT-2. Post-deploy live verification of FPT Q4 2025 revealed 3 defects: (A) `ocr_as_markdown` = 0 bytes, (B) 15 of 30 tables are noise (letterhead/prose), (C) cosmetic — header noise glued to segment table top + label over-segmented into 3 columns.
+
+**DEFECT-A root cause:** ops re-extract call sent `{report_id, pdf_path}` only — no `doc_ocr_text`. Use case hit else-branch → stored empty string. OCR text already exists in mcp-server `pdf_extracted_text` table, queryable via `GET /api/bctc-inspect/ocr/{doc_id}?page=N`. Fix: new `OcrTextFetchClientPort` (domain) + `OcrTextFetchClient` (infra, HTTP GET, concatenate pages) + optional injection into use case as Step 0. Zero extra Tesseract calls. Graceful degrade.
+
+**DEFECT-B fix:** `_is_data_table(grid)` density gate. `_MONEY_GROUP_RE = r'\d{1,3}(?:[.,]\d{3})+'` as primary signal. K=6 money-groups (primary gate) OR J=3 three-digit codes + 1 money-group (secondary). Live data: real tables >=6, noise <=3 — clean split. Old col_count==1 prose filter REPLACED by density gate for all regions.
+
+**DEFECT-C fixes:** `_strip_leading_header_bands()` — remove rows with 0 money-groups from grid top until first financial row. `_coalesce_label_columns()` — merge leading text-only columns (zero money-groups) left of first numeric column into single label column.
+
+**Key design decisions:**
+1. Zero mcp-server changes. `GET /api/bctc-inspect/ocr/{doc_id}` already exists and returns per-page OCR text. The fetch client is purely additive in pdf-extractor.
+2. All new functions in `generic_md_table_extractor.py` use `_MONEY_GROUP_RE` and `_DATE_HEADER_RE` — generic patterns, AC-0 grep-proof satisfied by construction.
+3. `_process_page()` pipeline order: strip_header_bands → coalesce_label_columns → _is_data_table gate → header detect → emit markdown.
+4. `OcrTextFetchClient` is infra. Port is domain. Wired at `main.py` composition root. Fence-A/B intact.
+5. Hardware: DEFECT-A adds 0 Tesseract calls (HTTP fetch only). DEFECT-B/C are post-processing of already-collected bbox data. No kernel-panic risk increase.
+
+**Expected outcome after fix:** 30 → ~12 tables, `ocr_as_markdown` non-empty, segment report header-noise-free, balance sheet labels coalesced, structured path unregressed (79 rows, balance_pass=true).
+
+**Files authored this cycle (2):**
+1. `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` — APPENDED "MD-EXTRACT-2" section
+2. `docs/handoffs/TASK_BCTC-MD-TABLE.md` — APPENDED [Architect] MD-EXTRACT-2 record
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Risk flags:**
+- R-HIGH: K=6 calibrated on FPT only. Other docs may need K=4. Tuning parameter.
+- R-MEDIUM: OcrTextFetchClient HTTP failure → empty ocr_as_markdown. Graceful degrade, not crash.
+
+**Next actor:** dev-pdf-extractor — MD-EXTRACT-2. Implement DEFECT-A/B/C. AC-2F (non-regression) first. Single-doc re-extract only after container rebuild.
+
+---
 
 ## MD-DESIGN — Generic table detection blueprint (2026-05-26T10:30Z) — DESIGN COMPLETE
 
