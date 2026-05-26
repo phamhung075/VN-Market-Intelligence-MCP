@@ -45,7 +45,45 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 - `__tests__/unit/test_bt3fix4_parser_hardening.py` — NEW: 21-test AC-8 regression guard
 - `__tests__/integration/test_bt3_fix3_row_fidelity.py` — AC-12 bound update [80,110] → [75,115]
 
-**NEXT:** ops must `docker compose up -d --build pdf-extractor` then re-POST to `/extract-tables` for FPT Q4 (report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65) → QA verifies live endpoint row count in [82, 92] with AC-1..AC-7 from the architect ruling.
+**NEXT (superseded):** ops must `docker compose up -d --build pdf-extractor` then re-POST to `/extract-tables` for FPT Q4 (report_id e71f845d-ffa5-48f9-8f09-30ac2cd09c65) → QA verifies live endpoint row count in [82, 92] with AC-1..AC-7 from the architect ruling.
+
+---
+
+### 2026-05-26 — MD-EXTRACT DONE (generic bbox-based markdown table detector)
+
+**Task:** MD-EXTRACT | Sprint: BCTC-MD-TABLE | Status: DONE, UNSTAGED
+
+**New files created:**
+- `infrastructure/generic_md_table_extractor.py` — GenericMdTableExtractor (Steps A-G algorithm) + ocr_text_to_markdown() pure function
+- `infrastructure/md_table_push_client.py` — MdTablePushClient (urllib POST to /api/push-bctc-md-tables)
+- `application/extract_md_tables_usecase.py` — ExtractMdTablesUseCase (MAX_PAGES=20, fire-and-forget, tempfile cleanup)
+- `__tests__/unit/test_generic_md_table_extractor.py` — 25 unit tests (AC-2, AC-1, geometry helpers)
+- `__tests__/unit/test_ocr_text_to_markdown.py` — 15 unit tests (pure function)
+- `__tests__/unit/test_extract_md_tables_usecase.py` — 9 unit tests (AC-4, AC-6)
+- `__tests__/integration/test_extract_md_tables_fpt.py` — AC-3 integration test (skips if FPT PDF absent)
+
+**Files modified:**
+- `domain/modules/financial_reports/ports.py` — ADD GenericMdTableExtractorPort + MdTablePushClientPort
+- `interface/handlers.py` — ADD POST /extract-md-tables (202 background task)
+- `main.py` — Wire new use case at composition root
+
+**Key constraints confirmed:**
+- AC-0: grep for BCTC-specific keywords → ZERO matches. Geometry + generic patterns only.
+- AC-1: Fence-A intact — no imports from application/ or interface/ in infra module.
+- AC-Q-4: Privacy — no cloud OCR/VLM references anywhere.
+- MAX_PAGES = 20 hard cap with WARNING log (AC-6).
+- Sequential single-page Tesseract calls, PIL Image deleted per page (R-MEDIUM).
+- tempfile.TemporaryDirectory context manager for auto-cleanup (R-LOW).
+- Decision A: zero collision with structured path — separate use case, ports, endpoint, mcp table.
+
+**Suite evidence:**
+- 334 unit tests passed, 0 failed (includes all pre-existing tests — AC-7 non-regression confirmed)
+- AC-0: PASS (exit 1, no matches)
+- AC-1: PASS (exit 1, no matches)
+- AC-Q-4: PASS (exit 1, no matches)
+- Sandbox: primitive + module GREEN with PYTHONPATH set
+
+**NEXT:** ops MD-DEPLOY (wait for dev-mcp-server MD-INSPECT to also complete, then rebuild both containers). NEVER run batch backfill — single doc re-extract only via POST /extract-md-tables.
 
 ---
 
