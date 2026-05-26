@@ -1,0 +1,46 @@
+{
+  "type": "pilot-closure-signal",
+  "from": "po",
+  "pilot": "frontend",
+  "action": "terminal-atomic-close",
+  "emitted_at": "2026-05-26T15:42:00Z",
+  "authorization": {
+    "qa_close_gate_signal": "docs/signals/qa-frontend-p2-close-2026-05-26T153000Z.json",
+    "qa_verdict": "APPROVED",
+    "qa_cycle": 125,
+    "qa_verification_commit": "723ef803",
+    "charter_clause": "§4.5 PO-only terminal flip — goal-status + decisionMatrix authorship"
+  },
+  "result": {
+    "status": "DONE",
+    "verdict": "scale",
+    "phase2_status": "CLOSED",
+    "goalsEarned": 10,
+    "goal_tally": "10 YES + 2 N/A = 12 graded",
+    "goals_yes": ["G1", "G2", "G4", "G6", "G7", "G8", "G9", "G10", "G11", "G12"],
+    "goals_na_justified": {
+      "G3": "Remix IS the composition root (framework-level route/loader/action wiring; root.tsx 60 lines, no DI container to extract) — Phase-2 plan §N/A Calibrations §G3",
+      "G5": "No prior mcp-server location (standalone Remix app since inception; already consumes api-gateway:4000 via lib/api/client.ts) — Phase-2 plan §N/A Calibrations §G5"
+    },
+    "decisionMatrix": {"speed": "YES", "trust": "YES", "scale": "YES", "verdict": "scale"},
+    "criteria": {
+      "speed": "G10=YES (1-cycle blind-fix) + G11=YES (outcome-(a)×2)",
+      "trust": "G9=YES (ops live-recheck Playwright 4/4 vs live :3001) + G8=YES (honest-green)",
+      "scale": "all 10 gradeable goals YES + ≤6 sprints (1-sprint kickoff→close)"
+    }
+  },
+  "g9_basis_clarification": "G9 graded via ops live-recheck (signal ops-frontend-p2h-rerun-2026-05-26T13-24Z.json: rebuild ca0bad81→13fe4167, Playwright 4/4, /dashboard/analysis 200, macro keyed-object). The obsolete awaitingUserG9Signoff gate was RETIRED 2026-05-26T08:30Z; NO user verbal sign-off required, per feedback_trust_verification_is_system_job. Same basis on which mcp-server G9 closed.",
+  "key_phase2_commits": {
+    "G4": ["437e8514", "9cc11a31 (fence freeze-anchor)"],
+    "G10": ["4aef229c (inject)", "c1df64ac (blind-fix)"],
+    "G9": ["a0364390 (macro keyed-object adapt, architect ruling 1d277bc7)"]
+  },
+  "tags_intact": ["frontend-pre-ci (3fbbd5e0)", "frontend-pre-inject (5eb73272)"],
+  "file_integrity": {
+    "json_parses": true,
+    "duplicate_root_keys": 0,
+    "duplicate_keys_any_object": 0
+  },
+  "scope": "Touched ONLY docs/data/pilot-status-frontend.json + po notebook + this closure signal. Did NOT touch other pilots, tags, app code, pipeline-state, or macro/mcp-server files.",
+  "fleet_context": "frontend = 10th/11 deep-module SCALE pilots DONE+scale (mcp-server = 11th/final, closed 8972a155). Backend rollout 11/11; frontend was the last pre-0 UI pilot."
+}

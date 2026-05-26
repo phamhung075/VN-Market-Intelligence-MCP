@@ -1,8 +1,27 @@
 # PO Notebook
 
-**Cycle:** dev-team triage 2026-05-26T12:25Z — frontend Phase-2 build-lane opens + macro data-gap follow-up dispatched.
-**Last update:** 2026-05-26T12:25Z
-**Status:** BATCH(2) + 1 HELD. WIP 0/2 → 2/2. Host STABLE.
+**Cycle:** frontend SCALE pilot TERMINAL CLOSE 2026-05-26T15:42Z — 10/12 YES + G3/G5 N/A, verdict=scale.
+**Last update:** 2026-05-26T15:42Z
+**Status:** frontend pilot DONE. WIP freed. Host STABLE.
+
+---
+
+## 2026-05-26T15:42Z — frontend terminal atomic close (§4.5 PO-only flip)
+
+**Trigger:** QA P2-Z close-gate signal APPROVED (qa-frontend-p2-close-2026-05-26T153000Z.json, cycle-125, commit 723ef803). PO is the ONLY agent authorized to flip goal-status; did it ONCE, atomically, on docs/data/pilot-status-frontend.json.
+
+**Terminal grades (12/12):**
+- YES (10, gradeable): G1 G2 G4 G6 G7 G8 G9 G10 G11 G12 → goalsEarned 4→10.
+- N/A-with-justification (2, excluded from YES tally per Phase-2 plan §N/A Calibrations): G3 (Remix=composition root) + G5 (no prior mcp-server location). Used status:"N/A" + _status_na_note (plan-prescribed terminal designation; NOT a new per-goal enum value — N/A is the plan's own word, designation lives in calibration+evidence). frontend is the FIRST pilot with terminal N/A goals (prior 9+mcp = all 12 YES).
+- **G9 framing CLEARED:** dropped stale AWAITING-USER-G9-SIGNOFF + "user verbal sign-off required" note; terminal YES rests on ops live-recheck (ops-frontend-p2h-rerun-2026-05-26T13-24Z.json: rebuild ca0bad81→13fe4167, Playwright 4/4, /dashboard/analysis 200, macro keyed-object 6 keys; macro blocker fixed a0364390 per architect 1d277bc7). Same basis as mcp-server close. awaitingUserG9Signoff gate already RETIRED 2026-05-26T08:30Z.
+
+**decisionMatrix:** speed=YES (G10 1-cycle + G11 outcome-(a)×2), trust=YES (G9 ops-recheck + G8 honest-green), scale=YES (10/10 gradeable + 1-sprint ≤6) → verdict=scale. status=DONE, phase2.status=CLOSED, closedAt/closedBy/closureSignal populated.
+
+**Integrity:** JSON parses OK; zero duplicate root keys; zero dup keys any object (verified python3 object_pairs_hook). Tags frontend-pre-ci (3fbbd5e0) + frontend-pre-inject (5eb73272) intact (not touched).
+
+**Scope discipline:** touched ONLY pilot-status-frontend.json + this notebook + closure signal po-frontend-closure-2026-05-26T154200Z.json. Did NOT touch other pilots, tags, app code, pipeline-state (dispatcher owns), macro/mcp-server files. Explicit git add per file (no -A/.). 
+
+**Fleet:** frontend = 10th deep-module pilot DONE+scale; mcp-server 11th/final closed (8972a155). Backend 11/11. UI pre-0 pilot done.
 
 ---
 
