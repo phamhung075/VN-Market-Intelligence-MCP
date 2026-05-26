@@ -1,30 +1,39 @@
 # PO Notebook
 
-**Cycle:** FA-EXIT 2026-05-26T16:10Z — FETCH-ANALYZE reliability FIX CLOSED (SIGN-OFF).
-**Last update:** 2026-05-26T16:10Z
-**Status:** FA-FIX DONE + ops live-verified. WIP → 0/2, apps/mcp-server zone now FREE for next tick.
+**Cycle:** :07-HOLD 2026-05-26T16:23Z — triage verdict = NOTHING (one quiet tick to let FA rebuild settle).
+**Last update:** 2026-05-26T16:26Z
+**Status:** WIP 0/2. apps/mcp-server zone FREE but DELIBERATELY HELD this tick. Host stable, 30m post-FA-rebuild.
 
 ---
 
-## 2026-05-26T16:10Z — FA-EXIT (FETCH-ANALYZE reliability FIX sign-off = CLOSED)
+## 2026-05-26T16:23Z — :07-HOLD (verdict NOTHING)
 
-**VERDICT: SIGN-OFF. FA-FIX CLOSED.** RESTART≠REBUILD close-gate (`docker-deployment-runbook.md` § Microservice Code-Change Close Gate) cleared all 3 steps. FIX `3c00c17a` (dev-mcp-server) + ops FA-OPS verdict=PASS `c41efb94` + dev done-signal `9045dfa2`. NOT a pilot — touched zero pilot-status files. Close signal `docs/signals/po-fa-exit-20260526T161000Z.json`.
+**VERDICT: NOTHING.** FA-FIX closed last tick (`3c00c17a` → ops `c41efb94` → PO sign-off). The only dev-team-dispatchable backlog is UX/hardening, all in `apps/mcp-server/`, all forcing ANOTHER ops rebuild:
+- NEWS-INGEST-2b (UX display filter, P3) — `newsFetchLiveHandler.ts`
+- MZH-1 (write-path trust, P2) — `pushBctcTableHandler.ts` returns DB-verified rows_stored
+- MZH-2 (test isolation, P2) — no test writes to live market.db; test-only, no rebuild
 
-- **Code verified live by me (git show 3c00c17a):** REC-1 budgets cafef=10s/vnexpress=10s/vneconomy=12s/reuters 30→15s via `withSourceTimeout` + inner `AbortSignal.timeout(15_000)`; REC-2 `Promise.allSettled` Step-1 (analysis.ts:218) + Step-4 (analysis.ts:300); REC-3 `AbortSignal.timeout(8_000)` on ragSearch (ragHttpClient.ts:96) + ragIndex (:123). All 3 commits exist on main. tsc exit 0; 7/7 new; bun 9449 pass/345 fail = 0 new vs ≤348 baseline.
-- **G9 ruling:** ops live-recheck IS the arbiter per `feedback-trust-verification-is-system-job` (NOT user visual). Hard-verified: image 15:54:04Z = +158s NEWER than commit 15:51:26Z (new code in running image, not stale — the exact RESTART≠REBUILD failure mode the gate exists to catch); /health 200; toolCount 146 (no regression). Live `fetch_and_analyze` with Reuters dead (50-consec-fail) returned via surviving sources with no 60s-wall regression.
-- **The one ops cosmetic defect I accepted WITHOUT re-probe:** ops mis-labelled budgets as "3s each" (actual 10/10/12/15s, confirmed in commit; 3s is the separate ragHealthCheck guard ragHttpClient.ts:142) + reported the dead-upstream proof qualitatively, not as a hard `fa_elapsed_seconds`. Cosmetic — the regression tripwire (return to 60s wall) was checked + clear; the worst-case wall is structurally bounded by the verified per-source budgets + allSettled isolation. A re-probe for a nice-to-have number would burn an ops cycle + re-open a closed zone for zero reliability gain. PASS sufficient.
+**Why HOLD, not dispatch:**
+1. Rebuild amortization — mcp-server rebuilt 15:54Z (30m ago) this hour. 16GB/8GB-capped panic-prone host; rag still flaky (ragInsert timing out, embeddings dark). A 2nd rebuild before the FA rebuild proves durable risks a swap-exhaustion event.
+2. mcp-server charter = SCHEDULE-LAST/anti-churn — zone churned all last tick; back-to-back dispatch contradicts the rule that avoids the SSOT-dup-key + git-index-race class.
+3. Priority: reliability→coverage→UX→arch. These are UX/hardening, below reliability. Nothing reliability-grade is dev-team-dispatchable (DEPLOY-DRIFT = ops/architect lane).
+4. BCTC session HOT in apps/pdf-extractor/ (MD-EXTRACT-8, `40d23490` LIVE-VERIFY FAIL → architect) — different zone, shares git index on main.
+
+**Batch directive recorded (for next tick):** NEWS-INGEST-2b + MZH-1 + MZH-2 dispatch as ONE coherent apps/mcp-server batch so a single rebuild covers all three. `ops_rebuild_required: true`.
+
+**Signals drained (all non-dev-actionable):** 2× cowork-team LOW ticks (16:18 silent, 16:03 fan-out 2/2 genuine; NEWSSCOUT-MACRO-MISVALIDATE self-resolved); 3× context-bloat pings + price_anomaly (janitor/cowork lane); my own FA close signals (processed last tick); 958-file backlog (claude-manager-helper lane).
 
 **Edits (working tree, NOTHING staged — no commit-mutex/task_claim in subagent harness; dispatcher commits on main, EXPLICIT git add per file, never -A):**
-- docs/TASKS.md (FA section net-reduced ~28L → ~13L; flipped to CLOSED/DONE w/ SHAs)
-- docs/signals/po-fa-exit-20260526T161000Z.json (new close signal)
+- docs/TASKS.md (FA section net-reduced ~10L; NEWS-INGEST-2b held-rationale refreshed to :07-HOLD + batch directive; 420→412L)
+- docs/signals/po-20260526T162611Z.json (triage verdict signal)
 - docs/agent-memory/notebooks/po.md (this)
 
 ## Carry-over
-- **Dispatcher (main terminal) commits all 3 in-tree docs** — EXPLICIT git add per file, no -A/./-am, no push, on main. Watch index.lock (BCTC session may be on main — NEVER rm a peer's lock).
-- **WIP can drop to 0/2.** apps/mcp-server zone now FREE.
-- **NEXT tick (apps/mcp-server, sequence reliability→UX):** (1) NEWS-INGEST-2b (UX display filter — VN articles invisible in /api/news-fetch/live) — now unblocked, zone free; (2) MCPZONE-HARDEN-1 after. Both were HELD only for FA zone-exclusivity — that gate is now cleared.
-- **FETCH-ANALYZE-2 (backlog, NOT dispatched):** REC-4 P2 `use_ingested` SQLite read-path. Reopen only if user wants the <50ms cached read path.
-- **MARKET-SLOTS-DARK:** Option B (recreate RemoteTriggers) routed to main-terminal `/cron-cowork-team` re-arm last tick — follow up that it landed.
-- **RELIABILITY WATCH:** host stabilized since ~06:11Z; macro/rag OOM-flap class still real — a 3rd macro/kinh-dich drift OR ingestion/safety-layer red → architect memory-budget rethink (recurring-bug-escalation). DRIFT-3 image-drift CI guard = structural response to deploy-drift class (architect lane).
-- **DO NOT TOUCH:** any pilot-status-*.json (all 11 backend + frontend CLOSED); BCTC-MD-TABLE / BCTC parallel session (apps/pdf-extractor/).
-- **JANITOR (not mine):** TASKS.md still ~414L (cap 80) — net-reduced again this tick; deeper trim is claude-manager-helper's lane.
+- **NEXT tick (apps/mcp-server, when zone quiet + FA rebuild confirmed durable):** dispatch ONE batch = NEWS-INGEST-2b + MZH-1 + MZH-2 → single ops rebuild. Reliability sequence first, then UX, then hardening within the batch. State `ops_rebuild_required: true` to ops.
+- **Confirm FA rebuild holds:** the 15:54Z rebuild needs ≥1 full cron cycle clean before re-touching the zone. Watch get_system_status for the FA regression tripwire (return to 60s wall) — clear so far.
+- **MARKET-SLOTS-DARK:** Option B (recreate 4 dark cowork RemoteTriggers) UNCHANGED — main-terminal `/cron-cowork-team` re-arm. NOT a dev-team spawn. Follow up that it landed.
+- **FETCH-ANALYZE-2 (backlog, NOT dispatched):** REC-4 P2 `use_ingested` SQLite read-path. Reopen only on user request.
+- **RELIABILITY WATCH:** macro/rag OOM-flap class still real — a 3rd macro/kinh-dich drift OR ingestion/safety-layer red → architect memory-budget rethink (recurring-bug-escalation). DRIFT-3 image-drift CI guard = architect lane.
+- **DO NOT TOUCH:** any pilot-status-*.json (all CLOSED); BCTC parallel session (apps/pdf-extractor/, HOT).
+- **JANITOR (not mine):** TASKS.md 412L (cap 80) — net-reduced this tick; deeper trim is claude-manager-helper's lane.
+- **Dispatcher commits all 3 in-tree docs** — EXPLICIT git add per file, no -A/./-am, no push, on main. Watch index.lock (BCTC session may be on main — NEVER rm a peer's lock).
