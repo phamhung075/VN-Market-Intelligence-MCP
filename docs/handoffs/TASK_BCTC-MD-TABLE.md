@@ -1377,3 +1377,72 @@ Independently hand-traced all 10 stages of §REV-8.2 and all 10 binding assertio
 **VERDICT: design is internally consistent, arithmetically correct, and root-cause-grounded. APPROVED for implementation.** Dispatching dev-pdf-extractor MD-EXTRACT-7-REV (diagnostic STEP-1 already done; AC-3F non-regression; leave files UNSTAGED). Goal stays armed — NOT done until live income statement renders ≥15 label-aligned rows AND AC-6-SEG still PASSES (both via direct DB query) AND user confirms.
 
 **NEXT: dev-pdf-extractor (MD-EXTRACT-7-REV implementation).**
+
+---
+
+## [dev-pdf-extractor] MD-EXTRACT-7-REV IMPLEMENTATION COMPLETE
+
+**Date:** 2026-05-26 | **Agent:** dev-pdf-extractor | **Task:** MD-EXTRACT-7-REV
+
+**Implementation summary:**
+
+Files modified (2):
+1. `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — all 6 spec items delivered:
+   - ADD: `PURE_CODE_COL_THRESHOLD = 0.90` constant
+   - ADD: `_find_first_value_row_top(number_tokens)` pure function
+   - ADD: `_exclude_header_tokens(number_tokens, first_value_top)` pure function
+   - ADD: `_identify_pure_code_columns(col_buckets, col_anchors)` pure function
+   - MODIFY: `_detect_column_anchors_from_tokens` — `sum(c)/len(c)` → `min(c)` (REV-5)
+   - MODIFY: `_process_page` — Step C5 (header cutoff) + Step C7.5 (pure-code split) + code_note_tokens re-attach in C11 label pool
+   - KEPT: `prefer_ref_pitch`, `DENSE_COL_THRESHOLD=6` from §MD-EXTRACT-7 §5 (unchanged)
+   - DROPPED: no `DENSE_LABEL_PITCH_FACTOR`, `N_EXPECTED_MAX_VALUE_COLS`, `LABEL_ZONE_GAP_FACTOR` (never shipped)
+
+2. `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` — all test classes added:
+   - ADD: `TestHeaderCutoff` (3 tests: AC-7-REV-HEADER)
+   - ADD: `TestPureCodeColumnDetector` (4 tests: AC-7-REV-DETECTOR including segment non-regression)
+   - ADD: `TestDenseIncomeStatement.test_dense_income_rev7` (10 assertions on FIXTURE_TOKENS_REV)
+   - ADD: `TestMinClusterAnchor.test_min_anchor_vs_centroid` (AC-7-REV-ANCHOR: cluster [1182,1187,1192] → anchor 1182)
+   - KEPT: all `TestOrdinalReconstruction` tests unchanged (AC-7-REV-ORD)
+
+**Assertion-9 carry-forward honored:** `grid[1][2]==" "` and `grid[2][3]==" "` are asserted against the PRE-label value-only grid (Stage C10, indices 0–3), not the final label+4 grid.
+
+**pytest results:** 122 passed / 0 failed (test_generic_md_table_extractor.py) | 439 passed / 0 failed (unit/ suite)
+
+**Sandbox runner (G12 DoD):**
+- Primitive tier: all designed-pass scenarios GREEN
+- Module tier: financial_reports/multi_primitive_story.json GREEN
+- `known_bad_*` and `failure_mismatch` scenarios are intentional False-pass by design
+
+**Compliance checks:**
+- AC-3F: `text_table_extractor.py` NOT in git diff — 0-byte diff confirmed
+- AC-0: zero BCTC semantic strings in code (grep returns 0 code matches; comment-only mentions per AC-0 prior ruling)
+- Fence-A: zero application/interface imports
+- Privacy: zero external API calls; all 3 new functions are pure in-memory list ops, zero new pytesseract calls
+- Files left UNSTAGED per commit-mutex protocol (main terminal commits)
+
+**NEXT:** ops MD-DEPLOY-7 (single doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`) → main-terminal live-verify (AC-7-REV-INC + AC-7-REV-SEG-NOREGRESS via direct DB query).
+
+---
+
+## [Main-Terminal] MD-EXTRACT-7-REV LIVE-VERIFY VERDICT — FAILED ON LIVE (2026-05-26)
+
+Deploy MD-DEPLOY-7 landed (image `9ed24b30…`, `PURE_CODE_COL_THRESHOLD` grep=3 live, fresh row id=8 table_count=23 page_count=20 extracted_at=2026-05-26 09:07:20). I pulled `md_tables_json` STRAIGHT from `market.db` (NOT inspect endpoint) and ran the gate. Verdict by statement type:
+
+- **AC-7-REV-SEG-NOREGRESS — PASS.** Segment report (table[17]): `| Doanh thu theo bộ phận … | 35.381.667 | 9.092.934 | 18.701.876 | 804.840 | 7.324.783 | 70.112.826 |` — the 3 revenues on ONE pipe-row in 3 DISTINCT cells. Pure-code detector did NOT regress the wide-matrix path. ✅
+
+- **AC-7-REV-INC — FAIL (hard).** Income statement (table[8]/[9]) is COMPLETELY SCRAMBLED on live:
+  - Labels interleaved: header row reads `2 1 Doanh Các khoản thu giảm bán hàng trừ và cung cấp dịch vụ 10 01` — "Doanh thu bán hàng" and "Các khoản giảm trừ" jumbled, codes `10 01` merged.
+  - Values misaligned: each pipe-row's value cells come from DIFFERENT logical statement lines (e.g. header `20.258.866.135.395 | 70.207.689.409.081 | 62.962.652.134.635 | 113.857.783.268` — not one line item).
+  - This is the SAME diagonal/column-assignment failure MD-EXTRACT-7-REV claimed to fix.
+
+- **Balance sheet (table[0..3]) — PARTIAL.** Clean head (labels+values aligned for first ~9 rows) BUT: codes intermittently missing (`1. Tiền | | 6.725…` — code 111 dropped), long-value splitting (table[3] `(11.683.165.704.` in label cell, `793)` in last value col), duplicate codes (`200) | 200`), and ~300 trailing empty `|   |   |   |` rows (table[0] = 325 lines, mostly empty).
+
+**ROOT FINDING — FALSE-GREEN FROM SYNTHETIC FIXTURE.** The MD-EXTRACT-7-REV unit tests (122/439 green) validated `FIXTURE_TOKENS_REV`, an IDEALIZED 29-token model of the income statement. The LIVE Tesseract token stream for the dense multi-period income page does not resemble that fixture — labels and values arrive out of reading order, so the column-anchor ordinal reconstruction assigns tokens to wrong rows/cols. Green-on-fixture ≠ correct-on-live. This is the 3rd fix attempt on `generic_md_table_extractor.py` for this exact symptom.
+
+**ESCALATION (recurring-bug rule, ≥2 fix commits on same module):** No further dev patch. Routing to **architect** for ROOT-CAUSE RETHINK. Mandate:
+  1. Run diagnostic-gate-first on the ACTUAL LIVE OCR token dump for the income-statement page (NOT a synthetic fixture) — determine whether the token stream is recoverable at all, or whether the OCR reading order itself is scrambled (ties to `project_bctc_ocr_psm_drift` — possible upstream psm/preprocessing or region-merge cause).
+  2. Determine whether dense multi-period income tables need a fundamentally different reconstruction than wide-matrix segment tables (which now work).
+  3. Any new design's acceptance gate is a LIVE re-extraction + direct-DB render check, NOT fixture unit tests alone.
+  4. Frozen surfaces unchanged (AC-3F text_table_extractor.py; dashboard/sandbox/pilot-status; mcp-server files). Privacy: local OCR/CV only.
+
+**GOAL STILL ARMED** — "table on pdf on all bctc need correct extract text and convert to md style." Segment ✅, income ❌, balance ⚠️. NOT done.
