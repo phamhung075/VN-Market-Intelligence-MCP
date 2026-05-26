@@ -3087,3 +3087,753 @@ With only 1 delta, `median([delta]) = delta`, so `local_pitch = delta` and `thre
 **Fix:** Use `ref_pitch` (median of local pitches from columns with ≥ 3 tokens). If `ref_pitch` is available, use it in place of `local_pitch` for 2-token columns. This is specified in the `_insert_skip_slots` signature above (`ref_pitch` parameter) and in the `_build_ordinal_grid` integration steps.
 
 The AC-6-SKIP SKIP-MID fixture exercises this exact case: col-1 has 2 tokens (top=103, top=143), delta=40. ref_pitch=20 (from cols 0 and 2). Threshold=30. delta=40 > 30 → 1 empty slot inserted. The full trace is in §9 AC-6-SKIP above.
+
+---
+
+## MD-EXTRACT-7 — Dense Income Statement Reconstruction
+
+> **Task:** MD-EXTRACT-7 | **Author:** architect | **Date:** 2026-05-26T09:16Z
+> **Status:** DESIGN COMPLETE — ready for dev-pdf-extractor (diagnostic STEP 1 mandatory before any code change)
+> **Input:** MAIN-TERMINAL LIVE-VERIFY-6 (`/tmp/md_v6_db.json` table[8], FPT `e71f845d`, income statement = Báo cáo kết quả hoạt động kinh doanh)
+> **Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + its unit test file. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED.
+
+---
+
+### 1. What Works — MUST NOT Regress
+
+MD-EXTRACT-6 ordinal path PASSED these ACs (carry-forward binding):
+
+- **AC-6-SEG:** Segment report table[17] — all 7 segment values on ONE GFM row, 3 binding revenues `35.381.667 / 9.092.934 / 18.701.876` in distinct `|`-separated cells. The diagonal cascade is defeated. This AC is the anchor; any change that breaks it is REJECTED.
+- **AC-6-D4b-LIVE:** Zero code+value concatenation in tables 0-4.
+- **AC-6-ORD, AC-6-SKIP:** Unit fixture tests for ordinal+skip algorithms.
+- **AC-3F:** `text_table_extractor.py` 0-byte diff; structured `bctc_table_rows` = 79, balance_delta = 0.
+
+The income statement fix MUST be additive and conditional. The ordinal Step C6→C10 pipeline MUST run unchanged for ALL tables. Any new logic targets the specific failure modes of dense tables and must be either (a) a pre-processing stage that normalises the token set before C6, or (b) a post-processing refinement that fixes the grid after C10 without touching the core ordinal logic, or (c) a targeted patch to C8.5 `_insert_skip_slots` for the dense-many-gap case.
+
+---
+
+### 2. The Three Failure Modes (from LIVE-VERIFY-6)
+
+Live observation from table[8] (`/tmp/md_v6_db.json`):
+
+**Failure 1 — LABEL INTERLEAVING:** Row-0 label cell = `"2 1 Doanh Các khoản thu giảm bán hàng trừ và cung cấp dịch vụ 10 01"`. This is two distinct income statement lines merged into one label cell:
+- Line 1: "1. Doanh thu bán hàng và cung cấp dịch vụ" (code 01)
+- Line 2: "2. Các khoản giảm trừ doanh thu" (code 10 — note: code 10 is the second line)
+
+The merged label also contains the code tokens `10 01` and `02` embedded in it.
+
+**Failure 2 — DUAL CODE COLUMNS MERGED:** The income statement has two small-integer columns:
+- "Mã số" (line codes: 01, 10, 11, 20, …, 70)
+- "Thuyết minh" (note references: also small integers like 30, 31, 32)
+
+Both appear as paired tokens `"10 01"` / `"11 02"` / `"12 10"` smashed into a single label cell. These tokens match `_NUMBER_TOKEN_RE` (pattern `^[\(\-]?\d{2,3}[\)\-]?$`) so they enter the NUMBER token path and are classified as code tokens — but they have `left` positions close to each other, likely causing anchor mis-detection or appearing in a label-adjacent bucket.
+
+**Failure 3 — VALUE SCRAMBLE:** Net-revenue row (magnitude ~17.65T VND) shows `17.651.065.378.939` as the first period cell, but then `43.247.573.048` and `94.863.843.843` as the two prior-period cells. `43B` and `94B` cannot be prior-period values for a `17.6T` revenue line — this is a rank-alignment error. Values from different physical rows are landing in the wrong rank-k row of the same physical line item.
+
+---
+
+### 3. MANDATORY Diagnostic (STEP 1 — dev runs BEFORE any code change)
+
+The diagnostic purpose: **locate which pipeline stage is the scramble source**. Three possible failure origins each require a different fix. The diagnostic disambiguates.
+
+#### 3.1 Diagnostic script
+
+Dev writes and runs `diagnostic_md7.py` (inline, not committed) against the live FPT PDF page 8 (income statement, 0-indexed from the 20-page extract window). The script calls the EXISTING live functions directly against real `image_to_data` output.
+
+```python
+#!/usr/bin/env python3
+"""
+diagnostic_md7.py — MD-EXTRACT-7 stage-localization diagnostic.
+Run from apps/pdf-extractor/ with PYTHONPATH=. against FPT page 8.
+Usage: PYTHONPATH=. python diagnostic_md7.py /path/to/fpt_page8.png
+"""
+import sys, json, statistics
+from PIL import Image
+import pytesseract
+from pytesseract import Output as TessOutput
+from infrastructure.generic_md_table_extractor import (
+    _classify_tokens, _filter_words,
+    _detect_column_anchors_from_tokens,
+    _assign_tokens_to_columns,
+    _build_ordinal_grid,
+    _attach_labels_ordinal,
+    _NUMBER_TOKEN_RE, _CODE_TOKEN_RE,
+    LABEL_BAND_FACTOR,
+)
+
+page_image = Image.open(sys.argv[1])
+data = pytesseract.image_to_data(page_image, lang="vie+eng", config="--psm 6",
+                                  output_type=TessOutput.DICT)
+words = _filter_words(data)
+number_tokens, text_tokens = _classify_tokens(words)
+
+# --- DUMP 1: column anchors ---
+num_heights = [float(w["height"]) for w in number_tokens if w["height"] > 0]
+num_widths  = [float(w["width"])  for w in number_tokens if w["width"]  > 0]
+h_med   = statistics.median(num_heights) if num_heights else 12.0
+w_med   = statistics.median(num_widths)  if num_widths  else 40.0
+anchors = _detect_column_anchors_from_tokens(number_tokens, w_med)
+print(f"\n=== DUMP 1: COLUMN ANCHORS ===")
+print(f"  count = {len(anchors)}")
+print(f"  x_positions = {[round(a,1) for a in anchors]}")
+
+# --- DUMP 2: per-column token counts ---
+col_buckets = _assign_tokens_to_columns(number_tokens, anchors, w_med)
+print(f"\n=== DUMP 2: PER-COLUMN TOKEN COUNTS ===")
+for i, bucket in enumerate(col_buckets):
+    texts = [w["text"] for w in bucket]
+    code_count  = sum(1 for t in texts if _CODE_TOKEN_RE.match(t))
+    value_count = len(texts) - code_count
+    print(f"  col[{i}] anchor={round(anchors[i],1)}: {len(bucket)} tokens "
+          f"(codes={code_count}, values={value_count})")
+    print(f"    sample texts: {texts[:8]}")
+
+# --- DUMP 3: PRE-LABEL number grid (first 6 rows) ---
+grid, col_y_medians = _build_ordinal_grid(col_buckets, len(anchors))
+print(f"\n=== DUMP 3: PRE-LABEL NUMBER GRID (first 6 rows of {len(grid)}) ===")
+for r, row in enumerate(grid[:6]):
+    print(f"  row[{r}] y_med={round(col_y_medians[r],1) if r < len(col_y_medians) else '?'}: {row}")
+
+# --- DUMP 4: classification of small-int tokens ---
+print(f"\n=== DUMP 4: SMALL-INT TOKEN CLASSIFICATION ===")
+small_ints = [w for w in number_tokens if _CODE_TOKEN_RE.match(w["text"])]
+print(f"  Total code-classified tokens: {len(small_ints)}")
+for w in small_ints[:20]:
+    print(f"    text={w['text']!r:6s} left={w['left']:4d} top={w['top']:4d} conf={w.get('conf',0):3d}")
+
+# --- DUMP 5: INTERPRETATION GATES ---
+print(f"\n=== DUMP 5: INTERPRETATION GATES ===")
+print(f"  Expected columns for income statement: 6 (label + code + note + Q-curr + Q-prior + cum-curr + cum-prior = 7 cols OR label + code + 4 value cols = 6)")
+print(f"  Actual anchor count: {len(anchors)}")
+if len(anchors) > 7:
+    print("  GATE FAIL: too many anchors → spurious x-anchors from code/note tokens")
+elif len(anchors) < 4:
+    print("  GATE FAIL: too few anchors → anchors merged value columns")
+else:
+    print("  GATE PASS: plausible column count")
+
+col_len_variance = statistics.variance([len(b) for b in col_buckets]) if len(col_buckets) > 1 else 0
+print(f"  Per-column token count variance: {round(col_len_variance, 1)}")
+if col_len_variance > 100:
+    print("  HIGH VARIANCE: columns wildly unequal → many empties → C8.5 multi-gap risk")
+else:
+    print("  LOW VARIANCE: columns roughly balanced")
+
+print(f"  PRE-LABEL row count: {len(grid)}")
+if len(grid) < 10:
+    print("  GRID TOO SPARSE: scramble likely at C6/C7 (anchor mis-count or token misclassification)")
+elif len(grid) > 50:
+    print("  GRID TOO DENSE: scramble likely at C8.5 (too many skip slots inflated total_rows)")
+else:
+    print("  GRID ROW COUNT PLAUSIBLE: scramble likely at C11 (label attachment)")
+```
+
+#### 3.2 PASS/FAIL interpretation table
+
+Run the diagnostic and match outputs to these interpretations. Dev STOPS and reports to architect if any CONDITIONAL ROW below triggers.
+
+| Dump | Pattern observed | Root cause indicated | Required fix |
+|---|---|---|---|
+| DUMP 1: `count > 7` | >7 column anchors detected | Code/note column tokens (left≈50-150px) create spurious left-edge clusters → too many anchors → values scatter across surplus columns | Fix path: **A** — exclude or isolate small-int tokens from anchor detection |
+| DUMP 1: `count == 4 or 5` | 4-5 anchors (expected 6-7) | Value columns merged by anchor detection | Fix path: **A** + raise `_COL_GAP_FACTOR` |
+| DUMP 1: `count == 6 or 7` | 6-7 anchors — plausible | Anchor detection is correct; failure is downstream | Continue to DUMP 2-4 |
+| DUMP 2: col[0] has `code_count >> value_count` (e.g., 20 codes, 0 values) | Code column correctly separated | Dual-code structure is visible; code tokens are in their own bucket | Fix path: **B** — code bucket is separate but needs to stay separate after C8.5 |
+| DUMP 2: col[0] AND col[1] both `code_count > 5` | Two code-like columns (Mã số + Thuyết minh both mapped to first 2 anchors) | Dual code columns detected as NUMBER anchors; both in grid as value columns | Fix path: **A** — geometric discriminator to handle dual-code-column |
+| DUMP 2: `value_count` very unequal across value columns (max/min ratio > 5) | Dense multi-row empties in value columns | Many rows genuinely absent in some period columns; C8.5 skip detection may insert too many or too few slots | Fix path: **C** — dense-multi-gap robustification of `_insert_skip_slots` |
+| DUMP 3: value scramble already present (wrong magnitudes) in pre-label grid rows 0-5 | Scramble is at C7/anchor or C8/C8.5 stage, BEFORE label attachment | C7 mis-assigns tokens across columns OR C8.5 inserts wrong number of skip slots | Fix path: **A** (anchor) or **C** (C8.5 skip slots) |
+| DUMP 3: pre-label grid rows 0-5 look correct BUT post-label grid is garbled | Scramble is ONLY at C11 label attachment stage | `LABEL_BAND_FACTOR × h_med` window grabs 2-4 dense rows' text into one label | Fix path: **D** — tighten label band |
+| DUMP 4: `small_ints` count >> expected (e.g., > 50 small-int tokens on a single page) | Both Mã số and Thuyết minh columns are entering NUMBER token pool; 2× the code tokens expected | Both code columns feeding spurious anchors AND rank inflation | Fix path: **A** + **B** combined |
+| DUMP 4: small-int tokens concentrated at `left` in range [30-200px] while value tokens at `left` > 500px | Clear geometric separation between code zone and value zone | Geometric discriminator is viable: filter small-int tokens from anchor-building pass | Fix path: **A** — width-based small-int discriminator |
+| DUMP 5: `anchor count` PASS + `variance` HIGH + `grid rows` plausible | Anchor count correct; value columns have many empties; label band is the merge source | C8.5 skip slots may be correct; C11 label band too wide | Fix path: **D** only |
+| DUMP 5: `anchor count` FAIL (>7) | Spurious anchors confirmed | Fix path: **A** confirmed |
+
+**If the diagnostic contradicts all four fix paths** (e.g., anchor count plausible + variance low + grid correct + scramble only cosmetic in labels): dev STOPS and reports the exact diagnostic output to architect before writing any code.
+
+---
+
+### 4. Design Decisions — Dual-Code-Column Handling
+
+#### 4.1 The choice: separate vs exclude
+
+Two options for the dual small-integer code/note columns:
+
+**Option (i) — Separate:** detect them as distinct markdown columns (label | code | note | v1..v4). The income statement markdown would have 7 columns.
+
+**Option (ii) — Exclude from anchor-building, re-attach like labels:** exclude small-int code/note tokens from the `_detect_column_anchors_from_tokens` call so they do not create spurious anchors, then re-attach them to rows the same way labels are attached.
+
+**Decision: Option (ii) — Exclude from anchor-building and re-attach.**
+
+Rationale:
+1. The ordinal guarantee (diagonal defeated) depends on column anchors reflecting the VALUE column layout. Inserting code/note columns into anchor detection contaminates the x-cluster distribution: code tokens at left≈60px and note tokens at left≈120px sit between the left-margin (left≈0px) and the first value column (left≈400px), fragmenting what should be a clean label/value gap into 3-4 spurious anchors.
+2. The segment report has NO code/note columns and PASSES (AC-6-SEG). The fix for the income statement must be conditional on token geometry, not on table type.
+3. Re-attaching code/note tokens as label-companions produces `[label+code+note | v1 | v2 | v3 | v4]` per row — a 5-column output that is semantically cleaner than a 7-column output where two columns are always 2-digit integers.
+4. AC-0 compliance: the discriminator is purely geometric (`token is small-int AND its left-position is within the label zone, defined as left < leftmost value-column anchor`), not based on Vietnamese label names.
+
+#### 4.2 AC-0-safe geometric discriminator for small-int non-money tokens
+
+A token is a "small-int code/note token" if ALL of the following hold:
+
+```
+(a) It matches _CODE_TOKEN_RE (already: ^[\(\-]?\d{2,3}[\)\-]?$)
+(b) It does NOT match _VALUE_TOKEN_RE (excludes money-groups — e.g. "1.234" is a value, "123" is a code)
+(c) Its left position is within the LABEL_ZONE:
+       left < (leftmost_value_anchor - LABEL_ZONE_GAP_FACTOR × median_word_width)
+    where leftmost_value_anchor is the leftmost anchor that belongs to a VALUE column
+    (detected as: the leftmost anchor whose bucket contains at least one _VALUE_TOKEN_RE match).
+    LABEL_ZONE_GAP_FACTOR = 2.0  (generic geometry constant, AC-0 compliant)
+```
+
+This discriminator is purely geometric:
+- Condition (a)+(b) ensures we only target standalone 2-3 digit integers, not money-group substrings.
+- Condition (c) ensures we only target tokens in the label zone (left-side of the page), not small integers that appear in the value zone (e.g., a value column that happens to contain the number "30" as a rounded figure would be at left > leftmost_value_anchor and thus not excluded).
+
+**New constant:**
+```python
+# Small-int code/note token exclusion from anchor building.
+# A code token is excluded from _detect_column_anchors_from_tokens if its left
+# position is within LABEL_ZONE_GAP_FACTOR × median_word_width of the leftmost
+# detected value anchor. This prevents dual-code columns from creating spurious
+# left-edge clusters that inflate anchor count.
+# AC-0: purely geometric. Zero BCTC-specific string constants.
+LABEL_ZONE_GAP_FACTOR = 2.0
+```
+
+#### 4.3 Implementation location
+
+The discriminator is implemented as a pre-processing step within `_process_page`, applied BEFORE `_detect_column_anchors_from_tokens`:
+
+```
+Step C6-pre: _split_number_tokens_by_zone(number_tokens, median_word_width)
+    → (anchor_tokens, code_note_tokens)
+    anchor_tokens: VALUE tokens + non-label-zone code tokens (used for anchor detection)
+    code_note_tokens: label-zone small-int tokens (excluded from anchor detection;
+                      re-attached to rows in C11-ext)
+```
+
+The function returns two lists. `anchor_tokens` feeds `_detect_column_anchors_from_tokens` and `_assign_tokens_to_columns`. `code_note_tokens` are appended to `region_text_tokens` before the `_attach_labels_ordinal` call (they are then treated as additional label tokens and attached to each row by y-proximity, appearing in the label cell as `"label_text code note"` or similar).
+
+**Why appending code_note_tokens to text_tokens works:** `_attach_labels_ordinal` already sorts all primary-band tokens by `left` and space-joins them. Code/note tokens at left≈60-120px will naturally sort between the label words and be included in the label cell. This is geometrically correct.
+
+**IMPORTANT — additive constraint:** `_split_number_tokens_by_zone` is called ONLY WHEN there are suspected dual-code columns. Detection condition: after the initial anchor detection pass, if `len(anchors) > N_EXPECTED_MAX_VALUE_COLS` (a tunable constant, default `N_EXPECTED_MAX_VALUE_COLS = 6`), re-run anchor detection on `anchor_tokens` only. If `len(anchors) <= N_EXPECTED_MAX_VALUE_COLS`, skip splitting entirely — no change to the segment-report or balance-sheet path. This ensures AC-6-SEG cannot regress.
+
+**New constant:**
+```python
+# Maximum expected value columns for the zone-split trigger.
+# If anchor detection produces more columns than this, activate the label-zone
+# small-int split to remove spurious anchors from code/note columns.
+# Default=6: income statements have at most 4-5 value columns; segment reports
+# may have 7-8 but their code tokens have left >> label zone.
+# AC-0: purely geometric, not table-type-specific.
+N_EXPECTED_MAX_VALUE_COLS = 6
+```
+
+---
+
+### 5. Dense-Multi-Gap C8.5 Robustification
+
+This fix is **conditional on diagnostic finding** Fix path **C** (DUMP 2 variance HIGH + DUMP 3 value scramble present in pre-label grid).
+
+#### 5.1 Failure mode
+
+The income statement has ~26 rows. Some period columns (Q-current, Q-prior, cum-current, cum-prior) are absent for subtotal rows that only appear in the cumulative columns. This produces VALUE columns where 8-12 consecutive physical rows are absent (multi-row gaps), not just a single missing row.
+
+Current `_insert_skip_slots` algorithm:
+```
+threshold = SKIP_GAP_FACTOR × local_pitch
+n_empty = ceil(delta / local_pitch) - 1
+```
+
+With `SKIP_GAP_FACTOR = 1.5` and `local_pitch` estimated from 2-3 consecutive tokens in a sparse column, the `local_pitch` estimate may be the GAP itself (not the true row-pitch), leading to `ceil(gap/gap) - 1 = 0` empty slots inserted — the gap is swallowed as if it were a single normal inter-row step.
+
+This is the same degenerate-column failure documented in §13.5 for 2-token columns, but now affecting columns with 3-6 tokens where the MEDIAN of the deltas is dominated by the large gaps rather than the true row pitch.
+
+#### 5.2 Fix: use `ref_pitch` priority over `local_pitch` for sparse columns
+
+When a column has fewer than `DENSE_THRESHOLD = 6` tokens, its local_pitch estimate is unreliable (too few deltas for a stable median). Prioritize `ref_pitch` (from dense columns with ≥ `DENSE_THRESHOLD` tokens) over `local_pitch` for skip-slot insertion.
+
+**Modified `_insert_skip_slots` signature:**
+```python
+def _insert_skip_slots(
+    sorted_tokens: List[Optional[Dict]],
+    ref_pitch: Optional[float] = None,
+    prefer_ref_pitch: bool = False,   # NEW: use ref_pitch over local_pitch for sparse cols
+) -> List[Optional[Dict]]:
+```
+
+**Modified `_build_ordinal_grid` call site:** compute whether each column is "sparse" (len(col) < `DENSE_THRESHOLD`). Pass `prefer_ref_pitch=True` for sparse columns, `prefer_ref_pitch=False` for dense ones.
+
+**New constant:**
+```python
+# Column density threshold for ref_pitch priority.
+# Columns with fewer tokens than this use ref_pitch (cross-column estimate)
+# instead of local_pitch (within-column estimate, unreliable when sparse).
+# AC-0: geometry only.
+DENSE_COL_THRESHOLD = 6
+```
+
+**Revised `_insert_skip_slots` logic:**
+```python
+# Determine working pitch
+if prefer_ref_pitch and ref_pitch is not None and ref_pitch > 0:
+    working_pitch = ref_pitch
+elif len(deltas) >= 2:
+    working_pitch = median(deltas)
+elif ref_pitch is not None and ref_pitch > 0:
+    working_pitch = ref_pitch
+else:
+    return list(real_tokens)
+```
+
+This is backward-compatible: existing calls without `prefer_ref_pitch` default to `False` and behave identically to the current implementation. AC-6-SKIP fixtures are unaffected.
+
+---
+
+### 6. Label Band Tightening for Dense Rows
+
+This fix is **conditional on diagnostic finding** Fix path **D** (DUMP 3: pre-label grid looks correct, scramble only in C11 label attachment).
+
+#### 6.1 Failure mode
+
+Current `LABEL_BAND_FACTOR = 1.5`. For a page with `h_med ≈ 20px` (typical for number tokens at 200 DPI), the label band = `1.5 × 20 = 30px`. The income statement has a physical row pitch of ~20px (vertical pitch of the PRINT layout, not the inter-token OCR gap). A band of 30px spans 1.5 rows. For dense rows, `_attach_labels_ordinal` grabs text tokens from the CURRENT row PLUS the adjacent row, then removes those tokens from the pool. The next row finds some of its label tokens already consumed → label interleaving.
+
+#### 6.2 Fix: local pitch-derived label band
+
+Compute the label band width from the per-page column y-medians spacing, not from `h_med`:
+
+```python
+# After _build_ordinal_grid returns col_y_medians:
+# Estimate label_pitch = median gap between consecutive col_y_medians
+# (this is the rendered row pitch in the actual ordinal grid)
+if len(col_y_medians) >= 3:
+    y_gaps = [col_y_medians[i+1] - col_y_medians[i]
+              for i in range(len(col_y_medians)-1) if col_y_medians[i+1] > col_y_medians[i]]
+    if y_gaps:
+        label_pitch = _median(y_gaps)
+        # Label band = 0.45 × label_pitch (admit within 45% of row spacing)
+        # Replaces LABEL_BAND_FACTOR × h_med for this page if label_pitch < 2 × h_med
+        # (i.e., the rows are dense enough that the global factor would over-reach)
+        if 0 < label_pitch < 2 * h_med:
+            effective_band = 0.45 * label_pitch
+        else:
+            effective_band = LABEL_BAND_FACTOR * h_med
+    else:
+        effective_band = LABEL_BAND_FACTOR * h_med
+else:
+    effective_band = LABEL_BAND_FACTOR * h_med
+```
+
+Pass `effective_band` to `_attach_labels_ordinal` as a new optional parameter `band_override`. If `band_override` is provided, use it instead of `LABEL_BAND_FACTOR * h_med` for the primary match.
+
+**Modified `_attach_labels_ordinal` signature:**
+```python
+def _attach_labels_ordinal(
+    grid: List[List[str]],
+    col_y_medians: List[float],
+    text_tokens: List[Dict],
+    h_med: float,
+    band_override: Optional[float] = None,   # NEW: if provided, overrides LABEL_BAND_FACTOR × h_med
+) -> List[List[str]]:
+```
+
+**AC-6-SEG regression safety:** For the segment report page, `label_pitch` from `col_y_medians` will be ~16-20px (the wide-spaced segment rows). `effective_band = 0.45 × 18 = 8.1px`. This is narrower than `LABEL_BAND_FACTOR × h_med = 1.5 × 12 = 18px` (for segment page h_med). The fallback `2.5 × h_med` in `_attach_labels_ordinal` still applies when the primary band misses. The segment report has clear visual separation between rows, so a narrower primary band does not affect label matching. Regression risk: LOW. Explicitly verified by AC-7-INC must PASS AND AC-6-SEG must PASS simultaneously.
+
+**New constant:**
+```python
+# Fraction of the per-page ordinal row pitch used as the label attachment band
+# when the rows are densely spaced (label_pitch < 2 × h_med).
+# 0.45 = admit text tokens within 45% of the row spacing above/below the number-row y_med.
+# AC-0: geometry only.
+DENSE_LABEL_PITCH_FACTOR = 0.45
+```
+
+---
+
+### 7. Hand-Traceable Dense-Table Fixture + Full Stage Trace
+
+This is the binding fixture for the AC-7-FIX unit test. Main terminal MUST re-trace every step by hand before dispatching dev.
+
+#### 7.1 Fixture definition
+
+A dense income-statement fragment: 4 rows, 4 columns (label + code + 2 value cols), with col-2 (Q-prior) missing row-1 (a subtotal row that has only cumulative values).
+
+**Token layout (20px inter-row pitch, label zone left ≈ 0-200px, value zone left ≈ 400-900px):**
+
+```
+Physical layout (left / top / text):
+  Row-0: label="Doanh thu"   left=0   top=100  (TEXT token)
+         code="01"            left=60  top=100  (NUMBER — code)
+         note="30"            left=120 top=101  (NUMBER — code/note)
+         val-Q="17.651.065"  left=400 top=100  (NUMBER — value)
+         val-P="16.500.000"  left=700 top=100  (NUMBER — value)
+
+  Row-1: label="Giam tru"    left=0   top=120  (TEXT token)
+         code="10"            left=60  top=120  (NUMBER — code)
+         note="31"            left=120 top=121  (NUMBER — code/note)
+         val-Q="43.247"       left=400 top=120  (NUMBER — value)
+         [col val-P ABSENT — row-1 has no prior-period subtotal]
+
+  Row-2: label="Doanh thu thuan" left=0 top=140 (TEXT token)
+         code="20"            left=60  top=140  (NUMBER — code)
+         note="32"            left=120 top=140  (NUMBER — code/note)
+         val-Q="17.607.818"  left=400 top=140  (NUMBER — value)
+         val-P="16.450.000"  left=700 top=140  (NUMBER — value)
+
+  Row-3: label="Gia von"     left=0   top=160  (TEXT token)
+         code="30"            left=60  top=160  (NUMBER — code)
+         note="33"            left=120 top=160  (NUMBER — code/note)
+         val-Q="14.000.000"  left=400 top=160  (NUMBER — value)
+         val-P="13.200.000"  left=700 top=160  (NUMBER — value)
+```
+
+Token dict format (mimicking `image_to_data` output):
+```python
+FIXTURE_TOKENS = [
+    # Row-0
+    {"text": "Doanh",       "left": 0,   "top": 100, "width": 50, "height": 14, "conf": 90},
+    {"text": "thu",         "left": 55,  "top": 100, "width": 30, "height": 14, "conf": 90},
+    {"text": "01",          "left": 60,  "top": 100, "width": 20, "height": 12, "conf": 85},
+    {"text": "30",          "left": 120, "top": 101, "width": 20, "height": 12, "conf": 85},
+    {"text": "17.651.065",  "left": 400, "top": 100, "width": 80, "height": 12, "conf": 90},
+    {"text": "16.500.000",  "left": 700, "top": 100, "width": 80, "height": 12, "conf": 90},
+    # Row-1
+    {"text": "Giam",        "left": 0,   "top": 120, "width": 40, "height": 14, "conf": 88},
+    {"text": "tru",         "left": 45,  "top": 120, "width": 25, "height": 14, "conf": 88},
+    {"text": "10",          "left": 60,  "top": 120, "width": 20, "height": 12, "conf": 85},
+    {"text": "31",          "left": 120, "top": 121, "width": 20, "height": 12, "conf": 85},
+    {"text": "43.247",      "left": 400, "top": 120, "width": 50, "height": 12, "conf": 87},
+    # [NO val-P token for row-1 — genuinely absent]
+    # Row-2
+    {"text": "Doanh",       "left": 0,   "top": 140, "width": 50, "height": 14, "conf": 91},
+    {"text": "thu",         "left": 55,  "top": 140, "width": 30, "height": 14, "conf": 91},
+    {"text": "thuan",       "left": 90,  "top": 140, "width": 45, "height": 14, "conf": 91},
+    {"text": "20",          "left": 60,  "top": 140, "width": 20, "height": 12, "conf": 86},
+    {"text": "32",          "left": 120, "top": 140, "width": 20, "height": 12, "conf": 86},
+    {"text": "17.607.818",  "left": 400, "top": 140, "width": 80, "height": 12, "conf": 90},
+    {"text": "16.450.000",  "left": 700, "top": 140, "width": 80, "height": 12, "conf": 90},
+    # Row-3
+    {"text": "Gia",         "left": 0,   "top": 160, "width": 30, "height": 14, "conf": 89},
+    {"text": "von",         "left": 35,  "top": 160, "width": 30, "height": 14, "conf": 89},
+    {"text": "30",          "left": 60,  "top": 160, "width": 20, "height": 12, "conf": 85},
+    {"text": "33",          "left": 120, "top": 160, "width": 20, "height": 12, "conf": 85},
+    {"text": "14.000.000",  "left": 400, "top": 160, "width": 80, "height": 12, "conf": 90},
+    {"text": "13.200.000",  "left": 700, "top": 160, "width": 80, "height": 12, "conf": 90},
+]
+```
+
+**Note on token overlaps:** `{"text": "30", "left": 60, "top": 100}` (row-0 note) and `{"text": "30", "left": 60, "top": 160}` (row-3 code) have the same `text="30"` and same `left=60` but different `top` values (100 vs 160). The ordinal algorithm must distinguish them by `top`, not by text. This is an intentional stress test: two tokens with identical text+left but different rows.
+
+Also note: `{"text": "30", "left": 60, "top": 160}` (row-3 code, which is the line code "30" for Gia von) and `{"text": "30", "left": 120, "top": 100}` (row-0 note reference "30") are genuinely different physical tokens. The discriminator must identify BOTH as label-zone small-int tokens (left < leftmost_value_anchor - 2×w_med) and exclude them from anchor building.
+
+#### 7.2 Stage-by-stage trace
+
+**Setup:**
+- All `conf ≥ 85 ≥ 30 = _MIN_WORD_CONF_ORDINAL` → no tokens filtered by confidence.
+- `h_med` (from number tokens) = median heights of all NUMBER token heights = median([12,12,12,12,...]) = `12`.
+- `w_med` (from number tokens) = median widths = median([20,20,20,80,80,20,20,50,...]) = `20`.
+
+**Step A2 — Classify tokens:**
+
+`_NUMBER_TOKEN_RE` = `^[\(\-]?\d{1,3}(?:[.,]\d{3})+[\)\-]?$` OR `^[\(\-]?\d{2,3}[\)\-]?$`
+
+NUMBER tokens (matching either branch):
+- "01" → matches `^[\(\-]?\d{2,3}[\)\-]?$` ✓
+- "30" (row-0 note, left=120) → matches 2-digit branch ✓
+- "17.651.065" → matches money-group branch ✓
+- "16.500.000" → matches ✓
+- "10" → matches ✓
+- "31" → matches ✓
+- "43.247" → matches money-group (one separator group `247` — Wait: `43.247` = `43` + `.` + `247`; the money-group pattern requires `\d{1,3}(?:[.,]\d{3})+` so `43.247` matches: `43` (1-3 digits) then `[.,]\d{3}` once = `.247`. YES, matches.) ✓
+- "20" → matches 2-digit branch ✓
+- "32" → matches ✓
+- "17.607.818" → matches ✓
+- "16.450.000" → matches ✓
+- "30" (row-3 code, left=60) → matches 2-digit branch ✓
+- "33" → matches ✓
+- "14.000.000" → matches ✓
+- "13.200.000" → matches ✓
+
+TEXT tokens: "Doanh" (row-0), "thu" (row-0), "Giam", "tru", "Doanh" (row-2), "thu" (row-2), "thuan", "Gia", "von" — total 9 text tokens.
+
+NUMBER tokens total: 15 (4 code-class + 4 note-class + 7 value-class — row-1's prior-period val-P is genuinely absent, so only 7 value tokens — all classified as NUMBER by `_NUMBER_TOKEN_RE`).  [main-terminal arithmetic correction 2026-05-26: was "16 / 8 value-class"; the literal FIXTURE_TOKENS list has 24 tokens = 15 number + 9 text.]
+
+**Step C6-pre — Identify label-zone small-int tokens:**
+
+First anchor detection pass on ALL 15 NUMBER tokens:
+- Sorted lefts: [60, 60, 60, 60, 120, 120, 120, 120, 400, 400, 400, 400, 700, 700, 700]  (three 700s — row-1 val-P absent)
+- `bin_width = max(1.0, 0.3 × 20) = 6.0`
+- Clusters: {60,60,60,60} → anchor≈60 | {120,120,120,120} → anchor≈120 | {400,400,400,400} → anchor≈400 | {700,700,700,700} → anchor≈700
+- `col_gap = 1.5 × 20 = 30`
+- Merged anchors: 60 → then 120: `120-60=60 > 30` → new anchor. 400: `400-120=280 > 30` → new. 700: `700-400=300 > 30` → new.
+- **Result: 4 anchors = [60.0, 120.0, 400.0, 700.0]**
+
+Check trigger condition: `len(anchors) = 4 > N_EXPECTED_MAX_VALUE_COLS = 6`? NO — 4 ≤ 6. So the split trigger does NOT fire on this fixture.
+
+**Wait — this is an important finding:** The trigger `> 6` is designed for real income statement pages where there may be 8+ anchors. In our compact fixture, we deliberately designed only 4 anchors (code zone + note zone + 2 value zones). On the actual FPT page 8, the diagnostic will show whether anchors > 6.
+
+For the fixture trace, we demonstrate the fix works by MANUALLY activating the split (i.e., the diagnostic shows anchor count > 6 on the real page, and the fix is applied). In the fixture, we verify the GEOMETRIC DISCRIMINATOR correctly identifies which tokens are label-zone tokens:
+
+`leftmost_value_anchor` = the leftmost anchor whose bucket contains at least one `_VALUE_TOKEN_RE` match. All 4 value tokens (`17.651.065`, `16.500.000`, etc.) are at left=400 and left=700. So `leftmost_value_anchor = 400.0`.
+
+`LABEL_ZONE_GAP_FACTOR × w_med = 2.0 × 20 = 40`. Tokens are label-zone if `left < 400 - 40 = 360`.
+
+Label-zone small-int tokens (CODE, left < 360):
+- "01" left=60 → 60 < 360 ✓ → label-zone code
+- "30" left=120 (row-0 note) → 120 < 360 ✓ → label-zone code
+- "10" left=60 → ✓
+- "31" left=120 → ✓
+- "20" left=60 → ✓
+- "32" left=120 → ✓
+- "30" left=60 (row-3 code) → ✓
+- "33" left=120 → ✓
+
+All 8 code/note tokens are correctly identified as label-zone small-int tokens. They are moved to `code_note_tokens` list and EXCLUDED from anchor detection.
+
+`anchor_tokens` = only VALUE tokens: [17.651.065, 16.500.000, 43.247, 17.607.818, 16.450.000, 14.000.000, 13.200.000]
+
+**Step C6 re-run on anchor_tokens only:**
+- Sorted lefts: [400, 400, 400, 400, 700, 700, 700]
+- bin_width = 6.0
+- Clusters: {400,400,400,400} → anchor≈400 | {700,700,700}→anchor≈700
+- col_gap = 30. Merge: 400 → then 700: `300 > 30` → new.
+- **Result: 2 value-column anchors = [400.0, 700.0]** ✓
+
+**Step C7 — Assign anchor_tokens to columns:**
+- "17.651.065" left=400 → col[0] (dist 0)
+- "16.500.000" left=700 → col[1] (dist 0)
+- "43.247" left=400 → col[0]
+- [no val-P for row-1]
+- "17.607.818" left=400 → col[0]
+- "16.450.000" left=700 → col[1]
+- "14.000.000" left=400 → col[0]
+- "13.200.000" left=700 → col[1]
+
+`col_buckets[0]` = [17.651.065(top=100), 43.247(top=120), 17.607.818(top=140), 14.000.000(top=160)] — 4 tokens
+`col_buckets[1]` = [16.500.000(top=100), 16.450.000(top=140), 13.200.000(top=160)] — 3 tokens (top=120 absent)
+
+**Step C8 — Sort each column by top (already sorted):**
+- col[0] sorted: [(top=100,"17.651.065"), (top=120,"43.247"), (top=140,"17.607.818"), (top=160,"14.000.000")]
+- col[1] sorted: [(top=100,"16.500.000"), (top=140,"16.450.000"), (top=160,"13.200.000")]
+
+**Step C8.5 — `_insert_skip_slots`:**
+
+col[0] has 4 tokens → `len(deltas) = 3 >= 2` → local_pitch = median([20, 20, 20]) = 20. threshold = 1.5 × 20 = 30. Deltas: [20,20,20] — all < 30. No skip slots. Slots: [(100,"17.651.065"), (120,"43.247"), (140,"17.607.818"), (160,"14.000.000")]. Length=4.
+
+col[1] has 3 tokens → `len(deltas) = 2 >= 2` → local_pitch = median([40, 20]) = 30. threshold = 1.5 × 30 = 45. Deltas: [40, 20]. Delta[0]=40 > 45? NO. Delta[1]=20 > 45? NO. No skip slots inserted.
+
+**Wait — this is the dense-multi-gap failure case.** col[1] delta[0] = 140-100 = 40. Is 40 > threshold=45? NO. So no skip slot is inserted. But physically row-1's prior-period value IS absent. The skip is missed.
+
+With `DENSE_COL_THRESHOLD = 6`: col[1] has 3 tokens < 6 → `prefer_ref_pitch=True`. ref_pitch from col[0] (has 4 tokens ≥ 3): deltas=[20,20,20], local_pitch=20. ref_pitch = 20. Now for col[1] with `prefer_ref_pitch=True`: `working_pitch = ref_pitch = 20`. threshold = 1.5 × 20 = 30. Delta[0]=40 > 30 → skip! `ceil(40/20)-1 = ceil(2.0)-1 = 1` slot inserted. Delta[1]=20 < 30 → no skip.
+
+Slots: [(top=100,"16.500.000"), None, (top=140,"16.450.000"), (top=160,"13.200.000")]. Length=4. ✓
+
+**Step C9: total_rows = max(4, 4) = 4** ✓
+
+**Step C10 — Build grid:**
+```
+rank  col[0]          col[1]         col_y_medians
+0     "17.651.065"    "16.500.000"   median(100,100)=100.0
+1     "43.247"        " "            median(120)=120.0  [col[1] has None]
+2     "17.607.818"    "16.450.000"   median(140,140)=140.0
+3     "14.000.000"    "13.200.000"   median(160,160)=160.0
+```
+
+Grid (before label attachment):
+```
+grid[0] = ["17.651.065", "16.500.000"]
+grid[1] = ["43.247",     " "]
+grid[2] = ["17.607.818", "16.450.000"]
+grid[3] = ["14.000.000", "13.200.000"]
+```
+✓ — No value scramble. Row-1's absent prior-period value is correctly empty.
+
+**Step C11 — `_attach_labels_ordinal`:**
+
+text_tokens (original 9) + code_note_tokens (8, appended to text pool) = 17 available tokens.
+
+`label_pitch` computation from col_y_medians [100.0, 120.0, 140.0, 160.0]:
+y_gaps = [20, 20, 20]. `label_pitch = _median([20,20,20]) = 20`.
+`label_pitch = 20 < 2 × h_med = 2 × 12 = 24` → DENSE condition triggered.
+`effective_band = DENSE_LABEL_PITCH_FACTOR × label_pitch = 0.45 × 20 = 9.0px`.
+
+Row-0 (y_med=100.0, band=9.0):
+- TEXT tokens within 9px of top=100: "Doanh"(top=100)✓, "thu"(row-0,top=100)✓
+- code_note tokens within 9px: "01"(top=100,left=60)✓, "30"(top=101,left=120)✓
+- All 4 in primary band. Sort by left: "Doanh"(0), "01"(60), "30"(120), "thu"(55) → wait, sort by left: 0→"Doanh", 55→"thu" (Note: "thu" has left=55, "01" has left=60, so sort order: Doanh(0), thu(55), 01(60), 30(120))
+- label_0 = "Doanh thu 01 30"
+- Greedy removal: remove these 4 from pool.
+
+Row-1 (y_med=120.0, band=9.0):
+- Remaining TEXT: "Giam"(top=120)✓, "tru"(top=120)✓
+- Remaining code_note: "10"(top=120,left=60)✓, "31"(top=121,left=120)✓
+- Sort by left: "Giam"(0), "tru"(45), "10"(60), "31"(120)
+- label_1 = "Giam tru 10 31"
+- Greedy removal: remove these 4.
+
+Row-2 (y_med=140.0, band=9.0):
+- "Doanh"(top=140)✓, "thu"(top=140,left=55)✓, "thuan"(top=140,left=90)✓, "20"(top=140,left=60)✓, "32"(top=140,left=120)✓
+- Sort by left: Doanh(0), thu(55), 20(60), thuan(90), 32(120)
+- label_2 = "Doanh thu 20 thuan 32"
+
+Row-3 (y_med=160.0, band=9.0):
+- "Gia"(top=160)✓, "von"(top=160)✓, "30"(top=160,left=60)✓, "33"(top=160,left=120)✓
+- Sort by left: Gia(0), von(35), 30(60), 33(120)
+- label_3 = "Gia von 30 33"
+
+**Final grid after label attachment:**
+```
+grid[0] = ["Doanh thu 01 30",     "17.651.065", "16.500.000"]
+grid[1] = ["Giam tru 10 31",      "43.247",     " "]
+grid[2] = ["Doanh thu 20 thuan 32", "17.607.818", "16.450.000"]
+grid[3] = ["Gia von 30 33",       "14.000.000", "13.200.000"]
+```
+
+**Assertions (for main-terminal hand-verification):**
+
+1. `grid[0][1] == "17.651.065"` — net revenue Q-current in row-0. ✓
+2. `grid[0][2] == "16.500.000"` — net revenue prior-period in row-0. ✓
+3. `grid[1][2] == " "` — row-1 prior-period correctly empty. ✓ (C8.5 dense-multi-gap fix)
+4. `grid[2][1] == "17.607.818"` — row-2 Q-current NOT scrambled to row-1. ✓
+5. `grid[3][1] == "14.000.000"` — row-3 correct. ✓
+6. No row contains both "17.651.065" AND "43.247" in the same row. ✓ (4 distinct rows)
+7. Labels do NOT interleave: "Doanh thu 01 30" does NOT contain "Giam" or "10" from row-1. ✓ (narrow band=9px stops over-reach)
+8. Total rows = 4. ✓
+
+**Markdown output (Step G):**
+```
+| Label              | Q-curr       | Prior        |
+|---|---|---|
+| Doanh thu 01 30    | 17.651.065   | 16.500.000   |
+| Giam tru 10 31     | 43.247       |              |
+| Doanh thu 20 thuan 32 | 17.607.818 | 16.450.000  |
+| Gia von 30 33      | 14.000.000   | 13.200.000   |
+```
+
+Labels contain the line codes (01, 10, 20, 30) and note references (30, 31, 32, 33) as a natural part of the label string. This is semantically readable: the code is visible to the human reviewer without needing a separate column. AC-0 compliant — no hard-coded label names anywhere in the algorithm.
+
+---
+
+### 8. Acceptance Criteria — MD-EXTRACT-7
+
+These ACs are ADDITIVE to all carried-forward ACs. Fences, privacy grep, and AC-3F (non-regression) carry forward unchanged.
+
+---
+
+**AC-7-DIAG (BLOCKING — diagnostic must run before any code change):**
+
+Dev runs `diagnostic_md7.py` against FPT page 8 (income statement). Reports ALL five dump outputs to main terminal. Main terminal approves the "root cause confirmed" finding before dev writes any fix code. No code changes without this gate.
+
+---
+
+**AC-7-INC (BINDING — income statement ≥15 rows, labels not interleaved, period values on same row):**
+
+After re-extract (MD-DEPLOY-7), `GET /api/bctc-inspect/md/e71f845d-ffa5-48f9-8f09-30ac2cd09c65`. Find the income statement table (identified by highest code density). Assert:
+
+1. Table has ≥15 data rows (non-separator, non-header pipe-rows).
+2. No row's label cell contains TWO distinct line-item label heads. Verified by: no data row has a label cell string that independently matches TWO DIFFERENT income-statement line prefixes (e.g., contains both "Doanh" AND "Các khoản" — two distinct line names). Human inspection sufficient.
+3. At least one row identifiable as net-revenue (`~17T VND` magnitude) has its Q-current and prior-period values as separate cells on ONE pipe-row, not on different rows.
+4. Code tokens (2-3 digit standalone integers) appear embedded in label cells (as label companions), NOT as standalone value cells in a separate column with empty label. Verify: no data row has an empty label cell AND a cell matching `^(?<!\d)\d{2,3}(?!\d)$` AND a value cell matching `_MONEY_GROUP_RE` all on the same row (which would indicate code+value landed without a label).
+
+---
+
+**AC-7-FIX (BINDING — dense-table fixture proof):**
+
+Unit test `test_dense_income_fragment` in class `TestDenseIncomeStatement` in `test_generic_md_table_extractor.py`. Uses EXACTLY the 24-token fixture from §7.1 (FIXTURE_TOKENS).  [main-terminal correction: 24 tokens = 15 number + 9 text, not "23".]
+
+Assertions (the main-terminal hand-trace from §7.2 must agree):
+- (a) After `_classify_tokens(FIXTURE_TOKENS)`: `len(number_tokens) == 15`, `len(text_tokens) == 9`. (verify the exact list matches §7.2 — 15 number = 4 code + 4 note + 7 value; row-1 val-P absent)
+- (b) After C6-pre split (if triggered by anchor count > N_EXPECTED_MAX_VALUE_COLS): code_note_tokens contains exactly the 8 tokens with left ∈ {60, 120}. anchor_tokens contains exactly the 7 value tokens with left ∈ {400, 700} (4 at left=400, 3 at left=700 — row-1 val-P absent).
+- (c) After C6 re-run on anchor_tokens: `len(col_anchors) == 2`, anchors ≈ [400.0, 700.0] (within ±5px).
+- (d) `col_buckets[0]` has 4 tokens (all Q-curr values). `col_buckets[1]` has 3 tokens (prior-period values, row-1 absent).
+- (e) After `_build_ordinal_grid` with `prefer_ref_pitch=True` for sparse col[1]: `grid[1][1] == " "` (row-1 prior-period empty). `grid[2][1] == "16.450.000"` (NOT scrambled to row-1). `len(grid) == 4`.
+- (f) `col_y_medians == [100.0, 120.0, 140.0, 160.0]` (within ±2px tolerance).
+- (g) After `_attach_labels_ordinal` with `effective_band = 0.45 × 20 = 9.0px`: label of row-0 does NOT contain "Giam" or "tru" (row-1 words). Label of row-1 does NOT contain "Doanh thuan" (row-2 words). Labels do not interleave.
+- (h) After full pipeline: emitted markdown has 4 data rows. Row-1 second value cell is empty or single-space. Row-0 and row-2 both have two non-empty value cells. The EXACT assertions from §7.2 items 1-8 all PASS.
+
+---
+
+**AC-7-SEG-NOREGRESS (BINDING — AC-6-SEG must still pass live):**
+
+After re-extract (MD-DEPLOY-7), inspect segment report table. The three revenue values `35.381.667`, `9.092.934`, `18.701.876` must STILL appear on ONE pipe-row, each as a SEPARATE cell. If any of the three values moves to a different row from the others → FAIL. This AC is BLOCKING — any fix that breaks AC-6-SEG is rejected regardless of AC-7-INC status.
+
+---
+
+**AC-7-ORD-NOREGRESS (BLOCKING — ordinal fixture tests still pass):**
+
+Unit tests `test_ordinal_defeats_drift_gt_gap`, `test_skip_mid_column_empty`, `test_skip_trailing_column_empty` in `TestOrdinalReconstruction` must all still PASS unchanged. These verify the core ordinal+C8.5 algorithm is not broken by the additive changes.
+
+---
+
+**AC-7-AC0 (BLOCKING — no BCTC label constants):**
+
+`grep -rniE "bao.cao.bo.phan|segment_report|SEGMENT|BAO_CAO|bo_phan|bao_phan|doanh_thu|gia_von|income_statement" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches. New constants (`LABEL_ZONE_GAP_FACTOR`, `N_EXPECTED_MAX_VALUE_COLS`, `DENSE_COL_THRESHOLD`, `DENSE_LABEL_PITCH_FACTOR`) are geometry-only.
+
+---
+
+**AC-7-FENCE (BLOCKING):**
+
+`grep -rnE "from application|from interface|import application|import interface" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+---
+
+**AC-7-PRIVACY (BLOCKING):**
+
+`grep -rniE "claude|openai|gemini|textract|document.?ai|anthropic|requests\.post|httpx\.post|aiohttp" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+---
+
+**AC-7-HARDWARE (zero extra Tesseract calls):**
+
+All new functions (`_split_number_tokens_by_zone`, modifications to `_insert_skip_slots`, modifications to `_attach_labels_ordinal`, `_process_page` routing logic) are pure in-memory list operations. Zero additional `pytesseract` calls. Zero `PIL` image operations. Per-page OCR budget UNCHANGED from MD-EXTRACT-6.
+
+---
+
+### 9. Files to Modify (pdf-extractor only — zero mcp-server changes)
+
+| File | Change | DDD Layer |
+|---|---|---|
+| `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` | ADD constants: `LABEL_ZONE_GAP_FACTOR=2.0`, `N_EXPECTED_MAX_VALUE_COLS=6`, `DENSE_COL_THRESHOLD=6`, `DENSE_LABEL_PITCH_FACTOR=0.45`; ADD function `_split_number_tokens_by_zone(number_tokens, col_anchors, median_word_width)` (pure); MODIFY `_insert_skip_slots` to add `prefer_ref_pitch: bool = False` parameter; MODIFY `_build_ordinal_grid` to pass `prefer_ref_pitch=(len(col) < DENSE_COL_THRESHOLD)` per column; ADD `band_override` parameter to `_attach_labels_ordinal`; MODIFY `_process_page` to (1) run initial anchor detection, (2) if `len(anchors) > N_EXPECTED_MAX_VALUE_COLS` apply zone split and re-detect anchors, (3) compute `label_pitch` + `effective_band` from `col_y_medians`, (4) append `code_note_tokens` to `region_text_tokens` before C11, (5) pass `band_override=effective_band` to `_attach_labels_ordinal` | infrastructure |
+| `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` | ADD class `TestDenseIncomeStatement` with `test_dense_income_fragment` (AC-7-FIX fixture, 8 assertions from §7.2); ADD `TestSplitNumberTokensByZone` (3 tests: all-value page returns empty code_note list; mixed page returns correct split; tokens exactly at boundary assigned correctly); ADD `TestDenseColThreshold` (2 tests: col with <6 tokens uses ref_pitch; col with ≥6 tokens uses local_pitch) | unit |
+
+No new files. No new ports. No mcp-server changes. No new test files (tests added to existing `test_generic_md_table_extractor.py`).
+
+---
+
+### 10. Risk Register (MD-EXTRACT-7)
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| R-HIGH: The zone-split trigger `len(anchors) > N_EXPECTED_MAX_VALUE_COLS = 6` may not fire if the REAL FPT page 8 diagnostic shows ≤6 anchors (e.g., if the code/note columns are correctly separated by the existing anchor logic). In that case, the label-interleaving must come from C11 label band only (Fix path D). | HIGH | Mandatory diagnostic STEP 1 resolves this before any code is written. If anchors ≤6, skip `_split_number_tokens_by_zone` entirely and implement only Fix path D (dense label band). Do NOT implement both fixes blindly. |
+| R-HIGH: `DENSE_COL_THRESHOLD = 6` applied globally may cause ref_pitch override on segment-report columns that have only 5-6 rows (e.g., a segment column with few metric rows). If ref_pitch is slightly different from local_pitch for those columns, skip detection may insert wrong number of slots. | HIGH | The fix is ADDITIVE only when `len(col) < DENSE_COL_THRESHOLD`. For segment-report columns, which typically have 7-10 tokens per column (one per metric row), `len(col) >= 6` → `prefer_ref_pitch=False` → no change from MD-EXTRACT-6 behavior. AC-7-SEG-NOREGRESS verifies this. |
+| R-MEDIUM: Appending `code_note_tokens` to `region_text_tokens` means they can be consumed by `_attach_labels_ordinal` for ANY row within `effective_band`, not just their "correct" row. If two adjacent rows have code tokens at similar y values (within `effective_band`), the greedy removal may assign row-0's code token to row-1. | MEDIUM | The effective band is derived from `label_pitch` (the true inter-row distance). With `DENSE_LABEL_PITCH_FACTOR = 0.45`, the band = 9px for a 20px pitch. Code tokens at left=60 have clean baselines (no diacritics), top-jitter ≤2px. A 9px band reliably captures the code token for its row without reaching the adjacent row at +20px. Verified by §7.2 trace assertions (g). |
+| R-MEDIUM: The `_split_number_tokens_by_zone` function requires knowing `leftmost_value_anchor` before calling `_detect_column_anchors_from_tokens` — but `leftmost_value_anchor` is defined as "the leftmost anchor whose bucket contains at least one `_VALUE_TOKEN_RE` match". Computing this requires a first pass of column assignment, which requires anchors. Chicken-and-egg. | MEDIUM | Resolution: Run one initial `_detect_column_anchors_from_tokens` on ALL number tokens. Identify `leftmost_value_anchor` from the resulting anchor list by scanning each anchor's x-neighbors: a value anchor is one where at least one token in the x-band of ±`bin_width` around that anchor matches `_VALUE_TOKEN_RE`. This requires one additional O(n) scan of tokens — no Tesseract call. |
+| R-MEDIUM: The label cell now embeds code and note integers (`"Doanh thu 01 30"`) mixed with the label text. If downstream analysis tools (future dev) parse the label cell expecting pure Vietnamese text, the embedded integers may confuse them. | MEDIUM | Accept: the generic markdown path is a HUMAN-RECHECK layer, not the structured analysis path. The human can read `"Doanh thu 01 30"` and identify code 01 + note 30. If future tools need clean label/code separation, a post-processing function can strip trailing integers from label cells — out of scope for MD-EXTRACT-7. |
+| R-LOW: `N_EXPECTED_MAX_VALUE_COLS = 6` is set conservatively for income statements (≤4 value columns). Segment reports have 7-8 segment columns + total. If the trigger were `N_EXPECTED_MAX_VALUE_COLS = 6` and a segment report had 8 value anchors, the zone split would fire incorrectly on the segment report. | LOW | Segment-report number tokens do NOT have code/note columns — all tokens are VALUE tokens at large `left` values. Even if the split fires, `_split_number_tokens_by_zone` would find ZERO label-zone tokens (all value tokens have left > `leftmost_value_anchor - 40px`). `anchor_tokens = all number tokens`. Anchor detection result: UNCHANGED from the pre-split run. The segment report path is safe. |
+| R-LOW: File size. Adding ~80L of new constants + functions. Current file is ~1100L. Monitor against `docs/data/file-size-caps.json`. | LOW | If file exceeds cap: move ALL dead-code functions (`_cluster_rows`, `_cluster_rows_by_gap`, `_cluster_number_rows`, `_cluster_number_rows_adaptive`, `_attach_labels`, `_build_grid_from_number_rows`) to `infrastructure/_legacy_bbox_helpers.py` (infra-to-infra, Fence-A compliant). |
+
+---
+
+### 11. DDD / Fence Compliance
+
+| Function / Constant | Layer | Imports | Fence |
+|---|---|---|---|
+| `_split_number_tokens_by_zone` | infrastructure (pure) | stdlib only | Fence-A compliant |
+| `_insert_skip_slots` (modified, `prefer_ref_pitch` param) | infrastructure (pure) | stdlib only | Fence-A compliant |
+| `_attach_labels_ordinal` (modified, `band_override` param) | infrastructure (pure) | stdlib only | Fence-A compliant |
+| `LABEL_ZONE_GAP_FACTOR`, `N_EXPECTED_MAX_VALUE_COLS`, `DENSE_COL_THRESHOLD`, `DENSE_LABEL_PITCH_FACTOR` | module-level constants | None | Fence-A compliant |
+| `_process_page` (modified routing) | infrastructure | `pytesseract`, `PIL` (existing boundary) | Fence-A compliant |
+
+All new and modified functions are PURE (no I/O, no Tesseract, no DB, no network). The impure boundary remains `_process_page` calling `pytesseract.image_to_data` — unchanged from MD-EXTRACT-6. Import-linter: `lint-imports --config pyproject.toml` must exit 0 (2 contracts KEPT, 0 broken) after changes.
+
+---
+
+### 12. Build Standard + Role-Relay
+
+**BUILD-STANDARD: lean** — in-zone additive algorithm enhancement within existing infrastructure file.
+
+**HARD CONSTRAINTS (carry-forward verbatim):**
+- PRIVACY: self-hosted local OCR/CV ONLY. No financial PDF/image to ANY external API. EVER.
+- HARDWARE: 16GB Intel Mac, kernel-panic risk. Sequential single-doc OCR only. Zero additional Tesseract calls.
+- `text_table_extractor.py` UNTOUCHED (AC-3F). Frozen surfaces unchanged.
+- Leave ALL files UNSTAGED — main terminal commits.
+
+**ROLE-RELAY:** dev-pdf-extractor (MD-EXTRACT-7, implement per §3-§11 with AC-7-DIAG mandatory STEP 1) → ops (MD-DEPLOY-7, single doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`) → main-terminal live-verify (AC-7-INC + AC-7-SEG-NOREGRESS) → qa (MD-QA-7) → po (MD-EXIT re-evaluation).

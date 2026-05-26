@@ -1175,3 +1175,80 @@ Balance sheet (tables 0-7): mostly OK; residual code-doubling (e.g. `200) | 200`
 ### Verdict: NOT DONE. Goal stays armed.
 
 Binding goal = "table on pdf on ALL bctc need correct extract text and convert to md style." Segment report ✅ but income statement ❌. Escalate **MD-EXTRACT-7** to architect: targeted at DENSE many-row / dual-code-column / many-empty reconstruction (income statement). MANDATORY diagnostic FIRST — dump page-8 column anchors, per-column token counts, and the PRE-label grid to pinpoint whether scramble originates at column-assignment (C7), ordinal+skip (C8/C8.5), or label attachment (C11). NOT a tweak to the segment-working path; must not regress AC-6-SEG.
+
+---
+
+## [Architect] MD-EXTRACT-7 — Dense Income Statement Reconstruction (2026-05-26T09:16Z)
+
+**Status:** DESIGN COMPLETE — ready for dev-pdf-extractor. Diagnostic mandatory STEP 1 before any code.
+
+**Full design:** `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md § MD-EXTRACT-7`
+
+**Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + its unit test. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED.
+
+**Build standard:** lean (existing service, additive fix within existing infrastructure file).
+
+### What the fix targets
+
+Three simultaneous garbling modes on the income statement (table[8]) that are ABSENT on the segment report (table[17]):
+
+1. **Label interleaving** — `LABEL_BAND_FACTOR=1.5×h_med = 30px` spans 1.5 physical rows on a 20px-pitch dense page. `_attach_labels_ordinal` grabs text tokens from the current row AND the adjacent row, consumes them (greedy removal), and the next row has its label tokens already taken → two lines' words merge into one label cell. Fix: derive `effective_band` from the per-page ordinal row pitch (`DENSE_LABEL_PITCH_FACTOR = 0.45`), shrinking the band to 9px on a 20px-pitch page.
+
+2. **Dual code columns merged** — the income statement's "Mã số" (line codes: 01,10,11,...) and "Thuyết minh" (note refs: 30,31,32,...) columns both produce `_NUMBER_TOKEN_RE`-matching tokens at left≈60px and left≈120px. These create spurious x-anchors that inflate column count and either (a) put code/note tokens in separate "value" columns with empty label, or (b) cause anchor mis-detection for the real value columns. Fix (AC-0 geometric): detect label-zone small-int tokens by `left < leftmost_value_anchor - LABEL_ZONE_GAP_FACTOR × w_med`, exclude from anchor detection, re-attach as label companions. Only triggers when `len(initial_anchors) > N_EXPECTED_MAX_VALUE_COLS = 6` — zero effect on segment report path.
+
+3. **Value scramble** — dense period columns (Q-current, Q-prior, cum-current, cum-prior) have MANY consecutive empty rows (8-12 in a row for subtotals absent from some columns). `_insert_skip_slots` current logic: local_pitch from sparse columns' own deltas is contaminated by the large skip gaps themselves. Fix: when `len(col) < DENSE_COL_THRESHOLD = 6`, use `prefer_ref_pitch=True` → force `ref_pitch` (from dense columns) as working pitch → correct skip slot count.
+
+### Mandatory diagnostic (STEP 1)
+
+Dev writes and runs `diagnostic_md7.py` (inline, not committed) against FPT page 8. Reports 5 dumps: column anchors (count + x-positions), per-column token counts, PRE-label number grid (first 6 rows), small-int token classification, and interpretation gates. Full script in `docs/architecture-briefs/... § 3.1`. Interpretation table (dump→root-cause→fix path) in `§3.2`. Dev STOPS and reports to architect if diagnostic contradicts all four fix paths.
+
+### Hand-traceable fixture (AC-7-FIX)
+
+24 tokens (15 number + 9 text) / 4 rows / 4 physical columns (label + code + note + 2 value cols). Row-1 prior-period value ABSENT (dense-multi-gap case). Full token list with exact `left/top/text/conf` in `§7.1`. Full 8-step algorithm trace in `§7.2` proving:
+- `grid[1][1] == " "` (absent prior-period correctly empty, not scrambled to row-2)
+- `grid[0][1] == "17.651.065"` and `grid[2][1] == "17.607.818"` (values on correct rows)
+- label of row-0 does NOT contain row-1 words (band=9px stops over-reach)
+- 4 distinct rows in output markdown
+
+Main terminal MUST re-trace §7.2 by hand and confirm assertions 1-8 before dispatching dev.
+
+### Binding ACs
+
+| AC | Blocking | Description |
+|---|---|---|
+| **AC-7-DIAG** | YES | Diagnostic runs, results reported, root cause confirmed before any code |
+| **AC-7-INC** | YES | Income statement ≥15 rows, labels not interleaved, net-revenue row (~17T) has period values on ONE pipe-row |
+| **AC-7-FIX** | YES | Dense-table fixture (§7.1) all 8 assertions pass as unit test |
+| **AC-7-SEG-NOREGRESS** | YES | AC-6-SEG: `35.381.667 / 9.092.934 / 18.701.876` still on ONE row, distinct cells |
+| **AC-7-ORD-NOREGRESS** | YES | Ordinal fixture tests (test_ordinal_defeats_drift_gt_gap, skip tests) still pass |
+| **AC-7-AC0** | YES | grep deny-list zero matches for BCTC label strings |
+| **AC-7-FENCE** | YES | grep Fence-A zero matches |
+| **AC-7-PRIVACY** | YES | grep external-API zero matches |
+| **AC-7-HARDWARE** | YES | Zero additional Tesseract calls (all new functions are pure in-memory) |
+
+### Files to modify
+
+- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — ADD 4 constants, ADD `_split_number_tokens_by_zone()`, MODIFY `_insert_skip_slots()` + `_build_ordinal_grid()` + `_attach_labels_ordinal()` + `_process_page()`.
+- `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` — ADD `TestDenseIncomeStatement`, `TestSplitNumberTokensByZone`, `TestDenseColThreshold`.
+
+Zero new files. Zero mcp-server changes. Zero new ports. Zero new test files.
+
+**NEXT: main-terminal** — re-trace AC-7-FIX dense fixture proof by hand (§7.2 in the brief, assertions 1-8). If trace passes, dispatch dev-pdf-extractor MD-EXTRACT-7.
+
+---
+
+## [Main-Terminal] MD-EXTRACT-7 RE-TRACE VERDICT — APPROVED w/ arithmetic correction (2026-05-26)
+
+Independently hand-traced §7.2 end-to-end (every stage A2 → C6-pre → C6 → C7 → C8 → C8.5 → C9 → C10 → C11 → Step G). **Core algorithm proof is SOUND** — all 8 assertions hold under independent re-derivation:
+
+- **C6-pre geometric discriminator:** `leftmost_value_anchor = 400`; threshold `400 − 2×20 = 360`; all 8 code/note tokens (left 60,120) < 360 → excluded. `anchor_tokens` = the value tokens only → C6 re-run yields exactly 2 anchors `[400, 700]`. ✓ Confirmed independently.
+- **C8.5 dense-multi-gap (THE critical proof):** col[1]=val-P has 3 tokens, tops `[100,140,160]`, deltas `[40,20]`. WITHOUT fix → `local_pitch = median([40,20]) = 30`, threshold 45, delta 40<45 → **skip missed → scramble** (the live bug). WITH `prefer_ref_pitch` (3 < DENSE_COL_THRESHOLD=6) → `ref_pitch=20` from col[0], threshold 30, delta 40>30 → `ceil(40/20)−1 = 1` slot → row-1 prior-period correctly `None`. ✓ The fix demonstrably prevents the value scramble.
+- **C11 label band:** `label_pitch=20 < 2×h_med=24` → dense → `effective_band = 0.45×20 = 9px`. Row-0 band [91,109] captures only row-0 tokens; row-1 words at top=120 are 11px away → excluded. ✓ No cross-row label interleave (assertion 7).
+- Assertions 1–8 (grid[0][1]=17.651.065, grid[0][2]=16.500.000, grid[1][2]=" ", grid[2][1]=17.607.818, grid[3][1]=14.000.000, no 17.651.065+43.247 same row, no label interleave, total_rows=4): **ALL VERIFIED.** ✓
+- Non-regression reasoning checked: zone-split trigger (`>6` anchors) does NOT fire on segment report (no code/note cols; even if it fired, discriminator finds zero label-zone tokens → anchors unchanged); `prefer_ref_pitch` defaults False so existing ordinal/skip tests unaffected. ✓
+
+**DEFECT CAUGHT + CORRECTED (gate working):** The trace narrative and the **binding** AC-7-FIX assertions (a)/(b) miscounted the fixture as **16 number / 8 value / 23 total**, assuming a full 4×2 value grid. The literal `FIXTURE_TOKENS` list has **24 tokens = 15 number (4 code + 4 note + 7 value) + 9 text** — row-1's prior-period val-P is intentionally absent (only 3 tokens at left=700, not 4). Left uncorrected, dev would code `assert len(number_tokens) == 16` and the AC-7-FIX unit test would FAIL on the very fixture meant to prove the fix. Main-terminal corrected 4 brief spots (§7.2 token-total line + C6-pre "15 NUMBER" + sorted-lefts three-700s + AC-7-FIX (a)=`==15` / (b)=7 value tokens) and the §7.1 "23/24-token" labels here + in brief. Pure arithmetic; design untouched. Corrections annotated inline in brief with `[main-terminal correction]` markers.
+
+**VERDICT: design APPROVED. Dispatching dev-pdf-extractor MD-EXTRACT-7** (diagnostic STEP-1 mandatory first; AC-7-FIX must use corrected counts 15/7/24; AC-3F non-regression; leave files UNSTAGED).
+
+**NEXT: dev-pdf-extractor** — run `diagnostic_md7.py` on FPT page 8 FIRST, report 5 dumps; only then implement per §3–§11 with corrected fixture counts. Then main-terminal verify diagnostic + re-run tests.
