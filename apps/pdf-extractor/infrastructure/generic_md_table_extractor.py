@@ -1,31 +1,44 @@
 """
-infrastructure/generic_md_table_extractor.py — MD-EXTRACT
+infrastructure/generic_md_table_extractor.py — MD-EXTRACT-4
 
-GenericMdTableExtractor: bbox-based generic table detector + markdown emitter.
+GenericMdTableExtractor: number-token-2D generic table detector + markdown emitter.
 
 Implements GenericMdTableExtractorPort (domain/modules/financial_reports/ports.py).
 
-Algorithm (per-page):
-    Step A — Per-word bbox collection via pytesseract.image_to_data (TSV/DICT mode).
-    Step B — Table boundary detection: vertical gap histogram separates preamble
-             from table body; multi-table pages produce separate regions.
-    Step C — Row clustering: y-band greedy merge (0.5 × H_med tolerance).
-    Step D — Column detection: left-edge histogram, 1.5 × median_word_width gap threshold.
-    Step E — Grid assembly: 2-D list[row][col] = cell_text.
-    Step F — Header detection: first 1-2 rows when no numeric tokens in row 0.
-    Step G — Markdown pipe-table emission: | header | ... |\\n|---|...\\n| cell | ...
+Algorithm (per-page) — MD-EXTRACT-4 NUMBER-TOKEN-ONLY PATH:
+    Step A — Collect per-word bboxes via pytesseract.image_to_data (TSV/DICT mode).
+    Step A2 — Classify tokens: NUMBER tokens (digits/money-groups) vs TEXT tokens (labels).
+    Step B — Detect table regions on NUMBER tokens only (≥4 number tokens).
+    Step C — Cluster NUMBER tokens into rows by y using SAME_LINE_TOL=4px.
+             NUMBER tokens have clean baselines (no diacritic inflation) — ≤2px jitter.
+    Step D — Derive column anchors from NUMBER token x (left) positions.
+    Step E — Build number grid: each row = [number tokens in their column slots].
+    Step F — Attach labels: for each number-row y-band find nearest TEXT tokens.
+    Step G — Post-processing: strip_header_bands → coalesce_labels → collapse_empty
+             → density gate → header detection → markdown emission.
+
+Root-cause of MD-EXTRACT-1/2/3 failures (DUAL-PATH DRIFT #5):
+    Clustering ALL tokens (labels + numbers) by y failed because Vietnamese-diacritic
+    label tokens have inflated top values (2-4px diacritic overhang), making them
+    scatter across y-bands. Number tokens have clean, uniform baselines.
+    Fix: cluster NUMBER tokens ONLY by y; attach TEXT label tokens afterwards.
+
+Dead-code notes:
+    _cluster_rows and _cluster_rows_by_gap are DEAD in MD-EXTRACT-4.
+    Kept for backward compatibility with existing unit tests. DO NOT REMOVE.
+    Candidate-2 (psm-6 line-text path) functions were CANCELLED per architect ruling
+    2026-05-26: psm-6 linearizes BCTC wide tables in column-major order, making
+    row-aligned splitting impossible. All cancelled functions are absent from this file.
 
 OCR substrate: pytesseract.image_to_data called on PIL Image objects already
 rasterized at 200 DPI by the use case (same DPI as PdfOcrAdapter.ocr_pages).
-Uses --psm 6 for consistent line-by-line layout (same as OCR adapter — never drift).
+Uses --psm 6 (same as OCR adapter — no drift).
 
 DDD layer: infrastructure (calls Tesseract subprocess, reads PIL Image — impure).
-    DDD: may import from domain/primitives and infrastructure/. Fence-A prohibits
-         imports from the application or interface layers.
+    Fence-A prohibits imports from the application or interface layers.
 
 Privacy: self-hosted Tesseract only. Zero network traffic. Zero external API.
-         Images remain in-process; no cloud VLM/OCR. Same privacy guarantee as
-         PdfOcrAdapter.ocr_pages.
+         Images remain in-process; no cloud VLM/OCR.
 
 Hardware guard: callers MUST pass images ONE AT A TIME (sequential for-loop).
     Never run multiple image_to_data calls concurrently.
@@ -117,6 +130,32 @@ _MIN_MONEY_THIN = 1
 # Matches: 31/12/2025, 1/6/2024, etc. No BCTC-specific semantics.
 _DATE_HEADER_RE = re.compile(r"\d{1,2}/\d{1,2}/\d{4}")
 
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-4 — Number-token-only y-clustering constants
+#
+# AC-0: all patterns below are GENERIC financial number formats.
+# ZERO BCTC-specific string literals.
+# ---------------------------------------------------------------------------
+
+# NUMBER token classifier — matches generic financial number tokens:
+#   - money groups: 1.234.567 / 1,234,567 / (1.234.567) / -1.234.567
+#   - 2-3 digit standalone codes or small integers: 100 / 270 / -30
+# TEXT tokens (labels, headers, units, prose) do NOT match.
+# KEY INSIGHT: number tokens have uniform character height, no diacritics,
+# clean shared baselines → ≤2px y-jitter. Label tokens have Vietnamese
+# diacritics that inflate top by 2-4px, causing scatter if clustered together.
+_NUMBER_TOKEN_RE = re.compile(
+    r'^[\(\-]?\d{1,3}(?:[.,]\d{3})+[\)\-]?$'  # money group: 1.234.567 / (1,234)
+    r'|^[\(\-]?\d{2,3}[\)\-]?$'               # 2-3 digit code or small int: 270 / 30
+)
+
+# Number-token y-clustering tolerance (pixels at 200 DPI).
+# Number tokens on the same print row share a clean baseline with ≤2px jitter.
+# Typical inter-row gap on dense financial statements: 8-12px.
+# SAME_LINE_TOL=4 cleanly separates rows without false merges or scatter.
+# Tunable: increase to 6 if LIVE-VERIFY shows split rows; decrease to 2 for false merges.
+SAME_LINE_TOL: int = 4
+
 
 # ---------------------------------------------------------------------------
 # Pure helper: OCR text → readable markdown (§2.3)
@@ -178,6 +217,262 @@ def ocr_text_to_markdown(text: str) -> str:
         output.append(stripped)
 
     return "\n".join(output)
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-4 — Number-token classification and clustering (pure functions)
+# ---------------------------------------------------------------------------
+
+
+def _classify_tokens(words: List[Dict]):
+    """
+    Split image_to_data word list into (number_tokens, text_tokens).
+
+    NUMBER tokens match _NUMBER_TOKEN_RE (money groups + 2-3 digit codes).
+    TEXT tokens are everything else (labels, headers, units, prose).
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    This is the key fix for MD-EXTRACT-1/2/3 failures:
+    Vietnamese diacritic LABEL tokens have inflated/jittered top values that
+    scatter across y-bands. By clustering NUMBER tokens only, we avoid diacritic
+    inflation entirely. Labels are attached afterwards (Step F).
+
+    AC-0: uses _NUMBER_TOKEN_RE (generic financial number pattern).
+          Zero BCTC-specific label strings.
+
+    Args:
+        words: Filtered image_to_data word dicts (conf > 0, text non-empty).
+
+    Returns:
+        (number_tokens, text_tokens) — two lists of word dicts.
+    """
+    number_tokens: List[Dict] = []
+    text_tokens: List[Dict] = []
+    for w in words:
+        txt = w.get("text", "").strip()
+        if not txt:
+            continue
+        if _NUMBER_TOKEN_RE.match(txt):
+            number_tokens.append(w)
+        else:
+            text_tokens.append(w)
+    return number_tokens, text_tokens
+
+
+def _cluster_number_rows(
+    number_tokens: List[Dict],
+    same_line_tol: int = SAME_LINE_TOL,
+) -> List[List[Dict]]:
+    """
+    Group number tokens into rows by y-coordinate using SAME_LINE_TOL.
+
+    Because number tokens have ≤2px y-jitter and the typical inter-row gap is
+    8-12px, SAME_LINE_TOL=4 cleanly separates rows without false merges.
+
+    This replaces _cluster_rows / _cluster_rows_by_gap for the number-token path.
+    The prior functions clustered ALL tokens (labels + numbers), so Vietnamese-
+    diacritic label tokens inflated y-band boundaries causing scatter.
+
+    Algorithm:
+      1. Sort number tokens by top.
+      2. Greedy same-y grouping: add to current row while abs(top - current_top) ≤ tol.
+      3. When top exceeds tolerance: close current row, start new one.
+      4. Each row is sorted by left (x ascending).
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    AC-0: zero BCTC-specific constants.
+
+    Args:
+        number_tokens: List of number-token word dicts (from _classify_tokens).
+        same_line_tol: y-distance tolerance in pixels (default SAME_LINE_TOL=4).
+
+    Returns:
+        List of row groups, each a list of word dicts sorted by left (x ascending).
+        Returns [] if input is empty.
+    """
+    if not number_tokens:
+        return []
+
+    sorted_by_y = sorted(number_tokens, key=lambda w: w["top"])
+    rows: List[List[Dict]] = []
+    current_row: List[Dict] = [sorted_by_y[0]]
+    current_top: int = sorted_by_y[0]["top"]
+
+    for w in sorted_by_y[1:]:
+        if abs(w["top"] - current_top) <= same_line_tol:
+            current_row.append(w)
+        else:
+            rows.append(sorted(current_row, key=lambda t: t["left"]))
+            current_row = [w]
+            current_top = w["top"]
+
+    rows.append(sorted(current_row, key=lambda t: t["left"]))
+    return rows
+
+
+def _attach_labels(
+    row_groups: List[List[Dict]],
+    text_tokens: List[Dict],
+    h_med: float,
+) -> List[tuple]:
+    """
+    For each number-row group, find nearest TEXT tokens by y and prepend as label.
+
+    Strategy (per §3 REVISED Step F):
+      1. Compute y-centroid (y_c) of the row group's number tokens.
+      2. Find TEXT tokens within h_med × 0.6 of y_c → primary match.
+      3. If none in primary band: find nearest within h_med × 2.0 → fallback.
+      4. Space-join matched TEXT tokens sorted by left (x ascending).
+      5. If still none: label = "" (honest empty — OCR merge or header row).
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    AC-0: zero BCTC-specific constants. Generic y-band attachment.
+
+    AC-4A guarantee: every row with ≥1 number token has a label cell (possibly
+    empty if no TEXT token exists within 2×h_med — the honest bar per §2.3).
+
+    Args:
+        row_groups:  List of number-row groups (from _cluster_number_rows).
+        text_tokens: All TEXT tokens on the page (from _classify_tokens).
+        h_med:       Median word height from number tokens (pixels).
+
+    Returns:
+        List of (label_str, row_tokens) tuples. Same length as row_groups.
+    """
+    result: List[tuple] = []
+    for row in row_groups:
+        if not row:
+            continue
+        y_c = sum(w["top"] for w in row) / len(row)
+
+        # Primary: TEXT tokens within h_med × 0.6
+        close = [t for t in text_tokens if abs(t["top"] - y_c) <= h_med * 0.6]
+
+        # Fallback: nearest within h_med × 2.0
+        if not close:
+            nearest = sorted(text_tokens, key=lambda t: abs(t["top"] - y_c))
+            if nearest and abs(nearest[0]["top"] - y_c) <= h_med * 2.0:
+                close = [nearest[0]]
+
+        label = " ".join(
+            t["text"] for t in sorted(close, key=lambda t: t["left"])
+        ).strip()
+        result.append((label, row))
+    return result
+
+
+def _build_grid_from_number_rows(
+    labeled_rows: List[tuple],
+    col_anchors: List[float],
+) -> List[List[str]]:
+    """
+    Assign number tokens + labels to (row_idx, col_idx) cells.
+
+    Grid layout: column 0 = label cell, columns 1..N = number-token columns
+    ordered by col_anchors.
+
+    For each number token in a row, assign to nearest col_anchor (by left distance).
+    The label cell is prepended as column 0.
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    AC-0: geometry only — zero BCTC-specific constants.
+
+    Args:
+        labeled_rows:  List of (label_str, row_tokens) from _attach_labels.
+        col_anchors:   Sorted column anchor x-positions (from _detect_column_anchors
+                       applied to number tokens only).
+
+    Returns:
+        2-D list of strings. grid[row_idx][0] = label, grid[row_idx][1..N] = values.
+        Empty cells represented as " " (pipe-table compatibility).
+    """
+    if not labeled_rows or not col_anchors:
+        return []
+
+    n_val_cols = len(col_anchors)
+    grid: List[List[str]] = []
+
+    for label, row_tokens in labeled_rows:
+        # Initialize: label + N value slots
+        cell_words: List[List[str]] = [[] for _ in range(n_val_cols)]
+
+        for w in row_tokens:
+            left = float(w["left"])
+            # Assign to nearest col_anchor
+            distances = [abs(left - anchor) for anchor in col_anchors]
+            nearest_col = distances.index(min(distances))
+            cell_words[nearest_col].append(w["text"])
+
+        # Build row: label cell + value cells
+        value_cells = [
+            " ".join(words).strip() if words else " "
+            for words in cell_words
+        ]
+        value_cells = [c if c else " " for c in value_cells]
+
+        row_cells = [label if label else " "] + value_cells
+        grid.append(row_cells)
+
+    return grid
+
+
+def _detect_column_anchors_from_tokens(
+    tokens: List[Dict],
+    median_word_width: float,
+) -> List[float]:
+    """
+    Column anchor detection from a flat list of word tokens (not row-grouped).
+
+    Used in the MD-EXTRACT-4 number-token path where column anchors are derived
+    from NUMBER tokens only (not ALL tokens). The original _detect_column_anchors
+    takes row-grouped word lists; this variant accepts a flat token list.
+
+    Algorithm: same as _detect_column_anchors but accepts List[Dict] directly.
+    Collects all token left-edges, bins them, clusters by gap threshold.
+
+    Pure function.
+
+    AC-0: geometry only.
+
+    Args:
+        tokens:            Flat list of word dicts (each has "left" key).
+        median_word_width: Median word width (pixels) for gap threshold.
+
+    Returns:
+        Sorted list of column anchor x-positions. Returns [0.0] if no tokens.
+    """
+    if not tokens or median_word_width <= 0:
+        return [0.0]
+
+    all_lefts = sorted(float(w["left"]) for w in tokens)
+    if not all_lefts:
+        return [0.0]
+
+    bin_width = max(1.0, _LEFT_EDGE_BIN_FACTOR * median_word_width)
+
+    clusters: List[List[float]] = []
+    current_cluster = [all_lefts[0]]
+    for left in all_lefts[1:]:
+        if left - current_cluster[-1] <= bin_width:
+            current_cluster.append(left)
+        else:
+            clusters.append(current_cluster)
+            current_cluster = [left]
+    clusters.append(current_cluster)
+
+    cluster_anchors = [sum(c) / len(c) for c in clusters]
+
+    col_gap = _COL_GAP_FACTOR * median_word_width
+    merged: List[float] = [cluster_anchors[0]]
+    for anchor in cluster_anchors[1:]:
+        if anchor - merged[-1] > col_gap:
+            merged.append(anchor)
+
+    return merged
 
 
 # ---------------------------------------------------------------------------
@@ -288,7 +583,9 @@ def _detect_table_regions(words: List[Dict], h_med: float) -> List[List[Dict]]:
 
 def _cluster_rows(words: List[Dict], h_med: float) -> List[List[Dict]]:
     """
-    # DEPRECATED — use _cluster_rows_by_gap
+    # DEAD in MD-EXTRACT-4 — replaced by _cluster_number_rows
+    # Kept for backward compatibility with existing unit tests (DO NOT REMOVE).
+    # The MD-EXTRACT-4 _process_page uses _cluster_number_rows (number tokens only).
 
     Step C — Row clustering via greedy y-band merge.
 
@@ -334,6 +631,13 @@ def _cluster_rows(words: List[Dict], h_med: float) -> List[List[Dict]]:
 
 def _cluster_rows_by_gap(words: List[Dict], h_med: float) -> List[List[Dict]]:
     """
+    # DEAD in MD-EXTRACT-4 — replaced by _cluster_number_rows
+    # Kept for backward compatibility with existing unit tests (DO NOT REMOVE).
+    # MD-EXTRACT-3 analysis: this fixed the balance-sheet collapse but scatter
+    # persisted for wide tables (income statement, segment report) because it
+    # still clustered ALL tokens including diacritic-inflated label tokens.
+    # The fix is in _cluster_number_rows (number tokens only, SAME_LINE_TOL=4).
+
     Step C (DEFECT-D fix) — Row clustering via gap-histogram row-pitch detection.
 
     Replaces the greedy height-based _cluster_rows for dense multi-column grids
@@ -920,8 +1224,16 @@ class GenericMdTableExtractor:
         """
         Process one page image and return a list of markdown pipe-table strings.
 
+        MD-EXTRACT-4 NUMBER-TOKEN-ONLY PATH:
+        Classify tokens → cluster number rows by y → detect col anchors from numbers
+        → attach labels → build grid → post-process → density gate → emit markdown.
+
+        Root-cause fix: prior cycles clustered ALL tokens (labels + numbers) by y.
+        Vietnamese-diacritic label tokens have inflated top (2-4px diacritic overhang)
+        causing scatter across y-bands. NUMBER tokens have clean shared baselines.
+        Solution: cluster NUMBER tokens only; attach TEXT labels afterwards.
+
         Each detected table region on the page produces one entry.
-        Prose regions (1-column, > _PROSE_ROW_THRESHOLD rows) are filtered out.
         """
         # Step A — Collect per-word bboxes via image_to_data (TSV mode)
         try:
@@ -942,42 +1254,78 @@ class GenericMdTableExtractor:
         if not words:
             return []
 
-        # Compute median word height and width for geometry thresholds
-        heights = [float(w["height"]) for w in words if w["height"] > 0]
-        widths = [float(w["width"]) for w in words if w["width"] > 0]
-        h_med = _median(heights)
-        median_word_width = _median(widths)
+        # Step A2 — Classify tokens into NUMBER tokens and TEXT tokens.
+        # NUMBER tokens: money-group format + 2-3 digit standalone codes.
+        # TEXT tokens: everything else (labels, headers, units, prose).
+        # This separation eliminates diacritic-inflated top values from clustering.
+        number_tokens, text_tokens = _classify_tokens(words)
+
+        if not number_tokens:
+            # No numeric content — not a table page
+            logger.debug(
+                "GenericMdTableExtractor: no number tokens on page — skipping"
+            )
+            return []
+
+        # Compute median word height from NUMBER tokens only (clean baselines).
+        # Using number tokens for h_med avoids diacritic inflation from label tokens.
+        num_heights = [float(w["height"]) for w in number_tokens if w["height"] > 0]
+        num_widths = [float(w["width"]) for w in number_tokens if w["width"] > 0]
+        h_med = _median(num_heights) if num_heights else 12.0
+        median_word_width = _median(num_widths) if num_widths else 40.0
 
         if h_med <= 0:
             return []
 
-        # Step B — Detect table regions (vertical gap histogram)
-        table_regions = _detect_table_regions(words, h_med)
+        # Compute SAME_LINE_TOL: per brief §3.3 — min(4, h_med * 0.3).
+        # SAME_LINE_TOL=4 is already the right value at 200 DPI for typical BCTC
+        # financials (h_med ≈ 14-18px → 0.3 × h_med ≈ 4-5px).
+        same_line_tol = min(SAME_LINE_TOL, int(h_med * 0.3)) if h_med > 0 else SAME_LINE_TOL
+
+        # Step B — Detect table regions on NUMBER tokens only.
+        # Using number tokens avoids including prose preamble in region boundaries.
+        table_regions = _detect_table_regions(number_tokens, h_med)
         if not table_regions:
             return []
 
         page_tables: List[str] = []
 
-        for region_words in table_regions:
-            # Step C — Row clustering (DEFECT-D fix: gap-histogram based)
-            # _cluster_rows_by_gap replaces _cluster_rows. Uses median inter-line
-            # gap as row-pitch oracle instead of 0.5 × H_med. Falls back to
-            # _cluster_rows automatically on sparse pages (< 3 candidate lines).
-            rows = _cluster_rows_by_gap(region_words, h_med)
-            if not rows:
+        for region_num_tokens in table_regions:
+            # Find TEXT tokens within the region's vertical extent (± h_med margin)
+            # to allow label attachment for rows near region boundaries.
+            region_top = min(w["top"] for w in region_num_tokens)
+            region_bot = max(w["top"] + w["height"] for w in region_num_tokens)
+            region_text_tokens = [
+                t for t in text_tokens
+                if (region_top - h_med) <= t["top"] <= (region_bot + h_med)
+            ]
+
+            # Step C — Cluster NUMBER tokens into rows by y using SAME_LINE_TOL.
+            # Number tokens have ≤2px y-jitter → clean row separation at tol=4.
+            row_groups = _cluster_number_rows(region_num_tokens, same_line_tol)
+            if not row_groups:
                 continue
 
-            # Step D — Column anchor detection
-            col_anchors = _detect_column_anchors(rows, median_word_width)
-            n_cols = len(col_anchors)
+            # Step D — Derive column anchors from NUMBER token x (left) positions.
+            # Using number tokens only: their left-edges align on grid columns.
+            col_anchors = _detect_column_anchors_from_tokens(
+                region_num_tokens, median_word_width
+            )
+            if not col_anchors:
+                continue
 
-            # Step E — Grid assembly
-            grid = _assign_columns(rows, col_anchors)
+            # Step F — Attach labels: for each number-row y-band find nearest TEXT tokens.
+            labeled_rows = _attach_labels(row_groups, region_text_tokens, h_med)
+            if not labeled_rows:
+                continue
 
-            # DEFECT-C.1 (MD-EXTRACT-2): strip leading letterhead/noise rows
-            # before the density gate and header detection. This prevents page
-            # headers glued to the top of real tables from inflating row counts
-            # or corrupting the first-row header detection.
+            # Step E — Build 2D grid: [label, col0_val, col1_val, ..., colN_val]
+            grid = _build_grid_from_number_rows(labeled_rows, col_anchors)
+            if not grid:
+                continue
+
+            # Post-processing pipeline (substrate-agnostic helpers — UNCHANGED):
+            # Strip leading letterhead/noise rows above first money-group or date row.
             grid = _strip_leading_header_bands(grid)
             if not grid:
                 logger.debug(
@@ -985,25 +1333,16 @@ class GenericMdTableExtractor:
                 )
                 continue
 
-            # DEFECT-C.2 (MD-EXTRACT-2): coalesce text-only label columns at
-            # the left of the first numeric column into a single merged cell.
-            # Fixes "Phải trả người | bán ngắn | hạn" → one label column.
+            # Merge text-only leading columns into single label column.
             grid = _coalesce_label_columns(grid)
 
-            # DEFECT-E (MD-EXTRACT-3 / AC-2E fix): collapse columns that are
-            # blank across ALL rows. Eliminates sparse anchor slots left over
-            # after label coalescing (e.g., 7-column balance sheet → 3-4 cols).
-            # Runs AFTER _coalesce_label_columns and BEFORE _is_data_table.
+            # Drop columns blank across ALL rows (sparse anchor artefacts).
             grid = _collapse_empty_columns(grid)
 
             n_rows = len(grid)
             n_cols = len(grid[0]) if grid else 0
 
-            # DEFECT-B (MD-EXTRACT-2): density gate replaces the old
-            # col_count==1 prose filter. Applies to ALL regions regardless of
-            # column count. Letterhead/title/prose with zero financial numbers
-            # are rejected here; real data tables (>= 6 money-groups) pass.
-            # AC-0: _is_data_table uses only generic number patterns.
+            # Density gate: reject prose/letterhead regions with < K money-groups.
             if not _is_data_table(grid):
                 logger.debug(
                     "GenericMdTableExtractor: density gate rejected region: "
@@ -1013,21 +1352,22 @@ class GenericMdTableExtractor:
                 )
                 continue
 
-            # Step F — Header row detection
+            # Header row detection.
             n_header_rows = _detect_header_rows(grid)
             if n_header_rows == 0:
                 continue
 
-            # Step G — Markdown pipe-table emission
+            # Markdown pipe-table emission.
             md_table = _emit_markdown_table(grid, n_header_rows)
             if md_table:
                 page_tables.append(md_table)
                 logger.debug(
-                    "GenericMdTableExtractor: emitted table: %d rows × %d cols "
-                    "(money_groups=%d)",
+                    "GenericMdTableExtractor: emitted table (MD-EXTRACT-4 number-token path): "
+                    "%d rows × %d cols (money_groups=%d, same_line_tol=%d)",
                     n_rows,
                     n_cols,
                     len(_MONEY_GROUP_RE.findall(" ".join(c for r in grid for c in r))),
+                    same_line_tol,
                 )
 
         return page_tables

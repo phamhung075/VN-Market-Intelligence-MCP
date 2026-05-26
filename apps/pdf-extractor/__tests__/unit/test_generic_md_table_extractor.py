@@ -80,6 +80,15 @@ from infrastructure.generic_md_table_extractor import (  # noqa: E402
     _collapse_empty_columns,
     _SAME_LINE_FACTOR,
     _ROW_PITCH_MULTIPLIER,
+    # MD-EXTRACT-4 additions:
+    _NUMBER_TOKEN_RE,
+    SAME_LINE_TOL,
+    _classify_tokens,
+    _cluster_number_rows,
+    _attach_labels,
+    _build_grid_from_number_rows,
+    _detect_column_anchors_from_tokens,
+    _MONEY_GROUP_RE,
 )
 
 
@@ -1253,3 +1262,431 @@ class TestCollapseEmptyColumns:
         assert _ROW_PITCH_MULTIPLIER == 1.2, (
             f"_ROW_PITCH_MULTIPLIER must be 1.2, got {_ROW_PITCH_MULTIPLIER}"
         )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-4: TestClassifyTokens
+# ---------------------------------------------------------------------------
+
+
+class TestClassifyTokens:
+    """Unit tests for _classify_tokens() — number vs text token split."""
+
+    def test_money_group_classified_as_number(self):
+        """Money-group token (e.g. '1.234.567') → number token."""
+        words = [_make_word("1.234.567", 100, 50)]
+        number_tokens, text_tokens = _classify_tokens(words)
+        assert len(number_tokens) == 1
+        assert number_tokens[0]["text"] == "1.234.567"
+        assert len(text_tokens) == 0
+
+    def test_vietnamese_label_classified_as_text(self):
+        """Vietnamese diacritic label ('Doanh thu') → text token."""
+        words = [_make_word("Doanh thu", 10, 50)]
+        number_tokens, text_tokens = _classify_tokens(words)
+        assert len(text_tokens) == 1
+        assert text_tokens[0]["text"] == "Doanh thu"
+        assert len(number_tokens) == 0
+
+    def test_three_digit_code_classified_as_number(self):
+        """3-digit code token ('270') → number token."""
+        words = [_make_word("270", 150, 50)]
+        number_tokens, text_tokens = _classify_tokens(words)
+        assert len(number_tokens) == 1
+        assert number_tokens[0]["text"] == "270"
+
+    def test_empty_text_excluded_from_both(self):
+        """Word with empty text stripped → excluded from both lists."""
+        words = [
+            _make_word("", 10, 50),
+            _make_word("  ", 20, 50),
+            _make_word("100", 30, 50),
+        ]
+        number_tokens, text_tokens = _classify_tokens(words)
+        assert len(number_tokens) == 1
+        assert len(text_tokens) == 0
+
+    def test_mixed_tokens_split_correctly(self):
+        """Mixed list: number and text tokens separated correctly."""
+        words = [
+            _make_word("Tien mat",   0,   50),   # text
+            _make_word("110",        50,  50),   # number (2-3 digit code)
+            _make_word("1.234.567",  200, 50),   # number (money group)
+            _make_word("Ngan hang",  0,   65),   # text
+            _make_word("44.338.155", 200, 65),   # number
+        ]
+        number_tokens, text_tokens = _classify_tokens(words)
+        assert len(number_tokens) == 3
+        assert len(text_tokens) == 2
+        number_texts = {w["text"] for w in number_tokens}
+        assert "110" in number_texts
+        assert "1.234.567" in number_texts
+        assert "44.338.155" in number_texts
+
+    def test_same_line_tol_constant_is_four(self):
+        """SAME_LINE_TOL module constant must equal 4 (per brief §3.3)."""
+        assert SAME_LINE_TOL == 4, (
+            f"SAME_LINE_TOL must be 4, got {SAME_LINE_TOL}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-4: TestClusterNumberRows
+# ---------------------------------------------------------------------------
+
+
+class TestClusterNumberRows:
+    """Unit tests for _cluster_number_rows() — y-band grouping of number tokens."""
+
+    def test_same_top_three_tokens_one_row(self):
+        """3 tokens with same top (within 4px) → 1 row group."""
+        tokens = [
+            _make_word("1.234.567", 100, 50),
+            _make_word("9.092.934", 200, 51),   # 1px diff → same row
+            _make_word("18.701.876", 300, 52),  # 2px diff → same row
+        ]
+        rows = _cluster_number_rows(tokens, same_line_tol=4)
+        assert len(rows) == 1
+        assert len(rows[0]) == 3
+
+    def test_three_distinct_tops_three_rows(self):
+        """3 tokens on 3 distinct tops (each 10px apart) → 3 row groups."""
+        tokens = [
+            _make_word("100", 50, 10),
+            _make_word("200", 50, 20),   # 10px gap > tol=4 → new row
+            _make_word("300", 50, 30),   # 10px gap > tol=4 → new row
+        ]
+        rows = _cluster_number_rows(tokens, same_line_tol=4)
+        assert len(rows) == 3
+
+    def test_mixed_two_groups(self):
+        """2 on same y, 2 on different y → 2 row groups."""
+        tokens = [
+            _make_word("1.000", 50,  10),
+            _make_word("2.000", 150, 11),  # 1px diff → same row
+            _make_word("3.000", 50,  25),  # 14px diff > tol=4 → new row
+            _make_word("4.000", 150, 26),  # 1px diff → same row as 25
+        ]
+        rows = _cluster_number_rows(tokens, same_line_tol=4)
+        assert len(rows) == 2
+        assert len(rows[0]) == 2
+        assert len(rows[1]) == 2
+
+    def test_rows_sorted_by_left(self):
+        """Each row group is sorted by left (x ascending)."""
+        tokens = [
+            _make_word("right_val", 400, 50),  # right column
+            _make_word("left_val",  50,  50),  # left column, same row
+        ]
+        rows = _cluster_number_rows(tokens, same_line_tol=4)
+        assert len(rows) == 1
+        assert rows[0][0]["text"] == "left_val"   # x=50 first
+        assert rows[0][1]["text"] == "right_val"  # x=400 second
+
+    def test_empty_input_returns_empty(self):
+        """Empty input → returns []."""
+        assert _cluster_number_rows([], same_line_tol=4) == []
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-4: TestAttachLabels
+# ---------------------------------------------------------------------------
+
+
+class TestAttachLabels:
+    """Unit tests for _attach_labels() — label attachment to number rows."""
+
+    def _make_num_row(self, top: int) -> List[Dict]:
+        """Build a single-token number row at the given top."""
+        return [_make_word("1.234.567", 200, top)]
+
+    def test_label_within_primary_band_attached(self):
+        """Text token within h_med × 0.6 → label = that token's text."""
+        row_groups = [self._make_num_row(50)]
+        text_tokens = [_make_word("Tien mat", 10, 52)]  # 2px diff, h_med=15 → within 9px band
+        h_med = 15.0
+        result = _attach_labels(row_groups, text_tokens, h_med)
+        assert len(result) == 1
+        label, _ = result[0]
+        assert "Tien mat" in label
+
+    def test_fallback_label_within_2x_h_med(self):
+        """No text within primary band but one within h_med×2 → fallback used."""
+        row_groups = [self._make_num_row(50)]
+        # Token at top=70 → abs(70-50)=20 > 15*0.6=9, but ≤ 15*2=30 → fallback
+        text_tokens = [_make_word("Fallback label", 10, 70)]
+        h_med = 15.0
+        result = _attach_labels(row_groups, text_tokens, h_med)
+        assert len(result) == 1
+        label, _ = result[0]
+        assert "Fallback label" in label
+
+    def test_no_text_within_2x_h_med_empty_label(self):
+        """No text token within h_med×2 → label = '' (honest empty)."""
+        row_groups = [self._make_num_row(50)]
+        # Token at top=200 → abs(200-50)=150 > 15*2=30 → not attached
+        text_tokens = [_make_word("Far away", 10, 200)]
+        h_med = 15.0
+        result = _attach_labels(row_groups, text_tokens, h_med)
+        assert len(result) == 1
+        label, _ = result[0]
+        assert label == ""
+
+    def test_multi_word_label_space_joined_in_x_order(self):
+        """Multiple text tokens near same y → space-joined in left (x) order."""
+        row_groups = [self._make_num_row(50)]
+        # Two text tokens at same y, different x
+        text_tokens = [
+            _make_word("Phai",  10, 51),  # left first
+            _make_word("tra",   60, 51),  # right second
+            _make_word("nguoi", 110, 51), # rightmost
+        ]
+        h_med = 15.0
+        result = _attach_labels(row_groups, text_tokens, h_med)
+        label, _ = result[0]
+        assert label == "Phai tra nguoi", f"Got: '{label}'"
+
+    def test_wrong_y_text_not_attached(self):
+        """Text tokens far from row y-band → not attached."""
+        row_groups = [self._make_num_row(50)]
+        text_tokens = [
+            _make_word("Wrong",   10, 100),  # 50px away, beyond 2×h_med=30
+            _make_word("AlsoWrong", 10, 0),  # 50px away
+        ]
+        h_med = 15.0
+        result = _attach_labels(row_groups, text_tokens, h_med)
+        label, _ = result[0]
+        assert label == ""
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-4: AC-4A correctness test (BLOCKING — every money-row has label)
+# ---------------------------------------------------------------------------
+
+
+class TestAc4aEveryMoneyRowHasLabel:
+    """
+    AC-4A (BLOCKING): every row containing a money-group has a NON-EMPTY label cell.
+
+    Synthetic image_to_data: 5 rows, each with one code, one money token, one label.
+    Tops: [10, 25, 40, 55, 70] (each 15px apart → 5 distinct row groups at tol=4).
+    """
+
+    def _make_five_row_tokens(self):
+        """5 rows × (label + code + money) tokens."""
+        tops = [10, 25, 40, 55, 70]
+        words = []
+        for r in tops:
+            words.append(_make_word("Tien mat",   0,   r))   # label (text)
+            words.append(_make_word("110",        50,  r))   # code (number)
+            words.append(_make_word("1.234.567",  200, r))   # money (number)
+        return words
+
+    def test_five_rows_five_groups_with_labels(self):
+        """5 rows → 5 distinct number row groups, each with non-empty label."""
+        words = self._make_five_row_tokens()
+        number_tokens, text_tokens = _classify_tokens(words)
+
+        # 5 code + 5 money = 10 number tokens
+        assert len(number_tokens) == 10
+        assert len(text_tokens) == 5
+
+        row_groups = _cluster_number_rows(number_tokens, same_line_tol=4)
+        assert len(row_groups) == 5, (
+            f"Expected 5 row groups (one per y-band), got {len(row_groups)}"
+        )
+
+        h_med = 15.0
+        labeled = _attach_labels(row_groups, text_tokens, h_med)
+        assert len(labeled) == 5
+
+        for i, (label, row) in enumerate(labeled):
+            money_tokens = [w for w in row if _MONEY_GROUP_RE.search(w["text"])]
+            if money_tokens:
+                assert label != "", (
+                    f"AC-4A FAIL: row {i} has money tokens but empty label. "
+                    f"Row tops: {[w['top'] for w in row]}, "
+                    f"Label tokens near y={sum(w['top'] for w in row)/len(row):.1f}"
+                )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-4: Segment correctness test (AC-Q4-1 CORRECTED)
+# ---------------------------------------------------------------------------
+
+
+class TestSegmentMatrixCorrectness:
+    """
+    AC-Q4-1 CORRECTED (binding segment proof):
+    3 segment revenue numbers at same y-band, different x → ONE grid row,
+    THREE different column cells, with a label.
+
+    Ground truth: "Doanh thu theo bo phan" has 3 segment values as COLUMNS
+    of ONE row (not 3 separate rows). This was LIVE-VERIFY-3's failing assertion.
+    """
+
+    def _build_segment_fake_pytesseract(self):
+        """
+        Fake pytesseract mimicking segment report layout:
+        - 3 number rows at y=[10, 25, 40], each with 3 money tokens at x=[100, 200, 300]
+        - Label tokens at y=[10, 25, 40] at x=5
+        """
+        class SegmentFakePytesseract:
+            class Output:
+                DICT = "dict"
+
+            def image_to_data(self, image, lang=None, config=None, output_type=None):
+                tops = [10, 25, 40]
+                xs = [100, 200, 300]
+                money_values = [
+                    ["35.381.667", "9.092.934", "18.701.876"],
+                    ["12.000.000", "5.500.000",  "7.200.000"],
+                    ["88.000.000", "32.000.000", "21.000.000"],
+                ]
+                words = []
+                # Label tokens (text)
+                for i, top in enumerate(tops):
+                    words.append({
+                        "text": f"Label row {i}",
+                        "left": 5, "top": top,
+                        "width": 80, "height": 12, "conf": 90,
+                    })
+                # Money tokens (number): 3 rows × 3 cols
+                for row_i, top in enumerate(tops):
+                    for col_i, x in enumerate(xs):
+                        words.append({
+                            "text": money_values[row_i][col_i],
+                            "left": x, "top": top,
+                            "width": 90, "height": 12, "conf": 90,
+                        })
+                return {
+                    "text":   [w["text"] for w in words],
+                    "left":   [w["left"] for w in words],
+                    "top":    [w["top"] for w in words],
+                    "width":  [w["width"] for w in words],
+                    "height": [w["height"] for w in words],
+                    "conf":   [w["conf"] for w in words],
+                }
+
+        return SegmentFakePytesseract()
+
+    def test_three_segment_revenues_in_one_row_each_different_column(self):
+        """
+        AC-Q4-1 CORRECTED: 3 money tokens at same y, x=[100,200,300] →
+        SAME grid row, 3 DIFFERENT column cells.
+
+        Tests the core number-token-only clustering fix: all 3 tokens share
+        the same y-band (top=10, tol=4) and are assigned to 3 distinct column
+        anchors (x=100, 200, 300). Result: ONE row with 3 value cells.
+        """
+        tops = [10, 25, 40]
+        xs = [100, 200, 300]
+        # Build number tokens for just the first segment row (y=10)
+        row0_numbers = [
+            _make_word("35.381.667",  xs[0], tops[0], height=12),
+            _make_word("9.092.934",   xs[1], tops[0], height=12),
+            _make_word("18.701.876",  xs[2], tops[0], height=12),
+        ]
+        # All 3 are within tol=4 of each other (all top=10)
+        row_groups = _cluster_number_rows(row0_numbers, same_line_tol=4)
+        assert len(row_groups) == 1, (
+            f"3 tokens at same y=10 must form 1 row group, got {len(row_groups)}"
+        )
+        assert len(row_groups[0]) == 3
+
+        # Column anchors from the 3 x positions
+        col_anchors = _detect_column_anchors_from_tokens(row0_numbers, median_word_width=40.0)
+        assert len(col_anchors) == 3, (
+            f"Expected 3 column anchors for x=[100,200,300], got {col_anchors}"
+        )
+
+        # Attach labels
+        label_tokens = [_make_word("Doanh thu bo phan", 5, 10, height=12)]
+        labeled = _attach_labels(row_groups, label_tokens, h_med=12.0)
+        label, _ = labeled[0]
+        assert label != "", "Label must be non-empty (AC-4A)"
+
+        # Build grid: [label, col0, col1, col2]
+        grid = _build_grid_from_number_rows(labeled, col_anchors)
+        assert len(grid) == 1, f"Expected 1 grid row, got {len(grid)}"
+        row_cells = grid[0]
+
+        # label cell + 3 value cells
+        assert len(row_cells) == 4, (
+            f"Expected 4 cells (label + 3 values), got {len(row_cells)}: {row_cells}"
+        )
+
+        # Verify all 3 segment values are in DIFFERENT cells
+        value_cells = row_cells[1:]  # skip label
+        assert "35.381.667" in value_cells[0], f"Segment 1 value missing from col 0: {value_cells}"
+        assert "9.092.934" in value_cells[1], f"Segment 2 value missing from col 1: {value_cells}"
+        assert "18.701.876" in value_cells[2], f"Segment 3 value missing from col 2: {value_cells}"
+
+    def test_three_rows_distinct_y_produce_three_grid_rows(self):
+        """
+        3 money-row y-bands (y=10, 25, 40, each 15px apart, tol=4) →
+        3 distinct grid rows. Values on different rows do NOT collapse.
+        """
+        all_number_tokens = [
+            # Row 0: y=10
+            _make_word("35.381.667",  100, 10, height=12),
+            _make_word("9.092.934",   200, 10, height=12),
+            _make_word("18.701.876",  300, 10, height=12),
+            # Row 1: y=25
+            _make_word("12.000.000",  100, 25, height=12),
+            _make_word("5.500.000",   200, 25, height=12),
+            _make_word("7.200.000",   300, 25, height=12),
+            # Row 2: y=40
+            _make_word("88.000.000",  100, 40, height=12),
+            _make_word("32.000.000",  200, 40, height=12),
+            _make_word("21.000.000",  300, 40, height=12),
+        ]
+        row_groups = _cluster_number_rows(all_number_tokens, same_line_tol=4)
+        assert len(row_groups) == 3, (
+            f"3 y-bands (10,25,40) must produce 3 row groups, got {len(row_groups)}"
+        )
+        # Each row must have 3 tokens
+        for i, rg in enumerate(row_groups):
+            assert len(rg) == 3, (
+                f"Row group {i} must have 3 tokens, got {len(rg)}: {[w['text'] for w in rg]}"
+            )
+
+    def test_full_pipeline_via_process_page(self):
+        """
+        Full _process_page pipeline with SegmentFakePytesseract:
+        3 rows × 3 columns → output markdown has ≥1 table, each row has ≥3 column
+        cells (label + 3 value columns), and at least 2 data rows are emitted.
+
+        Note: one row may be consumed as the header row by _detect_header_rows
+        (first row with money-group values → 1 header row). The remaining rows
+        are data rows. With 3 input rows: 1 header + ≥2 data rows.
+        """
+        extractor = GenericMdTableExtractor()
+        fake_pt = self._build_segment_fake_pytesseract()
+        fake_image = FakePILImage()
+
+        tables = extractor._process_page(fake_image, fake_pt, fake_pt.Output)
+        # Should produce ≥1 table (density gate: 9 money-groups >= 6)
+        assert len(tables) >= 1, (
+            "Segment fake data (9 money-groups) must pass density gate and emit ≥1 table"
+        )
+
+        # Parse the first table's rows
+        first_table = tables[0]
+        pipe_rows = [
+            r for r in first_table.split("\n")
+            if r.startswith("|") and "---" not in r
+        ]
+        # 3 rows total: 1 header (row 0) + ≥2 data rows
+        # (row 0 has money-groups → detected as 1 header, not consumed as noise)
+        assert len(pipe_rows) >= 3, (
+            f"Expected ≥3 pipe rows total (1 header + ≥2 data) from 3-segment table, "
+            f"got {len(pipe_rows)}: {pipe_rows}"
+        )
+
+        # Each pipe row must have ≥3 column separators (label + 3 value cols)
+        for row_str in pipe_rows:
+            cells = [c.strip() for c in row_str.split("|")[1:-1]]
+            assert len(cells) >= 3, (
+                f"Row must have ≥3 cells (label + ≥2 values), got {len(cells)}: {row_str}"
+            )
