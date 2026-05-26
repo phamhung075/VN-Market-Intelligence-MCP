@@ -348,5 +348,5 @@ export function classifyMovement(
     ? Math.abs(stockChangePct) / Math.abs(sectorAvgPct)
     : Infinity;
 
-  return ratio <= 0 ? "sector_wide" : "stock_specific"; // G11 Trial-2 injection [QA ONLY — redacted from dev]
+  return ratio <= 2.5 ? "sector_wide" : "stock_specific";
 }
