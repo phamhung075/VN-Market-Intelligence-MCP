@@ -94,6 +94,15 @@ from infrastructure.generic_md_table_extractor import (  # noqa: E402
     _cluster_number_rows_adaptive,
     _CODE_TOKEN_RE,
     _VALUE_TOKEN_RE,
+    # MD-EXTRACT-6 additions:
+    _assign_tokens_to_columns,
+    _insert_skip_slots,
+    _build_ordinal_grid,
+    _attach_labels_ordinal,
+    SKIP_GAP_FACTOR,
+    LABEL_BAND_FACTOR,
+    _COL_ASSIGN_MAX_DIST_FACTOR,
+    _MIN_WORD_CONF_ORDINAL,
 )
 
 
@@ -2073,4 +2082,368 @@ class TestAc5D3LabelCellClean:
 
         assert _MONEY_GROUP_RE.search(label) is None, (
             f"AC-5-D3 FAIL: label cell contains money-group match: {label!r}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-6 — TestOrdinalReconstruction
+# AC-6-ORD, AC-6-SKIP, AC-6-D4b
+# ---------------------------------------------------------------------------
+
+
+class TestOrdinalReconstruction:
+    """
+    AC-6-ORD: ordinal reconstruction defeats drift > gap (§8 10-token fixture).
+    AC-6-SKIP: mid/trailing empty-cell reconciliation (§9 SKIP-MID + SKIP-TRAILING).
+    AC-6-D4b: live-substrate code/value separation using exact image_to_data values.
+    """
+
+    # -----------------------------------------------------------------------
+    # AC-6-ORD: test_ordinal_defeats_drift_gt_gap
+    # §8 fixture: 5 columns, row-0 drift=16px, row-1 gap from row-0 col-4 = 2px
+    # -----------------------------------------------------------------------
+
+    def test_ordinal_defeats_drift_gt_gap(self):
+        """
+        AC-6-ORD (BLOCKING): §8 10-token fixture where drift (16px) > gap (2px).
+
+        5 columns × 2 rows. Row-0 tops increase linearly from 100 to 116.
+        Row-1 starts at top=118 (only 2px above row-0's last token top=116).
+        MD-EXTRACT-5 produces 5+ rows (diagonal). Ordinal must produce exactly 2.
+
+        Step C7: col_buckets each has exactly 2 tokens (one per row).
+        Step C8+C9+C10: _build_ordinal_grid → grid[0] and grid[1] correct.
+        """
+        # Exact §8 fixture
+        all_tokens = [
+            # Row 0 — drift: each column's top increases by 4px
+            _make_word("100",  left=100,  top=100, width=30, height=12, conf=90),
+            _make_word("200",  left=400,  top=104, width=30, height=12, conf=90),
+            _make_word("300",  left=700,  top=108, width=30, height=12, conf=90),
+            _make_word("400",  left=1000, top=112, width=30, height=12, conf=90),
+            _make_word("500",  left=1300, top=116, width=30, height=12, conf=90),
+            # Row 1 — gap from row-0 col-4 (top=116) to row-1 col-0 (top=118) = 2px
+            _make_word("600",  left=100,  top=118, width=30, height=12, conf=90),
+            _make_word("700",  left=400,  top=122, width=30, height=12, conf=90),
+            _make_word("800",  left=700,  top=126, width=30, height=12, conf=90),
+            _make_word("900",  left=1000, top=130, width=30, height=12, conf=90),
+            _make_word("1000", left=1300, top=134, width=30, height=12, conf=90),
+        ]
+        col_anchors = [100.0, 400.0, 700.0, 1000.0, 1300.0]
+        median_word_width = 30.0
+
+        # Step C7: assign tokens to columns
+        col_buckets = _assign_tokens_to_columns(all_tokens, col_anchors, median_word_width)
+
+        assert len(col_buckets) == 5, f"Expected 5 col_buckets, got {len(col_buckets)}"
+        for c, bucket in enumerate(col_buckets):
+            assert len(bucket) == 2, (
+                f"col_buckets[{c}] should have 2 tokens, got {len(bucket)}: "
+                f"{[t['text'] for t in bucket]}"
+            )
+
+        # Steps C8+C8.5+C9+C10: build ordinal grid
+        grid, col_y_medians = _build_ordinal_grid(col_buckets, n_cols=5)
+
+        assert len(grid) == 2, (
+            f"AC-6-ORD FAIL: expected exactly 2 rows, got {len(grid)}. "
+            f"Grid: {grid}"
+        )
+        assert grid[0] == ["100", "200", "300", "400", "500"], (
+            f"AC-6-ORD FAIL: grid[0] wrong: {grid[0]}"
+        )
+        assert grid[1] == ["600", "700", "800", "900", "1000"], (
+            f"AC-6-ORD FAIL: grid[1] wrong: {grid[1]}"
+        )
+
+    def test_assign_tokens_col_buckets_structure(self):
+        """Step C7: each token goes to its nearest x-anchor, noise excluded."""
+        tokens = [
+            _make_word("10", left=98, top=100, width=30, height=12, conf=90),  # → col 0 (anchor=100)
+            _make_word("20", left=405, top=100, width=30, height=12, conf=90),  # → col 1 (anchor=400)
+            _make_word("30", left=9999, top=100, width=30, height=12, conf=90),  # → noise: distance >> 3×30
+        ]
+        col_anchors = [100.0, 400.0]
+        col_buckets = _assign_tokens_to_columns(tokens, col_anchors, median_word_width=30.0)
+        assert len(col_buckets) == 2
+        assert len(col_buckets[0]) == 1
+        assert col_buckets[0][0]["text"] == "10"
+        assert len(col_buckets[1]) == 1
+        assert col_buckets[1][0]["text"] == "20"
+
+    def test_assign_tokens_low_conf_filtered(self):
+        """Tokens below _MIN_WORD_CONF_ORDINAL are excluded from col_buckets."""
+        tokens = [
+            _make_word("50", left=100, top=100, width=30, height=12, conf=_MIN_WORD_CONF_ORDINAL - 1),
+            _make_word("60", left=100, top=100, width=30, height=12, conf=_MIN_WORD_CONF_ORDINAL),
+        ]
+        col_anchors = [100.0]
+        col_buckets = _assign_tokens_to_columns(tokens, col_anchors, median_word_width=30.0)
+        # Only the conf >= threshold token should appear
+        assert len(col_buckets[0]) == 1
+        assert col_buckets[0][0]["text"] == "60"
+
+    # -----------------------------------------------------------------------
+    # AC-6-SKIP: test_skip_mid_column_empty
+    # §9 SKIP-MID fixture: 3×3, col-1 missing physical row-1
+    # -----------------------------------------------------------------------
+
+    def test_skip_mid_column_empty(self):
+        """
+        AC-6-SKIP (BLOCKING): SKIP-MID fixture — col-1 missing physical row-1.
+
+        §9 full trace:
+          col-0: [top=100/A1, top=120/A2, top=140/A3] — 3 tokens, local_pitch=20
+          col-1: [top=103/B1, top=143/B3] — 2 tokens, delta=40
+                 ref_pitch=20 (from col-0 and col-2), threshold=30
+                 delta=40 > 30 → 1 None slot inserted before B3
+                 col-1 slots: [B1, None, B3] length=3
+          col-2: [top=106/C1, top=126/C2, top=146/C3] — 3 tokens, local_pitch=20
+
+        Expected grid (3 rows × 3 cols):
+          grid[0] = ["A1", "B1", "C1"]
+          grid[1] = ["A2", " ", "C2"]   ← None slot in col-1
+          grid[2] = ["A3", "B3", "C3"]
+        """
+        tokens = [
+            # Row 0
+            _make_word("A1", left=100, top=100, width=30, height=12, conf=90),
+            _make_word("B1", left=400, top=103, width=30, height=12, conf=90),
+            _make_word("C1", left=700, top=106, width=30, height=12, conf=90),
+            # Row 1 — col-1 absent
+            _make_word("A2", left=100, top=120, width=30, height=12, conf=90),
+            _make_word("C2", left=700, top=126, width=30, height=12, conf=90),
+            # Row 2
+            _make_word("A3", left=100, top=140, width=30, height=12, conf=90),
+            _make_word("B3", left=400, top=143, width=30, height=12, conf=90),
+            _make_word("C3", left=700, top=146, width=30, height=12, conf=90),
+        ]
+        col_anchors = [100.0, 400.0, 700.0]
+        col_buckets = _assign_tokens_to_columns(tokens, col_anchors, median_word_width=30.0)
+
+        grid, col_y_medians = _build_ordinal_grid(col_buckets, n_cols=3)
+
+        assert len(grid) == 3, f"SKIP-MID: expected 3 rows, got {len(grid)}. grid={grid}"
+
+        # AC-6-SKIP assertions (a)-(d)
+        assert grid[2][1] == "B3", (
+            f"SKIP-MID (a): grid[2][1] should be 'B3', got '{grid[2][1]}'. grid={grid}"
+        )
+        assert grid[1][1] == " ", (
+            f"SKIP-MID (b): grid[1][1] should be ' ' (empty slot), got '{grid[1][1]}'. grid={grid}"
+        )
+        assert grid[0] == ["A1", "B1", "C1"], (
+            f"SKIP-MID (c): grid[0] wrong: {grid[0]}"
+        )
+        assert grid[2] == ["A3", "B3", "C3"], (
+            f"SKIP-MID (c): grid[2] wrong: {grid[2]}"
+        )
+
+    # -----------------------------------------------------------------------
+    # AC-6-SKIP: test_skip_trailing_column_empty
+    # §9 SKIP-TRAILING: col-1 missing row-2 (trailing)
+    # -----------------------------------------------------------------------
+
+    def test_skip_trailing_column_empty(self):
+        """
+        AC-6-SKIP (BLOCKING): SKIP-TRAILING fixture — col-1 missing physical row-2.
+
+        §9 trace:
+          col-0: [top=100/X1, top=120/X2, top=140/X3] — 3 tokens, local_pitch=20
+          col-1: [top=103/Y1, top=123/Y2] — 2 tokens, delta=20
+                 ref_pitch=20, threshold=30. delta=20 < 30 → no skip inserted.
+                 col-1 slots: [Y1, Y2] length=2
+          col-2: [top=106/Z1, top=126/Z2, top=146/Z3] — 3 tokens, local_pitch=20
+
+        total_rows = max(3, 2, 3) = 3.
+        grid[2][1] = " " by grid initialization (col-1 has no slot at rank 2).
+
+        Expected:
+          grid[0] = ["X1", "Y1", "Z1"]
+          grid[1] = ["X2", "Y2", "Z2"]
+          grid[2][1] = " "   (trailing empty — no skip insertion needed)
+          total_rows = 3
+        """
+        tokens = [
+            # Row 0
+            _make_word("X1", left=100, top=100, width=30, height=12, conf=90),
+            _make_word("Y1", left=400, top=103, width=30, height=12, conf=90),
+            _make_word("Z1", left=700, top=106, width=30, height=12, conf=90),
+            # Row 1
+            _make_word("X2", left=100, top=120, width=30, height=12, conf=90),
+            _make_word("Y2", left=400, top=123, width=30, height=12, conf=90),
+            _make_word("Z2", left=700, top=126, width=30, height=12, conf=90),
+            # Row 2 — col-1 absent (trailing)
+            _make_word("X3", left=100, top=140, width=30, height=12, conf=90),
+            _make_word("Z3", left=700, top=146, width=30, height=12, conf=90),
+        ]
+        col_anchors = [100.0, 400.0, 700.0]
+        col_buckets = _assign_tokens_to_columns(tokens, col_anchors, median_word_width=30.0)
+
+        grid, col_y_medians = _build_ordinal_grid(col_buckets, n_cols=3)
+
+        assert len(grid) == 3, (
+            f"SKIP-TRAILING: expected 3 total rows, got {len(grid)}. grid={grid}"
+        )
+        assert grid[0] == ["X1", "Y1", "Z1"], (
+            f"SKIP-TRAILING: grid[0] wrong: {grid[0]}"
+        )
+        assert grid[1] == ["X2", "Y2", "Z2"], (
+            f"SKIP-TRAILING: grid[1] wrong: {grid[1]}"
+        )
+        assert grid[2][1] == " ", (
+            f"SKIP-TRAILING: grid[2][1] should be ' ' (trailing empty), got '{grid[2][1]}'"
+        )
+
+    # -----------------------------------------------------------------------
+    # AC-6-D4b: test_d4b_live_substrate_code_value_separation
+    # Live-substrate fixture from §6 diagnostic output for FPT balance-sheet page 4
+    # -----------------------------------------------------------------------
+
+    def test_d4b_live_substrate_code_value_separation(self):
+        """
+        AC-6-D4b (BLOCKING): code '100' and value '58.102.970.741.619' land in
+        DIFFERENT col_buckets and DIFFERENT grid cells.
+
+        Fixture uses EXACT left/top/width/height values from §6 diagnostic output
+        (FPT page 4, image_to_data, 200 DPI):
+          code  '100':                left=793, top=504, width=34,  height=15, conf=96
+          value '58.102.970.741.619': left=1015, top=503, width=202, height=16, conf=91
+
+        Under ordinal reconstruction:
+          - col-0 anchor ≈ 793 (code column)
+          - col-1 anchor ≈ 1015 (value column)
+          argmin for code (793): |793-793|=0 → col 0
+          argmin for value (1015): |1015-1015|=0 → col 1
+          They land in DIFFERENT col_buckets → DIFFERENT grid cells.
+        """
+        # Exact values from AC-6-DIAG diagnostic output (§6), page 4
+        code_token = _make_word(
+            "100",
+            left=793, top=504, width=34, height=15, conf=96
+        )
+        value_token = _make_word(
+            "58.102.970.741.619",
+            left=1015, top=503, width=202, height=16, conf=91
+        )
+
+        # Derive col_anchors from these two tokens
+        # median_word_width from widths: median([34, 202]) = 118
+        median_word_width = 118.0
+        all_tokens = [code_token, value_token]
+        col_anchors = _detect_column_anchors_from_tokens(all_tokens, median_word_width)
+
+        # The two tokens should produce 2 distinct anchors
+        # (distance = 1015-793=222px >> col_gap = 1.5×118=177px → separate columns)
+        assert len(col_anchors) >= 2, (
+            f"AC-6-D4b: expected ≥2 col_anchors, got {len(col_anchors)}: {col_anchors}"
+        )
+
+        # Assign tokens to columns
+        col_buckets = _assign_tokens_to_columns(all_tokens, col_anchors, median_word_width)
+
+        # Find which bucket each token is in
+        code_col = None
+        value_col = None
+        for c, bucket in enumerate(col_buckets):
+            for t in bucket:
+                if t["text"] == "100":
+                    code_col = c
+                if t["text"] == "58.102.970.741.619":
+                    value_col = c
+
+        assert code_col is not None, "AC-6-D4b: code token '100' not found in any col_bucket"
+        assert value_col is not None, "AC-6-D4b: value token not found in any col_bucket"
+        assert code_col != value_col, (
+            f"AC-6-D4b FAIL: code and value token in SAME col_bucket {code_col}. "
+            f"col_anchors={col_anchors}"
+        )
+
+        # Build grid and verify they land in different cells
+        grid, _ = _build_ordinal_grid(col_buckets, n_cols=len(col_anchors))
+        assert len(grid) >= 1, "AC-6-D4b: grid should have at least 1 row"
+
+        # Row 0 should have code at col_col and value at value_col
+        assert grid[0][code_col] == "100", (
+            f"AC-6-D4b: grid[0][{code_col}] should be '100', got '{grid[0][code_col]}'"
+        )
+        assert grid[0][value_col] == "58.102.970.741.619", (
+            f"AC-6-D4b: grid[0][{value_col}] should be '58.102.970.741.619', "
+            f"got '{grid[0][value_col]}'"
+        )
+        assert code_col != value_col, (
+            f"AC-6-D4b: code (col {code_col}) and value (col {value_col}) must be in different cells"
+        )
+
+    # -----------------------------------------------------------------------
+    # Additional helper tests for _insert_skip_slots
+    # -----------------------------------------------------------------------
+
+    def test_insert_skip_slots_no_gap(self):
+        """No gap → no None inserted, slots == sorted_tokens."""
+        tokens = [
+            _make_word("A", 100, 100, height=12),
+            _make_word("B", 100, 120, height=12),
+            _make_word("C", 100, 140, height=12),
+        ]
+        slots = _insert_skip_slots(tokens, ref_pitch=None)
+        assert len(slots) == 3
+        assert all(s is not None for s in slots)
+
+    def test_insert_skip_slots_mid_gap_with_ref_pitch(self):
+        """2-token column with large gap uses ref_pitch to detect skip."""
+        tokens = [
+            _make_word("B1", 400, 103, height=12),
+            _make_word("B3", 400, 143, height=12),
+        ]
+        # delta=40, ref_pitch=20, threshold=30 → 40>30 → ceil(40/20)-1=1 None inserted
+        slots = _insert_skip_slots(tokens, ref_pitch=20.0)
+        assert len(slots) == 3, f"Expected 3 slots (B1, None, B3), got {len(slots)}: {slots}"
+        assert slots[0] is not None and slots[0]["text"] == "B1"
+        assert slots[1] is None
+        assert slots[2] is not None and slots[2]["text"] == "B3"
+
+    def test_insert_skip_slots_single_token(self):
+        """Single token → no gap to check → return as-is."""
+        tokens = [_make_word("X", 100, 100)]
+        slots = _insert_skip_slots(tokens, ref_pitch=20.0)
+        assert len(slots) == 1
+        assert slots[0] is not None
+
+    def test_insert_skip_slots_no_ref_pitch_2tokens(self):
+        """2-token column with no ref_pitch → cannot determine pitch → no insertion."""
+        tokens = [
+            _make_word("A", 100, 100),
+            _make_word("B", 100, 200),
+        ]
+        slots = _insert_skip_slots(tokens, ref_pitch=None)
+        # Cannot determine pitch without ref → return as-is (no insertion)
+        assert len(slots) == 2
+        assert all(s is not None for s in slots)
+
+    def test_build_ordinal_grid_empty_buckets(self):
+        """Empty col_buckets → returns empty grid."""
+        grid, medians = _build_ordinal_grid([[], []], n_cols=2)
+        assert grid == []
+        assert medians == []
+
+    def test_attach_labels_ordinal_greedy_no_reuse(self):
+        """
+        Greedy removal: same text token not reused across adjacent rows.
+        """
+        grid = [
+            ["100", "200"],  # rank 0
+            ["300", "400"],  # rank 1
+        ]
+        col_y_medians = [100.0, 120.0]
+        # Single text token right between both rows
+        text_tokens = [_make_word("Label", left=10, top=110, height=12, conf=90)]
+        h_med = 12.0
+        result = _attach_labels_ordinal(grid, col_y_medians, text_tokens, h_med)
+        # Label should appear in exactly ONE row (greedy — first-match-wins)
+        assert len(result) == 2
+        labels = [row[0] for row in result]
+        # "Label" should appear at most once
+        assert labels.count("Label") <= 1, (
+            f"Label reused across adjacent rows: {labels}"
         )

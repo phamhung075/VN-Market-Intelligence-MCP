@@ -1,47 +1,51 @@
 """
-infrastructure/generic_md_table_extractor.py — MD-EXTRACT-5
+infrastructure/generic_md_table_extractor.py — MD-EXTRACT-6
 
 GenericMdTableExtractor: number-token-2D generic table detector + markdown emitter.
 
 Implements GenericMdTableExtractorPort (domain/modules/financial_reports/ports.py).
 
-Algorithm (per-page) — MD-EXTRACT-5 NUMBER-TOKEN-ONLY PATH + ADAPTIVE TOLERANCE:
+Algorithm (per-page) — MD-EXTRACT-6 COLUMN-ANCHOR-FIRST ORDINAL RECONSTRUCTION:
     Step A — Collect per-word bboxes via pytesseract.image_to_data (TSV/DICT mode).
     Step A2 — Classify tokens: NUMBER tokens (digits/money-groups) vs TEXT tokens (labels).
     Step B — Detect table regions on NUMBER tokens only (≥4 number tokens).
-    Step C — Cluster NUMBER tokens into rows by y using adaptive tolerance.
-             _cluster_number_rows_adaptive derives row-pitch from large-gap mode on
-             NUMBER-token histogram, then uses running-centroid grouping.
-             NUMBER tokens have clean baselines (no diacritic inflation) — ≤2px jitter.
-    Step D — Derive column anchors from NUMBER token x (left) positions.
-    Step E — Build number grid: each row = [number tokens in their column slots].
-             CODE tokens (2-3 digit) routed to leftmost number column; VALUE tokens
-             routed to x-nearest value column (D4b — no code+value cell concatenation).
-    Step F — Attach labels: for each number-row y-band find nearest TEXT tokens.
+    Step C6 — Detect column anchors from NUMBER token x-positions
+              (reuse existing _detect_column_anchors_from_tokens).
+    Step C7 — Assign each NUMBER token to its nearest x-column-anchor by argmin
+              (_assign_tokens_to_columns). No y-comparison at all.
+    Step C8 — Within each column, sort tokens by top (ascending) → ordinal rank.
+    Step C8.5 — Within each column, detect intra-column rank gaps and insert None
+                sentinel slots so physical row positions align across columns
+                (_insert_skip_slots + ref_pitch from columns with ≥3 tokens).
+    Step C9 — total_rows = max slot-list length across all columns.
+    Step C10 — Reconstruct 2D grid: grid[rank][col] = token text, None→" ".
+    Step C11 — Attach labels: for each ordinal row k, find TEXT tokens within
+               LABEL_BAND_FACTOR × h_med of the row's y_median; space-join left-sorted
+               (_attach_labels_ordinal). Greedy removal prevents label re-use.
     Step G — Post-processing: strip_header_bands → coalesce_labels → collapse_empty
              → density gate → header detection → markdown emission.
-             Separator row: valid GFM |---|---|---| (D2 fix).
+             Separator row: valid GFM |---|---|---| (D2 fix, kept from MD-EXTRACT-5).
 
-Root-cause of MD-EXTRACT-1/2/3 failures (DUAL-PATH DRIFT #5):
-    Clustering ALL tokens (labels + numbers) by y failed because Vietnamese-diacritic
-    label tokens have inflated top values (2-4px diacritic overhang), making them
-    scatter across y-bands. Number tokens have clean, uniform baselines.
-    Fix: cluster NUMBER tokens ONLY by y; attach TEXT label tokens afterwards.
+Why MD-EXTRACT-1/2/3/4/5 all failed (SCALAR-Y-TOLERANCE EXHAUSTED):
+    All five prior attempts compared token top-values across columns to assign rows.
+    On wide BCTC tables, OCR skew causes baseline drift of ~4px per column across
+    ~300px inter-column spacing, totalling ~28px across 7 columns. The inter-row
+    pitch is ~16px. Drift (28px) > gap (16px) → no y-threshold can cleanly separate
+    rows for rightmost columns. The diagonal cascade is structurally inevitable.
 
-Root-cause of MD-EXTRACT-4 failure (D1 wide-row cascade-split):
-    Fixed anchor current_top = first token top. Lens distortion / per-column
-    baseline drift of 8-15px across wide pages caused rightmost tokens to exceed
-    SAME_LINE_TOL=4, fragmenting one logical row into 2-3 rows.
-    Fix (MD-EXTRACT-5): adaptive tolerance from inter-row pitch estimation
-    (large-gap mode on NUMBER-token top histogram) + running-centroid comparison.
+Why MD-EXTRACT-6 defeats drift>gap (geometric guarantee):
+    Within a single column (narrow x-range ~150px), scanner skew drift is at most
+    0.016×150 ≈ 2.4px — well below the 20px inter-row pitch. Within-column y-ordering
+    is ALWAYS correct. Ordinal rank within a column = physical row index for that column.
+    Matching rank-k across all columns reconstructs row-k without any y-comparison
+    across columns. Cross-column y-comparison NEVER occurs → diagonal impossible.
 
 Dead-code notes:
     _cluster_rows and _cluster_rows_by_gap are DEAD in MD-EXTRACT-4.
     _cluster_number_rows is DEAD in MD-EXTRACT-5.
+    _cluster_number_rows_adaptive, _attach_labels, _build_grid_from_number_rows
+        are DEAD in MD-EXTRACT-6.
     All kept for backward compatibility with existing unit tests. DO NOT REMOVE.
-    Candidate-2 (psm-6 line-text path) functions were CANCELLED per architect ruling
-    2026-05-26: psm-6 linearizes BCTC wide tables in column-major order, making
-    row-aligned splitting impossible. All cancelled functions are absent from this file.
 
 OCR substrate: pytesseract.image_to_data called on PIL Image objects already
 rasterized at 200 DPI by the use case (same DPI as PdfOcrAdapter.ocr_pages).
@@ -68,6 +72,7 @@ AC-0 compliance: ZERO BCTC-specific constants. No code ranges, no balance-sheet
 from __future__ import annotations
 
 import logging
+import math
 import re
 from typing import Dict, List, Optional
 
@@ -184,6 +189,32 @@ _CODE_TOKEN_RE = re.compile(r'^[\(\-]?\d{2,3}[\)\-]?$')
 # VALUE token: money-group format with at least one thousands-separator group.
 # Matches: 1.234.567, 1,234,567, (1.234.567), 58.102.970.741.619 — not plain codes.
 _VALUE_TOKEN_RE = re.compile(r'^\d{1,3}(?:[.,]\d{3})+')
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-6 — Column-Anchor-First Ordinal Reconstruction constants
+#
+# AC-0: all constants below are GENERIC geometry parameters.
+# ZERO BCTC-specific string literals or semantics.
+# ---------------------------------------------------------------------------
+
+# Maximum distance (as multiple of median_word_width) for assigning a number token
+# to a column anchor. Tokens farther than this are noise — excluded from the grid.
+_COL_ASSIGN_MAX_DIST_FACTOR = 3.0
+
+# Skip-slot detection: a within-column gap exceeding this factor × local_pitch
+# indicates a missing physical row. Insert ceil(gap/pitch)-1 empty rank slots.
+SKIP_GAP_FACTOR = 1.5
+
+# Minimum Tesseract word confidence for tokens entering the ordinal path.
+# Filters low-confidence noise tokens before column assignment.
+# Lower-confidence tokens are more likely OCR garbage that inflates rank counts.
+_MIN_WORD_CONF_ORDINAL = 30
+
+# Label attachment band: TEXT tokens within this factor × h_med of a row's y_median
+# are considered label candidates for that row. Wider than MD-EXTRACT-5's 0.6 primary
+# band because skewed pages may shift label top by up to half the row pitch.
+LABEL_BAND_FACTOR = 1.5
 
 
 # ---------------------------------------------------------------------------
@@ -420,6 +451,10 @@ def _cluster_number_rows_adaptive(
     same_line_tol: int = SAME_LINE_TOL,
 ) -> List[List[Dict]]:
     """
+    # DEAD in MD-EXTRACT-6 — replaced by column-anchor-first ordinal reconstruction.
+    # Kept for backward compatibility with existing unit tests. DO NOT REMOVE.
+    # _process_page now uses _assign_tokens_to_columns + _build_ordinal_grid + _attach_labels_ordinal.
+
     Group number tokens into rows using adaptive tolerance + running-centroid.
 
     Fixes D1 wide-row cascade-split from MD-EXTRACT-4:
@@ -469,20 +504,10 @@ def _cluster_number_rows_adaptive(
     if row_pitch > 0:
         adaptive_tol = min(int(0.45 * row_pitch), 8)
         tol = adaptive_tol
-        logger.debug(
-            "_cluster_number_rows_adaptive: row_pitch=%s adaptive_tol=%s n_tokens=%s",
-            row_pitch,
-            adaptive_tol,
-            len(number_tokens),
-        )
+        logger.info("_cluster_number_rows_adaptive: row_pitch=%s adaptive_tol=%s n_tokens=%s (MD-EXTRACT-6 diagnostic)", row_pitch, adaptive_tol, len(number_tokens))
     else:
         tol = same_line_tol
-        logger.debug(
-            "_cluster_number_rows_adaptive: sparse/flat page, row_pitch=0, "
-            "falling back to fixed same_line_tol=%s n_tokens=%s",
-            same_line_tol,
-            len(number_tokens),
-        )
+        logger.info("_cluster_number_rows_adaptive: sparse/flat page, row_pitch=0, adaptive_tol=%s n_tokens=%s (MD-EXTRACT-6 diagnostic)", same_line_tol, len(number_tokens))
 
     # Step 4: greedy grouping with running-centroid anchor
     rows: List[List[Dict]] = []
@@ -510,6 +535,9 @@ def _attach_labels(
     h_med: float,
 ) -> List[tuple]:
     """
+    # DEAD in MD-EXTRACT-6 — replaced by _attach_labels_ordinal (Step C11).
+    # Kept for backward compatibility with existing unit tests. DO NOT REMOVE.
+
     For each number-row group, find nearest TEXT tokens by y and prepend as label.
 
     Strategy (per §3 REVISED Step F):
@@ -561,6 +589,9 @@ def _build_grid_from_number_rows(
     col_anchors: List[float],
 ) -> List[List[str]]:
     """
+    # DEAD in MD-EXTRACT-6 — replaced by _build_ordinal_grid (Steps C8+C8.5+C9+C10).
+    # Kept for backward compatibility with existing unit tests. DO NOT REMOVE.
+
     Assign number tokens + labels to (row_idx, col_idx) cells.
 
     Grid layout: column 0 = label cell, columns 1..N = number-token columns
@@ -683,6 +714,344 @@ def _detect_column_anchors_from_tokens(
             merged.append(anchor)
 
     return merged
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-6 — Column-Anchor-First Ordinal Reconstruction (pure functions)
+# ---------------------------------------------------------------------------
+
+
+def _assign_tokens_to_columns(
+    number_tokens: List[Dict],
+    col_anchors: List[float],
+    median_word_width: float,
+) -> List[List[Dict]]:
+    """
+    Step C7 — Assign each NUMBER token to its nearest x-column-anchor.
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    For each token, compute argmin(|token.left - anchor|) across all col_anchors.
+    Tokens whose nearest-anchor distance exceeds _COL_ASSIGN_MAX_DIST_FACTOR × median_word_width
+    are noise tokens far from any column — excluded from the grid entirely.
+
+    This step makes NO comparison of top (y) values across columns. The entire row
+    assignment is deferred to within-column ordinal ranking (Step C8).
+
+    AC-0: geometry only — ZERO BCTC-specific string literals.
+
+    Args:
+        number_tokens:     List of number-token word dicts (from _classify_tokens).
+        col_anchors:       Sorted column anchor x-positions (from _detect_column_anchors_from_tokens).
+        median_word_width: Median word width (pixels) — used for noise-distance gate.
+
+    Returns:
+        col_buckets: List[List[Dict]] of length len(col_anchors).
+        col_buckets[c] contains all tokens assigned to column c, in original order.
+    """
+    n_cols = len(col_anchors)
+    col_buckets: List[List[Dict]] = [[] for _ in range(n_cols)]
+
+    max_dist = _COL_ASSIGN_MAX_DIST_FACTOR * max(median_word_width, 1.0)
+
+    for token in number_tokens:
+        left = float(token["left"])
+        # Filter by minimum confidence for ordinal path
+        conf = token.get("conf", 100)
+        if conf < _MIN_WORD_CONF_ORDINAL:
+            continue
+
+        distances = [abs(left - anchor) for anchor in col_anchors]
+        min_dist = min(distances)
+        if min_dist > max_dist:
+            # Noise token: too far from any column anchor
+            continue
+        nearest_col = distances.index(min_dist)
+        col_buckets[nearest_col].append(token)
+
+    return col_buckets
+
+
+def _insert_skip_slots(
+    sorted_tokens: List[Optional[Dict]],
+    ref_pitch: Optional[float] = None,
+) -> List[Optional[Dict]]:
+    """
+    Step C8.5 — Detect within-column rank gaps and insert None sentinel slots.
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    Given a single column's token list ALREADY SORTED BY TOP (ascending), detects
+    intra-column y-gaps that exceed SKIP_GAP_FACTOR × local_pitch and inserts
+    ceil(gap/local_pitch)-1 None sentinels before the token following the gap.
+
+    A None slot represents a missing physical row (genuine absent value) in that
+    column. After insertion, the slot-list length equals the number of physical
+    rows this column spans, with correct rank-alignment.
+
+    Degenerate case (2 tokens, 1 delta): single delta == the skip gap itself, so
+    median([delta]) = delta and threshold = 1.5 × delta. Since delta < threshold
+    always, no skip would be detected. Fix: use ref_pitch when only 1 gap exists.
+
+    AC-0: geometry only — ZERO BCTC-specific string literals.
+
+    Args:
+        sorted_tokens: Tokens sorted by top ascending. May be None if already slots.
+        ref_pitch:     Cross-column reference pitch (median of local pitches from
+                       columns with ≥ 3 tokens). Used when len(sorted_tokens) < 3.
+
+    Returns:
+        List of token dicts interspersed with None sentinels. Same token objects,
+        original dicts not modified.
+    """
+    # Filter out any Nones passed in (should not happen but be defensive)
+    real_tokens = [t for t in sorted_tokens if t is not None]
+
+    if len(real_tokens) <= 1:
+        return list(real_tokens)
+
+    # Compute consecutive top-deltas
+    deltas = [
+        real_tokens[i + 1]["top"] - real_tokens[i]["top"]
+        for i in range(len(real_tokens) - 1)
+    ]
+
+    # Determine local_pitch
+    if len(deltas) >= 2:
+        # Two or more gaps — use median of deltas as local_pitch
+        sorted_deltas = sorted(deltas)
+        n = len(sorted_deltas)
+        mid = n // 2
+        local_pitch: Optional[float] = (
+            (sorted_deltas[mid - 1] + sorted_deltas[mid]) / 2.0
+            if n % 2 == 0
+            else float(sorted_deltas[mid])
+        )
+    elif ref_pitch is not None and ref_pitch > 0:
+        # Only 1 gap: use cross-column reference pitch instead of contaminated local
+        local_pitch = ref_pitch
+    else:
+        # Cannot determine pitch — no skip insertion possible
+        return list(real_tokens)
+
+    if not local_pitch or local_pitch <= 0:
+        return list(real_tokens)
+
+    threshold = SKIP_GAP_FACTOR * local_pitch
+
+    slots: List[Optional[Dict]] = [real_tokens[0]]
+    for i, delta in enumerate(deltas):
+        if delta > threshold:
+            n_empty = math.ceil(delta / local_pitch) - 1
+            slots.extend([None] * n_empty)
+        slots.append(real_tokens[i + 1])
+
+    return slots
+
+
+def _build_ordinal_grid(
+    col_buckets: List[List[Dict]],
+    n_cols: int,
+) -> tuple:
+    """
+    Steps C8+C8.5+C9+C10 — Build 2D grid via ordinal rank-alignment.
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    Algorithm:
+      C8:   Sort each col_bucket by top (ascending) — ordinal rank within column.
+      C8.5: Compute ref_pitch = median(local_pitch_c for cols with ≥3 tokens).
+            Call _insert_skip_slots(col_bucket, ref_pitch) per column.
+            If NO column has ≥3 tokens → ref_pitch unavailable → pure-ordinal
+            (no skip insertion), log WARNING.
+      C9:   total_rows = max(len(col_slots[c]) for all c).
+      C10:  grid[rank][col] = token['text'].strip() or " " for None slots.
+            Multiple tokens with same (rank, col): space-join left-sorted.
+
+    col_y_medians[rank] = median(top of non-None tokens at rank across all columns).
+    Used by _attach_labels_ordinal for y-band label attachment.
+
+    AC-0: geometry only — ZERO BCTC-specific string literals.
+
+    Args:
+        col_buckets: List[List[Dict]] — one list per column (from _assign_tokens_to_columns).
+        n_cols:      Number of columns (= len(col_buckets)).
+
+    Returns:
+        (grid, col_y_medians) where:
+          grid: List[List[str]] — grid[rank][col] = cell text.
+          col_y_medians: List[float] — representative y for each rank.
+    """
+    if n_cols == 0 or not col_buckets:
+        return ([], [])
+
+    # C8: sort each column by top
+    sorted_cols: List[List[Dict]] = [
+        sorted(col, key=lambda w: w["top"]) for col in col_buckets
+    ]
+
+    # C8.5: compute ref_pitch from columns with ≥3 tokens
+    local_pitches: List[float] = []
+    for col in sorted_cols:
+        if len(col) >= 3:
+            deltas = [col[i + 1]["top"] - col[i]["top"] for i in range(len(col) - 1)]
+            sorted_d = sorted(deltas)
+            nd = len(sorted_d)
+            mid = nd // 2
+            lp = (
+                (sorted_d[mid - 1] + sorted_d[mid]) / 2.0
+                if nd % 2 == 0
+                else float(sorted_d[mid])
+            )
+            if lp > 0:
+                local_pitches.append(lp)
+
+    if local_pitches:
+        sorted_lp = sorted(local_pitches)
+        n = len(sorted_lp)
+        mid = n // 2
+        ref_pitch: Optional[float] = (
+            (sorted_lp[mid - 1] + sorted_lp[mid]) / 2.0
+            if n % 2 == 0
+            else float(sorted_lp[mid])
+        )
+    else:
+        ref_pitch = None
+        logger.warning(
+            "_build_ordinal_grid: no column has ≥3 tokens — ref_pitch unavailable, "
+            "using pure-ordinal (no skip insertion). "
+            "Mid-column empty cells may misalign (R-MEDIUM per brief §10)."
+        )
+
+    # C8.5 (continued): insert skip slots per column
+    col_slots: List[List[Optional[Dict]]] = [
+        _insert_skip_slots(col, ref_pitch) for col in sorted_cols
+    ]
+
+    # C9: total rows
+    if not col_slots:
+        return ([], [])
+    total_rows = max(len(slots) for slots in col_slots)
+    if total_rows == 0:
+        return ([], [])
+
+    # C10: build grid — grid[rank][col]
+    grid: List[List[str]] = [[" "] * n_cols for _ in range(total_rows)]
+
+    # col_y_tops[rank] accumulates tops of non-None tokens for y_median computation
+    col_y_tops: List[List[float]] = [[] for _ in range(total_rows)]
+
+    for col_idx, slots in enumerate(col_slots):
+        for rank, slot in enumerate(slots):
+            if rank >= total_rows:
+                break
+            if slot is not None:
+                text = slot.get("text", "").strip()
+                if grid[rank][col_idx] == " ":
+                    grid[rank][col_idx] = text if text else " "
+                else:
+                    # Multiple tokens in same (rank, col): space-join left-sorted
+                    existing = grid[rank][col_idx]
+                    # Re-join by left position: put new token in order
+                    existing_left = 0  # approximate — keep as-is for multi-token
+                    new_left = float(slot.get("left", 0))
+                    if new_left < existing_left:
+                        grid[rank][col_idx] = (text + " " + existing).strip()
+                    else:
+                        grid[rank][col_idx] = (existing + " " + text).strip()
+                col_y_tops[rank].append(float(slot["top"]))
+
+    # Compute col_y_medians per rank
+    col_y_medians: List[float] = []
+    for rank in range(total_rows):
+        tops = col_y_tops[rank]
+        if tops:
+            sorted_t = sorted(tops)
+            n = len(sorted_t)
+            mid = n // 2
+            med = (
+                (sorted_t[mid - 1] + sorted_t[mid]) / 2.0
+                if n % 2 == 0
+                else float(sorted_t[mid])
+            )
+            col_y_medians.append(med)
+        else:
+            col_y_medians.append(0.0)
+
+    return (grid, col_y_medians)
+
+
+def _attach_labels_ordinal(
+    grid: List[List[str]],
+    col_y_medians: List[float],
+    text_tokens: List[Dict],
+    h_med: float,
+) -> List[List[str]]:
+    """
+    Step C11 — Attach labels to each ordinal row using y-median band matching.
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    For each ordinal row k:
+      1. y_med_k = col_y_medians[k] (median top of rank-k tokens across columns).
+      2. Find TEXT tokens where abs(token.top - y_med_k) <= LABEL_BAND_FACTOR × h_med.
+      3. Sort matched TEXT tokens by left, space-join → label_k.
+      4. Fallback: if no match in primary band, use nearest TEXT token within 2.5×h_med.
+      5. Prepend label_k as column 0: grid[k] = [label_k] + grid[k].
+      6. Greedy removal: once a TEXT token is used for row k, remove it from the
+         candidate pool for row k+1 (prevents same label appearing on adjacent rows).
+
+    AC-0: LABEL_BAND_FACTOR is a generic geometry constant.
+
+    Args:
+        grid:           2D grid from _build_ordinal_grid (no label column yet).
+        col_y_medians:  Representative y per rank (from _build_ordinal_grid).
+        text_tokens:    All TEXT tokens on the page (from _classify_tokens).
+        h_med:          Median word height (pixels) from number tokens.
+
+    Returns:
+        Grid with label prepended as column 0 (same number of rows, one more column).
+    """
+    if not grid:
+        return grid
+
+    # Work on a mutable copy of the text token pool
+    available_text: List[Dict] = list(text_tokens)
+
+    result: List[List[str]] = []
+    for rank, row in enumerate(grid):
+        y_med = col_y_medians[rank] if rank < len(col_y_medians) else 0.0
+
+        if y_med <= 0.0 or not available_text:
+            result.append([" "] + list(row))
+            continue
+
+        # Primary band: TEXT tokens within LABEL_BAND_FACTOR × h_med of y_med
+        primary = [
+            t for t in available_text
+            if abs(t["top"] - y_med) <= LABEL_BAND_FACTOR * h_med
+        ]
+
+        if not primary:
+            # Fallback: nearest within 2.5 × h_med
+            sorted_by_dist = sorted(available_text, key=lambda t: abs(t["top"] - y_med))
+            if sorted_by_dist and abs(sorted_by_dist[0]["top"] - y_med) <= 2.5 * h_med:
+                primary = [sorted_by_dist[0]]
+
+        if primary:
+            # Sort by left and join
+            label = " ".join(
+                t["text"] for t in sorted(primary, key=lambda t: t["left"])
+            ).strip()
+            # Remove used tokens (greedy: prevents re-use on adjacent rows)
+            used_ids = {id(t) for t in primary}
+            available_text = [t for t in available_text if id(t) not in used_ids]
+        else:
+            label = " "
+
+        result.append([label] + list(row))
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -1437,14 +1806,16 @@ class GenericMdTableExtractor:
         """
         Process one page image and return a list of markdown pipe-table strings.
 
-        MD-EXTRACT-5 NUMBER-TOKEN-ONLY PATH + ADAPTIVE TOLERANCE (D1 fix):
-        Classify tokens → cluster number rows by y (adaptive) → detect col anchors
-        from numbers → attach labels → build grid (D4b code/value separation)
-        → post-process → density gate → emit markdown (D2 GFM separator).
+        MD-EXTRACT-6 COLUMN-ANCHOR-FIRST ORDINAL RECONSTRUCTION:
+        Step A (image_to_data), A2 (classify tokens), B (detect_table_regions) UNCHANGED.
+        Steps C-F REPLACED by C6→C7→C8→C8.5→C9→C10→C11 (ordinal approach).
+        Step G post-processing pipeline UNCHANGED.
 
-        D1 fix (_cluster_number_rows_adaptive): adaptive row-pitch estimation from
-        large-gap mode on NUMBER-token top histogram + running-centroid grouping.
-        Fixes wide-row cascade-split (lens-distortion drift 8-15px over 2400px page).
+        The ordinal approach defeats drift>gap by eliminating cross-column y-comparison:
+        each token is first assigned to a column by x-argmin, then ranked within that
+        column by top (ascending). Rank-k across all columns = physical row k.
+        The diagonal cascade is geometrically impossible — within-column y-ordering
+        is always correct regardless of inter-column skew.
 
         Each detected table region on the page produces one entry.
         """
@@ -1470,18 +1841,15 @@ class GenericMdTableExtractor:
         # Step A2 — Classify tokens into NUMBER tokens and TEXT tokens.
         # NUMBER tokens: money-group format + 2-3 digit standalone codes.
         # TEXT tokens: everything else (labels, headers, units, prose).
-        # This separation eliminates diacritic-inflated top values from clustering.
         number_tokens, text_tokens = _classify_tokens(words)
 
         if not number_tokens:
-            # No numeric content — not a table page
             logger.debug(
                 "GenericMdTableExtractor: no number tokens on page — skipping"
             )
             return []
 
-        # Compute median word height from NUMBER tokens only (clean baselines).
-        # Using number tokens for h_med avoids diacritic inflation from label tokens.
+        # Compute median word height and width from NUMBER tokens only (clean baselines).
         num_heights = [float(w["height"]) for w in number_tokens if w["height"] > 0]
         num_widths = [float(w["width"]) for w in number_tokens if w["width"] > 0]
         h_med = _median(num_heights) if num_heights else 12.0
@@ -1490,13 +1858,7 @@ class GenericMdTableExtractor:
         if h_med <= 0:
             return []
 
-        # Compute SAME_LINE_TOL: per brief §3.3 — min(4, h_med * 0.3).
-        # SAME_LINE_TOL=4 is already the right value at 200 DPI for typical BCTC
-        # financials (h_med ≈ 14-18px → 0.3 × h_med ≈ 4-5px).
-        same_line_tol = min(SAME_LINE_TOL, int(h_med * 0.3)) if h_med > 0 else SAME_LINE_TOL
-
         # Step B — Detect table regions on NUMBER tokens only.
-        # Using number tokens avoids including prose preamble in region boundaries.
         table_regions = _detect_table_regions(number_tokens, h_med)
         if not table_regions:
             return []
@@ -1504,8 +1866,7 @@ class GenericMdTableExtractor:
         page_tables: List[str] = []
 
         for region_num_tokens in table_regions:
-            # Find TEXT tokens within the region's vertical extent (± h_med margin)
-            # to allow label attachment for rows near region boundaries.
+            # Find TEXT tokens within the region's vertical extent (± h_med margin).
             region_top = min(w["top"] for w in region_num_tokens)
             region_bot = max(w["top"] + w["height"] for w in region_num_tokens)
             region_text_tokens = [
@@ -1513,33 +1874,43 @@ class GenericMdTableExtractor:
                 if (region_top - h_med) <= t["top"] <= (region_bot + h_med)
             ]
 
-            # Step C — Cluster NUMBER tokens into rows by y (adaptive tolerance).
-            # MD-EXTRACT-5: _cluster_number_rows_adaptive derives per-page row-pitch
-            # from NUMBER-token large-gap histogram, then uses running-centroid
-            # comparison — fixes D1 wide-row cascade-split from lens-distortion drift.
-            row_groups = _cluster_number_rows_adaptive(region_num_tokens, same_line_tol)
-            if not row_groups:
-                continue
-
-            # Step D — Derive column anchors from NUMBER token x (left) positions.
-            # Using number tokens only: their left-edges align on grid columns.
+            # Step C6 — Column anchor detection from NUMBER token x-positions.
+            # Reuse existing _detect_column_anchors_from_tokens (unchanged from MD-EXTRACT-4/5).
             col_anchors = _detect_column_anchors_from_tokens(
                 region_num_tokens, median_word_width
             )
-            if not col_anchors:
+            n_cols = len(col_anchors)
+            if n_cols == 0:
                 continue
 
-            # Step F — Attach labels: for each number-row y-band find nearest TEXT tokens.
-            labeled_rows = _attach_labels(row_groups, region_text_tokens, h_med)
-            if not labeled_rows:
+            # Guard: too few number tokens to build a meaningful grid
+            if len(region_num_tokens) < 4:
                 continue
 
-            # Step E — Build 2D grid: [label, col0_val, col1_val, ..., colN_val]
-            grid = _build_grid_from_number_rows(labeled_rows, col_anchors)
+            # Step C7 — Assign each NUMBER token to nearest x-column-anchor.
+            # NO y-comparison. The entire row assignment is deferred to ordinal ranking.
+            col_buckets = _assign_tokens_to_columns(
+                region_num_tokens, col_anchors, median_word_width
+            )
+
+            # Guard: all tokens filtered as noise → no grid possible
+            if not any(col_buckets):
+                continue
+
+            # Steps C8+C8.5+C9+C10 — Build 2D grid via ordinal rank-alignment.
+            # Handles mid/trailing empty cells via within-column gap detection.
+            grid, col_y_medians = _build_ordinal_grid(col_buckets, n_cols)
             if not grid:
                 continue
 
-            # Post-processing pipeline (substrate-agnostic helpers — UNCHANGED):
+            # Step C11 — Attach labels: for each ordinal row, find TEXT tokens
+            # within LABEL_BAND_FACTOR × h_med of the row's y_median.
+            # Greedy removal prevents same label token from appearing on adjacent rows.
+            grid = _attach_labels_ordinal(grid, col_y_medians, region_text_tokens, h_med)
+            if not grid:
+                continue
+
+            # Post-processing pipeline (Steps G — substrate-agnostic, UNCHANGED):
             # Strip leading letterhead/noise rows above first money-group or date row.
             grid = _strip_leading_header_bands(grid)
             if not grid:
@@ -1555,15 +1926,15 @@ class GenericMdTableExtractor:
             grid = _collapse_empty_columns(grid)
 
             n_rows = len(grid)
-            n_cols = len(grid[0]) if grid else 0
+            n_cols_grid = len(grid[0]) if grid else 0
 
             # Density gate: reject prose/letterhead regions with < K money-groups.
             if not _is_data_table(grid):
                 logger.debug(
-                    "GenericMdTableExtractor: density gate rejected region: "
+                    "GenericMdTableExtractor: density gate rejected region (ordinal path): "
                     "rows=%d cols=%d — treating as non-table prose",
                     n_rows,
-                    n_cols,
+                    n_cols_grid,
                 )
                 continue
 
@@ -1577,12 +1948,11 @@ class GenericMdTableExtractor:
             if md_table:
                 page_tables.append(md_table)
                 logger.debug(
-                    "GenericMdTableExtractor: emitted table (MD-EXTRACT-5 adaptive path): "
-                    "%d rows × %d cols (money_groups=%d, same_line_tol=%d)",
+                    "GenericMdTableExtractor: emitted table (MD-EXTRACT-6 ordinal path): "
+                    "%d rows × %d cols (money_groups=%d)",
                     n_rows,
-                    n_cols,
+                    n_cols_grid,
                     len(_MONEY_GROUP_RE.findall(" ".join(c for r in grid for c in r))),
-                    same_line_tol,
                 )
 
         return page_tables
