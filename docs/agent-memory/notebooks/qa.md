@@ -1,5 +1,70 @@
 # QA — Notebook
 
+## cycle-130 · 2026-05-27 · PEK-QA RE-RUN (G9 gate — commit 9ab93889, image 3b4526c0) — FAIL / CHANGES_REQUESTED
+
+**Task:** PEK-QA re-run after PEK-DEP-RECONCILE fix (commit 9ab93889) | **Verdict:** CHANGES_REQUESTED
+
+```
+date: 2026-05-27T22:47Z
+type: sprint-qa-gate (PEK-INTEGRATE re-run)
+report_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (FPT Q4 2025)
+report: reports/TASK_REPORT_PEK-QA.md
+commit_under_test: 9ab93889
+image_sha: 3b4526c0…
+
+static_gates:
+  git_pristine_PEK_subtree: PASS (git -C PDF-Extract-Kit diff = empty)
+  frozen_surfaces: PASS (text_table_extractor.py + sandbox/runner.py = 0-diff)
+  unit_tests: 629/629 PASS (host venv, excluding integration)
+  scenario_tests_pek: 10/10 PASS (prior patch-target blocker FIXED)
+  ddd_fence_a: KEPT
+  ddd_fence_b: KEPT
+  security_process_env: 0 matches
+  security_secrets: 0 matches
+  smoke_gate_in_container: PASS (numpy 2.2.6 / cv2 4.13.0 / paddleocr 2.10.0 / doclayout_yolo OK / torch 2.5.1+cpu / pek-native-imports: ALL OK)
+  prior_blocker_1_numpy_abi: FIXED (numpy 2.2.6, cv2 4.12.0.88 — numpy-2 native)
+  prior_blocker_2_patch_target: FIXED (10/10 scenario tests pass)
+  market_hours_layer1_cron: PASS (CRON_BCTC_REPARSE_JOB=0 21 * * *)
+  market_hours_layer2_http: PASS (handler code confirmed at handlers.py:404)
+  market_hours_state: market CLOSED (22:47 UTC Tuesday) → 202 returned correctly
+
+sentinel_extraction:
+  trigger: POST /pek-extract → HTTP 202 (guard passed)
+  crash: ModuleNotFoundError: No module named 'unimernet'
+  crash_path: _load_pek_models → from pdf_extract_kit.tasks.layout_detection import LayoutDetectionTask
+              → tasks/__init__.py:3 → FormulaRecognitionTask → formula_recognition/__init__.py
+              → models/unimernet.py:9 → import unimernet.tasks → ModuleNotFoundError
+  bctc_layout_units_after: 0
+  bctc_page_zones_after: 0
+  rows_produced: 0
+  row_quality_verdict: UNTESTABLE (crash before any output)
+
+fleet_ram: ~2.6 GiB of 8 GiB cap (models never loaded, cold-start only)
+
+blocking_issues:
+  1. pdf_extract_kit/tasks/__init__.py:3 (PRISTINE — DO NOT EDIT)
+     Eagerly imports FormulaRecognitionTask → unimernet (not installed, intentionally excluded)
+     ANY import of pdf_extract_kit.tasks.* triggers this chain
+     Smoke gate does NOT test PEK task imports → build passes green, runtime crashes
+     Fix class (architect to decide — fixer ceiling hit):
+       A: pip install unimernet (unknown RAM, GPU-oriented)
+       B: bypass pdf_extract_kit.tasks entirely, import doclayout_yolo + paddleocr directly
+       C: stub unimernet package (empty, satisfies eager import)
+
+verdict: FAIL — CHANGES_REQUESTED
+round: 3 (fixer ceiling hit — ≥2 fix commits on apps/pdf-extractor)
+next: architect (root-cause review of PEK import chain) → dev-pdf-extractor implements fix → ops rebuild → qa re-run
+```
+
+key_learnings:
+  - pdf_extract_kit/tasks/__init__.py is an eager-import trap: importing ANY task class triggers ALL tasks including formula_recognition which needs unimernet
+  - Build-time smoke gates must test the ACTUAL import path used at runtime (not just the leaf packages)
+  - Smoke gate missing: `from pdf_extract_kit.tasks.layout_detection import LayoutDetectionTask` — this one line would have caught the crash at build time
+  - The pattern to avoid: importing from a package whose __init__.py has eager sibling imports that require missing deps
+  - Fix options are architecturally non-trivial because the pristine-invariant prohibits editing PEK source; dev must work around PEK's import structure
+
+---
+
 ## cycle-129 · 2026-05-27 · PEK-QA (G9 gate — PEK-INTEGRATE sentinel extraction) — FAIL / CHANGES_REQUESTED
 
 **Task:** PEK-QA — G9 gate on PEK-IMPL-OCR (commit efd23447) via FPT Q4 2025 sentinel | **Verdict:** CHANGES_REQUESTED
