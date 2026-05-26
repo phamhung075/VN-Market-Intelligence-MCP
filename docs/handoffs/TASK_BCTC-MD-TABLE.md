@@ -1735,3 +1735,40 @@ I independently re-traced the §MD-EXTRACT-9 design against LIVE code (not trust
 5. **CARRY-FORWARD (all BLOCKING):** AC-3F `text_table_extractor.py` 0-byte diff. AC-0 zero BCTC string semantics in the 2 new constants + 2 new functions (grep-proof per §9.7). Fence-A no `from application`/`from interface` imports. Privacy local-only, zero network egress in new functions. Frozen surfaces untouched (dashboard {index.html,traces.js,trust-contract.spec.js,g9-trust-contract.png}, sandbox/runner.py, pilot-status-pdf-extractor.json, all mcp-server files). Leave ALL files UNSTAGED — main terminal commits. Acceptance gate = LIVE direct-`market.db` render (NOT inspect endpoint, NOT unit tests alone), single doc `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, NEVER batch.
 
 **NEXT:** dev-pdf-extractor (MD-EXTRACT-9 implementation per brief §9.1-§9.11 + FLAGS A-E above). Goal STILL ARMED — income LABELS not yet clean on live.
+
+---
+
+## [Main-Terminal] MD-EXTRACT-9 IMPL VERIFIED + COMMITTED (2026-05-26)
+
+dev-pdf-extractor returned. I re-reviewed the diff (not the RETURN) and re-ran pytest myself in `.venv`. **VERDICT: APPROVED, committed.** Commits: work `7e6bff6a` (generic_md_table_extractor.py +262, test +415), dev notebook `25ed262d` (separate).
+
+**Diff review (live source, not RETURN):**
+- 3 new functions present at expected lines: `_cluster_text_into_label_lines` (1187), `_exclude_pre_data_label_lines` (1246), `_attach_labels_by_rank` (1286). 2 new constants `_LABEL_LINE_GAP_PX=15` (270), `_LABEL_HEADER_MARGIN_PX=20` (274).
+- **FLAG-A SATISFIED:** `_attach_labels_ordinal` (1109) has ZERO diff hunks — left 100% untouched. dev added the NEW `_attach_labels_by_rank` per my flag (not in-place modify). The 12 `TestOrdinalReconstruction` tests pass unchanged (re-ran: 34 pass across the 4 classes).
+- **FLAG-D APPLIED:** `_cluster_text_into_label_lines` uses running-min-top anchor (line 1232 `current_line_min_top = min(...)`), not strict previous-token — the baseline-slope-robust variant I requested.
+- `_attach_labels_by_rank` body confirmed: `data_label_lines[k] ↔ grid[k]` by direct index, NO y-distance comparison; per-rank code_note re-attach within `_LABEL_LINE_GAP_PX*2`; count-mismatch handled both directions (extra value rows → `label=" "`; extra label lines → empty-value rows).
+- Integration (`_process_page` 2362-2395): C10.5 clusters `region_text_tokens` → computes per-line y-medians → C10.6 excludes via `first_value_top` (in scope from 2084) → C10.7 `_attach_labels_by_rank`. Old `label_pool`/`_attach_labels_ordinal` call at this site fully replaced.
+- **FLAG-B SATISFIED:** fixtures `_LIVE_LINE1_TOKENS`/`_LIVE_LINE2_TOKENS` (test lines 3230-3248) are the verbatim live FPT page-8 diagnostic tokens (exact tops 488-496 / 522-524, exact lefts, exact texts per brief §9.8). `test_old_band_logic_merges_both_lines_into_one_cell` (3328+) reproduces the LIVE-VERIFY-8 over-merge under the OLD band — proving fixture fidelity (not a synthetic idealization).
+
+**Gates (re-run by me):** AC-3F text_table_extractor.py 0-byte diff ✅ | AC-0 all `segment` greps are comments/docstrings only, zero in logic ✅ | Fence-A zero app/interface imports ✅ | Privacy zero network/external-API refs ✅ | **466 unit tests pass in .venv (independent re-run)** ✅. Pre-existing snapshot files in the zone (test_financial_validation.py, g9-trust-contract.png, services.py, mock_echo.py + untracked spike/_deprecated junk) NOT from this task → excluded by explicit-path staging. Zero foreign files in each commit.
+
+**FLAG-C carries to live-verify:** ordinal pairing assumes `len(data_label_lines)==len(grid)`. I WILL re-check at LIVE-VERIFY-9 — if AC-9-PAIR drifts it is a count-mismatch escape → back to architect.
+
+---
+
+## [Main-Terminal → ops] MD-DEPLOY-9 — rebuild + single-doc re-extract + DIRECT-DB report
+
+**Why:** pdf-extractor builds from BUILD-CONTEXT (no source mount). A plain restart runs the STALE image. The MD-EXTRACT-9 fix (committed `7e6bff6a`) is INERT until the container is rebuilt.
+
+**Steps (sequential, single-doc — host kernel-panic risk; NEVER batch / NEVER run_bctc_batch_sweep):**
+1. `docker compose build pdf-extractor` then `docker compose up -d --no-deps --force-recreate pdf-extractor`.
+2. **Prove new code is live** before extracting: `docker compose exec -T pdf-extractor grep -c "_attach_labels_by_rank" /app/infrastructure/generic_md_table_extractor.py` → must be ≥2 (def + call site). Also confirm `grep -c "_LABEL_LINE_GAP_PX" ...` ≥3. If 0, the build used a stale layer — rebuild `--no-cache` and re-prove. DO NOT extract on a stale image.
+3. Re-extract the SINGLE FPT doc (NEVER batch):
+   - `POST http://localhost:5001/extract-md-tables` with report_id `e71f845d-ffa5-48f9-8f09-30ac2cd09c65` (path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`). Returns 202; OCR runs ~3-4 min via BackgroundTasks.
+   - Poll for completion by watching for a FRESH `bctc_md_tables` row (new `extracted_at` UTC, id > 10), NOT the `/api/bctc-inspect/md/{id}` endpoint (can be STALE).
+4. **Report via DIRECT DB query** (sqlite3 NOT in containers — use bun):
+   `docker compose exec -T mcp-server bun -e 'const db=require("bun:sqlite").Database; const d=new db("/app/data/market.db",{readonly:true}); const r=d.query("SELECT id,report_id,table_count,page_count,extracted_at,length(md_tables_json) AS json_len FROM bctc_md_tables ORDER BY extracted_at DESC LIMIT 3").all(); console.log(JSON.stringify(r,null,2));'`
+   Report the newest row id, table_count, page_count, extracted_at, json_len. Confirm extracted_at is AFTER the rebuild timestamp (fresh, not the prior MD-DEPLOY-8 row id=10).
+5. Leave all files UNSTAGED. Make NO code changes. Do NOT touch frozen surfaces. Local-only, no third-party API.
+
+**Hand back to:** Main-Terminal for AC-9 live-verify (direct market.db read of `md_tables_json`): AC-9-LABEL (income row-0 label = ONLY `Doanh thu bán hàng và cung cấp dịch vụ`, NO `Các khoản giảm trừ` interleave) + AC-9-PAIR (row-0 code-01 ↔ 20.258.866.135.395 family; row-1 code-02 ↔ 33.415.777.986 family; no ordinal drift) + AC-9-SEG-NOREGRESS (3 segment revenues on one pipe-row) + AC-9-BALANCE-NOREGRESS + AC-9-VALUE-NOREGRESS.
