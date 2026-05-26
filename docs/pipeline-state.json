@@ -1,10 +1,10 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "IDLE — ROLLOUT NOT COMPLETE. mcp-server Phase-2 plan CORRECTED 2026-05-25T22:00Z (architect P2-MCP-G9-CONTRACT-FIX). P2-H falsified assumptions fixed: inline-data model replaces addInitScript injection; assertion-5 re-specified as pure unit; sparkline-regression-tripwire.json must be deleted. P2-H needs corrective re-implementation (P2-H-FIX) before P2-I can proceed. Plan at docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-2-task-plan.md. frontend unchanged = AWAITING-USER-G9 (visual only, NO user command). WIP=0/2.",
-  "currentSprint": "mcp-server SCALE pilot — Phase-1 CLOSED (7/12 YES). Phase-2 plan CORRECTED 2026-05-25T22:00Z (P2-H-FIX required before P2-I). Corrected sequencing: P2-A→P2-G (done/planned) → P2-H-FIX (dev-mcp-server corrective re-impl: inline data, no addInitScript, delete tripwire, assertion-5 pure unit) → P2-I (G9 USER verbal — ONLY USER-gated step; PO verifies file:// real panels first) → P2-J/K/L/Z. frontend pilot = code QA-approved, AWAITING-USER-G9.",
-  "activeTaskId": "P2-H-FIX — dev-mcp-server must correct P2-H before P2-I can proceed. See corrected P2-H section in mcp-server-phase-2-task-plan.md. WIP=0/2.",
-  "nextAgent": "dev-mcp-server — implement P2-H-FIX: (1) inline trace+module data as <script type='application/json'> blocks in index.html; (2) remove fetch()/window.__MCP_* from dashboard JS; (3) delete sparkline-regression-tripwire.json; (4) update trust-contract.spec.js: remove addInitScript, re-spec assertion-5 as pure renderCard() unit call; (5) re-run npx playwright test; (6) commit regenerated playwright-verdict.json. Then po verifies file:// real panels before dispatching P2-I. See corrected P2-H + P2-I + Correction Log in mcp-server-phase-2-task-plan.md.",
-  "nextPrompt": "CORRECTED Phase-2 task plan at docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-2-task-plan.md. P2-H shipped with two falsified assumptions (addInitScript Potemkin gate + synthetic-RED fixture); P2-H-FIX required before P2-I. Dispatch dev-mcp-server RUN-SOLO for P2-H-FIX (see corrected P2-H section: inline-data model, no addInitScript, delete sparkline-regression-tripwire.json, assertion-5 pure unit). After P2-H-FIX AC-3 confirmed (file:// opens real panels), dispatch PO for P2-I (G9 USER verbal — ONLY USER-gated step, PO presents file:// dashboard showing 9 GREEN cards + 12 modules, user says YES verbally, NEVER ask user to run commands). After P2-I: dispatch qa for P2-J, then P2-K, P2-L, P2-Z per existing plan. After P2-Z close-gate: PO does atomic 12/12 flip + decisionMatrix. Only then does the rollout reach 11/11. Constraint: WIP=1 sequential, RUN-SOLO, no other scale terminal active.",
+  "status": "ROLLOUT COMPLETE — 11/11. mcp-server SCALE pilot CLOSED 2026-05-26T07:36Z (12/12 YES, verdict=scale) as the 11th and FINAL pilot of the 2026-05-22 three-tier deep-module rollout. qa P2-Z close-gate APPROVED 2026-05-26T07:30Z → PO Phase-3 atomic terminal flip. G9 verified via ops live-recheck (system-trust-is-system's-job), NOT user verbal sign-off. frontend pilot = code QA-approved, AWAITING-USER-G9 (visual only, NO user command) — a separate bookkeeping item, not a rollout blocker. WIP=0/2.",
+  "currentSprint": "DEEP-MODULE THREE-TIER ROLLOUT 11/11 COMPLETE (2026-05-22 brief). All 11 scale pilots terminal: technical-analysis, macro-indicators, stock-price, alert-engine, api-gateway, news-fetch, pdf-extractor, rag-service, kinh-dich (Go reboot), frontend(*), mcp-server. mcp-server was SOLO-LAST per charter. No active scale sprint.",
+  "activeTaskId": "NONE — rollout complete. mcp-server terminal close was the final atomic commit. WIP=0/2.",
+  "nextAgent": "NONE for the scale rollout. Residual maintenance (not rollout-blocking): (a) frontend AWAITING-USER-G9 visual confirmation; (b) SSOT stale-data refresh per mcp-server Phase-2 §Carried-Debt — project-stats.json cronJobCount 77→68 + testBaselinePass, system-map.json MCP toolCount 125→146; (c) DRIFT-2 kinh-dich endpoint wiring (dev-kinh-dich Go pilot).",
+  "nextPrompt": "Three-tier deep-module rollout is 11/11 COMPLETE. mcp-server SCALE pilot closed 12/12 YES verdict=scale (qa P2-Z APPROVED, PO Phase-3 atomic terminal flip 2026-05-26T07:36Z). No further scale-rollout dispatch required. Remaining items are maintenance: frontend user-visual-G9 (visual only, never ask user to run commands), SSOT stale-stat refresh (project-stats.json + system-map.json per mcp-server Phase-2 §Carried-Debt), and DRIFT-2 kinh-dich endpoint wiring (owned by dev-kinh-dich Go pilot). None block the rollout.",
   "news_fetch_pilot": {
     "phase": "terminal",
     "status": "DONE",
@@ -23,19 +23,22 @@
     "goalflip_rule": "§4.5 — all 12 flipped TBD/EARNED-PENDING→YES in ONE atomic terminal-close commit; matrix populated same commit"
   },
   "mcp_server_pilot": {
-    "phase": "1",
-    "status": "PHASE-1-COMPLETE (NOT terminal/DONE) — pilot stays ACTIVE",
-    "goalsEarned": 7,
-    "all_12_yes": false,
+    "phase": "terminal",
+    "status": "DONE",
+    "goalsEarned": 12,
+    "all_12_yes": true,
     "phase0": "CLOSED 2026-05-25T10:50Z (P0-MCP-EXIT)",
-    "phase1": "CLOSE-GATE APPROVED 2026-05-25T17:45Z (po P1-EXIT). Host-side build P1-A→P1-H + ops rebuild 0a617df1 + qa P1-MCP-QA PASS 3ea944b6. Earns 7/12.",
-    "phase2": "PLANNED 2026-05-25T17:55Z — architect P2-MCP-PLAN authored 13-task plan. Awaiting PO dispatch to dev-mcp-server RUN-SOLO. Plan: docs/architecture-briefs/2026-05-22-refactor/scale/mcp-server-phase-2-task-plan.md. Tasks: P2-A (pre-ci tag) → P2-B/C/D (G4 ESLint fence) → P2-E (G3 composition-root) → P2-F (G5a kinhDichWrapper _deprecated) → P2-G/H (G9 dashboard live panels + Playwright) → P2-I (G9 USER verbal — ONLY USER-gated step) → P2-J/K (G10 ≤2-cycle fix) → P2-L (G11 2-trial) → P2-Z (close-gate). nextAgent: pm/dev-mcp-server.",
-    "p1_exit_finding": "PO honest grade REJECTED the 12/12 dispatch premise. QA P1-MCP-QA PASS = Phase-1 close-gate (task P1-QA), not Phase-2 terminal. 7/12 YES (G1/G2/G5/G6/G7/G8/G12). 5 goals DEFER with zero evidence (G3/G4/G9/G10/G11) — all marked STILL-UNMET in architect's own Phase-1 plan §Goals Roadmap. NO 12/12 flip, NO decisionMatrix (schema forbids partial), NO DONE.",
-    "commits": ["195ef1a3 P1-A", "3bc85cf7 P1-B", "d053b0d4 P1-C", "d7f4129f P1-D", "9da207fc P1-E", "970f4b38 P1-F", "2148d2be P1-G", "a9212ad2 P1-H", "0a617df1 ops-rebuild", "3ea944b6 qa-gate-PASS"],
-    "anchor_tag": "mcp-server-pre-refactor @ 7d78abb1 (local-only)",
-    "decisionMatrix": {"speed": "TBD (needs G10+G11)", "trust": "TBD (needs G9)", "scale": "TBD (needs all-12)", "verdict": "TBD"},
-    "remaining": "architect authors mcp-server Phase-2 task plan → dev-mcp-server RUN-SOLO Phase-2 (G3/G4/G9/G10/G11 + G5a) → qa Phase-2 close-gate → PO 12/12 terminal atomic flip + decisionMatrix. ONLY THEN does the rollout reach 11/11.",
-    "rollout_position": "FINAL pilot — Phase-1 closed, Phase-2 outstanding. The 2026-05-22 three-tier rollout is NOT 11/11 yet.",
+    "phase1": "CLOSE-GATE APPROVED 2026-05-25T17:45Z (po P1-EXIT). Host-side build P1-A→P1-H + ops rebuild 0a617df1 + qa P1-MCP-QA PASS 3ea944b6. Earned 7/12.",
+    "phase2": "CLOSED 2026-05-26T07:36Z — qa P2-Z close-gate APPROVED 2026-05-26T07:30Z (signal docs/signals/qa-mcp-server-p2-close-2026-05-26T073000Z.json, commit_sha c323a8f5) → PO Phase-3 atomic 12/12 terminal flip + decisionMatrix. P2-A/B/C/D (G4 ESLint fence) + P2-E (G3 composition-root 41L/120L) + P2-F (G5a kinhDichWrapper→_deprecated) + P2-G/H/H-FIX (G9 dashboard inline-data + Playwright 7/7) + ops live-recheck (G9 trust basis) + P2-K (G10 1-cycle blind-fix) + P2-L (G11 outcome-(a)×2) all verified.",
+    "phase3_terminal_finding": "PO Phase-3 terminal close 2026-05-26T07:36Z. All 12 goals terminal YES. G9 graded via ops live-recheck (toolCount=146, 8 tools real data, VN-Index 1880.89, 0 Telegram failures, playwright 7/7) per MEMORY feedback_trust_verification_is_system_job — NOT user verbal sign-off. Each Phase-2 gate's on-disk evidence independently PO-verified before flip. Supersedes earlier false-negative blocker docs/signals/po-mcp-server-12of12-blocked-20260526T093000Z.json (timing-race: checked docs/signals/ while qa was flushing P2-Z; deleted in the same atomic close commit).",
+    "commits": ["195ef1a3 P1-A", "3bc85cf7 P1-B", "d053b0d4 P1-C", "d7f4129f P1-D", "9da207fc P1-E", "970f4b38 P1-F", "2148d2be P1-G", "a9212ad2 P1-H", "0a617df1 ops-rebuild", "3ea944b6 qa-P1-gate-PASS", "b0705683 G10/G11-T1-inject", "21361392 G10/G11-T1-fix", "0332624a G11-T2-inject", "3b9851fb G11-T2-revert", "c323a8f5 P2-Z close-gate state"],
+    "anchor_tags": ["mcp-server-pre-refactor @ 7d78abb1", "mcp-server-pre-inject @ 931a2d0d (INTACT)"],
+    "decisionMatrix": {"speed": "YES", "trust": "YES", "scale": "YES", "verdict": "scale"},
+    "verdict": "scale",
+    "outcome": "SCALE (3×YES) — 11th and FINAL pilot of the 2026-05-22 three-tier deep-module rollout; dev-mcp-server specialist owner, TS (Bun).",
+    "closure_signal": "docs/signals/qa-mcp-server-p2-close-2026-05-26T073000Z.json",
+    "rollout_position": "FINAL pilot — terminal CLOSED. The 2026-05-22 three-tier rollout is now 11/11 COMPLETE.",
+    "ssot_carried_debt": "Phase-2 plan §Carried-Debt: docs/data/project-stats.json (cronJobCount=77 stale vs 68, testBaselinePass=9277 stale) + docs/data/system-map.json (MCP toolCount=125 stale vs live 146) flagged as PO follow-up. Deferred OUT of this atomic close commit per explicit-file-staging discipline (not in the authorized terminal-close staging list); track as a separate maintenance touch.",
     "closure_report_signal": "docs/signals/po-20260525T174842Z.json"
   },
   "deploy_drift": {
@@ -47,6 +50,6 @@
   },
   "signal_backlog": "719 files in docs/signals/ undrained since 2026-05-22 (~449 stale terminal receipts + ~265 context-bloat hook noise; runaway size-cap hook re-firing on TASKS.md/qa-notebook/architect-notebook every edit). NONE are new dev work not already in TASKS.md. Routed to claude-manager-helper/code-janitor (self-cron maintenance, NOT dev-team-spawnable) via DASHBOARD. Runaway hook flagged.",
   "cross_team_note": "chef-frozen escalation VERIFIED 2026-05-25T17:04Z via get_agent_work_log(unified-agent) = FALSE ALARM on the pipeline. Chef HEALTHY: id=1107 ran 05-25 06:38 UTC, status=completed, published TNB dish to MARKET. 05-23/05-24 gap = server-renewal outage (same as DRIFT-1/-2), NOT a chef bug. Residual: notebook-append did not complete on the 06:38 recovery run ('Notebook append pending') → cowork-lane maintenance (PO/agent-father harden notebook-append on degraded-tool exit), NOT urgent, NOT dev-team's lane. DASHBOARD row downgraded VERIFIED.",
-  "updatedAt": "2026-05-25T22:00:00Z",
-  "updatedBy": "architect 2026-05-25T22:00Z — P2-MCP-G9-CONTRACT-FIX. Corrected two falsified assumptions in P2-H + P2-I plan sections: (1) addInitScript Potemkin gate → inline-data model; (2) synthetic sparkline-regression-tripwire.json fixture → assertion-5 pure renderCard() unit call. P2-H-FIX required before P2-I. nextAgent: dev-mcp-server (P2-H-FIX). Signal: docs/signals/architect-mcp-g9-contract-fix-2026-05-25T220000Z.json. Prior (2026-05-25T17:55Z): architect P2-MCP-PLAN authored 13-task plan."
+  "updatedAt": "2026-05-26T07:36:00Z",
+  "updatedBy": "po 2026-05-26T07:36Z — mcp-server SCALE pilot Phase-3 terminal close (12/12 YES, verdict=scale). Rollout flipped to 11/11 COMPLETE. Against qa P2-Z close-gate APPROVED (docs/signals/qa-mcp-server-p2-close-2026-05-26T073000Z.json, commit_sha c323a8f5). G9 trust basis = ops live-recheck per feedback_trust_verification_is_system_job. Superseded false-negative blocker po-mcp-server-12of12-blocked-20260526T093000Z.json (timing-race false-negative, deleted in same atomic commit)."
 }

@@ -25,7 +25,9 @@ The fleet has advanced beyond a single-pilot view. Some services are already sca
 | rag-service | **PENDING** (fresh) | `docs/data/pilot-status-rag-service.json` | `rag-service-charter.md` (thin) | dev-rag-service | Python |
 | frontend | **PENDING** (fresh) | `docs/data/pilot-status-frontend.json` | `frontend-charter.md` (thin) | dev-frontend | TS (Remix) |
 | news-fetch | **PENDING** (fresh) | `docs/data/pilot-status-news-fetch.json` | `news-fetch-charter.md` (thin) | developer | TS |
-| **mcp-server** | **PENDING** (fresh) | `docs/data/pilot-status-mcp-server.json` | `mcp-server-charter.md` (thin) | dev-mcp-server | TS (Bun) |
+| **mcp-server** | **DONE** (scale — 12/12 YES, closed 2026-05-26 SOLO-LAST) | `docs/data/pilot-status-mcp-server.json` | `mcp-server-charter.md` (thin) | dev-mcp-server | TS (Bun) |
+
+> **ROLLOUT 11/11 COMPLETE (2026-05-26).** mcp-server was the 11th and FINAL pilot of the 2026-05-22 three-tier deep-module rollout, closed SOLO-LAST per charter at 12/12 YES (verdict=scale) — qa P2-Z close-gate APPROVED (`docs/signals/qa-mcp-server-p2-close-2026-05-26T073000Z.json`) → PO Phase-3 atomic terminal flip. G9 trust contract verified via ops live-recheck (toolCount=146, 8 tools real data, 0 Telegram failures, Playwright 7/7) per `feedback_trust_verification_is_system_job`, NOT user verbal sign-off. The 2026-05-22 three-tier-trust pattern is now scaled across all 11 services. (Note: the "PENDING (fresh)" labels on other rows above are pre-rollout snapshot text — reconcile each against its live `pilot-status-<svc>.json` SSOT; do not treat this table's stale labels as authoritative.)
 
 **Thin charters in this dir cover only the 6 fresh PENDING services.** The 4 DONE/ACTIVE services already have richer factory-dir charters — do not duplicate. When a fresh service kicks off, the architect should instantiate a factory charter dir (mirroring alert-engine pilot-5); the thin charter here captures interim deltas/risks/primitive candidates to fold in.
 
