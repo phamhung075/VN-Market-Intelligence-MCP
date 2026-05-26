@@ -143,41 +143,90 @@ export function registerAnalysisTools(server: McpServer): void {
         const db = getDb();
 
         // ── Step 1: Fetch from all requested sources in parallel ─────────────
-        const fetchPromises: Promise<Awaited<ReturnType<typeof fetchCafeF>>>[] = [];
-        if (sources.includes("cafef")) fetchPromises.push(fetchCafeF());
-        if (sources.includes("vnexpress")) fetchPromises.push(fetchVnExpress());
-        if (sources.includes("reuters")) {
-          // G5b HTTP rewire: delegate to news-fetch microservice
-          const NEWS_FETCH_BASE = Bun.env['NEWS_FETCH_URL'] ?? 'http://news-fetch:5008';
-          fetchPromises.push(
-            fetch(`${NEWS_FETCH_BASE}/reuters/headlines`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ maxItems: limit }),
-              signal: AbortSignal.timeout(30_000),
-            })
-              .then((res) => res.json() as Promise<{ articles: Array<{ headline: string; url: string | null; publishedAt: string | null; source: string }> }>)
-              .then((data): RssItem[] =>
-                (data.articles ?? []).map((a) => ({
-                  title: a.headline,
-                  url: a.url ?? '',
-                  publishedAt: a.publishedAt ?? '',
-                  content: '',
-                  source: 'reuters',
-                }))
-              )
-              .catch((err): RssItem[] => {
-                logger.warn('[fetch_and_analyze] news-fetch reuters HTTP call failed', {
-                  error: err instanceof Error ? err.message : String(err),
-                });
-                return [];
-              })
-          );
-        }
-        if (sources.includes("vneconomy")) fetchPromises.push(fetchVnEconomy());
+        // REC-1 (FA-FIX P0): per-source outer timeout budgets — each source is
+        //   wrapped in Promise.race with a fallback-to-[] sentinel so a slow or
+        //   dead upstream never holds the whole batch hostage.
+        //   cafef=10s, vnexpress=10s, vneconomy=12s (2 serial feeds), reuters=15s.
+        // REC-2 (FA-FIX P0): Promise.allSettled replaces Promise.all — a
+        //   rejected/timed-out slot logs and contributes [] while others continue.
 
-        const results = await Promise.all(fetchPromises);
-        const allItems = results.flat().slice(0, limit);
+        /**
+         * Wraps a fetch promise with a per-source outer timeout budget.
+         * On timeout the source contributes an empty array (same as a network error).
+         */
+        function withSourceTimeout(
+          promise: Promise<RssItem[]>,
+          budgetMs: number,
+          sourceName: string,
+        ): Promise<RssItem[]> {
+          const timeout = new Promise<RssItem[]>((resolve) =>
+            setTimeout(() => {
+              logger.warn(`[fetch_and_analyze] source timeout — ${sourceName} exceeded ${budgetMs}ms budget`, {
+                source: sourceName,
+                budgetMs,
+              });
+              resolve([]);
+            }, budgetMs),
+          );
+          return Promise.race([promise, timeout]);
+        }
+
+        const fetchPromises: Promise<RssItem[]>[] = [];
+
+        if (sources.includes("cafef")) {
+          fetchPromises.push(withSourceTimeout(fetchCafeF(), 10_000, "cafef"));
+        }
+        if (sources.includes("vnexpress")) {
+          fetchPromises.push(withSourceTimeout(fetchVnExpress(), 10_000, "vnexpress"));
+        }
+        if (sources.includes("reuters")) {
+          // G5b HTTP rewire: delegate to news-fetch microservice (local Docker network).
+          // REC-1: tightened from 30_000 → 15_000 (news-fetch is a local Docker call,
+          //         not a geo-blocked external API; 30s was too generous).
+          const NEWS_FETCH_BASE = Bun.env['NEWS_FETCH_URL'] ?? 'http://news-fetch:5008';
+          const reutersFetch = fetch(`${NEWS_FETCH_BASE}/reuters/headlines`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ maxItems: limit }),
+            signal: AbortSignal.timeout(15_000),
+          })
+            .then((res) => res.json() as Promise<{ articles: Array<{ headline: string; url: string | null; publishedAt: string | null; source: string }> }>)
+            .then((data): RssItem[] =>
+              (data.articles ?? []).map((a) => ({
+                title: a.headline,
+                url: a.url ?? '',
+                publishedAt: a.publishedAt ?? '',
+                content: '',
+                source: 'reuters',
+              }))
+            )
+            .catch((err): RssItem[] => {
+              logger.warn('[fetch_and_analyze] news-fetch reuters HTTP call failed', {
+                error: err instanceof Error ? err.message : String(err),
+              });
+              return [];
+            });
+          // Outer 15s budget on top of the AbortSignal (belt-and-suspenders).
+          fetchPromises.push(withSourceTimeout(reutersFetch, 15_000, "reuters"));
+        }
+        if (sources.includes("vneconomy")) {
+          // vneconomy runs 2 RSS feeds serially inside fetchVnEconomy — budget the pair.
+          fetchPromises.push(withSourceTimeout(fetchVnEconomy(), 12_000, "vneconomy"));
+        }
+
+        // REC-2 (FA-FIX P0): allSettled — rejected/timed-out slots contribute []
+        const settled = await Promise.allSettled(fetchPromises);
+        const rejectedSources = settled
+          .map((r, i) => (r.status === "rejected" ? i : -1))
+          .filter((i) => i >= 0);
+        if (rejectedSources.length > 0) {
+          logger.warn("[fetch_and_analyze] some sources rejected", {
+            rejectedCount: rejectedSources.length,
+          });
+        }
+        const allItems = settled
+          .flatMap((r) => (r.status === "fulfilled" ? r.value : []))
+          .slice(0, limit);
 
         if (allItems.length === 0) {
           return {
@@ -243,30 +292,35 @@ export function registerAnalysisTools(server: McpServer): void {
         // (embedding + LanceDB write) blew the MCP 60s timeout. Run them in
         // parallel — the embedding model + LanceDB tolerate concurrent calls
         // and the wall-clock collapses to roughly the slowest single insert.
-        await Promise.all(
+        //
+        // REC-3 (FA-FIX P1): switched from Promise.all → Promise.allSettled so
+        //   a single ragIndex timeout (AbortSignal 8s in ragHttpClient) degrades
+        //   gracefully — the other entries continue and the SQLite rows are
+        //   already committed. An OOM rag-service restart cannot stall this step.
+        const ragSettled = await Promise.allSettled(
           entries.map(async (entry) => {
-            try {
-              // G5b: ragIndex delegates to rag-service HTTP /index (port 5002)
-              await ragIndex({
-                id: entry.id,
-                content: entry.summary,
-                tags: entry.tags,
-                level: entry.level,
-                title: entry.sourceTitle,
-                summary: entry.summary,
-                ...(entry.affectedActions.length > 0
-                  ? { action_code: entry.affectedActions[0] }
-                  : {}),
-              });
-            } catch (ragErr) {
-              logger.warn("[fetch_and_analyze] RAG insert failed for entry", {
-                id: entry.id,
-                error: ragErr instanceof Error ? ragErr.message : String(ragErr),
-              });
-              // Continue — SQLite row was already committed
-            }
+            // G5b: ragIndex delegates to rag-service HTTP /index (port 5002)
+            // AbortSignal.timeout(8_000) is now set inside ragHttpClient.ts (REC-3).
+            await ragIndex({
+              id: entry.id,
+              content: entry.summary,
+              tags: entry.tags,
+              level: entry.level,
+              title: entry.sourceTitle,
+              summary: entry.summary,
+              ...(entry.affectedActions.length > 0
+                ? { action_code: entry.affectedActions[0] }
+                : {}),
+            });
           }),
         );
+        const ragFailCount = ragSettled.filter((r) => r.status === "rejected").length;
+        if (ragFailCount > 0) {
+          logger.warn("[fetch_and_analyze] some RAG index calls failed (degraded gracefully)", {
+            failed: ragFailCount,
+            total: entries.length,
+          });
+        }
 
         // ── Step 5: Format output ─────────────────────────────────────────────
         const header = `Analysis — ${entries.length} item${entries.length !== 1 ? "s" : ""} fetched and analyzed`;

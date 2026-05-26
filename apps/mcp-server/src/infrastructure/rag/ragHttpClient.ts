@@ -82,15 +82,18 @@ export interface AnalysisInput {
 /**
  * Search the RAG service for similar entries.
  *
+ * REC-3 (FA-FIX): AbortSignal.timeout(8_000) guards against rag-service OOM-restart hangs.
+ *
  * @param request Search parameters
  * @returns SearchResponse with ranked results
- * @throws Error if the request fails
+ * @throws Error if the request fails or times out after 8 s
  */
 export async function ragSearch(request: RagSearchRequest): Promise<RagSearchResponse> {
   const response = await fetch(`${RAG_SERVICE_URL}/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
+    signal: AbortSignal.timeout(8_000),
   });
 
   if (!response.ok) {
@@ -104,15 +107,20 @@ export async function ragSearch(request: RagSearchRequest): Promise<RagSearchRes
 /**
  * Index an entry in the RAG service.
  *
+ * REC-3 (FA-FIX): AbortSignal.timeout(8_000) guards against rag-service OOM-restart hangs.
+ * Callers in the analysis fan-out (Step 4) use Promise.allSettled so a timeout here
+ * degrades gracefully — the SQLite row is already committed before ragIndex is called.
+ *
  * @param request Entry to index
  * @returns IndexResponse with status + entry_id
- * @throws Error if the request fails
+ * @throws Error if the request fails or times out after 8 s
  */
 export async function ragIndex(request: RagIndexRequest): Promise<RagIndexResponse> {
   const response = await fetch(`${RAG_SERVICE_URL}/index`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(request),
+    signal: AbortSignal.timeout(8_000),
   });
 
   if (!response.ok) {
