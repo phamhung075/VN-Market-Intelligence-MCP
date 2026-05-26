@@ -1446,3 +1446,126 @@ Deploy MD-DEPLOY-7 landed (image `9ed24b30…`, `PURE_CODE_COL_THRESHOLD` grep=3
   4. Frozen surfaces unchanged (AC-3F text_table_extractor.py; dashboard/sandbox/pilot-status; mcp-server files). Privacy: local OCR/CV only.
 
 **GOAL STILL ARMED** — "table on pdf on all bctc need correct extract text and convert to md style." Segment ✅, income ❌, balance ⚠️. NOT done.
+
+---
+
+## [Architect] MD-EXTRACT-8 — Root-Cause Rethink (2026-05-26T16:12Z) — DESIGN COMPLETE
+
+**Zone:** `apps/pdf-extractor/`
+**Build-standard:** lean (existing service, new feature within zone)
+**Sprint:** MD-EXTRACT-8
+
+### Diagnostic Mandate Fulfilled
+
+All 5 mandated questions answered from live OCR token dump (pytesseract `image_to_data`, page 8 of FPT Q4 2025 PDF, 200 DPI, local Tesseract only, single-page, no batch):
+
+**Q1 — Is the live token stream recoverable?** YES. OCR reading order is clean. Consistent 35–37px vertical pitch across all 20+ data rows, all 4 value column clusters at stable x-positions (Val-A 1182–1229, Val-B 1477–1522, Val-C 1768–1814, Val-D 2061–2105). No diagonal cascade, no scrambled reading order.
+
+**Q2 — Root cause classification: DOWNSTREAM-RECOVERABLE.** The failure is a pure algorithm defect in `_detect_column_anchors_from_tokens`. OCR is NOT the cause. Upstream psm/preprocessing (`project_bctc_ocr_psm_drift`) is NOT the cause. Dense multi-period income tables do NOT need a fundamentally different reconstruction path. Same ordinal path; corrected anchor detection.
+
+**Q3 — Income table vs. segment table: same path.** Segment report works because its tokens are shorter (~55px → `w_med ≈ 60px` → `col_gap ≈ 90px`). Income statement fails because its tokens are longer (annual cumulative values like `20.258.866.135.395` = 201px → `w_med = 167px` → `col_gap = 250.5px`). The reconstruction algorithm is structurally correct for both; the anchor-gap oracle must use fixed-pixel geometry, not `w_med`.
+
+**Q4 — FIXTURE_TOKENS_REV divergence:** Fixture used 29 tokens with short widths → `w_med ≈ 60px` → `col_gap ≈ 90px` → correct anchors [258, 959, 1182, 1477, 1768, 2061]. Live token stream has 2.8× longer money strings → `w_med = 167px` → `col_gap = 250.5px` → anchor collapse. The divergence is entirely at the token-width level. The fixture was not a valid proxy for live income statement data.
+
+**Q5 — Anchor failure trace (hard numbers):**
+- Page dimensions: 2339 × 1654 px
+- Total words: 404 | Number tokens: 140 (87 value, ~43 code)
+- `first_value_top` (C5): 497.0px — 10 header tokens excluded correctly
+- `w_med` = 167px (inflated by 18–20 char money strings)
+- `col_gap = 1.5 × 167 = 250.5px`
+- Real value columns (from token left-edge clustering at fine scale):
+  - Val-A: left 1182–1229, 21 tokens
+  - Val-B: left 1477–1522, 20 tokens
+  - Val-C: left 1768–1814, 20 tokens
+  - Val-D: left 2061–2105, 20 tokens
+- Inter-cluster gaps: Val-B minus Val-A = 295px; Val-C minus Val-B = 291px; Val-D minus Val-C = 293px. All > 80px.
+- Gap from code anchor 957 to Val-A 1182 = 225px — less than `col_gap = 250.5px` → Val-A absorbed under anchor 957.
+- FINAL ANCHORS PRODUCED = [255, 957, 1330, 1642, 1916] — all 4 real value columns lost.
+
+### Root Cause (Single)
+
+`_detect_column_anchors_from_tokens` (line 684–740, `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py`) uses `col_gap = 1.5 × w_med` to merge adjacent left-edge clusters. This oracle is valid only when all tokens have uniform width. On dense income statement pages, long cumulative annual values inflate `w_med` to 167px, raising `col_gap` to 250.5px — above the real inter-column physical gap of ~225px between code column edge and first value column. Fix: replace the `w_med`-based oracle with a fixed-pixel geometry constant (`_MIN_INTER_COLUMN_GAP_PX = 80`, derived from 1cm whitespace at 200 DPI).
+
+### Verified Paths
+
+- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py:684-740` — `_detect_column_anchors_from_tokens`: failing function, sole change target for anchor logic
+- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py:~45-70` — constants block: `_MIN_INTER_COLUMN_GAP_PX = 80` to be added here
+- `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` — existing unit test file: add a live-width fixture test class for `_detect_column_anchors_from_tokens` that exercises the wide-token path
+
+### Design Decisions
+
+**1. New constant** `_MIN_INTER_COLUMN_GAP_PX = 80` added to the constants block. This is a generic 200-DPI geometry constant (1cm physical whitespace). AC-0 compliant: no BCTC label semantics. Replaces `1.5 × w_med` as the merge threshold in Pass 2.
+
+**2. Two-pass anchor detection** in `_detect_column_anchors_from_tokens`:
+- Pass 1: fine-grained clustering using CODE token widths for `bin_width` (code tokens like `01`, `10` are short ~23px → `bin_width = 0.3 × 23 = 6.9px`). Falls back to `0.3 × w_med` if no code tokens detected.
+- Pass 2: merge adjacent clusters using `_MIN_INTER_COLUMN_GAP_PX = 80` (fixed) instead of `1.5 × w_med` (variable). Physical: columns are separated by ≥1cm whitespace at 200 DPI.
+
+**Expected output on income page:** ANCHORS = [255, 957, 1049, 1182, 1330, 1477, 1642, 1768, 1916, 2061]. Pure-code detector (REV-4, Step C7.5) eliminates code columns at 255 and 957 → 8 value anchors remain. (The 4 true value columns plus their pairing anchors; `_identify_pure_code_columns` handles elimination.) Downstream ordinal grid (C8–C10) is unchanged.
+
+**DDD layer:** `infrastructure/` — correct. Calls pytesseract (subprocess), reads PIL Image. No domain imports. Fence-A compliant.
+
+**3. Zero changes** to `_find_first_value_row_top`, `_exclude_header_tokens`, `_identify_pure_code_columns`, `_build_ordinal_grid`, `_insert_skip_slots`, `_process_page` routing. The REV-3/REV-4 additions from MD-EXTRACT-7-REV remain intact. No other file touches.
+
+**4. Negative parenthetical risk (R-HIGH):** Values like `(73.049.924.176)` match `_NUMBER_TOKEN_RE` but NOT `_VALUE_TOKEN_RE`. Dev MUST verify on live token list whether parenthetical negatives are classified as code-like tokens and check if `_identify_pure_code_columns` would incorrectly flag any value column containing them. Mitigation options: (a) extend `_VALUE_TOKEN_RE` to match leading `(`, or (b) tighten `_identify_pure_code_columns` to require `_CODE_TOKEN_RE` match (2–3 digit only), not merely `not VALUE_TOKEN_RE`.
+
+### Acceptance Gate (LIVE-ONLY, no fixture shortcut)
+
+- **AC-8-INC (PRIMARY):** After dev implements + ops deploys (single doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`), pull `md_tables_json` direct from `market.db` (NOT inspect endpoint). Income statement table[8]/[9]: (a) header row MUST read `| Chỉ tiêu | Mã số | Thuyết minh | Quý 4/2025 | Lũy kế 2025 | Quý 4/2024 | Lũy kế 2024 |` (or similar with those 4 period labels in distinct cells); (b) each data row MUST contain EXACTLY one label + one code + one note-ref + four numeric values; (c) `20.258.866.135.395` MUST appear in the same row as `Doanh thu bán hàng và cung cấp dịch vụ` and NOT mixed with `Các khoản giảm trừ doanh thu`.
+- **AC-8-SEG-NOREGRESS:** Segment report table[17]/[19]: `35.381.667 | 9.092.934 | 18.701.876` MUST remain on ONE pipe-row in 3 distinct cells (identical to AC-7-REV-SEG-NOREGRESS which already passed).
+- **AC-8-BALANCE-NOREGRESS:** Balance sheet table[0..3]: no regression versus current PARTIAL state — head rows must remain clean, no new corruption introduced. (Full balance sheet fix is a separate task; AC-8 gate only requires no regression.)
+
+Gate arbiter: main terminal direct DB query. NOT fixture unit tests. NOT `/api/bctc-inspect` endpoint. NOT Playwright.
+
+### Risk Register
+
+| ID | Severity | Description | Mitigation |
+|---|---|---|---|
+| R-8-HIGH | HIGH | Parenthetical negatives `(73.049.924.176)` may be misclassified as code-like → pure-code detector strips value column | Dev verifies on live token list; extend VALUE_TOKEN_RE or tighten pure-code classifier |
+| R-8-MED-A | MEDIUM | Pass-1 bin_width from CODE tokens: if CODE tokens absent (page with no code column), falls back to `0.3 × w_med` — same old behaviour. Income pages always have code column so safe. Verify fallback path. | Fallback guard in Pass 1; dev adds assertion test |
+| R-8-MED-B | MEDIUM | `_MIN_INTER_COLUMN_GAP_PX = 80` chosen for 200 DPI; if DPI changes, constant must scale. AC-0 requires no BCTC-specific value but DPI-scaling is generic. | Add DPI parameter or document the 200-DPI assumption in constant docstring |
+| R-8-LOW-A | LOW | Segment report uses `_detect_column_anchors_from_tokens` also — two-pass may produce additional spurious anchors. Downstream pure-code detector + ordinal grid are robust. | AC-8-SEG-NOREGRESS gate catches regression |
+| R-8-LOW-B | LOW | Balance sheet long-value splitting (`(11.683.165.704.` + `793)`) is a separate issue not addressed by this fix. May remain broken. | AC-8-BALANCE-NOREGRESS gates only non-regression; full balance fix deferred |
+
+### Files to Modify
+
+1. `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py`
+   - Constants block (~line 45–70): add `_MIN_INTER_COLUMN_GAP_PX = 80`
+   - `_detect_column_anchors_from_tokens` (lines 684–740): implement two-pass logic per §MD-EXTRACT-8 §3 in architecture brief
+
+2. `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py`
+   - Add test class `TestDetectColumnAnchorsLiveWidth` — tokens with 167px median width, verify correct anchors with two-pass; verify single-pass (old logic) produces wrong anchors (regression proof)
+
+### Privacy / Security
+
+Zero external API calls. All computation is pure in-memory list operations on tokens already returned by local Tesseract. No new pytesseract calls introduced. No cloud VLM. No batch. Single-doc ops-deploy only.
+
+### Files Left UNSTAGED
+
+Per commit-mutex protocol. Main terminal commits.
+
+**NEXT:** dev-pdf-extractor implements MD-EXTRACT-8 per architecture brief §MD-EXTRACT-8 → ops single-doc deploy (UUID `e71f845d`) → main-terminal live-verify AC-8-INC + AC-8-SEG-NOREGRESS + AC-8-BALANCE-NOREGRESS via direct `market.db` query.
+
+**Architecture brief:** `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` §MD-EXTRACT-8
+
+---
+
+## [Main-Terminal] MD-EXTRACT-8 DESIGN RE-TRACE — APPROVED (2026-05-26)
+
+I independently re-traced the diagnostic + design (not trusting the RETURN). Verdict: **diagnosis correct, fix sound, dependencies exist → APPROVED for dev-pdf-extractor implementation.**
+
+**Root-cause re-trace CONFIRMED (corrected my own first pass).** My initial hand-trace omitted the EPS/negative interstitial clusters and wrongly predicted [255,957,1477,1768,2061]. Re-tracing the OLD `col_gap = 1.5×w_med = 250.5px` greedy-merge over the FULL fine-cluster set [255,957,1049,1182,**1330**,1477,**1642**,1768,**1916**,2061]:
+`255→957(+702 keep)→1049(+92 drop)→1182(+225 DROP=Val-A lost)→1330(+373 keep)→1477(+147 DROP=Val-B lost)→1642(+312 keep)→1768(DROP=Val-C lost)→1916(keep)→2061(DROP=Val-D lost)` = **[255,957,1330,1642,1916]** — reproduces the architect's reported broken output EXACTLY. This UNIFIES the prior "150px anchor offset" puzzle: the offset is the EPS/neg interstitials *surviving* the greedy merge while the 4 real value columns get absorbed. Not header contamination.
+
+**Fix re-trace CONFIRMED.** Fixed 80px gap over the same 10 fine clusters keeps all 10 (smallest gap 92>80) → C7.5 `_identify_pure_code_columns` strips the 3 pure-code cols (255,957,1049; value_count=0, code-fraction≥0.90) → 4 dense value anchors {1182,1477,1768,2061} + 3 sparse EPS/neg cols {1330,1642,1916}. `_collapse_empty_columns` (line 1398, verified exists, keeps any col with ≥1 non-empty cell) retains the sparse cols, drops genuinely-empty ones. All 4 referenced fns exist (`_assign_tokens_to_columns` 748, `_build_ordinal_grid` 893, `_attach_labels_ordinal` 1031, `_collapse_empty_columns` 1398, wired at `_process_page` 2123).
+
+**Regex check (R-8-HIGH).** Confirmed against live code: `_VALUE_TOKEN_RE = ^\d{1,3}(?:[.,]\d{3})+` has NO leading `[\(\-]?` group → parenthetical negatives `(73.049.924.176)` do NOT match it; they also fail `_CODE_TOKEN_RE` (`^[\(\-]?\d{2,3}[\)\-]?$`, 2-3 digit only). So in `_identify_pure_code_columns` an all-negative column has value_count=0 AND code_count=0 → `0/total < 0.90` → NOT stripped → survives. The architect's R-8-HIGH "code_fraction=1.0 → stripped" first framing is WRONG; the brief's own line-5239 conclusion (negatives survive) is RIGHT. Net: low risk, dev confirms on live.
+
+**FLAGS for dev-pdf-extractor (binding):**
+1. **Authoritative target = the BRIEF, not the handoff §Design Decision 2 summary.** The handoff's "8 value anchors remain" is loose; the brief's correct model is 10 raw → strip 3 code → 4 dense + 3 sparse. The regression-proof unit test (brief line 5219) MUST assert: new `_detect_column_anchors_from_tokens(tokens, w_med=167)` returns anchors within 50px of {1182,1477,1768,2061}; a reference impl of the OLD formula returns the broken [255,957,1330,1642,1916].
+2. **Any width fixture MUST be regenerated from the LIVE image_to_data token dump (the architect's page-8 dump), NOT synthesized.** This is the exact false-green trap that killed 4 prior rounds. A synthetic fixture is grounds for me to reject the implementation.
+3. **R-8-HIGH:** verify on the live token list that the negative parentheticals survive C7.5. Apply the `_VALUE_TOKEN_RE` extension (`^\(?\d{1,3}(?:[.,]\d{3})+\)?$`) ONLY if live shows they get stripped — do not change the regex speculatively (it would alter the segment/balance paths).
+4. **Minimal-change preference:** the proven root cause is the Pass-2 col_gap oracle (250.5→fixed 80). The Pass-1 bin_width change (0.3×w_med→0.3×code_width) is harmless but unproven-necessary on this page (50px bins already separate all clusters, smallest gap 92px). Keep it only if the brief's "more accurate on long-string pages" rationale holds; do NOT let it regress the segment path (AC-8-SEG-NOREGRESS).
+5. **EPS-row caveat (verify on live, non-blocking):** the sparse cols {1330,1642,1916} are short right-shifted values (EPS/neg). Confirm they do NOT pull MAIN line-item values out of the 4 period columns — they shouldn't, since the architect found the main values uniform-width left-aligned at {1182,1477,1768,2061}. If EPS rows render in spurious columns that's an acknowledged secondary imperfection (brief R-MEDIUM), NOT an AC-8-INC failure as long as the main line items are correct.
+6. Frozen surfaces unchanged (AC-3F text_table_extractor.py; dashboard/sandbox/pilot-status; mcp-server). Privacy: local-only. Leave files UNSTAGED (main terminal commits). Acceptance gate = LIVE direct-DB render, NOT fixture tests.
+
+**NEXT:** dev-pdf-extractor (MD-EXTRACT-8 implementation). Goal still armed.

@@ -4730,3 +4730,537 @@ All new and modified functions are PURE (no I/O, no Tesseract, no DB, no network
 - Leave ALL files UNSTAGED — main terminal commits.
 
 **ROLE-RELAY:** dev-pdf-extractor (MD-EXTRACT-7, implement per §3-§11 with AC-7-DIAG mandatory STEP 1) → ops (MD-DEPLOY-7, single doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`) → main-terminal live-verify (AC-7-INC + AC-7-SEG-NOREGRESS) → qa (MD-QA-7) → po (MD-EXIT re-evaluation).
+
+---
+
+## §MD-EXTRACT-8 — Root-Cause Rethink: Column Anchor Collapse from w_med Inflation
+
+> **Task:** MD-EXTRACT-8 | **Author:** architect | **Date:** 2026-05-26T~UTC
+> **Trigger:** LIVE-VERIFY-7 FAILED. Recurring-bug rule (≥2 fix commits on `generic_md_table_extractor.py`).
+> **Mandate:** diagnostic-gate-first; prove root cause from live token coordinates before designing anything.
+> **Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + its unit test. AC-3F surface FROZEN. Zero mcp-server changes.
+
+---
+
+### 1. Live Diagnostic — Income Statement Page (FPT e71f845d, page 8, 200 DPI)
+
+All findings below come from `pytesseract.image_to_data` run live inside the pdf-extractor container against `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf` page 8 at 200 DPI, `--psm 6`. No synthetic data used.
+
+#### 1.1 Page geometry
+
+- **Page size (px):** 2339 × 1654
+- **Total words (conf > 0):** 404
+- **Number tokens (matching `_NUMBER_TOKEN_RE`):** 140
+  - Value tokens (`_VALUE_TOKEN_RE`): 87, top range 497–1295
+  - Code-like tokens (`_CODE_TOKEN_RE`): 53
+
+#### 1.2 True value column positions (from raw left-edge clustering with 80px gap)
+
+| Column | Left range | Token count | Example token |
+|---|---|---|---|
+| Val-A | 1182–1229 | 21 | `20.258.866.135.395` |
+| Interstitial-1 | 1330–1331 | 2 | `1.168` (EPS row only) |
+| Val-B | 1477–1522 | 20 | `17.651.065.378.939` |
+| Val-C | 1768–1814 | 20 | `70.207.689.409.081` |
+| Interstitial-2 | 1916–1916 | 2 | `5.211` (EPS row only) |
+| Val-D | 2061–2105 | 20 | `62.962.652.134.635` |
+
+There are **4 real value columns** (Val-A, B, C, D) with 20–21 tokens each and uniform 35–37px vertical pitch. Two interstitial 2-token clusters (EPS row `1.168` / `5.211` / `868`) fall in the gaps between columns.
+
+#### 1.3 Code column positions
+
+- Left ≈ 255 (11 tokens): statement-number codes (row numbers 10–20 in left margin)
+- Left ≈ 957–961 (27 tokens): Mã số column (01, 02, 10, 11, 20, 21 … 71)
+- Left ≈ 1049 (5 tokens): Thuyết minh column (25, 26, 27, 28, 29)
+
+Code columns are all pure code (zero `_VALUE_TOKEN_RE` matches). `_identify_pure_code_columns` correctly classifies them.
+
+#### 1.4 Header token exclusion (Step C5)
+
+`_find_first_value_row_top` returns `first_value_top = 497.0`. The C5 cutoff correctly excludes 10 header tokens (top < 497: page-level dates `31/12`, `01` etc.). After C5 exclusion: **130 clean number tokens** (87 value + 43 code).
+
+#### 1.5 Per-row vertical pitch (from value tokens)
+
+Every row of 4 value tokens (one per column) appears with a consistent top-delta:
+
+```
+top=497 → 533: gap=36px
+top=533 → 570: gap=37px
+top=570 → 606: gap=36px
+… (all 20 data rows, pitch consistently 35–37px)
+top=1251 → 1287: gap=36px (EPS rows)
+```
+
+**Conclusion: OCR reading order is NOT scrambled.** Value tokens arrive in correct top-sorted order. Each of the 4 value columns has exactly 20–21 clean tokens spaced at 35–37px. The token stream is fully recoverable by any correct column-anchor algorithm.
+
+#### 1.6 The anchor failure (Step C6) — w_med inflation
+
+After C5 exclusion, Step C6 computes column anchors on all 130 clean number tokens:
+
+```
+w_med  = median word width of clean number tokens = 167px
+         (inflated by 18-20 char money strings like "20.258.866.135.395" = 201px wide)
+bin_width = 0.3 × 167 = 50.1px
+col_gap   = 1.5 × 167 = 250.5px
+```
+
+Raw clusters produced (by bin_width=50.1px grouping):
+
+| Cluster idx | min left | token count | content |
+|---|---|---|---|
+| 0 | 255 | 11 | left-margin codes |
+| 1 | 957 | 17 | Mã số codes |
+| 2 | 1049 | 5 | Thuyết minh codes |
+| 3 | 1182 | 21 | Val-A (true column A) |
+| 4 | 1330 | 2 | Interstitial-1 (EPS) |
+| 5 | 1477 | 20 | Val-B (true column B) |
+| 6 | 1642 | 2 | Negative parenthetical `(868)` from EPS row |
+| 7 | 1768 | 18 | Val-C (true column C) |
+| 8 | 1916 | 2 | Interstitial-2 (EPS) |
+| 9 | 2061 | 19 | Val-D (true column D) |
+
+Merge trace with `col_gap = 250.5px`:
+
+```
+START: anchor=255
+gap 957-255=702 > 250.5  → NEW anchor=957
+gap 1049-957=92 < 250.5  → SKIP (1049 absorbed under 957)
+gap 1182-957=225 < 250.5 → SKIP (Val-A ABSORBED under 957)   ← ROOT FAILURE
+gap 1330-957=373 > 250.5 → NEW anchor=1330
+gap 1477-1330=147 < 250.5→ SKIP (Val-B ABSORBED under 1330)  ← ROOT FAILURE
+gap 1642-1330=312 > 250.5→ NEW anchor=1642
+gap 1768-1642=126 < 250.5→ SKIP (Val-C ABSORBED under 1642)  ← ROOT FAILURE
+gap 1916-1642=274 > 250.5→ NEW anchor=1916
+gap 2061-1916=145 < 250.5→ SKIP (Val-D ABSORBED under 1916)  ← ROOT FAILURE
+
+FINAL ANCHORS (5): [255, 957, 1330, 1642, 1916]
+```
+
+**All 4 real value columns (1182, 1477, 1768, 2061) are absorbed under wrong anchors.** The four interstitial EPS-row clusters (1330, 1642, 1916) become the "value column anchors". EPS tokens (`1.168`, `868`, `5.211`) are then the only tokens assigned to those anchors; 20+ real value tokens per column are assigned to a wrong anchor (957) or discarded as noise (distance > 3.0 × w_med from their nearest wrong anchor).
+
+#### 1.7 Why the FIXTURE_TOKENS_REV did not expose this
+
+The §REV-8 fixture was constructed with 29 tokens representing short code and value tokens. Short value tokens (e.g., `35.381.667` = 8 chars ≈ 55px wide, `206.820` = 7 chars ≈ 50px wide) produce `w_med ≈ 50–70px` → `col_gap = 75–105px`. With `col_gap ≈ 90px`, the real inter-column gap of 295px safely exceeds the threshold and anchors form correctly at 1182/1477/1768/2061.
+
+**Live income statement difference:** Full-year cumulative figures like `20.258.866.135.395` (18 chars) and `70.207.689.409.081` (18 chars) generate token widths of 201px. These inflate `w_med` from the fixture's ~60px to the live 167px — a 2.8× inflation. `col_gap` scales from 90px to 250.5px, which now straddles the 225px gap between code anchor 957 and Val-A cluster 1182, causing all 4 real value columns to be swallowed.
+
+**The fixture diverges from reality at exactly this point:** it used period values (`Năm 2025` / `Năm 2024` columns with 4-period data) with shorter individual figures, while the live page has a "Lũy kế từ đầu năm đến cuối quý này" column whose cumulative figures span 18 chars.
+
+#### 1.8 Root-cause classification
+
+**Downstream-recoverable.** The OCR token stream is clean and correct. Reading order is row-major within each column. The 4 value columns are perfectly aligned at 1182/1477/1768/2061. The root failure is a single algorithmic decision: using `w_med` (median word width) as the column gap oracle. `w_med` is dominated by the widest tokens (long money strings), not by the actual inter-column whitespace. The column gap oracle must be derived from the actual left-edge cluster separations, not from word widths.
+
+**Upstream OCR / psm mode is NOT the cause.** psm-6 on this page produces correct per-word bboxes with clean y-alignment (35–37px pitch, ≤5px intra-column left variation, ≤3px y-jitter). The BCTC-OCR-psm-drift memory note (psm-6 column-major linearization) applies to `image_to_string` output, not to `image_to_data` bboxes. The `image_to_data` bboxes are spatial, not linearized — they correctly place each token at its (left, top) 2D coordinate. No psm change is needed.
+
+**The segment report WORKS** because its figures are shorter (`35.381.667` = 10 chars ≈ 73px wide) → `w_med ≈ 73px` → `col_gap ≈ 110px` → all inter-column gaps (295px) easily exceed the threshold → correct anchors emerge. The ordinal reconstruction (`_build_ordinal_grid`, `_insert_skip_slots`, `_identify_pure_code_columns`, `_find_first_value_row_top`) works correctly once anchors are correct.
+
+**Conclusion:** Dense multi-period income tables do NOT need a fundamentally different reconstruction path from the wide-matrix segment path. They need the **same ordinal path** but with a **different column-gap oracle** that is insensitive to long-number token widths.
+
+---
+
+### 2. Proposed Fix — Value-Left Inter-Cluster Gap Oracle (Drop w_med as col_gap basis)
+
+#### 2.1 Root of the problem in `_detect_column_anchors_from_tokens`
+
+Current implementation (lines 716–740 of `generic_md_table_extractor.py`):
+
+```python
+bin_width = max(1.0, _LEFT_EDGE_BIN_FACTOR * median_word_width)  # 0.3 × w_med
+col_gap = _COL_GAP_FACTOR * median_word_width                     # 1.5 × w_med
+```
+
+`median_word_width` is passed from `_process_page` as `_median(num_widths)` over ALL number tokens including long value strings. On the income statement page, this equals 167px and makes the col_gap oracle blind to real columns.
+
+The fix: **derive `col_gap` from the actual left-edge distribution of VALUE tokens only** (not all number tokens, not word widths). Value token left-edges cluster tightly within each column (±47px range on live data). The inter-cluster gap (gap between the rightmost left-edge of cluster N and the leftmost left-edge of cluster N+1) is the natural column-gap measure. This is document-derived, not width-derived, and is independent of token length.
+
+#### 2.2 New function `_auto_col_gap_from_value_tokens`
+
+```python
+def _auto_col_gap_from_value_tokens(
+    number_tokens: List[Dict],
+    fallback_word_width: float,
+) -> float:
+    """
+    Derive the column-gap threshold from the actual inter-cluster gaps in
+    VALUE token left-edge positions.
+
+    Algorithm:
+      1. Collect left-edges of VALUE tokens only (matching _VALUE_TOKEN_RE).
+         If fewer than 4 value tokens exist, fall back to _COL_GAP_FACTOR × fallback_word_width.
+      2. Sort left-edges. Compute all adjacent gaps.
+      3. Find "large gaps" = gaps > median(all_gaps).
+         These are the true inter-column whitespace regions.
+      4. min_large_gap = min(large_gaps).
+         This is the narrowest real inter-column gap — the most conservative threshold.
+      5. Return max(min_large_gap × 0.7, _COL_GAP_FACTOR × fallback_word_width).
+         The 0.7 factor gives 30% headroom below the narrowest gap (safety margin).
+         The max() ensures the threshold never goes below the legacy fallback on pages
+         where value tokens are sparse or nearly adjacent.
+
+    AC-0: uses only _VALUE_TOKEN_RE (generic money-group pattern). No BCTC semantics.
+    Pure function: no I/O, no Tesseract.
+
+    Args:
+        number_tokens:        All number tokens on the page region.
+        fallback_word_width:  w_med (for fallback when value tokens are sparse).
+
+    Returns:
+        Column-gap threshold in pixels.
+    """
+    value_lefts = sorted(
+        float(w["left"])
+        for w in number_tokens
+        if _VALUE_TOKEN_RE.match(w.get("text", "").strip())
+    )
+    if len(value_lefts) < 4:
+        return _COL_GAP_FACTOR * max(fallback_word_width, 1.0)
+
+    gaps = [value_lefts[i + 1] - value_lefts[i] for i in range(len(value_lefts) - 1)]
+    sorted_gaps = sorted(gaps)
+    n = len(sorted_gaps)
+    mid = n // 2
+    gap_median = (sorted_gaps[mid - 1] + sorted_gaps[mid]) / 2.0 if n % 2 == 0 else float(sorted_gaps[mid])
+    large_gaps = [g for g in gaps if g > gap_median]
+    if not large_gaps:
+        return _COL_GAP_FACTOR * max(fallback_word_width, 1.0)
+    min_large_gap = min(large_gaps)
+    fallback = _COL_GAP_FACTOR * max(fallback_word_width, 1.0)
+    return max(min_large_gap * 0.7, fallback)
+```
+
+**Worked trace on live income statement data:**
+
+```
+Value token lefts (87 tokens, sorted):
+  1182 (×21), 1330 (×2 EPS), 1477 (×20), 1642 (×2 neg), 1768 (×20), 1916 (×2 EPS), 2061 (×19)
+
+Adjacent gaps (selected large ones):
+  1229→1330: 101px  (within-cluster variation + EPS interstitial)
+  1331→1477: 146px  (EPS cluster → Val-B start) — INTER-COLUMN
+  1477→…→1522: within-cluster (up to 45px) 
+  1522→1642: 120px  (Val-B → neg parenthetical)
+  1642→1768: 126px  (neg → Val-C start)
+  …
+  2061→2105: 44px (within Val-D)
+
+True inter-column gaps (between cluster A's max and cluster B's min):
+  Val-A max=1229, Val-B min=1477: gap = 248px
+  Val-B max=1522, Val-C min=1768: gap = 246px
+  Val-C max=1814, Val-D min=2061: gap = 247px
+
+Approximate: min_large_gap ≈ 146px (1331→1477, the interstitial+cluster gap)
+col_gap = max(146 × 0.7, 1.5 × 167) = max(102, 250.5) = 250.5px  ← fallback still wins
+```
+
+**Note:** the 0.7 factor on 146px gives 102px, which still loses to the legacy fallback 250.5px. The issue is that the EPS interstitial clusters (1330, 1642, 1916) sit BETWEEN the real columns, making the smallest inter-cluster gap appear to be ~100–150px (within the EPS+cluster spacing) rather than the true 246–248px inter-column gap.
+
+**Required refinement:** Filter out VALUE clusters with ≤2 tokens before computing inter-cluster gaps. The EPS interstitial clusters have exactly 2 tokens; real value columns have 20–21. A minimum-cluster-size filter of 3 removes all interstitials cleanly.
+
+```python
+# Step 2 revised: group lefts into clusters (using _LEFT_EDGE_BIN_FACTOR × w_med bin)
+# then discard clusters with < MIN_VALUE_CLUSTER_SIZE tokens before gap analysis
+MIN_VALUE_CLUSTER_SIZE = 3  # interstitials have ≤2; real columns have ≥15
+```
+
+**Revised trace:**
+
+```
+Value clusters (after filtering ≤2-token interstitials):
+  Val-A: min=1182, max=1229 (21 tokens)
+  Val-B: min=1477, max=1522 (20 tokens)
+  Val-C: min=1768, max=1814 (20 tokens)
+  Val-D: min=2061, max=2105 (19 tokens)
+
+Inter-cluster gaps (min of next cluster - max of previous):
+  Val-A→B: 1477 - 1229 = 248px
+  Val-B→C: 1768 - 1522 = 246px
+  Val-C→D: 2061 - 1814 = 247px
+
+min_large_gap = 246px (all gaps are in the same range; any is "large")
+col_gap = max(246 × 0.7, 1.5 × 167) = max(172, 250.5) = 250.5px  ← still fallback
+```
+
+**The fallback dominates because `w_med` itself is inflated.** The fix must also restrict `w_med` to exclude long value tokens from the median — or use a DIFFERENT variable for `bin_width` vs `col_gap`.
+
+#### 2.3 Correct fix: use VALUE token widths for `col_gap`, NOT all number token widths
+
+The `bin_width` (cluster-formation tolerance) legitimately needs to be related to within-cluster variation — but for column assignment, what matters is the whitespace GAP between clusters, not the token widths. The right oracle for `col_gap` is the inter-cluster gap measured directly from the cluster edges, not token widths.
+
+**Revised approach — two-pass anchor detection:**
+
+```
+Pass 1: Form raw clusters using bin_width = max(1.0, _LEFT_EDGE_BIN_FACTOR × w_med_CODE)
+         where w_med_CODE = median width of CODE tokens only (2-3 digit tokens, width ≈ 20–30px).
+         CODE tokens have uniform short widths → bin_width ≈ 6–9px → fine-grained clustering.
+         Clusters form naturally at {255}, {957–961}, {1049}, {1182–1229}, {1330–1331},
+         {1477–1522}, {1642}, {1768–1814}, {1916}, {2061–2105}.
+
+Pass 2: Merge clusters where gap < MIN_INTER_COLUMN_GAP (a fixed pixel threshold derived from
+         page geometry). At 200 DPI, BCTC value columns are always separated by ≥ 1cm of white
+         space = ≥ 79px. Set MIN_INTER_COLUMN_GAP = 80px.
+         Gaps < 80px: cluster internal variation or adjacent code/value within same column → merge.
+         Gaps ≥ 80px: true column boundary → keep as separate anchor.
+
+Merge trace with MIN_INTER_COLUMN_GAP = 80:
+  {255} → gap 702 ≥ 80 → new
+  {957–961} → gap 88 ≥ 80 → new
+  {1049} → gap 133 ≥ 80 → new (Thuyết minh col separate from Mã số)
+  {1182–1229} → gap 101 ≥ 80 → new (Val-A)
+  {1330–1331} → gap 146 ≥ 80 → new (EPS interstitial — but will be filtered later as sparse)
+  {1477–1522} → gap 246 ≥ 80 → new (Val-B)
+  {1642} → gap 126 ≥ 80 → new (negative parenthetical)
+  {1768–1814} → gap 246 ≥ 80 → new (Val-C)
+  {1916} → gap 145 ≥ 80 → new (EPS)
+  {2061–2105} → gap 247 ≥ 80 → new (Val-D)
+```
+
+This produces 10 clusters, not 6. The interstitials appear as separate clusters. They are then handled by Step C7.5 (`_identify_pure_code_columns`) or by a new **sparse-cluster filter**: drop clusters with fewer than `MIN_VALUE_CLUSTER_SIZE=3` tokens from the value anchor list. Interstitial clusters (2 tokens) are discarded; pure-code clusters (11 and 27 tokens) are separated by `_identify_pure_code_columns`. Result: 4 clean value anchors at {1182, 1477, 1768, 2061}. Exactly correct.
+
+**AC-0 compliance:** `MIN_INTER_COLUMN_GAP = 80` is a generic geometry constant (minimum whitespace between any two column groups, derived from 200 DPI print resolution and standard A4 BCTC layout margins). It carries no BCTC-specific semantics — it applies to any multi-column financial table at 200 DPI. The existing `_COL_GAP_FACTOR × median_word_width` formula is REPLACED, not supplemented with a BCTC guard.
+
+#### 2.4 Segment report non-regression proof
+
+For the segment report (table[17]), value tokens are `35.381.667` (8 chars ≈ 73px), `9.092.934` (9 chars ≈ 80px), etc. With the same `MIN_INTER_COLUMN_GAP = 80px` approach:
+
+- Segment left-edge clusters are separated by actual whitespace of 150–400px (segment columns on a 2339px wide page at 200 DPI).
+- All inter-cluster gaps ≥ 80px → each segment column forms its own anchor.
+- The ordinal path then reconstructs each segment's single-row values correctly.
+
+The segment report used exactly 1 row with 6 value tokens across 6 columns — each token is its own cluster, and all cluster gaps are > 80px. Non-regression is geometric, not conditional.
+
+---
+
+### 3. New Design — `_detect_column_anchors_from_tokens` Replacement
+
+#### 3.1 New constant
+
+```python
+# Minimum pixel gap between two distinct column clusters (at 200 DPI).
+# Derived from A4 BCTC printing: columns are always separated by ≥1cm whitespace.
+# At 200 DPI: 1cm = 79px. Using 80px as a round number with 1px headroom.
+# AC-0: generic 200-DPI print geometry. No BCTC column semantics.
+_MIN_INTER_COLUMN_GAP_PX = 80
+```
+
+#### 3.2 Modified `_detect_column_anchors_from_tokens`
+
+The existing function (lines 684–740) is replaced with a two-pass implementation:
+
+```python
+def _detect_column_anchors_from_tokens(
+    tokens: List[Dict],
+    median_word_width: float,
+) -> List[float]:
+    """
+    Column anchor detection — two-pass implementation.
+
+    Pass 1: Form raw left-edge clusters using fine bin_width derived from CODE
+            token widths (short, uniform) rather than ALL token widths.
+            Falls back to _LEFT_EDGE_BIN_FACTOR × median_word_width if no code
+            tokens present (maintains backward compatibility for sparse pages).
+
+    Pass 2: Merge adjacent clusters whose gap < _MIN_INTER_COLUMN_GAP_PX.
+            This replaces the w_med-derived col_gap oracle that inflated to 250px
+            on long-string income statement tokens (root cause of MD-EXTRACT-8 failure).
+            _MIN_INTER_COLUMN_GAP_PX = 80px is fixed for 200 DPI output (1cm whitespace).
+
+    Returns:
+        Sorted list of column anchor x-positions (min of each surviving cluster).
+        Returns [0.0] if no tokens supplied.
+
+    AC-0: _VALUE_TOKEN_RE and _CODE_TOKEN_RE are generic numeric patterns.
+          _MIN_INTER_COLUMN_GAP_PX is a generic 200-DPI geometry constant.
+          Zero BCTC-specific string constants.
+
+    Non-regression (segment report):
+        Segment value tokens are short (8–10 chars, ~70–80px wide), producing
+        w_med ≈ 75px → old col_gap ≈ 112px. Segment inter-column whitespace is
+        ≥150px. Old and new algorithms both correctly separate segment columns.
+        The two-pass approach is strictly more accurate on long-string pages and
+        at least as accurate as the old approach on short-string pages.
+    """
+    if not tokens or median_word_width <= 0:
+        return [0.0]
+
+    all_lefts = sorted(float(w["left"]) for w in tokens)
+    if not all_lefts:
+        return [0.0]
+
+    # Pass 1 — form fine-grained clusters.
+    # Use CODE token width for bin_width (short, uniform ~20-30px at 200 DPI).
+    # Fallback: _LEFT_EDGE_BIN_FACTOR × median_word_width (unchanged from prior).
+    code_widths = [
+        float(w["width"])
+        for w in tokens
+        if _CODE_TOKEN_RE.match(w.get("text", "").strip()) and w.get("width", 0) > 0
+    ]
+    if code_widths:
+        sorted_cw = sorted(code_widths)
+        code_w_med = sorted_cw[len(sorted_cw) // 2]
+        bin_width = max(1.0, _LEFT_EDGE_BIN_FACTOR * code_w_med)
+    else:
+        bin_width = max(1.0, _LEFT_EDGE_BIN_FACTOR * median_word_width)
+
+    clusters: List[List[float]] = []
+    current_cluster = [all_lefts[0]]
+    for left in all_lefts[1:]:
+        if left - current_cluster[-1] <= bin_width:
+            current_cluster.append(left)
+        else:
+            clusters.append(current_cluster)
+            current_cluster = [left]
+    clusters.append(current_cluster)
+
+    cluster_mins = [min(c) for c in clusters]
+
+    # Pass 2 — merge clusters whose gap < _MIN_INTER_COLUMN_GAP_PX.
+    # This is the core fix: column gap is now a fixed physical constant (80px at
+    # 200 DPI) rather than a function of median token width.
+    merged: List[float] = [cluster_mins[0]]
+    for anchor in cluster_mins[1:]:
+        if anchor - merged[-1] > _MIN_INTER_COLUMN_GAP_PX:
+            merged.append(anchor)
+        # else: within same column group — absorbed under merged[-1]
+
+    return merged
+```
+
+**Worked trace on live income statement (130 clean number tokens):**
+
+```
+Pass 1 (code widths: 22-24px → code_w_med=23 → bin_width = 0.3×23 = 6.9px):
+  Clusters form at: 255, 957, 961, 1049, 1182, 1229(?), 1330, 1331, 1477, ...
+  (exact fine-clustering depends on 6.9px tolerance; key: all 4 value cluster mins
+   emerge as separate entries: 1182, 1477, 1768, 2061)
+
+Pass 2 (MIN_INTER_COLUMN_GAP_PX = 80):
+  255 → gap 702 ≥ 80 → NEW anchor=255 ✓
+  957 → gap 702 ≥ 80 → NEW anchor=957 ✓ (actually from cluster_min after fine clustering)
+  1049 → gap ~88 ≥ 80 → NEW anchor=1049 ✓
+  1182 → gap ~133 ≥ 80 → NEW anchor=1182 ✓ (Val-A correctly separated)
+  1330 → gap ~101 ≥ 80 → NEW anchor=1330 (EPS interstitial)
+  1477 → gap ~146 ≥ 80 → NEW anchor=1477 ✓ (Val-B correctly separated)
+  1642 → gap ~120 ≥ 80 → NEW anchor=1642 (neg parenthetical)
+  1768 → gap ~126 ≥ 80 → NEW anchor=1768 ✓ (Val-C correctly separated)
+  1916 → gap ~145 ≥ 80 → NEW anchor=1916 (EPS)
+  2061 → gap ~145 ≥ 80 → NEW anchor=2061 ✓ (Val-D correctly separated)
+
+Raw result (10 anchors): [255, 957, 1049, 1182, 1330, 1477, 1642, 1768, 1916, 2061]
+```
+
+The 4 real value columns are now correctly detected. The interstitial EPS clusters (1330, 1916) and the negative parenthetical cluster (1642) are also detected. They are handled downstream by `_identify_pure_code_columns` (Step C7.5): the EPS and negative clusters will be classified as non-pure-code (they contain `_VALUE_TOKEN_RE` matches), while the code clusters at 255, 957, 1049 are classified as pure-code and removed. The EPS interstitials (1330, 1642, 1916) will have only 2 tokens and survive as sparse value columns — they will get `prefer_ref_pitch=True` in `_build_ordinal_grid` and produce correct single-row data for the EPS row.
+
+**No further downstream changes required.** The existing C7 (`_assign_tokens_to_columns`), C7.5 (`_identify_pure_code_columns`), C8–C10 (`_build_ordinal_grid`), C11 (`_attach_labels_ordinal`) all work correctly once anchors are correct. The segment report's non-regression is geometric: all its inter-column gaps are ≥ 150px > 80px → all segment column anchors emerge correctly in Pass 2.
+
+---
+
+### 4. Acceptance Gate (LIVE-ONLY — no fixture tests as sole gate)
+
+**The hard rule from the mandate:** any new design's acceptance gate MUST be a live re-extraction + direct-DB render check. Fixture tests are required but NOT sufficient.
+
+#### 4.1 Live acceptance gate (primary)
+
+After dev implements the fix and ops runs MD-DEPLOY-8 (single-doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, NEVER batch):
+
+**AC-8-INC (BLOCKING — income statement label-value alignment on live):**
+
+Pull `md_tables_json` directly from `market.db` (NOT via inspect endpoint). Find the income statement table (highest code-density entry). Assert via Python script:
+
+```python
+import json, re
+tables = json.loads(...)  # from market.db
+MONEY_RE = re.compile(r'\d{1,3}(?:[.,]\d{3})+')
+
+# Income statement: first pipe-row must contain ALL of a single line item
+# (not interleaved labels from two lines)
+# Line item 1 (Doanh thu bán hàng): expected 4 values across 4 columns
+# Specifically: 20.258.866.135.395 / 17.651.065.378.939 / 70.207.689.409.081 / 62.962.652.134.635
+# These MUST appear in ONE pipe row (same header/first data row), each in a distinct cell.
+# If any two of these appear in DIFFERENT rows → label-value scrambling persists.
+
+income_tbl = max(tables, key=lambda t: len(re.findall(r'(?<!\d)\d{2,3}(?!\d)', t)))
+rows = [r for r in income_tbl.split('\n') if r.startswith('|') and '---' not in r]
+found_20258 = [i for i, r in enumerate(rows) if '20.258.866' in r]
+found_17651 = [i for i, r in enumerate(rows) if '17.651.065' in r]
+assert len(found_20258) == 1 and len(found_17651) == 1, "Values appear in multiple rows"
+assert found_20258[0] == found_17651[0], f"FAIL: values on different rows {found_20258} vs {found_17651}"
+print("AC-8-INC PASS: 20.258.866 and 17.651.065 on same row")
+```
+
+**AC-8-SEG-NOREGRESS (BLOCKING — segment report must NOT regress):**
+
+```python
+# Segment report (table[17] in the current DB, but identify generically as the table
+# containing all three revenue figures on ONE row)
+for tbl in tables:
+    if '35.381.667' in tbl and '9.092.934' in tbl and '18.701.876' in tbl:
+        rows_with_all3 = [r for r in tbl.split('\n') if '35.381.667' in r and '9.092.934' in r and '18.701.876' in r]
+        assert len(rows_with_all3) >= 1, "FAIL: 3 revenues not in one row"
+        print("AC-8-SEG-NOREGRESS PASS")
+        break
+else:
+    print("WARN: segment table not found in md_tables_json")
+```
+
+**AC-8-BALANCE-NOREGRESS (balance sheet — partial pass still acceptable):**
+
+The balance sheet (tables[0..3]) already shows partial correctness (clean head, intermittent issues). After the fix, the label-code alignment should improve (codes assigned to correct code-column, not absorbed into value column). AC: balance sheet first data row label cell is non-empty and contains readable Vietnamese text (not just `"200) | 200"`). Verified by human inspection of tables[0] first 5 rows.
+
+#### 4.2 Fixture unit test (required, not sufficient alone)
+
+Dev generates the fixture directly from the live `image_to_data` output. The fixture MUST use the actual income statement tokens from page 8 of FPT e71f845d:
+
+**Minimum fixture requirements:**
+- Include at least 5 value tokens from Val-A (left=1182–1229), 5 from Val-B (left=1477–1522), 5 from Val-C (left=1768–1814), 5 from Val-D (left=2061–2105) — all with live `top` values from the diagnostic output.
+- Include 2 code tokens at left=957–961 and 2 at left=255–256.
+- Include 1–2 EPS interstitial tokens at left=1330 and left=1916.
+- Compute `median_word_width` from THIS fixture → it must produce `w_med` close to 167px (not the short-token ~60px of FIXTURE_TOKENS_REV).
+
+Assert: `_detect_column_anchors_from_tokens(fixture_tokens, w_med=167)` returns a list that includes anchors close to 1182, 1477, 1768, and 2061 (within 50px of each). Assert: the OLD formula (1.5 × 167 = 250.5px threshold) would have produced WRONG anchors — demonstrate the regression by calling a reference implementation of the old algorithm and verifying it returns [255, 957, 1330, 1642, 1916] (the failure case). This is the explicit false-green trap proof.
+
+---
+
+### 5. Files to Modify
+
+| File | Change | DDD Layer |
+|---|---|---|
+| `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` | ADD constant `_MIN_INTER_COLUMN_GAP_PX = 80`; MODIFY `_detect_column_anchors_from_tokens` — two-pass: (1) fine bin_width from CODE token width (fallback: existing formula), (2) merge with `_MIN_INTER_COLUMN_GAP_PX` as threshold replacing `_COL_GAP_FACTOR × median_word_width`; no other functions modified | infrastructure |
+| `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` | ADD class `TestDetectColumnAnchorsFromTokensV8` with (a) income-statement-realistic fixture (long value tokens, `w_med=167`) asserting 4 correct value anchors emerge; (b) regression proof asserting old formula fails on same fixture; (c) segment-report non-regression fixture (short value tokens) asserting column count unchanged | unit |
+
+**No new files. No new ports. No new use case changes. No mcp-server changes. Zero frozen-surface changes.**
+
+---
+
+### 6. Risk Register
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| R-HIGH: `_MIN_INTER_COLUMN_GAP_PX = 80` is calibrated for 200 DPI. If the pdf-extractor ever runs at a different DPI (e.g., 150 DPI), 80px = 1.35cm which may be too large and over-merge adjacent columns. | HIGH | The existing use case always rasterizes at exactly 200 DPI (hardcoded in `extract_md_tables_usecase.py`). If DPI changes, `_MIN_INTER_COLUMN_GAP_PX` must be rescaled. Add a docstring warning + a `# DPI-DEPENDENT constant: calibrated at 200 DPI` comment. |
+| R-HIGH: EPS interstitial clusters (1330, 1642, 1916) survive as 3 extra anchors. They contain only 2 tokens each (EPS row). The ordinal path assigns them correctly (2-row EPS data per cluster). BUT if `_identify_pure_code_columns` misclassifies the `(73.049.924.176)` and `(105.413.134.287)` negative parenthetical tokens at left=1508–1787 as "code" (they are wrapped in parentheses), those columns would be stripped and lost. | HIGH | `_VALUE_TOKEN_RE` matches `^\d{1,3}(?:[.,]\d{3})+` — it does NOT match `(73.049.924.176)` which starts with `(`. The negative parentheticals at left=1508–1787 are classified by `_NUMBER_TOKEN_RE` (which includes `^[\(\-]?\d{1,3}(?:[.,]\d{3})+[\)\-]?$`) but NOT by `_VALUE_TOKEN_RE`. They will fall into the "code-like" bin in `_identify_pure_code_columns`. RISK: they have 3 tokens → code_fraction=1.0, value_count=0 → classified as pure-code → STRIPPED. These are LEGITIMATE negative values. Fix: extend `_VALUE_TOKEN_RE` to match parenthetical negatives: `r'^\(?\d{1,3}(?:[.,]\d{3})+\)?$'`. OR: extend `_identify_pure_code_columns` condition to require code_count > 0 via `_CODE_TOKEN_RE` specifically (2-3 digit codes), not any non-value token. The parenthetical negatives are NOT 2-3 digit codes → they survive the code-column filter. Dev must verify this on the live token list. |
+| R-MEDIUM: Pass 1 bin_width derived from CODE tokens. If a page has no code tokens (e.g., a pure financial summary table with only dates and values), `code_widths` is empty and the fallback `_LEFT_EDGE_BIN_FACTOR × median_word_width` is used — same as the old formula. On such pages, the old behavior is preserved (regression-free for pages without code columns). | MEDIUM | The fallback is explicit and logged. No mitigation needed beyond the fallback path. |
+| R-MEDIUM: The 10-anchor output (including EPS interstitials) means `_assign_tokens_to_columns` must handle 10 columns and `_build_ordinal_grid` produces a 10-column grid before pure-code-column stripping. After stripping 3 pure-code columns (255, 957, 1049) and handling 3 EPS/neg columns (1330, 1642, 1916) as sparse value columns, the final grid should have 4 clean columns + 3 EPS sparse columns = 7 columns. `_collapse_empty_columns` then drops columns that are empty across all rows EXCEPT the EPS row. This may work correctly but needs verification on the live output. | MEDIUM | The `_collapse_empty_columns` function is designed exactly for this scenario: any column empty in ALL rows is dropped. EPS columns have 2 non-empty rows → they are KEPT. This is correct behavior (EPS row renders with 2 values in their columns). If dev finds EPS columns cause visual clutter, they can add a sparse-column filter (drop columns with < 3 non-empty rows) as an optional post-processing step. Not required for the AC gate. |
+| R-LOW: The `_MIN_INTER_COLUMN_GAP_PX = 80` constant name uses `_PX` suffix to indicate it is DPI-dependent. This naming convention is new — no existing constants use this suffix. | LOW | Document in the constant's docstring. No functional concern. |
+
+---
+
+### 7. DDD / Fence Compliance
+
+All changes are confined to `infrastructure/generic_md_table_extractor.py`. The new constant and the modified function are pure (no I/O, no Tesseract, no DB, no network). Import-linter: `_detect_column_anchors_from_tokens` already has no application/interface imports — this constraint is preserved. Fence-A: no new cross-layer imports introduced.
+
+`_VALUE_TOKEN_RE` extension (if needed for parenthetical negatives — Risk R-HIGH above): the regex change is a module-level constant update, no new imports, AC-0 compliant (still a generic financial number pattern).
+
+---
+
+### 8. Build Standard + Hard Constraints
+
+**BUILD-STANDARD: lean** — single function modification in existing infrastructure file.
+
+**ROLE-RELAY:** dev-pdf-extractor (MD-EXTRACT-8, this brief §3-§7) → ops (MD-DEPLOY-8, single doc `e71f845d`, NEVER batch) → main-terminal live-verify (AC-8-INC + AC-8-SEG-NOREGRESS via direct DB query) → qa (MD-QA-8, all prior ACs remain binding) → po (MD-EXIT re-evaluation, armed when both INC and SEG pass live).
+
+**HARD CONSTRAINTS (carry-forward, all binding):**
+- PRIVACY: self-hosted Tesseract ONLY. Financial PDFs/images NEVER leave the host. No external API.
+- HARDWARE: 16GB Intel Mac, Docker 8GB cap. Single-doc sequential OCR only. NEVER batch backfill.
+- `text_table_extractor.py` UNTOUCHED (AC-3F FROZEN).
+- Frozen surfaces: `apps/pdf-extractor/dashboard/`, `apps/pdf-extractor/sandbox/runner.py`, `docs/data/pilot-status-pdf-extractor.json`, all mcp-server files.
+- Leave all files UNSTAGED — main terminal commits per commit-mutex protocol.
+- AC-0 grep-proof: `grep -rniE "bao.cao.bo.phan|segment_report|SEGMENT|BAO_CAO|bo_phan|bao_phan" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches in logic (comments allowed).
