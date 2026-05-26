@@ -73,9 +73,40 @@ _MIN_WORD_CONF = 0
 # Numeric value pattern: a token of ≥3 chars that looks like a number.
 _NUMERIC_RE = re.compile(r"\d[\d.,]{2,}")
 
-# Prose page filter: if col_count == 1 and row_count > this threshold, treat
-# as prose (not a table) and emit only via ocr_as_markdown path.
-_PROSE_ROW_THRESHOLD = 15
+# ---------------------------------------------------------------------------
+# DEFECT-B — Noise density gate constants (generic financial patterns)
+#
+# AC-0: all patterns below are GENERIC — they apply to any financial document
+# with locale-agnostic number formatting. ZERO BCTC-specific string literals.
+# ---------------------------------------------------------------------------
+
+# Money-group pattern: N,NNN,NNN or N.NNN.NNN (at least one separator group).
+# Locale-agnostic: works for both VN dot-thousands and comma-thousands formats.
+# Derived from live FPT density profile: real tables have >= 6, noise <= 3.
+_MONEY_GROUP_RE = re.compile(r"\d{1,3}(?:[.,]\d{3})+")
+
+# K: minimum money-group matches for a region to be emitted as a table.
+# Primary gate. Live data split is clean: real >= 6, noise <= 3, no 4-5 cases.
+_MIN_MONEY_GROUPS = 6
+
+# Three-digit standalone code pattern (e.g. 100, 200, 270, 300, 400, 440).
+# Generic: these codes appear in income statement, cash flow, and segment
+# tables of any BCTC document — not specific to balance sheet.
+_CODE_LIKE_RE = re.compile(r"(?<!\d)\d{3}(?!\d)")
+
+# J: minimum 3-digit code hits for the secondary gate (code-rich tables).
+_MIN_CODE_HITS = 3
+
+# Money-group floor for the secondary gate (code column + at least 1 value).
+_MIN_MONEY_THIN = 1
+
+# ---------------------------------------------------------------------------
+# DEFECT-C — Header strip and label-coalescing constants
+# ---------------------------------------------------------------------------
+
+# Generic date pattern for column headers (DD/MM/YYYY — locale-agnostic).
+# Matches: 31/12/2025, 1/6/2024, etc. No BCTC-specific semantics.
+_DATE_HEADER_RE = re.compile(r"\d{1,2}/\d{1,2}/\d{4}")
 
 
 # ---------------------------------------------------------------------------
@@ -451,6 +482,156 @@ def _emit_markdown_table(grid: List[List[str]], n_header_rows: int) -> str:
 
 
 # ---------------------------------------------------------------------------
+# DEFECT-B: density gate helper
+# ---------------------------------------------------------------------------
+
+
+def _is_data_table(grid: List[List[str]]) -> bool:
+    """
+    Generic density gate: emit grid as a pipe-table only if it contains
+    financial data.
+
+    Two acceptance conditions (OR — either is sufficient):
+      1. money_groups >= _MIN_MONEY_GROUPS: at least K cells match the
+         N,NNN,NNN or N.NNN.NNN number format (locale-agnostic financial).
+      2. code_hits >= _MIN_CODE_HITS AND money_groups >= _MIN_MONEY_THIN:
+         at least J three-digit standalone codes AND at least 1 money-group
+         (section-header pages with a code column + a few values also qualify).
+
+    Returns False for letterhead / title / prose blocks (zero financial numbers).
+
+    AC-0: zero BCTC-specific constants. Uses only _MONEY_GROUP_RE (generic
+    financial number pattern) and _CODE_LIKE_RE (generic 3-digit code pattern).
+    Geometry and generic number patterns only — no per-table label keywords.
+
+    Args:
+        grid: 2-D list of strings assembled by _assign_columns().
+
+    Returns:
+        True if the grid passes the financial density gate; False otherwise.
+    """
+    if not grid:
+        return False
+
+    flat = " ".join(cell for row in grid for cell in row)
+    money_groups = len(_MONEY_GROUP_RE.findall(flat))
+
+    # Primary gate: sufficient money-group density
+    if money_groups >= _MIN_MONEY_GROUPS:
+        return True
+
+    # Secondary gate: code-rich table with at least one money-group
+    code_hits = len(_CODE_LIKE_RE.findall(flat))
+    return code_hits >= _MIN_CODE_HITS and money_groups >= _MIN_MONEY_THIN
+
+
+# ---------------------------------------------------------------------------
+# DEFECT-C.1: leading header band stripper
+# ---------------------------------------------------------------------------
+
+
+def _strip_leading_header_bands(grid: List[List[str]]) -> List[List[str]]:
+    """
+    Remove leading rows that contain ZERO money-group tokens (letterhead noise).
+
+    Stop stripping at the first row that:
+      - has at least one money-group match (_MONEY_GROUP_RE), OR
+      - contains a date-header pattern (_DATE_HEADER_RE: DD/MM/YYYY), OR
+      - is a recognized section header (_is_recognized_section_header).
+
+    These stop-conditions preserve legitimate column header rows (e.g. date
+    headers like "31/12/2025", BCTC section labels like "A. TÀI SẢN NGẮN HẠN")
+    while stripping company-name / letterhead lines glued to the table top by
+    Step B's vertical-gap detection.
+
+    AC-0: uses only _MONEY_GROUP_RE (generic) and _DATE_HEADER_RE (generic).
+    _is_recognized_section_header is a diacritic-insensitive geometry helper
+    with no hardcoded table-type constants — also AC-0 compliant.
+
+    DDD: pure function — no I/O, no Tesseract, no DB. Infrastructure layer.
+
+    Args:
+        grid: 2-D list of strings from _assign_columns().
+
+    Returns:
+        Grid with leading noise rows removed. May be empty if all rows were noise.
+    """
+    start = 0
+    for i, row in enumerate(grid):
+        flat = " ".join(row)
+        has_money = bool(_MONEY_GROUP_RE.search(flat))
+        has_date = bool(_DATE_HEADER_RE.search(flat))
+        is_section_hdr = _is_recognized_section_header(flat)
+        if has_money or has_date or is_section_hdr:
+            start = i
+            break
+    return grid[start:]
+
+
+# ---------------------------------------------------------------------------
+# DEFECT-C.2: label column coalescing
+# ---------------------------------------------------------------------------
+
+
+def _coalesce_label_columns(grid: List[List[str]]) -> List[List[str]]:
+    """
+    Merge adjacent TEXT-ONLY columns at the left of the first numeric column
+    into a single label column.
+
+    A column is TEXT-ONLY if it has zero money-group matches across ALL rows.
+    The first column that contains at least one money-group match across all
+    its rows is the boundary: it and all columns to its right are kept separate.
+
+    Fixes: "Phải trả người | bán ngắn | hạn" (3 false columns) → single
+    label cell "Phải trả người bán ngắn hạn".
+
+    AC-0: uses only _MONEY_GROUP_RE (generic financial number pattern).
+    No BCTC label constants, no hardcoded column positions.
+
+    DDD: pure function — no I/O, no Tesseract, no DB. Infrastructure layer.
+
+    Args:
+        grid: 2-D list of strings from _assign_columns() (or post-strip).
+
+    Returns:
+        Grid with text-only leading columns merged into a single label column.
+        Returns unchanged grid when: grid is empty, first_numeric <= 1,
+        or no numeric column exists (let density gate handle rejection).
+    """
+    if not grid or not grid[0]:
+        return grid
+
+    n_cols = len(grid[0])
+
+    # Find the first numeric column (leftmost with any money-group match)
+    first_numeric: Optional[int] = None
+    for col_idx in range(n_cols):
+        col_text = " ".join(
+            row[col_idx] for row in grid if col_idx < len(row)
+        )
+        if _MONEY_GROUP_RE.search(col_text):
+            first_numeric = col_idx
+            break
+
+    if first_numeric is None or first_numeric <= 1:
+        # No numeric column found, or label is already single-column — keep as-is
+        return grid
+
+    # Merge columns 0..first_numeric-1 into a single label column per row
+    merged: List[List[str]] = []
+    for row in grid:
+        label_parts = [
+            row[i].strip()
+            for i in range(first_numeric)
+            if i < len(row) and row[i].strip()
+        ]
+        label = " ".join(label_parts)
+        rest = list(row[first_numeric:]) if first_numeric < len(row) else []
+        merged.append([label] + rest)
+    return merged
+
+
+# ---------------------------------------------------------------------------
 # Public class — implements GenericMdTableExtractorPort
 # ---------------------------------------------------------------------------
 
@@ -589,14 +770,37 @@ class GenericMdTableExtractor:
 
             # Step E — Grid assembly
             grid = _assign_columns(rows, col_anchors)
-            n_rows = len(grid)
 
-            # Post-filter: 1-column, many rows → prose page (not a table)
-            if n_cols == 1 and n_rows > _PROSE_ROW_THRESHOLD:
+            # DEFECT-C.1 (MD-EXTRACT-2): strip leading letterhead/noise rows
+            # before the density gate and header detection. This prevents page
+            # headers glued to the top of real tables from inflating row counts
+            # or corrupting the first-row header detection.
+            grid = _strip_leading_header_bands(grid)
+            if not grid:
                 logger.debug(
-                    "GenericMdTableExtractor: prose filter: region has %d rows "
-                    "and 1 column — treating as prose, skipping pipe-table emit",
+                    "GenericMdTableExtractor: grid empty after header strip — skipping"
+                )
+                continue
+
+            # DEFECT-C.2 (MD-EXTRACT-2): coalesce text-only label columns at
+            # the left of the first numeric column into a single merged cell.
+            # Fixes "Phải trả người | bán ngắn | hạn" → one label column.
+            grid = _coalesce_label_columns(grid)
+
+            n_rows = len(grid)
+            n_cols = len(grid[0]) if grid else 0
+
+            # DEFECT-B (MD-EXTRACT-2): density gate replaces the old
+            # col_count==1 prose filter. Applies to ALL regions regardless of
+            # column count. Letterhead/title/prose with zero financial numbers
+            # are rejected here; real data tables (>= 6 money-groups) pass.
+            # AC-0: _is_data_table uses only generic number patterns.
+            if not _is_data_table(grid):
+                logger.debug(
+                    "GenericMdTableExtractor: density gate rejected region: "
+                    "rows=%d cols=%d — treating as non-table prose",
                     n_rows,
+                    n_cols,
                 )
                 continue
 
@@ -610,9 +814,11 @@ class GenericMdTableExtractor:
             if md_table:
                 page_tables.append(md_table)
                 logger.debug(
-                    "GenericMdTableExtractor: emitted table: %d rows × %d cols",
+                    "GenericMdTableExtractor: emitted table: %d rows × %d cols "
+                    "(money_groups=%d)",
                     n_rows,
                     n_cols,
+                    len(_MONEY_GROUP_RE.findall(" ".join(c for r in grid for c in r))),
                 )
 
         return page_tables

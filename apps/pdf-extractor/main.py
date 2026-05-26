@@ -28,6 +28,7 @@ from infrastructure.alert_adapter import TelegramAlertAdapter  # BT-5
 from infrastructure.ocr_adapter import PdfOcrAdapter  # BT-3-D
 from infrastructure.generic_md_table_extractor import GenericMdTableExtractor  # MD-EXTRACT
 from infrastructure.md_table_push_client import MdTablePushClient  # MD-EXTRACT
+from infrastructure.ocr_text_fetch_client import OcrTextFetchClient  # MD-EXTRACT-2
 from domain.services import ExtractPDFService
 from application.usecases import ExtractPDFUseCase
 from application.extract_tables_usecase import ExtractTablesUseCase
@@ -80,12 +81,14 @@ def create_app() -> FastAPI:
         ocr_port=ocr_adapter,       # BT-3-D: injected OcrPort (real Tesseract path)
     )
 
-    # --- MD-EXTRACT: generic markdown table extraction use case ---
+    # --- MD-EXTRACT / MD-EXTRACT-2: generic markdown table extraction use case ---
     md_table_extractor = GenericMdTableExtractor()
     md_table_push_client = MdTablePushClient(mcp_server_url=cfg.mcp_server_url)
+    ocr_fetch_client = OcrTextFetchClient(mcp_server_url=cfg.mcp_server_url)  # MD-EXTRACT-2
     extract_md_tables_usecase = ExtractMdTablesUseCase(
         md_extractor=md_table_extractor,
         md_push_client=md_table_push_client,
+        ocr_fetch_client=ocr_fetch_client,  # MD-EXTRACT-2: auto-fetch OCR text
     )
 
     # --- FastAPI app ---

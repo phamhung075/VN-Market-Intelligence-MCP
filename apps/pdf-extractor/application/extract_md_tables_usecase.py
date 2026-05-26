@@ -1,5 +1,5 @@
 """
-application/extract_md_tables_usecase.py — MD-EXTRACT
+application/extract_md_tables_usecase.py — MD-EXTRACT / MD-EXTRACT-2
 
 ExtractMdTablesUseCase: orchestrates generic markdown table extraction for ALL
 pages of a BCTC PDF and pushes results to mcp-server.
@@ -35,6 +35,13 @@ Application layer rules (DDD):
 Ports injected:
     - GenericMdTableExtractorPort  (concrete: infrastructure.generic_md_table_extractor)
     - MdTablePushClientPort        (concrete: infrastructure.md_table_push_client)
+    - OcrTextFetchClientPort       (concrete: infrastructure.ocr_text_fetch_client — MD-EXTRACT-2)
+
+MD-EXTRACT-2 DEFECT-A fix:
+    Step 0 added: if doc_ocr_text not provided by caller, auto-fetch stored OCR
+    text from mcp-server via OcrTextFetchClientPort before launching extraction.
+    This ensures ocr_as_markdown is always populated without re-running Tesseract.
+    Zero new Tesseract calls added (HARDWARE SAFE).
 """
 
 from __future__ import annotations
@@ -47,6 +54,7 @@ from typing import Dict, List, Optional
 from domain.modules.financial_reports.ports import (
     GenericMdTableExtractorPort,
     MdTablePushClientPort,
+    OcrTextFetchClientPort,
 )
 
 logger = logging.getLogger(__name__)
@@ -79,9 +87,11 @@ class ExtractMdTablesUseCase:
     Wiring (composition root — main.py):
         md_extractor      = GenericMdTableExtractor()
         md_push_client    = MdTablePushClient(mcp_server_url=cfg.mcp_server_url)
+        ocr_fetch_client  = OcrTextFetchClient(mcp_server_url=cfg.mcp_server_url)
         extract_md_tables_usecase = ExtractMdTablesUseCase(
             md_extractor=md_extractor,
             md_push_client=md_push_client,
+            ocr_fetch_client=ocr_fetch_client,
         )
 
     Hardware:
@@ -90,20 +100,29 @@ class ExtractMdTablesUseCase:
         - PIL Image reference is deleted after each page (R-MEDIUM mitigation).
         - Temp PNGs live in a TemporaryDirectory context (R-LOW mitigation).
         - MAX_PAGES = 20 hard cap with WARNING log when exceeded (AC-6).
+        - Step 0 (DEFECT-A fix): fetch stored OCR text from mcp-server — ZERO
+          new Tesseract calls.
     """
 
     def __init__(
         self,
         md_extractor: GenericMdTableExtractorPort,
         md_push_client: MdTablePushClientPort,
+        ocr_fetch_client: Optional[OcrTextFetchClientPort] = None,
     ) -> None:
         """
         Args:
-            md_extractor:   Injected GenericMdTableExtractorPort implementation.
-            md_push_client: Injected MdTablePushClientPort implementation.
+            md_extractor:     Injected GenericMdTableExtractorPort implementation.
+            md_push_client:   Injected MdTablePushClientPort implementation.
+            ocr_fetch_client: Optional OcrTextFetchClientPort (MD-EXTRACT-2).
+                              When provided and doc_ocr_text is not supplied by
+                              caller, the use case auto-fetches OCR text from
+                              mcp-server before extraction. Graceful degrade
+                              when absent or when fetch returns empty string.
         """
         self._extractor = md_extractor
         self._push_client = md_push_client
+        self._ocr_fetch_client = ocr_fetch_client
 
     async def execute(
         self,
@@ -135,6 +154,37 @@ class ExtractMdTablesUseCase:
             report_id,
             pdf_path,
         )
+
+        # ------------------------------------------------------------------
+        # Step 0 (MD-EXTRACT-2 DEFECT-A fix): auto-fetch stored OCR text
+        # from mcp-server when doc_ocr_text is not provided by the caller.
+        # This ensures ocr_as_markdown is populated without new Tesseract calls.
+        # Graceful degrade: if fetch fails or returns empty, continue normally.
+        # ------------------------------------------------------------------
+        if doc_ocr_text is None and self._ocr_fetch_client is not None:
+            try:
+                fetched = await self._ocr_fetch_client.fetch_ocr_text(report_id)
+                if fetched:
+                    doc_ocr_text = fetched
+                    logger.info(
+                        "ExtractMdTablesUseCase: fetched %d chars of OCR text "
+                        "from mcp-server for report_id=%s",
+                        len(doc_ocr_text),
+                        report_id,
+                    )
+                else:
+                    logger.warning(
+                        "ExtractMdTablesUseCase: no stored OCR text for "
+                        "report_id=%s — ocr_as_markdown will be empty",
+                        report_id,
+                    )
+            except Exception as exc:
+                logger.warning(
+                    "ExtractMdTablesUseCase: OCR fetch failed for report_id=%s: %s "
+                    "— continuing without OCR text",
+                    report_id,
+                    exc,
+                )
 
         # ------------------------------------------------------------------
         # Step 1: Determine page list (ALL pages, with MAX_PAGES cap)

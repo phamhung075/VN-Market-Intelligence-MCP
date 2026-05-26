@@ -13,7 +13,7 @@ Domain layer rules:
 These protocols satisfy G2 re-verify (P2-C) and enforce the DDD layering rule:
 domain modules compose domain primitives via ports, not direct function calls.
 
-Ports defined here (13 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2):
+Ports defined here (14 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2; MD-EXTRACT-2 adds 1):
     - DecimalNormalizerPort         (decimal_normalizer — P1-B2)
     - FinancialValidatorPort        (validate_financial_figures — P1-B1)
     - ConfidenceScorerPort          (confidence_scorer — P2-B1)
@@ -27,6 +27,7 @@ Ports defined here (13 ports — BT-1 adds 3; BT-3-A adds 2; MD-EXTRACT adds 2):
     - TablePushClientPort           (table_push_client — BT-3-A)
     - GenericMdTableExtractorPort   (generic_md_table_extractor — MD-EXTRACT)
     - MdTablePushClientPort         (md_table_push_client — MD-EXTRACT)
+    - OcrTextFetchClientPort        (ocr_text_fetch_client — MD-EXTRACT-2)
 """
 
 from __future__ import annotations
@@ -462,5 +463,42 @@ class MdTablePushClientPort(Protocol):
 
         Raises:
             Exception: on HTTP error or network failure (caller handles).
+        """
+        ...
+
+
+class OcrTextFetchClientPort(Protocol):
+    """
+    Port for fetching stored per-page OCR text from mcp-server (MD-EXTRACT-2).
+
+    Concrete adapter: infrastructure/ocr_text_fetch_client.OcrTextFetchClient
+    Source endpoint: GET /api/bctc-inspect/ocr/{report_id}?page=N
+
+    Reads OCR text already stored in mcp-server's pdf_extracted_text table
+    (from prior Tesseract processing). Concatenates all pages into a single
+    string separated by page-break markers. Returns empty string on failure
+    (graceful degrade — never crashes the extraction).
+
+    DDD: domain port — zero infrastructure imports. Pure Protocol.
+
+    PRIVACY: reads from our own mcp-server only. Zero external API calls.
+    HARDWARE: adds zero new Tesseract calls (OCR text is already stored).
+
+    Implemented by:
+        - infrastructure/ocr_text_fetch_client.OcrTextFetchClient (production)
+        - FakeOcrTextFetchClient (tests — injected)
+    """
+
+    async def fetch_ocr_text(self, report_id: str) -> str:
+        """
+        Fetch and concatenate all stored OCR pages for the given report.
+
+        Args:
+            report_id: UUID string matching financial_reports.id on mcp-server.
+
+        Returns:
+            Concatenated OCR text for all pages, separated by
+            "\\n\\n---\\n\\n" page-break markers. Returns empty string
+            when no OCR text is stored or on HTTP failure.
         """
         ...

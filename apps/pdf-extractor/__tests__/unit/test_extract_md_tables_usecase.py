@@ -332,3 +332,253 @@ class TestExtractMdTablesUseCaseAC6:
     def test_max_pages_constant_is_20(self):
         """MAX_PAGES must equal 20 (brief constraint)."""
         assert MAX_PAGES == 20, f"MAX_PAGES must be 20, got {MAX_PAGES}"
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-2 DEFECT-A: OcrTextFetchClientPort injection tests
+# ---------------------------------------------------------------------------
+
+
+class FakeOcrTextFetchClient:
+    """
+    Fake OcrTextFetchClientPort.
+
+    Returns configurable OCR text. Records call arguments.
+    Optionally raises to simulate HTTP failure.
+    """
+
+    def __init__(self, text: str = "## Section\n> 88.089.621") -> None:
+        self._text = text
+        self.called = False
+        self.last_report_id: Optional[str] = None
+        self._should_raise: Optional[Exception] = None
+
+    def set_raise(self, exc: Exception) -> None:
+        self._should_raise = exc
+
+    async def fetch_ocr_text(self, report_id: str) -> str:
+        self.called = True
+        self.last_report_id = report_id
+        if self._should_raise is not None:
+            raise self._should_raise
+        return self._text
+
+
+class TestOcrFetchClientInjection:
+    """
+    MD-EXTRACT-2 DEFECT-A: tests for Step 0 OCR text auto-fetch in use case.
+
+    AC-2A (unit level): when doc_ocr_text is None and ocr_fetch_client is
+    injected, the fetch client is called and the returned text becomes
+    ocr_as_markdown in the push call.
+    """
+
+    def _make_use_case_with_ocr_client(
+        self,
+        ocr_text: str = "## Section\n> 88.089.621",
+        should_raise: Optional[Exception] = None,
+    ) -> tuple:
+        ext = FakeGenericMdTableExtractor()
+        push = FakeMdPushClient()
+        ocr_client = FakeOcrTextFetchClient(text=ocr_text)
+        if should_raise is not None:
+            ocr_client.set_raise(should_raise)
+        uc = ExtractMdTablesUseCase(
+            md_extractor=ext,
+            md_push_client=push,
+            ocr_fetch_client=ocr_client,
+        )
+        return uc, ext, push, ocr_client
+
+    def test_ocr_fetch_client_called_when_no_doc_ocr_text(self):
+        """
+        When doc_ocr_text is None, ocr_fetch_client.fetch_ocr_text is called
+        with the correct report_id.
+        """
+        uc, ext, push, ocr_client = self._make_use_case_with_ocr_client()
+
+        with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
+            asyncio.get_event_loop().run_until_complete(
+                uc.execute(
+                    report_id="fetch-test-001",
+                    pdf_path="/fake/test.pdf",
+                    # doc_ocr_text NOT provided → should trigger Step 0
+                )
+            )
+
+        assert ocr_client.called, "fetch_ocr_text was not called when doc_ocr_text=None"
+        assert ocr_client.last_report_id == "fetch-test-001"
+
+    def test_ocr_fetch_client_not_called_when_doc_ocr_text_provided(self):
+        """
+        When doc_ocr_text is explicitly provided by caller, the fetch client
+        must NOT be called (avoid redundant HTTP call).
+        """
+        uc, ext, push, ocr_client = self._make_use_case_with_ocr_client()
+
+        with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
+            asyncio.get_event_loop().run_until_complete(
+                uc.execute(
+                    report_id="fetch-test-002",
+                    pdf_path="/fake/test.pdf",
+                    doc_ocr_text="Already provided OCR text",
+                )
+            )
+
+        assert not ocr_client.called, (
+            "fetch_ocr_text was called even though doc_ocr_text was explicitly provided"
+        )
+
+    def test_fetched_ocr_text_appears_in_push_as_markdown(self):
+        """
+        The OCR text returned by fetch_ocr_text is converted to markdown
+        and passed to push_md_tables as ocr_as_markdown (non-empty string).
+        """
+        raw_ocr = "A. TÀI SẢN NGẮN HẠN\n100  88.089.621  71.999.995"
+        uc, ext, push, ocr_client = self._make_use_case_with_ocr_client(
+            ocr_text=raw_ocr,
+        )
+
+        with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
+            asyncio.get_event_loop().run_until_complete(
+                uc.execute(report_id="fetch-test-003", pdf_path="/fake/test.pdf")
+            )
+
+        assert push.call_args is not None, "push_md_tables was not called"
+        ocr_md = push.call_args["ocr_as_markdown"]
+        assert isinstance(ocr_md, str), "ocr_as_markdown must be a string"
+        assert len(ocr_md) > 0, "ocr_as_markdown must be non-empty when OCR text is fetched"
+
+    def test_ocr_fetch_client_not_injected_no_crash(self):
+        """
+        When no ocr_fetch_client is provided (None), use case continues normally
+        without Step 0. ocr_as_markdown stays empty (original behavior).
+        """
+        ext = FakeGenericMdTableExtractor()
+        push = FakeMdPushClient()
+        uc = ExtractMdTablesUseCase(
+            md_extractor=ext,
+            md_push_client=push,
+            # ocr_fetch_client NOT provided
+        )
+
+        with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
+            result = asyncio.get_event_loop().run_until_complete(
+                uc.execute(report_id="no-client-001", pdf_path="/fake/test.pdf")
+            )
+
+        assert result["pushed"] is True
+        # Push still called; ocr_as_markdown is "" (no text, no client)
+        assert push.called
+        assert push.call_args["ocr_as_markdown"] == ""
+
+    def test_graceful_degrade_when_fetch_raises(self):
+        """
+        If ocr_fetch_client.fetch_ocr_text raises an exception, the use case
+        must NOT crash. It continues and ocr_as_markdown stays empty.
+        """
+        uc, ext, push, ocr_client = self._make_use_case_with_ocr_client(
+            should_raise=ConnectionError("mcp-server unreachable"),
+        )
+
+        with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
+            result = asyncio.get_event_loop().run_until_complete(
+                uc.execute(report_id="fail-fetch-001", pdf_path="/fake/test.pdf")
+            )
+
+        # Must not raise; must return normally with pushed status
+        assert "pushed" in result
+        assert "tables_detected" in result
+        # Push still attempted even if OCR fetch failed
+        assert push.called
+
+    def test_empty_fetch_result_gives_empty_ocr_markdown(self):
+        """
+        When fetch_ocr_text returns empty string (no stored OCR), ocr_as_markdown
+        in the push call is also empty string.
+        """
+        uc, ext, push, ocr_client = self._make_use_case_with_ocr_client(ocr_text="")
+
+        with _patch_count_pages(1), _patch_rasterize_page(), _patch_pdf2image():
+            asyncio.get_event_loop().run_until_complete(
+                uc.execute(report_id="empty-ocr-001", pdf_path="/fake/test.pdf")
+            )
+
+        assert push.call_args is not None
+        assert push.call_args["ocr_as_markdown"] == ""
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-2 DEFECT-A: AC-2J fence test
+# ---------------------------------------------------------------------------
+
+
+class TestOcrFetchClientFenceAC2J:
+    """
+    AC-2J: ocr_text_fetch_client.py must NOT import pytesseract or call OCR.
+    """
+
+    def test_no_tesseract_in_ocr_fetch_client(self):
+        """
+        AC-2J: ocr_text_fetch_client.py must contain zero IMPORT or CALL
+        references to pytesseract, image_to_string, or image_to_data.
+
+        Uses AST inspection to check only actual import and attribute-access
+        nodes (not comments or docstrings), so incidental mentions in docstring
+        examples are not false-positives.
+        """
+        import ast
+        import inspect
+        import infrastructure.ocr_text_fetch_client as mod
+
+        source = inspect.getsource(mod)
+        tree = ast.parse(source)
+
+        forbidden_names = {"pytesseract", "image_to_string", "image_to_data"}
+
+        for node in ast.walk(tree):
+            # Check import statements: import pytesseract / from pytesseract import ...
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    assert alias.name not in forbidden_names, (
+                        f"AC-2J violation: 'import {alias.name}' in ocr_text_fetch_client.py"
+                    )
+            elif isinstance(node, ast.ImportFrom):
+                if node.module and node.module in forbidden_names:
+                    raise AssertionError(
+                        f"AC-2J violation: 'from {node.module} import ...' in ocr_text_fetch_client.py"
+                    )
+                for alias in node.names:
+                    assert alias.name not in forbidden_names, (
+                        f"AC-2J violation: 'from ... import {alias.name}' in ocr_text_fetch_client.py"
+                    )
+            # Check attribute accesses: pytesseract.image_to_data(...)
+            elif isinstance(node, ast.Attribute):
+                assert node.attr not in forbidden_names, (
+                    f"AC-2J violation: attribute '.{node.attr}' in ocr_text_fetch_client.py"
+                )
+            # Check function calls by name
+            elif isinstance(node, ast.Name):
+                if node.id in forbidden_names:
+                    raise AssertionError(
+                        f"AC-2J violation: name '{node.id}' used in ocr_text_fetch_client.py"
+                    )
+
+    def test_no_application_or_interface_import(self):
+        """Fence-A: ocr_text_fetch_client.py must not import from application/ or interface/."""
+        import ast
+        import inspect
+        import infrastructure.ocr_text_fetch_client as mod
+
+        source = inspect.getsource(mod)
+        tree = ast.parse(source)
+
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module:
+                module = node.module
+                assert not module.startswith("application"), (
+                    f"Fence-A violation in ocr_text_fetch_client: 'from {module} import ...'"
+                )
+                assert not module.startswith("interface"), (
+                    f"Fence-A violation in ocr_text_fetch_client: 'from {module} import ...'"
+                )
