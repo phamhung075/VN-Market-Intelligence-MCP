@@ -56,4 +56,26 @@ User verbatim: *"i want 1 layer on/off on http://localhost:3000/api/bctc-inspect
 Sprint opened. `docs/SPRINT_GOAL.md § Sprint BCTC-LAYOUT-FIRST` written (supersedes BCTC-MD-TABLE). TASKS.md ladder LF-BA → LF-EXIT created. Sprint umbrella lock claimed. NEXT = BA writes the requirement spec (LF-BA), returns to PO approval gate before architect LF-DESIGN dispatches.
 
 <!-- BA appends LF-BA REQ pointer below -->
+
+## [BA] LF-BA — 2026-05-26T18:30Z
+
+Requirement spec written. NEXT = PO approval gate (architect LF-DESIGN is BLOCKED until PO approves).
+
+**REQ file:** `docs/REQ_BCTC-LAYOUT-FIRST.md`
+
+**Summary of what was specced:**
+- 8 requirements across both deliverables and all 4 tiers
+- REQ-LF-0: AC-0 generic-by-construction hard invariant (grep-proof, applies to all tiers)
+- REQ-LF-1: Tier 0 document map with geometric-spine grouping — encodes the FPT Q1 2026 page-5 root cause fix as named requirement + testable ACs
+- REQ-LF-2: Tier 1 per-page layout zoning with schema inheritance for continuation pages
+- REQ-LF-3: Tier 2 OCR into the known grid + cross-page stitch into one markdown table per unit
+- REQ-LF-4: Tier 3 per-unit invariant gate (balance identity, codes monotonic, no orphan rows) — anti-false-green mechanism; DIRECT market.db query is the only arbiter
+- REQ-LF-5: Structured path non-regression (text_table_extractor.py 0-byte-diff, Decision B)
+- REQ-LF-6: Privacy + host constraints (local tools only, sequential OCR, no batch sweep)
+- REQ-LF-7: pdf-extractor zone — zone-geometry JSON emission (Deliverable 2, pdf-extractor side)
+- REQ-LF-8: mcp-server zone — zone-overlay toggle on /api/bctc-inspect (Deliverable 2, mcp-server side); service boundary enforced
+- DDD layer mapping table in REQ file
+- Done-bar (Decision F) encoded verbatim as 7-point gate
+- No PO blockers. 3 architect-open questions (schema, JSON contract, quarantine storage) flagged for LF-DESIGN resolution.
+
 <!-- architect appends LF-DESIGN blueprint + per-task ACs below -->
