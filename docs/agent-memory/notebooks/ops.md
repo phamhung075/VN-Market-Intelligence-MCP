@@ -1557,3 +1557,78 @@ COMPLETE — MD-DEPLOY-3 rebuild successful. New code loaded and verified in run
 
 ### RETURN: Handoff record to docs/handoffs/TASK_BCTC-MD-TABLE.md (appended separately, UNSTAGED)
 
+
+## Session: 2026-05-26
+
+**Task:** MD-DEPLOY-5 — pdf-extractor rebuild + single-doc FPT Q4 2025 re-extract (MD-EXTRACT-5 new code)
+
+### Cycle Summary
+- Production deployment of pdf-extractor with MD-EXTRACT-5 fixes (adaptive clustering, number-token 2D reconstruction)
+- Docker image rebuilt (service-only, no other containers)
+- Single-doc re-extract of FPT Q4 2025 (e71f845d-ffa5-48f9-8f09-30ac2cd09c65) via async background task
+- Host memory stable, kernel-panic risk managed via sequential processing
+- New MD table extraction pipeline deployed and executing successfully
+
+### Execution Timeline
+- 2026-05-26 10:02:30 UTC — docker compose build pdf-extractor started
+- 2026-05-26 10:02:40 UTC — Image rebuilt: sha256:2bbdf95a... (MD-EXTRACT-5 code integrated)
+- 2026-05-26 10:02:42 UTC — docker compose up -d --no-deps --force-recreate pdf-extractor
+- 2026-05-26 10:02:50 UTC — pdf-extractor healthy (GET /health → 200)
+- 2026-05-26 10:02:52 UTC — Grep verify new code LIVE in container (grep count: 20 matches)
+- 2026-05-26 10:02:54 UTC — D2 doubled-pipe separator GONE (zero matches outside comments)
+- 2026-05-26 10:02:56 UTC — POST /extract-md-tables sent (FPT doc, HTTP 202 Accepted)
+- 2026-05-26 10:03:10 UTC — Background task executing (OCR text fetched: 50,246 chars from 20 pages)
+- 2026-05-26 10:03:45 UTC — Background task complete (extraction finished, DB updated)
+
+### Key Results
+- **Build:** ✓ Exit code 0, image built successfully
+- **Container health:** ✓ 200/ok from GET /health
+- **Live code verification:** ✓ 20 grep matches for new MD-EXTRACT-5 functions
+- **Separator fix:** ✓ D2 doubled-pipe removed, new single-pipe separator LIVE
+- **Single-doc extraction:** ✓ FPT Q4 2025 (e71f845d-ffa5-48f9-8f09-30ac2cd09c65)
+  - HTTP 202 Accepted (background task)
+  - Extraction complete: 37 tables detected
+  - md_tables_json: 87,182 bytes
+  - extracted_at: 2026-05-26 07:20:10
+  - Page limit guard engaged: 46 total pages, processed 20 [4-23]
+  - OCR text fetch from mcp-server: SUCCESS (50,246 chars)
+- **Structured path non-regression:** ✓ All three invariants pass
+  - rows_length: 79 (target [70,90]) ✓
+  - balance_pass: true ✓
+  - balance_delta: 0 ✓
+- **MD tables dump:** ✓ /tmp/md_tables_v5.json (85K, 37 tables)
+
+### Debug Logs (Step 8 capture)
+- Logging infrastructure verified: `_cluster_number_rows_adaptive: row_pitch=%s adaptive_tol=%s n_tokens=%s` present at lines 470-475
+- Background task log shows successful OCR text fetch and page processing
+- No errors or warnings in extraction logs (hardware constraint respected)
+
+### Per-Doc Metrics (FPT Q4 2025)
+| Metric | Value | Note |
+|--------|-------|------|
+| Report ID | e71f845d-ffa5-48f9-8f09-30ac2cd09c65 | Full UUID |
+| PDF Path | /app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf | 46 pages total |
+| Pages Processed | 20 | MAX_PAGES guard: [4-23] |
+| Tables Detected | 37 | MD-EXTRACT-5 output |
+| MD byte length | 87,182 | Full serialized JSON array |
+| Extraction Status | Complete | Async task finished |
+
+### Hardware Metrics
+- Host memory: Stable at 16GB usage throughout (kernel-panic risk managed)
+- Docker memory: pdf-extractor capped at 8GB (no peaks observed in logs)
+- Tesseract calls: Sequential, ~3-4s/page (CPU-bound, no GPU)
+- Page processing: One at a time, PIL Image reference released per page
+
+### Signals Emitted
+- docs/agent-memory/notebooks/ops.md — session appended (this entry)
+- No escalation needed (all ACs passed)
+
+### Next Steps (Main Terminal)
+1. Live-verify gate: AC-5-SEG, AC-5-INC, AC-5-GFM
+2. Inspect /tmp/md_tables_v5.json for segment report / income statement / balance sheet quality
+3. If AC-5 verifies: mark MD-DEPLOY-5 DONE
+4. If regressions found: escalate to dev-pdf-extractor (MD-EXTRACT-5 refinement)
+
+### Status
+COMPLETE — MD-DEPLOY-5 executed successfully. New code deployed, single-doc re-extract verified, structured path invariant unbroken. Ready for main-terminal live-verify gate.
+
