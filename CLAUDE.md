@@ -18,6 +18,16 @@ Main terminal = router only. Never implement directly. Always delegate.
 - NO branches — all work stays on `main`
 - All agents backgrounded by default
 
+## MCP Tools — call_tool wrapper ONLY
+The `vn-market` server is intentionally NOT registered in `.mcp.json` (cleaned out) to keep the tool surface small — its 146 tools are NOT loaded directly. The server still exists as a downstream of the `claude.ai gateway`.
+Reach EVERY vn-market tool through the `claude.ai gateway` wrapper:
+```
+mcp__claude_ai_gateway__call_tool(server="vn-market", tool="<tool_name>", arguments={...})
+```
+- `<tool_name>` is the bare name (e.g. `task_claim`, `send_telegram`, `get_market_snapshot`) — NOT the `mcp__vn-market__` prefix.
+- Discover tools via the gateway: `list_server_tools("vn-market")` or `search_tools("<keyword>")`.
+- NEVER call `mcp__vn-market__*` directly — that connection is off; the call will fail.
+
 ## Skills (slash commands)
 - **/cron-cowork-team** — re-arm cowork master dispatcher after every session restart → `.claude/skills/cron-cowork-team/SKILL.md`
 
