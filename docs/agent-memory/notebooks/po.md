@@ -1,8 +1,32 @@
 # PO Notebook
 
-**Cycle:** triage :07 cron (fire 20260526T182326Z) — 2026-05-26T18:26Z.
-**Last update:** 2026-05-26T18:26Z
-**Status:** Registered active sprint BCTC-LAYOUT-FIRST. Corrected a STALE kickoff signal. RETURN to dispatcher = BATCH(2): architect LF-DESIGN + qa NEWS-INGEST-3 (parallel, WIP-safe).
+**Cycle:** NEWS-INGEST-CLOSE (scoped terminal close) — 2026-05-26T18:50Z.
+**Last update:** 2026-05-26T18:50Z
+**Status:** NEWS-INGEST CLOSED/DONE on qa APPROVE (d729e4d1). Nothing else dispatched — WIP slot free for LF-OVERLAY. BCTC-LAYOUT-FIRST untouched.
+
+---
+
+## 2026-05-26T18:50Z — NEWS-INGEST-CLOSE (scoped terminal close, no re-triage)
+
+**Scoped task: close NEWS-INGEST only.** Did NOT re-triage the board, did NOT open a sprint, did NOT touch BCTC-LAYOUT-FIRST or pipeline-state (LF-EXTRACT running, LF-OVERLAY queued — left alone).
+
+**Verdict: CLOSED/DONE.** qa APPROVE (`d729e4d1`, `docs/signals/qa-news-ingest-2026-05-26T1846Z.json`) accepted in full. No false-green — qa used DIRECT-DB `bun:sqlite` COUNT/DISTINCT (the correct arbiter, NOT handler echo). All 4 ACs PASS:
+- AC-1 cursor (`9711ca72`): 2127 distinct VN urls == total (0 dup), 140 new post-fix / 70 today; strict `>`, advances only on HTTP-200.
+- AC-2 VN panel (`e1e08a29`): NF-LD-2 19/19, reuters/bloomberg non-regression, source=all=all providers.
+- AC-3 dedup: UNIQUE partial index present, 0 dup.
+- AC-4 regression: 9433 pass / 362 fail (under baseline), tsc 0, DDD+security clean.
+
+**Commit chain:** `9711ca72` → `e1e08a29` → `d729e4d1`.
+
+**NEWS-INGEST-LIVE folded into close** — qa's direct-DB evidence (70 genuinely-new VN rows today, latest created_at 17:58:57Z against live container market.db) IS the live truth-gate proof; re-push loop eliminated in production. No separate ops hop. Q1 count resolved: 4282 total, 2127 VN, 1 non-VN, 4280 distinct urls.
+
+**Deferred non-blocking follow-up — NEWS-INGEST-2c (NOT dispatched):** dashboard `<option>` selector in `apps/news-fetch/dashboard/index.html` still lists only reuters/bloomberg/all; API already returns VN via source=all. Cosmetic/UX, developer cosmetic lane, low priority. Carried here — do NOT auto-dispatch.
+
+**Recurring-bug guard:** NOT triggered (first + only fix on `fetch-vn-news.sh` push-selection logic).
+
+**WORK telegram:** PO session lacks call_tool (MCP gateway unavailable this session — `search_tools` returned "No such tool"). Encoded the WORK message in the close signal `work_telegram` field for dispatcher relay rather than fabricate a send.
+
+**Files modified (UNSTAGED — explicit-file staging only, notebook commits SEPARATELY):** `docs/TASKS.md` (NEWS-INGEST section collapsed to terminal CLOSED block, net-reduced ~20 lines), `docs/handoffs/TASK_NEWS-INGEST.md` (appended [PO] NEWS-INGEST-CLOSE sign-off), `docs/signals/po-news-ingest-close-20260526T185009Z.json` (new close signal), this notebook (separate commit). Did NOT touch pre-existing dirty tree, pipeline-state, or any pilot-status-*.json.
 
 ---
 
