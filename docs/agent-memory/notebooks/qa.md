@@ -1,5 +1,55 @@
 # QA — Notebook
 
+## cycle-121 · 2026-05-26 · P2-L (G11 regression alarm — 2-trial coupling proof, QA half) — IN PROGRESS (pending dev Trial-2 revert)
+
+**Task:** P2-L — G11 regression alarm: 2-trial coupling proof | **Verdict pending:** AC-6 requires dev Trial-2 revert + 9/9 GREEN confirmation
+
+```
+date: 2026-05-26
+type: scale-pilot-qa-gate (mcp-server Phase-2 G11 — regression alarm calibration)
+task: P2-L
+round: 1
+
+trial_1:
+  injection_commit: b0705683
+  revert_commit: 21361392
+  primitive_file: apps/mcp-server/src/domain/signals/signalBuilders.ts
+  mutation: setSummary() returned summary + "!" instead of summary
+  coupled_scenarios_red:
+    - signal-bus-golden-valid (buildCrossValidateSignal primitive)
+    - signal-bus-golden-minimal (buildCrossValidateSignal primitive)
+  scenarios_red_count: 2
+  revert_diff: 1 file, 1 line (setSummary: "summary + '!'" → "summary")
+  ac1: PASS (2 coupled scenarios named, same primitive, same commit window)
+  ac2: PASS (git show 21361392 = 1 file signalBuilders.ts, 1 line)
+
+trial_2:
+  injection_commit: 0332624a
+  primitive_file: apps/mcp-server/src/domain/services/sectorPeers.ts
+  mutation_line: 351
+  mutation_before: "return ratio <= 2.5 ? \"sector_wide\" : \"stock_specific\";"
+  mutation_after: "return ratio <= 0 ? \"sector_wide\" : \"stock_specific\"; // G11 Trial-2 injection [QA ONLY — redacted from dev]"
+  logic: classifyMovement(2.5, 2.3) → ratio≈1.087 > 0 → returns "stock_specific" (was "sector_wide")
+  scenario_red: sector-classifier-golden-known-ticker
+  runner_exit: 1 (non-zero)
+  trace_actual: "stock_specific" vs expected "sector_wide" (match: false)
+  full_suite: 8/9 PASS, 1/9 FAIL (sector-classifier-golden-known-ticker)
+  dashboard_card: sector-classifier-golden-known-ticker → status:fail, mcp-dot-fail (RED)
+  ac3: PASS (non-zero exit + trace mismatch confirmed)
+  ac4: PASS (1 scenario RED in full suite)
+  ac5: PENDING (dev Trial-2 revert next)
+  ac6: PENDING (outcome-(a)×2 verdict pending dev revert + 9/9 GREEN)
+
+revert_instruction_for_dev:
+  file: apps/mcp-server/src/domain/services/sectorPeers.ts line 351
+  restore: "return ratio <= 2.5 ? \"sector_wide\" : \"stock_specific\";"
+  also: re-run bun run src/sandbox/runner.ts --emit-traces to regenerate traces + update dashboard/index.html inline block
+
+ac7_tripwires: NOT YET RUN (pending post-revert full regression)
+```
+
+---
+
 ## cycle-120 · 2026-05-26 · BT3-QA2 (BCTC table FIX5 formal acceptance sign-off) — APPROVED
 
 **Task:** BT3-QA2 — formal acceptance sign-off for BT3-FIX5 (commit 81970243) | **Verdict:** APPROVED — BT3-EXIT2 cleared for po
