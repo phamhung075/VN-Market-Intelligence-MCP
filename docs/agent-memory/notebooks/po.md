@@ -1,30 +1,36 @@
 # PO Notebook
 
-**Cycle:** PEK-INTEGRATE REQ amendment (post-PEK-DESIGN, architect R-CRIT flags) — 2026-05-26T21:03Z.
-**Last update:** 2026-05-26T21:03:47Z
-**Status:** REQ AMENDED + re-stamped APPROVED. PEK-IMPL UNBLOCKED → dev-pdf-extractor. Files UNSTAGED — main terminal commits (scoped add, never -A).
+**Cycle:** dev-team triage (Step 1 PO Triage) — 2026-05-26T21:08Z.
+**Last update:** 2026-05-26T21:08:55Z
+**Status:** BATCH(2) returned — SSOT-REFRESH + CLEAN-1972. HARD-SCOPED OUT of all pdf-extractor/LF-*/PEK-*/rebuild work (parallel session owns LF-FIX, only live lock fleet-wide).
 
 ---
 
-## 2026-05-26T21:03Z — PEK-INTEGRATE REQ amended (2 PO-owned blockers resolved) → dev-pdf-extractor
+## 2026-05-26T21:08Z — dev-team triage, parallel LF-FIX active
 
-Architect (PEK-DESIGN, brief `2026-05-26-pek-integrate-design.md`, commit `1fbf017f`) surfaced 3 CRITICAL flags. 2 were PO-only REQ amendments blocking PEK-IMPL; resolved this cycle.
+**Held-lock truth verified:** only branch = `task/1972-vndirect-ohlcv-null-coercion`; harness confirms `task:LF-FIX` (pdf-extractor) is the ONLY live lock. All TASKS.md IN-PROGRESS markers (P2-A1, P2-F2, MACRO-VNINDEX) are STALE — reconciled, not re-dispatched.
 
-**AC-PEK-3a REWRITTEN (R-CRIT-1):** prior literal demanded source tree ABSENT (`ls /app/PDF-Extract-Kit` = No such file) — mutually exclusive with the architect's chosen `pip install -e ./PDF-Extract-Kit` editable install (source MUST be present at runtime for `pdf_extract_kit` import). New invariant = **zero-diff, NOT absence**: (a) `.git/` excluded from image, (b) weights NEVER baked (image < 2GB via `docker image inspect`), (c) `git -C apps/pdf-extractor/PDF-Extract-Kit diff` EMPTY. User constraint "repo publish, dont touch" = zero-diff, not absent.
+**Reconciled (TASKS.md, minimal edits):**
+- P2-A1 + P2-F2: IN-PROGRESS → RECONCILED-STALE → READY (no live lock; deferred while LF-FIX active).
+- SSOT-REFRESH + CLEAN-1972: QUEUED → DISPATCHED.
 
-**REQ-PEK-11 APPENDED (AC-PEK-NEW-1 + NEW-2, verbatim brief §10):** market-hours isolation, user hard constraint "pdf service never run on market open." NEW-1 = `POST /pek-extract` HTTP 503 + no RSS rise at Mon 03:00 UTC sim-open; NEW-2 = `bctcReparseJob` cron not 02:00–08:59 UTC weekdays (`CRON_BCTC_REPARSE_JOB=0 21 * * *`). Done-Bar now SEVEN cond (#6 market-hours). Spec = 11 reqs, 37 ACs.
+**SSOT divergence VERIFIED live:** `system-map.json` mcp-server tools array = 125 (jq), `project-stats.json` toolCount = 146, board prior note = 148. THREE numbers. Owner (dev-mcp-server) must COUNT the live registry FIRST, then write single true value to system-map.json + reconcile project-stats.json. Pure data, no rebuild, no pdf.
 
-**R-CRIT-2 + R-CRIT-3 — no REQ change (architect resolved in-brief), NOTED for dev:** R-CRIT-2 no TableMaster in clone → PaddleOCR PP-StructureV2 table mode directly. R-CRIT-3 StructEqTable hard-asserts CUDA → import guard, NEVER `TableParsingTask`/`FormulaDetectionTask`, unit test asserts no CUDA import.
+**CLEAN-1972 VERIFIED:** `git log main..task/1972` = 1 commit `0d918f08` (carries ohlcvBackfill.ts + 159L test). → qa merge-or-discard, NEVER auto-discard.
 
-**Wrote (all UNSTAGED):** REQ header re-stamp + amendment note + AC-PEK-3a rewrite + REQ-PEK-11 + DDD-table row + Done-Bar #6; handoff [PO] append; TASKS PEK-IMPL row + amendment Note.
+**BATCH returned (WIP=2, both non-pdf, zero rebuild):**
+1. SSOT-REFRESH (CLEAN) → dev-mcp-server, zone apps/mcp-server/, data-only.
+2. CLEAN-1972 (CLEAN) → qa, zone cross-service/, merge-or-discard.
 
-**Dispatch:** NEXT = dev-pdf-extractor | PEK-IMPL against amended spec.
+**HELD (not dispatched):** MACRO-VNINDEX-DATA-GAP (pipeline-state defers under host load); DRIFT-2 (rebuild-only, DEFERRED); ARCH-DOC-DRIFT (doc-only PARKED). Dashboard ## po rows = mostly COWORK-domain calibration → route to cowork-team, NOT dev-team code tasks.
+
+**Cross-team inbox:** RESTART-NEQ-REBUILD-GATE already applied (DRIFT-3-A3 SHA gate in runbook Step 4). DRIFT-3 Phase A SHIPPED last cycle (A1/A2/A3 + close). MACRO-CONTRACT + CLIENTS-TYPE SHIPPED — board risk flags STALE.
 
 ---
 
 ## Carry-over
-- PEK-IMPL ground truth for dev: editable install (source present, zero-diff), layout+ocr only via PaddleOCR PP-Struct (no TableMaster/StructEqTable), import guard, lazy-load singleton + Semaphore(1), market-hours guard 503 + cron 0 21 * * *, `.dockerignore` `.git/`+`models/`, weight cache named volume `pek_model_cache`, image < 2GB.
-- Pipeline: PEK-IMPL → PEK-DEPLOY (ops REBUILD not restart, AC-10) → PEK-QA (direct market.db rows + FPT sentinel `e71f845d-...` + RSS + pristine git-diff + market-hours 503) → PEK-EXIT (po) → USER G9.
-- DoD = scale-pilot bar, 5 prior false-greens; NOT-RUN ≠ green; measured corpus pass-rate not one doc.
-- BCTC-LAYOUT-FIRST LF-EXTRACT chain PAUSED — do not let both sessions edit pdf-extractor concurrently. Concurrent docker rebuild = 16GB host kernel-panic risk; serialize ops hops.
-- Next PO hop = PEK-EXIT after PEK-QA returns (independent LIVE re-verify, then main terminal commits in-tree work).
+- PEK-IMPL chain + BCTC-LAYOUT-FIRST LF-FIX = PARALLEL SESSION OWNS. Do NOT touch apps/pdf-extractor/, any LF-*/PEK-* task, pilot-status-*.json, or pipeline-state BCTC fields. Concurrent docker rebuild = 16GB host kernel-panic risk; all rebuilds serialized to later hop.
+- ALL container rebuilds DEFERRED this tick (DRIFT-2 kinh-dich, MACRO deploy, any pdf rebuild).
+- Next PO hops: SSOT-REFRESH + CLEAN-1972 close-out; PEK-EXIT after parallel session's PEK-QA returns (independent LIVE re-verify).
+- Files written this cycle UNSTAGED (TASKS.md reconcile + this notebook). Main terminal commits scoped (never -A). commit-mutex uncallable by subagents.
+- DoD bar for any dispatched task = honest-green; NOT-RUN ≠ green; verify live, not board markers.
