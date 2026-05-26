@@ -1471,3 +1471,89 @@ NEXT: Monitor extraction → verify table_count + ocr_as_markdown → report res
 ### Status
 COMPLETE — MD-DEPLOY-3 rebuild successful. New code loaded and verified in running container. Single-document re-extraction completed with 15 tables detected and persisted. Ready for main-terminal md-inspect row-order verification (MD-QA-3).
 
+
+---
+
+## Session: 2026-05-26 — MD-DEPLOY-4
+
+**Task:** MD-DEPLOY-4 — Deploy MD-EXTRACT-4 (number-token 2D table reconstruction) to pdf-extractor container and trigger single-doc re-extract.
+
+### Execution Summary
+
+**Step 1: Image rebuild**
+- `docker compose build pdf-extractor` → exit 0, image rebuilt successfully (multiarch Python)
+- `docker compose up -d --force-recreate --no-deps pdf-extractor` → container recreated, started in <5s
+
+**Step 2: Live code verification**
+- Health: `GET http://localhost:5001/health` → 200 OK
+- Grep-verify NEW functions present: `_classify_tokens`, `_cluster_number_rows`, `_attach_labels`, `SAME_LINE_TOL`
+  - Match count: 28 occurrences (expected, functions distributed across the module)
+- Grep-verify CANCELLED functions ABSENT: `_process_page_from_text`, `_split_by_whitespace_gap`, `_detect_table_regions_from_text`, `_build_grid_from_lines`
+  - Match count: 0 (confirmed absent)
+- **Verdict:** New code is live in the running container.
+
+**Step 3: Single-doc re-extract (FPT Q4 2025)**
+- Report ID: `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`
+- PDF path: `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf` (46 pages total)
+- Request: `POST http://localhost:5001/extract-md-tables` with full UUID (FULL UUID mandatory per hard constraints)
+- Response: 202 Accepted (fire-and-forget background task)
+- Execution time: ~3m45s (Tesseract `image_to_data` on 20 pages: pages 4–23 processed, first 3 preamble skipped)
+
+**Step 4: Extraction completion & verification**
+- Log evidence: "ExtractMdTablesUseCase.execute DONE: tables_detected=37 pushed=True"
+- OCR auto-fetch: DEFECT-A fix confirmed (50,246 chars fetched from mcp-server `/api/bctc-inspect/ocr/{doc_id}?page=N`)
+- Push to mcp-server: HTTP OK, 1 row inserted/replaced in `bctc_md_tables`
+
+**Step 5: Database state (direct query)**
+| Metric | Value | Status |
+|--------|-------|--------|
+| table_count | 37 | NEW (vs 15 from MD-DEPLOY-3) |
+| page_count | 20 | Expected (MAX_PAGES=20 guard applied) |
+| md_json_len | 19,274 bytes | Reasonable (37 tables) |
+| ocr_len | 51,013 bytes | Same as stored (reused) |
+| extracted_at | 2026-05-26 07:20:10 | NEW (current timestamp) |
+| bctc_md_tables row id | 6 | Replaces old id=5 via REPLACE semantics |
+
+**Step 6: Non-regression (structured path)**
+- GET `/api/bctc-inspect/table/{doc_id}` → has_table=true, rows_length=79, balance_pass=true, balance_delta=0
+- bctc_table_rows count: 79 (unchanged)
+- **Verdict:** Structured path unaffected. AC-D-2 PASS.
+
+**Step 7: Artifact capture**
+- Full md_tables array saved to `/tmp/md_tables_v4.json` (21 KB)
+- First table preview: Balance sheet with structure "| A. TÀI SẲN NGAN HẠN | 100 ... |"
+
+### Key Findings
+
+1. **MD-EXTRACT-4 algorithm active:** New number-token-only y-clustering code confirmed live in container. Changed from MD-EXTRACT-3 (greedy row clustering) to MD-EXTRACT-4 (separate number/text tokens, number-row y-clustering, label attachment).
+
+2. **Table count doubled (15 → 37):** The new algorithm detects MORE tables than MD-EXTRACT-3. This could indicate:
+   - Noise re-introduced (density gate tuning may have drifted), OR
+   - More honest detection of actual regions (generic by design, not discriminating heavily)
+   
+   **MAIN-TERMINAL to verify** in live inspector.
+
+3. **OCR-as-markdown preserved:** 51,013 bytes of OCR text converted to markdown, stored and served. DEFECT-A auto-fetch working correctly.
+
+4. **Non-regression 100%:** Structured `bctc_table_rows` path completely unaffected (79 rows, balance δ=0, pass=true). ZERO write conflict between `/extract-md-tables` and `/extract-tables`.
+
+5. **Hardware safe:** Single-doc execution, sequential Tesseract, 3m45s total (no host kernel-panic). OCR pre-supply eliminates double-Tesseract.
+
+### Acceptance Criteria Status (MD-DEPLOY-4)
+
+- **AC-D-0:** pdf-extractor rebuild + healthy ✓ PASS
+- **AC-D-1:** mcp-server healthy (not rebuilt, but new push path working) ✓ PASS
+- **AC-D-2:** Single-doc 202 + completion → `has_md_tables: true` ✓ PASS
+- **AC-D-3:** table_count >= 1 (actual: 37) ✓ PASS
+- **Non-regression:** bctc_table_rows 79/balance δ=0 ✓ PASS
+- **New code live:** _classify_tokens, _cluster_number_rows, _attach_labels present (28 matches) ✓ PASS
+- **Cancelled absent:** _process_page_from_text, _split_by_whitespace_gap, _build_grid_from_lines absent (0 matches) ✓ PASS
+
+### Next Steps (per task ladder)
+
+1. **Main-terminal:** LIVE-VERIFY-4 (curl inspector, inspect rendered markdown for segment report + income statement + balance sheet, row-order correctness, label↔value alignment)
+2. **QA:** MD-QA-4 (grep-proof AC-0, live gate, non-regression, privacy audit)
+3. **PO:** MD-EXIT (sign-off vs Decision D + Success Metric)
+
+### RETURN: Handoff record to docs/handoffs/TASK_BCTC-MD-TABLE.md (appended separately, UNSTAGED)
+
