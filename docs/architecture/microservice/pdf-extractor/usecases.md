@@ -36,7 +36,7 @@ statement_section: str  # "balance_sheet" | "income_statement" | "cash_flow"
 ### Output
 ```python
 {
-    "rows_stored": int,      # echoed from mcp-server push response
+    "rows_stored": int,      # DB-verified count from mcp-server (SELECT COUNT after write)
     "balance_pass": bool,    # True when Total Assets == Liab + Equity within 1 VND
     "balance_delta": float,  # assets - (liab + equity); 0.0 when N/A
 }
