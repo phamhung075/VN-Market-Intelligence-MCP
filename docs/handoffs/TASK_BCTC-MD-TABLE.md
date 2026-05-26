@@ -887,3 +887,77 @@ MD-EXTRACT-1/2/3/4 are 4 fix attempts on `generic_md_table_extractor.py`. Per th
 
 **NEXT:** architect MD-EXTRACT-5 (rethink wide-table row grouping).
 
+---
+
+## [Architect] MD-EXTRACT-5 — Adaptive-Pitch Row Grouping Design (2026-05-26T07:28Z, REVISED post AC-trace)
+
+**Status:** DESIGN COMPLETE — ready for dev-pdf-extractor
+
+**Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py`. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED. All frozen surfaces untouched.
+
+**Full design:** `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md § MD-EXTRACT-5`
+
+### Root cause (D1)
+
+`_cluster_number_rows` (lines 298–312) is a greedy single-pass that fixes `current_top` to the FIRST token's `top` coordinate and admits subsequent tokens only within `SAME_LINE_TOL = 4px` of that fixed anchor. On a wide BCTC row whose number tokens span the full page width (~2400px at 200 DPI), OCR baseline drift accumulates 5-8px from left to right due to scanner lens distortion. Tokens beyond ~700px from the row-start exceed the 4px window and start new "rows" — the cascade-split (3/2/1 pattern). Not tunable by widening the constant: BCTC rows sit 12-16px apart, so any constant wide enough to absorb page-width drift must also stay below the inter-row gap. Algorithm change required.
+
+### Chosen strategy: Candidate (b) — inter-row pitch via large-gap mode + running-centroid grouping
+
+**REVISION vs original design:** The original Step 2 computed `row_pitch = median(all adjacent inter-bin gaps)`. This is WRONG: within-row OCR micro-gaps (1-4px) vastly outnumber row-boundary gaps (12-16px), so the median always collapses to the micro-gap value. Adaptive tol = int(0.45 × 2) = 0 — worse than the original fixed tol=4. The fix is large-gap mode: separate gaps above the median (the row-boundary candidates), take the minimum as pitch.
+
+**Corrected pitch estimation (Step 2):** Bin all NUMBER-token tops to 2px buckets → sorted unique bins → compute all adjacent inter-bin gaps → `gap_median = median(gaps)` → `large_gaps = [g for g in gaps if g > gap_median]` → `row_pitch = min(large_gaps)`. For the §8 fixture (row0 drift=6px, row1 gap=14px): bins=[100,102,104,106,120], gaps=[2,2,2,14], median=2, large_gaps=[14], row_pitch=14.
+
+**Corrected tol:** `adaptive_tol = min(int(0.45 × 14), 8) = min(6, 8) = 6px`.
+
+**Greedy centroid with tol=6 passes the fixture:** row0 tokens (top 100→106) all admitted (max deviation from centroid = 3.5px < 6). Inter-row gap |120-103|=17px >> 6 → row1 starts cleanly. Full arithmetic proof in §8 brief.
+
+**Why candidate (c) was reconsidered but not chosen:** The densest-column k-estimation approach is robust for uniform matrices but fails when (a) all columns have equal token counts (no clear densest column), or (b) the row boundary has drift ≈ gap — the anchor from one column's top values can misplace tokens from other columns that drift past the boundary. The large-gap mode + centroid-tracking in (b) achieves the same row-separation with less code and a simpler testable invariant, provided the design precondition holds.
+
+**Design precondition (explicit):** `inter-row gap > within-row drift`. For well-scanned BCTC documents at 200 DPI: drift ≤ 8px, gap ≥ 12px → precondition satisfied. If a document violates this (severe scan distortion), the algorithm falls back to `same_line_tol=4` (no worse than the current broken behavior). Pre-processing deskew is the correct fix for severe distortion — out of scope.
+
+### Functions to add / modify / retire
+
+| Function | Action |
+|---|---|
+| `_estimate_inter_row_pitch(number_tokens, same_line_tol)` | **ADD** (pure helper) — large-gap mode: bins tops, finds inter-bin gaps, returns min(large_gaps) or 0 for fallback. Called by `_cluster_number_rows_adaptive`. |
+| `_cluster_number_rows_adaptive(number_tokens, same_line_tol)` | **ADD** — replaces `_cluster_number_rows` call in `_process_page`. Calls `_estimate_inter_row_pitch` for tol, then running-centroid grouping. Pure. |
+| `_cluster_number_rows` | **RETIRE** (mark `# DEAD in MD-EXTRACT-5`) — keep for test backward-compat. |
+| `_emit_markdown_table` line 982 | **MODIFY** (one line) — D2 GFM separator fix. |
+| `_CODE_TOKEN_RE`, `_VALUE_TOKEN_RE` | **ADD constants** — D4b code/value cell separation. |
+| `_build_grid_from_number_rows` | **MODIFY** — route `_CODE_TOKEN_RE` matches to leftmost number slot; `_VALUE_TOKEN_RE` to x-nearest slot. D4b fix. |
+| `_process_page` | **MODIFY** — replace `_cluster_number_rows(...)` call with `_cluster_number_rows_adaptive(...)`. |
+| `_detect_table_regions` | **MODIFY (advisory / non-blocking)** — post-detection merge of adjacent same-column-count regions within `_REGION_MERGE_MAX_GAP_FACTOR × H_med`. D4a over-split fix. Skip if unstable in tests. |
+| All other functions | **UNCHANGED** |
+
+### D2 fix (trivial, isolated)
+
+Line 982 in `_emit_markdown_table`:
+- Current: `separator = "|" + "|".join(["---|"] * n_cols)` → `|---||---||---|` (doubled pipes, invalid GFM)
+- Fixed: `separator = "|" + "|".join(["---"] * n_cols) + "|"` → `|---|---|---|` (valid GFM)
+
+### D3 (symptom of D1 — resolves automatically)
+
+Label leakage and fragment rows are consequences of the cascade-split. Once D1 is fixed, `_attach_labels` runs once per row → correct label → no bleed. No additional code change beyond D1.
+
+### D4 (balance sheet over-split + code-value concatenation)
+
+D4a (over-split into 10 tables): advisory fix via region-merge post-step in `_detect_table_regions`. Non-blocking if merge proves unstable.
+
+D4b (code `100` concatenated with value `58.102.970.741.619` in one cell): routing fix in `_build_grid_from_number_rows` using `_CODE_TOKEN_RE` / `_VALUE_TOKEN_RE` discriminators.
+
+### Binding ACs for main-terminal live-verify
+
+**AC-5-SEG (BLOCKING, FIXTURE REVISED):** Unit test: 14 tokens — row0 `top` = [100,101,102,103,104,105,106] (6px drift, realistic), row1 `top` = [120,121,120,121,120,121,120] (14px gap from row0). Both rows: `left` = [100,400,700,1000,1300,1600,1900]. `_cluster_number_rows_adaptive` must produce EXACTLY 2 groups: row0 all 7 tokens (top 100-106), row1 all 7 tokens (top 120-121). Full arithmetic proof in §8 brief. Live: the segment revenue row contains `35.381.667`, `9.092.934`, `18.701.876` all in ONE pipe-table row as separate cells.
+
+**AC-5-INC (BINDING):** Live: income statement table ≥15 data rows, each with non-empty first cell (no scatter rows with values but empty label).
+
+**AC-5-GFM (BINDING):** Unit test: `_emit_markdown_table(3-col grid)` separator line matches `re.fullmatch(r'\|(?:---|)+\|', ...)`. Live: no `||` in any separator row of any emitted table.
+
+**AC-3F / AC-0 / Fence-A / Privacy:** unchanged carry-forward (all BLOCKING). `text_table_extractor.py` untouched. `bctc_table_rows` = 79, balance_pass = true, delta = 0.
+
+**MD-DEPLOY-5 constraint:** single doc only, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`. NEVER batch backfill.
+
+**BUILD-STANDARD: lean**
+
+**NEXT: dev-pdf-extractor** — implement MD-EXTRACT-5 per revised brief §3-§9. Verify AC-3F (non-regression) FIRST. Leave files UNSTAGED. Then ops MD-DEPLOY-5 (single doc, full UUID) → main-terminal live-verify → qa MD-QA-5 → po MD-EXIT.
+
