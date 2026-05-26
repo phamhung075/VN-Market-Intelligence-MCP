@@ -21,3 +21,12 @@ type SBVRatePort interface {
 	// TODO(P1-B1): implement SBV XML feed adapter in infrastructure layer.
 	GetRate(ctx context.Context, from, to string) (float64, error)
 }
+
+// MarketIndexPort is the port for VN stock market index retrieval.
+// Returns the most recent VN-Index value from the local market data store.
+// Implemented in pkg/infrastructure; only cmd/server/main.go imports that package.
+type MarketIndexPort interface {
+	// FetchVNIndex returns the most recent VN-Index level (e.g. 1880.89).
+	// Returns 0, nil when no data is available (caller falls back to fixture).
+	FetchVNIndex(ctx context.Context) (float64, error)
+}

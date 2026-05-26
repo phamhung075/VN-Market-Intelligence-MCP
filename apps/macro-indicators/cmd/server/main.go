@@ -41,7 +41,8 @@ func main() {
 	// Fence-C: only this file (cmd/server/main.go) imports pkg/infrastructure.
 	commodityFetcher := infrastructure.NewHTTPCommodityFetcher("")
 	sbvRateRepo := infrastructure.NewSBVRateRepository()
-	useCase := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo)
+	marketIndexRepo := infrastructure.NewSQLiteMarketIndexRepository()
+	useCase := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo, marketIndexRepo)
 	router := iface.NewRouter(useCase, logger)
 
 	addr := fmt.Sprintf(":%s", port)

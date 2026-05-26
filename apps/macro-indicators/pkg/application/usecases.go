@@ -63,6 +63,7 @@ func (c *concreteClock) Classify(input mic.InvestmentClockInput) mic.InvestmentC
 type ComputeMacroUseCase struct {
 	commodityFetcher domain.CommodityFetcherPort
 	sbvRate          domain.SBVRatePort
+	marketIndex      domain.MarketIndexPort
 }
 
 // NewComputeMacroUseCase creates a new use case with injected ports.
@@ -71,18 +72,20 @@ type ComputeMacroUseCase struct {
 func NewComputeMacroUseCase(
 	cf domain.CommodityFetcherPort,
 	sr domain.SBVRatePort,
+	mi domain.MarketIndexPort,
 ) *ComputeMacroUseCase {
 	return &ComputeMacroUseCase{
 		commodityFetcher: cf,
 		sbvRate:          sr,
+		marketIndex:      mi,
 	}
 }
 
 // Execute runs the macro snapshot computation using the 6-primitive module composition.
 //
-// Fixture mode (P2-X3): prices are fetched from the commodity port; if the port
-// returns zero or an error the fixture defaults are used instead. This keeps the
-// sandbox deterministic while leaving room for real adapters post-pilot.
+// VNIndex is resolved from MarketIndexPort.FetchVNIndex(); falls back to
+// fixtureVNIndex only when the port returns zero (no data yet in market.db).
+// Commodity prices (oil/gold/usdvnd) are resolved via CommodityFetcherPort.
 //
 // R-1 compliant: no random seeding, no time.Now() in any primitive call.
 // Fence-B compliant: module imports only primitives (BuildMacroSignals satisfies this).
@@ -90,7 +93,10 @@ func (uc *ComputeMacroUseCase) Execute(
 	ctx context.Context,
 	_ MacroSnapshotRequest,
 ) (MacroSnapshotResponse, error) {
-	// Resolve prices via port; fall back to fixture defaults on zero/error.
+	// Resolve VN-Index from port; fall back to fixture default if port returns zero.
+	vnIndex := resolveVNIndex(ctx, uc)
+
+	// Resolve commodity prices via port; fall back to fixture defaults on zero/error.
 	oilPrice, goldPrice, usdVnd := resolveMarketPrices(ctx, uc)
 
 	// Build module input with fixture-stable timestamps (R-1).
@@ -119,7 +125,7 @@ func (uc *ComputeMacroUseCase) Execute(
 
 	return MacroSnapshotResponse{
 		Status:  "ok",
-		VNIndex: fixtureVNIndex,
+		VNIndex: vnIndex,
 		OilUSD:  oilPrice,
 		GoldUSD: goldPrice,
 		USDVnd:  usdVnd,
@@ -133,6 +139,20 @@ func (uc *ComputeMacroUseCase) Execute(
 		},
 		FetchedAt: fetchedAt,
 	}, nil
+}
+
+// resolveVNIndex fetches the VN-Index level from MarketIndexPort.
+// Falls back to fixtureVNIndex when the port is nil, returns 0, or errors.
+// This ensures live data is used when the DB is populated while keeping the
+// sandbox deterministic when no market data is available.
+func resolveVNIndex(ctx context.Context, uc *ComputeMacroUseCase) float64 {
+	if uc.marketIndex != nil {
+		v, err := uc.marketIndex.FetchVNIndex(ctx)
+		if err == nil && v > 0 {
+			return v
+		}
+	}
+	return fixtureVNIndex
 }
 
 // resolveMarketPrices fetches commodity prices from the port; uses fixture defaults on failure.
