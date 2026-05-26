@@ -1,0 +1,75 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "triage-close",
+  "id": "po-20260526T122538Z",
+  "createdAt": "2026-05-26T12:25:38Z",
+  "tick": "dev-team cron 2026-05-26T09:23Z (triage at 12:25Z)",
+  "host_state": "STABLE — uptime 3h13m, 0 open/half-open circuits across 16 breakers, Telegram SET, 0 unnotified. Background noise only (vnstock RATE_LIMITED VHM/VNH/VDC non-fatal; Reuters+TradingEconomics RSS long-dead geo/anti-bot). market.db 171.85MB / WAL 7.31MB healthy.",
+  "wip_before": "0/2",
+  "wip_after": "2/2",
+  "verdict": "BATCH(2) + 1 HELD",
+  "batch": [
+    {
+      "type": "SPRINT-S",
+      "id": "P2-A",
+      "title": "frontend-phase2-build-wave-entry",
+      "desc": "BUILD-lane entry for frontend Phase-2 (plan READY-FOR-DISPATCH, commit ed488ca1). dev-frontend takes P2-A directly (no pm — plan is already atomic, 9 tasks P2-A..Z, WIP=1 sequential). P2-A = create local-only git tag `frontend-pre-ci` (5m anchor before the G4 ESLint fence work in P2-B). dev-frontend then runs the strict WIP=1 chain P2-A->B->C->D->E->F->G->H->Z; do NOT parallelize. Per-task ACs in the plan. §4.5 binding: dev-frontend/qa/ops do NOT flip any goal status or pilot-status goal fields — all goal flips are PO-only at the terminal P2-Z close. NOTE: frontend planning is DONE, so this is now a BUILD lane that CONSUMES a WIP slot (not a planning lane).",
+      "size": "S",
+      "files": [
+        "apps/frontend/ (zone — P2-A: git tag only; P2-B onward: eslint.config.mjs + package.json + app/domain/formatters/**)"
+      ],
+      "baseline_pass": "apps/frontend: `vitest run` (179/179) + `npm run typecheck` + `npm run build` + `npm run test:e2e` (Playwright 4/4 @ port 3001) — all exit 0. P2-A itself is tag-only (no test impact); P2-B AC-4 re-asserts the full tripwire set.",
+      "zone": "apps/frontend/",
+      "owner": "dev-frontend",
+      "priority": 1,
+      "sequence": 1,
+      "plan_ref": "docs/architecture-briefs/2026-05-22-refactor/scale/frontend-phase-2-task-plan.md"
+    },
+    {
+      "type": "FIX",
+      "id": "MACRO-VNINDEX-DATA-GAP",
+      "title": "macro-vnindex-data-gap-source-wiring",
+      "desc": "DIAGNOSE-FIRST follow-up to a148db3d (consumption side already sound — do NOT re-fix it). get_macro_snapshot still returns vnIndex=1280.5 (graceful fixture fallback) because market.db macro_indicators has no live VN-Index row -> MarketIndexPort returns 0. LIVE NUANCE to reconcile FIRST: get_system_status auto_tracked_indicators show vnindex=1909 (25 data points), get_market_snapshot shows ~1884.18, fixture is 1280.5 — three divergent values. Diagnosis MUST reconcile auto_tracked_indicators vs macro_indicators vs the live source get_market_snapshot reads BEFORE any code. Fix = wire MarketIndexPort to the live VN-Index source get_market_snapshot reads (PREFERRED — read live source directly), OR add a population path into macro_indicators (fallback — fragile cron, avoid if possible). may_involve dev-stock-price + dev-mcp-server for the source-of-truth identification. after_fix: ops REBUILD macro-indicators + live-verify get_macro_snapshot vnIndex matches the live source.",
+      "size": "S-M",
+      "files": [
+        "apps/macro-indicators/ (zone — MarketIndexPort + macro snapshot assembler; source-wiring side ONLY)"
+      ],
+      "baseline_pass": "apps/macro-indicators: `bun test` exits 0. Post-fix: ops rebuild + get_macro_snapshot vnIndex reconciles to the live source.",
+      "zone": "apps/macro-indicators/",
+      "owner": "dev-macro-indicators",
+      "priority": 2,
+      "sequence": 2,
+      "signal_ref": "docs/signals/dev-team-macro-vnindex-gap-20260526T0846Z.json",
+      "consumption_fix_commit_DO_NOT_TOUCH": "a148db3d",
+      "blast_radius": "LIMITED — stale value is the displayed vnIndex field only, NOT the macro regime classifier. Service healthy, all breakers OK."
+    }
+  ],
+  "held": [
+    {
+      "type": "SPIKE",
+      "id": "FETCH-ANALYZE-PROFILE",
+      "title": "fetch-analyze-profile",
+      "question": "Why did fetch_and_analyze time out at 00:07Z off-hours; profile the call path and recommend a bound/backoff.",
+      "mode": "spike",
+      "timebox": 120,
+      "zone": "apps/mcp-server/",
+      "owner": "dev-mcp-server",
+      "hold_reason": "ZONE-CONTENTION + WIP-CAP. apps/mcp-server/ is being ACTIVELY churned by the parallel BCTC session (MD-EXTRACT-6 landed 23m, LIVE-VERIFY-6 split verdict 12m — income-statement FAIL, still iterating). Dispatching a spike into that live zone = file + git-index contention. Also non-urgent: 9h old, off-hours timeout, all VN RSS sources OK 55s ago (source-health). Batch already fills WIP 2/2. DISPATCH NEXT TICK once the BCTC session quiesces in apps/mcp-server/ AND a WIP slot frees."
+    }
+  ],
+  "acknowledged_not_dispatched": [
+    "news-scout-2026-05-26T0007Z-escalation.json — already captured as the FETCH-ANALYZE-PROFILE spike (held); 9h old; VN RSS all OK.",
+    "tnb-bug-2026-05-25T20:13:00Z-chef-frozen.json + tnb-2026-05-25T21:13:00Z-c79.json — COWORK LANE (unified-agent / tran-ngoc-bau NOT dev-team-spawnable per team-boundary). On DASHBOARD ## cowork for the cowork-team flow. Acknowledge only.",
+    "BCTC-MD-TABLE sprint (apps/pdf-extractor/) — self-managed by dev-pdf-extractor + architect (parallel session). NOT mine to triage."
+  ],
+  "pilot_status_reconciliation": {
+    "file": "docs/data/pilot-status-frontend.json",
+    "change": "phase2.status AWAITING-PLAN -> OPEN (phase lifecycle flip, PO-only per plan §4.5). Added _status_transition_note + buildOpenedAt/buildOpenedBy. NO goal flip — goalsEarned stays 4, decisionMatrix stays TBD, per-goal status untouched. JSON re-validated: parse OK + zero duplicate keys + parser-visible.",
+    "trigger": "architect Phase-2 plan landed READY-FOR-DISPATCH (ed488ca1). My 2026-05-26T08:32Z notebook claimed READY-FOR-DISPATCH but the live file still read AWAITING-PLAN — this tick persists the correct lifecycle state.",
+    "NOT_a_terminal_close": "No 12/12 grade, no verdict, no closedAt. Terminal atomic flip happens only after the P2-Z close-gate signal."
+  },
+  "janitor_backlog_not_mine": "TASKS.md = 684L (cap 80) + docs/signals/ large — route to claude-manager-helper self-cron (NOT dev-team-spawnable). Do not attempt to spawn janitor from dev-team.",
+  "commit_note": "All working-tree edits left UNSTAGED (pilot-status-frontend.json, DASHBOARD.md ## po, notebook po.md, this signal). Dispatcher (main terminal) commits under commit-mutex — parallel BCTC session is committing on main ~every 10 min. PO did NOT git add / commit / push and has no live-tool / task_claim / send_telegram in harness.",
+  "priority_order_applied": "reliability->coverage->UX->arch. MACRO-VNINDEX (reliability/data-correctness FIX) ranks by impact but P2-A is the unblocked atomic build-lane entry with a clean isolated zone; both dispatched. SPIKE held (lowest urgency + zone contention)."
+}

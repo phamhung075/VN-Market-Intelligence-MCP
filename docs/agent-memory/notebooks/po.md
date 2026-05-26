@@ -1,27 +1,28 @@
 # PO Notebook
 
-**Cycle:** dev-team triage 2026-05-26T08:30Z — post-mcp-server-close + frontend Phase-2 open.
-**Last update:** 2026-05-26T08:32Z
-**Status:** BATCH=2 (1 FIX macro-seed-wiring + 1 SPRINT-S frontend-Phase-2-plan). mcp-server VERIFIED DONE 12/12 — NOT reopened.
+**Cycle:** dev-team triage 2026-05-26T12:25Z — frontend Phase-2 build-lane opens + macro data-gap follow-up dispatched.
+**Last update:** 2026-05-26T12:25Z
+**Status:** BATCH(2) + 1 HELD. WIP 0/2 → 2/2. Host STABLE.
 
 ---
 
-## 2026-05-26T08:30Z — dev-team triage
+## 2026-05-26T12:25Z — dev-team triage
 
-**mcp-server 12/12 close VERIFIED on ground truth (last cycle I ABORTED this — the blocker is now legitimately cleared).** Commit `8972a155` exists; qa P2-Z close-gate signal `docs/signals/qa-mcp-server-p2-close-2026-05-26T073000Z.json` (APPROVED, `c323a8f5`) exists; pilot-status-mcp-server.json status=DONE 12/12 verdict=scale with each Phase-2 gate PO-verified on disk (composition-root 120L/index 41L, eslint 4272B, kinhDichWrapper in _deprecated/, playwright 7/7, G10/G11 inject+fix commits). My 2026-05-26T09:30Z false-negative blocker (timing-race: read signals while qa flushed P2-Z) is correctly superseded. Rollout 11/11 COMPLETE. **Did NOT reopen.**
+**BATCH(2) dispatched (WIP 0/2 → 2/2, host stable, both zones isolated from BCTC churn):**
+1. **P2-A frontend BUILD-lane entry** (dev-frontend, apps/frontend/, SPRINT-S). Plan landed READY-FOR-DISPATCH (ed488ca1, 9 tasks P2-A→Z, WIP=1). Planning is DONE → frontend is now a BUILD lane (CONSUMES a WIP slot, no longer a planning lane). dev-frontend takes P2-A directly (atomic, no pm). P2-A = create `frontend-pre-ci` tag; then strict sequential chain.
+2. **MACRO-VNINDEX-DATA-GAP FIX** (dev-macro-indicators, apps/macro-indicators/, diagnose-first S-M). Consumption side a148db3d is SOUND — do NOT re-fix. Source-wiring gap only: macro_indicators has no live VN-Index row → port returns 0 → fixture 1280.5. NEW NUANCE: 3 divergent values (auto_tracked 1909 / market-snapshot 1884 / fixture 1280.5) — diagnosis MUST reconcile these BEFORE code. Prefer reading the live source get_market_snapshot reads over a fragile population cron. after_fix: ops rebuild + live-verify.
 
-**Priority order (reliability→coverage→UX→arch):**
-1. RAG down → ops ALREADY dispatched by dispatcher (restart+flap RCA). Did NOT double-dispatch. Aware only.
-2. MACRO no longer "down" — UP serving SEED data (vnIndex 1280.5 vs ~1909). Reclassified DOWN→FIX: **MACRO-SEED-WIRING (dev-macro-indicators, apps/macro-indicators/, MED)** — Go source-wiring gap, not outage. Safety/speed layer intact (68 crons, 16 breakers OK).
-3. FETCH-ANALYZE-RECUR → **SPIKE FETCH-ANALYZE-PROFILE (dev-mcp-server, 2h timebox)** queued, not dispatched this tick (WIP discipline; ingestion green, bounded blast radius).
-4. **Frontend Phase-2 OPENED (planning) — SPRINT-S P2-FE-PLAN (architect).** Retired the OBSOLETE awaitingUserG9Signoff gate (G9 = ops live-recheck per feedback_trust_verification_is_system_job, exactly how mcp-server G9 closed). Container already rebuilt (ops FE-REBUILD 19:31Z). Pilot stays ACTIVE — NOT DONE: G3/G4/G5/G7/G10/G11 genuinely TBD, Phase-2 builds them. Planning lane = no WIP-cap consume. Frontend zone isolated from BCTC-MD-TABLE churn.
+**HELD: FETCH-ANALYZE-PROFILE SPIKE** (dev-mcp-server, apps/mcp-server/, 2h). Zone-contention (BCTC session actively churning apps/mcp-server/ — MD-EXTRACT-6/LIVE-VERIFY-6) + WIP-cap reached. 9h old, off-hours, VN RSS all OK → non-urgent. Dispatch next tick when BCTC quiesces + WIP frees.
 
-**COWORK-LANE (acknowledged, NOT dev-dispatched):** HSG-FIRE (alert severity), MARKET-SLOTS-DARK (schedule), CHEF-KINHDICH (retracted), NEWSFETCH-FALSECRIT, TNB-C79.
+**phase2.status flip (lifecycle, NOT goal flip):** pilot-status-frontend.json phase2.status AWAITING-PLAN→OPEN. PO-only per plan §4.5. Plan landed = phase moves to build. goalsEarned stays 4, decisionMatrix TBD, per-goal status untouched. JSON re-validated: parse OK + zero dup keys. Last cycle I claimed READY-FOR-DISPATCH but the live file still read AWAITING-PLAN — corrected this tick.
 
-**Edits (working tree, NOTHING staged — commit-mutex uncallable by me; parallel BCTC session committing every ~10min):** DASHBOARD.md (P1-EXIT-7of12→CLOSED/superseded; STACK-CYCLE + FETCH-ANALYZE triaged), pilot-status-frontend.json (gate retired + phase2=AWAITING-PLAN, JSON valid zero-dup), this notebook. NO git write performed by me → no commit-mutex needed this cycle.
+**COWORK-LANE (ACK only, NOT dev-dispatched):** NEWSSCOUT-MACRO-MISVALIDATE (agent-side mis-validation; same MACRO-SEED root already routed to dev-macro-indicators — marked READ), CHEF-EOD-MACRO-MISATTRIB, HSG-FIRE-SEVERITY-RECAL, TNB chef-frozen + C79. unified-agent/tran-ngoc-bau NOT dev-team-spawnable.
+
+**Edits (working tree, NOTHING staged — no commit-mutex/task_claim/send_telegram in my harness; parallel BCTC session commits on main ~every 10min):** pilot-status-frontend.json (phase2→OPEN), DASHBOARD.md (## po new triage row + NEWSSCOUT row ACK + _Updated), docs/signals/po-20260526T122538Z.json (triage-close), this notebook.
 
 ## Carry-over
-- **Main terminal commits in-tree docs** (DASHBOARD.md + pilot-status-frontend.json + notebook) — explicit `git add`, no push, on main, zero foreign in `git show --stat HEAD`. Beware the parallel BCTC session's index race — claim commit-mutex first.
-- **JANITOR BACKLOG (flagged, not mine):** TASKS.md = 684L (cap 80); docs/signals/ = 904 top-level. Needs claude-manager-helper/code-janitor (self-cron, not dev-team-spawnable). Schedule once tree quiets (BCTC session active now).
-- **NEXT dispatches:** MACRO-SEED-WIRING (dev-macro-indicators) + P2-FE-PLAN (architect). Then FETCH-ANALYZE-PROFILE SPIKE (dev-mcp-server) when WIP frees.
-- **DO NOT TOUCH:** BCTC-MD-TABLE sprint (parallel session, MD-EXTRACT-6 next) + its EIB/DHG Telegram reports + any other pilot-status file.
+- **Dispatcher (main terminal) commits all in-tree docs** under commit-mutex (explicit git add, no push, on main). Beware BCTC index race.
+- **NEXT tick:** FETCH-ANALYZE-PROFILE SPIKE (dev-mcp-server) once BCTC session quiesces in apps/mcp-server/ + WIP frees. Then frontend chain P2-B→Z continues WIP=1.
+- **PO terminal close pending:** frontend 12/12 atomic flip ONLY after P2-Z close-gate signal (qa). Do NOT flip goals before then.
+- **JANITOR BACKLOG (not mine):** TASKS.md 684L (cap 80) → claude-manager-helper self-cron (NOT dev-team-spawnable).
+- **DO NOT TOUCH:** BCTC-MD-TABLE sprint (apps/pdf-extractor/, parallel session) + any other pilot-status file.
