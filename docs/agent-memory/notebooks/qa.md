@@ -1,5 +1,120 @@
 # QA — Notebook
 
+## cycle-123 · 2026-05-26 · P2-D + P2-E (frontend Phase-2 fence freeze + G10 inject) — PASS
+
+**Task:** P2-D (G4 fence freeze anchor confirm) + P2-E (G10 bug injection) | **Verdict:** P2-D PASS; P2-E inject committed; P2-F READY
+
+```
+date: 2026-05-26T12:53Z
+type: qa-gate (frontend Phase-2)
+signals:
+  p2d: docs/signals/qa-frontend-g4-p2d-2026-05-26T125100Z.json
+  p2e: docs/signals/qa-frontend-p2e-inject-2026-05-26T125333Z.json
+inject_commit: 4aef229c
+
+P2-D:
+  ac1_freeze_anchor:
+    sha: 9cc11a31
+    commit_msg: "fix(p2-fe/frontend): P2-B fence config — mode:full + TS resolver + rule order"
+    no_newer_commit: true
+    verdict: PASS
+
+  ac2_fence_honesty_proof:
+    baseline_exit: 0 (0 problems)
+    violation_injection_target: apps/frontend/app/domain/formatters/direction-arrow.ts
+    violation_line: "import type { ApiResponse } from '~/lib/api/client.js'; // DELIBERATE-VIOLATION-TEST QA P2-D"
+    violation_exit: 1
+    error_line: "7:34  error  Fence-A: domain/formatters must not import api-client layer  boundaries/element-types"
+    fence_a_in_output: true
+    post_revert_exit: 0
+    git_status_after_revert: empty (CLEAN — never staged)
+    verdict: PASS
+
+  ac3_regression_tripwires:
+    vitest: 179/179 pass, exit 0
+    typecheck: exit 0 (0 errors)
+    verdict: PASS
+
+P2-E:
+  frontend_pre_inject_tag: frontend-pre-inject
+  frontend_pre_inject_tag_sha: 5eb73272560bc39c1b9d5daac1636d614a8ce1f8
+  injected_file: apps/frontend/app/domain/formatters/direction-arrow.ts
+  mutation: symbol "↑" → "↑↑" for direction=="up" + comment // G10-INJECTED-BUG
+  mutation_line: 22
+  inject_commit: 4aef229c
+  staged_files_at_commit: [apps/frontend/app/domain/formatters/direction-arrow.ts] only
+
+  vitest_result:
+    test_files_failed: 2
+    tests_failed: 3
+    exit_code: 1
+    failing_tests:
+      - "direction-arrow.test.ts > formatDirectionArrow > up direction returns upward arrow with green class"
+      - "analysis-vm.test.ts > buildWatchlistTileVM > direction up returns upward arrow symbol and green class"
+      - "analysis-vm.test.ts > buildWatchlistTileVM > multi-formatter: both formatChangePct and formatDirectionArrow outputs present in view model"
+
+  typecheck_with_bug: exit 0 (string literal mutation — no type error; dev diagnoses from test output only)
+
+  g11_coupling_bonus:
+    2 test files RED: direction-arrow.test.ts + analysis-vm.test.ts
+    view-model consumer tests also fail — proves G11 Trial-1 coupling (primitive mutation → view-model cascade)
+    coupled_consumer_tests_red: 2
+
+  p2f_dispatch: dev-frontend dispatched blind (no file/line/mutation hint provided)
+
+key_learnings:
+  - npm test (vitest run) forwards vitest exit code correctly — confirmed exit 1 on failure
+  - tsconfig parse warnings from bun cache (@ljharb/tsconfig) are pre-existing infra noise, do not block
+  - "↑↑" mutation is purely behavioral — correct type (string), deterministic RED on golden case
+  - Coupling bonus: direction-arrow mutation cascades to analysis-vm.test.ts — useful for G11 Trial-1
+```
+
+---
+
+## cycle-122 · 2026-05-26 · P2-Z (mcp-server SCALE pilot final close-gate) — APPROVED
+
+**Task:** P2-Z — Phase-2 close-gate verification | **Verdict:** P2-Z PASS — pilot READY for PO 12/12 flip
+
+```
+date: 2026-05-26
+type: scale-pilot-close-gate (mcp-server Phase-2 final verification)
+task: P2-Z
+signal: docs/signals/qa-mcp-server-p2-close-2026-05-26T073000Z.json
+commit_sha: c323a8f53c4f6f3fc4485e1a3d32748908cf10bb
+
+checklist:
+  G3 (index.ts ≤80L):          PASS — 41L (threshold ≤80). composition-root.ts=120L, zero domain logic.
+  G4 (fence non-false-green):   PASS — freeze-anchor 4e6f89ab confirmed. Fence-A proven: deliberate violation → exit 1 + "Fence-A" output (P2-D signal).
+  G5a (kinhDichWrapper moved):  PASS — absent from domain/; present at infrastructure/_deprecated/; 0 interface/scheduler callers; domain infra-imports=0 (comments only).
+  G9 (ops live-recheck):        PASS — mcp-server rebuilt 2026-05-26 04:40Z with Phase-2 code. toolCount=146, 8 tools verified with real data, 0 new failures, playwright 7/7 PASS. po-verbal signal absent but overridden by P2-Z spec + user MEMORY directive (trust-verification is system's job).
+  G10 (≤2 cycle blind-fix):     PASS — 1 cycle: b0705683 inject → 21361392 fix. threshold ≤2.
+  G11 (outcome-(a)×2):          PASS — Trial-1 signalBuilders (21361392); Trial-2 sectorPeers (0332624a inject → 3b9851fb revert). Both outcome-(a).
+
+regression_tripwires:
+  bun_test:         pass=9452, fail=335, skip=35 (≥9408/≤348 PASS)
+  tsc:              exit 0 (bun run check)
+  toolCount:        146 (live /health)
+  scheduler:        68 (grep -c cron.schedule)
+  sandbox:          9/9 PASS (all scenarios per runner.ts --scenario=)
+
+ddd_scan:
+  signalBuilders.ts: 0 forbidden imports
+  sectorPeers.ts:    0 forbidden imports
+  domain/ infra actual imports: 0 (comment lines only)
+
+security_scan:
+  process.env in touched files: 0
+  hardcoded secrets:             0
+
+earned_pending_reconfirmed: G1 G2 G5 G6 G7 G8 G12 (all YES in pilot-status — unchanged)
+g12_streak: sandbox 9/9 PASS confirms streak intact
+pilot_status_touched: false (AC-9 binding honored)
+
+NEXT: po → Phase-3 atomic terminal flip (12/12 YES + decisionMatrix + verdict + DONE in one commit)
+```
+
+---
+
 ## cycle-121 · 2026-05-26 · P2-L (G11 regression alarm — 2-trial coupling proof, QA half) — IN PROGRESS (pending dev Trial-2 revert)
 
 **Task:** P2-L — G11 regression alarm: 2-trial coupling proof | **Verdict pending:** AC-6 requires dev Trial-2 revert + 9/9 GREEN confirmation
