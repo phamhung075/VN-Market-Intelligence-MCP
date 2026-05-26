@@ -56,3 +56,36 @@ Re-engine the BCTC table-extraction path of `apps/pdf-extractor` onto the publis
 ---
 
 ## Appends (BA / architect append below)
+
+---
+
+### [BA] PEK-BA — Spec Complete 2026-05-26T21:00Z
+
+**Spec file:** `docs/REQ_PEK-INTEGRATE.md`
+**Status:** DONE — pending PO approval gate. Architect PEK-DESIGN remains BLOCKED until PO approves.
+
+**Requirements summary (10 REQs, 35 ACs):**
+
+| REQ | Name | DDD Layer | Priority |
+|-----|------|-----------|----------|
+| REQ-PEK-0 | Pristine-engine invariant (git-diff proof) | Infrastructure | CRITICAL |
+| REQ-PEK-1 | Trimmed task set + model pick | Infrastructure | CRITICAL |
+| REQ-PEK-2 | CPU-only / 8GB-safe memory budget | Infrastructure | CRITICAL |
+| REQ-PEK-3 | Docker build hygiene (.dockerignore / weight cache) | Infrastructure | HIGH |
+| REQ-PEK-4 | Lazy model load + per-process RSS caps | Application + Infrastructure | HIGH |
+| REQ-PEK-5 | FastAPI /api PULL contract preservation | Interface + Application | CRITICAL |
+| REQ-PEK-6 | Structured bctc_table_rows non-regression | Infrastructure | CRITICAL |
+| REQ-PEK-7 | Live BCTC rows quality gate (scale-pilot done-bar) | Domain + Application | CRITICAL |
+| REQ-PEK-8 | LF-OVERLAY contract reuse | Interface + Infrastructure | HIGH |
+| REQ-PEK-9 | Privacy + locality guardrail | Infrastructure + Application | CRITICAL |
+| REQ-PEK-10 | ops REBUILD (not restart) after dev change | Infrastructure | HIGH |
+
+**Architect-deferred decisions (do NOT pre-decide — each needs a RAM number in PEK-DESIGN):**
+- (a) Table model pick: `PaddleOCR+TableMaster` vs `StructEqTable` — resident RSS + inference peak for each
+- (b) Topology: in-process always-on vs on-demand worker container — kernel-panic risk judgement per option
+- (c) Clone embedding + Docker `.dockerignore` / `.gitignore` hygiene + model-weight cache location
+- (d) Lazy-load initialisation pattern + per-process RSS cap value + concurrent-request queuing
+
+**Blockers for PO:** None. All PO decisions pre-resolved. Ground truth confirmed. Architect questions are technical design decisions, not PO-level blockers.
+
+**Frozen surfaces confirmed (not touched by this sprint):** `PDF-Extract-Kit/` (pristine, zero edits), `text_table_extractor.py` (0-byte-diff unless architect migration plan), `sandbox/runner.py`, `pilot-status-pdf-extractor.json`, dashboard trust-contract.

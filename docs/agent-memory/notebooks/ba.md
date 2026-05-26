@@ -1,8 +1,22 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-26T18:30Z | **Sprint:** BCTC-LAYOUT-FIRST (LF-BA)
+**Last updated:** 2026-05-26T21:00Z | **Sprint:** PEK-INTEGRATE (PEK-BA)
 
 > Archive: `docs/archive/notebooks/ba-2026-05-21.md`
+
+## PEK-BA · 2026-05-26T21:00Z
+
+Sprint PEK-INTEGRATE decomposition complete. REQ file: `docs/REQ_PEK-INTEGRATE.md`. Handoff appended: `docs/handoffs/TASK_PEK-INTEGRATE.md`. Files left UNSTAGED per commit-discipline. NEXT = PO approval gate; architect PEK-DESIGN BLOCKED until PO approves.
+
+Key decisions encoded as requirements:
+- REQ-PEK-0: Pristine invariant baked in as a hard CRITICAL requirement — 3 git-diff ACs so QA can prove it at close.
+- REQ-PEK-1: Trimmed task set (layout+table+ocr, no formula) + table model pick flagged as architect-deferred (a); StructEqTable = biggest RAM risk, explicitly named.
+- REQ-PEK-2: 8GB hard ceiling + CPU-only + no-kernel-panic encoded as testable ACs (RSS capture by ops, fleet running simultaneously). Topology decision flagged as architect-deferred (b).
+- REQ-PEK-3: Docker hygiene gap explicitly named (COPY . . + missing .dockerignore entry) — architect decision (c) must fix; weight-cache lifecycle AC included.
+- REQ-PEK-4: Lazy-load + per-process RSS cap encoded as 4 ACs; architect decision (d) must specify the init pattern and cap value.
+- REQ-PEK-7: Scale-pilot done-bar applied — 5 prior false-greens; direct market.db arbiter clause, NOT-RUN ≠ green, corpus pass-rate (not one doc). FPT Q4 2025 sentinel values baked in as a regression anchor.
+- REQ-PEK-8: LF-OVERLAY reuse flagged as a PRESERVATION requirement — architect must reference the §3 contract from the LF-DESIGN brief and not reinvent a parallel overlay schema.
+- 4 architect-deferred decisions correctly left open with RAM-number gate. No PO blockers.
 
 ## LF-BA · 2026-05-26T18:30Z
 
