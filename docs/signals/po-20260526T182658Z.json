@@ -1,0 +1,56 @@
+{
+  "from": "po",
+  "to": "dev-team-dispatcher",
+  "type": "triage-verdict",
+  "priority": "high",
+  "createdAt": "2026-05-26T18:26:58Z",
+  "cron": "dev-team :07 (fire 20260526T182326Z)",
+  "verdict": "BATCH(2) — dispatch architect LF-DESIGN + qa NEWS-INGEST-3 in parallel (different lanes, WIP-safe at 0/2).",
+  "kickoff_signal_correction": {
+    "drained": "docs/signals/po-20260526T181140Z.json (sprint-kickoff po→ba, dispatch ba for LF-BA)",
+    "finding": "STALE PREMISE. The kickoff's NEXT (dispatch ba to write LF-BA spec) and its NOTE (nobody driving LF-BA, no peer lock, yours to confirm+register) are based on a snapshot that predates the work. The FULL PO-kickoff→BA-spec→PO-approval chain ALREADY landed.",
+    "git_evidence": [
+      "fb1d5d62 docs(sprint): open BCTC-LAYOUT-FIRST",
+      "a97c3a09 chore(notebook): po cycle :11 — BCTC-LAYOUT-FIRST kickoff",
+      "0be7184b docs(req): LF-BA — requirement spec (8 reqs, 4-tier, 2-service split, page-5 root-cause)",
+      "158173b9 chore(notebook): ba cycle — LF-BA requirement spec written",
+      "6fc7252b docs(po): LF-BA APPROVED — spec faithful to Decisions A–F; LF-DESIGN unblocked",
+      "f31cd6a5 chore(notebook): po cycle — LF-BA approval gate"
+    ],
+    "ondisk_evidence": [
+      "docs/REQ_BCTC-LAYOUT-FIRST.md exists (29KB, ba)",
+      "docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md exists with [BA] LF-BA + [PO] LF-BA APPROVAL GATE=APPROVED sections (kickoff said 'NOT yet written' — it IS)",
+      "docs/TASKS.md row LF-BA = 'DONE — PO APPROVED 2026-05-26T18:20Z'; row LF-DESIGN = 'READY (dispatch NEXT — PO approval gate cleared)'",
+      "docs/SPRINT_GOAL.md §Sprint BCTC-LAYOUT-FIRST present",
+      "NO LF-DESIGN architect brief exists yet in docs/architecture-briefs/; NO architect LF signal queued"
+    ],
+    "resolution": "Re-dispatching ba for LF-BA would redo completed+approved work — REJECTED. Correct NEXT = architect LF-DESIGN. Confirmed + REGISTERED the sprint per the kickoff's own NOTE: pipeline-state.json was stale (rollout-complete/activeTaskId=NONE) — set activeTaskId=BCTC-LAYOUT-FIRST + nextAgent=architect(LF-DESIGN) so future ticks resume."
+  },
+  "decisions": {
+    "BCTC-LAYOUT-FIRST": {
+      "still_right_call": true,
+      "rationale": "Mandated architect-grade root-cause rethink (generic_md_table_extractor.py = 9 MD-EXTRACT + text_table_extractor.py = 7 BT fix commits per feedback_recurring_bug_escalation.md). User-co-authored, go-to-build. SUPERSEDES BCTC-MD-TABLE (bbox-clustering passed FPT Q4 only, does not generalize).",
+      "next_agent": "architect (LF-DESIGN), NOT ba — LF-BA is DONE+APPROVED",
+      "size": "SPRINT-L",
+      "size_rationale": "zone=multi (architect splits at pdf-extractor↔mcp-server boundary); ladder LF-DESIGN→(LF-EXTRACT ‖ LF-OVERLAY)→LF-DEPLOY→LF-QA→LF-FIX?→LF-EXIT = architect-led split + 2 parallel dev tasks across 2 services. Multi-zone + architect-split = SPRINT-L (not SPRINT-M ba→architect→pm).",
+      "host_risk": "LOW for this tick — LF-DESIGN is design-only, architect writes ONLY docs/architecture-briefs/, no code, no rebuild, no OCR. Safe even under the parallel-BCTC-session churn + 16GB/8GB-Docker OOM-flap risk. Heavy/contended work (LF-EXTRACT OCR, LF-DEPLOY rebuild) is gated behind LF-DESIGN and not dispatched this tick.",
+      "wip_note": "NOT a scale pilot — does NOT consume the WIP=2 fleet cap; does NOT touch any pilot-status-*.json."
+    },
+    "NEWS-INGEST-3": {
+      "dispatch_this_tick": true,
+      "rationale": "HIGH-priority reliability tier; gates an already-SHIPPED fix (NEWS-INGEST-2 cursor 9711ca72 deployed + NEWS-INGEST-2b e1e08a29 live VN surface confirmed by ops MCPZONE-DEPLOY-1). Was held for 'next triage tick' — this IS that tick. qa-lane verification, no dev-WIP contention with architect LF-DESIGN.",
+      "host_risk": "LIGHT — deterministic cursor test (N old + M new → exactly M pushed) + direct market.db reads via docker compose exec bun:sqlite + /api/news-fetch/live probe. No rebuild, no heavy OCR, no batch sweep.",
+      "order": "Dispatch first (close-out of a landed reliability fix), runs in parallel with LF-DESIGN regardless (qa-lane vs architect-lane)."
+    },
+    "wip_check": "WIP=0/2 before this tick. LF-DESIGN = architect design-lane (does not consume dev/pilot WIP slot). NEWS-INGEST-3 = qa verification-lane. Two distinct non-dev lanes → WIP≤2 respected.",
+    "off_hours_heartbeats": "cowork-fires 17:33/17:48/18:03/18:18Z all expected-silent off-hours (VN market closed, next fan-out ~20:00Z) — not actionable, no entry.",
+    "context_bloat_noise": "context-bloat-docs-TASKS-md-* (18:05–18:21Z) = PostToolUse size-cap hook noise from THIS session's own TASKS.md commits — janitor lane (claude-manager-helper/code-janitor), NOT dev CODE work. Skipped."
+  },
+  "files_modified_unstaged": [
+    "docs/pipeline-state.json",
+    "docs/TASKS.md",
+    "docs/signals/po-20260526T182658Z.json",
+    "docs/agent-memory/notebooks/po.md"
+  ],
+  "staging_note": "All edits LEFT UNSTAGED for the dev-team dispatcher to commit under commit-mutex with explicit per-file git add. Notebook (docs/agent-memory/notebooks/po.md) commits SEPARATELY from work files per commit convention. Did NOT touch the pre-existing dirty tree (.claude/agents/*, apps/api-gateway/sandbox/traces/*, etc.) nor any pilot-status-*.json."
+}
