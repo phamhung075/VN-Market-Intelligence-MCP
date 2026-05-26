@@ -240,3 +240,62 @@ The `vps-scripts/fetch-vn-news.sh` cursor defect is a NEW, first-time root cause
 The dashboard source selector in `apps/news-fetch/dashboard/index.html` (canonical) and the served copy at `apps/mcp-server/src/interface/news-fetch-dashboard/index.html` still only lists `reuters`, `bloomberg`, `all` options. The `source=all` fix already surfaces all VN rows without a selector change (user can select "All" and see them). However for per-provider filtering from the UI (cafef/vnexpress/vneconomy), the selector needs new `<option>` entries.
 
 **Recommendation:** Route NEWS-INGEST-2c to the generic `developer` (zone `apps/news-fetch/dashboard/`) to add VN source options to the selector, then re-run `sync-news-fetch-dashboard.sh` to regenerate the served copy. This is cosmetic/UX, NOT a correctness blocker — the API already returns VN rows correctly.
+
+---
+
+## [QA] NEWS-INGEST-3 Review Record
+
+**Date:** 2026-05-26T18:46:00Z
+**Verdict:** APPROVED
+**Signal:** `docs/signals/qa-news-ingest-2026-05-26T1846Z.json`
+**Commits gated:** `9711ca72` (NEWS-INGEST-2 cursor fix), `e1e08a29` (NEWS-INGEST-2b VN surface)
+
+### AC-1 — Cursor re-push fix (NEWS-INGEST-2): PASS
+
+Direct DB evidence via `docker compose exec -T mcp-server bun -e` with `bun:sqlite` readonly (NOT handler rows_stored echo — write-wedge trap avoided):
+
+| Metric | Value |
+|---|---|
+| Total VN rows (cafef/vnexpress/vneconomy) | 2127 |
+| Distinct VN source_urls | **2127** (= total — 0 duplicates) |
+| New VN rows after fix (post-2026-05-25) | **140** |
+| New VN rows today (2026-05-26) | **70** |
+| Latest VN row created_at | 2026-05-26T17:58:57.958Z |
+
+distinctVN == totalVN == 2127 — no re-pushed duplicates in DB. Re-push stopped.
+
+### AC-2 — VN surface live panel (NEWS-INGEST-2b): PASS
+
+NF-LD-2 test suite 19/19 PASS (in-memory DB injected, zero creds):
+- Tests (i–r): VN visibility, per-source filters (cafef/vnexpress/vneconomy), _provider derivation for 6 providers, reuters/bloomberg non-regression, honest-empty.
+- NF-LD-4 (push-news) 11/11 PASS (non-regression).
+
+### AC-3 — Dedup intact: PASS
+
+- `idx_rag_source_url` UNIQUE partial index: PRESENT and unchanged.
+- Duplicate source_urls in live DB: **0**.
+- NULL/empty url rows: 2 (correctly exempt from index, as designed).
+
+### AC-4 — No test regression: PASS
+
+| Check | Result |
+|---|---|
+| bun test pass | 9433 (>= 9408 bar) |
+| bun test fail | 362 (<= 363 baseline) |
+| bun test skip | 35 |
+| tsc --noEmit | exit 0 |
+| NEWS-INGEST tests in fail set | 0 |
+
+### DDD scan: PASS
+`newsFetchLiveHandler.ts` — 0 imports from infrastructure or application layers.
+
+### Security scan: PASS
+0 `process.env` in handler; 0 `process.env` in `fetch-vn-news.sh`; 0 hardcoded secrets.
+
+### Cursor logic code-review (9711ca72): PASS
+- Line 267: `filtered = [item for item in items if to_epoch(item.get('publishedAt','')) > cursor]` — strict `>` (not `>=`) is correct (avoids boundary repeat).
+- Cursor advanced ONLY on HTTP 200 from MCP — correct (no cursor drift on failure).
+- First-run fallback seeds `now()` epoch when all dates are unparseable — correct.
+- Heartbeat sentinel on empty-after-filter (INFO, not ERROR) — correct level.
+
+**NEXT: NEWS-INGEST-CLOSE → `po`**

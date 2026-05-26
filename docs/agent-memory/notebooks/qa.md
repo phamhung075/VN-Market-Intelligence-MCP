@@ -1,5 +1,55 @@
 # QA — Notebook
 
+## cycle-127 · 2026-05-26 · NEWS-INGEST-3 (cursor re-push fix + VN surface gate) — APPROVED
+
+**Task:** NEWS-INGEST-3 — QA gate on NEWS-INGEST-2 (cursor fix) + NEWS-INGEST-2b (VN surface) | **Verdict:** APPROVED
+
+```
+date: 2026-05-26T18:46:00Z
+type: sprint-qa-gate (NEWS-INGEST, commits 9711ca72 + e1e08a29)
+signal: docs/signals/qa-news-ingest-2026-05-26T1846Z.json
+method: direct bun:sqlite readonly against live market.db (NOT handler rows_stored echo)
+
+AC1_cursor_fix:
+  total_vn_rows: 2127
+  distinct_vn_urls: 2127
+  duplicate_vn_urls: 0
+  new_rows_post_fix: 140 (70 on 2026-05-26 alone)
+  latest_vn_created_at: 2026-05-26T17:58:57.958Z
+  verdict: PASS — re-push stopped, genuinely-new articles flowing
+
+AC2_vn_surface:
+  NF-LD-2: 19/19 PASS (in-memory injected DB, zero creds)
+  NF-LD-4: 11/11 PASS (non-regression)
+  tests_i_to_r: all PASS (VN visibility, per-source filters, _provider, non-regression, honest-empty)
+  verdict: PASS
+
+AC3_dedup_intact:
+  unique_index: PRESENT (idx_rag_source_url partial WHERE NOT NULL AND != '')
+  duplicate_source_urls: 0
+  null_empty_rows: 2 (exempt by design)
+  verdict: PASS
+
+AC4_no_regression:
+  bun_test: 9433 pass / 362 fail / 35 skip (>=9408 / <=363 — PASS)
+  tsc: exit 0
+  news_ingest_in_fail_set: 0
+  verdict: PASS
+
+ddd: PASS (0 infra/app imports in handler)
+security: PASS (0 process.env, 0 secrets in handler or script)
+cursor_logic_review: PASS (strict >, advance-on-200-only, first-run fallback correct)
+```
+
+VERDICT: APPROVED. NEXT: NEWS-INGEST-CLOSE → po.
+
+key_learnings:
+  - write-wedge trap: handler rows_stored can echo input count, not DB count — always use COUNT(*) bun:sqlite direct
+  - distinctVN == totalVN is the correct dedup proof — not just checking UNIQUE index exists
+  - 9433 pass / 362 fail is within the established cycle-122 baseline (9452/335 was a different run; 362 is pre-existing BCTC/fixture tech debt confirmed by cycle-118)
+
+---
+
 ## cycle-126 · 2026-05-26 · MD-QA-9 (income-statement label interleave fix, 5th attempt gate) — PASS
 
 **Task:** MD-QA-9 — independent live gate on MD-EXTRACT-9 fix (income-statement label interleave) | **Verdict:** ALL BINDING ACs PASS
