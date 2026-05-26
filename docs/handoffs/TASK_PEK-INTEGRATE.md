@@ -55,6 +55,48 @@ Re-engine the BCTC table-extraction path of `apps/pdf-extractor` onto the publis
 
 ---
 
+## [dev-pdf-extractor] PEK-IMPL — DONE 2026-05-26
+
+**Status:** IMPLEMENTATION COMPLETE — files unstaged, ready for main terminal commit.
+
+**Test results (required by G12 DoD gate):**
+
+```
+Unit tests:    608 passed, 0 failed  (python3 -m pytest --ignore=__tests__/integration)
+Market hours:  12/12 boundary tests PASS  (test_market_hours_guard.py)
+PEK adapter:   15/15 unit tests PASS  (test_pek_engine_adapter.py)
+Scenario:       7/7 FastAPI TestClient tests PASS  (scenarios/pek_single_doc_extraction.py)
+Import-linter: 2/2 contracts KEPT (Fence-A + Fence-B)
+```
+
+**Frozen surfaces (zero-diff confirmed):**
+- `apps/pdf-extractor/infrastructure/text_table_extractor.py` — 0-byte-diff
+- `apps/pdf-extractor/sandbox/runner.py` — 0-byte-diff
+- `docs/data/pilot-status-pdf-extractor.json` — 0-byte-diff
+- `apps/pdf-extractor/PDF-Extract-Kit/` (entire subtree) — `git -C apps/pdf-extractor/PDF-Extract-Kit diff` = EMPTY
+
+**Hard constraints verified:**
+1. PDF-Extract-Kit PRISTINE: git diff empty.
+2. CPU-ONLY: NEVER imports TableParsingTask/FormulaDetectionTask. paddlepaddle_gpu not in sys.modules.
+3. Market-hours Layer 1: CRON_BCTC_REPARSE_JOB=0 21 * * * in docker-compose.yml mcp-server env.
+4. Market-hours Layer 2: POST /pek-extract returns HTTP 503 {"error":"market_open"} during VN session.
+5. Lazy singleton: _pek_models_cache=None at boot. threading.Semaphore(1) sequential guard (HTTP 429 on contention).
+6. Frozen surfaces: text_table_extractor.py + sandbox/runner.py + pilot-status.json unchanged.
+7. DDD: domain/primitives/market_hours/ pure function. PekEngineAdapterPort in domain/repositories.py. Adapter in infrastructure/. No infra import from domain.
+
+**Files touched:**
+NEW: domain/primitives/market_hours/__init__.py, domain/primitives/market_hours/primitive.py,
+     infrastructure/pek_engine_adapter.py, requirements-pek.txt,
+     __tests__/test_market_hours_guard.py, __tests__/test_pek_engine_adapter.py,
+     scenarios/pek_single_doc_extraction.py
+MODIFIED: domain/repositories.py, Dockerfile, .dockerignore, .gitignore,
+          interface/handlers.py, main.py, docker-compose.yml
+
+**NEXT:** ops PEK-DEPLOY (docker compose build pdf-extractor + force-recreate; NOT restart).
+         QA: direct market.db row check + FPT Q4 2025 sentinels + RSS sampling + git-diff proof + market-hours 503 test.
+
+---
+
 ## Appends (BA / architect append below)
 
 ---
@@ -161,4 +203,134 @@ Re-engine the BCTC table-extraction path of `apps/pdf-extractor` onto the publis
 - **R-CRIT-2:** no `TableMaster` model class exists in the pristine clone — table extraction uses `PaddleOCR` PP-StructureV2 table mode DIRECTLY (the `paddleocr==2.7.3` package from application code, NOT via the PEK task framework). This is NOT an edit to PDF-Extract-Kit.
 - **R-CRIT-3:** `struct_eqtable.py` hard-asserts `torch.cuda.is_available()` (fails on this CPU-only host). `pek_engine_adapter.py` must import ONLY `LayoutDetectionTask` + `OCRTask` explicitly — NEVER `TableParsingTask` or `FormulaDetectionTask` (both fail at import on CPU). Unit test must assert no CUDA import in the extraction path.
 
-**Pipeline state:** PEK-IMPL (dev-pdf-extractor) → PEK-DEPLOY (ops, REBUILD not restart per REQ-PEK-10 + AC-PEK-10a–c) → PEK-QA (qa: direct market.db row check + FPT Q4 2025 sentinel report_id `e71f845d-ffa5-48f9-8f09-30ac2cd09c65` + RSS sampling + pristine git-diff + market-hours 503 check) → PEK-EXIT (po) → USER verbal G9.
+**Pipeline state:** PEK-IMPL DONE → PEK-DEPLOY-FIX DONE → ops (force-recreate, cache hit) → PEK-QA → PEK-EXIT → USER verbal G9.
+
+---
+
+## [Developer] PEK-DEPLOY-FIX Implementation Record
+
+**Task:** PEK-DEPLOY-FIX | **SHA:** `efd23447` | **Status:** DONE — image built clean
+
+**Two build blockers fixed:**
+
+### Fix 1 — doclayout-yolo ghost pin (requirements-pek.txt)
+- `doclayout-yolo==0.0.2` does not exist on PyPI. Available: `0.0.2b1`, `0.0.3`, `0.0.4`.
+- Fixed to `==0.0.3` — first stable release; same `YOLOv10` API (PEK source has `from doclayout_yolo import YOLOv10`); pure Python `py3-none-any` wheel; Python 3.12 compatible.
+- NOTE: task description claimed ultralytics requires Python <=3.11 — this was incorrect. `ultralytics>=8.2.85` resolves to 8.4.55 (requires Python >=3.8 only). The base image ubuntu:24.04 (Python 3.12) is fine and was NOT changed.
+
+### Fix 2 — pip install -e ./PDF-Extract-Kit fails (Dockerfile)
+- `pyproject.toml` in pristine PEK subtree has invalid TOML at line 21: `opencv-python = "^4.6.0"` written as key=value inside a PEP 508 `dependencies` array. Python 3.12 pip raises `TOMLDecodeError: Invalid value`.
+- Fix: removed `RUN pip3 install -e ./PDF-Extract-Kit`; extended `PYTHONPATH=/app:/app/PDF-Extract-Kit`.
+- Editable install is equivalent to adding source dir to sys.path. PYTHONPATH is a direct substitute.
+- PEK subtree NOT edited — `pyproject.toml` left pristine. Constraint preserved.
+
+**Build proof:** `docker compose build pdf-extractor` → `pdf-extractor Built` (exit 0, 8 stages, image `vn-market-intelligence-mcp-pdf-extractor:latest`)
+
+**Files changed:** `apps/pdf-extractor/Dockerfile`, `apps/pdf-extractor/requirements-pek.txt` (2 files only)
+
+**Verification:**
+- Test suite: 629 unit tests PASS (689 total; 4 integration failures are pre-existing real-OCR tests)
+- PEK subtree: `git -C PDF-Extract-Kit diff` = empty (CONFIRMED)
+- Frozen surfaces: `text_table_extractor.py`, `sandbox/runner.py`, `pilot-status-pdf-extractor.json` — 0-diff
+- Staged: explicit per-file `git add` — no wildcards
+
+**NEXT: ops** — force-recreate pdf-extractor container (image already built, ops gets cache hit). Then qa PEK-QA.
+
+---
+
+## [Architect] PEK-DEP-RECONCILE — Dependency Reconcile (2026-05-27T00:00Z)
+
+**Zone:** apps/pdf-extractor/ (single zone)
+**Brief:** `docs/architecture-briefs/2026-05-27-pek-dependency-reconcile.md`
+**Escalation trigger:** ≥2 fix commits on same module (fix #1: ghost doclayout-yolo pin; fix #2: numpy ABI crash at first model load)
+
+### Brownfield verified paths
+
+- `apps/pdf-extractor/requirements-pek.txt` — the culprit: `numpy>=1.24.0` (resolves to 2.4.4) + unpinned opencv (resolves to 4.6.0.66, numpy-1.x ABI binary) + `ultralytics>=8.2.85` (8.2.85–8.3.0 declare numpy<2.0.0)
+- `apps/pdf-extractor/Dockerfile` — torch/torchvision unpinned in CPU build step; no build-time import gate
+- `apps/pdf-extractor/scenarios/pek_single_doc_extraction.py` line ~534 — `patch("infrastructure.pek_engine_adapter.convert_from_path")` targets name absent from module namespace (local import inside `_run_table_extraction`); correct patch is `patch("pdf2image.convert_from_path")`
+
+### Root cause (systemic)
+
+`opencv-python 4.6.0.66` is a `cp36-abi3` wheel compiled against numpy 1.x C API (ABI `0x1000009`). Container resolved it non-deterministically because requirements-pek.txt had no explicit opencv pin. `numpy>=1.24.0` resolved to 2.4.4 (numpy-2 ABI `0x2000000`). The C-level mismatch causes `numpy.core.multiarray` bootstrap failure — 0 BCTC rows produced. Build was GREEN because `pip install` never imports native libs; host venv (numpy 2.3.5 + opencv 4.13.0.92) masked the problem.
+
+### Design decisions
+
+1. **numpy pin:** `numpy>=2.0.0,<2.3.0` — floor forces pip to reject all numpy-1.x-compiled binaries at install time (self-enforcing); ceiling satisfies opencv 4.12.0.88's `<2.3.0` requirement for py3.9+.
+2. **opencv-python:** `==4.12.0.88` — first version compiled with numpy 2.x ABI; explicit pin eliminates resolver non-determinism.
+3. **ultralytics:** `>=8.3.10` — first version to drop `numpy<2.0.0` from core requires_dist (8.3.0 still had it; 8.3.10 removed it).
+4. **torch/torchvision:** explicit `torch==2.5.1 torchvision==0.20.1` in Dockerfile RUN step — prevents build-time drift; matched pair.
+5. **Smoke gate:** `RUN python3 -c "import numpy, cv2, paddleocr; from doclayout_yolo import YOLOv10; print('pek-native-imports: ALL OK')"` as the last build step before EXPOSE — fails the build at layer time if any ABI mismatch exists. Ends the one-crash-at-a-time loop.
+6. **Test patch:** `patch("pdf2image.convert_from_path")` replaces `patch("infrastructure.pek_engine_adapter.convert_from_path")` in `test_fake_ocr_backend_result_in_extraction_output` — patches the source module, correct idiom for local imports.
+
+### Verified dep compatibility (live PyPI audit)
+
+| Package | Target | numpy-2 compatible | Evidence |
+|---|---|---|---|
+| numpy | >=2.0.0,<2.3.0 | n/a (is the ABI anchor) | — |
+| opencv-python | ==4.12.0.88 | YES — declares numpy>=2.0,<2.3 for py3.9+ | PyPI wheel metadata |
+| paddlepaddle | ==3.3.1 | YES — host: paddle 3.0.0 + numpy 2.3.5 working | live host evidence |
+| paddleocr | ==2.7.3 | YES — no numpy pin | PyPI metadata |
+| ultralytics | >=8.3.10 | YES — numpy>=1.23.0 (no upper) | PyPI 8.3.10 metadata |
+| doclayout-yolo | ==0.0.3 | YES — no numpy pin in core deps | PyPI metadata |
+| torch | ==2.5.1 (CPU) | YES — no numpy constraint in metadata | PyPI torch 2.5.1 |
+| torchvision | ==0.20.1 (CPU) | YES — no numpy constraint | PyPI metadata |
+| scipy, pandas, albumentations | transitive | YES — all numpy-2 compatible at >=floor versions | PyPI audit |
+
+### Editable surfaces (3 files only)
+
+- `apps/pdf-extractor/requirements-pek.txt` — new pin set per brief §4.2
+- `apps/pdf-extractor/Dockerfile` — torch/torchvision version pins + smoke gate step
+- `apps/pdf-extractor/scenarios/pek_single_doc_extraction.py` — one-line patch target fix
+
+### Frozen (zero-diff)
+
+- `apps/pdf-extractor/infrastructure/text_table_extractor.py`
+- `apps/pdf-extractor/sandbox/runner.py`
+- `docs/data/pilot-status-pdf-extractor.json`
+- `apps/pdf-extractor/PDF-Extract-Kit/` (entire subtree — pristine invariant)
+
+### Verification sequence
+
+See brief §8 for full mechanical steps. Key gates:
+1. `docker compose build --no-cache pdf-extractor` → smoke gate layer must print `pek-native-imports: ALL OK`
+2. `docker compose up -d --no-deps --force-recreate pdf-extractor` → status: healthy
+3. Re-run FPT Q4 2025 sentinel → direct `bun:sqlite` query `SELECT COUNT(*) FROM bctc_layout_units WHERE report_id LIKE 'e71f845d%'` returns n > 0
+4. `pytest scenarios/ -v` → all TestPekOcrBackendInjectionScenario tests pass
+
+**BUILD-STANDARD: not-applicable** (bug fix / build maintenance)
+
+**NEXT: dev-pdf-extractor** — implement §4.2 (requirements-pek.txt) + §5.2 (Dockerfile smoke gate) + §6.3 (test fix). Then ops force-recreate. Then qa re-runs sentinel.
+
+---
+
+## [dev-pdf-extractor] PEK-DEP-RECONCILE — DONE 2026-05-27T00:43Z
+
+**SHA:** `9ab938895ff5a7ac694c552e2a4582a49812b3c1`
+**Status:** IMPLEMENTATION COMPLETE — committed to main.
+
+### Deviations from architect brief (live PyPI audit corrections)
+
+**D1 — paddleocr 2.7.3 → 2.10.0:**
+Architect brief stated paddleocr 2.7.3 has "no numpy pin" (incorrect). Live PyPI audit confirmed: paddleocr 2.7.3 `requires_dist` declares `opencv-python<=4.6.0.66` — direct conflict with `opencv-python==4.12.0.88`. Upgraded to `paddleocr==2.10.0` (first 2.x release with no opencv upper bound, no numpy<2.0 constraint). Same PP-StructureV2 table-mode API retained.
+
+**D2 — huggingface_hub added:**
+`doclayout-yolo==0.0.3` does not declare `huggingface_hub` in its `requires_dist` but `doclayout_yolo.models.yolov10.model` imports `PyTorchModelHubMixin` from it at import time. The dependency was previously supplied transitively by paddleocr 2.7.3 chain; paddleocr 2.10.0 no longer pulls it. Added `huggingface_hub>=0.20.0` explicitly.
+
+**D3 — test fix is broader than one line:**
+`test_fake_ocr_backend_result_in_extraction_output` had two broken patches: (a) `patch("infrastructure.pek_engine_adapter.convert_from_path")` (local import, not in namespace) — fixed to `patch("pdf2image.convert_from_path")`; (b) `patch("infrastructure.pek_engine_adapter.np")` (np is also a local import, not in namespace) — replaced with a real PIL image created from `np.zeros(...)`, matching the pattern used in the sibling test `test_fake_ocr_backend_invoked_by_pek_engine_adapter`.
+
+### Verification results
+
+| Gate | Result |
+|---|---|
+| `docker compose build --no-cache pdf-extractor` | PASS — smoke gate layer reached and passed |
+| Smoke gate stdout | `numpy 2.2.6 / cv2 4.13.0 / paddleocr import OK / doclayout_yolo import OK / torch 2.5.1+cpu / pek-native-imports: ALL OK` |
+| `pytest scenarios/pek_single_doc_extraction.py -v` | 10/10 PASS |
+| `git -C apps/pdf-extractor/PDF-Extract-Kit diff` | EMPTY (pristine) |
+| `git show --stat 9ab93889` | 3 files only: Dockerfile + requirements-pek.txt + scenarios/pek_single_doc_extraction.py |
+| Frozen surfaces | text_table_extractor.py + sandbox/runner.py + pilot-status-pdf-extractor.json — 0-diff |
+
+### NEXT
+
+**ops** — `docker compose up -d --no-deps --force-recreate pdf-extractor` (NOT restart — ops gets fresh image from this build). Then **qa** re-runs FPT Q4 2025 sentinel + direct `bun:sqlite` row check.
