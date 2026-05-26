@@ -849,3 +849,356 @@ All MD-QA ACs from the original design remain binding. The following are AMENDED
 - **Scan clean:** true — no existing generic table detection module, no existing markdown surfacing module. The design adds NET-NEW files in both zones.
 - **Frozen surfaces not touched:** `apps/pdf-extractor/dashboard/`, `apps/pdf-extractor/sandbox/runner.py`, `docs/data/pilot-status-pdf-extractor.json`.
 - **Hardware constraint encoded:** MAX_PAGES=20 guard in use case, fire-and-forget 202 pattern, sequential single-page Tesseract calls.
+
+---
+
+## MD-EXTRACT-3 — DEFECT-D Dense-Grid Row Reconstruction
+
+> **Task:** MD-EXTRACT-3 | **Author:** architect | **Date:** 2026-05-26T13:00Z
+> **Status:** DESIGN COMPLETE — ready for dev-pdf-extractor
+> **Input:** MAIN-TERMINAL LIVE-VERIFY post MD-DEPLOY2 (FPT Q4 2025, `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`)
+> **Zone:** `apps/pdf-extractor/` ONLY — target file `infrastructure/generic_md_table_extractor.py`. Zero mcp-server changes.
+
+---
+
+### 1. Problem Statement
+
+MD-EXTRACT-2 fixed the easy parts (noise gate, header strip, label coalesce, OCR auto-fetch). The dense multi-column financial statements — income statement (`md_tables[4]`, 6+ columns) and the segment report (`md_tables[13],[14]`, 7+ columns, the user's literal proof case) — still collapse into word-soup.
+
+**Observed output** (main terminal live-verify, FPT Q4 2025):
+
+- `md_tables[4]`: ~25 physical income-statement lines merge into ~1 markdown row. Codes `20 10 11 12 ... ` concatenated, label words scrambled, all 2025 values stacked in one cell, all 2024 values stacked in another.
+- `md_tables[13],[14]`: Segment revenues `35.381.667 / 9.092.934 / 18.701.876` present but unassociated with segments. First cell reads `"Chi Doanh phi thu theo theo bộ phận bộ phận (i) Chỉ tiêu | Sản dịch nước 35.381.667 phẩm vụ | ngoài CNTT và | ..."`.
+
+**Balance-sheet residual (AC-2E FAIL):** `md_tables[0..3]` still emit 7 columns despite label coalesce. Root: empty columns proliferate across ALL rows after `_coalesce_label_columns` — numeric columns assigned by anchor produce sparse grids where many column slots are always empty. The label-coalesce only merged the text side; it did not eliminate the empty numeric slots.
+
+---
+
+### 2. Root Cause Analysis
+
+#### 2.1 Row-collapse root cause — Step C `_cluster_rows` greedy merge
+
+The existing `_cluster_rows` uses:
+```
+new row when next_word.top > current_row_max_bottom + (0.5 × H_med)
+```
+
+**Why it fails on dense grids:**
+
+1. `H_med` is the median word HEIGHT across all words on the page, including tall tokens (section-header letters like `A`, `B`, date column headers `31/12/2025`, and ascender/descender characters in Vietnamese diacritics). On a typical BCTC income-statement page, a few tall header tokens inflate `H_med` from ~12px (actual data-row line spacing) to ~20-25px.
+
+2. Row-merge tolerance = `0.5 × H_med`. With `H_med = 22px`, tolerance = `11px`. But tightly-stacked statement rows have a physical inter-row gap of only 3-5px (line spacing minus character height). The tolerance (11px) is larger than the gap (3-5px) → the greedy merge absorbs all 25 data lines into a single "row".
+
+3. For simple 2-3 column tables (balance sheet, cash flow), rows are more widely spaced (the table is less dense), so the gap exceeds the tolerance and rows separate correctly.
+
+4. This is the exact same conceptual class as drift #4 from the structured path (psm-3 column-major scramble): the algorithm's threshold is calibrated to a coarse measure (median height) that does not track actual inter-row spacing in dense regions.
+
+#### 2.2 Empty-column proliferation root cause — Step D column anchor detection
+
+The `_detect_column_anchors` step accumulates left-edge positions from ALL rows across the entire table region. In a 7-column segment report, the union of all left-edge positions produces 7 anchor clusters, but most data rows only populate 2-4 of those anchors (header rows define the segment columns; data rows may only have label + the value for their segment). After `_assign_columns`, most cells are empty strings.
+
+After `_coalesce_label_columns` merges the text-only left columns, the right side still has 4-6 numeric slots with many empty cells. These map directly to the surplus columns seen (7 observed, 4 expected).
+
+**Fix required:** Drop columns that are empty across ALL data rows after the label-coalesce step.
+
+---
+
+### 3. Algorithm Redesign — Step C (DEFECT-D Core Fix)
+
+#### 3.1 Replace greedy height-based merge with gap-histogram row detection
+
+**Principle:** Instead of using median word HEIGHT as the row-separation oracle, compute the distribution of actual INTER-ROW GAPS between consecutive word tops. The true row pitch emerges as a stable peak in this distribution. Each physical OCR scan line becomes exactly one grid row.
+
+**Algorithm for `_cluster_rows_by_gap` (new function, replaces `_cluster_rows`):**
+
+```
+INPUT: words (filtered, any order), h_med (kept for fallback only)
+
+Step 1 — Sort words by top coordinate (ascending).
+
+Step 2 — Compute raw top values: unique_tops = deduplicated sorted list of
+          word.top values (multiple words on same physical line share ≈ same top).
+
+          "Same physical line" := two words whose top values differ by at most
+          SAME_LINE_TOLERANCE = floor(0.3 × h_med). Group all words within
+          SAME_LINE_TOLERANCE of each other into the same candidate line.
+          This tolerates OCR baseline jitter (Tesseract top-jitter is typically
+          ±2-4px on 200 DPI images).
+
+Step 3 — Compute inter-line gaps: for each adjacent pair of candidate lines
+          (sorted by top), compute gap = top[i+1] - top[i].
+
+Step 4 — Derive row-pitch from gap distribution:
+          row_pitch = median(all inter-line gaps where gap > 0)
+          If no gaps exist (single line), row_pitch = h_med (fallback).
+
+Step 5 — New-row threshold:
+          ROW_SPLIT_THRESHOLD = row_pitch × ROW_PITCH_MULTIPLIER
+          where ROW_PITCH_MULTIPLIER = 1.2 (constant — allows 20% stretch
+          before a new logical section begins; tighter than the old 0.5 × h_med).
+
+Step 6 — Assign words to rows:
+          Walk lines in top-sorted order. Start a new grid row when the gap
+          from the previous line exceeds ROW_SPLIT_THRESHOLD. Within a row,
+          sort words by left coordinate (ascending — strict left-to-right order,
+          never column-major).
+
+Step 7 — Return: List[List[Dict]] — rows, each row's words sorted by left.
+```
+
+**Why this works on dense grids:**
+
+- For the income statement (25 rows, ~4px inter-row gap): `row_pitch = median(4px, 4px, 4px, ...)` = 4px. Threshold = `4 × 1.2 = 4.8px`. Adjacent rows (4px gap) are BELOW threshold → same row detection zone. But this still gives too-tight rows. Actually the key insight is the OPPOSITE: each inter-line gap IS the row pitch for consecutive rows. For tightly-stacked text, row_pitch ≈ 14-16px (line height + spacing). The median of those gaps is the actual inter-row distance, not the word height.
+
+- For balance sheet (wider spacing): row_pitch ≈ 20-25px. Threshold = ~24-30px. This is the same behavior as before (rows already separated correctly).
+
+**Critical constraint — SAME_LINE_TOLERANCE:** Words on the same physical line must be grouped before computing inter-line gaps. Without this, each word's individual top value (which jitters ±3px in Tesseract output for the same line) creates false "gaps" between words on the same line.
+
+**Constant definitions (module-level, generic — no BCTC semantics):**
+
+```python
+# Row clustering: same-line grouping tolerance as fraction of median word height.
+# Words within this vertical distance share a physical scan line.
+_SAME_LINE_FACTOR = 0.3      # 30% of H_med — matches typical Tesseract top-jitter
+
+# Row-pitch multiplier: gap must exceed row_pitch × this factor to start a new row.
+# 1.2 = allow 20% stretch in line spacing before treating as a section break.
+# Lower than the old 0.5 × h_med approach — more precise for dense grids.
+_ROW_PITCH_MULTIPLIER = 1.2
+```
+
+#### 3.2 Strict left-to-right word emission (Step E — existing but now guaranteed)
+
+The existing `_assign_columns` already sorts words by left within each row. After the Step C fix, each row contains only words from ONE physical line, so intra-row left-ordering is naturally maintained. No change to `_assign_columns` is needed — the fix is upstream at Step C.
+
+**Explicit invariant to enforce in code (add assert in debug mode):**
+
+Within `_assign_columns`, after assigning words to column anchors, verify that the `left` value of each word is monotonically non-decreasing when the word list is iterated in its original (left-sorted) order. This is trivially satisfied by the existing sort, but making it explicit prevents future regressions.
+
+---
+
+### 4. Empty-Column Collapse (AC-2E Fix — DEFECT-E)
+
+**New function: `_collapse_empty_columns(grid)`**
+
+Applied AFTER `_coalesce_label_columns` and BEFORE `_is_data_table`. Removes columns that are empty (or whitespace-only) across ALL rows.
+
+```
+def _collapse_empty_columns(grid: List[List[str]]) -> List[List[str]]:
+    """
+    Drop columns that are empty (whitespace-only) across all rows.
+
+    Fixes empty-column proliferation: after label-coalescing reduces the
+    left side, the right side may still contain column slots that were
+    populated only in the header row but never in data rows (or vice versa).
+
+    A column is EMPTY if every cell in that column, across all rows, is
+    either an empty string or whitespace-only after strip().
+
+    AC-0: operates on the assembled grid only. Zero BCTC-specific constants.
+    DDD: pure function — no I/O, no Tesseract, no DB. Infrastructure layer.
+
+    Args:
+        grid: 2-D list of strings.
+
+    Returns:
+        Grid with all-empty columns removed.
+        If the result has 0 columns, returns the original grid unchanged
+        (let the density gate handle rejection).
+    """
+    if not grid or not grid[0]:
+        return grid
+
+    n_cols = len(grid[0])
+
+    # Identify non-empty columns: at least one row has a non-blank cell
+    keep_cols: List[int] = []
+    for col_idx in range(n_cols):
+        col_is_empty = all(
+            (row[col_idx].strip() == "" if col_idx < len(row) else True)
+            for row in grid
+        )
+        if not col_is_empty:
+            keep_cols.append(col_idx)
+
+    if not keep_cols:
+        return grid  # all empty — let density gate reject
+
+    if len(keep_cols) == n_cols:
+        return grid  # nothing to drop
+
+    # Rebuild grid keeping only non-empty columns
+    return [
+        [row[col_idx] if col_idx < len(row) else " " for col_idx in keep_cols]
+        for row in grid
+    ]
+```
+
+**Updated `_process_page` pipeline order (final):**
+
+```
+Step A → image_to_data
+Step B → detect table regions (unchanged)
+Step C → _cluster_rows_by_gap  (REPLACED — DEFECT-D fix)
+Step D → _detect_column_anchors (unchanged)
+Step E → _assign_columns (unchanged)
+         ↓ post-processing pipeline (pure, no I/O):
+         _strip_leading_header_bands   (DEFECT-C.1, unchanged)
+         _coalesce_label_columns       (DEFECT-C.2, unchanged)
+         _collapse_empty_columns       (NEW — DEFECT-E / AC-2E fix)
+         _is_data_table gate           (DEFECT-B, unchanged)
+Step F → _detect_header_rows
+Step G → _emit_markdown_table
+```
+
+---
+
+### 5. Files to Modify (pdf-extractor only — zero mcp-server changes)
+
+| File | Change | DDD Layer |
+|---|---|---|
+| `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` | ADD `_SAME_LINE_FACTOR`, `_ROW_PITCH_MULTIPLIER` constants; ADD `_cluster_rows_by_gap()` function; ADD `_collapse_empty_columns()` function; MODIFY `_process_page()` to call `_cluster_rows_by_gap` instead of `_cluster_rows` and to call `_collapse_empty_columns` in the post-processing pipeline; KEEP `_cluster_rows()` as dead code or remove (prefer removal) | infrastructure |
+| `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` | ADD unit tests for `_cluster_rows_by_gap` (synthetic word lists with known top values) and `_collapse_empty_columns` (grid with all-empty columns); ADD row-order-correctness test: given a synthetic dense word list (25 rows × 6 columns), assert output has exactly 25 grid rows each with 6 cells and top values are monotonically increasing across rows | unit |
+
+**No new files. No new ports. No mcp-server changes. The mcp-server storage contract (push/inspect endpoints, `bctc_md_tables` schema) is UNCHANGED — re-extract writes to the same table via the same push handler.**
+
+---
+
+### 6. Acceptance Criteria — MD-EXTRACT-3
+
+These ACs are ADDITIVE to the still-binding MD-EXTRACT + MD-EXTRACT-2 ACs. Fences, privacy grep, and non-regression ACs carry forward unchanged.
+
+---
+
+**AC-3A (BLOCKING — row-order correctness for code-bearing statements):**
+
+For a code-bearing financial statement table (income statement — detected generically by the density gate passing on a table with ≥6 money-groups AND ≥3 three-digit codes), each detected 3-digit standalone code (`(?<!\d)\d{3}(?!\d)`) must appear in EXACTLY ONE markdown row. No code may appear in the same markdown row together with another distinct 3-digit code.
+
+Verify: iterate every `md_tables[i]` entry. For each entry, parse rows (split on `\n`). For each non-separator row, find all 3-digit standalone codes. Assert no row contains more than one distinct 3-digit code. Failure = two or more codes in one row = row-collapse still occurring.
+
+Unit-test: inject a synthetic word list representing 5 rows × 3 columns (codes 100, 200, 300, 400, 500 in separate rows). Assert output grid has 5 rows, each row's first cell contains exactly one of the five codes and no other code.
+
+---
+
+**AC-3B (BLOCKING — monotonic top-coordinate row order):**
+
+Within each detected table, the `_cluster_rows_by_gap` output must have rows whose minimum `top` value is monotonically non-decreasing. Within each row, words must be sorted by `left` in ascending order.
+
+Unit-test: inject a word list with known (top, left) coordinates in scrambled insertion order. Assert the returned rows are sorted by top (ascending). Assert words within each row are sorted by left (ascending). Assert no two words from different physical lines (top difference > `_SAME_LINE_FACTOR × h_med`) appear in the same row.
+
+---
+
+**AC-3C (segment report human-readable):**
+
+After re-extract, the segment report table (`md_tables[i]` identified generically as having ≥6 money-groups AND ≥4 pipe-delimited columns) renders such that:
+- The table has ≥ 5 rows (one header + at least 4 metric rows).
+- Each non-separator, non-header row contains NO MORE THAN ONE of the three known segment revenue values `35.381.667`, `9.092.934`, `18.701.876` (verifiable by regex on each row string). If all three appear in a single row, the row-collapse is not fixed.
+- Columns are distinguishable: the table has ≥ 4 distinct non-empty column slots after empty-column collapse.
+
+This AC is verified by main terminal live-curl and human inspection — no automated fixture required. It confirms the user's binding goal ("Báo cáo bộ phận" readable).
+
+---
+
+**AC-3D (income statement row count):**
+
+For the income statement table (detected generically), the resulting markdown table must have ≥ 10 data rows (non-separator, non-header rows). The current collapsed output has 1 data row. A minimum of 10 confirms the row-collapse is resolved.
+
+Unit-test: inject a synthetic 25-word list representing 5 statement lines (5 words per line, each line at top ≈ `i × 16px`, left positions spread across 4 column anchors). Assert `_cluster_rows_by_gap` returns exactly 5 rows.
+
+---
+
+**AC-3E (AC-2E re-test — balance-sheet column count ≤4 after empty-column collapse):**
+
+After re-extract, `md_tables[0]` (or whichever table is the balance sheet, detected generically by being the first table with ≥6 money-groups on a page with balance-sheet-like structure) has at most 4 pipe-delimited columns per row.
+
+Verify: parse the markdown table. Count the number of `|`-separated cells in any data row. Assert `cell_count ≤ 4`. Current failing state: 7 columns. Expected after `_collapse_empty_columns`: 3-4 (label + value_current + value_prior + optional code).
+
+Unit-test: inject a grid with 4 columns where columns 2 and 5 are all-whitespace. Assert `_collapse_empty_columns` returns a grid with 5 columns → 3 remaining (non-empty 0, 1, 3 → re-indexed 0, 1, 2). Verify no data is lost.
+
+---
+
+**AC-3F (non-regression — all MD-EXTRACT-2 passing ACs unchanged):**
+
+The following MD-EXTRACT-2 ACs must remain PASS after the Step C replacement:
+- AC-2A: `ocr_as_markdown` non-empty (DEFECT-A fix — unaffected, different code path).
+- AC-2B: `table_count` in [10, 15] (DEFECT-B density gate — unaffected, runs after Step C).
+- AC-2C: ≥2 distinct tables with ≥6 money-groups retained (density gate unchanged).
+- AC-2D: Segment table first row not garbled letterhead (DEFECT-C.1 strip — unaffected).
+- AC-2F (BLOCKING): Structured path `rows_length` in [70,90], `balance_pass: true`, `balance_delta: 0`. Zero regression on `bctc_table_rows` (entirely separate code path).
+- AC-2G (BLOCKING): `grep -r "bao.cao.bo.phan\|segment_report\|SEGMENT\|BAO_CAO\|bo_phan\|bao_phan" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches. New constants `_SAME_LINE_FACTOR`, `_ROW_PITCH_MULTIPLIER` are generic geometry constants — AC-0 compliant by construction.
+- AC-2H: Fence-A — `grep "from application\|from interface" generic_md_table_extractor.py` → ZERO matches.
+- AC-2I: Fence-B — `grep "from infrastructure\|from interface" extract_md_tables_usecase.py` → ZERO matches.
+- AC-2J: Hardware — `grep "pytesseract\|image_to_string\|image_to_data" ocr_text_fetch_client.py` → ZERO matches.
+
+---
+
+**AC-3G (privacy — unchanged):**
+
+`grep -rn "claude\|openai\|gemini\|api.mistral\|textract\|document.ai\|requests.post\|httpx.post" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches. `_cluster_rows_by_gap` and `_collapse_empty_columns` are pure in-process functions with no network calls.
+
+---
+
+**AC-3H (unit-test fixture mandate — live poppler OCR substrate):**
+
+All NEW unit test fixtures (word lists used to test `_cluster_rows_by_gap` and `_collapse_empty_columns`) must be derived from LIVE pytesseract `image_to_data` output against the real FPT Q4 2025 PDF (or a synthetic word list that replicates the exact `top`/`left`/`height` distribution observed in live output — NOT PyMuPDF spike output). This closes the false-green vector that caused 7 prior false-greens on `text_table_extractor.py`.
+
+At minimum: one integration-level test that calls `_cluster_rows_by_gap` on a real `image_to_data` DICT from page 8-12 of the FPT PDF and asserts: (a) number of rows matches manually-counted physical lines on that page, (b) no row contains words from two distinct physical lines (verified by max `top` - min `top` within a row being < `2 × h_med`).
+
+---
+
+### 7. Deploy + QA Gates (MD-EXTRACT-3)
+
+#### MD-DEPLOY-3 ACs (ops — SINGLE DOC ONLY, NEVER batch)
+
+**AC-D3-0:** `docker-compose build pdf-extractor` — container healthy (GET /health → 200). Grep-verify live code: `grep -c "_cluster_rows_by_gap\|_collapse_empty_columns" /app/infrastructure/generic_md_table_extractor.py` inside the container → count > 0.
+
+**AC-D3-1:** Single-doc re-extract: `POST http://localhost:5001/extract-md-tables` with `{"report_id": "e71f845d-ffa5-48f9-8f09-30ac2cd09c65", "pdf_path": "/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf"}` (NO `doc_ocr_text` — use case auto-fetches). Response: HTTP 202. SINGLE DOC. NEVER batch.
+
+**AC-D3-2:** Poll `GET http://localhost:3000/api/bctc-inspect/md/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` until `extracted_at` timestamp advances. Confirm: `table_count` in [10, 15], `ocr_as_markdown` length > 0, `md_tables_json` length > 0.
+
+**AC-D3-3:** Structured path non-regression: `GET http://localhost:3000/api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` → `rows_length` in [70,90], `balance_pass: true`, `balance_delta: 0`.
+
+#### MD-QA-3 ACs (qa — live verification gate)
+
+All MD-QA-2 ACs remain binding (AC-Q2-0 through AC-Q2-4). The following are ADDED for MD-EXTRACT-3:
+
+**AC-Q3-0 (BLOCKING — row-order live proof):** Fetch `GET /api/bctc-inspect/md/{fpt_doc_id}`. Find the income statement table (highest code-density entry in `md_tables`). Verify: each pipe-table row contains at most one 3-digit standalone code. If any row contains two or more distinct 3-digit codes (e.g., `"20 | 10 | ..."`) → CHANGES_REQUESTED immediately.
+
+**AC-Q3-1 (BLOCKING — segment report human-readable):** Inspect `md_tables` entries. Find the segment report (≥4 columns, ≥5 rows). Verify: the three segment revenue figures `35.381.667`, `9.092.934`, `18.701.876` each appear in a DIFFERENT row (not stacked in one cell). Human inspection confirms which segment each figure belongs to. If all three appear in one row → CHANGES_REQUESTED.
+
+**AC-Q3-2 (balance-sheet column count):** `md_tables[0]` (or first balance-sheet table) has ≤4 columns. Verified by counting pipe separators in any data row: `row.count('|') - 1 ≤ 4`. If > 4 → CHANGES_REQUESTED.
+
+**AC-Q3-3 (AC-0 grep-proof — new constants):** `grep -n "_SAME_LINE_FACTOR\|_ROW_PITCH_MULTIPLIER\|_cluster_rows_by_gap\|_collapse_empty_columns" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → all matches are constant/function DEFINITIONS (no per-table keyword strings). `grep -rn "bao.cao.bo.phan\|segment_report\|SEGMENT\|BAO_CAO\|bo_phan\|bao_phan" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+---
+
+### 8. Risk Register (MD-EXTRACT-3)
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| R-HIGH: `_cluster_rows_by_gap` uses `median(inter-line gaps)` as row-pitch. If a page has very few lines (≤ 3) or uneven spacing, the median gap is unreliable. | HIGH | Fallback: if `len(unique_tops) < 3` OR `row_pitch <= 0`, fall back to the old `_cluster_rows` with `_ROW_GAP_FACTOR × h_med`. Log a DEBUG warning. This prevents regression on sparse pages. |
+| R-HIGH: `_SAME_LINE_FACTOR = 0.3 × h_med` for same-line grouping. If `h_med` is inflated by a few very tall tokens (section headers), the same-line window balloons and erroneously groups words from TWO consecutive close lines into one. | HIGH | Mitigation: cap `SAME_LINE_TOLERANCE = min(floor(0.3 × h_med), 8px)`. The 8px absolute cap ensures that even with `h_med = 40px` (from a large header), the same-line window is at most 8px — which is safely below any normal inter-row gap on 200 DPI BCTC pages. |
+| R-MEDIUM: `_collapse_empty_columns` may drop a column that is empty in most rows but non-empty in the header row (e.g., a column label with no data values below it). This would silently lose a column header. | MEDIUM | Mitigation: change the empty-column rule to require emptiness across ALL rows INCLUDING header rows. If the header row has text in a column, the column is kept (it may be a label-only column header for a future row). A column is dropped only when even the header cell is blank. |
+| R-MEDIUM: Two words on different physical lines may have top values within `SAME_LINE_TOLERANCE` if the lines are very tightly packed (e.g., a superscript note-reference number immediately below the main line). These would be incorrectly merged into one row. | MEDIUM | Accept: superscript note-reference numbers are single-character tokens (e.g., `"1"`, `"2"`) with `_NUMERIC_RE` matching but no money-group match. They do not materially affect the table structure. The density gate will not exclude the table; the note-ref text will be appended to the nearest cell. Cosmetic artifact only. |
+| R-LOW: `_cluster_rows_by_gap` changes the row-clustering behavior for simple 2-3 col tables that already worked (balance sheet, cash flow). If `row_pitch` is correctly estimated, behavior is equivalent to the old greedy merge for widely-spaced rows (threshold still > actual gap). Regression risk is low but must be verified by AC-3F. | LOW | Mitigated by AC-3F non-regression AC (structured path invariant). Unit tests on balance-sheet-like synthetic word lists. |
+| R-LOW: The old `_cluster_rows` function is called from unit tests as a standalone testable function. If it is deleted, existing unit tests break. | LOW | Keep `_cluster_rows` in the module as a private utility (not called from `_process_page`). Mark with a `# DEPRECATED — use _cluster_rows_by_gap` comment. Remove calls from `_process_page` only. Existing unit tests still pass against the kept function. |
+
+---
+
+### 9. Build Standard
+
+**BUILD-STANDARD: lean** — existing `apps/pdf-extractor/` service; this is a targeted algorithm improvement within an existing infrastructure file.
+
+**ROLE-RELAY:** dev-pdf-extractor → ops (MD-DEPLOY-3, single-doc) → main-terminal live-verify → qa (MD-QA-3) → po (MD-EXIT re-evaluation).
+
+---
+
+### 10. DDD Compliance Restatement
+
+| Function | Layer | Imports | Fence |
+|---|---|---|---|
+| `_cluster_rows_by_gap(words, h_med)` | infrastructure | None (pure — stdlib list ops only) | Fence-A: no application/interface imports |
+| `_collapse_empty_columns(grid)` | infrastructure | None (pure — stdlib list ops only) | Fence-A: no application/interface imports |
+| `_process_page(...)` modified | infrastructure | `pytesseract`, `PIL` (already present) | Fence-A compliant |
+
+Both new functions are PURE: no I/O, no Tesseract, no DB, no network. They operate only on the already-assembled `word` dicts and `grid` lists collected in Steps A-E. This satisfies the DDD infrastructure layer rule (impure only at the boundary; pure helpers can live in the same file).
