@@ -1266,3 +1266,93 @@ All representative tools exercised; all returned 200 + real data. No "tool not w
 
 **Ready for PO close-out. No rollback needed.**
 
+
+---
+
+## Session: 2026-05-26
+
+**Task:** MD-DEPLOY — Sprint BCTC-MD-TABLE (pdf-extractor + mcp-server rebuild + single-doc generic markdown extraction)
+
+### Cycle Summary
+- Production deployment of both pdf-extractor (new extract-md-tables route) and mcp-server (new bctc_md_tables table + inspect endpoint)
+- Docker images rebuilt sequentially with volume mount fix for pdfs-local folder
+- Single-doc re-extract (FPT Q4 2025) executed host-safe: 30 markdown tables detected from 20 pages (MAX_PAGES guard applied)
+- Zero regression on structured BCTC balance-sheet path (bctc_table_rows intact, balance_pass=true)
+- Database migrations auto-ran; direct DB verification confirms persistent storage (65KB markdown JSON)
+
+### Execution Timeline
+- 2026-05-26 07:03:54 UTC — docker compose build pdf-extractor (commit 3bdd6a82 with generic_md_table_extractor.py)
+- 2026-05-26 07:03:55 UTC — pdf-extractor image rebuilt successfully
+- 2026-05-26 07:04:00 UTC — docker compose up -d pdf-extractor (container start)
+- 2026-05-26 07:04:03 UTC — pdf-extractor healthy (GET /health → 200)
+- 2026-05-26 07:04:20 UTC — docker compose build mcp-server (commit 8969d154 with bctc_md_tables DDL + handlers)
+- 2026-05-26 07:04:22 UTC — mcp-server image rebuilt successfully
+- 2026-05-26 07:04:25 UTC — docker compose up -d mcp-server (container start with migration)
+- 2026-05-26 07:04:30 UTC — mcp-server healthy (GET /health → 200)
+- 2026-05-26 07:04:32 UTC — Migration verified: bctc_md_tables table exists
+- 2026-05-26 07:05:48 UTC — docker-compose.yml updated to add volume mount: ./data/pdfs-local:/app/data/pdfs-local:ro
+- 2026-05-26 07:05:55 UTC — docker compose down + up (fresh containers with PDF access)
+- 2026-05-26 07:06:00 UTC — Both services re-healthy
+- 2026-05-26 07:06:05 UTC — POST /extract-md-tables (FPT Q4 2025, report_id=e71f845d..., container pdf_path=/app/data/pdfs-local/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf) → HTTP 202
+- 2026-05-26 07:06:07 UTC — Background extraction task started in pdf-extractor
+- 2026-05-26 07:06:10 UTC — Extraction logged: PDF has 46 pages, MAX_PAGES=20 guard applied, processing pages 4-23
+- 2026-05-26 07:09:48 UTC — Extraction complete: 30 tables detected, push to mcp-server OK
+- 2026-05-26 07:10:00 UTC — Direct DB verification: table_count=30, md_tables_json=65261 bytes
+
+### Key Results
+- **pdf-extractor rebuild:** ✓ Image rebuilt, service healthy
+  - New routes: POST /extract-md-tables (202 Accepted, background task)
+  - New use case: ExtractMdTablesUseCase (fire-and-forget, MAX_PAGES=20 guard)
+  - New adapter: GenericMdTableExtractor (bbox-based, zero per-table constants)
+- **mcp-server rebuild:** ✓ Image rebuilt, migration auto-ran
+  - New schema: bctc_md_tables table (UNIQUE on report_id, JSON arrays for tables)
+  - New routes: POST /api/push-bctc-md-tables, GET /api/bctc-inspect/md/{doc_id}
+  - New handlers: pushBctcMdTablesHandler.ts, bctcInspectMdHandler.ts
+- **Single-doc extraction (FPT Q4 2025):** ✓ HOST-SAFE
+  - PDF: 46 pages, processed 20 pages (4-23) per MAX_PAGES=20 + skip-preamble logic
+  - Detection: 30 markdown tables from generic bbox path
+  - Database: All 30 markdown strings persisted (65261 bytes)
+  - Push: Fire-and-forget background task, 202 accepted within 2 seconds
+- **Volume mount fix:** ✓ Added ./data/pdfs-local:/app/data/pdfs-local:ro to docker-compose.yml
+  - Resolved "No such file or directory" error from host path sent to container
+  - pdfs-local folder now accessible to pdf-extractor at /app/data/pdfs-local/
+- **Non-regression:** ✓ Structured path (bctc_table_rows) unaffected
+  - GET /api/bctc-inspect/table/e71f845d... → has_table=true, rows=79, balance_pass=true, balance_delta=0
+  - Zero changes to TextTableExtractor, ExtractTablesUseCase, pushBctcTableHandler
+  - Separate DB table (bctc_md_tables), separate endpoints, separate use cases
+- **Host memory:** Stable throughout
+  - Tesseract processing pages 4-23 sequentially (no parallel OOM risk)
+  - Single-page rasterization + bbox extraction + markdown emission per page
+  - No batch backfill job triggered (NEVER per hard constraint)
+
+### Acceptance Criteria (MD-DEPLOY)
+- **AC-D-0:** pdf-extractor rebuild + health ✓ PASS
+  - Image rebuilt, container healthy (GET /health → 200)
+- **AC-D-1:** mcp-server rebuild + health + migration ✓ PASS
+  - Image rebuilt, container healthy
+  - bctc_md_tables table verified in market.db
+- **AC-D-2:** Single-doc re-extract (202 + background completion) ✓ PASS
+  - FPT Q4 2025 extraction triggered (202 Accepted)
+  - Background task completed: 30 tables detected, pushed to mcp-server
+  - poll GET /api/bctc-inspect/md/... showed has_md_tables=true
+- **AC-D-3:** table_count >= 1 + non-empty markdown ✓ PASS
+  - table_count: 30 (>= 1)
+  - md_tables[0]: valid pipe-table with | delimiters and |---| separators
+  - All 30 strings in md_tables_json (65261 bytes)
+
+### Docker-Compose Change
+**File:** docker-compose.yml  
+**Change:** Added volume mount to pdf-extractor service  
+**Line:** `- ./data/pdfs-local:/app/data/pdfs-local:ro`  
+**Reason:** pdf-extractor container receives host paths but cannot access them without volume mount. Mount allows container to read PDFs at /app/data/pdfs-local/...
+
+### Summary
+- All MD-DEPLOY ACs passed (D-0, D-1, D-2, D-3)
+- Single-doc extraction: host-safe (sequential, MAX_PAGES=20), 30 tables detected
+- Generic detection confirmed working (no hardcoded segment-report constants in code path)
+- Structured path: zero regression (balance_pass=true, 79 rows intact)
+- Database: Direct verification confirms persistent writes (not just push handler 200)
+- **BLOCKED ITEMS:** None
+- **ESCALATIONS:** None
+- **NEXT STEP:** qa-team (MD-QA — live curl verification + grep proofs + browser inspector render)
+
