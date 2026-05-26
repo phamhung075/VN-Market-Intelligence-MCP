@@ -907,3 +907,67 @@ sandbox scenario `structured_table_extraction` DEFERRED to PO decision (see hand
 **BT-5i DEFERRED:** blocked_reason in GET /api/bctc-inspect/table/{doc_id} response is mcp-server zone. Appended deferred note routing BT-5i to dev-mcp-server in handoff.
 
 **NEXT:** BT-4 (ops/dev-mainserver-crawls deploy) → BT-4b (one-shot re-extraction) → BT-6 (qa).
+
+---
+
+### 2026-05-26 — MD-EXTRACT-5 DONE (adaptive running-centroid clustering — D1/D2/D4b fixes)
+
+**Task:** MD-EXTRACT-5 | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
+
+**Root cause fixed (D1 wide-row cascade-split):**
+`_cluster_number_rows` used a fixed anchor (`current_top` = first token's `top`). Lens distortion / per-column baseline drift of 8-15px across 2400px-wide BCTC pages caused rightmost tokens to fail `abs(top - fixed_top) <= 4` → cascade-split of one logical row into 2-3 fragment rows. Segment report (7 columns, wide span) was most affected.
+
+**Why median-of-all-gaps failed (MD-EXTRACT-3 lesson retained):**
+Within-row micro-gaps (1-4px OCR jitter) vastly outnumber row-boundary gaps (14-16px). `median([2,2,2,14]) = 2` → adaptive_tol collapses to ~0 → broken. The fix uses `large_gaps = [g for g in gaps if g > median]` to isolate only row-boundary transitions.
+
+**Algorithm changes in MD-EXTRACT-5:**
+
+1. `_estimate_inter_row_pitch(number_tokens, same_line_tol)` (NEW, line 346) — pure helper, stdlib only:
+   - Bins token tops to 2px resolution, builds sorted unique bins
+   - Computes adjacent gaps, gap_median = median(gaps)
+   - large_gaps = [g for g in gaps if g > gap_median] (row-boundary transitions only)
+   - row_pitch = min(large_gaps); fallback 0.0 if < 3 unique bins or large_gaps empty
+
+2. `_cluster_number_rows_adaptive(number_tokens, same_line_tol=SAME_LINE_TOL)` (NEW, line 418):
+   - Derives adaptive_tol = min(int(0.45 × row_pitch), 8) when row_pitch > 0, else same_line_tol
+   - Safety invariant: 2 × adaptive_tol < inter_row_gap (6.75px cap < 14px BCTC pitch − 3px drift)
+   - Greedy RUNNING-CENTROID grouping: admit if abs(top - current_centroid) <= tol; update centroid = running mean of admitted tokens
+   - DEBUG log on both SUCCESS and FALLBACK paths (row_pitch, adaptive_tol, n_tokens)
+   - Replaces `_cluster_number_rows` call site in `_process_page` (line 1520)
+
+3. `_cluster_number_rows` marked `# DEAD in MD-EXTRACT-5` (line 297)
+
+4. D2 separator fix (line ~1192 in `_emit_markdown_table`):
+   - Old: `"|" + "|".join(["---|"] * n)` → `|---||---||---|` (doubled `||`)
+   - New: `"|" + "|".join(["---"] * n) + "|"` → `|---|---|---|` (correct GFM)
+
+5. D4b code/value cell separation:
+   - `_CODE_TOKEN_RE = re.compile(r'^[\(\-]?\d{2,3}[\)\-]?$')` (line 182) — 2-3 digit codes
+   - `_VALUE_TOKEN_RE = re.compile(r'^\d{1,3}(?:[.,]\d{3})+')` (line 186) — money-group format
+   - In `_build_grid_from_number_rows`: CODE → leftmost number column (col_anchors[0]); VALUE → x-nearest; prevents "100 58.102.970.741.619" concatenation in same cell
+
+6. D4a (advisory region-merge): SKIPPED — architect spec explicitly non-blocking; cosmetic 10-table balance-sheet over-split accepted.
+
+**New function line numbers:**
+- `_CODE_TOKEN_RE`: line 182
+- `_VALUE_TOKEN_RE`: line 186
+- `_estimate_inter_row_pitch`: line 346
+- `_cluster_number_rows_adaptive`: line 418
+
+**Tests added (16 new tests, 5 new classes):**
+- `TestEstimateInterRowPitch` (4 tests): fixture → pitch=14.0, sparse ≤2 bins → 0.0, empty → 0.0, 3-bin clear gap → 18.0
+- `TestClusterNumberRowsAdaptive` (6 tests): AC-5-SEG BINDING (14-token/2-row/7-col → exactly 2 groups of 7, no bleed), empty, single token, sparse fallback, groups sorted by left
+- `TestEmitMarkdownTableGfm` (3 tests, AC-5-GFM): separator matches `r'\|(?:---\|)+'`, header/separator `|` count equal, 3 dashes per column
+- `TestD4bCodeValueSeparation` (2 tests, AC-5-D4b): code+value in different cells, no cell matches both patterns
+- `TestAc5D3LabelCellClean` (1 test, AC-5-D3): label cell has no money-group match
+
+**Test results:** `4 failed, 478 passed, 1 skipped, 1 warning` — same 4 pre-existing integration failures (require Docker container + FPT PDF). Zero new regressions.
+
+**Grep-proof verification:**
+- AC-3F: `git diff --stat -- text_table_extractor.py` = empty; zero symbol matches in that file
+- AC-0: 3 matches found — ALL in docstrings/comments only (compliant per spec; "only allowed inside comments")
+- Fence-A: zero matches (`from application|from interface|import application|import interface`)
+- Privacy: zero matches (no claude/openai/gemini/textract/anthropic/requests.post/httpx.post/aiohttp)
+- Dead marker: present at lines 40 and 297
+
+**NEXT:** main-terminal independent verify → ops MD-DEPLOY-5 (single-doc, UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, pdf `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`, NEVER batch backfill) → qa MD-QA-5.
