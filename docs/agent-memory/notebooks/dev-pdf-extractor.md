@@ -4,6 +4,33 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — MD-EXTRACT-7-REV DONE (Dense Income Statement Reconstruction)
+
+**Task:** MD-EXTRACT-7-REV | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
+
+**Three root causes fixed (income statement still broken after MD-EXTRACT-6):**
+1. REV-3: Header/date tokens at top=200 contaminated anchor detection. `_find_first_value_row_top` + `_exclude_header_tokens` (Step C5) strips them before anchor detection.
+2. REV-4: Presence-based pure-code-column detector (`_identify_pure_code_columns`, Step C7.5) separates code columns [0,1] from value columns [2,3,4,5] after C7 assignment. Replaces the dead count-gate `> N_EXPECTED_MAX_VALUE_COLS`.
+3. REV-5: `min(cluster)` replaces centroid in `_detect_column_anchors_from_tokens` — anchors align to true left-edge of each column cluster.
+
+**New constants:** `PURE_CODE_COL_THRESHOLD=0.90` (also `DENSE_COL_THRESHOLD=6` from §MD-EXTRACT-7 §5 — kept)
+
+**New pure functions:** `_find_first_value_row_top`, `_exclude_header_tokens`, `_identify_pure_code_columns`
+
+**Fixture (FIXTURE_TOKENS_REV):** 29 tokens (25 number + 4 text) — 6 anchors (2 pure-code + 4 value), 3 header tokens, 35px pitch, unequal density 4/4/3/3, 2 absent cells.
+
+**pytest results:** 122 passed / 0 failed (target file) | 439 passed (unit/ suite)
+
+**Non-regression proof:** Segment report → all buckets value_count>0 → `code_col_indices=[]` → ELSE branch → pipeline identical to MD-EXTRACT-6. Covered by `test_all_value_cols_returns_empty_code_list`.
+
+**Files modified (UNSTAGED):**
+- `infrastructure/generic_md_table_extractor.py` — +1 constant, +3 pure functions, modified _process_page (Step C5 + C7.5), min(cluster) metric
+- `__tests__/unit/test_generic_md_table_extractor.py` — +imports (5 new symbols), +TestHeaderCutoff (3 tests), +TestPureCodeColumnDetector (4 tests), +TestDenseIncomeStatement (1 test / 10 assertions), +TestMinClusterAnchor (1 test)
+
+**NEXT:** ops MD-DEPLOY-7 (rebuild pdf-extractor, single-doc re-extract FPT e71f845d). Main-terminal live-verify AC-7-REV-INC + AC-7-REV-SEG-NOREGRESS via direct DB query.
+
+---
+
 ### 2026-05-26 — MD-EXTRACT-6 DONE (Column-Anchor-First Ordinal Reconstruction)
 
 **Task:** MD-EXTRACT-6 | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
