@@ -2340,3 +2340,750 @@ All new code is PURE (no I/O, no Tesseract, no DB, no network). The impure bound
 **BUILD-STANDARD: lean** — in-zone algorithm change within existing infrastructure file. No new ports, no new use cases, no mcp-server changes, no new test files (add tests to existing test file).
 
 **ROLE-RELAY:** dev-pdf-extractor (MD-EXTRACT-5, implement per §3-§9 above) → ops (MD-DEPLOY-5, single doc, full UUID) → main-terminal live-verify (AC-5-SEG + AC-5-GFM + AC-5-INC) → qa (MD-QA-5) → po (MD-EXIT).
+
+---
+
+## MD-EXTRACT-6 — Column-Anchor-First Ordinal Reconstruction
+
+> **Task:** MD-EXTRACT-6 | **Author:** architect | **Date:** 2026-05-26
+> **Status:** DESIGN COMPLETE — ready for dev-pdf-extractor after main-terminal verifies the §8 fixture proof
+> **Input:** MAIN-TERMINAL LIVE-VERIFY-5 (DB ground truth, FPT `e71f845d`, extracted_at `2026-05-26 08:07:58`)
+> **Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + its unit test. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED.
+> **Recurring-bug rule:** 5 scalar-y-tolerance attempts (MD-EXTRACT-1 through MD-EXTRACT-5) all produce the same diagonal failure. This section designs a FUNDAMENTALLY DIFFERENT row-assignment strategy that makes y-coordinate comparison across columns STRUCTURALLY IMPOSSIBLE.
+
+---
+
+### 1. Why the Entire Scalar-Y-Tolerance Family Is Exhausted
+
+Every attempt since MD-EXTRACT-1 has shared one architectural assumption: **a token's row is determined by comparing its absolute `top` coordinate to a y-threshold or centroid.** The five variants are:
+
+| Attempt | y-Assignment Strategy | Why It Fails on Wide Rows |
+|---|---|---|
+| MD-EXTRACT-1/2/3 | Greedy band-merge on ALL tokens, tolerance = 0.5×H_med | H_med inflated by diacritics → tolerance > inter-row gap → over-merge |
+| MD-EXTRACT-3 `_cluster_rows_by_gap` | gap-histogram pitch on ALL tokens, threshold = pitch×1.2 | On dense statements: pitch ≈ 4px → threshold too tight; on wide tables: drift > pitch |
+| MD-EXTRACT-4 `_cluster_number_rows` | Fixed-anchor greedy on NUMBER tokens only, tol=4 | Within-row x-drift accumulates → rightmost token's top > anchor+4 → cascade-split |
+| MD-EXTRACT-5 `_cluster_number_rows_adaptive` | Large-gap mode pitch + running-centroid | Empirically: row_pitch returned 0 (within-row drift gaps ≈ inter-row gaps in live wide-table regions) → fell back to tol=4 → same cascade |
+
+The mechanical diagnosis from LIVE-VERIFY-5 is **geometrically certain**: the diagonal (value-k at row-k/col-k) is the exact signature of monotonically increasing `top` across a single logical row's tokens. On the live FPT segment-report page, each successive column's token has a `top` value ~4px higher than the previous due to page skew. With 7 columns across ~1800px of page width, the total drift is ~28px. The inter-row gap is ~16px. Drift (28px) > gap (16px) → no y-threshold, however derived, can cleanly separate the row from its neighbor.
+
+**The invariant that cannot be circumvented by any y-tolerance tuning:** When the rightmost token in row-k has a higher `top` than the leftmost token in row-(k+1), absolute-y assignment of that token is ambiguous regardless of threshold value. Widening tol to include that token also risks including the next row's leftmost token. Narrowing tol excludes the rightmost token. Neither is correct. This is a structural impossibility for any algorithm that assigns rows by absolute-y comparison across columns.
+
+**The one invariant that IS reliable:** Within a single column (fixed x-position), all row-k tokens appear above all row-(k+1) tokens. The printer lays rows top-to-bottom; within-column y-ordering is always correct regardless of inter-column skew. This is the invariant the chosen strategy exploits.
+
+---
+
+### 2. Approach Evaluation
+
+#### Approach (A) — Image Deskew (PIL rotate before OCR)
+
+Estimate page skew angle from token (left, top) linear regression, rotate page image, re-run `image_to_data` on the corrected image. Advantages: flattens baseline globally, makes all existing clustering work. Disadvantages:
+
+- Adds one full Tesseract `image_to_data` call per page (on top of the existing call) → doubles per-page OCR budget → 20 pages × 5s = +100s. **On the 16GB Intel Mac with Docker 8GB cap, this doubles the re-extract runtime from ~3m44s to ~7m30s.** Not a kernel-panic risk (still sequential) but unacceptable for a 20-page budget.
+- OpenCV is NOT in `requirements.txt` and NOT in the Dockerfile. PIL's `Image.rotate(expand=True)` can rotate without OpenCV, but skew-angle estimation requires either OpenCV's `minAreaRect` or a manual projection-profile algorithm. A PIL-only implementation would require implementing Hough-line detection from scratch — out of scope complexity.
+- **Verdict: REJECTED.** CPU budget violation + missing OpenCV dependency. If added as dep, requires Dockerfile change + ops rebuild verification, which adds scope. OpenCV installs cleanly on Ubuntu 24.04 but `opencv-python-headless` is ~120MB and adds build complexity.
+
+#### Approach (B) — Token-Space Deskew (correct `top' = top - slope*left`)
+
+Estimate a global skew slope from the NUMBER token (left, top) cloud using simple linear regression (slope = cov(left, top) / var(left)). Correct each token's top: `top_corrected = top - slope * left`. Then apply `_cluster_number_rows_adaptive` on corrected tops. Advantages: no re-OCR, no new dependency, very cheap (one pass over token list, ~0.1ms). Disadvantages:
+
+- Assumes distortion is purely linear (uniform scanner skew). Real lens distortion is slightly curved. On typical flatbed-scanned A4 documents at 200 DPI, linear approximation explains >90% of drift. Residual non-linear distortion is typically <2px — within existing tolerances.
+- If the FPT wide-table drift is 28px across 1800px, slope ≈ 28/1800 ≈ 0.016. After correction, all tokens in a row have the same `top_corrected` ± 2px (residual). The adaptive pitch algorithm would then cleanly separate rows.
+- **Risk:** slope estimation requires enough tokens with spread across the x-axis. If a page has tokens only on the left half, slope is unreliable. For wide financial tables (7+ columns), x-spread is sufficient.
+- **Verdict: VIABLE as a standalone fix, but not chosen as primary** because it still relies on y-tolerance post-correction. If the correction is imprecise (e.g., 5px residual instead of 2px), the cascade-split recurs. Approach (B) reduces drift but does not eliminate the structural dependence on y-threshold.
+
+#### Approach (C) — Column-Anchor-First Ordinal Reconstruction
+
+Assign each NUMBER token to its nearest x-column-anchor FIRST (using existing `_detect_column_anchors_from_tokens`). Within each column, sort tokens by `top` (ascending) and assign ordinal ranks [0, 1, 2, ...] independently. Reconstruct rows by aligning ordinal ranks across columns: row-k = the rank-k token from each column. Advantages:
+
+- **Never compares `top` values across columns.** Cross-column y comparison is the source of all five prior failures. The ordinal approach eliminates this comparison by construction.
+- **Geometric proof that drift > gap does not matter** (see §8): within a single column, tokens are always in correct physical y-order regardless of inter-column skew. Ordinal rank within a column = physical row index for that column. Matching rank-k across all columns always yields the correct row-k reconstruction.
+- **Empty-cell handling:** When column-c has fewer tokens than the anchor column (because a value is genuinely missing from that row), that column's rank-k slot is empty (represented as `" "`). This is correct behavior. No rank misalignment occurs: missing values in column-c do not affect other columns' rank assignments.
+- **No new dependency.** Operates on already-collected token lists and existing column-anchor logic.
+- **Verdict: CHOSEN.** Sole approach that defeats drift > gap by architectural elimination of cross-column y-comparison.
+
+#### Hybrid (B)+(C) — Token Deskew then Ordinal
+
+Apply (B) as a preprocessing step (correct tops), then (C) for row assignment. This would make the column-anchor histograms cleaner (no skew-induced x-migration of tokens) and improve label attachment accuracy. However:
+
+- The ordinal approach does not require corrected tops for its core guarantee — the within-column y-ordering is already correct before deskew.
+- (B) adds complexity and a slope estimation that can fail (low x-spread pages).
+- **Verdict: NOT chosen.** The ordinal guarantee holds without (B). If post-deploy QA reveals significant label-attachment errors (caused by label-top vs number-row y-mismatch after ordinal reconstruction), token-space deskew can be added as a preprocessing step in a future iteration without redesigning the core algorithm.
+
+---
+
+### 3. Chosen Algorithm — Column-Anchor-First Ordinal Reconstruction
+
+#### 3.1 High-level flow (replaces Steps C through F in `_process_page`)
+
+```
+EXISTING (unchanged): Step A (image_to_data) → A2 (classify tokens) → B (detect table regions)
+NEW STEPS (replace C, D, E, F):
+  Step C6 — Derive column anchors from NUMBER tokens (x-clustering, existing _detect_column_anchors_from_tokens)
+  Step C7 — Assign each NUMBER token to its nearest column anchor by x (argmin distance)
+  Step C8 — Within each column, sort tokens by top (ascending) → ordinal rank within column
+  Step C8.5 — Within each column, detect intra-column rank gaps (mid/trailing empty cells) and insert empty rank slots so physical row positions align (see §13)
+  Step C9 — Determine total row count = max rank count across all columns (after C8.5 slot insertion)
+  Step C10 — Reconstruct 2D grid: grid[rank_k][col_c] = token text (or " " if that column has no rank-k token)
+  Step C11 — Attach labels: for each row k, find TEXT tokens whose top is within a LABEL_BAND_FACTOR × h_med window of the median top of rank-k tokens across all columns; space-join → label cell; prepend as col-0
+EXISTING (unchanged): Step G (post-processing pipeline: strip_header_bands → coalesce_labels → collapse_empty → density gate → header detect → markdown emit)
+```
+
+#### 3.2 Step-by-step algorithm detail
+
+**Step C6 — Column anchor detection (existing function, reused)**
+
+Call `_detect_column_anchors_from_tokens(number_tokens, median_word_width)`. This produces a sorted list of column x-positions `col_anchors = [x0, x1, ..., x_{N-1}]` where N is the number of detected columns. This step is identical to the MD-EXTRACT-5 Step D — no change.
+
+If `len(col_anchors) == 0` or `len(number_tokens) < 4`: return empty grid (page has insufficient numeric content for table reconstruction).
+
+**Step C7 — Column assignment (NEW)**
+
+For each number token `t`, assign it to column `c = argmin |t['left'] - col_anchors[c]|`. Store as `col_buckets[c] = list of tokens assigned to column c`.
+
+If a token's distance to its nearest anchor exceeds `_COL_ASSIGN_MAX_DIST_FACTOR * median_word_width` (proposed value: 3.0), the token is a noise token far from any column — exclude it from the grid (but still consider it for label attachment if it is a text token). This prevents OCR noise tokens from creating spurious rows.
+
+```python
+_COL_ASSIGN_MAX_DIST_FACTOR = 3.0  # generic geometry constant; AC-0 compliant
+```
+
+**Step C8 — Within-column ordinal assignment (NEW — the structural core)**
+
+For each column `c`, sort `col_buckets[c]` by `top` ascending. Assign rank `r = 0, 1, 2, ...` to each token in order. The rank within a column is the token's PHYSICAL ROW INDEX for that column.
+
+Result: `col_ranks[c] = [(rank, token), (rank, token), ...]` ordered by rank (= by ascending top).
+
+**Step C9 — Total row count determination**
+
+`total_rows = max(len(col_buckets[c]) for c in range(N))` across all columns. This is the number of distinct rows detected. If all columns have the same rank count, the table is a complete matrix. If some columns have fewer ranks, those cells are genuinely missing values.
+
+**Step C10 — Grid reconstruction (NEW)**
+
+Initialize `grid[r][c] = " "` for all r in `[0, total_rows)`, c in `[0, N)`.
+
+For each column `c`, for each `(rank, token)` in `col_ranks[c]`: `grid[rank][c] = token['text'].strip()`.
+
+Multiple tokens assigned to the same (rank, col) cell (possible when OCR splits one number into two tokens): space-join them in left-sorted order.
+
+Note: there is no x-position in the grid — only the ordinal column index matters. This means column ordering is determined solely by the x-anchor order (left-to-right), which is correct for financial tables.
+
+**Step C11 — Label attachment (REVISED from MD-EXTRACT-4/5 _attach_labels)**
+
+Label attachment must now work row-by-row against ordinal rows, not y-band rows. For each row rank `r`:
+
+1. Compute `y_med_r = median(top of all tokens assigned to rank r across all columns)`. This is the "representative y" for this logical row.
+2. Find TEXT tokens where `abs(t['top'] - y_med_r) <= LABEL_BAND_FACTOR * h_med`. Proposed: `LABEL_BAND_FACTOR = 1.5` (wider than MD-EXTRACT-5's 0.6 primary band, because the label's top may differ from number top by up to half the row pitch on skewed pages).
+3. Sort matched text tokens by `left`, space-join → `label_r`.
+4. If no TEXT token found in that band, use nearest TEXT token within `2.5 * h_med` (fallback).
+5. Prepend `label_r` as column 0: `grid[r] = [label_r] + grid[r]`.
+
+```python
+LABEL_BAND_FACTOR = 1.5   # generic geometry constant; AC-0 compliant
+```
+
+**Note on label re-use:** On skewed pages where a label's `top` is further from `y_med_r` than `LABEL_BAND_FACTOR * h_med`, the fallback uses nearest TEXT token. This may assign the same label token to two adjacent rows if those rows' `y_med` values are equidistant from the label. Mitigation: once a TEXT token is used as a label for row r, remove it from the candidate pool for row r+1. This is a greedy assignment — first-match-wins in ascending row order.
+
+#### 3.3 How the ordinal approach defeats the mandatory drift>gap fixture
+
+See §8 for the full arithmetic proof. Summary:
+
+- 5 columns, row-0 tops = [100, 104, 108, 112, 116] (drift=16px across row)
+- row-1 tops = [118, 122, 126, 130, 134] (gap from row-0 col-4 to row-1 col-0 = only 2px)
+- col-0 bucket: [(top=100, row-0), (top=118, row-1)] → rank 0 → top=100; rank 1 → top=118
+- col-4 bucket: [(top=116, row-0), (top=134, row-1)] → rank 0 → top=116; rank 1 → top=134
+- `total_rows = max(2, 2, 2, 2, 2) = 2`
+- grid[0] = [row-0 col-0 text, row-0 col-1 text, ..., row-0 col-4 text] ← correct row-0 reconstruction
+- grid[1] = [row-1 col-0 text, ..., row-1 col-4 text] ← correct row-1 reconstruction
+
+The critical step: col-4's rank-0 token has top=116 and col-0's rank-1 token has top=118. The ordinal approach never compares these two tops — it assigns col-4's token to grid[0][4] (rank=0 in col-4) and col-0's token to grid[1][0] (rank=1 in col-0). The diagonal is destroyed without any y-tolerance tuning.
+
+---
+
+### 4. Empty-Cell Problem — Explicit Analysis and Mitigation
+
+The empty-cell problem arises when a column has fewer tokens than the maximum-rank column. Example:
+
+```
+col-0: 5 tokens (ranks 0-4)    ← anchor column (most complete)
+col-3: 4 tokens (ranks 0-3)    ← row-4 is genuinely missing for col-3
+col-5: 5 tokens (ranks 0-4)    ← complete
+```
+
+With ordinal-by-rank and C8.5 skip detection (§13): `grid[4][3] = " "` (empty). This is correct — col-3 has no value for the 5th (last) row item. No rank misalignment occurs for cols 0-2 or 4-5.
+
+**Limitation of pure ordinal rank-alignment (without C8.5):** Pure ordinal correctly handles TRAILING empties (a column missing its last N rows) because the present tokens map to their correct ranks [0..M-1] and the absent ranks [M..total_rows-1] become empty by the `grid` initialization. However, pure ordinal SILENTLY CORRUPTS on MID-column and LEADING-column empties: a column missing its row-1 value only has tokens for physical rows 0, 2, 3, ... Sorting by top gives ranks 0, 1, 2, ... — rank-1 receives physical-row-2's value, rank-2 receives physical-row-3's value, and so on. Every token below the gap shifts up one rank. C8.5 corrects this by detecting the within-column y-gap and inserting empty rank slots before the continuation. See §13 for the full algorithm and AC-6-SKIP fixture proof.
+
+**The dangerous case — EXTRA tokens (noise):** If col-3 has 6 tokens because one OCR noise token slipped into that column, col-3's ranks [0-5] misalign with the other columns' ranks [0-4]. This pushes col-3's real row-4 token to rank-5, creating a spurious 6th row.
+
+**Mitigation strategy: confidence-gated token inclusion.** Before assigning tokens to columns:
+1. Filter tokens by `conf >= _MIN_WORD_CONF` (already in `_filter_words` — currently `_MIN_WORD_CONF = 0`). Raise threshold to `_MIN_WORD_CONF_ORDINAL = 30` for the ordinal path only (low-confidence tokens are more likely to be noise). This is tunable; log filtered count at DEBUG.
+2. Apply `_NUMBER_TOKEN_RE` match (already done in `_classify_tokens`) — ensures only valid number-format tokens enter the grid. Random OCR garbage letters do not match `_NUMBER_TOKEN_RE` and are excluded.
+3. If column-c has significantly more tokens than the median column count (e.g., `len(col_buckets[c]) > 2 × median_rank_count`), truncate to the median count and log a WARNING. This prevents single-column noise bursts from inflating total_rows.
+
+**The safe-empty-cell invariant:** When a value is genuinely absent (e.g., a "Total" row that has values only in specific columns), ordinal rank assigns correct empty slots. The density gate (`_is_data_table`) that runs after grid construction filters out grids with insufficient money-group density, naturally rejecting near-empty results.
+
+---
+
+### 5. Functions to Add / Modify / Retire
+
+| Function | Action | DDD Layer | Rationale |
+|---|---|---|---|
+| `_assign_tokens_to_columns(number_tokens, col_anchors, median_word_width)` | **ADD** (pure) | infrastructure | Step C7: assigns each token to nearest x-anchor. Returns `col_buckets: List[List[Dict]]` (one list per column). AC-0 compliant: geometry only. |
+| `_insert_skip_slots(col_bucket_sorted)` | **ADD** (pure) | infrastructure | Step C8.5: given a single column's tokens already sorted by top, detects intra-column y-gaps > SKIP_GAP_FACTOR × local_pitch and inserts `None` sentinel slots to represent missing physical rows. Returns `col_slots: List[Optional[Dict]]` where `None` = empty rank slot. Called per-column inside `_build_ordinal_grid` after the C8 sort. Zero Tesseract calls — pure in-memory list pass. AC-0 compliant. |
+| `_build_ordinal_grid(col_buckets, n_cols)` | **ADD** (pure) | infrastructure | Steps C8+C8.5+C9+C10: sorts each col by top, calls `_insert_skip_slots` per column, assigns ranks across slot lists, builds 2D `grid[rank][col]`. Returns `(grid: List[List[str]], col_y_medians: List[float])`. `col_y_medians[r]` = median top of rank-r tokens across all columns (used for label attachment). `None` slots contribute `" "` to grid and are excluded from y_medians computation. |
+| `_attach_labels_ordinal(grid, col_y_medians, text_tokens, h_med)` | **ADD** (pure) | infrastructure | Step C11 REVISED: per-row label attachment using ordinal y_med and `LABEL_BAND_FACTOR`. Replaces `_attach_labels` call in `_process_page`. Returns grid with label prepended as col-0. |
+| `_process_page(page_image, pytesseract, Output)` | **MODIFY** | infrastructure | Replace Steps C-F with new Steps C6-C11. Keep Step A (image_to_data), A2 (classify), B (detect_table_regions), G (post-processing) unchanged. Add `INFO`-level log for `row_pitch` (diagnostic gate, §6). |
+| `_estimate_inter_row_pitch` | **MODIFY** | infrastructure | Promote `logger.debug` → `logger.info` at the row_pitch/tol output line (§6 diagnostic requirement). No logic change. |
+| `_cluster_number_rows_adaptive` | **RETIRE** (mark `# DEAD in MD-EXTRACT-6`) | infrastructure | Replaced by column-anchor-first ordinal. Keep for test backward-compat; do not call from `_process_page`. |
+| `_attach_labels` | **RETIRE** (mark `# DEAD in MD-EXTRACT-6`) | infrastructure | Replaced by `_attach_labels_ordinal`. Keep for test backward-compat. |
+| `_build_grid_from_number_rows` | **RETIRE** (mark `# DEAD in MD-EXTRACT-6`) | infrastructure | Replaced by `_build_ordinal_grid`. Keep for test backward-compat. |
+| `_cluster_number_rows` | **ALREADY DEAD** (MD-EXTRACT-5 comment) | — | No change needed. |
+| `_cluster_rows`, `_cluster_rows_by_gap` | **ALREADY DEAD** (MD-EXTRACT-4/5 comment) | — | No change needed. |
+| `LABEL_BAND_FACTOR`, `_COL_ASSIGN_MAX_DIST_FACTOR`, `_MIN_WORD_CONF_ORDINAL`, `SKIP_GAP_FACTOR` | **ADD constants** | infrastructure | Generic geometry constants. AC-0 compliant. |
+| All post-processing functions (`_strip_leading_header_bands`, `_coalesce_label_columns`, `_collapse_empty_columns`, `_is_data_table`, `_detect_header_rows`, `_emit_markdown_table`) | **UNCHANGED** | infrastructure | Grid-level processing; substrate-agnostic. |
+| `_detect_column_anchors_from_tokens` | **UNCHANGED** | infrastructure | Reused as Step C6. |
+| `_classify_tokens`, `_NUMBER_TOKEN_RE`, `SAME_LINE_TOL` | **UNCHANGED** | infrastructure | Token classification unchanged. `SAME_LINE_TOL` no longer used in `_process_page` (ordinal path does not need a y-tolerance for row assignment) but kept for dead functions' backward compat. |
+
+**File size note:** Adding 4 new pure functions (`_assign_tokens_to_columns`, `_insert_skip_slots`, `_build_ordinal_grid`, `_attach_labels_ordinal`, ~110L total) while retiring 3 functions (kept as dead code, ~0L net removal). Net addition ~110L. Monitor against `docs/data/file-size-caps.json`. If file exceeds cap, move ALL dead code (5 functions marked `# DEAD`) to `infrastructure/_legacy_bbox_helpers.py` — infra-to-infra import, Fence-A compliant.
+
+---
+
+### 6. MANDATORY DIAGNOSTIC GATE (STEP 1 of dev's work — before any algorithm change)
+
+**Dev MUST run this diagnostic FIRST before writing any new code.** The diagnostic prints hard numbers that confirm the regime (is the precondition `drift < gap` violated? what is the actual skew slope?) so the chosen algorithm is validated against reality, not assumed.
+
+#### Diagnostic script (run offline against live FPT PDF)
+
+```python
+# diagnostic_gate_md6.py — run outside Docker, PYTHONPATH=apps/pdf-extractor
+# Requires: pdf2image, pytesseract, Pillow, live FPT PDF at PDF_PATH
+import sys, statistics
+from pdf2image import convert_from_path
+import pytesseract
+from pytesseract import Output
+
+PDF_PATH = "/absolute/path/to/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf"
+TARGET_PAGES = [8, 22]   # income statement + segment report (1-indexed)
+
+from infrastructure.generic_md_table_extractor import (
+    _filter_words, _classify_tokens, _estimate_inter_row_pitch,
+    _NUMBER_TOKEN_RE, SAME_LINE_TOL
+)
+
+pages = convert_from_path(PDF_PATH, dpi=200, first_page=min(TARGET_PAGES), last_page=max(TARGET_PAGES))
+
+for page_idx, page_label in zip([0, len(TARGET_PAGES)-1], TARGET_PAGES):
+    page_img = pages[page_idx]
+    data = pytesseract.image_to_data(page_img, lang="vie+eng", config="--psm 6", output_type=Output.DICT)
+    words = _filter_words(data)
+    number_tokens, _ = _classify_tokens(words)
+
+    # 1. Report row_pitch estimate
+    row_pitch = _estimate_inter_row_pitch(number_tokens, SAME_LINE_TOL)
+    adaptive_tol = min(int(0.45 * row_pitch), 8) if row_pitch > 0 else SAME_LINE_TOL
+    print(f"\n=== PAGE {page_label} ===")
+    print(f"[INFO] row_pitch={row_pitch:.1f}px  adaptive_tol={adaptive_tol}px  n_number_tokens={len(number_tokens)}")
+
+    # 2. Report all revenue-row number token tops and lefts
+    # Revenue row: tokens near top=... (look for largest-top cluster in first 30 tokens)
+    sorted_tok = sorted(number_tokens, key=lambda w: w['top'])[:30]
+    print(f"[INFO] First 30 number tokens (left, top, text):")
+    for t in sorted_tok:
+        print(f"       left={t['left']:5d}  top={t['top']:5d}  text={t['text']}")
+
+    # 3. Skew slope estimate (linear regression of top vs left for all number tokens)
+    lefts = [float(w['left']) for w in number_tokens]
+    tops  = [float(w['top'])  for w in number_tokens]
+    if len(lefts) > 2:
+        mean_l = statistics.mean(lefts)
+        mean_t = statistics.mean(tops)
+        cov = sum((l - mean_l) * (t - mean_t) for l, t in zip(lefts, tops))
+        var_l = sum((l - mean_l) ** 2 for l in lefts)
+        slope = cov / var_l if var_l > 0 else 0.0
+        print(f"[INFO] Skew slope estimate: {slope:.5f} px/px  (drift over 1800px: {slope * 1800:.1f}px)")
+        print(f"[INFO] Precondition check: drift_over_row = {abs(slope * 1800):.1f}px  vs  inter_row_gap (approx row_pitch) = {row_pitch:.1f}px")
+        if row_pitch > 0:
+            ratio = abs(slope * 1800) / row_pitch
+            verdict = "VIOLATED (drift > gap — ordinal approach NEEDED)" if ratio > 1 else "SATISFIED (scalar-y MAY work)"
+            print(f"[INFO] drift/gap ratio = {ratio:.2f}  →  {verdict}")
+```
+
+**Print criteria and interpretation:**
+
+| Printed value | Interpret as PASS (ordinal approach confirmed) | Interpret as FAIL (revisit design) |
+|---|---|---|
+| `row_pitch` | 0 or very small (< 4px) = within-row drift gaps dominate → confirms large-gap-mode collapse | row_pitch > 16px = precondition satisfied, investigate why MD-EXTRACT-5 still failed |
+| `adaptive_tol` | 0 or ≤ 2 = confirms fallback to SAME_LINE_TOL → confirms tol=4 cascade | adaptive_tol ≥ 8 = explore why live failed |
+| `drift/gap ratio` | > 1.0 = precondition VIOLATED → ordinal approach is the correct solution | < 1.0 = unexpected; re-examine live log from MD-EXTRACT-5 |
+| Token (left, top) printout | Shows monotonically increasing `top` as `left` increases within a single logical row | — |
+
+**If all three diagnostic outputs match the PASS column: ordinal approach is confirmed as the correct fix. Dev proceeds to implementation.**
+
+**Pass criteria for the diagnostic:** `row_pitch < 8px` (confirms large-gap-mode failed) AND `drift/gap ratio > 1.0` (confirms precondition violated) AND `top` values show monotonic increase with `left` in the first 30 number tokens.
+
+#### Diagnostic-gate log promotion (AC-6-DIAG prerequisite)
+
+Before any algorithm change, also modify `_cluster_number_rows_adaptive` to promote the `logger.debug(...)` at the row_pitch/tol print to `logger.info(...)`. This ensures future live container runs are diagnosable from standard-level logs without enabling DEBUG mode.
+
+Exact line to change (currently at approximately line 473 in `generic_md_table_extractor.py`):
+```python
+# Change from:
+logger.debug(
+    "_cluster_number_rows_adaptive: row_pitch=%s adaptive_tol=%s n_tokens=%s",
+    ...
+)
+# Change to:
+logger.info(
+    "_cluster_number_rows_adaptive: row_pitch=%s adaptive_tol=%s n_tokens=%s (MD-EXTRACT-6 diagnostic)",
+    ...
+)
+```
+
+This change is also required in the fallback branch (sparse/flat page logger.debug → logger.info).
+
+---
+
+### 7. D4b Re-fix with Live-Substrate Test
+
+#### Why the MD-EXTRACT-5 D4b unit test false-greened
+
+The test fixture for D4b used SYNTHETIC x-anchors: `col_anchors = [100.0, 300.0, 900.0]` (or similar hand-crafted values). The live `image_to_data` for the FPT balance-sheet page produces a DIFFERENT column-anchor layout — the actual x-positions of the code column (~left=50-80px at 200 DPI), the label column, and the value columns depend on the physical page layout and DPI. The synthetic anchors placed the code token near anchor-0 and the value token near anchor-2, making the routing look correct in the test while the live page's geometry placed both tokens near the SAME anchor (anchor-0 in the live geometry), producing the `100 58.102.970.741.619` concatenation.
+
+This is the SAME class of false-green as BT3 (lesson from `feedback_scale_pilot_done_bar.md` and the BCTC-TABLE false-greens): synthetic fixtures that do not replicate live substrate geometry are not valid gates.
+
+#### D4b re-fix design under the ordinal approach
+
+Under the ordinal reconstruction, D4b (code+value concatenation) is largely self-resolving: each number token is assigned to its x-nearest column anchor independently. A code token at `left=50` and a value token at `left=900` on the same row are assigned to different col_buckets (col-0 and col-3 respectively). They land in `grid[rank][0]` and `grid[rank][3]` — separate cells. No concatenation occurs.
+
+**When D4b can still occur** under the ordinal approach: if the code column and the first value column have anchors that are very close (< `_COL_GAP_FACTOR * median_word_width`), the column-anchor clustering may merge them into one anchor → both tokens assigned to the same col_bucket → same rank → same cell → concatenation. This is a column-detection failure, not a row-assignment failure.
+
+**Fix (targeted):** After column-anchor detection (`_detect_column_anchors_from_tokens`), if the leftmost anchor is within `_CODE_COL_ISOLATION_PX` pixels of the second anchor AND that leftmost cluster consists predominantly of 2-3 digit tokens (code tokens), split them. Proposed: if anchor-0 tokens have >80% matching `_CODE_TOKEN_RE` and anchor-1 distance < 150px, keep anchor-0 as a dedicated code column.
+
+However, this logic adds BCTC-aware heuristics, risking AC-0 violation. A simpler approach: **raise `_COL_GAP_FACTOR` from 1.5 to 2.0** for the ordinal path. This makes column boundaries wider, ensuring the code column (narrow, left-side) and the first value column (wider, middle-right) are always separate. Test: `_detect_column_anchors_from_tokens` on a fixture with code-column tokens at x=60 and value-column tokens at x=180 (typical for balance-sheet 200 DPI) should produce 2 distinct anchors at 2.0 factor.
+
+#### Live-substrate test requirement
+
+The D4b test fixture MUST be derived from real `image_to_data` output. Exact process:
+
+1. Obtain the raw `image_to_data` dictionary for FPT page 4 (or whichever page contains the balance-sheet `100` code row) by running the diagnostic script (§6) against that page.
+2. Find the `text="100"` token and the `text="58.102.970.741.619"` token (or the nearest large number) in the raw data output. Record their exact `left`, `top`, `width`, `height`, `conf` values.
+3. Construct the test fixture using these EXACT values (not rounded or synthetic).
+4. Assert that `_assign_tokens_to_columns([code_token, value_token], col_anchors, median_word_width)` places them in DIFFERENT col_buckets.
+5. Assert that `_build_ordinal_grid(col_buckets, n_cols)` produces two non-empty cells at `grid[0][0]` and `grid[0][1]` (or higher column index for the value).
+
+This is AC-6-D4b and is BLOCKING before any other D4b test can be considered passing.
+
+---
+
+### 8. Binding AC Fixture + Arithmetic Proof
+
+This is the AC fixture that the main terminal will re-trace by hand before dispatching dev. The proof must show that the ordinal approach produces EXACTLY 2 rows from a fixture where drift > gap.
+
+#### Fixture specification
+
+```
+5 number tokens in logical row-0 (one per column):
+  token_r0_c0: left=100,  top=100, text="100"
+  token_r0_c1: left=400,  top=104, text="200"
+  token_r0_c2: left=700,  top=108, text="300"
+  token_r0_c3: left=1000, top=112, text="400"
+  token_r0_c4: left=1300, top=116, text="500"
+
+5 number tokens in logical row-1 (one per column):
+  token_r1_c0: left=100,  top=118, text="600"
+  token_r1_c1: left=400,  top=122, text="700"
+  token_r1_c2: left=700,  top=126, text="800"
+  token_r1_c3: left=1000, top=130, text="900"
+  token_r1_c4: left=1300, top=134, text="1000"
+```
+
+Drift within row-0: top_max - top_min = 116 - 100 = **16px** (across 5 columns).
+Minimum gap between adjacent rows: top of row-1 col-0 (118) minus top of row-0 col-4 (116) = **2px**.
+Drift (16px) > gap (2px): this is the critical precondition that defeated MD-EXTRACT-5.
+
+median_word_width = 30 (typical at 200 DPI for 3-4 character numbers).
+
+#### Step-by-step algorithm trace (ordinal approach)
+
+**Step C6 — Column anchor detection**
+
+`_detect_column_anchors_from_tokens` on all 10 tokens:
+- Left values: [100, 400, 700, 1000, 1300] × 2 = [100, 100, 400, 400, 700, 700, 1000, 1000, 1300, 1300]
+- bin_width = 0.3 × 30 = 9px
+- Cluster [100, 100] → anchor x = 100.0
+- Cluster [400, 400] → anchor x = 400.0
+- Cluster [700, 700] → anchor x = 700.0
+- Cluster [1000, 1000] → anchor x = 1000.0
+- Cluster [1300, 1300] → anchor x = 1300.0
+- col_gap = 1.5 × 30 = 45px. Adjacent anchor differences: 300, 300, 300, 300 — all > 45 → no merging.
+- `col_anchors = [100.0, 400.0, 700.0, 1000.0, 1300.0]` (5 columns). ✓
+
+**Step C7 — Column assignment**
+
+For each token, argmin distance to col_anchors:
+- token_r0_c0 (left=100): distances [0, 300, 600, 900, 1200] → nearest = 100.0 → col 0 ✓
+- token_r0_c1 (left=400): distances [300, 0, 300, 600, 900] → nearest = 400.0 → col 1 ✓
+- token_r0_c2 (left=700): → col 2 ✓
+- token_r0_c3 (left=1000): → col 3 ✓
+- token_r0_c4 (left=1300): → col 4 ✓
+- token_r1_c0 through token_r1_c4: same assignments → col 0, 1, 2, 3, 4 ✓
+
+`col_buckets[0] = [token_r0_c0, token_r1_c0]`
+`col_buckets[1] = [token_r0_c1, token_r1_c1]`
+...
+`col_buckets[4] = [token_r0_c4, token_r1_c4]`
+
+**Step C8 — Within-column ordinal assignment (sorted by top)**
+
+`col_buckets[0]` sorted by top: [top=100 → rank 0, top=118 → rank 1]
+`col_buckets[1]` sorted by top: [top=104 → rank 0, top=122 → rank 1]
+`col_buckets[2]` sorted by top: [top=108 → rank 0, top=126 → rank 1]
+`col_buckets[3]` sorted by top: [top=112 → rank 0, top=130 → rank 1]
+`col_buckets[4]` sorted by top: [top=116 → rank 0, top=134 → rank 1]
+
+CRITICAL: token_r0_c4 (top=116) is assigned rank 0 in col 4. token_r1_c0 (top=118) is assigned rank 1 in col 0. These are NEVER compared against each other. The 2px gap between them is irrelevant.
+
+**Step C9 — Total row count**
+
+`total_rows = max(2, 2, 2, 2, 2) = 2` ✓
+
+**Step C10 — Grid reconstruction**
+
+```
+grid[0][0] = "100"   grid[0][1] = "200"   grid[0][2] = "300"   grid[0][3] = "400"   grid[0][4] = "500"
+grid[1][0] = "600"   grid[1][1] = "700"   grid[1][2] = "800"   grid[1][3] = "900"   grid[1][4] = "1000"
+```
+
+Row 0 reconstruction: all 5 row-0 tokens correctly placed in their columns. ✓
+Row 1 reconstruction: all 5 row-1 tokens correctly placed in their columns. ✓
+
+**Result: EXACTLY 2 grid rows from 10 tokens spanning drift=16px > gap=2px. The diagonal is completely eliminated.**
+
+No scalar-y-tolerance parameter appears in this trace. The row assignment is determined purely by: (a) which column a token belongs to (by x-argmin) and (b) how many tokens of lower `top` exist in that same column (the rank).
+
+#### Comparison to MD-EXTRACT-5 trace on the same fixture
+
+Using MD-EXTRACT-5's `_cluster_number_rows_adaptive` on the same 10 tokens:
+- Step 2: unique_bins (2px-binned tops): [100, 104, 108, 112, 116, 118, 122, 126, 130, 134]
+- Inter-bin gaps: [4, 4, 4, 4, 2, 4, 4, 4, 4] (the gap between row-0-col-4 and row-1-col-0 is only 2px)
+- gap_median = median([4,4,4,4,2,4,4,4,4]) = 4
+- large_gaps = [g for g in [4,4,4,4,2,4,4,4,4] if g > 4] = [] (EMPTY — all gaps are ≤ 4)
+- row_pitch = 0.0 → fallback to SAME_LINE_TOL=4
+- With tol=4: token_r0_c0 (top=100) starts row-0. token_r0_c1 (top=104): |104-100|=4 ≤ 4 → admitted (centroid=102). token_r0_c2 (top=108): |108-102|=6 > 4 → NEW ROW. Token_r0_c2 starts row-1. token_r0_c3 (top=112): |112-108|=4 ≤ 4 → admitted. token_r0_c4 (top=116): |116-110|=6 > 4 → NEW ROW. And so on.
+- **Result: MD-EXTRACT-5 produces 5+ rows from 10 tokens (the diagonal). Ordinal produces exactly 2 rows.** ✓
+
+---
+
+### 9. Acceptance Criteria
+
+All prior PASS ACs (AC-3F, AC-0, Fence-A, Privacy, D2-GFM) remain binding. New ACs:
+
+**AC-6-DIAG (MANDATORY STEP 1 — gates all other ACs):**
+Dev runs the §6 diagnostic script against FPT page 8 (income statement) AND page 22 (segment report) and reports all three printed values:
+- `row_pitch` (expected: < 8px for both pages — confirms large-gap-mode failure)
+- `adaptive_tol` (expected: ≤ 2 or 0 — confirms fallback to tol=4)
+- `drift/gap ratio` (expected: > 1.0 — confirms precondition violation)
+- First 30 number token `(left, top)` pairs from both pages (dev appends to handoff)
+
+If any value contradicts the PASS column from §6 table, dev STOPS and reports to architect before proceeding. Do not implement the algorithm until the diagnostic confirms the regime.
+
+**AC-6-LOG (BLOCKING — log promotion):**
+`grep -n "logger.info.*row_pitch\|logger.info.*adaptive_tol" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → at least 2 matches (the promoted INFO lines in `_cluster_number_rows_adaptive` and its fallback branch). These lines existed as DEBUG — the only change is INFO level promotion. Verify: `grep -n "logger.debug.*row_pitch\|logger.debug.*adaptive_tol" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches (no remaining DEBUG row_pitch log).
+
+**AC-6-ORD (BLOCKING — ordinal fixture proof):**
+Unit test in `test_generic_md_table_extractor.py` class `TestOrdinalReconstruction`:
+
+Test `test_ordinal_defeats_drift_gt_gap`: the exact 10-token fixture from §8 (drift=16px, gap=2px). Call `_assign_tokens_to_columns(all_10_tokens, col_anchors=[100.0,400.0,700.0,1000.0,1300.0], median_word_width=30)`. Assert `len(col_buckets) == 5`. Assert each col_bucket has exactly 2 tokens. Call `_build_ordinal_grid(col_buckets, n_cols=5)`. Assert `len(grid) == 2` (exactly 2 rows). Assert `grid[0] == ["100", "200", "300", "400", "500"]`. Assert `grid[1] == ["600", "700", "800", "900", "1000"]`.
+
+**AC-6-D4b (BLOCKING — live-substrate D4b test):**
+Unit test `test_d4b_live_substrate_code_value_separation`: fixture must use EXACT `left`, `top`, `height`, `width` values from diagnostic script §6 output for the `text="100"` code token and the adjacent large-value token on balance-sheet page. Assert the two tokens land in DIFFERENT col_buckets (different column indices). Assert `_build_ordinal_grid` places them in `grid[r][0]` and `grid[r][k]` where `k > 0`. This test REPLACES the prior MD-EXTRACT-5 synthetic D4b test (which false-greened).
+
+**AC-6-SKIP (BLOCKING — mid/leading empty-cell unit test, class `TestOrdinalReconstruction`):**
+
+This AC proves C8.5 prevents the rank-shift corruption described in §13. Two sub-fixtures:
+
+**Sub-fixture SKIP-MID** (mid-column empty, proves C8.5 inserts empty rank slot):
+
+Tokens — 3 columns × 3 physical rows, col-1 missing physical row-1:
+```
+token_r0_c0: left=100, top=100, text="A1"
+token_r0_c1: left=400, top=103, text="B1"
+token_r0_c2: left=700, top=106, text="C1"
+
+token_r1_c0: left=100, top=120, text="A2"
+# col-1 physical row-1 is ABSENT (genuine missing value)
+token_r1_c2: left=700, top=126, text="C2"
+
+token_r2_c0: left=100, top=140, text="A3"
+token_r2_c1: left=400, top=143, text="B3"
+token_r2_c2: left=700, top=146, text="C3"
+```
+
+Within-row drift: up to 6px. Inter-row pitch: ~20px. `median_word_width=30`.
+
+Step C6: `col_anchors = [100.0, 400.0, 700.0]` (3 columns). ✓
+
+Step C7 column assignment:
+- col-0 bucket: [top=100/"A1", top=120/"A2", top=140/"A3"] (3 tokens)
+- col-1 bucket: [top=103/"B1", top=143/"B3"] (2 tokens — row-1 absent)
+- col-2 bucket: [top=106/"C1", top=126/"C2", top=146/"C3"] (3 tokens)
+
+Step C8 (sort by top within each column — already sorted):
+- col-0 sorted: [(top=100,"A1"), (top=120,"A2"), (top=140,"A3")]
+- col-1 sorted: [(top=103,"B1"), (top=143,"B3")]
+- col-2 sorted: [(top=106,"C1"), (top=126,"C2"), (top=146,"C3")]
+
+Step C8.5 — `_insert_skip_slots` per column:
+
+*col-0*: consecutive top-deltas: [120-100=20, 140-120=20]. `local_pitch = median([20,20]) = 20`. Gaps: delta=20, threshold=1.5×20=30. 20 < 30 → no skip. Slots: [(top=100,"A1"), (top=120,"A2"), (top=140,"A3")]. Length=3.
+
+*col-1*: consecutive top-deltas: [143-103=40]. `local_pitch = median([40]) = 40`. Wait — with only ONE gap, local_pitch=40. Threshold=1.5×40=60. delta=40 < 60 → no skip detected? WRONG — this is a degenerate case where the single gap IS the skip-gap, so local_pitch is contaminated by the very skip we are trying to detect. Correction: when a column has only 2 tokens, `local_pitch` is undefined (no "typical" gap to compare against). Use the cross-column reference pitch instead: `ref_pitch = median(local_pitch_c for all columns c where len(col_buckets[c]) >= 3)`. Here ref_pitch = median([20]) = 20 (only col-0 and col-2 qualify; both give 20). Threshold = 1.5 × 20 = 30. delta=40 > 30 → skip detected. `ceil(40/20) - 1 = ceil(2.0) - 1 = 1` empty slot inserted before "B3". Slots: [(top=103,"B1"), None, (top=143,"B3")]. Length=3. ✓
+
+*col-2*: consecutive top-deltas: [126-106=20, 146-126=20]. local_pitch=20. Threshold=30. No skip. Slots: [(top=106,"C1"), (top=126,"C2"), (top=146,"C3")]. Length=3.
+
+Step C9: `total_rows = max(3, 3, 3) = 3`. ✓
+
+Step C10 grid reconstruction:
+```
+grid[0][0]="A1"  grid[0][1]="B1"  grid[0][2]="C1"
+grid[1][0]="A2"  grid[1][1]=" "   grid[1][2]="C2"
+grid[2][0]="A3"  grid[2][1]="B3"  grid[2][2]="C3"
+```
+
+Assertions (hand-traceable):
+- (a) `grid[2][1] == "B3"` (col-1's third-physical-row value lands in row-2, NOT row-1). ✓
+- (b) `grid[1][1] == " "` (physical row-1's missing cell is empty). ✓
+- (c) `grid[0] == ["A1","B1","C1"]` and `grid[2] == ["A3","B3","C3"]` (cols 0 and 2 stay correctly aligned across all 3 rows). ✓
+- (d) `total_rows == 3`. ✓
+
+Unit test name: `test_skip_mid_column_empty` in class `TestOrdinalReconstruction`.
+
+**Sub-fixture SKIP-TRAILING** (trailing empty — regression proof that §4's original case still works):
+
+```
+col-0: [top=100/"X1", top=120/"X2", top=140/"X3"]
+col-1: [top=103/"Y1", top=123/"Y2"]   ← row-2 absent (trailing)
+col-2: [top=106/"Z1", top=126/"Z2", top=146/"Z3"]
+```
+
+Step C8.5 on col-1: deltas=[123-103=20], local_pitch=20 (1 gap, use ref_pitch=20 from cols 0+2). Threshold=30. delta=20 < 30 → no skip inserted. Slots: [(top=103,"Y1"),(top=123,"Y2")]. Length=2.
+
+Step C9: total_rows=max(3,2,3)=3. grid[2][1]=" " by initialization. No corruption.
+
+Assertions: `grid[0]==["X1","Y1","Z1"]`, `grid[1]==["X2","Y2","Z2"]`, `grid[2][1]==" "`, `total_rows==3`. ✓
+
+Unit test name: `test_skip_trailing_column_empty` in class `TestOrdinalReconstruction`.
+
+**AC-6-SEG (BINDING — live segment report, STRENGTHENED):**
+Live: after re-extract, inspect segment-report table in `md_tables`. TWO assertions required:
+1. The three revenue values `35.381.667`, `9.092.934`, `18.701.876` must appear in the SAME pipe-table row (same `\n`-delimited line), each as a separate `|`-delimited cell. Proves revenue row (rank-0) is correctly aligned.
+2. A SECOND identifiable multi-column row in the same segment table (any row below revenue that contains at least 2 money-group values `\d{1,3}(?:[.,]\d{3})+` in distinct `|`-delimited cells, on a SINGLE pipe-row) must also render all its values on that one row. This proves rows BELOW revenue rank are also correctly aligned, not just revenue. If any such row has its values split across two different `\n`-delimited lines → FAIL.
+
+**AC-6-INC (BINDING — income statement row count + multi-period alignment, STRENGTHENED):**
+Live: TWO assertions required:
+1. Income-statement table has ≥ 15 distinct data rows (non-separator, non-header lines). Each data row must have at most ONE 3-digit standalone code (`(?<!\d)\d{3}(?!\d)`) — same as AC-3A.
+2. At least one income-statement line that legitimately has values in multiple period columns (i.e., a row where at least 2 distinct cells on that pipe-row match `\d{1,3}(?:[.,]\d{3})+`) renders ALL those values on ONE single pipe-row. This proves period-column alignment is correct for rows below the first rank.
+
+**AC-6-D4b-LIVE (BINDING — no code+value concatenation):**
+Live: scan all cells in `md_tables[0..4]` (balance-sheet tables). No cell matches BOTH `r'^\d{2,3}$'` AND `r'\d{1,3}(?:[.,]\d{3})+'` in the same cell text string.
+
+**AC-3F (carry-forward — BLOCKING):** `text_table_extractor.py` UNTOUCHED. Structured `bctc_table_rows` = 79, balance_pass = true, balance_delta = 0 (live).
+
+**AC-0 (carry-forward — BLOCKING):** `grep -rniE "bao.cao.bo.phan|segment_report|SEGMENT|BAO_CAO|bo_phan|bao_phan" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches (any segments/etc references only in comments, not branching logic or constant values).
+
+**Fence-A (carry-forward — BLOCKING):** `grep -rnE "from application|from interface|import application|import interface" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+**Privacy (carry-forward — BLOCKING):** `grep -rniE "claude|openai|gemini|textract|document.?ai|anthropic|requests\.post|httpx\.post|aiohttp" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+---
+
+### 10. Risk Register
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| R-HIGH: If a page has unequal token counts per column (missing values or noise tokens), the `total_rows = max(rank_counts)` estimate may over-count rows. A single noise token in col-k inflates total_rows by 1, creating a spurious empty row. | HIGH | Mitigation: confidence gate (`_MIN_WORD_CONF_ORDINAL = 30`) filters low-confidence tokens before column assignment. `_NUMBER_TOKEN_RE` match (already applied in `_classify_tokens`) excludes OCR garbage. The density gate (`_is_data_table`) rejects grids that do not have enough money-group density regardless. The spurious empty row is filtered by `_collapse_empty_columns` if all its non-label cells are empty. |
+| R-HIGH: Label attachment (`_attach_labels_ordinal`) uses `y_med_r = median(top of rank-r tokens across columns)`. On severely skewed pages, y_med_r may be far from the label token's top (which is near the left-column number's top ≈ top_r0_c0, not the median). `LABEL_BAND_FACTOR = 1.5 × h_med` may miss labels on pages with extreme skew. | HIGH | Mitigation: the fallback (nearest TEXT token within 2.5×h_med) catches the label even if the primary band misses. If both fail, label cell = " " (honest empty). The label-leakage problem (same label attached to multiple rows) is mitigated by the greedy-assignment removal of used TEXT tokens. |
+| R-MEDIUM: `_detect_column_anchors_from_tokens` may merge two legitimate close columns (e.g., a "note number" column and the first value column that are close together). This produces one wider column that contains two logical columns' values concatenated. | MEDIUM | Existing `_COL_GAP_FACTOR = 1.5` and `_LEFT_EDGE_BIN_FACTOR = 0.3` are tunable. If close-column merging is observed on live data, raise `_COL_GAP_FACTOR` to 2.0 as described in §7. The code-column isolation heuristic in §7 is an additional option but risks AC-0; prefer the geometry-only parameter approach. |
+| R-MEDIUM: Wide tables (7+ columns, segment report) may produce 7 very narrow column anchors. Some value tokens are 7-15px wide; rounding errors in `image_to_data` may cause 1-2% of tokens to land in the wrong column by 1 anchor position. | MEDIUM | Accept: single-token mis-routing produces one wrong cell in one row. The overall table is still human-readable. The density gate ensures the table has sufficient money-group density regardless of 1-2 mis-routed tokens. |
+| R-MEDIUM: `_insert_skip_slots` uses `local_pitch = median(consecutive_top_deltas)`. When a column has exactly 2 tokens (1 gap), the single delta IS the skip gap, making local_pitch unreliable (it equals the skipped gap itself). | MEDIUM | Correction: when `len(col_bucket) < 3` (fewer than 2 gaps for median), use `ref_pitch = median(local_pitch_c for all columns c where len(col_buckets[c]) >= 3)`. If no column has >= 3 tokens, ref_pitch is unavailable — fall through to the pure-ordinal path (no skip insertion) for that column. Log WARNING if ref_pitch fallback is triggered. |
+| R-LOW: Leading-column skip (a column whose TOPMOST data row is missing) cannot be detected by within-column gap analysis because there is no preceding token. Cross-column-y detection would reintroduce the diagonal risk. | LOW | See §13 — documented as a KNOWN LIMITATION. Rationale: in BCTC financial tables, the first data row (revenue / total assets) is always present in every column, because these are the primary figures. Leading skip is structurally rare. No mitigation beyond the known-limitation note. If a future document class has leading skips, the correct fix is a pre-processing table-alignment step (out of scope). |
+| R-LOW: `SKIP_GAP_FACTOR = 1.5` may be too aggressive: if within-column y-variation is large (e.g., a sparse 3-row page where the "gap" between row-0 and row-2 is only 1.4× the row-0 → row-1 gap), a real row-2 token may be misclassified as a skip-inserted slot. | LOW | The SKIP_GAP_FACTOR=1.5 is conservative (requires gap > 1.5× pitch). On the 20px inter-row pitch regime of BCTC pages at 200 DPI, a 1.5× threshold = 30px, well above the within-row 6px drift. If false-positive skips appear on live data, raise to 2.0. Tunable at one constant. |
+| R-LOW: The `_cluster_number_rows_adaptive` function is retired but kept as dead code. If a future agent calls it thinking it is active, silent wrong results may occur without an error. | LOW | The function docstring already says `# DEAD in MD-EXTRACT-5`. Add `# DEAD in MD-EXTRACT-6` to the same comment. No functional risk as long as `_process_page` does not call it. |
+| R-LOW: File size. 4 new functions (~110L total: `_assign_tokens_to_columns` ~20L, `_insert_skip_slots` ~30L, `_build_ordinal_grid` ~30L, `_attach_labels_ordinal` ~30L), 3 functions marked DEAD (kept, ~0L net removal). Net addition ~110L. Monitor against file-size-caps.json. | LOW | If cap exceeded: move all DEAD functions to `infrastructure/_legacy_bbox_helpers.py` (infra-to-infra import, Fence-A compliant). |
+
+---
+
+### 11. DDD / Fence Compliance
+
+| Function | Layer | Imports | Fence |
+|---|---|---|---|
+| `_assign_tokens_to_columns` | infrastructure (pure helper) | stdlib only | Fence-A: no application/interface imports |
+| `_insert_skip_slots` | infrastructure (pure helper) | stdlib only (`statistics.median`) | Fence-A: no application/interface imports |
+| `_build_ordinal_grid` | infrastructure (pure helper) | stdlib only | Fence-A: no application/interface imports |
+| `_attach_labels_ordinal` | infrastructure (pure helper) | stdlib only | Fence-A: no application/interface imports |
+| `LABEL_BAND_FACTOR`, `_COL_ASSIGN_MAX_DIST_FACTOR`, `_MIN_WORD_CONF_ORDINAL`, `SKIP_GAP_FACTOR` | module-level constants | `re` (already imported) | Fence-A: no application/interface imports |
+| `_process_page` (modified) | infrastructure | `pytesseract`, `PIL` (existing) | Fence-A compliant |
+| `_estimate_inter_row_pitch` (log level change) | infrastructure (pure helper) | stdlib only | Fence-A: no application/interface imports |
+
+All new functions are PURE: no I/O, no Tesseract, no DB, no network. The impure boundary remains `_process_page` calling `pytesseract.image_to_data` — unchanged from MD-EXTRACT-5.
+
+No new ports, no new use cases, no mcp-server changes, no new test files (tests added to existing `test_generic_md_table_extractor.py`).
+
+Import-linter Fence-A/B compliance: zero new cross-layer imports. `lint-imports --config pyproject.toml` must exit 0 (2 contracts KEPT, 0 broken) after changes.
+
+---
+
+### 12. Build Standard
+
+**BUILD-STANDARD: lean** — in-zone algorithm change within an existing infrastructure file. No new ports, no new use cases, no mcp-server changes, no new test files.
+
+**HARD CONSTRAINTS (verbatim carry-forward):**
+- PRIVACY: self-hosted local OCR/CV ONLY. PIL is LOCAL and ALLOWED. NO financial PDF/image to ANY external API (no Claude/Gemini/GPT/Document-AI/Textract VLM). EVER.
+- HARDWARE: 16GB Intel Mac, kernel-panics under load. SEQUENTIAL single-doc OCR only. The ordinal approach adds ZERO additional Tesseract calls. Per-page budget unchanged.
+- `text_table_extractor.py` UNTOUCHED (AC-3F). Frozen surfaces unchanged: dashboard, sandbox/runner.py, pilot-status-pdf-extractor.json, all mcp-server files.
+- OpenCV NOT required. PIL/Pillow already in `requirements.txt`. No dependency additions needed.
+- Leave ALL files UNSTAGED (main terminal commits).
+
+**ROLE-RELAY:** dev-pdf-extractor (MD-EXTRACT-6, implement per §3-§13 above with AC-6-DIAG as MANDATORY STEP 1) → ops (MD-DEPLOY-6, single doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`) → main-terminal live-verify (AC-6-SEG + AC-6-INC + AC-6-D4b-LIVE) → qa (MD-QA-6) → po (MD-EXIT).
+
+**Hardware / CPU budget re-confirmation:** Step C8.5 (`_insert_skip_slots`) is a pure in-memory list pass over the already-collected token list. It performs zero Tesseract calls, zero PIL image operations, zero I/O. Per-page OCR budget is UNCHANGED from the original MD-EXTRACT-6 design.
+
+---
+
+### 13. Mid/Leading Empty-Cell Reconciliation (AUGMENTATION — MD-EXTRACT-6 revision 2026-05-26)
+
+#### 13.1 The failure mode pure ordinal rank-alignment cannot handle
+
+Pure ordinal rank-alignment (Steps C8+C9+C10 as originally specified) correctly reconstructs grids where all columns either have all rows present or are missing only their TRAILING rows. This works because absent trailing rows simply leave the initialized `grid[r][c] = " "` slots untouched.
+
+The failure occurs with MID-column or LEADING-column empties:
+
+```
+3 columns, 2 physical rows. col-1 is missing physical row-0 (the leading row):
+
+  Physical layout:
+    row-0:  col-0="A1" (top=100),  [col-1 ABSENT],  col-2="C1" (top=106)
+    row-1:  col-0="A2" (top=120),  col-1="B2" (top=122), col-2="C2" (top=126)
+
+  After Step C7:
+    col-0 bucket (sorted by top): [(top=100,"A1"), (top=120,"A2")]
+    col-1 bucket (sorted by top): [(top=122,"B2")]  ← only 1 token
+    col-2 bucket (sorted by top): [(top=106,"C1"), (top=126,"C2")]
+
+  Pure ordinal rank assignment (WITHOUT C8.5):
+    col-1: rank-0 → "B2"  (WRONG — B2 is physical row-1, not row-0)
+
+  Grid reconstruction:
+    grid[0][1] = "B2"   ← WRONG (should be " ")
+    grid[1][1] = " "    ← WRONG (should be "B2")
+
+  Misalignment: cols 0 and 2 are correct; col-1 is shifted up by one rank.
+```
+
+The analogous failure with a mid-column empty:
+
+```
+3 columns, 3 physical rows. col-1 is missing physical row-1 (the middle row):
+
+  col-1 bucket (sorted by top): [(top=103,"B1"), (top=143,"B3")]
+
+  Pure ordinal rank assignment (WITHOUT C8.5):
+    col-1: rank-0 → "B1" (correct), rank-1 → "B3" (WRONG — B3 is physical row-2)
+
+  grid[1][1] = "B3"  ← WRONG (should be " ")
+  grid[2][1] = " "   ← WRONG (should be "B3")
+```
+
+This matters for BCTC tables: the segment report has 7 columns where some columns (segment subtotals, elimination columns) are absent for specific line items. The income statement has prior-period columns that are blank for certain rows. Rank-shifting makes values appear in the wrong row, which is semantically worse than a missing value — it is a silent value misattribution.
+
+#### 13.2 Why within-column y-gap detection is safe (the key geometric justification)
+
+Within-column gap detection avoids the cross-column comparison that caused all five prior failures. The geometric reason this is reliable:
+
+**Cross-column y-comparison is unreliable** because scanner skew introduces a drift of ~4px per column across ~300px inter-column spacing, totalling ~28px across 7 columns. This drift can exceed the ~16px inter-row pitch, making cross-column absolute-y comparisons ambiguous.
+
+**Within-column y-gap detection is reliable** because: each column spans a NARROW x-range of approximately 150px (the width of one number token plus uncertainty). Over 150px, the scanner skew drift is at most `slope × 150 ≈ 0.016 × 150 ≈ 2.4px` — roughly 2px. The inter-row pitch is ~20px (at 200 DPI for typical BCTC page layout). The within-column drift of 2px is less than 15% of the pitch. Therefore, within a single column, consecutive top-deltas reliably reflect physical row separations: a gap of ~20px = one row interval, a gap of ~40px = one row skipped, a gap of ~60px = two rows skipped. The SKIP_GAP_FACTOR=1.5 threshold (30px for a 20px pitch) is well above the 2px intra-column noise ceiling.
+
+**This is the exact same geometric invariant that makes the ordinal approach work in the first place:** within a column, y-ordering is always physically correct. Extending this to gap-magnitude estimation is sound because the intra-column drift (2px) is negligible compared to the pitch (20px).
+
+#### 13.3 Step C8.5 algorithm — `_insert_skip_slots`
+
+```python
+SKIP_GAP_FACTOR = 1.5   # generic geometry constant; AC-0 compliant
+```
+
+**Input:** A single column's token list already sorted by `top` (the output of Step C8 sort for that column). Also accepts `ref_pitch: Optional[float]` for the degenerate case (see below).
+
+**Output:** `col_slots: List[Optional[Dict]]` — the same tokens interspersed with `None` sentinels representing empty rank slots. The length of `col_slots` reflects the true number of physical rows represented by this column (including gaps).
+
+**Algorithm:**
+
+```
+def _insert_skip_slots(sorted_tokens, ref_pitch=None):
+    if len(sorted_tokens) <= 1:
+        return list(sorted_tokens)   # no gap to detect
+
+    # Compute consecutive top-deltas
+    deltas = [sorted_tokens[i+1]['top'] - sorted_tokens[i]['top']
+              for i in range(len(sorted_tokens) - 1)]
+
+    # Determine local_pitch
+    if len(deltas) >= 2:
+        local_pitch = median(deltas)
+    elif ref_pitch is not None:
+        local_pitch = ref_pitch       # degenerate: 2 tokens, use cross-column ref
+    else:
+        return list(sorted_tokens)    # cannot determine pitch, no skip insertion
+
+    if local_pitch <= 0:
+        return list(sorted_tokens)
+
+    threshold = SKIP_GAP_FACTOR * local_pitch
+
+    slots = [sorted_tokens[0]]
+    for i, delta in enumerate(deltas):
+        if delta > threshold:
+            n_empty = ceil(delta / local_pitch) - 1
+            slots.extend([None] * n_empty)
+        slots.append(sorted_tokens[i + 1])
+
+    return slots
+```
+
+**Integration into `_build_ordinal_grid`:**
+
+1. After Step C8 sort, compute `local_pitch_c` for each column `c` where `len(col_buckets[c]) >= 3`.
+2. `ref_pitch = median([local_pitch_c for c where computable])` if any such column exists, else `None`.
+3. Call `col_slots[c] = _insert_skip_slots(col_buckets[c], ref_pitch)` for every column.
+4. Step C9: `total_rows = max(len(col_slots[c]) for all c)`.
+5. Step C10: for each column `c`, for each index `i` in `col_slots[c]`: if `col_slots[c][i]` is not `None`, `grid[i][c] = col_slots[c][i]['text'].strip()`; else `grid[i][c] = " "`.
+
+**CPU budget:** Zero Tesseract calls. All operations are pure Python list traversals over the already-collected token list (typically 20-80 tokens per column per page). Estimated additional time: < 1ms per page. Per-page OCR budget unchanged.
+
+#### 13.4 Leading-column skip — known limitation
+
+A leading-column skip occurs when a column's TOPMOST physical row is absent: the column's first token is at physical row-1 or later. Within-column gap detection cannot identify this because there is no preceding token to form a gap.
+
+**Why a cross-column-y detector is not the right fix:** To detect a leading skip, one would compare the column's first token top against the first token tops of other columns. But this is exactly the cross-column y-comparison that the ordinal approach was designed to eliminate. Any such comparison reintroduces the diagonal risk for the first token row — the column with the earliest first token becomes the "reference" row-0, and if it has drift > pitch relative to another column, the comparison is ambiguous.
+
+**Decision: KNOWN LIMITATION.** Leading-column skips are not corrected by C8.5.
+
+**Rationale for accepting this:** In BCTC financial report tables:
+- The first data row of a segment report is revenue / "Doanh thu" — this is always populated in every segment column (it is the defining metric).
+- The first data row of an income statement is total revenue — always present in every period column.
+- The first data row of a balance sheet is total current assets (code 100) — always present.
+
+Leading skips are structurally rare in the BCTC document class. If a future document class (e.g., a notes table with some columns starting mid-table) exhibits leading skips, the correct fix is a table-alignment pre-processing step that detects header rows and identifies which physical row each column's first data token belongs to. This is out of scope for MD-EXTRACT-6.
+
+**Risk register entry:** See §10 R-LOW (leading-column skip).
+
+#### 13.5 Degenerate case: 2-token column (1 delta)
+
+When a column has exactly 2 tokens, there is one delta. This delta may be either:
+- A normal consecutive-row gap (~20px) — no skip needed.
+- A skip gap (~40px) — one empty row needed.
+
+With only 1 delta, `median([delta]) = delta`, so `local_pitch = delta` and `threshold = 1.5 × delta`. Since `delta < threshold` always, no skip is ever inserted. This produces the same wrong result as pure ordinal for the 2-token-missing-middle case.
+
+**Fix:** Use `ref_pitch` (median of local pitches from columns with ≥ 3 tokens). If `ref_pitch` is available, use it in place of `local_pitch` for 2-token columns. This is specified in the `_insert_skip_slots` signature above (`ref_pitch` parameter) and in the `_build_ordinal_grid` integration steps.
+
+The AC-6-SKIP SKIP-MID fixture exercises this exact case: col-1 has 2 tokens (top=103, top=143), delta=40. ref_pitch=20 (from cols 0 and 2). Threshold=30. delta=40 > 30 → 1 empty slot inserted. The full trace is in §9 AC-6-SKIP above.
