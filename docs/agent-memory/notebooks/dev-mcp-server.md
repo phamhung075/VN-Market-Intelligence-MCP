@@ -1,5 +1,21 @@
 # dev-mcp-server -- Notebook
 
+## c312 · 2026-05-26T19:07Z (LF-OVERLAY verification run — BCTC-LAYOUT-FIRST)
+
+### Verification result: CONFIRMED DONE
+
+Prior cycle (c311) committed `2326ebb6`. This cycle re-ran tests + AC audit.
+
+**Test results (re-run):** 29 pass / 0 fail (1272 + 1273) | full suite 9883 tests exit 0 | tsc EXIT 0
+
+**AC-LFO-0..7 re-verified:** all pass except AC-LFO-7 (DEFERRED — needs corpus re-extraction at LF-DEPLOY)
+
+**Done-signal:** `docs/signals/2026-05-26T19-07-11Z-lf-overlay-done.json`
+
+**Pre-existing note:** 2 Bun module isolation failures occur ONLY when running 8+ files in parallel (deleteTelegramBug SyntaxError); each file passes 0 fail in isolation. Pre-existing before LF-OVERLAY. Bun C++ post-suite panic = upstream v1.3.13 bug, pre-existing.
+
+---
+
 ## c311 · 2026-05-26 (LF-OVERLAY — BCTC-LAYOUT-FIRST zone overlay)
 
 ### LF-OVERLAY DONE
