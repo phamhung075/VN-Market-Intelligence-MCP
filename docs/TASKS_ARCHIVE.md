@@ -61,3 +61,20 @@ Active board → `TASKS.md`
 | BUILD-WAVE SEQUENCING (PO governance) | **EXECUTED — A frontend → B mcp-server-SOLO → C ops rebuild → D QA all complete.** No open wave remains. Concurrency policy (serialized BUILD, mcp-server RUN-SOLO) honored throughout. | — | — |
 
 **Lessons preserved:** frontend is the FIRST pilot with terminal N/A-with-justification goals (G3 Remix=composition-root; G5 no prior mcp-server location) — N/A excluded from the YES tally, 12-goal set reduces to 10 gradeable, all YES. mcp-server G5 was the INVERSE goal (remove dead/migrated tool code, every handler proven HTTP-routed). G9 trust-verification = ops live-recheck per `feedback_trust_verification_is_system_job` (NOT user verbal sign-off) — applied consistently to both terminal closes.
+
+---
+
+## Archive — Added 2026-05-26 by PO (dev-team :07 triage — net-reduce closed news-fetch + NF-LD ledgers)
+
+**Period:** 2026-05-24 | **Sections archived:** 6 (News-Fetch SCALE Pilot Phase 0/1/2 full ledgers; NF-LD live-data follow-on; NF-LD-4 served-dashboard; NF-LD-5 refresh-button). Reason: all six are terminally closed or PO-signed-off with only an ops-deploy gate outstanding — they carried ~170 lines of per-task detail that the SSOT files + git history already hold. Pulled to keep TASKS.md under the 80-line working board norm during the FETCH-ANALYZE FIX dispatch. Full per-task detail in git history at HEAD~ of this archive commit + the handoff files cited.
+
+| Sprint / Section | Terminal state | Close SHA | SSOT / Handoff |
+|---|---|---|---|
+| News-Fetch SCALE Pilot Phase 0 | **CLOSED 2026-05-24T07:34Z (P0-NF-EXIT PASS).** All 5 deliverables DONE + architect verification. Anchor `news-fetch-pre-refactor` @ 31483c8c. | P0-NF-EXIT (PO) | `docs/data/pilot-status-news-fetch.json` |
+| News-Fetch SCALE Pilot Phase 1 | **CLOSED/APPROVED 2026-05-24T08:39Z.** All 10 tasks DONE; QA close-gate APPROVED `c8a2f7cb`; 7 goals EARNED-PENDING. | `c8a2f7cb` (QA) | `docs/data/pilot-status-news-fetch.json` |
+| News-Fetch SCALE Pilot Phase 2 — PILOT DONE | **CLOSED 2026-05-24T09:45Z. 12/12 YES, goalsEarned=12, verdict=scale (6th pilot to SCALE).** QA P2-NF-Z `41e4b2ce` → PO terminal atomic close. | `41e4b2ce` (QA) ; closure `po-news-fetch-closure-20260524T094500Z.json` | `docs/data/pilot-status-news-fetch.json` |
+| NF-LD live-data inspection view | **DONE + CLOSED 2026-05-24T17:58Z (PO NF-LD-EXIT).** Read-only `GET /api/news-fetch/live` on mcp-server over real `rag_analyses`; pilot 12/12 frozen. | `5a91e12f` + `45fd7f74` ; QA `59bd79f7` | `docs/handoffs/TASK_NF-LD.md` |
+| NF-LD-4 served dashboard | **PO SIGNED OFF 2026-05-24T20:05Z (Option B: serve from mcp-server:3000 /dashboards/news-fetch/).** Terminal gate was NF-LD-4-OPS (ops rebuild + prove served URL 200). | `e160fe04` + `6b012fc8` + `d32398f4` ; QA `a315ac99` | `docs/handoffs/TASK_NF-LD.md` |
+| NF-LD-5 refresh button (MVP) | **PO SIGNED OFF 2026-05-24T21:35Z.** Refresh/Load-latest button re-calls existing endpoint, no new write path. Terminal gate was NF-LD-5-OPS (ops rebuild + prove button live). | `12600a1f` + `15d9b034` ; QA `2a02d3e3` | `docs/handoffs/TASK_NF-LD.md` |
+
+**Lessons preserved:** (1) news-fetch is a STATELESS scraper with NO DB — live-data view MUST be a read-only mcp-server route over `rag_analyses`, never give the scraper DB creds (design-regression guard). (2) Served-dashboard Option B (same-origin from mcp-server:3000) removes the CORS/`file://` degrade risk class; anti-drift gate = committed served copy must equal `sync-news-fetch-dashboard.sh` output (idempotent md5). (3) NF-LD-4/5 ops-deploy gates may still be outstanding — verify the running mcp-server image carries `15d9b034`+ before declaring the served dashboard + refresh button live; the FETCH-ANALYZE ops rebuild this tick will also pick these up if not yet deployed.
