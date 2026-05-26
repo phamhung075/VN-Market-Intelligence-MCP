@@ -1,5 +1,66 @@
 # QA — Notebook
 
+## cycle-129 · 2026-05-27 · PEK-QA (G9 gate — PEK-INTEGRATE sentinel extraction) — FAIL / CHANGES_REQUESTED
+
+**Task:** PEK-QA — G9 gate on PEK-IMPL-OCR (commit efd23447) via FPT Q4 2025 sentinel | **Verdict:** CHANGES_REQUESTED
+
+```
+date: 2026-05-27T22:02Z
+type: sprint-qa-gate (PEK-INTEGRATE)
+report_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (FPT Q4 2025)
+report: reports/TASK_REPORT_PEK-QA.md
+commit_under_test: efd23447
+
+static_gates:
+  git_pristine_PEK_subtree: PASS (git -C PDF-Extract-Kit diff = empty)
+  frozen_surfaces: PASS (text_table_extractor.py + sandbox/runner.py = 0-diff)
+  unit_tests: 629/629 PASS (excluding integration, host venv)
+  pek_adapter_tests: 15/15 PASS
+  market_hours_guard_tests: 12/12 PASS
+  ocr_backends_tests: 21/21 PASS
+  ddd_fence_a: KEPT (95 files, 206 deps)
+  ddd_fence_b: KEPT
+  security_process_env: 0 matches
+  security_secrets: 0 matches
+  market_hours_layer1_cron: PASS (CRON_BCTC_REPARSE_JOB=0 21 * * *)
+  market_hours_layer2_http: PASS (HTTP 503 {"error":"market_open"} confirmed via mock patch)
+  fleet_ram_cold_start: PASS (~2.5 GiB of 8 GiB cap)
+
+sentinel_extraction:
+  trigger: POST /pek-extract → HTTP 202 (guard passed, 22:02 UTC Tuesday = market CLOSED)
+  crash: RuntimeError: module compiled against ABI version 0x1000009 but this version of numpy is 0x2000000
+  crash_path: _load_pek_models → from doclayout_yolo import YOLOv10 → cv2 → numpy ABI fail
+  bctc_layout_units_after: 0
+  bctc_page_zones_after: 0
+  rows_produced: 0
+  row_quality_verdict: UNTESTABLE (crash before any output)
+
+blocking_issues:
+  1. apps/pdf-extractor/requirements-pek.txt:49
+     numpy>=1.24.0 resolves to 2.4.4 (2.x ABI)
+     cv2==4.6.0.66 + paddlepaddle==3.3.1 compiled against numpy 1.x ABI → crash at first extraction
+     Fix: numpy>=1.24.0,<2.0.0
+  2. scenarios/pek_single_doc_extraction.py::TestPekOcrBackendInjectionScenario::test_fake_ocr_backend_result_in_extraction_output
+     patch("infrastructure.pek_engine_adapter.convert_from_path") fails — not a module-level name
+     Fix: patch("pdf2image.convert_from_path") or hoist import to module level
+
+verdict: FAIL — CHANGES_REQUESTED
+next: dev-pdf-extractor (fix #1 + #2) → ops rebuild → qa re-run
+```
+
+key_learnings:
+  - numpy>=lower_bound without upper bound is a trap: pip will always resolve to latest 2.x now
+  - cv2 4.6.0.66 is numpy 1.x only; paddlepaddle 3.3.1 same; need numpy<2.0.0 constraint
+  - patch target for lazy imports (imported inside function body) must be the ORIGINAL module namespace
+    not the module that contains the function — patch("pdf2image.convert_from_path") not
+    patch("infrastructure.pek_engine_adapter.convert_from_path")
+  - HTTP 202 (route accepted) does NOT mean extraction succeeded — background task crashes are
+    silent from the HTTP layer; ALWAYS check docker logs + direct DB count
+  - Market hours guard at HTTP level confirmed correct: patch at interface.handlers namespace
+    (the imported binding) not the source module namespace
+
+---
+
 ## cycle-128 · 2026-05-26 · LF-QA (BCTC-LAYOUT-FIRST focused diagnostic gate) — FAIL / CHANGES_REQUESTED
 
 **Task:** LF-QA — focused diagnostic gate on BCTC-LAYOUT-FIRST sprint, FPT Q1 2026 extraction | **Verdict:** CHANGES_REQUESTED
