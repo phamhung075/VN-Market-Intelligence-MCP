@@ -14,7 +14,7 @@ HTTP concerns (status codes, serialization) are handled here.
 
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from fastapi.responses import HTMLResponse, Response
@@ -26,6 +26,11 @@ from application.extract_md_tables_usecase import ExtractMdTablesUseCase
 from application.extract_layout_first_usecase import ExtractLayoutFirstUseCase  # LF-EXTRACT
 from infrastructure.inspection_store import InspectionStore
 from interface.serializers import ExtractPDFRequestSchema, HealthResponse
+
+# PEK-INTEGRATE: market-hours guard (domain primitive — pure function, injected at call site)
+# REQ-PEK-11 Layer 2: POST /pek-extract returns HTTP 503 during VN market hours.
+# Domain import is permitted in interface layer (interface → domain is valid DDD flow).
+from domain.primitives.market_hours.primitive import is_vn_market_open_utc
 
 # Viewer HTML template is co-located in the interface/ layer.
 _VIEWER_HTML_PATH = Path(__file__).parent / "viewer.html"
@@ -134,6 +139,22 @@ class ExtractLayoutFirstRequestSchema(BaseModel):
     pdf_path: str
 
 
+class PekExtractRequestSchema(BaseModel):
+    """
+    Pydantic model: validates incoming POST /pek-extract request body.
+
+    PEK-INTEGRATE: trigger PDF-Extract-Kit layout+table extraction for one document.
+    Endpoint returns 202 Accepted immediately (background task — fire-and-forget).
+
+    Market-hours guard (REQ-PEK-11 Layer 2 — AC-PEK-NEW-1):
+        If VN HOSE is open (Mon–Fri 02:00–08:59 UTC), returns HTTP 503 IMMEDIATELY.
+        No model is loaded. No inference runs. RSS stays at cold-start baseline.
+    """
+
+    report_id: str
+    pdf_path: str
+
+
 async def _run_extract_layout_first(
     use_case: "ExtractLayoutFirstUseCase",
     report_id: str,
@@ -169,6 +190,49 @@ async def _run_extract_layout_first(
         )
 
 
+async def _run_pek_extract(
+    pek_adapter: Any,
+    push_client: Any,
+    report_id: str,
+    pdf_path: str,
+) -> None:
+    """
+    Background task: run PEK extraction and push results via LayoutFirstPushClient.
+
+    PEK-INTEGRATE: calls PekEngineAdapter.extract_layout_and_tables(), then
+    pushes the result payload to mcp-server POST /api/push-bctc-layout
+    via the existing LayoutFirstPushClient (unchanged contract).
+
+    Logs errors internally — background tasks must not raise.
+    """
+    import logging as _logging
+    _log = _logging.getLogger(__name__)
+    try:
+        result = pek_adapter.extract_layout_and_tables(
+            pdf_path=pdf_path,
+            report_id=report_id,
+        )
+        push_result = await push_client.push_layout(
+            report_id=report_id,
+            document_map=result.get("document_map", {}),
+            units=result.get("units", []),
+            page_zones=result.get("page_zones", []),
+            pass_rate_report=result.get("pass_rate_report", {}),
+        )
+        _log.info(
+            "_run_pek_extract: DONE report_id=%s units_stored=%s pages_stored=%s",
+            report_id,
+            push_result.get("units_stored"),
+            push_result.get("pages_stored"),
+        )
+    except Exception as exc:
+        _log.error(
+            "_run_pek_extract: FAILED report_id=%s error=%s",
+            report_id,
+            exc,
+        )
+
+
 def register_routes(
     router: APIRouter,
     extract_usecase: ExtractPDFUseCase,
@@ -176,6 +240,8 @@ def register_routes(
     extract_tables_usecase: Optional[ExtractTablesUseCase] = None,
     extract_md_tables_usecase: Optional[ExtractMdTablesUseCase] = None,
     extract_layout_first_usecase: Optional["ExtractLayoutFirstUseCase"] = None,
+    pek_engine_adapter: Optional[Any] = None,
+    pek_push_client: Optional[Any] = None,
 ) -> None:
     """Attach all routes to the given APIRouter."""
 
@@ -301,6 +367,65 @@ def register_routes(
         background_tasks.add_task(
             _run_extract_layout_first,
             extract_layout_first_usecase,
+            body.report_id,
+            body.pdf_path,
+        )
+
+        return {"status": "accepted", "report_id": body.report_id}
+
+    @router.post("/pek-extract", status_code=status.HTTP_202_ACCEPTED)
+    async def pek_extract(
+        body: PekExtractRequestSchema,
+        background_tasks: BackgroundTasks,
+    ) -> dict:
+        """
+        POST /pek-extract
+
+        PEK-INTEGRATE: trigger PDF-Extract-Kit layout+table extraction for one document.
+        Returns 202 Accepted immediately; extraction runs as background task.
+
+        Market-hours guard (REQ-PEK-11 Layer 2 — AC-PEK-NEW-1, CRITICAL):
+            If VN HOSE is open (Mon-Fri 02:00-08:59 UTC), returns HTTP 503 IMMEDIATELY.
+            No model loaded. No inference. RSS stays at cold-start baseline (~80MB).
+
+        Sequential guard (REQ-PEK-4d):
+            PekEngineAdapter uses threading.Semaphore(1). Contention → HTTP 429.
+
+        Accepts:  { report_id: str, pdf_path: str }
+        Returns:  { status: "accepted", report_id: str }  (HTTP 202)
+                  { error: "market_open", retry_after: "after 15:00 ICT (08:00 UTC)" }  (HTTP 503)
+
+        Requires: pek_engine_adapter + pek_push_client injected at composition root.
+        Returns HTTP 503 if not wired (graceful degrade, same as other endpoints).
+        """
+        # Layer 2: market-hours guard — BEFORE any model check or adapter call.
+        # AC-PEK-NEW-1: 503 returned, no model load, RSS unchanged.
+        if is_vn_market_open_utc():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "error": "market_open",
+                    "retry_after": "after 15:00 ICT (08:00 UTC)",
+                    "message": (
+                        "PEK extraction blocked during VN HOSE trading hours "
+                        "(Mon-Fri 02:00-08:59 UTC). No model loaded."
+                    ),
+                },
+            )
+
+        if pek_engine_adapter is None or pek_push_client is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={
+                    "status": "failed",
+                    "error": "pek_engine_adapter not configured",
+                },
+            )
+
+        background_tasks.add_task(
+            _run_pek_extract,
+            pek_engine_adapter,
+            pek_push_client,
             body.report_id,
             body.pdf_path,
         )

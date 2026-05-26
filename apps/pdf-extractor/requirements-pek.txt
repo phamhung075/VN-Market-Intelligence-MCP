@@ -1,0 +1,55 @@
+# apps/pdf-extractor/requirements-pek.txt
+# PEK-INTEGRATE trimmed requirements (CPU-only, 8GB-safe)
+# Base: Ubuntu 24.04, Python 3.12
+#
+# EXCLUDED intentionally (REQ-PEK-1 / REQ-PEK-2 — CPU-only, 8GB-safe):
+#   unimernet==0.2.1         (formula model, ~1.4GB, OUT OF SCOPE)
+#   struct-eqtable           (StructEqTable VLM, GPU-only, crashes on CPU import)
+#   paddlepaddle-gpu         (NVIDIA GPU only — not on this Apple Silicon host)
+#   lmdeploy                 (GPU serving framework — impossible on CPU)
+#
+# torch + torchvision MUST be installed as CPU-only builds.
+# Install separately BEFORE this file to use CPU index-url:
+#   pip3 install --no-cache-dir --break-system-packages \
+#       torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# (Dockerfile handles this as a separate RUN step before -r requirements-pek.txt)
+
+# FastAPI service runtime
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9
+pydantic>=2.6.4
+
+# PDF processing
+pdfplumber>=0.10.3
+pdf2image>=1.16.0
+
+# Image + HTTP
+Pillow>=10.2.0
+aiohttp>=3.9.3
+
+# Tesseract (still used for existing structured path — text_table_extractor.py)
+pytesseract>=0.3.10
+
+# PDF-Extract-Kit runtime deps (from PDF-Extract-Kit/requirements-cpu.txt — trimmed)
+omegaconf
+matplotlib
+PyMuPDF
+
+# Layout detection (DocLayout-YOLO, CPU)
+ultralytics>=8.2.85
+doclayout-yolo==0.0.2
+
+# OCR + table structure (CPU, no GPU variant)
+# paddlepaddle CPU build (not paddlepaddle-gpu)
+paddlepaddle
+paddleocr==2.7.3
+
+# NumPy (required by PaddleOCR + image processing)
+numpy>=1.24.0
+
+# Dev / testing
+pytest>=8.1.1
+pytest-asyncio>=0.23.6
+import-linter>=2.0
+httpx>=0.27.0

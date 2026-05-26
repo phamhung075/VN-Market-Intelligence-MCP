@@ -35,6 +35,7 @@ from infrastructure.generic_md_table_extractor import (  # LF-EXTRACT
 from infrastructure.md_table_push_client import MdTablePushClient  # MD-EXTRACT
 from infrastructure.ocr_text_fetch_client import OcrTextFetchClient  # MD-EXTRACT-2 + LF-EXTRACT
 from infrastructure.layout_first_push_client import LayoutFirstPushClient  # LF-EXTRACT
+from infrastructure.pek_engine_adapter import PekEngineAdapter  # PEK-INTEGRATE
 from domain.services import ExtractPDFService
 from application.usecases import ExtractPDFUseCase
 from application.extract_tables_usecase import ExtractTablesUseCase
@@ -109,6 +110,15 @@ def create_app() -> FastAPI:
         ocr_unit_fn=ocr_unit,
     )
 
+    # --- PEK-INTEGRATE: PDF-Extract-Kit engine adapter ---
+    # Lazy singleton: models load on first extraction call (cold-start RSS ~80MB).
+    # Sequential guard: threading.Semaphore(1) inside PekEngineAdapter.
+    # Market-hours guard (Layer 1): CRON_BCTC_REPARSE_JOB env var in docker-compose.yml.
+    # Market-hours guard (Layer 2): handled at route level in interface/handlers.py.
+    pek_adapter = PekEngineAdapter()
+    # PEK push client reuses existing LayoutFirstPushClient (same contract).
+    pek_push_client = LayoutFirstPushClient(mcp_server_url=cfg.mcp_server_url)
+
     # --- FastAPI app ---
     app = FastAPI(
         title="PDF Extractor",
@@ -132,6 +142,8 @@ def create_app() -> FastAPI:
         extract_tables_usecase,
         extract_md_tables_usecase,
         extract_layout_first_usecase=extract_layout_first_usecase,  # LF-EXTRACT
+        pek_engine_adapter=pek_adapter,     # PEK-INTEGRATE
+        pek_push_client=pek_push_client,    # PEK-INTEGRATE: reuses LayoutFirstPushClient
     )
     app.include_router(router)
 

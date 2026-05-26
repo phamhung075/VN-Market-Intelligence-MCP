@@ -14,6 +14,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Protocol
 
 from domain.models import PDFDocument, ExtractedContent, ExtractedTable
+from typing import Any  # noqa: F401 (re-exported for adapter protocol use)
 
 
 class PDFDocumentRepository(ABC):
@@ -155,5 +156,63 @@ class AlertPort(Protocol):
         Note: fire-and-forget — implementations must NOT raise on Telegram failure.
               Log the error internally and return normally to avoid disrupting the
               extraction pipeline.
+        """
+        ...
+
+
+class PekEngineAdapterPort(Protocol):
+    """
+    Port for the PDF-Extract-Kit engine adapter (PEK-INTEGRATE).
+
+    The adapter (infrastructure/pek_engine_adapter.py) wraps:
+      - LayoutDetectionTask (DocLayout-YOLO, CPU) — from pdf_extract_kit.tasks
+      - OCRTask (PaddleOCR, CPU) — from pdf_extract_kit.tasks
+      - PaddleOCR PP-StructureV2 table mode (paddleocr package) — direct, NOT via PEK task
+
+    Lazy singleton pattern: models load on first call (_pek_models_cache).
+    Sequential guard: threading.Semaphore(1) — one extraction at a time; HTTP 429 on contention.
+
+    DDD layer: domain port — zero infrastructure imports, zero I/O, pure Protocol.
+
+    Hard constraints (REQ-PEK-2 / CRITICAL):
+        - NEVER imports TableParsingTask or FormulaDetectionTask
+          (struct_eqtable.py hard-asserts torch.cuda.is_available() → crash on CPU)
+        - CPU-only (no paddlepaddle_gpu, no lmdeploy, no CUDA)
+        - models load lazily on first call (cold-start RSS ~80MB)
+
+    Implemented by:
+        - infrastructure/pek_engine_adapter.PekEngineAdapter (production)
+        - FakePekEngineAdapter (tests — injected, zero model weights)
+
+    REQ-PEK-0 (pristine-engine invariant): the adapter imports pdf_extract_kit
+    read-only as a library. Zero edits to the PDF-Extract-Kit subtree ever.
+    """
+
+    def extract_layout_and_tables(
+        self,
+        pdf_path: str,
+        report_id: str,
+    ) -> Dict:
+        """
+        Run the PEK layout+table extraction pipeline on one PDF document.
+
+        Pipeline (per page, sequential):
+            1. LayoutDetectionTask.predict_pdfs(pdf_path) → bboxes per page
+            2. For each 'table' bbox: OCRTask + PaddleOCR table mode → table cells
+            3. Map bboxes → LF-OVERLAY bctc_page_zones / bctc_layout_units contract
+
+        Args:
+            pdf_path:  Absolute path to the PDF file (already stored locally).
+            report_id: UUID string matching financial_reports.id on mcp-server.
+
+        Returns:
+            dict with keys:
+                document_map:     dict — Tier 0 DocumentMap (total_pages, units)
+                units:            list[dict] — per-unit OCR results (stitched_markdown, …)
+                page_zones:       list[dict] — per-page zone data (LF-OVERLAY contract)
+                pass_rate_report: dict — quarantine stats
+
+        Raises:
+            RuntimeError: if models cannot be loaded or semaphore times out (→ HTTP 429).
         """
         ...

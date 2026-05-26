@@ -16,3 +16,13 @@ data/
 __tests__/
 .git/
 .gitignore
+
+# PEK-INTEGRATE: PDF-Extract-Kit build hygiene (AC-PEK-3a / REQ-PEK-3)
+# Exclude .git/ of pristine PEK clone (not needed in image, ~20MB saving)
+PDF-Extract-Kit/.git/
+# Exclude downloaded model weights (never bake into image — AC-PEK-3b)
+PDF-Extract-Kit/models/
+PDF-Extract-Kit/outputs/
+# Exclude any top-level model weight directories
+models/
+pek_models/

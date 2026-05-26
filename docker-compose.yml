@@ -42,6 +42,10 @@ services:
       # Value: set in .env (never commit plaintext key to git).
       PORT: '3000'
       CLOUDFLARE_PATH_PREFIX: /vn-market
+      # PEK-INTEGRATE REQ-PEK-11 Layer 1: cron fires only off-market (21:00 UTC = 04:00 ICT)
+      # AC-PEK-NEW-2: bctcReparseJob must NOT fire 02:00-08:59 UTC weekdays.
+      # Overrides cronConfig.ts default without any source code edit to cronConfig.ts.
+      CRON_BCTC_REPARSE_JOB: "0 21 * * *"
     env_file:
     - .env
     restart: unless-stopped
@@ -76,11 +80,19 @@ services:
     volumes:
     - market_data:/app/data
     - ./data/pdfs-local:/app/data/pdfs-local:ro
+    # PEK-INTEGRATE: named volume for model weights (downloaded once, never baked in image)
+    # AC-PEK-3e: weights survive docker compose build + force-recreate
+    - pek_model_cache:/app/pek_models
     environment:
     - DB_PATH=/app/data/pdf_extractor.db
     - STORAGE_DIR=/app/data/extractions
     - LOG_LEVEL=INFO
     - MCP_SERVER_URL=http://mcp-server:3000
+    # PEK-INTEGRATE: model weight cache dirs (REQ-PEK-3 §2.3c)
+    - HUGGINGFACE_HUB_CACHE=/app/pek_models/huggingface
+    - MODELSCOPE_CACHE=/app/pek_models/modelscope
+    - YOLO_CONFIG_DIR=/app/pek_models/yolo
+    - PADDLEOCR_HOME=/app/pek_models/paddleocr
     restart: unless-stopped
     healthcheck:
       test:
@@ -419,4 +431,8 @@ services:
           cpus: '0.25'
 volumes:
   market_data:
+    driver: local
+  # PEK-INTEGRATE: named volume for PDF-Extract-Kit model weights (AC-PEK-3b/3e)
+  # Weights downloaded once on first extraction call; survive force-recreate.
+  pek_model_cache:
     driver: local
