@@ -6,6 +6,7 @@
 
 ## Status
 
+2026-05-26 — P2-F G10 blind-fix COMPLETE. direction-arrow.ts "↑↑" → "↑" fix (G10-injected bug). 179/179 Vitest GREEN. tsc clean. lint:fence 0. 1 cycle used.
 2026-05-26 — Phase 2 P2-A + P2-B + P2-C COMPLETE. ESLint fence (G4) installed and proven. 179/179 Vitest GREEN. tsc clean. Stopping before P2-D (QA gate).
 2026-05-25 — Phase 1 MVR COMPLETE. P1-A + P1-B1..B4 + P1-C + P1-E all DONE. 179/179 Vitest GREEN. 4/4 Playwright GREEN. G12 streak 3/3 COMPLETE. tsc clean.
 2026-05-19 — Task 1956 emergency route rename complete. 2026-05-18 — Task 1945b-frontend complete. 20/20 tests GREEN. 144/144 full suite GREEN. 0 tsc errors.
@@ -62,6 +63,14 @@ Phase 2 P2-A/B/C DONE. ESLint fence (G4) installed: eslint.config.mjs + eslint-p
   - ~ Remix alias requires tsconfig.json paths + TS resolver to resolve correctly
   - last-write-wins: put most-specific fence rule LAST in rules array to control error message
   - checkUnknownLocals:true needed as fallback for any remaining unresolved imports
+
+## Cycle P2-F — 2026-05-26 (G10 blind-fix)
+
+- G10 injected bug: `direction-arrow.ts` line 22 — `symbol: "↑↑"` (double arrow) instead of `symbol: "↑"`. Comment marker `// G10-INJECTED-BUG` present.
+- Fix: reverted to single-arrow `"↑"`, removed bug comment.
+- Diagnosis: Vitest output → `expected '↑↑' to be '↑'` → traced to formatDirectionArrow("up") in direction-arrow.ts → single-line fix.
+- Verify: 179/179 Vitest, tsc exit 0, lint:fence exit 0. Cycles used: 1.
+- Signal: docs/signals/dev-frontend-p2f-fix-20260526T125755Z.json
 
 ## Carry-over (next session)
 
