@@ -56,3 +56,65 @@ The **connectivity root cause is FIXED + committed** — these tasks are the res
 
 ## Acceptance gate (DRIFT-QA, qa)
 End-to-end through mcp-server: `get_macro_calendar` 200 + real calendar data; all 4 kinh-dich endpoints 200; basic kinh-dich tools non-regression; test baseline 9277/34 no new fails. Emit `qa-deploy-drift-<UTC>.json`. DRIFT-3 carries its own deliberate-drift proof (separate from this gate).
+
+---
+
+## [Architect] DRIFT-3 — CI/CD Image SHA Drift Guard
+
+**Design completed:** 2026-05-26T20:30Z
+**Brief:** `docs/architecture-briefs/2026-05-26-ci-cd-image-sha-drift-guard.md`
+
+### Zone
+`cross-service/` — touches all 11 local Dockerfiles + `scripts/` + `docs/protocols/docker-deployment-runbook.md`
+
+### BUILD-STANDARD: lean
+(new scripts + 2-line Dockerfile additions + runbook update; no new service)
+
+### Root Cause (structural)
+
+Both DRIFT-1 and DRIFT-2 share the same mechanism: `docker compose up -d` (without `--build`) relaunches the previously-built image. The health check passes (`/health` 200, `running (healthy)`), the deploy is declared complete, but the committed code is absent. The existing Step 4 in the deployment runbook used a timestamp comparison (`{{.Created}}` vs git commit time) which is (a) imprecise — a cached build can produce a later timestamp with old content — and (b) manual — no script enforces it.
+
+### Mechanism
+
+Bake the git commit SHA into each Docker image as a label at build time (`ARG GIT_SHA + LABEL vn.market.git_sha`). After deploy, `scripts/verify-deploy-sha.sh <service>` reads the label from the running container and compares it to `git rev-parse HEAD`. SHA mismatch or absent label = exit 1 = deploy BLOCKED.
+
+### Key files to create/modify
+
+| Action | Path |
+|--------|------|
+| CREATE | `scripts/verify-deploy-sha.sh` — main SHA gate |
+| CREATE | `scripts/test-sha-drift-guard.sh` — deliberate-stale-image proof |
+| CREATE | `scripts/test-sha-comparison-unit.sh` — unit tests (no Docker daemon) |
+| MODIFY | All 11 local Dockerfiles (`apps/*/Dockerfile`) — add `ARG GIT_SHA` + `LABEL` to runtime stage last 2 lines |
+| MODIFY | `docs/protocols/docker-deployment-runbook.md` — replace Step 4 timestamp check |
+
+### Deliberate-stale-image proof (AC-2 / AC-3)
+
+`scripts/test-sha-drift-guard.sh` builds a minimal Alpine image with label `vn.market.git_sha=0000000...` (known-stale), runs it as a container, invokes `verify-deploy-sha.sh` against it, and asserts the script exits 1 with "SHA drift detected". The proof itself exits 0 only when the guard correctly FAILS. A guard that returns OK on a stale image = false-green = proof exits 1 and implementation is blocked.
+
+### Implementation sequence constraint
+
+`apps/pdf-extractor/Dockerfile` has an active parallel session (BCTC-LAYOUT-FIRST). The 2-line ARG/LABEL addition to that Dockerfile is Phase B, sequenced after pdf-extractor's session closes. All other 10 Dockerfiles + scripts + runbook update are Phase A (parallel-safe, no overlap with active sessions).
+
+### Risk flags
+
+- R-HIGH (mitigated): Docker layer cache can serve stale layers. Mitigation: place `ARG GIT_SHA` + `LABEL` as the LAST two lines of the final runtime stage (after all `COPY --from=builder` instructions) so the label step is never served from a stale cache.
+- R-MED: `docker compose ps -q` may return multiple IDs during restart. Mitigation: filter for `running` state only in `verify-deploy-sha.sh`.
+- R-LOW: First run after shipping — containers built before this guard have no label. Expected: guard exits 1 "label absent — rebuild required". This is correct behavior.
+
+### Acceptance criteria summary
+
+- AC-1: `verify-deploy-sha.sh` exits 0 on fresh rebuild (SHA matches HEAD)
+- AC-2: `verify-deploy-sha.sh` exits 1 on stale image (SHA mismatch)
+- AC-3: `test-sha-drift-guard.sh` exits 0 (proof validates the guard)
+- AC-4: All 11 Dockerfiles carry the label (`grep` returns 11 paths)
+- AC-5: Runbook Step 4 calls `verify-deploy-sha.sh` (timestamp check language removed)
+- AC-6: Unit test script passes all 3 cases (match / mismatch / empty label)
+
+### Ops rebuild command (updated — for runbook)
+
+```bash
+docker compose build --build-arg GIT_SHA="$(git rev-parse HEAD)" <svc>
+docker compose up -d <svc>
+scripts/verify-deploy-sha.sh <svc>   # must exit 0
+```

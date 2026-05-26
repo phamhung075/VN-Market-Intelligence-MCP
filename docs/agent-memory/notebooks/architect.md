@@ -1,8 +1,44 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 20:00 UTC | **Sprint:** BCTC-LAYOUT-FIRST
+**Last updated:** 2026-05-26 20:45 UTC | **Sprint:** DRIFT-3
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## DRIFT-3 — CI/CD Image SHA Drift Guard (2026-05-26T20:45Z) — DESIGN COMPLETE
+
+**Task:** DRIFT-3. Recurring-bug escalation (2 deploy-drift instances: DRIFT-1 macro + DRIFT-2 kinh-dich). Root cause: `docker compose up -d` without `--build` relaunches stale image; health check passes; deploy declared complete; code absent. Existing Step 4 in deployment runbook uses timestamp comparison (imprecise + manual). Structural fix mandated.
+
+**Brownfield findings:**
+
+- No existing SHA-based gate. `scripts/preflight-disk.sh` is the only deploy pre-flight script — pattern to mirror.
+- `docs/protocols/docker-deployment-runbook.md` Step 4 = `docker inspect {{.Created}}` timestamp comparison. Replaced by `scripts/verify-deploy-sha.sh` call.
+- All 11 local Dockerfiles use multi-stage builds (builder + runtime stages). ARG/LABEL addition is 2-line append to runtime stage — zero logic impact.
+- `flaresolverr` is a pulled image — no Dockerfile, excluded from guard scope.
+- `apps/pdf-extractor/` has an active parallel session. Its Dockerfile update deferred to Phase B (after session closes).
+
+**Design decisions:**
+
+- SHA label: `vn.market.git_sha` injected via `ARG GIT_SHA=unknown` + `LABEL` in final runtime stage (last 2 lines, after all COPYs to avoid layer-cache stale SHA risk).
+- New build command: `docker compose build --build-arg GIT_SHA="$(git rev-parse HEAD)" <svc>`.
+- Verification script: `scripts/verify-deploy-sha.sh` — reads label from running container, compares to HEAD. Exit 1 = drift or label absent. Exit 0 = verified.
+- Deliberate-stale-image proof: `scripts/test-sha-drift-guard.sh` — builds image with STALE_SHA label, runs container, asserts verify script exits 1. Proof itself exits 0 only if guard correctly catches drift.
+- Unit tests: `scripts/test-sha-comparison-unit.sh` — no Docker daemon required, 3 cases (match/mismatch/empty).
+
+**Key risk flags:**
+
+- Docker layer cache: mitigated by placing ARG/LABEL as last 2 lines of runtime stage (no cacheable dependency).
+- Multiple container IDs during restart: mitigated by filtering for `running` state in verify script.
+- First-run "label absent": expected and correct; forces rebuild.
+
+**Files authored this cycle:**
+
+1. `docs/architecture-briefs/2026-05-26-ci-cd-image-sha-drift-guard.md` — NEW (full blueprint: §1 root cause, §2 mechanism, §3 test strategy + deliberate-proof, §4 ACs, §5 risks, §6 file list, §7 frozen surfaces, §8 sequence, §9 parallelism)
+2. `docs/handoffs/TASK_DEPLOY-DRIFT.md` — `[Architect] DRIFT-3` entry appended
+3. `docs/agent-memory/notebooks/architect.md` — this entry (prepended)
+
+**Next actor:** PM decomposes into atomic tasks: (Phase A) dev-cross-service implements 10 Dockerfiles + 3 scripts + runbook; (Phase B, after pdf-extractor session closes) dev-pdf-extractor or dev-cross-service adds label to apps/pdf-extractor/Dockerfile.
+
+---
 
 ## BCTC-LAYOUT-FIRST — LF-DESIGN (2026-05-26T19:30Z) — DESIGN COMPLETE
 
