@@ -1,8 +1,45 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 13:12 UTC | **Sprint:** P2-H / macro-frontend-contract-ruling
+**Last updated:** 2026-05-26 15:29 UTC | **Sprint:** MD-EXTRACT-7-REV / income-statement-diagnostic-revision
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## MD-EXTRACT-7-REV — Diagnostic-Driven Income Statement Redesign (2026-05-26T15:29Z) — DESIGN COMPLETE
+
+**Task:** MD-EXTRACT-7-REV. AC-7-DIAG diagnostic contradicted central assumption of MD-EXTRACT-7. Main-terminal gated implementation. Redesign required before any code.
+
+**Contradiction resolved:** Prior design assumed dual code columns INFLATE anchor count above 6 → trigger fires. Live: Tesseract cleanly assigns 12+29 code tokens to exactly 2 of 6 anchors → count == 6 → trigger dead branch. Three simultaneous root causes identified and fixed.
+
+**Six revision requirements resolved:**
+
+1. **Header/date pollution (NEW):** 9 header tokens (top<400) contaminate anchor + grid. Fix: `_find_first_value_row_top` (scan for first VALUE_TOKEN_RE match → minimum top) + `_exclude_header_tokens` (filter tokens below cutoff). AC-0: top-coord only. New Step C5 in _process_page.
+
+2. **Dual-code-column when anchor count == 6 (count-gate dead):** Replaced count-gate with presence-based detector `_identify_pure_code_columns`. Bucket is pure-code when code_fraction ≥ PURE_CODE_COL_THRESHOLD=0.90 AND value_count==0. Applied at Step C7.5. Segment report: all buckets have value_count>0 → code_col_indices=[] → ELSE branch → pipeline IDENTICAL to MD-EXTRACT-6 for segment. AC-6-SEG structurally guaranteed.
+
+3. **~150px anchor offset (dual mechanism):** (a) Code column at x=959 within col_gap=249 of true value left-edge x=1182 → 1182 cluster swallowed. (b) Header tokens at x≈1330 form separate cluster surviving (371>249) → false anchor. Both fixed by REV-3 (header cutoff) + REV-4 (code exclusion). Supplementary: `_detect_column_anchors_from_tokens` line 708 changed from centroid (`sum(c)/len(c)`) to `min(c)` for left-edge alignment.
+
+4. **KEEP fix-path-C:** `prefer_ref_pitch`, `DENSE_COL_THRESHOLD=6`, `_insert_skip_slots` modification all carry forward unchanged from §MD-EXTRACT-7 §5.
+
+5. **DROP fix-path-D:** Live pitch=35px, band=27px < 35px → no over-reach. `DENSE_LABEL_PITCH_FACTOR`, `band_override`, §MD-EXTRACT-7 §6 content NOT implemented.
+
+6. **Regenerated fixture (REV-8):** 29 tokens = 25 number + 4 text. Mirrors live: 6 anchors (2 pure-code @258/@959, 4 value @1182/1477/1768/2061), 3 header tokens at top=200, 35px data pitch (495/530/565/600), density 4/4/3/3, 2 absent cells (col[4] row-1, col[5] row-2). Full 10-stage trace + 10 hand-checkable assertions in brief §REV-8.
+
+**Key arithmetic to verify (assertions 7+8):**
+- col[4] C8.5: ref_pitch=43.5, threshold=65.25, delta[0]=70>65.25 → `ceil(70/43.5)-1 = ceil(1.609)-1 = 1` None slot → slots[1] is None ✓
+- col[5] C8.5: delta[0]=34<65.25 (no skip), delta[1]=70>65.25 → 1 None slot → slots[2] is None ✓
+
+**Files to touch:** `infrastructure/generic_md_table_extractor.py` (3 new pure functions + 1-line anchor metric change + _process_page routing) + `__tests__/unit/test_generic_md_table_extractor.py` (3 new test classes + 1 revised dense fixture test). Zero new files. Zero mcp-server changes.
+
+**Files authored this cycle:**
+1. `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` — appended §MD-EXTRACT-7-REV (before §MD-EXTRACT-7 which is now SUPERSEDED). §MD-EXTRACT-7 §5 (dense-multi-gap) preserved unchanged.
+2. `docs/handoffs/TASK_BCTC-MD-TABLE.md` — appended §[Architect] MD-EXTRACT-7-REV handoff.
+3. `docs/agent-memory/notebooks/architect.md` — this entry.
+
+**Risk flags:** R-HIGH: _find_first_value_row_top could set cutoff at column-header period row (~326) rather than data row (~495); still passes — 70px gap means all data tokens included. R-MEDIUM: OCR garbling could misclassify code as value — "01" cannot match VALUE_TOKEN_RE (no .NNN group). R-MEDIUM: min(cluster) with far-left artifact — noise gate in _assign_tokens_to_columns handles downstream.
+
+**Next actor:** main terminal — re-trace §REV-8.2 (10 stages) + §REV-8.3 (10 assertions) by hand. If all assertions pass → dispatch dev-pdf-extractor MD-EXTRACT-7-REV → ops MD-DEPLOY-7 (single doc, full UUID) → main-terminal live-verify → qa → po.
+
+---
 
 ## MACRO-FRONTEND-CONTRACT-RULING — P2-H unblock (2026-05-26T13:12Z) — RULING ISSUED
 
