@@ -1,5 +1,23 @@
 # dev-mcp-server -- Notebook
 
+## c307 · 2026-05-26 (P2-K — G10 blind-fix buildCrossValidateSignal summary regression)
+
+### P2-K — G10 Blind-Fix DONE
+
+**Commit:** `21361392` | 2 files | tsc EXIT 0 | bun test 9822 tests exit 0 | toolCount=148 | sched=68
+
+**Diagnosis:** Injected regression b0705683 — `CrossValidateBuilderImpl.setSummary()` appended literal `"!"` to every summary value (`this.data.summary = summary + "!"`). Both golden scenarios (signal-bus-golden-valid + signal-bus-golden-minimal) failed with actual summary having trailing `!` vs expected without.
+
+**Fix:** `apps/mcp-server/src/domain/signals/signalBuilders.ts` line 327 — removed `+ "!"` suffix; `setSummary()` now assigns `summary` directly.
+
+**Dashboard:** `apps/mcp-server/dashboard/index.html` inline trace data updated — both signal-bus scenarios flipped from `status:fail / match:false` to `status:pass / match:true`.
+
+**Sandbox:** 9/9 scenarios PASS, runner exit 0 (1 cycle used).
+
+**Zone health:** P2-K fix complete; all 9 sandbox scenarios GREEN; tsc EXIT 0; bun test exit 0; toolCount=148; sched=68 | HEALTHY
+
+---
+
 ## c306 · 2026-05-26 (MD-INSPECT — generic markdown table storage + inspector panel)
 
 ### MD-INSPECT DONE (UNSTAGED — main terminal commits)
