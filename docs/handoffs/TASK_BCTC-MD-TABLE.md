@@ -1772,3 +1772,24 @@ dev-pdf-extractor returned. I re-reviewed the diff (not the RETURN) and re-ran p
 5. Leave all files UNSTAGED. Make NO code changes. Do NOT touch frozen surfaces. Local-only, no third-party API.
 
 **Hand back to:** Main-Terminal for AC-9 live-verify (direct market.db read of `md_tables_json`): AC-9-LABEL (income row-0 label = ONLY `Doanh thu bán hàng và cung cấp dịch vụ`, NO `Các khoản giảm trừ` interleave) + AC-9-PAIR (row-0 code-01 ↔ 20.258.866.135.395 family; row-1 code-02 ↔ 33.415.777.986 family; no ordinal drift) + AC-9-SEG-NOREGRESS (3 segment revenues on one pipe-row) + AC-9-BALANCE-NOREGRESS + AC-9-VALUE-NOREGRESS.
+
+---
+
+## [Main-Terminal] LIVE-VERIFY-9 — ALL BINDING ACs PASS (2026-05-26)
+
+ops MD-DEPLOY-9 (`a448aa84`) returned: new code live in rebuilt image (`_attach_labels_by_rank`×3, `_LABEL_LINE_GAP_PX`×7), fresh re-extract = row **id=11** (extracted_at 2026-05-26 17:21:28 UTC, after rebuild ~17:17:48; 22 tables, jlen=19539). I read `md_tables_json` DIRECTLY from `market.db` (NOT inspect endpoint) and ran the AC-9 gate. **VERDICT: PASS — the income-statement LABEL interleave defect is FIXED on live.**
+
+**Evidence (live row id=11, table[8] = income statement):**
+- **AC-9-LABEL ✅** — row-0 label cell = `1 Doanh thu bán hàng và cung cấp dịch vụ` (clean; `has 'Doanh thu'`=True, `has 'giảm trừ'`=False). Row-1 is its OWN separate row `2 Các khoản giảm trừ 02`. The two label lines previously fused/interleaved (MD-EXTRACT-8 residual) are now cleanly separated. THIS is the headline fix — observed on LIVE DB, not a synthetic fixture.
+- **AC-9-PAIR ✅** — row-0 `Doanh thu...` ↔ `20.258.866.135.395`; row-1 `...giảm trừ` (code `02` present) ↔ `33.415.777.986`. Correct value families, no ordinal drift. No NEW interleave introduced anywhere in the 22-row income block (each row carries one clean label + its value cells).
+- **FLAG-C ✅ (count-mismatch re-check)** — AC-9-PAIR did NOT drift → `len(data_label_lines)==len(grid)` held → no count-mismatch escape. No architect re-escalation needed.
+- **AC-9-SEG-NOREGRESS ✅** — table[17]: 3 segment revenues `35.381.667 / 9.092.934 / 18.701.876` on ONE shared row in 3 DISTINCT cells (segments-as-columns preserved).
+- **AC-9-BALANCE-NOREGRESS ✅** — table[7]: balance identity total `88.089.621.779.862` present.
+- **AC-9-VALUE-NOREGRESS ✅** — 21 income rows render ≥2 money cells columnar; the 4 period value columns are columnar (MD-EXTRACT-8 not regressed).
+
+**Out-of-AC-9-scope known limitations (NOT regressions, NOT blocking the gate — table STRUCTURE is correct):**
+1. Dual code-columns partly absorbed into label cells on some income rows (e.g. `... 10 25`, `... 10 11 25 26`) — characteristic of this dense table's interspersed code columns, pre-existing, not introduced by MD-EXTRACT-9.
+2. Tesseract character-level OCR glitches (`thuần`→`thưần`, `lãi vay`→`Idi vay`, `Chi phí`→`Chỉ phí`) — local-OCR pixel recognition limits, not a table-detection / md-conversion defect.
+3. Balance total line carries an OCR-mismatched label (`1, Nguồn kinh phí 431`) — balance geometry "mostly works"; identity VALUE present satisfies the non-regress gate.
+
+**NEXT:** qa MD-QA-9 (independent live re-read of row id=11 — guard against false-green #5) → po MD-EXIT + user verbal G9 sign-off. Goal STILL ARMED until user confirms (income labels now clean on live; segment ✅; balance ✅ non-regress; income values ✅ non-regress).
