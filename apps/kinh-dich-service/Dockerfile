@@ -32,4 +32,7 @@ COPY --from=builder /app/api /app/api
 EXPOSE 5005
 ENV PORT=5005
 
+ARG GIT_SHA=unknown
+LABEL vn.market.git_sha=$GIT_SHA
+
 CMD ["/app/server"]

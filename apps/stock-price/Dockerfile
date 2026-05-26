@@ -39,4 +39,7 @@ ENV PORT=5000
 ENV DB_PATH=/app/data/market.db
 ENV STOCK_PRICE_DB_PATH=/app/data/stock_price.db
 
+ARG GIT_SHA=unknown
+LABEL vn.market.git_sha=$GIT_SHA
+
 ENTRYPOINT ["/app/stock-price"]

@@ -38,4 +38,7 @@ COPY package.json tsconfig.json ./
 EXPOSE 5008
 ENV PORT=5008
 
+ARG GIT_SHA=unknown
+LABEL vn.market.git_sha=$GIT_SHA
+
 CMD ["bun", "run", "src/index.ts"]

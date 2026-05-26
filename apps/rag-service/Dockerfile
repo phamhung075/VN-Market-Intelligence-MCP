@@ -70,4 +70,7 @@ EXPOSE 5002
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5002/health || exit 1
 
+ARG GIT_SHA=unknown
+LABEL vn.market.git_sha=$GIT_SHA
+
 CMD ["python3", "main.py"]

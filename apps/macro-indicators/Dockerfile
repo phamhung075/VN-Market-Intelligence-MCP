@@ -33,4 +33,7 @@ EXPOSE 5004
 
 ENV PORT=5004
 
+ARG GIT_SHA=unknown
+LABEL vn.market.git_sha=$GIT_SHA
+
 ENTRYPOINT ["/app/server"]

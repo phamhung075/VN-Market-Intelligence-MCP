@@ -40,4 +40,7 @@ COPY --from=build /app/package.json ./package.json
 
 EXPOSE 3001
 
+ARG GIT_SHA=unknown
+LABEL vn.market.git_sha=$GIT_SHA
+
 CMD ["node_modules/.bin/remix-serve", "./build/server/index.js"]

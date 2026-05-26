@@ -21,4 +21,7 @@ COPY --from=builder /app/gateway /app/gateway
 
 EXPOSE 4000
 
+ARG GIT_SHA=unknown
+LABEL vn.market.git_sha=$GIT_SHA
+
 ENTRYPOINT ["/app/gateway"]

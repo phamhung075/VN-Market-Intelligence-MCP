@@ -31,4 +31,7 @@ RUN mkdir -p /app/data
 
 EXPOSE 5003
 
+ARG GIT_SHA=unknown
+LABEL vn.market.git_sha=$GIT_SHA
+
 ENTRYPOINT ["/app/server"]
