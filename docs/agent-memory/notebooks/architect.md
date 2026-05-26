@@ -1,8 +1,56 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 14:00 UTC | **Sprint:** BCTC-MD-TABLE / P2-FE-PLAN
+**Last updated:** 2026-05-26 13:12 UTC | **Sprint:** P2-H / macro-frontend-contract-ruling
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## MACRO-FRONTEND-CONTRACT-RULING — P2-H unblock (2026-05-26T13:12Z) — RULING ISSUED
+
+**Task:** Contract ruling for POST /macro/snapshot `signals` field. P2-H BLOCKED by `snapshot.signals.map is not a function` (ops incident signal 20260526T150702Z, commit d413b4e7).
+
+**Evidence gathered:**
+- `apps/macro-indicators/pkg/application/dtos.go`: `SignalResult` Go struct → JSON keyed-object with 6 named fields. This is the sole DTO. No array path exists.
+- `apps/macro-indicators/pkg/interface/http/router_test.go`: snapshot body shape NOT covered (nil useCase, no TestSnapshotBody). The keyed-object shape is unchallenged by tests but correct per DTO.
+- `apps/macro-indicators/pkg/application/usecases.go`: Execute() constructs `SignalResult{...}` at every call. Keyed-object is intentional design from Phase-2 Go rewrite (commit f85ad1d9, CLOSED pilot).
+- `apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts`: raw JSON.stringify passthrough. No structure applied to signals. Cowork agents read text.
+- `apps/mcp-server/src/infrastructure/microservices/clients.ts:226`: `raw.signals ?? []` stores the object as-is. `macroIndicatorRefreshJob` never reads signals. No mcp-server code iterates signals.
+- Frontend is the lone broken consumer (MacroSignalPanel `.map()` line 705, InfoSourcePanel `.length`/`.sort()` lines 1067-1084, domain type `MacroSignal[]` line 132).
+
+**Ruling:** Keyed-object is canonical. Frontend adapts.
+
+**Fix owner:** dev-frontend (3 files: domain/market.ts, routes/dashboard.analysis.tsx, __tests__/1934-macro-panel.test.ts). No macro rebuild needed. Frontend rebuild + ops P2-H re-run required.
+
+**Risk flags:** R-HIGH: no snapshot body contract test in macro service. R-MEDIUM: mcp-server clients.ts signals typed as array (latent). R-LOW: ARCHITECTURE.md shows macro as TS/Bun (Go drift).
+
+**Files authored:**
+1. `docs/architecture-briefs/2026-05-26-macro-snapshot-signals-contract-ruling.md` (NEW)
+2. `docs/signals/architect-macro-frontend-contract-ruling-20260526T131241Z.json` (NEW)
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** po/dev-team — read routing signal, dispatch dev-frontend for the 3-file fix, then ops for frontend container rebuild + P2-H Playwright re-run.
+
+---
+
+## MD-EXTRACT-7 — Dense Income Statement Reconstruction (2026-05-26T09:16Z) — DESIGN COMPLETE
+
+**Task:** MD-EXTRACT-7. Follow-up to MD-EXTRACT-6 which PASSED AC-6-SEG (segment report diagonal defeated) but FAILED AC-6-INC (income statement table[8] garbled in three simultaneous modes).
+
+**Three failure modes diagnosed from LIVE-VERIFY-6:**
+1. Label interleaving — `LABEL_BAND_FACTOR=1.5×h_med=30px` spans 1.5 physical rows on 20px-pitch dense income statement page. Fix: `effective_band = DENSE_LABEL_PITCH_FACTOR × label_pitch = 0.45 × 20 = 9px` derived from per-page ordinal row pitch.
+2. Dual code columns merged — Mã số + Thuyết minh small-int tokens create spurious x-anchors. Fix: `_split_number_tokens_by_zone()` excludes label-zone small-int tokens from anchor detection when `len(initial_anchors) > N_EXPECTED_MAX_VALUE_COLS=6`. AC-0: purely geometric (left < leftmost_value_anchor - 2×w_med).
+3. Dense multi-gap value scramble — sparse period columns with many empty rows use unreliable local_pitch. Fix: `prefer_ref_pitch=True` for columns with <6 tokens in `_insert_skip_slots`.
+
+**Mandatory diagnostic (STEP 1):** `diagnostic_md7.py` — 5 dumps (anchors, per-col token counts, PRE-label grid, small-int classification, interpretation gates). Diagnostic confirms root cause before any code. Full script + interpretation table in brief §3.
+
+**Hand-traceable fixture (§7.1/§7.2):** 23 tokens, 4 rows, col-1 row-1 absent (dense-multi-gap). Full stage trace with 8 assertions — main terminal must verify by hand before dispatching dev.
+
+**Files:** brief §MD-EXTRACT-7 (architecture-briefs), handoff §[Architect] MD-EXTRACT-7 (TASK_BCTC-MD-TABLE.md), this notebook.
+
+**Risk flags:** R-HIGH: diagnostic may show anchors ≤6 → zone split does not trigger → Fix path D only (label band). R-HIGH: DENSE_COL_THRESHOLD=6 must not fire on segment report (col counts ≥7 → safe). R-MEDIUM: code_note_tokens appended to text pool may grab wrong row (mitigated by 9px band from label_pitch). R-LOW: zone split fires on segment report → zero label-zone tokens found → no change.
+
+**Next actor:** main-terminal — re-traces §7.2 dense-fixture proof by hand (8 assertions), then dispatches dev-pdf-extractor MD-EXTRACT-7.
+
+---
 
 ## P2-FE-PLAN — frontend Phase-2 task plan (2026-05-26T14:00Z) — DESIGN COMPLETE
 
