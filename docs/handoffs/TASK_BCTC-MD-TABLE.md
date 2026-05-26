@@ -1252,3 +1252,46 @@ Independently hand-traced §7.2 end-to-end (every stage A2 → C6-pre → C6 →
 **VERDICT: design APPROVED. Dispatching dev-pdf-extractor MD-EXTRACT-7** (diagnostic STEP-1 mandatory first; AC-7-FIX must use corrected counts 15/7/24; AC-3F non-regression; leave files UNSTAGED).
 
 **NEXT: dev-pdf-extractor** — run `diagnostic_md7.py` on FPT page 8 FIRST, report 5 dumps; only then implement per §3–§11 with corrected fixture counts. Then main-terminal verify diagnostic + re-run tests.
+
+---
+
+## [Main-Terminal] MD-EXTRACT-7 AC-7-DIAG RESULT + GATE DECISION → ESCALATE TO ARCHITECT (2026-05-26)
+
+dev-pdf-extractor ran `diagnostic_md7.py` (diagnostic-only, zero code written) on the LIVE FPT income statement (physical page 8, "BÁO CÁO KẾT QUẢ HOẠT ĐỘNG KINH DOANH HỢP NHẤT"; the body's first code token `01` at left=960 top=495 matches the MD-EXTRACT-6 DIAG substrate). **The diagnostic CONTRADICTS the design's central assumption — gate decision: design REVISION required before any implementation.**
+
+### Live dumps (the trustworthy substrate — captured here so architect need not re-OCR)
+
+`h_med=18px, w_med=166px`.
+
+**DUMP 1 — anchors: count = 6**, x = `[258.1, 959.8, 1330.5, 1642.0, 1916.0, 2207.0]`.
+
+**DUMP 2 — per-column token class composition:**
+- col[0] @258 → 12 tokens, **codes=12 / values=0** (pure "Mã số" line-code column: 10,11,12,…,20)
+- col[1] @959 → 29 tokens, **codes=29 / values=0** (pure "Thuyết minh" note + code column: 01,02,…,70,71)
+- col[2] @1330 → 29 tokens, codes=2 / **values=27** (value column)
+- col[3] @1642 → 29 tokens, codes=3 / **values=26**
+- col[4] @1916 → 19 tokens, codes=2 / **values=17**
+- col[5] @2207 → 22 tokens, codes=2 / **values=20**
+
+So the 6 anchors = **2 pure-code columns + 4 value columns.** The two code columns are CORRECTLY separated (258 vs 959, 700px apart) — codes are NOT leaking into value buckets. Value-column density is unequal: 27/26/17/20.
+
+**DUMP 3 — PRE-label grid (34 rows total):** rows 0-1 are HEADER GARBAGE — `row[0] y_med=252 = ['10','01','01','12','01','01']`, `row[1] y_med=217 = [' ',' ','31',' ','31','12']` (page section number + date-header tokens from top 135-326). Real data starts ~row[5] (top≈495). Value mis-assignment visible in data rows (e.g. a 70.2T value landing one column left of where its left-edge implies).
+
+**DUMP 4 — 50 code-class tokens:** 9 in header/date band (top<400, left scattered 282…2123); 41 in data band (top≥495) in two clean clusters left≈256-282 (Mã số) and left≈957-1049 (Thuyết minh). Value tokens all have left ≥ 1182. Code/value zones are cleanly separable geometrically.
+
+**DUMP 5 — gates:** anchor count 6 = "plausible" (so the `>6` trigger does NOT fire); value-column variance low (1.59 across the 4 value cols); grid 34 rows.
+
+### Why the design as-written will NOT work on live (gate findings)
+
+1. **Fix-path-A is a DEAD BRANCH.** Trigger `len(initial_anchors) > N_EXPECTED_MAX_VALUE_COLS(6)` evaluates FALSE (count == 6). The design assumed dual code columns INFLATE anchors above 6; live Tesseract instead packs them into exactly 2 of 6 anchors. The dual-code-column exclusion never runs.
+2. **NEW unaddressed root cause: header/date pollution.** ~9 header small-int tokens (top<400) are ingested into anchor detection + ordinal grid → phantom top grid rows (DUMP 3 rows 0-1) and possible anchor shift. No design element excludes them.
+3. **Fix-path-D (label band) is NOT needed and must be DROPPED.** Live row pitch ≈ 35px (495→530→567, Δ≈35-37) — NOT the assumed tight ~20px. Band = 1.5×18 = 27px < 35px → no over-reach. The LIVE-VERIFY-6 "label interleaving" was a SYMPTOM of header pollution + value mis-assignment, not band over-reach. Do not change what isn't broken.
+4. **Value-anchor offset ~150px:** detected value anchors `[1330,1642,1916,2207]` sit ~150px RIGHT of actual value-token left-edges `[1182,1477,1768,2061]` → boundary mis-assignment. Unexplained by the design (anchor metric left-vs-centroid? header-token contamination of the cluster?).
+5. **Fix-path-C (dense-multi-gap ref_pitch) IS confirmed needed** (value cols 27/26/17/20 — the 17 & 20 cols need ref_pitch skip alignment to stay rank-aligned with the 27/26 cols).
+6. **The §7.1 binding fixture is UNREPRESENTATIVE of live** (4 anchors / 20px pitch / no header tokens) vs live (6 anchors = 2 code + 4 value / 35px pitch / header pollution / unequal value-col density). Coding the fix against this fixture risks the SAME false-green that bit BT3 (spike-vs-poppler) and MD-EXTRACT-5 D4b (synthetic-vs-live x-anchors). **The fixture MUST be regenerated to mirror the live regime.**
+
+### GATE DECISION
+
+Per AC-7-DIAG ("main terminal approves root cause before any fix code") + recurring-bug-escalation rule: the confirmed root cause **differs from the design's assumption**, so the design is **NOT approved for implementation**. Escalating to **architect MD-EXTRACT-7-REV** to revise. dev wrote NO code; working tree clean.
+
+**NEXT: architect (MD-EXTRACT-7-REV)** — revise §MD-EXTRACT-7 using the live dumps above. Must resolve: (1) header/date token exclusion (positional/structural cutoff above first value-bearing row — AC-0 geometric); (2) dual-code-column handling when anchor count == 6 (replace the `>6` count-gate with a PRESENCE-based pure-code-column detector — a bucket that is ≥X% code-class AND 0 value-class — AC-0 safe, non-regressing segment report which has no pure-code columns); (3) the ~150px value-anchor offset (root-cause the anchor metric); (4) KEEP Fix-C dense-multi-gap; (5) DROP Fix-D label-band (not broken on live); (6) REGENERATE the binding fixture to mirror live (6 anchors: 2 pure-code + 4 value, header tokens present to be excluded, 35px pitch, unequal value-col density 27/26/17/20). Hand-traceable proof required; main-terminal will re-trace before dispatching dev.
