@@ -1,0 +1,43 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "batch-close",
+  "id": "po-20260526T180433Z",
+  "parent": "MCPZONE-BATCH-1",
+  "timestamp": "2026-05-26T18:04:33.000Z",
+  "verdict": "BATCH-CLOSED",
+  "closed": true,
+  "not_a_pilot": true,
+  "pilot_status_untouched": true,
+  "wip": "0/2",
+  "tasks_closed": ["MZH-1", "MZH-2", "NEWS-INGEST-2b"],
+  "close_gate": "RESTART != REBUILD — Steps 1+2 PASSED (code + ops live deploy); Step 3 governance close-out (this signal)",
+  "commits": {
+    "code": "2d4f71d9",
+    "doc": "7e34c2b7",
+    "news_ingest_2b": "e1e08a29",
+    "news_ingest_2_cursor": "9711ca72"
+  },
+  "evidence_chain": {
+    "dev_mcp_server_code": "2d4f71d9 (MZH-1 DB-verified rows_stored via SELECT COUNT after DELETE+INSERT txn + MZH-2 prod-db guard) + 7e34c2b7 (doc clarification). Baseline IMPROVED: full suite 9441 pass / 354 fail / 35 skip (pre-change 9434/360/35) — +7 passes, -6 pre-existing fails, 0 NEW failures, TS clean.",
+    "news_ingest_2b": "e1e08a29 — newsFetchLiveHandler.ts + NF-LD-2 19 tests already surface cafef/vnexpress/vneconomy; reuters/bloomberg non-regression confirmed; needed no further handler change in this batch.",
+    "ops_mcpzone_deploy_1": "PASS (G9 arbiter, live): image build-time 2026-05-26T18:02:43Z > commit-time 18:00:37Z (proves recreate, not restart); /health 200; toolCount 146/146 (SSOT match); uptime fresh. MZH-1 live proof: handler returned rows_stored:1 verified against direct market.db COUNT, write-wedge gone. Dead-upstream FA-FIX timeouts non-regressed. All 8 containers healthy; Docker mem 2.6GB/8GB."
+  },
+  "done_condition_assessment": {
+    "MZH-1": "MET — pushBctcTableHandler.ts now returns SELECT COUNT(*) FROM bctc_table_rows WHERE report_id=? as rows_stored (not rows.length input echo); ops live proof rows_stored:1 == direct DB COUNT, the write-wedge false-success class is eliminated.",
+    "MZH-2": "MET — prod-db test-isolation guard in 2d4f71d9; tests cannot write to /app/data/market.db; no stray Test Row can reach a live table; rode the batch rebuild (test-only, no own rebuild).",
+    "NEWS-INGEST-2b": "MET — VN providers (cafef/vnexpress/vneconomy) surfaced in GET /api/news-fetch/live; reuters/bloomberg non-regression; dedup write path untouched; NF-LD-2 19/19 GREEN; ops confirmed live VN-provider surface."
+  },
+  "g9_arbiter_ruling": "ops MCPZONE-DEPLOY-1 live-recheck IS the G9 arbiter per feedback_trust_verification_is_system_job (NOT user visual sign-off). RESTART != REBUILD close-gate cleared by build-time > commit-time + toolCount 146/146 + /health 200 + fresh uptime. The MZH-1 live rows_stored:1 == direct DB COUNT is the hard truth-proof that the input-echo false-success is gone. ops PASS accepted as final.",
+  "follow_ons": {
+    "NEWS-INGEST-3": "NEXT-READY / UNBLOCKED (qa). Both NEWS-INGEST-2 (cursor 9711ca72, deployed) and NEWS-INGEST-2b (e1e08a29, live VN surface confirmed) landed → QA can gate both. NOT dispatched now — next triage tick picks it up.",
+    "NEWS-INGEST-LIVE": "ops final truth gate for NEWS-INGEST-2 (real VPS cycle inserts >0 NEW distinct VN rows + authoritative rag_analyses count) — separate from this batch, still open."
+  },
+  "residuals": [
+    "NEWS-INGEST-3 (qa) is the next-ready follow-on — gates the cursor deterministically + the VN-panel visibility; carried in TASKS.md backlog.",
+    "NEWS-INGEST-LIVE (ops) — final live-proof of the cursor fix on a real VPS cycle remains open (not part of MCPZONE-BATCH-1).",
+    "NEWS-INGEST-2c (developer, UX): dashboard source-selector still lists only reuters/bloomberg/all — cosmetic per-provider UI filter, NOT a correctness blocker (source=all already returns VN rows). Backlog only."
+  ],
+  "staging_note": "All edits left UNSTAGED. Dispatcher commits under commit-mutex (commit-mutex enum-drift: subagents cannot acquire). Files: docs/TASKS.md, docs/signals/po-20260526T180433Z.json, docs/agent-memory/notebooks/po.md.",
+  "untouched": "No pilot-status-*.json touched. Pre-existing dirty working tree (.claude/agents/*, apps/api-gateway/sandbox/traces/*, etc.) NOT touched — not this lane."
+}
