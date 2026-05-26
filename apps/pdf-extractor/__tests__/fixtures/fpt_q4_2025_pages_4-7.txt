@@ -1,98 +1,162 @@
+# Fixture: poppler OCR, e71f845d, FPT Q4 2025 balance sheet pages 4-7
+# Generated: 2026-05-26 via docker exec + PdfOcrAdapter.ocr_pages() (pdf2image 200DPI, pytesseract vie+eng --psm 6)
+# DO NOT replace with PyMuPDF/spike text — substrate mismatch causes false-green
 --- PAGE 4 ---
 CÔNG TY CỔ PHẦN FPT
 Số 10 phố Phạm Văn Bạch Báo cáo tài chính hợp nhất
 Phường Cầu Giấy Cho kỳ hoạt động từ ngày 01 tháng 01 năm 2025
 Thành phố Hà Nội, Việt Nam đến ngày 31 tháng 12 năm 2025
-BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT
-Tại ngày 31 thang 12 năm 2025
+A x P a.
+BANG CÂN ĐỐI KẾ TOÁN HỢP NHẬT
+Tại ngày 31 tháng 12 năm 2025
 MẪU SỐ B 01-DN/HN
 Đơn vị: VND
-ach Thuyết
-TÀI SẲN Mã số a 31/12/2025 31/12/2024
-A. TÀI SẢN NGAN HAN 100 58.102.970.741.619 45.535.942.846.453
-I. Tiền và các khoản tương đương tiền 110 5 10.540.181.640.920 9.315.440.438.884
+ne? ~.„ Thuyết
+TÀI SAN Mã số minh 31/12/2025 31/12/2024
+A. TÀI SẲN NGAN HẠN 100 58.102.970.741.619 45.535.942.846.453
+I. . Tiền và các khoản tương đương tiền 110 5 10.540.181.640.920 9.315.440.438.884
 1. Tiền 111 8.084.826.991.114 6.725.619.929.289
 2. Các khoản tương đương tiền 112 2.455.354.649.806 2.589.820.509.595
-It. Các khoản đầu tư tài chính ngắn hạn 120 6 29.612.986.737.440 21.785.213.686.808
+II. Các khoản đầu tư tài chính ngắn hạn 120 6 29.612.986.737.440 21.785.213.686.808
 1. Đầu tư nắm giữ đến ngày đáo hạn 123 29.612.986.737.440 21.785.213.686.808
 Ill, Các khoản phải thư ngắn hạn 130 14.400.800.569.076 11.381.523.992.803
-1. Phải thu ngắn hạn của khách hàng 131 7 12.733.504.688.522 10.537.019.113.380 i
+1. Phải thu ngắn han của khách hàng 131 7 12.733.504.688.522 10.537.019.113.380 ;
 2. Trả trước cho người bán ngắn hạn 132 915.176.652.285 610.379.845.664
-Sabb lay theo tien dekethgach 134 200.405.269.967 136.097.256.629
-hợp đồng xây dựng \
+Sabb lại thee ten đ©ÌEể hoạch 134 200.405.269.967 136.097.256.629 :
+hợp đồng xây dựng :
 4. Phải thu về cho vay ngắn hạn 135 9.195.910.819 9.808.117.590
 5, Phải thư ngắn hạn khác 136 8 1.128.684.791.757 707.751.585.399
-6. Dự phòng phải thu ngắn hạn khó đòi 137 9 (586.166.744.274) (619.531.925.859)
-Iv. Hang tồn kho 140 10 2.167.188.682.919 1.856.756.949.030
+6. Dự phòng phải thu ngắn hạn khó đời 137 €) (586.166.744.274) (619.531.925.859)
+Iv. Hàng tồn kho 140 10 2.167.188.682.919 1.856.756.949.030
 1. Hàng tồn kho 141 2.250.812.490.757 1.990.224.486.513
 2. Dự phòng giảm giá hàng tồn kho 149 (83.623.807.838) (133.467.537.483)
 V. Tài sản ngắn hạn khác 150 1.381.813.111.264 1.197.007.778.928
-1. Chi phí trả trước ngắn han 151 14 641.070.240.596 479.707.218.558
-2. Thuế giá trị gia tăng được khấu trừ 152 609.517.465.104 648.697.117.785 |
+1. Chí phí trả trước ngắn hạn 151 14 641.070.240.596 479.707.218.558
+2. Thuế giá trị gia tăng được khấu trừ 152 609.517.465.104 648.697.117.785
 3. Thuế và các khoản khác phải thu Nhà nước 153 19 131.225.405.564 68.603.442.585
 2
+1
 |
+
 --- PAGE 5 ---
-B. TÀI SẢN DÀI HẠN 200 29.986.651.038.243 26.464.052.832.167
-I. Các khoản phải thu dài hạn 210 564.342.065.270 331.646.166.008
-2. Phải thu về cho vay dài hạn 215 5.278.733.014 2.509.722.351
-4. Phải thu dài hạn khác 216 611.435.814.893 381.508.926.294
-5. Dự phòng phải thu dài hạn khó đòi 219 (52.372.482.637) (52.372.482.637)
-II. Tài sản cố định 220 17.330.033.606.586 14.816.131.186.204
+CÔNG TY CỔ PHẦN FPT
+Số 10 phố Phạm Van Bạch Báo cáo tài chính hợp nhất
+Phường Cầu Giấy Cho kỳ hoạt động từ ngày 01 tháng 01 năm 2025
+Thành phố Hà Nội, Việt Nam _ đến ngày 31 tháng 12 näm 2025
+BANG CÂN ĐỐI KẾ TOÁN HỢP NHẤT (tiếp theo)
+Tai ngày 31 thang 12 năm 2025
+MẪU SỐ B 01-DN/HN
+Đơn vị: VND
+a ch . Thuyết
+TÀI SAN Mã số st 31/12/2025 31/12/2024
+minh
+B. TÀI SẢN DAI HẠN 200 29.986.651.038.243 26.464.052.832.167
+Il. Các khoản phải thu dài hạn 210 564.342.065.270 331.646.166.008
+1. Phải thu về cho vay dài hạn 215 5.278.733.014 2.509.722.351
+2. Phải thu dài hạn khác 216 8 611.435.814.893 381.508.926.294
+3. Dự phòng phải thu dài hạn khó đòi 219 (52.372.482.637) (52.372.482.637)
+Il. Tài sản cố định 220 17.330.033.606.586 14.816.131.186.204
 1. Tài sản cố định hữu hình 221 11 15.385.816.846.287 12.774.567.961.718
-- Nguyên giá 222 29.148.692.599.137 24.457.733.666.511
-- Giá trị hao mòn lũy kế 223 (13.762.875.752.850) (11.683.165.704.793)
+- Nguyên giá 222 29.148.692.599.137 24.457.733.666.511 1
+- Giá trị hao mòn lũy kết 223 (13.762.875.752.850) (11.683.165.704. 793)
 2. Tài sản cố định thuê tài chính 224 1.277.212.606 2.042.708.364
+- Nguyên giá 225 5.871.006.196 5.716.034.788 |
+- Giá trị hao mòn luỹ kế 226 (4.593.793.590) (3.673.326.424) ,
 3. Tài sản cố định vô hình 227 12 1.942.939.547.693 2.039.520.516.122
 - Nguyên giá 228 3.868.884.070.908 3.656.302.027.788
 - Giá trị hao mòn lũy kế 229 (1.925.944.523.215) (1.616.781.511.666)
-III. Tài sản dở dang dài hạn 240 1.604.915.957.419 2.559.766.724.411
-2. Chi phí xây dựng cơ bản dở dang 242 1.604.915.957.419 2.559.766.724.411
+II. Tài sản dở dang dài hạn 240 1.604.915.957.419 2.559.766.724.411
+1. Chi phí xây dựng cơ ban dé dang 242 13 1.604.915.957.419 2.559.766.724.411
 IV. Các khoản đầu tư tài chính dài hạn 250 4.737.863.994.182 3.318.095.237.260
-2. Đầu tư vào công ty liên doanh liên kết 252 3.581.128.517.425 2.281.222.436.752
-3. Đầu tư góp vốn vào đơn vị khác 253 3.823.762.975.906 3.393.737.969.842
-4. Dự phòng đầu tư tài chính dài hạn 254 (2.667.027.499.149) (2.357.065.169.334)
-V. Tài sản dài hạn khác 260 5.749.495.414.786 5.438.413.518.284
-1. Chi phí trả trước dài hạn 261 4.200.230.383.066 3.765.187.625.417
-2. Tài sản thuế thu nhập hoãn lại 262 533.534.765.559 575.767.686.189
-8. Lợi thế thương mại 269 1.015.730.266.161 1.097.458.206.678
-TỔNG CỘNG TÀI SẢN 270 88.089.621.779.862 71.999.995.678.620
+1. Đầu tư vào công ty liên doanh, liên kết 252 17 3.581.128.517.425 2.281.222.436.752
+2. Đầu tư góp vốn vào đơn vị khác 253 6 3.823.762.975.906 3.393.737.969.842
+3. Dự phòng đầu tư tài chính dài hạn 254 (2.667.027.499.149) (2.357.065.169.334)
+4. Đầu tư nắm giữ đến ngày đáo hạn 255 - 200.000.000
+V. Tài sản dai han khác 260 5.749.495.414.786 5.438.413.518.284
+1. Chi phí trả trước dài hạn 261 14 4.200.230.383.066 3.765.187.625.417
+2. Tài sản thuế thu nhập hoẩn lại 262 533.534.765.559 575.767.686.189
+3. Lợi thế thương mai 269 15 1.015.730.266.161 1.097.458.206.678
+TONG CỘNG TÀI SAN {270 = 100 + 200) 270 88.089.621.779.862 71.999.995.678.620
+|
+3 |
+|
+
 --- PAGE 6 ---
-NGUỒN VỐN
-A. NỢ PHẢI TRẢ 300 44.338.155.487.272 36.272.455.573.820
-I. Nợ ngắn hạn 310 41.552.785.100.161 34.836.184.067.740
-1. Phải trả người bán ngắn hạn 311 3.837.081.438.126 4.423.912.840.298
-2. Người mua trả tiền trước ngắn hạn 312 761.332.738.428 562.066.755.666
-3. Thuế và các khoản phải nộp Nhà nước 313 2.192.156.678.455 2.298.821.801.748
+CÔNG TY CỔ PHẦN FPT
+Số 10 phố Phạm Văn Bạch Báo cáo tài chính hợp nhất
+Phường Cầu Giấy Cho kỳ hoạt động từ ngày 01 tháng 01 năm 2025
+Thành phố Hà Nội, Việt Nam _ đến ngày 31 tháng 12 năm 2025
+BANG CÂN ĐỐI KẾ TOÁN HỢP NHẤT (tiếp theo)
+Tai ngày 31 thang 12 năm 2025
+MẪU SỐ B 01-DN/HN
+Đơn vị: VND
+An. „ Thuyết
+NGUỒN VỐN Mã số TẾ 31/12/2025 31/12/2024
+Cc. NỢPHẢI TRẢ 300 44,338.155.487.272 36.272.455.573.820
+I. Ne ngan hạn 310 41.552.785.100.161 34.836.184.067.740
+1. Phải trả người bán ngắn hạn 311 18 3.837.081.438.126 4.423.912.840.298
+2. Người mua trả tiền trước ngắn han 312 761.332.738.428 562.066.755.666
+3. Thuế và các khoản phải nộp Nhà nước 313 19 2.192.156.678.455 2.298.821.801.748
 4. Phải trả người lao động 314 5.678.410.841.285 4.341.013.546.853
-5. Chi phí phải trả ngắn hạn 315 1.843.426.377.372 1.241.089.122.260
-7. Phải thu theo tiến độ kế hoạch hợp đồng xây dựng 317 85.650.109.236 92.738.882.375
-8. Doanh thu chưa thực hiện ngắn hạn 318 4.230.708.251.601 4.224.649.366.399
-9. Phải trả ngắn hạn khác 319 1.014.673.786.632 874.015.837.328
-10. Vay và nợ thuê tài chính ngắn hạn 320 19.169.697.497.955 14.446.238.451.323
-11. Dự phòng phải trả ngắn hạn 321 578.298.384.069 496.600.145.127
-12. Quỹ khen thưởng phúc lợi 322 2.161.348.997.002 1.835.037.318.363
-II. Nợ dài hạn 330 2.785.370.387.111 1.436.271.506.080
-6. Doanh thu chưa thực hiện dài hạn 336 127.529.003.367 131.344.534.204
-7. Phải trả dài hạn khác 337 149.213.186.822 183.788.442.785
-8. Vay và nợ thuê tài chính dài hạn 338 1.903.789.988.184 501.115.537.075
-11. Thuế thu nhập hoãn lại phải trả 341 198.787.701.984 356.966.680.614
-12. Dự phòng phải trả dài hạn 342 405.858.410.471 262.864.215.119
-13. Quỹ phát triển khoa học và công nghệ 343 192.096.283 192.096.283
+5. Chi phí phải trả ngắn hạn 315 20 1.843.426.377.372 1.241.089.122.260 s
+6. LH RE" aD GED USUTEETO 317 85.650.109.236 92.738.882.375
+hợp đồng xây dựng
+7. Doanh thu chưa thực hiện ngắn hạn 318 21 4.230.708.251.601 4.224.649.366.399
+8. Phải trả ngắn hạn khác 319 22 1.014.673.786.632 874.015.837.328 }
+9. Vay và nợ thuê tai chính ngắn hạn 320 23 19.169.697.497.955 14.446.238.451.323 k
+10. Dự phòng phải trả ngắn hạn 321 578.298.384.069 496.600.145.127
+11. Quỹ khen thưởng, phúc lợi 322 2.161.348.997.002 1.835.037.318.363
+I. No dài hạn 330 2.785.370.387.111 1.436.271.506.080
+1. Doanh thu chưa thực hiện dài hạn 336 21 127.529.003.367 131.344.534.204
+2. Phải trả dài hạn khác 337 22 149.213.186.822 183.788.442.785
+3. Vay và nợ thuê tài chính dài hạn 338 23 1.903.789.988.184 501.115.537.075
+4. Thuế thu nhập hoãn lại phải trả 341 198.787.701.984 356.966.680.614
+5. Dự phòng phải trả dài hạn 342 405.858.410.471 262.864.215.119
+6. Quỹ phát triển khoa học và công nghệ 343 182.096.283 192.096.283
+|
+|
+' |
+L
+ị
+
 --- PAGE 7 ---
+CÔNG TY CỔ PHẦN FPT
+Số 10 phố Phạm Văn Bạch Báo cáo tài chính hợp nhất
+Phường Cầu Giấy Cho kỳ hoạt động từ ngày 01 tháng 01 nam 2025
+Thành phố Hà Nội, Việt Nam _ đến ngày 31 tháng 12 nằm 2025
+BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT (tiếp theo)
+Tại ngày 31 tháng 12 nằm 2025
+MẪU SỐ B 01-DN/HN
+Đơn vị: VND
+NGUỒN VỐN Mã số + 31/12/2025 31/12/2024
 D. VỐN CHỦ SỞ HỮU 400 43.751.466.292.590 35.727.540.104.800
 I. Vốn chủ sở hữu 410 24 43.748.716.292.590 35.724.790.104.800
 1. Vốn góp của chủ sở hữu 411 17.035.071.210.000 14.710.691.830.000
-2. Thặng dư vốn cổ phần 412 49.713.213.411 49.713.213.411
-4. Vốn khác của chủ sở hữu 414 3.499.547.369.952 1.929.012.703.454
-6. Chênh lệch tỷ giá hối đoái 417 (70.194.908.319) (49.485.560.860)
-7. Quỹ đầu tư phát triển 418 1.556.932.891.952 2.033.289.141.535
-8. Quỹ khác thuộc vốn chủ sở hữu 420 88.263.628.887 87.730.484.825
-9. Lợi nhuận sau thuế chưa phân phối 421 14.324.284.500.434 11.030.528.671.431
-- LNST chưa phân phối lũy kế đến cuối kỳ trước 421a 7.399.799.985.311 5.458.228.109.134
-- Lợi nhuận sau thuế chưa phân phối kỳ này 421b 6.924.484.515.123 5.572.300.562.297
-2. Lợi ích cổ đông không kiểm soát 429 7.265.098.386.273 5.933.309.621.004
-E. Nguồn kinh phí và quỹ khác 430 2.750.000.000 2.750.000.000
-1. Nguồn kinh phí 431 2.750.000.000 2.750.000.000
-TONG CỘNG NGUON VỐN (440=300+400) 440 88.089.621.779.862 71.999.995.678.620
-Ngày 26 tháng 01 năm 2026
+- Cổ phiếu phổ thông có quyền biểu quyết 411q 17.035.071.210.000 14.710.691.830.000
+2. Thang dư vốn cổ phần 412 49.713.213.411 49.713.213.411
+3. Vốn khác của chủ sở hữu 414 3.499.547.369.952 1.929.012.703.454
+4. Chênh lậch tỷ giá hối đoái 417 (70.194.908.319) (49.485.560.860)
+5. Quỹ đầu tư phát triển 418 1.556,932.891.952 2.033.289.141.535
+6. Quỹ khác thuộc vốn chủ sở hữu 420 88.263.628.887 87.730.484.825
+7. Lợi nhuận sau thuế chưa phân phối 421 14.324.284.500.434 11.030.528.671.431
+_ tet Gane 2 EGUSDHEUA|DIEHGESE 4214 7.399.799.985.311 5.458.228.109.134 |
+cuối kỳ trước
+- Loi nhuận sau thuế chưa phân phối kỳ này — 421b 6.924.484.515.123 5.572.300.562.297 :
+8. Lợi ích cổ đông không kiểm soát 429 7.265.098.386.273 5.933.309.621.004
+II. Nguồn kinh phí và quỹ khác 430 2.750.000.000 2.750.000.000
+1, Nguồn kinh phí 431 2.750.000.000 2.750.000.000
+TỔNG CỘNG NGUỒN VỐN (440=300+400] 440 88.089.621.779.862 71.999.995.678.620
+re
+| a,
+gUẶu OO by se.
+VÀ) NY a,
+LS) a 0 \.
+YO - S3.) 7
+: \:| /PTP) 7), y2
+uy N : yy
+ụ So i ide
+AN \\ N N * = it ;
+Lê Varetrung Mioàng Hữu Chiến "SoNgayen Thế Phương
+Người lập Kế toán trưởng Phó Tổng giám đốc
+Hà Nội, ngày 23 tháng 01 năm 2025
+5

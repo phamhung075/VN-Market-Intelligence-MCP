@@ -1,5 +1,5 @@
 """
-infrastructure/text_table_extractor.py — BT-3-A + BT3-FIX-2 + BT3-FIX4
+infrastructure/text_table_extractor.py — BT-3-A + BT3-FIX-2 + BT3-FIX4 + BT3-FIX5
 
 TEXT-path table assembler adapter.
 
@@ -26,6 +26,8 @@ Algorithm per page:
           Handled by _parse_lines_to_rows() using 4-pattern _try_parse_code_row().
           Example: FPT pages 5 and 7.
     4. Stitch multi-page sections (p4-7 pattern): list concatenation with global row_order.
+    5. Positional cutoff (BT3-FIX5 Ruling B): drop all rows after the last sentinel
+       code row (270/440 for balance sheets). Eliminates signature-block noise.
 
 BCTC summary codes (is_summary_row=1): {100, 200, 270, 300, 400, 440}.
 
@@ -42,18 +44,285 @@ BT3-FIX-2: Three-block layout fix (2026-05-25)
     missing from assembled rows → balance_pass=False → BT-5 gate blocked the push.
     Fix: _parse_three_block_layout() detects the "Mã số" header, collects codes in
     order, then collects current and prior values in order, and pairs them positionally.
+
+BT3-FIX5: Root-cause fix — substrate-mismatch (2026-05-26)
+    Root cause: FIX4 unit tests ran against PyMuPDF OCR fixture; live container uses
+    poppler (pdf2image). Diacritic output differs. Negative skip-list was calibrated
+    against PyMuPDF characters → missed on poppler substrate → 23 orphan rows live.
+
+    Four rulings implemented:
+    A. POSITIVE-KEEP: non-code else-branch now requires _is_recognized_section_header()
+       instead of alpha-3 heuristic. Garbled noise never matches → silently dropped.
+    B. POSITIONAL CUTOFF: _apply_positional_cutoff() drops everything after last 270/440.
+    C. DIACRITIC-INSENSITIVE: _norm() (NFD + strip Mn) applied to ALL string comparisons.
+    D. EMBEDDED-CODE recovery: _find_code_in_line() as Layout 5 fallback in
+       _try_parse_code_row() — scan-and-extract for 222/223/226/131/319/421b.
 """
 
 from __future__ import annotations
 
 import re
 import logging
+import unicodedata
 from typing import Dict, List, Optional
 
 from domain.primitives.vn_number_normalize.primitive import vn_number_normalize
 from domain.primitives.select_period_column.primitive import select_period_column
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# BT3-FIX5 Ruling C — Diacritic-insensitive normalization (module-level helper)
+# ---------------------------------------------------------------------------
+
+def _norm(s: str) -> str:
+    """
+    Diacritic-insensitive normalization: NFD decompose + strip combining marks + uppercase.
+
+    Used for ALL string comparisons in skip-lists and header recognition.
+    Makes the parser immune to poppler vs PyMuPDF diacritic variation.
+
+    Example:
+        _norm("BẢNG CÂN ĐỐI") == _norm("BANG CAN DOI")  # True
+        _norm("tại ngày")     == _norm("tai ngay")       # True
+
+    Special handling: Vietnamese "Đ" (U+0110, D with stroke) and "đ" (U+0111) are NOT
+    decomposed by NFD (they are standalone letters, not base+combining-mark). They must
+    be mapped explicitly to "D" before NFD normalization.
+
+    DDD layer: pure function (no I/O, no imports beyond unicodedata from stdlib).
+    Infrastructure concern (OCR substrate adaptation), not domain logic.
+    """
+    # Explicit replacement for Đ/đ (D-with-stroke — not NFD-decomposable)
+    s = s.replace("Đ", "D").replace("đ", "d")
+    return "".join(
+        c for c in unicodedata.normalize("NFD", s)
+        if unicodedata.category(c) != "Mn"
+    ).upper()
+
+
+# ---------------------------------------------------------------------------
+# BT3-FIX5 Ruling C — Module-level junk skip-list (normalized forms)
+# ---------------------------------------------------------------------------
+
+# Strings that identify junk/non-data lines in BCTC OCR output.
+# Applied via _norm(skip) in _norm(stripped) — diacritic-insensitive.
+# The negative skip-list is SECONDARY: only for structurally recognizable patterns
+# (company name, form number) that always start a page and have consistent tokens.
+# Primary noise filter is POSITIVE-KEEP (_is_recognized_section_header) + POSITIONAL CUTOFF.
+_JUNK_SKIP_KEYS: List[str] = [
+    # Company/address block
+    "công ty",          # company name: "CÔNG TY CỔ PHẦN FPT"
+    "phường",           # ward: "Phường Cầu Giấy"
+    "thành phố",        # city: "Thành phố Hà Nội"
+    "số 10",            # street address: "Số 10 phố Phạm Văn Bạch"
+    # Form-level noise (provably not item labels)
+    "mã số",            # "Mã số" column header line
+    "mẫu số",           # form number: "MẪU SỐ B 01-DN/HN"
+    "mau so",           # OCR-variant form number
+    # Signature-block keywords (also caught by positional cutoff but listed for defense-in-depth)
+    "người lập",        # signature: "Người lập"
+    "kế toán trưởng",   # signature: "Kế toán trưởng"
+    "phó tổng",         # signature: "Phó Tổng giám đốc"
+]
+
+
+# ---------------------------------------------------------------------------
+# BT3-FIX5 Ruling D — Embedded-code scanner (Layout 5)
+# ---------------------------------------------------------------------------
+
+# Regex: scan a line for a BCTC code token followed by VN-format value(s).
+# Used in _find_code_in_line() — the Layout 5 fallback in _try_parse_code_row().
+#
+# Structure of the pattern:
+#   (?<![.\d])            — not preceded by a digit OR a dot (avoids matching inside
+#                           large VN numbers like 7.399.799.985.311 where "311" follows ".")
+#   (\d{2,3}[a-z]?)       — code: 2-3 digits + optional lowercase letter suffix (421b)
+#   \s+                   — separator (one or more spaces)
+#   (?:\d{1,3}\s+)?       — optional note-ref: 1-3 digit integer followed by space
+#   (\(?\d[\d.,]+\)?)     — first value: positive or paren-negative VN number
+#   (?:\s+(\(?\d[\d.,\s]*\d\)?))?  — optional second value (prior period)
+#                            NOTE: \s inside allows for OCR space mid-number
+#   \s*.{0,3}\s*$         — allow up to 3 trailing chars: "1" (note ref), "}" "]" ";"
+#                            "i" (OCR artifact), ":" etc. — permissive tail
+_BCTC_CODE_SCAN_RE = re.compile(
+    r"(?<![.\d])"
+    r"(\d{2,3}[a-z]?)"
+    r"\s+"
+    r"(?:\d{1,3}\s+)?"
+    r"(\(?\d[\d.,]+\)?)"
+    r"(?:\s+(\(?\d[\d.,\s]*\d\)?))?"
+    r"\s*.{0,3}\s*$"
+)
+
+
+def _find_code_in_line(stripped: str) -> Optional[tuple]:
+    """
+    BT3-FIX5 Ruling D — Layout 5: scan-and-extract code finder.
+
+    Scan a stripped OCR line for a BCTC code token regardless of what precedes it
+    (the label portion). Returns (code, label, values_rest) or None.
+
+    Strategy:
+      1. Pre-process: remove OCR-artifact spaces inside parenthetical numbers,
+         e.g. "(11.683.165.704. 793)" → "(11.683.165.704.793)".
+         These occur when poppler inserts a space mid-number in the rasterized image.
+      2. Find all candidate code positions using _BCTC_CODE_SCAN_RE.
+      3. For each match: code is the (\\d{2,3}[a-z]?) group; everything before
+         the match start is the label; the value groups form values_rest.
+      4. Accept the FIRST match where:
+         (a) numeric part of code is in range [100, 999] (BCTC structural codes)
+             OR is a known letter-suffix form (e.g. "421b"),
+         (b) at least one value group was captured.
+
+    This function is called ONLY when Layouts 1-4 all fail. It does not modify or
+    replace the 4 existing layouts — it provides a fallback that is insensitive to
+    label content (handles diacritic-mangled labels that break regex boundaries).
+
+    Non-regression: Layout 5 is only reached when Layouts 1-4 return None, so
+    zero existing matches can be reduced.
+
+    False-positive guard: (?<![\\.\\d]) lookbehind prevents matching "311" inside
+    "7.399.799.985.311". code_int < 100 guard rejects 1-2 digit note-ref numbers.
+    """
+    # Pre-process: remove OCR-artifact spaces inside parenthetical numbers.
+    # Pattern: "(digits. digit)" where a space appears after a dot inside parens.
+    # Example: "(11.683.165.704. 793)" → "(11.683.165.704.793)"
+    # This is a poppler rendering artifact where the rasterizer breaks a number mid-word.
+    cleaned = re.sub(r"(\(\d[\d.]*)\.\s+(\d[\d.]*\))", r"\1.\2", stripped)
+
+    for m in _BCTC_CODE_SCAN_RE.finditer(cleaned):
+        code_str = m.group(1)
+        first_value = m.group(2)
+        if first_value is None:
+            continue
+
+        # Accept code if numeric part is in BCTC structural range [100, 999]
+        numeric_match = re.match(r"(\d{2,3})", code_str)
+        if numeric_match is None:
+            continue
+        code_int = int(numeric_match.group(1))
+        if code_int < 100:
+            continue  # 1-2 digit note-ref numbers — skip
+
+        label = cleaned[: m.start()].strip()
+        second_value = m.group(3) or ""
+        # Clean up the second value (may contain spaces from OCR artifact cleanup)
+        second_value = second_value.strip()
+        values_rest = first_value + (" " + second_value if second_value else "")
+
+        return (code_str, label, values_rest)
+
+    return None
+
+
+# ---------------------------------------------------------------------------
+# BT3-FIX5 Ruling A — Recognized section header gate
+# ---------------------------------------------------------------------------
+
+def _is_recognized_section_header(stripped: str) -> bool:
+    """
+    BT3-FIX5 Ruling A — POSITIVE-KEEP gate for non-code lines.
+
+    Return True ONLY if stripped is a recognized BCTC section-level header.
+    Uses diacritic-insensitive matching via _norm() so poppler OCR
+    ("BANG CAN DOI", partial diacritics) and PyMuPDF OCR (full diacritics) both match.
+
+    Recognized headers are structural section labels that appear in Vietnamese BCTC
+    balance sheets (and income/cash-flow statements) with consistent structural
+    tokens regardless of diacritic fidelity:
+      - "A.", "B.", "C.", "D.", "E." — section letters (short-form headers)
+      - "I.", "II.", "III.", "IV.", "V." — sub-section roman numerals
+
+    Design is deliberately NARROW — only matches structural section labels.
+    It does NOT attempt to match arbitrary Vietnamese section names by keyword.
+    Narrow gate = zero false-positives on garbled OCR noise.
+
+    Lines that are real data rows always carry a code and are handled by the
+    code-path first. The recognizer is only reached when no code was found.
+    """
+    if not stripped:
+        return False
+
+    normalized = _norm(stripped)
+
+    # Section-letter headers (e.g. "A. TAI SAN NGAN HAN", "D. VON CHU SO HUU")
+    if re.match(r"^[A-E]\.\s+[A-Z]", normalized):
+        return True
+
+    # Sub-section roman numeral headers (e.g. "I. Tien va cac khoan")
+    if re.match(r"^(I{1,3}|IV|V|VI{0,3}|IX|X{1,3})\.\s+[A-Z]", normalized):
+        return True
+
+    return False
+
+
+# ---------------------------------------------------------------------------
+# BT3-FIX5 Ruling B — Positional cutoff
+# ---------------------------------------------------------------------------
+
+def _apply_positional_cutoff(rows: List[Dict], statement_section: str) -> List[Dict]:
+    """
+    BT3-FIX5 Ruling B — Drop all rows after the last sentinel code.
+
+    In Vietnamese BCTC balance sheets, the accounting identity row
+    (code 440 = total equity+liabilities, or code 270 = total assets) is
+    the last meaningful data row. Everything after it belongs to the
+    signature block, digital certificate, or footer — never to the table.
+
+    Implementation: scan rows in reverse; find the last row with a code in
+    the sentinel set; drop all rows after it. Rows AT the sentinel are kept.
+
+    Args:
+        rows:              All assembled rows (stitched across pages).
+        statement_section: "balance_sheet" | "income_statement" | "cash_flow"
+
+    Returns:
+        Truncated rows list (sentinel row and everything before it).
+        Returns rows unchanged if no sentinel is found (logs warning).
+    """
+    # Sentinel sets per statement type
+    _BALANCE_SHEET_SENTINELS = frozenset({"270", "440"})
+    _INCOME_SENTINELS = frozenset({"50", "60", "70"})
+    _CASH_FLOW_SENTINELS = frozenset({"70"})
+
+    if statement_section == "balance_sheet":
+        sentinels = _BALANCE_SHEET_SENTINELS
+    elif statement_section == "income_statement":
+        sentinels = _INCOME_SENTINELS
+    elif statement_section == "cash_flow":
+        sentinels = _CASH_FLOW_SENTINELS
+    else:
+        sentinels = _BALANCE_SHEET_SENTINELS
+
+    # Find the last sentinel row index (scan in reverse)
+    last_sentinel_idx = None
+    for i in range(len(rows) - 1, -1, -1):
+        code = rows[i].get("code")
+        if code and code in sentinels:
+            last_sentinel_idx = i
+            break
+
+    if last_sentinel_idx is None:
+        logger.warning(
+            "_apply_positional_cutoff: no sentinel code %r found in rows — "
+            "positional cutoff NOT applied. Check OCR quality or statement section.",
+            sorted(sentinels),
+        )
+        return rows
+
+    cutoff_count = len(rows) - (last_sentinel_idx + 1)
+    if cutoff_count > 0:
+        logger.info(
+            "_apply_positional_cutoff: dropped %d post-sentinel rows "
+            "(last sentinel code=%r at row_order=%r)",
+            cutoff_count,
+            rows[last_sentinel_idx].get("code"),
+            rows[last_sentinel_idx].get("row_order"),
+        )
+    return rows[: last_sentinel_idx + 1]
+
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -149,16 +418,18 @@ def _detect_unit(text: str) -> str:
     Detect the unit from a 'Đơn vị' header line.
     Returns "billion_vnd" or "vnd". Defaults to "billion_vnd" if not detectable.
 
+    BT3-FIX5 Ruling C: apply _norm() for diacritic-insensitive keyword matching.
+
     Examples:
         "Đơn vị: VND"     → "vnd"
         "Đơn vị tính: Tỷ đồng" → "billion_vnd"
         "Đơn vị tính: Triệu đồng" → "billion_vnd"  (treat as billion for storage)
     """
-    lower = text.lower()
-    if any(kw in lower for kw in _BILLION_KEYWORDS):
+    norm_text = _norm(text)
+    if any(_norm(kw) in norm_text for kw in _BILLION_KEYWORDS):
         return _UNIT_BILLION_VND
     # If the line says raw "vnd" (no billion qualifier) → vnd
-    if any(kw in lower for kw in _VND_KEYWORDS):
+    if any(_norm(kw) in norm_text for kw in _VND_KEYWORDS):
         return _UNIT_VND
     # Default to billion_vnd (BCTC standard)
     return _UNIT_BILLION_VND
@@ -342,6 +613,14 @@ def _try_parse_code_row(stripped: str) -> Optional[tuple[str, str, str]]:
         values_rest = m4.group(3).strip()
         return (code, label, values_rest)
 
+    # Layout 5: scan-and-extract (BT3-FIX5 Ruling D — diacritic-insensitive code finder).
+    # Only reached when Layouts 1-4 all fail. Handles embedded codes where the label
+    # portion contains diacritic-mangled chars that break the boundary regexes in
+    # Layouts 2 and 4 (e.g. "222/223/226/131/319/421b" on poppler substrate).
+    m5 = _find_code_in_line(stripped)
+    if m5 is not None:
+        return m5
+
     return None
 
 
@@ -394,16 +673,20 @@ def _is_three_block_layout(lines: List[str]) -> bool:
     (1-2 digit "Thuyết minh" codes) by requiring the isolated integer to be
     ≥100 (a BCTC structural code) — or to appear before any "thuyết minh" header.
 
+    BT3-FIX5 Ruling C: use _norm() for "mã số" and "thuyết" checks so poppler
+    OCR variants ("ma so", "thuy") match without exact diacritics.
+
     Returns True if three-block layout detected.
     """
-    text_lower = "\n".join(lines).lower()
-    if "mã số" not in text_lower:
+    _NORM_MA_SO = _norm("mã số")
+    full_norm = _norm("\n".join(lines))
+    if _NORM_MA_SO not in full_norm:
         return False
 
     # Find the position of "mã số" line
     ma_so_idx = None
     for i, line in enumerate(lines):
-        if "mã số" in line.lower():
+        if _NORM_MA_SO in _norm(line):
             ma_so_idx = i
             break
 
@@ -411,17 +694,18 @@ def _is_three_block_layout(lines: List[str]) -> bool:
         return False
 
     # After "Mã số", count standalone code-looking integers (2-3 digits, ≥100)
-    # before any "thuyết" or "minh" keyword (which starts the note-ref block)
+    # before any "thuyết" / "thuy" keyword (which starts the note-ref block)
+    _NORM_THUY = _norm("thuy")
     count_codes = 0
     for i in range(ma_so_idx + 1, len(lines)):
         stripped = lines[i].strip()
         if not stripped:
             continue
-        low = stripped.lower()
-        # Stop at "thuyết" / "minh" header
-        if "thuy" in low or low == "minh":
+        norm_s = _norm(stripped)
+        # Stop at "thuyết" / "thuy" / "minh" header
+        if _NORM_THUY in norm_s or norm_s == "MINH":
             break
-        # Count standalone 3-digit BCTC code (100-440 range)
+        # Count standalone 3-digit BCTC structural code (100-999 range)
         if re.match(r"^\d{3}$", stripped) and 100 <= int(stripped) <= 999:
             count_codes += 1
 
@@ -465,10 +749,11 @@ def _parse_three_block_layout(
     rows: List[Dict] = []
     row_order = row_order_start
 
-    # Phase 1: find "Mã số" header line index
+    # Phase 1: find "Mã số" header line index (BT3-FIX5: use _norm() for diacritic tolerance)
+    _NORM_MA_SO = _norm("mã số")
     ma_so_idx = None
     for i, line in enumerate(lines):
-        if "mã số" in line.lower():
+        if _NORM_MA_SO in _norm(line):
             ma_so_idx = i
             break
 
@@ -477,17 +762,17 @@ def _parse_three_block_layout(
         return [], row_order_start
 
     # Phase 2: collect labels (free text before "Mã số")
+    # BT3-FIX5 Ruling C: use _norm() for all skip checks
     labels: List[str] = []
     for i in range(0, ma_so_idx):
         stripped = lines[i].strip()
         if not stripped:
             continue
-        # Skip company header lines and form reference lines
-        low = stripped.lower()
-        if any(skip in low for skip in [
+        # Skip company header lines and form reference lines using normalized comparison
+        norm_s = _norm(stripped)
+        if any(_norm(skip) in norm_s for skip in [
             "công ty", "số 10", "phường", "thành phố", "báo cáo",
-            "cho kỳ", "đến ngày", "bang c", "bảng c", "mẫu số", "mau so",
-            "tài sản\n", "tai san\n",  # standalone asset section header
+            "cho kỳ", "đến ngày", "bảng cân", "bang can", "mẫu số", "mau so",
         ]):
             continue
         # Skip very short lines (noise)
@@ -501,15 +786,17 @@ def _parse_three_block_layout(
 
     # Phase 3: collect BCTC codes (3-digit standalone integers after "Mã số",
     # before "Thuyết minh" header)
+    # BT3-FIX5 Ruling C: use _norm() for "thuyết" detection
+    _NORM_THUY = _norm("thuy")
     codes: List[str] = []
     in_note_refs = False
     for i in range(ma_so_idx + 1, len(lines)):
         stripped = lines[i].strip()
         if not stripped:
             continue
-        low = stripped.lower()
-        # Detect "Thuyết minh" block start
-        if "thuy" in low or low == "minh":
+        norm_s = _norm(stripped)
+        # Detect "Thuyết minh" block start (diacritic-insensitive)
+        if _NORM_THUY in norm_s or norm_s == "MINH":
             in_note_refs = True
             continue
         # Once in note-ref block, stop collecting codes
@@ -646,8 +933,8 @@ def _parse_lines_to_rows(
         if not stripped:
             continue
 
-        # Skip unit header lines
-        if any(kw in stripped.lower() for kw in _UNIT_HEADER_VI_KEYWORDS):
+        # Skip unit header lines (diacritic-insensitive via _norm())
+        if any(_norm(kw) in _norm(stripped) for kw in _UNIT_HEADER_VI_KEYWORDS):
             continue
 
         # Skip date-only header lines (period headers)
@@ -655,59 +942,37 @@ def _parse_lines_to_rows(
             # Likely a period-header line (e.g. "31/12/2025  31/12/2024")
             continue
 
-        # BT3-FIX-3 DEFECT 2 FIX: Skip company/address block lines and form-level
-        # noise BEFORE they reach the header-row branch. The existing alpha-3 filter
-        # does not catch these — they have alphabetic content and pass through,
-        # leaking into the output as junk header rows.
-        # Explicit string patterns only — no heuristics.
-        #
-        # BT3-FIX4 CHANGE-4: Extended with signature-block keywords and column-header
-        # fragments that slip through the existing filter. The 18 junk orphan rows
-        # from the live FPT fixture are all caught by the new entries below.
-        low_stripped = stripped.lower()
-        if any(skip in low_stripped for skip in [
-            # Company/address block (AC-10 targets)
-            "công ty",          # company name: "CÔNG TY CỔ PHẦN FPT"
-            "phường",           # ward: "Phường Cầu Giấy"
-            "thành phố",        # city: "Thành phố Hà Nội"
-            "số 10",            # street address: "Số 10 phố Phạm Văn Bạch"
-            # Form-level noise (provably not item labels)
-            "mã số",            # "Mã số" column header line (e.g. "TÀI SẲN Mã số a 31/12/2025...")
-            "mẫu số",           # form number: "MẪU SỐ B 01-DN/HN"
-            "mau so",           # OCR-variant form number
-            "bảng cân",         # balance-sheet title: "BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT"
-            "bang can",         # OCR-variant
-            "bang can doi",     # unaccented fallback for balance-sheet title continuation
-            "tại ngày",         # date-context: "Tại ngày 31 thang 12 năm 2025"
-            "tai ngay",         # OCR-variant
-            "ngày 26",          # signature date: "Ngày 26 tháng 01 năm 2026"
-            "ngay 26",          # OCR-variant
-            # BT3-FIX4 CHANGE-4: Column-header fragments (split across OCR lines)
-            "thuyết",           # "Thuyết" / "Thuyết minh" column header fragment
-            # BT3-FIX4 CHANGE-4: Signature-block keywords (appear at bottom of last page)
-            "người lập",        # signature: "Người lập"
-            "kế toán trưởng",   # signature: "Kế toán trưởng"
-            "phó tổng",         # signature: "Phó Tổng giám đốc" (covers all variants)
-            "hà nội, ngày",     # signature date location line: "Hà Nội, ngày 23 tháng 01..."
-            "ha noi",           # unaccented fallback for signature location
-        ]):
+        # BT3-FIX5 Ruling C: Apply diacritic-insensitive normalization to skip-list.
+        # Both the input and each skip key are normalized via _norm() so poppler OCR
+        # variants (no/partial diacritics) match the same patterns as full-diacritic
+        # PyMuPDF OCR. This replaces the FIX4 diacritic-sensitive low_stripped checks.
+        norm_stripped = _norm(stripped)
+
+        # Secondary skip-list (company name, form number, signature block).
+        # These are structurally recognizable patterns that always appear outside the
+        # table. Applied via _norm() on both sides — immune to diacritic variation.
+        if any(_norm(skip) in norm_stripped for skip in _JUNK_SKIP_KEYS):
             continue
-        # BT3-FIX4 CHANGE-4: Regex skip for signature dates with any day-of-month.
-        # Covers "Hà Nội, ngày 23 tháng 01 năm 2025" and all day variants (1-31).
-        # This is more robust than enumerating individual "ngày 01"/"ngày 23" entries.
-        if re.search(r"ngày\s+\d{1,2}\s+tháng", low_stripped):
+
+        # BT3-FIX5 Ruling C: Diacritic-insensitive date regex for signature dates.
+        # Replaces: re.search(r"ngày\s+\d{1,2}\s+tháng", low_stripped)
+        # Now: search on norm_stripped (all uppercase, diacritics stripped).
+        # Catches "Tại ngày 31 tháng 12 năm 2025", "Tai ngay 31 thang 12 nam 2025", etc.
+        if re.search(r"NGAY\s+\d{1,2}\s+THANG", norm_stripped):
             continue
-        # Skip very short OCR noise fragments (< 10 chars, no code row context)
-        # Example: "ach Thuyết" (OCR split fragment from "Báo cáo ach Thuyết minh")
-        # Use a simple length+pattern heuristic: < 15 chars AND no digits
-        if len(stripped) < 15 and not re.search(r"\d", stripped) and not re.search(r"[A-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂẮẲẶĐÊẾỆỔỖỘỞỢỤỨỪỬỮ]", stripped):
-            # All-lowercase or mixed short fragment with no uppercase letters → likely noise
-            pass  # fall through to normal processing
+
+        # BT3-FIX5 Ruling C: Diacritic-insensitive balance-sheet title filter.
+        # "BẢNG CÂN ĐỐI" and "BANG CAN DOI" both normalize to "BANG CAN DOI".
+        # Also catches "NGUON VON" (NGUỒN VỐN) standalone section header lines.
+        if "BANG CAN" in norm_stripped and "DOI" in norm_stripped:
+            continue
+
         # Skip line-continuation fragments (backslash-terminated or single-word with no code)
         if stripped.endswith("\\") and len(stripped.split()) <= 6 and not re.search(r"\d{2,3}", stripped):
             continue
 
-        # Try to match a code row (handles code-first and label-first layouts)
+        # Try to match a code row (handles code-first and label-first layouts,
+        # plus Layout 5 scan-and-extract fallback for embedded codes).
         parsed = _try_parse_code_row(stripped)
         if parsed is not None:
             code, label, values_rest = parsed
@@ -768,11 +1033,18 @@ def _parse_lines_to_rows(
                 "is_summary_row": is_summary,
             })
         else:
-            # Header / separator row — no code.
-            # Tightened filter: only emit if stripped text contains ≥3 consecutive
-            # alphabetic chars (Vietnamese or ASCII). Kills numeric-only noise,
-            # company addresses, short OCR fragments, and date strings.
-            if stripped and len(stripped) > 3 and re.search(r"[A-Za-zÀ-ỹ]{3,}", stripped):
+            # BT3-FIX5 Ruling A — POSITIVE-KEEP gate:
+            # Only emit non-code lines that are recognized section-level headers.
+            # All other non-code lines are silently dropped — garbled noise, junk,
+            # diacritic variants of known headers, and signature-block text all fail
+            # this gate and are never stored as orphan rows.
+            #
+            # _is_recognized_section_header() uses _norm() internally so it is immune
+            # to poppler vs PyMuPDF diacritic variation.
+            #
+            # This replaces the FIX4 alpha-3 heuristic (re.search(r"[A-Za-zÀ-ỹ]{3,}"))
+            # which let through garbled OCR noise that happened to contain 3+ letters.
+            if _is_recognized_section_header(stripped):
                 rows.append({
                     "page_number": page_num,
                     "row_order": row_order,
@@ -783,6 +1055,7 @@ def _parse_lines_to_rows(
                     "unit": unit,
                     "is_summary_row": 0,
                 })
+            # else: DROP SILENTLY — no orphan row created (Ruling A core behavior)
 
         row_order += 1
 
@@ -920,9 +1193,15 @@ class TextTableExtractor:
 
             all_rows.extend(page_rows)
 
+        # BT3-FIX5 Ruling B — Positional cutoff:
+        # Drop all rows after the last sentinel code (270/440 for balance sheets).
+        # Applied after all pages are stitched — the sentinel (440) only appears on
+        # the last page, so per-page cutoff would not work.
+        all_rows = _apply_positional_cutoff(all_rows, statement_section)
+
         logger.info(
             "TextTableExtractor.assemble: section=%s pages=%d rows=%d "
-            "period_current=%s period_prior=%s",
+            "period_current=%s period_prior=%s (after positional cutoff)",
             statement_section,
             len(pages),
             len(all_rows),

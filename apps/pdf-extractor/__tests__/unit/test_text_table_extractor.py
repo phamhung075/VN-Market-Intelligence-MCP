@@ -26,10 +26,13 @@ from infrastructure.text_table_extractor import TextTableExtractor
 # Minimal FPT p4 fixture (1 header row + 4 code rows)
 # BT3-FIX-3: Form title ("BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT") and the "Mã số"
 # column-header line are now filtered as form-level noise per the architect's spec.
-# The legitimate section header "NGUỒN VỐN" (not a form/company/address pattern)
-# is used here to test the header-row passthrough behavior.
+# BT3-FIX5 Ruling A: POSITIVE-KEEP gate — only section-letter ("A. ...") or
+# roman-numeral ("I. ...") headers pass through as code=None rows. Standalone
+# section names like "NGUỒN VỐN" without a structural prefix are silently dropped
+# (cosmetic; does not affect balance_pass or sentinel values — per ruling R-1).
+# Use "A. NGUON VON" (section-letter prefix) to test header-row passthrough.
 FIXTURE_P4_MINIMAL = """\
-NGUỒN VỐN
+A. NGUON VON
 Đơn vị: VND
 31/12/2025  31/12/2024
 A. TÀI SẢN NGAN HAN  100  58.102.970.741.619  45.535.942.846.453
@@ -108,17 +111,18 @@ class TestTextTableExtractor:
     def test_header_row_code_is_none(self) -> None:
         """Header/separator rows have code=None and value_current=None.
 
-        BT3-FIX-3: fixture uses 'NGUỒN VỐN' (genuine section header, not form noise)
-        because form titles and 'Mã số' column headers are now filtered per the
-        architect's company-header junk filter spec.
+        BT3-FIX5 Ruling A: POSITIVE-KEEP gate replaces alpha-3 heuristic.
+        Only section-letter ("A. ...") or roman-numeral ("I. ...") headers
+        pass through. Fixture uses "A. NGUON VON" which matches the section-
+        letter pattern and should appear as a code=None header row.
         """
         pages = [{"page_number": 4, "text": FIXTURE_P4_MINIMAL}]
         result = self.extractor.assemble(pages, "balance_sheet")
         rows = result["rows"]
 
         header_rows = [r for r in rows if r["code"] is None]
-        # "NGUỒN VỐN" is the genuine section header in the fixture
-        assert len(header_rows) >= 1, "At least one header row expected (NGUỒN VỐN)"
+        # "A. NGUON VON" is the section-letter header in the fixture
+        assert len(header_rows) >= 1, "At least one header row expected (A. NGUON VON)"
         for r in header_rows:
             assert r["value_current"] is None
             assert r["value_prior"] is None
