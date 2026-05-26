@@ -5264,3 +5264,302 @@ All changes are confined to `infrastructure/generic_md_table_extractor.py`. The 
 - Frozen surfaces: `apps/pdf-extractor/dashboard/`, `apps/pdf-extractor/sandbox/runner.py`, `docs/data/pilot-status-pdf-extractor.json`, all mcp-server files.
 - Leave all files UNSTAGED — main terminal commits per commit-mutex protocol.
 - AC-0 grep-proof: `grep -rniE "bao.cao.bo.phan|segment_report|SEGMENT|BAO_CAO|bo_phan|bao_phan" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches in logic (comments allowed).
+
+---
+
+## §MD-EXTRACT-9 — Label-Row Ordinal Reconstruction (2026-05-26)
+
+**Status:** DESIGN COMPLETE — DIAGNOSTIC GATE FULFILLED. Ready for dev-pdf-extractor after main-terminal re-traces §9.8 fixture proof.
+
+**Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py`. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED (AC-3F FROZEN).
+
+**Recurring-bug escalation:** MD-EXTRACT-6/7/7-REV/8 = many fix commits on `generic_md_table_extractor.py`. Root cause rethink mandated before any further dev patch. Diagnostic completed below.
+
+---
+
+### §9.1 — Diagnostic Gate (Binding — Live OCR Token Dump, No Batch)
+
+**PDF:** FPT Q4 2025 (`e71f845d-ffa5-48f9-8f09-30ac2cd09c65`), PDF page 8 (0-based page index 7).
+**Method:** Local Tesseract `image_to_data` PSM 6, 200 DPI, single page. Privacy: zero off-machine data.
+
+**Substrate:**
+- Image: 2339 × 1654 px
+- Usable words: 400 tokens (conf ≥ 10)
+- `h_med = 18px`, `w_med = 45px`
+- number_tokens: 136 (after `_classify_tokens`), text_tokens: 264
+
+**Q-A — How are text tokens currently grouped into label rows?**
+
+The `_attach_labels_ordinal` function (Step C11) does NOT cluster text tokens into lines. It uses a scalar y-band: for each ordinal rank k, it grabs all TEXT tokens within `LABEL_BAND_FACTOR × h_med = 1.5 × 18 = 27px` of the rank-k `col_y_medians[k]` value. Greedy removal prevents re-use.
+
+**Q-B — What is the actual label-row vertical pitch vs value-row pitch?**
+
+Text tokens in the label region (left < 1100, top > 447) form 24 clean physical lines. Pitch between consecutive label lines (hard numbers from live diagnostic):
+
+| Metric | Value |
+|---|---|
+| Label line pitch | 33.5 – 38px, **median = 36px** |
+| Value row pitch (col@1182, 21 tokens) | **36px uniform** (35–37px range) |
+| `LABEL_BAND_FACTOR × h_med` (band) | **27px** |
+| `2 × band` | **54px** |
+| Verdict | `2 × band (54px) > label_pitch (36px)` → **band spans > 1 label line** |
+
+**Q-C — Is label-band over-reaching (pulling 2 rows' text into 1 band), OR is there a count mismatch?**
+
+Hard answer: **BAND OVER-REACH IS THE SOLE CAUSE. COUNT MATCHES.**
+
+- Ordinal grid rows: **24** (from `max(col_buckets token counts)` across 4 value columns)
+- Physical label lines: **24** (OCR produces exactly 24 text-token lines in the data region)
+- Count mismatch: **ZERO**
+
+Live simulation of `_attach_labels_ordinal` (band=27px, greedy, col_y_medians[0]=501.5px):
+- rank=0, y_med=502, band=[474,528]: captures **15 tokens** from tops [488,489,491,494,496,**522**,523,524] = label line-1 (`1 Doanh thu bán hàng và cung cấp dịch vụ`) PLUS label line-2 (`2 Các khoản giảm trừ`) interleaved by x-sort → produces `2 1 Doanh Các khoản thu giảm bán hàng trừ và cung cấp dịch vụ`
+- rank=1, y_med=538, band=[510,564]: captures label line-2 residual + line-3 → `3. Doanh thu thuần …` (one shifted)
+
+This reproduces EXACTLY the observed LIVE-VERIFY-8 row 1 = `2 1 Doanh Các khoản thu giảm bán hàng trừ và cung cấp dịch vụ 02`.
+
+**The fix-path-D label-band (DROPPED in MD-EXTRACT-7-REV) was the RIGHT instinct — but the reason it was dropped (`pitch=35px > band=27px → no over-reach`) used the WRONG comparator.** The correct gate is `2×band > pitch` (does the band span the ADJACENT row), not `band > pitch`. With `band=27px` and `pitch=36px`: `2×27=54 > 36` → adjacent label row's tokens are within ±27px of the current y_med → OVER-MERGE. The MD-EXTRACT-7 §3 reasoning (`band=27px < pitch=35px`) was geometrically correct but checked the WRONG condition.
+
+**Additional structural finding: label lines sit ~9-10px ABOVE value tokens for the same physical row.** (Label "Doanh thu bán hàng" top=488, value 20.258.866.135.395 top=497, delta=9px.) This is consistent (all data rows in range 9-10px offset). It does NOT cause a problem for the ordinal approach — the key insight is that this offset is stable and smaller than band/2, meaning the band could catch the right label if it were narrow enough, OR the ordinal rank approach catches it unconditionally.
+
+---
+
+### §9.2 — Root Cause Classification
+
+**Single root cause: `_attach_labels_ordinal` uses a scalar y-band (27px) for label assignment that spans 1.5 label rows at the income statement's 36px pitch.** This is not a value-column problem (MD-EXTRACT-8 fixed that). It is not a count mismatch. It is not OCR reading order scrambling. It is a pure algorithm defect in how the label cell content is assembled for each ordinal row.
+
+The two live defects from LIVE-VERIFY-8 map directly to this single root cause:
+1. **Label-row over-merge** — band 474→528 captures both label line-1 (top~488-496) and label line-2 (top~522-524) into rank-0's label cell.
+2. **Label↔value ordinal offset** — because rank-0 consumed both line-1 and line-2 tokens, rank-1 gets line-3 tokens (`Doanh thu thuần`) paired with code-02 values (the ~33B deductions). Every subsequent rank is shifted by -1.
+
+Secondary observations (non-blocking after fix):
+- 3 EPS noise columns (`1.168`/`5.211`/`4.292` from col@2061 ranks 20-23) are a pre-existing R-MEDIUM artifact from the anchor-detection path. They survive because `_collapse_empty_columns` correctly keeps columns with ≥1 non-empty cell. After label fix, they render as sparse trailing columns in 2-3 rows — visually inelegant but not incorrect (the architect's MD-EXTRACT-8 predicted this).
+- Minor trailing-word spillover on ~6 labels (words like `vụ`, `cung`) are symptoms of the SAME over-merge: after greedy removal at rank-0, the consumed multi-word label leaves word fragments (line-3's trailing words `cung vụ`) as orphans that get picked up by rank-4's fallback.
+
+---
+
+### §9.3 — Why the fix-path-D drop in MD-EXTRACT-7-REV was Incomplete (post-mortem)
+
+MD-EXTRACT-7-REV §REV-5 stated: "Live pitch=35px, band=27px < 35px → no over-reach." This is an off-by-one error in the geometric reasoning. The correct condition for over-reach is whether the ADJACENT row's label tokens fall within the current row's band window:
+
+- Current row y_med = 502px. Adjacent row (rank-1 label line) y_med = 523px. Distance from current y_med to adjacent label line = 21px.
+- Is 21px ≤ band (27px)? **YES** → adjacent row's tokens ARE captured.
+- The check `band < pitch` (27 < 35) tells us the band does not span the full pitch distance. But the label line sits at `y_med_label + offset` where offset ≈ -49px (label is ~49px above the value-row y_median). So:
+  - label line-2's y_med = 523. Value y_med for rank-0 = 502. Distance = 523-502 = 21px ≤ 27px (the band).
+- The structural offset between value-row y_medians and label-line y_medians (labels lead by ~49px per row) is what makes the band geometry different from the intuitive `band < pitch` check.
+
+**Lesson: label-band over-reach must be assessed against the label-line positions directly, not against value-row pitch.**
+
+---
+
+### §9.4 — Chosen Fix: Ordinal-Rank Label Assignment (Parallel to Value Ordinal Reconstruction)
+
+The value columns are already reconstructed by ordinal rank (MD-EXTRACT-6). The label column must be reconstructed by the SAME ordinal discipline — not by y-band proximity.
+
+**Algorithm:**
+
+1. **Step C10.5 — Cluster text tokens into label lines (NEW pure function `_cluster_text_into_label_lines`).**
+   - Input: `region_text_tokens` (all TEXT tokens in the region, already filtered to region vertical extent).
+   - Algorithm: sort by top; greedy line grouping with gap threshold `_LABEL_LINE_GAP_PX = 15px` (hard constant: any two tokens within 15px of top are on the same physical line). This mirrors the `<15px` grouping confirmed by the diagnostic (all within-row text-token top variance is ≤ 6px; inter-row gaps are 33-38px).
+   - Output: `label_lines: List[List[Dict]]` — list of grouped text-token lines, each line sorted by left.
+   - Each line's representative y = `median(top for t in line)` → `label_line_ymeds: List[float]`.
+
+2. **Step C10.6 — Exclude pre-data header label lines (NEW pure function `_exclude_pre_data_label_lines`).**
+   - Input: `label_lines`, `label_line_ymeds`, `first_value_top` (already computed at Step C5).
+   - Rule: exclude any label line whose `y_med < first_value_top - _LABEL_HEADER_MARGIN_PX` where `_LABEL_HEADER_MARGIN_PX = 20px`. This removes column-header fragments (e.g., `số minh` at y=454 when first_value_top=497).
+   - Output: `data_label_lines`, `data_label_ymeds` (header-stripped lists).
+   - AC-0: uses only `first_value_top` (a y-coordinate from the number-token scan), no string constants.
+
+3. **Step C10.7 — Ordinal rank assignment (MODIFY `_attach_labels_ordinal` OR add `_attach_labels_by_rank`).**
+   - Input: `grid` (ordinal rows from C8-C10), `data_label_lines` (from C10.6), `code_note_tokens`.
+   - Ordinal pairing: `grid_rank_k` ↔ `data_label_lines[k]` (direct index, no y-comparison). When `len(data_label_lines) < len(grid)`: assign `label = " "` for the extra trailing value rows. When `len(data_label_lines) > len(grid)`: the extra label lines have no value row — emit them as empty-value rows (consistent with the existing `_insert_skip_slots` pattern for absent values).
+   - Label construction for rank k: sort `data_label_lines[k]` by left, join with space. Append `code_note_tokens` that fall within `_LABEL_LINE_GAP_PX × 2` of the line's `y_med` (re-attaches line codes as label companions, same as current code_note_tokens injection).
+   - Output: `labeled_grid` with label prepended as col-0.
+   - **Critical property:** NO y-band comparison. The pairing is purely by sort-order (ascending y). The structural offset (~9px label-above-value per row) is IRRELEVANT — rank-k label maps to rank-k values unconditionally.
+
+**Why this defeats over-merge (geometric guarantee):** Each physical label line becomes exactly one label cell. Two adjacent label lines at pitch=36px are ALWAYS assigned to consecutive ranks. The band (27px) that caused over-merge is eliminated from the label-assignment step entirely.
+
+**Why count mismatch is handled:** The diagnostic confirms 24 label lines and 24 value ordinal rows for this statement. When they match, it is 1:1. The EPS noise columns (col@2061 rows 20-23: `5.211`/`4.292` pairs at top 1251-1295) inflate the max value rank from 23 to 24 while the label lines stop at 23 data entries (plus 1 header line). The fix: `_exclude_pre_data_label_lines` removes the header line → 23 data label lines; the 24th value row (from EPS tokens) gets `label = " "` (empty). The EPS noise is a pre-existing secondary artifact, not a new defect.
+
+---
+
+### §9.5 — Functions to Add / Modify / Retire
+
+| Function | Action | DDD Layer | AC-0 |
+|---|---|---|---|
+| `_LABEL_LINE_GAP_PX: int = 15` | ADD constant | module-level | generic geometry |
+| `_LABEL_HEADER_MARGIN_PX: int = 20` | ADD constant | module-level | generic geometry |
+| `_cluster_text_into_label_lines(text_tokens, label_line_gap_px)` | ADD (pure) — Step C10.5 | infrastructure | no string constants |
+| `_exclude_pre_data_label_lines(label_lines, label_line_ymeds, first_value_top, margin_px)` | ADD (pure) — Step C10.6 | infrastructure | top coord only |
+| `_attach_labels_ordinal(grid, col_y_medians, text_tokens, h_med)` | **MODIFY** — replace band-based body with ordinal-rank pairing. Signature UNCHANGED (drop-in). col_y_medians parameter kept for backward compatibility of existing unit tests (used only for rank-count; not used for y-distance). | infrastructure | no BCTC strings |
+| `_process_page` | **MODIFY** — between C10 and C11: call `_cluster_text_into_label_lines` + `_exclude_pre_data_label_lines` → pass result to revised `_attach_labels_ordinal`. `first_value_top` already computed at C5 → pass to C10.6. | infrastructure | — |
+
+**All other functions:** UNCHANGED. `_cluster_rows`, `_cluster_rows_by_gap`, `_cluster_number_rows`, `_cluster_number_rows_adaptive` remain as DEAD code (test compat). `_build_ordinal_grid`, `_assign_tokens_to_columns`, `_insert_skip_slots`, `_detect_column_anchors_from_tokens`, `_identify_pure_code_columns`, `_find_first_value_row_top`, `_exclude_header_tokens` all UNCHANGED.
+
+**No new files. No new ports. No mcp-server changes. Zero frozen-surface changes.**
+
+---
+
+### §9.6 — Non-Regression Argument
+
+**AC-8-SEG-NOREGRESS (segment report: 3 revenues on ONE pipe-row):**
+The segment report has NO pure-code columns → `code_col_indices = []` → `code_note_tokens = []`. The `region_text_tokens` for the segment page contain the segment label column text. `_cluster_text_into_label_lines` groups them into label lines at the segment report's pitch. `_exclude_pre_data_label_lines` removes any column-header fragments above `first_value_top`. Ordinal rank assignment: segment revenues `35.381.667`, `9.092.934`, `18.701.876` are at rank-0 in 3 value columns → `data_label_lines[0]` = the revenue label row → correctly paired. The diagonal is ALREADY defeated (MD-EXTRACT-6). Nothing in the new label clustering logic touches the value-column ordinal path. **AC-8-SEG-NOREGRESS is structurally preserved.**
+
+**AC-8-BALANCE-NOREGRESS (balance sheet identity 270=100+200=300+400, no new corruption):**
+Balance sheet tables have short value strings → `w_med` is not inflated → `_detect_column_anchors_from_tokens` continues to produce correct anchors (the 80px gap fix from MD-EXTRACT-8 already handles this). The new label clustering replaces the same `_attach_labels_ordinal` call with an ordinal-rank version. Balance sheet label lines are well-separated (wider pitch, fewer rows per page region). The `_cluster_text_into_label_lines` grouping with `_LABEL_LINE_GAP_PX=15px` correctly separates them. Ordinal pairing is 1:1. **No new corruption introduced; residual depreciation-subsection issues are PRE-EXISTING and deferred (separate task, per LIVE-VERIFY-8).**
+
+**AC-8-VALUE-COLUMNS-NOREGRESS (income 4 period values each on correct row):**
+The value-column ordinal reconstruction (MD-EXTRACT-8 + MD-EXTRACT-6) is NOT touched. `_build_ordinal_grid`, `_assign_tokens_to_columns`, `_detect_column_anchors_from_tokens` are all UNCHANGED. Value values remain at correct ordinal rows. **Proven by: the MD-EXTRACT-9 change only modifies `_attach_labels_ordinal` (Step C11) and adds Steps C10.5-C10.6. Steps C6-C10 (value ordinal reconstruction) are untouched.**
+
+---
+
+### §9.7 — Binding Acceptance Criteria
+
+**AC-9-LABEL (BLOCKING — live):** After deploy, pull `md_tables_json` direct from `market.db`. Income table[8] row-0 label cell MUST contain ONLY the tokens of ONE physical label line (`1 Doanh thu bán hàng và cung cấp dịch vụ`) — NOT interleaved with row-1 tokens. Specifically: the string `Các khoản giảm trừ` MUST NOT appear in the same label cell as `Doanh thu bán hàng`.
+
+**AC-9-PAIR (BLOCKING — live):** Income table[8] row-0 label = code-01 revenue label; row-0 values = `20.258.866.135.395`, `17.651.065.378.939`, `70.207.689.409.081`, `62.962.652.134.635`. Row-1 label = code-02 deductions; row-1 value = `33.415.777.986`, `43.247.573.048`, etc. No ordinal drift.
+
+**AC-9-SEG-NOREGRESS (BLOCKING — live):** Segment revenues `35.381.667`, `9.092.934`, `18.701.876` still on ONE pipe-row in 3 distinct cells (AC-8-SEG-NOREGRESS must hold).
+
+**AC-9-BALANCE-NOREGRESS (BLOCKING — live):** Balance identity 270=100+200=300+400 still holds; no new empty-row bloat; no new corruption versus LIVE-VERIFY-8 state.
+
+**AC-9-VALUE-NOREGRESS (BLOCKING — live):** Income row-0 has 4 period values in 4 DISTINCT columns (`20.258.866.135.395`, `17.651.065.378.939`, `70.207.689.409.081`, `62.962.652.134.635`). The MD-EXTRACT-8 anchor fix must not have been regressed.
+
+**AC-9-UNIT-CLUSTER (BLOCKING — unit test, LIVE-SUBSTRATE FIXTURE):**
+`TestLabelLineClustering` class. Fixture MUST be derived from the live `image_to_data` token dump (the diagnostic data above). Specifically use the first 5 physical label lines from the income page diagnostic:
+- line-1 tokens: `{top: 488, left: 262, text: '1'}, {top: 488, left: 295, text: 'Doanh'}, {top: 488, left: 368, text: 'thu'}, {top: 488, left: 410, text: 'bán'}, {top: 488, left: 454, text: 'hàng'}, {top: 489, left: 511, text: 'và'}, {top: 491, left: 637, text: 'dịch'}, {top: 494, left: 541, text: 'cung'}, {top: 496, left: 686, text: 'vụ'}, {top: 488, left: 595, text: 'cấp'}`
+- line-2 tokens: `{top: 522, left: 337, text: 'khoản'}, {top: 523, left: 295, text: 'Các'}, {top: 523, left: 404, text: 'giảm'}, {top: 524, left: 261, text: '2'}, {top: 524, left: 458, text: 'trừ'}`
+- (no synthesized fixtures — the 4×-confirmed false-green trap)
+
+Assertions (minimum):
+- `len(label_lines) == 2` for these 15 tokens (correctly separated by gap of 522-496=26px > 15px threshold)
+- `len(label_lines[0]) == 10` (all 10 line-1 tokens in one group)
+- `len(label_lines[1]) == 5` (all 5 line-2 tokens in one group)
+- Label text for line-1 (left-sorted join): contains `Doanh` AND `thu` AND `bán` AND `hàng` in that order
+- Label text for line-2 (left-sorted join): `2 Các khoản giảm trừ`
+
+**AC-9-UNIT-RANK (BLOCKING — unit test, LIVE-SUBSTRATE):**
+`TestAttachLabelsByRank` class. Use 2-row ordinal grid + 2 data label lines (derived from the diagnostic). Assert: `labeled_grid[0][0]` = line-1 text (code-01 label), `labeled_grid[1][0]` = line-2 text (code-02 label). Zero cross-contamination.
+
+**AC-9-EXCLUDE-HEADER (BLOCKING — unit test):**
+`TestExcludePreDataLabelLines` class. 3 label lines: one at y=454 (header fragment, `first_value_top=497`, margin=20 → cutoff=477 → excluded), two at y=488 and y=523 (data, retained). Assert: output has 2 lines, y_meds = [488, 523].
+
+**AC-0 (BLOCKING — grep-proof):** `grep -rniE "bao.cao.bo.phan|segment_report|SEGMENT|BAO_CAO|bo_phan|bao_phan" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches in logic.
+
+**AC-3F (BLOCKING — carry-forward):** `text_table_extractor.py` 0-byte diff. Structured `bctc_table_rows` = 79, `balance_pass=true`, `balance_delta=0`.
+
+**Fence-A (BLOCKING):** `grep -rnE "from application|from interface" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+**Privacy (BLOCKING):** zero external API calls in new functions.
+
+**Gate arbiter:** main terminal reads `md_tables_json` DIRECTLY from `market.db` (NOT `/api/bctc-inspect` endpoint). NOT unit tests. NOT Playwright. SINGLE DOC ONLY (UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`), NEVER batch backfill.
+
+---
+
+### §9.8 — Fixture Proof (main-terminal must re-trace before dispatching dev)
+
+**Fixture (live-substrate, 15 tokens = 10 line-1 + 5 line-2, h_med=18px, `_LABEL_LINE_GAP_PX=15`):**
+
+```
+Line-1 tokens (line-1 of income data, code-01 revenue):
+  top=488, left=262, text='1'
+  top=488, left=295, text='Doanh'
+  top=488, left=368, text='thu'
+  top=488, left=410, text='bán'
+  top=488, left=454, text='hàng'
+  top=489, left=511, text='và'
+  top=491, left=637, text='dịch'
+  top=494, left=541, text='cung'
+  top=496, left=686, text='vụ'
+  top=488, left=595, text='cấp'
+
+Line-2 tokens (line-2 of income data, code-02 deductions):
+  top=522, left=337, text='khoản'
+  top=523, left=295, text='Các'
+  top=523, left=404, text='giảm'
+  top=524, left=261, text='2'
+  top=524, left=458, text='trừ'
+```
+
+**`_cluster_text_into_label_lines` trace:**
+
+- Sort all 15 tokens by top: [262/488, 295/488, 368/488, 410/488, 454/488, 595/488, 511/489, 541/494, 686/496, (left notation incorrect — sort is by top first)]
+- Correct sort by (top, left): 488/262, 488/295, 488/368, 488/410, 488/454, 488/595, 489/511, 491/637, 494/541, 496/686 — all top 488-496, then 522/337, 523/295, 523/404, 524/261, 524/458
+- Start current_line = [top=488/left=262/'1']
+- tok top=488: 488-488=0 < 15 → same line
+- tok top=488: same line
+- tok top=488: same line
+- tok top=488: same line
+- tok top=488: same line
+- tok top=489: 489-488=1 < 15 → same line
+- tok top=491: 491-488=3 < 15 → same line (gap from last added is 491-489=2, but algorithm compares to `current_line[-1]["top"]` which is the PREVIOUS token's top, not the line anchor — this is a greedy scan)
+
+**NOTE ON ALGORITHM DESIGN:** The `_cluster_text_into_label_lines` function compares each new token to the PREVIOUS token's top in the current line (greedy) to detect when the gap exceeds `_LABEL_LINE_GAP_PX`. This is correct because:
+- Within a label line: all tokens have top within 6-8px of each other (OCR baseline variation).
+- Between lines: gap is 33-38px >> 15px threshold.
+- Greedy comparison (prev_top to cur_top) is sufficient because tokens are pre-sorted by top.
+
+Continuing the trace:
+- tok top=494: 494-491=3 < 15 → same line
+- tok top=496: 496-494=2 < 15 → same line. current_line now has 10 tokens.
+- tok top=522: 522-496=26 > 15 → NEW LINE. Append current_line (10 tokens) → label_lines[0].
+- tok top=523: 523-522=1 < 15 → same line
+- tok top=523: same line
+- tok top=524: 524-523=1 < 15 → same line
+- tok top=524: same line. current_line has 5 tokens.
+- End of tokens → append current_line → label_lines[1].
+
+**Result: label_lines = [[10 tokens], [5 tokens]]. Exactly 2 label lines. Line-1 is the code-01 revenue label; line-2 is the code-02 deductions label. They are NEVER merged.**
+
+**`_attach_labels_ordinal` (revised) with 2-row ordinal grid:**
+
+- grid = [["20.258.866.135.395", ...], ["33.415.777.986", ...]] (value rows 0 and 1)
+- data_label_lines = [label_lines[0], label_lines[1]] (after header exclusion removes nothing — both are at y>477)
+- rank=0: `data_label_lines[0]` sorted by left → `1 Doanh thu bán hàng và cung cấp cấp dịch vụ`. Prepend → labeled_grid[0] = ["1 Doanh thu bán hàng …", "20.258.866.135.395", ...]
+- rank=1: `data_label_lines[1]` sorted by left → `2 Các khoản giảm trừ`. Prepend → labeled_grid[1] = ["2 Các khoản giảm trừ", "33.415.777.986", ...]
+
+**Zero cross-contamination. The 3 prior defects (over-merge, ordinal drift, trailing spillover) are all eliminated by this single algorithmic change.**
+
+**Note on code_note_tokens re-attachment:** Code tokens from the pure-code columns (e.g., `01` at left=960) are passed as `code_note_tokens`. They should be included in the label text for their respective rank. Approach: after constructing the label from `data_label_lines[k]`, find `code_note_tokens` whose top is within `_LABEL_LINE_GAP_PX × 2 = 30px` of the label line's y_med. Append those code text to the label (maintaining left-sort order across the merged token set). This reproduces the current `label_pool = region_text_tokens + code_note_tokens` injection at C11, but at per-rank precision (not per-band).
+
+---
+
+### §9.9 — Risk Register
+
+| ID | Severity | Description | Mitigation |
+|---|---|---|---|
+| R-9-HIGH | HIGH | `_cluster_text_into_label_lines` with `_LABEL_LINE_GAP_PX=15` may over-split a wrapped label if Tesseract OCR produces a 2-line label region (some long Vietnamese labels wrap to 2 physical OCR lines 16-18px apart). | Diagnostic shows income statement labels DO wrap (e.g., `'6_ Doanh thu hoạt động tài chính'` = single OCR line at pitch=36px; no wrapping observed on this page). If wrapping occurs on other BCTC pages, increase `_LABEL_LINE_GAP_PX` to 20px. Exposed as a named constant. |
+| R-9-MED-A | MEDIUM | Count mismatch (label lines ≠ ordinal rows) when EPS noise columns inflate max value rank. The income page has 24 value ranks (col@2061 has 24 tokens including 2 EPS pairs at tops 1292/1295) vs 23 data label lines. The extra rank-23 gets `label = " "`. | The 4.292/5.211 EPS tokens at ranks 20-23 of col@2061 are pre-existing R-MEDIUM artifacts. Empty label on extra ranks is correct behavior (no corresponding label line exists). Not a regression. |
+| R-9-MED-B | MEDIUM | `_exclude_pre_data_label_lines` with `margin=20px` may exclude a valid data label line on a page where `first_value_top` is computed below the actual first data row. | The diagnostic confirms `first_value_top=497px` is the CORRECT first data value. Any label line with y_med < 477 is guaranteed to be a header fragment. The margin of 20px is conservative (income row pitch = 36px >> 20px). |
+| R-9-LOW-A | LOW | Segment report `region_text_tokens` includes footnote prose after the table. Clustering will group them into label lines below the data region. Ordinal pairing will assign empty label cells (no corresponding value row) or trailing prose labels to EPS-noise value rows. | `_detect_table_regions` already limits region vertical extent. Ordinal pairs beyond the value row count get no label row. Prose below the table's last value row gets no value → empty row → `_is_data_table` density gate may reject the region. Already mitigated by existing pipeline. |
+| R-9-LOW-B | LOW | `_LABEL_LINE_GAP_PX = 15` is a new module-level constant. File already has ~15 constants; the file size cap should be monitored. | New functions add ~60-80 lines. File is currently 2204 lines. Context-bloat caps in `docs/data/file-size-caps.json` should be checked before dev starts. |
+
+---
+
+### §9.10 — Files to Modify
+
+| File | Change | DDD Layer |
+|---|---|---|
+| `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` | ADD 2 constants (`_LABEL_LINE_GAP_PX=15`, `_LABEL_HEADER_MARGIN_PX=20`); ADD 2 pure functions (`_cluster_text_into_label_lines`, `_exclude_pre_data_label_lines`); MODIFY `_attach_labels_ordinal` — replace band-based body with ordinal-rank pairing from pre-clustered label lines; MODIFY `_process_page` — add Steps C10.5 and C10.6 between existing C10 and C11, pass `data_label_lines` + `first_value_top` to revised C11 | infrastructure |
+| `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` | ADD `TestLabelLineClustering` (AC-9-UNIT-CLUSTER, live-substrate fixtures — see §9.7), `TestAttachLabelsByRank` (AC-9-UNIT-RANK), `TestExcludePreDataLabelLines` (AC-9-EXCLUDE-HEADER) | unit |
+
+**No new files. No new ports. No mcp-server changes. `text_table_extractor.py` UNTOUCHED. All frozen surfaces untouched.**
+
+---
+
+### §9.11 — Build Standard + Hard Constraints (carry-forward)
+
+**BUILD-STANDARD: lean** — existing service, fix within existing infrastructure file.
+
+**ROLE-RELAY:** dev-pdf-extractor (MD-EXTRACT-9 per this brief §9.1-§9.10) → ops (MD-DEPLOY-9, single doc `e71f845d`, NEVER batch) → main-terminal live-verify (AC-9-LABEL + AC-9-PAIR + AC-9-SEG-NOREGRESS via direct `market.db` query, NOT endpoint) → qa (MD-QA-9) → po (MD-EXIT re-evaluation).
+
+**HARD CONSTRAINTS:**
+- PRIVACY: self-hosted Tesseract ONLY. No external API.
+- HARDWARE: single-doc sequential OCR only. NEVER batch backfill (kernel-panic risk on 16GB host).
+- `text_table_extractor.py` UNTOUCHED (AC-3F).
+- Frozen surfaces untouched: dashboard, sandbox/runner.py, pilot-status, all mcp-server files.
+- All files UNSTAGED — main terminal commits.
+- AC-0 compliant: `_cluster_text_into_label_lines`, `_exclude_pre_data_label_lines`, `_LABEL_LINE_GAP_PX`, `_LABEL_HEADER_MARGIN_PX` contain ZERO BCTC label string constants.
+- Signature of `_attach_labels_ordinal` UNCHANGED (backward compatibility with 12+ existing unit tests in `TestOrdinalReconstruction`).
+
+**NEXT: main-terminal** — re-trace §9.8 fixture proof by hand (2-group clustering + 2-rank ordinal pairing). If arithmetic checks out → dispatch dev-pdf-extractor MD-EXTRACT-9 → ops MD-DEPLOY-9 (single doc, full UUID) → main-terminal live-verify → qa MD-QA-9 → po MD-EXIT.
