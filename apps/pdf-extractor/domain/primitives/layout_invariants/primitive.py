@@ -107,8 +107,28 @@ def _has_any_value(values: Optional[List[Optional[str]]]) -> bool:
 
 
 def _has_label(label: Optional[str]) -> bool:
-    """Return True if label is non-empty, non-None."""
-    return bool(label and str(label).strip())
+    """
+    Return True if label is non-empty, non-None, AND contains at least some
+    non-numeric text content.
+
+    A label field that contains ONLY numeric content (digits, dots, commas,
+    spaces) is classified as a misassigned value token — not a genuine row
+    label. This prevents structurally-scrambled rows from passing Invariant 3
+    when a narrow "label" column (OCR overspill from an adjacent value column)
+    contains a number fragment while the real content is in the value column.
+
+    AC-0: generic structural check — no BCTC keyword matching.
+    """
+    if not label:
+        return False
+    stripped = str(label).strip()
+    if not stripped:
+        return False
+    # Reject labels that are purely numeric (digits, Vietnamese thousands dots,
+    # commas, parentheses for negative numbers). A real label has text content.
+    if re.fullmatch(r"[\d.,\(\)\-\s]+", stripped):
+        return False
+    return True
 
 
 # ---------------------------------------------------------------------------
@@ -317,9 +337,20 @@ def check_no_orphan_rows(rows: List[Dict]) -> Tuple[bool, str]:
         has_val = _has_any_value(values)
 
         if has_lab and not has_val:
+            # Label present but no value — orphan row
             orphan_count += 1
         elif not has_lab and not has_val:
+            # Neither label nor value — junk row
             junk_count += 1
+        elif not has_lab and has_val:
+            # Value present but label is missing or purely numeric.
+            # This is the secondary fix (LF-FIX): in a correctly-detected
+            # multi-column layout, every data row should have a text label
+            # in its dedicated label column. A row with values but no genuine
+            # label indicates the column detection placed all content into the
+            # value column, losing the structural label+value separation.
+            # Classify as an orphan (values without label).
+            orphan_count += 1
 
     total_bad = orphan_count + junk_count
     if total_bad > 0:

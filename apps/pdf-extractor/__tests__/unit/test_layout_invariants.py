@@ -328,3 +328,63 @@ class TestCheckNoOrphanRows:
         rows = [_row(label="Something", values=["12345678"])]
         ok, reason = check_no_orphan_rows(rows)
         assert ok
+
+    def test_numeric_only_label_treated_as_no_label(self):
+        """
+        Secondary fix (LF-FIX): a label that is ONLY numeric (digits/dots/commas)
+        is treated as a misassigned value token, NOT a genuine text label.
+        A row with purely-numeric label + value cells should fail as a junk row.
+
+        This catches the 'all content in one wide column' structural scramble
+        where a narrow 25-30px 'label' column has an OCR number overspill
+        while the real content is in the adjacent value column.
+
+        AC-0: generic structural check (numeric-only label detection),
+        no Vietnamese keyword matching.
+        """
+        rows = [
+            # Numeric-only 'label' — should be treated as no-label
+            _row(label="44.393.950.887.086", values=["28.464.058.214.856"]),
+        ]
+        ok, reason = check_no_orphan_rows(rows)
+        # The row should fail: numeric-only label → classified as junk/orphan
+        assert not ok, (
+            "Row with purely-numeric label should not pass Invariant 3 "
+            "— it indicates a structurally-scrambled column layout."
+        )
+
+    def test_numeric_only_label_with_no_values_is_junk(self):
+        """
+        Numeric-only label + no values = junk row (both slots structurally empty).
+        """
+        rows = [
+            _row(label="1.234.567", values=[""]),
+        ]
+        ok, reason = check_no_orphan_rows(rows)
+        assert not ok
+
+    def test_mixed_label_text_and_numbers_passes(self):
+        """
+        A label that contains both text and numbers is a genuine label.
+        Example: 'Item 1' or 'Cash (note 5)' — these pass the text-content check.
+        """
+        rows = [
+            _row(label="Cash and equivalents (note 5)", values=["12345678"]),
+            _row(label="Total assets 2024", values=["99999999"]),
+        ]
+        ok, reason = check_no_orphan_rows(rows)
+        assert ok, f"Mixed label should pass: {reason}"
+
+    def test_has_label_rejects_pure_number(self):
+        """Direct test of _has_label for purely-numeric strings."""
+        from domain.primitives.layout_invariants.primitive import _has_label
+        assert _has_label("88.141.991.634.625") is False
+        assert _has_label("100") is False
+        assert _has_label("(1.234)") is False
+
+    def test_has_label_accepts_text(self):
+        """Direct test of _has_label for strings with text content."""
+        from domain.primitives.layout_invariants.primitive import _has_label
+        assert _has_label("Phai tra nguoi ban ngan han") is True
+        assert _has_label("Cash (note 5)") is True
+        assert _has_label("Item 311") is True  # has text "Item"

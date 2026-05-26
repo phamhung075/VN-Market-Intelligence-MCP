@@ -2470,8 +2470,17 @@ class GenericMdTableExtractor:
 _TIER0_DPI: int = 50
 
 # Gutter detection threshold: a column is a gutter if its dark-pixel sum
-# drops below this fraction of the median column dark-pixel sum.
-_GUTTER_DARK_FRACTION: float = 0.05
+# drops below this fraction of the MAX dark-pixel sum WITHIN the ink bounding box.
+# Using the ink-bbox max (not the global median) prevents page margins from
+# dominating: the global median is near-zero on real pages (most columns are
+# whitespace), so threshold ≈ 0 and only the far-margin pure-white columns
+# qualify as "gutters" — producing one pseudo-column spanning 97% of the page.
+_GUTTER_DARK_FRACTION: float = 0.15
+
+# Ink bounding box: a column is "ink-bearing" if its dark-pixel sum exceeds
+# this fraction of the global maximum. Used to clamp the gutter search to the
+# actual text region, excluding leading/trailing page margins.
+_INK_BBOX_MIN_FRACTION: float = 0.01
 
 # Gutter position tolerance: two pages belong to the same unit if all gutter
 # x-fractions differ by less than this value (as fraction of page width).
@@ -2483,6 +2492,26 @@ _ROW_PITCH_CHANGE_TOLERANCE: float = 0.50
 
 # Tier 1 minimum gutter width at 200 DPI (≈2.5mm at 200 DPI).
 _MIN_GUTTER_WIDTH_PX: int = 20
+
+# LF-FIX: minimum text column width at 200 DPI.
+# A real BCTC table column is at minimum ~1cm wide = 80px at 200 DPI.
+# Any "text column" narrower than this is margin noise or edge whitespace,
+# NOT a real column. Gutters that would produce sub-threshold columns are
+# rejected so that 20-30px slivers at the page margins are never accepted
+# as column boundaries (the root cause of the pre-fix 97%-wide col_0 defect).
+_MIN_TEXT_COL_WIDTH_PX: int = 80
+
+# LF-FIX: same threshold scaled to 50 DPI (Tier 0 fingerprint).
+# 80px at 200 DPI → 80 * 50/200 = 20px at 50 DPI.
+_MIN_TEXT_COL_WIDTH_PX_50DPI: int = 20
+
+# Tier 0 gutter threshold for the 50-DPI FINGERPRINT only.
+# Uses a HIGHER fraction (40%) than Tier 1 (15%) so that only the deepest
+# whitespace valleys — the structural column separators — are detected.
+# Smaller intra-column gaps (e.g. between sparse number rows within one column)
+# don't reach this level and are correctly ignored. This keeps the fingerprint
+# consistent across consecutive pages of the same logical document section.
+_GUTTER_DARK_FRACTION_50DPI: float = 0.40
 
 # Tier 1 header band: top fraction of page typically containing headers.
 _HEADER_BAND_FRACTION: float = 0.15
@@ -2735,28 +2764,61 @@ def _compute_page_fingerprint_50dpi(
 
         img.close()
 
-        # Detect gutters: columns where dark-pixel sum < 5% of median
-        median_col_dark = sorted(col_dark)[len(col_dark) // 2] or 1
-        gutter_threshold = median_col_dark * _GUTTER_DARK_FRACTION
+        # Detect gutters: columns where dark-pixel sum is below threshold.
+        # Fix: clamp search to ink bounding box and use max-based threshold
+        # (not median-based) to avoid detecting page margins as gutters.
+        # The same fix that applies to _detect_column_gutters_200dpi at Tier 1.
+        x_left_50, x_right_50 = _find_ink_bbox(col_dark)
+        ink_region_50 = col_dark[x_left_50:x_right_50 + 1]
+        max_ink_dark = max(ink_region_50) if ink_region_50 else 1
+        # Use the higher 50-DPI threshold: only the deepest whitespace valleys
+        # (structural column separators) should count as gutters in the fingerprint.
+        # Intra-column gaps (e.g. between sparse number rows in a value column)
+        # are shallower and correctly filtered out by the higher fraction.
+        gutter_threshold = (max_ink_dark or 1) * _GUTTER_DARK_FRACTION_50DPI
 
-        gutter_x_positions: List[int] = []
+        # LF-FIX: Collect raw gutter candidates — runs of low-ink columns.
+        # Do NOT flush an open gutter at the ink-right boundary: trailing
+        # whitespace at the end of the last text column is NOT a column
+        # separator. Only closed runs (gutter followed by more ink) are real.
+        raw_gutter_centers: List[int] = []
+        raw_gutter_ranges_50: List[Tuple[int, int]] = []
         in_gutter = False
         gutter_start = 0
-        for x in range(width):
-            if col_dark[x] <= gutter_threshold:
+        for i, dark in enumerate(ink_region_50):
+            x = x_left_50 + i
+            if dark <= gutter_threshold:
                 if not in_gutter:
                     in_gutter = True
                     gutter_start = x
             else:
                 if in_gutter:
+                    gutter_end = x - 1
                     gutter_center = (gutter_start + x) // 2
-                    gutter_x_positions.append(gutter_center)
+                    raw_gutter_centers.append(gutter_center)
+                    raw_gutter_ranges_50.append((gutter_start, gutter_end))
                     in_gutter = False
-        # Final gutter at right edge
-        if in_gutter:
-            gutter_x_positions.append((gutter_start + width) // 2)
+        # Open gutter at ink-right is DROPPED (trailing content whitespace).
 
-        # Convert to fractions of page width
+        # LF-FIX: Filter out gutters that would produce sub-threshold text columns.
+        # A gutter is valid only if the text column on BOTH sides is wide enough.
+        # This rejects the narrow 20-30px slivers at the page edges.
+        gutter_x_positions: List[int] = []
+        prev_col_start = x_left_50
+        for gi, (g_start, g_end) in enumerate(raw_gutter_ranges_50):
+            left_col_width = g_start - prev_col_start
+            # Right column ends at the next gutter start or at ink right
+            if gi + 1 < len(raw_gutter_ranges_50):
+                right_col_end = raw_gutter_ranges_50[gi + 1][0] - 1
+            else:
+                right_col_end = x_right_50
+            right_col_width = right_col_end - g_end
+            if (left_col_width >= _MIN_TEXT_COL_WIDTH_PX_50DPI
+                    and right_col_width >= _MIN_TEXT_COL_WIDTH_PX_50DPI):
+                gutter_x_positions.append(raw_gutter_centers[gi])
+            prev_col_start = g_end + 1
+
+        # Convert to fractions of page width (positions relative to full page)
         gutter_x_fractions = [x / width for x in gutter_x_positions]
 
         # Row pitch: estimate from vertical projection by finding peak-to-peak spacing
@@ -2868,6 +2930,52 @@ def _extract_unit_hints(text: str) -> List[str]:
                 if len(hints) >= 5:
                     break
     return hints
+
+
+def _find_ink_bbox(col_dark: List[int]) -> Tuple[int, int]:
+    """
+    Find the horizontal ink bounding box of the page.
+
+    Returns (x_left, x_right) where:
+        x_left  = index of the leftmost column with col_dark > ink_threshold
+        x_right = index of the rightmost column with col_dark > ink_threshold
+
+    If no ink-bearing column is found, returns (0, len(col_dark) - 1) as a
+    safe fallback (full-width).
+
+    Purpose: clamp the gutter-valley search to the actual text region so
+    that leading/trailing page margins are NEVER detected as gutters. On a
+    real document page the majority of columns are whitespace; the global
+    median of col_dark is near-zero, causing the old median-based threshold
+    to detect only the far-margin pure-white columns as "gutters". Clamping
+    to the ink bbox eliminates margin false-positives entirely.
+
+    AC-0: purely geometric — no BCTC semantics.
+    """
+    if not col_dark:
+        return 0, 0
+
+    global_max = max(col_dark) or 1
+    ink_threshold = global_max * _INK_BBOX_MIN_FRACTION
+
+    x_left = 0
+    x_right = len(col_dark) - 1
+
+    for x in range(len(col_dark)):
+        if col_dark[x] > ink_threshold:
+            x_left = x
+            break
+
+    for x in range(len(col_dark) - 1, -1, -1):
+        if col_dark[x] > ink_threshold:
+            x_right = x
+            break
+
+    # Safety: ensure left <= right
+    if x_left > x_right:
+        x_left, x_right = 0, len(col_dark) - 1
+
+    return x_left, x_right
 
 
 def _fingerprints_continuous(fp_a: Dict, fp_b: Dict) -> bool:
@@ -3072,16 +3180,39 @@ def _detect_column_gutters_200dpi(
         # Fallback: single full-width column
         return [{"col_id": "col_0", "x_min": 0, "x_max": width}]
 
-    # Find gutter x-ranges (whitespace between text columns)
-    median_dark = sorted(col_dark)[len(col_dark) // 2] or 1
-    gutter_threshold = median_dark * _GUTTER_DARK_FRACTION
+    # ------------------------------------------------------------------
+    # Clamp search to the ink bounding box.
+    # This is the PRIMARY fix for the margin-gutter defect:
+    # On a real page, most columns are white (margins + inter-col space).
+    # The global median of col_dark is near-zero, so threshold ≈ 0 and
+    # only the pure-white far-margin columns qualify as "gutters",
+    # producing one pseudo-column spanning ~97% of the page.
+    # By restricting the valley search to [x_left, x_right] we guarantee
+    # that page-margin whitespace is NEVER detected as a column gutter.
+    # ------------------------------------------------------------------
+    x_left, x_right = _find_ink_bbox(col_dark)
+    ink_region = col_dark[x_left:x_right + 1]
 
-    # Identify contiguous gutter runs
-    gutter_ranges: List[Tuple[int, int]] = []
+    if not ink_region:
+        return [{"col_id": "col_0", "x_min": 0, "x_max": width}]
+
+    # Threshold relative to the max within the ink region (not global median).
+    # Valleys inside the ink bbox that drop below this level are real gutters.
+    max_dark_in_region = max(ink_region) or 1
+    gutter_threshold = max_dark_in_region * _GUTTER_DARK_FRACTION
+
+    # LF-FIX: Collect raw gutter candidates — contiguous runs of low-ink columns
+    # WITHIN the ink bbox only.
+    # Do NOT flush an open gutter at the ink-right boundary: trailing whitespace
+    # after the last text column is NOT a column separator. Only closed runs
+    # (gutter immediately followed by more ink content) count as real gutters.
+    # This prevents the 20-30px edge slivers from being accepted as columns.
+    raw_gutter_ranges: List[Tuple[int, int]] = []
     in_gutter = False
     gutter_start = 0
-    for x in range(width):
-        if col_dark[x] <= gutter_threshold:
+    for i, dark in enumerate(ink_region):
+        x = x_left + i
+        if dark <= gutter_threshold:
             if not in_gutter:
                 in_gutter = True
                 gutter_start = x
@@ -3090,35 +3221,60 @@ def _detect_column_gutters_200dpi(
                 gutter_end = x - 1
                 gap_width = gutter_end - gutter_start + 1
                 if gap_width >= _MIN_GUTTER_WIDTH_PX:
-                    gutter_ranges.append((gutter_start, gutter_end))
+                    raw_gutter_ranges.append((gutter_start, gutter_end))
                 in_gutter = False
-    if in_gutter:
-        gutter_end = width - 1
-        gap_width = gutter_end - gutter_start + 1
-        if gap_width >= _MIN_GUTTER_WIDTH_PX:
-            gutter_ranges.append((gutter_start, gutter_end))
+    # Open gutter at ink-right is DROPPED (trailing content whitespace).
+
+    if not raw_gutter_ranges:
+        # No inter-column gutters found within the ink bbox.
+        # Return a single column spanning the ink bounding box.
+        return [{"col_id": "col_0", "x_min": x_left, "x_max": x_right}]
+
+    # LF-FIX: Filter out gutters that would produce sub-threshold text columns.
+    # A gutter at position G is valid only if the text column on BOTH sides of G
+    # is at least _MIN_TEXT_COL_WIDTH_PX wide. This rejects the 20-30px edge
+    # slivers (e.g. page 3 col_2=1630-1653 with 23px width, page 4 col_0=0-25
+    # with 25px width) that caused the schema-inheritance cascade failure.
+    gutter_ranges: List[Tuple[int, int]] = []
+    prev_col_start = x_left
+    for gi, (g_start, g_end) in enumerate(raw_gutter_ranges):
+        left_col_width = g_start - prev_col_start
+        # Right column ends at the next gutter start or at ink right
+        if gi + 1 < len(raw_gutter_ranges):
+            right_col_end = raw_gutter_ranges[gi + 1][0] - 1
+        else:
+            right_col_end = x_right
+        right_col_width = right_col_end - g_end
+        if (left_col_width >= _MIN_TEXT_COL_WIDTH_PX
+                and right_col_width >= _MIN_TEXT_COL_WIDTH_PX):
+            gutter_ranges.append((g_start, g_end))
+        prev_col_start = g_end + 1
 
     if not gutter_ranges:
-        # No gutters found — single full-width column
-        return [{"col_id": "col_0", "x_min": 0, "x_max": width}]
+        # All candidate gutters were adjacent to sub-threshold columns (edge noise).
+        # Return a single column spanning the ink bounding box.
+        return [{"col_id": "col_0", "x_min": x_left, "x_max": x_right}]
 
-    # Build text column regions from the gaps between gutters
+    # Build text column regions from the ink-bbox edges and the validated gutters.
+    # The first column starts at x_left (ink left edge), the last ends at x_right.
+    # Encoding: alternate text columns and gutter-whitespace columns so the OCR
+    # layer can identify which regions contain text vs. whitespace.
     columns: List[Dict] = []
     col_idx = 0
 
-    # Column before the first gutter
+    # Column from ink-left to the first gutter
     first_gutter_start = gutter_ranges[0][0]
-    if first_gutter_start > 0:
+    if first_gutter_start > x_left:
         columns.append({
             "col_id": f"col_{col_idx}",
-            "x_min": 0,
+            "x_min": x_left,
             "x_max": first_gutter_start - 1,
         })
         col_idx += 1
 
-    # Include gutter as a column boundary, then text region after it
+    # Gutter as column boundary + text region after it
     for i, (g_start, g_end) in enumerate(gutter_ranges):
-        # Add the gutter itself as a (very narrow) boundary column
+        # Add the gutter as a (narrow whitespace) boundary column
         columns.append({
             "col_id": f"col_{col_idx}",
             "x_min": g_start,
@@ -3126,8 +3282,9 @@ def _detect_column_gutters_200dpi(
         })
         col_idx += 1
 
-        # Text region after this gutter (up to next gutter or page edge)
-        next_start = gutter_ranges[i + 1][0] if i + 1 < len(gutter_ranges) else width
+        # Text region from this gutter's right edge to next gutter's start
+        # (or to ink-right if this is the last gutter)
+        next_start = gutter_ranges[i + 1][0] if i + 1 < len(gutter_ranges) else x_right + 1
         if next_start > g_end + 1:
             columns.append({
                 "col_id": f"col_{col_idx}",

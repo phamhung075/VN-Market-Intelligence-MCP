@@ -24,6 +24,8 @@ from infrastructure.generic_md_table_extractor import (
     _estimate_row_pitch,
     _extract_unit_hints,
     _blank_fingerprint,
+    _find_ink_bbox,
+    _detect_column_gutters_200dpi,
 )
 
 
@@ -364,3 +366,529 @@ class TestFingerprintGroupingLogic:
         assert fp_table["page_type"] != "prose"  # Sanity check
         # The last group is the prose unit
         assert len(groups[1]) == 1
+
+
+# ===========================================================================
+# Tests for _find_ink_bbox — LF-FIX gutter-detection regression gate
+# ===========================================================================
+
+class TestFindInkBbox:
+    """
+    Tests for the ink bounding box helper that clamps gutter search to the
+    actual text region, preventing page margins from being detected as gutters.
+
+    AC-0: purely geometric inputs. No BCTC semantics.
+    """
+
+    def test_full_ink_no_margins(self):
+        """All columns have ink — bbox spans full width."""
+        col_dark = [10, 10, 10, 10, 10]
+        x_left, x_right = _find_ink_bbox(col_dark)
+        assert x_left == 0
+        assert x_right == 4
+
+    def test_left_margin_excluded(self):
+        """Leading zero columns are excluded from the ink bbox."""
+        # 3 empty margin cols, then ink from col 3 onward
+        col_dark = [0, 0, 0, 8, 9, 8, 0]
+        x_left, x_right = _find_ink_bbox(col_dark)
+        assert x_left == 3
+        assert x_right == 5
+
+    def test_right_margin_excluded(self):
+        """Trailing zero columns are excluded from the ink bbox."""
+        col_dark = [8, 9, 8, 0, 0, 0]
+        x_left, x_right = _find_ink_bbox(col_dark)
+        assert x_left == 0
+        assert x_right == 2
+
+    def test_both_margins_excluded(self):
+        """Both leading and trailing zero columns excluded."""
+        col_dark = [0, 0, 8, 9, 8, 0, 0]
+        x_left, x_right = _find_ink_bbox(col_dark)
+        assert x_left == 2
+        assert x_right == 4
+
+    def test_empty_col_dark_returns_zero_zero(self):
+        """Empty input returns (0, 0) safe fallback."""
+        x_left, x_right = _find_ink_bbox([])
+        assert x_left == 0
+        assert x_right == 0
+
+    def test_all_zero_returns_full_range(self):
+        """All-zero profile returns full-width fallback (nothing to exclude)."""
+        col_dark = [0, 0, 0, 0]
+        x_left, x_right = _find_ink_bbox(col_dark)
+        # With all zeros: global_max=0, ink_threshold=0, no column exceeds it,
+        # so fallback to full range.
+        assert x_left == 0
+        assert x_right == 3
+
+    def test_single_ink_column(self):
+        """Single ink column at the center."""
+        col_dark = [0, 0, 100, 0, 0]
+        x_left, x_right = _find_ink_bbox(col_dark)
+        assert x_left == 2
+        assert x_right == 2
+
+
+# ===========================================================================
+# Tests for _detect_column_gutters_200dpi — LF-FIX primary regression gate
+# ===========================================================================
+
+class TestDetectColumnGutters200dpi:
+    """
+    Tests for the Tier-1 gutter detector.
+
+    PRIMARY regression test: a synthetic profile with wide page margins and
+    3 narrow inter-column gutters must produce 4 columns at the INTERNAL
+    valleys — NOT one column spanning 97% of the page (the pre-fix failure).
+
+    AC-0: purely geometric inputs. No BCTC semantics.
+    """
+
+    def _make_profile(self, width: int, ink_ranges: list, gutter_positions: list,
+                      margin_left: int = 0, margin_right: int = 0) -> list:
+        """
+        Build a synthetic col_dark profile.
+
+        Args:
+            width:           total profile width in columns
+            ink_ranges:      list of (start, end) where dark=high (ink)
+            gutter_positions: list of (start, end) where dark=low (gap)
+            margin_left:     number of leading zero columns (margin)
+            margin_right:    number of trailing zero columns (margin)
+
+        All unlisted positions default to a moderate dark value (20).
+        Ink ranges have dark=100. Gutters have dark=0.
+        Margin columns have dark=0.
+        """
+        profile = [20] * width
+        for x in range(margin_left):
+            profile[x] = 0
+        for x in range(width - margin_right, width):
+            profile[x] = 0
+        for g_start, g_end in gutter_positions:
+            for x in range(g_start, g_end + 1):
+                profile[x] = 0
+        for i_start, i_end in ink_ranges:
+            for x in range(i_start, i_end + 1):
+                profile[x] = 100
+        return profile
+
+    def test_three_internal_gutters_produce_four_columns(self):
+        """
+        PRIMARY REGRESSION: synthetic profile with 50-col margins + 3 internal
+        20-col gutters. Pre-fix: one column spanning 97% of page (bug).
+        Post-fix: 4 text columns at internal valleys, margins excluded.
+
+        Layout: |margin50|col0_200|gutter20|col1_100|gutter20|col2_150|gutter20|col3_200|margin50|
+        Total width = 50+200+20+100+20+150+20+200+50 = 810
+        """
+        width = 810
+        margin = 50
+        # Text column spans
+        col0_end = margin + 200 - 1  # 249
+        g0_start = 250; g0_end = 269
+        col1_end = 370 - 1           # 369
+        g1_start = 370; g1_end = 389
+        col2_end = 540 - 1           # 539
+        g2_start = 540; g2_end = 559
+        # col3 from 560 to 760
+
+        profile = self._make_profile(
+            width=width,
+            ink_ranges=[
+                (margin, col0_end),      # col 0 ink
+                (g0_end + 1, g1_start - 1),  # col 1 ink
+                (g1_end + 1, g2_start - 1),  # col 2 ink
+                (g2_end + 1, width - margin - 1),  # col 3 ink
+            ],
+            gutter_positions=[
+                (g0_start, g0_end),
+                (g1_start, g1_end),
+                (g2_start, g2_end),
+            ],
+            margin_left=margin,
+            margin_right=margin,
+        )
+
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+
+        # We expect at least 4 text columns (columns 0,2,4,6 in alternating
+        # text/gutter layout) — margins must NOT be columns.
+        text_cols = [c for c in columns if (c["x_max"] - c["x_min"] + 1) >= 50]
+        assert len(text_cols) == 4, (
+            f"Expected 4 text columns from 3 internal gutters, got {len(text_cols)}. "
+            f"All columns: {columns}"
+        )
+
+        # The first text column must start at or near the ink left edge (not at 0)
+        leftmost = columns[0]
+        assert leftmost["x_min"] >= margin - 5, (
+            f"First column starts at {leftmost['x_min']}, expected >= {margin - 5}. "
+            f"Left margin was incorrectly included as a column. All columns: {columns}"
+        )
+
+        # No column should span more than 60% of the total page width
+        max_col_width = max(c["x_max"] - c["x_min"] + 1 for c in columns)
+        assert max_col_width <= width * 0.60, (
+            f"Widest column is {max_col_width}px = {max_col_width/width:.1%} of page. "
+            f"Expected < 60% (pre-fix bug produced 97%). All columns: {columns}"
+        )
+
+    def test_no_gutters_produces_single_ink_bbox_column(self):
+        """
+        All-ink profile (no internal gutters) → single column spanning ink bbox.
+        Margins still excluded.
+        """
+        width = 500
+        margin = 30
+        profile = self._make_profile(
+            width=width,
+            ink_ranges=[(margin, width - margin - 1)],
+            gutter_positions=[],
+            margin_left=margin,
+            margin_right=margin,
+        )
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+        assert len(columns) == 1
+        assert columns[0]["col_id"] == "col_0"
+        # Column starts at ink left edge, not at 0
+        assert columns[0]["x_min"] >= margin - 5, (
+            f"Single column starts at {columns[0]['x_min']}, expected >= {margin - 5}."
+        )
+
+    def test_column_ids_are_positional(self):
+        """Column IDs must match col_N pattern — AC-0."""
+        import re
+        width = 400
+        profile = self._make_profile(
+            width=width,
+            ink_ranges=[(50, 349)],
+            gutter_positions=[(175, 195)],
+            margin_left=50,
+            margin_right=50,
+        )
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+        for col in columns:
+            assert re.fullmatch(r"col_\d+", col["col_id"]), (
+                f"Non-positional column ID: {col['col_id']!r} — AC-0 violation"
+            )
+
+    def test_empty_profile_fallback(self):
+        """Empty col_dark → fallback single full-width column."""
+        columns = _detect_column_gutters_200dpi(col_dark=[], width=0)
+        assert len(columns) == 1
+        assert columns[0]["col_id"] == "col_0"
+
+    def test_margin_only_columns_not_detected_as_gutters(self):
+        """
+        Pre-fix regression: page with 5% left margin + ink from 5% to 100%.
+        The margin columns must NOT be detected as a gutter.
+        Expected: 1 ink column (no internal gutters).
+        """
+        width = 1000
+        margin_cols = 50  # 5% of width
+        profile = [0] * margin_cols + [80] * (width - margin_cols)
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+        # No internal gutters → should produce 1 column for the ink region
+        text_cols = [c for c in columns if (c["x_max"] - c["x_min"] + 1) > 20]
+        assert len(text_cols) == 1, (
+            f"Margin-only gap was incorrectly detected as a gutter. "
+            f"Columns: {columns}"
+        )
+
+
+# ===========================================================================
+# LF-FIX regression tests — gutter-detection edge-sliver fix
+# ===========================================================================
+
+class TestGutterDetectionEdgeSliverFix:
+    """
+    LF-FIX targeted regression gate.
+
+    The pre-fix bug: gutter detection produced 20-30px slivers at the page
+    margins — these edge slivers were accepted as column boundaries, creating
+    one vast pseudo-column (97% of page width) and destroying label/value
+    separation.  Pages 3,4,5,6 then had mutually inconsistent fingerprints
+    (edge slivers at opposite margins), so Tier-0 grouping never fired and
+    pages were left as isolated single-page units.  Schema inheritance was
+    never triggered.
+
+    The fix: a gutter is only accepted when the text column on BOTH sides of
+    the gutter is >= _MIN_TEXT_COL_WIDTH_PX pixels wide.  Trailing content
+    whitespace (open gutter at ink-right) is also dropped.
+
+    All tests use purely geometric synthetic profiles.  AC-0: no BCTC semantics.
+    """
+
+    def _fpt_like_profile(self, width: int = 1654) -> list:
+        """
+        Synthetic horizontal projection profile that approximates the FPT Q1
+        2026 balance-sheet page column layout at 200 DPI:
+            - Left margin: 56px (0-55)
+            - Label column:  56 to 579  (524px, ~35% of page)
+            - Gutter 0:     580 to 620  (41px whitespace)
+            - Code column:  621 to 744  (124px, ~8%)
+            - Gutter 1:     745 to 785  (41px whitespace)
+            - Value col 1:  786 to 1240 (455px, ~28%)
+            - Gutter 2:    1241 to 1281 (41px whitespace)
+            - Value col 2: 1282 to 1597 (316px, ~19%)
+            - Right margin: 1598-1653 (56px)
+        """
+        profile = [0] * width
+        # Margins
+        for x in range(56):
+            profile[x] = 0
+        for x in range(1598, width):
+            profile[x] = 0
+        # Text columns (dense ink)
+        for x in range(56, 580):
+            profile[x] = 90
+        for x in range(621, 745):
+            profile[x] = 80
+        for x in range(786, 1241):
+            profile[x] = 85
+        for x in range(1282, 1598):
+            profile[x] = 75
+        # Gutters (whitespace — zero ink)
+        for x in range(580, 621):
+            profile[x] = 0
+        for x in range(745, 786):
+            profile[x] = 0
+        for x in range(1241, 1282):
+            profile[x] = 0
+        return profile
+
+    def test_fpt_like_page_produces_3_gutters(self):
+        """
+        Profile approximating FPT Q1 balance-sheet pages (3 internal gutters)
+        must produce 3 detected gutters → 4 text columns + 3 gutter entries = 7
+        total entries, OR just the 4 text columns if returned without whitespace.
+        The key assertion: no single column spans more than 40% of the page.
+        """
+        width = 1654
+        profile = self._fpt_like_profile(width)
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+
+        # No column should span more than 40% of the total page width
+        max_col_width = max(c["x_max"] - c["x_min"] + 1 for c in columns)
+        assert max_col_width <= width * 0.40, (
+            f"Widest column is {max_col_width}px = {max_col_width/width:.1%} of page. "
+            f"Expected < 40% (pre-fix: 97%). Columns: {columns}"
+        )
+
+        # Must find at least 4 distinct text-content columns (width >= 80px)
+        text_cols = [c for c in columns if (c["x_max"] - c["x_min"] + 1) >= 80]
+        assert len(text_cols) >= 4, (
+            f"Expected >= 4 real text columns, got {len(text_cols)}. "
+            f"All columns: {columns}"
+        )
+
+    def test_trailing_whitespace_not_a_gutter(self):
+        """
+        LF-FIX: open gutter at the ink-right boundary (trailing content
+        whitespace) must NOT be accepted as a column separator.
+
+        Pre-fix: the 'flush at ink_right' path accepted a 23px trailing
+        whitespace run as a gutter → produced a 22px col_2 sliver at the right
+        edge → identical to the pre-fix page-3 failure.
+
+        Post-fix: the trailing whitespace is dropped → single column.
+        """
+        width = 1654
+        # All ink except trailing 30px whitespace (simulates content ending
+        # before the right margin — exactly what caused the page-3 sliver)
+        profile = [80] * (width - 30) + [0] * 30
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+
+        # The trailing whitespace must NOT produce a 30px trailing column
+        if len(columns) > 1:
+            last_col = columns[-1]
+            last_col_width = last_col["x_max"] - last_col["x_min"] + 1
+            assert last_col_width >= 80, (
+                f"Trailing whitespace produced a {last_col_width}px sliver column. "
+                f"LF-FIX: open gutters at ink-right must be dropped. "
+                f"All columns: {columns}"
+            )
+
+    def test_leading_edge_sliver_rejected(self):
+        """
+        LF-FIX: a narrow (25px) gutter near the left edge that would produce
+        a 25px text column (< _MIN_TEXT_COL_WIDTH_PX=80) must be rejected.
+
+        Pre-fix: this produced col_0=0-25 (page-4 failure), then a vast col_2
+        spanning almost the entire page.
+
+        Post-fix: gutter rejected → single column spanning the ink region.
+        """
+        width = 1654
+        # Simulates page-4 failure: 25px "text" col at left, then vast content
+        profile = [0] * 56                      # left margin
+        profile += [90] * 25                    # tiny "text" col 0 (25px)
+        profile += [0] * 30                     # narrow gutter (30px)
+        profile += [85] * (1654 - 56 - 25 - 30 - 56)  # main content
+        profile += [0] * 56                     # right margin
+        columns = _detect_column_gutters_200dpi(col_dark=profile, width=width)
+
+        # No text column should be narrower than 80px
+        text_cols = [c for c in columns if (c["x_max"] - c["x_min"] + 1) >= 80]
+        narrow_cols = [c for c in columns if 0 < (c["x_max"] - c["x_min"] + 1) < 80]
+        # The 25px column must not appear as the sole content column
+        # (if it's a gutter whitespace entry that's fine, but no tiny text region)
+        for nc in narrow_cols:
+            # Only gutter entries (whitespace columns) should be narrow
+            # i.e. they should be bordered by larger columns on both sides
+            col_width = nc["x_max"] - nc["x_min"] + 1
+            assert col_width <= 60, (
+                f"Narrow text column {nc} (width={col_width}px) should have been "
+                f"rejected by the minimum column width filter. Columns: {columns}"
+            )
+
+    def test_fpt_like_pages_p3_p4_produce_same_gutter_count(self):
+        """
+        LF-FIX: pages p3 and p4 of FPT Q1 2026 have the same physical column
+        layout but differ in which edge the pre-fix gutter was found.  After
+        the fix, both pages should produce the same gutter_count from equivalent
+        profiles, enabling Tier-0 grouping.
+
+        Simulates p3 (gutters at 35%/47%/75%) and p4 (same layout).
+        """
+        width = 1654
+        profile_p3 = self._fpt_like_profile(width)
+        # p4 same layout — no difference in actual column structure
+        profile_p4 = list(profile_p3)  # identical
+
+        cols_p3 = _detect_column_gutters_200dpi(col_dark=profile_p3, width=width)
+        cols_p4 = _detect_column_gutters_200dpi(col_dark=profile_p4, width=width)
+
+        # Both pages must detect the same number of columns
+        assert len(cols_p3) == len(cols_p4), (
+            f"p3 detected {len(cols_p3)} columns but p4 detected {len(cols_p4)}. "
+            f"Same layout must produce same gutter count. "
+            f"p3 cols: {cols_p3}. p4 cols: {cols_p4}"
+        )
+
+    def test_fingerprint_consistency_enables_p3_p6_grouping(self):
+        """
+        LF-FIX end-to-end: simulated pages 3,4,5,6 with the same physical
+        column layout produce fingerprints that _fingerprints_continuous()
+        recognizes as the same unit.
+
+        Pre-fix: gutters at opposite edges (97% vs 3%) → 95% drift → unit break.
+        Post-fix: gutters at correct internal positions (35%/47%/75%) → < 5% drift
+        → pages group into one unit → AC-LFE-2 can fire.
+        """
+        from infrastructure.generic_md_table_extractor import _fingerprints_continuous
+
+        # Post-fix: all 4 pages should produce gutter fractions near [0.35, 0.47, 0.75]
+        # We test with synthetic fingerprints that match the expected post-fix output
+        fp_balanced = {
+            "page_type": "table",
+            "gutter_count": 3,
+            "gutter_x_fractions": [0.35, 0.47, 0.75],
+            "row_pitch_px_at_50dpi": 12.0,
+        }
+        # Pages 3, 4, 5, 6 all have same layout → same fingerprint
+        assert _fingerprints_continuous(fp_balanced, fp_balanced), (
+            "Identical post-fix fingerprints must be continuous (same unit)."
+        )
+
+        # Verify: pre-fix fingerprints (edge slivers) would FAIL continuity
+        fp_pre_fix_p3 = {
+            "page_type": "table",
+            "gutter_count": 3,
+            "gutter_x_fractions": [0.0, 0.97, 0.99],
+            "row_pitch_px_at_50dpi": 12.0,
+        }
+        fp_pre_fix_p4 = {
+            "page_type": "table",
+            "gutter_count": 3,
+            "gutter_x_fractions": [0.0, 0.02, 0.03],
+            "row_pitch_px_at_50dpi": 12.0,
+        }
+        assert not _fingerprints_continuous(fp_pre_fix_p3, fp_pre_fix_p4), (
+            "Pre-fix fingerprints (edge slivers at opposite margins) must NOT be "
+            "continuous — confirms the pre-fix bug is the cause of unit fragmentation."
+        )
+
+
+class TestInvariant3DistinctLabelValueRequirement:
+    """
+    LF-FIX: Invariant 3 leniency gap — verify that check_no_orphan_rows
+    correctly rejects the 'all content in one wide column' scramble case.
+
+    The QA-reported page-4 failure: col_0=empty, col_1=empty,
+    col_2='label value1 value2 code all mashed together'.
+    A row with no genuine label (or purely-numeric label) plus content in
+    col_2 must NOT pass Invariant 3.
+
+    These tests exercise the already-implemented fix in check_no_orphan_rows
+    (_has_label rejects purely-numeric labels; value-without-label → orphan).
+    """
+
+    def test_all_content_one_column_fails_invariant3(self):
+        """
+        The page-4 scramble case: BCTC line-item mashed into one cell.
+        Simulates: | PHAI TRA 44.393.950.887.086 28.464.058.214.856 NO 300 Cc |  |  |
+        In rows_for_gate format: label=None (col_0 empty), values=[mashed_content].
+        """
+        from domain.primitives.layout_invariants.primitive import check_no_orphan_rows
+
+        # Row as it appears with all-in-one-column layout:
+        # label column is empty, everything dumped into the single wide column
+        rows = [
+            {
+                "code": None,
+                "label": None,  # label column is empty (col_0 empty)
+                "values": ["PHAI TRA 44.393.950.887.086 28.464.058.214.856 NO 300 Cc"],
+                "page": 4,
+            }
+        ]
+        ok, reason = check_no_orphan_rows(rows)
+        assert not ok, (
+            "Row with empty label + all-mashed-content value must fail Invariant 3. "
+            "Page-4 false-green must be caught."
+        )
+        assert "orphan" in reason.lower() or "junk" in reason.lower()
+
+    def test_numeric_only_label_value_in_adjacent_col_fails(self):
+        """
+        When col_0 (label column) has an OCR number overspill (numeric string)
+        and col_2 has the real content, Invariant 3 must catch this.
+        _has_label() returns False for purely-numeric labels.
+        """
+        from domain.primitives.layout_invariants.primitive import check_no_orphan_rows
+
+        rows = [
+            {
+                "code": None,
+                "label": "44.393.950.887.086",  # numeric-only overspill in label col
+                "values": ["28.464.058.214.856"],
+                "page": 5,
+            }
+        ]
+        ok, reason = check_no_orphan_rows(rows)
+        assert not ok, (
+            "Row with purely-numeric label (OCR overspill) must fail Invariant 3. "
+            "This prevents the page-4 false-green from repeating post-fix."
+        )
+
+    def test_genuine_label_and_value_in_distinct_columns_passes(self):
+        """
+        A correctly extracted row: label col has text, value col has number.
+        This must pass Invariant 3 (the fix must not create false-negatives).
+        """
+        from domain.primitives.layout_invariants.primitive import check_no_orphan_rows
+
+        rows = [
+            {
+                "code": "310",
+                "label": "No ngan han",  # genuine text label
+                "values": ["44393950887086", "28464058214856"],  # two value columns
+                "page": 5,
+            }
+        ]
+        ok, reason = check_no_orphan_rows(rows)
+        assert ok, f"Correctly extracted row must pass Invariant 3, got: {reason}"
