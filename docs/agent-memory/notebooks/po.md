@@ -1,44 +1,36 @@
 # PO Notebook
 
-**Cycle:** :20 2026-05-26T18:20Z — Sprint BCTC-LAYOUT-FIRST, LF-BA approval gate.
-**Last update:** 2026-05-26T18:20Z
-**Status:** LF-BA spec APPROVED; architect LF-DESIGN UNBLOCKED. Scope this cycle = approval gate + next dispatch ONLY (no re-design, did NOT answer architect-open Qs).
+**Cycle:** triage :07 cron (fire 20260526T182326Z) — 2026-05-26T18:26Z.
+**Last update:** 2026-05-26T18:26Z
+**Status:** Registered active sprint BCTC-LAYOUT-FIRST. Corrected a STALE kickoff signal. RETURN to dispatcher = BATCH(2): architect LF-DESIGN + qa NEWS-INGEST-3 (parallel, WIP-safe).
 
 ---
 
-## 2026-05-26T18:20Z — :20 (LF-BA APPROVAL GATE = APPROVED)
+## 2026-05-26T18:26Z — triage :07 (stale-kickoff correction + sprint register)
 
-Reviewed BA spec `docs/REQ_BCTC-LAYOUT-FIRST.md` vs my binding Decisions A–F + the two hard-constraint blocks. **Verdict: APPROVED — faithful on every Decision:**
-- **A** (generic/grep-proof) → REQ-LF-0 hard invariant (AC-0a grep, AC-0b corpus, AC-0c structured untouched); inherited by REQ-LF-7c overlay JSON (positional `col_0` descriptors).
-- **B** (replace column-guesser / augment structured) → REQ-LF-5a `text_table_extractor.py` 0-byte-diff; redesign target = `generic_md_table_extractor.py`; REQ-LF-5c no new write to `bctc_table_rows`.
-- **D** (schema inheritance = named fix) → REQ-LF-1 ROOT-CAUSE ANCHOR (FPT Q1 pages 3-6 one unit; page 41 anchor-collide proves geometry-spine), REQ-LF-2b page-5 inherits page-3 grid.
-- **E** (pdf-extractor JSON / mcp-server toggle / boundary split) → REQ-LF-7 + REQ-LF-8 + REQ-LF-8f no Python import (DB read only).
-- **F** (done-bar) → REQ-LF-4e DIRECT market.db arbiter (endpoint NEVER), 7-pt Done-Bar incl. USER verbal G9.
-- **Privacy/host** → REQ-LF-6 (no external API, sequential single-doc, never `run_bctc_batch_sweep`) + NFR-1/2.
+**Drained signal was STALE.** pendingSignals headline (`po-20260526T181140Z.json`) asked: dispatch ba for LF-BA, with a NOTE that "nobody is driving LF-BA, no peer lock, yours to confirm+register." That premise predates the work — the full chain already landed:
+- git: `fb1d5d62` sprint-open → `0be7184b` ba REQ → `6fc7252b` PO-APPROVED LF-BA (18:20Z) → `f31cd6a5` po notebook.
+- on-disk: `docs/REQ_BCTC-LAYOUT-FIRST.md` (29KB) + `docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md` (has `[BA] LF-BA` + `[PO] LF-BA APPROVAL GATE=APPROVED`); TASKS.md LF-BA=DONE/APPROVED, LF-DESIGN=READY.
+- The kickoff said the handoff was "NOT yet written" — it WAS. Re-dispatching ba would redo approved work. REJECTED that path.
 
-**3 architect-open Qs CORRECTLY DEFERRED** (recorded, NOT answered by me): zone+md schema vs `bctc_table_rows`; exact boundary JSON contract; quarantined-unit storage for QA direct-DB count. Architect resolves in LF-DESIGN.
+**What the NOTE got right:** the prior PO cycle did NOT update `pipeline-state.json` (still said rollout-complete / activeTaskId=NONE) and left no umbrella lock. That part was mine to fix — DONE this cycle.
 
-Recurring-bug guard cleared — this redesign IS the root-cause rethink (9 MD-EXTRACT + 7 BT commits).
+**Decision 1 — BCTC-LAYOUT-FIRST:** still the right call (mandated root-cause rethink: `generic_md_table_extractor.py` 9 MD-EXTRACT + `text_table_extractor.py` 7 BT fix commits; user-co-authored go-to-build; supersedes BCTC-MD-TABLE). Correct NEXT = **architect LF-DESIGN**, NOT ba. Registered: `activeTaskId=BCTC-LAYOUT-FIRST`, `nextAgent=architect(LF-DESIGN)`. Size = **SPRINT-L** (zone=multi, architect-led pdf-extractor↔mcp-server split + 2 parallel dev tasks). Host risk LOW this tick — LF-DESIGN is design-only (architect writes only `docs/architecture-briefs/`, no code/rebuild/OCR), safe under BCTC churn + OOM-flap. Heavy work (LF-EXTRACT OCR, LF-DEPLOY rebuild) gated behind LF-DESIGN — not dispatched now.
 
-**Edits (working tree, NOTHING staged — main terminal commits):**
-- docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md (PO approval entry)
-- docs/TASKS.md (LF-BA DONE / LF-DESIGN READY)
-- docs/agent-memory/notebooks/po.md (this)
+**Decision 2 — NEWS-INGEST-3 (qa):** DISPATCH this tick. HIGH reliability tier; gates an already-shipped fix (NEWS-INGEST-2 cursor `9711ca72` deployed + -2b `e1e08a29` live VN surface, ops-confirmed). TASKS.md held it for "next triage tick" — this is that tick. qa-lane verification (deterministic cursor test + direct market.db reads + /api/news-fetch/live probe); no rebuild, no batch sweep → light host load, no contention with architect LF-DESIGN.
 
-**No code, no pilot-status JSON, no frozen surface touched.**
+**WIP:** 0/2 before tick. LF-DESIGN=architect design-lane (no dev/pilot WIP slot); NEWS-INGEST-3=qa lane. Two non-dev lanes → WIP≤2 respected. Order: NEWS-INGEST-3 first (close-out), LF-DESIGN parallel.
+
+**Not actionable:** cowork-fires 17:33/17:48/18:03/18:18Z = expected-silent off-hours heartbeats (VN closed, next fan-out ~20:00Z). context-bloat-docs-TASKS-md-* = PostToolUse size-cap hook noise from this session's own commits → janitor lane, not dev CODE.
+
+**Files modified (UNSTAGED for dispatcher commit-mutex):** `docs/pipeline-state.json` (registered active sprint + footer), `docs/TASKS.md` (NEWS-INGEST-3 row → DISPATCHED), `docs/signals/po-20260526T182658Z.json` (verdict), this notebook. Did NOT touch pre-existing dirty tree (`.claude/agents/*`, `apps/api-gateway/sandbox/traces/*`) nor any `pilot-status-*.json`. Did NOT git-stage.
 
 ---
 
-## Carry-over (next cycle)
+## Carry-over
 
-- **NEXT = architect LF-DESIGN** (zone=`multi`, design-only no code): 4-tier blueprint, split at pdf-extractor↔mcp-server boundary, resolve the 3 open Qs, per-task ACs for LF-EXTRACT + LF-OVERLAY, brief → `docs/architecture-briefs/`.
-- **At LF-EXIT (my next gate on this sprint):** do NOT rubber-stamp. Re-verify LIVE via DIRECT market.db (`docker compose exec -T mcp-server bun -e` + `bun:sqlite`) — endpoint can be stale. Check multi-doc Tier-3 pass-rate (not one doc), FPT Q1 p5 scramble fixed, `text_table_extractor.py` 0-byte-diff, overlay ON/OFF. **5 prior false-greens** on this surface — goal stays ARMED until USER verbal G9.
-- **LF chain order:** architect(LF-DESIGN)→dev-pdf-extractor(LF-EXTRACT)+dev-mcp-server(LF-OVERLAY)→ops(LF-DEPLOY seq single-doc rebuild/recreate)→qa(LF-QA Tier-3 corpus via direct DB)→PO(LF-EXIT)→USER G9.
-- **Lock note:** task_claim NOT acquirable from this thread (gateway ✓ but thread toolset = Read/Edit/Write/Bash + semble only). Single-user autonomous, non-fatal; chain dispatch is what matters. Re-attempt umbrella claim when next in a thread that surfaces the MCP call_tool proxy.
-
-## Standing context (carry-over, NOT re-dispatch)
-- **NEWS-INGEST-3 (qa) NEXT-READY**; **NEWS-INGEST-LIVE (ops)** OPEN (real VPS cycle inserts >0 NEW distinct VN rows); **NEWS-INGEST-2c (developer)** cosmetic UI backlog.
-- DEPLOY-DRIFT (-1/-2 ops-rebuild, -3 architect guard) standing. BCTC-TABLE-3 CLOSED (BT3-EXIT2, 79 clean rows). BCTC-TABLE-2 + MCPZONE-HARDEN-1 stay SEPARATE — NOT folded into LAYOUT-FIRST. Standing routed: HSG-FIRE-SEVERITY-RECAL, MARKET-SLOTS-DARK, HOLLOW-RUN-20260525, CHEF-EOD-MACRO-MISATTRIB, context-bloat janitor, cowork-fire (expected-silent off-hours).
-
-## PO order (binding): reliability → coverage → UX → architecture
-- Self-initiate; full autonomy. Subagents leave files UNSTAGED; dispatcher commits under commit-mutex. Recurring-bug guard: ≥2 fix commits same module → BLOCK + architect rethink. HONEST counts only — verify SHAs/build-time. NOT-RUN panels are not green.
+- **BCTC-LAYOUT-FIRST ACTIVE.** Next inbound = architect LF-DESIGN brief → docs/architecture-briefs/. After that returns, my next gate is to verify the brief resolves the 3 architect-open Qs (zone+md schema vs `bctc_table_rows` collision; exact pdf-extractor↔mcp-server boundary JSON contract; quarantined-unit storage for QA direct-DB count) and splits zone=multi cleanly before LF-EXTRACT‖LF-OVERLAY dispatch. Done-bar = Decision F (Tier-3 invariants PASS over 18-doc corpus via DIRECT market.db, NOT endpoint; + USER verbal G9; no false-greens — 5 prior).
+- **NEWS-INGEST-3** out for qa. On qa APPROVE → NEWS-INGEST-CLOSE (my PO sign-off gate). On CHANGES_REQUESTED → NEWS-INGEST-FIX (fixer).
+- **Open non-blocking maintenance** (NOT to dispatch under BCTC churn/OOM-flap unless lanes idle): MACRO-VNINDEX-DATA-GAP (dev-macro-indicators); SSOT stale-stat refresh (project-stats.json cronJobCount/testBaselinePass, system-map.json toolCount 125→146); DRIFT-2 kinh-dich endpoint wiring (Go pilot); architect risk flags from frontend close (macro body-contract test gap; mcp-server clients.ts signals type); DRIFT-3 image-SHA-drift guard (architect design-lane).
+- **Host reality:** 16GB Mac / Docker 8GB cap, kernel-panic-prone under swap; a parallel BCTC session commits on main ~every 10 min. Keep heavy/contended dispatch serialized; design + qa-read lanes are safe.
+- **Discipline reminder:** explicit-file staging only; notebooks commit separately; subagents leave files unstaged; never re-dispatch DONE+APPROVED work — verify git+on-disk state before acting on a kickoff signal (this cycle's lesson).
