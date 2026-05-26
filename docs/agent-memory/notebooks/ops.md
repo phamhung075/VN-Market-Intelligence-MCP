@@ -2365,3 +2365,85 @@ This is **correct behavior**. The schema inheritance fix applies WITHIN units (p
 
 **NEXT = qa (LF-QA)** — Sequence extraction of remaining 17 docs from 18-doc corpus, verify Tier-3 pass-rate per doc, confirm sandbox green, validate overlay visual (zone toggle ON/OFF, 5+ colors, unit boundaries), obtain user verbal G9 sign-off.
 
+
+---
+
+## Session: 2026-05-26
+
+**Task:** PEK-DEPLOY — Rebuild pdf-extractor container with PEK-IMPL-OCR engine (commit 18198910)
+
+### Execution Attempt
+
+**Pre-Flight Check:**
+- All 7 running containers healthy (api-gateway, frontend, kinh-dich-service, macro-indicators, mcp-server, pdf-extractor, rag-service)
+- Memory baseline: 1.817 GiB live usage (17% of 8 GiB cap), headroom adequate
+- rag-service at 99.55% memory (tight but acceptable for brief build operation)
+
+**Build Execution:**
+- Command: `docker compose build pdf-extractor`
+- Status: FAILED immediately during pip3 install
+
+### Build Failure Diagnosis
+
+**Error Output:**
+```
+ERROR: No matching distribution found for doclayout-yolo==0.0.2
+ERROR: Could not find a version that satisfies the requirement ultralytics>=8.2.85
+Failed versions require Python >=3.7,<=3.11
+```
+
+**Root Cause Analysis:**
+
+1. **Python Version Conflict:**
+   - Dockerfile base: `FROM ubuntu:24.04` (provides Python 3.12)
+   - requirements-pek.txt specifies: `ultralytics>=8.2.85`
+   - ultralytics 8.2.85+ constraint: `Requires-Python >=3.7,<=3.11` (NOT compatible with Python 3.12)
+   - Result: pip cannot find compatible version
+
+2. **Exact Version Not Available:**
+   - requirements-pek.txt specifies: `doclayout-yolo==0.0.2` (exact)
+   - PyPI has versions: 0.0.2b1, 0.0.3, 0.0.4
+   - Version 0.0.2 does not exist as a stable release
+   - Result: pip cannot find exact match
+
+3. **Developer Integration Issue:**
+   - Commit 18198910 was merged to main successfully by developer
+   - Developer likely built locally (macOS) where Python 3.11 may have been available
+   - Docker container built in this CI environment uses Ubuntu 24.04 (Python 3.12)
+   - **Code itself is fine; environment mismatch is the blocker**
+
+### Impact
+
+- **Severity:** CRITICAL (service cannot be deployed)
+- **Duration:** Indefinite (cannot proceed without code fix)
+- **Blast Radius:** BCTC table extraction feature (PEK-IMPL) cannot go live
+
+### Escalation
+
+- Telegram BUG channel notified (message_id: 2597)
+- Classification: UNRECOVERABLE by ops (requires source code change)
+
+### Required Actions for Dev Team
+
+Fix options (choose one):
+
+**Option A (Recommended):** Update Python to 3.11 in Dockerfile
+```
+FROM python:3.11-slim-bookworm
+# (if archive.ubuntu.com is still inaccessible, use bookworm instead)
+```
+
+**Option B:** Update requirements-pek.txt to use Python 3.12-compatible versions
+```
+ultralytics>=8.3.0  # (if available for Python 3.12)
+doclayout-yolo>=0.0.3  # (relax from exact ==0.0.2)
+```
+
+**Option C:** Investigate PDF-Extract-Kit itself
+- Check if PEK has pre-built Python 3.12 wheels or if it requires 3.11
+- May need to pin Python to 3.11 regardless
+
+### Status
+
+BLOCKED — Build failed, escalated to dev team. Cannot deploy pdf-extractor without code fix.
+NEXT: Wait for dev-team fix to requirements-pek.txt or Dockerfile Python version.
