@@ -1295,3 +1295,85 @@ So the 6 anchors = **2 pure-code columns + 4 value columns.** The two code colum
 Per AC-7-DIAG ("main terminal approves root cause before any fix code") + recurring-bug-escalation rule: the confirmed root cause **differs from the design's assumption**, so the design is **NOT approved for implementation**. Escalating to **architect MD-EXTRACT-7-REV** to revise. dev wrote NO code; working tree clean.
 
 **NEXT: architect (MD-EXTRACT-7-REV)** — revise §MD-EXTRACT-7 using the live dumps above. Must resolve: (1) header/date token exclusion (positional/structural cutoff above first value-bearing row — AC-0 geometric); (2) dual-code-column handling when anchor count == 6 (replace the `>6` count-gate with a PRESENCE-based pure-code-column detector — a bucket that is ≥X% code-class AND 0 value-class — AC-0 safe, non-regressing segment report which has no pure-code columns); (3) the ~150px value-anchor offset (root-cause the anchor metric); (4) KEEP Fix-C dense-multi-gap; (5) DROP Fix-D label-band (not broken on live); (6) REGENERATE the binding fixture to mirror live (6 anchors: 2 pure-code + 4 value, header tokens present to be excluded, 35px pitch, unequal value-col density 27/26/17/20). Hand-traceable proof required; main-terminal will re-trace before dispatching dev.
+
+---
+
+## [Architect] MD-EXTRACT-7-REV — Revised Income Statement Design (2026-05-26)
+
+**Status:** DESIGN COMPLETE — supersedes §MD-EXTRACT-7. All 6 revision requirements resolved. Zero code written. Main terminal MUST re-trace REV-8.2 stage trace + REV-8.3 assertions before dispatching dev.
+
+**Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py`. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED.
+
+**Full design:** `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md § MD-EXTRACT-7-REV`
+
+### Root causes (from diagnostic — all 6 requirements resolved)
+
+**Req 1 — Header/date pollution (NEW root cause):** ~9 header tokens (top<400) contaminate anchor detection and ordinal grid. Fix: new `_find_first_value_row_top(number_tokens)` + `_exclude_header_tokens(number_tokens, first_value_top)` applied at Step C5 (before anchor detection). AC-0: `_VALUE_TOKEN_RE` scan for minimum top coordinate — pure geometry, zero BCTC string constants.
+
+**Req 2 — Dual-code-column handling (anchor count == 6, trigger never fires):** Prior `> N_EXPECTED_MAX_VALUE_COLS` count-gate is a dead branch. Replacement: `_identify_pure_code_columns(col_buckets, col_anchors)` — presence-based detector. A bucket is pure-code when `(code_count / total_count ≥ PURE_CODE_COL_THRESHOLD = 0.90) AND (value_count == 0)`. Applied at new Step C7.5 after C7 assignment. Returns `code_col_indices` (→ code_note_tokens re-attached at C11) and `value_col_indices` (→ remaining pipeline). Non-regression: segment-report buckets all have `value_count > 0` → `code_col_indices = []` → ELSE branch → pipeline IDENTICAL to MD-EXTRACT-6 for segment report. AC-6-SEG is structurally guaranteed.
+
+**Req 3 — ~150px anchor offset (root cause explained):** Dual mechanism: (a) code column at x=959 is within col_gap=249 of true value left-edge at x=1182 → 1182 cluster SWALLOWED in merge step; (b) header tokens at x≈1330 form a separate cluster that survives (1330-959=371>249) and becomes the false value anchor. Fix applies at two levels: REV-3 (header cutoff removes contaminator) + REV-4 (code column exclusion removes the swallowing neighbor at 959). Additionally: `_detect_column_anchors_from_tokens` line 708 changed from `sum(c)/len(c)` (centroid) to `min(c)` (left-edge). With header and code excluded, anchors land at [1182, 1477, 1768, 2061] — the true value column left-edges. Segment report: min ≈ centroid for homogeneous clusters → behavioral equivalence.
+
+**Req 4 — KEEP fix-path-C (dense-multi-gap ref_pitch):** Unchanged from §MD-EXTRACT-7 §5. `prefer_ref_pitch`, `DENSE_COL_THRESHOLD=6`, `_insert_skip_slots` modification all carry forward exactly.
+
+**Req 5 — DROP fix-path-D (label band tightening):** Live pitch=35px, band=27px (=1.5×18) < 35px — no over-reach. `DENSE_LABEL_PITCH_FACTOR`, `band_override`, and all §MD-EXTRACT-7 §6 content are NOT implemented.
+
+**Req 6 — REGENERATED fixture (REV-8):** 29 tokens = 25 number + 4 text. Encodes: 6 anchors (col[0]=258 pure-code 4tok, col[1]=959 pure-code 4tok, col[2]=1182 value 4tok, col[3]=1477 value 4tok, col[4]=1768 value 3tok, col[5]=2061 value 3tok) + 3 header tokens at top=200 + 35px data pitch (495/530/565/600) + unequal value density 4/4/3/3 + 2 absent cells (col[4] row-1, col[5] row-2). Full 29-token `FIXTURE_TOKENS_REV` list + complete 10-stage trace + 10 hand-checkable assertions in brief §REV-8.
+
+### New functions and constants
+
+| Item | Action | AC-0 |
+|---|---|---|
+| `PURE_CODE_COL_THRESHOLD = 0.90` | ADD constant | geometry (token-class fractions) |
+| `_find_first_value_row_top(number_tokens)` | ADD pure function | `_VALUE_TOKEN_RE` scan, top coordinate |
+| `_exclude_header_tokens(number_tokens, first_value_top)` | ADD pure function | top coordinate comparison |
+| `_identify_pure_code_columns(col_buckets, col_anchors)` | ADD pure function | CODE_RE / VALUE_RE counts only |
+| `_detect_column_anchors_from_tokens` line 708 | MODIFY: `sum(c)/len(c)` → `min(c)` | pure geometry |
+| `_process_page` | MODIFY: add C5, C7.5, code_note append before C11 | — |
+| `DENSE_COL_THRESHOLD`, prefer_ref_pitch logic | KEEP from §MD-EXTRACT-7 §5 | — |
+| `N_EXPECTED_MAX_VALUE_COLS`, `LABEL_ZONE_GAP_FACTOR`, `DENSE_LABEL_PITCH_FACTOR`, `band_override` | NOT IMPLEMENTED (dropped) | — |
+
+### Binding ACs
+
+| AC | Type | Key criteria |
+|---|---|---|
+| AC-7-REV-HEADER | BLOCKING | Header cutoff unit test: 3 header tokens excluded, 5 data tokens retained |
+| AC-7-REV-DETECTOR | BLOCKING | Pure-code-col detector: 2 code cols detected in income-stmt fixture; 0 in segment-report-like fixture |
+| AC-7-REV-ANCHOR | BLOCKING | min(cluster) unit test: cluster [1182,1187,1192] → anchor=1182 (not 1187) |
+| AC-7-REV-FIX | BLOCKING | REV-8 fixture: 10 assertions pass (token counts, anchor count+positions, code_col_indices, skip slots, absent cells, label non-interleave) |
+| AC-7-REV-SEG-NOREGRESS | BLOCKING | Detector ELSE branch + live: segment revenues on ONE row |
+| AC-7-REV-ORD | BLOCKING | All existing TestOrdinalReconstruction tests pass unchanged |
+| AC-7-REV-INC | BINDING (live) | ≥15 income statement rows, no label interleave, revenue row period values on ONE pipe-row |
+| AC-7-REV-AC0/FENCE/PRIVACY | BLOCKING | grep deny-lists all ZERO |
+| AC-7-REV-HARDWARE | BLOCKING | Zero additional Tesseract calls |
+| AC-3F | BLOCKING | text_table_extractor.py 0-byte diff; 79 rows, balance δ=0 |
+
+### Risk flags
+
+- R-HIGH: `_find_first_value_row_top` may find a near-cutoff VALUE token in the column-header period row (top≈400). Even so: the 70px gap between header row (~326) and data row (~495) means first_value_top=326 would still include all data tokens. Acceptable.
+- R-MEDIUM: OCR garbling could produce a code "01" that passes `_VALUE_TOKEN_RE` (it cannot — "01" has no `.` group). `value_count == 0` condition is robust.
+- R-MEDIUM: `min(cluster)` with a noisy far-left artifact in the cluster. Mitigation: noise-gate in `_assign_tokens_to_columns` (dist > 3×w_med) handles downstream; upstream, a far-left artifact forms its own cluster at x≈0 and becomes a spurious anchor that the noise gate excludes.
+
+**NEXT:** main terminal re-traces §REV-8.2 stage trace (all 10 stages) and §REV-8.3 assertions by hand (especially C8.5 arithmetic in assertions 7+8: `ceil(70/43.5)-1=1`, `ceil(70/43.5)-1=1`). If all 10 assertions check out → dispatch dev-pdf-extractor MD-EXTRACT-7-REV → ops MD-DEPLOY-7 (single doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`) → main-terminal live-verify → qa → po.
+
+---
+
+## [Main-Terminal] MD-EXTRACT-7-REV RE-TRACE VERDICT — APPROVED (2026-05-26)
+
+Independently hand-traced all 10 stages of §REV-8.2 and all 10 binding assertions of §REV-8.3. Re-derived every token count from the literal `FIXTURE_TOKENS_REV` list (29 = 25 number + 4 text; data number subtotal 4+4+4+4+3+3 = 22; header 3). **All 10 assertions verified independently — no arithmetic defect this round.**
+
+**C8.5 arithmetic (the specifically-flagged proof) re-derived from scratch:**
+- ref_pitch = median of per-column local_pitch for cols with ≥3 tokens = median([35, 35, 52.5, 52.0]) → sorted [35, 35, 52.0, 52.5] → (35+52.0)/2 = **43.5px** ✓
+- All 4 value cols are sparse (3–4 tok < DENSE_COL_THRESHOLD=6) → prefer_ref_pitch=True for all → working_pitch=43.5, threshold=1.5×43.5=**65.25** ✓
+- col[4] (value[2], tops [495,565,600]): delta[0]=70 > 65.25 → ceil(70/43.5)−1 = ceil(1.609)−1 = 2−1 = **1** None slot → slots=[T05,None,T25,T35], len 4, **slots[1] is None** ✓ (assertion 7)
+- col[5] (value[3], tops [496,530,600]): delta[0]=34 < 65.25 (no skip); delta[1]=70 > 65.25 → 1 None slot → slots=[T06,T16,None,T36], len 4, **slots[2] is None** ✓ (assertion 8)
+
+**Anchor-offset root cause independently validated:** REV-2's merge trace with col_gap=249 reconstructs the EXACT live DUMP 1 anchors `[258,959,1330,1642,1916,2207]` step-by-step (1182 swallowed by 959-proximity; 1330 header-contaminator survives at 371>249; cascade repeats). This reproduces the observed broken state — root cause is proven, not hypothesized. With REV-3 (header cutoff) + REV-4 (code exclusion) + min(cluster), the cleaned token set yields anchors `[258,959,1182,1477,1768,2061]` then value_anchors `[1182,1477,1768,2061]` — verified in my Stage C6 re-trace.
+
+**TWO CARRY-FORWARD GATES (binding, NOT blockers for dispatch):**
+1. **AC-6-SEG live non-regression is EMPIRICAL, not asserted.** The brief ARGUES the segment report has no pure-code column (all buckets value_count>0 → code_col_indices=[] → ELSE branch → MD-EXTRACT-6-identical). The unit test `test_all_value_cols_returns_empty_code_list` covers the *algorithm*. But the *real* segment page is only proven non-regressed at MD-DEPLOY-7 live-verify via DIRECT DB query confirming the 3 revenues (35.381.667 / 9.092.934 / 18.701.876) still land on ONE pipe-row in 3 distinct cells. This is a HARD live gate I will personally run; if the new pure-code detector accidentally grabs a segment column, it fails here and I catch it.
+2. **Assertion-9 indexing convention.** `grid[1][2]`/`grid[2][3]` reference the PRE-label value-only grid (0–3 value cols, Stage C10). The final C11 grid is label+4 cols (indices shift +1). Dev MUST index the Stage-C10 value grid in `test_dense_income_rev7` assertion 9, not the post-label 5-col grid. Flagged to dev in dispatch.
+
+**VERDICT: design is internally consistent, arithmetically correct, and root-cause-grounded. APPROVED for implementation.** Dispatching dev-pdf-extractor MD-EXTRACT-7-REV (diagnostic STEP-1 already done; AC-3F non-regression; leave files UNSTAGED). Goal stays armed — NOT done until live income statement renders ≥15 label-aligned rows AND AC-6-SEG still PASSES (both via direct DB query) AND user confirms.
+
+**NEXT: dev-pdf-extractor (MD-EXTRACT-7-REV implementation).**

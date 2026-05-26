@@ -3090,10 +3090,903 @@ The AC-6-SKIP SKIP-MID fixture exercises this exact case: col-1 has 2 tokens (to
 
 ---
 
+## MD-EXTRACT-7-REV — Dense Income Statement Reconstruction (REVISED — diagnostic-confirmed)
+
+> **Task:** MD-EXTRACT-7-REV | **Author:** architect | **Date:** 2026-05-26
+> **Status:** DESIGN COMPLETE — supersedes §MD-EXTRACT-7 (see SUPERSEDED notice inline). Main terminal MUST re-trace §REV-7 fixture proof before dispatching dev.
+> **Input:** TASK_BCTC-MD-TABLE.md §[Main-Terminal] MD-EXTRACT-7 AC-7-DIAG RESULT — DUMP 1-5 from live FPT income statement page 8 (h_med=18, w_med=166, anchors=[258.1,959.8,1330.5,1642.0,1916.0,2207.0], value left-edges=[1182,1477,1768,2061], pitch≈35px)
+> **Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py`. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED.
+
+---
+
+### REV-0. What the Diagnostic Proved and What It Invalidated
+
+The mandatory AC-7-DIAG run (before any code was written) produced five live dumps. The central contradiction versus the prior §MD-EXTRACT-7 design:
+
+| Prior design assumption | Live diagnostic result | Impact on prior design |
+|---|---|---|
+| Dual code columns INFLATE anchor count above 6 (trigger: `len(anchors) > N_EXPECTED_MAX_VALUE_COLS = 6`) | Tesseract cleanly assigns 12+29 code tokens to exactly 2 of 6 anchors → count == 6 | Fix-path-A is a dead branch. Zone-split trigger never fires. |
+| Income statement has ~20px row pitch (from LIVE-VERIFY-6 label-interleaving symptom) | Live row pitch ≈ 35px (495→530→567, Δ=35–37) | Fix-path-D (label band tightening) is NOT needed — band=27px < 35px gap, no over-reach |
+| No header token pollution | ~9 header small-int tokens (top<400) ingested → phantom top grid rows (DUMP 3 rows 0-1 at y_med=252/217) | New root cause unaddressed by prior design |
+| Value anchors correct | Detected [1330,1642,1916,2207] sit ~150px right of true left-edges [1182,1477,1768,2061] | Token-to-column assignment mis-allocates tokens across column boundaries |
+| Dense-multi-gap ref_pitch fix needed | DUMP 2 confirms value-column density 27/26/17/20 — sparse cols confirmed | Fix-path-C still required |
+| §7.1 fixture is representative | 4 anchors/20px pitch/no header tokens vs live 6 anchors/35px pitch/header pollution | Fixture must be regenerated |
+
+**Surviving elements from §MD-EXTRACT-7:**
+- Fix-path-C: `prefer_ref_pitch` parameter in `_insert_skip_slots` + `DENSE_COL_THRESHOLD`. Required. Carry forward unchanged.
+- `_split_number_tokens_by_zone` concept: correct approach for excluding code tokens from anchor detection. The TRIGGER mechanism changes (presence-based, not count-based). The re-attach logic is unchanged.
+
+---
+
+### REV-1. What Must Not Regress
+
+Identical to §MD-EXTRACT-7 §1 — carry-forward verbatim:
+- **AC-6-SEG**: segment revenues `35.381.667 / 9.092.934 / 18.701.876` on ONE pipe-row, distinct cells.
+- **AC-6-ORD**: `test_ordinal_defeats_drift_gt_gap`, `test_skip_mid_column_empty`, `test_skip_trailing_column_empty` all pass.
+- **AC-3F**: `text_table_extractor.py` 0-byte diff; structured `bctc_table_rows`=79, balance_delta=0.
+- **AC-0 / Fence-A / Privacy**: grep deny-lists unchanged.
+
+---
+
+### REV-2. Root-Cause Analysis of the 150px Anchor Offset
+
+**Mechanistic trace (confirmed by diagnostic):**
+
+`_detect_column_anchors_from_tokens` collects ALL number token left-edges, bins them with `bin_width = 0.3 × w_med = 0.3 × 166 = 50px`, then merges adjacent cluster centroids within `col_gap = 1.5 × 166 = 249px`.
+
+With header tokens present and code columns present, the sorted cluster-centroid sequence (approximate) is:
+```
+~258  (code col Mã số)
+~959  (code col Thuyết minh)
+~1182 (true value col-0 left-edges)
+~1330 (header/date tokens — contaminator cluster)
+~1477 (true value col-1)
+~1642 (header contaminator for col-1 zone)
+~1768 (true value col-2)
+~1916 (header contaminator for col-2 zone)
+~2061 (true value col-3)
+~2207 (header contaminator for col-3 zone)
+```
+
+The merge step with col_gap=249 proceeds left-to-right, keeping the first anchor in each col_gap window:
+1. Start: merged=[258]
+2. 959-258=701>249 → keep 959. merged=[258,959]
+3. 1182-959=**223<249** → **1182 swallowed** (too close to 959). merged=[258,959]
+4. 1330-959=371>249 → keep 1330. merged=[258,959,1330]
+5. 1477-1330=147<249 → 1477 swallowed. merged=[258,959,1330]
+6. 1642-1330=312>249 → keep 1642. merged=[258,959,1330,1642]
+7. 1768-1642=126<249 → 1768 swallowed. merged=[258,959,1330,1642]
+8. 1916-1642=274>249 → keep 1916. merged=[258,959,1330,1642,1916]
+9. 2061-1916=145<249 → 2061 swallowed. merged=[258,959,1330,1642,1916]
+10. 2207-1916=291>249 → keep 2207. merged=[258,959,1330,1642,1916,2207]
+
+**Outcome: anchors=[258,959,1330,1642,1916,2207]. This matches DUMP 1 exactly.**
+
+**Dual cause of the offset:**
+1. The true value left-edges (1182, 1477, 1768, 2061) are each within col_gap=249 of the preceding anchor (code col at 959, then header-contaminator anchors at 1330/1642/1916). They get swallowed.
+2. Header/date tokens at left≈1330/1642/1916/2207 survive because they are each >249px from the preceding anchor.
+
+**Fix: eliminate BOTH causes.**
+
+Cause 1 is eliminated by **excluding pure-code-column tokens from anchor detection** (requirement 2). Once col[0]@258 and col[1]@959 are excluded, the first non-code left-edge is 1182. 1182 becomes merged[0], then 1477-1182=295>249 → 1477 added, etc.
+
+Cause 2 is eliminated by **excluding header-zone tokens** (requirement 1). Once tokens at top<first_value_row_top are excluded, the contaminator clusters at 1330/1642/1916/2207 disappear. The true left-edges (1182/1477/1768/2061) become the only cluster centroids.
+
+**With both fixes applied**, anchor detection on the cleaned token set yields anchors ≈ [1182, 1477, 1768, 2061] (centroids of single-value clusters, which equal their left-edges since each cluster contains only tokens with the same left-edge). This is correct.
+
+**Supplementary metric fix (anchor = min(cluster), not centroid):** Even without header contamination, if OCR produces slight left-edge variation within a column (e.g. 1182 and 1193 for the same column due to slight token alignment drift), the centroid is 1187.5 vs min = 1182. Using `min(cluster)` ensures anchors align to the leftmost token left-edge of each cluster, which is the true column left boundary. This is a robustness improvement for all pages, not just the income statement.
+
+**Change to `_detect_column_anchors_from_tokens` line 708:**
+```python
+# Current (centroid):
+cluster_anchors = [sum(c) / len(c) for c in clusters]
+# Revised (left-edge-aligned):
+cluster_anchors = [min(c) for c in clusters]
+```
+AC-0: pure geometry. Zero semantic content. Non-regressing: for columns where all tokens have the same left-edge (the common case), min == centroid. This change has zero effect on the segment-report path.
+
+---
+
+### REV-3. Fix 1 — Header/Date Token Exclusion (new `_exclude_header_tokens`)
+
+**Root cause:** ~9 tokens with `top < first_value_row_top` (DUMP 4: top<400, representing the page section number and column-header date band "01"/"31"/"12") are included in `number_tokens` passed to anchor detection and `_build_ordinal_grid`. They produce phantom grid rows (DUMP 3 rows 0-1 at y_med=217/252) and contaminate the anchor cluster (driving the 150px offset as analysed in REV-2).
+
+**New function `_find_first_value_row_top`:**
+```python
+def _find_first_value_row_top(number_tokens: List[Dict]) -> float:
+    """
+    Returns the `top` coordinate of the first token (lowest top value)
+    that matches _VALUE_TOKEN_RE (a money-group / multi-digit number).
+
+    Used as a positional cutoff: tokens at top < this value are in the
+    header/column-label zone and must be excluded from anchor detection
+    and ordinal grid construction.
+
+    If no value token is found (page has only code tokens), returns 0.0
+    (no cutoff — all tokens pass). This is the safe fallback.
+
+    AC-0: purely geometric (top coordinate comparison). Zero BCTC-specific
+    string constants. Does not use label text or table-type knowledge.
+    """
+    value_tops = [
+        float(w["top"]) for w in number_tokens
+        if _VALUE_TOKEN_RE.match(w["text"].strip())
+    ]
+    return min(value_tops) if value_tops else 0.0
+```
+
+**New function `_exclude_header_tokens`:**
+```python
+def _exclude_header_tokens(
+    number_tokens: List[Dict],
+    first_value_top: float,
+) -> List[Dict]:
+    """
+    Excludes number tokens whose top coordinate is strictly less than
+    first_value_top. These tokens are in the column-header / page-section
+    zone above the first data row.
+
+    AC-0: top-coordinate comparison only. No label string matching.
+    Zero Tesseract calls. Pure in-memory filter.
+    """
+    if first_value_top <= 0.0:
+        return number_tokens  # safe fallback: no cutoff
+    return [w for w in number_tokens if float(w["top"]) >= first_value_top]
+```
+
+**Integration into `_process_page` (new Step C5):**
+```
+Step C5 (NEW, before C6):
+    first_value_top = _find_first_value_row_top(number_tokens)
+    clean_number_tokens = _exclude_header_tokens(number_tokens, first_value_top)
+    # All subsequent steps use clean_number_tokens, not number_tokens
+    # Text tokens are NOT filtered (label text may start above the first value row)
+```
+
+**Non-regression proof for segment report:** The segment-report page has NO header tokens above the first value row that match `_VALUE_TOKEN_RE`. The first value token IS the topmost token (there is no tall section-header band). `first_value_top` = topmost value token = top of revenue row. All tokens are at or below this top → `_exclude_header_tokens` returns the full list unchanged. The segment-report path is structurally unaffected.
+
+**AC-0 compliance:** `_find_first_value_row_top` uses `_VALUE_TOKEN_RE` which is a generic money-group pattern (`r'^\d{1,3}(?:[.,]\d{3})+'`). Zero BCTC label strings. The cutoff is derived from the token content and geometry, not from table type.
+
+---
+
+### REV-4. Fix 2 — Presence-Based Pure-Code-Column Detector (replaces count-gate trigger)
+
+**Problem with the prior `> N_EXPECTED_MAX_VALUE_COLS` count-gate:** DUMP 1 confirmed the anchor count is EXACTLY 6 (= 2 code columns + 4 value columns). The prior trigger `len(anchors) > 6` evaluates FALSE. Dead branch.
+
+**Revised approach: presence-based detector on per-column token composition.**
+
+After `_assign_tokens_to_columns` (Step C7), each bucket's composition is known (DUMP 2). A bucket is a **pure-code column** if:
+```
+pure_code = (code_count / total_count >= PURE_CODE_COL_THRESHOLD) AND (value_count == 0)
+```
+
+where:
+- `code_count` = number of tokens in the bucket matching `_CODE_TOKEN_RE`
+- `value_count` = number of tokens in the bucket matching `_VALUE_TOKEN_RE`
+- `total_count` = len(bucket)
+- `PURE_CODE_COL_THRESHOLD = 0.9` (a bucket is "pure code" if ≥90% of its tokens are code-class and ZERO are value-class)
+
+The `value_count == 0` condition is the binding constraint. A column with even ONE money-group token is NOT a pure-code column.
+
+**New constant:**
+```python
+# Threshold for classifying a column bucket as a pure-code column.
+# A bucket is pure-code when: code_fraction >= this AND value_count == 0.
+# Default=0.90: allows up to 10% OCR-noise non-code tokens in code columns.
+# AC-0: uses _CODE_TOKEN_RE and _VALUE_TOKEN_RE, both generic numeric patterns.
+PURE_CODE_COL_THRESHOLD = 0.90
+```
+
+**New function `_identify_pure_code_columns`:**
+```python
+def _identify_pure_code_columns(
+    col_buckets: List[List[Dict]],
+    col_anchors: List[float],
+) -> Tuple[List[int], List[int]]:
+    """
+    Classifies each column bucket as pure-code or value.
+
+    Returns:
+        code_col_indices:  Indices of pure-code column buckets.
+        value_col_indices: Indices of value column buckets.
+
+    A bucket is pure-code if:
+        (code_count / total_count >= PURE_CODE_COL_THRESHOLD) AND (value_count == 0)
+
+    AC-0: uses _CODE_TOKEN_RE and _VALUE_TOKEN_RE (generic numeric patterns).
+    Zero BCTC-specific string constants.
+    Pure function — no I/O, no Tesseract.
+    """
+    code_col_indices: List[int] = []
+    value_col_indices: List[int] = []
+    for i, bucket in enumerate(col_buckets):
+        if not bucket:
+            value_col_indices.append(i)
+            continue
+        code_count  = sum(1 for w in bucket if _CODE_TOKEN_RE.match(w["text"].strip()))
+        value_count = sum(1 for w in bucket if _VALUE_TOKEN_RE.match(w["text"].strip()))
+        total_count = len(bucket)
+        if value_count == 0 and (code_count / total_count) >= PURE_CODE_COL_THRESHOLD:
+            code_col_indices.append(i)
+        else:
+            value_col_indices.append(i)
+    return code_col_indices, value_col_indices
+```
+
+**Integration into `_process_page` (new Step C7.5, after C7):**
+```
+Step C7 (existing): _assign_tokens_to_columns(clean_number_tokens, anchors, w_med)
+    → col_buckets (6 buckets on income statement page)
+
+Step C7.5 (NEW):
+    code_col_indices, value_col_indices = _identify_pure_code_columns(col_buckets, anchors)
+    IF code_col_indices is non-empty:
+        # Collect tokens from pure-code buckets → re-attach as label companions later (C11-ext)
+        code_note_tokens = [t for i in code_col_indices for t in col_buckets[i]]
+        # Rebuild col_buckets and anchors using only value columns
+        value_col_buckets = [col_buckets[i] for i in value_col_indices]
+        value_anchors = [anchors[i] for i in value_col_indices]
+    ELSE:
+        # No pure-code columns detected (e.g. segment report, balance sheet)
+        # Proceed with original col_buckets and anchors unchanged
+        code_note_tokens = []
+        value_col_buckets = col_buckets
+        value_anchors = anchors
+
+    # All subsequent steps C8..C11 use value_col_buckets and value_anchors
+    # code_note_tokens are appended to region_text_tokens before C11 (unchanged re-attach logic)
+```
+
+**Non-regression proof for segment report (MUST prove):**
+
+The segment report columns are ALL pure-value: DUMP 2 for segment page shows no bucket with `value_count == 0`. Every bucket has revenue / cost / profit values (money-group tokens). Therefore:
+- `code_count = 0` for every segment bucket (no 2-3 digit codes)
+- `value_count > 0` for every segment bucket
+- The condition `value_count == 0` is FALSE for every bucket
+
+`_identify_pure_code_columns` returns `code_col_indices = []`, `value_col_indices = [all indices]`. Step C7.5 takes the ELSE branch: `code_note_tokens = []`, `value_col_buckets = col_buckets`. The pipeline is COMPLETELY UNCHANGED from MD-EXTRACT-6 behavior for the segment report. AC-6-SEG cannot regress from this change.
+
+**Non-regression proof for balance sheet:** Balance sheet columns contain large value tokens (assets/liabilities in trillion VND). No pure-code column. `code_col_indices = []`. ELSE branch taken. Unchanged.
+
+**Income statement treatment (DUMP 2 confirmed):**
+- col[0]@258: codes=12, values=0, total=12 → code_count/total=1.0 ≥ 0.9 AND value_count=0 → PURE CODE ✓
+- col[1]@959: codes=29, values=0, total=29 → 1.0 ≥ 0.9 AND 0=0 → PURE CODE ✓
+- col[2]@1330: codes=2, values=27, total=29 → value_count=27≠0 → VALUE ✓
+- col[3]@1642: codes=3, values=26, total=29 → VALUE ✓
+- col[4]@1916: codes=2, values=17, total=19 → VALUE ✓
+- col[5]@2207: codes=2, values=20, total=22 → VALUE ✓
+
+`code_col_indices=[0,1]`, `value_col_indices=[2,3,4,5]`. `value_col_buckets` has 4 buckets at anchors [1330,1642,1916,2207]. Combined with the REV-2 anchor-metric fix (`min(cluster)`) and REV-3 header cutoff, these anchors would be [1182,1477,1768,2061] (the true left-edges). Assignment step C7 is re-run on `clean_number_tokens` (header-excluded) against re-detected anchors.
+
+**Implementation note: ordering of operations in _process_page:**
+
+The correct order is:
+```
+C5: exclude header tokens → clean_number_tokens
+C6: detect anchors from clean_number_tokens (using min(cluster) metric)
+C7: assign clean_number_tokens to col_buckets (using anchors from C6)
+C7.5: identify pure-code columns → value_col_buckets, value_anchors, code_note_tokens
+C8..C11: ordinal reconstruction on value_col_buckets, value_anchors
+C11-ext: append code_note_tokens to region_text_tokens before _attach_labels_ordinal
+```
+
+This is clean and does not require a "two-pass anchor detection" (the prior design's chicken-and-egg problem no longer applies because we do NOT need `leftmost_value_anchor` before anchor detection — we detect anchors once, assign to buckets once, then classify buckets).
+
+---
+
+### REV-5. Fix 3 — Anchor Metric: min(cluster) replaces centroid
+
+**Change:** In `_detect_column_anchors_from_tokens`, line 708:
+```python
+# Before (centroid):
+cluster_anchors = [sum(c) / len(c) for c in clusters]
+# After (left-edge-aligned):
+cluster_anchors = [min(c) for c in clusters]
+```
+
+**Effect on live income statement (after REV-3 header cutoff + REV-4 code exclusion):**
+
+After header exclusion and code exclusion, the value tokens have left-edges [1182, 1477, 1768, 2061]. All tokens in a given column have the same (or very close) left-edge. The cluster for col[2] contains only tokens at left≈1182 → min=1182. The anchor is 1182. Correct.
+
+In the presence of slight OCR left-edge variation (e.g. two tokens at left=1182 and left=1187 in the same column), `min([1182,1187]) = 1182` vs centroid=1184.5. The min-based anchor aligns to the column's leftmost token edge, which is more representative of the column's true left boundary. The argmin assignment `|token.left - anchor|` is slightly more accurate.
+
+**Non-regression on segment report:** Segment value tokens have consistent left-edges per column. min ≈ centroid. Zero behavioral change.
+
+---
+
+### REV-6. Fix 4 (Keep) — Dense-Multi-Gap ref_pitch in `_insert_skip_slots`
+
+Unchanged from §MD-EXTRACT-7 §5. DUMP 2 value-column density 27/26/17/20 confirms: the sparse columns (17 and 20 tokens) have fewer tokens than the dense columns (27 and 26) and require `prefer_ref_pitch=True` for correct skip-slot insertion.
+
+The `prefer_ref_pitch` parameter, `DENSE_COL_THRESHOLD=6`, and the modified `_build_ordinal_grid` call site are all KEPT exactly as designed in §MD-EXTRACT-7 §5. No changes needed.
+
+**Constants (unchanged):**
+```python
+DENSE_COL_THRESHOLD = 6
+```
+
+---
+
+### REV-7. DELETED Fix — Label Band Tightening (Fix-path-D)
+
+**Decision: NOT IMPLEMENTED.**
+
+Evidence: live row pitch ≈ 35px (DUMP 3 first real data rows: top=495, 530, 567; Δ=35–37). Current `LABEL_BAND_FACTOR = 1.5`, `h_med = 18`. Band = 1.5 × 18 = 27px. Since 27 < 35, the label band does NOT over-reach into adjacent rows. The "label interleaving" failure in LIVE-VERIFY-6 was a SYMPTOM of header pollution producing phantom rows (fixed by REV-3) and value mis-assignment (fixed by REV-4/REV-5), NOT a label band width problem.
+
+Do NOT implement `DENSE_LABEL_PITCH_FACTOR`, `band_override`, or any modification to `_attach_labels_ordinal`. The existing `LABEL_BAND_FACTOR = 1.5` is correct for the live 35px pitch.
+
+All code and constants from §MD-EXTRACT-7 §6 are DROPPED from this revision.
+
+---
+
+### REV-8. Hand-Traceable Fixture — Live-Regime Mirror
+
+This is the binding fixture for the AC-7-REV-FIX unit test. It encodes the live regime (6 anchors = 2 pure-code + 4 value, header tokens to be excluded, 35px pitch, unequal value-column density, two absent value cells). Main terminal MUST re-trace every stage before dispatching dev.
+
+#### REV-8.1 Fixture Token List (FIXTURE_TOKENS_REV)
+
+**Geometry:** h_med = 18px, w_med = 140px (computed from this fixture's tokens — see stage trace). Row pitch = 35px. Header zone top ∈ {200}. Data zone top ∈ {495, 530, 565, 600}. Pure-code left-edges: col[0]=258, col[1]=959. Value left-edges: col[2]=1182, col[3]=1477, col[4]=1768, col[5]=2061.
+
+**Value-column density:** col[2]=4, col[3]=4, col[4]=3 (row-1 absent), col[5]=3 (row-2 absent).
+
+```python
+FIXTURE_TOKENS_REV = [
+    # ── HEADER ZONE (top=200, to be EXCLUDED by _exclude_header_tokens) ──────
+    # 3 header number tokens simulating page section number + date band
+    {"text": "01",  "left": 258,  "top": 200, "width": 18, "height": 16, "conf": 85},  # H1
+    {"text": "31",  "left": 959,  "top": 200, "width": 18, "height": 16, "conf": 85},  # H2
+    {"text": "12",  "left": 1330, "top": 200, "width": 20, "height": 16, "conf": 85},  # H3 (contaminator)
+
+    # ── DATA ZONE (top ≥ 495) ─────────────────────────────────────────────────
+    # Row-0 (top=495)
+    {"text": "Doanh",       "left": 0,    "top": 495, "width": 60,  "height": 18, "conf": 90},  # T00 TEXT
+    {"text": "01",          "left": 258,  "top": 495, "width": 18,  "height": 17, "conf": 90},  # T01 code col[0]
+    {"text": "30",          "left": 959,  "top": 495, "width": 18,  "height": 17, "conf": 88},  # T02 code col[1]
+    {"text": "20.258.866",  "left": 1182, "top": 495, "width": 160, "height": 17, "conf": 92},  # T03 val col[2]
+    {"text": "17.651.065",  "left": 1477, "top": 495, "width": 160, "height": 17, "conf": 91},  # T04 val col[3]
+    {"text": "70.207.689",  "left": 1768, "top": 495, "width": 155, "height": 17, "conf": 90},  # T05 val col[4]
+    {"text": "62.962.652",  "left": 2061, "top": 496, "width": 155, "height": 17, "conf": 91},  # T06 val col[5]
+
+    # Row-1 (top=530)
+    {"text": "Giam",        "left": 0,    "top": 530, "width": 55,  "height": 18, "conf": 88},  # T10 TEXT
+    {"text": "10",          "left": 258,  "top": 530, "width": 18,  "height": 17, "conf": 89},  # T11 code col[0]
+    {"text": "31",          "left": 959,  "top": 530, "width": 18,  "height": 17, "conf": 87},  # T12 code col[1]
+    {"text": "43.247",      "left": 1182, "top": 530, "width": 70,  "height": 17, "conf": 88},  # T13 val col[2]
+    {"text": "8.804.827",   "left": 1477, "top": 530, "width": 140, "height": 17, "conf": 89},  # T14 val col[3]
+    # col[4] (val) ABSENT for row-1
+    {"text": "30.412.233",  "left": 2061, "top": 530, "width": 150, "height": 17, "conf": 90},  # T16 val col[5]
+
+    # Row-2 (top=565)
+    {"text": "Thuan",       "left": 0,    "top": 565, "width": 55,  "height": 18, "conf": 91},  # T20 TEXT
+    {"text": "20",          "left": 258,  "top": 565, "width": 18,  "height": 17, "conf": 90},  # T21 code col[0]
+    {"text": "32",          "left": 959,  "top": 565, "width": 18,  "height": 17, "conf": 86},  # T22 code col[1]
+    {"text": "17.607.818",  "left": 1182, "top": 565, "width": 160, "height": 17, "conf": 91},  # T23 val col[2]
+    {"text": "9.092.934",   "left": 1477, "top": 565, "width": 140, "height": 17, "conf": 90},  # T24 val col[3]
+    {"text": "18.701.876",  "left": 1768, "top": 565, "width": 155, "height": 17, "conf": 92},  # T25 val col[4]
+    # col[5] (val) ABSENT for row-2
+
+    # Row-3 (top=600)
+    {"text": "Gia",         "left": 0,    "top": 600, "width": 40,  "height": 18, "conf": 89},  # T30 TEXT
+    {"text": "30",          "left": 258,  "top": 600, "width": 18,  "height": 17, "conf": 87},  # T31 code col[0]
+    {"text": "33",          "left": 959,  "top": 600, "width": 18,  "height": 17, "conf": 85},  # T32 code col[1]
+    {"text": "14.000.000",  "left": 1182, "top": 600, "width": 155, "height": 17, "conf": 90},  # T33 val col[2]
+    {"text": "13.200.000",  "left": 1477, "top": 600, "width": 155, "height": 17, "conf": 91},  # T34 val col[3]
+    {"text": "11.500.000",  "left": 1768, "top": 600, "width": 155, "height": 17, "conf": 89},  # T35 val col[4]
+    {"text": "9.800.000",   "left": 2061, "top": 600, "width": 140, "height": 17, "conf": 88},  # T36 val col[5]
+]
+```
+
+**Token count verification (MUST MATCH before any assertion):**
+- Header number tokens: H1("01"), H2("31"), H3("12") = **3 header number tokens**
+- Data number tokens:
+  - code col[0]: T01, T11, T21, T31 = **4**
+  - code col[1]: T02, T12, T22, T32 = **4**
+  - val col[2]: T03, T13, T23, T33 = **4** (all 4 rows present)
+  - val col[3]: T04, T14, T24, T34 = **4** (all 4 rows present)
+  - val col[4]: T05, T25, T35 = **3** (row-1 absent)
+  - val col[5]: T06, T16, T36 = **3** (row-2 absent)
+  - Data number subtotal: 4+4+4+4+3+3 = **22 data number tokens**
+- Total NUMBER tokens = 3 + 22 = **25**
+- TEXT tokens: T00("Doanh"), T10("Giam"), T20("Thuan"), T30("Gia") = **4**
+- **TOTAL = 25 + 4 = 29 tokens**
+
+#### REV-8.2 Stage-by-stage trace
+
+All tokens with conf ≥ 85 ≥ `_MIN_WORD_CONF_ORDINAL = 30` → no confidence filter.
+
+---
+
+**Stage A: `_classify_tokens(FIXTURE_TOKENS_REV)`**
+
+`_NUMBER_TOKEN_RE` matches: `^[\(\-]?\d{1,3}(?:[.,]\d{3})+[\)\-]?$` OR `^[\(\-]?\d{2,3}[\)\-]?$`
+
+- H1 "01" → `^[\(\-]?\d{2,3}[\)\-]?$` ✓ → NUMBER
+- H2 "31" → ✓ → NUMBER
+- H3 "12" → ✓ → NUMBER
+- T01 "01" → ✓ → NUMBER
+- T02 "30" → ✓ → NUMBER
+- T03 "20.258.866" → money-group (`20.258.866`: 20 then .258 then .866) ✓ → NUMBER
+- T04 "17.651.065" → ✓ → NUMBER
+- T05 "70.207.689" → ✓ → NUMBER
+- T06 "62.962.652" → ✓ → NUMBER
+- T10 "Giam" → no match → TEXT
+- T11 "10" → ✓ → NUMBER
+- T12 "31" → ✓ → NUMBER
+- T13 "43.247" → money-group (43 then .247) ✓ → NUMBER
+- T14 "8.804.827" → ✓ → NUMBER
+- T16 "30.412.233" → ✓ → NUMBER
+- T20 "Thuan" → TEXT
+- T21 "20" → ✓ → NUMBER
+- T22 "32" → ✓ → NUMBER
+- T23 "17.607.818" → ✓ → NUMBER
+- T24 "9.092.934" → ✓ → NUMBER
+- T25 "18.701.876" → ✓ → NUMBER
+- T30 "Gia" → TEXT
+- T31 "30" → ✓ → NUMBER
+- T32 "33" → ✓ → NUMBER
+- T33 "14.000.000" → ✓ → NUMBER
+- T34 "13.200.000" → ✓ → NUMBER
+- T35 "11.500.000" → ✓ → NUMBER
+- T36 "9.800.000" → ✓ → NUMBER
+- T00 "Doanh" → TEXT
+
+**Result: number_tokens = 25, text_tokens = 4** ✓ (matches count above)
+
+---
+
+**Stage B: compute w_med and h_med from number_tokens (25 tokens)**
+
+All 25 number token heights: 16 (H1), 16 (H2), 16 (H3), 17×22 (all data tokens) = [16,16,16, 17,17,17,17,17, 17,17,17,17,17, 17,17,17,17,17, 17,17,17,17,17, 17,17] wait, let me count: H1 h=16, H2 h=16, H3 h=16, then 22 data tokens all h=17. Total: 3×16 + 22×17 = [16,16,16,17,17,...17] — sorted: 3 values of 16, 22 values of 17. Median of 25: the 13th value = 17. **h_med = 17px.**
+
+All 25 number token widths: H1=18, H2=18, H3=20, T01=18, T02=18, T03=160, T04=160, T05=155, T06=155, T11=18, T12=18, T13=70, T14=140, T16=150, T21=18, T22=18, T23=160, T24=140, T25=155, T31=18, T32=18, T33=155, T34=155, T35=155, T36=140.
+
+Sorted: [18,18,18,18,18,18,18,18,18,18, 20, 70, 140,140,140, 150, 155,155,155,155,155, 160,160,160, ... wait let me re-list systematically:
+- width=18: H1,H2,T01,T02,T11,T12,T21,T22,T31,T32 = **10 tokens**
+- width=20: H3 = **1 token**
+- width=70: T13 = **1 token**
+- width=140: T14,T24,T36 = **3 tokens**
+- width=150: T16 = **1 token**
+- width=155: T05,T06,T25,T33,T34,T35 = **6 tokens**
+- width=160: T03,T04,T23 = **3 tokens**
+
+Total: 10+1+1+3+1+6+3 = 25 ✓
+
+Sorted: [18(×10), 20, 70, 140,140,140, 150, 155,155,155,155,155,155, 160,160,160]
+
+Median of 25 = 13th value. Count through: positions 1-10 = 18; position 11 = 20; position 12 = 70; position 13 = **140**. **w_med = 140px.**
+
+---
+
+**Stage C5: `_find_first_value_row_top(number_tokens)`**
+
+Scan for first `_VALUE_TOKEN_RE` match: `^[\(\-]?\d{1,3}(?:[.,]\d{3})+`. The header tokens H1="01", H2="31", H3="12" do NOT match (they are 2-digit, no `.` groups). The first value token is T03="20.258.866" at **top=495**. (Header tokens at top=200 have no value matches.)
+
+`first_value_top = 495.0`
+
+**Stage C5b: `_exclude_header_tokens(number_tokens, first_value_top=495.0)`**
+
+Exclude all tokens with top < 495: H1(top=200), H2(top=200), H3(top=200). Removed = 3.
+
+`clean_number_tokens`: 22 data tokens remain (T01..T36 all at top ≥ 495). ✓
+
+---
+
+**Stage C6: `_detect_column_anchors_from_tokens(clean_number_tokens, w_med=140)`**
+
+Note: w_med recomputed from clean_number_tokens (22 tokens):
+- Widths: T01=18,T02=18,T03=160,T04=160,T05=155,T06=155, T11=18,T12=18,T13=70,T14=140,T16=150, T21=18,T22=18,T23=160,T24=140,T25=155, T31=18,T32=18,T33=155,T34=155,T35=155,T36=140
+- Count by width: 18×8, 70×1, 140×3, 150×1, 155×6, 160×3 = 8+1+3+1+6+3=22 ✓
+- Sorted: [18,18,18,18,18,18,18,18, 70, 140,140,140, 150, 155,155,155,155,155,155, 160,160,160]
+- Median of 22 = average of 11th and 12th = (140+140)/2 = **140px** (same). ✓
+
+`bin_width = max(1.0, 0.3 × 140) = 42.0px`
+`col_gap = 1.5 × 140 = 210.0px`
+
+Sorted lefts of 22 clean tokens: [258,258,258,258, 959,959,959,959, 1182,1182,1182,1182, 1477,1477,1477,1477, 1768,1768,1768, 2061,2061,2061]
+
+Bin clustering (consecutive left within 42px → same cluster):
+- 258 → cluster={258}. Next=258 (same): 258-258=0≤42 → cluster={258,258}. Next=258: cluster={258,258,258}. Next=258: cluster={258,258,258,258}.
+- Next=959: 959-258=701>42 → NEW cluster. cluster_1={258,258,258,258}. cluster_2={959}.
+- Next=959,959,959 → cluster_2={959,959,959,959}.
+- Next=1182: 1182-959=223>42 → NEW cluster_3={1182}.
+- Next=1182,1182,1182 → cluster_3={1182,1182,1182,1182}.
+- Next=1477: 1477-1182=295>42 → NEW cluster_4={1477,1477,1477,1477}.
+- Next=1768: 1768-1477=291>42 → NEW cluster_5={1768,1768,1768}.
+- Next=2061: 2061-1768=293>42 → NEW cluster_6={2061,2061,2061}.
+
+Clusters: [{258×4}, {959×4}, {1182×4}, {1477×4}, {1768×3}, {2061×3}]
+
+`cluster_anchors = [min(c) for c in clusters] = [258, 959, 1182, 1477, 1768, 2061]`
+
+(Using the revised min-anchor formula. With the header tokens excluded, each cluster is homogeneous — min == centroid == 258, 959, etc. The min formula makes no difference here since each cluster has a single unique left-value. But it proves the approach is correct: even if a cluster had left-edge variation, min selects the leftmost edge.)
+
+Merge with col_gap=210:
+- merged=[258]
+- 959-258=701>210 → add. merged=[258,959]
+- 1182-959=223>210 → add. merged=[258,959,1182]
+- 1477-1182=295>210 → add. merged=[258,959,1182,1477]
+- 1768-1477=291>210 → add. merged=[258,959,1182,1477,1768]
+- 2061-1768=293>210 → add. merged=[258,959,1182,1477,1768,2061]
+
+**anchors = [258, 959, 1182, 1477, 1768, 2061]** (6 anchors, correct — no 1330 contaminator, value anchors at true left-edges)
+
+Key difference from broken prior path: WITHOUT header cutoff and WITHOUT min-anchor, anchors would have been [258, 959, 1330, 1642, 1916, 2207] (the live broken state). WITH fixes: [258, 959, 1182, 1477, 1768, 2061]. ✓
+
+---
+
+**Stage C7: `_assign_tokens_to_columns(clean_number_tokens, anchors=[258,959,1182,1477,1768,2061], w_med=140)`**
+
+For each token, find argmin |token.left - anchor|:
+
+- T01("01", left=258): distances=[|258-258|=0, 701, 924, 1219, 1510, 1803] → col[0] ✓
+- T11("10", left=258): → col[0] ✓
+- T21("20", left=258): → col[0] ✓
+- T31("30", left=258): → col[0] ✓
+- T02("30", left=959): distances=[701, 0, 223, 518, 809, 1102] → col[1] ✓
+- T12("31", left=959): → col[1] ✓
+- T22("32", left=959): → col[1] ✓
+- T32("33", left=959): → col[1] ✓
+- T03("20.258.866", left=1182): distances=[924, 223, 0, 295, 586, 879] → col[2] ✓
+- T13("43.247", left=1182): → col[2] ✓
+- T23("17.607.818", left=1182): → col[2] ✓
+- T33("14.000.000", left=1182): → col[2] ✓
+- T04("17.651.065", left=1477): distances=[1219, 518, 295, 0, 291, 584] → col[3] ✓
+- T14("8.804.827", left=1477): → col[3] ✓
+- T24("9.092.934", left=1477): → col[3] ✓
+- T34("13.200.000", left=1477): → col[3] ✓
+- T05("70.207.689", left=1768): distances=[1510, 809, 586, 291, 0, 293] → col[4] ✓
+- T25("18.701.876", left=1768): → col[4] ✓
+- T35("11.500.000", left=1768): → col[4] ✓
+- T06("62.962.652", left=2061): distances=[1803, 1102, 879, 584, 293, 0] → col[5] ✓
+- T16("30.412.233", left=2061): → col[5] ✓
+- T36("9.800.000", left=2061): → col[5] ✓
+
+Noise gate: max distance for any token = col[0] tokens at 258 → dist to col[0] = 0, well within `3.0 × 140 = 420`. No token excluded. ✓
+
+**col_buckets:**
+- col[0]: [T01, T11, T21, T31] — 4 tokens
+- col[1]: [T02, T12, T22, T32] — 4 tokens
+- col[2]: [T03, T13, T23, T33] — 4 tokens
+- col[3]: [T04, T14, T24, T34] — 4 tokens
+- col[4]: [T05, T25, T35] — 3 tokens (T15 absent, row-1)
+- col[5]: [T06, T16, T36] — 3 tokens (T26 absent, row-2)
+
+Total tokens assigned: 4+4+4+4+3+3 = 22 ✓
+
+---
+
+**Stage C7.5: `_identify_pure_code_columns(col_buckets, anchors)`**
+
+For each bucket, classify tokens:
+- `_CODE_TOKEN_RE`: `^[\(\-]?\d{2,3}[\)\-]?$`
+- `_VALUE_TOKEN_RE`: `^[\(\-]?\d{1,3}(?:[.,]\d{3})+`
+
+col[0] = [T01"01", T11"10", T21"20", T31"30"]:
+- "01": CODE_RE ✓, VALUE_RE ✗ → code
+- "10": CODE_RE ✓ → code
+- "20": CODE_RE ✓ → code
+- "30": CODE_RE ✓ → code
+- code_count=4, value_count=0, total=4. code_fraction=4/4=1.0 ≥ 0.9 AND value_count=0 → **PURE CODE**
+
+col[1] = [T02"30", T12"31", T22"32", T32"33"]:
+- All CODE_RE ✓, VALUE_RE ✗ → code
+- code_count=4, value_count=0, total=4 → **PURE CODE**
+
+col[2] = [T03"20.258.866", T13"43.247", T23"17.607.818", T33"14.000.000"]:
+- "20.258.866": CODE_RE? `^[\(\-]?\d{2,3}[\)\-]?$` → "20.258.866" has dots, doesn't match CODE_RE. VALUE_RE ✓
+- "43.247": CODE_RE? "43.247" has a dot → ✗. VALUE_RE ✓
+- "17.607.818": VALUE_RE ✓
+- "14.000.000": VALUE_RE ✓
+- code_count=0, value_count=4, total=4 → value_count=4≠0 → **VALUE COLUMN**
+
+col[3] = [T04"17.651.065", T14"8.804.827", T24"9.092.934", T34"13.200.000"]:
+- All VALUE_RE ✓ → value_count=4≠0 → **VALUE COLUMN**
+
+col[4] = [T05"70.207.689", T25"18.701.876", T35"11.500.000"]:
+- All VALUE_RE ✓ → **VALUE COLUMN**
+
+col[5] = [T06"62.962.652", T16"30.412.233", T36"9.800.000"]:
+- All VALUE_RE ✓ → **VALUE COLUMN**
+
+**code_col_indices = [0, 1]**, **value_col_indices = [2, 3, 4, 5]**
+
+`code_note_tokens` = col[0] + col[1] tokens = [T01, T11, T21, T31, T02, T12, T22, T32] = **8 tokens**
+
+`value_col_buckets` = [col[2], col[3], col[4], col[5]] (re-indexed as [0,1,2,3])
+`value_anchors` = [1182, 1477, 1768, 2061]
+
+---
+
+**Stage C8: sort each value_col_bucket by top (ascending)**
+
+col[0] (originally col[2], val@1182): T03(top=495), T13(top=530), T23(top=565), T33(top=600) — already sorted ✓
+col[1] (originally col[3], val@1477): T04(top=495), T14(top=530), T24(top=565), T34(top=600) — sorted ✓
+col[2] (originally col[4], val@1768): T05(top=495), T25(top=565), T35(top=600) — sorted ✓
+col[3] (originally col[5], val@2061): T06(top=496), T16(top=530), T36(top=600) — sorted ✓
+
+---
+
+**Stage C8.5: `_insert_skip_slots` per value column**
+
+**ref_pitch computation** (from columns with ≥ 3 tokens — all 4 qualify):
+- col[0]: tops=[495,530,565,600], deltas=[35,35,35], local_pitch=median([35,35,35])=35
+- col[1]: tops=[495,530,565,600], deltas=[35,35,35], local_pitch=35
+- col[2]: tops=[495,565,600], deltas=[70,35], local_pitch=median([70,35])=52.5
+- col[3]: tops=[496,530,600], deltas=[34,70], local_pitch=median([34,70])=52.0
+
+ref_pitch = median([35, 35, 52.5, 52.0]) = median([35, 35, 52.0, 52.5]) = (35+52.0)/2 = 43.5px
+
+**Per-column `_insert_skip_slots`:**
+
+col[0] (4 tokens, len=4 ≥ DENSE_COL_THRESHOLD=6? NO, 4<6 → prefer_ref_pitch=True):
+Working_pitch = ref_pitch = 43.5. threshold = 1.5 × 43.5 = 65.25.
+Deltas: [35, 35, 35]. All < 65.25 → no skip slots.
+Slots: [T03, T13, T23, T33]. Length=4. ✓
+
+col[1] (4 tokens, 4<6 → prefer_ref_pitch=True):
+Working_pitch = 43.5. threshold = 65.25.
+Deltas: [35, 35, 35]. All < 65.25 → no skip slots.
+Slots: [T04, T14, T24, T34]. Length=4. ✓
+
+col[2] (3 tokens, 3<6 → prefer_ref_pitch=True):
+Working_pitch = ref_pitch = 43.5. threshold = 65.25.
+Deltas: [70, 35]. Delta[0]=70 > 65.25 → skip! `ceil(70/43.5)-1 = ceil(1.609)-1 = 2-1 = 1` slot.
+After slot 0 (T05@495): insert 1×None. Then slot T25@565. Delta[1]=35 < 65.25 → no skip. Then T35@600.
+Slots: [T05, None, T25, T35]. Length=4. ✓ (row-1 absent correctly as None)
+
+col[3] (3 tokens, 3<6 → prefer_ref_pitch=True):
+Working_pitch = 43.5. threshold = 65.25.
+Deltas: [34, 70]. Delta[0]=34 < 65.25 → no skip. Then T16@530. Delta[1]=70 > 65.25 → skip! `ceil(70/43.5)-1 = 1` slot.
+After T06@496: no skip. T16@530. Insert 1×None. Then T36@600.
+Slots: [T06, T16, None, T36]. Length=4. ✓ (row-2 absent correctly as None)
+
+---
+
+**Stage C9: total_rows = max(4, 4, 4, 4) = 4** ✓
+
+---
+
+**Stage C10: Build grid**
+
+For rank r=0..3, col c=0..3:
+- col[0] slots: [T03"20.258.866"@r0, T13"43.247"@r1, T23"17.607.818"@r2, T33"14.000.000"@r3]
+- col[1] slots: [T04"17.651.065"@r0, T14"8.804.827"@r1, T24"9.092.934"@r2, T34"13.200.000"@r3]
+- col[2] slots: [T05"70.207.689"@r0, None@r1, T25"18.701.876"@r2, T35"11.500.000"@r3]
+- col[3] slots: [T06"62.962.652"@r0, T16"30.412.233"@r1, None@r2, T36"9.800.000"@r3]
+
+col_y_medians[r] = median(top of non-None tokens at rank r):
+- r=0: tops=[495(T03), 495(T04), 495(T05), 496(T06)] → median([495,495,495,496])=495.0
+- r=1: tops=[530(T13), 530(T14), -(None), 530(T16)] → median([530,530,530])=530.0
+- r=2: tops=[565(T23), 565(T24), 565(T25), -(None)] → median([565,565,565])=565.0
+- r=3: tops=[600(T33), 600(T34), 600(T35), 600(T36)] → median([600,600,600,600])=600.0
+
+Grid (values only, before label attachment):
+```
+rank  col[0]          col[1]          col[2]          col[3]
+r0    "20.258.866"    "17.651.065"    "70.207.689"    "62.962.652"
+r1    "43.247"        "8.804.827"     " "             "30.412.233"
+r2    "17.607.818"    "9.092.934"     "18.701.876"    " "
+r3    "14.000.000"    "13.200.000"    "11.500.000"    "9.800.000"
+```
+
+---
+
+**Stage C11: `_attach_labels_ordinal`**
+
+Available text_tokens (original 4): T00("Doanh"@top=495), T10("Giam"@top=530), T20("Thuan"@top=565), T30("Gia"@top=600).
+code_note_tokens (8, appended to text pool): T01("01"@left=258,top=495), T11("10"@left=258,top=530), T21("20"@left=258,top=565), T31("30"@left=258,top=600), T02("30"@left=959,top=495), T12("31"@left=959,top=530), T22("32"@left=959,top=565), T32("33"@left=959,top=600).
+
+Total label-pool = 4 text + 8 code_note = 12 tokens.
+
+`effective_band = LABEL_BAND_FACTOR × h_med = 1.5 × 17 = 25.5px` (Note: we DO NOT use DENSE_LABEL_PITCH_FACTOR — Fix-path-D is DROPPED. The standard band applies.)
+
+Row r=0 (y_med=495.0, band=25.5):
+- Text tokens within |top - 495| ≤ 25.5: T00(top=495, |0|≤25.5)✓
+- code_note within band: T01(top=495)✓, T02(top=495)✓
+- Sort by left: T00(left=0), T01(left=258), T02(left=959) → label_0 = "Doanh 01 30"
+- Greedy removal: T00, T01, T02 removed.
+
+Row r=1 (y_med=530.0, band=25.5):
+- Remaining text in band [504.5, 555.5]: T10(top=530)✓
+- code_note in band: T11(top=530)✓, T12(top=530)✓
+- Sort by left: T10(left=0), T11(left=258), T12(left=959) → label_1 = "Giam 10 31"
+- Removal: T10, T11, T12.
+
+Row r=2 (y_med=565.0, band=25.5):
+- Remaining text in band [539.5, 590.5]: T20(top=565)✓
+- code_note in band: T21(top=565)✓, T22(top=565)✓
+- Sort: T20(left=0), T21(left=258), T22(left=959) → label_2 = "Thuan 20 32"
+- Removal: T20, T21, T22.
+
+Row r=3 (y_med=600.0, band=25.5):
+- Remaining text in band [574.5, 625.5]: T30(top=600)✓
+- code_note: T31(top=600)✓, T32(top=600)✓
+- Sort: T30(left=0), T31(left=258), T32(left=959) → label_3 = "Gia 30 33"
+- Removal: T30, T31, T32.
+
+**Final grid (4 cols = label + 4 value cols = 5 cols total):**
+```
+r0  ["Doanh 01 30",  "20.258.866",  "17.651.065",  "70.207.689",  "62.962.652"]
+r1  ["Giam 10 31",   "43.247",      "8.804.827",   " ",           "30.412.233"]
+r2  ["Thuan 20 32",  "17.607.818",  "9.092.934",   "18.701.876",  " "]
+r3  ["Gia 30 33",    "14.000.000",  "13.200.000",  "11.500.000",  "9.800.000"]
+```
+
+**Markdown output:**
+```
+| Label         | Col-0       | Col-1       | Col-2       | Col-3       |
+|---|---|---|---|---|
+| Doanh 01 30   | 20.258.866  | 17.651.065  | 70.207.689  | 62.962.652  |
+| Giam 10 31    | 43.247      | 8.804.827   |             | 30.412.233  |
+| Thuan 20 32   | 17.607.818  | 9.092.934   | 18.701.876  |             |
+| Gia 30 33     | 14.000.000  | 13.200.000  | 11.500.000  | 9.800.000   |
+```
+
+---
+
+#### REV-8.3 Fixture Assertions (binding — main terminal MUST verify each one)
+
+The 10 binding assertions for `test_dense_income_rev7` unit test:
+
+1. `len(number_tokens) == 25` and `len(text_tokens) == 4` (after `_classify_tokens`)
+2. After `_find_first_value_row_top`: `first_value_top == 495.0` (T03 is the first VALUE-class token)
+3. After `_exclude_header_tokens(number_tokens, 495.0)`: `len(clean_number_tokens) == 22` (3 header tokens excluded)
+4. After C6 anchor detection on clean tokens: `len(anchors) == 6` and anchors ≈ `[258, 959, 1182, 1477, 1768, 2061]` (within ±5px)
+5. After C7.5: `len(code_col_indices) == 2` (col[0] and col[1] are pure-code); `len(value_col_buckets) == 4`; `len(code_note_tokens) == 8`
+6. After C7 (assignment to value anchors [1182,1477,1768,2061]): `value_col_buckets[2]` has 3 tokens (col[4], row-1 absent); `value_col_buckets[3]` has 3 tokens (col[5], row-2 absent)
+7. After C8.5 on `value_col_buckets[2]` (col[4], 3 tokens): slot list length = 4, `slots[1] is None` (row-1 correctly empty)
+8. After C8.5 on `value_col_buckets[3]` (col[5], 3 tokens): slot list length = 4, `slots[2] is None` (row-2 correctly empty)
+9. `grid[1][2] == " "` and `grid[2][3] == " "` (the two absent cells are empty, not swapped)
+10. Labels do NOT interleave: label of r=0 does NOT contain "Giam" or "Thuan"; label of r=1 does NOT contain "Doanh" or "Thuan". (band=25.5px, pitch=35px → no over-reach)
+
+**Verification of count arithmetic (assertion 1):**
+- 25 number tokens = 3 header (H1,H2,H3) + 4 code col[0] (T01,T11,T21,T31) + 4 code col[1] (T02,T12,T22,T32) + 4 val col[2] (T03,T13,T23,T33) + 4 val col[3] (T04,T14,T24,T34) + 3 val col[4] (T05,T25,T35) + 3 val col[5] (T06,T16,T36) = 3+4+4+4+4+3+3 = **25** ✓
+- 4 text tokens = T00,T10,T20,T30 = **4** ✓
+- Total = 29 ✓
+
+**Verification of C8.5 arithmetic (assertions 7 and 8):**
+
+Assertion 7 (col[4], 3 tokens at tops [495,565,600]):
+- ref_pitch = 43.5px (from stage trace above)
+- prefer_ref_pitch = True (3 < 6)
+- working_pitch = 43.5, threshold = 65.25
+- delta[0] = 565-495 = 70 > 65.25 → insert `ceil(70/43.5)-1 = ceil(1.609)-1 = 2-1 = 1` None slot
+- delta[1] = 600-565 = 35 < 65.25 → no skip
+- slots = [T05, None, T25, T35], length=4, slots[1] is None ✓
+
+Assertion 8 (col[5], 3 tokens at tops [496,530,600]):
+- working_pitch = 43.5, threshold = 65.25
+- delta[0] = 530-496 = 34 < 65.25 → no skip
+- delta[1] = 600-530 = 70 > 65.25 → insert ceil(70/43.5)-1 = 1 None slot
+- slots = [T06, T16, None, T36], length=4, slots[2] is None ✓
+
+---
+
+### REV-9. Non-Regression Proof: AC-6-SEG (Segment Report)
+
+The segment-report page has these properties (from MD-EXTRACT-6 DIAG substrate + LIVE-VERIFY-6):
+- No column-header date band above the data rows at `top < first_value_top`
+  → `_find_first_value_row_top` returns the revenue row top
+  → `_exclude_header_tokens` returns the full number_tokens unchanged (no exclusions)
+- All columns contain money-group value tokens (revenue, cost, profit per segment)
+  → `value_count > 0` for every bucket
+  → `_identify_pure_code_columns` returns `code_col_indices = []`
+  → Step C7.5 takes the ELSE branch → `code_note_tokens = []`, `value_col_buckets = col_buckets`
+  → pipeline is IDENTICAL to MD-EXTRACT-6 behavior
+- `prefer_ref_pitch`: segment columns have 7-10 tokens each (DUMP 2 confirmed per MD-EXTRACT-6). `len(col) ≥ 6` for most columns → `prefer_ref_pitch=False` → no change from MD-EXTRACT-6
+- The anchor min-metric change: segment column tokens have consistent left-edges (narrow x-variation per column) → min ≈ centroid → behavioral equivalence
+
+**All three revenue values `35.381.667 / 9.092.934 / 18.701.876` will still appear on ONE pipe-row.** AC-6-SEG is structurally guaranteed by the ELSE branch in C7.5.
+
+---
+
+### REV-10. Files to Modify
+
+| File | Change | DDD Layer |
+|---|---|---|
+| `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` | ADD constants: `PURE_CODE_COL_THRESHOLD=0.90`; ADD functions: `_find_first_value_row_top(number_tokens)`, `_exclude_header_tokens(number_tokens, first_value_top)`, `_identify_pure_code_columns(col_buckets, col_anchors)` (all pure); MODIFY `_detect_column_anchors_from_tokens` line 708: `sum(c)/len(c)` → `min(c)`; MODIFY `_process_page`: add Step C5 (header cutoff), add Step C7.5 (pure-code-column split), append `code_note_tokens` to `region_text_tokens` before C11; KEEP `prefer_ref_pitch` fix (DENSE_COL_THRESHOLD, `_insert_skip_slots` modification from §MD-EXTRACT-7 §5 — unchanged); DROP all §MD-EXTRACT-7 §6 (DENSE_LABEL_PITCH_FACTOR, band_override) — not implemented; REMOVE dead constants `N_EXPECTED_MAX_VALUE_COLS`, `LABEL_ZONE_GAP_FACTOR` from §MD-EXTRACT-7 (never shipped) | infrastructure |
+| `apps/pdf-extractor/__tests__/unit/test_generic_md_table_extractor.py` | ADD class `TestHeaderCutoff` (3 tests: `test_find_first_value_row_top_normal`, `test_find_first_value_row_top_no_values`, `test_exclude_header_tokens_removes_above_cutoff`); ADD class `TestPureCodeColumnDetector` (4 tests: `test_all_value_cols_returns_empty_code_list`, `test_detects_two_pure_code_cols`, `test_mixed_col_stays_value`, `test_sparse_code_col_with_noise_still_pure`); ADD `test_dense_income_rev7` in existing class `TestDenseIncomeStatement` (the 10-assertion REV-8 fixture test, replaces the superseded `test_dense_income_fragment`); KEEP all existing ordinal tests unchanged | unit |
+
+Zero new files. Zero mcp-server changes. Zero new ports. Zero test files.
+
+**Constants to ADD (new):**
+```python
+PURE_CODE_COL_THRESHOLD = 0.90
+```
+
+**Constants to KEEP from §MD-EXTRACT-7 §5 (unchanged):**
+```python
+DENSE_COL_THRESHOLD = 6  # (if not already present from prior shipping)
+```
+
+**Constants NOT to implement (from §MD-EXTRACT-7 §6, DROPPED):**
+- `DENSE_LABEL_PITCH_FACTOR` — NOT implemented
+- `N_EXPECTED_MAX_VALUE_COLS` — NOT implemented (replaced by presence-based detector)
+- `LABEL_ZONE_GAP_FACTOR` — NOT implemented (replaced by pure-code-column detector)
+
+---
+
+### REV-11. Binding Acceptance Criteria (Revised)
+
+**AC-7-REV-HEADER (BLOCKING):** Unit test `test_exclude_header_tokens_removes_above_cutoff`: fixture with 3 header tokens (top=200) + 5 data tokens (top≥495, including at least one VALUE_TOKEN_RE match at top=495). `_find_first_value_row_top` returns 495.0. `_exclude_header_tokens(..., 495.0)` returns only the 5 data tokens. `len(result)==5`.
+
+**AC-7-REV-DETECTOR (BLOCKING):** Unit test `test_detects_two_pure_code_cols`: use `col_buckets` from the REV-8 fixture — 6 buckets. `_identify_pure_code_columns` returns `code_col_indices=[0,1]`, `value_col_indices=[2,3,4,5]`. Test `test_all_value_cols_returns_empty_code_list`: segment-report-like buckets (all value tokens, no code tokens) → `code_col_indices=[]` (proves non-regression on segment path).
+
+**AC-7-REV-ANCHOR (BLOCKING):** Unit test using a micro-cluster: cluster `[1182, 1187, 1192]` (left-edge variation within one value column). `min([1182,1187,1192]) == 1182`. `sum([1182,1187,1192])/3 == 1187`. Confirms min-anchor returns left-edge (not centroid).
+
+**AC-7-REV-FIX (BLOCKING — replaces AC-7-FIX):** Unit test `test_dense_income_rev7` using FIXTURE_TOKENS_REV (29 tokens, REV-8.1). All 10 assertions from REV-8.3 pass. Token count assertions (assertion 1: `len(number_tokens)==25`, `len(text_tokens)==4`) MUST be verified first.
+
+**AC-7-REV-SEG-NOREGRESS (BLOCKING):** Unit test `test_all_value_cols_returns_empty_code_list` proves the ELSE branch. Live: after re-extract (MD-DEPLOY-7), segment revenues `35.381.667 / 9.092.934 / 18.701.876` still on ONE pipe-row, distinct cells.
+
+**AC-7-REV-ORD (BLOCKING):** All existing ordinal tests (`test_ordinal_defeats_drift_gt_gap`, `test_skip_mid_column_empty`, `test_skip_trailing_column_empty`) still pass unchanged.
+
+**AC-7-REV-INC (BINDING — live gate):** Income statement table after re-extract: ≥15 data rows; no row has TWO distinct line-item label heads in one label cell; at least one revenue-magnitude row (~17-70T VND) has period values in separate cells on ONE pipe-row; code tokens appear INSIDE label cells (not as standalone value cells with empty labels).
+
+**AC-7-REV-AC0 (BLOCKING):**
+`grep -rniE "bao.cao.bo.phan|segment_report|SEGMENT|BAO_CAO|bo_phan|bao_phan|doanh_thu|gia_von|income_statement" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches (new code only in comments: acceptable per prior AC-0 ruling).
+
+**AC-7-REV-FENCE (BLOCKING):**
+`grep -rnE "from application|from interface|import application|import interface" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+**AC-7-REV-PRIVACY (BLOCKING):**
+`grep -rniE "claude|openai|gemini|textract|document.?ai|anthropic|requests\.post|httpx\.post|aiohttp" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+**AC-7-REV-HARDWARE (zero extra Tesseract calls):**
+`_find_first_value_row_top`, `_exclude_header_tokens`, `_identify_pure_code_columns`, `min(c)` anchor metric change: all pure in-memory list ops. Zero additional `pytesseract` calls.
+
+**AC-3F (BLOCKING, carry-forward):** `text_table_extractor.py` 0-byte diff. `bctc_table_rows`=79, balance_delta=0.
+
+---
+
+### REV-12. Risk Register
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| R-HIGH: `_find_first_value_row_top` may mis-identify a very small value token in the header zone as the cutoff (e.g., a confidence-passed "1.234" in the column-header period row at top≈400). This would set the cutoff too HIGH, excluding legitimate data tokens just below it. | HIGH | The header period row at FPT page 8 is at top≈326 (DUMP 3: top<400). The first data row is top=495. A 70px gap (326→495) means even if the cutoff is set to 326 (header period row), the data tokens at 495 are still included. Acceptable. The only risk is a very tall income statement header with a period-header value token at top=470, which would exclude data at top=495 only if first_value_top > 495 — this cannot happen since data token T03 is AT top=495 and it IS the minimum. |
+| R-MEDIUM: `PURE_CODE_COL_THRESHOLD = 0.90` may fail for a column with significant OCR noise (e.g., 2/12 tokens are garbled non-code values). If value_count > 0 due to OCR noise (e.g., code "01" is misread as "0.1"), the column is classified as VALUE. | MEDIUM | A spurious `0.1` would be caught by `_CODE_TOKEN_RE` failing (not 2-3 digits) and `_VALUE_TOKEN_RE` failing (no `\d{3}` group). "0.1" does not match either RE. Real OCR noise is typo-class ("O1" → TEXT, not NUMBER). The condition is `value_count == 0` which is robust: only tokens matching the FULL money-group pattern (`r'^\d{1,3}(?:[.,]\d{3})+'`) count as values. Code tokens cannot accidentally match that pattern. |
+| R-MEDIUM: `min(cluster)` anchor metric may produce anchors that are too far left if a noisy token (OCR artifact at left=0) accidentally clusters with a real column. | MEDIUM | The noise gate in `_assign_tokens_to_columns` (dist > 3 × w_med excluded) prevents outlier tokens from being included in later stages. For anchor detection itself, a left=0 artifact would form its own cluster (well separated from col[0]@258 by col_gap=210) and would become a spurious anchor at 0 — which `_assign_tokens_to_columns` would then exclude (dist from 0 to any real token > 210). Safe fallback. |
+| R-LOW: DENSE_COL_THRESHOLD=6 applied to value_col_buckets post-C7.5 — if value_col_buckets have fewer than 6 tokens (e.g. a section break splits the income statement into two short regions), ref_pitch may override local_pitch for all columns. | LOW | Income statement has ~26 data rows → 4 value columns have 17-27 tokens each (DUMP 2). Even after header exclusion (removing 9 header tokens), value columns have 15-25 tokens >> 6. No columns will use prefer_ref_pitch unexpectedly. |
+| R-LOW: File size. Adding ~60L of new constants + 3 new functions. Monitor against docs/data/file-size-caps.json. | LOW | If file exceeds cap, move dead-code functions (_cluster_rows, _cluster_rows_by_gap, _cluster_number_rows, etc.) to infrastructure/_legacy_bbox_helpers.py. |
+
+---
+
+### REV-13. DDD / Fence Compliance
+
+| Function / Constant | Layer | Imports | Fence |
+|---|---|---|---|
+| `_find_first_value_row_top` | infrastructure (pure) | stdlib only | Fence-A compliant |
+| `_exclude_header_tokens` | infrastructure (pure) | stdlib only | Fence-A compliant |
+| `_identify_pure_code_columns` | infrastructure (pure) | stdlib only (uses module-level _CODE_TOKEN_RE, _VALUE_TOKEN_RE) | Fence-A compliant |
+| `PURE_CODE_COL_THRESHOLD` | module-level constant | None | Fence-A compliant |
+| `_detect_column_anchors_from_tokens` (min metric) | infrastructure (pure) | stdlib only | Fence-A compliant |
+| `_process_page` (modified routing) | infrastructure | `pytesseract`, `PIL` (existing impure boundary — UNCHANGED) | Fence-A compliant |
+
+All new/modified functions are PURE (no I/O, no Tesseract, no DB, no network).
+
+---
+
+### REV-14. Build Standard + Role-Relay
+
+**BUILD-STANDARD: lean** — in-zone additive algorithm enhancement within existing infrastructure file.
+
+**HARD CONSTRAINTS (carry-forward verbatim):**
+- PRIVACY: self-hosted local OCR only. NEVER send PDF/image to external API.
+- HARDWARE: 16GB Intel Mac, sequential single-doc. Zero additional Tesseract calls.
+- `text_table_extractor.py` UNTOUCHED. Frozen surfaces unchanged.
+- Leave ALL files UNSTAGED — main terminal commits with zero-foreign verify.
+
+**SUPERSEDES:** §MD-EXTRACT-7 §4 (dual-code-column handling via count-gate → replaced by presence-based detector). §MD-EXTRACT-7 §6 (label band tightening → dropped). §MD-EXTRACT-7 §7 (fixture → replaced by REV-8). §MD-EXTRACT-7 §8 ACs → replaced by REV-11 ACs.
+
+**UNCHANGED FROM §MD-EXTRACT-7:** §MD-EXTRACT-7 §5 (dense-multi-gap ref_pitch, DENSE_COL_THRESHOLD=6 — carry forward exactly).
+
+**ROLE-RELAY:** main-terminal re-traces REV-8.2 stage trace + REV-8.3 assertions by hand (especially REV-8.3 assertions 7+8 C8.5 arithmetic) → approve → dispatch dev-pdf-extractor MD-EXTRACT-7-REV → ops MD-DEPLOY-7 (single doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`, path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`) → main-terminal live-verify (AC-7-REV-INC + AC-7-REV-SEG-NOREGRESS) → qa → po.
+
+---
+
 ## MD-EXTRACT-7 — Dense Income Statement Reconstruction
 
 > **Task:** MD-EXTRACT-7 | **Author:** architect | **Date:** 2026-05-26T09:16Z
-> **Status:** DESIGN COMPLETE — ready for dev-pdf-extractor (diagnostic STEP 1 mandatory before any code change)
+> **Status:** ~~DESIGN COMPLETE~~ **SUPERSEDED by §MD-EXTRACT-7-REV** — diagnostic contradicted central assumption. See REV-0 for invalidation analysis. §MD-EXTRACT-7 §5 (dense-multi-gap ref_pitch) is PRESERVED unchanged. §§4, 6, 7, 8 are superseded.
 > **Input:** MAIN-TERMINAL LIVE-VERIFY-6 (`/tmp/md_v6_db.json` table[8], FPT `e71f845d`, income statement = Báo cáo kết quả hoạt động kinh doanh)
 > **Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + its unit test file. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED.
 
