@@ -1,8 +1,39 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-26 11:30 UTC | **Sprint:** BCTC-MD-TABLE / MD-EXTRACT-2
+**Last updated:** 2026-05-26 14:30 UTC | **Sprint:** BCTC-MD-TABLE / MD-EXTRACT-4
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## MD-EXTRACT-4 REVISED — Number-Token 2D Reconstruction (2026-05-26T~UTC) — DESIGN REVISED
+
+**Task:** MD-EXTRACT-4 revision. Main-terminal verified live `pdf_extracted_text` substrate and disproved the psm-6 Candidate 2 design for wide tables. Revision mandated before dev proceeds.
+
+**Ground-truth finding:** psm-6 OCR for wide BCTC tables (segment report p22, income statement p8) is COLUMN-MAJOR, not row-major. The entire label column is stacked, then col-1 values stacked, etc. Segment revenues `35.381.667/9.092.934/18.701.876` are on lines 53/83/100 — each alone. `_split_by_whitespace_gap` cannot reconstruct these matrices (no row-aligned lines to split). Candidate 2 is REJECTED.
+
+**Correct direction (Candidate 3 — elevated):** `image_to_data` 2D reconstruction with NUMBER-TOKEN-ONLY y-clustering. The bbox data is correct (values present in MD-EXTRACT-3 output). Fix: classify tokens (NUMBER vs TEXT), cluster only NUMBER tokens by y (`SAME_LINE_TOL=4`, no diacritic inflation), derive column layout from NUMBER token x-positions, attach labels by nearest TEXT token y-band.
+
+**New functions to add:**
+1. `_NUMBER_TOKEN_RE` constant + `SAME_LINE_TOL=4` constant.
+2. `_classify_tokens(words)` → `(number_tokens, text_tokens)`. Pure.
+3. `_cluster_number_rows(number_tokens, same_line_tol)` → row groups. Pure. Replaces `_cluster_rows`/`_cluster_rows_by_gap`.
+4. `_attach_labels(row_groups, text_tokens, h_med)` → `[(label, row_tokens)]`. Pure.
+5. `_build_grid_from_number_rows(labeled_rows, col_anchors)` → 2D grid. Pure.
+6. `_process_page` MODIFIED — number-token-2D path replaces cluster-all-tokens.
+
+**CANCELLED — do NOT implement:** `_process_page_from_text`, `_split_by_whitespace_gap`, `_detect_table_regions_from_text`, `_build_grid_from_lines`.
+
+**AC-4C corrected (was BACKWARDS):** "Doanh thu theo bộ phận" is ONE row; the three values are THREE COLUMN CELLS of that row. Correct assertion: all three appear in THE SAME pipe-row, in different column cells. Prior AC-4C said "three different rows" — WRONG.
+
+**AC-4A/4B/4D:** unchanged and correct.
+
+**Files authored this cycle:**
+1. `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md` — MD-EXTRACT-4 section revised (Candidate 2 rejected, Candidate 3 elevated, §3/§4/§5/§6/§7/§8/§9 updated, AC-Q4-1 corrected)
+2. `docs/handoffs/TASK_BCTC-MD-TABLE.md` — [Architect] MD-EXTRACT-4 record replaced with REVISED version
+3. `docs/agent-memory/notebooks/architect.md` (this entry)
+
+**Next actor:** dev-pdf-extractor — MD-EXTRACT-4 (number-token-2D implementation). Verify AC-3F (non-regression) FIRST. Leave files UNSTAGED. Then ops MD-DEPLOY-4 (single doc, full UUID) → main-terminal re-verify → qa MD-QA-4 → po MD-EXIT.
+
+---
 
 ## MD-EXTRACT-2 — Live-verify fix design (2026-05-26T11:30Z) — DESIGN COMPLETE
 
