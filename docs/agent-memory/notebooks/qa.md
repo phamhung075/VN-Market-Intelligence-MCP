@@ -1,5 +1,78 @@
 # QA — Notebook
 
+## cycle-126 · 2026-05-26 · MD-QA-9 (income-statement label interleave fix, 5th attempt gate) — PASS
+
+**Task:** MD-QA-9 — independent live gate on MD-EXTRACT-9 fix (income-statement label interleave) | **Verdict:** ALL BINDING ACs PASS
+
+```
+date: 2026-05-26T19:26Z
+type: sprint-qa-gate (BCTC-MD-TABLE, MD-EXTRACT-9 live gate)
+report_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+db_row: id=11, extracted_at=2026-05-26 17:21:28 UTC
+commit_under_test: 7e6bff6a (MD-EXTRACT-9)
+
+row_freshness:
+  id: 11 (>10, as required)
+  extracted_at: 2026-05-26 17:21:28 UTC (after ops rebuild ~17:17:48 UTC)
+  json_len: 19539 bytes (22 tables)
+  verdict: FRESH — not stale
+
+AC-9-LABEL:
+  row0_label: "1 Doanh thu bán hàng và cung cấp dịch vụ"
+  has_Doanh_thu: true
+  has_giam_tru: false
+  giam_tru_on_own_row1: true ("2 Các khoản giảm trừ 02" separate row)
+  verdict: PASS
+
+AC-9-PAIR:
+  row0_value: 20.258.866.135.395 (present, correct family)
+  row1_value: 33.415.777.986 (present, correct family)
+  no_ordinal_drift: true (33.4B NOT in row0)
+  verdict: PASS
+
+AC-9-SEG-NOREGRESS:
+  table: 17
+  row: "| Doanh thu theo bộ phận | 35.381.667 | 9.092.934 | 18.701.876 | 804.840 | 7.324.783 | 70.112.826 |"
+  all_3_in_one_row: true
+  in_distinct_cells: true (indices 1/2/3)
+  verdict: PASS
+
+AC-9-BALANCE-NOREGRESS:
+  target: 88.089.621.779.862
+  found_in_tables: [3, 7]
+  verdict: PASS
+
+AC-9-VALUE-NOREGRESS:
+  income_rows_with_2plus_money_cells: 21 of 23
+  verdict: PASS
+
+unit_suite:
+  test_generic_md_table_extractor.py: 149/149 PASS (0.25s)
+  full_unit_suite: 466/466 PASS (1.17s, 1 deprecation warning non-blocking)
+  target_class_counts:
+    TestOrdinalReconstruction: 12 PASS
+    TestLabelLineClustering: 8 PASS
+    TestExcludePreDataLabelLines: 5 PASS
+    TestAttachLabelsByRank: 9 PASS
+  total_target_classes: 34 PASS
+
+scope_gates:
+  AC-3F (text_table_extractor.py 0-byte diff vs HEAD): PASS (empty git diff)
+  AC-0 (BCTC semantics in logic): PASS (11 matches, all in comments/docstrings, zero in branching code)
+  Fence-A (no application/interface imports): PASS (exit 1, zero matches)
+  Privacy (no external API calls): PASS (exit 1, zero matches)
+
+constraints_verified:
+  files_unstaged: true (QA makes no code changes)
+  frozen_surfaces_untouched: true
+  single_doc_only: true (no batch re-extract triggered by QA)
+  live_db_not_endpoint: true (read via bun:sqlite direct)
+```
+
+VERDICT: ALL BINDING ACs PASS. NEXT: po MD-EXIT + user verbal G9 sign-off. Route: APPROVED.
+
+---
+
 ## cycle-125 · 2026-05-26 · P2-Z (frontend Phase-2 close-gate) — APPROVED
 
 **Task:** P2-Z — Phase-2 close-gate verification | **Verdict:** APPROVED — PO authorized for 12/12 terminal flip
