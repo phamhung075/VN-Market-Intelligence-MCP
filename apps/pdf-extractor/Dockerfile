@@ -84,23 +84,27 @@ ENV MODELSCOPE_CACHE=/app/pek_models/modelscope
 ENV YOLO_CONFIG_DIR=/app/pek_models/yolo
 ENV PADDLEOCR_HOME=/app/pek_models/paddleocr
 
-# PEK-DEP-RECONCILE: build-time native import smoke gate.
-# Fails the build immediately if any binary wheel is ABI-incompatible with numpy.
-# This catches the entire class of "works in host venv, crashes in container" errors.
-# Note: actual model weights are NOT loaded here (lazy-load at runtime per REQ-PEK-4).
-# PYTHONPATH is already set to /app:/app/PDF-Extract-Kit from the ENV step above.
+# PEK-IMPORT-CHAIN: corrected build-time smoke gate.
+# Imports pek_engine_adapter MODULE ITSELF — not a proxy symbol set.
+# If ANY import inside pek_engine_adapter.py fails (including transitive chains
+# through pdf_extract_kit.tasks.* or any other package), the build fails here,
+# not at first /pek-extract call.
+# MANDATE: any new 'import X' added to _load_pek_models() must also appear below.
 RUN python3 -c "\
-import numpy; \
-print('numpy', numpy.__version__); \
-import cv2; \
-print('cv2', cv2.__version__); \
-from paddleocr import PaddleOCR; \
-print('paddleocr import OK'); \
-from doclayout_yolo import YOLOv10; \
-print('doclayout_yolo import OK'); \
-import torch; \
-print('torch', torch.__version__); \
-print('pek-native-imports: ALL OK')"
+import sys; \
+sys.path.insert(0, '/app'); \
+sys.path.insert(0, '/app/PDF-Extract-Kit'); \
+print('--- PEK import chain smoke gate (PEK-IMPORT-CHAIN) ---'); \
+import numpy; print('numpy', numpy.__version__); \
+import cv2; print('cv2', cv2.__version__); \
+import fitz; print('fitz (PyMuPDF)', fitz.__version__); \
+from omegaconf import OmegaConf; print('omegaconf OK'); \
+from doclayout_yolo import YOLOv10; print('doclayout_yolo.YOLOv10 OK'); \
+from paddleocr import PaddleOCR; print('paddleocr.PaddleOCR OK'); \
+import torch; print('torch', torch.__version__); \
+from infrastructure.pek_engine_adapter import _PekLayoutModel, _load_pek_models; \
+print('pek_engine_adapter import OK — no pdf_extract_kit.tasks trigger'); \
+print('--- pek-import-chain: ALL OK ---')"
 
 EXPOSE 5001
 

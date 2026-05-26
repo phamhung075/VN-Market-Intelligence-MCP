@@ -4,14 +4,18 @@ infrastructure/pek_engine_adapter.py — PEK-INTEGRATE
 PekEngineAdapter: wraps PDF-Extract-Kit (installed via pip install -e ./PDF-Extract-Kit)
 as the BCTC layout+table extraction engine.
 
-CRITICAL hard constraints (REQ-PEK-2 / non-negotiable):
-    1. NEVER import TableParsingTask or FormulaDetectionTask.
-       struct_eqtable.py hard-asserts torch.cuda.is_available() → instant crash on CPU.
+CRITICAL hard constraints (REQ-PEK-2 / PEK-IMPORT-CHAIN / non-negotiable):
+    1. NEVER import ANYTHING from pdf_extract_kit.tasks.* — not even 'safe' submodules.
+       Python package rule: any import from pdf_extract_kit.tasks.* executes
+       pdf_extract_kit/tasks/__init__.py, which eagerly imports ALL 6 task classes
+       including FormulaRecognitionTask → unimernet → ModuleNotFoundError crash.
+       This is unconditional. There is no safe subpath under pdf_extract_kit.tasks.
     2. NEVER import paddlepaddle_gpu, lmdeploy, unimernet.
     3. CPU-only. No CUDA, no Metal, no NVIDIA GPU on this host.
-    4. Import ONLY LayoutDetectionTask and OCRTask from pdf_extract_kit.tasks.
+    4. Layout inference via _PekLayoutModel (doclayout_yolo.YOLOv10 directly).
     5. Table extraction via PaddleOCR PP-StructureV2 table mode DIRECTLY (paddleocr package).
-       NOT via PEK's TableParsingTask.
+    6. Any new import added to _load_pek_models() MUST also be added to the
+       Dockerfile smoke gate — gate must exercise the actual import chain, not a proxy.
 
 Lazy-load singleton (REQ-PEK-4):
     _pek_models_cache is None at import time → cold-start RSS ~80MB.
@@ -83,6 +87,98 @@ class SemaphoreContendedError(RuntimeError):
 
 
 # ---------------------------------------------------------------------------
+# _PekLayoutModel — replaces LayoutDetectionTask (PEK-IMPORT-CHAIN)
+# ---------------------------------------------------------------------------
+
+
+class _PekLayoutModel:
+    """
+    Minimal replacement for LayoutDetectionTask + LayoutDetectionYOLO.
+
+    WHY THIS EXISTS (PEK-IMPORT-CHAIN):
+    Any import under pdf_extract_kit.tasks.* executes tasks/__init__.py, which
+    eagerly imports FormulaRecognitionTask → formula_recognition/__init__.py →
+    models/unimernet.py line 9: import unimernet.tasks → ModuleNotFoundError.
+    This class replaces LayoutDetectionTask and LayoutDetectionYOLO entirely,
+    importing only doclayout_yolo.YOLOv10 (separate package, no PEK tasks link).
+
+    Pristine constraint: pdf_extract_kit/ subtree NOT edited. Fix lives here only.
+
+    DocLayout-YOLO 10-class vocabulary (same as LayoutDetectionYOLO.id_to_names):
+        0:title  1:plain_text  2:abandon  3:figure  4:figure_caption
+        5:table  6:table_caption  7:table_footnote  8:isolate_formula  9:formula_caption
+    """
+
+    def __init__(self, yolo_cls: Any, model_cfg: dict) -> None:
+        """
+        Args:
+            yolo_cls: doclayout_yolo.YOLOv10 class (injected to keep import at call site).
+            model_cfg: OmegaConf dict for the 'model' sub-key of layout_detection_yolo.yaml.
+                       Must contain 'model_path'. Optional: img_size, conf_thres, iou_thres.
+        """
+        self._model = yolo_cls(model_cfg["model_path"])
+        self._img_size = model_cfg.get("img_size", 1280)
+        self._conf_thres = model_cfg.get("conf_thres", 0.25)
+        self._iou_thres = model_cfg.get("iou_thres", 0.45)
+        self._device = "cpu"  # Hard-override — CPU-only invariant (REQ-PEK-2)
+
+    def predict_pdfs(self, pdf_paths: List[str]) -> List[List[Dict]]:
+        """
+        Run DocLayout-YOLO on a list of PDF paths.
+
+        Returns a list (one element per PDF) of lists (one element per page) of dicts:
+            {"page": int, "bboxes": [{"bbox": [x0,y0,x1,y1], "label": int, "score": float}],
+             "width": int, "height": int}
+
+        This output shape is what _run_layout_detection() consumes at lines 711-718.
+        DPI fixed at 200 (matches LF-OVERLAY §3.2 coordinate contract).
+        """
+        import fitz  # PyMuPDF — in requirements-pek.txt as PyMuPDF
+        import numpy as np  # type: ignore
+
+        all_results: List[List[Dict]] = []
+        for pdf_path in pdf_paths:
+            doc = fitz.open(pdf_path)
+            page_results: List[Dict] = []
+            try:
+                for page_num, page in enumerate(doc, start=1):
+                    mat = fitz.Matrix(200 / 72, 200 / 72)  # 200 DPI
+                    pix = page.get_pixmap(matrix=mat)
+                    img_arr = np.frombuffer(pix.samples, dtype=np.uint8).reshape(
+                        pix.height, pix.width, pix.n
+                    )
+                    if pix.n == 4:  # RGBA → RGB
+                        img_arr = img_arr[:, :, :3]
+
+                    det = self._model(
+                        img_arr,
+                        imgsz=self._img_size,
+                        conf=self._conf_thres,
+                        iou=self._iou_thres,
+                        device=self._device,
+                        verbose=False,
+                    )
+                    bboxes: List[Dict] = []
+                    if det and len(det) > 0:
+                        for box in det[0].boxes:
+                            bboxes.append({
+                                "bbox": [float(v) for v in box.xyxy[0].tolist()],
+                                "label": int(box.cls[0].item()),
+                                "score": float(box.conf[0].item()),
+                            })
+                    page_results.append({
+                        "page": page_num,
+                        "bboxes": bboxes,
+                        "width": pix.width,
+                        "height": pix.height,
+                    })
+            finally:
+                doc.close()
+            all_results.append(page_results)
+        return all_results
+
+
+# ---------------------------------------------------------------------------
 # Model loading (called once, lazily)
 # ---------------------------------------------------------------------------
 
@@ -91,8 +187,8 @@ def _load_pek_models() -> Dict[str, Any]:
     """
     Load DocLayout-YOLO + PaddleOCR models.
 
-    CRITICAL: NEVER imports TableParsingTask or FormulaDetectionTask.
-    Only LayoutDetectionTask and OCRTask are imported.
+    CRITICAL: NEVER imports from pdf_extract_kit.tasks.* (PEK-IMPORT-CHAIN).
+    Layout inference uses _PekLayoutModel (doclayout_yolo.YOLOv10 directly).
     Table extraction uses PaddleOCR PP-StructureV2 directly.
 
     Called at most once per process lifetime (lazy singleton).
@@ -104,14 +200,16 @@ def _load_pek_models() -> Dict[str, Any]:
 
     logger.info("PekEngineAdapter: loading models (first extraction request)...")
 
-    # Import ONLY LayoutDetectionTask and OCRTask — NEVER TableParsingTask.
-    # This is the critical CPU guard: TableParsingTask imports struct_eqtable.py
-    # which hard-asserts torch.cuda.is_available() → immediate crash on this host.
-    from pdf_extract_kit.tasks.layout_detection import LayoutDetectionTask  # type: ignore
-    from pdf_extract_kit.tasks.ocr import OCRTask  # type: ignore
+    # PEK-IMPORT-CHAIN FIX: import doclayout_yolo.YOLOv10 directly.
+    # ANY import under pdf_extract_kit.tasks.* (including pdf_extract_kit.tasks.layout_detection)
+    # triggers pdf_extract_kit/tasks/__init__.py, which eagerly imports FormulaRecognitionTask
+    # → formula_recognition/__init__.py → models/unimernet.py line 9: import unimernet.tasks
+    # → ModuleNotFoundError (unimernet not installed — intentionally excluded, GPU-only, ~1.4GB).
+    # Fix: _PekLayoutModel (above) replaces LayoutDetectionTask without any PEK tasks import.
+    # OCRTask is dropped entirely — it was never called in _run_extraction() (dead import).
+    from doclayout_yolo import YOLOv10  # type: ignore
 
     layout_cfg_path = os.path.join(_PEK_CONFIG_DIR, "layout_detection_yolo.yaml")
-    ocr_cfg_path = os.path.join(_PEK_CONFIG_DIR, "ocr.yaml")
 
     layout_task = None
     ocr_task = None
@@ -120,14 +218,16 @@ def _load_pek_models() -> Dict[str, Any]:
         try:
             from omegaconf import OmegaConf  # type: ignore
             layout_cfg = OmegaConf.load(layout_cfg_path)
-            # Override device to CPU regardless of config
-            if hasattr(layout_cfg, "model"):
-                OmegaConf.update(layout_cfg, "model.device", "cpu", merge=True)
-            layout_task = LayoutDetectionTask(layout_cfg)
-            logger.info("PekEngineAdapter: LayoutDetectionTask loaded (CPU)")
+            model_cfg = dict(OmegaConf.to_container(
+                layout_cfg.get("model", {}), resolve=True
+            ))
+            # Hard-override device to CPU (REQ-PEK-2 — CPU-only invariant)
+            model_cfg["device"] = "cpu"
+            layout_task = _PekLayoutModel(yolo_cls=YOLOv10, model_cfg=model_cfg)
+            logger.info("PekEngineAdapter: _PekLayoutModel loaded (DocLayout-YOLO, CPU)")
         except Exception as exc:
             logger.warning(
-                "PekEngineAdapter: LayoutDetectionTask load failed: %s — "
+                "PekEngineAdapter: _PekLayoutModel load failed: %s — "
                 "falling back to geometry-only path",
                 exc,
             )
@@ -138,19 +238,10 @@ def _load_pek_models() -> Dict[str, Any]:
             layout_cfg_path,
         )
 
-    if os.path.exists(ocr_cfg_path):
-        try:
-            from omegaconf import OmegaConf  # type: ignore
-            ocr_cfg = OmegaConf.load(ocr_cfg_path)
-            ocr_task = OCRTask(ocr_cfg)
-            logger.info("PekEngineAdapter: OCRTask loaded (CPU)")
-        except Exception as exc:
-            logger.warning("PekEngineAdapter: OCRTask load failed: %s", exc)
-    else:
-        logger.warning(
-            "PekEngineAdapter: ocr.yaml not found at %s — OCR task disabled",
-            ocr_cfg_path,
-        )
+    # OCRTask intentionally removed (PEK-IMPORT-CHAIN).
+    # ocr_task was never called in _run_extraction() — it was dead import weight.
+    # Table text recognition uses paddle_table (PaddleOCR) directly below.
+    ocr_task = None
 
     # PaddleOCR PP-StructureV2 table mode (direct, NOT via PEK TableParsingTask).
     # This is the table extraction path per architect brief §2.1(a) R-CRIT-2.
@@ -179,7 +270,7 @@ def _load_pek_models() -> Dict[str, Any]:
 
     return {
         "layout_task": layout_task,
-        "ocr_task": ocr_task,
+        # ocr_task removed — was never invoked in _run_extraction() (PEK-IMPORT-CHAIN)
         "paddle_table": paddle_table,
     }
 
@@ -465,9 +556,9 @@ class PekEngineAdapter:
     Sequential guard: threading.Semaphore(1) — one extraction at a time.
 
     CRITICAL imports:
-        - LayoutDetectionTask (layout_detection) — imported in _load_pek_models ONLY
-        - OCRTask (ocr) — imported in _load_pek_models ONLY
-        - NEVER TableParsingTask, NEVER FormulaDetectionTask
+        - _PekLayoutModel (doclayout_yolo.YOLOv10 directly) — no pdf_extract_kit.tasks import
+        - NEVER import from pdf_extract_kit.tasks.* (PEK-IMPORT-CHAIN)
+        - NEVER TableParsingTask, NEVER FormulaDetectionTask, NEVER OCRTask
 
     DDD: infrastructure layer. Injected at composition root (main.py).
 
@@ -519,8 +610,8 @@ class PekEngineAdapter:
         """Core extraction pipeline (called within semaphore guard)."""
         models = _get_pek_models()
         layout_task = models.get("layout_task")
-        ocr_task = models.get("ocr_task")
         paddle_table = models.get("paddle_table")
+        # ocr_task removed — was dead import; table OCR uses paddle_table directly
 
         # PEK-IMPL-OCR: propagate the now-loaded paddle_table into the injected
         # OCR backend (PaddleOcrBackend / AutoFallbackOcrBackend) if it has a
