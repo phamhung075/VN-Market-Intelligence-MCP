@@ -4,6 +4,54 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-26 — MD-EXTRACT-3 DONE (DEFECT-D row-reconstruction + DEFECT-E empty-col collapse)
+
+**Task:** MD-EXTRACT-3 | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
+
+**Root causes fixed:**
+
+**DEFECT-D (BLOCKING — dense multi-column grid row-collapse):**
+- Root cause: `_cluster_rows` greedy merge `next.top > prev_bottom + 0.5×H_med`. H_med inflated by tall header tokens (~22px) → tolerance (11px) >> real inter-row gap (3-5px of actual gap + 14px word height = 16-17px pitch), causing ~25 physical statement lines to merge into 1 markdown row.
+- Fix: NEW `_cluster_rows_by_gap(words, h_med)`:
+  - Step 1: sort words by top.
+  - Step 2: group into candidate physical lines using `SAME_LINE_TOLERANCE = min(floor(0.3 × h_med), 8px)` (8px cap defuses H_med inflation from tall headers).
+  - Steps 3-4: compute `row_pitch = median(inter-line gaps > 0)`.
+  - Steps 5-6: each candidate physical line = exactly one grid row (1:1 mapping). The gap-histogram and row_pitch are computed for fallback detection and logging; consecutive physical lines are not merged.
+  - Step 7: sort words by left within each row (strict left-to-right).
+  - Fallback: `len(candidate_lines) < 2` OR `row_pitch <= 0` → falls back to DEPRECATED `_cluster_rows`.
+- `_process_page` Step C: `_cluster_rows_by_gap` replaces `_cluster_rows`.
+- `_cluster_rows` kept as DEPRECATED private fallback (existing unit tests reference it).
+
+**DEFECT-E (AC-2E — balance-sheet 7-column residual):**
+- Root cause: sparse column anchor assignment leaves many column slots blank across all rows after `_coalesce_label_columns`.
+- Fix: NEW `_collapse_empty_columns(grid)` — drop columns blank (whitespace-only) across ALL rows INCLUDING header. If header has text in a column, column is KEPT (R-MEDIUM #1). Returns original if result = 0 columns.
+- Pipeline: runs AFTER `_coalesce_label_columns`, BEFORE `_is_data_table`.
+
+**Module-level constants added:**
+- `_SAME_LINE_FACTOR = 0.3` (fraction of h_med for same-line grouping)
+- `_ROW_PITCH_MULTIPLIER = 1.2` (retained in module for completeness; not used as split threshold)
+
+**Files modified (2 files, UNSTAGED):**
+- `infrastructure/generic_md_table_extractor.py` — +constants, +2 functions, modified `_process_page`. 1033 lines.
+- `__tests__/unit/test_generic_md_table_extractor.py` — +18 tests (9 `TestClusterRowsByGap` + 9 `TestCollapseEmptyColumns`). 1255 lines.
+
+**AC fences:**
+- AC-0 PASS: grep for BCTC-specific keywords → ZERO matches (exit 1)
+- Fence-A PASS: no application/interface imports in generic_md_table_extractor.py (exit 1)
+- Privacy PASS: no cloud OCR/VLM refs (exit 1)
+- AC-3F non-regression PASS: structured path 30/30 unit tests pass; text_table_extractor.py untouched
+- Import-linter PASS: 80 files, 159 deps, 2 contracts KEPT, 0 broken
+
+**Suite evidence:**
+- 382 passed (unit-only)
+- 442 passed, 4 failed (full suite — same 4 pre-existing integration tests needing real PDFs on disk)
+- Baseline before this task: 424 passed. Net +18 new tests.
+- Sandbox primitive + module tiers: GREEN (pass: true)
+
+**NEXT:** ops MD-DEPLOY-3 (single doc only: report_id=e71f845d-ffa5-48f9-8f09-30ac2cd09c65, pdf_path=/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf, full UUID required). Verify income statement ≥10 rows, segment revenues in DIFFERENT rows, balance ≤4 cols.
+
+---
+
 ### 2026-05-26 — MD-EXTRACT-2 DONE (3-defect fix: OCR fetch, noise gate, header strip + label coalesce)
 
 **Task:** MD-EXTRACT-2 | Sprint: BCTC-MD-TABLE | Status: DONE, ALL FILES UNSTAGED
