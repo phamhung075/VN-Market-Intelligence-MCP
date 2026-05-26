@@ -36,6 +36,7 @@ from infrastructure.md_table_push_client import MdTablePushClient  # MD-EXTRACT
 from infrastructure.ocr_text_fetch_client import OcrTextFetchClient  # MD-EXTRACT-2 + LF-EXTRACT
 from infrastructure.layout_first_push_client import LayoutFirstPushClient  # LF-EXTRACT
 from infrastructure.pek_engine_adapter import PekEngineAdapter  # PEK-INTEGRATE
+from infrastructure.ocr_backends import select_ocr_backend  # PEK-IMPL-OCR
 from domain.services import ExtractPDFService
 from application.usecases import ExtractPDFUseCase
 from application.extract_tables_usecase import ExtractTablesUseCase
@@ -115,7 +116,28 @@ def create_app() -> FastAPI:
     # Sequential guard: threading.Semaphore(1) inside PekEngineAdapter.
     # Market-hours guard (Layer 1): CRON_BCTC_REPARSE_JOB env var in docker-compose.yml.
     # Market-hours guard (Layer 2): handled at route level in interface/handlers.py.
-    pek_adapter = PekEngineAdapter()
+    #
+    # PEK-IMPL-OCR: OCR backend selection via OCR_TEXT_BACKEND env var.
+    # Default (unset or "tesseract-vie"): TesseractVieBackend (proven for Vietnamese BCTC).
+    # "paddleocr": PaddleOcrBackend (PaddleOCR PP-StructureV2 direct).
+    # "auto": AutoFallbackOcrBackend (Tesseract-first; PaddleOCR on low confidence).
+    # paddle_table is not yet loaded at composition-root time (lazy singleton).
+    # select_ocr_backend() is called here with paddle_table=None; PaddleOcrBackend/
+    # AutoFallbackOcrBackend will have no paddle instance until the first extraction
+    # call loads models. For the pluggable architecture, the ocr_backend is passed
+    # into PekEngineAdapter and used at extraction time — models are already loaded
+    # by then (lazy singleton ensures models exist before _run_table_extraction runs).
+    #
+    # NOTE: For "paddleocr" or "auto" modes that need the real paddle_table, the
+    # adapter calls self._ocr_backend.recognize_text() after models are loaded.
+    # The PaddleOcrBackend receives paddle_table=None here but _pek_models_cache
+    # provides the real paddle_table to _run_table_extraction which holds it in
+    # scope. PaddleOcrBackend wraps the same ocr() call with its own paddle_table
+    # slot. If OCR_TEXT_BACKEND=paddleocr|auto, construct the backend AFTER models
+    # load via deferred wiring (see note in ocr_backends.py select_ocr_backend).
+    # For the test harness and default (tesseract-vie), paddle_table=None is fine.
+    _ocr_text_backend = select_ocr_backend(paddle_table=None)
+    pek_adapter = PekEngineAdapter(ocr_backend=_ocr_text_backend)
     # PEK push client reuses existing LayoutFirstPushClient (same contract).
     pek_push_client = LayoutFirstPushClient(mcp_server_url=cfg.mcp_server_url)
 

@@ -160,6 +160,65 @@ class AlertPort(Protocol):
         ...
 
 
+class OcrBackendPort(Protocol):
+    """
+    Pure Protocol — PEK-IMPL-OCR: pluggable cell/line text-recognition backend.
+
+    Domain layer rule: pure Protocol, zero infra imports, zero I/O here.
+    Concrete adapters (infrastructure/):
+        - infrastructure/ocr_backends.PaddleOcrBackend  — wraps PaddleOCR PP-StructureV2
+        - infrastructure/ocr_backends.TesseractVieBackend — wraps pytesseract (vie+eng, --psm 6)
+
+    Selection policy (infrastructure/ocr_backends.select_ocr_backend()):
+        - Default (OCR_TEXT_BACKEND unset or "tesseract-vie"): TesseractVieBackend.
+          Vietnamese BCTC has rich diacritics — Tesseract vie+eng is proven on this corpus.
+        - "paddleocr": PaddleOcrBackend (PaddleOCR PP-StructureV2 direct, CPU).
+        - "auto": TesseractVieBackend first; if confidence < threshold, retry with
+          PaddleOcrBackend; keep the higher-confidence result.
+
+    Confidence scoring (BCTC low-confidence handling):
+        - confidence == 0.0: empty/no-text result — upstream skips insert.
+        - confidence < 0.2:  low-confidence result — upstream inserts with low_confidence flag.
+        - confidence >= 0.2: normal result — upstream inserts as-is.
+
+    Hard constraint: ONLY the cell/line TEXT step is pluggable via this port.
+    LAYOUT detection (DocLayout-YOLO) and TABLE-GRID detection (PaddleOCR PP-StructureV2
+    table mode) are NOT pluggable. This port is for the text inside detected cells only.
+
+    REQ-PEK-12 candidate (OCR pluggability — to be formalized by PO at PEK-EXIT).
+    """
+
+    def recognize_text(
+        self,
+        image_or_region: Any,
+    ) -> tuple[str, float]:
+        """
+        Recognize text in a single image region (cropped cell or line image).
+
+        Args:
+            image_or_region: Image data for OCR. Accepted types vary by backend:
+                - numpy ndarray (H×W×C, uint8, BGR or RGB) — PaddleOCR + Tesseract both accept.
+                - PIL.Image.Image — Tesseract backend accepts directly.
+                Backends must handle None gracefully (return ("", 0.0)).
+
+        Returns:
+            (text, confidence) where:
+                text:       Recognized text string (stripped). Empty string if none found.
+                confidence: Float in [0.0, 1.0].
+                            0.0 = no text / error.
+                            0.0–0.2 = low confidence (low_confidence flag upstream).
+                            ≥0.2 = normal confidence.
+
+        Contract:
+            - Must NOT raise on empty or None input — return ("", 0.0) instead.
+            - Must NOT perform layout detection or table-grid detection.
+            - Must NOT make network calls (all inference is on-host).
+            - Thread-safe: may be called from multiple threads (adapter must be reentrant
+              or use its own internal lock if the underlying library is not thread-safe).
+        """
+        ...
+
+
 class PekEngineAdapterPort(Protocol):
     """
     Port for the PDF-Extract-Kit engine adapter (PEK-INTEGRATE).

@@ -32,6 +32,17 @@ LF-OVERLAY contract (brief §3.1):
 AC-PEK-0a (pristine invariant):
     git -C apps/pdf-extractor/PDF-Extract-Kit diff MUST return empty.
     This file never modifies the PEK subtree.
+
+PEK-IMPL-OCR (REQ-PEK-12 candidate — OCR pluggability):
+    The cell/line TEXT-recognition step is now pluggable via OcrBackendPort.
+    PekEngineAdapter accepts an ocr_backend: OcrBackendPort at __init__.
+    Composition root (main.py) reads OCR_TEXT_BACKEND env var and injects
+    the selected backend via infrastructure.ocr_backends.select_ocr_backend().
+
+    Hard gate: ONLY the TEXT step is pluggable.
+    LAYOUT (DocLayout-YOLO) + TABLE-GRID (PaddleOCR PP-StructureV2 table mode)
+    remain hardcoded in _load_pek_models / _run_table_extraction.
+    These are NOT made selectable by this task.
 """
 
 from __future__ import annotations
@@ -459,7 +470,23 @@ class PekEngineAdapter:
         - NEVER TableParsingTask, NEVER FormulaDetectionTask
 
     DDD: infrastructure layer. Injected at composition root (main.py).
+
+    PEK-IMPL-OCR: accepts an optional ocr_backend (OcrBackendPort) for the
+    cell/line TEXT-recognition step. Injected at composition root via
+    infrastructure.ocr_backends.select_ocr_backend(). When None, falls back
+    to inline PaddleOCR call (backward-compatible).
+    LAYOUT + TABLE-GRID detection remain unchanged (not pluggable).
     """
+
+    def __init__(self, ocr_backend: Optional[Any] = None) -> None:
+        """
+        Args:
+            ocr_backend: Optional OcrBackendPort implementation for cell/line text.
+                         When None, the adapter uses the paddle_table instance from
+                         _pek_models_cache directly (backward-compatible fallback).
+                         Inject via infrastructure.ocr_backends.select_ocr_backend().
+        """
+        self._ocr_backend = ocr_backend
 
     def extract_layout_and_tables(
         self,
@@ -494,6 +521,14 @@ class PekEngineAdapter:
         layout_task = models.get("layout_task")
         ocr_task = models.get("ocr_task")
         paddle_table = models.get("paddle_table")
+
+        # PEK-IMPL-OCR: propagate the now-loaded paddle_table into the injected
+        # OCR backend (PaddleOcrBackend / AutoFallbackOcrBackend) if it has a
+        # set_paddle_table() method. This deferred wiring is necessary because
+        # the backend is constructed at composition-root time (before models load).
+        if self._ocr_backend is not None and paddle_table is not None:
+            if hasattr(self._ocr_backend, "set_paddle_table"):
+                self._ocr_backend.set_paddle_table(paddle_table)
 
         logger.info(
             "PekEngineAdapter._run_extraction: report_id=%s pdf_path=%s",
@@ -720,6 +755,13 @@ class PekEngineAdapter:
         """
         Run PaddleOCR PP-StructureV2 table mode on table regions per page.
 
+        Table-grid detection (bounding-box layout) uses paddle_table directly —
+        this part is NOT pluggable (LAYOUT + TABLE-GRID stay fixed).
+
+        Cell/line TEXT recognition uses self._ocr_backend when injected.
+        If self._ocr_backend is None, falls back to the paddle_table OCR result
+        directly (backward-compatible path).
+
         Returns:
             {page_num: {region_idx: [cell_dict, ...]}}
         """
@@ -766,28 +808,50 @@ class PekEngineAdapter:
                         if crop.size == 0:
                             continue
                         try:
-                            ocr_result = paddle_table.ocr(crop, cls=False)
-                            cells: List[Dict] = []
-                            if ocr_result and ocr_result[0]:
-                                for item in ocr_result[0]:
-                                    if item and len(item) >= 2:
-                                        pts = item[0]
-                                        text_conf = item[1]
-                                        if pts and len(pts) == 4:
-                                            xs = [p[0] for p in pts]
-                                            ys = [p[1] for p in pts]
-                                            cells.append({
-                                                "bbox": [
-                                                    min(xs) + x0, min(ys) + y0,
-                                                    max(xs) + x0, max(ys) + y0,
-                                                ],
-                                                "text": text_conf[0] if text_conf else "",
-                                                "score": text_conf[1] if text_conf else 0.0,
-                                            })
+                            if self._ocr_backend is not None:
+                                # --- Pluggable TEXT step (PEK-IMPL-OCR) ---
+                                # Table-grid layout already known from paddle_table above.
+                                # Use injected backend for cell/line TEXT only.
+                                # Produces (text, confidence) from the region crop.
+                                cell_text, cell_score = self._ocr_backend.recognize_text(crop)
+                                cells: List[Dict] = []
+                                if cell_text.strip():
+                                    # Wrap the pluggable result in the same cell dict shape
+                                    # so downstream _assemble_unit_markdown / _cells_to_row_bands
+                                    # receive consistent data.
+                                    cells.append({
+                                        "bbox": [
+                                            float(x0), float(y0),
+                                            float(x1), float(y1),
+                                        ],
+                                        "text": cell_text,
+                                        "score": cell_score,
+                                    })
+                            else:
+                                # --- Backward-compatible path (no injected backend) ---
+                                # Use paddle_table directly for TEXT (original behaviour).
+                                ocr_result = paddle_table.ocr(crop, cls=False)
+                                cells = []
+                                if ocr_result and ocr_result[0]:
+                                    for item in ocr_result[0]:
+                                        if item and len(item) >= 2:
+                                            pts = item[0]
+                                            text_conf = item[1]
+                                            if pts and len(pts) == 4:
+                                                xs = [p[0] for p in pts]
+                                                ys = [p[1] for p in pts]
+                                                cells.append({
+                                                    "bbox": [
+                                                        min(xs) + x0, min(ys) + y0,
+                                                        max(xs) + x0, max(ys) + y0,
+                                                    ],
+                                                    "text": text_conf[0] if text_conf else "",
+                                                    "score": text_conf[1] if text_conf else 0.0,
+                                                })
                             region_cells[region_idx] = cells
                         except Exception as exc:
                             logger.warning(
-                                "PekEngineAdapter: PaddleOCR region %d page %d: %s",
+                                "PekEngineAdapter: OCR region %d page %d: %s",
                                 region_idx,
                                 page_num,
                                 exc,
