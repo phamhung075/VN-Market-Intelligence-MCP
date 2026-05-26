@@ -1,0 +1,30 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "triage-candidate",
+  "id": "MACRO-VNINDEX-DATA-GAP-20260526T0846Z",
+  "severity": "MED",
+  "createdAt": "2026-05-26T08:46:00Z",
+  "title": "MACRO-VNINDEX-DATA-GAP — consumption-side fixed, production-side missing",
+  "status": "OPEN",
+  "summary": "Macro seed-leak is HALF-fixed. dev-macro-indicators shipped a148db3d (new MarketIndexPort — ends hardcoded vnIndex=1280.5). ops rebuilt+deployed (image b40dbab6, notebook dcba0279) and live-verified. RESULT: get_macro_snapshot STILL returns vnIndex=1280.5 because market.db macro_indicators table has NO live VN-Index row -> port returns 0 -> graceful fixture fallback (working AS DESIGNED). get_market_snapshot HAS the live value (VN-Index 1884.18), so the data exists elsewhere.",
+  "followup": {
+    "owner": "dev-macro-indicators",
+    "mode": "diagnose-first",
+    "size": "S-M",
+    "task": "Wire MarketIndexPort to the live VN-Index source that get_market_snapshot reads, OR add a population path into the macro_indicators table. PREFER reading the live source directly over a fragile table-population cron.",
+    "may_involve": ["dev-stock-price", "dev-mcp-server"],
+    "do_not": "Re-fix the consumption side — a148db3d is already structurally sound (port + graceful degradation). Only the production/source-wiring side remains.",
+    "after_fix": "ops REBUILD macro-indicators + live-verify get_macro_snapshot vnIndex now matches get_market_snapshot VN-Index."
+  },
+  "blast_radius": "LIMITED — the stale value is the displayed vnIndex field of the macro snapshot, NOT the macro regime classifier. All 16 circuit breakers OK post-rebuild; service healthy.",
+  "evidence": {
+    "consumption_fix_commit": "a148db3d",
+    "rebuild_notebook": "dcba0279",
+    "docker_image": "sha256:b40dbab6",
+    "get_macro_snapshot_vnIndex": 1280.5,
+    "get_market_snapshot_vnIndex": 1884.18,
+    "ops_verdict": "PASS(rebuild) + DATA-PIPELINE-GAP(followup)"
+  },
+  "scheduling_note": "Next PO triage: pick up. Defer if host is under BCTC-MD-TABLE churn or OOM-flap load (16GB Mac, 8GB Docker cap — flapped 2026-05-26 05:23Z)."
+}
