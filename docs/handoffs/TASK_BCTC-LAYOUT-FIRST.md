@@ -97,3 +97,48 @@ Spec `docs/REQ_BCTC-LAYOUT-FIRST.md` reviewed against binding Decisions A–F + 
 **NEXT = architect (LF-DESIGN).** Formalize the 4-tier blueprint; split the work at the pdf-extractor↔mcp-server service boundary (zone=`multi`); resolve the 3 open questions; write per-task ACs for LF-EXTRACT + LF-OVERLAY; brief → `docs/architecture-briefs/`. Design-only — no code.
 
 <!-- architect appends LF-DESIGN blueprint + per-task ACs below -->
+
+## [Architect] LF-DESIGN — 2026-05-26T19:30Z
+
+**Brief:** `docs/architecture-briefs/2026-05-26-bctc-layout-first-pipeline.md`
+**Build standard:** lean (existing service zones; redesign target = `generic_md_table_extractor.py`)
+
+### Brownfield summary
+
+- **Redesign target confirmed:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` (MD-EXTRACT-9, ~2445 lines). The per-page algorithm (Steps A–G) has no cross-page unit grouping. This IS the structural root cause.
+- **0-byte-diff boundary confirmed:** `text_table_extractor.py` owns `bctc_table_rows` via the 1954c write chain. The two use cases (`ExtractMdTablesUseCase` / `ExtractTablesUseCase`) are fully separated — different triggers, different ports, different DB tables. Zero collision risk.
+- **Existing infrastructure reused:** `bctc_md_tables` DDL (extended, not replaced), `pushBctcMdTablesHandler.ts` (unchanged — old endpoint stays), `MdTablePushClient` (new `LayoutFirstPushClient` added alongside), `bctcInspectHandler.ts` (extended with overlay route + toggle).
+- **Scan clean:** true. No hidden shared state found between the two extraction paths.
+
+### 3 Architect-Open Questions — Resolved
+
+1. **market.db schema (Q1):** Two NEW tables: `bctc_layout_units` (one row per logical unit per report, with `quarantined` flag) and `bctc_page_zones` (one row per page per report, with full `zones_json`). Both owned by mcp-server via new `POST /api/push-bctc-layout` handler. DDL in brief §3.1. Zero overlap with `bctc_table_rows`, `bctc_balance_checks`, or `bctc_md_tables`.
+
+2. **JSON contract at the service boundary (Q2):** Full contract specified in brief §3.2. Coordinate system: top-left origin, px unit, 200 DPI. Column IDs are positional (`col_0`, `col_1`). Continuation pages emit IDENTICAL column gutters as the schema-page (this is the visual inheritance proof). Zone type vocabulary bound to overlay color assignments.
+
+3. **Quarantined unit storage (Q3):** Quarantined units are stored in `bctc_layout_units` with `quarantined=1`. QA counts them via direct bun:sqlite query (exact command in brief §3.3). Pass-rate = `COUNT(*) WHERE quarantined=0` / `COUNT(*)` total.
+
+### Per-Task ACs
+
+Full machine-checkable ACs in brief:
+- **LF-EXTRACT:** AC-LFE-0 through AC-LFE-11 (§4.1)
+- **LF-OVERLAY:** AC-LFO-0 through AC-LFO-7 (§4.2)
+
+Key done-bar ACs:
+- AC-LFE-0: grep-proof (zero BCTC semantic labels in zone/grid decision paths)
+- AC-LFE-2: schema inheritance (page 5 `schema_inherited_from_page=3`)
+- AC-LFE-3: page 41 is prose (geometry-is-spine proof)
+- AC-LFE-5: corpus breadth (18 docs, measured pass-rate, not assumed)
+- AC-LFO-3: structured path non-regression (balance_pass=1 for FPT Q4 after overlay added)
+
+### Parallelism
+
+LF-EXTRACT and LF-OVERLAY CAN run in parallel — the JSON contract (§3.2), DDL (§3.1), and endpoint name are fully specified. Both dev agents implement against the contract independently. LF-DEPLOY is gated on BOTH being done.
+
+### Zone
+
+- LF-EXTRACT: `apps/pdf-extractor/` (dev-pdf-extractor, sole owner)
+- LF-OVERLAY: `apps/mcp-server/` (dev-mcp-server, sole market.db write-owner)
+- architect writes only: `docs/architecture-briefs/2026-05-26-bctc-layout-first-pipeline.md` + this handoff entry + TASKS.md + notebook
+
+**NEXT = PM dispatches dev-pdf-extractor (LF-EXTRACT) + dev-mcp-server (LF-OVERLAY) in parallel.**
