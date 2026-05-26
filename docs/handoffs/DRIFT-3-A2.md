@@ -208,3 +208,30 @@ Single-zone task (cross-service). Can be parallelized with DRIFT-3-A1 and DRIFT-
 - NO `git push` (main terminal owns the final commit)
 - Stay on main branch
 - Do NOT touch `apps/pdf-extractor/`, any `LF-*` task, any `pilot-status-*.json`, or `docs/pipeline-state.json` BCTC fields
+
+---
+
+## [Developer] Implementation Record
+
+- **Files created:**
+  - `scripts/verify-deploy-sha.sh:68` — main deploy gate; exports `compare_shas()` function; BASH_SOURCE guard prevents main block from running when sourced
+  - `scripts/test-sha-comparison-unit.sh:75` — pure-logic unit tests (no Docker); covers match/stale/empty-label
+  - `scripts/test-sha-drift-guard.sh:77` — end-to-end stale-image proof (Docker, ops-deferred); sources `compare_shas()` from verify script
+- **Tests written:** `scripts/test-sha-comparison-unit.sh` — 3 assertions, all GREEN
+- **Key test output (deliberate-stale anti-false-green proof):**
+  ```
+  PASS Test 1: matching SHAs — exit 0
+  PASS Test 2: stale SHA (deliberate drift) — exit non-zero (guard correctly rejects)
+  PASS Test 3: empty label — exit non-zero (guard correctly rejects)
+  Results: 3 pass, 0 fail
+  OK: all SHA comparison unit tests passed.
+  ```
+- **bash -n syntax:** all 3 scripts PASS
+- **shellcheck:** not available on host (not installed); syntax-check via bash -n substituted
+- **compare_shas() signature:** `compare_shas <deployed_sha> <expected_sha>` — returns 0 on match, 1 on drift or empty label; exported with `export -f compare_shas`; sourceable by A3 runbook examples and A1 reviewers
+- **Dockerfile edits:** ZERO (DRIFT-3-A1 owns Dockerfiles)
+- **Runbook edits:** ZERO (DRIFT-3-A3 owns runbook)
+- **pdf-extractor/LF-*/pipeline-state touches:** ZERO
+- **Docker run/build during implementation:** ZERO (unit tests are Docker-free)
+- **Docs updated:** `docs/handoffs/DRIFT-3-A2.md` — this record appended
+- **Graphify:** skipped (no docs/policies/standards knowledge files impacted — scripts-only task)
