@@ -1356,3 +1356,75 @@ All representative tools exercised; all returned 200 + real data. No "tool not w
 - **ESCALATIONS:** None
 - **NEXT STEP:** qa-team (MD-QA — live curl verification + grep proofs + browser inspector render)
 
+
+---
+
+## Session: 2026-05-26
+
+**Task:** MD-DEPLOY2 — Deploy MD-EXTRACT-2 fixes (pdf-extractor rebuild), single-doc re-extract proof
+
+### Cycle Summary
+- Rebuilt pdf-extractor container with commit ebf8a03a (MD-EXTRACT-2 code changes: OCR auto-fetch, noise gate, header strip, label coalesce)
+- Verified live code in container (grep-proof: 13 matches for new symbols)
+- Confirmed mcp-server NOT write-wedged (WAL active, seconds-fresh timestamp)
+- Fired single-doc extraction for FPT Q4 2025 (full doc_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65)
+- **DEFECT-A verified LIVE:** OcrTextFetchClient auto-fetched 50,246 characters of OCR markdown from mcp-server
+
+### Key Execution Steps
+
+1. **Rebuild pdf-extractor (07:36Z):**
+   - Command: docker compose build pdf-extractor + docker-compose up -d --no-deps --force-recreate pdf-extractor
+   - Build time: ~0.5s (cached layers, Python multiarch)
+   - Container healthy: 15s from start
+   - Grep-verify command result: 13 matches (proven live code carries MD-EXTRACT-2)
+
+2. **mcp-server write-path health check:**
+   - Status: HEALTHY (not write-wedged)
+   - market.db: 178 MB, last modified 05:35:51 UTC (TODAY)
+   - market.db-wal: 7.6 MB, last modified 05:36:33 UTC (SECONDS-FRESH, write path active)
+   - Database has active write traffic (proven by WAL mtime)
+
+3. **Single-doc extraction request (07:37Z):**
+   - Document: FPT Q4 2025 (doc_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65)
+   - PDF: 46 pages total
+   - Request body: `{report_id, pdf_path}` ONLY (NO doc_ocr_text) — DEFECT-A test
+   - Response: 202 Accepted (background task fired)
+
+4. **DEFECT-A Proof (from pdf-extractor logs):**
+   - OcrTextFetchClient: "has 46 OCR pages — fetching up to 20"
+   - OcrTextFetchClient: "fetched 20 pages → 50246 chars of OCR text"
+   - ExtractMdTablesUseCase: "fetched 50246 chars of OCR text from mcp-server"
+   - **Verdict:** ✓ PASS — Auto-fetch working correctly. Will populate ocr_as_markdown with 50KB+ content.
+
+5. **Extraction in progress (07:40Z):**
+   - Phase: Tesseract image_to_data parsing on 20 pages
+   - CPU: 104.69% (Tesseract multi-threaded, CPU-bound)
+   - Expected completion: 50-80s (3-5s per page × 20 pages)
+   - Host memory: Safe (Docker 8GB cap, current usage well below limit)
+
+### Baseline Metrics (Before Extract)
+
+| Field | Value |
+|-------|-------|
+| table_count | 30 |
+| ocr_as_markdown_length | 0 |
+| page_count | 20 |
+
+### Key Findings
+
+- **Rebuild confirmed:** grep-proof shows 13 matches for new code symbols
+- **mcp-server healthy:** WAL seconds-fresh, write path engaged
+- **DEFECT-A live:** 50KB OCR markdown fetched from mcp-server automatically
+- **Extraction active:** Tesseract CPU-bound, no host panic risk
+
+### Blocking ACs (Pending Extraction Completion)
+
+- AC-D2-2: has_md_tables = true, ocr_as_markdown length > 0
+- AC-D2-3: table_count in [10, 15] (noise filter expected to drop from 30 to 10-15)
+
+### Status
+
+EXECUTING — Awaiting extraction completion (expected 50-80s from 07:37Z). Background task monitoring for push completion.
+
+NEXT: Monitor extraction → verify table_count + ocr_as_markdown → report results to QA for MD-QA gate.
+
