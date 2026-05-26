@@ -640,3 +640,76 @@ Pulled `md_tables_json` (47.7 KB, 15 tables) + `ocr_as_markdown` (51,013) direct
 
 **NEXT: architect** — root-cause rethink for multi-column matrix reconstruction; append redesign to brief; then dev → ops MD-DEPLOY-4 → main-terminal re-verify → qa → po. Goal `table on pdf on all bctc need correct extract text and convert to md style` REMAINS ARMED (segment report + income statement not yet human-readable).
 
+---
+
+## [Architect] MD-EXTRACT-4 — REVISED: Number-Token 2D Reconstruction (2026-05-26)
+
+**Status:** DESIGN REVISED — Candidate 2 (psm-6 line-text) REJECTED by main-terminal ground-truth verification of live `pdf_extracted_text`. Candidate 3 (image_to_data 2D + number-token-only clustering) ELEVATED. Ready for dev-pdf-extractor.
+
+**Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + its unit test. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED.
+
+**Build standard:** lean.
+
+### Why Candidate 2 (psm-6 line-text) is rejected
+
+Main-terminal verified the live `pdf_extracted_text` OCR substrate (psm-6 stored OCR for FPT e71f845d). The psm-6 linearization of WIDE tables is COLUMN-MAJOR:
+
+- **Segment report (page 22):** entire label column stacked (lines 1-22), then col-1 values stacked (`35.381.667` on line 53 alone), then col-2 values stacked (`9.092.934` on line 83 alone), then col-3 (`18.701.876` on line 100 alone). No row-aligned lines to split.
+- **Income statement (page 8):** code column stacked (lines 11-26), label column stacked (lines 28-44), then value blocks. Same column-major pattern.
+- psm-6 row-alignment holds ONLY for the narrow balance sheet (close columns). That is the exception.
+
+`_split_by_whitespace_gap` cannot reconstruct these matrices — there are no row-aligned lines. **Do NOT implement:** `_process_page_from_text`, `_split_by_whitespace_gap`, `_detect_table_regions_from_text`, `_build_grid_from_lines`.
+
+### Chosen strategy (Candidate 3 — elevated)
+
+`image_to_data` 2D reconstruction with NUMBER-TOKEN-ONLY y-clustering.
+
+The `image_to_data` bbox data is correct — LIVE-VERIFY-3 confirmed the segment revenues are present in the output, just on wrong rows. The fix: separate NUMBER tokens from TEXT tokens, cluster only NUMBER tokens by y (no diacritic inflation, `SAME_LINE_TOL=4` cleanly separates rows), derive column layout from NUMBER token x-positions, then ATTACH labels by finding nearest TEXT tokens per row y-band.
+
+### Functions to add/modify/retire
+
+**ADD (all pure except `_process_page` which remains the impure boundary):**
+1. `_NUMBER_TOKEN_RE` constant — generic number vs text classifier (money groups + 2-3 digit codes).
+2. `SAME_LINE_TOL: int = 4` constant — tunable.
+3. `_classify_tokens(words)` → `(number_tokens, text_tokens)`.
+4. `_cluster_number_rows(number_tokens, same_line_tol)` → row groups sorted by y then x. Replaces `_cluster_rows` / `_cluster_rows_by_gap`.
+5. `_attach_labels(row_groups, text_tokens, h_med)` → `[(label, row_tokens)]`.
+6. `_build_grid_from_number_rows(labeled_rows, col_anchors)` → 2D grid.
+
+**MODIFY:**
+- `_process_page(page_image, pytesseract, Output)` — replace cluster-all-tokens logic: classify → cluster_number_rows → detect_column_anchors (numbers only) → build_grid_from_number_rows → attach_labels → post-process pipeline.
+
+**RETIRE (keep as dead code — test imports preserved):**
+- `_cluster_rows`, `_cluster_rows_by_gap`. Mark: `# DEAD in MD-EXTRACT-4 — replaced by _cluster_number_rows`.
+
+**UNCHANGED:** `extract_md_tables` signature, all post-processing pure functions, all existing constants.
+
+### Corrected ACs
+
+**AC-4A (BLOCKING):** every data row with ≥1 money-group match has non-empty first cell (label present).
+
+**AC-4B (BLOCKING):** every 3-digit code in a table appears in a row that ALSO has a money-group match.
+
+**AC-4C (CORRECTED — was BACKWARDS in original MD-EXTRACT-4 design):** Ground-truth layout: "Doanh thu theo bộ phận" is ONE row; `35.381.667`, `9.092.934`, `18.701.876` are its values in THREE DIFFERENT COLUMNS (segments are columns). The CORRECT assertion: all three values appear in THE SAME pipe-row, each as a separate column cell. Prior AC-4C said "three different rows" — that was wrong.
+
+**AC-4D:** income statement ≥15 data rows with non-empty labels.
+
+### Key constraints confirmed
+
+- AC-0: `_NUMBER_TOKEN_RE`, `_classify_tokens`, `_cluster_number_rows`, `_attach_labels` contain zero BCTC label strings. Generic number patterns only.
+- Privacy: `image_to_data` is local Tesseract subprocess. No cloud, no network.
+- Fence-A: new pure functions import only stdlib + module-level constants. No application/interface imports.
+- `text_table_extractor.py`: NOT TOUCHED. AC-3F preserved.
+- FROZEN surfaces: NOT TOUCHED.
+
+### Risk summary
+
+- R-HIGH: OCR may merge adjacent column values into one token → empty cell in that column. Honest bar: majority alignment. Accept per §2.3.
+- R-HIGH: `SAME_LINE_TOL=4` may need tuning. Exposed as named constant.
+- R-MEDIUM: Column header rows (segment names, period dates) are TEXT-only — may not appear in grid. Dev may add a header-scan pass. Not blocking.
+- R-LOW: Dead functions + new functions add ~150L. Monitor file size cap.
+
+**Full design:** `docs/architecture-briefs/2026-05-26-bctc-md-table-generic-table-detection.md § MD-EXTRACT-4 (REVISED)`
+
+**NEXT: dev-pdf-extractor** — implement MD-EXTRACT-4 per revised brief §3-§5. Verify AC-3F (non-regression: structured 79 rows, balance_pass=true) BEFORE any re-extract. Run full unit suite. Leave files UNSTAGED (main terminal commits). Then ops MD-DEPLOY-4 (single doc, full UUID `e71f845d-ffa5-48f9-8f09-30ac2cd09c65`) → main-terminal live-verify → qa MD-QA-4 → po MD-EXIT.
+

@@ -1202,3 +1202,670 @@ All MD-QA-2 ACs remain binding (AC-Q2-0 through AC-Q2-4). The following are ADDE
 | `_process_page(...)` modified | infrastructure | `pytesseract`, `PIL` (already present) | Fence-A compliant |
 
 Both new functions are PURE: no I/O, no Tesseract, no DB, no network. They operate only on the already-assembled `word` dicts and `grid` lists collected in Steps A-E. This satisfies the DDD infrastructure layer rule (impure only at the boundary; pure helpers can live in the same file).
+
+---
+
+## MD-EXTRACT-4 — PSM-6 Line-Text Substrate (Kill Dual-Path Drift at Source)
+
+> **Task:** MD-EXTRACT-4 | **Author:** architect | **Date:** 2026-05-26T~UTC
+> **Status:** DESIGN REVISED — Candidate 2 (psm-6 line-text) REJECTED by ground-truth. Candidate 3 (image_to_data 2D + number-token clustering) ELEVATED. Ready for dev-pdf-extractor.
+> **Recurring-bug rule:** 2nd failed render on `generic_md_table_extractor.py`. Root-cause rethink MANDATORY before any dev patch.
+> **Binding evidence:** MAIN-TERMINAL LIVE-VERIFY-3 (post MD-DEPLOY-3, FPT `e71f845d`). MD-EXTRACT-3 `_cluster_rows_by_gap` is present and working (income statement went from 1 collapsed row to 74 pipe-rows), yet matrix scatter persists. ADDITIONAL ground-truth from main-terminal inspection of live `pdf_extracted_text` (psm-6 stored OCR for FPT e71f845d) disproves Candidate 2 for wide tables — see §2.1.
+> **Zone:** `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` + its test. Zero mcp-server changes. `text_table_extractor.py` UNTOUCHED.
+
+---
+
+### 1. Root-Cause Analysis — Why All Three Prior Fixes Failed
+
+#### 1.1 The invariant that the structured path exploits
+
+`text_table_extractor.py` works — 79 clean rows, label↔code↔value aligned, balance δ=0 — because it consumes **psm-6 `image_to_string` line-text**. Under psm-6, Tesseract's internal layout analysis commits to one line per physical print row BEFORE emitting text. Every token that belongs to row N (label word, code digits, current-period value, prior-period value) is already on the same line in the output string. The structured parser just splits the line on whitespace-run boundaries to extract columns. That is why it is robust.
+
+#### 1.2 Why `image_to_data` (per-word bbox) cannot reconstruct the same grid
+
+`image_to_data` returns per-word bounding boxes. In a multi-column financial matrix (income statement: code + note + 4 period values; segment: label + 7 segment totals), the value tokens in the rightmost columns are physically printed several hundred pixels to the right of the label column. Tesseract's internal word segmentor assigns each word its own `top` coordinate independently. Due to:
+
+- **Printing baseline variation:** the label text baseline and the numeric baseline for the same logical row differ by 0-6px on a 200 DPI scan.
+- **Diacritic overhang:** Vietnamese diacritics extend word bounding boxes upward, inflating `top` by 2-4px for accented words.
+- **Column-to-column optical alignment:** printers often micro-shift numeric columns 1-3px vertically relative to the label column.
+
+The net effect: the label cell for logical row N has `top = T`, but the four value cells in that row have `top ∈ [T-4, T+6]`. This 10px spread straddles the `_SAME_LINE_FACTOR × h_med` tolerance (capped at 8px). When tolerance < spread, `_cluster_rows_by_gap` correctly splits the values into separate "candidate lines" — and then each line becomes its own grid row.
+
+This is not a threshold tuning problem. Raising the cap from 8px to, say, 16px fixes the merge for that spread, but then creates false merges between genuinely adjacent print rows (which are ~14-16px apart on dense statements). There is no stable value that works for both cases simultaneously because the two distances overlap.
+
+**Class of defect: Dual-Path Drift #5.** The per-word bbox approach attempts to re-derive what psm-6 already knows: which words belong to the same physical print line. The re-derivation is geometrically unstable on multi-column financial matrices. The structured path skips this re-derivation entirely by consuming the psm-6 output directly.
+
+#### 1.3 What MD-EXTRACT-3 actually fixed (partial)
+
+`_cluster_rows_by_gap` fixed the COLLAPSE problem for sparse tables (balance sheet: 3-4 columns, wide row spacing) and for cases where word-top jitter is small relative to row pitch. Income statement now correctly produces 74 pipe-rows instead of 1. But the SCATTER problem (value columns detached from their label row) persists because it lives in the clustering tolerance, not in the row-pitch detection.
+
+---
+
+### 2. Strategy Decision — Chosen Direction
+
+#### 2.1 Candidates evaluated
+
+**Candidate 1 (REJECTED): Continue tuning `image_to_data` per-word bbox clustering.**
+Raise `_SAME_LINE_FACTOR` cap from 8px to 16-20px, accept some false row-merges. This does not converge: the spread range [0-10px for same-row top jitter] overlaps with the inter-row gap [14-16px for dense statements]. Any cap in between produces either scatter or collapse depending on the specific page. Third failure on this approach.
+
+**Candidate 2 (REJECTED-BY-GROUND-TRUTH): Replace `image_to_data` per-word substrate with psm-6 `image_to_string` line-text, split each line into columns by whitespace-gap analysis.**
+
+This was the originally chosen direction. It is DISPROVEN by main-terminal ground-truth verification of the live `pdf_extracted_text` substrate (psm-6 stored OCR for FPT e71f845d). The psm-6 linearization for WIDE tables (segment report page 22, income statement page 8) is COLUMN-MAJOR, not row-major. Tesseract psm-6 emits the entire label column vertically stacked, then the entire first value-column stacked, then the second value-column stacked, etc. There are NO row-aligned lines to split. Specific evidence:
+
+- **Segment report (page 22):** psm-6 outputs label-column tokens on lines 1-22 ("Chỉ tiêu", "Doanh thu theo bộ phận", ...), then segment-1 header + values on lines 23-83 (each value alone on its line — `35.381.667` is on line 53), then segment-2 values on lines 84-100 (`9.092.934` is on line 83), then segment-3 values (`18.701.876` is on line 100), then total column, in column-major order. The three segment revenues are on lines 53 / 83 / 100 — each ALONE on its line. `_split_by_whitespace_gap` on any of those lines returns a single cell, not a row across columns.
+- **Income statement (page 8):** same column-major pattern. Code column stacked (lines 11-26), label column stacked (lines 28-44), then value blocks. No shared row line across columns.
+- **Why psm-6 does work for the narrow balance sheet:** the balance sheet columns are close enough horizontally that psm-6 can fit all cells on one line. That is the EXCEPTION, not the rule. The Candidate 2 assumption (psm-6 is row-aligned) only holds for narrow tables.
+
+Therefore Candidate 2 (`_process_page_from_text` + `_split_by_whitespace_gap` + `_detect_table_regions_from_text` + `_build_grid_from_lines`) CANNOT reconstruct the segment report or income statement matrices and is REJECTED. All Candidate-2 function designs in §3-§4 above are SUPERSEDED by the revised design below (§2.2-§4 REVISED).
+
+**Candidate 3 (CHOSEN — ELEVATED from deferred): image_to_data 2D reconstruction with number-token-only y-clustering.**
+
+`image_to_data` per-word bbox IS the correct substrate for WIDE matrices — it is the only tool that preserves the 2D spatial relationship (x=column, y=row) independently of Tesseract's linearization order. The failure of MD-EXTRACT-1 through MD-EXTRACT-3 was NOT that `image_to_data` is wrong — it is that those cycles clustered ALL tokens (labels + numbers) by y into rows. Vietnamese-diacritic LABEL tokens have inflated/jittered `top` values that scatter across y-bands. The fix (confirmed by main-terminal) is to SEPARATE token classes and cluster only NUMBER tokens by y.
+
+The `image_to_data` bbox data already captures the correct values: LIVE-VERIFY-3 confirmed that `35.381.667 / 9.092.934 / 18.701.876` are present in the segment report output — they were just on scattered rows. The values are there; the row assignment was wrong. This means the substrate is correct, the clustering strategy was wrong.
+
+**Hybrid path decision:** psm-6 `image_to_string` (Branch A / stored OCR text) is retained as the FAST PATH for NARROW tables (balance sheet — 3-4 columns, all tokens on one line in psm-6). `image_to_data` is the WIDE-MATRIX PATH for the segment report and income statement. The implementation may either (a) route by detected column count after a cheap psm-6 parse, or (b) always use `image_to_data` for the wide-matrix path and psm-6 only for narrow. The architect's call (see §3): use `image_to_data` as the primary substrate for the wide-matrix algorithm; psm-6 text path remains viable for narrow tables and is kept as the `ocr_as_markdown` source.
+
+#### 2.2 Why number-token-only y-clustering fixes the scatter
+
+The root cause of scatter in MD-EXTRACT-1/2/3 is label-token `top` jitter inflating y-band boundaries. The fix is:
+
+1. **Separate token classes.** NUMBER tokens (matching `_MONEY_GROUP_RE` or a 2-3 digit standalone code pattern) have uniform character height — no diacritics, clean baseline, consistent `top`. TEXT tokens (labels, headers) carry Vietnamese diacritics that inflate `top`.
+2. **Cluster NUMBER tokens by y ONLY.** Numbers on the same print row share a clean baseline across all columns because the printer lays them out on a grid. y-jitter for number tokens is ≤2px. A `SAME_LINE_TOL = 4` cap (half the typical 8-9px inter-row gap) cleanly separates rows without over-merging.
+3. **Cluster NUMBER tokens by x (left) to define columns.** Each NUMBER cluster at a given y-band appears in one of the `N_segment` + `total` column positions. x-anchors derived from all number-token left-edges give the column layout.
+4. **Attach labels per row.** For each number-row y-band, find TEXT token(s) whose y falls nearest that band → that row's label cell. Multi-line wrapped labels: take the TEXT token group whose centroid y is closest to the number-row y.
+5. **Emit grid.** Row = [label, col1_value, col2_value, ..., total_value]. Empty string where no number exists at that (row_y, col_x) intersection.
+
+**Why this sidesteps the prior failures:**
+- MD-EXTRACT-1/2: y-band clustering included label tokens → diacritic jitter expanded y-bands → false merges.
+- MD-EXTRACT-3 `_cluster_rows_by_gap`: improved for balance sheet (sparse, large row gap) but SCATTER persisted for income/segment because the gap-histogram row-pitch was still computed over ALL tokens, and value tokens across columns were on different y-sub-bands.
+- Number-only clustering: the NUMBER tokens in the rightmost segment column on the same print row as the label share the same baseline as the leftmost number column. The label's y-jitter is irrelevant — it is attached AFTER rows are formed from numbers.
+
+#### 2.3 Honest bar
+
+Perfect reconstruction may be impossible for some cells: OCR sometimes merges adjacent column values onto one line (e.g., `"804.840 7.324.783 (1.193.275)"` is one image_to_data word-token block). Garbled column headers are expected. The bar is HUMAN-READABLE majority alignment: label↔value↔column correct for the bulk of rows. The structured `bctc_table_rows` path remains the SSOT for analyzable figures; this generic MD path is the additive human-recheck layer.
+
+#### 2.4 psm-6 narrow-table fast path (retained)
+
+For the narrow balance sheet (3-4 columns), psm-6 line-text + whitespace-gap splitting DOES work (Candidate 2 assumption holds for narrow). The implementation MAY retain a Branch A fast path using psm-6 text for narrow tables (detected by low column count after a cheap text scan) while routing wide tables through the number-token-2D path. This is an implementation decision for dev-pdf-extractor — architect does not mandate the routing condition. What IS mandated: the wide-matrix path (segment report, income statement) MUST use `image_to_data` 2D reconstruction. The narrow path may use psm-6 text if dev finds it simpler to maintain one unified code path via `image_to_data` for all tables.
+
+---
+
+### 3. New Algorithm Design — Number-Token 2D Reconstruction (REVISED)
+
+> NOTE: §3 supersedes the psm-6 line-text algorithm designed before ground-truth verification. Candidate 2 functions (`_process_page_from_text`, `_split_by_whitespace_gap`, `_detect_table_regions_from_text`, `_build_grid_from_lines`) are CANCELLED — do NOT implement them. The algorithm below is the binding design for MD-EXTRACT-4.
+
+#### 3.1 Substrate
+
+`pytesseract.image_to_data(page_image, lang="vie+eng", config="--psm 6", output_type=Output.DICT)` — per-word bbox TSV. This IS the substrate that proved it captures the correct values (LIVE-VERIFY-3 confirmed segment revenues present). The failure was in clustering strategy, not substrate. One `image_to_data` call per page (same as the original MD-DESIGN intent).
+
+`page_image_paths` remain the primary input. `doc_ocr_text` is used only for `ocr_text_to_markdown` (the human-readable flat text view) — NOT for table reconstruction. Port signature is unchanged.
+
+**No change to ports, use case, handlers, or mcp-server.**
+
+#### 3.2 Token classification
+
+After collecting words via `image_to_data` (filter `conf > 0`, `text.strip() != ""`):
+
+```python
+_NUMBER_TOKEN_RE = re.compile(
+    r'^[\(\-]?\d{1,3}(?:[.,]\d{3})*[\)\-]?$'      # money group: (1.234.567) or 1,234,567
+    r'|^[\(\-]?\d{2,3}[\)\-]?$'                     # 2-3 digit code or small number
+)
+```
+
+A token is a NUMBER token if its `text` (stripped of whitespace) matches `_NUMBER_TOKEN_RE`. All other tokens are TEXT tokens (labels, headers, units, prose).
+
+This split is the key fix: NUMBER tokens are uniform-height glyphs (digits + punctuation), no diacritics, clean shared baseline. TEXT tokens may have diacritics with unpredictable `top` jitter.
+
+#### 3.3 Per-page algorithm (number-token-2D path)
+
+**Step A — Collect and classify tokens.**
+
+```
+words = pytesseract.image_to_data(page_image, ..., output_type=Output.DICT)
+number_tokens = [w for w in words if _NUMBER_TOKEN_RE.match(w['text'].strip())]
+text_tokens   = [w for w in words if not _NUMBER_TOKEN_RE.match(w['text'].strip())]
+```
+
+**Step B — Detect table regions.**
+
+Use the existing `_detect_table_regions` y-gap histogram on NUMBER tokens only (not all tokens). A page has a table region if there are ≥4 number tokens. Table boundary = vertical extent of the number-token cluster, extended ±`H_med` to include the label column.
+
+**Step C — Cluster NUMBER tokens into rows by y.**
+
+Within each table region's number-token set:
+
+1. Sort by `top`.
+2. Greedy same-line grouping with tolerance `SAME_LINE_TOL = min(4, H_med * 0.3)`. Use `top` of number tokens only — no diacritic inflation.
+3. Each group = one logical row's number tokens. The `top` of each group = median `top` of its members.
+
+Because number tokens have ≤2px y-jitter and the typical inter-row gap is 8-12px, `SAME_LINE_TOL = 4` cleanly separates rows without false merges.
+
+**Step D — Cluster NUMBER tokens into columns by x.**
+
+Collect all number-token `left` values across all rows. Build x-band clusters (existing `_detect_column_anchors` logic, unchanged). Each cluster = one column. Column index = rank by x ascending. This gives the `N_col` column layout.
+
+**Step E — Build number grid.**
+
+Initialize `grid[row_idx][col_idx] = ""` for all rows and columns.
+
+For each number token, assign it to its row (by y-band from Step C) and column (by nearest x-anchor from Step D). Space-join multiple tokens assigned to the same cell.
+
+**Step F — Attach labels.**
+
+For each row `row_idx` with y-band centroid `y_c`:
+
+1. Find all TEXT tokens whose `top` satisfies `abs(top - y_c) <= H_med * 0.6`.
+2. Sort matching TEXT tokens by `left` ascending.
+3. Space-join their `text` fields → `label_cell`.
+4. If no TEXT token falls within that band, find the nearest TEXT token by `abs(top - y_c)` (with cap `2 * H_med`) → use its text as the label (handles slight label-row offset).
+
+Set `grid[row_idx][0] = label_cell`. Shift existing column 0 (if it contained a number) to column 1, renumbering. Alternatively: prepend label as column 0; number columns start at index 1.
+
+**Step G — Post-processing (unchanged functions).**
+
+Apply in order:
+- `_strip_leading_header_bands(grid)`
+- `_coalesce_label_columns(grid)`
+- `_collapse_empty_columns(grid)`
+- `_is_data_table(grid)`
+
+**Step H — Header detection and markdown emission (unchanged).**
+
+`_detect_header_rows(grid)` + `_emit_markdown_table(grid, n_header_rows)`.
+
+#### 3.4 AC-4A / AC-4B compliance by construction
+
+- **AC-4A (every money-row has non-empty label):** Step F guarantees every row with ≥1 number token has a label attached (nearest TEXT token fallback). If no TEXT token exists within `2 * H_med`, the label cell is empty — this is the honest "OCR merges some columns" limitation stated in §2.3.
+- **AC-4B (code+value co-located):** Because rows are built from NUMBER token y-bands, and codes (2-3 digit tokens) cluster by y the same as value tokens, a code and its value columns land on the same row by construction. Detachment only occurs when the code token's `top` differs from value tokens by > `SAME_LINE_TOL` — practically impossible for printed financials.
+
+#### 3.5 Functions to add / modify / retire
+
+| Function | Action | Rationale |
+|---|---|---|
+| `_NUMBER_TOKEN_RE` | **ADD constant** | Classifies number vs text tokens |
+| `SAME_LINE_TOL: int = 4` | **ADD constant** | Number-token y-clustering tolerance (px) |
+| `_classify_tokens(words)` | **ADD** | Returns `(number_tokens, text_tokens)` split. Pure. |
+| `_cluster_number_rows(number_tokens, same_line_tol)` | **ADD** | Groups number tokens by y using `SAME_LINE_TOL`. Returns list of row groups, each sorted by x. Pure. |
+| `_attach_labels(row_groups, text_tokens, h_med)` | **ADD** | For each row group y-band, finds nearest TEXT tokens → label cell. Returns updated row groups with label prepended. Pure. |
+| `_build_grid_from_number_rows(row_groups_with_labels, col_anchors)` | **ADD** | Assigns tokens to (row, col) cells using col_anchors. Returns 2D grid. Pure. |
+| `_process_page(page_image, pytesseract, Output)` | **MODIFY** | Replace cluster-all-tokens logic with: (1) classify → (2) cluster numbers by y → (3) detect col anchors on numbers → (4) build number grid → (5) attach labels → (6) post-process pipeline. Keep existing dead-code bbox helpers (compatibility). |
+| `extract_md_tables(page_image_paths, doc_ocr_text)` | **UNCHANGED signature** | `doc_ocr_text` still used for `ocr_text_to_markdown` only. Table reconstruction uses `image_to_data` per page. |
+| `_cluster_rows`, `_cluster_rows_by_gap` | **RETIRE** — keep as dead code | Replaced by `_cluster_number_rows`. Mark `# DEAD in MD-EXTRACT-4`. |
+| All post-processing pure functions | **UNCHANGED** | Substrate-agnostic. |
+| `_MONEY_GROUP_RE`, `_CODE_LIKE_RE`, `_MIN_MONEY_GROUPS`, etc. | **UNCHANGED** | Used by density gate and post-processing. |
+
+**Candidate-2 functions CANCELLED (do not implement):** `_process_page_from_text`, `_split_by_whitespace_gap`, `_detect_table_regions_from_text`, `_build_grid_from_lines`.
+
+#### 3.6 Handling pages not covered by stored OCR
+
+`image_to_data` is called per page image directly — it does not depend on stored OCR text. The `doc_ocr_text` field is used only for `ocr_text_to_markdown` (flat human-readable view). No change to the fallback behavior.
+
+#### 3.7 Honest limitations
+
+- OCR may merge adjacent column values into one token (e.g., `"804.840 7.324.783 (1.193.275)"` as a single image_to_data word). In that case, the merged token is assigned to the x-nearest column anchor; the other column(s) get empty cells. This is noted in §2.3 honest bar — human-readable majority alignment is the goal.
+- Column header rows (segment names, period dates) may not contain NUMBER tokens — they consist of TEXT tokens only. These rows will appear in the grid only if TEXT-token attachment (Step F) is extended to header rows. Dev may choose to include a header-row pass or emit headers from a psm-6 text scan of the first few lines. This is an implementation decision; the AC bar is met without perfect header reconstruction.
+
+---
+
+### 4. Functions to Add / Modify / Remove in `generic_md_table_extractor.py` (REVISED)
+
+> This section supersedes the psm-6 Candidate-2 function table. Functions listed as CANCELLED below must NOT be implemented.
+
+| Function | Action | Rationale |
+|---|---|---|
+| `_NUMBER_TOKEN_RE` | **ADD constant** | Number vs text token classifier. Matches money-group format and 2-3 digit codes. AC-0 compliant — no BCTC label strings. |
+| `SAME_LINE_TOL: int = 4` | **ADD constant** | Number-token y-clustering tolerance (pixels). Tunable. |
+| `_classify_tokens(words)` | **ADD** | Splits `image_to_data` word list into `(number_tokens, text_tokens)`. Pure. |
+| `_cluster_number_rows(number_tokens, same_line_tol)` | **ADD** | Groups number tokens by y using `SAME_LINE_TOL`. Returns row groups sorted by x. Pure. Replaces `_cluster_rows` / `_cluster_rows_by_gap`. |
+| `_attach_labels(row_groups, text_tokens, h_med)` | **ADD** | For each row group's y-band centroid, finds nearest TEXT tokens → label cell. Returns row groups with label prepended. Pure. |
+| `_build_grid_from_number_rows(row_groups_with_labels, col_anchors)` | **ADD** | Assigns tokens to `(row_idx, col_idx)` cells. Returns 2D grid. Pure. |
+| `_process_page(page_image, pytesseract, Output)` | **MODIFY** | Replace cluster-all-tokens logic: classify → cluster_number_rows → detect_column_anchors (number tokens only) → build_grid_from_number_rows → attach_labels → post-process pipeline. Keep existing dead-code bbox helpers for test compatibility. |
+| `extract_md_tables(page_image_paths, doc_ocr_text)` | **UNCHANGED signature** | `doc_ocr_text` used only for `ocr_text_to_markdown`. Table reconstruction uses `image_to_data` per page (via `_process_page`). |
+| `_cluster_rows`, `_cluster_rows_by_gap` | **RETIRE** — keep as dead code | Replaced by `_cluster_number_rows`. Mark `# DEAD in MD-EXTRACT-4 — replaced by _cluster_number_rows`. |
+| All post-processing pure functions: `_strip_leading_header_bands`, `_coalesce_label_columns`, `_collapse_empty_columns`, `_is_data_table`, `_detect_header_rows`, `_emit_markdown_table` | **UNCHANGED** | Substrate-agnostic — work on any 2D grid. |
+| Module-level constants: `_MONEY_GROUP_RE`, `_CODE_LIKE_RE`, `_MIN_MONEY_GROUPS`, `_MIN_CODE_HITS`, `_MIN_MONEY_THIN`, `_DATE_HEADER_RE` | **UNCHANGED** | Used by density gate and post-processing. |
+| **CANCELLED — do NOT implement:** `_split_by_whitespace_gap`, `_detect_table_regions_from_text`, `_build_grid_from_lines`, `_process_page_from_text` | **CANCELLED** | Candidate-2 (psm-6 line-text) functions. Candidate 2 is rejected by ground-truth. Do not add these functions. |
+
+#### 4.1 Implementation sketches for new functions (REVISED — number-token-2D)
+
+```python
+# Number token classifier — generic financial number pattern.
+# Matches: money groups (1.234.567 / 1,234,567 / (1.234.567)),
+#          2-3 digit standalone codes (100, 270, 30), parenthetical negatives.
+# AC-0: zero BCTC-specific label strings.
+_NUMBER_TOKEN_RE = re.compile(
+    r'^[\(\-]?\d{1,3}(?:[.,]\d{3})+[\)\-]?$'  # money group
+    r'|^[\(\-]?\d{2,3}[\)\-]?$'               # 2-3 digit code or small int
+)
+
+# Number-token y-clustering tolerance (pixels at 200 DPI).
+SAME_LINE_TOL: int = 4
+
+
+def _classify_tokens(words):
+    """Split image_to_data word list into (number_tokens, text_tokens). Pure."""
+    number_tokens, text_tokens = [], []
+    for w in words:
+        txt = w.get("text", "").strip()
+        if not txt:
+            continue
+        if _NUMBER_TOKEN_RE.match(txt):
+            number_tokens.append(w)
+        else:
+            text_tokens.append(w)
+    return number_tokens, text_tokens
+
+
+def _cluster_number_rows(number_tokens, same_line_tol=SAME_LINE_TOL):
+    """
+    Group number tokens into rows by y-coordinate using SAME_LINE_TOL.
+    Returns list of row groups sorted by ascending y; each group sorted
+    by ascending x. Pure.
+    """
+    if not number_tokens:
+        return []
+    sorted_by_y = sorted(number_tokens, key=lambda w: w["top"])
+    rows = []
+    current_row = [sorted_by_y[0]]
+    current_top = sorted_by_y[0]["top"]
+    for w in sorted_by_y[1:]:
+        if abs(w["top"] - current_top) <= same_line_tol:
+            current_row.append(w)
+        else:
+            rows.append(sorted(current_row, key=lambda t: t["left"]))
+            current_row = [w]
+            current_top = w["top"]
+    rows.append(sorted(current_row, key=lambda t: t["left"]))
+    return rows
+
+
+def _attach_labels(row_groups, text_tokens, h_med):
+    """
+    For each number-row group, find nearest TEXT tokens by y and return
+    (label_str, row_tokens) tuples. Pure.
+    Strategy: collect TEXT tokens within h_med * 0.6 of row y-centroid;
+    fallback to nearest within h_med * 2.0.
+    """
+    result = []
+    for row in row_groups:
+        if not row:
+            continue
+        y_c = sum(w["top"] for w in row) / len(row)
+        close = [t for t in text_tokens if abs(t["top"] - y_c) <= h_med * 0.6]
+        if not close:
+            nearest = sorted(text_tokens, key=lambda t: abs(t["top"] - y_c))
+            if nearest and abs(nearest[0]["top"] - y_c) <= h_med * 2.0:
+                close = [nearest[0]]
+        label = " ".join(t["text"] for t in sorted(close, key=lambda t: t["left"]))
+        result.append((label.strip(), row))
+    return result
+```
+
+```python
+def _detect_table_regions_from_text(page_lines: List[str]) -> List[List[str]]:
+    """
+    Detect table regions within a page's line-text.
+
+    A table region is a maximal contiguous block of lines where:
+      - At least 2 lines contain >= 1 money-group match (_MONEY_GROUP_RE), OR
+        contain >= 1 three-digit standalone code match (_CODE_LIKE_RE).
+      - No gap of > 2 consecutive blank lines separates lines within the block.
+
+    Non-table prose pages (cover, notes, signature blocks) produce 0 or 1 line
+    with money-groups — they are rejected by the 2-line minimum.
+
+    AC-0: uses _MONEY_GROUP_RE and _CODE_LIKE_RE (generic financial patterns).
+    No BCTC-specific table type constants.
+
+    Returns:
+        List of line-groups. Each group is a List[str] representing one table
+        region. May be empty (no table detected on this page).
+    """
+    regions: List[List[str]] = []
+    current_region: List[str] = []
+    blank_run: int = 0
+
+    for line in page_lines:
+        stripped = line.strip()
+        is_blank = not stripped
+        is_data = (
+            bool(_MONEY_GROUP_RE.search(stripped))
+            or bool(_CODE_LIKE_RE.search(stripped))
+        )
+
+        if is_blank:
+            blank_run += 1
+            if blank_run > 2 and current_region:
+                # Gap too large: close current region
+                regions.append(current_region)
+                current_region = []
+            elif current_region:
+                current_region.append(stripped)
+        else:
+            blank_run = 0
+            current_region.append(stripped)
+
+    if current_region:
+        regions.append(current_region)
+
+    # Filter: keep only regions with >= 2 data-dense lines
+    def _is_data_region(lines: List[str]) -> bool:
+        data_lines = sum(
+            1 for l in lines
+            if _MONEY_GROUP_RE.search(l) or _CODE_LIKE_RE.search(l)
+        )
+        return data_lines >= 2
+
+    return [r for r in regions if _is_data_region(r)]
+```
+
+```python
+def _build_grid_from_lines(region_lines: List[str]) -> List[List[str]]:
+    """
+    Convert a list of psm-6 text lines into a uniform 2-D grid.
+
+    Each line is split into columns by _split_by_whitespace_gap(line).
+    All rows are padded to the maximum column count (empty string padding).
+
+    AC-0: pure — uses only _split_by_whitespace_gap.
+    DDD: pure function — no I/O, no Tesseract. Infrastructure layer.
+
+    Returns:
+        2-D List[List[str]]. Empty if all lines are blank after splitting.
+    """
+    raw_rows = [_split_by_whitespace_gap(line) for line in region_lines]
+    raw_rows = [r for r in raw_rows if r]  # drop fully blank lines
+    if not raw_rows:
+        return []
+
+    max_cols = max(len(r) for r in raw_rows)
+    return [r + [""] * (max_cols - len(r)) for r in raw_rows]
+```
+
+```python
+def _process_page_from_text(page_text: str) -> List[str]:
+    """
+    Full table-detection pipeline for one page of psm-6 line-text.
+
+    Steps:
+      B — Detect table regions from text lines.
+      C — Build grid per region (_build_grid_from_lines).
+      D — Post-processing: strip + coalesce + collapse + density gate.
+      F — Header detection.
+      G — Markdown emission.
+
+    Returns:
+        List of markdown pipe-table strings detected on this page.
+    """
+    page_lines = page_text.splitlines()
+    table_regions = _detect_table_regions_from_text(page_lines)
+
+    page_tables: List[str] = []
+    for region_lines in table_regions:
+        grid = _build_grid_from_lines(region_lines)
+        if not grid:
+            continue
+
+        grid = _strip_leading_header_bands(grid)
+        if not grid:
+            continue
+        grid = _coalesce_label_columns(grid)
+        grid = _collapse_empty_columns(grid)
+
+        if not _is_data_table(grid):
+            continue
+
+        n_header_rows = _detect_header_rows(grid)
+        if n_header_rows == 0:
+            continue
+
+        md_table = _emit_markdown_table(grid, n_header_rows)
+        if md_table:
+            page_tables.append(md_table)
+
+    return page_tables
+```
+
+#### 4.2 Modified `_process_page` (key logic change — REVISED)
+
+```python
+# In _process_page, replace the cluster-all-tokens block with:
+
+number_tokens, text_tokens = _classify_tokens(words)
+if not number_tokens:
+    return []  # no numeric content — not a table page
+
+# h_med from number tokens only (no diacritic inflation)
+heights = [w["height"] for w in number_tokens]
+h_med = sorted(heights)[len(heights) // 2] if heights else 12
+
+# Detect table regions on number-token y-extent
+table_regions = _detect_table_regions(number_tokens, h_med)
+
+page_tables = []
+for region_num_tokens in table_regions:
+    # Text tokens within the region's vertical extent + h_med margin
+    region_top = min(w["top"] for w in region_num_tokens)
+    region_bot = max(w["top"] + w["height"] for w in region_num_tokens)
+    region_text_tokens = [
+        t for t in text_tokens
+        if region_top - h_med <= t["top"] <= region_bot + h_med
+    ]
+
+    row_groups = _cluster_number_rows(region_num_tokens, SAME_LINE_TOL)
+    if not row_groups:
+        continue
+
+    # Column anchors derived from number tokens only
+    col_anchors = _detect_column_anchors(region_num_tokens, h_med)
+    if not col_anchors:
+        continue
+
+    labeled_rows = _attach_labels(row_groups, region_text_tokens, h_med)
+
+    # Build grid: each row = [label, col0_val, col1_val, ...]
+    grid = _build_grid_from_number_rows(labeled_rows, col_anchors)
+    if not grid:
+        continue
+
+    grid = _strip_leading_header_bands(grid)
+    if not grid:
+        continue
+    grid = _coalesce_label_columns(grid)
+    grid = _collapse_empty_columns(grid)
+
+    if not _is_data_table(grid):
+        continue
+
+    n_header_rows = _detect_header_rows(grid)
+    md_table = _emit_markdown_table(grid, n_header_rows)
+    if md_table:
+        page_tables.append(md_table)
+
+return page_tables
+
+# extract_md_tables signature is UNCHANGED.
+# doc_ocr_text is still passed through to ocr_text_to_markdown only.
+# image_to_data is called once per page (same as prior design).
+```
+
+---
+
+### 5. Test Strategy (REVISED)
+
+#### 5.1 New unit tests in `__tests__/unit/test_generic_md_table_extractor.py`
+
+All new tests added to the existing file (no new test files). Import the new functions explicitly.
+CANCELLED test classes (do NOT add): `TestSplitByWhitespaceGap`, `TestDetectTableRegionsFromText`, `TestBuildGridFromLines`, `TestProcessPageFromText` — these tested Candidate-2 psm-6 functions which are not being implemented.
+
+**TestClassifyTokens** (4 tests):
+- Money-group token (`"1.234.567"`) → classified as number token.
+- Vietnamese diacritic label token (`"Doanh thu"`) → classified as text token.
+- 3-digit code token (`"270"`) → classified as number token.
+- Empty text → excluded from both lists.
+
+**TestClusterNumberRows** (5 tests):
+- 3 tokens with same `top` (within 4px) → 1 row group.
+- 3 tokens on 3 distinct `top` values (each 10px apart) → 3 row groups.
+- Mixed: 2 on same y, 2 on different y → 2 row groups.
+- Each row group is sorted by `left` (x ascending).
+- Empty input → returns `[]`.
+
+**TestAttachLabels** (5 tests):
+- Row y-centroid matches a text token within `h_med * 0.6` → label = that token's text.
+- No text token within `h_med * 0.6` but one within `h_med * 2.0` → fallback label used.
+- No text token within `h_med * 2.0` → label = `""` (honest empty).
+- Multi-word label (multiple text tokens near same y) → space-joined in x order.
+- Text tokens at wrong y → not attached.
+
+**AC-4A correctness test (BLOCKING):**
+
+Synthetic `image_to_data` word dict list: 5 rows, each row has one code token (`{"text": "110", "top": r, "left": 10}`) and one money token (`{"text": "1.234.567", "top": r, "left": 200}`), plus one label text token (`{"text": "Tien mat", "top": r, "left": 0}`), for `r` in [10, 25, 40, 55, 70] (10px apart, ≥ 4px per step). Inject into `_classify_tokens` + `_cluster_number_rows` + `_attach_labels`. Assert: 5 distinct row groups, each with a non-empty label and at least one money token. No row group has money tokens but an empty label.
+
+**Segment correctness test (AC-4C proxy):**
+
+Synthetic segment report image_to_data: 3 number rows at y=[10, 25, 40], each row has 3 money tokens at x=[100, 200, 300] (three columns). Label tokens at y=[10, 25, 40] at x=5. Inject into full pipeline via `_process_page`. Assert: output markdown has 3 data rows. Assert: each row has a non-empty label. Assert: the first column value for row 0, row 1, and row 2 are in THREE DIFFERENT rows (not collapsed into one).
+
+#### 5.2 Corrected AC-3A (replaces flawed prior version)
+
+The prior AC-3A used `(?<!\d)\d{3}(?!\d) ≤1 per row` as a mechanically checkable proxy for "no row collapse". This was measurement-flawed: money values in VN format (e.g., `58.102.970.741.619`) contain dot-separated 3-digit groups internally (`102`, `970`, etc.) that match the regex. Every row with money values false-fails this AC.
+
+**New AC-4A (BLOCKING — corrected row-order AC):**
+
+For every data row in every emitted markdown table, extract all cell text and apply the following check: a "label cell" is the first non-empty cell in the row. A "value cell" is any cell matching `_MONEY_GROUP_RE` (the N.NNN.NNN format — at least one thousands-separator group). Assert: every data row that contains ≥1 value cell also has a NON-EMPTY label cell (first column non-empty or second column non-empty, with the first being the label after coalescing). This catches the off-by-one "values on row without label" scatter pattern seen in LIVE-VERIFY-3.
+
+**New AC-4B (BLOCKING — no logical statement line split across rows):**
+
+For the income statement table (detected generically as the table with highest code density): each three-digit standalone code `(?<!\d)\d{3}(?!\d)` that appears in the table must appear in EXACTLY ONE row, AND that same row must contain at least one `_MONEY_GROUP_RE` match. If any code appears in a row with no money-group match, the code's value landed on a different row (scatter still present).
+
+Mechanically checkable against live `md_tables_json` via a Python one-liner:
+```python
+import json, re
+tables = json.loads(open("md_tables_json.txt").read())
+CODE_RE = re.compile(r"(?<!\d)\d{3}(?!\d)")
+MONEY_RE = re.compile(r"\d{1,3}(?:[.,]\d{3})+")
+for tbl in tables:
+    rows = [r for r in tbl.split("\n") if r.startswith("|") and "---" not in r]
+    for row in rows[1:]:  # skip header
+        cells = [c.strip() for c in row.split("|")[1:-1]]
+        codes_in_row = CODE_RE.findall(" ".join(cells))
+        money_in_row = MONEY_RE.findall(" ".join(cells))
+        if codes_in_row and not money_in_row:
+            print("FAIL: code without value on same row:", codes_in_row, row)
+```
+ZERO output = PASS.
+
+**New AC-4C (segment report human-proof):**
+
+After live re-extract (MD-DEPLOY-4), inspect the segment report table (identified as the table with ≥4 non-empty columns and containing segment-type data). Assert via live `md_tables_json`:
+- The table has ≥5 rows (1 header + ≥4 data).
+- The three segment revenue values `35.381.667`, `9.092.934`, `18.701.876` each appear in DIFFERENT rows (no two in the same pipe-separated row string). This is the user's binding proof case.
+
+**New AC-4D (income statement completeness):**
+
+The income statement table has ≥15 data rows (non-separator, non-header pipe-rows). Prior state (LIVE-VERIFY-3): 74 rows in MD-EXTRACT-3 (row collapse fixed), but values split across adjacent rows making many rows value-only. After MD-EXTRACT-4: each of the ≥15 logical statement lines has BOTH label and at least one value in the SAME row.
+
+---
+
+### 6. Hard Constraint Compliance
+
+| Constraint | Status | Evidence |
+|---|---|---|
+| AC-0 deny-list (GENERIC only) | COMPLIANT by construction | New functions (`_classify_tokens`, `_cluster_number_rows`, `_attach_labels`, `_build_grid_from_number_rows`) use `_NUMBER_TOKEN_RE`, `_MONEY_GROUP_RE`, `_CODE_LIKE_RE` — generic financial patterns. Token classification is purely pattern-based. Zero BCTC label strings. |
+| PRIVACY (local OCR only) | COMPLIANT | `image_to_data` is a local Tesseract subprocess call (same as existing MD path). `doc_ocr_text` used for `ocr_text_to_markdown` only — no re-OCR. No network. No cloud API. |
+| AC-3F NON-REGRESSION (bctc_table_rows = 79, balance δ=0) | TRIVIALLY PRESERVED | `text_table_extractor.py` is UNTOUCHED. The two paths share no code. |
+| pdf-extractor zone ONLY | COMPLIANT | Changes confined to `infrastructure/generic_md_table_extractor.py` + its test. Zero mcp-server, zero handlers, zero ports, zero use case changes. |
+| Fence-A (infra no app/interface imports) | UNCHANGED | New functions are pure stdlib + regex + module-level constants. No application/interface imports. |
+| FROZEN surfaces | UNTOUCHED | dashboard/index.html, traces.js, trust-contract.spec.js, sandbox/runner.py, pilot-status-pdf-extractor.json — none touched. |
+| `text_table_extractor.py` UNTOUCHED | CONFIRMED | No change of any kind. AC-3F non-regression preserved by construction. |
+
+---
+
+### 7. Risk Register
+
+| Risk | Severity | Mitigation |
+|---|---|---|
+| R-HIGH: OCR may merge adjacent column values into one `image_to_data` word token (e.g., `"804.840 7.324.783 (1.193.275)"` as a single token). When this occurs, `_NUMBER_TOKEN_RE` may not match the merged string (it contains spaces), and the token falls into the TEXT bucket instead of NUMBER. The column cell will be empty. | HIGH | Accept per §2.3 honest bar. The majority of tokens are unmerged. Garbled cells are visible to human reviewer. A future refinement: detect merged-number strings in TEXT tokens and re-classify. Not in scope for MD-EXTRACT-4. |
+| R-HIGH: `SAME_LINE_TOL = 4` may be too tight for some pages where number tokens have more baseline variation (e.g., bold vs. regular glyphs). Rows may scatter at 5-6px jitter. | HIGH | Tunable: `SAME_LINE_TOL` is a named module constant. If live-verify shows split rows, increase to 6. If false-merges, decrease to 2. Do not hard-code; keep as `SAME_LINE_TOL: int = 4`. |
+| R-MEDIUM: Column header rows (segment names, period dates) consist entirely of TEXT tokens — they have no NUMBER tokens. They will not appear as rows in the number-only grid. The output table may lack column headers. | MEDIUM | Partially mitigated: `_detect_header_rows` looks for date-like or all-caps patterns in the first rows. Dev may add a header-scan pass on TEXT tokens in the top `h_med * 2` of the table region to extract a header row. Not blocking — the density gate and markdown output are still correct without headers. |
+| R-MEDIUM: `_attach_labels` nearest-text fallback may attach wrong label when two consecutive rows have similar y and the nearest text token is equidistant. | MEDIUM | Accept cosmetically. One mis-labeled row per table is within the honest-bar expectation. The fallback `2 * h_med` cap limits damage to at most one adjacent row. |
+| R-LOW: Dead-code bbox functions plus new number-token functions add ~150L to the existing 1033L file. At ~1183L it is near the split threshold in `docs/data/file-size-caps.json`. | LOW | Monitor. If file exceeds cap after implementation, move the DEAD bbox functions to `_legacy_bbox.py` (same infra layer). Not blocking for MD-EXTRACT-4. |
+
+---
+
+### 8. DDD Layer Assignment
+
+| Function | Layer | Imports | Fence |
+|---|---|---|---|
+| `_classify_tokens` | infrastructure | `_NUMBER_TOKEN_RE` (module-level) | Fence-A: no app/interface imports |
+| `_cluster_number_rows` | infrastructure | stdlib only | Fence-A compliant |
+| `_attach_labels` | infrastructure | stdlib only | Fence-A compliant |
+| `_build_grid_from_number_rows` | infrastructure | `_detect_column_anchors` (same file) | Fence-A compliant |
+| `_process_page` (modified) | infrastructure | `pytesseract`, `PIL` (existing boundary) | Fence-A compliant |
+| `extract_md_tables` (unchanged signature) | infrastructure | `pytesseract`, `PIL` (via `_process_page`) | Fence-A compliant |
+
+All new functions are PURE (no I/O, no Tesseract, no DB, no network). The impure boundary remains `_process_page` which calls `pytesseract.image_to_data` — same as the existing boundary. Layer rule satisfied.
+
+---
+
+### 9. MD-DEPLOY-4 Steps (ops)
+
+**Single doc only. NEVER batch. Full UUID mandatory.**
+
+1. `docker-compose build pdf-extractor` — verify exit 0.
+2. `docker-compose up -d --no-deps --force-recreate pdf-extractor`.
+3. Health check: `GET http://localhost:5001/health` → 200.
+4. Grep-verify live code: `grep -c "_classify_tokens\|_cluster_number_rows\|_attach_labels\|SAME_LINE_TOL" /app/infrastructure/generic_md_table_extractor.py` inside container → count > 0. Also verify cancelled psm-6 functions are absent: `grep "_process_page_from_text\|_split_by_whitespace_gap\|_detect_table_regions_from_text" /app/infrastructure/generic_md_table_extractor.py` → ZERO matches (those functions must not have been implemented).
+5. Single-doc re-extract: `POST http://localhost:5001/extract-md-tables` with `{"report_id": "e71f845d-ffa5-48f9-8f09-30ac2cd09c65", "pdf_path": "/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf"}` → HTTP 202.
+6. Poll `GET http://localhost:3000/api/bctc-inspect/md/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` until `extracted_at` timestamp advances past the MD-EXTRACT-3 timestamp (`2026-05-26 06:31:37`).
+7. Structured path non-regression: `GET http://localhost:3000/api/bctc-inspect/table/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` → `rows_length` in [70,90], `balance_pass: true`, `balance_delta: 0`.
+
+---
+
+### 10. MD-QA-4 Steps (qa)
+
+All prior MD-QA ACs remain binding. Add:
+
+**AC-Q4-0 (BLOCKING — corrected row-order gate, replaces AC-3A):**
+
+Fetch live `md_tables_json` from `GET /api/bctc-inspect/md/e71f845d-ffa5-48f9-8f09-30ac2cd09c65`. Parse each table. For every data row: (a) if the row contains a three-digit standalone code AND a money-group match → PASS for that row. (b) if the row contains a three-digit code but NO money-group match → FAIL: code's value is on a different row (scatter still present). (c) if the row has a money-group match but empty first cell → FAIL: label detached. Zero failures across all rows of all tables → PASS.
+
+**AC-Q4-1 (BLOCKING — segment report proof, CORRECTED):**
+
+Ground-truth layout: "Doanh thu theo bộ phận" is ONE logical row in the segment report. `35.381.667` (segment 1), `9.092.934` (segment 2), and `18.701.876` (segment 3) are that row's values in THREE DIFFERENT COLUMNS (each segment is a column). The CORRECT assertion is therefore:
+
+All three values `35.381.667`, `9.092.934`, `18.701.876` appear in THE SAME pipe-row (the "Doanh thu theo bộ phận" row), each in a DIFFERENT column cell of that row.
+
+Human verification: in the raw `md_tables` JSON, find the row whose label cell contains "Doanh thu" (or closest equivalent). Assert that row's cell text contains all three values as separate cells (pipe-separated). If the three values are found in different rows (scattered) → CHANGES_REQUESTED. If they are found in the same row but concatenated in one cell (column merge) → warn but do not block (OCR merge honesty — see §2.3 honest bar).
+
+NOTE: The prior MD-EXTRACT-4 brief had this AC BACKWARDS ("appear in THREE DIFFERENT rows") — that was the wrong expectation. The ground-truth image layout says they are column-values of one revenue row. This corrected AC-Q4-1 is the binding version.
+
+**AC-Q4-2 (income statement completeness):**
+
+The income statement table (highest code-density table) has ≥15 data rows with non-empty first cells (label column populated).
+
+**AC-Q4-3 (substrate proof — no image_to_data in live path):**
+
+`grep -n "image_to_data" /app/infrastructure/generic_md_table_extractor.py` inside container. The function definition may be present (dead code) but zero calls from `extract_md_tables` or `_process_page_from_text`. Verify: no live call path reaches `image_to_data`.
+
+**AC-Q4-4 (privacy grep — unchanged):**
+
+`grep -rn "claude\|openai\|gemini\|api.mistral\|textract\|document.ai\|requests.post\|httpx.post" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+**AC-Q4-5 (AC-0 grep-proof — unchanged):**
+
+`grep -rn "bao.cao.bo.phan\|segment_report\|SEGMENT\|BAO_CAO\|bo_phan\|bao_phan" apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` → ZERO matches.
+
+**AC-Q4-6 (non-regression):**
+
+Structured path: `rows_length` in [70,90], `balance_pass: true`, `balance_delta: 0`. `bun test` (mcp-server) ≥ pre-sprint passing count. `pytest` (pdf-extractor) all existing tests pass.
+
+---
+
+### 11. Build Standard
+
+**BUILD-STANDARD: lean** — in-zone algorithm replacement within existing infrastructure file. No new ports, no new use cases, no mcp-server changes.
+
+**ROLE-RELAY:** dev-pdf-extractor → ops (MD-DEPLOY-4, single doc) → main-terminal live-verify → qa (MD-QA-4) → po (MD-EXIT re-evaluation).
