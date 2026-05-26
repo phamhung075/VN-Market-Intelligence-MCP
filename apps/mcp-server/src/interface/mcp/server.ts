@@ -53,10 +53,12 @@ import {
   handleBctcInspectPdf,
   handleBctcInspectOcr,
   handleBctcInspectTable,
+  handleBctcInspectZones,
 } from "./routes/bctcInspectHandler.js";
 import { handlePushBctcTable } from "./routes/pushBctcTableHandler.js";
 import { handlePushBctcMdTables } from "./routes/pushBctcMdTablesHandler.js";
 import { handleBctcInspectMd } from "./routes/bctcInspectMdHandler.js";
+import { handlePushBctcLayout } from "./routes/pushBctcLayoutHandler.js";
 import { backfillBctcPdfPaths } from "../../application/usecases/backfillBctcPdfPaths.js";
 import { getAccuracyStats, getSystemAccuracyDigestStats } from "../../infrastructure/db/signalOutcomeStore.js";
 
@@ -384,6 +386,17 @@ export async function createBunServer(
     if (method === "GET" && pathname.startsWith("/api/bctc-inspect/md/")) {
       const docId = pathname.slice("/api/bctc-inspect/md/".length);
       await handleBctcInspectMd(req, res, db, docId);
+      return;
+    }
+    // LF-OVERLAY: Push layout-first extraction payload from pdf-extractor
+    if (method === "POST" && pathname === "/api/push-bctc-layout") {
+      await handlePushBctcLayout(req, res, db);
+      return;
+    }
+    // LF-OVERLAY: Get zone-geometry for a specific doc + page (overlay read path)
+    if (method === "GET" && pathname.startsWith("/api/bctc-inspect/zones/")) {
+      const docId = pathname.slice("/api/bctc-inspect/zones/".length);
+      handleBctcInspectZones(req, res, db, docId);
       return;
     }
 

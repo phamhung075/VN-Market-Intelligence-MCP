@@ -646,6 +646,88 @@ export async function handleBctcInspectTable(
   }
 }
 
+// ─── LF-OVERLAY: Zone-geometry endpoint ──────────────────────────────────────
+//
+// GET /api/bctc-inspect/zones/{doc_id}?page=N
+//
+// Returns the zones_json stored in bctc_page_zones for a given report_id + page.
+// Pure DB read — no pdf-extractor import, no re-extraction triggered.
+// AC-LFO-2: grep-auditable (zero import of pdf-extractor here).
+//
+// Response 200: { report_id, page_number, unit_id, page_type, is_schema_page,
+//                 is_continuation_page, schema_inherited_from_page, zones }
+// Response 404: { error: "zone_not_found" }
+
+interface PageZoneDbRow {
+  page_number: number;
+  unit_id: string;
+  page_type: string;
+  is_schema_page: number;
+  is_continuation_page: number;
+  schema_inherited_from_page: number | null;
+  zones_json: string;
+}
+
+export function handleBctcInspectZones(
+  req: IncomingMessage,
+  res: ServerResponse,
+  db: Database,
+  docId: string,
+): void {
+  if (!isValidUuid(docId)) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid_doc_id", doc_id: docId }));
+    return;
+  }
+
+  try {
+    const url = new URL(req.url ?? "/", "http://localhost");
+    const rawPage = url.searchParams.get("page") ?? "1";
+    const pageNum = Math.max(1, parseInt(rawPage, 10) || 1);
+
+    const row = db
+      .prepare<PageZoneDbRow, [string, number]>(`
+        SELECT page_number, unit_id, page_type,
+               is_schema_page, is_continuation_page,
+               schema_inherited_from_page, zones_json
+        FROM bctc_page_zones
+        WHERE report_id = ? AND page_number = ?
+      `)
+      .get(docId, pageNum);
+
+    if (!row) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "zone_not_found", report_id: docId, page_number: pageNum }));
+      return;
+    }
+
+    let zones: unknown;
+    try {
+      zones = JSON.parse(row.zones_json);
+    } catch {
+      zones = {};
+    }
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      report_id: docId,
+      page_number: row.page_number,
+      unit_id: row.unit_id,
+      page_type: row.page_type,
+      is_schema_page: row.is_schema_page === 1,
+      is_continuation_page: row.is_continuation_page === 1,
+      schema_inherited_from_page: row.schema_inherited_from_page ?? null,
+      zones,
+    }));
+  } catch (err) {
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({
+      error: "server_error",
+      detail: err instanceof Error ? err.message : String(err),
+    }));
+  }
+}
+
 // ─── Viewer HTML page ─────────────────────────────────────────────────────────
 
 export function handleBctcInspectPage(

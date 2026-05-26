@@ -236,3 +236,73 @@ WATCHLIST (pm):
   - Host kernel-panic: LF-DEPLOY single-doc only, NEVER batch sweep. Sequential on ops lane.
   - Blockers escalate to architect for routing.
 ```
+
+## [dev-mcp-server] LF-OVERLAY — 2026-05-26T18:50Z
+
+**Status: DONE — files UNSTAGED — main terminal commits**
+
+### What was implemented
+
+**Schema (schema-financial-reports.ts):**
+- Added `bctc_layout_units` table exactly per brief §3.1 DDL (unit_id, schema_page, page_numbers_json, page_type, stitched_markdown, row_count, quarantined, quarantine_reason, document_map_json)
+- Added `bctc_page_zones` table exactly per brief §3.1 DDL (page_number, unit_id, page_type, is_schema_page, is_continuation_page, schema_inherited_from_page, zones_json)
+- Both use `CREATE TABLE IF NOT EXISTS` + `CREATE INDEX IF NOT EXISTS` (additive migration pattern)
+- Zero modification to bctc_table_rows, bctc_balance_checks, or bctc_md_tables
+
+**Push handler (pushBctcLayoutHandler.ts NEW):**
+- POST /api/push-bctc-layout — ingests §3.2 JSON contract
+- Validates report_id as UUID; validates document_map, units[], page_zones[] arrays
+- Writes bctc_layout_units (INSERT OR REPLACE per unit_id) + bctc_page_zones (INSERT OR REPLACE per page_number)
+- DB-verified COUNT returned in response (write-wedge detection — never echo input length)
+- Quarantined units stored with quarantined=1
+
+**Zones endpoint (bctcInspectHandler.ts extended):**
+- `handleBctcInspectZones` → GET /api/bctc-inspect/zones/{doc_id}?page=N
+- Returns full zones_json from bctc_page_zones; 404 when no data
+- Pure DB read — zero pdf-extractor import (grep-auditable)
+- Existing bctc_table_rows read path and balance badge are untouched
+
+**Overlay toggle (bctc-inspector.html extended):**
+- Toggle control: `<input id="zone-overlay-toggle" data-zone-toggle="true" />` in controls bar
+- 5-color ZONE_COLORS: headerBand (amber), footerBand (orange), gutterEven (blue), gutterOdd (green), rowBand (purple), unitBoundary (red heavy)
+- Coordinate scaling: canvas_width / image_width_px per §3.2 constraint
+- SVG overlay draws: header_band, footer_band, column_gutters (alternating colors), row_bands, unit_boundary_after_page line
+- Zone cache per doc_id:page; clearAllOverlays on doc reset; overlay re-renders on page navigation
+
+**Routes (server.ts extended):**
+- `POST /api/push-bctc-layout` → handlePushBctcLayout
+- `GET /api/bctc-inspect/zones/*` → handleBctcInspectZones
+
+### AC audit (machine-checkable)
+
+| AC | Status | Evidence |
+|---|---|---|
+| AC-LFO-0 | PASS | id="zone-overlay-toggle" + data-zone-toggle="true" present in HTML |
+| AC-LFO-1 | PASS | Test 1273(a): zones endpoint returns col_id matching /^col_\d+$/ pattern |
+| AC-LFO-2 | PASS | grep finds zero actual import lines of pdf-extractor in bctcInspectHandler.ts |
+| AC-LFO-3 | PASS | pushBctcTableHandler.test.ts 14/14 green; bctc_table_rows read path not touched |
+| AC-LFO-4 | PASS | Test 1272(f): SELECT COUNT(*) FROM bctc_table_rows = 0 after layout push |
+| AC-LFO-5 | PASS | Test 1272(c): two identical pushes result in 2 rows, not 4 |
+| AC-LFO-6 | PASS | ZONE_COLORS has 5 distinct entries with distinct fill/stroke colors |
+| AC-LFO-7 | DEFERRED | Requires corpus re-extraction; verified at LF-QA step |
+
+### Test results
+- 1272-push-bctc-layout.test.ts: 20 tests — 20 pass / 0 fail
+- 1273-bctc-inspect-overlay.test.ts: 9 tests — 9 pass / 0 fail
+- pushBctcTableHandler.test.ts (non-regression): 14 pass / 0 fail
+- `bun tsc --noEmit`: EXIT 0
+
+### Files changed (UNSTAGED)
+```
+apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts
+apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts   (NEW)
+apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts
+apps/mcp-server/src/interface/mcp/server.ts
+apps/mcp-server/src/interface/bctc-inspector.html
+apps/mcp-server/src/__tests__/1272-push-bctc-layout.test.ts         (NEW)
+apps/mcp-server/src/__tests__/1273-bctc-inspect-overlay.test.ts     (NEW)
+docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md
+docs/agent-memory/notebooks/dev-mcp-server.md
+```
+
+**NEXT = ops (LF-DEPLOY)** — gated on BOTH LF-OVERLAY (this, DONE) AND LF-EXTRACT (dev-pdf-extractor, in parallel). ops must: `docker compose build mcp-server && docker compose up -d --no-deps --force-recreate mcp-server` before running single-doc re-extraction. AC-LFO-7 (corpus breadth) verified by QA after re-extraction.

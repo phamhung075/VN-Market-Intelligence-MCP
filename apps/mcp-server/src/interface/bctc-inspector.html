@@ -380,6 +380,61 @@
       overflow-y: auto;
     }
 
+    /* ── LF-OVERLAY: Zone overlay toggle ── */
+    .zone-toggle-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-left: 12px;
+    }
+    .zone-toggle-label {
+      font-size: 12px;
+      color: #aaa;
+      user-select: none;
+    }
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 36px;
+      height: 20px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #444;
+      border-radius: 20px;
+      transition: background .2s;
+    }
+    .toggle-slider:before {
+      content: "";
+      position: absolute;
+      height: 14px;
+      width: 14px;
+      left: 3px;
+      top: 3px;
+      background: #ccc;
+      border-radius: 50%;
+      transition: transform .2s;
+    }
+    .toggle-switch input:checked + .toggle-slider { background: #4a9eff; }
+    .toggle-switch input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+    /* Zone overlay SVG — positioned over the pdf-container canvases */
+    .pdf-page-wrap {
+      position: relative;
+      display: inline-block;
+    }
+    .zone-svg-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      /* display toggled via JS */
+    }
+
     /* ── Missing / empty states ── */
     .missing-msg {
       padding: 24px;
@@ -418,6 +473,13 @@
   <select id="doc-select">
     <option value="">— select a document —</option>
   </select>
+  <div class="zone-toggle-wrap">
+    <span class="zone-toggle-label">Zone Overlay</span>
+    <label class="toggle-switch">
+      <input type="checkbox" id="zone-overlay-toggle" data-zone-toggle="true" />
+      <span class="toggle-slider"></span>
+    </label>
+  </div>
 </div>
 
 <div class="split">
@@ -1016,16 +1078,18 @@
     return pdfNumPages > 0 ? pdfNumPages : totalPages;
   }
 
-  btnPrev.addEventListener("click", () => {
+  btnPrev.addEventListener("click", async () => {
     if (currentDocId && currentPage > 1) {
       currentPage--;
-      renderOcr(currentDocId, currentPage);
+      await renderOcr(currentDocId, currentPage);
+      if (zoneOverlayEnabled && currentDocId) await renderZoneOverlay(currentDocId, currentPage);
     }
   });
-  btnNext.addEventListener("click", () => {
+  btnNext.addEventListener("click", async () => {
     if (currentDocId && currentPage < getNavBound()) {
       currentPage++;
-      renderOcr(currentDocId, currentPage);
+      await renderOcr(currentDocId, currentPage);
+      if (zoneOverlayEnabled && currentDocId) await renderZoneOverlay(currentDocId, currentPage);
     }
   });
 
@@ -1054,7 +1118,209 @@
     if (mdTablesContent) mdTablesContent.innerHTML = "";
     if (mdOcrMarkdownBlock) mdOcrMarkdownBlock.style.display = "none";
     if (mdOcrMarkdownPre) mdOcrMarkdownPre.textContent = "";
+    // LF-OVERLAY: clear overlays and cache
+    clearAllOverlays();
+    zoneCache.clear();
   }
+
+  // ── LF-OVERLAY: Zone overlay rendering ──────────────────────────────────
+  //
+  // Color assignments (AC-LFO-6: at least two distinct zone types, code-inspectable):
+  //   header_band       → rgba(255, 200, 80,  0.25) stroke  #ffc850
+  //   footer_band       → rgba(255, 140, 60,  0.25) stroke  #ff8c3c
+  //   column_gutters[N] → alternating rgba(80, 160, 255, 0.20) / rgba(80, 220, 160, 0.20)
+  //   row_bands         → rgba(200, 100, 220, 0.12) stroke  #c864dc
+  //   unit_boundary     → rgba(255, 80,  80,  0.60) heavy border
+  //
+  // Coordinate scaling: §3.2 — source coords are 200-DPI pixels, top-left origin.
+  // Overlay scales every coordinate by (canvas_display_width / image_width_px).
+  //
+  // AC-LFO-2: no import of pdf-extractor. Pure DB read via GET /api/bctc-inspect/zones/.
+
+  const ZONE_COLORS = {
+    headerBand:   { fill: "rgba(255,200,80,0.18)",  stroke: "#ffc850", width: 1.5 },
+    footerBand:   { fill: "rgba(255,140,60,0.18)",  stroke: "#ff8c3c", width: 1.5 },
+    gutterEven:   { fill: "rgba(80,160,255,0.16)",  stroke: "#50a0ff", width: 1 },
+    gutterOdd:    { fill: "rgba(80,220,160,0.16)",  stroke: "#50dca0", width: 1 },
+    rowBand:      { fill: "rgba(200,100,220,0.10)", stroke: "#c864dc", width: 0.8 },
+    unitBoundary: { fill: "none",                   stroke: "#ff5050", width: 3 },
+  };
+
+  // Cache: doc_id → page_number → zone JSON (null = no data / 404)
+  const zoneCache = new Map();
+
+  // Current overlay state
+  let zoneOverlayEnabled = false;
+
+  const zoneToggle = document.getElementById("zone-overlay-toggle");
+
+  zoneToggle.addEventListener("change", () => {
+    zoneOverlayEnabled = zoneToggle.checked;
+    if (currentDocId) {
+      if (zoneOverlayEnabled) {
+        // Render overlay for the current page
+        renderZoneOverlay(currentDocId, currentPage);
+      } else {
+        clearAllOverlays();
+      }
+    }
+  });
+
+  /**
+   * Fetch zone data for a given doc + page.
+   * Returns the parsed zones object or null when not available.
+   */
+  async function fetchZoneData(docId, pageNum) {
+    const key = `${docId}:${pageNum}`;
+    if (zoneCache.has(key)) return zoneCache.get(key);
+
+    try {
+      const resp = await fetch(`${BASE}/api/bctc-inspect/zones/${encodeURIComponent(docId)}?page=${pageNum}`);
+      if (!resp.ok) {
+        zoneCache.set(key, null);
+        return null;
+      }
+      const data = await resp.json();
+      zoneCache.set(key, data);
+      return data;
+    } catch {
+      zoneCache.set(key, null);
+      return null;
+    }
+  }
+
+  /**
+   * Build an SVG overlay string for a single page canvas.
+   *
+   * @param zoneData   Parsed zone response from GET /api/bctc-inspect/zones/
+   * @param canvasW    Rendered canvas display width (px)
+   * @param canvasH    Rendered canvas display height (px)
+   */
+  function buildZoneSvg(zoneData, canvasW, canvasH) {
+    const zones = zoneData.zones;
+    if (!zones) return null;
+
+    const imgW = zones.image_width_px || 2338;
+    const imgH = zones.image_height_px || 3308;
+
+    // Scale factor: source coords (200-DPI px) → display canvas px
+    const sx = canvasW / imgW;
+    const sy = canvasH / imgH;
+
+    const rects = [];
+
+    // Helper: emit one filled+stroked rect
+    function rect(x, y, w, h, color) {
+      const { fill, stroke, width } = color;
+      rects.push(
+        `<rect x="${(x * sx).toFixed(1)}" y="${(y * sy).toFixed(1)}" ` +
+        `width="${(w * sx).toFixed(1)}" height="${(h * sy).toFixed(1)}" ` +
+        `fill="${fill}" stroke="${stroke}" stroke-width="${width}" />`
+      );
+    }
+
+    // header_band
+    if (zones.header_band) {
+      const hb = zones.header_band;
+      rect(0, hb.y_min, imgW, hb.y_max - hb.y_min, ZONE_COLORS.headerBand);
+    }
+
+    // footer_band
+    if (zones.footer_band) {
+      const fb = zones.footer_band;
+      rect(0, fb.y_min, imgW, fb.y_max - fb.y_min, ZONE_COLORS.footerBand);
+    }
+
+    // column_gutters — alternating colors per positional index (col_0, col_1, …)
+    if (Array.isArray(zones.column_gutters)) {
+      zones.column_gutters.forEach((col, i) => {
+        const color = i % 2 === 0 ? ZONE_COLORS.gutterEven : ZONE_COLORS.gutterOdd;
+        rect(col.x_min, 0, col.x_max - col.x_min, imgH, color);
+      });
+    }
+
+    // row_bands (drawn over column_gutters for visibility)
+    if (Array.isArray(zones.row_bands)) {
+      for (const rb of zones.row_bands) {
+        rect(0, rb.y_min, imgW, rb.y_max - rb.y_min, ZONE_COLORS.rowBand);
+      }
+    }
+
+    // unit_boundary_after_page — heavy line at footer_band.y_min
+    if (zones.unit_boundary_after_page && zones.footer_band) {
+      const yLine = zones.footer_band.y_min * sy;
+      rects.push(
+        `<line x1="0" y1="${yLine.toFixed(1)}" x2="${canvasW}" y2="${yLine.toFixed(1)}" ` +
+        `stroke="${ZONE_COLORS.unitBoundary.stroke}" stroke-width="${ZONE_COLORS.unitBoundary.width}" />`
+      );
+    }
+
+    if (rects.length === 0) return null;
+
+    return `<svg xmlns="http://www.w3.org/2000/svg" ` +
+      `width="${canvasW}" height="${canvasH}" ` +
+      `class="zone-svg-overlay" style="width:${canvasW}px;height:${canvasH}px">` +
+      rects.join("") +
+      `</svg>`;
+  }
+
+  /**
+   * Render zone overlay on the canvas for the given doc + page.
+   * Wraps the canvas in a .pdf-page-wrap div and injects the SVG above it.
+   */
+  async function renderZoneOverlay(docId, pageNum) {
+    const canvas = document.getElementById(`pdf-page-${pageNum}`);
+    if (!canvas) return;
+
+    const zoneData = await fetchZoneData(docId, pageNum);
+    if (!zoneData) return; // No zone data — silent no-op
+
+    const svgStr = buildZoneSvg(zoneData, canvas.width, canvas.height);
+    if (!svgStr) return;
+
+    // Wrap canvas in .pdf-page-wrap if not already wrapped
+    let wrap = canvas.parentElement;
+    if (!wrap || !wrap.classList.contains("pdf-page-wrap")) {
+      wrap = document.createElement("div");
+      wrap.className = "pdf-page-wrap";
+      canvas.parentNode.insertBefore(wrap, canvas);
+      wrap.appendChild(canvas);
+    }
+
+    // Remove any existing overlay for this page
+    wrap.querySelectorAll(".zone-svg-overlay").forEach(el => el.remove());
+
+    // Insert SVG overlay
+    const tmp = document.createElement("div");
+    tmp.innerHTML = svgStr;
+    const svg = tmp.firstElementChild;
+    if (svg) wrap.appendChild(svg);
+  }
+
+  /**
+   * Remove all zone SVG overlays from all canvases (toggle OFF path).
+   */
+  function clearAllOverlays() {
+    document.querySelectorAll(".zone-svg-overlay").forEach(el => el.remove());
+  }
+
+  /**
+   * Called after renderWithPdfJs completes — re-draw overlay on the current page
+   * if the toggle is on.
+   */
+  async function maybeRenderZoneOverlayAfterPdfRender() {
+    if (zoneOverlayEnabled && currentDocId) {
+      // Render overlay on visible current page
+      await renderZoneOverlay(currentDocId, currentPage);
+    }
+  }
+
+  // Monkey-patch renderWithPdfJs to trigger overlay after all pages are rendered
+  const _origRenderWithPdfJs = renderWithPdfJs;
+  renderWithPdfJs = async function(pdfUrl) {
+    await _origRenderWithPdfJs(pdfUrl);
+    await maybeRenderZoneOverlayAfterPdfRender();
+  };
 
   // ── Init ─────────────────────────────────────────────────────────────────
   await loadDocList();

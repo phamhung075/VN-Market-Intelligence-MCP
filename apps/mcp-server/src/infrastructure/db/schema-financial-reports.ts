@@ -154,6 +154,48 @@ export function initFinancialReportsTables(db: Database): void {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bmt_report ON bctc_md_tables(report_id)`);
 
+  // ── LF-OVERLAY: Layout-first unit + zone-geometry storage ─────────────────
+  // Sprint BCTC-LAYOUT-FIRST §3.1 — two new tables owned exclusively by mcp-server.
+  // Written only by pushBctcLayoutHandler (POST /api/push-bctc-layout).
+  // Zero overlap with bctc_table_rows, bctc_balance_checks, or bctc_md_tables.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_layout_units (
+      id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id           TEXT    NOT NULL,
+      unit_id             TEXT    NOT NULL,
+      schema_page         INTEGER NOT NULL,
+      page_numbers_json   TEXT    NOT NULL,
+      page_type           TEXT    NOT NULL DEFAULT 'table',
+      stitched_markdown   TEXT    NOT NULL DEFAULT '',
+      row_count           INTEGER NOT NULL DEFAULT 0,
+      quarantined         INTEGER NOT NULL DEFAULT 0,
+      quarantine_reason   TEXT,
+      document_map_json   TEXT,
+      extracted_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(report_id, unit_id)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_blu_report ON bctc_layout_units(report_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_blu_quarantine ON bctc_layout_units(report_id, quarantined)`);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_page_zones (
+      id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id                   TEXT    NOT NULL,
+      page_number                 INTEGER NOT NULL,
+      unit_id                     TEXT    NOT NULL,
+      page_type                   TEXT    NOT NULL,
+      is_schema_page              INTEGER NOT NULL DEFAULT 0,
+      is_continuation_page        INTEGER NOT NULL DEFAULT 0,
+      schema_inherited_from_page  INTEGER,
+      zones_json                  TEXT    NOT NULL,
+      extracted_at                TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(report_id, page_number)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bpz_report ON bctc_page_zones(report_id, page_number)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bpz_unit   ON bctc_page_zones(unit_id)`);
+
   // ── PDF OCR Cache (Sprint 048 / Task 292) ──────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS pdf_extracted_text (
