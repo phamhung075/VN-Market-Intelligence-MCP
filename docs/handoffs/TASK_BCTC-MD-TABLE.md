@@ -1604,3 +1604,27 @@ dev-pdf-extractor returned. I re-reviewed the diff (not the RETURN) and re-ran t
 5. Leave all files UNSTAGED. Do NOT commit (main terminal commits if needed — but ops makes no code changes here). Do NOT touch frozen surfaces. Local-only, no third-party API.
 
 **Hand back to:** Main-Terminal for AC-8 live-verify (direct market.db read of `md_tables_json`): AC-8-INC (income main line items: label+code+note+4 period values per row, `20.258.866.135.395` in the SAME row as `Doanh thu bán hàng`, no interleave with `Các khoản giảm trừ`) + AC-8-SEG-NOREGRESS (3 segment revenues on one pipe-row) + AC-8-BALANCE-NOREGRESS (no new corruption).
+
+---
+
+## [Main-Terminal] LIVE-VERIFY-8 VERDICT — VALUE COLUMNS FIXED / SEG+BALANCE NON-REGRESS / INCOME LABELS STILL BROKEN (2026-05-26)
+
+ops MD-DEPLOY-8 deployed (image rebuilt, `_MIN_INTER_COLUMN_GAP_PX` grep=6 live, fresh row **id=10** extracted_at 2026-05-26 16:38:21 UTC, 22 tables). I read `md_tables_json` STRAIGHT from market.db (NOT the inspect endpoint — `/tmp/md_v8_db.json`, 16146 bytes, 22-element array) and ran the gate.
+
+**✅ MD-EXTRACT-8 TARGET ACHIEVED — value-column anchor collapse is FIXED on live.** Income table[8] row 1 now renders all 4 period values on ONE row in 4 DISTINCT columns: `20.258.866.135.395 | … | 17.651.065.378.939 | 70.207.689.409.081 | … | 62.962.652.134.635` — exactly the live value anchors {1182,1477,1768,2061}. In MD-EXTRACT-7-REV these were scrambled across different rows. The fixed-80px gap defeated the w_med-inflation absorption. **This is the first time the income statement's period values are correctly columnar.**
+
+**✅ AC-8-SEG-NOREGRESS — PASS.** table[17] `| Doanh thu theo bộ phận … | 35.381.667 | 9.092.934 | 18.701.876 | …` — 3 segment revenues on ONE pipe-row in 3 distinct cells. The pure-code ELSE-branch preserved the wide-matrix path. Non-regressed.
+
+**✅ AC-8-BALANCE-NOREGRESS — PASS (improved).** Balance identity holds NUMERICALLY: code 270 = 88.089.621.779.862 = 100+200 = 300+400 = code 440 (verified arithmetic). The ~300 trailing empty `|   |   |   |` rows that bloated MD-EXTRACT-7-REV are GONE (table[0]=10 lines, was 325; empty_rows=0 across all 8 balance tables). Main codes + labels + values + priors clean for the bulk (110/111/112/120/130/131/132 … 311-343 … 411-440). Residual (PRE-EXISTING, DEFERRED to separate balance task — NOT a regression): table[3] depreciation sub-section (codes 222-229 dash-prefix) has long-value-split (`223 (11.683.165.704. 793)`) + a few merged codes (240/242, 250/252) + prior-col shifts. These were present before; no NEW corruption.
+
+**❌ AC-8-INC (full clean income) — FAIL. Two remaining DISTINCT defects, both LABEL-side (value side now solved):**
+1. **Label-row over-merge** — the top revenue block merges two line-items' label tokens INTERLEAVED by x-sort: row 1 = `2 1 Doanh Các khoản thu giảm bán hàng trừ và cung cấp dịch vụ 02` = `Doanh thu bán hàng và cung cấp dịch vụ` (code 01) + `Các khoản giảm trừ` (code 02) token-interleaved (D-C-k-t-g-b-h-t-v…). Both labels start at the left margin (~x255) so two adjacent dense rows' label tokens land in one label cell and x-sort interleaves them.
+2. **Label↔value ordinal offset** — because labels merge (fewer label rows than value rows), the ordinal pairing drifts: row 2 label `Doanh thu thuần` (code 10, should be ~20T) carries the ~33B deductions values. Cascades from defect 1.
+   Plus minor trailing-word spillover on ~6 labels (`Giá vốn hàng bán vụ`, `cung vụ`, `gdp`) and 3 EPS noise columns (`1.168`/`5.211`/`4.292`, sparse rows 1-2 only — the brief's predicted R-MEDIUM non-blocking artifact).
+   NOTE the bulk of the statement (codes 20-62: chi phí tài chính/bán hàng/QLDN, lợi nhuận, thuế) now reads with correct code+label+value alignment — the damage is concentrated in the codes 01/02/10 header block.
+
+**VERDICT: MD-EXTRACT-8 succeeded at its specific objective (value columns) and regressed NOTHING (balance improved). But the binding goal — income renders correctly — is NOT met. The remaining problem is now CLEANLY ISOLATED to LABEL reconstruction.** Per the recurring-bug rule (many fix commits on generic_md_table_extractor.py), NO further dev patch — escalating to architect **MD-EXTRACT-9** for a root-cause rethink of LABEL-row reconstruction (the fix-path-D label-band that was DROPPED in 7-REV on a pitch=35px argument must be reconsidered: live shows two adjacent label rows DO merge into one value-row's label cell; likely a label-row-to-value-row ordinal-assignment problem parallel to the value-column ordinal fix that now works).
+
+**Goal STILL ARMED** — segment ✅, balance ✅(non-regress, deferred polish), income value-cols ✅ but income LABELS ❌. NOT done until income labels render correctly on live + user confirms.
+
+**NEXT:** architect MD-EXTRACT-9 (label-reconstruction root-cause rethink). Acceptance gate stays LIVE direct-DB render, NOT fixture tests.
