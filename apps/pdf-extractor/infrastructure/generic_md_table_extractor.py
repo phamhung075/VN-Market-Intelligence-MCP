@@ -1,21 +1,26 @@
 """
-infrastructure/generic_md_table_extractor.py — MD-EXTRACT-4
+infrastructure/generic_md_table_extractor.py — MD-EXTRACT-5
 
 GenericMdTableExtractor: number-token-2D generic table detector + markdown emitter.
 
 Implements GenericMdTableExtractorPort (domain/modules/financial_reports/ports.py).
 
-Algorithm (per-page) — MD-EXTRACT-4 NUMBER-TOKEN-ONLY PATH:
+Algorithm (per-page) — MD-EXTRACT-5 NUMBER-TOKEN-ONLY PATH + ADAPTIVE TOLERANCE:
     Step A — Collect per-word bboxes via pytesseract.image_to_data (TSV/DICT mode).
     Step A2 — Classify tokens: NUMBER tokens (digits/money-groups) vs TEXT tokens (labels).
     Step B — Detect table regions on NUMBER tokens only (≥4 number tokens).
-    Step C — Cluster NUMBER tokens into rows by y using SAME_LINE_TOL=4px.
+    Step C — Cluster NUMBER tokens into rows by y using adaptive tolerance.
+             _cluster_number_rows_adaptive derives row-pitch from large-gap mode on
+             NUMBER-token histogram, then uses running-centroid grouping.
              NUMBER tokens have clean baselines (no diacritic inflation) — ≤2px jitter.
     Step D — Derive column anchors from NUMBER token x (left) positions.
     Step E — Build number grid: each row = [number tokens in their column slots].
+             CODE tokens (2-3 digit) routed to leftmost number column; VALUE tokens
+             routed to x-nearest value column (D4b — no code+value cell concatenation).
     Step F — Attach labels: for each number-row y-band find nearest TEXT tokens.
     Step G — Post-processing: strip_header_bands → coalesce_labels → collapse_empty
              → density gate → header detection → markdown emission.
+             Separator row: valid GFM |---|---|---| (D2 fix).
 
 Root-cause of MD-EXTRACT-1/2/3 failures (DUAL-PATH DRIFT #5):
     Clustering ALL tokens (labels + numbers) by y failed because Vietnamese-diacritic
@@ -23,9 +28,17 @@ Root-cause of MD-EXTRACT-1/2/3 failures (DUAL-PATH DRIFT #5):
     scatter across y-bands. Number tokens have clean, uniform baselines.
     Fix: cluster NUMBER tokens ONLY by y; attach TEXT label tokens afterwards.
 
+Root-cause of MD-EXTRACT-4 failure (D1 wide-row cascade-split):
+    Fixed anchor current_top = first token top. Lens distortion / per-column
+    baseline drift of 8-15px across wide pages caused rightmost tokens to exceed
+    SAME_LINE_TOL=4, fragmenting one logical row into 2-3 rows.
+    Fix (MD-EXTRACT-5): adaptive tolerance from inter-row pitch estimation
+    (large-gap mode on NUMBER-token top histogram) + running-centroid comparison.
+
 Dead-code notes:
     _cluster_rows and _cluster_rows_by_gap are DEAD in MD-EXTRACT-4.
-    Kept for backward compatibility with existing unit tests. DO NOT REMOVE.
+    _cluster_number_rows is DEAD in MD-EXTRACT-5.
+    All kept for backward compatibility with existing unit tests. DO NOT REMOVE.
     Candidate-2 (psm-6 line-text path) functions were CANCELLED per architect ruling
     2026-05-26: psm-6 linearizes BCTC wide tables in column-major order, making
     row-aligned splitting impossible. All cancelled functions are absent from this file.
@@ -156,6 +169,22 @@ _NUMBER_TOKEN_RE = re.compile(
 # Tunable: increase to 6 if LIVE-VERIFY shows split rows; decrease to 2 for false merges.
 SAME_LINE_TOL: int = 4
 
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-5 — D4b: Code vs value token discriminators
+#
+# CODE tokens: 2-3 digit standalone numbers (row codes: 100, 200, 270, 30, etc.)
+# VALUE tokens: money-group format with at least one thousands-separator group.
+# AC-0: purely numeric pattern matching — zero BCTC-specific label strings.
+# ---------------------------------------------------------------------------
+
+# CODE token: 2-3 digit standalone (with optional leading paren/minus, trailing paren/minus).
+# Matches: 100, 270, 30, (30), -30  — never embedded in longer number strings.
+_CODE_TOKEN_RE = re.compile(r'^[\(\-]?\d{2,3}[\)\-]?$')
+
+# VALUE token: money-group format with at least one thousands-separator group.
+# Matches: 1.234.567, 1,234,567, (1.234.567), 58.102.970.741.619 — not plain codes.
+_VALUE_TOKEN_RE = re.compile(r'^\d{1,3}(?:[.,]\d{3})+')
+
 
 # ---------------------------------------------------------------------------
 # Pure helper: OCR text → readable markdown (§2.3)
@@ -265,14 +294,16 @@ def _cluster_number_rows(
     same_line_tol: int = SAME_LINE_TOL,
 ) -> List[List[Dict]]:
     """
-    Group number tokens into rows by y-coordinate using SAME_LINE_TOL.
+    # DEAD in MD-EXTRACT-5 — replaced by _cluster_number_rows_adaptive.
+    # Kept for backward compatibility with existing unit tests. DO NOT REMOVE.
+    #
+    # Failure mode (D1 wide-row cascade-split): fixed anchor current_top = first
+    # token top. Lens-distortion drift of 8-15px over a 2400px-wide page caused
+    # rightmost tokens (top+14px) to fail abs(top - current_top) <= 4 → cascade
+    # split into 2-3 fragment rows. _cluster_number_rows_adaptive fixes this via
+    # large-gap mode row-pitch estimation + running-centroid comparison.
 
-    Because number tokens have ≤2px y-jitter and the typical inter-row gap is
-    8-12px, SAME_LINE_TOL=4 cleanly separates rows without false merges.
-
-    This replaces _cluster_rows / _cluster_rows_by_gap for the number-token path.
-    The prior functions clustered ALL tokens (labels + numbers), so Vietnamese-
-    diacritic label tokens inflated y-band boundaries causing scatter.
+    Group number tokens into rows by y-coordinate using SAME_LINE_TOL (FIXED anchor).
 
     Algorithm:
       1. Sort number tokens by top.
@@ -307,6 +338,167 @@ def _cluster_number_rows(
             rows.append(sorted(current_row, key=lambda t: t["left"]))
             current_row = [w]
             current_top = w["top"]
+
+    rows.append(sorted(current_row, key=lambda t: t["left"]))
+    return rows
+
+
+def _estimate_inter_row_pitch(
+    number_tokens: List[Dict],
+    same_line_tol: int = SAME_LINE_TOL,
+) -> float:
+    """
+    Estimate the inter-row pitch from NUMBER token top-value distribution.
+
+    Uses large-gap mode on a 2px-binned histogram of top values to separate
+    the inter-row boundary transitions from the within-row micro-gaps.
+
+    Within-row micro-gaps (OCR jitter): small, plentiful → dominate the median.
+    Row-boundary gaps: larger, fewer → isolated by large_gaps = [g > median].
+
+    Algorithm (§3 Step 2 of MD-EXTRACT-5 brief):
+      1. Bin all token top values to 2px buckets: bin = (top // 2) * 2.
+      2. Build sorted list of unique bins: unique_bins.
+      3. Compute adjacent inter-bin gaps.
+      4. gap_median = median(gaps).
+      5. large_gaps = [g for g in gaps if g > gap_median].
+      6. row_pitch = min(large_gaps) if large_gaps else gap_median.
+      7. Fallback: if len(unique_bins) < 3 or row_pitch <= 0 or large_gaps empty
+             → return 0.0 (triggers same_line_tol fallback in caller).
+
+    Pure function: stdlib only. No I/O, no Tesseract, no DB.
+
+    AC-0: geometry only — zero BCTC-specific constants.
+
+    Args:
+        number_tokens: List of number-token word dicts (each has "top" key).
+        same_line_tol:  Unused here; accepted for signature symmetry with caller.
+
+    Returns:
+        Estimated inter-row pitch in pixels (positive), or 0.0 for fallback.
+    """
+    if not number_tokens:
+        return 0.0
+
+    # Step 1-2: bin tops to 2px and collect unique bins
+    binned = [(w["top"] // 2) * 2 for w in number_tokens]
+    unique_bins = sorted(set(binned))
+
+    # Fallback: too few unique bins to estimate pitch reliably
+    if len(unique_bins) < 3:
+        return 0.0
+
+    # Step 3: adjacent inter-bin gaps
+    gaps = [unique_bins[i + 1] - unique_bins[i] for i in range(len(unique_bins) - 1)]
+
+    # Step 4: gap median (sort-based, no statistics import)
+    sorted_gaps = sorted(gaps)
+    n = len(sorted_gaps)
+    mid = n // 2
+    if n % 2 == 0:
+        gap_median = (sorted_gaps[mid - 1] + sorted_gaps[mid]) / 2.0
+    else:
+        gap_median = float(sorted_gaps[mid])
+
+    # Step 5-6: large-gap mode — only gaps above the median are row-boundary candidates
+    large_gaps = [g for g in gaps if g > gap_median]
+    if not large_gaps:
+        # All gaps equal (flat page with no clear row structure) → fallback
+        return 0.0
+
+    row_pitch = float(min(large_gaps))
+
+    # Safety: row_pitch must be positive
+    if row_pitch <= 0.0:
+        return 0.0
+
+    return row_pitch
+
+
+def _cluster_number_rows_adaptive(
+    number_tokens: List[Dict],
+    same_line_tol: int = SAME_LINE_TOL,
+) -> List[List[Dict]]:
+    """
+    Group number tokens into rows using adaptive tolerance + running-centroid.
+
+    Fixes D1 wide-row cascade-split from MD-EXTRACT-4:
+    The old _cluster_number_rows used a FIXED anchor (first token top).
+    Lens-distortion baseline drift of 8-15px over a 2400px-wide BCTC page caused
+    rightmost tokens to fail abs(top - first_top) <= 4 → row fragment cascade.
+
+    This function derives the tolerance FROM THE DOCUMENT (per-page) via:
+      Step 2: _estimate_inter_row_pitch — large-gap mode on 2px-binned histogram.
+      Step 3: adaptive_tol = min(int(0.45 × row_pitch), 8).
+              0.45 × pitch = admit within 45% of row-pitch (generous for drift,
+              tight enough to exclude adjacent rows at 100% pitch).
+              8px absolute cap: safety ceiling for very-large pitch estimates.
+      Step 4: greedy grouping with RUNNING-CENTROID comparison (not fixed anchor).
+              Each admitted token updates the running mean → tracks baseline drift.
+
+    Worked example (§8 AC-5-SEG fixture, row_pitch=14, adaptive_tol=6):
+      row0 tops [100..106] all admitted (centroid tracks 100→103), centroid=103.
+      row1 first token top=120: |120-103|=17 > 6 → new row. All row1 tokens admitted.
+      Result: EXACTLY 2 groups of 7 tokens. No bleed.
+
+    Fallback: if _estimate_inter_row_pitch returns 0 (sparse page, ≤2 unique bins,
+    or all gaps equal), use same_line_tol (fixed, default=4). Logged at DEBUG.
+
+    Pure function: no I/O, no Tesseract, no DB.
+
+    AC-0: geometry only — zero BCTC-specific constants.
+
+    Args:
+        number_tokens: List of number-token word dicts (from _classify_tokens).
+        same_line_tol: Fixed fallback tolerance in pixels (default SAME_LINE_TOL=4).
+
+    Returns:
+        List of row groups, each a list of word dicts sorted by left (x ascending).
+        Returns [] if input is empty.
+    """
+    if not number_tokens:
+        return []
+
+    # Step 1: sort by top
+    sorted_tokens = sorted(number_tokens, key=lambda w: w["top"])
+
+    # Step 2: estimate inter-row pitch via large-gap mode
+    row_pitch = _estimate_inter_row_pitch(number_tokens, same_line_tol)
+
+    # Step 3: compute adaptive tolerance
+    if row_pitch > 0:
+        adaptive_tol = min(int(0.45 * row_pitch), 8)
+        tol = adaptive_tol
+        logger.debug(
+            "_cluster_number_rows_adaptive: row_pitch=%s adaptive_tol=%s n_tokens=%s",
+            row_pitch,
+            adaptive_tol,
+            len(number_tokens),
+        )
+    else:
+        tol = same_line_tol
+        logger.debug(
+            "_cluster_number_rows_adaptive: sparse/flat page, row_pitch=0, "
+            "falling back to fixed same_line_tol=%s n_tokens=%s",
+            same_line_tol,
+            len(number_tokens),
+        )
+
+    # Step 4: greedy grouping with running-centroid anchor
+    rows: List[List[Dict]] = []
+    current_row: List[Dict] = [sorted_tokens[0]]
+    current_centroid: float = float(sorted_tokens[0]["top"])
+
+    for w in sorted_tokens[1:]:
+        if abs(w["top"] - current_centroid) <= tol:
+            # Admit token: update running centroid
+            current_row.append(w)
+            current_centroid = sum(t["top"] for t in current_row) / len(current_row)
+        else:
+            # Close current row, start new one
+            rows.append(sorted(current_row, key=lambda t: t["left"]))
+            current_row = [w]
+            current_centroid = float(w["top"])
 
     rows.append(sorted(current_row, key=lambda t: t["left"]))
     return rows
@@ -374,12 +566,19 @@ def _build_grid_from_number_rows(
     Grid layout: column 0 = label cell, columns 1..N = number-token columns
     ordered by col_anchors.
 
-    For each number token in a row, assign to nearest col_anchor (by left distance).
-    The label cell is prepended as column 0.
+    D4b (MD-EXTRACT-5): CODE tokens (2-3 digit standalone, matching _CODE_TOKEN_RE)
+    are routed to the LEFTMOST number-column slot (col_anchors[0]) regardless of
+    their x-position. VALUE tokens (money-group format, matching _VALUE_TOKEN_RE)
+    are assigned to their x-nearest col_anchor. This prevents code+value cell
+    concatenation (e.g., "100 58.102.970.741.619" in one cell).
+
+    Tokens matching neither CODE nor VALUE (e.g., small unformatted integers) fall
+    back to the x-nearest anchor assignment (previous behaviour, no regression).
 
     Pure function: no I/O, no Tesseract, no DB.
 
-    AC-0: geometry only — zero BCTC-specific constants.
+    AC-0: geometry only — _CODE_TOKEN_RE and _VALUE_TOKEN_RE are purely numeric
+    patterns. Zero BCTC-specific label strings.
 
     Args:
         labeled_rows:  List of (label_str, row_tokens) from _attach_labels.
@@ -397,15 +596,26 @@ def _build_grid_from_number_rows(
     grid: List[List[str]] = []
 
     for label, row_tokens in labeled_rows:
-        # Initialize: label + N value slots
+        # Initialize: N value slots
         cell_words: List[List[str]] = [[] for _ in range(n_val_cols)]
 
         for w in row_tokens:
+            txt = w.get("text", "").strip()
             left = float(w["left"])
-            # Assign to nearest col_anchor
-            distances = [abs(left - anchor) for anchor in col_anchors]
-            nearest_col = distances.index(min(distances))
-            cell_words[nearest_col].append(w["text"])
+
+            if _CODE_TOKEN_RE.match(txt):
+                # D4b: CODE token → leftmost number column (index 0)
+                cell_words[0].append(txt)
+            elif _VALUE_TOKEN_RE.match(txt):
+                # D4b: VALUE token → x-nearest column anchor
+                distances = [abs(left - anchor) for anchor in col_anchors]
+                nearest_col = distances.index(min(distances))
+                cell_words[nearest_col].append(txt)
+            else:
+                # Fallback: x-nearest anchor (no regression for other token types)
+                distances = [abs(left - anchor) for anchor in col_anchors]
+                nearest_col = distances.index(min(distances))
+                cell_words[nearest_col].append(txt)
 
         # Build row: label cell + value cells
         value_cells = [
@@ -977,9 +1187,12 @@ def _emit_markdown_table(grid: List[List[str]], n_header_rows: int) -> str:
         line = "| " + " | ".join(_cell(c) for c in padded) + " |"
         lines.append(line)
 
-        # Insert separator after the last header row
+        # Insert separator after the last header row.
+        # D2 fix (MD-EXTRACT-5): valid GFM |---|---|---| (no doubled pipes).
+        # Old (WRONG): "|" + "|".join(["---|"] * n) → |---||---||---| (doubled |)
+        # New (CORRECT): "|" + "|".join(["---"] * n) + "|" → |---|---|---|
         if row_idx == n_header_rows - 1:
-            separator = "|" + "|".join(["---|"] * n_cols)
+            separator = "|" + "|".join(["---"] * n_cols) + "|"
             lines.append(separator)
 
     return "\n".join(lines)
@@ -1224,14 +1437,14 @@ class GenericMdTableExtractor:
         """
         Process one page image and return a list of markdown pipe-table strings.
 
-        MD-EXTRACT-4 NUMBER-TOKEN-ONLY PATH:
-        Classify tokens → cluster number rows by y → detect col anchors from numbers
-        → attach labels → build grid → post-process → density gate → emit markdown.
+        MD-EXTRACT-5 NUMBER-TOKEN-ONLY PATH + ADAPTIVE TOLERANCE (D1 fix):
+        Classify tokens → cluster number rows by y (adaptive) → detect col anchors
+        from numbers → attach labels → build grid (D4b code/value separation)
+        → post-process → density gate → emit markdown (D2 GFM separator).
 
-        Root-cause fix: prior cycles clustered ALL tokens (labels + numbers) by y.
-        Vietnamese-diacritic label tokens have inflated top (2-4px diacritic overhang)
-        causing scatter across y-bands. NUMBER tokens have clean shared baselines.
-        Solution: cluster NUMBER tokens only; attach TEXT labels afterwards.
+        D1 fix (_cluster_number_rows_adaptive): adaptive row-pitch estimation from
+        large-gap mode on NUMBER-token top histogram + running-centroid grouping.
+        Fixes wide-row cascade-split (lens-distortion drift 8-15px over 2400px page).
 
         Each detected table region on the page produces one entry.
         """
@@ -1300,9 +1513,11 @@ class GenericMdTableExtractor:
                 if (region_top - h_med) <= t["top"] <= (region_bot + h_med)
             ]
 
-            # Step C — Cluster NUMBER tokens into rows by y using SAME_LINE_TOL.
-            # Number tokens have ≤2px y-jitter → clean row separation at tol=4.
-            row_groups = _cluster_number_rows(region_num_tokens, same_line_tol)
+            # Step C — Cluster NUMBER tokens into rows by y (adaptive tolerance).
+            # MD-EXTRACT-5: _cluster_number_rows_adaptive derives per-page row-pitch
+            # from NUMBER-token large-gap histogram, then uses running-centroid
+            # comparison — fixes D1 wide-row cascade-split from lens-distortion drift.
+            row_groups = _cluster_number_rows_adaptive(region_num_tokens, same_line_tol)
             if not row_groups:
                 continue
 
@@ -1362,7 +1577,7 @@ class GenericMdTableExtractor:
             if md_table:
                 page_tables.append(md_table)
                 logger.debug(
-                    "GenericMdTableExtractor: emitted table (MD-EXTRACT-4 number-token path): "
+                    "GenericMdTableExtractor: emitted table (MD-EXTRACT-5 adaptive path): "
                     "%d rows × %d cols (money_groups=%d, same_line_tol=%d)",
                     n_rows,
                     n_cols,

@@ -89,6 +89,11 @@ from infrastructure.generic_md_table_extractor import (  # noqa: E402
     _build_grid_from_number_rows,
     _detect_column_anchors_from_tokens,
     _MONEY_GROUP_RE,
+    # MD-EXTRACT-5 additions:
+    _estimate_inter_row_pitch,
+    _cluster_number_rows_adaptive,
+    _CODE_TOKEN_RE,
+    _VALUE_TOKEN_RE,
 )
 
 
@@ -1690,3 +1695,382 @@ class TestSegmentMatrixCorrectness:
             assert len(cells) >= 3, (
                 f"Row must have ≥3 cells (label + ≥2 values), got {len(cells)}: {row_str}"
             )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-5: TestEstimateInterRowPitch
+# ---------------------------------------------------------------------------
+
+
+class TestEstimateInterRowPitch:
+    """
+    Unit tests for _estimate_inter_row_pitch() — Step 2 of adaptive algorithm.
+
+    §8 arithmetic proof fixture: 14 tokens, 2 rows, row_pitch must equal 14.
+    """
+
+    def _make_seg_tokens(self) -> List[Dict]:
+        """
+        §8 AC-5-SEG fixture (14 tokens, 2 rows):
+          row0 tops [100,101,102,103,104,105,106], left=[100,400,700,1000,1300,1600,1900]
+          row1 tops [120,121,120,121,120,121,120], left=[100,400,700,1000,1300,1600,1900]
+        """
+        row0_tops = [100, 101, 102, 103, 104, 105, 106]
+        row1_tops = [120, 121, 120, 121, 120, 121, 120]
+        lefts = [100, 400, 700, 1000, 1300, 1600, 1900]
+        tokens = []
+        for i, (top, left) in enumerate(zip(row0_tops, lefts)):
+            tokens.append(_make_word(f"1.234.{500 + i:03d}", left, top, height=12))
+        for i, (top, left) in enumerate(zip(row1_tops, lefts)):
+            tokens.append(_make_word(f"5.678.{100 + i:03d}", left, top, height=12))
+        return tokens
+
+    def test_ac5_fixture_row_pitch_equals_14(self):
+        """
+        §8 arithmetic proof: 14-token / 2-row fixture must yield row_pitch=14.
+
+        Binned tops: row0 → {100,102,104,106}, row1 → {120}
+        unique_bins = [100,102,104,106,120]
+        gaps = [2,2,2,14]
+        gap_median = (2+2)/2 = 2
+        large_gaps = [14]
+        row_pitch = min([14]) = 14
+        """
+        tokens = self._make_seg_tokens()
+        pitch = _estimate_inter_row_pitch(tokens)
+        assert pitch == 14.0, (
+            f"§8 fixture must yield row_pitch=14, got {pitch}"
+        )
+
+    def test_sparse_page_fewer_than_3_unique_bins_returns_zero(self):
+        """
+        Fallback: ≤2 unique bins → row_pitch=0 → caller uses same_line_tol.
+        """
+        # Only 2 unique bins after 2px binning
+        tokens = [
+            _make_word("100", 50, 10, height=12),
+            _make_word("200", 100, 10, height=12),  # same bin as top=10
+            _make_word("300", 150, 12, height=12),  # same 2px bin (12//2*2=12, 10//2*2=10 → different)
+        ]
+        # bins: [10, 10, 12] → unique = [10, 12] → 2 unique bins < 3 → return 0
+        result = _estimate_inter_row_pitch(tokens)
+        assert result == 0.0, (
+            f"≤2 unique bins must return 0.0 (fallback), got {result}"
+        )
+
+    def test_empty_input_returns_zero(self):
+        """Empty token list → 0.0."""
+        assert _estimate_inter_row_pitch([]) == 0.0
+
+    def test_three_unique_bins_with_clear_large_gap(self):
+        """
+        3 unique bins with one large gap → pitch = that gap.
+        unique_bins=[10,12,30]: gaps=[2,18], median=(2+18)/2=10, large=[18], pitch=18.
+        """
+        tokens = [
+            _make_word("100", 50, 10, height=12),
+            _make_word("200", 100, 12, height=12),  # bin=12
+            _make_word("300", 150, 30, height=12),  # bin=30
+        ]
+        pitch = _estimate_inter_row_pitch(tokens)
+        assert pitch == 18.0, (
+            f"Expected row_pitch=18 for bins [10,12,30], got {pitch}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-5: TestClusterNumberRowsAdaptive — AC-5-SEG
+# ---------------------------------------------------------------------------
+
+
+class TestClusterNumberRowsAdaptive:
+    """
+    Unit tests for _cluster_number_rows_adaptive() — D1 fix.
+
+    AC-5-SEG: §8 binding fixture (14 tokens, 2 rows, 7 cols) must yield
+    EXACTLY 2 groups with no token bleed.
+    """
+
+    def _make_seg_tokens(self) -> List[Dict]:
+        """§8 AC-5-SEG fixture: 14 tokens, 2 logical rows, 7 columns."""
+        row0_tops = [100, 101, 102, 103, 104, 105, 106]
+        row1_tops = [120, 121, 120, 121, 120, 121, 120]
+        lefts = [100, 400, 700, 1000, 1300, 1600, 1900]
+        tokens = []
+        for i, (top, left) in enumerate(zip(row0_tops, lefts)):
+            tokens.append(_make_word(f"1.234.{500 + i:03d}", left, top, height=12))
+        for i, (top, left) in enumerate(zip(row1_tops, lefts)):
+            tokens.append(_make_word(f"5.678.{100 + i:03d}", left, top, height=12))
+        return tokens
+
+    def test_ac5_seg_exactly_two_groups_of_seven(self):
+        """
+        AC-5-SEG (BINDING): §8 fixture → EXACTLY 2 row groups, each with 7 tokens.
+
+        Arithmetic proof (from §8):
+          row_pitch=14, adaptive_tol=min(int(0.45×14),8)=6
+          row0 centroid tracks 100→103; first row1 token: |120-103|=17>6 → new row.
+          All 7 row0 tokens admitted; all 7 row1 tokens admitted.
+        """
+        tokens = self._make_seg_tokens()
+        groups = _cluster_number_rows_adaptive(tokens, same_line_tol=4)
+
+        assert len(groups) == 2, (
+            f"AC-5-SEG: must yield EXACTLY 2 row groups, got {len(groups)}"
+        )
+        assert len(groups[0]) == 7, (
+            f"Row group 0 must have 7 tokens (row0), got {len(groups[0])}"
+        )
+        assert len(groups[1]) == 7, (
+            f"Row group 1 must have 7 tokens (row1), got {len(groups[1])}"
+        )
+
+    def test_ac5_seg_no_token_bleed_between_rows(self):
+        """No token from row0 tops [100..106] bleeds into row1 (tops [120..121])."""
+        tokens = self._make_seg_tokens()
+        groups = _cluster_number_rows_adaptive(tokens, same_line_tol=4)
+
+        assert len(groups) == 2
+        row0_tops = {w["top"] for w in groups[0]}
+        row1_tops = {w["top"] for w in groups[1]}
+        assert row0_tops <= {100, 101, 102, 103, 104, 105, 106}, (
+            f"Row0 must only contain tops 100-106, got {row0_tops}"
+        )
+        assert row1_tops <= {120, 121}, (
+            f"Row1 must only contain tops 120-121, got {row1_tops}"
+        )
+
+    def test_empty_input_returns_empty(self):
+        """Empty input → []."""
+        assert _cluster_number_rows_adaptive([]) == []
+
+    def test_single_token_returns_one_group(self):
+        """Single token → one group of 1."""
+        tokens = [_make_word("1.234.567", 100, 50, height=12)]
+        groups = _cluster_number_rows_adaptive(tokens, same_line_tol=4)
+        assert len(groups) == 1
+        assert len(groups[0]) == 1
+
+    def test_sparse_page_fallback_to_same_line_tol(self):
+        """
+        Sparse page (≤2 unique bins) → row_pitch=0 → fallback to same_line_tol=4.
+        Tokens 3px apart (within tol=4) → ONE group; tokens 10px apart → TWO groups.
+        """
+        # All tops in same 2px bin: top=10 and top=12 → bins 10 and 12 → 2 unique bins < 3
+        # → pitch=0 → tol=4 (fallback)
+        tokens_same = [
+            _make_word("100", 50, 10, height=12),
+            _make_word("200", 100, 13, height=12),  # 3px apart ≤ tol=4 → same group
+        ]
+        groups = _cluster_number_rows_adaptive(tokens_same, same_line_tol=4)
+        # May be 1 or 2 groups depending on bin structure (2 unique bins → fallback)
+        # With tol=4 (fallback), top=10 and top=13: |13-10|=3 ≤ 4 → 1 group
+        assert len(groups) == 1, (
+            f"Sparse fallback tol=4: tops 10,13 (3px apart) → 1 group, got {len(groups)}"
+        )
+
+    def test_groups_sorted_by_left(self):
+        """Each row group's tokens are sorted by left (x ascending)."""
+        row0_tokens = [
+            _make_word("right", 1900, 100, height=12),
+            _make_word("left",  100,  101, height=12),
+            _make_word("mid",   700,  102, height=12),
+        ]
+        groups = _cluster_number_rows_adaptive(row0_tokens, same_line_tol=4)
+        # pitch from 3 unique bins [100,100,102]→{100,102}, 2 bins < 3 → fallback tol=4
+        # |101-100|=1≤4, |102-100|=2≤4 → 1 group (running centroid: 100 → 100.5 → 101)
+        assert len(groups) >= 1
+        lefts = [w["left"] for w in groups[0]]
+        assert lefts == sorted(lefts), f"Group not sorted by left: {lefts}"
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-5: TestEmitMarkdownTableGfm — AC-5-GFM
+# ---------------------------------------------------------------------------
+
+
+class TestEmitMarkdownTableGfm:
+    """
+    AC-5-GFM (BINDING): _emit_markdown_table separator must be valid GFM.
+
+    D2 fix: separator = "|" + "|".join(["---"] * n) + "|"
+    → |---|---|---| (correct GFM, no doubled pipes)
+
+    Old bug: "|" + "|".join(["---|"] * n) → |---||---||---| (doubled ||)
+    """
+
+    def test_separator_is_valid_gfm_no_doubled_pipe(self):
+        """
+        AC-5-GFM: separator row must match |(?:---|)+ pattern with no ||.
+        """
+        import re
+        grid = [
+            ["Header A", "Header B", "Header C"],
+            ["cell 1",   "cell 2",   "cell 3"],
+            ["cell 4",   "cell 5",   "cell 6"],
+        ]
+        md = _emit_markdown_table(grid, n_header_rows=1)
+        lines = md.split("\n")
+        assert len(lines) >= 2, "Table must have at least 2 lines"
+        separator_line = lines[1]
+
+        # Must match valid GFM separator: |---|---|---|
+        assert re.fullmatch(r'\|(?:---\|)+', separator_line), (
+            f"AC-5-GFM: separator must match |(?:---|)+ pattern, got: {separator_line!r}"
+        )
+
+        # No doubled pipe (the old D2 bug)
+        assert "||" not in separator_line, (
+            f"AC-5-GFM: separator must not contain doubled pipes '||', got: {separator_line!r}"
+        )
+
+    def test_header_pipe_count_equals_separator_pipe_count(self):
+        """
+        AC-5-GFM: header row and separator row must have the same number of '|' chars.
+        Confirms column counts match (no off-by-one in D2 fix).
+        """
+        grid = [
+            ["H1", "H2", "H3"],
+            ["d1", "d2", "d3"],
+        ]
+        md = _emit_markdown_table(grid, n_header_rows=1)
+        lines = md.split("\n")
+        header_line = lines[0]
+        separator_line = lines[1]
+        assert header_line.count("|") == separator_line.count("|"), (
+            f"Header pipe count ({header_line.count('|')}) != "
+            f"separator pipe count ({separator_line.count('|')})\n"
+            f"  header:    {header_line!r}\n"
+            f"  separator: {separator_line!r}"
+        )
+
+    def test_separator_contains_three_dashes_per_column(self):
+        """Each column slot in separator uses '---' (exactly 3 dashes)."""
+        grid = [["A", "B"], ["1", "2"]]
+        md = _emit_markdown_table(grid, n_header_rows=1)
+        sep_line = md.split("\n")[1]
+        # Strip leading/trailing |, split on |
+        inner = sep_line.strip("|")
+        col_parts = inner.split("|")
+        for part in col_parts:
+            assert part.strip() == "---", (
+                f"Each separator cell must be '---', got: {part!r} in {sep_line!r}"
+            )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-5: TestD4bCodeValueSeparation — AC-5-D4b
+# ---------------------------------------------------------------------------
+
+
+class TestD4bCodeValueSeparation:
+    """
+    AC-5-D4b (BINDING): CODE tokens and VALUE tokens must land in DIFFERENT cells.
+
+    _build_grid_from_number_rows routes _CODE_TOKEN_RE matches to col_anchors[0]
+    and _VALUE_TOKEN_RE matches to their x-nearest anchor. No cell may match both.
+    """
+
+    def test_code_and_value_in_different_cells(self):
+        """
+        AC-5-D4b: "100"@left50 + "58.102.970.741.619"@left200, anchors=[50,200]
+        → code lands in col_anchors[0] slot, value in col_anchors[1] slot.
+        They must NOT share one cell.
+        """
+        # labeled_rows = [(label, [code_token, value_token])]
+        labeled_rows = [(
+            "Some label",
+            [
+                _make_word("100", 50, 50),               # CODE: 3-digit
+                _make_word("58.102.970.741.619", 200, 50),  # VALUE: money-group
+            ],
+        )]
+        col_anchors = [50.0, 200.0]
+        grid = _build_grid_from_number_rows(labeled_rows, col_anchors)
+
+        assert len(grid) == 1
+        row = grid[0]  # [label, col_anchor_0_cell, col_anchor_1_cell]
+        assert len(row) == 3, f"Expected 3 cells (label+2 value slots), got {len(row)}: {row}"
+
+        # Find cells containing the code and value
+        code_cell = None
+        value_cell = None
+        for i, cell in enumerate(row[1:], start=1):  # skip label
+            if _CODE_TOKEN_RE.search(cell.strip()):
+                code_cell = i
+            if _VALUE_TOKEN_RE.search(cell.strip()):
+                value_cell = i
+
+        assert code_cell is not None, f"Code '100' not found in any cell: {row}"
+        assert value_cell is not None, f"Value '58.102.970.741.619' not found in any cell: {row}"
+        assert code_cell != value_cell, (
+            f"AC-5-D4b FAIL: code and value in SAME cell (index {code_cell}): {row}"
+        )
+
+    def test_no_cell_matches_both_code_and_value_patterns(self):
+        """
+        AC-5-D4b: No single cell in the grid may match both _CODE_TOKEN_RE
+        and _VALUE_TOKEN_RE simultaneously (concatenated form ruled out).
+        """
+        labeled_rows = [(
+            "Label",
+            [
+                _make_word("100", 50, 50),
+                _make_word("1.234.567", 200, 50),
+            ],
+        )]
+        col_anchors = [50.0, 200.0]
+        grid = _build_grid_from_number_rows(labeled_rows, col_anchors)
+
+        for row in grid:
+            for cell in row:
+                stripped = cell.strip()
+                matches_code = bool(_CODE_TOKEN_RE.match(stripped))
+                matches_value = bool(_VALUE_TOKEN_RE.match(stripped))
+                assert not (matches_code and matches_value), (
+                    f"AC-5-D4b: cell matches BOTH code and value patterns: {cell!r}"
+                )
+
+
+# ---------------------------------------------------------------------------
+# MD-EXTRACT-5: TestAc5D3LabelCellClean
+# ---------------------------------------------------------------------------
+
+
+class TestAc5D3LabelCellClean:
+    """
+    AC-5-D3: label cell for the segment row must contain NO money-group match.
+
+    D3 is a consequence of D1: once all wide-row tokens cluster into ONE group,
+    _attach_labels finds the correct TEXT label token (no number bleed).
+    Verify: after _cluster_number_rows_adaptive on the §8 fixture, the label
+    produced by _attach_labels has no _MONEY_GROUP_RE match.
+    """
+
+    def test_label_cell_has_no_money_group(self):
+        """
+        §8 fixture row0 → after label attachment, label cell satisfies
+        _MONEY_GROUP_RE.search(label_cell) is None.
+        """
+        row0_tops = [100, 101, 102, 103, 104, 105, 106]
+        lefts = [100, 400, 700, 1000, 1300, 1600, 1900]
+        number_tokens = [
+            _make_word(f"1.{200 + i:03d}.{300 + i:03d}", left, top, height=12)
+            for i, (top, left) in enumerate(zip(row0_tops, lefts))
+        ]
+        # One Vietnamese text label at the same y-band
+        text_tokens = [_make_word("Doanh thu theo", 5, 101, height=12)]
+        h_med = 12.0
+
+        row_groups = _cluster_number_rows_adaptive(number_tokens, same_line_tol=4)
+        # Sparse fixture (tops [100..106] → unique bins too close), but 1 row expected
+        # _estimate_inter_row_pitch may fallback; either way 1 group forms at tol=4
+        assert len(row_groups) >= 1
+
+        labeled = _attach_labels([row_groups[0]], text_tokens, h_med)
+        assert len(labeled) == 1
+        label, _ = labeled[0]
+
+        assert _MONEY_GROUP_RE.search(label) is None, (
+            f"AC-5-D3 FAIL: label cell contains money-group match: {label!r}"
+        )
