@@ -1,5 +1,82 @@
 # QA — Notebook
 
+## cycle-131 · 2026-05-27 · PEK-QA Option-B (commit 6c124745, image 455eeb073801) — CHANGES_REQUESTED
+
+**Task:** PEK-QA corpus-wide verification of Option B (bypass pdf_extract_kit.tasks via _PekLayoutModel) | **Verdict:** CHANGES_REQUESTED
+
+```
+date: 2026-05-27T05:36Z
+type: sprint-qa-gate (PEK-INTEGRATE Option B — commit 6c124745)
+report_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (FPT Q4 2025 sentinel)
+report: reports/TASK_REPORT_PEK-QA.md
+commit_under_test: 6c124745
+image_sha: 455eeb073801 (4.74GB, healthy)
+prior_image_swapped_out: 3b4526c0 (unimernet crash)
+
+static_gates:
+  git_pristine_PEK_subtree: PASS (git -C PDF-Extract-Kit diff = empty, 0 bytes)
+  frozen_surfaces: PASS (text_table_extractor.py + sandbox/runner.py + pilot-status + generic_md_table = 0-diff vs 6c124745)
+  smoke_gate_in_container: PASS (numpy 2.2.6 / cv2 4.13.0 / fitz 1.27.2.3 / omegaconf / doclayout_yolo.YOLOv10 / paddleocr / torch 2.5.1+cpu / pek_engine_adapter: ALL OK)
+  prior_blocker_1_unimernet: FIXED — no pdf_extract_kit.tasks.* executable imports
+  prior_blocker_2_patch_target: FIXED — 10/10 scenario tests pass (test_fake_ocr_backend_result_in_extraction_output PASS)
+  unit_tests: 687/687 PASS (non-slow; 7 slow deselected)
+  pek_adapter_tests: 15/15 PASS
+  market_hours_guard_tests: 12/12 PASS
+  ocr_backends_tests: 21/21 PASS
+  scenario_tests_pek: 10/10 PASS
+  ddd_fence_a: KEPT (96 files, 207 deps)
+  ddd_fence_b: KEPT
+  security_process_env: 0 matches
+  security_secrets: 0 matches (docstring-only matches)
+  mcp_server_push_bctc_layout: 20/20 PASS
+  market_hours_layer2_http: WORKING (503 confirmed at 05:12 UTC — market OPEN)
+  market_hours_state: market OPEN (05:36 UTC Wednesday) → 503 returned correctly
+
+blocking_issue_found:
+  file: apps/pdf-extractor/infrastructure/pek_engine_adapter.py:221
+  code: layout_cfg.get("model", {})
+  yaml: PDF-Extract-Kit/configs/layout_detection_yolo.yaml
+  yaml_structure: tasks.layout_detection.model_config (no top-level "model" key)
+  effect: model_cfg = {} → KeyError "model_path" → caught silently → layout_task = None
+  consequence: DocLayout-YOLO layout detection DISABLED; extraction falls back to geometry-only
+  root_cause: NEW regression in 6c124745 — old code passed full OmegaConf to LayoutDetectionTask
+    which navigated the YAML internally; new _PekLayoutModel expects caller to read "model" key
+    but caller uses wrong path
+  severity: BLOCKING — core PEK capability (layout detection) silently disabled
+  fix: pek_engine_adapter.py:221 → read tasks.layout_detection.model_config path instead of "model"
+
+stage_1_extraction:
+  status: BLOCKED (market open — 503 until 09:00 UTC)
+  bctc_layout_units_for_e71f845d: 0 (never extracted via PEK path)
+  background_script_queued: true (will trigger at market close ~09:00 UTC)
+
+stage_2_corpus:
+  eligible_reports: 12 (with pdf_path set)
+  excluded: VCB 2025-Q1 + VCB 2025-Q4 (pdf_path = NULL)
+  status: BLOCKED (market open + layout config bug)
+
+fleet_ram_cold_start: ~1.7 GiB of 8 GiB cap
+models_loaded: false (market-open guard fired before any load)
+
+verdict: FAIL — CHANGES_REQUESTED
+next: dev-pdf-extractor (fix pek_engine_adapter.py:221 YAML path) → ops rebuild → qa re-runs
+```
+
+key_learnings:
+  - Config key mismatch is a silent failure mode: `layout_cfg.get("model", {})` returns {} without error
+    when YAML has no top-level "model" key. The KeyError is on `model_cfg["model_path"]`, caught silently.
+  - Old code: LayoutDetectionTask(layout_cfg) — PEK task class navigated its own YAML (tasks.layout_detection.model_config)
+    New code: _PekLayoutModel(model_cfg) — expects caller to pre-read the model_config section, but caller
+    reads wrong YAML path.
+  - The smoke gate at build time imports `pek_engine_adapter` module, which imports cleanly (no crash).
+    The YAML config read failure only happens at model-load time (lazy, first extraction request).
+    Build-time smoke gate cannot catch runtime config reading bugs.
+  - Market-hours guard is correct: 503 at 05:12 UTC (inside 02:00-08:59 UTC window). Report this as
+    PASS (guard working), not as a failure.
+  - Corpus size: 12 reports eligible for PEK extraction (14 total, minus 2 with NULL pdf_path)
+
+---
+
 ## cycle-130 · 2026-05-27 · PEK-QA RE-RUN (G9 gate — commit 9ab93889, image 3b4526c0) — FAIL / CHANGES_REQUESTED
 
 **Task:** PEK-QA re-run after PEK-DEP-RECONCILE fix (commit 9ab93889) | **Verdict:** CHANGES_REQUESTED
