@@ -663,6 +663,14 @@ Third carry-forward note (v2.1): cowork-refactory-expert is the executor for all
 
 ---
 
+## Backlog — Validating Findings (motivation log)
+
+These are independently observed product findings that this redesign already addresses. Recorded as motivation/validation, not new work for this brief.
+
+| Date | Finding | Why this redesign already fixes it |
+|---|---|---|
+| 2026-05-27 | **CHEF attention concentrates on ~7 news-heavy large-caps** (VHM, VIC, MWG, ACB, HCM, HVN, ACV) instead of the full ~37-ticker watchlist. PO/owner observed via `get_cycle_bootstrap(unified-agent)`. Verified root cause: WATCHLIST section = full coverage (no LIMIT). But CHEF's ATTENTION channels are monopolized: (1) `agent_signals` bus inbox (`to_agent IN ('unified-agent','all')`) is EMPTY because watchlist-wide scanners route to `alert-commander` instead (`market-watcher/flow/cycle.md:64`, `news-scout/flow/stage-signals.md:74,104`); (2) OPEN ALERTS = `buildAlertsSection` `WHERE read=0 ORDER BY triggered_at DESC LIMIT 20` — high-frequency `news_mention` alerts fill all 20 slots; (3) RECENT ANALYSIS = `buildAnalysisSection` `ORDER BY impact_score DESC LIMIT 10` — same big-cap clustering. Aggravated when VN market is CLOSED (price/technical scanners are market-hours only; news flows 24/7). | **Design Point A (line 111) + F25 (line 620):** CHEF's GATHER step is rewired to read the FULL `docs/daily/<date>/` folder + the full attention register — NOT the 20-row alert window or the empty signal-bus inbox. At full cutover (Phase 3), CHEF's attention no longer flows through `buildAlertsSection`/`buildAnalysisSection`/`agent_signals` at all. The signal-routing-to-alert-commander problem becomes moot (signals deprecated Phase 3, brief line 561). The redesign STRUCTURALLY eliminates this attention-starvation for CHEF. **NOTE:** because the redesign CHEF-GATHER rewire (F25) lands near the END of Phase 3 (after a 5-day + 10-day QA-gate migration), a small targeted pre-redesign fix to `buildAlertsSection` (per-stock diversity cap) was greenlit to improve the live `get_cycle_bootstrap` surface during the multi-week migration window — see TASKS.md § CHEF-ATTN. The pre-redesign fix touches ONLY the alerts-section diversity cap; it does NOT add signal-bus `'all'` routing (that would inject churn into the soon-deprecated bus model). |
+
 ## Signal Dropped
 
 `docs/signals/cowork-team-daily-document-redesign-v2-20260527.json` → agent-father (updated to v2.1)

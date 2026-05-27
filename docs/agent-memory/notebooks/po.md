@@ -1,34 +1,35 @@
 # PO Notebook
 
-## Cycle 2026-05-27T14:04:39Z — PEK-EXIT sign-off (done-pending-G9)
+## Cycle 2026-05-27T19:25:01Z — CHEF-attention finding: scope verdict (self-initiated)
 
-**Task:** Formalize closure of PEK-INTEGRATE after QA returned GREEN.
+**Input:** Routed verified diagnosis — CHEF (unified-agent) bootstrap concentrates on ~7 news-heavy
+large-caps, not full ~37 watchlist. Code path pre-traced by main terminal (no re-derive needed).
 
-**Verdict:** ACCEPTED — DELIVERED, done-pending-G9. Commit `a6511572`.
+**Re-verified (grounding, not re-investigation):**
+- `marketContextBuilder.ts buildAlertsSection` L269-305 = `read=0 ORDER BY triggered_at DESC LIMIT 20`
+  (recency-only, no diversity cap) — confirmed the monopolization site.
+- `buildWatchlistSection` L149-195 = no LIMIT, full coverage — NOT the problem.
+- Signals route `to_agent:"alert-commander"` at `market-watcher/flow/cycle.md:64` +
+  `news-scout/flow/stage-signals.md:74,104` — CHEF bus inbox empty by design. Confirmed.
 
-**REQ-PEK-12 formalized + MET** (OCR-backend pluggability):
-- Port: `domain/repositories.py:163` `OcrBackendPort(Protocol)` — `recognize_text() -> (str, float)`.
-- Selector: `infrastructure/ocr_backends.py:387` `select_ocr_backend()` reads `OCR_TEXT_BACKEND`
-  in {tesseract-vie(default), paddleocr, auto}.
-- Adapters: TesseractVieBackend (vie+eng, psm6) + PaddleOcrBackend (lang="vi" at adapter:316).
-- Composition root: `main.py:120` injects. Layout(DocLayout-YOLO)+table-grid(PP-StructureV2) NON-selectable.
-- 6 ACs (12a-12f) all checked MET in `docs/REQ_PEK-INTEGRATE.md`.
+**Verdict = BOTH (per autonomy):**
+- (A) Recorded as motivation/validation in redesign brief backlog — Design Point A + F25 rewire
+  CHEF GATHER to read full daily folder, structurally killing this attention-starvation at Phase-3
+  cutover. Signals deprecated Phase 3 → routing problem moot.
+- (B) Greenlit small pre-redesign fix because F25 lands near END of multi-week 3-phase migration
+  (5d+10d QA gates) while user sees the broken bootstrap TODAY. New Sprint CHEF-ATTN, zone
+  `apps/mcp-server/`, 5 tasks (BA→IMPL→DEPLOY→QA→EXIT). Fix = per-stock diversity cap on
+  buildAlertsSection only.
+- REJECTED the signal-bus `'all'`-routing half of the proposal — would churn the soon-deprecated bus.
 
-**Done-when confirmed:** (1) pluggable committed `8535b175`; (2) container REBUILT not restarted,
-image `439d42948589` built 10:26 UTC, weights runtime-only on volume `pek_model_cache`, fleet RAM
-3.4 GiB/8 GB; (3) qa clean rows direct market.db + FPT sentinel `e71f845d` 23/23; (4) PEK subtree
-pristine (diff EMPTY, re-verified at exit) + 503 guard holds. (5) USER verbal G9 = ONLY outstanding —
-main terminal obtains, PO does NOT block.
-
-**Docs updated:** `docs/REQ_PEK-INTEGRATE.md` (REQ-PEK-12 + header + DDD table),
-`docs/TASKS.md` (PEK-EXIT→DONE-PENDING-G9, status header, Notes), `docs/handoffs/TASK_PEK-INTEGRATE.md`
-(QA + PEK-EXIT records).
-
-**Commit discipline:** scoped per-file `git add` (3 docs only); PEK subtree left unstaged/pristine;
-`git show --stat` = 3 files, zero foreign. Verified.
+**Docs updated:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md`
+(new § Backlog — Validating Findings), `docs/TASKS.md` (new § Sprint CHEF-ATTN + PO scope-verdict note).
+No code touched (scope-only, per not_my_job).
 
 ## Carry-over
-- PEK-INTEGRATE goal stays ARMED until USER says G9. Only condition #7 outstanding.
-- Non-blocking tech-debt tracked: ghost-unit accumulation on `bctc_layout_units` re-extraction
-  (INSERT OR REPLACE on fresh UUID unit_id) — pre-existing, not an OCR-fix regression. Candidate
-  future cleanup task if it bloats market.db.
+- CHEF-ATTN-BA is READY → BA writes `docs/REQ_CHEF-ATTN.md` → returns to PO approval gate.
+  Watch for spec scope-creep: BA must NOT add signal-bus routing changes (out-of-scope, rejected).
+- PEK-INTEGRATE goal stays ARMED until USER verbal G9 (only condition #7 outstanding). PEK-MULTIPAGE
+  READY (page-coverage round-5, separate zone apps/pdf-extractor/).
+- Non-blocking tech-debt: ghost-unit accumulation on `bctc_layout_units` re-extraction — candidate
+  future cleanup if market.db bloats.
