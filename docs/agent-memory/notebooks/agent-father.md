@@ -1,5 +1,25 @@
 # Agent Father — Notebook
 
+## c271 · 2026-05-27
+
+**Task:** Phase 1 Foundation (F1–F8) — Cowork-Team Daily Document Redesign
+**Brief:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md` v2.1
+
+**F1 (dirs):** 9 directories created with .gitkeep: docs/daily/, docs/outbox/{market/danger,market/normal,work,dead}, docs/recaps/{weekly,monthly,yearly}, docs/attention/.
+**F2 (.gitignore):** Added docs/daily/ and docs/outbox/ entries (ephemeral, no git commits). docs/attention/ NOT gitignored.
+**F3 (file-size-caps.json):** Added `docs/daily/*/*.md` entry, 200L cap, class=daily-agent-section.
+**F4 (cowork-schedule.json):** Added 5 slot stubs (all enabled:false): daily-seed, delivery-cron-danger, delivery-cron-normal, monthly-recap, yearly-recap. Added retention object: daily_days=14, weekly_weeks=8, monthly_months=24, yearly=indefinite, attention_register=never_prune, prune_runner=digest-predict, fail_safe=verify_recap_before_delete.
+**F5 (daily-document-spec.md):** Written at docs/standards/daily-document-spec.md (154L). Includes: folder structure, agent section append format, Language Rule block (Addition 6 — mandatory, with register boundary table), Bootstrap-Only Read Rule (Addition 7 — binding, with exemptions table), _header.md format, outbox format, CHEF _dish/ format, failure mode table.
+**F6 (watch.md):** docs/attention/watch.md created with OPEN / TRIGGERED-RESOLVED / EXPIRED template + item schema table header.
+**F7 (market-push-state.json):** docs/data/market-push-state.json created, all fields null/0.
+**F8 (delivery-cron-delivered.json):** docs/data/delivery-cron-delivered.json created as empty {}.
+
+**Deliverable gate PASSED:** daily-document-spec.md (154L, readable) + watch.md (18L, readable). Zero agent flow files modified (git diff HEAD confirms clean).
+**Commit:** 93e0641e (11 files, 293 insertions)
+**HARD STOP:** Phase 2 gated — cowork-refactory-expert (F9–F17) + PO sign-off required. daily-seed must run ≥1 full day before agent appends. Do NOT auto-start Phase 2.
+
+---
+
 ## c270 · 2026-05-25
 
 **Task:** Institutionalize user directive "rebuild container if dev team changes microservice code" — Restart ≠ Rebuild close-gate.
@@ -157,53 +177,9 @@ Replaced 19L thin pointer with 124L pilot-enforcement flow (explicit size-justif
 
 ---
 
-## c261 · 2026-05-24
+## Carry-over (from c256–c261)
 
-**Task:** Fleet size-cap remediation — STAGE 1 (JUSTIFY) + STAGE 2 pilot splits
-
-**STAGE 1 — JUSTIFY (15 files, zero behaviour change):**
-Inserted `<!-- size-justification: -->` comments in first 8 lines of 15 files:
-ops-mainserver-fetch/main.md (178L), system-auditor.md (160L), pm.md (156L),
-news-scout/stage-signals.md (154L), system-map-query/SKILL.md (150L),
-ops-vps-fetch/main.md (150L), pm/main.md (149L), signal-dashboard/SKILL.md (147L),
-ba.md (147L), dev-frontend/main.md (142L), developer/main.md (141L),
-dev-macro-indicators/main.md (138L), financial-analyst.md (137L),
-microservice-main.md (135L), news-scout.md (133L), market-watcher.md (132L),
-report-analyzer.md (129L).
-Commit: bundled into 179f7cd1 (concurrent git race with alert-engine signal).
-
-**STAGE 2 — SPLIT pilot (2 files):**
-- chef.md (278L→228L): telemetry scaffolding (ENTRY/CLOSE/FAILED/SILENT/try-catch) extracted to chef-telemetry.md (74L). Pointer at 3 call sites in chef.md. Size-justification added to both files.
-- dev-mainserver-crawls/main.md (235L→203L): Step 3b research protocol + code scaffolding extracted to technique-research.md (96L). Sub-flow pointer replaces inline content at 4 locations. Size-justification added to both files.
-Commit: 6becd6b0
-
-**Verification results:**
-- chef.md: pointer confirmed at 3 locations, chef-telemetry.md exists (74L), no dangling ENTRY/CLOSE/FAILED headers remain in parent.
-- dev-mainserver-crawls/main.md: pointer confirmed at 4 locations, technique-research.md exists (96L), no dangling WebSearch/playwright inline content in parent.
-- Both parents still exceed 120L (228L, 203L) — size-justification comments added per brief guidance.
-
-**HELD:** dev-vps-crawls, dev-stock-price, dev-kinh-dich — await pilot verification.
-
-## c260 · 2026-05-23T23:04Z
-
-**Task:** P0-KD-3 — dev-kinh-dich agent + flow baking (Factory v2 pilot 4)
-
-**BOTH FILES UPDATED (factory audit + rewrite):**
-- `.claude/agents/dev-kinh-dich.md`: added `pilot_constraints` (g12_dod_gate, r_fence/Fence-A/B/C, g7_zero_creds, pre_revert_tags), `doc_maintenance`, `language: TypeScript`, `runtime: bun`, `model: claude-opus-4-5`, factory lazy_load (charter, brownfield, phase-1-plan, pilot-status), updated capabilities/skills for primitive/module/sandbox work.
-- `.claude/flows/dev-kinh-dich/main.md`: baked G12 DoD Gate (sandbox-green-before-RETURN, both tiers), R-FENCE section (eslint-plugin-boundaries Fence-A/B/C, R-2 fallback, lazy-load gate note), pre-revert tag protocol (kinh-dich-pre-ci/-delete/-inject), smoke checks, security/zero-credentials clause.
-
-**System facts:** zone=apps/kinh-dich-service, runtime=bun, language=ts, port=5005 (all from system-map.json via jq).
-
-**Commit:** 2382b6d2 (L84 explicit-file staging — 2 files only)
-**Signal:** docs/signals/agent-father-kinh-dich-p0-kd-3-done-20260523T230414Z.json
-**All 6 ACs PASS. Hard gates: FACTORY SUCCESS + FILES EXIST + ZONE+RUNTIME SET + DOD GATE ACTIVE — all PASS.**
-
-**Note:** agent-md-factory skill not registered as standalone SKILL.md — patterns applied inline per guide + reference templates (dev-stock-price.md, dev-macro-indicators.md). Expected warning; not a hard gate blocker.
-
-## Carry-over
-
-- SI-5 (dev-news-fetch agent): DEFERRED — before pilot-6 charter. Clone dev-macro-indicators pattern.
-- 1967-07/08/09/10: IMPL_DONE — awaiting smart-skip qa (signals emitted).
-- c256–c259 (2026-05-22 1967c sprint): DONE — dispatcher-wrap try/finally, signal protocol, misc MED/LOW bundle, MW-identity no-op review. See git log f47ed0bf..c8b053d8.
-- c-P0-SP-3 / SI-1: DONE — stock-price G12 gate (83770aa1), pilot-status-schema.json (df6ad8dc).
-- c263 (P0-NF-3): DONE — dev-news-fetch flow baked (bca30508).
+- c261 fleet size-cap JUSTIFY+SPLIT: chef.md→228L (6becd6b0), dev-mainserver-crawls→203L. HELD: dev-vps-crawls, dev-stock-price.
+- c260 P0-KD-3 dev-kinh-dich agent+flow baked (2382b6d2). c263 P0-NF-3 dev-news-fetch flow baked (bca30508).
+- c-P0-SP-3/SI-1: stock-price G12 gate (83770aa1), pilot-status-schema (df6ad8dc).
+- 1967-07/08/09/10: IMPL_DONE awaiting smart-skip qa. SI-5 dev-news-fetch agent DEFERRED before pilot-6 charter.
