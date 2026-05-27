@@ -2712,3 +2712,60 @@ QA-team PEK-QA: direct market.db row count check on live BCTC table extraction +
 - Build used cache from dev's verified --no-cache run (both runs re-hit smoke gate successfully, confirming deterministic import resolution)
 - Container is ready for FPT sentinel extraction (qa's next task)
 - Cold-start RAM (64 MiB) leaves substantial headroom before first model load (models will load on first /pek-extract call)
+
+---
+
+## Session: 2026-05-27 (continued)
+
+**Task:** PEK-DEPLOY — REBUILD pdf-extractor microservice (commit e6b84ca5)
+
+### Cycle Summary
+- Dev commit e6b84ca5 (PEK-LAYOUT-CFG fix): DocLayout-YOLO config-path parity + fail-loud gate
+- Rebuild required (docker restart relaunches stale image; fix never lands per memory/feedback_rebuild_after_dev_change.md)
+- Full rebuild executed per EXACT SEQUENCE: capture pre-image, build --no-cache, force-recreate, verify
+
+### Pre-Rebuild State
+- Commit: e6b84ca5 HEAD ✓
+- Running image ID: `455eeb073801` (sha256:455eeb0738012b542f71d4a85e6362493a0a5f3ca94fe1e0d8779ac6f6287d9b)
+- Container: vn-market-intelligence-mcp-pdf-extractor-1 (healthy, port 5001)
+
+### Build & Deployment
+1. `docker compose build --no-cache pdf-extractor` — completed (fresh layers, 117.8 KB build output)
+2. **Smoke gate executed & PASSED:**
+   - Build step #13 (final RUN): imports numpy, cv2, fitz, omegaconf, doclayout_yolo.YOLOv10, paddleocr.PaddleOCR, torch, infrastructure.pek_engine_adapter
+   - Output: `--- pek-import-chain: ALL OK ---` present
+   - No ModuleNotFoundError, ABI errors, or traceback
+3. `docker compose up -d --no-deps --force-recreate pdf-extractor` — recreated & started
+4. Health poll: State reached "running (healthy)" within 2 iterations (~4 seconds)
+
+### Post-Rebuild Verification
+- **NEW image ID:** `fb6fda6f17cf` (sha256:fb6fda6f17cf2336c39e733d6a5cacf0aff4f607aa64f12131d1246d5e5d3328)
+  - ✓ DIFFERS from pre-rebuild (`455eeb073801` → `fb6fda6f17cf`)
+- **Container health:** State = running, RestartCount = 0 (no crash-loop)
+- **Smoke gate:** ✓ CONFIRMED `--- pek-import-chain: ALL OK ---` in build output
+- **Runtime logs:** Last 40 lines clean
+  ```
+  INFO: Started server process [1]
+  INFO: Waiting for application startup.
+  INFO: pdf-extractor starting on 0.0.0.0:5001
+  INFO: Application startup complete.
+  INFO: Uvicorn running on http://0.0.0.0:5001
+  INFO: GET /health → 200 OK (2x health probes successful)
+  ```
+- **RAM usage:** pdf-extractor 55.03 MiB (idle); fleet total ~2.3 GB (well below 8 GB hard cap)
+
+### Execution Timeline
+- 2026-05-27 08:00:00 UTC — Preflight: HEAD confirmed at e6b84ca5
+- 2026-05-27 08:00:15 UTC — Pre-rebuild image captured: 455eeb073801
+- 2026-05-27 08:00:30 UTC — Build started (--no-cache)
+- 2026-05-27 08:03:15 UTC — Build completed (smoke gate passed)
+- 2026-05-27 08:03:23 UTC — Force-recreate executed
+- 2026-05-27 08:03:25 UTC — Container transitioned healthy
+- 2026-05-27 08:03:46 UTC — Post-rebuild verification: all checks GREEN
+
+### Result
+**GREEN — PEK-DEPLOY COMPLETE**
+- Commit e6b84ca5 now LIVE in running image (fb6fda6f17cf)
+- Smoke gate proves all required imports available
+- No restart crashes, no module errors, no ABI drift
+- DocLayout-YOLO config path resolution & fail-loud gate now active
