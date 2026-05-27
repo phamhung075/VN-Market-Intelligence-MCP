@@ -1,0 +1,10 @@
+{
+  "_ssot": "docs/data/market-push-state.json",
+  "_note": "Delivery cron state for MARKET-group push deduplication. Updated after every successful send. See docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md Design Point D.",
+  "_maintained_by": "delivery-cron (Phase 3)",
+  "last_pushed_at": null,
+  "last_pushed_fingerprint": null,
+  "last_pushed_dedup_key": null,
+  "last_pushed_slot": null,
+  "push_count_today": 0
+}

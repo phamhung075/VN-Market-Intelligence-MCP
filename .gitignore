@@ -20,3 +20,5 @@ apps/*/server
 docs/data/cycle-snapshot-*.json
 docs/data/.cycle-snapshot-*.stage
 docs/data/cycle-snapshot-*.json.tmp
+docs/daily/
+docs/outbox/

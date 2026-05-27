@@ -27,6 +27,12 @@
       "pattern": ".claude/agents/*.md",
       "cap": 120,
       "class": "agent-definition"
+    },
+    {
+      "pattern": "docs/daily/*/*.md",
+      "cap": 200,
+      "class": "daily-agent-section",
+      "_note": "Per-agent section file in docs/daily/<YYYY-MM-DD>/. 200L soft cap per section file. Older entries archived to _archive/ by CHEF at EOD. See docs/standards/daily-document-spec.md."
     }
   ]
 }
