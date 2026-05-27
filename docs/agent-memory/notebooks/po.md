@@ -1,64 +1,53 @@
 # PO Notebook
 
-## Cycle 2026-05-27T20:37:53Z — SELF-IMPROVE-GATE kickoff (gated self-improvement loop, design-first)
+## Cycle 2026-05-27T20:46:28Z — PEK-INTEGRATE G9 REJECTED #2 → Round 6 RENDER-SEAM BLOCK (architect-first)
 
-**Input:** EXPLICIT user-approved DIRECTION (verbatim): "po approve, all automate, need thinking before
-approve anything." = automate the self-improvement loop, PO holds the routine approval seat (not the user),
-PO MUST red-team each proposal before approving — written critique mandatory, NO rubber-stamping.
+**Input:** Main terminal CONTEXT — user rejected PEK-INTEGRATE G9 a SECOND time. Verbatim:
+"why OCR Text render is always old data FPT page 3 and 5 no change after all demande fix."
+Main terminal read-only diag CODE-PROVED a NEW root cause (not another OCR-quality patch).
 
-**ACTION: self-initiated Sprint SELF-IMPROVE-GATE.** Authored `docs/SPRINT_GOAL.md § SELF-IMPROVE-GATE`
-+ `docs/TASKS.md § SELF-IMPROVE-GATE` (5 tasks: SIG-DESIGN→SIG-PO-GATE→SIG-IMPL-MD/SIG-IMPL-GATE→SIG-EXIT)
-+ handoff `docs/handoffs/TASK_SELF-IMPROVE-GATE.md`. Phase 1 = DESIGN BRIEF ONLY (zero code).
+**ROOT CAUSE (CODE-PROVEN, I re-verified the two claims, did NOT re-litigate):**
+1. DUAL-PATH RENDER DRIFT — inspector OCR Text panel (`bctcInspectHandler.ts:19,380`) reads OLD
+   `pdf_extracted_text`; table panel reads OLD `bctc_table_rows`; ONLY zones panel reads NEW PEK
+   `bctc_page_zones`. PEK writes ONLY `bctc_layout_units`+`bctc_page_zones`. So a perfect PEK
+   extraction can NEVER change the OCR Text render. CONFIRMED via grep + Read.
+2. 422 TRIGGER — `PekExtractRequestSchema` (`handlers.py:142-155`) requires BOTH report_id AND
+   pdf_path (mandatory). Backfill driver sent report_id only → PEK never re-ran on FPT + 9 others.
+   CONFIRMED via Read.
+Corpus: only 2/12 have PEK units (DGC 6, DIG 11); FPT sentinel + 9 = 0 PEK units; FPT old data @2026-05-26.
 
-**Locked at kickoff (settled scope, not architect choices):**
-- THREE LANES fixed: (a) PO-approve `.md` [default, →agent-father]; (b) auto-implement ONLY behind a
-  PROVEN gate [hard/ungameable signals, →dev-team+QA]; (c) NEVER auto-close → human for subjective
-  comprehensibility + irreversible actions + ANY change to the gate/audit logic itself.
-- PO critique-before-approve = HARD gate (break / false-green+silent-swallow / gameability / host-load).
-- Proven-gate = inject-a-violation-confirm-red, NOT asserted (feedback_fence_false_green).
-- Host-bounded: reuse existing agents only (system-auditor detect, agents-architect propose, agent-father
-  `.md`, dev-team code); NO new always-on cron/agent without a PO-signed RAM+disk+tick budget
-  (project_host_memory_panic / project_enospc_blocker).
-- ANCHOR (binding): plain-VN MARKET fix passed tran-ngoc-bau audit yet failed user ("too complicated") —
-  self-audit can't see comprehensibility → lane-c FOREVER. Brief must name this blind spot.
-- Reconcile with PAUSED Sprint 1948 shadow-mode (improve_check_log / degradationRules / orchestrator job).
+**ACTION — Step 0 BLOCK + Round 6 escalation (ARCHITECT-FIRST per `feedback_recurring_bug_escalation`):**
+6 fix commits on PEK pipeline + "fix didn't take" → NO new patch before architect root-cause brief.
+- VOIDED prior PEK-EXIT sign-off; PEK-EXIT row → BLOCKED.
+- PEK-MULTIPAGE → DONE (backend grouping `2e228f0d`+`ed347661` adjudicated CORRECT, but backend-only).
+- Opened Round-6 RENDER-SEAM chain in TASKS.md: PEK-RENDER-DESIGN (architect, READY) →
+  PEK-RENDER-MCP (dev-mcp-server, render repoint) + PEK-RENDER-PDFX (dev-pdf-extractor, 422 fix) →
+  PEK-RENDER-DEPLOY (ops, rebuild both + re-extract 12 sequential off-hours) →
+  PEK-RENDER-QA (qa, FPT OCR-Text-render-fresh acceptance + 4-gate corpus) → PEK-RENDER-EXIT (po) → USER G9.
+- Zone flipped `apps/pdf-extractor/` → `multi`.
+- Appended full PO-BLOCK record to `docs/handoffs/TASK_PEK-INTEGRATE.md` (root cause, 3 design points,
+  hard constraints) for architect.
 
-**Docs touched (UNSTAGED — main terminal commits):** SPRINT_GOAL.md (+SELF-IMPROVE-GATE block at top),
-TASKS.md (+sprint block), handoff created. NO code, NO `.md` agent/flow edits this cycle.
+**Docs touched (UNSTAGED — main terminal commits):** TASKS.md (sprint status header + PEK-EXIT row +
+PEK-MULTIPAGE row + Round-6 task block + Notes), TASK_PEK-INTEGRATE.md (PO-BLOCK append), this notebook.
+NO code, NO `.md` agent/flow edits this cycle.
 
-**NEXT:** dispatch agents-architect to write `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md`.
+**NEXT:** architect → `docs/architecture-briefs/2026-05-27-pek-render-seam.md` (DESIGN ONLY: SSOT for
+inspector OCR/table render — one unified fail-loud path, no dual-path; + 422 trigger fix carrying
+pdf_path; + exact zone split render=mcp-server / trigger=pdf-extractor). Returns to PO gate.
 
 ## Carry-over
-- **SIG-DESIGN READY** → agents-architect writes brief → returns to SIG-PO-GATE (PO red-teams the DESIGN
-  itself, critique before verdict). Then lane-(a)/(c) `.md` → agent-father; lane-(b) code → dev-team+QA.
-  SIG-EXIT ARMED until loop demonstrated end-to-end (lane-b proven red on injected violation; lane-c escalates).
-- NEWS-CMD-QA in-flight (prior cycle BATCH) → NEWS-CMD-FIX (only if CHANGES_REQUESTED, dev-mcp-server) else
-  NEWS-CMD-EXIT (po). Goal ARMED until USER confirms reads usefully (DoD #7) — main terminal owns verbal G9.
-- PEK-INTEGRATE goal ARMED until USER verbal G9; PEK-MULTIPAGE re-deploy+QA closes the page-coverage defect
-  (ops --no-cache rebuild + DELETE stale layout units + re-extract 12 → qa revised 4-gate, md_len>=1000).
-- CHEF-ATTN (BA spec, READY, apps/mcp-server zone) HELD behind NEWS-CMD — same zone, avoid QA churn.
-- TNB F9 = cowork-lane + data-blocked (BCTC Q1 unfiled), NOT a dev sprint. F3 PMI / F4 VIRA = backlog
-  candidates, lower than NEWS-CMD in reliability→UX order.
-- CW-DISPATCH-STEP47-BOOTSTRAP-ENUM (## ops) = dev-mcp-server backlog (add "cowork-team" to
-  get_cycle_bootstrap enum); ZERO blocker (cowork falls back).
+- **PEK-RENDER goal ARMED until USER verbal G9.** The acceptance test for THIS bug = `/api/bctc-inspect`
+  FPT `e71f845d` OCR Text + table panels render FRESH multi-page PEK data (NOT 2026-05-26). NOT done
+  until that renders fresh AND user signs off. HARD: PDF-Extract-Kit/ pristine; scoped git add never -A;
+  CPU-only/8GB; FROZEN (text_table_extractor.py, sandbox/runner.py, pilot-status.json,
+  generic_md_table_extractor.py); re-extract STRICTLY off HOSE hours; DB verify = in-container bun -e
+  readonly COUNT, never push-echo. After architect brief returns → PO red-teams the design at the gate,
+  then dev-mcp-server + dev-pdf-extractor implement per brief; ops rebuilds BOTH services (not restart).
+- **SELF-IMPROVE-GATE** SIG-DESIGN READY → agents-architect writes brief → SIG-PO-GATE (PO red-teams
+  the DESIGN). Lane-(a)/(c) `.md`→agent-father; lane-(b) code→dev-team+QA. SIG-EXIT armed until loop proven.
+- **NEWS-CMD-QA** in-flight (BATCH) → NEWS-CMD-FIX (if CHANGES_REQUESTED, dev-mcp-server) else NEWS-CMD-EXIT.
+  Goal ARMED until USER confirms reads usefully — main terminal owns verbal G9.
+- **CHEF-ATTN** (BA spec READY, apps/mcp-server zone) HELD behind NEWS-CMD — same zone, avoid QA churn.
 - Channel audit (MARKET/WORK/BUG via gateway) still owed → main terminal next cron tick (PO has no call_tool).
-- All files left UNSTAGED except PO doc edits (pipeline-state.json, tnb ACK, dashboard READ, this notebook).
-
-## 2026-05-27T20:47Z — SIG-PO-GATE (Sprint SELF-IMPROVE-GATE) — gated self-improvement loop
-- VERDICT: APPROVE-WITH-CONDITIONS. Red-teamed brief 2026-05-27-gated-self-improvement-loop.md against LIVE
-  repo (read all 5 edit-target files + SPIKE_1947, not just the brief). Critique written BEFORE verdict in
-  handoff TASK_SELF-IMPROVE-GATE.md (5 axes, no rubber-stamp).
-- PASS clean: host-load (cron = already-budgeted 1948 selfImproveOrchestratorJob 0 9 * * *, inside mcp-server
-  process, no new Docker/agent/tick — SPIKE Option-B dedicated agent was REJECTED, brief honors it); plain-VN
-  comprehensibility named lane-C FOREVER with binding tran-ngoc-bau anchor; lane-C first-match-wins barrier;
-  lane-B gate written as inject-violation-confirm-red not asserted.
-- 3 real findings → 5 conditions (NOT reject — none touch lane-C / human-only product call):
-  C-1 EDIT-4 input-contract mismatch: edit.md takes structured agent_name+change_description but proposal
-  "Proposed Change" is free prose → add structured target_agent+target_files[]; fail-loud if absent.
-  C-2 status=DONE != success-signal-met (lane-A false-green) → DONE only after weakness re-verified.
-  C-3 add 5th mandatory critique field "lane-C-in-disguise" (gameability rests on PO catch, make it explicit).
-  C-4 per-path GATE-PROOF, NOT one global SELF_IMPROVE_AUTO_DISPATCH (silent-swallow serial bugs).
-  C-5 D-IMPROVE must fail-loud-SKIP bad candidate, never abort Tier-2 freshness sweep.
-- ROUTING: SIG-DESIGN done. agent-father signal set unblocked (conditions embedded in JSON). NEXT=agent-father
-  (SIG-IMPL-MD, honor C-1/C-2/C-3/C-5). SIG-IMPL-GATE → dev-team chain AFTER, QA owns C-4. RETURN: continue.
-- All writes UNSTAGED (handoff, signal JSON, this notebook) — main terminal commits to serialize.
+- All files left UNSTAGED except PO doc edits — main terminal commits.
