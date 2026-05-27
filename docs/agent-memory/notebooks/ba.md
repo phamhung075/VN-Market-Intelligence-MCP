@@ -1,8 +1,21 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-26T21:00Z | **Sprint:** PEK-INTEGRATE (PEK-BA)
+**Last updated:** 2026-05-27T20:00Z | **Sprint:** NEWS-CMD (NEWS-CMD-BA)
 
 > Archive: `docs/archive/notebooks/ba-2026-05-21.md`
+
+## NEWS-CMD-BA · 2026-05-27T20:00Z
+
+Sprint NEWS-CMD decomposition complete. REQ file: `docs/REQ_NEWS-CMD.md`. Files left UNSTAGED per commit-discipline. NEXT = PO approval gate; architect NEWS-CMD-DESIGN BLOCKED until PO approves.
+
+Key findings from codebase verification:
+- `handleTelegramCommand` switch in `telegramCommands.ts` is the correct and only insertion point. `/news` grep-clean confirmed.
+- `webhookHandler.ts` reply path confirmed: sends ONE `CommandResult` per command — chunking mechanism is a real design decision for architect (B1).
+- `rag_analyses` table has `summary` column (NOT exposed by `newsFetchLiveHandler.ts` — that handler only exposes `source_title`, not `summary`). The BA spec explicitly includes `summary` as the one-line gist field.
+- `midnightVietnamAsUtc()` pattern exists in `assembleEveningSummary.ts` — replicable inline in `telegramCommands.ts`; must NOT be imported (infrastructure file must not import from application layer).
+- `newsFetchLiveHandler.ts` orders by `created_at DESC`; the correct order for `/news` is `impact_score DESC, created_at DESC` (established by `assembleEveningSummary.ts`).
+
+Two architect-deferred design points (B1 = chunking mechanism: Option A multi-text CommandResult vs Option B single-message conservative cap; B2 = fallback window definition + header wording). No PO blockers.
 
 ## PEK-BA · 2026-05-26T21:00Z
 
