@@ -1,257 +1,287 @@
-# Task Report: PEK-QA (cycle-131) — Option B Engine Verification (commit 6c124745)
-date: 2026-05-27T05:36Z
-outcome: CHANGES_REQUESTED (blocking layout-config reading bug found; STAGE 1+2 pending market close)
+# Task Report: PEK-QA — LIVE Two-Stage Verification (commit e6b84ca5)
+
+date: 2026-05-27
+commit_under_test: e6b84ca5 (fix(pdf-extractor): PEK-LAYOUT-CFG — config-path + model_path resolution + fail-loud)
+image_sha: fb6fda6f17cf (built 2026-05-27 08:00 CEST)
+outcome: RED — CHANGES_REQUESTED
+qa_utc: 2026-05-27T09:04–10:30Z
+market_state_at_start: CLOSED (09:04 UTC — past 08:59 UTC close, extraction permitted)
 
 ---
 
-## Executive Summary
+## Overall Verdict: RED
 
-Commit `6c124745` (PEK-IMPORT-CHAIN — bypass pdf_extract_kit.tasks via `_PekLayoutModel`) correctly
-fixes the prior blocker (unimernet ModuleNotFoundError). The import chain is clean, the smoke gate
-passes in the running container, and all static gates PASS.
+The config-path fix (e6b84ca5) is structurally CORRECT and VERIFIED: DocLayout-YOLO loads
+successfully, layout detection runs on all pages, fail-loud is wired. However, the OCR TEXT step
+(`TesseractVieBackend.recognize_text`) throws `NameError: name '_to_pil' is not defined` on every
+call. The exception is caught silently (returns `("", 0.0)`), producing empty `stitched_markdown`
+in every table unit across all 5 extracted reports. Code 100 cannot be found. Stage 1 and Stage 2
+FAIL on content — not on the config fix itself.
 
-However, a new blocking issue is found during static analysis: the `_load_pek_models()` function
-reads `layout_cfg.get("model", {})` from `layout_detection_yolo.yaml`, but the YAML has NO top-level
-`model` key (its structure is `tasks.layout_detection.model_config`). This causes `model_cfg` to be
-`{}` → `model_cfg["model_path"]` raises `KeyError` → caught silently → `layout_task = None` →
-DocLayout-YOLO layout detection is DISABLED. Extraction falls back to geometry-only page grouping.
-
-STAGE 1 (FPT Q4 sentinel extraction) and STAGE 2 (corpus sweep) are BLOCKED by market hours
-(currently 05:36 UTC; guard fires until 09:00 UTC Mon-Fri). A background script is queued to
-trigger all 12 report extractions at 09:00 UTC.
+Root cause is a separate code defect in `infrastructure/ocr_backends.py:108` — `_to_pil` is called
+but never defined in that module.
 
 ---
 
-## Deployment Confirmation
+## 503 Market-Hours Guard: INTACT
 
-| Field | Value |
+- `CRON_BCTC_REPARSE_JOB=0 21 * * *` confirmed in docker-compose.yml (unchanged)
+- HTTP guard: `is_vn_market_open_utc()` imported from `domain.primitives.market_hours.primitive`
+  returns 503 during 02:00–08:59 UTC Mon–Fri — code at `interface/handlers.py:403` (unchanged)
+- QA verification: at 09:04 UTC (market closed), endpoint returned HTTP 202 — guard correctly open
+- Prior run at 05:12 UTC (cycle-131) returned HTTP 503 — guard correctly closed
+- VERDICT: 503 guard UNCHANGED and WORKING
+
+---
+
+## Stage 1 — FPT Q4 2025 Sentinel (report_id: e71f845d)
+
+### Trigger and HTTP response
+
+```
+POST /pek-extract
+  {"report_id": "e71f845d-ffa5-48f9-8f09-30ac2cd09c65",
+   "pdf_path": "/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf"}
+HTTP 202 Accepted (market CLOSED at 09:04 UTC)
+```
+
+### Model load sequence (verified from docker logs)
+
+Attempt 1 (09:04 UTC): FAILED — model weights missing at
+  `/app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt`
+  Auto-download from GitHub returned 404 (doclayout_yolo v8.1.0 GitHub assets URL does not exist).
+  Fail-loud WORKED CORRECTLY: RuntimeError raised, not silent degradation.
+
+QA action: Downloaded model via `huggingface_hub.hf_hub_download` from
+  `opendatalab/PDF-Extract-Kit-1.0` to `/app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt`
+  (38.8 MB). This is a first-run setup requirement — named volume `pek_model_cache` is empty in
+  current image.
+
+Attempt 2 (after weights placed): MODELS LOADED SUCCESSFULLY
+
+```
+PekEngineAdapter: _PekLayoutModel loaded (DocLayout-YOLO, CPU)
+PekEngineAdapter: PaddleOCR PP-StructureV2 table mode loaded (CPU)
+PekEngineAdapter._run_extraction: report_id=e71f845d...
+PekEngineAdapter: layout detection complete — 46 pages
+PekEngineAdapter: table extraction complete — 30 pages with tables
+LayoutFirstPushClient.push_layout OK: units_stored=39 pages_stored=46
+_run_pek_extract: DONE report_id=e71f845d units_stored=39 pages_stored=46
+```
+
+No crash. No RuntimeError. No traceback. The config-path fix (e6b84ca5) WORKS.
+
+### Direct DB verification (python3 sqlite3 readonly in mcp-server container)
+
+```sql
+SELECT COUNT(*) FROM bctc_layout_units WHERE report_id LIKE 'e71f845d%';
+-- Result: 39
+```
+
+COUNT = 39 > 0: PASS
+
+### Layout units breakdown
+
+| page_type | units | table_units_with_empty_md |
+|---|---|---|
+| prose | 16 | N/A |
+| table | 23 | 23 (ALL empty) |
+
+### 15-row sample — Column Alignment Check
+
+All 39 units have `stitched_markdown = ""` (empty string, LENGTH=0). No row content to inspect.
+No markdown table structure. Code 100 (TONG CONG TAI SAN / total assets) ABSENT.
+
+This is NOT a layout detection failure. DocLayout-YOLO correctly identified 23 table pages.
+The zones_json for page 5 shows valid column gutters: `col_0: x_min=225, x_max=1494`.
+The failure is in the OCR TEXT step — `TesseractVieBackend.recognize_text` returns ("", 0.0)
+for every table region crop due to `_to_pil` undefined at `ocr_backends.py:108`.
+
+### PASS bar evaluation
+
+| Check | Result |
 |---|---|
-| Container | vn-market-intelligence-mcp-pdf-extractor-1 |
-| Image SHA | 455eeb073801 |
-| Image size | 4.74 GB |
-| Status | Up ~1 minute (healthy) at QA start |
-| Commit under test | 6c124745 |
-| Prior image (swapped out) | 3b4526c0 (unimernet crash) |
+| No crash / traceback during extraction | PASS — clean DONE, no RuntimeError |
+| rows > 0 (layout units COUNT) | PASS — 39 units stored |
+| 15-row stitched_markdown sample CLEAN | FAIL — all stitched_markdown empty |
+| Code 100 present | FAIL — absent (empty content) |
+| No failure modes (a) junk-text rows | INCONCLUSIVE — content empty |
+| No failure modes (b) value-no-label orphans | INCONCLUSIVE — content empty |
+| No failure modes (c) missing code 100 | FAIL — code 100 absent |
+| No failure modes (d) mass duplicate rows | INCONCLUSIVE — content empty |
+| No failure modes (e) null prior-period column | INCONCLUSIVE — content empty |
+| 503 guard unchanged | PASS |
+| pdf-extractor RAM | PASS — 1.44 GiB / 2.5 GiB limit |
+| Total fleet RAM | PASS — 3.57 GiB / 8 GiB cap |
+
+### Stage 1 verdict: FAIL
+
+---
+
+## Stage 2 — Corpus Sweep (the /goal)
+
+### Excluded reports (pdf_path = NULL, correctly skipped)
+
+| report_id | ticker | reason |
+|---|---|---|
+| 6e967457 | VCB 2025-Q1 | pdf_path = NULL — PDF never downloaded (SSC doc blocked/geo-restricted) |
+| 466495f7 | VCB 2025-Q4 | pdf_path = NULL — PDF never downloaded (SSC doc blocked/geo-restricted) |
+
+Both are known-excluded. Corpus = 12 eligible, 2 excluded = 14 total.
+
+### Corpus results (5 verified via PEK path during this QA run)
+
+| report_id (short) | ticker / period | units | pages | table_units | non_empty_md | code-100 | failure modes | PASS/FAIL |
+|---|---|---|---|---|---|---|---|---|
+| e71f845d | FPT / 2025-Q4 | 39 | 46 | 23 | 0 | NO | content empty | FAIL |
+| fea19bae | ACB / 2026-Q1 | 27 | 33 | 11 | 0 | NO | content empty | FAIL |
+| ac3f0d01 | BSR / 2025-Q4 | 24 | 30 | 14 | 0 | NO | content empty | FAIL |
+| b48f7e6a | VEA / 2025-Q4 | 34 | 51 | 11 | 0 | NO | content empty | FAIL |
+| d6f1885f | HPG / 2025-Q4 | 20 | 24 | 13 | 0 | NO | content empty | FAIL |
+
+### Remaining 7 reports (not yet extracted via current PEK path at report write time)
+
+| report_id (short) | ticker / period | expected outcome |
+|---|---|---|
+| 620a9d00 | DHG / 2026-Q1 | FAIL — same _to_pil bug applies |
+| 59212e0d | SHB / 2025-Q4 | FAIL — same _to_pil bug applies |
+| 549d458a | EIB / 2026-Q1 | FAIL — same _to_pil bug applies |
+| 4316f6d1 | VNM / 2025-Q4 | FAIL — same _to_pil bug applies |
+| 173038f2 | DIG / 2025-Q4 | FAIL — same _to_pil bug applies |
+| 0c6f0535 | DGC / 2025-Q4 | FAIL — same _to_pil bug applies |
+| e8ea3df5 | FPT / 2026-Q1 | FAIL — same _to_pil bug applies (prior LF-path data in DB from 2026-05-26 is not PEK output) |
+
+The `_to_pil` bug is in `TesseractVieBackend.recognize_text` — a shared code path called for
+every table region crop on every report. No report-specific variation can change this outcome.
+The 5 verified reports are a representative sample; the remaining 7 would produce identical results.
+
+### Stage 2 verdict: FAIL
+
+The /goal "all bctc downloaded can extract correct table" is NOT MET.
+5 of 5 verified reports FAIL. Expected: 12 of 12 FAIL.
 
 ---
 
 ## Static Gates
 
-### Smoke Gate (build-time + running container verification)
-```
---- PEK import chain smoke gate (PEK-IMPORT-CHAIN) ---
-numpy 2.2.6
-cv2 4.13.0
-fitz (PyMuPDF) 1.27.2.3
-omegaconf OK
-doclayout_yolo.YOLOv10 OK
-paddleocr.PaddleOCR OK
-torch 2.5.1+cpu
-pek_engine_adapter import OK — no pdf_extract_kit.tasks trigger
---- pek-import-chain: ALL OK ---
-```
-The smoke gate now imports `pek_engine_adapter` MODULE ITSELF, so any import chain regression
-inside `_load_pek_models()` would fail the build. PASS.
-
-### Import Chain Fix Verification
-```python
-# Verified in running container:
-from infrastructure.pek_engine_adapter import _PekLayoutModel, _load_pek_models
-# → import OK — no pdf_extract_kit.tasks trigger
-```
-Prior blocker (unimernet ModuleNotFoundError): FIXED.
-Executable `pdf_extract_kit.tasks.*` imports in production code: 0 (all references are in
-docstrings/comments — verified by grep).
-
-### PEK Subtree
-`git -C apps/pdf-extractor/PDF-Extract-Kit diff` → empty (0 bytes). PRISTINE.
-
-### Frozen Surfaces
-Files frozen by QA:
-- `apps/pdf-extractor/infrastructure/text_table_extractor.py` — NOT in commit 6c124745
-- `apps/pdf-extractor/sandbox/runner.py` — NOT in commit 6c124745
-- `pilot-status-pdf-extractor.json` — NOT in commit 6c124745
-- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` — NOT in commit 6c124745
-
-Commit 6c124745 changes only: `apps/pdf-extractor/Dockerfile` + `apps/pdf-extractor/infrastructure/pek_engine_adapter.py`. PASS.
-
 ### Unit Tests
-| Test Set | Result |
-|---|---|
-| pdf-extractor unit suite (host, non-slow) | 581/581 PASS |
-| pdf-extractor full suite (host, non-slow) | 687/687 PASS (7 slow deselected) |
-| test_pek_engine_adapter.py | 15/15 PASS |
-| test_market_hours_guard.py | 12/12 PASS |
-| test_ocr_backends.py | 21/21 PASS |
-| scenarios/pek_single_doc_extraction.py | 10/10 PASS |
-
-Prior cycle-130 blocker #2 (patch target test failing): FIXED in this commit.
-
-### DDD Compliance
 ```
-Analyzed 96 files, 207 dependencies.
-Fence-A: primitives must not import infrastructure, application, or interface — KEPT
-Fence-B: modules must not import infrastructure or interface — KEPT
-Contracts: 2 kept, 0 broken.
+694 pass / 0 fail / 7 slow deselected
 ```
-PASS.
+PASS
 
-### Security Scan
-- `process.env` in production code: 0 matches — PASS
-- Hardcoded secrets/tokens/passwords: 0 executable matches (all in docstrings) — PASS
+### DDD Fence
+```
+lint-imports: 96 files, 207 dependencies analyzed
+Fence-A: KEPT  Fence-B: KEPT  Contracts: 2 kept, 0 broken
+```
+PASS
 
-### Market-Hours Guard
-Layer 2 (HTTP handler):
-- Current time at QA start: 05:12 UTC Wednesday (inside HOSE market window 02:00-08:59 UTC Mon-Fri)
-- POST /pek-extract → HTTP 503 `{"error":"market_open","retry_after":"after 15:00 ICT (08:00 UTC)"}`
-- Guard is working correctly. The 503 is expected and correct — do NOT count as failure.
-- Market closes at 09:00 UTC. STAGE 1/2 extraction deferred to post-market.
+### Security
+- process.env in source: 0 matches
+- hardcoded secrets/credentials: 0 matches
+PASS
 
-### mcp-server Regression Gate
-- `bun test src/__tests__/1272-push-bctc-layout.test.ts` → 20/20 PASS
-- pushBctcLayoutHandler writes to `bctc_layout_units` correctly — PASS
+### Config-Path Fix Verification (structural, in-container)
+
+```python
+OmegaConf.load('/app/PDF-Extract-Kit/configs/layout_detection_yolo.yaml')
+has tasks: True
+has layout_detection: True
+has model_config: True
+model_config: {img_size: 1024, conf_thres: 0.25, iou_thres: 0.45,
+               model_path: models/Layout/YOLO/doclayout_yolo_ft.pt, ...}
+FAIL-LOUD guard: PASS — config structure correct, RuntimeError would fire if missing
+```
+Fix e6b84ca5 is STRUCTURALLY CORRECT. PASS.
 
 ---
 
-## BLOCKING ISSUE FOUND (static analysis)
+## RAM
 
-### Blocking #1 — Layout config key mismatch: DocLayout-YOLO silently disabled
-**File:** `apps/pdf-extractor/infrastructure/pek_engine_adapter.py:221`
-**Code:**
-```python
-model_cfg = dict(OmegaConf.to_container(
-    layout_cfg.get("model", {}), resolve=True
-))
-```
-**Config:** `apps/pdf-extractor/PDF-Extract-Kit/configs/layout_detection_yolo.yaml`
-```yaml
-inputs: assets/demo/layout_detection
-outputs: outputs/layout_detection
-tasks:
-  layout_detection:
-    model: layout_detection_yolo
-    model_config:
-      img_size: 1024
-      conf_thres: 0.25
-      iou_thres: 0.45
-      model_path: models/Layout/YOLO/doclayout_yolo_ft.pt
-```
-**Problem:** The YAML has NO top-level `model` key. `layout_cfg.get("model", {})` returns `{}`.
-`model_cfg["model_path"]` → `KeyError: 'model_path'` → caught silently at line 228 →
-`layout_task = None` → DocLayout-YOLO layout detection DISABLED.
-
-**Old code (before fix):** Passed full `layout_cfg` object to `LayoutDetectionTask(layout_cfg)`.
-`LayoutDetectionTask` knew to navigate `tasks.layout_detection.model_config` itself.
-
-**Fix needed (dev, NOT QA):** Change line 221 to read the correct YAML path:
-```python
-# Option: navigate tasks.layout_detection.model_config
-model_cfg_node = (layout_cfg.get("tasks", {})
-                  .get("layout_detection", {})
-                  .get("model_config", {}))
-model_cfg = dict(OmegaConf.to_container(model_cfg_node, resolve=True))
-```
-**Impact:** Without layout detection, extraction falls back to `_get_page_dims_fallback()` (geometry-only,
-no bbox-guided page grouping). Rows may be produced but column structure quality is uncertain.
-
-**Classification:** This is a code bug introduced in commit 6c124745. Blocking — DocLayout-YOLO is the
-core of the PEK extraction. The fix bypassed the import crash but broke the model loading.
-
----
-
-## Fleet RAM (cold start, pre-model-load)
-
-| Container | RAM Used | Limit |
+| container | usage | limit |
 |---|---|---|
-| pdf-extractor | 57.71 MiB | 2.5 GiB |
-| rag-service | 976.5 MiB | 1.5 GiB |
-| mcp-server | 494.3 MiB | 2.0 GiB |
-| frontend | 99.74 MiB | 512 MiB |
-| api-gateway | 17.17 MiB | 512 MiB |
-| macro-indicators | 15.27 MiB | 1.5 GiB |
-| kinh-dich-service | 11.61 MiB | 512 MiB |
-| mcp-gateway | 24.69 MiB | 512 MiB |
-| **Fleet total** | **~1.7 GiB** | **8 GiB cap** |
+| pdf-extractor | 1.44 GiB | 2.5 GiB |
+| rag-service | 1.19 GiB | 1.5 GiB |
+| mcp-server | 0.84 GiB | 2.0 GiB |
+| others | ~0.10 GiB | — |
+| TOTAL FLEET | 3.57 GiB | 8 GiB cap |
 
-Fleet is well within 8GB cap at cold start. With DocLayout-YOLO + PaddleOCR loaded:
-estimated additional ~1-2GB (YOLO model ~100MB, PaddleOCR ~200-500MB). Fleet RAM
-with models resident estimated at ~3-4GB — within cap, but not yet measured (extraction pending
-market close).
+PASS — well under cap.
 
 ---
 
-## STAGE 1 — FPT Q4 Sentinel: BLOCKED (market hours)
+## Blocking Issues (file:line)
 
-- Report ID: e71f845d-ffa5-48f9-8f09-30ac2cd09c65
-- PDF: /app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf
-- Extraction trigger: BLOCKED — guard returns HTTP 503 until 09:00 UTC
-- Current bctc_layout_units rows for e71f845d: 0 (never extracted via PEK path)
-- Background script queued to trigger at market close (~09:00 UTC)
-- VERDICT: NOT YET RUN — counts as FAIL per honest-green discipline until extraction completes
+### Blocking Issue 1 — ocr_backends.py:108 — `_to_pil` undefined
+
+File: `apps/pdf-extractor/infrastructure/ocr_backends.py:108`
+
+```python
+pil_image = _to_pil(image_or_region)  # line 108 — _to_pil is NOT defined anywhere in this module
+```
+
+`_to_pil` is called but never defined in `ocr_backends.py`. No `def _to_pil` exists anywhere in
+the file. Every call to `TesseractVieBackend.recognize_text(image_or_region)` with a non-None
+numpy array reaches line 108, raises `NameError: name '_to_pil' is not defined`, is caught by the
+bare `except Exception` at line 134, and returns `("", 0.0)` silently.
+
+Effect: 100% of OCR TEXT calls produce empty output. `stitched_markdown` is empty in every table
+unit for every report. Code 100 is never stored. The /goal cannot be met.
+
+Fix options (dev-pdf-extractor to choose):
+  A. Define `_to_pil` as a module-level helper in `ocr_backends.py`:
+     ```python
+     def _to_pil(img):
+         from PIL import Image
+         import numpy as np
+         if isinstance(img, np.ndarray):
+             return Image.fromarray(img)
+         return img
+     ```
+  B. Set `OCR_TEXT_BACKEND=paddleocr` as default in docker-compose.yml (PaddleOCR path at
+     `pek_engine_adapter.py:987-1004` has no `_to_pil` dependency and uses the loaded
+     `paddle_table` instance directly — this path is known-working).
+
+### Blocking Issue 2 — test_ocr_backends.py — real numpy array path untested
+
+File: `apps/pdf-extractor/__tests__/test_ocr_backends.py`
+
+`TesseractVieBackend.recognize_text` is never tested with a real `numpy.ndarray` input.
+All tests use `None` (exits early at line 92) or `object()` (falls to import check at line 97).
+The `_to_pil` call at line 108 is therefore dead code from test coverage perspective.
+
+Fix: Add test: `backend.recognize_text(np.zeros((50, 200, 3), dtype=np.uint8))` — should
+return `("", 0.0)` gracefully without NameError (after `_to_pil` is defined).
+
+### Non-blocking
+
+3. Model weights not pre-seeded on `pek_model_cache` volume: `doclayout_yolo_ft.pt` (38.8 MB)
+   must be manually downloaded on first run. GitHub auto-download returns 404 for v8.1.0 URL.
+   Recommend: add startup script that downloads via HuggingFace (`opendatalab/PDF-Extract-Kit-1.0`)
+   if weights absent.
 
 ---
 
-## STAGE 2 — Corpus Sweep: BLOCKED (market hours)
+## config-path fix (e6b84ca5) — verified correct
 
-### Corpus Enumeration
-
-14 financial_reports in DB. 12 with pdf_path set (eligible for PEK extraction):
-
-| # | ticker | period | report_id (8) | pdf_path |
-|---|---|---|---|---|
-| 1 | FPT | 2025-Q4 | e71f845d | 20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf |
-| 2 | ACB | 2026-Q1 | fea19bae | 20260422-ACB-BCTC-Hop-nhat-Quy-1-nam-2026.pdf |
-| 3 | BSR | 2025-Q4 | ac3f0d01 | 20260130-BSR-Bao-cao-tai-chinh-rieng-Quy-4-nam-2025.pdf |
-| 4 | DGC | 2025-Q4 | 0c6f0535 | 20260130-DGC-BCTC-hop-nhat-quy-4-2025.pdf |
-| 5 | DHG | 2026-Q1 | 620a9d00 | 20260420-DHG-BCTC-Quy-1.2026.pdf |
-| 6 | DIG | 2025-Q4 | 173038f2 | 20260129-DIG-BCTC-hop-nhat-quy-4-nam-2025-cks.pdf |
-| 7 | EIB | 2026-Q1 | 549d458a | 20260428-EIB-BCTC-hop-nhat-Q1.2026.pdf |
-| 8 | FPT | 2026-Q1 | e8ea3df5 | 20260424-FPT-BCTC-hop-nhat-Quy-1-nam-2026.pdf |
-| 9 | HPG | 2025-Q4 | d6f1885f | 20260130-HPG-Bao-cao-tai-chinh-rieng-Cong-ty-me-va-giai-trinh-Q4.2025.pdf |
-| 10 | SHB | 2025-Q4 | 59212e0d | 20260130-SHB-Bao-cao-tai-chinh-Q4.2025-Hop-nhat.pdf |
-| 11 | VEA | 2025-Q4 | b48f7e6a | BCTC VEA 31.12.2025 - RIENG - VN.pdf |
-| 12 | VNM | 2025-Q4 | 4316f6d1 | BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf |
-
-Excluded (no pdf_path in financial_reports):
-- VCB 2025-Q1 (6e967457): pdf_path = NULL
-- VCB 2025-Q4 (466495f7): pdf_path = NULL
-
-PDFs on disk but no financial_report entry: GAS 2026-Q1, VCB_2025_Q1.pdf, VCB_2025_Q4.pdf (3 files,
-not in scope for PEK extraction via report_id).
-
-Total extraction-eligible: **12 reports**. Extraction pending market close.
-
-Per-report results table: **NOT YET RUN**.
-
----
-
-## Overall Verdict
-
-**RED — CHANGES_REQUESTED**
-
-| Gate | Status |
+| Fix | Verified |
 |---|---|
-| Image 455eeb073801 healthy | PASS |
-| PEK subtree pristine | PASS |
-| Frozen surfaces untouched | PASS |
-| unimernet ModuleNotFoundError (prior crash) | FIXED |
-| Smoke gate imports pek_engine_adapter | PASS |
-| Unit tests 687/687 | PASS |
-| Scenario tests 10/10 | PASS |
-| DDD fence 2/2 KEPT | PASS |
-| Security: 0 violations | PASS |
-| Market-hours guard 503 | PASS (guard working) |
-| mcp-server pushBctcLayout 20/20 | PASS |
-| **Layout config key mismatch (KeyError "model_path")** | **BLOCKING — DocLayout-YOLO disabled** |
-| STAGE 1 FPT sentinel extraction | NOT-RUN (market-open blocker) |
-| STAGE 2 corpus sweep | NOT-RUN (market-open blocker) |
+| FIX 1: reads `layout_cfg.tasks.layout_detection.model_config` (not nonexistent `model` key) | YES — live YAML structure confirmed in container |
+| FIX 2: resolves relative `model_path` against `_pek_root` | YES — `_PekLayoutModel.__init__` receives correct absolute path |
+| FIX 3: RuntimeError on broken config instead of silent logger.warning + layout_task=None | YES — confirmed by Attempt 1 failure (weights absent → clean RuntimeError logged) |
 
-**BLOCKING ISSUE:** `pek_engine_adapter.py:221` reads `layout_cfg.get("model", {})` but YAML has
-no top-level `model` key — should be `tasks.layout_detection.model_config`. DocLayout-YOLO silently
-disabled. Fix needed in `pek_engine_adapter.py` before corpus sweep is meaningful.
+The fix closes the cycle-131 YAML-config blocker. The `_to_pil` defect is a pre-existing latent
+bug in `ocr_backends.py` that only became reachable once models actually loaded after the config fix.
 
-**Market-open note:** Extraction runs blocked until 09:00 UTC by correct HTTP 503 guard. Background
-script queued. STAGE 1/2 results will be appended when market closes.
+---
 
-NEXT: dev-pdf-extractor — fix YAML config reading path at pek_engine_adapter.py:221 →
-ops rebuild → qa re-runs STAGE 1+2.
+## Recurring-Bug Rule
+
+e6b84ca5 is the 4th+ fix commit on `apps/pdf-extractor` (preceded by 9ab93889, efd23447, and
+others). Per the recurring-bug rule: if dev-pdf-extractor proposes an architectural change to the
+OCR backend strategy (not just the one-liner `_to_pil` fix), architect should review before
+implementation. The one-liner Option A fix does not require architect review. Option B
+(OCR_TEXT_BACKEND default change) is configuration-only and also does not require architect review.
+
+Route: dev-pdf-extractor → ops rebuild → qa re-run.

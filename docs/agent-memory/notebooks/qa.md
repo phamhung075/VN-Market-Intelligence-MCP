@@ -1,5 +1,87 @@
 # QA — Notebook
 
+## cycle-132 · 2026-05-27 · PEK-QA LIVE (commit e6b84ca5, image fb6fda6f17cf) — RED / CHANGES_REQUESTED
+
+**Task:** PEK-QA live two-stage verification of config-path + fail-loud fix | **Verdict:** CHANGES_REQUESTED
+
+```
+date: 2026-05-27T09:04–10:30Z
+type: sprint-qa-gate (PEK-QA LIVE — commit e6b84ca5)
+report_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (FPT Q4 2025 sentinel)
+report: reports/TASK_REPORT_PEK-QA.md
+commit_under_test: e6b84ca5
+image_sha: fb6fda6f17cf (built 2026-05-27 08:00 CEST)
+
+market_hours_guard:
+  state: CLOSED at 09:04 UTC (past 08:59 UTC window)
+  http_status: 202 (correctly permitted)
+  prior_run_503: confirmed at 05:12 UTC cycle-131
+  CRON_BCTC_REPARSE_JOB: "0 21 * * *" — unchanged
+  verdict: PASS
+
+static_gates:
+  unit_tests: 694/694 PASS (7 slow deselected)
+  ddd_fence_a: KEPT (96 files, 207 deps)
+  ddd_fence_b: KEPT
+  security_process_env: 0 matches
+  security_secrets: 0 matches
+
+config_path_fix_verified:
+  yaml_path: tasks.layout_detection.model_config — CORRECT (confirmed in container)
+  fail_loud: RuntimeError on missing config — confirmed by Attempt-1 clean failure
+  models_loaded: YES (DocLayout-YOLO + PaddleOCR both loaded on Attempt 2)
+  layout_detection_complete: YES — 46 pages for FPT Q4
+
+blocking_issue_found:
+  file: apps/pdf-extractor/infrastructure/ocr_backends.py:108
+  code: pil_image = _to_pil(image_or_region)
+  defect: _to_pil is called but NEVER defined in this module (no def _to_pil anywhere)
+  effect: NameError caught silently → returns ("", 0.0) for every table crop
+  consequence: stitched_markdown empty in ALL table units for ALL reports
+  code_100: absent in all extraction outputs
+  test_gap: test_ocr_backends.py never tests recognize_text(np.ndarray) — only tests None
+    input (exits early at line 92 before reaching _to_pil)
+
+stage_1_sentinel:
+  http: 202 (not 503 — market closed)
+  attempt_1: FAILED — model weights absent (GitHub 404, weights not pre-seeded on volume)
+  qa_action: downloaded doclayout_yolo_ft.pt (38.8MB) via huggingface_hub
+  attempt_2: DONE — units_stored=39, pages_stored=46
+  db_count: 39 (bctc_layout_units for e71f845d)
+  non_empty_md: 0 (all stitched_markdown empty)
+  code_100: ABSENT
+  verdict: FAIL
+
+stage_2_corpus:
+  eligible: 12 reports (14 total - 2 VCB with NULL pdf_path)
+  excluded: VCB 2025-Q1 (6e967457) + VCB 2025-Q4 (466495f7) — NULL pdf_path
+  extracted_this_run: 5 (FPT-Q4, ACB, BSR, VEA, HPG)
+  all_5_result: DONE no-crash, units>0, stitched_markdown=EMPTY, code_100=ABSENT → FAIL
+  remaining_7: DHG/SHB/EIB/VNM/DIG/DGC/FPT-Q1 — same _to_pil bug → expected FAIL
+  verdict: FAIL — /goal not met
+
+fleet_ram: 3.57 GiB of 8 GiB cap (pdf-extractor 1.44GiB during extraction)
+verdict: RED — CHANGES_REQUESTED
+next: dev-pdf-extractor (fix ocr_backends.py:108 _to_pil + add numpy test) → ops rebuild → qa re-run
+```
+
+key_learnings:
+  - Config-path fix (e6b84ca5) is correct and works. Closing the cycle-131 YAML-config blocker
+    does NOT close the /goal — the OCR step was a separate latent defect.
+  - _to_pil is called but undefined: NameError caught by bare except → silent empty return.
+    This is a ghost bug — tests all pass because TesseractVieBackend.recognize_text is only
+    tested with None input (exits early at line 92 before reaching line 108).
+  - First-run weights issue: named volume pek_model_cache is empty until first download.
+    GitHub auto-download URL (v8.1.0 assets) returns 404. HuggingFace download works
+    (opendatalab/PDF-Extract-Kit-1.0). Startup weight seeding needed for unattended deploys.
+  - DocLayout-YOLO layout detection IS working correctly: 46 pages detected, 23 table pages,
+    column gutters computed. The failure is purely in the downstream OCR TEXT step.
+  - PaddleOCR is also loaded (PP-StructureV2) but its OCR is bypassed when ocr_backend is not
+    None (TesseractVie is injected as default). OCR_TEXT_BACKEND=paddleocr would use the working
+    paddle_table path — a viable fix B option.
+
+---
+
 ## cycle-131 · 2026-05-27 · PEK-QA Option-B (commit 6c124745, image 455eeb073801) — CHANGES_REQUESTED
 
 **Task:** PEK-QA corpus-wide verification of Option B (bypass pdf_extract_kit.tasks via _PekLayoutModel) | **Verdict:** CHANGES_REQUESTED
