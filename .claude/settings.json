@@ -1,7 +1,6 @@
 {
-  "worktree": {"bgIsolation": "none"},
   "hooks": {
-"PreToolUse": [
+    "PreToolUse": [
       {
         "matcher": "Glob|Grep",
         "hooks": [
@@ -12,5 +11,14 @@
         ]
       }
     ]
+  },
+  "worktree": {
+    "bgIsolation": "none"
+  },
+  "enabledPlugins": {
+    "frontend-design@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "chrome-devtools-mcp@claude-plugins-official": true
   }
 }

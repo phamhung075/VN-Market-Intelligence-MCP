@@ -46,6 +46,13 @@ services:
       # AC-PEK-NEW-2: bctcReparseJob must NOT fire 02:00-08:59 UTC weekdays.
       # Overrides cronConfig.ts default without any source code edit to cronConfig.ts.
       CRON_BCTC_REPARSE_JOB: "0 21 * * *"
+      # Per-dispatch-path kill-switch for self-improving gate (Sprint SELF-IMPROVE-GATE Phase 2 lane-B)
+      # default false; flip ONLY after QA records GATE-PROOF in the proposal doc (C-4 enforcement).
+      # All lines commented out at ship time — absent env var = false (default-off invariant).
+      #SELF_IMPROVE_AUTO_DISPATCH_PRICE_CONFIRMATION=false
+      #SELF_IMPROVE_AUTO_DISPATCH_CHAIN_CATALYST=false
+      #SELF_IMPROVE_AUTO_DISPATCH_VOLUME_SPIKE=false
+      #SELF_IMPROVE_AUTO_DISPATCH_COVERAGE_GAP=false
     env_file:
     - .env
     restart: unless-stopped
