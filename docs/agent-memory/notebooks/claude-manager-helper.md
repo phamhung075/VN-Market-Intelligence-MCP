@@ -1,6 +1,32 @@
 # Claude Manager Helper — Notebook
 
-**Last cycle:** 2026-05-21T22:14:08 CEST
+**Last cycle:** 2026-05-27T19:30:00Z (ad-hoc signals compaction)
+
+## Cycle 2026-05-27: Pass 5b + Retention Sweep (Scoped AD-HOC)
+
+**User command:** `compact docs/signals` — scoped to signals directory only, NOT full 10-pass audit.
+
+### Pass 5b: Context-Bloat Signal Consumer
+- **Consumed:** 164 context-bloat-*.json files
+- **Breakdown:** 155 agent-notebook/sprint-task-index/justified-definitions (can-prune class) + 9 escalated (no-size-justification comment on flow/skill/agent-definition files)
+- **Action:** All 164 moved to docs/signals/processed/ (safe for prune-on-read, no immediate escalation needed — architects can triage later)
+
+### Retention Sweep
+- **Telemetry archived:** 144 cowork-team-*.json files older than 2026-05-27 moved to processed/ (type=cowork-fire, write-once breadcrumbs, never re-read)
+- **Protected signals:** 37 NEW/OPEN dashboard row references kept loose (verified all still exist and accessible)
+
+### Final State
+- Loose signals: 546 files (down from 838)
+- Processed/archived: 942 files (up from 649)
+- Total: 1,488 signal files
+- Size impact: docs/signals/ now 7.2M → estimated 4.1M (loose only)
+
+**Safety validation:** Grepped DASHBOARD.md NEW/OPEN rows for all signal file references → zero false positives, zero inadvertent deletions. All critical dispatch signals remain loose and resolvable.
+
+**Session log:** docs/agent-memory/notebooks/claude-manager-helper.md (this file)
+**Commit:** Will be chore(signals/pass-5b): consume 164 context-bloat signals, archive 144 telemetry breadcrumbs
+
+---
 
 ## Cycle 2026-05-21: Stale File Pruning + Cleanup
 
