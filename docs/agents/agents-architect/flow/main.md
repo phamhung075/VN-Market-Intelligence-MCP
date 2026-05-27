@@ -19,6 +19,7 @@ One of:
 | User-typed architecture question / brief request | → Run handler: `docs/agents/agents-architect/handlers.md` § **Operating Cycle** |
 | TNB signal (system quality gap) | Same handler, signal payload as Step 2 input |
 | Direct call from agent-father (clarification before implementation) | Same handler, scoped to the agent/flow under question |
+| DASHBOARD.md has `status=NEW` rows of type `improvement_proposal` | → Run handler: `docs/agents/agents-architect/handlers.md` § **Improvement-Proposal Review** |
 
 There is **no sub-flow split** — every invocation produces the same artifact set:
 - `docs/architecture-briefs/<UTC-DATE>-<slug>.md` (the brief)

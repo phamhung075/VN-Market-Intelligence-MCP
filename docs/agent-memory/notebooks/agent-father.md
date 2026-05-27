@@ -1,5 +1,30 @@
 # Agent Father — Notebook
 
+## c272 · 2026-05-27 — SIG-IMPL-MD (Gated Self-Improvement Loop, Phase 1)
+
+**Task:** EDIT-1 through EDIT-5 — implement gated self-improvement loop into flow files per `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md` §9 Phase 1. Signal unblocked by PO at 2026-05-27T20:47:27Z.
+
+**Files edited (5 files, 6 edits):**
+1. `docs/agents/system-auditor/flow/main.md` — added `### Improvement Proposal Emit (D-IMPROVE)` block to Tier-2 sweep (after stale-source emit, before Existing Doc/Memory Audit). Includes D-IMPROVE-4 cooldown guard first, D-IMPROVE-1 candidate collection, D-IMPROVE-2 per-candidate try/catch with structured schema (target_agent + target_files as machine-readable fields), D-IMPROVE-3 outcome log.
+2. `docs/agents/agents-architect/flow/main.md` — added `improvement_proposal` dispatch row to Dispatch table routing to handlers.md § Improvement-Proposal Review.
+3. `docs/agents/agents-architect/handlers.md` — added `## Improvement-Proposal Review` handler (Steps IP-1 through IP-8): lane validation, structured-field validation (target_agent + target_files), architect-review section fill, signal emit to PO, DASHBOARD mark READ, atomic commit.
+4. `docs/agents/po/flow/triage-signals.md` — added `improvement_proposal` routing row with ALL FIVE mandatory PO critique fields enforced: break-risk, false-green, gameability, host-load, and the C-3 fifth field `lane-C-in-disguise check`. Empty/placeholder on any field → auto-reject "critique incomplete".
+5. `docs/agents/agent-father/flow/main.md` — added `signal type=improvement_approved_md` route to dispatch table with full C-1 contract (structured target_agent/target_files fields ONLY, FAIL-LOUD reject if missing/invalid) and C-2 two-phase status lifecycle (IMPLEMENTING after clean edit, DONE only after success_verified_by + date confirmed).
+6. `docs/agents/dev-team/flow/drain-signals.md` — added `improvement_proposal_lane_b` row to 0a-3 routing table; SELF_IMPROVE_AUTO_DISPATCH documented as per-dispatch-path default-false, deferred to Phase 2 / SIG-IMPL-GATE.
+
+**PO conditions honored:**
+- C-1: target_agent (kebab-case) + target_files[] defined as structured fields in proposal schema (EDIT-1 schema), validated by architect (EDIT-2), read by agent-father (EDIT-4) — never from free prose. FAIL-LOUD reject if absent/invalid.
+- C-2: IMPLEMENTING status after clean edit, DONE only after Success Signal independently re-confirmed by system-auditor freshness tick (success_verified_by + date). Mis-targeted edit → rollback + DRAFT reset + BUG alert.
+- C-3: Fifth mandatory critique field `lane-C-in-disguise check` added to EDIT-3 triage row. Empty/placeholder → auto-reject "critique incomplete" identical to other four fields.
+- C-4: NOT implemented (Phase 2 / SIG-IMPL-GATE / dev-team QA). SELF_IMPROVE_AUTO_DISPATCH documented as per-dispatch-path default-false in EDIT-5.
+- C-5: D-IMPROVE wrapped in try/catch per-candidate; on any exception: release mutex if held, log "[D-IMPROVE] SKIP candidate {id}: {error}", continue — NEVER re-raise, NEVER abort Tier-2 sweep. Cooldown guard (D-IMPROVE-4) prevents half-written proposals.
+
+**SSOT/DRY:** Three-lane rule and proposal schema are NOT duplicated. All five flow edits reference `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md` §1 and §3 as the single source. No new agents, no new cron, no Docker.
+**Writes:** ALL unstaged (no git add, no git commit) per main-terminal serialization rule.
+**Cowork refresh needed:** YES — agent-father/flow/main.md, po/flow/triage-signals.md, system-auditor/flow/main.md, agents-architect/flow/main.md + handlers.md, dev-team/flow/drain-signals.md all changed. User should run /cron-cowork-team to refresh the cowork session.
+
+---
+
 ## c271 · 2026-05-27
 
 **Task:** Phase 1 Foundation (F1–F8) — Cowork-Team Daily Document Redesign

@@ -85,3 +85,63 @@ NEXT: agent-father | implement brief recommendations
 HANDOFF: docs/architecture-briefs/YYYY-MM-DD-<slug>.md
 PIPELINE: continue
 ```
+
+---
+
+## Improvement-Proposal Review
+
+> Three-lane rule + proposal schema SSOT: `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md` §1 and §3.
+
+**Trigger:** invoked when `docs/signals/DASHBOARD.md` has `status=NEW` rows of `type=improvement_proposal`.
+
+**Step IP-1 — Read each proposal doc** from the path in the DASHBOARD row payload.
+
+**Step IP-2 — Validate lane classification** by applying the THREE-LANE rule (first-match-wins, lane-C tested first) from the brief above §1.
+- If lane label is wrong → correct it in the `## Lane` section of the proposal doc. Note correction in the architect-review section.
+- Validate `## target_agent` is a valid kebab-case agent id that maps to a real agent in `.claude/agents/`. If missing or invalid → mark proposal `status=DRAFT-INCOMPLETE`, write `send_telegram(channel="work", message="[agents-architect] Proposal {id}: target_agent invalid — returned to system-auditor for re-emit")`, skip to next proposal.
+- Validate `## target_files` is non-empty and each path exists in the repo. If empty → same DRAFT-INCOMPLETE treatment.
+
+**Step IP-3 — Validate evidence concreteness:** the `## Evidence` section must carry a `check_id` or a metric with numeric data and dates. If vague → mark `status=DRAFT-INCOMPLETE`, send WORK message asking system-auditor to re-emit with evidence.
+
+**Step IP-4 — Fill architect-review section** in the proposal doc:
+```markdown
+## Architect Review
+
+**Lane confirmed:** {LANE-A | LANE-B | LANE-C}
+**Evidence validated:** yes | no (with reason)
+**target_agent confirmed:** {kebab-case id}
+**target_files confirmed:** {list}
+**Proposed change scope:** {N files — list}
+**Architect notes:** {any caveats}
+```
+
+**Step IP-5 — Update proposal doc status** to `ARCHITECT-REVIEWED`.
+
+**Step IP-6 — Write signal to PO:**
+```json
+{
+  "from": "agents-architect",
+  "to": "po",
+  "type": "improvement_proposal",
+  "payload": "docs/improvement-proposals/{id}.md",
+  "priority": "normal",
+  "createdAt": "{ISO-8601 UTC}"
+}
+```
+Write to `docs/signals/{id}-review.json`.
+
+**Step IP-7 — Mark DASHBOARD row** `status=READ`.
+
+**Step IP-8 — Commit** (Brief-Commit Invariant extended):
+```bash
+git add docs/improvement-proposals/{id}.md docs/signals/{id}-review.json docs/agent-memory/notebooks/agents-architect.md
+git commit -m "chore(improve): architect-review {id}"
+```
+Explicit paths only — never `-A`.
+
+**RETURN**
+```
+DONE: {N} proposals reviewed — {M} ARCHITECT-REVIEWED, {K} DRAFT-INCOMPLETE
+NEXT: po (via signals + DASHBOARD rows)
+PIPELINE: continue
+```

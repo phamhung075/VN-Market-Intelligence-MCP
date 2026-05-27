@@ -164,6 +164,83 @@ docker exec mcp-server sqlite3 /app/data/market.db "SELECT count(*) FROM bctc_qu
 
 ---
 
+### Improvement Proposal Emit (D-IMPROVE) — Tier-2 add-on
+
+> Three-lane rule + proposal schema SSOT: `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md` §1 and §3.
+> C-5 invariant: this entire block MUST fail-loud-SKIP on any bad candidate and NEVER abort the Tier-2 freshness sweep above. A throw mid-write must release the commit-mutex and leave no half-written proposal doc.
+
+**D-IMPROVE-4 (cooldown guard — check FIRST):**
+Before any write, list `docs/improvement-proposals/` for existing proposals whose `status` is `DRAFT` or `ARCHITECT-REVIEWED` and whose `weakness_id` matches the candidate's `check_id` or `signal_type`. If found and not yet resolved → log `"[D-IMPROVE] skip duplicate: {existing-id}"` and skip that candidate. Continue to next.
+
+**D-IMPROVE-1 — Collect candidates:**
+Query `improve_check_log` (inside mcp-server container) for entries with `dispatch_status IN ('shadow','worsened')` and `checked_at` within the last 24h. These are the signal-accuracy candidates.
+Also inspect the Tier-2 stale-source findings emitted above: any source with `severity=CRITICAL` and no open FIX task in `docs/TASKS.md` is a doc-level candidate.
+
+**D-IMPROVE-2 — Per candidate (wrapped in try/catch; on any exception: release mutex if held, log "[D-IMPROVE] SKIP candidate {id}: {error}", continue to next candidate — DO NOT re-raise):**
+
+  a. Classify lane per THREE-LANE rule (§1 of brief above). First-match-wins; lane-C tested first.
+
+  b. Build the proposal document with **structured fields** (C-1 requirement — these are machine-readable, not free prose):
+     ```markdown
+     # Improvement Proposal IMP-{YYYYMMDD}-{slug}
+
+     **Created:** {ISO-8601 UTC}
+     **Created by:** system-auditor
+     **Status:** DRAFT
+     **weakness_id:** {check_id or signal_type}   ← dedup key
+
+     ## target_agent
+     {kebab-case agent id — e.g. "dev-mcp-server"}
+
+     ## target_files
+     - {absolute doc path 1}
+     - {absolute doc path 2 if applicable}
+
+     ## Weakness
+     {one paragraph — what is wrong, concrete evidence pointer}
+
+     ## Evidence
+     - Source: {check_id / audit dimension}
+     - Data: {metric, delta, dates}
+     - Reproducibility: {how to reproduce}
+
+     ## Proposed Change
+     {description only — no implementation}
+
+     ## Lane
+     {LANE-A | LANE-B | LANE-C}
+
+     ### Lane Rationale
+     {why this lane}
+
+     ## Success Signal
+     {how to know the change worked}
+
+     ## success_verified_by
+     (to be filled after DONE — agent id + date)
+
+     ## Rollback
+     {how to undo within 7 days}
+     ```
+     FAIL-LOUD-SKIP if `target_agent` cannot be determined (no kebab-case agent id maps to the weakness) — log `"[D-IMPROVE] SKIP {id}: target_agent unknown"`, continue.
+     FAIL-LOUD-SKIP if `target_files` is empty — log `"[D-IMPROVE] SKIP {id}: target_files empty"`, continue.
+
+  c. Acquire commit-mutex (skill: `.claude/skills/commit-mutex/SKILL.md`).
+     Write `docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md` (path-explicit).
+     Append DASHBOARD.md row under `## po` section:
+     ```
+     | {id} | {ts} | system-auditor | improvement_proposal | {summary ≤40 chars} | NEW | {proposal-path} |
+     ```
+     Commit: `git add docs/improvement-proposals/{id}.md docs/signals/DASHBOARD.md` (explicit paths only — never -A).
+     git commit -m `"chore(improve): D-IMPROVE emit {id}"`.
+     Release commit-mutex regardless of commit outcome.
+
+**D-IMPROVE-3 — Log outcome:**
+After processing all candidates, log `"[D-IMPROVE] emitted {N} proposals, skipped {M} (duplicates), skipped {K} (bad candidates)"`.
+Append summary to this Tier-2 run's notebook entry.
+
+---
+
 ## Existing Doc/Memory Audit (Tier-3 only — skip in Tier-1 and Tier-2)
 
 ### Early Exit Check
