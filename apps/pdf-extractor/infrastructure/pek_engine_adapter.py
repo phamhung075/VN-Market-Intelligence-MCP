@@ -109,14 +109,25 @@ class _PekLayoutModel:
         5:table  6:table_caption  7:table_footnote  8:isolate_formula  9:formula_caption
     """
 
-    def __init__(self, yolo_cls: Any, model_cfg: dict) -> None:
+    def __init__(self, yolo_cls: Any, model_cfg: dict, pek_root: str) -> None:
         """
         Args:
             yolo_cls: doclayout_yolo.YOLOv10 class (injected to keep import at call site).
-            model_cfg: OmegaConf dict for the 'model' sub-key of layout_detection_yolo.yaml.
+            model_cfg: OmegaConf dict for the 'model_config' sub-key under
+                       tasks.layout_detection in layout_detection_yolo.yaml.
                        Must contain 'model_path'. Optional: img_size, conf_thres, iou_thres.
+            pek_root: Absolute path to the PDF-Extract-Kit source root. Used to resolve
+                      the relative model_path from the YAML (e.g.
+                      'models/Layout/YOLO/doclayout_yolo_ft.pt') to an absolute path,
+                      mirroring how the original LayoutDetectionTask resolved it when run
+                      from the PEK root directory.
         """
-        self._model = yolo_cls(model_cfg["model_path"])
+        raw_path = model_cfg["model_path"]
+        if not os.path.isabs(raw_path):
+            model_path = os.path.join(pek_root, raw_path)
+        else:
+            model_path = raw_path
+        self._model = yolo_cls(model_path)
         self._img_size = model_cfg.get("img_size", 1280)
         self._conf_thres = model_cfg.get("conf_thres", 0.25)
         self._iou_thres = model_cfg.get("iou_thres", 0.45)
@@ -210,27 +221,79 @@ def _load_pek_models() -> Dict[str, Any]:
     from doclayout_yolo import YOLOv10  # type: ignore
 
     layout_cfg_path = os.path.join(_PEK_CONFIG_DIR, "layout_detection_yolo.yaml")
+    # PEK root = parent of the configs/ directory
+    _pek_root = os.path.normpath(os.path.join(_PEK_CONFIG_DIR, ".."))
 
     layout_task = None
     ocr_task = None
 
     if os.path.exists(layout_cfg_path):
+        # PEK-LAYOUT-CFG FIX — three divergences corrected:
+        #
+        # FIX 1 — CONFIG-PATH BUG:
+        #   BEFORE: layout_cfg.get("model", {}) → returns {} (no top-level 'model' key in YAML).
+        #   The YAML structure is:
+        #       tasks:
+        #         layout_detection:
+        #           model: layout_detection_yolo        # STRING name, not a dict
+        #           model_config:                       # ← the dict we need
+        #             img_size: 1024
+        #             conf_thres: 0.25
+        #             iou_thres: 0.45
+        #             model_path: models/Layout/YOLO/doclayout_yolo_ft.pt  # RELATIVE
+        #             device: 0
+        #   AFTER: layout_cfg.tasks.layout_detection.model_config
+        #
+        # FIX 2 — RELATIVE model_path RESOLUTION:
+        #   The YAML model_path is relative to the PEK root, not cwd.
+        #   The original LayoutDetectionTask resolved it the same way (run from PEK root).
+        #   We resolve it in _PekLayoutModel.__init__ using pek_root (computed above).
+        #   If the resolved path does not exist at runtime, YOLOv10 will attempt to
+        #   download it (ultralytics/doclayout_yolo auto-download path). Weights are
+        #   on the named volume pek_model_cache (/app/pek_models) at runtime, NOT baked
+        #   in the image. This means build-time instantiation is IMPOSSIBLE (correct:
+        #   smoke gate stays at import-level only — see SMOKE-GATE FINDING below).
+        #
+        # FIX 3 — FAIL-LOUD (see below — NEVER swallow layout load failure silently).
         try:
             from omegaconf import OmegaConf  # type: ignore
             layout_cfg = OmegaConf.load(layout_cfg_path)
+
+            # Guard for missing keys — fail-loud if structure is wrong
+            if (
+                not hasattr(layout_cfg, "tasks")
+                or not hasattr(layout_cfg.tasks, "layout_detection")
+                or not hasattr(layout_cfg.tasks.layout_detection, "model_config")
+            ):
+                raise RuntimeError(
+                    f"layout_detection_yolo.yaml at {layout_cfg_path} is missing required "
+                    "structure: tasks.layout_detection.model_config. "
+                    "Check the YAML matches the expected PEK config format."
+                )
+
             model_cfg = dict(OmegaConf.to_container(
-                layout_cfg.get("model", {}), resolve=True
+                layout_cfg.tasks.layout_detection.model_config, resolve=True
             ))
             # Hard-override device to CPU (REQ-PEK-2 — CPU-only invariant)
             model_cfg["device"] = "cpu"
-            layout_task = _PekLayoutModel(yolo_cls=YOLOv10, model_cfg=model_cfg)
+            layout_task = _PekLayoutModel(
+                yolo_cls=YOLOv10, model_cfg=model_cfg, pek_root=_pek_root
+            )
             logger.info("PekEngineAdapter: _PekLayoutModel loaded (DocLayout-YOLO, CPU)")
         except Exception as exc:
-            logger.warning(
-                "PekEngineAdapter: _PekLayoutModel load failed: %s — "
-                "falling back to geometry-only path",
-                exc,
-            )
+            # FIX 3 — FAIL-LOUD:
+            # The original code swallowed this as logger.warning + layout_task = None,
+            # which silently disabled layout detection (DocLayout-YOLO) and produced
+            # empty/garbage tables. This is the root cause of the QA cycle-131 RED.
+            # Per fail-loud-protocol: if the YAML EXISTS but the model fails to load,
+            # RAISE (hard fail). Garbage-tables-without-error = worse than a clear crash.
+            # Layout detection is MANDATORY for BCTC table extraction — tables come from
+            # layout regions. A missing/broken layout model is a deployment error, not a
+            # graceful-degradation scenario.
+            raise RuntimeError(
+                f"PekEngineAdapter: _PekLayoutModel load FAILED (YAML exists at "
+                f"{layout_cfg_path} but model could not be loaded): {exc}"
+            ) from exc
     else:
         logger.warning(
             "PekEngineAdapter: layout_detection_yolo.yaml not found at %s — "

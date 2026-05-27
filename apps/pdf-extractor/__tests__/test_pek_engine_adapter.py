@@ -400,3 +400,379 @@ class TestLazyLoadSingleton:
             result = m._get_pek_models()
 
         assert result is fake_models
+
+
+# ---------------------------------------------------------------------------
+# PEK-LAYOUT-CFG regression tests (config-path + fail-loud)
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Fake OmegaConf DictConfig (avoids requiring omegaconf on the host for tests)
+# ---------------------------------------------------------------------------
+class _AttrDict(dict):
+    """
+    Minimal dict subclass that supports attribute access and OmegaConf-style
+    hasattr() checks — used to fake an OmegaConf DictConfig in tests without
+    needing the omegaconf package installed on the host test runner.
+    """
+    def __getattr__(self, name):
+        try:
+            val = self[name]
+            if isinstance(val, dict) and not isinstance(val, _AttrDict):
+                val = _AttrDict(val)
+            return val
+        except KeyError:
+            raise AttributeError(name)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
+    def get(self, key, default=None):
+        return super().get(key, default)
+
+
+def _make_fake_layout_cfg(extra_model_cfg: Optional[dict] = None) -> _AttrDict:
+    """
+    Return a fake DictConfig-like object that mirrors layout_detection_yolo.yaml:
+        tasks:
+          layout_detection:
+            model: layout_detection_yolo
+            model_config:
+              img_size: 1024
+              conf_thres: 0.25
+              iou_thres: 0.45
+              model_path: models/Layout/YOLO/doclayout_yolo_ft.pt
+              device: 0
+    No omegaconf import required.
+    """
+    model_config_data: Dict[str, Any] = {
+        "img_size": 1024,
+        "conf_thres": 0.25,
+        "iou_thres": 0.45,
+        "model_path": "models/Layout/YOLO/doclayout_yolo_ft.pt",
+        "device": 0,
+    }
+    if extra_model_cfg:
+        model_config_data.update(extra_model_cfg)
+
+    return _AttrDict({
+        "tasks": _AttrDict({
+            "layout_detection": _AttrDict({
+                "model": "layout_detection_yolo",
+                "model_config": _AttrDict(model_config_data),
+            })
+        })
+    })
+
+
+class TestLayoutCfgConfigPath:
+    """
+    PEK-LAYOUT-CFG — verifies that _load_pek_models() reads the correct YAML path
+    (tasks.layout_detection.model_config) and that a broken/missing layout config
+    fails LOUD (raises RuntimeError) rather than silently setting layout_task = None.
+
+    All tests use injected fakes — zero model weights, zero network, zero creds.
+    omegaconf is mocked entirely so this class runs without omegaconf installed on host.
+    """
+
+    def _patch_omegaconf(self, mock_omegaconf_module, fake_cfg: _AttrDict):
+        """
+        Wire mock_omegaconf so that:
+          - OmegaConf.load(...) returns fake_cfg
+          - OmegaConf.to_container(node, resolve=True) returns dict(node) recursively
+        """
+        mock_omegaconf_module.load.return_value = fake_cfg
+
+        def fake_to_container(node, resolve=True):
+            # Recursively convert _AttrDict to plain dict
+            if isinstance(node, dict):
+                return {k: fake_to_container(v, resolve) for k, v in node.items()}
+            return node
+
+        mock_omegaconf_module.to_container.side_effect = fake_to_container
+
+    def test_correct_config_path_tasks_layout_detection_model_config(self):
+        """
+        _load_pek_models() must read tasks.layout_detection.model_config,
+        NOT layout_cfg.get('model', {}), which returns {} (no top-level 'model' key).
+        Asserts _PekLayoutModel is instantiated with a non-empty model_cfg dict.
+        """
+        import infrastructure.pek_engine_adapter as m
+
+        captured_model_cfg: list = []
+
+        class FakePekLayoutModel:
+            def __init__(self, yolo_cls, model_cfg: dict, pek_root: str):
+                captured_model_cfg.append(dict(model_cfg))
+
+        fake_cfg = _make_fake_layout_cfg()
+
+        # Patch the local 'from omegaconf import OmegaConf' inside _load_pek_models()
+        # by intercepting the module-level import of OmegaConf.
+        import sys
+        fake_omegaconf_mod = MagicMock()
+        self._patch_omegaconf(fake_omegaconf_mod, fake_cfg)
+        # Patch sys.modules["omegaconf"] so 'from omegaconf import OmegaConf' resolves
+        fake_omegaconf_mod.OmegaConf = fake_omegaconf_mod
+
+        fake_doclayout_mod = MagicMock()
+        fake_doclayout_mod.YOLOv10 = MagicMock()
+
+        m._pek_models_cache = None
+        with patch("infrastructure.pek_engine_adapter.os.path.exists", return_value=True), \
+             patch.dict(sys.modules, {
+                 "omegaconf": fake_omegaconf_mod,
+                 "doclayout_yolo": fake_doclayout_mod,
+                 "paddleocr": MagicMock(),
+             }), \
+             patch.object(m, "_PekLayoutModel", new=FakePekLayoutModel):
+            try:
+                m._load_pek_models()
+            except Exception:
+                pass  # paddle/YOLOv10 errors are OK — we only care about model_cfg
+
+        assert len(captured_model_cfg) >= 1, (
+            "_PekLayoutModel was never instantiated — _load_pek_models() "
+            "did not call it (config-path bug not fixed)"
+        )
+        cfg = captured_model_cfg[0]
+        # Must NOT be empty {} (that was the old CONFIG-PATH BUG symptom)
+        assert cfg, (
+            "model_cfg passed to _PekLayoutModel is empty dict {} — "
+            "symptom of CONFIG-PATH BUG: reading layout_cfg.get('model', {}) "
+            "instead of layout_cfg.tasks.layout_detection.model_config"
+        )
+        assert "model_path" in cfg, (
+            "model_cfg missing 'model_path' key — "
+            "tasks.layout_detection.model_config not read correctly"
+        )
+        assert "img_size" in cfg, "model_cfg missing 'img_size'"
+        assert cfg["model_path"] == "models/Layout/YOLO/doclayout_yolo_ft.pt", (
+            f"Unexpected model_path: {cfg['model_path']}"
+        )
+
+    def test_fail_loud_when_yaml_exists_but_model_load_raises(self):
+        """
+        If layout_detection_yolo.yaml EXISTS but _PekLayoutModel() raises
+        (e.g. weight file missing, YOLO init error), _load_pek_models() must
+        re-raise as RuntimeError — NOT silently set layout_task = None.
+
+        The silent-fallback bug produced false-green empty tables (QA cycle-131 RED).
+        """
+        import infrastructure.pek_engine_adapter as m
+        import sys
+
+        fake_cfg = _make_fake_layout_cfg()
+
+        class BrokenPekLayoutModel:
+            def __init__(self, yolo_cls, model_cfg: dict, pek_root: str):
+                raise FileNotFoundError("Weight file not found: simulated")
+
+        fake_omegaconf_mod = MagicMock()
+        self._patch_omegaconf(fake_omegaconf_mod, fake_cfg)
+        fake_omegaconf_mod.OmegaConf = fake_omegaconf_mod
+
+        fake_doclayout_mod = MagicMock()
+        fake_doclayout_mod.YOLOv10 = MagicMock()
+
+        m._pek_models_cache = None
+        with patch("infrastructure.pek_engine_adapter.os.path.exists", return_value=True), \
+             patch.dict(sys.modules, {
+                 "omegaconf": fake_omegaconf_mod,
+                 "doclayout_yolo": fake_doclayout_mod,
+             }), \
+             patch.object(m, "_PekLayoutModel", new=BrokenPekLayoutModel):
+            with pytest.raises(RuntimeError) as exc_info:
+                m._load_pek_models()
+
+        assert "FAILED" in str(exc_info.value) or "load" in str(exc_info.value).lower(), (
+            "RuntimeError message must indicate load failure, got: "
+            + str(exc_info.value)
+        )
+
+    def test_fail_loud_does_not_swallow_to_none(self):
+        """
+        After a broken model load, _load_pek_models() must NOT return a dict
+        with layout_task=None. It must raise before reaching the return statement.
+        This test asserts the 'swallow to None' anti-pattern is absent.
+        """
+        import infrastructure.pek_engine_adapter as m
+        import sys
+
+        fake_cfg = _make_fake_layout_cfg()
+
+        class BrokenPekLayoutModel:
+            def __init__(self, yolo_cls, model_cfg: dict, pek_root: str):
+                raise RuntimeError("Simulated weight load failure")
+
+        fake_omegaconf_mod = MagicMock()
+        self._patch_omegaconf(fake_omegaconf_mod, fake_cfg)
+        fake_omegaconf_mod.OmegaConf = fake_omegaconf_mod
+
+        returned_dict: list = []
+
+        fake_doclayout_mod = MagicMock()
+        fake_doclayout_mod.YOLOv10 = MagicMock()
+
+        m._pek_models_cache = None
+        with patch("infrastructure.pek_engine_adapter.os.path.exists", return_value=True), \
+             patch.dict(sys.modules, {
+                 "omegaconf": fake_omegaconf_mod,
+                 "doclayout_yolo": fake_doclayout_mod,
+             }), \
+             patch.object(m, "_PekLayoutModel", new=BrokenPekLayoutModel):
+            try:
+                result = m._load_pek_models()
+                returned_dict.append(result)
+            except RuntimeError:
+                pass  # Expected — good path
+
+        assert len(returned_dict) == 0, (
+            "_load_pek_models() returned a dict instead of raising — "
+            "silent-fallback anti-pattern still present (layout_task=None masked the error)"
+        )
+
+    def test_missing_yaml_does_not_raise_disables_layout(self):
+        """
+        If layout_detection_yolo.yaml does NOT exist, layout is disabled gracefully
+        (layout_task = None returned in dict, no exception). This is the 'optional
+        config path' — only missing layout config is graceful, not broken layout model.
+        """
+        import infrastructure.pek_engine_adapter as m
+        import sys
+
+        m._pek_models_cache = None
+        fake_paddle_mod = MagicMock()
+        fake_paddle_mod.PaddleOCR.return_value = MagicMock()
+
+        with patch("infrastructure.pek_engine_adapter.os.path.exists", return_value=False), \
+             patch.dict(sys.modules, {"paddleocr": fake_paddle_mod}), \
+             patch.dict(sys.modules, {"doclayout_yolo": MagicMock()}):
+            result = m._load_pek_models()
+
+        assert "layout_task" in result
+        assert result["layout_task"] is None, (
+            "layout_task should be None when YAML not found (graceful — no YAML = optional)"
+        )
+
+    def test_model_path_resolved_relative_to_pek_root(self):
+        """
+        _PekLayoutModel must receive pek_root as an absolute path.
+        The PEK root is computed as the parent of the configs/ directory
+        (i.e. PDF-Extract-Kit/). This test verifies the value passed to
+        _PekLayoutModel is absolute and non-empty.
+        """
+        import infrastructure.pek_engine_adapter as m
+        import sys
+
+        fake_cfg = _make_fake_layout_cfg()
+        captured_init_args: list = []
+
+        class CapturingPekLayoutModel:
+            def __init__(self, yolo_cls, model_cfg: dict, pek_root: str):
+                captured_init_args.append({"model_cfg": dict(model_cfg), "pek_root": pek_root})
+
+        fake_omegaconf_mod = MagicMock()
+        self._patch_omegaconf(fake_omegaconf_mod, fake_cfg)
+        fake_omegaconf_mod.OmegaConf = fake_omegaconf_mod
+
+        fake_doclayout_mod = MagicMock()
+        fake_doclayout_mod.YOLOv10 = MagicMock()
+
+        m._pek_models_cache = None
+        with patch("infrastructure.pek_engine_adapter.os.path.exists", return_value=True), \
+             patch.dict(sys.modules, {
+                 "omegaconf": fake_omegaconf_mod,
+                 "doclayout_yolo": fake_doclayout_mod,
+                 "paddleocr": MagicMock(),
+             }), \
+             patch.object(m, "_PekLayoutModel", new=CapturingPekLayoutModel):
+            try:
+                m._load_pek_models()
+            except Exception:
+                pass  # paddle errors expected
+
+        assert len(captured_init_args) >= 1, "_PekLayoutModel was never instantiated"
+        init_args = captured_init_args[0]
+
+        pek_root = init_args["pek_root"]
+        assert os.path.isabs(pek_root), (
+            f"pek_root passed to _PekLayoutModel is not absolute: {pek_root!r}"
+        )
+        # model_path in model_cfg is still relative (raw YAML value)
+        raw_path = init_args["model_cfg"]["model_path"]
+        assert raw_path == "models/Layout/YOLO/doclayout_yolo_ft.pt", (
+            f"Unexpected raw model_path in model_cfg: {raw_path!r}"
+        )
+
+    def test_pek_layout_model_init_resolves_relative_path(self):
+        """
+        _PekLayoutModel.__init__ resolves a relative model_path against pek_root
+        before passing it to yolo_cls. Verifies the YOLOv10 call receives
+        an absolute path, not the raw relative string from the YAML.
+        """
+        from infrastructure.pek_engine_adapter import _PekLayoutModel
+
+        received_paths: list = []
+
+        class FakeYOLOv10:
+            def __init__(self, path: str):
+                received_paths.append(path)
+
+        fake_model_cfg = {
+            "model_path": "models/Layout/YOLO/doclayout_yolo_ft.pt",
+            "img_size": 1024,
+            "conf_thres": 0.25,
+            "iou_thres": 0.45,
+            "device": "cpu",
+        }
+        pek_root = "/app/PDF-Extract-Kit"
+
+        _PekLayoutModel(
+            yolo_cls=FakeYOLOv10,
+            model_cfg=fake_model_cfg,
+            pek_root=pek_root,
+        )
+
+        assert len(received_paths) == 1, "yolo_cls was not called exactly once"
+        resolved = received_paths[0]
+        expected_abs = "/app/PDF-Extract-Kit/models/Layout/YOLO/doclayout_yolo_ft.pt"
+        assert resolved == expected_abs, (
+            f"_PekLayoutModel passed wrong path to yolo_cls.\n"
+            f"  Expected: {expected_abs!r}\n"
+            f"  Got:      {resolved!r}\n"
+            "The relative model_path must be resolved against pek_root."
+        )
+
+    def test_pek_layout_model_init_passes_absolute_path_unchanged(self):
+        """
+        _PekLayoutModel.__init__ must pass an already-absolute model_path through
+        unchanged (no double-join).
+        """
+        from infrastructure.pek_engine_adapter import _PekLayoutModel
+
+        received_paths: list = []
+
+        class FakeYOLOv10:
+            def __init__(self, path: str):
+                received_paths.append(path)
+
+        abs_path = "/custom/weights/doclayout_yolo_ft.pt"
+        fake_model_cfg = {
+            "model_path": abs_path,
+            "img_size": 1024,
+            "conf_thres": 0.25,
+            "iou_thres": 0.45,
+            "device": "cpu",
+        }
+
+        _PekLayoutModel(
+            yolo_cls=FakeYOLOv10,
+            model_cfg=fake_model_cfg,
+            pek_root="/app/PDF-Extract-Kit",
+        )
+
+        assert received_paths == [abs_path], (
+            f"Absolute path was modified unexpectedly: {received_paths}"
+        )

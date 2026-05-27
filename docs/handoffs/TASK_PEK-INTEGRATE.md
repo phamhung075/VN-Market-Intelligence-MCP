@@ -334,3 +334,181 @@ Architect brief stated paddleocr 2.7.3 has "no numpy pin" (incorrect). Live PyPI
 ### NEXT
 
 **ops** — `docker compose up -d --no-deps --force-recreate pdf-extractor` (NOT restart — ops gets fresh image from this build). Then **qa** re-runs FPT Q4 2025 sentinel + direct `bun:sqlite` row check.
+
+---
+
+## [Architect] PEK-IMPORT-CHAIN — Root-Cause Review (2026-05-27)
+
+**Zone:** apps/pdf-extractor/ (single zone)
+**Brief:** `docs/architecture-briefs/2026-05-27-pek-import-chain.md`
+**Escalation trigger:** Round 3 fix on pdf-extractor module — fixer ceiling hit. Mandatory architect review per feedback_recurring_bug_escalation.
+
+### Traced entry point (live evidence)
+
+`apps/pdf-extractor/infrastructure/pek_engine_adapter.py` lines 110–111 (`_load_pek_models()`):
+```python
+from pdf_extract_kit.tasks.layout_detection import LayoutDetectionTask
+from pdf_extract_kit.tasks.ocr import OCRTask
+```
+
+Python's import system rule (verified live with test harness): importing ANY symbol from `pdf_extract_kit.tasks.*` unconditionally executes `pdf_extract_kit/tasks/__init__.py` first — including when importing from a leaf submodule via a full dotted path. That `__init__.py` eagerly imports ALL six task classes including `FormulaRecognitionTask` → `formula_recognition/__init__.py` → `models/unimernet.py:9` → `import unimernet.tasks` → `ModuleNotFoundError`.
+
+There is no safe sub-path under `pdf_extract_kit.tasks`. Any import there detonates.
+
+**Does the adapter actually need PEK task wrappers?** No. `LayoutDetectionTask` is a thin shell over `LayoutDetectionYOLO` which uses `doclayout_yolo.YOLOv10`. `OCRTask` is dead weight — it is stored in the models dict but NEVER invoked in `_run_extraction()`. Both are replaceable/removable without behavioural change.
+
+### Selected fix — Option B: bypass `pdf_extract_kit.tasks` entirely
+
+**Option A (pip install unimernet) REJECTED:** GPU-oriented, ~1.4GB weights, violates REQ-PEK-1 (trimmed CPU task set) and REQ-PEK-2 (8GB cap). Installing a GPU package to satisfy an eager import is not a fix.
+
+**Option C (stub unimernet) FALLBACK:** accepted only if B fails. Papiermaché-patches the symptom.
+
+**Option B SELECTED:** Add `_PekLayoutModel` class in OUR adapter (`pek_engine_adapter.py`) that calls `doclayout_yolo.YOLOv10` + `fitz` (PyMuPDF) directly — zero `pdf_extract_kit.tasks` imports. Drop dead `OCRTask`. PEK subtree untouched.
+
+### Editable surfaces (2 files only)
+
+- `apps/pdf-extractor/infrastructure/pek_engine_adapter.py` — add `_PekLayoutModel` class; replace `LayoutDetectionTask`/`OCRTask` imports with `from doclayout_yolo import YOLOv10`; remove dead OCRTask block; update return dict + `_run_extraction`; update module docstring. Full exact diff in brief §3.
+- `apps/pdf-extractor/Dockerfile` — replace smoke gate `RUN` step with corrected body that imports `pek_engine_adapter` module itself. Full exact body in brief §4.2.
+
+### Smoke gate gap closed
+
+Prior gate tested proxy symbols (numpy/cv2/paddleocr/YOLOv10/torch) — NOT the adapter module. Corrected gate imports `from infrastructure.pek_engine_adapter import _PekLayoutModel, _load_pek_models` so any import error in the module fails the build, not the first extraction. Mandate: any new `import` added to `_load_pek_models()` must also appear in the gate body.
+
+### BUILD-STANDARD: not-applicable (bug fix / build maintenance)
+
+**NEXT: dev-pdf-extractor** — implement 2-file edit per brief §3 + §8 verification sequence. Then ops force-recreate (`--no-cache` build). Then qa re-runs FPT Q4 2025 sentinel + direct bun:sqlite row check.
+
+---
+
+## [dev-pdf-extractor] PEK-LAYOUT-CFG — DONE 2026-05-27
+
+**Status:** IMPLEMENTATION COMPLETE — committed to main.
+
+### Root cause (QA cycle-131 RED)
+
+Commit `6c124745` (`_PekLayoutModel` Option B) introduced three divergences from the
+original `LayoutDetectionTask`/`LayoutDetectionYOLO` behaviour:
+
+1. **CONFIG-PATH BUG** — `layout_cfg.get("model", {})` returned `{}` because the YAML has no
+   top-level `model` key. The real path is `layout_cfg.tasks.layout_detection.model_config`.
+   Result: `_PekLayoutModel` received an empty dict → no img_size/conf_thres/iou_thres →
+   YOLO called with all defaults → DocLayout-YOLO effectively disabled.
+
+2. **RELATIVE model_path** — The YAML `model_path` is `models/Layout/YOLO/doclayout_yolo_ft.pt`
+   (relative). Original PEK scripts ran from the PEK root (`/app/PDF-Extract-Kit/`), so
+   `YOLOv10("models/Layout/...")` resolved correctly. Our adapter passed the relative string
+   directly → runtime FileNotFoundError / silent exception → YOLO disabled.
+   Fix: `_PekLayoutModel.__init__` now accepts `pek_root` arg and resolves relative paths against it.
+   `_load_pek_models()` computes `pek_root = os.path.normpath(os.path.join(_PEK_CONFIG_DIR, ".."))`.
+
+3. **SILENT-FALLBACK** — `except Exception → logger.warning → layout_task = None` swallowed
+   config and load failures, producing geometry-only degrade = empty/garbage tables with no error.
+   Fix: if the YAML EXISTS but the model fails to load, `_load_pek_models()` raises `RuntimeError`
+   (fail-loud per protocol). The "YAML not found" branch remains graceful (optional config path).
+
+### SMOKE-GATE FINDING (weights are runtime-only)
+
+The Dockerfile smoke gate cannot be extended to instantiate `_PekLayoutModel` against the real
+weights because **weights are NOT baked into the image** (excluded by `.dockerignore`;
+downloaded to named volume `pek_model_cache` at runtime). Build-time instantiation would always
+fail with FileNotFoundError. The gate correctly stays at import-level only.
+Limitation documented here. Smoke gate MANDATE (docstring rule) kept intact.
+
+### Changes (2 files only)
+
+**`apps/pdf-extractor/infrastructure/pek_engine_adapter.py`:**
+- `_PekLayoutModel.__init__`: added `pek_root: str` parameter; resolves relative `model_path`
+  against `pek_root` before calling `yolo_cls(model_path)`.
+- Fixed docstring (was "model sub-key" → "model_config sub-key under tasks.layout_detection").
+- `_load_pek_models()`:
+  - Added `_pek_root = os.path.normpath(os.path.join(_PEK_CONFIG_DIR, ".."))`.
+  - Fixed config read: `layout_cfg.tasks.layout_detection.model_config` (was `.get("model", {})`).
+  - Added guard for missing YAML structure → raises `RuntimeError` immediately.
+  - Changed `except` handler from `logger.warning + layout_task = None` to re-raise as
+    `RuntimeError` (fail-loud — YAML exists but model load failed = hard error).
+
+**`apps/pdf-extractor/__tests__/test_pek_engine_adapter.py`:**
+- Added `_AttrDict` helper class (fake OmegaConf DictConfig, no omegaconf dep on host).
+- Added `_make_fake_layout_cfg()` fixture builder.
+- Added `TestLayoutCfgConfigPath` (7 new tests): config-path correctness, fail-loud on broken
+  model, fail-loud does not swallow to None, missing YAML graceful, pek_root absolute path,
+  `_PekLayoutModel` resolves relative path, `_PekLayoutModel` passes absolute path unchanged.
+
+### Verification results
+
+| Gate | Result |
+|---|---|
+| `pytest __tests__/test_pek_engine_adapter.py -v` | 22/22 PASS (was 15; +7 new) |
+| `pytest --ignore=__tests__/integration -q` | 636 passed, 0 failed |
+| `git -C apps/pdf-extractor/PDF-Extract-Kit diff` | EMPTY (pristine) |
+| Frozen surfaces | text_table_extractor.py + sandbox/runner.py + pilot-status.json — 0-diff |
+| PEK subtree diff | EMPTY |
+
+### SMOKE-GATE: NOT extended (weights runtime-only — see above)
+
+Smoke gate remains at import level (`from infrastructure.pek_engine_adapter import _PekLayoutModel, _load_pek_models`).
+Extending it to instantiate `_PekLayoutModel` is impossible without baking weights into the image
+(violates AC-PEK-3b). The fail-loud RuntimeError in `_load_pek_models()` will surface the bug
+at first extraction (not at build time), but with a clear traceable error rather than silent None.
+
+### NEXT
+
+**ops** — `docker compose up -d --no-deps --force-recreate pdf-extractor` (rebuild already done by PEK-IMPORT-CHAIN).
+Wait — ops must `docker compose build --no-cache pdf-extractor` FIRST (new code was just committed).
+Then force-recreate. Then **qa** re-runs FPT Q4 2025 sentinel + direct `bun:sqlite` row check
+(2-stage live verification after market close 09:00 UTC).
+
+---
+
+## [dev-pdf-extractor] PEK-IMPORT-CHAIN — DONE 2026-05-27
+
+**SHA:** `6c124745196081ecb211a7441c6205fa4ffb0105`
+**Status:** IMPLEMENTATION COMPLETE — committed to main.
+
+### Changes (2 files only)
+
+**`apps/pdf-extractor/infrastructure/pek_engine_adapter.py`:**
+- Added `_PekLayoutModel` class (before `_load_pek_models`) — calls `doclayout_yolo.YOLOv10` + `fitz` directly, zero `pdf_extract_kit.tasks` imports.
+- Replaced the two `pdf_extract_kit.tasks.*` imports with `from doclayout_yolo import YOLOv10` + explanatory comment block.
+- Removed `ocr_cfg_path` variable (no longer needed).
+- Replaced `LayoutDetectionTask(layout_cfg)` instantiation with `_PekLayoutModel(yolo_cls=YOLOv10, model_cfg=model_cfg)`.
+- Removed `OCRTask` block; added `ocr_task = None` comment placeholder.
+- Updated return dict (removed dead `ocr_task` key).
+- Updated `_run_extraction()` (removed dead `ocr_task = models.get("ocr_task")` line).
+- Updated module-level CRITICAL comment to reflect new `pdf_extract_kit.tasks` import rule.
+
+**`apps/pdf-extractor/Dockerfile`:**
+- Replaced prior smoke gate (proxy symbols only) with corrected gate per brief §4.2.
+- New gate imports `from infrastructure.pek_engine_adapter import _PekLayoutModel, _load_pek_models` — any import regression in the adapter fails the BUILD, not the first extraction.
+
+### Verification results
+
+| Gate | Result |
+|---|---|
+| `grep` executable `pdf_extract_kit.tasks` imports in our code | ZERO hits |
+| `docker compose build --no-cache pdf-extractor` | PASS — smoke gate layer reached and passed |
+| Smoke gate stdout | `--- pek-import-chain: ALL OK ---` (full output below) |
+| `pytest __tests__/test_pek_engine_adapter.py -v` | 15/15 PASS |
+| `pytest scenarios/pek_single_doc_extraction.py -v` | 10/10 PASS |
+| `pytest --ignore=__tests__/integration -q` | 629 passed, 0 failed |
+| `git -C apps/pdf-extractor/PDF-Extract-Kit diff` | EMPTY (pristine) |
+| `git show --stat 6c124745` | 2 files only (Dockerfile + pek_engine_adapter.py) |
+| Frozen surfaces | text_table_extractor.py + sandbox/runner.py + pilot-status.json — 0-diff |
+
+**Smoke gate full stdout:**
+```
+--- PEK import chain smoke gate (PEK-IMPORT-CHAIN) ---
+numpy 2.2.6
+cv2 4.13.0
+fitz (PyMuPDF) 1.27.2.3
+omegaconf OK
+doclayout_yolo.YOLOv10 OK
+paddleocr.PaddleOCR OK
+torch 2.5.1+cpu
+pek_engine_adapter import OK — no pdf_extract_kit.tasks trigger
+--- pek-import-chain: ALL OK ---
+```
+
+### NEXT
+
+**ops** — `docker compose up -d --no-deps --force-recreate pdf-extractor` (NOT restart — fresh container from this build). Then **qa** re-runs FPT Q4 2025 sentinel + direct `bun:sqlite` row check.
