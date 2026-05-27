@@ -921,3 +921,96 @@ class TestGroupBboxesIntoUnits:
         assert units[1]["pages"] == [9], (
             f"Second unit must cover page 9 only, got {units[1]['pages']}"
         )
+
+
+# ---------------------------------------------------------------------------
+# PEK-ROWCOUNT — row_count semantics: pipe data rows, not newlines
+# ---------------------------------------------------------------------------
+
+class TestRowCountSemantics:
+    """
+    PEK-ROWCOUNT — verifies the corrected row_count expression.
+
+    The field must count non-separator pipe rows (lines that start with '|'
+    and do NOT contain '---'), not raw newline characters.
+
+    Architect adjudication (2026-05-27 PEK-QA-ADJUDICATE §D):
+      Current (wrong): row_count = stitched_md.count("\\n")
+      Corrected:       row_count = sum(1 for line in stitched_md.split("\\n")
+                                       if line.strip().startswith("|")
+                                       and "---" not in line)
+
+    All tests are pure-Python — zero model weights, zero network.
+    """
+
+    @staticmethod
+    def _count_pipe_rows(stitched_md: str) -> int:
+        """Mirror of the corrected expression in pek_engine_adapter.py:799."""
+        return sum(
+            1 for line in stitched_md.split("\n")
+            if line.strip().startswith("|") and "---" not in line
+        )
+
+    def test_pipe_data_rows_counted_separator_excluded(self):
+        """
+        N pipe data rows + 1 separator row → row_count = N (separator excluded).
+        This is the core contract: '| --- | --- |' must not be counted.
+        """
+        stitched_md = (
+            "| col1 | col2 |\n"
+            "| --- | --- |\n"
+            "| val1 | val2 |\n"
+            "| val3 | val4 |\n"
+        )
+        # 3 pipe rows total, 1 is '| --- | --- |' separator → count = 2
+        # (header row "| col1 | col2 |" is a pipe row with no '---' → counted)
+        assert self._count_pipe_rows(stitched_md) == 3, (
+            "Expected 3 non-separator pipe rows (header + 2 data); separator must be excluded"
+        )
+
+    def test_separator_only_yields_zero(self):
+        """A markdown with only a separator row → row_count = 0."""
+        stitched_md = "| --- | --- |\n"
+        assert self._count_pipe_rows(stitched_md) == 0, (
+            "Separator-only markdown must yield row_count = 0"
+        )
+
+    def test_blank_lines_not_counted(self):
+        """Blank lines and non-pipe lines are excluded from the count."""
+        stitched_md = (
+            "\n"
+            "Some prose text\n"
+            "| data row |\n"
+            "\n"
+        )
+        assert self._count_pipe_rows(stitched_md) == 1, (
+            "Only the pipe data row must be counted; blank and prose lines excluded"
+        )
+
+    def test_empty_string_yields_zero(self):
+        """Empty stitched markdown → row_count = 0 (not 1 as .count('\\n') would give)."""
+        assert self._count_pipe_rows("") == 0, (
+            "Empty string must yield row_count = 0"
+        )
+
+    def test_multipage_pek_unit_pattern(self):
+        """
+        Simulates the FPT pages 7/8/9 pattern: 3 pipe content blocks separated
+        by '| --- | --- |' separator rows.
+
+        Each page produces 1 flat pipe row (all cells concatenated).
+        row_count must equal 3 (one per page data block), not 3 + separator count.
+        """
+        # 3 page blocks, each as 1 flat pipe row, separated by | --- | --- |
+        stitched_md = (
+            "| balance sheet data col1 col2 col3 |\n"
+            "| --- | --- |\n"
+            "| income statement data col1 col2 col3 |\n"
+            "| --- | --- |\n"
+            "| yoy comparison data col1 col2 |\n"
+        )
+        # 3 non-separator pipe rows (one per page block); 2 separators excluded
+        assert self._count_pipe_rows(stitched_md) == 3, (
+            "3-page PEK unit with 2 separators must yield row_count=3 "
+            "(one pipe data row per page, separators excluded)"
+        )

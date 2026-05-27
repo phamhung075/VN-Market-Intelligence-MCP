@@ -796,7 +796,7 @@ class PekEngineAdapter:
                 table_cells_by_page=table_cells_by_page,
                 page_zones_output=page_zones_output,
             )
-            row_count = stitched_md.count("\n")
+            row_count = sum(1 for line in stitched_md.split("\n") if line.strip().startswith("|") and "---" not in line)
             units_output.append({
                 "unit_id": unit_id,
                 "stitched_markdown": stitched_md,
