@@ -97,7 +97,7 @@ func (uc *ComputeMacroUseCase) Execute(
 	vnIndex := resolveVNIndex(ctx, uc)
 
 	// Resolve commodity prices via port; fall back to fixture defaults on zero/error.
-	oilPrice, goldPrice, usdVnd := resolveMarketPrices(ctx, uc)
+	oilPrice, goldPrice, usdVnd, allLive := resolveMarketPrices(ctx, uc)
 
 	// Build module input with fixture-stable timestamps (R-1).
 	input := ms.MacroSignalsInput{
@@ -123,12 +123,20 @@ func (uc *ComputeMacroUseCase) Execute(
 
 	fetchedAt := time.Now().UTC()
 
+	// DataSource: "live" when all three commodity values came from the port (>0),
+	// "fixture" when any value fell back to fixture defaults.
+	dataSource := "fixture"
+	if allLive {
+		dataSource = "live"
+	}
+
 	return MacroSnapshotResponse{
-		Status:  "ok",
-		VNIndex: vnIndex,
-		OilUSD:  oilPrice,
-		GoldUSD: goldPrice,
-		USDVnd:  usdVnd,
+		Status:     "ok",
+		VNIndex:    vnIndex,
+		OilUSD:     oilPrice,
+		GoldUSD:    goldPrice,
+		USDVnd:     usdVnd,
+		DataSource: dataSource,
 		Signals: SignalResult{
 			InvestmentClock: out.InvestmentClock,
 			Oil:             out.OilImpact,
@@ -156,25 +164,33 @@ func resolveVNIndex(ctx context.Context, uc *ComputeMacroUseCase) float64 {
 }
 
 // resolveMarketPrices fetches commodity prices from the port; uses fixture defaults on failure.
+// Returns (oilPrice, goldPrice, usdVnd, allLive) where allLive is true when all three
+// values came from the live port (non-zero), enabling the DataSource field to be set.
 // This function is a pure helper — no side effects beyond the port call.
-func resolveMarketPrices(ctx context.Context, uc *ComputeMacroUseCase) (oilPrice, goldPrice, usdVnd float64) {
+func resolveMarketPrices(ctx context.Context, uc *ComputeMacroUseCase) (oilPrice, goldPrice, usdVnd float64, allLive bool) {
 	oilPrice = fixtureOilUSD
 	goldPrice = fixtureGoldUSD
 	usdVnd = fixtureUSDVnd
+
+	oilLive, goldLive, usdVndLive := false, false, false
 
 	if uc.commodityFetcher != nil {
 		prices, err := uc.commodityFetcher.FetchPrices(ctx, []string{"OIL", "GOLD", "USDVND"})
 		if err == nil {
 			if v, ok := prices["OIL"]; ok && v > 0 {
 				oilPrice = v
+				oilLive = true
 			}
 			if v, ok := prices["GOLD"]; ok && v > 0 {
 				goldPrice = v
+				goldLive = true
 			}
 			if v, ok := prices["USDVND"]; ok && v > 0 {
 				usdVnd = v
+				usdVndLive = true
 			}
 		}
 	}
+	allLive = oilLive && goldLive && usdVndLive
 	return
 }

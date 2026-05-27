@@ -22,8 +22,9 @@ import (
 	"time"
 
 	"github.com/vn-market-intelligence/macro-indicators/pkg/application"
-	iface "github.com/vn-market-intelligence/macro-indicators/pkg/interface/http"
+	"github.com/vn-market-intelligence/macro-indicators/pkg/domain"
 	"github.com/vn-market-intelligence/macro-indicators/pkg/infrastructure"
+	iface "github.com/vn-market-intelligence/macro-indicators/pkg/interface/http"
 
 	_ "modernc.org/sqlite"
 )
@@ -37,9 +38,16 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
 
-	// DI wiring: infrastructure adapters → use case → router.
+	// DI wiring: select commodity adapter based on COMMODITY_LIVE_MODE env gate.
 	// Fence-C: only this file (cmd/server/main.go) imports pkg/infrastructure.
-	commodityFetcher := infrastructure.NewHTTPCommodityFetcher("")
+	// COMMODITY_LIVE_MODE unset/false → HTTPCommodityFetcher (fixture, sandbox-safe DEFAULT).
+	// COMMODITY_LIVE_MODE=true → SQLiteCommodityRepository (reads live market.db).
+	var commodityFetcher domain.CommodityFetcherPort
+	if os.Getenv("COMMODITY_LIVE_MODE") == "true" {
+		commodityFetcher = infrastructure.NewSQLiteCommodityRepository()
+	} else {
+		commodityFetcher = infrastructure.NewHTTPCommodityFetcher("")
+	}
 	sbvRateRepo := infrastructure.NewSBVRateRepository()
 	marketIndexRepo := infrastructure.NewSQLiteMarketIndexRepository()
 	useCase := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo, marketIndexRepo)

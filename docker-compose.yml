@@ -194,6 +194,7 @@ services:
     - PORT=5004
     - DB_PATH=/app/data/market.db
     - DB_READONLY=true
+    - COMMODITY_LIVE_MODE=true
     restart: unless-stopped
     healthcheck:
       test:

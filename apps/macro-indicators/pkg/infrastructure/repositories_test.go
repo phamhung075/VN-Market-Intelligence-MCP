@@ -19,13 +19,16 @@ import (
 	"context"
 	"database/sql"
 	"testing"
+	"time"
 )
 
 // newInMemoryDB opens an in-memory SQLite database and creates the minimal
-// table schema required by SQLiteMarketIndexRepository.FetchVNIndex.
+// table schema required by SQLiteMarketIndexRepository.FetchVNIndex and
+// SQLiteCommodityRepository.FetchPrices.
 //
-// Both market_prices and macro_indicators are created so each test can
-// populate whichever table it needs to exercise a specific resolution path.
+// Both market_prices, macro_indicators, and commodity_prices are created so
+// each test can populate whichever table it needs to exercise a specific
+// resolution path.
 func newInMemoryDB(t *testing.T) *sql.DB {
 	t.Helper()
 	// Use in-memory mode — no file, no credentials, disappears after test.
@@ -60,6 +63,20 @@ func newInMemoryDB(t *testing.T) *sql.DB {
 		)`)
 	if err != nil {
 		t.Fatalf("create macro_indicators: %v", err)
+	}
+
+	// commodity_prices — source for SQLiteCommodityRepository (MACRO-LIVE-PRICES).
+	// Schema mirrors the production table written by commodityTrackerRefreshJob.ts.
+	_, err = db.Exec(`
+		CREATE TABLE commodity_prices (
+			source          TEXT PRIMARY KEY,
+			brent_crude_usd REAL,
+			gold_usd_per_oz REAL,
+			usd_vnd_rate    REAL,
+			fetched_at      TEXT
+		)`)
+	if err != nil {
+		t.Fatalf("create commodity_prices: %v", err)
 	}
 
 	return db
@@ -210,5 +227,197 @@ func TestFetchVNIndex_PrefersMarketPricesOverMacroIndicators(t *testing.T) {
 	}
 	if got != marketPriceValue {
 		t.Errorf("PRIORITY: got %.2f, want %.2f (market_prices must win over macro_indicators)", got, marketPriceValue)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// T-MLP-1: fetchCommodityPricesFromDB returns live values for a fresh row
+// ---------------------------------------------------------------------------
+
+// TestFetchCommodityPricesFromDB_LiveRow (T-MLP-1) verifies that fresh rows are
+// returned with all three symbols populated.
+//
+// Contract: when commodity_prices has a 'yahoo' row with fetched_at < 26h ago,
+// fetchCommodityPricesFromDB MUST return {"OIL": 96.0, "GOLD": 4480.0, "USDVND": 26150.0}.
+func TestFetchCommodityPricesFromDB_LiveRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	// Insert a fresh row (timestamp well within 26h bound).
+	// Values differ from fixtures (82.5/2350.0/24500.0) — proves port is read, not constants.
+	_, err := db.Exec(`
+		INSERT INTO commodity_prices (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+		VALUES ('yahoo', 96.0, 4480.0, 26150.0, ?)`,
+		time.Now().UTC().Add(-1*time.Hour).Format(time.RFC3339Nano))
+	if err != nil {
+		t.Fatalf("insert commodity_prices: %v", err)
+	}
+
+	got, err := fetchCommodityPricesFromDB(context.Background(), db, 26*time.Hour)
+	if err != nil {
+		t.Fatalf("fetchCommodityPricesFromDB returned error: %v", err)
+	}
+
+	if got["OIL"] != 96.0 {
+		t.Errorf("OIL = %.2f, want 96.0", got["OIL"])
+	}
+	if got["GOLD"] != 4480.0 {
+		t.Errorf("GOLD = %.2f, want 4480.0", got["GOLD"])
+	}
+	if got["USDVND"] != 26150.0 {
+		t.Errorf("USDVND = %.2f, want 26150.0", got["USDVND"])
+	}
+}
+
+// ---------------------------------------------------------------------------
+// T-MLP-2: fetchCommodityPricesFromDB returns empty map for stale rows
+// ---------------------------------------------------------------------------
+
+// TestFetchCommodityPricesFromDB_StaleRow (T-MLP-2) verifies that rows outside
+// the 26h staleness window return an empty map, not live values.
+//
+// Also verifies the R-2 (RFC3339Nano) fix: a fresh row with millisecond precision
+// timestamp (e.g. "2026-05-28T06:01:23.456Z") MUST parse correctly and return
+// live values. RFC3339 would fail on the .456 suffix → all rows stale → bug #3003.
+func TestFetchCommodityPricesFromDB_StaleRow(t *testing.T) {
+	t.Run("stale_row_returns_empty", func(t *testing.T) {
+		db := newInMemoryDB(t)
+		defer db.Close()
+
+		// Insert a row that is 28 hours old (> 26h staleBound).
+		staleTs := time.Now().UTC().Add(-28 * time.Hour).Format(time.RFC3339Nano)
+		_, err := db.Exec(`
+			INSERT INTO commodity_prices (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+			VALUES ('yahoo', 96.0, 4480.0, 26150.0, ?)`,
+			staleTs)
+		if err != nil {
+			t.Fatalf("insert stale row: %v", err)
+		}
+
+		got, err := fetchCommodityPricesFromDB(context.Background(), db, 26*time.Hour)
+		if err != nil {
+			t.Fatalf("fetchCommodityPricesFromDB returned error: %v", err)
+		}
+		if len(got) != 0 {
+			t.Errorf("stale row: got map %v, want empty map (staleness enforcement)", got)
+		}
+	})
+
+	// R-2 sub-case: millisecond-precision timestamp MUST parse correctly.
+	// TypeScript writes new Date().toISOString() → "2026-05-28T06:01:23.456Z".
+	// Using time.RFC3339 (without Nano) silently fails on the .456 suffix and
+	// returns time.Time{} → every row is treated as infinitely stale → bug #3003.
+	t.Run("millisecond_timestamp_parses_correctly", func(t *testing.T) {
+		db := newInMemoryDB(t)
+		defer db.Close()
+
+		// Fresh timestamp with millisecond precision (TypeScript toISOString() format).
+		freshMsTs := time.Now().UTC().Add(-30 * time.Minute).Format("2006-01-02T15:04:05.000Z07:00")
+		_, err := db.Exec(`
+			INSERT INTO commodity_prices (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+			VALUES ('yahoo', 96.0, 4480.0, 26150.0, ?)`,
+			freshMsTs)
+		if err != nil {
+			t.Fatalf("insert ms-precision row: %v", err)
+		}
+
+		got, err := fetchCommodityPricesFromDB(context.Background(), db, 26*time.Hour)
+		if err != nil {
+			t.Fatalf("fetchCommodityPricesFromDB returned error: %v", err)
+		}
+		// If RFC3339Nano parser works, the fresh ms-precision row should return live values.
+		if got["OIL"] != 96.0 {
+			t.Errorf("RFC3339Nano parse: OIL = %.2f, want 96.0 — RFC3339Nano must parse ms-precision timestamps (bug #3003 regression)", got["OIL"])
+		}
+		if got["GOLD"] != 4480.0 {
+			t.Errorf("RFC3339Nano parse: GOLD = %.2f, want 4480.0", got["GOLD"])
+		}
+		if got["USDVND"] != 26150.0 {
+			t.Errorf("RFC3339Nano parse: USDVND = %.2f, want 26150.0", got["USDVND"])
+		}
+	})
+}
+
+// ---------------------------------------------------------------------------
+// T-MLP-3: fetchCommodityPricesFromDB returns empty map when no 'yahoo' row
+// ---------------------------------------------------------------------------
+
+// TestFetchCommodityPricesFromDB_NoYahooRow (T-MLP-3) verifies that the
+// WHERE source='yahoo' filter is enforced and missing rows return empty map.
+func TestFetchCommodityPricesFromDB_NoYahooRow(t *testing.T) {
+	t.Run("empty_table", func(t *testing.T) {
+		db := newInMemoryDB(t)
+		defer db.Close()
+
+		// commodity_prices table exists but has zero rows.
+		got, err := fetchCommodityPricesFromDB(context.Background(), db, 26*time.Hour)
+		if err != nil {
+			t.Fatalf("fetchCommodityPricesFromDB returned error: %v", err)
+		}
+		if len(got) != 0 {
+			t.Errorf("empty table: got map %v, want empty map", got)
+		}
+	})
+
+	t.Run("only_macro_snapshot_source", func(t *testing.T) {
+		db := newInMemoryDB(t)
+		defer db.Close()
+
+		// Insert a row with source='macro-snapshot' (not 'yahoo').
+		freshTs := time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339Nano)
+		_, err := db.Exec(`
+			INSERT INTO commodity_prices (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+			VALUES ('macro-snapshot', 96.0, 4480.0, 26150.0, ?)`,
+			freshTs)
+		if err != nil {
+			t.Fatalf("insert macro-snapshot row: %v", err)
+		}
+
+		got, err := fetchCommodityPricesFromDB(context.Background(), db, 26*time.Hour)
+		if err != nil {
+			t.Fatalf("fetchCommodityPricesFromDB returned error: %v", err)
+		}
+		if len(got) != 0 {
+			t.Errorf("non-yahoo source: got map %v, want empty map (WHERE source='yahoo' not enforced)", got)
+		}
+	})
+}
+
+// ---------------------------------------------------------------------------
+// T-MLP partial-NULL: fetchCommodityPricesFromDB omits keys for NULL columns
+// ---------------------------------------------------------------------------
+
+// TestFetchCommodityPricesFromDB_PartialNULL verifies per-commodity NULL handling.
+//
+// Contract: if gold_usd_per_oz is NULL, the "GOLD" key must be absent from the
+// returned map so the application layer applies per-commodity fixture fallback.
+// This exercises the R-1 (sql.NullFloat64) requirement.
+func TestFetchCommodityPricesFromDB_PartialNULL(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	freshTs := time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339Nano)
+	// gold_usd_per_oz is NULL.
+	_, err := db.Exec(`
+		INSERT INTO commodity_prices (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
+		VALUES ('yahoo', 96.0, NULL, 26150.0, ?)`,
+		freshTs)
+	if err != nil {
+		t.Fatalf("insert partial-NULL row: %v", err)
+	}
+
+	got, err := fetchCommodityPricesFromDB(context.Background(), db, 26*time.Hour)
+	if err != nil {
+		t.Fatalf("fetchCommodityPricesFromDB returned error: %v", err)
+	}
+
+	if got["OIL"] != 96.0 {
+		t.Errorf("partial-NULL OIL = %.2f, want 96.0", got["OIL"])
+	}
+	if _, present := got["GOLD"]; present {
+		t.Errorf("partial-NULL GOLD key present (%.2f), want absent (NULL column must be omitted)", got["GOLD"])
+	}
+	if got["USDVND"] != 26150.0 {
+		t.Errorf("partial-NULL USDVND = %.2f, want 26150.0", got["USDVND"])
 	}
 }

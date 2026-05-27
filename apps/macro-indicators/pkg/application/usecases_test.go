@@ -111,3 +111,90 @@ func TestVNIndexFallsBackToFixtureWhenPortReturnsZero(t *testing.T) {
 		t.Errorf("VNIndex fallback = %.2f, want fixtureVNIndex %.1f", resp.VNIndex, fixtureVNIndex)
 	}
 }
+
+// ---------------------------------------------------------------------------
+// T-MLP-4: resolveMarketPrices passes live port values through
+// ---------------------------------------------------------------------------
+
+// TestResolveMarketPrices_LivePortValues (T-MLP-4) verifies that when the
+// CommodityFetcherPort returns non-zero values, they pass through to the
+// snapshot response unchanged.
+//
+// Values differ from fixtures (82.5/2350.0/24500.0) — proves the port was
+// read, not the constants (per brief §11 QA-GATE-1 note).
+func TestResolveMarketPrices_LivePortValues(t *testing.T) {
+	// Live values: distinct from all fixture constants.
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    96.0,
+			"GOLD":   4480.0,
+			"USDVND": 26150.0,
+		}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() returned unexpected error: %v", err)
+	}
+
+	// Verify each commodity value is the live port value, NOT the fixture.
+	if resp.OilUSD == fixtureOilUSD {
+		t.Errorf("OilUSD seed-data-leak: got fixture %.1f, want live port value 96.0", fixtureOilUSD)
+	}
+	if resp.OilUSD != 96.0 {
+		t.Errorf("OilUSD = %.2f, want 96.0 (from port)", resp.OilUSD)
+	}
+
+	if resp.GoldUSD == fixtureGoldUSD {
+		t.Errorf("GoldUSD seed-data-leak: got fixture %.1f, want live port value 4480.0", fixtureGoldUSD)
+	}
+	if resp.GoldUSD != 4480.0 {
+		t.Errorf("GoldUSD = %.2f, want 4480.0 (from port)", resp.GoldUSD)
+	}
+
+	if resp.USDVnd == fixtureUSDVnd {
+		t.Errorf("USDVnd seed-data-leak: got fixture %.1f, want live port value 26150.0", fixtureUSDVnd)
+	}
+	if resp.USDVnd != 26150.0 {
+		t.Errorf("USDVnd = %.2f, want 26150.0 (from port)", resp.USDVnd)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// T-MLP-5: resolveMarketPrices falls back to fixture constants on empty port
+// ---------------------------------------------------------------------------
+
+// TestResolveMarketPrices_EmptyPortFallback (T-MLP-5) verifies that when the
+// CommodityFetcherPort returns an empty map (stale or missing data from DB),
+// the use case falls back to fixture constants.
+//
+// This simulates SQLiteCommodityRepository returning {} when:
+//   - fetched_at > 26h (stale row), or
+//   - no 'yahoo' row exists, or
+//   - commodity_prices table is absent.
+func TestResolveMarketPrices_EmptyPortFallback(t *testing.T) {
+	// Empty map — simulates SQLiteCommodityRepository stale/missing data.
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() returned unexpected error: %v", err)
+	}
+
+	// All three values MUST be the fixture constants (fixture fallback fired).
+	if resp.OilUSD != fixtureOilUSD {
+		t.Errorf("OilUSD fallback = %.2f, want fixtureOilUSD %.1f (empty port must use fixture)", resp.OilUSD, fixtureOilUSD)
+	}
+	if resp.GoldUSD != fixtureGoldUSD {
+		t.Errorf("GoldUSD fallback = %.2f, want fixtureGoldUSD %.1f (empty port must use fixture)", resp.GoldUSD, fixtureGoldUSD)
+	}
+	if resp.USDVnd != fixtureUSDVnd {
+		t.Errorf("USDVnd fallback = %.2f, want fixtureUSDVnd %.1f (empty port must use fixture)", resp.USDVnd, fixtureUSDVnd)
+	}
+}

@@ -34,12 +34,17 @@ type SignalResult struct {
 // MacroSnapshotResponse is the output DTO returned by ComputeMacroUseCase.Execute.
 // Mirrors domain.MacroSnapshot but adds HTTP-level metadata (Status, FetchedAt)
 // and the 6-primitive signals block required by AC-2 (P2-X3).
+//
+// MACRO-LIVE-PRICES: DataSource field added to indicate whether commodity values
+// came from live DB ("live") or fixture defaults ("fixture"). Set by Execute()
+// after resolveMarketPrices() runs; callers can detect degraded mode via this field.
 type MacroSnapshotResponse struct {
-	Status    string       `json:"status"`
-	VNIndex   float64      `json:"vnIndex"`
-	OilUSD    float64      `json:"oilUsd"`
-	GoldUSD   float64      `json:"goldUsd"`
-	USDVnd    float64      `json:"usdVnd"`
-	Signals   SignalResult `json:"signals"`
-	FetchedAt time.Time    `json:"fetchedAt"`
+	Status     string       `json:"status"`
+	VNIndex    float64      `json:"vnIndex"`
+	OilUSD     float64      `json:"oilUsd"`
+	GoldUSD    float64      `json:"goldUsd"`
+	USDVnd     float64      `json:"usdVnd"`
+	DataSource string       `json:"dataSource"`
+	Signals    SignalResult `json:"signals"`
+	FetchedAt  time.Time    `json:"fetchedAt"`
 }
