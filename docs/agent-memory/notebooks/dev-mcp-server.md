@@ -1,5 +1,47 @@
 # dev-mcp-server -- Notebook
 
+## c314 · 2026-05-27T20:25Z (NEWS-CMD-IMPL — /news Telegram command)
+
+### NEWS-CMD-IMPL DONE → Review
+
+**Files changed (4 in apps/mcp-server/, 1 doc, 2 task-tracking):**
+- `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts` — `VN_OFFSET_MS` import; `CommandResult.texts?`; `handleNews()` (query+fallback+formatter+chunker); `/news` case wired before switch; `HELP_TEXT` updated
+- `apps/mcp-server/src/interface/mcp/routes/webhookHandler.ts` — single send → `const chunks = result.texts ?? [result.text]; for...` loop (3-line change)
+- `apps/mcp-server/src/__tests__/214-telegram-commands.test.ts` — `rag_analyses` in makeDb(); seedNewsToday/Old helpers; T-NEWS-1..8 all pass
+- `docs/architecture/microservice/mcp-server/news-analysis.md` — "Telegram Commands" section appended
+- `docs/handoffs/TASK_NEWS-CMD.md` — [Developer] section written
+- `docs/TASKS.md` — NEWS-CMD-IMPL → Review
+
+**Gates:**
+- T-NEWS-1..8: 31 pass / 0 fail (was 26 before)
+- webhookHandler tests: 34 pass / 0 fail
+- bun tsc --noEmit: EXIT 0 (clean)
+
+**Files UNSTAGED — main terminal commits.**
+**NEXT: ops (docker compose build + force-recreate mcp-server) per rebuild-after-dev-change rule.**
+
+---
+
+## c313 · 2026-05-26T20:05Z (CLIENTS-TYPE — macro signals type fix)
+
+### CLIENTS-TYPE DONE
+
+**Commit (worktree):** `f3fb4564` | 3 files | tsc EXIT 0 | 14 pass / 0 fail (targeted)
+
+**Changes:**
+- `apps/mcp-server/src/infrastructure/microservices/clients.ts` — ADD `MacroSignalEntry` interface; CHANGE `signals` field type `Array<{indicator,...}>` → `Record<string, MacroSignalEntry>`; CHANGE fallback `?? []` → `?? {}`
+- `apps/mcp-server/src/__tests__/1354a-parallel-service-dispatcher-gaps.test.ts` — FIX stub: `signals: []` → `signals: {}`
+- `apps/mcp-server/src/__tests__/1974-clients-type-macro-signals.test.ts` — NEW: 6 type-contract scenarios
+
+**Gates:**
+- tsc EXIT 0 (main repo, post-fix)
+- bun test 1974 + 1354a: 14 pass / 0 fail
+- toolCount=148 (unchanged) | sched=68 (unchanged)
+
+**Zone health:** type fix only — no barrel changes — toolCount=148, sched=68, tsc EXIT 0 | HEALTHY
+
+---
+
 ## c312 · 2026-05-26T19:07Z (LF-OVERLAY verification run — BCTC-LAYOUT-FIRST)
 
 ### Verification result: CONFIRMED DONE
@@ -90,6 +132,7 @@ Sandbox 9/9 PASS. Phase-2 SCALE pilot CLOSED at 8972a155. P2 FROZEN.
 ## Working Memory
 
 ### Active Work
+- CLIENTS-TYPE: DONE (c313). Committed f3fb4564 to worktree. Main terminal merges. No rebuild required (type-only fix).
 - LF-OVERLAY: DONE (c311). Files UNSTAGED — awaiting main terminal commit.
   NEXT = ops (LF-DEPLOY) — gated on LF-EXTRACT also done.
 - FA-FIX: DONE (c310). ops rebuild required before live fix takes effect.
