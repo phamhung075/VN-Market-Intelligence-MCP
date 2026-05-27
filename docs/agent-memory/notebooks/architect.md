@@ -1,8 +1,35 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-27 21:30 UTC | **Sprint:** PEK-INTEGRATE Round 6
+**Last updated:** 2026-05-27T22:30Z | **Sprint:** SELF-IMPROVE-GATE Phase 2
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## SIG-IMPL-GATE — Blueprint (2026-05-27T22:30Z) — DESIGN COMPLETE
+
+**Task:** SIG-IMPL-GATE. GREENFIELD build of the Sprint-1948 detection substrate (confirmed absent by PO grep). Extended with D-IMPROVE proposal-doc bridge per brief §9 Phase 2.
+
+**Open points resolved:**
+1. **Kill-switch type:** `DispatchPath = typeof DISPATCH_PATHS[number]` (4 entries: price_confirmation, chain_catalyst, volume_spike, coverage_gap). Env-var: `SELF_IMPROVE_AUTO_DISPATCH_{PATH_UPPER}`. No global flag possible — TypeScript type prevents freeform string lookup. Unknown path → false (fail-safe for kill-switch only).
+2. **Slug rule:** `IMP-{YYYYMMDD}-{signal_type_kebab}-{detection_class_lower}`. Dedup key: `${signal_type}_${detection_class}`. fix_area→target_agent: typed `FIX_AREA_TO_AGENT` constant (manual→UNRESOLVED, unknown→UNRESOLVED).
+3. **Cron slot:** `2 9 * * *` (09:02 UTC). Same-minute is safe but 2-minute offset eliminates cron_job_runs visual ambiguity at zero cost. Single new slot — hard constraint satisfied.
+
+**Key design decisions:**
+- `detectDegradedSignalTypes()` is pure domain — locally re-declares `SignalAccuracyStatsByType` interface to avoid importing infra. Caller passes infra's `SignalAccuracyStats[]` (structurally compatible).
+- `queryCoverageGaps()` lives in `improveCheckStore.ts` (not inline in orchestrator) — injectable via `deps.coverageGapFn`.
+- `improvementSignalWriter.ts` is EXTRACTED to `infrastructure/signals/` (not inline) — testability + orchestrator stays under 200L.
+- DEGRADED and PERSISTENTLY_LOW for same signal_type = TWO separate findings (not merged). Anti-runaway picks top-2 by severity (DEGRADED > PERSISTENTLY_LOW > COVERAGE_GAP).
+- `wrapRun()` is in startScheduler.ts (matches accuracyDigestJob.ts pattern); `_running` guard is inside the job function.
+- C-5 isolation: doc-write wrapped in independent try/catch; log+Telegram steps run before doc-write.
+
+**Files authored:**
+1. `docs/handoffs/TASK_SELF-IMPROVE-GATE.md` — `[Architect] SIG-IMPL-GATE Blueprint` appended
+2. `docs/agent-memory/notebooks/architect.md` — this entry
+
+**13 production/test/config files specified.** Blueprint in handoff has: TypeScript interfaces (5), DDD layer table, module dep graph, test scaffold (36 ACs mapped), risk flags (7), hard constraint confirmation, complete file list.
+
+**Next actor:** po (approve blueprint). Then pm → dev-mcp-server (5 tasks sequential by dependency). Then ops REBUILD. Then qa TASK-6 gate-proof.
+
+---
 
 ## PEK-INTEGRATE — PEK-RENDER-DESIGN (2026-05-27) — DESIGN COMPLETE
 
