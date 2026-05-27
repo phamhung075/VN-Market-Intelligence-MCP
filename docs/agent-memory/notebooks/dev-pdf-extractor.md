@@ -4,6 +4,185 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-27 — PEK-RENDER-PDFX DONE (zero-change verify-only)
+
+**Task:** PEK-RENDER-PDFX | Sprint: PEK-INTEGRATE Round 6 | Status: DONE — read-only pass
+**Verdict:** PASS. No gaps found. No code changes made.
+
+**Four checks, all confirmed:**
+1. `PekExtractRequestSchema` (`handlers.py:142-155`): `report_id: str` + `pdf_path: str`, both mandatory (no Optional, no default). 422 cause confirmed. Schema stays unchanged — architect's fix (new mcp-server trigger endpoint) is the correct owner.
+2. Market-hours 503 guard: `is_vn_market_open_utc()` at `handlers.py:403` — first check in `pek_extract` route, before any model call. Import at line 33. Intact.
+3. `page_numbers_json` 1-indexed end-to-end: `enumerate(doc, start=1)` → `pages_bboxes` keys → `_group_bboxes_into_units` `pages` list → `document_map.units[].pages` → `pushBctcLayoutHandler.ts` `JSON.stringify(pageNums)` → stored. No conversion at any stage. `json_each(page_numbers_json) WHERE value = ?` requires no coordinate conversion in the new mcp-server handler.
+4. Frozen surfaces + PEK subtree: `git status --short` on `text_table_extractor.py`, `sandbox/runner.py`, `generic_md_table_extractor.py`, `pilot-status-pdf-extractor.json` → empty. `git -C PDF-Extract-Kit status --short` → empty.
+
+**Files written:** `docs/handoffs/TASK_PEK-INTEGRATE.md` (PEK-RENDER-PDFX section), this notebook.
+**Code files touched:** NONE.
+
+**NEXT: ops** (PEK-RENDER-DEPLOY — rebuild mcp-server after dev-mcp-server lands PEK-RENDER-MCP).
+
+---
+
+### 2026-05-27 — PEK-LAYOUT-CFG DONE (parity audit fix for 6c124745)
+
+**Task:** PEK-LAYOUT-CFG | Sprint: PEK-INTEGRATE | Status: DONE — commit SHA `e6b84ca5`
+
+**Root cause (QA cycle-131 RED):** Three divergences from original `LayoutDetectionTask`:
+1. CONFIG-PATH: `layout_cfg.get("model", {})` → `{}`. YAML has no top-level `model` key. Fix: `layout_cfg.tasks.layout_detection.model_config`.
+2. RELATIVE model_path: `models/Layout/YOLO/doclayout_yolo_ft.pt` was passed raw to `YOLOv10()`. Fix: `_PekLayoutModel.__init__` accepts `pek_root` arg, resolves relative path to absolute. `_load_pek_models()` computes `_pek_root = normpath(join(_PEK_CONFIG_DIR, ".."))`.
+3. SILENT-FALLBACK: `except → logger.warning → layout_task = None` hid all failures. Fix: RuntimeError raised when YAML exists but model load fails (fail-loud per protocol).
+
+**SMOKE-GATE FINDING:** Cannot extend gate to `_PekLayoutModel` instantiation — weights runtime-only (named volume, excluded from image). Import-level gate kept. fail-loud surfaces at first extraction with clear traceback.
+
+**Verification:**
+- `pytest __tests__/test_pek_engine_adapter.py -v` → 22/22 PASS (+7 new `TestLayoutCfgConfigPath`)
+- `pytest --ignore=__tests__/integration -q` → 636 passed, 0 failed
+- `git -C PDF-Extract-Kit diff` = EMPTY (pristine)
+- `git show --stat e6b84ca5` = 3 files only (pek_engine_adapter.py + test_pek_engine_adapter.py + TASK_PEK-INTEGRATE.md)
+- Frozen surfaces: text_table_extractor.py, sandbox/runner.py, pilot-status-pdf-extractor.json — 0-diff
+
+**NEXT:** ops REBUILD (--no-cache) + force-recreate pdf-extractor → qa two-stage live verification after market close 09:00 UTC.
+
+---
+
+### 2026-05-27 — PEK-IMPORT-CHAIN DONE (bypass pdf_extract_kit.tasks)
+
+**Task:** PEK-IMPORT-CHAIN | Sprint: PEK-INTEGRATE | Status: DONE — commit SHA `6c124745`
+
+**Root cause (architect, verified):** `from pdf_extract_kit.tasks.layout_detection import LayoutDetectionTask` unconditionally executes `pdf_extract_kit/tasks/__init__.py` → eagerly imports `FormulaRecognitionTask` → `unimernet` → `ModuleNotFoundError`. There is no safe sub-path under `pdf_extract_kit.tasks`.
+
+**Fix (Option B — bypass entirely):**
+- Added `_PekLayoutModel` class in `pek_engine_adapter.py` that calls `doclayout_yolo.YOLOv10` + `fitz` (PyMuPDF) directly — zero PEK tasks import.
+- Replaced the two `pdf_extract_kit.tasks.*` imports with `from doclayout_yolo import YOLOv10`.
+- Removed dead `OCRTask` block (was never called in `_run_extraction()`); set `ocr_task = None` with comment.
+- Removed `ocr_cfg_path` variable.
+- Updated return dict (removed `ocr_task` key).
+- Updated `_run_extraction()` (removed dead `ocr_task` reference).
+- Updated module-level CRITICAL comment (§3.8 constraint language).
+- Dockerfile smoke gate corrected: now imports `from infrastructure.pek_engine_adapter import _PekLayoutModel, _load_pek_models` — any import regression in the adapter fails the BUILD.
+
+**Verification:**
+- `grep -rn executable pdf_extract_kit.tasks` in our code: ZERO hits.
+- `docker compose build --no-cache pdf-extractor` → smoke gate reached and PASSED.
+- Smoke gate stdout: `--- pek-import-chain: ALL OK ---`
+- `pytest __tests__/test_pek_engine_adapter.py -v` → 15/15 PASS.
+- `pytest scenarios/pek_single_doc_extraction.py -v` → 10/10 PASS.
+- `pytest --ignore=__tests__/integration -q` → 629 passed, 0 failed.
+- `git -C PDF-Extract-Kit diff` = EMPTY (pristine).
+- `git show --stat 6c124745` = 2 files only (Dockerfile + pek_engine_adapter.py).
+- Frozen surfaces: text_table_extractor.py, sandbox/runner.py, pilot-status-pdf-extractor.json — 0-diff.
+
+**NEXT:** ops force-recreate pdf-extractor container (--no-cache build done here) → qa re-runs FPT Q4 2025 sentinel + direct bun:sqlite row check.
+
+---
+
+### 2026-05-26 — PEK-DEPLOY-FIX DONE (Docker build unblocked)
+
+**Task:** PEK-DEPLOY-FIX | Status: DONE — commit SHA `efd23447`
+
+**Two build blockers fixed (Dockerfile + requirements-pek.txt only):**
+
+**Blocker 1 — doclayout-yolo==0.0.2 does not exist on PyPI:**
+- `0.0.2` is a ghost pin. Actual releases: `0.0.2b1`, `0.0.3`, `0.0.4`.
+- Fix: pinned to `==0.0.3` — first stable release after intended `0.0.2`; same `YOLOv10` API; pure Python wheel (`py3-none-any`); Python 3.12 compatible.
+- Root cause: PEK upstream `requirements-cpu.txt` always carried the ghost pin; when the pip cache was cold inside Docker, the resolution failed.
+
+**Blocker 2 — pip install -e ./PDF-Extract-Kit fails on pyproject.toml TOML error:**
+- PEK's `pyproject.toml` line 21: `opencv-python = "^4.6.0"` written as TOML key=value inside a PEP 508 `dependencies` array — invalid TOML.
+- Python 3.12's pip parses this strictly and raises `TOMLDecodeError: Invalid value`.
+- Fix: removed the `RUN pip3 install -e ./PDF-Extract-Kit` step; extended `PYTHONPATH=/app:/app/PDF-Extract-Kit`.
+  An editable install only adds the source dir to sys.path — PYTHONPATH is a direct equivalent.
+- PEK subtree NOT edited (constraint preserved). `pyproject.toml` left as-is.
+
+**Base image stays ubuntu:24.04 (Python 3.12):**
+- Task description claimed ultralytics requires Python <=3.11 — this was incorrect.
+- Actual build output: `ultralytics>=8.2.85` resolves to 8.4.55 (requires Python >=3.8, no upper bound). Python 3.12 is fine.
+- The only fatal error was the doclayout-yolo ghost pin. No base image change needed.
+
+**Verification:**
+- `docker compose build pdf-extractor` → `pdf-extractor Built` (exit 0, image `vn-market-intelligence-mcp-pdf-extractor:latest`)
+- Test suite: 689 passed, 4 pre-existing integration failures (require real OCR/PDF files — unchanged)
+- PEK subtree: `git -C PDF-Extract-Kit diff` = empty (CONFIRMED)
+- Frozen surfaces: `text_table_extractor.py`, `sandbox/runner.py`, `pilot-status-pdf-extractor.json` — 0-diff (CONFIRMED)
+- Staged files: `Dockerfile` + `requirements-pek.txt` only (C2 protocol: no wildcard add)
+
+**NEXT:** ops force-recreate pdf-extractor container (cache hit on built image) → qa PEK-QA → user verbal G9.
+
+---
+
+### 2026-05-26 — PEK-ORPHAN-RECONCILE DONE (pre-deploy adjudication)
+
+**Task:** PEK-ORPHAN-RECONCILE | Status: DONE, 3 commits
+
+**Provenance verdict:** All four uncommitted file groups were established in-progress work from the BCTC-LAYOUT-FIRST sprint — coherent, tested, documented in notebook entries. None abandoned or experimental.
+
+**Group A — LF-FIX2 improvements (COMMITTED, SHA `08644675`):**
+- `infrastructure/generic_md_table_extractor.py` — 5 targeted refinements:
+  - `_MAX_INTER_GUTTER_GAP_PX=60`: compound gutter merging for OCR artifact noise
+  - `_MIN_TEXT_COL_WIDTH_PX_50DPI: 20→30`: tighter noise suppression at 50 DPI
+  - `_GUTTER_DARK_FRACTION_50DPI: 0.40→0.15`: correct threshold for dense BCTC pages
+  - `page_type` via money-group density (drops gutter_count gate) — stable signal
+  - `is_gutter` flag on column dicts + gutter-skip in `ocr_unit` rows_for_gate
+- `__tests__/unit/test_document_map.py` — +143 lines: `TestIsGutterFlagAndCompoundGutterMerging` (4 tests) + 3 `page_type` continuity tests in `TestFingerprintsContinuous`
+
+**Group B — DDD import fix (COMMITTED, SHA `0879cb33`):**
+- `domain/services.py` — comment clarifies external callers must import from `domain.primitives` directly; noqa removed
+- `__tests__/unit/test_financial_validation.py` — import moved from `domain.services` to `domain.primitives.validate_financial_figures` (correct DDD path)
+
+**Group C — mock_echo deletion (COMMITTED, SHA `7acdef90`):**
+- `domain/primitive/mock_echo/mock_echo.py` — zero references outside `_deprecated/`; 629 tests pass without it; safe removal
+
+**Restored (dashboard PNG):** `dashboard/g9-trust-contract.png` — binary, undocumented change, restored to committed state.
+
+**Final gate check:**
+- Suite: 629 passed, 1 warning (asyncio deprecation — pre-existing, not introduced here)
+- PEK subtree: `git -C PDF-Extract-Kit diff` = empty (CONFIRMED)
+- Frozen surfaces: text_table_extractor.py, sandbox/runner.py, pilot-status-pdf-extractor.json — 0-diff (CONFIRMED)
+- Working tree `apps/pdf-extractor/`: only `??` untracked (PDF-Extract-Kit/, _deprecated/, spike/, dashboard/*.json, .DS_Store) — all excluded by HARD CONSTRAINTS
+
+**NEXT:** Deploy is unblocked. ops PEK-DEPLOY (REBUILD pdf-extractor container, not restart).
+
+---
+
+### 2026-05-26 — PEK-IMPL DONE (PEK-INTEGRATE sprint)
+
+**Task:** PEK-IMPL | Sprint: PEK-INTEGRATE | Status: DONE — files UNSTAGED, ops notified
+
+**Deliverables (all tests pass, frozen surfaces zero-diff, PEK pristine):**
+
+New files:
+- `domain/primitives/market_hours/primitive.py` — `is_vn_market_open_utc()` pure domain fn
+- `domain/primitives/market_hours/__init__.py`
+- `infrastructure/pek_engine_adapter.py` — PekEngineAdapter (lazy singleton, semaphore guard)
+- `requirements-pek.txt` — CPU-only trimmed deps (no unimernet/struct-eqtable/paddlepaddle-gpu)
+- `__tests__/test_market_hours_guard.py` — 12 boundary tests (all pass)
+- `__tests__/test_pek_engine_adapter.py` — 15 unit tests (all pass)
+- `scenarios/pek_single_doc_extraction.py` — 7 scenario tests (all pass, zero creds)
+
+Modified files:
+- `domain/repositories.py` — PekEngineAdapterPort protocol added
+- `Dockerfile` — requirements-pek.txt + pip install -e ./PDF-Extract-Kit + GIT_SHA label + libgl1
+- `.dockerignore` — PDF-Extract-Kit/.git/, PDF-Extract-Kit/models/, pek_models/ excluded
+- `.gitignore` — pek_models/, PDF-Extract-Kit/models/, PDF-Extract-Kit/outputs/ excluded
+- `interface/handlers.py` — POST /pek-extract + HTTP 503 market-hours guard
+- `main.py` — PekEngineAdapter + pek_push_client wired at composition root
+- `docker-compose.yml` — pek_model_cache volume + model cache env vars + CRON_BCTC_REPARSE_JOB
+
+Frozen surfaces confirmed zero-diff: text_table_extractor.py, sandbox/runner.py, pilot-status-pdf-extractor.json.
+PDF-Extract-Kit pristine: `git -C apps/pdf-extractor/PDF-Extract-Kit diff` = empty.
+
+Test results: 608 unit tests PASS (12 market-hours + 15 PEK adapter + 7 scenario + all existing).
+Import-linter: 2/2 contracts KEPT. Fence-A + Fence-B both green.
+
+Hard constraints verified:
+- NEVER imports TableParsingTask or FormulaDetectionTask (CPU crash guard)
+- paddlepaddle_gpu not in sys.modules after import
+- Market-hours guard: POST /pek-extract returns 503 during market hours (no model load)
+- CRON_BCTC_REPARSE_JOB=0 21 * * * in docker-compose.yml mcp-server env
+
+**NEXT:** ops PEK-DEPLOY (REBUILD, not restart) → qa PEK-QA → po PEK-EXIT → user verbal G9.
+
+---
+
 ### 2026-05-26 — LF-FIX DONE (zone_page() gutter-detection edge-sliver fix)
 
 **Task:** LF-FIX | Sprint: BCTC-LAYOUT-FIRST | Status: DONE, committed SHA `95b24566`

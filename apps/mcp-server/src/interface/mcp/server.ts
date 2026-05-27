@@ -393,6 +393,88 @@ export async function createBunServer(
       await handlePushBctcLayout(req, res, db);
       return;
     }
+    // PEK-RENDER-SEAM: Trigger PEK re-extraction for a report (§5 brief)
+    // POST /api/trigger-pek-extract — accepts { report_id }, looks up pdf_path,
+    // calls pdf-extractor:5001/pek-extract with { report_id, pdf_path }.
+    // Returns 202 on success, 404 when pdf_path IS NULL, 503 from pdf-extractor (market hours).
+    // No change to PekExtractRequestSchema — pdf_path stays mandatory on pdf-extractor side.
+    if (method === "POST" && pathname === "/api/trigger-pek-extract") {
+      let body = "";
+      for await (const chunk of req) body += chunk;
+
+      let payload: { report_id?: unknown } = {};
+      try {
+        if (body.trim()) payload = JSON.parse(body) as { report_id?: unknown };
+      } catch {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Invalid JSON body" }));
+        return;
+      }
+
+      const reportId = typeof payload.report_id === "string" ? payload.report_id.trim() : null;
+      if (!reportId) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "Missing required field: report_id (string)" }));
+        return;
+      }
+
+      // Look up pdf_path from financial_reports (mcp-server owns the DB)
+      const pdfPathRow = db
+        .prepare<{ pdf_path: string | null }, [string]>(
+          `SELECT pdf_path FROM financial_reports WHERE id = ?`,
+        )
+        .get(reportId) as { pdf_path: string | null } | null;
+
+      if (!pdfPathRow) {
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "report_not_found", report_id: reportId }));
+        return;
+      }
+
+      const pdfPath = pdfPathRow.pdf_path;
+      if (!pdfPath) {
+        // Two known cases: VCB Q1/Q4 geo-restricted — never trigger PEK for these
+        res.writeHead(404, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "pdf_path_null", report_id: reportId, detail: "PDF not downloaded (geo-restricted or not available)" }));
+        return;
+      }
+
+      // Call pdf-extractor with both report_id and pdf_path (PekExtractRequestSchema requires both)
+      try {
+        const pekUrl = "http://pdf-extractor:5001/pek-extract";
+        const pekResp = await fetch(pekUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ report_id: reportId, pdf_path: pdfPath }),
+        });
+
+        // Propagate 503 (market hours guard) verbatim
+        if (pekResp.status === 503) {
+          res.writeHead(503, { "Content-Type": "application/json" });
+          const pekBody = await pekResp.text();
+          res.end(pekBody || JSON.stringify({ error: "market_open", detail: "pdf-extractor returned 503 (VN market hours guard)" }));
+          return;
+        }
+
+        if (!pekResp.ok) {
+          const pekBody = await pekResp.text();
+          log.error("[trigger-pek-extract] pdf-extractor error", { status: pekResp.status, reportId, body: pekBody });
+          res.writeHead(502, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "pdf_extractor_error", status: pekResp.status, detail: pekBody }));
+          return;
+        }
+
+        log.info("[trigger-pek-extract] extraction triggered", { reportId, pdfPath });
+        res.writeHead(202, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ ok: true, report_id: reportId, pdf_path: pdfPath, status: "extraction_queued" }));
+      } catch (fetchErr) {
+        log.error("[trigger-pek-extract] fetch error", { error: fetchErr instanceof Error ? fetchErr.message : String(fetchErr), reportId });
+        res.writeHead(502, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "pdf_extractor_unreachable", detail: fetchErr instanceof Error ? fetchErr.message : String(fetchErr) }));
+      }
+      return;
+    }
+
     // LF-OVERLAY: Get zone-geometry for a specific doc + page (overlay read path)
     if (method === "GET" && pathname.startsWith("/api/bctc-inspect/zones/")) {
       const docId = pathname.slice("/api/bctc-inspect/zones/".length);

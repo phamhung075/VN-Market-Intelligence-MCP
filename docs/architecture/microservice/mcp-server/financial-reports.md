@@ -117,3 +117,60 @@ Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 - Balance badge: green "BALANCE PASS" or red "BALANCE FAIL" with delta.
 - "No structured table yet — re-extract pending (BT-4b)" shown for legacy docs.
 - Called automatically on document selection after renderOcr().
+
+---
+
+## PEK-RENDER-MCP: Render Seam — PEK SSOT Inspector Panels (Sprint PEK-INTEGRATE Round 6)
+
+### Problem (Root Cause)
+
+The BCTC inspector OCR Text and structured-table panels were reading from stale OLD-pipeline tables (`pdf_extracted_text`, `bctc_table_rows`) while PEK writes exclusively to `bctc_layout_units` + `bctc_page_zones`. A perfect PEK extraction could never change the OCR Text render — dual-path render drift.
+
+### Solution: Option A — Repoint Inspector Panels to PEK SSOT Tables
+
+`handleBctcInspectOcr` and `handleBctcInspectTable` now check `bctc_layout_units` FIRST for any given `report_id`. The `has_pek` flag is ALWAYS present in every response branch — it is the fail-loud guard (never omitted).
+
+### Read Contract
+
+**`GET /api/bctc-inspect/ocr/{doc_id}?page=N`:**
+
+| State | has_pek | pek_coverage_gap | text_content source |
+|-------|---------|-----------------|-------------------|
+| PEK units exist + page covered | true | absent | `stitched_markdown` from `bctc_layout_units` |
+| PEK units exist + page NOT covered | true | true | empty string (no silent fallback) |
+| No PEK units for this report | false | absent | `pdf_extracted_text` (legacy) |
+
+**`GET /api/bctc-inspect/table/{doc_id}`:**
+
+| State | has_pek | Response shape |
+|-------|---------|---------------|
+| PEK units exist | true | `{ has_pek: true, has_table: false, units: [...] }` |
+| No PEK units | false | `{ has_pek: false, has_table: bool, rows: [...] }` |
+
+### New Endpoint: `POST /api/trigger-pek-extract`
+
+- Accepts `{ report_id: string }`
+- Looks up `financial_reports.pdf_path` (mcp-server owns market.db)
+- Returns 404 when `pdf_path IS NULL` (VCB geo-restricted — 2 known rows)
+- Calls `POST http://pdf-extractor:5001/pek-extract` with `{ report_id, pdf_path }`
+- Returns 202 on success; propagates 503 (market-hours guard from pdf-extractor)
+- Does NOT change `PekExtractRequestSchema` on pdf-extractor side — `pdf_path` stays mandatory
+
+### HTML Inspector (PEK-RENDER-MCP)
+
+`src/interface/bctc-inspector.html` updated:
+- OCR panel: removes prior PEK banners before re-render; branches on `data.has_pek`
+- C-1 HARD: unmistakable gold/orange stale banner when `has_pek:false` (mirroring `ocr-sync-note` pattern)
+- Coverage-gap banner when `has_pek:true AND pek_coverage_gap:true`
+- Renders `stitched_markdown` (pre-formatted) when `has_pek:true` and page covered
+- Table panel: stale banner when `has_pek:false`; PEK SSOT badge + unit list when `has_pek:true`
+
+### Tests
+
+`src/__tests__/pek-render-seam.test.ts` — 12 tests, 0 fail:
+- (a) has_pek:true + stitched_markdown when PEK unit covers requested page
+- (b) has_pek:false + legacy fallback when no PEK units
+- (c) pek_coverage_gap:true when PEK units exist but page not covered
+- (d) Table: has_pek:true + units array for PEK reports
+- (e) Table: has_pek:false + rows for non-PEK reports
+- (f) financial_reports pdf_path DB verification (trigger endpoint contract)

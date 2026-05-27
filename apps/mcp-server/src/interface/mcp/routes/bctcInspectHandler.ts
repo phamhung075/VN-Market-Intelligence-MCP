@@ -9,14 +9,22 @@
  * Serves a side-by-side PDF inspection viewer over mcp-server's own market.db.
  * Data sources:
  *   - financial_reports (document list + parsed figures)
- *   - pdf_extracted_text (page-by-page OCR text)
+ *   - bctc_layout_units (PEK extraction units — primary source when present)
+ *   - pdf_extracted_text (page-by-page OCR text — fallback when no PEK units)
+ *   - bctc_table_rows (structured table rows — fallback when no PEK units)
  *   - financial_reports.pdf_path (authoritative absolute path to on-disk PDF)
  *
  * Routes:
  *   GET /api/bctc-inspect               — HTML viewer page
  *   GET /api/bctc-inspect/docs          — list of real docs from financial_reports
  *   GET /api/bctc-inspect/pdf/{doc_id}  — stream PDF bytes (application/pdf)
- *   GET /api/bctc-inspect/ocr/{doc_id}?page=N — OCR text pages from pdf_extracted_text
+ *   GET /api/bctc-inspect/ocr/{doc_id}?page=N — OCR text (PEK-priority, fallback pdf_extracted_text)
+ *   GET /api/bctc-inspect/table/{doc_id} — structured table (PEK-priority, fallback bctc_table_rows)
+ *
+ * PEK render-seam (PEK-RENDER-MCP):
+ *   has_pek: true  — PEK bctc_layout_units exist for this report; stitched_markdown returned.
+ *   has_pek: false — No PEK units; legacy fallback path used. ALWAYS emitted in every response.
+ *   pek_coverage_gap: true — PEK units exist for this report but no unit covers the requested page.
  *
  * Security: doc_id is validated as UUID before any DB SELECT or filesystem access.
  * pdf_path is read from DB (server-side), never from user-supplied input — no path traversal.
@@ -306,6 +314,16 @@ export function handleBctcInspectPdf(
 
 const PAGE_SIZE = 1; // Return 1 page at a time; caller uses ?page=N
 
+// ─── PEK layout unit row shape ────────────────────────────────────────────────
+
+interface BctcLayoutUnitRow {
+  unit_id: string;
+  schema_page: number;
+  page_numbers_json: string;
+  stitched_markdown: string;
+  quarantined: number;
+}
+
 export interface OcrPageResponse {
   doc_id: string;
   filename: string | null;
@@ -314,6 +332,21 @@ export interface OcrPageResponse {
   text_content: string;
   confidence: number;
   has_more: boolean;
+  /**
+   * PEK render-seam flag — ALWAYS present in every response branch.
+   * true  = PEK bctc_layout_units exist for this report; stitched_markdown returned.
+   * false = No PEK units for this report; legacy pdf_extracted_text fallback used.
+   */
+  has_pek: boolean;
+  /**
+   * true when PEK units exist for the report but no unit covers the requested page.
+   * Only set when has_pek:true.
+   */
+  pek_coverage_gap?: boolean;
+  /** PEK unit fields — populated when has_pek:true and the page is covered. */
+  unit_id?: string | null;
+  page_numbers_json?: string | null;
+  quarantined?: boolean | null;
   /** Parsed figures from financial_reports for the right-pane figures section */
   figures: FiguresPayload | null;
 }
@@ -445,6 +478,87 @@ export function handleBctcInspectOcr(
         }
       : null;
 
+    // ── PEK render-seam: check bctc_layout_units FIRST ─────────────────────
+    // §3 of PEK-RENDER-SEAM brief: PEK units take priority when present.
+    // has_pek is ALWAYS emitted in the response (never omitted) — fail-loud guard.
+
+    // Step 1: check if any PEK units exist for this report_id
+    const pekCountRow = db
+      .prepare<{ cnt: number }, [string]>(
+        `SELECT COUNT(*) as cnt FROM bctc_layout_units WHERE report_id = ?`,
+      )
+      .get(docId) as { cnt: number } | null;
+    const hasPekUnits = (pekCountRow?.cnt ?? 0) > 0;
+
+    if (hasPekUnits) {
+      // PEK units exist for this report — use PEK path.
+      // Find the unit whose page_numbers_json covers the requested page.
+      // Use json_each to safely match (LIKE '%7%' would match page 17/27).
+      // R-CRIT-1 in brief: json_each available in SQLite 3.38+ (Bun bundles 3.43+).
+      const pekUnitRow = db
+        .prepare<BctcLayoutUnitRow, [string, number]>(`
+          SELECT unit_id, schema_page, page_numbers_json, stitched_markdown, quarantined
+          FROM bctc_layout_units
+          WHERE report_id = ?
+            AND page_type = 'table'
+            AND EXISTS (
+              SELECT 1 FROM json_each(page_numbers_json) WHERE value = ?
+            )
+          LIMIT 1
+        `)
+        .get(docId, page) as BctcLayoutUnitRow | null;
+
+      if (pekUnitRow) {
+        // Page covered by a PEK unit — return stitched_markdown
+        const response: OcrPageResponse = {
+          doc_id: docId,
+          filename,
+          // total_pages: use pdf_extracted_text count for page nav, or 0 if no filename
+          total_pages: filename
+            ? (db.prepare(`SELECT COUNT(*) as cnt FROM pdf_extracted_text WHERE filename = ?`).get(filename) as { cnt: number } | null)?.cnt ?? 0
+            : 0,
+          page,
+          text_content: pekUnitRow.stitched_markdown,
+          confidence: 1.0,
+          has_more: false, // nav driven by PDF pane; PEK unit may span multiple pages
+          has_pek: true,
+          unit_id: pekUnitRow.unit_id,
+          page_numbers_json: pekUnitRow.page_numbers_json,
+          quarantined: pekUnitRow.quarantined === 1,
+          figures,
+        };
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(response));
+        return;
+      }
+
+      // PEK units exist for the report but no unit covers this page — coverage gap.
+      // Do NOT fall back to pdf_extracted_text silently — emit pek_coverage_gap:true.
+      const response: OcrPageResponse = {
+        doc_id: docId,
+        filename,
+        total_pages: filename
+          ? (db.prepare(`SELECT COUNT(*) as cnt FROM pdf_extracted_text WHERE filename = ?`).get(filename) as { cnt: number } | null)?.cnt ?? 0
+          : 0,
+        page,
+        text_content: "",
+        confidence: 0,
+        has_more: false,
+        has_pek: true,
+        pek_coverage_gap: true,
+        unit_id: null,
+        page_numbers_json: null,
+        quarantined: null,
+        figures,
+      };
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify(response));
+      return;
+    }
+
+    // ── No PEK units for this report — fall back to pdf_extracted_text ──────
+    // has_pek:false is emitted so the UI can show the stale-data banner.
+
     if (!filename) {
       // No pdf_path → no OCR filename to look up
       const response: OcrPageResponse = {
@@ -455,6 +569,7 @@ export function handleBctcInspectOcr(
         text_content: "",
         confidence: 0,
         has_more: false,
+        has_pek: false,
         figures,
       };
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -479,6 +594,7 @@ export function handleBctcInspectOcr(
         text_content: "",
         confidence: 0,
         has_more: false,
+        has_pek: false,
         figures,
       };
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -506,6 +622,7 @@ export function handleBctcInspectOcr(
       text_content: pageRow?.text_content ?? "",
       confidence: pageRow?.confidence ?? 0,
       has_more: page < totalPages,
+      has_pek: false,
       figures,
     };
 
@@ -569,6 +686,53 @@ export async function handleBctcInspectTable(
   }
 
   try {
+    // ── PEK render-seam: check bctc_layout_units FIRST (§4 brief) ───────────
+    // has_pek is ALWAYS emitted — never omitted.
+
+    const pekCountRow = db
+      .prepare<{ cnt: number }, [string]>(
+        `SELECT COUNT(*) as cnt FROM bctc_layout_units WHERE report_id = ?`,
+      )
+      .get(docId) as { cnt: number } | null;
+    const hasPekUnits = (pekCountRow?.cnt ?? 0) > 0;
+
+    if (hasPekUnits) {
+      // PEK units exist — return all units as the structured content
+      const pekUnits = db
+        .prepare<BctcLayoutUnitRow, [string]>(`
+          SELECT unit_id, schema_page, page_numbers_json, stitched_markdown, quarantined
+          FROM bctc_layout_units
+          WHERE report_id = ?
+          ORDER BY schema_page ASC
+        `)
+        .all(docId) as BctcLayoutUnitRow[];
+
+      const mappedUnits = pekUnits.map((u) => ({
+        unit_id: u.unit_id,
+        schema_page: u.schema_page,
+        page_numbers_json: (() => {
+          try { return JSON.parse(u.page_numbers_json); } catch { return []; }
+        })(),
+        stitched_markdown: u.stitched_markdown,
+        quarantined: u.quarantined === 1,
+      }));
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          doc_id: docId,
+          report_id: docId,
+          has_pek: true,
+          has_table: false,
+          units: mappedUnits,
+        }),
+      );
+      return;
+    }
+
+    // ── No PEK units — fall back to bctc_table_rows (has_pek:false) ─────────
+    // This is the EXPLICIT, FLAGGED fallback — not silent.
+
     // Q1: fetch rows ordered by row_order
     const rows = db
       .prepare<BctcTableRowDbRow, [string]>(`
@@ -633,6 +797,7 @@ export async function handleBctcInspectTable(
         rows: mappedRows,
         balance_check: balanceCheck,
         has_table: hasTable,
+        has_pek: false,
       }),
     );
   } catch (err) {

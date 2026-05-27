@@ -1222,3 +1222,133 @@ PDF-Extract-Kit/ subtree pristine (`git -C apps/pdf-extractor/PDF-Extract-Kit di
 PEK-RENDER-MCP (dev-mcp-server, 4 files, +C-1) → PEK-RENDER-PDFX (dev-pdf-extractor, verify frozen surfaces only) → PEK-RENDER-DEPLOY (ops, rebuild mcp-server + re-extract corpus, +C-3) → PEK-RENDER-QA (render-seam acceptance + 4-gate + all-12 has_pek, +C-2) → PEK-RENDER-EXIT (po, re-seek USER verbal G9). Goal stays ARMED until G9.
 
 **NEXT: dev-mcp-server** (PEK-RENDER-MCP). PEK-RENDER-PDFX is a parallel zero-change verify task.
+
+---
+
+## [Developer] PEK-RENDER-MCP — Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts` — extended `handleBctcInspectOcr` (PEK-priority read from `bctc_layout_units` with `json_each` page coverage; `has_pek`, `pek_coverage_gap`, `unit_id`, `page_numbers_json`, `quarantined` fields emitted; fallback to `pdf_extracted_text` behind `has_pek:false`); extended `handleBctcInspectTable` (PEK-priority read returns `{ has_pek:true, units:[...] }`; fallback to `bctc_table_rows` behind `has_pek:false`); added `BctcLayoutUnitRow` interface; extended `OcrPageResponse` type.
+  - `apps/mcp-server/src/interface/mcp/server.ts` — added `POST /api/trigger-pek-extract` route: parses `{ report_id }`, looks up `financial_reports.pdf_path` from market.db, returns 404 for `pdf_path IS NULL` (VCB geo-restricted), calls `POST http://pdf-extractor:5001/pek-extract` with `{ report_id, pdf_path }`, propagates 503 (market-hours guard).
+  - `apps/mcp-server/src/interface/bctc-inspector.html` — updated `renderOcr` JS: removes prior PEK banners before re-render; C-1 HARD: gold/orange visible stale banner when `has_pek:false`; coverage-gap banner when `pek_coverage_gap:true`; branches on `has_pek` to render `stitched_markdown` (preformatted) vs legacy `text_content`. Updated `renderTable` JS: stale banner when `has_pek:false`; PEK SSOT badge + unit list pre-formatted when `has_pek:true`.
+- **Tests written:** `apps/mcp-server/src/__tests__/pek-render-seam.test.ts` — 12 assertions, GREEN
+  - (a) OCR has_pek:true + stitched_markdown for covered page (2 tests)
+  - (b) OCR has_pek:false + legacy fallback (2 tests incl. flag-always-present guard)
+  - (c) pek_coverage_gap:true for uncovered page
+  - (d) Table has_pek:true + units array
+  - (e) Table has_pek:false + rows (2 tests incl. flag-always-present guard)
+  - (f) DB verification — null pdf_path + valid pdf_path (2 tests + 2 UUID invalid tests)
+- **Git commits:** UNSTAGED (main terminal serializes commits per Round-6 binding rule)
+- **Type check:** clean (`bun tsc --noEmit` 0 errors)
+- **bun test (new file):** 12 pass / 0 fail
+- **bun test (representative batch):** 111 pass / 0 fail (7 test files)
+- **Tool count:** 148 (matches pre-task baseline — unchanged)
+- **Scheduler count:** 68 cron.schedule entries (unchanged)
+- **Docs updated:** `docs/architecture/microservice/mcp-server/financial-reports.md` — PEK-RENDER-MCP section appended
+- **Frozen surfaces (verified):** `pushBctcLayoutHandler.ts` write path unchanged; `pushBctcTableHandler.ts` write path unchanged; `bctc_table_rows` write path unregressed; `text_table_extractor.py` NOT touched; `PDF-Extract-Kit/` subtree NOT touched.
+- **C-1 compliance:** visible gold/orange banner rendered when `has_pek:false` (both OCR and table panels); coverage-gap blue banner when `pek_coverage_gap:true` — NOT hidden JSON only.
+- **has_pek invariant:** emitted in EVERY response branch of both handlers — zero omission paths.
+
+**NEXT: ops** — PEK-RENDER-DEPLOY: `docker compose build --no-cache mcp-server` + `up -d --no-deps --force-recreate mcp-server`. Then trigger re-extraction for the 10 non-VCB corpus reports via `POST /api/trigger-pek-extract {report_id}` SEQUENTIALLY within off-hours window (C-3).
+
+---
+
+## [dev-pdf-extractor] PEK-RENDER-PDFX — VERIFY COMPLETE 2026-05-27
+
+**Task:** PEK-RENDER-PDFX (zero-change verify-only)
+**Zone:** `apps/pdf-extractor/` — read-only pass
+**Verdict:** PASS — zero gaps. mcp-server fix can proceed on correct assumptions.
+**NEXT: ops**
+
+---
+
+### Check 1 — PekExtractRequestSchema: mandatory fields confirmed
+
+**File:** `apps/pdf-extractor/interface/handlers.py:142–155`
+
+```python
+class PekExtractRequestSchema(BaseModel):
+    report_id: str
+    pdf_path: str
+```
+
+Both fields are plain `str` with no `Optional` wrapper, no `= None` default, no `= Field(default=...)`. Pydantic raises 422 Unprocessable Entity when either field is absent. This is the confirmed cause of the prior 422 (caller sent `{"report_id": "..."}` only, omitting `pdf_path`).
+
+**Schema change required for render-seam fix:** NONE. The architect's fix (new mcp-server `POST /api/trigger-pek-extract` that resolves `pdf_path` server-side before calling `/pek-extract`) requires zero change to this schema. `pdf_path` stays mandatory — correct by design.
+
+---
+
+### Check 2 — Market-hours 503 guard intact
+
+**File:** `apps/pdf-extractor/interface/handlers.py:403`
+
+```python
+if is_vn_market_open_utc():
+    raise HTTPException(
+        status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        detail={"error": "market_open", ...},
+    )
+```
+
+The guard fires as the FIRST check in the `pek_extract` route handler, before any model check or adapter call. Import: `from domain.primitives.market_hours.primitive import is_vn_market_open_utc` (line 33). QA's prior verification (`handlers.py:403`, `is_vn_market_open_utc()`) is accurate.
+
+---
+
+### Check 3 — _run_pek_extract → pushBctcLayoutHandler pipeline traced
+
+**`_run_pek_extract` (handlers.py:193–233):**
+1. Calls `pek_adapter.extract_layout_and_tables(pdf_path=pdf_path, report_id=report_id)` — returns `{"document_map": ..., "units": [...], "page_zones": [...], "pass_rate_report": ...}`.
+2. Calls `push_client.push_layout(report_id=..., document_map=..., units=..., page_zones=..., pass_rate_report=...)`.
+
+**`PekEngineAdapter._run_extraction` (pek_engine_adapter.py:658–824):**
+- `units_output` is built per logical unit from `units_in_map`. Each entry includes `unit_id`, `stitched_markdown`, `row_count`, `quarantined`, `quarantine_reason`, `page_row_spans`.
+- `page_zones_output` is built per page from `_map_bboxes_to_zones(...)` which records `"page_number": page_num` — where `page_num` comes from `enumerate(doc, start=1)` at line 155 of `_PekLayoutModel.predict_pdfs`. **1-indexed confirmed at source.**
+
+**`_group_bboxes_into_units` (pek_engine_adapter.py:510–590):**
+- `pages_bboxes` keys are the same 1-indexed `page_num` values from layout detection.
+- Each unit dict contains `"pages": list(current_unit_pages)` — these are the 1-indexed page numbers.
+- `schema_page = current_unit_pages[0]` — also 1-indexed.
+
+**`pushBctcLayoutHandler.ts` (lines 130–168):**
+- `pageNumbersById.set(dmUnit.unit_id, dmUnit.pages ?? [])` — reads the `pages` array directly from `document_map.units`.
+- `JSON.stringify(pageNums)` → stored as `page_numbers_json` in `bctc_layout_units`.
+
+**page_numbers_json indexing verdict:** The 1-indexed page numbers flow unmodified from `enumerate(doc, start=1)` → `_PekLayoutModel` → `pages_bboxes` keys → `_group_bboxes_into_units` unit dicts → `document_map.units[].pages` → `pushBctcLayoutHandler.ts` `pageNums` → `JSON.stringify(pageNums)` → stored in `bctc_layout_units.page_numbers_json`. No conversion happens at any stage. The stored JSON array (e.g. `[7, 8, 9]`) is 1-indexed.
+
+The bctcInspectHandler uses 1-indexed `?page=N` query parameter (architect brief §3, confirmed at `bctcInspectHandler.ts:489` — "1-indexed → 0-indexed OFFSET" comment means it converts internally for SQL OFFSET, but the incoming parameter and `page_numbers_json` values are both 1-indexed). The `json_each(page_numbers_json) WHERE value = ?` query in the brief will receive the 1-indexed page number from the caller and compare to 1-indexed stored values. **No conversion required — confirmed.**
+
+---
+
+### Check 4 — Frozen surfaces: git status clean
+
+```
+git status --short apps/pdf-extractor/infrastructure/text_table_extractor.py
+                   apps/pdf-extractor/sandbox/runner.py
+                   apps/pdf-extractor/infrastructure/generic_md_table_extractor.py
+                   docs/data/pilot-status-pdf-extractor.json
+→ (empty output — all clean, no modifications)
+
+git -C apps/pdf-extractor/PDF-Extract-Kit status --short
+→ (empty output — subtree pristine)
+```
+
+All four frozen surfaces and the PEK subtree are byte-untouched. Zero diff.
+
+---
+
+### Gap analysis
+
+No gaps found. Every assumption the architect's brief makes about the pdf-extractor side is confirmed:
+- Schema unchanged: `pdf_path` mandatory, no schema edit required.
+- 503 guard intact at `handlers.py:403`.
+- `page_numbers_json` is 1-indexed end-to-end; `json_each` query requires no coordinate conversion.
+- Frozen surfaces clean; PEK subtree pristine.
+
+**The mcp-server fix (PEK-RENDER-MCP) can proceed on the stated assumptions without risk of a wrong-assumption failure on the pdf-extractor side.**
+
+---
+
+**Files written this cycle:** `docs/handoffs/TASK_PEK-INTEGRATE.md` (this section), `docs/agent-memory/notebooks/dev-pdf-extractor.md` (notebook append).
+**Files touched (code):** NONE — verify-only pass, zero code changes.
