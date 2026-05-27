@@ -1,3 +1,50 @@
+# Sprint SELF-IMPROVE-GATE — Gated Self-Improvement Loop (auto-detect → PO deliberation gate → implement behind proof)
+
+**BUILD STATUS 2026-05-27T22:30Z — OPEN (PO kickoff from an EXPLICIT, USER-APPROVED DIRECTION — full autonomy to plan/dispatch).** User (non-technical, French-based, verbatim): *"po approve, all automate, need thinking before approve anything."* PO interpretation (autonomous, not bounced to user): automate the self-improvement loop end-to-end, but the PO holds the single approval seat (NOT the user for routine changes) AND must genuinely RED-TEAM each proposed self-improvement before approving — an explicit written critique is a mandatory gate. NO rubber-stamping. The system may improve its own flows AND its own tools, but it must NOT be able to silently rewrite its own success criteria.
+
+## Vision
+
+The system continuously improves itself. system-auditor / agents-architect auto-detect a weakness (a stale doc, a missing test, a flow gap, a recurring bug, a degraded signal), auto-generate a written improvement PROPOSAL, and route it to the PO. The PO does not rubber-stamp: the PO writes a structured CRITIQUE (what could break, false-green / silent-swallow risk, is the success signal gameable, host-load impact) and ONLY THEN approves, rejects, or escalates. Approved proposals flow automatically to agent-father (agent/flow `.md`) or the dev-team chain (microservice code/tools, behind the QA gate) for implementation behind a PROVEN gate. The one thing the loop can NEVER auto-decide is whether the product is good ENOUGH for a non-technical human — that, plus any change to the gate logic itself, stays user-judged.
+
+## Binding Session Goal (verbatim, ARMED + UNMET)
+
+> "po approve, all automate, need thinking before approve anything."
+
+Meaning: a working, documented governance loop where (1) weakness detection + proposal generation + routing are AUTOMATED; (2) the PO approval gate enforces a MANDATORY written critique before any approval; (3) the three lanes are codified so the loop knows what it may auto-implement, what needs PO judgement, and what MUST escalate to the human. NOT DONE until the loop is designed (architect brief), the agent/flow `.md` changes are live, the proven-gate proof procedure is documented + demonstrated red on a deliberate violation, and the PO critique gate is a hard, skippable-by-nobody step.
+
+## Scope
+
+**IN:**
+- **An architecture brief** (`docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md`, written by agents-architect) formalizing: the three-lane model, the PO deliberation gate, the proven-gate proof procedure, the host-load budget, and the escalation boundary.
+- **The three-lane classification** every self-improvement MUST be sorted into:
+  - **(a) AUTO-PROPOSE + PO-APPROVE** — flow/agent `.md` changes the PO can judge. The DEFAULT lane. Implemented by agent-father after PO critique+approval.
+  - **(b) AUTO-IMPLEMENT BEHIND A PROVEN GATE** — ONLY where the success signal is hard + ungameable (tests pass / lint / dedup). The gate must be PROVEN live by injecting a deliberate violation and confirming it goes red (ref `feedback_fence_false_green`: lint exit 0 != enforces). Routes through the dev-team chain with QA.
+  - **(c) NEVER AUTO-CLOSE — escalate to the user** — user-facing subjective quality (comprehensibility), irreversible actions, AND any change to the gate/audit logic itself (the system must NOT be able to rewrite its own success criteria).
+- **The PO "think before approve" gate** — a written critique per proposal answering: what could break, what is the false-green / silent-swallow risk, is the success signal gameable, host-load impact. Approval is INVALID without this critique recorded.
+- **Reuse of existing agents only** — system-auditor (detect), agents-architect (propose), agent-father (.md impl), dev-team po→ba→architect→pm→dev-*→qa (code impl). NO new always-on agent or cron without an explicit budget decision in the brief.
+- **Codification** of the loop into the relevant flow `.md` (PO review-proposal gate, system-auditor/agents-architect proposal-emit step) via agent-father after the brief is approved.
+
+**OUT:**
+- Building a brand-new orchestration agent or a new always-on cron daemon (host kernel-panics under full fleet load — `project_host_memory_panic`; Docker capped 8GB; prior ENOSPC — `project_enospc_blocker`). The loop rides existing agents on existing cron ticks unless the brief makes an explicit, budgeted exception.
+- Any shortcut around the QA gate for code/tool changes — tool self-improvement ALWAYS routes po→ba→architect→pm→dev-*→qa.
+- Letting the loop modify the gate/audit/success-criteria logic itself (lane c — human only).
+- Re-litigating the in-flight NEWS-CMD or PEK-INTEGRATE sprints (different zones, no collision).
+
+## HARD CONSTRAINTS (non-negotiable — gate the design)
+
+1. **PO critique-before-approve is mandatory and unskippable.** Every proposal gets a written red-team critique (break-risk / false-green-risk / gameability / host-load) recorded in the PO notebook + proposal doc BEFORE the verdict. An approval with no critique is a protocol violation.
+2. **Three lanes, hard boundaries.** (a) PO-approves .md, (b) auto-implements ONLY behind a proven-red gate, (c) escalates to human for subjective quality + irreversible actions + ANY change to the gate logic. The loop must NEVER auto-promote a lane-c item into lane-a/b.
+3. **Proven gate, not asserted gate** (`feedback_fence_false_green`, `feedback_fence_false_green` + `feedback_silent_swallow_serial_bugs`). For any lane-b auto-implement, the gate must be demonstrated to fail red on a deliberately injected violation before it is trusted. "Tests pass / lint exit 0" is NOT proof the gate enforces anything.
+4. **Host-load bounded** (`project_host_memory_panic`, `project_enospc_blocker`). NO unbounded growth of agents/cron. Reuse existing agents on existing ticks. Any new cron requires an explicit budget decision (RAM + disk + tick cost) in the brief, signed off at the PO gate.
+5. **Commit safety** (`feedback_concurrent_commit_race`, `feedback_merge_gate_cherrypick_serialize`). Self-editing agents share ONE git index — commit steps MUST be serialized; never batch cherry-picks under one `set -e`; main terminal / commit-mutex owns the commit.
+6. **The human-comprehensibility axis stays human-judged (anchor case study).** Today's plain-Vietnamese MARKET fix: the jargon-heavy report PASSED the internal tran-ngoc-bau audit (it WAS analytically rigorous) but FAILED the user ("too complicated to understand"). Self-audit structurally cannot detect subjective comprehensibility. That axis is lane-c forever. The design MUST preserve this — proof that the loop knows its own blind spot.
+
+## Success Metric
+
+A documented, live governance loop where: (1) system-auditor/agents-architect emit a structured improvement proposal automatically; (2) the PO gate refuses to approve without a recorded written critique; (3) every proposal is classified into exactly one of the three lanes; (4) lane-b's proven-gate procedure is demonstrated to go red on an injected violation (not asserted); (5) lane-c (comprehensibility, irreversibility, gate-self-edit) provably escalates to the human and is never auto-closed; (6) zero new always-on cron/agent unless the brief carries an explicit, PO-approved host-load budget. The loop's own blind spot (subjective human comprehensibility) is named and routed to the human.
+
+---
+
 # Sprint NEWS-CMD — On-demand `/news` Telegram pull command (full news digest)
 
 **BUILD STATUS 2026-05-27T19:50Z — OPEN (PO kickoff from an EXPLICIT USER FEATURE REQUEST — full autonomy, no further user approval needed to plan/dispatch).** User (non-technical, French-based, verbatim broken English): *"make /news on telegram command for get all content if user need"*. PO interpretation (autonomous decision, not bounced to user): user wants an **on-demand Telegram pull command** `/news` they can type at any time to receive the full current news digest — "all content they need", not a teaser. User-pull request/response, NOT a scheduled push.
