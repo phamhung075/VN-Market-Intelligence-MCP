@@ -1,5 +1,54 @@
 # QA — Notebook
 
+## cycle-136 · 2026-05-27 · MACRO-LIVE-PRICES MLP-QA (commit 6102620a, image 2714fa34dd4f) — PASS
+
+**Task:** MLP-QA acceptance gate for Sprint MACRO-LIVE-PRICES | **Verdict:** PASS
+
+```
+date: 2026-05-27T22:32Z
+type: sprint-qa-gate (MACRO-LIVE-PRICES)
+signal: docs/signals/qa-mlp-2026-05-27T223236Z.json
+dev_commit: 6102620a
+ops_image: 2714fa34dd4f (force-recreated, COMMODITY_LIVE_MODE=true, container healthy)
+bug_closed: #3003 (stale oil/gold/usdvnd for 4 cron cycles)
+
+T-MLP-11_hard_e2e_gate:
+  method: MCP tool call via vn-market MCP server (localhost:3000 JSON-RPC) + direct container POST /snapshot
+  oilUsd: 92.86 (> 90 threshold: PASS)
+  goldUsd: 4488.5 (> 3000 threshold: PASS)
+  usdVnd: 26273 (> 25000 threshold: PASS)
+  dataSource: "live" (== "live": PASS)
+  verdict: PASS — independent re-confirm (NOT dispatcher word)
+
+go_test_packages:
+  command: go clean -testcache && go test ./...
+  packages: 13 total — 10 ok (all tests pass), 3 [no test files] (cmd/sandbox, cmd/server, pkg/domain)
+  individual_tests: 38 PASS / 0 FAIL
+  dev_claim "13/13 PASS": CONFIRMED (13 packages, 0 FAIL lines)
+
+fixture_mode_backward_compat:
+  test: TestResolveMarketPrices_EmptyPortFallback (T-MLP-5) + cmd/server/main.go env gate
+  result: PASS — empty port triggers fixture fallback (82.5/2350.0/24500.0); HTTPCommodityFetcher default when COMMODITY_LIVE_MODE unset
+
+rfc3339nano_regression_guard:
+  test: TestFetchCommodityPricesFromDB_StaleRow (both sub-tests)
+    - stale_row_returns_empty: PASS
+    - millisecond_timestamp_parses_correctly: PASS — ms-precision ts (RFC3339Nano) returns live values; RFC3339 without Nano would silently fail re-introducing bug #3003
+  r2_fix: CONFIRMED in repositories.go:290 — time.Parse(time.RFC3339Nano, fetchedAt.String)
+
+no_test_baseline_regression: PASS — 0 FAIL in Go module scope
+ddd_compliance: PASS
+  - domain: stdlib only (time, context)
+  - application + interface: zero infra imports
+  - CommodityFetcherPort unchanged (single method FetchPrices)
+  - Fence-C: only cmd/server/main.go imports pkg/infrastructure
+
+verdict: PASS
+next: MLP-EXIT (po sign-off)
+```
+
+---
+
 ## cycle-134 · 2026-05-27 · NEWS-CMD-QA (commit 25a92ca6, container 21da3475) — APPROVED
 
 **Task:** NEWS-CMD-QA — QA gate on /news Telegram pull command | **Verdict:** APPROVED

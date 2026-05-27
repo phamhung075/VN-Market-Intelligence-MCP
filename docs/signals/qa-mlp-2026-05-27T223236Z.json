@@ -1,0 +1,62 @@
+{
+  "signal": "qa-mlp-acceptance-gate",
+  "verdict": "PASS",
+  "sprint": "MACRO-LIVE-PRICES",
+  "qa_cycle": 136,
+  "emitted_at": "2026-05-27T22:32:36Z",
+  "dev_commit": "6102620a",
+  "ops_image": "2714fa34dd4f",
+  "container": "vn-market-intelligence-mcp-macro-indicators-1",
+  "container_status": "healthy",
+  "container_env": {
+    "COMMODITY_LIVE_MODE": "true",
+    "DB_PATH": "/app/data/market.db"
+  },
+  "checks": {
+    "T-MLP-11_hard_e2e_gate": {
+      "result": "PASS",
+      "method": "MCP tool call via vn-market MCP server (localhost:3000 JSON-RPC) + direct container POST /snapshot cross-check",
+      "oilUsd": 92.86,
+      "goldUsd": 4488.5,
+      "usdVnd": 26273,
+      "dataSource": "live",
+      "thresholds": {
+        "oilUsd_gt_90": true,
+        "goldUsd_gt_3000": true,
+        "usdVnd_gt_25000": true,
+        "dataSource_eq_live": true
+      }
+    },
+    "go_test_packages": {
+      "result": "PASS",
+      "detail": "go test ./... — 13/13 packages: 10 ok (all tests pass), 3 [no test files] (cmd/sandbox, cmd/server, pkg/domain). 0 FAIL lines. 38 individual test cases pass.",
+      "cache_cleared": true,
+      "exit_code": 0
+    },
+    "fixture_mode_backward_compat": {
+      "result": "PASS",
+      "detail": "TestResolveMarketPrices_EmptyPortFallback (T-MLP-5): empty port map {} triggers fixture fallback (82.5/2350.0/24500.0). HTTPCommodityFetcher remains default when COMMODITY_LIVE_MODE unset. Composition root env gate confirmed in cmd/server/main.go.",
+      "test": "TestResolveMarketPrices_EmptyPortFallback"
+    },
+    "rfc3339nano_regression_guard": {
+      "result": "PASS",
+      "detail": "TestFetchCommodityPricesFromDB_StaleRow/millisecond_timestamp_parses_correctly: fresh ms-precision timestamp (format '2006-01-02T15:04:05.000Z07:00') correctly parsed by time.RFC3339Nano, returns live values. Stale sub-test also confirms staleness enforcement. Both sub-tests PASS.",
+      "test": "TestFetchCommodityPricesFromDB_StaleRow",
+      "sub_tests": ["stale_row_returns_empty", "millisecond_timestamp_parses_correctly"],
+      "r2_fix_confirmed": true
+    },
+    "no_test_baseline_regression": {
+      "result": "PASS",
+      "detail": "Scope: apps/macro-indicators Go module only (no TS/bun suite touched). 0 FAIL packages, 0 FAIL individual tests.",
+      "scope": "apps/macro-indicators Go module"
+    },
+    "ddd_compliance": {
+      "result": "PASS",
+      "detail": "pkg/domain imports only stdlib (time, context). pkg/application and pkg/interface/http: zero import lines from pkg/infrastructure. CommodityFetcherPort interface unchanged — still single method FetchPrices(ctx, symbols) (map[string]float64, error). SQLiteCommodityRepository is infra-layer only; composition root (cmd/server/main.go) is sole importer of pkg/infrastructure.",
+      "fence_a": "PASS — domain imports only stdlib",
+      "fence_c": "PASS — only cmd/server/main.go imports pkg/infrastructure",
+      "commodity_fetcher_port_unchanged": true
+    }
+  },
+  "next": "MLP-EXIT (po sign-off)"
+}
