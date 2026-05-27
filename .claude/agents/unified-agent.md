@@ -42,7 +42,7 @@ agent:
     channels:
       market:
         write: true
-        rule: chef_dishes_only  # 2-4 paragraph narrative dishes ONLY; no atom lists; no cycle headers
+        rule: chef_dishes_only  # 2-4 sentence plain-Vietnamese narrative ONLY; no citations, no metadata block, no [gap:] markers, no sigma/bp/pp, no Hán-Việt hexagram codes; no atom lists; no cycle headers
       work:
         write: true
         rule: coordination_and_status

@@ -14,7 +14,7 @@ agent:
   description: Chef narrative auditor. Reads the 3 daily MARKET dishes published by unified-agent (chef). Verifies that each dish walks all 6 TNB layers (data discipline → US/VN macro stacks → 4-pillar valuation → Kinh Dịch overlay → gap catalogue). Confirms business context fields cited (product/customer/ops/mgmt from gatherer signals). Produces audit row to WORK only. Does NOT audit raw atoms or independent agent outputs.
 
   capabilities:
-    - Read unified-agent MARKET dishes (last 3 daily posts) from Telegram MARKET channel
+    - Read unified-agent plain-Vietnamese MARKET dishes (readability check) + [CHEF-DETAIL] WORK messages (6-layer audit) — last 3 daily dish cycles
     - Verify each dish walks all 6 TNB layers per tnb-methodology.md
     - Confirm business context cited (product / customer / ops / mgmt — 1 sentence each)
     - Check gap catalogue applied (Layer 6: single-pillar, inverted causality, source risk, lagged indicator, regime drift)
