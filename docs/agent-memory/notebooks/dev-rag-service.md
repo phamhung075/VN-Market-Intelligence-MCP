@@ -4,6 +4,29 @@ Zone: `apps/rag-service/` | Stack: Python/FastAPI | DB: rag_service.db (write)
 
 ## Working Memory
 
+### 2026-05-27 — DISK RECLAIM + COMPACTION GUARD (maintenance task)
+
+**Trigger:** Host disk 100% full. Investigation identified two separate LanceDB stores.
+
+**Root cause (two-store split):**
+- **Container store** (`market_data` named volume, `/app/data/lancedb/`): 2.0 GB, 6880 fragments, 6877 versions — the LIVE store.
+- **Local orphaned store** (`data/lancedb/` in project root): 23 GB, 2261 fragments — legacy artifact from a prior bind-mount phase; no running container reads/writes it.
+
+**Actions taken:**
+1. Compacted the container store via `docker exec` + `lancedb.optimize(cleanup_older_than=timedelta(days=1))`:
+   - Pass 1: 6875 fragments merged → 1 compacted fragment; 5934 old versions pruned; 1.48 GB removed.
+   - Pass 2: remaining 6879 old manifest files cleaned; 558 MB freed. Store: 2.0 GB → 16 MB.
+   - Row count before=after=6875. Queryability: PASS.
+2. Deleted orphaned local `data/lancedb/rag_entries.lance/` (23 GB, confirmed not mounted by any container). Host disk: 168 GB → 145 GB used, 38 GB → 61 GB free (82% → 71%).
+3. Added periodic compaction guard to `LanceDBVectorStore.insert()`: every 100 inserts triggers `optimize(cleanup_older_than=2 days)` automatically. `compact()` method also exposed directly.
+4. 4 new unit tests in `__tests__/unit/test_lancedb_compaction.py` (85/85 total). Sandbox 16+2+3 all PASS. Env audit: empty.
+5. Updated `docs/architecture/microservice/rag-service/infrastructure.md` with compaction docs.
+6. Commits: `e1407a74` (code + tests), `44a039c9` (docs). Container rebuild required.
+
+**Zone health:** 85/85 tests GREEN, 16+2+3 sandbox GREEN, env audit empty. Compaction guard wired — bloat cannot recur. REBUILD_REQUIRED: ops must `docker compose up -d --build rag-service`.
+
+---
+
 ### 2026-05-24 — TASKS P3-A → P3-D (service-tier completion — SCALE pilot REOPEN)
 
 **Trigger:** PO cycle-78 DEFECT-REOPEN — user pilot-review rejected 12/12 close. Tier-3 (service) had zero scenario evidence, dashboard permanently NOT-RUN with dishonest hint.
