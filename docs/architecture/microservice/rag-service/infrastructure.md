@@ -21,6 +21,23 @@ Columns:
 ### insert(entry, vector)
 Builds row dict, calls `table.add([row])`. Tags serialized to JSON.
 
+After each insert, increments an internal `_insert_count` counter. When
+`_insert_count >= _COMPACT_EVERY` (100), calls `compact()` automatically then
+resets the counter. Compaction failure is non-fatal — insert still succeeds.
+
+### compact()
+Runs `table.optimize(cleanup_older_than=timedelta(days=2))`:
+- Merges small fragment files into larger compacted files (online-safe, reads/writes continue)
+- Prunes version manifests older than 2 days; latest version is always kept
+- Resets `_insert_count` to 0
+- Failure is logged as WARNING and does not raise
+- Can be called directly for manual/maintenance runs (e.g. a `/compact` admin endpoint or cron)
+
+**Why this matters:** every `table.add()` creates a new fragment file + manifest version.
+Without periodic compaction, a 100-insert/day workload produces ~36k fragments/year and
+several GB of write-amplification. With this guard, fragments converge to a single compacted
+file after each compaction cycle (~100 inserts).
+
 ### search(query_vector, limit, level_filter?, action_code_filter?)
 1. Build filter clauses:
    - Level filter: validates against `{"global", "country", "domain", "action"}`
