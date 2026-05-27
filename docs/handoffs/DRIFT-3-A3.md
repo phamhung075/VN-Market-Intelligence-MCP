@@ -82,3 +82,15 @@ Single-zone task (cross-service). Can be parallelized with DRIFT-3-A1 and DRIFT-
 - NO `git push` (main terminal owns the final commit)
 - Stay on main branch
 - Do NOT touch `apps/pdf-extractor/`, any `LF-*` task, any `pilot-status-*.json`, or `docs/pipeline-state.json` BCTC fields
+
+---
+
+## [Developer] Implementation Record
+
+- **Files modified:** `docs/protocols/docker-deployment-runbook.md` — replaced timestamp-comparison Step 4 with SHA gate; added Microservice Close Gate section (new to worktree base); updated Delegation rule to match new actor ownership
+- **Tests written:** NONE — documentation-only change (markdown)
+- **Git commits:** `15059fab` docs(DRIFT-3/deploy-verification): DRIFT-3-A3 SHA gate replaces timestamp check in runbook Step 4
+- **tsc status:** N/A (no TypeScript)
+- **Full suite:** N/A (no code change)
+- **Docs updated:** `docs/protocols/docker-deployment-runbook.md` — Step 4 timestamp check removed; SHA gate `bash scripts/verify-deploy-sha.sh <svc>` added as authoritative gate; first-run / flaresolverr / pdf-extractor-Phase-B notes added
+- **Graphify:** skipped (single doc, pure runbook prose — no graph node change)

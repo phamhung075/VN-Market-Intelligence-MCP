@@ -117,4 +117,5 @@ v1.29.9 (as specified in AC-1)
 
 ### Commit SHA
 
-`3ec12778`
+- P1-KD-A1g initial: `3ec12778`
+- P1-KD-A1g..A5g full A-bucket: `e187a4ea`
