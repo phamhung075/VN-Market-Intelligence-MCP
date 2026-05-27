@@ -79,20 +79,76 @@ mcp-server serves the news-fetch pilot dashboard statically at the route above. 
 
 | Command | Purpose | Source table | Argument | Chunking |
 |---------|---------|-------------|----------|----------|
-| `/news [N]` | On-demand digest of today's news in plain Vietnamese | `rag_analyses` | Optional count N (default 20, max 50) | Multi-message if digest > 4096 chars; each chunk split at story boundaries via `CommandResult.texts[]` loop in `webhookHandler.ts` |
+| `/news [N]` | Full-day deduped importance-ranked digest (NEWS-FULLDAY) | `rag_analyses` | Optional count N (no default cap; explicit N max 200) | Multi-message if digest > 4096 chars; each chunk split at story boundaries via `CommandResult.texts[]` loop in `webhookHandler.ts` |
+| `/recap` | Day synthesis: VN-Index, movers, news, alerts, portfolio (RECAP-CMD) | In-container DB via `assembleEveningSummary` | None | Multi-message if > 4096 chars |
+| `/recapw` | Weekly synthesis: period range, totals, key events, stock moves, alert breakdown (RECAP-CMD) | In-container DB via `generatePeriodicSummary("weekly")` | None | Multi-message if > 4096 chars |
+| `/recapm` | Monthly synthesis (same shape as /recapw) (RECAP-CMD) | In-container DB via `generatePeriodicSummary("monthly")` | None | Multi-message if > 4096 chars |
 
-**Query logic:**
-- Primary: `created_at >= midnight-Vietnam-today (UTC+7)` ordered `impact_score DESC, created_at DESC LIMIT N`.
-- Fallback (zero today-rows): same ORDER BY, same LIMIT, no date filter. Header changes to `Tin tức gần đây (N bài):`.
+### `/news [N]` — Full-day coverage (NEWS-FULLDAY sprint)
+
+**Query logic (updated NEWS-FULLDAY):**
+- Primary (no-arg): `created_at >= midnight-Vietnam-today (UTC+7)` ordered `impact_score DESC, created_at DESC` — **NO LIMIT** (full-day coverage).
+- Explicit `/news N`: clamps to `MIN(MAX_LIMIT_EXPLICIT=200, N)`, applies LIMIT.
+- Fallback (zero today-rows): most-recent `FALLBACK_LIMIT=20` rows, no date filter. Header changes to `Tin tức gần đây (N bài):`.
 - Empty DB: returns `Chưa có tin hôm nay.`
+
+**Dedup (NEWS-FULLDAY):**
+- Same-story duplicates from multiple feeds (cafef / vnexpress / reuters) collapsed to one block.
+- Key: normalized `source_title` (stripHtml → trim → lowercase → collapse whitespace → strip trailing punctuation).
+- Tie-break: highest `impact_score` wins (SQL order guarantees this — first occurrence kept).
+- Null/empty-after-normalize titles treated as unique (each kept individually).
+- Header count reflects post-dedup story count.
+
+**HTML strip (NEWS-FULLDAY):**
+- `stripHtml()` applied to `source_title` and `summary` before render.
+- Void elements (img, br, hr, etc.) discarded entirely. Anchor inner text preserved.
+- `summary` truncated at 200 plain-text chars (after strip) with `…` if longer.
 
 **Output constraints (NFR-1 / feedback_market_report_plain_vietnamese):**
 - `sentiment` column mapped to Vietnamese label: positive → `tích cực`, negative → `tiêu cực`, neutral/null → `trung tính`.
 - `impact_score` numeric value never surfaces in output.
-- `source_url` not shown in story blocks (URLs do not render usefully in plain Telegram text).
-- `summary` truncated at 200 chars with `…` if longer.
+- `source_url` not shown in story blocks.
+- No raw HTML tags (`<`, `>`) in any output string.
 
-**DDD layer:** `handleNews` lives in `src/infrastructure/notifiers/telegramCommands.ts` (direct DB read, consistent with all sync command handlers). Chunking loop lives in `src/interface/mcp/routes/webhookHandler.ts`.
+### `/recap` `/recapw` `/recapm` — Recap commands (RECAP-CMD sprint)
+
+**Data source:** 100% in-container DB — no filesystem volume, no network call in render path.
+- `/recap` → `assembleEveningSummary({ db })` → typed `EveningSummary`.
+- `/recapw` → `generatePeriodicSummary("weekly", undefined, db)` → typed `PeriodicSummary`.
+- `/recapm` → `generatePeriodicSummary("monthly", undefined, db)` → typed `PeriodicSummary`.
+
+**Section layout `/recap`:**
+1. Header: `Tổng kết ngày {date}`
+2. VN-Index (if available): `VN-Index: {close} điểm (tăng/giảm {|change|} điểm, tăng/giảm {|changePct|}%)`
+3. Cổ phiếu nổi bật (always present; empty → `Không có cổ phiếu nào biến động đáng kể hôm nay.`)
+4. Tin tức nổi bật (if topStories non-empty): stripped titles only
+5. Cảnh báo (if topAlerts non-empty): `[SeverityLabel] message`
+6. Danh mục (if portfolioPnl non-null): per-position + aggregate P/L
+7. Khối ngoại (if foreignFlowMovers non-empty): net flow per stock
+
+**Section layout `/recapw` and `/recapm`:**
+1. Header: `Tổng kết tuần/tháng {periodStart} đến {periodEnd}`
+2. Tổng quan (always present): news/alert/report counts
+3. Sự kiện nổi bật (if keyEvents non-empty, up to 5): `{date} — {direction} — {title}`
+4. Biến động cổ phiếu (if any non-null changePct): sorted by |changePct| DESC
+5. Phân loại cảnh báo (if alertCount > 0): by severity + top alert messages
+
+**Error/empty-state strings:**
+- `/recap` error: `Lỗi khi tổng kết ngày. Vui lòng thử lại sau.`
+- `/recapw` error: `Lỗi khi tổng kết tuần. Vui lòng thử lại sau.`
+- `/recapm` error: `Lỗi khi tổng kết tháng. Vui lòng thử lại sau.`
+
+**Constraints (NFR-1):**
+- No `summaryText` / `buildSummaryText()` in render path (banned — English prose).
+- No `recommendation`, `confidence`, `macroContext` shown.
+- No `impact_score` numeric value shown.
+- All direction shown as `tăng`/`giảm`/`mua ròng`/`bán ròng`/`lãi`/`lỗ`.
+- `fmtNum` used for all VND amounts (vi-VN locale).
+- `stripHtml` applied to all fields that may contain HTML (topStories titles, keyEvents titles).
+
+**DDD layer:** handlers `handleNews`, `handleRecap`, `handleRecapWeek`, `handleRecapMonth` live in `src/infrastructure/notifiers/telegramCommands.ts`. Handlers call `application/usecases/assembleEveningSummary.ts` and `application/usecases/generatePeriodicSummary.ts` (infra → application = legal DDD direction). Chunking loop in `src/interface/mcp/routes/webhookHandler.ts` (unchanged).
+
+**Shared helper:** `export function stripHtml(raw: string | null | undefined): string` — module-level in `telegramCommands.ts`. Used by `/news` (dedup normalization + render) and `/recap*` (story/event title render).
 
 ---
 

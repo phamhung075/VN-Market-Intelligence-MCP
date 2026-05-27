@@ -37,6 +37,10 @@ import {
 import { insertAskQuestion } from "../db/askQueueStore.js";
 import { spawnQaResponder } from "../agents/qaResponderSpawner.js";
 import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
+import { assembleEveningSummary } from "../../application/usecases/assembleEveningSummary.js";
+import type { EveningSummary } from "../../application/usecases/assembleEveningSummary.js";
+import { generatePeriodicSummary } from "../../application/usecases/generatePeriodicSummary.js";
+import type { PeriodicSummary } from "../../application/usecases/generatePeriodicSummary.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -74,7 +78,10 @@ const HELP_TEXT = `VN Market Bot
 /watchlist              Danh mục theo dõi
 /price VCB              Giá cổ phiếu
 /health                 Trạng thái hệ thống
-/news [N]               Tin tức hôm nay (mặc định 20 bài)
+/news [N]               Tất cả tin quan trọng hôm nay (hoặc N bài gần nhất)
+/recap                  Tổng kết hôm nay (chỉ số, cổ phiếu, tin tức, cảnh báo, danh mục)
+/recapw                 Tổng kết tuần này
+/recapm                 Tổng kết tháng này
 /set_position VCB 75000 1000  Thêm/bán/xóa vị thế (qty>0 mua, qty<0 bán, 0 0 xóa)
 /check_position         Xem vị thế + P/L + stop-loss + TP
 /ask <câu hỏi>          Đặt câu hỏi phân tích (trả lời trong 12 phút)
@@ -89,6 +96,36 @@ const HELP_TEXT = `VN Market Bot
 /** Format a number with thousands separator (period-separated, Vietnamese style). */
 function fmtNum(n: number): string {
   return Math.round(n).toLocaleString("vi-VN");
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared render helpers (NEWS-FULLDAY + RECAP-CMD)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Strip HTML tags from a string, preserving inner text of element content.
+ * Self-closing / void elements (img, br, hr, input, etc.) are discarded entirely.
+ * Null or undefined input returns ''. Never throws.
+ *
+ * Called by handleNews (NEWS-FULLDAY sprint) and handleRecap* (RECAP-CMD sprint).
+ * Module-level export for unit testing and sibling-sprint reuse.
+ */
+export function stripHtml(raw: string | null | undefined): string {
+  if (raw == null) return "";
+  try {
+    // Remove void/self-closing elements entirely (no inner text to preserve)
+    let s = raw.replace(
+      /<(img|br|hr|input|meta|link|area|base|col|embed|param|source|track|wbr)\b[^>]*\/?>/gi,
+      "",
+    );
+    // Replace all remaining tags with nothing (strip the angle brackets)
+    s = s.replace(/<[^>]*>/g, "");
+    // Collapse runs of whitespace and trim
+    s = s.replace(/\s+/g, " ").trim();
+    return s;
+  } catch {
+    return raw.replace(/<[^>]*>/g, "").trim();
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -503,29 +540,40 @@ function chunkStories(header: string, storyBlocks: string[], maxLen = 4096): str
  * /news [N] — query rag_analyses for today's stories (UTC+7 midnight), format
  * as plain Vietnamese digest. Returns `texts[]` for chunked delivery.
  *
- * Primary query: rows with created_at >= midnight-Vietnam today.
- * Fallback (zero today-rows): most-recent N rows, no date constraint.
+ * Primary query (no-arg): all of today's rows — NO LIMIT (full-day coverage).
+ * Explicit /news N: clamps to MIN(MAX_LIMIT_EXPLICIT, N).
+ * Fallback (zero today-rows): most-recent FALLBACK_LIMIT rows, no date constraint.
  * Header changes to "Tin tức gần đây" when fallback is active.
+ *
+ * Dedup: collapse same-story duplicates (normalized source_title key);
+ * keep highest-impact copy (impact_score DESC, then created_at DESC, then longer summary).
+ * HTML: stripHtml applied to source_title and summary before render.
  */
 function handleNews(db: Database, args: string[]): { texts: string[] } {
-  const DEFAULT_LIMIT = 20;
+  /** Cap for an explicit /news N request — no cap on the default full-day query. */
+  const MAX_LIMIT_EXPLICIT = 200;
   const MIN_LIMIT = 1;
-  const MAX_LIMIT = 50;
+  /** Fallback path (no today-rows) stays capped at 20 (stale multi-day data). */
+  const FALLBACK_LIMIT = 20;
 
   // Parse optional count argument
-  let limit = DEFAULT_LIMIT;
+  // null = uncapped (default full-day query); number = explicit user cap
+  let explicitLimit: number | null = null;
   if (args[0] !== undefined) {
     const parsed = parseInt(args[0], 10);
     if (Number.isFinite(parsed) && parsed > 0) {
-      limit = Math.min(MAX_LIMIT, Math.max(MIN_LIMIT, parsed));
+      explicitLimit = Math.min(MAX_LIMIT_EXPLICIT, Math.max(MIN_LIMIT, parsed));
     }
+    // parsed <= 0 or NaN → treat as no-arg (uncapped)
   }
 
   interface NewsRow {
     source_title: string | null;
+    source_url: string | null;
     summary: string | null;
     sentiment: string | null;
     impact_direction: string | null;
+    impact_score: number | null;
     created_at: string;
   }
 
@@ -535,28 +583,40 @@ function handleNews(db: Database, args: string[]): { texts: string[] } {
   try {
     const midnight = midnightVietnamAsUtcInline();
 
-    // Primary query: today's rows
-    rows = db
-      .prepare<NewsRow, [string, number]>(
-        `SELECT source_title, summary, sentiment, impact_direction, created_at
-         FROM rag_analyses
-         WHERE created_at >= ?
-         ORDER BY impact_score DESC, created_at DESC
-         LIMIT ?`,
-      )
-      .all(midnight, limit);
+    if (explicitLimit !== null) {
+      // Explicit /news N path — apply LIMIT
+      rows = db
+        .prepare<NewsRow, [string, number]>(
+          `SELECT source_title, source_url, summary, sentiment, impact_direction, impact_score, created_at
+           FROM rag_analyses
+           WHERE created_at >= ?
+           ORDER BY impact_score DESC, created_at DESC
+           LIMIT ?`,
+        )
+        .all(midnight, explicitLimit);
+    } else {
+      // Default no-arg path — fetch ALL of today's rows (no LIMIT)
+      rows = db
+        .prepare<NewsRow, [string]>(
+          `SELECT source_title, source_url, summary, sentiment, impact_direction, impact_score, created_at
+           FROM rag_analyses
+           WHERE created_at >= ?
+           ORDER BY impact_score DESC, created_at DESC`,
+        )
+        .all(midnight);
+    }
 
-    // Fallback: most-recent N rows regardless of date
+    // Fallback: most-recent FALLBACK_LIMIT rows regardless of date
     if (rows.length === 0) {
       isFallback = true;
       rows = db
         .prepare<NewsRow, [number]>(
-          `SELECT source_title, summary, sentiment, impact_direction, created_at
+          `SELECT source_title, source_url, summary, sentiment, impact_direction, impact_score, created_at
            FROM rag_analyses
            ORDER BY impact_score DESC, created_at DESC
            LIMIT ?`,
         )
-        .all(limit);
+        .all(FALLBACK_LIMIT);
     }
   } catch {
     // DB error (e.g. table not yet created) — return friendly fallback
@@ -568,23 +628,63 @@ function handleNews(db: Database, args: string[]): { texts: string[] } {
     return { texts: ["Chưa có tin hôm nay."] };
   }
 
-  // Build header
-  const headerLabel = isFallback ? "Tin tức gần đây" : "Tin tức hôm nay";
-  const header = `${headerLabel} (${rows.length} bài):`;
+  // ── Dedup: collapse same-story duplicates (normalized source_title key) ──
+  // Rows are already ordered by impact_score DESC, created_at DESC from SQL.
+  // First occurrence of each normalized key wins (highest-impact copy).
+  // Null/empty titles each get a unique Symbol key (treated as individual stories).
 
-  // Build per-story blocks
-  const storyBlocks: string[] = rows.map((row) => {
-    const titleLine = row.source_title ?? "(không có tiêu đề)";
+  function normalizeTitle(raw: string | null | undefined): string | null {
+    if (raw == null) return null;
+    const stripped = stripHtml(raw);
+    if (!stripped) return null;
+    // lowercase → collapse whitespace → strip trailing punctuation
+    const normalized = stripped
+      .toLowerCase()
+      .replace(/\s+/g, " ")
+      .trim()
+      .replace(/[.,!?;:]+$/, "");
+    return normalized || null;
+  }
+
+  const seenKeys = new Map<string, true>();
+  const dedupedRows: NewsRow[] = [];
+
+  for (const row of rows) {
+    const key = normalizeTitle(row.source_title);
+    if (key === null) {
+      // Null or empty-after-normalize: each is unique — always keep
+      dedupedRows.push(row);
+    } else {
+      if (!seenKeys.has(key)) {
+        seenKeys.set(key, true);
+        dedupedRows.push(row);
+      }
+      // duplicate — skip (SQL order guarantees highest-impact comes first)
+    }
+  }
+
+  // Build header using POST-DEDUP count
+  const headerLabel = isFallback ? "Tin tức gần đây" : "Tin tức hôm nay";
+  const header = `${headerLabel} (${dedupedRows.length} bài):`;
+
+  // Build per-story blocks (HTML stripped from title and summary)
+  const storyBlocks: string[] = dedupedRows.map((row) => {
+    // Strip HTML from title before display
+    const strippedTitle = stripHtml(row.source_title);
+    const titleLine = strippedTitle || "(không có tiêu đề)";
 
     const lines: string[] = [titleLine];
 
-    // One-line gist from summary (truncate at 200 chars)
+    // One-line gist from summary (strip HTML, then truncate at 200 chars plain text)
     if (row.summary != null && row.summary.length > 0) {
-      const gist =
-        row.summary.length > 200
-          ? row.summary.slice(0, 200) + "…"
-          : row.summary;
-      lines.push(gist);
+      const plainSummary = stripHtml(row.summary);
+      if (plainSummary.length > 0) {
+        const gist =
+          plainSummary.length > 200
+            ? plainSummary.slice(0, 200) + "…"
+            : plainSummary;
+        lines.push(gist);
+      }
     }
 
     // Sentiment label (plain Vietnamese — no raw English, no numeric score)
@@ -597,6 +697,272 @@ function handleNews(db: Database, args: string[]): { texts: string[] } {
   const chunks = chunkStories(header, storyBlocks, 4096);
 
   return { texts: chunks };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RECAP-CMD helpers and handlers
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Pre-split a single section block at newline boundaries if it exceeds maxLen.
+ * Appends "(tiếp theo…)" to non-final sub-blocks.
+ * Defensive guard — in practice no production section block hits 4096 chars.
+ */
+function splitBlockAtNewlines(block: string, maxLen = 4096): string[] {
+  if (block.length <= maxLen) return [block];
+  const parts: string[] = [];
+  let remaining = block;
+  while (remaining.length > maxLen) {
+    const cut = remaining.lastIndexOf("\n", maxLen);
+    const boundary = cut > 0 ? cut : maxLen;
+    parts.push(remaining.slice(0, boundary) + "\n(tiếp theo…)");
+    remaining = remaining.slice(boundary).trimStart();
+  }
+  if (remaining.length > 0) parts.push(remaining);
+  return parts;
+}
+
+/** Map severity string to plain Vietnamese label for alert rendering. */
+function severityLabelVi(raw: string | null | undefined): string {
+  switch (raw) {
+    case "critical": return "Nghiêm trọng";
+    case "warning":  return "Cảnh báo";
+    case "info":     return "Thông tin";
+    case "high":     return "Cao";
+    default:         return "Thông tin";
+  }
+}
+
+/** Map direction string to plain Vietnamese direction word. */
+function directionVi(raw: string | null | undefined): string {
+  switch (raw) {
+    case "up":   return "tăng";
+    case "down": return "giảm";
+    default:     return "ổn định";
+  }
+}
+
+/**
+ * /recap — day synthesis from assembleEveningSummary.
+ * assembleFn is an injectable override for tests (zero DB side-effects, zero filesystem).
+ * Production omits it — the real assembleEveningSummary is called.
+ * Exported for direct unit testing with injected assembleFn.
+ */
+export async function handleRecap(
+  db: Database,
+  assembleFn?: (db: Database) => Promise<EveningSummary>,
+): Promise<{ texts: string[] }> {
+  try {
+    const fn = assembleFn ?? ((d: Database) => assembleEveningSummary({ db: d }));
+    const summary = await fn(db);
+
+    const sectionBlocks: string[] = [];
+
+    // Section 2 — VN-Index (present only when defined)
+    if (summary.vnIndex !== undefined) {
+      const direction = summary.vnIndex.change >= 0 ? "tăng" : "giảm";
+      const absChange = Math.abs(summary.vnIndex.change);
+      const absPct = Math.abs(summary.vnIndex.changePct).toLocaleString("vi-VN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      sectionBlocks.push(
+        `VN-Index: ${fmtNum(summary.vnIndex.close)} điểm (${direction} ${fmtNum(absChange)} điểm, ${direction} ${absPct}%)`,
+      );
+    }
+
+    // Section 3 — Watchlist movers (always present)
+    {
+      const lines: string[] = ["Cổ phiếu nổi bật:"];
+      if (summary.watchlistMovers.length === 0) {
+        lines.push("Không có cổ phiếu nào biến động đáng kể hôm nay.");
+      } else {
+        for (const mover of summary.watchlistMovers) {
+          const dir = mover.changePct >= 0 ? "tăng" : "giảm";
+          const absPct = Math.abs(mover.changePct).toLocaleString("vi-VN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+          lines.push(`${mover.code}: ${dir} +${absPct}% (giá ${fmtNum(mover.price)})`);
+        }
+      }
+      sectionBlocks.push(lines.join("\n"));
+    }
+
+    // Section 4 — Top news (present only when non-empty)
+    if (summary.topStories.length > 0) {
+      const lines: string[] = [`Tin tức nổi bật (${summary.topStories.length} bài):`];
+      for (const story of summary.topStories) {
+        const title = stripHtml(story.title) || "(không có tiêu đề)";
+        lines.push(title);
+      }
+      sectionBlocks.push(lines.join("\n"));
+    }
+
+    // Section 5 — Alerts (present only when non-empty)
+    if (summary.topAlerts.length > 0) {
+      const lines: string[] = ["Cảnh báo:"];
+      for (const alert of summary.topAlerts) {
+        const sevLabel = severityLabelVi(alert.severity);
+        const msg = alert.message.length > 120
+          ? alert.message.slice(0, 120) + "…"
+          : alert.message;
+        lines.push(`[${sevLabel}] ${msg}`);
+      }
+      sectionBlocks.push(lines.join("\n"));
+    }
+
+    // Section 6 — Portfolio P/L (present only when non-null/undefined)
+    if (summary.portfolioPnl != null) {
+      const lines: string[] = ["Danh mục:"];
+      for (const item of summary.portfolioPnl.items) {
+        if (item.pnlPct === null || item.pnlAmount === null) {
+          lines.push(`${item.code}: chưa có giá`);
+        } else {
+          const dir = item.pnlAmount >= 0 ? "lãi" : "lỗ";
+          const absPct = Math.abs(item.pnlPct).toLocaleString("vi-VN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          });
+          lines.push(`${item.code}: ${dir} +${absPct}% (${dir} ${fmtNum(Math.abs(item.pnlAmount))} đ)`);
+        }
+      }
+      // Aggregate footer
+      const totalDir = summary.portfolioPnl.totalPnlAmount >= 0 ? "lãi" : "lỗ";
+      const totalAbsPct = Math.abs(summary.portfolioPnl.totalPnlPct).toLocaleString("vi-VN", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      });
+      lines.push(
+        `Tổng: ${totalDir} +${totalAbsPct}% (${totalDir} ${fmtNum(Math.abs(summary.portfolioPnl.totalPnlAmount))} đ)`,
+      );
+      sectionBlocks.push(lines.join("\n"));
+    }
+
+    // Section 7 — Foreign flow (present only when defined and non-empty)
+    if (summary.foreignFlowMovers && summary.foreignFlowMovers.length > 0) {
+      const lines: string[] = ["Khối ngoại:"];
+      for (const mover of summary.foreignFlowMovers) {
+        const dir = mover.foreignNetVol > 0 ? "mua ròng" : "bán ròng";
+        lines.push(`${mover.code}: ${dir} ${fmtNum(Math.abs(mover.foreignNetVol))} cổ phiếu`);
+      }
+      sectionBlocks.push(lines.join("\n"));
+    }
+
+    const header = `Tổng kết ngày ${summary.date}`;
+    const flatBlocks = sectionBlocks.flatMap((b) => splitBlockAtNewlines(b));
+    return { texts: chunkStories(header, flatBlocks, 4096) };
+  } catch {
+    return { texts: ["Lỗi khi tổng kết ngày. Vui lòng thử lại sau."] };
+  }
+}
+
+/**
+ * /recapw — weekly synthesis from generatePeriodicSummary.
+ * assembleFn injectable override for tests.
+ * Exported for direct unit testing with injected assembleFn.
+ */
+export async function handleRecapWeek(
+  db: Database,
+  assembleFn?: (db: Database) => Promise<PeriodicSummary>,
+): Promise<{ texts: string[] }> {
+  try {
+    const fn = assembleFn ?? ((d: Database) => generatePeriodicSummary("weekly", undefined, d));
+    const summary = await fn(db);
+    return { texts: buildPeriodicTexts(summary, "week") };
+  } catch {
+    return { texts: ["Lỗi khi tổng kết tuần. Vui lòng thử lại sau."] };
+  }
+}
+
+/**
+ * /recapm — monthly synthesis from generatePeriodicSummary.
+ * assembleFn injectable override for tests.
+ * Exported for direct unit testing with injected assembleFn.
+ */
+export async function handleRecapMonth(
+  db: Database,
+  assembleFn?: (db: Database) => Promise<PeriodicSummary>,
+): Promise<{ texts: string[] }> {
+  try {
+    const fn = assembleFn ?? ((d: Database) => generatePeriodicSummary("monthly", undefined, d));
+    const summary = await fn(db);
+    return { texts: buildPeriodicTexts(summary, "month") };
+  } catch {
+    return { texts: ["Lỗi khi tổng kết tháng. Vui lòng thử lại sau."] };
+  }
+}
+
+/**
+ * Shared section builder for /recapw and /recapm.
+ * period = "week" | "month" determines the header label.
+ */
+function buildPeriodicTexts(summary: PeriodicSummary, period: "week" | "month"): string[] {
+  const periodLabel = period === "week" ? "tuần" : "tháng";
+  const header = `Tổng kết ${periodLabel} ${summary.periodStart} đến ${summary.periodEnd}`;
+
+  const sectionBlocks: string[] = [];
+
+  // Section 2 — Totals (always present)
+  sectionBlocks.push(
+    [
+      "Tổng quan:",
+      `Tin tức: ${summary.newsCount} bài`,
+      `Cảnh báo: ${summary.alertCount} cảnh báo`,
+      `Báo cáo tài chính: ${summary.reportCount} báo cáo`,
+    ].join("\n"),
+  );
+
+  // Section 3 — Key events (present only when non-empty)
+  if (summary.keyEvents.length > 0) {
+    const lines: string[] = ["Sự kiện nổi bật:"];
+    const events = summary.keyEvents.slice(0, 5);
+    for (const ev of events) {
+      const localDate = (ev.date ?? "").slice(0, 10);
+      const dir = directionVi(ev.direction);
+      const title = stripHtml(ev.title);
+      const truncTitle = title.length > 100 ? title.slice(0, 100) + "…" : title;
+      lines.push(`${localDate} — ${dir} — ${truncTitle}`);
+    }
+    sectionBlocks.push(lines.join("\n"));
+  }
+
+  // Section 4 — Per-stock moves (present only when at least one non-null changePct)
+  {
+    const entries = Object.entries(summary.stockPerformance)
+      .filter(([, perf]) => perf.changePct !== null)
+      .sort((a, b) => Math.abs(b[1].changePct!) - Math.abs(a[1].changePct!));
+
+    if (entries.length > 0) {
+      const lines: string[] = ["Biến động cổ phiếu:"];
+      for (const [code, perf] of entries) {
+        const dir = (perf.changePct ?? 0) >= 0 ? "tăng" : "giảm";
+        const absPct = Math.abs(perf.changePct!).toLocaleString("vi-VN", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+        lines.push(`${code}: ${dir} +${absPct}%`);
+      }
+      sectionBlocks.push(lines.join("\n"));
+    }
+  }
+
+  // Section 5 — Alert breakdown (present only when alertCount > 0)
+  if (summary.alertCount > 0) {
+    const lines: string[] = ["Phân loại cảnh báo:"];
+    for (const [sev, count] of Object.entries(summary.alertsSummary.bySeverity)) {
+      lines.push(`${severityLabelVi(sev)}: ${count}`);
+    }
+    const topAlerts = (summary.alertsSummary.topAlerts ?? []).slice(0, 3);
+    for (const msg of topAlerts) {
+      const truncMsg = msg.length > 100 ? msg.slice(0, 100) + "…" : msg;
+      lines.push(`- ${truncMsg}`);
+    }
+    sectionBlocks.push(lines.join("\n"));
+  }
+
+  const flatBlocks = sectionBlocks.flatMap((b) => splitBlockAtNewlines(b));
+  return chunkStories(header, flatBlocks, 4096);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -633,6 +999,20 @@ export async function handleTelegramCommand(
     if (cmd === "/news") {
       const newsResult = handleNews(db, args);
       return { text: newsResult.texts[0] ?? "", texts: newsResult.texts, chatId };
+    }
+
+    // Recap commands — async handlers returning { texts: string[] }
+    if (cmd === "/recap") {
+      const r = await handleRecap(db);
+      return { text: r.texts[0] ?? "", texts: r.texts, chatId };
+    }
+    if (cmd === "/recapw") {
+      const r = await handleRecapWeek(db);
+      return { text: r.texts[0] ?? "", texts: r.texts, chatId };
+    }
+    if (cmd === "/recapm") {
+      const r = await handleRecapMonth(db);
+      return { text: r.texts[0] ?? "", texts: r.texts, chatId };
     }
 
     let responseText: string;
