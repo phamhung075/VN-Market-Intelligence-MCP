@@ -2,7 +2,7 @@
 
 **Sprint:** NEWS-CMD
 **BA author:** ba
-**Status:** DRAFT — awaiting PO approval gate
+**Status:** APPROVED — PO approval gate passed 2026-05-27T20:01:02Z. See § 11 PO RULING.
 **Date:** 2026-05-27
 **Sprint goal SSOT:** `docs/SPRINT_GOAL.md § Sprint NEWS-CMD`
 
@@ -271,3 +271,33 @@ The developer SHALL add the following test scenarios to the test suite for `tele
 | ops REBUILD (not restart) mcp-server after change | NFR-3 constraint |
 | QA verifies live with real content (not stub / NOT-RUN) | NFR-5, NFR-4 |
 | User confirms reads usefully (G9) | Sprint goal ARMED until then |
+
+---
+
+## 11. PO RULING (approval gate — 2026-05-27T20:01:02Z)
+
+**VERDICT: APPROVED.** The spec faithfully covers the sprint scope and all 5 hard constraints (plain Vietnamese / FR-4+NFR-1; no silent truncation / FR-6; empty-DB fallback / FR-5; never throws / NFR-4; pull-reply only no new push / NFR-2+NFR-3). The codebase verification (§1) confirms my four kickoff handoff claims against live code, and the `summary`-column addition to the `/news` query (vs `newsFetchLiveHandler.ts`, which omits it) is a correct improvement — `summary` IS the "one-line gist" the Vision promises, and it already exists in `schema-news.ts`. ACCEPTED.
+
+The two deferred questions are NOT both architect-scoped. I am settling the **product half of B1** and **all of B2** as product calls now; only the implementation contract of B1 stays with the architect.
+
+### B1 — Chunking: PO MANDATES "deliver ALL content" (Option A family). Architect picks the contract ONLY.
+
+**Binding constraint, no longer optional:** the binding session goal is verbatim *"get all content if user need"* and Hard Constraint 3 is *"No silent truncation."* **Option B (single-message conservative cap + "thêm" affordance) is REJECTED** — AC-FR6-4(ii) itself concedes it "does not guarantee all content for large digests," which directly violates the binding goal and Constraint 3. A user who types `/news` to get the full day's digest must receive the full digest, not a teaser that makes them paginate by hand.
+
+- **AC-FR6-4 is AMENDED:** the architect MUST choose a mechanism in the **Option A family** — i.e. when the formatted digest exceeds 4096 chars it is split at story boundaries into multiple sequential Telegram messages, every story delivered. The architect's remaining freedom is the *exact implementation contract*: `CommandResult.texts?: string[]` + a loop in `webhookHandler.ts` is the obvious candidate, but the architect MAY pick an equivalent (e.g. `handleNews` itself drives the sequential `sendTelegramMarket` sends, or a small chunker helper) provided AC-FR6-1/2/3 are provably met and the change stays single-zone (`apps/mcp-server/`). The "how to wire the multi-send" is the genuine architect decision; "must it deliver everything" is settled — YES.
+- AC-FR6-4(ii) (Option B) is struck. AC-FR6-1, AC-FR6-2, AC-FR6-3, AC-FR6-5 stand unchanged.
+- Note for architect: the default cap of 20 (AC-FR2-3) and the `[1,50]` clamp (AC-FR3-5) stay — they cap how many stories are *queried*, not how the queried set is *delivered*. All queried stories must be delivered in full; chunking handles length. No conservative story-count reduction to dodge chunking.
+
+### B2 — Fallback window: PO SETTLES as a product call (no longer architect-deferred).
+
+This is a UX decision, not a technical one, so I settle it for consistency:
+
+- **Fallback = most-recent N rows, NO date window.** REJECT "last 24h" and "last 3 days." Rationale: a date-windowed fallback can itself return zero on a quiet weekend/holiday (VN market closed → no fresh analyses), which re-introduces the empty-result problem the fallback exists to solve. "Most-recent N regardless of date" always returns something if the table is non-empty — that is the correct UX for an on-demand pull. AC-FR2-5 already specifies this; it is now CONFIRMED, not deferred.
+- **Header MUST change when fallback is active.** AC-FR4-5 already provides `Tin tức gần đây (N bài):` for fallback vs `Tin tức hôm nay (N bài):` for today. CONFIRMED and now MANDATORY (not optional): when zero today-rows trigger the fallback, the header MUST read the "gần đây / recent" variant so a non-technical user understands the data is not from today. A silent "hôm nay" header over stale data would mislead the user — unacceptable.
+- B2 is therefore CLOSED. The architect does NOT need to re-decide the window or the header; both are settled above. The architect's NEWS-CMD-DESIGN note should simply restate these as confirmed inputs.
+
+### Net effect on architect scope (NEWS-CMD-DESIGN)
+
+The architect's remaining real decision is **one item**: the exact single-zone implementation contract for Option-A multi-message chunking (CommandResult shape vs handler-driven sends vs chunker helper) — with AC-FR6-1/2/3 provably satisfied and zero change outside `apps/mcp-server/`, zero new push, zero delivery-cron/alert-commander touch. Everything else in this spec is locked. Keep the brief small — this is a single-command feature, not an architecture overhaul.
+
+Nothing else in the spec is changed. All FRs, NFRs, edge cases (§6), test scenarios T-NEWS-1..8 (§7) and the file-change table (§9) stand as written, with T-NEWS-5 now necessarily exercising the multi-message path (since Option B is off the table).
