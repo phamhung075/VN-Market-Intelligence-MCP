@@ -5,5 +5,16 @@
   "payload": "docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md",
   "priority": "high",
   "createdAt": "2026-05-27T20:41:55Z",
-  "notes": "BLOCKED on SIG-PO-GATE deliberation. Agent-father MUST NOT act until PO approves. When approved, implement EDIT-1 through EDIT-5 in brief §9 Phase-1 (flow edits only). Phase 2 code work routes to dev-team via SIG-IMPL-GATE task."
+  "status": "unblocked",
+  "po_verdict": "APPROVE-WITH-CONDITIONS",
+  "po_verdict_at": "2026-05-27T20:47:27Z",
+  "po_gate_critique": "docs/handoffs/TASK_SELF-IMPROVE-GATE.md § [PO] SIG-PO-GATE critique",
+  "notes": "UNBLOCKED by SIG-PO-GATE 2026-05-27T20:47:27Z. Agent-father: implement EDIT-1 through EDIT-5 (brief §9 Phase 1, flow .md only). MUST honor PO conditions C-1, C-2, C-3, C-5 (see handoff § [PO] VERDICT). Phase 2 code routes to dev-team via SIG-IMPL-GATE (QA owns C-4 per-path gate proof), sequenced AFTER SIG-IMPL-MD.",
+  "po_conditions": {
+    "C-1": "EDIT-4 input contract: proposal schema must carry structured target_agent (kebab-case) + target_files[]; agent-father reads those, NOT free-text 'Proposed Change'; FAIL-LOUD reject if target_agent absent/invalid. REQUIRED before any auto-edit.",
+    "C-2": "Post-edit target verification: after edit.md, verify edited file == target_files[]; status=IMPLEMENTING after clean edit, DONE only after Success Signal independently confirmed (success_verified_by + date). Edit-applied != weakness-gone.",
+    "C-3": "EDIT-3 add 5th mandatory PO critique field 'lane-C-in-disguise check'; empty/placeholder auto-rejects with 'critique incomplete' like the other four.",
+    "C-4": "dev-team/QA SIG-IMPL-GATE: SELF_IMPROVE_AUTO_DISPATCH per-dispatch-path, NOT a single global flag; re-run GATE-PROOF-1..5 for each new gate mechanism; default false per path until that path's proof recorded.",
+    "C-5": "EDIT-1 D-IMPROVE must fail-loud-SKIP a bad candidate (log, continue), never abort the Tier-2 freshness sweep; throw mid-write must release commit-mutex and leave no half-written proposal doc."
+  }
 }
