@@ -1,6 +1,6 @@
 # Alert Commander — Notebook
 
-**Last updated:** 2026-05-22 04:09 UTC | **Sprint:** 1965d
+**Last updated:** 2026-05-25 06:42 UTC | **Sprint:** post-renewal health check
 
 > Prior cycles archived → `docs/archive/notebooks/alert-commander-2026-05-22.md`
 
@@ -108,22 +108,35 @@
 - **suppress id=3692 (critic 0.6) | log_agent_work id=1101**
 - **Notable:** VHM deepening to -4.38% at cycle end (was -4.26% at cycle start) — approaching 5% singleDayDrop trigger. VIC deepening to -3.70%. Real estate sector capitulation continues across 4 HOSE stocks. New chain_catalyst id=3681 VIC stadium mega-project bullish (TIGHTENING suppressed). PVD chain_catalyst id=3684 neutral CEO challenge piece (WORK only). HNX/UPCOM sources still failing (infra error persistent). ACV rate-limited (vnstock). Foreign-flow-job fallbacks exhausted again.
 
+### Alert Cycle (06:39–06:42 UTC, 2026-05-25) — Post-server-renewal health check
+- **Status:** SILENT-EXIT (firing gate not met)
+- **Regime:** NEUTRAL (news-fallback — get_macro_snapshot unavailable x2, macro-indicators service error) | REGIME_SOURCE=news-fallback | conservative thresholds applied
+- **Market:** VN-Index 1,887.14 +0.53% OPEN | Brent 100.21 | Gold 4,523.2 | USD/VND 26,162
+- **Key price moves:** GAS -4.59% | PLX -4.53% (oil/gas sector drop, Hormuz/Iran peace news) | VHM +3.32% | VRE +3.15% (real estate REVERSAL from prior session) | ACB +2.84% | EIB +2.12%
+- **Agent signals:** 0 on bus ("Không có tín hiệu mới")
+- **position-danger:** GAS -4.59%, PLX -4.53% — both approaching but < 5% threshold | stopLossHit=false (no active price alerts) → 0/3 NOT MET
+- **watchlist-opportunity:** 0 agent signals → agentSignalsMajority=BUY FALSE | kinhDich stock-level unavailable (connection error) → 0/4 NOT MET. Index-level Quẻ Khôn MUA 100% (does NOT gate)
+- **CRITICAL overrides:** legal_risk PC1/VPB stale (filed 2026-05-21 04:38, no new) | crisis_velocity=0 | verified_chain=0
+- **Fired:** 0 | MARKET: 0 | log_agent_work id=1110
+- **MCP health (post-renewal):**
+  - PASS: get_cycle_bootstrap, get_legal_risk_signals, get_crisis_early_warning, get_market_snapshot, get_alerts(price), get_agent_signals, log_agent_work
+  - FAIL: get_macro_snapshot (error: "macro-indicators service unavailable" x2 attempts)
+  - FAIL: get_kinhdich_reading (error: "Unable to connect. Is the computer able to access the url?")
+- **Notable:** Real estate sector full reversal (VHM +3.32%, VRE +3.15%) vs prior session deep losses — probable short-cover/sector-rotation. Oil/gas under pressure from Hormuz/Iran peace talks reducing geopolitical premium. GAS -4.59% is largest single-stock move this cycle — watch for >5% breach triggering position-danger if stopLoss configured. Macro service outage persists — dev-team aware.
+
 ## Carry-over for next market-hours cycle
 
-- NVL chain_catalyst verdict d763acd4 pending (verdictResolutionJob ≥24h: 07:00 UTC 2026-05-23+)
-- PC1/VPB legal_risk verdicts ec181d4e/5f780ed3 pending — verdictResolutionJob hourly (stale — not re-fired through 03:54 cycle)
+- NVL chain_catalyst verdict d763acd4 pending (verdictResolutionJob ≥24h: 07:00 UTC 2026-05-23+ — likely resolved, check agent_signals.outcome)
+- PC1/VPB legal_risk verdicts ec181d4e/5f780ed3 pending resolution (stale since 2026-05-21 04:38)
 - write_alert_verdict enum gap: `legal_risk` not in alertSource enum — dev-team bug open
-- Real estate sector deepening: VHM -4.38%, KBC -3.48%, VIC -3.70%, VRE -3.35% — watch for singleDayDrop>5% trigger (VHM at -4.38%; needs <-0.62% more to cross threshold — PRIORITY WATCH)
-- VNH [HNX] -10.00% confirmed at 03:51 — no position configured, no market-watcher signal, no stopLossHit path. If position configured or news emerges → priority escalation path
-- VN-Index -1.45% at 1,869.37 — broad market weakness deepening (was -1.23% at 03:38); index-level Quẻ Khôn BUY 100% (diverges from stock-level BAN readings)
-- Chain_catalyst BDS bearish id=3650 TIGHTENING regime_adj_score=10 but confidence_score=0.50 — watch for news-scout re-emit with higher confidence_score ≥0.85
-- NVL insider distribution (chain_catalyst bearish BDS id=3646,3650) — NVL +0.98% today despite bearish signal; watch for reversal confirmation or conf escalation
-- New chain_catalyst id=3673 VCB container bullish (conf=0.50) — likely mis-tagged ticker (container shipping ≠ VCB banking); watch for corrected re-emit
-- FII net sell pattern persists (carry -0.33%) — watch for escalation to verified_chain
-- Banking deposit outflow 12 banks Q1 — watch newsSentiment escalation for BID/VCB (BID now -1.83%)
-- Container shipping chain_catalyst id=3642,3651,3673 suppressed — watch for higher-conf resend from news-scout
-- Kinh Dich stock-level signals: DPM Quẻ Kiển BAN 48%, FPT Quẻ Kiển BAN 48% — no BUY this cycle (6+ cycles absent). Index-level Quẻ Khôn MUA 100% noted but does NOT gate watchlist-opportunity.
-- Pivot window June 2026 in 10 days (PMI 2026-06-02, CPI 2026-06-04, FOMC 2026-06-18, SBV 2026-06-24)
-- DPM chemicals bullish outlier (+1.52% at 03:51) persists but Kinh Dich BAN — watch for kinhDich flip to BUY + newsSentiment ≥0.5 (TIGHTENING threshold)
-- Steel sector: NKG +1.46%, HSG +1.23% outperforming — watch for sector catalyst to emerge
-- MWG insider sale completed (Đoàn Văn Hiểu Em 2M shares) — DMX IPO incoming, neutral for now
+- **INFRA BUG (post-renewal):** get_macro_snapshot returning "macro-indicators service unavailable" x2 attempts — macro service not recovered after server renewal. Route to dev-team.
+- **INFRA BUG (post-renewal):** get_kinhdich_reading returning "Unable to connect" — kinh-dich service connection error after server renewal. Route to dev-team.
+- Real estate sector REVERSED: VHM +3.32%, VRE +3.15% (prior session -4.38%, -3.35%) — short-cover/rotation confirmed. Position-danger trigger no longer imminent for real estate.
+- Oil/gas under pressure: GAS -4.59%, PLX -4.53% (Hormuz/Iran peace talks = geopolitical premium unwinding). CRITICAL macro_deviation alert (Brent -3.83σ) in system. Watch GAS for >5% singleDayDrop + stopLossHit combo.
+- MWG insider sale (Đoàn Văn Hiểu Em + cổ đông lớn) accelerating — LOW alert in system, no stopLossHit configured. Watch for further concentration risk news.
+- HPG quý 2 lãi vượt kỳ vọng nhờ xuất khẩu thép — bullish alert, no agent signal yet
+- VCB lãi suất huy động giảm mạnh tháng 5/2026 — bearish for NIM but banking sector recovering (+2.84% ACB today)
+- FPT cổ phiếu ESOPs cho lãnh đạo giá thấp hơn 90% thị giá — insider-buy signal (bullish), FPT -1.60% today
+- Pivot window June 2026 active (PMI 2026-06-02, CPI 2026-06-04, FOMC 2026-06-18, SBV 2026-06-24)
+- Agent signal bus empty (0 signals) — news-scout and market-watcher may not have fired this cycle
+- Index Quẻ Khôn MUA 100% (index-level, does NOT gate watchlist-opportunity per policy)

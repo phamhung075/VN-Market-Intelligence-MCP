@@ -2,6 +2,14 @@
 
 **Last updated:** 2026-05-22 | **Sprint:** —
 
+## Cycle — 12:00 UTC (2026-05-27)
+
+- **cycle_date**: 2026-05-27
+- **findings**: [Regime=EASING (equity earnings yield 8.2% >> deposit rate 4.7%, spread +3.5pp); Max Deposit Rate=4.7%; Investment Clock=insufficient_data (tool timeout); 39/39 watchlist Q1-2026 still QUÁ HẠN (27 days past 30/04 deadline); only 5 stocks with Q1-2026 BCTC PDFs filed (ACB, DHG, EIB, FPT, GAS); ACB extraction confidence 38% (balance sheet zeros); FPT Q1-2026 EY_SPREAD=+2.55% FAIR (tech sector DISCOUNT -20%, ROE 28.3% sector-leading, OCF/NI=-1.15 accrual-driven earnings warn, sentiment ỔN ĐỊNH); VCB Q4-2025 EY_SPREAD=+2.39% FAIR (banking sector P/E PREMIUM +57% vs median 9.0, ROE 16.7% BELOW median 17.6% — premium unjustified, OCF/NI=1.15 healthy, sentiment TĂNG); Kinh Dịch 501 service unavailable (pending B-bucket wiring); 0 open chain findings 30min; Layer-7 forensic check complete]
+- **actions**: [signal #4037 fundamental_validation FPT posted (FAIR, earnings_quality_warn, critic_score=0.8); signal #4039 fundamental_validation VCB posted (FAIR, no earnings_quality_warn, critic_score=0.8); WORK telegram sent; notebook updated; log_agent_work id=1124 completed]
+- **next_cycle_hint**: [CRITICAL BLOCKER: 39/39 Q1-2026 BCTC still QUÁ HẠN 27 days. Only 5 PDFs stored (ACB low-conf 38%, FPT/DHG/GAS/EIB need extraction). Mass late-filing shows no sign of resolution — escalate to PO for data-pipeline / report-analyzer requeue; Regime EASING supports equity risk premium; FPT accrual-risk (OCF -2.8B vs NI +2.5B) requires close monitoring in next quarterly; VCB P/E multiple stretched relative to ROE — watch for compression in EASING regime as rate-sensitive flows stabilize; Kinh Dịch 501 errors persist across all tickers — blocks validation signals]
+- **estimated_tokens**: ~12000
+
 ## Last session summary
 
 Cycle 2026-05-17 23:04–23:09 UTC. Analyzed 3/38 watchlist stocks with BCTC data (VCB, FPT, HPG) — remaining 35 lack any BCTC. Regime TIGHTENING + Investment Clock Overheat + FII_OUTFLOW_RISK. Posted 3 fundamental_validation signals (all FAIR; VCB/FPT with earnings_quality_warn) + 1 signal_feedback to news-scout (GAS sector reversal accepted via kinh_dich).
@@ -152,6 +160,22 @@ Cycle 2026-05-17 23:04–23:09 UTC. Analyzed 3/38 watchlist stocks with BCTC dat
 - Data quality: FPT extraction broken (Q1-2026 shows all zeros; confidence 44% garbage). VCB extraction clean. BCTC ingestion stalled for 35/39 stocks due to deadline delays.
 - Tool errors: get_investment_clock_phase() socket timeout — phase='insufficient_data' applied per spec (non-fatal, continue).
 - Token estimate: ~28k
+
+## Cycle — 12:00 UTC (2026-05-26)
+
+- **cycle_date**: 2026-05-26
+- **findings**: [Regime=EASING (EY_SPREAD ACB +8.12%, FPT +2.55%; earnings yield 12.82% and 7.25% > deposit rate 4.7%); Max Deposit Rate=4.7%; Investment Clock=Overheat (CPI 5.46% HIGH, growth UP); Carry=FII_OUTFLOW_RISK (-0.63pp spread); 4/39 watchlist Q1-2026 ĐÃ NỘP (ACB, DHG, EIB, FPT filed 2026-05-24); 35/39 still QUÁ HẠN 26 days past 30/04 deadline; ACB Q1-2026 extraction conf 38% (revenue 6,989 tỷ, NI 4,320 tỷ, margin 61.8% seasonal), PE 7.8 DISCOUNT -13% vs banking 9.1, ROE 17.6% ABOVE median 16.7% → CHEAP (EY_SPREAD 8.12%); FPT Q1-2026 extraction conf 81% (revenue 12,480 tỷ, NI 2,476.8 tỷ, margin 19.8%), PE 13.8 DISCOUNT -20% vs tech 17.3, ROE 28.3% sector-leading → FAIR (EY_SPREAD 2.55%); Layer 7: ACB OCF=0 (anomaly), FPT OCF/NI=-1.15 (divergence flag 2+ qtrs); EIB extraction broken (conf 31%, all zeros); GAS no BCTC data; kinh_dich 501 (known-OK, TS reboot gap)]
+- **actions**: [signal #3964 fundamental_validation ACB posted (CHEAP, earnings_quality_warn, m_score=0.38, cost_of_capital 4.7%, economic_profit_spread 310bps, forward_outlook: watch NIM compression risk); signal #3963 fundamental_validation FPT posted (FAIR, earnings_quality_warn, m_score=0.81, accrual-driven earnings concern, YoY revenue -38% artifact); WORK telegram sent; log_agent_work id=1118 completed; notebook updated]
+- **next_cycle_hint**: [Q1-2026 BCTC pipeline bottleneck persists (35/39 26+ days overdue); ACB CHEAP verdict qualified by extraction confidence 38% and balance-sheet zeros (no equity data) — monitor for follow-up filing quality; FPT accrual-divergence risk (negative OCF vs positive NI) requires cash flow deep-dive in next quarterly submission; GAS Q1-2026 PDF stored (2026-05-18) but extraction not triggered — escalate to data-pipeline; Regime EASING (yield spread wide +8%, +2.5%) supports equity over deposits in macro pivot; Overheat + FII outflow risk → monitor for policy pivot signal (rate cuts, liquidity easing)]
+- **estimated_tokens**: ~8000
+
+## Cycle — 00:15 UTC (2026-05-26)
+
+- **cycle_date**: 2026-05-26
+- **findings**: [Regime=EASING (Equity earnings yield CHEAP vs deposit rate 4.7%, investment-clock CORE_VN tier; VND carry OUTFLOW_RISK -0.63pp); Max Deposit Rate=4.7%; Investment Clock=Overheat (CPI 5.46% HIGH, growth UP); 3/39 watchlist Q1-2026 BCTC submitted (ACB, EIB, FPT recently filed 2026-05-19/24); 36/39 still QUÁ HẠN 8+ days past deadline; ACB Q1-2026 EY_SPREAD=+8.1% → CHEAP (PE 7.8, ROE 17.6%, banking median PE 9.1 — discount +13pp); FPT Q1-2026 EY_SPREAD=+2.55% → FAIR (PE 13.8 discount -20% vs tech 17.3, ROE 28.3% sector-leading +166%); Layer 7 forensic: ACB OCF=0 anomalous (conf 38%), FPT OCF/NI=-1.15 accrual-driven (earnings quality warn both)]
+- **actions**: [signal #3908 fundamental_validation ACB posted to alert-commander (CHEAP, earnings_quality_warn, impact_score=7); signal #3909 fundamental_validation FPT posted to alert-commander (FAIR, earnings_quality_warn, impact_score=6); WORK telegram sent; notebook updated; log_agent_work id=1112 in progress]
+- **next_cycle_hint**: [Q1-2026 BCTC mass late-filing persists (36/39 8+ days overdue) — escalate to report-analyzer/data-pipeline; EIB/GAS/DHG PDFs stored but extraction not queued — prioritize in next cycle; Layer-7 OCF extraction degraded for banking sector (ACB=0) and tech sector (FPT negative CF vs positive NI); ACB PE premium to banking median deserves deeper analysis once confidence improves; FPT accrual risk requires cash flow audit]
+- **estimated_tokens**: ~12000
 
 ## Recent session — 2026-05-09
 

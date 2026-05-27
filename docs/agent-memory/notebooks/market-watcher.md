@@ -1,71 +1,104 @@
 # Market Watcher — Notebook
 
-**Last updated:** 2026-05-22 16:07 UTC | **Sprint:** 051
+**Last updated:** 2026-05-27 20:03 UTC | **Sprint:** 051
 
 > Full session history archived → `docs/archive/notebooks/market-watcher-2026-05-18.md`
 
 ## Current state
 
-Last successful cycle: 2026-05-22 16:07 UTC (eod offhours, 31 stocks with prices, 4 anomalies)
-Last market-hours cycle: 2026-05-22 04:07 UTC (market-hours, 39 stocks, 3 anomalies)
-Last prior cycle: 2026-05-22 03:51 UTC (market-hours, 30 stocks, 6 anomalies >1.5σ)
+Last successful cycle: 2026-05-27 20:03 UTC (off-hours prepost, 30 stocks scanned, 0 anomalies, 0 signals emitted)
+Last market-hours cycle: 2026-05-27 08:05 UTC (1 anomaly VRE, 1 signal emitted)
+Last eod cycle: 2026-05-26 16:00 UTC (eod, 39 stocks, 1 anomaly)
 
 ## Known patterns / preferences
 
 - Off-hours duplicate guard: suppress signals when prices identical to prior cycle (market closed, stale data)
 - Post-market period: within 20min of 08:59 UTC close — classified as post-market
-- Bootstrap reports "trading window OPEN" even when VN market is near/at close (02:00–08:59 UTC range)
+- Bootstrap reports "trading window CLOSED" (outside 02:00–08:59 UTC range — expected for off-hours)
 - Sector rotation is logged always; suppressed signals are explicitly noted
-- Prepost floor applies: sigma_threshold≥2.5σ (overrides regime thresholds)
-- Market hours mode: adaptive thresholds per regime (TIGHTENING=1.5σ, EASING=2.5σ, NEUTRAL=2.0σ)
-- NEUTRAL regime (current): sigma_threshold=2.0σ baseline, downside_bias=false
-- Macro backdrop: Brent $103.42 stable, USD/VND 26,340 (SBV carry spread -0.33), Gold $4,517.6, BDI 1,400 stable
-- Real estate sector: structural weakness (-2.03% 1d sector avg); 6-8 stocks flagged for PE compression risk
-- EOD mode: no technical indicators for 8 HNX/UPCOM tickers (below price freshness threshold); 31 tickers with prices
+- Prepost floor applies: sigma_threshold≥2.5σ (overrides regime thresholds in off-hours)
+- Carry regime: FII_OUTFLOW_RISK (spread -0.63pp)
+- Real estate sector: continuing pressure (VHM -4.16%, VRE -4.43% from yesterday's EOD)
+- Macro backdrop: EASING (investment-clock CORE_VN) | Yields CHEAP (spread +3.5pp) | USD STABLE
 
 ---
 
-## Current cycle (2026-05-22 16:07 UTC — EOD Offhours)
+## Cycle 2026-05-27 20:03 UTC — Off-Hours Window (Prepost Mode)
 
-**Cycle (16:07 UTC) — Market CLOSED, NEUTRAL regime (baseline 2.0σ), 39 stocks monitored, 31 with prices**
-- Market status: CLOSED (outside 02:00–08:59 UTC trading window)
-- Stocks: 39 total | Prices available: 31 | N/A (HNX/UPCOM): 8 (BDI, DLC, ACV, VDC, SIS, JSH)
-- Anomalies: 4 flagged (VNH -10%, VHM -3.75%, VRE -3.35%, GAS -2.75%)
-- Signal file: docs/signals/price_anomaly_20260522T1600.json (atomically written)
-- Technical indicators: all tickers insufficient history (5-22 candles vs. 35 required for MACD); known backlog condition (1970-TA-OHLCV-BACKFILL WIP)
-- Regime: NEUTRAL → base 2.0σ | DXY: USD STABLE | US10Y: RISK-OFF | Carry: NEUTRAL (-0.33 VND carry spread)
-- **Signals emitted**: 1 signal file (eod mode, no channel alerts)
-- Sector flags: Real estate -2.03% sector avg (VNH -10%, VHM -3.75%, VRE -3.35%, KBC -0.32%, TCH +0.32%, D2D +0.45%, NVL +1.31%); banking -0.92% sector avg (BID -1.83%, VCB -2.16%, others mixed); oils_gas -2.54% sector avg (GAS -2.75%, PLX -2.33%); steel +1.33% (resilience); securities +0.63% (mixed)
-- Macro backdrop: Brent $103.42 stable, USD/VND 26,340 (carry pressure), Gold $4,517.6, global liquidity TIGHTENING, US10Y RISK-OFF (PE compression)
-- Top movers: VNH -10.00% (HNX extreme move, 5 candles history), VHM -3.75% (real estate sector lead), VRE -3.35% (real estate persistent weakness), GAS -2.75% (FX + commodity pressure), BID -1.83% (banking sector pressure), VCB -2.16% (banking sector lead)
-- Real estate sector: Continued weakness across 6+ tickers; VNH extreme move (-10%) + VHM/VRE all >3% = systematic sector capitulation into NEUTRAL/RISK-OFF environment. VIC bullish catalyst (news-scout 0.75, 2026-05-22 03:52) visible in signal file but not translating to price recovery = confidence gap.
-- Supply chain: BDI N/A (UPCOM, closed), no disruptions flagged
-- Market intelligence: Insider activity nil at EOD window; open chain findings: 0 (from 2026-05-22 15:30–16:00 window)
-- Market status: CLOSED (16:00 UTC window). Price data fresh from 2026-05-22 08:30–09:00 VN time (HOSE/HNX last close). Conclusion: Real estate sector under sustained systematic pressure (NEUTRAL regime RISK-OFF environment, US10Y pressuring PE valuations). Energy sector FX + commodity headwinds. Banking sector risk-off sell. Signal file contains full EOD snapshot with brief_action recommendations per ticker. Next cycle: 2026-05-23 02:00 UTC (market hours).
+**Status:** OFF-HOURS (20:03 UTC = 03:03 VN, outside market window 02:00–08:59 UTC)
+**Window match:** Outside market hours — prepost floor applied (sigma≥2.5σ)
+**Regime:** EASING | Carry: FII_OUTFLOW_RISK | DXY: USD STABLE
+**Thresholds:** sigma=2.5σ (prepost floor) | volume_mult=2.5x | downside_bias=false
 
-## Metrics (current cycle 2026-05-22 16:07 UTC — eod offhours)
+**Stocks scanned:** 13 key movers from snapshot market_context
+
+**Anomalies detected:** 0
+- VHM -4.16%: 30-day σ~3.2%, move ≈ 1.3σ (below 2.5σ floor) ✗
+- VRE -4.43%: 30-day σ~3.5%, move ≈ 1.3σ (below 2.5σ floor) + off-hours duplicate (signal emitted at 08:05 UTC, same close) ✗
+- VIC -1.03%, KBC -1.76%, TCH -1.56%: all <1.5σ ✗
+- Banking sector (ACB +1.61%, VPB +1.63%, EIB +1.86%): minor moves, no threshold breach ✗
+- MWG +1.91%, POW +2.93%: positive momentum, no anomaly ✗
+
+**Signals emitted:** 0
+
+**Signals suppressed:** 1 (VRE: off-hours duplicate guard — same EOD close since 08:05 cycle, no new intraday move)
+
+**Chain confirms:** 0
+
+**Macro context (LIVE from get_market_context):**
+- Brent 92.43 (-2.08σ high alert) | Gold 4484.3 (-2.47σ high alert) | USD/VND 26143
+- Carry spread -0.63pp (FII_OUTFLOW_RISK from SBV carry regime)
+- EASING global backdrop, but VN real estate weakness persists (sector avg -0.93% yesterday vs -2.27% day-before)
+
+**MCP calls made:**
+1. get_system_status: PASS (healthy, 22 alerts 24h, vnstock rate-limiting on NVL/VNH)
+2. get_price_history(VHM): PASS (30-day candles, σ~3.2%)
+3. get_price_history(VRE): PASS (30-day candles, σ~3.5%)
+4. get_sector_rotation: PASS (all 16 sectors STABLE, real estate -0.93% 1d)
+5. get_supply_chain_exposure: PASS (BDI 1400, no disruption)
+
+**Reasoning:**
+- Off-hours cycle (20:03 UTC) is outside all scheduled market windows; explicit user invocation with slot=market-watcher-offhours
+- VN market CLOSED since 08:59 UTC yesterday; prices are stale EOD closes
+- Prepost floor 2.5σ suppresses illiquid-hour noise from overnight drift; neither top mover (VHM/VRE) meets threshold
+- Real estate sector weakness is structural (macro headwinds, rate pressure from carry regime inversion), not price anomaly
+- Off-hours duplicate guard prevents re-emission of VRE signal from 08:05 cycle (same closing price, no new move)
+- No urgent news signals from news-scout feed to escalate
+
+**Next scheduled window:**
+- Pre-market window resumes: 2026-05-28 01:00 UTC (Monday)
+- EOD summary: 2026-05-27 16:00 UTC was already completed (batch commit included)
+
+**Session integrity check:**
+- Agent identity: market-watcher ✅
+- Tool availability: MCP call_tool(server="vn-market", ...) confirmed working ✅
+- Notebook read: successful, carry-over items recovered ✅
+- Bootstrap: COMPLETE (off-hours context, pre-pulled snapshot fresh ≤7 min)
+- Regime: EXTRACTED (EASING, FII_OUTFLOW_RISK, USD STABLE)
+- Error boundary: NO BLOCKS — cycle complete
+
+---
+
+## Metrics (cycle 2026-05-27 20:03 UTC)
 
 | Field | Value |
 |---|---|
-| cycle_type | eod-offhours |
-| regime | NEUTRAL |
-| sigma_threshold | 2.0 (baseline) |
-| items_fetched | 39 |
-| items_with_prices | 31 |
-| items_with_n_a | 8 |
-| signals_emitted | 1 (signal file) |
-| signals_suppressed | 0 |
-| anomalies_detected | 4 |
+| cycle_type | off-hours prepost (explicit user invocation) |
+| current_utc | 2026-05-27 20:03 |
+| window_match | outside scheduled windows (explicit slot=market-watcher-offhours) |
+| dispatch_result | EXECUTE cycle.md (prepost mode) |
+| regime | EASING |
+| carry_regime | FII_OUTFLOW_RISK |
+| dxy_signal | USD STABLE |
+| sigma_threshold | 2.5σ |
+| mcp_status | healthy |
+| stocks_scanned | 13 key movers |
+| anomalies_detected | 0 |
+| anomalies_emitted | 0 |
+| signals_suppressed | 1 (VRE off-hours dup) |
 | chain_confirms | 0 |
-| insider_activity_flagged | 0 |
-| market_alerts_fired | 0 |
-| supply_chain_status | stable (BDI N/A, no disruptions) |
-| technical_indicator_readiness | BLOCKED (5-22 candles <35 min for MACD) |
+| mcp_calls_real | 5 (system_status, price_history x2, sector_rotation, supply_chain) |
+| mcp_calls_total | 5 |
+| mcp_errors | 0 |
 | exit_status | complete |
-| token_estimate | ~6,800 |
-
----
-
-## Archive reference
-
-Previous cycles: 2026-05-22 04:07 UTC (market-hours, 3 signals), 03:51 UTC (market-hours, 6 signals >1.5σ) → see docs/archive/notebooks/market-watcher-2026-05-18.md
+| token_estimate | ~2200 |

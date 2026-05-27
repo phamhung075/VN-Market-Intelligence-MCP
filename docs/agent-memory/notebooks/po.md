@@ -1,53 +1,49 @@
 # PO Notebook
 
-## Cycle 2026-05-27T21:16:12Z — SIG-IMPL-GATE spec gate → APPROVED
+## Cycle 2026-05-27T21:41:17Z — NEWS-FULLDAY kickoff (user `/news` refinement → BA)
 
-**Input:** Spec-gate the architect's SIG-IMPL-GATE blueprint (handoff `[Architect] SIG-IMPL-GATE Blueprint`)
-vs REQ_SIG-IMPL-GATE.md (6 tasks, 36 tests) + brief §1/§5 + my own C-1..C-5. Deliberation, NOT rubber-stamp.
+**Input:** User (non-technical, FR) sent a 4-item request: (1) refine `/news` to ALL important news
+of the DAY (deduped, importance-ranked, not just latest); (2) `/recap` day; (3) `/recapw` week;
+(4) `/recapm` month. **Items 2/3/4 are ALREADY owned by sibling Sprint RECAP-CMD (opened 21:34Z, at
+BA gate) — did NOT duplicate.** Only item #1 is new → opened Sprint NEWS-FULLDAY.
 
-**VERDICT: APPROVED.** All 7 mandated axes PASS; verified structurally against live code.
+**PO decisions (autonomous):**
+- **REVISED the RECAP-CMD "`/news` stays as-is" ruling — on the record.** Day-SYNTHESIS gap is still
+  `/recap`'s (unchanged). But user's separate signal about `/news`'s OWN job is legit: `/news` stays a
+  news LIST but must be COMPLETE + deduped + importance-ranked. `/news` ≠ `/recap`, both single-purpose.
+- **Traced live `handleNews` (telegramCommands.ts L510-600):** date window is ALREADY correct
+  (today-since-VN-midnight, `ORDER BY impact_score DESC`). Gap = 3 defects: (1) silent cap 20
+  (DEFAULT_LIMIT=20/MAX=50, no "more exist" signal) → full-day coverage; (2) NO dedup (multi-feed dupes
+  pad list + push distinct stories off cap) → dedup on title/url, keep highest-impact copy; (3) raw HTML
+  in `summary` (`<a href>`/`<img>`) → strip at render. Defect (3) FOLDS IN backlogged NEWS-CMD-HTML-STRIP.
+- **Single zone apps/mcp-server, no new infra.** All 3 fixes inside `handleNews`. Render-time HTML strip
+  (NOT upstream news-fetch — would split zone). Dedup = pure in-handler transform. No DB table / tool /
+  cron / microservice / compose change. Sync read-only ~1s pull, same contract as `/news` today.
 
-**7-axis critique (full text in handoff `[PO] SIG-IMPL-GATE Spec-Gate Verdict`):**
-- **C-1** typed `FIX_AREA_TO_AGENT` (no prose parse; map total; unmapped/`_default`→UNRESOLVED fail-SAFE, not wrong-agent). PASS
-- **C-2** proposal status `DRAFT` only; DONE flip stays agent-father (already shipped 062a6569). PASS
-- **C-3** lane-C-in-disguise critique field already in Phase-1 flows (triage-signals). PASS
-- **C-4** STRONGEST — `DispatchPath` union enforces per-path at COMPILE time; no key pattern matches a bare
-  global flag; AC-T5-4 = test-asserted REJECT. Structural, not convention. PASS
-- **C-5** doc-write try/catch isolated, runs AFTER log+Telegram, AC-T4-6 proves it. PASS
-- **GATE-PROOF** QA-owned, injects into `degradationRules.ts` SUBJECT CODE, RED-then-GREEN + evidence;
-  AC-T6-5 demotes lane-B→lane-A on false-green, never silent-pass. PASS
-- **lane-C leak** — GREENFIELD grep-confirmed; mutating `DEGRADATION_CAUSE_MAP` is structurally impossible
-  (constant doesn't exist yet); all ADD-only. PASS
-- **shadow+budget** — all paths default-false, ONE cron slot, within 1948 footprint, no regression floor breach. PASS
+**Deliverables (UNSTAGED — main terminal commits):**
+- `docs/SPRINT_GOAL_NEWS-FULLDAY.md` (separate file — SPRINT_GOAL.md=SELF-IMPROVE-GATE, SPRINT_GOAL_RECAP-CMD.md=recap cmds)
+- `docs/TASKS.md` — new Sprint NEWS-FULLDAY section (NEWS-FD-BA pending, NEWS-FD-EXIT blocked) above RECAP-CMD; NEWS-CMD-HTML-STRIP row marked FOLDED
+- `docs/handoffs/TASK_NEWS-FULLDAY.md`
+- this notebook
 
-**Live-code verification:** 4 target files ABSENT; `improve_check_log`=0; `SELF_IMPROVE_AUTO_DISPATCH`/
-`DEGRADATION_CAUSE_MAP`=zero in apps/mcp-server/src; `getAccuracyStats`+`SignalAccuracyStats` exist;
-`accuracyDigestJob.ts` `_running`/`wrapRun`/`AccuracyDigestDeps` reference pattern exists; `infrastructure/signals/`
-+ `docs/improvement-proposals/` absent (R-3/R-4 honest); cronConfig 09:xx block read.
-
-**2 hardening notes (NOT blockers, NO return to architect):**
-- **HN-1** blueprint claims `bctcOverdueCheck = 0 9 * * 1-5` — FACTUALLY WRONG, live is `0 9 * * *` DAILY (the `1-5`
-  slot is `marketOpen`). The offset DECISION to `2 9 * * *` is CORRECT anyway (avoids both collisions). Don't propagate.
-- **HN-2** anti-runaway order diverges: REQ TASK-3 step 8 = `DEGRADED > COVERAGE_GAP > PERSISTENTLY_LOW`,
-  blueprint = `DEGRADED > PERSISTENTLY_LOW > COVERAGE_GAP`. Architect's is canonical; reconcile REQ before AC-T3-8.
-
-**Routing:** decomposed into SIG-G-T1..T5 (dev-mcp-server serial) → SIG-G-REBUILD (ops) → SIG-G-T6 (qa GATE-PROOF).
-**Docs touched (UNSTAGED — main terminal commits):** handoff verdict, TASKS.md (status cell + 7 dev rows + gate note),
-this notebook. NO code, NO agent/flow `.md` edits, NO pilot-status-*.json.
-
-**NEXT: pm** (decompose REQ TASK-1..6 → TASK_NNN, sequence dev→ops→qa, honor WIP=2).
+**NEXT: ba** — write `docs/REQ_NEWS-FULLDAY.md`. **PIPELINE: continue.**
 
 ## Carry-over
-- **SELF-IMPROVE-GATE Phase 2:** SIG-IMPL-GATE spec gate APPROVED → pm. Chain SIG-G-T1..T5 (dev-mcp-server, serial,
-  zone apps/mcp-server) → SIG-G-REBUILD (ops force-recreate, not restart) → SIG-G-T6 (qa GATE-PROOF, subject-code
-  inject, AC-T6-5 false-green firewall). C-4 per-path-default-false = HARD QA gate. SIG-EXIT BLOCKED. Human-reserved
-  (NOT authorized this phase): GLOBAL auto-dispatch flip, gate-logic self-edit, un-pausing 1948 prod OBSERVE gates,
-  comprehensibility (lane-C forever). pm must carry HN-1 (cron `2 9 * * *`, premise false) + HN-2 (anti-runaway order).
-- **PEK-RENDER goal ARMED until USER verbal G9.** Chain PEK-RENDER-MCP/PDFX → DEPLOY (rebuild mcp-server + re-extract
-  10 non-VCB) → QA → EXIT. Round 6 / 6+ fix commits — QA RED on render seam → escalate architect AGAIN (no blind patch).
-  HARD: PDF-Extract-Kit/ pristine; git add never -A; CPU-only/8GB; re-extract off HOSE hours; DB verify = in-container
-  bun readonly COUNT, never push-echo. C-1 visible stale banner / C-2 all-12 has_pek:true / C-3 window-bounded re-extract.
-- **CHEF-ATTN** BA spec READY (apps/mcp-server) — eligible next triage.
-- **NEWS-CMD** CLOSED (build); USER G9 owns comprehensibility. NEWS-CMD-HTML-STRIP backlog LOW.
+- **NEWS-FULLDAY goal ARMED until QA live + user G9.** Chain: ba (REQ_NEWS-FULLDAY.md: full-day-coverage
+  mechanism + dedup key/tie-break + HTML-strip rule + T-NEWS test matrix) → architect (confirm coverage
+  mechanism + dedup/strip are pure in-handler transforms; small scope) → pm → dev-mcp-server (refine
+  handleNews + extend T-NEWS suite + HELP_TEXT touch) → ops REBUILD+force-recreate → qa LIVE on
+  zenmidi.com/vn-market/webhook (full deduped day, no HTML) → NEWS-FD-EXIT. Zone apps/mcp-server. Reuse
+  handleNews/chunkStories/texts[]. No jargon, no impact_score number, no raw HTML.
+- **RECAP-CMD goal ARMED until QA live G9** (sibling, item 2/3/4). Chain at BA gate: ba (REQ_RECAP-CMD.md)
+  → architect (VN section labels from EveningSummary + PeriodicSummary) → pm → dev-mcp-server (3 handlers
+  + router + chunkStories + HELP_TEXT + VN empty-states + tests) → ops REBUILD → qa LIVE → RECAP-EXIT.
+  Render from TYPED objects only (NOT summaryText/buildSummaryText = English+jargon).
+- **SELF-IMPROVE-GATE Phase 2:** SIG-IMPL-GATE spec APPROVED → pm. SIG-G-T1..T5 (dev-mcp-server serial)
+  → SIG-G-REBUILD (ops) → SIG-G-T6 (qa GATE-PROOF subject-code inject, AC-T6-5 false-green firewall).
+  C-4 per-path-default-false = HARD QA gate. Human-reserved: GLOBAL auto-dispatch flip, gate self-edit,
+  un-pause 1948 OBSERVE, comprehensibility (lane-C). Carry HN-1 (cron `2 9 * * *`) + HN-2 (anti-runaway order).
+- **PEK-RENDER goal ARMED until USER G9.** Round 6+ — QA RED on render seam → escalate architect, no blind
+  patch. PDF-Extract-Kit/ pristine; CPU-only/8GB; DB verify = in-container bun readonly COUNT.
 - Channel audit (MARKET/WORK/BUG via gateway) owed → main terminal next cron tick (PO subagent has no call_tool).
-- All files UNSTAGED except PO doc edits — main terminal commits.
+- All files UNSTAGED except PO doc edits — main terminal commits (serialized, no -A, no push, main branch).
