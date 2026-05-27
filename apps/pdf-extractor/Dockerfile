@@ -82,7 +82,7 @@ ENV LOG_LEVEL=INFO
 ENV HUGGINGFACE_HUB_CACHE=/app/pek_models/huggingface
 ENV MODELSCOPE_CACHE=/app/pek_models/modelscope
 ENV YOLO_CONFIG_DIR=/app/pek_models/yolo
-ENV PADDLEOCR_HOME=/app/pek_models/paddleocr
+ENV PADDLE_OCR_BASE_DIR=/app/pek_models/paddleocr
 
 # PEK-IMPORT-CHAIN: corrected build-time smoke gate.
 # Imports pek_engine_adapter MODULE ITSELF — not a proxy symbol set.

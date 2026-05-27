@@ -82,17 +82,17 @@ services:
     - ./data/pdfs-local:/app/data/pdfs-local:ro
     # PEK-INTEGRATE: named volume for model weights (downloaded once, never baked in image)
     # AC-PEK-3e: weights survive docker compose build + force-recreate
-    - pek_model_cache:/app/pek_models
+    - pek_model_cache:/app/PDF-Extract-Kit/models
     environment:
     - DB_PATH=/app/data/pdf_extractor.db
     - STORAGE_DIR=/app/data/extractions
     - LOG_LEVEL=INFO
     - MCP_SERVER_URL=http://mcp-server:3000
     # PEK-INTEGRATE: model weight cache dirs (REQ-PEK-3 §2.3c)
-    - HUGGINGFACE_HUB_CACHE=/app/pek_models/huggingface
-    - MODELSCOPE_CACHE=/app/pek_models/modelscope
-    - YOLO_CONFIG_DIR=/app/pek_models/yolo
-    - PADDLEOCR_HOME=/app/pek_models/paddleocr
+    - HUGGINGFACE_HUB_CACHE=/app/PDF-Extract-Kit/models/huggingface
+    - MODELSCOPE_CACHE=/app/PDF-Extract-Kit/models/modelscope
+    - YOLO_CONFIG_DIR=/app/PDF-Extract-Kit/models/yolo
+    - PADDLE_OCR_BASE_DIR=/app/PDF-Extract-Kit/models/paddleocr
     restart: unless-stopped
     healthcheck:
       test:
