@@ -2,7 +2,7 @@
 
 **Sprint:** NEWS-FULLDAY
 **BA author:** ba
-**Status:** READY FOR PO SPEC-REVIEW
+**Status:** APPROVED — PO spec-review gate passed 2026-05-28 (critique-before-approve; all 5 axes PASS; one product micro-ruling on B2 recorded in §5)
 **Date:** 2026-05-27
 **Sprint goal SSOT:** `docs/SPRINT_GOAL_NEWS-FULLDAY.md`
 **Handoff:** `docs/handoffs/TASK_NEWS-FULLDAY.md`
@@ -228,6 +228,8 @@ Either approach satisfies AC-FR1-1. The architect picks one and documents it. Th
 
 BA recommendation: retain a practical cap for the fallback (e.g. 20 or a configurable `FALLBACK_LIMIT` constant), because the fallback covers potentially stale data across many days and returning hundreds of old rows is not useful. The architect confirms or overrides.
 
+**PO RULING (spec-review gate, 2026-05-28) — product decision on B2, made now so it is not ambiguous:** the fallback path MUST retain a sensible cap. The fallback fires only when today has zero rows and is showing STALE multi-day data; dumping hundreds of old rows under a "gần đây" header is a UX defect for a non-technical user. So this is NOT "architect decides whether to cap" — it IS capped. What remains an architect call is purely the NUMBER (BA's ~20 / `FALLBACK_LIMIT` is fine) and whether it is a named constant. The primary (today) full-day uncapped behaviour (B1) is unaffected by this ruling — only the degraded-fallback path is capped. Rationale: full-day completeness matters for TODAY's important news (the user's actual ask); stale fallback completeness does not.
+
 The architect documents both B1 and B2 in the design note and communicates the final values to the developer.
 
 ---
@@ -334,6 +336,18 @@ No changes to:
 
 ## 11. Blockers — None
 
-No PO-level blocker exists. All product decisions are locked in the sprint goal and handoff. The two open items (B1, B2) are architect-scoped design choices with BA recommendations provided. Coding must not start until the architect confirms both.
+No PO-level blocker exists. All product decisions are locked in the sprint goal and handoff. The two open items (B1, fallback-cap NUMBER under B2) are architect-scoped design choices with BA recommendations provided — note the B2 product question ("cap or not") is now ANSWERED by the PO ruling in §5 (capped; architect picks only the number). Coding must not start until the architect confirms both.
 
 Pipeline is clean: BA → architect (B1+B2 confirmation) → pm → dev-mcp-server → ops → QA → PO.
+
+---
+
+## 12. PO Spec-Review Verdict — APPROVED (2026-05-28)
+
+Critique-before-approve gate, sibling-reviewed with RECAP-CMD (shared `stripHtml` asset). Load-bearing code claims verified against live source before ruling:
+- `stripHtml` absent everywhere in `apps/mcp-server/src` → this spec defines it once, greenfield, no collision.
+- `handleNews` L510, `chunkStories` L480, `DEFAULT_LIMIT=20` L511, `MAX_LIMIT=50` L513, HELP "mặc định 20 bài" L77 — all confirmed present where claimed.
+
+Five axes PASS: (1) ACs testable — T-NEWS-9..12 + T-STRIP-1..7 each carry concrete seed + assertion; (2) plain-VN render contract enforced — NFR-1-AC-1..5 ban impact_score number / English sentiment / jargon / HTML; (3) empty-state strings present verbatim ("Chưa có tin hôm nay.", "Tin tức gần đây (N bài):", "Lỗi khi tải tin tức."); (4) test matrix happy/empty/chunk-boundary, in-memory Bun SQLite, no creds/network; (5) nothing silently dropped — AC-FR1-6 "every story exactly once across all chunks".
+
+B1 (remove LIMIT vs large ceiling) = genuine architect engineering call. B2 product half ANSWERED here (fallback capped); number deferred to architect. No conflict with RECAP-CMD (shared `stripHtml` defined here, reused there; HELP_TEXT edits non-overlapping; one dev pass + one ops rebuild). NEXT: architect (one pass covering both sibling sprints).
