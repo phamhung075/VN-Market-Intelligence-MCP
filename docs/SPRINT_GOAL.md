@@ -1,3 +1,49 @@
+# Sprint NEWS-CMD — On-demand `/news` Telegram pull command (full news digest)
+
+**BUILD STATUS 2026-05-27T19:50Z — OPEN (PO kickoff from an EXPLICIT USER FEATURE REQUEST — full autonomy, no further user approval needed to plan/dispatch).** User (non-technical, French-based, verbatim broken English): *"make /news on telegram command for get all content if user need"*. PO interpretation (autonomous decision, not bounced to user): user wants an **on-demand Telegram pull command** `/news` they can type at any time to receive the full current news digest — "all content they need", not a teaser. User-pull request/response, NOT a scheduled push.
+
+## Vision
+
+The user can type `/news` in Telegram at any moment and instantly receive the full day's Vietnam-market news digest — every relevant story the system has gathered today, written in plain comprehensible Vietnamese, with each story's gist and whether it is good/bad/neutral for the market. No waiting, no analyst jargon.
+
+## Binding Session Goal (verbatim, ARMED + UNMET)
+
+> "make /news on telegram command for get all content if user need"
+
+Meaning: a working `/news` Telegram command, in production behind the existing webhook, returning the full stored news content on demand in plain Vietnamese. NOT DONE until the command is live in the running mcp-server container and a QA test proves it returns real `rag_analyses` content (not N/A, not a stub).
+
+## Scope
+
+**IN:**
+- New `/news` command handler in `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts`, wired into the existing `handleTelegramCommand` switch + `/help` text. Plain-text Vietnamese output (no Markdown — same rule as every other command).
+- **SYNCHRONOUS pattern** (mirrors `/watchlist`, `/price`, `/health` — direct SQLite read, instant reply), NOT the async `/ask` queue. Rationale: the news content already exists in `rag_analyses`; no agent reasoning is needed, so a queue + spawned agent is unnecessary overhead. Reply is sent by the existing `sendTelegramMarket(result.text, {chatId})` path in `webhookHandler.ts` — already in production for the other sync commands.
+- **Source = `rag_analyses` table** — the SAME data source the existing `GET /api/news-fetch/live` route (`newsFetchLiveHandler.ts`) already reads (headline=`source_title`, `summary`, `sentiment`, `impact_direction`, `impact_score`, `published_at`, `source_url`). Reuse that query shape: today's stories since midnight GMT+7, ordered by impact, falling back to most-recent if today is empty.
+- **"All content" semantics:** default = full digest of today's relevant news (every story since midnight GMT+7, capped sensibly for readability). Optional argument `/news N` caps the count to N stories. Each story line: headline + one-line gist (`summary`) + plain-Vietnamese sentiment label.
+- **Telegram length handling:** a full digest can exceed Telegram's 4096-char message limit. Handler MUST chunk the output into multiple sequential messages (or hard-cap with a "thêm" affordance) so nothing is silently truncated. BA + architect decide the exact chunking mechanism.
+- Unit tests: handler returns formatted Vietnamese digest from seeded `rag_analyses` rows; empty-DB → friendly "chưa có tin" message; chunking proven for over-limit input.
+- ops REBUILD (not restart) of mcp-server after the change (`feedback_rebuild_after_dev_change`).
+
+**OUT:**
+- Any new scheduled/cron PUSH (this is pull-only — does NOT touch the delivery cron or the cron-only MARKET-group push rule).
+- Fresh on-the-fly news fetching or re-analysis (no scraping, no agent spawn — read stored `rag_analyses` only; the news-scout/news-fetch pipeline keeps populating it on its own schedule).
+- Reading the daily-document blackboard folder (`docs/daily/`) — that folder is the FUTURE source once the cowork redesign Phase 3 lands; for now `/news` reads the live `rag_analyses` table which is the current SSOT. (Architect MAY note a future-migration hook but must not block on the unfinished redesign.)
+- Any change to the MARKET-group push lane, alert-commander, or the delivery cron.
+- Translation of foreign-source headlines is OUT of scope unless trivially available; render the stored `summary`/title as-is but the framing text (labels, headers, sentiment words) MUST be plain Vietnamese.
+
+## HARD CONSTRAINTS (non-negotiable)
+
+1. **Plain comprehensible Vietnamese only** (`feedback_market_report_plain_vietnamese`): NO analyst jargon — no `impact_score` numbers, no citations, no "Layer #", no σ/bp, no hexagram terms. Sentiment rendered as plain words: tích cực / tiêu cực / trung tính. User is non-technical.
+2. **No new push channel** — reply only to the user's own `/news` message via the existing webhook request/response path. Does NOT collide with the cowork-redesign cron-only MARKET-group push rule (`docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md` § C) — that rule governs unsolicited pushes to the market GROUP; a direct reply to a user command is the established `/ask`/`/watchlist` lane and is already in production.
+3. **No silent truncation** — over-4096-char digests MUST be chunked, never cut off mid-story.
+4. **Never throws** — wrap all errors in a friendly Vietnamese message (existing router contract: handler returns plain text, the switch try/catch is the safety net).
+5. **Zone = `apps/mcp-server/`** — dev-mcp-server is the sole code owner. Single-zone; no `multi` split needed (news-fetch service is a scraper that only populates `rag_analyses`; `/news` reads the table mcp-server already owns).
+
+## Success Metric
+
+User types `/news` in Telegram → receives, within seconds, a plain-Vietnamese digest of today's gathered Vietnam-market news (headline + gist + good/bad/neutral per story), correctly chunked if long, with a friendly "chưa có tin hôm nay" fallback when the table is empty. Verified live in the running container by QA (real `rag_analyses` content, not stub/N/A) + USER confirms it reads usefully.
+
+---
+
 # Sprint PEK-INTEGRATE — Re-engine apps/pdf-extractor on PDF-Extract-Kit (OpenDataLab), CPU-only, 8GB-safe
 
 **BUILD STATUS 2026-05-26T20:37Z — OPEN (PO kickoff from an EXPLICIT USER DIRECTIVE — full autonomy, no further user approval needed to plan/dispatch).** User decided to "rewrite apps/pdf-extractor to use this sub repo" and explicitly picked **Architect-led** integration over a direct in-place rewrite. The pristine upstream engine is already cloned at `apps/pdf-extractor/PDF-Extract-Kit` (89MB, depth-1, retains its own `.git`) — DO NOT re-clone, DO NOT modify a single line of it (it is published upstream code; treat it as a library/engine only).
