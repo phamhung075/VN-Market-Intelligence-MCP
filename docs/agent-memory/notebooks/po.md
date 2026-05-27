@@ -1,35 +1,37 @@
 # PO Notebook
 
-## Cycle 2026-05-27T19:25:01Z — CHEF-attention finding: scope verdict (self-initiated)
+## Cycle 2026-05-27T19:50:01Z — Sprint NEWS-CMD kickoff (explicit user feature request)
 
-**Input:** Routed verified diagnosis — CHEF (unified-agent) bootstrap concentrates on ~7 news-heavy
-large-caps, not full ~37 watchlist. Code path pre-traced by main terminal (no re-derive needed).
+**Input:** USER feature request (verbatim, broken English, non-technical): "make /news on telegram
+command for get all content if user need". Routed by main terminal with an interpretation to verify.
 
-**Re-verified (grounding, not re-investigation):**
-- `marketContextBuilder.ts buildAlertsSection` L269-305 = `read=0 ORDER BY triggered_at DESC LIMIT 20`
-  (recency-only, no diversity cap) — confirmed the monopolization site.
-- `buildWatchlistSection` L149-195 = no LIMIT, full coverage — NOT the problem.
-- Signals route `to_agent:"alert-commander"` at `market-watcher/flow/cycle.md:64` +
-  `news-scout/flow/stage-signals.md:74,104` — CHEF bus inbox empty by design. Confirmed.
+**Scoping VERIFIED against live codebase (not trusted blindly — I read the files):**
+- Inbound command infra EXISTS: `telegramCommands.ts handleTelegramCommand` switch (sync cmds
+  /watchlist /price /health query SQLite directly + reply; /ask = async ask_queue + spawnQaResponder).
+  Webhook reply path `webhookHandler.ts` sends one CommandResult via `sendTelegramMarket({chatId})`.
+- News SSOT = `rag_analyses` table (source_title/summary/sentiment/impact_*). `newsFetchLiveHandler.ts`
+  (GET /api/news-fetch/live) ALREADY reads exactly this — reusable query shape. `assembleEveningSummary.ts`
+  L449-460 = "top stories since midnight GMT+7 ORDER BY impact_score DESC" digest pattern to mirror.
+- `/news` confirmed NOT implemented (grep-clean).
 
-**Verdict = BOTH (per autonomy):**
-- (A) Recorded as motivation/validation in redesign brief backlog — Design Point A + F25 rewire
-  CHEF GATHER to read full daily folder, structurally killing this attention-starvation at Phase-3
-  cutover. Signals deprecated Phase 3 → routing problem moot.
-- (B) Greenlit small pre-redesign fix because F25 lands near END of multi-week 3-phase migration
-  (5d+10d QA gates) while user sees the broken bootstrap TODAY. New Sprint CHEF-ATTN, zone
-  `apps/mcp-server/`, 5 tasks (BA→IMPL→DEPLOY→QA→EXIT). Fix = per-stock diversity cap on
-  buildAlertsSection only.
-- REJECTED the signal-bus `'all'`-routing half of the proposal — would churn the soon-deprecated bus.
+**PO product DECISIONS (autonomous, settled — BA/architect must not re-open):**
+1. SYNC handler (like /watchlist), NOT async /ask queue — data is stored, no agent reasoning. REJECTED async.
+2. Source = rag_analyses, NOT docs/daily/ blackboard (that's a post-redesign-Phase-3 future hook).
+3. Pull-reply via existing webhook, NOT a new push. Confirmed NO collision with cowork-redesign
+   cron-only MARKET-GROUP push rule (§C governs unsolicited GROUP pushes; command-reply is the /ask lane).
+HARD: plain comprehensible VN only (feedback_market_report_plain_vietnamese — no impact#/jargon);
+chunk over 4096 chars, no silent truncation; empty-DB friendly fallback; never throws.
 
-**Docs updated:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md`
-(new § Backlog — Validating Findings), `docs/TASKS.md` (new § Sprint CHEF-ATTN + PO scope-verdict note).
-No code touched (scope-only, per not_my_job).
+**Docs written:** `docs/SPRINT_GOAL.md` (prepended § Sprint NEWS-CMD, full Scope/HARD/Success).
+`docs/TASKS.md` (prepended § Sprint NEWS-CMD: 7 tasks BA→DESIGN→IMPL→DEPLOY→QA→FIX→EXIT, zone
+apps/mcp-server, MEDIUM). NO code touched (scope-only). Files left UNSTAGED — main terminal commits.
+
+**Channel audit NOT run:** MCP gateway call_tool wrapper unavailable in PO subagent toolset; for an
+EXPLICIT user feature request the request IS the backlog (audit = self-init bug discovery, not a
+precondition). Flagged in TASKS.md note for main terminal to run on next cron tick.
 
 ## Carry-over
-- CHEF-ATTN-BA is READY → BA writes `docs/REQ_CHEF-ATTN.md` → returns to PO approval gate.
-  Watch for spec scope-creep: BA must NOT add signal-bus routing changes (out-of-scope, rejected).
-- PEK-INTEGRATE goal stays ARMED until USER verbal G9 (only condition #7 outstanding). PEK-MULTIPAGE
-  READY (page-coverage round-5, separate zone apps/pdf-extractor/).
-- Non-blocking tech-debt: ghost-unit accumulation on `bctc_layout_units` re-extraction — candidate
-  future cleanup if market.db bloats.
+- NEWS-CMD-BA is READY → BA writes `docs/REQ_NEWS-CMD.md` → returns to PO approval gate. Watch for
+  scope-creep: BA must NOT add async-queue / new push / docs/daily read (all PO-settled OUT).
+- CHEF-ATTN-BA still READY (separate apps/mcp-server sprint, different files — no collision with NEWS-CMD).
+- PEK-INTEGRATE goal ARMED until USER verbal G9; PEK-MULTIPAGE READY (apps/pdf-extractor zone).
