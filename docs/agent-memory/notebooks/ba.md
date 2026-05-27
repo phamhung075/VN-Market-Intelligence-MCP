@@ -4,6 +4,10 @@
 
 > Archive: `docs/archive/notebooks/ba-2026-05-21.md`
 
+## NEWS-FULLDAY-BA · 2026-05-27
+
+Sprint NEWS-FULLDAY spec complete. REQ file: `docs/REQ_NEWS-FULLDAY.md`. Three defects decomposed into testable ACs: FR-1 (full-day coverage — remove silent DEFAULT_LIMIT=20), FR-2 (dedup key = normalized source_title, 5-step normalization, highest-impact survivor), FR-3 (stripHtml — module-level export, dependency-free, called before dedup and before 200-char truncation). Test matrix T-NEWS-9..12 + T-STRIP-1..7 added to spec. Two architect-deferred items: B1 (LIMIT removal vs large ceiling), B2 (fallback cap value). stripHtml scoped as shared helper for RECAP-CMD convergence. No PO blockers. TASKS.md NEWS-FD-BA → DONE/REVIEW. Files left UNSTAGED. NEXT: po (spec-review gate). PIPELINE: continue.
+
 ## SIG-IMPL-GATE-BA · 2026-05-27T21:30Z
 
 Sprint SELF-IMPROVE-GATE Phase 2 decomposition complete. REQ file: `docs/REQ_SIG-IMPL-GATE.md`. 5 dev tasks + 1 QA task, 36 minimum new unit tests. Files left UNSTAGED per commit-discipline. NEXT = architect technical blueprint (SIG-IMPL-GATE unblocked).
