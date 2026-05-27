@@ -10,7 +10,7 @@ import logging
 import os
 import sqlite3
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from domain.models import AnalysisEntry, EmbeddingVector, SearchResult
@@ -21,6 +21,13 @@ logger = logging.getLogger(__name__)
 TABLE_NAME = "rag_entries"
 _VALID_LEVELS = {"global", "country", "domain", "action"}
 _VALID_ACTION_CODE = re.compile(r"^[A-Z0-9]{1,10}$")
+
+# ── Compaction constants ──────────────────────────────────────────────────────
+# Run optimize() every N inserts to prevent write-amplification bloat.
+# 100 inserts ≈ one daily intelligence cycle — compaction is cheap and online-safe.
+_COMPACT_EVERY = 100
+# Keep versions from the last 2 days; the latest version is always preserved.
+_COMPACT_RETENTION = timedelta(days=2)
 
 
 def _validate_level(value: str) -> bool:
@@ -51,6 +58,7 @@ class LanceDBVectorStore(VectorStorePort):
         self._db_path = db_path
         self._db = None
         self._table = None
+        self._insert_count: int = 0  # inserts since last compaction
 
     async def _get_table(self):
         """Lazy-initialize LanceDB connection and table."""
@@ -95,6 +103,37 @@ class LanceDBVectorStore(VectorStorePort):
             "created_at": entry.created_at.isoformat(),
         }
         await table.add([row])
+        self._insert_count += 1
+        if self._insert_count >= _COMPACT_EVERY:
+            try:
+                await self.compact()
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("LanceDB compaction raised unexpectedly (non-fatal): %s", exc)
+                self._insert_count = 0  # reset to avoid tight retry loop
+
+    async def compact(self) -> None:
+        """
+        Run LanceDB optimize() to compact fragments and prune old version manifests.
+
+        Called automatically every _COMPACT_EVERY inserts, and can be invoked
+        directly (e.g. from a maintenance endpoint or daily cron).
+
+        Compaction is online-safe: reads and writes continue during compaction.
+        The latest version is always preserved — no data loss is possible.
+        Temporal-decay logic is unaffected (stored created_at timestamps are not changed).
+        """
+        try:
+            table = await self._get_table()
+            stats = await table.optimize(cleanup_older_than=_COMPACT_RETENTION)
+            self._insert_count = 0
+            logger.info(
+                "LanceDB compaction complete: compaction=%s prune=%s",
+                stats.compaction,
+                stats.prune,
+            )
+        except Exception as exc:  # noqa: BLE001
+            # Non-fatal: log and continue — compaction failure must not block indexing.
+            logger.warning("LanceDB compaction failed (non-fatal): %s", exc)
 
     async def search(
         self,
