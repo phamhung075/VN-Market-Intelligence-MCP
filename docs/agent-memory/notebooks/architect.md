@@ -1,8 +1,31 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-28T00:00Z | **Sprint:** MACRO-LIVE-PRICES
+**Last updated:** 2026-05-28T00:10Z | **Sprint:** NEWS-FULLDAY + RECAP-CMD
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## NEWS-FULLDAY + RECAP-CMD (2026-05-28T00:10Z) — DESIGN COMPLETE
+
+**Task:** Combined architect pass covering two sibling sprints. Single zone `apps/mcp-server/`, single file `telegramCommands.ts`, one dev pass, one ops rebuild.
+
+**B1/B2 rulings (NEWS-FULLDAY):**
+- B1: Remove `LIMIT` clause entirely from primary (today) query. `DEFAULT_LIMIT` removed. `MAX_LIMIT_EXPLICIT = 200`. `chunkStories` is the length safety-valve.
+- B2: `FALLBACK_LIMIT = 20` named constant. PO ruled capped; 20 confirmed as the right number.
+
+**B1/B2 rulings (RECAP-CMD):**
+- B1: `splitBlockAtNewlines(block, maxLen=4096)` helper. 30-ticker watchlist section ≈ 950 chars, well under 4096 — defensive only.
+- B2: `assembleFn` wrapper parameter. Tests inject typed objects directly; real assembly side-effects never fire in handler tests.
+
+**Verified brownfield:** `stripHtml` absent (grep-clean). EveningSummary L97 + PeriodicSummary L53 fields confirmed. assembleEveningSummary overload L355 + generatePeriodicSummary L610 injection points confirmed. writeFileSync at L831-839 wrapped in try/catch. DDD direction: infrastructure → application. Legal.
+
+**Files authored:**
+1. `docs/handoffs/TASK_NEWS-FULLDAY.md` — `[Architect] Brownfield Findings` appended
+2. `docs/handoffs/TASK_RECAP-CMD.md` — `[Architect] Brownfield Findings` appended
+3. `docs/architecture-briefs/2026-05-28-news-fullday-recap-cmd-design.md` — NEW
+
+**Next:** dev-mcp-server (one combined task). Then ops REBUILD + force-recreate mcp-server. Then QA live-verify. Then PO G9.
+
+---
 
 ## MACRO-LIVE-PRICES — Design Brief (2026-05-28T00:00Z) — DESIGN COMPLETE
 
