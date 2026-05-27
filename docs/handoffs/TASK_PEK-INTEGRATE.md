@@ -511,4 +511,114 @@ pek_engine_adapter import OK — no pdf_extract_kit.tasks trigger
 
 ### NEXT
 
+---
+
+## [Architect] PEK-OCR-ROOTCAUSE (2026-05-27T08:00Z) — DESIGN COMPLETE
+
+**Zone:** `apps/pdf-extractor/`
+**BUILD-STANDARD:** not-applicable (bug-fix / anti-recurrence hardening)
+**Brief:** `docs/architecture-briefs/2026-05-27-pek-ocr-rootcause.md`
+
+### Root Cause Confirmed
+
+The serial whack-a-mole loop has one structural root cause: **silent `except Exception` swallowing in `ocr_backends.py` converts all runtime errors (including NameError for an undefined helper) into `("", 0.0)` returns**. The QA corpus sweep (5 reports, uniform FAIL, all empty text despite valid layout detection) is explained entirely by `_to_pil` being called at line 108 but never defined — the resulting `NameError` is swallowed by the bare `except Exception` at line 134, producing `("", 0.0)` for every cell in every extraction. Layout structure is correct; OCR text is absent.
+
+A second defect was discovered in the same audit pass: `pek_engine_adapter.py:316` has `lang="en"` — the English PaddleOCR recognition model — for Vietnamese BCTC documents. This would have been the next serial discovery after `_to_pil`.
+
+### Decisions
+
+1. **Fail-loud remediation:** bare `except Exception` swallows in `ocr_backends.py` (lines 134, 237) are replaced with raises. `ImportError` on missing pytesseract also raises (not returns empty). Per-crop/per-page isolation catches in `pek_engine_adapter.py` (lines 1006, 1019) are CORRECT and annotated — not changed.
+2. **`_to_pil` fix:** Option A — define `_to_pil` module-level helper (numpy ndarray → PIL.Image via `Image.fromarray`, PIL passthrough, None passthrough, RuntimeError on unsupported type). Rationale: Option B (default to PaddleOCR) would not fix the structural swallow and would leave the same false-green posture.
+3. **Backend default and language:** `tesseract-vie` remains the default (Vietnamese proven path). `lang="en"` in `_load_pek_models()` changed to `lang="vi"` — this fixes both the fallback PaddleOCR path and the backward-compatible inline path.
+4. **Test mandate:** 5 new tests in `test_ocr_backends.py` that pass real numpy ndarray shapes through `recognize_text()` — the exact gap that let `_to_pil` ship green.
+5. **One-pass audit:** dev greps `ocr_backends.py` + `pek_engine_adapter.py` for undefined symbols, bare excepts, and `lang=` before implementing, and fixes the whole class together.
+
+### Change-List (3 files)
+
+1. `infrastructure/ocr_backends.py` — add `_to_pil`, fix `except Exception` swallows (lines 134 and 237), fix ImportError handling.
+2. `infrastructure/pek_engine_adapter.py` — change `lang="en"` to `lang="vi"` at line 316; annotate per-crop catches.
+3. `__tests__/test_ocr_backends.py` — add 5 tests (ndarray input shape, ImportError raises, PIL passthrough, unsupported type, PaddleOCR ndarray path).
+
+### Frozen Surfaces (unchanged)
+
+`text_table_extractor.py`, `sandbox/runner.py`, `pilot-status-pdf-extractor.json`, `generic_md_table_extractor.py`, `PDF-Extract-Kit/` subtree.
+
+### Verification Sequence
+
+1. `python -m pytest __tests__/test_ocr_backends.py -v` — all 20 tests pass.
+2. `python -m pytest __tests__/ -v --ignore=__tests__/integration` — 694+ tests, no regressions.
+3. Ops: `docker compose build --no-cache pdf-extractor` + force-recreate.
+4. QA: FPT Q4 2025 sentinel (`e71f845d-...`) — direct `bun:sqlite` query shows non-empty `label` + non-empty values in `bctc_table_rows`.
+5. QA corpus sweep — multi-doc pass-rate measured, not endpoint-only.
+
+**NEXT: dev-pdf-extractor implements the 3-file edit per brief §9. Then ops --no-cache rebuild + force-recreate. Then qa FPT sentinel + corpus sweep.**
+
 **ops** — `docker compose up -d --no-deps --force-recreate pdf-extractor` (NOT restart — fresh container from this build). Then **qa** re-runs FPT Q4 2025 sentinel + direct `bun:sqlite` row check.
+
+---
+
+## [dev-pdf-extractor] PEK-OCR-ROOTCAUSE — DONE 2026-05-27
+
+**SHA:** `8535b175`
+**Status:** IMPLEMENTATION COMPLETE — committed to main.
+
+### Changes (3 files, 1 commit)
+
+**`apps/pdf-extractor/infrastructure/ocr_backends.py`:**
+- Added `_to_pil` module-level helper before `TesseractVieBackend` class: ndarray → PIL.Image.fromarray, PIL passthrough, None passthrough, RuntimeError on unsupported type.
+- `TesseractVieBackend.recognize_text()`: removed outer `try/except Exception` swallow — exceptions now propagate to per-crop isolation in `_run_table_extraction`.
+- `TesseractVieBackend.recognize_text()`: `ImportError` path now raises `RuntimeError` instead of returning `("", 0.0)`.
+- `PaddleOcrBackend.recognize_text()` inner except (:205): kept `return ("", 0.0)` but added `logger.warning` with actual `exc` (per brief §4 classification: per-crop data-shape issue).
+- `PaddleOcrBackend.recognize_text()` outer except (:237): replaced `return ("", 0.0)` with bare `raise` (structural backend failure must propagate).
+
+**`apps/pdf-extractor/infrastructure/pek_engine_adapter.py`:**
+- `_load_pek_models()` line 316: `lang="en"` → `lang="vi"` (PaddleOCR Vietnamese recognition model for BCTC).
+- Per-crop isolation catch at :1006: annotated with INTENTIONAL comment.
+- Per-page isolation catch at :1019: annotated with INTENTIONAL comment.
+
+**`apps/pdf-extractor/__tests__/test_ocr_backends.py`:**
+- Added class `TestToPilAndFailLoud` with 5 new tests (A–E per brief §7).
+
+### Grep Audit Results (§8 one-pass — all findings resolved)
+
+**Grep 1 — Undefined symbols:**
+- `ocr_backends.py:108: _to_pil(image_or_region)` — FIXED: `_to_pil` now defined at module level above `TesseractVieBackend`.
+- No other undefined symbols found.
+
+**Grep 2 — Bare/broad except swallows:**
+- `ocr_backends.py:134`: was `except Exception → return ("", 0.0)` — FIXED: outer try/except removed; errors propagate.
+- `ocr_backends.py:205`: `except Exception` inner np.array() — KEPT return ("",0.0), added WARNING log (per-crop data-shape issue, not structural failure).
+- `ocr_backends.py:237`: was `except Exception → return ("", 0.0)` — FIXED: replaced with bare `raise`.
+- `pek_engine_adapter.py:283`: already fail-loud RAISE from PEK-LAYOUT-CFG — correct, unchanged.
+- `pek_engine_adapter.py:322`: PaddleOCR load failure → graceful degrade (paddle_table=None, Tesseract primary takes over) — correct, unchanged.
+- `pek_engine_adapter.py:709`: layout detection step-level isolation — correct, unchanged.
+- `pek_engine_adapter.py:750`: table extraction step-level isolation — correct, unchanged.
+- `pek_engine_adapter.py:873`: `_run_layout_detection` — re-raises after logging — correct, unchanged.
+- `pek_engine_adapter.py:896`: pdfplumber fallback — graceful degrade — correct, unchanged.
+- `pek_engine_adapter.py:1006`: per-crop INTENTIONAL boundary — ANNOTATED.
+- `pek_engine_adapter.py:1016`: `page_img.close()` cleanup — correct, unchanged.
+- `pek_engine_adapter.py:1019`: per-page INTENTIONAL boundary — ANNOTATED.
+
+**Grep 3 — lang= arguments:**
+- `ocr_backends.py:115`: `lang="vie+eng"` — correct Vietnamese.
+- `pek_engine_adapter.py:316`: `lang="en"` — FIXED to `lang="vi"`.
+
+### Deviations from Brief
+
+None. All 3 changes implemented exactly per §9. No additional undefined symbols or swallows were found beyond what the brief identified. The `except Exception` blocks in `pek_engine_adapter.py` at lines 709, 750, 873, 896 were audited and classified as correct (step-level isolation / re-raise / graceful fallback) — no action required.
+
+### Verification Results
+
+| Gate | Result |
+|---|---|
+| `python3 -m pytest __tests__/test_ocr_backends.py -v` | 26/26 PASS (21 existing + 5 new Tests A–E) |
+| `python3 -m pytest __tests__/ --ignore=__tests__/integration -q` | 641 passed, 0 failed |
+| `git -C apps/pdf-extractor/PDF-Extract-Kit diff` | EMPTY (pristine) |
+| Frozen surfaces | text_table_extractor.py + sandbox/runner.py + pilot-status.json + generic_md_table_extractor.py — 0-diff |
+| Staged files | Exactly 3 (no wildcards, no contamination) |
+
+### NEXT
+
+**ops** — `docker compose build --no-cache pdf-extractor` (--no-cache required: smoke gate layer is cached; must re-run to validate new import chain). Then `docker compose up -d --no-deps --force-recreate pdf-extractor`.
+
+**qa** — FPT Q4 2025 sentinel (`e71f845d-...`): direct `bun:sqlite` query on `market.db` — `bctc_table_rows` rows for this report_id must have non-empty `label` AND non-empty values. Non-empty `stitched_markdown` in extraction response also confirms OCR text flowing. Then full corpus sweep.
