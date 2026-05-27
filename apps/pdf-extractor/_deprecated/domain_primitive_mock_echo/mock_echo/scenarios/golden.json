@@ -1,0 +1,5 @@
+{
+  "primitive": "mock_echo",
+  "input": {"value": "hello"},
+  "expected_output": {"echo": "hello"}
+}
