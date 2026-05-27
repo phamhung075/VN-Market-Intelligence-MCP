@@ -2,7 +2,7 @@
 
 **Sprint:** RECAP-CMD
 **BA author:** ba
-**Status:** READY FOR PO SPEC-REVIEW
+**Status:** APPROVED — PO spec-review gate passed 2026-05-28 (critique-before-approve; all 5 axes PASS; both deferred items confirmed genuine architect calls)
 **Date:** 2026-05-27
 **Sprint goal SSOT:** `docs/SPRINT_GOAL_RECAP-CMD.md`
 **Handoff:** `docs/handoffs/TASK_RECAP-CMD.md`
@@ -557,3 +557,17 @@ No changes to:
 No PO-level blocker. All product decisions are locked. Two architect-scoped decisions (B1, B2) are provided with BA recommendations. Coding must not start until the architect confirms both.
 
 Pipeline is clean: BA (this spec) → architect (B1+B2 confirmation) → pm → dev-mcp-server → ops (rebuild + force-recreate) → QA (live) → PO sign-off.
+
+---
+
+## 16. PO Spec-Review Verdict — APPROVED (2026-05-28)
+
+Critique-before-approve gate, sibling-reviewed with NEWS-FULLDAY. Load-bearing typed-field claims verified against live source before ruling (the render contract is only enforceable if the fields are real):
+- `EveningSummary` (assembleEveningSummary.ts L97) confirmed carries `vnIndex?`, `watchlistMovers`, `topStories`, `topAlerts`, `portfolioPnl?`, `foreignFlowMovers?`, `newsCount` — every field §3-A renders from exists.
+- `PeriodicSummary` (generatePeriodicSummary.ts L53) confirmed carries `periodStart/periodEnd/newsCount/alertCount/reportCount/keyEvents{date,title,impact,direction}/stockPerformance/alertsSummary/summaryText/recommendation` — every field §3-B renders from exists; the BANNED `summaryText` (English prose) and `recommendation.confidence` (numeric) genuinely exist, so the ban is enforceable not phantom.
+- Injection points real: `assembleEveningSummary({db})` overload (L355) + `writeFileSync`/`reportsDir` side-effect (L831-833); `generatePeriodicSummary(periodType, periodEnd?, db?)` (L610). B2 is therefore a genuine test-mechanism question.
+- `stripHtml` reused from NEWS-FULLDAY — confirmed absent today, defined once there; §2.4 + NFR-5-AC-4 forbid a second copy here. No duplicate.
+
+Five axes PASS: (1) ACs testable — T-RECAP-1..7, T-RECAPW-1..4, T-RECAPM-1..3, T-RECAP-RT-1..4 each carry fake-object shape + string assertions; (2) plain-VN render contract enforced — NFR-1-AC-1..6 ban numeric impact / English field names / jargon / `[UP]` / HTML / and the `summaryText`+`buildSummaryText()` render-path (grep-verified per NFR-1-AC-6); section labels LOCKED Vietnamese; (3) empty-state strings present verbatim per command ("Hôm nay chưa có dữ liệu tổng kết.", "Tuần này chưa đủ dữ liệu để tổng kết.", "Tháng này chưa đủ dữ liệu để tổng kết.", "Lỗi khi tổng kết …", "Không có cổ phiếu nào biến động đáng kể hôm nay.", "(không có tiêu đề)"); (4) test matrix happy/empty/chunk-boundary, injected fake assembly objects + in-memory `makeRecapDb()`, no creds/network; (5) nothing silently dropped — AC-CHUNK-3 "all sections appear across full texts[]".
+
+B1 (section-block >4096 split strategy) and B2 (assembleFn wrapper vs in-memory DB given the `writeFileSync` side-effect) are BOTH genuine architect engineering calls — neither is a product decision the PO must make now. No conflict with NEWS-FULLDAY (shared `stripHtml` defined there, reused here; HELP_TEXT — NEWS-FD edits the `/news` line, this inserts 3 lines after it, non-overlapping; one dev pass + one ops rebuild). NEXT: architect (one pass covering both sibling sprints).

@@ -1,5 +1,30 @@
 # PO Notebook
 
+## Cycle 2026-05-27T~20:50Z — dev-team :07 TRIAGE (peer session on mcp-server+PEK)
+
+**Main terminal ran Step-0 channel audit (gateway call_tool unavailable to PO subagent).** Reconciled
+state trusted over stale pipeline-state 20:36Z. Constraints honored: pdf-extractor + ALL PEK-* OFF-LIMITS;
+serialize mcp-server (peer holds PEK-RENDER-MCP locks); SMALL batch (host-panic risk).
+
+**BATCH(2) emitted:**
+- **MACRO-LIVE-PRICES** (FIX→SPRINT-S, zone `apps/macro-indicators`, ba-first) — #3003 4-cycle macro
+  staleness ESCALATED. Root cause confirmed at source: `HTTPCommodityFetcher` (repositories.go L37-60) is
+  PERMANENT fixture mode `{OIL:82.5,GOLD:2350,USDVND:24500}`, ZERO network calls (deliberate sandbox
+  contract); `resolveMarketPrices` fixture-fallback never fires (fetcher always succeeds w/ seed). VN-Index
+  already live-wired (SQLiteMarketIndexRepository) but oil/gold/usdvnd left "post-pilot deferred" (L45).
+  Needs ba→architect (data-source decision: VPS geo-block policy / DB table like VN-Index / FX feed; preserve
+  sandbox fixture mode behind env gate)→pm→dev→qa. False-green guard 3bd9e6ae = verify END-TO-END through
+  mcp-server, NOT direct curl. ZERO peer collision (different zone).
+- **RECAP-BA** (existing RECAP-CMD row, zone `apps/mcp-server`, → ba) — the ONE mcp-server item. SAFE under
+  peer-lock skip: next owner=ba, deliverable=spec DOC `docs/REQ_RECAP-CMD.md`, touches NO mcp-server source
+  (no `bctcInspectHandler.ts` contention w/ PEK-RENDER-MCP). If execute-tier skips on a coarse zone-lock →
+  harmless retry next tick. Chose RECAP over NEWS-FULLDAY (its spec is DONE@PO-review-gate = a PO action not
+  a dev dispatch) and over SIG-IMPL-GATE (at pm → enters dev-mcp-server SERIAL code = max collision+host risk).
+
+**Did NOT dispatch:** NEWS-FULLDAY (advance at PO spec-review gate, not dev batch), SIG-IMPL-GATE (peer
+collision + host load), NEWS-CMD (DONE@20:52:50Z, no re-dispatch), PEK-* / pdf-extractor (OFF-LIMITS),
+janitor-lane signal noise (nothing new). NEXT: dev-team routes batch (MACRO→Step2 planning, RECAP-BA→ba).
+
 ## Cycle 2026-05-27T21:41:17Z — NEWS-FULLDAY kickoff (user `/news` refinement → BA)
 
 **Input:** User (non-technical, FR) sent a 4-item request: (1) refine `/news` to ALL important news

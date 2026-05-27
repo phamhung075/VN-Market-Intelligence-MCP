@@ -1,8 +1,24 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-27T21:30Z | **Sprint:** SELF-IMPROVE-GATE (SIG-IMPL-GATE-BA)
+**Last updated:** 2026-05-28T00:00Z | **Sprint:** MACRO-LIVE-PRICES (MLP-BA)
 
 > Archive: `docs/archive/notebooks/ba-2026-05-21.md`
+
+## MACRO-LIVE-PRICES-BA · 2026-05-28T00:00Z
+
+Sprint MACRO-LIVE-PRICES spec complete. REQ file: `docs/REQ_MACRO-LIVE-PRICES.md`. Root cause code-confirmed against live Go source.
+
+Key findings:
+- `HTTPCommodityFetcher.FetchPrices()` in `pkg/infrastructure/repositories.go` returns hardcoded `{OIL:82.5, GOLD:2350, USDVND:24500}` unconditionally — deliberate sandbox security contract comment, not a bug-in-waiting. Never fires live network calls.
+- `resolveMarketPrices()` in `usecases.go` calls the port; fixture fallback only fires on zero/error. Since the fixture fetcher always succeeds, fixture values pass as "live."
+- Live commodity data already written to `commodity_prices` table (source=yahoo, cols: brent_crude_usd, gold_usd_per_oz, usd_vnd_rate) by mcp-server's `commodityTrackerRefreshJob` (Yahoo Finance, daily 06:00 UTC). market_data named volume is shared. macro-indicators is NOT reading it.
+- VN-Index precedent (MACRO-SEED-WIRING): `SQLiteMarketIndexRepository` reads `market_prices WHERE code='VNINDEX'` from shared market.db. Same pattern is the recommended solution for oil/gold/usdvnd (Option A).
+
+Data-source options A/B/C laid out for architect. Option A (DB read) is recommended — no new network calls, no geo-block risk, reuses Yahoo data already in DB. Option B (direct Yahoo HTTP from macro-indicators) triggers SPRINT-M re-size if geo-block confirmed. Option C (SBV XML for usdvnd only) is deferred scope.
+
+HARD requirements: env gate `COMMODITY_LIVE_MODE` (fixture/live selector); QA-GATE-1 mandates E2E verification through `get_macro_snapshot` MCP tool (not direct curl to :5004). 12 test cases specified (T-MLP-1..T-MLP-12). All existing Go tests must remain green with `COMMODITY_LIVE_MODE` unset.
+
+Sprint size: SPRINT-S conditional on architect choosing Option A. Re-size to SPRINT-M if Option B + geo-block confirmed. TASKS.md updated with MLP-BA/ARCH/DEV/OPS/QA/EXIT tasks. NEXT: architect. PIPELINE: continue.
 
 ## RECAP-CMD-BA · 2026-05-28
 
