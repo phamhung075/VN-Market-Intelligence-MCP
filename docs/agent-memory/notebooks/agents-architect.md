@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-27T19:32:51Z
+
+**Brief:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md` (v2.2)
+
+Internal-consistency gap closed: F25 only replaced file-based signal reads but never stated CHEF stops consuming `get_cycle_bootstrap`'s SQLite-fed sections (buildAlertsSection/buildAnalysisSection/agent_signals). Design Point K added with three explicit rules: (K1) CHEF drops those three DB-backed sections from GATHER at Phase-3 cutover; (K2) CHEF keeps the price/macro snapshot role of get_cycle_bootstrap unchanged; (K3) the pre-redesign CHEF-ATTN diversity cap is NOT removed at F25 — it benefits non-CHEF consumers and the migration window. F25 checklist item, backlog note, invariants table, and Open Questions section all updated to reference Design Point K. Backlog claim and F25 now agree exactly.
+
+**Signal dropped:** `docs/signals/cowork-team-daily-document-redesign-v2-20260527.json` → agent-father (updated to v2.2)
+
+---
+
 ## 2026-05-27T18:14:09Z
 
 **Brief:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md` (v2.1)

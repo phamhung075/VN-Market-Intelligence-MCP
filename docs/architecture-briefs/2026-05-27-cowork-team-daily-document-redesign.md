@@ -1,11 +1,24 @@
-<!-- size-justification: 850L — full architecture brief v2.1 covering 10 design-question resolutions (8 original + Additions 6 and 7), 7 PO additions, 3-phase migration plan, per-agent-father instructions F1–F36 + F-MIG1–F-MIG4, cross-agent impact table, Context-Loading Discipline section, and language register boundary table. Cannot be split without losing the holistic traceability that agent-father needs to implement this correctly in sequence. -->
+<!-- size-justification: 900L — full architecture brief v2.2 covering 11 design-question resolutions (8 original + Additions 6, 7, and 8), 7 PO additions, 3-phase migration plan, per-agent-father instructions F1–F36 + F-MIG1–F-MIG4, cross-agent impact table, Context-Loading Discipline section, language register boundary table, and post-cutover get_cycle_bootstrap role clarification (Design Point K). Cannot be split without losing the holistic traceability that agent-father needs to implement this correctly in sequence. -->
 
 # Architecture Brief — Cowork-Team Daily Document Redesign
 
 **Date:** 2026-05-27
 **Author:** agents-architect
-**Status:** v2.1 — ready for agent-father
+**Status:** v2.2 — ready for agent-father
 **Signal:** `docs/signals/cowork-team-daily-document-redesign-v2-20260527.json`
+
+---
+
+## v2.2 Revision Log
+
+**What changed from v2.1 and why:**
+
+| # | Area | Change | Reason |
+|---|---|---|---|
+| 8 | **NEW** — Design Point K: post-cutover `get_cycle_bootstrap` role for CHEF | Explicit statement of which SQLite-fed sections CHEF keeps vs drops after Phase-3 cutover. CHEF drops `buildAlertsSection` (alerts table) and `buildAnalysisSection` (rag_analyses table) as GATHER sources; drops `agent_signals` (DB table) as attention source. CHEF KEEPS `get_cycle_bootstrap` for price/macro snapshot data only (the price/macro role stated in Design Point A line 98 is NOT deprecated). Backlog note updated to reference Design Point K instead of asserting inline. F25 checklist item updated to state the full GATHER replacement explicitly. Pre-redesign CHEF-ATTN fix compatibility confirmed and noted. | Verified internal-consistency gap: F25 only replaced file reads; never stated CHEF stops calling bootstrap's alert/analysis/signal_bus DB sections. Backlog claim was stronger than F25 warranted — created ambiguity about post-cutover double-sourcing. |
+| — | Implementation checklist | F25 action/sub-step updated to cite Design Point K and state which bootstrap sections are dropped vs kept. | Reflects Addition 8 |
+| — | Impact-on-Invariants table | 1 new row: post-cutover bootstrap scope reduction. | Reflects Addition 8 |
+| — | Open Questions | Note added: post-cutover bootstrap role now resolved in Design Point K. | Reflects Addition 8 |
 
 ---
 
@@ -459,6 +472,46 @@ Loading the full folder by a domain agent is a context-bloat violation equivalen
 
 ---
 
+### K. Post-Cutover Role of `get_cycle_bootstrap` for CHEF (NEW — v2.2 Addition 8)
+
+**Problem:** F25 (checklist) says CHEF's GATHER step reads `docs/daily/<date>/` folder "instead of `docs/signals/*.json` files" — replacing the file-based signal path. But the live CHEF attention-starvation root cause (Backlog, 2026-05-27) flows through a DIFFERENT, SQLite-backed path: `get_cycle_bootstrap` → `marketContextBuilder.ts` which calls `buildAlertsSection` (reads the `alerts` DB table, LIMIT 20 — the 20-row news-dominated window) and `buildAnalysisSection` (reads `rag_analyses` DB table) and `getSignals` reading the `agent_signals` DB table. F25 as written does NOT state whether CHEF still calls `get_cycle_bootstrap` at cutover. Without this explicit statement, CHEF could read BOTH the daily folder AND bootstrap's 20-row news-dominated alert window — either redundant double-sourcing or the same attention-concentration leaking back in.
+
+**Decision — three explicit rules:**
+
+**Rule K1 — DROPPED at Phase-3 cutover (CHEF GATHER):**
+
+After F25 is implemented, CHEF's GATHER step MUST NOT use `get_cycle_bootstrap` output for the following purposes:
+- `buildAlertsSection` result (alerts DB table) → **DROPPED** as a CHEF attention source. Replaced by the full daily folder (which carries domain-agent findings across all tickers without the 20-row hard cap).
+- `buildAnalysisSection` result (rag_analyses DB table) → **DROPPED** as a CHEF attention source. Replaced by the daily folder (financial-analyst and report-analyzer sections carry the same analysis in readable prose).
+- `getSignals` / `agent_signals` DB table result → **DROPPED** as a CHEF attention source. Replaced by domain-agent daily sections (which carry findings directly from the agents that would have posted to agent_signals).
+
+These three sources are the root cause of CHEF's attention-starvation (see Backlog). Their removal is the structural fix. After cutover, CHEF never ingests these sections from `get_cycle_bootstrap`.
+
+**Rule K2 — KEPT at Phase-3 cutover (price/macro snapshot):**
+
+CHEF retains the `get_cycle_bootstrap` call **solely for the price/macro snapshot portion** — the same role stated in Design Point A (line 98: "bootstrap + macro exactly as today"). Specifically:
+- The live market numbers section of `get_cycle_bootstrap` (prices, VN-Index level, macro indicators, market-open status) — **KEPT**.
+- This portion feeds CHEF's situational framing (e.g. confirming whether market is open, current index level for dish context) and is distinct from the attention/analysis/alert sections.
+- The `_header.md` Live State block (written by the dispatcher each tick) carries the same numbers in human-readable form; CHEF may use either, or both. There is no conflict — these are the same data expressed differently.
+
+**Rule K3 — Pre-redesign CHEF-ATTN fix compatibility:**
+
+The pre-redesign fix to `buildAlertsSection` (per-stock diversity cap, TASKS.md § CHEF-ATTN) applies a diversity constraint to the 20-row alerts window. Under Rule K1, CHEF drops this entire section after Phase-3 cutover — so the cap becomes irrelevant to CHEF specifically at that point. However the cap is NOT redundant before cutover and remains valuable throughout the migration window (Phase 1 through Phase 3 QA gate, estimated multi-week). It also benefits non-CHEF consumers of `get_cycle_bootstrap` (direct user calls, tran-ngoc-bau audit, the user-facing bootstrap view), and if CHEF retains any temporary dependency on the alert window during the parallel run (Phase 2), the cap improves quality there too. The pre-redesign fix and this redesign are **fully compatible and non-conflicting**. Agent-father implementing F25 must NOT remove or revert the CHEF-ATTN diversity cap as part of the GATHER rewire — they are separate concerns with independent lifetimes.
+
+**Summary table:**
+
+| `get_cycle_bootstrap` section | Post-cutover CHEF role | Replaced by |
+|---|---|---|
+| `buildAlertsSection` (alerts DB, LIMIT 20) | **DROPPED from CHEF GATHER** | Domain-agent daily sections (full ticker coverage, no hard cap) |
+| `buildAnalysisSection` (rag_analyses DB, LIMIT 10) | **DROPPED from CHEF GATHER** | financial-analyst + report-analyzer daily sections |
+| `getSignals` / agent_signals DB | **DROPPED from CHEF GATHER** | Domain-agent daily sections (direct findings) |
+| Price/macro snapshot | **KEPT** (unchanged — Design Point A) | Not replaced |
+| Market-open status, VN-Index level | **KEPT** (part of price/macro snapshot) | Also available via `_header.md` Live State |
+
+**Where this applies in the checklist:** F25 is updated to explicitly state Rules K1/K2/K3 in its action description and sub-step.
+
+---
+
 ## New File: docs/standards/daily-document-spec.md (specification for agent-father to write)
 
 This file must be created in Phase 1. It specifies:
@@ -568,6 +621,7 @@ One file per CHEF dish window (morning/intraday/eod/evening). CHEF writes dish c
 | Migration-recap guard (NEW) | **ONE-SHOT INVARIANT.** Historical signals/*.json and cycle-snapshot data must be rolled up into recap files BEFORE the legacy cleanup step (P3.7) runs. Verify-before-delete guard applies here identically to the recurring retention lifecycle. |
 | Language register boundary (NEW — v2.1) | **NEW INVARIANT.** All analysis prose written into daily document sections is in comprehensible Vietnamese. Caveman/ULTRA restricted to RETURN blocks, signals, DASHBOARD pokes, and structural machine fields. Boundary table in Design Point I is the authoritative definition. |
 | Context-loading discipline (NEW — v2.1) | **NEW INVARIANT (binding audit).** Domain agents load only own-section delta + `_header.md` Live State per cycle. Full-folder load permitted only for CHEF (dish windows) and tran-ngoc-bau (audit). Enforced by cowork-refactory-expert audit pass (F36) before Phase-3 QA gate. |
+| Post-cutover bootstrap scope reduction (NEW — v2.2) | **NEW INVARIANT.** After F25 is implemented: CHEF GATHER MUST NOT consume `buildAlertsSection`, `buildAnalysisSection`, or `agent_signals` DB results from `get_cycle_bootstrap`. Price/macro snapshot remains. Pre-redesign CHEF-ATTN diversity cap on `buildAlertsSection` is NOT removed — it benefits non-CHEF consumers. See Design Point K (Rules K1/K2/K3). |
 
 ---
 
@@ -617,7 +671,7 @@ Listed in strict Phase order. Each item has a single responsible output.
 | F22 | CRE | Replace direct send_telegram(channel="market") in alert-commander: danger items → docs/outbox/market/danger/<ts>-alert-commander.md (no push_mode needed). Non-danger market items → normal lane. Work/bug channels: KEEP direct send_telegram. | docs/agents/alert-commander/flow/stage-dispatch-log.md | Verify: WORK/BUG direct send_telegram kept; no MARKET direct send remains |
 | F23 | CRE | Update digest-predict/flow/weekly.md: read docs/daily/<YYYY-Www>/ folder; write docs/recaps/weekly/<YYYY-Www>.md + normal-lane outbox; after verify: run prune (daily files >14d). Add monthly.md and yearly.md sub-flows with same pattern + respective prune step. | docs/agents/digest-predict/flow/weekly.md + 2 new sub-flows | digest-predict reads full folder for weekly synthesis — exempt from domain bootstrap rule (synthesis role). Verify: prune step runs AFTER recap verified. |
 | F24 | CRE | Add CHEF watch consolidation step to daily-seed sub-flow: merge prior day ## WATCH subsections → docs/attention/watch.md; auto-expire stale items; write Today's Catalysts section. | docs/agents/unified-agent/flow/daily-seed.md | CHEF seed full-folder read at 00:00 UTC — exempt from domain bootstrap rule |
-| F25 | CRE | Update unified-agent/flow/chef.md GATHER step: read docs/daily/<date>/ folder + docs/attention/watch.md (all OPEN) instead of docs/signals/*.json files | docs/agents/unified-agent/flow/chef.md | **CHEF full-folder read permitted at dish windows only — verify GATHER step is gated to dish-window slots, not every 15-min tick.** |
+| F25 | CRE | Update unified-agent/flow/chef.md GATHER step: (a) read `docs/daily/<date>/` folder + `docs/attention/watch.md` (all OPEN) instead of `docs/signals/*.json` files; (b) **DROP** `buildAlertsSection` (alerts DB), `buildAnalysisSection` (rag_analyses DB), and `agent_signals` DB results as CHEF attention sources — these are fully replaced by the daily folder (see Design Point K, Rule K1); (c) **KEEP** the price/macro snapshot portion of `get_cycle_bootstrap` — VN-Index level, live market numbers, market-open status (Design Point K, Rule K2); (d) do NOT remove or revert the CHEF-ATTN diversity cap on `buildAlertsSection` — it remains for non-CHEF consumers and the migration window (Design Point K, Rule K3). | docs/agents/unified-agent/flow/chef.md | **CHEF full-folder read permitted at dish windows only — verify GATHER step is gated to dish-window slots, not every 15-min tick. Also verify: no residual call to bootstrap's alert/analysis/agent_signals sections in CHEF GATHER after cutover.** |
 | F26 | CRE | Update digest-predict weekly sub-flow: add watch register scan (triggered/resolved this week → weekly recap summary). | docs/agents/digest-predict/flow/weekly.md | — |
 | — | — | **F-MIG1 (ONE-TIME MIGRATION — precedes F27)** | — | — |
 | F-MIG1 | AF | Survey existing historical data: list docs/signals/*.json agent-written files (price_anomaly_*, news_impact_*, bctc_signal_*, fundamental_*); list any cycle-snapshot-*.json files; list any existing digest outputs. Log the date range covered. | read-only survey step | — |
@@ -653,7 +707,9 @@ Listed in strict Phase order. Each item has a single responsible output.
 
 ## Open Questions (none — all resolved in this brief)
 
-All 10 design points (A through J) are resolved above. No items are deferred to future briefs.
+All 11 design points (A through K) are resolved above. No items are deferred to future briefs.
+
+**v2.2 resolution note:** The post-cutover role of `get_cycle_bootstrap` for CHEF was previously implicit (F25 stated the file-read replacement but not the DB-section replacement). Design Point K makes this explicit: `buildAlertsSection`, `buildAnalysisSection`, and `agent_signals` DB results are dropped from CHEF GATHER; the price/macro snapshot is kept. This closes the internal-consistency gap between F25's wording and the backlog note's cutover claim.
 
 One carry-forward note for agent-father: the `handoff-delta-read` skill uses `## §N-<slug>` anchors (numeric sequence). Daily section files use `## §HH:MM-<agent>` anchors (time-based). These are compatible patterns (both match `^## §`) but the skill's "locate anchor by line scan" logic works identically for both formats. No skill modification needed.
 
@@ -669,8 +725,8 @@ These are independently observed product findings that this redesign already add
 
 | Date | Finding | Why this redesign already fixes it |
 |---|---|---|
-| 2026-05-27 | **CHEF attention concentrates on ~7 news-heavy large-caps** (VHM, VIC, MWG, ACB, HCM, HVN, ACV) instead of the full ~37-ticker watchlist. PO/owner observed via `get_cycle_bootstrap(unified-agent)`. Verified root cause: WATCHLIST section = full coverage (no LIMIT). But CHEF's ATTENTION channels are monopolized: (1) `agent_signals` bus inbox (`to_agent IN ('unified-agent','all')`) is EMPTY because watchlist-wide scanners route to `alert-commander` instead (`market-watcher/flow/cycle.md:64`, `news-scout/flow/stage-signals.md:74,104`); (2) OPEN ALERTS = `buildAlertsSection` `WHERE read=0 ORDER BY triggered_at DESC LIMIT 20` — high-frequency `news_mention` alerts fill all 20 slots; (3) RECENT ANALYSIS = `buildAnalysisSection` `ORDER BY impact_score DESC LIMIT 10` — same big-cap clustering. Aggravated when VN market is CLOSED (price/technical scanners are market-hours only; news flows 24/7). | **Design Point A (line 111) + F25 (line 620):** CHEF's GATHER step is rewired to read the FULL `docs/daily/<date>/` folder + the full attention register — NOT the 20-row alert window or the empty signal-bus inbox. At full cutover (Phase 3), CHEF's attention no longer flows through `buildAlertsSection`/`buildAnalysisSection`/`agent_signals` at all. The signal-routing-to-alert-commander problem becomes moot (signals deprecated Phase 3, brief line 561). The redesign STRUCTURALLY eliminates this attention-starvation for CHEF. **NOTE:** because the redesign CHEF-GATHER rewire (F25) lands near the END of Phase 3 (after a 5-day + 10-day QA-gate migration), a small targeted pre-redesign fix to `buildAlertsSection` (per-stock diversity cap) was greenlit to improve the live `get_cycle_bootstrap` surface during the multi-week migration window — see TASKS.md § CHEF-ATTN. The pre-redesign fix touches ONLY the alerts-section diversity cap; it does NOT add signal-bus `'all'` routing (that would inject churn into the soon-deprecated bus model). |
+| 2026-05-27 | **CHEF attention concentrates on ~7 news-heavy large-caps** (VHM, VIC, MWG, ACB, HCM, HVN, ACV) instead of the full ~37-ticker watchlist. PO/owner observed via `get_cycle_bootstrap(unified-agent)`. Verified root cause: WATCHLIST section = full coverage (no LIMIT). But CHEF's ATTENTION channels are monopolized: (1) `agent_signals` bus inbox (`to_agent IN ('unified-agent','all')`) is EMPTY because watchlist-wide scanners route to `alert-commander` instead (`market-watcher/flow/cycle.md:64`, `news-scout/flow/stage-signals.md:74,104`); (2) OPEN ALERTS = `buildAlertsSection` `WHERE read=0 ORDER BY triggered_at DESC LIMIT 20` — high-frequency `news_mention` alerts fill all 20 slots; (3) RECENT ANALYSIS = `buildAnalysisSection` `ORDER BY impact_score DESC LIMIT 10` — same big-cap clustering. Aggravated when VN market is CLOSED (price/technical scanners are market-hours only; news flows 24/7). | **Design Point A + Design Point K + F25:** CHEF's GATHER step is rewired (F25) to read the FULL `docs/daily/<date>/` folder + the full attention register — NOT the 20-row alert window or the empty signal-bus inbox. **At full cutover (Phase 3), CHEF drops `buildAlertsSection`, `buildAnalysisSection`, and `agent_signals` DB results from its GATHER step; it retains `get_cycle_bootstrap` ONLY for the price/macro snapshot (Design Point K, Rules K1/K2).** The signal-routing-to-alert-commander problem becomes moot (signals deprecated Phase 3, brief § Invariants line 561). The redesign STRUCTURALLY eliminates this attention-starvation for CHEF. **NOTE:** because F25 lands near the END of Phase 3 (after a 5-day + 10-day QA-gate migration), a small targeted pre-redesign fix to `buildAlertsSection` (per-stock diversity cap) was greenlit to improve the live `get_cycle_bootstrap` surface during the multi-week migration window — see TASKS.md § CHEF-ATTN. The pre-redesign fix touches ONLY the alerts-section diversity cap; it does NOT add signal-bus `'all'` routing (that would inject churn into the soon-deprecated bus model). The diversity cap is NOT removed when F25 is implemented — it remains for non-CHEF consumers (Design Point K, Rule K3). |
 
 ## Signal Dropped
 
-`docs/signals/cowork-team-daily-document-redesign-v2-20260527.json` → agent-father (updated to v2.1)
+`docs/signals/cowork-team-daily-document-redesign-v2-20260527.json` → agent-father (updated to v2.2)
