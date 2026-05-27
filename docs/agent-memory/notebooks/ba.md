@@ -4,6 +4,10 @@
 
 > Archive: `docs/archive/notebooks/ba-2026-05-21.md`
 
+## RECAP-CMD-BA · 2026-05-28
+
+Sprint RECAP-CMD spec complete. REQ file: `docs/REQ_RECAP-CMD.md`. Three commands decomposed: `/recap` (7 sections from `EveningSummary` — VN-Index, movers, news, alerts, portfolio P/L, foreign flow, header), `/recapw`+`/recapm` (5 sections from `PeriodicSummary` — header, totals, key events, stock moves, alert breakdown). All Vietnamese section labels locked. `summaryText` / `recommendation` / numeric `impact` BANNED from output. `stripHtml` coordinated with NEWS-FULLDAY — reuse, do not duplicate. Handler signatures async, returning `{ texts: string[] }`, router wiring mirrors `/news` branch. Test matrix: T-RECAP-1..7, T-RECAPW-1..4, T-RECAPM-1..3, T-RECAP-RT-1..4. Two architect-deferred items: B1 (section-block overflow split for blocks > 4096 chars), B2 (test injection strategy: wrapper fn vs real assembly with in-memory DB). No PO blockers. TASKS.md RECAP-BA → DONE/REVIEW. Files left UNSTAGED. NEXT: po (spec-review gate). PIPELINE: continue.
+
 ## NEWS-FULLDAY-BA · 2026-05-27
 
 Sprint NEWS-FULLDAY spec complete. REQ file: `docs/REQ_NEWS-FULLDAY.md`. Three defects decomposed into testable ACs: FR-1 (full-day coverage — remove silent DEFAULT_LIMIT=20), FR-2 (dedup key = normalized source_title, 5-step normalization, highest-impact survivor), FR-3 (stripHtml — module-level export, dependency-free, called before dedup and before 200-char truncation). Test matrix T-NEWS-9..12 + T-STRIP-1..7 added to spec. Two architect-deferred items: B1 (LIMIT removal vs large ceiling), B2 (fallback cap value). stripHtml scoped as shared helper for RECAP-CMD convergence. No PO blockers. TASKS.md NEWS-FD-BA → DONE/REVIEW. Files left UNSTAGED. NEXT: po (spec-review gate). PIPELINE: continue.
