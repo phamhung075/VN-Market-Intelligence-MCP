@@ -1,0 +1,7 @@
+MICROSERVICE REBUILD REPORT
+===========================
+Generated: $(date)
+
+Summary Table:
+Service | Old-Image-Time | New-Image-Time | Health-Result
+
