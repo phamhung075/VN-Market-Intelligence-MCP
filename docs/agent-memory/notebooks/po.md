@@ -1,35 +1,26 @@
 # PO Notebook
 
-## Cycle 2026-05-28T~00:05Z — SPEC-REVIEW GATE: NEWS-FULLDAY + RECAP-CMD (both APPROVED)
+## Cycle 2026-05-27T22:04:44Z — SIG-EXIT: SELF-IMPROVE-GATE FINAL SIGN-OFF → APPROVE-WITH-CONDITIONS
 
-**Two sibling specs returned from BA, reviewed together (critique-before-approve, not rubber-stamp).**
-Both single-zone `apps/mcp-server`, owner dev-mcp-server, NOT scale pilots, share one asset (`stripHtml`).
+**Sprint SELF-IMPROVE-GATE closed.** Phase 2 (SIG-IMPL-GATE, lane-B proven code gate) shipped + deployed + gate-proven. Final gate. Critique-before-verdict, NOT rubber-stamp (user mandate: PO is the gate, must genuinely red-team).
 
-**Verified load-bearing code claims live BEFORE ruling (the render contract is only enforceable if fields are real):**
-- `stripHtml` ABSENT everywhere in `apps/mcp-server/src` → NEWS-FD defines it once, greenfield, no collision.
-- `handleNews` L510, `chunkStories` L480, `DEFAULT_LIMIT=20` L511, `MAX_LIMIT=50` L513, HELP "mặc định 20 bài" L77, `handleTelegramCommand` L612 — all confirmed where NEWS-FD claims.
-- `EveningSummary` (L97) + `PeriodicSummary` (L53) — EVERY field RECAP-CMD §3 renders from EXISTS. The BANNED `summaryText` (English prose) + `recommendation.confidence` (numeric) genuinely present → ban is enforceable, not phantom. `keyEvents{date,title,impact,direction}` shape confirmed.
-- B2 worry real: `assembleEveningSummary` `writeFileSync`/`reportsDir` (L831-833) + `{db}` overload (L355); `generatePeriodicSummary(type,end?,db?)` L610 → B2 is a genuine test-mechanism question.
+**Verified FIRST-HAND, not on QA/dev word (false-green discipline):**
+- git: ef109a76 (code gate) + 062a6569 (5 flow edits) + 6a690c24 (1941c) all in main ancestry. 4 prod files exist on disk; `git diff ef109a76 -- degradationRules.ts` EMPTY (byte-identical, matches QA clean-diff); working tree clean.
+- live container: /health 200, 146 tools, uptime ~8min (recent force-recreate). ZERO `SELF_IMPROVE_*` env vars → SHADOW MODE confirmed by me. `improve_check_log` table present in live market.db. cron `2 9 * * *` registered via wrapRun (startScheduler.ts:941). No selfImprove boot crash.
+- C-1/C-4/C-5 read line-by-line in shipped code (improvementSignalWriter.ts:44-140 typed FIX_AREA_TO_AGENT no-prose-parse + UNRESOLVED fail-safe; selfImproveOrchestratorJob.ts:62-89 DISPATCH_PATHS const + compile-time DispatchPath, no global flag; :384-432 doc-write isolated try/catch "non-fatal" + outer re-throw for wrapRun status=error).
+- FLOW loop traced end-to-end: system-auditor D-IMPROVE (main.md:167+, SKIP-not-abort C-5, FAIL-LOUD-SKIP C-1) → po triage-signals:17 (5 mandatory critique fields incl. lane-C-in-disguise, auto-reject empty = UNSKIPPABLE) → agent-father improvement_approved_md (structured-fields-only C-1, DRAFT→IMPLEMENTING→DONE C-2) → dev-team drain-signals:78 lane-B. Loop is in the FLOW layer, not inert doc.
 
-**5 gate axes PASS both specs:** (1) ACs testable (concrete seed+assertion per T-ID); (2) plain-VN render contract enforced (no impact_score number / English / jargon / HTML / summaryText); (3) empty-state strings present verbatim; (4) test matrix happy/empty/chunk-boundary, in-mem Bun SQLite + injected fakes, no creds/network; (5) nothing silently dropped.
+**All 7 SIG-EXIT axes PASS.** Lane-B PROVEN-RED (QA cycle-135: inject >=0.50 → 5 RED → revert → 15/15 GREEN). One cron slot, no new Docker/agent, shadow-mode inert.
 
-**B1/B2 ruling:** NEWS-FD B1 (remove LIMIT vs ceiling) = architect call. **NEWS-FD B2 product half ANSWERED by me (recorded REQ §5): fallback IS capped (stale multi-day dump = UX defect), architect picks only the number.** RECAP B1 (block>4096 split) + B2 (wrapper vs in-mem DB) = both genuine architect calls, no PO product decision owed. **No conflict** (shared `stripHtml` defined in NEWS-FD reused in RECAP; HELP_TEXT edits non-overlapping; one dev pass + one ops rebuild).
+**OPEN-ITEM RULINGS:**
+- (1) AC-T6-4 deferred: notebook evidence SUFFICIENT for the detection gate, but the EMIT path (writeImprovementProposal → real IMP-*.md + DASHBOARD row) is unit-green only, NEVER run end-to-end (dir empty). That's the write-wedge/fence-false-green shape. → REQUIRE synthetic dry-run as binding condition **X-1** (SIG-FOLLOWUP-DRYRUN, routable to dev/qa, NOT lane-C). APPROVE-WITH-CONDITIONS not CHANGES-REQ because the gap is on an inert seam — nothing auto-dispatches regardless.
+- (2) 1941c batch-isolation false-green: ACCEPT out-of-scope (predates SIG, zero degradationRules dep), LOG as **X-2** (SIG-FOLLOWUP-1941C LOW) so it's not silently absorbed. No block.
 
-**Deliverables:**
-- `docs/REQ_NEWS-FULLDAY.md` — Status→APPROVED, B2 product ruling in §5, verdict §12 (UNSTAGED).
-- `docs/REQ_RECAP-CMD.md` — Status→APPROVED, verdict §16 (already COMMITTED by serialized router — HEAD==WT).
-- `docs/TASKS.md` — NEWS-FD-BA + RECAP-BA → APPROVED; inserted NEWS-FD-ARCH + RECAP-ARCH (PENDING, sibling-batched) (UNSTAGED).
+**HUMAN-RESERVED (lane-C, NOT authorized here):** (a) global/fleet-wide auto-dispatch flip; (b) any change to gate/audit/classification logic; (c) subjective comprehensibility. **Next safe step:** run X-1; then a FIRST per-path flag flip is gated on THAT path's own GATE-PROOF; global enable is human-reserved.
 
-**GOTCHA this cycle:** concurrent SIG dev-chain was hot-writing TASKS.md (SIG-G-T1..T4 flipped DONE mid-review). Edit tool optimistic-lock failed 3x on mtime despite zero content collision. Resolved with a single atomic python read-substitute-write (count==1 assert per anchor) — landed both rows, SIG rows intact. Pattern for next time: under concurrent TASKS.md writes, prefer one atomic substitution over Read→Edit.
-
-**NEXT: architect** — ONE pass covers BOTH sprints. **PIPELINE: continue.**
+**Writes (UNSTAGED for main-terminal serial commit):** docs/TASKS.md (SIG-G-T1..T6+REBUILD→DONE, SIG-IMPL-GATE CLOSED, SIG-EXIT APPROVE-WITH-CONDITIONS, +X-1/X-2 rows), docs/handoffs/TASK_SELF-IMPROVE-GATE.md ([PO] SIG-EXIT critique + verdict). Did NOT touch pilot-status-*.json.
 
 ## Carry-over
-- **NEWS-FULLDAY + RECAP-CMD both APPROVED, at architect.** ONE architect pass (same zone, same `telegramCommands.ts`, shared `stripHtml`) → pm → dev-mcp-server (single dev pass) → ops REBUILD+force-recreate → qa LIVE on zenmidi.com/vn-market/webhook → NEWS-FD-EXIT + RECAP-EXIT. Both ARMED until QA live + user G9 (lane-c comprehensibility).
-  - NEWS-FD architect confirms: B1 (remove SQL LIMIT vs large ceiling), B2 (fallback-cap NUMBER only — capped is decided), dedup+strip pure in-handler (no schema/index), `MAX_LIMIT_EXPLICIT` for `/news N`.
-  - RECAP architect confirms: lock VN section labels (§3), B1 (block>4096 split), B2 (wrapper vs in-mem DB given writeFileSync side-effect). Render from TYPED objects only — NEVER summaryText/buildSummaryText (English+jargon).
-- **SELF-IMPROVE-GATE Phase 2:** SIG-G-T1..T4 now DONE (committed ef109a76, concurrent). SIG-G-T5 (per-path kill-switch C-4) PENDING → SIG-G-REBUILD (ops) → SIG-G-T6 (qa GATE-PROOF subject-code inject, AC-T6-5 false-green firewall). Watch SIG-G-T4 NOTE: emit path proven by unit mocks, NOT yet end-to-end (SIG-EXIT condition X-1). Human-reserved: GLOBAL auto-dispatch flip, gate self-edit, un-pause 1948 OBSERVE, comprehensibility (lane-C).
-- **MACRO-LIVE-PRICES** (sprint MLP) at architect (MLP-ARCH, data-source A/B/C). Zone apps/macro-indicators. False-green guard: verify via `call_tool get_macro_snapshot`, NOT direct :5004 curl.
-- **PEK-RENDER goal ARMED until USER G9.** Round 6+ — QA RED on render seam → escalate architect, no blind patch. PDF-Extract-Kit/ pristine; CPU-only/8GB; DB verify = in-container bun readonly COUNT.
-- Channel audit (MARKET/WORK/BUG via gateway) owed → main terminal next cron tick (PO subagent has no call_tool).
-- All files UNSTAGED except where already committed by router — main terminal commits (serialized, no -A, no push, main branch).
+- **Umbrella lock NOT released** — MCP gateway `call_tool` wrapper absent in PO subagent toolset (same as kickoff TASKS.md:105). Main terminal: `task_release task:SIG-IMPL-GATE` (ok=false acceptable, TTL likely expired). Then commit the UNSTAGED TASKS.md + handoff serially.
+- X-1 (dry-run) + X-2 (1941c) are OPEN tasks for the next dev-mcp-server cycle; both non-blocking.
+- SELF-IMPROVE-GATE goal in SPRINT_GOAL.md: closeable; the loop is demonstrated live in shadow mode. X-1 closes the last machine-checkable proof gap.

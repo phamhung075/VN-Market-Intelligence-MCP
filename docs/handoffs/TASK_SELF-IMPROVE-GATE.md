@@ -852,3 +852,82 @@ The SIG-IMPL-GATE blueprint is sound on all 7 critique axes and is APPROVED to e
 - **Lane-C anchor:** unchanged — comprehensibility + global/fleet-wide auto-dispatch flip + any gate/audit self-edit stay human-reserved, OUT of scope here.
 
 **RETURN PIPELINE: continue. NEXT: pm (decompose SIG-IMPL-GATE → TASK_NNN dev tasks, sequence dev→ops→qa, honor WIP=2).**
+
+---
+
+## [PO] SIG-EXIT critique — 2026-05-27T22:04:44Z
+
+This is the final sign-off. Per the user's binding mandate ("all automate, PO is the gate, NOT the user, but PO MUST genuinely red-team before approving — NO rubber-stamping"), I verified every SIG-EXIT checklist item against the LIVE container, git ancestry, and the SHIPPED code by hand — I did not take QA's word, the dev's word, or the handoff prose at face value. Concrete evidence per axis below, then the two open-item rulings, then the human-reserved boundary.
+
+### What I independently verified (live, not asserted)
+
+- **git ancestry:** `ef109a76` (the code gate) and `062a6569` (the 5 flow edits) and `6a690c24` (1941c) are all `merge-base --is-ancestor HEAD` = in main. `ef109a76` ships 12 files / 2861 insertions: degradationRules.ts (259L), improveCheckStore.ts (275L), selfImproveOrchestratorJob.ts (455L), improvementSignalWriter.ts (376L), schema-system.ts +24, cronConfig.ts +5, startScheduler.ts +8, plus the 5 test files (1948a-e). All 4 production files exist on disk; `git diff ef109a76 -- degradationRules.ts` is EMPTY (byte-identical, matches QA's clean-diff claim); `git status --porcelain` on all 4 = clean (no uncommitted drift).
+- **live container:** `curl /health` = `{"status":"ok","name":"vn-market","toolCount":146}`, uptime ~8 min (consistent with a recent ops force-recreate). `docker ps` = healthy.
+- **SHADOW MODE (verified, not trusted):** `docker exec env | grep SELF_IMPROVE` = ZERO matches. No path can auto-dispatch — the ship is genuinely inert.
+- **live DB:** `sqlite_master` query in-container confirms `improve_check_log` table EXISTS in `/app/data/market.db`.
+- **cron registered, no boot crash:** `startScheduler.ts:941` = `cron.schedule(CRONS.selfImproveOrchestrator, ...)` wrapped in `jobRunRepo.wrapRun('selfImproveOrchestratorJob', ...)`; `cronConfig.ts:172` = `'2 9 * * *'`. Container logs at startup show NO selfImprove error/crash (the error lines present are pre-existing PEK/VPS connectivity issues from cycle-133, unrelated).
+
+### SIG-EXIT checklist — each PASS, with the evidence that earned it
+
+1. **Loop is live end-to-end in the FLOW layer (the "change to flow not here" mandate) — PASS.** I traced the full circuit in the shipped flow files, not the brief:
+   - **Detect:** `system-auditor/flow/main.md` § "Improvement Proposal Emit (D-IMPROVE) — Tier-2 add-on" (L167+) queries `improve_check_log` (D-IMPROVE-1), wraps each candidate in try/catch with SKIP-not-abort on exception (D-IMPROVE-2, honors C-5 at the flow layer), FAIL-LOUD-SKIPs if `target_agent`/`target_files` cannot be determined (L225-226, honors C-1), cooldown-guards duplicates (D-IMPROVE-4).
+   - **Deliberate:** `po/flow/triage-signals.md:17` `improvement_proposal` row — "ALL FIVE fields must be filled before writing a verdict. An empty or placeholder value on any field auto-rejects with reason 'critique incomplete'." Field (5) is the lane-C-in-disguise check (C-3). This is the unskippable gate.
+   - **Implement lane-A:** `agent-father/flow/main.md:24` `improvement_approved_md` route — reads structured `## target_agent`/`## target_files` ONLY, FAIL-LOUD rejects on missing/invalid (C-1), DRAFT→IMPLEMENTING→DONE only after success verified (C-2), rolls back via `git checkout` on mis-targeted edit.
+   - **Implement lane-B:** `dev-team/flow/drain-signals.md:78` `improvement_proposal_lane_b` row routes through the full po→ba→architect→pm→dev-*→qa chain; notes per-path default-false until GATE-PROOF.
+   - **The flows route to the CODE gate** (ef109a76 selfImproveOrchestratorJob.ts) which is what writes the proposal docs the flows then consume. The flow-resident loop and the code gate connect. This is a loop in the flow layer, not an inert doc.
+
+2. **PO critique-before-approve gate is unskippable — PASS.** triage-signals.md:17 enforces it at the flow STEP (auto-reject on empty/placeholder), not by convention. 5 mandatory fields: (1) what breaks, (2) false-green/silent-swallow, (3) gameable success signal, (4) host-load, (5) lane-C-in-disguise (C-3). Field 5 cannot be empty or "N/A".
+
+3. **Three lanes hold — PASS.** lane-A = `.md`-only default → agent-father; lane-B = THIS proven code gate → dev-team chain; lane-C = WORK Telegram + STOPS the loop ("LANE-C or any REJECTED → send_telegram(channel='work', ...)" in triage-signals.md:17). First-match-wins ordering with lane-C tested first (from SIG-PO-GATE design, unchanged).
+
+4. **Lane-B proven RED on injection — PASS (QA cycle-135, cross-checked by me).** QA injected `>=0.50` into the DEGRADED delta threshold in degradationRules.ts (subject code, NOT gate config) → 5 named AC tests went RED → reverted → 15/15 GREEN → clean diff. I confirmed the diff is byte-identical to ef109a76 myself. The gate is not vacuous. False-green→lane-A demotion path (AC-T6-5) exists in code and the SIG-G-T6 row; not triggered here because the gate DID go red.
+
+5. **Lane-C still escalates (no auto-action) — PASS.** Global/fleet auto-dispatch flip, any edit to gate/audit/classification logic, un-pausing OBSERVE gates: none are reachable by an automated step. The kill-switch is per-path default-false (no global flag matches the key pattern — verified in code), and any change to the classification rule is itself a lane-C action the loop cannot auto-close (the logical barrier from SIG-PO-GATE §7, unchanged). The comprehensibility blind spot stays lane-C-forever.
+
+6. **C-1 / C-4 / C-5 honored in SHIPPED code (verified line-by-line, not asserted):**
+   - **C-1 (improvementSignalWriter.ts:44-140):** `FIX_AREA_TO_AGENT` typed `Record`; `resolveTarget` "Looks up FIX_AREA_TO_AGENT — never parses free-text prose"; unknown fix_area → `{ target_agent: 'UNRESOLVED', target_files: [] }` fail-safe.
+   - **C-4 (selfImproveOrchestratorJob.ts:62-89):** `DISPATCH_PATHS as const` + `type DispatchPath = typeof DISPATCH_PATHS[number]`; `isAutoDispatchEnabled(path: DispatchPath)` reads `SELF_IMPROVE_AUTO_DISPATCH_${PATH_UPPER}` — a bare global `SELF_IMPROVE_AUTO_DISPATCH=true` matches no key (AC-T5-4). Call site (L435-436) type-guards `DISPATCH_PATHS.includes(...)` before the lookup. docker-compose.yml:52-55 all 4 commented (default-false). Enforced at compile time, structurally.
+   - **C-5 (selfImproveOrchestratorJob.ts:384-432):** doc-write is step 12, AFTER the improve_check_log insert and WORK Telegram; wrapped in its own try/catch that logs and "Continue — C-5: doc-write failure is non-fatal" (L431). The outer cycle catch re-throws so `wrapRun` records `status='error'` (L444-451) — correct fail-loud at the job boundary while the doc-write add-on stays subordinate.
+
+7. **Host budget — PASS.** Exactly ONE new cron slot (`2 9 * * *`, verified the 09:xx block has no collision: marketOpen `0 9 * * 1-5`, bctcOverdueCheck `0 9 * * *`, bctcReparse `30 9`, `2 9` free). No new Docker service, no new cowork agent (it is a scheduler job inside the existing mcp-server process). Shadow-mode ship (zero env vars). ~0 MB incremental RAM. No aggravation of `project_host_memory_panic`.
+
+### Red-team — where I pushed hardest
+
+I did not stop at "all green." The two places a self-improvement loop is most dangerous are (a) the emit seam that turns a detected weakness into an action, and (b) trusting a one-time proof for all future regression classes. On (b), the per-path default-false kill-switch (C-4) is the structural answer and it holds — no path is `true`, and flipping any path is itself gated on that path's own recorded GATE-PROOF (not the global one QA ran). On (a), I found the one real gap, ruled below as X-1: the emit path is unit-green but NOT proven end-to-end against a real run. I am NOT willing to call that "demonstrated end-to-end" on unit mocks alone — that is exactly the write-wedge / `feedback_fence_false_green` shape (a write path green in tests but never shown to produce a real artifact). It is cheap and routable, so it becomes a condition, not a silent pass.
+
+### RULING — Open Item 1 (AC-T6-4 deferred): notebook evidence is SUFFICIENT TO CLOSE THE BUILD, but I REQUIRE the synthetic dry-run as a tracked condition
+
+The detection gate is genuinely proven (RED-then-GREEN on subject-code injection — that is the thing AC-T6-1..3/T6-5 demand, and it is done). AC-T6-4, however, asserts something different: the **D-IMPROVE write path end-to-end** (`writeImprovementProposal` → real file in `docs/improvement-proposals/` + `DASHBOARD.md` append). That seam — the one that connects the proven detection to the governance flow — has NOT executed against a real run. `docs/improvement-proposals/` is empty (I checked: the dir exists, zero files). Unit tests AC-T4-1..8 exercise `writeImprovementProposal` with injected mocks; none proves the orchestrator's step-12 actually calls the real writer and emits a valid structured DRAFT doc.
+
+QA's position (ops/timing dependency, not a code defect; primary intent — record evidence before any path is flipped — is satisfied) is REASONABLE and I accept it for the *detection gate*. But "record evidence before flipping" is a lower bar than "prove the emit path produces a real artifact." Per the prompt, forcing a dry-run is a code/test action routable to dev/qa — within my authority, NOT a lane-C human item. So I require it: **condition X-1** (task `SIG-FOLLOWUP-DRYRUN`) — seed a synthetic degraded `signal_outcomes` fixture (or inject `detectFn`/`coverageGapFn`) so the orchestrator reaches step-12 and emits ONE real `IMP-*.md` DRAFT with valid structured `target_agent`/`target_files` (C-1), `status: DRAFT` (C-2), correct lane. Reversible, machine-checkable, no path flipped. This closes AC-T6-4 honestly.
+
+Why APPROVE-WITH-CONDITIONS and not CHANGES-REQUESTED: the build is shipped, live, shadow-mode-inert, the detection gate is proven, and X-1 cannot change any user-facing or production behavior (nothing auto-dispatches regardless). The gap is a proof gap on an inert seam, not a defect that risks the running system. Blocking the whole sprint on it would be process for its own sake. Tracking it as a binding non-blocking condition is the proportionate call.
+
+### RULING — Open Item 2 (1941c batch-only failure): ACCEPT as out-of-scope with a LOGGED follow-up (X-2), do NOT block
+
+`1941c-accuracy-digest.test.ts` passes 7/7 standalone, fails only in batch (shared `signal_outcomes` state across concurrent workers; committed 6a690c24, predates SIG). It has zero dependency on degradationRules.ts or any SIG file, so it is genuinely out of SIG-IMPL-GATE scope. But it IS a latent test-isolation false-green in the broader suite — exactly the `feedback_fence_false_green` shape — and leaving it un-logged would let it rot. So: ACCEPT out-of-scope, BLOCK nothing, but LOG it as **X-2** (task `SIG-FOLLOWUP-1941C`, LOW) so it is tracked, not silently absorbed. It is not a blocker because it predates this sprint, is batch-isolation-only, and the SIG suite itself runs clean (305 pass / 0 NEW failures across 33 sharded files; the 8GB cap blocks the full 9408 run, which is a known host limitation, not a SIG regression).
+
+### Human-reserved boundary (lane-C) — what stays the USER's call, never the loop's
+
+Three things remain human-reserved and are NOT authorized by this sign-off:
+1. **The GLOBAL / fleet-wide flip of auto-dispatch to live across ALL paths at once** — distinct from the per-path, post-GATE-PROOF flip C-4 permits. Broad trust across the whole loop is a product call.
+2. **ANY change to the gate/audit/classification logic itself** — the loop rewriting its own success criteria (e.g. loosening the DEGRADED threshold, editing DEGRADATION_CAUSE_MAP, changing the lane rule). Lane-C forever per brief §1/§7.
+3. **Subjective comprehensibility of any user-facing output** — the plain-VN anchor. Self-audit structurally cannot detect it; human-judged forever.
+
+### The next safe step
+
+The loop is live in shadow mode. The next safe action is NOT to flip anything — it is to run **X-1** (the synthetic dry-run) to prove the emit path produces a real proposal doc end-to-end. Only after that, the FIRST per-path flag flip (e.g. `SELF_IMPROVE_AUTO_DISPATCH_PRICE_CONFIRMATION=true`) becomes considerable — and that flip is itself gated on THAT path's own recorded GATE-PROOF (inject-violation-confirm-red for that specific path's regression class, recorded in its proposal doc), per C-4. One path proven does not bless another. The global/fleet-wide enable across all paths is human-reserved (boundary item 1 above) and is a separate future product call, not a routine PO action.
+
+---
+
+## [PO] VERDICT — APPROVE-WITH-CONDITIONS — 2026-05-27T22:04:44Z
+
+Sprint SELF-IMPROVE-GATE is **APPROVED WITH CONDITIONS** and closed. The gated self-improvement loop is live end-to-end in the FLOW layer (5 EDIT flows, 062a6569) wired to a PROVEN-RED code gate (ef109a76), deployed live in shadow mode (verified: healthy container, cron `2 9 * * *` registered, `improve_check_log` table present, ZERO auto-dispatch env vars). All 7 SIG-EXIT checklist axes PASS on evidence I gathered first-hand. The PO critique gate is unskippable (5 mandatory fields incl. lane-C-in-disguise). Three lanes hold; lane-B is proven red on subject-code injection; lane-C escalates and stops. C-1/C-4/C-5 are honored in the shipped code, not merely asserted. One new cron slot, no new Docker/agent, within the Sprint-1948 host budget.
+
+**Two binding conditions (both routable to dev/qa, neither lane-C, neither blocks the live shadow-mode ship):**
+- **X-1 (`SIG-FOLLOWUP-DRYRUN`, MEDIUM, dev-mcp-server → qa):** synthetic-data dry-run proving the D-IMPROVE emit path end-to-end → ONE real `docs/improvement-proposals/IMP-*.md` DRAFT with valid structured `target_agent`/`target_files`, `status: DRAFT`, correct lane, + DASHBOARD.md row. Closes AC-T6-4. Unit mocks do not prove the orchestrator wires the real writer. No path flipped.
+- **X-2 (`SIG-FOLLOWUP-1941C`, LOW, dev-mcp-server):** isolate the 1941c accuracyDigest batch-isolation false-green (shared `signal_outcomes` state). Out of SIG scope, logged so it is not silently absorbed.
+
+**Human-reserved (lane-C, NOT authorized here):** (1) global/fleet-wide auto-dispatch flip; (2) any change to the gate/audit/classification logic; (3) subjective comprehensibility. **Next safe step:** run X-1; do NOT flip any per-path flag until that path's own GATE-PROOF is recorded; the first flip and the global enable are separate, individually-gated steps (per-path) / human-reserved (global).
+
+**RETURN PIPELINE: complete (sprint closed). NEXT: dev-mcp-server (X-1 dry-run, non-blocking) when fleet capacity allows; X-2 backlogged LOW. No user action required.**
