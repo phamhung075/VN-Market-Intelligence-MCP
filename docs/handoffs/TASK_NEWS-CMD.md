@@ -168,3 +168,67 @@ Four files, minimal surface:
 4. `docs/architecture/microservice/mcp-server/news-analysis.md` — append `/news` command reference.
 
 The chunking algorithm (story-boundary split, 4096-char cap, `texts[]` return) is the only non-trivial logic. Everything else mirrors established patterns in the file.
+
+---
+
+## [Developer] Implementation — NEWS-CMD-IMPL
+
+**Date:** 2026-05-27
+**Task:** NEWS-CMD-IMPL
+**Status:** Review
+
+### Implementation Summary
+
+All four files modified exactly as specified. No new files created. Zone: `apps/mcp-server/` only.
+
+### Changes Delivered
+
+| # | File | Change |
+|---|------|--------|
+| 1 | `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts` | Added `import { VN_OFFSET_MS }` from `timeConstants.js`; extended `CommandResult` with `texts?: string[]`; added `sentimentLabel()`, `midnightVietnamAsUtcInline()`, `chunkStories()`, and `handleNews()` functions; wired `/news` case before the switch (returns `{ text, texts, chatId }`); added `/news [N]` line to `HELP_TEXT`; updated module JSDoc. |
+| 2 | `apps/mcp-server/src/interface/mcp/routes/webhookHandler.ts` | Replaced single `sendTelegramMarket(result.text,...)` with `const chunks = result.texts ?? [result.text]; for (const chunk of chunks) { await sendTelegramMarket(chunk,...) }`. 3-line change; all existing commands unaffected (single-element fallback). |
+| 3 | `apps/mcp-server/src/__tests__/214-telegram-commands.test.ts` | Added `rag_analyses` table to `makeDb()` schema; added `seedNewsToday()` and `seedNewsOld()` helpers; added `describe("handleNews — /news command")` block with T-NEWS-1..8. |
+| 4 | `docs/architecture/microservice/mcp-server/news-analysis.md` | Appended "Telegram Commands" section with `/news` command reference (source table, argument, chunking behaviour, query logic, output constraints, DDD layer). |
+
+### Test Results
+
+```
+bun test src/__tests__/214-telegram-commands.test.ts
+31 pass, 0 fail (was 26 pass before this task — 5 new T-NEWS tests)
+bun tsc --noEmit: clean (zero errors)
+```
+
+T-NEWS-1..8: all pass.
+- T-NEWS-1: 3 today-rows → all 3 headlines in output
+- T-NEWS-2: positive sentiment → `tích cực` in output; `positive` and `0.85` absent
+- T-NEWS-3: empty DB → `Chưa có tin hôm nay.`
+- T-NEWS-4: `/news 2` with 5 rows → exactly 2 story blocks
+- T-NEWS-5: 20-row digest with 250-char summaries → each `texts[]` element <= 4096 chars
+- T-NEWS-6: `source_title = NULL` → no crash, non-empty output
+- T-NEWS-7: `summary = NULL` → no crash, non-empty output
+- T-NEWS-8: no today-rows + old fallback rows → output contains fallback content + `gần đây` header
+
+### FR/NFR Coverage
+
+| Requirement | Status |
+|-------------|--------|
+| FR-1: `/news` case in switch, `HELP_TEXT` updated | MET |
+| FR-2: today-filter with midnight-GMT+7, `impact_score DESC`, `LIMIT N` | MET |
+| FR-3: `/news N` arg parse, clamp [1,50], default 20 | MET |
+| FR-4: plain-VN formatter, sentiment label, summary truncation, no `impact_score` | MET |
+| FR-5: empty-DB fallback `Chưa có tin hôm nay.` | MET |
+| FR-6: story-boundary chunking, each chunk <= 4096 chars, `texts[]` send-loop | MET |
+| NFR-1: no numeric score, no English sentiment strings, no jargon | MET |
+| NFR-2: no new cron job, no new push, reply via existing webhook path | MET |
+| NFR-3: all changes in `apps/mcp-server/` only | MET |
+| NFR-4: handleNews catches DB errors internally; outer try/catch also present | MET |
+| NFR-6: no `docs/daily/` dependency | MET |
+
+### Files Left UNSTAGED (for main terminal to commit)
+
+- `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts`
+- `apps/mcp-server/src/interface/mcp/routes/webhookHandler.ts`
+- `apps/mcp-server/src/__tests__/214-telegram-commands.test.ts`
+- `docs/architecture/microservice/mcp-server/news-analysis.md`
+- `docs/handoffs/TASK_NEWS-CMD.md` (this file)
+- `docs/TASKS.md` (NEWS-CMD-IMPL → Review)
