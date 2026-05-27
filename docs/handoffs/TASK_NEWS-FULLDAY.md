@@ -220,3 +220,58 @@ Exact insertion point: after `fmtNum` function closing brace (L92), before the s
 ### Scan clean: true
 
 No DDD violations. No new infra. No cross-zone imports. No new DB schema. Import direction: `telegramCommands.ts` (infrastructure) reads from `schema-news.ts` (infrastructure) — same layer, no violation. `stripHtml` helper is pure presentation-layer, no domain import. `chunkStories` unchanged.
+
+---
+
+## [QA] Review Record — NEWS-FULLDAY
+
+**date:** 2026-05-28
+**commit under test:** 99f433ec
+**verdict:** APPROVED
+
+### Test Results
+
+- Target test file `214-telegram-commands.test.ts`: **60 pass / 0 fail** (independently re-run, not trusting dev claim)
+- T-NEWS-1..8 regression: all 8 still pass unmodified (confirmed in run output)
+- T-NEWS-9 (dedup survivor): PASS
+- T-NEWS-10 (3 distinct): PASS
+- T-NEWS-11 (HTML-strip removes tags): PASS
+- T-NEWS-12 (full-day >20 uncapped): PASS
+- T-STRIP-1..7 (stripHtml unit): all 7 PASS
+- TypeScript: `pnpm --filter vn-market check` (bun tsc --noEmit) → **exit 0, 0 errors**
+
+### AC Coverage
+
+- AC-FR1-1 (no-arg uncapped): PASS — `handleNews` confirmed at L597-606; no LIMIT clause on the default path. `DEFAULT_LIMIT=20` removed, `MAX_LIMIT_EXPLICIT=200`, `FALLBACK_LIMIT=20`.
+- AC-FR1-2 (explicit /news N): PASS — L586-596, LIMIT applied with MIN(200, N)
+- AC-FR1-4 (HELP_TEXT updated): PASS — L81: `/news [N]               Tất cả tin quan trọng hôm nay (hoặc N bài gần nhất)`
+- AC-FR1-5 (header uses post-dedup count): PASS — L668
+- AC-FR2-1/2/3/4/5/7 (dedup): PASS — L631-668, normalizeTitle + Map<string,true> + first-wins
+- AC-FR3-1..10 (stripHtml): PASS — `export function stripHtml` defined at L113, module-level, single definition confirmed (`grep` finds 1 definition only)
+- AC-FR4-2 (impact_score never in output): PASS — `impact_score` only in NewsRow interface + SELECT; never emitted as a string
+- AC-FR5-1 (empty-DB → "Chưa có tin hôm nay."): PASS — L622-628
+- AC-FR5-2 (fallback header "gần đây"): PASS — L667
+- NFR-1-AC-4 (no HTML in output): PASS — stripHtml applied to source_title + summary before render
+- NFR-3-AC-1 (zone: apps/mcp-server only): PASS — commit 99f433ec touches only mcp-server files
+
+### DDD: PASS
+
+- `telegramCommands.ts` (infrastructure) imports from `domain/services/timeConstants.js` + `application/usecases/assembleEveningSummary.js` + `application/usecases/generatePeriodicSummary.js` — valid DDD direction (infra→app→domain)
+- No domain→infra imports
+- `stripHtml` defined once at module level — no duplicate
+
+### Security: PASS
+
+- Zero `process.env` in `telegramCommands.ts` (confirmed by grep)
+- All SQL in `handleNews` uses parameterized queries (`db.prepare(...).all(midnight, explicitLimit)` / `.all(midnight)` / `.all(FALLBACK_LIMIT)`)
+- No hardcoded secrets/tokens/credentials in modified file
+
+### Live E2E Probe
+
+Command `/news` — `update_id:99001`, `chat_id:99999999`:
+- HTTP 200 `ok` from `https://zenmidi.com/vn-market/webhook`
+- Container log: `[telegram] sendMessage failed status:400 channel:market chatId:99999999`
+- Handler ran, reply built, targeted chatId from update (not hardcoded). 400 = expected (fake chat).
+- No handler error in logs.
+
+### Merge Status: APPROVED — already on main (commit 99f433ec)

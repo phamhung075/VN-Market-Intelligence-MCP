@@ -277,3 +277,56 @@ Then add all tests in `214-telegram-commands.test.ts` (T-NEWS-9..12, T-STRIP-1..
 ### Scan clean: true
 
 No DDD violations. Import direction legal: `telegramCommands.ts` (infrastructure) → `assembleEveningSummary.ts` (application) → domain types. Handlers read domain value objects; never call domain services directly. `summaryText` and `recommendation` fields exist on `PeriodicSummary` but are provably unreachable from the render path — enforced by the test assertions (NFR-1-AC-6 grep-verification mandate). No new infra, no new DB tables, no new MCP tools, no new cron jobs.
+
+---
+
+## [QA] Review Record — RECAP-CMD
+
+**date:** 2026-05-28
+**commit under test:** 99f433ec
+**verdict:** APPROVED
+
+### Test Results
+
+- Target test file `214-telegram-commands.test.ts`: **60 pass / 0 fail** (independently re-run)
+- T-NEWS-1..8 regression: all 8 still pass unmodified
+- T-RECAP-1..7 (handleRecap /recap): all 7 PASS
+- T-RECAPW-1..4 (handleRecapWeek /recapw): all 4 PASS
+- T-RECAPM-1..3 (handleRecapMonth /recapm): all 3 PASS
+- T-RECAP-RT-1..4 (routing): all 4 PASS (including T-RECAP-RT-4 /help lists all 3 new commands)
+- TypeScript: **exit 0, 0 errors**
+
+### AC Coverage
+
+- Handlers defined: `handleRecap`, `handleRecapWeek`, `handleRecapMonth` at L751, L865, L883 — all async, all return `{ texts: string[] }`, all have `catch` returning Vietnamese error strings
+- Router wiring: L1005-1016 — three `if (cmd === "/recap*")` branches before the switch block
+- HELP_TEXT: L82-84 — all 3 commands listed with Vietnamese descriptions
+- NFR-1-AC-6 (summaryText/buildSummaryText never in output): PASS — grep of telegramCommands.ts confirms `summaryText` and `recommendation` fields never appear in any string literal output
+- AC-CHUNK-1/2/3 (chunk boundary): PASS — `splitBlockAtNewlines` helper at L711 + `chunkStories` called at L854, L965
+- assembleFn injectable wrapper: PASS — `handleRecap(db, assembleFn?)` signature at L751-753; production omits it
+- `stripHtml` reused from NEWS-FULLDAY — exactly one definition at L113, RECAP-CMD handlers call it at L796, L923
+
+### DDD: PASS
+
+- `telegramCommands.ts` (infrastructure) imports `assembleEveningSummary` + `generatePeriodicSummary` from `application/usecases/` — valid DDD direction (infra→app→domain)
+- Domain value objects (`EveningSummary`, `PeriodicSummary`) read-only, never mutated by handlers
+- No domain→infra violations
+
+### Security: PASS
+
+- Zero `process.env` in `telegramCommands.ts`
+- No hardcoded secrets
+- No SQL in recap handlers (they call existing use-cases, not raw SQL)
+
+### Live E2E Probes
+
+All four commands probed synthetically via `update_id:99001-99004`, `chat_id:99999999` to `https://zenmidi.com/vn-market/webhook`:
+
+- `/news` (update 99001): HTTP 200. Log: `sendMessage failed status:400 chatId:99999999`. Handler ran, reply targeted originating chat. No errors.
+- `/recap` (update 99002): HTTP 200. Log: `[assembleEveningSummary] summary persisted filePath:reports/2026-05-28-evening.json` + `sendMessage failed status:400 chatId:99999999`. Real assembly ran without error. Reply targeted originating chat.
+- `/recapw` (update 99003): HTTP 200. Log: `[generatePeriodicSummary] stored id:weekly-2026-05-25` + `sendMessage failed status:400 chatId:99999999`. Weekly summary assembled and stored. Reply targeted originating chat.
+- `/recapm` (update 99004): HTTP 200. Log: `[generatePeriodicSummary] stored id:monthly-2026-05-01` + `sendMessage failed status:400 chatId:99999999`. Monthly summary assembled and stored. Reply targeted originating chat.
+
+All four handlers: (a) reached `handleTelegramCommand`, (b) correct handler ran without throwing, (c) reply attempted to originating chatId. 400 = expected for non-existent test chat.
+
+### Merge Status: APPROVED — already on main (commit 99f433ec)
