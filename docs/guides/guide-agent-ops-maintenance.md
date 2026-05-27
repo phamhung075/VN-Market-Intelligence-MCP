@@ -37,7 +37,7 @@ Each agent maintains their own zone. Like an employee who keeps their processes 
 | Document | Action | When |
 |----------|--------|------|
 | Own `.claude/agents/<id>.md` | Update version, fix capabilities | Doc self-heal |
-| Own `.claude/flows/<id>/*.md` | Fix tool names, steps, add missing steps | Doc self-heal |
+| Own `docs/agents/<id>/flow/*.md` | Fix tool names, steps, add missing steps | Doc self-heal |
 | Own notebook | Overwrite with fresh lessons | End of cycle |
 | Own session logs | Append cycle entry | Every cycle |
 | Own service docs | Update README | After code tasks |
@@ -60,7 +60,7 @@ document_registry:
   static:
     - path: .claude/agents/<agent-id>.md
       type: definition
-    - path: .claude/flows/<agent-id>/cycle.md
+    - path: docs/agents/<agent-id>/flow/cycle.md
       type: flow
 
   dynamic:

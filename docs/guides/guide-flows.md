@@ -8,7 +8,7 @@ Flow files = step-by-step instructions for agents. Two classes: cowork (analysis
 
 ### 6.1 Cowork Flow Template
 
-`.claude/flows/<agent-id>/cycle.md` — real-time market analysis loop.
+`docs/agents/<agent-id>/flow/cycle.md` — real-time market analysis loop.
 
 **Structure:**
 1. Bootstrap (market context, signals, status)
@@ -24,7 +24,7 @@ Flow files = step-by-step instructions for agents. Two classes: cowork (analysis
 
 ### 6.2 Dev Flow Template
 
-`.claude/flows/developer/microservice-main.md` (shared) + dev-<service> pointers.
+`docs/agents/developer/flow/microservice-main.md` (shared) + dev-<service> pointers.
 
 **Structure:**
 1. Handoff read (task scope, requirements, zone)

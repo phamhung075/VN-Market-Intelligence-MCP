@@ -8,7 +8,7 @@ Dev-team orchestration, context budgets, and state preservation across compactio
 
 ### Flow State to Preserve at Each Step
 
-When hooks fire during `.claude/flows/dev-team/main.md`, the **main terminal** MUST offload:
+When hooks fire during `docs/agents/dev-team/flow/main.md`, the **main terminal** MUST offload:
 
 | Step | State to preserve | Where |
 |---|---|---|

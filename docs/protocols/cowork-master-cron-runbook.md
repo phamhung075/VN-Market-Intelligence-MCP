@@ -4,7 +4,7 @@
 **Last updated:** 2026-05-20 (Sprint 1957b)
 **Related skill:** `.claude/skills/cron-cowork-team/SKILL.md`
 **Schedule SSOT:** `docs/data/cowork-schedule.json`
-**Dispatcher flow:** `.claude/flows/cowork-team/main.md`
+**Dispatcher flow:** `docs/agents/cowork-team/flow/main.md`
 **System-auditor Tier-1 link:** see `docs/protocols/system-audit-runbook.md` — if Tier-1 detects cowork silence, follow this runbook.
 
 ---
@@ -81,7 +81,7 @@ Step 3: Wait up to 15 min for next tick
   → If signals appear: DONE. Layer B restored.
 
 Step 4: If no signal after 2 ticks (30 min):
-  → Read .claude/flows/cowork-team/main.md — check for syntax errors
+  → Read docs/agents/cowork-team/flow/main.md — check for syntax errors
   → Verify docs/data/cowork-schedule.json is valid JSON:
       jq '.' docs/data/cowork-schedule.json
   → Check .claude/scripts/cowork-match-slots.js exists
@@ -186,7 +186,7 @@ Escalate (drop signal `docs/signals/agent-father-<ISO>-cowork-escalation.json`, 
 - `/cron-cowork-team` succeeds (CronList shows dispatcher), telemetry signals appear, but **2 full ticks pass with zero MARKET messages** during active VN market hours.
 - `cowork-match-slots.js` exits non-zero or returns non-JSON output consistently across 2 ticks.
 - `docs/data/cowork-schedule.json` is missing or invalid JSON.
-- `.claude/flows/cowork-team/main.md` returns a parse or execution error visible in telemetry.
+- `docs/agents/cowork-team/flow/main.md` returns a parse or execution error visible in telemetry.
 
 These indicate an infrastructure or flow-file defect, not a session-evaporation issue. dev-mcp-server handles Docker/MCP layer; agent-father handles flow/skill/schedule-file layer.
 

@@ -17,7 +17,7 @@ Full schedule → `docs/standards/cron-jobs.md` § Chef Cook Schedule (SSOT).
 | `45 8 * * 1-5` | 15:45 | `eod` | unified-agent |
 | `45 19 * * *` | 02:45+1 | `evening` | unified-agent |
 
-The registered cron expression is `29 * * * *` (hourly at :29 UTC). The schedule values above are dispatch time-windows handled inside `.claude/flows/unified-agent/main.md` — the cron fires each hour and exits immediately outside these windows.
+The registered cron expression is `29 * * * *` (hourly at :29 UTC). The schedule values above are dispatch time-windows handled inside `docs/agents/unified-agent/flow/main.md` — the cron fires each hour and exits immediately outside these windows.
 
 Minimum guaranteed dishes per weekday: 3 (morning + eod + evening). Intraday fires every hour 02–08 UTC but exits silently when 0 clusters qualify.
 

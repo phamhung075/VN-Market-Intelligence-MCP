@@ -2,7 +2,7 @@
 
 **Owned by:** PO / architect
 **Read by:** PO (sprint planning), PM (task scoping), BA (spec sizing)
-**Source:** extracted from `.claude/flows/po/main.md` L26 (c83 — task 1888-CDG-G)
+**Source:** extracted from `docs/agents/po/flow/main.md` L26 (c83 — task 1888-CDG-G)
 
 ---
 

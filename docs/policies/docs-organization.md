@@ -32,7 +32,7 @@ Creating a file in the wrong place causes duplication debt that requires manual 
 | `docs/standards/` | Format specs / schemas / tool lookups | Stable, update on spec change |
 | `docs/references/` | Lookups / rosters / maps / templates | Stable, update on registry change |
 | `.claude/agents/` | Agent configs | Update via agent-md-factory |
-| `.claude/flows/` | Agent flow files | Update via flow guide |
+| `docs/agents/*/flow/` | Agent flow files | Update via flow guide |
 
 ---
 
