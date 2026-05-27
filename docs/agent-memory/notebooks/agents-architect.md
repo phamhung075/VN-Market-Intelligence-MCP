@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-27T18:01:29Z
+
+**Brief:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md`
+
+The cowork-team ephemeral snapshot + scattered signal-JSON model lacks day-long context and has tight delivery coupling across 7+ agents. Designed a shared daily document architecture (one file per agent per day in docs/daily/<date>/, dispatcher-written _header.md for live state, CHEF reads full folder at dish windows, domain agents use delta-read for own section only), a two-lane delivery model (postman cron drains docs/outbox/ for all non-danger output; alert-commander keeps direct send_telegram for danger — preserving alert-split), and a long-horizon recap system (digest-predict owns weekly/monthly/yearly rollups into docs/recaps/). Three-phase migration (Foundation → Parallel Run → Full Cutover) with explicit QA gates and rollback plan. 22 agent-father actions F1–F22.
+
+**Signal dropped:** `docs/signals/cowork-team-daily-document-redesign-20260527T180129Z.json` → agent-father
+
+---
+
 ## 2026-05-27T08:19:28Z
 
 **Brief:** `docs/architecture-briefs/2026-05-27-plain-vietnamese-market-report.md`
