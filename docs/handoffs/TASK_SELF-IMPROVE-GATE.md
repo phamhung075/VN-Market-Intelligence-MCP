@@ -141,3 +141,56 @@ agent-father MUST honor these conditions in SIG-IMPL-MD; dev-team MUST honor C-4
 - **Lane-C anchor:** unchanged — comprehensibility stays human-judged forever.
 
 **RETURN PIPELINE: continue. NEXT: agent-father (SIG-IMPL-MD).**
+
+---
+
+## [PO] SIG-IMPL-GATE Kickoff — Phase 2 lane-b proven-gate CODE — 2026-05-27
+
+**Phase 1 closed.** SIG-IMPL-MD is DONE+committed `062a6569` — agent-father wired EDIT-1..5 into the 5 flow files honoring C-1/C-2/C-3/C-5 (verified: 166 insertions across system-auditor/agents-architect/po/agent-father/dev-team flows). SIG-PO-GATE verdict (above) APPROVE-WITH-CONDITIONS. SIG-IMPL-GATE is now READY (its blocker SIG-PO-GATE is resolved). I am routing it through the full dev-team chain **po→ba→architect→pm→dev-mcp-server→qa** with the QA gate. **NEXT agent: ba** (decompose into atomic tasks).
+
+### What SIG-IMPL-GATE builds (the brief §9 Phase 2 + SPIKE_1947 §6 Phase 1)
+
+This phase ships the lane-b **detection + log + proposal-emit** substrate in SHADOW MODE. The detection layer is ALREADY DESIGNED — do NOT reinvent it. The work is to write the designed-but-never-shipped Sprint-1948 code, EXTENDED with the brief's D-IMPROVE proposal-doc bridge.
+
+**Substrate reconciliation (PO grep-confirmed at kickoff — read this before decomposing):** the Sprint-1948 files do NOT exist in the codebase yet. Sprint 1948 was QUEUED-and-gate-PAUSED (`project-stats.json#previousSprint`: "all 4 tasks BLOCKED") and never shipped. Confirmed ABSENT: `apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts`, `apps/mcp-server/src/domain/services/degradationRules.ts`, `apps/mcp-server/src/infrastructure/db/improveCheckStore.ts`; no `improve_check_log` in `schema-system.ts`; no `SELF_IMPROVE_AUTO_DISPATCH` anywhere. So this is a GREENFIELD build of an ALREADY-SPECIFIED design — the spec is `docs/spikes/SPIKE_1947-auto-improve-loop.md`. **Reuse SPIKE_1947 §4 (detection policy: two-window 7d-vs-30d delta ≥10pp, persistently-low <40% w/ ≥10 samples, coverage-gap), §5 (DEGRADATION_CAUSE_MAP rule table — pure domain, zero imports), §8 (improve_check_log schema), §9 (anti-runaway safety gates), §12 (Phase-1 ACs AC-1..AC-8) verbatim. Do NOT re-litigate the 10pp threshold, the host topology (Option C = scheduler job inside mcp-server, NOT a new service/agent — both rejected in SPIKE §3), or the cron slot (`0 9 * * *`).**
+
+**Files (from SPIKE_1947 §6 Phase 1 — already designed):**
+| File | Change |
+|---|---|
+| `apps/mcp-server/src/infrastructure/db/schema-system.ts` | Add `improve_check_log` table (SPIKE §8 schema) to `initSystemTables()` |
+| `apps/mcp-server/src/infrastructure/db/improveCheckStore.ts` | NEW — snapshot write/read for recheck baseline |
+| `apps/mcp-server/src/domain/services/degradationRules.ts` | NEW — `DEGRADATION_CAUSE_MAP` rule table (pure, zero imports) + `detectDegradedSignalTypes()` |
+| `apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts` | NEW — cron entry (Option C, inside mcp-server process) |
+| `apps/mcp-server/src/scheduler/cronConfig.ts` | Add `CRONS.selfImproveOrchestrator` = `0 9 * * *` |
+| `apps/mcp-server/src/scheduler/startScheduler.ts` | Wire the new cron via the existing `cron_job_runs.wrapRun()` dedup pattern |
+
+**Extension from THIS brief (the D-IMPROVE bridge, brief §9 Phase 2):** `selfImproveOrchestratorJob.ts` must write `docs/improvement-proposals/<IMP-YYYYMMDD-slug>.md` in DRAFT form (the §3 proposal schema fields: weakness, evidence, proposed change, **structured `target_agent` + `target_files[]` per C-1**, lane, success-signal, rollback) INSTEAD OF / IN ADDITION TO the original WORK Telegram, and append a DASHBOARD.md row `type=improvement_proposal, status=NEW`. This is the seam that connects the 1948 code substrate to the flow-level governance layer that EDIT-1..5 already wired. Lane classification at emit time uses the §1 three-lane rule (lane-C tested FIRST, first-match-wins).
+
+### Conditions the dev-team chain MUST honor (from SIG-PO-GATE verdict)
+
+- **C-4 (HARD — QA owns it):** `SELF_IMPROVE_AUTO_DISPATCH` is NOT a single global boolean. It MUST be scoped PER-DISPATCH-PATH (e.g. keyed by the gate mechanism / signal_type the lane-b fix targets), **default `false` per path**. A path flips to `true` ONLY after QA records that specific path's GATE-PROOF in the proposal doc. **One global flag that, once true, blesses everything is REJECTED** (`feedback_silent_swallow_serial_bugs`: one green proof masks the next unproven regression class). The architect must design the per-path keying; dev implements it default-false-per-path; QA enforces that no path is `true` without a recorded GATE-PROOF.
+- **Proven-gate proof = QA acceptance, NOT an assertion (brief §5 GATE-PROOF-1..5):** for the detection gate, QA must inject a deliberate violation **INTO THE SUBJECT CODE (not the gate config)** → confirm the gate/test goes RED → remove → confirm GREEN → record "Gate proven red on [date] by [method]. Evidence: [output]" in the proposal doc. "tests pass / lint exit 0" is NOT proof (`feedback_fence_false_green`). If the gate does NOT go red, the path is demoted to lane-A (PO approves manually, no automated backstop).
+- **SHADOW MODE is the ship target.** This task ships detect→log→proposal-emit with auto-dispatch OFF (every path default-false). NO live auto-dispatch fires from this task. The Phase-3 flip of any path to live happens only after that path's QA GATE-PROOF; the global/fleet-wide enable across all paths at once is a SEPARATE, human-gated future step (see Lane-C boundary below) and is OUT of scope here.
+- **Host budget (HARD, `project_host_memory_panic`, 8GB Docker cap):** NO new always-on agent, NO new Docker service, NO new cron beyond the single already-budgeted `selfImproveOrchestratorJob` `0 9 * * *` running inside the existing mcp-server process (~0 MB incremental RAM, ~0.5 KB/day to `improve_check_log`, ~2-5 KB/proposal to `docs/improvement-proposals/`). SPIKE §3 Option A (new microservice) and Option B (new cowork agent) are both REJECTED — do NOT reopen. If the chain finds it needs ANY new always-on tick/agent/service, STOP and return to PO with a line-itemed budget for a critique-gate decision; do NOT add it silently.
+- **No test-baseline regression:** floor 9408 PASS / ceiling 348 FAIL per `project-stats.json`. New code carries ≥6 unit tests per SPIKE §12 AC-8 (degraded / not-degraded / insufficient-sample detection; known-type / `_default` hypothesis lookup; schema table-absent fallback) PLUS the C-4 per-path kill-switch default-false test PLUS the D-IMPROVE proposal-emit test (writes a valid DRAFT doc with structured `target_agent`/`target_files`).
+- **Commit safety:** all on `main`, no branches; explicit-path `git add` only (never `-A`/`.`); no `--force`/`--no-verify`; leave files UNSTAGED — main terminal serializes commits (`feedback_concurrent_commit_race`); do NOT touch any `pilot-status-*.json`.
+- **ops REBUILD (not restart) after dev change** (`feedback_rebuild_after_dev_change`) — the deploy task force-recreates mcp-server so the new cron/code is live; restart relaunches the stale image.
+
+### Lane-C boundary check (per the kickoff STOP-if-human-call-required constraint)
+
+I evaluated whether any part of THIS Phase-2 build requires a human product call. It does NOT:
+- Building shadow-mode detection+log+proposal-emit code is **reversible** (git-tracked, no prod data deletion), the success signal is **machine-checkable** (gate proven red), and it **implements** the gate logic rather than **editing** it. Not lane-C.
+- The per-path kill-switch defaults to `false`, so nothing auto-dispatches to production at ship time. Not an irreversible action.
+
+**The forward-looking items that ARE human-reserved (named, NOT authorized by this kickoff, NOT part of SIG-IMPL-GATE):**
+1. A GLOBAL / fleet-wide flip of `SELF_IMPROVE_AUTO_DISPATCH` to live across ALL paths at once (vs the per-path, post-GATE-PROOF flip C-4 permits) — that broad trust step is a product call.
+2. ANY change to the gate/audit/classification logic itself (the loop rewriting its own success criteria) = lane-C forever per brief §1/§7.
+3. Un-pausing Sprint 1948's production OBSERVE gates or running the orchestrator against a degradation input substrate the PO has not confirmed clean.
+
+None of (1)-(3) is needed to ship the shadow-mode build. If the BA/architect chain discovers the build CANNOT proceed without one of them, the chain STOPS and returns to PO, who escalates to the user with the precise question. **For this kickoff, no such boundary is hit — PIPELINE: continue.**
+
+### BA decomposition instructions (NEXT)
+
+ba: read this handoff + `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md` §9 Phase 2 + `docs/spikes/SPIKE_1947-auto-improve-loop.md` §4/§5/§6/§8/§9/§12. Decompose SIG-IMPL-GATE into atomic dev-mcp-server tasks (mirror SPIKE §15: schema+store / domain+detect / orchestrator+cron+wiring / D-IMPROVE proposal-emit extension / tests) with testable acceptance criteria per task. Make C-4 per-path-default-false an explicit AC. Make the D-IMPROVE proposal doc carry the structured `target_agent`/`target_files` (C-1) an explicit AC. Flag for the architect ONLY the genuinely-open design points: (i) the exact per-path keying scheme for `SELF_IMPROVE_AUTO_DISPATCH` (C-4), and (ii) the slug/id derivation + dedup key for the proposal-doc cooldown guard. Do NOT re-decide the detection policy, host topology, cron slot, or threshold — those are SPIKE-settled. Write the spec to `docs/REQ_SIG-IMPL-GATE.md` and return to the PO approval gate.
+
+**RETURN PIPELINE: continue. NEXT: ba (decompose SIG-IMPL-GATE → `docs/REQ_SIG-IMPL-GATE.md`, return to PO spec gate).**
