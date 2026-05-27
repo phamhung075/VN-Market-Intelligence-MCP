@@ -56,3 +56,167 @@ Hand to architect to confirm the coverage mechanism + that dedup/strip are pure 
 ## ACK log
 
 - 2026-05-27T21:41:17Z — PO: sprint scoped, goal + BA task written; REVISED the "`/news` stays as-is" ruling on the record; folded in NEWS-CMD-HTML-STRIP; confirmed no overlap with sibling RECAP-CMD. NEXT: ba writes `docs/REQ_NEWS-FULLDAY.md`.
+
+---
+
+## [Architect] Brownfield Findings — NEWS-FULLDAY
+
+**Zone:** `apps/mcp-server/` — sole zone, owner `dev-mcp-server`
+
+**BUILD-STANDARD:** lean (feature refinement — `apps/mcp-server/` exists, no new service)
+
+### Verified paths
+
+- `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts` L510-600 — `handleNews` confirmed exactly as BA described. `DEFAULT_LIMIT=20` at L511, `MAX_LIMIT=50` at L513. Primary SQL query with `LIMIT ?` at L541-546. Fallback at L551-559. Header at L572-573. Story block builder at L576-594. Calls `chunkStories` at L597.
+- `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts` L480-500 — `chunkStories(header, storyBlocks, maxLen=4096)` confirmed. Not modified.
+- `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts` L461-477 — `midnightVietnamAsUtcInline()` confirmed. Not modified.
+- `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts` L72-83 — `HELP_TEXT` constant, line 77: `/news [N]   Tin tức hôm nay (mặc định 20 bài)` — must be updated.
+- `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts` L631-636 — `/news` branch in `handleTelegramCommand` — calls `handleNews(db, args)` and spreads `texts`. No change needed to this branch.
+- `apps/mcp-server/src/__tests__/214-telegram-commands.test.ts` — BA-confirmed existing T-NEWS-1..8. Extension point for T-NEWS-9..12 and T-STRIP-1..7.
+- `apps/mcp-server/src/infrastructure/db/schema-news.ts` — `rag_analyses` schema. Columns confirmed: `source_title`, `source_url`, `summary`, `sentiment`, `impact_score`, `created_at`, `published_at`. No schema change needed.
+
+**Greenfield confirmation:**
+`stripHtml` is completely absent from `apps/mcp-server/src/` (grep-verified). Defined once in this sprint as a module-level export in `telegramCommands.ts`. Zero collision risk.
+
+**Reuse patterns:**
+- `chunkStories` — called unchanged; it is the length safety-valve for the uncapped primary query result.
+- `sentimentLabel`, `midnightVietnamAsUtcInline`, `fmtNum` — reused unchanged.
+- `NewsRow` interface inside `handleNews` must be extended to include `source_url` for dedup secondary key (or a new `seedNewsTodayWithUrl` test helper must add it — dev choice; `source_url` is already in `rag_analyses`).
+
+### DDD layer assignments
+
+| Change | Layer | Rationale |
+|---|---|---|
+| `export function stripHtml(...)` | Interface / Presentation | Pure render-time transform, no domain state. Module-level to be shared with RECAP-CMD. |
+| Dedup logic in `handleNews` | Application (in-handler) | Post-query data reduction, no side effects, no domain invariant. Consistent with established pattern of lightweight read-only handlers. |
+| Remove DEFAULT_LIMIT / update HELP_TEXT | Interface | Argument parsing + query limit = presentation-tier concern. |
+| `rag_analyses` read — no schema change | Infrastructure (read-only) | DB contract frozen. |
+
+### Resolved design decisions
+
+**B1 — Full-day cap mechanism (RESOLVED)**
+
+Decision: **remove the `LIMIT` clause from the primary (today) query entirely** when no explicit `/news N` argument is provided.
+
+Rationale:
+1. A large ceiling constant (9999) is safer from a SQLite perspective but adds a hidden assumption that no real day ever hits it. It is also misleading — the code reads as though there is a limit when there is not. Removal is cleaner and self-documenting.
+2. The length safety-valve is `chunkStories`, not SQL. Removing LIMIT from SQL does not affect the 4096-char Telegram send-loop in any way — `chunkStories` already handles any size.
+3. SQLite is stable with full-table scans on `rag_analyses` ordered by `impact_score DESC, created_at DESC`. The table is a time-bounded single-day working set (confirmed 174 rows max on a busy day). No full-table risk.
+4. The explicit `/news N` path continues to apply `LIMIT MIN(MAX_LIMIT_EXPLICIT, N)` unchanged.
+
+Implementation: the two-branch query pattern in `handleNews` becomes:
+
+```
+// No-argument path: SELECT ... WHERE created_at >= ? ORDER BY impact_score DESC, created_at DESC
+//                   (no LIMIT clause)
+// Explicit-N path:  SELECT ... WHERE created_at >= ? ORDER BY impact_score DESC, created_at DESC LIMIT ?
+//                   with limit = MIN(MAX_LIMIT_EXPLICIT, parsed_N)
+```
+
+`DEFAULT_LIMIT` constant is removed entirely. `MAX_LIMIT` is renamed `MAX_LIMIT_EXPLICIT` and raised to **200** (BA recommendation confirmed: allows an explicit request to reach a large set on a heavy news day; aligns with the confirmed 174-row live observation plus headroom).
+
+For `/news 0` or `/news -1` (invalid explicit N), treat as no-argument — use the uncapped primary query. Dev implements: `if (parsed > 0)` guard already exists at L519; values <= 0 fall through to the no-arg path naturally.
+
+**B2 — Fallback path cap (RESOLVED — PO already ruled "capped"; architect picks number)**
+
+Decision: **`FALLBACK_LIMIT = 20`** as a named constant.
+
+Rationale:
+1. The fallback fires only when today has zero rows — it shows multi-day stale data. Returning 20 rows is the established user expectation from the original NEWS-CMD sprint and the live behaviour. No reason to change it — the PO explicitly ruled this path stays capped.
+2. 20 is the right number: it is enough for the user to see recent news without flooding with potentially weeks-old content. The BA recommendation of "~20" is confirmed as the exact value.
+3. Named constant `FALLBACK_LIMIT` (rather than inline `20`) keeps the code self-documenting.
+
+The fallback path also retains its own `LIMIT ?` bound to `FALLBACK_LIMIT`:
+
+```
+// Fallback path (zero today-rows): always capped at FALLBACK_LIMIT=20
+// SELECT ... ORDER BY impact_score DESC, created_at DESC LIMIT 20
+```
+
+If the user typed `/news N` and today is empty, the fallback still uses `FALLBACK_LIMIT` (not the user's N), because the fallback is degraded-mode stale data — the user's explicit N is irrelevant in that context. This is consistent with the PO's UX rationale.
+
+### Exact functions / signatures to add or modify
+
+**File: `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts`**
+
+1. **ADD** (before the `midnightVietnamAsUtcInline` function, after the `fmtNum` block — approximately after L93):
+
+```typescript
+/**
+ * Strip HTML tags from a string, preserving inner text of element content.
+ * Self-closing / void elements (img, br, hr, input) are discarded entirely.
+ * Null or undefined input returns ''. Never throws.
+ *
+ * Called by handleNews (this sprint) and handleRecap (RECAP-CMD sprint).
+ * Module-level export for unit testing and sibling-sprint reuse.
+ */
+export function stripHtml(raw: string | null | undefined): string {
+  if (raw == null) return "";
+  try {
+    // Remove void/self-closing elements entirely (no inner text to preserve)
+    let s = raw.replace(/<(img|br|hr|input|meta|link|area|base|col|embed|param|source|track|wbr)\b[^>]*\/?>/gi, "");
+    // Replace all remaining tags with their inner text (strip the angle brackets)
+    s = s.replace(/<[^>]*>/g, "");
+    // Collapse runs of whitespace and trim
+    s = s.replace(/\s+/g, " ").trim();
+    return s;
+  } catch {
+    return raw.replace(/<[^>]*>/g, "").trim();
+  }
+}
+```
+
+Exact insertion point: after `fmtNum` function closing brace (L92), before the section comment `// ─── Command handlers ───` (L96). This places it in the module-level helpers block.
+
+2. **MODIFY `handleNews`** (L510-600):
+   - Remove `DEFAULT_LIMIT = 20` constant (L511).
+   - Rename `MAX_LIMIT = 50` → `MAX_LIMIT_EXPLICIT = 200` (L513).
+   - Add `FALLBACK_LIMIT = 20` constant.
+   - Change argument-parsing block: when no arg (or arg <= 0), set `limit = null` (null = uncapped). When valid arg > 0, set `limit = Math.min(MAX_LIMIT_EXPLICIT, parsed)`.
+   - Change primary SQL query: when `limit === null`, omit `LIMIT ?` clause (use a separate prepared statement or construct the SQL string). When `limit` is a number, apply `LIMIT ?`.
+   - Change fallback query: always use `LIMIT FALLBACK_LIMIT` (hardcoded 20 — no user arg applies).
+   - Add `source_url` to the `NewsRow` interface (needed for dedup secondary key; also add `impact_score` to the SELECT for tie-breaking in dedup).
+   - After primary query returns rows, run dedup in-memory per FR-2 spec: build a `Map<string, NewsRow>` keyed on normalized title; iterate rows in SQL order (highest impact first); for each row, compute normalized key via `stripHtml` → trim → lowercase → collapse spaces → strip trailing punctuation. If key not seen, add. If seen, skip. Null/empty titles each get a unique Symbol key (treated as unique).
+   - Build story blocks using `stripHtml(row.source_title) ?? "(không có tiêu đề)"` and `stripHtml(row.summary)` before the 200-char truncation.
+   - Update header count to reflect `dedupedRows.length` (post-dedup count).
+
+3. **MODIFY `HELP_TEXT`** (L77):
+   - Change: `/news [N]   Tin tức hôm nay (mặc định 20 bài)`
+   - To: `/news [N]               Tất cả tin quan trọng hôm nay (hoặc N bài gần nhất)`
+
+### File:line insertion points
+
+| What | File | Lines affected |
+|---|---|---|
+| ADD `export function stripHtml(...)` | `telegramCommands.ts` | After L92 (after `fmtNum` closing brace) |
+| MODIFY `handleNews` — constants + query + dedup + strip | `telegramCommands.ts` | L510-600 (full function rewrite) |
+| MODIFY `HELP_TEXT` `/news` line | `telegramCommands.ts` | L77 |
+| ADD T-NEWS-9..12, T-STRIP-1..7 | `214-telegram-commands.test.ts` | Append to existing `handleNews` describe block |
+
+### Test approach
+
+**Framework:** Bun test, in-memory SQLite via `makeDb()` (existing helper). Zero network, zero credentials, zero filesystem.
+
+**T-STRIP-1..7:** Standalone `describe("stripHtml")` block. Direct unit tests — no DB needed. Input strings → expected output. All 7 cases from the spec matrix. Can live in `214-telegram-commands.test.ts` or a separate `215-strip-html.test.ts` (dev choice — same file is simplest).
+
+**T-NEWS-9..12:** Extend existing `describe("handleNews")` block.
+- `seedNewsTodayWithUrl` helper: extend `seedNewsToday` to accept `{ sourceUrl?: string | null }`. Adds `source_url` column seeding.
+- T-NEWS-9 (dedup): seed 2 rows with normalized-equal titles, different `impact_score`. Assert 1 occurrence in joined output from Row B (higher score).
+- T-NEWS-10 (3 distinct): seed 3 distinct-title rows. Assert all 3 appear.
+- T-NEWS-11 (HTML strip): seed 1 row with HTML in both `source_title` and `summary`. Assert no `<` `>` in joined output; assert inner text present.
+- T-NEWS-12 (full-day >20): seed 25 distinct rows (all today). Call `handleNews(db, [])`. Assert all 25 titles appear in `result.texts.join("\n")`. Assert each `result.texts[i].length <= 4096`.
+
+**Regression guard:** T-NEWS-1..8 pass unchanged. Any modification to `handleNews` that breaks them is a defect.
+
+**`tsc` zero errors:** `NewsRow` interface extended with `source_url: string | null` and `impact_score: number | null`. The `stripHtml` export must be typed `(raw: string | null | undefined): string`.
+
+### Risk flags
+
+- **R-LOW — regex HTML stripping correctness:** The regex approach handles the AC-defined cases correctly. It does not handle malformed HTML (e.g. `<a href=">broken"`) in a semantically correct way — but AC-FR3 explicitly accepts "best effort, no crash, no raw `<` in output". The void-element regex must be placed before the generic tag-strip regex to avoid leaving orphan text attributes.
+- **R-LOW — dedup null/undefined title handling:** null titles in SQLite are returned as `null` in Bun SQLite. The dedup Map must use a unique Symbol per null-title row (not the string `"null"`). Developer must test this explicitly (T-NEWS has AC-FR2-4 for this case).
+- **R-LOW — SQL two-branch query:** the uncapped and capped branches use different SQL strings. Either use two separate `db.prepare()` calls (cleaner) or a conditional string — both are fine. Avoid template-string SQL injection risk; the only interpolation is the hardcoded `FALLBACK_LIMIT` constant (no user input in SQL string).
+- **R-INFO — `impact_score` needed for dedup tie-break:** the current `NewsRow` interface at L524 does not include `impact_score`. The SELECT must be extended. This is a non-breaking change — `impact_score` is only used in-handler for tie-breaking, never in output.
+
+### Scan clean: true
+
+No DDD violations. No new infra. No cross-zone imports. No new DB schema. Import direction: `telegramCommands.ts` (infrastructure) reads from `schema-news.ts` (infrastructure) — same layer, no violation. `stripHtml` helper is pure presentation-layer, no domain import. `chunkStories` unchanged.
