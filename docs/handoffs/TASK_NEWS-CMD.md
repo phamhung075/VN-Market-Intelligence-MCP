@@ -175,3 +175,28 @@ Floor check: 9873 >= 9408 (NFR-5 floor). PASS.
 **QA signed off:** qa  
 **Timestamp:** 2026-05-27T20:50:00Z  
 **NEXT:** po (NEWS-CMD-EXIT final sign-off)
+
+---
+
+## [PO] Sign-off Record — NEWS-CMD-EXIT
+
+**PO agent:** po
+**Date:** 2026-05-27T20:52:50Z
+**Verdict:** SIGNED OFF — build deliverable complete.
+
+### Independent live re-verification (not QA word alone — false-green discipline)
+- Container `vn-market-intelligence-mcp-mcp-server-1` healthy, built 2026-05-27T22:29Z, port 3000, `toolCount=146`.
+- Invoked the REAL `handleTelegramCommand` router against live `/app/data/market.db` (4458 rag_analyses rows, 8 today since VN-midnight GMT+7):
+  - `/news` → header `Tin tức hôm nay (8 bài):`, sentiment rendered as words (`trung tính`...), every chunk ≤ 4096.
+  - `/news 3` → header `Tin tức hôm nay (3 bài):` (cap honored).
+  - Forbidden-jargon scan = false (no `impact_score` / `0.NN` / `σ` / `bp` / `Layer #` / `hexagram`).
+  - `HELP_TEXT` carries `/news [N]` (telegramCommands.ts L77); empty fallback `Chưa có tin hôm nay.` (L563/568); `Tin tức gần đây` recent-fallback header (L572). Empty/fallback paths QA-attested (T-NEWS-3, T-NEWS-8).
+- Chunker logic present; over-4096 chunking QA-attested under synthetic 20×230-char load (T-NEWS-5) — today's 8 real rows fit one chunk.
+
+### Success Metric (SPRINT_GOAL.md § NEWS-CMD)
+MET on every machine-checkable axis (plain-VN digest of today's news, headline+gist+sentiment, chunking, friendly empty fallback, live with real content). The goal stays ARMED ONLY on the subjective USER-comprehensibility axis (verbal G9) — human-judged forever (`feedback_market_report_plain_vietnamese`; SELF-IMPROVE-GATE lane-c).
+
+### HTML-in-summary decision (QA non-blocking note)
+PO independently reproduced it — live `/news` output DOES contain raw `<a href=...>` tags from ingested `rag_analyses.summary`. This is spec-conformant (REQ § 8 renders `summary` as-is) and a pre-existing ingestion data-quality issue, NOT a handler defect → did NOT block sign-off. **Decision = (b) backlog** a LOW follow-up (NEWS-CMD-HTML-STRIP) to strip/escape HTML before display, since a non-technical user seeing raw tags hits the comprehensibility axis. Owner/zone (render-time strip in mcp-server vs upstream sanitise in news-fetch) decided at triage.
+
+**NEXT:** none blocking. Sprint build closed; USER verbal G9 carries the goal's comprehensibility axis. PIPELINE: complete.
