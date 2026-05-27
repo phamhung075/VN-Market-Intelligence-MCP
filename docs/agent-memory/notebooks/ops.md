@@ -3038,3 +3038,69 @@ When Cloudflare Tunnel routes traffic, it does NOT strip the path prefix automat
 ### Status
 ✓ CLOSED — Telegram webhook routing fixed. Webhook now registered at `https://zenmidi.com/vn-market/webhook` and receiving updates correctly. No further action needed.
 
+
+---
+## Session: 2026-05-27 (continued)
+
+**Task:** REBUILD-AFTER-DEV-CHANGE — mcp-server rebuild after SELF-IMPROVE-GATE Phase 2 code merge (commit ef109a76)
+
+### Cycle Summary
+- Sprint SELF-IMPROVE-GATE Phase 2 landed code in apps/mcp-server (commit ef109a76, now in main ancestry)
+- New scheduler job: `selfImproveOrchestratorJob` (cron `2 9 * * *`, daily 09:02 UTC)
+- New DB table: `improve_check_log` (created via initSystemTables() on startup)
+- Rebuild requirement: Container restart would use stale image — rebuild mandatory per feedback_rebuild_after_dev_change
+- Force-recreate-only rebuild executed: `docker compose up -d --build --force-recreate --no-deps mcp-server`
+- No other containers touched (--no-deps ensured); host safe (Docker capped 8GB)
+- Container healthy within ~5s; scheduler registered all 74 cron keys cleanly
+- New job code verified LIVE; shadow mode enabled (SELF_IMPROVE_AUTO_DISPATCH_* env vars NOT set)
+
+### Execution Timeline
+- 2026-05-27 23:55:48 UTC — docker compose up -d --build --force-recreate --no-deps mcp-server started
+- 2026-05-27 23:55:48 UTC — TypeScript compilation + image export (multiarch build)
+- 2026-05-27 23:55:51 UTC — Container recreated and started
+- 2026-05-27 23:55:56 UTC — Container healthy (5s from start, within 60s start_period)
+- 2026-05-27 23:56:00 UTC — Verification gates began
+
+### Key Results
+
+**1. Container Health:**
+- Status: Up 46+ seconds (healthy) at verification
+- Image: sha256:ac271e8d9bd6b078bd17ad2907dd8d2d2b1927ec35c2c0e5364a77a41653309d (rebuilt TODAY 23:55:48)
+- Port 3000: bound correctly, health endpoint responds 200 OK
+- toolCount: 146 (all MCP tools loaded)
+- No crash loops, no unhandled errors in startup logs
+
+**2. Scheduler Job Registration:**
+- ✓ Scheduler started cleanly: `[bootstrap] Scheduler started — cron jobs active`
+- ✓ All 74 cron keys registered in CRONS map (inclusive of WAL checkpoint + 5 summary jobs + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor)
+- ✓ selfImproveOrchestratorJob configured to CRONS.selfImproveOrchestrator = '2 9 * * *' (verified in cronConfig.ts)
+- ✓ Job registration line found: `cron.schedule(CRONS.selfImproveOrchestrator, async () => { ... await jobRunRepo.wrapRun('selfImproveOrchestratorJob', ...) })`
+- No "already running" warnings, no registration errors in logs
+
+**3. Database Table (improve_check_log):**
+- ✓ Table exists: `SELECT name FROM sqlite_master WHERE type='table' AND name='improve_check_log'` returns 1 row
+- ✓ Schema verified: INTEGER id (PRIMARY KEY), TEXT signal_type (NOT NULL), REAL window_7d_rate, REAL window_30d_rate, INTEGER sample_count_7d, INTEGER sample_count_30d
+- ✓ Created via initSystemTables() — confirmed live in container market.db at `/app/data/market.db`
+- No integrity issues, table ready for data writes
+
+**4. Shadow Mode Verification:**
+- ✓ SELF_IMPROVE_AUTO_DISPATCH_TALENT_BUILDER: NOT SET
+- ✓ No SELF_IMPROVE_AUTO_DISPATCH_* env vars present in container env
+- ✓ Confirmed via `docker compose exec mcp-server env | grep SELF_IMPROVE` → (no output)
+- Code will run in observation-only mode: detects but does NOT dispatch tasks
+
+### Acceptance Criteria
+
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| Container running/healthy | ✓ PASS | `docker ps`: healthy, port 3000 bound, health endpoint 200 |
+| New job registered without crash | ✓ PASS | Scheduler logs show 74 keys registered, no error for selfImproveOrchestratorJob |
+| improve_check_log table exists | ✓ PASS | Live query returns 1 row, full schema verified |
+| Shadow mode enabled | ✓ PASS | No SELF_IMPROVE env vars set; code runs in observation-only mode |
+
+### Signals Emitted
+- docs/agent-memory/notebooks/ops.md — session appended (this entry)
+
+### Status
+COMPLETE — mcp-server rebuild successful. Phase 2 scheduler job registered and ready. improve_check_log table live. Shadow mode enabled for observation-only run.
+NEXT: QA gate-proof (TASK-6) validates Phase 2 logic running in-container without spawning tasks.
