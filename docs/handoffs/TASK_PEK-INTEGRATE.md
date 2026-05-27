@@ -680,3 +680,96 @@ The `OcrBackendPort` "candidate" carried in code since PEK-IMPL is now a formal 
 ### Commit discipline
 
 PEK subtree (`apps/pdf-extractor/PDF-Extract-Kit/`) left UNSTAGED/pristine. PO stages ONLY the three doc files via scoped per-file `git add` (NEVER `-A`/`.`). Sprint goal remains ARMED until USER verbal G9.
+
+---
+
+## [Architect] PEK-MULTIPAGE — G9-REJECTED Root-Cause Brief (2026-05-27T17:41Z)
+
+**Zone:** `apps/pdf-extractor/` (single zone)
+**BUILD-STANDARD:** not-applicable (bug-fix)
+**Brief:** `docs/architecture-briefs/2026-05-27-pek-multipage.md`
+**Escalation trigger:** G9 REJECTED — user found that multi-page financial statement tables produce output for only 1 page. Round 5 on pdf-extractor module (4 prior fix commits). Recurring-bug escalation mandates root-cause brief.
+
+### Verdict: BACKEND
+
+Live DB query confirms: `bctc_page_zones` has 30 pages classified `page_type='table'` for FPT (`e71f845d`). Zone overlay IS correctly persisted — display is correct. The defect is upstream in the PEK extraction: `bctc_layout_units` stores 23 populated units, each covering a single page (e.g. `page_numbers_json: "[5]"`, `"[7]"`, etc). A 3-page balance sheet run should produce 1 unit with `pages=[7,8,9]` and 30+ rows; instead it produces 3 separate 1-page units with 2 rows each.
+
+### Root Cause
+
+**RC-1 (CRITICAL) — `_group_bboxes_into_units` in `pek_engine_adapter.py`:** The X-range shift threshold (10% of page width) fires on natural BCTC column-header position variance, continuation-page indentation, and footer-area drift — splitting one financial statement into 3-5 single-page units. The algorithm has no concept of consecutive-table-page continuity.
+
+**RC-2 (HIGH) — double `finalize_unit()` on prose pages:** Each prose page calls `finalize_unit()` twice, creating a ghost empty unit for the prose page itself. Evidence: 78 total `bctc_layout_units` rows for FPT (2 per schema_page), with every table schema_page appearing once populated and once empty (the ghost twin).
+
+**RC-3 (HIGH) — QA gate is page-blind:** "23/23 non-empty units" counts rows with `LENGTH(stitched_markdown) > 0`. This passes even when each unit covers 1 page. Never validates that consecutive table pages are grouped into one unit.
+
+### Fix Design (§5 in brief)
+
+**One file, one function:** Replace `_group_bboxes_into_units` body in `apps/pdf-extractor/infrastructure/pek_engine_adapter.py`. New algorithm: consecutive table pages → single unit (separated by prose-page boundaries). Cap at 8 consecutive table pages per unit. Double-finalize eliminated structurally. Function signature unchanged.
+
+### QA Acceptance Contract (§6 in brief — replaces page-blind check)
+
+Four gates — ALL must pass:
+- **Gate A:** Every `page_type='table'` page in `bctc_page_zones` must be covered by at least one unit with `LENGTH(stitched_markdown) > 0`.
+- **Gate B (sentinel):** FPT pages 7, 8, 9 must appear together in a single unit with `row_count >= 10`.
+- **Gate C:** `ghost_table_units = 0` — no `page_type='table'` unit with empty markdown.
+- **Gate D:** Corpus sweep — Gates A+C for every report_id.
+
+**Ops pre-requisite:** DELETE old `bctc_layout_units` + `bctc_page_zones` for FPT sentinel before re-extraction (see brief §9 R-MED). Then rebuild + force-recreate + trigger re-extraction.
+
+### Frozen Surfaces (unchanged)
+
+`text_table_extractor.py`, `sandbox/runner.py`, `pilot-status-pdf-extractor.json`, `generic_md_table_extractor.py`, `PDF-Extract-Kit/` subtree.
+
+**NEXT: dev-pdf-extractor** — implement `_group_bboxes_into_units` rewrite per brief §5. Then ops --no-cache build + DELETE + force-recreate + re-extract. Then qa four-gate check. Then po PEK-MULTIPAGE-EXIT. Then USER verbal G9.
+
+---
+
+## [dev-pdf-extractor] PEK-MULTIPAGE — DONE 2026-05-27
+
+**SHA:** `2e228f0d`
+**Status:** IMPLEMENTATION COMPLETE — committed to main.
+
+### Changes (2 files, 1 commit)
+
+**`apps/pdf-extractor/infrastructure/pek_engine_adapter.py`:**
+- Rewrote `_group_bboxes_into_units` body (function signature unchanged, same parameters, same return type).
+- RC-1 FIX: removed 10% X-range shift threshold entirely. New algorithm: consecutive table pages aggregate into one unit. A prose or blank page finalizes the current table unit (if non-empty) and starts no unit itself.
+- RC-2 FIX: double `finalize_unit()` on prose pages structurally eliminated — prose pages are handled by a single `finalize_unit()` + reset, never creating a unit entry.
+- Cap guard: `_MAX_CONSECUTIVE_TABLE_PAGES = 8` — at cap, current unit finalized and new unit starts with the next table page.
+
+**`apps/pdf-extractor/__tests__/test_pek_engine_adapter.py`:**
+- Added `TestGroupBboxesIntoUnits` class with 5 cases:
+  - `test_single_table_page_produces_one_unit` — happy-path 1-page unit
+  - `test_three_consecutive_table_pages_produce_one_unit` — RC-1 regression (FPT pages 7-8-9 pattern)
+  - `test_table_prose_table_produces_two_units` — prose-page boundary produces 2 units
+  - `test_prose_only_creates_no_unit` — RC-2 regression (ghost-unit accumulation)
+  - `test_nine_consecutive_table_pages_split_at_cap` — 8-page cap boundary (units: [1-8], [9])
+
+### Verification Results
+
+| Gate | Result |
+|---|---|
+| `python3 -m pytest __tests__/test_pek_engine_adapter.py -v` | 27/27 PASS (22 existing + 5 new) |
+| `python3 -m pytest --ignore=__tests__/integration -q` | 646 passed, 0 failed |
+| `git -C apps/pdf-extractor/PDF-Extract-Kit diff` | EMPTY (pristine) |
+| Staged files | Exactly 2 (per-file explicit `git add` — no wildcards) |
+| Frozen surfaces | text_table_extractor.py + sandbox/runner.py + pilot-status.json + generic_md_table_extractor.py — 0-diff |
+
+### Deviations from Brief
+
+None. Algorithm implemented exactly per brief §5.1. Cap value 8 per §5.1 ("A single financial statement rarely exceeds 8 pages"). `page_dims` parameter retained in signature (unused in new algorithm) — signature unchanged as mandated.
+
+### NEXT
+
+**ops** — `docker compose build --no-cache pdf-extractor`. Then per brief §9 R-MED:
+```sql
+DELETE FROM bctc_layout_units WHERE report_id = 'e71f845d-ffa5-48f9-8f09-30ac2cd09c65';
+DELETE FROM bctc_page_zones WHERE report_id = 'e71f845d-ffa5-48f9-8f09-30ac2cd09c65';
+```
+Then `docker compose up -d --no-deps --force-recreate pdf-extractor`. Then trigger re-extraction for FPT sentinel via `bctcReparseJob` or direct `/pek-extract` API call.
+
+**qa** — run all four gates per brief §6:
+- Gate A: every `page_type='table'` page in `bctc_page_zones` covered by unit with `LENGTH(stitched_markdown) > 0`
+- Gate B: FPT pages 7, 8, 9 in single unit with `row_count >= 10`
+- Gate C: `ghost_table_units = 0`
+- Gate D: corpus sweep — Gates A+C for every report_id
