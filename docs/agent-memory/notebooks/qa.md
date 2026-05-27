@@ -1,5 +1,74 @@
 # QA — Notebook
 
+## cycle-137 · 2026-05-28 · NEWS-FULLDAY + RECAP-CMD dual-sprint gate (commit 99f433ec) — APPROVED
+
+**Task:** Dual QA gate on sprints NEWS-FULLDAY (/news refinement) + RECAP-CMD (/recap /recapw /recapm) | **Verdict:** APPROVED
+
+```
+date: 2026-05-28T00:00Z
+type: sprint-qa-gate (NEWS-FULLDAY + RECAP-CMD, dual-sprint single pass)
+commit_under_test: 99f433ec
+container: vn-market-intelligence-mcp-mcp-server-1 (healthy, 146 tools, Up 5 min at probe time)
+reports: reports/TASK_REPORT_NEWS-FULLDAY.md + reports/TASK_REPORT_RECAP-CMD.md
+
+test_run:
+  command: bun test src/__tests__/214-telegram-commands.test.ts
+  result: 60 pass / 0 fail — GREEN
+  t_news_1_8_regression: ALL 8 PASS unmodified
+  t_news_9_12: PASS (dedup, distinct, HTML-strip, full-day uncapped)
+  t_strip_1_7: PASS (all stripHtml unit cases)
+  t_recap_1_7: PASS (handleRecap happy/empty/chunk/HTML/throw/null-pnl)
+  t_recapw_1_4: PASS
+  t_recapm_1_3: PASS
+  t_recap_rt_1_4: PASS (routing including /help listing all 3)
+  tsc: exit 0 (0 errors)
+
+news_fullday_acs:
+  AC-FR1-1 (no-arg uncapped): PASS — no LIMIT on default path (L597-606)
+  AC-FR1-2 (/news N cap): PASS — MIN(200,N)
+  AC-FR1-4 (HELP_TEXT): PASS — "Tất cả tin quan trọng hôm nay (hoặc N bài gần nhất)"
+  AC-FR2 (dedup): PASS — normalizeTitle + Map first-wins
+  AC-FR3 (stripHtml): PASS — module-level export, 1 definition, T-STRIP-1..7
+  AC-FR4-2 (no impact_score in output): PASS
+  AC-FR5 (fallbacks intact): PASS
+
+recap_cmd_acs:
+  handlers_present: handleRecap L751, handleRecapWeek L865, handleRecapMonth L883
+  router_wiring: L1005-1016 — 3 branches before switch
+  help_text: L82-84 all 3 commands
+  assembleFn_wrapper: PASS — injectable, production omits, tests inject fakes
+  stripHtml_reused: PASS — 1 definition, called at L796 + L923
+  summaryText_never_output: PASS (grep-verified)
+  chunk_boundary: PASS — splitBlockAtNewlines L711
+
+ddd: PASS
+  - telegramCommands.ts (infra) → application/usecases/ → domain: legal direction
+  - No domain→infra violations
+  - stripHtml defined once
+
+security: PASS
+  - zero process.env in telegramCommands.ts
+  - all news SQL parameterized (? placeholders)
+  - no hardcoded secrets
+
+live_e2e:
+  endpoint: https://zenmidi.com/vn-market/webhook (HTTP 200 on all 4 probes)
+  /news (update 99001): sendMessage failed 400 chatId:99999999 — handler ran, reply to originating chatId
+  /recap (update 99002): assembleEveningSummary persisted reports/2026-05-28-evening.json — real assembly OK
+  /recapw (update 99003): generatePeriodicSummary stored id:weekly-2026-05-25 — real assembly OK
+  /recapm (update 99004): generatePeriodicSummary stored id:monthly-2026-05-01 — real assembly OK
+  all 4: correct handler ran, no throw, reply to originating chatId (not hardcoded group)
+  400 = expected for non-existent test chat_id — not a handler error
+
+tasks_md_updated: NEWS-FD-ARCH → DONE, NEWS-FD-EXIT → DONE/PENDING-PO, RECAP-ARCH → DONE, RECAP-EXIT → DONE/PENDING-PO
+handoffs_updated: [QA] Review Record appended to both TASK_NEWS-FULLDAY.md + TASK_RECAP-CMD.md
+
+verdict: APPROVED
+next: po (dual sprint sign-off — NEWS-FD-EXIT + RECAP-EXIT)
+```
+
+---
+
 ## cycle-136 · 2026-05-27 · MACRO-LIVE-PRICES MLP-QA (commit 6102620a, image 2714fa34dd4f) — PASS
 
 **Task:** MLP-QA acceptance gate for Sprint MACRO-LIVE-PRICES | **Verdict:** PASS
