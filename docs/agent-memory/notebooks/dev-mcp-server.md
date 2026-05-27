@@ -1,5 +1,42 @@
 # dev-mcp-server -- Notebook
 
+## c315 · 2026-05-27T21:30Z (SIG-G-T1..T5 — Sprint SELF-IMPROVE-GATE Phase 2)
+
+### SELF-IMPROVE-GATE TASK-1..5 DONE — UNSTAGED
+
+**Task:** Build lanes-B detection substrate + D-IMPROVE proposal-doc bridge. Serial implementation TASK-1→2→3→4→5.
+
+**Files created (6 production + 5 test):**
+- `apps/mcp-server/src/infrastructure/db/schema-system.ts` — MODIFIED: added `improve_check_log` table + index to `initSystemTables()`
+- `apps/mcp-server/src/infrastructure/db/improveCheckStore.ts` — NEW: 4 functions + CoverageGapFinding + types; queryCoverageGaps()
+- `apps/mcp-server/src/domain/services/degradationRules.ts` — NEW: DEGRADATION_CAUSE_MAP (as const) + detectDegradedSignalTypes() pure domain function; zero infra imports
+- `apps/mcp-server/src/scheduler/audits/selfImproveOrchestratorJob.ts` — NEW: 12-step pipeline; DISPATCH_PATHS + isAutoDispatchEnabled() + FIX_AREA_TO_AGENT moved to writer; injectable deps
+- `apps/mcp-server/src/infrastructure/signals/improvementSignalWriter.ts` — NEW: writeImprovementProposal() + appendDashboardRow() + FIX_AREA_TO_AGENT + buildProposalFields()
+- `apps/mcp-server/src/scheduler/cronConfig.ts` — MODIFIED: `selfImproveOrchestrator: '2 9 * * *'` (HN-1: avoids bctcOverdueCheck DAILY + marketOpen WEEKDAYS)
+- `apps/mcp-server/src/scheduler/startScheduler.ts` — MODIFIED: import + register with jobRunRepo.wrapRun()
+- `docker-compose.yml` — MODIFIED: commented-out per-path kill-switch env vars (C-4)
+- `apps/mcp-server/src/__tests__/1948a-improve-check-store.test.ts` — NEW: 6 ACs
+- `apps/mcp-server/src/__tests__/1948b-degradation-rules.test.ts` — NEW: 8 ACs
+- `apps/mcp-server/src/__tests__/1948c-self-improve-orchestrator.test.ts` — NEW: 9 ACs
+- `apps/mcp-server/src/__tests__/1948d-improvement-signal-writer.test.ts` — NEW: 8 ACs
+- `apps/mcp-server/src/__tests__/1948e-dispatch-kill-switch.test.ts` — NEW: 5 ACs
+
+**Gates (targeted test run):**
+- 62 pass / 0 fail across 5 new test files (157 expect() calls)
+- `bun tsc --noEmit`: EXIT 0 (clean)
+- AC-T2-7: grep confirms zero infra/application imports in degradationRules.ts
+- HN-1: cron slot `2 9 * * *` verified (live neighbors: bctcOverdueCheck=`0 9 * * *` daily, marketOpen=`0 9 * * 1-5` weekdays)
+- HN-2: severity order DEGRADED(3) > PERSISTENTLY_LOW(2) > COVERAGE_GAP(1) in SEVERITY_ORDER const
+- C-1: FIX_AREA_TO_AGENT typed constant; resolveTargetAgent() structural lookup; no prose parsing
+- C-4: DISPATCH_PATHS as const; isAutoDispatchEnabled(path: DispatchPath); AC-T5-4 PASS (global flag rejected)
+- C-5: doc-write in try/catch AFTER improve_check_log insert + WORK Telegram; AC-T4-6 PASS
+- docs/improvement-proposals/ directory created; infrastructure/signals/ created
+
+**COMMITTED — commit ef109a76 on main (confirmed post-context-compaction).**
+**NEXT: ops (force-recreate mcp-server — feedback_rebuild_after_dev_change) before QA gate-proof.**
+
+---
+
 ## c314 · 2026-05-27T20:25Z (NEWS-CMD-IMPL — /news Telegram command)
 
 ### NEWS-CMD-IMPL DONE → Review
