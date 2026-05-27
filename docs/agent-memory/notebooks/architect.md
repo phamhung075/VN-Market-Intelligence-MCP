@@ -1,8 +1,42 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-27 21:00 UTC | **Sprint:** NEWS-CMD
+**Last updated:** 2026-05-27 21:30 UTC | **Sprint:** PEK-INTEGRATE Round 6
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## PEK-INTEGRATE — PEK-RENDER-DESIGN (2026-05-27) — DESIGN COMPLETE
+
+**Task:** PEK-RENDER-DESIGN. Round 6 escalation (6 fix commits + G9 rejected twice). Root cause code-proven by main terminal before architect called. Design only — zero code.
+
+**Root causes (not re-derived — already proven):**
+
+1. Dual-path render drift: OCR Text panel reads `pdf_extracted_text` (OLD pipeline); structured-table panel reads `bctc_table_rows` (OLD pipeline); ZONES panel reads `bctc_page_zones` (PEK). PEK never writes `pdf_extracted_text` or `bctc_table_rows`. A perfect PEK extraction cannot change what those two panels show.
+2. 422 re-extract trigger: `PekExtractRequestSchema` requires `pdf_path` (mandatory, no default). The caller sent only `report_id`. Pydantic 422'd every POST. FPT + 9 others never got re-extracted by PEK.
+
+**Decision: Option A** — repoint inspector panels to read PEK `bctc_layout_units`. Rationale: Option B (PEK writes old tables) perpetuates dual-path drift — same class as the bug. Option A extends readers, leaves writers untouched, is fail-loud via `has_pek` flag.
+
+**Key design choices:**
+
+- `has_pek` flag emitted in EVERY response branch from both OCR + table handlers (R-CRIT guard). Never omitted.
+- `pek_coverage_gap: true` when PEK units exist for report but page not covered — prevents silent blank.
+- `json_each(page_numbers_json)` for page coverage lookup — NOT `LIKE '%7%'` (matches 17, 27).
+- 1-indexed page numbers: PEK + inspector both use 1-indexed → no conversion needed.
+- 422 fix: new `POST /api/trigger-pek-extract` on mcp-server — accepts `{report_id}`, looks up `financial_reports.pdf_path`, calls `/pek-extract` with both fields. `PekExtractRequestSchema` stays unchanged.
+- dev-pdf-extractor: ZERO CODE CHANGE. Zero-change task.
+
+**Zone split:**
+- dev-mcp-server: `bctcInspectHandler.ts` (OCR + table panel extensions) + `server.ts` (trigger route) + `bctc-inspector.html` (panel JS update) + new tests.
+- dev-pdf-extractor: verify frozen surfaces only (zero-change task).
+
+**Files authored this cycle:**
+1. `docs/architecture-briefs/2026-05-27-pek-render-seam.md` — NEW (§1 root causes, §2 Option A/B analysis + pick, §3 OCR Text panel new contract, §4 table panel new contract, §5 422 trigger fix + Option T-A, §6 exact files per developer, §7 acceptance test, §8 DDD, §9 risks, §10 hard constraints, §11 verification sequence)
+2. `docs/handoffs/TASK_PEK-INTEGRATE.md` — `[Architect] PEK-RENDER-DESIGN` appended
+3. `docs/TASKS.md` — PEK-RENDER-DESIGN → DONE; PEK-RENDER-MCP → READY; PEK-RENDER-PDFX → READY (zero-change)
+4. `docs/agent-memory/notebooks/architect.md` — this entry
+
+**Next actor:** PO deliberation gate. Then dev-mcp-server (PEK-RENDER-MCP). dev-pdf-extractor (PEK-RENDER-PDFX — zero change, verify frozen surfaces). ops PEK-RENDER-DEPLOY. qa PEK-RENDER-QA. po PEK-RENDER-EXIT. USER G9.
+
+---
 
 ## NEWS-CMD — NEWS-CMD-DESIGN (2026-05-27) — DESIGN COMPLETE
 

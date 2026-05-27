@@ -1139,3 +1139,54 @@ PDF-Extract-Kit/ subtree pristine (`git -C apps/pdf-extractor/PDF-Extract-Kit di
 **TASKS:** Round 6 chain added to `docs/TASKS.md § Sprint PEK-INTEGRATE` — PEK-RENDER-DESIGN (architect, READY) → PEK-RENDER-MCP (dev-mcp-server) + PEK-RENDER-PDFX (dev-pdf-extractor) → PEK-RENDER-DEPLOY (ops) → PEK-RENDER-QA (qa) → PEK-RENDER-EXIT (po) → USER G9.
 
 **NEXT: architect** — write `docs/architecture-briefs/2026-05-27-pek-render-seam.md` per the three design points above. DESIGN ONLY. Return to PO.
+
+---
+
+## [Architect] PEK-RENDER-DESIGN — Design Complete 2026-05-27
+
+**Brief:** `docs/architecture-briefs/2026-05-27-pek-render-seam.md`
+**Zone:** multi — `apps/mcp-server/` (render repoint + trigger) + `apps/pdf-extractor/` (zero code change — PekExtractRequestSchema unchanged)
+**BUILD-STANDARD:** not-applicable (bug-fix)
+
+### Decision: Option A — Repoint Inspector Panels to PEK Tables
+
+Rationale: Option B (PEK writes to old tables) perpetuates dual-path drift — the exact class of bug this sprint is fixing. Option A eliminates the stale read path for PEK-processed reports by extending the readers on the mcp-server side. The architecture invariant (mcp-server sole write owner) is preserved.
+
+**`bctc_table_rows` path (`text_table_extractor.py`) is NOT touched.** It remains the explicit fallback for reports without PEK units, clearly signalled via `has_pek: false` in every response.
+
+### SSOT Design (§3 + §4 in brief)
+
+**OCR Text panel:** `handleBctcInspectOcr` is extended to check `bctc_layout_units WHERE report_id = ?` first. If PEK units exist, return `stitched_markdown` for the unit covering the requested page (via `json_each(page_numbers_json)` — 1-indexed, matching the inspector's existing `?page=N` parameter). Emit `has_pek: true`, `unit_id`, `page_numbers_json`, and `pek_coverage_gap: true` if the page is not covered by any unit. Fallback to `pdf_extracted_text` only when `has_pek: false` (no PEK units for this report). The `has_pek` flag is NEVER omitted — it is the structural guard against silent stale-data fallback.
+
+**Structured-table panel:** `handleBctcInspectTable` is extended with the same priority check. PEK-processed reports return `{ has_pek: true, units: [...] }`. Non-PEK reports return `{ has_pek: false, rows: [...] }`.
+
+**Page-numbering reconciliation:** both PEK and the inspector use 1-indexed page numbers. `page_numbers_json` stores 1-indexed integers (e.g. `[7, 8, 9]`). No coordinate conversion required.
+
+### 422 Trigger Fix (§5 in brief)
+
+**`PekExtractRequestSchema` stays unchanged** — `pdf_path` is and must remain mandatory (removing it would hide future missing-path bugs).
+
+**Fix: new `POST /api/trigger-pek-extract` endpoint on mcp-server.** Accepts `{ report_id: str }`. Looks up `financial_reports.pdf_path` from market.db (same field used by `bctcInspectHandler.ts:255–265`). Calls `POST http://pdf-extractor:5001/pek-extract` with `{ report_id, pdf_path }`. Returns 202 / propagates 503 (market hours) / returns 404 if `pdf_path IS NULL`. Ops triggers re-extraction for all 10 non-VCB corpus reports via this endpoint (not the bctcReparseJob cron — the cron feeds the old `/extract` path for old-pipeline reports).
+
+### Zone Split (§6 in brief)
+
+**dev-mcp-server (`apps/mcp-server/`):**
+- `src/interface/mcp/routes/bctcInspectHandler.ts` — extend OCR + table handlers
+- `src/interface/mcp/server.ts` — register `POST /api/trigger-pek-extract` route
+- `src/interface/bctc-inspector.html` — update OCR + table panels to branch on `has_pek`
+- `src/__tests__/` — new tests (6 cases per brief §6)
+
+**dev-pdf-extractor (`apps/pdf-extractor/`):** ZERO CODE CHANGE. This is a zero-change task for dev-pdf-extractor — verify frozen surfaces only.
+
+### Acceptance Test (§7 in brief)
+
+Open `/api/bctc-inspect` for FPT `e71f845d`. OCR Text + table panels show FRESH PEK data with `has_pek: true` and `extracted_at` dated today (not 2026-05-26). Verified via direct in-container `bun -e` readonly query on market.db — never push-handler echo.
+
+### Risk Flags
+
+- **R-CRIT-1:** `json_each` SQLite — use `WHERE EXISTS (SELECT 1 FROM json_each(page_numbers_json) WHERE value = ?)` not `LIKE '%7%'` (matches page 17/27).
+- **R-HIGH-1:** `has_pek` flag must appear in every response branch.
+- **R-HIGH-2:** HTML panel update must land in the same commit as the handler change — mis-matched response shapes cause blank panels.
+- **R-MED-1:** 10-report re-extraction requires ~multi-hour window outside 02:00–08:59 UTC.
+
+**NEXT: PO** — deliberation gate. Brief at `docs/architecture-briefs/2026-05-27-pek-render-seam.md`. PEK-RENDER-MCP (dev-mcp-server) + PEK-RENDER-PDFX (dev-pdf-extractor, zero-change) → READY.
