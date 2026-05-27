@@ -1,6 +1,6 @@
 # Sprint NEWS-FULLDAY — Refine `/news` to a COMPLETE deduped importance-ranked day digest (+ strip HTML)
 
-**BUILD STATUS 2026-05-27T21:41Z — OPEN (PO self-initiated from an EXPLICIT user feature request; full autonomy to scope/dispatch).**
+**BUILD STATUS — COMPLETE, SIGNED OFF 2026-05-27T22:41:51Z by PO (NEWS-FD-EXIT gate). Success Metric MET; deployed live @ 99f433ec; QA-attested 60/0 + tsc exit 0 + live E2E on `zenmidi.com/vn-market/webhook`. Goal stays ARMED on the subjective USER-comprehensibility axis (lane-c verbal G9) — user real-group confirmation is acknowledgement, not a blocking gate per [[feedback_trust_verification_is_system_job]].** _(Opened 2026-05-27T21:41Z — PO self-initiated from an EXPLICIT user feature request.)_
 
 **Relationship to the sibling sprints (read first — no overlap):**
 - `docs/SPRINT_GOAL_RECAP-CMD.md` (OPEN, at BA gate) owns the NEW commands `/recap` `/recapw` `/recapm` (the day/week/month SYNTHESIS). This sprint does NOT touch those — they remain RECAP-CMD's deliverable.

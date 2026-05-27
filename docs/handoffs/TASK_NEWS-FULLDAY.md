@@ -275,3 +275,23 @@ Command `/news` — `update_id:99001`, `chat_id:99999999`:
 - No handler error in logs.
 
 ### Merge Status: APPROVED — already on main (commit 99f433ec)
+
+---
+
+## [PO] Sign-off — NEWS-FULLDAY
+
+**date:** 2026-05-27T22:41:51Z
+**gate:** NEWS-FD-EXIT
+**verdict:** SIGNED OFF — sprint COMPLETE. Success Metric MET.
+
+PO independently re-verified the load-bearing source claims in `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts` @ 99f433ec (confirmed on `main`, commit touches only the two mcp-server source files + the mcp-server's own `news-analysis.md` doc — single zone, clean):
+- Silent `DEFAULT_LIMIT=20` REMOVED — no-arg `/news` path is now uncapped (the silent top-20 slice is gone).
+- `MAX_LIMIT_EXPLICIT=200` (L554) bounds the `/news N` explicit-override path.
+- `FALLBACK_LIMIT=20` (L557) caps the empty-day stale fallback.
+- `stripHtml` defined exactly once at module level (L113) — no duplicate, no raw-HTML leak path.
+
+Accepted QA's live attestation per [[feedback_trust_verification_is_system_job]]: 60/0 tests, tsc exit 0, T-NEWS-1..8 regression intact, live E2E 200 on `zenmidi.com/vn-market/webhook` (handler ran, reply targeted the originating chat_id — the synthetic 400 "chat not found" confirms correct per-chat targeting, not a hardcoded channel), container rebuilt + force-recreated healthy with 146 tools.
+
+Plain-Vietnamese mandate satisfied for the non-technical user: no `impact_score` number, no raw HTML tags, sentiment in plain words. The complete deduped importance-ranked day is delivered, correctly chunked, with the friendly empty-state/fallback intact.
+
+Goal stays ARMED on the subjective comprehensibility axis (lane-c). The user — who reported the `/news` gap — will do the real-group confirmation; that is acknowledgement, NOT a blocking gate (QA already attested the live wiring).

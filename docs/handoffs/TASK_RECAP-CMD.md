@@ -330,3 +330,20 @@ All four commands probed synthetically via `update_id:99001-99004`, `chat_id:999
 All four handlers: (a) reached `handleTelegramCommand`, (b) correct handler ran without throwing, (c) reply attempted to originating chatId. 400 = expected for non-existent test chat.
 
 ### Merge Status: APPROVED — already on main (commit 99f433ec)
+
+---
+
+## [PO] Sign-off — RECAP-CMD
+
+**date:** 2026-05-27T22:41:51Z
+**gate:** RECAP-EXIT
+**verdict:** SIGNED OFF — sprint COMPLETE. Success Metric MET.
+
+PO independently re-verified the load-bearing source claims in `telegramCommands.ts` @ 99f433ec:
+- `handleRecap` / `handleRecapWeek` / `handleRecapMonth` present (L751 / L865 / L883), all `async`, all return `{ texts: string[] }`.
+- Three router branches wired before the switch block (L1005 / L1009 / L1013).
+- CRITICAL plain-VN proof: `summaryText` / `buildSummaryText` / `recommendation` / `macroContext` have ZERO references anywhere in the file. The English-prose + jargon path is structurally UNREACHABLE — the render-from-typed-fields mandate is enforced BY CONSTRUCTION, not merely by a test assertion.
+
+Accepted QA's live attestation per [[feedback_trust_verification_is_system_job]]: 60/0 tests, tsc exit 0, T-NEWS-1..8 regression intact (`/news` unchanged by the recap work), and the REAL assembly functions executed live on `zenmidi.com/vn-market/webhook` (`assembleEveningSummary` persisted today's evening JSON; `generatePeriodicSummary` stored weekly + monthly; each reply targeted the originating chat_id). `splitBlockAtNewlines` + `chunkStories` cover the >4096-char boundary; sensible plain-VN empty-states confirmed.
+
+Plain-Vietnamese mandate satisfied for the non-technical user. User real-group confirmation = acknowledgement, NOT a blocking gate.

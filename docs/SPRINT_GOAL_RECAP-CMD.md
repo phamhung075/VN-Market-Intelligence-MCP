@@ -1,6 +1,6 @@
 # Sprint RECAP-CMD — On-demand `/recap` `/recapw` `/recapm` Telegram pull-commands
 
-**BUILD STATUS 2026-05-27T21:34Z — OPEN (PO self-initiated from an EXPLICIT user feature request; full autonomy to scope/dispatch).**
+**BUILD STATUS — COMPLETE, SIGNED OFF 2026-05-27T22:41:51Z by PO (RECAP-EXIT gate). Success Metric MET; deployed live @ 99f433ec; QA-attested 60/0 + tsc exit 0 + all 4 commands live-probed on `zenmidi.com/vn-market/webhook` (real assembly fns executed). `/news` unchanged by the recap work. User real-group confirmation is acknowledgement, not a blocking gate per [[feedback_trust_verification_is_system_job]].** _(Opened 2026-05-27T21:34Z — PO self-initiated from an EXPLICIT user feature request.)_
 **Note:** `docs/SPRINT_GOAL.md` holds the parallel still-OPEN SELF-IMPROVE-GATE sprint (different zone, no conflict). This file is the RECAP-CMD sprint goal, tracked separately like its predecessor `docs/REQ_NEWS-CMD.md`.
 
 User (non-technical, French-based, broken English — verbatim intent):
