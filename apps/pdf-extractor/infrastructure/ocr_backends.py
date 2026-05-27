@@ -62,6 +62,44 @@ AUTO_FALLBACK_CONFIDENCE_THRESHOLD: float = float(
 
 
 # ---------------------------------------------------------------------------
+# _to_pil — module-level image-conversion helper (PEK-OCR-ROOTCAUSE)
+# ---------------------------------------------------------------------------
+
+
+def _to_pil(image_or_region):
+    """
+    Convert image_or_region to PIL.Image.Image.
+
+    Accepts:
+        numpy.ndarray (uint8, H×W×C BGR or RGB) — converted via Image.fromarray.
+        PIL.Image.Image — returned as-is (passthrough).
+        None — returns None (caller must handle).
+    Returns:
+        PIL.Image.Image or None.
+    Raises:
+        RuntimeError if the input type is neither ndarray nor PIL.Image and
+        conversion fails — so the caller receives a hard failure instead of
+        silent empty text.
+
+    DDD: infrastructure helper — local imports deferred to avoid loading heavy
+    dependencies at module import time.
+    """
+    from PIL import Image  # type: ignore
+    import numpy as np  # type: ignore
+
+    if image_or_region is None:
+        return None
+    if isinstance(image_or_region, Image.Image):
+        return image_or_region
+    if isinstance(image_or_region, np.ndarray):
+        return Image.fromarray(image_or_region)
+    raise RuntimeError(
+        f"_to_pil: unsupported input type {type(image_or_region).__name__} — "
+        "expected numpy.ndarray or PIL.Image.Image"
+    )
+
+
+# ---------------------------------------------------------------------------
 # TesseractVieBackend — default backend for Vietnamese BCTC
 # ---------------------------------------------------------------------------
 
@@ -78,7 +116,8 @@ class TesseractVieBackend:
     segmentation → scrambled BCTC output (drift #4, documented in ocr_adapter.py).
 
     Accepts numpy ndarray (uint8, H×W×C BGR/RGB) or PIL.Image.Image.
-    Returns ("", 0.0) on None input or any exception.
+    Returns ("", 0.0) on None input only. All other failures raise (fail-loud).
+    PEK-OCR-ROOTCAUSE: bare except swallow removed — errors propagate to caller.
     """
 
     def recognize_text(self, image_or_region: Any) -> Tuple[str, float]:
@@ -87,7 +126,17 @@ class TesseractVieBackend:
 
         Returns:
             (text, confidence) — confidence estimated from character-level scores
-            via pytesseract.image_to_data(). Returns ("", 0.0) on failure.
+            via pytesseract.image_to_data(). Returns ("", 0.0) on None input only.
+
+        Raises:
+            RuntimeError if pytesseract/pandas are not installed (infra
+            misconfiguration — operator must know).
+            Any other exception propagates to the caller (per-crop isolation
+            catch in _run_table_extraction handles it per-region).
+
+        PEK-OCR-ROOTCAUSE: ImportError and bare except swallows removed.
+        The previous bare `except Exception → return ("", 0.0)` was the root
+        cause of corpus-wide empty OCR text (swallowed `_to_pil` NameError).
         """
         if image_or_region is None:
             return ("", 0.0)
@@ -96,47 +145,39 @@ class TesseractVieBackend:
             import pytesseract  # type: ignore
             import pandas as pd  # type: ignore
         except ImportError as exc:
-            logger.warning(
-                "TesseractVieBackend: pytesseract/pandas not installed: %s — "
-                "returning empty text",
-                exc,
-            )
+            # PEK-OCR-ROOTCAUSE: RAISE instead of returning empty.
+            # pytesseract/pandas missing = infra misconfiguration.
+            # Operator must know — a silent ("", 0.0) would mask the problem.
+            raise RuntimeError(
+                f"TesseractVieBackend: required packages not installed: {exc}"
+            ) from exc
+
+        # Convert numpy array to PIL.Image if needed
+        pil_image = _to_pil(image_or_region)
+        if pil_image is None:
             return ("", 0.0)
 
-        try:
-            # Convert numpy array to PIL.Image if needed
-            pil_image = _to_pil(image_or_region)
-            if pil_image is None:
-                return ("", 0.0)
+        # Use image_to_data to get per-word confidence scores
+        data = pytesseract.image_to_data(
+            pil_image,
+            lang="vie+eng",
+            config="--psm 6",
+            output_type=pytesseract.Output.DATAFRAME,
+        )
 
-            # Use image_to_data to get per-word confidence scores
-            data = pytesseract.image_to_data(
-                pil_image,
-                lang="vie+eng",
-                config="--psm 6",
-                output_type=pytesseract.Output.DATAFRAME,
-            )
+        # Filter to rows with valid text (non-empty, confidence > 0)
+        valid_rows = data[
+            (data["conf"] > 0) & (data["text"].str.strip() != "")
+        ]
 
-            # Filter to rows with valid text (non-empty, confidence > 0)
-            valid_rows = data[
-                (data["conf"] > 0) & (data["text"].str.strip() != "")
-            ]
-
-            if valid_rows.empty:
-                return ("", 0.0)
-
-            texts = valid_rows["text"].str.strip().tolist()
-            text = " ".join(t for t in texts if t)
-            mean_conf = float(valid_rows["conf"].mean()) / 100.0  # Tesseract: 0-100 → 0-1
-
-            return (text.strip(), max(0.0, min(1.0, mean_conf)))
-
-        except Exception as exc:
-            logger.warning(
-                "TesseractVieBackend.recognize_text: error: %s — returning empty",
-                exc,
-            )
+        if valid_rows.empty:
             return ("", 0.0)
+
+        texts = valid_rows["text"].str.strip().tolist()
+        text = " ".join(t for t in texts if t)
+        mean_conf = float(valid_rows["conf"].mean()) / 100.0  # Tesseract: 0-100 → 0-1
+
+        return (text.strip(), max(0.0, min(1.0, mean_conf)))
 
 
 # ---------------------------------------------------------------------------
@@ -202,7 +243,13 @@ class PaddleOcrBackend:
             if not isinstance(image_or_region, np.ndarray):
                 try:
                     image_arr = np.array(image_or_region)
-                except Exception:
+                except Exception as exc:
+                    # Per-crop data-shape issue (single crop with unsupported type).
+                    # Not a broken backend — acceptable silent return here.
+                    # PEK-OCR-ROOTCAUSE: added WARNING log so this is visible in logs.
+                    logger.warning(
+                        "PaddleOcrBackend: could not convert input to ndarray: %s", exc
+                    )
                     return ("", 0.0)
             else:
                 image_arr = image_or_region
@@ -234,12 +281,13 @@ class PaddleOcrBackend:
             mean_confidence = sum(scores) / len(scores) if scores else 0.0
             return (combined_text.strip(), max(0.0, min(1.0, mean_confidence)))
 
-        except Exception as exc:
-            logger.warning(
-                "PaddleOcrBackend.recognize_text: error: %s — returning empty",
-                exc,
-            )
-            return ("", 0.0)
+        except Exception:
+            # PEK-OCR-ROOTCAUSE: RAISE instead of returning empty.
+            # Structural backend failure (PaddleOCR inference crash, memory error,
+            # dtype assertion, etc.) must propagate to the per-crop isolation catch
+            # in _run_table_extraction:1006, which logs a WARNING and skips the region.
+            # Swallowing here would mask the failure with false-green ("", 0.0).
+            raise
 
 
 # ---------------------------------------------------------------------------

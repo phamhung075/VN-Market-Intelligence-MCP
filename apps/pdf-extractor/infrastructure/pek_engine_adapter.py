@@ -313,7 +313,7 @@ def _load_pek_models() -> Dict[str, Any]:
         from paddleocr import PaddleOCR  # type: ignore
         paddle_table = PaddleOCR(
             use_angle_cls=False,
-            lang="en",
+            lang="vi",  # PEK-OCR-ROOTCAUSE: was "en" — Vietnamese BCTC requires Vietnamese model
             use_gpu=False,
             show_log=False,
             type="structure",  # PP-StructureV2 table mode
@@ -1004,6 +1004,9 @@ class PekEngineAdapter:
                                                 })
                             region_cells[region_idx] = cells
                         except Exception as exc:
+                            # Per-crop isolation: catch here is intentional —
+                            # one bad crop must not abort the page.
+                            # (PEK-OCR-ROOTCAUSE: do NOT change to raise.)
                             logger.warning(
                                 "PekEngineAdapter: OCR region %d page %d: %s",
                                 region_idx,
@@ -1017,6 +1020,9 @@ class PekEngineAdapter:
                         pass
 
                 except Exception as exc:
+                    # Per-page isolation: catch here is intentional —
+                    # one bad page must not abort the full extraction.
+                    # (PEK-OCR-ROOTCAUSE: do NOT change to raise.)
                     logger.warning(
                         "PekEngineAdapter: table extraction page %d: %s",
                         page_num,

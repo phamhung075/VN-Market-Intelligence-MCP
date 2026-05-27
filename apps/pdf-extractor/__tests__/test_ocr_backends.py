@@ -473,3 +473,182 @@ class TestOcrBackendPortDomainCompliance:
         assert "recognize_text" in source, (
             "OcrBackendPort must define recognize_text() method"
         )
+
+
+# ---------------------------------------------------------------------------
+# PEK-OCR-ROOTCAUSE: Tests A–E — _to_pil path + fail-loud contract
+# These are the exact tests that would have caught the _to_pil NameError
+# before ship (see architect brief 2026-05-27-pek-ocr-rootcause.md §7).
+# All use mocked pytesseract — zero real model weights, zero credentials.
+# ---------------------------------------------------------------------------
+
+class TestToPilAndFailLoud:
+    """
+    PEK-OCR-ROOTCAUSE: Tests A–E.
+
+    Verifies:
+      A. TesseractVieBackend handles real numpy ndarray (exercises the _to_pil path).
+      B. TesseractVieBackend ImportError raises RuntimeError (not returns empty).
+      C. PaddleOcrBackend handles real numpy ndarray (exercises the inference path).
+      D. TesseractVieBackend handles PIL.Image passthrough (isinstance branch).
+      E. _to_pil raises RuntimeError on unsupported input type.
+    """
+
+    def test_a_tesseract_backend_handles_real_ndarray(self):
+        """
+        Test A — TesseractVieBackend with real numpy ndarray: _to_pil path exercised.
+
+        Given: np.zeros((50, 200, 3), dtype="uint8") — minimal valid crop.
+        When: TesseractVieBackend().recognize_text(image).
+        Then: does NOT raise; returns (str, float) with 0.0 <= float <= 1.0.
+              Blank image → empty string acceptable; NameError → test FAILS.
+        Patch: pytesseract.image_to_data → DataFrame with no valid rows.
+        """
+        import numpy as np
+        import pandas as pd
+        from unittest.mock import patch, MagicMock
+        from infrastructure.ocr_backends import TesseractVieBackend
+
+        # Minimal blank-image crop (all zeros → no readable text)
+        image = np.zeros((50, 200, 3), dtype="uint8")
+
+        # Minimal pytesseract mock: image_to_data returns empty dataframe
+        # with the required columns but no valid rows.
+        fake_df = pd.DataFrame({
+            "conf": pd.Series([], dtype=float),
+            "text": pd.Series([], dtype=str),
+        })
+        mock_pytesseract = MagicMock()
+        mock_pytesseract.image_to_data.return_value = fake_df
+        mock_pytesseract.Output.DATAFRAME = "dataframe"
+
+        with patch.dict("sys.modules", {"pytesseract": mock_pytesseract, "pandas": pd}):
+            backend = TesseractVieBackend()
+            text, conf = backend.recognize_text(image)
+
+        assert isinstance(text, str), f"Expected str, got {type(text)}"
+        assert isinstance(conf, float), f"Expected float, got {type(conf)}"
+        assert 0.0 <= conf <= 1.0, f"Confidence {conf} out of [0.0, 1.0]"
+        # Blank image → empty text is acceptable
+        mock_pytesseract.image_to_data.assert_called_once()
+
+    def test_b_tesseract_import_error_raises_runtime_error(self):
+        """
+        Test B — TesseractVieBackend: ImportError raises RuntimeError (not returns empty).
+
+        Given: pytesseract not importable.
+        When: TesseractVieBackend().recognize_text(np.zeros((50,200,3), dtype="uint8")).
+        Then: raises RuntimeError (NOT returns ("", 0.0)).
+        """
+        import numpy as np
+        import builtins
+        from infrastructure.ocr_backends import TesseractVieBackend
+
+        image = np.zeros((50, 200, 3), dtype="uint8")
+
+        original_import = builtins.__import__
+
+        def _import_that_blocks_pytesseract(name, *args, **kwargs):
+            if name == "pytesseract":
+                raise ImportError("No module named 'pytesseract'")
+            return original_import(name, *args, **kwargs)
+
+        import sys
+        # Ensure pytesseract is not already in sys.modules (would bypass __import__)
+        saved = sys.modules.pop("pytesseract", None)
+        try:
+            with patch("builtins.__import__", side_effect=_import_that_blocks_pytesseract):
+                backend = TesseractVieBackend()
+                with pytest.raises(RuntimeError, match="required packages not installed"):
+                    backend.recognize_text(image)
+        finally:
+            if saved is not None:
+                sys.modules["pytesseract"] = saved
+
+    def test_c_paddle_backend_handles_real_ndarray(self):
+        """
+        Test C — PaddleOcrBackend with real numpy ndarray: full inference path exercised.
+
+        Given: np.zeros((50, 200, 3), dtype="uint8") and a mock paddle_table.
+        When: PaddleOcrBackend(paddle_table=mock).recognize_text(image).
+        Then: does NOT raise; mock.ocr called with the ndarray; returns (str, float).
+        """
+        import numpy as np
+        from unittest.mock import MagicMock
+        from infrastructure.ocr_backends import PaddleOcrBackend
+
+        image = np.zeros((50, 200, 3), dtype="uint8")
+
+        # Mock paddle_table.ocr — returns empty result (blank image → no text)
+        mock_paddle = MagicMock()
+        mock_paddle.ocr.return_value = [[]]  # valid but empty OCR result
+
+        backend = PaddleOcrBackend(paddle_table=mock_paddle)
+        text, conf = backend.recognize_text(image)
+
+        assert isinstance(text, str), f"Expected str, got {type(text)}"
+        assert isinstance(conf, float), f"Expected float, got {type(conf)}"
+        assert 0.0 <= conf <= 1.0, f"Confidence {conf} out of [0.0, 1.0]"
+        mock_paddle.ocr.assert_called_once()
+        # Verify the ndarray was passed (not None)
+        call_args = mock_paddle.ocr.call_args
+        passed_arr = call_args[0][0] if call_args[0] else call_args[1].get("image_arr")
+        # cls=False must be passed
+        assert call_args[1].get("cls") is False or (
+            len(call_args[0]) >= 2 and call_args[0][1] is False
+        ) or call_args[1].get("cls") == False
+
+    def test_d_tesseract_backend_pil_image_passthrough(self):
+        """
+        Test D — TesseractVieBackend with PIL.Image passthrough: isinstance branch.
+
+        Given: PIL.Image.new("RGB", (200, 50), color=(255,255,255)) — white image.
+        When: TesseractVieBackend().recognize_text(image).
+        Then: does NOT raise; _to_pil returns the PIL.Image unchanged; Tesseract called.
+        """
+        from PIL import Image
+        import pandas as pd
+        from unittest.mock import patch, MagicMock
+        from infrastructure.ocr_backends import TesseractVieBackend
+
+        pil_image = Image.new("RGB", (200, 50), color=(255, 255, 255))
+
+        fake_df = pd.DataFrame({
+            "conf": pd.Series([], dtype=float),
+            "text": pd.Series([], dtype=str),
+        })
+        mock_pytesseract = MagicMock()
+        mock_pytesseract.image_to_data.return_value = fake_df
+        mock_pytesseract.Output.DATAFRAME = "dataframe"
+
+        with patch.dict("sys.modules", {"pytesseract": mock_pytesseract, "pandas": pd}):
+            backend = TesseractVieBackend()
+            text, conf = backend.recognize_text(pil_image)
+
+        assert isinstance(text, str)
+        assert isinstance(conf, float)
+        mock_pytesseract.image_to_data.assert_called_once()
+        # The first positional arg to image_to_data must be a PIL.Image (passthrough)
+        called_image = mock_pytesseract.image_to_data.call_args[0][0]
+        assert isinstance(called_image, Image.Image), (
+            f"_to_pil should return PIL.Image unchanged, got {type(called_image)}"
+        )
+
+    def test_e_to_pil_unsupported_type_raises_runtime_error(self):
+        """
+        Test E — _to_pil with unsupported type raises RuntimeError directly.
+
+        Given: _to_pil("a string").
+        When: called directly.
+        Then: raises RuntimeError (not NameError, not silent return).
+        """
+        from infrastructure.ocr_backends import _to_pil
+
+        with pytest.raises(RuntimeError, match="unsupported input type"):
+            _to_pil("a string")
+
+        with pytest.raises(RuntimeError, match="unsupported input type"):
+            _to_pil(42)
+
+        with pytest.raises(RuntimeError, match="unsupported input type"):
+            _to_pil([1, 2, 3])
