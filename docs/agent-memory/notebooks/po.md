@@ -1,37 +1,40 @@
 # PO Notebook
 
-## Cycle 2026-05-27T20:01:02Z — NEWS-CMD spec approval gate (APPROVED + 2 product calls)
+## Cycle 2026-05-27T20:36Z — dev-team :07 triage → BATCH(2)
 
-**Input:** BA returned `docs/REQ_NEWS-CMD.md` (6 FR + 6 NFR, DDD map, 8 test scenarios, file table,
-done-bar). BA confirmed all 4 kickoff handoff claims against live code; added the `summary` column to
-the `/news` query (correct — it IS the Vision's "one-line gist"; absent from newsFetchLiveHandler.ts,
-present in schema-news.ts). BA deferred B1 (chunking) + B2 (fallback window) to architect.
+**Pre-flight:** TNB c81 ACK'd (+ c80 retro-ACK) in tnb-audit-latest.md; 2 NEW ## po dashboard rows → READ.
+project root resolved; gateway call_tool unavailable in PO toolset (27th cycle) → file-evidence triage.
 
-**VERDICT: APPROVED.** Spec faithfully covers scope + all 5 hard constraints (plain VN/FR-4+NFR-1;
-no silent truncation/FR-6; empty-DB fallback/FR-5; never-throws/NFR-4; pull-only no-push/NFR-2+3).
+**State found:** NEWS-CMD is the active sprint and has advanced PAST what TASKS.md status fields say.
+Verified in source: handleNews() telegramCommands.ts:510 + case "/news":634 + webhookHandler.ts chunking
+loop :86 (`result.texts ?? [result.text]`). IMPL @25a92ca6 (Review). ops DEPLOY DONE today
+@85ed911f+@477b57b7 (image built 2026-05-27T22:29:45 CEST, healthy, 146 tools; handoff = OPS COMPLETE).
+TASKS.md DEPLOY/QA status fields say BLOCKED = STALE (blocker satisfied).
 
-**Two product calls made at the gate (REQ § 11 PO RULING — don't punt UX to architect):**
-1. **B1 chunking — Option B REJECTED.** Single-message cap + "thêm" affordance violates the binding
-   goal "get all content" AND Hard Constraint 3 "no silent truncation" (AC-FR6-4(ii) itself concedes
-   it "does not guarantee all content"). MANDATED Option-A family: deliver ALL stories via sequential
-   multi-message split at story boundaries. Architect's ONLY remaining decision = the exact single-zone
-   implementation contract (CommandResult `texts?:string[]` + webhook loop, OR handler-driven sends, OR
-   chunker helper). Default cap 20 / clamp [1,50] = query cap, NOT a delivery cap — no count-shrink to dodge chunking.
-2. **B2 fallback — SETTLED (not deferred).** Fallback = most-recent N, NO date window (24h/3-day window
-   can return empty on a quiet weekend → re-introduces the empty problem). Header MUST switch to
-   "Tin tức gần đây" when fallback active so non-technical user knows data isn't today. AC-FR2-5 +
-   AC-FR4-5 confirmed/made mandatory. Architect just restates these as confirmed inputs.
+**BATCH(2) returned to dispatcher:**
+1. **NEWS-CMD-QA** (qa, zone apps/mcp-server/) — the real next step; drive active sprint to done
+   (feedback_ship_completion). Live-verify real rag_analyses content (NOT stub/N/A), plain-VN (no impact
+   numbers/jargon), /news N cap, >4096 chunking, empty-DB "chưa có tin hôm nay" fallback. NOT-RUN forbidden.
+2. **PEK-MULTIPAGE re-deploy+QA** (ops → qa, zone apps/pdf-extractor/, OFF the WIP=2 cap) — last
+   G9-rejected page-coverage defect on PEK-INTEGRATE (DONE-PENDING-G9). Dev fix committed @2e228f0d
+   (grouping rewrite) + @ed347661 (PEK-ROWCOUNT). Architect PEK-QA-ADJUDICATE revised Gate B = md_len>=1000
+   (row_count>=10 was wrong metric). Remaining: ops --no-cache rebuild + DELETE stale layout units +
+   re-extract all 12 → qa re-sweep revised 4-gate.
 
-**Net:** architect NEWS-CMD-DESIGN is now effectively ONE decision (chunking contract); keep brief small.
-
-**Docs touched (UNSTAGED — main terminal commits):** `docs/REQ_NEWS-CMD.md` (status→APPROVED + § 11
-PO RULING, AC-FR6-4 amended/Option-B struck), `docs/TASKS.md` (NEWS-CMD-BA→DONE, NEWS-CMD-DESIGN→READY
-with pre-settled B1/B2 in the cell + SPEC-GATE note). NO code touched.
+**pipeline-state RECONCILED (was 25h stale):** prior claimed BCTC-LAYOUT-FIRST LF-FIX in-flight (lock
+expired ~23h ago, 0 progress). That sprint is SUPERSEDED by PEK-INTEGRATE (user directive) — LF-FIX
+ABANDONED, not re-dispatched (the column-guesser it would patch is being REPLACED by PDF-Extract-Kit).
+Rewrote currentSprint→NEWS-CMD + added bctc_reconciliation block.
 
 ## Carry-over
-- NEWS-CMD-DESIGN READY → architect writes the chunking-contract design note → dev-mcp-server IMPL.
-  B1/B2 are LOCKED at PO level — architect must NOT re-open (esp. must NOT revive Option B / a date window).
-- NEWS-CMD-EXIT (PO gate) stays BLOCKED on QA; goal ARMED until USER confirms it reads usefully (G9).
-- Channel audit still owed — flagged for main terminal next cron tick (gateway call_tool unavailable in PO toolset).
-- CHEF-ATTN-BA still READY (separate apps/mcp-server sprint, different files — no NEWS-CMD collision).
-- PEK-INTEGRATE goal ARMED until USER verbal G9; PEK-MULTIPAGE READY (apps/pdf-extractor zone).
+- NEWS-CMD-QA in-flight → NEWS-CMD-FIX (only if CHANGES_REQUESTED, dev-mcp-server) else NEWS-CMD-EXIT (po).
+  Goal ARMED until USER confirms it reads usefully (DoD #7) — main terminal owns the verbal G9.
+- PEK-INTEGRATE goal ARMED until USER verbal G9; PEK-MULTIPAGE closes the page-coverage defect.
+- CHEF-ATTN (BA spec, READY, apps/mcp-server zone) HELD behind NEWS-CMD — same zone, avoid QA churn.
+  Dispatch next tick once NEWS-CMD clears QA.
+- TNB F9 (business context, 9 cycles) = cowork-lane (chef flow) + data-blocked (BCTC Q1 unfiled), NOT a
+  dev sprint. F3 PMI / F4 VIRA = real backlog candidates, lower than NEWS-CMD in reliability→UX order.
+- CW-DISPATCH-STEP47-BOOTSTRAP-ENUM (## ops) = dev-mcp-server backlog (add "cowork-team" to
+  get_cycle_bootstrap enum); ZERO blocker (cowork falls back). Not dispatched this tick.
+- Channel audit (MARKET/WORK/BUG via gateway) still owed → main terminal next cron tick (PO has no call_tool).
+- All files left UNSTAGED except PO doc edits (pipeline-state.json, tnb ACK, dashboard READ, this notebook).
