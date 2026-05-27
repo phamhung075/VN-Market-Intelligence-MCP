@@ -1,5 +1,6 @@
 .env
 .env.local
+.DS_Store
 node_modules
 ~/
 data/
@@ -14,9 +15,21 @@ dist/
 .claude/scheduled_tasks.lock
 .claire/
 **/reports/*-evening.json
-/__pycache__/
+**/__pycache__/
 docs/agent-memory/sessions/preflight-lsof-*.log
 apps/*/server
+# compiled sandbox runners (build artifacts — rebuilt from cmd/sandbox sources)
+apps/technical-analysis/sandbox
+apps/kinh-dich-service/sandbox
+apps/stock-price/sandbox
+apps/stock-price/bin/
+apps/api-gateway/sandbox/sandbox-runner
+# build output & ephemeral test runner state
+apps/frontend/build/
+**/test-results/
+# vendored third-party clone (has its own .git) & local dep install
+apps/pdf-extractor/PDF-Extract-Kit/
+packages/primitives/
 docs/data/cycle-snapshot-*.json
 docs/data/.cycle-snapshot-*.stage
 docs/data/cycle-snapshot-*.json.tmp
