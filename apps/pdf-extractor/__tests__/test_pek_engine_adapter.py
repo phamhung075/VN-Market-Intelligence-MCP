@@ -776,3 +776,148 @@ class TestLayoutCfgConfigPath:
         assert received_paths == [abs_path], (
             f"Absolute path was modified unexpectedly: {received_paths}"
         )
+
+
+# ---------------------------------------------------------------------------
+# PEK-MULTIPAGE — _group_bboxes_into_units correctness (RC-1 + RC-2 fix)
+# ---------------------------------------------------------------------------
+
+
+def _make_table_page(page_num: int) -> Dict:
+    """Return a fake pages_bboxes entry for a page with one table bbox."""
+    from infrastructure.pek_engine_adapter import _LAYOUT_CLASS_TABLE
+    return {page_num: [{"label": _LAYOUT_CLASS_TABLE, "bbox": [100, 200, 900, 2800], "score": 0.95}]}
+
+
+def _make_prose_page(page_num: int) -> Dict:
+    """Return a fake pages_bboxes entry for a page with no table bbox (prose)."""
+    from infrastructure.pek_engine_adapter import _LAYOUT_CLASS_PLAIN_TEXT
+    return {page_num: [{"label": _LAYOUT_CLASS_PLAIN_TEXT, "bbox": [50, 100, 800, 500], "score": 0.88}]}
+
+
+def _make_blank_page(page_num: int) -> Dict:
+    """Return a fake pages_bboxes entry for a blank page (empty bbox list)."""
+    return {page_num: []}
+
+
+def _default_dims(*page_nums: int) -> Dict:
+    """Return page_dims with 1000×1400 for all specified page numbers."""
+    return {p: (1000, 1400) for p in page_nums}
+
+
+class TestGroupBboxesIntoUnits:
+    """
+    PEK-MULTIPAGE — verifies the rewritten _group_bboxes_into_units algorithm.
+
+    RC-1: consecutive table pages must aggregate into one unit (X-range heuristic gone).
+    RC-2: prose pages must NOT create ghost units (double finalize_unit eliminated).
+    Cap: 8 consecutive table pages → unit boundary, new unit starts with page 9.
+
+    All tests use injected fake bbox dicts — zero model weights, zero network.
+    """
+
+    def test_single_table_page_produces_one_unit(self):
+        """
+        A single table page → exactly 1 unit covering that page.
+        Verifies basic happy-path: page_type='table', pages=[N].
+        """
+        from infrastructure.pek_engine_adapter import _group_bboxes_into_units
+
+        pages_bboxes = _make_table_page(5)
+        units = _group_bboxes_into_units(pages_bboxes, _default_dims(5))
+
+        assert len(units) == 1, f"Expected 1 unit, got {len(units)}: {units}"
+        assert units[0]["page_type"] == "table"
+        assert units[0]["pages"] == [5]
+        assert units[0]["schema_page"] == 5
+
+    def test_three_consecutive_table_pages_produce_one_unit(self):
+        """
+        RC-1 fix: 3 consecutive table pages → 1 unit with page_numbers=[7, 8, 9].
+        The old X-range heuristic split this into 3 separate units.
+        """
+        from infrastructure.pek_engine_adapter import _group_bboxes_into_units
+
+        pages_bboxes: Dict = {}
+        pages_bboxes.update(_make_table_page(7))
+        pages_bboxes.update(_make_table_page(8))
+        pages_bboxes.update(_make_table_page(9))
+
+        units = _group_bboxes_into_units(pages_bboxes, _default_dims(7, 8, 9))
+
+        assert len(units) == 1, (
+            f"Expected 1 unit for pages 7-8-9, got {len(units)}: "
+            f"{[u['pages'] for u in units]}"
+        )
+        assert units[0]["pages"] == [7, 8, 9], (
+            f"pages must be [7, 8, 9], got {units[0]['pages']}"
+        )
+        assert units[0]["page_type"] == "table"
+        assert units[0]["schema_page"] == 7
+
+    def test_table_prose_table_produces_two_units(self):
+        """
+        RC-1 fix: prose page acts as boundary → 2 separate table units.
+        Layout: table(p3) | prose(p4) | table(p5) → unit([3]), unit([5]).
+        """
+        from infrastructure.pek_engine_adapter import _group_bboxes_into_units
+
+        pages_bboxes: Dict = {}
+        pages_bboxes.update(_make_table_page(3))
+        pages_bboxes.update(_make_prose_page(4))
+        pages_bboxes.update(_make_table_page(5))
+
+        units = _group_bboxes_into_units(pages_bboxes, _default_dims(3, 4, 5))
+
+        assert len(units) == 2, (
+            f"Expected 2 units (table|prose|table), got {len(units)}: "
+            f"{[u['pages'] for u in units]}"
+        )
+        assert units[0]["pages"] == [3]
+        assert units[1]["pages"] == [5]
+        assert all(u["page_type"] == "table" for u in units)
+
+    def test_prose_only_creates_no_unit(self):
+        """
+        RC-2 fix: prose-only input → zero units (no ghost unit).
+        The old double finalize_unit() created a ghost empty unit for every prose page.
+        """
+        from infrastructure.pek_engine_adapter import _group_bboxes_into_units
+
+        pages_bboxes: Dict = {}
+        pages_bboxes.update(_make_prose_page(1))
+        pages_bboxes.update(_make_prose_page(2))
+        pages_bboxes.update(_make_blank_page(3))
+
+        units = _group_bboxes_into_units(pages_bboxes, _default_dims(1, 2, 3))
+
+        assert len(units) == 0, (
+            f"Expected 0 units for prose-only input, got {len(units)}: "
+            f"{[u['pages'] for u in units]} — "
+            "ghost-unit (RC-2) regression: prose pages must NOT create units"
+        )
+
+    def test_nine_consecutive_table_pages_split_at_cap(self):
+        """
+        Cap guard: 9 consecutive table pages → 2 units.
+        First unit covers pages 1-8 (cap=8), second unit covers page 9.
+        Verifies the 8-page cap boundary.
+        """
+        from infrastructure.pek_engine_adapter import _group_bboxes_into_units
+
+        pages_bboxes: Dict = {}
+        for p in range(1, 10):  # pages 1..9
+            pages_bboxes.update(_make_table_page(p))
+
+        units = _group_bboxes_into_units(pages_bboxes, _default_dims(*range(1, 10)))
+
+        assert len(units) == 2, (
+            f"Expected 2 units for 9 consecutive table pages (cap=8), "
+            f"got {len(units)}: {[u['pages'] for u in units]}"
+        )
+        assert units[0]["pages"] == list(range(1, 9)), (
+            f"First unit must cover pages 1-8, got {units[0]['pages']}"
+        )
+        assert units[1]["pages"] == [9], (
+            f"Second unit must cover page 9 only, got {units[1]['pages']}"
+        )

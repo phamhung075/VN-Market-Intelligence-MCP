@@ -523,15 +523,28 @@ def _group_bboxes_into_units(
     page_dims: Dict[int, Tuple[int, int]],
 ) -> List[Dict]:
     """
-    Group pages into logical units using table-bbox continuity heuristic.
+    Group pages into logical units using consecutive-table-page continuity.
 
-    Simple heuristic for PEK:
-        - Pages with table bboxes form a unit run if the table x-range overlaps.
-        - A new unit starts when: no table on current page, OR table x-range
-          shifts more than 10% of page width from previous page.
+    PEK-MULTIPAGE algorithm (replaces RC-1 X-range threshold + RC-2 ghost-unit):
+        - Consecutive table pages aggregate into ONE unit.
+        - A prose or blank page acts as a unit boundary (finalizes the current
+          table unit if non-empty) but does NOT create a unit itself.
+        - Cap: at most 8 consecutive table pages per unit. On reaching 8, the
+          current unit is finalized and a new unit starts with the next table page.
+
+    RC-1 (CRITICAL — X-range threshold) eliminated:
+        The old 10% shift threshold fired on natural BCTC continuation-page
+        variance (repeated column-header, indented sub-items, footer), splitting
+        one financial statement into multiple single-page units. The new algorithm
+        uses page adjacency as the sole continuity signal.
+
+    RC-2 (HIGH — double finalize_unit on prose pages) eliminated structurally:
+        Prose pages never create units; double-finalize is gone.
 
     Returns list of unit dicts per DocumentMap format.
     """
+    _MAX_CONSECUTIVE_TABLE_PAGES = 8
+
     units: List[Dict] = []
     page_nums = sorted(pages_bboxes.keys())
 
@@ -539,67 +552,40 @@ def _group_bboxes_into_units(
         return units
 
     current_unit_pages: List[int] = []
-    prev_table_x_range: Optional[Tuple[float, float]] = None
 
     def finalize_unit() -> None:
-        if current_unit_pages:
-            unit_id = str(uuid.uuid4())
-            schema_page = current_unit_pages[0]
-            # Detect page_type of unit from first page
-            first_page_bboxes = pages_bboxes.get(schema_page, [])
-            has_tables = any(b.get("label") == _LAYOUT_CLASS_TABLE for b in first_page_bboxes)
-            page_type = "table" if has_tables else "prose"
-            units.append({
-                "unit_id": unit_id,
-                "schema_page": schema_page,
-                "pages": list(current_unit_pages),
-                "page_type": page_type,
-            })
+        if not current_unit_pages:
+            return
+        unit_id = str(uuid.uuid4())
+        schema_page = current_unit_pages[0]
+        # All pages in a table unit were table pages — type is always "table".
+        units.append({
+            "unit_id": unit_id,
+            "schema_page": schema_page,
+            "pages": list(current_unit_pages),
+            "page_type": "table",
+        })
 
     for page_num in page_nums:
         bboxes = pages_bboxes[page_num]
-        width_px = page_dims.get(page_num, (1000, 1000))[0]
         table_bboxes = [b for b in bboxes if b.get("label") == _LAYOUT_CLASS_TABLE]
 
         if not table_bboxes:
-            # Prose or blank page — finalize current unit, start new prose unit
-            finalize_unit()
-            current_unit_pages = [page_num]
-            prev_table_x_range = None
+            # Prose or blank page — boundary: finalize current table unit if any.
+            # Do NOT create a unit for this prose page (RC-2 fix).
             finalize_unit()
             current_unit_pages = []
-            prev_table_x_range = None
             continue
 
-        # Compute table x-range for this page
-        x_mins = [_safe_bbox(b)[0] for b in table_bboxes]
-        x_maxs = [_safe_bbox(b)[2] for b in table_bboxes]
-        cur_x_range = (min(x_mins), max(x_maxs))
-
-        if (
-            not current_unit_pages
-            or prev_table_x_range is None
-        ):
-            # Start new unit
-            if current_unit_pages:
-                finalize_unit()
-                current_unit_pages = []
-            current_unit_pages.append(page_num)
-            prev_table_x_range = cur_x_range
+        # Table page — extend current unit or start a new one.
+        if len(current_unit_pages) >= _MAX_CONSECUTIVE_TABLE_PAGES:
+            # Cap reached — finalize and start fresh with this page.
+            finalize_unit()
+            current_unit_pages = [page_num]
         else:
-            # Check x-range shift
-            shift_left = abs(cur_x_range[0] - prev_table_x_range[0]) / max(width_px, 1)
-            shift_right = abs(cur_x_range[1] - prev_table_x_range[1]) / max(width_px, 1)
-            if shift_left > 0.10 or shift_right > 0.10:
-                # New unit
-                finalize_unit()
-                current_unit_pages = [page_num]
-                prev_table_x_range = cur_x_range
-            else:
-                # Same unit — append
-                current_unit_pages.append(page_num)
-                prev_table_x_range = cur_x_range
+            current_unit_pages.append(page_num)
 
+    # Finalize any trailing table unit.
     finalize_unit()
     return units
 
