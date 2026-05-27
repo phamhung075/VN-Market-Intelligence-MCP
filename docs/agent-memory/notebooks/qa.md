@@ -1,5 +1,124 @@
 # QA — Notebook
 
+## cycle-134 · 2026-05-27 · NEWS-CMD-QA (commit 25a92ca6, container 21da3475) — APPROVED
+
+**Task:** NEWS-CMD-QA — QA gate on /news Telegram pull command | **Verdict:** APPROVED
+
+```
+date: 2026-05-27T20:50Z
+type: sprint-qa-gate (NEWS-CMD)
+report: docs/handoffs/TASK_NEWS-CMD.md [QA] Review Record
+commit_under_test: 25a92ca6 (feat(mcp-server): /news Telegram pull command)
+image_sha: 21da3475a8bf069b30a1e2b9c0c1c699d21fa2dc7b4cc48b564f21d115078d6e
+container: vn-market-intelligence-mcp-mcp-server-1 (healthy, 146 tools)
+
+tests:
+  214-telegram-commands (T-NEWS-1..8 + prior 214): 31/31 PASS
+  1406c-webhook-handler: 3/3 PASS
+  215-telegram-webhook: 12/12 PASS
+  full_suite: 9873 tests ran, exit 0 (Bun v1.3.13 post-run C++ panic = known Bun runtime bug, NOT test failure)
+  tsc: exit 0 (clean)
+
+ddd: PASS (zero forbidden imports; VN_OFFSET_MS from domain/services/timeConstants.js; no assembleEveningSummary import; webhookHandler owns send-loop)
+security: PASS (zero process.env, zero hardcoded secrets, all SQL parameterized)
+nfr3_zone: PASS (commit touches only apps/mcp-server/ + docs/architecture/microservice/mcp-server/)
+
+live_e2e:
+  health: {"status":"ok","toolCount":146}
+  POST /webhook /news: HTTP 200 ok
+  Telegram send: 400 on chatId=12345 (expected — fake chat, no token in test env, not a handler error)
+  direct_invoke: texts=1 chunk, starts "Tin tức hôm nay (3 bài):", sentiment="Cảm xúc: trung tính"
+  rag_analyses: 4458 total, 174 today rows — real data confirmed
+
+spec_conformance: FR-1 PASS / FR-2 PASS / FR-3 PASS / FR-4 PASS / FR-5 PASS / FR-6 PASS
+
+non_blocking_observation:
+  live summary field contains HTML fragments (e.g. <a href>, <img>) from news ingestion pipeline
+  spec § 8 says "render summary as-is" — not a handler defect
+  recommendation: news-fetch pipeline to HTML-strip before storing summary (future sprint)
+
+verdict: APPROVED
+next: po (NEWS-CMD-EXIT final sign-off)
+```
+
+---
+
+## cycle-133 · 2026-05-27 · PEK-QA MULTIPAGE (commits 2e228f0d + e418d606) — RED / back-to-dev
+
+**Task:** PEK-QA — validate PEK-MULTIPAGE grouping fix (2e228f0d) + PEK-WEIGHTS ops fix (e418d606) | **Verdict:** RED — PIPELINE: back-to-dev
+
+```
+date: 2026-05-27T~18:37–19:10Z
+type: sprint-qa-gate (PEK-MULTIPAGE + PEK-WEIGHTS)
+report: reports/TASK_REPORT_PEK-QA.md
+dev_commit: 2e228f0d (PEK-MULTIPAGE — _group_bboxes_into_units consecutive-page rewrite)
+ops_commit: e418d606 (PEK-WEIGHTS — PADDLE_OCR_BASE_DIR env + model named volume)
+fpt_report_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+
+step_0_extraction:
+  status: COMPLETE — clean run, no stack traces
+  units_stored: 7
+  pages_stored: 46
+  container_log: layout detection 46 pages, table extraction 30 pages, push OK
+
+gate_a_fpt_coverage:
+  table_pages: 30
+  uncovered_pages: []
+  verdict: PASS
+
+gate_b_sentinel_789:
+  unit_id: 905248f4
+  page_numbers_json: [7,8,9]
+  row_count: 3
+  md_len: 2903
+  grouping_fix: WORKING (not 3 islands — RC-1 eliminated)
+  threshold_met: false (3 < 10)
+  verdict: RED — row_count semantic mismatch vs contract threshold
+
+gate_c_fpt_ghosts:
+  total_units: 7
+  ghost_table_units: 0
+  rc2_double_finalize_bug: ELIMINATED
+  verdict: PASS
+
+gate_d_corpus:
+  total: 12
+  both_pass: 4 (0c6f0535, 549d458a, e71f845d, e8ea3df5)
+  gate_c_fail_only: 5 (59212e0d=14ghosts, 620a9d00=16, ac3f0d01=14, b48f7e6a=11, d6f1885f=26)
+  both_fail: 3 (173038f2, 4316f6d1, fea19bae — also gate_a fail, stale data)
+  root_cause: stale old-algorithm data — ops never re-extracted these 8 reports
+  verdict: RED (8/12 fail — stale data, not code regression)
+
+carryover:
+  code_270_value_current: 88,089,621,779,862
+  code_270_value_prior: 71,999,995,678,620 (non-null)
+  code_100_present: true
+  balance_check: PASS (58T + 30T = 88T)
+  duplicate_codes: 0
+  diacritics: confirmed (TỔNG CỘNG NGUỒN VỐN, VỐN CHỦ SỞ HỮU)
+  verdict: PASS
+
+overall: RED
+pipeline: back-to-dev
+routing:
+  issue_1: row_count semantic (dev + architect) — clarify table-block-count vs line-item-count; revise Gate B threshold
+  issue_2: stale corpus (ops) — DELETE + re-extract 8 reports outside market hours
+```
+
+key_learnings:
+  - PEK-MULTIPAGE grouping algorithm IS correct: pages 7,8,9 aggregate into one unit vs 3 islands.
+    The RED is a contract calibration problem, not an algorithm regression.
+  - row_count counts PaddleOCR table block extractions per unit (one per page in a multi-page spread),
+    NOT individual financial line items. Contract threshold >= 10 was calibrated against line-item semantics.
+  - Gate B pass criterion needs architect ruling: either redefine row_count OR revise threshold to
+    >= num_pages_in_unit OR add line_item_count field.
+  - Corpus Gate D failures are entirely stale data (old algorithm ghosts). Ops must DELETE + re-extract
+    the 8 reports. FPT fresh extraction cleanly passes A and C.
+  - "23/23 units non-empty" prior false-green: avoided by requiring page_numbers_json grouping check.
+    The page-blind metric passes even when 3 islands exist (each island is non-empty separately).
+
+---
+
 ## cycle-132 · 2026-05-27 · PEK-QA LIVE (commit e6b84ca5, image fb6fda6f17cf) — RED / CHANGES_REQUESTED
 
 **Task:** PEK-QA live two-stage verification of config-path + fail-loud fix | **Verdict:** CHANGES_REQUESTED
@@ -4076,5 +4195,86 @@ goal_flips: NONE (Charter §4.5)
 | AC-5 | PASS | evidence file + signal emitted + committed |
 
 **Next:** PM sequences P2-K (G9 PO Playwright Path B).
+
+---
+
+## cycle-133 · 2026-05-27 · PEK-QA FULL CORPUS SWEEP (commit 8535b175, image 439d42948589) — GREEN / APPROVED
+
+**Task:** PEK-QA final two-stage corpus sweep — OCR root-cause fix (_to_pil + lang=vi) | **Verdict:** APPROVED
+
+```
+date: 2026-05-27T10:26–13:49Z
+type: sprint-qa-gate (PEK-QA full corpus — commit 8535b175)
+report: reports/TASK_REPORT_PEK-QA.md
+commit_under_test: 8535b175
+image_sha: 439d42948589 (built 2026-05-27 10:26 UTC)
+
+what_was_fixed:
+  - ocr_backends.py: _to_pil module-level helper defined (line 69); silent except swallow removed
+  - pek_engine_adapter.py: lang="en" → lang="vi" (PaddleOCR Vietnamese model)
+  - test_ocr_backends.py: 26 new tests covering _to_pil + recognize_text(ndarray) — 26/26 PASS
+
+market_hours_guard:
+  state: CLOSED at trigger time (all triggers after 10:26 UTC, past 08:59 window)
+  http_status: 202 on all corpus triggers
+  verdict: INTACT
+
+static_gates:
+  ts_tests: 9810/9810 PASS (Bun 1.3.13 crash post-suite = known upstream bug, exit 0)
+  py_tests: 26/26 PASS (new ocr_backends tests)
+  tsc: 0 errors
+  ddd_fence: KEPT (domain zero infra imports)
+  security: parameterized SQL, no secrets, process.env config-only
+  ram_fleet: ~3.4 GiB of 8 GiB cap
+
+stage_1_sentinel:
+  report_id: e71f845d (FPT Q4 2025)
+  extracted_at: 2026-05-27T10:57:34Z
+  table_units: 23 / table_nonempty: 23
+  vietnamese_text: YES — TỔNG CỘNG TÀI SẢN, TÀI SẢN NGẮN HẠN
+  code_270_current: 88,089,621,779,862 VND
+  code_270_prior: 71,999,995,678,620 VND (NOT null)
+  bctc_table3_checks: (a)(b)(c)(d)(e) all PASS
+  verdict: PASS
+
+stage_2_corpus:
+  eligible: 12 (14 total - 2 VCB NULL pdf_path)
+  excluded: VCB Q1-2025 (6e967457) + VCB Q4-2025 (466495f7)
+  results:
+    FPT-Q4  (e71f845d): 23/23 vi=Y PASS
+    ACB-Q1  (fea19bae): 10/11 vi=Y PASS
+    BSR-Q4  (ac3f0d01): 14/14 vi=Y PASS
+    VEA-Q4  (b48f7e6a): 11/11 vi=Y PASS
+    HPG-Q4  (d6f1885f): 13/13 vi=Y PASS
+    DHG-Q1  (620a9d00): 16/16 vi=Y PASS
+    SHB-Q4  (59212e0d): 14/14 vi=Y PASS
+    DGC-Q4  (0c6f0535): 14/14 vi=Y PASS
+    DIG-Q4  (173038f2): 18/19 vi=Y PASS (1 sparse zone, accepted)
+    EIB-Q1  (549d458a):  9/9  vi=Y PASS
+    VNM-Q4  (4316f6d1): 24/25 vi=Y PASS (1 sparse zone, accepted)
+    FPT-Q1  (e8ea3df5): 22/22 vi=Y PASS
+  summary: 12 PASS / 0 FAIL / 0 NOT_EXTRACTED
+  goal_met: YES
+
+non_blocking:
+  ghost_units: bctc_layout_units INSERT OR REPLACE per fresh unit_id UUID = ghosts accumulate
+    on re-extraction. Pre-existing structural issue, not a regression. Track separately.
+  tcp_backlog: single-worker uvicorn blocks during PaddleOCR; OS queues POST requests.
+    BSR ran 3x from queued triggers. Non-blocking, informational only.
+
+verdict: GREEN — APPROVED
+next: dispatch po PEK-EXIT → user G9
+```
+
+key_learnings:
+  - _to_pil undefined was the true corpus-wide OCR blocker. One missing helper + one silent
+    except swallow = 100% empty OCR across 12 reports. The fix is minimal and correct.
+  - lang="vi" in PaddleOCR is required for Vietnamese BCTC text — confirmed by diacritics present
+    in extracted units after fix.
+  - Single-worker uvicorn + CPU-heavy PaddleOCR = OS TCP backlog queuing on client timeout.
+    Do not send multiple rapid triggers to a blocking server — each enqueued connection runs when
+    the previous extraction completes.
+  - Ghost-unit accumulation (INSERT OR REPLACE + fresh UUID) is a pre-existing design issue.
+    Corpus verification must query latest extracted_at batch per report to avoid false counts.
 
 ---
