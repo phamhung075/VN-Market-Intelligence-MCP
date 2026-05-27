@@ -18,7 +18,7 @@
                     │  reads RETURN.NEXT → spawns next | NEVER     │
                     │  writes domain files (TASKS, handoffs, etc.) │
                     └────────┬────────────────────────────────────┘
-                             │ run .claude/flows/<agent>/main.md
+                             │ run docs/agents/<agent>/flow/main.md
                              ▼
                        agent's main.md
                              │
@@ -131,7 +131,7 @@ MAIN TERMINAL (Do)                      ✗ NEVER
 ✓ Read user prompt / cron prompt        ✗ Write docs/TASKS.md
 ✓ Look up intent in dispatch table SSOT ✗ Write docs/handoffs/*
 ✓ Spawn 1 agent via Agent tool +        ✗ Write docs/pipeline-state.json
-  prompt = `run .claude/flows/<agent>/main.md` ✗ Edit .claude/agents/*
+  prompt = `run docs/agents/<agent>/flow/main.md` ✗ Edit .claude/agents/*
 ✓ Read agent RETURN block               ✗ Execute MCP tool calls itself
 ✓ If PIPELINE:continue + NEXT → spawn   ✗ Decide investment / fix code / send alert
 ✓ If PIPELINE:complete|blocked → idle   ✗ Modify .claude/skills/*
@@ -143,7 +143,7 @@ MAIN TERMINAL (Do)                      ✗ NEVER
 
 ## Universal-Entry Invariant
 
-Every agent (count → `jq '.project.agents | length' docs/data/system-map.json`) has `.claude/flows/<agent>/main.md` — main terminal's spawn prompt is always `run .claude/flows/<agent>/main.md`. Dev-microservice agents (`dev-mcp-server`, `dev-api-gateway`, `dev-stock-price`, `dev-technical-analysis`, `dev-macro-indicators`, `dev-kinh-dich`, `dev-alert-engine`, `dev-pdf-extractor`, `dev-rag-service`) have **pointer** main.md files that redirect to the shared `.claude/flows/developer/microservice-main.md` — keeps the dispatcher contract uniform, lets specialists share the same TDD/DDD/zone-restriction recipe.
+Every agent (count → `jq '.project.agents | length' docs/data/system-map.json`) has `docs/agents/<agent>/flow/main.md` — main terminal's spawn prompt is always `run docs/agents/<agent>/flow/main.md`. Dev-microservice agents (`dev-mcp-server`, `dev-api-gateway`, `dev-stock-price`, `dev-technical-analysis`, `dev-macro-indicators`, `dev-kinh-dich`, `dev-alert-engine`, `dev-pdf-extractor`, `dev-rag-service`) have **pointer** main.md files that redirect to the shared `docs/agents/developer/flow/microservice-main.md` — keeps the dispatcher contract uniform, lets specialists share the same TDD/DDD/zone-restriction recipe.
 
 ---
 
@@ -167,4 +167,4 @@ Agent count → `jq '.project.agents | length' docs/data/system-map.json`
 - `docs/protocols/agent-chaining-protocol.md` — return-block grammar, pipeline-state spec
 - `docs/references/agent-roster.md` — team rosters + cooperation matrix
 - `docs/references/tree-map.md` — full DAG of all docs
-- `cowork-team` dispatcher (Sprint 1951) — `.claude/commands/cowork-team.md` → `.claude/flows/cowork-team/main.md`. Not an agent (no `.claude/agents/cowork-team.md`); it is a CronCreate command that reads `docs/data/cowork-schedule.json` and parallel-spawns cowork agents every 15 min. Replaces 16 RemoteTrigger slots. See `docs/standards/cron-jobs.md` § Dev-Team + Ops Agent Crons.
+- `cowork-team` dispatcher (Sprint 1951) — `.claude/commands/cowork-team.md` → `docs/agents/cowork-team/flow/main.md`. Not an agent (no `.claude/agents/cowork-team.md`); it is a CronCreate command that reads `docs/data/cowork-schedule.json` and parallel-spawns cowork agents every 15 min. Replaces 16 RemoteTrigger slots. See `docs/standards/cron-jobs.md` § Dev-Team + Ops Agent Crons.

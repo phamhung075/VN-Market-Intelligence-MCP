@@ -96,7 +96,7 @@ def find_roots(all_md):
             roots.add(p)
         elif p.startswith('.claude/agents/'):
             roots.add(p)
-        elif p.startswith('.claude/flows/'):
+        elif p.startswith('docs/agents/') and '/flow/' in p:
             roots.add(p)
         elif p.startswith('.claude/skills/') and p.endswith('SKILL.md'):
             roots.add(p)
@@ -160,7 +160,7 @@ def analyze(project):
     # Critical = .claude/ excluding tools/
     critical = []
     for cat, items in dead_by_cat.items():
-        if cat.startswith('.claude/') and cat != '.claude/tools':
+        if cat.startswith('.claude/') and cat != 'docs/agents/tools':
             critical.extend(items)
 
     return {
@@ -193,7 +193,7 @@ def generate_html(result, project):
     # Filter to important files for graph
     important = set()
     for f in all_md:
-        if f.startswith('.claude/') and not f.startswith('.claude/tools/list/'):
+        if f.startswith('.claude/') and not f.startswith('docs/agents/tools/list/'):
             important.add(f)
         elif f.startswith('docs/') and not f.startswith('docs/handoffs/') and not f.startswith('docs/agent-memory/sessions/'):
             important.add(f)
@@ -221,10 +221,10 @@ def generate_html(result, project):
                     links.append({"source": node_ids[src], "target": node_ids[t]})
 
     colors = {
-        ".claude/agents": "#4CAF50", ".claude/flows": "#2196F3",
+        ".claude/agents": "#4CAF50", "docs/agents": "#2196F3",
         ".claude/knowledge": "#FF9800", ".claude/skills": "#9C27B0",
         ".claude/commands": "#00BCD4", ".claude/templates": "#795548",
-        ".claude/tools": "#607D8B", ".claude/projects": "#E91E63",
+        "docs/agents/tools": "#607D8B", ".claude/projects": "#E91E63",
         "docs/agent-memory": "#8BC34A", "docs/analysis-briefs": "#FFEB3B",
         "docs/handoffs": "#FF5722", "docs/microservices": "#3F51B5",
         "docs/guides": "#009688", "cowork-workspace": "#673AB7", "root": "#F44336",
@@ -233,14 +233,14 @@ def generate_html(result, project):
     # Build sidebar HTML
     dead_report = defaultdict(list)
     for d in sorted(dead):
-        if d.startswith('.claude/tools/list/'): continue
+        if d.startswith('docs/agents/tools/list/'): continue
         cat = get_category(d)
         refs_from = [s for s in all_md if d in edges.get(s, set())]
         dead_report[cat].append({"path": d, "inbound": len(refs_from), "refs_from": refs_from[:3]})
 
     critical_items = []
     for cat, items in sorted(dead_report.items()):
-        if cat.startswith('.claude/') and cat != '.claude/tools':
+        if cat.startswith('.claude/') and cat != 'docs/agents/tools':
             for d in items:
                 ref_text = "ORPHAN" if d["inbound"] == 0 else f'{d["inbound"]} refs from: {", ".join(d["refs_from"][:2])}'
                 critical_items.append(f'<div class="dead-item orphan"><span class="path">{d["path"]}</span><br><span class="refs">{ref_text}</span></div>')

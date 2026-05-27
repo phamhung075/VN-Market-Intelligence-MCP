@@ -9,7 +9,7 @@ Create system-auditor crons with CronCreate (three tiers). Run all three.
 - **durable**: true
 - **prompt**:
   ```
-  Launch subagent (subagent_type=system-auditor). Read and execute .claude/flows/system-auditor/main.md
+  Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md
   AUDIT_TIER=1
   MCP: https://zenmidi.com/vn-market/mcp
   ```
@@ -23,7 +23,7 @@ Create system-auditor crons with CronCreate (three tiers). Run all three.
 - **durable**: true
 - **prompt**:
   ```
-  Launch subagent (subagent_type=system-auditor). Read and execute .claude/flows/system-auditor/main.md
+  Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md
   AUDIT_TIER=2
   MCP: https://zenmidi.com/vn-market/mcp
   ```
@@ -37,7 +37,7 @@ Create system-auditor crons with CronCreate (three tiers). Run all three.
 - **durable**: true
 - **prompt**:
   ```
-  Launch subagent (subagent_type=system-auditor). Read and execute .claude/flows/system-auditor/main.md
+  Launch subagent (subagent_type=system-auditor). Read and execute docs/agents/system-auditor/flow/main.md
   AUDIT_TIER=3
   MCP: https://zenmidi.com/vn-market/mcp
   ```

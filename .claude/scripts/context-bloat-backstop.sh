@@ -56,7 +56,7 @@ MATCHED_CLASS=""
 while IFS=$'\t' read -r pattern cap class; do
   # Use bash glob-style match (fnmatch via case) — ** not natively supported
   # in bash case, but our patterns are shallow enough to work with simple globs.
-  # For .claude/flows/**/*.md and .claude/skills/**/*.md we use an extended match.
+  # For docs/agents/*/flow/**/*.md and .claude/skills/**/*.md we use an extended match.
   case "$REL_PATH" in
     $pattern)
       MATCHED_CAP="$cap"

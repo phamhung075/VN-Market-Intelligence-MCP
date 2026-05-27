@@ -4,7 +4,7 @@
 **Scheduler:** none (on-demand only)
 **Domain services:** backtesting execution engine
 
-Individual tool signatures: `.claude/tools/list/backtesting.md`
+Individual tool signatures: `docs/agents/tools/list/backtesting.md`
 
 ---
 

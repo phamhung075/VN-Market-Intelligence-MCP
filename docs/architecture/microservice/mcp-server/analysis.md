@@ -4,7 +4,7 @@
 **Scheduler:** none (on-demand only)
 **Domain services:** All domain services combined — TA + macro + news + cascade + signal synthesis
 
-Individual tool signatures: `.claude/tools/list/analysis.md`
+Individual tool signatures: `docs/agents/tools/list/analysis.md`
 
 ---
 

@@ -5,7 +5,7 @@ Create digest-predict cron with CronCreate:
 - **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
   ```
-  Launch subagent (subagent_type=digest-predict). Read and execute .claude/flows/digest-predict/main.md
+  Launch subagent (subagent_type=digest-predict). Read and execute docs/agents/digest-predict/flow/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 

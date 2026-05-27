@@ -19,7 +19,7 @@ Include updated docs in the same commit as their related source category.
 | `apps/mcp-server/src/**` (new tools/routes) | `docs/data/project-stats.json` (tool count) |
 | `apps/mcp-server/src/**` (schema change) | Any `docs/` architecture docs referencing that schema |
 | `docs/TASKS.md` | `docs/TASKS_ARCHIVE.md` — archive completed tasks if not already done |
-| `.claude/flows/**` | Relevant agent `.md` if the flow change affects agent behavior |
+| `docs/agents/*/flow/**` | Relevant agent `.md` if the flow change affects agent behavior |
 | `docs/{policies,protocols,standards,references}/**` | Any agent `.md` that references the changed knowledge file |
 | Source code bug fix | Add entry to relevant session log if a bug was resolved |
 
@@ -32,7 +32,7 @@ Group all modified/untracked files into logical categories. Skip `.DS_Store` —
 | Category | Commit prefix | Examples |
 |----------|--------------|---------|
 | Agent files | `chore(agents)` | `.claude/agents/*.md` |
-| Flows | `chore(flows)` | `.claude/flows/` |
+| Flows | `chore(flows)` | `docs/agents/*/flow/` |
 | Knowledge files | `docs(knowledge)` | `docs/{policies,protocols,standards,references}/` |
 | Docs / briefs | `docs(analysis)` | `docs/analysis-briefs/` |
 | Notebooks | `chore(memory/<agent-id>)` | `docs/agent-memory/notebooks/` — `notebook YYYY-MM-DD` (no trailers) |

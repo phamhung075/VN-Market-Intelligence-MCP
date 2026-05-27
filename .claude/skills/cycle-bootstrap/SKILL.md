@@ -18,7 +18,7 @@ Session logs record PAST state. They do NOT predict current state.
 
 Violation = phantom incident: fake blocker reports, cascading false failures, corrupted pipeline state.
 
-**NEVER invent tool names.** Only call tools listed in `.claude/tools/package/<your-agent-id>.md` or your flow docs. If unsure → Read your package file first. If tool not there → SKIP the step, log `[SKIP] No tool: <name>`.
+**NEVER invent tool names.** Only call tools listed in `docs/agents/tools/package/<your-agent-id>.md` or your flow docs. If unsure → Read your package file first. If tool not there → SKIP the step, log `[SKIP] No tool: <name>`.
 
 **FORBIDDEN outputs when blocked:**
 - Standalone blocker/incident/recovery files (`*-BLOCKED.md`, `*-eod-blocker-report.md`, `*-cycle-error.md`)

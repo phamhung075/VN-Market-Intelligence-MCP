@@ -4,7 +4,7 @@
 
 <!-- size-justification: ~80L — canonical dimension registry; each dimension is a one-table entry + acceptance reference. Tightly coupled check-ID traceability. -->
 
-This file is the canonical registry of what system-auditor checks and why. Each dimension maps to check IDs in `.claude/flows/system-auditor/main.md` and acceptance criteria in architecture briefs.
+This file is the canonical registry of what system-auditor checks and why. Each dimension maps to check IDs in `docs/agents/system-auditor/flow/main.md` and acceptance criteria in architecture briefs.
 
 ---
 
@@ -33,7 +33,7 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 **Tier:** 3 (daily 02:00Z)
 **Check IDs:** C-01 through C-16
 **Scope:** Row count distributions across 6 SQLite DBs, watchlist coverage (≥ 25 of active tickers), schema sentinels, cross-table consistency (orphaned alerts), WAL size, PRAGMA integrity_check, EPIPE crash accumulation.
-**Pass condition:** All 16 checks pass per thresholds in `.claude/flows/system-auditor/main.md` §Tier-3.
+**Pass condition:** All 16 checks pass per thresholds in `docs/agents/system-auditor/flow/main.md` §Tier-3.
 **Signal type:** `db_integrity_breach`
 
 ---
@@ -70,7 +70,7 @@ See `docs/agents/system-auditor/handlers.md` §TASKS.md Reconciliation Pass → 
 
 ### Signal bus
 
-- DASHBOARD row target: `## po` (po reads DASHBOARD at every cycle Step 0 per `.claude/flows/po/main.md`)
+- DASHBOARD row target: `## po` (po reads DASHBOARD at every cycle Step 0 per `docs/agents/po/flow/main.md`)
 - BUG channel: new divergences only (dedup 7d, key pattern: `d4_tasksmd_lock_diverge:<task_id>`)
 - Signal type: `system_issue`
 

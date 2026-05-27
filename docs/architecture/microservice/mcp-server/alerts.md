@@ -4,7 +4,7 @@
 **Scheduler:** `src/scheduler/alerts/` (3 jobs)
 **Domain services:** alertGenerator, alertCooldown, alertDedup, alertGrouper, alertMuteChecker, customAlertEvaluator, convictionScorer, chainSynthesizer, recencyWeighter
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

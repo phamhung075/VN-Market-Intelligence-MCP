@@ -14,7 +14,7 @@
       "class": "sprint-task-index"
     },
     {
-      "pattern": ".claude/flows/**/*.md",
+      "pattern": "docs/agents/*/flow/**/*.md",
       "cap": 120,
       "class": "flow-file"
     },

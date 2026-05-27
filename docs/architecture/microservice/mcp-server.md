@@ -39,7 +39,7 @@ Tool files are grouped by domain module. See sub-files:
 
 Total tool count: `docs/data/project-stats.json` → `toolCount`
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

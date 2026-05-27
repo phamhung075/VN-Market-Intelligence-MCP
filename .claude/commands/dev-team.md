@@ -2,4 +2,4 @@
 description: Run dev-team orchestration loop on demand
 ---
 
-Read and execute .claude/flows/dev-team/main.md
+Read and execute docs/agents/dev-team/flow/main.md

@@ -5,7 +5,7 @@ Create news-scout cron with CronCreate:
 - **durable**: true  (persist across session restarts)
 - **prompt**:
   ```
-  Launch subagent (subagent_type=news-scout). Read and execute .claude/flows/news-scout/main.md
+  Launch subagent (subagent_type=news-scout). Read and execute docs/agents/news-scout/flow/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 
@@ -18,7 +18,7 @@ Create news-scout cron with CronCreate:
 - **durable**: true  (persist across session restarts)
 - **prompt**:
   ```
-  Launch subagent (subagent_type=news-scout). Read and execute .claude/flows/news-scout/main.md
+  Launch subagent (subagent_type=news-scout). Read and execute docs/agents/news-scout/flow/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 

@@ -9,13 +9,13 @@ description: >
 
 ## Auto-Switch Protocol — Universal Entry
 
-**Every agent has `.claude/flows/<agent>/main.md` as the single entry point.** `main.md` is a thin dispatcher that picks the right sub-flow (cycle / eod / daily / weekly / create / edit / review / keep / …) based on trigger, time of day, or caller intent.
+**Every agent has `docs/agents/<agent>/flow/main.md` as the single entry point.** `main.md` is a thin dispatcher that picks the right sub-flow (cycle / eod / daily / weekly / create / edit / review / keep / …) based on trigger, time of day, or caller intent.
 
 | Caller | What they invoke | What happens |
 |---|---|---|
-| User demand (free text) | Main terminal reads dispatch table → spawns matching agent with prompt `run .claude/flows/<agent>/main.md` | Agent's `main.md` dispatches to the right sub-flow internally |
-| Cron tick | Cron prompt says `run .claude/flows/<agent>/main.md` | Same — `main.md` reads the clock and picks the sub-flow |
-| Agent handoff | Previous agent returns `NEXT: <agent>` | Main terminal spawns target with `run .claude/flows/<agent>/main.md` + prior return as context |
+| User demand (free text) | Main terminal reads dispatch table → spawns matching agent with prompt `run docs/agents/<agent>/flow/main.md` | Agent's `main.md` dispatches to the right sub-flow internally |
+| Cron tick | Cron prompt says `run docs/agents/<agent>/flow/main.md` | Same — `main.md` reads the clock and picks the sub-flow |
+| Agent handoff | Previous agent returns `NEXT: <agent>` | Main terminal spawns target with `run docs/agents/<agent>/flow/main.md` + prior return as context |
 
 **Cron skill files (`.claude/commands/crons/cron-<agent>.md`) MUST point to `main.md`** — never hardcode a sub-flow path. If the agent has time-of-day branching, encode it inside `main.md`, not in the cron prompt.
 
@@ -50,7 +50,7 @@ description: >
 | strategy quality audit | `tran-ngoc-bau` | `main` | TNB methodology compliance |
 | inter-agent architecture / brief | `agents-architect` | `main` | Outputs `docs/architecture-briefs/*.md` |
 
-Agent files → `.claude/agents/*.md` | Flows → `.claude/flows/{agent}/main.md` (dispatcher) → sub-flows.
+Agent files → `.claude/agents/*.md` | Flows → `docs/agents/{agent}/flow/main.md` (dispatcher) → sub-flows.
 
 **Dev-* specialist doc-ownership:** Each dev-* agent is sole committer of `docs/architecture/microservice/<service>/`. Architect writes only to `docs/architecture-briefs/`. Architect briefs that propose microservice doc edits MUST route the doc-write subtask to the matching dev-* agent, not to architect or generic developer. Full table → `docs/references/agent-roster.md` § doc_owner column.
 

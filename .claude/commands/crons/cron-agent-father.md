@@ -5,7 +5,7 @@ Create agent-father cron with CronCreate:
 - **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
   ```
-  Launch subagent (subagent_type=agent-father). Read and execute .claude/flows/agent-father/main.md
+  Launch subagent (subagent_type=agent-father). Read and execute docs/agents/agent-father/flow/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 

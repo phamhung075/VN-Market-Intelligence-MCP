@@ -39,7 +39,7 @@ If two SSOTs conflict, **tree-map.md wins** and the other is fixed to match.
 ## Scope — every run, no exceptions
 
 ```
-.claude/agents/*.md | .claude/skills/*/SKILL.md | .claude/flows/*/main.md (+ sub-flows)
+.claude/agents/*.md | .claude/skills/*/SKILL.md | docs/agents/*/flow/main.md (+ sub-flows)
 docs/{policies,protocols,standards,references,guides}/*.md | docs/references/bundles/*.md
 docs/*.md | docs/architecture/**/*.md | docs/data/*.json | CLAUDE.md | memory/MEMORY.md
 ```

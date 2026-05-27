@@ -4,7 +4,7 @@
 **Scheduler:** `src/scheduler/market-data/` (8 jobs)
 **Domain services:** foreignFlowAnalyzer, technicalIndicators, intradayAnalyzer, priceAlertChecker, orderBookAnalyzer, volatilityCalculator
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

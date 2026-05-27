@@ -4,7 +4,7 @@
 **Scheduler:** none (on-demand only)
 **Domain services:** sectorRotationDetector, sectorValuationComparator, creditFlowAnalyzer, energyMarketAnalyzer, pharmaEventMapper, tradeRelationships, sectorPeers
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

@@ -4,7 +4,7 @@
 **Scheduler:** `src/scheduler/portfolio/` (1 job)
 **Domain services:** portfolioPnlCalculator, portfolioRiskCalculator, rebalancingCalculator, performanceAttribution, correlationCalculator
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

@@ -5,13 +5,13 @@ Create dev-team cron with CronCreate:
 - **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
   ```
-  Read and execute .claude/flows/dev-team/main.md
+  Read and execute docs/agents/dev-team/flow/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 
 ## Weekly Zone-Scan Cadence
 
-Each dev-* specialist runs `.claude/flows/developer/zone-scan.md` once per week (Sunday UTC, staggered by 15 min per service to avoid concurrent signal flood). Triggers are declared in each agent's flow catalog. PO batches findings from `zone_health_report` signals into one sprint review per week via `triage-signals.md`.
+Each dev-* specialist runs `docs/agents/developer/flow/zone-scan.md` once per week (Sunday UTC, staggered by 15 min per service to avoid concurrent signal flood). Triggers are declared in each agent's flow catalog. PO batches findings from `zone_health_report` signals into one sprint review per week via `triage-signals.md`.
 
 | Agent | Sunday UTC |
 |---|---|

@@ -37,7 +37,7 @@ Before declaring any tool unused, verify it is absent from ALL of these:
 
 ### Layer 2 — Dev Team Flow Files
 ```
-.claude/flows/**/*.md        ← narrative references to tool names
+docs/agents/**/flow/*.md        ← narrative references to tool names
 .claude/skills/**/*.md       ← skill files that call tools
 ```
 
@@ -62,7 +62,7 @@ For each candidate tool, answer ALL 5 questions:
 | # | Question | Where to check |
 |---|----------|---------------|
 | 1 | Listed in any agent `.md` tools block? | `.claude/agents/` |
-| 2 | Referenced in any flow or skill `.md`? | `.claude/flows/`, `.claude/skills/` |
+| 2 | Referenced in any flow or skill `.md`? | `docs/agents/`, `.claude/flow/skills/` |
 | 3 | In `agentBootstrap.ts` SKILL_MANIFEST? | `agentBootstrap.ts` |
 | 4 | Called in any Telegram command handler? | `telegramCommands.ts` |
 | 5 | Has test coverage? | `**/*.test.ts` |
@@ -96,7 +96,7 @@ Format:
 ```
 Tool: get_example
 Layer 1 (agents): not found in any .md
-Layer 2 (flows): not found in .claude/flows/ or .claude/skills/
+Layer 2 (flows): not found in docs/agents/ or .claude/flow/skills/
 Layer 3 (bootstrap): not found in agentBootstrap.ts SKILL_MANIFEST
 Layer 4 (telegram/tests): not found in telegramCommands.ts or *.test.ts
 Verdict: SAFE TO REMOVE

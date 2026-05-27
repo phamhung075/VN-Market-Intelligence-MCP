@@ -4,7 +4,7 @@
 **Scheduler:** `src/scheduler/news-analysis/` (5 jobs)
 **Domain services:** cascadeEngine, sentimentClassifier, newsNormalizer, chainSynthesizer, sourceHealthTracker, sentimentTrend, embeddingTextBuilder
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

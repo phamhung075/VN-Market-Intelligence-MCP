@@ -17,12 +17,12 @@ Decision tree for bootstrap errors at agent startup:
 
 | Name | Path | Trigger | Input | Output |
 |---|---|---|---|---|
-| main | `.claude/flows/ops/main.md` | incident_detected_or_health_check | Health check result or alert trigger | BUG channel incident report; recovery action or WORK escalation |
-| cloudflare-mcp | `.claude/flows/ops/cloudflare-mcp.md` | cloudflare_tunnel_mcp_connection_failure | Claude Desktop cannot connect via Cloudflare SSE | MCP accessible via https://zenmidi.com/vn-market/sse |
-| docker | `.claude/flows/ops/docker.md` | container_health_issue | Container down or restart loop | All services healthy, /health returns 200 |
-| vps | `.claude/flows/ops/vps.md` | vps_proxy_issue | VPS service failure or data fetch timeout | Service restored or escalation sent |
-| bctc | `.claude/flows/ops/bctc.md` | bctc_extraction_failure | PDF extraction timeout or parse error | BCTC data available or escalation sent |
-| db | `.claude/flows/ops/db.md` | database_corruption_or_lock | SQLite lock timeout or integrity failure | Database healthy or WAL cleaned |
+| main | `docs/agents/ops/flow/main.md` | incident_detected_or_health_check | Health check result or alert trigger | BUG channel incident report; recovery action or WORK escalation |
+| cloudflare-mcp | `docs/agents/ops/flow/cloudflare-mcp.md` | cloudflare_tunnel_mcp_connection_failure | Claude Desktop cannot connect via Cloudflare SSE | MCP accessible via https://zenmidi.com/vn-market/sse |
+| docker | `docs/agents/ops/flow/docker.md` | container_health_issue | Container down or restart loop | All services healthy, /health returns 200 |
+| vps | `docs/agents/ops/flow/vps.md` | vps_proxy_issue | VPS service failure or data fetch timeout | Service restored or escalation sent |
+| bctc | `docs/agents/ops/flow/bctc.md` | bctc_extraction_failure | PDF extraction timeout or parse error | BCTC data available or escalation sent |
+| db | `docs/agents/ops/flow/db.md` | database_corruption_or_lock | SQLite lock timeout or integrity failure | Database healthy or WAL cleaned |
 
 ---
 

@@ -26,14 +26,14 @@
  *   T10: `sprint-task:X` and `dashboard-row:X` are independent (kind is part of uniqueness)
  *
  * Flow integration grep checks (non-runtime):
- *   G1: .claude/flows/po/sprint-kickoff.md contains task_claim
- *   G2: .claude/flows/po/sprint-signoff.md contains task_release
- *   G3: .claude/flows/pm/main.md contains task_heartbeat
- *   G4: .claude/flows/developer/main.md contains task_claim AND task_heartbeat
- *   G5: .claude/flows/developer/microservice-main.md contains task_claim AND task_heartbeat
- *   G6: .claude/flows/qa/main.md contains task_heartbeat AND task_release
- *   G7: .claude/flows/agent-father/edit-apply.md contains task_claim AND task_heartbeat AND task_release
- *   G8: .claude/flows/dev-team/drain-signals.md contains task_claim AND task_release
+ *   G1: docs/agents/po/flow/sprint-kickoff.md contains task_claim
+ *   G2: docs/agents/po/flow/sprint-signoff.md contains task_release
+ *   G3: docs/agents/pm/flow/main.md contains task_heartbeat
+ *   G4: docs/agents/developer/flow/main.md contains task_claim AND task_heartbeat
+ *   G5: docs/agents/developer/flow/microservice-main.md contains task_claim AND task_heartbeat
+ *   G6: docs/agents/qa/flow/main.md contains task_heartbeat AND task_release
+ *   G7: docs/agents/agent-father/flow/edit-apply.md contains task_claim AND task_heartbeat AND task_release
+ *   G8: docs/agents/dev-team/flow/drain-signals.md contains task_claim AND task_release
  *   G9: All 8 flow files contain task-lock skill lazy-load line
  *
  * Pipeline-state AUGMENT checks:
@@ -341,14 +341,14 @@ console.log(`\n[INFO] Total dangling locks after cleanup: ${allLocks.count} (exp
 console.log("\n=== Flow Integration Grep Checks (G1-G9) ===");
 
 const FLOW_FILES: Record<string, string> = {
-  "po/sprint-kickoff.md":          ".claude/flows/po/sprint-kickoff.md",
-  "po/sprint-signoff.md":          ".claude/flows/po/sprint-signoff.md",
-  "pm/main.md":                    ".claude/flows/pm/main.md",
-  "developer/main.md":             ".claude/flows/developer/main.md",
-  "developer/microservice-main.md":".claude/flows/developer/microservice-main.md",
-  "qa/main.md":                    ".claude/flows/qa/main.md",
-  "agent-father/edit-apply.md":    ".claude/flows/agent-father/edit-apply.md",
-  "dev-team/drain-signals.md":     ".claude/flows/dev-team/drain-signals.md",
+  "po/sprint-kickoff.md":          "docs/agents/po/flow/sprint-kickoff.md",
+  "po/sprint-signoff.md":          "docs/agents/po/flow/sprint-signoff.md",
+  "pm/main.md":                    "docs/agents/pm/flow/main.md",
+  "developer/main.md":             "docs/agents/developer/flow/main.md",
+  "developer/microservice-main.md":"docs/agents/developer/flow/microservice-main.md",
+  "qa/main.md":                    "docs/agents/qa/flow/main.md",
+  "agent-father/edit-apply.md":    "docs/agents/agent-father/flow/edit-apply.md",
+  "dev-team/drain-signals.md":     "docs/agents/dev-team/flow/drain-signals.md",
 };
 
 const flowContents: Record<string, string> = {};

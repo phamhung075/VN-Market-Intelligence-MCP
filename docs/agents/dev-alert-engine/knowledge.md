@@ -12,7 +12,7 @@ doc_maintenance:
   responsibilities:
     - Update zone docs after ANY code change that alters behavior, API, alert logic, or config
     - Keep own agent description (.claude/agents/dev-alert-engine.md) accurate if skills/stack/port change
-    - Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
+    - Update shared flow (docs/agents/developer/flow/microservice-main.md) if workflow pattern changes
     - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
     - If docs/architecture/microservice/alert-engine/ files don't exist yet, CREATE them following doc-review.md templates
   rule: "Code without matching doc update = incomplete task. QA will reject."

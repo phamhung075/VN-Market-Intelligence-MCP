@@ -11,7 +11,7 @@ description: >
 **Trigger:** User types `/cron-cowork-team`
 **Purpose:** Re-arm the `*/15 * * * *` CronCreate master dispatcher after any session reset.
 **SSOT:** `docs/data/cowork-schedule.json`
-**Dispatcher flow:** `.claude/flows/cowork-team/main.md`
+**Dispatcher flow:** `docs/agents/cowork-team/flow/main.md`
 **Runbook:** `docs/protocols/cowork-master-cron-runbook.md`
 
 ---
@@ -48,12 +48,12 @@ Only execute this step if Step 1 found no existing entry.
 CronCreate(
   description : "cowork-team master dispatcher — fires every 15 min, fans out to schedule SSOT",
   cron        : "*/15 * * * *",
-  prompt      : "run .claude/flows/cowork-team/main.md",
+  prompt      : "run docs/agents/cowork-team/flow/main.md",
   durable     : true
 )
 ```
 
-**On success:** log `[cron-cowork-team] Master dispatcher registered. Next tick: <next UTC :00 or :15 or :30 or :45>. Dispatcher: .claude/flows/cowork-team/main.md`.
+**On success:** log `[cron-cowork-team] Master dispatcher registered. Next tick: <next UTC :00 or :15 or :30 or :45>. Dispatcher: docs/agents/cowork-team/flow/main.md`.
 
 **On failure:** log error verbatim + send `send_telegram(channel="bug", "[cron-cowork-team] CronCreate FAILED: <error>")`. Do NOT retry. Report to user.
 

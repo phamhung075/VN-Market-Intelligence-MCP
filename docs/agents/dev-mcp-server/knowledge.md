@@ -49,7 +49,7 @@ Decision tree for bootstrap errors at agent startup:
 **Responsibilities:**
 - Update zone docs after ANY code change that alters behavior, API, schema, or config
 - Keep own agent description (.claude/agents/dev-mcp-server.md) accurate if skills/stack/port change
-- Update shared flow (.claude/flows/developer/microservice-main.md) if workflow pattern changes
+- Update shared flow (docs/agents/developer/flow/microservice-main.md) if workflow pattern changes
 - Run doc-review flow (flows/developer/doc-review.md) as mandatory post-code step — never skip
 - If docs/architecture/microservice/mcp-server/ files don't exist yet, CREATE them following doc-review.md templates
 

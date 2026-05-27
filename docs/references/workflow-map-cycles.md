@@ -52,9 +52,9 @@ W10b ZONE PROPAGATION (sub-workflow that runs inside W2 / W3 / W10 Step 2-3)
         Tier 2 INFER (fallback):       all files in one apps/X/ → spawn dev-<service>
         Tier 3 REPORT (last resort):   indeterminate → spawn developer + WORK warning
               ↓
-     dev-<service> reads .claude/flows/dev-<service>/main.md (thin pointer)
+     dev-<service> reads docs/agents/dev-<service>/flow/main.md (thin pointer)
               ↓
-     pointer redirects to shared .claude/flows/developer/microservice-main.md
+     pointer redirects to shared docs/agents/developer/flow/microservice-main.md
               ↓
      specialist runs scoped to apps/<service>/ only
 ```
@@ -100,7 +100,7 @@ W17 DEMAND architecture brief
 
 W18 DEMAND agent maintenance
     USER → MAIN → agent-father main.md → create|edit|review|keep
-                                       → edits .claude/agents/*.md or .claude/flows/*
+                                       → edits .claude/agents/*.md or docs/agents/*/flow/*
                                        → notebook commit → RETURN
 
 W19 DEMAND new cron schedule

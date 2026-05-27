@@ -44,8 +44,8 @@ Count → `docs/data/project-stats.json#analysisAgentCount`. Files live in `.cla
 
 ## Microservice Dev Agents (Claude Code CLI — zone-scoped)
 
-All share flow: `.claude/flows/developer/microservice-main.md`
-All share tool package: `.claude/tools/package/developer.md`
+All share flow: `docs/agents/developer/flow/microservice-main.md`
+All share tool package: `docs/agents/tools/package/developer.md`
 
 **Naming convention drift:** `apps/kinh-dich-service/` carries a `-service` suffix while all other microservices use bare names (`apps/alert-engine/`, `apps/stock-price/`, …). Architecture doc folder is `docs/architecture/microservice/kinh-dich/` (bare name). Recommend renaming `apps/kinh-dich-service/` → `apps/kinh-dich/` in a future developer task (touches Docker compose + imports).
 

@@ -4,7 +4,7 @@
 **Scheduler:** `src/scheduler/system/` (2 jobs)
 **Domain services:** rateLimiter, sourceHealthTracker, stockSearch, stockAliases
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

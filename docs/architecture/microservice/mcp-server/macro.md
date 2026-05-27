@@ -4,7 +4,7 @@
 **Scheduler:** `src/scheduler/macro/` (6 jobs)
 **Domain services:** macroThresholds, macroIndicatorScorer, policyImpactMapper, predictionCascadeMapper, predictionSignalDetector
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

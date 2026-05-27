@@ -6,7 +6,7 @@
 
 ```bash
 # Enumerate the whole subtree
-find .claude/agents .claude/skills .claude/flows .claude/knowledge docs \
+find .claude/agents .claude/skills .claude/knowledge docs \
   -type f \( -name "*.md" -o -name "*.json" \) -not -path "*/node_modules/*"
 ```
 
@@ -42,7 +42,7 @@ For each `.md` file in `$ALL_FILES`:
 
 ## Phase 3 — SSOT / no-hardcode (auto-fix)
 
-Scan `docs/{policies,protocols,standards,references}/*.md` + `.claude/agents/*.md` + `.claude/flows/**/*.md` for:
+Scan `docs/{policies,protocols,standards,references}/*.md` + `.claude/agents/*.md` + `docs/agents/**/flow/*.md` for:
 
 | Anti-pattern | Replace with |
 |--------------|--------------|

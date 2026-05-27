@@ -4,7 +4,7 @@
 **Scheduler:** none (on-demand only)
 **Domain services:** `src/domain/services/kinhDich/` — hexagramLibrary, hexagramResolver, haoEncoder, nuclearComputer, transformedComputer, nguHanhClassifier, kinhDichReading, kinhDichFormatter, hexagramBacktester, kinhDichWrapper
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

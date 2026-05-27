@@ -12,8 +12,8 @@
 
 | Resource | Purpose | When to Use |
 |----------|---------|------------|
-| **`.claude/tools/list/<tool>.md`** (116 files) | Tool signatures, parameters, examples | Agent needs to call a tool: look up here |
-| **`.claude/tools/package/<agent>.md`** (22 files) | Agent's permitted tools by category | Agent starting: load this for quick reference |
+| **`docs/agents/tools/list/<tool>.md`** (116 files) | Tool signatures, parameters, examples | Agent needs to call a tool: look up here |
+| **`docs/agents/tools/package/<agent>.md`** (22 files) | Agent's permitted tools by category | Agent starting: load this for quick reference |
 | **`.claude/agents/<agent>.md`** | Agent definition | Agent spawning: always read first |
 
 **Key change:** All cowork agents now use the MCP gateway `call_tool` (server="vn-market") instead of individual tool permissions.
@@ -31,7 +31,7 @@ call_tool(
 | Param | Type | Value |
 |-------|------|-------|
 | `server` | string | **`"vn-market"`** — the only MCP server. NOT `vnmarket-mcp`, NOT `vn_market`, NOT `vnmarket`. |
-| `tool` | string | Tool name from `.claude/tools/list/<tool>.md` |
+| `tool` | string | Tool name from `docs/agents/tools/list/<tool>.md` |
 | `arguments` | object | Tool input params (see tool doc for schema) |
 
 **Common mistakes:**

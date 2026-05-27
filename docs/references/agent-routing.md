@@ -15,4 +15,4 @@ This knowledge file only carries rules that do **not** belong inside the runtime
 1. **Main terminal is permanent switch.** Sub-agents cannot spawn each other (see `docs/protocols/agent-chaining-protocol.md`).
 2. **Agent dispatch is exclusive.** Each intent routes to exactly one primary agent. Secondary agents are chained by the primary via RETURN `NEXT:`.
 3. **No agent execution in main terminal.** Main terminal only routes; work is delegated.
-4. **Universal entry.** Every spawn goes through `.claude/flows/<agent>/main.md` — never hardcode a sub-flow path in the spawn prompt.
+4. **Universal entry.** Every spawn goes through `docs/agents/<agent>/flow/main.md` — never hardcode a sub-flow path in the spawn prompt.

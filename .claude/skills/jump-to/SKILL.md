@@ -58,6 +58,6 @@ Write `JUMP TO <label>` in UPPERCASE with the label in backticks. Always inside 
 
 ## Invariants
 
-- Every `JUMP TO <label>` MUST resolve to an existing `<!-- jump:<label> -->` anchor in the same file (or reserved `end`). Audit: `grep -rEoh 'JUMP TO \`[a-z0-9-]+\`' .claude/flows | sort -u`.
+- Every `JUMP TO <label>` MUST resolve to an existing `<!-- jump:<label> -->` anchor in the same file (or reserved `end`). Audit: `grep -rEoh 'JUMP TO \`[a-z0-9-]+\`' docs/agents/*/flow | sort -u`.
 - Anchors live ON the step they identify, never as standalone navigation lines.
 - A dispatch table that maps to JUMP TOs must cover every distinct entry condition the flow supports.

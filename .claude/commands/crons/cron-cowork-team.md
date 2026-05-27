@@ -5,7 +5,7 @@ Create cowork-team master cron with CronCreate:
 - **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
   ```
-  Read and execute .claude/flows/cowork-team/main.md
+  Read and execute docs/agents/cowork-team/flow/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 

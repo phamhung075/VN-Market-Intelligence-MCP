@@ -5,7 +5,7 @@ Create claude-manager-helper cron with CronCreate:
 - **durable**: true  (persist across session restarts — required for unattended operation)
 - **prompt**:
   ```
-  Launch subagent (subagent_type=claude-manager-helper). Read and execute .claude/flows/claude-manager-helper/main.md
+  Launch subagent (subagent_type=claude-manager-helper). Read and execute docs/agents/claude-manager-helper/flow/main.md
   MCP: https://zenmidi.com/vn-market/mcp
   ```
 

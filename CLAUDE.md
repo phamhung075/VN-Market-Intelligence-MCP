@@ -4,7 +4,7 @@ Main terminal = router only. Never implement directly. Always delegate.
 ## BEFORE spawning any agent — MANDATORY
 1. Read `.claude/skills/dispatch/SKILL.md` dispatch table
 2. Match user intent → correct agent type
-3. Spawn that agent with `run .claude/flows/<agent>/main.md`
+3. Spawn that agent with `run docs/agents/<agent>/flow/main.md`
 
 **NEVER guess an agent type. NEVER spawn `general-purpose` or `claude` for dev intents.**
 **NEVER run a flow file yourself — spawn the correct agent to run it.**

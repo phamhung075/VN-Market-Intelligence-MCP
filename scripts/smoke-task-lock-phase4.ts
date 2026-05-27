@@ -396,8 +396,8 @@ console.log("\n=== T7 — Grep: 7 wired files contain task_claim AND task_releas
 
 // 7 spawn sites map to 5 files (S2+S3+S4 share main.md)
 const WIRED_FILES: Record<string, string> = {
-  "S1 execute-tier.md":  ".claude/flows/dev-team/execute-tier.md",
-  "S2-S4 main.md":       ".claude/flows/dev-team/main.md",
+  "S1 execute-tier.md":  "docs/agents/dev-team/flow/execute-tier.md",
+  "S2-S4 main.md":       "docs/agents/dev-team/flow/main.md",
   "S5 developer.md":     ".claude/agents/developer.md",
   "S6 ba.md":            ".claude/agents/ba.md",
   "S7 pm.md":            ".claude/agents/pm.md",
@@ -580,35 +580,35 @@ interface FlowExpect {
 
 const FLOW_1960C: FlowExpect[] = [
   {
-    path: ".claude/flows/po/sprint-kickoff.md",
+    path: "docs/agents/po/flow/sprint-kickoff.md",
     mustHave: ["task_claim"],
   },
   {
-    path: ".claude/flows/po/sprint-signoff.md",
+    path: "docs/agents/po/flow/sprint-signoff.md",
     mustHave: ["task_release"],
   },
   {
-    path: ".claude/flows/pm/main.md",
+    path: "docs/agents/pm/flow/main.md",
     mustHave: ["task_heartbeat"],
   },
   {
-    path: ".claude/flows/developer/main.md",
+    path: "docs/agents/developer/flow/main.md",
     mustHave: ["task_claim", "task_heartbeat"],
   },
   {
-    path: ".claude/flows/developer/microservice-main.md",
+    path: "docs/agents/developer/flow/microservice-main.md",
     mustHave: ["task_claim", "task_heartbeat"],
   },
   {
-    path: ".claude/flows/qa/main.md",
+    path: "docs/agents/qa/flow/main.md",
     mustHave: ["task_claim", "task_heartbeat", "task_release"],
   },
   {
-    path: ".claude/flows/agent-father/edit-apply.md",
+    path: "docs/agents/agent-father/flow/edit-apply.md",
     mustHave: ["task_claim", "task_heartbeat", "task_release"],
   },
   {
-    path: ".claude/flows/dev-team/drain-signals.md",
+    path: "docs/agents/dev-team/flow/drain-signals.md",
     mustHave: ["task_claim", "task_release"],
   },
 ];

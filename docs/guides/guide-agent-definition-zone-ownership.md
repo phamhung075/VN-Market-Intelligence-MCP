@@ -13,8 +13,8 @@
     # Zone A: controlled files this agent can edit (user reviews via git)
     owns_controlled:
       - .claude/agents/<agent-id>.md
-      - .claude/flows/<agent-id>/*.md
-      - .claude/tools/package/<agent-id>.md
+      - docs/agents/<agent-id>/flow/*.md
+      - docs/agents/tools/package/<agent-id>.md
 
     # Zone B: autonomous files this agent owns (no user approval needed)
     owns_autonomous:
@@ -49,9 +49,9 @@ Every file the agent creates or owns must be registered here. This prevents phan
     static:
       - path: .claude/agents/<agent-id>.md
         type: definition
-      - path: .claude/flows/<agent-id>/cycle.md
+      - path: docs/agents/<agent-id>/flow/cycle.md
         type: flow
-      - path: .claude/tools/package/<agent-id>.md
+      - path: docs/agents/tools/package/<agent-id>.md
         type: tool-package
       - path: docs/agent-memory/notebooks/<agent-id>.md
         type: notebook
@@ -76,7 +76,7 @@ Every file the agent creates or owns must be registered here. This prevents phan
 Every agent has a tool permission package file:
 
 ```yaml
-  tools_package: .claude/tools/package/<agent-id>.md
+  tools_package: docs/agents/tools/package/<agent-id>.md
 ```
 
-This file lists which MCP tools the agent is authorized to call. Referenced in flow files as `**Tools:** .claude/tools/package/<agent-id>.md`.
+This file lists which MCP tools the agent is authorized to call. Referenced in flow files as `**Tools:** docs/agents/tools/package/<agent-id>.md`.

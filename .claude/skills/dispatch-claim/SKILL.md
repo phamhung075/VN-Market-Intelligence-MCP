@@ -74,8 +74,8 @@ If inner uses a different prefix (`task:` vs `sprint-task:`), treat as independe
 
 ## Reference Commits (Sprint 1962c)
 
-- `.claude/flows/dev-team/execute-tier.md` (S1) — `592fe1c4`
-- `.claude/flows/dev-team/main.md` (S2/S3/S4) — `348443d1`
+- `docs/agents/dev-team/flow/execute-tier.md` (S1) — `592fe1c4`
+- `docs/agents/dev-team/flow/main.md` (S2/S3/S4) — `348443d1`
 - `.claude/agents/developer.md` (S5) — `587f4265`
 - `.claude/agents/ba.md` (S6) — `7ae26e3b`
 - pm fan-out (S7) — `5ecf426c`

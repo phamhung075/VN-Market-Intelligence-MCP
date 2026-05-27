@@ -4,7 +4,7 @@
 **Scheduler:** `src/scheduler/briefings/` (3 jobs)
 **Domain services:** decisionNoteSynthesizer, sparkline, assembleEveningSummary, assembleBriefing, assembleAlertDigest
 
-Individual tool signatures: `.claude/tools/list/<tool>.md`
+Individual tool signatures: `docs/agents/tools/list/<tool>.md`
 
 ---
 

@@ -236,7 +236,7 @@ CLAUDE.md (root — always loaded)
 Shared proactive scan flow used weekly by all 9 dev-* specialists:
 
 ```
-.claude/flows/developer/zone-scan.md (shared weekly zone-scan — stale imports, test ratio, doc drift)
+docs/agents/developer/flow/zone-scan.md (shared weekly zone-scan — stale imports, test ratio, doc drift)
   → emits docs/signals/zone-scan-<service>-<ts>.json (type: zone_health_report, to: po)
   → po triage-signals.md handles zone_health_report signals
 ```
@@ -248,23 +248,23 @@ Shared proactive scan flow used weekly by all 9 dev-* specialists:
 Children created by zone-enforcement-and-split-policy brief — thin dispatcher parent + sibling sub-flows:
 
 ```
-.claude/flows/tran-ngoc-bau/main.md (thin dispatcher — 23L)
-│   ├── .claude/flows/tran-ngoc-bau/bootstrap.md (Steps 0a-0c: project root, notebook, handoff ACK, bootstrap)
-│   ├── .claude/flows/tran-ngoc-bau/audit-market.md (Phase 1-2: MARKET audit + cross-validate + notebook review)
-│   ├── .claude/flows/tran-ngoc-bau/audit-methodology.md (Phase 2.5: 9-step Báu methodology scoring)
-│   ├── .claude/flows/tran-ngoc-bau/audit-signals.md (Phase 3: signal bus audit + confidence + dedup)
-│   └── .claude/flows/tran-ngoc-bau/auto-cure-and-handoff.md (Phase 4: auto-cure + report + notebook + PO handoff)
+docs/agents/tran-ngoc-bau/flow/main.md (thin dispatcher — 23L)
+│   ├── docs/agents/tran-ngoc-bau/flow/bootstrap.md (Steps 0a-0c: project root, notebook, handoff ACK, bootstrap)
+│   ├── docs/agents/tran-ngoc-bau/flow/audit-market.md (Phase 1-2: MARKET audit + cross-validate + notebook review)
+│   ├── docs/agents/tran-ngoc-bau/flow/audit-methodology.md (Phase 2.5: 9-step Báu methodology scoring)
+│   ├── docs/agents/tran-ngoc-bau/flow/audit-signals.md (Phase 3: signal bus audit + confidence + dedup)
+│   └── docs/agents/tran-ngoc-bau/flow/auto-cure-and-handoff.md (Phase 4: auto-cure + report + notebook + PO handoff)
 │
-.claude/flows/news-scout/cycle.md (thin dispatcher — 23L)
-│   ├── .claude/flows/news-scout/stage-bootstrap.md (Stage 0: bootstrap + regime + feedback hints)
-│   ├── .claude/flows/news-scout/stage-fetch.md (Stage 1: fetch_and_analyze + historical context)
-│   ├── .claude/flows/news-scout/stage-sentiment.md (Stage 2: sentiment scoring + PMI + regime multiplier)
-│   ├── .claude/flows/news-scout/stage-signals.md (Stage 3: post urgent_news + chain_catalyst signals)
-│   └── .claude/flows/news-scout/stage-log-notify.md (Stage 4-5: session log + WORK channel + Batch 2)
+docs/agents/news-scout/flow/cycle.md (thin dispatcher — 23L)
+│   ├── docs/agents/news-scout/flow/stage-bootstrap.md (Stage 0: bootstrap + regime + feedback hints)
+│   ├── docs/agents/news-scout/flow/stage-fetch.md (Stage 1: fetch_and_analyze + historical context)
+│   ├── docs/agents/news-scout/flow/stage-sentiment.md (Stage 2: sentiment scoring + PMI + regime multiplier)
+│   ├── docs/agents/news-scout/flow/stage-signals.md (Stage 3: post urgent_news + chain_catalyst signals)
+│   └── docs/agents/news-scout/flow/stage-log-notify.md (Stage 4-5: session log + WORK channel + Batch 2)
 │
-.claude/flows/ops/cloudflare-mcp.md (thin dispatcher — 20L)
-│   ├── .claude/flows/ops/cloudflare-mcp-diagnosis.md (3-layer diagnosis + 4 root causes + per-issue fixes)
-│   └── .claude/flows/ops/cloudflare-mcp-recovery.md (step-by-step recovery + escalation + notebook entry)
+docs/agents/ops/flow/cloudflare-mcp.md (thin dispatcher — 20L)
+│   ├── docs/agents/ops/flow/cloudflare-mcp-diagnosis.md (3-layer diagnosis + 4 root causes + per-issue fixes)
+│   └── docs/agents/ops/flow/cloudflare-mcp-recovery.md (step-by-step recovery + escalation + notebook entry)
 ```
 
 ## Agent File Splits (Wave 2A)
@@ -308,32 +308,32 @@ Children created by zone-enforcement-and-split-policy brief Wave 3A — lazy-loa
 Children created by zone-enforcement-and-split-policy brief Wave 3A — thin dispatcher parent + sibling sub-flows:
 
 ```
-.claude/flows/financial-analyst/cycle.md (thin dispatcher — 20L)
-│   ├── .claude/flows/financial-analyst/stage-bootstrap.md (Steps 0-0b: bootstrap + regime)
-│   ├── .claude/flows/financial-analyst/stage-analyze.md (Steps 1-4b: BCTC + EY spread + Layer 7/8 + chain validation + signal feedback)
-│   └── .claude/flows/financial-analyst/stage-log-notify.md (Steps 5-5b: notebook + WORK + deadline watch)
+docs/agents/financial-analyst/flow/cycle.md (thin dispatcher — 20L)
+│   ├── docs/agents/financial-analyst/flow/stage-bootstrap.md (Steps 0-0b: bootstrap + regime)
+│   ├── docs/agents/financial-analyst/flow/stage-analyze.md (Steps 1-4b: BCTC + EY spread + Layer 7/8 + chain validation + signal feedback)
+│   └── docs/agents/financial-analyst/flow/stage-log-notify.md (Steps 5-5b: notebook + WORK + deadline watch)
 │
-.claude/flows/agent-father/edit.md (thin dispatcher — 22L)
-│   ├── .claude/flows/agent-father/edit-prepare.md (Steps 0a-4: validate + read + guide lookup + edit plan)
-│   └── .claude/flows/agent-father/edit-apply.md (Steps 5-8: apply edits + cascade + validate + diff + notebook + RETURN)
+docs/agents/agent-father/flow/edit.md (thin dispatcher — 22L)
+│   ├── docs/agents/agent-father/flow/edit-prepare.md (Steps 0a-4: validate + read + guide lookup + edit plan)
+│   └── docs/agents/agent-father/flow/edit-apply.md (Steps 5-8: apply edits + cascade + validate + diff + notebook + RETURN)
 │
-.claude/flows/alert-commander/cycle.md (thin dispatcher — 20L)
-│   ├── .claude/flows/alert-commander/stage-bootstrap.md (Steps 0-2: bootstrap + regime + context + legal/crisis)
-│   ├── .claude/flows/alert-commander/stage-signals.md (Steps 3-3c: signal matrix + price-validation override + chain_catalyst routing)
-│   └── .claude/flows/alert-commander/stage-dispatch-log.md (Steps 4a-5: MARKET dispatch + verdict + WORK + notebook + firing rules + value investor mode)
+docs/agents/alert-commander/flow/cycle.md (thin dispatcher — 20L)
+│   ├── docs/agents/alert-commander/flow/stage-bootstrap.md (Steps 0-2: bootstrap + regime + context + legal/crisis)
+│   ├── docs/agents/alert-commander/flow/stage-signals.md (Steps 3-3c: signal matrix + price-validation override + chain_catalyst routing)
+│   └── docs/agents/alert-commander/flow/stage-dispatch-log.md (Steps 4a-5: MARKET dispatch + verdict + WORK + notebook + firing rules + value investor mode)
 │
-.claude/flows/unified-agent/market.md (thin dispatcher — 21L)
-│   ├── .claude/flows/unified-agent/market-bootstrap.md (Steps 0-1: bootstrap + regime + system health)
-│   ├── .claude/flows/unified-agent/market-analysis.md (Steps 2-6: intelligence + portfolio + domain + pillar coverage + WORK)
-│   └── .claude/flows/unified-agent/market-events-log.md (special event triggers + conviction shift + notebook commit)
+docs/agents/unified-agent/flow/market.md (thin dispatcher — 21L)
+│   ├── docs/agents/unified-agent/flow/market-bootstrap.md (Steps 0-1: bootstrap + regime + system health)
+│   ├── docs/agents/unified-agent/flow/market-analysis.md (Steps 2-6: intelligence + portfolio + domain + pillar coverage + WORK)
+│   └── docs/agents/unified-agent/flow/market-events-log.md (special event triggers + conviction shift + notebook commit)
 │
-.claude/flows/agent-father/review.md (thin dispatcher — 22L)
-│   ├── .claude/flows/agent-father/review-setup.md (Steps 0a-2: build agent list + load 15-check compliance matrix)
-│   └── .claude/flows/agent-father/review-execute.md (Steps 3-6: per-agent checks + cross-agent consistency + report + rank + notebook + RETURN)
+docs/agents/agent-father/flow/review.md (thin dispatcher — 22L)
+│   ├── docs/agents/agent-father/flow/review-setup.md (Steps 0a-2: build agent list + load 15-check compliance matrix)
+│   └── docs/agents/agent-father/flow/review-execute.md (Steps 3-6: per-agent checks + cross-agent consistency + report + rank + notebook + RETURN)
 │
-.claude/flows/ops/data-validation.md (thin dispatcher — 22L)
-│   ├── .claude/flows/ops/data-validation-checks.md (Steps 1-4: VPS dry-run + pipeline health + freshness + classify)
-│   └── .claude/flows/ops/data-validation-report.md (Steps 5-6: bug report + return + PO handoff)
+docs/agents/ops/flow/data-validation.md (thin dispatcher — 22L)
+│   ├── docs/agents/ops/flow/data-validation-checks.md (Steps 1-4: VPS dry-run + pipeline health + freshness + classify)
+│   └── docs/agents/ops/flow/data-validation-report.md (Steps 5-6: bug report + return + PO handoff)
 ```
 
 ## Flow File Splits (Wave 3B — 2026-05-12)
@@ -341,8 +341,8 @@ Children created by zone-enforcement-and-split-policy brief Wave 3A — thin dis
 Workflow-map autonomy fixes — extract reusable sub-flows so multiple callers don't duplicate logic:
 
 ```
-.claude/flows/po/channel-audit.md (Steps 0/0-a2/0-b only — 103L)
-│   └── .claude/flows/po/zone-routing.md (Step A zone inference table + Step B zone-health notebook scan — reusable by triage-signals.md, sprint-kickoff.md too — 60L)
+docs/agents/po/flow/channel-audit.md (Steps 0/0-a2/0-b only — 103L)
+│   └── docs/agents/po/flow/zone-routing.md (Step A zone inference table + Step B zone-health notebook scan — reusable by triage-signals.md, sprint-kickoff.md too — 60L)
 
 .claude/skills/dispatch/SKILL.md (slimmed 141L → 97L)
 │   ├── Cowork Signal Bus details → `docs/standards/mcp-tools.md` § Signal Bus
