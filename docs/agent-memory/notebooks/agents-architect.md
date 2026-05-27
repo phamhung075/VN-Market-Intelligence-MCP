@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-27T08:19:28Z
+
+**Brief:** `docs/architecture-briefs/2026-05-27-plain-vietnamese-market-report.md`
+
+chef.md Step 7 fuses TNB-analyst output (citations, layer numbers, `[gap:]` markers, Hán-Việt hexagram codes) with the user-facing MARKET message, making dishes unreadable for the non-technical sole reader. Designed a dual-output Step 7: Block A (plain 3–6 sentence Vietnamese prose → MARKET, zero citations/jargon) + Block B (`[CHEF-DETAIL]`-prefixed analyst detail → WORK, TNB-auditable). Flow-only change across 4 files — no new agents, no new cron slots, no memory overhead. tran-ngoc-bau audit path updated to read `[CHEF-DETAIL]` WORK messages for layer-walk completeness; MARKET plainness becomes a new positive audit gate.
+
+**Signal dropped:** `docs/signals/plain-vietnamese-market-report-20260527T081928Z.json` → agent-father, cowork-refactory-expert
+
+---
+
 ## 2026-05-24T07:33:08Z
 
 **Brief:** `docs/architecture-briefs/2026-05-24-microservice-build-standard-promotion.md` (REVISED)
