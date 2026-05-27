@@ -37,6 +37,41 @@
 
 ---
 
+## c316 · 2026-05-28 (NEWS-FULLDAY + RECAP-CMD — combined sprint)
+
+### IMPLEMENTATION COMPLETE — UNSTAGED (router commits)
+
+**Sprints:** NEWS-FULLDAY + RECAP-CMD (both single-zone apps/mcp-server, one dev pass, one ops rebuild)
+
+**Files modified (3):**
+- `apps/mcp-server/src/infrastructure/notifiers/telegramCommands.ts` — all changes
+- `apps/mcp-server/src/__tests__/214-telegram-commands.test.ts` — test extension
+- `docs/architecture/microservice/mcp-server/news-analysis.md` — doc update
+
+**Key changes in telegramCommands.ts:**
+- ADD imports: assembleEveningSummary, EveningSummary, generatePeriodicSummary, PeriodicSummary
+- UPDATE HELP_TEXT: /news line updated + 3 new lines (/recap /recapw /recapm)
+- ADD `export function stripHtml(raw)` — module-level, dependency-free (NEWS-FULLDAY)
+- REWRITE handleNews: removed DEFAULT_LIMIT=20, MAX_LIMIT_EXPLICIT=200+FALLBACK_LIMIT=20, uncapped primary query, dedup on normalized source_title, stripHtml on title+summary, post-dedup count in header
+- ADD splitBlockAtNewlines helper + severityLabelVi + directionVi (RECAP-CMD)
+- ADD handleRecap, handleRecapWeek, handleRecapMonth (exported; assembleFn injectable; RECAP-CMD)
+- ADD buildPeriodicTexts shared section builder
+- ADD 3 router branches: /recap /recapw /recapm
+
+**Gates:**
+- 60 pass / 0 fail (was 8; 52 new tests added)
+- `bun tsc --noEmit`: EXIT 0 (zero errors)
+- T-NEWS-1..8 all still pass (zero regression)
+- No banned fields in render path — grep-verified
+- stripHtml defined exactly once — grep-verified
+- webhookHandler.ts NOT modified
+
+**Root-cause note:** SQLite `datetime('now')` = space-format vs ISO midnightVietnamAsUtcInline() = T-format. String compare fails. Fixed seedNewsToday to use `new Date().toISOString()`.
+
+**NEXT: ops REBUILD + FORCE-RECREATE mcp-server. Then QA on zenmidi.com/vn-market/webhook.**
+
+---
+
 ## c314 · 2026-05-27T20:25Z (NEWS-CMD-IMPL — /news Telegram command)
 
 ### NEWS-CMD-IMPL DONE → Review
