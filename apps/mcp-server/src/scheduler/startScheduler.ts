@@ -65,6 +65,7 @@ import { runPublicContractsJob } from './market-data/publicContractsJob.js'
 import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
+import { runSelfImproveOrchestrator } from './audits/selfImproveOrchestratorJob.js'
 import { runDiskUsageAlertJob } from './diskUsageAlertJob.js'
 import { runTasksMdJanitorJob } from './system/tasksMdJanitorJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
@@ -933,6 +934,13 @@ export function startScheduler() {
       log,
     })
   })()
+
+  // Sprint SELF-IMPROVE-GATE Phase 2 — Self-improvement detection (09:02 UTC daily)
+  // Shadow mode: all DISPATCH_PATHS default-false; no auto-dispatch fires at ship.
+  // HN-1: bctcOverdueCheck is DAILY (0 9 * * *) not weekday-only; 2-min offset is correct.
+  cron.schedule(CRONS.selfImproveOrchestrator, async () => {
+    await jobRunRepo.wrapRun('selfImproveOrchestratorJob', () => runSelfImproveOrchestrator({ db }))
+  }, { timezone: 'UTC' })
 
   log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor active`)
 }

@@ -379,6 +379,30 @@ export function initSystemTables(db: Database): void {
     )
   `);
 
+  // ── Improve Check Log (Sprint SELF-IMPROVE-GATE Phase 2 lane-B) ──────────
+  // Snapshot log for the self-improvement detection loop (selfImproveOrchestratorJob).
+  // Records two-window accuracy delta findings and tracks dispatch lifecycle.
+  // SPIKE_1947 §8 schema — verbatim, do NOT modify without a lane-B gate-proof.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS improve_check_log (
+      id               INTEGER PRIMARY KEY AUTOINCREMENT,
+      signal_type      TEXT    NOT NULL,
+      window_7d_rate   REAL,
+      window_30d_rate  REAL,
+      sample_count_7d  INTEGER,
+      sample_count_30d INTEGER,
+      hypothesis       TEXT,
+      dispatch_status  TEXT    NOT NULL DEFAULT 'shadow',
+      fix_signal_id    TEXT,
+      checked_at       TEXT    NOT NULL DEFAULT (datetime('now')),
+      rechecked_at     TEXT
+    )
+  `);
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_improve_check_log_signal_type
+      ON improve_check_log(signal_type, checked_at DESC)
+  `);
+
   // ── Signal Quality Audit (Task 233b) ──────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS signal_quality_audit (

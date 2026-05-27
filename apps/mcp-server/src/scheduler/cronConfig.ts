@@ -165,4 +165,9 @@ export const CRONS = {
    *  parses TASKS.md, detects git log concurrent commits. Emits DASHBOARD ## po row on divergence.
    *  03:00 UTC: off-peak, after bctcReparseJob at 02:30 UTC. */
   tasksMdJanitor:             Bun.env.CRON_TASKS_MD_JANITOR                       ?? '0 3 * * *',
+  /** selfImproveOrchestrator — daily two-window accuracy degradation detection (Sprint SELF-IMPROVE-GATE Phase 2)
+   *  09:02 UTC daily — offset from 09:00 to avoid collision with bctcOverdueCheck ('0 9 * * *' daily)
+   *  and marketOpen ('0 9 * * 1-5' weekdays). One new cron slot. Shadow mode at ship (all paths default-false).
+   *  HN-1: bctcOverdueCheck is DAILY (0 9 * * *), NOT weekday-only — the 2-min offset is correct. */
+  selfImproveOrchestrator:    Bun.env.CRON_SELF_IMPROVE_ORCHESTRATOR               ?? '2 9 * * *',
 }
