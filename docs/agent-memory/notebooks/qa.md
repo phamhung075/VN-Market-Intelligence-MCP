@@ -43,6 +43,93 @@ next: po (NEWS-CMD-EXIT final sign-off)
 
 ---
 
+## cycle-135 · 2026-05-28 · SIG-IMPL-GATE T6 GATE-PROOF (commit ef109a76) — PROVEN-RED / APPROVED
+
+**Task:** SIG-IMPL-GATE TASK-6 — Gate-proof for lane-B detection gate (degradationRules.ts) | **Verdict:** GATE-PROOF: PROVEN-RED | **Merge verdict:** APPROVED
+
+```
+date: 2026-05-28T00:00Z
+type: sprint-qa-gate-proof (SIG-IMPL-GATE Phase 2 TASK-6)
+subject_commit: ef109a76
+subject_file: apps/mcp-server/src/domain/services/degradationRules.ts
+test_file: apps/mcp-server/src/__tests__/1948b-degradation-rules.test.ts
+
+GATE-PROOF PROCEDURE:
+
+step_1_baseline:
+  command: bun test apps/mcp-server/src/__tests__/1948b-degradation-rules.test.ts
+  result: 15 pass / 0 fail — GREEN
+
+step_2_injection:
+  mutation: line 224 — changed `baselineRate - currentRate >= 0.10` to `>= 0.50`
+  rationale: 15pp delta (0.55 - 0.40 = 0.15) no longer satisfies the raised threshold (0.50);
+             all DEGRADED-path tests should fail
+
+step_3_red_confirmation:
+  command: bun test apps/mcp-server/src/__tests__/1948b-degradation-rules.test.ts
+  result: 10 pass / 5 FAIL — RED
+  failing_tests:
+    - "AC-T2-1: DEGRADED detection on 15pp delta > 15pp delta >= 10pp threshold → DEGRADED finding returned"
+      assertion: "expect(findings).toHaveLength(1)" — Received length: 0
+    - "AC-T2-5: Known type hypothesis from DEGRADATION_CAUSE_MAP > volume_spike finding uses SPIKE §5 entry hypothesis, not _default"
+      assertion: "expect(degraded).toBeDefined()" — Received: undefined
+    - "AC-T2-6: Unknown signal_type falls back to _default hypothesis > unknown_type_xyz returns _default hypothesis, not undefined, not throw"
+      assertion: "expect(degraded).toBeDefined()" — Received: undefined
+    - "Edge cases > multi-stock weighted aggregation: 2 stocks for price_confirmation"
+      assertion: "expect(degraded).toBeDefined()" — Received: undefined
+    - "Edge cases > signal_type can appear as both DEGRADED and PERSISTENTLY_LOW"
+      assertion: "expect(degraded).toHaveLength(1)" — Received length: 0
+  verdict: RED CONFIRMED — gate is not vacuous
+
+step_4_revert:
+  action: restored `>= 0.10` (exact original text)
+  command: bun test apps/mcp-server/src/__tests__/1948b-degradation-rules.test.ts
+  result: 15 pass / 0 fail — GREEN RESTORED
+
+step_5_clean_diff:
+  command: git diff apps/mcp-server/src/domain/services/degradationRules.ts
+  result: (empty) — byte-identical to ef109a76
+
+GATE-PROOF VERDICT: PROVEN-RED
+The gate CAN go red. The 1948b test suite exercises the real threshold.
+No false-green. Lane-B classification is valid.
+
+AC results:
+  AC-T6-1: PASS — docker-compose.yml lines 52-55: all per-path vars commented-out (default false)
+           SELF_IMPROVE_AUTO_DISPATCH_PRICE_CONFIRMATION=false (commented)
+           SELF_IMPROVE_AUTO_DISPATCH_CHAIN_CATALYST=false (commented)
+           SELF_IMPROVE_AUTO_DISPATCH_VOLUME_SPIKE=false (commented)
+           SELF_IMPROVE_AUTO_DISPATCH_COVERAGE_GAP=false (commented)
+           No path is true at ship time.
+  AC-T6-2: PASS — threshold mutation triggered 5 RED failures (documented above)
+  AC-T6-3: PASS — revert restored GREEN (15/15)
+  AC-T6-4: DEFERRED — no live proposal doc exists yet in container (orchestrator shadow-mode,
+           no live signal_outcomes data to trigger detection); gate-proof evidence recorded here
+           in QA notebook per flow; AC-T6-4 requires a running orchestrator to have emitted a
+           real proposal doc — dependency on TASK-3/TASK-4 running in live container with real data.
+           Non-blocking: evidence is recorded; doc append is an ops/timing dependency, not a code gap.
+  AC-T6-5: N/A — gate DID go RED; lane-B demotion is NOT triggered.
+
+suite_floor:
+  1948_all_7_files: 70 pass / 0 fail (all ACs T2-1..T8 + T1, T3, T4, T5 neighbor tests)
+  pre_1948_neighbor_shard (1940-1946, 12 files): 78 pass / 4 skip / 3 fail
+    NOTE: 3 failures in 1941c-accuracy-digest.test.ts are PRE-EXISTING test-isolation failures
+    (fail when run in batch alongside 1942+ files due to shared signal_outcomes state;
+     pass when run in isolation: 7/7 PASS confirmed standalone).
+    These are NOT introduced by SIG-IMPL-GATE sprint — no degradationRules.ts dependency.
+  post_1948_neighbor_shard (1949-1959, 7 files): 54 pass / 0 fail
+  domain_signal_shard (062-065+1920f+1941a+signal-outcome-store, 7 files): 103 pass / 0 fail
+  tsc: exit 0 (zero errors)
+  oom_limitation: Full 9408-test suite cannot be run end-to-end (8GB Docker cap OOM per
+    project_host_memory_panic). Sharded coverage = 305 tests across 33 files, 0 failures
+    introduced by new code. 3 pre-existing failures in 1941c (batch-isolation only).
+
+ddd: PASS — degradationRules.ts: grep confirms zero import lines from infrastructure/ or application/
+security: PASS — zero process.env, zero hardcoded secrets, no SQL (pure domain function)
+```
+
+---
+
 ## cycle-133 · 2026-05-27 · PEK-QA MULTIPAGE (commits 2e228f0d + e418d606) — RED / back-to-dev
 
 **Task:** PEK-QA — validate PEK-MULTIPAGE grouping fix (2e228f0d) + PEK-WEIGHTS ops fix (e418d606) | **Verdict:** RED — PIPELINE: back-to-dev
