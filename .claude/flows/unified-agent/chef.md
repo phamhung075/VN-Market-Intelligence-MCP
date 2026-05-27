@@ -1,4 +1,4 @@
-<!-- size-justification: 227L — telemetry extracted to chef-telemetry.md (S1 split); remaining content is the 6-layer TNB recipe protocol (Steps 0–7) which is a single atomic responsibility; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle and cannot be factored without breaking recipe coherence -->
+<!-- size-justification: 264L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -164,30 +164,56 @@ Rules:
 
 ---
 
-## Step 7 — WRITE DISH
+## Step 7 — WRITE DISH (Dual-Output)
 
-**Format:** 2–4 narrative paragraphs in Vietnamese with full diacritics.
+Produce **two outputs** from the synthesized analysis: Block A for the user (MARKET channel — plain Vietnamese), Block B for TNB audit (WORK channel — analyst detail).
 
-**Structure:**
-1. **Regime context** — market hexagram state + macro regime (TIGHTENING/EASING/NEUTRAL) + US/VN stack summary
-2. **Sector/ticker thesis** — qualifying clusters, pillar alignment, convergence evidence cited. Open this paragraph with the causal-chain sentence(s) from Step 6.5 verbatim. Then expand with supporting detail.
-3. **Kinh Dịch overlay** — hexagram states for key tickers; reversal signals if any
-4. **Action signal or watch** — high-conviction: clear action signal; medium: watch trigger; low: no recommendation
+---
 
-**Citation Discipline (paragraph 2 — TNB-auditable):**
-Every claim in paragraph 2 MUST cite at least one of: signal ID (e.g. `#3350`), source file (e.g. `price_anomaly_20260518T1637`), or source_tier (`tier-1`). Citation format: inline parenthetical immediately after the claim — e.g. "VCB volume 10x average (#3350, price_anomaly_20260518T1637)". Claims without citations are a FLOW VIOLATION — self-correct by adding the citation or downgrading the claim to "unverified observation" and reducing conviction.
+### Block A — MARKET message (plain Vietnamese, user-facing)
 
-**Metadata to include in dish:**
-- TNB layers walked: cite by number (Layer 1–6)
-- Signal IDs consumed: list file names or IDs
-- `source_tier` values cited
+**Audience:** Non-technical user reading on a phone. Goal: comprehensible in 30 seconds.
+
+**Structure (3–6 sentences total):**
+1. What happened today — plain direction + delta % (e.g. "Thị trường hôm nay giảm nhẹ, VN-Index mất khoảng 0.8%").
+2. What is driving it — plain Vietnamese (e.g. "Dòng tiền ngoại rút ra khỏi nhóm ngân hàng do áp lực tỷ giá USD/VND tăng").
+3. What it means for the watchlist — name tickers in plain context (e.g. "VCB và TCB chịu áp lực bán, trong khi HPG hưởng lợi từ đơn hàng xuất khẩu").
+4. Kinh Dịch context (optional, only if meaningful reversal signal): plain Vietnamese name only, no Hán-Việt code or hào numbers (e.g. "Quẻ thị trường đang ở trạng thái đỉnh Yang — tín hiệu cần thận trọng với đà tăng").
+5. What to watch next — one concrete trigger (e.g. "Theo dõi mức kháng cự 26,500 VND/USD trong phiên ngày mai").
+
+**Format rules:**
+- Full diacritics, flowing prose.
+- NO inline citations (`#ID`, `price_anomaly_*`, `tier-1`).
+- NO metadata block (no "TNB layers walked", no "Signal IDs consumed").
+- NO `[gap: ...]` markers.
+- NO σ / bp / pp notation.
+- NO Hán-Việt hexagram codes (`Lão Âm Hào 6`) — use plain Vietnamese name only.
+- NO bullet-point ticker dumps. Every MARKET message is narrative prose.
 
 **Send:**
 ```
-send_telegram(channel="market", message=<dish_text>)
+send_telegram(channel="market", message=<Block_A_text>)
 ```
 
-No atom lists. No bullet-point ticker dumps. Every MARKET message is a narrative dish.
+---
+
+### Block B — WORK analyst detail (TNB-auditable)
+
+**Audience:** tran-ngoc-bau audit. Contains the full 6-layer analysis.
+
+**Content:** Full analyst narrative — identical in depth to the former single MARKET dish:
+- Causal-chain sentences from Step 6.5 verbatim (including `[gap: ...]` markers)
+- Paragraph 2 with inline citations: signal ID (`#3350`), source file (`price_anomaly_*`), source_tier
+- Citation Discipline: every paragraph-2 claim MUST cite ≥1 of: signal ID, source file, source_tier. Claims without citations are a FLOW VIOLATION — self-correct or downgrade to "unverified observation".
+- Metadata footer: "TNB layers walked: Layer 1–6 | Signal IDs consumed: [...] | source_tier values cited: [...]"
+- Full hexagram names in Hán-Việt (`Lão Âm Hào 6`) — TNB expects canonical terminology.
+
+**Send:**
+```
+send_telegram(channel="work", message="[CHEF-DETAIL] <DISH_TYPE> <HH:MM UTC>\n" + <Block_B_text>)
+```
+
+The `[CHEF-DETAIL]` prefix is mandatory — it allows tran-ngoc-bau's audit flow to filter WORK messages precisely.
 
 ---
 

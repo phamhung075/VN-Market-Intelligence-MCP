@@ -4,17 +4,29 @@
 
 ## Phase 1: Audit MARKET Messages
 
-**Step 1 — Read MARKET channel**
-`read_telegram_reports(channel="market", limit=50)` → last 50 messages
+**Step 1a — Read MARKET channel (plain-language check)**
+`read_telegram_reports(channel="market", limit=10)` → last 10 MARKET messages
 
-For each message, check:
+For each MARKET message check:
 - [ ] Vietnamese diacritics present (no mojibake, no missing marks)
+- [ ] Message is plain Vietnamese prose — no inline citations (`#ID`, `price_anomaly_*`), no `[gap:]` markers, no metadata block
+- [ ] Message is 3–6 sentences and comprehensible to a non-technical reader
+- [ ] Ticker direction + delta % visible (not σ notation)
+- [ ] No bullet-point ticker dumps (narrative only)
+
+**Step 1b — Read WORK channel for analyst detail (layer-walk audit)**
+`read_telegram_reports(channel="work", limit=20)` → filter messages starting with `[CHEF-DETAIL]`
+
+For each `[CHEF-DETAIL]` message (one per dish — Morning / EOD / Evening), check:
 - [ ] Message structure follows `docs/standards/alert-message-format.md`
 - [ ] Confidence displayed as 0–1 decimal (not percentage, not raw integer)
 - [ ] Regime caveat appended when required (TIGHTENING + bullish must have caveat)
 - [ ] Ticker symbol valid (in watchlist or known VN stock)
 - [ ] No duplicate messages (same ticker + same signal type within 2h)
-- [ ] **Pillar coverage** — investment-thesis messages reference ≥3 of {M2, COC, EPS, POL} per `tnb-methodology.md` Layer 4. Score logged for Phase 2.5.
+- [ ] **Pillar coverage** — investment-thesis references ≥3 of {M2, COC, EPS, POL} per `tnb-methodology.md` Layer 4. Score logged for Phase 2.5.
+- [ ] Causal-chain sentence from Step 6.5 present in paragraph 2
+- [ ] Inline citations present in paragraph 2 (signal ID / source file / source_tier)
+- [ ] TNB metadata footer present: "TNB layers walked", "Signal IDs consumed", "source_tier values cited"
 
 **Step 2 — Cross-validate with live data**
 For each MARKET alert about a specific ticker:
