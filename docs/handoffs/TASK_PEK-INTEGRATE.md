@@ -622,3 +622,61 @@ None. All 3 changes implemented exactly per §9. No additional undefined symbols
 **ops** — `docker compose build --no-cache pdf-extractor` (--no-cache required: smoke gate layer is cached; must re-run to validate new import chain). Then `docker compose up -d --no-deps --force-recreate pdf-extractor`.
 
 **qa** — FPT Q4 2025 sentinel (`e71f845d-...`): direct `bun:sqlite` query on `market.db` — `bctc_table_rows` rows for this report_id must have non-empty `label` AND non-empty values. Non-empty `stitched_markdown` in extraction response also confirms OCR text flowing. Then full corpus sweep.
+
+---
+
+## [qa] PEK-QA — GREEN / APPROVED 2026-05-27
+
+**Report:** `reports/TASK_REPORT_PEK-QA.md` | **Commit under test:** `8535b175` | **Image:** `439d42948589` (built 2026-05-27 10:26 UTC)
+
+- Corpus sweep: **12/12 eligible reports PASS, 0 FAIL, 0 NOT_EXTRACTED** (2 excluded: VCB Q1/Q4 — `pdf_path` NULL, geo-restricted, never downloaded).
+- FPT Q4 2025 sentinel (`e71f845d`): 23/23 table_units non-empty, Vietnamese diacritics confirmed ("TỔNG CỘNG TÀI SẢN"), code 270 = 88,089,621,779,862 current + 71,999,995,678,620 prior (non-null), all 5 BCTC-TABLE-3 mode checks PASS.
+- 503 market-hours guard INTACT (`is_vn_market_open_utc()` `handlers.py:403`; `CRON_BCTC_REPARSE_JOB=0 21 * * *`).
+- Static gates: TS 9810/9810 PASS, `tsc --noEmit` 0 errors, Python 26/26 PASS, DDD fences KEPT, security clean.
+- RAM: pdf-extractor ~1.4 GiB / 2.5 GiB cap; total fleet ~3.4 GiB / 8 GiB cap — PASS.
+- PEK subtree pristine; frozen surfaces 0-diff. Non-blocking note tracked separately (ghost-unit accumulation on re-extraction — pre-existing, not an OCR-fix regression).
+
+**NEXT: PO PEK-EXIT.**
+
+---
+
+## [PO] PEK-EXIT — SIGN-OFF (done-pending-G9) 2026-05-27T14:04:39Z
+
+**Verdict:** ACCEPTED — sprint DELIVERED and independently re-verified at exit. Done-Bar conditions 1–6 MET; only condition #7 (USER verbal G9) outstanding. Goal stays ARMED until G9. PO does NOT block on G9 — main terminal obtains it.
+
+### REQ-PEK-12 — FORMALIZED + MET
+
+The `OcrBackendPort` "candidate" carried in code since PEK-IMPL is now a formal requirement in `docs/REQ_PEK-INTEGRATE.md § REQ-PEK-12`, recorded **MET** (AC-PEK-12a–12f all checked). Live ground truth re-verified at exit:
+
+- **Port:** `domain/repositories.py:163` — `class OcrBackendPort(Protocol)`, single `recognize_text(image_or_region) -> tuple[str, float]`, pure Protocol, zero infra imports.
+- **Selection:** `infrastructure/ocr_backends.py:387` — `select_ocr_backend()` reads `OCR_TEXT_BACKEND` ∈ {`tesseract-vie` (default `_DEFAULT_BACKEND` line 382), `paddleocr`, `auto`}; unknown → default + warning.
+- **Adapters:** `TesseractVieBackend` (pytesseract `vie+eng`, `--psm 6`) + `PaddleOcrBackend` (PP-StructureV2, `lang="vi"` at `pek_engine_adapter.py:316`).
+- **Composition root:** `main.py:120` reads env + injects into `PekEngineAdapter`.
+- **Scope boundary (binding):** ONLY cell/line TEXT recognition is pluggable. LAYOUT (DocLayout-YOLO) + TABLE-GRID (PP-StructureV2 table mode) are NON-selectable — fixed in the adapter, no env switch (port docstring `:184-186`, recognize_text contract `:214`).
+- **Proven end-to-end:** QA corpus 12/12 PASS ran on the live `tesseract-vie` backend through this port; scenario `TestPekOcrBackendInjectionScenario` (FastAPI TestClient + injected `FakeOcrBackend`) exercises the seam.
+
+### Done-when criteria — CONFIRMED
+
+| # | Criterion | Status | Evidence |
+|---|-----------|--------|----------|
+| 1 | OCR pluggable committed | MET | commit `8535b175` (PEK-OCR-ROOTCAUSE); chain `9ab93889` numpy ABI → `6c124745` Option B unimernet bypass → `8535b175` `_to_pil` + fail-loud + `lang="vi"` |
+| 2 | Container REBUILT (not restarted) + weights runtime-only + fleet RAM < 8 GB | MET | image `439d42948589` built 2026-05-27 10:26 UTC (post-commit); weights on named volume `pek_model_cache` (not baked, image < 2GB); fleet RAM 3.4 GiB / 8 GB |
+| 3 | qa clean BCTC rows via direct market.db + FPT sentinel | MET | 12/12 corpus PASS via `bun:sqlite`; FPT `e71f845d` 23/23 non-empty, code 270 current+prior non-null, diacritics confirmed |
+| 4 | PEK subtree pristine + 503 guard holds | MET | `git -C apps/pdf-extractor/PDF-Extract-Kit diff` EMPTY (re-verified at exit, clean status); 503 guard `handlers.py:403` + `CRON_BCTC_REPARSE_JOB=0 21 * * *` |
+| 5 | USER verbal G9 | **OUTSTANDING** | main terminal obtains — PO does NOT block |
+
+### Independent exit re-verification (PO, not re-derived from QA)
+
+- `git -C apps/pdf-extractor/PDF-Extract-Kit diff --stat` → EMPTY; `git status --short` on subtree → clean. PEK subtree pristine confirmed at exit time.
+- `git log --oneline` confirms `8535b175` present in chain (current HEAD `3393efea` = ops notebook cycle-131; `ef74970e` = PEK-OCR-ROOTCAUSE impl record).
+- OCR backend pluggability mechanism verified live in code (port + selector + adapters + composition root, paths above).
+
+### Docs updated at PEK-EXIT (PO)
+
+- `docs/REQ_PEK-INTEGRATE.md` — REQ-PEK-12 added (FORMALIZED + MET, 6 ACs); status header re-stamped DELIVERED/done-pending-G9; DDD Layer Summary row added.
+- `docs/TASKS.md` — PEK-EXIT row → DONE-PENDING-G9; sprint Status header updated; PEK-EXIT sign-off note added to Notes block.
+- `docs/handoffs/TASK_PEK-INTEGRATE.md` — this EXIT record.
+
+### Commit discipline
+
+PEK subtree (`apps/pdf-extractor/PDF-Extract-Kit/`) left UNSTAGED/pristine. PO stages ONLY the three doc files via scoped per-file `git add` (NEVER `-A`/`.`). Sprint goal remains ARMED until USER verbal G9.

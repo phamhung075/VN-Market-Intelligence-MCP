@@ -1,6 +1,6 @@
 # REQ_PEK-INTEGRATE — Re-engine apps/pdf-extractor on PDF-Extract-Kit (CPU-only, 8GB-safe)
 
-**status: APPROVED (AMENDED 2026-05-26T21:03:47Z)** — PO spec-approval gate PASSED 2026-05-26T20:49:25Z; AMENDED post-PEK-DESIGN per architect risk flags. Architect PEK-DESIGN is UNBLOCKED; PEK-IMPL (dev-pdf-extractor) UNBLOCKED against this amended spec.
+**status: APPROVED (AMENDED 2026-05-26T21:03:47Z) — DELIVERED, done-pending-G9 (PEK-EXIT 2026-05-27T14:04:39Z)** — PO spec-approval gate PASSED 2026-05-26T20:49:25Z; AMENDED post-PEK-DESIGN per architect risk flags. QA returned GREEN 2026-05-27 (12/12 corpus PASS, 0 FAIL — `reports/TASK_REPORT_PEK-QA.md`). REQ-PEK-12 (OCR-backend pluggability) FORMALIZED + MET at PEK-EXIT. All 12 REQs MET; Done-Bar conditions 1–6 MET; only condition #7 (USER verbal G9) remains — main terminal will obtain it. Goal stays ARMED until G9.
 
 **AMENDMENT NOTE (2026-05-26T21:03:47Z, PO — resolves architect brief §8 R-CRIT-1 + §10 new ACs):**
 - **AC-PEK-3a REWRITTEN (R-CRIT-1 — contradiction resolved):** the prior literal ("`ls /app/PDF-Extract-Kit` returns No such file") contradicted the architect's chosen `pip install -e ./PDF-Extract-Kit` editable-install strategy, which REQUIRES the source tree present in the container at runtime. Pristine invariant is now preserved by **zero-diff, NOT absence**: (a) `.git/` subdirectory excluded from image, (b) model weights NEVER baked into image (verify image size < 2GB via `docker image inspect`), (c) `git -C apps/pdf-extractor/PDF-Extract-Kit diff` returns EMPTY. User hard constraint "do not change any code here, it repo publish, dont touch" honored as zero-diff.
@@ -295,6 +295,40 @@ After PEK-IMPL ships new code to `apps/pdf-extractor/`, ops must rebuild the Doc
 
 ---
 
+## REQ-PEK-12 — OCR-Backend Pluggability (Cell/Line TEXT Only) — FORMALIZED + MET 2026-05-27 (PO, PEK-EXIT)
+
+**DDD Layer:** Domain (port Protocol — `OcrBackendPort`) + Application (composition-root selection) + Infrastructure (concrete adapters)
+**Priority:** HIGH
+**Status:** FORMALIZED AT PEK-EXIT — **MET** (verified live in code + QA-GREEN corpus).
+
+### Goal statement
+
+The cell/line TEXT-recognition step of the PEK extraction path is **pluggable** behind a single
+domain port, so the text recogniser can be swapped (Tesseract ↔ PaddleOCR) without touching the
+layout or table-grid detection path. This requirement was carried as a `OcrBackendPort` "candidate"
+in `domain/repositories.py` during PEK-IMPL and is FORMALIZED here at PEK-EXIT now that the OCR
+root-cause work (commit `8535b175`) made the backend live and QA verified the corpus GREEN.
+
+**Hard scope boundary (binding):** ONLY the cell/line TEXT step is selectable via `OcrBackendPort`.
+LAYOUT detection (DocLayout-YOLO) and TABLE-GRID detection (PaddleOCR PP-StructureV2 table mode) are
+NOT pluggable and NOT selectable — they remain fixed in `pek_engine_adapter.py`. This port governs
+the text inside already-detected cells only.
+
+### Testable acceptance criteria — ALL MET
+
+- [x] **AC-PEK-12a (domain port exists):** `domain/repositories.py` defines `class OcrBackendPort(Protocol)` — a pure typing Protocol with a single `recognize_text(image_or_region) -> tuple[str, float]` method, zero infrastructure imports, zero I/O. VERIFIED: `domain/repositories.py:163`.
+- [x] **AC-PEK-12b (env-driven selection live):** `select_ocr_backend()` in `infrastructure/ocr_backends.py:387` reads `OCR_TEXT_BACKEND` ∈ {`tesseract-vie`, `paddleocr`, `auto`}, default `tesseract-vie` (`_DEFAULT_BACKEND`, line 382), and returns the matching `OcrBackendPort` implementation. Unknown value falls back to the default with a warning. VERIFIED live.
+- [x] **AC-PEK-12c (concrete adapters present):** `TesseractVieBackend` (pytesseract, `lang="vie+eng"`, `--psm 6`) and `PaddleOcrBackend` (PaddleOCR PP-StructureV2, `lang="vi"`) both exist in `infrastructure/ocr_backends.py` and implement the port. PaddleOCR Vietnamese path confirmed at `pek_engine_adapter.py:316` (`lang="vi"`, fixed under PEK-OCR-ROOTCAUSE).
+- [x] **AC-PEK-12d (composition-root injection):** `main.py:120` reads `OCR_TEXT_BACKEND` and injects the selected backend into `PekEngineAdapter`. No hard-coded backend in the extraction path. VERIFIED.
+- [x] **AC-PEK-12e (layout/table-grid NON-selectable):** The port docstring (`domain/repositories.py:184-186`) and the `recognize_text` contract (`:214`) state the port MUST NOT perform layout or table-grid detection. DocLayout-YOLO + PP-StructureV2 table mode are fixed, not behind any env switch. VERIFIED.
+- [x] **AC-PEK-12f (backend exercised end-to-end):** QA corpus sweep (12/12 PASS, `reports/TASK_REPORT_PEK-QA.md`) ran on the live `tesseract-vie` default backend producing non-empty Vietnamese text with diacritics across all eligible reports — the OCR path through `OcrBackendPort` is proven on the real corpus, not just unit fixtures. Scenario test `TestPekOcrBackendInjectionScenario` (FastAPI TestClient + injected `FakeOcrBackend`) proves the port seam is exercised by the handler.
+
+### Confidence-scoring contract (carried, unchanged)
+
+`confidence == 0.0` → upstream skips insert; `< 0.2` → inserts with `low_confidence` flag; `>= 0.2` → normal insert (matches `reference_low_confidence_handling`).
+
+---
+
 ## REQ-PEK-11 — Market-Hours Isolation (Hard Constraint — APPENDED 2026-05-26)
 
 **DDD Layer:** Interface (route-level HTTP guard) + Infrastructure (cron schedule)
@@ -354,6 +388,7 @@ The sprint is NOT done until ALL SEVEN conditions hold simultaneously. No partia
 | REQ-PEK-9 (privacy + locality) | — | Execution mode (sequential) | Tool selection (local-only) | — |
 | REQ-PEK-10 (ops REBUILD) | — | — | Deployment pipeline | — |
 | REQ-PEK-11 (market-hours isolation) | — | — | Cron schedule | Route-level HTTP 503 guard |
+| REQ-PEK-12 (OCR-backend pluggability) | OcrBackendPort Protocol | Composition-root selection | Tesseract/Paddle adapters | — |
 
 ---
 
