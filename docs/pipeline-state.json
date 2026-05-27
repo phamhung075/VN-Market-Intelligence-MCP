@@ -1,10 +1,10 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "ACTIVE SPRINT: NEWS-CMD (on-demand /news Telegram pull command). PO opened 2026-05-27T19:50Z. Ladder NEWS-CMD-BA(done @92f9bc52, PO-approved)→NEWS-CMD-DESIGN(done @4db46d7f, brief docs/architecture-briefs/2026-05-27-news-cmd-design.md)→NEWS-CMD-IMPL(done @25a92ca6 — handleNews() telegramCommands.ts:510 + case /news:634 + webhookHandler.ts chunking loop :86; TASKS.md=Review)→NEWS-CMD-DEPLOY(DONE — ops rebuilt+force-recreated mcp-server @85ed911f+@477b57b7, image built 2026-05-27T22:29:45 CEST, healthy, 146 tools; handoff docs/handoffs/TASK_NEWS-CMD.md='OPS COMPLETE'; TASKS.md status field still says BLOCKED = STALE, blocker satisfied)→NEWS-CMD-QA(DISPATCHED THIS TICK, qa, zone apps/mcp-server/)→NEWS-CMD-EXIT(po gate after QA; goal stays ARMED until USER confirms it reads usefully). NEWS-CMD is NOT a scale pilot; does NOT consume the WIP=2 fleet cap; does NOT touch pilot-status-*.json. BCTC reconciliation below (PEK-INTEGRATE supersedes the abandoned BCTC-LAYOUT-FIRST/LF-FIX).",
-  "currentSprint": "NEWS-CMD — On-demand /news Telegram pull command (full plain-Vietnamese news digest from rag_analyses, sync command like /watchlist, /news N cap, >4096 chunking, empty-DB fallback). zone=apps/mcp-server/ (dev-mcp-server sole owner). SPRINT-S, MEDIUM (UX/coverage tier). SSOT docs/SPRINT_GOAL.md §Sprint NEWS-CMD; ledger docs/handoffs/TASK_NEWS-CMD.md + TASKS.md §Sprint NEWS-CMD.",
-  "activeTaskId": "NEWS-CMD — BA✓92f9bc52; DESIGN✓4db46d7f; IMPL✓25a92ca6 (TASKS.md=Review); DEPLOY✓ (ops @85ed911f+@477b57b7, container rebuilt+healthy today). activeStep = NEWS-CMD-QA (qa, DISPATCHED 2026-05-27T20:36Z, zone apps/mcp-server/) → NEWS-CMD-EXIT (po). NOT a scale pilot; does NOT consume WIP=2 fleet cap.",
-  "nextAgent": "NEWS-CMD-QA (qa) DISPATCHED THIS TICK — live-verify /news in the running mcp-server container (rebuilt today): (1) /news returns REAL rag_analyses content (not stub/N/A — exercise the handler against the live/seeded DB; NOT-RUN/stub-green FORBIDDEN); (2) plain-VN formatting only (no impact_score numbers, no jargon — feedback_market_report_plain_vietnamese); (3) /news N caps the count; (4) over-4096-char output CHUNKED into sequential messages (no silent truncation); (5) empty-table → friendly 'chưa có tin hôm nay' fallback (most-recent-N fallback header 'Tin tức gần đây' per B2); (6) no test-baseline regression (floor 9408 PASS / ceiling 348 FAIL per project-stats.json). Emit qa-news-cmd-<UTC>.json. If CHANGES_REQUESTED → NEWS-CMD-FIX (fixer, dev-mcp-server zone); else → NEWS-CMD-EXIT (po sign-off; goal stays ARMED until USER confirms it reads usefully — DoD item 7). ALSO DISPATCHED THIS TICK (parallel, BCTC lane, does NOT consume WIP=2): PEK-MULTIPAGE re-deploy+QA — ops --no-cache rebuild pdf-extractor + DELETE stale bctc_layout_units/bctc_page_zones + re-extract ALL 12 corpus reports, then qa re-sweep under the REVISED 4-gate contract (Gate B = md_len >= 1000, NOT row_count >= 10 — architect adjudication PEK-QA-ADJUDICATE; dev fix already committed @ed347661 PEK-ROWCOUNT + @2e228f0d grouping rewrite).",
-  "nextPrompt": "Drive NEWS-CMD to done (feedback_ship_completion — do NOT ship a slice and exit). NEWS-CMD-QA is the active-sprint actionable step now that DEPLOY is effectively satisfied (ops rebuilt mcp-server today; TASKS.md BLOCKED status field is stale and will flip on the next status edit). After QA: NEWS-CMD-FIX (only if CHANGES_REQUESTED, dev-mcp-server zone) or NEWS-CMD-EXIT (po; ARMED until USER usefulness confirm). PARALLEL BCTC lane (off the WIP=2 cap): PEK-MULTIPAGE re-deploy+QA closes the last G9-rejected page-coverage defect for PEK-INTEGRATE (sprint is DONE-PENDING-G9). Other READY work queued, NOT dispatched this tick: CHEF-ATTN (BA spec, MEDIUM, apps/mcp-server zone — opened 2026-05-27T19:25Z, holds behind NEWS-CMD to avoid same-zone churn while QA exercises mcp-server). Never ask user to run/deploy/test — spawn ops/dev/qa.",
+  "status": "IDLE for THIS session's lane (apps/macro-indicators) — Sprint MACRO-LIVE-PRICES CLOSED DONE this :07 tick (2026-05-27 ~22:30Z). Bug #3003 RESOLVED end-to-end: get_macro_snapshot now serves live oil 92.86/gold 4488.5/usdvnd 26273 dataSource=live (was 2026-05-23 fixture seed 82.5/2350/24500 for 4 cron cycles). NEWS-CMD also DONE (PO sign-off 20:52:50Z, prior tick). ⛔ LANE SEPARATION: a PARALLEL SESSION owns the apps/mcp-server lane (NEWS-FULLDAY, RECAP-CMD, SELF-IMPROVE-GATE) AND apps/pdf-extractor/PEK-INTEGRATE — THIS session must NOT dispatch any of those (see bctc_reconciliation.session_handoff). MACRO-RATES-LIVE backlogged (carry/yield sub-signal staleness, separate scope, no active incident).",
+  "currentSprint": "NONE active in this session's lane. MACRO-LIVE-PRICES (apps/macro-indicators) CLOSED DONE: full chain ba(17c431e4)->PO-spec-gate->architect(7753c172, Option A + 26h staleness + RFC3339Nano)->pm(ece4bea9, MLP-D1..D5)->dev-macro-indicators(6102620a, SQLiteCommodityRepository live-wiring, go test 13pkg PASS)->ops(image 2714fa34dd4f force-recreated, COMMODITY_LIVE_MODE=true healthy)->qa(cd673c3c PASS, signal qa-mlp-2026-05-27T223236Z.json)->PO MLP-EXIT(f33c1eda DONE). SSOT docs/REQ_MACRO-LIVE-PRICES.md + docs/architecture-briefs/2026-05-28-macro-live-prices.md.",
+  "activeTaskId": "NONE (macro lane idle). MACRO-LIVE-PRICES DONE @f33c1eda. MACRO-RATES-LIVE = backlog stub only (not dispatched).",
+  "nextAgent": "NONE — do NOT resume any prior nextAgent (the stale NEWS-CMD-QA reference from the 20:36Z snapshot is OBSOLETE — NEWS-CMD is DONE). Next :07 tick: PO triage. ⛔ THIS session's dispatcher must NOT claim apps/mcp-server tasks (NEWS-FULLDAY/RECAP-CMD/SELF-IMPROVE-GATE) or any PEK-*/apps/pdf-extractor task — the PARALLEL SESSION owns those lanes; the per-task dispatcher-wrap claim will collide/skip if attempted. Stay in apps/macro-indicators (or other uncontended zones).",
+  "nextPrompt": "Macro lane is idle and clean. On the next :07 tick, PO triage should look for NEW uncontended work OUTSIDE the parallel session's mcp-server+pdf-extractor lanes. Candidate backlog in macro lane: MACRO-RATES-LIVE (mirror the proven Option-A DB-read + COMMODITY_LIVE_MODE-style env gate + 26h recency-bound to live-wire carry/yield deposit-rate/fed-funds/earnings-yield inputs — currently computedAt 2026-05-23). NOT urgent (no active incident). Never ask user to run/deploy; spawn ops/dev/qa. feedback_ship_completion: drive to done.",
   "bctc_reconciliation": {
     "abandoned": "BCTC-LAYOUT-FIRST (LF-FIX) — the prior pipeline-state (updatedAt 2026-05-26T19:25Z) claimed 'LF-FIX (dev-pdf-extractor) IN-FLIGHT, lock task:LF-FIX ttl7200'. That 2h lock expired ~2026-05-26T21:25Z (~23h ago); ZERO LF-FIX progress committed. SUPERSEDED, not re-dispatched.",
     "superseded_by": "Sprint PEK-INTEGRATE (TASKS.md §Sprint PEK-INTEGRATE) — OPENED 2026-05-26T20:37Z by PO from EXPLICIT USER DIRECTIVE ('rewrite apps/pdf-extractor to use this sub repo'). PEK-INTEGRATE SUPERSEDES the ENGINE layer (LF-EXTRACT) of BCTC-LAYOUT-FIRST and ABSORBS its UX layer (LF-OVERLAY). LF-EXTRACT/LF-DEPLOY/LF-QA PAUSED. The zone_page() gutter-detection fix that LF-FIX was meant to make is moot — the column-guessing engine is being REPLACED by PDF-Extract-Kit (PaddleOCR PP-StructureV2 table mode), not patched.",
@@ -20,7 +20,12 @@
     "phase2": "CLOSED 2026-05-24T09:45Z (QA P2-NF-Z APPROVED @41e4b2ce → PO terminal 12/12 atomic close)",
     "goalsEarned": 12,
     "all_12_yes": true,
-    "decisionMatrix": {"speed": "YES", "trust": "YES", "scale": "YES", "verdict": "scale"},
+    "decisionMatrix": {
+      "speed": "YES",
+      "trust": "YES",
+      "scale": "YES",
+      "verdict": "scale"
+    },
     "verdict": "scale",
     "outcome": "SCALE (3xYES) — 6th pilot to SCALE; generic developer owner, no specialist agent",
     "anchor_tag": "news-fetch-pre-refactor @ 31483c8c (local-only, INTACT)",
@@ -34,7 +39,12 @@
     "status": "DONE",
     "goalsEarned": 12,
     "all_12_yes": true,
-    "decisionMatrix": {"speed": "YES", "trust": "YES", "scale": "YES", "verdict": "scale"},
+    "decisionMatrix": {
+      "speed": "YES",
+      "trust": "YES",
+      "scale": "YES",
+      "verdict": "scale"
+    },
     "verdict": "scale",
     "outcome": "SCALE (3×YES) — 11th and FINAL pilot of the 2026-05-22 three-tier deep-module rollout; dev-mcp-server specialist owner, TS (Bun). Terminal CLOSED 2026-05-26T07:36Z. Three-tier rollout 11/11 COMPLETE.",
     "closure_signal": "docs/signals/qa-mcp-server-p2-close-2026-05-26T073000Z.json"
@@ -44,11 +54,20 @@
     "status": "DONE",
     "goalsEarned": 10,
     "graded": "10 YES + 2 N/A (G3, G5) = 12 total",
-    "decisionMatrix": {"speed": "YES", "trust": "YES", "scale": "YES", "verdict": "scale"},
+    "decisionMatrix": {
+      "speed": "YES",
+      "trust": "YES",
+      "scale": "YES",
+      "verdict": "scale"
+    },
     "verdict": "scale",
     "outcome": "SCALE (3×YES) — separate frontend pilot; dev-frontend specialist owner, Remix + TS. Terminal CLOSED 2026-05-26T15:42Z (commit 2f33d871).",
     "closure_signal": "docs/signals/po-frontend-closure-2026-05-26T154200Z.json",
-    "architect_risk_flags_filed": ["R-HIGH: macro /macro/snapshot body-contract test gap — CLOSED via MAINT MACRO-CONTRACT @80c776de", "R-MED: mcp-server clients.ts signals type mismatch — CLOSED via MAINT CLIENTS-TYPE @5d49e3be", "R-LOW: ARCHITECTURE.md macro Go/TS doc drift — PARKED MAINT ARCH-DOC-DRIFT"]
+    "architect_risk_flags_filed": [
+      "R-HIGH: macro /macro/snapshot body-contract test gap — CLOSED via MAINT MACRO-CONTRACT @80c776de",
+      "R-MED: mcp-server clients.ts signals type mismatch — CLOSED via MAINT CLIENTS-TYPE @5d49e3be",
+      "R-LOW: ARCHITECTURE.md macro Go/TS doc drift — PARKED MAINT ARCH-DOC-DRIFT"
+    ]
   },
   "maint_residual": "MAINT batch (TASKS.md §MAINT, opened 2026-05-26T19:40Z) — off-WIP-cap residual. DONE: MACRO-CONTRACT @80c776de, CLIENTS-TYPE @5d49e3be, SSOT-REFRESH @862c41cf (toolCount 3-way divergence CLOSED → all 146), CLEAN-1972 (branch DISCARDED, zero coverage lost). DRIFT-3 Phase A merged (236dfc8b/1e3b3803/09998906); ops live-E2E + Phase B (pdf Dockerfile) deferred. PARKED: ARCH-DOC-DRIFT (doc-only, lowest), MACRO-VNINDEX-DATA-GAP (defer under host load), NEWS-INGEST-2c dashboard <option> (cosmetic).",
   "deploy_drift": {
@@ -59,6 +78,6 @@
   },
   "dashboard_actioned": "po dev-team triage 2026-05-27T20:36Z: ACK'd tnb-c81-audit-handoff + tnb-F9-sprint-escalation (both NEW → READ; F9 = data-availability-blocked [BCTC Q1 banking/real-estate not filed] + chef is a COWORK flow, NOT a dev sprint this tick — routed as cowork-lane/deferred-on-data, see TNB ACK). c80 was un-ACK'd 2 cycles — ACK'd via tnb-audit-latest.md PO ACK block. CW-DISPATCH-STEP47-BOOTSTRAP-ENUM (## ops, LOW, ZERO blocker — cowork falls back to direct bootstrap) = real dev-mcp-server backlog candidate (add 'cowork-team' to get_cycle_bootstrap enum, OR flow passes a valid agent name) but NOT dispatched this tick (WIP discipline, NEWS-CMD active). CHEF-EOD-MACRO-MISATTRIB + MARKET-SLOTS-DARK + HSG-FIRE-SEVERITY-RECAL etc. = cowork-team lane, NOT dev-team-spawnable. SIGNAL-BACKLOG-MAINT = janitor lane (already half-pruned @4f766da2 + @19cb55fb).",
   "signal_backlog": "Half-drained this session (commit 4f766da2 + 19cb55fb removed ~308 context-bloat/telemetry signals). Remainder = janitor/code-janitor lane (self-cron maintenance, NOT dev-team-spawnable). NONE are new dev work not already in TASKS.md.",
-  "updatedAt": "2026-05-27T20:36:00Z",
-  "updatedBy": "dev-team :07 dispatcher (PO triage) — RECONCILED 25h-stale state. Prior pipeline-state claimed BCTC-LAYOUT-FIRST LF-FIX in-flight (lock expired ~23h ago, zero progress) — that sprint is SUPERSEDED by PEK-INTEGRATE (DONE-PENDING-G9); LF-FIX abandoned, NOT re-dispatched (the column-guessing engine it would have patched is being REPLACED by PDF-Extract-Kit). NEW active sprint = NEWS-CMD: IMPL committed @25a92ca6 (handler live in source), ops DEPLOY done today @85ed911f+@477b57b7 (TASKS.md BLOCKED field stale). DISPATCHED NEWS-CMD-QA (qa, apps/mcp-server/, live-verify real rag_analyses content + plain-VN + /news N + chunking + fallback; NOT-RUN forbidden) + PEK-MULTIPAGE re-deploy+QA (parallel, off-WIP-cap; ops --no-cache rebuild + re-extract all 12 + qa re-sweep under revised Gate B md_len>=1000 per architect PEK-QA-ADJUDICATE — dev fix already committed @ed347661+@2e228f0d). WIP for fleet-cap sprints: NEWS-CMD active (1 of 2); CHEF-ATTN held behind it (same mcp-server zone). RETURN to dispatcher: BATCH(2). Left all files UNSTAGED except this pipeline-state.json + tnb ACK + dashboard READ marks (PO doc edits, committed per convention)."
+  "updatedAt": "2026-05-27T22:39:15Z",
+  "updatedBy": "dev-team :07 dispatcher (this session) — DROVE Sprint MACRO-LIVE-PRICES FULLY TO DONE this tick (bug #3003 closed, live oil/gold/usdvnd verified end-to-end through get_macro_snapshot by qa + PO independently). Reconciled the stale 20:36Z snapshot (NEWS-CMD long since DONE; obsolete NEWS-CMD-QA nextAgent cleared). Confirmed via git log that a PARALLEL SESSION is actively committing the apps/mcp-server lane (NEWS-FULLDAY/RECAP-CMD/SELF-IMPROVE-GATE: 7e3b7957, 076ba5c5) + owns apps/pdf-extractor/PEK (session_handoff preserved below). Clean zone separation maintained: this session touched ONLY apps/macro-indicators + docker-compose.yml(1 line) + docs. Umbrella lock task:MACRO-LIVE-PRICES released (ok=false, TTL expired)."
 }
