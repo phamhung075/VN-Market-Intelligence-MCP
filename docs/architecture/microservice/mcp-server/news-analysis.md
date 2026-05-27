@@ -75,6 +75,27 @@ mcp-server serves the news-fetch pilot dashboard statically at the route above. 
 
 ---
 
+## Telegram Commands
+
+| Command | Purpose | Source table | Argument | Chunking |
+|---------|---------|-------------|----------|----------|
+| `/news [N]` | On-demand digest of today's news in plain Vietnamese | `rag_analyses` | Optional count N (default 20, max 50) | Multi-message if digest > 4096 chars; each chunk split at story boundaries via `CommandResult.texts[]` loop in `webhookHandler.ts` |
+
+**Query logic:**
+- Primary: `created_at >= midnight-Vietnam-today (UTC+7)` ordered `impact_score DESC, created_at DESC LIMIT N`.
+- Fallback (zero today-rows): same ORDER BY, same LIMIT, no date filter. Header changes to `Tin tức gần đây (N bài):`.
+- Empty DB: returns `Chưa có tin hôm nay.`
+
+**Output constraints (NFR-1 / feedback_market_report_plain_vietnamese):**
+- `sentiment` column mapped to Vietnamese label: positive → `tích cực`, negative → `tiêu cực`, neutral/null → `trung tính`.
+- `impact_score` numeric value never surfaces in output.
+- `source_url` not shown in story blocks (URLs do not render usefully in plain Telegram text).
+- `summary` truncated at 200 chars with `…` if longer.
+
+**DDD layer:** `handleNews` lives in `src/infrastructure/notifiers/telegramCommands.ts` (direct DB read, consistent with all sync command handlers). Chunking loop lives in `src/interface/mcp/routes/webhookHandler.ts`.
+
+---
+
 ## Invariants
 
 1. 10 news sources: CafeF (2), VnExpress, VnEconomy, Vietstock (3), VietnamBiz, VnBusiness, TuoiTre, NhanDan (2), NLD. BaoDauTu: INVESTIGATE (0 items — parsing issue task 1185).

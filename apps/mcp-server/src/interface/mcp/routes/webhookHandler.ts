@@ -82,11 +82,15 @@ export async function handleWebhook(
       db,
     );
     if (result) {
-      await sendTelegramMarket(result.text, {
-        parseMode: "",
-        chatId: result.chatId,
-        persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
-      });
+      // Multi-message commands (e.g. /news) return texts[]; single-message commands use text.
+      const chunks = result.texts ?? [result.text];
+      for (const chunk of chunks) {
+        await sendTelegramMarket(chunk, {
+          parseMode: "",
+          chatId: result.chatId,
+          persist: { from_agent: "mcp-user", message_type: "user_ask_reply" },
+        });
+      }
     }
   } catch (err) {
     log.warn("[webhook] command handling failed", {

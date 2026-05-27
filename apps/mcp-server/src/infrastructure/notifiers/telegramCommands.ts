@@ -1,5 +1,5 @@
 /**
- * Infrastructure — Telegram Command Router (Task 214, Task 1063)
+ * Infrastructure — Telegram Command Router (Task 214, Task 1063, Task NEWS-CMD)
  *
  * Processes incoming Telegram bot commands from webhook updates.
  * Each handler queries SQLite directly (no MCP layer) and returns
@@ -10,13 +10,14 @@
  *   - Plain text only (no Markdown to avoid parse errors)
  *   - Returns null when the update has no actionable text
  *
- * Supported commands (task 1063 reduced set, task 1071 additions, task 1073 /ask):
+ * Supported commands (task 1063 reduced set, task 1071 additions, task 1073 /ask, NEWS-CMD /news):
  *   /watchlist                  — list watchlist stocks with current prices
  *   /price VCB                  — price snapshot for a single stock
  *   /health                     — system health (uptime, DB size, watchlist count)
  *   /set_position VCB 75000 1000 — buy/sell/clear a position
  *   /check_position             — list all open positions with P/L, stop-loss, TP ladder
  *   /ask <question>             — enqueue a free-form question for the QA Responder agent
+ *   /news [N]                   — full digest of today's news from rag_analyses (chunked if > 4096 chars)
  *   /report <mota>              — report a bug/issue to Dev Team (priority=medium)
  *   /fix   <mota>               — report an urgent bug to Dev Team (priority=high)
  *   /help                       — list all commands
@@ -35,6 +36,7 @@ import {
 } from "../db/positionStore.js";
 import { insertAskQuestion } from "../db/askQueueStore.js";
 import { spawnQaResponder } from "../agents/qaResponderSpawner.js";
+import { VN_OFFSET_MS } from "../../domain/services/timeConstants.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -51,8 +53,14 @@ export interface TelegramUpdate {
 
 /** Result returned by handleTelegramCommand to the webhook handler. */
 export interface CommandResult {
-  /** Plain text to send back to Telegram. */
+  /** Plain text to send back to Telegram (single-message commands). */
   text: string;
+  /**
+   * Multi-message commands (e.g. /news with a large digest).
+   * When present, webhookHandler.ts iterates this array sequentially
+   * and ignores `text`. Each element is guaranteed <= 4096 chars.
+   */
+  texts?: string[];
   /** Telegram chat ID to reply to. */
   chatId: number;
 }
@@ -66,6 +74,7 @@ const HELP_TEXT = `VN Market Bot
 /watchlist              Danh mục theo dõi
 /price VCB              Giá cổ phiếu
 /health                 Trạng thái hệ thống
+/news [N]               Tin tức hôm nay (mặc định 20 bài)
 /set_position VCB 75000 1000  Thêm/bán/xóa vị thế (qty>0 mua, qty<0 bán, 0 0 xóa)
 /check_position         Xem vị thế + P/L + stop-loss + TP
 /ask <câu hỏi>          Đặt câu hỏi phân tích (trả lời trong 12 phút)
@@ -429,6 +438,168 @@ function handleCheckPosition(db: Database): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// /news handler (Task NEWS-CMD)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Map sentiment column value to plain Vietnamese label. */
+function sentimentLabel(raw: string | null | undefined): string {
+  switch (raw) {
+    case "positive":
+    case "tích cực":
+      return "tích cực";
+    case "negative":
+    case "tiêu cực":
+      return "tiêu cực";
+    case "neutral":
+    case "trung tính":
+      return "trung tính";
+    default:
+      return "trung tính";
+  }
+}
+
+/** Inline midnight-Vietnam-as-UTC arithmetic (mirrors assembleEveningSummary.ts). */
+function midnightVietnamAsUtcInline(): string {
+  const now = new Date();
+  const vnNow = new Date(now.getTime() + VN_OFFSET_MS);
+  const midnight = new Date(
+    Date.UTC(
+      vnNow.getUTCFullYear(),
+      vnNow.getUTCMonth(),
+      vnNow.getUTCDate(),
+      0,
+      0,
+      0,
+      0,
+    ) - VN_OFFSET_MS,
+  );
+  return midnight.toISOString();
+}
+
+/** Chunk an array of story-block strings into sequential messages each <= maxLen chars. */
+function chunkStories(header: string, storyBlocks: string[], maxLen = 4096): string[] {
+  const chunks: string[] = [];
+  let current = header;
+
+  for (const block of storyBlocks) {
+    const candidate = current + "\n\n" + block;
+    if (candidate.length <= maxLen) {
+      current = candidate;
+    } else {
+      chunks.push(current);
+      // New chunk starts with the story block directly (no repeated header)
+      current = block;
+    }
+  }
+
+  if (current.length > 0) {
+    chunks.push(current);
+  }
+
+  return chunks;
+}
+
+/**
+ * /news [N] — query rag_analyses for today's stories (UTC+7 midnight), format
+ * as plain Vietnamese digest. Returns `texts[]` for chunked delivery.
+ *
+ * Primary query: rows with created_at >= midnight-Vietnam today.
+ * Fallback (zero today-rows): most-recent N rows, no date constraint.
+ * Header changes to "Tin tức gần đây" when fallback is active.
+ */
+function handleNews(db: Database, args: string[]): { texts: string[] } {
+  const DEFAULT_LIMIT = 20;
+  const MIN_LIMIT = 1;
+  const MAX_LIMIT = 50;
+
+  // Parse optional count argument
+  let limit = DEFAULT_LIMIT;
+  if (args[0] !== undefined) {
+    const parsed = parseInt(args[0], 10);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      limit = Math.min(MAX_LIMIT, Math.max(MIN_LIMIT, parsed));
+    }
+  }
+
+  interface NewsRow {
+    source_title: string | null;
+    summary: string | null;
+    sentiment: string | null;
+    impact_direction: string | null;
+    created_at: string;
+  }
+
+  let rows: NewsRow[] = [];
+  let isFallback = false;
+
+  try {
+    const midnight = midnightVietnamAsUtcInline();
+
+    // Primary query: today's rows
+    rows = db
+      .prepare<NewsRow, [string, number]>(
+        `SELECT source_title, summary, sentiment, impact_direction, created_at
+         FROM rag_analyses
+         WHERE created_at >= ?
+         ORDER BY impact_score DESC, created_at DESC
+         LIMIT ?`,
+      )
+      .all(midnight, limit);
+
+    // Fallback: most-recent N rows regardless of date
+    if (rows.length === 0) {
+      isFallback = true;
+      rows = db
+        .prepare<NewsRow, [number]>(
+          `SELECT source_title, summary, sentiment, impact_direction, created_at
+           FROM rag_analyses
+           ORDER BY impact_score DESC, created_at DESC
+           LIMIT ?`,
+        )
+        .all(limit);
+    }
+  } catch {
+    // DB error (e.g. table not yet created) — return friendly fallback
+    return { texts: ["Chưa có tin hôm nay."] };
+  }
+
+  // Empty DB entirely
+  if (rows.length === 0) {
+    return { texts: ["Chưa có tin hôm nay."] };
+  }
+
+  // Build header
+  const headerLabel = isFallback ? "Tin tức gần đây" : "Tin tức hôm nay";
+  const header = `${headerLabel} (${rows.length} bài):`;
+
+  // Build per-story blocks
+  const storyBlocks: string[] = rows.map((row) => {
+    const titleLine = row.source_title ?? "(không có tiêu đề)";
+
+    const lines: string[] = [titleLine];
+
+    // One-line gist from summary (truncate at 200 chars)
+    if (row.summary != null && row.summary.length > 0) {
+      const gist =
+        row.summary.length > 200
+          ? row.summary.slice(0, 200) + "…"
+          : row.summary;
+      lines.push(gist);
+    }
+
+    // Sentiment label (plain Vietnamese — no raw English, no numeric score)
+    lines.push(`Cảm xúc: ${sentimentLabel(row.sentiment)}`);
+
+    return lines.join("\n");
+  });
+
+  // Chunk stories into Telegram-safe messages (<= 4096 chars each)
+  const chunks = chunkStories(header, storyBlocks, 4096);
+
+  return { texts: chunks };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Main router
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -458,6 +629,12 @@ export async function handleTelegramCommand(
   const userId = message.from?.id != null ? String(message.from.id) : "default";
 
   try {
+    // /news returns { texts: string[] } — handle separately from single-text commands
+    if (cmd === "/news") {
+      const newsResult = handleNews(db, args);
+      return { text: newsResult.texts[0] ?? "", texts: newsResult.texts, chatId };
+    }
+
     let responseText: string;
 
     switch (cmd) {
