@@ -2832,3 +2832,84 @@ INFO:     127.0.0.1:37162 - "GET /health HTTP/1.1" 200 OK
 - Prior session (rag-service rebuild) left notebook at line 50; new PEK-DEPLOY session appended here
 - No incidents during build or deployment
 - Container health check endpoints responding correctly
+
+---
+## Session: 2026-05-27 (NEWS-CMD-DEPLOY)
+
+**Task:** NEWS-CMD-DEPLOY — Rebuild mcp-server container after dev-team /news command implementation
+
+### Context
+- Sprint NEWS-CMD, task NEWS-CMD-DEPLOY
+- dev-mcp-server shipped new `/news` Telegram command (commits e49ad47a..34d299a2 on main)
+- Running container was 16 hours old (stale image from before code merge)
+- Rule: rebuild-after-dev-change requires full Docker rebuild (restart would load stale image)
+
+### Cycle Summary
+- Single-service rebuild: `docker compose build mcp-server` (89.7s, successful)
+- Container force-recreated: `docker compose up -d --no-deps --force-recreate mcp-server`
+- Container healthy within 12 seconds
+- All verification gates passed
+- New image timestamp: 2026-05-27T22:29:45+02:00 CEST (proves rebuild completed today)
+
+### Execution Timeline
+- 2026-05-27 22:26:22 CEST — Rebuild task initiated (ops flow main.md)
+- 2026-05-27 22:26:30 CEST — docker compose build mcp-server started
+- 2026-05-27 22:31:20 CEST — Build complete (step 18 export done, manifest list created)
+- 2026-05-27 22:31:20 CEST — docker compose up -d --no-deps --force-recreate mcp-server executed
+- 2026-05-27 22:31:30 CEST — Container status: Up 12 seconds (healthy)
+
+### Key Results
+- **Docker rebuild:** ✓ Image rebuilt with /news command code
+  - Image ID: sha256:21da3475a8bf069b30a1e2b9c0c1c699d21fa2dc7b4cc48b564f21d115078d6e
+  - Created: 2026-05-27T22:29:45+02:00 CEST (today)
+  - Previous image was 16 hours old (healthy state, but stale code)
+
+- **Container deployment:** ✓ Healthy in 12s from restart
+  - Port 3000 exposed correctly (MCP server API)
+  - Port 4004 exposed correctly (MCP proxy gateway)
+  - market_data volume mounted correctly
+  - Startup logs clean: no errors, 146 tools registered
+
+- **Health endpoint:** ✓ HTTP 200 operational
+  - Status: ok
+  - Version: 1.0.0
+  - Tool count: 146 (unchanged, /news is internal Telegram dispatch, not a new tool)
+  - Uptime: 3.4s at verification
+
+- **System health post-rebuild:**
+  - api-gateway: ok
+  - kinh-dich: ok
+  - macro: ok
+  - rag: ok
+  - frontend: ok
+  - alert, news, pdf, stock, ta: down (pre-existing, unrelated to mcp-server rebuild)
+  - Gateway health status: degraded (expected, pre-existing services down)
+  - No new failures introduced by rebuild
+
+- **Code verification:**
+  - Commits verified: e49ad47a (start) → 34d299a2 (end)
+  - Key commit: 25a92ca6 feat(mcp-server): /news Telegram pull command
+  - Description: Full day's news in Vietnamese
+  - Code path: mcp-server container now runs commit 34d299a2 (live)
+
+### Acceptance Criteria
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| Build succeeds | ✓ PASS | docker compose build exit 0, image exported successfully |
+| Image timestamp TODAY | ✓ PASS | 2026-05-27T22:29:45+02:00 CEST vs old 16h image |
+| Container healthy | ✓ PASS | docker ps: Up 12 seconds (healthy), no crash loop |
+| Health endpoint 200 | ✓ PASS | curl http://localhost:3000/health → 200 OK |
+| No startup errors | ✓ PASS | Logs show: "[bootstrap] MCP server ready", 146 tools registered |
+| Fresh code live | ✓ PASS | Image ID changed, timestamp proves rebuild occurred |
+| Gateway reachable | ✓ PASS | curl http://localhost:4000/health → 200 OK (degraded state expected) |
+
+### Signals Emitted
+- docs/agent-memory/notebooks/ops.md — session appended (this entry)
+
+### Status
+✓ COMPLETE — mcp-server container successfully rebuilt with /news command code deployed.
+- All acceptance criteria verified PASS
+- No rollback needed
+- Container healthy and reachable
+- Ready for QA to test /news Telegram command
+NEXT: QA (via NEWS-CMD task) to verify /news command works end-to-end
