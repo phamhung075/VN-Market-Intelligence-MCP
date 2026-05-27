@@ -1,0 +1,30 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "cycle": "c81",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-05-27T20:13:00Z",
+  "summary": "NEEDS_ATTENTION. STABLE. 3/3 guaranteed dishes audited. Layer scores: Evening 4/6, EOD 4/6, Morning 3.5/6. Structural gaps D/E/F/F9 persist. No CRITICAL findings. Chef pipeline fully operational (3/3 guaranteed + 3 correct silent exits). Key: business context F9 now 9 cycles (auto-cure threshold 3 exceeded — PO sprint dispatch needed). c80 handoff not ACK'd (DASHBOARD ## tran-ngoc-bau empty). Macro-snapshot fix dispatched not yet confirmed deployed.",
+  "findings": [
+    { "id": "F1", "severity": "MED", "category": "data-quality", "issue": "Macro-snapshot stale seed unresolved across all 3 dishes" },
+    { "id": "F2", "severity": "MED", "category": "methodology", "issue": "L4 1-1.5/4 pillars structural — BCTC Q1 absent, SBV stale, P/E absent" },
+    { "id": "F3", "severity": "MED", "category": "methodology", "issue": "D-gap PMI sub-components absent (L2 PARTIAL all dishes)" },
+    { "id": "F4", "severity": "MED", "category": "methodology", "issue": "E-gap VIRA absent (L3 PARTIAL all dishes)" },
+    { "id": "F5", "severity": "MED", "category": "methodology", "issue": "Business context F9 absent 9th cycle — escalate to sprint dispatch" },
+    { "id": "F6", "severity": "LOW", "category": "process", "issue": "c80 handoff NOT ACK'd by PO (DASHBOARD ## tran-ngoc-bau empty)" },
+    { "id": "F7", "severity": "LOW", "category": "process", "issue": "CHEF-EOD-MACRO-MISATTRIB still NEW in DASHBOARD ## po" }
+  ],
+  "positives": [
+    "Chef pipeline 3/3 guaranteed slots + 3 correct silent exits",
+    "Evening dish: 4 convergence clusters, Investment-clock CORE_VN tier=8 (new)",
+    "L5 Kinh Dich PASS Evening+EOD via get_portfolio_conviction inline path",
+    "L6 gap catalogue PASS all 3 dishes",
+    "L1 state-transition discipline PASS all 3 dishes",
+    "Causal chain discipline strong — no inverted causality in any dish"
+  ],
+  "autoCures": 0,
+  "pipelineDegraded": false,
+  "guaranteedOk": true
+}

@@ -1,0 +1,27 @@
+{
+  "from": "architect",
+  "to": "po",
+  "via": "caveman",
+  "type": "phase-2-task-plan-done",
+  "createdAt": "2026-05-24T08:31:33Z",
+  "pilot": "kinh-dich-service",
+  "phase": "2",
+  "plan": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/phase-2-task-plan-go.md",
+  "status": "READY-FOR-DISPATCH",
+  "tasks": 12,
+  "ac_count": 61,
+  "estimated_effort_hours": 5.5,
+  "task_sequence": ["P2-A","P2-B","P2-C","P2-D","P2-E","P2-F","P2-G","P2-H","P2-I","P2-J","P2-K","P2-Z"],
+  "goal_scope_phase2": ["G4","G5","G9","G10","G11"],
+  "earned_pending_carry_forward": ["G1","G2","G3","G6","G7","G8","G12"],
+  "critical_findings": {
+    "ts_era_tags_exist": "kinh-dich-pre-ci (2d245200), kinh-dich-pre-delete (fdaf4be3), kinh-dich-pre-inject (b4cdb1db) — all from TS pilot, must NOT be retagged",
+    "go_era_tag_convention": "-go suffix: kinh-dich-pre-ci-go, kinh-dich-pre-delete-go, kinh-dich-pre-inject-go",
+    "g5b_already_done": "All 6 MCP kinhdich tools confirmed HTTP-routed to port 5005 (TS P2-KD-G). P2-G is read-only audit.",
+    "g5a_may_be_done": "src/_deprecated/services_v1.ts may already exist from TS P2-KD-F. P2-F is verify-if-done / move-if-not.",
+    "g9_requires_sandbox_population": "Go dashboard G9 requires sandbox run BEFORE Playwright opens — cold-open proves NOT-RUN only.",
+    "g10_injection_target": "THIEU_DUONG_THRESHOLD 0.10->0.25 in pkg/primitive/hao_encoder/hao_encoder.go",
+    "fence_a_allowlist_required": "nuclear_hexagram imports hexagram_resolver + hao_encoder (OQ-6 sister-primitive exempt). depguard must allowlist pkg/primitive/* -> pkg/primitive/*."
+  },
+  "next_action": "PO: repoint docs/data/pilot-status-kinh-dich.json phase2.taskPlan to this plan + install tasks map + flip phase2.status AWAITING-PLAN->OPEN + dispatch P2-A to dev-kinh-dich"
+}

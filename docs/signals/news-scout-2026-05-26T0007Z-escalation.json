@@ -1,0 +1,8 @@
+{
+  "from": "news-scout",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[news-scout] Stage 1 fetch failed: fetch_and_analyze timeout after 2 retries (00:07Z off-hours cycle). news-fetch service (vinahost VPS) unreachable or hung. No articles processed, zero signals fired.",
+  "priority": "high",
+  "createdAt": "2026-05-26T00:07:55Z"
+}

@@ -1,0 +1,23 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T001831Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "gateway_probe": {
+      "status": "STILL-DOWN",
+      "detail": "Re-probed open incident cow-20260527T000315 at next tick. get_market_snapshot via gateway = same 'dial vn-market ... 192.168.65.254:3000: i/o timeout'. Host loopback localhost:3000/health=200 (mcp-server healthy). gateway->host bridge NOT recovered ~15min later; Docker likely not yet restarted.",
+      "no_new_dashboard_row": "Incident already escalated to po (cow-20260527T000315); not duplicating. No slots due this tick so no spawns withheld."
+    }
+  },
+  "priority": "low",
+  "createdAt": "20260527T001831Z"
+}

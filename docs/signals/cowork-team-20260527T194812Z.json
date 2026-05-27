@@ -1,0 +1,23 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T194812Z",
+    "matched_slots": ["chef-evening"],
+    "won_slots": ["chef-evening"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "verify": {
+      "hollow_run": false,
+      "method": "independent get_cycle_bootstrap + get_macro_snapshot cross-check; 8+ data points matched chef dish (USD/VND 26143, carry -0.63pp, VHM -4.16%, VRE -4.43%, ACB +1.61%, MWG +1.91%, Brent/Gold sigma); 25 live tool calls/152s",
+      "note": "Step 4.7 snapshot skipped (single-agent tick = zero dedup benefit; documented soft-fail, chef bootstrapped directly). Enum bug CW-DISPATCH-STEP47-BOOTSTRAP-ENUM still open w/ agent-father."
+    }
+  },
+  "priority": "low",
+  "createdAt": "20260527T194812Z"
+}

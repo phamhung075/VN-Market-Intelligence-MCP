@@ -1,0 +1,40 @@
+{
+  "signal_type": "task_complete",
+  "agent": "system-auditor",
+  "task_id": "P0-KD-2",
+  "task_name": "kinh-dich Bug-Inventory Entry",
+  "status": "DONE",
+  "commit_sha": "f3433ec7",
+  "timestamp": "2026-05-24T12:00:00Z",
+  "acceptance_criteria": {
+    "AC-1_bug_history_query": {
+      "pass": true,
+      "note": "Scanned docs/data/bug-inventory.json for service=kinh_dich_service or module=kinh-dich. Found 0 bugs in 60-day window (2026-03-25 to 2026-05-24). Fallback threshold <2 triggered."
+    },
+    "AC-2_kinh_dich_baseline_block": {
+      "pass": true,
+      "note": "Added top-level kinh_dich_baseline block with service, module, baselineCycleCount, baselineSource, observedFixCount, recordedAt, recordedBy fields. Schema matches stock_price_baseline and macro_indicators_baseline pattern."
+    },
+    "AC-3_json_syntax": {
+      "pass": true,
+      "jq_exit_code": 0,
+      "validation_command": "jq '.' docs/data/bug-inventory.json"
+    },
+    "AC-4_git_staging": {
+      "pass": true,
+      "staging_method": "git add -f docs/data/bug-inventory.json",
+      "note": "File staged explicitly per L84 constraint. Gitignored file requires -f flag."
+    }
+  },
+  "hard_gates": {
+    "JSON_VALID": true,
+    "BASELINE_SET": true
+  },
+  "baseline_details": {
+    "baselineCycleCount": 1.5,
+    "baselineSource": "system-wide fallback",
+    "derivation": "60-day bug scan (2026-03-25 to 2026-05-24) found 0 bugs attributed to kinh-dich-service. Since <2 threshold, fallback per charter §Baseline Metric Capture applied. baselineCycleCount set to system-wide average 1.5.",
+    "observed_bugs_in_60d": 0
+  },
+  "next_phase": "Phase 0 deliverable 3/6 complete. Awaiting remaining Phase 0 deliverables (brownfield inventory, dev agent flow, phase 1 task plan, architect verification)."
+}

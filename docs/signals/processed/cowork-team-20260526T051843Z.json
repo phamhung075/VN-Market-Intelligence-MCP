@@ -1,0 +1,40 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T051843Z",
+    "nominal_tick": "20260526T051500Z",
+    "matched_slots": ["chef-morning", "chef-intraday"],
+    "won_slots": ["chef-morning"],
+    "held_by_other": [],
+    "all_held": false,
+    "deduped": ["chef-intraday"],
+    "dedupe_reason": "chef-morning + chef-intraday both resolve to unified-agent on chef.md at the same nominal tick (chef-intraday :13 falls in the +-2min window of the 05:15 floor). Same-agent collision -> ran the agent ONCE with the canonical anchor slot chef-morning (the daily morning guaranteed-publish dish, a superset of the conditional intraday scan). chef-intraday superseded for this tick. No double-publish.",
+    "spawned": ["unified-agent"],
+    "silent": false,
+    "drift_min": 3,
+    "hollow_run_watch": {
+      "unified-agent": {
+        "verdict": "GENUINE",
+        "evidence": "26 tool calls / 203s; 14 MCP calls (13 ok + 1 macro-service fail); 2 clusters (oil_gas + banking) full TNB 6-layer walk. Cross-agent consistency: Brent -3.37sigma, ACB +2.97%, EIB all match the 05:00Z news-scout cycle -> shared live backend, not confabulation.",
+        "false_critical": "NONE escalated to PO by the agent. It flagged macro-indicators DOWN + kinh-dich 501 + BCTC-overdue in its OWN layer notes but folded them as 'known B-bucket, no false-outage escalation'. Honest.",
+        "output": "Published morning dish to MARKET — oil_gas (Hormuz reopening, Brent -3.37sigma 94.84, LOW conviction 1/4 pillars) + banking (ACB +2.97% relief bounce NOT earnings, LOW-MEDIUM 1.5/4 pillars). Action WATCH both (no BUY/SELL). Notebook logged.",
+        "service_down_claim_VERIFIED": "Agent's 'macro-indicators service DOWN' note was LIVE-PROBED by dispatcher -> CONFIRMED TRUE (get_macro_snapshot 'Unable to connect'). This is a TRUE-positive, NOT a hollow-run/false-CRITICAL. Escalated as STACK-CYCLE-MACRO-RAG-DOWN (see below) because it is a RECURRENCE of a tracked outage with new evidence (flap down->up->down + rag co-casualty + mcp-server 17m uptime restart + 05:03Z gateway 502)."
+      }
+    },
+    "service_outage_escalation": {
+      "id": "STACK-CYCLE-MACRO-RAG-DOWN-20260526T0525Z",
+      "to": "po",
+      "severity": "HIGH (intelligence layer; safety layer intact)",
+      "confirmed": "macro-indicators (port 5004) DOWN + rag-service unreachable, both 'Unable to connect'; mcp-server restarted ~05:06Z; gateway 502 at 05:03:49Z corroborates stack cycle.",
+      "root_cause_shift": "recovered-then-down-again flap => rebuild did not hold => suspect host-OOM/restart (16GB Mac, 8GB Docker cap), not stale-image deploy-drift. Updates SMOKE-POST-RENEWAL DRIFT-1.",
+      "dashboard_row": "## po STACK-CYCLE-MACRO-RAG-DOWN-20260526T0525Z (NEW)",
+      "signal_file": "docs/signals/cowork-team-stack-cycle-macro-rag-down-20260526T0525Z.json"
+    },
+    "mcp_probe": "Lock claim {claimed:true} at 05:18:43Z (gateway 502 fully recovered from the 05:03Z transient). Lock released {ok:true}.",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T051843Z"
+}

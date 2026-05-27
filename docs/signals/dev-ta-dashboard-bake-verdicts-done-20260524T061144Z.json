@@ -1,0 +1,28 @@
+{
+  "signal": "dev-ta-dashboard-bake-verdicts-done",
+  "timestamp": "2026-05-24T06:11:44Z",
+  "agent": "dev-technical-analysis",
+  "task": "dashboard-bake-verdicts",
+  "commit": "db63e6eb",
+  "status": "DONE",
+  "summary": "build.sh bake step runs CGO_ENABLED=0 go run ./cmd/sandbox over all 30 scenarios. dashboard/dist/scenario-results.js written with real green/red. applyBuildVerdicts() in app.ts applies verdicts before render. file:// opens with 30/0 passed/failed.",
+  "verdicts": {
+    "primitives": "25/25 green",
+    "module": "5/5 green",
+    "total": "30/30 green"
+  },
+  "env_audit": "forbidden_matches: empty — zero DB credentials confirmed",
+  "smoke": {
+    "go_test": "7 packages ok exit 0",
+    "go_vet": "exit 0",
+    "tsc": "0 errors",
+    "bun_test": "24 pass 0 fail",
+    "build_sh": "30 passed 0 failed"
+  },
+  "dod_gates": {
+    "G6_dashboard_renders_file": "PASS",
+    "G8_honest_red_green": "PASS",
+    "G12_green_before_done": "PASS"
+  },
+  "next_actor": "pm"
+}

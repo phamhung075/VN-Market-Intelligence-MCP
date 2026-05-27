@@ -1,0 +1,39 @@
+{
+  "type": "dev-macro-p2-e2-fix-done",
+  "from": "dev-macro-indicators",
+  "to": "qa",
+  "cycle": "cycle-56",
+  "task_id": "P2-E2",
+  "goal_under_proof": "G11",
+  "fix_commit_sha": "f2b45fd2",
+  "primitive": "macro_yield_spread_signal",
+  "literal_restored": {
+    "before": "5.0",
+    "after": "2.0",
+    "file": "apps/macro-indicators/pkg/primitive/macro_yield_spread_signal/macro_yield_spread_signal.go",
+    "line": 44
+  },
+  "byte_identical_diff_vs_tag": "",
+  "cycles_used": 1,
+  "sandbox_exit_code": 0,
+  "sandbox_pass_count": 20,
+  "sandbox_fail_count": 0,
+  "sandbox_status": "OK",
+  "hard_gates": {
+    "anchor_held": true,
+    "anchor_exit": 0,
+    "r1_exit": 1,
+    "fence_b_exit": 1,
+    "fence_c_exit": 1
+  },
+  "ssot_untouched": true,
+  "ta_untouched": true,
+  "scenarios_untouched": true,
+  "ci_untouched": true,
+  "staged_files_c2_verified": [
+    "apps/macro-indicators/pkg/primitive/macro_yield_spread_signal/macro_yield_spread_signal.go"
+  ],
+  "next_dispatch_target": "qa",
+  "next_dispatch_task": "P2-E2-verify",
+  "completion_timestamp": "2026-05-23T23:34:00Z"
+}

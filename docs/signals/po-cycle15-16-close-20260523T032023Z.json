@@ -1,0 +1,15 @@
+{
+  "signal": "po-cycle-close",
+  "cycle": "c282 cycle-15+16 catch-up (L87 TCC recovery)",
+  "status": "done",
+  "close_commit": "34c64721",
+  "anchor": "62edbf3d",
+  "g_goals_terminal_count": 9,
+  "g10_status": "YES",
+  "g11_status": "TBD (grade deferred to cycle-17)",
+  "g12_status": "YES",
+  "cycle15_landings": ["69108655", "d6c790bf", "324e3e12", "815fc9bb"],
+  "billing_block": "persistent",
+  "tcc_recovery_used": "Terminal.app spawn via open -a Terminal",
+  "timestamp": "20260523T032023Z"
+}

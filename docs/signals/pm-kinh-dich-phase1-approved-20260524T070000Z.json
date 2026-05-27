@@ -1,0 +1,57 @@
+{
+  "signal_type": "phase-transition",
+  "agent": "pm",
+  "pilot": "kinh-dich",
+  "timestamp": "2026-05-24T07:00:00Z",
+  "phase": "1",
+  "status": "APPROVED",
+  "gate_verdict": "clean full GO",
+  "gate_verified_by": "qa",
+  "gate_verified_at": "2026-05-24T07:00:00Z",
+  "evidence": {
+    "qa_revert_signal": "docs/signals/qa-kinh-dich-P1-KD-QA-AC2-REVERT-done-20260524T070000Z.json",
+    "qa_revert_evidence": "docs/handoffs/TASK_P1-KD-QA-AC2-REVERT-evidence.md (commit 34205c87)",
+    "ssot_update_commit": "92ae7402",
+    "ssot_path": "docs/data/pilot-status-kinh-dich.json"
+  },
+  "task_completion": {
+    "P1-KD-H": {
+      "status": "DONE",
+      "commit_sha": "b7cb55bc",
+      "completedAt": "2026-05-24T06:45:00Z"
+    },
+    "P1-KD-QA-AC2-REVERT": {
+      "status": "DONE",
+      "commit_sha": "34205c87",
+      "completedAt": "2026-05-24T07:00:00Z"
+    }
+  },
+  "phase1_summary": {
+    "tasks_total": 11,
+    "tasks_done": 11,
+    "sandbox_verdict": "14/14 green (all tiers: 6 primitives + 1 module + 1 service)",
+    "dashboard_verdict": "6/6 card groups (100%) with reading-scorer 4th primitive",
+    "cold_start_state": "14/14 NOT-RUN (honest, zero external fetch)",
+    "external_fetch": false,
+    "g12_streaks_completed": 6
+  },
+  "next_gate": {
+    "gate_name": "Phase-2 authorization",
+    "gate_owner": "po",
+    "gate_action": "Authorize Phase-2 task plan (architect designs Phase-2 tasks)",
+    "gate_blocker": false
+  },
+  "charter_compliance": {
+    "goalsEarned": 0,
+    "decisionMatrix_all_TBD": true,
+    "reason": "§4.5: Phase-transition flip does not activate goal grading. Goals graded PO-only at 12/12 terminal close (Phase 3). decisionMatrix stays all-TBD entire pilot until terminal."
+  },
+  "next_actor": "main-router",
+  "next_action": "Dispatch Phase-2 authorization gate to PO for design → architect Phase-2 task plan",
+  "meta": {
+    "sender": "pm (kinh-dich pilot-4)",
+    "fleet_state": "interim single-committer serialization active",
+    "branch": "main",
+    "user_responsibility": "None — PM handled full SSOT update + commit + signal"
+  }
+}

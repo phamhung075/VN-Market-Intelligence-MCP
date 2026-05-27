@@ -1,0 +1,29 @@
+{
+  "from": "main-router",
+  "to": "po",
+  "timestamp": "2026-05-23T22:35:00Z",
+  "kind": "critical-finding-route",
+  "priority": "high",
+  "subject": "P2-B0 audit landed — B1 scope MUST expand before B2 dispatch",
+  "context": {
+    "P2-B0 status": "DONE",
+    "commit": "c175f745",
+    "audit_doc": "docs/architecture-briefs/2026-05-22-refactor/p2-b-caller-inventory.md"
+  },
+  "finding": {
+    "sev": "SEV-2 gap vs architect pre-scan",
+    "file": "src/services/morningBriefing/assembleBriefing.ts",
+    "issue": "imports computeRSI + computeMA directly from technicalIndicators.ts (domain service)",
+    "consequence": "if P2-B2 deletes technicalIndicators.ts without first rewiring assembleBriefing.ts, morning briefing breaks at runtime",
+    "action_required": "PM updates docs/handoffs/TASK_P2-B1.md to add assembleBriefing.ts rewire to B1 scope"
+  },
+  "secondary_findings": [
+    "DailyCandle type conflict: two incompatible interfaces — tool handler must define local type post-rewire",
+    "1408 + 1410 diacritics tests use DailyCandle type-only import — fix in B1/B2 or tsc fails",
+    "git tag p2-b-pre-delete must land before any B2 deletion commit (rollback marker)"
+  ],
+  "do_not_do": [
+    "do not dispatch P2-B1 until handoff scope is expanded",
+    "do not dispatch P2-B2 deletion until P2-B1 lands + git tag set"
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "task_id": "P2-KD-I",
+  "agent": "dev-kinh-dich",
+  "status": "DONE",
+  "timestamp": "20260524T041630Z",
+  "goal_advanced": "G3",
+  "commit_sha": "db0692d3",
+  "evidence": {
+    "composition_root_lines": 63,
+    "ac1_domain_grep_count": 0,
+    "ac2_markov_port_injected": true,
+    "ac3_line_count_lte80": true,
+    "ac4_openapi_exists": "apps/kinh-dich-service/src/interface/openapi.yaml",
+    "ac4_yaml_valid": true,
+    "ac5_eslint_exit": 0,
+    "ac5_tsc_exit": 0,
+    "ac6_sandbox_g12": "14/14 scenarios PASS (0 failed, 0 skipped)",
+    "foreign_files_touched": false,
+    "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc confirmed ancestor"
+  },
+  "openapi_endpoints": [
+    "GET /health",
+    "GET /reading/{code}",
+    "GET /market",
+    "GET /readings/{code}/history",
+    "GET /hexagram/{number}/transitions",
+    "GET /backtest/{code}",
+    "GET /hexagram/{number}/explain"
+  ],
+  "graphify_skipped": "LLM key unavailable in agent context — /graphify skipped per instruction",
+  "next_actor": "pm",
+  "next_action": "verify P2-KD-I (G3), then sequence P2-KD-J (G6 dashboard finalization + nuclear-hexagram-computer 5th primitive)"
+}

@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T041815Z",
+    "matched_slots": ["chef-intraday"],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [
+      {
+        "step": "4.6",
+        "error": "vn-market unreachable via gateway — slot-lock probe (get_market_snapshot) returned 'dial vn-market ... 192.168.65.254:3000: i/o timeout'. WITHHELD chef-intraday (unified-agent) spawn: routes through the same dead gateway. THIRD chef-intraday lost (02:18Z + 03:18Z + 04:18Z); FIFTH cumulative live slot lost this outage."
+      }
+    ],
+    "gateway_probe": {
+      "status": "STILL-DOWN",
+      "consecutive_ticks_down": 18,
+      "detail": "Open incident cow-20260527T000315 unresolved across 00:03Z..04:18Z (18 ticks, ~4h15m). Host loopback /health=200 (mcp-server healthy). Docker host-bridge still wedged.",
+      "market_state": "VN market OPEN (11:18 VN). 5 live slots lost cumulatively (3x chef-intraday + news-scout-offhours + market-watcher-offhours). Intraday CHEF cadence dark 3 slots running.",
+      "severity_change": "Sustained — no recovery across full market morning. Bumping DASHBOARD incident freshness (no duplicate row)."
+    }
+  },
+  "priority": "high",
+  "createdAt": "20260527T041815Z"
+}

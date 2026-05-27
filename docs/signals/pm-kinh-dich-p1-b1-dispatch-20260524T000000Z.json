@@ -1,0 +1,96 @@
+{
+  "signal_type": "task_dispatch",
+  "task_id": "P1-KD-B1",
+  "pilot": "kinh-dich",
+  "phase": "1",
+  "title": "First Primitive: hexagram-resolver + R-FENCE Discovery Gate",
+  "owner": "dev-kinh-dich",
+  "timestamp": "2026-05-24T00:00:00Z",
+  "agent_pm": "pm",
+  "dispatch_cycle": "kinh-dich-pilot-4-phase-1-pm-cycle",
+
+  "predecessor_task": {
+    "task_id": "P1-KD-A",
+    "status": "DONE",
+    "commit": "1e76d339",
+    "ac_count": 6,
+    "verdict": "ALL 6 ACs PASS — zero-creds (grep=0), zero-infra (grep=0), sandbox-green (exit 0)"
+  },
+
+  "current_task_handoff": {
+    "path": "docs/handoffs/TASK_P1-KD-B1.md",
+    "ac_count": 8,
+    "critical_gate": "R-FENCE discovery (AC-6 + AC-7)",
+    "blocker_on": "P1-B2",
+    "estimated_effort": "2 hours",
+    "g12_streak": "task #1 / 3 (G12 DoD Gate applies)"
+  },
+
+  "p1_a_verification_summary": {
+    "signal_file": "docs/signals/dev-kinh-dich-p1-a-done-20260523T231906Z.json",
+    "commit_sha": "1e76d339",
+    "ac_1_runner_flags": "PASS — --tier=primitive|module|all, --module=kinh-dich, --scenario=all",
+    "ac_2_scenario_paths": "PASS — docs/scenarios/kinh-dich/primitives/ and module/ confirmed in runner.ts",
+    "ac_3_exit_codes": "PASS — exit 0 on PASS, non-zero on failure",
+    "ac_4_zero_creds": "PASS — grep -c 'DB_|API_KEY|SECRET|TOKEN|PASSWORD|infrastructure|hono|SQLite' = 0",
+    "ac_5_bun_env_fix": "PASS — process.env = 0, Bun.env = 2 (lines 12-13 config.ts)",
+    "ac_6_zero_infra_imports": "PASS — grep -rn 'from.*infrastructure|from.*hono|from.*application|from.*interface' runner.ts = 0",
+    "sandbox_baseline": "GREEN — [sandbox] PASS 0/0 scenarios (no scenarios loaded — baseline GREEN)",
+    "all_ac_pass": true
+  },
+
+  "p1_b1_critical_gates": {
+    "ac_4_sandbox_green": {
+      "requirement": "bun run src/sandbox/runner.ts --tier=primitive --module=kinh-dich --scenario=all exits 0",
+      "role": "G12 DoD Gate (streak task #1)",
+      "blocker_on_p1_b2": true
+    },
+    "ac_6_ac_7_r_fence_discovery": {
+      "requirement": "Confirm import style + record deliberate-violation pair for Phase 2 G4 empirical proof",
+      "critical_role": "R-FENCE is the per-service critical chokepoint — import style discovery MUST BE RECORDED before Phase 2 G4 task is authored",
+      "blocker_on_p1_b2": true,
+      "fallback": "If eslint-plugin-boundaries R-2 risk materializes at AC-4b (Phase 2), add @typescript-eslint/parser to devDependencies + languageOptions.parser (5-min in-Option-A fix)"
+    }
+  },
+
+  "phase_1_sequencing": {
+    "task_sequence": ["P1-A (DONE)", "P1-B1 (READY)", "P1-B2", "P1-B3", "P1-C", "P1-D", "P1-E", "P1-F (optional)", "P1-G"],
+    "wip_limit": 1,
+    "wip_current": 1,
+    "parallel_dispatch_available": false,
+    "note": "Sequential WIP=1. PM waits for P1-B1 DONE signal (with AC-6/AC-7 R-FENCE discovery recorded) before dispatching P1-B2."
+  },
+
+  "brownfield_reference": {
+    "source_file": "apps/kinh-dich-service/src/domain/services.ts",
+    "hexagram_resolver_lines": "resolveHexagram() 272–281, TRIGRAM_LINES 23–32, TRIGRAMS_TO_QUE 198–201",
+    "brownfield_inventory_path": "docs/architecture-briefs/2026-05-23-kinh-dich-factory/p0-brownfield-inventory.md",
+    "priority": "1 (highest-leverage primitive)"
+  },
+
+  "ssot_updated": {
+    "file": "docs/data/pilot-status-kinh-dich.json",
+    "phase1_current_task": "P1-B1",
+    "phase1_current_task_handoff": "docs/handoffs/TASK_P1-KD-B1.md",
+    "progress_notes_appended": true,
+    "commit": "0222ce98"
+  },
+
+  "dispatch_readiness": {
+    "all_predecessor_signals_present": true,
+    "p0_exit_gate_passed": true,
+    "p1_a_done_verified": true,
+    "handoff_file_created": true,
+    "ssot_updated": true,
+    "readiness_verdict": "GO — P1-B1 ready for dev-kinh-dich acceptance"
+  },
+
+  "next_action": "Main router spawns dev-kinh-dich agent with TASK_P1-KD-B1 handoff. Upon DONE signal (with AC-6/AC-7 R-FENCE discovery recorded in handoff), PM sequences P1-B2.",
+
+  "notes": [
+    "R-FENCE discovery is the critical information gate — Phase 2 G4 enforcement depends on the import style recorded here",
+    "G12 DoD Gate applies: sandbox must exit 0 (AC-4 + AC-8) before P1-B1 is marked DONE",
+    "If AC-6/AC-7 reveal the import style does NOT support eslint-plugin-boundaries element pattern matching, escalate to architect before Phase 2 G4 (R-2 risk mitigation)",
+    "WIP=1 enforced: PM will NOT sequence P1-B2 in parallel with P1-B1 dispatch"
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire-loadshed-resolved",
+  "payload": {
+    "fire_time": "20260527T061820Z",
+    "matched_slots": ["chef-intraday"],
+    "won_slots": ["chef-intraday"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["unified-agent"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "gateway_probe": {
+      "status": "HEALTHY",
+      "detail": "Slot-lock probe get_market_snapshot returned LIVE VN-Index 1,868.00 -0.86% @ 2026-05-27T06:18:49Z (source_tier 2, market OPEN 13:18 VN). localhost:3000/health=200. Bridge alive."
+    },
+    "loadshed_decision": {
+      "pre_declared_criterion": "At this ~06:18Z chef-intraday tick, re-read swap BEFORE spawning. WITHHOLD the heavy CHEF spawn if free swap <~700MB OR total still pinned at the 10240 cap. Otherwise spawn normally. (Declared in cowork-team-20260527T060315Z.json at the 06:03Z early-warning.)",
+      "swap_at_decision": "total = 9216MB / used = 8219.5MB / free = 996.5MB",
+      "evaluation": "BOTH withhold-conditions are FALSE. (1) free 996.5MB is ABOVE the ~700MB floor. (2) total CONTRACTED from 10240 -> 9216 — macOS released a swap-file segment, the OPPOSITE of pinned-at-cap, indicating real memory pressure relief. The 582MB-free / 10240-capped reading at 06:03Z was a TRANSIENT spike, consistent with the swap volatility observed all session (1730 -> 1213 -> 582 -> 996 free across 4 ticks).",
+      "decision": "SPAWN NORMALLY. Heavy CHEF intraday spawn proceeded. No load-shed needed.",
+      "guard_extension_validated": "This tick exercised the extended slot-lock Error Guard (gateway-liveness + host-capacity) end-to-end: a real capacity threshold was pre-declared at 06:03Z, re-evaluated against fresh data at 06:18Z, and correctly resolved to SPAWN when the threshold cleared — no false-withhold, no reactive crash."
+    },
+    "chef_briefing": "Fresh intraday dish (do not re-publish 05:18Z deduped content). Active #4013 severity-watch (do NOT anchor capital-flight crisis on the accumulation headline). Macro-staleness provenance (cap conviction on stale 24,500/82.5/2350 seed). Fail-loud on mid-cycle timeouts — no retry-storm (swap recovered but volatile).",
+    "residual_risk": "Host swap RECOVERED this tick but remains VOLATILE (582->996 free in one 15-min interval). The proactive ops memory-shed recommendation (## po HOST-SWAP-RE-DEGRADE-20260527T0603Z) STILL STANDS — recovery was the OS contracting swap under eased pressure, not a structural fix. Continue per-tick swap monitoring; the load-shed guard remains armed for future ticks."
+  },
+  "priority": "low",
+  "createdAt": "20260527T061820Z"
+}

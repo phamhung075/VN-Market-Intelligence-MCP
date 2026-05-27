@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T203416Z",
+    "nominal_tick": "20260526T203000Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 4,
+    "note": "Expected-silent. Last non-silent tick was 20:13Z tnb-audit (tran-ngoc-bau, GENUINE). Next *-offhours fan-out is at 00:00Z (0 */4) — ~3.5h out; that */15 tick should MATCH news-scout-offhours + market-watcher-offhours. VN market closed (03:30 VN). No further daily slots expected before 00:00Z (chef-evening 19:45Z + tnb-audit 20:13Z already fired today). 20:45Z-23:45Z ticks expected silent — verified each via matcher. No lock/probe on a no-match tick.",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T203416Z"
+}

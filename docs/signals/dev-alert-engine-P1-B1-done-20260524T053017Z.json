@@ -1,0 +1,44 @@
+{
+  "signal": "P1-B1-done",
+  "agent": "dev-alert-engine",
+  "task": "P1-AE-B1",
+  "timestamp": "2026-05-24T05:30:17Z",
+  "commit": "4607ca55",
+  "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "files_created": [
+    "apps/alert-engine/pkg/primitive/signal-classifier/classifier.go",
+    "apps/alert-engine/pkg/primitive/signal-classifier/classifier_test.go",
+    "docs/scenarios/alert-engine/primitives/signal-classifier-golden.json",
+    "docs/scenarios/alert-engine/primitives/signal-classifier-edge.json",
+    "docs/scenarios/alert-engine/primitives/signal-classifier-failure.json"
+  ],
+  "files_modified": [
+    "apps/alert-engine/cmd/sandbox/main.go",
+    "docs/handoffs/TASK_P1-AE-B1.md"
+  ],
+  "gates": {
+    "AC1_classifier_exported": "PASS",
+    "AC2_unit_tests_7_cases": "PASS",
+    "AC3_go_test_exit0": "PASS",
+    "AC4_fence_a_grep_0_matches": "PASS",
+    "AC5_sandbox_all_green_G12_streak1": "PASS — total=3 pass=3 fail=0 status=OK",
+    "AC6_zero_creds_scenario_grep_0_matches": "PASS",
+    "AC7_cgo_enabled_0_build_exit0": "PASS",
+    "AC8_G12_dod_gate_streak1": "PASS"
+  },
+  "sandbox_result": {
+    "total": 3,
+    "pass": 3,
+    "fail": 0,
+    "status": "OK",
+    "command": "CGO_ENABLED=0 go run ./cmd/sandbox -tier=all -module=alert-engine -scenario=all"
+  },
+  "build_exit": 0,
+  "test_exit": 0,
+  "zero_creds_grep_exit": 1,
+  "fence_a_grep_exit": 1,
+  "go_test_all_exit": 0,
+  "graphify_skip": "Skipped — no LLM key available for graphify in this execution context.",
+  "next_actor": "pm",
+  "next_action": "verify P1-B1 (signal-classifier, G12 streak #1), then sequence P1-B2 (dedup-key-builder)"
+}

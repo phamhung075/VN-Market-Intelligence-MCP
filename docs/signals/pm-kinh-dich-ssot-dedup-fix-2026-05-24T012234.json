@@ -1,0 +1,25 @@
+{
+  "agent": "pm",
+  "cycle": "kinh-dich-pilot-4-phase1-close-gate-fix-cycle",
+  "action": "ssot-dedup-repair",
+  "timestamp": "2026-05-24T01:22:34.705205Z",
+  "status": "DONE",
+  "subject": "pilot-status-kinh-dich.json duplicate-phase1-key bug fixed",
+  "details": {
+    "root_cause": "Two root-level 'phase1' keys (lines 117 and 391). JSON last-key-wins parser behavior discarded metadata (status=APPROVED, gate fields, milestone), leaving only phase1.tasks visible.",
+    "structural_repair": "Consolidated into single phase1 object with metadata + tasks. Charter \u00a74.5 structural repair (zero goal/matrix change).",
+    "commit_sha": "45eb34e8",
+    "verifications": [
+      "Zero duplicate keys detected",
+      "phase1.status now parser-visible as APPROVED",
+      "All 11 P1 task records intact (P1-A through P1-KD-QA-AC2-REVERT)",
+      "Single phase1 key in file (grep -c '\"phase1\"' = 1)",
+      "phase2 intact (status=NOT-STARTED, tasks={})",
+      "goalsEarned=0 (unchanged)",
+      "decisionMatrix all-TBD (unchanged)"
+    ],
+    "next_gate": "Phase-2 authorization (PO \u2192 architect Phase-2 task plan)"
+  },
+  "next_actor": "main-router",
+  "next_action": "kinh-dich Phase-1 APPROVED now parser-visible; dispatch Phase-2 authorization to PO for architect review"
+}

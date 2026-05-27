@@ -1,0 +1,62 @@
+{
+  "signal": "dev-pdf-extractor-P2-F-done",
+  "emitted_at": "2026-05-24T11:23:00Z",
+  "task": "P2-F",
+  "pilot": "pdf-extractor",
+  "phase": "2",
+  "actor": "dev-pdf-extractor",
+  "status": "DONE",
+  "commit_sha": "1356dcce",
+
+  "g6_primitive_cards": 6,
+  "g6_card_ids": [
+    "card-validate-financial-figures",
+    "card-decimal-normalizer",
+    "card-confidence-scorer",
+    "card-low-confidence-gate",
+    "card-ratio-computer",
+    "card-field-extractor"
+  ],
+  "g6_total_cards": 8,
+
+  "trace_paths_count": 8,
+  "trace_paths": [
+    "traces/primitive/validate_financial_figures.json",
+    "traces/primitive/decimal_normalizer.json",
+    "traces/primitive/confidence_scorer.json",
+    "traces/primitive/low_confidence_gate.json",
+    "traces/primitive/ratio_computer.json",
+    "traces/primitive/field_extractor.json",
+    "traces/module/financial_reports.json",
+    "traces/service/pdf_extractor.json"
+  ],
+
+  "g8_honesty_spot_check": {
+    "known_bad_scenario": "apps/pdf-extractor/scenarios/primitives/confidence_scorer/known_bad_score_wrong.json",
+    "trace_pass": false,
+    "runner_exit": 1,
+    "badge_class": "badge-fail",
+    "badge_text": "FAIL",
+    "verdict": "RED confirmed"
+  },
+  "g8_final_state": "honest-green (happy scenarios for all 6 primitives)",
+
+  "g12_sandbox_real_scenarios": 19,
+  "g12_sandbox_pass": 19,
+  "g12_sandbox_fail": 0,
+  "g12_verdict": "PASS",
+
+  "pytest_pass": 114,
+  "pytest_fail": 0,
+
+  "si2_boundary_intact": true,
+  "zero_network_calls": true,
+  "file_url_compatible": true,
+
+  "handoff": "docs/handoffs/TASK_pdf-extractor-P2-F.md",
+
+  "next_actor": "qa",
+  "next_action": "Re-verify G6 (6 primitive cards in HTML) and G8 (trace-driven honesty, not hardcoded). Then dispatch P2-A1 (G4 fence).",
+  "pipeline": "continue",
+  "next_task": "P2-A1 (G4 DDD fence with import-linter)"
+}

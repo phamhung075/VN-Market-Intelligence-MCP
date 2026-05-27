@@ -1,0 +1,22 @@
+{
+  "signal": "dev-sp-P2-F-remediation-done",
+  "timestamp": "2026-05-24T00:48:52Z",
+  "from": "dev-stock-price",
+  "next_actor": "pm",
+  "task": "P2-F remediation",
+  "commit_sha": "399afe54",
+  "files_deleted": [
+    "apps/stock-price/pkg/domain/services.go",
+    "apps/stock-price/pkg/domain/services_test.go"
+  ],
+  "verdicts": {
+    "go_build": "EXIT_0",
+    "golangci_lint": "0_issues",
+    "sandbox_primitive": "total=9 pass=9 fail=0 status=OK",
+    "sandbox_module": "total=2 pass=2 fail=0 status=OK",
+    "pre_commit_index": "2_files_only_no_foreign_paths",
+    "anchor_intact": true
+  },
+  "action_required": "Correct P2-F record AC-1 to reflect committed truth (deletion committed as 399afe54), then proceed to sequence P2-H (G3 composition root + OpenAPI).",
+  "evidence": "docs/handoffs/TASK_P2-F-remediation-evidence.md"
+}

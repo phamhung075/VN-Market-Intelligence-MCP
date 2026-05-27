@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T153343Z",
+    "nominal_tick": "20260526T153000Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "note": "Expected-silent. No slots until the next *-offhours fan-out at 16:00Z (0 */4) — now ~27min out. VN market closed; no weekday chef slots remaining today. 15:45Z tick also expected silent. No lock/probe on a no-match tick.",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T153343Z"
+}

@@ -1,0 +1,45 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "phase-1-dispatch",
+  "pilot": "pdf-extractor",
+  "cycle": "c291",
+  "createdAt": "2026-05-24T09:30:00Z",
+  "priority": "high",
+  "phase0_closed": {
+    "exit_gate_status": "CLOSED",
+    "all_deliverables_landed": true,
+    "verification_commit_sha_architect": "31483c8c",
+    "verification_signal": "docs/signals/architect-pdf-extractor-phase0-done-20260524T091000Z.json",
+    "ssot_commit": "9482958a (pilot-status folded by concurrent committer; content verified correct, history NOT rewritten per concurrent-commit-race lesson)"
+  },
+  "wip_limit": 1,
+  "first_dispatch": {
+    "task": "P1-A1",
+    "title": "Sandbox runner apps/pdf-extractor/sandbox/runner.py (FastAPI composition-root scaffold + Python sandbox runner, zero-credentials) + scenario dir",
+    "owner": "dev-pdf-extractor",
+    "route": "via PM (PM creates TASK handoff from phase-1-task-plan-python.md §P1-A1, dispatches to dev-pdf-extractor)",
+    "goals": ["G7", "G12"],
+    "bctc_freeze": "CLEAR",
+    "headline_risk": true,
+    "ac_count": 7
+  },
+  "hard_precondition": {
+    "rule": "P1-B1 (first primitive validate-financial-figures) MUST NOT start until P1-A1 zero-creds gate PASSES.",
+    "gate": "P1-A1 AC-5 (env audit empty: env | grep -iE 'DB_PATH|VPS_|VINAHOST|STORAGE_DIR|OCR|TESSERACT|TOKEN|SECRET|API_KEY|PASSWORD' returns EMPTY) AND AC-6 (scenario JSON grep: grep -rniE 'db_path|vps|vinahost|storage_dir|token|secret|api_key|password' apps/pdf-extractor/sandbox/ returns 0 matches).",
+    "enforcer": "PM must hold P1-B1 dispatch until dev-pdf-extractor pastes AC-5 + AC-6 PASS evidence in P1-A1 handoff."
+  },
+  "phase1_order": [
+    {"id": "P1-A1", "owner": "dev-pdf-extractor", "blockedBy": null, "note": "HEADLINE RISK — first, blocks all"},
+    {"id": "P1-A2", "owner": "dev-pdf-extractor", "blockedBy": "P1-A1"},
+    {"id": "P1-A3", "owner": "dev-pdf-extractor", "blockedBy": "P1-A2", "note": "main.py shrink <=80L"},
+    {"id": "P1-B1", "owner": "dev-pdf-extractor", "blockedBy": "P1-A3 AND P1-A1 zero-creds gate (AC-5+AC-6 PASS)", "note": "G12 streak#1; HARD blocked-until zero-creds gate"},
+    {"id": "P1-B2", "owner": "dev-pdf-extractor", "blockedBy": "P1-B1", "note": "READ-ONLY mcp-server archaeology, ZERO mcp-server write"},
+    {"id": "P1-C", "owner": "dev-pdf-extractor", "blockedBy": "P1-B2", "note": "G12 streak#2; module financial-reports stub"},
+    {"id": "P1-D", "owner": "dev-pdf-extractor", "blockedBy": "P1-C"},
+    {"id": "P1-E1", "owner": "dev-pdf-extractor", "blockedBy": "P1-C, P1-D", "note": "G12 streak#3; dashboard stub"},
+    {"id": "P1-E2", "owner": "dev-pdf-extractor", "blockedBy": "P1-E1", "note": "G7 all 4 sub-gates"},
+    {"id": "P1-G", "owner": "qa", "blockedBy": "P1-E2", "note": "Phase-1 QA close-gate"}
+  ],
+  "phase2_freeze_note": "G5b rewire (fetch_ssc_reports -> reports.ts/fetchParseAndStoreBctc.ts; bctc_batch_sweep -> bctcBatchSweepJob.ts) HARD FROZEN until PO lifts 1953-G-FAIL/1954c. Recorded in pilot-status phase2.bctc_freeze_gate. PM must NOT dispatch these without PO lift signal."
+}

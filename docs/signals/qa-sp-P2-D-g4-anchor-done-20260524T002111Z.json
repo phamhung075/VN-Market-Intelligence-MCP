@@ -1,0 +1,18 @@
+{
+  "task": "P2-D",
+  "pilot": "stock-price",
+  "phase": "2",
+  "goal_focus": "G4",
+  "ac_verdicts": ["AC-1 PASS", "AC-2 PASS", "AC-3 PASS"],
+  "freeze_anchor_sha": "d5ce886e",
+  "stock_price_pre_ci_tag_sha": "db3ca097",
+  "tag_ancestry": "merge-base returns non-empty (stock-price-pre-ci is ancestor of HEAD)",
+  "golangci_yml_locked": true,
+  "g4_evidence_complete": true,
+  "g4_ready_to_grade": true,
+  "next_actor": "pm",
+  "next_action": "verify P2-D evidence, update SSOT, dispatch P2-E (Create stock-price-pre-delete tag)",
+  "commit_sha": "e086cdf7",
+  "commit_conflation": false,
+  "commit_conflation_note": "Commit e086cdf7 contains exactly 1 file (docs/handoffs/TASK_P2-D-sp-g4-evidence.md). No cross-pilot files swept in."
+}

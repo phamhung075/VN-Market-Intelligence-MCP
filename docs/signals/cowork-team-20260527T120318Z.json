@@ -1,0 +1,36 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T120318Z",
+    "matched_slots": ["financial-analyst-midday", "news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["financial-analyst-midday", "news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["financial-analyst", "news-scout", "market-watcher"],
+    "agent_ids": {
+      "financial-analyst": "a26b490515dc926c8",
+      "news-scout": "a195d6a0a8b4e9465",
+      "market-watcher": "ab92f21e07ebf6eee"
+    },
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "gateway_probe": {
+      "status": "HEALTHY",
+      "detail": "Slot-lock probe get_market_snapshot returned LIVE VN-Index 1,874.43 -0.52% @ 2026-05-27T12:03:44Z (source_tier 2). Cash session CLOSED (close print, unchanged from 08:48Z EOD). localhost:3000/health=200. Genuine liveness, not just a 200 — bridge alive."
+    },
+    "loadshed_check": {
+      "swap_at_decision": "total = 13312MB / used = 11979MB / free = 1332MB",
+      "bar": "STANDARD offhours load-shed: withhold heavy spawn if free <~700MB AND total pinned-at-cap with no expansion headroom.",
+      "evaluation": "Free 1332MB is well above the ~700MB floor and RISING across the last 3 ticks (662MB @11:33Z -> 959MB @11:48Z -> 1332MB @12:03Z). Total 13312MB is NOT pinned — the OS demonstrated BOTH a +7GB expansion (to 16384MB @11:33Z) AND a -3GB contraction (to 13312MB @11:48Z), confirming the 11:33Z root-cause revision (OS swap-management page-out, NOT a container leak). Neither withhold condition met.",
+      "decision": "SPAWN ALL 3 NORMALLY. No load-shed. First heavy fan-out since cash-session close; host memory in relief direction."
+    },
+    "agent_briefing": "Offhours fan-out, first since the 08:48Z EOD close. Standing cross-agent context carried forward: (1) news-scout bidirectional severity-inflation (x1.3 multiplier) flagged this session -> grade impact conservatively, do NOT euphoria-anchor MWG off stale #4023; (2) macro-staleness provenance — USD/VND seed 24,500 is -6.7% stale vs live ~26,153 (market-watcher's own 08:04Z read confirmed 26,153) -> reject the 24,500 seed, flag any carry thesis as data-gapped; (3) Vingroup VHM/VRE/VIC are ONE correlated issuer-family, narrate as correlated NOT a sector crisis (non-Vin RE went green at close: DXG +0.66%); (4) get_market_hexagram is a known 501, per-ticker hexagrams come from get_portfolio_conviction (works inline) — a 501 there is NOT confabulation; (5) fail-loud / no-retry-storm. Cash session is CLOSED so prices are close prints — narrate as post-close, not live intraday.",
+    "residual_risk": "Host swap volatile this session but currently in RELIEF (free 662->959->1332MB over 3 ticks; total contracted -3GB off the 16384MB session-high). Spawning 3 cowork agents simultaneously adds host-side Claude-subagent RSS; per-tick guard will re-read swap at the next tick (~12:18Z) and the verification gate fires on each agent completion. If free drops back below ~400MB WHILE total pins at cap during these 3 concurrent runs, escalate harder. The pdf-extractor-restart rec remains LOW-value per the 11:33Z revision; disk-free monitoring is the relevant ops watch given 16GB-class disk swap.",
+    "verification_pending": "3 agents in flight — verification gate (GENUINE vs hollow-run, independent live-probe cross-check, severity-discipline, briefing compliance) fires on each completion; verdict JSON(s) + DASHBOARD line-4 bump to follow."
+  },
+  "priority": "low",
+  "createdAt": "20260527T120318Z"
+}

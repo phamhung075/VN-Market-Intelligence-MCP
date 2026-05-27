@@ -1,0 +1,36 @@
+{
+  "signal": "P1-C-ready",
+  "agent": "pm",
+  "pilot": "alert-engine",
+  "phase": "1",
+  "task": "P1-AE-C",
+  "timestamp": "2026-05-24T05:45:51Z",
+  "commit": "72e214b6",
+  "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc",
+  "prior_task": {
+    "id": "P1-AE-B3",
+    "status": "DONE",
+    "commit": "251071bd",
+    "verified_by": "pm (router independently verified)",
+    "result": "cooldown-gate primitive; now time.Time injected; sandbox total=9 pass=9 fail=0 status=OK; ZERO-CREDS+Fence-A clean (time.Now=0); CGO0 build+tests pass; anchor intact",
+    "goals": "G1 core-3 band COMPLETE + G12 streak #3 COMPLETE (Phase-1 G12 streak requirement met)"
+  },
+  "p1_b4_decision": "SKIPPED — optional flex 4th primitive (duplicate-checker). Per plan §P1-B4, core-3 band satisfies G1 minimum; defers to Phase 2. PM proceeds directly to P1-C.",
+  "sequenced": {
+    "id": "P1-AE-C",
+    "title": "Module stub: alert_pipeline",
+    "owner": "dev-alert-engine",
+    "zone": "apps/alert-engine/",
+    "handoff": "docs/handoffs/TASK_P1-AE-C.md",
+    "ac_count": 7,
+    "goals_advanced": ["G2", "G12"],
+    "summary": "Compose 3 primitives via injected ports (AlertRepositoryPort/MutePort/TelegramPort). Fence-B: module imports primitives + domain + stdlib only. ports.go + pipeline.go + pipeline_test.go (mock ports) + 2 module scenarios (golden/edge). Module-tier scenario = full pipeline story (classify -> fingerprint -> dedup -> cooldown -> mute -> format -> route). G12 DoD sandbox-green-before-RETURN binds."
+  },
+  "ssot": "docs/data/pilot-status-alert-engine.json (phase1.current_task=P1-C, current_task_owner=dev-alert-engine, current_task_handoff=docs/handoffs/TASK_P1-AE-C.md)",
+  "ssot_dup_key_gate": "OK",
+  "goalsEarned": 0,
+  "decisionMatrix": "TBD (PO-only, §4.5)",
+  "charter_section_4_5": "NO goal flips — goalsEarned=0, dm-TBD",
+  "next_actor": "main-router",
+  "next_action": "Route P1-AE-C to dev-alert-engine: spawn dev-alert-engine to implement TASK_P1-AE-C.md (alert_pipeline module stub, 7 ACs, G2 + G12, Fence-B). WIP=1 sequential. On dev DONE signal, route back to pm for verification + sequence P1-D."
+}

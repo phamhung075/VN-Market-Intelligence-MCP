@@ -1,0 +1,60 @@
+{
+  "signal": "pm-alert-engine-P2-J-ready",
+  "task": "P2-J",
+  "pilot": "alert-engine",
+  "phase": "2",
+  "status": "DISPATCHED",
+  "timestamp": "2026-05-24T09:57:00Z",
+  "ssot_commit_sha": "801313ac0b1a947ef822747d178672887bba71d7",
+  "ssot_path": "docs/data/pilot-status-alert-engine.json",
+  "handoff_path": "docs/handoffs/TASK_P2-J-ae-g8-honest-red.md",
+  "previous_task": "P2-I",
+  "previous_task_status": "DONE",
+  "previous_task_commit": "9d18d87ed80167c767daa0f38ce84b6f855f1c1e",
+  "current_task": "P2-J",
+  "current_task_owner": "qa",
+  "current_task_status": "SEQUENCED",
+  "acceptance_criteria": [
+    {
+      "AC": "AC-1",
+      "criterion": "Sandbox exits non-zero on corrupted scenario AND dashboard shows non-green for the affected card. Evidence (terminal output) pasted to handoff §Evidence — G8 Test A.",
+      "test": "Test A — Corrupted scenario"
+    },
+    {
+      "AC": "AC-2",
+      "criterion": "Sandbox exits 0 after revert AND dashboard shows green for all cards. Evidence pasted to §Evidence — G8 Test B.",
+      "test": "Test B — Golden scenario (after revert)"
+    },
+    {
+      "AC": "AC-3",
+      "criterion": "QA runs 2 more deliberately corrupted scenario invocations using different primitives (e.g. signal-classifier-golden.json then dedup-key-builder-golden.json). Both return exit non-zero. Evidence: paste exit codes.",
+      "test": "2 additional known-bad runs"
+    },
+    {
+      "AC": "AC-4",
+      "criterion": "git status --short | grep scenarios returns empty (no staged or unstaged changes to any scenario file after all reverts).",
+      "test": "Reverted files clean"
+    },
+    {
+      "AC": "AC-5",
+      "criterion": "QA writes docs/handoffs/TASK_P2-J-ae-g8-evidence.md and emits docs/signals/qa-ae-P2-J-g8-done-<UTC>.json.",
+      "test": "G8 evidence compiled"
+    }
+  ],
+  "goal_posture": {
+    "goalsEarned": 0,
+    "decisionMatrix": "all-TBD",
+    "g8_status": "evidence collection",
+    "no_goal_flips": true,
+    "ssot_frozen": true
+  },
+  "critical_notes": [
+    "Pattern inherited verbatim from stock-price P2-J — scenario JSON corruption + revert",
+    "NO scenario files are committed; all test edits are reverted before task completion",
+    "Dashboard must show honest RED on corrupted scenario, GREEN on golden scenario",
+    "G8 honest-red contract: dashboard is NOT a false-green machine"
+  ],
+  "next_actor": "qa",
+  "next_action": "Execute G8 honest-red deliberate-break proof: Test A (corrupt golden.json, sandbox fail, dashboard RED), Test B (revert, sandbox green, dashboard GREEN), AC-3 (2 additional bad runs), compile evidence to TASK_P2-J-ae-g8-evidence.md, emit signal qa-ae-P2-J-g8-done-<UTC>.json",
+  "next_task": "P2-K — G9 PO Playwright Path B"
+}

@@ -1,0 +1,19 @@
+{
+  "from": "po",
+  "to": "dev-mcp-server",
+  "type": "task-dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-24T21:51:34Z",
+  "payload": {
+    "task": "NEWS-INGEST-1",
+    "title": "CONFIRM root cause of news-ingest all-duplicate drop (ROUTE FIRST — do NOT guess-fix)",
+    "zone": "apps/mcp-server/",
+    "handoff": "docs/handoffs/TASK_NEWS-INGEST.md",
+    "bug": "Live logs: every pollNews cycle ends `fetched:160 inserted:0 duplicates:160`. ALL ~160 VPS-pushed articles dropped as duplicates; rag_analyses ~empty (~1 row). Silent (INSERT OR IGNORE).",
+    "action": "Add TEMPORARY debug logging to tryInsertEntry (apps/mcp-server/src/application/usecases/pollNews.ts ~L511-566) and/or the persist loop (~L915). For ONE real push/poll cycle, log per article: {id, source_url, sourceTitle(<=60), isTitleDup, insertChanges}. Emit a histogram into the handoff: distinct-URL count, empty-URL count, max-duplicate-URL count, isTitleDup-true count.",
+    "decision_rule": "Many articles share ONE identical non-empty source_url => root cause (a') upstream URL flattening (trace pushNewsHandler payload -> news-fetch -> VPS script). isTitleDup:true dominating on distinct-URL articles => root cause (b) title-dedup over-match (fix in pollNews.ts). URLs empty across the board => contradicts current logic (empty/NULL exempt from partial unique index schema-news.ts:49-51 + skip title-dedup) => re-examine live DB index state + accounting.",
+    "constraints": "Remove/guard verbose per-article logging before any fix commit. Explicit-file staging (git add <path>, never -A/.). No --force/--no-verify/--no-gpg-sign. No git push. main only. Zero foreign files in git show --stat HEAD. Do NOT touch pilot-status-*.json. Confirmation ONLY this task — do NOT fix in the same cycle; PO routes the fix (NEWS-INGEST-2) after the verdict.",
+    "return_to": "po",
+    "next": "PO reads NEWS-INGEST-1 histogram -> routes NEWS-INGEST-2 fix to the zone owning the broken URL source -> qa NEWS-INGEST-3 gate -> po close -> ops PROVE LIVE (NEWS-INGEST-LIVE)."
+  }
+}

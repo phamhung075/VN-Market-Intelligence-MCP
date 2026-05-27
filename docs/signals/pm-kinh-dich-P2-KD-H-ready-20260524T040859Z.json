@@ -1,0 +1,76 @@
+{
+  "agent": "pm",
+  "action": "sequence",
+  "cycle": "kinh-dich-P2",
+  "completed_task": "P2-KD-G",
+  "completed_task_status": "DONE",
+  "completed_task_commit": "6fc7b6b3",
+  "completed_task_ac_count": 8,
+  "completed_task_ac_verdict": "all PASS",
+  "completed_task_sandbox": "14/14 PASS",
+  "current_task": "P2-KD-H",
+  "current_task_owner": "qa",
+  "current_task_handoff": "docs/handoffs/TASK_P2-KD-H.md",
+  "current_task_type": "qa-audit",
+  "current_task_scope": "G5c zero TODO.*migrat audit + G5 evidence sign-off",
+  "p2_kd_g_summary": {
+    "title": "G5b — MCP handler HTTP rewire (6 tools → port 5005) + 4 new kinh-dich-service endpoints",
+    "ac_verdicts": {
+      "AC-1": "PASS — zero direct domain imports from mcp-server parallel copy in kinhDichTools.ts",
+      "AC-2": "PASS — HTTP client confirmed at port 5005 in clients.ts",
+      "AC-3": "PASS — 4 new kinh-dich-service endpoints added and verified",
+      "AC-4": "PASS — zero direct infrastructure imports in module/primitive layers",
+      "AC-5": "PASS — ESLint fence clean (bunx eslint src/ --max-warnings 0 exits 0)",
+      "AC-6": "PASS — TypeScript compiles cleanly (bun tsc --noEmit exits 0)",
+      "AC-7": "PASS — G12 DoD gate: sandbox 14/14 scenarios PASS",
+      "AC-8": "PASS — score-computation helpers remain in mcp-server (not migrated)"
+    },
+    "key_facts": [
+      "kinhDichTools.ts rewired from direct domain imports to HTTP POST/GET calls",
+      "4 endpoints: /readings/{code}/history, /hexagram/{number}/transitions, /backtest/{code}, /hexagram/{number}/explain",
+      "Score helpers (computeHaoScores, computeSentimentScore, computeFundamentalsScore) stay in mcp-server",
+      "Port 5005 confirmed in clients.ts per system-map.json",
+      "Parallel mcp-server domain copy (apps/mcp-server/src/domain/services/kinhDich/) no longer imported in kinhDichTools.ts"
+    ]
+  },
+  "p2_kd_h_scope": {
+    "title": "G5c — zero TODO.*migrat audit + G5 evidence sign-off",
+    "owner": "qa",
+    "ac_count": 5,
+    "est_hours": 0.5,
+    "read_only": true,
+    "audit_targets": [
+      "apps/kinh-dich-service/",
+      "apps/mcp-server/src/interface/mcp/tools/kinhdich/",
+      "apps/kinh-dich-service/src/_deprecated/"
+    ],
+    "key_ac": [
+      "AC-1: Zero TODO.*migrat markers",
+      "AC-2: Zero TODO.*migrat in _deprecated/ paths",
+      "AC-3: Zero direct domain imports (G5b rewire post-completion confirmation)",
+      "AC-4: HTTP port 5005 confirmed in mcp-server client",
+      "AC-5: G5 evidence compiled (6 fields: g5a path, g5b imports/client/endpoints, g5c TODO markers)"
+    ],
+    "deliverable": "docs/handoffs/TASK_P2-KD-H-g5-evidence.md + docs/signals/qa-kd-P2-KD-H-g5-evidence-done-<UTC>.json"
+  },
+  "ssot_verification": {
+    "dup_key_gate": "PASS",
+    "goalsEarned": 0,
+    "phase2_current_task": "P2-KD-H",
+    "phase2_current_task_owner": "qa",
+    "phase2_current_task_status": "READY",
+    "anchor_intact": true
+  },
+  "git_verification": {
+    "commit_sha": "2f19f6fe",
+    "commit_subject": "chore(pm/kinh-dich-P2): mark P2-KD-G DONE (G5b MCP→HTTP rewire complete), sequence P2-KD-H (G5c audit)",
+    "files_changed": ["docs/data/pilot-status-kinh-dich.json", "docs/handoffs/TASK_P2-KD-H.md"],
+    "no_destructive_git": true,
+    "no_force_push": true,
+    "ancestor_check_debba8ea_intact": true
+  },
+  "wip_status": "P2-KD-H ready for qa dispatch (WIP=1 sequential)",
+  "next_actor": "main-router",
+  "next_action": "fan out qa for P2-KD-H (G5c zero TODO.*migrat audit + G5 evidence sign-off)",
+  "timestamp": "2026-05-24T04:08:59Z"
+}

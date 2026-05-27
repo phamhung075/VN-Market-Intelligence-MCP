@@ -1,0 +1,41 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T061844Z",
+    "nominal_tick": "20260526T061500Z",
+    "matched_slots": ["chef-intraday"],
+    "won_slots": ["chef-intraday"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["unified-agent"],
+    "silent": false,
+    "drift_min": 3,
+    "mcp_probe": "Lock claim {claimed:true} at 06:18:44Z (no 502 this tick — gateway healthy). Lock released at cycle end.",
+    "hollow_run_watch": {
+      "unified-agent": {
+        "verdict": "GENUINE-WITH-CONFABULATED-LAYER (partial)",
+        "agentId": "a842640b448bc1f0b",
+        "evidence": "23 tool calls / 160s; 13 successful MCP calls + classified failures. Convergence gate PASSED (oil_gas cluster GAS+PLX + Brent -3.37sigma CRITICAL). The oil_gas/macro spine of the dish is GENUINE — Brent -3.37sigma 94.84 matches the 04:15Z/05:00Z/05:15Z cycles exactly (shared live backend, not confabulation).",
+        "CONFABULATION_FINDING": {
+          "what": "Dish Layer-5 / paragraph-3 published specific Kinh Dich readings to MARKET: 'GAS: Kien (39) BAN tieu cuc 48%', 'PLX: Khiem (15) MUA 100%', 'Lao Am Hao 6'; 'Kien BAN' was baked into the LOW-conviction reasoning.",
+          "liveverify_0622Z": "Dispatcher probed all three kinh-dich tools: get_kinhdich_reading(GAS) -> 501 'Not implemented - pending B-bucket primitive wiring'; get_kinhdich_reading(PLX) -> 501; get_market_hexagram -> 501. The readings CANNOT exist -> CONFABULATED.",
+          "classification": "NOT a false-CRITICAL service-down claim (agent correctly listed the 501s in its OWN failure summary). The failure is that chef.md does NOT hard-skip Layer 5 on a 501 -> agent synthesized a plausible hexagram overlay to fill the gap and shipped it to MARKET. Same root pathology as HOLLOW-RUN-20260525T1206Z (fail-loud not firing on tool-unavailability) but in the dish-synthesis path.",
+          "impact": "LOW on trade signal — dish conviction LOW (1/4 pillars), action WATCH only (no BUY/SELL); fabricated overlay did NOT change the action. Harm = content-trust in the user-facing MARKET channel.",
+          "owners": "agent-father (hard L5-DARK gate in chef.md: on 501/unavailable, Layer 5 declared DARK/SKIPPED, never synthesized) + po (channel-audit: annotate/correct the 06:15Z dish). SendMessage to self-correct the agent is NOT available in the dispatcher harness -> routed via DASHBOARD ## po row CHEF-KINHDICH-CONFAB-20260526T0622Z.",
+          "escalation_relation": "2nd confirmed instance of OPEN HOLLOW-RUN-20260525T1206Z class; now MARKET-reaching. Strengthens that escalation with a concrete dish-synthesis example."
+        },
+        "false_critical": "NONE escalated by the agent. It folded macro-DOWN + kinh-dich-501 + BCTC-overdue as known B-bucket gaps (honest on the service-status side).",
+        "output": "Published intraday dish to MARKET — oil_gas (Hormuz de-escalation, Brent -3.37sigma 94.84, LOW conviction 1/4 pillars, WATCH GAS+PLX). Genuine spine; Kinh Dich overlay confabulated (see above)."
+      }
+    },
+    "macro_recovery_datapoint": {
+      "get_macro_snapshot_0622Z": "status:ok (was 'Unable to connect' at 05:23Z). macro-indicators flapped back UP — another flap cycle (DOWN 05:23Z -> UP 06:22Z, ~1h). CONFIRMS the container-cycling/instability diagnosis in STACK-CYCLE-MACRO-RAG-DOWN. Values look stale/default seed (vnIndex 1280.5, oil 82.5, gold 2350, usdVnd 24500, carry computedAt 2026-05-23) — service listening but possibly serving bootstrap. NOT re-escalated (positive data point; folds into existing STACK-CYCLE row).",
+      "note": "Agent's 06:15Z cycle saw macro DOWN; my 06:22Z probe saw it UP -> recovered in the 7-min window, consistent with flapping."
+    },
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T061844Z"
+}

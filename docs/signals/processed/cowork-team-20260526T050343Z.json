@@ -1,0 +1,35 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T050343Z",
+    "nominal_tick": "20260526T050000Z",
+    "matched_slots": ["news-scout-sentiment"],
+    "won_slots": ["news-scout-sentiment"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["news-scout"],
+    "silent": false,
+    "drift_min": 3,
+    "mcp_probe": {
+      "first_claim": "FAILED — Cloudflare 502 origin_bad_gateway at 05:03:49Z (retryable, retry_after 60s). Transient gateway origin overload.",
+      "retry_after_60s_backoff": "SUCCEEDED — {claimed:true} at ~05:05Z. 502 was transient; spawn gated on successful probe (no hollow-run risk). NOT escalated — single retryable sighting, recovered on first retry.",
+      "lock_release": "ok:false (benign — not-found/expired per tool contract; lock keyed to this nominal tick, auto-expires ~05:20Z, no collision with next-tick key). Likely residual session-scope flux from the 502."
+    },
+    "hollow_run_watch": {
+      "news-scout": {
+        "verdict": "GENUINE",
+        "evidence": "26 tool calls / 185s; fetch_and_analyze SUCCEEDED this cycle (20 articles, tier-2 cafef/vnexpress/reuters); 5 signals posted to bus (#3930-3934) all critic 0.8 with real tickers/values.",
+        "false_critical": "NONE — no service-down claims; no escalations.",
+        "output": "Signals: #3930 VIC (Vuong 80K-ty new venture, bullish impact7), #3931 market-wide K-shaped banking rally (ACB +2.97%/SSI/HCM, impact10), #3932 REE 500kV utilities capex (impact6), #3933 GAS macro risk-off Brent -3.37sigma $95.47 + Gold +2.39sigma $4527.8 (bearish, hot_money_risk), #3934 MWG IPO disclosure (neutral). New watch surfaced: EIB governance risk (3 Eximbank execs resign 2026-05-26).",
+        "cross_agent_consistency": "Brent -3.37sigma figure matches CHEF 04:15Z oil_gas dish exactly — confirms shared live backend, not per-agent confabulation.",
+        "fetch_analyze_recovery": "POSITIVE data point for FETCH-ANALYZE-RECUR: fetch_and_analyze WORKED this cycle after 3 prior timeouts (00:07Z, 04:07Z, 2026-05-25 20:05Z). Confirms the degradation is INTERMITTENT/latency-driven, NOT a hard failure — reinforces PO fix direction (tighten per-source timeout budget, not 'tool dead'). NOT re-escalated (recovery = less urgent, not worsening); existing FETCH-ANALYZE-RECUR escalation stands.",
+        "note": "Agent self-model lists 'next run 05:21Z market-hours 15min stagger' — stale (news-scout-market */15 2-8 is DISABLED per MARKET-SLOTS-DARK; real next = offhours 09:06/08:00Z it also lists). Harmless, agent does not self-schedule. Not corrected."
+      }
+    },
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T050343Z"
+}

@@ -1,0 +1,31 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "type": "sprint-dispatch",
+  "priority": "high",
+  "createdAt": "2026-05-24T21:27:12Z",
+  "payload": {
+    "sprint": "BCTC-TABLE",
+    "goal": "Correct result-table extraction for BCTC analysis (user /goal: 'bctc can extract correct result table for analyze')",
+    "goal_doc": "docs/SPRINT_GOAL.md",
+    "tasks_doc": "docs/TASKS.md#sprint-bctc-table",
+    "handoff": "docs/handoffs/TASK_BCTC-TABLE.md",
+    "research_ssot": "docs/architecture-briefs/2026-05-24-bctc-table-extraction-research.md",
+    "dispatch_now": ["BT-1", "BT-0"],
+    "BT-1": {"owner": "dev-pdf-extractor", "zone": "apps/pdf-extractor/", "type": "FIX", "why": "Vietnamese number-format parse fix + reconcile/select primitives; CRITICAL, no model, ships immediate decimal-shift correctness (VNM/DHG red->green anchors)"},
+    "BT-0": {"owner": "dev-pdf-extractor", "zone": "apps/pdf-extractor/", "type": "SPIKE", "timebox_min": 480, "why": "Phase-0 self-hosted extractor evaluation on 14-doc real gold-set; image-vs-text comparison the user asked for; scoreboard gates the architect hop"},
+    "wip": "BT-1 + BT-0 occupy both slots (WIP=2). BT-0-PICK (PO) gates BT-2 (architect), which gates all integration.",
+    "guardrails": {
+      "privacy": "NO task sends financial PDF/page-image to a third-party API. External-API VLM cross-check DEFERRED + opt-in (Open Q1). Phase-0 + self-hosted track = zero external data flow.",
+      "security_clause": "OCR/model/PDF-IO = infrastructure adapters; domain/primitives stay PURE (import-linter fence); sandbox zero credentials.",
+      "freeze": "1954c BCTC consolidation LANDED (372fbc91). Build on top. Architect (BT-2) confirms no collision before BT-3.",
+      "mac": "Mac = dev/eval only; production model on main server.",
+      "pilot": "pilot-status-pdf-extractor.json FROZEN 12/12 — not edited."
+    },
+    "open_questions_for_user": [
+      "1. Privacy: third-party API ever OK for financial PDFs/images, or self-hosted only? Default assumed = self-hosted only.",
+      "2. Does the main server have a GPU? (BT-4 sizing; not needed for BT-0)",
+      "3. Figure-accuracy pass-bar + API budget? Default ≥95% of result-column figures within ±0.5%."
+    ]
+  }
+}

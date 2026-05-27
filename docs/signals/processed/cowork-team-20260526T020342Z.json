@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T020342Z",
+    "nominal_tick": "20260526T020000Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "finding": "Investigated unexpected [] at market-open tick. Root cause: 4 market-hours slots enabled:false; RemoteTrigger stopgap empty (list=[]). Market-hours cowork intelligence layer dark. One-time HIGH escalation posted to ## po (MARKET-SLOTS-DARK-20260526T0203Z) + signal docs/signals/cowork-team-market-slots-dark-20260526T0203Z.json. Mechanically silent (matcher honors enabled:false) — no spawn.",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T020342Z"
+}

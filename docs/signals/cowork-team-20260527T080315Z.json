@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T080315Z",
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["news-scout", "market-watcher"],
+    "agent_ids": {"news-scout": "a7bd7e7b8ea104abf", "market-watcher": "a9049be9d09a21120"},
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "gateway_probe": {
+      "status": "HEALTHY",
+      "detail": "Slot-lock probe get_market_snapshot returned LIVE VN-Index 1,874.43 -0.52% @ 2026-05-27T08:03:31Z (source_tier 2, at/near close 15:03 VN). localhost:3000/health=200. Index continued recovering (-0.98% @06:21Z low -> -0.68% @07:22Z -> -0.52% now). Bridge alive."
+    },
+    "loadshed_check": {
+      "swap_at_decision": "total = 11264MB / used = 9795MB / free = 1469MB",
+      "evaluation": "Both withhold-conditions FALSE. free 1469MB >> ~700MB floor; total RE-EXPANDED 10240->11264 (OS grew the swap file again, expansion headroom proven). Free RECOVERED from the 904MB dip at 07:48Z — consistent with session volatility (band 582-1469MB). These are the lighter news-scout + market-watcher offhours scans, not the heavy CHEF, so load footprint is well below the load-shed concern.",
+      "decision": "SPAWN BOTH NORMALLY. No load-shed."
+    },
+    "agent_briefing": "Both briefed: (1) VN-Index recovered to -0.52% near close; (2) real-estate DECOUPLED/underperformed the recovery (Vingroup complex VHM/VRE ~-4% deepened while index climbed) -- news-scout to verify any related headlines without anchoring crisis, market-watcher to confirm whether relative weakness held into close without manufacturing a synthetic sector crisis from correlated issuer-family beta; (3) ACTIVE #4013 severity-watch (news-scout): do NOT anchor capital-flight on accumulation/'gom' headlines, verify polarity before bearish severity, do not let x1.3 multiplier inflate past what the -0.52% close supports; (4) macro-staleness provenance (24,500/82.5/2350 seed vs ~26,153/~95/~4500 fresh); (5) fail-loud/no-retry-storm on swap-volatility timeouts.",
+    "residual_risk": "Host swap VOLATILE this session (free 582-1469MB; total oscillating 9216<->11264MB; dipped to 904MB/total-10240 at 07:48Z then recovered). Acute exhaustion risk currently LOW (free ample + expansion headroom proven). NEXT heavy spawn + load-shed decision point = 08:37Z EOD chef (GUARANTEED-publish slot -- withholding costs the daily close dish, higher bar than intraday silent-skip). Standing ## po HOST-SWAP-RE-DEGRADE proactive memory-shed rec stands; per-tick load-shed guard remains armed."
+  },
+  "priority": "low",
+  "createdAt": "20260527T080315Z"
+}

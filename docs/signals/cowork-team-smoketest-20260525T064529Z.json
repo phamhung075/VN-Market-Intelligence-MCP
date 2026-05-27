@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "post-renewal-smoke-test",
+  "priority": "high",
+  "createdAt": "2026-05-25T06:45:29Z",
+  "trigger": "User requested full cowork-fleet verification after MCP server renewal/redeploy (https://zenmidi.com/vn-market/mcp). Main terminal ran all 10 cowork flows.",
+  "summary": "MCP gateway + core data tools HEALTHY post-renewal (prices/alerts/news/bctc/insider/portfolio/telegram/logging all OK). 2 downstream microservices DID NOT recover. Plus 2 agent-config issues and 1 session-registry gap.",
+  "findings": {
+    "SERVICE_OUTAGE_macro_indicators": {
+      "severity": "HIGH",
+      "tools_failing": ["get_macro_snapshot", "get_macro_calendar"],
+      "error": "macro-indicators service unavailable",
+      "confirmed_by": ["unified-agent", "digest-predict", "alert-commander", "qa-responder"],
+      "impact": "REGIME/CARRY extraction impossible -> all chef dishes degrade to conservative; macro-deviation alerts blind; market-analyst cannot issue recommendations.",
+      "suggested_zone": "ops (restart container) + dev-macro-indicators (verify service health)"
+    },
+    "SERVICE_OUTAGE_kinh_dich": {
+      "severity": "HIGH",
+      "tools_failing": ["get_market_hexagram", "get_kinhdich_reading", "run_hexagram_backtest"],
+      "error": "Unable to connect. Is the computer able to access the url?",
+      "confirmed_by": ["unified-agent", "digest-predict", "alert-commander", "qa-responder"],
+      "impact": "Hexagram Layer-5 overlay blocked in chef; stock-level kinhdich opportunity signals blind for alert-commander.",
+      "suggested_zone": "ops (restart container) + dev-kinh-dich (verify service health; note TS->Go reboot in progress)"
+    },
+    "CONFIG_market_analyst_missing_mcp_tool": {
+      "severity": "MEDIUM",
+      "status": "RESOLVED 2026-05-25 by agent-father",
+      "file": ".claude/agents/market-analyst.md",
+      "current_was": "tools: Read, Glob, Grep",
+      "fix_applied": "tools: Read, Glob, Grep, mcp__claude_ai_gateway__call_tool",
+      "verification": "agent-father confirmed flow calls 9 live MCP tools; genuine defect, not by-design. Version bumped 2026-04-26 -> 2026-05-25.",
+      "impact_was": "ALL market-analyst MCP calls blocked at agent allowlist before reaching server; agent could not perform any live analysis."
+    },
+    "REGISTRY_unregistered_subagents": {
+      "severity": "HIGH",
+      "status": "RESOLVED 2026-05-25 by agent-father (pending CC session restart to re-read files)",
+      "agents": ["financial-analyst", "news-scout", "market-watcher", "report-analyzer"],
+      "symptom": "Agent tool returns 'Agent type not found'; these 4 absent from the Claude Code session subagent registry.",
+      "CORRECTED_ROOT_CAUSE": "NOT a session-registry sync gap. The 4 files were physically malformed: a `<!-- size-justification: ... -->` HTML comment sat on LINE 1, pushing the YAML frontmatter opener `---` to line 2. CC's agent loader requires `---` on the first byte; with a comment first it parses no frontmatter, so the agents get no name/tools and are never registered. A restart alone would NOT have fixed this.",
+      "fix_applied": "agent-father moved the size-justification comment to immediately after the closing `---` in all 4 files (matching the 6 working agents). Directory rescan also found + fixed the SAME defect class in 3 more files (ba.md, pm.md, system-auditor.md). 7 files total fixed; head -1 == `---` verified on all; full .claude/agents/ rescan = 0 remaining defects.",
+      "remaining_action": "ONE Claude Code session restart so the loader re-reads all 7 files from byte 0 and registers them; then re-run /crons:cron-cowork-team. No FleetView re-sync needed.",
+      "suggested_zone": "config-admin (user — restart only)"
+    }
+  },
+  "agents_that_passed_flow": {
+    "unified-agent": "completed chef-intraday; published MARKET dish (oil_gas GAS/PLX convergence); degraded to layers 1-2-6 by the 2 outages",
+    "alert-commander": "completed; correct SILENT EXIT (no firing-gate condition met); no market impact",
+    "digest-predict": "completed; published MARKET weekly calibration; 22 tools OK",
+    "qa-responder": "completed; gateway 8/10 core tools OK; /ask queue empty (normal)"
+  },
+  "agents_working_as_designed": {
+    "tran-ngoc-bau": "file-evidence audit mode (no MCP tools by design); completed c78 audit; flagged chef/financial-analyst notebooks frozen 72h+ (consistent with financial-analyst being unspawnable; unified-agent has since run this cycle)."
+  }
+}

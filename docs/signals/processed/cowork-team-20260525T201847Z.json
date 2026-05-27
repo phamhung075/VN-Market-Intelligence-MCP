@@ -1,0 +1,21 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260525T201847Z",
+    "nominal_tick": "20260525T201500Z",
+    "matched_slots": ["tnb-audit"],
+    "won_slots": ["tnb-audit"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [".claude/flows/tran-ngoc-bau/main.md"],
+    "silent": false,
+    "drift_min": 3,
+    "mcp_reachable": true,
+    "snapshot_skipped": "sole matched slot tran-ngoc-bau is a filesystem-only auditor (no MCP tools); does not consume cycle-snapshot — skipped get_cycle_bootstrap+get_macro_snapshot per token-economy",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260525T201847Z"
+}

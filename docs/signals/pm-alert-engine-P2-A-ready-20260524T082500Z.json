@@ -1,0 +1,47 @@
+{
+  "agent": "pm",
+  "agent_role": "Project Manager (alert-engine factory pilot-5)",
+  "signal_type": "task_ready_for_dispatch",
+  "timestamp_utc": "2026-05-24T082500Z",
+  "phase": "2",
+  "current_task": "P2-A",
+  "title": "Create alert-engine-pre-ci tag (pre-revert anchor before G4 work)",
+  "owner_agent": "dev-alert-engine",
+  "handoff_file": "docs/handoffs/TASK_P2-A-ae-pre-ci-tag.md",
+  "commit_sha": "5d356e7c",
+  "phase2_status": "ACTIVE",
+  "phase2_opened_at": "2026-05-24T082100Z",
+  "blocked_by": null,
+  "blocks": "P2-B",
+  "ac_list": [
+    {
+      "id": "AC-1",
+      "title": "Tag created at Phase-1 anchor or later",
+      "criterion": "git log --oneline alert-engine-pre-ci returns exactly one line referencing a Phase-1 commit. No --force, no push."
+    },
+    {
+      "id": "AC-2",
+      "title": "Tag exists in local repo",
+      "criterion": "git tag | grep alert-engine-pre-ci returns alert-engine-pre-ci (tag exists in local repo)."
+    },
+    {
+      "id": "AC-3",
+      "title": "Anchor still INTACT",
+      "criterion": "git log --oneline --ancestry-path debba8eaff0724d1fb32fc9d28640201cc32d1cc..HEAD | tail -1 returns non-empty output."
+    }
+  ],
+  "ac_count": 3,
+  "g_goals_advanced": "G4 (setup only — no flip per §4.5)",
+  "ssot_gates_verified": {
+    "dup_key_detector": "PASS",
+    "parser_visible_phase": true,
+    "parser_visible_phase2_status": true,
+    "parser_visible_current_task": true,
+    "goals_earned_preserved_0": true,
+    "decision_matrix_all_tbd": true,
+    "frozen_anchor_intact": true
+  },
+  "notes": "P2-A is a tag-only task. PM has verified SSOT is clean (zero dup-keys, all fields readable, goalsEarned=0, decisionMatrix all-TBD preserved per §4.5 freeze). Tag creation gates dispatch of P2-B (.golangci.yml Fence-A/B/C work). WIP=1 enforced.",
+  "next_actor": "dev-alert-engine",
+  "next_action": "Create alert-engine-pre-ci tag at current HEAD; emit docs/signals/dev-ae-P2-A-done-<UTC>.json with tag SHA + anchor_intact=true; PM verifies signal then dispatches P2-B."
+}

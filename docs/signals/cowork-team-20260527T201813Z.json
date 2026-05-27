@@ -1,0 +1,26 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T201813Z",
+    "nominal_tick": "20260527T201500Z",
+    "matched_slots": ["tnb-audit"],
+    "won_slots": ["tnb-audit"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/tran-ngoc-bau/flow/main.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "verify": {
+      "hollow_run": false,
+      "method": "tran-ngoc-bau is a FILE-ONLY audit agent (no MCP tools by design — 'MCP blocked' is NOT a defect). Genuine work verified: 24 tool calls/346s, read unified-agent notebook (lines 1-129), audited 3 chef dishes with quoted Layer 1-6 text, scored each (Evening 4/6, EOD 4/6, Morning 3.5/6), wrote notebook c81 + handoff + signal file + 3 dashboard rows (2 to ## po, 1 to ## tran-ngoc-bau).",
+      "findings_routed": "tran-ngoc-bau wrote to DASHBOARD ## po: (1) audit-handoff c81, (2) F9 business-context ESCALATION — 9th consecutive cycle with zero bctc_signal_/fundamental_ citation; auto-cure threshold exceeded but needs BOTH a data-pipeline fix (BCTC Q1 filings) AND a flow change (wire chef Step 4 to consume fundamental_validation signals) — flow-edit alone cannot fix. PO to triage as sprint escalation.",
+      "chef_quality_note": "Audit confirms chef pipeline FULLY OPERATIONAL today (Morning SENT, 3 intraday correctly SILENT on convergence gate, EOD SENT 3 clusters, Evening SENT 4 clusters). Recurring quality gap = Layer 4 (4-pillar) coverage thin (1.5/4 evening) due to BCTC absence; conviction correctly capped MEDIUM. First evening dish to cite investment-clock earnings-yield (8.2% vs 4.7%) — partial L4 improvement.",
+      "step47_skipped": "Single-agent tick — Step 4.7 snapshot skipped (zero dedup benefit; tran-ngoc-bau has no MCP tools so would not read it anyway). Step 4.7 enum bug CW-DISPATCH-STEP47-BOOTSTRAP-ENUM remains open w/ agent-father."
+    }
+  },
+  "priority": "low",
+  "createdAt": "20260527T201813Z"
+}

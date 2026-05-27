@@ -1,0 +1,41 @@
+{
+  "signal_id": "pm-p1-d-dispatch-stock-price-20260524T012000Z",
+  "task_id": "P1-D",
+  "pilot": "stock-price",
+  "phase": 1,
+  "from": "pm",
+  "to": "main_router",
+  "timestamp": "2026-05-24T01:20:00Z",
+  "action": "dispatch",
+  "agent_target": "dev-stock-price",
+  "status": "READY",
+  "handoff": "docs/handoffs/TASK_P1-D.md",
+  "ac_count": 7,
+  "g12_dod_gate": {
+    "requirement": "Sandbox all-green (all scenarios: B1+B2+B3 primitives + C module) before any card shows GREEN status in the HTML",
+    "current_state": "SATISFIED — P1-C verified DONE with sandbox 11/11 all-tier pass (9 primitive + 2 module scenarios)"
+  },
+  "blocked_by": "P1-C",
+  "blocks": "P1-E",
+  "critical_notes": [
+    "P1-C is DONE-verified: all 7 ACs PASS, Fence-B CLEAR (module isolation confirmed), sandbox 11/11 all-tier green",
+    "P1-D is the G6 trust dashboard — 3-panel standard (primitives, module, microservice), file:// only, no network calls",
+    "SI-2 boundary: fleet dashboard index (docs/dashboards/index.html) is Phase 2 deliverable, NOT P1-D scope. P1-D owns per-service dashboard only.",
+    "AC-7 G12 DoD Gate: sandbox must show all green BEFORE dashboard cards are allowed to display GREEN status",
+    "L84 constraint: dev-stock-price must stage files explicitly (git add <path>), no --force, no --no-verify, no --no-gpg-sign",
+    "Strict WIP=1: dispatch only P1-D until completion; do NOT spawn P1-E until P1-D DONE signal received"
+  ],
+  "wip_policy": {
+    "limit": 1,
+    "current_in_progress": ["P1-D"],
+    "next_ready": ["P1-E"]
+  },
+  "previous_tasks_status": {
+    "P1-A": "DONE (2026-05-24T00:46:00Z, afe3468b)",
+    "P1-B1": "DONE (2026-05-24T00:53:00Z, 69afa2ab) — R-CGO CLEAR",
+    "P1-B2": "DONE (2026-05-24T01:00:46Z, b3f2ee5f) — Fence-A CLEAR",
+    "P1-B3": "DONE (2026-05-24T01:08:00Z, 69b034a4) — G12 streak 3/3 COMPLETE",
+    "P1-C": "DONE (2026-05-24T01:15:00Z, e98179f9) — Fence-B CLEAR, sandbox 11/11 green"
+  },
+  "phase1_progress": "5 of 9 tasks DONE (P1-A, P1-B1, P1-B2, P1-B3, P1-C); P1-D dispatched; P1-E..P1-G queued"
+}

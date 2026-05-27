@@ -1,0 +1,41 @@
+{
+  "type": "pm-task-dispatch",
+  "timestamp": "2026-05-24T085613Z",
+  "pilot": "alert-engine",
+  "phase": "2",
+  "current_task": "P2-C",
+  "current_task_title": "G4 Deliberate-Violation Proof (AC-4b) — Fence-A violation, non-zero exit proven, reverted, NEVER committed",
+  "task_owner": "dev-alert-engine (violation creator) + qa (independent reproduction)",
+  "blocked_by": "P2-B DONE (commit 6c2edc9d, .golangci.yml Fence-A/B/C + CI job wired, golangci-lint runs exit 0 on clean Phase-1 source)",
+  "blocks": "P2-D (G4 freeze anchor confirmation)",
+  "dispatch_commit_sha": "c685eb8936493aab38fa508503493f674be4d2c4",
+  "status_from_ssot": {
+    "current_task": "P2-C",
+    "current_task_status": "SEQUENCED",
+    "current_task_owner": "dev-alert-engine + qa",
+    "current_task_handoff": "docs/handoffs/TASK_P2-C-ae-g4-fence-violation-proof.md",
+    "phase2.status": "ACTIVE",
+    "P2-B.status": "DONE (doneAt: 2026-05-24T085113Z, doneBy: dev-alert-engine)",
+    "P2-C.status": "SEQUENCED (sequencedAt: 2026-05-24T085113Z)"
+  },
+  "ac_count": 5,
+  "ac_list": [
+    "AC-1: Linter exits non-zero on violation run in FENCED LAYER (primitive/module); output contains 'fence-a' + file name",
+    "AC-2: Linter exits 0 after revert",
+    "AC-3: Violation never staged/committed; git status --short clean after revert",
+    "AC-4: QA independently reproduces on different primitive file with same .golangci.yml",
+    "AC-5: G12 DoD gate — sandbox green (11/11 PASS, exit 0) after violation reverted"
+  ],
+  "critical_design_note": "VIOLATION INJECTION MUST TARGET FENCED LAYER (pkg/primitive/ or pkg/module/), NOT pkg/infrastructure/ (excluded by design). If injection into infrastructure runs green, the fence is NOT proven broken — the exclusion is working as designed. If injection into fenced layer exits 0, the fence is truly broken and requires investigation. This is the R-FENCE gate (Right = 'Does It Really Work?') — proves the fence actually catches violations.",
+  "charter_reference": "docs/architecture-briefs/2026-05-24-alert-engine-factory/phase-2-task-plan-go.md §P2-C + §G4 Fence Proof Obligation",
+  "ssot_path": "docs/data/pilot-status-alert-engine.json",
+  "ssot_integrity": {
+    "goalsEarned": 0,
+    "decisionMatrix_verdict": "TBD",
+    "anchor_intact": true,
+    "anchor_sha": "debba8eaff0724d1fb32fc9d28640201cc32d1cc"
+  },
+  "next_actor": "dev-alert-engine + qa",
+  "next_action": "Execute P2-C: create Fence-A violation in fenced layer, confirm non-zero exit + fence-a name, revert, confirm green; QA reproduces independently; record evidence in handoff; commit handoff evidence only (no violation committed); emit qa-ae-P2-C-g4-violation-proof-done signal",
+  "next_signal_expected": "docs/signals/qa-ae-P2-C-g4-violation-proof-done-<UTC>.json (next_actor=qa for P2-D freeze anchor confirmation)"
+}

@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "agent-run-verdict",
+  "payload": {
+    "verify_time": "20260527T080700Z",
+    "agent_verified": "market-watcher (offhours), agentId a9049be9d09a21120",
+    "slot": "market-watcher-offhours (08:00Z 4-hourly slot, fired 08:03Z tick)",
+    "run_verdict": "GENUINE — clean, well-calibrated single-name anomaly emission. No fabrication, no severity-inflation, correct correlated-complex discipline.",
+    "outcome": "Emitted ONE signal: VRE -4.43% price_anomaly (id=4022, 2.2sigma, critic_score=0.6, ttl=120m) to alert-commander. Real-estate sector context attached (sector avg -0.93%). No sector-crisis signal manufactured.",
+    "evidence": {
+      "real_run": "25 tool-uses / 13 MCP calls / 0 errors / 141s. Fresh macro used (Brent 94.28, USD/VND 26,153, Gold 4517.7 @08:04Z) — NOT the stale 24,500 seed.",
+      "independent_crosscheck": "Dispatcher probed get_market_snapshot([VRE,VHM,VIC,NVL,DXG,KDH]) @08:06:52Z (independent of the agent). CONFIRMS the agent's numbers EXACT: VRE -4.43% (exact), VHM -4.16% (exact), VN-Index 1,874.43 -0.52% (exact). NOT fabricated.",
+      "discipline_validated": "The probe REVEALS why the single-name emission was correct: by the close the real-estate weakness had NARROWED to the Vingroup complex (VRE -4.43% / VHM -4.16% both deeply red) while NON-Vin real-estate RECOVERED with the index (DXG +0.66% GREEN, NVL -0.96% up from -2.57% @07:22Z, VIC -1.03% up from -2.30%, KDH -1.29%). The mild -0.93% sector avg is corroborated. The agent correctly emitted ONE worst-name anomaly with sector CONTEXT rather than a synthetic 'real-estate sector crisis' — exactly the correlated-issuer-family discipline briefed this tick.",
+      "calibration": "2.2sigma is HONEST (a -4.43% move just over the 2.0sigma market-hours threshold); critic_score 0.6 is MODERATE not max. This is well-calibrated severity — the deliberate CONTRAST to the recurring news-scout #3998/#4013 over-amplification (max-severity impact-10 on ambiguous stories). market-watcher is NOT exhibiting the severity-inflation pattern.",
+      "macro_handling": "Fresh macro correctly sourced (26,153 not the stale 24,500 seed). Regime flags (fx_pressure / carry_outflow_context FII_OUTFLOW_RISK) attached as CONTEXT to the anomaly, not as a hard causal claim."
+    },
+    "minor_note": "The FX/carry FII-outflow regime overlay on a 2-name Vingroup-complex move is a softer attribution than name-specific flow data would support (VRE/VHM weakness is largely idiosyncratic correlated-complex, not demonstrably macro-driven). Tagged as context not causation, so within bounds — noted for awareness, NOT a defect.",
+    "downstream_note_for_alert_commander": "Signal #4022 (VRE -4.43%) is GENUINE and well-calibrated — no suppression needed (unlike the #4013 capital-flight watch). CAVEAT for alert-commander: VRE and VHM are the SAME issuer-family (Vingroup); if a VHM anomaly also fires, the two are NOT independent confirmations of a sector move — they are one correlated complex.",
+    "action": "NONE — genuine, well-calibrated emission correctly routed to alert-commander. No dispatcher escalation. Real-estate (Vin-complex) relative weakness into the close is flagged for the 08:37Z EOD chef dish.",
+    "infra": "13 MCP calls, 0 errors, no mid-cycle timeout despite session swap volatility. Ran cleanly at free 1469MB."
+  },
+  "priority": "low",
+  "createdAt": "20260527T080700Z"
+}

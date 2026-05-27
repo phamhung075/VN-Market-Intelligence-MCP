@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T050317Z",
+    "matched_slots": ["news-scout-sentiment"],
+    "won_slots": ["news-scout-sentiment"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["news-scout"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "gateway_probe": {
+      "status": "HEALTHY",
+      "detail": "First live spawn since incident cow-20260527T000315 recovered at 04:48Z. Slot-lock probe get_market_snapshot returned live data — VN-Index 1,868.43 -0.84% @ 2026-05-27T05:03:24Z. localhost:3000/health=200. Bridge stable across two consecutive ticks (04:48Z + 05:03Z).",
+      "market_state": "VN market OPEN (12:03 VN). news-scout-sentiment (cron 0 5 * * 1-5) spawned normally. Agent briefed on the morning coverage gap (fleet dark 00:03Z->04:48Z) — expect news backlog + abnormally long since-last-cycle window.",
+      "residual_risk": "Host swap still climbing: 9323MB used / 917MB free (was 8399MB at 04:48Z). Trending wrong direction. Not yet at crash threshold but monitor — agent instructed to fail-loud (no retry-storm) if it sees mid-cycle timeouts/5xx signalling VM re-degrade."
+    }
+  },
+  "priority": "low",
+  "createdAt": "20260527T050317Z"
+}

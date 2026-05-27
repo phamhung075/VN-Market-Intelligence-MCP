@@ -1,0 +1,19 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T191109Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 11,
+    "errors": [],
+    "note": "manual off-tick invocation (19:11Z, 11min past 19:00 nominal); no slot window covers this minute"
+  },
+  "priority": "low",
+  "createdAt": "20260527T191109Z"
+}

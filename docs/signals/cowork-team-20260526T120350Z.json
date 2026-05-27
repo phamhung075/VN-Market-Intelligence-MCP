@@ -1,0 +1,55 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T120350Z",
+    "nominal_tick": "20260526T120000Z",
+    "matched_slots": ["financial-analyst-midday", "news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["financial-analyst-midday", "news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["financial-analyst", "news-scout", "market-watcher"],
+    "silent": false,
+    "drift_min": 3,
+    "note": "11 cron fires had queued during the 09:15Z-12:00Z idle window; dispatcher resolved current wall-clock once (12:03:50Z) and matched against now, rather than replaying stale ticks. The 12:00Z midday fan-out was the live match.",
+    "mcp_probe": "All 3 slot-locks (cowork-slot:<slot>:20260526T120000Z) claimed {claimed:true} at 12:03-12:04Z (no 502 — gateway healthy). All 3 released {ok:true} at cycle end.",
+    "hollow_run_watch": {
+      "financial-analyst": {
+        "verdict": "GENUINE",
+        "agentId": "a4c477fff5c33a270",
+        "evidence": "52 tool calls / ~242s. Midday BCTC/financials cycle. Posted signal #3964 ACB fundamental_validation CHEAP (PE 7.8, ROE 17.6%, EY_SPREAD +8.12%, extraction conf 38% DISCLOSED, OCF anomaly flagged) + #3963 FPT FAIR (PE 13.8, ROE 28.3%, EY_SPREAD +2.55%, conf 81%, OCF/NI divergence -1.15 flagged, -38% YoY rev flagged as extraction artifact). Prices live-matched: ACB 24.800 (+5.31%), FPT 74.500 (+1.36%) both exact vs get_market_context. Fail-loud: macro snapshot flagged stale (used bootstrap context instead), EIB/GAS extraction breakage disclosed, kinh-dich 501 acknowledged, 35/39 BCTC overdue reported not fabricated. Signals are valuation verdicts (CHEAP/FAIR), NOT crisis/danger alerts — no CRITICAL live-probe required.",
+        "false_critical": "NONE."
+      },
+      "market-watcher": {
+        "verdict": "GENUINE",
+        "agentId": "a4e7d524b2cb17864",
+        "evidence": "10 tool calls / ~107s. Off-hours macro surveillance on a CLOSED market. Cross-checked VN-Index 1,884.18 via get_market_snapshot. STALE-SEED GUARD correctly applied: explicitly flagged get_macro_snapshot VN-Index 1,280.5 (05-23) as 46% stale vs real 1,884.18, did NOT re-escalate (fix routed). No price anomalies (market closed), no new position-danger/stop-loss event, no escalation.",
+        "false_critical": "NONE."
+      },
+      "news-scout": {
+        "verdict": "GENUINE (one LOW data-hygiene defect: mis-validated stale macro seed)",
+        "agentId": "acce699d19554e729",
+        "evidence": "21 tool calls / ~99s. Off-hours fetch returned 0 articles (expected — VN market closed ~08:59Z, ~3.5h prior). 0 signals fired, 0 suppressed. HSG #3948 handling CORRECT per directive: explicitly kept as a watch-note ('remains under watch — no follow-up damage disclosure'), did NOT re-fire the -15/-20% crisis. Genuine work.",
+        "false_critical": "NONE.",
+        "macro_misvalidate_defect_LOW": {
+          "claim": "news-scout cycle log states get_macro_snapshot oil 82.50 / gold 2350 / carry -0.63 are 'consistent with market-context snapshot, confirming no major data lag.'",
+          "ground_truth": "FALSE. Dispatcher re-probed BOTH tools at 12:09Z. get_macro_snapshot: oilUsd 82.5, goldUsd 2350, usdVnd 24500, vnIndex 1280.5 (stale 05-23 seed, fetchedAt 12:09:12Z). get_market_context MACRO section: brent_crude_usd 95.59, gold_usd_oz 4536.7, USD_VND 26164 (fresh, fetchedAt 12:09:14Z). The two tools DIVERGE materially (oil 82.5 vs 95.59; gold 2350 vs 4536.7; usdVnd 24500 vs 26164) — so 'consistent / no lag' is false; news-scout rubber-stamped the stale seed as fresh.",
+          "contradicts": "(a) the dispatcher's stale-seed directive; (b) market-watcher in the SAME 12:00Z cycle, which correctly flagged the snapshot as 46% stale; (c) news-scout's OWN 08:05Z run, which correctly flagged Brent 82.50 vs market-context 96.22. => a regression in news-scout's own stale-detection this cycle.",
+          "severity": "LOW. 0 signals fired this cycle => no propagation, no user harm. Distinct from MACRO-SEED-WIRING (tool serving stale data, already routed to dev-macro-indicators); THIS is agent-side mis-validation of that stale data.",
+          "action": "DASHBOARD row NEWSSCOUT-MACRO-MISVALIDATE-20260526T1205Z written to ## po (LOW). po optional hygiene guard: news-scout macro cross-check should compare get_macro_snapshot vs get_market_context MACRO and FLAG divergence as stale-seed, never validate as 'no lag'. One-time note."
+        }
+      }
+    },
+    "dispatcher_self_correction": {
+      "target": "CHEF-EOD-MACRO-MISATTRIB-20260526T0848Z (08:45Z finding)",
+      "original_root_cause": "Dispatcher logged that the EOD chef's 'USD/VND 26,164' was an INFERRED carry-equilibrium that bled in via the shared unified-agent.md notebook and got mis-stated as a get_macro_snapshot reading.",
+      "correction": "PARTLY WRONG. The 12:09Z re-probe shows get_market_context MACRO returns USD_VND 26164 LIVE (vs get_macro_snapshot 24500). So 26,164 is a REAL tool value, NOT notebook-inferred. The EOD chef cited a genuine number from the WRONG tool (get_market_context, not get_macro_snapshot). Defect is narrower than logged — a tool-name slip between two divergent macro tools — still LOW, dish still not anchored on it. Anti-hollow-run discipline applied to the dispatcher's own prior finding. The hygiene guard still applies (reframed: when two macro tools disagree, name the exact source).",
+      "dashboard": "CHEF-EOD row prefixed with [CORRECTION 2026-05-26T12:12Z]; original text retained."
+    },
+    "still_actionable_other_agents": "HSG-FIRE-SEVERITY-RECAL-20260526T0808Z (alert-commander: downgrade #3948 to watch-note, do NOT post -15/-20% crisis). Not dispatcher-actionable; kept flagged in header.",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T120350Z"
+}

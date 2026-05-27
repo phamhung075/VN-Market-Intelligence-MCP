@@ -1,0 +1,56 @@
+{
+  "signal": "pm-kinh-dich-P2-KD-K-ready",
+  "task_id": "P2-KD-K",
+  "phase": 2,
+  "timestamp": "2026-05-24T04:32:00Z",
+  "pm_action": "P2-KD-J marked DONE, P2-KD-K handoff written and sequenced",
+  "phase2_status": {
+    "current_task": "P2-KD-K",
+    "current_task_owner": "qa",
+    "previous_task": "P2-KD-J",
+    "previous_task_verdict": "DONE (all 7 ACs PASS, sandbox 17/17, G6 + G1 advanced)"
+  },
+  "p2_kd_j_verification": {
+    "commit_sha": "5db652f3",
+    "sandbox_result": "17/17 PASS (14 Phase-1 baseline + 3 nuclear-hexagram-computer)",
+    "dashboard_primitives": 5,
+    "ac_verdicts": {
+      "AC-1": "PASS — 5th primitive exists, Fence-A clean",
+      "AC-2": "PASS — eslint src/ --max-warnings 0 exits 0",
+      "AC-3": "PASS — 3 nuclear scenario JSONs present",
+      "AC-4": "PASS — dashboard finalized (5th card + OpenAPI link + deprecated notice)",
+      "AC-5": "PASS — SI-2 boundary held",
+      "AC-6": "PASS — G12 DoD gate 17/17",
+      "AC-7": "PASS — file:// self-contained, zero network calls"
+    },
+    "goals_advanced": ["G6", "G1"],
+    "g1_status": "5/5 primitives complete (hexagram-resolver, ngu-hanh-classifier, hao-encoder, reading-scorer, nuclear-hexagram-computer)"
+  },
+  "p2_kd_k_handoff": {
+    "title": "G8 honest-red deliberate-break proof",
+    "owner": "qa",
+    "blocked_by": "P2-KD-J (DONE)",
+    "blocks": "P2-KD-L",
+    "ac_count": 5,
+    "ac_summary": {
+      "AC-1": "Test A — corrupt scenario → sandbox RED + dashboard RED",
+      "AC-2": "Test B — revert + sandbox GREEN + dashboard GREEN + no false greens",
+      "AC-3": "2 additional known-bad runs (ngu-hanh-classifier, hao-encoder)",
+      "AC-4": "Reverted files clean (git status empty)",
+      "AC-5": "Evidence compiled (handoff + signal)"
+    }
+  },
+  "ssot_verification": {
+    "dup_key_gate": "PASS",
+    "goalsEarned": 0,
+    "current_task": "P2-KD-K",
+    "anchor_intact": "debba8eaff0724d1fb32fc9d28640201cc32d1cc (confirmed)"
+  },
+  "commit_info": {
+    "sha": "fc81450f",
+    "staged_paths": ["docs/data/pilot-status-kinh-dich.json", "docs/handoffs/TASK_P2-KD-K.md"],
+    "subject": "chore(pm/kinh-dich-P2): mark P2-KD-J DONE (G6 finalization + 5th primitive), sequence P2-KD-K (G8 honest-red)"
+  },
+  "next_actor": "main-router",
+  "next_action": "fan out qa for P2-KD-K (G8 honest-red deliberate-break proof) — sandbox RED/GREEN validation"
+}

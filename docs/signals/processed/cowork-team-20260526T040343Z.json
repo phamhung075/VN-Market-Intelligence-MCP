@@ -1,0 +1,34 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T040343Z",
+    "nominal_tick": "20260526T040000Z",
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["news-scout", "market-watcher"],
+    "silent": false,
+    "drift_min": 3,
+    "hollow_run_watch": {
+      "market-watcher": {
+        "verdict": "GENUINE",
+        "evidence": "35 MCP tool calls / 191s; 32/37 watchlist scanned; regime NEUTRAL 2.0sigma.",
+        "false_critical": "NONE — 'all MCP circuits operational'; no service-down claim.",
+        "output": "Posted real ACB +2.76% (2.1sigma) banking anomaly to alert-commander (signal_id=3927, critic_score=0.8). Supply-chain/climate/energy/macro all sub-threshold.",
+        "note": "Agent notebook says 'next cycle 04:20Z 15-min' — stale self-model (market-watcher-market */15 2-8 is disabled per MARKET-SLOTS-DARK; real next run = 08:00Z offhours). Harmless (agent does not self-schedule). Not corrected."
+      },
+      "news-scout": {
+        "verdict": "GENUINE (ABORT — fail-loud)",
+        "evidence": "17 MCP tool calls / 327s (mostly 3 timed-out fetch_and_analyze retries); bootstrap+macro succeeded (Brent 95.05, Gold 4542.4, USD/VND 26164, carry -0.63pp).",
+        "false_critical": "NONE — this time news-scout VERIFIED get_vps_service_health(5/5 healthy)+get_vps_proxy_health(news ok,0err) FIRST and correctly classified as 'gateway latency NOT outage'. The NEWSFETCH-FALSECRIT lesson stuck.",
+        "true_positive_finding": "fetch_and_analyze timed out 3x = 2nd occurrence in ~4h. Dispatcher independent triple-probe corroborates + isolates fault to the TOOL not the pipeline (VPS healthy, proxy 0-err, all 13 rate-limit sources ready). Consolidated to ## po row FETCH-ANALYZE-RECUR-20260526T0407Z + signal docs/signals/cowork-team-fetch-analyze-recur-20260526T0407Z.json."
+      }
+    },
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T040343Z"
+}

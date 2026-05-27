@@ -1,0 +1,15 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-05-25T20:11:04Z",
+  "payload": {
+    "file": ".claude/flows/cowork-team/main.md",
+    "line_count": 316,
+    "cap": 120,
+    "class": "flow-file",
+    "overage": 196,
+    "action_required": "prune_or_split"
+  }
+}

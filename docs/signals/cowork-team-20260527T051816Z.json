@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T051816Z",
+    "matched_slots": ["chef-morning", "chef-intraday"],
+    "won_slots": ["chef-morning", "chef-intraday"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["unified-agent"],
+    "dedup": "chef-morning + chef-intraday both resolve to unified-agent running .claude/flows/unified-agent/chef.md -> collapsed to ONE CHEF spawn covering both slot intents.",
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "gateway_probe": {
+      "status": "HEALTHY",
+      "detail": "Slot-lock probe get_market_snapshot returned live VN-Index 1,868.43 -0.84% @ 2026-05-27T05:18:27Z. localhost:3000/health=200. Bridge stable 3 consecutive ticks (04:48Z + 05:03Z + 05:18Z) since the 04:48Z recovery.",
+      "market_state": "VN market OPEN (12:18 VN). First CHEF dish since the morning outage — intraday cadence was dark 3 slots (02:18Z/03:18Z/04:18Z). CHEF briefed on the coverage gap + the active #4013 capital-flight severity-watch (do not narrate a crisis off an accumulation headline) + macro-staleness provenance.",
+      "residual_risk": "Host swap EASED slightly this tick: 9224MB used / 1016MB free (was 9323/917 at 05:03Z) — wrong-direction trend paused, not worsening. Still tight. Continue monitoring; CHEF instructed to fail-loud on mid-cycle timeouts (no retry-storm) if VM re-degrades."
+    }
+  },
+  "priority": "low",
+  "createdAt": "20260527T051816Z"
+}

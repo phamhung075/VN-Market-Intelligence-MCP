@@ -1,0 +1,23 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-05-26T20:13:00Z",
+  "summary": "c80 audit: NEEDS_ATTENTION IMPROVING. Chef FULLY OPERATIONAL (8 dishes). L5 Kinh Dịch PASS (was GAP c79). F1/F2 CRITICAL closed. Active: macro stale-seed MED + D/E/F structural + F9 business-context 8+ cycles. 0 auto-cures.",
+  "cycle": "c80",
+  "overallVerdict": "NEEDS_ATTENTION",
+  "direction": "IMPROVING",
+  "pipeline": "guaranteed_ok=TRUE",
+  "dishScores": {
+    "evening_1937Z": "4/6 NEEDS_ATTENTION",
+    "eod_0849Z": "4/6 NEEDS_ATTENTION",
+    "morning_0523Z": "3.5/6 NEEDS_ATTENTION"
+  },
+  "closedFindings": ["F1-macro-indicators-CRITICAL", "F2-kinh-dich-CRITICAL", "F4-chef-pipeline-degraded"],
+  "activeFindings": ["F1-macro-stale-seed-MED", "F2-L4-1of4-pillars-MED", "F3-D-gap-PMI-MED", "F4-E-gap-VIRA-MED", "F5-F9-business-context-MED", "F6-newsscout-severity-watch-LOW-MED", "F7-chef-macro-misattrib-LOW"],
+  "autoCures": 0,
+  "toolCallCount": 0,
+  "mode": "file-evidence (MCP call_tool unavailable in spawned session, 26th cycle)"
+}

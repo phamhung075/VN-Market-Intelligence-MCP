@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "chef-dish-verdict",
+  "payload": {
+    "verify_time": "20260527T085240Z",
+    "agent_verified": "unified-agent (CHEF EOD), agentId aa02621903a1ccb57",
+    "slot": "chef-eod (45 8 * * 1-5, fired 08:48Z tick) — GUARANTEED-publish daily close dish",
+    "run_verdict": "GENUINE — well-walked guaranteed-publish EOD dish. Numbers exact, all 5 briefing points honored, severity discipline maintained on the highest-temptation slot (resisted MWG euphoria, narrated Vin-complex as correlated NOT crisis), macro-staleness flagged, fail-loud honored, Kinh Dich divergences surfaced rather than smoothed.",
+    "outcome": "PUBLISHED (correct — EOD is guaranteed-publish, walks all 8 steps regardless of convergence). 3 clusters qualified: (1) real-estate Vingroup VHM/VRE/VIC, (2) utilities POW, (3) retail MWG. Dual output: MARKET (plain Vietnamese, 4 paragraphs) + WORK ([CHEF-DETAIL] TNB Layer 1-6 audit). 23 tool-uses / 192s.",
+    "evidence": {
+      "real_run": "23 tool-uses / 192s. Walked Steps 0-8 end-to-end: gathered 9 open alerts + 39-ticker live prices + macro + Fed liquidity (EFFR 3.63%) + portfolio conviction; built 3 convergence clusters from the bus (each multi-type: price + news_mention + sector); TNB Layer 1-6 audit with explicit gaps; Kinh Dich from get_portfolio_conviction (get_market_hexagram 501 documented, bypassed per protocol, NOT fabricated). Granularity and independent alert-sourcing refute a hollow/echo run.",
+      "independent_crosscheck": "Dispatcher probed get_market_snapshot([POW,MWG,VHM,VRE,VIC,DXG,NVL,FRT]) @08:52:25Z (independent of the agent's run). CONFIRMS every cited number EXACT to the decimal: POW +2.93% (vol 14,098,600 — agent said ~14M, exact), MWG +1.91% (vol 4.63M), VHM -4.16%, VRE -4.43%, VIC -1.03%, DXG +0.66% GREEN, NVL -0.96%, FRT +0.61%, VN-Index 1,874.43 -0.52% (close print). NOT fabricated.",
+      "independence_from_briefing": "The 3 published clusters overlap the 3 threads the dispatcher flagged, BUT the chef re-derived them independently from the 9-alert bus and graded all three convictions DOWN (RE-Vin MEDIUM / POW MEDIUM-LOW / MWG LOW-MEDIUM) rather than echoing them as strong. It added Kinh Dich layer detail the briefing did NOT supply (VHM/VRE Su(7) blockade 83%; POW & MWG Kien(39) caution 48%) and explicitly flagged that the Kien caution CONTRADICTS the bullish POW/MWG price — a divergence surfaced, not smoothed. This is independent analysis, not briefing-parroting.",
+      "severity_discipline_PASS": "On the guaranteed-publish slot (highest temptation to over-narrate), the chef held the line: (a) MWG +1.91% graded LOW-MEDIUM with explicit signal-INVERSION risk noted (price up THEN news-euphoria at 04:38-04:42, not news->price) and 'CEO IPO strategy = strategic news, not earnings catalyst, wait for BCTC' — did NOT inherit news-scout #4023 impact-10 euphoria; (b) VHM/VRE -4% narrated as correlated Vingroup-issuer-family weakness with non-Vin recovery (DXG +0.66%) cited — did NOT manufacture a sector crisis / capital-flight (#4013/#4024); (c) POW +2.93% graded MEDIUM-LOW '0.6sigma micro-move, pillar-1 only, insufficient energy catalyst' — did NOT over-amplify into a regime shift. Consistent with the 08:18Z intraday severity-discipline PASS.",
+      "brief_compliance": "(1) RE Vin-complex correlated-not-crisis — HONORED. (2) POW genuine-but-not-overhyped — HONORED (MEDIUM-LOW). (3) No MWG euphoria anchor off #4023 — HONORED (LOW-MEDIUM + inversion risk). (4) Macro-staleness provenance — HONORED (USD/VND seed 24,500 vs live 26,153 = -6.7% drift documented as data-unreliable, carry thesis GAPPED, seed NOT validated as 'consistent'). (5) Fail-loud / no-retry-storm — HONORED (501 documented, no retry-storm, no mid-cycle timeout at free 803MB)."
+    },
+    "macro_consistency_note": "Chef's fresh macro (USD/VND 26,153, oil 93.68, gold 4,519.6 @08:48Z) is consistent with market-watcher's 08:04Z fresh read (USD/VND 26,153, Brent 94.28, gold 4,517.7) — cross-agent fresh-macro agreement, both correctly rejecting the stale 24,500 seed. No macro-misvalidation regression.",
+    "action": "NONE — GENUINE guaranteed-publish dish, no fabrication, no severity-inflation, conservative conviction grading, all briefings honored. No new DASHBOARD row. This closes the cash-session cowork cadence; offhours 4-hourly slots resume. DASHBOARD line-4 bumped.",
+    "infra": "23 tool-uses, 1 expected 501, no mid-cycle timeout. Ran cleanly at free 803MB / total 11264M (expansion headroom proven, 12288M peak prior tick) — the higher-bar load-shed SPAWN decision was correct, no false-withhold; the guaranteed close dish was delivered."
+  },
+  "priority": "low",
+  "createdAt": "20260527T085240Z"
+}

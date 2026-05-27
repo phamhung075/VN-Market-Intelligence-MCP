@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "alert-commander",
+  "type": "signal-severity-recalibration-liveverify",
+  "payload": {
+    "verify_time": "20260527T050800Z",
+    "agent_verified": "news-scout",
+    "run_verdict": "GENUINE",
+    "run_evidence": "21 real tool calls, 187s, 2 signals fired / 3 suppressed. VN-Index 1,868.43 -0.84% matches dispatcher gateway probe @05:03:24Z. Macro staleness correctly self-flagged this cycle (get_macro_snapshot stale 82.5/2350 seed vs fresh bootstrap 95.07/4516.2 — used bootstrap for regime extraction). First clean post-recovery cowork run.",
+    "signals_reviewed": [
+      {
+        "id": "#4012",
+        "ticker": "MWG",
+        "verdict": "OK — no action",
+        "note": "Bullish IPO-expansion + 40% dividend catalyst, impact=7 correctly dampened ×0.7 → 7.0 under TIGHTENING. Moderate, not a crisis. Regime multiplier applied correctly. Cascade POW/PPC/REE plausible."
+      },
+      {
+        "id": "#4013",
+        "verdict": "SEVERITY-WATCH — RECURRENCE, do NOT post as crisis",
+        "note": "Bearish 'institutional buyer tung 100B+ VND gom HOSE on down-day', impact=10 (regime-adjusted 9×1.3). This is the SECOND occurrence of the identical pattern flagged on 2026-05-26T20:03Z (#3998): an institutional-ACCUMULATION headline ('một thế lực gom 100B+ VND') read as max-severity BEARISH 'capital flight' and pushed to impact-10 by the ×1.3 TIGHTENING multiplier. Accumulation = money flowing IN; 'capital flight' = money flowing OUT — the polarity is interpretively backwards. news-scout itself hedged (confidence 69%, 'next cycle confirms smart-support vs margin-call'), i.e. the bullish reading is equally live. Today VN-Index is −0.84% (mildly down, slightly more defensible than the −0.10% FLAT day last time) but impact-10 max-severity off an accumulation event remains over-amplified."
+      }
+    ],
+    "action_for_alert_commander": "Before propagating #4013 to the user: verify the buyer is DISTRIBUTION not ACCUMULATION, and weigh impact against a mild −0.84% close. Do NOT post a 'capital-flight crisis' alert off an institutional-accumulation headline. Same discipline as #3998 (20:03Z) and HSG-FIRE-SEVERITY-RECAL. #4012 (MWG bullish) is fine to treat normally.",
+    "systemic_flag": "2nd identical occurrence (accumulation→capital-flight polarity flip + ×1.3 max-severity) = crosses from one-time heads-up to RECURRING calibration defect in news-scout's signal-polarity/severity logic. Routed as a LOW-priority cross-team calibration item via ## po (NOT urgent, NOT a fabrication). Catching it repeatedly at the alert-commander gate works but the upstream rule should be reviewed.",
+    "data_hygiene_nit": "news-scout's regime summary line cites the STALE oil/gold (82.50/2350) while stating it used fresh bootstrap (95.07/4516.2) for regime extraction — minor internal inconsistency. Macro cache-TTL audit already a known dev-team item (MACRO-VNINDEX-DATA-GAP). LOW."
+  },
+  "priority": "medium",
+  "createdAt": "20260527T050800Z"
+}

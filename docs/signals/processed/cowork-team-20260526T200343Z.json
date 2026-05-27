@@ -1,0 +1,41 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T200343Z",
+    "nominal_tick": "20260526T200000Z",
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["news-scout", "market-watcher"],
+    "silent": false,
+    "drift_min": 3,
+    "mcp_probe": "Both slot-locks (cowork-slot:<slot>:20260526T200000Z) claimed {claimed:true} at 20:03Z (no 502 — gateway healthy). Both released {ok:true} at cycle end.",
+    "hollow_run_watch": {
+      "news-scout": {
+        "verdict": "GENUINE — but a LOW severity-calibration observation routed to alert-commander (see severity_calibration_LOW)",
+        "agentId": "aaf653bbc83c766b5",
+        "evidence": "8 distinct real MCP calls (get_cycle_bootstrap, get_macro_snapshot, get_agent_signals, fetch_and_analyze=20 archive articles ts 17:51-03:52Z, 2x run_impact_chain=39-stock cascades, 2x post_agent_signal) + log_agent_work/send_telegram/notebook (30 tool_uses incl retries), ~213s. Real archive articles (off-hours normal). Suppressed 6 (5 sub-threshold post-regime incl. the 16:00Z K-shaped bullish leg now dampened x0.7=4.9, 1 prior-dup HSG). Fired #3998 + #3999.",
+        "false_critical": "NONE that is fabricated — all signals trace to real articles + real impact chains.",
+        "stale_seed_guard_applied": "Correctly flagged get_macro_snapshot stale 2026-05-23 seed (82.5/2350/24500) vs FRESH bootstrap (Brent 96.75 / Gold 4502.1 / USD_VND 26164) and used fresh for regime. Continues the 16:00Z self-resolved behavior (NEWSSCOUT-MACRO-MISVALIDATE remains resolved — 2 clean cycles now). Did NOT re-escalate the seed (fix routed to dev-macro-indicators).",
+        "hsg_not_amplified": "HSG #3948 suppressed by dedup — directive followed.",
+        "severity_calibration_LOW": "news-scout flipped from 16:00Z K-shaped BULLISH (#3980) to 20:00Z BEARISH via the TIGHTENING x1.3 bearish multiplier. The regime read (FII carry -0.63pp, gold risk-off, USD_VND 26164 weak) is defensible and consistent with chef's 19:37Z FII_OUTFLOW_RISK walk — NOT a contradiction. HOWEVER #3998 was scored impact=10 (MAX, 'macro bearish / capital flight') off an institutional-ACCUMULATION headline ('A force deployed 100B+ VND to gom HOSE on a down session') on a day the VN-Index closed -0.10% (essentially FLAT, per market-watcher + chef get_market_snapshot 1,884.18 -0.10%). Impact-10 macro-bearish does NOT match a -0.10% flat close; the multiplier appears to have over-amplified an ambiguous/arguably-bullish accumulation story. critic=0.8 (not 1.0) registered some uncertainty. This is an interpretive/severity issue, NOT a fabrication — so logged GENUINE, but a heads-up is routed to alert-commander (the event-gate) to verify #3998/#3999 severity against the flat close BEFORE any user-facing crisis alert. #3999 (utilities -2 days post-policy, impact 9) is more defensible (real sector decline + policy headwind) but same family.",
+        "live_probe": "PROBED via ground-truth cross-check: VN-Index close 1,884.18 -0.10% (corroborated by market-watcher 20:00Z + chef 19:37Z, same source get_market_snapshot). A -0.10% flat close does not support an impact-10 'capital flight' macro-bearish reading. Heads-up routed, not a confabulated escalation."
+      },
+      "market-watcher": {
+        "verdict": "GENUINE — clean correct-by-design offhours exit",
+        "agentId": "a5b25dac348161777",
+        "evidence": "2 real calls (get_system_status + send_telegram), ~60s. Internal window logic classified 20:00Z (=03:00 VN) as OUTSIDE market(02:00-08:59Z)/prepost/eod windows -> smoke-probe + EXIT (no scan). This is CORRECT-BY-DESIGN: rather than fabricate activity on a market closed 11.75h, it health-probed and exited. get_system_status: MCP healthy, all 16 circuit breakers GREEN, DB uptime 39m. Cited VN-Index 1,884.18 as the 08:17Z close (NOT the 1,280.5 seed). Applied stale-macro guard (fresh Brent 97.15/Gold 4506.9/USD_VND 26164 from prior bootstrap). Did NOT re-raise ACB +5.31% (correctly treated as an already-signaled 08:05Z anomaly). No synthetic anomaly on the closed market.",
+        "false_critical": "NONE.",
+        "observation_pipeline_friction": "get_system_status reported 10 unresolved errors = vnstock rate-limits on balance_sheet/cash_flow/stats DAGs. Real data-pipeline friction (relates to chef's BCTC-Q1-overdue gap), already tracked (10 entries) and routed to dev — NOT dispatcher-actionable, NOT a hollow run, NOT a new crisis. Noted only."
+      }
+    },
+    "cross_consistency": "VN-Index 1,884.18 -0.10% is now triple-confirmed (chef 19:37Z + market-watcher 20:00Z + news-scout's regime base). Fresh macro USD_VND 26164 confirmed by all three (Brent 96.75-97.15 / Gold 4502.1-4506.9 minor tick-drift between 19:37Z and 20:03Z, consistent). news-scout's TIGHTENING/FII-outflow lean is directionally consistent with chef's FII_OUTFLOW_RISK MEDIUM walk — the divergence is only in SEVERITY (impact 10 vs chef MEDIUM-conviction), which is the calibration point routed to alert-commander.",
+    "still_actionable_other_agents": "HSG-FIRE-SEVERITY-RECAL-20260526T0808Z (alert-commander) — STILL open. NEW this cycle: NEWSSCOUT-SIGNAL-SEVERITY-WATCH-20260526T2003Z (alert-commander: verify #3998 impact-10 'capital flight' + #3999 impact-9 against the -0.10% FLAT VN-Index close before any user-facing crisis alert; do NOT post a capital-flight crisis off a flat day). Both routed to DASHBOARD for alert-commander.",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T200343Z"
+}

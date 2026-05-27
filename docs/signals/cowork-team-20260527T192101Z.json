@@ -1,0 +1,23 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T192101Z",
+    "matched_slots": ["chef-evening"],
+    "won_slots": ["chef-evening"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "note": "MANUAL forced complete-flow validation run (first run on new system). Live cron 3fad811d deleted for duration to prevent double-fire; recreated after. unified-agent GENUINE: 10 live MCP calls, 2 Telegram blocks published, all 6 TNB layers walked.",
+    "findings": [
+      "BUG Step 4.7: get_cycle_bootstrap(agent_name='cowork-team') rejected by enum (valid: news-scout|financial-analyst|market-watcher|alert-commander|digest-predict|qa-responder|unified-agent|report-analyzer). Tick-snapshot step errors every run; agents fall back to direct bootstrap (zero blocker). Fix: dispatcher should pass a valid agent name (e.g. the spawned slot.agent) or the tool enum should accept 'cowork-team'.",
+      "MINOR: spawned agent could not log_agent_work — 'requires session id'; telemetry log skipped agent-side."
+    ]
+  },
+  "priority": "low",
+  "createdAt": "20260527T192101Z"
+}

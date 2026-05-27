@@ -1,0 +1,35 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "system-issue",
+  "payload": {
+    "fire_time": "20260527T044821Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 3,
+    "incident_ref": "cow-20260527T000315",
+    "severity": "RESOLVED — full fleet recovered",
+    "errors": [],
+    "recovery": {
+      "status": "RESOLVED",
+      "incident_duration": "~4h47m (00:03Z first detection -> 04:48Z recovery; CRITICAL daemon-down state 04:33Z->04:48Z)",
+      "consecutive_ticks_down": 19,
+      "evidence": {
+        "docker_info": "28.1.1 containers=8 running=8 (was: 'Cannot connect to the Docker daemon', containers=0 at 04:33Z)",
+        "loopback_health": "localhost:3000/health=200, /sse=200 (was 000 connection-refused at 04:33Z)",
+        "gateway_probe": "get_market_snapshot via gateway returned LIVE data: VN-Index 1,868.43 -0.84% @ 2026-05-27T04:49:50Z. FIRST probe this tick timed out (gateway container warm-up re-dialing freshly-rebuilt VM bridge); SECOND probe succeeded -> bridge confirmed working, not a false-green."
+      },
+      "root_cause_confirmed": "Docker Linux VM/daemon had crashed under host swap exhaustion (project_host_memory_panic). Daemon now back; all 8 containers restarted via compose policy. Resolution = Docker Desktop restart (host-level, by ops/user) as advised.",
+      "residual_risk": "Host swap still tight: 8399/9216 MB used, 817MB free. Swap total grew 8192->9216 MB. Watch for re-degrade under full fleet load — the same swap-exhaustion failure mode could recur. Recommend monitoring memory_pressure during market hours; 8GB Docker cap already in place (2026-05-25).",
+      "cumulative_slots_lost": ["02:18Z chef-intraday", "03:18Z chef-intraday", "04:03Z news-scout-offhours", "04:03Z market-watcher-offhours", "04:18Z chef-intraday"],
+      "next_slot": "chef-intraday due 05:13Z (cron 13 2-8 * * 1-5) — first post-recovery live slot; will spawn normally if gateway stays healthy.",
+      "market_state": "VN market OPEN (11:48 VN). No slot pinned to 04:48Z -> no spawn due this tick; recovery is the story."
+    }
+  },
+  "priority": "high",
+  "createdAt": "20260527T044821Z"
+}

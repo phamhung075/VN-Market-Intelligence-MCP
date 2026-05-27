@@ -1,0 +1,66 @@
+{
+  "type": "pm-close",
+  "from": "pm",
+  "to": "po",
+  "cycle": "cycle-57",
+  "task_id": "P2-E2",
+  "goal_under_proof": "G11",
+  "action": "close P2-E2 + flip G11=YES (9/12 goals earned)",
+  "verdict": "CLOSED-COMPLETE",
+  "timestamp": "2026-05-23T21:35:50Z",
+  "ssot_commit": "d4cec5c3",
+  "qa_verify_commit": "a6ea2aed",
+  "qa_verify_signal": "docs/signals/qa-p2-e2-verify-GREEN-20260523T213550Z.json",
+  "dev_fix_commit": "f2b45fd2",
+  "phase2_status": "IN-PROGRESS",
+  "phase2_activeTask": null,
+  "goals_earned": 9,
+  "goals_earned_breakdown": [
+    "G1=YES (P2-X1)",
+    "G2=YES (P2-X2+P2-G1)",
+    "G3=YES (P2-X3)",
+    "G4=YES (P2-A1+P2-A2)",
+    "G5=YES (P2-B1+P2-B2+P2-B3)",
+    "G8=YES (P2-F1)",
+    "G9=YES (P2-C1-rerun)",
+    "G10=YES (P2-D1+P2-D2)",
+    "G11=YES (P2-E1+P2-E2) ← flipped this cycle"
+  ],
+  "goals_terminal_remaining": [
+    "G6=TBD (dashboard rendering, Phase 1 already satisfied, re-verified P2-G1)",
+    "G7=TBD (edit-rerun, Phase 1 already satisfied, re-verified P2-G1)",
+    "G12=EARNED-PENDING per Charter §4.5 (no flip until 12/12 terminal)"
+  ],
+  "g11_evidence": {
+    "trial_1": {
+      "task": "P2-D1 (injection) + E1 alias",
+      "primitive": "macro_carry_trade_signal",
+      "mutation": "HotMoneyThreshold 2.5 → 5.0",
+      "coupled_scenarios_count": 2,
+      "fix_cycle": 1,
+      "fix_commit": "9e3131ea + aa87759b"
+    },
+    "trial_2": {
+      "task": "P2-E2",
+      "primitive": "macro_yield_spread_signal (DIFFERENT from trial-1)",
+      "mutation": "CheapThreshold 2.0 → 5.0",
+      "coupled_scenarios_count": 2,
+      "fix_cycle": 1,
+      "fix_commit": "f2b45fd2"
+    },
+    "repeatability": "PROVEN across different primitives",
+    "rubric": "TA cycle-17 2-trial coupling-proof = G11 PASS",
+    "ac_all_pass": true
+  },
+  "p2_e2_status": "DONE",
+  "p2_e2_qa_verdict": "GREEN",
+  "p2_e2_ac_results": "5/5 PASS",
+  "p2_e2_cycle_used": 1,
+  "p2_e2_cycle_max": 2,
+  "p2_phase2_tasks_complete": 14,
+  "p2_phase2_tasks_total": 14,
+  "anchor_status": "1776df8e HELD (exit 0)",
+  "decisionMatrix_status": "all TBD (preserved per Charter §4.5 — PO-only authorship at 12/12 terminal)",
+  "next_dispatch": "PO for Phase 3 atomic close (verify 12/12 goals terminal, populate decisionMatrix, flip brief DONE)",
+  "next_dispatch_reason": "All 14 Phase 2 tasks DONE. 9/12 goals earned (G1-G5, G8-G11). G6/G7 terminal already confirmed (Phase 1), G12 EARNED-PENDING per §4.5. Phase 2 functionally complete. PO must perform atomic close: check G6/G7 terminal at HEAD, verify all 12 goals non-TBD, populate decisionMatrix per rubric, flip verdict, close brief."
+}

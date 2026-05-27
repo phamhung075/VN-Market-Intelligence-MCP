@@ -1,0 +1,37 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T201844Z",
+    "nominal_tick": "20260526T201300Z",
+    "matched_slots": ["tnb-audit"],
+    "won_slots": ["tnb-audit"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["tran-ngoc-bau"],
+    "silent": false,
+    "drift_min": 3,
+    "mcp_probe": "slot-lock cowork-slot:tnb-audit:20260526T201300Z claimed {claimed:true} at 20:18Z (no 502 — gateway healthy), released {ok:true} at cycle end.",
+    "slot_note": "tnb-audit (13 20 * * * — 20:13Z daily, =03:13 VN) is the DAILY Strategy-Supervisor audit slot mapping to tran-ngoc-bau, flow .claude/flows/tran-ngoc-bau/main.md. First non-silent tick since the 20:00Z off-hours fan-out; naturally timed to audit the unified-agent EVENING dish published at the 19:45Z chef-evening fan-out. enabled:true, guaranteed:true in cowork-schedule.json.",
+    "hollow_run_watch": {
+      "tran-ngoc-bau": {
+        "verdict": "GENUINE — file-evidence audit, correct-by-design for its no-MCP tool grant (NOT a hollow run)",
+        "agentId": "a1590426a7aec609b",
+        "evidence": "50 tool_uses (~736s), file-evidence mode. tran-ngoc-bau's tool grant is Read/Edit/Write/Glob/Grep with NO MCP tools — so 0 MCP calls is EXPECTED and correct-by-design (analogous to market-watcher's correct-by-design exit). It read the REAL chef dish content from docs/agent-memory/notebooks/unified-agent.md (lines 1-88 verbatim) and audited 3 MARKET dishes (Evening 19:37Z / EOD 08:49Z / Morning 05:23Z). Produced a real 1,147-byte signal (docs/signals/tnb-2026-05-26T20:13:00Z-c80.json) + 14.8KB handoff (docs/handoffs/tnb-audit-latest.md), both left uncommitted in working tree (correct C-2 behavior — no unexpected commit).",
+        "false_critical": "NONE.",
+        "ground_truth_cross_check": "Audit anchors INDEPENDENTLY MATCH this session's triple-confirmed ground truth: VN-Index 1,884.18 -0.10% (matches notebook + market-watcher + news-scout + chef), ACB +5.31% @2.8sigma, USD/VND ~26,164, Brent ~96.75, EFFR 3.63%/IORB 3.65% (matches unified-agent's 19:45Z get_fed_liquidity_spread). No fabricated/divergent numbers. Not a fabricated audit.",
+        "kinhdich_heuristic_OK": "tran-ngoc-bau scored L5 PASS for Evening/EOD precisely because the chef sourced per-ticker hexagrams from the WORKING get_portfolio_conviction (7 banking tickers), and correctly classified get_market_hexagram 501 as a known B-bucket / dev-kinh-dich reboot design gap — NOT an outage. Matches the dispatcher's corrected anti-confabulation heuristic exactly. L5 was a GAP at c79 (when kinh-dich was mis-read as DOWN); now correctly re-classified — consistent with the dispatcher's own session findings.",
+        "l4_vs_l6_nuance_resolved": "The exact nuance flagged in the spawn directive was resolved correctly: the chef's honest self-flagging of '3/4 valuation pillars unavailable' SATISFIES Layer 6 (gap catalogue applied = PASS) but does NOT rescue Layer 4 (valuation = PARTIAL 1/4). Scored as two separate layers, not double-counted. This is methodologically sound.",
+        "findings_all_known_structural": "Per-dish scores 4/6 (Evening/EOD) and 3.5/6 (Morning), verdict NEEDS_ATTENTION direction IMPROVING. ALL gap findings map to ALREADY-KNOWN/already-routed structural items — NONE are NEW or dispatcher-actionable: L2 ISM-PMI sub-components no_data; L3 VIRA scraper not built (matches VN-macro-source policy: VIRA fetchable, needs VPS scraper) + SBV CPI/M2 stale; L4 M2 stale + BCTC-Q1-banking-overdue + no P/E screener (MACRO-SEED-WIRING + BCTC-Q1 family); F9 business-context absent 8+ cycles (a recurring chef-quality observation, routed by tran-ngoc-bau itself to po). 0 auto-cures (all structural / sprint-required, none flow-curable this cycle).",
+        "c79_criticals_resolved": "Both c79 CRITICALs (macro-indicators DOWN, kinh-dich DOWN) confirmed RESOLVED/re-classified by this audit — macro = recovered, now a stale-seed data-quality issue (fix already routed to dev-macro-indicators); kinh-dich 501 = expected TS->Go reboot design gap with get_portfolio_conviction inline path working. Fully consistent with the dispatcher's session ground truth. F1/F2 CRITICAL closed."
+      }
+    },
+    "dispatcher_observation_LOW": "The tran-ngoc-bau flow's Input line claims 'full MCP data access', but the agent's actual tool grant (Read/Edit/Write/Glob/Grep) has NO MCP tools — so it correctly fell back to file-evidence mode, and the flow's commit-mutex C-2 path likewise cannot run (left output files uncommitted, which is the normal steady state for all dispatcher-fired cowork agents — commits are user-gated per CLAUDE.md). This is a cosmetic flow-doc/tool-grant accuracy nit for the flow owner (agent-father), NOT dispatcher-actionable, NOT a crisis, and the agent self-handled gracefully. Noted only — NOT escalated to DASHBOARD (proportionality).",
+    "cross_consistency": "tran-ngoc-bau's audit is a 5th-source corroboration of the day's banking K-shaped + VN-Index 1,884.18 -0.10% thesis (now chef + market-watcher + news-scout + financial-analyst + TNB-audit). No contradictions. TNB routed its NEEDS_ATTENTION quality verdict to po via its OWN DASHBOARD ## po row + handoff — the dispatcher does NOT duplicate that routing.",
+    "still_actionable_other_agents": "Unchanged from 20:00Z — NOT re-escalated (one-time discipline): HSG-FIRE-SEVERITY-RECAL-20260526T0808Z (alert-commander) STILL open; NEWSSCOUT-SIGNAL-SEVERITY-WATCH-20260526T2003Z (alert-commander) routed last cycle. TNB's structural gaps (ISM/VIRA/BCTC-Q1/F9-business-context/MACRO-SEED-WIRING) are po/dev-owned and already routed by tran-ngoc-bau itself — no new dispatcher row needed.",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T201844Z"
+}

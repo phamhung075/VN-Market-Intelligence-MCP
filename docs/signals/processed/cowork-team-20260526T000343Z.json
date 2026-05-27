@@ -1,0 +1,21 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T000343Z",
+    "nominal_tick": "20260526T000000Z",
+    "matched_slots": ["financial-analyst-morning", "news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["financial-analyst-morning", "news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [".claude/flows/financial-analyst/main.md", ".claude/flows/news-scout/main.md", ".claude/flows/market-watcher/main.md"],
+    "silent": false,
+    "drift_min": 3,
+    "mcp_reachable": true,
+    "snapshot_skipped": "Step 4.7 skipped: LLM main-terminal dispatcher cannot pipe live MCP output into staging files per the flow's bash; hand-reconstructing the ~4KB escaped market_context string risks a malformed snapshot (same outcome as the documented Step -1 fallback but with stale-file risk). All 3 won slots are MCP-live agents (3/3 task_claim + bootstrap + macro pulls succeeded this tick) → they use the canonical direct get_cycle_bootstrap path. macro-indicators confirmed LIVE (status:ok, fetchedAt 2026-05-26T00:05:06Z).",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T000343Z"
+}

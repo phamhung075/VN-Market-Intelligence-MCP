@@ -1,0 +1,72 @@
+{
+  "signal": "pm-sp-P2-Z-ready",
+  "pilot": "stock-price",
+  "phase": "2",
+  "task": "P2-Z",
+  "task_type": "Phase-2 close-gate verification",
+  "emitted_at": "2026-05-24T02:17:22Z",
+  "emitted_by": "pm",
+
+  "p2_m_verification": {
+    "task": "P2-M",
+    "status": "VERIFIED DONE",
+    "g10_evidence": {
+      "bug_location": "apps/stock-price/pkg/primitive/price-staleness-classifier/classifier.go",
+      "fix_commit": "4e920ffb",
+      "fix_cycles_used": 1,
+      "byte_identical_restore": "git diff stock-price-pre-inject HEAD -- classifier.go → EMPTY (exit 0)",
+      "sandbox_post_fix": "total=11 pass=11 fail=0 status=OK",
+      "build_exit": 0,
+      "lint_exit": 0,
+      "verdict": "G10 PASS — 1-cycle fix (within 2-cycle budget) with byte-identical restore to pre-inject baseline"
+    },
+    "g11_evidence": {
+      "trial_1_outcome": "outcome-(a) PASS (1 coupled scenario: price-staleness-classifier-golden)",
+      "trial_2_outcome": "outcome-(a) PASS (2 coupled scenarios: price-quote-normalizer-golden + failure)",
+      "trial_2_mutation": "ChangePercent field mapping (rawChangePct → rawChange)",
+      "trial_2_pre_tag": "stock-price-pre-trial2",
+      "trial_2_byte_identical_restore": "git diff stock-price-pre-trial2 HEAD -- normalizer.go → EMPTY (exit 0)",
+      "verdict": "G11 PASS — both trials demonstrate regression-alarm coupling (coupled REDs on mutations, single-edit fixes restore all GREEN)"
+    },
+    "g12_dod_gate": "CONFIRMED (sandbox 11/11, build exit 0, lint exit 0, working tree clean)"
+  },
+
+  "p2_z_sequencing": {
+    "task_id": "P2-Z",
+    "owner": "qa",
+    "status": "READY",
+    "handoff_file": "docs/handoffs/TASK_P2-Z.md",
+    "blocked_by": "P2-M (DONE 2026-05-24T02:13:53Z)",
+    "ac_count": 5,
+    "acceptance_criteria": [
+      "AC-1: Sandbox all-green (primitive/module/all tiers exit 0)",
+      "AC-2: All 6 Phase-2 goal evidence files present (G3/G4/G5/G8/G9/G10-G11)",
+      "AC-3: G12 streak carry-forward confirmed (3/3 Phase-1 + 5 Phase-2 dev tasks)",
+      "AC-4: Pre-revert tags present + ancestry-ordered (stock-price-pre-ci ≤ pre-delete ≤ pre-inject)",
+      "AC-5: Anchor intact (debba8ea ancestor of HEAD) + SSOT untouched (goalsEarned=0, decisionMatrix all TBD)"
+    ],
+    "charter_section": "docs/architecture-briefs/2026-05-23-stock-price-factory/pilot-charter.md §4.5 (matrix-authorship rule)",
+    "critical_constraint": "P2-Z is a close-gate that attests READINESS — it does NOT flip any G-goal and does NOT populate decisionMatrix. Those are Phase-3 PO-only events (atomic 12/12 terminal close). goalsEarned stays 0, decisionMatrix stays all-TBD through P2-Z."
+  },
+
+  "ssot_state": {
+    "pilot": "stock-price",
+    "phase": "2",
+    "current_task": "P2-Z",
+    "current_task_status": "READY",
+    "current_task_owner": "qa",
+    "goals_earned": 0,
+    "decision_matrix_state": "all-TBD (speed=TBD, trust=TBD, scale=TBD, verdict=TBD)",
+    "phase2_task_completion_count": "13/14 (P2-A..P2-M complete, P2-Z READY)"
+  },
+
+  "dispatch_notes": {
+    "pm_actions_complete": "P2-M verification + P2-Z handoff written + SSOT updated (explicit-path L84 staging)",
+    "ssot_validation": "python3 dup-key check → OK; goalsEarned=0 confirmed; decisionMatrix all-TBD confirmed; current_task='P2-Z' confirmed",
+    "commit_sha": "2dd7f84e",
+    "commit_subject": "chore(pm): P2-M marked DONE + P2-Z handoff written (Phase-2 close-gate)"
+  },
+
+  "next_actor": "main-router",
+  "next_action": "fan out qa for P2-Z (Phase-2 close-gate — evidence-completeness audit + final sandbox green + readiness attestation for Phase-3 terminal close)"
+}

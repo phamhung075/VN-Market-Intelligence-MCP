@@ -1,0 +1,51 @@
+{
+  "signal_id": "pm-p1-c-dispatch-stock-price-20260524T010800Z",
+  "task_id": "P1-C",
+  "pilot": "stock-price",
+  "phase": 1,
+  "from": "pm",
+  "to": "dev-stock-price",
+  "timestamp": "2026-05-24T01:08:00Z",
+  "verdict": "READY",
+  "handoff": "docs/handoffs/TASK_P1-C.md",
+  "ac_count": 7,
+  "predecessor": {
+    "task_id": "P1-B3",
+    "status": "DONE",
+    "commit_sha": "69b034a4cf975dfe8ec69642ff169fcace87368d",
+    "g12_streak_task": 3,
+    "g12_dod_sandbox": "GREEN",
+    "sandbox_breakdown": "9 total (3 B1 + 3 B2 + 3 B3), 9 PASS, 0 FAIL, exit 0"
+  },
+  "g12_milestone": {
+    "streak_required": 3,
+    "streak_completed": 3,
+    "streakComplete": true,
+    "status": "EARNED-PENDING (QA must verify all 3 handoff docs have DoD evidence before PO flips goal to YES at 12/12 terminal)",
+    "tasks": [
+      "P1-B1 (2026-05-24T00:53:00Z — sandbox 3/3 PASS)",
+      "P1-B2 (2026-05-24T01:00:46Z — sandbox 6/6 PASS)",
+      "P1-B3 (2026-05-24T01:08:00Z — sandbox 9/9 PASS, streak complete)"
+    ]
+  },
+  "critical_path": "P1-C (module stub) → P1-D (dashboard) → P1-E (edit-rerun) → P1-G (QA close-gate)",
+  "ac_summary": {
+    "AC-1": "ports.go TierFetcher interface",
+    "AC-2": "Fence-B grep check (no infrastructure imports)",
+    "AC-3": "Unit tests with mocks (go test exit 0)",
+    "AC-4": "No cross-module imports (grep check)",
+    "AC-5": "Module sandbox (-tier=module) exit 0",
+    "AC-6": "All-tier sandbox (-tier=all) exit 0",
+    "AC-7": "G12 DoD Gate: both tiers green before RETURN"
+  },
+  "wip_limit": 1,
+  "blocked_by": "P1-B3 (now resolved)",
+  "blocks": "P1-D (dashboard stub)",
+  "fence_gates": {
+    "Fence-A": "CLEARED (P1-B1) — primitives have no infrastructure imports",
+    "Fence-B": "THIS TASK — module must not import infrastructure or mattn/go-sqlite3",
+    "Fence-C": "Phase 2 — composition root; infrastructure wired only from cmd/server/main.go"
+  },
+  "dispatch_context": "P1-B3 verification COMPLETE: all 6 ACs PASS, commit 69b034a4, sandbox 9/9 GREEN. G12 streak 3/3 COMPLETE. SSOT updated. P1-C handoff ready. Main router may spawn dev-stock-price for P1-C.",
+  "next_action": "Main router spawns dev-stock-price agent with TASK_P1-C.md. After P1-C DONE signal, PM will sequence P1-D (dashboard stub)."
+}

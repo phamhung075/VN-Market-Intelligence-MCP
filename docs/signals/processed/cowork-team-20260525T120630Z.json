@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "high",
+  "createdAt": "20260525T120630Z",
+  "payload": {
+    "fire_time": "20260525T120630Z",
+    "matched_slots": ["financial-analyst-midday", "news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["financial-analyst-midday", "news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [".claude/flows/financial-analyst/main.md", ".claude/flows/news-scout/main.md", ".claude/flows/market-watcher/main.md"],
+    "silent": false,
+    "drift_min": 6,
+    "hollow_run": true,
+    "hollow_run_detail": "All 3 spawned agents completed with ZERO MCP call_tool execution — narrated planned cycle, fetched no data, posted no signals, no telegram, no real notebook write. financial-analyst='cannot call MCP in this environment'; market-watcher='have call_tool, shall I proceed?'; news-scout='tool unavailability in this context'. Cross-team finding filed to DASHBOARD ## po (HOLLOW-RUN-20260525T1206Z) + docs/handoffs/cowork-team-hollow-run-20260525T1206Z.md.",
+    "errors": [
+      {"slot_id": "*", "error": "slot-lock (Step 4.6) + tick-snapshot (Step 4.7) skipped — main terminal has no vn-market call_tool access; single-session invariant holds"},
+      {"slot_id": "financial-analyst-midday", "error": "hollow run — 12 tool_uses, 0 call_tool, no execution"},
+      {"slot_id": "market-watcher-offhours", "error": "hollow run — 13 tool_uses, 0 call_tool, asked permission instead of executing"},
+      {"slot_id": "news-scout-offhours", "error": "hollow run — 16 tool_uses, 0 call_tool, MCP stages reported Pending/Blocked"}
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "from": "dev-technical-analysis",
+  "to": "po",
+  "kind": "done",
+  "task_id": "P2-D3",
+  "cycle": "c282 cycle-13",
+  "timestamp": "2026-05-23T02:08:35Z",
+  "closure_anchor": "62edbf3d",
+  "handoff": "docs/handoffs/TASK_P2-D3.md",
+  "commit_sha": "d909492bc84ce8de284ae9e51a87bf2e0946dd59",
+  "commit_short": "d909492b",
+  "commit_subject": "fix(technical-analysis): P2-D3 — RSI Wilder smoothing weight period-1 not period — G10 cycle 1 of ≤2",
+  "cycles_consumed": 1,
+  "cycles_budget": 2,
+  "g10_result": "PASS (1 of 2 cycles used)",
+  "g12_dod": "GREEN — all 30 dashboard scenarios pass; both tiers run; verification block + root-cause note appended to TASK_P2-D3.md below frontmatter",
+  "root_cause": {
+    "file": "apps/technical-analysis/pkg/primitive/rsi/rsi.go",
+    "lines": "56-57",
+    "summary": "Wilder smoothing weighted previous avg by `period` instead of `period-1`; SMA seed remained correct so rsi[0] matched expected but rsi[1..] diverged. Off-by-one weight in numerator.",
+    "fix_diff_lines": 2,
+    "files_changed": [
+      "apps/technical-analysis/pkg/primitive/rsi/rsi.go",
+      "docs/handoffs/TASK_P2-D3.md"
+    ]
+  },
+  "sandbox_output_summary": {
+    "primitive_tier_total": 25,
+    "primitive_tier_green": 25,
+    "primitive_tier_red": 0,
+    "module_tier_total": 5,
+    "module_tier_green": 5,
+    "module_tier_red": 0,
+    "all_scenarios_green": true,
+    "go_test_status": "ok across all packages (count=1, no cache)",
+    "go_vet_status": "clean"
+  },
+  "sandbox_runner_note": "Dispatch handoff command syntax `-module=technical-analysis -scenario=all` is not implemented by `apps/technical-analysis/cmd/sandbox/main.go` — the runner takes one scenario per invocation via `-tier=<primitive|module> -scenario=<file>`. Iterated every scenario file under `docs/scenarios/technical-analysis/{primitives,module}/` for full-tier verification. Verbatim per-scenario status lines pasted into TASK_P2-D3.md §Verification.",
+  "operational_notes": {
+    "amend_used": true,
+    "amend_reason": "Cycle-log row in TASK_P2-D3.md references the commit SHA. Recorded placeholder, committed (SHA 92639e15), amended once to inline the real SHA. Single atomic commit per cycle preserved. The committed snapshot of TASK_P2-D3.md cycle-log row records the pre-amend SHA (92639e15) because the cycle-log self-reference is circular; the canonical HEAD commit SHA is d909492b. No `--no-verify`, no `--force`, no broad-glob staging used.",
+    "explicit_files_staged": [
+      "apps/technical-analysis/pkg/primitive/rsi/rsi.go",
+      "docs/handoffs/TASK_P2-D3.md"
+    ],
+    "branch": "main",
+    "push_attempted": false,
+    "push_reason": "CI billing block per dispatch constraint; local landing is sufficient for G10 proof"
+  },
+  "forbidden_reads_compliance": {
+    "rationale": "No-cheat clause — diagnosed strictly from dashboard signal + source + scenario fixtures + Wikipedia knowledge of Wilder RSI",
+    "files_read": [
+      "docs/handoffs/TASK_P2-D3.md (this task's own handoff — allowed)",
+      "docs/signals/po-P2-D3-dispatch-20260523T020000Z.json (this task's own dispatch — allowed)",
+      ".claude/flows/dev-technical-analysis/main.md (own flow file)",
+      "apps/technical-analysis/pkg/primitive/rsi/rsi.go (allowed — production source)",
+      "apps/technical-analysis/cmd/sandbox/main.go (allowed — sandbox runner)",
+      "docs/scenarios/technical-analysis/primitives/rsi-golden.json (allowed — scenario fixture)"
+    ],
+    "forbidden_files_read": [],
+    "forbidden_compliance": "FULL — none of `p2-d-bug-injection-spec.md`, `TASK_P2-D0/D1/D2.md`, `qa-P2-D2-*` signals, `pilot-status.json`, or recent rsi.go git log were read"
+  }
+}

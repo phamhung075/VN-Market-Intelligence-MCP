@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T084815Z",
+    "matched_slots": ["chef-eod"],
+    "won_slots": ["chef-eod"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["unified-agent"],
+    "agent_ids": {"unified-agent": "aa02621903a1ccb57"},
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "gateway_probe": {
+      "status": "HEALTHY",
+      "detail": "Slot-lock probe get_market_snapshot returned LIVE VN-Index 1,874.43 -0.52% @ 2026-05-27T08:48:31Z (source_tier 2). Cash session CLOSED (15:48 VN) — close print, unchanged from 08:18Z. localhost:3000/health=200. Bridge alive."
+    },
+    "loadshed_check": {
+      "swap_at_decision": "total = 11264MB / used = 10461MB / free = 803MB",
+      "bar": "HIGHER BAR — chef-eod is the GUARANTEED-publish daily close dish; withholding costs the close narrative. Only withhold if free CRITICALLY low AND total pinned-at-cap with no demonstrated expansion headroom.",
+      "evaluation": "Free 803MB is above the ~700MB floor (NOT critically low). Total 11264MB re-expanded above the 10240 cap; the prior 08:33Z tick hit a NEW session high of 12288MB — expansion headroom repeatedly demonstrated. Neither acute condition met (free is not near 0, total is not pinned). Both withhold-conditions FALSE.",
+      "decision": "SPAWN NORMALLY. No load-shed. EOD close dish proceeds."
+    },
+    "agent_briefing": "EOD chef briefed (guaranteed publish, walks all 8 steps): (1) real-estate Vin-complex DECOUPLING — VRE -4.43%/VHM -4.16% deepened into close while index recovered and non-Vin RE went GREEN (DXG +0.66%, NVL -0.96%, VIC -1.03%) -> narrate as CORRELATED issuer-family weakness, NOT a sector crisis/capital-flight; (2) POW closed STRONG +2.93% on ~14M vol -> genuine energy outperformance thread; (3) MWG +1.91% real but NOT max-tier -> do NOT anchor euphoric breakout off news-scout #4023 (bidirectional severity-inflation flagged this session); (4) macro-staleness provenance (24,500/82.5/2350 seed vs ~26,153/~95/~4500 fresh) -> flag divergence; (5) fail-loud/no-retry-storm, get_market_hexagram known 501, per-ticker hexagrams from get_portfolio_conviction. Plain Vietnamese, no jargon.",
+    "residual_risk": "Host swap VOLATILE this session (free band 582-1645MB; total oscillating 9216<->12288MB). This guaranteed EOD chef spawned at free 803MB (tightest reading since the 07:48Z 904M dip, but above floor) with expansion headroom proven (12288M last tick) -- no false-withhold. This is the LAST scheduled heavy slot for the cash session; after the EOD dish the cowork cadence drops to 4-hourly offhours slots. Standing ## po HOST-SWAP-RE-DEGRADE proactive memory-shed rec stands; per-tick guard remains armed for offhours ticks."
+  },
+  "priority": "low",
+  "createdAt": "20260527T084815Z"
+}

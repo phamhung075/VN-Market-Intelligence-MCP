@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260527T013314Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "gateway_probe": {
+      "status": "STILL-DOWN",
+      "consecutive_ticks_down": 7,
+      "detail": "Open incident cow-20260527T000315 unresolved across 00:03Z..01:33Z (7 ticks). get_market_snapshot via gateway = same i/o timeout to 192.168.65.254:3000. Host loopback /health=200. Docker host-bridge still wedged.",
+      "time_to_market_open": "VN market opens 02:00Z (~27 min). Last off-hours ticks before live slots begin firing.",
+      "no_new_dashboard_row": "Not duplicating; incident already escalated to po."
+    }
+  },
+  "priority": "low",
+  "createdAt": "20260527T013314Z"
+}

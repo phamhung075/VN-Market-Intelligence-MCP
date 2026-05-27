@@ -1,0 +1,22 @@
+{
+  "signal": "dev-ta-render-gate-done",
+  "timestamp": "2026-05-24T08:28:00Z",
+  "agent": "dev-technical-analysis",
+  "commit": "5727d264",
+  "task": "headless render gate (verify-render.mjs)",
+  "status": "DONE",
+  "files_changed": [
+    "apps/technical-analysis/dashboard/verify-render.mjs",
+    "apps/technical-analysis/dashboard/build.sh",
+    "apps/technical-analysis/package.json",
+    "apps/technical-analysis/bun.lock"
+  ],
+  "gate_results": {
+    "pass_run": "exit 0 — 30 dot-green, 0 dot-red, 0 dot-pending, 0 JS errors, chips 25+5 passed",
+    "break_run": "exit 1 — bb-expansion=red injected → FAIL: Expected 25 passed, got 24 passed",
+    "go_test": "7 packages ok, exit 0",
+    "bun_test": "24 pass / 0 fail",
+    "tsc": "0 errors"
+  },
+  "next_actor": "qa"
+}

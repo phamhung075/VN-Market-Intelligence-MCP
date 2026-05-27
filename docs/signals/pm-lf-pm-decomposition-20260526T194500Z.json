@@ -1,0 +1,43 @@
+{
+  "agent": "pm",
+  "task": "LF-PM",
+  "date": "2026-05-26T19:45:00Z",
+  "status": "DONE",
+  "action": "task-decomposition",
+  "sprint": "BCTC-LAYOUT-FIRST",
+  "architect_brief": "docs/architecture-briefs/2026-05-26-bctc-layout-first-pipeline.md",
+  "child_tasks": [
+    {
+      "task_id": "LF-EXTRACT",
+      "owner": "dev-pdf-extractor",
+      "zone": "apps/pdf-extractor/",
+      "baseline_hours": 2,
+      "deliverables": ["Tier-0-3 pipeline", "zone-geometry JSON", "3 test files"],
+      "acceptance_criteria_count": 12,
+      "frozen_surfaces": ["text_table_extractor.py", "sandbox/runner.py", "pilot-status-pdf-extractor.json"]
+    },
+    {
+      "task_id": "LF-OVERLAY",
+      "owner": "dev-mcp-server",
+      "zone": "apps/mcp-server/",
+      "baseline_hours": 2,
+      "deliverables": ["bctc_layout_units + bctc_page_zones DDL", "POST /api/push-bctc-layout handler", "overlay toggle rendering"],
+      "acceptance_criteria_count": 8,
+      "frozen_surfaces": ["bctc_table_rows read path", "balance badge", "existing md-tables endpoints"]
+    }
+  ],
+  "dispatch_recommendation": "PARALLEL",
+  "wip_enforcement": "max 2 (one per zone specialist)",
+  "host_safety_assessment": "PARALLEL is host-safe (repo-source dev, no runtime until LF-DEPLOY single-doc re-extract)",
+  "gate": "LF-DEPLOY (sequential, never batch) gates on BOTH done",
+  "handoff_file": "docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md",
+  "pm_section": "docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md § [PM] LF-PM — Task Decomposition & Dispatch Recommendation",
+  "tasks_md_update": "docs/TASKS.md (added [PM] note, NET-REDUCED 21 lines)",
+  "commit": "b1fda5af",
+  "watchlist": [
+    "WIP count = 2 (LF-EXTRACT + LF-OVERLAY)",
+    "AC-LFE-0 grep-proof is non-negotiable",
+    "Host kernel-panic: single-doc only, NEVER batch sweep",
+    "Blocker escalation → architect"
+  ]
+}

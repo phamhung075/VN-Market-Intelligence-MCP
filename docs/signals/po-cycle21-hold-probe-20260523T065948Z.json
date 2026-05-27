@@ -1,0 +1,56 @@
+{
+  "type": "po-hold-probe",
+  "from": "po",
+  "cycle": "c282 cycle-21",
+  "timestamp": "2026-05-23T06:59:48Z",
+  "purpose": "Status probe + R-11 window math reconciliation; no state advance, no new dispatch",
+  "trigger": "User /goal re-invocation asking PO to complete docs/architecture-briefs/2026-05-22-refactor",
+  "ground_truth_check": {
+    "current_utc": "2026-05-23T06:59:48Z",
+    "cycle20_dispatch_utc": "2026-05-23T06:40:34Z",
+    "elapsed_since_dispatch_minutes": 19,
+    "r11_window_minutes": 60,
+    "r11_window_remaining_minutes": 41,
+    "r11_fire_at_utc": "2026-05-23T07:40:34Z",
+    "r11_status": "DEFERRED — window NOT exceeded"
+  },
+  "prompt_premise_reconciliation": {
+    "prompt_claim": "now well past that window (>2h elapsed at session start)",
+    "filesystem_evidence": "docs/signals/po-cycle20-dispatch-dev-ta-fix-go-lint-20260523T064034Z.json mtime = 23 mai 08:40 (local UTC+2 = 06:40Z); `date -u` returned 2026-05-23T06:59:48Z",
+    "resolution": "Filesystem + `date -u` ground truth WINS over prompt narrative. PO does not fire R-11 prematurely. Logged for audit transparency."
+  },
+  "completion_signal_check": {
+    "expected_filename_glob": "docs/signals/dev-ta-cycle20-fix-go-lint-done-*.json",
+    "found": false,
+    "newer_signals_than_dispatch": [],
+    "git_commits_by_dev_ta_since_dispatch": 0,
+    "apps_technical_analysis_source_changes_since_dispatch": "none (only .DS_Store touched, which is OS-level, not dev-ta work)"
+  },
+  "decision": "HOLD — no new dispatch, no chain forward, no R-11 fire. Cycle-20 HOLD decision (docs/po-decisions/2026-05-23-cycle-20-hold-until-dev-ta-completion.md) remains binding.",
+  "constraints_held": [
+    "L84 explicit-file staging (none — this signal is the only artifact written this cycle, not committed)",
+    "SSOT: single dispatch signal per task (no duplicate cycle-20 re-dispatch attempted)",
+    "Charter §4.5 matrix-authorship: decisionMatrix.{speed,trust,scale} UNTOUCHED",
+    "Anchor 62edbf3d held",
+    "No --force, no --no-verify, no push"
+  ],
+  "next_natural_unblock": {
+    "scenario_a": "dev-ta lands completion signal docs/signals/dev-ta-cycle20-fix-go-lint-done-*.json before 07:40:34Z → next PO cycle reads it, dispatches qa for P2-A3 verification, chains forward to G4=YES → G5 chain → 12/12 → matrix populate → brief CLOSES.",
+    "scenario_b": "07:40:34Z reached with no completion signal → next PO cycle fires R-11 status-check on dev-technical-analysis dispatch per cycle-7 R-11 protocol precedent.",
+    "scenario_c": "User interrupts with new /goal direction → that directive supersedes this hold."
+  },
+  "g_goal_snapshot": {
+    "terminal_count": "11/12",
+    "yes": ["G1", "G2", "G3", "G6", "G7", "G8", "G9", "G10", "G11", "G12"],
+    "in_progress": ["G4"],
+    "tbd": ["G5"],
+    "unchanged_since": "cycle-19 (G9 graded YES + G4 scope correction)"
+  },
+  "brief_closure_status": "BLOCKED — score 1/7 per phase-2-closure-checklist §1 (cycle-20 audit unchanged). Brief is NOT closed.",
+  "exit_state": {
+    "pipeline": "blocked-time-only",
+    "next_actor": "dev-technical-analysis (in-flight cycle-20 dispatch) OR PO cycle next-tick if R-11 fires",
+    "blocker": "Time — awaiting natural dev-ta completion OR R-11 window expiry (whichever first)",
+    "evidence_to_unblock": "Either: (1) docs/signals/dev-ta-cycle20-fix-go-lint-done-*.json landed, OR (2) wallclock > 2026-05-23T07:40:34Z"
+  }
+}

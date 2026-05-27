@@ -1,0 +1,34 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260526T194844Z",
+    "nominal_tick": "20260526T194500Z",
+    "matched_slots": ["chef-evening"],
+    "won_slots": ["chef-evening"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["unified-agent"],
+    "silent": false,
+    "drift_min": 3,
+    "mcp_probe": "slot-lock cowork-slot:chef-evening:20260526T194500Z claimed {claimed:true} at 19:48Z (no 502 — gateway healthy), released {ok:true} at cycle end.",
+    "slot_note": "chef-evening (45 19 * * *) is a DAILY evening synthesis slot mapping to unified-agent CHEF flow .claude/flows/unified-agent/chef.md. Not part of today's earlier 16:15-19:30Z no-match window; first non-silent tick since the 16:00Z fan-out.",
+    "hollow_run_watch": {
+      "unified-agent": {
+        "verdict": "GENUINE",
+        "evidence": "7 distinct real MCP calls + send_telegram (17 tool_uses incl. retries), ~217s. get_market_snapshot returned VN-Index 1,884.18 -0.10% (REAL close, matches market-watcher's 16:00Z reading exactly — NOT the stale 1,280.5 seed). get_portfolio_conviction returned 39 tickers 0.44-0.59 MODERATE with per-ticker hexagrams (the WORKING Kinh Dich source). get_fed_liquidity_spread tier-1 EFFR 3.63%/IORB 3.65%/spread -0.02pp. Walked TNB 6 layers; convergence = banking mega-cap K-shaped bifurcation, conviction MEDIUM with 1/4 pillars confirmed and 3/4 gaps EXPLICITLY flagged (fail-loud, not papered over). Dish published to MARKET as post-close overnight synthesis.",
+        "false_critical": "NONE.",
+        "stale_seed_guard_applied": "Correctly flagged get_macro_snapshot as STALE tier-2 seed (USD/VND 24,500, computedAt 2026-05-23, 3d old) and used the FRESH USD/VND ~26,164 for the carry/regime walk — did NOT present 24,500 as current, did NOT re-escalate (fix already routed to dev-macro-indicators).",
+        "kinhdich_heuristic_OK": "get_market_hexagram 501 correctly treated as known B-bucket / dev-kinh-dich reboot gap (Layer 5 market-wide flagged unavailable, NOT a fabricated reading, NOT escalated as outage). Per-ticker convictions sourced from the WORKING get_portfolio_conviction — exactly the corrected anti-confabulation heuristic.",
+        "hsg_not_amplified": "HSG #3948 (factory fire, benign per issuer disclosure) NOT amplified into a crisis — directive followed.",
+        "minor": "get_agent_signals param-validation friction on an early call (requires 'agent' param); self-recovered, expected friction, no action."
+      }
+    },
+    "cross_consistency": "CHEF's VN-Index 1,884.18, fresh USD/VND ~26,164, and ACB +5.31% @2.8sigma all corroborate the 16:00Z market-watcher + news-scout readings and financial-analyst #3964 earlier today (four-way agreement on the banking K-shaped thesis). Fresh-macro value consistent with the dispatcher's 12:09Z self-correction. No contradictions this cycle.",
+    "still_actionable_other_agents": "HSG-FIRE-SEVERITY-RECAL-20260526T0808Z (alert-commander: downgrade #3948 to watch-note, do NOT post -15/-20% crisis) — STILL the only open user-facing item; not dispatcher-actionable, kept flagged in DASHBOARD header. CHEF correctly did not re-amplify HSG.",
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260526T194844Z"
+}
