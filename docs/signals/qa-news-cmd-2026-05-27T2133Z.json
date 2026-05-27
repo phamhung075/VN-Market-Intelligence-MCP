@@ -1,0 +1,105 @@
+{
+  "signal": "qa-news-cmd",
+  "task": "NEWS-CMD-QA",
+  "timestamp": "2026-05-27T21:33:00Z",
+  "qa_agent": "qa",
+  "cycle": 134,
+  "verdict": "PASS",
+  "round": 1,
+
+  "container": {
+    "image_id": "sha256:21da3475a8bf069b30a1e2b9c0c1c699d21fa2dc7b4cc48b564f21d115078d6e",
+    "built": "2026-05-27T22:29:45+02:00",
+    "status": "Up 16 minutes (healthy)",
+    "health_endpoint": "HTTP 200 OK",
+    "tool_count": 146
+  },
+
+  "static_gates": {
+    "unit_tests_214_T_NEWS_1_to_8": "31 pass / 0 fail — ALL GREEN",
+    "full_suite": "9486 pass / 352 fail / 35 skip (within baseline: pass >= 9408 floor PASS; fail variance 348-389 is pre-existing flaky network-dependent tests, none in NEWS-CMD)",
+    "tsc": "exit 0 (0 errors)",
+    "ddd_domain_no_infra_imports": "PASS",
+    "ddd_news_cmd_files_no_app_imports": "PASS — 0 matches in telegramCommands.ts + webhookHandler.ts",
+    "security_process_env_in_news_cmd_files": "PASS — 0 matches",
+    "security_hardcoded_secrets": "PASS — comments only"
+  },
+
+  "target_test_results": {
+    "T_NEWS_1": "PASS — 3 today-rows, all 3 headlines in output",
+    "T_NEWS_2": "PASS — positive→tích cực; no 'positive' string or 0.85 numeric in output",
+    "T_NEWS_3": "PASS — empty table returns 'Chưa có tin hôm nay.'",
+    "T_NEWS_4": "PASS — /news 2 returns exactly 2 story blocks",
+    "T_NEWS_5": "PASS — large digest chunked, every texts[] element <= 4096 chars",
+    "T_NEWS_6": "PASS — null source_title handled, no crash",
+    "T_NEWS_7": "PASS — null summary handled, no crash",
+    "T_NEWS_8": "PASS — no today-rows + old rows → fallback with 'gần đây' header"
+  },
+
+  "live_container_checks": {
+    "rag_analyses_row_count": 4458,
+    "today_rows_count": 8,
+    "midnight_cutoff": "2026-05-27T17:00:00.000Z",
+    "real_data_present": true,
+    "real_headlines": [
+      "Công ty chứng khoán liên quan Chủ tịch Trần Hùng Huy lại sắp tăng vốn thêm 2.000 tỷ",
+      "Thứ trưởng Công Thương lý giải lộ trình chuyển đổi xăng E10",
+      "Thaiholdings phát thông báo quan trọng giữa lúc cổ phiếu làm mưa làm gió"
+    ],
+    "impact_score_in_output": "PASS — not surfaced (ORDER BY only, column not in SELECT output)",
+    "english_sentiment_strings_in_output": "PASS — sentimentLabel() maps all cases, 'positive/negative/neutral' not shown",
+    "no_impact_score_floats": "PASS — impact_scores are integers 5-10 and never shown; period-numbers in output are Vietnamese monetary formatting (e.g. 2.000 tỷ)"
+  },
+
+  "ac_audit": {
+    "AC_1_real_content": "PASS — 8 real rag_analyses rows, real Vietnamese headlines, real sentiment labels",
+    "AC_2_plain_vietnamese": "PASS — sentiment labels in plain VN; impact_score excluded; jargon (σ/bp/Layer/hexagram) absent. NOTE: summary field rendered as-is per REQ_NEWS-CMD.md § 8 ('render stored source_title and summary as-is; only framing text must be Vietnamese'). HTML in stored summary is upstream data pipeline issue, not handler defect.",
+    "AC_3_news_N_caps": "PASS — T-NEWS-4 verified, clamping [1,50] implemented",
+    "AC_4_chunking": "PASS — chunkStories() splits at story boundaries; proof: T-NEWS-5; each chunk <= 4096; sequential for...of loop in webhookHandler.ts (AC-FR6-5)",
+    "AC_5_empty_fallback": "PASS — 'Chưa có tin hôm nay.' (T-NEWS-3); 'gần đây' header in fallback mode (T-NEWS-8)",
+    "AC_6_regression": "PASS — 9486 >= 9408 floor; fail variance is pre-existing tech debt (not NEWS-CMD introduced); T-NEWS-1..8 stable green"
+  },
+
+  "non_blocking_observations": [
+    {
+      "id": "NC-OBS-1",
+      "type": "data_quality",
+      "description": "86% of rag_analyses rows (3850/4458) have HTML markup in summary column from news-fetch ingest pipeline. All 8 today-rows contain HTML. Handler renders as-is per spec § 8. Not a handler defect. Recommendation: news-fetch pipeline should strip HTML before storing summary. Future sprint, outside NEWS-CMD scope (NFR-3).",
+      "blocking": false
+    },
+    {
+      "id": "NC-OBS-2",
+      "type": "data_quality",
+      "description": "'bullish' sentiment value in DB not in AC-FR4-2 map — falls through to trung tính (correct per default case). Upstream data normalisation gap in news-fetch. Not a handler bug.",
+      "blocking": false
+    },
+    {
+      "id": "NC-OBS-3",
+      "type": "test_suite_variance",
+      "description": "Full suite fail count 348-389 across runs. Variable due to pre-existing network-dependent flaky tests (newsHeadlines E2E, get_technical_indicators HTTP fallback). None are NEWS-CMD tests. Baseline floor 9408 PASS met every run.",
+      "blocking": false
+    }
+  ],
+
+  "implementation_conformance": {
+    "FR_1_case_news_switch": "PASS — case '/news' at telegramCommands.ts:633",
+    "FR_1_handleNews_signature": "PASS — function handleNews(db, args) returns {texts: string[]} at :510",
+    "FR_1_HELP_TEXT_updated": "PASS — '/news [N]   Tin tức hôm nay (mặc định 20 bài)' in HELP_TEXT at :77",
+    "FR_1_no_ask_queue_enqueue": "PASS — handleNews makes no call to insertAskQuestion or spawnQaResponder",
+    "FR_2_midnight_gmt7_query": "PASS — midnightVietnamAsUtcInline() at :462-477 mirrors assembleEveningSummary pattern",
+    "FR_2_VN_OFFSET_MS_imported": "PASS — imported from domain/services/timeConstants.js at :39",
+    "FR_2_order_by": "PASS — ORDER BY impact_score DESC, created_at DESC",
+    "FR_2_fallback_no_date": "PASS — fallback query has no date constraint",
+    "FR_3_n_argument": "PASS — parseInt(args[0]), default 20, clamp [1,50]",
+    "FR_4_sentiment_label": "PASS — sentimentLabel() at :445-459 maps all 4 cases",
+    "FR_4_no_impact_score_in_output": "PASS — column not in SELECT; only used for ORDER BY",
+    "FR_5_empty_fallback_message": "PASS — 'Chưa có tin hôm nay.' for empty DB",
+    "FR_6_chunking_option_a": "PASS — chunkStories() at :480-500 + CommandResult.texts[] + webhookHandler.ts send-loop at :86-94",
+    "NFR_2_no_new_push": "PASS — no new cron, no scheduler change",
+    "NFR_3_zone_isolation": "PASS — changes only in apps/mcp-server/",
+    "NFR_4_never_throws": "PASS — try/catch in handleNews at :535-563 returns friendly string on DB error",
+    "doc_news_analysis_md_updated": "PASS — /news command entry present at docs/architecture/microservice/mcp-server/news-analysis.md:82"
+  },
+
+  "next_step": "PASS — route to po for NEWS-CMD-EXIT gate. Sprint goal remains ARMED until user verbal G9 sign-off (user confirms /news reads usefully — po/user step, not QA)."
+}
