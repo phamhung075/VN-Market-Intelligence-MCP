@@ -2,7 +2,7 @@
 **Sprint:** MACRO-LIVE-PRICES
 **BA:** ba
 **Date:** 2026-05-27
-**Status:** DRAFT — pending PO spec-review gate
+**Status:** APPROVED (PO spec-gate 2026-05-27T22:08:19Z) — proceed to architect
 **Handoff to:** architect
 **Sprint size:** SPRINT-S (see §7 for sizing rationale and re-size flag)
 
@@ -268,3 +268,42 @@ Read-only (must not be modified):
 Out of scope entirely:
 - `docs/handoffs/pilot-status-*.json` — do not touch
 - Any agent `.md` or flow `.md` file
+
+---
+
+## 12. § PO RULING — SPEC-GATE (2026-05-27T22:08:19Z)
+
+**VERDICT: APPROVED → architect (brownfield analysis).**
+
+This REQ passes all five spec-gate axes. The decision is APPROVED, not CHANGES_REQUESTED. The notes below are non-blocking guidance the architect must carry into design — they do not gate the handoff.
+
+### Gate axis 1 — Testability
+PASS. Acceptance criteria are concrete and falsifiable. The Test Matrix (§6) is layered correctly: T-MLP-1..5/9/10 are zero-network in-memory Go (`:memory:` + httptest), T-MLP-6..8 lock existing green, T-MLP-11 is the live MCP gate, T-MLP-12 proves the signal actually moves. The QA-GATE-1 live bounds (oil>90, gold>3000, usdVnd>25000) are reality-anchored, not fixture-anchored, so they cannot pass on the stale seed. Good.
+
+### Gate axis 2 — Recency bound (4h) sanity
+PASS with a noted asymmetry, NOT a blocker. The 4h bound (NFR-1) is *tighter* than the data producer's cadence: mcp-server's `commodityTrackerRefreshJob` runs daily 06:00 UTC (~24h), confirmed at `apps/mcp-server/src/scheduler/macro/commodityTrackerRefreshJob.ts`. A strict 4h gate therefore degrades macro-indicators to fixture for ~20h of every 24h day — which would re-introduce exactly the stale-fixture bug this sprint exists to kill. The REQ itself flags this tension (NFR-1 rationale: "serving a 25h-old stale DB value is better than serving the wrong fixture"). **Architect decision required:** reconcile the recency bound with the 24h producer cadence — either (a) widen the bound to ~26h (cron+drift) so the live value survives a normal day, or (b) keep 4h ONLY if paired with an intraday refresh, which §10 explicitly defers. Picking 4h as written without (a) or (b) is self-defeating. This is a design tradeoff for the architect, not a spec defect — the REQ surfaced it honestly, which is why it stays APPROVED.
+
+### Gate axis 3 — Data-source question correctly deferred to architect
+PASS. §2 is exactly right: the BA enumerates A/B/C with trade-offs and explicitly does NOT pre-decide. Option A (read `commodity_prices` from the shared DB, mirroring the proven VN-Index `SQLiteMarketIndexRepository` pattern) is the sound default and I endorse it as the BA does — but the binding choice is the architect's. I code-verified the three load-bearing premises of Option A:
+- `commodity_prices` IS written by mcp-server with columns `brent_crude_usd / gold_usd_per_oz / usd_vnd_rate / fetched_at`, upserted on `source` PK (`macroIndicatorRefreshJob.ts:207-213` and `commodityTrackerRefreshJob.ts:104`, source='yahoo'). BA's PRIMARY filter `WHERE source='yahoo'` matches the live write.
+- The `market_data` named volume is mounted on BOTH mcp-server and macro-indicators (`docker-compose.yml` L12, L192), both `DB_PATH=/app/data/market.db`. The cross-container read is real.
+- macro-indicators ALREADY carries `DB_PATH=/app/data/market.db` + `DB_READONLY=true` (L195-196), so NFR-3 is pre-satisfied and the ONLY new env is `COMMODITY_LIVE_MODE`.
+- `resolveMarketPrices()` (`usecases.go` L160-180) already does per-commodity `>0`-guarded port reads with fixture fallback — BA correctly scopes usecases.go as NO-CHANGE (tests-only). Confirmed.
+
+**ARCHITECT'S SINGLE DECISION = data-source A / B / C.** Recommended default: **A**. Multi-source note for architect: `commodity_prices` is keyed by `source` and is upserted by *two* jobs (commodityTracker source='yahoo' AND the macro refresh job under its own source); pick the canonical source row deliberately so the read doesn't grab the wrong upsert.
+
+### Gate axis 4 — False-green resistance
+PASS — this is the strongest part of the spec and directly answers `feedback_fence_false_green` + incident 3bd9e6ae. Two independent guards: (1) the env-gate contract (§4) keeps fixture mode green under `COMMODITY_LIVE_MODE` unset/false so deterministic Go tests are untouched — and the REQ forbids modifying any existing test to expect live values; (2) QA-GATE-1 (§5) mandates END-TO-END verification through `call_tool get_macro_snapshot`, NOT a direct `:5004` curl — closing the exact "200-OK but stale" hole that bit this system before (`project_mcp_server_write_wedge`). The injected-fake values (oil=96.0/gold=4480.0/usdVnd=26150.0) are distinct from fixtures, so a test passing proves the port was read, not the constants. Sufficient.
+
+### Gate axis 5 — Host / zone safety
+PASS for Option A. All writes stay in zone `apps/macro-indicators/` + a single additive line in `docker-compose.yml` (§11). No new service, no API key (NFR-2), no VPS, no cross-zone reach. The mcp-server tree is correctly read-only / out-of-scope (§10, §11). **Zone flag honored:** the REQ's §7 conditional re-size is correct — Option B (direct Yahoo HTTP from macro-indicators) would cross into ops/VPS scope under `project_bctc_vps_proxy.md` (geo-block unknown from the French Docker host) and MUST re-size to SPRINT-M. If the architect picks B, this APPROVAL does NOT extend to it — bounce back to PO for a re-sized batch entry before any VPS/ops work.
+
+### Non-blocking note for architect (QA threshold vs existing validation band)
+`dataAuditJob.ts` already enforces sanity bands on these same fields (oil 10-300, gold 500-5000, usd_vnd 20000-30000). The QA-GATE-1 live bounds (gold>3000, usdVnd>25000) sit comfortably inside those, so no conflict — just confirm the live ~4500 gold value passes the existing 5000 ceiling (it does). No action needed; logged for awareness.
+
+### Ruling summary
+- **APPROVED → architect.**
+- Architect's single binding decision: **data-source A / B / C** (recommend A).
+- Architect MUST resolve in design: the **4h recency-bound vs 24h producer-cadence** asymmetry (axis 2).
+- If architect picks **Option B**: re-size to SPRINT-M and return to PO before ops/VPS work — this approval is Option-A-scoped.
+- Sprint stays SPRINT-S under Option A.

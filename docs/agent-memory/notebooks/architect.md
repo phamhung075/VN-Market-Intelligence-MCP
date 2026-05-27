@@ -1,8 +1,29 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-27T22:30Z | **Sprint:** SELF-IMPROVE-GATE Phase 2
+**Last updated:** 2026-05-28T00:00Z | **Sprint:** MACRO-LIVE-PRICES
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## MACRO-LIVE-PRICES — Design Brief (2026-05-28T00:00Z) — DESIGN COMPLETE
+
+**Task:** MLP-ARCH. Fix 4-cycle macro regime miscalibration (#3003) — live-wire oil/gold/usdVnd in get_macro_snapshot by replacing the permanent-fixture `HTTPCommodityFetcher` with a DB-backed adapter behind an env gate.
+
+**Key decisions:**
+1. **Option A confirmed (SPRINT-S).** Read `commodity_prices WHERE source='yahoo'` from shared `market_data` volume (already mounted). Mirror `SQLiteMarketIndexRepository` precedent exactly. No Option B (geo-block risk + VPS scope), no Option C (SBV XML deferred §10).
+2. **Staleness bound: 26 hours** (not 4h as written in spec). 4h vs 24h producer cadence is self-defeating — would keep fixture active ~20h/day. 26h = 24h cadence + 2h cron drift. PO spec-gate axis 2 explicitly flags this for architect to resolve. Resolution: widen.
+3. **usdVnd via CommodityFetcherPort only.** `usd_vnd_rate` is in `commodity_prices`; maps through the new adapter. SBVRateRepository stays fixture stub.
+4. **Canonical source: source='yahoo'** (commodityTrackerRefreshJob.ts, not 'macro-snapshot' from macroIndicatorRefreshJob.ts).
+5. **fetchCommodityPricesFromDB helper** (pure, injectable, mirrors fetchVNIndexFromDB) — testable without file-path constructor.
+6. **R-2 (RISK):** fetched_at has milliseconds in TypeScript output → Go must use `time.RFC3339Nano` not `time.RFC3339` or all rows appear stale.
+
+**Files authored:**
+1. `docs/architecture-briefs/2026-05-28-macro-live-prices.md` — full brief
+2. `docs/TASKS.md` — MLP-ARCH DONE, MLP-DEV unblocked
+3. `docs/agent-memory/notebooks/architect.md` — this entry
+
+**Next actor:** pm → dispatch dev-macro-indicators with brief at docs/architecture-briefs/2026-05-28-macro-live-prices.md.
+
+---
 
 ## SIG-IMPL-GATE — Blueprint (2026-05-27T22:30Z) — DESIGN COMPLETE
 
