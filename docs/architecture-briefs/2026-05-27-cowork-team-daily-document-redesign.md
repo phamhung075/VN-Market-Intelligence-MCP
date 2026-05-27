@@ -1,11 +1,26 @@
-<!-- size-justification: 680L — full architecture brief v2 covering 8 design-question resolutions, 5 additions from PO, 3-phase migration plan with watch register + retention lifecycle + migration-recap, per-agent-father instructions F1–F35, and cross-agent impact table. Cannot be split without losing the holistic traceability that agent-father needs to implement this correctly in sequence. -->
+<!-- size-justification: 850L — full architecture brief v2.1 covering 10 design-question resolutions (8 original + Additions 6 and 7), 7 PO additions, 3-phase migration plan, per-agent-father instructions F1–F36 + F-MIG1–F-MIG4, cross-agent impact table, Context-Loading Discipline section, and language register boundary table. Cannot be split without losing the holistic traceability that agent-father needs to implement this correctly in sequence. -->
 
 # Architecture Brief — Cowork-Team Daily Document Redesign
 
 **Date:** 2026-05-27
 **Author:** agents-architect
-**Status:** v2 — ready for agent-father
+**Status:** v2.1 — ready for agent-father
 **Signal:** `docs/signals/cowork-team-daily-document-redesign-v2-20260527.json`
+
+---
+
+## v2.1 Revision Log
+
+**What changed from v2 and why:**
+
+| # | Area | Change | Reason |
+|---|---|---|---|
+| 6 | **NEW** — Language Register Boundary | Daily-document analysis prose is written in comprehensible Vietnamese. Caveman/ULTRA stays on RETURN blocks, signals, and DASHBOARD pokes only. Register boundary table added. `daily-document-spec.md` gains explicit Language rule per section. Token trade-off bounded by existing delta-read + 200L cap. | PO Addition 6: source quality governs CHEF dish quality — caveman source → lossy dish |
+| 7 | **NEW** — Context-Loading Discipline (binding audit) | Every cowork agent flow review/refactor must verify minimal bootstrap (own-section delta + header only; no full-folder load except CHEF + tran-ngoc-bau). Adds: a cross-cutting § section, a sub-step on each flow-edit checklist item (F9–F17, F18, F25, F29), and Phase-2 + Phase-3 QA-gate criteria. Executor split: cowork-refactory-expert for `.md` flow rewrites; agent-father for structural/new-file edits. | PO Addition 7: lazy-load discipline must be enforced as a binding audit, not guidance |
+| — | Implementation checklist | F29 gains sub-step. F9–F17, F18, F25 gain "verify minimal bootstrap" sub-step. F36 (new) = post-migration cowork-refactory-expert flow audit pass. | Reflects Additions 6 and 7 |
+| — | Dependencies/Sequencing | 2 new constraints added: A6 language rule encoded in spec before flow edits; A7 flow audit runs after F18 (delta-read wired), before Phase-3 QA gate. | Reflects additions above |
+| — | Impact-on-Invariants table | 2 new rows: language register boundary; context-loading discipline. | Reflects additions above |
+| — | Phase-2 and Phase-3 QA gates | 2 new criteria per phase (language compliance, bootstrap verification). | Reflects Addition 7 |
 
 ---
 
@@ -34,6 +49,8 @@ The redesign gives the team a shared daily notebook. Each day, a file per agent 
 
 **v2 adds four further improvements:** (1) Only the delivery cron ever pushes to the user MARKET group — no cowork agent reaches that channel directly, including danger alerts (which go through a fast-drain priority lane). (2) The delivery cron sends full documents only at scheduled dish windows; intraday it pushes only what changed since the last push. (3) A new Watch / Attention Register lets agents flag future catalysts (earnings dates, pending rulings, price levels to watch) so they carry forward across days and drive focus in future cycles. (4) The retention lifecycle is fully specified with roll-up-before-prune invariants and tunable windows, so the system never loses data that has not yet been summarised.
 
+**v2.1 adds two further improvements:** (5) All analysis prose that agents write into the daily document is written in plain, comprehensible Vietnamese — not caveman shorthand, not analyst jargon. This makes CHEF's source material already readable, so dishes are selections from clear text rather than reconstructions from compressed shorthand. (6) Every cowork agent's context-loading pattern is formally audited and must follow the project's existing lazy-load discipline — bootstrap only what is needed (own section delta + header); no agent loads the full daily folder except CHEF and tran-ngoc-bau.
+
 The five biggest user-visible improvements: agents have context on what happened earlier today before they write; CHEF produces richer messages because it can see the full day's picture; delivery is reliable and deduplicated; intraday pushes are change-only (no noise); and future catalysts are tracked and surfaced automatically.
 
 ---
@@ -52,11 +69,15 @@ The current architecture has three structural gaps:
 
 **Gap 5 (v2) — No retention lifecycle.** Raw daily/signal files accumulate without a defined roll-up-then-prune policy. Historical data is either never cleaned (storage bloat) or cleaned before being summarised (data loss risk).
 
+**Gap 6 (v2.1) — Compressed source language degrades dish quality.** If agents write analysis prose in caveman / ULTRA shorthand (the default agent-to-agent register), CHEF must reconstruct meaning from compressed notation. This introduces a lossy translation step where none should exist. The daily document is the direct source for CHEF synthesis; it must be written in the same plain Vietnamese the user will ultimately read.
+
+**Gap 7 (v2.1) — Context-loading not audited after redesign.** The read-pattern table in Design Points A and B specifies minimal bootstrap per agent, but nothing enforces it. Without a binding audit pass, flow rewrites may inadvertently load the full daily folder for domain agents, bloating per-cycle token cost.
+
 ---
 
 ## Affected Files and Agents
 
-**Agents affected:** unified-agent (chef.md), digest-predict (weekly.md + monthly.md), cowork-team (dispatcher main.md), news-scout, market-watcher, financial-analyst, alert-commander, report-analyzer, tran-ngoc-bau
+**Agents affected:** unified-agent (chef.md), digest-predict (weekly.md + monthly.md), cowork-team (dispatcher main.md), news-scout, market-watcher, financial-analyst, alert-commander, report-analyzer, tran-ngoc-bau, **cowork-refactory-expert** (flow audit executor for Additions 7)
 
 **Skills affected:** cycle-bootstrap/SKILL.md, signal-dashboard/SKILL.md, cron-cowork-team/SKILL.md
 
@@ -334,7 +355,7 @@ Actions:
 2. Add `docs/daily/` and `docs/outbox/` to `.gitignore` (ephemeral, no git commits needed). `docs/attention/` is NOT gitignored.
 3. Add `docs/data/file-size-caps.json` entries for daily section files (200L per agent section).
 4. Add slot stubs to `docs/data/cowork-schedule.json`: `daily-seed` (enabled:false), `delivery-cron-danger` (enabled:false), `delivery-cron-normal` (enabled:false), `monthly-recap` (enabled:false), `yearly-recap` (enabled:false). Add `retention` config object (see Design Point F).
-5. Write `docs/standards/daily-document-spec.md` per spec below.
+5. Write `docs/standards/daily-document-spec.md` per spec below. **The spec must include explicit Language rules per section (see Design Point I — Language Register Boundary).**
 6. Create `docs/attention/watch.md` with empty template (OPEN / TRIGGERED-RESOLVED / EXPIRED sections).
 7. Create `docs/data/market-push-state.json` with zeroed initial state.
 8. Create `docs/data/delivery-cron-delivered.json` as empty `{}`.
@@ -351,9 +372,9 @@ P2.1 — **cowork-team/flow/main.md Step 4.7:** Add header write alongside exist
 
 P2.2 — **unified-agent/flow/chef.md:** Add `daily-seed` sub-flow at 00:00 UTC — creates the day's folder and per-agent stub files from template in `docs/standards/daily-document-spec.md`. Seed also initialises the `## Today's Catalysts` header section by reading OPEN items from `docs/attention/watch.md`. CHEF continues to call `get_agent_signals` and read `docs/signals/*.json` AS BEFORE (parallel run — new path is additive only).
 
-P2.3 — **Domain agent flows (news-scout, market-watcher, financial-analyst, alert-commander, report-analyzer):** Add a write step at end of cycle: append current findings to `docs/daily/<date>/<agent>.md` using the section anchor convention, INCLUDING a `## WATCH` subsection if the agent identified any forward-looking items. Agents do NOT yet read from the daily folder (avoids the token-growth problem until delta-read is wired). Telegram delivery unchanged (agents still call `send_telegram` directly during parallel run).
+P2.3 — **Domain agent flows (news-scout, market-watcher, financial-analyst, alert-commander, report-analyzer):** Add a write step at end of cycle: append current findings to `docs/daily/<date>/<agent>.md` using the section anchor convention, INCLUDING a `## WATCH` subsection if the agent identified any forward-looking items. **All analysis prose in this write step is written in comprehensible Vietnamese (see Design Point I).** Agents do NOT yet read from the daily folder (avoids the token-growth problem until delta-read is wired). Telegram delivery unchanged (agents still call `send_telegram` directly during parallel run).
 
-P2.4 — **QA gate for Phase 2:** Verify that for 5 consecutive trading days: (a) `docs/daily/<date>/` folder is created by 07:15 VN, (b) all 5 domain agent section files are populated by EOD, (c) `## WATCH` subsections appear where agents found forward items, (d) no performance regression in cycle time (no new timeouts, drift_min stays ≤ 10).
+P2.4 — **QA gate for Phase 2:** Verify that for 5 consecutive trading days: (a) `docs/daily/<date>/` folder is created by 07:15 VN, (b) all 5 domain agent section files are populated by EOD, (c) `## WATCH` subsections appear where agents found forward items, (d) no performance regression in cycle time (no new timeouts, drift_min stays ≤ 10), **(e) at least 3 sampled agent sections read as plain Vietnamese with no caveman notation or jargon symbols**, **(f) no domain agent flow loads the full daily folder (verify by inspection of flow read steps — own-section delta + header only).**
 
 **Rollback plan:** If any agent fails due to Phase 2 changes, the write step is the only new code path. Remove the write step and redeploy. Zero impact on Telegram delivery (unchanged). Daily folder files are gitignored, so rollback is clean.
 
@@ -377,7 +398,64 @@ P3.6 — **One-time Migration Recap (see F-MIG steps below).** This step PRECEDE
 
 P3.7 — **Legacy signal cleanup:** `docs/signals/*.json` agent-written files (price_anomaly_*, news_impact_*, bctc_signal_*, fundamental_*) are deprecated. CHEF's GATHER step reads `docs/daily/<date>/` folder instead. Signal bus (`docs/signals/DASHBOARD.md`) is retained for urgent cross-agent poking — not deprecated.
 
-P3.8 — **QA gate for Phase 3:** 10 consecutive trading days with: (a) CHEF reads full daily folder and produces richer dishes (TNB audit confirms), (b) delivery cron drains outbox — danger lane ≤30s latency, normal lane ≤5 min latency, (c) no duplicate Telegram MARKET messages (dedup-key verified), (d) alert-engine server-side stop-loss fires independently with no delivery-cron dependency confirmed, (e) watch register accumulates items and CHEF surfaces them in dishes, (f) retention prune runs at least one weekly cycle with verify-before-delete confirmed.
+P3.8 — **QA gate for Phase 3:** 10 consecutive trading days with: (a) CHEF reads full daily folder and produces richer dishes (TNB audit confirms), (b) delivery cron drains outbox — danger lane ≤30s latency, normal lane ≤5 min latency, (c) no duplicate Telegram MARKET messages (dedup-key verified), (d) alert-engine server-side stop-loss fires independently with no delivery-cron dependency confirmed, (e) watch register accumulates items and CHEF surfaces them in dishes, (f) retention prune runs at least one weekly cycle with verify-before-delete confirmed, **(g) spot-check 5 daily document sections across 3 agents: all prose in plain Vietnamese, zero caveman notation**, **(h) no domain agent flow loads the full daily folder — delta-read returns delta-only on second cycle verified by inspection.**
+
+---
+
+### I. Language Register Boundary (NEW — v2.1 Addition 6)
+
+**Problem:** The cowork system's default agent-to-agent communication register is caveman/ULTRA (token-economy skill). If agents write their daily-document analysis prose in caveman, CHEF synthesises dishes from compressed shorthand rather than readable text — a lossy reconstruction step. This brief corrects that by drawing an explicit register boundary.
+
+**Register boundary table:**
+
+| Surface | Register |
+|---|---|
+| Daily document analysis prose — agent section content (paragraphs under `## §HH:MM-<agent>`), WATCH item `what_to_watch`/`why` fields, CHEF `_dish/` output prose | **Comprehensible Vietnamese — plain sentences, no caveman shorthand, no σ/bp/Layer#/hexagram-term jargon** |
+| RETURN blocks, DASHBOARD urgency pokes, signal rows, and other agent-to-agent machine comms | **Caveman/ULTRA stays** — PO never reads these surfaces |
+| Structural/machine fields — section anchors (`## §HH:MM-agent`), `_header.md` key:value live-state lines, watch-item schema fields (id/flagged_by/flagged_date/trigger/priority/status/domain), outbox frontmatter | **Unchanged** — these are machine fields, not prose |
+
+**Rationale for the token trade-off:** The cost of writing prose rather than caveman is bounded by the existing delta-read pattern (domain agents write ≤40 lines per append, Section B cap) and the 200-line section cap enforced by the PostToolUse backstop hook. Full-folder reads are restricted to CHEF and tran-ngoc-bau. Therefore fidelity wins without blowing up token cost.
+
+**Reconciliation with token-economy skill:** The `token-economy` skill (`docs/skills/token-economy/SKILL.md`) governs agent-to-agent RETURN signals, DASHBOARD pokes, and notebook entries. This brief creates a single documented exception: the daily-document analysis prose surface. That exception must be stated explicitly in `docs/standards/daily-document-spec.md` so any agent reading the spec understands the register override without needing to hold both the spec and the token-economy skill in context simultaneously.
+
+**Cross-reference:** The plain-Vietnamese MARKET rule in `feedback_market_report_plain_vietnamese` (memory, 2026-05-27) governs CHEF's final dish output to the user. This addition extends that principle **upstream** to the source document that CHEF reads — so the chain from analysis prose → dish synthesis is already plain Vietnamese end-to-end, with no jargon-to-plain translation required at the synthesis step.
+
+**Where to encode this:**
+
+1. `docs/standards/daily-document-spec.md` — the "Section-write format" block gains a `Language:` field: `Language: comprehensible Vietnamese — plain sentences, no caveman, no σ/bp/Layer#/hexagram terms`.
+2. Each domain agent flow's daily-append write step (F12–F17) gets a note: `Prose in comprehensible Vietnamese (see daily-document-spec.md § Language)`.
+3. This register boundary table appears in this brief as the authoritative cross-reference for agent-father and cowork-refactory-expert.
+
+---
+
+### J. Context-Loading Discipline (NEW — v2.1 Addition 7 — Cross-Cutting Constraint)
+
+**Rule:** Every cowork agent flow that is created or modified as part of this redesign MUST follow the project's existing lazy-load discipline. No new standard is introduced — this section binds the existing standards to the daily-document flow audit.
+
+**Inherited standards (cite these, do not re-invent):**
+
+- **Waterfall lazy-load rules** (`feedback_waterfall_lazy_load` memory, encoded in `docs/agents/*/init.md` and flow files): no `trigger: startup`; notebooks ≤200 lines; `always_load` items must have explicit justification; every flow read step is guarded (fail-silent or fail-loud per the file's criticality).
+- **CLAUDE.md lazy-load pattern** (`CLAUDE.md § Defaults — lazy-load`): bootstrap only what is needed for the current task; defer everything else to the step that actually needs it.
+- **Architect read-pattern table** (Design Point A of this brief): domain agents load own-section delta + `_header.md` Live State only; full-folder load is reserved exclusively for CHEF (at dish windows) and tran-ngoc-bau (audit role).
+
+**Bootstrap-only rule (binding):**
+
+Domain agents (news-scout, market-watcher, financial-analyst, alert-commander, report-analyzer) MUST NOT load the full daily folder at any cycle step. Their maximum bootstrap is:
+1. `_header.md` Live State section (last 10 lines, `offset` parameter).
+2. Own section delta (lines since `last_read_anchor`).
+3. Filtered watch.md OPEN items (domain-tagged, ≤20 lines).
+4. alert-commander only: tail of news-scout.md (last 20 lines).
+
+Loading the full folder by a domain agent is a context-bloat violation equivalent to a `trigger: startup` load — it must be caught in the flow audit (F36) and blocked before merge.
+
+**Executor ownership:**
+
+| Task type | Executor |
+|---|---|
+| Cowork agent `.md` flow rewrites and bootstrap-compliance audit | **cowork-refactory-expert** |
+| New file creation, structural edits to agent init files, new skill entries | **agent-father** |
+
+**Where this applies in the checklist:** Every checklist item that touches a cowork agent flow (F9, F10, F12, F13, F14, F15, F16, F17, F18, F25, F29, F36) carries a sub-step: "verify minimal bootstrap (own-section delta + header only; no full-folder load) before marking done." See checklist below.
 
 ---
 
@@ -402,10 +480,20 @@ docs/daily/<YYYY-MM-DD>/
 **Agent section append format:**
 ```markdown
 ## §HH:MM-<agent>
-<agent findings — plain text, max 40 lines per append>
+<agent findings — comprehensible Vietnamese prose, max 40 lines per append>
 
 ## WATCH §HH:MM-<agent>
-- id: W-<YYYYMMDD>-<AGENT-ABBR>-<NNN> | flagged_by: <agent> | flagged_date: <date> | what_to_watch: <text> | why: <text> | trigger: <date or condition> | priority: high|normal|danger | status: open | domain: <tag>
+- id: W-<YYYYMMDD>-<AGENT-ABBR>-<NNN> | flagged_by: <agent> | flagged_date: <date> | what_to_watch: <plain Vietnamese description> | why: <plain Vietnamese rationale> | trigger: <date or condition> | priority: high|normal|danger | status: open | domain: <tag>
+```
+
+**Language rule (mandatory — encodes Addition 6):**
+
+```
+Language: comprehensible Vietnamese
+- Analysis prose under ## §HH:MM-<agent>: plain sentences, no caveman shorthand, no σ/bp/Layer#/hexagram-term jargon.
+- what_to_watch and why fields of WATCH items: plain Vietnamese.
+- CHEF _dish/ output: plain Vietnamese (per feedback_market_report_plain_vietnamese rule).
+- Exception: RETURN blocks, DASHBOARD signal rows, outbox frontmatter, structural anchors — caveman/ULTRA unchanged.
 ```
 
 **`_header.md` Live State format:**
@@ -478,6 +566,8 @@ One file per CHEF dish window (morning/intraday/eod/evening). CHEF writes dish c
 | Watch register durability (NEW) | **NEW INVARIANT.** `docs/attention/watch.md` is never gitignored, never pruned by retention. Items survive daily prune. Only item-status resolution (triggered/resolved/expired) removes items from the OPEN filter. |
 | Retention lifecycle (NEW) | **NEW INVARIANT.** No raw data file is deleted until the next compaction tier recap is written AND verified non-empty. digest-predict is the sole prune runner. Prune is the last step of each recap slot, never a standalone job. |
 | Migration-recap guard (NEW) | **ONE-SHOT INVARIANT.** Historical signals/*.json and cycle-snapshot data must be rolled up into recap files BEFORE the legacy cleanup step (P3.7) runs. Verify-before-delete guard applies here identically to the recurring retention lifecycle. |
+| Language register boundary (NEW — v2.1) | **NEW INVARIANT.** All analysis prose written into daily document sections is in comprehensible Vietnamese. Caveman/ULTRA restricted to RETURN blocks, signals, DASHBOARD pokes, and structural machine fields. Boundary table in Design Point I is the authoritative definition. |
+| Context-loading discipline (NEW — v2.1) | **NEW INVARIANT (binding audit).** Domain agents load only own-section delta + `_header.md` Live State per cycle. Full-folder load permitted only for CHEF (dish windows) and tran-ngoc-bau (audit). Enforced by cowork-refactory-expert audit pass (F36) before Phase-3 QA gate. |
 
 ---
 
@@ -485,59 +575,62 @@ One file per CHEF dish window (morning/intraday/eod/evening). CHEF writes dish c
 
 Listed in strict Phase order. Each item has a single responsible output.
 
+**Executor key:** AF = agent-father handles (new files, structural edits); CRE = cowork-refactory-expert handles (cowork `.md` flow rewrites/audit).
+
 ### Phase 1 — Foundation (no agent flows changed)
 
-| # | Action | File |
-|---|---|---|
-| F1 | Create dirs: docs/daily/, docs/outbox/market/danger/, docs/outbox/market/normal/, docs/outbox/work/, docs/outbox/dead/, docs/recaps/weekly/, docs/recaps/monthly/, docs/recaps/yearly/, docs/attention/ | git mkdir + .gitkeep |
-| F2 | Add docs/daily/, docs/outbox/ to .gitignore. docs/attention/ is NOT gitignored. | .gitignore |
-| F3 | Add daily section file entries to docs/data/file-size-caps.json (200L per agent section) | docs/data/file-size-caps.json |
-| F4 | Add slot stubs to cowork-schedule.json: daily-seed (enabled:false), delivery-cron-danger (enabled:false), delivery-cron-normal (enabled:false), monthly-recap (enabled:false), yearly-recap (enabled:false). Add retention config object. | docs/data/cowork-schedule.json |
-| F5 | Write docs/standards/daily-document-spec.md per spec above | docs/standards/daily-document-spec.md |
-| F6 | Create docs/attention/watch.md with empty template (## OPEN / ## TRIGGERED / ## EXPIRED sections + item schema table header) | docs/attention/watch.md |
-| F7 | Create docs/data/market-push-state.json with zeroed initial state | docs/data/market-push-state.json |
-| F8 | Create docs/data/delivery-cron-delivered.json as empty {} | docs/data/delivery-cron-delivered.json |
+| # | Executor | Action | File |
+|---|---|---|---|
+| F1 | AF | Create dirs: docs/daily/, docs/outbox/market/danger/, docs/outbox/market/normal/, docs/outbox/work/, docs/outbox/dead/, docs/recaps/weekly/, docs/recaps/monthly/, docs/recaps/yearly/, docs/attention/ | git mkdir + .gitkeep |
+| F2 | AF | Add docs/daily/, docs/outbox/ to .gitignore. docs/attention/ is NOT gitignored. | .gitignore |
+| F3 | AF | Add daily section file entries to docs/data/file-size-caps.json (200L per agent section) | docs/data/file-size-caps.json |
+| F4 | AF | Add slot stubs to cowork-schedule.json: daily-seed (enabled:false), delivery-cron-danger (enabled:false), delivery-cron-normal (enabled:false), monthly-recap (enabled:false), yearly-recap (enabled:false). Add retention config object. | docs/data/cowork-schedule.json |
+| F5 | AF | Write docs/standards/daily-document-spec.md per spec above. **Must include the Language rule block (Addition 6) and the bootstrap-only read rule (Addition 7).** | docs/standards/daily-document-spec.md |
+| F6 | AF | Create docs/attention/watch.md with empty template (## OPEN / ## TRIGGERED / ## EXPIRED sections + item schema table header) | docs/attention/watch.md |
+| F7 | AF | Create docs/data/market-push-state.json with zeroed initial state | docs/data/market-push-state.json |
+| F8 | AF | Create docs/data/delivery-cron-delivered.json as empty {} | docs/data/delivery-cron-delivered.json |
 
 ### Phase 2 — Parallel Run
 
-| # | Action | File |
-|---|---|---|
-| F9 | Edit cowork-team/flow/main.md Step 4.7: add _header.md write alongside tick-snapshot write | docs/agents/cowork-team/flow/main.md |
-| F10 | Add daily-seed sub-flow to unified-agent/flow/: creates day folder + stub files at 00:00 UTC; reads watch.md OPEN items → writes ## Today's Catalysts to _header.md | docs/agents/unified-agent/flow/daily-seed.md (new) |
-| F11 | Enable daily-seed slot in cowork-schedule.json | docs/data/cowork-schedule.json |
-| F12 | Add end-of-cycle daily-append step (including ## WATCH subsection) to news-scout/flow/stage-log-notify.md | docs/agents/news-scout/flow/stage-log-notify.md |
-| F13 | Add end-of-cycle daily-append step (including ## WATCH subsection) to market-watcher/flow/eod.md and cycle.md | docs/agents/market-watcher/flow/cycle.md + eod.md |
-| F14 | Add end-of-cycle daily-append step (including ## WATCH subsection) to financial-analyst/flow/main.md | docs/agents/financial-analyst/flow/main.md |
-| F15 | Add end-of-cycle daily-append step (including ## WATCH subsection) to alert-commander/flow/stage-dispatch-log.md | docs/agents/alert-commander/flow/stage-dispatch-log.md |
-| F16 | Add end-of-cycle daily-append step (including ## WATCH subsection) to report-analyzer/flow/main.md | docs/agents/report-analyzer/flow/main.md |
-| F17 | Add end-of-cycle daily-append step (including ## WATCH subsection) to tran-ngoc-bau/flow/main.md | docs/agents/tran-ngoc-bau/flow/main.md |
+| # | Executor | Action | File | Bootstrap sub-step |
+|---|---|---|---|---|
+| F9 | CRE | Edit cowork-team/flow/main.md Step 4.7: add _header.md write alongside tick-snapshot write | docs/agents/cowork-team/flow/main.md | Verify dispatcher write step does not load daily folder for read; header write is write-only |
+| F10 | AF | Add daily-seed sub-flow to unified-agent/flow/: creates day folder + stub files at 00:00 UTC; reads watch.md OPEN items → writes ## Today's Catalysts to _header.md | docs/agents/unified-agent/flow/daily-seed.md (new) | CHEF seed reads full watch.md at 00:00 UTC only — not a domain-agent cycle, exempt from domain bootstrap rule |
+| F11 | AF | Enable daily-seed slot in cowork-schedule.json | docs/data/cowork-schedule.json | — |
+| F12 | CRE | Add end-of-cycle daily-append step (including ## WATCH subsection, **prose in comprehensible Vietnamese**) to news-scout/flow/stage-log-notify.md | docs/agents/news-scout/flow/stage-log-notify.md | **Verify: append step writes own-section only; no full-folder read added. Mark done only after verification.** |
+| F13 | CRE | Add end-of-cycle daily-append step (including ## WATCH subsection, **prose in comprehensible Vietnamese**) to market-watcher/flow/eod.md and cycle.md | docs/agents/market-watcher/flow/cycle.md + eod.md | **Verify: append step writes own-section only; no full-folder read added. Mark done only after verification.** |
+| F14 | CRE | Add end-of-cycle daily-append step (including ## WATCH subsection, **prose in comprehensible Vietnamese**) to financial-analyst/flow/main.md | docs/agents/financial-analyst/flow/main.md | **Verify: append step writes own-section only; no full-folder read added. Mark done only after verification.** |
+| F15 | CRE | Add end-of-cycle daily-append step (including ## WATCH subsection, **prose in comprehensible Vietnamese**) to alert-commander/flow/stage-dispatch-log.md | docs/agents/alert-commander/flow/stage-dispatch-log.md | **Verify: append step writes own-section only; no full-folder read added. Mark done only after verification.** |
+| F16 | CRE | Add end-of-cycle daily-append step (including ## WATCH subsection, **prose in comprehensible Vietnamese**) to report-analyzer/flow/main.md | docs/agents/report-analyzer/flow/main.md | **Verify: append step writes own-section only; no full-folder read added. Mark done only after verification.** |
+| F17 | CRE | Add end-of-cycle daily-append step (including ## WATCH subsection) to tran-ngoc-bau/flow/main.md. **Note: tran-ngoc-bau is an audit/analyst role and reads full folder — full-folder read is permitted and correct for this agent.** | docs/agents/tran-ngoc-bau/flow/main.md | tran-ngoc-bau: full-folder read is correct (audit role) — no bootstrap restriction applies. Verify prose is still plain Vietnamese. |
 
-**Phase 2 QA gate:** 5 consecutive trading days clean (## WATCH subsections present where applicable). PO signs off before Phase 3 starts.
+**Phase 2 QA gate:** 5 consecutive trading days clean per all criteria in Phase 2 section above, including (e) language compliance spot-check and (f) bootstrap verification. PO signs off before Phase 3 starts.
 
 ### Phase 3 — Full Cutover
 
-| # | Action | File |
-|---|---|---|
-| F18 | Add delta-read from daily folder to domain agent cycle-start steps (per read pattern table above); wire last_read_anchor into notebook write step for each agent; add filtered watch.md OPEN-items read (domain-tagged) | 5 agent flow files (stage-bootstrap.md per agent) |
-| F19 | Write delivery cron component: danger loop (30s) + normal loop (5 min) + dedup/delta logic + market-push-state.json update + delivery-cron-delivered.json dedup check | new cron script / delivery-cron process |
-| F20 | Enable delivery-cron-danger and delivery-cron-normal slots in cowork-schedule.json | docs/data/cowork-schedule.json |
-| F21 | Replace direct send_telegram(channel="market") with outbox-write in: unified-agent/chef.md (→ normal lane, push_mode:full), news-scout/stage-log-notify.md (→ normal lane for any market output), market-watcher/eod.md, financial-analyst/main.md, report-analyzer/main.md | 5 flow files |
-| F22 | Replace direct send_telegram(channel="market") in alert-commander: danger items → docs/outbox/market/danger/<ts>-alert-commander.md (no push_mode needed). Non-danger market items → normal lane. Work/bug channels: KEEP direct send_telegram. | docs/agents/alert-commander/flow/stage-dispatch-log.md |
-| F23 | Update digest-predict/flow/weekly.md: read docs/daily/<YYYY-Www>/ folder; write docs/recaps/weekly/<YYYY-Www>.md + normal-lane outbox; after verify: run prune (daily files >14d). Add monthly.md and yearly.md sub-flows with same pattern + respective prune step. | docs/agents/digest-predict/flow/weekly.md + 2 new sub-flows |
-| F24 | Add CHEF watch consolidation step to daily-seed sub-flow: merge prior day ## WATCH subsections → docs/attention/watch.md; auto-expire stale items; write Today's Catalysts section. | docs/agents/unified-agent/flow/daily-seed.md |
-| F25 | Update unified-agent/flow/chef.md GATHER step: read docs/daily/<date>/ folder + docs/attention/watch.md (all OPEN) instead of docs/signals/*.json files | docs/agents/unified-agent/flow/chef.md |
-| F26 | Update digest-predict weekly sub-flow: add watch register scan (triggered/resolved this week → weekly recap summary). | docs/agents/digest-predict/flow/weekly.md |
-| — | **F-MIG1 (ONE-TIME MIGRATION — precedes F27)** | — |
-| F-MIG1 | Survey existing historical data: list docs/signals/*.json agent-written files (price_anomaly_*, news_impact_*, bctc_signal_*, fundamental_*); list any cycle-snapshot-*.json files; list any existing digest outputs. Log the date range covered. | read-only survey step |
-| F-MIG2 | Generate historical recaps from surveyed data: write at least one monthly recap (current month) and weekly recap (current week) from signals/*.json content into docs/recaps/monthly/ and docs/recaps/weekly/ using the same format as the new recap sub-flows. | docs/recaps/monthly/<YYYY-MM>.md + weekly/<YYYY-Www>.md |
-| F-MIG3 | Verify migration recaps exist and are non-empty (stat check on each file written in F-MIG2). Log verification result to WORK channel. ABORT if any recap file is zero bytes — do not proceed to F-MIG4. | verification step |
-| F-MIG4 | Only after F-MIG3 passes: delete docs/signals/*.json agent-written files (price_anomaly_*, news_impact_*, bctc_signal_*, fundamental_*) and any stale cycle-snapshot-*.json. DASHBOARD.md is NOT deleted. | cleanup step |
-| — | **Resume normal F-series after F-MIG4** | — |
-| F27 | Deprecation notice in cycle-bootstrap/SKILL.md: signal file writes (price_anomaly_*, etc.) are sunset; domain agents write to daily folder instead | docs/.claude/skills/cycle-bootstrap/SKILL.md note |
-| F28 | Enable monthly-recap and yearly-recap slots in cowork-schedule.json | docs/data/cowork-schedule.json |
-| F29 | Update cowork-refactory-expert to be aware of daily-document + watch register architecture (lazy-load entries to docs/standards/daily-document-spec.md and docs/attention/watch.md) | docs/agents/cowork-refactory-expert/init.md |
+| # | Executor | Action | File | Bootstrap sub-step |
+|---|---|---|---|---|
+| F18 | CRE | Add delta-read from daily folder to domain agent cycle-start steps (per read pattern table above); wire last_read_anchor into notebook write step for each agent; add filtered watch.md OPEN-items read (domain-tagged) | 5 agent flow files (stage-bootstrap.md per agent) | **Verify: each agent's bootstrap reads ONLY own-section delta + header tail + domain watch items. No full-folder load. Mark done only after verification.** |
+| F19 | AF | Write delivery cron component: danger loop (30s) + normal loop (5 min) + dedup/delta logic + market-push-state.json update + delivery-cron-delivered.json dedup check | new cron script / delivery-cron process | — |
+| F20 | AF | Enable delivery-cron-danger and delivery-cron-normal slots in cowork-schedule.json | docs/data/cowork-schedule.json | — |
+| F21 | CRE | Replace direct send_telegram(channel="market") with outbox-write in: unified-agent/chef.md (→ normal lane, push_mode:full), news-scout/stage-log-notify.md (→ normal lane for any market output), market-watcher/eod.md, financial-analyst/main.md, report-analyzer/main.md | 5 flow files | Verify: no residual send_telegram(channel="market") call remains in any of the 5 files |
+| F22 | CRE | Replace direct send_telegram(channel="market") in alert-commander: danger items → docs/outbox/market/danger/<ts>-alert-commander.md (no push_mode needed). Non-danger market items → normal lane. Work/bug channels: KEEP direct send_telegram. | docs/agents/alert-commander/flow/stage-dispatch-log.md | Verify: WORK/BUG direct send_telegram kept; no MARKET direct send remains |
+| F23 | CRE | Update digest-predict/flow/weekly.md: read docs/daily/<YYYY-Www>/ folder; write docs/recaps/weekly/<YYYY-Www>.md + normal-lane outbox; after verify: run prune (daily files >14d). Add monthly.md and yearly.md sub-flows with same pattern + respective prune step. | docs/agents/digest-predict/flow/weekly.md + 2 new sub-flows | digest-predict reads full folder for weekly synthesis — exempt from domain bootstrap rule (synthesis role). Verify: prune step runs AFTER recap verified. |
+| F24 | CRE | Add CHEF watch consolidation step to daily-seed sub-flow: merge prior day ## WATCH subsections → docs/attention/watch.md; auto-expire stale items; write Today's Catalysts section. | docs/agents/unified-agent/flow/daily-seed.md | CHEF seed full-folder read at 00:00 UTC — exempt from domain bootstrap rule |
+| F25 | CRE | Update unified-agent/flow/chef.md GATHER step: read docs/daily/<date>/ folder + docs/attention/watch.md (all OPEN) instead of docs/signals/*.json files | docs/agents/unified-agent/flow/chef.md | **CHEF full-folder read permitted at dish windows only — verify GATHER step is gated to dish-window slots, not every 15-min tick.** |
+| F26 | CRE | Update digest-predict weekly sub-flow: add watch register scan (triggered/resolved this week → weekly recap summary). | docs/agents/digest-predict/flow/weekly.md | — |
+| — | — | **F-MIG1 (ONE-TIME MIGRATION — precedes F27)** | — | — |
+| F-MIG1 | AF | Survey existing historical data: list docs/signals/*.json agent-written files (price_anomaly_*, news_impact_*, bctc_signal_*, fundamental_*); list any cycle-snapshot-*.json files; list any existing digest outputs. Log the date range covered. | read-only survey step | — |
+| F-MIG2 | AF | Generate historical recaps from surveyed data: write at least one monthly recap (current month) and weekly recap (current week) from signals/*.json content into docs/recaps/monthly/ and docs/recaps/weekly/ using the same format as the new recap sub-flows. | docs/recaps/monthly/<YYYY-MM>.md + weekly/<YYYY-Www>.md | — |
+| F-MIG3 | AF | Verify migration recaps exist and are non-empty (stat check on each file written in F-MIG2). Log verification result to WORK channel. ABORT if any recap file is zero bytes — do not proceed to F-MIG4. | verification step | — |
+| F-MIG4 | AF | Only after F-MIG3 passes: delete docs/signals/*.json agent-written files (price_anomaly_*, news_impact_*, bctc_signal_*, fundamental_*) and any stale cycle-snapshot-*.json. DASHBOARD.md is NOT deleted. | cleanup step | — |
+| — | — | **Resume normal F-series after F-MIG4** | — | — |
+| F27 | AF | Deprecation notice in cycle-bootstrap/SKILL.md: signal file writes (price_anomaly_*, etc.) are sunset; domain agents write to daily folder instead | docs/.claude/skills/cycle-bootstrap/SKILL.md note | — |
+| F28 | AF | Enable monthly-recap and yearly-recap slots in cowork-schedule.json | docs/data/cowork-schedule.json | — |
+| F29 | AF | Update cowork-refactory-expert to be aware of daily-document + watch register architecture (lazy-load entries to docs/standards/daily-document-spec.md and docs/attention/watch.md) | docs/agents/cowork-refactory-expert/init.md | **Verify: lazy-load entries use `trigger:` not `always_load`; cowork-refactory-expert is aware of the language register boundary and bootstrap-only rule.** |
+| F36 | CRE | **Post-migration flow audit pass:** Review ALL cowork agent flows modified in F9–F25. For each agent: (a) confirm analysis prose is comprehensible Vietnamese (no caveman in section appends), (b) confirm domain agents bootstrap with own-section delta + header only, (c) confirm CHEF GATHER is gated to dish windows only, (d) confirm CHEF and tran-ngoc-bau are the only full-folder loaders. File audit report as a WORK channel message. Block Phase-3 QA gate until this pass is complete. | All modified cowork agent flow files (audit, no edits unless a violation is found) | This item IS the bootstrap verification — no sub-step needed. |
 
-**Phase 3 QA gate:** 10 consecutive trading days clean per criteria in Phase 3 section above. User verbal confirmation.
+**Phase 3 QA gate:** 10 consecutive trading days clean per all criteria in Phase 3 section above, including (g) language compliance spot-check and (h) delta-read verification. **F36 audit pass must be complete before the QA gate countdown starts.** User verbal confirmation.
 
 ---
 
@@ -553,19 +646,23 @@ Listed in strict Phase order. Each item has a single responsible output.
 8. F24 (watch consolidation in daily-seed) must come AFTER F12–F17 have been running for at least 3 trading days, so there is `## WATCH` content to consolidate.
 9. F23 (digest-predict with prune step) must be deployed with the retention config in cowork-schedule.json (F4) already present — prune reads the `retention.daily_days` value from that config before deciding what to delete.
 10. F28 (monthly/yearly slots enabled) must come AFTER F23 has been tested with at least one successful weekly cycle including prune.
+11. **(v2.1) F5 must encode the Language rule (Addition 6) before F12–F17 are executed** — the spec is the language authority; agent flows reference it. Agent-father must not write F5 without the language rule block.
+12. **(v2.1) F36 (cowork-refactory-expert audit pass) must complete AFTER F18 (delta-read wired) and BEFORE the Phase-3 QA gate countdown** — the audit verifies the full live flow state, not the written intent.
 
 ---
 
 ## Open Questions (none — all resolved in this brief)
 
-All 8 design points (A through H) are resolved above. No items are deferred to future briefs.
+All 10 design points (A through J) are resolved above. No items are deferred to future briefs.
 
 One carry-forward note for agent-father: the `handoff-delta-read` skill uses `## §N-<slug>` anchors (numeric sequence). Daily section files use `## §HH:MM-<agent>` anchors (time-based). These are compatible patterns (both match `^## §`) but the skill's "locate anchor by line scan" logic works identically for both formats. No skill modification needed.
 
 Second carry-forward note: the delivery cron is NOT a cowork agent and therefore does NOT require an agent .md file, a notebook, or a task-lock slot. It is a plain cron process (like the existing cowork-team dispatcher). Register it only in cowork-schedule.json as two slot stubs.
 
+Third carry-forward note (v2.1): cowork-refactory-expert is the executor for all cowork `.md` flow rewrites (F9, F12–F18, F21–F26, F36). Agent-father handles all new file creation and structural edits (F1–F8, F10–F11, F19–F20, F27–F29, F-MIG1–F-MIG4). The executor column in the checklist is the authoritative split. Do not reverse these.
+
 ---
 
 ## Signal Dropped
 
-`docs/signals/cowork-team-daily-document-redesign-v2-20260527.json` → agent-father
+`docs/signals/cowork-team-daily-document-redesign-v2-20260527.json` → agent-father (updated to v2.1)

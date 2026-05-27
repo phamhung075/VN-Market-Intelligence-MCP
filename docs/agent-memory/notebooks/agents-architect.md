@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-27T18:14:09Z
+
+**Brief:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md` (v2.1)
+
+Two PO additions integrated into the daily-document redesign: (6) a language register boundary making all daily-doc analysis prose comprehensible Vietnamese — overriding caveman only for that surface, reconciled with token-economy skill, extending the plain-Vietnamese MARKET rule upstream to source; (7) a context-loading discipline binding audit where cowork-refactory-expert executes a post-migration flow audit pass (F36) verifying bootstrap-only reads for domain agents and language compliance, inheriting the project's waterfall-lazy-load standards. Checklist gains F36, sub-steps on F9/F12–F18/F25/F29, two new QA-gate criteria per phase, and two new sequencing constraints. All v1+v2 decisions intact.
+
+**Signal dropped:** `docs/signals/cowork-team-daily-document-redesign-v2-20260527.json` → agent-father (updated to v2.1)
+
+---
+
 ## 2026-05-27T18:12:13Z
 
 **Brief:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md` (v2)

@@ -3,10 +3,10 @@
   "to": "agent-father",
   "type": "brief_complete",
   "payload": "docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md",
-  "version": "v2",
+  "version": "v2.1",
   "priority": "high",
-  "createdAt": "2026-05-27T18:12:13Z",
-  "summary": "Cowork-team daily document redesign v2 — 5 PO additions integrated: (1) cron-exclusive MARKET channel with 30s danger-drain lane, (2) full-at-milestone / delta-intraday fingerprint dedup, (3) watch/attention register (docs/attention/watch.md) for forward-looking catalysts, (4) retention lifecycle with roll-up-before-prune invariant and tunable windows, (5) one-time migration recap-then-clean before legacy signal deprecation. 29 F-items + 4 F-MIG items. All v1 decisions intact except OVERRIDE of direct market send by alert-commander (now danger-drain lane).",
+  "createdAt": "2026-05-27T18:14:09Z",
+  "summary": "Cowork-team daily document redesign v2.1 — 7 PO additions integrated. v2.1 adds: (6) language register boundary (daily-doc analysis prose in plain Vietnamese; caveman stays on RETURN/signals/DASHBOARD only; boundary table in Design Point I; encoded in daily-document-spec.md), (7) context-loading discipline as binding audit (cowork-refactory-expert audits all flows post-migration; bootstrap-only rule inherited from waterfall-lazy-load; F36 new audit pass; Phase-2+3 QA gates updated; executor split: CRE=flow rewrites, AF=structural/new-file edits). All v1+v2 decisions intact.",
   "v1_overrides": [
     "Design Point C: alert-commander no longer calls send_telegram(channel=market) directly — replaced by 30s danger-drain lane in delivery cron",
     "Postman section: renamed to delivery cron; two-lane (30s danger + 5min normal); SOLE market sender"
@@ -16,28 +16,46 @@
     "Addition 2: push_mode full|delta; market-push-state.json fingerprint; unchanged intraday tick = no push",
     "Addition 3: Watch/Attention Register — docs/attention/watch.md; per-agent ## WATCH subsection; CHEF consolidates; 8-field item schema; lifecycle open→triggered→resolved|expired",
     "Addition 4: Retention lifecycle — roll-up-before-prune; defaults daily=14d weekly=8w monthly=24m yearly=indefinite; digest-predict prune runner; fail-safe verify-before-delete",
-    "Addition 5: One-time migration recap F-MIG1–F-MIG4 gated before P3.7 legacy cleanup"
+    "Addition 5: One-time migration recap F-MIG1–F-MIG4 gated before P3.7 legacy cleanup",
+    "Addition 6: Language register boundary — daily-doc analysis prose in comprehensible Vietnamese; caveman/ULTRA stays on RETURN blocks, signals, DASHBOARD pokes, structural machine fields; boundary table in Design Point I; Language rule encoded in daily-document-spec.md; reconciled with token-economy skill; extends feedback_market_report_plain_vietnamese upstream",
+    "Addition 7: Context-loading discipline binding audit — cowork-refactory-expert performs audit pass (F36) after F18 and before Phase-3 QA gate; bootstrap-only rule (own-section delta + header only for domain agents); inherited from waterfall-lazy-load + CLAUDE.md lazy-load pattern; Phase-2 and Phase-3 QA gates gain 2 new criteria each; executor split: CRE=flow rewrites, AF=structural edits"
   ],
   "phase_sequence": [
-    "Phase 1 (F1-F8): Foundation — dirs, gitignore, caps, schedule stubs, spec, watch.md, push-state.json",
-    "Phase 2 (F9-F17): Parallel run — header write + agents append to daily folder with ## WATCH subsections, existing delivery unchanged",
-    "Phase 3 (F18-F29 + F-MIG1-F-MIG4): Full cutover — delta-read, delivery cron (2 lanes), outbox cutover, watch consolidation, CHEF reads daily folder, migration recap-then-clean, retention prune wired into digest-predict"
+    "Phase 1 (F1-F8): Foundation — dirs, gitignore, caps, schedule stubs, spec (incl. language rule + bootstrap rule), watch.md, push-state.json",
+    "Phase 2 (F9-F17): Parallel run — header write + agents append to daily folder with ## WATCH subsections + Vietnamese prose, existing delivery unchanged",
+    "Phase 3 (F18-F29 + F-MIG1-F-MIG4 + F36): Full cutover — delta-read, delivery cron (2 lanes), outbox cutover, watch consolidation, CHEF reads daily folder, migration recap-then-clean, retention prune wired into digest-predict, cowork-refactory-expert audit pass"
   ],
+  "new_checklist_items": [
+    "F36 (CRE): Post-migration flow audit pass — verify language compliance + bootstrap compliance across all modified cowork agent flows; block Phase-3 QA gate until complete",
+    "F5 updated: daily-document-spec.md must include Language rule block and bootstrap-only read rule",
+    "F12–F17 updated: each gains 'prose in comprehensible Vietnamese' note and 'verify minimal bootstrap' sub-step",
+    "F18 updated: gains 'verify minimal bootstrap' sub-step",
+    "F25 updated: gains 'CHEF GATHER gated to dish windows only' verification sub-step",
+    "F29 updated: gains lazy-load entry verification sub-step"
+  ],
+  "new_sequencing_constraints": [
+    "Constraint 11: F5 must encode Language rule before F12–F17 are executed",
+    "Constraint 12: F36 audit pass must complete after F18 and before Phase-3 QA gate countdown"
+  ],
+  "executor_split": {
+    "agent-father": "F1-F8, F10-F11, F19-F20, F27-F29, F-MIG1-F-MIG4 — new file creation and structural edits",
+    "cowork-refactory-expert": "F9, F12-F18, F21-F26, F36 — cowork .md flow rewrites and post-migration audit"
+  },
   "first_action": "F1: Create directory structure (docs/daily/, docs/outbox/market/danger|normal|dead, docs/recaps/*, docs/attention/) and update .gitignore",
   "qa_gates": [
-    "Phase 2 gate: 5 consecutive trading days — ## WATCH subsections present, no cycle-time regression — PO sign-off required before Phase 3",
-    "Phase 3 gate: 10 consecutive trading days — danger lane ≤30s, dedup confirmed, watch register surfacing items in dishes, retention prune cycle verified — user verbal confirmation"
+    "Phase 2 gate: 5 consecutive trading days — ## WATCH subsections present, no cycle-time regression, language compliance spot-check (e), bootstrap verification (f) — PO sign-off required before Phase 3",
+    "Phase 3 gate: 10 consecutive trading days — danger lane ≤30s, dedup confirmed, watch register surfacing items in dishes, retention prune cycle verified, language compliance spot-check (g), delta-read verification (h) — F36 audit must be complete first — user verbal confirmation"
   ],
   "agents_affected": ["unified-agent", "digest-predict", "cowork-team", "news-scout", "market-watcher", "financial-analyst", "alert-commander", "report-analyzer", "tran-ngoc-bau", "cowork-refactory-expert"],
   "new_components": ["delivery-cron (NOT an agent — cron process, two lanes)", "docs/attention/watch.md (persistent attention register)"],
-  "new_files": [
-    "docs/standards/daily-document-spec.md",
-    "docs/agents/unified-agent/flow/daily-seed.md",
-    "docs/attention/watch.md",
-    "docs/data/market-push-state.json",
-    "docs/data/delivery-cron-delivered.json",
-    "docs/agents/digest-predict/flow/monthly.md",
-    "docs/agents/digest-predict/flow/yearly.md"
+  "new_invariants": [
+    "Delivery channel exclusivity",
+    "Dedup / delta fingerprint",
+    "Watch register durability",
+    "Retention lifecycle",
+    "Migration-recap guard",
+    "Language register boundary (v2.1)",
+    "Context-loading discipline / binding audit (v2.1)"
   ],
   "alert_split_preserved": true,
   "alert_engine_unaffected": true,
