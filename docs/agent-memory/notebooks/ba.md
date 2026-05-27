@@ -1,8 +1,22 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-27T20:00Z | **Sprint:** NEWS-CMD (NEWS-CMD-BA)
+**Last updated:** 2026-05-27T21:30Z | **Sprint:** SELF-IMPROVE-GATE (SIG-IMPL-GATE-BA)
 
 > Archive: `docs/archive/notebooks/ba-2026-05-21.md`
+
+## SIG-IMPL-GATE-BA · 2026-05-27T21:30Z
+
+Sprint SELF-IMPROVE-GATE Phase 2 decomposition complete. REQ file: `docs/REQ_SIG-IMPL-GATE.md`. 5 dev tasks + 1 QA task, 36 minimum new unit tests. Files left UNSTAGED per commit-discipline. NEXT = architect technical blueprint (SIG-IMPL-GATE unblocked).
+
+Key decisions encoded:
+- TASK-5 (C-4 per-path kill-switch) is standalone with explicit REJECT clause for single-global-flag anti-pattern in AC-T5-4.
+- TASK-4 (D-IMPROVE bridge) fail-loud-skip isolation from TASK-3 pipeline is AC-T4-6 (C-5 hard requirement).
+- TASK-6 (QA gate-proof) has AC-T6-5: if gate doesn't go red → lane demotion to lane-A, must be recorded explicitly (feedback_fence_false_green).
+- C-1 structured `target_agent`/`target_files[]` in AC-T4-1..3 with UNRESOLVED fallback for `_default` entries.
+- SPIKE §12 AC-1..AC-8 fully mapped to TASK-2/TASK-3 ACs.
+- Cron collision detail for architect: `bctcOverdueCheck='0 9 * * 1-5'` (weekdays) vs new `'0 9 * * *'` (daily) — same minute. Surfaced as detail; not a blocker.
+- Two open design points for architect: (i) per-path kill-switch keying scheme with a TypeScript suggestion; (ii) proposal-doc slug derivation + fix_area→target_agent mapping. Neither requires PO input.
+- Zero PO blockers.
 
 ## NEWS-CMD-BA · 2026-05-27T20:00Z
 
