@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md",
+  "priority": "high",
+  "createdAt": "2026-05-27T20:41:55Z",
+  "notes": "BLOCKED on SIG-PO-GATE deliberation. Agent-father MUST NOT act until PO approves. When approved, implement EDIT-1 through EDIT-5 in brief §9 Phase-1 (flow edits only). Phase 2 code work routes to dev-team via SIG-IMPL-GATE task."
+}

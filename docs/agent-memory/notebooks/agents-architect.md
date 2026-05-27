@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-27T20:41:55Z
+
+**Brief:** `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md`
+
+Three-lane gated self-improvement loop formalized: lane-a (PO approves `.md` changes via agent-father), lane-b (auto-implement ONLY behind proven gate via dev-team+QA, Sprint 1948 substrate reconciled), lane-c (comprehensibility + irreversible + gate-self-edits → human WORK Telegram, never auto-close). Five concrete flow-edit targets named (EDIT-1 through EDIT-5 in system-auditor/agents-architect/po/agent-father/dev-team flows). No new agents, no new cron beyond the already-budgeted 1948 selfImproveOrchestratorJob.
+
+**Signal dropped:** `docs/signals/gated-self-improvement-loop-20260527.json` → agent-father (BLOCKED on SIG-PO-GATE)
+
+---
+
 ## 2026-05-27T19:32:51Z
 
 **Brief:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md` (v2.2)

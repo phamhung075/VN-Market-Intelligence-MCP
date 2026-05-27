@@ -34,3 +34,34 @@ Sprint SELF-IMPROVE-GATE. Goal SSOT: `docs/SPRINT_GOAL.md § Sprint SELF-IMPROVE
 
 ### Return
 Brief → `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md`. Return to the PO deliberation gate (SIG-PO-GATE). Append a `[Architect] Design Record` section to this handoff before returning.
+
+---
+
+## [Architect] Design Record — 2026-05-27T20:41:55Z
+
+**Brief authored:** `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md`
+**Signal dropped:** `docs/signals/gated-self-improvement-loop-20260527.json` → agent-father (BLOCKED on SIG-PO-GATE)
+
+**Key decisions in the brief:**
+
+1. Sprint 1948 shadow-mode substrate (SPIKE_1947) is RECONCILED and absorbed: `selfImproveOrchestratorJob.ts` becomes the lane-b detection engine. This brief adds the governance wrapper on top — not a reinvention.
+
+2. Five concrete flow edits (EDIT-1 through EDIT-5) named with exact file paths and exact steps:
+   - EDIT-1: `docs/agents/system-auditor/flow/main.md` — add D-IMPROVE step to Tier-2 sweep
+   - EDIT-2: `docs/agents/agents-architect/flow/main.md` + `handlers.md` — add IP-review dispatch branch
+   - EDIT-3: `docs/agents/po/flow/triage-signals.md` — add `improvement_proposal` routing row with mandatory critique gate
+   - EDIT-4: `docs/agents/agent-father/flow/main.md` dispatch table — add `improvement_approved_md` route
+   - EDIT-5: `docs/agents/dev-team/flow/drain-signals.md` routing table — add `improvement_proposal_lane_b` row
+
+3. No new agents, no new Docker services, no new always-on cron beyond the already-budgeted 1948 `selfImproveOrchestratorJob` (0 MB incremental RAM, inside existing mcp-server process).
+
+4. PO critique gate is enforced by triage-signals.md rejecting proposals where PO-Critique section is empty — not by convention, by the flow step itself.
+
+5. Lane-c comprehensibility blind spot is explicitly named and routed: the loop detects it, writes a WORK Telegram, stops. The human decides. No automated path out.
+
+6. Proven-gate procedure (§5) is QA's acceptance criterion for SIG-IMPL-GATE, not an assertion.
+
+**SIG-IMPL-MD scope:** EDIT-1 through EDIT-5 in the brief §9 Phase 1 (flow `.md` files only — agent-father's domain).
+**SIG-IMPL-GATE scope:** Phase 2 code work (Sprint 1948 substrate, extended with proposal-doc emit). Zone: `apps/mcp-server/`.
+
+**NEXT:** SIG-PO-GATE deliberation.
