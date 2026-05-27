@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-27T18:12:13Z
+
+**Brief:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md` (v2)
+
+Five PO additions integrated into the cowork-team daily document redesign: delivery channel exclusivity (cron is sole MARKET sender; danger items via 30s-drain priority lane; agents keep direct work/bug send), full-at-milestone / delta-intraday push with SHA-256 fingerprint dedup via market-push-state.json, a new Watch/Attention Register (docs/attention/watch.md) for forward-looking catalysts with 8-field item schema and CHEF-managed lifecycle, a retention & compaction lifecycle (roll-up-before-prune invariant, tunable windows encoded in cowork-schedule.json, digest-predict as sole prune runner), and a one-time migration recap-then-clean (F-MIG1–F-MIG4 gated steps before legacy signal deprecation). Checklist expanded to F1–F29 + F-MIG1–F-MIG4. v1 OVERRIDE: alert-commander danger items no longer call send_telegram to market directly.
+
+**Signal dropped:** `docs/signals/cowork-team-daily-document-redesign-v2-20260527.json` → agent-father
+
+---
+
 ## 2026-05-27T18:01:29Z
 
 **Brief:** `docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md`

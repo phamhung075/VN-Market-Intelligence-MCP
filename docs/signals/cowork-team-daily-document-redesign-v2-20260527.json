@@ -1,0 +1,47 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-05-27-cowork-team-daily-document-redesign.md",
+  "version": "v2",
+  "priority": "high",
+  "createdAt": "2026-05-27T18:12:13Z",
+  "summary": "Cowork-team daily document redesign v2 — 5 PO additions integrated: (1) cron-exclusive MARKET channel with 30s danger-drain lane, (2) full-at-milestone / delta-intraday fingerprint dedup, (3) watch/attention register (docs/attention/watch.md) for forward-looking catalysts, (4) retention lifecycle with roll-up-before-prune invariant and tunable windows, (5) one-time migration recap-then-clean before legacy signal deprecation. 29 F-items + 4 F-MIG items. All v1 decisions intact except OVERRIDE of direct market send by alert-commander (now danger-drain lane).",
+  "v1_overrides": [
+    "Design Point C: alert-commander no longer calls send_telegram(channel=market) directly — replaced by 30s danger-drain lane in delivery cron",
+    "Postman section: renamed to delivery cron; two-lane (30s danger + 5min normal); SOLE market sender"
+  ],
+  "new_additions": [
+    "Addition 1: Delivery channel exclusivity — no cowork agent sends to market; agents keep direct send for work/bug",
+    "Addition 2: push_mode full|delta; market-push-state.json fingerprint; unchanged intraday tick = no push",
+    "Addition 3: Watch/Attention Register — docs/attention/watch.md; per-agent ## WATCH subsection; CHEF consolidates; 8-field item schema; lifecycle open→triggered→resolved|expired",
+    "Addition 4: Retention lifecycle — roll-up-before-prune; defaults daily=14d weekly=8w monthly=24m yearly=indefinite; digest-predict prune runner; fail-safe verify-before-delete",
+    "Addition 5: One-time migration recap F-MIG1–F-MIG4 gated before P3.7 legacy cleanup"
+  ],
+  "phase_sequence": [
+    "Phase 1 (F1-F8): Foundation — dirs, gitignore, caps, schedule stubs, spec, watch.md, push-state.json",
+    "Phase 2 (F9-F17): Parallel run — header write + agents append to daily folder with ## WATCH subsections, existing delivery unchanged",
+    "Phase 3 (F18-F29 + F-MIG1-F-MIG4): Full cutover — delta-read, delivery cron (2 lanes), outbox cutover, watch consolidation, CHEF reads daily folder, migration recap-then-clean, retention prune wired into digest-predict"
+  ],
+  "first_action": "F1: Create directory structure (docs/daily/, docs/outbox/market/danger|normal|dead, docs/recaps/*, docs/attention/) and update .gitignore",
+  "qa_gates": [
+    "Phase 2 gate: 5 consecutive trading days — ## WATCH subsections present, no cycle-time regression — PO sign-off required before Phase 3",
+    "Phase 3 gate: 10 consecutive trading days — danger lane ≤30s, dedup confirmed, watch register surfacing items in dishes, retention prune cycle verified — user verbal confirmation"
+  ],
+  "agents_affected": ["unified-agent", "digest-predict", "cowork-team", "news-scout", "market-watcher", "financial-analyst", "alert-commander", "report-analyzer", "tran-ngoc-bau", "cowork-refactory-expert"],
+  "new_components": ["delivery-cron (NOT an agent — cron process, two lanes)", "docs/attention/watch.md (persistent attention register)"],
+  "new_files": [
+    "docs/standards/daily-document-spec.md",
+    "docs/agents/unified-agent/flow/daily-seed.md",
+    "docs/attention/watch.md",
+    "docs/data/market-push-state.json",
+    "docs/data/delivery-cron-delivered.json",
+    "docs/agents/digest-predict/flow/monthly.md",
+    "docs/agents/digest-predict/flow/yearly.md"
+  ],
+  "alert_split_preserved": true,
+  "alert_engine_unaffected": true,
+  "concurrent_commit_race_eliminated": true,
+  "delivery_channel_exclusivity": "market=cron-only; work/bug=direct-send-kept",
+  "supersedes_signal": "docs/signals/cowork-team-daily-document-redesign-20260527T180129Z.json"
+}
