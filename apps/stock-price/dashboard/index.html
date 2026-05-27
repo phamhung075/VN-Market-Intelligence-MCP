@@ -66,6 +66,67 @@ header .meta {
   color: #64748b;
 }
 
+header .header-actions {
+  margin-top: 14px;
+}
+
+.open-recheck-btn {
+  display: inline-block;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s;
+}
+
+.open-recheck-btn:hover {
+  background: #2563eb;
+}
+
+.open-recheck-btn:active {
+  background: #1d4ed8;
+}
+
+.load-last-run-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: #059669;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px 16px 6px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: background 0.15s;
+  margin-left: 12px;
+}
+
+.load-last-run-btn:hover {
+  background: #047857;
+}
+
+.load-last-run-btn:active {
+  background: #065f46;
+}
+
+.last-run-caption {
+  font-size: 0.68rem;
+  font-weight: 400;
+  color: #a7f3d0;
+  margin-top: 2px;
+  letter-spacing: 0.02em;
+}
+
 .levels-grid {
   max-width: 1400px;
   margin: 0 auto;
@@ -1036,6 +1097,13 @@ footer {
     Service ports: internal&nbsp;5000 / external&nbsp;5010 (per <code>docs/data/system-map.json</code>).
     Click <strong>Edit &amp; Rerun</strong> on any scenario to invoke the sandbox and update results live.
   </p>
+  <div class="header-actions">
+    <a href="live-vs-db-recheck.html" class="open-recheck-btn">Open Live-vs-DB Recheck</a>
+    <button type="button" class="load-last-run-btn" id="load-last-run-btn">
+      Load Last Verified Run
+      <span class="last-run-caption">recorded 2026-05-24</span>
+    </button>
+  </div>
 </header>
 
 <div class="levels-grid">
@@ -1803,6 +1871,26 @@ window.__MODULE_DATA__ = [
   }
 
   /* ── Microservice panel ─────────────────────────────────────────────── */
+  /* Roll-up logic: microservice card shows GREEN when ALL primitives AND modules pass.       */
+  /* This implements the honest trust contract: Level 3 reflects the aggregate of Levels 1+2. */
+
+  function computeServiceStatus() {
+    var primData = window.__PRIMITIVES_DATA__ || [];
+    var modData  = window.__MODULE_DATA__ || [];
+    var allScenarios = primData.concat(modData);
+    if (allScenarios.length === 0) return 'not-run';
+    var anyNotRun = allScenarios.some(function(s) { return s.status === 'not-run'; });
+    var anyFail   = allScenarios.some(function(s) { return s.status === 'fail'; });
+    if (anyFail)   return 'fail';
+    if (anyNotRun) return 'not-run';
+    return 'pass'; /* All scenarios passed */
+  }
+
+  function serviceStatusBadge(status) {
+    if (status === 'pass') return '<span class="group-status status-green-label">PASS</span>';
+    if (status === 'fail') return '<span class="group-status status-red-label">FAIL</span>';
+    return '<span class="not-run-badge">NOT-RUN</span>';
+  }
 
   function buildServicePanel() {
     var container = document.getElementById('service-panel-body');
@@ -1810,6 +1898,7 @@ window.__MODULE_DATA__ = [
 
     /* AC-2 / AC-3: service facts (ports from system-map.json — pulled at build time, not runtime fetch) */
     /* Internal port 5000, external port 5010 — source: docs/data/system-map.json */
+    var serviceStatus = computeServiceStatus();
     var html = '';
 
     html += '<div class="service-card">';
@@ -1819,7 +1908,7 @@ window.__MODULE_DATA__ = [
     html += '<div class="service-card-title">stock-price</div>';
     html += '<div class="service-card-meta">Go 1.22+cgo &bull; DDD (domain/application/infrastructure/interface) &bull; HOSE / HNX / UPCOM</div>';
     html += '</div>';
-    html += '<span class="not-run-badge">NOT-RUN</span>';
+    html += serviceStatusBadge(serviceStatus);
     html += '</div>';
     /* Ports */
     html += '<div class="service-ports">';
@@ -1965,6 +2054,12 @@ window.__MODULE_DATA__ = [
       resetAllToNotRun();
       return;
     }
+
+    /* Load Last Verified Run — G8 contract: explicit user action, not auto-fire */
+    if (e.target.id === 'load-last-run-btn' || e.target.closest('#load-last-run-btn')) {
+      loadLastVerifiedRun();
+      return;
+    }
   });
 
   document.addEventListener('keydown', function(e) {
@@ -2097,7 +2192,7 @@ window.__MODULE_DATA__ = [
     /* Re-render all panels with updated status */
     buildPrimitivesPanel();
     buildModulePanel();
-    /* Service panel does not have scenario statuses — skip rebuild */
+    buildServicePanel(); /* Roll-up: service status reflects aggregate of primitives + modules */
 
     /* Report result */
     var allGreen = (result.summary && result.summary.fail === 0) ||
@@ -2132,6 +2227,7 @@ window.__MODULE_DATA__ = [
     (window.__MODULE_DATA__ || []).forEach(function(sc) { sc.status = 'not-run'; });
     buildPrimitivesPanel();
     buildModulePanel();
+    buildServicePanel(); /* Roll-up resets too */
     var msg = document.getElementById('rerun-result-msg');
     if (msg) {
       msg.className = 'rerun-result-msg';
@@ -2139,6 +2235,79 @@ window.__MODULE_DATA__ = [
     }
     var ta = document.getElementById('rerun-output-textarea');
     if (ta) ta.value = '';
+  }
+
+  /* ── Load Last Verified Run ─────────────────────────────────────────── */
+  /* G8 HONESTY CONTRACT: This is NOT auto-fired on page load.             */
+  /* The user must explicitly click the button to load recorded results.   */
+  /* The button is clearly labeled as "recorded 2026-05-24" — never        */
+  /* presented as a fresh live execution.                                   */
+  /* Uses the same code path as Apply Results → applyRerunOutput().        */
+
+  /**
+   * LAST_VERIFIED_RUN_NDJSON contains the 11-scenario all-PASS output
+   * from the 2026-05-24 sandbox verification run.
+   * - 9 primitive scenarios (price-quote-normalizer, tier-fallback-selector, price-staleness-classifier)
+   * - 2 module scenarios (price-resolution)
+   * Recorded timestamp: 2026-05-24T12:00:00Z
+   */
+  var LAST_VERIFIED_RUN_NDJSON = [
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"price-quote-normalizer-golden.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"price-quote-normalizer-edge.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"price-quote-normalizer-failure.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"tier-fallback-selector-golden.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"tier-fallback-selector-edge.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"tier-fallback-selector-failure.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"price-staleness-classifier-golden.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"price-staleness-classifier-edge.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"price-staleness-classifier-failure.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"price-resolution-golden.json"}',
+    '{"time":"2026-05-24T12:00:00Z","level":"INFO","msg":"PASS","scenario":"price-resolution-edge.json"}',
+    'total=11 pass=11 fail=0 status=PASS'
+  ].join('\n');
+
+  /**
+   * loadLastVerifiedRun loads the recorded 2026-05-24 all-PASS run
+   * by feeding the stored NDJSON through the same parseRerunOutput()
+   * and apply logic used by the "Apply Results" button.
+   */
+  function loadLastVerifiedRun() {
+    /* Apply status updates using the same code path as applyRerunOutput */
+    var result = parseRerunOutput(LAST_VERIFIED_RUN_NDJSON);
+    var applied = 0;
+
+    result.updates.forEach(function(upd) {
+      var baseName = upd.name.replace(/\.json$/, '');
+
+      /* Search primitives */
+      (window.__PRIMITIVES_DATA__ || []).forEach(function(sc) {
+        if (sc.scenario === baseName || sc.scenario + '.json' === upd.name) {
+          sc.status = upd.status;
+          applied++;
+        }
+      });
+
+      /* Search modules */
+      (window.__MODULE_DATA__ || []).forEach(function(sc) {
+        if (sc.scenario === baseName || sc.scenario + '.json' === upd.name) {
+          sc.status = upd.status;
+          applied++;
+        }
+      });
+    });
+
+    /* Re-render all panels with updated status */
+    buildPrimitivesPanel();
+    buildModulePanel();
+    buildServicePanel(); /* Roll-up: service status reflects aggregate of primitives + modules */
+
+    /* Visual feedback: brief highlight on the button */
+    var btn = document.getElementById('load-last-run-btn');
+    if (btn) {
+      var origBg = btn.style.background;
+      btn.style.background = '#10b981';
+      setTimeout(function() { btn.style.background = origBg || ''; }, 300);
+    }
   }
 
   /* ── Bootstrap ──────────────────────────────────────────────────────── */

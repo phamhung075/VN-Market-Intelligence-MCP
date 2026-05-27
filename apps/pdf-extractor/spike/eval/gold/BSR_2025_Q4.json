@@ -1,0 +1,79 @@
+{
+  "ticker": "BSR",
+  "year": 2025,
+  "quarter": 4,
+  "period_label": "Q4 2025 + Year 2025",
+  "statement": "income_statement",
+  "currency": "VND",
+  "unit": "VND (raw, not millions)",
+  "pdf_file": "20260130-BSR-Bao-cao-tai-chinh-rieng-Quy-4-nam-2025.pdf",
+  "pdf_type": "text-native (pdfplumber readable)",
+  "income_statement_pages": [4],
+  "source_method": "pdfplumber text extraction — text-native PDF, highest confidence",
+  "column_layout": {
+    "col_0": "Row code (Mã số)",
+    "col_1": "Q4 2025 (Quý 4) VND",
+    "col_2": "Q4 2024 VND",
+    "col_3": "Year 2025 (Lũy kế) VND",
+    "col_4": "Year 2024 VND"
+  },
+  "consolidated_current_quarter_column": 1,
+  "consolidated_ytd_column": 3,
+  "rows": [
+    {
+      "row_code": "01",
+      "label": "Doanh thu bán hàng và cung cấp dịch vụ",
+      "q4_2025": 37596533295261,
+      "q4_2024": 35951957257345,
+      "ytd_2025": 141510262044677,
+      "ytd_2024": 122986399077561
+    },
+    {
+      "row_code": "10",
+      "label": "Doanh thu thuần",
+      "q4_2025": 37596533295261,
+      "q4_2024": 35951957257345,
+      "ytd_2025": 141510262044677,
+      "ytd_2024": 122986399077561
+    },
+    {
+      "row_code": "20",
+      "label": "Lợi nhuận gộp",
+      "q4_2025": 3635434946217,
+      "q4_2024": 196079949409,
+      "ytd_2025": 6018164832908,
+      "ytd_2024": 492706162230
+    },
+    {
+      "row_code": "30",
+      "label": "Lợi nhuận thuần từ hoạt động kinh doanh",
+      "q4_2025": 3434115375045,
+      "q4_2024": -59049466452,
+      "ytd_2025": 5903627105896,
+      "ytd_2024": 431032489174,
+      "note": "Q4 2024 is negative: (59.049.466.452)"
+    },
+    {
+      "row_code": "50",
+      "label": "Lợi nhuận kế toán trước thuế",
+      "q4_2025": 3439913739857,
+      "q4_2024": -50982119810,
+      "ytd_2025": 5934478453634,
+      "ytd_2024": 459370772469
+    },
+    {
+      "row_code": "60",
+      "label": "Lợi nhuận sau thuế TNDN (net profit)",
+      "q4_2025": 3031352191955,
+      "q4_2024": -87653930703,
+      "ytd_2025": 5179680297962,
+      "ytd_2024": 316727575109
+    }
+  ],
+  "regression_anchors": {
+    "net_profit_q4_2025_vnd": 3031352191955,
+    "net_profit_ytd_2025_vnd": 5179680297962,
+    "revenue_q4_2025_vnd": 37596533295261,
+    "description": "BSR text-native PDF — highest confidence ground truth. No OCR needed."
+  }
+}

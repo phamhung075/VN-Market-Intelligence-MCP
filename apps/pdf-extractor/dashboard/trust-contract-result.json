@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/mcp-server/dashboard/playwright.config.js",
-    "rootDir": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/mcp-server/dashboard/tests",
+    "configFile": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/pdf-extractor/dashboard/playwright.config.js",
+    "rootDir": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/pdf-extractor/dashboard",
     "forbidOnly": false,
     "fullyParallel": false,
     "globalSetup": null,
@@ -16,20 +16,20 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/mcp-server/test-results",
+        "outputDir": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
           "actualWorkers": 1
         },
-        "id": "chromium",
-        "name": "chromium",
-        "testDir": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/mcp-server/dashboard/tests",
+        "id": "",
+        "name": "",
+        "testDir": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/pdf-extractor/dashboard",
         "testIgnore": [],
         "testMatch": [
-          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+          "trust-contract.spec.js"
         ],
-        "timeout": 15000
+        "timeout": 30000
       }
     ],
     "quiet": false,
@@ -41,7 +41,7 @@
       [
         "json",
         {
-          "outputFile": "playwright-verdict.json"
+          "outputFile": "trust-contract-result.json"
         }
       ]
     ],
@@ -55,7 +55,13 @@
     "updateSourceMethod": "patch",
     "version": "1.60.0",
     "workers": 6,
-    "webServer": null
+    "webServer": {
+      "command": "npx http-server . -p 9999 -c-1 --cors",
+      "url": "http://localhost:9999",
+      "reuseExistingServer": false,
+      "cwd": "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP/apps/pdf-extractor/dashboard",
+      "timeout": 10000
+    }
   },
   "suites": [
     {
@@ -66,33 +72,33 @@
       "specs": [],
       "suites": [
         {
-          "title": "G9 Trust Contract — mcp-server Dashboard",
+          "title": "file:// rendering — PRIMARY regression guard",
           "file": "trust-contract.spec.js",
-          "line": 38,
+          "line": 49,
           "column": 6,
           "specs": [
             {
-              "title": "1. Three panels are present in the DOM",
+              "title": "AC-1: file:// — 6 primitive + 1 module cards show PASS, service shows NOT-RUN",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 15000,
+                  "timeout": 30000,
                   "annotations": [],
                   "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
+                  "projectId": "",
+                  "projectName": "",
                   "results": [
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2349,
+                      "duration": 1425,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-25T21:52:44.775Z",
+                      "startTime": "2026-05-24T20:00:45.271Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -100,33 +106,33 @@
                   "status": "expected"
                 }
               ],
-              "id": "39080c102801adda9f03-2c44ff54ee53e9bdb8b3",
+              "id": "39080c102801adda9f03-793bb5fbab1917f42043",
               "file": "trust-contract.spec.js",
-              "line": 81,
+              "line": 68,
               "column": 3
             },
             {
-              "title": "2. Module panel contains no \"Phase 2\" placeholder text",
+              "title": "AC-4: file:// — zero network requests (footer claim literally true)",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 15000,
+                  "timeout": 30000,
                   "annotations": [],
                   "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
+                  "projectId": "",
+                  "projectName": "",
                   "results": [
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2173,
+                      "duration": 434,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-25T21:52:47.471Z",
+                      "startTime": "2026-05-24T20:00:47.909Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -134,67 +140,33 @@
                   "status": "expected"
                 }
               ],
-              "id": "39080c102801adda9f03-f9550b56f7d4466c4139",
-              "file": "trust-contract.spec.js",
-              "line": 96,
-              "column": 3
-            },
-            {
-              "title": "3. Primitives panel contains ≥9 scenario cards",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 15000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2182,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-05-25T21:52:49.660Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "39080c102801adda9f03-be9abdcc6ac94ae1b65e",
+              "id": "39080c102801adda9f03-e1dc606488f39fa88e29",
               "file": "trust-contract.spec.js",
               "line": 104,
               "column": 3
             },
             {
-              "title": "4. At least 1 card with GREEN (pass) status indicator",
+              "title": "AC-2: file:// — missing traces.js → all cards show NOT-RUN (honest fallback)",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 15000,
+                  "timeout": 30000,
                   "annotations": [],
                   "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
+                  "projectId": "",
+                  "projectName": "",
                   "results": [
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2183,
+                      "duration": 586,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-25T21:52:51.853Z",
+                      "startTime": "2026-05-24T20:00:48.416Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -202,67 +174,33 @@
                   "status": "expected"
                 }
               ],
-              "id": "39080c102801adda9f03-b2b6ac8894d5b417fdfd",
-              "file": "trust-contract.spec.js",
-              "line": 111,
-              "column": 3
-            },
-            {
-              "title": "5. renderCard() produces mcp-dot-fail HTML when given status:\"fail\"",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 15000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2181,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-05-25T21:52:54.053Z",
-                      "annotations": [],
-                      "attachments": []
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "39080c102801adda9f03-d3bafc86664f5bc9ec34",
+              "id": "39080c102801adda9f03-5297307ddb5d58a62b6d",
               "file": "trust-contract.spec.js",
               "line": 118,
               "column": 3
             },
             {
-              "title": "6. Zero console errors during load + 2s settle",
+              "title": "AC-6: file:// — honest-red — inject pass=false into traces.js, card shows FAIL badge",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 15000,
+                  "timeout": 30000,
                   "annotations": [],
                   "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
+                  "projectId": "",
+                  "projectName": "",
                   "results": [
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2180,
+                      "duration": 484,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-25T21:52:56.252Z",
+                      "startTime": "2026-05-24T20:00:49.069Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -270,33 +208,75 @@
                   "status": "expected"
                 }
               ],
-              "id": "39080c102801adda9f03-3decfc83eed4abe0e7dc",
+              "id": "39080c102801adda9f03-70d83ff0aa199602f21d",
               "file": "trust-contract.spec.js",
-              "line": 138,
+              "line": 151,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "http baseline — retained G9 contract",
+          "file": "trust-contract.spec.js",
+          "line": 205,
+          "column": 6,
+          "specs": [
+            {
+              "title": "AC-5: http — 3 panels, 6 primitive PASS, module PASS, service NOT-RUN, 0 console errors, 0 external HTTP",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 633,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-24T20:00:49.633Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "39080c102801adda9f03-b114ade40ed975156f51",
+              "file": "trust-contract.spec.js",
+              "line": 222,
               "column": 3
             },
             {
-              "title": "7. Zero HTTP/HTTPS network requests (file:// mode)",
+              "title": "http screenshot: trust-contract screenshot in all-green state",
               "ok": true,
               "tags": [],
               "tests": [
                 {
-                  "timeout": 15000,
+                  "timeout": 30000,
                   "annotations": [],
                   "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
+                  "projectId": "",
+                  "projectName": "",
                   "results": [
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2177,
+                      "duration": 1853,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-25T21:52:58.446Z",
+                      "startTime": "2026-05-24T20:00:50.358Z",
                       "annotations": [],
                       "attachments": []
                     }
@@ -304,9 +284,67 @@
                   "status": "expected"
                 }
               ],
-              "id": "39080c102801adda9f03-9948ec27b9f565451d22",
+              "id": "39080c102801adda9f03-e32f6a3598a9bf2c2ab4",
               "file": "trust-contract.spec.js",
-              "line": 148,
+              "line": 252,
+              "column": 3
+            }
+          ]
+        },
+        {
+          "title": "AC-3: runner honesty — known_bad fixtures exit 1, output pass=false",
+          "file": "trust-contract.spec.js",
+          "line": 274,
+          "column": 6,
+          "specs": [
+            {
+              "title": "AC-3: all known_bad scenario fixtures produce runner exit 1 + pass=false output",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "",
+                  "projectName": "",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2500,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [
+                        {
+                          "buffer": ""
+                        },
+                        {
+                          "buffer": ""
+                        },
+                        {
+                          "buffer": ""
+                        },
+                        {
+                          "buffer": ""
+                        },
+                        {
+                          "buffer": ""
+                        }
+                      ],
+                      "retry": 0,
+                      "startTime": "2026-05-24T20:00:52.256Z",
+                      "annotations": [],
+                      "attachments": []
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "39080c102801adda9f03-e77f5b05a7bc417f3194",
+              "file": "trust-contract.spec.js",
+              "line": 275,
               "column": 3
             }
           ]
@@ -316,8 +354,8 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-05-25T21:52:44.101Z",
-    "duration": 16577.469,
+    "startTime": "2026-05-24T20:00:35.013Z",
+    "duration": 19920.469,
     "expected": 7,
     "skipped": 0,
     "unexpected": 0,

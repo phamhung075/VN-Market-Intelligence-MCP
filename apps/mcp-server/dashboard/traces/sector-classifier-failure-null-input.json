@@ -8,6 +8,6 @@
   },
   "match": true,
   "error": "classifySectorMovement: input must not be null/undefined",
-  "timestamp": "2026-05-25T10:27:55.728Z",
-  "durationMs": 0.01
+  "timestamp": "2026-05-26T06:14:21.132Z",
+  "durationMs": 2.72
 }

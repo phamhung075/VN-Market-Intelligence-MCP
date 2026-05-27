@@ -1,0 +1,63 @@
+{
+  "ticker": "DHG",
+  "year": 2026,
+  "quarter": 1,
+  "period_label": "Q1 2026 (3 tháng kết thúc ngày 31.03.2026)",
+  "statement": "income_statement",
+  "currency": "VND",
+  "unit": "VND (raw, not millions)",
+  "pdf_file": "20260420-DHG-BCTC-Quy-1.2026.pdf",
+  "pdf_type": "image-based (scanned)",
+  "income_statement_pages": [6],
+  "source_method": "OCR with Tesseract vie+eng at 2.0x scale on page 6 — verified",
+  "column_layout": {
+    "col_0": "Row code (Mã số)",
+    "col_1": "Q1 2026 (kỳ 3 tháng kết thúc ngày 31.03.2026) VND",
+    "col_2": "Q1 2025 (kỳ 3 tháng kết thúc ngày 31.03.2025) VND"
+  },
+  "consolidated_current_quarter_column": 1,
+  "consolidated_ytd_column": 1,
+  "rows": [
+    {
+      "row_code": "01",
+      "label": "Doanh thu bán hàng và cung cấp dịch vụ",
+      "q1_2026": 1360855373439,
+      "q1_2025": 1397247597425
+    },
+    {
+      "row_code": "10",
+      "label": "Doanh thu thuần",
+      "q1_2026": 1198100182788,
+      "q1_2025": 1194544776752
+    },
+    {
+      "row_code": "20",
+      "label": "Lợi nhuận gộp",
+      "q1_2026": 600227548958,
+      "q1_2025": 567386132303
+    },
+    {
+      "row_code": "30",
+      "label": "Lợi nhuận từ hoạt động kinh doanh",
+      "q1_2026": 347315199268,
+      "q1_2025": 296845590740
+    },
+    {
+      "row_code": "50",
+      "label": "Tổng lợi nhuận kế toán trước thuế",
+      "q1_2026": 347269179744,
+      "q1_2025": 293176470516
+    },
+    {
+      "row_code": "60",
+      "label": "Lợi nhuận sau thuế thu nhập doanh nghiệp (net profit)",
+      "q1_2026": 315677281272,
+      "q1_2025": 266239848812
+    }
+  ],
+  "regression_anchors": {
+    "net_profit_q1_2026_vnd": 315677281272,
+    "revenue_q1_2026_vnd": 1360855373439,
+    "description": "DHG Q1 2026 anchor. The old pipeline had decimal-shift issue on DHG revenue: '0.000009' case from vn_number_normalize — now fixed."
+  }
+}

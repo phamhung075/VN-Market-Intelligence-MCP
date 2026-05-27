@@ -8,6 +8,6 @@
   },
   "match": true,
   "error": "generateSparkline: input must not be null/undefined",
-  "timestamp": "2026-05-25T10:27:55.727Z",
-  "durationMs": 0.12
+  "timestamp": "2026-05-26T06:14:21.549Z",
+  "durationMs": 0.4
 }

@@ -1,0 +1,85 @@
+{
+  "ticker": "VNM",
+  "year": 2025,
+  "quarter": 4,
+  "period_label": "Q4 2025 + Year 2025",
+  "statement": "income_statement",
+  "currency": "VND",
+  "unit": "VND (raw, not millions)",
+  "pdf_file": "BCTC VNM 31.12.2025 - HOP NHAT - VN.pdf",
+  "pdf_type": "image-based (scanned)",
+  "income_statement_pages": [8, 9],
+  "source_method": "OCR with Tesseract vie+eng at 2.0x scale — manually verified line by line",
+  "column_layout": {
+    "col_0": "Row code (Mã số)",
+    "col_1": "Q4 2025 (Quý IV kết thúc ngày 31/12/2025) VND",
+    "col_2": "Q4 2024 (Quý IV kết thúc ngày 31/12/2024) VND",
+    "col_3": "Year 2025 (Năm kết thúc ngày 31/12/2025) VND",
+    "col_4": "Year 2024 (Năm kết thúc ngày 31/12/2024) VND"
+  },
+  "consolidated_current_quarter_column": 1,
+  "consolidated_ytd_column": 3,
+  "rows": [
+    {
+      "row_code": "01",
+      "label": "Doanh thu bán hàng và cung cấp dịch vụ",
+      "q4_2025": 17045421378817,
+      "q4_2024": 15485051443652,
+      "ytd_2025": 63723520008574,
+      "ytd_2024": 61823889921880,
+      "note": "Revenue - manual read from OCR page 8 col 3"
+    },
+    {
+      "row_code": "10",
+      "label": "Doanh thu thuần về bán hàng và cung cấp dịch vụ",
+      "q4_2025": 17033450405954,
+      "q4_2024": 15477073125441,
+      "ytd_2025": 63645886756227,
+      "ytd_2024": 61782609528445,
+      "note": "Net revenue after deductions"
+    },
+    {
+      "row_code": "20",
+      "label": "Lợi nhuận gộp về bán hàng và cung cấp dịch vụ",
+      "q4_2025": 6890016993344,
+      "q4_2024": 6209690644985,
+      "ytd_2025": 26209474194531,
+      "ytd_2024": 25590176323124,
+      "note": "Gross profit"
+    },
+    {
+      "row_code": "50",
+      "label": "Lợi nhuận kế toán trước thuế",
+      "q4_2025": 3476999882086,
+      "q4_2024": 2643368770905,
+      "ytd_2025": 11649985224938,
+      "ytd_2024": 11599653741335,
+      "note": "Profit before tax"
+    },
+    {
+      "row_code": "60",
+      "label": "Lợi nhuận sau thuế TNDN",
+      "q4_2025": 2827199040932,
+      "q4_2024": 2146791343977,
+      "ytd_2025": 9413589732469,
+      "ytd_2024": 9452892989948,
+      "note": "Net profit after tax — total including minority"
+    },
+    {
+      "row_code": "61",
+      "label": "Lợi nhuận sau thuế — Chủ sở hữu của Công ty (phân bổ cho parent)",
+      "q4_2025": 2840367601702,
+      "q4_2024": 2123649268483,
+      "ytd_2025": 9410201646692,
+      "ytd_2024": 9392310356250,
+      "note": "Net profit attributable to parent — THE anchor: ~2,840,370 million VND in Q4 2025. This is the figure that was decimal-shifted to 0.000051 in old pipeline."
+    }
+  ],
+  "regression_anchors": {
+    "net_profit_parent_q4_2025_vnd": 2840367601702,
+    "net_profit_parent_q4_2025_million_vnd": 2840.37,
+    "known_decimal_shift_token": "2.840.370",
+    "expected_normalized": "2840370",
+    "description": "VNM net_profit anchor: the OCR token '2.840.370' in millions-VND tables was being parsed as 2.84037 by float() instead of 2840370. Fixed by vn_number_normalize."
+  }
+}

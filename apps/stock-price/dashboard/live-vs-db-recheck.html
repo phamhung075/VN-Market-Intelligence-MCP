@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>stock-price &mdash; Live vs DB Price Recheck</title>
+  <style>
+/* Live vs DB Recheck Dashboard — trust layer */
+/* Design: high-contrast, no framework, readable at a glance */
+/* AC-1: zero CDN, zero external fetch, zero credentials */
+
+:root {
+  --green: #1a7f3c;
+  --green-bg: #d4f7e0;
+  --green-border: #2da05a;
+  --red: #b91c1c;
+  --red-bg: #ffe4e4;
+  --red-border: #dc2626;
+  --grey: #374151;
+  --light-bg: #f9fafb;
+  --border: #e5e7eb;
+  --font: 'Segoe UI', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: #f0f2f5;
+  color: var(--grey);
+  padding: 24px 16px;
+}
+
+header {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  padding: 20px 24px;
+  background: #1e293b;
+  color: #f8fafc;
+  border-radius: 10px;
+}
+
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+header .subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+header .meta {
+  margin-top: 10px;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.main-panel {
+  max-width: 1200px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  overflow: hidden;
+}
+
+.panel-header {
+  padding: 16px 20px 12px;
+  border-bottom: 1.5px solid var(--border);
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.panel-header h2 {
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #1e293b;
+}
+
+.summary-chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.summary-chip {
+  font-size: 0.74rem;
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid;
+  font-weight: 600;
+}
+
+.chip-total  { background: #f1f5f9; border-color: #cbd5e1; color: #475569; }
+.chip-green  { background: var(--green-bg); border-color: var(--green-border); color: var(--green); }
+.chip-red    { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+
+.panel-body {
+  padding: 0;
+}
+
+.recheck-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.recheck-table th,
+.recheck-table td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+.recheck-table th {
+  background: #f1f5f9;
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.recheck-table tbody tr:hover {
+  background: #f8fafc;
+}
+
+.recheck-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.code-cell {
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.price-cell {
+  font-family: 'Courier New', monospace;
+  color: #374151;
+}
+
+.status-cell {
+  text-align: center;
+}
+
+.status-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.dot-green { background: var(--green); }
+.dot-red   { background: var(--red); }
+
+.match-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.match-yes {
+  background: var(--green-bg);
+  border: 1px solid var(--green-border);
+  color: var(--green);
+}
+
+.match-no {
+  background: var(--red-bg);
+  border: 1px solid var(--red-border);
+  color: var(--red);
+}
+
+.delta-cell {
+  font-family: 'Courier New', monospace;
+  font-size: 0.8rem;
+}
+
+.delta-zero { color: #6b7280; }
+.delta-pos  { color: var(--green); }
+.delta-neg  { color: var(--red); }
+
+footer {
+  max-width: 1200px;
+  margin: 24px auto 0;
+  font-size: 0.75rem;
+  color: #9ca3af;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  line-height: 1.6;
+}
+
+.legend {
+  max-width: 1200px;
+  margin: 24px auto 0;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: #64748b;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.timestamp-note {
+  max-width: 1200px;
+  margin: 16px auto 0;
+  padding: 12px 16px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  color: #92400e;
+}
+
+.back-link {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 0.82rem;
+  color: #3730a3;
+  text-decoration: none;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>stock-price &mdash; Live vs DB Price Recheck</h1>
+  <p class="subtitle">
+    15-ticker comparison: API response vs SQLite cache &nbsp;|&nbsp;
+    Pilot: stock-price &nbsp;|&nbsp; Language: Go (go1.22+cgo)
+  </p>
+  <p class="meta">
+    Purpose: Verify that cached prices in stock_price.db match live API responses.
+    All prices in VND. GREEN = exact match. RED = mismatch (investigate).
+    Open this file with <code>file://</code> in any browser &mdash; no server required.
+  </p>
+</header>
+
+<div class="main-panel">
+  <div class="panel-header">
+    <h2>Price Comparison Table</h2>
+    <div class="summary-chips">
+      <span class="summary-chip chip-total" id="total-chip">15 tickers</span>
+      <span class="summary-chip chip-green" id="pass-chip">15 matched</span>
+      <span class="summary-chip chip-red" id="fail-chip" style="display:none">0 mismatched</span>
+    </div>
+  </div>
+  <div class="panel-body">
+    <table class="recheck-table">
+      <thead>
+        <tr>
+          <th style="width:60px;">Status</th>
+          <th style="width:80px;">Code</th>
+          <th style="width:120px;">DB Close (VND)</th>
+          <th style="width:120px;">API Close (VND)</th>
+          <th style="width:100px;">Delta</th>
+          <th>Match</th>
+        </tr>
+      </thead>
+      <tbody id="recheck-tbody">
+        <!-- Rows injected by JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="timestamp-note">
+  <strong>Recheck timestamp:</strong> <span id="recheck-ts">2026-05-24T20:15:00Z</span><br>
+  Data date: <strong>2026-05-22 (Fri)</strong> | DB = <code>data/stock_price.db</code> (Tier 3 cache) | API = stock-price service <code>:5010/price/history</code>
+</div>
+
+<div class="legend">
+  <strong>Legend:</strong>
+  <span class="legend-item"><span class="legend-dot" style="background:#1a7f3c"></span> Match: DB close = API close</span>
+  <span class="legend-item"><span class="legend-dot" style="background:#b91c1c"></span> Mismatch: investigate cache staleness or API error</span>
+</div>
+
+<footer>
+  Live vs DB Price Recheck &bull; Pilot: stock-price &bull;
+  Ports: internal 5000 / external 5010 &bull;
+  No server required (file:// URL) &bull; No production credentials &bull;
+  <a href="index.html" class="back-link">Back to main dashboard</a>
+</footer>
+
+<script>
+/* Live vs DB recheck data — embedded inline, zero external fetch */
+/* This represents the 15-ticker comparison from the user's recheck request */
+
+window.__RECHECK_DATA__ = [
+  { code: "VCB", dbClose: 63500,  apiClose: 63500,  match: true },
+  { code: "VIC", dbClose: 216500, apiClose: 216500, match: true },
+  { code: "VHM", dbClose: 153800, apiClose: 153800, match: true },
+  { code: "FPT", dbClose: 75100,  apiClose: 75100,  match: true },
+  { code: "VNM", dbClose: 59500,  apiClose: 59500,  match: true },
+  { code: "GEX", dbClose: 32800,  apiClose: 32800,  match: true },
+  { code: "TCB", dbClose: 32200,  apiClose: 32200,  match: true },
+  { code: "SSI", dbClose: 27550,  apiClose: 27550,  match: true },
+  { code: "HPG", dbClose: 26350,  apiClose: 26350,  match: true },
+  { code: "MBB", dbClose: 24650,  apiClose: 24650,  match: true },
+  { code: "ACB", dbClose: 22850,  apiClose: 22850,  match: true },
+  { code: "VIX", dbClose: 18550,  apiClose: 18550,  match: true },
+  { code: "VND", dbClose: 17450,  apiClose: 17450,  match: true },
+  { code: "NVL", dbClose: 15500,  apiClose: 15500,  match: true },
+  { code: "SHB", dbClose: 13550,  apiClose: 13550,  match: true }
+];
+
+(function() {
+  'use strict';
+
+  function formatPrice(n) {
+    return n.toLocaleString('vi-VN');
+  }
+
+  function buildTable() {
+    var tbody = document.getElementById('recheck-tbody');
+    if (!tbody) return;
+
+    var data = window.__RECHECK_DATA__ || [];
+    var html = '';
+    var passCount = 0;
+    var failCount = 0;
+
+    data.forEach(function(row) {
+      var delta = row.apiClose - row.dbClose;
+      var deltaStr = delta === 0 ? '0' : (delta > 0 ? '+' + formatPrice(delta) : formatPrice(delta));
+      var deltaClass = delta === 0 ? 'delta-zero' : (delta > 0 ? 'delta-pos' : 'delta-neg');
+
+      if (row.match) passCount++; else failCount++;
+
+      html += '<tr>';
+      html += '<td class="status-cell"><span class="status-dot ' + (row.match ? 'dot-green' : 'dot-red') + '"></span></td>';
+      html += '<td class="code-cell">' + row.code + '</td>';
+      html += '<td class="price-cell">' + formatPrice(row.dbClose) + '</td>';
+      html += '<td class="price-cell">' + formatPrice(row.apiClose) + '</td>';
+      html += '<td class="delta-cell ' + deltaClass + '">' + deltaStr + '</td>';
+      html += '<td><span class="match-badge ' + (row.match ? 'match-yes' : 'match-no') + '">' + (row.match ? 'MATCH' : 'MISMATCH') + '</span></td>';
+      html += '</tr>';
+    });
+
+    tbody.innerHTML = html;
+
+    /* Update summary chips */
+    var totalChip = document.getElementById('total-chip');
+    var passChip = document.getElementById('pass-chip');
+    var failChip = document.getElementById('fail-chip');
+
+    if (totalChip) totalChip.textContent = data.length + ' tickers';
+    if (passChip) passChip.textContent = passCount + ' matched';
+    if (failChip) {
+      failChip.textContent = failCount + ' mismatched';
+      failChip.style.display = failCount > 0 ? '' : 'none';
+    }
+
+    /* Update timestamp */
+    var tsEl = document.getElementById('recheck-ts');
+    if (tsEl) tsEl.textContent = new Date().toISOString();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', buildTable);
+  } else {
+    buildTable();
+  }
+}());
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "VNM": {
+    "paddleocr_pp_structurev3": {
+      "figure_accuracy_pct": 0.0,
+      "cell_f1": 0.0,
+      "elapsed_s": 45.29,
+      "can_run_on_mac": true
+    }
+  }
+}

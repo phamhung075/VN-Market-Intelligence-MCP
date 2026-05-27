@@ -1,0 +1,67 @@
+[
+  {
+    "candidate": "paddleocr_pp_structurev3",
+    "doc_key": "VNM",
+    "strategy_used": "pp_structurev3 status=ok",
+    "elapsed_s": 45.29,
+    "figure_matches": 0,
+    "figure_total": 6,
+    "figure_accuracy_pct": 0.0,
+    "cell_f1": 0.0,
+    "cell_precision": 0.0,
+    "cell_recall": 0.0,
+    "all_numbers_found": 0,
+    "figure_detail": [
+      {
+        "row_code": "01",
+        "gold": 17045421378817.0,
+        "predicted": null,
+        "pct_error": 100.0,
+        "match": false
+      },
+      {
+        "row_code": "10",
+        "gold": 17033450405954.0,
+        "predicted": null,
+        "pct_error": 100.0,
+        "match": false
+      },
+      {
+        "row_code": "20",
+        "gold": 6890016993344.0,
+        "predicted": null,
+        "pct_error": 100.0,
+        "match": false
+      },
+      {
+        "row_code": "50",
+        "gold": 3476999882086.0,
+        "predicted": null,
+        "pct_error": 100.0,
+        "match": false
+      },
+      {
+        "row_code": "60",
+        "gold": 2827199040932.0,
+        "predicted": null,
+        "pct_error": 100.0,
+        "match": false
+      },
+      {
+        "row_code": "61",
+        "gold": 2840367601702.0,
+        "predicted": null,
+        "pct_error": 100.0,
+        "match": false
+      }
+    ],
+    "can_run_on_this_mac": true,
+    "api_notes": [
+      "PPStructureV3 init: OK",
+      "Page 7: rendered 1684×1191 px",
+      "Page 7: predict() returned 0 result(s)",
+      "Page 8: rendered 1684×1191 px",
+      "Page 8: predict() returned 0 result(s)"
+    ]
+  }
+]

@@ -8,6 +8,6 @@
   },
   "match": true,
   "error": "buildCrossValidateSignal: direction, confidence, and summary are required",
-  "timestamp": "2026-05-25T10:27:55.728Z",
-  "durationMs": 0.06
+  "timestamp": "2026-05-26T06:14:21.339Z",
+  "durationMs": 0.2
 }

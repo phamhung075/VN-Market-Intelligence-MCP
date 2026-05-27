@@ -1,0 +1,767 @@
+{
+  "text_raw_all": {
+    "path": "text_tesseract",
+    "label": "pages4to7",
+    "elapsed_s": 15.81,
+    "notes": [
+      "Page 4: rendered 1656x2341px",
+      "Page 4: tesseract 3.7s, chars=1762",
+      "Page 5: rendered 1656x2341px",
+      "Page 5: tesseract 4.4s, chars=2184",
+      "Page 6: rendered 1656x2341px",
+      "Page 6: tesseract 3.5s, chars=1747",
+      "Page 7: rendered 1656x2341px",
+      "Page 7: tesseract 2.9s, chars=1640"
+    ],
+    "s_per_page": 3.95,
+    "all_numbers_found": 367
+  },
+  "image_raw_all": {},
+  "text_eval_pages": {
+    "page4_rows": {
+      "extractor": "text_tesseract",
+      "label": "text_page4_rows",
+      "section": "page4_rows",
+      "figure_accuracy_pct": 100.0,
+      "figure_matches": 20,
+      "figure_total": 20,
+      "cell_f1": 0.103,
+      "cell_precision": 0.054,
+      "cell_recall": 1.0,
+      "all_numbers_found": 367,
+      "match_detail": [
+        {
+          "code": "100",
+          "label": "TÀI SẢN NGẮN HẠN",
+          "gold": 58102970741619.0,
+          "predicted": 58102970741619.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "110",
+          "label": "Tiền và các khoản tương đương tiền",
+          "gold": 10540181640920.0,
+          "predicted": 10540181640920.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "111",
+          "label": "Tiền",
+          "gold": 8084826991114.0,
+          "predicted": 8084826991114.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "112",
+          "label": "Các khoản tương đương tiền",
+          "gold": 2455354649806.0,
+          "predicted": 2455354649806.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "120",
+          "label": "Các khoản đầu tư tài chính ngắn hạn",
+          "gold": 29612986737440.0,
+          "predicted": 29612986737440.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "123",
+          "label": "Đầu tư nắm giữ đến ngày đáo hạn",
+          "gold": 29612986737440.0,
+          "predicted": 29612986737440.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "130",
+          "label": "Các khoản phải thu ngắn hạn",
+          "gold": 14400800569076.0,
+          "predicted": 14400800569076.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "131",
+          "label": "Phải thu ngắn hạn của khách hàng",
+          "gold": 12733504688522.0,
+          "predicted": 12733504688522.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "132",
+          "label": "Trả trước cho người bán ngắn hạn",
+          "gold": 915176652285.0,
+          "predicted": 915176652285.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "134",
+          "label": "Phải thu theo tiến độ kế hoạch hợp đồng xây dựng",
+          "gold": 200405269967.0,
+          "predicted": 200405269967.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "135",
+          "label": "Phải thu về cho vay ngắn hạn",
+          "gold": 9195910819.0,
+          "predicted": 9195910819.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "136",
+          "label": "Phải thu ngắn hạn khác",
+          "gold": 1128684791757.0,
+          "predicted": 1128684791757.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "137",
+          "label": "Dự phòng phải thu ngắn hạn khó đòi",
+          "gold": -586166744274.0,
+          "predicted": -586166744274.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "140",
+          "label": "Hàng tồn kho",
+          "gold": 2167188682919.0,
+          "predicted": 2167188682919.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "141",
+          "label": "Hàng tồn kho (gross)",
+          "gold": 2250812490757.0,
+          "predicted": 2250812490757.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "149",
+          "label": "Dự phòng giảm giá hàng tồn kho",
+          "gold": -83623807838.0,
+          "predicted": -83623807838.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "150",
+          "label": "Tài sản ngắn hạn khác",
+          "gold": 1381813111264.0,
+          "predicted": 1381813111264.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "151",
+          "label": "Chi phí trả trước ngắn hạn",
+          "gold": 641070240596.0,
+          "predicted": 641070240596.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "152",
+          "label": "Thuế giá trị gia tăng được khấu trừ",
+          "gold": 609517465104.0,
+          "predicted": 609517465104.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "153",
+          "label": "Thuế và các khoản khác phải thu Nhà nước",
+          "gold": 131225405564.0,
+          "predicted": 131225405564.0,
+          "pct_error": 0.0,
+          "match": true
+        }
+      ]
+    },
+    "page5_rows": {
+      "extractor": "text_tesseract",
+      "label": "text_page5_rows",
+      "section": "page5_rows",
+      "figure_accuracy_pct": 95.8,
+      "figure_matches": 23,
+      "figure_total": 24,
+      "cell_f1": 0.118,
+      "cell_precision": 0.063,
+      "cell_recall": 0.958,
+      "all_numbers_found": 367,
+      "match_detail": [
+        {
+          "code": "200",
+          "label": "TÀI SẢN DÀI HẠN",
+          "gold": 29986651038243.0,
+          "predicted": 29986651038243.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "210",
+          "label": "Các khoản phải thu dài hạn",
+          "gold": 564342065270.0,
+          "predicted": 564342065270.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "215",
+          "label": "Phải thu về cho vay dài hạn",
+          "gold": 5278733014.0,
+          "predicted": 5278733014.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "216",
+          "label": "Phải thu dài hạn khác",
+          "gold": 611435814893.0,
+          "predicted": 611435814893.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "219",
+          "label": "Dự phòng phải thu dài hạn khó đòi",
+          "gold": -52372482637.0,
+          "predicted": -52372482637.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "220",
+          "label": "Tài sản cố định",
+          "gold": 17330033606586.0,
+          "predicted": 17330033606586.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "221",
+          "label": "Tài sản cố định hữu hình",
+          "gold": 15385816846287.0,
+          "predicted": 15385816846287.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "222",
+          "label": "Nguyên giá TSCĐ hữu hình",
+          "gold": 29148692599137.0,
+          "predicted": 29148692599137.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "223",
+          "label": "Giá trị hao mòn lũy kế TSCĐ hữu hình",
+          "gold": -13762875752850.0,
+          "predicted": -13762875752850.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "224",
+          "label": "Tài sản cố định thuê tài chính",
+          "gold": 1277212606.0,
+          "predicted": 1277212606.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "227",
+          "label": "Tài sản cố định vô hình",
+          "gold": 1942939547693.0,
+          "predicted": 1942939547693.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "228",
+          "label": "Nguyên giá TSCĐ vô hình",
+          "gold": 3868884070908.0,
+          "predicted": 3868884070908.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "229",
+          "label": "Giá trị hao mòn lũy kế TSCĐ vô hình",
+          "gold": -1925944523215.0,
+          "predicted": -1925944523215.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "240",
+          "label": "Tài sản dở dang dài hạn",
+          "gold": 1604915957419.0,
+          "predicted": 1604915957419.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "242",
+          "label": "Chi phí xây dựng cơ bản dở dang",
+          "gold": 1604915957419.0,
+          "predicted": 1604915957419.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "250",
+          "label": "Các khoản đầu tư tài chính dài hạn",
+          "gold": 4737863994182.0,
+          "predicted": 4737863994182.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "252",
+          "label": "Đầu tư vào công ty liên doanh liên kết",
+          "gold": 3581128517425.0,
+          "predicted": 3656302027788.0,
+          "pct_error": 2.099,
+          "match": false
+        },
+        {
+          "code": "253",
+          "label": "Đầu tư góp vốn vào đơn vị khác",
+          "gold": 3823762975906.0,
+          "predicted": 3823762975906.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "254",
+          "label": "Dự phòng đầu tư tài chính dài hạn",
+          "gold": -2667027499149.0,
+          "predicted": -2667027499149.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "260",
+          "label": "Tài sản dài hạn khác",
+          "gold": 5749495414786.0,
+          "predicted": 5749495414786.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "261",
+          "label": "Chi phí trả trước dài hạn",
+          "gold": 4200230383066.0,
+          "predicted": 4200230383066.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "262",
+          "label": "Tài sản thuế thu nhập hoãn lại",
+          "gold": 533534765559.0,
+          "predicted": 533534765559.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "269",
+          "label": "Lợi thế thương mại",
+          "gold": 1015730266161.0,
+          "predicted": 1015730266161.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "270",
+          "label": "TỔNG CỘNG TÀI SẢN",
+          "gold": 88089621779862.0,
+          "predicted": 88089621779862.0,
+          "pct_error": 0.0,
+          "match": true
+        }
+      ]
+    },
+    "page6_rows": {
+      "extractor": "text_tesseract",
+      "label": "text_page6_rows",
+      "section": "page6_rows",
+      "figure_accuracy_pct": 100.0,
+      "figure_matches": 20,
+      "figure_total": 20,
+      "cell_f1": 0.103,
+      "cell_precision": 0.054,
+      "cell_recall": 1.0,
+      "all_numbers_found": 367,
+      "match_detail": [
+        {
+          "code": "300",
+          "label": "NỢ PHẢI TRẢ",
+          "gold": 44338155487272.0,
+          "predicted": 44338155487272.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "310",
+          "label": "Nợ ngắn hạn",
+          "gold": 41552785100161.0,
+          "predicted": 41552785100161.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "311",
+          "label": "Phải trả người bán ngắn hạn",
+          "gold": 3837081438126.0,
+          "predicted": 3837081438126.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "312",
+          "label": "Người mua trả tiền trước ngắn hạn",
+          "gold": 761332738428.0,
+          "predicted": 761332738428.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "313",
+          "label": "Thuế và các khoản phải nộp Nhà nước",
+          "gold": 2192156678455.0,
+          "predicted": 2192156678455.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "314",
+          "label": "Phải trả người lao động",
+          "gold": 5678410841285.0,
+          "predicted": 5678410841285.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "315",
+          "label": "Chi phí phải trả ngắn hạn",
+          "gold": 1843426377372.0,
+          "predicted": 1843426377372.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "317",
+          "label": "Phải thu theo tiến độ kế hoạch hợp đồng xây dựng",
+          "gold": 85650109236.0,
+          "predicted": 85650109236.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "318",
+          "label": "Doanh thu chưa thực hiện ngắn hạn",
+          "gold": 4230708251601.0,
+          "predicted": 4230708251601.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "319",
+          "label": "Phải trả ngắn hạn khác",
+          "gold": 1014673786632.0,
+          "predicted": 1014673786632.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "320",
+          "label": "Vay và nợ thuê tài chính ngắn hạn",
+          "gold": 19169697497955.0,
+          "predicted": 19169697497955.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "321",
+          "label": "Dự phòng phải trả ngắn hạn",
+          "gold": 578298384069.0,
+          "predicted": 578298384069.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "322",
+          "label": "Quỹ khen thưởng phúc lợi",
+          "gold": 2161348997002.0,
+          "predicted": 2161348997002.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "330",
+          "label": "Nợ dài hạn",
+          "gold": 2785370387111.0,
+          "predicted": 2785370387111.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "336",
+          "label": "Doanh thu chưa thực hiện dài hạn",
+          "gold": 127529003367.0,
+          "predicted": 127529003367.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "337",
+          "label": "Phải trả dài hạn khác",
+          "gold": 149213186822.0,
+          "predicted": 149213186822.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "338",
+          "label": "Vay và nợ thuê tài chính dài hạn",
+          "gold": 1903789988184.0,
+          "predicted": 1903789988184.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "341",
+          "label": "Thuế thu nhập hoãn lại phải trả",
+          "gold": 198787701984.0,
+          "predicted": 198787701984.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "342",
+          "label": "Dự phòng phải trả dài hạn",
+          "gold": 405858410471.0,
+          "predicted": 405858410471.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "343",
+          "label": "Quỹ phát triển khoa học và công nghệ",
+          "gold": 192096283.0,
+          "predicted": 192096283.0,
+          "pct_error": 0.0,
+          "match": true
+        }
+      ]
+    },
+    "page7_rows": {
+      "extractor": "text_tesseract",
+      "label": "text_page7_rows",
+      "section": "page7_rows",
+      "figure_accuracy_pct": 86.7,
+      "figure_matches": 13,
+      "figure_total": 15,
+      "cell_f1": 0.068,
+      "cell_precision": 0.035,
+      "cell_recall": 0.867,
+      "all_numbers_found": 367,
+      "match_detail": [
+        {
+          "code": "400",
+          "label": "VỐN CHỦ SỞ HỮU",
+          "gold": 43751466292590.0,
+          "predicted": 43751466292590.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "410",
+          "label": "Vốn chủ sở hữu",
+          "gold": 43748716292590.0,
+          "predicted": 43748716292590.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "411",
+          "label": "Vốn góp của chủ sở hữu",
+          "gold": 17035071210000.0,
+          "predicted": 17035071210000.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "412",
+          "label": "Thặng dư vốn cổ phần",
+          "gold": 49713213411.0,
+          "predicted": 49713213411.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "414",
+          "label": "Vốn khác của chủ sở hữu",
+          "gold": 3499547369952.0,
+          "predicted": 3499547369952.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "417",
+          "label": "Chênh lệch tỷ giá hối đoái",
+          "gold": -70194908319.0,
+          "predicted": -70194908319.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "418",
+          "label": "Quỹ đầu tư phát triển",
+          "gold": 1556932891952.0,
+          "predicted": 1604915957419.0,
+          "pct_error": 3.082,
+          "match": false
+        },
+        {
+          "code": "420",
+          "label": "Quỹ khác thuộc vốn chủ sở hữu",
+          "gold": 88263628887.0,
+          "predicted": 88263628887.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "421",
+          "label": "Lợi nhuận sau thuế chưa phân phối",
+          "gold": 14324284500434.0,
+          "predicted": 14324284500434.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "421a",
+          "label": "LNST chưa phân phối lũy kế đến cuối kỳ trước",
+          "gold": 7399799985311.0,
+          "predicted": 7265098386273.0,
+          "pct_error": 1.82,
+          "match": false
+        },
+        {
+          "code": "421b",
+          "label": "Lợi nhuận sau thuế chưa phân phối kỳ này",
+          "gold": 6924484515123.0,
+          "predicted": 6924484515123.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "429",
+          "label": "Lợi ích cổ đông không kiểm soát",
+          "gold": 7265098386273.0,
+          "predicted": 7265098386273.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "430",
+          "label": "Nguồn kinh phí và quỹ khác",
+          "gold": 2750000000.0,
+          "predicted": 2750000000.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "431",
+          "label": "Nguồn kinh phí",
+          "gold": 2750000000.0,
+          "predicted": 2750000000.0,
+          "pct_error": 0.0,
+          "match": true
+        },
+        {
+          "code": "440",
+          "label": "TỔNG CỘNG NGUỒN VỐN",
+          "gold": 88089621779862.0,
+          "predicted": 88089621779862.0,
+          "pct_error": 0.0,
+          "match": true
+        }
+      ]
+    }
+  },
+  "image_eval_pages": {},
+  "sentinel_text": {
+    "sentinel_pass": 6,
+    "sentinel_total": 6,
+    "sentinel_pct": 100.0,
+    "detail": [
+      {
+        "code": "100",
+        "label": "TÀI SẢN NGẮN HẠN",
+        "gold": 58102970741619.0,
+        "predicted": 58102970741619.0,
+        "pct_error": 0.0,
+        "pass": true
+      },
+      {
+        "code": "200",
+        "label": "TÀI SẢN DÀI HẠN",
+        "gold": 29986651038243.0,
+        "predicted": 29986651038243.0,
+        "pct_error": 0.0,
+        "pass": true
+      },
+      {
+        "code": "270",
+        "label": "TỔNG CỘNG TÀI SẢN",
+        "gold": 88089621779862.0,
+        "predicted": 88089621779862.0,
+        "pct_error": 0.0,
+        "pass": true
+      },
+      {
+        "code": "300",
+        "label": "NỢ PHẢI TRẢ",
+        "gold": 44338155487272.0,
+        "predicted": 44338155487272.0,
+        "pct_error": 0.0,
+        "pass": true
+      },
+      {
+        "code": "400",
+        "label": "VỐN CHỦ SỞ HỮU",
+        "gold": 43751466292590.0,
+        "predicted": 43751466292590.0,
+        "pct_error": 0.0,
+        "pass": true
+      },
+      {
+        "code": "440",
+        "label": "TỔNG CỘNG NGUỒN VỐN",
+        "gold": 88089621779862.0,
+        "predicted": 88089621779862.0,
+        "pct_error": 0.0,
+        "pass": true
+      }
+    ]
+  },
+  "sentinel_image": null
+}
