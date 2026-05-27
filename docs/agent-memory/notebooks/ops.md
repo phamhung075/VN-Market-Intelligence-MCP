@@ -2769,3 +2769,66 @@ QA-team PEK-QA: direct market.db row count check on live BCTC table extraction +
 - Smoke gate proves all required imports available
 - No restart crashes, no module errors, no ABI drift
 - DocLayout-YOLO config path resolution & fail-loud gate now active
+
+---
+
+## Session: 2026-05-27 (PEK-DEPLOY)
+
+**Task:** PEK-DEPLOY — Rebuild pdf-extractor container on commit 8535b175 (PEK-OCR-ROOTCAUSE fix)
+
+### Cycle Summary
+- dev-pdf-extractor committed PEK-OCR-ROOTCAUSE fix (8535b175) bypassing pdf_extract_kit.tasks to prevent import chain ABI mismatch
+- Code-change rebuild required: `docker compose build --no-cache pdf-extractor && docker compose up -d --force-recreate pdf-extractor`
+- --no-cache enforced to re-run build-time smoke-gate (layer #13 in Dockerfile)
+- Six hard self-verify checks executed (all PASSED):
+  1. Image ID changed from fb6fda6f17cf → 439d42948589 ✓
+  2. Container health: healthy, RestartCount=0 ✓
+  3. Smoke-gate passed: "--- pek-import-chain: ALL OK ---" in build log ✓
+  4. Startup logs clean: no import errors, no ABI crashes ✓
+  5. Fleet RAM: 1.9 GiB (under 8 GiB hard cap) ✓
+  6. 503 market-hours guard intact: isVnTradingWindowUtc() gates signal detection ✓
+
+### Execution Timeline
+- 2026-05-27 12:16 UTC — Pre-rebuild state recorded: image fb6fda6f17cf, container Up 4 hours (unhealthy)
+- 2026-05-27 12:17 UTC — `docker compose build --no-cache pdf-extractor` started
+- 2026-05-27 12:26 UTC — Build complete (exit 0), new image 439d42948589 ready
+  - Layer #13 smoke-gate output: numpy 2.2.6, cv2 4.13.0, fitz 1.27.2.3, omegaconf OK, doclayout_yolo OK, paddleocr OK, torch 2.5.1+cpu
+  - pek_engine_adapter imported successfully (bypassed pdf_extract_kit.tasks)
+  - "--- pek-import-chain: ALL OK ---" printed to build log
+- 2026-05-27 12:26:49 UTC — `docker compose up -d --no-deps --force-recreate pdf-extractor` executed
+- 2026-05-27 12:26:49 UTC — Container recreated, image ID changed
+- 2026-05-27 12:27 UTC — Health status: starting
+- 2026-05-27 12:27:10 UTC — Health status: healthy (stabilized within 10s)
+
+### Startup Logs (container clean startup)
+```
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:infrastructure.lifespan:pdf-extractor starting on 0.0.0.0:5001
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:5001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:37162 - "GET /health HTTP/1.1" 200 OK
+```
+
+### Guard Verification — 503 Market-Hours Gate (Task 1380)
+- **Location:** apps/mcp-server/src/interface/mcp/server-startup.ts
+- **Function:** `export function isVnTradingWindowUtc(now: Date = new Date()): boolean`
+- **Implementation:** Returns true only during 02:00–08:59 UTC, Mon–Fri
+  - Line 45–46: checks `day !== 0 && day !== 6` (not weekend)
+  - Line 47–48: checks `h >= 2 && h <= 8` (within trading window)
+- **Usage:** pushPricesHandler.ts calls `if (!isVnTradingWindowUtc()) return;` before signal detection (suppresses change_pct alerts outside window)
+- **Status:** INTACT — no weakening, no code changes to guard logic
+
+### Key Results
+- **Rebuild status:** ✓ COMPLETE
+- **Image ID change:** ✓ VERIFIED (old fb6fda6f17cf → new 439d42948589)
+- **Smoke-gate:** ✓ PASSED (all deps imported, "ALL OK" printed)
+- **Container health:** ✓ HEALTHY (no restarts, clean startup)
+- **Fleet RAM:** ✓ 1.9 GiB (safe, under 8 GiB cap)
+- **Market-hours guard:** ✓ INTACT (no changes)
+- **Next step:** QA corpus sweep (owns verification, not ops)
+
+**Notes:**
+- Prior session (rag-service rebuild) left notebook at line 50; new PEK-DEPLOY session appended here
+- No incidents during build or deployment
+- Container health check endpoints responding correctly
