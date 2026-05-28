@@ -70,7 +70,8 @@
     { "schedule": "7 * * * *", "name": "verdictResolutionJob", "file": "src/scheduler/verdictResolutionJob.ts", "desc": "Hourly alert verdict resolver at minute=7 — resolves pending alert-verdicts.json entries against price data (task 1863b, Sprint 1867)" },
     { "schedule": "*/30 * * * *", "name": "walCheckpoint", "file": "src/scheduler/walCheckpointJob.ts", "desc": "SQLite WAL checkpoint: every 30 min FULL (live hours) + TRUNCATE+backup at 03-05 UTC (task 1329a)" },
     { "schedule": "17 * * * *", "name": "signalOutcomeResolution", "file": "src/scheduler/alerts/signalOutcomeResolutionJob.ts", "desc": "Hourly signal outcome resolution at minute 17 — resolves agent signal outcomes for 24h and 48h windows (2026-05-17)" },
-    { "schedule": "0 7 * * *", "name": "accuracyDigestJob", "file": "src/scheduler/digest/accuracyDigestJob.ts", "desc": "Daily 07:00 UTC signal accuracy WORK digest — 30-day accuracy stats, top-3/bottom-3 signal types, DB dedup guard (task 1941c)" }
+    { "schedule": "0 7 * * *", "name": "accuracyDigestJob", "file": "src/scheduler/digest/accuracyDigestJob.ts", "desc": "Daily 07:00 UTC signal accuracy WORK digest — 30-day accuracy stats, top-3/bottom-3 signal types, DB dedup guard (task 1941c)" },
+    { "schedule": "2 22 * * *", "name": "bctcEvalRecomputeJob", "file": "src/scheduler/financial-reports/bctcEvalRecomputeJob.ts", "desc": "Nightly BCTC eval recompute at 22:02 UTC (05:02 GMT+7) — sweeps stale bctc_eval_results rows and recomputes stages 4-6. Override: CRON_BCTC_EVAL_RECOMPUTE (Sprint BCTC-EVAL-SUBSTRATE)" }
   ],
   "orphan": [],
   "legacy": ["newsPollerJob.ts"]
