@@ -4,6 +4,36 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-28 — PDF-SINGLE-SOURCE DONE (§7 + §7.7 path consolidation)
+
+**Task:** PDF-SINGLE-SOURCE | Sprint: PDF-SINGLE-SOURCE | Status: DONE — 5 commits
+**Scope:** Code-only (§7 + §7.7). No docker-compose, no PDF file moves, no ops steps.
+
+**Changes:**
+- `apps/pdf-extractor/spike/eval/harness.py:42` — `data/pdfs-local` → `data/pdfs` (PDFS_LOCAL constant, name kept per §7.1 note)
+- `apps/pdf-extractor/spike/fpt_balance_sheet_eval.py:38` — PDF_PATH `data/pdfs-local/...` → `data/pdfs/...`
+- `apps/pdf-extractor/__tests__/integration/test_extract_md_tables_fpt.py:47` — path string `pdfs-local/` → `pdfs/`
+- `apps/pdf-extractor/__tests__/integration/test_extract_tables_bt3d_real_ocr.py:44` — path string `pdfs-local/` → `pdfs/`
+- `.gitignore` — added `data/pdfs/*.pdf` + `data/pdfs-local/`
+
+**Commits (all scoped, no contamination):**
+- `2e6154ee` chore(pdf-extractor/spike): PDF-SINGLE-SOURCE — eval harness path → data/pdfs
+- `b9b135a4` chore(pdf-extractor/spike): PDF-SINGLE-SOURCE — fpt_balance_sheet_eval path → data/pdfs
+- `7fc2048b` chore(pdf-extractor/tests): PDF-SINGLE-SOURCE — integration test md-tables-fpt path
+- `d1be5050` chore(pdf-extractor/tests): PDF-SINGLE-SOURCE — integration test bt3d-real-ocr path
+- `6802e0c7` chore(repo): PDF-SINGLE-SOURCE — .gitignore data/pdfs/*.pdf + data/pdfs-local/
+
+**G1 verification:**
+- `grep -r pdfs-local spike/ __tests__/` → empty (PASS)
+- `grep data/pdfs .gitignore` → 2 lines (PASS)
+- `git -C PDF-Extract-Kit diff --quiet` → exit 0 (PEK pristine, PASS)
+- Frozen files (text_table_extractor.py, sandbox/runner.py, pilot-status-pdf-extractor.json, generic_md_table_extractor.py): 0-diff (PASS)
+- Pre-existing dirty files (notebooks, dashboards, traces): NOT staged
+
+**NEXT:** ops executes §5 (migration: delete 2 orphans, copy 15 PDFs from volume, delete pdfs-local/) + §6 (compose change: replace pdfs-local bind with pdfs bind, add pdfs bind to mcp-server) + force-recreate. Then qa runs §10 G3 (FPT sentinel e71f845d-ffa5-48f9-8f09-30ac2cd09c65 page 5 has_pek=true).
+
+---
+
 ### 2026-05-27 — PEK-RENDER-PDFX DONE (zero-change verify-only)
 
 **Task:** PEK-RENDER-PDFX | Sprint: PEK-INTEGRATE Round 6 | Status: DONE — read-only pass
