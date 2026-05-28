@@ -1,5 +1,20 @@
 # agents-architect — Notebook
 
+## 2026-05-28 — BCTC-EVAL-AGENTS (sprint BCTC-EVAL-SUBSTRATE)
+
+6 agent flow files updated to consume the shared eval substrate (GET /api/bctc-eval/{report_id} and GET /api/bctc-eval). No commits — all files left unstaged per task constraint.
+
+- `docs/agents/qa/flow/main.md` — BCTC Eval Gate added before pipeline verdict: red blocks DONE with gate_failures summary, yellow logs CAUTION but does not block. 198L (≤200L preserved).
+- `docs/agents/system-auditor/flow/main.md` — D-BCTC-EVAL nightly sweep step added in Tier-2: compares statuses against notebook snapshot, posts deltas to WORK Telegram, updates DASHBOARD.md for red/yellow changes.
+- `docs/agents/financial-analyst/flow/main.md` — BCTC Citation Trust Protocol added: red → Vietnamese `[ĐỘ TIN CẬY THẤP — TRÍCH XUẤT ĐỎ stage N]` (NOT brief's Portuguese), yellow → `[độ tin cậy thấp]`, green → cite normally. Brief §9 Portuguese correction flagged for follow-up.
+- `docs/agents/report-analyzer/flow/cycle.md` — eval pill mandatory on every WORK notebook entry referencing a BCTC report: 🟢/🟡/🔴/⬜ with detector_version and computed_at.
+- `docs/agents/dev-pdf-extractor/flow/main.md` — Extraction Failure Debug Subroutine added as first step: fetches GET /api/bctc-eval/{report_id}, maps each gate_id in gate_failures_json to a regression-set AC before writing any code.
+- `docs/agents/ops/flow/main.md` — Fleet OCR Regression Alert added: 3+ reports with 3_OCR.vn_diacritic_ratio below threshold → treat as PaddleOCR regression; diagnostic: pip freeze | grep paddleocr, diff vs requirements-pek.txt, check base image SHA.
+
+Vietnamese correction: brief §9 used Portuguese (`BAIXA CONFIANÇA / EXTRAÇÃO VERMELHA`). All user-facing warnings in financial-analyst flow use Vietnamese per `feedback_market_report_plain_vietnamese`. Brief needs follow-up edit — flagged in flow comment and this notebook.
+
+---
+
 ## 2026-05-27T20:41:55Z
 
 **Brief:** `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md`
