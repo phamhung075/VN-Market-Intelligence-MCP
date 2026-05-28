@@ -189,6 +189,7 @@ Produce **two outputs** from the synthesized analysis: Block A for the user (MAR
 - NO σ / bp / pp notation.
 - NO Hán-Việt hexagram codes (`Lão Âm Hào 6`) — use plain Vietnamese name only.
 - NO bullet-point ticker dumps. Every MARKET message is narrative prose.
+- Khi nhắc đến cổ phiếu HCM, lần đầu tiên trong tin phải viết `HCM (cổ phiếu)` hoặc `HCM (mã CK)` để phân biệt với thành phố; khi nhắc đến thành phố luôn dùng `TP. HCM`.
 
 **Send:**
 ```
