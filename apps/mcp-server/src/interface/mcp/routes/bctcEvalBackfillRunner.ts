@@ -45,7 +45,7 @@ async function runBackfill(): Promise<void> {
   console.log(`[bctc-eval-backfill] DB: ${dbPath}`);
   console.log(`[bctc-eval-backfill] Project root: ${projectRoot}`);
 
-  const db = new Database(dbPath, { create: false });
+  const db = new Database(dbPath);
   db.exec("PRAGMA journal_mode=WAL");
   db.exec("PRAGMA foreign_keys=ON");
 
