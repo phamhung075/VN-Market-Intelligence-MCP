@@ -1352,3 +1352,71 @@ No gaps found. Every assumption the architect's brief makes about the pdf-extrac
 
 **Files written this cycle:** `docs/handoffs/TASK_PEK-INTEGRATE.md` (this section), `docs/agent-memory/notebooks/dev-pdf-extractor.md` (notebook append).
 **Files touched (code):** NONE — verify-only pass, zero code changes.
+
+---
+
+## [QA] PEK-RENDER-QA — Review Record 2026-05-28T00:45Z
+
+**Commit under test:** `3a547488` | **Status:** APPROVED
+
+### Gate A — FPT Sentinel (e71f845d) PASS
+
+- DB: 7 units in `bctc_layout_units`, latest `2026-05-27 22:20:00 UTC`
+- Page 3: `has_pek: true`, `pek_coverage_gap: true`, `text_content: ""`, `unit_id: null` — correct (page 3 is front matter, no unit; honest gap signal, NOT stale fallback)
+- Page 5: `has_pek: true`, `unit_id: 2048b0fb-45a5-4ba0-a78c-03c3f58c533e`, fresh PEK stitched_markdown (1906 chars, contains TÀI SẢN ĐÀI HẠN, codes 200/210/270, TỔNG CỘNG TÀI SẢN 270, Vietnamese diacritics intact, pipe-table structure)
+- Table panel: `has_pek: true`, `has_table: false`, `units: [7 items]` — FPT user complaint resolved.
+
+### Gate B — C-2 Corpus-wide (12 reports) PASS
+
+| report_id (prefix) | units | latest_extracted_at | OCR has_pek | Table has_pek |
+|---|---|---|---|---|
+| e71f845d (FPT-Q4) | 7 | 2026-05-27 22:20:00 | true | true |
+| e8ea3df5 (FPT-Q1) | 6 | 2026-05-27 22:34:20 | true | true |
+| 0c6f0535 (DGC) | 18 | 2026-05-27 22:46:12 | true | true |
+| 173038f2 (DIG) | 11 | 2026-05-27 23:10:13 | true | true |
+| 4316f6d1 (VNM) | 7 | 2026-05-27 23:24:50 | true | true |
+| 549d458a (EIB) | 7 | 2026-05-27 23:36:18 | true | true |
+| 59212e0d (SHB) | 8 | 2026-05-27 23:46:39 | true | true |
+| 620a9d00 (DHG) | 5 | 2026-05-27 23:55:50 | true | true |
+| ac3f0d01 (BSR) | 5 | 2026-05-28 00:02:54 | true | true |
+| b48f7e6a (VEA) | 5 | 2026-05-28 00:18:27 | true | true |
+| d6f1885f (HPG) | 4 | 2026-05-28 00:25:43 | true | true |
+| fea19bae (ACB) | 5 | 2026-05-28 00:35:17 | true | true |
+
+VCB (8db67cba, 1b7ab79b) — null pdf_path, no `bctc_layout_units` → OCR + table return `200 has_pek:false`. These are not in the 12-report gate; they do not count against the gate. Note: endpoints return HTTP 200 (not 404) because the report_id exists in `financial_reports` — the `has_pek:false` signal correctly routes the browser to show the stale banner, which is the intended UX. Not a defect.
+
+### Gate C — C-1 Stale Banner PASS
+
+- `bctc-inspector.html:746`: `if (data.has_pek === false)` → createElement `pek-stale-banner` (gold #ffd700 text, #5c3300 background, #ff8c00 4px left border, "⚠ DU LIEU CU — chua qua PEK / OLD pre-PEK data"). Fires on every `has_pek:false` response.
+- `bctc-inspector.html:910`: same pattern for table panel (`pek-table-stale-banner`).
+- `bctc-inspector.html:755`: `if (has_pek:true && pek_coverage_gap:true)` → blue gap banner "PEK: no unit extracted for page N".
+- Trigger confirmed: VCB reports return `has_pek:false` → banner fires in browser when navigating to those reports.
+
+### Gate D — Fail-Loud Guard PASS
+
+All data-path branches in both handlers emit `has_pek`:
+- `handleBctcInspectOcr`: L524 (PEK found → true), L547 (coverage gap → true), L572 (no pdf_path → false), L597 (totalPages=0 → false), L625 (legacy fallback → false). 500 error branch L633 omits it (error branch, acceptable by convention).
+- `handleBctcInspectTable`: L725 (PEK found → true), L800 (no PEK fallback → false). 500 error branch L803 omits it (same convention).
+- No silent stale-data path exists.
+
+### Gate E — C-3 Market-Hours + 4-Gate Carry-Over PASS
+
+- C-3 timestamps: all 12 extracted between 22:20 UTC and 00:35 UTC — fully outside 02:00–08:59 UTC window. Zero violations.
+- `handlers.py:403` `is_vn_market_open_utc()` check: INTACT (verified grep).
+- Carry-over quality spot-check: FPT p5 (code 200/210/270, diacritics, pipe-table, 1906 chars), ACB p5 (diacritics, pipe-table, 460 chars), SHB p4 (BÁO CÁO TÌNH HÌNH TÀI CHÍNH HỢP NHẤT, diacritics, 3207 chars). All clean.
+
+### Test Suite
+
+- `pek-render-seam.test.ts`: 12 pass / 0 fail (316ms)
+- `1272-push-bctc-layout.test.ts`: 20 pass / 0 fail (regression)
+- `tsc --noEmit`: exit 0 (0 errors)
+- DDD: PASS — no domain→infrastructure imports in modified files
+- Security: PASS — no process.env, no hardcoded secrets in bctcInspectHandler.ts
+
+### PDF-Extractor Health Observation (OPS FLAG)
+
+Container shows `(unhealthy)` docker label. Root cause: uvicorn running at 72.4% CPU / 20.3% MEM (1.65GB RSS) post-extraction; Docker healthcheck `curl -f http://localhost:5001/health` times out (10s). Internal logs show `GET /health HTTP/1.1 200 OK` continuously — the service IS healthy internally. All 12 corpus reports extracted successfully (market.db confirmed). This is a false-negative healthcheck, not a stuck process. Flagged for ops: recommend increasing healthcheck timeout to 30s or replacing `curl` with a Python-based probe that doesn't block on load.
+
+### Verdict: APPROVED
+
+**Next:** po — PEK-RENDER-EXIT sign-off

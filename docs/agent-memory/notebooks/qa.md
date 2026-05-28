@@ -67,6 +67,86 @@ verdict: APPROVED
 next: po (dual sprint sign-off — NEWS-FD-EXIT + RECAP-EXIT)
 ```
 
+## cycle-138 · 2026-05-28 · PEK-RENDER-QA (commit 3a547488) — APPROVED
+
+**Task:** PEK-RENDER-QA — acceptance gate for render-seam fix (Sprint PEK-INTEGRATE Round-6) | **Verdict:** APPROVED
+
+```
+date: 2026-05-28T00:40Z
+type: acceptance-gate (live behavior + direct DB truth)
+commit_under_test: 3a547488
+container: vn-market-intelligence-mcp-mcp-server-1 (healthy)
+
+db_truth:
+  query: bctc_layout_units GROUP BY report_id ORDER BY latest DESC
+  result: 12 reports, all extracted 2026-05-27 22:20 – 2026-05-28 00:35 UTC
+  all_off_market_hours: true (none in 02:00-08:59 UTC)
+
+gate_a_fpt_sentinel:
+  report_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+  units_in_db: 7 (latest 2026-05-27 22:20:00 UTC)
+  page_3: has_pek:true, pek_coverage_gap:true, text_content:"", unit_id:null — CORRECT (no unit for page 3, honest gap)
+  page_5: has_pek:true, pek_coverage_gap:absent, unit_id:2048b0fb, stitched_markdown:fresh-PEK (TÀI SẢN DAI HAN, code 200/210/270/TONG CONG TÀI SAN 270) — FRESH PEK
+  table_panel: has_pek:true, has_table:false, units:7 (schema_page 5,7,16,22,30,38,46)
+  verdict: PASS
+
+gate_b_corpus:
+  all_12_has_pek_ocr: true (all 12 report_ids return has_pek:true on OCR endpoint)
+  all_12_has_pek_table: true (all 12 return has_pek:true on table endpoint)
+  all_12_extracted_at_fresh: true (all 2026-05-27 or 2026-05-28)
+  vcb_handling: VCB (8db67cba, 1b7ab79b) have null pdf_path → no bctc_layout_units → OCR returns 200+has_pek:false (not 404; reports exist in financial_reports). Correct fallback behavior — 404 gate clause clarification: task said "expected 404" but this is moot; VCB reports exist in the DB, they just have no PEK units. has_pek:false is the correct honest signal.
+  verdict: PASS
+
+gate_c_stale_banner:
+  html_branch: bctc-inspector.html L746 — if(data.has_pek === false) → createElement pek-stale-banner (gold/orange, #5c3300 bg, #ff8c00 border, "DU LIEU CU" warning text). Table panel also at L910.
+  has_pek_false_case: VCB returns has_pek:false → banner fires in browser. Confirmed via live endpoint + HTML code inspection.
+  gap_banner: L755 if(has_pek:true && pek_coverage_gap:true) → blue banner "PEK: no unit extracted for page N"
+  verdict: PASS
+
+gate_d_fail_loud:
+  handleBctcInspectOcr_branches:
+    - L524: PEK unit found → has_pek:true
+    - L547: PEK units exist, page not covered → has_pek:true + pek_coverage_gap:true
+    - L572: no pdf_path, no PEK → has_pek:false
+    - L597: totalPages=0, no PEK → has_pek:false
+    - L625: legacy fallback → has_pek:false
+    - L633: 500 error branch → no has_pek (error branch, acceptable)
+  handleBctcInspectTable_branches:
+    - L725: PEK units found → has_pek:true
+    - L800: no PEK → has_pek:false
+    - L803: 500 error branch → no has_pek (error branch, acceptable)
+  all_data_paths_emit_has_pek: CONFIRMED
+  verdict: PASS
+
+gate_e_market_hours_carry_over:
+  c3_timestamps: all 12 extracted_at in 22:20-00:35 UTC = off-hours. PASS
+  handlers_py_503_guard: handlers.py:403 is_vn_market_open_utc() check intact. PASS
+  carry_over_quality:
+    fpt_p5: Vietnamese diacritics present, codes 200/210/270/TONG CONG 270 present, pipe-table structure, length 1906 chars. PASS
+    acb_p5: Vietnamese diacritics, pipe-table, length 460 chars, unit_id 988f2016. PASS (page 1 correctly shows pek_coverage_gap:true — units start p5)
+    shb_p4: Vietnamese diacritics, pipe-table, length 3207 chars, BÁO CÁO TÌNH HÌNH TÀI CHÍNH HỢP NHẤT header. PASS
+  verdict: PASS
+
+test_run:
+  pek_render_seam: 12 pass / 0 fail (316ms)
+  push_bctc_layout_regression: 20 pass / 0 fail (combined: 32 pass / 0 fail across 2 files)
+  tsc: exit 0 (0 errors)
+  ddd: PASS — domain/ has no infrastructure imports in modified files
+  security: PASS — no process.env, no hardcoded secrets in bctcInspectHandler.ts
+
+side_observation_pdf_extractor:
+  status: Up 3 hours (unhealthy) — docker healthcheck curl times out (10s)
+  root_cause: uvicorn process at 72.4% CPU / 20.3% MEM (1.65GB RSS) — PEK model loaded in memory post-extraction; healthcheck curl cannot get response within 10s when CPU-bound
+  internal_logs: /health returns 200 OK continuously (visible in docker logs); internal health is genuine
+  assessment: UNHEALTHY label is a false-negative from healthcheck timeout under CPU load after extraction, NOT a stuck process. All 12 corpus reports extracted successfully (market.db confirms). This is an OPS concern (healthcheck timeout tuning or curl→python fallback), NOT a code defect in the render-seam fix.
+  action: FLAG FOR OPS — do not fix here. Recommend: increase healthcheck timeout to 30s or add StartPeriod after extraction completes.
+
+pek_subtree_pristine: git -C PDF-Extract-Kit diff = empty (exit 0). PASS
+
+verdict: APPROVED
+next: po (PEK-RENDER-EXIT)
+```
+
 ---
 
 ## cycle-136 · 2026-05-27 · MACRO-LIVE-PRICES MLP-QA (commit 6102620a, image 2714fa34dd4f) — PASS
