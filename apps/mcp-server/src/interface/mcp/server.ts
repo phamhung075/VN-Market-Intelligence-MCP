@@ -61,6 +61,12 @@ import { handleBctcInspectMd } from "./routes/bctcInspectMdHandler.js";
 import { handlePushBctcLayout } from "./routes/pushBctcLayoutHandler.js";
 import { backfillBctcPdfPaths } from "../../application/usecases/backfillBctcPdfPaths.js";
 import { getAccuracyStats, getSystemAccuracyDigestStats } from "../../infrastructure/db/signalOutcomeStore.js";
+import { handleBctcEvalList } from "./routes/bctcEvalListHandler.js";
+import { handleBctcEvalDetail } from "./routes/bctcEvalDetailHandler.js";
+import { handleBctcEvalRecompute } from "./routes/bctcEvalRecomputeHandler.js";
+import { handleBctcEvalThresholds } from "./routes/bctcEvalThresholdsHandler.js";
+import { handleBctcEvalPushStage } from "./routes/bctcEvalPushStageHandler.js";
+import { loadBctcEvalThresholds } from "../../application/usecases/computeBctcEval.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -202,6 +208,19 @@ export async function createBunServer(
   // One shared DB instance for all route handlers — opened once at startup.
   // Eliminates 16 per-request calls; server lifetime matches startScheduler.
   const db = getDb();
+
+  // ── BCTC-EVAL-SUBSTRATE: Load thresholds SSOT at startup ─────────────────
+  // Loaded once; injected into recompute handler so no per-request file reads.
+  // Non-fatal if file absent — handler returns 500 on missing thresholds.
+  const bctcEvalProjectRoot = process.cwd();
+  let bctcEvalThresholds: ReturnType<typeof loadBctcEvalThresholds> | null = null;
+  try {
+    bctcEvalThresholds = loadBctcEvalThresholds(bctcEvalProjectRoot);
+  } catch (thresholdsErr) {
+    log.warn("[startup] bctc-eval-thresholds.json not found — recompute handler will return 500", {
+      error: thresholdsErr instanceof Error ? thresholdsErr.message : String(thresholdsErr),
+    });
+  }
 
   // ── REOPEN-2: Backfill pdf_path for financial_reports rows where pdf_path IS NULL ─
   // Idempotent: only touches NULL rows; same input → same result.
@@ -1777,6 +1796,45 @@ export async function createBunServer(
         res.writeHead(500, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "Internal server error" }));
       }
+      return;
+    }
+
+    // ── BCTC-EVAL-SUBSTRATE routes (Sprint BCTC-EVAL-SUBSTRATE) ─────────────
+    // GET /api/bctc-eval                  — list all reports (trust-ascending sort)
+    // GET /api/bctc-eval/thresholds       — SSOT thresholds JSON (MUST precede dynamic /:id route)
+    // GET /api/bctc-eval/:id              — full detail for one report
+    // POST /api/bctc-eval/recompute/:id   — recompute stages 4-6 for one report
+    // POST /api/bctc-eval/push-stage      — receive stages 1-3 from pdf-extractor
+    if (method === "GET" && pathname === "/api/bctc-eval") {
+      handleBctcEvalList(req, res, db);
+      return;
+    }
+    // thresholds BEFORE dynamic /:id to avoid ambiguous match
+    if (method === "GET" && pathname === "/api/bctc-eval/thresholds") {
+      handleBctcEvalThresholds(req, res, bctcEvalProjectRoot);
+      return;
+    }
+    if (method === "GET" && pathname.startsWith("/api/bctc-eval/") && !pathname.startsWith("/api/bctc-eval/recompute/")) {
+      const evalReportId = pathname.slice("/api/bctc-eval/".length);
+      if (evalReportId) {
+        handleBctcEvalDetail(req, res, db, evalReportId);
+        return;
+      }
+    }
+    if (method === "POST" && pathname.startsWith("/api/bctc-eval/recompute/")) {
+      const evalReportId = pathname.slice("/api/bctc-eval/recompute/".length);
+      if (evalReportId) {
+        if (!bctcEvalThresholds) {
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ error: "BCTC eval thresholds not loaded at startup", code: "THRESHOLDS_UNREADABLE" }));
+          return;
+        }
+        await handleBctcEvalRecompute(req, res, db, evalReportId, bctcEvalThresholds);
+        return;
+      }
+    }
+    if (method === "POST" && pathname === "/api/bctc-eval/push-stage") {
+      await handleBctcEvalPushStage(req, res, db);
       return;
     }
 
