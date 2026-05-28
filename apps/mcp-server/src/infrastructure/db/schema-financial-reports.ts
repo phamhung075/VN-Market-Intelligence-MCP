@@ -196,6 +196,28 @@ export function initFinancialReportsTables(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bpz_report ON bctc_page_zones(report_id, page_number)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bpz_unit   ON bctc_page_zones(unit_id)`);
 
+  // ── BCTC-EVAL-SUBSTRATE: Per-stage evaluation results (Sprint BCTC-EVAL-SUBSTRATE) ──
+  // Additive migration — zero mutation to any existing table or index above.
+  // 6 rows per PDF (one per pipeline stage); written at extraction time + nightly recompute.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_eval_results (
+      report_id TEXT NOT NULL,
+      stage_no INTEGER NOT NULL,
+      stage_name TEXT NOT NULL,
+      status TEXT NOT NULL CHECK(status IN ('green','yellow','red')),
+      metrics_json TEXT NOT NULL DEFAULT '{}',
+      gate_failures_json TEXT NOT NULL DEFAULT '[]',
+      golden_diff_json TEXT NOT NULL DEFAULT '{}',
+      detector_version TEXT NOT NULL DEFAULT 'v1',
+      computed_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (report_id, stage_no),
+      CONSTRAINT fk_report FOREIGN KEY (report_id) REFERENCES financial_reports(id) ON DELETE CASCADE
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ber_report ON bctc_eval_results(report_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ber_status ON bctc_eval_results(status, stage_no)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_ber_version ON bctc_eval_results(detector_version, computed_at)`);
+
   // ── PDF OCR Cache (Sprint 048 / Task 292) ──────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS pdf_extracted_text (
