@@ -1,8 +1,40 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-28T08:45Z | **Sprint:** PDF-SINGLE-SOURCE
+**Last updated:** 2026-05-28T09:30Z | **Sprint:** BCTC-EVAL-SUBSTRATE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## BCTC-EVAL-SUBSTRATE (2026-05-28T09:30Z) — DESIGN COMPLETE
+
+**Task:** Design shared per-PDF extraction evaluation framework. Single SQLite table (`bctc_eval_results`, 6 rows per PDF), versioned JSON API (2 GET endpoints + 1 POST recompute + 1 thresholds), Remix FE scorecard, 6 agent consumers.
+
+**Key decisions:**
+
+1. **Q1 (financial-analyst): DEMOTE not HARD-BLOCK.** Cite red-report figures with `[BAIXA CONFIANÇA — EXTRAÇÃO VERMELHA]` prefix. Rationale: known-bad citation is more honest than silence. Hard-block produces silent data gaps that look like "no data" to user.
+
+2. **Q2 (FE location): Remix dashboard (`apps/frontend/`) NOT mcp-server HTML.** Eval scorecard is a new surface (fleet quality visibility), not an extension of the content inspector. Frontend has the full shadcn/ui dependency stack installed (`@radix-ui/react-slot`, CVA, clsx, tailwind-merge). mcp-server HTML dashboard lacks a component framework. No duplication: inspector stays at `/api/bctc-inspect`, scorecard at `/dashboard/bctc-eval`.
+
+3. **Q3 (detector location): SPLIT.** Stages 1-3 in `apps/pdf-extractor/domain/eval_detectors.py` (artifacts live on pdf-extractor host — rasterized PNGs, PaddleOCR output). Stages 4-6 in `apps/mcp-server/src/domain/services/bctcEvalDetectors.ts` (pure functions over mcp-server SQLite rows). Putting stage 1-3 detectors in mcp-server would require mcp-server to reach into pdf-extractor filesystem — DDD violation.
+
+4. **`balance_pass` signal-not-gate:** Encoded in `docs/data/bctc-eval-thresholds.json` as `"balance_pass_is_signal_only": true`. Deliberate-violation smoke test in G2 confirms it never triggers red alone.
+
+5. **409 for eval-not-yet-computed:** Report exists in `financial_reports` but no rows in `bctc_eval_results`. `409 Conflict` per RFC 9110 (resource exists but conflicting state). Not 404 (report IS found), not 202 (not async).
+
+6. **Schema lock:** `schema_version: "1"` in every response. Agents must check before parsing. Breaking changes require incrementing.
+
+**Multi-zone split:**
+- `apps/pdf-extractor/` — eval_detectors.py (domain), eval_push_client.py (infra), extraction hook
+- `apps/mcp-server/` — table DDL, 5 route handlers, domain detectors (4-6), store, orchestrator, nightly cron
+- `apps/frontend/` — 2 Remix routes + nav entry
+- `docs/agents/<6 agents>/flow/main.md` — agents-architect task
+
+**Files authored this cycle:**
+1. `docs/architecture-briefs/2026-05-28-bctc-eval-shared-substrate.md` — NEW (full brief §1–§15 + anti-false-green summary)
+2. `docs/agent-memory/notebooks/architect.md` — this entry
+
+**Handoff:** parallel fan-out: dev-pdf-extractor + dev-mcp-server + dev-frontend + agents-architect. ops gated on dev-mcp-server. qa G2+G3 gated on ops. FPT sentinel `e71f845d` is G3 regression anchor.
+
+---
 
 ## PDF-SINGLE-SOURCE (2026-05-28T08:45Z) — DESIGN COMPLETE
 
