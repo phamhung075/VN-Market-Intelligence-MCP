@@ -1,6 +1,23 @@
 # Financial Analyst — Notebook
 
-**Last updated:** 2026-05-22 | **Sprint:** —
+**Last updated:** 2026-05-28 | **Sprint:** —
+
+## Cycle — 07:28 UTC (2026-05-28)
+
+- **cycle_date**: 2026-05-28
+- **focused_analysis**: [FPT Q1-2026 deep-dive per user request]
+- **findings**: [Regime=EASING (EY_SPREAD +3.5% vs 4.7% deposit rate); Max Deposit Rate=4.7%; Investment Clock=Overheat (CPI 5.46% HIGH); 4/39 Q1-2026 ĐÃ NỘP (ACB/DHG/EIB/FPT); FPT Q1-2026 filed 2026-05-24: Revenue 12.48T (YoY -38.3% seasonal), Net Profit 2.48T (Margin 19.8%), Assets 68.6T, conf 81%; PE 13.8 discount -20% vs tech sector 17.3; ROE 28.3% sector-leading +166% vs median 10.6%; OCF/NI -1.15 (working capital absorption or non-cash revenue); Q4-2025 OCF/NI was healthy 1.64; no insider signals; Kinh Dịch 501 (B-bucket pending); 0 open chain findings 30min; balance sheet zeros (extraction artifact); sentiment ỔN ĐỊNH +0.01 slope; Layer-7 earnings quality WARN (accrual-driven)]
+- **actions**: [signal #4119 fundamental_validation FPT posted to alert-commander (FAIR verdict, m_score=0.81, f_score=0.72, impact_score=6); MARKET Telegram sent (plain Vietnamese per policy, no jargon, direction+delta % FPT -1.65%); log_agent_work id=1135 completed; notebook updated]
+- **next_cycle_hint**: [FPT Q2-2026 Q3-2026 cash flow normalization critical — working capital absorption (OCF -2.85T vs NI +2.48T) atypical; watch cash conversion rate recovery; FPT fundamentals remain strong (ROE sector-best, PE discount, margin 20%) but earnings quality requires validation; Regime EASING supports equity EY spread advantage; VHM alert: price surge +6.92% today (watch for follow-up); 35/39 stocks still QUÁ HẠN (28 days) — escalate to PO/data-pipeline]
+- **estimated_tokens**: ~4000
+
+## Cycle — 00:04 UTC (2026-05-28)
+
+- **cycle_date**: 2026-05-28
+- **findings**: [Regime=EASING (equity EY_SPREAD +3.5% vs 4.7% deposit rate); Max Deposit Rate=4.7%; Investment Clock=CORE_VN (phase CORE_VN, tier equity); 4/39 Q1-2026 ĐÃ NỘP (ACB/DHG/EIB/FPT filed 2026-05-24); 35/39 still QUÁ HẠN (28 days past 30/04 deadline); ACB Q1-2026 EY_SPREAD +8.1% → CHEAP (confidence 38%, balance sheet zeros, extraction issue flagged); FPT Q1-2026 EY_SPREAD +2.55% → FAIR (confidence 81%, earnings_quality_warn accrual-driven -1.15 OCF/NI ratio); VCB Q4-2025 EY_SPREAD +2.39% → FAIR (confidence 63%, margin compression -10.2pp red flag, PE premium +57% unjustified); DHG/EIB extraction broken (zeros); Kinh Dịch 501 (B-bucket pending); 0 open chain findings 30min; Layer-7 cash flow forensics complete (ACB banking OCF structural 0, FPT accrual divergence flagged, VCB healthy 1.15)]
+- **actions**: [signal #4083 fundamental_validation ACB posted (CHEAP, m_score=0.62, f_score=0.8, impact_score=7, critic_score=0.8); signal #4084 fundamental_validation FPT posted (FAIR, earnings_quality_warn, accruals_flag=true, m_score=0.81, f_score=0.72, impact_score=6, critic_score=1.0); signal #4086 fundamental_validation VCB posted (FAIR, m_score=0.63, f_score=0.78, impact_score=8, critic_score=0.8); WORK telegram sent (3 stocks analyzed); notebook updated]
+- **next_cycle_hint**: [CRITICAL BLOCKER: 35/39 Q1-2026 BCTC QUÁ HẠN 28 days (deadline 30/04/2026 now 28 days overdue) — escalate to PO/report-analyzer for data-pipeline re-extraction; ACB extraction confidence 38% insufficient for long-term valuation (balance sheet all zeros) — await re-extraction when available; FPT Q1-2026 working capital absorption (OCF -2.8B vs NI +2.5B) watch Q2-2026 normalization and cash conversion rate; VCB NIM compression -10.2pp in rising-rate environment persists despite EASING macro regime shift — critical to see margin stabilization in Q1-2026 filing; Kinh Dịch service offline (B-bucket pending) — cannot validate hexagram confirmations; consider portfolio composition rotation if FII outflow risk (-0.63pp carry spread) extends; next 12-hour cycle 12:00 UTC to assess new filings if released]
+- **estimated_tokens**: ~6000
 
 ## Cycle — 12:00 UTC (2026-05-27)
 
