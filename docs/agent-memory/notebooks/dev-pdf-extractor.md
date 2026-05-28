@@ -4,6 +4,41 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-28 — BCTC-EVAL-PDFX READY (unstaged)
+
+**Task:** BCTC-EVAL-PDFX | Sprint: BCTC-EVAL-SUBSTRATE | Status: READY (files unstaged — main terminal commits)
+
+**Files created (unstaged, `??`):**
+- `apps/pdf-extractor/domain/eval_detectors.py` — Stage 1-3 pure detector functions
+- `apps/pdf-extractor/infrastructure/eval_push_client.py` — HTTP POST port adapter to `/api/bctc-eval/push-stage`
+- `apps/pdf-extractor/__tests__/unit/test_eval_detectors.py` — 36 unit tests (all PASS)
+
+**Files modified (unstaged, `M`):**
+- `apps/pdf-extractor/application/extract_layout_first_usecase.py` — Added eval hooks after Stage 1 (RASTERIZE), Stage 2 (LAYOUT_DETECT), Stage 3 (OCR). Added `_load_thresholds()` loader, `eval_push_client` optional injection, three private `_eval_push_stage{1,2,3}` methods.
+
+**Test results:** 36/36 PASS
+- G2 deliberate-violation smoke (stage 3): ASCII-only text → vn_diacritic_ratio=0.0 → status=red CONFIRMED
+- Push client HTTP 500 raises (not swallowed): CONFIRMED
+- SHA stability first/second/changed run: CONFIRMED
+- All gate failure entries carry provenance dict: CONFIRMED
+
+**Contracts met:**
+- schema_version: "1", detector_version: "v1" in every result
+- Thresholds loaded from `docs/data/bctc-eval-thresholds.json` (fallback to built-in defaults if not yet created)
+- Eval push fails → log + continue (extraction never aborted)
+- RAISE on HTTP error in push client (no bare except)
+- PEK subtree: CLEAN (`git -C PDF-Extract-Kit diff` → empty)
+- Frozen files (text_table_extractor.py, sandbox/runner.py, pilot-status-pdf-extractor.json, generic_md_table_extractor.py): UNTOUCHED
+
+**Brief §5 thresholds source:** built-in defaults mirror §5 exactly. Production path reads `docs/data/bctc-eval-thresholds.json` (created by dev-mcp-server in parallel). If file missing, detectors log warning and use defaults — no abort.
+
+**DDD compliance:**
+- `domain/eval_detectors.py`: pure functions, no HTTP, no DB, no infra imports
+- `infrastructure/eval_push_client.py`: HTTP only, no domain imports beyond primitives
+- `application/extract_layout_first_usecase.py`: imports from domain only; eval_push_client injected (not imported directly)
+
+---
+
 ### 2026-05-28 — PDF-SINGLE-SOURCE DONE (§7 + §7.7 path consolidation)
 
 **Task:** PDF-SINGLE-SOURCE | Sprint: PDF-SINGLE-SOURCE | Status: DONE — 5 commits
