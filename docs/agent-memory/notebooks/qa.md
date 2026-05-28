@@ -1,5 +1,57 @@
 # QA — Notebook
 
+## cycle-141 · 2026-05-28 · HCM-DISAMBIG-QA (commits 10438892 + de391d9b) — APPROVED
+
+**Task:** HCM-QA acceptance gate for HCM-DISAMBIG sprint | **Verdict:** APPROVED
+
+```
+date: 2026-05-28T21:43Z
+type: acceptance-gate (extraction hardening + chef narrative rule)
+sprint: HCM-DISAMBIG
+signal: docs/signals/qa-hcm-disambig-2026-05-28T214341Z.json
+commits_covered: HCM-D1=10438892, HCM-D2=de391d9b
+container: 34a9b5165c828 (image f09264113a71, healthy, 146 tools, Up since 21:37Z)
+
+unit_test_suite:
+  command: bun test 1788 HCM-DISAMBIG 1198 1206 1322
+  files: 6 (1788-hcm-geographic-false-positive / HCM-DISAMBIG-extraction / 1198 / 1206 / 1322×2)
+  result: 50 pass / 0 fail — GREEN
+  tsc: exit 0 (0 errors)
+
+fence_false_green_proof (AC-QA-05):
+  method: injected `expect(true).toBe(false)` into HCM-DISAMBIG-extraction.test.ts
+  result: 1 fail "Expected: false, Received: true" — non-zero exit — runner DOES see file
+  revert: 19 pass / 0 fail confirmed
+
+live_injection_tests:
+  AC-QA-01 (TPHCM-Phuket): affectedActions=[] — NO HCM — PASS
+  AC-QA-02 (Tp.HCM metro): affectedActions=[] — NO HCM — PASS
+  AC-QA-03 (TP-HCM planning): affectedActions=[] — NO HCM — PASS
+  AC-QA-04 (Chứng khoán HCM ticker): affectedActions=["HCM"] — HCM PRESENT — PASS
+  REPLAY #4144 (TPHCM-Phuket): affectedActions=[] — NO HCM — PASS
+
+chef_md_rule (AC-D2 / HCM-D2):
+  file: docs/agents/unified-agent/flow/chef.md line 192
+  block: Block A Format rules
+  rule: "Khi nhắc đến cổ phiếu HCM..." — PRESENT — PASS
+
+post_rebuild_signal_audit (AC-QA-06):
+  container_started: 2026-05-28T21:37:04Z
+  pollNewsJob_post_rebuild: started_at=21:41:48 status=success duration_ms=2189
+  post_rebuild_hcm_alerts: 0 (query: alerts WHERE affected_actions_json LIKE '%HCM%' AND triggered_at > '2026-05-28T21:37:00')
+  existing_news_impact_4144: affected_stocks=["HVN"] (TPHCM geographic → HVN only, NOT HCM) — PASS
+  pre_rebuild_false_positives: 3 alerts (all before 21:37Z) — expected artifacts from pre-D1 code
+
+ddd: PASS — 0 infrastructure imports in domain/ changed files
+security: PASS — 0 process.env, 0 hardcoded secrets
+
+ac_results: 6/6 PASS (AC-QA-01 through AC-QA-06)
+verdict: APPROVED
+next: HCM-EXIT (po sprint sign-off)
+```
+
+---
+
 ## cycle-140 · 2026-05-28 · BCTC-EVAL-QA-G2G3 — G2 deliberate-violation smokes + G3 live e2e — YELLOW (FE build stale)
 
 **Task:** BCTC-EVAL-QA-G2G3 — G2 + G3 acceptance gates for BCTC-EVAL-SUBSTRATE sprint | **Verdict:** YELLOW (FE rebuild required)

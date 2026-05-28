@@ -1,0 +1,115 @@
+{
+  "sprint": "HCM-DISAMBIG",
+  "task": "HCM-QA",
+  "executed_at": "2026-05-28T21:43:41Z",
+  "verdict": "APPROVED",
+  "qa_agent": "qa",
+  "commits_covered": {
+    "HCM-D1": "10438892",
+    "HCM-D2": "de391d9b"
+  },
+  "evidence": {
+    "AC-QA-01_tphcm_phuket": {
+      "headline": "Vietnam Airlines TPHCM-Phuket strategic expansion",
+      "result": "affectedActions does NOT contain HCM — affectedActions: []",
+      "status": "PASS"
+    },
+    "AC-QA-02_tp_dot_hcm": {
+      "headline": "Tp.HCM mở rộng metro line 3",
+      "result": "affectedActions does NOT contain HCM — affectedActions: []",
+      "status": "PASS"
+    },
+    "AC-QA-03_tp_hyphen_hcm": {
+      "headline": "TP-HCM họp về quy hoạch kinh tế",
+      "result": "affectedActions does NOT contain HCM — affectedActions: []",
+      "status": "PASS"
+    },
+    "AC-QA-04_positive_ticker": {
+      "headline": "Chứng khoán HCM (HCM) báo lãi quý 1",
+      "result": "affectedActions CONTAINS HCM — over-block check: PASS",
+      "status": "PASS"
+    },
+    "AC-QA-05_fence_false_green": {
+      "test_file": "apps/mcp-server/src/__tests__/HCM-DISAMBIG-extraction.test.ts",
+      "method": "Injected deliberate `expect(true).toBe(false)` assertion into test file; bun test reported 1 fail + non-zero exit. Reverted — 19 pass 0 fail confirmed.",
+      "inject_result": "1 fail (Expected: false, Received: true) — runner DOES pick up file",
+      "revert_result": "19 pass 0 fail",
+      "status": "PASS"
+    },
+    "AC-QA-06_post_rebuild_signal_audit": {
+      "container_id": "34a9b5165c828",
+      "container_image": "f09264113a71",
+      "rebuild_started_at": "2026-05-28T21:37:04Z",
+      "pollNewsJob_post_rebuild": {
+        "started_at": "2026-05-28 21:41:48",
+        "status": "success",
+        "duration_ms": 2189
+      },
+      "post_rebuild_hcm_alerts_in_db": 0,
+      "query": "SELECT FROM alerts WHERE affected_actions_json LIKE '%HCM%' AND triggered_at > '2026-05-28T21:37:00' → 0 rows",
+      "existing_news_impact_file": {
+        "path": "docs/signals/news_impact_4144_hvn_expansion.json",
+        "headline": "Vietnam Airlines TPHCM-Phuket strategic expansion",
+        "affected_stocks": ["HVN"],
+        "hcm_in_affected_stocks": false,
+        "fetched_at": "2026-05-28T16:02:01Z",
+        "note": "Pre-rebuild signal; TPHCM geographic context → only HVN extracted, NOT HCM. Validates correct behavior."
+      },
+      "pre_rebuild_false_positives_note": "3 pre-D1 geographic HCM alerts found in DB (triggered before 21:37Z rebuild): TP.HCM food-safety headline (14:13Z), morning news digest (23:59Z 2026-05-27), QP Holdings TP.HCM headline (14:52Z 2026-05-27). These are PRE-D1 extractions from old code. Zero post-rebuild HCM geographic false-positives confirmed.",
+      "status": "PASS"
+    },
+    "unit_test_suite": {
+      "command": "bun test 1788 HCM-DISAMBIG 1198 1206 1322",
+      "files_run": [
+        "1788-hcm-geographic-false-positive.test.ts",
+        "HCM-DISAMBIG-extraction.test.ts",
+        "1198-vnd-guard.test.ts",
+        "1206-keyword-false-match.test.ts",
+        "1322-evening-summary-news-count.test.ts",
+        "1322-vjc-alias.test.ts"
+      ],
+      "result": "50 pass / 0 fail across 6 files — 56 expect() calls",
+      "status": "PASS"
+    },
+    "regression_4144_replay": {
+      "headline": "Vietnam Airlines TPHCM-Phuket strategic expansion",
+      "result": "affectedActions does NOT contain HCM — live injection confirmed",
+      "status": "PASS"
+    },
+    "chef_md_rule": {
+      "file": "docs/agents/unified-agent/flow/chef.md",
+      "line": 192,
+      "block": "Block A Format rules",
+      "rule_text": "Khi nhắc đến cổ phiếu HCM, lần đầu tiên trong tin phải viết `HCM (cổ phiếu)` hoặc `HCM (mã CK)` để phân biệt với thành phố; khi nhắc đến thành phố luôn dùng `TP. HCM`.",
+      "rule_present": true,
+      "commit": "de391d9b",
+      "status": "PASS"
+    },
+    "tsc_check": {
+      "command": "bun tsc --noEmit",
+      "result": "0 errors",
+      "status": "PASS"
+    },
+    "ddd_compliance": {
+      "check": "grep -rn from.*infrastructure src/domain/services/newsNormalizer.ts stockAliases.ts",
+      "result": "0 violations",
+      "status": "PASS"
+    }
+  },
+  "all_acs_green": [
+    "AC-QA-01",
+    "AC-QA-02",
+    "AC-QA-03",
+    "AC-QA-04",
+    "AC-QA-05",
+    "AC-QA-06"
+  ],
+  "ac_pass_count": "6/6",
+  "notes": [
+    "Fence-false-green proof: deliberate `expect(true).toBe(false)` injection caused bun test to report 1 fail + non-zero exit. File is NOT silently skipped.",
+    "Write-path evidence: pollNewsJob ran at 21:41:48 post-rebuild (success, 2189ms). Zero HCM geographic false-positives in alerts table after 2026-05-28T21:37:00Z rebuild.",
+    "Pre-rebuild DB contains 3 geographic HCM false-positive alerts (TP.HCM city headlines, all triggered before 21:37Z). These are expected artifacts from old code before D1 fix.",
+    "HCM (HCM) parenthetical and alias paths confirm over-block check PASS (ticker correctly extracted).",
+    "50/50 tests green across 6 files including all regression suites."
+  ]
+}
