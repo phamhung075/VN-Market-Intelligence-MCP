@@ -41,7 +41,7 @@ import pytest
 
 _FPT_PDF_PATH = Path(
     "/Users/admin/Documents/Hung/__works__/__PROJET/__labo/"
-    "VN-Market-Intelligence-MCP/data/pdfs-local/"
+    "VN-Market-Intelligence-MCP/data/pdfs/"
     "20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf"
 )
 
