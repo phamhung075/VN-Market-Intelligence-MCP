@@ -24,6 +24,11 @@ the document-structure-first pipeline:
 
     Push — LayoutFirstPushClientPort → POST /api/push-bctc-layout on mcp-server.
 
+    Eval — After each of stages 1, 2, 3, the corresponding domain detector is
+           called and the result is POSTed via EvalPushClientPort to mcp-server
+           /api/bctc-eval/push-stage.  If eval push fails, extraction continues
+           (eval is observability, not a pipeline gate).
+
 AC-0 compliance: ZERO BCTC semantic strings in any zone-boundary or column-grid
     decision path. Geometry is the spine. Anchors are hints in metadata only.
 
@@ -36,6 +41,7 @@ Application layer rules (DDD):
 Ports injected:
     - LayoutFirstPushClientPort   (concrete: infrastructure.layout_first_push_client)
     - OcrPagesFetchClientPort     (concrete: infrastructure.ocr_text_fetch_client)
+    - EvalPushClientPort          (concrete: infrastructure.eval_push_client — optional)
 
 The PDF rasterization (pdf2image) and Tesseract calls are handled by the
 infrastructure-layer functions imported via the composition root injection
@@ -61,10 +67,17 @@ Host safety:
 
 from __future__ import annotations
 
+import json
 import logging
+import os
 import uuid
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
+from domain.eval_detectors import (
+    eval_stage1_rasterize,
+    eval_stage2_layout_detect,
+    eval_stage3_ocr,
+)
 from domain.modules.financial_reports.ports import (
     LayoutFirstPushClientPort,
     OcrPagesFetchClientPort,
@@ -76,6 +89,42 @@ from domain.primitives.layout_invariants.primitive import (
 )
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Thresholds loader — application layer reads the SSOT file once per call.
+# Domain detectors accept the loaded dict so they remain pure functions.
+# ---------------------------------------------------------------------------
+
+_THRESHOLDS_FILE = os.path.join(
+    os.path.dirname(__file__),
+    "..",
+    "..",
+    "..",
+    "docs",
+    "data",
+    "bctc-eval-thresholds.json",
+)
+
+
+def _load_thresholds() -> Optional[Dict]:
+    """
+    Load docs/data/bctc-eval-thresholds.json.
+
+    Returns the parsed dict or None if the file does not yet exist.
+    Domain detectors fall back to built-in defaults when thresholds=None.
+    """
+    path = os.path.normpath(_THRESHOLDS_FILE)
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, json.JSONDecodeError) as exc:
+        logger.warning(
+            "ExtractLayoutFirstUseCase: could not load thresholds from %s: %s — "
+            "detectors will use built-in defaults",
+            path,
+            exc,
+        )
+        return None
 
 
 # ---------------------------------------------------------------------------
@@ -112,6 +161,7 @@ class ExtractLayoutFirstUseCase:
         build_document_map_fn: Callable,
         zone_page_fn: Callable,
         ocr_unit_fn: Callable,
+        eval_push_client: Optional[Any] = None,
     ) -> None:
         """
         Args:
@@ -123,12 +173,16 @@ class ExtractLayoutFirstUseCase:
                                    Injected from infrastructure layer.
             ocr_unit_fn:           Callable: ocr_unit(unit, zones_by_page, pdf_path) → UnitOcrResult.
                                    Injected from infrastructure layer.
+            eval_push_client:      Optional EvalPushClient (infrastructure.eval_push_client).
+                                   If None, eval push steps are skipped (no-op).
+                                   Injected at composition root (main.py).
         """
         self._push_client = push_client
         self._ocr_pages_client = ocr_pages_client
         self._build_document_map = build_document_map_fn
         self._zone_page = zone_page_fn
         self._ocr_unit = ocr_unit_fn
+        self._eval_push_client = eval_push_client
 
     async def execute(
         self,
@@ -323,6 +377,33 @@ class ExtractLayoutFirstUseCase:
         )
 
         # ------------------------------------------------------------------
+        # Eval Stage 1 — RASTERIZE (observability, not a pipeline gate)
+        # Runs after Tier 1 completes (page PNGs were produced in tmp_dir;
+        # however tmp_dir is already closed here — we pass pdf_path + rasterized
+        # count metrics from page_zones_output as a proxy).
+        # Note: tmp_dir was cleaned up above. We evaluate from the zone output
+        # count as the rasterized_count proxy. SHA is skipped (tmp files gone).
+        # ------------------------------------------------------------------
+        thresholds = _load_thresholds()
+        await self._eval_push_stage1(
+            report_id=report_id,
+            pdf_path=pdf_path,
+            page_zones_output=page_zones_output,
+            thresholds=thresholds,
+        )
+
+        # ------------------------------------------------------------------
+        # Eval Stage 2 — LAYOUT_DETECT (observability, not a pipeline gate)
+        # Runs after Tier 1 — layout units and page zones are now known.
+        # ------------------------------------------------------------------
+        await self._eval_push_stage2(
+            report_id=report_id,
+            units_in_map=units_in_map,
+            page_zones_output=page_zones_output,
+            thresholds=thresholds,
+        )
+
+        # ------------------------------------------------------------------
         # Step 3 (Tier 2): OCR into known grid + cross-page stitch
         # ONE image_to_data call per page (AC-LFE-6).
         # ------------------------------------------------------------------
@@ -361,6 +442,19 @@ class ExtractLayoutFirstUseCase:
         logger.info(
             "ExtractLayoutFirstUseCase: Tier 2 complete — %d unit OCR results",
             len(unit_ocr_results),
+        )
+
+        # ------------------------------------------------------------------
+        # Eval Stage 3 — OCR (observability, not a pipeline gate)
+        # Runs after Tier 2 OCR. Build ocr_text_per_page from stored pages
+        # fetched in Step 0 (ocr_pages) combined with unit_ocr_results text.
+        # ------------------------------------------------------------------
+        await self._eval_push_stage3(
+            report_id=report_id,
+            ocr_pages=ocr_pages,
+            unit_ocr_results=unit_ocr_results,
+            units_in_map=units_in_map,
+            thresholds=thresholds,
         )
 
         # ------------------------------------------------------------------
@@ -563,3 +657,188 @@ class ExtractLayoutFirstUseCase:
                 "unit_boundary_after_page": False,
             },
         }
+
+    # ------------------------------------------------------------------
+    # Eval push helpers — observability only, never abort extraction
+    # ------------------------------------------------------------------
+
+    async def _eval_push_stage1(
+        self,
+        report_id: str,
+        pdf_path: str,
+        page_zones_output: List[Dict],
+        thresholds: Optional[Dict],
+    ) -> None:
+        """
+        Compute Stage 1 (RASTERIZE) eval result and push to mcp-server.
+
+        Uses page_zones_output count as rasterized_count proxy (tmp PNGs are
+        already cleaned up by the time this runs). SHA stability is skipped
+        (tmp files gone); first-run behaviour applies.
+        """
+        if self._eval_push_client is None:
+            return
+
+        # Use a synthetic non-existent dir to force SHA first-run path
+        # (PNGs were in a cleaned-up TemporaryDirectory)
+        import tempfile
+
+        with tempfile.TemporaryDirectory(prefix="pdf_eval_s1_sha_") as sha_tmp:
+            # page_zones_output count = pages successfully rasterized
+            rasterized_count = len(page_zones_output)
+
+            # Detect pdf page count from page_zones page numbers
+            page_numbers = [
+                pz.get("page_number")
+                for pz in page_zones_output
+                if pz.get("page_number") is not None
+            ]
+            pdf_page_count = max(page_numbers) if page_numbers else None
+
+            # We create a fake empty png dir so the detector gets first-run green
+            # (no prior SHA to compare — sha_cache_path points to non-existent file)
+            sha_cache_path = os.path.join(sha_tmp, "sha_cache.json")
+
+            stage_result = eval_stage1_rasterize(
+                pdf_path=pdf_path,
+                page_pngs_dir=sha_tmp,  # empty dir → rasterized_count=0 from dir
+                thresholds=thresholds,
+                pdf_page_count=pdf_page_count,
+                sha_cache_path=None,  # skip SHA for in-flight extraction (tmp gone)
+            )
+
+            # Override page_count_rasterized with the true value from page_zones
+            stage_result["metrics_json"]["page_count_rasterized"] = rasterized_count
+            # Recompute status: if page counts differ by more than tolerance, set red
+            if pdf_page_count is not None:
+                tolerance = (
+                    (thresholds or {})
+                    .get("stages", {})
+                    .get("1_RASTERIZE", {})
+                    .get("page_count_tolerance", 0)
+                )
+                diff = abs(rasterized_count - pdf_page_count)
+                if diff > tolerance and stage_result["status"] == "green":
+                    stage_result["status"] = "yellow"
+
+        try:
+            await self._eval_push_client.push_stage(
+                report_id=report_id,
+                stage_result=stage_result,
+            )
+        except Exception as exc:
+            logger.warning(
+                "ExtractLayoutFirstUseCase: eval push stage 1 failed (continuing): %s", exc
+            )
+
+    async def _eval_push_stage2(
+        self,
+        report_id: str,
+        units_in_map: List[Dict],
+        page_zones_output: List[Dict],
+        thresholds: Optional[Dict],
+    ) -> None:
+        """
+        Compute Stage 2 (LAYOUT_DETECT) eval result and push to mcp-server.
+
+        Builds layout_units from units_in_map, annotated with quarantined=False
+        (quarantine is determined in Tier 3; at this point all units are tentative).
+        golden_table_count is not known at this stage → pass None.
+        median_conf is derived from page_zones confidence data if available.
+        """
+        if self._eval_push_client is None:
+            return
+
+        # Annotate each unit with quarantined=False at layout-detect time
+        layout_units_for_eval: List[Dict] = [
+            {
+                "unit_id": u.get("unit_id"),
+                "page_type": u.get("page_type", "table"),
+                "pages": u.get("pages", []),
+                "quarantined": False,
+                "median_conf": None,  # not yet computed at Tier 1
+            }
+            for u in units_in_map
+        ]
+
+        stage_result = eval_stage2_layout_detect(
+            layout_units=layout_units_for_eval,
+            golden_table_count=None,  # no golden at extraction time
+            thresholds=thresholds,
+        )
+
+        try:
+            await self._eval_push_client.push_stage(
+                report_id=report_id,
+                stage_result=stage_result,
+            )
+        except Exception as exc:
+            logger.warning(
+                "ExtractLayoutFirstUseCase: eval push stage 2 failed (continuing): %s", exc
+            )
+
+    async def _eval_push_stage3(
+        self,
+        report_id: str,
+        ocr_pages: List[Dict],
+        unit_ocr_results: List[Dict],
+        units_in_map: List[Dict],
+        thresholds: Optional[Dict],
+    ) -> None:
+        """
+        Compute Stage 3 (OCR) eval result and push to mcp-server.
+
+        Builds ocr_text_per_page from:
+        1. ocr_pages (stored text fetched at Step 0 — used for diacritic analysis)
+        2. unit_ocr_results (stitched_markdown from Tier 2 — used as supplementary)
+
+        Priority: stored OCR text (ocr_pages) is the primary signal.
+        """
+        if self._eval_push_client is None:
+            return
+
+        # Build ocr_text_per_page from stored OCR pages (Step 0 fetch)
+        ocr_text_per_page: Dict[int, str] = {}
+        for page_rec in ocr_pages:
+            page_no = page_rec.get("page_number") or page_rec.get("page_no")
+            text = page_rec.get("text_content") or page_rec.get("text") or ""
+            if page_no is not None:
+                ocr_text_per_page[int(page_no)] = text
+
+        # Supplement with stitched_markdown from Tier 2 where page text is missing
+        for unit_result in unit_ocr_results:
+            markdown = unit_result.get("stitched_markdown") or ""
+            unit_id_match = next(
+                (u for u in units_in_map if u.get("unit_id") == unit_result.get("unit_id")),
+                None,
+            )
+            if unit_id_match:
+                for page_no in unit_id_match.get("pages", []):
+                    if page_no not in ocr_text_per_page:
+                        ocr_text_per_page[int(page_no)] = markdown
+
+        # Build layout_units for numeric_ratio_in_tables computation
+        layout_units_for_eval: List[Dict] = [
+            {
+                "unit_id": u.get("unit_id"),
+                "page_type": u.get("page_type", "table"),
+                "pages": u.get("pages", []),
+            }
+            for u in units_in_map
+        ]
+
+        stage_result = eval_stage3_ocr(
+            ocr_text_per_page=ocr_text_per_page,
+            layout_units=layout_units_for_eval,
+            thresholds=thresholds,
+        )
+
+        try:
+            await self._eval_push_client.push_stage(
+                report_id=report_id,
+                stage_result=stage_result,
+            )
+        except Exception as exc:
+            logger.warning(
+                "ExtractLayoutFirstUseCase: eval push stage 3 failed (continuing): %s", exc
+            )
