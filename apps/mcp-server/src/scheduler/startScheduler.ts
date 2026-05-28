@@ -66,6 +66,7 @@ import { runBrokerSanctionsJob } from './news-analysis/brokerSanctionsJob.js'
 import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
 import { runSelfImproveOrchestrator } from './audits/selfImproveOrchestratorJob.js'
+import { runBctcEvalRecomputeJob } from './financial-reports/bctcEvalRecomputeJob.js'
 import { runDiskUsageAlertJob } from './diskUsageAlertJob.js'
 import { runTasksMdJanitorJob } from './system/tasksMdJanitorJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
@@ -942,5 +943,16 @@ export function startScheduler() {
     await jobRunRepo.wrapRun('selfImproveOrchestratorJob', () => runSelfImproveOrchestrator({ db }))
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor active`)
+  // Sprint BCTC-EVAL-SUBSTRATE — Nightly BCTC eval recompute (22:02 UTC)
+  // Off-market: 22:02 UTC = 05:02 GMT+7 next day; well outside HOSE hours (02:00-08:59 UTC Mon-Fri).
+  // Sweeps stale bctc_eval_results rows (detector_version mismatch) and recomputes stages 4-6.
+  // Override via env: CRON_BCTC_EVAL_RECOMPUTE
+  cron.schedule(CRONS.bctcEvalRecompute, async () => {
+    await jobRunRepo.wrapRun('bctcEvalRecomputeJob', async () => {
+      const result = await runBctcEvalRecomputeJob()
+      return { rowsWritten: result.recomputed * 3 } // 3 stages per report
+    })
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute active`)
 }

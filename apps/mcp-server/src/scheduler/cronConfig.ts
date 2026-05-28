@@ -170,4 +170,9 @@ export const CRONS = {
    *  and marketOpen ('0 9 * * 1-5' weekdays). One new cron slot. Shadow mode at ship (all paths default-false).
    *  HN-1: bctcOverdueCheck is DAILY (0 9 * * *), NOT weekday-only — the 2-min offset is correct. */
   selfImproveOrchestrator:    Bun.env.CRON_SELF_IMPROVE_ORCHESTRATOR               ?? '2 9 * * *',
+  /** bctcEvalRecompute — nightly BCTC eval recompute at 22:02 UTC (off-market) (Sprint BCTC-EVAL-SUBSTRATE)
+   *  Sweeps stale bctc_eval_results rows (detector_version mismatch) and recomputes stages 4-6.
+   *  22:02 UTC = 05:02 GMT+7 next day, well outside HOSE market hours (02:00-08:59 UTC Mon-Fri).
+   *  Collision check: 22:00 UTC = eveningSummary slot — offset by 2 min to avoid pile-up. */
+  bctcEvalRecompute:          Bun.env.CRON_BCTC_EVAL_RECOMPUTE                     ?? '2 22 * * *',
 }
