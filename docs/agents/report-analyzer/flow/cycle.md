@@ -39,6 +39,8 @@ Metrics: Revenue, Net Income, EPS, ROE, Debt/Equity, Operating Margin
 *†"vs YoY Same Q" is the primary comparison — avoids seasonal distortion. Use for beat/miss verdict.*
 *If Q1 reported: compare vs Q1 prior year only. "Below Q4" is expected, not a miss.*
 
+**3b. BCTC eval fetch** — for each ticker, before citing figures, call `GET /api/bctc-eval/{report_id}` where `report_id` is the UUID for the BCTC report. Store `overall_status` and `stages[*]` for use in step 4. If endpoint unavailable → `eval_status = "unknown"`.
+
 **4. Signal + ledger**
 `post_agent_signal(type="fundamental_validation", beat_miss="beat|miss|in-line")`
 If `docs/analysis-briefs/{TICKER}.md` does not exist → create from `docs/references/analysis-ledger-template.md`
@@ -49,6 +51,15 @@ Append `docs/analysis-briefs/{TICKER}.md` [Report Analyzer]:
 [table as above]
 **Verdict**: Beat / Miss / In-line — {one sentence, max 15 words}
 ```
+
+Every WORK notebook entry that references a BCTC report MUST include a one-line eval pill on the same entry line. Format:
+- Green: `BCTC-EVAL: {TICKER} Q{N}-{YEAR} = 🟢 (all 6 stages green, v{detector_version}, {computed_at date})`
+- Yellow: `BCTC-EVAL: {TICKER} Q{N}-{YEAR} = 🟡 (stage N yellow)`
+- Red: `BCTC-EVAL: {TICKER} Q{N}-{YEAR} = 🔴 (stage N red — {failing gate_id}: {actual_value})`
+- Unknown: `BCTC-EVAL: {TICKER} Q{N}-{YEAR} = ⬜ (eval not available)`
+
+Status semantics: red = hard fail, yellow = soft warning, green = pass.
+
 Partial data → `N/A` | write fails → BUG channel immediately
 
 **5. Notebook commit** — append to `docs/agent-memory/notebooks/report-analyzer.md`:
