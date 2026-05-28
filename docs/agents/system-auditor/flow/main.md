@@ -164,6 +164,24 @@ docker exec mcp-server sqlite3 /app/data/market.db "SELECT count(*) FROM bctc_qu
 
 ---
 
+### BCTC Eval Sweep (D-BCTC-EVAL) — Tier-2 add-on
+
+Call `GET /api/bctc-eval` (list endpoint). Compare each report's `overall_status` and per-stage `stage_statuses` against the previous snapshot stored in `docs/agent-memory/notebooks/system-auditor.md` (look for `BCTC-EVAL-SNAPSHOT:` block from last run).
+
+For each report where ANY stage status changed since last snapshot, post delta to WORK Telegram:
+```
+[BCTC-EVAL] {ticker} {period}: stage N {stage_name} {old_status}→{new_status} ({metric}: {actual_value})
+```
+Example: `[BCTC-EVAL] FPT Q4-2025: stage 3 green→yellow (vn_diacritic_ratio dropped to 0.28)`
+
+Status semantics: red = hard fail, yellow = soft warning, green = pass.
+
+Also update `docs/signals/DASHBOARD.md` per signal-dashboard skill for any report showing `overall_status = "red"` or any new `"yellow"`.
+
+After sweep, overwrite the `BCTC-EVAL-SNAPSHOT:` block in the notebook with the current list response (compact: `{report_id, ticker, period, overall_status, stage_statuses, computed_at}` per entry). If endpoint returns non-200 → log `[D-BCTC-EVAL] endpoint unavailable — skipping sweep` and continue (non-fatal).
+
+---
+
 ### Improvement Proposal Emit (D-IMPROVE) — Tier-2 add-on
 
 > Three-lane rule + proposal schema SSOT: `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md` §1 and §3.
