@@ -35,3 +35,7 @@ docs/data/.cycle-snapshot-*.stage
 docs/data/cycle-snapshot-*.json.tmp
 docs/daily/
 docs/outbox/
+
+# PDF single-source consolidation (PDF-SINGLE-SOURCE)
+data/pdfs/*.pdf
+data/pdfs-local/
