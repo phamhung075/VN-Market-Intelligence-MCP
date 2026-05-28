@@ -1,23 +1,22 @@
 # PO Notebook
 
-## Cycle 2026-05-28T21:23Z — Sprint HCM-DISAMBIG kickoff (USER bug report, content-accuracy tier)
+## Cycle 2026-05-28T21:47Z — HCM-EXIT sign-off, Sprint HCM-DISAMBIG CLOSED APPROVED
 
-User reported a HIGH-priority MARKET/WORK content bug: agents could conflate `HCM` (Securities ticker, HOSE-listed, peer of SSI/VND/VCI/VIX per `stock-classification.json:112`) with `TP.HCM` / `TPHCM` (Vietnamese abbreviation for Thành Phố Hồ Chí Minh = the city). The non-technical user must never read an ambiguous HCM in a dish. Concrete pointer: news-scout 20:00Z cycle + signal #4144 (`docs/signals/news_impact_4144_hvn_expansion.json` headline "Vietnam Airlines TPHCM-Phuket strategic expansion").
+QA verdict `docs/signals/qa-hcm-disambig-2026-05-28T214341Z.json` reviewed: 6/6 ACs PASS, fence-false-green proof recorded (`expect(true).toBe(false)` injection → 1 fail non-zero exit; reverted → 19 pass), post-rebuild write-path proven (pollNewsJob success 21:41:48Z 2189ms, 0 HCM false-positive in alerts table after 21:37Z rebuild, #4144 replay clean, news_impact_4144 confirms HCM not in affected_stocks). 50/50 across 6 test files. tsc 0 errors. DDD 0 violations. Sign-off APPROVED.
 
-**Recon (independent, before kickoff):**
-- Existing guard: Task 1788 `GEOGRAPHIC_CONTEXT_MAP` in `apps/mcp-server/src/domain/services/newsNormalizer.ts:547` + test `1788-hcm-geographic-false-positive.test.ts`. Covers `TPHCM` / `TP HCM` / `TP.HCM` / `thành phố hồ chí minh` via 10-char look-behind on Pattern 2; alias path (Pattern 3) is structurally safe (HCM aliases are `chứng khoán hồ chí minh` + `hcm securities`, neither matches city abbreviation).
-- PROOF guard worked in prod: signal #4144 has `affected_stocks: ["HVN"]` only — NO HCM leak — despite the headline saying TPHCM-Phuket. User's concern is forward-looking/coverage, not a confirmed runtime leak.
-- GAPS identified: (a) `TP-HCM` hyphen / `TP. HCM` dot+space / `Tp.HCM` mixed-case NOT tested explicitly (likely work — toLowerCase() normalizes — but unproven); (b) chef.md Block A "Format rules" list has NO HCM-vs-TP.HCM disambiguation guidance — the dish writer could narrate "HCM tăng 2%" without telling the non-technical reader it is a ticker.
+**Sprint chain closed:** PO @4b0608cd → HCM-BA (24 ACs, `docs/REQ_HCM-DISAMBIG.md`) → HCM-ARCH (`docs/architecture-briefs/2026-05-28-hcm-disambig.md`, R-1/R-5 closed, suppress-only) → HCM-PM (4 handoffs, WIP=0) → HCM-D1 @10438892 (newsNormalizer.ts GEOGRAPHIC_CONTEXT_MAP +2 entries `tp. hcm` / `tp-hcm`) || HCM-D2 @de391d9b (chef.md line 192 Block A narrative rule `HCM (cổ phiếu)` vs `TP. HCM`) → HCM-OPS (mcp-server force-recreated, container 34a9b5165c828, image f09264113a71) → HCM-QA @a2ff3356 → HCM-EXIT.
 
-**Sprint scope (autonomous PO decisions — BA/architect MUST NOT re-litigate):** SPRINT-S; multi-zone (extraction + chef prompt); HCM stays on watchlist; extend `GEOGRAPHIC_CONTEXT_MAP` IN PLACE (no new module); 10-char look-behind stays unless architect cites a real failing headline; chef.md change is prompt-only (no microservice rebuild); extraction code change DOES require ops force-recreate (memory `feedback_rebuild_after_dev_change`); NO branches; commit per convention; post-fix `/graphify docs --update --no-viz`.
+**Pre-approve container-rebuild gate (per sprint-signoff.md):** PASS — ops force-recreated `apps/mcp-server/`; QA confirms build timestamp > commit; /health 200, toolCount 146; post-rebuild pollNewsJob proved write-path live (write-wedge memory `project_mcp_server_write_wedge` guarded).
 
-**Atomization dispatched (per memory `project_no_pm_ba_agent`: PM/BA both spawnable — use full chain, do NOT collapse):** HCM-BA → HCM-ARCH → HCM-PM → HCM-D1 (extraction + tests, `dev-mcp-server`) + HCM-D2 (chef.md prompt, `dev-mcp-server`) → HCM-OPS (force-recreate, ONLY after HCM-D1) → HCM-QA (injects #4144 exact headline + 3 adversarial + 1 positive, reads post-rebuild `news_impact_*.json` per `project_mcp_server_write_wedge`; verifies new test file actually picked up per `feedback_fence_false_green`) → HCM-EXIT (PO).
+**Lessons reinforced:** `feedback_fence_false_green` (inject deliberate fail proved test file picked up) + `project_mcp_server_write_wedge` (post-rebuild fresh signal read confirms live extractor) + `feedback_rebuild_after_dev_change` (force-recreate vs restart) + `feedback_market_report_plain_vietnamese` (chef.md rule written plain Vietnamese no jargon for non-tech user). Honest-green, no hollow-run heuristics tripped.
 
-**SSOT:** `docs/SPRINT_GOAL_HCM-DISAMBIG.md` (9 acceptance cases + R-1..R-4 risks + day-0 constraints). TASKS.md row added at top (above MACRO-LIVE-PRICES sprint).
+**Actions this cycle:** 8 TASKS.md rows flipped DONE with commit refs; sprint header flipped OPEN→DONE with full chain; SPRINT_GOAL_HCM-DISAMBIG.md status COMPLETE with evidence; graphify dispatched; user Telegram (work channel) plain-Vietnamese sprint-close summary sent; notebook overwritten; mutex-guarded commit.
 
-**NEXT:** ba | write `docs/REQ_HCM-DISAMBIG.md` for vision in `docs/SPRINT_GOAL_HCM-DISAMBIG.md`. PIPELINE: continue.
+**NEXT:** idle | dispatcher awaits next cowork tick / cron triage cycle. PIPELINE: complete.
 
 ## Carry-over
-- HCM stays on watchlist (Securities sector needs the peer; do NOT drop). `user_watchlist` memory unchanged.
-- Backlog ticket if a 2nd ticker shows similar geographic clash (sprint scope is HCM-only by PO decision).
-- If architect proves `apps/news-fetch/` has a parallel ticker extractor, re-size flag → SPRINT-M (otherwise stays SPRINT-S).
+- HCM stays on watchlist (Securities peer SSI/VND/VCI/VIX) — `user_watchlist` unchanged.
+- Backlog open: if another ticker shows geographic clash (e.g. HNX vs city, BID context), spawn analogous DISAMBIG sprint — HCM-only by PO decision this round.
+- chef.md rule applies forward-only; pre-existing signals on disk untouched.
+- Next ops force-recreate of mcp-server (any future code change) MUST repeat the post-rebuild fresh-signal audit per write-wedge memory.
+- Apply HCM-DISAMBIG fence-false-green discipline to all future test additions: inject deliberate fail, confirm non-zero exit, revert before commit.
