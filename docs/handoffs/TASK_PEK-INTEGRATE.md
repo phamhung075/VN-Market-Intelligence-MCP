@@ -1420,3 +1420,40 @@ Container shows `(unhealthy)` docker label. Root cause: uvicorn running at 72.4%
 ### Verdict: APPROVED
 
 **Next:** po — PEK-RENDER-EXIT sign-off
+
+---
+
+## [PO] PEK-RENDER-EXIT — Sign-Off Record 2026-05-28T00:51:46Z
+
+**Verdict:** APPROVE (DONE pending USER verbal G9) | **Commit under sign-off:** `3a547488` (render-seam) | **QA verdict committed:** `e49a3843`
+
+### Critique-before-approve — independent re-verification (NOT a rubber-stamp)
+
+PO did not accept the QA Review Record on its word. Every gate was independently reproduced against the LIVE mcp-server container DB (`/app/data/market.db`, 192MB, mtime 2026-05-28 00:49) and live source. Findings:
+
+1. **FPT sentinel `e71f845d` (Gate A) — REPRODUCED.** Direct `bun:sqlite` readonly COUNT against the live container DB: `e71f845d-ffa5-48f9-8f09-30ac2cd09c65` (HOSE, pdf_path `/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf`) → **7 units, latest+earliest `2026-05-27 22:20:00`** (matches QA exactly). Page-coverage arrays: `[5] / [7,8,9] / [16] / [22-29] / [30-37] / [38-45] / [46]`. Page 5 unit `2048b0fb` md_len=1906, q=0 — markdown head verified: `TÀI SẢN DÀI HẠN 200 29.986.651.038.243 ... Các khoản phải thu dài hạn 210 ...` — codes 200/210, Vietnamese diacritics intact, pipe-table structure present. **Page 3 is absent from every page_numbers_json array** → the handler MUST emit `pek_coverage_gap:true` (honest gap, no silent stale fallback), exactly as QA reported. The "FPT pages 3 and 5 never change" user complaint is resolved: page 5 = fresh PEK; page 3 = honest coverage-gap signal.
+2. **Corpus-wide (Gate B) — REPRODUCED.** `GROUP BY report_id` over `bctc_layout_units`: **exactly 12 distinct reports with fresh PEK units**, all `latest` timestamps between `2026-05-27 22:20:00` and `2026-05-28 00:35:17`. Per-report unit counts match the QA table 1:1 (FPT 7, FPT-Q1 6, DGC 18, DIG 11, VNM 7, EIB 7, SHB 8, DHG 5, BSR 5, VEA 5, HPG 4, ACB 5). VCB ×2 (null pdf_path) correctly absent from the PEK set → honest `has_pek:false` fallback.
+3. **C-3 off-hours window (Gate E) — REPRODUCED.** All 12 extraction timestamps fall in 22:20–00:35 UTC, fully outside the 02:00–08:59 UTC HOSE window. Zero violations. 503 guard `is_vn_market_open_utc` confirmed live at `apps/pdf-extractor/.../handlers.py` import + `/pek-extract` route.
+4. **Render-seam code (Gates C+D) — READ AND CONFIRMED.** `bctcInspectHandler.ts` OCR path (L485–557) reads `stitched_markdown` FROM `bctc_layout_units` (PEK SSOT) as the primary path, emits `pek_coverage_gap:true` with empty `text_content` on coverage gap (no silent stale fallback), `has_pek:false` only when zero PEK units exist. `has_pek` emitted in every data branch (524/547/572/597/625 OCR; 725/800 table) — fail-loud confirmed. `bctc-inspector.html`: stale banner is a real DOM `insertBefore` (L746–751, gold-on-brown, unmistakable for a non-technical user), coverage-gap banner (L755–760), PEK markdown render path (L764–766). Line numbers match the QA citations exactly.
+5. **Trigger 422-fix — REPRODUCED LIVE.** `POST /api/trigger-pek-extract {}` against live mcp-server returns **HTTP 400** (input validation), not 404 — the route exists and the old 422 dead-end is gone. Route present at `server.ts:401`.
+6. **Deploy lane — INDEPENDENTLY PROVEN.** mcp-server image `Created 2026-05-27T22:30:43Z` (fresh rebuild/force-recreate, not a restart of a stale image), container Up healthy. PDF-Extract-Kit subtree clean; the two modified files (`bctcInspectHandler.ts`, `bctc-inspector.html`) are committed in `3a547488` (no pending unstaged drift from PO).
+
+**Nothing was thin. No gate routed back.** The dual-path render drift behind the user's complaint is fixed at the root (Option A — inspector repointed to the PEK SSOT), with a fail-loud guard and a visible stale banner closing the false-green seam that C-1 was written to catch.
+
+### Decision
+
+- **PEK-RENDER-DEPLOY → DONE** (mcp-server rebuilt 22:30:43Z; corpus re-extracted into the live DB, 12/12 fresh, off-hours).
+- **PEK-RENDER-QA → DONE** (APPROVED `e49a3843`, all 5 gates; PO re-verified independently).
+- **PEK-RENDER-EXIT → DONE pending USER verbal G9.** Render-seam acceptance met; only criterion (5) USER verbal G9 outstanding — main terminal obtains it. PO does NOT block.
+- **PEK-EXIT / PEK-MULTIPAGE → DONE pending USER verbal G9** (the render-seam was the last open defect; both upstream gates were BLOCKED only on this Round-6 work, now satisfied).
+- Sprint PEK-INTEGRATE goal stays **ARMED** until USER verbal G9; not fully closed.
+
+### Non-blocking follow-up — pdf-extractor healthcheck false-negative (OPS FLAG triage)
+
+QA flagged: pdf-extractor shows `(unhealthy)` because the Docker healthcheck `curl -f /health` (10s) times out under post-extraction CPU saturation (~72% CPU, 1.65GB RSS), while `/health` returns 200 internally. **Confirmed live** (container still labelled `(unhealthy)`). **DECISION: BACKLOG, do NOT spin an ops task now.** Rationale: it is a cosmetic false-negative — extraction works (12/12 corpus landed), the service is functionally healthy, no fleet dependency keys off this label, and it does not affect the render-seam acceptance or the user's bug. It does NOT block this exit. Backlog item opened in `docs/TASKS.md` (PEK-HEALTHCHECK-PROBE, LOW): raise healthcheck `timeout` to ~30s or swap `curl -f` for a lightweight non-blocking probe; route to ops/infra when the reliability backlog is next pulled. Not urgent — no user-facing impact.
+
+### Ready for user G9
+
+**READY FOR USER VERBAL G9.** The render-seam fix is live and independently verified: FPT page 5 renders FRESH PEK data (codes 200/210, diacritics, pipe-table), page 3 shows an honest coverage-gap banner (never silent stale data), all 12 corpus reports carry fresh PEK units, and a visible stale banner fires on any `has_pek:false`. Nothing blocks G9. Main terminal presents to user.
+
+**Files written this cycle:** `docs/handoffs/TASK_PEK-INTEGRATE.md` (this record), `docs/TASKS.md` (row flips), `docs/agent-memory/notebooks/po.md` (notebook). All left UNSTAGED for main-terminal scoped commit. PDF-Extract-Kit subtree untouched.
