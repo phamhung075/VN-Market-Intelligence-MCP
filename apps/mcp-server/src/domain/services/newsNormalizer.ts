@@ -550,6 +550,8 @@ const GEOGRAPHIC_CONTEXT_MAP: Map<string, string[]> = new Map([
     [
       "tp.hcm", "tp hcm", "tphcm",
       "tp.", "tp ",
+      "tp. hcm",  // dot-space variant — belt-and-suspenders for TP. HCM (HCM-D1)
+      "tp-hcm",   // hyphen variant — genuine gap (HCM-D1)
       "thành phố hồ chí minh", "thanh pho ho chi minh",
       "thành phố hcm", "thanh pho hcm",
     ],
