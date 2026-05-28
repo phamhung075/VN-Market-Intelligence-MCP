@@ -3369,3 +3369,57 @@ Total fleet:    ~1.9 GiB / 8 GiB cap
 - DevOps monitors 22:02 UTC cron tick for bctcEvalRecompute execution
 - Cowork sends WORK channel deploy notification
 
+
+---
+
+## Session: 2026-05-28
+
+**Task:** BCTC-EVAL-OPS-FRONTEND-REBUILD — close qa G3-T1 + G3-T2 FAIL via targeted frontend container rebuild
+
+### Cycle Summary
+- Sprint BCTC-EVAL-SUBSTRATE in-flight (G9 pending); QA returned YELLOW with G3-T1 + G3-T2 (FE) FAIL
+- Root cause: frontend container Up 41h running stale build; bctc-eval route source files (commits 727a3b42–15842b8b) committed in repo but not yet baked into image
+- Architect confirmed: API backend GREEN (14 trust-ascending reports verified, FPT sentinel e71f845d-ffa5-48f9-8f09-30ac2cd09c65 has 6 stages + has_pek:true); ONLY FE container needed rebuild
+- Scope: narrow rebuild (frontend only) — no other services touched, PDF-Extract-Kit subtree untouched, frozen files pristine
+- Root-cause diagnosis: docker-compose.yml missing `MCP_SERVER_BASE_URL` env var; frontend defaulted to localhost:3000, which inside container != docker network mcp-server:3000
+- Fix: `MCP_SERVER_BASE_URL=http://mcp-server:3000` added to frontend service environment → container can now reach mcp-server API
+
+### Execution Timeline
+- Build start: `docker compose build frontend` (layer cache active, no --no-cache)
+- Build output: bctc-eval assets compiled ✓
+  - build/client/assets/dashboard.bctc-eval._index-DYpkFMaL.js (3.98 kB gzip 1.55 kB)
+  - build/client/assets/dashboard.bctc-eval._reportId-B3QTjt7Y.js (13.17 kB gzip 4.98 kB)
+  - Full build completed in 15.9s total (Vite client+SSR bundles)
+- Container restart: `docker compose up -d --no-deps --force-recreate frontend`
+- Health status: Up 11 seconds (healthy) — within SLA
+- Environment variable fix: python script updated docker-compose.yml (MCP_SERVER_BASE_URL line added)
+- Container recreation with new env: `docker compose up -d --no-deps --force-recreate frontend` (second pass)
+- Health verification: Up 11 seconds (healthy)
+
+### Key Results
+- **Docker rebuild:** ✓ Image rebuilt with bctc-eval routes compiled in
+- **Environment configuration:** ✓ FIXED MCP_SERVER_BASE_URL=http://mcp-server:3000
+- **Container deployment:** ✓ Healthy in <12s from start
+  - Port 3001 exposed correctly
+  - build/server/index.js contains bctc-eval routes compiled
+  - Healthcheck passes (wget http://localhost:3001/)
+- **API Endpoint Verification:**
+  - List endpoint `GET /dashboard/bctc-eval` → HTTP 200 ✓
+  - Detail endpoint `GET /dashboard/bctc-eval/e71f845d-ffa5-48f9-8f09-30ac2cd09c65` → HTTP 200 ✓
+- **Integrity checks:**
+  - PDF-Extract-Kit: pristine (0 uncommitted files) ✓
+  - Frozen files (text_table_extractor.py, sandbox/runner.py, pilot-status-pdf-extractor.json, generic_md_table_extractor.py): all untouched ✓
+  - Other microservices: unchanged (mcp-server, pdf-extractor, news-fetch, stock-price healthy at Up 41h) ✓
+
+### Expected QA Outcome
+- G3-T1 (FE list route): PASS (HTTP 200, renders trust-ascending list)
+- G3-T2 (FE detail route): PASS (HTTP 200, renders report detail with 6 stages + FPT data)
+- G3-T3/T4/T5 (existing tests): remain GREEN (no changes to API or db)
+- Full sprint G9 gate: unblocked, FE ready for human sign-off
+
+### Operational Notes
+- Off-HOSE timing (Thursday 23:23 UTC = Friday 04:23 ICT); safe window for FE-only rebuild
+- No fleet-wide rebuild risk (single-service scope)
+- Rebuild triggered by missing env-var discovery during troubleshooting (root-cause: MCP_SERVER_BASE_URL not in docker-compose.yml)
+- Future prevention: env var now documented in docker-compose.yml; QA can re-verify on any future FE rebuild
+
