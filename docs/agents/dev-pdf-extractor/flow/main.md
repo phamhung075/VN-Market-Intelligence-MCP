@@ -20,6 +20,23 @@ Service docs: `docs/architecture/microservice/pdf-extractor/`. See `docs/protoco
 
 ---
 
+## Extraction Failure Debug Subroutine (run FIRST when investigating any BCTC extraction failure)
+
+Before reading logs, before running tests, before any code change — fetch the eval for the failing report:
+```
+GET /api/bctc-eval/{report_id}   ← check schema_version field before parsing
+```
+
+Read `stages[*].gate_failures` for every stage. Each failing `gate_id` in `gate_failures_json` is a named detector gate; it becomes a **regression-set acceptance criterion** for the fix. List them explicitly in the task handoff before writing any code.
+
+Example: if `stages[3].gate_failures = [{"gate_id": "value_blank_label_max", "threshold": 0, "actual": 44}]` → AC-1: `value_blank_label_max = 0` (zero blank-label rows) must pass after fix.
+
+Status semantics: red = hard fail (at least one gate_id in gate_failures_json), yellow = soft warning only, green = all gates pass.
+
+If `GET /api/bctc-eval/{report_id}` returns 404 or 409 (eval not yet computed) → proceed with log-based debug, note that structured eval is unavailable.
+
+---
+
 ## Smoke Checks (Python — run before every commit)
 
 | Check | Command |
