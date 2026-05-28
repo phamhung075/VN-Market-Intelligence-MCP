@@ -4821,3 +4821,114 @@ key_learnings:
     Corpus verification must query latest extracted_at batch per report to avoid false counts.
 
 ---
+
+## cycle-141 · 2026-05-28 · BCTC-EVAL-QA-G3-RETEST — surgical re-run G3-T1 + G3-T2 only — GREEN
+
+**Task:** BCTC-EVAL-QA-G3-RETEST — re-test G3-T1 (FE list) + G3-T2 (FE detail) only after ops fixes dae07fbb + c244e4f5 | **Verdict:** GREEN
+
+```
+date: 2026-05-28T21:45Z
+type: acceptance-gate (G3 surgical re-test)
+sprint: BCTC-EVAL-SUBSTRATE
+commits_under_test: dae07fbb (docker-compose MCP_SERVER_BASE_URL env), c244e4f5 (force-recreate frontend)
+scope: G3-T1 + G3-T2 ONLY (G2, G3-T3/T4/T5 carry forward GREEN from cycle-140)
+pre_condition: frontend :3001 healthy (verified independently by main terminal), mcp-server :3000 healthy
+
+═══════════════════════════════════════════════════════════════
+G3-T1 — FE LIST /dashboard/bctc-eval
+═══════════════════════════════════════════════════════════════
+
+G3_T1_http:
+  command: curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/bctc-eval
+  result: 200
+  body_size: 54920 bytes (SSR'd HTML — not empty error page)
+  verdict: PASS
+
+G3_T1_count:
+  method: python3 grep href="/dashboard/bctc-eval/<uuid>"
+  count: 14 report links found in tbody
+  expected: 14
+  verdict: PASS
+
+G3_T1_sort:
+  method: python3 regex extraction of overall badge per row, DOM order
+  page_header_text: "Sort: trust_ascending" (confirmed in SSR HTML)
+  dom_order:
+    row_01: VNM    Q4-2025  Red
+    row_02: EIB    Q1-2026  Red
+    row_03: SHB    Q4-2025  Red
+    row_04: DHG    Q1-2026  Red
+    row_05: VEA    Q4-2025  Red
+    row_06: HPG    Q4-2025  Red
+    row_07: FPT    Q4-2025  Red
+    row_08: ACB    Q1-2026  Red
+    row_09: DGC    Q4-2025  Yellow
+    row_10: DIG    Q4-2025  Yellow
+    row_11: VCB    Q1-2025  Yellow
+    row_12: BSR    Q4-2025  Yellow
+    row_13: VCB    Q4-2025  Yellow
+    row_14: FPT    Q1-2026  Yellow
+  first_8_all_red: YES
+  next_6_all_yellow: YES
+  any_green_in_overall: NO (bg-primary badge absent in Overall column — only appears in per-stage S6 cells for VEA/HPG/FPT)
+  client_resort: NO — sort matches server trust_ascending label exactly
+  verdict: PASS
+
+G3_T1_final_verdict: PASS
+
+═══════════════════════════════════════════════════════════════
+G3-T2 — FE DETAIL /dashboard/bctc-eval/e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+═══════════════════════════════════════════════════════════════
+
+G3_T2_http:
+  command: curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/dashboard/bctc-eval/e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+  result: 200
+  body_size: 16176 bytes (SSR'd HTML)
+  verdict: PASS
+
+G3_T2_ground_truth (from mcp-server direct):
+  curl http://localhost:3000/api/bctc-eval/e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+  overall_status: red
+  has_pek: true
+  stages: 6 (stage_no 1..6)
+  stage_statuses: [yellow, yellow, yellow, green, red, green]
+  note: S1-S3 placeholder yellow, S5(MARKDOWN_RENDER) red drives overall red
+
+G3_T2_stage_cards:
+  method: python3 regex — card heading markers + stage name strings in HTML
+  card_markers_found: [Stage 1, Stage 2, Stage 3, Stage 4, Stage 5, Stage 6]
+  stage_names_found: RASTERIZE, LAYOUT_DETECT, OCR, TABLE_RECONSTRUCT, MARKDOWN_RENDER, STRUCTURED_EXTRACT
+  count: 6 stage cards rendered
+  expected: 6
+  verdict: PASS
+
+G3_T2_has_pek:
+  evidence_1: visible badge — '<span class="rounded bg-blue-900 px-2 py-0.5 text-xs text-blue-300">PEK</span>'
+  evidence_2: SSR context — '"has_pek",true' found in embedded __remixContext stream at pos=14298
+  has_pek_visible: YES (blue badge rendered + embedded data present)
+  verdict: PASS
+
+G3_T2_ticker_period:
+  ticker_FPT_in_html: YES
+  period_Q4-2025_in_html: YES
+  verdict: PASS
+
+G3_T2_overall_status:
+  api_overall_status: red
+  fe_overall_badge: Red (bg-destructive class confirmed in page header area)
+  api_vs_fe_match: YES
+  verdict: PASS
+
+G3_T2_final_verdict: PASS
+
+═══════════════════════════════════════════════════════════════
+FINAL VERDICT: GREEN
+═══════════════════════════════════════════════════════════════
+
+both_gates: G3-T1 PASS + G3-T2 PASS
+root_cause_from_cycle140_resolved: YES — MCP_SERVER_BASE_URL env var added + fresh image deployed
+sprint_status: BCTC-EVAL-SUBSTRATE ready for G9 human sign-off
+carry_forward: G2 GREEN (cycle-140) + G3-T3/T4/T5 GREEN (cycle-140) unchanged
+```
+
+---
