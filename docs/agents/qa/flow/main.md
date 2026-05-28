@@ -1,4 +1,4 @@
-<!-- size-justification: 151L — atomic QA gate flow with JUMP-TO dispatch (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security checklist steps are tightly sequential and cannot decompose without losing gate ordering. -->
+<!-- size-justification: 198L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval checklist steps are tightly sequential and cannot decompose without losing gate ordering. -->
 # QA — Main Flow
 
 **Tools:** `docs/agents/tools/package/qa.md`
@@ -67,6 +67,23 @@ Read handoff using delta-read skill:
 
 <!-- jump:pipeline -->
 ## Pipeline
+
+### BCTC Eval Gate (run after test-run, before verdict)
+
+For any sprint task that touches a BCTC report, fetch eval for each `report_id` in task scope:
+```
+GET /api/bctc-eval/{report_id}   ← exact path; check schema_version field before parsing
+```
+Status semantics (consistent across all agent consumers):
+- `overall_status = "red"` → hard fail: qa MUST refuse DONE. Write in handoff:
+  `BLOCKED: stage N red — <gate_failures summary from gate_failures_json>`
+- `overall_status = "yellow"` → soft warning: qa logs in handoff:
+  `CAUTION: yellow eval — <stage names that are yellow>`
+  Does NOT block merge.
+- `overall_status = "green"` → pass; proceed to verdict.
+
+If endpoint returns 404 (eval not yet computed) → log `BCTC-EVAL: not yet computed for {report_id}` in handoff, do NOT block (eval substrate may not be deployed yet).
+If endpoint returns 409 → same as 404 treatment.
 
 **Heartbeat sprint-task lock** → load skill: `.claude/skills/task-lock/SKILL.md`
 ```
