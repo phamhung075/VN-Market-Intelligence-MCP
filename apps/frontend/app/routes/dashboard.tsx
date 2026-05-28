@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: "/dashboard/fetch", label: "Fetch Ops" },
   { to: "/dashboard/vps", label: "VPS Proxy" },
   { to: "/dashboard/db", label: "Database" },
+  { to: "/dashboard/bctc-eval", label: "BCTC Eval" },
 ] as const;
 
 export default function DashboardLayout() {
