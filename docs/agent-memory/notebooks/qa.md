@@ -1,5 +1,74 @@
 # QA — Notebook
 
+## cycle-139 · 2026-05-28 · PDF-SINGLE-SOURCE G3 regression gate — GATE-G3-PROVEN-GREEN
+
+**Task:** PDF-SINGLE-SOURCE final regression gate G3 (bind-mount migration verification) | **Verdict:** GATE-G3-PROVEN-GREEN
+
+```
+date: 2026-05-28T19:28Z
+type: regression-gate (PDF-SINGLE-SOURCE G3)
+sprint: PDF-SINGLE-SOURCE
+commits_under_test: 2e6154ee, b9b135a4, 7fc2048b, d1be5050, 6802e0c7 (dev), 1e589708 (ops)
+ops_pre_baseline: bctc_layout_units=134, financial_reports=14
+
+G3.1_fpt_sentinel:
+  endpoint: GET /api/bctc-inspect/ocr/e71f845d-ffa5-48f9-8f09-30ac2cd09c65?page=5
+  has_pek: true
+  db_pdf_path: /app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf
+  pdf_path_prefix: /app/data/pdfs/ (NOT /app/data/pdfs-local/)
+  verdict: PASS — PEK render-seam fix survives bind-mount migration
+
+G3.2_db_count_parity:
+  bctc_layout_units POST: 134 (== PRE: 134) — zero drift
+  financial_reports POST: 14 (== PRE: 14) — zero drift
+  verdict: PASS — zero DB rewrite confirmed
+
+G3.3_pdf_path_resolvability:
+  total_rows_with_pdf_path: 12
+  missing_pdf: 0
+  verdict: PASS — all 12 pdf_path values resolve to existing files in /app/data/pdfs/
+
+G3.4_mount_state:
+  pdf_extractor:
+    Source: /host_mnt/.../VN-Market-Intelligence-MCP/data/pdfs
+    Destination: /app/data/pdfs
+    RW: false
+    Mode: ro
+    pdfs-local_mount: ABSENT
+    verdict: PASS — single correct mount, :ro enforced, no pdfs-local
+  mcp_server:
+    Source: /host_mnt/.../VN-Market-Intelligence-MCP/data/pdfs
+    Destination: /app/data/pdfs
+    RW: true
+    Mode: rw
+    pdfs-local_mount: ABSENT
+    verdict: PASS — single correct mount, rw for VPS push handler, no pdfs-local
+
+G3.5_pek_subtree_pristine:
+  command: git -C apps/pdf-extractor/PDF-Extract-Kit diff --quiet
+  result: PEK pristine (exit 0)
+  verdict: PASS
+
+G3.6_live_extraction_smoke (optional):
+  endpoint: POST /api/trigger-pek-extract {report_id: "e71f845d-ffa5-48f9-8f09-30ac2cd09c65"}
+  http_response: 202 Accepted (extraction_queued)
+  pdf_extractor_log: PekEngineAdapter._run_extraction: report_id=e71f845d ... pdf_path=/app/data/pdfs/20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf
+  models_loaded: DocLayout-YOLO (CPU) + PaddleOCR PP-StructureV2 (CPU)
+  verdict: PASS — write-side bind mount working; extraction running from /app/data/pdfs/
+
+note_endpoint_url_correction:
+  brief_said: GET /api/bctc-inspect?reportId=...&page=5
+  actual_route: GET /api/bctc-inspect/ocr/{id}?page=5
+  server_ts_line_347: pathname="/api/bctc-inspect" returns HTML viewer (always)
+  correction_applied: used correct route, result unambiguous
+
+overall_verdict: GATE-G3-PROVEN-GREEN
+rollback_required: NO
+next: po (PDF-SINGLE-SOURCE close)
+```
+
+---
+
 ## cycle-137 · 2026-05-28 · NEWS-FULLDAY + RECAP-CMD dual-sprint gate (commit 99f433ec) — APPROVED
 
 **Task:** Dual QA gate on sprints NEWS-FULLDAY (/news refinement) + RECAP-CMD (/recap /recapw /recapm) | **Verdict:** APPROVED
