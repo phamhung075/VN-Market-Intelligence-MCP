@@ -85,6 +85,28 @@ git commit -m "chore(memory/ops): notebook YYYY-MM-DD"
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
+## Fleet OCR Regression Alert
+
+When system-auditor (or any BUG channel message) reports that `3_OCR.vn_diacritic_ratio` dropped below threshold (`< 0.30` per `docs/data/bctc-eval-thresholds.json`) for **3 or more reports simultaneously**, treat as a PaddleOCR model or library regression — NOT a per-report data issue.
+
+Diagnostic steps (in order):
+1. Check PaddleOCR version in running pdf-extractor container:
+   ```bash
+   docker exec pdf-extractor pip freeze | grep paddleocr
+   ```
+2. Compare to `apps/pdf-extractor/requirements-pek.txt` — any version drift?
+3. Check base image SHA for unintended updates:
+   ```bash
+   docker inspect pdf-extractor --format "{{.Image}}"
+   docker inspect pdf-extractor --format "{{.Config.Image}}"
+   ```
+4. If version drift confirmed → REBUILD pdf-extractor (`docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) pdf-extractor && docker compose up -d --no-deps --force-recreate pdf-extractor`), then re-run mandatory 9-service health check → `docs/agents/ops/flow/docker.md` § Post-Rebuild Health Verification.
+5. Report to WORK channel with `send_telegram(channel="work")` detailing the drift and action taken.
+
+Status semantics for eval: red = hard fail, yellow = soft warning, green = pass. A fleet-wide OCR regression typically shows `3_OCR` stage red across multiple reports — distinguish from isolated single-report red (single-PDF data issue, not a regression).
+
+---
+
 ## Incident Protocol
 1. Diagnose — Docker/VPS/DB/network?
 2. `send_telegram(channel="bug")`: "Investigating [issue]"
