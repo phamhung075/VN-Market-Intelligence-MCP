@@ -1,8 +1,38 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-28T00:10Z | **Sprint:** NEWS-FULLDAY + RECAP-CMD
+**Last updated:** 2026-05-28T08:45Z | **Sprint:** PDF-SINGLE-SOURCE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## PDF-SINGLE-SOURCE (2026-05-28T08:45Z) — DESIGN COMPLETE
+
+**Task:** Consolidate dual PDF source paths (production named-volume `pdfs/` + dev `pdfs-local/` + dead-orphan host `data/pdfs/`) into one canonical host `data/pdfs/` bind-mounted at `/app/data/pdfs/` in both containers.
+
+**Key technical risk resolved:** Docker bind mount CAN shadow a named-volume subdirectory. This is PROVEN by the existing `./data/pdfs-local:/app/data/pdfs-local:ro` bind mount already in production on pdf-extractor — it shadows `/app/data/pdfs-local` inside the `market_data:/app/data` named volume without disturbing `/app/data/market.db` or any other sibling path. Live-verified: named volume contains both `pdfs/` and `pdfs-local/` subdirs.
+
+**Key decisions:**
+1. Canonical path stays `/app/data/pdfs/` — zero DB rewrite (`financial_reports.pdf_path` unchanged).
+2. mcp-server bind mount is read-write (VPS push handler at `server.ts:885` writes new PDFs there).
+3. pdf-extractor bind mount is read-only (`:ro`) — never writes PDFs.
+4. Named volume `pdfs/` has 15 files (includes 3 Q1-2026: FPT/GAS/EIB missing from pdfs-local).
+5. Migration: copy 15 from volume first, then delete pdfs-local. No DB rows touched.
+6. `.gitignore` must add `data/pdfs/*.pdf` before ops populates the directory.
+
+**4 Python files to update** (path constant `pdfs-local` → `pdfs`):
+- `spike/eval/harness.py:42` — `PDFS_LOCAL` constant
+- `spike/fpt_balance_sheet_eval.py:38` — `PDF_PATH` constant
+- `__tests__/integration/test_extract_md_tables_fpt.py:44,47`
+- `__tests__/integration/test_extract_tables_bt3d_real_ocr.py:44`
+
+**Frozen surfaces untouched:** `text_table_extractor.py`, `sandbox/runner.py`, `pilot-status-pdf-extractor.json`, `generic_md_table_extractor.py`, `PDF-Extract-Kit/` subtree.
+
+**Files authored:**
+1. `docs/architecture-briefs/2026-05-28-pdf-single-source-consolidation.md` — NEW (full brief §1–§13)
+2. `docs/agent-memory/notebooks/architect.md` — this entry
+
+**Next actor:** dev-pdf-extractor (4 path constants + .gitignore) → ops (M-1 through M-5 + compose + rebuild, off-hours) → qa (G3 has_pek regression + DB count).
+
+---
 
 ## NEWS-FULLDAY + RECAP-CMD (2026-05-28T00:10Z) — DESIGN COMPLETE
 
