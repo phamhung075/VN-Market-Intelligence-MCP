@@ -39,7 +39,7 @@ from typing import Optional
 
 # ---- Paths ----------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parents[4]
-PDFS_LOCAL = REPO_ROOT / "data" / "pdfs-local"
+PDFS_LOCAL = REPO_ROOT / "data" / "pdfs"
 GOLD_DIR = Path(__file__).parent / "gold"
 RESULTS_DIR = Path(__file__).parent / "results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
