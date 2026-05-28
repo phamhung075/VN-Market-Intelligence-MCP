@@ -35,7 +35,7 @@ from typing import Optional
 
 # ---- Paths ---------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parents[3]
-PDF_PATH = REPO_ROOT / "data" / "pdfs-local" / "20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf"
+PDF_PATH = REPO_ROOT / "data" / "pdfs" / "20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf"
 GOLD_FILE = Path(__file__).parent / "eval" / "gold" / "FPT_2025_Q4_balance_sheet.json"
 RESULTS_DIR = Path(__file__).parent / "eval" / "results"
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
