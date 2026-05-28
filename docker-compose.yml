@@ -10,6 +10,7 @@ services:
     - 4004:3000
     volumes:
     - market_data:/app/data
+    - ./data/pdfs:/app/data/pdfs
     - ./mcp.config.json:/app/mcp.config.json:ro
     - ./reports:/app/reports
     - ./docs/agent-memory:/app/docs/agent-memory
@@ -86,7 +87,7 @@ services:
     - 5001:5001
     volumes:
     - market_data:/app/data
-    - ./data/pdfs-local:/app/data/pdfs-local:ro
+    - ./data/pdfs:/app/data/pdfs:ro
     # PEK-INTEGRATE: named volume for model weights (downloaded once, never baked in image)
     # AC-PEK-3e: weights survive docker compose build + force-recreate
     - pek_model_cache:/app/PDF-Extract-Kit/models
