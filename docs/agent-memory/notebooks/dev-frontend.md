@@ -1,11 +1,12 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-05-25 | **Sprint:** P1-FE (Phase 1 MVR)
+**Last updated:** 2026-05-28 | **Sprint:** BCTC-EVAL-SUBSTRATE
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
 
+2026-05-28 — BCTC-EVAL-FE COMPLETE (unstaged). 2 routes + 3 helper components + domain types + API client. 204/204 Vitest GREEN (+21 new). tsc clean. Build ✓. shadcn components installed (table, badge, collapsible). No commits (main terminal scoped-commit).
 2026-05-26 — P2-H macro contract fix COMPLETE. MacroSnapshot.signals: MacroSignal[] → MacroSignals (keyed-object). 3 files. 183/183 Vitest GREEN. tsc exit 0. lint:fence exit 0. Build ✓. Architect ruling 1d277bc7.
 2026-05-26 — P2-F G10 blind-fix COMPLETE. direction-arrow.ts "↑↑" → "↑" fix (G10-injected bug). 179/179 Vitest GREEN. tsc clean. lint:fence 0. 1 cycle used.
 2026-05-26 — Phase 2 P2-A + P2-B + P2-C COMPLETE. ESLint fence (G4) installed and proven. 179/179 Vitest GREEN. tsc clean. Stopping before P2-D (QA gate).
@@ -82,6 +83,26 @@ Phase 2 P2-A/B/C DONE. ESLint fence (G4) installed: eslint.config.mjs + eslint-p
 - File 3: `app/__tests__/1934-macro-panel.test.ts` — appended `describe("MacroSnapshot signals — keyed-object contract")` with 4 assertions (not array, 6 entries, per-key field access, Object.values length).
 - Verify: 183/183 Vitest GREEN (+4 new). tsc --noEmit exit 0. lint:fence exit 0. Remix build ✓ (114 + 21 modules).
 - Macro service NOT touched. Frontend only.
+
+## Cycle BCTC-EVAL-FE — 2026-05-28 (BCTC-EVAL-SUBSTRATE sprint)
+
+- Task: BCTC-EVAL-FE — per-PDF eval scorecard Remix dashboard surface.
+- Brief: docs/architecture-briefs/2026-05-28-bctc-eval-shared-substrate.md (§4 JSON contract, §8 FE design, §13 DDD table).
+- shadcn install: `npx shadcn@latest add table badge collapsible` → 3 new components in app/components/ui/. Card/Button already existed.
+- Domain types: app/domain/bctc-eval.ts (EvalStatus, GateFailure, EvalStage, EvalReportSummary, EvalListResponse, EvalDetailResponse, ThresholdsResponse).
+- API client: app/lib/api/bctc-eval-client.ts (fetchBctcEvalList, fetchBctcEvalDetail, recomputeBctcEval, fetchBctcEvalThresholds). Base URL from MCP_SERVER_BASE_URL env var (NOT api-gateway). fetchBctcEvalDetail returns {data, status} to let loader discriminate 404 vs 409.
+- Helper components: app/components/bctc-eval/StatusBadge.tsx, StageCard.tsx.
+- Routes: dashboard.bctc-eval._index.tsx (list), dashboard.bctc-eval.$reportId.tsx (detail).
+- Nav: dashboard.tsx NAV_ITEMS += { to: "/dashboard/bctc-eval", label: "BCTC Eval" }.
+- Tests: bctc-eval-list.test.tsx (9 tests), bctc-eval-detail.test.ts (12 tests) — 21 new tests, all GREEN.
+- Total: 204/204 Vitest GREEN. tsc --noEmit exit 0. bun run build ✓ (1615 + 32 modules).
+- Key learnings:
+  - lucide-react icons must be typed as `LucideIcon` (not inline ComponentType with `size: number`) — LucideProps.size accepts `string | number`.
+  - fetchBctcEvalDetail wraps BctcEvalApiError internally to return {status, data} — loader can discriminate without throwing.
+  - MCP_SERVER_BASE_URL is separate from API_GATEWAY_URL; BCTC eval routes go direct to mcp-server:3000.
+  - `satisfies` operator in STATUS_CONFIG causes assignability friction with LucideIcon — use explicit `Record<EvalStatus, StatusConfig>` instead.
+
+Zone health: 20/20 test files GREEN (204 assertions), tsc clean, build ✓, new BCTC eval surface complete | HEALTHY
 
 ## Carry-over (next session)
 
