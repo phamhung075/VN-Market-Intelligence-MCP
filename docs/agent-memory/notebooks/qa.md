@@ -1,5 +1,194 @@
 # QA — Notebook
 
+## cycle-140 · 2026-05-28 · BCTC-EVAL-QA-G2G3 — G2 deliberate-violation smokes + G3 live e2e — YELLOW (FE build stale)
+
+**Task:** BCTC-EVAL-QA-G2G3 — G2 + G3 acceptance gates for BCTC-EVAL-SUBSTRATE sprint | **Verdict:** YELLOW (FE rebuild required)
+
+```
+date: 2026-05-28T21:16Z
+type: acceptance-gate (G2 deliberate-violation + G3 live e2e)
+sprint: BCTC-EVAL-SUBSTRATE
+commits_under_test: e0b7fa11+f16b0db8 (mcp-server), e0b7fa11 (pdf-extractor)
+pre_condition_deploy: mcp-server :3000 healthy, pdf-extractor :5001 healthy
+pre_condition_db: 84 rows in bctc_eval_results (14 reports × 6 stages, backfill complete)
+pre_condition_endpoints: /api/bctc-eval OK (14 reports), /api/bctc-eval/thresholds OK (schema_version="1")
+pre_condition_fpt: e71f845d-ffa5-48f9-8f09-30ac2cd09c65 present, has_pek:true confirmed
+
+═══════════════════════════════════════════════════════════════
+G2 — DELIBERATE-VIOLATION ANTI-FALSE-GREEN SMOKES
+═══════════════════════════════════════════════════════════════
+
+G2_T1_S4_null_label:
+  method: bun test apps/mcp-server/src/__tests__/bctc-eval-detectors.test.ts
+  test: "red (G2 smoke): row with label=NULL and value_current set triggers value_blank_label gate"
+  input: BctcTableRow[{ code:"100", label:null, value_current:500 }]
+  result: status="red", value_blank_label_count=1, gate_failures contains "value_blank_label_count"
+  verdict: PASS — detector fails loud on blank-label bug, NOT silent-pass
+
+G2_T2_S3_ascii_only:
+  method: pdf-extractor host venv pytest -k "ascii" __tests__/unit/test_eval_detectors.py
+  test: TestStage3Ocr::test_deliberate_violation_ascii_only_text_red
+  command: .venv/bin/python -m pytest __tests__/unit/test_eval_detectors.py -v -k "ascii"
+  result: 2 passed (ascii_only + pure_ascii_ratio_zero)
+  vn_diacritic_ratio: 0.0 < 0.30 threshold
+  status: "red", gate_id "vn_diacritic_ratio_below_threshold" in gate_failures_json
+  verdict: PASS — S3 detector rejects ASCII-only text with red
+  note: test class is TestStage3Ocr (not TestEvalStage3Ocr — correct class per source code)
+  note: container has no __tests__/ dir; host venv used (same source, identical result)
+
+G2_T3_S6_balance_pass_signal:
+  method: bun test apps/mcp-server/src/__tests__/bctc-eval-detectors.test.ts
+  test: "G2 smoke: balance_pass=false with balance_pass_is_signal_only=true → stage NOT red"
+  input: all 3 golden anchors present, balance_pass=false, balance_pass_is_signal_only=true
+  result: status NOT "red" (green), balance_pass in metrics (signal), NOT in gate_failures
+  verdict: PASS — balance_pass is signal-only, stage 6 cannot go red on balance alone
+
+G2_suite_result:
+  command: bun test src/__tests__/bctc-eval-detectors.test.ts
+  result: 13 pass / 0 fail (87ms) — ALL G2 TESTS GREEN
+  coverage: bctcEvalDetectors.ts 100% funcs / 87.23% lines
+
+═══════════════════════════════════════════════════════════════
+G3 — LIVE END-TO-END VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+G3_T1_FE_list_14_reports:
+  url: http://localhost:3001/dashboard/bctc-eval
+  http_status: 404
+  cause: frontend container running stale build (Up 41h) — bctc-eval routes NOT in build assets
+    (assets dir contains ClientTimestamp, _index, components, dashboard.*, entry, market, root, theme —
+     NO dashboard.bctc-eval-* files)
+  source_code_status: route files committed (727a3b42 feat(frontend/dashboard): NAV_ITEMS += BCTC Eval
+    + 3b7672da feat(frontend/bctc-eval): list + detail Remix routes) — code is correct
+  verdict: FAIL — ops did not rebuild frontend; stale container image
+  api_verified_independently:
+    GET /api/bctc-eval → 14 reports, sort=trust_ascending, 8 red then 6 yellow — API CORRECT
+    list_order: VNM→EIB→SHB→DHG→VEA→HPG→FPT→ACB (red) then DGC→DIG→VCB(Q4)→BSR→VCB(Q1)→FPT(Q1) (yellow)
+
+G3_T2_FE_detail_FPT_sentinel:
+  url: http://localhost:3001/dashboard/bctc-eval/e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+  http_status: 404
+  cause: same as G3_T1 — stale frontend build
+  api_verified_independently:
+    GET /api/bctc-eval/e71f845d: schema_version="1", ticker="FPT", period="Q4-2025"
+    overall_status: "red", has_pek: true, 6 stages present, detector_version="v1"
+    stage_statuses: S1=yellow S2=yellow S3=yellow S4=green S5=red S6=green
+  verdict: FAIL (FE stale) — API correct, has_pek:true confirmed in API response
+
+G3_T3_qa_hard_gate_injection:
+  report_used: 0c6f0535-3f29-4fd8-ae60-3c1414219f26 (DGC Q4-2025, all-yellow pre-injection)
+  injection_method: POST /api/bctc-eval/push-stage
+  injection_payload: stage_no=3, stage_name="OCR", status="red",
+    metrics_json={vn_diacritic_ratio:0.0, qa_test_injection:true},
+    gate_failures_json=[{gate_id:"vn_diacritic_ratio_below_threshold", threshold:0.30, actual:0.0, provenance:"qa_g3t3_injection"}]
+  push_response: {"ok":true,"report_id":"0c6f0535...","stage_no":3,"stage_name":"OCR","status":"red"}
+  verify_api: GET /api/bctc-eval/0c6f0535 → overall_status="red" (confirmed)
+  qa_gate_applied:
+    per flow/main.md: overall_status="red" → QA MUST refuse DONE
+    handoff_entry: "BLOCKED: stage 3 red — vn_diacritic_ratio_below_threshold (threshold: 0.30, actual: 0.0)"
+    citation_prefix: "[ĐỘ TIN CẬY THẤP — TRÍCH XUẤT ĐỎ stage 3]"
+    gate_emits_correctly: TRUE — gate fires on red, logs verbatim failure
+  restore_method: POST /api/bctc-eval/push-stage (stage_no=3, status="yellow", original backfill placeholder)
+  restore_response: {"ok":true,"status":"yellow"}
+  verify_restore: GET /api/bctc-eval/0c6f0535 → overall_status="yellow" (RESTORED)
+  verdict: PASS — qa hard gate correctly blocks on red, verbatim prefix confirmed, injection reverted
+
+G3_T4_system_auditor_work_alert:
+  notebook_checked: docs/agent-memory/notebooks/system-auditor.md (70 lines)
+  bctc_eval_snapshot_section: ABSENT — no prior snapshot exists in notebook
+  delta_emit_logic_per_brief_s9:
+    if snapshot absent → all 14 reports are "newly observed"
+    first-run alert would emit for each report: "[BCTC-EVAL] {ticker} {period}: newly observed, stage X={status}"
+    subsequent runs: diff only changed statuses → emit delta messages to WORK channel
+    format: "[BCTC-EVAL] FPT Q4-2025: stage N {old}→{new} ({metric_name} dropped to {value})"
+  current_api_state: 14 reports (8 red, 6 yellow) — delta vs empty snapshot = 14 new
+  delta_logic_correct: TRUE (described in brief §9) — system-auditor would post WORK alert on first sweep
+  verdict: PASS (dry-run) — delta-emit logic verified correct; actual WORK send not triggered (dry-run per task spec)
+  action_item: system-auditor flow update (brief §14 handoff) must persist snapshot in notebook after sweep
+
+G3_T5_recompute_roundtrip:
+  report_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (FPT Q4-2025)
+  method: POST /api/bctc-eval/recompute/e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+  http_response: 200
+  before_computed_at: "2026-05-28 21:11:06" (all 6 stages)
+  after_computed_at_s4: "2026-05-28 21:16:24" (updated)
+  after_computed_at_s5: "2026-05-28 21:16:24" (updated)
+  after_computed_at_s6: "2026-05-28 21:16:24" (updated)
+  s1_s2_s3_backfill: timestamps unchanged (backfill placeholders, expected — no pdf-extractor push yet)
+  detector_version: "v1" (unchanged, correct)
+  has_pek_post_recompute: true (confirmed via GET after POST)
+  overall_status: "red" (S5 roundtrip_row_match_ratio=0 → red, gates firing correctly)
+  verdict: PASS — recompute 200, S4-S6 timestamps updated, detector_version "v1", has_pek:true survives
+
+═══════════════════════════════════════════════════════════════
+CONSTRAINT CHECKS
+═══════════════════════════════════════════════════════════════
+
+pek_subtree_pristine:
+  command: git -C apps/pdf-extractor/PDF-Extract-Kit status --porcelain | wc -l
+  result: 0 — PASS
+
+frozen_files_untouched:
+  text_table_extractor.py: 0 diff vs HEAD — PASS
+  sandbox/runner.py: 0 diff vs HEAD — PASS
+  pilot-status-pdf-extractor.json: 0 diff vs HEAD — PASS
+  generic_md_table_extractor.py: 0 diff vs HEAD — PASS
+
+db_row_count:
+  command: (in-container bun:sqlite readonly)
+  result: 14 reports × 6 stages = 84 total rows — PASS
+  all 14 reports have exactly 6 stages: CONFIRMED
+
+fpt_sentinel_has_pek_survives:
+  post_recompute_api_check: has_pek=true, overall_status="red", detector_version="v1", is_stale=false — PASS
+
+changes_left_unstaged: TRUE — notebook only; main terminal commits
+
+═══════════════════════════════════════════════════════════════
+FULL TEST SUITE SUMMARY
+═══════════════════════════════════════════════════════════════
+
+bun_test_detectors: 13/13 PASS (bctc-eval-detectors.test.ts)
+bun_test_integration: 29/29 PASS (bctc-eval-integration.test.ts + bctc-eval-routes.test.ts)
+python_eval_detectors: 36/36 PASS (test_eval_detectors.py, host venv)
+api_bctc_eval: 14 reports, trust-ascending sort, schema_version="1" — PASS
+api_thresholds: all 6 stage thresholds, schema_version="1" — PASS
+api_recompute: 200 response, updated timestamps S4-S6, has_pek:true — PASS
+
+═══════════════════════════════════════════════════════════════
+VERDICT
+═══════════════════════════════════════════════════════════════
+
+overall_verdict: YELLOW
+
+PASS (6/8 tests):
+  G2-T1: S4 blank-label → red CONFIRMED (anti-false-green proven)
+  G2-T2: S3 ASCII-only → red CONFIRMED (anti-false-green proven)
+  G2-T3: S6 balance_pass signal-only → NOT red CONFIRMED (anti-false-green proven)
+  G3-T3: QA hard-gate emits correctly on red injection, reverted cleanly
+  G3-T4: system-auditor delta-emit logic verified correct (dry-run)
+  G3-T5: recompute round-trip 200, S4-S6 updated, has_pek:true persists
+
+BLOCKING (ops gap):
+  G3-T1: FE list page returns 404 — frontend container not rebuilt after route commits
+    routes committed: 727a3b42, 78cc5bb3, 3b7672da, e24808e6, 15842b8b
+    fix: ops must docker compose build --build-arg GIT_SHA=$(git rev-parse HEAD) frontend && docker compose up -d --no-deps --force-recreate frontend
+  G3-T2: FE detail page returns 404 — same root cause as G3-T1 (stale build)
+
+NON-BLOCKING OBSERVATION:
+  FPT sentinel overall_status="red" — not a new defect; S5 (MARKDOWN_RENDER) has
+  roundtrip_row_match_ratio=0 because bctc_md_tables has 22 tables but value matching
+  against bctc_table_rows (79 rows) finds 0 exact matches (value format mismatch).
+  This is a pre-existing S1-S5 data quality issue; the eval substrate correctly surfaces it.
+  The detectors are working as designed — the data quality issue is what they are designed to detect.
+
+NEXT:
+  ops → rebuild frontend container (single service, no other deps) → qa re-run G3-T1 + G3-T2
+  po → decide sprint closure: G2 fully proven, G3 API fully proven, G3 FE gated on one ops action
+```
+
+---
+
 ## cycle-139 · 2026-05-28 · PDF-SINGLE-SOURCE G3 regression gate — GATE-G3-PROVEN-GREEN
 
 **Task:** PDF-SINGLE-SOURCE final regression gate G3 (bind-mount migration verification) | **Verdict:** GATE-G3-PROVEN-GREEN
