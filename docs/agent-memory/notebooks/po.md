@@ -1,24 +1,23 @@
 # PO Notebook
 
-## Cycle 2026-05-28T00:51Z — PEK-RENDER-EXIT sign-off → APPROVE (DONE pending USER G9)
+## Cycle 2026-05-28T21:23Z — Sprint HCM-DISAMBIG kickoff (USER bug report, content-accuracy tier)
 
-Final PO sign-off for Sprint PEK-INTEGRATE Round-6 (render-seam fix). qa returned APPROVED all 5 gates (commit `3a547488`; verdict `e49a3843`). Applied the critique-before-approve gate — did NOT rubber-stamp; independently reproduced every gate against the LIVE mcp-server container DB + live source. Nothing thin, nothing routed back.
+User reported a HIGH-priority MARKET/WORK content bug: agents could conflate `HCM` (Securities ticker, HOSE-listed, peer of SSI/VND/VCI/VIX per `stock-classification.json:112`) with `TP.HCM` / `TPHCM` (Vietnamese abbreviation for Thành Phố Hồ Chí Minh = the city). The non-technical user must never read an ambiguous HCM in a dish. Concrete pointer: news-scout 20:00Z cycle + signal #4144 (`docs/signals/news_impact_4144_hvn_expansion.json` headline "Vietnam Airlines TPHCM-Phuket strategic expansion").
 
-**Independent re-verification (all REPRODUCED):**
-- FPT sentinel `e71f845d`: direct `bun:sqlite` readonly → **7 units, latest=22:20:00 UTC**. Page-5 unit `2048b0fb` md_len=1906, head = `TÀI SẢN DÀI HẠN 200 ... 210 ...` (codes 200/210, diacritics, pipe-table). Page 3 absent from all page_numbers_json → handler MUST emit honest `pek_coverage_gap:true`, not silent stale. Matches qa exactly.
-- Corpus: `GROUP BY report_id` → exactly **12 distinct reports**, all latest 22:20–00:35 UTC (off-hours, C-3 honored). Per-report counts match the qa table 1:1. VCB×2 (null pdf_path) correctly absent → honest has_pek:false.
-- Render code: `bctcInspectHandler.ts` OCR L485–557 reads `stitched_markdown` FROM `bctc_layout_units` (PEK SSOT), coverage-gap emits empty text + flag (no silent fallback). has_pek in every branch (524/547/572/597/625 + 725/800) = fail-loud. `bctc-inspector.html` stale banner = real DOM insertBefore L746–751 (gold-on-brown), gap banner L755, PEK render L764. Line numbers match qa citations.
-- Trigger 422-fix: `POST /api/trigger-pek-extract {}` → **HTTP 400** live (route exists, validates; not 404). 422 dead-end gone.
-- Deploy: mcp-server image **Created 22:30:43Z** (fresh force-recreate, not stale-restart). Subtree clean; 2 modified files committed in `3a547488` (no PO drift).
+**Recon (independent, before kickoff):**
+- Existing guard: Task 1788 `GEOGRAPHIC_CONTEXT_MAP` in `apps/mcp-server/src/domain/services/newsNormalizer.ts:547` + test `1788-hcm-geographic-false-positive.test.ts`. Covers `TPHCM` / `TP HCM` / `TP.HCM` / `thành phố hồ chí minh` via 10-char look-behind on Pattern 2; alias path (Pattern 3) is structurally safe (HCM aliases are `chứng khoán hồ chí minh` + `hcm securities`, neither matches city abbreviation).
+- PROOF guard worked in prod: signal #4144 has `affected_stocks: ["HVN"]` only — NO HCM leak — despite the headline saying TPHCM-Phuket. User's concern is forward-looking/coverage, not a confirmed runtime leak.
+- GAPS identified: (a) `TP-HCM` hyphen / `TP. HCM` dot+space / `Tp.HCM` mixed-case NOT tested explicitly (likely work — toLowerCase() normalizes — but unproven); (b) chef.md Block A "Format rules" list has NO HCM-vs-TP.HCM disambiguation guidance — the dish writer could narrate "HCM tăng 2%" without telling the non-technical reader it is a ticker.
 
-**Flipped in TASKS.md:** Sprint status header → DONE pending USER G9; PEK-RENDER-DEPLOY → DONE; PEK-RENDER-QA → DONE-APPROVED; PEK-RENDER-EXIT → DONE pending G9 (APPROVE); PEK-EXIT + PEK-MULTIPAGE → DONE pending G9 (render seam was their only open blocker); PEK-RENDER-FIX → N/A. Wrote PO sign-off record to handoff § PEK-RENDER-EXIT.
+**Sprint scope (autonomous PO decisions — BA/architect MUST NOT re-litigate):** SPRINT-S; multi-zone (extraction + chef prompt); HCM stays on watchlist; extend `GEOGRAPHIC_CONTEXT_MAP` IN PLACE (no new module); 10-char look-behind stays unless architect cites a real failing headline; chef.md change is prompt-only (no microservice rebuild); extraction code change DOES require ops force-recreate (memory `feedback_rebuild_after_dev_change`); NO branches; commit per convention; post-fix `/graphify docs --update --no-viz`.
 
-**Healthcheck follow-up (non-blocking triage):** qa flagged pdf-extractor `(unhealthy)` = `curl -f /health` 10s timeout under post-extraction CPU load though /health=200 internally. Confirmed live. DECISION = **BACKLOG** (opened PEK-HEALTHCHECK-PROBE, LOW). Cosmetic false-negative, no fleet dep, extraction works → does NOT block this exit. Did NOT spin an ops task now.
+**Atomization dispatched (per memory `project_no_pm_ba_agent`: PM/BA both spawnable — use full chain, do NOT collapse):** HCM-BA → HCM-ARCH → HCM-PM → HCM-D1 (extraction + tests, `dev-mcp-server`) + HCM-D2 (chef.md prompt, `dev-mcp-server`) → HCM-OPS (force-recreate, ONLY after HCM-D1) → HCM-QA (injects #4144 exact headline + 3 adversarial + 1 positive, reads post-rebuild `news_impact_*.json` per `project_mcp_server_write_wedge`; verifies new test file actually picked up per `feedback_fence_false_green`) → HCM-EXIT (PO).
 
-**Verdict: APPROVE. READY FOR USER VERBAL G9.** Main terminal presents.
+**SSOT:** `docs/SPRINT_GOAL_HCM-DISAMBIG.md` (9 acceptance cases + R-1..R-4 risks + day-0 constraints). TASKS.md row added at top (above MACRO-LIVE-PRICES sprint).
+
+**NEXT:** ba | write `docs/REQ_HCM-DISAMBIG.md` for vision in `docs/SPRINT_GOAL_HCM-DISAMBIG.md`. PIPELINE: continue.
 
 ## Carry-over
-- **PEK-INTEGRATE goal stays ARMED** until USER verbal G9 — only outstanding criterion. NOT fully closed. If user accepts → main terminal disarms goal; if rejected → re-escalate (but 6+ fix commits already, would need architect re-rethink per `feedback_recurring_bug_escalation`).
-- **PEK-HEALTHCHECK-PROBE** (ops, LOW, BACKLOG) — raise healthcheck timeout ~30s or lightweight probe. Pull on next reliability backlog. Non-urgent, no user-facing impact.
-- **OFF-LIMITS (parallel session):** apps/mcp-server + apps/pdf-extractor render lane now exits; macro lane unchanged. MACRO-RATES-LIVE still backlog (MEDIUM, no incident — slow-moving rates, cosmetic staleness).
-- Wrote only this notebook + TASKS.md + handoff. Left UNSTAGED for router scoped commit. No -A, no push, all on main. PDF-Extract-Kit subtree untouched.
+- HCM stays on watchlist (Securities sector needs the peer; do NOT drop). `user_watchlist` memory unchanged.
+- Backlog ticket if a 2nd ticker shows similar geographic clash (sprint scope is HCM-only by PO decision).
+- If architect proves `apps/news-fetch/` has a parallel ticker extractor, re-size flag → SPRINT-M (otherwise stays SPRINT-S).
