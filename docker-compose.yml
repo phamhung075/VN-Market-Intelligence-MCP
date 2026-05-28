@@ -389,6 +389,7 @@ services:
     - api-gateway
     environment:
     - API_GATEWAY_URL=http://api-gateway:4000
+    - MCP_SERVER_BASE_URL=http://mcp-server:3000
     restart: unless-stopped
     healthcheck:
       test:
