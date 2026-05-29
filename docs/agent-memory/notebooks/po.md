@@ -1,22 +1,23 @@
 # PO Notebook
 
-## Cycle 2026-05-30 — DPI-EXIT: DATA-PIPELINE-INTEGRITY sign-off (CRITICAL incident CLOSED)
+## Cycle 2026-05-29T23:57Z — BTB-DRIFT triage (dual-path drift, BCTC-TABLE-BOUNDARY)
 
-**Trigger:** QA + ops finished DPI; live-probed ledger handed up. Did independent live re-probe (not code-read) before signing — per `feedback_scale_pilot_done_bar`.
+**Trigger:** dev-mcp-server (60dfac7f fixed BLOCKING-1 idempotency) traced BLOCKING-2 (prose not persisted) and found TWO divergent extraction paths. Routed to me to name canonical path + pick resolution before more code lands.
 
-**PO live re-verify (corroborates ledger):**
-- DPI-1: `get_macro_snapshot` usdVnd=26115 AND `get_cycle_bootstrap` MACRO USD_VND=26115 (identical; Yahoo 26255 gone). FULLY DONE.
-- DPI-2: carry/yield.computedAt=2026-05-29T23:49Z (today, not 2026-05-23). DONE.
-- DPI-2b: vndDepositRate=5.0 LIVE (≠ fixture 4.7, adapter PROVEN); fedFunds 5.33 + earningYield 8.2 = correct SAFE-DEGRADE (upstream stale/empty). DONE-WITH-DEGRADE.
-- DPI-3: code-done + math proven (computeDelta); live 0.00% is same-hour-equal-tick artifact → confirms at 06:00 UTC cron. NOT a bug.
-- DPI-4: code-done (2 bugs: 32d201e8 silent-skip + 36a91a59 NOT NULL) + path proven (upserted=102, no NOT NULL). "No data" = legit weekend-zero (VPS source 0 off-hours). Confirms Mon ~02:15 UTC.
+**PO code-trace (did NOT delegate the trace — answered it myself):**
+- LIVE = PATH B. `/api/trigger-pek-extract` (server.ts) → `/pek-extract` → `_run_pek_extract` (handlers.py L193-219) → `pek_adapter.extract_layout_and_tables()` → its OWN `_group_bboxes_into_units` (pek_engine_adapter.py L541). Does NOT import/call `build_document_map`; never touches `ExtractLayoutFirstUseCase`.
+- **d297f3ba (BTB fix) is NOT in live path** — landed in PATH A `build_document_map`, reached only via separate `/extract-layout-first`. 659-test/DV-1/DV-2 GREEN proof is on a path the USER doesn't run. = dual-path drift #3 (project_bctc_table_sprint; feedback_recurring_bug_escalation).
+- QA's correct live boundaries = PATH B's own RC-1 fix (adjacency + 8pp cap + prose-boundary), coincidental — NOT d297f3ba.
+- BLOCKING-2 prose-skip is BY DESIGN in PATH B (L593-597, RC-2 fix; page_type always "table"). Fix must land HERE.
 
-**Verdict:** DPI-1/2/2b = DONE. DPI-3/4 = CODE-DONE / LIVE-CONFIRM-PENDING (honest residuals, NOT false-green per `feedback_fence_false_green`). Sprint SIGNED OFF. Umbrella lock release ok=false (TTL expired, acceptable).
+**Decision:** Option (a) CONVERGE on PATH B; port boundary state-machine + prose-unit emission into `_group_bboxes_into_units` (or shared DRY module both call), kill/delegate build_document_map. Option (c) fallback if architect finds clean merge impossible. Test/guard MUST prove single-path-or-agreement.
 
-**Registered 4 follow-ups (TASKS.md § DPI-FOLLOWUPS, all dev-mcp-server zone except FU-MON):** FU-A FRED EFFR stale 15d; FU-B market_earning_yield zero rows; FU-C own commit 36a91a59 (out-of-zone ops patch) + real-schema integration test (closes write-wedge unit false-green); FU-MON Monday live-confirm DPI-3/DPI-4 (po live-probe, no code).
+**Chain dispatched: architect FIRST** (convergence DESIGN, not trace) → dev-pdf-extractor → ops (ONE off-hours re-extraction, BATCHED with 60dfac7f idempotency rebuild + BTB-UNBLOCK runtime mandate) → qa direct-DB → po BTB-EXIT.
+
+**Done-bar:** clean re-extract FPT e71f845d (7 table spans + prose) + ACB (5 + prose), DIRECT DB read, PROOF data came from PATH B (extract_layout_and_tables, not build_document_map).
 
 ## Carry-over
-- DPI CLOSED. FU-MON is TIME-CRITICAL (Monday) — after 06:00 UTC cron re-probe Brent/Gold delta; after ~02:15 UTC HOSE open re-probe get_foreign_flow(HPG). Flip both DONE or REOPEN.
-- FU-A/FU-B are the upstream-data gaps behind DPI-2b safe-degrade; degrade is correct so MEDIUM priority. FU-C = test debt, MEDIUM.
-- 36a91a59 + 32d201e8 are mcp-server fixes committed under git user report-analyzer (out-of-zone emergency) — FU-C must retroactively own.
-- Still OPEN: BCTC-TABLE-BOUNDARY (infra-BLOCKED, BTB-UNBLOCK mandate live), SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST, CHEF-ATTN. Triage against WIP cap next tick.
+- BTB-DRIFT: NEXT agent = **architect** (brief → docs/architecture-briefs/, convergence on PATH B). Then dev-pdf-extractor. d297f3ba CONFIRMED-NOT-IN-LIVE-PATH (PO-traced, not assumed).
+- 60dfac7f idempotency fix = path-agnostic + correct; rebuild BATCHED, do NOT rebuild mcp-server alone.
+- FU-MON still TIME-CRITICAL (Monday): re-probe Brent/Gold delta after 06:00 UTC cron; get_foreign_flow(HPG) after ~02:15 UTC HOSE open. Flip DONE or REOPEN.
+- Still OPEN: SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST (check if /extract-layout-first is its live consumer — affects BTB-DRIFT kill-vs-delegate of PATH A), CHEF-ATTN. WIP cap: BTB-DRIFT now active HIGH.

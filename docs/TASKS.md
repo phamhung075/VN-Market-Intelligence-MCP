@@ -56,7 +56,7 @@ PO live-probe 2026-05-29T17:29Z: `get_macro_snapshot` returns `dataSource:"live"
 
 ## Sprint BCTC-TABLE-BOUNDARY — Multi-Page Table Stitcher Boundary State Machine
 
-**Status:** OPEN — BA spec ready. **Priority: HIGH (user-reported data-correctness bug).** Zone: `apps/pdf-extractor/`.
+**Status:** OPEN — **DUAL-PATH DRIFT confirmed (BTB-DRIFT triage 2026-05-29T23:57Z): d297f3ba boundary fix is NOT in the live path; canonical = PATH B (PEK adapter). NEXT = architect (convergence design), then dev-pdf-extractor.** **Priority: HIGH (user-reported data-correctness bug + drift risk).** Zone: `apps/pdf-extractor/`.
 
 - ✅ BTB-BA: Spec `docs/REQ_BCTC-TABLE-BOUNDARY.md` — 4 boundary states (START/CONTINUE/END/NEW), FR-1..5, DV tests, two real-data sentinels. NEXT: architect.
 - ✅ BTB-ARCH (architect): design state-machine transition (per-page type × geometric continuity × title-band × intervening-prose), title-band detector, revised _flush_unit, revised blank-bridge — brief `docs/architecture-briefs/2026-05-29-bctc-table-boundary.md`. NEXT: dev-pdf-extractor.
@@ -74,6 +74,22 @@ PO live-probe 2026-05-29T17:29Z: `get_macro_snapshot` returns `dataSource:"live"
 **Mandate → dev-pdf-extractor (primary):** (i) audit d297f3ba state machine for any loop/hang (PO pre-checked clean — confirm + document); (ii) make `_run_pek_extract` FAIL-LOUD: `_log.error(..., exc_info=True)` full traceback + re-surface to a status the DB can show; (iii) add per-page progress HEARTBEAT log in PekEngineAdapter extraction loop; (iv) add a hard extraction TIMEOUT (>= 30min, generous for 46pp CPU) so a genuine hang self-aborts loudly instead of needing a manual kill. **→ dev-mcp-server (conditional):** if instrumented run proves push 200-OK but DB COUNT=0, fix push handler to COMMIT + return real DB count (write-wedge), per MCPZONE-HARDEN priors.
 
 **Then:** ops runs ONE instrumented extraction to COMPLETION off-hours (HOSE 02:00–08:59 UTC closed; CPU-only/8GB; patience ≥ timeout, do NOT kill before heartbeat stalls past timeout) on FPT `e71f845d` + sentinel B; verify via DIRECT in-container market.db COUNT (not push echo). → qa direct-DB done-bar → po BTB-EXIT.
+
+### BTB-DRIFT — PO triage 2026-05-29T23:57Z (DUAL-PATH DRIFT confirmed by PO code-trace → architect-FIRST)
+
+**CANONICAL PATH = PATH B (PEK adapter). PO-CONFIRMED by code-trace (not assumed):**
+- LIVE route: `/api/trigger-pek-extract` (server.ts) → pdf-extractor `/pek-extract` → `_run_pek_extract` (handlers.py L193-219) → `pek_adapter.extract_layout_and_tables()` → its OWN grouping `_group_bboxes_into_units` (pek_engine_adapter.py L541). It does NOT import or call `build_document_map`; it does NOT touch `ExtractLayoutFirstUseCase`. PATH A is reached ONLY via the SEPARATE `/extract-layout-first` route.
+- **d297f3ba (BTB boundary fix) is NOT in the live path** — it landed in `build_document_map()` (PATH A). The 659-unit-test / DV-1 / DV-2 GREEN proof is on a path the USER does not exercise. Same failure class as BCTC-TABLE-3 dual-path drift #2 (`project_bctc_table_sprint`) + recurring-bug-escalation (`feedback_recurring_bug_escalation`: ≥2 fixes same concern → architect RCA first).
+- **Why QA saw correct live boundaries anyway:** PATH B's `_group_bboxes_into_units` (page-adjacency + 8-page cap + prose-as-boundary, RC-1/RC-2 fixes) produces correct table spans INDEPENDENTLY — the original over-merge was fixed by PATH B's own RC-1, NOT by d297f3ba. Coincidental agreement, not shared logic.
+- **BLOCKING-2 (prose units not persisted) is BY DESIGN in PATH B** (L593-597: prose/blank pages finalize-but-never-create; `page_type` always "table" via RC-2 fix). Prose emission must land HERE, not in PATH A.
+
+**RESOLUTION DECISION (PO): Option (a) CONVERGE on PATH B as the single canonical path** — route the boundary state-machine semantics + prose-unit emission INTO the live PEK adapter, and kill-or-delegate `build_document_map`/`ExtractLayoutFirstUseCase` so ONE grouping implementation exists. Rationale: PATH B already IS the live, RC-1/RC-2-hardened, user-facing path; converging onto a dead path (option b) would re-route production through unproven code; option (c) shared-module is acceptable as a fallback IF architect finds the two cannot be merged cleanly under the constraints. The prose contract + boundary semantics MUST end up in the live path with a guard/test proving either single-path or path-agreement.
+
+**CHAIN: architect FIRST** (canonical-path question answered by PO; architect's job = convergence DESIGN, not the trace): (i) confirm PO's trace + map every caller of `build_document_map`/`ExtractLayoutFirstUseCase` (is `/extract-layout-first` dead or used by BCTC-LAYOUT-FIRST?); (ii) design the merge: port boundary state-machine + prose-unit emission into `_group_bboxes_into_units` (or a shared module both call — DRY), preserving RC-1/RC-2 + 8-page cap; (iii) define the test/guard that PROVES single-path-or-agreement; (iv) honor constraints (text_table_extractor.py 0-diff, PEK subtree pristine, CPU-only/8GB). → **dev-pdf-extractor** implements brief (prose emission + boundary semantics in LIVE path) → **ops** ONE off-hours instrumented re-extraction (BATCHED with BTB-UNBLOCK mandate + idempotency rebuild) → **qa** direct-DB done-bar → **po BTB-EXIT**.
+
+**BATCHED with this chain (do NOT rebuild alone now):** BLOCKING-1 idempotency fix `60dfac7f` (mcp-server push writer, path-agnostic + correct) — its ops rebuild rides the same off-hours re-extraction. BTB-UNBLOCK runtime mandate (fail-loud/heartbeat/timeout) stays live and merges into BTB-DEV's next pass.
+
+**Done-bar (anti-false-green):** SINGLE clean re-extraction (post-idempotency) of FPT `e71f845d` (expect 7 table spans + visible prose units) AND ACB (5 table spans + prose units), verified by DIRECT in-container market.db read, WITH proof the verified data came from the LIVE/canonical PATH B (e.g. log/trace tying the row to `extract_layout_and_tables`, not `build_document_map`).
 
 ---
 
