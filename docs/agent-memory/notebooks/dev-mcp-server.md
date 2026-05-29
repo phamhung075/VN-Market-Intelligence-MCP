@@ -1,5 +1,23 @@
 # dev-mcp-server -- Notebook
 
+## c326 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE Task #9 — HEADER PAGE-NAV + KEYBOARD) — COMMITTED 3490dffa
+
+**Task:** Move page-change buttons to top-middle header; add ArrowLeft/ArrowRight keyboard nav.
+
+**Files changed (2):**
+- `apps/mcp-server/src/interface/bctc-inspector.html` — CSS: `header { position:relative }` + `#header-page-nav` (centered absolute); HTML: header nav block (header-btn-prev, header-page-indicator, header-btn-next); JS: `headerBtnPrev/Next/pageIndicator` DOM refs, `setNavState()` SSOT for all 4 nav elements, keyboard `keydown` listener with focus guard (INPUT/SELECT/TEXTAREA), header button click handlers. `renderOcr` and `resetPanes` updated to use `setNavState`.
+- `apps/mcp-server/src/__tests__/1976-bctc-inspector-page-nav.test.ts` — NEW: 19 pure-function tests (clampPage, navLabel, shouldSkipKeyboard, button-disabled derivation) + DV guard comment. All GREEN.
+
+**Design:** `setNavState(page, bound)` single SSOT syncs header+OCR-pane nav. All nav (buttons+keyboard) delegates to `navigateToPage` orchestrator. Focus guard: skip arrows when activeElement tag is INPUT/SELECT/TEXTAREA.
+
+**Gates:** tsc EXIT 0 | 19 new tests GREEN | 10088 tests 0 fail | tool=148 | sched=70 | frozen 0-diff | staged=2 | commit 3490dffa
+
+**ops_rebuild_required: true** — HTML baked into image; `docker compose build mcp-server && up -d --no-deps --force-recreate mcp-server`
+
+Zone health: 2 files (1 mod, 1 new); tsc EXIT 0; 19 tests green; frozen 0-diff | HEALTHY
+
+---
+
 ## c325 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE Task #9 — MD→TABLE RENDERED VIEW)
 
 ### MD-STAGE5: markdown→table rendered per-page view — COMMITTED a7d70e62
@@ -64,9 +82,9 @@ bctc-analyst added to VALID_AGENT_NAMES. 5 files.
 ## Working Memory
 
 ### Active Sprint: BCTC-EVAL-INSPECT-MERGE Task #9
-- c325 DONE: MD→table rendered view, committed a7d70e62
-- NEXT: ops (rebuild) → qa (verify live at http://localhost:3000/api/bctc-inspect)
-- QA should verify: #md-stage5-section visible for has_pek:true docs; HTML table rendered (not raw markdown); page nav triggers re-render; fragment banner on multi-page units
+- c326 DONE: header page-nav + keyboard, committed 3490dffa
+- NEXT: ops (rebuild) → qa (verify live)
+- QA should verify: header center nav visible, ←/→ keyboard drives navigateToPage, focus-guard SELECT works, bounds disable correct, no regression on existing panes
 
 ### Carry-over
 - tool=148, sched=70 (baselines for Gate 2c/2d)
