@@ -29,8 +29,8 @@ describe("getCycleBootstrap use case", () => {
     expect(result.error).toBeUndefined();
   });
 
-  test("VALID_AGENT_NAMES contains exactly 8 entries", () => {
-    expect(VALID_AGENT_NAMES).toHaveLength(8);
+  test("VALID_AGENT_NAMES contains exactly 9 entries", () => {
+    expect(VALID_AGENT_NAMES).toHaveLength(9);
     expect(VALID_AGENT_NAMES).toContain("news-scout");
     expect(VALID_AGENT_NAMES).toContain("financial-analyst");
     expect(VALID_AGENT_NAMES).toContain("market-watcher");
@@ -39,6 +39,7 @@ describe("getCycleBootstrap use case", () => {
     expect(VALID_AGENT_NAMES).toContain("qa-responder");
     expect(VALID_AGENT_NAMES).toContain("unified-agent");
     expect(VALID_AGENT_NAMES).toContain("report-analyzer");
+    expect(VALID_AGENT_NAMES).toContain("bctc-analyst");
   });
 
   test("does NOT include removed agent names", () => {

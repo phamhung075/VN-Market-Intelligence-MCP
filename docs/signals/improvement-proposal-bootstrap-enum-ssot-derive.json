@@ -1,0 +1,25 @@
+{
+  "_type": "improvement_proposal",
+  "_date": "2026-05-29",
+  "_sprint": "BOOTSTRAP-ENUM-BCTC",
+  "title": "Derive VALID_AGENT_NAMES from system-map.json at build/test time (SSOT-derive)",
+  "context": "This is the 4th string-vs-enum mismatch bug (after VNH DomainType, commit-mutex, verified_decision). Each was caused by a hardcoded enum drifting from the canonical roster in docs/data/system-map.json. The XS fix (BOOTSTRAP-ENUM-BCTC) adds 'bctc-analyst' manually; the durable fix is to derive VALID_AGENT_NAMES from the SSOT so new cowork agents auto-propagate.",
+  "proposed_fix": {
+    "approach": "At build/test time, read docs/data/system-map.json and emit a generated TypeScript const for VALID_AGENT_NAMES. Options: (a) a bun script run in prebuild that writes getCycleBootstrap.generated.ts, (b) a Zod enum built at test-init from the JSON, (c) keep the const but add a CI assertion that compares it against the JSON roster.",
+    "preferred": "Option (c) — CI assertion — is lowest risk: the existing guard test (1975-bootstrap-enum-bctc-analyst-guard.test.ts) already does this at test time. Promote it to a mandatory gate in the bun test suite.",
+    "risk_if_done_in_xs": "Full runtime-derive requires infra file I/O in the application layer (layer violation) or a build-time codegen step (new tooling). Both exceed XS scope. SPIKE required."
+  },
+  "proposed_spike": {
+    "id": "BOOTSTRAP-SSOT-DERIVE",
+    "size": "S",
+    "zone": "apps/mcp-server/",
+    "owner": "dev-mcp-server",
+    "priority": "medium — guard test partially mitigates until spike ships"
+  },
+  "related_bugs": [
+    "VNH-SECTOR-FIX (DomainType string vs enum)",
+    "commit-mutex (enum lacks 'commit-mutex' kind)",
+    "verified_decision enum drift",
+    "BOOTSTRAP-ENUM-BCTC (this bug)"
+  ]
+}

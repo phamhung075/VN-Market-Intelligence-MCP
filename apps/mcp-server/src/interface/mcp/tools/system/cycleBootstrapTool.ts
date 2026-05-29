@@ -25,7 +25,7 @@ export function registerCycleBootstrapTool(server: McpServer): void {
       "Returns { agent_signals, market_context, system_status }. " +
       "Partial failure: failed keys set to null with error details — agent applies fail-loud protocol. " +
       "Valid agent_name values: news-scout, financial-analyst, market-watcher, alert-commander, " +
-      "digest-predict, qa-responder, unified-agent, report-analyzer.",
+      "digest-predict, qa-responder, unified-agent, report-analyzer, bctc-analyst.",
     {
       agent_name: z
         .enum(VALID_AGENT_NAMES)

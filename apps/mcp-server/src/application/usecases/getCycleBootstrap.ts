@@ -24,6 +24,7 @@ export const VALID_AGENT_NAMES = [
   "qa-responder",
   "unified-agent",
   "report-analyzer",
+  "bctc-analyst",
 ] as const;
 
 export type ValidAgentName = (typeof VALID_AGENT_NAMES)[number];
