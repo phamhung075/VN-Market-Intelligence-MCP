@@ -1,5 +1,15 @@
 # Agent Father — Notebook
 
+## c279 · 2026-05-29 — Edit fb-market-poster (hashtag block — FB-only, 5 lowercase mandatory)
+
+- Change: Replaced 8-tag CamelCase evergreen set (#ChungKhoan/#StockMarket/#Vietnam/#VietnamStock etc.) with EXACTLY 5 lowercase mandatory tags: `#chungkhoan #chungkhoanvietnam #vnindex #dautu #thitruongchungkhoan`. Removed all English-locale tags (#StockMarket, #Vietnam, #VietnamStock) and YouTube references from the hashtag rule and diacritics note. Dynamic tags remain optional, must be appended AFTER the mandatory 5, all lowercase no diacritics. Sector and ticker dynamic tag examples converted to lowercase. STEP 4 check 16 updated: "Evergreen set complete (all 8 CamelCase)" → "Mandatory set complete (verbatim, lowercase) all 5 tags"; removed ≥3 dynamic tags minimum; total-count sub-check removed; on-failure line updated. STEP 5 template footer updated: "8 evergreen + 3-6 dynamic" → "5 mandatory lowercase + optional dynamic". init.md version comment updated.
+- Files modified: 2 (docs/agents/fb-market-poster/flow/main.md, docs/agents/fb-market-poster/init.md)
+- Cascade: none — no name/routing/inter_agent/roster/dispatch/tool-package change
+- Validation: 7/7 passed (frontmatter line 1 ✓, flow has error boundary + RETURN ✓, tool package unchanged ✓, no new always_load paths ✓, mandatory 5 tags verbatim lowercase in rule + check 16 + example output ✓, no YouTube mention remaining ✓, no English locale tags in mandatory set ✓)
+- Decision: User correction — target is Facebook VN audience only (not YouTube), mandatory tags must be the 5 lowercase no-diacritics Vietnamese tags. English-locale tags were incorrect for this audience.
+
+---
+
 ## c278 · 2026-05-29 — Edit fb-market-poster (hashtag block)
 
 - Change: Added promotional hashtag block as the final post element (after disclaimer `---` closing line). STEP 3 updated with: (a) hard rule stating hashtag block is last, (b) post template placeholder `[HASHTAG BLOCK]`, (c) new "Hashtag block — composition rule" subsection defining 8 evergreen tags (#ChungKhoan #ChungKhoanVietNam #VNIndex #DauTu #ThiTruongChungKhoan #StockMarket #Vietnam #VietnamStock) + 3–6 dynamic tags (strongest sector(s) and notable tickers from day's content in CamelCase no-diacritics Vietnamese), diacritics strip rule, English-tag exemption, format (space-separated, 10–14 total, 1–2 lines), and concrete tail example. STEP 4 updated with check 16 (hashtag block check) — 5 sub-checks: position (after closing `---`), evergreen set complete (all 8), dynamic tags ≥3, total count 10–14, no diacritics in any hashtag token (hard-fail, strip to ASCII). STEP 5 file template updated to include hashtag block placeholder. STEP 8 notebook format updated 15 checks → 16 checks with hashtag-block field. Size-justification updated 434L → 475L.

@@ -264,27 +264,27 @@ Dự đoán:
 
 The hashtag block is the LAST element of the post, placed immediately after the closing `---` of the disclaimer block (no blank line between).
 
-**Evergreen tags (always include, all 8):**
-`#ChungKhoan #ChungKhoanVietNam #VNIndex #DauTu #ThiTruongChungKhoan #StockMarket #Vietnam #VietnamStock`
+**Mandatory tags (always include, all 5, lowercase, no diacritics, verbatim):**
+`#chungkhoan #chungkhoanvietnam #vnindex #dautu #thitruongchungkhoan`
 
-**Dynamic tags (3–6 tags, derived from the day's content):**
-- The strongest sector(s) of the day — use the sector name in CamelCase no-diacritics Vietnamese. Examples: `#NganHang`, `#DauKhi`, `#BatDongSan`, `#CongNghe`, `#BanLe`, `#VatLieu`, `#TienIch`, `#ThucPham`, `#DuocPham`, `#ChungKhoanCo`.
-- The most notable named tickers of the day (by price move or news significance) — use ticker code directly. Examples: `#VHM`, `#VIC`, `#GAS`, `#PLX`, `#TCB`, `#VCB`, `#HPG`, `#FPT`.
+These 5 tags are required on every post exactly as written above. Do not capitalise, do not add diacritics, do not substitute.
+
+**Dynamic tags (optional, appended AFTER the 5 mandatory tags):**
+- The strongest sector(s) of the day — use the sector name in lowercase no-diacritics Vietnamese. Examples: `#nganhang`, `#daukhi`, `#batdongsan`, `#congnge`, `#banle`, `#vatlieu`, `#tienich`, `#thucpham`, `#duocpham`, `#chungkhoanco`.
+- The most notable named tickers of the day (by price move or news significance) — use ticker code directly in lowercase. Examples: `#vhm`, `#vic`, `#gas`, `#plx`, `#tcb`, `#vcb`, `#hpg`, `#fpt`.
 - Derive these from the same movers/sector data used in STEP 1b (top_movers + snapshot) — the sectors and tickers that appear in the Tóm tắt nhanh and Phân tích sections.
-- Pull 2–3 sector tags and 1–3 ticker tags to reach the 3–6 dynamic tag count.
+- Pull 2–3 sector tags and 1–3 ticker tags as value-add. Dynamic tags are optional; the mandatory 5 are not.
 
-**Diacritics rule:** No diacritics inside any hashtag. Facebook and YouTube hashtags do not handle Vietnamese accents — strip all diacritics. Use `#DauKhi` NOT `#DầuKhí`; `#NganHang` NOT `#NgânHàng`; `#BatDongSan` NOT `#BấtĐộngSản`.
+**Diacritics rule:** No diacritics inside any hashtag. Facebook hashtags do not handle Vietnamese accents — strip all diacritics. Use `#daukhi` NOT `#dầukhí`; `#nganhang` NOT `#ngânhàng`; `#batdongsan` NOT `#bấtđộngsản`.
 
-**Hashtags are exempt from the no-jargon-English rule** — tags like `#StockMarket` and `#VietnamStock` are intentional discoverability anchors.
-
-**Format:** Single line or two lines. Total ~10–14 hashtags. No comma separators — space-separated only.
+**Format:** Single line or two lines. Mandatory 5 first, then optional dynamic tags. No comma separators — space-separated only.
 
 **Example output (final lines of post):**
 ```
 ---
 ⚠️ Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng. Tôi không chịu trách nhiệm về tính chính xác của thông tin. Nếu nội dung có sai sót hoặc cần chỉnh sửa, mọi góp ý của bạn sẽ được ghi nhận lại để giúp bot hoạt động và phục vụ bạn tốt hơn.
 ---
-#ChungKhoan #ChungKhoanVietNam #VNIndex #DauTu #ThiTruongChungKhoan #StockMarket #Vietnam #VietnamStock #NganHang #DauKhi #VCB #GAS #PLX
+#chungkhoan #chungkhoanvietnam #vnindex #dautu #thitruongchungkhoan #nganhang #daukhi #vcb #gas #plx
 ```
 
 ---
@@ -355,9 +355,8 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
 **Hashtag block check (must pass — fix inline if failing):**
 16. Hashtag block is present as the LAST element of the post, immediately after the closing `---` of the disclaimer block. Verify ALL of the following sub-checks; any failure is a mandatory fix inline before file write:
     - **Position:** hashtag block appears after the disclaimer `---`, not before it and not before the disclaimer text.
-    - **Evergreen set complete:** all 8 evergreen tags present: `#ChungKhoan`, `#ChungKhoanVietNam`, `#VNIndex`, `#DauTu`, `#ThiTruongChungKhoan`, `#StockMarket`, `#Vietnam`, `#VietnamStock`.
-    - **Dynamic tags present:** at least 3 dynamic tags (sector or ticker tags) derived from today's content.
-    - **Total count:** 10–14 hashtags total. If below 10 → add more dynamic tags. If above 14 → remove the weakest dynamic tags first.
+    - **Mandatory set complete (verbatim, lowercase):** all 5 mandatory tags present exactly as written: `#chungkhoan`, `#chungkhoanvietnam`, `#vnindex`, `#dautu`, `#thitruongchungkhoan`. Case mismatch (e.g. `#ChungKhoan`) is a failure — tags must be lowercase.
+    - **Dynamic tags:** optional but encouraged — sector or ticker tags derived from today's content. No minimum count required.
     - **No diacritics:** scan every hashtag token (word starting with `#`) for Vietnamese diacritics characters (à á â ã ä å è é ê ì í ò ó ô õ ù ú ý and their tone-marked variants: ă ắ ặ ằ ẳ ẵ â ấ ầ ẩ ẫ ậ đ ê ế ề ể ễ ệ ô ố ồ ổ ỗ ộ ơ ớ ờ ở ỡ ợ ư ứ ừ ử ữ ự). Any diacritic inside a hashtag token is a hard-fail — remove by stripping to plain ASCII equivalent.
 
 **On failure:**
@@ -365,7 +364,7 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
 - Checks 1–2, 4–8 fail: fix inline, re-verify.
 - Checks 9–14 fail because data genuinely unavailable after live tools + notebook: log which field is missing in RETURN QUALITY field; proceed (do NOT pad).
 - Check 15 fails: mandatory fix inline before writing.
-- Check 16 fails: mandatory fix inline before writing — correct position, add missing evergreen tags, add dynamic tags, strip diacritics from hashtag tokens.
+- Check 16 fails: mandatory fix inline before writing — correct position, add missing mandatory tags (must be lowercase verbatim), strip diacritics from all hashtag tokens.
 - Any check cannot be resolved after one fix attempt → send_telegram(bug, "[fb-market-poster] Post validation failed: <which check>") and EXIT.
 
 ---
@@ -389,7 +388,7 @@ _Được tạo bởi bot AI lúc {HH:MM} giờ Việt Nam_
 ---
 ⚠️ Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng. Tôi không chịu trách nhiệm về tính chính xác của thông tin. Nếu nội dung có sai sót hoặc cần chỉnh sửa, mọi góp ý của bạn sẽ được ghi nhận lại để giúp bot hoạt động và phục vụ bạn tốt hơn.
 ---
-{HASHTAG BLOCK — 8 evergreen + 3-6 dynamic, no diacritics, space-separated}
+{HASHTAG BLOCK — 5 mandatory lowercase + optional dynamic, no diacritics, space-separated}
 ```
 
 ---

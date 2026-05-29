@@ -1,7 +1,7 @@
 agent:
   id: fb-market-poster
   name: FB Market Poster
-  version: "2026-05-29"
+  version: "2026-05-29"  # updated: hashtag block — 5 lowercase mandatory tags, Facebook-only
   description: >
     Reads all of the day's synthesized market intelligence (CHEF MARKET dishes,
     news-scout findings, market-watcher anomalies, macro/regime snapshot,
