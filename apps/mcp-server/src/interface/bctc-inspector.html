@@ -633,6 +633,8 @@
   let pdfNumPages = 0;   // PDF page count (pdf.numPages from pdf.js)
   let pdfjsLib = null;
   let usingIframeFallback = false; // true when pdf.js CDN failed → iframe used
+  // pdf.js document object — retained across page navigations for on-demand render
+  let pdfDoc = null;
 
   // ── DOM refs ─────────────────────────────────────────────────────────────
   const select        = document.getElementById("doc-select");
@@ -694,13 +696,14 @@
     currentDocId = docId;
     currentPage = 1;
     pdfNumPages = 0;
+    pdfDoc = null;
     usingIframeFallback = false;
 
     const selectedOpt = select.options[select.selectedIndex];
     let item = null;
     try { item = JSON.parse(selectedOpt.dataset.item || "null"); } catch { /* */ }
 
-    // PDF first — populates pdfNumPages, pre-renders all canvases
+    // PDF first — populates pdfNumPages, renders page 1 immediately (lazy: remaining pages on nav)
     await renderPdf(docId, item);
     // Navigate to page 1 — triggers OCR + eval strip + zones in lockstep
     await navigateToPage(1);
@@ -768,40 +771,50 @@
 
     const arrayBuffer = await resp.arrayBuffer();
     const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-    const numPages = pdf.numPages;
-    // Store PDF page count in module-level state so renderOcr can use it
-    pdfNumPages = numPages;
+    // Store doc object in module state — on-demand page rendering reuses it
+    pdfDoc = pdf;
+    pdfNumPages = pdf.numPages;
 
     pdfContainer.innerHTML = "";
-    // Render all pages stacked vertically (viewer scrolls).
-    // Each canvas is tagged so page-nav can scrollIntoView the matching page.
-    for (let pageNum = 1; pageNum <= numPages; pageNum++) {
-      const page = await pdf.getPage(pageNum);
-      const viewport = page.getViewport({ scale: 1.4 });
-      const canvas = document.createElement("canvas");
-      canvas.id = `pdf-page-${pageNum}`;
-      canvas.dataset.page = String(pageNum);
-      canvas.width = viewport.width;
-      canvas.height = viewport.height;
-      const ctx = canvas.getContext("2d");
-      await page.render({ canvasContext: ctx, viewport }).promise;
-      pdfContainer.appendChild(canvas);
-    }
-
     pdfContainer.style.display = "flex";
     pdfIframe.style.display = "none";
+
+    // Render page 1 immediately so the user sees content on select.
+    // Remaining pages are rendered on-demand inside ensurePdfPageRendered.
+    await renderPdfPage(1);
+  }
+
+  // Render a single PDF page into a canvas tagged pdf-page-{pageNum}.
+  // No-op if the canvas already exists (page already rendered).
+  async function renderPdfPage(pageNum) {
+    if (!pdfDoc) return;
+    const existingCanvas = document.getElementById(`pdf-page-${pageNum}`);
+    if (existingCanvas) return; // already rendered — skip
+    const page = await pdfDoc.getPage(pageNum);
+    const viewport = page.getViewport({ scale: 1.4 });
+    const canvas = document.createElement("canvas");
+    canvas.id = `pdf-page-${pageNum}`;
+    canvas.dataset.page = String(pageNum);
+    canvas.width = viewport.width;
+    canvas.height = viewport.height;
+    const ctx = canvas.getContext("2d");
+    await page.render({ canvasContext: ctx, viewport }).promise;
+    pdfContainer.appendChild(canvas);
   }
 
   // ── BCTC-EVAL-INSPECT-MERGE: ensurePdfPageRendered ───────────────────────
-  // Scrolls the PDF pane to canvas pdf-page-{pageNum}.
-  // Called from navigateToPage on every page change — fixes the PDF-stuck-on-page-1 bug.
+  // On-demand page render + scroll to canvas pdf-page-{pageNum}.
+  // Called from navigateToPage on every page change.
+  // Pages are rendered lazily — only page 1 is pre-rendered on doc select.
   async function ensurePdfPageRendered(docId, pageNum) {
-    if (usingIframeFallback || pdfNumPages === 0) return;
+    if (usingIframeFallback || pdfNumPages === 0 || !pdfDoc) return;
+    // Render the page if its canvas doesn't exist yet (lazy render)
+    await renderPdfPage(pageNum);
     const canvas = document.getElementById(`pdf-page-${pageNum}`);
     if (canvas) {
       canvas.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      console.warn(`[inspector] pdf-page-${pageNum} canvas not found`);
+      console.warn(`[inspector] pdf-page-${pageNum} canvas not found after render`);
     }
   }
 
@@ -1404,6 +1417,7 @@
     totalPages = 0;
     currentPage = 1;
     pdfNumPages = 0;
+    pdfDoc = null;
     usingIframeFallback = false;
     document.getElementById("ocr-sync-note")?.remove();
     // BT-3i-B: reset table section
