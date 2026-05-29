@@ -1267,9 +1267,17 @@
         ? ` <span class="eval-report-label">${escHtml(gate.label_suffix)}</span>`
         : "";
 
+      // Per-stage Vietnamese trust prefix (M-5 spec)
+      let trustPrefix = "";
+      if (gate.status === "red") {
+        trustPrefix = `<span style="color:#e06060;font-weight:700;">[ĐỘ TIN CẬY THẤP — TRÍCH XUẤT ĐỎ giai đoạn ${gate.stage_no}]</span> `;
+      } else if (gate.status === "yellow") {
+        trustPrefix = `<span style="color:#d4a017;font-weight:600;">[độ tin cậy thấp]</span> `;
+      }
+
       html += `<div class="eval-strip-row">
         <span class="eval-dot" style="background:${dotColor};"></span>
-        <span class="eval-stage-label">Giai đoạn ${gate.stage_no} — ${escHtml(gate.stage_name)}${suffixHtml}</span>
+        <span class="eval-stage-label">${trustPrefix}Giai đoạn ${gate.stage_no} — ${escHtml(gate.stage_name)}${suffixHtml}</span>
         <span class="eval-metrics">${escHtml(gate.metrics_summary || "—")}</span>
       </div>`;
 
