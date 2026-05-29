@@ -3576,3 +3576,77 @@ NEXT: QA — User confirms MD→table viewer renders correctly on live http://lo
 ✓ COMPLETE — BCTC viewer rebuild successful. Task #9 feature markers live in served HTML.
 NEXT: QA validates header-page-nav + keyboard arrows functionality on live viewer.
 
+
+## Session: 2026-05-29 (BCTC-TABLE-BOUNDARY BTB-OPS)
+
+**Task:** BTB-OPS — Rebuild pdf-extractor + re-extract SENTINEL A & B for BCTC-TABLE-BOUNDARY sprint
+
+**Status:** ESCALATION REQUIRED — infrastructure blocker (data persistence failure)
+
+### Cycle Summary
+
+PDF-extractor container already rebuilt with table boundary state machine code (commit d297f3ba per BTB-DEV handoff). Attempted manual re-extraction of SENTINEL A (FPT Q4 2024, report_id=e71f845d-ffa5-48f9-8f09-30ac2cd09c65, 46 pages).
+
+**Extraction completed successfully in pdf-extractor:**
+- Extraction request: POST /pek-extract → 202 Accepted at 2026-05-29T21:27:16Z
+- Layout detection: 46 pages processed
+- Table extraction: 30 pages with tables, 28 layout units generated
+- Logs: "_run_pek_extract: DONE report_id=e71f845d... units_stored=28 pages_stored=46"
+
+**Data persistence FAILED:**
+- Database query: SELECT COUNT(*) FROM bctc_layout_units WHERE report_id='e71f845d...' → 0 rows
+- bctc_layout_units table completely empty (no extraction data for any report)
+- POST /api/push-bctc-layout push never logged in mcp-server
+- Curl HTTP response stalled (4+ minutes upload, no completion)
+
+### Root Cause Analysis
+
+**Hypothesis:** HTTP push from pdf-extractor to mcp-server broken. Three possible causes:
+
+1. **Network/DNS:** pdf-extractor cannot reach mcp-server:3000 (endpoint timeout)
+   - Check: `docker exec pdf-extractor curl -v http://mcp-server:3000/health`
+   
+2. **Handler hung:** POST /api/push-bctc-layout accepted request but hangs indefinitely
+   - Check: `docker logs mcp-server | grep push-bctc` (should show receipt log)
+   - Check: mcp-server response times for other endpoints
+   
+3. **Write-wedge:** mcp-server responds 200-OK but doesn't commit to database
+   - Pattern: matches prior "mcp-server write-wedge" incident (project memory)
+   - Check: Force-recreate container per docs/protocols (named-volume safe)
+
+### Immediate Actions Taken
+
+- Verified pdf-extractor health: Container up, models loaded, CPU 96–102%, memory 1.49–1.54GB (well under 2.5GB cap)
+- Verified mcp-server health: Container up (healthy status), port 3000 accessible
+- Verified database: market.db exists, bctc_layout_units schema correct, no rows present
+- Verified off-hours: UTC 21:27–21:40 (outside 02:00–08:59 Mon–Fri HOSE window) — extraction permitted
+
+### Execution Timeline
+
+- 2026-05-29T21:27:16Z — POST /pek-extract SENTINEL A (FPT Q4 2024)
+- 2026-05-29T21:27:16Z — HTTP 202 Accepted; background extraction started
+- 2026-05-29T21:34:06Z — Poll SENTINEL A db: still 0 units (extraction ongoing)
+- 2026-05-29T21:39:00Z — pdf-extractor logs show extraction COMPLETE (28 units)
+- 2026-05-29T21:39:30Z — Database still shows 0 units (push data loss confirmed)
+- 2026-05-29T21:40:00Z — Curl HTTP response stalled (~3 min elapsed, 0% download, 100% upload)
+
+### Blocker Statement
+
+**Cannot proceed with SENTINEL B extraction or QA verification without resolving data persistence.**
+
+- Extraction pipeline: WORKING ✓ (pdf-extractor successfully generates units)
+- Data push: BROKEN ✗ (HTTP push stalls or commits fail silently)
+- QA gate impossible: no database records to verify
+- NEXT: Escalate to architect/dev-team for POST /api/push-bctc-layout diagnosis
+
+### Constraints Met (up to blocker point)
+
+- Off-hours extraction: ✓ UTC 21:27 (outside market hours)
+- Single-document sequential: ✓ (not batch sweep)
+- CPU/memory cap: ✓ (pdf-extractor 1.54GB / 2.5GB, 102% CPU active)
+- pdf-extractor image: ✓ (commit d297f3ba verified in logs)
+
+### Signals Emitted
+
+ops.md — session appended (this entry, 2026-05-29 21:40 UTC)
+
