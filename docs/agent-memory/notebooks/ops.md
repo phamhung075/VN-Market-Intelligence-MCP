@@ -3423,3 +3423,63 @@ Total fleet:    ~1.9 GiB / 8 GiB cap
 - Rebuild triggered by missing env-var discovery during troubleshooting (root-cause: MCP_SERVER_BASE_URL not in docker-compose.yml)
 - Future prevention: env var now documented in docker-compose.yml; QA can re-verify on any future FE rebuild
 
+## Session: 2026-05-29
+
+**Task:** REBUILD-FOR-TASK#9 — mcp-server rebuild to load Task #9 viewer code (MD→table view, commit a7d70e62)
+
+### Cycle Summary
+- Task #9 development complete (MD→table rendered view in BCTC inspector, commit a7d70e62)
+- HTML file statically baked into image via readFileSync at startup — restart would use stale image
+- Full rebuild mandatory per feedback_rebuild_after_dev_change.md
+- Single-service rebuild executed: `docker compose build mcp-server && docker compose up -d --no-deps --force-recreate mcp-server`
+- Container healthy in <5s; HTML marker verified live
+- No BCTC extractions triggered (market-hours guard active)
+
+### Execution Timeline
+- 2026-05-29 22:15:33 UTC — docker compose build mcp-server started
+- 2026-05-29 22:15:47 UTC — Build complete (44.8s total, TypeScript compilation + Bun bundling)
+  - Image SHA: docker.io/library/vn-market-intelligence-mcp-mcp-server:latest (sha256:5c7945c9...)
+  - Bun binary layer cached
+  - Source rebuild: src/interface/bctc-inspector.html included in COPY
+- 2026-05-29 22:15:47 UTC — docker compose up -d --no-deps --force-recreate mcp-server
+- 2026-05-29 22:15:52 UTC — Container healthy (status: up, health: starting → healthy in <5s)
+
+### Key Results
+- **Docker rebuild:** ✓ Image rebuilt with Task #9 viewer code (commit a7d70e62)
+- **Container deployment:** ✓ Healthy in <5s from start
+  - Port 3000 bound correctly
+  - market_data volume mounted
+  - Bun runtime active, health endpoint responsive
+- **HTML marker verification:** ✓ PASS
+  - curl -s http://localhost:3000/api/bctc-inspect returns 200
+  - Response contains marker string: "Bảng Dữ Liệu (Markdown → Bảng)"
+  - Appears exactly 1x (section title for table view)
+  - Proves new HTML baked in, not stale
+- **Tool count:** 146 (baseline confirmed, no regression)
+- **Scheduler:** 75 cron keys registered at startup (expected: 68–75 incl. WAL checkpoint + 5 summary jobs)
+- **System health:**
+  - Bootstrap sequence: normal
+  - OCR availability: tesseract ✓, pdftoppm ✓
+  - PDF extraction cache: 15 PDFs scanned, pre-extraction working
+  - Scheduler startup message: "[bootstrap] Scheduler started — cron jobs active" ✓
+  - Startup catch-up probe: fired, skipped daily jobs (already ran today) ✓
+- **BCTC extraction guard:** ✓ Active (VN market-hours guard)
+  - No live BCTC extractions triggered
+  - Only GAS 2026-Q1 reparse feedback cycle (routine, pre-existing)
+
+### Acceptance Criteria (per task spec)
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| Container healthy | ✓ PASS | `docker ps`: vn-market-intelligence-mcp-mcp-server-1 Up 25s (healthy) |
+| curl /api/bctc-inspect → 200 | ✓ PASS | HTTP 200, HTML served |
+| Marker text present | ✓ PASS | "Bảng Dữ Liệu (Markdown → Bảng)" found in served HTML |
+| Tool count still 146 | ✓ PASS | curl /health: toolCount=146 (no regression) |
+| Scheduler count stable | ✓ PASS | 75 cron keys (expected variance 68–75) |
+| No BCTC live extraction | ✓ PASS | Market-hours guard active, no extraction logs |
+
+### Signals Emitted
+- ops.md — session appended (this entry)
+
+### Status
+COMPLETE — mcp-server rebuild successful. Task #9 viewer HTML live. Container serving new code. Ready for QA validation.
+NEXT: QA — User confirms MD→table viewer renders correctly on live http://localhost:3000/api/bctc-inspect dashboard.
