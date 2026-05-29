@@ -43,53 +43,41 @@ Zone health: 3 files (1 mod, 2 new); tsc EXIT 0; 14 tests green; frozen 0-diff; 
 
 ---
 
-## c324 · 2026-05-29 (DUAL-VIEW GATE STRIP) — COMMITTED 24e9776d
 
-M-1..M-7: user/agent dual-view + debug sub-object on gate_strip. 3 files. 15 tests pass. ops_rebuild_required.
+## c327 · 2026-05-30 (BCTC-TABLE-BOUNDARY BTB-PERSIST-FIX BLOCKING-1) — COMMITTED 60dfac7f
 
----
+**Task:** Fix pushBctcLayoutHandler idempotency + add prose persistence tests.
 
-## c323 · 2026-05-29 (PDF LAZY RENDER BUG FIX) — COMMITTED a6233c85
+**Files changed (2):**
+- `apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts` — Replace INSERT OR REPLACE with DELETE-before-INSERT inside the existing transaction. Two DELETE statements (bctc_layout_units + bctc_page_zones WHERE report_id=?) added at transaction start. INSERT changed to plain INSERT (not OR REPLACE). Root cause: pdf-extractor generates new unit_id UUIDs per extraction run; INSERT OR REPLACE only fires on same key — new UUIDs always append, never replace (FPT 42 rows = 7 spans × 6 extractions).
+- `apps/mcp-server/src/__tests__/1272-push-bctc-layout.test.ts` — 12 new tests (h-DV: idempotency with different unit_ids proven-red→green; h-DV: old UUIDs absent after re-push; i: prose page_type stored correctly; i: prose count ≥ 1; i-DV: prose survives re-push).
 
-Page-on-select + page-by-page on nav (HTML-only). 1 file. ops_rebuild_required.
+**BLOCKING-2 prose finding (end-to-end trace):**
+- mcp-server handler: CORRECT — reads page_type from document_map, persists prose units as-is.
+- Prose units NOT in push payload for PEK path. Root: pek_engine_adapter.py explicitly skips prose pages — only creates table-type units (line ~595: "Do NOT create a unit for this prose page"). The mcp-server handler cannot fix what's never sent.
+- NEXT for BLOCKING-2: dev-pdf-extractor must add prose units to PEK push payload.
 
----
+**Idempotency DV:** proven-red = INSERT OR REPLACE + different unit_ids → 4 rows (not 2). proven-green = DELETE-before-INSERT → 2 rows.
 
-## c322 · 2026-05-29 (AC6 PER-STAGE TRUST PREFIX) — COMMITTED e51e4b8e
+**Gates:** tsc EXIT 0 | 25 tests 0 fail (file-scope) | tool=148 | sched=70 | frozen 0-diff
 
-trustPrefix in renderGateStrip (HTML-only). 1 file. ops_rebuild_required.
+**ops_rebuild_required: true** — mcp-server must be rebuilt for fix to take effect.
 
----
-
-## c321 · 2026-05-29 (PROD SCHEMA FIX) — COMMITTED 5ad6df9c
-
-Stage-3 prod schema divergence (pdf_extracted_text no report_id). 2 files. ops_rebuild_required.
-
----
-
-## c320 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE BASELINE) — COMMITTED 75c7acf5
-
-Folded 6-gate eval strip into /api/bctc-inspect. 4 files. New GET /api/bctc-eval/{id}/page/{N}. ops_rebuild_required.
-
----
-
-## c319 · 2026-05-29 (BOOTSTRAP-ENUM-BCTC) — COMMITTED a0103b84
-
-bctc-analyst added to VALID_AGENT_NAMES. 5 files.
+Zone health: 2 files (1 mod, 1 mod); tsc EXIT 0; 25 tests green; frozen 0-diff | HEALTHY
 
 ---
 
 ## Working Memory
 
-### Active Sprint: BCTC-EVAL-INSPECT-MERGE Task #9
-- c326 DONE: header page-nav + keyboard, committed 3490dffa
-- NEXT: ops (rebuild) → qa (verify live)
-- QA should verify: header center nav visible, ←/→ keyboard drives navigateToPage, focus-guard SELECT works, bounds disable correct, no regression on existing panes
+### Active Sprint: BCTC-TABLE-BOUNDARY (BTB-PERSIST-FIX)
+- c327 DONE: BLOCKING-1 delete-before-insert committed 60dfac7f
+- BLOCKING-2: prose units must be added by dev-pdf-extractor to PEK push payload
+- NEXT: ops (rebuild mcp-server) → dev-pdf-extractor (add prose units to pek_engine_adapter.py push) → ops (rebuild pdf-extractor) → single re-extraction of FPT + ACB sentinels → qa re-verify
 
 ### Carry-over
 - tool=148, sched=70 (baselines for Gate 2c/2d)
 - Bun v1.3.13 C++ post-suite panic = upstream bug, pre-existing
-- AC-LFO-7 deferred (needs corpus re-extraction)
+- 352 pre-existing failures in full suite (unrelated: e.g. newsHeadlines e2e missing reuters.js)
 
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`
