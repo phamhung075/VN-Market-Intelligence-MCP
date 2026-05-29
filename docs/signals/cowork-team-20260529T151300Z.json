@@ -12,8 +12,10 @@
     "spawned": ["bctc-analyst"],
     "silent": false,
     "drift_min": 13,
-    "errors": [],
-    "note": "15:00Z FIRE — bctc-analyst-slot-1 (cron 0 15 * * *, daily BCTC run) matched UNANIMOUS x3. Clock 15:13Z (drift 13), nominal floors to 150000Z. Lock cowork-slot:bctc-analyst-slot-1:20260529T150000Z claimed=true (won race vs RemoteTrigger backstop). Spawned bctc-analyst background agentId ae5e8b20957a6d50d, flow docs/agents/bctc-analyst/flow/main.md. E2 guard OK (~22:00 VN off-market). Lock held under 900s TTL; release on agent-completion notification. Next NON-silent: 16:00Z off-hours fan-out."
+    "completed": true,
+    "lock_released": true,
+    "errors": ["mcp-enum-drift: bctc-analyst id not in get_cycle_bootstrap enum, agent fell back to financial-analyst value (BUG #2613)"],
+    "note": "15:00Z FIRE CLOSED — bctc-analyst-slot-1 (cron 0 15 * * *, daily BCTC run) matched UNANIMOUS x3. Clock 15:13Z (drift 13), nominal floors to 150000Z. Lock claimed=true (won vs RemoteTrigger), released ok=true on completion. Spawned bctc-analyst bg agentId ae5e8b20957a6d50d; mode=routine, 4 tickers (ACB CHEAP pe7.8, FPT FAIR pe13.8 OCF/NI warn, DHG+EIB DATA_INSUFFICIENT extraction broken). Signals #4251 ACB + #4252 FPT to alert-commander (critic 0.8). Agent had NO shell tool — dispatcher committed its 4 signal files + notebook at 1a6831ab. E2 guard PASS (~22:00 VN). Next NON-silent: 16:00Z off-hours fan-out."
   },
   "priority": "normal",
   "createdAt": "20260529T151300Z"
