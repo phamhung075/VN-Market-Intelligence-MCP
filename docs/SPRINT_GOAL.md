@@ -30,7 +30,7 @@ Absolute prices live (Brent 91.7, Gold 4569.9) but change-% = +0.00% for both. p
 ## Success Metric (DoD — live re-probe through MCP tools, all four GREEN)
 
 1. **FX:** `get_macro_snapshot` and `get_cycle_bootstrap` macro block return a SINGLE consistent USD/VND value (or both tagged with an explicit, correct source). No silent divergence.
-2. **Carry/Yield:** `get_macro_snapshot` signals show a FRESH `carry.computedAt` + `yield.computedAt` (today or very recent), proving the recompute job fired + persisted.
+2. **Carry/Yield:** `get_macro_snapshot` signals show a FRESH `carry.computedAt` + `yield.computedAt` (today or very recent) AND the regime is derived from LIVE INPUTS (VND deposit / Fed funds / earning yield read from market.db), NOT frozen fixture constants. A fresh timestamp on frozen inputs is cosmetic (`feedback_fence_false_green`) — DPI-2 fixes the timestamp, DPI-2b wires the live inputs (PO decision 2026-05-29: all 3 live-wirable, zero documented-gaps). Proven by AC-6 regime-flip DV + AC-7 snapshot-vs-direct-DB cross-check.
 3. **Brent/Gold:** `get_macro_snapshot` shows NON-ZERO, directionally-correct change-% for Brent and Gold (not +0.00%).
 4. **Foreign-flow:** `get_foreign_flow(HPG)` returns POPULATED data (real foreign buy/sell/net), verified live post-rebuild + direct DB count > 0.
 
@@ -38,7 +38,7 @@ All four verified by agents calling the live tools after ops rebuild. Goal stays
 
 ## Owner Chain
 
-ba (REQ decomposition + zone-split confirm) → architect (FX canonical-source policy + carry/yield job RCA-to-fix + delta-pipeline design + foreign-flow upsert contract; brief only) → pm (sequence tasks) → dev-macro-indicators (bugs 1-3) + dev-mcp-server (bug 4) → ops (REBUILD affected containers) → qa (live re-probe all four MCP tools) → po (DPI-EXIT independent live re-verify). **Zone:** `multi` — architect confirms the macro-indicators ↔ mcp-server split (bugs 1-3 macro, bug 4 mcp-server; no cross-coupling expected).
+ba (REQ decomposition + zone-split confirm) → architect (FX canonical-source policy + carry/yield job RCA-to-fix + delta-pipeline design + foreign-flow upsert contract; brief only) → pm (sequence tasks) → dev-macro-indicators (bugs 1-3; DPI-2b live-input wiring added by PO decision 2026-05-29) + dev-mcp-server (bug 4) → ops (REBUILD affected containers) → qa (live re-probe all four MCP tools) → po (DPI-EXIT independent live re-verify). **Zone:** `multi` — architect confirms the macro-indicators ↔ mcp-server split (bugs 1-3 macro, bug 4 mcp-server; no cross-coupling expected).
 
 ---
 

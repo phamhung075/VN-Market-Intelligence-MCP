@@ -1,27 +1,22 @@
 # PO Notebook
 
-## Cycle 2026-05-29T22:16Z — INCIDENT TRIAGE → Sprint DATA-PIPELINE-INTEGRITY (4 root-caused data bugs)
+## Cycle 2026-05-29T22:57Z — DECISION: DPI-2b live-input wiring (carry/yield not-recomputing)
 
-**Input:** ops fully diagnosed multi-source live-data failure (live-probed + VPS-audited). VPS HEALTHY — all 5 pushes HTTP 200 (prices/BCTC/news/SBV-FX/foreign-flow). Blockers = 4 CODE bugs already root-caused. Do NOT re-diagnose.
+**Trigger:** dev-macro-indicators completed DPI-2 (computedAt = time.Now()) but surfaced a scope blocker — the carry/yield regime INPUTS are still frozen fixtures in `usecases.go` (4.7 VND deposit / 5.33 Fed / 8.2 earning yield). Fresh timestamp on frozen inputs = cosmetic; carry permanently FII_OUTFLOW_RISK only because frozen 5.33>4.7. Textbook false-green vs user GOAL "carry/yield NOT RECOMPUTING".
 
-**Action: kicked off Sprint DATA-PIPELINE-INTEGRITY (CRITICAL, multi-zone). Preempts WIP cap (data-correctness incident > priority order).**
+**Did NOT rubber-stamp — verified live sources exist before deciding (per-input feasibility):**
+- VND deposit → `sbv_rates.max_deposit_rate_pct` source='sbv' (SBV cron, mcp-server fetchers/sbv.ts). LIVE-WIRE.
+- Fed funds → `fred_series_daily` series='EFFR' latest (fetchFredEffrIorb). mcp-server uses SAME 5.33 as documented fallback. LIVE-WIRE.
+- Earning yield → `tracked_indicators` indicator='market_earning_yield' latest (marketEarningYieldJob → computeMarketEarningYield). LIVE-WIRE.
 
-**Verified diagnosis grounded before creating tasks (didn't rubber-stamp):**
-- Bug 4: read `ohlcvForeignFlowStore.ts` L1-54 — VERBATIM UPDATE-only (`WHERE code=? AND date=?`), doc-comment L5/L16 literally says "no stub rows / silently skipped". Confirmed. Foreign-flow arrives before OHLCV row → silent skip.
-- Bugs 1-3: TASKS.md MACRO-SEED-WIRING #3003 already flagged carry/yield computedAt=2026-05-23 stale + USD/VND=26255 as "monitoring" 2026-05-29. Ops now escalates to actionable FIX. Consistent.
+**Verdict: ALL THREE live-wirable, ZERO documented-gaps.** All in shared market.db the Go service already reads read-only (DPI-1 adapter). Fixtures (4.7/5.33/8.2) = literally mcp-server's documented fallbacks. No new HTTP fetcher. Pattern = exact mirror of DPI-1 SBVRateSQLiteAdapter (proven 3x: VN-Index, commodity, SBV-FX).
 
-**4 tasks created (one per bug, zone-tagged):**
-- DPI-1 FX dual-path 26255 vs 26115 → dev-macro-indicators (canonical SBV source OR source-tag both)
-- DPI-2 carry/yield computedAt stale → dev-macro-indicators (find recompute job, restore, persist)
-- DPI-3 Brent/Gold +0.00% delta → dev-macro-indicators (prev-close store + delta pipeline)
-- DPI-4 foreign-flow "No data" → dev-mcp-server (UPSERT/INSERT…ON CONFLICT in ohlcvForeignFlowStore.ts)
-+ DPI-OPS (REBUILD), DPI-QA (live re-probe), DPI-EXIT (po). Umbrella lock `task:DATA-PIPELINE-INTEGRITY` claimed (TTL 3600).
+**Action:** created DPI-2b (`docs/handoffs/DPI-2b.md`, owner dev-macro-indicators). New CarryYieldInputsSQLiteAdapter + port + composition-root inject + Execute() resolve-with-fixture-fallback. Fixtures KEPT as explicit safe-degrade (NOT deleted — re-inlining a literal would re-hardcode). AC-6 regime-flip DV = anti-false-green proof; AC-7 live re-probe cross-checked vs direct DB read. Updated TASKS.md (DPI-2 annotated, DPI-2b registered) + SPRINT_GOAL success-metric #2 (timestamp alone insufficient) + owner chain.
 
-**DoD (hard, no false-greens):** live re-probe through MCP tools — FX single value, fresh computedAt, non-zero Brent/Gold deltas, populated get_foreign_flow + direct DB count>0. Verification = agents call live tools (feedback_trust_verification_is_system_job), REBUILD not restart (feedback_rebuild_after_dev_change). Bug-4 verify via live tool + DB count, NOT push echo (project_mcp_server_write_wedge).
-
-**NEXT:** ba — decompose 4 bugs into REQ_DATA-PIPELINE-INTEGRITY.md, confirm multi-zone split. PIPELINE: continue.
+**NEXT:** dev-macro-indicators implements DPI-2b. PIPELINE: continue.
 
 ## Carry-over
-- DATA-PIPELINE-INTEGRITY: goal ARMED until all 4 surfaces re-probe correct. Architect must: (1) pick FX canonical source policy, (2) RCA-to-fix the carry/yield recompute job, (3) design delta/prev-close pipeline, (4) define foreign-flow upsert contract. multi-zone: bugs 1-3 macro-indicators, bug 4 mcp-server, no cross-coupling expected.
-- BCTC-TABLE-BOUNDARY: code GREEN, infra-BLOCKED on live verify (BTB-UNBLOCK: fail-loud+heartbeat+timeout). Not touched by this incident.
+- DATA-PIPELINE-INTEGRITY ARMED: DPI-1/2 in REVIEW (await ops rebuild + QA), DPI-2b NEW (dev-macro-indicators), DPI-3/4 not yet started (dev-mcp-server). Rebuild order: mcp-server (3+4) FIRST, then macro-indicators (1+2+2b). DPI-2b rebuilds with 1/2 (same container). DoD = live re-probe all 4 surfaces + DPI-2b AC-6/AC-7.
+- Architect's DPI-1 design is the proven template for DPI-2b adapter; no new arch brief needed (PO judged in-scope of established pattern). If dev hits a port-shape question, escalate to architect.
+- BCTC-TABLE-BOUNDARY: code GREEN, infra-BLOCKED on live verify. Not touched this incident.
 - SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST still OPEN.
