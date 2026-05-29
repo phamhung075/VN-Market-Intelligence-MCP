@@ -2,7 +2,7 @@
 
 **Location:** `docs/agents/tools/package/fb-market-poster.md`
 **Load when:** Agent starts, before first MCP call
-**Last Updated:** 2026-05-29
+**Last Updated:** 2026-05-29 (v2 — live enrichment tools added)
 
 ## How to Invoke Tools
 
@@ -37,12 +37,32 @@ call_tool(
 - `bug` — errors only
 - `market` — NEVER (this agent does not write to MARKET channel)
 
-### NOT in scope (v1)
+### Live Market Read Tools (STEP 1b enrichment)
+
+Called after notebook reads to fill missing quantitative fields. All read-only. Each call wrapped in error-skip: if tool errors, log and continue with notebook fallback.
+
+| Tool | Purpose | Key Params |
+|------|---------|-----------|
+| `get_market_snapshot` | All indices (VN-Index, VN30, HNX-Index, UPCOM) with value, point change, pct change | (none required) |
+| `get_market_breadth` | Advancers / decliners / unchanged / ceiling-hits (tăng trần) / floor-hits (giảm sàn) | (none required) |
+| `get_foreign_flow` | Net foreign buy/sell value (tỷ đồng), most-bought tickers, most-sold tickers | (none required) |
+| `get_top_movers` | Top gaining and top losing tickers with price + pct_change + sector | (none required) |
+
+**Usage pattern:**
+```
+snapshot     = call_tool(server="vn-market", tool="get_market_snapshot", arguments={})
+breadth      = call_tool(server="vn-market", tool="get_market_breadth",  arguments={})
+foreign_flow = call_tool(server="vn-market", tool="get_foreign_flow",    arguments={})
+top_movers   = call_tool(server="vn-market", tool="get_top_movers",      arguments={})
+```
+All four are **read-only**. Do NOT call any write tool in this block.
+
+### NOT in scope
 | Tool | Why excluded |
 |------|-------------|
 | Facebook Graph API | Not implemented in MCP fleet — Phase 2 only |
 | `post_agent_signal` | This agent does not emit signals to the bus |
-| Any price/news fetch tool | This agent reads notebooks, not raw data feeds |
+| Any trade/order/write tool | This agent is read-only for market data |
 
 ---
 

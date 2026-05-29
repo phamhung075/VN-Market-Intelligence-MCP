@@ -1,5 +1,15 @@
 # Agent Father — Notebook
 
+## c275 · 2026-05-29 — Edit fb-market-poster (detail-floor uplift)
+
+- Change: Raised content-detail bar — added STEP 1b (live enrichment via 4 vn-market read tools), rewrote STEP 3 with 7-field detail floor, replaced STEP 4 with 11-check validation (4 structural + 6 detail-floor + 1 anti-filler), relaxed word count 200-350 → 150-650.
+- Files modified: 2 (docs/agents/fb-market-poster/flow/main.md + docs/agents/tools/package/fb-market-poster.md)
+- Cascade: none — no name/routing/inter_agent/roster/dispatch change; tool package updated with 4 new read tools (get_market_snapshot, get_market_breadth, get_foreign_flow, get_top_movers)
+- Validation: 7/7 passed (frontmatter line 1 ✓, flow has error boundary + RETURN ✓, tool package ✓, no new always_load paths added ✓, no jargon added ✓, word-count rule consistent across STEP 3 + STEP 4 ✓, filler-check added ✓)
+- Decision: User feedback "too generic" after first test post — permanent detail-floor ensures every future post carries all quantitative fields (indices, breadth, liquidity, foreign flow, ≥5 named tickers, ≥2 named news) sourced first from live tools then fallback to notebooks. No spelling step added per user explicit decline.
+
+---
+
 ## c274 · 2026-05-29 — Create fb-market-poster
 
 - Type: cowork
