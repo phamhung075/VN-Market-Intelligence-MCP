@@ -1,29 +1,24 @@
 # PO Notebook
 
-## Cycle 2026-05-29T02:23Z — c82 TNB ACK, BATCH=NOTHING (dev-team arming-trip 02:20Z)
+## Cycle 2026-05-29T12:29Z — dev-team :07 triage (macro lane)
 
-Spawned by dev-team Step 1 with c82 in pendingSignals[] after ~6h+ un-ACK'd row in DASHBOARD ## po; parallel session quiet 4h31m post-HCM-EXIT close. Read tnb-audit-latest.md c82: NEEDS_ATTENTION + STABLE, 0 CRITICAL, 0 auto-cures, 0 new findings, 2 GENUINE clusters (Vingroup gold-rotation MEDIUM-HIGH 0.55–0.60, banking macro-micro contradiction MEDIUM 0.45–0.53), 4/6 layers, gap catalogue 5/5 PASS, chef pipeline 8/8 dishes. Triple-reinforcement #4169 Taiwan fund + #4170 VHM gold-parity confirms Cluster 1 genuine post-hoc.
+**Spawn:** dev-team cron dispatcher, :07 tick. Market CLOSED (ICT 19:29).
 
-**Verdict: mirror c81 disposition.** All 6 findings = persisting/structural — no new escalation surface:
-- F1 macro-snapshot stale: already PARKED MACRO-VNINDEX-DATA-GAP §MAINT line 365 ("defer under host load"). No new evidence to flip. Chef workaround honest.
-- F2 L4 partial: BCTC Q1 unfiled 35/39 watchlist. Data-blocked, cowork-lane.
-- F3 PMI / F4 VIRA: structural backlogs, no host capacity for new sprints.
-- F5 F9 10th cycle: c82 itself says "PO ACK'd c81 cowork-lane + data-blocked — no new action."
-- F6 L5 hexagram dark: dev-kinh-dich pilot TS→Go reboot, known.
+**MCP DEGRADED:** `mcp__claude_ai_gateway__call_tool` NOT in this session's tool surface (`claude mcp list` shows gateway ✓ at CLI but the session is stale per `project_mcp_gateway_architecture`). Could NOT run the 2 mandatory live calls (`read_telegram_reports` / `list_unresolved_reports`). Triaged on file inputs only: DASHBOARD ## po + TASKS.md + git log + pipeline-state + tnb-audit-latest. Honest degraded triage — flagged in pipeline-state for session reload.
 
-**BATCH return: NOTHING (idle EXIT).** Triage claim task:po-triage-20260529 held by dispatcher — do not release. Parallel session zone (mcp-server / pdf-extractor / frontend / PEK) untouched; my lane apps/macro-indicators has only the parked MACRO-VNINDEX-DATA-GAP, not actionable this tick.
+**Verdict: NOTHING (idle).** No dev-team-spawnable work in an uncontended zone.
 
-**Actions:** tnb-audit-latest.md ACK block appended at 02:23Z (verdict + finding-by-finding, positive signals acknowledged, carry-over c83 priorities noted). Notebook overwritten. Mutex-guarded commit next.
+**NEW DASHBOARD rows assessed:**
+- `cowork-DUPLICATE-PUBLISH-20260529T0526` (HIGH) — chef-morning 4x at 05:15 tick; dispatcher retried Agent spawn 3x under transport lag, slot-lock can't dedup same-slot retries. FIX = harden cowork-team **dispatcher Step 5** spawn-retry guard (flow/agent .md), NOT an `apps/<service>/` zone. = MEMORY.md `feedback_spawn_retry_under_lag` exactly. → marked READ + routed cowork/agent-father lane. NO dev BATCH. Duplicate MARKET dishes disregarded per dispatcher.
+- CHEF-EOD-MACRO-MISATTRIB / HSG-FIRE-SEVERITY-RECAL / MARKET-SLOTS-DARK / NEWSFETCH-FALSECRIT = cowork-lane, prior-disposed.
+- FETCH-ANALYZE-PROFILE SPIKE = `apps/mcp-server` OFF-LIMITS (parallel session owns lane).
+- TNB c82 = already ACK'd 02:23Z (mirror c81: F9/F2 data-blocked, cowork-lane). c83 ~20:13Z (~8h out).
 
-**Pre-checks:** project root resolved (`/Users/admin/Documents/Hung/__works__/__PROJET/__labo/VN-Market-Intelligence-MCP`). Dashboard ## po c82 row already marked READ by dispatcher per spawn brief. TASKS.md blockers: none waiting on PO (all current sprint sections DONE/signed-off; backlog rows tagged BACKLOG or §MAINT). Channels audit skipped — arming-trip is c82-scoped; full channel audit not in arming-trip lane and parallel session may be racing.
+**Lane:** macro (apps/macro-indicators) idle. MACRO-RATES-LIVE = backlog stub, MED, no incident; re-open trigger = SBV/FOMC move (none since 23-May).
 
-**NEXT:** idle | dispatcher releases lock on return. PIPELINE: idle.
+**Maintenance noted, NOT dispatched (janitor/governance, not dev-team-spawnable):** (a) signals.db drain dead since May 22 → 872-file backlog incl 153 context-bloat; (b) TASKS.md 670L over 80L cap (keeps re-triggering context-bloat hook).
 
 ## Carry-over
-- MACRO-VNINDEX-DATA-GAP stays parked under §MAINT until host load eases — next triage tick re-evaluates dispatch readiness.
-- BCTC Q1 filings landing (any of VHM/ACB/VCB/EIB/BID) = trigger to unblock L4 earnings pillar audit class.
-- PMI (US tools D-gap) + VIRA VPS scraper (E-gap) remain backlog candidates for next non-arming-trip planning window.
-- F9 business context: 11 cycles after c82 (12+ at c83) is the threshold to revisit disposition — if BCTC data still unavailable, escalate cowork-lane work to a chef flow change (fundamental_validation surface) rather than a dev sprint.
-- TASKS.md sits at 670L (far over 80L WIP target) — full prune deferred until parallel session quiet AND no active sprint churn; safe candidate for a CLEAN batch next idle cycle.
-- Apply HCM-DISAMBIG fence-false-green discipline to all future test additions (inject deliberate fail, confirm non-zero exit, revert).
-- Arming-trip pattern this cycle confirmed working: dispatcher drained 6h+ NEW row, fired triage spawn at scheduled 02:20Z arm, lock held without conflict — no parallel-session race observed.
+- Next :07 tick: reload session to restore `mcp__claude_ai_gateway__*` tools; re-triage only if NEW report/signal lands in an uncontended (non-mcp-server/non-pdf-extractor) zone.
+- Watch cowork-team for the spawn-retry-guard fix landing (Step 5 launch-confirm gate).
+- c83 TNB audit ~20:13Z 2026-05-29 — check BCTC Q1 filings + MACRO-VNINDEX-DATA-GAP deploy status.
