@@ -1,0 +1,36 @@
+{
+  "from": "agent-father",
+  "to": "pm",
+  "type": "sprint-task",
+  "priority": "medium",
+  "createdAt": "2026-05-29T00:00:00Z",
+  "subject": "OQ-4: dev-pdf-extractor sprint — 3 missing fields for bctc-analyst trick passes",
+  "payload": {
+    "sprint_name": "BCTC-EXTRACTOR-FIELDS",
+    "context": "bctc-analyst E1 multi-pass trick detection requires 3 fields not yet produced by the extractor pipeline. The passes use fallback logic until this sprint delivers them. See docs/architecture-briefs/2026-05-29-bctc-analyst-merge.md §E4 for full specification.",
+    "tasks": [
+      {
+        "id": "EF-1",
+        "title": "Add per-row confidence_score to bctc_table_rows",
+        "description": "Add confidence_score column to bctc_table_rows (REAL, nullable). Value = average Tesseract word-level confidence for OCR tokens in that row. Rows with native text extraction: confidence_score = 1.0. Rows where value_current IS NULL: confidence_score = 0.0 (existing proxy). All passes currently skip rows where value_current IS NULL as proxy — this field formalizes it.",
+        "owner": "dev-pdf-extractor",
+        "priority": "high"
+      },
+      {
+        "id": "EF-2",
+        "title": "Verify and fix statement_section coverage for income_statement + cash_flow",
+        "description": "bctc_table_rows.statement_section is reliably set for balance_sheet. Verify it is also set for income_statement and cash_flow sections. Fix section detection if gaps found. P&L and cashflow trick passes currently check for this field and skip if missing — this sprint makes them reliable.",
+        "owner": "dev-pdf-extractor",
+        "priority": "high"
+      },
+      {
+        "id": "EF-3",
+        "title": "Add footnote-code linkage (medium priority)",
+        "description": "Link footnote text in pdf_extracted_text to specific BCTC line codes. RPT and footnote passes currently use raw OCR text + page_anchor as evidence anchor. This sprint adds a footnote_anchors table or JSON column linking code → page_anchor → ocr_excerpt. Accepts partial delivery (even covering top 20 codes).",
+        "owner": "dev-pdf-extractor",
+        "priority": "medium"
+      }
+    ],
+    "unblock_condition": "bctc-analyst trick passes (stage-pass-*.md) will auto-detect field availability and upgrade from fallback to full logic when fields are present. No bctc-analyst changes required on delivery — the passes already contain the upgrade path."
+  }
+}

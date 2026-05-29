@@ -852,7 +852,7 @@
         "type": "cowork"
       },
       {
-        "id": "financial-analyst",
+        "id": "bctc-analyst",
         "type": "cowork"
       },
       {
@@ -869,10 +869,6 @@
       },
       {
         "id": "qa-responder",
-        "type": "cowork"
-      },
-      {
-        "id": "report-analyzer",
         "type": "cowork"
       },
       {

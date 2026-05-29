@@ -39,3 +39,7 @@ docs/outbox/
 # PDF single-source consolidation (PDF-SINGLE-SOURCE)
 data/pdfs/*.pdf
 data/pdfs-local/
+
+# E3 idempotency cache — bctc-analyst ephemeral agent-layer metadata (OQ-5)
+# Note: covered by top-level data/ rule above; explicit entry for documentation clarity
+data/bctc-analysis-cache/

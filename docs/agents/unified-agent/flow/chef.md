@@ -36,8 +36,8 @@ Read all `docs/signals/*.json` with `mtime` within last 24h (or since last dish 
 Collect file groups:
 - `price_anomaly_*` — from market-watcher
 - `news_impact_*` — from news-scout
-- `bctc_signal_*` — from financial-analyst
-- `fundamental_*` — from report-analyzer
+- `bctc_signal_*` — from bctc-analyst (merged agent; was financial-analyst)
+- `fundamental_*` — from report-analyzer [TRANSITION: dual-accept `signal_type == "bctc_signal" OR signal_type == "fundamental"` during soak window H-18→H-19; remove `fundamental` branch after H-19 archive]
 
 Also call:
 - `get_market_hexagram()` — market-wide Kinh Dịch state
