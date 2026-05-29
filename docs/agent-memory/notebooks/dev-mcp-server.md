@@ -1,5 +1,36 @@
 # dev-mcp-server -- Notebook
 
+## c319 · 2026-05-29 (BOOTSTRAP-ENUM-BCTC — XS FIX)
+
+### BOOTSTRAP-ENUM-BCTC DONE
+
+**Task:** Add `bctc-analyst` to `VALID_AGENT_NAMES` enum in `getCycleBootstrap.ts`. Agent was rejecting with `invalid_enum_value` forcing `bctc-analyst` to impersonate `financial-analyst` (report #3009, log #1154).
+
+**Root cause confirmed (jq):** `bctc-analyst` is a cowork-type agent in `docs/data/system-map.json` but was absent from the hardcoded `VALID_AGENT_NAMES` array. This is the 4th string-vs-enum drift bug (VNH DomainType, commit-mutex, verified_decision, now this).
+
+**SSOT-derive scope assessment:** Full runtime derive from system-map.json crosses application/infra layer boundary (file I/O) → out of XS scope → emitted SPIKE proposal to `docs/signals/improvement-proposal-bootstrap-enum-ssot-derive.json`.
+
+**Files modified (3 + 2 new):**
+- `apps/mcp-server/src/application/usecases/getCycleBootstrap.ts` — VALID_AGENT_NAMES: added "bctc-analyst" (8 → 9 entries)
+- `apps/mcp-server/src/interface/mcp/tools/system/cycleBootstrapTool.ts` — description string updated to include bctc-analyst
+- `apps/mcp-server/src/__tests__/1563-get-cycle-bootstrap.test.ts` — count assertion 8 → 9, added bctc-analyst check
+- `apps/mcp-server/src/__tests__/1975-bootstrap-enum-bctc-analyst-guard.test.ts` — NEW guard: reads cowork roster from system-map.json, asserts every bootstrap cowork agent is in VALID_AGENT_NAMES; RED-on-removal proven
+- `docs/signals/improvement-proposal-bootstrap-enum-ssot-derive.json` — NEW SPIKE proposal
+
+**Gates:**
+- bun tsc --noEmit: EXIT 0 (clean)
+- Targeted tests: 13 pass / 0 fail (1563 + 1975)
+- Server-wiring: 23 pass / 0 fail
+- RED proof: removed bctc-analyst → 2 fail (guard fires correctly)
+- Tool count: 148 (unchanged)
+- Scheduler count: 70 (unchanged)
+
+**Commit:** a0103b84
+
+Zone health: enum fix only, no tool/scheduler changes; tsc EXIT 0; 13 bootstrap tests pass; guard RED-on-removal proven | HEALTHY
+
+---
+
 ## c318 · 2026-05-28 (BCTC-EVAL-MCPS-GLUE — Sprint BCTC-EVAL-SUBSTRATE integration fix)
 
 ### BCTC-EVAL-MCPS-GLUE DONE — UNSTAGED
