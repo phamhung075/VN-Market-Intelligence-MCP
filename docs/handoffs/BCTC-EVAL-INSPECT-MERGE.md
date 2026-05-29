@@ -402,3 +402,25 @@ Report-level suffix rendered in UI: `(toàn báo cáo)` — NOT the French word 
 6. Network tab: `GET /api/bctc-eval/{sentinel}/page/{N}` fires on each page nav click.
 7. Deliberate-violation injection tests (AC-6).
 8. Vietnamese labels render with correct UTF-8 diacritics, no mojibake.
+
+---
+
+## [Developer] Implementation Record — Task #9 (Dual-View Gate Strip M-1..M-7)
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/bctcEvalPageHandler.ts` — M-1 LayoutUnitRow +3 fields; M-2 S4 SELECT extended; M-3 ocrBasename capture + pek debug vars + safeParseJson() + debug sub-object per gate (additive, existing fields byte-identical)
+  - `apps/mcp-server/src/interface/bctc-inspector.html` — M-4 additive CSS; M-5 segmented toggle HTML; M-6 evalViewMode+lastEvalData vars, setEvalViewMode(), button wire, renderDebugBlock(), renderEvalStrip cache+mode, renderGateStrip mode param + conditional agent append
+  - `apps/mcp-server/src/__tests__/bctcEvalPageHandler.test.ts` — M-7 TC-D1 + DV-2 + non-regression assertions
+- **Tests written:** bctcEvalPageHandler.test.ts — 6 new tests (TC-D1×2 + DV-2), 140 expect() calls total, GREEN
+- **Git commits:** 24e9776d (impl) | f1b1b688 (notebook)
+- **Type check:** clean (bun tsc --noEmit EXIT 0)
+- **bun test:** 15 pass / 0 fail (bctcEvalPageHandler.test.ts)
+- **Tool count:** 148 tools — matches pre-task baseline
+- **Scheduler count:** 70 cron.schedule entries
+- **Frozen surfaces confirmed 0-diff:** bctcEvalDetailHandler.ts, bctcInspectHandler.ts, bctcEvalStore.ts, full-report endpoint, PEK subtree
+- **DV-2 deliberate-violation evidence:** debug.metrics_json must be typeof "object" (parsed); if handler emits raw string → typeof "string" ≠ "object" → RED. Gate is non-hollow.
+- **Honesty:** stages 1/2/5/6 carry `⚑ toàn báo cáo` label in debug block; stages 3/4 show genuine page-scoped DB evidence only; no per-page fabrication for report_level:true gates.
+- **Docs updated:** NONE (additive endpoint extension, no architecture doc change needed)
+- **ops_rebuild_required:** true — HTML baked into image; docker compose up -d --build --force-recreate mcp-server
