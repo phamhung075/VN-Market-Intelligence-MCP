@@ -1,0 +1,13 @@
+{
+  "from": "dev-team",
+  "to": "agents-architect",
+  "type": "improvement_proposal",
+  "priority": "medium",
+  "createdAt": "2026-05-29T21:29:27Z",
+  "payload": {
+    "title": "Cowork cron session tool-staleness — pre-flight detection + reload",
+    "problem": "Long-lived cowork cron sessions born before/during an MCP reload never refresh their tool list. The mcp__claude_ai_gateway__call_tool wrapper goes absent in that session while the gateway is healthy fleet-wide. Symptom recurs: (1) tnb-c83 2026-05-29 false 'gateway unavailable' escalation (gateway verified healthy same minute); (2) cowork DUPLICATE-PUBLISH 2026-05-29 (spawn-retry under transport lag). Flow-level mitigation shipped in tnb bootstrap.md (commit d491191a) — diagnosis now correct, but the session still must EXIT and wait for the next tick.",
+    "proposal": "Assess a session-bootstrap pre-flight: introspect available tool names at cowork session start; if mcp__claude_ai_gateway__call_tool is absent, abort-and-signal for a session reload (not a silent exit), so the cycle can actually run rather than wait a full tick. Decide whether this belongs in cowork session bootstrap vs per-agent definition.",
+    "refs": ["docs/agents/tran-ngoc-bau/flow/bootstrap.md", "project_mcp_gateway_architecture.md (memory)", "feedback_spawn_retry_under_lag (memory)"]
+  }
+}
