@@ -1,23 +1,27 @@
 # PO Notebook
 
-## Cycle 2026-05-29T20:58Z — USER bug triage → SPRINT (BCTC-TABLE-BOUNDARY)
+## Cycle 2026-05-29T22:16Z — INCIDENT TRIAGE → Sprint DATA-PIPELINE-INTEGRITY (4 root-caused data bugs)
 
-**Report (caveman):** per-page table extract OVER-MERGES — merges ALL tables as one continuous unit. Want: merge ONLY genuine continuation (page N+1 = same structure); when table ENDS → fall back to normal text; when NEW table appears → start FRESH unit. Boundary-aware (start/continue/end/new), not greedy merge.
+**Input:** ops fully diagnosed multi-source live-data failure (live-probed + VPS-audited). VPS HEALTHY — all 5 pushes HTTP 200 (prices/BCTC/news/SBV-FX/foreign-flow). Blockers = 4 CODE bugs already root-caused. Do NOT re-diagnose.
 
-**Verdict:** SPRINT-S (NOT one-shot FIX). Recurring-bug class → architect RCA BEFORE any patch (feedback_recurring_bug_escalation; table extraction has dual-path drift, OCR psm drift, schema divergence priors). Chain: ba → architect (RCA on boundary logic) → dev-pdf-extractor → ops rebuild → qa LIVE-verify.
+**Action: kicked off Sprint DATA-PIPELINE-INTEGRITY (CRITICAL, multi-zone). Preempts WIP cap (data-correctness incident > priority order).**
 
-**Root-cause area (CONFIRMED by read, not assumed):** Tier 0 grouping `build_document_map()` + `_fingerprints_continuous()` in `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py` (L2552 / L3000). Continuity test is purely geometric (page_type + gutter_count + gutter_x + row_pitch). Gaps that cause over-merge: (1) two distinct tables both page_type=table with similar gutters merge with no title/intervening-prose break; (2) dominant-page-type voting in `_flush_unit` lets a table-then-prose page stay `table` so no fall-back to text; (3) blank-page tolerance (L2664) unconditionally bridges units. Orchestrator `extract_layout_first_usecase.py` consumes units → drives `page_numbers_json` viewer filters.
+**Verified diagnosis grounded before creating tasks (didn't rubber-stamp):**
+- Bug 4: read `ohlcvForeignFlowStore.ts` L1-54 — VERBATIM UPDATE-only (`WHERE code=? AND date=?`), doc-comment L5/L16 literally says "no stub rows / silently skipped". Confirmed. Foreign-flow arrives before OHLCV row → silent skip.
+- Bugs 1-3: TASKS.md MACRO-SEED-WIRING #3003 already flagged carry/yield computedAt=2026-05-23 stale + USD/VND=26255 as "monitoring" 2026-05-29. Ops now escalates to actionable FIX. Consistent.
 
-**Repro:** FPT sentinel `e71f845d-ffa5-48f9-8f09-30ac2cd09c65` (unit spans p7-9, total 46) + REQUIRE a 2nd multi-table report for QA (anti-false-green; not done until BOTH show correct boundaries live).
+**4 tasks created (one per bug, zone-tagged):**
+- DPI-1 FX dual-path 26255 vs 26115 → dev-macro-indicators (canonical SBV source OR source-tag both)
+- DPI-2 carry/yield computedAt stale → dev-macro-indicators (find recompute job, restore, persist)
+- DPI-3 Brent/Gold +0.00% delta → dev-macro-indicators (prev-close store + delta pipeline)
+- DPI-4 foreign-flow "No data" → dev-mcp-server (UPSERT/INSERT…ON CONFLICT in ohlcvForeignFlowStore.ts)
++ DPI-OPS (REBUILD), DPI-QA (live re-probe), DPI-EXIT (po). Umbrella lock `task:DATA-PIPELINE-INTEGRITY` claimed (TTL 3600).
 
-**FROZEN-FILE SCOPE DECISION (mine, explicit):** generic_md_table_extractor.py was frozen for Task #9 BCTC-EVAL-INSPECT-MERGE. Task #9 is CLOSED (commit 891dd3f0 EXIT). Freeze LIFTED by sprint closure. I AUTHORIZE this sprint to edit generic_md_table_extractor.py (Tier 0 grouping is the genuine root cause; cannot fix boundary logic elsewhere). PDF-Extract-Kit subtree stays PRISTINE. text_table_extractor.py NOT in scope. Architect must confine changes to build_document_map + _fingerprints_continuous + their helpers.
+**DoD (hard, no false-greens):** live re-probe through MCP tools — FX single value, fresh computedAt, non-zero Brent/Gold deltas, populated get_foreign_flow + direct DB count>0. Verification = agents call live tools (feedback_trust_verification_is_system_job), REBUILD not restart (feedback_rebuild_after_dev_change). Bug-4 verify via live tool + DB count, NOT push echo (project_mcp_server_write_wedge).
 
-**New task, NOT reopen:** distinct from PEK-MULTIPAGE (not in live TASKS.md). Create fresh: BCTC-TABLE-BOUNDARY.
-
-**Constraints carried:** main only; CPU-only 8GB; NO re-extraction during HOSE 02:00-08:59 UTC Mon-Fri (run off-hours); scoped commits.
-
-**Commit:** notebook only this cycle. HEAD before: 891dd3f0.
+**NEXT:** ba — decompose 4 bugs into REQ_DATA-PIPELINE-INTEGRITY.md, confirm multi-zone split. PIPELINE: continue.
 
 ## Carry-over
-- BCTC-TABLE-BOUNDARY dispatched to ba → architect. WIP now 3 OPEN sprints (SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST, +this) — accept: user-reported correctness bug outranks WIP soft-cap.
-- QA done-bar: FPT sentinel + 2nd multi-table report BOTH show continue/end-to-text/new-fresh live on DIRECT DB read. Balance badge FORBIDDEN as sole gate (BCTC-TABLE-3 prior).
+- DATA-PIPELINE-INTEGRITY: goal ARMED until all 4 surfaces re-probe correct. Architect must: (1) pick FX canonical source policy, (2) RCA-to-fix the carry/yield recompute job, (3) design delta/prev-close pipeline, (4) define foreign-flow upsert contract. multi-zone: bugs 1-3 macro-indicators, bug 4 mcp-server, no cross-coupling expected.
+- BCTC-TABLE-BOUNDARY: code GREEN, infra-BLOCKED on live verify (BTB-UNBLOCK: fail-loud+heartbeat+timeout). Not touched by this incident.
+- SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST still OPEN.

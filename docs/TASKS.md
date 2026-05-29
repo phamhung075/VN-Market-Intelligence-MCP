@@ -24,6 +24,21 @@ PO live-probe 2026-05-29T17:29Z: `get_macro_snapshot` returns `dataSource:"live"
 
 ---
 
+## Sprint DATA-PIPELINE-INTEGRITY — Macro + Foreign-Flow Live-Data Correctness
+
+**Status:** OPEN — PO incident triage 2026-05-29T22:16Z. **Priority: CRITICAL (user-facing live market data wrong/missing on 4 surfaces).** Zone: `multi` (`apps/macro-indicators` bugs 1-3 + `apps/mcp-server` bug 4). VPS infra HEALTHY (all 5 pushes HTTP 200); blockers are 4 root-caused CODE bugs. Goal `docs/SPRINT_GOAL.md` § DATA-PIPELINE-INTEGRITY. **Owner chain:** ba → architect → pm → dev-macro-indicators + dev-mcp-server → ops (REBUILD) → qa (live re-probe) → po (DPI-EXIT). DoD = live MCP-tool re-probe of all four, NOT user sign-off.
+
+- 🔄 DPI-BA: Decompose 4 bugs into REQ spec (`docs/REQ_DATA-PIPELINE-INTEGRITY.md`); confirm multi-zone split. NEXT: po approve → architect.
+- 🔄 DPI-1 (dev-macro-indicators) [zone: `apps/macro-indicators`]: **FX dual-path divergence** — `get_macro_snapshot` USD/VND=26255 vs `get_cycle_bootstrap` 26115. Pick ONE canonical FX source (SBV official policy-correct) OR source-tag both; make both code paths agree. DoD: both tools return single consistent value live.
+- 🔄 DPI-2 (dev-macro-indicators) [zone: `apps/macro-indicators`]: **carry/yield regime STALE** — `carry.computedAt`/`yield.computedAt` stuck at 2026-05-23. Find recompute scheduler/job, why it stopped, restore + persist `computedAt`. DoD: fresh `computedAt` live. (Escalated from MACRO-SEED-WIRING #3003 monitoring note.)
+- 🔄 DPI-3 (dev-macro-indicators) [zone: `apps/macro-indicators`]: **Brent/Gold delta +0.00%** — prices live but change-% zero. Fix prev-close store + delta computation. DoD: non-zero directional deltas live.
+- 🔄 DPI-4 (dev-mcp-server) [zone: `apps/mcp-server`]: **foreign-flow data loss** — `get_foreign_flow(HPG)` "No data"; `ohlcvForeignFlowStore.ts` L~31 UPDATE-only silently skips when no `daily_ohlcv (code,date)` row yet. Fix: UPSERT / INSERT…ON CONFLICT, or ensure OHLCV row exists first. DoD: `get_foreign_flow(HPG)` populated + direct DB count >0 post-rebuild.
+- 🔄 DPI-OPS (ops): REBUILD affected container(s) — `build` + `up -d --no-deps --force-recreate` (NOT restart, `feedback_rebuild_after_dev_change`).
+- 🔄 DPI-QA (qa): live re-probe all four MCP tools post-rebuild; verify bug-4 via live `get_foreign_flow` + direct DB count (not push echo). PROVEN-RED→GREEN where a test seam exists.
+- 🔄 DPI-EXIT (po): independent live re-verify all four surfaces; sign off.
+
+---
+
 ## Sprint BCTC-TABLE-BOUNDARY — Multi-Page Table Stitcher Boundary State Machine
 
 **Status:** OPEN — BA spec ready. **Priority: HIGH (user-reported data-correctness bug).** Zone: `apps/pdf-extractor/`.
@@ -31,9 +46,19 @@ PO live-probe 2026-05-29T17:29Z: `get_macro_snapshot` returns `dataSource:"live"
 - ✅ BTB-BA: Spec `docs/REQ_BCTC-TABLE-BOUNDARY.md` — 4 boundary states (START/CONTINUE/END/NEW), FR-1..5, DV tests, two real-data sentinels. NEXT: architect.
 - ✅ BTB-ARCH (architect): design state-machine transition (per-page type × geometric continuity × title-band × intervening-prose), title-band detector, revised _flush_unit, revised blank-bridge — brief `docs/architecture-briefs/2026-05-29-bctc-table-boundary.md`. NEXT: dev-pdf-extractor.
 - ✅ BTB-DEV (dev-pdf-extractor): 5-state machine (NO_TABLE/TABLE_OPEN/TABLE_END/TABLE_NEW + deferred blank buffer), _is_title_band D-5, schema-page-type _flush_unit — commit d297f3ba. DV-1 PROVEN-RED→GREEN. DV-2 PROVEN-RED→GREEN. 659/659 unit tests pass. NEXT: ops rebuild.
-- 🔄 BTB-OPS (ops): rebuild pdf-extractor container (`build` + `up --force-recreate`); off-hours re-extract sentinels A + B.
+- 🚫 BTB-OPS (ops): BLOCKED — 2 cycles, conflicting diagnoses (cycle-1 `df159c7f` write-wedge: units_stored=28 echo vs DB=0; cycle-2 force-recreate then "hang" at 13min/101%CPU, container KILLED). Held pending BTB-UNBLOCK.
 - 🔄 BTB-QA (qa): DV-1 + DV-2 PROVEN-RED pre-fix, then PROVEN-GREEN post-fix; direct DB verification both sentinels; REJECT if any prose page in a table unit's page_numbers_json.
 - 🔄 BTB-EXIT (po): independent live re-verify sentinels A + B via direct DB; sign off.
+
+### BTB-UNBLOCK — PO triage 2026-05-29T21:57Z (UNBLOCK, runtime not boundary code)
+
+**d297f3ba EXONERATED on loop/hang** (PO read generic_md_table_extractor.py L2696-2784): boundary grouping is a single bounded `for page_num in range(1, total_pages+1)` pass; no inner while, no re-queue; `pending_blanks` appended-or-reset every branch (cannot grow unbounded). Structurally cannot infinite-loop/hang. Boundary change confined to grouping; unit-GREEN. → Runtime blocker is PRE-EXISTING infra (write-wedge + slow-CPU priors), NOT introduced by d297f3ba.
+
+**Cycle-1/cycle-2 contradiction RECONCILED by PO code-read** (handlers.py L185-233): (a) `units_stored=28` logs `push_result.get("units_stored")` = push-client return, which per `project_mcp_server_write_wedge` is input-echo not committed-DB count → "DONE 28 vs DB 0" = documented write-wedge echo, not success. (b) `except Exception as exc: _log.error(..., error=%s)` has NO traceback/`exc_info` → silent-swallow (`feedback_silent_swallow_serial_bugs`), hides real error one-rebuild-at-a-time. (c) ZERO per-page heartbeat between extract start and DONE → cycle-2 "hang" indistinguishable from normal-slow CPU PaddleOCR (46pp × ~26s ≈ 20min); KILL at 13min = likely PREMATURE, not a proven hang.
+
+**Mandate → dev-pdf-extractor (primary):** (i) audit d297f3ba state machine for any loop/hang (PO pre-checked clean — confirm + document); (ii) make `_run_pek_extract` FAIL-LOUD: `_log.error(..., exc_info=True)` full traceback + re-surface to a status the DB can show; (iii) add per-page progress HEARTBEAT log in PekEngineAdapter extraction loop; (iv) add a hard extraction TIMEOUT (>= 30min, generous for 46pp CPU) so a genuine hang self-aborts loudly instead of needing a manual kill. **→ dev-mcp-server (conditional):** if instrumented run proves push 200-OK but DB COUNT=0, fix push handler to COMMIT + return real DB count (write-wedge), per MCPZONE-HARDEN priors.
+
+**Then:** ops runs ONE instrumented extraction to COMPLETION off-hours (HOSE 02:00–08:59 UTC closed; CPU-only/8GB; patience ≥ timeout, do NOT kill before heartbeat stalls past timeout) on FPT `e71f845d` + sentinel B; verify via DIRECT in-container market.db COUNT (not push echo). → qa direct-DB done-bar → po BTB-EXIT.
 
 ---
 

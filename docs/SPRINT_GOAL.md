@@ -1,3 +1,69 @@
+# Sprint DATA-PIPELINE-INTEGRITY — Macro + Foreign-Flow Live-Data Correctness (4 root-caused bugs)
+
+**BUILD STATUS 2026-05-29T22:16Z — OPEN (PO INCIDENT TRIAGE, full autonomy).** Priority: **CRITICAL (user-facing market data is WRONG / missing across 4 surfaces).** Ops has fully diagnosed a multi-source data-pipeline failure: live-probed + VPS-audited. **VPS infra is HEALTHY** — all 5 push pipelines confirmed pushing HTTP 200 (prices, BCTC, news, SBV/FX, foreign-flow). The blockers are **4 CODE bugs already root-caused — DO NOT re-diagnose.** This preempts the WIP cap (data-correctness incident > priority order: recurring/data bugs first; the two open dev sprints BCTC-TABLE-BOUNDARY [infra-blocked] + SELF-IMPROVE-GATE [X-1 follow-up] are not actively burning a dev-* zone this incident touches). Two zones: `apps/macro-indicators` (bugs 1-3) + `apps/mcp-server` (bug 4).
+
+## Vision
+
+Every live market-data surface the user reads returns ONE consistent, fresh, correctly-derived value: USD/VND shows a single canonical FX figure (no dual-path divergence), carry/yield regime signals carry a fresh `computedAt` (recompute job firing + persisting), Brent/Gold show real non-zero change-% (prev-close→current delta pipeline working), and `get_foreign_flow(HPG)` returns populated data (no silent UPDATE-only skip when OHLCV rows arrive after foreign-flow). Verified by AGENTS re-probing the LIVE MCP tools post-rebuild — not by user sign-off (`feedback_trust_verification_is_system_job`).
+
+## The Four Bugs (root-caused by ops — implement, do not re-diagnose)
+
+**BUG 1 — FX dual-path divergence** [zone: `apps/macro-indicators`]
+`get_macro_snapshot` → USD/VND=26255 (global feed, e.g. Yahoo); `get_cycle_bootstrap` macro block → 26115 (SBV Vietcombank official). Same metric, two values, no attribution. **Fix:** pick ONE canonical FX source for both paths (SBV official = policy-correct VN rate, per `feedback_data_sources_vn`) OR tag each value with its source. Decide canonical-source policy; make both code paths agree.
+
+**BUG 2 — carry/yield regime STALE** [zone: `apps/macro-indicators`]
+`get_macro_snapshot` signals show `carry.computedAt` and `yield.computedAt` both = 2026-05-23 (6+ days old). Recompute job not firing or not persisting `computedAt`. **Fix:** find the scheduler/job that recomputes carry+yield regime, why it stopped, restore it, verify a fresh `computedAt`. (Matches the MACRO-SEED-WIRING #3003 residual flagged 2026-05-29 — now escalated from monitoring to FIX.)
+
+**BUG 3 — Brent/Gold delta = +0.00%** [zone: `apps/macro-indicators`]
+Absolute prices live (Brent 91.7, Gold 4569.9) but change-% = +0.00% for both. prev-close→current delta pipeline broken/missing. **Fix:** find where change% is derived, fix prev-close store + delta computation, verify non-zero deltas. (Also violates `feedback_market_data_direction` — must show direction + delta.)
+
+**BUG 4 — foreign-flow data loss** [zone: `apps/mcp-server`]
+`get_foreign_flow(HPG)` → "No data". VPS pushes 102 items HTTP 200, but `apps/mcp-server/src/infrastructure/db/ohlcvForeignFlowStore.ts` L~31 is **UPDATE-only** (`WHERE code=? AND date=?`) — silently skips rows when no `daily_ohlcv (code,date)` exists yet (PO confirmed verbatim: store doc-comment L5/L16 says "no stub rows / silently skipped"). Foreign-flow arrives before OHLCV rows are created. **Fix:** INSERT…ON CONFLICT/UPSERT, or ensure the `daily_ohlcv` row exists before the foreign-flow write. Verify `get_foreign_flow(HPG)` returns populated data after fix + rebuild.
+
+## HARD CONSTRAINTS (non-negotiable)
+
+1. **REBUILD after dev change** (`feedback_rebuild_after_dev_change`) — ops MUST `docker compose build` then `up -d --no-deps --force-recreate` the affected container (macro-indicators and/or mcp-server). Restart relaunches the stale image. NOT DONE on a restart.
+2. **Verification = live re-probe through the MCP tools** (`feedback_trust_verification_is_system_job`), NOT user visual sign-off. QA/PO call the live tools post-rebuild.
+3. **No false-greens** (`feedback_fence_false_green`, `feedback_silent_swallow_serial_bugs`) — a passing unit test is not proof; the DoD is the live tool returning correct data. For bug 4, verify via the live `get_foreign_flow` AND/OR direct DB count, not the push-client echo (`project_mcp_server_write_wedge`: push 200-OK ≠ committed row).
+4. **Commit discipline** — explicit-file staging; all on `main`; main terminal commits; subagents leave files unstaged.
+
+## Success Metric (DoD — live re-probe through MCP tools, all four GREEN)
+
+1. **FX:** `get_macro_snapshot` and `get_cycle_bootstrap` macro block return a SINGLE consistent USD/VND value (or both tagged with an explicit, correct source). No silent divergence.
+2. **Carry/Yield:** `get_macro_snapshot` signals show a FRESH `carry.computedAt` + `yield.computedAt` (today or very recent), proving the recompute job fired + persisted.
+3. **Brent/Gold:** `get_macro_snapshot` shows NON-ZERO, directionally-correct change-% for Brent and Gold (not +0.00%).
+4. **Foreign-flow:** `get_foreign_flow(HPG)` returns POPULATED data (real foreign buy/sell/net), verified live post-rebuild + direct DB count > 0.
+
+All four verified by agents calling the live tools after ops rebuild. Goal stays ARMED until every surface re-probes correct.
+
+## Owner Chain
+
+ba (REQ decomposition + zone-split confirm) → architect (FX canonical-source policy + carry/yield job RCA-to-fix + delta-pipeline design + foreign-flow upsert contract; brief only) → pm (sequence tasks) → dev-macro-indicators (bugs 1-3) + dev-mcp-server (bug 4) → ops (REBUILD affected containers) → qa (live re-probe all four MCP tools) → po (DPI-EXIT independent live re-verify). **Zone:** `multi` — architect confirms the macro-indicators ↔ mcp-server split (bugs 1-3 macro, bug 4 mcp-server; no cross-coupling expected).
+
+---
+
+# Sprint BCTC-TABLE-BOUNDARY — Multi-Page Table Stitcher Boundary State Machine
+
+**BUILD STATUS 2026-05-29 — OPEN (PO-approved, triage commit 05a880df). Priority: HIGH.** User-reported data-correctness bug: tables over-merged (prose after table end swallowed into table unit; new distinct tables appended to prior unit). Root cause: `build_document_map` majority-vote page_type assignment + geometric-only continuity check missing title-band and intervening-prose breaks. Fix scope: `generic_md_table_extractor.py` + `extract_layout_first_usecase.py` only.
+
+## Vision
+
+The multi-page table stitcher in `apps/pdf-extractor` must correctly distinguish four boundary states when grouping pages into logical units: (1) START a new table unit when a table page follows prose or document-start; (2) CONTINUE the current table unit only when geometric fingerprints match AND no prose page intervenes AND no title band appears; (3) END the table unit and fall back to a prose unit when a prose page follows a table page — the prose is emitted as normal text, never swallowed; (4) open a FRESH (NEW) table unit when a structurally distinct table appears after an end or after a different table with a structural break. This is verified by direct DB read of `bctc_layout_units`, not by the viewer or balance badge.
+
+## Binding Session Goal
+
+Fix `build_document_map` + `_fingerprints_continuous` + `_flush_unit` so that prose content after a table end appears as a prose unit, new distinct tables appear as separate units, and genuine multi-page tables are correctly merged into one unit. Proven by two real-data sentinels (FPT Q4 sentinel + a second corpus doc) AND deliberate-violation tests that go RED before fix and GREEN after.
+
+## Owner Chain
+
+architect (BTB-ARCH brief) → dev-pdf-extractor (BTB-DEV) → ops (BTB-OPS rebuild + re-extract) → qa (BTB-QA DV + sentinels) → po (BTB-EXIT)
+
+## Zone
+
+`apps/pdf-extractor/` — dev-pdf-extractor sole owner. Architect writes `docs/architecture-briefs/` only.
+
+---
+
 # Sprint SELF-IMPROVE-GATE — Gated Self-Improvement Loop (auto-detect → PO deliberation gate → implement behind proof)
 
 **BUILD STATUS 2026-05-27T22:30Z — OPEN (PO kickoff from an EXPLICIT, USER-APPROVED DIRECTION — full autonomy to plan/dispatch).** User (non-technical, French-based, verbatim): *"po approve, all automate, need thinking before approve anything."* PO interpretation (autonomous, not bounced to user): automate the self-improvement loop end-to-end, but the PO holds the single approval seat (NOT the user for routine changes) AND must genuinely RED-TEAM each proposed self-improvement before approving — an explicit written critique is a mandatory gate. NO rubber-stamping. The system may improve its own flows AND its own tools, but it must NOT be able to silently rewrite its own success criteria.
