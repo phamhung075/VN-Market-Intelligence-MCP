@@ -1,5 +1,31 @@
 # Agent Father — Notebook
 
+## c273 · 2026-05-29 — BCTC Analyst Merge (MERGE-OK-v2)
+
+**Task:** Implement architect brief 2026-05-29-bctc-analyst-merge.md. Signal: bctc-analyst-merge-20260529T042613Z.json. Prior partial state (H-1..H-7) verified and extended.
+
+**Files created/modified (34 file changeset, commit 3e90e27c):**
+- `.claude/agents/bctc-analyst.md` — frontmatter line 1, model=sonnet, E2 guard note added
+- `docs/agents/bctc-analyst/init.md` — extended with trick_pass_schema + idempotency_cache + schedule updated to 0 15,18,21,0
+- `docs/agents/bctc-analyst/flow/cycle.md` — E2 market-hours guard added as first step (before bootstrap)
+- `docs/agents/bctc-analyst/flow/stage-analyze.md` — E3 cache-check + E1 pass invocation loop added; 117L (within 120L cap)
+- 7 new stage files: stage-pass-balance-sheet.md, stage-pass-pl.md, stage-pass-cashflow.md, stage-pass-rpt.md, stage-pass-footnote.md, stage-pass-segment.md, stage-consolidate.md
+- `docs/agents/tools/package/bctc-analyst.md` — union of FA + RA tool packages
+- `docs/agent-memory/notebooks/bctc-analyst.md` — bootstrap with c001 migration entry
+- `docs/agents/unified-agent/flow/chef.md` — dual-accept OR clause (transition window H-18→H-19)
+- `docs/data/cowork-schedule.json` — 4 bctc-analyst slots added (0 15,18,21,0 UTC); FA slots disabled for soak
+- `docs/data/system-map.json` + `docs/references/agent-roster.md` — FA+RA removed, bctc-analyst added
+- `.gitignore` — explicit data/bctc-analysis-cache/ entry (OQ-5)
+- `docs/signals/bctc-analyst-oq4-extractor-sprint-20260529T000000Z.json` — PM signal for dev-pdf-extractor sprint
+
+**Deleted (PO directive — no archive):** financial-analyst.md, report-analyzer.md, all flow dirs, tool packages, notebooks. Last cycles preserved inline in bctc-analyst c001.
+
+**Open gates:** H-19..H-24 (flip cron, remove chef dual-accept, delete old schedule entries) — trigger ONLY after 24h parallel soak shows ≥1 valid bctc-analyst signal.
+
+**Cowork refresh needed:** YES — bctc-analyst.md new agent, chef.md updated, cowork-schedule changed.
+
+---
+
 ## c272 · 2026-05-27 — SIG-IMPL-MD (Gated Self-Improvement Loop, Phase 1)
 
 **Task:** EDIT-1 through EDIT-5 — implement gated self-improvement loop into flow files per `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md` §9 Phase 1. Signal unblocked by PO at 2026-05-27T20:47:27Z.
@@ -117,94 +143,10 @@ Expanded 142L → 192L (size-justification updated). Sections added between "Aft
 
 ---
 
-## c266 · 2026-05-24
+## Carry-over (c262–c266 summary)
 
-**Task:** F1–F7 — Microservice Build Standard Promotion (size-gated FULL/LEAN profiles)
-**Signal:** docs/signals/agents-architect-microservice-build-standard-promotion-20260524T073308Z.json (CLOSED)
-
-**F1 (create):** `docs/standards/microservice-build-standard.md` — 7 sections, 90L (≤120L). Profile Selection gate at top with FULL/LEAN decision logic. Thin pointers to pilot-charter.md and 07-phases.md (no duplication). Sandbox clause inline. Commit: 63fe61b0.
-
-**F2 (edit):** `docs/references/tree-map.md` — added microservice-build-standard.md entry before ARCHITECTURE.md in tree (sibling/child of ARCHITECTURE subtree). Added Write Ownership row (Architect, methodology change or closed pilot lesson). Commit: ceb6cf19.
-
-**F3a (edit):** 8 dev-* frontmatter agents — added single lazy-load entry each (trigger: new_service_or_feature_build, fail_loud: true). Agents: dev-technical-analysis, dev-macro-indicators, dev-stock-price, dev-api-gateway, dev-frontend, dev-mainserver-crawls, dev-vps-crawls, dev-rag-service. Commit: 9482958a.
-
-**F3b (edit):** 4 knowledge.md children — added same lazy-load entry to lazy_load table in each. Files: docs/agents/dev-mcp-server/knowledge.md, dev-alert-engine/knowledge.md, dev-pdf-extractor/knowledge.md, dev-kinh-dich/knowledge.md. Commit: 8d136928.
-
-**F4 (edit):** `.claude/flows/architect/main.md` Step 5 — added Standard Detection block with three-branch emit (NEW SERVICE → full + PILOT-STATUS-SSOT + ROLE-RELAY; NEW FEATURE → lean + solo-dev note; BUG-FIX/MAINTENANCE → not-applicable). Commit: 11a07b09.
-
-**F5 (edit):** `.claude/flows/dev-team/main.md` Step 2 matrix — added Tag emitted column + NEW-SERVICE row (full, ba→architect→pm→dev-svc→qa) + NEW-FEATURE row (lean, pm→dev-svc only). Commit: 6122b934.
-
-**F6 (edit):** `.claude/flows/developer/microservice-main.md` Step 0c — replaced single-branch with three-branch dispatch (full/lean/absent). Commit: 176fcf6c.
-
-**F7 (verify):** No-op — F2 Write Ownership row already covers microservice-build-standard.md. No separate commit needed.
-
-**Git safety:** Explicit `git add <path>` for every commit. No `git add -A`. No pilot-status-*.json touched. No --amend used. Signal CLOSED.
-
----
-
-## c265 · 2026-05-24
-
-**Task:** P0-AG-3 — Reconcile dev-api-gateway agent + flow for SCALE Go three-tier pilot (api-gateway)
-
-**Agent file (.claude/agents/dev-api-gateway.md):** Version bumped 2026-05-14→2026-05-24. description updated to reflect Go three-tier ownership (HONEST 3 primitives: overall-status-computer, proxy-path-resolver, route-service-matcher), pkg/module/gateway, cmd/server composition root, cmd/sandbox, dashboard. capabilities rewritten with anti-creep mandate ("do NOT manufacture a 4th"). identity mindset updated: G12 gate non-negotiable, honest-3 only. lazy_load: two new entries (api-gateway-charter.md + api-gateway-brownfield.md with appropriate triggers). size-justification updated 154L→165L.
-
-**Flow file (.claude/flows/dev-api-gateway/main.md):** Expanded 17L→145L with size-justification (mirrors dev-kinh-dich as factory template). Sections added: Three-Tier Ownership table, Notebook Read step, Smoke Checks (6-row table), G12 DoD Gate (blocking Day 0), Security Rule (zero-creds clause, CGO_ENABLED=0, scenario JSON grep), Depguard Fence Gate (Fence-A/B/C via golangci-lint, net/http banned at Fence-A per api-gateway calibration), References table.
-
-**Key facts for PO:** G12 DoD gate exact line: "Do not mark task DONE / do not RETURN until sandbox dashboard shows all api-gateway scenarios GREEN."
-
-**Commit:** c9cac80b (both files). pilot-status g12Streak.ruleEffectiveAfter = c9cac80b to be set by PO.
-
-**Template used:** .claude/flows/dev-kinh-dich/main.md (Factory v2, G12 Day-0 pattern). agent-md-factory skill not present at .claude/skills/agent-md-factory/SKILL.md — proceeded from guide directly (same note as c263/c264).
-
----
-
-## c264 · 2026-05-24
-
-**Task:** P0-RAG-3 — Calibrate dev-rag-service agent file + bake G12 DoD gate into flow (SCALE pilot Phase 0 deliverable)
-
-**Sub-task 1 — Agent file calibration (.claude/agents/dev-rag-service.md):**
-Drift found: version stale (2026-05-06), no pilot context, no three-tier refactor mandate, no determinism/env-audit awareness, no G12 DoD constraint. Fixed: version → 2026-05-24; description updated with SCALE pilot + Python lock note; three-tier refactor capabilities added (5 primitives + retrieval module + env-audit); constraints block expanded with pilot_language=Python, g12_dod=binding_day_0, determinism_gate, env_audit_forbidden_keys; two lazy-load entries added (scale charter + pilot charter, both guarded triggers).
-
-**Sub-task 2 — Flow file G12 gate (.claude/flows/dev-rag-service/main.md):**
-Replaced 19L thin pointer with 124L pilot-enforcement flow (explicit size-justification, schedule-for-split note, mirrors macro/TA canonical pattern). Sections: Language Mode (Python fixed Day 0), Smoke Checks (pytest+mypy+JSON+sandbox both tiers), G12 DoD Gate (blocking — sandbox-green AND env-audit-empty BOTH required before RETURN, evidence paste mandatory), Security Rule (LANCEDB_*/HF_TOKEN/HUGGINGFACE_*/OPENAI_API_KEY + standard keys, HF_HUB_OFFLINE hardening retained), Fence Rules (Python import-linter, Fence-A+B, SI-4 gate note), Pre-Revert Tag Protocol (rag-pre-ci/delete/inject), References table.
-
-**Pilot-status updated:** dev_agent_file + dev_agent_flow_file → DONE; g12Streak.ruleEffectiveAfter populated.
-
-**Commit:** 0b5ef802 (agent + flow files); pilot-status in HEAD.
-**Note:** agent-md-factory skill does not exist at .claude/skills/agent-md-factory/SKILL.md — proceeded from guide directly (same note as c263).
-
----
-
-## c263 · 2026-05-24
-
-**Task:** P0-PDF-4 — Bake G12 DoD gate into dev-pdf-extractor flow (SCALE pilot Phase 0 deliverable)
-
-**Action:** Service-specific gate added to `.claude/flows/dev-pdf-extractor/main.md`. File expanded from 18L → 88L (within 120L cap; size-justification comment present). Gate structure mirrors `dev-macro-indicators/main.md` with Python-correct substitutions: `python sandbox_runner.py` instead of `go run ./cmd/sandbox`, pdf-extractor-specific Security Clause credential list (adds VPS_|VINAHOST|PDF_EXTRACTOR_DB to base pattern). Shared `microservice-main.md` confirmed NOT to contain a G12 gate — service-specific override is correct (not duplication).
-
-**Gate outcome:** SERVICE-SPECIFIC override (not inheritance). The shared flow has no G12 gate. Macro pattern followed verbatim.
-
-**Commit:** e7541786
-**Staged:** `.claude/flows/dev-pdf-extractor/main.md` only — explicit git add per L84 constraint.
-**Note:** agent-md-factory skill referenced in project memory but file does not exist at `.claude/skills/agent-md-factory/SKILL.md` — proceeded using guide patterns directly; flagged for BUG if needed.
-
----
-
-## c262 · 2026-05-24
-
-**Task:** claude-manager-helper.md — Pass-5b carve-out in forbidden_outputs (contradiction fix)
-
-**Change:** Single-line edit to line 74 `forbidden_outputs`. Blanket "NEVER modify other agents' notebooks" contradicted the Pass-5b capability granted at line 22. Added explicit exception: "EXCEPT size-driven Pass-5b pruning of agent-notebook class (authorized at line 22)".
-
-**Scope check:** No cascade — no routing, roster, dispatch, or CLAUDE.md impact. Single file.
-**Size:** 130L, size-justification present (comment says 130L — exact match post-edit).
-**Commit:** b7d647a6 (note: commit swept existing untracked working-tree files — agent-file change is included)
-**Outcome:** Contradiction resolved. Zero new capability. Guide §5.7 boundary_rules compliant.
-
----
-
-## Carry-over (from c256–c261)
-
-- c261 fleet size-cap JUSTIFY+SPLIT: chef.md→228L (6becd6b0), dev-mainserver-crawls→203L. HELD: dev-vps-crawls, dev-stock-price.
-- c260 P0-KD-3 dev-kinh-dich agent+flow baked (2382b6d2). c263 P0-NF-3 dev-news-fetch flow baked (bca30508).
-- c-P0-SP-3/SI-1: stock-price G12 gate (83770aa1), pilot-status-schema (df6ad8dc).
-- 1967-07/08/09/10: IMPL_DONE awaiting smart-skip qa. SI-5 dev-news-fetch agent DEFERRED before pilot-6 charter.
+- c266: Microservice Build Standard F1–F7 FULL/LEAN promotion (commits 63fe61b0..176fcf6c)
+- c265: dev-api-gateway agent+flow — G12 DoD gate, three-tier ownership (c9cac80b)
+- c264: dev-rag-service agent+flow — G12 gate, Python lock, env-audit (0b5ef802)
+- c263: dev-pdf-extractor flow — G12 gate service-specific override (e7541786)
+- c262: claude-manager-helper — Pass-5b carve-out contradiction fix (b7d647a6)
