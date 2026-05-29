@@ -425,6 +425,194 @@ describe("1272 — handlePushBctcLayout", () => {
     expect(resp.pages_stored).toBe(0);
   });
 
+  // ── (h) BTB-PERSIST-FIX: idempotency with DIFFERENT unit_ids (re-extraction) ─
+  // DV guard: this is the actual bug scenario — pdf-extractor emits NEW UUIDs on
+  // every run. Without DELETE-before-INSERT the second push appends (dupes); with
+  // DELETE-before-INSERT the second push REPLACES (count stays at 2).
+  // Deliberate-violation annotation: remove the two DELETE lines in the handler →
+  // this test MUST fail (count becomes 4, not 2).
+
+  it("(h-DV) re-push with NEW unit_ids: bctc_layout_units count stays at 2 (not 4)", async () => {
+    // First extraction — push VALID_PAYLOAD (2 units: UNIT_UUID_A, UNIT_UUID_B)
+    const { res: r1 } = mockRes();
+    await handlePushBctcLayout(mockReq(), r1, db, VALID_PAYLOAD);
+
+    // Second extraction — pdf-extractor emits new UUIDs for the same report
+    const NEW_UNIT_UUID_C = "c1c2c3c4-0000-0000-0000-000000000001";
+    const NEW_UNIT_UUID_D = "c1c2c3c4-0000-0000-0000-000000000002";
+    const REEXTRACTED_PAYLOAD = {
+      ...VALID_PAYLOAD,
+      document_map: {
+        total_pages: 10,
+        units: [
+          { unit_id: NEW_UNIT_UUID_C, schema_page: 3, pages: [3, 4, 5], page_type: "table" },
+          { unit_id: NEW_UNIT_UUID_D, schema_page: 7, pages: [7, 8], page_type: "prose" },
+        ],
+      },
+      units: [
+        {
+          unit_id: NEW_UNIT_UUID_C,
+          stitched_markdown: "| col_0 | col_1 |\n|---|---|\n| A | 200 |",
+          row_count: 1,
+          quarantined: false,
+          quarantine_reason: null,
+        },
+        {
+          unit_id: NEW_UNIT_UUID_D,
+          stitched_markdown: "",
+          row_count: 0,
+          quarantined: false,
+          quarantine_reason: null,
+        },
+      ],
+      page_zones: [
+        {
+          page_number: 3,
+          unit_id: NEW_UNIT_UUID_C,
+          page_type: "table",
+          is_schema_page: true,
+          is_continuation_page: false,
+          schema_inherited_from_page: null,
+          zones: ZONES_PAGE_3,
+        },
+        {
+          page_number: 5,
+          unit_id: NEW_UNIT_UUID_C,
+          page_type: "table",
+          is_schema_page: false,
+          is_continuation_page: true,
+          schema_inherited_from_page: 3,
+          zones: ZONES_PAGE_5,
+        },
+      ],
+    };
+
+    const { res: r2, captured: cap2 } = mockRes();
+    await handlePushBctcLayout(mockReq(), r2, db, REEXTRACTED_PAYLOAD);
+    expect(cap2.statusCode).toBe(200);
+
+    const cnt = db
+      .prepare<{ cnt: number }, [string]>(
+        "SELECT COUNT(*) AS cnt FROM bctc_layout_units WHERE report_id = ?",
+      )
+      .get(REPORT_UUID);
+    // Must be 2 (REPLACED), not 4 (APPENDED).
+    // Without DELETE-before-INSERT: count=4 → test fails → DV proven-red.
+    expect(cnt?.cnt).toBe(2);
+  });
+
+  it("(h-DV) re-push with NEW unit_ids: old unit_ids no longer present in DB", async () => {
+    // First push: UNIT_UUID_A and UNIT_UUID_B enter DB
+    const { res: r1 } = mockRes();
+    await handlePushBctcLayout(mockReq(), r1, db, VALID_PAYLOAD);
+
+    // Verify first push stored the original UUIDs
+    const firstPush = db
+      .prepare<{ unit_id: string }, [string]>(
+        "SELECT unit_id FROM bctc_layout_units WHERE report_id = ?",
+      )
+      .all(REPORT_UUID);
+    expect(firstPush.map((r) => r.unit_id)).toContain(UNIT_UUID_A);
+
+    // Second push: fresh UUIDs (simulating re-extraction)
+    const NEW_UNIT_UUID_E = "e1e2e3e4-0000-0000-0000-000000000001";
+    const REPUSH = {
+      ...VALID_PAYLOAD,
+      document_map: {
+        total_pages: 10,
+        units: [
+          { unit_id: NEW_UNIT_UUID_E, schema_page: 3, pages: [3], page_type: "table" },
+        ],
+      },
+      units: [
+        { unit_id: NEW_UNIT_UUID_E, stitched_markdown: "", row_count: 0, quarantined: false, quarantine_reason: null },
+      ],
+      page_zones: [
+        { page_number: 3, unit_id: NEW_UNIT_UUID_E, page_type: "table", is_schema_page: true, is_continuation_page: false, schema_inherited_from_page: null, zones: ZONES_PAGE_3 },
+      ],
+    };
+
+    const { res: r2 } = mockRes();
+    await handlePushBctcLayout(mockReq(), r2, db, REPUSH);
+
+    // Old UUID must be gone — DELETE-before-INSERT removed it.
+    // Without DELETE-before-INSERT: old UUID still present → test fails.
+    const afterRepush = db
+      .prepare<{ unit_id: string }, [string]>(
+        "SELECT unit_id FROM bctc_layout_units WHERE report_id = ?",
+      )
+      .all(REPORT_UUID);
+    expect(afterRepush.map((r) => r.unit_id)).not.toContain(UNIT_UUID_A);
+    expect(afterRepush.map((r) => r.unit_id)).toContain(NEW_UNIT_UUID_E);
+  });
+
+  // ── (i) Prose persistence (BTB-PERSIST-FIX BLOCKING-2) ────────────────────
+  // The mcp-server handler must persist prose units (page_type="prose") exactly
+  // as received. The page_type comes from document_map.units[].page_type.
+  // Deliberate-violation annotation: if the handler filters units where
+  // page_type != "table" (or defaults page_type to "table" always) → this
+  // test MUST fail (no prose row found).
+
+  it("(i) prose unit in payload: page_type='prose' row stored in DB", async () => {
+    const { res } = mockRes();
+    // VALID_PAYLOAD already has UNIT_UUID_B with page_type="prose" in document_map
+    await handlePushBctcLayout(mockReq(), res, db, VALID_PAYLOAD);
+
+    const row = db
+      .prepare<{ page_type: string }, [string, string]>(
+        "SELECT page_type FROM bctc_layout_units WHERE report_id = ? AND unit_id = ?",
+      )
+      .get(REPORT_UUID, UNIT_UUID_B);
+    // Must be 'prose'. If handler defaults to 'table' → test fails → DV proven-red.
+    expect(row?.page_type).toBe("prose");
+  });
+
+  it("(i) prose unit count: at least 1 prose row stored per extraction", async () => {
+    const { res } = mockRes();
+    await handlePushBctcLayout(mockReq(), res, db, VALID_PAYLOAD);
+
+    const proseCnt = db
+      .prepare<{ cnt: number }, [string]>(
+        "SELECT COUNT(*) AS cnt FROM bctc_layout_units WHERE report_id = ? AND page_type = 'prose'",
+      )
+      .get(REPORT_UUID);
+    expect(proseCnt?.cnt).toBeGreaterThanOrEqual(1);
+  });
+
+  it("(i-DV) prose unit survives re-push with fresh unit_ids", async () => {
+    // Simulate re-extraction: new UUIDs, prose unit still in document_map
+    const NEW_TABLE_UUID = "f1f2f3f4-0000-0000-0000-000000000001";
+    const NEW_PROSE_UUID = "f1f2f3f4-0000-0000-0000-000000000002";
+    const REPUSH_WITH_PROSE = {
+      ...VALID_PAYLOAD,
+      document_map: {
+        total_pages: 10,
+        units: [
+          { unit_id: NEW_TABLE_UUID, schema_page: 3, pages: [3], page_type: "table" },
+          { unit_id: NEW_PROSE_UUID, schema_page: 10, pages: [10], page_type: "prose" },
+        ],
+      },
+      units: [
+        { unit_id: NEW_TABLE_UUID, stitched_markdown: "| A | B |", row_count: 1, quarantined: false, quarantine_reason: null },
+        { unit_id: NEW_PROSE_UUID, stitched_markdown: "", row_count: 0, quarantined: false, quarantine_reason: null },
+      ],
+      page_zones: [
+        { page_number: 3, unit_id: NEW_TABLE_UUID, page_type: "table", is_schema_page: true, is_continuation_page: false, schema_inherited_from_page: null, zones: ZONES_PAGE_3 },
+      ],
+    };
+
+    const { res } = mockRes();
+    await handlePushBctcLayout(mockReq(), res, db, REPUSH_WITH_PROSE);
+
+    const proseRow = db
+      .prepare<{ unit_id: string; page_type: string }, [string]>(
+        "SELECT unit_id, page_type FROM bctc_layout_units WHERE report_id = ? AND page_type = 'prose'",
+      )
+      .get(REPORT_UUID);
+    expect(proseRow).not.toBeNull();
+    expect(proseRow?.unit_id).toBe(NEW_PROSE_UUID);
+  });
+
   // ── missing arrays → 400 ──────────────────────────────────────────────────
 
   it("missing units array returns 400", async () => {

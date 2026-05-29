@@ -69,8 +69,12 @@ interface PushBctcLayoutBody {
 /**
  * handlePushBctcLayout — ingest layout-first extraction payload.
  *
- * Idempotent: INSERT OR REPLACE per (report_id, unit_id) in bctc_layout_units
- * and per (report_id, page_number) in bctc_page_zones. Re-pushes are safe.
+ * Idempotent: DELETE-before-INSERT within a single transaction.
+ * DELETE FROM bctc_layout_units/bctc_page_zones WHERE report_id = ? runs first,
+ * then all units are re-inserted. This handles the case where pdf-extractor
+ * generates new unit_id UUIDs on every extraction run (INSERT OR REPLACE would
+ * only fire on a matching unit_id — it would not remove stale rows with old UUIDs).
+ * Re-pushes are safe: a mid-write failure rolls back completely (report never empty).
  *
  * @param req  Incoming request
  * @param res  Server response
@@ -137,9 +141,18 @@ export async function handlePushBctcLayout(
 
     // ── Transactional write (zero cross-writes) ────────────────────────────
     db.transaction(() => {
+      // ── IDEMPOTENCY: delete all prior rows for this report before re-inserting ─
+      // pdf-extractor generates new unit_id UUIDs on every extraction run, so
+      // INSERT OR REPLACE on (report_id, unit_id) would NOT fire the REPLACE path —
+      // it would just append. Deleting first guarantees a re-push REPLACES the
+      // report's units atomically (delete + insert in one transaction; a mid-write
+      // failure rolls back completely, never leaving the report empty).
+      db.prepare("DELETE FROM bctc_layout_units WHERE report_id = ?").run(reportId);
+      db.prepare("DELETE FROM bctc_page_zones WHERE report_id = ?").run(reportId);
+
       // ── bctc_layout_units ──────────────────────────────────────────────
       const insertUnit = db.prepare(`
-        INSERT OR REPLACE INTO bctc_layout_units
+        INSERT INTO bctc_layout_units
           (report_id, unit_id, schema_page, page_numbers_json, page_type,
            stitched_markdown, row_count, quarantined, quarantine_reason,
            document_map_json, extracted_at)
@@ -170,7 +183,7 @@ export async function handlePushBctcLayout(
 
       // ── bctc_page_zones ────────────────────────────────────────────────
       const insertZone = db.prepare(`
-        INSERT OR REPLACE INTO bctc_page_zones
+        INSERT INTO bctc_page_zones
           (report_id, page_number, unit_id, page_type,
            is_schema_page, is_continuation_page, schema_inherited_from_page,
            zones_json, extracted_at)
