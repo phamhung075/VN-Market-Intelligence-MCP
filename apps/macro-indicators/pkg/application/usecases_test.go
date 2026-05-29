@@ -4,8 +4,12 @@
 // sourced from the MarketIndexPort when the port returns a non-zero value,
 // NOT from the fixture constant (1280.5).
 //
-// If this test fails it means the use case is leaking the fixture/seed value
-// instead of wiring through the live data port.
+// DPI-2b tests (AC-1 through AC-6): verify that carry/yield regime inputs are
+// sourced from CarryYieldInputsPort when live values are available, fall back
+// to fixture constants on empty/stale port, and that regime sign can flip
+// (anti-false-green proof — AC-6).
+//
+// If these tests fail it means the use case is leaking the fixture/seed constants.
 package application
 
 import (
@@ -42,6 +46,24 @@ func (s *stubSBVRate) GetRate(_ context.Context, _, _ string) (float64, error) {
 	return 0, nil
 }
 
+// stubCarryYieldInputs returns configurable carry/yield input values.
+// Zero values signal "no data" (port safe-degrade → Execute() uses fixtures).
+type stubCarryYieldInputs struct {
+	vndDeposit float64
+	fedFunds   float64
+	earnYield  float64
+}
+
+func (s *stubCarryYieldInputs) GetVNDDepositRate(_ context.Context) (float64, error) {
+	return s.vndDeposit, nil
+}
+func (s *stubCarryYieldInputs) GetFedFundsRate(_ context.Context) (float64, error) {
+	return s.fedFunds, nil
+}
+func (s *stubCarryYieldInputs) GetEarningYield(_ context.Context) (float64, error) {
+	return s.earnYield, nil
+}
+
 // stubMarketIndex returns a configurable VN-Index value.
 type stubMarketIndex struct {
 	vnIndex float64
@@ -72,6 +94,7 @@ func TestVNIndexSourcedFromPort(t *testing.T) {
 		}},
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: liveVNIndex},
+		nil, // carryYieldInputs nil → fixture safe-degrade (this test checks VNIndex, not carry/yield)
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -100,6 +123,7 @@ func TestVNIndexFallsBackToFixtureWhenPortReturnsZero(t *testing.T) {
 		}},
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 0}, // port has no data
+		nil, // carryYieldInputs nil → fixture safe-degrade
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -135,6 +159,7 @@ func TestResolveMarketPrices_LivePortValues(t *testing.T) {
 		}},
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
+		nil, // carryYieldInputs nil → fixture safe-degrade (this test checks commodity, not carry/yield)
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -183,6 +208,7 @@ func TestResolveMarketPrices_EmptyPortFallback(t *testing.T) {
 		&stubCommodityFetcher{prices: map[string]float64{}},
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
+		nil, // carryYieldInputs nil → fixture safe-degrade
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -232,6 +258,7 @@ func TestSBVRateOverridesUSDVnd(t *testing.T) {
 		}},
 		&stubSBVRateLive{rate: sbvUSDVnd},
 		&stubMarketIndex{vnIndex: 1880.0},
+		nil, // carryYieldInputs nil → fixture safe-degrade
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -262,6 +289,7 @@ func TestSBVRateZeroKeepsCommodityUSDVnd(t *testing.T) {
 		}},
 		&stubSBVRate{}, // returns 0 — simulates stale/absent sbv_rates
 		&stubMarketIndex{vnIndex: 1880.0},
+		nil, // carryYieldInputs nil → fixture safe-degrade
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -290,6 +318,7 @@ func TestSBVRateDoesNotAffectOilGold(t *testing.T) {
 		}},
 		&stubSBVRateLive{rate: 26115.0}, // SBV fires
 		&stubMarketIndex{vnIndex: 1880.0},
+		nil, // carryYieldInputs nil → fixture safe-degrade
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -326,6 +355,7 @@ func TestComputedAtIsCurrentTime(t *testing.T) {
 		}},
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
+		nil, // carryYieldInputs nil → fixture safe-degrade (this test checks computedAt only)
 	)
 
 	// Truncate to second precision: time.RFC3339 drops sub-second; comparison must
@@ -393,4 +423,268 @@ func TestComputedAtIsCurrentTime(t *testing.T) {
 	if yieldTs.Before(before) || yieldTs.After(after) {
 		t.Errorf("DPI-2: yield.computedAt %v outside execute window [%v, %v]", yieldTs, before, after)
 	}
+}
+
+// ---------------------------------------------------------------------------
+// DPI-2b: CarryYieldInputsPort — live inputs wire-through + safe-degrade tests
+// ---------------------------------------------------------------------------
+
+// newStubCommodity returns a stubCommodityFetcher with plausible live values.
+func newStubCommodity() *stubCommodityFetcher {
+	return &stubCommodityFetcher{prices: map[string]float64{
+		"OIL":    82.5,
+		"GOLD":   2350.0,
+		"USDVND": 24500.0,
+	}}
+}
+
+// extractCarrySignal extracts carry signal fields via JSON round-trip.
+// Returns (carrySpread, regime) from resp.Signals.Carry.
+func extractCarrySignal(t *testing.T, resp MacroSnapshotResponse) (float64, string) {
+	t.Helper()
+	type carryFields struct {
+		CarrySpread float64 `json:"carrySpread"`
+		Regime      string  `json:"regime"`
+	}
+	b, err := json.Marshal(resp.Signals.Carry)
+	if err != nil {
+		t.Fatalf("DPI-2b: marshal carry signal: %v", err)
+	}
+	var f carryFields
+	if err = json.Unmarshal(b, &f); err != nil {
+		t.Fatalf("DPI-2b: unmarshal carry signal: %v", err)
+	}
+	return f.CarrySpread, f.Regime
+}
+
+// extractYieldSignal extracts yield signal fields via JSON round-trip.
+// Returns (spread, label) from resp.Signals.Yield.
+func extractYieldSignal(t *testing.T, resp MacroSnapshotResponse) (float64, string) {
+	t.Helper()
+	type yieldFields struct {
+		Spread float64 `json:"spread"`
+		Label  string  `json:"label"`
+	}
+	b, err := json.Marshal(resp.Signals.Yield)
+	if err != nil {
+		t.Fatalf("DPI-2b: marshal yield signal: %v", err)
+	}
+	var f yieldFields
+	if err = json.Unmarshal(b, &f); err != nil {
+		t.Fatalf("DPI-2b: unmarshal yield signal: %v", err)
+	}
+	return f.Spread, f.Label
+}
+
+// TestDPI2b_DepositLive (AC-1) verifies that when CarryYieldInputsPort returns a
+// live VND deposit rate, Execute() uses it instead of fixtureVNDDepositRate (4.7).
+func TestDPI2b_DepositLive(t *testing.T) {
+	const liveDeposit = 6.0 // distinct from fixture 4.7
+
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{vndDeposit: liveDeposit, fedFunds: 5.33, earnYield: 8.2},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+
+	// carrySpread = liveDeposit − fedFunds = 6.0 − 5.33 = 0.67 (NEUTRAL, not frozen −0.63)
+	carrySpread, _ := extractCarrySignal(t, resp)
+	const wantSpread = 0.67
+	if carrySpread == -0.63 {
+		t.Errorf("DPI-2b AC-1: carrySpread = frozen −0.63 — deposit live input not wired (still using fixture 4.7)")
+	}
+	if abs(carrySpread-wantSpread) > 0.01 {
+		t.Errorf("DPI-2b AC-1: carrySpread = %.4f, want ~%.2f (liveDeposit %.1f − fedFunds 5.33)", carrySpread, wantSpread, liveDeposit)
+	}
+}
+
+// TestDPI2b_FedFundsLive (AC-2) verifies that when CarryYieldInputsPort returns a
+// live Fed funds rate, Execute() uses it instead of fixtureFedFundsRate (5.33).
+func TestDPI2b_FedFundsLive(t *testing.T) {
+	const liveFed = 4.0 // distinct from fixture 5.33
+
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{vndDeposit: 4.7, fedFunds: liveFed, earnYield: 8.2},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+
+	// carrySpread = 4.7 − 4.0 = 0.70 (NEUTRAL); frozen would give 4.7 − 5.33 = −0.63
+	carrySpread, _ := extractCarrySignal(t, resp)
+	if carrySpread == -0.63 {
+		t.Errorf("DPI-2b AC-2: carrySpread = frozen −0.63 — fed funds live input not wired (still using fixture 5.33)")
+	}
+	if abs(carrySpread-0.7) > 0.01 {
+		t.Errorf("DPI-2b AC-2: carrySpread = %.4f, want ~0.70 (deposit 4.7 − liveFed %.1f)", carrySpread, liveFed)
+	}
+}
+
+// TestDPI2b_EarningYieldLive (AC-3) verifies that when CarryYieldInputsPort returns a
+// live earnings yield, Execute() uses it instead of fixtureEarningYield (8.2).
+func TestDPI2b_EarningYieldLive(t *testing.T) {
+	const liveYield = 5.5 // distinct from fixture 8.2 — also changes yield regime
+
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{vndDeposit: 4.7, fedFunds: 5.33, earnYield: liveYield},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+
+	// yieldSpread = liveYield − deposit = 5.5 − 4.7 = 0.8 (FAIRLY_VALUED)
+	// fixture gives 8.2 − 4.7 = 3.5 (CHEAP) → regime changes
+	yieldSpread, yieldLabel := extractYieldSignal(t, resp)
+	if abs(yieldSpread-3.5) < 0.01 {
+		t.Errorf("DPI-2b AC-3: yieldSpread = frozen 3.5 — earning yield live input not wired (still using fixture 8.2)")
+	}
+	if abs(yieldSpread-0.8) > 0.01 {
+		t.Errorf("DPI-2b AC-3: yieldSpread = %.4f, want ~0.80 (liveYield %.1f − deposit 4.7)", yieldSpread, liveYield)
+	}
+	if yieldLabel == "CHEAP" {
+		t.Errorf("DPI-2b AC-3: yield label = CHEAP (fixture regime) — earning yield live input not wired; want FAIRLY_VALUED for spread 0.8")
+	}
+}
+
+// TestDPI2b_SafeDegrade_EmptyPort (AC-4) verifies that when CarryYieldInputsPort
+// returns zero for all three inputs (empty DB), Execute() falls back to fixture
+// constants and does not error or panic.
+//
+// Behavior: port returns 0 → resolvers detect v==0 → fixtures (4.7/5.33/8.2) apply.
+// carrySpread = fixtureVNDDepositRate − fixtureFedFundsRate = 4.7 − 5.33 = −0.63.
+// This is CORRECT safe-degrade: fixture values propagate, not panic, not zero.
+func TestDPI2b_SafeDegrade_EmptyPort(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{vndDeposit: 0, fedFunds: 0, earnYield: 0}, // all zero = absent DB
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error on empty port: %v", err)
+	}
+
+	// Zero port values → resolvers return fixture constants (4.7/5.33/8.2).
+	// carrySpread = fixture 4.7 − fixture 5.33 = −0.63 (FII_OUTFLOW_RISK).
+	// This verifies safe-degrade fires exactly (no panic, fixture used as fallback).
+	carrySpread, carryRegime := extractCarrySignal(t, resp)
+	const frozenSpread = -0.63
+	if abs(carrySpread-frozenSpread) > 0.01 {
+		t.Errorf("DPI-2b AC-4: carrySpread = %.4f, want %.2f (zero port → fixtures 4.7−5.33=−0.63 must apply)", carrySpread, frozenSpread)
+	}
+	// Regime must be FII_OUTFLOW_RISK (spread −0.63 < OutflowRiskThreshold 0.5).
+	if carryRegime != "FII_OUTFLOW_RISK" {
+		t.Errorf("DPI-2b AC-4: regime = %q, want FII_OUTFLOW_RISK (fixture safe-degrade path)", carryRegime)
+	}
+}
+
+// TestDPI2b_SafeDegrade_NilPort (AC-4 nil) verifies that a nil CarryYieldInputsPort
+// causes Execute() to use fixture constants — no panic.
+func TestDPI2b_SafeDegrade_NilPort(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		nil, // nil port → resolvers return fixture constants
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error on nil port: %v", err)
+	}
+
+	// With nil port, fixtures (4.7/5.33/8.2) are used.
+	// carrySpread = 4.7 − 5.33 = −0.63 → FII_OUTFLOW_RISK (the "frozen" regime).
+	// This confirms the fixture fallback path activates exactly when expected.
+	carrySpread, carryRegime := extractCarrySignal(t, resp)
+	if abs(carrySpread-(-0.63)) > 0.01 {
+		t.Errorf("DPI-2b AC-4 nil: carrySpread = %.4f, want −0.63 (fixture fallback 4.7−5.33)", carrySpread)
+	}
+	if carryRegime != "FII_OUTFLOW_RISK" {
+		t.Errorf("DPI-2b AC-4 nil: carryRegime = %q, want FII_OUTFLOW_RISK (fixture path)", carryRegime)
+	}
+}
+
+// TestDPI2b_RegimeFlip_LiveInputs (AC-6) — THE ANTI-FALSE-GREEN PROOF.
+//
+// This is the decisive DV: with live inputs, carrySpread MUST change sign vs
+// the frozen fixture value (4.7 − 5.33 = −0.63, FII_OUTFLOW_RISK).
+//
+// Scenario: VND deposit = 6.0%, Fed = 4.0% → spread = +2.0% (NEUTRAL).
+// Frozen fixture: VND = 4.7%, Fed = 5.33% → spread = −0.63% (FII_OUTFLOW_RISK).
+//
+// If this test passes, the regime is NOT frozen — carry is recomputing from
+// live inputs. This is the proof that DPI-2b is not a false-green.
+func TestDPI2b_RegimeFlip_LiveInputs(t *testing.T) {
+	const liveDeposit = 6.0 // > fed → positive spread → regime flips out of FII_OUTFLOW_RISK
+	const liveFed = 4.0
+	const liveYield = 7.0
+
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{vndDeposit: liveDeposit, fedFunds: liveFed, earnYield: liveYield},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+
+	carrySpread, carryRegime := extractCarrySignal(t, resp)
+
+	// --- anti-false-green assertions ---
+
+	// 1. Spread must NOT be the frozen fixture value (−0.63).
+	if abs(carrySpread-(-0.63)) < 0.01 {
+		t.Errorf("DPI-2b AC-6 REGIME-FLIP FAIL: carrySpread = −0.63 (frozen fixture 4.7−5.33) — "+
+			"live inputs NOT wired; this is the false-green the sprint is designed to prevent")
+	}
+
+	// 2. Spread must equal liveDeposit − liveFed = 6.0 − 4.0 = 2.0.
+	const wantSpread = 2.0
+	if abs(carrySpread-wantSpread) > 0.01 {
+		t.Errorf("DPI-2b AC-6: carrySpread = %.4f, want %.2f (live %.1f − %.1f)", carrySpread, wantSpread, liveDeposit, liveFed)
+	}
+
+	// 3. Regime must NOT be FII_OUTFLOW_RISK (the frozen regime from −0.63).
+	if carryRegime == "FII_OUTFLOW_RISK" {
+		t.Errorf("DPI-2b AC-6 REGIME-FLIP FAIL: regime = FII_OUTFLOW_RISK — carry is still frozen; "+
+			"with deposit=6.0 > fed=4.0, spread=+2.0 must produce NEUTRAL, not FII_OUTFLOW_RISK")
+	}
+
+	// 4. Regime must be NEUTRAL (spread 2.0 is in the 0.5–2.5 band).
+	if carryRegime != "NEUTRAL" {
+		t.Errorf("DPI-2b AC-6: carryRegime = %q, want NEUTRAL (spread 2.0 in [0.5, 2.5] NEUTRAL band)", carryRegime)
+	}
+
+	t.Logf("DPI-2b AC-6 REGIME-FLIP PROVEN: carrySpread %.2f (was frozen −0.63), regime %s (was FII_OUTFLOW_RISK)", carrySpread, carryRegime)
+}
+
+// abs returns the absolute value of a float64.
+// Defined locally (math.Abs exists but this avoids an import for a trivial helper).
+func abs(x float64) float64 {
+	if x < 0 {
+		return -x
+	}
+	return x
 }

@@ -30,3 +30,26 @@ type MarketIndexPort interface {
 	// Returns 0, nil when no data is available (caller falls back to fixture).
 	FetchVNIndex(ctx context.Context) (float64, error)
 }
+
+// CarryYieldInputsPort supplies the live regime INPUTS for the carry-trade and
+// yield-spread primitives, read from the shared market.db. All methods return
+// (0, nil) on absent/zero/stale rows (safe-degrade — caller keeps fixture).
+//
+// Implemented in pkg/infrastructure (CarryYieldInputsSQLiteAdapter).
+// Only cmd/server/main.go imports pkg/infrastructure (Fence-C preserved).
+// DPI-2b: replaces frozen fixture constants in usecases.go Execute() with live DB reads.
+type CarryYieldInputsPort interface {
+	// GetVNDDepositRate returns the latest SBV max deposit rate (%) from
+	// sbv_rates.max_deposit_rate_pct WHERE source='sbv'. Returns (0, nil) on absent/stale.
+	GetVNDDepositRate(ctx context.Context) (float64, error)
+
+	// GetFedFundsRate returns the latest Fed Funds effective rate (%) from
+	// fred_series_daily WHERE series='EFFR' ORDER BY date DESC LIMIT 1.
+	// Returns (0, nil) on absent/stale (staleness bound: 96h — FRED business-day lag).
+	GetFedFundsRate(ctx context.Context) (float64, error)
+
+	// GetEarningYield returns the latest VN equity earnings yield (%) from
+	// tracked_indicators WHERE indicator='market_earning_yield' ORDER BY extracted_at DESC LIMIT 1.
+	// Returns (0, nil) on absent/stale.
+	GetEarningYield(ctx context.Context) (float64, error)
+}

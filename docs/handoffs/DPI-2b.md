@@ -95,3 +95,81 @@ YieldSpread: yld.YieldSpreadInput{EarningYield: earnYield, DepositRate: vndDepos
 
 ## Owner chain
 dev-macro-indicators (impl + DV tests RED→GREEN) → ops (rebuild macro-indicators, after DPI-1/2) → qa (live re-probe + direct-DB cross-check AC-7) → po (fold into DPI-EXIT).
+
+---
+
+## [Developer] — impl complete 2026-05-30
+
+**Status:** REVIEW. All ACs 1–6 GREEN. AC-7 (live re-probe) pending ops REBUILD.
+
+### Files changed
+
+| File | Change |
+|---|---|
+| `pkg/domain/ports.go` | Added `CarryYieldInputsPort` (3 methods: GetVNDDepositRate / GetFedFundsRate / GetEarningYield) |
+| `pkg/infrastructure/repositories.go` | Added `CarryYieldInputsSQLiteAdapter` + `effrStaleBound` (96h) + `depositYieldStaleBound` (26h) + 3 pure query helpers: `fetchVNDDepositRateFromDB` / `fetchFedFundsRateFromDB` / `fetchEarningYieldFromDB` |
+| `pkg/application/usecases.go` | Added `carryYieldInputs` field to struct; updated `NewComputeMacroUseCase` signature (4th arg); added `resolveVNDDepositRate` / `resolveFedFundsRate` / `resolveEarningYield` helpers; Execute() now calls resolvers (not inline fixture consts); fixture consts kept as safe-degrade fallback with updated doc-comment |
+| `cmd/server/main.go` | Injected `infrastructure.NewCarryYieldInputsSQLiteAdapter()` as 4th arg to `NewComputeMacroUseCase` |
+| `pkg/infrastructure/repositories_test.go` | Extended `newInMemoryDB` with `sbv_rates.max_deposit_rate_pct` column + `fred_series_daily` + `tracked_indicators` tables; added 9 DPI-2b adapter tests (fresh/stale/absent for all three inputs) |
+| `pkg/application/usecases_test.go` | Updated all 8 existing `NewComputeMacroUseCase` calls (nil 4th arg); added `stubCarryYieldInputs` stub; added 6 DPI-2b tests (AC-1..4 + AC-4-nil + AC-6 regime-flip) |
+| `pkg/interface/http/handlers_snapshot_contract_test.go` | Updated `NewComputeMacroUseCase` call (nil 4th arg) |
+
+### Build / test results
+
+```
+go build ./...   → CLEAN (0 errors)
+go vet ./...     → CLEAN (0 warnings)
+go test ./...    → ALL PASS
+  pkg/application        ok  (8 existing + 6 new DPI-2b tests)
+  pkg/infrastructure     ok  (existing + 9 new DPI-2b adapter tests)
+  pkg/interface/http     ok
+  all primitive/module   ok
+```
+
+### AC-6 REGIME-FLIP DV outcome (anti-false-green proof)
+
+Test: `TestDPI2b_RegimeFlip_LiveInputs` — live deposit=6.0%, fed=4.0%, earnYield=7.0%
+
+```
+DPI-2b AC-6 REGIME-FLIP PROVEN:
+  carrySpread 2.00  (was frozen −0.63 from 4.7−5.33)
+  regime NEUTRAL    (was frozen FII_OUTFLOW_RISK)
+```
+
+With live inputs `carrySpread = 6.0 − 4.0 = +2.00` (NEUTRAL), vs frozen fixture spread `4.7 − 5.33 = −0.63` (FII_OUTFLOW_RISK). Regime changed sign and label — regime is NOT frozen. DPI-2b is not a false-green.
+
+### Safe-degrade confirmed
+
+`TestDPI2b_SafeDegrade_NilPort`: nil port → resolvers return fixtures → carrySpread = −0.63 (FII_OUTFLOW_RISK). Confirms fixture fallback activates exactly when live inputs unavailable — no panic, no zero-value emission.
+
+### AC-7 QA verification query (leave for QA)
+
+After `docker compose build macro-indicators && docker compose up -d --no-deps --force-recreate macro-indicators`:
+
+1. Call `get_macro_snapshot` via gateway; note carry.carrySpread, carry.regime, carry.vndDepositRate, carry.fedFundsRate, yield.spread, yield.label.
+
+2. Cross-check against direct DB reads:
+
+```sql
+-- VND deposit rate (should match carry.vndDepositRate when fresh)
+SELECT max_deposit_rate_pct, fetched_at
+FROM sbv_rates WHERE source='sbv';
+
+-- Fed funds rate (should match carry.fedFundsRate when fresh)
+SELECT value, date
+FROM fred_series_daily WHERE series='EFFR'
+ORDER BY date DESC LIMIT 1;
+
+-- Earnings yield (should match yield.earningYield when fresh)
+SELECT value, extracted_at
+FROM tracked_indicators WHERE indicator='market_earning_yield'
+ORDER BY extracted_at DESC LIMIT 1;
+```
+
+3. Verify: snapshot values match DB rows (not fixture 4.7/5.33/8.2), and `carry.computedAt` reflects today (not 2026-05-23).
+
+4. If any DB row is absent/stale (staleness guard fires): verify snapshot falls back to fixture constants (4.7/5.33/8.2) — that is correct safe-degrade, not a bug.
+
+### REBUILD note (per feedback_rebuild_after_dev_change)
+
+OPS MUST `docker compose build macro-indicators && docker compose up -d --no-deps --force-recreate macro-indicators` — a plain `restart` relaunches the stale image and will NOT pick up this code change.

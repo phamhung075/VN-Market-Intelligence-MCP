@@ -430,3 +430,238 @@ func fetchSBVRateFromDB(
 
 	return rate.Float64, nil
 }
+
+// ---------------------------------------------------------------------------
+// CarryYieldInputsSQLiteAdapter — live carry/yield regime inputs reader (DPI-2b)
+// ---------------------------------------------------------------------------
+
+// effrStaleBound is the maximum age of a fred_series_daily EFFR row before it
+// is treated as stale and Execute() falls back to fixtureFixtureFedFundsRate.
+// 96h covers FRED business-day lag including a weekend (Fri close → Mon refresh).
+const effrStaleBound = 96 * time.Hour
+
+// depositYieldStaleBound is the maximum age of sbv_rates.max_deposit_rate_pct
+// and tracked_indicators.market_earning_yield rows before safe-degrade.
+// 26h = daily producer cadence + 2h cron drift tolerance (mirrors commodityStaleBound).
+const depositYieldStaleBound = 26 * time.Hour
+
+// CarryYieldInputsSQLiteAdapter implements domain.CarryYieldInputsPort.
+// Reads the three live carry/yield regime inputs from the shared market.db
+// (mounted at DB_PATH env var, readonly). Pattern mirrors SBVRateSQLiteAdapter.
+//
+// Safe-degrade contract (per method): return (0, nil) — never an error — on:
+//   - DB file missing or unreadable
+//   - table absent or no matching row
+//   - NULL or zero value
+//   - unparseable or stale timestamp (fetched_at / extracted_at)
+//
+// (NOT a silent hardcode — fixture fallback happens explicitly in Execute().)
+type CarryYieldInputsSQLiteAdapter struct {
+	dbPath string
+}
+
+// NewCarryYieldInputsSQLiteAdapter creates a carry/yield inputs adapter backed
+// by the shared market.db. dbPath is read from the DB_PATH env var; falls back
+// to /app/data/market.db. No error in constructor — errors deferred to methods.
+func NewCarryYieldInputsSQLiteAdapter() *CarryYieldInputsSQLiteAdapter {
+	dbPath := os.Getenv("DB_PATH")
+	if dbPath == "" {
+		dbPath = "/app/data/market.db"
+	}
+	return &CarryYieldInputsSQLiteAdapter{dbPath: dbPath}
+}
+
+// openReadOnly opens the database at a.dbPath in read-only mode.
+// Returns (nil, nil) — not an error — when the file is absent (safe-degrade).
+func (a *CarryYieldInputsSQLiteAdapter) openReadOnly() (*sql.DB, error) {
+	db, err := sql.Open("sqlite", fmt.Sprintf("file:%s?mode=ro", a.dbPath))
+	if err != nil {
+		return nil, nil //nolint:nilerr // intentional: caller returns 0, nil
+	}
+	return db, nil
+}
+
+// GetVNDDepositRate returns the latest SBV max deposit rate (%) from
+// sbv_rates.max_deposit_rate_pct WHERE source='sbv'. Returns (0, nil) on
+// absent/stale rows (safe-degrade — Execute() keeps fixtureVNDDepositRate).
+//
+// Staleness bound: 26h (SBV daily cadence + 2h drift).
+func (a *CarryYieldInputsSQLiteAdapter) GetVNDDepositRate(ctx context.Context) (float64, error) {
+	db, _ := a.openReadOnly()
+	if db == nil {
+		return 0, nil
+	}
+	defer db.Close()
+	return fetchVNDDepositRateFromDB(ctx, db, depositYieldStaleBound)
+}
+
+// GetFedFundsRate returns the latest EFFR value (%) from fred_series_daily
+// WHERE series='EFFR' ORDER BY date DESC LIMIT 1. Returns (0, nil) on
+// absent/stale rows (safe-degrade — Execute() keeps fixtureFedFundsRate).
+//
+// Staleness bound: 96h (FRED business-day lag over weekends).
+func (a *CarryYieldInputsSQLiteAdapter) GetFedFundsRate(ctx context.Context) (float64, error) {
+	db, _ := a.openReadOnly()
+	if db == nil {
+		return 0, nil
+	}
+	defer db.Close()
+	return fetchFedFundsRateFromDB(ctx, db, effrStaleBound)
+}
+
+// GetEarningYield returns the latest VN equity earnings yield (%) from
+// tracked_indicators WHERE indicator='market_earning_yield' ORDER BY extracted_at DESC.
+// Returns (0, nil) on absent/stale rows (safe-degrade — Execute() keeps fixtureEarningYield).
+//
+// Staleness bound: 26h (daily job cadence + 2h drift).
+func (a *CarryYieldInputsSQLiteAdapter) GetEarningYield(ctx context.Context) (float64, error) {
+	db, _ := a.openReadOnly()
+	if db == nil {
+		return 0, nil
+	}
+	defer db.Close()
+	return fetchEarningYieldFromDB(ctx, db, depositYieldStaleBound)
+}
+
+// ---------------------------------------------------------------------------
+// Pure query helpers (test-injectable via *sql.DB)
+// ---------------------------------------------------------------------------
+
+// fetchVNDDepositRateFromDB reads sbv_rates.max_deposit_rate_pct WHERE source='sbv'.
+// Extracted from GetVNDDepositRate so tests can inject a *sql.DB directly.
+// Returns (0, nil) on missing row, zero value, or stale fetched_at.
+func fetchVNDDepositRateFromDB(
+	ctx context.Context,
+	db *sql.DB,
+	staleBound time.Duration,
+) (float64, error) {
+	const query = `
+		SELECT max_deposit_rate_pct, fetched_at
+		FROM sbv_rates
+		WHERE source = 'sbv'
+		LIMIT 1`
+
+	var (
+		rate      sql.NullFloat64
+		fetchedAt sql.NullString
+	)
+
+	if err := db.QueryRowContext(ctx, query).Scan(&rate, &fetchedAt); err != nil {
+		return 0, nil //nolint:nilerr // intentional: safe-degrade
+	}
+
+	if !rate.Valid || rate.Float64 <= 0 {
+		return 0, nil
+	}
+
+	if !fetchedAt.Valid {
+		return 0, nil
+	}
+
+	// R-2 CRITICAL: TypeScript writes ms-precision ISO timestamps; use RFC3339Nano.
+	ts, err := time.Parse(time.RFC3339Nano, fetchedAt.String)
+	if err != nil {
+		return 0, nil
+	}
+
+	if time.Since(ts) > staleBound {
+		return 0, nil
+	}
+
+	return rate.Float64, nil
+}
+
+// fetchFedFundsRateFromDB reads fred_series_daily WHERE series='EFFR' latest by date.
+// Extracted from GetFedFundsRate so tests can inject a *sql.DB directly.
+// Returns (0, nil) on missing row, zero value, or stale date.
+//
+// The fred_series_daily table stores the date column as TEXT (YYYY-MM-DD).
+// Staleness is measured against the date column parsed as a day boundary
+// (time.DateOnly), not an RFC3339Nano timestamp — FRED rows are day-granular.
+func fetchFedFundsRateFromDB(
+	ctx context.Context,
+	db *sql.DB,
+	staleBound time.Duration,
+) (float64, error) {
+	const query = `
+		SELECT value, date
+		FROM fred_series_daily
+		WHERE series = 'EFFR' AND value IS NOT NULL AND value > 0
+		ORDER BY date DESC
+		LIMIT 1`
+
+	var (
+		value sql.NullFloat64
+		date  sql.NullString
+	)
+
+	if err := db.QueryRowContext(ctx, query).Scan(&value, &date); err != nil {
+		return 0, nil //nolint:nilerr // intentional: safe-degrade
+	}
+
+	if !value.Valid || value.Float64 <= 0 {
+		return 0, nil
+	}
+
+	if !date.Valid {
+		return 0, nil
+	}
+
+	// FRED date column is YYYY-MM-DD; parse as date-only and treat as midnight UTC.
+	ts, err := time.Parse(time.DateOnly, date.String)
+	if err != nil {
+		return 0, nil
+	}
+
+	if time.Since(ts) > staleBound {
+		return 0, nil
+	}
+
+	return value.Float64, nil
+}
+
+// fetchEarningYieldFromDB reads tracked_indicators WHERE indicator='market_earning_yield'
+// ORDER BY extracted_at DESC LIMIT 1. Extracted from GetEarningYield so tests
+// can inject a *sql.DB directly.
+// Returns (0, nil) on missing row, zero value, or stale extracted_at.
+func fetchEarningYieldFromDB(
+	ctx context.Context,
+	db *sql.DB,
+	staleBound time.Duration,
+) (float64, error) {
+	const query = `
+		SELECT value, extracted_at
+		FROM tracked_indicators
+		WHERE indicator = 'market_earning_yield' AND value IS NOT NULL AND value > 0
+		ORDER BY extracted_at DESC
+		LIMIT 1`
+
+	var (
+		val         sql.NullFloat64
+		extractedAt sql.NullString
+	)
+
+	if err := db.QueryRowContext(ctx, query).Scan(&val, &extractedAt); err != nil {
+		return 0, nil //nolint:nilerr // intentional: safe-degrade
+	}
+
+	if !val.Valid || val.Float64 <= 0 {
+		return 0, nil
+	}
+
+	if !extractedAt.Valid {
+		return 0, nil
+	}
+
+	// R-2 CRITICAL: TypeScript writes ms-precision ISO timestamps; use RFC3339Nano.
+	ts, err := time.Parse(time.RFC3339Nano, extractedAt.String)
+	if err != nil {
+		return 0, nil
+	}
+
+	if time.Since(ts) > staleBound {
+		return 0, nil
+	}
+
+	return val.Float64, nil
+}

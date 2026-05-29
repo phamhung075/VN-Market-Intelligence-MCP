@@ -6,6 +6,11 @@
 // to the use case via the domain ports, but for sandbox determinism the fixture
 // values below are used when port values are unavailable (zero from ports).
 //
+// DPI-2b: CarryYieldInputsPort added — Execute() resolves VNDDepositRate, FedFundsRate,
+// and EarningYield from live market.db rows via the port. The three fixture* consts
+// below are NOW the documented safe-degrade fallbacks only (NOT primary values).
+// They are kept explicitly — deleting + inlining a literal would re-create the hardcode.
+//
 // Fence-C note: only cmd/server/main.go imports pkg/infrastructure.
 // This package imports only pkg/module and pkg/primitive (via module types).
 package application
@@ -28,16 +33,21 @@ import (
 // ---------------------------------------------------------------------------
 // Fixture defaults (sandbox-deterministic, R-1 compliant)
 // These represent plausible VN macro indicator values for fixture/demo mode.
+//
+// DPI-2b NOTE: fixtureVNDDepositRate, fixtureFedFundsRate, fixtureEarningYield
+// are NOW safe-degrade fallbacks only — Execute() resolves each from live
+// market.db rows via CarryYieldInputsPort first. Do NOT delete these consts;
+// deleting + inlining a literal would silently re-hardcode the values.
 // ---------------------------------------------------------------------------
 
 const (
-	fixtureVNIndex       = 1280.5  // VN-Index level
-	fixtureOilUSD        = 82.5    // Brent crude USD/barrel (NEUTRAL band: 60–100)
-	fixtureGoldUSD       = 2350.0  // XAU/USD (BULLISH: >2200)
-	fixtureUSDVnd        = 24500.0 // USDVND spot (NEUTRAL band: 23000–25000)
-	fixtureVNDDepositRate = 4.7    // SBV max deposit rate %
-	fixtureFedFundsRate  = 5.33    // US Fed Funds effective rate %
-	fixtureEarningYield  = 8.2     // VN equity earnings yield %
+	fixtureVNIndex        = 1280.5  // VN-Index level
+	fixtureOilUSD         = 82.5    // Brent crude USD/barrel (NEUTRAL band: 60–100)
+	fixtureGoldUSD        = 2350.0  // XAU/USD (BULLISH: >2200)
+	fixtureUSDVnd         = 24500.0 // USDVND spot (NEUTRAL band: 23000–25000)
+	fixtureVNDDepositRate = 4.7     // SBV max deposit rate % — safe-degrade only (DPI-2b)
+	fixtureFedFundsRate   = 5.33    // US Fed Funds effective rate % — safe-degrade only (DPI-2b)
+	fixtureEarningYield   = 8.2     // VN equity earnings yield % — safe-degrade only (DPI-2b)
 )
 
 // ---------------------------------------------------------------------------
@@ -60,20 +70,24 @@ type ComputeMacroUseCase struct {
 	commodityFetcher domain.CommodityFetcherPort
 	sbvRate          domain.SBVRatePort
 	marketIndex      domain.MarketIndexPort
+	carryYieldInputs domain.CarryYieldInputsPort // DPI-2b: live carry/yield regime inputs
 }
 
 // NewComputeMacroUseCase creates a new use case with injected ports.
 // The composition root (cmd/server/main.go) is responsible for providing
 // the concrete infrastructure adapters at startup.
+// DPI-2b: carryYieldInputs port added — supplies live deposit/fed/earningYield from market.db.
 func NewComputeMacroUseCase(
 	cf domain.CommodityFetcherPort,
 	sr domain.SBVRatePort,
 	mi domain.MarketIndexPort,
+	cy domain.CarryYieldInputsPort,
 ) *ComputeMacroUseCase {
 	return &ComputeMacroUseCase{
 		commodityFetcher: cf,
 		sbvRate:          sr,
 		marketIndex:      mi,
+		carryYieldInputs: cy,
 	}
 }
 
@@ -111,6 +125,13 @@ func (uc *ComputeMacroUseCase) Execute(
 		}
 	}
 
+	// DPI-2b: Resolve carry/yield regime inputs from live market.db via port.
+	// Each resolver calls the port; if port returns >0 (fresh row), use it;
+	// else fall back to the fixture constant (safe-degrade, not hardcode).
+	vndDeposit := resolveVNDDepositRate(ctx, uc)
+	fedFunds := resolveFedFundsRate(ctx, uc)
+	earnYield := resolveEarningYield(ctx, uc)
+
 	// Build module input.
 	input := ms.MacroSignalsInput{
 		InvestmentClock: mic.InvestmentClockInput{IndicatorName: "VN_CPI"},
@@ -118,13 +139,13 @@ func (uc *ComputeMacroUseCase) Execute(
 		GoldDirection:   gld.GoldDirectionInput{PriceUSD: goldPrice},
 		UsdVndDirection: uvnd.UsdVndDirectionInput{RateVND: usdVnd},
 		CarryTrade: carry.CarryTradeInput{
-			VNDDepositRate: fixtureVNDDepositRate,
-			FedFundsRate:   fixtureFedFundsRate,
+			VNDDepositRate: vndDeposit,
+			FedFundsRate:   fedFunds,
 			ComputedAt:     computedAt,
 		},
 		YieldSpread: yld.YieldSpreadInput{
-			EarningYield: fixtureEarningYield,
-			DepositRate:  fixtureVNDDepositRate,
+			EarningYield: earnYield,
+			DepositRate:  vndDeposit,
 			ComputedAt:   computedAt,
 		},
 	}
@@ -174,6 +195,50 @@ func resolveVNIndex(ctx context.Context, uc *ComputeMacroUseCase) float64 {
 	}
 	return fixtureVNIndex
 }
+
+// ---------------------------------------------------------------------------
+// DPI-2b resolvers — live carry/yield inputs from CarryYieldInputsPort
+// ---------------------------------------------------------------------------
+
+// resolveVNDDepositRate fetches the SBV max deposit rate from CarryYieldInputsPort.
+// Falls back to fixtureVNDDepositRate (4.7) when the port is nil, returns 0, or errors.
+// Safe-degrade: port contract guarantees (0, nil) on absent/stale rows.
+func resolveVNDDepositRate(ctx context.Context, uc *ComputeMacroUseCase) float64 {
+	if uc.carryYieldInputs != nil {
+		if v, err := uc.carryYieldInputs.GetVNDDepositRate(ctx); err == nil && v > 0 {
+			return v
+		}
+	}
+	return fixtureVNDDepositRate
+}
+
+// resolveFedFundsRate fetches the EFFR from CarryYieldInputsPort.
+// Falls back to fixtureFedFundsRate (5.33) when the port is nil, returns 0, or errors.
+// Safe-degrade: port contract guarantees (0, nil) on absent/stale rows.
+func resolveFedFundsRate(ctx context.Context, uc *ComputeMacroUseCase) float64 {
+	if uc.carryYieldInputs != nil {
+		if v, err := uc.carryYieldInputs.GetFedFundsRate(ctx); err == nil && v > 0 {
+			return v
+		}
+	}
+	return fixtureFedFundsRate
+}
+
+// resolveEarningYield fetches the VN equity earnings yield from CarryYieldInputsPort.
+// Falls back to fixtureEarningYield (8.2) when the port is nil, returns 0, or errors.
+// Safe-degrade: port contract guarantees (0, nil) on absent/stale rows.
+func resolveEarningYield(ctx context.Context, uc *ComputeMacroUseCase) float64 {
+	if uc.carryYieldInputs != nil {
+		if v, err := uc.carryYieldInputs.GetEarningYield(ctx); err == nil && v > 0 {
+			return v
+		}
+	}
+	return fixtureEarningYield
+}
+
+// ---------------------------------------------------------------------------
+// resolveMarketPrices — commodity prices from CommodityFetcherPort
+// ---------------------------------------------------------------------------
 
 // resolveMarketPrices fetches commodity prices from the port; uses fixture defaults on failure.
 // Returns (oilPrice, goldPrice, usdVnd, allLive) where allLive is true when all three

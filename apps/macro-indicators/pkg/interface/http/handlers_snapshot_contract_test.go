@@ -76,6 +76,7 @@ func newContractRouter() http.Handler {
 		&fakeContractCommodityFetcher{},
 		&fakeContractSBVRate{},
 		&fakeContractMarketIndex{},
+		nil, // carryYieldInputs nil → fixture safe-degrade (contract test, not DPI-2b scope)
 	)
 	return NewRouter(uc, nil)
 }

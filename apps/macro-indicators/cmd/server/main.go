@@ -50,7 +50,10 @@ func main() {
 	}
 	sbvRateRepo := infrastructure.NewSBVRateSQLiteAdapter()
 	marketIndexRepo := infrastructure.NewSQLiteMarketIndexRepository()
-	useCase := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo, marketIndexRepo)
+	// DPI-2b: inject CarryYieldInputsSQLiteAdapter — reads live deposit/fed/earningYield
+	// from market.db so carry/yield regimes recompute from real data, not frozen fixtures.
+	carryYieldRepo := infrastructure.NewCarryYieldInputsSQLiteAdapter()
+	useCase := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo, marketIndexRepo, carryYieldRepo)
 	router := iface.NewRouter(useCase, logger)
 
 	addr := fmt.Sprintf(":%s", port)

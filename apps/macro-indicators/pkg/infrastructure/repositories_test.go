@@ -78,17 +78,48 @@ func newInMemoryDB(t *testing.T) *sql.DB {
 		t.Fatalf("create commodity_prices: %v", err)
 	}
 
-	// sbv_rates — source for SBVRateSQLiteAdapter (DPI-1).
+	// sbv_rates — source for SBVRateSQLiteAdapter (DPI-1) and
+	// CarryYieldInputsSQLiteAdapter.GetVNDDepositRate (DPI-2b).
 	// Schema mirrors production table written by sbvRatesJob.ts.
 	// source TEXT PRIMARY KEY (production value: 'sbv').
+	// max_deposit_rate_pct added in DPI-2b — the SBV max deposit rate used in carry/yield.
 	_, err = db.Exec(`
 		CREATE TABLE sbv_rates (
-			source           TEXT PRIMARY KEY,
-			usd_vnd_official REAL NOT NULL DEFAULT 0,
-			fetched_at       TEXT NOT NULL
+			source                TEXT PRIMARY KEY,
+			usd_vnd_official      REAL NOT NULL DEFAULT 0,
+			max_deposit_rate_pct  REAL,
+			fetched_at            TEXT NOT NULL
 		)`)
 	if err != nil {
 		t.Fatalf("create sbv_rates: %v", err)
+	}
+
+	// fred_series_daily — source for CarryYieldInputsSQLiteAdapter.GetFedFundsRate (DPI-2b).
+	// Schema mirrors production table written by fetchFredEffrIorb job.
+	// series='EFFR', date=YYYY-MM-DD, value=REAL.
+	_, err = db.Exec(`
+		CREATE TABLE fred_series_daily (
+			series TEXT NOT NULL,
+			date   TEXT NOT NULL,
+			value  REAL,
+			PRIMARY KEY (series, date)
+		)`)
+	if err != nil {
+		t.Fatalf("create fred_series_daily: %v", err)
+	}
+
+	// tracked_indicators — source for CarryYieldInputsSQLiteAdapter.GetEarningYield (DPI-2b).
+	// Schema mirrors production table written by marketEarningYieldJob.
+	// indicator='market_earning_yield', value=REAL, extracted_at=RFC3339Nano.
+	_, err = db.Exec(`
+		CREATE TABLE tracked_indicators (
+			id           INTEGER PRIMARY KEY AUTOINCREMENT,
+			indicator    TEXT NOT NULL,
+			value        REAL,
+			extracted_at TEXT
+		)`)
+	if err != nil {
+		t.Fatalf("create tracked_indicators: %v", err)
 	}
 
 	return db
@@ -525,5 +556,211 @@ func TestFetchSBVRateFromDB_ZeroValue(t *testing.T) {
 	}
 	if got != 0 {
 		t.Errorf("zero-value row: got %.2f, want 0 (zero DEFAULT must not propagate as valid rate)", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// DPI-2b: CarryYieldInputsSQLiteAdapter — fetchVNDDepositRateFromDB tests
+// ---------------------------------------------------------------------------
+
+// TestFetchVNDDepositRateFromDB_FreshRow (DPI-2b AC-1 deposit live) verifies that
+// a fresh sbv_rates row with max_deposit_rate_pct returns the live value.
+func TestFetchVNDDepositRateFromDB_FreshRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	const liveDeposit = 6.0 // distinct from fixtureVNDDepositRate=4.7
+	freshTs := time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO sbv_rates (source, usd_vnd_official, max_deposit_rate_pct, fetched_at)
+		VALUES ('sbv', 25800.0, ?, ?)`,
+		liveDeposit, freshTs)
+	if err != nil {
+		t.Fatalf("insert sbv_rates fresh deposit row: %v", err)
+	}
+
+	got, err := fetchVNDDepositRateFromDB(context.Background(), db, depositYieldStaleBound)
+	if err != nil {
+		t.Fatalf("fetchVNDDepositRateFromDB returned error: %v", err)
+	}
+	if got != liveDeposit {
+		t.Errorf("DPI-2b AC-1 deposit fresh: got %.2f, want %.2f (must read max_deposit_rate_pct, not fixture 4.7)", got, liveDeposit)
+	}
+}
+
+// TestFetchVNDDepositRateFromDB_StaleRow (DPI-2b AC-5 deposit stale) verifies
+// that a row older than depositYieldStaleBound (26h) returns 0 (safe-degrade).
+func TestFetchVNDDepositRateFromDB_StaleRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	staleTs := time.Now().UTC().Add(-28 * time.Hour).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO sbv_rates (source, usd_vnd_official, max_deposit_rate_pct, fetched_at)
+		VALUES ('sbv', 25800.0, 6.0, ?)`,
+		staleTs)
+	if err != nil {
+		t.Fatalf("insert stale deposit row: %v", err)
+	}
+
+	got, err := fetchVNDDepositRateFromDB(context.Background(), db, depositYieldStaleBound)
+	if err != nil {
+		t.Fatalf("fetchVNDDepositRateFromDB returned error: %v", err)
+	}
+	if got != 0 {
+		t.Errorf("DPI-2b AC-5 deposit stale: got %.2f, want 0 (stale row must return 0)", got)
+	}
+}
+
+// TestFetchVNDDepositRateFromDB_AbsentRow (DPI-2b AC-4 deposit absent) verifies
+// that an empty sbv_rates table returns (0, nil) — not an error.
+func TestFetchVNDDepositRateFromDB_AbsentRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	got, err := fetchVNDDepositRateFromDB(context.Background(), db, depositYieldStaleBound)
+	if err != nil {
+		t.Fatalf("fetchVNDDepositRateFromDB on empty table returned error: %v", err)
+	}
+	if got != 0 {
+		t.Errorf("DPI-2b AC-4 deposit absent: got %.2f, want 0", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// DPI-2b: CarryYieldInputsSQLiteAdapter — fetchFedFundsRateFromDB tests
+// ---------------------------------------------------------------------------
+
+// TestFetchFedFundsRateFromDB_FreshRow (DPI-2b AC-2 fed live) verifies that a fresh
+// fred_series_daily EFFR row returns the live value.
+func TestFetchFedFundsRateFromDB_FreshRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	const liveEFFR = 4.0 // distinct from fixtureFedFundsRate=5.33
+	// Use a recent date (within 96h effrStaleBound).
+	recentDate := time.Now().UTC().AddDate(0, 0, -1).Format(time.DateOnly)
+	_, err := db.Exec(`
+		INSERT INTO fred_series_daily (series, date, value)
+		VALUES ('EFFR', ?, ?)`,
+		recentDate, liveEFFR)
+	if err != nil {
+		t.Fatalf("insert fred_series_daily fresh EFFR row: %v", err)
+	}
+
+	got, err := fetchFedFundsRateFromDB(context.Background(), db, effrStaleBound)
+	if err != nil {
+		t.Fatalf("fetchFedFundsRateFromDB returned error: %v", err)
+	}
+	if got != liveEFFR {
+		t.Errorf("DPI-2b AC-2 fed fresh: got %.2f, want %.2f (must read EFFR, not fixture 5.33)", got, liveEFFR)
+	}
+}
+
+// TestFetchFedFundsRateFromDB_StaleRow (DPI-2b AC-5 fed stale) verifies that a
+// row older than effrStaleBound (96h) returns 0 (safe-degrade).
+func TestFetchFedFundsRateFromDB_StaleRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	// 5 days ago → > 96h stale bound.
+	staleDate := time.Now().UTC().AddDate(0, 0, -5).Format(time.DateOnly)
+	_, err := db.Exec(`
+		INSERT INTO fred_series_daily (series, date, value)
+		VALUES ('EFFR', ?, 4.0)`,
+		staleDate)
+	if err != nil {
+		t.Fatalf("insert stale EFFR row: %v", err)
+	}
+
+	got, err := fetchFedFundsRateFromDB(context.Background(), db, effrStaleBound)
+	if err != nil {
+		t.Fatalf("fetchFedFundsRateFromDB returned error: %v", err)
+	}
+	if got != 0 {
+		t.Errorf("DPI-2b AC-5 fed stale: got %.2f, want 0 (stale row must return 0)", got)
+	}
+}
+
+// TestFetchFedFundsRateFromDB_AbsentRow (DPI-2b AC-4 fed absent) verifies that
+// an empty fred_series_daily table returns (0, nil) — not an error.
+func TestFetchFedFundsRateFromDB_AbsentRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	got, err := fetchFedFundsRateFromDB(context.Background(), db, effrStaleBound)
+	if err != nil {
+		t.Fatalf("fetchFedFundsRateFromDB on empty table returned error: %v", err)
+	}
+	if got != 0 {
+		t.Errorf("DPI-2b AC-4 fed absent: got %.2f, want 0", got)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// DPI-2b: CarryYieldInputsSQLiteAdapter — fetchEarningYieldFromDB tests
+// ---------------------------------------------------------------------------
+
+// TestFetchEarningYieldFromDB_FreshRow (DPI-2b AC-3 earning live) verifies that a
+// fresh tracked_indicators market_earning_yield row returns the live value.
+func TestFetchEarningYieldFromDB_FreshRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	const liveYield = 7.5 // distinct from fixtureEarningYield=8.2
+	freshTs := time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO tracked_indicators (indicator, value, extracted_at)
+		VALUES ('market_earning_yield', ?, ?)`,
+		liveYield, freshTs)
+	if err != nil {
+		t.Fatalf("insert tracked_indicators fresh earning yield row: %v", err)
+	}
+
+	got, err := fetchEarningYieldFromDB(context.Background(), db, depositYieldStaleBound)
+	if err != nil {
+		t.Fatalf("fetchEarningYieldFromDB returned error: %v", err)
+	}
+	if got != liveYield {
+		t.Errorf("DPI-2b AC-3 earning fresh: got %.2f, want %.2f (must read market_earning_yield, not fixture 8.2)", got, liveYield)
+	}
+}
+
+// TestFetchEarningYieldFromDB_StaleRow (DPI-2b AC-5 earning stale) verifies that
+// a row older than depositYieldStaleBound (26h) returns 0 (safe-degrade).
+func TestFetchEarningYieldFromDB_StaleRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	staleTs := time.Now().UTC().Add(-28 * time.Hour).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO tracked_indicators (indicator, value, extracted_at)
+		VALUES ('market_earning_yield', 7.5, ?)`,
+		staleTs)
+	if err != nil {
+		t.Fatalf("insert stale earning yield row: %v", err)
+	}
+
+	got, err := fetchEarningYieldFromDB(context.Background(), db, depositYieldStaleBound)
+	if err != nil {
+		t.Fatalf("fetchEarningYieldFromDB returned error: %v", err)
+	}
+	if got != 0 {
+		t.Errorf("DPI-2b AC-5 earning stale: got %.2f, want 0 (stale row must return 0)", got)
+	}
+}
+
+// TestFetchEarningYieldFromDB_AbsentRow (DPI-2b AC-4 earning absent) verifies that
+// an empty tracked_indicators table returns (0, nil) — not an error.
+func TestFetchEarningYieldFromDB_AbsentRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	got, err := fetchEarningYieldFromDB(context.Background(), db, depositYieldStaleBound)
+	if err != nil {
+		t.Fatalf("fetchEarningYieldFromDB on empty table returned error: %v", err)
+	}
+	if got != 0 {
+		t.Errorf("DPI-2b AC-4 earning absent: got %.2f, want 0", got)
 	}
 }
