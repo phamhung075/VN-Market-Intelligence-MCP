@@ -78,3 +78,25 @@ Active board → `TASKS.md`
 | NF-LD-5 refresh button (MVP) | **PO SIGNED OFF 2026-05-24T21:35Z.** Refresh/Load-latest button re-calls existing endpoint, no new write path. Terminal gate was NF-LD-5-OPS (ops rebuild + prove button live). | `12600a1f` + `15d9b034` ; QA `2a02d3e3` | `docs/handoffs/TASK_NF-LD.md` |
 
 **Lessons preserved:** (1) news-fetch is a STATELESS scraper with NO DB — live-data view MUST be a read-only mcp-server route over `rag_analyses`, never give the scraper DB creds (design-regression guard). (2) Served-dashboard Option B (same-origin from mcp-server:3000) removes the CORS/`file://` degrade risk class; anti-drift gate = committed served copy must equal `sync-news-fetch-dashboard.sh` output (idempotent md5). (3) NF-LD-4/5 ops-deploy gates may still be outstanding — verify the running mcp-server image carries `15d9b034`+ before declaring the served dashboard + refresh button live; the FETCH-ANALYZE ops rebuild this tick will also pick these up if not yet deployed.
+
+---
+
+## Archive — Added 2026-05-29 by claude-manager-helper (Governance context-bloat cleanup: 6 completed sprints)
+
+**Period:** 2026-05-27 → 2026-05-28 | **Sprints archived:** 6 (HCM-DISAMBIG, MACRO-LIVE-PRICES, NEWS-FULLDAY, RECAP-CMD, NEWS-CMD, and partial PDF-INSPECT). Reason: 6 sprints signed off by PO across 2026-05-27/28, carrying ~360 total lines of per-task detail. Archived to bring TASKS.md under the 80-line working-board cap while preserving complete history in git + archive file for future reference.
+
+| Sprint | Terminal state | Close DateTime | SSOT / Goal |
+|--------|---|---|---|
+| HCM-DISAMBIG | **DONE @2026-05-28T HCM-EXIT.** QA 6/6 ACs APPROVED @a2ff3356. Zone: mcp-server (newsNormalizer.ts + chef.md). SPRINT-S sizing. | 2026-05-28T | `docs/SPRINT_GOAL_HCM-DISAMBIG.md` |
+| MACRO-LIVE-PRICES | **DONE @2026-05-27T22:36:00Z MLP-EXIT.** PO re-verified END-TO-END: oilUsd 92.86 / goldUsd 4488.5 / usdVnd 26273 (live, not fixture). Escalation #3003 RESOLVED. Zone: macro-indicators. SPRINT-S Option A. | 2026-05-27T22:36Z | `docs/SPRINT_GOAL.md` |
+| NEWS-FULLDAY | **COMPLETE @2026-05-27T22:41:51Z NEWS-FD-EXIT.** Success Metric MET; deployed @ 99f433ec. PO user-initiated (explicit `/news` refinement signal). Full-day deduped importance-ranked coverage. Zone: mcp-server `handleNews`. | 2026-05-27T22:41Z | `docs/SPRINT_GOAL_NEWS-FULLDAY.md` |
+| RECAP-CMD | **COMPLETE @2026-05-27T22:41:51Z RECAP-EXIT.** Success Metric MET; deployed @ 99f433ec. PO user-initiated (`/recap /recapw /recapm` commands). Sibling of NEWS-FULLDAY, same ops rebuild. Zone: mcp-server `telegramCommands.ts`. | 2026-05-27T22:41Z | `docs/SPRINT_GOAL_RECAP-CMD.md` |
+| NEWS-CMD | **DONE @2026-05-27T20:52:50Z NEWS-CMD-EXIT.** All ACs MET. PO signed off (user-initiated `/news` Telegram command). Zone: mcp-server. Goal-armed on user-comprehensibility axis (verbal G9). | 2026-05-27T20:52Z | `docs/SPRINT_GOAL.md` |
+| PDF-INSPECT | **DONE + CLOSED @2026-05-24T19:34Z (2 reopens for real-data defects).** Zone migrated mcp-server; impl owner dev-mcp-server; user-facing URL `http://localhost:3000/api/bctc-inspect` LIVE. Read-only inspector over real `market.db`. POST-PILOT feature; pilot frozen 12/12. | 2026-05-24T19:34Z | `docs/handoffs/TASK_PDF-INSPECT.md` |
+
+**Lessons + Notes:**
+- (1) HCM-DISAMBIG: forward-hardening on ticker TP.HCM city disambiguation. Follows existing guard in Task 1788 (live prod proof #4144). SPRINT-S scope: no schema/microservice/cron change. Chef.md format-rule + extraction code GEOGRAPHIC_CONTEXT_MAP 2-entry extend.
+- (2) MACRO-LIVE-PRICES: real-time oil/gold/usdVnd provisioning for get_macro_snapshot. PO verified live values via the same MCP JSON-RPC path that external tools use (no bypass). 26h staleness bound. Separate MACRO-RATES-LIVE (carry/yield VND/Fed rates) backlogged as later sprint.
+- (3) NEWS-FULLDAY + RECAP-CMD: pair of user-initiated feature requests arriving simultaneously 2026-05-27 21:34–21:41Z. Each is single-zone mcp-server (same 99f433ec rebuild). NEWS-FULLDAY refines `/news` (full-day deduped list); RECAP-CMD adds `/recap /recapw /recapm` (day/week/month synthesis). No overlap; each single-purpose. Sibling rebuild → shared ops rebuild cycle. PO verified live comprehensibility + plain-VN (no jargon).
+- (4) NEWS-CMD: precursor to NEWS-FULLDAY (earlier `/news` Telegram command). First user-initiated sprint opened 2026-05-27 19:50Z. Goal-armed on comprehensibility axis; machine-checkable ACs all MET (QA 60/0 tests green, tsc 0, live handler routing correct). User verbal G9 sign-off pending but not a blocker per [[feedback_trust_verification_is_system_job]].
+- (5) PDF-INSPECT: demoted from pilot-track scale task to dev tool (side-by-side PDF / extracted-text inspector). Real-data reopens 2x (2026-05-24) revealed zone migration need: BCTC data lives in mcp-server market.db, NOT pdf-extractor sandbox db. Final state: live at mcp-server:3000/api/bctc-inspect, read-only over real table. Post-pilot feature; pdf-extractor Phase 1 continues (WIP=1 sequential sandbox runners).
