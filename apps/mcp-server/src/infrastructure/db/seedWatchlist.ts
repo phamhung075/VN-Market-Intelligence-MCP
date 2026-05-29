@@ -17,6 +17,7 @@
  */
 
 import type { Database } from "bun:sqlite";
+import type { DomainType } from "../../../bctc-schema.js";
 import { sqlInClause } from "./sqlHelpers.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -30,7 +31,7 @@ import { sqlInClause } from "./sqlHelpers.js";
 export interface WatchlistSeedEntry {
   code: string;
   exchange: "HOSE" | "HNX" | "UPCOM";
-  domain: string;
+  domain: DomainType;
 }
 
 export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
@@ -66,7 +67,7 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
   { code: "SSI", exchange: "HOSE",  domain: "securities" },
   { code: "HCM", exchange: "HOSE",  domain: "securities" },
   // Machinery
-  { code: "DAG", exchange: "HOSE",  domain: "machinery" }, // Da Nang Rubber Group — industrial/machinery
+  { code: "DAG", exchange: "HOSE",  domain: "machinery" }, // Đông Á Plastic Group — plastics/industrial, HOSE
   // Pharma
   { code: "DHG", exchange: "HOSE",  domain: "pharma" },
   // Utilities
@@ -80,11 +81,12 @@ export const WATCHLIST_SEED: WatchlistSeedEntry[] = [
   // (called immediately after in initDatabase()) applies -9.0 unconditionally.
   // Real Estate (high-vol)
   { code: "NVL", exchange: "HOSE",  domain: "real_estate" }, // Novaland — std dev ~2.5%
-  { code: "VNH", exchange: "HNX",   domain: "real_estate" }, // VNH — HNX, std dev ~2.1%
   { code: "KBC", exchange: "HOSE",  domain: "real_estate" }, // Kinh Bac City Development — std dev ~2.3%
-  { code: "TCH", exchange: "HOSE",  domain: "real_estate" }, // Techcombank (high-vol) — std dev ~1.9%
+  { code: "TCH", exchange: "HOSE",  domain: "real_estate" }, // Hoang Huy Investment Financial Services — real estate/auto services, HOSE; std dev ~1.9%
+  // Agriculture (high-vol)
+  { code: "VNH", exchange: "HNX",   domain: "agriculture" }, // CTCP Đầu tư Việt Việt Nhật — seafood/food import-export (xuất nhập khẩu thủy hải sản & thực phẩm), HNX; std dev ~2.1%
   // Chemicals
-  { code: "DPM", exchange: "HOSE",  domain: "chemicals" },   // Daphaco — std dev ~2.2%
+  { code: "DPM", exchange: "HOSE",  domain: "chemicals" },   // Đạm Phú Mỹ (PetroVietnam Fertilizer & Chemicals) — fertilizer, HOSE; std dev ~2.2%
   // Utilities (high-vol)
   { code: "REE", exchange: "HOSE",  domain: "utilities" },   // REE Holdings — std dev ~2.4%
   // Retail
