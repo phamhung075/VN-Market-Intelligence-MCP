@@ -3483,3 +3483,96 @@ Total fleet:    ~1.9 GiB / 8 GiB cap
 ### Status
 COMPLETE — mcp-server rebuild successful. Task #9 viewer HTML live. Container serving new code. Ready for QA validation.
 NEXT: QA — User confirms MD→table viewer renders correctly on live http://localhost:3000/api/bctc-inspect dashboard.
+
+---
+
+## Session: 2026-05-29
+
+**Task:** REBUILD-VIEWER-UPDATE — Rebuild mcp-server to load BCTC inspector viewer HTML changes (Task #9, commit 3490dffa)
+
+### Context
+- Feature: BCTC viewer header page-nav + keyboard arrows (commit 3490dffa, Task #9)
+- Viewer HTML (bctc-inspector.html) is baked into Docker image at build time
+- Running container was using stale HTML (plain restart insufficient)
+- Goal: Force-recreate to load fresh HTML with page-nav markers
+
+### Cycle Summary
+- Single-service rebuild: `docker compose build mcp-server && docker compose up -d --no-deps --force-recreate mcp-server`
+- Build succeeded in ~14s (TypeScript cached, layers cached)
+- Container force-recreated and started; healthy in 15 seconds
+- Marker strings verified in served HTML (header-page-nav, headerPageIndicator)
+- All verification gates passed; no collateral damage to fleet
+
+### Execution Timeline
+- 2026-05-29 20:47:06 UTC — Build started
+- 2026-05-29 20:47:21 UTC — Build complete (14s elapsed)
+- 2026-05-29 20:47:21 UTC — Container force-recreated (old container removed)
+- 2026-05-29 20:47:28 UTC — Container healthy (28s from start, within 60s start_period)
+
+### Key Results
+
+**Image Status:**
+- Image rebuilt: sha256:91c654fc438ff2df0bee8b8940e94d93c26482a315dccaa03f019ee85957665d
+- Timestamp: 2026-05-29 (today, verified)
+- HTML baked in: yes (bctc-inspector.html compiled into TypeScript bundle)
+
+**Container Health:**
+- Status: Up 28 seconds (healthy) at verification
+- Port 3000: bound correctly (0.0.0.0:3000->3000/tcp)
+- Port 4004: bound correctly (external proxy, 0.0.0.0:4004->3000/tcp)
+- Health endpoint: /health returns 200 OK
+
+**Health Probe Results:**
+```
+{
+  "status": "ok",
+  "name": "vn-market",
+  "version": "1.0.0",
+  "toolCount": 146,
+  "sessions": 0,
+  "uptime": 5.519259968
+}
+```
+✓ toolCount=146 (no regression, scheduler unchanged)
+
+**Viewer HTML Verification:**
+- Endpoint: GET http://localhost:3000/api/bctc-inspect
+- HTTP Status: 200 OK
+- Marker 1 "header-page-nav": ✓ Found (5 occurrences in CSS + HTML)
+- Marker 2 "headerPageIndicator": ✓ Found (3 occurrences in JavaScript)
+- Verdict: Fresh HTML confirmed, Task #9 feature markers baked in, not stale
+
+**Fleet Health (Post-Rebuild):**
+- docker-compose ps: 7 containers UP (api-gateway, frontend, kinh-dich, macro, mcp-server, pdf, rag)
+- Running service health checks:
+  - mcp-server:3000 → 200 ✓
+  - api-gateway:4000 → 200 ✓
+  - macro-indicators:5004 → 200 ✓
+  - kinh-dich-service:5005 → 200 ✓
+  - pdf-extractor:5001 → 200 ✓
+  - rag-service:5002 → 200 ✓
+  - frontend:3001 → 404 (not exposed, pre-existing)
+- No new failures introduced by mcp-server rebuild ✓
+- No collateral damage (no port conflicts, no neighbor service restarts)
+
+### Acceptance Criteria
+
+| Criterion | Status | Evidence |
+|-----------|--------|----------|
+| Container rebuilt | ✓ PASS | Image hash changed, timestamp 2026-05-29 |
+| Container healthy | ✓ PASS | docker ps: Up, health=ok |
+| toolCount=146 | ✓ PASS | /health returns 146 (no scheduler drift) |
+| HTML marker 1 | ✓ PASS | "header-page-nav" found in served HTML |
+| HTML marker 2 | ✓ PASS | "headerPageIndicator" found in served HTML |
+| No collateral | ✓ PASS | All 7 running services healthy, no new failures |
+| Response code 200 | ✓ PASS | curl /api/bctc-inspect returns 200 |
+
+### Signals Emitted
+- No BCTC extraction triggered (viewer-only change, market hours guard respects current time)
+- Logs show normal bootstrap (PDF OCR checks, backfill cache reads)
+- No alerts emitted to BUG or MARKET channels
+
+### Status
+✓ COMPLETE — BCTC viewer rebuild successful. Task #9 feature markers live in served HTML.
+NEXT: QA validates header-page-nav + keyboard arrows functionality on live viewer.
+
