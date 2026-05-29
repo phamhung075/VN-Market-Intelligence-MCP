@@ -47,7 +47,7 @@ For each held lock from Step R-1:
 
 **Step R-3 — TASKS.md owner/status cross-check (AC-1, AC-2, AC-3)**
 
-Read `docs/TASKS.md`. For each held lock from Step R-1:
+Read `$PROJECT_ROOT/docs/TASKS.md` (absolute path — NEVER use relative `docs/TASKS.md`; CWD may have drifted). For each held lock from Step R-1:
 
 ```
 bare_task_id = held.task_id.startsWith("task:") ? held.task_id.slice(5) : held.task_id
@@ -117,7 +117,8 @@ No DASHBOARD row, no BUG write.
 | Failure | Behavior |
 |---|---|
 | `task_list_held` MCP call fails | Log WARN, skip Steps R-3/R-4, proceed to R-4 git-log check independently |
-| `docs/TASKS.md` parse fails (corrupted) | Log BUG telegram: `"[system-auditor] D4 ABORT: TASKS.md unreadable — possible Seam 3 corruption"` → EXIT handler |
+| `$PROJECT_ROOT/docs/TASKS.md` not found (CWD drift) | This is a path-resolution bug — Step 0a MUST have resolved `$PROJECT_ROOT` before this handler runs. Log BUG telegram: `"[system-auditor] D4 ABORT: TASKS.md not found at $PROJECT_ROOT/docs/TASKS.md — CWD drift; Step 0a project-root skill must run first"` → EXIT handler. Do NOT emit "Seam 3 corruption" for a missing file — that message is reserved for parse/encoding failures only. |
+| `$PROJECT_ROOT/docs/TASKS.md` exists but parse fails (corrupted) | Log BUG telegram: `"[system-auditor] D4 ABORT: TASKS.md unreadable — possible Seam 3 corruption: parse error at $PROJECT_ROOT/docs/TASKS.md"` → EXIT handler |
 | `docs/pipeline-state.json` missing | Log WARN, skip Step R-2 cross-check only |
 | git log command fails | Log WARN, skip Step R-4 only |
 
