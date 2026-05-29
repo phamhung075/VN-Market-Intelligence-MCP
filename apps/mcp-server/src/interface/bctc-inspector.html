@@ -30,9 +30,42 @@
       align-items: center;
       gap: 12px;
       flex-shrink: 0;
+      position: relative;
     }
     header h1 { font-size: 15px; font-weight: 600; color: #f0f0f0; }
     #status-bar { font-size: 12px; color: #888; margin-left: auto; }
+
+    /* ── Header page-nav (centered, prominent) ── */
+    #header-page-nav {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: auto;
+    }
+    #header-page-nav button {
+      background: #3a3a3a;
+      color: #e0e0e0;
+      border: 1px solid #666;
+      border-radius: 4px;
+      padding: 4px 14px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      transition: background .15s;
+    }
+    #header-page-nav button:disabled { opacity: .35; cursor: default; }
+    #header-page-nav button:hover:not(:disabled) { background: #555; }
+    #header-page-indicator {
+      font-size: 13px;
+      font-weight: 600;
+      color: #c8c8c8;
+      min-width: 80px;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+    }
 
     /* ── Controls ── */
     .controls {
@@ -634,6 +667,12 @@
 
 <header>
   <h1>BCTC Inspector</h1>
+  <!-- Page-nav: centered in header, drives navigateToPage orchestrator (same as OCR-pane nav) -->
+  <div id="header-page-nav">
+    <button id="header-btn-prev" disabled aria-label="Trang trước (←)">&#8249;</button>
+    <span id="header-page-indicator">—</span>
+    <button id="header-btn-next" disabled aria-label="Trang sau (→)">&#8250;</button>
+  </div>
   <span id="status-bar">Loading...</span>
 </header>
 
@@ -769,6 +808,28 @@
   const btnPrev       = document.getElementById("btn-prev-page");
   const btnNext       = document.getElementById("btn-next-page");
   const pageIndicator = document.getElementById("page-indicator");
+  // Header page-nav (prominent, top-centered) — mirrors OCR-pane nav
+  const headerBtnPrev  = document.getElementById("header-btn-prev");
+  const headerBtnNext  = document.getElementById("header-btn-next");
+  const headerPageIndicator = document.getElementById("header-page-indicator");
+
+  // ── setNavState: single source of truth for all page-nav button/indicator state ──
+  // Keeps header nav + OCR-pane nav in perfect sync. Called from renderOcr and resetPanes.
+  function setNavState(page, bound) {
+    const atFirst = page <= 1;
+    const atLast  = bound > 0 ? page >= bound : true;
+    const label   = bound > 0 ? `${page} / ${bound}` : "—";
+
+    // OCR-pane nav
+    btnPrev.disabled = atFirst;
+    btnNext.disabled = atLast;
+    pageIndicator.textContent = label;
+
+    // Header nav
+    if (headerBtnPrev) headerBtnPrev.disabled = atFirst;
+    if (headerBtnNext) headerBtnNext.disabled = atLast;
+    if (headerPageIndicator) headerPageIndicator.textContent = label;
+  }
 
   // ── Load pdf.js from CDN ─────────────────────────────────────────────────
   let pdfJsLoaded = false;
@@ -965,9 +1026,13 @@
   // ── Render OCR + Figures (right pane) ────────────────────────────────────
   async function renderOcr(docId, page) {
     ocrTextContent.textContent = "Loading...";
+    // Show loading state on all nav indicators while fetching
     pageIndicator.textContent = "...";
+    if (headerPageIndicator) headerPageIndicator.textContent = "...";
     btnPrev.disabled = true;
     btnNext.disabled = true;
+    if (headerBtnPrev) headerBtnPrev.disabled = true;
+    if (headerBtnNext) headerBtnNext.disabled = true;
 
     try {
       const resp = await fetch(
@@ -1039,12 +1104,11 @@
       // We do NOT lie about "in sync" when counts differ. A small note below
       // the indicator is shown whenever the counts diverge.
       const navBound = pdfNumPages > 0 ? pdfNumPages : totalPages;
-      pageIndicator.textContent = navBound > 0 ? `${currentPage} / ${navBound}` : "—";
-      btnPrev.disabled = currentPage <= 1;
+      // setNavState syncs header nav + OCR-pane nav in a single call (SSOT).
       // "has_more" from the OCR endpoint governs whether OCR text exists for the
       // next page. But the nav arrow stays enabled as long as there are more PDF
       // pages to show — even if OCR text is absent for them.
-      btnNext.disabled = currentPage >= navBound;
+      setNavState(currentPage, navBound);
 
       // Show a note when PDF and OCR page counts are known and differ
       const syncNote = document.getElementById("ocr-sync-note");
@@ -1679,6 +1743,46 @@
     }
   });
 
+  // ── Header nav buttons (same orchestrator, same bounds) ──────────────────
+  if (headerBtnPrev) {
+    headerBtnPrev.addEventListener("click", async () => {
+      if (currentDocId && currentPage > 1) {
+        await navigateToPage(currentPage - 1);
+      }
+    });
+  }
+  if (headerBtnNext) {
+    headerBtnNext.addEventListener("click", async () => {
+      if (currentDocId && currentPage < getNavBound()) {
+        await navigateToPage(currentPage + 1);
+      }
+    });
+  }
+
+  // ── Keyboard navigation: ArrowLeft / ArrowRight ──────────────────────────
+  // Guard: skip when user is typing in an input, select, or textarea so the
+  // doc-select dropdown and any text fields still work normally.
+  // Delegates to navigateToPage — same orchestrator as buttons (SSOT, no dup logic).
+  document.addEventListener("keydown", async (e) => {
+    // Focus guard — do not intercept arrows in form controls
+    const tag = document.activeElement?.tagName ?? "";
+    if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return;
+
+    const bound = getNavBound();
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      if (currentDocId && currentPage > 1) {
+        await navigateToPage(currentPage - 1);
+      }
+    } else if (e.key === "ArrowRight") {
+      e.preventDefault();
+      if (currentDocId && bound > 0 && currentPage < bound) {
+        await navigateToPage(currentPage + 1);
+      }
+    }
+  });
+
   // ── Reset ────────────────────────────────────────────────────────────────
   function resetEvalPanel() {
     const section = document.getElementById("eval-strip-section");
@@ -1694,9 +1798,8 @@
     pdfIframe.style.display = "none";
     figuresContent.innerHTML = `<div class="missing-msg">No document selected.</div>`;
     ocrTextContent.innerHTML = `<div class="missing-msg">No document selected.</div>`;
-    pageIndicator.textContent = "—";
-    btnPrev.disabled = true;
-    btnNext.disabled = true;
+    // Reset all nav indicators (header + OCR-pane) via setNavState(1, 0) = "—" + both disabled
+    setNavState(1, 0);
     totalPages = 0;
     currentPage = 1;
     pdfNumPages = 0;
