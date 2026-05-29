@@ -1074,9 +1074,19 @@ export async function createBunServer(
         }
 
         const now = new Date().toISOString();
+        // DPI-4 R-1 race fix: replaced INSERT OR REPLACE (row-destructive DELETE+INSERT)
+        // with ON CONFLICT DO UPDATE SET to preserve foreign flow columns written by
+        // ohlcvForeignFlowStore (stub rows from DPI-4 UPSERT must survive real OHLCV push).
         const stmt = db.prepare(`
-          INSERT OR REPLACE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
+          INSERT INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+          ON CONFLICT(code, date) DO UPDATE SET
+            open       = excluded.open,
+            high       = excluded.high,
+            low        = excluded.low,
+            close      = excluded.close,
+            volume     = excluded.volume,
+            updated_at = excluded.updated_at
         `);
 
         let inserted = 0;

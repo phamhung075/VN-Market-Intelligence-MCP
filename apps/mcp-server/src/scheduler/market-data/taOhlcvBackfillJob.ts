@@ -104,10 +104,20 @@ const TICKER_COVERAGE_SQL = `
   WHERE code = ?
 `;
 
+// DPI-4 R-5 audit fix: replaced INSERT OR REPLACE (row-destructive DELETE+INSERT)
+// with ON CONFLICT DO UPDATE SET to preserve foreign flow columns.
+// Matches the same pattern as pushPricesHandler and server.ts (DPI-4 scope).
 const UPSERT_SQL = `
-  INSERT OR REPLACE INTO daily_ohlcv
+  INSERT INTO daily_ohlcv
     (code, date, open, high, low, close, volume, updated_at)
   VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+  ON CONFLICT(code, date) DO UPDATE SET
+    open       = excluded.open,
+    high       = excluded.high,
+    low        = excluded.low,
+    close      = excluded.close,
+    volume     = excluded.volume,
+    updated_at = excluded.updated_at
 `;
 
 // ─────────────────────────────────────────────────────────────────────────────

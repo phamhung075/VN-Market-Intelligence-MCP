@@ -374,6 +374,27 @@ export async function fetchYahooFinancePrices(
 }
 
 // ---------------------------------------------------------------------------
+// Private helpers
+// ---------------------------------------------------------------------------
+
+/**
+ * Computes the change amount and percentage from a previous price to a current price.
+ * Returns {amt: 0, pct: 0} when either value is missing/null or prev is zero
+ * (guards against division-by-zero and first-run scenarios).
+ *
+ * Module-private — not exported.
+ */
+function computeDelta(
+  current: number | null,
+  prev: number | null,
+): { amt: number; pct: number } {
+  if (current == null || prev == null || prev === 0) return { amt: 0, pct: 0 };
+  const amt = current - prev;
+  const pct = (amt / prev) * 100;
+  return { amt, pct };
+}
+
+// ---------------------------------------------------------------------------
 // Public API — store
 // ---------------------------------------------------------------------------
 
@@ -383,6 +404,15 @@ export async function fetchYahooFinancePrices(
  *   1. INSERT OR REPLACE INTO commodity_prices — upserts the latest snapshot
  *      for source='yahoo' (overwrites the previous row).
  *   2. INSERT INTO commodity_prices_history — appends an immutable history row.
+ *   3. Upserts BRENT and GOLD into market_prices with computed change deltas
+ *      (derived from the previous history row before this snapshot's fetched_at).
+ *      USDVND is excluded from market_prices per FR-DPI-3d (macro-indicators
+ *      surfaces USDVND via the SBV rate path; Yahoo USDVND is an offshore rate).
+ *
+ * DPI-3: prev-close for BRENT and GOLD is read BEFORE the write transaction to
+ * keep the transaction body write-only (better DDD readability). If
+ * commodity_prices_history has <2 rows, prev is null → delta=0 (tolerated on
+ * first run; next daily tick produces non-zero delta — see R-2 in DPI-ARCH.md).
  *
  * @param snapshot - The snapshot to persist.
  * @param db       - Optional database instance (defaults to the app singleton via getDb()).
@@ -392,6 +422,35 @@ export function storeCommoditySnapshot(
   db?: Database,
 ): void {
   const database = db ?? getDb();
+
+  // DPI-3: Read prev-close for BRENT and GOLD BEFORE the write transaction.
+  // Use the most recent history row strictly before the current snapshot's
+  // fetched_at so we always compare against the prior tick (not the current one).
+  // On first run or when history is empty, these return null → deltas default to 0.
+  const prevBrent: number | null =
+    (
+      database
+        .prepare(
+          `SELECT brent_crude_usd FROM commodity_prices_history
+           WHERE source = 'yahoo' AND fetched_at < ?
+           ORDER BY fetched_at DESC LIMIT 1`,
+        )
+        .get(snapshot.fetchedAt) as { brent_crude_usd?: number } | null
+    )?.brent_crude_usd ?? null;
+
+  const prevGold: number | null =
+    (
+      database
+        .prepare(
+          `SELECT gold_usd_per_oz FROM commodity_prices_history
+           WHERE source = 'yahoo' AND fetched_at < ?
+           ORDER BY fetched_at DESC LIMIT 1`,
+        )
+        .get(snapshot.fetchedAt) as { gold_usd_per_oz?: number } | null
+    )?.gold_usd_per_oz ?? null;
+
+  const brentDelta = computeDelta(snapshot.brentCrudeUSD, prevBrent);
+  const goldDelta  = computeDelta(snapshot.goldUSDPerOz,  prevGold);
 
   const upsertLatest = database.prepare(`
     INSERT OR REPLACE INTO commodity_prices
@@ -406,11 +465,16 @@ export function storeCommoditySnapshot(
   // get_market_context macro query finds them and consumers no longer fall
   // back to news-mined values in tracked_indicators (which were producing
   // a $3+ gap vs the live yahoo number — see report 921, signal #509).
+  // DPI-3: ON CONFLICT branch now updates change_amt and change_pct so that
+  // get_macro_snapshot surfaces directional deltas (not hardcoded 0).
+  // USDVND excluded per FR-DPI-3d.
   const upsertMacroPrice = database.prepare(`
     INSERT INTO market_prices (code, price, change_amt, change_pct, volume, updated_at)
-    VALUES (?, ?, 0, 0, 0, ?)
+    VALUES (?, ?, ?, ?, 0, ?)
     ON CONFLICT(code) DO UPDATE SET
       price      = excluded.price,
+      change_amt = excluded.change_amt,
+      change_pct = excluded.change_pct,
       updated_at = excluded.updated_at
   `);
 
@@ -466,10 +530,10 @@ export function storeCommoditySnapshot(
       snapshot.fetchedAt,
     );
     if (snapshot.brentCrudeUSD != null) {
-      upsertMacroPrice.run("BRENT", snapshot.brentCrudeUSD, snapshot.fetchedAt);
+      upsertMacroPrice.run("BRENT", snapshot.brentCrudeUSD, brentDelta.amt, brentDelta.pct, snapshot.fetchedAt);
     }
     if (snapshot.goldUSDPerOz != null) {
-      upsertMacroPrice.run("GOLD", snapshot.goldUSDPerOz, snapshot.fetchedAt);
+      upsertMacroPrice.run("GOLD", snapshot.goldUSDPerOz, goldDelta.amt, goldDelta.pct, snapshot.fetchedAt);
     }
 
     // Task 1087 / report #1070: mirror Brent + Gold into tracked_indicators
