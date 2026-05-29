@@ -55,6 +55,8 @@ function makeTestDb(): Database {
     )
   `);
 
+  // Production schema (verbatim from sqlite_master):
+  // Includes FK constraint — foreign_keys=OFF means it is not enforced in tests.
   db.exec(`
     CREATE TABLE IF NOT EXISTS bctc_eval_results (
       report_id TEXT NOT NULL,
@@ -66,7 +68,8 @@ function makeTestDb(): Database {
       golden_diff_json TEXT NOT NULL DEFAULT '{}',
       detector_version TEXT NOT NULL DEFAULT 'v1',
       computed_at TEXT NOT NULL DEFAULT (datetime('now')),
-      PRIMARY KEY (report_id, stage_no)
+      PRIMARY KEY (report_id, stage_no),
+      CONSTRAINT fk_report FOREIGN KEY (report_id) REFERENCES financial_reports(id) ON DELETE CASCADE
     )
   `);
 
@@ -88,15 +91,27 @@ function makeTestDb(): Database {
     )
   `);
 
+  // Production schema (verbatim from sqlite_master — NO report_id column):
+  // CREATE TABLE pdf_extracted_text (
+  //   id INTEGER PRIMARY KEY AUTOINCREMENT,
+  //   filename TEXT NOT NULL,
+  //   page_number INTEGER NOT NULL,
+  //   text_content TEXT NOT NULL,
+  //   confidence REAL DEFAULT 0,
+  //   extracted_at TEXT NOT NULL DEFAULT (datetime('now')),
+  //   action_code TEXT NOT NULL DEFAULT '',
+  //   UNIQUE(filename, page_number)
+  // )
   db.exec(`
     CREATE TABLE IF NOT EXISTS pdf_extracted_text (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      report_id TEXT,
-      filename TEXT,
+      filename TEXT NOT NULL,
       page_number INTEGER NOT NULL,
-      text_content TEXT NOT NULL DEFAULT '',
-      confidence REAL,
-      extracted_at TEXT NOT NULL DEFAULT (datetime('now'))
+      text_content TEXT NOT NULL,
+      confidence REAL DEFAULT 0,
+      extracted_at TEXT NOT NULL DEFAULT (datetime('now')),
+      action_code TEXT NOT NULL DEFAULT '',
+      UNIQUE(filename, page_number)
     )
   `);
 
@@ -350,16 +365,21 @@ describe("bctcEvalPageHandler — TC-3: page not in any PEK unit", () => {
 // ─── Test: TC-8 Stage 3 with OCR row present ──────────────────────────────────
 
 describe("bctcEvalPageHandler — TC-8: stage 3 OCR row present", () => {
-  it("stage 3 has_ocr_row:true when pdf_extracted_text row exists for report_id + page", () => {
+  it("stage 3 has_ocr_row:true when pdf_extracted_text row exists for filename + page", () => {
     const db = makeTestDb();
-    db.prepare(`INSERT INTO financial_reports (id, action_code, period_year) VALUES (?, ?, ?)`).run(REPORT_UUID, "VNM", 2025);
+    // financial_reports must have pdf_path so the handler can resolve the filename
+    db.prepare(
+      `INSERT INTO financial_reports (id, action_code, period_year, pdf_path) VALUES (?, ?, ?, ?)`
+    ).run(REPORT_UUID, "VNM", 2025, "/data/pdfs/vnm_q4_2025.pdf");
     insertAllEvalRows(db, REPORT_UUID);
 
-    // Insert OCR row by report_id
+    // Production pdf_extracted_text has NO report_id column — insert by filename only.
+    // Handler resolves: financial_reports.pdf_path → basename "vnm_q4_2025.pdf"
+    //                   → pdf_extracted_text WHERE filename = 'vnm_q4_2025.pdf' AND page_number = 7
     db.prepare(`
-      INSERT INTO pdf_extracted_text (report_id, filename, page_number, text_content, confidence)
-      VALUES (?, ?, ?, ?, ?)
-    `).run(REPORT_UUID, "vnm_q4_2025.pdf", 7, "Doanh thu thuần 1,234,567", 0.93);
+      INSERT INTO pdf_extracted_text (filename, page_number, text_content, confidence)
+      VALUES (?, ?, ?, ?)
+    `).run("vnm_q4_2025.pdf", 7, "Doanh thu thuần 1,234,567", 0.93);
 
     const { res, getMock } = makeMockRes();
     bctcEvalPageHandler(makeMockReq(), res, db, REPORT_UUID, 7);

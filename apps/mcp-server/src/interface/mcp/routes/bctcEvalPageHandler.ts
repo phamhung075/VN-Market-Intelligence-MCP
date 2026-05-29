@@ -98,19 +98,11 @@ export function bctcEvalPageHandler(
     }
 
     // ── 2. Stage 3 page annotation: OCR confidence + text_length ──────────
-    // basename(pdf_path) via SQLite's replace() trick (no built-in basename in SQLite)
-    const ocrRow = db
-      .prepare<OcrPageRow, [string, number]>(
-        `SELECT pet.confidence,
-                LENGTH(pet.text_content) AS text_length_chars
-         FROM pdf_extracted_text pet
-         WHERE pet.report_id = ?
-           AND pet.page_number = ?
-         LIMIT 1`,
-      )
-      .get(reportId, pageNo) as OcrPageRow | null;
-
-    // Fallback: try by filename when report_id column is absent / mismatched
+    // Production pdf_extracted_text has NO report_id column.
+    // Real columns: id, filename, page_number, text_content, confidence,
+    //               extracted_at, action_code.
+    // Lookup path: resolve pdf_path from financial_reports → extract basename
+    // → query pdf_extracted_text by filename + page_number.
     let ocrAnnotation: {
       page_no: number;
       ocr_confidence: number | null;
@@ -118,51 +110,34 @@ export function bctcEvalPageHandler(
       has_ocr_row: boolean;
     };
 
-    if (ocrRow !== null) {
-      ocrAnnotation = {
-        page_no: pageNo,
-        ocr_confidence: ocrRow.confidence ?? null,
-        text_length_chars: ocrRow.text_length_chars ?? null,
-        has_ocr_row: true,
-      };
-    } else {
-      // Try via filename join (secondary lookup)
-      const pdfPathRow = db
-        .prepare<PdfPathRow, [string]>(
-          `SELECT pdf_path FROM financial_reports WHERE id = ? LIMIT 1`,
+    const pdfPathRow = db
+      .prepare<PdfPathRow, [string]>(
+        `SELECT pdf_path FROM financial_reports WHERE id = ? LIMIT 1`,
+      )
+      .get(reportId) as PdfPathRow | null;
+
+    if (pdfPathRow?.pdf_path) {
+      // Extract basename: take the last path segment
+      const parts = pdfPathRow.pdf_path.replace(/\\/g, "/").split("/");
+      const basename = parts[parts.length - 1] ?? "";
+      const ocrByFilename = db
+        .prepare<OcrPageRow, [string, number]>(
+          `SELECT confidence,
+                  LENGTH(text_content) AS text_length_chars
+           FROM pdf_extracted_text
+           WHERE filename = ?
+             AND page_number = ?
+           LIMIT 1`,
         )
-        .get(reportId) as PdfPathRow | null;
+        .get(basename, pageNo) as OcrPageRow | null;
 
-      if (pdfPathRow?.pdf_path) {
-        // Extract basename: take the last path segment
-        const parts = pdfPathRow.pdf_path.replace(/\\/g, "/").split("/");
-        const basename = parts[parts.length - 1] ?? "";
-        const ocrByFilename = db
-          .prepare<OcrPageRow, [string, number]>(
-            `SELECT confidence,
-                    LENGTH(text_content) AS text_length_chars
-             FROM pdf_extracted_text
-             WHERE filename = ?
-               AND page_number = ?
-             LIMIT 1`,
-          )
-          .get(basename, pageNo) as OcrPageRow | null;
-
-        if (ocrByFilename !== null) {
-          ocrAnnotation = {
-            page_no: pageNo,
-            ocr_confidence: ocrByFilename.confidence ?? null,
-            text_length_chars: ocrByFilename.text_length_chars ?? null,
-            has_ocr_row: true,
-          };
-        } else {
-          ocrAnnotation = {
-            page_no: pageNo,
-            ocr_confidence: null,
-            text_length_chars: null,
-            has_ocr_row: false,
-          };
-        }
+      if (ocrByFilename !== null) {
+        ocrAnnotation = {
+          page_no: pageNo,
+          ocr_confidence: ocrByFilename.confidence ?? null,
+          text_length_chars: ocrByFilename.text_length_chars ?? null,
+          has_ocr_row: true,
+        };
       } else {
         ocrAnnotation = {
           page_no: pageNo,
@@ -171,6 +146,13 @@ export function bctcEvalPageHandler(
           has_ocr_row: false,
         };
       }
+    } else {
+      ocrAnnotation = {
+        page_no: pageNo,
+        ocr_confidence: null,
+        text_length_chars: null,
+        has_ocr_row: false,
+      };
     }
 
     // ── 3. Stage 4 page annotation: TABLE_RECONSTRUCT partial-fragment ─────
