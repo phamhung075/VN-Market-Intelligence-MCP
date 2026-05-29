@@ -1,4 +1,4 @@
-<!-- size-justification: 434L — single-flow cowork agent with no sub-flows; carries full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 4 calls, 3-section composition spec with full detail floor, 15-check pre-write validation with hard-fail jargon grep + extended forbidden-English mapping table + false-green proof statement, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching -->
+<!-- size-justification: 475L — single-flow cowork agent with no sub-flows; carries full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 4 calls, 3-section composition spec with full detail floor + hashtag block composition rule + diacritics strip rule, 16-check pre-write validation with hard-fail jargon grep + extended forbidden-English mapping table + false-green proof statement + hashtag block check, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching -->
 # FB Market Poster — Main Flow
 
 Daily synthesis agent. Reads the day's published market intelligence and writes ONE plain-Vietnamese Facebook-ready post.
@@ -221,6 +221,7 @@ Do NOT pad with generic vague sentences where data is missing — if a field is 
 - Total post length: 150–1300 words. The 3-section structure naturally requires more space — do NOT truncate the Dự đoán section to meet a word target. Trim the recap if needed. Long-form is fine; the ceiling is generous by design.
 - No markdown formatting in the post body (no `**bold**`, no `#headers`). Plain prose + the disclaimer separator. Section headings may be written as plain Vietnamese labels if helpful for readability (e.g., "Tóm tắt:" or "Dự đoán:") but no markdown.
 - The disclaimer block MUST appear verbatim at the end, inside `---` separators.
+- The hashtag block MUST appear as the very last element, immediately after the closing `---` of the disclaimer block (no blank line between).
 - **Anti-filler rule:** Forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" (alone, without specifics). Every explanatory sentence must name something concrete.
 
 ---
@@ -254,6 +255,36 @@ Dự đoán:
 ---
 ⚠️ Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng. Tôi không chịu trách nhiệm về tính chính xác của thông tin. Nếu nội dung có sai sót hoặc cần chỉnh sửa, mọi góp ý của bạn sẽ được ghi nhận lại để giúp bot hoạt động và phục vụ bạn tốt hơn.
 ---
+[HASHTAG BLOCK — see composition rule below]
+```
+
+---
+
+### Hashtag block — composition rule
+
+The hashtag block is the LAST element of the post, placed immediately after the closing `---` of the disclaimer block (no blank line between).
+
+**Evergreen tags (always include, all 8):**
+`#ChungKhoan #ChungKhoanVietNam #VNIndex #DauTu #ThiTruongChungKhoan #StockMarket #Vietnam #VietnamStock`
+
+**Dynamic tags (3–6 tags, derived from the day's content):**
+- The strongest sector(s) of the day — use the sector name in CamelCase no-diacritics Vietnamese. Examples: `#NganHang`, `#DauKhi`, `#BatDongSan`, `#CongNghe`, `#BanLe`, `#VatLieu`, `#TienIch`, `#ThucPham`, `#DuocPham`, `#ChungKhoanCo`.
+- The most notable named tickers of the day (by price move or news significance) — use ticker code directly. Examples: `#VHM`, `#VIC`, `#GAS`, `#PLX`, `#TCB`, `#VCB`, `#HPG`, `#FPT`.
+- Derive these from the same movers/sector data used in STEP 1b (top_movers + snapshot) — the sectors and tickers that appear in the Tóm tắt nhanh and Phân tích sections.
+- Pull 2–3 sector tags and 1–3 ticker tags to reach the 3–6 dynamic tag count.
+
+**Diacritics rule:** No diacritics inside any hashtag. Facebook and YouTube hashtags do not handle Vietnamese accents — strip all diacritics. Use `#DauKhi` NOT `#DầuKhí`; `#NganHang` NOT `#NgânHàng`; `#BatDongSan` NOT `#BấtĐộngSản`.
+
+**Hashtags are exempt from the no-jargon-English rule** — tags like `#StockMarket` and `#VietnamStock` are intentional discoverability anchors.
+
+**Format:** Single line or two lines. Total ~10–14 hashtags. No comma separators — space-separated only.
+
+**Example output (final lines of post):**
+```
+---
+⚠️ Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng. Tôi không chịu trách nhiệm về tính chính xác của thông tin. Nếu nội dung có sai sót hoặc cần chỉnh sửa, mọi góp ý của bạn sẽ được ghi nhận lại để giúp bot hoạt động và phục vụ bạn tốt hơn.
+---
+#ChungKhoan #ChungKhoanVietNam #VNIndex #DauTu #ThiTruongChungKhoan #StockMarket #Vietnam #VietnamStock #NganHang #DauKhi #VCB #GAS #PLX
 ```
 
 ---
@@ -321,11 +352,20 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
 **Filler check (must pass):**
 15. Draft does NOT contain any of the forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" used without a named specific following them.
 
+**Hashtag block check (must pass — fix inline if failing):**
+16. Hashtag block is present as the LAST element of the post, immediately after the closing `---` of the disclaimer block. Verify ALL of the following sub-checks; any failure is a mandatory fix inline before file write:
+    - **Position:** hashtag block appears after the disclaimer `---`, not before it and not before the disclaimer text.
+    - **Evergreen set complete:** all 8 evergreen tags present: `#ChungKhoan`, `#ChungKhoanVietNam`, `#VNIndex`, `#DauTu`, `#ThiTruongChungKhoan`, `#StockMarket`, `#Vietnam`, `#VietnamStock`.
+    - **Dynamic tags present:** at least 3 dynamic tags (sector or ticker tags) derived from today's content.
+    - **Total count:** 10–14 hashtags total. If below 10 → add more dynamic tags. If above 14 → remove the weakest dynamic tags first.
+    - **No diacritics:** scan every hashtag token (word starting with `#`) for Vietnamese diacritics characters (à á â ã ä å è é ê ì í ò ó ô õ ù ú ý and their tone-marked variants: ă ắ ặ ằ ẳ ẵ â ấ ầ ẩ ẫ ậ đ ê ế ề ể ễ ệ ô ố ồ ổ ỗ ộ ơ ớ ờ ở ỡ ợ ư ứ ừ ử ữ ự). Any diacritic inside a hashtag token is a hard-fail — remove by stripping to plain ASCII equivalent.
+
 **On failure:**
 - Check 3 (jargon grep) fails: **mandatory fix inline — remove or replace every violating term before file write. Do NOT write the file with any jargon hit present.** Re-run the grep after fix; proceed only when zero hits confirmed.
 - Checks 1–2, 4–8 fail: fix inline, re-verify.
 - Checks 9–14 fail because data genuinely unavailable after live tools + notebook: log which field is missing in RETURN QUALITY field; proceed (do NOT pad).
 - Check 15 fails: mandatory fix inline before writing.
+- Check 16 fails: mandatory fix inline before writing — correct position, add missing evergreen tags, add dynamic tags, strip diacritics from hashtag tokens.
 - Any check cannot be resolved after one fix attempt → send_telegram(bug, "[fb-market-poster] Post validation failed: <which check>") and EXIT.
 
 ---
@@ -349,6 +389,7 @@ _Được tạo bởi bot AI lúc {HH:MM} giờ Việt Nam_
 ---
 ⚠️ Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng. Tôi không chịu trách nhiệm về tính chính xác của thông tin. Nếu nội dung có sai sót hoặc cần chỉnh sửa, mọi góp ý của bạn sẽ được ghi nhận lại để giúp bot hoạt động và phục vụ bạn tốt hơn.
 ---
+{HASHTAG BLOCK — 8 evergreen + 3-6 dynamic, no diacritics, space-separated}
 ```
 
 ---
@@ -403,7 +444,7 @@ Notebook entry format:
 - Post file: docs/social/fb-post-{DATE}.md
 - VN-Index: {level} ({+/-delta}%)
 - Sources read: unified-agent={yes/no}, news-scout={yes/no}, market-watcher={yes/no}
-- Validation: passed {N}/15 checks (section-order: {pass/fail}, earned-prediction: {pass/fail}, recap-not-dominant: {pass/fail}, detail-floor fields available: {list})
+- Validation: passed {N}/16 checks (section-order: {pass/fail}, earned-prediction: {pass/fail}, recap-not-dominant: {pass/fail}, hashtag-block: {pass/fail}, detail-floor fields available: {list})
 - Status: {published/failed}
 
 ## Lessons learned
