@@ -26,6 +26,7 @@ from infrastructure.generic_md_table_extractor import (
     _blank_fingerprint,
     _find_ink_bbox,
     _detect_column_gutters_200dpi,
+    _is_title_band,
 )
 
 
@@ -230,36 +231,93 @@ class TestFingerprintGroupingLogic:
     injected fingerprints (no real PDF). Tests AC-0 and schema-page logic.
     """
 
-    def _simulate_grouping(self, fingerprints: list) -> list:
+    def _simulate_grouping(
+        self,
+        fingerprints: list,
+        stored_texts: list = None,
+    ) -> list:
         """
         Run the continuity test against a list of fingerprints,
         producing a list of unit groups: [[page_nums], ...].
-        Mirrors the logic in build_document_map.
+
+        Mirrors the UPDATED state-machine logic in build_document_map
+        (BCTC-TABLE-BOUNDARY fix):
+          - NO_TABLE / TABLE_OPEN states
+          - Deferred pending_blanks buffer (Option B)
+          - D-5 title-band check via stored_texts parameter
+          - Prose pages NEVER appended to a table unit
+
+        Args:
+            fingerprints: List of page fingerprint dicts.
+            stored_texts: Optional list of stored OCR text strings, parallel
+                to fingerprints. Defaults to [""] * len(fingerprints).
         """
+        if stored_texts is None:
+            stored_texts = [""] * len(fingerprints)
+
         units = []
-        current_pages = []
+        current_pages: list = []
         current_fp = None
+        last_committed_d1_fp = None
+        pending_blanks: list = []
+        state = "NO_TABLE"
 
         for i, fp in enumerate(fingerprints):
             page_num = i + 1
             page_type = fp.get("page_type", "prose")
+            stored_text = stored_texts[i] if i < len(stored_texts) else ""
 
             if page_type == "blank":
-                if current_pages:
-                    current_pages.append(page_num)
+                pending_blanks.append(page_num)
                 continue
 
-            if current_fp is None:
-                current_pages = [page_num]
-                current_fp = fp
-                continue
+            if state == "NO_TABLE":
+                pending_blanks = []
+                if page_type == "table":
+                    # Flush any open prose unit before starting a table unit.
+                    if current_pages:
+                        units.append(list(current_pages))
+                    current_pages = [page_num]
+                    current_fp = fp
+                    last_committed_d1_fp = fp
+                    state = "TABLE_OPEN"
+                else:
+                    if current_fp is None:
+                        current_pages = [page_num]
+                        current_fp = fp
+                    elif _fingerprints_continuous(current_fp, fp, stored_text_b=stored_text):
+                        current_pages.append(page_num)
+                        current_fp = fp
+                    else:
+                        units.append(list(current_pages))
+                        current_pages = [page_num]
+                        current_fp = fp
 
-            if _fingerprints_continuous(current_fp, fp):
-                current_pages.append(page_num)
-            else:
-                units.append(list(current_pages))
-                current_pages = [page_num]
-                current_fp = fp
+            elif state == "TABLE_OPEN":
+                if page_type == "prose":
+                    pending_blanks = []
+                    units.append(list(current_pages))
+                    current_pages = [page_num]
+                    current_fp = fp
+                    last_committed_d1_fp = None
+                    state = "NO_TABLE"
+                else:
+                    assert last_committed_d1_fp is not None
+                    continuation = _fingerprints_continuous(
+                        last_committed_d1_fp, fp, stored_text_b=stored_text
+                    )
+                    if continuation:
+                        current_pages.extend(pending_blanks)
+                        pending_blanks = []
+                        current_pages.append(page_num)
+                        last_committed_d1_fp = fp
+                        current_fp = fp
+                    else:
+                        pending_blanks = []
+                        units.append(list(current_pages))
+                        current_pages = [page_num]
+                        current_fp = fp
+                        last_committed_d1_fp = fp
 
         if current_pages:
             units.append(current_pages)
