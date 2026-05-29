@@ -1,5 +1,67 @@
 # QA — Notebook
 
+## cycle-142 · 2026-05-29 · BOOTSTRAP-ENUM-BCTC (commit a0103b84) — APPROVED
+
+**Task:** FIX gate — bctc-analyst enum addition to VALID_AGENT_NAMES | **Verdict:** APPROVED
+
+```
+date: 2026-05-29T17:48Z
+type: fix-qa-gate (BOOTSTRAP-ENUM-BCTC)
+sprint: BOOTSTRAP-ENUM-BCTC
+fix_commit: a0103b84 (fix(mcp-server): add bctc-analyst to get_cycle_bootstrap agent_name enum)
+source_bug: Telegram report #3009 / log #1154 (invalid_enum_value for bctc-analyst)
+container: vn-market-intelligence-mcp-mcp-server-1 (healthy, Up 2 min — force-recreated by ops)
+
+check_1_live_probe_bctc_analyst:
+  method: JSON-RPC POST http://localhost:3000/mcp
+  tool: get_cycle_bootstrap { agent_name: "bctc-analyst" }
+  result: BootstrapResult { agent_signals: [], market_context: populated, system_status: populated, elapsed_ms: 6 }
+  sub_call_timings: { signals: 1ms, context: 5ms, status: 1ms }
+  error: none
+  verdict: PASS — real BootstrapResult returned, no enum rejection
+
+check_2_regression_financial_analyst:
+  method: JSON-RPC POST http://localhost:3000/mcp
+  tool: get_cycle_bootstrap { agent_name: "financial-analyst" }
+  result: BootstrapResult { agent_signals: [], market_context: populated }
+  verdict: PASS — legacy agent unaffected by enum addition
+
+check_3_guard_test_1975_red_proof:
+  method: temporarily removed "bctc-analyst" from VALID_AGENT_NAMES, ran test
+  result_with_removal: 4 pass / 2 FAIL (bctc-analyst NOT in VALID_AGENT_NAMES + functional bootstrap test)
+  restore: reverted, git diff HEAD == empty (byte-identical)
+  result_after_restore: 6 pass / 0 fail (6 tests, 15 expect() calls)
+  verdict: PROVEN-RED — gate is not vacuous; fails exactly on removal
+
+check_4_tsc_clean:
+  command: bun tsc --noEmit (apps/mcp-server)
+  result: exit 0, 0 errors
+  verdict: PASS
+
+check_5_test_suites:
+  1975-bootstrap-enum-bctc-analyst-guard.test.ts: 6 pass / 0 fail (301ms)
+  1563-get-cycle-bootstrap.test.ts: 7 pass / 0 fail (126ms)
+  both_files: 13 total / 0 fail — GREEN
+
+source_data_verify:
+  getCycleBootstrap.ts VALID_AGENT_NAMES line 27: "bctc-analyst" PRESENT
+  system-map.json bctc-analyst type: "cowork" CONFIRMED (guard test derives from this)
+  cycleBootstrapTool.ts description: "bctc-analyst" listed in valid values
+
+telegram_report:
+  report_id: 3009
+  resolution: fixed (process_telegram_report called)
+  delete_success: true
+  telegram_message: 2613 deleted
+
+ddd: PASS — enum addition in application/usecases (correct layer; no domain→infra violation)
+security: PASS — no process.env, no secrets added
+verdict: APPROVED
+next: po (BOOTSTRAP-ENUM-BCTC EXIT sign-off)
+```
+
+---
+
 ## cycle-141 · 2026-05-28 · HCM-DISAMBIG-QA (commits 10438892 + de391d9b) — APPROVED
 
 **Task:** HCM-QA acceptance gate for HCM-DISAMBIG sprint | **Verdict:** APPROVED
