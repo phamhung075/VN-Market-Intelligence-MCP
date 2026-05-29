@@ -1,5 +1,231 @@
 # QA — Notebook
 
+## cycle-143 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE (commits 75c7acf5 + 5ad6df9c) — YELLOW
+
+**Task:** BCTC-EVAL-INSPECT-MERGE Task #9 — 6-gate eval merge into /api/bctc-inspect page-by-page | **Verdict:** YELLOW
+
+```
+date: 2026-05-29T20:40Z
+type: acceptance-gate (BCTC-EVAL-INSPECT-MERGE)
+sprint: BCTC-EVAL-INSPECT-MERGE
+commits_under_test: 75c7acf5 (feature) + 5ad6df9c (prod-schema fix)
+container: mcp-server healthy, force-recreated (pre-confirmed by task)
+fpt_sentinel: e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+
+═══════════════════════════════════════════════════════════════
+AC1 — New page endpoint live
+═══════════════════════════════════════════════════════════════
+
+probe_page_1:
+  url: GET /api/bctc-eval/e71f845d-ffa5-48f9-8f09-30ac2cd09c65/page/1
+  http_status: 200
+  gate_strip_count: 6
+  overall_status: red
+  schema_version: "1"
+  verdict: PASS
+
+probe_page_2:
+  http_status: 200
+  gate_strip_count: 6
+  stage3_ocr_confidence: 0.8 (real OCR row)
+  verdict: PASS
+
+probe_page_99 (high-page sanity):
+  http_status: 200
+  gate_strip_count: 6
+  stage3_has_ocr_row: false (no OCR for page 99 — correct, FPT has 46 pages)
+  stage4_pek_unit_id: null (no unit for page 99 — correct)
+  verdict: PASS — no 500
+
+AC1: PASS
+
+═══════════════════════════════════════════════════════════════
+AC2 — report_level honesty
+═══════════════════════════════════════════════════════════════
+
+stage_1_RASTERIZE:   report_level=true,  label_suffix="(toàn báo cáo)", page_annotation=absent
+stage_2_LAYOUT_DETECT: report_level=true, label_suffix="(toàn báo cáo)", page_annotation=absent
+stage_3_OCR:         report_level=false, label_suffix=null, page_annotation={page_no:1, ocr_confidence:0.8, text_length_chars:1529, has_ocr_row:true}
+stage_4_TABLE:       report_level=false, label_suffix=null, page_annotation={page_no:1, pek_unit_id:null, pek_unit_page_numbers:[], is_multi_page_unit:false, partial_fragment_warning:false}
+stage_5_MARKDOWN:    report_level=true,  label_suffix="(toàn báo cáo)", page_annotation=absent
+stage_6_STRUCTURED:  report_level=true,  label_suffix="(toàn báo cáo)", page_annotation=absent
+
+anti-false-green boundary:
+  report-level stages 1/2/5/6: no fabricated per-page granularity — CONFIRMED
+  page-scoped stages 3/4: real data from pdf_extracted_text + bctc_layout_units — CONFIRMED
+
+AC2: PASS
+
+═══════════════════════════════════════════════════════════════
+AC3 — Partial-fragment banner
+═══════════════════════════════════════════════════════════════
+
+fpt_sentinel_layout_units:
+  db_query: SELECT unit_id, page_numbers_json FROM bctc_layout_units WHERE report_id='e71f845d...'
+  multi_page_units_found: [7,8,9], [22..29], [30..37], [38..45] — confirmed
+  single_page_units: [5], [16], [46]
+
+probe_page_7_fpt_sentinel:
+  stage4_partial_fragment_warning: true
+  stage4_pek_unit_page_numbers: [7, 8, 9]
+  stage4_is_multi_page_unit: true
+  stage4_partial_label: "Đang xem trang 7 trong đơn vị bảng trải dài trang 7–9"
+  verdict: PASS — WARNING fires for multi-page unit
+
+probe_page_5_fpt_sentinel (single-page unit):
+  stage4_partial_fragment_warning: false
+  stage4_is_multi_page_unit: false
+  verdict: PASS — NO warning for single-page unit
+
+additional_corpus_report (0c6f0535 DGC, unit spans [5..10]):
+  probe_page_5: partial_fragment_warning=true, pek_unit_page_numbers=[5,6,7,8,9,10] — PASS
+
+live_anti_false_green:
+  multi_page fires: page 7 → partial_fragment_warning=true (CONFIRMED)
+  single_page silent: page 5 → partial_fragment_warning=false (CONFIRMED)
+  deliberate_violation_test (DV-1 in test suite): 12/12 passing, DV-1 proven non-hollow
+
+AC3: PASS (FPT sentinel has multi-page units; criterion not vacuous)
+
+═══════════════════════════════════════════════════════════════
+AC4 — PDF pagination fix
+═══════════════════════════════════════════════════════════════
+
+html_functions_present:
+  navigateToPage: 7 occurrences (FOUND)
+  ensurePdfPageRendered: 3 occurrences (FOUND)
+  renderEvalStrip: 3 occurrences (FOUND)
+  renderOcr: 4 occurrences (FOUND)
+
+navigateToPage_body_confirmed:
+  1. await ensurePdfPageRendered(currentDocId, pageNum) → PDF scroll
+  2. await renderOcr(currentDocId, pageNum)             → OCR text
+  3. await renderEvalStrip(currentDocId, pageNum)       → eval gate strip
+  4. if (zoneOverlayEnabled) await renderZoneOverlay    → zones
+  calls: btnPrev → navigateToPage(currentPage - 1), btnNext → navigateToPage(currentPage + 1)
+
+doc_select_handler:
+  sequence: await renderPdf → await navigateToPage(1) → renderTable → renderMdTables
+  pdfNumPages_populated_before_navigate: CONFIRMED
+
+headless_check_note: static HTML verified; actual browser scroll not headless-testable
+AC4: PASS (wiring confirmed via static HTML inspection)
+
+═══════════════════════════════════════════════════════════════
+AC5 — Existing inspect intact
+═══════════════════════════════════════════════════════════════
+
+bctc_inspect_html:    GET /api/bctc-inspect → HTTP 200 (HTML page served) — PASS
+bctc_eval_detail:     GET /api/bctc-eval/e71f845d... → HTTP 200, schema_version="1", 6 stages — PASS
+has_pek_fpt_sentinel: GET /api/bctc-inspect/ocr/e71f845d...?page=1 → has_pek=true — PASS
+existing_routes_untouched: bctcInspectHandler.ts / bctcEvalDetailHandler.ts / bctcEvalStore.ts 0-diff — PASS
+
+AC5: PASS
+
+═══════════════════════════════════════════════════════════════
+AC6 — Vietnamese trust prefix
+═══════════════════════════════════════════════════════════════
+
+strings_in_html:
+  "ĐỘ TIN CẬY THẤP":             FOUND (overall trust header, red status)
+  "ĐỘ TIN CẬY TRUNG BÌNH":       FOUND (overall trust header, yellow status)
+  "TIN CẬY CAO":                  FOUND (overall trust header, green status)
+  "(toàn báo cáo)":               FOUND (report-level stage suffix)
+  "FRAGMENT TRANG":               FOUND (fragment banner)
+  "TRÍCH XUẤT ĐỎ":                NOT FOUND
+  "độ tin cậy thấp" (lowercase):  NOT FOUND
+
+gap:
+  M-5 spec says: per-stage red prefix "[ĐỘ TIN CẬY THẤP — TRÍCH XUẤT ĐỎ giai đoạn N]"
+  and yellow prefix "[độ tin cậy thấp]" when gate_failures non-empty.
+  The page endpoint (/page/N) does NOT return gate_failures_json.
+  renderGateStrip uses colored dot for status but does NOT emit the inline per-stage text prefix.
+  Overall trust header ("ĐỘ TIN CẬY THẤP") is present.
+  Per-stage inline trust prefix labels are NOT implemented.
+
+severity: NON-BLOCKING (UI is plain Vietnamese; colored dot + overall header conveys trust level;
+  no jargon present; functional requirements are met; anti-false-green not impacted)
+
+AC6: YELLOW — overall trust label present and correct; per-stage "[TRÍCH XUẤT ĐỎ giai đoạn N]"
+  inline text absent from renderGateStrip (page endpoint omits gate_failures_json; M-5 partially unimplemented)
+
+═══════════════════════════════════════════════════════════════
+AC7 — Frozen/PEK pristine
+═══════════════════════════════════════════════════════════════
+
+pek_subtree:
+  command: git -C apps/pdf-extractor/PDF-Extract-Kit status --porcelain | wc -l
+  result: 0 — PASS
+
+frozen_files_diff:
+  bctcEvalDetailHandler.ts: 0 bytes diff vs HEAD — PASS
+  bctcInspectHandler.ts: 0 bytes diff vs HEAD — PASS
+  bctcEvalStore.ts: 0 bytes diff vs HEAD — PASS
+
+AC7: PASS
+
+═══════════════════════════════════════════════════════════════
+TEST SUITE
+═══════════════════════════════════════════════════════════════
+
+test_run:
+  command: docker compose exec -T mcp-server bun test src/__tests__/bctcEvalPageHandler.test.ts
+  result: 12 pass / 0 fail (64 expect() calls, 182ms)
+  tests_passing:
+    TC-1: multi-page PEK unit → partial_fragment_warning:true — PASS
+    TC-2: single-page unit → partial_fragment_warning:false — PASS
+    TC-3: page not in any unit → pek_unit_id:null — PASS
+    TC-4: no eval rows → 409 EVAL_NOT_COMPUTED — PASS
+    TC-5: invalid UUID → 400 INVALID_UUID — PASS
+    TC-6: invalid page_no (0, -1, NaN) → 400 INVALID_PAGE_NO — PASS
+    TC-7: stages 1/2/5/6 report_level:true + label_suffix:"(toàn báo cáo)" — PASS
+    TC-8: stage 3 has_ocr_row:true when row exists — PASS
+    TC-9: stage 3 has_ocr_row:false when no row — PASS
+    DV-1: deliberate-violation smoke — PASS (gate proven non-hollow)
+
+fixture_schema_vs_production:
+  pdf_extracted_text: NO report_id column (correct; production schema) — CONFIRMED
+  bctc_eval_results: PRIMARY KEY (report_id, stage_no) — matches production
+  false_green_from_prior_sprint: FIXED — test uses verbatim production schema
+
+tsc: exit 0 (0 errors, verified in container via bun run check)
+ddd: PASS — bctcEvalPageHandler.ts in interface/ layer imports from infrastructure/ (legal DDD direction)
+  domain/ has no infra imports in modified files
+security: PASS — no process.env, no hardcoded secrets, all SQL parameterized
+
+═══════════════════════════════════════════════════════════════
+VERDICT
+═══════════════════════════════════════════════════════════════
+
+overall_verdict: YELLOW
+
+PASS (6/7 criteria):
+  AC1: page endpoint 200, 6 stages, page/2 and page/99 sane — PASS
+  AC2: report_level honesty (stages 1/2/5/6 true, stages 3/4 false) — PASS
+  AC3: partial_fragment_warning fires for multi-page units (FPT page 7 [7,8,9] → true); silent for single-page (page 5 [5] → false) — PASS
+  AC4: navigateToPage + ensurePdfPageRendered present, wiring confirmed — PASS
+  AC5: existing inspect 200, eval detail 200, has_pek=true for FPT — PASS
+  AC7: PEK pristine (0), frozen files untouched — PASS
+  test_suite: 12/12 PASS, fixture schema matches production — PASS
+
+YELLOW (1/7 criteria):
+  AC6: overall trust label ("ĐỘ TIN CẬY THẤP") PRESENT; per-stage inline "[TRÍCH XUẤT ĐỎ giai đoạn N]"
+    text NOT present in renderGateStrip. Page endpoint omits gate_failures_json, so HTML cannot
+    conditionally render the per-stage prefix on failure-only stages. M-5 spec partially unimplemented.
+    Impact: non-blocking — trust level is conveyed via colored dot + overall header; no false-green risk.
+
+BLOCKING: none
+NEXT_STEP: fixer or dev-mcp-server to add gate_failures pass-through to page endpoint response
+  + per-stage conditional prefix in renderGateStrip. OR PO to accept YELLOW as done
+  (overall label + dot color satisfies plain-Vietnamese requirement; the extra prefix is cosmetic).
+
+non_blocking_observation:
+  FPT sentinel overall_status="red" (S5 MARKDOWN_RENDER roundtrip_row_match_ratio=0) — pre-existing
+  data quality issue, not a regression; eval correctly surfaces it.
+```
+
+---
+
 ## cycle-142 · 2026-05-29 · BOOTSTRAP-ENUM-BCTC (commit a0103b84) — APPROVED
 
 **Task:** FIX gate — bctc-analyst enum addition to VALID_AGENT_NAMES | **Verdict:** APPROVED
