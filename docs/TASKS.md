@@ -4,9 +4,11 @@
 
 ---
 
-## Sprint VNH-SECTOR-FIX — Watchlist Seed Sector Misclassification (data-integrity)
+## Sprint VNH-SECTOR-FIX → ✅ CLOSED 2026-05-29T17:45Z
 
-**Status:** OPEN — BA spec next. **Priority: HIGH (fleet-wide data-integrity, public-facing leak).** Zone: `apps/mcp-server/` (dev) + live DB (ops). Created 2026-05-29 (PO, user-tracked bug).
+**Status:** DONE. VNH domain real_estate→agriculture in seed + live market.db (rebuilt container); DomainType field typed string→DomainType (compile-time guard); 3 comment fixes (DAG/TCH/DPM). QA 24/24 green, tsc clean, anti-false-green PROVEN (bogus domain → TS2322). PO done-bar sign-off: independent live `get_cycle_bootstrap(market-watcher)` confirms `VNH [HNX] agriculture` (NOT real_estate); QA's `news-scout` bootstrap agreed. Both done-bar conditions met. Commits: dev 9713118f, qa 29d5629f. **Lesson:** seedWatchlist domain field was typed `string` (compiled bad enum values silently); tightening to `DomainType` makes the whole seed compile-checked — see backlog note on fleet-wide string-vs-enum hardening. Created/closed 2026-05-29.
+
+> Closed-out detail (was OPEN — BA spec next; Priority HIGH fleet-wide data-integrity public-facing leak; Zone apps/mcp-server/ + live DB; user-tracked bug):
 
 **Bug:** `seedWatchlist.ts:83` seeds VNH as `domain: "real_estate"`. VNH = CTCP Đầu tư Việt Việt Nhật = seafood/food import-export (xuất nhập khẩu thủy hải sản & thực phẩm), HNX. Wrong label seeded into market.db → propagates via `get_cycle_bootstrap` to ALL cowork agents (alert-commander, news-scout, market-watcher, CHEF/unified, fb-market-poster) → mislabels VNH as real-estate in alerts/notebooks/signals/public FB draft.
 
@@ -23,9 +25,11 @@
 - ✅ VNH-IMPL (dev-mcp-server) — edit `seedWatchlist.ts` (VNH value + comment + 3 audit comments) + add idempotent `UPDATE watchlist SET domain='agriculture' WHERE code='VNH'` correction in seed/migration path (seed UPSERT alone fixes fresh DBs; running DB needs explicit UPDATE since UPSERT only fires on re-insert) + guard test (pattern: `1787-gvr-sector-fix.test.ts`) asserting WATCHLIST_SEED has no `real_estate` VNH and every seed `domain` ∈ DomainType union.
 - ✅ VNH-DEPLOY (ops) — apply correction to LIVE market.db in running container + rebuild/restart mcp-server (memory: rebuild-after-dev-change). Verify via direct in-container `market.db` query (bun, no sqlite3): `SELECT code,domain FROM watchlist WHERE code='VNH'` → must read `agriculture`.
 - ✅ VNH-QA (qa) — confirm one agent's next `get_cycle_bootstrap` shows VNH NOT under real_estate + guard test RED-on-regression. QA APPROVED 2026-05-29. Handoff: `docs/handoffs/VNH-QA-handoff.md`.
-- 🔄 VNH-EXIT (po) — sign-off against done bar.
+- ✅ VNH-EXIT (po) — signed off 2026-05-29T17:45Z. Done bar met; independent spot-check confirms.
 
-**Done bar:** seed corrected + market.db row corrected in RUNNING container (verified by direct query) + mcp-server rebuilt + ≥1 agent bootstrap shows VNH no longer real_estate. (Today's already-written FB draft/notebooks are artifacts — fixed by a separate path; this sprint stops recurrence at source+DB.)
+**Done bar (MET):** seed corrected + market.db row corrected in RUNNING container (verified by direct query) + mcp-server rebuilt + ≥1 agent bootstrap shows VNH no longer real_estate. (Today's already-written FB draft/notebooks are artifacts — fixed by a separate path; this sprint stops recurrence at source+DB.)
+
+**Backlog note (do NOT action now):** the string-vs-enum hardening (seed `domain` field was `string`, now `DomainType`) likely applies to other seed/config arrays that type structural fields as bare `string` — a fleet-wide one-pass audit could catch the next silently-compiled bad enum value before it leaks. Worth a SPIKE next triage.
 
 ---
 
