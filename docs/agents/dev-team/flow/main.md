@@ -6,9 +6,10 @@
 This flow fan out ONLY dev-team subagents:
 - **dev-core:** po, ba, architect, pm, developer, qa, fixer
 - **dev-zone:** dev-mcp-server, dev-api-gateway, dev-stock-price, dev-technical-analysis, dev-macro-indicators, dev-kinh-dich, dev-alert-engine, dev-pdf-extractor, dev-rag-service, dev-frontend, dev-mainserver-crawls, dev-vps-crawls
-- **ops** (type: ops) — shared infra lane; spawned on infra incident, not a cowork agent
+- **ops** lane (ops, ops-mainserver-fetch, ops-vps-fetch) — shared infra lane; spawned on infra/fetch incident, not cowork agents
+<!-- roster mirrors docs/data/system-map.json .project.agents[]; re-sync here when roster changes -->
 
-NEVER spawn cowork-team agents (news-scout, market-watcher, financial-analyst, alert-commander, digest-predict, unified-agent, tran-ngoc-bau, report-analyzer, qa-responder, market-analyst) from this flow.
+NEVER spawn cowork-team agents (news-scout, market-watcher, bctc-analyst, alert-commander, digest-predict, unified-agent, tran-ngoc-bau, fb-market-poster, qa-responder, market-analyst) from this flow.
 <!-- spawn-guard: policy-only — no runtime assertion; enforced by convention, not code check (ITEM-16 doc note, 1967-10) -->
 
 Cross-team work (e.g. cowork agent reports a code bug): write a signal row to `docs/signals/DASHBOARD.md` per skill `.claude/skills/signal-dashboard/SKILL.md`. The cowork-team flow reads the dashboard at its next cycle.
