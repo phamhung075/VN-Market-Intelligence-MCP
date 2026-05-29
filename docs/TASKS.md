@@ -4,21 +4,16 @@
 
 ---
 
-## Sprint BOOTSTRAP-ENUM-BCTC → ✅ CLOSED 2026-05-29T17:51Z
+## Closed this session (detail → commits / TASKS_ARCHIVE.md)
 
-**Status:** DONE. `get_cycle_bootstrap` agent_name Zod enum rejected real roster agent `bctc-analyst` → `invalid_enum_value` (report #3009); workaround impersonated `financial-analyst`, polluting attribution. Fix: added `bctc-analyst` to `VALID_AGENT_NAMES` in `getCycleBootstrap.ts`. PO done-bar MET: enum accepts `bctc-analyst` in RUNNING container (ops force-recreated; ops + qa both live-probed `get_cycle_bootstrap(bctc-analyst)` SUCCESS), guard test 1975 PROVEN RED-on-regression (independently re-run 4p/2f→6p/0f), legacy `financial-analyst` regression-clean, tsc clean, suites 1563+1975 green; report #3009 resolved + Telegram msg 2613 deleted. Commits: dev a0103b84; QA verdict 2026-05-29T17:48Z APPROVED. SSOT-derive (enum from `system-map.json` roster, not hardcoded literal) deferred → SPIKE proposal `docs/signals/improvement-proposal-bootstrap-enum-ssot-derive.json` (next triage). Created/closed 2026-05-29.
-
----
-
-## Sprint VNH-SECTOR-FIX → ✅ CLOSED 2026-05-29T17:45Z
-
-**Status:** DONE. VNH domain `real_estate`→`agriculture` in seed + live market.db (rebuilt container); `domain` field typed `string`→`DomainType` (compile-time guard); 3 comment fixes (DAG/TCH/DPM). QA 24/24 green, anti-false-green PROVEN (bogus domain→TS2322); independent live `get_cycle_bootstrap` confirms `VNH [HNX] agriculture`. Commits: dev 9713118f, qa 29d5629f. Spec `docs/REQ_VNH-SECTOR-FIX.md`.
+- **BOOTSTRAP-ENUM-BCTC** ✅ CLOSED 2026-05-29T17:51Z — `bctc-analyst` added to `VALID_AGENT_NAMES` (getCycleBootstrap.ts); guard 1975 PROVEN-RED, report #3009 resolved. dev a0103b84 / QA APPROVED. SSOT-derive deferred → proposal `docs/signals/improvement-proposal-bootstrap-enum-ssot-derive.json`.
+- **VNH-SECTOR-FIX** ✅ CLOSED 2026-05-29T17:45Z — VNH `real_estate`→`agriculture` (seed + live db); `domain` typed `string`→`DomainType`. QA 24/24, anti-false-green PROVEN. dev 9713118f / qa 29d5629f. Spec `docs/REQ_VNH-SECTOR-FIX.md`.
 
 ---
 
 ## Backlog — string-vs-enum hardening (recurring class, do NOT action; next triage)
 
-Structural fields typed as bare `string` compile bad enum values silently. Recurring across: VNH `DomainType` (seedWatchlist), `commit-mutex` task_claim kind, `verified_decision` enum, bootstrap agent_name enum. Two SPIKE candidates: (1) fleet-wide one-pass audit of seed/config arrays typing structural fields as `string` → tighten to unions; (2) bootstrap agent_name SSOT-derive from `system-map.json` roster → `docs/signals/improvement-proposal-bootstrap-enum-ssot-derive.json`.
+Structural fields typed as bare `string` compile bad enum values silently. Recurring across: VNH `DomainType` (seedWatchlist), `commit-mutex` task_claim kind, `verified_decision` enum, bootstrap agent_name enum. Two SPIKE candidates: (1) fleet-wide one-pass audit of seed/config arrays typing structural fields as `string` → tighten to unions; (2) bootstrap agent_name SSOT-derive from `system-map.json` roster → `docs/signals/improvement-proposal-bootstrap-enum-ssot-derive.json`. PO triage 2026-05-29: candidate (2) HELD (not opened) — WIP=2 both HIGH; priority medium; guard test 1975 already mitigates; full runtime-derive risks app→infra boundary. Revisit when WIP frees or 5th recurrence.
 
 ---
 
@@ -50,6 +45,14 @@ PO live-probe 2026-05-29T17:29Z: `get_macro_snapshot` returns `dataSource:"live"
 - 🔄 LF-EXTRACT (dev-pdf-extractor): Tier 0-3 + zone-geometry JSON
 - 🔄 LF-OVERLAY (dev-mcp-server): `POST /api/push-bctc-layout` + zone toggle
 - 🔄 LF-DEPLOY + LF-QA + LF-EXIT: sequential single-doc, DIRECT DB arbiter
+
+---
+
+## CLEAN SIGDRAIN-PERSIST — Signal drain not committing (root-cause + sweep)
+
+**Status:** OPEN — CLEAN (hygiene lane, does NOT count vs feature WIP). **Priority: CLEAN (> SPRINT-S).** Zone: `cross-service/` (dev-team flow + signal-dashboard skill). Opened 2026-05-29 (2nd recurrence — armed last tick, never fired).
+
+Symptom: `docs/signals/signals.db` frozen at 2026-05-22; file count 730→741; DASHBOARD `## po` 8 NEW rows (2026-05-25/26) never consumed. Drain Step 0a (`docs/agents/dev-team/flow/drain-signals.md`) reads but does not persist/commit. Scope: (1) RCA the write/commit seam in drain-signals.md + signal-dashboard SKILL (why mark-READ + db-write not landing); (2) prove fix by a single drain run that advances signals.db mtime + drops file count; (3) sweep stale heartbeats/acks (cowork-fire, context_bloat → route to claude-manager-helper janitor, completion-acks May 23-27); (4) consume/mark-READ the 8 stale `## po` rows (all liveverify/already-actioned, no dev code). Done-bar: signals.db mtime current + `## po` inbox empty + file count drops materially.
 
 ---
 
