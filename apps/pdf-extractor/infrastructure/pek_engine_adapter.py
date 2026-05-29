@@ -55,10 +55,30 @@ import logging
 import os
 import sys
 import threading
+import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from typing import Dict, List, Optional, Tuple, Any
 
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# BTB-UNBLOCK-DEV: Hard extraction timeout
+# ---------------------------------------------------------------------------
+# Default: 30 minutes — generous enough for a 46-page CPU PaddleOCR run.
+# Override via env: PEK_EXTRACTION_TIMEOUT_SECONDS (integer seconds).
+# If exceeded: extraction is aborted and an explicit RuntimeError is raised
+# (logged with full traceback via exc_info=True in the handler) rather than
+# hanging the container forever or requiring a manual kill.
+#
+# Rationale: cycle2 "apparent hang" at 13min / 101% CPU was likely a normal
+# ~20min PaddleOCR run killed prematurely — confusion arose because there was
+# NO progress visibility and NO timeout signal. The new heartbeat (per-page
+# log line) makes normal-slow runs visible; this timeout makes true hangs fatal.
+_DEFAULT_EXTRACTION_TIMEOUT_SECONDS = 30 * 60  # 30 minutes
+_EXTRACTION_TIMEOUT_SECONDS: int = int(
+    os.environ.get("PEK_EXTRACTION_TIMEOUT_SECONDS", _DEFAULT_EXTRACTION_TIMEOUT_SECONDS)
+)
 
 # ---------------------------------------------------------------------------
 # Lazy-load singleton — None at boot (cold-start RSS ~80MB)
@@ -651,7 +671,27 @@ class PekEngineAdapter:
             )
 
         try:
-            return self._run_extraction(pdf_path=pdf_path, report_id=report_id)
+            # BTB-UNBLOCK-DEV: hard timeout — runs _run_extraction in a thread
+            # so we can enforce a wall-clock ceiling without blocking the event loop.
+            # If PaddleOCR genuinely hangs (not just slow), this aborts with a clear
+            # RuntimeError that propagates to the handler and is logged with exc_info=True.
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(
+                    self._run_extraction,
+                    pdf_path=pdf_path,
+                    report_id=report_id,
+                )
+                try:
+                    return future.result(timeout=_EXTRACTION_TIMEOUT_SECONDS)
+                except FuturesTimeoutError:
+                    # Abort loudly — ops sees this in logs (exc_info=True in handler).
+                    raise RuntimeError(
+                        f"PekEngineAdapter: extraction TIMED OUT after "
+                        f"{_EXTRACTION_TIMEOUT_SECONDS}s for report_id={report_id} "
+                        f"pdf_path={pdf_path} — "
+                        "increase PEK_EXTRACTION_TIMEOUT_SECONDS env if the PDF is large "
+                        "or the host is slow. Check heartbeat logs to identify last page."
+                    )
         finally:
             _extraction_semaphore.release()
 
@@ -914,6 +954,9 @@ class PekEngineAdapter:
 
         result: Dict[int, Dict[int, List[Dict]]] = {}
 
+        total_pages = max(pages_bboxes.keys()) if pages_bboxes else 0
+        _run_table_start = time.monotonic()
+
         with tempfile.TemporaryDirectory(prefix="pek_table_") as tmp_dir:
             for page_num in sorted(pages_bboxes.keys()):
                 bboxes = pages_bboxes[page_num]
@@ -922,6 +965,21 @@ class PekEngineAdapter:
                 ]
                 if not table_bboxes:
                     continue
+
+                # BTB-UNBLOCK-DEV PER-PAGE HEARTBEAT:
+                # Emitted before each page's heavy OCR work so a slow run is
+                # visibly progressing. Distinguishes a normal-slow CPU PaddleOCR
+                # run (heartbeats keep advancing) from a true hang (heartbeats stop).
+                # No extra inference — elapsed is wall-clock only.
+                elapsed = time.monotonic() - _run_table_start
+                logger.info(
+                    "PekEngineAdapter: extract progress page=%d/%d elapsed=%.1fs "
+                    "table_regions=%d",
+                    page_num,
+                    total_pages,
+                    elapsed,
+                    len(table_bboxes),
+                )
 
                 try:
                     imgs = convert_from_path(

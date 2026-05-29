@@ -2701,6 +2701,13 @@ def build_document_map(pages: List[Dict], pdf_path: str) -> Dict:
     # state: "NO_TABLE" or "TABLE_OPEN"
     state: str = "NO_TABLE"
 
+    # BTB-UNBLOCK-DEV (2026-05-29): This loop is BOUNDED and structurally cannot hang.
+    # - Iterates exactly `total_pages` times (range(1, total_pages+1)) — no inner while,
+    #   no re-queue, no recursive call.
+    # - pending_blanks is only appended on blank pages (O(pages)) and is fully drained
+    #   on the next non-blank page — it cannot grow unboundedly.
+    # - All inner operations are O(1) per page (dict lookup, list append, _flush_unit).
+    # PO exonerated this loop (commit d297f3ba). Do NOT modify the state machine.
     for page_num in range(1, total_pages + 1):
         fp = page_fingerprints[page_num]
         page_type = fp.get("page_type", "prose")

@@ -203,7 +203,15 @@ async def _run_pek_extract(
     pushes the result payload to mcp-server POST /api/push-bctc-layout
     via the existing LayoutFirstPushClient (unchanged contract).
 
-    Logs errors internally — background tasks must not raise.
+    BTB-UNBLOCK-DEV observability contract:
+      - FAIL-LOUD: exceptions are logged with full traceback (exc_info=True).
+        A failed extraction is never silently invisible — ops/QA can search
+        for "FAILED" in logs and get the full cause without digging further.
+      - ECHO-vs-DB: the DONE log distinguishes between the push-client return
+        value (mcp-server echo / input echo — NOT a DB commit count per
+        project_mcp_server_write_wedge) and the persisted DB count (which this
+        handler cannot observe directly — ops must verify via in-container
+        market.db COUNT query).
     """
     import logging as _logging
     _log = _logging.getLogger(__name__)
@@ -219,17 +227,30 @@ async def _run_pek_extract(
             page_zones=result.get("page_zones", []),
             pass_rate_report=result.get("pass_rate_report", {}),
         )
+        # BTB-UNBLOCK-DEV ECHO-vs-DB: push_result values come from the mcp-server
+        # HTTP response body (input echo) — NOT a committed DB row count.
+        # Per project_mcp_server_write_wedge: pushBctcLayoutHandler echoes the
+        # input length, not the rows actually stored in SQLite.
+        # "push_echo" = what mcp-server returned; "db_count" = UNKNOWN from here.
+        # Ops MUST verify persistence directly: bun -e "SELECT COUNT(*) ..." in-container.
         _log.info(
-            "_run_pek_extract: DONE report_id=%s units_stored=%s pages_stored=%s",
+            "_run_pek_extract: DONE report_id=%s "
+            "push_echo_units=%s push_echo_pages=%s "
+            "(NOTE: these are mcp-server echo values, NOT committed DB row counts — "
+            "verify db_count via in-container market.db COUNT query)",
             report_id,
             push_result.get("units_stored"),
             push_result.get("pages_stored"),
         )
     except Exception as exc:
+        # BTB-UNBLOCK-DEV FAIL-LOUD: log full traceback (exc_info=True).
+        # A silent "error=%s" with no traceback was the root cause of the
+        # "cycle1 units_stored=28 but DB=0" confusion — the real error was invisible.
+        # exc_info=True guarantees the full stack is in the log for ops diagnosis.
         _log.error(
-            "_run_pek_extract: FAILED report_id=%s error=%s",
+            "_run_pek_extract: FAILED report_id=%s — full traceback follows",
             report_id,
-            exc,
+            exc_info=True,
         )
 
 

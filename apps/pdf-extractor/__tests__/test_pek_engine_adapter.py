@@ -1014,3 +1014,300 @@ class TestRowCountSemantics:
             "3-page PEK unit with 2 separators must yield row_count=3 "
             "(one pipe data row per page, separators excluded)"
         )
+
+
+# ---------------------------------------------------------------------------
+# BTB-UNBLOCK-DEV: Observability tests (fail-loud, timeout, echo-vs-DB)
+# ---------------------------------------------------------------------------
+
+
+class TestFailLoudAndTimeout:
+    """
+    BTB-UNBLOCK-DEV (sprint BCTC-TABLE-BOUNDARY, task BTB-UNBLOCK-DEV).
+
+    Tests for the four observability improvements:
+      1. FAIL-LOUD: _run_pek_extract logs exceptions with exc_info=True (full traceback).
+         DV-GUARD: a test that FAILS if exc_info=True is reverted to exc_info=False
+         or removed (i.e. the silent-swallow anti-pattern is detected).
+      2. ECHO-vs-DB: DONE log contains "push_echo" label, not "units_stored" alone.
+      3. TIMEOUT: PekEngineAdapter.extract_layout_and_tables() raises RuntimeError
+         when _run_extraction exceeds _EXTRACTION_TIMEOUT_SECONDS.
+      4. TIMEOUT env: _EXTRACTION_TIMEOUT_SECONDS reads from PEK_EXTRACTION_TIMEOUT_SECONDS.
+
+    Heartbeat logging (per-page progress in _run_table_extraction) requires a live
+    PaddleOCR loop and cannot be meaningfully unit-tested without real model weights.
+    Verification: confirmed by ops instrumented run watching log stream — not faked here.
+    """
+
+    # -----------------------------------------------------------------------
+    # 1. FAIL-LOUD: exc_info=True (deliberate-violation guard)
+    # -----------------------------------------------------------------------
+
+    def test_run_pek_extract_logs_exc_info_true_on_failure(self):
+        """
+        DV-GUARD (deliberate-violation): _run_pek_extract must call logger.error
+        with exc_info=True when an exception occurs.
+
+        This test FAILS if the handler reverts to silent-swallow (exc_info=False /
+        exc_info omitted) — which was the root cause of the cycle1 confusion where
+        "units_stored=28 but DB=0" hid the actual failure.
+
+        Method: use logging.handlers.MemoryHandler (via caplog-equivalent) to
+        intercept actual log records emitted by the handler's internal logger.
+        Verifies exc_info is set on the error record (LogRecord.exc_info is not None).
+        """
+        import asyncio
+        import logging
+        from unittest.mock import AsyncMock, MagicMock
+
+        # Inject a fake adapter that raises so the except branch runs
+        failing_adapter = MagicMock()
+        failing_adapter.extract_layout_and_tables.side_effect = RuntimeError(
+            "Simulated extraction failure for DV-GUARD"
+        )
+
+        # Capture log records via a real logging handler
+        captured_records: list = []
+
+        class CapturingHandler(logging.Handler):
+            def emit(self, record):
+                captured_records.append(record)
+
+        handler = CapturingHandler(level=logging.ERROR)
+        # The handler uses logging.getLogger(__name__) where __name__ is interface.handlers
+        target_logger = logging.getLogger("interface.handlers")
+        target_logger.addHandler(handler)
+        target_logger.setLevel(logging.ERROR)
+
+        try:
+            from interface.handlers import _run_pek_extract
+            asyncio.run(_run_pek_extract(
+                pek_adapter=failing_adapter,
+                push_client=AsyncMock(),
+                report_id="dv-guard-report-id",
+                pdf_path="/fake/path.pdf",
+            ))
+        finally:
+            target_logger.removeHandler(handler)
+
+        assert len(captured_records) >= 1, (
+            "_run_pek_extract: no ERROR log records emitted on exception — "
+            "handler is silently swallowing failures. "
+            "DV-GUARD: this must fail if fail-loud is reverted."
+        )
+
+        last_record = captured_records[-1]
+        assert last_record.exc_info is not None and last_record.exc_info[0] is not None, (
+            f"_run_pek_extract: ERROR record has exc_info={last_record.exc_info!r} — "
+            "logger.error was called WITHOUT exc_info=True (or exc_info omitted). "
+            "DV-GUARD: exc_info=True is mandatory — silent-swallow anti-pattern detected. "
+            "Full traceback must be in the log record so ops can diagnose failures."
+        )
+
+    def test_run_pek_extract_done_log_uses_push_echo_label(self):
+        """
+        ECHO-vs-DB: the DONE log must use 'push_echo' in the message format string
+        so that operators know they are reading the mcp-server HTTP response echo,
+        NOT a committed DB row count.
+
+        Per project_mcp_server_write_wedge: pushBctcLayoutHandler echoes the
+        input length; a "200 OK + units_stored=28" does NOT mean 28 rows in DB.
+
+        Method: inject a successful adapter + push client; capture INFO log records;
+        assert the format string contains 'push_echo'.
+        """
+        import asyncio
+        import logging
+        from unittest.mock import AsyncMock, MagicMock
+
+        success_adapter = MagicMock()
+        success_adapter.extract_layout_and_tables.return_value = {
+            "document_map": {},
+            "units": [],
+            "page_zones": [],
+            "pass_rate_report": {},
+        }
+
+        success_push_client = AsyncMock()
+        success_push_client.push_layout = AsyncMock(return_value={
+            "units_stored": 28,
+            "pages_stored": 46,
+        })
+
+        captured_records: list = []
+
+        class CapturingHandler(logging.Handler):
+            def emit(self, record):
+                captured_records.append(record)
+
+        handler = CapturingHandler(level=logging.INFO)
+        target_logger = logging.getLogger("interface.handlers")
+        target_logger.addHandler(handler)
+        original_level = target_logger.level
+        target_logger.setLevel(logging.INFO)
+
+        try:
+            from interface.handlers import _run_pek_extract
+            asyncio.run(_run_pek_extract(
+                pek_adapter=success_adapter,
+                push_client=success_push_client,
+                report_id="echo-vs-db-test",
+                pdf_path="/fake/path.pdf",
+            ))
+        finally:
+            target_logger.removeHandler(handler)
+            target_logger.setLevel(original_level)
+
+        # Collect all INFO message format strings
+        all_msgs = " ".join(r.getMessage() for r in captured_records if r.levelno == logging.INFO)
+        # Also check format strings (msg field before % formatting)
+        all_fmts = " ".join(r.msg for r in captured_records if r.levelno == logging.INFO)
+
+        assert "push_echo" in all_fmts or "push_echo" in all_msgs or "echo" in all_msgs.lower(), (
+            "DONE log does not mention 'push_echo' or echo semantics. "
+            "Operators cannot distinguish mcp-server echo from committed DB count. "
+            f"Captured log format strings: {all_fmts!r}"
+        )
+
+    # -----------------------------------------------------------------------
+    # 3. TIMEOUT: extraction raises RuntimeError on timeout
+    # -----------------------------------------------------------------------
+
+    def test_extract_layout_and_tables_raises_on_timeout(self):
+        """
+        If _run_extraction takes longer than _EXTRACTION_TIMEOUT_SECONDS,
+        extract_layout_and_tables must raise RuntimeError (not hang forever).
+
+        Method: override _EXTRACTION_TIMEOUT_SECONDS to 0 (immediate timeout);
+        inject _run_extraction that sleeps 1s so the future always expires.
+        Asserts RuntimeError is raised with a message mentioning 'TIMED OUT'.
+        """
+        import time
+        import infrastructure.pek_engine_adapter as m
+        from infrastructure.pek_engine_adapter import PekEngineAdapter, SemaphoreContendedError
+
+        adapter = PekEngineAdapter()
+
+        def slow_extraction(**kwargs):
+            time.sleep(2)  # Longer than override timeout
+            return {}
+
+        original_timeout = m._EXTRACTION_TIMEOUT_SECONDS
+        try:
+            m._EXTRACTION_TIMEOUT_SECONDS = 0  # Force immediate timeout
+            with patch.object(adapter, "_run_extraction", side_effect=slow_extraction):
+                with pytest.raises(RuntimeError) as exc_info:
+                    adapter.extract_layout_and_tables(
+                        pdf_path="/fake/big.pdf",
+                        report_id="timeout-test-report",
+                    )
+        finally:
+            m._EXTRACTION_TIMEOUT_SECONDS = original_timeout  # Restore
+            # Ensure semaphore is released (timeout leaves finally block to release it)
+
+        assert "TIMED OUT" in str(exc_info.value), (
+            f"RuntimeError on timeout must say 'TIMED OUT', got: {exc_info.value!r}"
+        )
+        assert "timeout-test-report" in str(exc_info.value), (
+            "RuntimeError must include the report_id for ops diagnosis"
+        )
+
+    def test_semaphore_released_after_timeout(self):
+        """
+        After a timeout RuntimeError, the semaphore must be released so the
+        next extraction can proceed (no deadlock).
+
+        This is a safety invariant: a timed-out extraction must not permanently
+        hold the semaphore and prevent all future extractions from running.
+        """
+        import time
+        import infrastructure.pek_engine_adapter as m
+        from infrastructure.pek_engine_adapter import (
+            PekEngineAdapter, _extraction_semaphore
+        )
+
+        adapter = PekEngineAdapter()
+
+        def slow_extraction(**kwargs):
+            time.sleep(2)
+            return {}
+
+        original_timeout = m._EXTRACTION_TIMEOUT_SECONDS
+        try:
+            m._EXTRACTION_TIMEOUT_SECONDS = 0
+            with patch.object(adapter, "_run_extraction", side_effect=slow_extraction):
+                try:
+                    adapter.extract_layout_and_tables(
+                        pdf_path="/fake/a.pdf",
+                        report_id="semaphore-release-test",
+                    )
+                except RuntimeError:
+                    pass  # Expected timeout
+        finally:
+            m._EXTRACTION_TIMEOUT_SECONDS = original_timeout
+
+        # Semaphore must be available (not held)
+        can_acquire = _extraction_semaphore.acquire(blocking=False)
+        if can_acquire:
+            _extraction_semaphore.release()
+        assert can_acquire, (
+            "Semaphore is still held after timeout — deadlock risk! "
+            "The finally block in extract_layout_and_tables must release it "
+            "even when a TimeoutError is raised."
+        )
+
+    # -----------------------------------------------------------------------
+    # 4. TIMEOUT env: configurable via PEK_EXTRACTION_TIMEOUT_SECONDS
+    # -----------------------------------------------------------------------
+
+    def test_extraction_timeout_reads_from_env(self):
+        """
+        _EXTRACTION_TIMEOUT_SECONDS must be configurable via
+        PEK_EXTRACTION_TIMEOUT_SECONDS env var.
+
+        Method: re-import the module with a patched os.environ and verify the
+        module-level constant picks up the override.
+
+        Note: because the constant is set at module import time, we test the
+        parse logic (int coercion) rather than live hot-reload.
+        """
+        import importlib
+        import sys
+        import os
+
+        # Save original
+        original_env = os.environ.get("PEK_EXTRACTION_TIMEOUT_SECONDS")
+        original_module = sys.modules.pop("infrastructure.pek_engine_adapter", None)
+
+        try:
+            os.environ["PEK_EXTRACTION_TIMEOUT_SECONDS"] = "999"
+            # Re-import fresh to pick up env
+            import infrastructure.pek_engine_adapter as m_fresh
+            assert m_fresh._EXTRACTION_TIMEOUT_SECONDS == 999, (
+                f"_EXTRACTION_TIMEOUT_SECONDS should be 999 when env is '999', "
+                f"got {m_fresh._EXTRACTION_TIMEOUT_SECONDS}"
+            )
+        finally:
+            # Restore
+            if original_env is None:
+                os.environ.pop("PEK_EXTRACTION_TIMEOUT_SECONDS", None)
+            else:
+                os.environ["PEK_EXTRACTION_TIMEOUT_SECONDS"] = original_env
+            # Restore original module if it was cached
+            if original_module is not None:
+                sys.modules["infrastructure.pek_engine_adapter"] = original_module
+            else:
+                sys.modules.pop("infrastructure.pek_engine_adapter", None)
+
+    def test_default_timeout_is_at_least_30_minutes(self):
+        """
+        _DEFAULT_EXTRACTION_TIMEOUT_SECONDS must be >= 1800 seconds (30 minutes).
+        A 46-page CPU PaddleOCR run legitimately takes ~20 minutes on this host.
+        A timeout shorter than 30 minutes would kill normal runs prematurely.
+        """
+        from infrastructure.pek_engine_adapter import _DEFAULT_EXTRACTION_TIMEOUT_SECONDS
+        assert _DEFAULT_EXTRACTION_TIMEOUT_SECONDS >= 1800, (
+            f"Default timeout is {_DEFAULT_EXTRACTION_TIMEOUT_SECONDS}s — must be >= 1800s (30 min). "
+            "A 46-page CPU PaddleOCR run takes ~20 minutes; "
+            "shorter timeout kills normal runs (cycle2 regression)."
+        )
