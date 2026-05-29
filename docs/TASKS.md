@@ -6,6 +6,7 @@
 
 ## Closed this session (detail → commits / TASKS_ARCHIVE.md)
 
+- **SIGDRAIN-PERSIST** ✅ CLOSED 2026-05-29 (CLEAN) — drain-signals.md had documented persist+commit, no enforcement; added MANDATORY PERSIST GUARD (>50 files OR >24h db mtime → full drain+commit). Drained 742 stale signals; signals.db 05-22→05-29 (512 rows today, integrity_check ok); `## po` 8 NEW→READ (inbox 0); root signals 742→1. dev `5e9e929e` (scope-clean) / QA APPROVE. Done-bar 3/3.
 - **BOOTSTRAP-ENUM-BCTC** ✅ CLOSED 2026-05-29T17:51Z — `bctc-analyst` added to `VALID_AGENT_NAMES` (getCycleBootstrap.ts); guard 1975 PROVEN-RED, report #3009 resolved. dev a0103b84 / QA APPROVED. SSOT-derive deferred → proposal `docs/signals/improvement-proposal-bootstrap-enum-ssot-derive.json`.
 - **VNH-SECTOR-FIX** ✅ CLOSED 2026-05-29T17:45Z — VNH `real_estate`→`agriculture` (seed + live db); `domain` typed `string`→`DomainType`. QA 24/24, anti-false-green PROVEN. dev 9713118f / qa 29d5629f. Spec `docs/REQ_VNH-SECTOR-FIX.md`.
 
@@ -48,14 +49,6 @@ PO live-probe 2026-05-29T17:29Z: `get_macro_snapshot` returns `dataSource:"live"
 
 ---
 
-## CLEAN SIGDRAIN-PERSIST — Signal drain not committing (root-cause + sweep)
-
-**Status:** OPEN — CLEAN (hygiene lane, does NOT count vs feature WIP). **Priority: CLEAN (> SPRINT-S).** Zone: `cross-service/` (dev-team flow + signal-dashboard skill). Opened 2026-05-29 (2nd recurrence — armed last tick, never fired).
-
-Symptom: `docs/signals/signals.db` frozen at 2026-05-22; file count 730→741; DASHBOARD `## po` 8 NEW rows (2026-05-25/26) never consumed. Drain Step 0a (`docs/agents/dev-team/flow/drain-signals.md`) reads but does not persist/commit. Scope: (1) RCA the write/commit seam in drain-signals.md + signal-dashboard SKILL (why mark-READ + db-write not landing); (2) prove fix by a single drain run that advances signals.db mtime + drops file count; (3) sweep stale heartbeats/acks (cowork-fire, context_bloat → route to claude-manager-helper janitor, completion-acks May 23-27); (4) consume/mark-READ the 8 stale `## po` rows (all liveverify/already-actioned, no dev code). Done-bar: signals.db mtime current + `## po` inbox empty + file count drops materially.
-
----
-
 ## Sprint CHEF-ATTN — Bootstrap Attention Diversity Cap
 
 **Status:** READY (2026-05-27). Per-stock diversity cap on `buildAlertsSection`. **Priority: MEDIUM.** Zone: `apps/mcp-server/`.
@@ -71,6 +64,7 @@ Symptom: `docs/signals/signals.db` frozen at 2026-05-22; file count 730→741; D
 - PDF-INSPECT → ✅ CLOSED 2026-05-24
 - BCTC-TABLE-2 → QUEUED (multi-ticker; after LF-EXTRACT + LF-OVERLAY close)
 - KD-QREF → ✅ CLOSED; KD-QREF-LANG — OPEN (EN/VI switch)
+- SIGDRAIN-DB-IGNORE-NIT (low-pri, non-blocking) → drain-signals.md L6 commit-scope lists `docs/signals/signals.db` but `.gitignore` `*.db` makes that `git add` a silent no-op. Fix: drop signals.db from guard commit list OR add `!docs/signals/signals.db` exception. (QA-identified post-SIGDRAIN-PERSIST.)
 - Phase 0/1 pilot backlogs frozen → `docs/TASKS_ARCHIVE.md`
 
 ---
