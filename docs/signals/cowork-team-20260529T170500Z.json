@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T170500Z",
+    "nominal_tick": "20260529T170000Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "note": "Auto-silent (stdout-blackout safe). Matcher slots:[] UNANIMOUS x3 at clock 2026-05-29T17:05:08Z, nominal floors to 20260529T170000Z. NO match -> no lock, no spawn, nothing in flight. Next NON-silent: 16:00Z off-hours fan-out (news-scout-offhours + market-watcher-offhours, cron 0 */4). Next chef: evening 19:37Z conditional / morning 2026-05-30 05:23Z guaranteed."
+  },
+  "priority": "low",
+  "createdAt": "20260529T170500Z"
+}
