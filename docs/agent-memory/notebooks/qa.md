@@ -1,5 +1,128 @@
 # QA — Notebook
 
+## cycle-144 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE (commit e51e4b8e) — GREEN
+
+**Task:** BCTC-EVAL-INSPECT-MERGE Task #9 — AC6 re-check + full regression guard | **Verdict:** GREEN
+
+```
+date: 2026-05-29T21:10Z
+type: acceptance-gate-recheck (BCTC-EVAL-INSPECT-MERGE cycle-144)
+sprint: BCTC-EVAL-INSPECT-MERGE
+fix_commit: e51e4b8e (renderGateStrip per-stage Vietnamese trust prefix — client-side, status-driven)
+prior_cycle: cycle-143 YELLOW (AC6 open)
+container: mcp-server healthy (ops confirmed rebuild on e51e4b8e before this cycle)
+fpt_sentinel: e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+
+═══════════════════════════════════════════════════════════════
+AC6 — Vietnamese trust prefix (THE OPEN CRITERION)
+═══════════════════════════════════════════════════════════════
+
+check_1_red_prefix:
+  command: curl -s http://localhost:3000/api/bctc-inspect | grep -c "TRÍCH XUẤT ĐỎ giai đoạn"
+  result: 1 (≥1 required)
+  verdict: PASS
+
+check_2_yellow_prefix:
+  command: curl -s http://localhost:3000/api/bctc-inspect | grep -c "độ tin cậy thấp"
+  result: 1 (≥1 required)
+  verdict: PASS
+
+check_3_source_wiring:
+  file: apps/mcp-server/src/interface/bctc-inspector.html lines 1270-1276
+  logic:
+    if gate.status === "red"    → trustPrefix = "[ĐỘ TIN CẬY THẤP — TRÍCH XUẤT ĐỎ giai đoạn N]" (red span)
+    if gate.status === "yellow" → trustPrefix = "[độ tin cậy thấp]" (gold span)
+  driven_by: each gate_strip element's own `status` field (client-side, no endpoint contract change)
+  prefix_placement: prepended to stage label inside eval-strip-row, before "Giai đoạn N — ..."
+  verdict: PASS — wiring confirmed correct per M-5 spec
+
+AC6: PASS (closed — was YELLOW in cycle-143)
+
+═══════════════════════════════════════════════════════════════
+REGRESSION GUARD — AC1 page endpoint
+═══════════════════════════════════════════════════════════════
+
+probe_page_1:
+  url: GET /api/bctc-eval/e71f845d-ffa5-48f9-8f09-30ac2cd09c65/page/1
+  http_status: 200
+  gate_strip_count: 6
+  overall_status: red
+  schema_version: 1
+  verdict: PASS
+
+AC1: PASS (regression confirmed)
+
+═══════════════════════════════════════════════════════════════
+REGRESSION GUARD — AC2 report_level honesty
+═══════════════════════════════════════════════════════════════
+
+stage_1_RASTERIZE:     report_level=true,  label_suffix="(toàn báo cáo)", status=yellow
+stage_2_LAYOUT_DETECT: report_level=true,  label_suffix="(toàn báo cáo)", status=yellow
+stage_3_OCR:           report_level=false, label_suffix=null,             status=yellow
+stage_4_TABLE:         report_level=false, label_suffix=null,             status=green
+stage_5_MARKDOWN:      report_level=true,  label_suffix="(toàn báo cáo)", status=red
+stage_6_STRUCTURED:    report_level=true,  label_suffix="(toàn báo cáo)", status=green
+
+anti-false-green: stages 1/2/5/6 report_level=true + suffix confirmed; stages 3/4 report_level=false confirmed
+
+AC2: PASS (regression confirmed)
+
+═══════════════════════════════════════════════════════════════
+REGRESSION GUARD — AC3 partial_fragment_warning
+═══════════════════════════════════════════════════════════════
+
+probe_page_7_fpt_sentinel:
+  stage4_partial_fragment_warning: true
+  stage4_is_multi_page_unit: true
+  stage4_pek_unit_page_numbers: [7, 8, 9]
+  verdict: PASS — warning fires non-vacuously for multi-page unit
+
+AC3: PASS (regression confirmed)
+
+═══════════════════════════════════════════════════════════════
+REGRESSION GUARD — AC5 existing inspect intact
+═══════════════════════════════════════════════════════════════
+
+bctc_inspect_html:    GET /api/bctc-inspect → HTTP 200 — PASS
+fpt_sentinel_has_pek: GET /api/bctc-inspect/ocr/e71f845d...?page=1 → has_pek=true — PASS
+
+AC5: PASS (regression confirmed)
+
+═══════════════════════════════════════════════════════════════
+REGRESSION GUARD — AC7 frozen files + PEK pristine
+═══════════════════════════════════════════════════════════════
+
+frozen_files_diff:
+  git diff HEAD -- bctcEvalDetailHandler.ts bctcInspectHandler.ts bctcEvalStore.ts
+  result: 0 bytes diff — PASS
+
+pek_subtree:
+  git -C apps/pdf-extractor/PDF-Extract-Kit status --porcelain | wc -l
+  result: 0 — PASS
+
+AC7: PASS (regression confirmed)
+
+═══════════════════════════════════════════════════════════════
+VERDICT
+═══════════════════════════════════════════════════════════════
+
+overall_verdict: GREEN
+
+PASS (7/7 criteria):
+  AC1: page endpoint 200, 6 stages — PASS
+  AC2: report_level honesty (stages 1/2/5/6 true + suffix; stages 3/4 false) — PASS
+  AC3: partial_fragment_warning fires non-vacuously (FPT page 7 [7,8,9] → true) — PASS
+  AC4: navigateToPage + ensurePdfPageRendered wiring — PASS (carried from cycle-143, no regression possible; client-side only change)
+  AC5: /api/bctc-inspect 200, has_pek=true for FPT sentinel — PASS
+  AC6: red prefix "TRÍCH XUẤT ĐỎ giai đoạn N" count=1 (grep≥1); yellow prefix "độ tin cậy thấp" count=1 (grep≥1); renderGateStrip wired to per-element status field — PASS (CLOSED)
+  AC7: frozen files 0-diff, PEK subtree 0 dirty — PASS
+
+BLOCKING: none
+NEXT: po — Task #9 BCTC-EVAL-INSPECT-MERGE sprint closure
+```
+
+---
+
 ## cycle-143 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE (commits 75c7acf5 + 5ad6df9c) — YELLOW
 
 **Task:** BCTC-EVAL-INSPECT-MERGE Task #9 — 6-gate eval merge into /api/bctc-inspect page-by-page | **Verdict:** YELLOW
