@@ -1,0 +1,1 @@
+{"from":"cowork-team","to":"dev-team","type":"cowork-fire","payload":{"fire_time":"20260529T031555Z","nominal_tick":"20260529T031500Z","matched_slots":["chef-intraday"],"won_slots":["chef-intraday"],"held_by_other":[],"all_held":false,"spawned":["docs/agents/unified-agent/flow/chef.md"],"silent":false,"drift_min":0,"errors":[]},"priority":"normal","createdAt":"20260529T031555Z"}

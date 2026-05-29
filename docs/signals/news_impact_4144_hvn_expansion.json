@@ -1,0 +1,23 @@
+{
+  "signal_id": 4144,
+  "signal_type": "chain_catalyst",
+  "source_agent": "news-scout",
+  "timestamp": "2026-05-28T16:03:00Z",
+  "headline": "Vietnam Airlines TPHCM-Phuket strategic expansion",
+  "event_type": "sector_expansion",
+  "polarity": "neutral",
+  "impact": 7,
+  "confidence": 73,
+  "regime_adjusted": 7,
+  "affected_stocks": ["HVN"],
+  "affected_sectors": ["aviation", "securities"],
+  "domains": ["aviation"],
+  "summary": "Vietnam Airlines công bố đường bay thẳng TPHCM - Phuket, mở rộng hợp tác chiến lược tại Thái Lan. Strategic international route expansion, positive for aviation sector.",
+  "analysis": "Direct HVN exposure to TPHCM-Phuket route expansion confirms strategic growth. Country-level event affects aviation/securities cascade. Market-wide inflation from 8/10 neutral→7/10 chain impact. Confidence 73% based on official announcement.",
+  "hot_money_risk": false,
+  "critic_score": 0.7,
+  "phase": "recovery",
+  "tier": "equity",
+  "fetched_at": "2026-05-28T16:02:01Z",
+  "article_timestamp": "2026-05-28T11:25:00Z"
+}

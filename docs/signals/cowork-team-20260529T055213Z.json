@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T055213Z",
+    "nominal_tick": "20260529T054500Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 6,
+    "errors": [],
+    "note": "Transport lag at tick start: ~10 tool calls returned empty then ALL batched back at once (lagged, not lost). No blind spawn was attempted during the blackout (per feedback_spawn_retry_under_lag). Authoritative clean matcher = slots:[]. A prior mis-stamped telemetry file (T062448Z, phantom clock) was deleted and replaced by this one."
+  },
+  "priority": "low",
+  "createdAt": "20260529T055213Z"
+}

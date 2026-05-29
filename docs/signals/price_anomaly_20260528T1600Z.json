@@ -1,0 +1,109 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-05-28T16:00:00.000Z",
+  "dish_window": "eod",
+  "analysis_type": "EOD post-close summary",
+  "macro_regime": "NEUTRAL (FII_OUTFLOW_RISK, USD_STRENGTHENING, CHEAP_YIELD)",
+  "session_context": "VN market closed 08:59 UTC. 7h post-market. 39 watchlist tickers scanned.",
+  "threshold_applied": "2.0σ (EOD standard)",
+  "tickers": [
+    {
+      "code": "VHM",
+      "exchange": "HOSE",
+      "sector": "real_estate",
+      "price": 157700,
+      "daily_change_pct": 6.99,
+      "move_sigma": 1.75,
+      "yoy_change_pct": 4.44,
+      "volume": 8920000,
+      "vs_avg_pct": 306,
+      "rsi": null,
+      "sentiment": "Bullish — VinHomes property environmentalism catalyst. Real estate bifurcation: Vin tier (VHM +6.99%, VRE +3.20%) rallying vs non-Vin peers (D2D -1.99%, NVL -2.27% weaker)",
+      "insider_activity": "no activity detected",
+      "fii_activity": "no recent data",
+      "brief_action": "Hold / Watch intraday reversal",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "Move 1.75σ — subthreshold (2.0σ floor). Catalyst-driven intraday spike; no structural breakout signal. EOD price stable from 08:59 close.",
+      "notes": "30d range 142K-164K. Today's +6.99% represents rebound from -4.16% on 2026-05-27. Intraday climax reversal pattern observed. Sector PE discount -35%, ROE premium +73% vs peers suggest value repricing."
+    },
+    {
+      "code": "VRE",
+      "exchange": "HOSE",
+      "sector": "real_estate",
+      "price": 32250,
+      "daily_change_pct": 3.20,
+      "move_sigma": 0.64,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Bullish — Vincom Rally aligned with VHM sector rotation. Mega-cap property names leading retail recovery.",
+      "insider_activity": "no activity detected",
+      "brief_action": "Hold / Watch sector momentum",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "Move 0.64σ — well subthreshold. Sector momentum play; no independent catalyst.",
+      "notes": "Real estate bifurcation: Vin tier rallying (VHM +6.99%, VRE +3.20%), non-Vin peers weakness (D2D -1.99%, NVL -2.27%). Carry regime FII_OUTFLOW pressure offset by domestic tactical buying in blue-chip real estate."
+    },
+    {
+      "code": "ACB",
+      "exchange": "HOSE",
+      "sector": "banking",
+      "price": 24650,
+      "daily_change_pct": -2.18,
+      "move_sigma": 0.91,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Bearish — Banking sector coordinated pulldown. Capital injection (ACB +2000B facility) not offsetting macro USD/carry pressure. 7-stock bank cohort avg -2.08% (ACB -2.18%, VCB -2.18%, EIB -2.73%, VPB -2.67%).",
+      "insider_activity": "no activity detected (11d+ no major buys)",
+      "brief_action": "Reduce / Monitor support 22.5K",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "Move 0.91σ — structural sector weakness, not anomaly spike. Consistent with FII_OUTFLOW_RISK macro regime.",
+      "notes": "USD/VND 26,143 (HIGH) = import cost pressure on banking net margins. Carry spread -0.63pp persistent. ACB capital injection announced 2026-05-27 (2000B) insufficient to offset macro headwind. No technical break; sector consolidation pattern."
+    }
+  ],
+  "macro_snapshot": {
+    "vnindex_close": 1863.67,
+    "vnindex_change_pct": -0.57,
+    "brent_usd": 92.67,
+    "brent_change_pct": 0.0,
+    "gold_usd_oz": 4505.6,
+    "gold_change_pct": 0.0,
+    "usd_vnd": 26143,
+    "usd_pressure": "HIGH",
+    "macro_regime": "NEUTRAL",
+    "carry_regime": "FII_OUTFLOW_RISK",
+    "dy_yield_regime": "CHEAP"
+  },
+  "sector_summary": {
+    "leaders": [],
+    "laggards": [
+      "banking (-2.08% 1d)",
+      "utilities (-1.78% 1d)",
+      "tech (-1.49% 1d)"
+    ],
+    "stable": [
+      "real_estate (-0.14% 1d, but bifurcated: Vin tier +3-7% vs non-Vin -2%)",
+      "oil_gas (+0.08% 1d)",
+      "machinery (+0.00% 1d)"
+    ]
+  },
+  "risk_signals": {
+    "supply_chain": "BDI 1400 neutral — no disruption",
+    "climate": "Early May heat alert (seasonal non-core impact)",
+    "energy": "Stable grid signals",
+    "fii_status": "OUTFLOW_RISK (550B confirmed by news-scout #4142)"
+  },
+  "open_chains": {
+    "count": 0,
+    "window_minutes": 480,
+    "detail": "No active cross-asset catalyst chains detected in last 8h"
+  },
+  "anomalies_detected": 0,
+  "summary": "EOD 2026-05-28: Standard market close. 39 watchlist tickers scanned. VHM +6.99% (1.75σ catalyst-driven), VRE +3.20% (0.64σ sector momentum), banking sector -2.08% (structural carry pressure). No signals exceed 2.0σ threshold. Regime NEUTRAL with FII_OUTFLOW_RISK and USD_STRENGTHENING undercurrents. Supply chain stable, climate non-impact. Real estate bifurcation (Vin tier up, others flat-to-down) reflects differentiated valuations.",
+  "chef_direction": "HOLD base portfolio. VHM +6.99% is intraday catalyst-driven (property + environmentalism), not structural breakout. Real estate bifurcation (Vin vs others) suggests sector is repricing: favor mega-cap PE discounts (VHM -35% vs peers, ROE +19% vs 6.3% median). Banking weakness structural (FII exit + USD/carry pressure) — no entry yet. Monitor USD/VND 26.1K+ for carry regime shifts."
+}

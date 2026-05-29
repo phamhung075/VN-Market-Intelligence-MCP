@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T073542Z",
+    "nominal_tick": "20260529T073000Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "note": "07:30 tick. Clean transport. Authoritative: clock 07:35:12Z, nominal floors to 073000Z, matcher slots:[] drift_min=5 -> genuinely silent, no slot due at 0730. No spawn. (Prior 07:15 tick fired chef-intraday with one hollow-run + corrective respawn -> SILENT chef outcome.)"
+  },
+  "priority": "low",
+  "createdAt": "20260529T073542Z"
+}

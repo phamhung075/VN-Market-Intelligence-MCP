@@ -1,0 +1,18 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T050547Z",
+    "matched_slots": ["news-scout-sentiment"],
+    "won_slots": ["news-scout-sentiment"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/news-scout/flow/main.md"],
+    "silent": false,
+    "drift_min": 5,
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260529T050547Z"
+}

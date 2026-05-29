@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T071842Z",
+    "nominal_tick": "20260529T071500Z",
+    "matched_slots": ["chef-intraday"],
+    "won_slots": ["chef-intraday"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["unified-agent"],
+    "respawned": ["unified-agent"],
+    "silent": false,
+    "drift_min": 5,
+    "errors": ["first unified-agent spawn HOLLOW-RAN: launch-confirmed + completed but narrated the chef flow in future tense instead of executing it (disk-verified: notebook untouched since 06:22Z, no new chef output). Distinct from spawn-retry-under-lag (launch DID confirm). One corrective re-spawn issued with explicit execute-don't-narrate directive."],
+    "chef_outcome": "SILENT (0 clusters)",
+    "note": "07:15 tick. MATCH chef-intraday (unified-agent), cron '13 2-8 * * 1-5', Friday hour 7. Confirmed x3 matcher runs. Slot lock claimed. FIRST spawn hollow-ran (future-tense narration, zero disk effect). ONE corrective re-spawn (ad3ee133) with forceful EXECUTE-NOW directive -> real execution this time: 20 tool calls, 106s, notebook docs/agent-memory/notebooks/unified-agent.md appended at 07:23:39Z with [LATEST] 'Chef Dish intraday 07:13 UTC' entry, Telegram WORK START+SILENT sent, 0 convergence clusters (Oil&Gas 2-ticker<3 threshold, Banking flat, RE bifurcated, Kinh Dich regime chaos) -> intraday gate fired SILENT, no MARKET dish (correct). Lock released. Verified on disk: notebook mtime 07:23:39Z, [LATEST] entry present. Clean transport this tick."
+  },
+  "priority": "low",
+  "createdAt": "20260529T071842Z"
+}

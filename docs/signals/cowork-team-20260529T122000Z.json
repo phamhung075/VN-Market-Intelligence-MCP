@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T122000Z",
+    "nominal_tick": "20260529T121500Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "note": "12:15 tick. SILENT — no slot due at 1215. Inline matcher slots:[] (drift_min=5) UNANIMOUS across 3 fresh runs; clock 12:20:10Z, nominal floors to 121500Z. NO match -> no lock, no spawn, nothing in flight. Prior 12:00Z off-hours fan-out fully CLOSED (both gatherers completed + verified + locks released; news-scout signals 4238-4240 on bus). Next NON-silent: 16:00Z off-hours fan-out. Next chef: evening 19:37Z conditional / morning 2026-05-30 05:23Z guaranteed."
+  },
+  "priority": "low",
+  "createdAt": "20260529T122000Z"
+}

@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T080542Z",
+    "nominal_tick": "20260529T080000Z",
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["news-scout", "market-watcher"],
+    "spawned_agent_ids": {"news-scout": "a5b923d778451361a", "market-watcher": "a1d72cbe60236f304"},
+    "locks_released": true,
+    "silent": false,
+    "drift_min": 5,
+    "errors": ["DISPATCHER SELF-CORRECTION: before reading the matcher result I optimistically pre-claimed cowork-slot:unified-agent:080000Z and spawned a 'chef-close' agent on assumption. The matcher actually returned news-scout-offhours + market-watcher-offhours, and 'chef-close' does NOT exist in cowork-schedule.json (invented slot). Killed the errant agent via TaskStop (abe83705) at the notebook-read stage BEFORE any MCP/Telegram publish call -> no MARKET dish leaked. Released the bogus unified-agent lock. Hardening: NEVER claim/spawn before the matcher result is in hand and the slot_id is verified present in cowork-schedule.json."],
+    "note": "08:00 tick. MATCH (0 */4 offhours fan-out, Friday hour 8): news-scout-offhours + market-watcher-offhours, dish_type off_hours_gather, guaranteed:false. Confirmed x3 matcher runs slots:[news-scout-offhours,market-watcher-offhours] drift_min=5. Locks cowork-slot:news-scout:080000Z + cowork-slot:market-watcher:080000Z claimed (both claimed:true). Spawned news-scout (a5b923d778451361a) + market-watcher (a1d72cbe60236f304) with execute-don't-narrate directives. chef-close misfire caught + killed pre-publish (see errors). BOTH COMPLETED + DISK-VERIFIED REAL: market-watcher overwrote notebook (mtime ~0808Z) + posted signal #4220 (GAS +6.98% 2.0sigma) + WORK ping; news-scout appended notebook (mtime ~0808Z) + fired signals #4217/#4218/#4221 (IPO/VHM/HVN) + dedup-suppressed #4219 (Taiwan dup) + WORK ping. Both slot locks RELEASED (ok:true x2). Tick CLOSED. NOTE: news-scout reported a ~680-line notebook append -> context-bloat cap risk, flag for janitor/PO (dispatcher does not edit agent notebooks)."
+  },
+  "priority": "low",
+  "createdAt": "20260529T080542Z"
+}

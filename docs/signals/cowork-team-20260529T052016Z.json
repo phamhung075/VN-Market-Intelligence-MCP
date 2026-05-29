@@ -1,0 +1,26 @@
+{
+  "from": "cowork-team",
+  "to": "po",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T052016Z",
+    "matched_slots": ["chef-morning", "chef-intraday"],
+    "won_slots": ["chef-morning"],
+    "held_by_other": ["chef-intraday"],
+    "all_held": false,
+    "spawned": [
+      "chef.md (afee2fc3)",
+      "chef.md (abcdd263)",
+      "chef.md (ac733e0d)",
+      "chef.md (a99bc1f4)"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [
+      {"slot_id": "chef-morning", "error": "DUPLICATE-PUBLISH: dispatcher launched chef-morning 4x. Transport LAGGED (not dropped) - Agent launch-confirmations returned ~2min late, so fs-polling falsely read non-registration and the spawn was retried 3 extra times (incl 1 foreground). All 4 ran the full flow and published to MARKET+WORK. Slot-lock did NOT dedup: all retries reused the SAME won slot (lock is per-slot/session, not per-spawn-attempt). User received 4 contradictory morning dishes (0-cluster CONSOLIDATION x3 vs 3-cluster x1). chef-intraday correctly deduped (held-by-self)."}
+    ],
+    "note": "ROOT CAUSE: never retry an Agent spawn whose launch-confirmation has not returned; a slow result means in-flight, NOT failed. fs-polling is proof of success only, never proof of failure."
+  },
+  "priority": "high",
+  "createdAt": "20260529T052016Z"
+}

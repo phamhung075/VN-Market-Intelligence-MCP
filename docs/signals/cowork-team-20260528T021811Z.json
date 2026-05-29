@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260528T021811Z",
+    "matched_slots": ["chef-intraday"],
+    "won_slots": ["chef-intraday"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [
+      {"slot_id": "tick-snapshot", "error": "Step 4.7 skipped — get_cycle_bootstrap rejects agent_name='cowork-team' (enum: news-scout|financial-analyst|market-watcher|alert-commander|digest-predict|qa-responder|unified-agent|report-analyzer). Non-blocking: chef falls back to direct get_cycle_bootstrap. Standing flow defect for po — Step 4.7 uses an invalid enum value on every fan-out tick."}
+    ]
+  },
+  "priority": "low",
+  "createdAt": "20260528T021811Z"
+}

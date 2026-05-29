@@ -1,0 +1,53 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "cycle": "c82",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-05-28T20:13:00Z",
+  "summary": "NEEDS_ATTENTION. STABLE. Evening dish 2026-05-28T19:45Z audited. 2 clusters GENUINE (not synthetic). Layer scores: 4/6 NEEDS_ATTENTION (L1 PASS, L2 PARTIAL, L3 PARTIAL, L4 PARTIAL, L5 PARTIAL, L6 PASS). Gap catalogue PASS — BCTC missingness and Kinh Dich 501 NOT papered over. Post-chef 20:00Z triple reinforcement (#4169 Taiwan fund, #4170 VHM gold-parity, #4171 CMG legal) confirms Cluster 1 genuine. Structural gaps D/E/F/F9 persist. Chef pipeline 8/8 dishes today. Gold reversal (−2.7σ → +2.7σ) correctly identified as state transition.",
+  "findings": [
+    { "id": "F1", "severity": "MED", "category": "data-quality", "issue": "Macro-snapshot stale seed unresolved (fix dispatched dev-macro-indicators, not confirmed deployed)" },
+    { "id": "F2", "severity": "MED", "category": "methodology", "issue": "L4 partial — VHM 3/4 caveated (earnings=news proxy not BCTC); banking 2/4 (BCTC absent, P/E unknown)" },
+    { "id": "F3", "severity": "MED", "category": "methodology", "issue": "D-gap PMI sub-components absent (L2 PARTIAL all dishes)" },
+    { "id": "F4", "severity": "MED", "category": "methodology", "issue": "E-gap VIRA absent (L3 PARTIAL all dishes)" },
+    { "id": "F5", "severity": "MED", "category": "methodology", "issue": "Business context F9 absent 10th cycle — PO ACK'd c81 as cowork-lane + data-blocked, carry forward" },
+    { "id": "F6", "severity": "LOW", "category": "infrastructure", "issue": "L5 market-wide hexagram dark (kinh-dich-service B-bucket known gap)" }
+  ],
+  "clusterIntegrity": {
+    "cluster1": {
+      "name": "Vingroup collateral rotation via gold liquidation",
+      "verdict": "GENUINE",
+      "sourceCount": 6,
+      "convergenceRules": ["ticker-convergence", "macro-extreme", "sector-convergence"],
+      "synthetic": false,
+      "postChefReinforcement": ["#4169 Taiwan fund (additive)", "#4170 VHM gold-parity (additive)"]
+    },
+    "cluster2": {
+      "name": "Banking FII outflow + ACB capital contradiction",
+      "verdict": "GENUINE",
+      "sourceCount": 5,
+      "convergenceRules": ["macro-micro-contradiction", "sector-convergence"],
+      "synthetic": false
+    }
+  },
+  "gapCatalogueApplied": true,
+  "bctcMissingnessHandled": "honest-gap-flagged",
+  "kinhDich501Handled": "honest-gap-flagged",
+  "positives": [
+    "Chef pipeline 8/8 dishes published 2026-05-28",
+    "Gold reversal (−2.7σ → +2.7σ) correctly identified as state transition",
+    "2 genuine clusters, not synthetic — multi-source convergence verified",
+    "Gap catalogue PASS all 5 types — no papering over",
+    "Honest contradiction disclosure (Lao Duong reversal warning for VHM)",
+    "Post-chef triple reinforcement confirms Cluster 1 genuineness",
+    "Conviction calibration appropriate (MEDIUM-HIGH / MEDIUM ranges properly bounded)"
+  ],
+  "autoCures": 0,
+  "pipelineDegraded": false,
+  "guaranteedOk": true,
+  "dishScore": "4/6",
+  "nineStepScore": "5.5/9",
+  "businessContextCycle": 10
+}

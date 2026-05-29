@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T062008Z",
+    "nominal_tick": "20260529T061500Z",
+    "matched_slots": ["chef-intraday"],
+    "won_slots": ["chef-intraday"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      {"flow": "docs/agents/unified-agent/flow/chef.md", "agent": "unified-agent", "agentId": "a02f273d827afbe52", "slot": "chef-intraday", "outcome": "completed", "agent_decision": "silent-exit (0 clusters qualified) — no MARKET publish"}
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "note": "Single spawn, single explicit launch-confirm — no transport lag, no retry (lesson feedback_spawn_retry_under_lag applied cleanly). Lock cowork-slot:unified-agent:20260529T061500Z claimed+released ok. task_claim enum now includes 'cowork-slot' (memory project_commit_mutex_enum_drift workaround no longer needed for cowork slots)."
+  },
+  "priority": "low",
+  "createdAt": "20260529T062008Z"
+}

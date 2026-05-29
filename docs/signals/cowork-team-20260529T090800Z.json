@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T090800Z",
+    "nominal_tick": "20260529T090000Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "note": "09:00 tick. SILENT — no slot due at 0900. Matcher returned slots:[] (drift_min=5) UNANIMOUSLY across 8+ runs incl. a background-task run (bkpyne5kv exit 0). Last clean wall-clock read 09:05:55Z; fire_time ~09:08Z is approximate because the timestamp probe fell into an intermittent tool-output transport-drop window (outputs arrived as delayed batches all turn). NO match -> no lock claimed, no spawn launched, nothing in flight. Prior tick 08:45 chef-eod PUBLISHED+verified, lock released, CLOSED. Next slot: evening off-hours/chef fan-out (19:xxZ). NOTE on transport: a ~17-call output-drop window opened then recovered as a delayed batch this tick; per hardening I held off ALL lock/spawn/telemetry writes until the matcher result was actually in hand, never defaulting to silent on the gap — the silent verdict here is from confirmed matcher output, not from the drop."
+  },
+  "priority": "low",
+  "createdAt": "20260529T090800Z"
+}

@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T070111Z",
+    "nominal_tick": "20260529T070000Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "note": "07:00 tick. Longest transport-result stall of the session (~20 tool calls returned empty across Bash AND Read) then the whole batch flushed at once on a parallel call boundary. feedback_spawn_retry_under_lag held: NO blind spawn, NO fabricated clock, NO phantom telemetry during the stall. Waiting primitive upgraded mid-tick: replaced blocked `sleep N; cmd` with a run_in_background until-loop (until out=$(matcher) && [ -n out ]) that captured the authoritative tick to /tmp/cw-tick3.txt rc=0 — this is the correct lag-safe pattern (the Step-5 hardening note from the 06:45 tick, applied live). Authoritative result unanimous across the bg job + every probe: clock 07:00:33->07:01:11Z, nominal floors 070000Z, matcher slots:[] -> genuinely silent, no slot due at 0700."
+  },
+  "priority": "low",
+  "createdAt": "20260529T070111Z"
+}

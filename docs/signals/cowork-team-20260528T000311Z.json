@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260528T000311Z",
+    "matched_slots": ["financial-analyst-morning", "news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["financial-analyst-morning", "news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/financial-analyst/flow/main.md",
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [
+      {"slot_id": "tick-snapshot", "error": "Step 4.7 skipped — get_cycle_bootstrap rejects agent_name='cowork-team' (enum: news-scout|financial-analyst|market-watcher|alert-commander|digest-predict|qa-responder|unified-agent|report-analyzer). Non-blocking: agents fall back to direct get_cycle_bootstrap. Flow defect candidate for po — Step 4.7 uses an invalid enum value."}
+    ]
+  },
+  "priority": "low",
+  "createdAt": "20260528T000311Z"
+}

@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T063720Z",
+    "nominal_tick": "20260529T063000Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 7,
+    "errors": [],
+    "note": "06:30 tick. Sustained transport lag at tick start: a long run of tool calls returned empty, then ALL landed in one batch (lagged, not lost) — same pattern as 05:45. feedback_spawn_retry_under_lag held: NO blind spawn during the blackout. One self-caught phantom-clock slip — an earlier draft was mis-stamped 064019Z (a value NO real tool result ever produced); rm -f removed docs/signals/cowork-team-20260529T064019Z.json (confirmed gone). A first corrected write (063605Z) was accidentally cancelled by chaining it behind a blocked `sleep 25` parallel call; rewritten here under 063720Z. All clock/drift values come from REAL landed Bash results (TRUE_CLOCK 063627->063720Z, DRIFT 6-7). Matcher unanimous across every real run: slots:[] -> silent."
+  },
+  "priority": "low",
+  "createdAt": "20260529T063720Z"
+}

@@ -1,0 +1,27 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T120000Z",
+    "nominal_tick": "20260529T120000Z",
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      {"slot": "news-scout-offhours", "agent": "news-scout", "agentId": "a5c681e0333d0794c", "flow": "docs/agents/news-scout/flow/main.md"},
+      {"slot": "market-watcher-offhours", "agent": "market-watcher", "agentId": "aa9e3b51af604ad0f", "flow": "docs/agents/market-watcher/flow/main.md"}
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "completed": [
+      {"slot": "market-watcher-offhours", "agentId": "aa9e3b51af604ad0f", "notebook_mtime": "20260529T120649Z", "exit_status": "complete", "mcp_errors": 0, "lock_released": true, "result": "39 tickers, 0 anomalies, 0 signals (GAS+VNH suppressed by AutoCure off-hours dup guard), session id=1152"},
+      {"slot": "news-scout-offhours", "agentId": "a5c681e0333d0794c", "notebook_mtime": "20260529T120933Z", "exit_status": "complete", "mcp_errors": 0, "lock_released": true, "result": "20 items, 3 chain_catalyst signals #4238-4240 (RE bullish / concentration bearish / macro opportunity), all critic_pass=true score 0.8, work log id=1153"}
+    ],
+    "note": "12:00Z tick. NON-SILENT — off-hours fan-out (cron 0 */4) FULLY CLOSED. Inline matcher UNANIMOUS across 3 fresh runs returning both news-scout-offhours + market-watcher-offhours; clock 12:05:10Z, nominal 120000Z, drift_min 5. Both cowork-slot locks CLAIMED (claimed:true, ttl 900s). Both agents spawned background with DISTINCT agentIds (news-scout a5c681e0333d0794c, market-watcher aa9e3b51af604ad0f) — no dup-echo. BOTH COMPLETED + disk-verified (notebooks fresh, exit complete, 0 mcp_errors) + locks RELEASED ok:true. market-watcher: 0 signals (dup-suppressed, correct). news-scout: 3 signals 4238-4240 ready for chef/alert-commander downstream. parallel_group=gatherers, dish_type=off_hours_gather. Next offhours 16:00Z. Next chef: evening 19:37Z conditional / morning 2026-05-30 05:23Z guaranteed."
+  },
+  "priority": "normal",
+  "createdAt": "20260529T120000Z"
+}

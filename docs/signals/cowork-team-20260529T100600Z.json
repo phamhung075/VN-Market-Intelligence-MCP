@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T100600Z",
+    "nominal_tick": "20260529T100000Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "note": "10:00 tick. SILENT — no slot due at 1000. Authoritative inline matcher: clock 10:05:13-18Z, nominal floors to 100000Z, slots:[] (drift_min=5) across 4 fresh runs. 10:00 is NOT an off-hours boundary (off-hours cron 0 */4 -> next 12:00Z); chef-intraday hours 2-8 only (market closed Friday). NO match -> no lock, no spawn, nothing in flight. TRANSPORT/STALE-FILE GUARD: a leftover /tmp/cw-tick5.txt read 07:35Z (old bg run, jumpy host clock) — IGNORED; trusted the fresh inline reads instead, NOT the temp file. Same drop-then-batch-recover pattern persists. Prior ticks 0900/0915/0930/0945 + now 1000 SILENT, CLOSED. Next chef: evening 19:37Z conditional / morning 2026-05-30 05:23Z guaranteed."
+  },
+  "priority": "low",
+  "createdAt": "20260529T100600Z"
+}

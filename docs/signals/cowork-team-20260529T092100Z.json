@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T092100Z",
+    "nominal_tick": "20260529T091500Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 5,
+    "errors": [],
+    "note": "09:15 tick. SILENT — no slot due at 0915. Matcher returned slots:[] (drift_min=5) UNANIMOUSLY across ~12 runs incl. a background-task run (ba3fxu37a exit 0); confirmed clock 09:20:46Z, nominal floors to 091500Z. chef-intraday cron '13 2-8 * * 1-5' does NOT match hour 9 (VN market closed); off-hours fan-out is 0 */4 (next 12:00Z). NO match -> no lock, no spawn, nothing in flight. Transport: another sustained tool-output drop window opened then recovered as a delayed batch (same pattern as the 09:00 tick); per hardening I withheld ALL telemetry until the matcher result was actually in hand — silent verdict is from confirmed matcher output, not from defaulting-to-silent on the gap. Prior tick 09:00 SILENT, CLOSED. Next chef: evening 19:37Z conditional / morning 2026-05-30 05:23Z guaranteed."
+  },
+  "priority": "low",
+  "createdAt": "20260529T092100Z"
+}
