@@ -417,6 +417,141 @@ describe("bctcEvalPageHandler — TC-9: stage 3 no OCR row", () => {
   });
 });
 
+// ─── Test: TC-D1 debug sub-object fields present (M-7) ──────────────────────
+//
+// Assert that:
+//   a) every gate_strip element carries a `debug` object with the five base fields
+//   b) stage-3 `debug.ocr_filename` equals the fixture basename
+//   c) stage-4 `debug.pek_row_count` equals the fixture row_count (42)
+//   d) all existing user-view fields still present (non-regression)
+//
+// DELIBERATE-VIOLATION: removing `debug` from the handler response causes (a) to fail.
+// Evidence of non-hollow gate: see DV-2 test below.
+
+describe("bctcEvalPageHandler — TC-D1: debug sub-object fields (M-7)", () => {
+  it("every gate carries debug with 5 base fields; stage 3 debug.ocr_filename matches fixture basename", () => {
+    const db = makeTestDb();
+    db.prepare(`INSERT INTO financial_reports (id, action_code, period_year, pdf_path) VALUES (?, ?, ?, ?)`)
+      .run(REPORT_UUID, "VNM", 2025, "/data/pdfs/vnm_q4_2025.pdf");
+    insertAllEvalRows(db, REPORT_UUID, "green");
+
+    db.prepare(`INSERT INTO pdf_extracted_text (filename, page_number, text_content, confidence) VALUES (?, ?, ?, ?)`)
+      .run("vnm_q4_2025.pdf", 7, "Doanh thu thuần 1,234,567", 0.93);
+
+    const { res, getMock } = makeMockRes();
+    bctcEvalPageHandler(makeMockReq(), res, db, REPORT_UUID, 7);
+    const mock = getMock();
+    expect(mock.statusCode).toBe(200);
+
+    const body = JSON.parse(mock.body);
+    expect(Array.isArray(body.gate_strip)).toBe(true);
+    expect(body.gate_strip).toHaveLength(6);
+
+    // (a) every gate has debug with 5 base fields
+    for (const gate of body.gate_strip) {
+      expect(gate.debug).toBeDefined();
+      // metrics_json is a parsed object (not string)
+      expect(typeof gate.debug.metrics_json).toBe("object");
+      // gate_failures_json is an array
+      expect(Array.isArray(gate.debug.gate_failures_json)).toBe(true);
+      // golden_diff_json is an object
+      expect(typeof gate.debug.golden_diff_json).toBe("object");
+      expect(typeof gate.debug.detector_version).toBe("string");
+      expect(typeof gate.debug.computed_at).toBe("string");
+    }
+
+    // (b) stage 3 debug.ocr_filename = basename of pdf_path
+    const stage3 = body.gate_strip.find((g: { stage_no: number }) => g.stage_no === 3);
+    expect(stage3).toBeDefined();
+    expect(stage3.debug.ocr_filename).toBe("vnm_q4_2025.pdf");
+
+    // (d) existing user-view fields still present (non-regression)
+    expect(stage3.stage_no).toBe(3);
+    expect(stage3.stage_name).toBe("OCR");
+    expect(stage3.status).toBe("green");
+    expect(stage3.report_level).toBe(false);
+    expect(typeof stage3.metrics_summary).toBe("string");
+    expect(stage3.page_annotation).toBeDefined();
+    expect(stage3.page_annotation.has_ocr_row).toBe(true);
+  });
+
+  it("stage 4 debug.pek_row_count matches fixture row_count (42)", () => {
+    const db = makeTestDb();
+    db.prepare(`INSERT INTO financial_reports (id, action_code, period_year) VALUES (?, ?, ?)`).run(VALID_UUID, "FPT", 2025);
+    insertAllEvalRows(db, VALID_UUID, "green");
+
+    // Insert layout unit with row_count=42, quarantined=1
+    db.prepare(`
+      INSERT INTO bctc_layout_units (report_id, unit_id, schema_page, page_numbers_json, row_count, quarantined, quarantine_reason)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(VALID_UUID, "unit_debug_001", 3, JSON.stringify([3]), 42, 1, "low_confidence");
+
+    const { res, getMock } = makeMockRes();
+    bctcEvalPageHandler(makeMockReq(), res, db, VALID_UUID, 3);
+    const mock = getMock();
+    expect(mock.statusCode).toBe(200);
+
+    const body = JSON.parse(mock.body);
+    const stage4 = body.gate_strip.find((g: { stage_no: number }) => g.stage_no === 4);
+    expect(stage4).toBeDefined();
+    expect(stage4.debug.pek_row_count).toBe(42);
+    expect(stage4.debug.pek_quarantined).toBe(true);
+    expect(stage4.debug.pek_quarantine_reason).toBe("low_confidence");
+
+    // Non-regression: existing page_annotation fields still present
+    expect(stage4.page_annotation).toBeDefined();
+    expect(stage4.page_annotation.pek_unit_id).toBe("unit_debug_001");
+    expect(stage4.stage_no).toBe(4);
+    expect(typeof stage4.metrics_summary).toBe("string");
+  });
+});
+
+// ─── Test: DV-2 DELIBERATE-VIOLATION smoke for debug field (M-7 anti-false-green) ──
+//
+// Proves the debug field assertions in TC-D1 are NOT hollow.
+// If `debug` is absent from the handler response, the assertion below FAILS.
+//
+// RED PROOF (documented here):
+//   If bctcEvalPageHandler emitted gate_strip without a `debug` property,
+//   `expect(gate.debug).toBeDefined()` would FAIL with: Expected value to be defined, received undefined.
+//   To verify: temporarily comment out the `debug` property in the gateStrip map.
+//   TC-D1 goes RED. This proves the debug gate is real.
+//
+// The live assertion below cross-checks that debug.metrics_json is NOT a string
+// (it must be a parsed object). If the handler emitted the raw string instead of
+// parsing it, the typeof check `"object"` would fail on "string" → RED.
+
+describe("bctcEvalPageHandler — DV-2: deliberate-violation smoke for debug field", () => {
+  it("LIVE PROOF: debug.metrics_json is parsed object not raw string (gate is not hollow)", () => {
+    const db = makeTestDb();
+    db.prepare(`INSERT INTO financial_reports (id, action_code, period_year) VALUES (?, ?, ?)`).run(VALID_UUID, "FPT", 2025);
+    insertAllEvalRows(db, VALID_UUID, "yellow");
+
+    const { res, getMock } = makeMockRes();
+    bctcEvalPageHandler(makeMockReq(), res, db, VALID_UUID, 1);
+    const mock = getMock();
+    expect(mock.statusCode).toBe(200);
+
+    const body = JSON.parse(mock.body);
+    for (const gate of body.gate_strip) {
+      // If handler sent raw string, typeof would be "string" → this goes RED
+      expect(typeof gate.debug.metrics_json).toBe("object");
+      // metrics_json must NOT be null (fixture inserts {sample_key: "stage_N"})
+      expect(gate.debug.metrics_json).not.toBeNull();
+    }
+
+    // Verify debug does NOT replace existing fields (additive check)
+    const anyGate = body.gate_strip[0];
+    expect(anyGate.stage_no).toBeDefined();
+    expect(anyGate.stage_name).toBeDefined();
+    expect(anyGate.status).toBeDefined();
+    expect(anyGate.report_level).toBeDefined();
+    expect(anyGate.metrics_summary).toBeDefined();
+    // debug is ADDITIONAL to these, not instead of them
+    expect(anyGate.debug).toBeDefined();
+  });
+});
+
 // ─── Test: DV-1 DELIBERATE-VIOLATION — anti-false-green smoke ────────────────
 //
 // This test demonstrates that the fragment-banner guard is NOT hollow.

@@ -530,6 +530,64 @@
     }
     .pek-unit-dim { opacity: 0.4; }
     .pek-unit-highlight { border: 2px solid #4a9eff; border-radius: 3px; padding: 2px; }
+
+    /* ── BCTC-EVAL Dual-View Toggle (M-4) ── */
+    .eval-strip-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .eval-view-toggle-wrap { display: flex; gap: 4px; }
+    .eval-view-btn {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 3px;
+      border: 1px solid #444;
+      background: #252525;
+      color: #888;
+      cursor: pointer;
+    }
+    .eval-view-btn.active {
+      background: #2d3b2d;
+      border-color: #72c870;
+      color: #72c870;
+    }
+    /* Debug view additions */
+    .eval-debug-block {
+      margin-top: 4px;
+      margin-left: 18px;
+      background: #151515;
+      border: 1px solid #333;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .eval-debug-summary {
+      font-size: 10px;
+      color: #999;
+      padding: 3px 8px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .eval-debug-summary:hover { color: #ccc; }
+    .eval-debug-pre {
+      font-family: "SF Mono","Fira Code",monospace;
+      font-size: 10px;
+      color: #b0c8b0;
+      padding: 6px 8px;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 300px;
+      overflow-y: auto;
+      border-top: 1px solid #2a2a2a;
+    }
+    .eval-debug-label {
+      font-size: 9px;
+      color: #555;
+      text-transform: uppercase;
+      padding: 2px 8px;
+      border-top: 1px solid #2a2a2a;
+    }
   </style>
 </head>
 <body>
@@ -576,7 +634,13 @@
 
     <!-- EVAL-STRIP: 6-gate eval strip (page-aware) — BCTC-EVAL-INSPECT-MERGE -->
     <div id="eval-strip-section" style="display:none">
-      <div class="section-title" style="margin-bottom:6px">Kiểm tra chất lượng trích xuất</div>
+      <div class="section-title eval-strip-title-row" style="margin-bottom:6px">
+        Kiểm tra chất lượng trích xuất
+        <span class="eval-view-toggle-wrap">
+          <button class="eval-view-btn active" id="eval-view-user" aria-pressed="true">Người dùng</button>
+          <button class="eval-view-btn" id="eval-view-agent" aria-pressed="false">Agent (debug)</button>
+        </span>
+      </div>
       <div id="eval-strip-content">
         <div class="missing-msg">Chưa chọn tài liệu.</div>
       </div>
@@ -635,6 +699,12 @@
   let usingIframeFallback = false; // true when pdf.js CDN failed → iframe used
   // pdf.js document object — retained across page navigations for on-demand render
   let pdfDoc = null;
+
+  // ── Eval view state (M-6: dual-view toggle) ──────────────────────────────
+  // "user" (default) | "agent" — persisted to localStorage
+  let evalViewMode = localStorage.getItem("bctcEvalViewMode") || "user";
+  // Last successful fetch result — allows mode switch without re-fetch
+  let lastEvalData = null;
 
   // ── DOM refs ─────────────────────────────────────────────────────────────
   const select        = document.getElementById("doc-select");
@@ -1223,6 +1293,37 @@
   // ── BCTC-EVAL-INSPECT-MERGE: renderEvalStrip / renderGateStrip ──────────
   //
   // Fetches GET /api/bctc-eval/{docId}/page/{pageNum} on every page change.
+  // ── Eval view mode toggle (M-6) ──────────────────────────────────────────
+  function setEvalViewMode(mode) {
+    evalViewMode = mode;
+    localStorage.setItem("bctcEvalViewMode", mode);
+    // Update button active states
+    const btnUser  = document.getElementById("eval-view-user");
+    const btnAgent = document.getElementById("eval-view-agent");
+    if (btnUser && btnAgent) {
+      if (mode === "user") {
+        btnUser.classList.add("active");  btnUser.setAttribute("aria-pressed", "true");
+        btnAgent.classList.remove("active"); btnAgent.setAttribute("aria-pressed", "false");
+      } else {
+        btnAgent.classList.add("active"); btnAgent.setAttribute("aria-pressed", "true");
+        btnUser.classList.remove("active"); btnUser.setAttribute("aria-pressed", "false");
+      }
+    }
+    // Re-render last fetched data without re-fetching
+    const content = document.getElementById("eval-strip-content");
+    if (lastEvalData && content) renderGateStrip(lastEvalData, content, mode);
+  }
+
+  // Wire toggle buttons after DOM is ready (they exist in static HTML)
+  {
+    const btnUser  = document.getElementById("eval-view-user");
+    const btnAgent = document.getElementById("eval-view-agent");
+    if (btnUser)  btnUser.addEventListener("click",  () => setEvalViewMode("user"));
+    if (btnAgent) btnAgent.addEventListener("click", () => setEvalViewMode("agent"));
+    // Apply persisted mode on load (restore active class)
+    setEvalViewMode(evalViewMode);
+  }
+
   // Renders 6-gate eval strip with:
   //   - Status dot (green/yellow/red)
   //   - Stage label + (toàn báo cáo) suffix when report_level:true
@@ -1248,13 +1349,60 @@
         return;
       }
       const data = await resp.json();
-      renderGateStrip(data, content);
+      lastEvalData = data;                            // cache for mode-switch re-render
+      renderGateStrip(data, content, evalViewMode);   // pass current mode
     } catch (err) {
       content.innerHTML = `<div class="missing-msg">Lỗi: ${escHtml(err.message)}</div>`;
     }
   }
 
-  function renderGateStrip(data, container) {
+  function renderDebugBlock(gate) {
+    const d = gate.debug;
+    if (!d) return "";
+
+    const sections = [
+      { label: "metrics_json",       json: d.metrics_json },
+      { label: "gate_failures_json", json: d.gate_failures_json },
+      { label: "golden_diff_json",   json: d.golden_diff_json },
+    ];
+
+    const metaLines = [
+      "detector_version: " + (d.detector_version || "—"),
+      "computed_at: "      + (d.computed_at      || "—"),
+    ];
+    if (gate.stage_no === 3 && d.ocr_filename != null) {
+      metaLines.push("ocr_filename: " + d.ocr_filename);
+    }
+    if (gate.stage_no === 4) {
+      metaLines.push("pek_row_count: "    + (d.pek_row_count    ?? "—"));
+      metaLines.push("pek_quarantined: "  + (d.pek_quarantined  ?? "—"));
+      if (d.pek_quarantine_reason) {
+        metaLines.push("pek_quarantine_reason: " + d.pek_quarantine_reason);
+      }
+    }
+
+    // Honesty: report_level:true stages carry ⚑ toàn báo cáo label
+    const reportTag = gate.report_level
+      ? '<span class="eval-debug-label">&#9873; toàn báo cáo — không phân tách theo trang</span>'
+      : "";
+
+    const sectionsHtml = sections.map(s =>
+      `<div class="eval-debug-label">${escHtml(s.label)}</div>` +
+      `<pre class="eval-debug-pre">${escHtml(JSON.stringify(s.json, null, 2))}</pre>`
+    ).join("");
+
+    return `<div class="eval-debug-block">
+      <details>
+        <summary class="eval-debug-summary">&#9658; raw debug</summary>
+        ${reportTag}
+        <div class="eval-debug-label">meta</div>
+        <pre class="eval-debug-pre">${escHtml(metaLines.join("\n"))}</pre>
+        ${sectionsHtml}
+      </details>
+    </div>`;
+  }
+
+  function renderGateStrip(data, container, mode) {
     const gates = Array.isArray(data.gate_strip) ? data.gate_strip : [];
     if (gates.length === 0) {
       container.innerHTML = '<div class="missing-msg">Không có dữ liệu đánh giá.</div>';
@@ -1300,6 +1448,11 @@
         html += `<div class="eval-fragment-row">
           <span class="eval-fragment-badge">[FRAGMENT TRANG — ${escHtml(label)}]</span>
         </div>`;
+      }
+
+      // Agent debug block — appended only in agent mode; user-view body untouched
+      if (mode === "agent") {
+        html += renderDebugBlock(gate);
       }
     }
 

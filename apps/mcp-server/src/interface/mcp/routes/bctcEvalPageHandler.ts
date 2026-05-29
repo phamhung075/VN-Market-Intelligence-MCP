@@ -42,6 +42,9 @@ interface OcrPageRow {
 interface LayoutUnitRow {
   unit_id: string;
   page_numbers_json: string;
+  row_count: number | null;
+  quarantined: number | null;
+  quarantine_reason: string | null;
 }
 
 interface PdfPathRow {
@@ -109,6 +112,8 @@ export function bctcEvalPageHandler(
       text_length_chars: number | null;
       has_ocr_row: boolean;
     };
+    // ocr_basename is kept for debug sub-object (S3 page-scoped evidence)
+    let ocrBasename: string | null = null;
 
     const pdfPathRow = db
       .prepare<PdfPathRow, [string]>(
@@ -120,6 +125,7 @@ export function bctcEvalPageHandler(
       // Extract basename: take the last path segment
       const parts = pdfPathRow.pdf_path.replace(/\\/g, "/").split("/");
       const basename = parts[parts.length - 1] ?? "";
+      ocrBasename = basename;
       const ocrByFilename = db
         .prepare<OcrPageRow, [string, number]>(
           `SELECT confidence,
@@ -159,7 +165,7 @@ export function bctcEvalPageHandler(
     // Find PEK layout unit(s) covering this page
     const layoutUnits = db
       .prepare<LayoutUnitRow, [string, number]>(
-        `SELECT unit_id, page_numbers_json
+        `SELECT unit_id, page_numbers_json, row_count, quarantined, quarantine_reason
          FROM bctc_layout_units
          WHERE report_id = ?
            AND EXISTS (
@@ -177,6 +183,10 @@ export function bctcEvalPageHandler(
       partial_fragment_warning: boolean;
       partial_label: string | null;
     };
+    // Debug fields for S4 (genuine page-scoped DB evidence only)
+    let pekRowCount: number | null = null;
+    let pekQuarantined: boolean | null = null;
+    let pekQuarantineReason: string | null = null;
 
     if (layoutUnits.length > 0) {
       const unit = layoutUnits[0]!;
@@ -189,6 +199,11 @@ export function bctcEvalPageHandler(
       const isMultiPage = pageNumbers.length > 1;
       const minPage = pageNumbers.length > 0 ? Math.min(...pageNumbers) : pageNo;
       const maxPage = pageNumbers.length > 0 ? Math.max(...pageNumbers) : pageNo;
+
+      // Capture debug fields from the unit row (additive — never null-fabricated)
+      pekRowCount = unit.row_count ?? null;
+      pekQuarantined = unit.quarantined != null ? unit.quarantined !== 0 : null;
+      pekQuarantineReason = unit.quarantine_reason ?? null;
 
       tableAnnotation = {
         page_no: pageNo,
@@ -234,6 +249,14 @@ export function bctcEvalPageHandler(
       }
     }
 
+    function safeParseJson(raw: string): unknown {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
     const gateStrip = evalRows.map((row) => {
       const isReportLevel = REPORT_LEVEL_STAGES.has(row.stage_no);
       const base = {
@@ -245,13 +268,40 @@ export function bctcEvalPageHandler(
         metrics_summary: safeParseSummary(row.metrics_json),
       };
 
+      // ── debug sub-object (additive — every existing field byte-identical) ──
+      const debug: {
+        metrics_json: unknown;
+        gate_failures_json: unknown;
+        golden_diff_json: unknown;
+        detector_version: string;
+        computed_at: string;
+        ocr_filename?: string | null;
+        pek_row_count?: number | null;
+        pek_quarantined?: boolean | null;
+        pek_quarantine_reason?: string | null;
+      } = {
+        metrics_json: safeParseJson(row.metrics_json),
+        gate_failures_json: safeParseJson(row.gate_failures_json),
+        golden_diff_json: safeParseJson(row.golden_diff_json),
+        detector_version: row.detector_version,
+        computed_at: row.computed_at,
+      };
       if (row.stage_no === 3) {
-        return { ...base, page_annotation: ocrAnnotation };
+        debug.ocr_filename = ocrBasename;
       }
       if (row.stage_no === 4) {
-        return { ...base, page_annotation: tableAnnotation };
+        debug.pek_row_count = pekRowCount;
+        debug.pek_quarantined = pekQuarantined;
+        debug.pek_quarantine_reason = pekQuarantineReason;
       }
-      return base;
+
+      if (row.stage_no === 3) {
+        return { ...base, page_annotation: ocrAnnotation, debug };
+      }
+      if (row.stage_no === 4) {
+        return { ...base, page_annotation: tableAnnotation, debug };
+      }
+      return { ...base, debug };
     });
 
     // ── 6. Respond ────────────────────────────────────────────────────────
