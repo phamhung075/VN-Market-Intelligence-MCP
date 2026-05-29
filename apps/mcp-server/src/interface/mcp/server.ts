@@ -66,6 +66,7 @@ import { handleBctcEvalDetail } from "./routes/bctcEvalDetailHandler.js";
 import { handleBctcEvalRecompute } from "./routes/bctcEvalRecomputeHandler.js";
 import { handleBctcEvalThresholds } from "./routes/bctcEvalThresholdsHandler.js";
 import { handleBctcEvalPushStage } from "./routes/bctcEvalPushStageHandler.js";
+import { bctcEvalPageHandler } from "./routes/bctcEvalPageHandler.js";
 import { loadBctcEvalThresholds } from "../../application/usecases/computeBctcEval.js";
 
 /**
@@ -1800,11 +1801,12 @@ export async function createBunServer(
     }
 
     // ── BCTC-EVAL-SUBSTRATE routes (Sprint BCTC-EVAL-SUBSTRATE) ─────────────
-    // GET /api/bctc-eval                  — list all reports (trust-ascending sort)
-    // GET /api/bctc-eval/thresholds       — SSOT thresholds JSON (MUST precede dynamic /:id route)
-    // GET /api/bctc-eval/:id              — full detail for one report
-    // POST /api/bctc-eval/recompute/:id   — recompute stages 4-6 for one report
-    // POST /api/bctc-eval/push-stage      — receive stages 1-3 from pdf-extractor
+    // GET /api/bctc-eval                        — list all reports (trust-ascending sort)
+    // GET /api/bctc-eval/thresholds             — SSOT thresholds JSON (MUST precede dynamic /:id route)
+    // GET /api/bctc-eval/{uuid}/page/{N}        — page-scoped eval strip (BCTC-EVAL-INSPECT-MERGE)
+    // GET /api/bctc-eval/:id                    — full detail for one report
+    // POST /api/bctc-eval/recompute/:id         — recompute stages 4-6 for one report
+    // POST /api/bctc-eval/push-stage            — receive stages 1-3 from pdf-extractor
     if (method === "GET" && pathname === "/api/bctc-eval") {
       handleBctcEvalList(req, res, db);
       return;
@@ -1813,6 +1815,14 @@ export async function createBunServer(
     if (method === "GET" && pathname === "/api/bctc-eval/thresholds") {
       handleBctcEvalThresholds(req, res, bctcEvalProjectRoot);
       return;
+    }
+    // BCTC-EVAL-INSPECT-MERGE: page-scoped eval strip (MUST precede UUID-only catch)
+    {
+      const pageMatch = pathname.match(/^\/api\/bctc-eval\/([^/]+)\/page\/(\d+)$/);
+      if (method === "GET" && pageMatch) {
+        const [, evalReportId, pageStr] = pageMatch;
+        return bctcEvalPageHandler(req, res, db, evalReportId!, parseInt(pageStr!, 10));
+      }
     }
     if (method === "GET" && pathname.startsWith("/api/bctc-eval/") && !pathname.startsWith("/api/bctc-eval/recompute/")) {
       const evalReportId = pathname.slice("/api/bctc-eval/".length);

@@ -459,6 +459,77 @@
       font-size: 15px;
     }
     .loading { color: #4a9eff; }
+
+    /* ── BCTC-EVAL-INSPECT-MERGE: Eval gate strip ── */
+    #eval-strip-section {
+      border-bottom: 1px solid #3a3a3a;
+      padding: 12px 14px;
+      flex-shrink: 0;
+      background: #181e18;
+    }
+    .eval-strip-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid #2a2a2a;
+    }
+    .eval-strip-row:last-child { border-bottom: none; }
+    .eval-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .eval-stage-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #c8c8c8;
+      flex-shrink: 0;
+    }
+    .eval-report-label {
+      color: #555;
+      font-size: 0.8em;
+      flex-shrink: 0;
+    }
+    .eval-metrics {
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 10px;
+      color: #888;
+      margin-left: auto;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 180px;
+    }
+    .eval-fragment-badge {
+      background: #5c2800;
+      border: 1px solid #ff8c3c;
+      color: #fff;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.8em;
+      margin-top: 2px;
+      display: inline-block;
+      word-break: break-word;
+    }
+    .eval-fragment-row {
+      padding: 2px 0 4px 18px;
+    }
+    /* PEK fragment banner in table pane */
+    .pek-fragment-banner {
+      background: #5c2800;
+      border: 1px solid #ff8c3c;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 3px;
+      font-size: 11px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+    .pek-unit-dim { opacity: 0.4; }
+    .pek-unit-highlight { border: 2px solid #4a9eff; border-radius: 3px; padding: 2px; }
   </style>
 </head>
 <body>
@@ -500,6 +571,14 @@
       <div class="section-title">Parsed Financial Figures</div>
       <div id="figures-content">
         <div class="missing-msg">No document selected.</div>
+      </div>
+    </div>
+
+    <!-- EVAL-STRIP: 6-gate eval strip (page-aware) — BCTC-EVAL-INSPECT-MERGE -->
+    <div id="eval-strip-section" style="display:none">
+      <div class="section-title" style="margin-bottom:6px">Kiểm tra chất lượng trích xuất</div>
+      <div id="eval-strip-content">
+        <div class="missing-msg">Chưa chọn tài liệu.</div>
       </div>
     </div>
 
@@ -621,11 +700,12 @@
     let item = null;
     try { item = JSON.parse(selectedOpt.dataset.item || "null"); } catch { /* */ }
 
-    // Render PDF first so pdfNumPages is populated before nav buttons are set
+    // PDF first — populates pdfNumPages, pre-renders all canvases
     await renderPdf(docId, item);
-    await renderOcr(docId, 1);
-    // BT-3i-B: load and render structured table next to OCR text
-    await renderTable(docId);
+    // Navigate to page 1 — triggers OCR + eval strip + zones in lockstep
+    await navigateToPage(1);
+    // Table and MD are report-level: fetched once per doc
+    await renderTable(docId, 1); // pass initial page for fragment highlighting
     // MD-INSPECT: load and render generic markdown tables panel
     await renderMdTables(docId);
   });
@@ -710,6 +790,38 @@
 
     pdfContainer.style.display = "flex";
     pdfIframe.style.display = "none";
+  }
+
+  // ── BCTC-EVAL-INSPECT-MERGE: ensurePdfPageRendered ───────────────────────
+  // Scrolls the PDF pane to canvas pdf-page-{pageNum}.
+  // Called from navigateToPage on every page change — fixes the PDF-stuck-on-page-1 bug.
+  async function ensurePdfPageRendered(docId, pageNum) {
+    if (usingIframeFallback || pdfNumPages === 0) return;
+    const canvas = document.getElementById(`pdf-page-${pageNum}`);
+    if (canvas) {
+      canvas.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      console.warn(`[inspector] pdf-page-${pageNum} canvas not found`);
+    }
+  }
+
+  // ── BCTC-EVAL-INSPECT-MERGE: navigateToPage orchestrator ────────────────
+  // Single entry point for ALL page changes. Drives PDF scroll, OCR, eval
+  // strip, and zone overlay in lockstep. Replaces split btnPrev/btnNext handlers.
+  async function navigateToPage(pageNum) {
+    if (!currentDocId) return;
+    const bound = pdfNumPages > 0 ? pdfNumPages : totalPages;
+    if (bound > 0) pageNum = Math.max(1, Math.min(pageNum, bound));
+    currentPage = pageNum;
+
+    // 1. Ensure PDF canvas for this page exists and scroll to it
+    await ensurePdfPageRendered(currentDocId, pageNum);
+    // 2. Fetch OCR (stage 3 text) for this page
+    await renderOcr(currentDocId, pageNum);
+    // 3. Fetch page-scoped eval gate strip for this page
+    await renderEvalStrip(currentDocId, pageNum);
+    // 4. Fetch zone overlay if enabled
+    if (zoneOverlayEnabled) await renderZoneOverlay(currentDocId, pageNum);
   }
 
   // ── Render OCR + Figures (right pane) ────────────────────────────────────
@@ -888,8 +1000,11 @@
   const mdOcrMarkdownBlock   = document.getElementById("md-ocr-markdown-block");
   const mdOcrMarkdownPre     = document.getElementById("md-ocr-markdown-pre");
 
-  async function renderTable(docId) {
+  // BCTC-EVAL-INSPECT-MERGE: renderTable is now page-aware (pageNum for fragment detection)
+  async function renderTable(docId, pageNum) {
     if (!tableSection || !balanceBadge || !tableContent) return;
+    // pageNum defaults to currentPage when called without explicit arg
+    const activePage = (typeof pageNum === "number" && pageNum >= 1) ? pageNum : currentPage;
 
     try {
       const resp = await fetch(`${BASE}/api/bctc-inspect/table/${encodeURIComponent(docId)}`);
@@ -915,7 +1030,7 @@
         tableContent.parentElement?.insertBefore(staleBanner, tableContent);
       }
 
-      // ── PEK path: render stitched_markdown units ─────────────────────────────
+      // ── PEK path: render stitched_markdown units with page-aware fragment banners ──
       if (data.has_pek === true) {
         balanceBadge.innerHTML = `<span class="balance-pass">PEK SSOT</span>`;
         const units = Array.isArray(data.units) ? data.units : [];
@@ -924,11 +1039,24 @@
         } else {
           let html = "";
           for (const unit of units) {
-            const pages = Array.isArray(unit.page_numbers_json) ? unit.page_numbers_json.join(", ") : "?";
+            const pageNums = Array.isArray(unit.page_numbers_json) ? unit.page_numbers_json : [];
+            const pages = pageNums.length > 0 ? pageNums.join(", ") : "?";
             const quarTag = unit.quarantined ? ` <span style="color:#f88;font-size:10px;">[quarantined]</span>` : "";
-            html += `<div style="margin-bottom:12px;">
+            const coversPage = pageNums.includes(activePage);
+            const isMultiPage = pageNums.length > 1;
+
+            // Page-aware highlighting and fragment banner (AC-3 HARD)
+            const unitClass = coversPage ? "pek-unit-highlight" : "pek-unit-dim";
+            let fragmentBanner = "";
+            if (coversPage && isMultiPage) {
+              const minPage = Math.min(...pageNums);
+              const maxPage = Math.max(...pageNums);
+              fragmentBanner = `<div class="pek-fragment-banner">[FRAGMENT TRANG &mdash; đang xem trang ${activePage} trong đơn vị bảng trải dài trang ${minPage}&ndash;${maxPage}]</div>`;
+            }
+
+            html += `<div class="${unitClass}" style="margin-bottom:12px;">
               <div style="font-size:10px;color:#888;margin-bottom:3px;">Schema page ${escHtml(String(unit.schema_page))} &bull; Pages: ${escHtml(pages)}${quarTag}</div>
-              <pre style="white-space:pre-wrap;font-size:11px;font-family:monospace;color:#e0e0e0;background:#1a1a1a;padding:6px;border-radius:3px;overflow-x:auto;">${escHtml(unit.stitched_markdown || "(empty)")}</pre>
+              ${fragmentBanner}<pre style="white-space:pre-wrap;font-size:11px;font-family:monospace;color:#e0e0e0;background:#1a1a1a;padding:6px;border-radius:3px;overflow-x:auto;">${escHtml(unit.stitched_markdown || "(empty)")}</pre>
             </div>`;
           }
           tableContent.innerHTML = html;
@@ -936,7 +1064,7 @@
         return;
       }
 
-      // ── Legacy path (has_pek:false): render bctc_table_rows ─────────────────
+      // ── Legacy path (has_pek:false): render bctc_table_rows, page-filtered ──
       if (!data.has_table) {
         balanceBadge.innerHTML = "";
         tableContent.innerHTML = `<div class="no-table-msg">No structured table yet — re-extract pending (BT-4b).</div>`;
@@ -957,11 +1085,28 @@
         balanceBadge.innerHTML = `<span class="balance-na">No balance check</span>`;
       }
 
+      // Page-aware filter for legacy rows
+      const allRows = Array.isArray(data.rows) ? data.rows : [];
+      const filteredRows = allRows.filter(row => !row.page_number || row.page_number === activePage);
+      const filteredCount = filteredRows.length;
+      const totalCount = allRows.length;
+
+      if (filteredCount === 0 && totalCount > 0) {
+        tableContent.innerHTML = `<div class="no-table-msg">Không có hàng bảng nào trên trang ${activePage}.</div>`;
+        return;
+      }
+
+      // Page notice when rows are filtered
+      let pageNotice = "";
+      if (totalCount > 0 && filteredCount < totalCount) {
+        pageNotice = `<div style="font-size:11px;color:#888;margin-bottom:4px;">Trang ${activePage} — ${filteredCount} hàng / ${totalCount} tổng cộng</div>`;
+      }
+
       // Render table
       const curPeriod = data.period_current || "Current";
       const priorPeriod = data.period_prior || "Prior";
 
-      let html = `<table class="bctc-table">
+      let html = pageNotice + `<table class="bctc-table">
         <thead>
           <tr>
             <th>Code</th>
@@ -972,7 +1117,7 @@
         </thead>
         <tbody>`;
 
-      for (const row of data.rows) {
+      for (const row of filteredRows) {
         if (row.code === null) {
           // Header/separator row: italic, full-width label
           html += `<tr class="row-header">
@@ -1062,6 +1207,84 @@
     }
   }
 
+  // ── BCTC-EVAL-INSPECT-MERGE: renderEvalStrip / renderGateStrip ──────────
+  //
+  // Fetches GET /api/bctc-eval/{docId}/page/{pageNum} on every page change.
+  // Renders 6-gate eval strip with:
+  //   - Status dot (green/yellow/red)
+  //   - Stage label + (toàn báo cáo) suffix when report_level:true
+  //   - metrics_summary in monospace
+  //   - Orange [FRAGMENT TRANG] badge for stage 4 when partial_fragment_warning:true
+  //
+  async function renderEvalStrip(docId, pageNum) {
+    const section = document.getElementById("eval-strip-section");
+    const content = document.getElementById("eval-strip-content");
+    if (!section || !content) return;
+    section.style.display = "block";
+    content.innerHTML = '<div class="loading">Đang tải...</div>';
+    try {
+      const resp = await fetch(
+        `${BASE}/api/bctc-eval/${encodeURIComponent(docId)}/page/${pageNum}`
+      );
+      if (!resp.ok) {
+        if (resp.status === 409) {
+          content.innerHTML = '<div class="missing-msg">Chưa có dữ liệu đánh giá (chạy backfill trước).</div>';
+          return;
+        }
+        content.innerHTML = `<div class="missing-msg">Lỗi tải strip (${resp.status}).</div>`;
+        return;
+      }
+      const data = await resp.json();
+      renderGateStrip(data, content);
+    } catch (err) {
+      content.innerHTML = `<div class="missing-msg">Lỗi: ${escHtml(err.message)}</div>`;
+    }
+  }
+
+  function renderGateStrip(data, container) {
+    const gates = Array.isArray(data.gate_strip) ? data.gate_strip : [];
+    if (gates.length === 0) {
+      container.innerHTML = '<div class="missing-msg">Không có dữ liệu đánh giá.</div>';
+      return;
+    }
+
+    // Overall trust header
+    const statusColors = { green: "#72c870", yellow: "#d4a017", red: "#e06060" };
+    const trustLabels = {
+      green: "TIN CẬY CAO",
+      yellow: "ĐỘ TIN CẬY TRUNG BÌNH",
+      red: "ĐỘ TIN CẬY THẤP",
+    };
+    const overallColor = statusColors[data.overall_status] || "#888";
+    const overallLabel = trustLabels[data.overall_status] || data.overall_status;
+    const staleNote = data.is_stale ? ' <span style="color:#d4a017;font-size:0.85em;">[CŨ]</span>' : "";
+
+    let html = `<div style="margin-bottom:6px;font-size:12px;font-weight:700;color:${overallColor};">${overallLabel}${staleNote}</div>`;
+
+    for (const gate of gates) {
+      const dotColor = statusColors[gate.status] || "#888";
+      const suffixHtml = gate.label_suffix
+        ? ` <span class="eval-report-label">${escHtml(gate.label_suffix)}</span>`
+        : "";
+
+      html += `<div class="eval-strip-row">
+        <span class="eval-dot" style="background:${dotColor};"></span>
+        <span class="eval-stage-label">Giai đoạn ${gate.stage_no} — ${escHtml(gate.stage_name)}${suffixHtml}</span>
+        <span class="eval-metrics">${escHtml(gate.metrics_summary || "—")}</span>
+      </div>`;
+
+      // Fragment badge for stage 4 (MANDATORY per brief)
+      if (gate.stage_no === 4 && gate.page_annotation?.partial_fragment_warning === true) {
+        const label = gate.page_annotation.partial_label || `trang ${gate.page_annotation.page_no}`;
+        html += `<div class="eval-fragment-row">
+          <span class="eval-fragment-badge">[FRAGMENT TRANG — ${escHtml(label)}]</span>
+        </div>`;
+      }
+    }
+
+    container.innerHTML = html;
+  }
+
   /**
    * parsePipeTableToHtml — converts a GitHub-style pipe-table string to an HTML table.
    *
@@ -1140,22 +1363,26 @@
     return pdfNumPages > 0 ? pdfNumPages : totalPages;
   }
 
+  // BCTC-EVAL-INSPECT-MERGE: buttons delegate to navigateToPage orchestrator
   btnPrev.addEventListener("click", async () => {
     if (currentDocId && currentPage > 1) {
-      currentPage--;
-      await renderOcr(currentDocId, currentPage);
-      if (zoneOverlayEnabled && currentDocId) await renderZoneOverlay(currentDocId, currentPage);
+      await navigateToPage(currentPage - 1);
     }
   });
   btnNext.addEventListener("click", async () => {
     if (currentDocId && currentPage < getNavBound()) {
-      currentPage++;
-      await renderOcr(currentDocId, currentPage);
-      if (zoneOverlayEnabled && currentDocId) await renderZoneOverlay(currentDocId, currentPage);
+      await navigateToPage(currentPage + 1);
     }
   });
 
   // ── Reset ────────────────────────────────────────────────────────────────
+  function resetEvalPanel() {
+    const section = document.getElementById("eval-strip-section");
+    const content = document.getElementById("eval-strip-content");
+    if (section) section.style.display = "none";
+    if (content) content.innerHTML = '<div class="missing-msg">Chưa chọn tài liệu.</div>';
+  }
+
   function resetPanes() {
     currentDocId = null;
     pdfContainer.innerHTML = `<div id="placeholder">Select a document to view its PDF.</div>`;
@@ -1180,6 +1407,8 @@
     if (mdTablesContent) mdTablesContent.innerHTML = "";
     if (mdOcrMarkdownBlock) mdOcrMarkdownBlock.style.display = "none";
     if (mdOcrMarkdownPre) mdOcrMarkdownPre.textContent = "";
+    // BCTC-EVAL-INSPECT-MERGE: reset eval strip
+    resetEvalPanel();
     // LF-OVERLAY: clear overlays and cache
     clearAllOverlays();
     zoneCache.clear();
