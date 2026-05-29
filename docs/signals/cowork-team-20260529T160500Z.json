@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T160500Z",
+    "nominal_tick": "20260529T160000Z",
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["news-scout", "market-watcher"],
+    "silent": false,
+    "drift_min": 5,
+    "completed": true,
+    "lock_released": true,
+    "errors": ["news-scout first spawn died on transient 'API Error: Overloaded' (21 tok, 17s) — retried once, retry succeeded"],
+    "note": "16:00Z off-hours fan-out FIRE CLOSED. Matcher UNANIMOUS x3 returned THREE slots: news-scout-offhours + market-watcher-offhours (cron 0 */4) AND market-watcher-eod (cron 0 16 * * 1-5; 2026-05-29 is Friday). 3 locks claimed=true (one market-watcher run covers both its slots), all released ok=true. market-watcher: 39 stocks, regime NEUTRAL, GAS +6.98% oil leader, real-estate HIGH alert -2.92%, banking mixed, carry FII_OUTFLOW_RISK day9; wrote notebook + signal price_anomaly_20260529T1606.json. news-scout (retry): 20 articles, 3 chain_catalyst signals #4255 real-estate-lift / #4256 breadth-divergence / #4257 macro-opportunity (critic 0.8 each), WORK log 1155. Dispatcher committed both notebooks + mw signal (agents have no commit duty). Next NON-silent: 19:37Z conditional chef-evening / 20:00Z next off-hours fan-out."
+  },
+  "priority": "normal",
+  "createdAt": "20260529T160500Z"
+}
