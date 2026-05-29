@@ -1,8 +1,0 @@
-{
-  "from": "market-watcher",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: get_cycle_bootstrap — connector not responding after 1 retry (MCP gateway unavailable)",
-  "priority": "high",
-  "createdAt": "2026-05-14T20:38:56Z"
-}

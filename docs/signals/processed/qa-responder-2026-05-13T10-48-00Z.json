@@ -1,8 +1,0 @@
-{
-  "from": "qa-responder",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 1 failed: dial vn-market: Get \"http://host.docker.internal:3000/sse\": dial tcp 192.168.65.254:3000: connect: connection refused (after 1 retry)",
-  "priority": "high",
-  "createdAt": "2026-05-13T10:48:00Z"
-}

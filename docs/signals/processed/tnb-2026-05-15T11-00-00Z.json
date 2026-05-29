@@ -1,8 +1,0 @@
-{
-  "from": "tran-ngoc-bau",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0c BLOCKED: vn-market MCP gateway unreachable — log_agent_work / get_macro_snapshot / get_system_status all returned 'No such tool available'. 1913 BLOCKING-F1 substrate unchanged (c59). Cycle aborted per error-boundary protocol. All carry-over items from c58 persist.",
-  "priority": "high",
-  "createdAt": "2026-05-15T11:00:00Z"
-}

@@ -1,8 +1,0 @@
-{
-  "from": "news-scout",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 (get_cycle_bootstrap) failed: gateway unreachable — dial vn-market: lookup host.docker.internal failed (DNS). Live probe (health_check) also failed after retry.",
-  "priority": "high",
-  "createdAt": "2026-05-17T00:20:56Z"
-}

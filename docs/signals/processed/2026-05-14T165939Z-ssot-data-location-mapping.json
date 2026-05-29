@@ -1,8 +1,0 @@
-{
-  "from": "agents-architect",
-  "to": "po",
-  "type": "brief_complete",
-  "payload": "SSOT data location brief ready: docs/ bind-mount gap identified — cowork agents on Claude Desktop cannot read policies/protocols/briefs/specs. 4 changes (C1 compose mount, C2 MCP tool, C3 backup cron, C4 policy doc). C1 is 1-hour highest-ROI first sprint. See docs/architecture-briefs/2026-05-14-ssot-data-location-mapping.md",
-  "priority": "high",
-  "createdAt": "2026-05-14T16:59:39Z"
-}

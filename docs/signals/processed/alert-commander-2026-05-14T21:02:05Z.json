@@ -1,8 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed after 1 retry: MCP gateway (vn-market) unreachable — get_cycle_bootstrap returned 'server not responding' on both attempts",
-  "priority": "high",
-  "createdAt": "2026-05-14T21:02:05Z"
-}

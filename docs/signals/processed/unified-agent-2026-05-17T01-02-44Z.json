@@ -1,8 +1,0 @@
-{
-  "from": "unified-agent",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 (prediction.md flow, 01:00 UTC prediction-review) failed: MCP gateway vn-market unreachable after 1 retry. log_agent_work and get_cycle_bootstrap both returned: dial vn-market: Get \"http://host.docker.internal:3000/sse\": dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving. send_telegram(channel=bug) also impossible — it is itself a vn-market MCP tool on the same down gateway. Same blocker observed prior cycle (2026-05-15T23:01Z DAILY_REVIEW). No fix yet visible in notebook carry-over.",
-  "priority": "high",
-  "createdAt": "2026-05-17T01:02:44Z"
-}

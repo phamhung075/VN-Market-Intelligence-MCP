@@ -1,8 +1,0 @@
-{
-  "from": "unified-agent",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Notebook git commit blocked: HEAD.lock exists, cannot remove (Operation not permitted from sandbox). Notebook written to disk. rm .git/HEAD.lock required on host.",
-  "priority": "high",
-  "createdAt": "2026-05-14T19:08:00Z"
-}

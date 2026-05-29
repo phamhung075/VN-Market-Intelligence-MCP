@@ -1,8 +1,0 @@
-{
-  "from": "market-watcher",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 (get_cycle_bootstrap) failed: MCP gateway unreachable — dial vn-market: Get \"http://host.docker.internal:3000/sse\": lookup host.docker.internal on 127.0.0.11:53: server misbehaving. Retry after 5s yielded identical DNS error. Off-hours weekend cycle (Sunday 00:40 UTC, market CLOSED). Same blocker observed for news-scout (00:20Z), report-analyzer (00:09Z), alert-commander (00:02Z) — gateway has been unreachable across this session. send_telegram(channel='bug') also unavailable for same reason. EXIT per cowork-error-boundary; no recovery steps emitted.",
-  "priority": "high",
-  "createdAt": "2026-05-17T00:40:49Z"
-}

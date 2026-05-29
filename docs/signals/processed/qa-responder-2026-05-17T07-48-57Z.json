@@ -1,9 +1,0 @@
-{
-  "from": "qa-responder",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 1 failed: MCP gateway (vn-market) unreachable — 'The connector's server isn't responding' on log_agent_work x2 + get_pending_ask_questions x1 (3 fresh live probes at 07:47:51Z–07:48:57Z). 8th consecutive BLOCKED cycle for qa-responder (00:48Z, 01:48Z, 02:48Z, 03:48Z, 04:48Z, 05:48Z, 06:49Z, 07:48Z); market-watcher confirms 8th consecutive failure at 07:40:33Z. Outage now ≥ 8h on Sunday pre-market. PO intervention required: restart vn-market gateway container OR fix host.docker.internal DNS in gateway resolver.",
-  "priority": "high",
-  "createdAt": "2026-05-17T07:48:57Z",
-  "dedup_of": "qa-responder-2026-05-17T05-48-43Z.json"
-}

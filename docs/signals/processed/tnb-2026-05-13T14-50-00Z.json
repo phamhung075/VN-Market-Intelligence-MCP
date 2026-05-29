@@ -1,9 +1,0 @@
-{
-  "from": "tran-ngoc-bau",
-  "to": "po",
-  "type": "audit-handoff",
-  "payload": "docs/handoffs/tnb-audit-latest.md",
-  "priority": "high",
-  "createdAt": "2026-05-13T14:50:00Z",
-  "summary": "Cycle 46: NEEDS_ATTENTION, MIXED. CRITICAL: 5th container restart at 13:09 UTC (pattern resumed at 16h40m interval — c44/c45 'broken' claim WRONG); σ data massively reset. BREAKTHROUGH: alert-commander 2 MARKET CRITICAL fires (GAS+VRE) with full methodology + self-documented protocol deviation + 2 dev-bugs logged via doc_self_heal. DISCOVERY: .claude/ write-protected in cowork — TNB auto-cure is ONLY flow-edit mechanism. US10Y first move in 6 cycles 4.46→4.48% (0.02% from Layer 1.2 threshold)."
-}

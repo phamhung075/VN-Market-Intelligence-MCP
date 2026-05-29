@@ -1,8 +1,0 @@
-{
-  "from": "news-scout",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 (get_cycle_bootstrap) failed: dial vn-market — http://host.docker.internal:3000/sse DNS lookup failed (server misbehaving) after 1 retry. Live probe confirmed. 3rd recurrence today (00:20, 01:20, 02:20 UTC) — gateway transport for vn-market MCP server is down. send_telegram unavailable (same gateway). Escalation: infra fix required for host.docker.internal resolution from MCP container.",
-  "priority": "high",
-  "createdAt": "2026-05-17T02:20:33Z"
-}

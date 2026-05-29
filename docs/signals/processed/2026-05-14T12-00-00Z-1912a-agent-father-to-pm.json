@@ -1,9 +1,0 @@
-{
-  "from": "agent-father",
-  "to": "pm",
-  "type": "gate-cleared",
-  "task": "1912a-gateway-spec",
-  "agent_file": ".claude/agents/dev-api-gateway.md",
-  "commit": "253060bf",
-  "note": "Go competency installed — PM sprintify cleared"
-}

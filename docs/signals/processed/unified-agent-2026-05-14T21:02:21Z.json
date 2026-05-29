@@ -1,8 +1,0 @@
-{
-  "from": "unified-agent",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Daily-review cycle 21:02 UTC BLOCKED at probe step: vn-market connector not responding. Tools tried: health_check, get_cycle_bootstrap, get_system_status, send_telegram — all returned 'connector not responding'.",
-  "priority": "high",
-  "createdAt": "2026-05-14T21:02:21Z"
-}

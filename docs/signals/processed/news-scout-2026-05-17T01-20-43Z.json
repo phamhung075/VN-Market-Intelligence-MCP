@@ -1,8 +1,0 @@
-{
-  "from": "news-scout",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 (get_cycle_bootstrap) failed: dial vn-market — http://host.docker.internal:3000/sse DNS lookup failed (server misbehaving) after 1 retry. Live probe confirmed. Recurrence of incidents at 2026-05-16 05:19 UTC and 2026-05-17 00:20 UTC.",
-  "priority": "high",
-  "createdAt": "2026-05-17T01:20:43Z"
-}

@@ -1,8 +1,0 @@
-{
-  "from": "news-scout",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: MCP gateway (zenmidi.com/mcp) unreachable — get_cycle_bootstrap + health_check + send_telegram all returned 'connector's server isn't responding' across 3 retries with 5–10s gaps",
-  "priority": "high",
-  "createdAt": "2026-05-17T07:21:54Z"
-}

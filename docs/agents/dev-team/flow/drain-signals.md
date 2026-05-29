@@ -1,5 +1,10 @@
 # Dev Team — Step 0a: Drain `docs/signals/`
 
+**MANDATORY PERSIST GUARD:** Before Step 0a-D, check:
+1. `ls docs/signals/*.json | wc -l` → if count > 50: full drain (§0a-1 + DB INSERT + mv) is REQUIRED this tick.
+2. `stat -f "%Sm" docs/signals/signals.db` → if mtime > 24h ago: DB write is REQUIRED this tick.
+Neither is optional. Curate-and-route without persist+commit = incomplete drain. After drain, commit ONLY these paths: `docs/signals/processed/`, `docs/signals/*.json` (deletions), `docs/signals/signals.db`, `docs/signals/DASHBOARD.md`.
+
 **Parent flow:** `docs/agents/dev-team/flow/main.md` (Step 0a dispatcher)
 
 Spec: `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md` | DB degradation: `docs/protocols/agent-chaining-protocol.md` § Cross-Team Signal Directory

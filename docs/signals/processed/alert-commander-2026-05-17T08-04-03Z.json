@@ -1,9 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 (get_cycle_bootstrap) failed: vn-market MCP gateway not responding ('The connector's server isn't responding'). 1 retry after 5s identical. send_telegram(channel=bug) on same gateway also unreachable — BUG telegram could not be delivered. 10th consecutive alert-commander block since 2026-05-16T23:02Z; 6th consecutive market-hours block (market 02:00–08:30 UTC). qa-responder 07:48Z + market-watcher 07:40Z + news-scout 07:21Z confirm cluster-wide outage ≥ 8h on Sunday market session. Prior alert-commander signal alert-commander-2026-05-17T07-02-31Z.json was routed-to-po at 07:21:41Z; gateway still down ~43 min later. Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending. Dedup-only; no new info beyond prior signal.",
-  "priority": "high",
-  "createdAt": "2026-05-17T08:04:03Z",
-  "dedup_of": "alert-commander-2026-05-17T07-02-31Z.json"
-}

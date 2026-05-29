@@ -1,8 +1,0 @@
-{
-  "from": "market-watcher",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: gateway unreachable after probe (dial vn-market: host.docker.internal:3000 SSE lookup failed). Retried once with 5s gap. 4th consecutive failure across Sunday pre-market window (2026-05-16 19:40 UTC, 2026-05-17 01:40 + 02:40 + 03:40 UTC). c142 self-healed claim is stale; gateway not recovering between cycles. send_telegram unreachable (same gateway) — no BUG telegram fired. PO intervention required to restart vn-market MCP gateway.",
-  "priority": "high",
-  "createdAt": "2026-05-17T03:40:49Z"
-}

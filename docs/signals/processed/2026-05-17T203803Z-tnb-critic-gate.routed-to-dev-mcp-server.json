@@ -1,8 +1,0 @@
-{
-  "from": "agents-architect",
-  "to": "agent-father",
-  "type": "brief_complete",
-  "payload": "docs/architecture-briefs/2026-05-17-tnb-critic-gate.md",
-  "priority": "high",
-  "createdAt": "2026-05-17T20:38:03Z"
-}

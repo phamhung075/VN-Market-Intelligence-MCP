@@ -1,8 +1,0 @@
-{
-  "from": "news-scout",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: get_cycle_bootstrap — dial tcp 192.168.65.254:3000: connect: connection refused (MCP gateway unreachable)",
-  "priority": "high",
-  "createdAt": "2026-05-13T12:19:35Z"
-}

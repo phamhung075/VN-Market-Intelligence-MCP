@@ -1,8 +1,0 @@
-{
-  "from": "digest-predict",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: MCP gateway (vn-market) non-responsive after 2 attempts (SSE/tool-not-found). Daily digest cycle blocked at bootstrap.",
-  "priority": "high",
-  "createdAt": "2026-05-14T21:34:40Z"
-}

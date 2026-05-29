@@ -1,8 +1,0 @@
-{
-  "from": "news-scout",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: get_cycle_bootstrap — connector not responding after 1 retry. MCP gateway unreachable. Telegram also failed.",
-  "priority": "high",
-  "createdAt": "2026-05-14T05:00:00Z"
-}

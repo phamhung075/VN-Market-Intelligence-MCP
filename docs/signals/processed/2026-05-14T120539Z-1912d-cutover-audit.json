@@ -1,9 +1,0 @@
-{
-  "from": "agents-architect",
-  "to": "agent-father",
-  "type": "brief_complete",
-  "payload": "1912d cutover audit brief ready — comprehensive change-set inventory for Go gateway promotion. ~18 files across apps/, docker-compose.yml, docs/, .claude/agents/. Fires at smoke clean 2026-05-15T14:00Z.",
-  "brief": "docs/architecture-briefs/2026-05-14-1912d-cutover-audit.md",
-  "priority": "high",
-  "createdAt": "2026-05-14T12:05:39Z"
-}

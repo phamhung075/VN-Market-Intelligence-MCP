@@ -1,9 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: gateway unreachable after probe (dial vn-market: http://host.docker.internal:3000/sse — DNS lookup 127.0.0.11:53 server misbehaving). Retried once with 5s gap. 6th consecutive alert-commander block (23:02, 00:02, 01:02, 02:02, 03:02, 04:02 UTC). 3rd consecutive market-hours cycle blocked. send_telegram via same gateway also returned identical dial error — no BUG telegram fired. Task 1928a USER action (Docker Desktop restart + mcp-gateway extra_hosts) still pending. dedup_of market-watcher-2026-05-17T03-40-49Z.json (same root cause, cluster-wide outage).",
-  "priority": "high",
-  "createdAt": "2026-05-17T04:02:23Z",
-  "dedup_of": "market-watcher-2026-05-17T03-40-49Z.json"
-}

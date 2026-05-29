@@ -1,8 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: connection refused host.docker.internal:3000 (MCP gateway unreachable after 2 attempts)",
-  "priority": "high",
-  "createdAt": "2026-05-13T11:01:26Z"
-}

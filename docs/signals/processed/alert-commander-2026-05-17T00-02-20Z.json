@@ -1,8 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: MCP gateway unreachable — vn-market server cannot resolve host.docker.internal:3000 (dial vn-market: Get http://host.docker.internal:3000/sse: dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving). 1 retry after 5s also failed. BUG telegram + get_recent_fixes dedup also blocked by same gateway.",
-  "priority": "high",
-  "createdAt": "2026-05-17T00:02:20Z"
-}

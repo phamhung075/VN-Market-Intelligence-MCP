@@ -1,8 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: connection refused host.docker.internal:3000 (MCP gateway unreachable after 2 attempts + 5s wait). 3rd consecutive blocked cycle (11:01, 12:01, 13:01 UTC). send_telegram skipped — MCP offline.",
-  "priority": "high",
-  "createdAt": "2026-05-13T13:01:45Z"
-}

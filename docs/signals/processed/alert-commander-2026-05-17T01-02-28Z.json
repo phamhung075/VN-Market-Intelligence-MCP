@@ -1,8 +1,0 @@
-{
-  "from": "alert-commander",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: MCP gateway vn-market unreachable after 1 retry. log_agent_work, get_cycle_bootstrap, get_system_status, send_telegram all returned: dial vn-market: Get http://host.docker.internal:3000/sse: dial tcp: lookup host.docker.internal on 127.0.0.11:53: server misbehaving. Same blocker reported by alert-commander 00:02 UTC and unified-agent 01:02 UTC this cycle window — gateway has not recovered. BUG telegram suppressed (channel is itself a vn-market tool on the same down gateway). USER action required per notebook c147 / Task 1928a (Docker Desktop restart + extra_hosts on mcp-gateway).",
-  "priority": "high",
-  "createdAt": "2026-05-17T01:02:28Z"
-}

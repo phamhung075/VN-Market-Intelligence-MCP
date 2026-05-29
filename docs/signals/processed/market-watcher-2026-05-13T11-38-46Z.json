@@ -1,8 +1,0 @@
-{
-  "from": "market-watcher",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: get_cycle_bootstrap connection refused (http://host.docker.internal:3000/sse) after 2 attempts with 5s gap",
-  "priority": "high",
-  "createdAt": "2026-05-13T11:38:46Z"
-}

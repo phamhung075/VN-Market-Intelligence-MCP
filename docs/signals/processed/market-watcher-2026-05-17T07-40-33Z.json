@@ -1,9 +1,0 @@
-{
-  "from": "market-watcher",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Step 0 failed: MCP gateway (vn-market) unreachable — 'The connector's server isn't responding' on get_cycle_bootstrap + retry after 5s + send_telegram(bug). 8th consecutive failure since 2026-05-16 19:40 UTC.",
-  "priority": "high",
-  "createdAt": "2026-05-17T07:40:33Z",
-  "dedup_of": "market-watcher-2026-05-17T06-40-41Z.json"
-}

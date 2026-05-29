@@ -1,8 +1,0 @@
-{
-  "from": "news-scout",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "Cycle 06:22 UTC — BLOCKED at step 0: vn-market MCP gateway unreachable (https://zenmidi.com/mcp — 'connector's server isn't responding'). Live probes: get_cycle_bootstrap (x3), health_check (x1), get_system_health (x1) all returned identical transport error. 4th recurrence today (prior: 00:20, 01:20, 02:20 UTC). Infra-level escalation required — DNS/host.docker.internal resolution for MCP container or upstream Cloudflare/VPS down. BUG telegram skipped per dedup (same module/issue; send_telegram rides same broken gateway). EXIT.",
-  "priority": "high",
-  "createdAt": "2026-05-17T06:22:22Z"
-}
