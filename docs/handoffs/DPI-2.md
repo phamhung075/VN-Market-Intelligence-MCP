@@ -129,3 +129,27 @@ go build ./cmd/... — CLEAN
 ```
 
 ### NEXT: ops REBUILD (macro-indicators, AFTER mcp-server) → qa live probe (AC-6)
+
+---
+
+## [QA] Review Record — 2026-05-30T00:21Z
+
+**Verdict: PASS**
+
+### Live Probe Method
+Direct POST to macro-indicators Go service (port 5004/snapshot via api-gateway /macro/snapshot), returning full signals JSON.
+
+### Values Read
+
+| Field | Snapshot Value | Expected | Status |
+|---|---|---|---|
+| `carry.computedAt` | `2026-05-29T23:20:58Z` | Today (2026-05-29/30) | PASS |
+| `yield.computedAt` | `2026-05-29T23:20:58Z` | Today (2026-05-29/30) | PASS |
+
+### AC-6 GATE PASS
+- Neither timestamp is the frozen `2026-05-23T00:00:00Z`.
+- Both timestamps reflect the live Execute() call time — `time.Now().UTC().Format(time.RFC3339)` fires correctly.
+
+### Container state
+- macro-indicators: Up 5 minutes (healthy) — post-rebuild confirmed.
+- `const fixtureComputedAt` is absent from deployed binary (confirmed by live timestamp).

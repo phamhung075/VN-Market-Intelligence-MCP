@@ -173,3 +173,41 @@ ORDER BY extracted_at DESC LIMIT 1;
 ### REBUILD note (per feedback_rebuild_after_dev_change)
 
 OPS MUST `docker compose build macro-indicators && docker compose up -d --no-deps --force-recreate macro-indicators` — a plain `restart` relaunches the stale image and will NOT pick up this code change.
+
+---
+
+## [QA] Review Record — 2026-05-30T00:21Z (AC-7 live re-probe)
+
+**Verdict: PASS (with documented acceptable safe-degrades)**
+
+### Method
+1. Snapshot values read from live POST /macro/snapshot (api-gateway → macro-indicators Go service).
+2. DB rows verified directly in mcp-server container via `bun -e` (no sqlite3 — correct per spec).
+
+### Cross-check table
+
+| Input | Snapshot value | DB row value | Source query | Match / Verdict |
+|---|---|---|---|---|
+| `carry.vndDepositRate` | **5.0** | `max_deposit_rate_pct=5, fetched_at=2026-05-29T23:15:03Z` | `sbv_rates WHERE source='sbv'` | **MATCH — LIVE** |
+| `carry.fedFundsRate` | **5.33** (fixture) | `value=3.63, date=2026-05-14` | `fred_series_daily WHERE series='EFFR' ORDER BY date DESC LIMIT 1` | **SAFE-DEGRADE — ACCEPTABLE** (see note) |
+| `yield.earningYield` | **8.2** (fixture) | no row | `tracked_indicators WHERE indicator='market_earning_yield'` | **SAFE-DEGRADE — ACCEPTABLE** (see note) |
+
+### Safe-degrade documentation
+
+**EFFR (fedFundsRate):** DB row date = 2026-05-14. Staleness bound = 96h. 96h cutoff = 2026-05-25T23:21Z. The row is 15 days old — staleness guard fires correctly, fixture fallback `5.33` applies. This is NOT a false-green: the adapter's guard is working as designed; the underlying FRED fetch job has not produced a fresh row. DB row is genuinely stale.
+
+**market_earning_yield:** `tracked_indicators` has zero rows for this indicator. Safe-degrade to `8.2` is correct. DB is genuinely empty.
+
+**VND deposit rate:** LIVE — adapter reads `max_deposit_rate_pct=5` from fresh sbv_rates row (fetched 2026-05-29T23:15:03Z, within 26h staleness bound). Snapshot matches DB exactly.
+
+### Anti-false-green confirmation
+- `carry.computedAt = 2026-05-29T23:20:58Z` — NOT frozen 2026-05-23 (DPI-2 confirmed).
+- `carry.vndDepositRate = 5` — NOT fixture 4.7 (live DB value wired correctly via CarryYieldInputsSQLiteAdapter).
+- Regime = `FII_OUTFLOW_RISK` with `carrySpread = -0.33` (5.0 − 5.33 = −0.33) — spread uses LIVE deposit rate (5.0 not 4.7); fed rate is fixture due to stale DB (documented above).
+- The adapter's staleness machinery is PROVEN working: deposit rate was LIVE (fresh row wired through), EFFR fell back to fixture only because DB row is genuinely stale (date=2026-05-14 >> 96h ago).
+
+### Container state
+- macro-indicators: Up 5 minutes (healthy) — post-rebuild confirmed.
+- DPI-2b code deployed: `CarryYieldInputsSQLiteAdapter` in binary confirmed (vndDepositRate live value 5 ≠ fixture 4.7 proves adapter runs).
+
+### AC-7 STATUS: PASS (LIVE inputs wired; safe-degrades legitimate and documented)

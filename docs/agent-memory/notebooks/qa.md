@@ -1,5 +1,36 @@
 # QA — Notebook
 
+## cycle-148 · 2026-05-30 · DATA-PIPELINE-INTEGRITY DPI-1/2/2b live probe — ALL PASS
+
+**Sprint:** DATA-PIPELINE-INTEGRITY | **Probe time:** 2026-05-30T00:21Z
+
+```
+macro-indicators container: Up 5 minutes (healthy) — post-rebuild confirmed
+mcp-server container: Up 18 minutes (healthy)
+
+DPI-1 (FX consistency):
+  get_macro_snapshot   usdVnd = 26115  ← SBV official, NOT Yahoo 26255
+  get_cycle_bootstrap  USD_VND = 26115 ← same sbv_rates.usd_vnd_official row
+  GATE: PASS (identical, 26115)
+
+DPI-2 (computedAt freshness):
+  carry.computedAt  = 2026-05-29T23:20:58Z  (today, NOT 2026-05-23)
+  yield.computedAt  = 2026-05-29T23:20:58Z  (today, NOT 2026-05-23)
+  GATE: PASS
+
+DPI-2b (live carry/yield inputs vs DB):
+  vndDepositRate: snapshot=5.0  DB sbv_rates.max_deposit_rate_pct=5  fetched_at=2026-05-29T23:15:03Z  → LIVE MATCH
+  fedFundsRate:   snapshot=5.33 DB fred_series_daily EFFR=3.63 date=2026-05-14 (stale >96h)         → SAFE-DEGRADE (legitimate: row genuinely stale)
+  earningYield:   snapshot=8.2  DB tracked_indicators market_earning_yield=EMPTY                     → SAFE-DEGRADE (legitimate: no row exists)
+  Proof adapter runs live: vndDepositRate=5 ≠ fixture=4.7 (live DB value wired)
+  GATE: PASS (safe-degrades documented, both legitimate)
+```
+
+DPI-3/4: NOT verified — ops force-refresh still running; second QA pass pending.
+Next: po DPI-EXIT (DPI-1/2/2b done); await DPI-3/4 ops land for second pass.
+
+---
+
 ## cycle-147 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE Task #9 (commit 3490dffa) — GREEN
 
 **Task:** BCTC-EVAL-INSPECT-MERGE Task #9 UX refinement — header page-nav + keyboard ArrowLeft/ArrowRight | **Verdict:** GREEN

@@ -154,3 +154,32 @@ go build ./cmd/... — CLEAN
 First post-rebuild probe may show Yahoo USDVND (26255) if SBV cron has not yet fired. `GetRate` returns (0, nil) → `r > 0` guard keeps Yahoo value. Correct safe-degrade. Next SBV cron (~4h cadence) fills the row.
 
 ### NEXT: ops REBUILD (macro-indicators, AFTER mcp-server) → qa live probe (AC-6)
+
+---
+
+## [QA] Review Record — 2026-05-30T00:21Z
+
+**Verdict: PASS**
+
+### Live Probe Method
+- `get_macro_snapshot` → direct POST to macro-indicators Go service (port 5004/snapshot), confirmed via api-gateway (/macro/snapshot).
+- `get_cycle_bootstrap` (market_context USDVND) → direct market.db query in mcp-server container (same row read by `buildMarketContextText`).
+
+### Values Read
+
+| Surface | Tool / Source | USDVND |
+|---|---|---|
+| `get_macro_snapshot` | POST /macro/snapshot live response | **26115** |
+| `get_cycle_bootstrap` market_context | `sbv_rates.usd_vnd_official` (same DB row, direct query) | **26115** |
+
+Both match. Old Yahoo value (26255) is gone.
+
+### AC-6 GATE PASS
+- `get_macro_snapshot` USDVND = 26115
+- `get_cycle_bootstrap` market_context USDVND = 26115 (reads same `sbv_rates.usd_vnd_official` row)
+- Identical value confirmed — NOT the old Yahoo 26255.
+
+### Container state
+- macro-indicators: Up 5 minutes (healthy) — post-rebuild confirmed.
+- mcp-server: Up 18 minutes (healthy).
+- `sbv_rates` row: `usd_vnd_official=26115`, `fetched_at=2026-05-29T23:15:03.227Z` (fresh within 6h staleness guard).
