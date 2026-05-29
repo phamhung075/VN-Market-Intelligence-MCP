@@ -1,5 +1,193 @@
 # QA — Notebook
 
+## cycle-149 · 2026-05-30 · BCTC-TABLE-BOUNDARY BTB-QA — RED (2 blocking issues)
+
+**Sprint:** BCTC-TABLE-BOUNDARY | **Task:** BTB-QA | **Verdict:** RED
+
+```
+date: 2026-05-30T01:30Z
+type: anti-false-green adjudication (BTB-QA)
+sprint: BCTC-TABLE-BOUNDARY
+commits_under_test: d297f3ba (boundary state machine) + b1e826c2 (instrumentation)
+sentinel_A: FPT e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf, 46pp)
+sentinel_B: ACB fea19bae-2b7a-4954-b3e0-e09d7bfc7390 (20260422-ACB-BCTC-Hop-nhat-Quy-1-nam-2026.pdf)
+note: ops reported sentinel_B as ac6b1c2e — that id has no financial_reports record; fea19bae is the live ACB report
+
+═══════════════════════════════════════════════════════════════
+CHECK-1 — UNIT TESTS: 42 + 58 + 38 + 659 all GREEN
+═══════════════════════════════════════════════════════════════
+
+test_table_boundary_state_machine.py: 42/42 PASS
+  - DV-1 (table,prose,table → 3 units): PASS (test_dv1_table_prose_table_produces_three_units)
+  - DV-2 (title-band → _fingerprints_continuous=False): PASS
+test_document_map.py: 58/58 PASS
+test_pek_engine_adapter.py (apps/pdf-extractor/__tests__/): 38/38 PASS
+all pdf-extractor unit tests: 659/659 PASS (5.74s, 1 DeprecationWarning only)
+bun tsc --noEmit: 0 errors (exit 0)
+bun test src/__tests__: 10097 tests, exit 0 (post-run Bun C++ crash is pre-existing Bun runtime bug, not test failure)
+
+verdict: GREEN for unit-test layer
+
+═══════════════════════════════════════════════════════════════
+CHECK-2 — FROZEN FILES: NFR-3, NFR-4
+═══════════════════════════════════════════════════════════════
+
+PDF-Extract-Kit subtree: git diff HEAD -- apps/pdf-extractor/PDF-Extract-Kit/ = 0 lines — PRISTINE
+text_table_extractor.py: git diff HEAD -- ...text_table_extractor.py = 0 lines — 0-diff
+extract_layout_first_usecase.py: git diff HEAD — 0-diff
+instrumentation note: b1e826c2 added clarifying comment to generic_md_table_extractor.py (7 lines, comment-only per commit message "State machine UNCHANGED")
+All 3 frozen-file constraints: PASS
+
+═══════════════════════════════════════════════════════════════
+CHECK-3 — DB DUMP: FPT sentinel (e71f845d)
+═══════════════════════════════════════════════════════════════
+
+Total rows: 42
+Distinct page_number_json spans: 7 (each appearing 6 times)
+  [5]                    × 6
+  [7,8,9]               × 6
+  [16]                  × 6
+  [22,23,24,25,26,27,28,29] × 6
+  [30,31,32,33,34,35,36,37] × 6
+  [38,39,40,41,42,43,44,45] × 6
+  [46]                  × 6
+All page_type values: "table" only — ZERO prose units
+Total unique pages covered: 30 (pages 5,7-9,16,22-46)
+
+Gap pages NOT in any unit: 1-4, 6, 10-15, 17-21
+OCR content check (sample):
+  p1: cover page — "CÔNG TY CỔ PHẦN FPT ... Báo cáo tài chính hợp nhất" — prose CONFIRMED
+  p4,6: same cover prose — CONFIRMED prose
+  p10,11,17-21: "THUYẾT MINH BÁO CÁO TÀI CHÍNH HỢP NHẤT" — narrative notes — prose CONFIRMED
+  All gap pages are genuine prose → exclusion from table units is CORRECT
+
+Content check on multi-page table spans:
+  p22-29 span: hasNumericData=true for all 8 pages → table content CONFIRMED
+  p30-37 span: p30 starts with "ĐẦU TƯ VÀO CÔNG TY CON" (different section from p22-29) — distinct table CONFIRMED
+  p38-45 span: hasNumericData=true — table CONFIRMED
+  p5 (single): table page; p16 (single): table page; p46 (single): table page
+  Continuation check [7,8,9]: single unit — CONTINUE state WORKING
+
+═══════════════════════════════════════════════════════════════
+CHECK-4 — DB DUMP: ACB sentinel (fea19bae)
+═══════════════════════════════════════════════════════════════
+
+Total rows: 10
+Distinct spans: 5 (each appearing 2 times)
+  [5,6]                  × 2
+  [16,17,18,19,20,21,22,23] × 2
+  [24,25,26,27]          × 2
+  [29]                   × 2
+  [31,32]                × 2
+All page_type values: "table" only — ZERO prose units
+
+Gap pages: 7-15, 28, 30
+OCR check:
+  p8: "BÁO CÁO LƯU CHUYỂN TIỀN TỆ" — prose CONFIRMED
+  p9,12,13,15: "THUYẾT MINH BÁO CÁO TÀI CHÍNH CHỌN LỌC" — notes/prose CONFIRMED
+  p28,30: "QUẢN LÝ RỦI RO TÀI CHÍNH" — notes/prose CONFIRMED
+  p7,10,11,14: null OCR (blank pages) — correctly not in any unit
+Prose gap pages correctly excluded: PASS
+
+Content check on spans:
+  [16-23]: all 8 pages hasNumericData=true — table content CONFIRMED
+  [24-27]: p24 starts "VI. THONG TIN BO SUNG" — new section title, correctly separate unit — NEW state WORKING
+  [29]: row_count=0, OCR shows scrambled/inverted text — likely blank/upside-down page; persisted as table-unit with 0 rows
+  [31,32]: no OCR text in pdf_extracted_text — data in bctc_layout_units without OCR records — suspicious
+
+═══════════════════════════════════════════════════════════════
+BLOCKING ISSUE-1 — MULTI-INSERT (duplicate unit rows)
+═══════════════════════════════════════════════════════════════
+
+FPT: 42 rows = 7 unique spans × 6 duplicates each. Every page appears 6 times.
+ACB: 10 rows = 5 unique spans × 2 duplicates each.
+Other reports (0c6f0535 = 18 rows = 6 spans × 3; etc.) — fleet-wide pattern.
+
+Root cause: bctc_layout_units insert path does NOT delete prior rows for the same
+report_id before re-inserting. Each re-extraction call appends, not replaces.
+This violates FR-5: "Adjacent units in the same report are disjoint (no page appears
+in two units)." — currently every page appears N times (N = number of re-extractions).
+
+Per REQ §FR-5: "Each row in bctc_layout_units MUST satisfy... Adjacent units in the
+same report are disjoint." — VIOLATED by duplication.
+
+Impact: the viewer will return 6× duplicate table sections for FPT. Downstream analysis
+counts rows N× and gets wrong totals. The state machine logic may be correct but the
+persistence layer has no idempotency guard.
+
+Status: RED — blocking. Cannot declare DONE with duplicate rows in sentinel.
+
+═══════════════════════════════════════════════════════════════
+BLOCKING ISSUE-2 — NO PROSE UNITS STORED
+═══════════════════════════════════════════════════════════════
+
+All units in both sentinels are page_type="table". Zero prose units are stored.
+The state machine correctly produces prose units in unit tests (DV-1: table,prose,table
+→ 3 units, where unit_2 is prose). But live extraction stores ONLY table-typed units.
+
+Likely cause: the handler or usecase is filtering out prose units before DB insert
+(possibly only storing units where page_type=="table" or row_count > 0). The prose
+pages 1-21 (non-table) for FPT and pages 7-15/28/30 for ACB are absent from the DB.
+
+Per STATE 3 spec: "Open a NEW prose unit for the current page. page_type='prose'."
+Per FR-5: "A page_type='prose' unit: pages come from a contiguous prose sequence."
+These prose units must appear in bctc_layout_units.
+
+The REQ explicitly says the expected output structure contains "a prose unit visible
+(not everything typed 'table')" as part of the Sentinel A verification command's
+"Expected output structure."
+
+Status: RED — blocking. Prose unit storage is either missing or suppressed.
+
+═══════════════════════════════════════════════════════════════
+CHECK-5 — OVER-MERGE CHECK (user's original bug)
+═══════════════════════════════════════════════════════════════
+
+No single unit spans across a table-END boundary into prose:
+- FPT [22-29]: all 8 pages have numeric data (table throughout) — NOT over-merged prose
+- FPT [30-37]: separate unit from [22-29]; p30 starts new section — NEW state correct
+- ACB [16-23] and [24-27]: separate units; p24 title-band triggers NEW — correct
+The original over-merge bug (all tables fused into one unit) is FIXED at the state machine level.
+DV-1 proves the three-unit pattern works. But prose units not being STORED means the
+full four-state contract is unverifiable from live DB alone.
+
+Status: PARTIAL PASS — over-merge fixed in logic; END→prose storage gap still blocks.
+
+═══════════════════════════════════════════════════════════════
+CHECK-6 — PRE vs POST
+═══════════════════════════════════════════════════════════════
+
+Pre-fix state not available in DB (old units purged by re-extraction). Dev handoff
+BTB-DEV.md documents: "DV-1 PROVEN-RED pre-fix: old _simulate_grouping with majority-vote
+returned 2 units from [table,prose,table] — prose unit silently dropped." Pre-fix
+evidence is in the handoff, not live DB. Accepted per task scope (pre-fix DB state
+not required to be preserved).
+
+Post-fix: boundary logic is demonstrably different (42 separate table units vs
+what would have been 1 or very few units pre-fix). But dual bugs (duplicate rows,
+no prose storage) make this a partial validation only.
+
+═══════════════════════════════════════════════════════════════
+VERDICT: RED — 2 blocking issues
+═══════════════════════════════════════════════════════════════
+
+RED-1: Multi-insert — bctc_layout_units missing idempotency guard (DELETE WHERE report_id
+  before INSERT). FPT: 42 rows (should be 7). ACB: 10 rows (should be 5). Fleet-wide.
+  Fix: add DELETE FROM bctc_layout_units WHERE report_id=? before unit insert loop,
+  OR use INSERT OR REPLACE with report_id+page_numbers_json as unique key.
+
+RED-2: Prose units not stored — handler/usecase filters out prose-typed units.
+  Fix: identify where prose unit filtering occurs (likely handlers.py or
+  extract_layout_first_usecase.py); remove filter or add prose unit persistence.
+
+State machine logic: CORRECT (unit tests 659/659, DV-1/DV-2 PROVEN).
+Over-merge fix: CORRECT at logic level.
+Frozen files: PASS.
+tsc: PASS.
+
+NEXT: fixer | apply RED-1 idempotency guard + RED-2 prose unit storage
+```
+
 ## cycle-148 · 2026-05-30 · DATA-PIPELINE-INTEGRITY DPI-1/2/2b live probe — ALL PASS
 
 **Sprint:** DATA-PIPELINE-INTEGRITY | **Probe time:** 2026-05-30T00:21Z
