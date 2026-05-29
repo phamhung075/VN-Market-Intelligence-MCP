@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-29T04:37:46Z
+
+**Brief:** `docs/architecture-briefs/2026-05-29-bctc-analyst-merge.md` (REVISED v2)
+
+PO expanded scope with E1–E4: (E1) 6 trick-detection passes + consolidation in ordered `stage-pass-*.md` flow files with mandatory evidence-citation requirement and deterministic consolidation algorithm; (E2) off-market-hours guard (VN 02:00–08:00 UTC) as first step in cycle.md, cron revised to `0 15,18,21,0 * * *`; (E3) SHA-256 content-hash idempotency cache at `data/bctc-analysis-cache/{TICKER}/{QUARTER}/{hash}.json`; (E4) extractor binding audit against actual BCTC table schema — 3 missing fields flagged as separate dev-pdf-extractor sprint. Partial H-1..H-7 files from killed agent-father run verified consistent. DELETE list expanded (no archive — PO directive). Migration steps renumbered H-1..H-24.
+
+**Signal dropped:** `docs/signals/bctc-analyst-merge-20260529T042613Z.json` → agent-father (updated to v2)
+
+---
+
 ## 2026-05-29T04:26:13Z
 
 **Brief:** `docs/architecture-briefs/2026-05-29-bctc-analyst-merge.md`

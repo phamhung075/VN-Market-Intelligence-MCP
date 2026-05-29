@@ -4,9 +4,16 @@
   "type": "architecture_brief",
   "payload": "docs/architecture-briefs/2026-05-29-bctc-analyst-merge.md",
   "priority": "high",
+  "version": "v2",
   "createdAt": "2026-05-29T04:26:13Z",
-  "summary": "PO-approved MERGE of financial-analyst + report-analyzer into bctc-analyst. 17-step migration sequence. Creates 9 new files, modifies 2 (chef + schedule), deletes 6 post-soak, archives 2 notebooks. Model: sonnet. Signal canonical: bctc_signal with mode discriminator. Chef dual-accept transition window required.",
-  "migration_steps": "H-1 through H-17 — see brief §(h)",
-  "rollback_gate": "24h parallel run between H-11 and H-12 — abort if 0 valid signals",
-  "open_questions": ["OQ-1: verify chef GATHER step file path", "OQ-2: verify cowork-schedule.json report-analyzer entry presence", "OQ-3: carry BCTC Citation Trust Protocol + fix Portuguese→Vietnamese in brief §9"]
+  "revisedAt": "2026-05-29T04:37:46Z",
+  "summary": "MERGE-OK-v2: financial-analyst + report-analyzer → bctc-analyst. E1: 6 trick-detection passes + stage-consolidate.md (ordered, per-pass output schema, evidence-citation mandatory). E2: off-market-hours guard in cycle.md, cron revised to 0 15,18,21,0 * * *. E3: SHA-256 content-hash idempotency cache at data/bctc-analysis-cache/. E4: extractor binding audit — 3 missing fields flagged as separate dev-pdf-extractor sprint. Partial H-1..H-7 exist (killed run) — verify + extend. DELETE list: 8 files (no archive). Migration H-1..H-24.",
+  "migration_steps": "H-1 through H-24 — see brief §(h)",
+  "partial_files_exist": ["/.claude/agents/bctc-analyst.md", "docs/agents/bctc-analyst/init.md", "docs/agents/bctc-analyst/flow/main.md", "docs/agents/bctc-analyst/flow/cycle.md", "docs/agents/bctc-analyst/flow/stage-bootstrap.md", "docs/agents/bctc-analyst/flow/stage-analyze.md", "docs/agents/bctc-analyst/flow/stage-log-notify.md"],
+  "new_files_needed": ["stage-pass-balance-sheet.md", "stage-pass-pl.md", "stage-pass-cashflow.md", "stage-pass-rpt.md", "stage-pass-footnote.md", "stage-pass-segment.md", "stage-consolidate.md", "tools/package/bctc-analyst.md", "notebooks/bctc-analyst.md", "data/bctc-analysis-cache/ (dir)"],
+  "rollback_gate": "24h parallel run between H-18 and H-19 — abort if 0 valid signals",
+  "open_questions": ["OQ-1: verify chef GATHER step file path", "OQ-2: verify cowork-schedule.json report-analyzer entry presence", "OQ-3: carry BCTC Citation Trust Protocol with Vietnamese terms (NOT Portuguese)", "OQ-4: signal PM for dev-pdf-extractor sprint (confidence_score + statement_section coverage + footnote linkage)", "OQ-5: add data/bctc-analysis-cache/ to .gitignore"],
+  "delete_list": [".claude/agents/financial-analyst.md", ".claude/agents/report-analyzer.md", "docs/agents/financial-analyst/ (dir)", "docs/agents/report-analyzer/ (dir)", "docs/agents/tools/package/financial-analyst.md", "docs/agents/tools/package/report-analyzer.md", "docs/agent-memory/notebooks/financial-analyst.md", "docs/agent-memory/notebooks/report-analyzer.md"],
+  "e4_dev_sprint_required": true,
+  "e4_missing_fields": ["confidence_score per bctc_table_row", "statement_section coverage for income_statement + cash_flow", "footnote-code linkage in pdf_extracted_text"]
 }
