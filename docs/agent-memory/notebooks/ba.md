@@ -1,8 +1,51 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-28T00:00Z | **Sprint:** MACRO-LIVE-PRICES (MLP-BA)
+**Last updated:** 2026-05-30 | **Sprint:** DATA-PIPELINE-INTEGRITY (DPI-BA)
+
+## DATA-PIPELINE-INTEGRITY-BA · 2026-05-30
+
+Sprint DPI spec complete. REQ file: `docs/REQ_DATA-PIPELINE-INTEGRITY.md`. Zero PO blockers. NEXT: architect.
+
+Key technical findings (code-confirmed, not re-diagnosed):
+
+- DPI-1 root seam: `apps/macro-indicators/pkg/infrastructure/repositories.go` — `SBVRateRepository` is fixture-only (returns 24500). `SQLiteCommodityRepository.FetchPrices` reads `commodity_prices WHERE source='yahoo'` for USDVND=26255. `get_cycle_bootstrap` path reads `sbv_rates.usd_vnd_official`=26115 via `marketContextBuilder.ts`. Fix = add `SBVRateSQLiteAdapter` implementing `SBVRatePort` to read `sbv_rates`, wire in `cmd/server/main.go` composition root. NEVER add new HTTP calls from macro-indicators.
+- DPI-2 root: `usecases.go` L45 `const fixtureComputedAt = "2026-05-23T00:00:00Z"` — hardcoded constant, no scheduler. 2-line fix: replace with `time.Now().UTC().Format(time.RFC3339)` inline at call site. Tests asserting exact string must be updated to accept any RFC3339 timestamp.
+- DPI-3 root: `yahooFinance.ts storeCommoditySnapshot()` L410-415 hardcodes `change_amt=0, change_pct=0` on both INSERT and ON CONFLICT update. `commodity_prices_history` holds hourly history (prev-close source). Fix = read prev-close from history before upsert, compute delta, set both columns. Confined to `apps/mcp-server/src/infrastructure/fetchers/yahooFinance.ts`.
+- DPI-4 root: `ohlcvForeignFlowStore.ts` L31 UPDATE-only, silently skips when OHLCV row not yet created. Fix = INSERT…ON CONFLICT UPSERT, creates stub row with NULL OHLCV cols if needed. Schema already nullable — no migration. Flag for architect: verify OHLCV write path also uses UPSERT to overwrite stub row cleanly.
+- Zone split confirmed: DPI-1/DPI-2 dev-macro-indicators only; DPI-3 fix lives in dev-mcp-server (data seam) though surface is macro-indicators; DPI-4 dev-mcp-server only. Parallel dev permitted. Rebuild order preference: mcp-server first, then macro-indicators (DPI-3 data dependency).
+
+DPI-3 ownership clarification: fix file is `yahooFinance.ts` (mcp-server zone) but the visible surface is `get_macro_snapshot` (macro-indicators). Architect must assign DPI-3 to dev-mcp-server, not dev-macro-indicators.
 
 > Archive: `docs/archive/notebooks/ba-2026-05-21.md`
+
+## BCTC-TABLE-BOUNDARY-BA · 2026-05-29
+
+Sprint BCTC-TABLE-BOUNDARY spec complete. REQ file: `docs/REQ_BCTC-TABLE-BOUNDARY.md`. Zero PO blockers. NEXT: architect (BTB-ARCH).
+
+Key decisions encoded:
+- FR-1: `_flush_unit` majority-vote dominant_type REPLACED by schema-page-type assignment (first non-blank page type). A unit that opens as table stays table only until first D-2 page — that page triggers END.
+- FR-2: Intervening-prose break added to `build_document_map` loop: a D-2 page between two D-1 pages forces a unit break even when the two table pages are geometrically identical.
+- FR-3: Title-band break added to `_fingerprints_continuous`: a standalone title in top 20% of page text (non-numeric, followed by D-1 fingerprint) forces `False` return. "(tiếp theo)" is the INVERSE signal (continuation, not new).
+- FR-4: Blank-page bridge (~L2664) gated: blank bridges into current unit ONLY when next non-blank page satisfies D-4. Blank followed by D-2 or D-5 does NOT bridge into the table unit.
+- FR-5: Output contract — every `page_type="table"` unit in `bctc_layout_units` must have only D-1 pages in `page_numbers_json`. Verified by direct DB read, never viewer.
+
+Acceptance gate: two real-data sentinels (FPT Q4 `e71f845d-ffa5-48f9-8f09-30ac2cd09c65` + second corpus doc) + DV-1/DV-2 deliberate-violation tests (must go RED pre-fix, GREEN post-fix). FPT Q4 continuation p7-9 must survive as single unit (regression guard for the fix that broke continuation).
+
+Constraints for handoff: edits confined to `generic_md_table_extractor.py` + `extract_layout_first_usecase.py`; PDF-Extract-Kit PRISTINE; `text_table_extractor.py` 0-byte-diff; main branch; off-hours re-extract only.
+
+## VNH-SECTOR-FIX-BA · 2026-05-29T17:00Z
+
+Sprint VNH-SECTOR-FIX spec complete. REQ file: `docs/REQ_VNH-SECTOR-FIX.md`. Zero PO blockers. NEXT: dev-mcp-server.
+
+Key decisions encoded:
+- FR-1: VNH `domain` value corrected `real_estate` → `agriculture` (DomainType union member; SECTOR_NAME_VI = "Nông nghiệp & Thủy sản"; peers VHC/ANV confirmed in sectorPeers.ts:118-126).
+- FR-2: Three comment-only fixes (TCH = Hoang Huy NOT Techcombank; DPM = Đạm Phú Mỹ fertilizer NOT Daphaco; DAG = Đông Á Plastic NOT Da Nang Rubber). Values stay unchanged.
+- FR-3: Explicit idempotent `UPDATE watchlist SET domain='agriculture' WHERE code='VNH' AND domain != 'agriculture'` required for live DB — UPSERT-alone false-green path explicitly forbidden.
+- FR-4: `WatchlistSeedEntry.domain` type-tightened from `string` to `DomainType` (import from `../../../bctc-schema.js`). Compile guard prevents future wrong-enum insertions.
+- FR-5: Guard test `VNH-sector-fix.test.ts` — 5 cases including fleet-wide "every seed domain in DomainType union" regression guard (derive allowed values from DomainType, NOT static string array).
+- FR-6: Container rebuild required post-code-change; direct DB query verification mandatory.
+- Edge case: DPM appears in sectorPeers.ts agriculture array (line 119) as a peer — that is PEER list, not seed domain. DPM seed domain `chemicals` is correct, leave it.
+- Edge case: VNH is in the `// Real Estate (high-vol)` block comment region — developer must either move entry to agriculture section or update section note.
 
 ## MACRO-LIVE-PRICES-BA · 2026-05-28T00:00Z
 
