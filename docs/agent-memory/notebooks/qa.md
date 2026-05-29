@@ -4983,4 +4983,36 @@ sprint_status: BCTC-EVAL-SUBSTRATE ready for G9 human sign-off
 carry_forward: G2 GREEN (cycle-140) + G3-T3/T4/T5 GREEN (cycle-140) unchanged
 ```
 
+## cycle-142 · 2026-05-29 · VNH-SECTOR-FIX QA Gate — APPROVED
+
+**Task:** VNH-QA acceptance gate | **Verdict:** APPROVED
+
+```
+date: 2026-05-29T17:30Z
+sprint: VNH-SECTOR-FIX
+handoff: docs/handoffs/VNH-QA-handoff.md
+
+unit_tests:
+  files: VNH-sector-fix.test.ts + 1787-gvr-sector-fix.test.ts + 1343a-watchlist-restore.test.ts
+  result: 24 pass / 0 fail (367 expect() calls) — GREEN
+
+tsc:
+  result: exit 0, 0 errors — GREEN
+
+anti_false_green_proof:
+  injection: domain="bogus_sector" at seedWatchlist.ts:87
+  tsc_error: "Type '"bogus_sector"' is not assignable to type 'DomainType'" (exit 2)
+  revert: git checkout confirmed clean
+  verdict: TYPE GUARD LIVE
+
+live_bootstrap:
+  tool: get_cycle_bootstrap(agent_name="news-scout")
+  server: localhost:4004 (vn-market, 146 tools, healthy)
+  vnh_line: "VNH    [HNX] agriculture    800 (-11.11%)  (as of 2026-05-29 08:59)"
+  verdict: PASS — VNH is NOT under real_estate
+
+overall: APPROVED — all 4 checks green
+next: VNH-EXIT (po sign-off)
+```
+
 ---

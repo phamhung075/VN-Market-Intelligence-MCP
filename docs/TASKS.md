@@ -19,10 +19,10 @@
 - Only VNH has a WRONG `domain` value (the data-integrity bug). Others are comment-only.
 
 **Tasks (chain: ba → dev-mcp-server → ops → qa → po):**
-- 🔄 VNH-BA (ba) — spec the fix: VNH domain→agriculture + comment + the 3 audit comment-corrections + guard design + DB migration approach. Output `docs/REQ_VNH-SECTOR-FIX.md`.
-- 🔄 VNH-IMPL (dev-mcp-server) — edit `seedWatchlist.ts` (VNH value + comment + 3 audit comments) + add idempotent `UPDATE watchlist SET domain='agriculture' WHERE code='VNH'` correction in seed/migration path (seed UPSERT alone fixes fresh DBs; running DB needs explicit UPDATE since UPSERT only fires on re-insert) + guard test (pattern: `1787-gvr-sector-fix.test.ts`) asserting WATCHLIST_SEED has no `real_estate` VNH and every seed `domain` ∈ DomainType union.
-- 🔄 VNH-DEPLOY (ops) — apply correction to LIVE market.db in running container + rebuild/restart mcp-server (memory: rebuild-after-dev-change). Verify via direct in-container `market.db` query (bun, no sqlite3): `SELECT code,domain FROM watchlist WHERE code='VNH'` → must read `agriculture`.
-- 🔄 VNH-QA (qa) — confirm one agent's next `get_cycle_bootstrap` shows VNH NOT under real_estate + guard test RED-on-regression.
+- ✅ VNH-BA (ba) — spec complete: `docs/REQ_VNH-SECTOR-FIX.md` (FR-1..6, 0 blockers, DomainType type-tighten + guard test + DB migration approach all specified).
+- ✅ VNH-IMPL (dev-mcp-server) — edit `seedWatchlist.ts` (VNH value + comment + 3 audit comments) + add idempotent `UPDATE watchlist SET domain='agriculture' WHERE code='VNH'` correction in seed/migration path (seed UPSERT alone fixes fresh DBs; running DB needs explicit UPDATE since UPSERT only fires on re-insert) + guard test (pattern: `1787-gvr-sector-fix.test.ts`) asserting WATCHLIST_SEED has no `real_estate` VNH and every seed `domain` ∈ DomainType union.
+- ✅ VNH-DEPLOY (ops) — apply correction to LIVE market.db in running container + rebuild/restart mcp-server (memory: rebuild-after-dev-change). Verify via direct in-container `market.db` query (bun, no sqlite3): `SELECT code,domain FROM watchlist WHERE code='VNH'` → must read `agriculture`.
+- ✅ VNH-QA (qa) — confirm one agent's next `get_cycle_bootstrap` shows VNH NOT under real_estate + guard test RED-on-regression. QA APPROVED 2026-05-29. Handoff: `docs/handoffs/VNH-QA-handoff.md`.
 - 🔄 VNH-EXIT (po) — sign-off against done bar.
 
 **Done bar:** seed corrected + market.db row corrected in RUNNING container (verified by direct query) + mcp-server rebuilt + ≥1 agent bootstrap shows VNH no longer real_estate. (Today's already-written FB draft/notebooks are artifacts — fixed by a separate path; this sprint stops recurrence at source+DB.)
