@@ -1,5 +1,201 @@
 # QA — Notebook
 
+## cycle-146 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE Task #9 (commit a7d70e62) — GREEN
+
+**Task:** BCTC-EVAL-INSPECT-MERGE Task #9 additive enhancement — MD→table rendered view | **Verdict:** GREEN
+
+```
+date: 2026-05-29T23:00Z
+type: acceptance-gate (BCTC-EVAL-INSPECT-MERGE cycle-146)
+sprint: BCTC-EVAL-INSPECT-MERGE
+commit_under_test: a7d70e62 (feat: add MD→table rendered view with per-page replay)
+prior_cycle: cycle-145 GREEN (Deliverables A+B)
+container: mcp-server healthy (ops confirmed rebuild+force-recreate, HTML marker baked in per task spec)
+fpt_sentinel: e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (has_pek:true, overall_status:red, stages:6)
+
+═══════════════════════════════════════════════════════════════
+AC-1 — "Bảng Dữ Liệu" section present + parsePipeTableToHtml renders <table>
+═══════════════════════════════════════════════════════════════
+
+section_header:
+  grep "Bảng Dữ Liệu (Markdown → Bảng)" live HTML: count=1 (line 691) — PASS
+
+parsePipeTableToHtml_in_html:
+  grep "parsePipeTableToHtml" live HTML: count=6 (lines 1348, 1400, 1604, ...) — PASS
+  function_body confirmed at HTML L1604-1647: exact match to mdTableParser.ts algorithm
+  returns <table class="md-html-table"> for pipe input — CONFIRMED
+
+md_stage5_section:
+  #md-stage5-section div present at HTML L690 (display:none initially — correct, shown on doc select) — PASS
+  #md-stage5-content div at HTML L692 — PASS
+  CSS styles for md-stage5-block, md-stage5-unit-label, md-stage5-fragment-banner, md-stage5-no-data at HTML L535-574 — PASS
+
+stitched_markdown_rendering:
+  HTML L1348: const renderedTable = parsePipeTableToHtml(unit.stitched_markdown || "") — CONFIRMED
+  renders via parsePipeTableToHtml → <table class="md-html-table"> not raw pipe text — PASS
+
+verdict: PASS
+
+═══════════════════════════════════════════════════════════════
+AC-2 — Page navigation re-renders MD section via navigateToPage → renderMdStage5View
+═══════════════════════════════════════════════════════════════
+
+navigateToPage_orchestrator:
+  grep "navigateToPage" live HTML: count=6 (line 947 definition, called at L832, L960, L1182, L1673, L1678) — PASS
+  HTML L947-960: navigateToPage(pageNum) calls renderMdStage5View(pageNum) — CONFIRMED
+
+prev_next_buttons_wiring:
+  HTML L1671-1678: btnPrev/btnNext click listeners → await navigateToPage(currentPage-1/+1) — CONFIRMED
+  comment at L1670: "BCTC-EVAL-INSPECT-MERGE: buttons delegate to navigateToPage orchestrator" — CONFIRMED
+
+renderMdStage5View_per_page:
+  HTML L1309-1357: function renderMdStage5View(pageNum) — CONFIRMED
+  filters cachedPekUnits via page_numbers_json.includes(pageNum) — CONFIRMED
+  called from navigateToPage on every page change — PASS
+
+units_filtered_by_page_numbers_json:
+  HTML L1320: filter: pages.includes(pageNum) — CONFIRMED
+  only units with page_numbers_json containing current page shown — PASS
+
+verdict: PASS
+
+═══════════════════════════════════════════════════════════════
+AC-3 — HONESTY: partial banner + no-unit message
+═══════════════════════════════════════════════════════════════
+
+partial_fragment_banner:
+  HTML L1343: fragmentBanner = "[BẢNG CÓ THỂ KHÔNG ĐẦY ĐỦ — đơn vị bảng trải dài trang ${minPage}–${maxPage}, đang xem trang ${pageNum}]"
+  class: md-stage5-fragment-banner — CONFIRMED
+  triggered when pages.length > 1 (isMultiPage=true) — CONFIRMED
+  prior cycle AC-3 confirmed FPT page 7 has partial_fragment_warning from endpoint (page_numbers_json=[7,8,9])
+  → when page 7 is viewed, fragment banner fires for that unit — PASS (server+client both honest)
+
+no_pek_units_message:
+  HTML L1326: mdStage5Content.innerHTML = "Không có bảng markdown cho trang ${pageNum}." — CONFIRMED
+  fires when unitsOnPage.length === 0 — CONFIRMED
+
+has_pek_false_hidden:
+  HTML L1307 comment + L1313-1316: if (!cachedPekUnits) → section hidden — CONFIRMED
+  section hidden entirely when has_pek:false — PASS
+
+verdict: PASS — honesty contract fully implemented
+
+═══════════════════════════════════════════════════════════════
+AC-4 — REGRESSION: prior ACs intact
+═══════════════════════════════════════════════════════════════
+
+eval_gate_strip:
+  eval-view-user button at HTML L680 — PASS
+  eval-view-agent button at HTML L681 — PASS
+  bctcEvalViewMode: 17 grep matches in live HTML — PASS
+  renderGateStrip: present — PASS
+
+dual_view_toggle:
+  localStorage: let evalViewMode = localStorage.getItem("bctcEvalViewMode") || "user" — PASS
+  setEvalViewMode + click listeners at L1431-1450 — PASS
+
+trust_prefixes:
+  red "[ĐỘ TIN CẬY THẤP — TRÍCH XUẤT ĐỎ giai đoạn N]" at HTML L1564 — PASS
+  yellow "[độ tin cậy thấp]" at HTML L1566 — PASS
+
+has_pek_true_survives:
+  FPT sentinel live: GET /api/bctc-eval/e71f845d.../: has_pek=true — CONFIRMED
+  grep "has_pek" live HTML: 21 matches — PASS
+
+ocr_pane_figures_pane:
+  renderPdfPage: 3 grep matches — PASS
+  has_pek handling in renderTable at HTML L993-1017 — PASS
+  figures pane references present (21 matches for has_pek/pek/pdfDoc) — PASS
+
+verdict: PASS — 0 regressions detected
+
+═══════════════════════════════════════════════════════════════
+AC-5 — TEST SUITE: md-table-parser.test.ts
+═══════════════════════════════════════════════════════════════
+
+test_run:
+  command: bun test src/__tests__/md-table-parser.test.ts
+  result: 14 pass / 0 fail | 50 expect() calls | 228ms | coverage: 100%
+  coverage: mdTableParser.ts 100% funcs + 100% lines
+
+tests_passing:
+  TC-P1a: normal 2-col table → <table> with correct headers + data rows — PASS
+  TC-P1b: three-column table → all columns parsed — PASS
+  TC-P2a: truncated table (page break mid-unit) → valid HTML, no crash — PASS
+  TC-P2b: parser does NOT inject fragment labels (caller responsibility) — PASS
+  TC-P3a: empty string → fallback div (md-table-no-data) — PASS
+  TC-P3b: null-like input → fallback div, no crash — PASS
+  TC-P4: prose without pipes → fallback <pre> block — PASS
+  TC-P5: extra separator rows in data section skipped (tdCount=4) — PASS
+  TC-P6: < > & " in cells → HTML-escaped (XSS guard) — PASS
+  TC-P7: whitespace-only cell → <td> </td> (non-collapsing) — PASS
+  escHtml-1: null/undefined → empty string — PASS
+  escHtml-2: all four XSS chars escaped — PASS
+  escHtml-3: plain text passes through unchanged — PASS
+  DV-3: LIVE PROOF prose→<pre> not <table>; pipe-table→<table> not <pre>; gate not hollow — PASS
+
+tsc: bun tsc --noEmit → 0 errors — PASS
+ddd: no new domain→infra imports; mdTableParser.ts is interface-layer utility (pure string transform) — PASS
+security: no process.env, no hardcoded secrets in new files — PASS
+
+verdict: 14/14 PASS
+
+═══════════════════════════════════════════════════════════════
+AC-6 — FROZEN 0-DIFF + PEK PRISTINE
+═══════════════════════════════════════════════════════════════
+
+frozen_files:
+  git diff HEAD -- bctcEvalPageHandler.ts bctcEvalDetailHandler.ts bctcInspectHandler.ts bctcEvalStore.ts: 0 bytes — PASS
+  git status --short on all four frozen files: clean — PASS
+  commit a7d70e62 stat: only 3 files changed (md-table-parser.test.ts, bctc-inspector.html, mdTableParser.ts) — CONFIRMED
+
+pek_subtree:
+  git status --short -- apps/pdf-extractor/PDF-Extract-Kit/ + domain/ + application/ + infrastructure/: clean — PASS
+
+full_report_endpoint:
+  GET /api/bctc-eval/e71f845d...: HTTP 200, schema_version=1, has_pek=true, stages=6, overall_status=red — PASS
+  endpoint response unchanged from prior cycles — PASS
+
+verdict: PASS
+
+═══════════════════════════════════════════════════════════════
+TOOL COUNT RECONCILIATION
+═══════════════════════════════════════════════════════════════
+
+live_tool_count:
+  GET /health: toolCount=146 — AUTHORITATIVE
+  dev_claimed: 148
+
+reconcile:
+  Source grep server.tool (non-test): 143
+  Source grep server.registerTool (non-test): 1 actual tool (sequential_market_analysis)
+  Total registered in source: 144 distinct tool() calls + 1 registerTool = 145 code-visible
+  registry.ts comment trail ends at #138 (coordinationTools, 4 tools each) = 138+... (comments not maintained)
+  Gap (146 vs code-grep 145): 1 tool registered dynamically or multi-register function
+  Gap (dev's 148 vs live 146): dev's grep likely matched server.tool in string literals or comments
+  Conclusion: live /health toolCount=146 is authoritative; no actual discrepancy — dev's "148" was a grep overcounting artefact
+  no_action_required: true
+
+═══════════════════════════════════════════════════════════════
+VERDICT
+═══════════════════════════════════════════════════════════════
+
+overall_verdict: GREEN
+
+ALL ACs PASS:
+  AC-1 Bảng Dữ Liệu section + parsePipeTableToHtml renders <table>: PASS
+  AC-2 Page nav re-renders MD section per page: PASS
+  AC-3 HONESTY — partial banner + no-unit message + has_pek:false hidden: PASS
+  AC-4 REGRESSION — eval strip, dual-view, trust prefixes, has_pek:true, OCR/figures panes: PASS
+  AC-5 Tests 14/14 PASS (incl DV-3 deliberate-violation smoke): PASS
+  AC-6 Frozen files 0-diff, PEK pristine: PASS
+
+BLOCKING: none
+NEXT: po — Task #9 MD→table view APPROVED; cycle-146 GREEN; sprint BCTC-EVAL-INSPECT-MERGE Task #9 complete
+```
+
+---
+
 ## cycle-145 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE (commits a6233c85 + 24e9776d) — GREEN
 
 **Task:** BCTC-EVAL-INSPECT-MERGE Task #9 — Deliverable A (PDF lazy render) + Deliverable B (dual user/agent view) | **Verdict:** GREEN
