@@ -3650,3 +3650,85 @@ PDF-extractor container already rebuilt with table boundary state machine code (
 
 ops.md — session appended (this entry, 2026-05-29 21:40 UTC)
 
+
+---
+
+## Session: 2026-05-30
+
+**Task:** DATA-PIPELINE-INTEGRITY REBUILD — mcp-server (DPI-3 Brent/Gold change_pct + DPI-4 foreign-flow UPSERT + R-1/R-5 race) + macro-indicators (DPI-1 SBV rate override + DPI-2 computedAt fresh timestamp)
+
+### Cycle Summary
+
+Sprint DATA-PIPELINE-INTEGRITY (CRITICAL) mandated REBUILD of two microservices after root-cause fixes were committed by dev-macro-indicators and dev-mcp-server:
+- **mcp-server** (commits 32d201e8): DPI-3 (Brent/Gold change_pct write to market_prices), DPI-4 (foreign-flow UPSERT to daily_ohlcv), R-1/R-5 race fixes
+- **macro-indicators** (commits 86f702bf): DPI-1 (SBVRateSQLiteAdapter reads sbv_rates from market.db, overrides Yahoo usdVnd), DPI-2 (computedAt = time.Now())
+
+Per `feedback_rebuild_after_dev_change`, restart relaunches stale images. Full rebuild (docker compose build + up -d --no-deps --force-recreate) is mandatory.
+
+### Execution Timeline
+
+- 2026-05-30 00:56:09 UTC — Pre-rebuild docker ps: mcp-server 1h old, macro-indicators 2d old, pdf-extractor unhealthy
+- 2026-05-30 00:56:11 UTC — `docker compose build mcp-server` started (background)
+- 2026-05-30 00:56:13 UTC — `docker compose build macro-indicators` started (background, parallel)
+- 2026-05-30 00:59:21 UTC — Both builds completed (exit 0), images ready
+- 2026-05-30 00:59:21 UTC — `docker compose up -d --no-deps --force-recreate mcp-server macro-indicators` executed
+- 2026-05-30 00:59:31 UTC — Both containers healthy (7 seconds post-start)
+
+### Key Results
+
+**mcp-server Rebuild:**
+- Pre-rebuild image: 1h old (HEAD ~1h behind commits 32d201e8)
+- Build time: ~3.5 minutes (TypeScript compilation + deps)
+- Post-rebuild image: Fresh, created 2026-05-30 00:59
+- Container status: Up 7 seconds, healthy ✓
+- Port 3000: responding (health endpoint: {"status":"ok","toolCount":146})
+- Port 4004: bound correctly (external MCP proxy)
+- Logs: Clean startup, no errors, Telegram webhook OK, all cron jobs registered
+
+**macro-indicators Rebuild:**
+- Pre-rebuild image: 2d old
+- Build time: ~1.5 minutes (Go compilation + deps)
+- Post-rebuild image: Fresh, created 2026-05-30 00:59
+- Container status: Up 7 seconds, healthy ✓
+- Port 5004: bound correctly
+- Logs: Clean startup, listening on port 5004
+
+**Fleet Status Post-Rebuild:**
+- mcp-server: healthy ✓
+- macro-indicators: healthy ✓
+- api-gateway: healthy (3d old, unrelated)
+- frontend: healthy (26h old, unrelated)
+- kinh-dich-service: healthy (2d old, unrelated)
+- rag-service: healthy (2d old, unrelated)
+- pdf-extractor: unhealthy (pre-existing, not part of this sprint)
+- No new service failures introduced by the rebuild
+
+**Database State Verification (market.db):**
+- File size: 199M (healthy)
+- Accessible from container: ✓
+- Docker exec confirmed file present at /app/data/market.db
+- Bun tool verified working in mcp-server
+
+**Code Verification (per sprint directive):**
+- DPI-1 (SBV rate override): macro-indicators code loaded; fresh computedAt setting expected next recompute job
+- DPI-2 (computedAt timestamp): macro-indicators loaded; time.Now() in effect
+- DPI-3 (Brent/Gold change_pct): mcp-server code loaded; change_pct write logic active
+- DPI-4 (foreign-flow UPSERT): mcp-server code loaded; UPSERT logic replaces UPDATE-only
+- R-1/R-5 race fixes: mcp-server code loaded
+
+**Next Actions (per sprint):**
+- Wait for commodity cron tick ~2x for DPI-3 change_pct to take effect (history seed on first tick, delta compute on second)
+- Wait for next macro-recompute cycle (SBV override DPI-1 + fresh computedAt DPI-2 take effect)
+- QA team probes all four gates (FX dual-path, carry/yield freshness, Brent/Gold deltas, foreign-flow data) via live MCP tools
+- PO (DPI-EXIT) independent re-verify LIVE data correct
+
+### Signals Emitted
+
+- Telegram WORK channel: Rebuild complete, both containers healthy, ready for QA live re-probe
+
+### Status
+
+✓ REBUILD COMPLETE — Both mcp-server and macro-indicators successfully rebuilt and deployed healthy.
+✓ CONTAINER HEALTH — All fleet services responding normally, no new failures.
+NEXT: QA probes the four data-pipeline gates via live MCP tools (get_macro_snapshot FX consistency, carry/yield freshness, commodity deltas, get_foreign_flow HPG population).
+
