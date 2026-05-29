@@ -40,10 +40,6 @@ const (
 	fixtureEarningYield  = 8.2     // VN equity earnings yield %
 )
 
-// fixtureComputedAt is the deterministic timestamp injected into carry/yield primitives.
-// Using a fixed string satisfies R-1 (no time.Now() in primitive computation).
-const fixtureComputedAt = "2026-05-23T00:00:00Z"
-
 // ---------------------------------------------------------------------------
 // concreteClock — satisfies macro_signals.Classifier interface using pkg/primitive
 // ---------------------------------------------------------------------------
@@ -86,20 +82,36 @@ func NewComputeMacroUseCase(
 // VNIndex is resolved from MarketIndexPort.FetchVNIndex(); falls back to
 // fixtureVNIndex only when the port returns zero (no data yet in market.db).
 // Commodity prices (oil/gold/usdvnd) are resolved via CommodityFetcherPort.
+// USDVND is then overridden by SBVRatePort if it returns a positive value (DPI-1).
+// carry.computedAt and yield.computedAt reflect the actual Execute() call time (DPI-2).
 //
-// R-1 compliant: no random seeding, no time.Now() in any primitive call.
+// R-1 compliant: no random seeding. time.Now() is used only for the computedAt
+// timestamp label (not as input to any primitive classifier decision).
 // Fence-B compliant: module imports only primitives (BuildMacroSignals satisfies this).
 func (uc *ComputeMacroUseCase) Execute(
 	ctx context.Context,
 	_ MacroSnapshotRequest,
 ) (MacroSnapshotResponse, error) {
+	// DPI-2: computedAt reflects the actual recompute time, not a frozen constant.
+	computedAt := time.Now().UTC().Format(time.RFC3339)
+
 	// Resolve VN-Index from port; fall back to fixture default if port returns zero.
 	vnIndex := resolveVNIndex(ctx, uc)
 
 	// Resolve commodity prices via port; fall back to fixture defaults on zero/error.
 	oilPrice, goldPrice, usdVnd, allLive := resolveMarketPrices(ctx, uc)
 
-	// Build module input with fixture-stable timestamps (R-1).
+	// DPI-1: SBV official USDVND takes priority over Yahoo Finance value.
+	// If sbvRate port returns a positive value, replace usdVnd (preserves OIL/GOLD).
+	// Safe-degrade: if sbv_rates is empty or stale, GetRate returns (0, nil) and
+	// usdVnd keeps the commodity/fixture value. No error, no panic.
+	if uc.sbvRate != nil {
+		if r, err := uc.sbvRate.GetRate(ctx, "USD", "VND"); err == nil && r > 0 {
+			usdVnd = r
+		}
+	}
+
+	// Build module input.
 	input := ms.MacroSignalsInput{
 		InvestmentClock: mic.InvestmentClockInput{IndicatorName: "VN_CPI"},
 		OilImpact:       oil.OilImpactInput{PriceUSD: oilPrice},
@@ -108,12 +120,12 @@ func (uc *ComputeMacroUseCase) Execute(
 		CarryTrade: carry.CarryTradeInput{
 			VNDDepositRate: fixtureVNDDepositRate,
 			FedFundsRate:   fixtureFedFundsRate,
-			ComputedAt:     fixtureComputedAt,
+			ComputedAt:     computedAt,
 		},
 		YieldSpread: yld.YieldSpreadInput{
 			EarningYield: fixtureEarningYield,
 			DepositRate:  fixtureVNDDepositRate,
-			ComputedAt:   fixtureComputedAt,
+			ComputedAt:   computedAt,
 		},
 	}
 

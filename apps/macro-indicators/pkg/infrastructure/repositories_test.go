@@ -23,12 +23,11 @@ import (
 )
 
 // newInMemoryDB opens an in-memory SQLite database and creates the minimal
-// table schema required by SQLiteMarketIndexRepository.FetchVNIndex and
-// SQLiteCommodityRepository.FetchPrices.
+// table schema required by SQLiteMarketIndexRepository.FetchVNIndex,
+// SQLiteCommodityRepository.FetchPrices, and SBVRateSQLiteAdapter.GetRate.
 //
-// Both market_prices, macro_indicators, and commodity_prices are created so
-// each test can populate whichever table it needs to exercise a specific
-// resolution path.
+// market_prices, macro_indicators, commodity_prices, and sbv_rates are all
+// created so each test can populate whichever table it needs.
 func newInMemoryDB(t *testing.T) *sql.DB {
 	t.Helper()
 	// Use in-memory mode — no file, no credentials, disappears after test.
@@ -77,6 +76,19 @@ func newInMemoryDB(t *testing.T) *sql.DB {
 		)`)
 	if err != nil {
 		t.Fatalf("create commodity_prices: %v", err)
+	}
+
+	// sbv_rates — source for SBVRateSQLiteAdapter (DPI-1).
+	// Schema mirrors production table written by sbvRatesJob.ts.
+	// source TEXT PRIMARY KEY (production value: 'sbv').
+	_, err = db.Exec(`
+		CREATE TABLE sbv_rates (
+			source           TEXT PRIMARY KEY,
+			usd_vnd_official REAL NOT NULL DEFAULT 0,
+			fetched_at       TEXT NOT NULL
+		)`)
+	if err != nil {
+		t.Fatalf("create sbv_rates: %v", err)
 	}
 
 	return db
@@ -419,5 +431,99 @@ func TestFetchCommodityPricesFromDB_PartialNULL(t *testing.T) {
 	}
 	if got["USDVND"] != 26150.0 {
 		t.Errorf("partial-NULL USDVND = %.2f, want 26150.0", got["USDVND"])
+	}
+}
+
+// ---------------------------------------------------------------------------
+// DPI-1: fetchSBVRateFromDB tests
+// ---------------------------------------------------------------------------
+
+// TestFetchSBVRateFromDB_FreshRow (DPI-1 AC-2 fresh) verifies that a fresh
+// sbv_rates row returns the usd_vnd_official value.
+func TestFetchSBVRateFromDB_FreshRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	const officialRate = 26115.0 // typical SBV value
+	freshTs := time.Now().UTC().Add(-1 * time.Hour).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO sbv_rates (source, usd_vnd_official, fetched_at)
+		VALUES ('sbv', ?, ?)`,
+		officialRate, freshTs)
+	if err != nil {
+		t.Fatalf("insert sbv_rates fresh row: %v", err)
+	}
+
+	got, err := fetchSBVRateFromDB(context.Background(), db, sbvStaleBound)
+	if err != nil {
+		t.Fatalf("fetchSBVRateFromDB returned error: %v", err)
+	}
+	if got != officialRate {
+		t.Errorf("fresh row: got %.2f, want %.2f (sbv_rates.usd_vnd_official)", got, officialRate)
+	}
+}
+
+// TestFetchSBVRateFromDB_StaleRow (DPI-1 AC-2 stale) verifies that a row
+// older than sbvStaleBound (6h) returns 0 (safe-degrade).
+func TestFetchSBVRateFromDB_StaleRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	// Insert a row 8 hours old (> 6h sbvStaleBound).
+	staleTs := time.Now().UTC().Add(-8 * time.Hour).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO sbv_rates (source, usd_vnd_official, fetched_at)
+		VALUES ('sbv', 26115.0, ?)`,
+		staleTs)
+	if err != nil {
+		t.Fatalf("insert sbv_rates stale row: %v", err)
+	}
+
+	got, err := fetchSBVRateFromDB(context.Background(), db, sbvStaleBound)
+	if err != nil {
+		t.Fatalf("fetchSBVRateFromDB returned error: %v", err)
+	}
+	if got != 0 {
+		t.Errorf("stale row: got %.2f, want 0 (staleness guard must return 0)", got)
+	}
+}
+
+// TestFetchSBVRateFromDB_AbsentRow (DPI-1 AC-2 absent) verifies that an
+// empty sbv_rates table returns (0, nil) — not an error.
+func TestFetchSBVRateFromDB_AbsentRow(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	// sbv_rates table is empty (created by newInMemoryDB, not populated).
+	got, err := fetchSBVRateFromDB(context.Background(), db, sbvStaleBound)
+	if err != nil {
+		t.Fatalf("fetchSBVRateFromDB on empty table returned error: %v", err)
+	}
+	if got != 0 {
+		t.Errorf("absent row: got %.2f, want 0 (absent row must return 0, not error)", got)
+	}
+}
+
+// TestFetchSBVRateFromDB_ZeroValue (DPI-1 AC-2 zero) verifies that a fresh
+// row with usd_vnd_official = 0 (DEFAULT on fresh schema) returns 0.
+func TestFetchSBVRateFromDB_ZeroValue(t *testing.T) {
+	db := newInMemoryDB(t)
+	defer db.Close()
+
+	freshTs := time.Now().UTC().Add(-30 * time.Minute).Format(time.RFC3339Nano)
+	_, err := db.Exec(`
+		INSERT INTO sbv_rates (source, usd_vnd_official, fetched_at)
+		VALUES ('sbv', 0, ?)`,
+		freshTs)
+	if err != nil {
+		t.Fatalf("insert sbv_rates zero-value row: %v", err)
+	}
+
+	got, err := fetchSBVRateFromDB(context.Background(), db, sbvStaleBound)
+	if err != nil {
+		t.Fatalf("fetchSBVRateFromDB returned error: %v", err)
+	}
+	if got != 0 {
+		t.Errorf("zero-value row: got %.2f, want 0 (zero DEFAULT must not propagate as valid rate)", got)
 	}
 }

@@ -48,7 +48,7 @@ func main() {
 	} else {
 		commodityFetcher = infrastructure.NewHTTPCommodityFetcher("")
 	}
-	sbvRateRepo := infrastructure.NewSBVRateRepository()
+	sbvRateRepo := infrastructure.NewSBVRateSQLiteAdapter()
 	marketIndexRepo := infrastructure.NewSQLiteMarketIndexRepository()
 	useCase := application.NewComputeMacroUseCase(commodityFetcher, sbvRateRepo, marketIndexRepo)
 	router := iface.NewRouter(useCase, logger)
