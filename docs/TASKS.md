@@ -33,6 +33,27 @@
 
 ---
 
+## Sprint BOOTSTRAP-ENUM-BCTC — get_cycle_bootstrap agent_name enum drift
+
+**Status:** OPEN — dispatched 2026-05-29T17:30Z dev-team triage. **Type: FIX (XS).** **Priority: HIGH (recurring string-vs-enum class).** Zone: `apps/mcp-server/`.
+
+**Bug (CONFIRMED LIVE 2026-05-29T17:29Z):** `get_cycle_bootstrap({agent_name:"bctc-analyst"})` → `invalid_enum_value`. The agent_name Zod enum = `[news-scout, financial-analyst, market-watcher, alert-commander, digest-predict, qa-responder, unified-agent, report-analyzer]` — `bctc-analyst` (a real roster agent, report #3009) is rejected. Workaround in use: bctc-analyst impersonates `financial-analyst`, polluting that agent's bootstrap attribution. Same recurring drift class as commit-mutex enum + verified_decision enum.
+
+**Fix:** add `"bctc-analyst"` to the `get_cycle_bootstrap` agent_name Zod enum (and any sibling bootstrap-agent enum it shares). Verify roster source — agent_name list SHOULD derive from `docs/data/system-map.json` agent roster, not be a hardcoded literal (root-cause = duplicated agent list drifting from SSOT). If literal, file the SSOT-derivation as the durable fix; minimal fix = add the value + guard test that every roster cowork agent resolves. baseline_pass: tsc clean + new guard test RED-on-removal.
+
+- 🔄 BENUM-IMPL (dev-mcp-server) — add enum value + guard test
+- ⏳ BENUM-DEPLOY (ops) — rebuild mcp-server (restart≠rebuild gate)
+- ⏳ BENUM-QA (qa) — live `get_cycle_bootstrap(bctc-analyst)` returns ok + guard RED-on-regression
+- ⏳ BENUM-EXIT (po)
+
+---
+
+## Note — MACRO-SEED-WIRING (report #3003, 4-cycle recurring) → FALSE-RED this tick, MONITORING
+
+PO live-probe 2026-05-29T17:29Z: `get_macro_snapshot` returns `dataSource:"live"` (oil 90.74, gold 4594.6, usdvnd 26255, fetchedAt 17:29Z) — matches live bootstrap range. The 2026-05-23 stale-seed HEADLINE symptom (oil 82.5/gold 2350/usdvnd 24500) is **NOT reproducible** → no FIX dispatched. Residual: the `carry` + `yield` sub-signals still carry `computedAt:"2026-05-23"` (derived/cached sub-computations with a stale recency label, NOT the headline ±2σ gold miscalibration the analysis-agent claimed). Report #3003 marked `monitoring`. If a future tick re-probes a STALE headline snapshot, escalate to a real cache-TTL FIX then. Backlog candidate: fold carry/yield recompute-recency into the next macro touch.
+
+---
+
 ## Sprint SELF-IMPROVE-GATE — Gated Self-Improvement Loop
 
 **Status:** OPEN — Phase 2 (lane-B code gate) live 2026-05-28. PO verdict: APPROVE-WITH-CONDITIONS (commits 062a6569 + ef109a76). All conditions met; X-1 (synthetic-data dry-run) open. **Priority: HIGH.** Zone: `apps/mcp-server/`.
