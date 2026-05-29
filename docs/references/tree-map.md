@@ -62,6 +62,10 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/references/agent-roster.md (team structure: analysis + dev + microservices, two-team architecture, three-channel rules, agent routing reference, cooperation flow, handoff protocol — counts in `docs/data/project-stats.json`)
 │
+├── docs/social/ (fb-market-poster deliverables: dated Facebook draft posts + feedback log)
+│   ├── docs/social/fb-post-YYYY-MM-DD.md (daily Facebook draft — one per day, written by fb-market-poster at 20:07 VN M-F)
+│   └── docs/social/fb-feedback.md (feedback sink — user appends corrections; Phase 2: auto-read via Graph API)
+│
 ├── docs/policies/dev-standards.md (DDD layer rules, coding standards, test template, commit format pointer, branch hygiene)
 │   └── docs/policies/commit-convention.md (index: section-anchor redirects for `§ X` back-compat — children below)
 │       ├── docs/policies/commit-convention-format.md (Format · Shell · Type vocab · Scope · Task ID · Trailers · AC style)

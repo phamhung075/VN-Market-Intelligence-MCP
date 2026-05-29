@@ -18,6 +18,7 @@ Count → `docs/data/project-stats.json#analysisAgentCount`. Files live in `.cla
 | Digest & Predict | `digest-predict.md` | Daily/weekly digests + Monday prediction synthesis | Daily 22:30 VN / Monday 07:30 VN / Weekly Sunday / Monthly 1st |
 | QA Responder | `qa-responder.md` | Answer /ask queue FIFO → MARKET | Every 12 min via askQueueCheck |
 | Tran Ngoc Bau | `tran-ngoc-bau.md` | Strategy supervisor, quality audit, auto-cure | Daily 20:00 VN |
+| FB Market Poster | `fb-market-poster.md` | Synthesize day's market intelligence → one plain-Vietnamese Facebook-ready post → docs/social/fb-post-YYYY-MM-DD.md | Daily 20:07 VN M-F (13:07 UTC) |
 
 ## Dev Team (Claude Code CLI — local cron)
 
@@ -132,7 +133,7 @@ DEV TEAM (Claude Code CLI — local cron, every 1h)
 Channel env vars → `jq '.project.channels[] | {id, env_var, purpose}' docs/data/system-map.json`
 Agent counts → `docs/data/project-stats.json`
 
-**Analysis Team count:** 9 agents — see `docs/data/project-stats.json#analysisAgentCount`.
+**Analysis Team count:** 10 agents — see `docs/data/project-stats.json#analysisAgentCount`.
 
 ## Three-Channel Rules
 

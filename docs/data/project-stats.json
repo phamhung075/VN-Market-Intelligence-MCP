@@ -37,7 +37,7 @@
   "_cronJobCountNote": "RECONCILED 2026-05-25 (P0-MCP-EXIT, po) 77→68. Sprint BCTC-EVAL-SUBSTRATE: +1 bctcEvalRecompute → 69. 69 = `grep -c cron.schedule apps/mcp-server/src/scheduler/startScheduler.ts` = the operative dev-mcp-server Gate-2d probe + Phase-1 regression tripwire. cronConfig.ts named CRON keys=74.",
   "knowledgeFileCount": 25,
   "devAgentCount": 17,
-  "analysisAgentCount": 9,
+  "analysisAgentCount": 10,
   "microserviceAgentCount": 9,
   "_agentCountReconciled": "2026-05-12 main-terminal audit: report-analyzer moved to Analysis Team (chaining-protocol + agent file = cowork). devAgentCount = roster Dev Team rows (incl. semble-search skill proxy). analysisAgentCount = roster Analysis Team rows. microserviceAgentCount = roster Microservice rows. Filesystem total = 17 + 9 + 9 = 35.",
   "totalTasksDone": 561,

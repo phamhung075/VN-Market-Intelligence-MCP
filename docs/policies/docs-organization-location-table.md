@@ -16,6 +16,8 @@ File placement SSOT. Before creating any `.md` file, look it up here.
 | `TECH_NNN.md` | `docs/historical/` | root, `docs/` root |
 | Agent notebooks | `docs/agent-memory/notebooks/` | root |
 | Analysis briefs | `docs/analysis-briefs/` | root, `reports/` |
+| Facebook post drafts `fb-post-*.md` | `docs/social/` | root, `reports/`, `docs/archive/` |
+| Facebook feedback log | `docs/social/fb-feedback.md` | root |
 | Source code `*.ts` | `apps/mcp-server/src/` | root, `docs/` |
 | Tests `*.test.ts` | `apps/mcp-server/src/__tests__/` | root, `reports/` |
 | Knowledge/rules | `docs/{policies,protocols,standards,references}/` | root, `docs/` |

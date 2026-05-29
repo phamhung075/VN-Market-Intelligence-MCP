@@ -876,6 +876,10 @@
         "type": "cowork"
       },
       {
+        "id": "fb-market-poster",
+        "type": "cowork"
+      },
+      {
         "id": "ops",
         "type": "ops"
       },

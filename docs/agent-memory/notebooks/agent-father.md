@@ -1,5 +1,17 @@
 # Agent Father — Notebook
 
+## c274 · 2026-05-29 — Create fb-market-poster
+
+- Type: cowork
+- Files created: 7 (agent def + init.md + flow/main.md + tool-package + notebook + cron skill + feedback sink)
+- Dirs created: docs/social/ (new), docs/agents/fb-market-poster/flow/ (new)
+- Registration: roster (Analysis Team +1 = 10) + dispatch SKILL.md + system-map.json agents[] + project-stats.json analysisAgentCount + tree-map.md + docs-organization-location-table.md
+- Validation: 7/7 passed (frontmatter line 1 ✓, flow has error boundary + RETURN ✓, tool package ✓, notebook ✓, always_load paths resolve ✓, flow.default resolves ✓, appears in roster+dispatch+system-map ✓)
+- Decision: cowork type (read-mostly synthesis, runs on cron, no code writing); haiku model (synthesis from pre-digested notebooks, not complex reasoning); purple color (social/content layer, distinct from existing agents); cron 7 13 * * 1-5 (13:07 UTC = 20:07 VN, after EOD dish 08:37 UTC, before FB prime-time)
+- Open: frontend dashboard wiring (dev-frontend task needed to surface docs/social/ draft); Phase 2 Graph API auto-publish; Phase 2 FB comment ingestion to feedback sink
+
+---
+
 ## c273 · 2026-05-29 — BCTC Analyst Merge (MERGE-OK-v2)
 
 **Task:** Implement architect brief 2026-05-29-bctc-analyst-merge.md. Signal: bctc-analyst-merge-20260529T042613Z.json. Prior partial state (H-1..H-7) verified and extended.
