@@ -1,5 +1,15 @@
 # Agent Father — Notebook
 
+## c276 · 2026-05-29 — Edit fb-market-poster (3-section predict-first structure)
+
+- Change: Restructured post composition from flat single-flow to mandatory 3-section order: Tóm tắt nhanh (brief recap, shortest) → Phân tích (causal analysis, bridge) → Dự đoán (prediction, LONGEST/main value). STEP 2 upgraded from sparse lazy-load to mandatory forward-looking source reads (digest-predict, CHEF outlook, analysis-briefs) with $prediction_inputs working-memory label. STEP 4 validation expanded from 11 to 15 checks (added: 3-sections present in order, Dự đoán has ≥1 concrete forward call, earned-prediction trace, recap-not-dominant guard). Word ceiling lifted 650 → 700 (trim rule: cut recap first, never cut Dự đoán). STEP 8 notebook format updated to log section-order/earned-prediction/recap-not-dominant check results.
+- Files modified: 1 (docs/agents/fb-market-poster/flow/main.md — 287L → 367L)
+- Cascade: none — no name/routing/inter_agent/roster/dispatch change; tool package unchanged (no new tools added, existing 4 live-tool calls sufficient)
+- Validation: 7/7 passed (frontmatter line 1 ✓, flow has error boundary + RETURN ✓, tool package unchanged ✓, no new always_load paths ✓, no jargon added ✓, word-count rule consistent across STEP 3 hard rules + STEP 4 check 4 ✓, 15-check count consistent across STEP 4 + STEP 8 notebook format ✓)
+- Decision: User feedback: "analyse before prediction" + "add value on prediction than resume" — post was a recap-heavy summary without earned forward view. New structure enforces facts→analysis→prediction causal chain; validation checks prevent orphan forecasts and recap dominance. No spelling step per user prior decline.
+
+---
+
 ## c275 · 2026-05-29 — Edit fb-market-poster (detail-floor uplift)
 
 - Change: Raised content-detail bar — added STEP 1b (live enrichment via 4 vn-market read tools), rewrote STEP 3 with 7-field detail floor, replaced STEP 4 with 11-check validation (4 structural + 6 detail-floor + 1 anti-filler), relaxed word count 200-350 → 150-650.

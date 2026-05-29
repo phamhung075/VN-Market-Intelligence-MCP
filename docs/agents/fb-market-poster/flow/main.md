@@ -1,4 +1,4 @@
-<!-- size-justification: 287L — single-flow cowork agent with no sub-flows; carries full 8-step cycle (bootstrap, dual-layer notebook reads, live-tool enrichment block with 4 calls, detail-floor composition spec with 7 required fields, 11-check pre-write validation, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching -->
+<!-- size-justification: 367L — single-flow cowork agent with no sub-flows; carries full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 4 calls, 3-section composition spec with full detail floor, 15-check pre-write validation, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching -->
 # FB Market Poster — Main Flow
 
 Daily synthesis agent. Reads the day's published market intelligence and writes ONE plain-Vietnamese Facebook-ready post.
@@ -84,12 +84,21 @@ From results, extract and hold in working memory:
 
 ---
 
-## STEP 2 — Read supplementary sources (L2 — lazy)
+## STEP 2 — Read forward-looking sources (L2 — mandatory for Dự đoán)
 
-Load only if time allows and notebook data was sparse:
+These feeds the **Dự đoán** section. Read ALL that exist — guard each: if file missing or <50 chars → skip and log. Do NOT skip this entire step.
 
-4. `docs/agent-memory/notebooks/digest-predict.md` — Weekly digest (if today is Friday or Monday).
-5. Read up to 2 relevant `docs/analysis-briefs/*.md` — only tickers explicitly flagged in CHEF as key movers.
+4. `docs/agent-memory/notebooks/digest-predict.md` — Digest-predict signals and weekly outlook. Extract:
+   - Any forward-looking signals (predicted direction, key levels, scenarios) for the next session or week.
+   - Weekly outlook if present (sector rotation, regime call).
+
+5. `docs/agent-memory/notebooks/unified-agent.md` (already read in STEP 1 — do NOT re-read; use working memory) — re-check for:
+   - CHEF outlook / conviction section (look for keywords: "dự báo", "tuần tới", "kỳ vọng", "nhìn về", "outlook", "conviction").
+   - Any regime call (risk-on / risk-off / carry / FII pressure language).
+
+6. Read up to 2 relevant `docs/analysis-briefs/*.md` — only tickers explicitly flagged in CHEF as key movers. Extract any forward call or price target.
+
+Hold all extracted forward signals in working memory under the label `$prediction_inputs`.
 
 ---
 
@@ -97,61 +106,125 @@ Load only if time allows and notebook data was sparse:
 
 **Language rule:** Plain, everyday Vietnamese. No analyst jargon. No citations (Layer #, σ, bp). No hexagram terms. No ticker codes without context. Use common names where helpful (e.g., "cổ phiếu Vingroup" alongside VHM/VIC if needed for clarity). Write as if explaining to a friend over coffee.
 
-### Detail Floor (mandatory)
+---
 
-The composed post MUST include the following concrete information whenever the data is available (from live tools in STEP 1b or notebooks). Do NOT pad with generic vague sentences where data is missing — if a field is genuinely unavailable after tool calls, omit that field entirely.
+### Section ordering (MANDATORY — never change this order)
 
-**1. Multiple indices** — Include VN-Index, VN30, HNX-Index, and UPCOM, each with: current value (điểm), point change (±x điểm), and percentage change (±x%). Example form: "VN-Index đóng cửa ở 1.285 điểm, giảm 12 điểm (−0,9%)".
-
-**2. Market breadth** — State advancers (tăng), decliners (giảm), unchanged (đứng giá), ceiling hits (tăng trần), floor hits (giảm sàn) as plain counts. Example: "Toàn thị trường có 320 mã tăng, 410 mã giảm, 85 mã đứng giá; 18 mã trần, 22 mã sàn."
-
-**3. Liquidity** — Total matched trading value for the session in tỷ đồng. Compare to recent average if available. Example: "Thanh khoản đạt 18.500 tỷ đồng, cao hơn mức trung bình 7 phiên gần nhất khoảng 15%."
-
-**4. Foreign flows (khối ngoại)** — Net buy/sell value in tỷ đồng. Name the top 2–3 most-bought and most-sold tickers with amounts. Example: "Khối ngoại bán ròng 620 tỷ đồng; mua mạnh VHM (+180 tỷ), HPG (+90 tỷ); xả FPT (−220 tỷ), VIC (−150 tỷ)."
-
-**5. Named movers (≥5 tickers, across multiple sectors)** — Both winners and losers. Each must have: ticker (+ plain company name for clarity), price or change, and % change. Spread across at least 2–3 different sectors (banking, real estate, materials, tech, retail, energy, etc.). Do NOT cluster everything in one sector. Example: "VNM tăng 3,2% lên 79.500đ; VHM giảm 2,8%; MSN bật +4,1%."
-
-**6. Named news / events / companies / policies** — At least 2 specific named items driving the session moves. These come from news-scout notebook signals. Name the company, policy, or event explicitly. NEVER write generic placeholders like "tin tức trong nước tích cực" or "thông tin vĩ mô". Example: "Ngân hàng Nhà nước hạ lãi suất điều hành 0,25%" or "Vingroup công bố kế hoạch thoái vốn tại VinFast."
-
-**7. Macro figures (if in scope)** — USD/VND rate + direction, gold price + direction, oil price + direction. Connect causally to today's moves where relevant. Example: "Tỷ giá USD/VND tăng nhẹ lên 25.350, tạo áp lực lên nhóm nhập khẩu."
-
-**Structure:**
+The post has exactly THREE sections, in this order:
 
 ```
-[Hook — 1 sentence]
-Câu mở: nêu bức tranh tổng thể ngày hôm nay (thị trường tăng/giảm/đi ngang) kèm số liệu chính.
+1. Tóm tắt nhanh   ← shortest; context only
+2. Phân tích       ← bridge; causal interpretation
+3. Dự đoán         ← LONGEST; the main value of the post
+```
 
-[Chỉ số thị trường]
-Nêu đủ 4 chỉ số (VN-Index, VN30, HNX-Index, UPCOM) với điểm số và % thay đổi.
-Độ rộng thị trường: số mã tăng/giảm/đứng/trần/sàn.
-Thanh khoản: tổng giá trị khớp lệnh tỷ đồng, so sánh với trung bình nếu có.
+The **Dự đoán** section is THE point of the post. It must be the most prominent, most detailed section. The recap is secondary — keep it concise.
 
-[Cổ phiếu nổi bật]
-Ít nhất 5 cổ phiếu cụ thể từ nhiều ngành khác nhau, mỗi mã kèm % và giá.
-Phân biệt rõ nhóm tăng mạnh và nhóm giảm sâu.
+---
 
-[Khối ngoại]
-Mua ròng hay bán ròng bao nhiêu tỷ đồng; các mã được mua/bán nhiều nhất.
+### Section 1 — Tóm tắt nhanh (brief recap)
 
-[Nguyên nhân — tin tức cụ thể]
-Ít nhất 2 sự kiện/tin tức/chính sách có tên cụ thể giải thích động lực ngày hôm nay.
-Liên kết số liệu vĩ mô (USD/VND, vàng, dầu) nếu có tác động trực tiếp.
+**Purpose:** Quick orientation — the factual context. Keep SHORT. Do NOT editorialize here.
 
-[Nhìn về phía trước — 1-2 câu]
-Điểm cần theo dõi tuần tới hoặc ngày mai. Giữ giọng điềm tĩnh, không phán đoán quá chắc.
+**Detail floor (mandatory — all quantitative data goes here):**
 
-[Disclaimer — giữ nguyên khối này]
+**1. Multiple indices** — VN-Index, VN30, HNX-Index, UPCOM, each with: current value (điểm), point change (±x điểm), percentage change (±x%). Example: "VN-Index đóng cửa ở 1.285 điểm, giảm 12 điểm (−0,9%)".
+
+**2. Market breadth** — advancers (tăng), decliners (giảm), unchanged (đứng giá), ceiling hits (tăng trần), floor hits (giảm sàn) as plain counts. Example: "320 mã tăng, 410 mã giảm, 85 đứng giá; 18 trần, 22 sàn."
+
+**3. Liquidity** — total matched value in tỷ đồng; compare to recent average if available.
+
+**4. Foreign flows** — net buy/sell in tỷ đồng; top 2–3 most-bought and most-sold tickers with amounts.
+
+**5. Named movers (≥5 tickers, across multiple sectors)** — winners and losers; each with ticker + company name + % change + price. Spread across ≥2–3 sectors.
+
+**6. Named news / events / companies / policies** — at least 2 specific named items (not generic placeholders). From news-scout notebook.
+
+**7. Macro figures (if in scope)** — USD/VND, gold, oil each with direction. Mention impact only if direct.
+
+---
+
+### Section 2 — Phân tích (analysis)
+
+**Purpose:** Interpret the day causally. Connect the data from the recap to meaning. This is the bridge between facts and prediction.
+
+**Required content:**
+- WHY did the market move today? Name the causal driver(s) — policy, earnings, foreign selling, macro shift, sector rotation. Link to named events from Section 1.
+- What do the breadth and liquidity signals imply? (e.g., broad advance = healthy risk-on vs. narrow rally = concentration risk; high volume confirms vs. low volume warns)
+- What does the foreign flow signal? (accumulation, distribution, carry-trade pressure, FII rotation)
+- What macro regime does today reinforce? (risk-on / risk-off, USD pressure on importers, rate sensitivity, etc.)
+- What sector narrative is playing out? (bank-led = rate expectations; real estate = FDI/land law; materials = commodity cycle)
+
+**Style:** 3–5 sentences of plain causal reasoning. Every claim must name something specific. No generic filler.
+
+---
+
+### Section 3 — Dự đoán (prediction) — THE main section
+
+**Purpose:** Deliver the forward value. This is what readers come for. Must be EARNED — every prediction claim must follow from something stated in Section 2 (Phân tích). No bare assertions.
+
+**Prediction inputs (pull from $prediction_inputs assembled in STEP 2):**
+- digest-predict signals: predicted direction, key levels, scenarios for next session/week.
+- CHEF (unified-agent) outlook / conviction section (if present).
+- Regime call from macro extraction (risk-on/off, carry/FII pressure).
+- If NO fleet prediction exists for today → derive your own from the Phân tích section, but you MUST reason through it (show the logic). Do not assert without reasoning.
+
+**Required content:**
+- **Direction call** — likely direction for next session and/or week (tăng / giảm / tích lũy / đi ngang), and why (must trace to Phân tích).
+- **Key levels or zones to watch** — at least 1 specific VN-Index support/resistance level or range. Example: "nếu VN-Index giữ được 1.270 điểm thì..."
+- **Specific tickers or sectors to watch** — name at least 1–2 tickers or sectors with a conditional ("nếu ... thì ..." or "khi ... mới ..."). Example: "Nhóm ngân hàng sẽ dẫn đầu nếu khối ngoại đảo chiều mua ròng."
+- **Scenario framing (if-then)** — at least 1 "nếu ... thì ..." scenario showing bull and/or bear condition. Grounded in today's analysis.
+
+**Tone:** Calm and reasoned. Not overconfident. Use hedged language naturally: "có khả năng", "nếu", "theo quan sát", "tuy nhiên cần theo dõi". No exaggerated certainty.
+
+---
+
+### Detail Floor — data availability rules
+
+Do NOT pad with generic vague sentences where data is missing — if a field is genuinely unavailable after tool calls, omit that field entirely. Do not fabricate numbers.
+
+---
+
+### Hard rules
+
+- ALWAYS include direction + delta% for VN-Index and any named ticker (memory: feedback_market_data_direction). Never write a bare price without change.
+- Total post length: 150–700 words. The 3-section structure naturally requires more space — do NOT truncate the Dự đoán section to meet a word target. Trim the recap if needed.
+- No markdown formatting in the post body (no `**bold**`, no `#headers`). Plain prose + the disclaimer separator. Section headings may be written as plain Vietnamese labels if helpful for readability (e.g., "Tóm tắt:" or "Dự đoán:") but no markdown.
+- The disclaimer block MUST appear verbatim at the end, inside `---` separators.
+- **Anti-filler rule:** Forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" (alone, without specifics). Every explanatory sentence must name something concrete.
+
+---
+
+### Post template
+
+```
+[Hook — 1 sentence: bức tranh tổng thể ngày hôm nay với số liệu chính]
+
+Tóm tắt nhanh:
+[4 chỉ số với điểm + % thay đổi]
+[Độ rộng: số mã tăng/giảm/đứng/trần/sàn]
+[Thanh khoản tỷ đồng]
+[Khối ngoại: mua/bán ròng tỷ đồng; mã được mua/bán nhất]
+[≥5 cổ phiếu nổi bật từ nhiều ngành, mỗi mã kèm % và giá]
+[≥2 tin tức/sự kiện/chính sách có tên cụ thể]
+[Macro: tỷ giá / vàng / dầu nếu có tác động]
+
+Phân tích:
+[Lý giải nhân quả: tại sao thị trường diễn biến như vậy hôm nay]
+[Ý nghĩa của breadth, thanh khoản, dòng ngoại]
+[Chế độ thị trường hiện tại (risk-on/off, áp lực tỷ giá, v.v.)]
+[Câu chuyện ngành đang diễn ra]
+
+Dự đoán:
+[Hướng kỳ vọng cho phiên tiếp theo / tuần tới + lý do từ phân tích]
+[Mức hỗ trợ/kháng cự VN-Index cần theo dõi]
+[1-2 cổ phiếu/nhóm ngành cụ thể + điều kiện ("nếu ... thì ...")]
+[Ít nhất 1 kịch bản if-then: bull và/hoặc bear]
+
 ---
 ⚠️ Nội dung được tạo tự động bởi bot AI, chưa được kiểm chứng. Tôi không chịu trách nhiệm về tính chính xác của thông tin. Nếu nội dung có sai sót hoặc cần chỉnh sửa, mọi góp ý của bạn sẽ được ghi nhận lại để giúp bot hoạt động và phục vụ bạn tốt hơn.
 ---
 ```
-
-**Hard rules:**
-- ALWAYS include direction + delta% for VN-Index and any named ticker (memory: feedback_market_data_direction). Never write a bare price without change.
-- Total post length: 150–650 words. Target richness, not brevity — include all detail-floor fields available. Do NOT artificially truncate.
-- No markdown formatting in the post body (no `**bold**`, no `#headers`). Plain prose + the disclaimer separator.
-- The disclaimer block MUST appear verbatim at the end, inside `---` separators.
-- **Anti-filler rule:** Forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" (alone, without specifics). Every explanatory sentence must name something concrete.
 
 ---
 
@@ -161,25 +234,31 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
 
 **Structural checks (must pass — fix inline if failing):**
 1. VN-Index appears with both level AND % change.
-2. Disclaimer block present verbatim.
+2. Disclaimer block present verbatim at the end.
 3. No jargon terms: Layer, σ, bp, hexagram, Kinh Dịch, TNB, signal #, convergence.
-4. Post length between 150 and 650 words. If under 150 → composition failed (exit with bug). If over 650 → trim least-informative sentences only.
+4. Post length between 150 and 700 words. If under 150 → composition failed (exit with bug). If over 700 → trim recap section (Tóm tắt nhanh) first; never trim Dự đoán.
+
+**Section-order checks (must pass — fix inline if failing):**
+5. All three sections are present in the post, in the mandatory order: Tóm tắt nhanh → Phân tích → Dự đoán. Missing any section → fix inline.
+6. Dự đoán section exists and contains at least ONE concrete forward call: a direction call (tăng/giảm/tích lũy/đi ngang), a key level or zone, a named ticker/sector with condition, or an if-then scenario. If Dự đoán is absent or contains only generic statements → mandatory fix inline.
+7. Earned-prediction check — every prediction claim in the Dự đoán section must trace to a specific fact or interpretation stated in the Phân tích section. Scan: if a forward claim appears in Dự đoán that has no anchor in Phân tích → add the missing reasoning to Phân tích, or remove the unsupported claim. No orphan forecasts.
+8. Recap must not dominate — the combined word count of Phân tích + Dự đoán must exceed the word count of Tóm tắt nhanh. If Tóm tắt nhanh is longer → trim it (remove less-important detail-floor items before trimming analysis or prediction).
 
 **Detail-floor checks (each field: pass if present with data, skip if genuinely no data available from any source including live tools):**
-5. ≥2 indices present with numeric value + change (VN-Index minimum; VN30/HNX/UPCOM additional).
-6. Market breadth: at least advancers + decliners count present.
-7. Liquidity: total matched value figure present (tỷ đồng).
-8. Foreign flow: net value figure present (tỷ đồng buy/sell).
-9. ≥5 named tickers with direction + % change each.
-10. ≥2 named news items or events/companies/policies (not generic placeholders).
+9. ≥2 indices present with numeric value + change (VN-Index minimum; VN30/HNX/UPCOM additional).
+10. Market breadth: at least advancers + decliners count present.
+11. Liquidity: total matched value figure present (tỷ đồng).
+12. Foreign flow: net value figure present (tỷ đồng buy/sell).
+13. ≥5 named tickers with direction + % change each.
+14. ≥2 named news items or events/companies/policies (not generic placeholders).
 
 **Filler check (must pass):**
-11. Draft does NOT contain any of the forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" used without a named specific following them.
+15. Draft does NOT contain any of the forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" used without a named specific following them.
 
 **On failure:**
-- Checks 1–4 fail: fix inline, re-verify.
-- Checks 5–10 fail because data genuinely unavailable after live tools + notebook: log which field is missing in RETURN QUALITY field; proceed (do NOT pad).
-- Check 11 fails: mandatory fix inline before writing.
+- Checks 1–8 fail: fix inline, re-verify.
+- Checks 9–14 fail because data genuinely unavailable after live tools + notebook: log which field is missing in RETURN QUALITY field; proceed (do NOT pad).
+- Check 15 fails: mandatory fix inline before writing.
 - Any check cannot be resolved after one fix attempt → send_telegram(bug, "[fb-market-poster] Post validation failed: <which check>") and EXIT.
 
 ---
@@ -257,7 +336,7 @@ Notebook entry format:
 - Post file: docs/social/fb-post-{DATE}.md
 - VN-Index: {level} ({+/-delta}%)
 - Sources read: unified-agent={yes/no}, news-scout={yes/no}, market-watcher={yes/no}
-- Validation: passed {N}/11 checks (detail-floor fields available: {list})
+- Validation: passed {N}/15 checks (section-order: {pass/fail}, earned-prediction: {pass/fail}, recap-not-dominant: {pass/fail}, detail-floor fields available: {list})
 - Status: {published/failed}
 
 ## Lessons learned
