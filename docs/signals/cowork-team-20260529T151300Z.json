@@ -1,0 +1,20 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T151300Z",
+    "nominal_tick": "20260529T150000Z",
+    "matched_slots": ["bctc-analyst-slot-1"],
+    "won_slots": ["bctc-analyst-slot-1"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["bctc-analyst"],
+    "silent": false,
+    "drift_min": 13,
+    "errors": [],
+    "note": "15:00Z FIRE — bctc-analyst-slot-1 (cron 0 15 * * *, daily BCTC run) matched UNANIMOUS x3. Clock 15:13Z (drift 13), nominal floors to 150000Z. Lock cowork-slot:bctc-analyst-slot-1:20260529T150000Z claimed=true (won race vs RemoteTrigger backstop). Spawned bctc-analyst background agentId ae5e8b20957a6d50d, flow docs/agents/bctc-analyst/flow/main.md. E2 guard OK (~22:00 VN off-market). Lock held under 900s TTL; release on agent-completion notification. Next NON-silent: 16:00Z off-hours fan-out."
+  },
+  "priority": "normal",
+  "createdAt": "20260529T151300Z"
+}
