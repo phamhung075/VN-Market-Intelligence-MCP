@@ -1,8 +1,79 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-28T09:30Z | **Sprint:** BCTC-EVAL-SUBSTRATE
+**Last updated:** 2026-05-29T18:01 UTC | **Sprint:** BCTC-EVAL-INSPECT-MERGE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## BCTC-EVAL-INSPECT-MERGE (2026-05-29T18:01 UTC) — DESIGN COMPLETE
+
+**Task:** Fold the 6-stage BCTC-EVAL gate substrate into the existing `/api/bctc-inspect` viewer.
+No new page. User directive: "page by page for see flow data change on each gate."
+
+**Key decisions:**
+
+1. **Option (b): per-page stage-flow panel.** NOT Option (a) (report-level strip only) — user
+   already has a report-level view at `/dashboard/bctc-eval`. Option (b) shows the gate badge
+   per stage AND points to the existing pane that shows that stage's data artifact. "Flow data
+   change" is made literal: stage 3 badge → OCR Text pane; stage 4 badge → Structured Table pane, etc.
+
+2. **No new route, no new file.** Client-side JS in `bctc-inspector.html` calls the already-shipped
+   `GET /api/bctc-eval/{report_id}` endpoint (same UUID as `doc_id`). Zero TS changes.
+
+3. **Report-level badges, explicitly labelled.** Badges labeled "toàn báo cáo" to prevent false-granularity.
+   No per-page eval metrics fabricated. Anti-false-green preserved.
+
+4. **409 / no-eval: graceful degrade.** Soft Vietnamese banner only. All existing panes unchanged.
+
+5. **Vietnamese trust labels** (per feedback_market_report_plain_vietnamese): "TIN CẬY CAO" /
+   "ĐỘ TIN CẬY TRUNG BÌNH" / "ĐỘ TIN CẬY THẤP". Gate failure prefix: "[ĐỘ TIN CẬY THẤP — TRÍCH XUẤT ĐỎ giai đoạn N]".
+
+6. **Stage→inspect-data mapping confirmed** (§5 of brief): S1=PDF pane, S2=Zone Overlay,
+   S3=OCR Text, S4=Structured Table, S5=Markdown Tables, S6=Parsed Financial Figures.
+
+**Brownfield confirmed:**
+- `bctc-inspector.html`: 1391L, static asset served via `readFileSync`. Dark-theme CSS palette.
+  Panel insertion point: between `.controls` and `.split` divs.
+- `bctcEvalDetailHandler.ts`: returns `stages[]` with `stage_no`, `stage_name`, `status`,
+  `metrics`, `gate_failures`, `computed_at`. schema_version: "1". 409 for no-eval.
+- `bctcEvalStore.ts`: `getEvalForReport` returns `EvalRow[] | null`. No change needed.
+- `doc_id` in inspector = `report_id` in eval store (same `financial_reports.id` UUID). No translation.
+- 84 backfill rows confirmed (14 reports × 6 stages). 409 path is exception case only.
+- file-size-caps.json governs docs/ and .claude/ files only — NOT HTML source assets.
+
+**Files authored:**
+1. `docs/architecture-briefs/2026-05-28-bctc-eval-inspect-merge.md` — NEW
+2. `docs/agent-memory/notebooks/architect.md` — this entry
+
+**Single dev work item:** modify `apps/mcp-server/src/interface/bctc-inspector.html` only
+(~140 additive lines: CSS + HTML section + `loadEvalPanel()` JS function).
+
+**Handoff:** dev-mcp-server → ops REBUILD mcp-server → qa AC-1..AC-8.
+
+---
+
+## HCM-DISAMBIG (2026-05-28T10:00Z) — DESIGN COMPLETE
+
+**Task:** HCM-ARCH. Harden HCM ticker vs TP.HCM city disambiguation. 2-entry GEOGRAPHIC_CONTEXT_MAP gap + chef.md Block A narrative rule.
+
+**Brownfield confirmed:**
+- R-1 CLOSED: `apps/news-fetch/` has zero parallel extractor (grep-clean on all geographic/extraction symbols).
+- `GEOGRAPHIC_CONTEXT_MAP` at `newsNormalizer.ts:547` — 9 entries; look-behind window `matchStart - 10` to `matchStart + 3`, lowercased.
+- Window arithmetic proven: `"tp."` already covers `"TP. HCM"` via substring match. Only genuine code gap is `"tp-hcm"` (hyphen).
+- Bun test glob: `bunfig.toml [test] root = "./src"` — all `*.test.ts` under `src/__tests__/` auto-discovered.
+
+**Key decisions:**
+1. D1 zone = `dev-mcp-server` only. D2 = prompt-only (no agent spawn, no rebuild for D2).
+2. D1 and D2 are parallelizable (zero file overlap).
+3. R-5: Add `"tp. hcm"` (belt-and-suspenders) + `"tp-hcm"` (genuine gap). Window stays 10 chars per NFR-1.
+4. Rule shape: extend suppress-only `GEOGRAPHIC_CONTEXT_MAP` — no new `STOCK_CONTEXT_MAP`. Positive cases already work without boost pass.
+
+**Files authored:**
+1. `docs/architecture-briefs/2026-05-28-hcm-disambig.md` — NEW
+2. `docs/agent-memory/notebooks/architect.md` — this entry
+
+**Handoff:** pm → atomize D1 + D2 parallel; OPS after D1; QA after D2+OPS.
+
+---
 
 ## BCTC-EVAL-SUBSTRATE (2026-05-28T09:30Z) — DESIGN COMPLETE
 
