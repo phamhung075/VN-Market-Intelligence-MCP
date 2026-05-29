@@ -531,6 +531,46 @@
     .pek-unit-dim { opacity: 0.4; }
     .pek-unit-highlight { border: 2px solid #4a9eff; border-radius: 3px; padding: 2px; }
 
+    /* ── MD-STAGE5: Markdown → rendered table view (per-page, stage 5) ── */
+    #md-stage5-section {
+      border-bottom: 1px solid #3a3a3a;
+      padding: 12px 14px;
+      flex-shrink: 0;
+      background: #181c24;
+    }
+    #md-stage5-content {
+      overflow-x: auto;
+      max-height: 360px;
+      overflow-y: auto;
+    }
+    .md-stage5-block {
+      margin-bottom: 12px;
+    }
+    .md-stage5-unit-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #6a9abf;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .md-stage5-fragment-banner {
+      background: #5c2800;
+      border: 1px solid #ff8c3c;
+      color: #fff;
+      padding: 3px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-weight: bold;
+      margin-bottom: 4px;
+      word-break: break-word;
+    }
+    .md-stage5-no-data {
+      font-size: 12px;
+      color: #666;
+      padding: 6px 0;
+    }
+
     /* ── BCTC-EVAL Dual-View Toggle (M-4) ── */
     .eval-strip-title-row {
       display: flex;
@@ -646,6 +686,14 @@
       </div>
     </div>
 
+    <!-- MD-STAGE5: Markdown → rendered HTML table view (per-page, additive) -->
+    <div id="md-stage5-section" style="display:none">
+      <div class="section-title" style="margin-bottom:6px">Bảng Dữ Liệu (Markdown → Bảng)</div>
+      <div id="md-stage5-content">
+        <div class="md-stage5-no-data">Chưa chọn tài liệu.</div>
+      </div>
+    </div>
+
     <!-- BT-3i-B: Structured table section -->
     <div id="table-section" style="display:none">
       <div class="section-title" style="margin-bottom:6px">Structured Table</div>
@@ -705,6 +753,11 @@
   let evalViewMode = localStorage.getItem("bctcEvalViewMode") || "user";
   // Last successful fetch result — allows mode switch without re-fetch
   let lastEvalData = null;
+
+  // ── MD-STAGE5: cached table units for per-page markdown→table render ─────
+  // Populated by renderTable when has_pek:true. Null = not yet fetched.
+  // Shape: Array<{ unit_id, schema_page, page_numbers_json: number[], stitched_markdown, quarantined }>
+  let cachedPekUnits = null;
 
   // ── DOM refs ─────────────────────────────────────────────────────────────
   const select        = document.getElementById("doc-select");
@@ -903,7 +956,9 @@
     await renderOcr(currentDocId, pageNum);
     // 3. Fetch page-scoped eval gate strip for this page
     await renderEvalStrip(currentDocId, pageNum);
-    // 4. Fetch zone overlay if enabled
+    // 4. MD-STAGE5: render markdown→table view for this page (uses cached units, no fetch)
+    renderMdStage5View(pageNum);
+    // 5. Fetch zone overlay if enabled
     if (zoneOverlayEnabled) await renderZoneOverlay(currentDocId, pageNum);
   }
 
@@ -1083,6 +1138,10 @@
   const mdOcrMarkdownBlock   = document.getElementById("md-ocr-markdown-block");
   const mdOcrMarkdownPre     = document.getElementById("md-ocr-markdown-pre");
 
+  // ── MD-STAGE5: DOM refs for per-page markdown→table rendered view ─────────
+  const mdStage5Section  = document.getElementById("md-stage5-section");
+  const mdStage5Content  = document.getElementById("md-stage5-content");
+
   // BCTC-EVAL-INSPECT-MERGE: renderTable is now page-aware (pageNum for fragment detection)
   async function renderTable(docId, pageNum) {
     if (!tableSection || !balanceBadge || !tableContent) return;
@@ -1117,6 +1176,10 @@
       if (data.has_pek === true) {
         balanceBadge.innerHTML = `<span class="balance-pass">PEK SSOT</span>`;
         const units = Array.isArray(data.units) ? data.units : [];
+        // MD-STAGE5: cache units for per-page markdown→table render,
+        // then immediately render for the current page (first load or re-fetch).
+        cachedPekUnits = units;
+        renderMdStage5View(activePage);
         if (units.length === 0) {
           tableContent.innerHTML = `<div class="no-table-msg">PEK units present but empty for this report.</div>`;
         } else {
@@ -1148,6 +1211,10 @@
       }
 
       // ── Legacy path (has_pek:false): render bctc_table_rows, page-filtered ──
+      // MD-STAGE5: no PEK units — clear cache and hide section
+      cachedPekUnits = null;
+      if (mdStage5Section) mdStage5Section.style.display = "none";
+
       if (!data.has_table) {
         balanceBadge.innerHTML = "";
         tableContent.innerHTML = `<div class="no-table-msg">No structured table yet — re-extract pending (BT-4b).</div>`;
@@ -1225,6 +1292,69 @@
       balanceBadge.innerHTML = "";
       tableContent.innerHTML = `<div class="no-table-msg">Error loading table: ${escHtml(err.message)}</div>`;
     }
+  }
+
+  // ── MD-STAGE5: Render per-page markdown → HTML table view ───────────────
+  //
+  // Called from navigateToPage on every page change (per-page replay).
+  // Uses cachedPekUnits (populated by renderTable on doc select).
+  //
+  // Honesty contract (HARD — anti-false-green):
+  //   - Only shows units whose page_numbers_json INCLUDES the current page.
+  //   - When a unit spans multiple pages (multi-page), the table may be PARTIAL
+  //     for the current page view. A [FRAGMENT TRANG] banner is shown to tell the
+  //     user the table continues on adjacent pages — NOT that this is the full table.
+  //   - The section is hidden entirely when has_pek:false (no PEK units).
+  //
+  function renderMdStage5View(pageNum) {
+    if (!mdStage5Section || !mdStage5Content) return;
+
+    // No PEK units cached → section was already hidden by renderTable; nothing to do
+    if (!cachedPekUnits) {
+      mdStage5Section.style.display = "none";
+      return;
+    }
+
+    // Filter: only units covering the current page
+    const unitsOnPage = cachedPekUnits.filter(unit => {
+      const pages = Array.isArray(unit.page_numbers_json) ? unit.page_numbers_json : [];
+      return pages.includes(pageNum);
+    });
+
+    if (unitsOnPage.length === 0) {
+      mdStage5Section.style.display = "block";
+      mdStage5Content.innerHTML = `<div class="md-stage5-no-data">Không có bảng markdown cho trang ${pageNum}.</div>`;
+      return;
+    }
+
+    mdStage5Section.style.display = "block";
+    let html = "";
+
+    for (let i = 0; i < unitsOnPage.length; i++) {
+      const unit = unitsOnPage[i];
+      const pages = Array.isArray(unit.page_numbers_json) ? unit.page_numbers_json : [];
+      const isMultiPage = pages.length > 1;
+
+      // Honesty: label partial-on-page state when unit spans multiple pages
+      let fragmentBanner = "";
+      if (isMultiPage) {
+        const minPage = Math.min(...pages);
+        const maxPage = Math.max(...pages);
+        fragmentBanner = `<div class="md-stage5-fragment-banner">[BẢNG CÓ THỂ KHÔNG ĐẦY ĐỦ — đơn vị bảng trải dài trang ${minPage}–${maxPage}, đang xem trang ${pageNum}]</div>`;
+      }
+
+      const unitLabel = `Unit ${escHtml(String(unit.unit_id))} &bull; Schema trang ${escHtml(String(unit.schema_page))} &bull; Trang: ${escHtml(pages.join(", "))}`;
+
+      const renderedTable = parsePipeTableToHtml(unit.stitched_markdown || "");
+
+      html += `<div class="md-stage5-block">
+        <div class="md-stage5-unit-label">${unitLabel}</div>
+        ${fragmentBanner}
+        ${renderedTable}
+      </div>`;
+    }
+
+    mdStage5Content.innerHTML = html;
   }
 
   // ── MD-INSPECT: Render generic markdown tables panel ─────────────────────
@@ -1582,6 +1712,10 @@
     if (mdTablesContent) mdTablesContent.innerHTML = "";
     if (mdOcrMarkdownBlock) mdOcrMarkdownBlock.style.display = "none";
     if (mdOcrMarkdownPre) mdOcrMarkdownPre.textContent = "";
+    // MD-STAGE5: reset per-page markdown→table section
+    if (mdStage5Section) mdStage5Section.style.display = "none";
+    if (mdStage5Content) mdStage5Content.innerHTML = "";
+    cachedPekUnits = null;
     // BCTC-EVAL-INSPECT-MERGE: reset eval strip
     resetEvalPanel();
     // LF-OVERLAY: clear overlays and cache
