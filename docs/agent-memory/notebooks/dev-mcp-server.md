@@ -1,5 +1,125 @@
 # dev-mcp-server -- Notebook
 
+## c323 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE — PDF LAZY RENDER BUG FIX)
+
+### PDF lazy render — page on select, page-by-page on nav — COMMITTED a6233c85
+
+**User bug report:** "document pdf need load on select and load page by page"
+
+**Root cause:** `renderWithPdfJs` rendered ALL pages in a sequential for-loop on doc select. For large BCTC PDFs (40-100 pages) this blocked the browser for 40-100s before any canvas appeared. `pdfNumPages` was not populated until the loop completed, so `navigateToPage(1)` ran with `pdfNumPages=0` → `ensurePdfPageRendered` was a no-op → blank PDF pane.
+
+**Fix (HTML-only, bctc-inspector.html):**
+- Added `pdfDoc = null` module-level state (retains the pdf.js document object across page navigations).
+- `renderWithPdfJs` now: fetches PDF bytes → calls `pdfjsLib.getDocument()` → stores `pdfDoc` + `pdfNumPages` → renders only page 1 via `renderPdfPage(1)` → returns immediately.
+- New `renderPdfPage(pageNum)`: renders a single pdf.js page into a canvas tagged `pdf-page-{pageNum}`. No-op if the canvas already exists (idempotent).
+- `ensurePdfPageRendered`: now calls `renderPdfPage(pageNum)` before `scrollIntoView` — on nav, the target page is rendered on-demand.
+- `resetPanes` + doc-select handler: both reset `pdfDoc = null` on new doc selection.
+
+**Preserved intact:** navigateToPage orchestrator, OCR/table/md/eval-strip replay, zone overlay wiring, iframe fallback path, `has_pdf` honest-degrade, monkey-patch for zone overlay.
+
+**Gates:**
+- `bun tsc --noEmit`: EXIT 0 (clean)
+- `bctcEvalPageHandler.test.ts`: 12 pass / 0 fail (HTML-only change; no TS impact)
+- Frozen handlers: bctcEvalDetailHandler.ts, bctcInspectHandler.ts, bctcEvalStore.ts, bctcEvalPageHandler.ts — git diff = empty (0 changes)
+- PEK subtree: git -C apps/pdf-extractor/PDF-Extract-Kit diff = 0 lines (pristine)
+- Staged files: exactly 1 (bctc-inspector.html)
+- Commit: a6233c85
+
+**ops_rebuild_required: true** — HTML is baked into the mcp-server container image; force-recreate required for fix to take effect live.
+
+Zone health: HTML-only fix; tsc EXIT 0; 12 tests pass; all frozen files untouched | HEALTHY
+
+---
+
+## c322 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE — AC6 PER-STAGE TRUST PREFIX)
+
+### AC6 fix — per-stage Vietnamese trust prefix in renderGateStrip — COMMITTED e51e4b8e
+
+**QA defect:** `renderGateStrip` in `bctc-inspector.html` emitted no per-stage inline trust text (M-5 spec). `ĐỘ TIN CẬY THẤP` existed only in the overall red header; `TRÍCH XUẤT ĐỎ` and per-stage `độ tin cậy thấp` were absent.
+
+**Fix:** HTML-only change to `renderGateStrip`. Added `trustPrefix` variable driven purely off `gate.status` (already in `/page/N` response — no endpoint change):
+- `status === "red"` → `[ĐỘ TIN CẬY THẤP — TRÍCH XUẤT ĐỎ giai đoạn ${gate.stage_no}]` (color #e06060, bold)
+- `status === "yellow"` → `[độ tin cậy thấp]` (color #d4a017, semi-bold)
+- green → no prefix
+`trustPrefix` prepended inside the `eval-stage-label` span before the "Giai đoạn N —" text.
+
+**Gates:**
+- `grep -n "TRÍCH XUẤT ĐỎ"` → line 1273 in renderGateStrip (PASS)
+- `grep -n "độ tin cậy thấp"` → line 1275 in renderGateStrip (PASS)
+- `bctcEvalPageHandler.test.ts`: 12 pass / 0 fail (HTML-only change; no test impact)
+- 4 frozen handlers/stores: 0 diff (bctcEvalPageHandler.ts, bctcEvalDetailHandler.ts, bctcInspectHandler.ts, bctcEvalStore.ts)
+- PEK subtree: 0 lines (pristine)
+- Staged files: exactly 1 (bctc-inspector.html)
+- Commit: e51e4b8e
+
+**ops_rebuild_required: true** — HTML served by mcp-server container; force-recreate needed for AC6 to take effect live.
+
+Zone health: HTML-only fix; tsc unaffected; 12 tests pass; frozen files untouched | HEALTHY
+
+---
+
+## c321 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE — PROD SCHEMA FIX)
+
+### bctcEvalPageHandler — prod schema divergence fix — COMMITTED 5ad6df9c
+
+**Root cause:** Stage-3 primary query `WHERE pet.report_id = ?` references a column that does not exist in production `pdf_extracted_text`. Real prod columns: `id, filename, page_number, text_content, confidence, extracted_at, action_code`. Test fixture TC-8 invented a `report_id` column → false-green. Confirmed via docker compose exec sqlite_master introspection.
+
+**Handler fix (bctcEvalPageHandler.ts):** Removed the broken `report_id` query entirely. Single working path: `financial_reports.pdf_path → basename → pdf_extracted_text WHERE filename=? AND page_number=?`. No code path references `pet.report_id`.
+
+**Test fix (bctcEvalPageHandler.test.ts):** Rebuilt `pdf_extracted_text` fixture verbatim from production sqlite_master (filename NOT NULL, action_code, UNIQUE(filename, page_number), NO report_id). Added FK constraint to `bctc_eval_results` fixture. TC-8 now inserts OCR row by filename only + seeds `financial_reports.pdf_path` so handler resolves basename correctly.
+
+**Production schema introspected:**
+- `pdf_extracted_text`: id, filename NOT NULL, page_number, text_content, confidence DEFAULT 0, extracted_at, action_code, UNIQUE(filename, page_number)
+- `bctc_layout_units`: has report_id (stage-4 query is correct, unchanged)
+- `bctc_eval_results`: has FK CONSTRAINT fk_report FOREIGN KEY (report_id) REFERENCES financial_reports(id) ON DELETE CASCADE
+
+**Gates:**
+- bun test bctcEvalPageHandler.test.ts: 12 pass / 0 fail
+- bun tsc --noEmit: EXIT 0 (clean)
+- pet.report_id grep: EXIT 1 (no matches — all code paths clean)
+- PEK subtree: 0 lines (pristine)
+- bctcEvalDetailHandler.ts, bctcInspectHandler.ts, bctcEvalStore.ts: git diff = empty (unchanged)
+- Commit: 5ad6df9c — 2 files, 70 ins / 68 del
+
+**ops_rebuild_required: true** — endpoint 500s until container is force-recreated.
+
+Zone health: handler prod-schema aligned; fixture prod-faithful; 12 tests GREEN; tsc clean | HEALTHY
+
+---
+
+## c320 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE)
+
+### BCTC-EVAL-INSPECT-MERGE DONE — COMMITTED 75c7acf5
+
+**Task:** Fold BCTC eval gate strip into the existing /api/bctc-inspect viewer. No new page, no new container. Option (c) from architecture brief.
+
+**Files created (2):**
+- `apps/mcp-server/src/interface/mcp/routes/bctcEvalPageHandler.ts` — NEW: GET /api/bctc-eval/{report_id}/page/{page_no}. Returns 6-gate eval status + page-scoped annotations. Stages 1/2/5/6: report_level:true + label_suffix:"(toàn báo cáo)". Stage 3: OCR confidence/text_length from pdf_extracted_text (by report_id, fallback by filename). Stage 4: partial-fragment detection from bctc_layout_units.page_numbers_json. HTTP 400 INVALID_UUID | INVALID_PAGE_NO, 409 EVAL_NOT_COMPUTED. DI pattern: db injected by server.ts (no getDb() in handler).
+- `apps/mcp-server/src/__tests__/bctcEvalPageHandler.test.ts` — NEW: 12 unit tests (TC-1..9 + DV-1 deliberate-violation). All pass. DV-1 smoke proves partial-fragment gate is not hollow.
+
+**Files modified (2):**
+- `apps/mcp-server/src/interface/mcp/server.ts` — import + route registration. pageMatch regex `/^\/api\/bctc-eval\/([^/]+)\/page\/(\d+)$/` inserted BEFORE the UUID-only catch to prevent false match as detail handler.
+- `apps/mcp-server/src/interface/bctc-inspector.html` — M-3 navigateToPage orchestrator; M-4 ensurePdfPageRendered+scroll fix; M-5 renderEvalStrip/renderGateStrip; M-6 eval-strip DOM section + CSS; M-7 renderTable(docId, pageNum) page-aware + mandatory [FRAGMENT TRANG] banner; M-8 doc-select handler uses navigateToPage(1) + renderTable(docId,1).
+
+**Gates:**
+- bun tsc --noEmit: EXIT 0 (clean)
+- bctcEvalPageHandler.test.ts: 12 pass / 0 fail (64 expect() calls)
+- PEK subtree pristine: `git -C .../PDF-Extract-Kit status --porcelain` = 0 lines
+- Frozen files untouched: bctcEvalDetailHandler.ts, bctcInspectHandler.ts, bctcEvalStore.ts, frozen Python files — all unmodified (git diff empty)
+- Staged files (exactly 4): bctcEvalPageHandler.ts, server.ts, bctc-inspector.html, bctcEvalPageHandler.test.ts
+- Commit: 75c7acf5
+
+**DV-1 red proof documented in test file:**
+- Multi-page unit [5,6,7] on page 6 → partial_fragment_warning:true (LIVE PASS)
+- Single-page unit [3] on page 3 → partial_fragment_warning:false (LIVE PASS)
+- If handler suppresses warning → TC-1 + DV-1 go RED with "Expected true, received false"
+
+**ops_rebuild_required: true** — new route + HTML changes require force-recreate.
+
+Zone health: 2 new files + 2 modified; tsc EXIT 0; 12 tests pass; PEK pristine; frozen files untouched | HEALTHY
+
+---
+
 ## c319 · 2026-05-29 (BOOTSTRAP-ENUM-BCTC — XS FIX)
 
 ### BOOTSTRAP-ENUM-BCTC DONE
