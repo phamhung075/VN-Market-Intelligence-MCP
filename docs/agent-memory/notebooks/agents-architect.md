@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-29T04:26:13Z
+
+**Brief:** `docs/architecture-briefs/2026-05-29-bctc-analyst-merge.md`
+
+PO-approved MERGE of `financial-analyst` + `report-analyzer` into single `bctc-analyst`: canonical `bctc_signal` with `mode` discriminator replaces dual signal types, in-cycle calendar gate drives routine vs release mode, release-mode-only ledger writes preserved, single `0 0,12 * * *` cron with earnings detection in-cycle, chef dual-accept transition then single-accept post-archive, sonnet pinned, 17-step H-1→H-17 migration with 24h parallel-run rollback gate.
+
+**Signal dropped:** `docs/signals/bctc-analyst-merge-20260529T042613Z.json` → agent-father
+
+---
+
 ## 2026-05-28 — BCTC-EVAL-AGENTS (sprint BCTC-EVAL-SUBSTRATE)
 
 6 agent flow files updated to consume the shared eval substrate (GET /api/bctc-eval/{report_id} and GET /api/bctc-eval). No commits — all files left unstaged per task constraint.

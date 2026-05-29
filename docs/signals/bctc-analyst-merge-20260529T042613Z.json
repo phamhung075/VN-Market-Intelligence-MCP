@@ -1,0 +1,12 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "payload": "docs/architecture-briefs/2026-05-29-bctc-analyst-merge.md",
+  "priority": "high",
+  "createdAt": "2026-05-29T04:26:13Z",
+  "summary": "PO-approved MERGE of financial-analyst + report-analyzer into bctc-analyst. 17-step migration sequence. Creates 9 new files, modifies 2 (chef + schedule), deletes 6 post-soak, archives 2 notebooks. Model: sonnet. Signal canonical: bctc_signal with mode discriminator. Chef dual-accept transition window required.",
+  "migration_steps": "H-1 through H-17 — see brief §(h)",
+  "rollback_gate": "24h parallel run between H-11 and H-12 — abort if 0 valid signals",
+  "open_questions": ["OQ-1: verify chef GATHER step file path", "OQ-2: verify cowork-schedule.json report-analyzer entry presence", "OQ-3: carry BCTC Citation Trust Protocol + fix Portuguese→Vietnamese in brief §9"]
+}
