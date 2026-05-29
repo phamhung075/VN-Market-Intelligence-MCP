@@ -24,6 +24,19 @@ PO live-probe 2026-05-29T17:29Z: `get_macro_snapshot` returns `dataSource:"live"
 
 ---
 
+## Sprint BCTC-TABLE-BOUNDARY — Multi-Page Table Stitcher Boundary State Machine
+
+**Status:** OPEN — BA spec ready. **Priority: HIGH (user-reported data-correctness bug).** Zone: `apps/pdf-extractor/`.
+
+- ✅ BTB-BA: Spec `docs/REQ_BCTC-TABLE-BOUNDARY.md` — 4 boundary states (START/CONTINUE/END/NEW), FR-1..5, DV tests, two real-data sentinels. NEXT: architect.
+- ✅ BTB-ARCH (architect): design state-machine transition (per-page type × geometric continuity × title-band × intervening-prose), title-band detector, revised _flush_unit, revised blank-bridge — brief `docs/architecture-briefs/2026-05-29-bctc-table-boundary.md`. NEXT: dev-pdf-extractor.
+- ✅ BTB-DEV (dev-pdf-extractor): 5-state machine (NO_TABLE/TABLE_OPEN/TABLE_END/TABLE_NEW + deferred blank buffer), _is_title_band D-5, schema-page-type _flush_unit — commit d297f3ba. DV-1 PROVEN-RED→GREEN. DV-2 PROVEN-RED→GREEN. 659/659 unit tests pass. NEXT: ops rebuild.
+- 🔄 BTB-OPS (ops): rebuild pdf-extractor container (`build` + `up --force-recreate`); off-hours re-extract sentinels A + B.
+- 🔄 BTB-QA (qa): DV-1 + DV-2 PROVEN-RED pre-fix, then PROVEN-GREEN post-fix; direct DB verification both sentinels; REJECT if any prose page in a table unit's page_numbers_json.
+- 🔄 BTB-EXIT (po): independent live re-verify sentinels A + B via direct DB; sign off.
+
+---
+
 ## Sprint SELF-IMPROVE-GATE — Gated Self-Improvement Loop
 
 **Status:** OPEN — Phase 2 (lane-B code gate) live 2026-05-28. PO: APPROVE-WITH-CONDITIONS (062a6569 + ef109a76). X-1 open. **Priority: HIGH.** Zone: `apps/mcp-server/`.
