@@ -1,17 +1,22 @@
 # PO Notebook
 
-## Cycle 2026-05-29T17:20Z — VNH-SECTOR-FIX EXIT sign-off (sprint CLOSED)
+## Cycle 2026-05-29T17:30Z — dev-team triage → BATCH(1 FIX)
 
-**Spawn:** QA-signalled sprint-complete → sprint-signoff sub-flow.
+**Verdict:** BATCH(1) = BOOTSTRAP-ENUM-BCTC (FIX, XS, dev-mcp-server). WIP respected — 2 HIGH sprints already OPEN (SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST LF-EXTRACT/LF-OVERLAY) left ready; a confirmed-live XS enum FIX outranks sprint advancement (priority order: recurring bug first).
 
-**Evidence chain reviewed:** BA spec docs/REQ_VNH-SECTOR-FIX.md; dev 9713118f (VNH real_estate→agriculture, 3 comment fixes DAG/TCH/DPM, domain field string→DomainType, guard 5/5); ops deploy (live market.db UPDATE, post-rebuild re-verify VNH=agriculture, seed didn't revert); qa 29d5629f / docs/handoffs/VNH-QA-handoff.md (24/24 green, tsc clean, anti-false-green PROVEN — bogus domain→TS2322, live news-scout bootstrap = agriculture).
+**Live probes (probe before believing a report):**
+- #3009 CONFIRMED: get_cycle_bootstrap enum rejects `bctc-analyst`; enum = [news-scout, financial-analyst, market-watcher, alert-commander, digest-predict, qa-responder, unified-agent, report-analyzer]. Recurring string-vs-enum class (commit-mutex, verified_decision). Hypothesis: hardcoded literal drifted from system-map.json roster → durable fix = derive from SSOT.
+- #3003 FALSE-RED: get_macro_snapshot NOW dataSource=live (oil 90.74/gold 4594.6/usdvnd 26255 @17:29Z) — 2026-05-23 stale-seed headline NOT reproducible. Residual = carry/yield computedAt=2026-05-23 (cache recency label only). Marked monitoring. NO FIX.
 
-**Independent spot-check (PO):** get_cycle_bootstrap(market-watcher) — distinct agent from QA's news-scout — watchlist line reads `VNH [HNX] agriculture`. Done bar BOTH conditions MET (DB-verified-in-running-container + ≥1 agent bootstrap no longer real_estate).
+**Resolved Telegram:** #3003 monitoring, #3005 fixed (webhook OPS-closed), #3010 wontfix (EOD info). NOTE: tool is `process_telegram_report` (NOT resolve_report); pass delete_telegram_message:false to mark DB only. Left unresolved (tracked): #3009 (now sprint), #3007 (BCTC overdue → owned by BCTC-LAYOUT-FIRST RCA, don't dup), #3006/#3008 (system-auditor "TASKS.md unreadable" — dispatcher read it fine @109L; agent read-path/CWD bug, NOT corruption — held).
 
-**Nuance noted (not a blocker):** VNH still appears in an 08:30 price_drop alert text under "Ngành Bất động sản" — that's a pre-fix generated artifact, not a live classification. Matches sprint's explicit out-of-scope (artifacts fixed by separate path).
+**Hygiene seen, NOT dispatched:** 730-file signals/ backlog + signals.db stale since 22-May; dev-team drain not committing file moves. CLEAN candidate; did not crowd out code this tick.
 
-**Actions:** VNH-EXIT ✅ + sprint marked CLOSED 2026-05-29T17:45Z in TASKS.md; task_release(task:VNH-SECTOR-FIX) ok=false (TTL expired — acceptable per flow); WORK note posted.
+**Commit:** 7286b122 (TASKS.md triage). HEAD before: 721c78e2.
 
-### Carry-over
-- **NEW backlog SPIKE idea:** string-vs-enum hardening — seed `domain` was `string` (compiled bad enum silently); now DomainType. Other seed/config arrays may type structural fields as bare `string`. Fleet-wide one-pass audit could catch next leak. Flagged in TASKS.md VNH section. Raise as SPIKE next triage.
-- Prior-cycle backlog still open: signals.db drain dead since 22-May; TASKS.md near/over 80L cap (VNH close added lines — janitor pass).
+## Carry-over
+- BOOTSTRAP-ENUM-BCTC chain: dev-mcp-server → ops(rebuild) → qa(live bctc-analyst bootstrap) → po EXIT.
+- PEK-INTEGRATE DONE-PENDING-G9 — do NOT auto-close; awaits USER verbal.
+- SPIKE (now 4th instance — strong case next idle tick): string-vs-enum fleet hardening (VNH DomainType + bootstrap enum + commit-mutex + verified_decision); pair with SSOT-derivation-of-enums.
+- system-auditor TASKS.md-unreadable (#3006/#3008): recurs 3rd cycle → dispatch as agent read-path FIX.
+- signals/ backlog CLEAN: arm next tick if drain still not committing.
