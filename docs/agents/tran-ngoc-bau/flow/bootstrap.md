@@ -25,4 +25,12 @@ If `docs/handoffs/tnb-audit-latest.md` exists, check for `## PO ACK` section at 
 - `get_macro_snapshot()` → extract REGIME, CARRY_REGIME, DXY_SIGNAL, US10Y_SIGNAL
 - `get_system_status()` → confirm infrastructure healthy. If DOWN → send BUG, EXIT.
 
-> **Gateway-down handling:** If MCP gateway call fails → send BUG one-line error → EXIT. Do NOT switch to "file-evidence mode" — session logs contain PAST state that may be wrong. Auditing from stale files produces hallucinated findings. Report the failure and exit.
+> **Gateway-down handling — two failure modes:**
+>
+> **(A) call_tool wrapper absent or transport error** — `mcp__claude_ai_gateway__call_tool` is not present in this session, or the call itself returns a connection/transport error (not an application-level status). This is most likely a **stale cron session** (session born before or during an MCP reload; tools never refreshed), NOT a fleet outage. Send BUG: `"gateway wrapper unavailable in this session — likely stale session, recommend session reload"`. EXIT. Do NOT claim the gateway or infrastructure is down.
+>
+> **(B) Gateway reachable, `get_system_status` reports infrastructure DOWN** — gateway responded but the status payload contains real failures. Send BUG with the status detail. EXIT.
+>
+> **FORBIDDEN diagnosis:** Never cite `.mcp.json` (empty or not) as evidence of an outage. `.mcp.json` is intentionally empty by design — the gateway is reached only via the `call_tool` wrapper, not via direct server registration. "No servers registered in `.mcp.json`" is NOT a failure condition.
+>
+> Do NOT switch to "file-evidence mode" in either case — session logs contain PAST state that may be wrong. Auditing from stale files produces hallucinated findings. Report the failure and exit.
