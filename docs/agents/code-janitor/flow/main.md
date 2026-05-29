@@ -35,6 +35,30 @@ Finding found?
 ```
 `send_telegram(channel="bug")`: "Found N DRY violations, proposed M backlog tasks"
 
+## Escalation Reporting (when sweep finds unfixed doublons)
+
+If the sweep produced any escalation-class findings (doublons / DRY violations NOT auto-fixed, i.e. added to backlog):
+
+1. Verify the payload JSON file exists (it MUST be written before this step — pointer integrity per signal-dashboard Rule 3):
+   ```
+   ls docs/signals/code-janitor-<slug>-<YYYY-MM-DD>.json
+   ```
+2. Append one DASHBOARD row per the WRITE protocol → skill: `.claude/skills/signal-dashboard/SKILL.md`
+   ```
+   to:      ## po
+   id:      cj-{YYYYMMDDTHHmmss}
+   from:    code-janitor
+   type:    system-issue
+   summary: Doublon sweep: N escalations → docs/signals/code-janitor-<slug>-<date>.json  (≤80 chars)
+   status:  NEW
+   payload: docs/signals/code-janitor-<slug>-<date>.json
+   ```
+3. Update `_Updated:` timestamp in `docs/signals/DASHBOARD.md`.
+
+Skip this step entirely if all findings were auto-fixed (nothing escalated).
+
+---
+
 ## Memory + State (every scan)
 - **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md` (OVERWRITE). Body template for this agent:
 ```

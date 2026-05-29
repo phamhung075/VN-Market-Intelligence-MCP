@@ -1,5 +1,15 @@
 # Agent Father — Notebook
 
+## c280 · 2026-05-30 — Edit code-janitor (add escalation DASHBOARD reporting step)
+
+- Change: Added "Escalation Reporting" section to `docs/agents/code-janitor/flow/main.md`. When a sweep produces escalation-class findings (doublons not auto-fixed), code-janitor must (1) verify the payload JSON file exists (Rule 3 pointer integrity), (2) append one `## po` DASHBOARD row via signal-dashboard SKILL (id=cj-…, from=code-janitor, type=system-issue, payload=JSON path), (3) update _Updated: timestamp. Step is skipped entirely when all findings were auto-fixed.
+- Files modified: 1 (docs/agents/code-janitor/flow/main.md — 81L → 105L)
+- Cascade: none — no name/routing/inter_agent/roster/dispatch/tool-package change; signal-dashboard skill referenced by pointer (DRY)
+- Validation: 5/5 passed (flow within 120L cap ✓, new section is pointer-only — no prose duplication of skill ✓, payload-file-first ordering satisfies Rule 3 ✓, skill path resolves ✓, no always_load/flow.catalog paths changed ✓)
+- Decision: User directive 2026-05-30 — doublon findings written only to loose JSON are invisible to PO triage (PO drains DASHBOARD ## po, not arbitrary signal JSONs). Manual main-terminal workaround must become an automatic flow step. Step gates on "escalation-class findings present" to avoid noise on clean scans.
+
+---
+
 ## c279 · 2026-05-29 — Edit fb-market-poster (hashtag block — FB-only, 5 lowercase mandatory)
 
 - Change: Replaced 8-tag CamelCase evergreen set (#ChungKhoan/#StockMarket/#Vietnam/#VietnamStock etc.) with EXACTLY 5 lowercase mandatory tags: `#chungkhoan #chungkhoanvietnam #vnindex #dautu #thitruongchungkhoan`. Removed all English-locale tags (#StockMarket, #Vietnam, #VietnamStock) and YouTube references from the hashtag rule and diacritics note. Dynamic tags remain optional, must be appended AFTER the mandatory 5, all lowercase no diacritics. Sector and ticker dynamic tag examples converted to lowercase. STEP 4 check 16 updated: "Evergreen set complete (all 8 CamelCase)" → "Mandatory set complete (verbatim, lowercase) all 5 tags"; removed ≥3 dynamic tags minimum; total-count sub-check removed; on-failure line updated. STEP 5 template footer updated: "8 evergreen + 3-6 dynamic" → "5 mandatory lowercase + optional dynamic". init.md version comment updated.
