@@ -1,0 +1,26 @@
+{
+  "from": "po",
+  "to": "ba",
+  "ts": "2026-05-29T16:56:15Z",
+  "kind": "spec_request",
+  "payload": {
+    "sprint": "VNH-SECTOR-FIX",
+    "task": "VNH-BA",
+    "intent": "Write docs/REQ_VNH-SECTOR-FIX.md for the VNH watchlist sector misclassification fix.",
+    "decision_locked": {
+      "vnh_domain": "agriculture",
+      "rationale": "agriculture is the in-union (DomainType @ apps/mcp-server/bctc-schema.ts:26-47) home for seafood; SECTOR_NAME_VI[agriculture]='Nông nghiệp & Thủy sản', peers VHC/ANV. 'seafood' is NOT a union member and would break Record<DomainType,string>."
+    },
+    "scope": [
+      "seedWatchlist.ts:83 — VNH domain real_estate->agriculture + correct inline comment (CTCP Đầu tư Việt Việt Nhật, seafood/food import-export, HNX)",
+      "seedWatchlist.ts:85 TCH comment fix (Hoang Huy Investment Financial Services, NOT Techcombank; value real_estate stays)",
+      "seedWatchlist.ts:87 DPM comment fix (Đạm Phú Mỹ / PetroVietnam Fertilizer, NOT Daphaco; value chemicals stays)",
+      "seedWatchlist.ts:69 DAG comment fix (Đông Á Plastic Group, NOT Da Nang Rubber=DRC; value machinery stays)",
+      "DB migration: idempotent UPDATE watchlist SET domain='agriculture' WHERE code='VNH' (UPSERT alone won't touch existing rows)",
+      "guard test (pattern 1787-gvr-sector-fix.test.ts): no real_estate VNH in WATCHLIST_SEED + every seed domain in DomainType union"
+    ],
+    "zone": "apps/mcp-server/",
+    "chain": ["ba", "dev-mcp-server", "ops", "qa", "po"],
+    "done_bar": "seed corrected + market.db row corrected in RUNNING container (direct query verify) + mcp-server rebuilt + >=1 agent bootstrap shows VNH not under real_estate"
+  }
+}

@@ -4,6 +4,31 @@
 
 ---
 
+## Sprint VNH-SECTOR-FIX — Watchlist Seed Sector Misclassification (data-integrity)
+
+**Status:** OPEN — BA spec next. **Priority: HIGH (fleet-wide data-integrity, public-facing leak).** Zone: `apps/mcp-server/` (dev) + live DB (ops). Created 2026-05-29 (PO, user-tracked bug).
+
+**Bug:** `seedWatchlist.ts:83` seeds VNH as `domain: "real_estate"`. VNH = CTCP Đầu tư Việt Việt Nhật = seafood/food import-export (xuất nhập khẩu thủy hải sản & thực phẩm), HNX. Wrong label seeded into market.db → propagates via `get_cycle_bootstrap` to ALL cowork agents (alert-commander, news-scout, market-watcher, CHEF/unified, fb-market-poster) → mislabels VNH as real-estate in alerts/notebooks/signals/public FB draft.
+
+**PO decision — sector value:** `agriculture` (NOT a new `seafood` value). Rationale: canonical union is `DomainType` in `apps/mcp-server/bctc-schema.ts:26-47` and it does NOT contain `seafood`/`food`/`consumer`. `SECTOR_NAME_VI[agriculture] = "Nông nghiệp & Thủy sản"` (Agriculture & **Seafood**) and `agriculture` already maps to seafood/aquaculture peers VHC/ANV (sectorPeers.ts:120-121). Setting `"seafood"` would break `Record<DomainType,string>` (no key) — exactly the "don't invent enum value" trap. `agriculture` is the in-union home for seafood.
+
+**Audit (PO spot-check vs real identities) — comments factually wrong, value defensible:**
+- `seedWatchlist.ts:85` TCH comment "Techcombank (high-vol)" is WRONG — TCH = Hoang Huy Investment Financial Services (real estate/auto); Techcombank is TCB (banking). `domain: real_estate` is OK; FIX the comment.
+- `seedWatchlist.ts:87` DPM comment "Daphaco" is WRONG — DPM = Đạm Phú Mỹ / PetroVietnam Fertilizer; `domain: chemicals` OK; FIX the comment.
+- `seedWatchlist.ts:69` DAG comment "Da Nang Rubber Group" is WRONG — DAG = Đông Á Plastic Group; "Da Nang Rubber" is DRC; `domain: machinery` defensible (plastics/industrial); FIX the comment. (pre-existing, low-risk; BA to confirm scope)
+- Only VNH has a WRONG `domain` value (the data-integrity bug). Others are comment-only.
+
+**Tasks (chain: ba → dev-mcp-server → ops → qa → po):**
+- 🔄 VNH-BA (ba) — spec the fix: VNH domain→agriculture + comment + the 3 audit comment-corrections + guard design + DB migration approach. Output `docs/REQ_VNH-SECTOR-FIX.md`.
+- 🔄 VNH-IMPL (dev-mcp-server) — edit `seedWatchlist.ts` (VNH value + comment + 3 audit comments) + add idempotent `UPDATE watchlist SET domain='agriculture' WHERE code='VNH'` correction in seed/migration path (seed UPSERT alone fixes fresh DBs; running DB needs explicit UPDATE since UPSERT only fires on re-insert) + guard test (pattern: `1787-gvr-sector-fix.test.ts`) asserting WATCHLIST_SEED has no `real_estate` VNH and every seed `domain` ∈ DomainType union.
+- 🔄 VNH-DEPLOY (ops) — apply correction to LIVE market.db in running container + rebuild/restart mcp-server (memory: rebuild-after-dev-change). Verify via direct in-container `market.db` query (bun, no sqlite3): `SELECT code,domain FROM watchlist WHERE code='VNH'` → must read `agriculture`.
+- 🔄 VNH-QA (qa) — confirm one agent's next `get_cycle_bootstrap` shows VNH NOT under real_estate + guard test RED-on-regression.
+- 🔄 VNH-EXIT (po) — sign-off against done bar.
+
+**Done bar:** seed corrected + market.db row corrected in RUNNING container (verified by direct query) + mcp-server rebuilt + ≥1 agent bootstrap shows VNH no longer real_estate. (Today's already-written FB draft/notebooks are artifacts — fixed by a separate path; this sprint stops recurrence at source+DB.)
+
+---
+
 ## Sprint SELF-IMPROVE-GATE — Gated Self-Improvement Loop
 
 **Status:** OPEN — Phase 2 (lane-B code gate) live 2026-05-28. PO verdict: APPROVE-WITH-CONDITIONS (commits 062a6569 + ef109a76). All conditions met; X-1 (synthetic-data dry-run) open. **Priority: HIGH.** Zone: `apps/mcp-server/`.

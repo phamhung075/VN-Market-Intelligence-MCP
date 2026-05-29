@@ -1,24 +1,24 @@
 # PO Notebook
 
-## Cycle 2026-05-29T12:29Z — dev-team :07 triage (macro lane)
+## Cycle 2026-05-29T16:56Z — VNH-SECTOR-FIX triage (user-tracked code bug)
 
-**Spawn:** dev-team cron dispatcher, :07 tick. Market CLOSED (ICT 19:29).
+**Spawn:** direct user-tracked bug routed to PO. Triaged + authored sprint, no implementation (router rule).
 
-**MCP DEGRADED:** `mcp__claude_ai_gateway__call_tool` NOT in this session's tool surface (`claude mcp list` shows gateway ✓ at CLI but the session is stale per `project_mcp_gateway_architecture`). Could NOT run the 2 mandatory live calls (`read_telegram_reports` / `list_unresolved_reports`). Triaged on file inputs only: DASHBOARD ## po + TASKS.md + git log + pipeline-state + tnb-audit-latest. Honest degraded triage — flagged in pipeline-state for session reload.
+**Bug:** `seedWatchlist.ts:83` seeds VNH `domain:"real_estate"`. VNH = CTCP Đầu tư Việt Việt Nhật = seafood/food import-export, HNX. Wrong label → market.db → `get_cycle_bootstrap` → ALL cowork agents mislabel VNH as real-estate (alerts/notebooks/signals/public FB draft). Fleet-wide data-integrity.
 
-**Verdict: NOTHING (idle).** No dev-team-spawnable work in an uncontended zone.
+**Verified before deciding:**
+- canonical union `DomainType` @ `apps/mcp-server/bctc-schema.ts:26-47` — NO `seafood`/`food`/`consumer` member. `domain` field in seed is typed `string` (no compile guard) — that's WHY the bad value slipped in.
+- `SECTOR_NAME_VI` (sectorPeers.ts:190+) is `Record<DomainType,string>`; `agriculture = "Nông nghiệp & Thủy sản"` (Agriculture & Seafood); `agriculture` peers = VHC/ANV (seafood/aquaculture). → seafood's in-union home IS `agriculture`.
 
-**NEW DASHBOARD rows assessed:**
-- `cowork-DUPLICATE-PUBLISH-20260529T0526` (HIGH) — chef-morning 4x at 05:15 tick; dispatcher retried Agent spawn 3x under transport lag, slot-lock can't dedup same-slot retries. FIX = harden cowork-team **dispatcher Step 5** spawn-retry guard (flow/agent .md), NOT an `apps/<service>/` zone. = MEMORY.md `feedback_spawn_retry_under_lag` exactly. → marked READ + routed cowork/agent-father lane. NO dev BATCH. Duplicate MARKET dishes disregarded per dispatcher.
-- CHEF-EOD-MACRO-MISATTRIB / HSG-FIRE-SEVERITY-RECAL / MARKET-SLOTS-DARK / NEWSFETCH-FALSECRIT = cowork-lane, prior-disposed.
-- FETCH-ANALYZE-PROFILE SPIKE = `apps/mcp-server` OFF-LIMITS (parallel session owns lane).
-- TNB c82 = already ACK'd 02:23Z (mirror c81: F9/F2 data-blocked, cowork-lane). c83 ~20:13Z (~8h out).
+**PO DECISION — VNH domain → `agriculture`** (NOT a new `seafood` enum; that'd break Record<DomainType> + invent a union member — the trap the task warned of).
 
-**Lane:** macro (apps/macro-indicators) idle. MACRO-RATES-LIVE = backlog stub, MED, no incident; re-open trigger = SBV/FOMC move (none since 23-May).
+**Audit of rest of seed (spot-check vs real identities):** only VNH has a WRONG *value*. 3 comments factually wrong (value still defensible): TCH comment "Techcombank"→ actually Hoang Huy (TCB is the bank); DPM "Daphaco"→ Đạm Phú Mỹ; DAG "Da Nang Rubber"→ Đông Á Plastic (DRC is the rubber co). Folded comment-corrections into IMPL scope.
 
-**Maintenance noted, NOT dispatched (janitor/governance, not dev-team-spawnable):** (a) signals.db drain dead since May 22 → 872-file backlog incl 153 context-bloat; (b) TASKS.md 670L over 80L cap (keeps re-triggering context-bloat hook).
+**Chain authored (TASKS.md → Sprint VNH-SECTOR-FIX):** ba → dev-mcp-server → ops → qa → po. Guard pattern = existing `1787-gvr-sector-fix.test.ts` (precedent: prior GVR sector bug got its own test). Critical: seed UPSERT alone WON'T fix running DB (only fires on re-insert) → ops must run explicit idempotent `UPDATE` + rebuild (memory: rebuild-after-dev-change), verify by direct in-container market.db query.
 
-## Carry-over
-- Next :07 tick: reload session to restore `mcp__claude_ai_gateway__*` tools; re-triage only if NEW report/signal lands in an uncontended (non-mcp-server/non-pdf-extractor) zone.
-- Watch cowork-team for the spawn-retry-guard fix landing (Step 5 launch-confirm gate).
-- c83 TNB audit ~20:13Z 2026-05-29 — check BCTC Q1 filings + MACRO-VNINDEX-DATA-GAP deploy status.
+**Next:** main terminal routes BATCH[VNH-BA] to **ba** to write `docs/REQ_VNH-SECTOR-FIX.md`.
+
+### Carry-over
+- VNH fix is data-integrity HIGH; done bar = DB-verified-in-running-container, not seed-edit-alone. Don't false-green on seed commit.
+- Today's FB draft / historical notebooks are artifacts — separate path fixes them; this sprint = source+DB recurrence-stop only.
+- Prior-cycle backlog still open: signals.db drain dead since 22-May; TASKS.md over 80L cap.
