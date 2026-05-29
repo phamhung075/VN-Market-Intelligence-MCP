@@ -332,3 +332,37 @@ Zone health: MACRO-VNINDEX-DATA-GAP FIXED; MarketIndexPort now queries market_pr
 **Commit:** f85ad1d9
 
 Zone health: crash-loop resolved; Go Dockerfile live; all tests pass; sandbox 20/20 GREEN; container healthy on port 5004 | HEALTHY
+
+### Session 2026-05-30 — DPI-1+DPI-2: SBV canonical FX + live computedAt
+
+**Sprint:** DATA-PIPELINE-INTEGRITY | Tasks: DPI-1 (FX canonical source) + DPI-2 (carry/yield computedAt)
+
+**DPI-1 — SBVRateSQLiteAdapter:**
+- Added `SBVRateSQLiteAdapter` to `pkg/infrastructure/repositories.go` — reads `sbv_rates.usd_vnd_official WHERE source='sbv'` from shared market.db (read-only, DB_PATH env, 6h staleness guard, safe-degrade to 0 on absent/stale/zero rows).
+- `fetchSBVRateFromDB(ctx, db, staleBound)` inner helper for testability (mirrors `fetchCommodityPricesFromDB` pattern exactly).
+- Uses `time.RFC3339Nano` for TypeScript `new Date().toISOString()` format (same R-2 fix as commodity adapter).
+- Wired into `Execute()` in `usecases.go`: after `resolveMarketPrices()`, if `sbvRate.GetRate(ctx, "USD", "VND") > 0`, replace usdVnd. OIL/GOLD unaffected.
+- `cmd/server/main.go` line 51: `NewSBVRateRepository()` → `NewSBVRateSQLiteAdapter()`.
+
+**DPI-2 — computedAt live timestamp:**
+- Deleted `const fixtureComputedAt = "2026-05-23T00:00:00Z"` from `usecases.go`.
+- Added `computedAt := time.Now().UTC().Format(time.RFC3339)` at top of `Execute()`.
+- Both `CarryTradeInput.ComputedAt` and `YieldSpreadInput.ComputedAt` now use the live variable.
+- AC-5 scan confirmed: `usecases_test.go` had ZERO assertions on the frozen constant. Safe.
+
+**BLOCKER NOTE (regime values — out of DPI-2 scope):**
+`fixtureVNDDepositRate=4.7`, `fixtureFedFundsRate=5.33`, `fixtureEarningYield=8.2` remain frozen constants (carry/yield primitive INPUT values, not computedAt). These are separate from DPI-2's computedAt scope. Surfaced to PO for separate task if carry/yield REGIME output accuracy is required.
+
+**Test results:**
+- `go test ./...`: ALL PASS (12 packages, including 4 new infra SBV tests + 4 new application DPI-1/DPI-2 tests)
+- `go vet ./...`: CLEAN
+- `go build ./cmd/...`: CLEAN
+
+**New tests:**
+- `repositories_test.go`: `TestFetchSBVRateFromDB_FreshRow`, `TestFetchSBVRateFromDB_StaleRow`, `TestFetchSBVRateFromDB_AbsentRow`, `TestFetchSBVRateFromDB_ZeroValue`
+- `usecases_test.go`: `TestSBVRateOverridesUSDVnd`, `TestSBVRateZeroKeepsCommodityUSDVnd`, `TestSBVRateDoesNotAffectOilGold`, `TestComputedAtIsCurrentTime`
+
+**Commit:** 86f702bf (8 files: 5 code + TASKS.md + 2 handoffs)
+**Status:** REVIEW — ops must REBUILD macro-indicators (AFTER mcp-server) → QA live probe
+
+Zone health: DPI-1+DPI-2 DONE; all tests GREEN; ops REBUILD required for live AC-6 verification | HEALTHY
