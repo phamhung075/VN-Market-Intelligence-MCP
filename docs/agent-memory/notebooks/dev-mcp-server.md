@@ -1,5 +1,41 @@
 # dev-mcp-server -- Notebook
 
+## c324 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE Task #9 — DUAL-VIEW GATE STRIP)
+
+### M-1..M-7 dual-view toggle + debug sub-object — COMMITTED 24e9776d
+
+**Task:** Add user/agent dual-view to the 6-gate eval strip. User view unchanged; Agent view adds collapsed `<details>` raw-debug blocks per gate.
+
+**Files changed (3):**
+- `apps/mcp-server/src/interface/mcp/routes/bctcEvalPageHandler.ts` — M-1: `LayoutUnitRow` extended with `row_count/quarantined/quarantine_reason`; M-2: S4 SELECT now fetches those 3 fields; M-3: `ocrBasename` captured for S3 debug; `pekRowCount/pekQuarantined/pekQuarantineReason` captured for S4 debug; `safeParseJson()` helper; `debug` sub-object emitted on every gate_strip element with raw parsed fields — additive, existing fields byte-identical.
+- `apps/mcp-server/src/interface/bctc-inspector.html` — M-4: additive CSS for `.eval-strip-title-row`, `.eval-view-toggle-wrap`, `.eval-view-btn/.active`, `.eval-debug-block`, `.eval-debug-summary`, `.eval-debug-pre`, `.eval-debug-label`; M-5: segmented toggle buttons in eval-strip-section title row; M-6: `evalViewMode` + `lastEvalData` state vars; `setEvalViewMode()`; button wire; `renderDebugBlock()` with `<details>/<summary>` + `⚑ toàn báo cáo` honesty label for report_level stages; `renderEvalStrip` caches `lastEvalData` + passes mode to `renderGateStrip`; `renderGateStrip` mode param + conditional agent block append. User-view code body untouched.
+- `apps/mcp-server/src/__tests__/bctcEvalPageHandler.test.ts` — M-7: TC-D1 asserts debug.metrics_json is parsed object, gate_failures_json is array, stage-3 debug.ocr_filename="vnm_q4_2025.pdf", stage-4 debug.pek_row_count=42/pek_quarantined=true/pek_quarantine_reason="low_confidence"; DV-2 deliberate-violation proves debug gate not hollow (removing debug → Expected value to be defined, received undefined); non-regression check for all existing user-view fields.
+
+**Gates:**
+- `bun tsc --noEmit`: TSC_EXIT_0
+- `bctcEvalPageHandler.test.ts`: 15 pass / 0 fail (was 9; 6 new tests added)
+- Full suite: 10055 tests EXIT 0 (Bun C++ post-suite panic = known upstream v1.3.13 bug, pre-existing)
+- Tool count: 148 (unchanged — grep -rc server.tool|addTool)
+- Scheduler count: 70 (unchanged)
+- Frozen: bctcEvalDetailHandler.ts, bctcInspectHandler.ts, bctcEvalStore.ts — git diff empty; full-report endpoint untouched
+- PEK subtree: PEK_CLEAN (git -C apps/pdf-extractor/PDF-Extract-Kit diff = 0 lines)
+- Staged files: exactly 3 — no foreign files in index
+- Commit: 24e9776d
+
+**DV-2 deliberate-violation evidence:**
+- `debug.metrics_json` is parsed object (not string). If handler emitted raw string, `typeof gate.debug.metrics_json === "object"` → RED ("string" ≠ "object"). Gate is not hollow.
+- `gate.debug` must be defined. If removed from gateStrip map, `expect(gate.debug).toBeDefined()` → RED. Gate fires correctly.
+
+**Honesty preserved:**
+- Stages 1/2/5/6 (report_level:true): `⚑ toàn báo cáo — không phân tách theo trang` label in debug block. No per-page fabrication.
+- Stages 3/4: genuine page-scoped DB evidence only (ocr_filename from pdf_path basename; pek_row_count/quarantined from bctc_layout_units).
+
+**ops_rebuild_required: true** — HTML baked into image; `docker compose up -d --build --force-recreate mcp-server` required.
+
+Zone health: 3 files changed additive only; tsc EXIT 0; 15 tests green; frozen surfaces 0-diff; PEK pristine | HEALTHY
+
+---
+
 ## c323 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE — PDF LAZY RENDER BUG FIX)
 
 ### PDF lazy render — page on select, page-by-page on nav — COMMITTED a6233c85
