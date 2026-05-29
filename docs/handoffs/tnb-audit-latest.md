@@ -1,178 +1,259 @@
-# TNB Audit — Cycle 81 — 2026-05-27T20:13Z (file-evidence, MCP call_tool unavailable 27th spawned-session cycle)
+# TNB Audit — Cycle 82 — 2026-05-28T20:13Z (slot=tnb-audit, file-evidence)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **STABLE** (structural gaps D/E/F/F9 persist across all 3 dishes; no new CRITICAL findings; chef pipeline fully operational 3/3 guaranteed slots; slight L4 improvement in Evening dish via Investment-clock earnings yield citation)
+Direction: **STABLE** (structural gaps D/E/F/F9 persist — same floor as c81; no new CRITICAL findings; chef pipeline fully operational 8 dishes; Evening dish clusters GENUINE; gap catalogue honestly applied)
 
 ---
 
 ## Previous Handoff ACK
 
-c80 handoff: DASHBOARD ## tran-ngoc-bau section is **EMPTY** — PO has NOT ACK'd c80 findings. Log: "c80 handoff NOT ACK'd — findings may be lost." This is the 2nd consecutive cycle without PO ACK. Flagged as F7 LOW blocker.
+c81 handoff: ACK'd by PO at 2026-05-27T20:36Z (see `## PO ACK` block in prior file and DASHBOARD ## po READ row). Log: "Previous handoff ACK'd by PO." Two-cycle gap closed.
 
 ---
 
 ## MCP Gateway Status (This Session)
 
-**TNB MCP call_tool probe:** 27th consecutive spawned-agent session without call_tool access. File-evidence mode engaged. Dishes audited from `docs/agent-memory/notebooks/unified-agent.md` (authoritative source — notebook updated through 19:51Z today). Per bootstrap.md gateway-down rule: auditing from notebook entries is valid when those entries were written by the chef itself (not stale external files).
+MCP gateway available in this environment (claudeMd instructs call_tool wrapper). However this audit cycle used file-evidence as the primary source per the authoritative notebook-as-SSOT pattern: `docs/agent-memory/notebooks/unified-agent.md` last-updated 2026-05-28T19:45Z was written by the chef itself during the actual cycle — this is the strongest evidence available for a dish audit. Cross-validated against news-scout notebook (20:00Z), financial-analyst notebook (12:03Z), market-watcher notebook (20:00Z).
 
 ---
 
-## Chef Pipeline Coverage (Step 0.5) — FULLY OPERATIONAL
+## Chef Pipeline Coverage (Step 0.5) — 2026-05-28 — FULLY OPERATIONAL
 
-Evidence source: `docs/agent-memory/notebooks/unified-agent.md` (2026-05-27 entries)
+Evidence source: `docs/agent-memory/notebooks/unified-agent.md` (2026-05-28 entries)
 
 | Slot | Expected | Confirmed | Status |
 |------|----------|-----------|--------|
-| Morning 05:23Z | YES | YES — 0 clusters qualified, morning guarantee rule applied | SENT |
-| Intraday 06:20Z | OPTIONAL | YES — 0 clusters, silent exit per intraday gate | SILENT |
-| Intraday 07:19Z | OPTIONAL | YES — 0 clusters, silent exit per intraday gate | SILENT |
-| Intraday 08:13Z | OPTIONAL | YES — 0 clusters, silent exit per intraday gate | SILENT |
-| EOD 08:50Z | YES | YES — 3 clusters (Vin real-estate, utilities, retail) | SENT |
-| Evening 19:51Z | YES | YES — 4 clusters (real-estate, banking, retail, macro extreme) | SENT |
+| Intraday 02:13Z | OPTIONAL | YES — 3 clusters, convergence gate FIRED | SENT |
+| Intraday 02:19Z | OPTIONAL | YES — 3 clusters, convergence gate FIRED | SENT |
+| Morning 05:23Z | YES | YES — 2 clusters (ACB+VHM macro-micro, banking) | SENT |
+| Intraday 04:18Z | OPTIONAL | YES — 3 clusters, convergence gate FIRED | SENT |
+| Intraday 06:15Z | OPTIONAL | YES — 3 clusters, convergence gate FIRED | SENT |
+| Intraday 07:15Z | OPTIONAL | YES — 3 clusters, convergence gate FIRED | SENT |
+| Intraday 08:15Z | OPTIONAL | YES — 2 major + 1 marginal, convergence gate FIRED | SENT |
+| EOD 08:46Z | YES | YES — 2 clusters (Vingroup divergence, banking FII) | SENT |
+| Evening 19:45Z | YES | YES — 2 clusters (Vingroup collateral rotation, banking FII) | SENT |
 
 `start_count≥3 | close_count≥3 | stuck_count=0 | failed_count=0 | guaranteed_ok=TRUE | pipeline_degraded=FALSE`
 
-Silent exits (3 intraday) correct: convergence gate properly rejected price-only moves without fresh catalysts (stale 4d carry baseline, no fresh news tier-2). Zero fabricated dishes.
+Note: 8 dishes total (3 guaranteed + 5 intraday). No silent-exit intraday cycles today — all convergence gates fired on the 2026-05-28 VHM +6.99% gold-for-house + banking FII narrative thread.
 
 ---
 
-## 3-Dish Layer Completeness Audit
+## Primary Audit Target: Evening Dish 2026-05-28T19:45Z
 
-### Dish A: Evening 2026-05-27T19:51Z — 4 clusters (real-estate, banking, retail, macro extreme)
+### Context provided to this audit cycle
+
+The caller provided the following pre-digested context (post-19:45Z chef-evening + 20:00Z news-scout fan-out):
+- Convergence gate FIRED, 2 clusters
+- Cluster 1: Vingroup collateral rotation via gold liquidation (Ticker+Macro convergence) MEDIUM-HIGH 0.55–0.60
+- Cluster 2: Banking FII outflow + ACB capital contradiction (Macro-micro contradiction) MEDIUM 0.45–0.53
+- Chef claimed Layers 1–6 traversed
+- Gap catalogue flagged: BCTC overdue VHM 28d / ACB-VCB-EIB-BID 13–28d, Vinhomes uptake tier-2 unvalidated, Kinh Dịch 501 B-bucket pending, VIRA FX stale 4d+, CPI absent
+- Post-chef 20:00Z news-scout: 3 new bullish Vingroup angles (#4169 Taiwan fund, #4170 VHM gold-parity, #4171 CMG legal risk)
+
+### Layer Walk Verification
 
 | Layer | Score | Evidence | Gap detail |
 |-------|-------|----------|------------|
-| L1 — Data discipline | PASS | VHM −4.16% / VRE −4.43% as %, oil −2.08σ / gold −2.47σ sigma-scaled, FII_OUTFLOW_RISK regime, carry −63bp. Causal chains per Step 6.5 for all 4 clusters. Investment-clock CORE_VN tier=8 cited (earnings 8.2% >> deposits 4.7% = valuation signal). Cause-effect: "[Global risk-off oil/gold −2σ+] → [FII bán −800B] → [Real estate −1.38%]" correct direction. | None |
-| L2 — US macro stack | PARTIAL | Gold BULLISH risk-off $4,484.3 live cited. Macro snapshot stale seed noted (oil 82.50 "neutral" = stale). EFFR-IORB implicitly via carry −63bp context. PMI sub-components absent. US10Y absent. Consumer sentiment absent. | D-gap: PMI sub-components structural; EFFR direct level not explicitly re-cited (was in EOD) |
-| L3 — VN macro stack | PARTIAL | USD/VND 26,143 live cited, carry −63bp persistent, FII_OUTFLOW_RISK. Macro carry baseline stale 4d flagged. CPI/FX reserves absent. VIRA absent. | E-gap: VIRA structural; SBV stale; carry baseline stale 4d |
-| L4 — 4-pillar valuation | PARTIAL (1.5/4) | COC: carry −63bp EXPENSIVE ✓ (PARTIAL — stale baseline). Lợi nhuận direction: earnings yield 8.2% vs deposits 4.7% CHEAP ✓ (PARTIAL — no BCTC). M2: SBV pending ✗. Định giá: P/E unknown ✗. Per-ticker: VHM/VRE MEDIUM (issuer-family + carry alignment), MWG MODERATE (IPO disclosure), ACB MEDIUM (capital injection news). | F-gap: no BCTC Q1 real-estate/banking; SBV stale; P/E absent |
-| L5 — Kinh Dịch | PASS | VHM/VRE Sư(7) BAN 83%, MWG Kiển(39) BAN 48%, ACB Tỉnh(48) MUA 43%, VCB Khôn(2) THAN TRONG 48% — 4 tickers from get_portfolio_conviction (inline working path). 38-ticker portfolio context cited. Market hexagram 501 unavailable correctly flagged (B-bucket known gap). Hexagram readings used to cross-check price narratives (Kiển BAN 48% for MWG contradicts IPO euphoria = correct TNB discipline). | None — inline conviction path confirmed working |
-| L6 — Gap catalogue | PASS | [gap: BCTC absent] = single-pillar risk ✓; [gap: carry baseline stale 4d] = lagged indicator ✓; [gap: VIRA pending] = source risk ✓; [gap: market hexagram unavailable] = regime-drift partial ✓; inverted causality: all 4 chains correct direction ✓. Investment-clock CORE_VN tier=8 (new in evening dish). | None |
-| Business context | ABSENT | MWG "94% margin business disclosure" (news signal) is closest, but not a bctc_signal_* or fundamental_* output. No product/customer/ops/mgmt for any ticker. | Persistent F9 gap — 9+ cycles |
+| L1 — Data discipline | PASS | State transitions explicitly cited: carry −0.63pp threshold, USD/VND 26,325 >> 25,500 (state transition named), gold +2.7σ shift — and chef explicitly flagged this as a REVERSAL from prior −2.7σ (state transition confirmed between sessions). Causality: "Fed 5.33% → carry −0.63pp → FII_OUTFLOW_RISK → gold +2.7σ → USD/VND 26,325 → sector moves." All 7 banking tickers cited as % changes with direction. Non-Vin real-estate laggards (KBC −0.49%, NVL −2.27%, TCH −1.90%, D2D −1.99%) vs Vin gainers (VHM +6.99%, VRE +3.20%) cited with % deltas. Cause-effect chains documented for both clusters. | None |
+| L2 — US macro stack | PARTIAL | Fed 5.33% cited explicitly (tier-2 macro snapshot, stable tightening). Carry −0.63pp cited as EFFR-IORB proxy (tier-3 computed). EFFR-IORB spread not re-stated explicitly in evening dish (was cited in earlier intraday dishes; evening ran lean at ~6k tokens). PMI sub-components absent (D-gap structural). US10Y absent. Consumer sentiment absent. | D-gap: PMI sub-components structural; EFFR direct level not re-cited in evening (lean cook); US10Y and consumer sentiment absent |
+| L3 — VN macro stack | PARTIAL | USD/VND 26,325 live cited (>> 25,500 threshold, state transition named). Carry FII_OUTFLOW_RISK −0.63pp explicit. [gap: CPI absent] explicitly flagged. [gap: VIRA stale 4d+] explicitly flagged. SBV data not cited. FX reserves absent. | E-gap: VIRA structural; SBV stale; CPI absent; carry baseline 5d stale (2026-05-23) |
+| L4 — 4-pillar valuation | PARTIAL (2/4 VHM; 2/4 banking) | VHM/Vingroup: M2 tight ✓ (carry headwind flagged), Chi phí vốn high ✓ (carry −0.63pp EXPENSIVE), Triển vọng lợi nhuận: Vinhomes 'đổi vàng lấy nhà' demand proxy ✓ (tier-2, not BCTC), Rủi ro định giá: overbought Lão Dương reversal warning ✓. BCTC 28d absent blocks earnings confirmation. Overall VHM: 3/4 WITH CAVEAT (earnings pillar = news proxy, not BCTC). Banking: M2 tight ✓, COC expensive ✓, earnings [BCTC absent] ✗, định giá [P/E unknown] ✗. Banking: 2/4. Investment-clock CORE_VN phase 8/10 cited (earnings yield 8.2% >> deposit 4.7%). | F-gap: BCTC absent VHM 28d+ / ACB-VCB-EIB-BID 13–28d; P/E unknown; SBV stale; VHM 3/4 caveat (earnings from news proxy, not BCTC) |
+| L5 — Kinh Dịch | PARTIAL | Market hexagram 501 unavailable correctly flagged (B-bucket known gap, not a failure). Stock-level from get_portfolio_conviction inline path: VHM Sư(7) GIU contradicted by +6.99% Lão Dương overbought reversal (HONEST contradiction disclosure — chef correctly flags this as reversal warning, lowering Cluster 1 confidence). ACB/VPB/BID Sư(7) GIU contradicted by −1.4% sector move (HONEST — regime instability declared, lowers Cluster 2 confidence). Overall: regime instability → LOW confidence for directional play (correctly stated). Contradiction disclosure discipline holding. | Market-wide hexagram B-bucket structural gap; Lão Dương/Âm cross-check present for VHM (overbought reversal) and implicitly for banking (contradiction) |
+| L6 — Gap catalogue | PASS | All 5 gap types addressed: single-pillar FIXED (all 4 pillars mapped for both clusters); causality FIXED (Fed→carry→FII→sector verified, inverted causality NOT present); source risk FLAGGED (tier-2 cafef news for Vinhomes program, BCTC 35 stocks 13d–28d overdue HIGH); lagged indicators FLAGGED (carry 5d baseline 2026-05-23, Fed T-1/T-2); regime drift FIXED (USD/VND 26,325 state transition + gold +2.7σ reversal-from-prior-−2.7σ identified). | None — all 5 gaps explicitly cited |
+| Business context | ABSENT | No bctc_signal_* or fundamental_* product/customer/ops/mgmt cited for any ticker. Vinhomes 'đổi vàng lấy nhà' is a news-tier commercial program description, not a BCTC/fundamental signal. Persistent F9 gap — 10th consecutive cycle. | 10 cycles. PO ACK'd c81 disposition: cowork-lane + deferred-on-data. No change needed this cycle. |
 
-**Dish A: 4/6 PASS — NEEDS_ATTENTION**
-Positive: Investment-clock earnings yield comparison is a step toward L4 improvement. Causal chain discipline strong across all 4 convergence clusters.
+**Evening Dish Score: 4/6 PASS — NEEDS_ATTENTION**
 
----
+### 9-Step Methodology Score (Evening Dish)
 
-### Dish B: EOD 2026-05-27T08:50Z — 3 clusters (Vin real-estate, utilities, retail)
+| Step | Result | Evidence |
+|------|--------|---------|
+| A | ✓ | Monthly/high-freq indicators open: carry (daily), gold σ (intraday), USD/VND (live). Not GDP quarterly. |
+| B | ✓ | Threshold crossings named: carry −0.63pp, USD/VND 26,325 >> 25,500, gold +2.7σ shift from prior −2.7σ. |
+| C | ✓ | Cause chains documented for both clusters. Fed → carry → FII → sector moves. No pure correlation. |
+| D | PARTIAL | EFFR-IORB cited via carry proxy; Fed 5.33% explicit; PMI sub-components absent; US10Y absent. |
+| E | PARTIAL | VIRA explicitly noted as stale 4d+. CPI absent. No WiData (correct). USD/VND live. |
+| F | PARTIAL | VHM 3/4 pillars (caveated earnings); banking 2/4. Full 3+ only for VHM with caveat. |
+| G | n/a | No BCTC financial forensics for this dish (BCTC absent is the gap, not an audit failure). |
+| H | PARTIAL | Investment-clock CORE_VN phase 8/10 cited. Cycle phase declared. Pyramid tier partial (tier mentioned). |
+| I | ✓ | All claims traced: tier-2 (macro snapshot, cafef news, FX), tier-3 (carry computed, prices). No social-media-as-primary. |
 
-| Layer | Score | Evidence | Gap detail |
-|-------|-------|----------|------------|
-| L1 — Data discipline | PASS | K-shaped close: VHM −4.16% / VRE −4.43% vs DXG +0.66% non-Vin (issuer-family framing, not sector crisis). VN-Index 1,874.43 −0.52% recovery from −0.98% low. "trụ lớn cản" news catalyst cited. 3 causal chains documented. | None |
-| L2 — US macro stack | PARTIAL | EFFR 3.63% / IORB 3.65% / spread −0.02pp tier-1 explicitly cited (correct signal). asOf 2026-05-14 13d, trend stable, flagged. Macro seed stale explicitly: "oil 82.5 vs 93.68 stale". PMI sub-components absent. US10Y absent. | D-gap structural |
-| L3 — VN macro stack | PARTIAL | USD/VND macro seed 24,500 vs live 26,153 = −6.7% divergence explicitly flagged ("FLAG the divergence"). Carry −0.63pp stale 4d noted. VIRA absent. SBV absent. | E-gap structural |
-| L4 — 4-pillar valuation | PARTIAL (1/4) | VHM: M2/COC stocked (PARTIAL), EPS stale (BCTC Q1 pending), Định giá unclear. POW: M2 stocked, COC stable, EPS neutral (0.6σ only), Định giá unclear. MWG: M2 stocked, COC tailwind, EPS risky (news tier=2 polarity uncertain), Định giá unclear. COC only of the 4 pillars has a tier-1 source. | F-gap: no BCTC/SBV/P/E |
-| L5 — Kinh Dịch | PASS | VHM/VRE Sư(7)-BAN 83%, POW Kiễn(39)-BAN 48%, MWG Kiễn(39)-BAN 48% from get_portfolio_conviction. Market hexagram 501 FAILED noted. Hexagram BAN readings used to contradict bullish prices (POW, MWG). | None |
-| L6 — Gap catalogue | PASS | All 5 gap types addressed. MWG inverted-causality risk (price up THEN news) explicitly named. Source-risk (tier-2 aggregator news, no tier-1 fundamental). Lagged indicator (EFFR 13d, carry 4d). Regime-drift (macro seed divergent −6.7%). Single-pillar (COC only per ticker). | None |
-| Business context | ABSENT | Persistent F9 |
-
-**Dish B: 4/6 PASS — NEEDS_ATTENTION**
-
----
-
-### Dish C: Morning 2026-05-27T05:23Z — 0 clusters (morning guarantee rule)
-
-| Layer | Score | Evidence | Gap detail |
-|-------|-------|----------|------------|
-| L1 — Data discipline | PASS | Convergence gate ZERO clusters — documented reason (stale 4d carry, no fresh catalyst). Morning guarantee rule correctly invoked. Lão Âm Hào 6 oversold recovery pattern identified (Kinh Dịch MUA 74-100% vs price −3%) = technical state interpretation. USD/VND real ~26,164 cited alongside stale seed 24,500. | None |
-| L2 — US macro stack | PARTIAL | EFFR 3.63% / IORB 3.65% / spread −0.02pp tier-1 cited (14d boundary, trend stable 34 samples). Full macro snapshot stale divergences enumerated: oil 82.5 vs real 95.01, gold 2,350 vs real 4,512.8, USD 24,500 vs real 26,164. PMI sub-components absent. | D-gap structural |
-| L3 — VN macro stack | PARTIAL | Carry −0.63pp FII_OUTFLOW_RISK, real USD/VND ~26,164 > 25,500 threshold cited. Stale baseline 4d noted. VIRA absent. SBV money stale 2d+. FX reserves absent. | E-gap structural |
-| L4 — 4-pillar valuation | PARTIAL | Real_estate 0.5/4: COC PARTIAL (EFFR stable but carry stale), M2/EPS/Định giá blocked. MWG 3/4: M2 CHEAP ✓, COC tailwind ✓, EPS bullish ✓ (#4012 tier=2), Định giá blocked (P/E unknown). Best single-ticker pillar coverage of the three dishes (MWG morning). | F-gap for real_estate; MWG Định giá absent |
-| L5 — Kinh Dịch | PARTIAL | VHM Sư(7) MUA 100%, VIC Khôn(2) MUA 74%, MWG Kiển(39) BAN 48% from get_portfolio_conviction ✓. Market hexagram FAILED 501 B-bucket noted. Lão Âm Hào 6 recovery pattern documented (interpretive layer from conviction oscillation). Market-wide context absent. | Market-wide hexagram B-bucket structural gap |
-| L6 — Gap catalogue | PASS | All 5 gap types addressed. Inverted causality (Kinh Dịch MUA 74-100% vs price −3% = technical, NOT fundamental signal). Source-risk (tier-2 alerts >12h stale). Lagged indicator (EFFR 13d, carry 4d stale). Regime-drift (no PMI/CPI crossing). Single-pillar real_estate (0.5/4). | None |
-| Business context | ABSENT | Persistent F9 |
-
-**Dish C: 3.5/6 (L5 PARTIAL) — NEEDS_ATTENTION**
+**9-step score: ~5.5/9 NEEDS_ATTENTION** (same tier as c81 Evening)
 
 ---
 
-### Layer Completeness Matrix (c81 — 2026-05-27)
+## Cluster Integrity Verification
 
-| Layer | Evening | EOD | Morning | Pattern vs c80 |
-|-------|---------|-----|---------|----------------|
-| L1 | PASS | PASS | PASS | STABLE — consistent strong |
-| L2 | PARTIAL | PARTIAL | PARTIAL | STABLE — D-gap structural (PMI absent) |
-| L3 | PARTIAL | PARTIAL | PARTIAL | STABLE — E-gap structural (VIRA absent) |
-| L4 | PARTIAL 1.5/4 | PARTIAL 1/4 | PARTIAL (0.5+3)/4 | MARGINAL IMPROVEMENT — evening adds earnings yield comparison; MWG morning 3/4 is best single-ticker coverage |
-| L5 | PASS | PASS | PARTIAL | STABLE — same as c80 |
-| L6 | PASS | PASS | PASS | STABLE — consistent strong |
-| Business context | ABSENT | ABSENT | ABSENT | STABLE-DEGRADING — 9th cycle (was 8+ in c80) |
+### Cluster 1: Vingroup Collateral Rotation via Gold Liquidation
 
-Overall dish quality floor: 3.5/6 (Morning) — same as c80. No regression.
+**Verdict: GENUINE. Multi-source. NOT synthetic from single source.**
+
+Sources used independently:
+1. Gold +2.7σ macro extreme (tier-2 HIGH alert, fetchedAt live 2026-05-28)
+2. Carry −0.63pp FII_OUTFLOW_RISK (tier-3 computed, 5d baseline — stale flagged)
+3. USD/VND 26,325 live (tier-2 FX, above 25,500 threshold — state transition named)
+4. VHM surge alerts #08:01 #06:49 (tier-3 prices, +6.99%)
+5. Vinhomes 'đổi vàng lấy nhà' news #14:13 #10:11 #09:39 (tier-2 cafef, 3 independent articles same day)
+6. VRE +3.20%, VIC +0.00% vs non-Vin laggards KBC/NVL/TCH/D2D (tier-3 prices, sector bifurcation)
+
+Convergence rule satisfied: Ticker convergence ✓ (VHM + news) + Macro extreme ✓ (gold +2.7σ) + Sector convergence ✓ (3+ real-estate tickers diverging).
+
+Gold +2.7σ → REVERSAL from prior −2.7σ is a confirmed state transition (chef correctly noted this shift). This is the strongest macro evidence for the cluster: the gold signal changed direction.
+
+Confidence range 0.55–0.60 appropriate: macro clear, Vinhomes program demand is tier-2 only (uptake unknown), Lão Dương warns reversal risk.
+
+**Key gap honestly disclosed: BCTC 28d absent (VHM earnings validation impossible), Vinhomes uptake unknown (program announced but take-up tier-2 only), Kinh Dịch 501 unavailable.** All three gaps explicitly named in causal chain annotation. Not papered over.
+
+Post-chef reinforcement assessment (#4169, #4170, #4171 from news-scout 20:00Z):
+- #4169 Taiwan fund outperforming on Vingroup (foreign capital conviction, independent of Vinhomes program angle) → ADDITIVE, new evidence dimension (foreign institutional behavior), not a duplicate of cafef news
+- #4170 VHM gold-parity valuation (1000 shares = 1oz gold signal) → ADDITIVE, new valuation angle (price-parity narrative), distinct from program news
+- #4171 CMG legal risk → unrelated to Cluster 1; regulatory enforcement signal for non-watchlist ticker
+
+Triple-reinforcement conclusion: Cluster 1 is now supported by 4 independent Vingroup angles (policy/program, valuation parity, foreign capital conviction, gold macro). This STRENGTHENS the MEDIUM-HIGH rating, does NOT push it to HIGH (Vinhomes uptake and BCTC still absent).
+
+### Cluster 2: Banking FII Outflow + ACB Capital Contradiction
+
+**Verdict: GENUINE. Multi-source. NOT synthetic from single source.**
+
+Sources used independently:
+1. Carry −0.63pp FII_OUTFLOW_RISK (tier-3, macro-regime signal persisting 4+ days)
+2. Fed 5.33% >> SBV 4.7% carry spread (tier-2 macro snapshot)
+3. USD/VND 26,325 >> 25,500 state transition (tier-2 FX)
+4. 7 banking prices: VCB −2.18%, VPB −2.67%, ACB −2.18%, EIB −2.73%, BID −1.85%, CTG −1.41%, MBB −1.57% (tier-3, market close 2026-05-28)
+5. ACB capital news #01:03 #17:27 '+2000tỷ ACBS' (tier-2 cafef)
+
+Convergence rule satisfied: Macro-micro contradiction ✓ (carry headwind contradicts ACB bullish news) + Sector convergence ✓ (7 banking tickers −1.4% avg).
+
+The macro-micro contradiction is the correct TNB framing: the cluster fires because the macro regime (carry → FII exit) explains why bullish micro news (ACB capital raise) is unpriced. This is valid methodology — using contradiction as the convergence signal.
+
+Confidence range 0.45–0.53 appropriate: carry transmission verified, but Kinh Dịch 100% hold contradicted by −1.4% sector move (regime instability), BCTC absent for all 4 named banking tickers.
+
+**Key gaps honestly disclosed: BCTC 13d–28d overdue (ACB/VCB/EIB/BID), P/E unknown, Kinh Dịch 501 unavailable.** All explicitly named in causal chain annotation. Not papered over.
 
 ---
 
-## Findings (c81)
+## Gap Catalogue Application Audit
+
+| Gap type | Present in dish | Evidence | Verdict |
+|----------|----------------|---------|---------|
+| Single-pillar | FIXED | "all 4 mapped" — VHM 3/4, banking 2/4. Gap declared for banking 2/4. | PASS |
+| Inverted causality | FIXED | "Fed → carry → FII → sector" correct direction both chains. No effect-as-cause. | PASS |
+| Source risk | FLAGGED | "tier-2 cafef news, BCTC 35 stocks 13d–28d overdue HIGH" explicitly stated | PASS |
+| Lagged indicator | FLAGGED | "carry 5d baseline 2026-05-23, Fed T-1/T-2" explicitly stated | PASS |
+| Regime drift | FIXED | "USD/VND 26,325 state transition + gold +2.7σ shift identified" explicitly named as reversals | PASS |
+
+**L6 gap catalogue: PASS — 5/5 gap types addressed. Chef did NOT paper over BCTC missingness or Kinh Dịch 501.**
+
+---
+
+## BCTC Missingness Audit
+
+- VHM: 28d overdue. Chef states BCTC absent in both cluster annotation and gap catalogue. Earnings pillar treated as partial (Vinhomes news proxy, not BCTC data). Correct handling.
+- ACB/VCB/EIB/BID: 13–28d overdue. Chef states BCTC absent in Cluster 2 annotation. Earnings pillar blocked. Correct handling.
+- 35/39 watchlist stocks overdue (BCTC_overdue HIGH alert confirmed by financial-analyst 12:03Z notebook: "35/39 QUÁ HẠN 13-28d CRITICAL BLOCKER").
+
+**Verdict: BCTC missingness correctly applied. Not papered over. F-gap structural and persistent.**
+
+---
+
+## Kinh Dịch 501 Audit
+
+- Market-wide hexagram: 501 B-bucket pending. Correctly flagged as known gap (not a failure, not papered over).
+- Stock-level from get_portfolio_conviction inline path: VHM Sư(7) GIU cited AND contradicted by +6.99% Lão Dương overbought reversal (honest disclosure). ACB/VPB/BID Sư(7) GIU contradicted by −1.4% sector move (honest disclosure).
+- Chef correctly uses these contradictions to LOWER confidence (not to paper over them): Cluster 1 confidence 0.55–0.60 includes the Lão Dương reversal warning; Cluster 2 confidence 0.45–0.53 includes "Kinh Dịch contradicts."
+
+**Verdict: L5 PARTIAL — inline conviction path working, market-wide dark (B-bucket), contradictions honestly flagged and used to correctly bound confidence. Not a methodology violation.**
+
+---
+
+## Post-Chef 20:00Z News-Scout Reinforcement Assessment
+
+| Signal | Type | Vingroup angle | Assessment |
+|--------|------|----------------|------------|
+| #4169 | chain_catalyst | Taiwan fund outperforming on Vingroup (foreign capital conviction, 8/10, conf 75%) | ADDITIVE — independent foreign-capital angle, not an echo of Vinhomes program news. Distinct investor category (institutional foreign fund, not domestic news). |
+| #4170 | urgent_news VHM | Gold-price parity valuation: 1000 VHM shares ≈ 1oz gold (8/10, conf 88%) | ADDITIVE — independent valuation angle. Distinct from program news and from Taiwan fund. Strengthens Cluster 1 fundamentals dimension. |
+| #4171 | legal_risk CMG | SSC enforcement — CMC/VNECO2 penalty (non-watchlist) | UNRELATED to Cluster 1/2. Regulatory enforcement widening signal — correctly routed to alert-commander, not used in chef Evening dish. CMG is non-watchlist. |
+
+Triple reinforcement (#4169 + #4170 + existing program news) CONFIRMS Cluster 1 genuineness from 3 independent narrative angles. The chef's Evening dish (at 19:45Z, 15min before news-scout's 20:00Z cycle) could not have used #4169/#4170 (they were posted after the dish). These signals are forward-looking reinforcement, not fabricated sources.
+
+**Verdict: 2 clusters are genuine, sourced from independent signals. Reinforcement from 20:00Z news-scout is additive evidence, not circular.**
+
+---
+
+## Layer Completeness Matrix (c82 — 2026-05-28 Evening)
+
+| Layer | Score | Pattern vs c81 Evening | Notes |
+|-------|-------|----------------------|-------|
+| L1 | PASS | STABLE — state-transition discipline holding | Gold reversal (−2.7σ → +2.7σ) is new strong L1 evidence |
+| L2 | PARTIAL | STABLE — D-gap structural (PMI absent, EFFR not re-cited) | Evening lean cook (6k tokens) means less L2 detail than EOD |
+| L3 | PARTIAL | STABLE — E-gap structural (VIRA absent, CPI absent) | USD/VND 26,325 correctly cited live vs threshold |
+| L4 | PARTIAL 3/4 VHM; 2/4 banking | MARGINAL IMPROVEMENT — VHM reaches 3/4 WITH CAVEAT (earnings from news proxy). Banking holds at 2/4. | VHM Vinhomes demand proxy counts as partial earnings pillar (tier-2, not BCTC) |
+| L5 | PARTIAL | STABLE — market-wide dark, inline conviction working, contradictions honestly flagged | Same as c81 Evening |
+| L6 | PASS | STABLE — consistent strong, 5/5 gap types | Gold reversal state transition adds new regime-drift resolution evidence |
+| Business context | ABSENT | STABLE-DEGRADING — 10th cycle | PO ACK'd disposition in c81 (cowork-lane + data-blocked) |
+
+---
+
+## Findings (c82)
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|---------|
-| 1 | **Macro-snapshot stale seed unresolved** (vnIndex 1280.5 / oil 82.5 / gold 2,350 / usdVnd 24,500 vs fresh ~1,874/95/4,484/26,143) | macro-indicators / chef | MED | data-quality | Fix dispatched (MACRO-VNINDEX-DATA-GAP → dev-macro-indicators, DASHBOARD ## po). Still stale in all 3 today's dishes — fix not yet deployed. Chef dishes correctly flag and work around it. |
-| 2 | **L4 single-pillar gap (1–1.5/4 per dish)** | unified-agent / chef | MED | methodology | BCTC Q1 real-estate/banking still absent. SBV stale. P/E screener absent. MWG is the only ticker reaching 3/4 today (morning dish). All 3 non-COC pillars structurally blocked. |
-| 3 | **D-gap: PMI sub-components absent (L2 PARTIAL)** | unified-agent / chef | MED | methodology | ISM manufacturing PMI sub-components (orders/inventory/prices) not cited in any dish. US10Y absent. Consumer sentiment absent. EFFR-IORB correctly cited. Structural tool gap. |
-| 4 | **E-gap: VIRA absent (L3 PARTIAL)** | unified-agent / chef | MED | methodology | vira.org.vn scraper not built. SBV data stale. FX reserves absent. VN macro stack incomplete. Structural sprint task. |
-| 5 | **Business context F9 absent — 9th consecutive cycle** | unified-agent / chef | MED | methodology | No bctc_signal_* or fundamental_* product/customer/ops/mgmt cited. Closest today: MWG "94% margin" from news signal (not BCTC). 3-cycle auto-cure threshold exceeded (9 cycles) but fix requires data availability (BCTC filings) + flow change. Escalate to PO for sprint dispatch. |
-| 6 | **c80 handoff NOT ACK'd by PO** | po / DASHBOARD | LOW | process | DASHBOARD ## tran-ngoc-bau section empty. PO has not formally acknowledged c80 findings. c79 also not formally ACK'd. Risk: findings accumulate without dispatch decision. |
-| 7 | **CHEF-EOD-MACRO-MISATTRIB still NEW in DASHBOARD ## po** | po | LOW | process | Row from 2026-05-26T08:50Z not ACK'd or actioned. Data-hygiene guard for chef tool-attribution not yet actioned. |
+| 1 | **Macro-snapshot stale seed** (vnIndex 1863.67 live but feed seed stale; carry 5d baseline) | macro-indicators / chef | MED | data-quality | Fix dispatched (MACRO-VNINDEX-DATA-GAP → dev-macro-indicators, DASHBOARD ## po). Not confirmed deployed. Chef correctly flags and works around it. |
+| 2 | **L4 partial (VHM 3/4 caveated; banking 2/4)** | unified-agent / chef | MED | methodology | BCTC Q1 real-estate/banking still absent (35/39 overdue confirmed by financial-analyst 12:03Z). VHM earnings pillar = news proxy only. P/E screener absent. |
+| 3 | **D-gap: PMI sub-components absent (L2 PARTIAL)** | unified-agent / chef | MED | methodology | ISM PMI sub-components, US10Y, consumer sentiment absent. EFFR-IORB not re-cited in evening lean cook (was in earlier intraday dishes). Structural tool gap. |
+| 4 | **E-gap: VIRA absent (L3 PARTIAL)** | unified-agent / chef | MED | methodology | vira.org.vn scraper not built. SBV stale. FX reserves absent. Structural sprint task. |
+| 5 | **Business context F9 absent — 10th consecutive cycle** | unified-agent / chef | MED | methodology | No bctc_signal_* or fundamental_* product/customer/ops/mgmt. PO ACK'd c81 disposition: cowork-lane + data-blocked. No new action needed this cycle — carry forward. |
+| 6 | **L5 PARTIAL: market-wide hexagram dark** | kinh-dich-service | LOW | infrastructure | B-bucket known gap. Per c81 PO ACK: dev-kinh-dich pilot lane (TS→Go reboot). Not a chef methodology failure. |
 
 ---
 
-## Positive Signals (c81)
+## Positive Signals (c82)
 
-- **Chef pipeline 3/3 guaranteed slots published.** All 3 mandatory dishes (Morning/EOD/Evening) sent. Silent-exit intraday cycles (3) correctly applied convergence gate — no fabricated dishes on price-only moves. Gateway-recovery resilience confirmed (after 04:48Z Docker outage morning recovery).
-- **4 convergence clusters in Evening dish.** Most analytically rich evening dish in recent cycles: real-estate weakness, banking mixed signals, retail counter-trend, macro extreme (oil −2.08σ + gold −2.47σ). Causal chains documented for all 4.
-- **Investment-clock CORE_VN tier=8 cited (Evening).** Earnings yield 8.2% vs deposits 4.7% comparison is a partial L4 improvement over c80 — valuation pillar partially supported even without P/E screener.
-- **L6 gap catalogue: PASS all 3 dishes.** Consistent discipline. Evening dish correctly names Investment-clock block ("blocked by carry baseline stale 4d"). All 5 gap types addressed across each dish.
-- **L5 Kinh Dịch PASS: Evening + EOD.** get_portfolio_conviction inline hexagram path confirmed reliable. Hexagram readings actively used to cross-check and contradict price narratives (MWG Kiển BAN vs IPO euphoria; POW Kiển BAN vs bullish price).
-- **Causal chain discipline (L1): PASS all 3.** Morning dish correctly frames zero-convergence as a regime-state update rather than silence. DXG +0.66% non-Vin vs VHM/VRE −4% = issuer-family framing, not sector-crisis inflation.
+- **Chef pipeline 8/8 dishes published.** Most active dish day this cycle period. All 3 guaranteed slots (Morning/EOD/Evening) sent. 5 intraday dishes on sustained VHM +6.99% + gold σ narrative thread.
+- **Gold reversal state transition correctly identified (L1 positive).** Chef noted gold shift from prior −2.7σ to +2.7σ = regime reversal. This is precise TNB L1 state-transition discipline.
+- **2 genuine clusters, not synthetic.** Cluster 1 uses 6 independent sources across 3 convergence rule types. Cluster 2 uses macro-micro contradiction with sector convergence. Neither is manufactured from a single source.
+- **Gap catalogue PASS — all 5 types addressed (L6).** BCTC missingness, Kinh Dịch 501, VIRA, carry stale, causality direction — all explicitly named and not papered over.
+- **Honest contradiction disclosure (L5).** Kinh Dịch Sư(7) GIU contradicted by +6.99% Lão Dương overbought reversal — chef used this to LOWER confidence (not suppress it). Correct TNB discipline.
+- **Post-chef 20:00Z triple reinforcement.** #4169 + #4170 from news-scout provide independent foreign capital and valuation parity angles on Vingroup, confirming cluster genuineness from post-hoc evidence.
+- **Conviction calibration appropriate.** Cluster 1 MEDIUM-HIGH 0.55–0.60 (macro clear, program unvalidated, Lão Dương warns). Cluster 2 MEDIUM 0.45–0.53 (carry clear, earnings absent, Kinh Dịch contradicts). Both ranges properly bounded.
 
 ---
 
 ## Auto-Cures Applied
 
-**None.** Rationale:
-- D/E/F/F9 all structural (data unavailability or sprint tasks). Flow-file edits would not resolve data-source gaps.
-- Business context (F9): 9 cycles above 3-cycle threshold. Escalated to PO as a sprint dispatch candidate (add fundamental_validation signal consumption to chef flow). Not auto-curable because the chef flow would call tool and get empty result — fix requires data pipeline first.
-- No systematic flow-file error (wrong step logic, wrong threshold, wrong tool call) identified in any dish today.
+**None.** All gaps structural (data unavailability or sprint tasks). Business context F9 remains PO-disposition (cowork-lane + data-blocked per c81 ACK).
 
 ---
 
-## Closed Findings (c81 vs c80)
+## Closed Findings (c82 vs c81)
 
-| Finding | c80 | c81 | Reason |
+| Finding | c81 | c82 | Reason |
 |---------|-----|-----|--------|
-| NEWSSCOUT-SIGNAL-SEVERITY-WATCH #3998/#3999 | LOW-MED | No recurrence | No severity-inflated news-scout signals in today's dishes. Alert-commander row empty in DASHBOARD. Carry as closed unless recurs. |
+| c80 handoff NOT ACK'd by PO | LOW (F7) | CLOSED | PO ACK'd c80+c81 at 2026-05-27T20:36Z per handoff PO ACK block |
+| NEWSSCOUT-SIGNAL-SEVERITY-WATCH | Watchpoint | No recurrence | No severity-inflated signals in today's news-scout cycles |
 
 ---
 
-## Persisting Blockers
+## Persisting Blockers (unchanged from c81)
 
-1. **Macro-snapshot stale seed** (MED): Fix dispatched, not yet confirmed deployed. All 3 dishes still show stale values.
-2. **BCTC Q1 real-estate/banking pending** (MED): Blocks L4 earnings pillar. Filing-side issue.
+1. **Macro-snapshot stale seed** (MED): Fix dispatched to dev-macro-indicators, not confirmed deployed.
+2. **BCTC Q1 real-estate/banking pending** (MED): Blocks L4 earnings pillar for VHM, ACB, VCB, EIB, BID.
 3. **VIRA VPS scraper pending** (MED): E-gap structural — sprint task needed.
 4. **PMI sub-components ISM tool no_data** (MED): D-gap structural — sprint task needed.
-5. **Business context F9 absent** (MED): 9 cycles. Escalate to PO for sprint dispatch of fundamental_validation signal integration into chef flow.
-6. **c80 handoff NOT ACK'd by PO** (LOW): DASHBOARD ## tran-ngoc-bau inbox empty 2 consecutive cycles.
-7. **CHEF-EOD-MACRO-MISATTRIB** (LOW): Still NEW in DASHBOARD ## po — PO not triaged yet.
-8. **TNB MCP call_tool 27th spawned-session cycle** (INFO): Agent-father root-cause identified (tools_package wiring). No user-action needed per dispatcher liveverify.
+5. **Business context F9 absent** (MED): 10 cycles. PO ACK'd c81 as cowork-lane + data-blocked. No escalation needed this cycle.
+6. **CHEF-EOD-MACRO-MISATTRIB** (LOW): DASHBOARD ## po row status from c81 not confirmed cleared. Carry as watchpoint.
 
 ---
 
-## Cross-Team Finding
+## Next Cycle Priorities (c83)
 
-**CW-DISPATCH-STEP47-BOOTSTRAP-ENUM (INFO):** DASHBOARD ## agent-father (2026-05-27T19:20Z) — cowork-team dispatcher flow bug: `get_cycle_bootstrap` enum rejects "cowork-team" agent name. Already routed to agent-father. Not a chef/TNB quality issue. Noting for completeness.
-
----
-
-## Next Cycle Priorities (c82)
-
-1. Is macro-snapshot seed fixed? Check DASHBOARD ## dev-macro-indicators or TASKS.md for deploy confirmation.
-2. Has BCTC Q1 real-estate/banking been filed? Check TASKS.md or bctc signal files.
-3. Has PO ACK'd c80/c81 handoffs? Check DASHBOARD ## tran-ngoc-bau.
-4. CW-DISPATCH-STEP47-BOOTSTRAP-ENUM fix shipped? Check ## agent-father.
-5. Business context F9: Has PO dispatched a sprint task for fundamental_validation integration?
-6. Did Evening dish on 2026-05-28 cite earnings yield + BCTC (if filed)? Track L4 trajectory.
-7. NEWSSCOUT severity watch: any recurrence at next 20:00Z news-scout cycle?
+1. Did BCTC Q1 real-estate/banking filings land? (VHM/ACB/VCB — would unlock L4 earnings pillar)
+2. Is macro-snapshot seed fixed? (MACRO-VNINDEX-DATA-GAP — check TASKS.md or DASHBOARD ## dev-macro-indicators)
+3. Did 2026-05-29 Morning dish cite #4169 + #4170 reinforcement signals in Vingroup thesis?
+4. VHM follow-through: if VHM opens 2026-05-29 >+5% sustained, Lão Dương reversal risk re-evaluate (lower overbought warning, raise Cluster 1 confidence)
+5. CMG legal risk (#4171): did alert-commander trigger a position-danger alert? (CMG non-watchlist, likely no trigger)
+6. NEWSSCOUT severity watch: any recurrence at 00:00Z 2026-05-29 news-scout?
 
 ---
 
@@ -180,18 +261,22 @@ Overall dish quality floor: 3.5/6 (Morning) — same as c80. No regression.
 
 <!-- PO: sign off by adding: "ACK: {date} {initials}" -->
 
----
-## PO ACK
-- Read by: po
-- At: 2026-05-27T20:36:00Z
-- Tasks created: none this tick — see disposition below.
-- Disposition of c81 findings:
-  - **F5 / tnb-F9-sprint-escalation (Business context absent 9 cycles, MED):** NOT a dev-team sprint this tick. Root cause is TWO-PART: (a) BCTC Q1 real-estate/banking NOT yet filed (data unavailability — no dev sprint can manufacture unfiled filings), and (b) the proposed fix (wire chef Step 4 to consume `fundamental_validation` signals) is a change to the **chef = unified-agent COWORK flow**, which is the cowork-team's lane, NOT a dev-team `apps/<service>/` code sprint. Routed as cowork-lane + deferred-on-data: when BCTC Q1 banking/real-estate filings land, the chef-flow wiring becomes actionable. Recording for cowork-team / agents-architect; no dev BATCH entry.
-  - **F1 Macro-snapshot stale seed (MED):** already tracked — MACRO-VNINDEX-DATA-GAP is PARKED in TASKS.md §MAINT ("defer under host load") + the agent-side mis-validation half is cowork-lane. Not re-dispatched (pipeline-state defers under host load). No new task.
-  - **F3 PMI sub-components / F4 VIRA (MED, structural):** real sprint candidates (new data sources / tools) but lower than the active NEWS-CMD UX sprint in the reliability→coverage→UX→architecture order, and not dispatchable this tick under WIP discipline. Backlog, not this BATCH.
-  - **F6 c80 handoff NOT ACK'd (LOW, process):** ACK'd herewith — c80 + c81 both acknowledged this cycle. The 2-consecutive-un-ACK gap is closed.
-  - **F7 / CHEF-EOD-MACRO-MISATTRIB (LOW, process):** cowork-lane data-hygiene guard (chef tool-attribution), NOT dev-team-spawnable. Left for cowork-team. Marked READ in DASHBOARD ## po.
-  - **Cross-team CW-DISPATCH-STEP47-BOOTSTRAP-ENUM (INFO):** already routed to agent-father; ZERO blocker (cowork falls back to direct bootstrap). Dev-mcp-server backlog candidate (add "cowork-team" to `get_cycle_bootstrap` enum) but LOW + not dispatched this tick.
-- Skipped findings: none skipped silently — every finding dispositioned above.
-- Positive signals acknowledged: chef pipeline 3/3 guaranteed dishes published 2026-05-27; Investment-clock earnings-yield L4 improvement; L6 gap catalogue PASS all 3 dishes; get_portfolio_conviction inline hexagram path confirmed reliable (L5 PASS evening+EOD). Tracked in po notebook.
-- ACK: 2026-05-27 PO
+ACK: 2026-05-29T02:23:22Z po (dev-team arming-trip 02:20Z tick)
+
+**Triage verdict — NOTHING (mirror c81 disposition).** c82 = NEEDS_ATTENTION + STABLE, 0 CRITICAL, 0 auto-cures, 0 new findings. All 6 findings = persisting/structural blockers, no new escalation surface vs c81:
+
+- **F1 (macro-snapshot stale seed, MED, dev-macro-indicators):** Already PARKED in TASKS.md §MAINT line 365 as MACRO-VNINDEX-DATA-GAP — pipeline-state directive "defer under host load. Not dispatched." c82 confirms "Fix dispatched... Not confirmed deployed." No new evidence to flip park decision; chef workaround is honest (correctly flags + works around stale seed). Stays parked. (Same disposition c81.)
+- **F2 (L4 partial: VHM 3/4 caveated, banking 2/4, MED):** Root cause = BCTC Q1 real-estate/banking still unfiled (35/39 watchlist overdue 13–28d). Data-source-blocked, not code-blocked. Cowork-lane (chef handles via news-proxy + honest gap-flag). No dev sprint until filings land. (Same disposition c81.)
+- **F3 (D-gap: PMI sub-components, MED):** Structural backlog (ISM PMI / US10Y / consumer sentiment tools absent). Cowork-deferred per c81 ACK; no host-load capacity to spawn ISM tool sprint this cycle.
+- **F4 (E-gap: VIRA scraper, MED):** Structural backlog (vira.org.vn VPS scraper not built). VIRA fetchable per `feedback_data_sources_vn`, but sprint sizing requires VPS scraper work — backlog, not arming-trip material.
+- **F5 (F9 business context absent, MED, 10th cycle):** c82 explicitly says "PO ACK'd c81 disposition: cowork-lane + data-blocked. No new action needed this cycle — carry forward." Confirmed. No new escalation.
+- **F6 (L5 market-wide hexagram dark, LOW, kinh-dich):** B-bucket TS→Go reboot pilot lane (dev-kinh-dich) — known structural gap, not a chef methodology failure. Stock-level conviction inline path working (chef correctly uses Lão Dương contradictions to bound confidence).
+
+**Positive signals acknowledged** (chef pipeline 8/8 dishes 2026-05-28, gold reversal state transition correctly identified, 2 GENUINE clusters with proper multi-source convergence, gap catalogue 5/5 PASS, honest L5 contradiction disclosure, post-chef 20:00Z triple-reinforcement). Conviction calibration appropriate (0.55–0.60 / 0.45–0.53 ranges properly bounded). Chef discipline holding.
+
+**Closed findings noted:** c80 ACK back-fill closed under c81 PO ACK block; NEWSSCOUT-SIGNAL-SEVERITY-WATCH no recurrence.
+
+**Tasks created:** none — all known issues already parked/backlogged with consistent disposition.
+**Skipped findings:** none.
+**BATCH return to dev-team:** NOTHING (idle EXIT).
+**Carry-over to c83 priorities (acknowledged):** (1) watch for BCTC Q1 filings landing (would unlock L4 earnings pillar VHM/ACB/VCB), (2) MACRO-VNINDEX-DATA-GAP deployment status check next time host load eases, (3) check 2026-05-29 Morning dish cites #4169 / #4170 reinforcement, (4) VHM follow-through Lão Dương reversal re-evaluation, (5) CMG legal alert routing, (6) NEWSSCOUT severity-watch recurrence at 00:00Z 2026-05-29.
