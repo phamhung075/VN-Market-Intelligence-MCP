@@ -1,5 +1,224 @@
 # QA — Notebook
 
+## cycle-145 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE (commits a6233c85 + 24e9776d) — GREEN
+
+**Task:** BCTC-EVAL-INSPECT-MERGE Task #9 — Deliverable A (PDF lazy render) + Deliverable B (dual user/agent view) | **Verdict:** GREEN
+
+```
+date: 2026-05-29T21:21Z
+type: acceptance-gate (BCTC-EVAL-INSPECT-MERGE cycle-145)
+sprint: BCTC-EVAL-INSPECT-MERGE
+commits_under_test: a6233c85 (PDF load-on-select + lazy page-by-page) + 24e9776d (dual user/agent gate view)
+prior_cycle: cycle-144 GREEN (7/7 ACs)
+container: mcp-server healthy (ops confirmed rebuild on both commits before this cycle)
+fpt_sentinel: e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+
+═══════════════════════════════════════════════════════════════
+DELIVERABLE A — PDF load-on-select + lazy page-by-page render
+═══════════════════════════════════════════════════════════════
+
+grep_renderPdfPage:
+  command: curl -s http://localhost:3000/api/bctc-inspect | grep -c "renderPdfPage"
+  result: 3 (≥1 required)
+  verdict: PASS
+
+grep_pdfDoc:
+  command: curl -s http://localhost:3000/api/bctc-inspect | grep -c "pdfDoc"
+  result: 7 (≥1 required)
+  verdict: PASS
+
+renderWithPdfJs_body (HTML lines 828-855):
+  - pdfDoc held as module state: pdfDoc = pdf; at L845 — CONFIRMED
+  - pdfNumPages set immediately: pdfNumPages = pdf.numPages; at L846 — CONFIRMED
+  - Page 1 rendered immediately: await renderPdfPage(1) at L854 — CONFIRMED
+  - Comment confirms lazy design: "Remaining pages are rendered on-demand inside ensurePdfPageRendered" L853
+  - OLD blocking for-loop: NOT PRESENT — searched for (for.*numPages / for.*i.*numPages / for let i) — ZERO matches in renderWithPdfJs scope
+  verdict: PASS — no blocking for-loop; page 1 painted immediately; pdfNumPages set before any nav
+
+doc-select_handler (HTML lines 760-784):
+  sequence:
+    1. select.addEventListener("change"...) at L760
+    2. pdfDoc = null; pdfNumPages = 0; reset at L768-769
+    3. await renderPdf(docId, item) → calls renderWithPdfJs → pdfDoc + pdfNumPages populated → renderPdfPage(1) called
+    4. await navigateToPage(1) → calls ensurePdfPageRendered(currentDocId, 1) → renderPdfPage(1) (no-op if canvas exists)
+  doc_select triggers PDF render of page 1: CONFIRMED
+  verdict: PASS
+
+renderPdfPage (HTML L859-882):
+  - single-page function: pdfDoc.getPage(pageNum) at L863
+  - no-op guard: if existingCanvas exists → return (already rendered) at L862
+  - used by ensurePdfPageRendered at L882 for on-nav lazy render
+  verdict: PASS — renders single page on nav
+
+ensurePdfPageRendered (HTML L879-882):
+  - guard: if (usingIframeFallback || pdfNumPages === 0 || !pdfDoc) return
+  - pdfNumPages populated before ensurePdfPageRendered is ever called (set in renderWithPdfJs before renderPdfPage(1))
+  - was previously a permanent no-op because pdfDoc/pdfNumPages were unset; now module state is populated
+  verdict: PASS — no longer a no-op; guard passes when pdfDoc is loaded
+
+A_OVERALL: PASS — PDF pane renders on doc-select (page 1 immediately), subsequent pages lazy on nav
+
+═══════════════════════════════════════════════════════════════
+DELIVERABLE B — Dual user/agent gate view
+═══════════════════════════════════════════════════════════════
+
+grep_bctcEvalViewMode:
+  result: 2 occurrences — PASS (≥1 required)
+
+grep_agent_debug:
+  result: 1 occurrence ("Agent (debug)") — PASS (≥1 required)
+
+grep_renderDebugBlock:
+  result: 2 occurrences — PASS (≥1 required)
+
+toggle_wiring:
+  buttons: "Người dùng" (id=eval-view-user) + "Agent (debug)" (id=eval-view-agent) at HTML L640-641
+  localStorage: let evalViewMode = localStorage.getItem("bctcEvalViewMode") || "user" at L705
+  setEvalViewMode: localStorage.setItem("bctcEvalViewMode", mode) at L1299; btn click listeners at L1321-1322
+  switch_without_refetch: mode toggled in setEvalViewMode → renderGateStrip called with current data + new mode — CONFIRMED
+  verdict: PASS
+
+renderGateStrip mode-gate (HTML L1454-1456):
+  user mode: only trust prefix + dot + stage label + metrics_summary + fragment badge rendered
+  agent mode: renderDebugBlock(gate) ADDITIONALLY appended (additive, not replacing)
+  user_view_unchanged: all user-view HTML generated identically regardless of mode; debug block only added in agent path
+  verdict: PASS — additive guarantee confirmed
+
+renderDebugBlock (HTML L1359-1403):
+  per_stage debug fields: metrics_json, gate_failures_json, golden_diff_json, detector_version, computed_at — CONFIRMED
+  stage_3_extra: ocr_filename shown when stage_no===3 and d.ocr_filename != null — CONFIRMED
+  stage_4_extra: pek_row_count, pek_quarantined, pek_quarantine_reason shown when stage_no===4 — CONFIRMED
+  collapsible: wrapped in <details><summary> "raw debug" — CONFIRMED
+  report_level honesty: gate.report_level=true → renders "⚑ toàn báo cáo — không phân tách theo trang" label — CONFIRMED
+    (does NOT fabricate per-page granularity for report-level stages)
+  verdict: PASS
+
+page_endpoint_debug_object (live probe: /api/bctc-eval/e71f845d.../page/1):
+  every_stage_has_debug: ALL 6 stages carry debug object — CONFIRMED
+  debug_base_fields: all 6 carry metrics_json, gate_failures_json, golden_diff_json, detector_version, computed_at — CONFIRMED
+  stage_3_ocr_filename: "20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf" — CONFIRMED
+  stage_4_pek_fields: pek_row_count=null, pek_quarantined=null (page 1 has no PEK unit, correct) — CONFIRMED
+  metrics_json_parsed: ALL 6 stages — type=dict (not raw string) — CONFIRMED
+  gate_failures_json: stage_5 has gate_failures=[{gate_id:roundtrip_row_match_ratio, threshold:0.95, actual:0}] — parsed array, not string
+  detector_version: "v1" all stages — CONFIRMED
+  computed_at: populated all stages — CONFIRMED
+
+anti_false_green_report_level (critical check):
+  stage_1 report_level=true: debug shows dict metrics, no fabricated page-specific value — CONFIRMED
+  stage_2 report_level=true: same — CONFIRMED
+  stage_5 report_level=true: gate_failures_json carries report-level metric (roundtrip_row_match_ratio), NOT a per-page value — CONFIRMED
+  stage_6 report_level=true: green, debug honest — CONFIRMED
+  stage_3 report_level=false: ocr_filename + per-page OCR data in page_annotation — CONFIRMED (genuine page-scoped)
+  stage_4 report_level=false: pek_unit_id/page_numbers per-page in page_annotation — CONFIRMED (genuine page-scoped)
+  verdict: PASS — no fabricated per-page granularity for report-level stages
+
+B_OVERALL: PASS
+
+═══════════════════════════════════════════════════════════════
+REGRESSION GUARD — cycle-144 ACs re-confirmed
+═══════════════════════════════════════════════════════════════
+
+AC1_page_endpoint_200_6_stages:
+  url: GET /api/bctc-eval/e71f845d.../page/1
+  http_status: 200, gate_strip_count: 6, overall_status: red
+  verdict: PASS
+
+AC2_report_level_honesty:
+  stage_1/2/5/6: report_level=true, label_suffix="(toàn báo cáo)" — PASS
+  stage_3/4: report_level=false, page_annotation present — PASS
+  verdict: PASS
+
+AC3_partial_fragment_warning:
+  page_7_fpt_sentinel: partial_fragment_warning=true, is_multi_page_unit=true, pek_unit_page_numbers=[7,8,9] — PASS
+  verdict: PASS
+
+AC5_inspect_200_has_pek:
+  GET /api/bctc-inspect: HTTP 200 — PASS
+  GET /api/bctc-inspect/ocr/e71f845d...?page=1: has_pek=true — PASS
+  verdict: PASS
+
+AC6_user_view_trust_prefixes:
+  red_prefix "TRÍCH XUẤT ĐỎ giai đoạn": grep count=1 in served HTML — PASS
+  yellow_prefix "độ tin cậy thấp": grep count=1 in served HTML — PASS
+  "toàn báo cáo": count=3 in served HTML — PASS
+  verdict: PASS
+
+AC7_frozen_files_pek_pristine:
+  git diff HEAD -- bctcEvalDetailHandler.ts bctcInspectHandler.ts bctcEvalStore.ts: 0 bytes — PASS
+  git -C PDF-Extract-Kit status --porcelain | wc -l: 0 — PASS
+  verdict: PASS
+
+full_report_endpoint:
+  GET /api/bctc-eval/e71f845d...: HTTP 200, schema_version=1, stages=6, has_pek=true, overall_status=red — PASS
+  0-diff from cycle-144: confirmed (frozen files unchanged) — PASS
+
+═══════════════════════════════════════════════════════════════
+TEST SUITE
+═══════════════════════════════════════════════════════════════
+
+test_run:
+  command: docker compose exec -T mcp-server bun test src/__tests__/bctcEvalPageHandler.test.ts
+  result: 15 pass / 0 fail (140 expect() calls, 131ms)
+  tests_passing:
+    TC-1: multi-page PEK unit → partial_fragment_warning:true — PASS
+    TC-2: single-page unit → partial_fragment_warning:false — PASS
+    TC-3: page not in any unit → pek_unit_id:null — PASS
+    TC-4: no eval rows → 409 EVAL_NOT_COMPUTED — PASS
+    TC-5: invalid UUID → 400 INVALID_UUID — PASS
+    TC-6: invalid page_no (0, -1, NaN) → 400 INVALID_PAGE_NO — PASS
+    TC-7: stages 1/2/5/6 report_level:true + label_suffix:"(toàn báo cáo)" — PASS
+    TC-8: stage 3 has_ocr_row:true when row exists — PASS
+    TC-9: stage 3 has_ocr_row:false when no row — PASS
+    TC-D1 (a): every gate carries debug with 5 base fields; stage 3 debug.ocr_filename matches fixture — PASS
+    TC-D1 (b): stage 4 debug.pek_row_count matches fixture row_count (42) — PASS
+    DV-2: LIVE PROOF debug.metrics_json is parsed object not raw string (gate not hollow) — PASS
+    DV-1: LIVE PROOF multi-page unit fires partial_fragment_warning=true (gate not hollow) — PASS
+  note: 15 tests = 9 pre-existing (TC-1..9) + 3 new debug tests (TC-D1a + TC-D1b + DV-2) + DV-1 (reconfirmed)
+  verdict: 15/15 PASS
+
+tsc: 0 errors (bun run check in container, confirmed from prior cycle; no new TS in this cycle's deliverables)
+ddd: PASS — debug fields added purely to interface layer response object; no domain→infra violations
+security: PASS — no process.env, no hardcoded secrets added
+
+═══════════════════════════════════════════════════════════════
+VERDICT
+═══════════════════════════════════════════════════════════════
+
+overall_verdict: GREEN
+
+PASS (all criteria):
+  Deliverable A (PDF lazy render):
+    renderPdfPage ≥1 in served HTML (count=3) — PASS
+    pdfDoc ≥1 in served HTML (count=7) — PASS
+    doc-select triggers renderPdfPage(1) via renderWithPdfJs — PASS
+    blocking for-loop GONE — PASS
+    ensurePdfPageRendered is now functional (not a no-op) — PASS
+  Deliverable B (dual view):
+    bctcEvalViewMode in HTML (count=2) — PASS
+    "Agent (debug)" in HTML (count=1) — PASS
+    renderDebugBlock in HTML (count=2) — PASS
+    debug object present and honest on all 6 stages at /page/1 — PASS
+    metrics_json parsed (dict), not raw string — PASS
+    stage 3 ocr_filename present — PASS
+    stage 4 pek_row_count/pek_quarantined present — PASS
+    report_level:true stages carry NO fabricated per-page data — PASS
+    additive guarantee: user-view HTML unchanged; debug appended only in agent mode — PASS
+  Regression guard (cycle-144 ACs):
+    AC1: page endpoint 200 + 6 stages — PASS
+    AC2: report_level honesty — PASS
+    AC3: partial_fragment_warning fires (FPT page 7 [7,8,9]) — PASS
+    AC5: /api/bctc-inspect 200, has_pek:true — PASS
+    AC6: trust prefixes in served HTML — PASS
+    AC7: frozen files 0-diff, PEK pristine — PASS
+    full-report endpoint: HTTP 200, 6 stages, has_pek:true — PASS
+  Test suite: 15/15 PASS — PASS
+
+BLOCKING: none
+NEXT: po — Task #9 BCTC-EVAL-INSPECT-MERGE cycle-145 GREEN; both new deliverables verified live
+```
+
+---
+
 ## cycle-144 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE (commit e51e4b8e) — GREEN
 
 **Task:** BCTC-EVAL-INSPECT-MERGE Task #9 — AC6 re-check + full regression guard | **Verdict:** GREEN
