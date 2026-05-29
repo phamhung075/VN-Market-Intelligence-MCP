@@ -1,5 +1,202 @@
 # QA — Notebook
 
+## cycle-147 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE Task #9 (commit 3490dffa) — GREEN
+
+**Task:** BCTC-EVAL-INSPECT-MERGE Task #9 UX refinement — header page-nav + keyboard ArrowLeft/ArrowRight | **Verdict:** GREEN
+
+```
+date: 2026-05-29T23:30Z
+type: acceptance-gate (BCTC-EVAL-INSPECT-MERGE cycle-147)
+sprint: BCTC-EVAL-INSPECT-MERGE
+commit_under_test: 3490dffa (feat: TASK-9 header page-nav + keyboard ArrowLeft/ArrowRight)
+prior_cycle: cycle-146 GREEN (MD→table view)
+container: mcp-server healthy (ops confirmed rebuild+force-recreate; markers header-page-nav + headerPageIndicator baked in)
+fpt_sentinel: e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (has_pek:true, total_pages:46)
+
+═══════════════════════════════════════════════════════════════
+ITEM-1 — HEADER NAV: #header-page-nav centered in header
+═══════════════════════════════════════════════════════════════
+
+html_structure (live server + source):
+  <div id="header-page-nav"> at HTML L671 — CONFIRMED
+  <button id="header-btn-prev"> at HTML L672 — CONFIRMED
+  <span id="header-page-indicator"> at HTML L673 — CONFIRMED
+  <button id="header-btn-next"> at HTML L674 — CONFIRMED
+
+css_positioning (HTML L39-46):
+  #header-page-nav { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; } — CONFIRMED
+  position:absolute + left:50% + translateX(-50%) = centered in header — PASS
+
+initial_state:
+  Both buttons disabled initially — CONFIRMED (disabled attr on both buttons in HTML)
+  Indicator shows "—" initially — CONFIRMED (HTML L673 text content)
+
+verdict: PASS
+
+═══════════════════════════════════════════════════════════════
+ITEM-2 — SINGLE ORCHESTRATOR: navigateToPage + setNavState SSOT
+═══════════════════════════════════════════════════════════════
+
+navigateToPage_references:
+  grep -c "navigateToPage" live HTML: 14 — PASS
+  defined at HTML L1008; all button click listeners delegate to it — CONFIRMED
+
+setNavState_body (HTML L818-831):
+  syncs: btnPrev.disabled, btnNext.disabled, pageIndicator.textContent (OCR-pane)
+  AND: headerBtnPrev.disabled, headerBtnNext.disabled, headerPageIndicator.textContent (header)
+  single function, single call per nav event — PASS
+
+header_buttons_wire (HTML L1747-1760):
+  headerBtnPrev click → navigateToPage(currentPage - 1) — CONFIRMED
+  headerBtnNext click → navigateToPage(currentPage + 1) — CONFIRMED
+  no duplicated nav logic — PASS
+
+ocr_pane_still_wired (HTML L1735-1744):
+  btnPrev click → navigateToPage(currentPage - 1) — CONFIRMED
+  btnNext click → navigateToPage(currentPage + 1) — CONFIRMED
+
+verdict: PASS — single orchestrator, no dup logic, setNavState syncs all 4 elements
+
+═══════════════════════════════════════════════════════════════
+ITEM-3 — KEYBOARD: document keydown ArrowLeft/ArrowRight
+═══════════════════════════════════════════════════════════════
+
+handler_present (HTML L1766):
+  document.addEventListener("keydown", async (e) => { ... }) — CONFIRMED
+
+arrowleft (HTML L1773-1777):
+  if (e.key === "ArrowLeft") { e.preventDefault(); navigateToPage(currentPage - 1) } — CONFIRMED
+
+arrowright (HTML L1778-1782):
+  else if (e.key === "ArrowRight") { e.preventDefault(); navigateToPage(currentPage + 1) } — CONFIRMED
+
+e_preventdefault: present on BOTH arrows — PASS
+
+bounds_respected:
+  ArrowLeft guard: currentPage > 1 — PASS (no-op at page 1)
+  ArrowRight guard: bound > 0 && currentPage < bound — PASS (no-op at last page AND no-op when no doc)
+
+verdict: PASS
+
+═══════════════════════════════════════════════════════════════
+ITEM-4 — FOCUS GUARD (critical): INPUT/SELECT/TEXTAREA skip
+═══════════════════════════════════════════════════════════════
+
+guard_code (HTML L1768-1769):
+  const tag = document.activeElement?.tagName ?? "";
+  if (tag === "INPUT" || tag === "SELECT" || tag === "TEXTAREA") return; — CONFIRMED
+
+covers_doc_select: SELECT included → doc-select dropdown arrow keys unaffected — PASS
+covers_text_inputs: INPUT + TEXTAREA — PASS
+null_guard: optional chaining + fallback "" (no crash if activeElement is null) — PASS
+
+test_coverage: shouldSkipKeyboard("SELECT")=true, shouldSkipKeyboard("INPUT")=true,
+  shouldSkipKeyboard("TEXTAREA")=true, shouldSkipKeyboard("BODY")=false,
+  shouldSkipKeyboard("DIV")=false, shouldSkipKeyboard("BUTTON")=false,
+  shouldSkipKeyboard("")=false — all 7 assertions GREEN in 1976 test suite
+
+verdict: PASS
+
+═══════════════════════════════════════════════════════════════
+ITEM-5 — BOUNDS AFFORDANCE: disabled state on first/last page
+═══════════════════════════════════════════════════════════════
+
+setNavState_logic (HTML L819-821):
+  atFirst = page <= 1 → prev disabled
+  atLast = bound > 0 ? page >= bound : true → next disabled (also both disabled when no doc)
+  label = bound > 0 ? `${page} / ${bound}` : "—"
+
+header_buttons_sync: headerBtnPrev.disabled = atFirst; headerBtnNext.disabled = atLast; — CONFIRMED
+ocr_buttons_sync: btnPrev.disabled = atFirst; btnNext.disabled = atLast; — CONFIRMED
+
+test_coverage (navDisabled helper in 1976 tests):
+  both disabled no-doc (bound=0): PASS
+  prev disabled page 1: PASS
+  next disabled last page: PASS
+  both enabled middle page: PASS
+  both disabled single-page-doc: PASS
+
+verdict: PASS
+
+═══════════════════════════════════════════════════════════════
+ITEM-6 — NO REGRESSION: prior features intact
+═══════════════════════════════════════════════════════════════
+
+md_table_section:
+  "Bảng Dữ Liệu (Markdown → Bảng)" present in live HTML — CONFIRMED
+
+dual_view_toggle:
+  "Người dùng" button present — CONFIRMED
+  "Agent (debug)" button present — CONFIRMED
+
+trust_prefixes:
+  red "[ĐỘ TIN CẬY THẤP — TRÍCH XUẤT ĐỎ giai đoạn N]" at HTML L1628 — CONFIRMED
+  yellow "[độ tin cậy thấp]" at HTML L1630 — CONFIRMED
+
+ocr_pane_inline_nav: btn-prev-page, btn-next-page, page-indicator all present — CONFIRMED
+  Both still function (wired to navigateToPage same as before) — PASS
+
+fpt_sentinel_has_pek_true: GET /api/bctc-inspect/ocr/e71f845d.../: has_pek=True, total_pages=46 — PASS
+
+eval_gate_strip: renderEvalStrip in navigateToPage at HTML L1019 — CONFIRMED
+figures_pane: renderFigures in renderOcr — CONFIRMED
+
+verdict: PASS — 0 regressions
+
+═══════════════════════════════════════════════════════════════
+ITEM-7 — TESTS: 1976-bctc-inspector-page-nav.test.ts
+═══════════════════════════════════════════════════════════════
+
+test_run:
+  command: bun test src/__tests__/1976-bctc-inspector-page-nav.test.ts
+  result: 19 pass / 0 fail | 31 expect() calls | 217ms | coverage: 100% funcs+lines
+
+test_groups:
+  clampPage (5 tests): bounds clamping, bound=0 passthrough, single-page — all PASS
+  navLabel (2 tests): em-dash when bound=0, "N / M" format — all PASS
+  shouldSkipKeyboard/focus-guard (7 tests): INPUT/SELECT/TEXTAREA skip, BODY/DIV/BUTTON/""  no-skip — all PASS
+  button disabled derivation (5 tests): no-doc, page-1, last-page, middle, single-page — all PASS
+
+dv_guard: DV comment at L157-160 (commented-out wrong assertion) — non-hollow, auditable — PASS
+
+tsc: bun tsc --noEmit → 0 errors — PASS
+
+verdict: 19/19 PASS
+
+═══════════════════════════════════════════════════════════════
+ITEM-8 — FROZEN 0-DIFF
+═══════════════════════════════════════════════════════════════
+
+frozen_files:
+  git diff HEAD -- bctcEvalPageHandler.ts bctcEvalDetailHandler.ts bctcInspectHandler.ts bctcEvalStore.ts: 0 bytes — PASS
+  commit 3490dffa stat: only 2 files changed (1976-bctc-inspector-page-nav.test.ts, bctc-inspector.html) — CONFIRMED
+
+pek_subtree: not touched — PASS (commit stat confirms)
+full_report_endpoint: unchanged from prior cycles — PASS
+python_frozen_files: not in commit stat — PASS
+
+═══════════════════════════════════════════════════════════════
+VERDICT
+═══════════════════════════════════════════════════════════════
+
+overall_verdict: GREEN
+
+ALL ITEMS PASS:
+  ITEM-1 Header nav centered at top-middle with correct IDs: PASS
+  ITEM-2 Single orchestrator navigateToPage + setNavState syncs all 4 elements: PASS
+  ITEM-3 Keyboard ArrowLeft/ArrowRight → navigateToPage with e.preventDefault: PASS
+  ITEM-4 Focus guard INPUT/SELECT/TEXTAREA skip — non-hollow (7 test assertions): PASS
+  ITEM-5 Bounds affordance disabled on page-1/last/no-doc: PASS
+  ITEM-6 No regressions (MD→table, dual-view, trust-prefixes, OCR pane, has_pek:true): PASS
+  ITEM-7 Tests 19/19 PASS, DV guard non-hollow, tsc 0 errors: PASS
+  ITEM-8 Frozen 0-diff (3 other handlers + evalStore + python subtree): PASS
+
+BLOCKING: none
+NEXT: po — Task #9 header-nav+keyboard UX APPROVED; cycle-147 GREEN; sprint BCTC-EVAL-INSPECT-MERGE Task #9 complete
+```
+
+---
+
 ## cycle-146 · 2026-05-29 · BCTC-EVAL-INSPECT-MERGE Task #9 (commit a7d70e62) — GREEN
 
 **Task:** BCTC-EVAL-INSPECT-MERGE Task #9 additive enhancement — MD→table rendered view | **Verdict:** GREEN
