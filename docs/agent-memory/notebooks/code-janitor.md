@@ -1,10 +1,40 @@
 # Code Janitor Notebook
 
-**Last updated:** 2026-05-14 (janitor-1912 artifact cleanup — shipped)
+**Last updated:** 2026-05-30 (scan-20 DOUBLON-FUNCTION detection — 3 critical Puppeteer doublons)
 
 > Archive: docs/archive/notebooks/code-janitor-2026-05-21.md (pre-trim history)
 
 ## State summary
+
+### Session 25 (2026-05-30 — Focused DOUBLON-FUNCTION detection cycle)
+
+**Scope:** SSOT enforcement sweep — detect duplicate function-level logic across MCP server code, DB layer, system files. Priority: function-level duplications (not just magic values).
+
+**Methodology:**
+- Focused scan on MCP server infrastructure (fetchers, tools, handlers)
+- DB layer schema files (schema*.ts — 10 files)
+- Domain services (financial extractors)
+- grep + manual code review for function patterns
+
+**Findings:** 3 NEW CRITICAL LIVE DOUBLONS (all Puppeteer-related):
+
+| DOUBLON | Location | Severity | Type | LOC | Status |
+|---------|----------|----------|------|-----|--------|
+| DOUBLON-001 | tradingEconomicsChromium.ts (playwrightScrape L217-235 + playwrightScrapeNews L679-696) | HIGH | Page setup + request interception handler — identical 19 LOC blocks | 19 | SIGNAL created |
+| DOUBLON-002 | tradingEconomicsChromium.ts × 2 + chromiumPageFetcher.ts × 1 (browser launch) | MEDIUM | Dynamic import puppeteer + buildChromiumLaunchConfig call — identical 5 LOC × 3 | 12 | SIGNAL created |
+| DOUBLON-003 | tradingEconomicsChromium.ts (cacheAgeMs L180 + newsCacheAgeMs L830) | LOW | Cache age millisecond calculation — identical 4 LOC blocks | 4 | SIGNAL created |
+
+**Recurrent backlog:** 10 prior proposed items remain pending (JANITOR-027, JANITOR-034 + 8 meta-config).
+
+**Escalations:** DOUBLON-001 (page setup) and DOUBLON-002 (browser launch) both require developer action (low-mechanical fixes). DOUBLON-003 optional (cleanup).
+
+**Signal file:** docs/signals/code-janitor-doublon-detection-2026-05-30.json
+
+**Backlog updated:** scan-20 section added to docs/data/code-janitor-known-findings.json
+
+**Quality:** Full — comprehensive MCP server scan + DB layer schema verification. Extractors (JANITOR-014a) confirmed resolved (all import from extractorHelpers.ts). BROWSER_UA (JANITOR-017) confirmed resolved (centralized in browserHeaders.ts).
+
+---
 
 ### Session 24 (2026-05-14 — janitor-1912 artifact cleanup)
 
