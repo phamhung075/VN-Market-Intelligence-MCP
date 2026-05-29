@@ -1,5 +1,15 @@
 # Agent Father — Notebook
 
+## c277 · 2026-05-29 — Edit fb-market-poster (jargon hard-fail + word-count fix)
+
+- Change: Fixed false-green jargon validator (feedback_fence_false_green). Check 3 replaced from passive note to hard-fail grep with two sublists: (a) quant/notation terms (σ, sigma, bp/bps, ±-as-notation, Layer #, standard deviation, z-score, hexagram, Kinh Dịch, quẻ, TNB, convergence, signal #); (b) 23 forbidden English market terms from a new mapping table in STEP 3 (bullish/bearish/neutral/breadth/broad-based/support/resistance/momentum/stasis/durable/outflow/inflow/risk-on/risk-off/rally/sell-off/breakout/rebound/consolidate/sentiment/volatility/catalyst/upside/downside). Any hit blocks file write — mandatory fix inline before STEP 5. FALSE-GREEN PROOF statement added (planted σ or "bullish" must fire the check). On-failure block updated: check 3 now explicitly says "do NOT write the file with any jargon hit present". Word-count bound corrected: STEP 3 hard rules + STEP 4 check 4 both changed 150–700 → 150–1300 (long-form encouraged, upper ceiling generous by design). Broken comparison description replaced with explicit word-count-the-body logic and separate under/over actions. Size-justification updated 367L → 434L.
+- Files modified: 1 (docs/agents/fb-market-poster/flow/main.md — 367L → 434L)
+- Cascade: none — no name/routing/inter_agent/roster/dispatch change; no new always_load paths; tool package unchanged
+- Validation: 7/7 passed (frontmatter line 1 ✓, flow has error boundary + RETURN ✓, tool package unchanged ✓, no new always_load paths ✓, jargon check now hard-fail with planted-violation proof statement ✓, word-count rule consistent across STEP 3 hard rules + STEP 4 check 4 both set to 1300 ✓, 15-check count still 15 ✓)
+- Decision: Previous check 3 was a passive comment ("No jargon terms: Layer, σ…") with no enforcement mechanism — classic false-green (feedback_fence_false_green). Agent composed a post containing forbidden terms yet validation passed. Fix: explicit grep list + hard-fail + false-green proof statement per lesson. Word-count "1150 within 150–700" math failure fixed by raising upper bound to 1300 (user: long is fine) and making the count logic explicit (count body words, check against bound). No orthography/spelling check per user prior decline.
+
+---
+
 ## c276 · 2026-05-29 — Edit fb-market-poster (3-section predict-first structure)
 
 - Change: Restructured post composition from flat single-flow to mandatory 3-section order: Tóm tắt nhanh (brief recap, shortest) → Phân tích (causal analysis, bridge) → Dự đoán (prediction, LONGEST/main value). STEP 2 upgraded from sparse lazy-load to mandatory forward-looking source reads (digest-predict, CHEF outlook, analysis-briefs) with $prediction_inputs working-memory label. STEP 4 validation expanded from 11 to 15 checks (added: 3-sections present in order, Dự đoán has ≥1 concrete forward call, earned-prediction trace, recap-not-dominant guard). Word ceiling lifted 650 → 700 (trim rule: cut recap first, never cut Dự đoán). STEP 8 notebook format updated to log section-order/earned-prediction/recap-not-dominant check results.

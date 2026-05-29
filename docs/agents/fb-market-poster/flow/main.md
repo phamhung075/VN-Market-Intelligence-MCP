@@ -1,4 +1,4 @@
-<!-- size-justification: 367L — single-flow cowork agent with no sub-flows; carries full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 4 calls, 3-section composition spec with full detail floor, 15-check pre-write validation, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching -->
+<!-- size-justification: 434L — single-flow cowork agent with no sub-flows; carries full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 4 calls, 3-section composition spec with full detail floor, 15-check pre-write validation with hard-fail jargon grep + extended forbidden-English mapping table + false-green proof statement, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching -->
 # FB Market Poster — Main Flow
 
 Daily synthesis agent. Reads the day's published market intelligence and writes ONE plain-Vietnamese Facebook-ready post.
@@ -106,6 +106,36 @@ Hold all extracted forward signals in working memory under the label `$predictio
 
 **Language rule:** Plain, everyday Vietnamese. No analyst jargon. No citations (Layer #, σ, bp). No hexagram terms. No ticker codes without context. Use common names where helpful (e.g., "cổ phiếu Vingroup" alongside VHM/VIC if needed for clarity). Write as if explaining to a friend over coffee.
 
+**Forbidden English terms — use Vietnamese equivalents instead (this list is also the grep set for STEP 4 check 3):**
+
+| Forbidden English | Required Vietnamese |
+|---|---|
+| bullish | tăng / tích cực |
+| bearish | giảm / tiêu cực |
+| neutral | trung tính |
+| breadth | độ rộng thị trường |
+| broad-based | trên diện rộng |
+| support | hỗ trợ |
+| resistance | kháng cự |
+| momentum | đà |
+| stasis | đi ngang |
+| durable | kéo dài / bền vững |
+| outflow | dòng tiền rút ra |
+| inflow | dòng tiền đổ vào |
+| risk-on | ưa rủi ro |
+| risk-off | tránh rủi ro |
+| rally | tăng mạnh / hồi phục |
+| sell-off | bán tháo |
+| breakout | phá vỡ ngưỡng |
+| rebound | hồi phục |
+| consolidate / consolidation | tích lũy |
+| sentiment | tâm lý thị trường |
+| volatility | biến động |
+| catalyst | yếu tố kích hoạt / động lực |
+| upside / downside | đầu tăng / đầu giảm |
+
+Any English word from this table appearing in the post body is a jargon violation (same class as σ/bp). Exception: permitted inside quoted company names or ticker codes only.
+
 ---
 
 ### Section ordering (MANDATORY — never change this order)
@@ -188,7 +218,7 @@ Do NOT pad with generic vague sentences where data is missing — if a field is 
 ### Hard rules
 
 - ALWAYS include direction + delta% for VN-Index and any named ticker (memory: feedback_market_data_direction). Never write a bare price without change.
-- Total post length: 150–700 words. The 3-section structure naturally requires more space — do NOT truncate the Dự đoán section to meet a word target. Trim the recap if needed.
+- Total post length: 150–1300 words. The 3-section structure naturally requires more space — do NOT truncate the Dự đoán section to meet a word target. Trim the recap if needed. Long-form is fine; the ceiling is generous by design.
 - No markdown formatting in the post body (no `**bold**`, no `#headers`). Plain prose + the disclaimer separator. Section headings may be written as plain Vietnamese labels if helpful for readability (e.g., "Tóm tắt:" or "Dự đoán:") but no markdown.
 - The disclaimer block MUST appear verbatim at the end, inside `---` separators.
 - **Anti-filler rule:** Forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" (alone, without specifics). Every explanatory sentence must name something concrete.
@@ -235,8 +265,44 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
 **Structural checks (must pass — fix inline if failing):**
 1. VN-Index appears with both level AND % change.
 2. Disclaimer block present verbatim at the end.
-3. No jargon terms: Layer, σ, bp, hexagram, Kinh Dịch, TNB, signal #, convergence.
-4. Post length between 150 and 700 words. If under 150 → composition failed (exit with bug). If over 700 → trim recap section (Tóm tắt nhanh) first; never trim Dự đoán.
+3. **Hard-fail jargon grep (MUST be zero hits before file write):** Scan the entire post body for each of the following. Any hit = mandatory fix inline before proceeding to STEP 5.
+
+   **Quant / notation violations:**
+   - `σ` (sigma character)
+   - `sigma` (word)
+   - `bp` or `bps` (basis points)
+   - `±` (used as a statistical notation, not a plain plus-or-minus)
+   - `Layer #` or `Layer ` followed by a digit
+   - `standard deviation` or `độ lệch chuẩn` (in a quant context)
+   - z-score, z score
+   - hexagram, Kinh Dịch, quẻ
+   - `TNB`
+   - `convergence` (English)
+   - `signal #` or `signal ` followed by a digit
+
+   **Forbidden-English violations (from the mapping table in STEP 3):**
+   - `bullish`, `bearish`, `neutral` (standalone English)
+   - `breadth` (English)
+   - `broad-based` (English)
+   - `momentum` (English)
+   - `stasis` (English)
+   - `durable` (English)
+   - `outflow`, `inflow` (English)
+   - `risk-on`, `risk-off` (English)
+   - `rally`, `sell-off`, `breakout`, `rebound` (English)
+   - `consolidat` (matches consolidate/consolidation, English)
+   - `sentiment` (English)
+   - `volatility` (English)
+   - `catalyst` (English)
+   - `upside`, `downside` (English)
+
+   **FALSE-GREEN PROOF:** If this check were a no-op, inserting a deliberate `σ` or the word `bullish` into the draft would NOT be caught. This grep is proven non-false-green only if such an injection causes the check to fire and block file write. Any future change to this check must include a planted-violation smoke test (insert `σ` → verify check fires → remove).
+
+4. Post length: minimum 150 words, maximum 1300 words.
+   - Count words in the post body (exclude the file header line and the disclaimer separator lines from the count).
+   - If word count < 150 → composition failed (EXIT with bug: "[fb-market-poster] Post too short: {N} words").
+   - If word count > 1300 → trim recap section (Tóm tắt nhanh) first; never trim Dự đoán.
+   - Long-form is encouraged — do NOT compress Dự đoán to fit a low ceiling.
 
 **Section-order checks (must pass — fix inline if failing):**
 5. All three sections are present in the post, in the mandatory order: Tóm tắt nhanh → Phân tích → Dự đoán. Missing any section → fix inline.
@@ -256,7 +322,8 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
 15. Draft does NOT contain any of the forbidden generic phrases: "tin tức trong nước", "thông tin tích cực", "yếu tố bên ngoài", "thị trường biến động" used without a named specific following them.
 
 **On failure:**
-- Checks 1–8 fail: fix inline, re-verify.
+- Check 3 (jargon grep) fails: **mandatory fix inline — remove or replace every violating term before file write. Do NOT write the file with any jargon hit present.** Re-run the grep after fix; proceed only when zero hits confirmed.
+- Checks 1–2, 4–8 fail: fix inline, re-verify.
 - Checks 9–14 fail because data genuinely unavailable after live tools + notebook: log which field is missing in RETURN QUALITY field; proceed (do NOT pad).
 - Check 15 fails: mandatory fix inline before writing.
 - Any check cannot be resolved after one fix attempt → send_telegram(bug, "[fb-market-poster] Post validation failed: <which check>") and EXIT.
