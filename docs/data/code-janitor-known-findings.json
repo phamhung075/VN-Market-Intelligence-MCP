@@ -496,6 +496,46 @@
         "notes": "All ?? fallback patterns safe. No mismatches between code defaults and mcp.config.json."
       },
       "summary": "1 new proposed (JANITOR-034). 1 recurrent (JANITOR-027 already proposed). 0 shipped. Quality: full."
+    },
+    "scan-20": {
+      "scan_date": "2026-05-30T00:00:00Z",
+      "scope": "Focused DOUBLON-FUNCTION detection — MCP server code, DB layer, system files. Priority: function-level logic duplicates (SSOT enforcement)",
+      "check-1-puppeteer-setup-duplication": {
+        "status": "complete",
+        "findings": 1,
+        "notes": "DOUBLON-001: playwrightScrape (lines 217-235) and playwrightScrapeNews (lines 679-696) both contain identical page setup: setUserAgent + setRequestInterception + request handler blocking TE_BLOCKED_PATTERNS. 19 LOC duplicate. Risk: HIGH (silent divergence on anti-bot pattern changes). Extracted to _setupPuppeteerPage() helper."
+      },
+      "check-2-puppeteer-browser-launch": {
+        "status": "complete",
+        "findings": 3,
+        "files_affected": [
+          "apps/mcp-server/src/infrastructure/fetchers/tradingEconomicsChromium.ts (playwrightScrape, lines 201-205)",
+          "apps/mcp-server/src/infrastructure/fetchers/tradingEconomicsChromium.ts (playwrightScrapeNews, lines 674-676)",
+          "apps/mcp-server/src/infrastructure/fetchers/chromiumPageFetcher.ts (chromiumFetchPage, lines 39-43)"
+        ],
+        "notes": "DOUBLON-002: All three locations contain identical 5-line pattern: dynamic import puppeteer-core, extract .default, await puppeteer.launch(buildChromiumLaunchConfig()). Extract to chromiumLaunchHelper.ts. Risk: LOW-MECHANICAL (3-file refactor, no test impact). 12 LOC removed."
+      },
+      "check-3-cache-age-helper-duplication": {
+        "status": "complete",
+        "findings": 1,
+        "notes": "DOUBLON-003: cacheAgeMs (line 180) and newsCacheAgeMs (line 830) both compute Date.now() - new Date(entry.cachedAt).getTime(). Identical logic on structurally identical types. Risk: LOW (minimal impact, but reduces naming overhead). 4 LOC removed. Consolidate to single cacheAgeMs(entry: {cachedAt: string})."
+      },
+      "check-4-db-schema-duplication": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "All DDL canonical in 10 schema files (schema.ts, schema-*.ts). No duplicate CREATE TABLE across files. No production inline DDL outside schema layer."
+      },
+      "check-5-extractor-helpers-consolidation": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "JANITOR-014a RESOLVED: balanceSheetExtractor, incomeStatementExtractor, cashFlowExtractor all import detectUnitMultiplier from extractorHelpers.ts (lines 113-176). No stale copies remain. Extraction complete."
+      },
+      "check-6-browser-ua-centralization": {
+        "status": "complete",
+        "findings": 0,
+        "notes": "JANITOR-017 RESOLVED: BROWSER_UA constant centralized in browserHeaders.ts. All consuming files (hose.ts, taOhlcvBackfillJob.ts, fetchParseAndStoreBctc.ts) import from browserHeaders.js. No remaining hardcoded UA strings in core fetchers."
+      },
+      "summary": "3 new CRITICAL DOUBLONS detected (Puppeteer setup + browser launch + cache calc). 0 shipped (all require developer input). 10 prior proposed findings remain (JANITOR-027, JANITOR-034). Quality: full."
     }
   }
 }
