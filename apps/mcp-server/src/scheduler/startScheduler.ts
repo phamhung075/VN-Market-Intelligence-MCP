@@ -67,7 +67,6 @@ import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
 import { runSelfImproveOrchestrator } from './audits/selfImproveOrchestratorJob.js'
 import { runBctcEvalRecomputeJob } from './financial-reports/bctcEvalRecomputeJob.js'
-import { runBctcRefineJob } from './financial-reports/bctcRefineJob.js'
 import { runDiskUsageAlertJob } from './diskUsageAlertJob.js'
 import { runTasksMdJanitorJob } from './system/tasksMdJanitorJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
@@ -952,16 +951,6 @@ export function startScheduler() {
     await jobRunRepo.wrapRun('bctcEvalRecomputeJob', async () => {
       const result = await runBctcEvalRecomputeJob()
       return { rowsWritten: result.recomputed * 3 } // 3 stages per report
-    })
-  }, { timezone: 'UTC' })
-
-  // Sprint BCTC-AGENTIC-REFINE — Refine orchestrator (09:00, 14:00, 20:00 UTC)
-  // All three times verified outside 02:00-08:59 UTC Mon-Fri OFF-HOSE window.
-  // 09:00 UTC = 16:00 GMT+7 (after HOSE close 15:00 GMT+7). 14:00 = 21:00 GMT+7. 20:00 = 03:00 GMT+7.
-  // Override via env: CRON_BCTC_REFINE_JOB
-  cron.schedule(CRONS.bctcRefineJob, async () => {
-    await jobRunRepo.wrapRun('bctcRefineJob', async () => {
-      await runBctcRefineJob({ db })
     })
   }, { timezone: 'UTC' })
 
