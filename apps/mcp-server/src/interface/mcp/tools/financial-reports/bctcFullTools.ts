@@ -319,6 +319,112 @@ function buildSentimentSection(db: Database, code: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PUB-1..4 Publishability Guard
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * PublishabilityCheck — result of the four-gate publish check.
+ */
+interface PublishabilityCheck {
+  publishable: boolean;
+  reason?: string;            // Human-readable refusal text when not publishable
+  partialWarning?: string;    // Warning text for partial REJECTED_SANITY (publishable=true)
+}
+
+/**
+ * checkPublishability — evaluates PUB-1 through PUB-4 binding conditions.
+ *
+ * Called immediately after `latestRow` query, before building any financial output.
+ * Uses the injected `db` parameter directly (no HTTP calls — supports in-memory test DBs).
+ *
+ * PUB-1: refine_status IN ('DONE', 'PARTIAL')
+ * PUB-2: ≥1 bctc_table_rows row with non-null value_current
+ * PUB-3: ≥1 balance_sheet non-summary row (is_summary_row=0)
+ * PUB-4: No REJECTED_SANITY units, or partial rejection with warning
+ *
+ * @param db        Database instance (injected for testability)
+ * @param reportId  Financial report UUID
+ * @returns PublishabilityCheck with publishable flag and optional reason/warning
+ */
+function checkPublishability(db: Database, reportId: string): PublishabilityCheck {
+  // PUB-1: refine_status must be DONE or PARTIAL
+  const report = db
+    .query<{ refine_status: string }, [string]>(
+      "SELECT refine_status FROM financial_reports WHERE id = ?",
+    )
+    .get(reportId);
+
+  if (!report || !["DONE", "PARTIAL"].includes(report.refine_status)) {
+    return {
+      publishable: false,
+      reason: "Chưa có dữ liệu BCTC",
+    };
+  }
+
+  // PUB-2: at least one bctc_table_rows row with non-null value_current
+  const rowCount = db
+    .query<{ cnt: number }, [string]>(
+      "SELECT COUNT(*) as cnt FROM bctc_table_rows WHERE report_id = ? AND value_current IS NOT NULL",
+    )
+    .get(reportId);
+
+  if (!rowCount || rowCount.cnt === 0) {
+    return {
+      publishable: false,
+      reason: "refine data absent — report has no extracted rows",
+    };
+  }
+
+  // PUB-3: balance sheet has at least one non-summary child row
+  const balanceChildren = db
+    .query<{ cnt: number }, [string]>(
+      "SELECT COUNT(*) as cnt FROM bctc_table_rows WHERE report_id = ? AND statement_section = 'balance_sheet' AND is_summary_row = 0",
+    )
+    .get(reportId);
+
+  if (!balanceChildren || balanceChildren.cnt === 0) {
+    return {
+      publishable: false,
+      reason: "balance sheet has no decomposition — forced-zero pass suspected",
+    };
+  }
+
+  // PUB-4: check for REJECTED_SANITY units
+  const totalUnitCount = db
+    .query<{ cnt: number }, [string]>(
+      "SELECT COUNT(*) as cnt FROM bctc_refined_units WHERE report_id = ?",
+    )
+    .get(reportId);
+
+  const rejectedUnitCount = db
+    .query<{ cnt: number }, [string]>(
+      "SELECT COUNT(*) as cnt FROM bctc_refined_units WHERE report_id = ? AND window_status = 'REJECTED_SANITY'",
+    )
+    .get(reportId);
+
+  if (rejectedUnitCount && rejectedUnitCount.cnt > 0) {
+    const total = totalUnitCount?.cnt ?? 0;
+    const rejected = rejectedUnitCount.cnt;
+
+    if (rejected >= total) {
+      // All units rejected — fully unpublishable
+      return {
+        publishable: false,
+        reason: "All refined units rejected by sanity gates; no publishable data",
+      };
+    }
+
+    // Partial rejection — publishable with warning
+    return {
+      publishable: true,
+      partialWarning: `[PUB-4 WARNING] ${rejected}/${total} refined units rejected by sanity gates; data for rejected sections may be incomplete`,
+    };
+  }
+
+  return { publishable: true };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tool registration
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -390,6 +496,33 @@ export function registerBctcFullTools(
               },
             ],
           };
+        }
+
+        // ── PUB-1..4 Publishability guard ─────────────────────────────────
+        // PUB-1: refine_status IN ('DONE', 'PARTIAL')
+        // PUB-2: ≥1 extracted row with value_current IS NOT NULL
+        // PUB-3: balance sheet has ≥1 non-summary child row (no forced-zero)
+        // PUB-4: no REJECTED_SANITY units, or partial rejection warning
+        // If any gate fails, return human-readable refusal — no financial data served.
+        const pubCheck = checkPublishability(db, latestRow.id);
+        if (!pubCheck.publishable) {
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: pubCheck.reason ?? "Chưa có dữ liệu BCTC",
+              },
+            ],
+          };
+        }
+
+        // PUB-4 partial rejection: log warning but continue serving clean sections
+        if (pubCheck.partialWarning) {
+          logger.warn("[bctcFullTools] PUB-4 partial REJECTED_SANITY", {
+            code: upperCode,
+            report_id: latestRow.id,
+            warning: pubCheck.partialWarning,
+          });
         }
 
         // ── 2. Build the three sections ──────────────────────────────────
