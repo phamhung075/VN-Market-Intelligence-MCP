@@ -1,5 +1,31 @@
 # dev-mcp-server -- Notebook
 
+## c334 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-6) — COMMITTED 7a3734ed
+
+**Task:** HC-DEV-6 — bctc-inspector.html "Sửa tay / Xác nhận cuối" tab
+
+**ADDITIVE only.** 476 lines added to `bctc-inspector.html`. Zero changes to existing panes.
+
+**HTML/JS additions:**
+- CSS block: `.hc-*` classes (hc-panel, hc-cell-card, hc-badge-red, hc-badge-yellow, hc-values-grid, hc-btn-confirm, hc-btn-reset, hc-btn-save, hc-correction-row, hc-input-val, hc-status-ok, hc-status-pending, hc-status-ambiguous, hc-confirm-badge, hc-cell-list, hc-no-flags, hc-loading, hc-error, hc-locked-note, hc-tab-btn, hc-tab-active)
+- Tab button `id="hc-tab-btn"` inside eval-strip header (alongside existing Người dùng / Agent (debug) toggle)
+- Panel `id="hc-panel"` after eval-strip-section (hidden by default, shown on tab click)
+- JS: `parseVnNumber()`, `hcFlagsUrl()`, `hcCorrectUrl()`, `hcConfirmUrl()`, `hcConfirmResetUrl()`, `hcLoadFlags()`, `hcRenderCells()`, `hcSubmitCorrection()`, `hcConfirmReport()`, `hcResetConfirmation()`, `hcUpdateStatusBadge()`, `resetPanes` monkey-patch (additive HC cleanup only)
+
+**Four endpoints wired:**
+- GET  `/api/bctc-inspect/flags/{doc_id}` — flag list on tab open
+- POST `/api/bctc-inspect/correct/{doc_id}` — per-cell correction
+- POST `/api/bctc-inspect/confirm/{doc_id}` — final confirm lock
+- POST `/api/bctc-inspect/confirm/{doc_id}/reset` — unlock
+
+**DV test: 53 pass, 0 fail** (`HC-DEV-6-inspector-panel.test.ts`)
+- URL-assertion (6 tests): exact /api/bctc-inspect/flags|correct|confirm|reset path patterns
+- parseVnNumber (11 tests): `,`→`.`, whitespace strip, null on NaN/empty/null/undefined
+- HTML structural (36 tests): new element IDs present + 17 existing pane IDs all present (additive-only proof)
+- DV guard: deliberate-violation comment in parseVnNumber block
+
+**tsc:** 0 errors. Existing panes: 0-diff. Next: QA gate (full HC sprint).
+
 ## c333 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-4) — COMMITTED dca93898
 
 **Task:** HC-DEV-4 — MCP tools #145/#146 + registry wiring
@@ -95,139 +121,8 @@ DV-HC-9 (idempotency x2), DV-HC-10 (service + both-table writes), DV-HC-11 (code
 
 **BLOCKS UNBLOCKED:** HC-DEV-2, HC-DEV-3, HC-DEV-4 can now start.
 
-## c329 · 2026-05-30 (BCTC-AGENTIC-REFINE AR-PREREQ-3 + AR-MCP-OPTY) — COMMITTED a1cb486e + 47c9f328
-
-**Tasks:** AR-PREREQ-3 (stop-the-bleed cron removal) + AR-MCP-OPTY (3 fleet-cron MCP tools)
-
-**Summary:** Option-Y ruling (§0.7.2): mcp-server becomes pure data service. Orchestration moves to host-level fleet cron.
-
-**Step A (AR-PREREQ-3, commit a1cb486e):**
-- Deleted `bctcRefineJob` key from `cronConfig.ts`
-- Deleted import + cron registration from `startScheduler.ts`
-- Stops active ENOENT failure loop (spawn("claude") in container with no claude CLI)
-
-**Step B (AR-MCP-OPTY, commit 47c9f328):**
-- NEW `application/utils/windowPartitioner.ts` — partitionIntoWindows() migrated
-- NEW `application/utils/boundedPool.ts` — runBoundedPool() migrated
-- MODIFIED `bctcRefineJob.ts` — production spawn path deleted, runBctcRefineJob() deleted, utilities re-exported
-- NEW `getBctcPendingRefineTool.ts` — tool #142: get_bctc_pending_refine
-- NEW `pushBctcRefinedUnitTool.ts` — tool #143: push_bctc_refined_unit (INSERT OR REPLACE idempotency)
-- NEW `finalizeBctcRefineTool.ts` — tool #144: finalize_bctc_refine (Phase-4 collect-then-write)
-- MODIFIED `registry.ts` — 3 imports + 3 array entries
-- MODIFIED test file — push_tool_pathway describe block (6 DV scenarios)
-
-**DV RED→GREEN:** 13/13 pass. tsc: 0 errors. No spawn() in production.
-
-**ops_rebuild_required: true** — next sprint task AR-OPS-REBUILD will rebuild container.
-
-## c328 · 2026-05-30 (DATA-PIPELINE-INTEGRITY DPI-FU-D) — COMMITTED d7ee43d7
-
-**Task:** DPI-FU-D — SBV fetcher must reject zero-value deposit-rate writes
-
-**Root cause:** `storeSbvSnapshot` in `sbv.ts` did unconditional INSERT OR REPLACE. When the fetcher returned `maxDepositRatePct=0` (parse miss / upstream SBV gap), the good prior row (5.0 from 2026-05-29T23:15Z) was silently overwritten with 0. `sbvRatesJob.ts` had no pre-flight guard — it passed any snapshot straight to store.
-
-**Fix layers (defence-in-depth):**
-1. `sbvRatesJob.ts` — pre-flight `detectZeroSentinelFields()` check BEFORE calling store. If any sentinel field (max_deposit_rate_pct, usd_vnd_official, overnight_rate_pct, refinancing_rate_pct, max_lending_rate_pct) is ≤0: alert WORK channel, return `zeroRateSkipped=true`, skip store entirely.
-2. `sbv.ts storeSbvSnapshot` — persistence-boundary guard: reads prior row, detects zero-overwrite risk on same 5 sentinel columns, returns `{skipped: true, zeroColumns}` and logs ERROR without touching DB. First-ever writes (no prior row) always accepted.
-3. NOT guarded: `interbank_overnight_pct` (legitimately 0 on holiday), `discount_rate_pct` (conservative scope).
-
-**Files changed (3):**
-- MOD: `src/infrastructure/fetchers/sbv.ts` — `storeSbvSnapshot` now returns `{skipped, zeroColumns}`, reads prior row, guards sentinel columns
-- MOD: `src/scheduler/macro/sbvRatesJob.ts` — pre-flight zero-sentinel check, WORK alert, `zeroRateSkipped` result field
-- NEW: `src/__tests__/DPI-FU-D-sbv-zero-deposit-guard.test.ts` — 7 tests (DFD-01..07)
-
-**RED→GREEN evidence:**
-- Before fix: 3 pass / 4 fail (DFD-01, 02, 05, 07 failed)
-- After fix: 7 pass / 0 fail
-- Existing SBV suite (028 + sbvRatesJob + 1497): 29→36 pass / 0 fail
-
-**Gates:** tsc EXIT 0 | 36 SBV tests GREEN | tool count 151 (unchanged) | scheduler count 71 (unchanged)
-
-**ops_rebuild_required: true** — mcp-server container rebuild required. Next good SBV fetch (every 4h, cron `0 */4 * * *`) will auto-restore deposit rate once upstream SBV XML is healthy.
-
-**DB verification ops/qa should run post-rebuild:**
-```sql
--- Confirm deposit rate is positive (not 0 and not fixture 4.7)
-SELECT max_deposit_rate_pct, fetched_at FROM sbv_rates WHERE source = 'sbv';
--- Confirm no zero-rate row in history
-SELECT COUNT(*) FROM sbv_rates_history WHERE max_deposit_rate_pct = 0;
-```
-
-Zone health: 2 files mod + 1 test new; tsc EXIT 0; 36 SBV tests green; HEALTHY
-
----
-
-## c327 · 2026-05-30 (BCTC-AGENTIC-REFINE AR-MCP) — COMMITTED 76a3b8d2
-
-**Task:** AR-MCP — FR-3 through FR-13 refine orchestrator, MCP tools, parser, schema.
-
-**Files changed (17):**
-- NEW: `src/application/utils/pageClassifier.ts` — FR-5 classifyPageForImageLoad (pipe/VN-keywords/continuation)
-- NEW: `src/application/utils/refinedMarkdownParser.ts` — FR-10 deterministic parser; LIVE schema (label, value_prior); trust flags→confidence 0.2/0.4/1.0; parseVnNumber (dot-thousands separator)
-- NEW: `src/interface/mcp/tools/financial-reports/getBctcPageTextTool.ts` — FR-3 (pdf-path→basename→getPageText)
-- NEW: `src/interface/mcp/tools/financial-reports/getBctcPageImageTool.ts` — FR-4 (on-demand rasterize, BCTC_IMAGE_PAGE_CAP=3)
-- NEW: `src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts` — FR-11 (reads bctc_refined_units)
-- NEW: `src/interface/mcp/routes/bctcRefineHandler.ts` — on-demand POST /api/refine-bctc/{report_id}
-- NEW: `src/scheduler/financial-reports/bctcRefineJob.ts` — FR-12 4-phase orchestrator (claim+readiness, window partition continuation-aware, bounded fan-out pool default=5, collect-then-write); runBctcRefineJob cron entry
-- MOD: `src/infrastructure/db/schema-financial-reports.ts` — FR-9 bctc_refined_units + window_status + text_status/refine_status idempotent migrations
-- MOD: `src/infrastructure/fetchers/pdfExtractorClient.ts` — getPageText() + rasterizePages()
-- MOD: `src/interface/mcp/tools/registry.ts` — 3 new tools (#139-#141)
-- MOD: `src/interface/mcp/tools/financial-reports/index.ts` — 3 new exports
-- MOD: `src/scheduler/cronConfig.ts` — bctcRefineJob '0 9,14,20 * * *' UTC
-- NEW: 5 test files (AR-parser-dv, AR-page-classifier, AR-schema-migration, AR-refine-readiness-gate, AR-refined-units-idempotency)
-
-**DV protocol:** RED_BEFORE=true guard in AR-parser-dv.test.ts; all 5 AR test files co-committed with production code.
-
-**Gates:** tsc EXIT 0 | 76 AR tests GREEN (0 fail) | balance-badge-forbidden enforced in tests | idempotency ≥3× proven (Scenario A/B/C) | continuation invariant tested (FPT [22,23]) | OFF-HOSE cron verified (09:00/14:00/20:00 UTC) | commit 76a3b8d2
-
-**ops_rebuild_required: true** — AR-OPS must rebuild mcp-server container after this change.
-
-Zone health: 17 files (12 new, 5 mod); tsc EXIT 0; 76 AR tests green; HEALTHY
-
----
-
-## c326 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE Task #9 — HEADER PAGE-NAV + KEYBOARD) — COMMITTED 3490dffa
-
-**Task:** Move page-change buttons to top-middle header; add ArrowLeft/ArrowRight keyboard nav.
-
-**Files changed (2):**
-- `apps/mcp-server/src/interface/bctc-inspector.html` — CSS: `header { position:relative }` + `#header-page-nav` (centered absolute); HTML: header nav block (header-btn-prev, header-page-indicator, header-btn-next); JS: `headerBtnPrev/Next/pageIndicator` DOM refs, `setNavState()` SSOT for all 4 nav elements, keyboard `keydown` listener with focus guard (INPUT/SELECT/TEXTAREA), header button click handlers. `renderOcr` and `resetPanes` updated to use `setNavState`.
-- `apps/mcp-server/src/__tests__/1976-bctc-inspector-page-nav.test.ts` — NEW: 19 pure-function tests (clampPage, navLabel, shouldSkipKeyboard, button-disabled derivation) + DV guard comment. All GREEN.
-
-**Design:** `setNavState(page, bound)` single SSOT syncs header+OCR-pane nav. All nav (buttons+keyboard) delegates to `navigateToPage` orchestrator. Focus guard: skip arrows when activeElement tag is INPUT/SELECT/TEXTAREA.
-
-**Gates:** tsc EXIT 0 | 19 new tests GREEN | 10088 tests 0 fail | tool=148 | sched=70 | frozen 0-diff | staged=2 | commit 3490dffa
-
-**ops_rebuild_required: true** — HTML baked into image; `docker compose build mcp-server && up -d --no-deps --force-recreate mcp-server`
-
-Zone health: 2 files (1 mod, 1 new); tsc EXIT 0; 19 tests green; frozen 0-diff | HEALTHY
-
----
-
-## c325 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE Task #9 — MD→TABLE RENDERED VIEW)
-
-### MD-STAGE5: markdown→table rendered per-page view — COMMITTED a7d70e62
-
-**Task:** Add #md-stage5-section to bctc-inspector.html: renders stage-5 stitched_markdown as visual HTML tables (per-page, page-nav replay). Additive only.
-
-**Files changed (3):**
-- `apps/mcp-server/src/interface/bctc-inspector.html` — CSS #md-stage5-section; HTML section (between eval-strip and table-section); JS: `cachedPekUnits` state, `renderMdStage5View(pageNum)` (filters units by page, `parsePipeTableToHtml`, fragment banner for multi-page units), hooked into `navigateToPage` step 4 + `renderTable` PEK path + `resetPanes`.
-- `apps/mcp-server/src/interface/mcp/routes/mdTableParser.ts` — NEW: exported `parsePipeTableToHtml()` + `escHtml()` pure TS utility. 100% coverage.
-- `apps/mcp-server/src/__tests__/md-table-parser.test.ts` — NEW: 14 tests (TC-P1..P7 + escHtml + DV-3), 50 expect(), 100% cov, all GREEN.
-
-**Design:** `stitched_markdown` already in `/api/bctc-inspect/table/{doc_id}` response (`units[].stitched_markdown`, has_pek:true). No handler change. Pure client-side.
-
-**Honesty:** multi-page units show `[BẢNG CÓ THỂ KHÔNG ĐẦY ĐỦ]` banner; no-unit pages show explicit message; has_pek:false hides section entirely.
-
-**Gates:** tsc EXIT 0 | 14 new tests GREEN 100% cov | 61-file run 0 fail | tool=148 | sched=70 | frozen 0-diff | PEK pristine | staged=3 | commit a7d70e62
-
-**DV-3:** prose→pre (no table), pipe→table. Both paths proven live. Gate not hollow.
-
-**ops_rebuild_required: true** — HTML baked; `docker compose build mcp-server && up -d --no-deps --force-recreate mcp-server`
-
-Zone health: 3 files (1 mod, 2 new); tsc EXIT 0; 14 tests green; frozen 0-diff; PEK pristine | HEALTHY
-
----
+## c329-c325 (pruned) — commits: a1cb486e 47c9f328 d7ee43d7 76a3b8d2 3490dffa a7d70e62
+AR-PREREQ-3, AR-MCP-OPTY, DPI-FU-D SBV zero-guard, AR-MCP orchestrator, header page-nav, MD→table view.
 
 
 ## c327 · 2026-05-30 (BCTC-TABLE-BOUNDARY BTB-PERSIST-FIX BLOCKING-1) — COMMITTED 60dfac7f
