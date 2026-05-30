@@ -902,6 +902,7 @@
       <button class="rtab-btn" data-tab="soluyen" id="rtab-soluyen">Số liệu</button>
       <button class="rtab-btn" data-tab="danhgia" id="rtab-danhgia">Đánh giá 6 cổng</button>
       <button class="rtab-btn" data-tab="suatay" id="rtab-suatay">Sửa tay</button>
+      <button class="rtab-btn" data-tab="aiinput" id="rtab-aiinput">Đầu vào AI</button>
     </div>
 
     <!-- Tab panels -->
@@ -1006,6 +1007,33 @@
         </div>
       </div>
 
+      <!-- TAB: Đầu vào AI (AIT — agent-input bundle per page) -->
+      <div class="tab-panel" data-tab-panel="aiinput" id="tab-panel-aiinput">
+        <div style="padding:12px 14px;flex:1;background:#181e28;display:flex;flex-direction:column;gap:12px;">
+          <div class="section-title">Đầu vào AI — trang đang chọn</div>
+          <!-- Image sub-section -->
+          <div id="aiinput-image-wrap" style="flex-shrink:0;">
+            <div style="font-size:11px;color:#888;margin-bottom:4px;">Ảnh trang (PNG agent đã nhận)</div>
+            <div id="aiinput-image-content"><div class="missing-msg">Chưa chọn tài liệu.</div></div>
+          </div>
+          <!-- Page-window sub-section -->
+          <div id="aiinput-window-wrap" style="flex-shrink:0;">
+            <div style="font-size:11px;color:#888;margin-bottom:4px;">Cửa sổ trang (các trang cùng được nạp)</div>
+            <div id="aiinput-window-content"><div class="missing-msg">—</div></div>
+          </div>
+          <!-- OCR text (reused from lastOcrData) -->
+          <div id="aiinput-ocr-wrap" style="flex:1;min-height:0;overflow:auto;">
+            <div style="font-size:11px;color:#888;margin-bottom:4px;">Văn bản OCR truyền cho agent</div>
+            <pre id="aiinput-ocr-content" style="white-space:pre-wrap;font-size:11px;color:#ccc;">—</pre>
+          </div>
+          <!-- Static refine contract (collapsed) -->
+          <details style="flex-shrink:0;font-size:11px;color:#888;">
+            <summary>Hướng dẫn agent (refine contract, chỉ đọc)</summary>
+            <pre style="white-space:pre-wrap;color:#aaa;margin-top:4px;">numbers ← text (OCR is authoritative for digits); structure ← image (image is authoritative for row/column layout); disagreement → FLAG, never guess.</pre>
+          </details>
+        </div>
+      </div>
+
     </div><!-- /#right-tab-panels -->
   </div>
 </div>
@@ -1027,6 +1055,9 @@
   let usingIframeFallback = false; // true when pdf.js CDN failed → iframe used
   // pdf.js document object — retained across page navigations for on-demand render
   let pdfDoc = null;
+
+  // AIT: last OCR response cached by renderOcr() — reused by renderAiInputTab()
+  let lastOcrData = null;
 
   // ── Eval view state (M-6: dual-view toggle) ──────────────────────────────
   // "user" (default) | "agent" — persisted to localStorage
@@ -1243,6 +1274,51 @@
     }
   }
 
+  // ── AIT: renderAiInputTab — show agent-input bundle for current page ────────
+  // Called lazily: only when activeTab === 'aiinput' in navigateToPage,
+  // and on switchTab('aiinput') if a document is already selected.
+  // Reads lastOcrData (populated by renderOcr which fires first in navigateToPage).
+  async function renderAiInputTab(docId, page) {
+    // Image sub-section
+    const imgContent = document.getElementById('aiinput-image-content');
+    if (imgContent) {
+      imgContent.innerHTML = '<div class="missing-msg">Carregando...</div>';
+      const imgUrl = `${BASE}/api/bctc-inspect/page-image/${encodeURIComponent(docId)}?page=${page}`;
+      const testImg = new Image();
+      testImg.onload = () => {
+        imgContent.innerHTML = '';
+        imgContent.appendChild(testImg);
+        testImg.style.maxWidth = '100%';
+      };
+      testImg.onerror = () => {
+        imgContent.innerHTML = '<div class="missing-msg">chưa có ảnh trang này</div>';
+      };
+      testImg.src = imgUrl;
+    }
+
+    // Page-window sub-section
+    const winContent = document.getElementById('aiinput-window-content');
+    if (winContent) {
+      try {
+        const wr = await fetch(`${BASE}/api/bctc-inspect/page-window/${encodeURIComponent(docId)}?page=${page}`);
+        const wd = await wr.json();
+        if (wd.found && wd.page_numbers && wd.page_numbers.length > 0) {
+          winContent.textContent = `Unit ${wd.unit_id} — trang: [${wd.page_numbers.join(', ')}]`;
+        } else {
+          winContent.textContent = 'Trang này không thuộc unit nào trong bctc_refined_units.';
+        }
+      } catch { winContent.textContent = '(lỗi tải cửa sổ trang)'; }
+    }
+
+    // OCR text sub-section — reuse lastOcrData already fetched by renderOcr()
+    const ocrPre = document.getElementById('aiinput-ocr-content');
+    if (ocrPre) {
+      ocrPre.textContent = (lastOcrData && lastOcrData.text_content)
+        ? lastOcrData.text_content
+        : '(chưa có văn bản OCR)';
+    }
+  }
+
   // ── BCTC-EVAL-INSPECT-MERGE: navigateToPage orchestrator ────────────────
   // Single entry point for ALL page changes. Drives PDF scroll, OCR, eval
   // strip, and zone overlay in lockstep. Replaces split btnPrev/btnNext handlers.
@@ -1262,6 +1338,8 @@
     renderMdStage5View(pageNum);
     // 5. Fetch zone overlay if enabled
     if (zoneOverlayEnabled) await renderZoneOverlay(currentDocId, pageNum);
+    // 6. AIT: render AI input bundle for this page (lazy — only when tab is active)
+    if (activeTab === 'aiinput') await renderAiInputTab(currentDocId, pageNum);
   }
 
   // ── Render OCR + Figures (right pane) ────────────────────────────────────
@@ -1286,6 +1364,7 @@
       }
 
       const data = await resp.json();
+      lastOcrData = data; // AIT: cache for renderAiInputTab reuse
       totalPages = data.total_pages;
       currentPage = data.page;
 
@@ -2588,6 +2667,10 @@
     // "Sửa tay" tab: auto-load flags if a document is selected
     if (tabId === "suatay" && currentDocId) {
       hcLoadFlags(currentDocId);
+    }
+    // AIT: "Đầu vào AI" tab: auto-render bundle if a document is selected
+    if (tabId === "aiinput" && currentDocId) {
+      renderAiInputTab(currentDocId, currentPage);
     }
   }
 

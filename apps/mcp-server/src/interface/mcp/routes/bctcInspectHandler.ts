@@ -893,6 +893,168 @@ export function handleBctcInspectZones(
   }
 }
 
+// ─── AIT-DEV: Agent-input page PNG endpoint ──────────────────────────────────
+//
+// GET /api/bctc-inspect/page-image/{docId}?page=N
+//
+// Serves the agent-input rasterized PNG for a given report page directly from
+// the named volume /data/bctc-page-images mounted in mcp-server.
+// Pattern identical to handleBctcInspectPdf: DB lookup validates docId, then
+// direct readFileSync from the absolute volume path — no proxy to pdf-extractor.
+//
+// Path formula: /data/bctc-page-images/{docId}/page_{0001..}.png
+// (docId === report_id; same key used by getBctcPageImageTool.ts)
+//
+// DDD layer: interface (same precedent as handleBctcInspectPdf — direct file I/O).
+
+export function handleBctcInspectPageImage(
+  req: IncomingMessage,
+  res: ServerResponse,
+  db: Database,
+  docId: string,
+): void {
+  // Validate UUID before any DB access — guard against filesystem probing
+  if (!isValidUuid(docId)) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid_doc_id", doc_id: docId }));
+    return;
+  }
+
+  try {
+    const url = new URL(req.url ?? "/", "http://localhost");
+    const rawPage = url.searchParams.get("page") ?? "1";
+    const page = Math.max(1, parseInt(rawPage, 10) || 1);
+
+    // Verify docId exists in financial_reports — security guard (prevents
+    // filesystem probing via fabricated UUIDs; path is server-computed)
+    const reportRow = db
+      .prepare<{ id: string }, [string]>(
+        `SELECT id FROM financial_reports WHERE id = ?`,
+      )
+      .get(docId) as { id: string } | null;
+
+    if (!reportRow) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "doc_not_found", doc_id: docId }));
+      return;
+    }
+
+    // Absolute path formula — uses the named volume mount point /data/bctc-page-images
+    // NOT process.cwd()/data/... which would resolve to /app/data/... (wrong mount)
+    const paddedPage = String(page).padStart(4, "0");
+    const pngPath = `/data/bctc-page-images/${docId}/page_${paddedPage}.png`;
+
+    if (!existsSync(pngPath)) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({ error: "png_not_found", doc_id: docId, page }),
+      );
+      return;
+    }
+
+    const pngBytes = readFileSync(pngPath);
+    res.writeHead(200, {
+      "Content-Type": "image/png",
+      "Content-Length": String(pngBytes.length),
+    });
+    res.end(pngBytes);
+  } catch (err) {
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        error: "server_error",
+        detail: err instanceof Error ? err.message : String(err),
+      }),
+    );
+  }
+}
+
+// ─── AIT-DEV: Page-window context endpoint ───────────────────────────────────
+//
+// GET /api/bctc-inspect/page-window/{docId}?page=N
+//
+// Returns the refined unit(s) whose page_numbers_json covers the requested page.
+// Source: bctc_refined_units (NOT bctc_layout_units) — same SQLite json_each
+// pattern as the existing PEK OCR query in handleBctcInspectOcr.
+//
+// Response: { found: true, unit_id, page_numbers, row_count, confidence }
+//        or { found: false } when no unit covers this page.
+// Always 200 — miss is not an error; honest empty state on the client side.
+
+interface BctcRefinedUnitRow {
+  unit_id: string;
+  page_numbers_json: string;
+  row_count: number | null;
+  confidence: number | null;
+}
+
+export function handleBctcInspectPageWindow(
+  req: IncomingMessage,
+  res: ServerResponse,
+  db: Database,
+  docId: string,
+): void {
+  if (!isValidUuid(docId)) {
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid_doc_id", doc_id: docId }));
+    return;
+  }
+
+  try {
+    const url = new URL(req.url ?? "/", "http://localhost");
+    const rawPage = url.searchParams.get("page") ?? "1";
+    const page = Math.max(1, parseInt(rawPage, 10) || 1);
+
+    // Query bctc_refined_units for unit(s) covering the requested page
+    // json_each(page_numbers_json) safely matches exact page number (avoids LIKE '%N%' false-matches)
+    const unitRow = db
+      .prepare<BctcRefinedUnitRow, [string, number]>(`
+        SELECT unit_id, page_numbers_json, row_count, confidence
+        FROM bctc_refined_units
+        WHERE report_id = ?
+          AND EXISTS (
+            SELECT 1 FROM json_each(page_numbers_json) WHERE value = ?
+          )
+        LIMIT 1
+      `)
+      .get(docId, page) as BctcRefinedUnitRow | null;
+
+    if (!unitRow) {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ found: false, doc_id: docId, page }));
+      return;
+    }
+
+    let pageNumbers: number[] = [];
+    try {
+      pageNumbers = JSON.parse(unitRow.page_numbers_json) as number[];
+    } catch {
+      pageNumbers = [];
+    }
+
+    res.writeHead(200, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        found: true,
+        doc_id: docId,
+        page,
+        unit_id: unitRow.unit_id,
+        page_numbers: pageNumbers,
+        row_count: unitRow.row_count ?? null,
+        confidence: unitRow.confidence ?? null,
+      }),
+    );
+  } catch (err) {
+    res.writeHead(500, { "Content-Type": "application/json" });
+    res.end(
+      JSON.stringify({
+        error: "server_error",
+        detail: err instanceof Error ? err.message : String(err),
+      }),
+    );
+  }
+}
+
 // ─── Viewer HTML page ─────────────────────────────────────────────────────────
 
 export function handleBctcInspectPage(

@@ -54,6 +54,8 @@ import {
   handleBctcInspectOcr,
   handleBctcInspectTable,
   handleBctcInspectZones,
+  handleBctcInspectPageImage,
+  handleBctcInspectPageWindow,
 } from "./routes/bctcInspectHandler.js";
 import { handlePushBctcTable } from "./routes/pushBctcTableHandler.js";
 import { handlePushBctcMdTables } from "./routes/pushBctcMdTablesHandler.js";
@@ -503,6 +505,20 @@ export async function createBunServer(
     if (method === "GET" && pathname.startsWith("/api/bctc-inspect/zones/")) {
       const docId = pathname.slice("/api/bctc-inspect/zones/".length);
       handleBctcInspectZones(req, res, db, docId);
+      return;
+    }
+
+    // AIT-DEV: AI Input Tab — serve agent-input page PNG
+    if (method === "GET" && pathname.startsWith("/api/bctc-inspect/page-image/")) {
+      const docId = pathname.slice("/api/bctc-inspect/page-image/".length);
+      handleBctcInspectPageImage(req, res, db, docId);
+      return;
+    }
+
+    // AIT-DEV: AI Input Tab — page-window context from bctc_refined_units
+    if (method === "GET" && pathname.startsWith("/api/bctc-inspect/page-window/")) {
+      const docId = pathname.slice("/api/bctc-inspect/page-window/".length);
+      handleBctcInspectPageWindow(req, res, db, docId);
       return;
     }
 
