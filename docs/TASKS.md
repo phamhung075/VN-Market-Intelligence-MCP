@@ -14,7 +14,7 @@
 
 **Atomic Tasks (7 total):**
 - ✅ **HC-DEV-1** (dev-mcp-server): DONE. Schema migrations (3 idempotent blocks) + bctcHumanCorrectionsStore + bctcFlagEnumerationService + bctcCorrectionService. 25/25 DV GREEN. Commit 4c40939c. Blocks DEV-2/3/4 now unblocked.
-- ⬜ **HC-DEV-2** (dev-mcp-server): Layer 1+2 guards + source_confidence fix. Depends: DEV-1. Duration ~2h. Serialized.
+- ✅ **HC-DEV-2** (dev-mcp-server): DONE. Layer 1+2 cron-survival guards + source_confidence INSERT fix + applyCorrections post-pass. 30/30 DV GREEN. Commit 89100e07. CORE INVARIANT proven (DV-HC-8).
 - ⬜ **HC-DEV-3** (dev-mcp-server): HTTP handlers + server dispatch. Depends: DEV-1. Duration ~1.5h. Blocks: DEV-6.
 - ⬜ **HC-DEV-4** (dev-mcp-server): MCP tools + registry. Depends: DEV-1. Duration ~1h. Independent.
 - ⬜ **HC-DEV-5** (dev-mcp-server): DV test suite (13 cases, bundled with production). Depends: DEV-1..4. Spread ~2h. Not separate step.

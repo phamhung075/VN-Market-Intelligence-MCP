@@ -1,5 +1,31 @@
 # dev-mcp-server -- Notebook
 
+## c331 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-2) — COMMITTED 89100e07
+
+**Task:** HC-DEV-2 — Layer 1+2 cron-survival guards + source_confidence INSERT fix
+
+**Layer 1 — getBctcPendingRefineTool.ts:**
+- Added `AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')` to WHERE clause
+- CONFIRMED reports never appear in the refine queue (primary guard)
+
+**Layer 2 — finalizeBctcRefineTool.ts (5 changes):**
+- Entry guard: reads confirm_status → returns `{ok:true, skipped:true, reason:"confirmed"}` immediately for CONFIRMED reports
+- applyCorrections() post-pass helper (ARCH-DECIDE A Option A2): overlays corrections BEFORE INSERT loop; key = `${label}||${page_number}||${statement_section}||${code??''}`; parser 0-diff
+- Selective DELETE: `DELETE WHERE report_id=? AND id NOT IN (SELECT row_id FROM bctc_human_corrections)` — corrected rows preserved
+- source_confidence added to INSERT column list + values — latent bug fixed (was silently dropped since BCTC-AGENTIC-REFINE)
+- reAnchorCorrections() called inside the SQLite transaction after INSERT (EC-7 prevention)
+
+**Parser:** parseTrustFlag already exported from HC-DEV-1 — 0-diff confirmed.
+
+**DV tests:** HC-human-confirm.test.ts 30/30 GREEN (+5 HC-DEV-2 tests vs 25 baseline).
+- DV-HC-3-Layer1 (confirmed excluded from pending refine x2 cases)
+- DV-HC-7 (finalize CONFIRMED → skipped:true, rows unchanged, refine_status unchanged)
+- DV-HC-8 CORE INVARIANT (corrections survive re-parse: corrected=2500+conf=1.0; uncorrected=0.4 yellow)
+- DV-HC-SC (red=0.2, yellow=0.4, clean=1.0, corrected=1.0 — all persist in DB)
+tsc: 0 errors.
+
+**NEXT:** HC-DEV-3 (HTTP route handlers), HC-DEV-4 (MCP tools)
+
 ## c330 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-1) — COMMITTED 4c40939c
 
 **Task:** HC-DEV-1 — Foundation layer for sprint BCTC-HUMAN-CONFIRM
