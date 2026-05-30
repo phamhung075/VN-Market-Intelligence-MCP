@@ -482,3 +482,40 @@ function initializeTestSchema(db: Database): void {
 This is a pre-existing regression from dev commit `b08ab73a` (TR0-DEV-2). QA cannot APPROVE until this is fixed.
 
 ---
+
+## [QA] Review Record — cycle-159 · 2026-05-30 — RE-SWEEP APPROVED
+
+**Verdict:** APPROVED
+**Fixer commit:** `caf6865d` (fix(test/240-bctc-full): add missing refine_status column to test schema)
+**Scope of fixer diff:** `apps/mcp-server/src/__tests__/240-bctc-full.test.ts` only (+86/-7 lines, test helpers only, zero production code)
+
+### Authoritative Per-Suite Counts
+
+| Suite | Pass | Fail |
+|---|---|---|
+| TRUST-RED-sanity-gate.test.ts | 8 | 0 |
+| bctcSanityValidator.test.ts | 18 | 0 |
+| bctcMagnitudeValidator.test.ts | 17 | 0 |
+| 240-bctc-full.test.ts | 5 | 0 |
+| AR-refined-units-idempotency.test.ts | 13 | 0 |
+| AIT-DEV-1.test.ts | 59 | 0 |
+| HCM-DISAMBIG-extraction.test.ts | 19 | 0 |
+
+Full bun test: exit 0.
+
+### Discrepancy Reconciliation
+
+Prior notebook cycle-158 reported bctcSanityValidator=37, bctcMagnitudeValidator=20, AR-refined-units=17. All were prior notebook reporting errors. Authoritative (confirmed by grep -c + bun test run): 18, 17, 13 respectively. No test hidden or not running. Fixer's report of 18/17 is consistent with authoritative.
+
+### Gate Checks
+
+- **HCM-DISAMBIG 0-diff:** `git diff 891dd3f0 HEAD -- HCM-DISAMBIG-extraction.test.ts` = empty. PASS.
+- **TRUST-RED gate still blocks:** All 8 gate cases pass. No production code changed by caf6865d. Gate handlers unchanged.
+- **Publish guard genuinely exercised:** Tests 1/3/4/5 inject all required rows so PUB-1..4 all fire. Assertions confirm financial text only served when gates pass. Not bypassed.
+- **tsc:** 19 errors in DWF-routing-policy-fence.test.ts — pre-existing from commit 8105f8fd (DYN-WF-FOUNDATION sprint, out-of-scope). Zero new errors from caf6865d.
+- **DDD:** PASS (test-only change).
+- **Security:** PASS (test-only change).
+
+Sprint BCTC-TRUST-RED ready for ops rebuild.
+
+---

@@ -1,5 +1,62 @@
 # QA — Notebook
 
+## cycle-159 · 2026-05-30 · TRUST-QA-1 RE-SWEEP — BCTC-TRUST-RED — APPROVED
+
+**Sprint:** BCTC-TRUST-RED | **Task:** TRUST-QA-1 (re-gate) | **Verdict:** APPROVED
+
+```
+date: 2026-05-30T23:59Z
+fixer_commit: caf6865d (240-bctc-full: add refine_status + bctc_table_rows + bctc_refined_units to makeDb())
+head_commit: 8105f8fd (DWF-routing-policy-fence — unrelated sprint, out-of-scope)
+
+AUTHORITATIVE PER-SUITE COUNTS (explicit individual runs):
+  TRUST-RED-sanity-gate.test.ts:         8 pass / 0 fail (6 TR-RED cases + 2 edge cases)
+  bctcSanityValidator.test.ts:          18 pass / 0 fail
+  bctcMagnitudeValidator.test.ts:       17 pass / 0 fail
+  240-bctc-full.test.ts:                 5 pass / 0 fail (was 1 pass / 4 fail before fixer)
+  AR-refined-units-idempotency.test.ts: 13 pass / 0 fail
+  AIT-DEV-1.test.ts (7-tab):           59 pass / 0 fail
+  HCM-DISAMBIG-extraction.test.ts:     19 pass / 0 fail
+
+DISCREPANCY RECONCILIATION (prior notebook cycle-158 vs fixer's report vs now):
+  bctcSanityValidator: prior reported 37 — WRONG. Authoritative = 18.
+    18 it() blocks in file, bun test output = 18 pass. Prior was reporting error.
+  bctcMagnitudeValidator: prior reported 20 — WRONG. Authoritative = 17.
+    17 it() blocks in file, bun test output = 17 pass. Prior was reporting error.
+  AR-refined-units-idempotency: prior reported 17 — WRONG. Authoritative = 13.
+  The discrepancies are prior notebook reporting errors; no test hidden, none not running.
+  Fixer's report of 18/17 (sanity/magnitude) is consistent with authoritative counts.
+
+FULL SUITE: bun test exits 0 (confirmed via background run exit code 0).
+Pre-existing failures: DWF-routing-policy-fence.test.ts TSC errors (19 errors) —
+  introduced by commit 8105f8fd (DYN-WF-FOUNDATION sprint), NOT from fixer caf6865d.
+  Verified: same TSC errors existed at 8105f8fd~1 (git stash confirmed).
+  Out-of-scope for BCTC-TRUST-RED sprint gate. Does not block this approval.
+
+HCM-DISAMBIG: git diff 891dd3f0 HEAD -- HCM-DISAMBIG-extraction.test.ts = empty (0-diff). PASS.
+Fixer did NOT touch HCM-DISAMBIG-extraction.test.ts. Confirmed by git diff --name-only caf6865d.
+
+TRUST-RED gate still blocks (6 cases all pass — gate logic unchanged):
+  TR-RED-1/2/3/4: sanity + magnitude + cross-statement + publish guard all block correctly.
+  Fixer changed ONLY apps/mcp-server/src/__tests__/240-bctc-full.test.ts (test helpers only).
+  No production code touched. pushBctcRefinedUnitTool, finalizeBctcRefineTool, bctcFullTools
+  unchanged by fixer commit caf6865d.
+
+240-bctc-full PUBLISH GUARD ANALYSIS:
+  Tests genuinely exercise checkPublishability (not bypass it).
+  makeDb() sets refine_status DEFAULT 'DONE'; insertTableRow() feeds PUB-2 (value_current=100000)
+  and PUB-3 (balance_sheet, is_summary_row=0); insertRefinedUnit() feeds PUB-4 (window_status='DONE').
+  Test 1 asserts "=== BCTC SUMMARY: VCB ===" — only passes if checkPublishability returns publishable=true.
+  Test 2 asserts graceful "no data" — hits early return BEFORE checkPublishability (latestRow=null).
+  Tests 3/4/5 same pattern as test 1: each injects the required table rows so PUB-2/3/4 pass.
+  No publish guard bypass. Gate is real.
+
+tsc: 19 errors in DWF-routing-policy-fence.test.ts (pre-existing, out-of-scope, commit 8105f8fd).
+     BCTC-TRUST-RED scope files: 0 new tsc errors introduced by caf6865d.
+DDD: PASS (no production code in fixer diff).
+Security: PASS (no production code changes).
+```
+
 ## cycle-158 · 2026-05-30 · TRUST-QA-1 — BCTC-TRUST-RED — CHANGES_REQUESTED
 
 **Sprint:** BCTC-TRUST-RED | **Task:** TRUST-QA-1 | **Verdict:** CHANGES_REQUESTED
