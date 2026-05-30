@@ -4,6 +4,30 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-30 — BTB-DRIFT-DEV COMMITTED (06fb1f10)
+
+**Task:** BTB-DRIFT-DEV | Sprint: BCTC-TABLE-BOUNDARY | Status: DONE — NEXT: ops (rebuild + off-hours re-extract)
+
+**Root cause fixed:** PATH A (build_document_map) and PATH B (_group_bboxes_into_units) were two independent grouping implementations. BTB-ARCH state-machine fix landed on PATH A only; PATH B (live user path via /api/trigger-pek-extract) still discarded prose units (BLOCKING-2) and had no D-5 title-band signal.
+
+**Files changed (commit 06fb1f10):**
+- `infrastructure/bctc_page_grouper.py` — NEW canonical SSOT (PageDescriptor dataclasses, _is_continuous, prose-unit emission, blank-bridge, D-5)
+- `infrastructure/unit_grouper.py` — NEW dict-based shim + _has_new_title; delegates to bctc_page_grouper
+- `infrastructure/pek_engine_adapter.py` — DELETED _group_bboxes_into_units; _run_extraction Step 2 now uses bctc_page_grouper.group_pages_into_units directly
+- `infrastructure/generic_md_table_extractor.py` — build_document_map inline state-machine replaced with unit_grouper.group_pages_into_units call
+- `__tests__/unit/test_grouping_convergence.py` — NEW anti-drift gate CG-1+CG-2
+- `__tests__/unit/test_unit_grouper.py` — NEW 38 tests
+- `__tests__/unit/test_table_boundary_state_machine.py` — Class C delegates to canonical grouper; Class A2 for _has_new_title
+
+**DoD evidence:**
+- CG-1 PROVEN-RED (neither path called group_pages_into_units before fix) → PROVEN-GREEN
+- CG-2 PROVEN-RED (PATH B discarded prose, PATH A emitted) → PROVEN-GREEN
+- DV-1 GREEN (table-prose-table → 3 units), DV-2 GREEN (title-band fires)
+- 709/709 tests (659 baseline + 50 new), 1 warning (unrelated asyncio)
+- text_table_extractor.py 0-diff. PDF-Extract-Kit PRISTINE.
+
+**Concurrent agent note:** bctc_page_grouper.py was created by a concurrent session. Adapted unit_grouper.py to be a shim over it. Both agree on grouping semantics.
+
 ### 2026-05-30 — BTB-UNBLOCK-DEV COMMITTED (b1e826c2)
 
 **Task:** BTB-UNBLOCK-DEV | Sprint: BCTC-TABLE-BOUNDARY | Status: DONE — NEXT: ops (rebuild + patient instrumented run)
