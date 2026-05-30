@@ -1,5 +1,19 @@
 # dev-mcp-server -- Notebook
 
+## c337 · 2026-05-30 (BCTC-AI-INPUT-TAB ops-fix) — COMMITTED cbe96137
+
+**Task:** Scoped commit — ops-identified path bug in getBctcPageImageTool.ts
+
+**1 file changed, 2 insertions(+), 1 deletion(-)**
+
+**Fix:** `getPngPath()` was using `join(process.cwd(), "data", "bctc-page-images", ...)` which resolves to `/app/data/bctc-page-images` inside container — a path that does not exist. Changed to `join("/data/bctc-page-images", ...)` matching the named Docker volume mount and the sibling `bctcInspectHandler.ts`. Added one-line clarifying comment.
+
+**QA gate:** Pre-approved (7 gates). No new test required (existing AIT-DEV-1 tests cover PNG path contract via mock; path is now consistent with working handler).
+
+**Verification:** tsc 0 errors / git show --stat HEAD = 1 file changed / git status clean on file.
+
+**NEXT:** po EXIT sign-off for BCTC-AI-INPUT-TAB sprint.
+
 ## c336 · 2026-05-30 (BCTC-AI-INPUT-TAB) — COMMITTED b4ed9266
 
 **Task:** BCTC-AI-INPUT-TAB — add 7th "Đầu vào AI" tab showing agent-input bundle per page
