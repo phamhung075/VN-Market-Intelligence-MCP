@@ -5,13 +5,18 @@
  * Tests DV-P2-1 through DV-P2-7 — each pair proves RED (wrong design) and
  * GREEN (correct design) in the same commit.
  *
+ * Also covers DV-TTL-CAP (follow-up to CROSS-4): weekly TTL cap reconciliation.
+ * ARCH-DECIDE-D: weekly slots use 691200s (8 days). Prior cap 604800 (7 days)
+ * was insufficient — raised to 691200 to exactly match the blueprint ceiling.
+ *
  * Pattern: in-memory SQLite DB injected via _injectCoordinationDb()
  * Clock mocking: direct SQL UPDATE on expires_at (coordinationStore uses
  * SQLite unixepoch('now') — do NOT mock Date.now()).
  *
  * Sprint: DYN-WF-FOUNDATION
- * Task:   DWF-DEV-CROSS-4
+ * Task:   DWF-DEV-CROSS-4 (+ TTL-cap follow-up)
  * AC:     AC-P2-5-1, AC-P2-5-2, AC-P2-5-3, AC-P2-6-1, AC-P2-6-2, AC-P2-6-3, AC-P2-6-4, AC-P2-7-1, AC-P2-7-2
+ *         DV-TTL-CAP-1: 691200s accepted (not capped), DV-TTL-CAP-2: 691201s is capped to 691200
  */
 
 // Force in-memory DB for this test file
@@ -600,5 +605,126 @@ describe("DV-P2-7: Published marker blocks duplicate send_telegram (AC-P2-7-1..4
     expect(row?.task_id).toBe("published:chef-morning:2026-05-30");
     expect(row?.task_kind).toBe("cowork-slot");
     expect(row?.ttl_seconds).toBe(100800); // 28h per ARCH-DECIDE-D
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DV-TTL-CAP — Weekly published-marker TTL cap reconciliation
+//
+// ARCH-DECIDE-D specifies:
+//   - Daily slots:  PUBLISHED_MARKER_TTL_SECONDS         = 100800s (28h)
+//   - Weekly slots: PUBLISHED_MARKER_WEEKLY_TTL_SECONDS  = 691200s (8 days)
+//
+// Prior cap was 604800s (7 days) — insufficient: an 8-day weekly marker would
+// be silently capped at 7 days, expiring one day early and allowing a duplicate
+// weekly publish (digest-sunday, tnb-audit).
+//
+// Fix: cap raised to exactly 691200s in coordinationStore.ts claimTask().
+//
+// DV-TTL-CAP-1 (GREEN): task_claim with ttl_seconds=691200 is accepted as-is
+//   → stored ttl_seconds in DB MUST equal 691200, not 604800.
+// DV-TTL-CAP-2 (BOUNDARY): task_claim with ttl_seconds=691201 is clamped to 691200
+//   → stored ttl_seconds MUST equal 691200 (ceiling enforced).
+// DV-TTL-CAP-3 (RED deliberate-violation): asserting stored value=604800 for a
+//   691200s claim MUST fail — proves the old cap is gone.
+// ---------------------------------------------------------------------------
+
+describe("DV-TTL-CAP: Weekly published-marker TTL cap = 691200s (ARCH-DECIDE-D follow-up)", () => {
+  const WEEKLY_TTL = 691200; // 8 days — ARCH-DECIDE-D weekly belt
+  const OLD_CAP    = 604800; // 7 days — prior (insufficient) cap
+
+  it("DV-TTL-CAP-1 GREEN: ttl_seconds=691200 (weekly belt) is accepted — stored value equals 691200", () => {
+    const result = claimTask({
+      task_id: "published:digest-sunday:2026-W22",
+      task_kind: "cowork-slot",
+      owner_session: "session-weekly",
+      owner_agent:   "unified-agent",
+      ttl_seconds:   WEEKLY_TTL,
+    });
+
+    expect(result.claimed).toBe(true);
+
+    // Verify the DB row stores the exact TTL — not the old 604800 cap
+    const row = testDb
+      .prepare("SELECT ttl_seconds FROM task_locks WHERE task_id = ?")
+      .get("published:digest-sunday:2026-W22") as { ttl_seconds: number } | null;
+
+    expect(row).not.toBeNull();
+    expect(row?.ttl_seconds).toBe(WEEKLY_TTL); // must be 691200, not 604800
+  });
+
+  it("DV-TTL-CAP-2 BOUNDARY: ttl_seconds=691201 (above ceiling) is clamped to 691200", () => {
+    const result = claimTask({
+      task_id: "published:digest-sunday:2026-W23",
+      task_kind: "cowork-slot",
+      owner_session: "session-weekly-2",
+      owner_agent:   "unified-agent",
+      ttl_seconds:   WEEKLY_TTL + 1, // 691201 — above ceiling
+    });
+
+    expect(result.claimed).toBe(true);
+
+    const row = testDb
+      .prepare("SELECT ttl_seconds FROM task_locks WHERE task_id = ?")
+      .get("published:digest-sunday:2026-W23") as { ttl_seconds: number } | null;
+
+    expect(row).not.toBeNull();
+    expect(row?.ttl_seconds).toBe(WEEKLY_TTL); // clamped to 691200 (ceiling)
+  });
+
+  it("DV-TTL-CAP-3 RED (deliberate-violation): stored ttl_seconds MUST NOT equal old 604800 cap for a 691200s claim", () => {
+    const result = claimTask({
+      task_id: "published:tnb-audit:2026-W22",
+      task_kind: "cowork-slot",
+      owner_session: "session-weekly-3",
+      owner_agent:   "tran-ngoc-bau",
+      ttl_seconds:   WEEKLY_TTL,
+    });
+
+    expect(result.claimed).toBe(true);
+
+    const row = testDb
+      .prepare("SELECT ttl_seconds FROM task_locks WHERE task_id = ?")
+      .get("published:tnb-audit:2026-W22") as { ttl_seconds: number } | null;
+
+    expect(row).not.toBeNull();
+    // RED (deliberate-violation): if the old 604800 cap were still in place,
+    // this would be 604800.  We assert it is NOT 604800 — proving the fix landed.
+    expect(row?.ttl_seconds).not.toBe(OLD_CAP);
+    // And confirm it IS the correct 691200
+    expect(row?.ttl_seconds).toBe(WEEKLY_TTL);
+  });
+
+  it("DV-TTL-CAP-4 COEXISTENCE: daily (100800s) and weekly (691200s) markers coexist correctly", () => {
+    // Daily marker
+    const daily = claimTask({
+      task_id: "published:chef-morning:2026-05-31",
+      task_kind: "cowork-slot",
+      owner_session: "session-daily",
+      owner_agent:   "unified-agent",
+      ttl_seconds:   100800, // 28h daily belt
+    });
+    expect(daily.claimed).toBe(true);
+
+    // Weekly marker
+    const weekly = claimTask({
+      task_id: "published:digest-sunday:2026-W22-coex",
+      task_kind: "cowork-slot",
+      owner_session: "session-weekly-4",
+      owner_agent:   "unified-agent",
+      ttl_seconds:   WEEKLY_TTL,
+    });
+    expect(weekly.claimed).toBe(true);
+
+    // Verify both stored correctly
+    const dailyRow = testDb
+      .prepare("SELECT ttl_seconds FROM task_locks WHERE task_id = ?")
+      .get("published:chef-morning:2026-05-31") as { ttl_seconds: number } | null;
+    const weeklyRow = testDb
+      .prepare("SELECT ttl_seconds FROM task_locks WHERE task_id = ?")
+      .get("published:digest-sunday:2026-W22-coex") as { ttl_seconds: number } | null;
+
+    expect(dailyRow?.ttl_seconds).toBe(100800);  // daily: 28h unchanged
+    expect(weeklyRow?.ttl_seconds).toBe(WEEKLY_TTL); // weekly: 8 days accepted
   });
 });

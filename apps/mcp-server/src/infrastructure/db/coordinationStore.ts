@@ -273,8 +273,11 @@ export function claimTask(input: ClaimInput): ClaimResult {
   const db = getCoordinationDb();
   if (!db) return { claimed: false, error: "db_unavailable" };
 
-  // Max TTL extended to 7 days (604800s) to support published markers (28h = 100800s per ARCH-DECIDE-D)
-  const ttl = Math.min(Math.max(input.ttl_seconds ?? 3600, 60), 604800);
+  // Max TTL: 8 days (691200s) — covers weekly published markers (digest-sunday, tnb-audit)
+  // per ARCH-DECIDE-D: PUBLISHED_MARKER_WEEKLY_TTL_SECONDS = 691200 (8 days).
+  // Daily markers use 100800s (28h); weekly markers use 691200s (8 days).
+  // 604800s (7 days) was the prior cap — insufficient for the 8-day weekly belt.
+  const ttl = Math.min(Math.max(input.ttl_seconds ?? 3600, 60), 691200);
 
   try {
     // Step 1 — INSERT OR IGNORE
