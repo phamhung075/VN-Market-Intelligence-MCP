@@ -1,5 +1,223 @@
 # QA — Notebook
 
+## cycle-150 · 2026-05-30 · BCTC-TABLE-BOUNDARY BTB-QA — RED (2 blocking issues remain)
+
+**Sprint:** BCTC-TABLE-BOUNDARY | **Task:** BTB-QA | **Verdict:** RED (partial progress — 2 of 4 issues remain)
+
+```
+date: 2026-05-30T01:45Z
+type: anti-false-green adjudication (BTB-QA cycle-150 — post-ops-af59abee)
+sprint: BCTC-TABLE-BOUNDARY
+sentinel_A: FPT e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf, 46pp)
+sentinel_B: ACB fea19bae-2b7a-4954-b3e0-e09d7bfc7390 (20260422-ACB-BCTC-Hop-nhat-Quy-1-nam-2026.pdf)
+confirmed: ac6b1c2e is phantom (no financial_reports record); fea19bae is live ACB Q1-2026
+
+═══════════════════════════════════════════════════════════════
+CHECK-1 — UNIT TESTS (core BTB suite)
+═══════════════════════════════════════════════════════════════
+
+test_table_boundary_state_machine.py (unit):   PASS (part of 122 total below)
+test_anti_drift_grouper.py (unit):             9/9 PASS
+  AD-1 path-agreement: PASS
+  AD-2 _group_bboxes_into_units deleted: PASS (confirmed deleted from pek_engine_adapter)
+  DV-1-B table,prose,table → 3 units: PASS
+  DV-2-B title-band split: PASS
+  9-page no-split regression: PASS
+test_document_map.py (unit):                   PASS (part of 122 total below)
+test_grouping_convergence.py (unit):           CG-1, CG-2, prose-emitted: PASS
+
+Core BTB tests (4 files): 122/122 PASS
+
+test_pek_engine_adapter.py (full file):        155 run; 150 PASS, 5 FAIL
+  FAILING: TestGroupBboxesIntoUnits × 5
+    test_single_table_page_produces_one_unit
+    test_three_consecutive_table_pages_produce_one_unit
+    test_table_prose_table_produces_two_units
+    test_prose_only_creates_no_unit
+    test_nine_consecutive_table_pages_split_at_cap
+  Root cause: all 5 import _group_bboxes_into_units which was DELETED (BTB convergence fix);
+    test_nine_consecutive_table_pages_split_at_cap also tests removed 8-page cap behavior.
+    These are STALE tests that survived the convergence sprint.
+    AD-2 in anti-drift_grouper.py PASSES (confirms deletion) but TestGroupBboxesIntoUnits
+    FAILS (tries to import deleted function) — direct conflict: two test files contradict.
+
+mcp-server:
+  bun test ./src/__tests__/1272-push-bctc-layout.test.ts: 25/25 PASS (idempotency, prose)
+  bun test ./src/__tests__/pek-render-seam.test.ts: 12/12 PASS
+  bun tsc --noEmit: 0 errors
+
+FULL pdf-extractor suite (incl non-BTB tests): 45 fail, 813 pass
+  Isolation-fail pattern: many failures only appear in full run (event-loop contamination)
+  — each file passes when run in isolation (confirmed for test_eval_detectors,
+    test_extract_md_tables_usecase, test_extract_tables_cross_check, etc.)
+  Genuine failures: the 5 TestGroupBboxesIntoUnits stale tests above
+
+═══════════════════════════════════════════════════════════════
+CHECK-2 — FROZEN FILES: NFR-3, NFR-4
+═══════════════════════════════════════════════════════════════
+
+PDF-Extract-Kit subtree: git diff HEAD = 0 lines — PRISTINE
+text_table_extractor.py: git diff HEAD = 0 lines — 0-diff
+extract_layout_first_usecase.py: git diff HEAD = 0 lines — 0-diff
+All frozen-file constraints: PASS
+
+═══════════════════════════════════════════════════════════════
+CHECK-3 — DB DUMP: FPT sentinel (e71f845d) — POST-FIX IMAGE
+═══════════════════════════════════════════════════════════════
+
+Total rows: 31 (after 4+ live re-extractions with new image)
+No duplicates for FPT — SELECT page_numbers_json, COUNT(*) HAVING cnt>1 returns 0 rows for FPT
+page_type breakdown: prose=4, table=27
+
+Prose units present (RED-2 fix CONFIRMED for FPT):
+  [1,2,3,4] prose   — cover/cert/ToC pages + p4
+  [6]       prose   — single page between [5] and [7,8,9]
+  [10,11,12,13,14,15] prose — 6-page block incl. cash flow + notes
+  [17,18,19,20,21]  prose  — 5-page notes block
+
+Table units (27 total, all single-page or small spans):
+  [5],[7],[8],[9],[16],[22,23],[24],[25],[26],[27,28],[29],[30],[31],[32],[33],
+  [34],[35],[36],[37],[38],[39],[40],[41],[42],[43],[44],[45,46]
+
+IDEMPOTENCY PROVEN: 4 consecutive live extractions, each pushed units_stored=31 pages_stored=46;
+  DB count remains exactly 31 after each push (DELETE-before-INSERT working live).
+
+═══════════════════════════════════════════════════════════════
+BOUNDARY CORRECTNESS ANALYSIS — FPT (CONTENT CROSS-CHECK)
+═══════════════════════════════════════════════════════════════
+
+OCR content cross-check on boundary pages:
+
+p4: "BẢNG CÂN ĐỐI KẾ TOÁN HỢP NHẤT / TÀI SẢN NGẮN HẠN" — Balance Sheet Assets.
+    Classified in prose unit [1,2,3,4]. This IS financial table content.
+    Root cause: YOLO detected no table bbox on p4 (header-only layout) → ptype="prose".
+    This is a YOLO model accuracy issue, NOT a state machine logic error.
+
+p5: "BẢNG CÂN ĐỐI KẾ TOÁN (tiếp theo) / B. TÀI SẢN DÀI HẠN" — table data.
+    Correctly classified as table unit [5]. PASS.
+
+p6: "BẢNG CÂN ĐỐI KẾ TOÁN (tiếp theo) / NỢ PHẢI TRẢ" — Balance Sheet Liabilities.
+    Classified as prose unit [6]. This IS financial table content.
+    Root cause: YOLO missed table bbox on p6 → ptype="prose". YOLO accuracy issue.
+
+p7,8,9: Balance sheet continuation pages with financial data.
+    Correctly classified as separate table units [7],[8],[9]. PASS.
+
+p10-11: "BÁO CÁO LƯU CHUYỂN TIỀN TỆ HỢP NHẤT" — Cash Flow Statement.
+    Classified in prose unit [10,11,12,13,14,15] mixed with Notes (p12-15).
+    Cash flow statement is a financial table; YOLO missed its table region.
+    YOLO accuracy issue — p10-11 are financial tables misclassified as prose.
+
+p12-21: "THUYẾT MINH BÁO CÁO TÀI CHÍNH HỢP NHẤT" — Notes. Prose. CORRECT.
+    p12-15 in prose unit [10-15]; p17-21 in prose unit [17-21]. PASS.
+
+p16: "THUYẾT MINH" notes page.
+    Classified as TABLE unit [16] — YOLO detected something → ptype="table".
+    This IS prose content. YOLO false positive → prose page classified as table.
+
+p22-23: "THUYẾT MINH BÁO CÁO TÀI CHÍNH HỢP NHẤT (tiếp theo)" — Notes.
+    Classified as table unit [22,23]. This IS prose content. YOLO false positive.
+
+Assessment: PAGE_TYPE CLASSIFICATION ACCURACY IS CONTROLLED BY YOLO DETECTION.
+PATH B has no OCR text access (stored_text="" per design), so D-5 title-band is silent.
+The state machine logic is CORRECT given the PageDescriptors it receives.
+The YOLO model produces imperfect page_type classification (false negatives on table-light
+financial statement pages; false positives on note pages with table-like layouts).
+This is an inherent PATH B limitation noted in the architecture brief.
+The state machine itself correctly groups contiguous same-type pages and splits at boundaries.
+
+═══════════════════════════════════════════════════════════════
+CHECK-4 — DB DUMP: ACB sentinel (fea19bae) — NOT YET RE-EXTRACTED
+═══════════════════════════════════════════════════════════════
+
+Total rows: 10 — SAME as cycle-149 (old pre-fix data)
+Duplicates: YES — 5 spans × 2 each
+  [5,6] ×2, [16-23] ×2, [24-27] ×2, [29] ×2, [31,32] ×2
+All page_type: "table" — ZERO prose units
+Status: OLD PRE-FIX DATA (idempotency fix not yet applied to ACB)
+
+Why not re-extracted: pdf-extractor monopolized by continuous FPT cron loop.
+5 FPT extractions triggered by mcp-server bctcQueueEnricher/bctcReparseJob during
+QA session; pdf-extractor unhealthy/busy throughout; ACB trigger (01:29:56) timed
+out (mcp-server → pdf-extractor connection refused while FPT running).
+
+ACB report_id confirmed: fea19bae-2b7a-4954-b3e0-e09d7bfc7390 (financial_reports).
+PDF: /app/data/pdfs/20260422-ACB-BCTC-Hop-nhat-Quy-1-nam-2026.pdf
+
+═══════════════════════════════════════════════════════════════
+CHECK-5 — IDEMPOTENCY / NO-DUPES (fleet-wide)
+═══════════════════════════════════════════════════════════════
+
+FPT (e71f845d): ZERO duplicate spans — idempotency WORKING for FPT post-fix.
+ACB (fea19bae): 5 duplicate spans — STILL old pre-fix data (not re-extracted).
+Other reports (0c6f0535, 4316f6d1, 549d458a, 59212e0d, 620a9d00, ac3f0d01, b48f7e6a,
+  d6f1885f): ALL have duplicate rows. These were extracted before fix deployment.
+  Not retesting fleet-wide — would require individual re-extractions.
+
+Fleet-wide idempotency status: PARTIAL — FPT proven, ACB and fleet pending re-extraction.
+
+═══════════════════════════════════════════════════════════════
+CHECK-6 — PROSE PRESENCE
+═══════════════════════════════════════════════════════════════
+
+FPT: 4 prose units — prose storage WORKING for FPT. RED-2 FIXED for FPT.
+ACB: 0 prose units — old data; pending re-extraction.
+
+═══════════════════════════════════════════════════════════════
+CHECK-7 — 8-PAGE CAP REMOVED
+═══════════════════════════════════════════════════════════════
+
+Pre-convergence spans had hard splits at exactly 8 pages (e.g. [22-29],[30-37],[38-45]).
+Post-convergence FPT has no such pattern — no span has exactly 8 pages as an artifact.
+Longest spans: [10,11,12,13,14,15] (6pp prose), [17-21] (5pp prose).
+The 8-page cap is confirmed removed: no spans end at exactly 8 for non-geometric reasons.
+test_anti_drift_grouper.py::TestNinePageRegressionCapRemoved: PASS (all 3 tests).
+
+═══════════════════════════════════════════════════════════════
+VERDICT: RED — 2 blocking issues remain
+═══════════════════════════════════════════════════════════════
+
+RED-3 (new — BLOCKING): 5 stale tests in test_pek_engine_adapter.py::TestGroupBboxesIntoUnits
+  fail because they import the deleted function _group_bboxes_into_units.
+  test_nine_consecutive_table_pages_split_at_cap also asserts the removed 8-page cap.
+  These are stale artifacts from before BTB-DRIFT convergence sprint.
+  Fix required: remove or migrate TestGroupBboxesIntoUnits class from test_pek_engine_adapter.py.
+  AD-2 in anti-drift_grouper.py already covers the deletion guard.
+  File: apps/pdf-extractor/__tests__/test_pek_engine_adapter.py lines 808-923
+  → NEXT: fixer | remove stale TestGroupBboxesIntoUnits class
+
+RED-4 (unresolved from cycle-149 — BLOCKING): ACB sentinel not re-extracted.
+  ACB (fea19bae) still shows 10 rows, 5×2 duplicates, zero prose — pre-fix state.
+  Cannot declare sentinel B verified until re-extraction with new image completes.
+  Blocker: pdf-extractor monopolized by FPT cron loop during QA session.
+  Action: ops must quiesce FPT cron (pause bctcReparseJob for FPT during ACB extraction),
+    then trigger: POST /api/trigger-pek-extract {"report_id":"fea19bae-2b7a-4954-b3e0-e09d7bfc7390"}
+    and verify: COUNT=10 (unique spans only), prose units present, no duplicates.
+  → NEXT: ops | quiesce FPT cron, trigger ACB re-extraction, then re-run QA
+
+WHAT IS GREEN:
+  - pushBctcLayoutHandler.ts: DELETE-before-INSERT confirmed in source (L150-151)
+  - FPT idempotency: 31 rows, 4+ extractions, 0 duplicates — PROVEN LIVE
+  - FPT prose units: 4 prose units in DB — PROVEN LIVE
+  - 8-page cap removed: confirmed via FPT data + AD test_9_consecutive_table_pages_not_split PASS
+  - Core BTB unit tests: 122/122 PASS (state machine, anti-drift, document map, convergence)
+  - mcp-server push handler: 25/25 PASS + tsc 0 errors
+  - Frozen files: PDF-Extract-Kit, text_table_extractor.py, extract_layout_first_usecase.py — 0-diff
+
+BOUNDARY CLASSIFICATION NOTE (not a new RED):
+  YOLO model accuracy causes some page_type misclassification in PATH B:
+  p4,p6 (balance sheet) → prose (false negatives); p16,p22-23 (notes) → table (false positives).
+  This is a known PATH B limitation (stored_text="" design choice, D-5 disabled).
+  The state machine correctly groups whatever page_types it receives.
+  Impact on viewer: some financial pages may appear in prose units (not surfaced as tables).
+  This is a pre-existing model accuracy limitation, not introduced by the BTB sprint.
+  If this is blocking acceptance, it requires a separate sprint to either:
+    a) Feed OCR text to PATH B to enable D-5
+    b) Fine-tune YOLO for VN financial document page classification
+
+NEXT: fixer (RED-3 stale tests) + ops (RED-4 ACB re-extraction) → re-run QA
+```
+
 ## cycle-149 · 2026-05-30 · BCTC-TABLE-BOUNDARY BTB-QA — RED (2 blocking issues)
 
 **Sprint:** BCTC-TABLE-BOUNDARY | **Task:** BTB-QA | **Verdict:** RED
