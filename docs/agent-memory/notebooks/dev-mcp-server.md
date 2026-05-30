@@ -1,6 +1,6 @@
 # dev-mcp-server -- Notebook
 
-## c328 · 2026-05-30 (DATA-PIPELINE-INTEGRITY DPI-FU-D) — COMMITTED [pending]
+## c328 · 2026-05-30 (DATA-PIPELINE-INTEGRITY DPI-FU-D) — COMMITTED d7ee43d7
 
 **Task:** DPI-FU-D — SBV fetcher must reject zero-value deposit-rate writes
 
