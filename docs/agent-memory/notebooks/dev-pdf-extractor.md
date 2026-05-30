@@ -4,6 +4,16 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-30 — BTB-DRIFT-DEV COMPLETE (06fb1f10 + test_anti_drift_grouper)
+
+**Task:** BTB-DRIFT-DEV | Sprint: BCTC-TABLE-BOUNDARY | Status: DONE — NEXT: ops (rebuild + off-hours re-extract)
+
+**Additional file (this cycle):** `__tests__/unit/test_anti_drift_grouper.py` — NEW 9 tests per architect spec (AD-1, AD-2, DV-1-B, DV-2-B, 9-page regression, 12-page, two-distinct-adjacent). All 718/718 unit tests pass. AD-2 PROVEN-RED evidence documented in test docstrings. 9-page regression PROVEN-RED evidence documented. text_table_extractor.py 0-diff. PEK PRISTINE.
+
+**Exactly ONE grouping implementation:** `bctc_page_grouper.group_pages_into_units()` is the SOLE grouper. PATH A (`build_document_map`) delegates via `bctc_page_grouper.PageDescriptor` adapter. PATH B (`_run_extraction` Step 2) builds `PageDescriptor` from bboxes and calls directly. `_group_bboxes_into_units` DELETED — `hasattr(pek_engine_adapter, "_group_bboxes_into_units")` returns False (AD-2 GREEN).
+
+---
+
 ### 2026-05-30 — BTB-DRIFT-DEV COMMITTED (06fb1f10)
 
 **Task:** BTB-DRIFT-DEV | Sprint: BCTC-TABLE-BOUNDARY | Status: DONE — NEXT: ops (rebuild + off-hours re-extract)
