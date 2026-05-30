@@ -1,0 +1,41 @@
+{
+  "from": "po",
+  "kind": "dev-team-triage",
+  "createdAt": "2026-05-30T08:17:16Z",
+  "cycle": ":07 dispatcher triage (Sat 2026-05-30, HOSE closed weekend)",
+  "lane_constraint": "apps/pdf-extractor OWNED BY PARALLEL SESSION this cycle — BTB/BTB-DRIFT/BCTC-LAYOUT-FIRST/BCTC-AGENTIC-REFINE/PEK family ALL off-limits. No dev-pdf-extractor / ops-rebuild / qa of pdf-extractor output dispatched.",
+  "parallel_owned_acknowledged": "BTB-DRIFT chain (brief 2026-05-30-btb-drift-convergence.md + commits 06fb1f10/e71f845d) DONE+committed, handed back to parallel session for sign-off. Left untouched. BCTC-AGENTIC-REFINE umbrella (kicked off earlier this session) is multi-zone INCLUDING pdf-extractor => its AR chain is PAUSED this cycle, not driven into the contended zone.",
+  "batch": [
+    {
+      "type": "FIX",
+      "id": "DPI-FU-A",
+      "title": "restore-fresh-EFFR-feed",
+      "desc": "fred_series_daily EFFR latest=2026-05-14 (15d stale) => DPI-2b fedFundsRate safe-degrades to fixture 5.33. Restore fresh EFFR ingestion so live fed-funds replaces the fixture. Verify post-fix: fred_series_daily EFFR max(date) within freshness window AND DPI-2b returns live value (not 5.33 fixture).",
+      "files": ["apps/mcp-server/src/**/fred*", "apps/mcp-server/src/**/dpi*"],
+      "baseline_pass": "DPI-2b currently GREEN-on-fixture (documented degrade). Fix proven only when live EFFR flows AND degrade fixture path no longer triggers.",
+      "zone": "apps/mcp-server/"
+    },
+    {
+      "type": "FIX",
+      "id": "DPI-FU-B",
+      "title": "restore-market-earning-yield-job",
+      "desc": "market_earning_yield writes zero rows to tracked_indicators => DPI-2b earningYield safe-degrades to fixture 8.2. Restore the job so tracked_indicators gets real earning-yield rows. Verify post-fix: tracked_indicators earningYield rows > 0 AND DPI-2b returns live value (not 8.2 fixture).",
+      "files": ["apps/mcp-server/src/**/earning*", "apps/mcp-server/src/**/tracked_indicator*", "apps/mcp-server/src/**/dpi*"],
+      "baseline_pass": "DPI-2b currently GREEN-on-fixture (documented degrade). Fix proven only when tracked_indicators has live earning-yield rows AND degrade path no longer triggers.",
+      "zone": "apps/mcp-server/"
+    }
+  ],
+  "next_agent": "dev-mcp-server (uncontended apps/mcp-server lane). After IMPL: ops rebuild mcp-server container (stale-image rule), then qa verify via in-container direct DB read (NOT push echo) that EFFR fresh + earning-yield rows present + DPI-2b returns live not fixture.",
+  "deferred": {
+    "SELF-IMPROVE-GATE-X-1": "HIGH priority label but internal emit-path plumbing, no user-facing data. Stays top of backlog for next tick — picked over FU only if user/ops want self-improve proof first.",
+    "CHEF-ATTN": "MED, not data-restoration — defer.",
+    "DPI-FU-C": "MED test-debt (retro-own 36a91a59 + writeForeignFlowToOhlcv real-schema integration test) — defer; pairs naturally with next mcp-server data tick.",
+    "string-vs-enum-hardening": "HELD (WIP/priority).",
+    "FU-MON": "Monday-only live probe (Brent/Gold delta post-06:00Z + get_foreign_flow(HPG) post-open) — NOT today (Sat, HOSE closed)."
+  },
+  "routes": [
+    {"to": "agents-architect", "topic": "system-auditor-D4-abort-recurring", "severity": "med", "detail": "Telegram #3006/#3008 D4 ABORT 'TASKS.md unreadable' re-fired => transient read-during-edit race, NOT real corruption (TASKS.md healthy/parse-clean). system-auditor is cowork/maintenance scope, NOT dev-team-spawnable. Harden auditor read (retry-on-empty/read-after-stat/lock-aware). Re-route (carried from po-20260529T235900Z) — still unaddressed."},
+    {"to": "cowork", "topic": "stale-news-and-bctc-filings", "severity": "low", "detail": "#3004 /news stale cowork output; #3007 BCTC filings overdue = data-availability cowork lane. Neither is dev-team BATCH."},
+    {"to": "janitor", "topic": "context-bloat-housekeeping", "severity": "low", "detail": "docs/TASKS.md exceeds 80L cap (closed sprints DPI/BTB/SELF-IMPROVE-phase1 archive candidates -> TASKS_ARCHIVE.md); ~65+ signal files accumulating (context-bloat heartbeat noise) -> drain per SIGDRAIN-PERSIST guard; po.md/qa.md notebook size. Governance lane — do NOT dev-team-spawn. Never block an exit on it."}
+  ]
+}
