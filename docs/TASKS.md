@@ -14,6 +14,22 @@
 
 ---
 
+## Sprint DYN-WF-FOUNDATION — Multi-session-safe orchestration + demand-driven SSOT instrumentation
+
+**Status:** 🟢 GREENLIT — PO kickoff 2026-05-30T20:53Z. **Priority: HIGH** (closes the duplicate-publish class + session-scoped SPOF; 4× chef-morning dup, 2026-05-29). Zone: **multi** (architect must split: `apps/mcp-server/` for `is_trading_day` tool + leader/work-item lock seam + `published:<work-id>` marker; `cross-service/` for cowork/dev-team flow + schedule-slot + `routing-policy.json` + `pressure-state.json` instrumentation). Goal: `docs/SPRINT_GOAL.md` § DYN-WF-FOUNDATION. Brief: `docs/architecture-briefs/2026-05-29-dynamic-workflow-architecture.md` (+ agents-architect Review 2026-05-30, CONDITIONAL ADOPT). **Settled — do NOT relitigate:** phase cut (0+2, defer 3/4/5), ordering 0→2→1, deterministic-router-only (OQ-6).
+
+**Greenlit build scope = Phase 0 + Phase 2 ONLY. Phase 1 registered-blocked. 3/4/5 deferred.**
+
+- 🔄 **DWF-BA** (BA, NEXT): decompose `docs/SPRINT_GOAL.md` § DYN-WF-FOUNDATION into a requirement spec `docs/REQ_DYN-WF-FOUNDATION.md` covering Phase 0 (4 deliverables: prune dead slots, `routing-policy.json` read-only SSOT, `is_trading_day` tool, per-tick `pressure-state.json` instrument-only) + Phase 2 (leader lock, per-work-item idempotent token, `published:<work-id>` belt) with R1/R3 folded as BLOCKING acceptance criteria and R2 as a documented ops invariant. Each AC must be a deliberate-violation proof, not "exit 0". → PO review.
+- ⏳ DWF-ARCH (architect, after BA spec approved): design split — confirm `apps/mcp-server` vs `cross-service` zones; design the leader-lock + per-work-item token seam reusing `task_claim`/`task_heartbeat`/`task_release` (kind `cowork-slot`, NO new enum); design `is_trading_day` tool contract + VN-holiday data source; design `routing-policy.json` schema + `pressure-state.json` schema; specify the R1 explicit-TTL enforcement point + R3 suffix-free key + R2 dark-window runbook. Architect owns the multi-zone split (per main.md `multi` rule).
+- ⏳ DWF-PM (pm, after arch): sequence into ordered tasks honoring 0→2→1 (Phase 0 deliverables first; Phase 2 leader-lock + token; `is_trading_day` is a Phase 0 dev-mcp-server prerequisite that gates the calendar-SSOT deliverable). WIP≤2.
+- ⏳ DWF-DEV (dev-mcp-server + generic developer for cross-service, after pm): implement per the spec; DV deliberate-violation tests RED-before/GREEN-after in SAME commit (single-winner leader test; suffix-free-key dedup test + a tick-suffix-would-leak counter-test; explicit-short-TTL crash-frees-within-180s test + default-3600-would-starve counter-test; `published` marker blocks 2nd send). ops REBUILDs mcp-server after change.
+- ⏳ DWF-QA (qa, after dev): verify all Phase 0 + Phase 2 success metrics live; prove the deliberate-violation gates actually fail when violated (no false-green); confirm zero current-behavior change for Phase 0; sign off the Phase 2-cutover-stable gate that UNBLOCKS Phase 1. → PO sign-off (DWF-EXIT).
+- 🔒 **DWF-PHASE1 (BLOCKED on DWF-QA Phase-2-cutover sign-off):** heartbeat consults Cadence Policy / adaptive cadence (`policy_id`+`last_fired`, `due = now-last_fired >= cadence(pressure)`, calendar suppression + freshness silent-downgrade). Phase 1 without Phase 2 is strictly worse than today (raises market-hours fire rate → more collision windows). Do NOT start until Phase 2 is QA-stable.
+- ⛔ DEFERRED (not this sprint): Phase 3 content-router consuming `routing-policy.json` · Phase 4 persistent workgraph DAG · Phase 5 backpressure governor + per-zone commit lanes · `*/15`→`*/5` floor shortening · persistent leader daemon.
+
+---
+
 ## Sprint FF-DEAD — Foreign-flow pipeline dead fleet-wide
 
 **Status:** OPEN — PO triage 2026-05-30T10:14Z. **Priority: HIGH** (live-confirmed: `get_foreign_flow(code=FPT)` → source_tier 2, "never collected"; foreign net buy/sell dead for every ticker). Zone: **VPS-crawls (`vps-scripts/`) — UNCONTENDED** (separate from AR-* apps/ fan-out). Producer = `fetch-foreign-flow.sh` + `vn-foreign-flow.service`; receiver handler already exists in mcp-server.
