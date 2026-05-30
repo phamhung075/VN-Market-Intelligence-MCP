@@ -109,6 +109,7 @@ import { registerPushBctcRefinedUnitTool } from "./financial-reports/pushBctcRef
 import { registerFinalizeBctcRefineTool } from "./financial-reports/finalizeBctcRefineTool.js"; // AR-MCP-OPTY AC-3: finalize_bctc_refine (#144)
 import { registerListFlaggedBctcCellsTool } from "./financial-reports/listFlaggedBctcCellsTool.js"; // HC-DEV-4: list_flagged_bctc_cells (#145)
 import { registerSubmitBctcCorrectionTool } from "./financial-reports/submitBctcCorrectionTool.js"; // HC-DEV-4: submit_bctc_correction (#146)
+import { registerIsTradingDayTool } from "./system/isTradingDayTool.js"; // DWF-DEV-MCP-1: is_trading_day (#147)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -222,4 +223,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerFinalizeBctcRefineTool,        // AR-MCP-OPTY AC-3: finalize_bctc_refine (#144)
   registerListFlaggedBctcCellsTool,      // HC-DEV-4: list_flagged_bctc_cells (#145)
   registerSubmitBctcCorrectionTool,      // HC-DEV-4: submit_bctc_correction (#146)
+  registerIsTradingDayTool,              // DWF-DEV-MCP-1: is_trading_day (#147)
 ];
