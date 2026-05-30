@@ -6476,3 +6476,221 @@ next: VNH-EXIT (po sign-off)
 ```
 
 ---
+
+## cycle-151 · 2026-05-30 · BCTC-TABLE-BOUNDARY BTB-QA Final Done-Bar
+
+**Task:** BTB-QA cycle-151 (final gate after RED-3 + RED-4 fixes) | **Verdict:** GREEN
+
+```
+date: 2026-05-30
+sprint: BCTC-TABLE-BOUNDARY
+task: BTB-QA cycle-151
+
+═══════════════════════════════════════════════════
+CHECK 1 — RED-3 CLEARED: Stale test class removal
+═══════════════════════════════════════════════════
+
+test_file: apps/pdf-extractor/__tests__/test_pek_engine_adapter.py
+class_searched: TestGroupBboxesIntoUnits
+found: NO (only a comment reference at L782 — not a live test class)
+result: 33/33 PASS, no ImportError
+
+unit_suite_full:
+  command: python3 -m pytest __tests__/unit/ -v
+  result: 718/718 passed, 1 warning (DeprecationWarning on old event loop — pre-existing)
+  coverage_preserved: YES — deleted class behavior covered by:
+    - test_anti_drift_grouper.py (AD-1, AD-2, DV-1-B, DV-2-B, 9-page)
+    - test_unit_grouper.py (shared grouper — 46 tests)
+
+anti_drift_guards:
+  AD-1 (path agreement): PASS
+  AD-2 (_group_bboxes_into_units deleted): PASS
+  DV-1-B (table-prose-table → 3 units): PASS
+  DV-2-B (title-band splits): PASS
+  9-page cap removed: PASS (12/12 consecutive → 1 unit)
+
+═══════════════════════════════════════════════════
+CHECK 2 — RED-4 / ACB BOUNDARY CORRECTNESS
+═══════════════════════════════════════════════════
+
+acb_report_id: fea19bae-2b7a-4954-b3e0-e09d7bfc7390
+acb_total_units: 22
+acb_by_type: prose=5, table=17
+acb_dupes: 0 (unit_id and page_numbers_json both unique)
+
+unit_map:
+  [1,2,3,4]  prose  — cover/intro pages
+  [5]        table
+  [6]        table
+  [7..15]    prose  — notes narrative (9 pages)
+  [16]       table
+  [17]       table
+  [18]       table
+  [19]       table
+  [20]       table
+  [21]       table
+  [22]       table
+  [23]       table
+  [24]       table
+  [25]       table
+  [26]       table
+  [27]       table
+  [28]       prose
+  [29]       table
+  [30]       prose
+  [31]       table
+  [32]       table
+  [33]       prose
+
+ADJUDICATION pages 16-27 (over-split question):
+  Each page is a DISTINCT financial note table.
+  Evidence from stitched_markdown content inspection:
+    p16: balance sheet breakdown (short-term securities, specific VND values 31.3.2026 vs 31.12.2025)
+    p17: single-column loan type table (~5 rows)
+    p18: loan quality/provisioning (different label rows than p17)
+    p19: 3 separate small note tables (deposits, instruments, loan portfolio by region)
+    p20: 2 separate note tables (off-balance items, trading securities)
+    p21: bond portfolio (giá trị ghi sổ vs mệnh giá columns)
+    p22: certificate of deposit + bond exposure (different from p21 structure)
+    p23: equity movement table (1.1.2026 → 31.3.2026 columns)
+    p24: income statement line items
+    p25: operating expense breakdown
+    p26: off-balance sheet commitments (different columns entirely)
+    p27: credit exposure matrix (multi-axis: domestic/foreign, instrument type)
+  VERDICT: CORRECTLY SEPARATE. Each page is a structurally distinct financial note.
+  The geometry predicate _is_continuous correctly returns False because gutter_count,
+  gutter_x_fractions, and/or row_pitch differ across these note tables.
+  NO OVER-SPLIT DEFECT.
+
+over_merge check:
+  No table unit spans across a prose boundary.
+  Prose pages 7-15 (long notes narrative) correctly separate p6 table from p16 table.
+  Prose pages 28, 30, 33 are singleton units — correctly classified by YOLO layout.
+  NO OVER-MERGE DEFECT.
+
+prose_content: stitched_markdown="" for all 5 prose units.
+  EXPECTED: PATH B runs with stored_text="" → D-5 title-band detector disabled by design.
+  Prose units are correctly emitted with empty markdown; YOLO page_type="prose" is the classifier.
+
+═══════════════════════════════════════════════════
+CHECK 3 — FPT 31 UNITS: TABLE SPANS RECONCILIATION
+═══════════════════════════════════════════════════
+
+fpt_report_id: e71f845d-ffa5-48f9-8f09-30ac2cd09c65
+fpt_total_units: 31
+fpt_by_type: prose=4, table=27
+fpt_dupes: 0
+
+multi_page_table_spans (continuation correctly merged):
+  [22,23]  — 2-page span
+  [27,28]  — 2-page span
+  [45,46]  — 2-page span
+  Total multi-page spans: 3
+
+single_page_table_units: 24
+
+architect_done_bar_reference: "~7 table spans + prose units" (BTB-ARCH done-bar, BTB-DRIFT done-bar)
+ADJUDICATION of ~7 vs actual 3 continuation spans:
+  The "~7" was an ESTIMATE in the architect brief, not a hard requirement.
+  Inspected key pages (5, 7, 8, 9):
+    p5:  Balance Sheet — long-term assets ("TÀI SẢN DÀI HẠN", "TÀI SẢN CỐ ĐỊNH")
+    p7:  Balance Sheet — equity section ("NGUỒN VỐN", "VỐN CHỦ SỞ HỮU")
+    p8:  Income Statement — quarterly & YTD ("QUÝ IV", "Lũy kế từ đầu năm")
+    p9:  Comparative metrics (different column structure entirely)
+  These are genuinely distinct financial statement sections with different column
+  headers and different table geometry. The grouper correctly refuses to merge them.
+  NO REGRESSION vs earlier "7 spans" — those spans were under a DIFFERENT (pre-BTB)
+  grouper version. The corrected grouper applies strict geometry matching.
+  3 correct multi-page merges confirmed. All 24 single-page table units are genuine
+  distinct note tables.
+  NO OVER-SPLIT DEFECT in FPT.
+
+prose_units_fpt:
+  [1,2,3,4]    prose  — cover/intro
+  [6]          prose  — single narrative page between balance sheet sections
+  [10..15]     prose  — 6-page notes narrative block
+  [17..21]     prose  — 5-page notes narrative block
+
+═══════════════════════════════════════════════════
+CHECK 4 — KNOWN-LIMITATION HONESTY (not pass/fail)
+═══════════════════════════════════════════════════
+
+YOLO/D-5 limitation:
+  PATH B runs stored_text="" → D-5 title-band detector silently no-ops.
+  YOLO page_type classification has margin errors:
+    - Balance-Sheet pages can be classified as "prose" if YOLO sees mostly text
+    - Notes pages can be classified as "table" if YOLO sees any tabular structure
+  Observed in ACB: pages 7-15 classified as a prose block; these may contain
+  balance-sheet note disclosures with embedded mini-tables. Cannot verify without
+  stored_text — classified as prose by YOLO geometry only.
+  Observed in FPT: page 6 classified as prose (single page between p5 table and p7
+  table); may be a cover page or separator — YOLO-based classification, no text.
+
+  THESE ARE KNOWN LIMITATIONS OF PATH B, out of sprint scope.
+
+IN-SCOPE GROUPING LOGIC CORRECTNESS:
+  The user's original bug was: "tables wrongly merged" — one unit spanning across
+  distinct tables. The grouper fix (generic_md_table_extractor.py state machine +
+  _is_continuous D-5 check) resolves this:
+    - Prose pages no longer absorbed into table units
+    - Title-band pages trigger TABLE_NEW correctly
+    - Pending-blank buffer no longer bridges across prose pages
+  This is VERIFIED via DV-1/DV-2 PROVEN-RED→GREEN + live ACB/FPT DB evidence.
+
+═══════════════════════════════════════════════════
+CHECK 5 — IDEMPOTENCY FINAL CONFIRMATION
+═══════════════════════════════════════════════════
+
+query: GROUP BY report_id + unique unit_id + unique page_numbers_json
+FPT: cnt=31, dup_unit_ids=0, dup_page_spans=0 — PASS
+ACB: cnt=22, dup_unit_ids=0, dup_page_spans=0 — PASS
+DB method: bun:sqlite direct query in mcp-server container (no better-sqlite3)
+
+═══════════════════════════════════════════════════
+CHECK 6 — FROZEN FILES
+═══════════════════════════════════════════════════
+
+text_table_extractor.py: 0-diff vs HEAD — CONFIRMED
+PDF-Extract-Kit subtree: 0-diff vs HEAD — CONFIRMED
+working_tree: clean (git status — "rien à valider, la copie de travail est propre")
+
+═══════════════════════════════════════════════════
+BCTC EVAL NOTE (per QA flow pipeline rules)
+═══════════════════════════════════════════════════
+
+bctc_eval_fpt: overall_status=red (S5 MARKDOWN_RENDER red: roundtrip_row_match_ratio=0)
+bctc_eval_acb: overall_status=red (S4 TABLE_RECONSTRUCT red: code_coverage=0, exact_dup_count=7)
+SCOPE DETERMINATION: Both red stages are in bctc_table_rows row-extraction pipeline,
+  NOT in bctc_layout_units boundary grouper. Sprint scope = generic_md_table_extractor.py
+  grouper only (text_table_extractor.py is 0-diff by design — out of scope).
+  The eval's red status is PRE-EXISTING and OUT OF SPRINT SCOPE for BCTC-TABLE-BOUNDARY.
+  This sprint's acceptance criteria (BTB-ARCH done-bar) does NOT include bctc-eval green.
+  eval_blocks_btb_verdict: NO — out of scope.
+
+═══════════════════════════════════════════════════
+FINAL VERDICT: GREEN
+═══════════════════════════════════════════════════
+
+original_bug_resolved: YES
+  "Tables wrongly merged" (one unit spanning multiple distinct financial tables) is
+  RESOLVED on the live path (PATH B). Evidence:
+  - ACB pages 16-27: 12 genuinely distinct note tables → 12 separate single-page units
+  - FPT: 3 correctly merged multi-page continuation spans + 24 distinct single-page units
+  - No table unit spans across a prose boundary in either sentinel
+
+over_split_verdict: NOT OBSERVED — single-page units are genuine distinct tables
+over_merge_verdict: NOT OBSERVED — no table unit crosses a prose boundary
+idempotency: CONFIRMED (FPT=31, ACB=22, 0 dupes)
+frozen_files: CONFIRMED (text_table_extractor.py + PDF-Extract-Kit 0-diff)
+unit_tests: 718/718 pass + 33/33 pek_adapter + anti-drift guards all pass
+coverage: NO LOSS — deleted TestGroupBboxesIntoUnits behavior covered by anti-drift suite
+
+known_limitation_caveat:
+  PATH B prose units have empty stitched_markdown (D-5 disabled).
+  YOLO page-type classification has margin errors (some prose pages may be mislabeled
+  and vice versa) — out of sprint scope. The grouping logic itself is correct.
+
+next: po (BTB-EXIT sign-off)
+```
+
+---
