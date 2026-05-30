@@ -1,5 +1,51 @@
 # QA — Notebook
 
+## cycle-158 · 2026-05-30 · TRUST-QA-1 — BCTC-TRUST-RED — CHANGES_REQUESTED
+
+**Sprint:** BCTC-TRUST-RED | **Task:** TRUST-QA-1 | **Verdict:** CHANGES_REQUESTED
+
+```
+date: 2026-05-30T21:33Z
+commit: 15dfc434 (TRUST-RED-sanity-gate.test.ts — 8 cases RED-before-GREEN)
+TRUST-RED-sanity-gate.test.ts: 8 pass / 0 fail
+bctcSanityValidator.test.ts: 37 pass / 0 fail (dev unit tests)
+bctcMagnitudeValidator.test.ts: 20 pass / 0 fail (dev unit tests)
+bctcPublishabilityGuard.test.ts: ? pass (not isolated — see regression gap below)
+AR-refined-units-idempotency.test.ts: 17 pass / 0 fail (regression)
+HCM-DISAMBIG-extraction.test.ts: 19 pass / 0 fail (0-diff, pre-existing whitespace M from dev)
+tsc: 0 errors | DDD: PASS (domain services zero infra/interface imports)
+security: PASS (no process.env, no hardcoded secrets)
+
+BLOCKING REGRESSION (must fix before APPROVE):
+  240-bctc-full.test.ts: 1 pass / 4 fail — pre-existing from dev commit b08ab73a
+  Root: checkPublishability queries `refine_status` from financial_reports, but the
+  240-bctc-full.test.ts uses makeDb() minimal schema (no refine_status column).
+  Error: "no such column: refine_status" → all PUB-guard tests fail in that file.
+  Fix: 240-bctc-full.test.ts makeDb() must call initFinancialReportsTables() instead
+  of creating minimal schema, OR add refine_status column to its makeDb() helper.
+```
+
+**RED-before-GREEN evidence (per case):**
+
+- TR-RED-1 (DT-1): Disabled validateBctcUnit → window_status='DONE' stored (RED observed).
+  Enabled: sanity_block=true, window_status='REJECTED_SANITY', flags=['sanity:DIGIT_RUN'] in DB (GREEN confirmed by log + bun:sqlite query).
+
+- TR-RED-2 (DT-2): Disabled detectMagnitudeViolations → ok:true, refine_status='DONE' (RED).
+  Enabled: MAGNITUDE_GROSS_EQ_NET BLOCK, refine_status='REJECTED_SANITY', bctc_table_rows COUNT=0 (GREEN).
+
+- TR-RED-3 (DT-3): Disabled detectCrossStatementRevenue → ok:true, refine_status='DONE' (RED).
+  Enabled: CROSS_STMT_REVENUE_CONTRADICTION BLOCK (11481 vs 16058 = 28.5% > 20%), REJECTED_SANITY, rows=0 (GREEN).
+
+- TR-RED-4 (PUB-1): Disabled checkPublishability → output contains "Net Revenue :" (RED).
+  Enabled: refusal text "Chưa có dữ liệu", no financial data served (GREEN).
+
+- TR-RED-5/5b: Clean data (net=100k gross=30k, realistic revenue) → ok:true, DONE, no false block (GREEN).
+
+- TR-RED-6: Direct bun:sqlite COUNT queries for all assertions; no HTTP echo fields used (protocol compliance).
+
+**Blocking issue (file:line):**
+  apps/mcp-server/src/__tests__/240-bctc-full.test.ts:219-285 — makeDb() creates minimal schema without refine_status column; checkPublishability fails at query time ("no such column: refine_status"). 4 tests fail. Must add refine_status column or use initFinancialReportsTables().
+
 ## cycle-157 · 2026-05-30 · AIT-QA — BCTC-AI-INPUT-TAB — APPROVED
 
 **Sprint:** BCTC-AI-INPUT-TAB | **Task:** AIT-QA | **Verdict:** APPROVED
