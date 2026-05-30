@@ -76,7 +76,7 @@ export function parseVnNumber(raw: string): number | null {
 
 // ── Trust flag parsing ─────────────────────────────────────────────────────────
 
-interface TrustFlagResult {
+export interface TrustFlagResult {
   confidence: number;
   flag: string | null;
   cleanedText: string;
@@ -89,7 +89,7 @@ interface TrustFlagResult {
  * Yellow flag: [độ tin cậy thấp] → confidence = 0.4
  * No flag → confidence = 1.0
  */
-function parseTrustFlag(cellText: string): TrustFlagResult {
+export function parseTrustFlag(cellText: string): TrustFlagResult {
   // Red flag: [ĐỘ TIN CẬY THẤP — {reason}]
   const redMatch = cellText.match(/\[ĐỘ TIN CẬY THẤP\s*—\s*([^\]]+)\]/i);
   if (redMatch) {

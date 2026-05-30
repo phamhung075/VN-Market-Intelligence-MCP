@@ -446,6 +446,84 @@ export function initFinancialReportsTables(db: Database): void {
     // fresh DB — columns included via SQLITE_DDL or table does not yet exist
   }
 
+  // ── BCTC-HUMAN-CONFIRM: Migration 1 — source_confidence on bctc_table_rows ─
+  // Non-breaking additive column. Default 1.0 = fully confident for existing rows
+  // (no flag info available). Parser-computed rows will override with their value.
+  // Corrected rows are explicitly set to 1.0 by the correction write path.
+  try {
+    const btrCols = db
+      .query<{ name: string }, []>("PRAGMA table_info(bctc_table_rows)")
+      .all();
+    const btrColNames = new Set(btrCols.map((c) => c.name));
+    if (!btrColNames.has("source_confidence")) {
+      db.exec(
+        "ALTER TABLE bctc_table_rows ADD COLUMN source_confidence REAL NOT NULL DEFAULT 1.0",
+      );
+    }
+  } catch {
+    // bctc_table_rows may not exist yet on fresh DB (handled by CREATE TABLE IF NOT EXISTS above)
+  }
+
+  // ── BCTC-HUMAN-CONFIRM: Migration 2 — confirm_status on financial_reports ──
+  // confirm_status: PENDING | CONFIRMED (separate dimension from refine_status)
+  // final_confirmed_at: ISO8601 UTC timestamp; NULL when not yet confirmed
+  // confirmed_by: reserved for future RBAC; always 'user' for single-user product
+  // Default PENDING for all existing rows (nothing has been human-confirmed yet).
+  try {
+    const frCols2 = db
+      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
+      .all();
+    const frColNames2 = new Set(frCols2.map((c) => c.name));
+    if (!frColNames2.has("confirm_status")) {
+      db.exec(
+        "ALTER TABLE financial_reports ADD COLUMN confirm_status TEXT NOT NULL DEFAULT 'PENDING'",
+      );
+    }
+    if (!frColNames2.has("final_confirmed_at")) {
+      db.exec(
+        "ALTER TABLE financial_reports ADD COLUMN final_confirmed_at TEXT",
+      );
+    }
+    if (!frColNames2.has("confirmed_by")) {
+      db.exec(
+        "ALTER TABLE financial_reports ADD COLUMN confirmed_by TEXT DEFAULT 'user'",
+      );
+    }
+  } catch {
+    // fresh DB — columns included via SQLITE_DDL
+  }
+
+  // ── BCTC-HUMAN-CONFIRM: Migration 3 — bctc_human_corrections table ──────────
+  // One correction record per (report_id, row_id). INSERT OR REPLACE is the
+  // idempotency mechanism for repeated corrections to the same cell.
+  // anchor_status tracks re-anchor outcome after re-parse:
+  //   'ok' = stable key matched exactly one row
+  //   'anchor_ambiguous' = stable key matched >1 rows (safe-fail: no mis-apply)
+  //   'anchor_missing' = stable key matched no row after re-parse
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_human_corrections (
+      id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id             TEXT    NOT NULL,
+      row_id                INTEGER NOT NULL,
+      label                 TEXT    NOT NULL,
+      page_number           INTEGER NOT NULL,
+      statement_section     TEXT    NOT NULL,
+      code                  TEXT,
+      old_value             REAL,
+      new_value             REAL    NOT NULL,
+      correction_source     TEXT    NOT NULL DEFAULT 'human_ui',
+      confirmed_by          TEXT    NOT NULL DEFAULT 'user',
+      corrected_at          TEXT    NOT NULL DEFAULT (datetime('now')),
+      flag_type             TEXT    NOT NULL,
+      ocr_value_snapshot    TEXT,
+      image_value_snapshot  TEXT,
+      anchor_status         TEXT    NOT NULL DEFAULT 'ok',
+      UNIQUE(report_id, row_id)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bhc_report ON bctc_human_corrections(report_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bhc_stable_key ON bctc_human_corrections(report_id, label, page_number, statement_section)`);
+
   // ── Task 1878a: backfill OCF on migration ─────────────────────────────────
   // Dev decision: wire backfillAllOCF into the migration block so new tickers
   // are covered automatically on every server start (idempotent UPDATE is a
