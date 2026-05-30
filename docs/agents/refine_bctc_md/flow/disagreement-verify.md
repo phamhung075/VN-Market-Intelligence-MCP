@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: claude-haiku-3-5
   authored_by: claude-opus-4
-  description: Sub-flow D — Re-examine one flagged cell. Orchestrator second-look. Output structured JSON verdict.
+  description: Sub-flow D — Re-examine one flagged cell. Orchestrator second-look. Returns JSON as Task return value (Option-Y).
   tools: [get_bctc_page_text, get_bctc_page_image]
 ---
 
@@ -64,24 +64,54 @@ flag: "[ĐỘ TIN CẬY THẤP — OCR 5678900 vs image ~5678960/5678990, nâng 
 
 1. `get_bctc_page_text(report_id, flagged_cell.page_number)` → `ocr_text`.
    `get_bctc_page_image(report_id, [flagged_cell.page_number])` → `page_image`.
-   Either fails after 1 retry → FAILED output → EXIT.
+   Either fails after 1 retry → return FAILED JSON → EXIT.
 2. Locate cell in `ocr_text` by `row_code` or `row_label`. Extract value in `column`.
 3. Locate same cell in `page_image` by code/label/grid position. Read value.
 4. Verdict: both agree → `confirmed=false, best_value=<value>, flag="", confidence=0.85`. Still disagree → `confirmed=true, best_value=null`. Discrepancy larger → escalate, `confidence < original`.
-5. Write `docs/refine-output/{report_id}/{unit_id}.json`:
+
+## RETURN (Task return value — NOT a file write)
+
+Return the following JSON object as the Task return value.
+**DO NOT write to docs/refine-output/ or any filesystem path.**
+The orchestrator (main.md) collects this return value directly.
 
 ```json
-{ "unit_id":"<id>", "page_numbers":[<N>], "markdown":"", "confidence":<score>,
-  "flags":["verify_result"], "status":"DONE",
-  "verify_result":{ "confirmed":<bool>, "best_value":<num|null>,
-    "flag":"<string>", "confidence":<score>, "rationale":"<string>" } }
+{
+  "unit_id": "<unit_id>",
+  "page_numbers": [<N>],
+  "markdown": "",
+  "row_count": 0,
+  "confidence": <score>,
+  "flags": ["verify_result"],
+  "status": "DONE",
+  "verify_result": {
+    "confirmed": <bool>,
+    "best_value": <number | null>,
+    "flag": "<string>",
+    "confidence": <score>,
+    "rationale": "<string>"
+  }
+}
 ```
 
-FAILED: `{ ..., "confidence":0.0, "flags":["agent_error:tool_call_failed"], "status":"FAILED", "verify_result":null }`
+FAILED return value (tool failure):
+```json
+{
+  "unit_id": "<unit_id>",
+  "page_numbers": [<N>],
+  "markdown": "",
+  "row_count": 0,
+  "confidence": 0.0,
+  "flags": ["agent_error:tool_call_failed"],
+  "status": "FAILED",
+  "verify_result": null
+}
+```
 
-## RETURN
+Final response line (for orchestrator log):
 ```
 STATUS: DONE | FAILED  |  UNIT_ID: <id>  |  PAGE: <N>  |  CELL: <row_code>/<column>
 CONFIRMED: true (flag stands) | false (refuted)  |  BEST_VALUE: <num> | null
-CONFIDENCE: <score>  |  OUTPUT: docs/refine-output/{report_id}/{unit_id}.json
+CONFIDENCE: <score>
+RETURN: JSON Task return value (no disk write)
 ```

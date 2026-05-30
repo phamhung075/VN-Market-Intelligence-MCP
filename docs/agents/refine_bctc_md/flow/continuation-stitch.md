@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: claude-haiku-3-5
   authored_by: claude-opus-4
-  description: Sub-flow C — Multi-page continuation table (pages N to N+k, max 3). ONE unified pipe-table, no duplicate headers.
+  description: Sub-flow C — Multi-page continuation table (pages N to N+k, max 3). ONE unified pipe-table. Returns JSON as Task return value (Option-Y).
   tools: [get_bctc_page_text, get_bctc_page_image]
 ---
 
@@ -57,22 +57,47 @@ Bất đồng số liệu: `| 120 | Đầu tư | [ĐỘ TIN CẬY THẤP — OCR
 
 ## Steps
 
-1. For each page N in `page_numbers` (order): `get_bctc_page_text(report_id, N)` + `get_bctc_page_image(report_id, [N])`. Text fail → FAILED → EXIT. Image fail → proceed text-only, flag `["image_unavailable:pageN"]`, confidence ≤ 0.6.
+1. For each page N in `page_numbers` (order): `get_bctc_page_text(report_id, N)` + `get_bctc_page_image(report_id, [N])`. Text fail → return FAILED JSON → EXIT. Image fail → proceed text-only, flag `["image_unavailable:pageN"]`, confidence ≤ 0.6.
 2. Parse page N: structure from image, numbers from OCR. Apply refine contract. Collect header + data rows.
 3. Parse page N+1: scan first 3 lines for continuation marker. Marker present → SKIP header. No marker → flag `["continuation_marker_missing:pageN+1"]`, continue. Structure from image, numbers from OCR. Collect data rows only. Repeat for N+2.
 4. Stitch: header from N + separator + data rows N + data rows N+1 [+ N+2]. No mid-table header.
 5. Confidence: 1.0 − 0.15×red − 0.05×yellow; cap 0.6 if image unavailable; min 0.1.
-6. Write `docs/refine-output/{report_id}/{unit_id}.json`:
+
+## RETURN (Task return value — NOT a file write)
+
+Return the following JSON object as the Task return value.
+**DO NOT write to docs/refine-output/ or any filesystem path.**
+The orchestrator (main.md) collects this return value directly.
 
 ```json
-{ "unit_id":"<id>", "page_numbers":[N,N+1], "markdown":"<unified table>",
-  "confidence":<score>, "flags":[], "status":"DONE" }
+{
+  "unit_id": "<unit_id>",
+  "page_numbers": [<N>, <N+1>],
+  "markdown": "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n|---|---|---|---|\n...",
+  "row_count": <number of data rows>,
+  "confidence": <score>,
+  "flags": [],
+  "status": "DONE"
+}
 ```
 
-## RETURN
+FAILED return value:
+```json
+{
+  "unit_id": "<unit_id>",
+  "page_numbers": [<N>, <N+1>],
+  "markdown": "",
+  "row_count": 0,
+  "confidence": 0.0,
+  "flags": ["agent_error:<detail>"],
+  "status": "FAILED"
+}
+```
+
+Final response line (for orchestrator log):
 ```
 STATUS: DONE | FAILED  |  UNIT_ID: <id>  |  PAGES: N, N+1 [, N+2]
 CONFIDENCE: <score>    |  FLAGS: <flags or none>
-OUTPUT: docs/refine-output/{report_id}/{unit_id}.json
+RETURN: JSON Task return value (no disk write)
 NOTE: Stitched <k> pages. Header from page N only.
 ```

@@ -8,7 +8,7 @@ agent:
   tools:
     - get_bctc_page_text
     - get_bctc_page_image
-  output: docs/refine-output/{report_id}/{unit_id}.json
+  output: CC Task return value (JSON object) — NO filesystem write (Option-Y)
 
   capabilities:
     - Process one page-window (1–3 pages) per invocation — never aggregates across windows
@@ -22,12 +22,12 @@ agent:
     - Faithfully transcribe numbers from OCR text (source of record)
     - Verify table structure and column boundaries from the page image
     - Flag any text ↔ image disagreement immediately — NEVER silently pick one value
-    - Write result JSON to docs/refine-output/{report_id}/{unit_id}.json
-    - Never write to the DB — orchestrator owns all DB writes
+    - Return result JSON as CC Task return value — orchestrator collects it (Option-Y)
+    - Never write to the DB — orchestrator owns all DB writes via push_bctc_refined_unit
 
   not_my_job:
-    - Aggregating multiple windows — that is the orchestrator's job (bctcRefineJob.ts)
-    - Writing to bctc_refined_units or any DB table — that is the orchestrator's job
+    - Aggregating multiple windows — that is the orchestrator's job (refine_bctc_md/flow/main.md fleet cron)
+    - Writing to bctc_refined_units or any DB table — that is push_bctc_refined_unit / finalize_bctc_refine tools
     - Expert BCTC financial analysis — that is bctc-analyst's job
     - Spawning sub-agents — this agent is itself a leaf subagent
 
@@ -49,14 +49,16 @@ agent:
     one_window_per_invocation: true
     no_db_writes: true
     no_cross_window_context: true
-    output_path_pattern: "docs/refine-output/{report_id}/{unit_id}.json"
+    no_filesystem_output: true
+    output_mechanism: "CC Task return value (JSON object) — Option-Y"
 
   boundary_rules:
-    scope: "ONE page-window in → ONE JSON file out. Select sub-flow by page type. Write output. EXIT."
-    on_error: "If a tool call fails after 1 retry → write FAILED status to output JSON → EXIT. Do NOT recurse."
+    scope: "ONE page-window in → ONE JSON Task return value out. Select sub-flow by page type. Return JSON. EXIT."
+    on_error: "If a tool call fails after 1 retry → return FAILED JSON as Task return value → EXIT. Do NOT recurse."
     forbidden_outputs:
       - "NEVER write to any database table"
-      - "NEVER read or write another window's output JSON"
+      - "NEVER write to docs/refine-output/ or any filesystem path"
+      - "NEVER read or write another window's output"
       - "NEVER span more pages than the window supplied"
       - "NEVER guess a number when text and image disagree — FLAG it"
 
@@ -68,9 +70,9 @@ agent:
 
   inter_agent:
     recv:
-      - {from: bctcRefineJob (orchestrator), via: subprocess_invocation, on: per_window_refine_request}
+      - {from: refine_bctc_md/flow/main.md (fleet-cron orchestrator), via: CC_Task_spawn, on: per_window_refine_request}
     send:
-      - {to: bctcRefineJob (orchestrator), via: output_json_file, on: window_result_complete}
+      - {to: refine_bctc_md/flow/main.md (fleet-cron orchestrator), via: CC_Task_return_value, on: window_result_complete}
 
   flow:
     default: docs/agents/refine_bctc_md/flow/main.md

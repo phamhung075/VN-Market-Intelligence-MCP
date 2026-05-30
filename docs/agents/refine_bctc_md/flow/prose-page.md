@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: claude-haiku-3-5
   authored_by: claude-opus-4
-  description: Sub-flow B — Prose/notes BCTC page. Text-only (no image). Output clean paragraph text + key disclosure pairs.
+  description: Sub-flow B — Prose/notes BCTC page. Text-only (no image). Returns JSON as Task return value (Option-Y).
   tools: [get_bctc_page_text]
 ---
 
@@ -58,22 +58,47 @@ OCR chứa: "| Mã số | Chỉ tiêu |" → flags: ["page_type_mismatch"] → F
 
 ## Steps
 
-1. `get_bctc_page_text(report_id, page_number)` → `ocr_text`. Fail after 1 retry → FAILED → EXIT.
-2. Scan `ocr_text` for table signals (`|` on multiple lines, `Mã số`, `Số cuối kỳ`). Detected → `flags=["page_type_mismatch"]`, `confidence=0.0`, `status="FAILED"` → write → EXIT.
+1. `get_bctc_page_text(report_id, page_number)` → `ocr_text`. Fail after 1 retry → return FAILED JSON → EXIT.
+2. Scan `ocr_text` for table signals (`|` on multiple lines, `Mã số`, `Số cuối kỳ`). Detected → return `flags=["page_type_mismatch"]`, `confidence=0.0`, `status="FAILED"` → EXIT.
 3. Extract numerical disclosures: for each number with context phrase → format as `**{label}:** {value}`.
 4. Construct output: leading narrative paragraphs + `**label:** value` pairs + sub-section headers.
 5. Confidence: default 0.85; garbled OCR (random symbols > 5%) → 0.5.
-6. Write `docs/refine-output/{report_id}/{unit_id}.json` via `Write` tool.
+
+## RETURN (Task return value — NOT a file write)
+
+Return the following JSON object as the Task return value.
+**DO NOT write to docs/refine-output/ or any filesystem path.**
+The orchestrator (main.md) collects this return value directly.
 
 ```json
-{ "unit_id":"<id>", "page_numbers":[<N>], "markdown":"<prose markdown>",
-  "confidence":0.85, "flags":[], "status":"DONE" }
+{
+  "unit_id": "<unit_id>",
+  "page_numbers": [<N>],
+  "markdown": "<prose markdown>",
+  "row_count": 0,
+  "confidence": 0.85,
+  "flags": [],
+  "status": "DONE"
+}
 ```
 
-## RETURN
+FAILED return value (table mismatch or tool failure):
+```json
+{
+  "unit_id": "<unit_id>",
+  "page_numbers": [<N>],
+  "markdown": "",
+  "row_count": 0,
+  "confidence": 0.0,
+  "flags": ["page_type_mismatch"],
+  "status": "FAILED"
+}
+```
+
+Final response line (for orchestrator log):
 ```
 STATUS: DONE | FAILED  |  UNIT_ID: <id>  |  PAGE: <N>
 CONFIDENCE: <score>    |  FLAGS: <flags or none>
-OUTPUT: docs/refine-output/{report_id}/{unit_id}.json
+RETURN: JSON Task return value (no disk write)
 NOTE: Text-only (no image fetched)
 ```

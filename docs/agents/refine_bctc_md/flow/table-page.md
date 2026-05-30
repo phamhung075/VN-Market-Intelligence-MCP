@@ -3,7 +3,7 @@ agent:
   id: refine_bctc_md
   model: claude-haiku-3-5
   authored_by: claude-opus-4
-  description: Sub-flow A — One table-dense BCTC page → trusted pipe-table markdown.
+  description: Sub-flow A — One table-dense BCTC page → trusted pipe-table markdown. Returns JSON as Task return value (Option-Y).
   tools: [get_bctc_page_text, get_bctc_page_image]
 ---
 
@@ -51,23 +51,48 @@ Balance PASSED không xóa cờ đỏ đã ghi. Cờ vẫn giữ nguyên.
 
 ## Steps
 
-1. `get_bctc_page_text(report_id, page_number)` → `ocr_text`. Fail after 1 retry → FAILED output → EXIT.
+1. `get_bctc_page_text(report_id, page_number)` → `ocr_text`. Fail after 1 retry → return FAILED JSON → EXIT.
 2. `get_bctc_page_image(report_id, pages=[page_number])` → `page_image`. Fail → proceed text-only, flag `["image_unavailable"]`, confidence ≤ 0.6.
-3. Read structure from image (column boundaries, row labels, account codes). If continuation marker detected (`tiếp theo`/`continued`) → flag `["wrong_subflow:use_continuation-stitch"]` → FAILED → EXIT.
+3. Read structure from image (column boundaries, row labels, account codes). If continuation marker detected (`tiếp theo`/`continued`) → flag `["wrong_subflow:use_continuation-stitch"]` → return FAILED JSON → EXIT.
 4. For each numeric cell: OCR value vs. image value → apply contract (agree/red-flag/yellow-flag).
 5. Construct pipe-table (one header, one row per BCTC line item, flags in value cells).
 6. Balance check if balance-sheet page → record `balance_check:PASSED|FAILED|N/A` in flags.
 7. Confidence: start 1.0; red flag −0.15; yellow flag −0.05; min 0.1.
-8. Write `docs/refine-output/{report_id}/{unit_id}.json` via `Write` tool.
+
+## RETURN (Task return value — NOT a file write)
+
+Return the following JSON object as the Task return value.
+**DO NOT write to docs/refine-output/ or any filesystem path.**
+The orchestrator (main.md) collects this return value directly.
 
 ```json
-{ "unit_id":"<unit_id>", "page_numbers":[<N>], "markdown":"<pipe-table>",
-  "confidence":<0.0-1.0>, "flags":[], "status":"DONE" }
+{
+  "unit_id": "<unit_id>",
+  "page_numbers": [<N>],
+  "markdown": "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n|---|---|---|---|\n...",
+  "row_count": <number of data rows>,
+  "confidence": <0.0-1.0>,
+  "flags": [],
+  "status": "DONE"
+}
 ```
 
-## RETURN
+FAILED return value:
+```json
+{
+  "unit_id": "<unit_id>",
+  "page_numbers": [<N>],
+  "markdown": "",
+  "row_count": 0,
+  "confidence": 0.0,
+  "flags": ["agent_error:<detail>"],
+  "status": "FAILED"
+}
+```
+
+Final response line (for orchestrator log):
 ```
 STATUS: DONE | FAILED  |  UNIT_ID: <id>  |  PAGE: <N>
 CONFIDENCE: <score>    |  FLAGS: <flags or none>
-OUTPUT: docs/refine-output/{report_id}/{unit_id}.json
+RETURN: JSON Task return value (no disk write)
 ```
