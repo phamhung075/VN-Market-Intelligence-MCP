@@ -1,5 +1,35 @@
 # dev-mcp-server -- Notebook
 
+## c338 · 2026-05-30 (BCTC-TRUST-RED) — COMMITTED 4 commits
+
+**Sprint:** BCTC-TRUST-RED
+**ACB UUID resolved:** `fea19bae-2b7a-4954-b3e0-e09d7bfc7390` (action_code=ACB, sort_key=2026-Q1)
+**Purge verified:** FPT bctc_table_rows=0, bctc_refined_units=0, refine_status=PENDING; ACB same.
+
+**Commits (in order):**
+1. `4278b61a` — feat: TR0-DEV-1+TR1-DEV-1 — bctcSanityValidator DT-1 (18 tests, 100% line coverage)
+2. `ebbdabbf` — feat: TR0-DEV-1 — ingest gate + REJECTED_SANITY Zod enum + schema comment
+3. `04fc08db` — feat: TR1-DEV-2 — bctcMagnitudeValidator DT-2/DT-3 + finalize wiring + DT-4 (17 tests)
+4. `b08ab73a` — feat: TR0-DEV-2 — checkPublishability PUB-1..4 guard in bctcFullTools (16 tests)
+
+**Files created:**
+- `domain/services/financial-reports/bctcSanityValidator.ts` — DT-1 digit-run detector (domain pure)
+- `domain/services/financial-reports/bctcMagnitudeValidator.ts` — DT-2+DT-3 detectors (domain pure)
+- `__tests__/bctcSanityValidator.test.ts` — 18 pass
+- `__tests__/bctcMagnitudeValidator.test.ts` — 17 pass
+- `__tests__/bctcPublishabilityGuard.test.ts` — 16 pass
+
+**Files modified:**
+- `pushBctcRefinedUnitTool.ts` — DT-1 ingest gate + Zod enum DONE|FAILED|REJECTED_SANITY
+- `finalizeBctcRefineTool.ts` — DT-2/DT-3 + DT-4 wiring, CONFIRMED guard Layer 1 preserved
+- `bctcFullTools.ts` — checkPublishability PUB-1..4
+- `schema-financial-reports.ts` — DDL comment REJECTED_SANITY valid values
+
+**Domain purity:** bctcSanityValidator.ts + bctcMagnitudeValidator.ts = 0 infra/interface imports
+**Zero diff:** HCM-DISAMBIG-extraction.test.ts, pdf-extractor/, text_table_extractor.py
+**ops_rebuild_required: true** (container must be rebuilt to activate guards)
+**QA:** TRUST-QA-1 unblocked — do NOT dispatch; return to router per instructions.
+
 ## c337 · 2026-05-30 (BCTC-AI-INPUT-TAB ops-fix) — COMMITTED cbe96137
 
 **Task:** Scoped commit — ops-identified path bug in getBctcPageImageTool.ts
