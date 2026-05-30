@@ -68,6 +68,7 @@ import { handleBctcEvalThresholds } from "./routes/bctcEvalThresholdsHandler.js"
 import { handleBctcEvalPushStage } from "./routes/bctcEvalPushStageHandler.js";
 import { bctcEvalPageHandler } from "./routes/bctcEvalPageHandler.js";
 import { loadBctcEvalThresholds } from "../../application/usecases/computeBctcEval.js";
+import { handleBctcRefineOnDemand } from "./routes/bctcRefineHandler.js"; // BCTC-AGENTIC-REFINE FR-12: POST /api/refine-bctc/{report_id}
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -1855,6 +1856,19 @@ export async function createBunServer(
     }
     if (method === "POST" && pathname === "/api/bctc-eval/push-stage") {
       await handleBctcEvalPushStage(req, res, db);
+      return;
+    }
+
+    // ── BCTC-AGENTIC-REFINE FR-12: POST /api/refine-bctc/{report_id} ─────────
+    // On-demand refine trigger for a single report. Responds 202 immediately;
+    // refineOneReport() runs async in background (fire-and-forget).
+    // report_id is parsed from path after /api/refine-bctc/
+    if (method === "POST" && pathname.startsWith("/api/refine-bctc/")) {
+      const reportId = pathname.slice("/api/refine-bctc/".length);
+      const handlerResp = await handleBctcRefineOnDemand(reportId || undefined);
+      const body = await handlerResp.text();
+      res.writeHead(handlerResp.status, { "Content-Type": "application/json" });
+      res.end(body);
       return;
     }
 
