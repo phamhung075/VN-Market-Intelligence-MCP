@@ -1,6 +1,6 @@
 # Sprint BCTC-HUMAN-CONFIRM — Human-in-the-loop correction layer for flagged BCTC cells (the final trust gate)
 
-**BUILD STATUS 2026-05-30 — KICKOFF (PO). New sprint, user-requested.** Previous sprint BCTC-AGENTIC-REFINE ✅ SIGNED OFF 2026-05-30 (record archived in `docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md` + TASKS.md). This sprint is the ADDITIVE human layer ON TOP of that shipped output — it does NOT rebuild the refine pipeline.
+**BUILD STATUS 2026-05-30 — ✅ SIGNED OFF (PO, HC-EXIT).** QA HC-QA-3 cycle-156 APPROVED all 9 gates GREEN @ 441f8e18, container dd904d63 toolCount=154 healthy. Critique-before-approve verified on main: transaction ordering sound (DELETE-old-pinned BEFORE reAnchorCorrections per HC-ARCH-2 canonical order, single db.transaction); DV-HC-8 false-green closed (asserts anchor_status='ok' + COUNT==1); DV-HC-14 genuine-ambiguous safe-fail closed (anchor_ambiguous + COUNT==2). Recurring-bug-escalation honored (architect HC-ARCH-2 root-caused at round 2 before HC-FIX-2). Sprint CLOSED. Optional follow-up: AR-FU-DETERMINISM (upstream refine non-determinism affects HOW MANY cells get flagged — not a blocker; correction layer handles whatever is flagged). Previous sprint BCTC-AGENTIC-REFINE ✅ SIGNED OFF 2026-05-30.
 
 ## User intent (verbatim)
 > "I need one other layer, manual fix, user can fix where đánh dấu cảnh báo (đỏ/vàng) for make bctc more correct for final confirmed."
