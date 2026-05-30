@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-30T12:48:10Z
+
+**Brief:** `docs/architecture-briefs/2026-05-29-dynamic-workflow-architecture.md` (Section 7 reconciliation)
+
+Section 7 body reconciled with the appended agents-architect review: (R3) per-work-item lock key changed from `chef-morning@<nominal-tick>` to `cowork-slot:chef-morning` (no tick suffix) — tick-suffixed key recreated the time-bucket bug by minting a fresh key at every 15-min boundary, orphaning the lock of a still-running job; (R1) explicit short TTL (~180 s) mandated on every per-work-item `task_claim` — the 3600 s default is a false-green surface that would hold a crashed job's lock for a full hour; phase ordering corrected to 0 → 2 → 1 in both the migration table preamble and the closing recommendation — Phase 1 adaptive cadence without Phase 2 leader lock is strictly worse than today. R2 ops invariant (force-recreate resets SERVER_SESSION_ID, causes TTL-length leader-lock dark window) and no-new-kind fact (`cowork-slot` reused, enum drift resolved via `migrateCoordinationTable()`) also stated in the body. Review section untouched.
+
+**Signal dropped:** none — doc-only reconciliation; review section already dropped the signal in the prior cycle.
+
+---
+
 ## 2026-05-30T12:29:42Z
 
 **Brief:** `docs/architecture-briefs/2026-05-29-dynamic-workflow-architecture.md` (adversarial review appended)

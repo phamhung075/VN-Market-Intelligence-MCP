@@ -71,14 +71,16 @@ PressureState unreadable → static cron fallback. Router low-confidence → PO.
 
 ## 4. Migration Phases
 
+**Mandatory implementation sequence: 0 → 2 → 1 → (3 → 4 → 5 deferred).** Phase 1 (adaptive cadence) MUST NOT ship before Phase 2 (leader lock). Phase 1 without Phase 2 raises market-hours fire rates, opening more collision windows — strictly worse than today. Phase 2 is the prerequisite gate for Phase 1.
+
 | Phase | Scope | Risk |
 |---|---|---|
 | **0 — Instrument & SSOT cleanup** | Prune dead schedule slots; stand up `routing-policy.json` + VN-calendar tool as read-only SSOTs nothing consumes yet; emit PressureState doc each tick without acting. Zero behavior change. | Very low |
-| **1 — Heartbeat consults Cadence Policy (cowork)** | Slots gain `policy_id`+`last_fired`; matcher uses `due = now-last_fired >= cadence(pressure)` with old cron as fallback. Calendar suppression + freshness silent-downgrade. SILENT off-market ticks become near-free. | Medium — guaranteed-floor + static fallback mitigate under-firing |
-| **2 — Idempotent spawn token + leader lock** | Switch lock key to launch-attempt token; persistent leader-lock removes SPOF. Closes duplicate-publish + SPOF. | Medium — TTL auto-expiry + heartbeat-renew prevent stuck leader |
-| **3 — Content-addressed router (dev-team first)** | Replace "everything → PO" with policy lookups (zoned bug → specialist, complete-brief → skip ba/architect); central channel/severity; pre-publish verify gate. Then cowork intent table. | Med-high — shadow-mode until N cycles agree, then flip |
-| **4 — Persistent workgraph + ready-set** | Persist DAG with completion-signal edges; ready-set decouples readiness from linear walk; cowork pipeline (news→market→chef→tnb) as DAG. | High — keep per-cycle recompute as SSOT, workgraph.json as rebuildable cache |
-| **5 — Backpressure governor + per-zone commit lanes** | Size spawn budget from host headroom; preemption; optional per-zone commit lanes for disjoint zones. | High — commit-mutex:main stays default; lanes opt-in for proven-disjoint sets only |
+| **2 — Idempotent spawn token + leader lock** *(ships before Phase 1)* | Switch per-work-item lock key to stable work-item identity (`cowork-slot:<slot_id>`, no tick suffix); explicit short TTL (~180 s) on every per-work-item claim; persistent leader-lock removes SPOF. Closes duplicate-publish + SPOF. | Medium — TTL auto-expiry + heartbeat-renew prevent stuck leader |
+| **1 — Heartbeat consults Cadence Policy (cowork)** *(ships after Phase 2)* | Slots gain `policy_id`+`last_fired`; matcher uses `due = now-last_fired >= cadence(pressure)` with old cron as fallback. Calendar suppression + freshness silent-downgrade. SILENT off-market ticks become near-free. | Medium — guaranteed-floor + static fallback mitigate under-firing |
+| **3 — Content-addressed router (dev-team first)** *(deferred)* | Replace "everything → PO" with policy lookups (zoned bug → specialist, complete-brief → skip ba/architect); central channel/severity; pre-publish verify gate. Then cowork intent table. | Med-high — shadow-mode until N cycles agree, then flip |
+| **4 — Persistent workgraph + ready-set** *(deferred)* | Persist DAG with completion-signal edges; ready-set decouples readiness from linear walk; cowork pipeline (news→market→chef→tnb) as DAG. | High — keep per-cycle recompute as SSOT, workgraph.json as rebuildable cache |
+| **5 — Backpressure governor + per-zone commit lanes** *(deferred)* | Size spawn budget from host headroom; preemption; optional per-zone commit lanes for disjoint zones. | High — commit-mutex:main stays default; lanes opt-in for proven-disjoint sets only |
 
 ---
 
@@ -120,7 +122,15 @@ PressureState unreadable → static cron fallback. Router low-confidence → PO.
 
 **Layer 1 — Leader lock.** Before the master dispatch body: `task_claim(key="cowork-leader", ttl)`. Win → lead this tick + renew. Lose → silent exit. Dead leader → TTL expiry → a standby wins next tick. Fixes double-dispatch **and** the session-scoped SPOF in one move (any live session can lead).
 
-**Layer 2 — Per-work-item idempotent token.** Claim a key derived from the **work, not the attempt** — `task_claim(key="chef-morning@<nominal-tick>")` — **before** spawn/publish. A retry recomputes the identical key → rejected. The old per-slot lock failed because its key was a time-bucket, not the work item; re-keying on `work-id` is the whole fix.
+`kind` for the leader lock: `cowork-slot` (existing kind — no new enum value needed; `migrateCoordinationTable()` has already resolved the `commit-mutex` enum drift; live kinds are `cowork-slot | sprint-task | dashboard-row | commit-mutex`).
+
+**Ops invariant (R2):** `SERVER_SESSION_ID` is `pid-<pid>-ts-<startupMs>` — process-level and stable within one container lifetime. A Docker `force-recreate` of the mcp-server (the standard wedge-recovery procedure) resets the PID, so the new process cannot renew the old leader lock via `task_heartbeat` (WHERE `owner_session` no longer matches). The lock is held by the stale row until its TTL elapses. **Ops must treat force-recreate as causing a leader-lock dark window equal to the leader TTL.** With `TTL ≈ 2× heartbeat` (e.g., 30 min for a 15-min heartbeat), this is the maximum dark window. Document this in the Phase 2 runbook; do not shorten by guessing — keep TTL at the 2× heartbeat formula and accept the bounded window.
+
+**Layer 2 — Per-work-item idempotent token.** Claim a key derived from the **work identity alone, not the dispatch attempt** — `task_claim(key="cowork-slot:<slot_id>")` — **before** spawn/publish. Example: `key="cowork-slot:chef-morning"` (NO tick suffix). A retry recomputes the identical key → claim rejected by INSERT OR IGNORE → duplicate prevented.
+
+The old per-slot lock keyed on a time-bucket failed because a fresh bucket appeared at each 15-min boundary, orphaning the lock of a still-running long job and allowing a peer to re-launch. The correct key is the **work item's stable identity** (`cowork-slot:chef-morning`), not a time-stamped variant. The lock is held for the job's real duration via TTL + renewal — not via the key.
+
+**Mandatory TTL requirement (R1 — no default reliance):** `task_claim` defaults to `ttl_seconds=3600` (1 hour). A per-work-item claim using the default would hold the lock for a full hour even if the job crashes in the first 30 seconds — a one-hour starvation window. **Every per-work-item `task_claim` MUST pass an explicit short TTL (~180 s).** `TTL > renewal interval`, never `TTL ≈ job duration`. The Phase 2 implementation must never omit the TTL argument on a per-work-item claim; the 3600 s default is only acceptable for contexts where a long starvation window is tolerable (it is not acceptable here).
 
 **Belt for publish:** server-side `published:<work-id>` marker checked before `send_telegram` — cheap insurance against the most user-visible failure (duplicate Telegram posts). Standing rule still applies: **do not retry an un-confirmed spawn** (`feedback_spawn_retry_under_lag`); the token makes a retry *safe*, not retrying is the first line of defense.
 
@@ -139,14 +149,14 @@ The job's real duration is handled by **renewal count**, not a guessed up-front 
 - Runaway ceiling: max-renewals cap → a stuck loop (renewed 200×) gets force-reclaimed + flagged, not held forever.
 
 **Per lock type:**
-- **Leader lock** — the master cron *is* the heartbeat; each firing renews. `TTL ≈ 2× heartbeat` (survives one missed tick). No estimate needed.
-- **Per-work-item lock** — the spawned agent renews at **natural flow checkpoints** (after each major flow step) and **releases on completion**. `TTL` = short constant (~one step, 2–3 min); crash detected within one step, independent of total length. A 20-min chain and a 1-min tick use the **same** short TTL — the long one just renews more.
+- **Leader lock** — the master cron *is* the heartbeat; each firing renews. `TTL ≈ 2× heartbeat` (survives one missed tick). No estimate needed. See ops invariant above (R2) for the dark-window bound on mcp-server restart.
+- **Per-work-item lock** — the spawned agent renews at **natural flow checkpoints** (after each major flow step) and **releases on completion**. `TTL` = explicit short constant (~180 s, i.e., ~one flow step); crash detected within one step, independent of total length. A 20-min chain and a 1-min tick use the **same** short TTL — the long one just renews more. **Never omit the TTL argument; never rely on the 3600 s default.**
 
-**Gotcha:** `task_claim` enum may reject a new `kind` (`project_commit_mutex_enum_drift`) — claim under an existing kind (e.g. `sprint-task`) until `dev-mcp-server` adds the enum value; verify before relying on it.
+**`task_claim` kind:** use `cowork-slot` for both leader and per-work-item tokens. No new kind is required. The `commit-mutex` enum drift is resolved in the current codebase via `migrateCoordinationTable()` — agents can use `commit-mutex` today without a CHECK constraint failure.
 
 ---
 
-*Next step: route to `agents-architect` for review, then `po` for phase prioritization. No implementation until sign-off.*
+*Next step: `po` for phase prioritization. Implementation sequence MUST follow **0 → 2 → 1**; Phase 1 is blocked on Phase 2 cutover. agents-architect review complete (2026-05-30) — see review section below.*
 
 ---
 
