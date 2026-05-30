@@ -39,6 +39,13 @@ Scheduled slots `0 9,14,20 * * *` UTC are all outside the off-HOSE window by des
 
 3. Take the FIRST report: `report = result[0]`.
 
+3b. **Confirm status guard** — check `report.confirm_status` before claiming:
+   - If `report.confirm_status == "CONFIRMED"`:
+     - Log: `[refine-orchestrator] Report {report.id} is CONFIRMED — skipping refine`
+     - EXIT cleanly. Do NOT claim. Do NOT set refine_status to FAILED. Return `{ skipped: true, reason: 'confirmed' }`.
+   - Otherwise: continue to Step 4.
+   *(Belt-and-suspenders: Layer 1 in `getBctcPendingRefineTool` WHERE clause already filters CONFIRMED reports at source. This guard catches any edge case where a confirmed report still reaches the flow.)*
+
 4. Claim a task lock before processing:
    ```
    claim = call_tool(server="vn-market", tool="task_claim", arguments={
