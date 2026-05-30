@@ -56,9 +56,10 @@ const InputSchema = z.object({
 
 // ── Helper: resolve PNG path ───────────────────────────────────────────────────
 
+// Uses absolute /data/bctc-page-images mount point, consistent with bctcInspectHandler.ts
 function getPngPath(reportId: string, pageNumber: number): string {
   const paddedPage = String(pageNumber).padStart(4, "0");
-  return join(process.cwd(), "data", "bctc-page-images", reportId, `page_${paddedPage}.png`);
+  return join("/data/bctc-page-images", reportId, `page_${paddedPage}.png`);
 }
 
 // ── Handler (testable with injected deps) ─────────────────────────────────────
