@@ -1,5 +1,34 @@
 # dev-mcp-server -- Notebook
 
+## c327 · 2026-05-30 (BCTC-AGENTIC-REFINE AR-MCP) — COMMITTED 76a3b8d2
+
+**Task:** AR-MCP — FR-3 through FR-13 refine orchestrator, MCP tools, parser, schema.
+
+**Files changed (17):**
+- NEW: `src/application/utils/pageClassifier.ts` — FR-5 classifyPageForImageLoad (pipe/VN-keywords/continuation)
+- NEW: `src/application/utils/refinedMarkdownParser.ts` — FR-10 deterministic parser; LIVE schema (label, value_prior); trust flags→confidence 0.2/0.4/1.0; parseVnNumber (dot-thousands separator)
+- NEW: `src/interface/mcp/tools/financial-reports/getBctcPageTextTool.ts` — FR-3 (pdf-path→basename→getPageText)
+- NEW: `src/interface/mcp/tools/financial-reports/getBctcPageImageTool.ts` — FR-4 (on-demand rasterize, BCTC_IMAGE_PAGE_CAP=3)
+- NEW: `src/interface/mcp/tools/financial-reports/getBctcRefinedTool.ts` — FR-11 (reads bctc_refined_units)
+- NEW: `src/interface/mcp/routes/bctcRefineHandler.ts` — on-demand POST /api/refine-bctc/{report_id}
+- NEW: `src/scheduler/financial-reports/bctcRefineJob.ts` — FR-12 4-phase orchestrator (claim+readiness, window partition continuation-aware, bounded fan-out pool default=5, collect-then-write); runBctcRefineJob cron entry
+- MOD: `src/infrastructure/db/schema-financial-reports.ts` — FR-9 bctc_refined_units + window_status + text_status/refine_status idempotent migrations
+- MOD: `src/infrastructure/fetchers/pdfExtractorClient.ts` — getPageText() + rasterizePages()
+- MOD: `src/interface/mcp/tools/registry.ts` — 3 new tools (#139-#141)
+- MOD: `src/interface/mcp/tools/financial-reports/index.ts` — 3 new exports
+- MOD: `src/scheduler/cronConfig.ts` — bctcRefineJob '0 9,14,20 * * *' UTC
+- NEW: 5 test files (AR-parser-dv, AR-page-classifier, AR-schema-migration, AR-refine-readiness-gate, AR-refined-units-idempotency)
+
+**DV protocol:** RED_BEFORE=true guard in AR-parser-dv.test.ts; all 5 AR test files co-committed with production code.
+
+**Gates:** tsc EXIT 0 | 76 AR tests GREEN (0 fail) | balance-badge-forbidden enforced in tests | idempotency ≥3× proven (Scenario A/B/C) | continuation invariant tested (FPT [22,23]) | OFF-HOSE cron verified (09:00/14:00/20:00 UTC) | commit 76a3b8d2
+
+**ops_rebuild_required: true** — AR-OPS must rebuild mcp-server container after this change.
+
+Zone health: 17 files (12 new, 5 mod); tsc EXIT 0; 76 AR tests green; HEALTHY
+
+---
+
 ## c326 · 2026-05-29 (BCTC-EVAL-INSPECT-MERGE Task #9 — HEADER PAGE-NAV + KEYBOARD) — COMMITTED 3490dffa
 
 **Task:** Move page-change buttons to top-middle header; add ArrowLeft/ArrowRight keyboard nav.
