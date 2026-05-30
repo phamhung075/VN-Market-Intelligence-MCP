@@ -67,17 +67,53 @@ Zone health: 2 files (1 mod, 1 mod); tsc EXIT 0; 25 tests green; frozen 0-diff |
 
 ---
 
+## c328 · 2026-05-30 (DATA-PIPELINE-INTEGRITY DPI-FU-A + DPI-FU-B) — COMMITTED ff9a64ce
+
+**Tasks:** DPI-FU-A (EFFR staleness fail-loud) + DPI-FU-B (earning-yield reachable-denominator + fail-loud)
+
+**Root cause DPI-FU-A:** FRED (fred.stlouisfed.org) unreachable from Docker container (timeout confirmed from inside container). fetchFredEffrIorb returns null on every macroIndicatorRefreshJob run. INSERT OR IGNORE means EFFR max(date)=2026-05-14 never advances (16 days stale). Was silently WARN-logged only.
+
+**Root cause DPI-FU-B:** Watchlist expanded to 39 tickers; 12 new tickers have no vnstock financial data (API consistently returns null, confirmed via vnstock_fetch_log vs vnstock_financials cross-check). Coverage = 27/39 = 69.2% < 70% → job refuses to write tracked_indicators rows daily. Silent WARN only.
+
+**Files changed (4):**
+- `apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts` — DPI-FU-A: add `checkAndAlertEffrStaleness()` (exported, testable): reads MAX(date) FROM fred_series_daily WHERE series='EFFR', compares against 96h SLA, sends WORK alert with actionable container-network diagnosis message. Call after every fetchFredEffrIorb attempt. Errors now logged at ERROR not WARN.
+- `apps/mcp-server/src/application/usecases/computeMarketEarningYield.ts` — DPI-FU-B: change coverage denominator from totalCount (full watchlist=39) to reachableCount (tickers with ANY vnstock_financials row=27). Coverage now 27/27=100% → rows written. Add fail-loud WORK alert when job refuses.
+- `apps/mcp-server/src/__tests__/DPI-FU-A-effr-staleness-alert.test.ts` — NEW: 6 tests for checkAndAlertEffrStaleness (fresh/stale/boundary/no-rows/closed-db/97h-over)
+- `apps/mcp-server/src/__tests__/DPI-FU-B-earning-yield-coverage.test.ts` — NEW: 8 tests for earning-yield reachable-denominator fix (production scenario 27/27=100%, partial coverage, refusal+alert, backward compat)
+
+**Test results:** 35 targeted tests GREEN (14 new + 21 existing). tsc clean on changed files (2 pre-existing errors in bctcRefineJob.ts/AR-refine-readiness-gate — not caused by this change).
+
+**Infrastructure blocker (DPI-FU-A):** Container outbound connectivity to fred.stlouisfed.org must be restored by ops. Code fix makes the failure loud; data freshness still requires network access. Ops action: `docker inspect` network mode, check DNS/firewall, test `curl https://fred.stlouisfed.org` from inside container.
+
+**DoD status:**
+- DPI-FU-A code: DONE — fail-loud alert in place. Data freshness: BLOCKED (network). After ops fixes network, macroIndicatorRefreshJob next run will backfill EFFR automatically (INSERT OR IGNORE on new dates).
+- DPI-FU-B code: DONE — rows will be written on next marketEarningYieldJob run (09:30 UTC weekday). After rebuild, verify: `SELECT COUNT(*) FROM tracked_indicators WHERE indicator='market_earning_yield'` > 0.
+
+**Gates:** tsc EXIT 0 on changed files | 35 tests 0 fail | tool=151 | sched=70 | frozen 0-diff
+
+**ops_rebuild_required: true** — `docker compose build mcp-server && up -d --no-deps --force-recreate mcp-server`
+
+Zone health: 4 files (2 mod, 2 new); tsc EXIT 0 on zone files; 35 tests green; frozen 0-diff | HEALTHY
+
+---
+
 ## Working Memory
 
-### Active Sprint: BCTC-TABLE-BOUNDARY (BTB-PERSIST-FIX)
+### Active Sprint: DATA-PIPELINE-INTEGRITY (DPI-FU-A + DPI-FU-B)
+- c328 DONE: DPI-FU-A fail-loud EFFR staleness + DPI-FU-B reachable-denominator committed ff9a64ce
+- DPI-FU-A INFRA BLOCKER: container cannot reach fred.stlouisfed.org (timeout) → ops must restore network connectivity
+- DPI-FU-B: after rebuild, marketEarningYieldJob fires next 09:30 UTC weekday → rows will appear in tracked_indicators
+- NEXT: ops (rebuild mcp-server) → qa (verify DoD: DB check + live get_macro_snapshot carry.fedFundsRate + yield.earningYield)
+
+### Also active: BCTC-TABLE-BOUNDARY (BTB-PERSIST-FIX)
 - c327 DONE: BLOCKING-1 delete-before-insert committed 60dfac7f
 - BLOCKING-2: prose units must be added by dev-pdf-extractor to PEK push payload
 - NEXT: ops (rebuild mcp-server) → dev-pdf-extractor (add prose units to pek_engine_adapter.py push) → ops (rebuild pdf-extractor) → single re-extraction of FPT + ACB sentinels → qa re-verify
 
 ### Carry-over
-- tool=148, sched=70 (baselines for Gate 2c/2d)
+- tool=151, sched=70 (baselines for Gate 2c/2d)
 - Bun v1.3.13 C++ post-suite panic = upstream bug, pre-existing
-- 352 pre-existing failures in full suite (unrelated: e.g. newsHeadlines e2e missing reuters.js)
+- Pre-existing tsc errors: bctcRefineJob.ts (2 errors) + AR-refine-readiness-gate.test.ts (1 error) — not caused by any recent change
 
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`
