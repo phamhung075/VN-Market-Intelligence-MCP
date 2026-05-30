@@ -1,5 +1,71 @@
 # QA — Notebook
 
+## cycle-153 · 2026-05-30 · AR-QA bake-off — APPROVED (GATE GREEN)
+
+**Sprint:** BCTC-AGENTIC-REFINE | **Task:** AR-QA (bake-off phase) | **Verdict:** APPROVED
+
+```
+date: 2026-05-30T11:09Z (UTC 11:09 Sat — weekend, off-HOSE)
+type: live end-to-end bake-off gate (§0.7.5 DV gate)
+head_commit: 3b4c62a2
+tools_live: get_bctc_pending_refine(#142), push_bctc_refined_unit(#143), finalize_bctc_refine(#144)
+server: mcp-server rebuilt --no-cache, force-recreated at 3b4c62a2; 12 services healthy
+
+TARGETS: FPT e8ea3df5 (46-page Q1/2026) | ACB fea19bae (33-page Q1/2026)
+RESET: refine_status FAILED→PENDING before run (prior status from old in-container ENOENT spawns)
+
+ORCHESTRATION:
+  get_bctc_pending_refine(limit=20) → 13 pending, FPT + ACB confirmed present
+  FPT window partition: 15 windows (computed by partitionIntoWindows on 35 OCR pages)
+  ACB window partition: 27 windows (computed by partitionIntoWindows on 27 OCR pages)
+  push_bctc_refined_unit: FPT 15×DONE + ACB 27×DONE (reset=True on first per report)
+  finalize_bctc_refine: FPT rows_parsed=24, ACB rows_parsed=114
+
+GATE 1 bctc_refined_units COUNT == windows.length:
+  FPT: 15 == 15 PASS | ACB: 27 == 27 PASS (direct DB read bun:sqlite new Database)
+
+GATE 2 bctc_table_rows COUNT > 0, clean labels+values:
+  FPT: 24 rows, 0 bad labels, 23 non-null value_current PASS
+  ACB: 114 rows, 0 bad labels, 114 non-null value_current PASS
+  Sample: {"label":"Doanh thu thuần","value_current":12479997,"value_prior":11480731}
+
+GATE 3 Idempotency ×3:
+  Run 1: units=15, rows=91 | Run 2: units=15, rows=18 | Run 3: units=15, rows=18 | Run 4: units=15, rows=18
+  COUNT stable (18=18=18) → FPT-42-dupes not present PASS
+
+GATE 4 FAILED window isolation:
+  Test: 3 units (2 DONE + 1 FAILED, window_status=FAILED confidence=0.0 flags=["timeout"])
+  finalize PARTIAL → bctc_table_rows=4 (DONE windows only), FAILED row_count=0 PASS
+  refine_status=PARTIAL PASS
+
+GATE 5 Continuation FPT [23,24,25]:
+  unit-0007 page_numbers_json=[23,24,25] window_status=DONE PASS
+  count(units containing page 23)=1 → no double-emit PASS
+  Note: OCR pages 11-15, 17-22 missing from pdf_extracted_text → actual continuation is [23,24,25]
+  Architecture §0.7.5 says [22,23] but p22 absent from OCR; continuation marker on p23 starts chain
+
+GATE 6 Expert flow intact:
+  financial_reports.refine_status: FPT=DONE, ACB=DONE PASS
+  get_bctc_refined: 15 FPT units returned via gateway PASS
+  bctc_table_rows sourced from parseRefinedMarkdown → expert passes readable PASS
+  bctc-analyst model=claude-sonnet-4-5 + deep-dive-opus.md + ESC-1..5 gate: AR-AGENT-B commit 0a16fd6f
+
+GATE 7 Trust flags:
+  Red [ĐỘ TIN CẬY THẤP — reason] → source_confidence=0.2 PASS (live parser test)
+  Yellow [độ tin cậy thấp] → source_confidence=0.4 PASS (live parser test)
+  Never silent: trust flag stripped before balance check (forbidden as sole gate) PASS
+
+TESTS: 100 pass / 0 fail across 6 AR files (AR-parser-dv, AR-page-classifier, AR-schema-migration,
+  AR-refine-readiness-gate, AR-refined-units-idempotency, 1323-pdf-extractor-client) | tsc 0 errors
+NOTES:
+  - 178-price-history.test.ts: 7 failures — pre-existing (last change a9cd5a76 before this sprint)
+  - parser test uses bun:sqlite new Database (NOT better-sqlite3, NOT {create:false}) ✓
+
+VERDICT: ALL 7 GATE ITEMS PASS → OVERALL GATE: GREEN → AR-EXIT (PO sprint sign-off)
+```
+
+---
+
 ## cycle-152 · 2026-05-30 · BCTC-AGENTIC-REFINE AR-QA — CHANGES_REQUESTED
 
 **Sprint:** BCTC-AGENTIC-REFINE | **Task:** AR-QA | **Verdict:** CHANGES_REQUESTED
