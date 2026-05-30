@@ -1,5 +1,67 @@
 # QA — Notebook
 
+## cycle-160 · 2026-05-31 · DWF-QA — DYN-WF-FOUNDATION Phase 0+2 — APPROVED
+
+**Sprint:** DYN-WF-FOUNDATION | **Task:** DWF-QA | **Verdict:** APPROVED
+
+```
+date: 2026-05-31T00:00Z
+sprint: DYN-WF-FOUNDATION
+branch: main (all work committed on main per NO-BRANCH policy)
+
+TEST SUITE RESULTS:
+  DWF-is-trading-day.test.ts:        12 pass / 1 fail (fail = AC-P0-3-6 DV deliberate-violation — CORRECT)
+  DWF-coordination-phase2.test.ts:   25 pass / 0 fail (DV-P2-1..7 + DV-TTL-CAP-1..4)
+  DWF-routing-policy-fence.test.ts:  7 pass / 0 fail
+  232-cowork-resilience.test.ts:     20 pass / 0 fail (regression)
+  tsc: 19 errors in DWF-routing-policy-fence.test.ts (pre-existing TS18048, test-only, same as cycle-159)
+       Zero new TSC errors introduced by DWF sprint.
+
+PHASE 0 VERIFICATION:
+  FR-P0-1: cowork-schedule.json — 14 enabled / 0 disabled (jq confirmed)
+    Slot IDs match REQ exactly: chef-morning, chef-intraday, chef-eod, chef-evening,
+    digest-sunday, tnb-audit, bctc-analyst-slot-1..4, news-scout-offhours, news-scout-sentiment,
+    market-watcher-offhours, market-watcher-eod.
+    AC-P0-1-2 corrected count: 12→14 (handoff stale, REQ is authoritative — 14 correct).
+    chef-morning present: YES (DV spot-check confirmed).
+  FR-P0-2: routing-policy.json valid JSON, 8 rules, last rule = catch-all type/severity/zone/ticker=*
+    routing to "po". No apps/ production code imports it.
+    Fence nit AC-P0-2-4: grep uses --exclude-dir=__tests__ — correctly prevents self-detection.
+    This IS properly handled in the implementation; the nit is a non-issue.
+  FR-P0-3: is_trading_day domain service:
+    2025-01-27 → holiday=Tết Nguyên Đán (PASS)
+    2025-01-11 → weekend (PASS)
+    2025-01-06 → open (PASS)
+    DV stub-proof: asserting true on known holiday → test FAILS as designed (RED confirmed)
+    Tool registered at #147 in registry.ts. DDD: domain-only imports (vnHolidayData.ts). Security: PASS.
+  FR-P0-4: pressure-state.json exists with all 9 required schema fields. Valid JSON.
+    calendar_status field present (populated by is_trading_day call in flow).
+    No production code outside cowork emitter reads the file (grep apps/ + .claude/skills/ = 0 hits).
+    Atomic write pattern in flow: write .tmp then mv.
+
+PHASE 2 VERIFICATION:
+  FR-P2-5 (leader lock): Step 0b in cowork flow has explicit ttl_seconds:1800.
+    DV-P2-1: single-winner proof — 25 pass / 0 fail (in-memory DB tests).
+  FR-P2-6 (per-work-item token): Step 4.6 uses cowork-slot:<slot.slot_id> (no nominal_tick suffix).
+    ttl_seconds:180 explicit. DV-P2-2/3/4/5/6 all GREEN.
+    R3 re-proof: task_id in Step 4.6 = "cowork-slot:" + slot.slot_id (nominal_tick absent).
+    R1 re-proof: ttl_seconds:180 literal present at line 184 of flow.
+  FR-P2-7 (published marker): DV-P2-7 GREEN. task_claim with ttl_seconds=100800 stored correctly.
+  BLOCKING R1 re-proof: DV-P2-4 tests confirm ttl_seconds:180 present; removing it → RED.
+  BLOCKING R3 re-proof: DV-P2-3 counter-test proves tick-suffix recreates bug; suffix-free blocks it.
+  TTL cap: coordinationStore.ts cap = 691200; coordinationTools.ts Zod .max(691200).
+    DV-TTL-CAP-1: 691200 stored as-is (not capped to old 604800). PASS.
+    DV-TTL-CAP-2: 691201 clamped to 691200. PASS.
+    DV-TTL-CAP-3: stored value != 604800 for a 691200s claim. PASS.
+  R2 ops runbook: docs/protocols/dwf-ops-runbook.md — 155L, all required sections present.
+    Cites: leader TTL=1800s, max dark window=30min, task_list_held monitoring command,
+    do-NOT-delete-stale-row, published-marker interaction note. Accurate and complete.
+
+DDD: PASS (vnTradingCalendar.ts imports only vnHolidayData.ts; isTradingDayTool.ts is interface-only)
+Security: PASS (no process.env, no hardcoded secrets in any DWF files)
+TSC pre-existing: 19 errors in test file only (DWF-routing-policy-fence.test.ts TS18048) — not new
+```
+
 ## cycle-159 · 2026-05-30 · TRUST-QA-1 RE-SWEEP — BCTC-TRUST-RED — APPROVED
 
 **Sprint:** BCTC-TRUST-RED | **Task:** TRUST-QA-1 (re-gate) | **Verdict:** APPROVED
