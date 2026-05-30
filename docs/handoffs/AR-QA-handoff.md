@@ -223,3 +223,47 @@ NEXT: AR-OPS
 HANDOFF: docs/handoffs/AR-QA-handoff.md
 PIPELINE: continue → AR-OPS (fix startScheduler.ts wiring + volume + rebuild)
 ```
+
+---
+
+## [Developer] AR-MCP-WIRE — Blocking Fix Resolved
+
+**Agent:** dev-mcp-server  
+**Date:** 2026-05-30  
+**Commit:** 5a46809c
+
+```
+STATUS: DONE
+COMMIT: 5a46809c
+
+GREP PROOF (apps/mcp-server/src/scheduler/startScheduler.ts):
+  70: import { runBctcRefineJob } from './financial-reports/bctcRefineJob.js'
+  962: cron.schedule(CRONS.bctcRefineJob, async () => {
+  963:   await jobRunRepo.wrapRun('bctcRefineJob', async () => {
+
+WIRING PATTERN: mirrors bctcEvalRecomputeJob registration —
+  jobRunRepo.wrapRun, shared db handle via { db } deps injection,
+  { timezone: 'UTC' } option. runBctcRefineJob signature takes
+  RefineOrchestratorDeps (db is optional field) — passed as { db }
+  to reuse the scheduler's single composition-root DB handle.
+
+DOCKER-COMPOSE STATUS: no changes required
+  - Named volume bctc-page-images: ALREADY present (line 438)
+  - mcp-server mount /data/bctc-page-images: ALREADY present (line 23)
+  - pdf-extractor mount /data/bctc-page-images: ALREADY present (line 83)
+  - REFINE_FANOUT_CONCURRENCY=5: ALREADY present on mcp-server (line 45)
+  - REFINE_WINDOW_TIMEOUT_S=120: ALREADY present on mcp-server (line 46)
+  - REFINE_MAX_WINDOW_PAGES=3: ALREADY present on mcp-server (line 47)
+  - BCTC_PAGE_TEXT_BACKEND=sqlite: ALREADY present on pdf-extractor (line 94)
+  - BCTC_RASTER_DPI=150: ALREADY present on pdf-extractor (line 93)
+
+TYPECHECK: bun tsc --noEmit — 0 errors
+FILES TOUCHED: apps/mcp-server/src/scheduler/startScheduler.ts only
+
+NEXT: AR-OPS
+  Action 1 (DONE by this task): startScheduler.ts wiring committed.
+  Action 2: docker-compose volume/env already in place — no compose edit needed.
+  Action 3: rebuild container --no-cache, verify cron fires at 09:00/14:00/20:00 UTC
+  Action 4: run bake-off on FPT + ACB (POST /api/refine-bctc/{id}) and confirm numeric agreement
+  Action 5: report bake-off metrics back to QA for Criterion 1 sign-off
+```
