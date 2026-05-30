@@ -6,23 +6,11 @@
 
 ## Closed sprints (live follow-ups only — full records in briefs/archive)
 
+- **BCTC-AI-INPUT-TAB** ✅ SIGNED OFF 2026-05-30 (AIT-EXIT). Additive 7th tab "Đầu vào AI" on `/api/bctc-inspect`: per selected page shows the agent-input PNG + OCR text + page-window the refine AI received. QA cycle-157 all 7 gates @ b4ed9266 + path-fix cbe96137. Live-verified: page-image route → real 336KB `image/png` (magic `89 50 4e 47`), miss → honest 404 `png_not_found`, page-window → `bctc_refined_units`; FPT report `e8ea3df5…` pages 6-11 rasterized; DB row untouched (`confirm_status=PENDING`); 6 prior tabs intact; repo==live image.
 - **BCTC-HUMAN-CONFIRM** ✅ SIGNED OFF 2026-05-30 (HC-EXIT). Human-in-the-loop correction layer on `/api/bctc-inspect`: review red/yellow flagged cells, hand-correct, lock "ĐÃ XÁC NHẬN"; corrections survive cron refine re-runs (3-layer lock); 50/50 viewer + 6 tabs. QA HC-QA-3 cycle-156 all 9 gates GREEN @ 441f8e18, container dd904d63 toolCount=154. Brief `docs/architecture-briefs/2026-05-30-bctc-human-confirm.md` (+ADDENDUM HC-ARCH-2 transaction-ordering). Commits 4c40939c·89100e07·ae3c5039·dca93898·7a3734ed·204344ec·9234e9c2·d5976d1e·441f8e18. 🔄 follow-up = AR-FU-DETERMINISM (below, shared with BCTC-AGENTIC-REFINE).
 - **BCTC-AGENTIC-REFINE** ✅ SIGNED OFF 2026-05-30. Brief `docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md`. 🔄 **AR-FU-DETERMINISM** (MED, `apps/mcp-server` + `docs/agents/refine_bctc_md`): Haiku refine fan-outs emit non-deterministic markdown coverage (FPT run-1=91 vs run-2=18); store-correctness unaffected, coverage variance a trust follow-up. Lower temp / determinism guard / golden-markdown snapshot. DEFERRED.
 - **DATA-PIPELINE-INTEGRITY** ✅ SIGNED OFF 2026-05-30. 🔄 FU-C (MED test-debt, `ohlcvForeignFlowStore.ts`, DEFERRED) · ⏳ FU-MON (Monday: DPI-3 Brent/Gold + DPI-4 `get_foreign_flow` live-probe).
 - **BCTC-TABLE-BOUNDARY** ✅ SIGNED OFF 2026-05-30. Over-merge bug resolved (FPT=31/ACB=22, 0 dup). FU-BTB-OCR registered. Brief `docs/architecture-briefs/2026-05-30-bctc-table-boundary-drift-convergence.md`.
-
----
-
-## Sprint BCTC-AI-INPUT-TAB — 7th viewer tab: per-page AI input bundle
-
-**Status:** KICKOFF — PO self-initiated 2026-05-30T19:07Z. **Priority: MEDIUM (operator-requested UX/debug).** Zone: **`apps/mcp-server/`** (the `/api/bctc-inspect` viewer is mcp-server's own served HTML — `src/interface/bctc-inspector.html` — NOT Remix). Additive-only; serializes on the single git tree. Goal: `docs/SPRINT_GOAL.md` (top section). WIP=2.
-
-Surface, per CURRENTLY SELECTED page (replays on `navigateToPage`): (1) rasterized agent-input PNG `data/bctc-page-images/{report_id}/page_{N}.png` via the `get_bctc_page_image` path — honest "chưa có ảnh" empty state if missing; (2) OCR text passed for that page; (3) page-window from `bctc_refined_units.page_numbers_json`; (4) optional read-only refine contract. New tab follows existing `switchTab`/`rtab-*`/`tab-panel` pattern; the existing 6 tabs + 50/50 split + 25 legacy pane IDs MUST stay green. Vietnamese tab LABEL only (the one exception); all sprint artifacts + comms ENGLISH.
-
-- 🔄 AIT-BA → AIT-ARCH (mini-brief: serving seam for PNG bytes to browser, tab wiring, per-page replay hook) → AIT-DEV (dev-mcp-server) → AIT-DEPLOY (ops rebuild --no-cache) → AIT-QA (DV RED→GREEN same commit; real PNG bytes; zero-regression on 6 tabs) → AIT-EXIT (po G9)
-- Anti-false-green: DV test lands SAME commit as production; new PNG route must return real `image/png` bytes (not echo); balance badge FORBIDDEN as gate (N/A).
-
-| AIT-BA | Requirement Spec for BCTC-AI-INPUT-TAB | pending | BA | — |
 
 ---
 
