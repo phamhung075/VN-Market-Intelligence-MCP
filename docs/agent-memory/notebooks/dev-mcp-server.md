@@ -1,5 +1,42 @@
 # dev-mcp-server -- Notebook
 
+## c328 · 2026-05-30 (DATA-PIPELINE-INTEGRITY DPI-FU-D) — COMMITTED [pending]
+
+**Task:** DPI-FU-D — SBV fetcher must reject zero-value deposit-rate writes
+
+**Root cause:** `storeSbvSnapshot` in `sbv.ts` did unconditional INSERT OR REPLACE. When the fetcher returned `maxDepositRatePct=0` (parse miss / upstream SBV gap), the good prior row (5.0 from 2026-05-29T23:15Z) was silently overwritten with 0. `sbvRatesJob.ts` had no pre-flight guard — it passed any snapshot straight to store.
+
+**Fix layers (defence-in-depth):**
+1. `sbvRatesJob.ts` — pre-flight `detectZeroSentinelFields()` check BEFORE calling store. If any sentinel field (max_deposit_rate_pct, usd_vnd_official, overnight_rate_pct, refinancing_rate_pct, max_lending_rate_pct) is ≤0: alert WORK channel, return `zeroRateSkipped=true`, skip store entirely.
+2. `sbv.ts storeSbvSnapshot` — persistence-boundary guard: reads prior row, detects zero-overwrite risk on same 5 sentinel columns, returns `{skipped: true, zeroColumns}` and logs ERROR without touching DB. First-ever writes (no prior row) always accepted.
+3. NOT guarded: `interbank_overnight_pct` (legitimately 0 on holiday), `discount_rate_pct` (conservative scope).
+
+**Files changed (3):**
+- MOD: `src/infrastructure/fetchers/sbv.ts` — `storeSbvSnapshot` now returns `{skipped, zeroColumns}`, reads prior row, guards sentinel columns
+- MOD: `src/scheduler/macro/sbvRatesJob.ts` — pre-flight zero-sentinel check, WORK alert, `zeroRateSkipped` result field
+- NEW: `src/__tests__/DPI-FU-D-sbv-zero-deposit-guard.test.ts` — 7 tests (DFD-01..07)
+
+**RED→GREEN evidence:**
+- Before fix: 3 pass / 4 fail (DFD-01, 02, 05, 07 failed)
+- After fix: 7 pass / 0 fail
+- Existing SBV suite (028 + sbvRatesJob + 1497): 29→36 pass / 0 fail
+
+**Gates:** tsc EXIT 0 | 36 SBV tests GREEN | tool count 151 (unchanged) | scheduler count 71 (unchanged)
+
+**ops_rebuild_required: true** — mcp-server container rebuild required. Next good SBV fetch (every 4h, cron `0 */4 * * *`) will auto-restore deposit rate once upstream SBV XML is healthy.
+
+**DB verification ops/qa should run post-rebuild:**
+```sql
+-- Confirm deposit rate is positive (not 0 and not fixture 4.7)
+SELECT max_deposit_rate_pct, fetched_at FROM sbv_rates WHERE source = 'sbv';
+-- Confirm no zero-rate row in history
+SELECT COUNT(*) FROM sbv_rates_history WHERE max_deposit_rate_pct = 0;
+```
+
+Zone health: 2 files mod + 1 test new; tsc EXIT 0; 36 SBV tests green; HEALTHY
+
+---
+
 ## c327 · 2026-05-30 (BCTC-AGENTIC-REFINE AR-MCP) — COMMITTED 76a3b8d2
 
 **Task:** AR-MCP — FR-3 through FR-13 refine orchestrator, MCP tools, parser, schema.

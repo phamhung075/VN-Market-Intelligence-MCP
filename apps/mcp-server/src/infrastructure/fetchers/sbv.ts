@@ -286,6 +286,57 @@ export async function fetchSbvRates(
 // Public API — storeSbvSnapshot
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Sentinel-for-missing rate columns — 0 is NOT a valid value for these fields.
+// If the fetcher returns 0 for any of these, it means the upstream scrape missed
+// the value. We must not overwrite a good prior row with 0.
+//
+// NOT listed: interbank_overnight_pct — can legitimately be 0 on market close /
+// holiday; discount_rate_pct — rarely touched, not a primary DPI concern.
+// ---------------------------------------------------------------------------
+
+const SENTINEL_ZERO_COLUMNS = [
+  "max_deposit_rate_pct",
+  "usd_vnd_official",
+  "overnight_rate_pct",
+  "refinancing_rate_pct",
+  "max_lending_rate_pct",
+] as const;
+
+type SentinelColumn = typeof SENTINEL_ZERO_COLUMNS[number];
+
+const SNAPSHOT_FIELD_MAP: Record<SentinelColumn, keyof SbvMacroSnapshot> = {
+  max_deposit_rate_pct: "maxDepositRatePct",
+  usd_vnd_official:     "usdVndOfficial",
+  overnight_rate_pct:   "overnightRatePct",
+  refinancing_rate_pct: "refinancingRatePct",
+  max_lending_rate_pct: "maxLendingRatePct",
+};
+
+/**
+ * Checks whether the incoming snapshot has any sentinel-for-missing 0-values
+ * that would clobber a good prior row in sbv_rates.
+ *
+ * Returns the list of column names where the new snapshot has 0 but the prior
+ * row has a positive value. An empty array means the write is safe.
+ */
+function detectZeroOverwriteColumns(
+  snapshot: SbvMacroSnapshot,
+  priorRow: Record<string, number> | null,
+): SentinelColumn[] {
+  if (!priorRow) return []; // no prior row — first write, always safe
+
+  const problematic: SentinelColumn[] = [];
+  for (const col of SENTINEL_ZERO_COLUMNS) {
+    const snapshotValue = snapshot[SNAPSHOT_FIELD_MAP[col]] as number;
+    const priorValue = priorRow[col] ?? 0;
+    if (snapshotValue <= 0 && priorValue > 0) {
+      problematic.push(col);
+    }
+  }
+  return problematic;
+}
+
 /**
  * Persists an SBV macro snapshot into SQLite using a dual-table write pattern:
  *
@@ -294,15 +345,46 @@ export async function fetchSbvRates(
  *
  * Both writes are wrapped in a single SQLite transaction for atomicity.
  *
+ * Zero-overwrite guard: if the incoming snapshot has ≤0 for any
+ * sentinel-for-missing column (max_deposit_rate_pct, usd_vnd_official,
+ * overnight_rate_pct, refinancing_rate_pct, max_lending_rate_pct) AND the
+ * prior row already holds a positive value for that column, the entire write
+ * is REJECTED. The function returns without touching sbv_rates or
+ * sbv_rates_history. The caller (sbvRatesJob) is responsible for logging
+ * and alerting before calling this function.
+ *
+ * First-ever writes (no prior row) are always accepted, even if deposit-rate=0,
+ * because there is no good prior value to protect.
+ *
  * @param snapshot - The SbvMacroSnapshot to persist.
  * @param db       - Optional Database instance. Defaults to the application singleton.
+ * @returns { skipped: true, zeroColumns: string[] } when the write was rejected;
+ *          { skipped: false } when the snapshot was persisted normally.
  */
 export function storeSbvSnapshot(
   snapshot: SbvMacroSnapshot,
   db?: Database,
-): void {
+): { skipped: boolean; zeroColumns: SentinelColumn[] } {
   const database = db ?? getDb();
   const source = "sbv";
+
+  // Read prior row to check for zero-overwrite risk
+  const priorRow = database
+    .query<Record<string, number>, [string]>(
+      `SELECT max_deposit_rate_pct, usd_vnd_official, overnight_rate_pct,
+              refinancing_rate_pct, max_lending_rate_pct
+       FROM sbv_rates WHERE source = ?`,
+    )
+    .get(source) ?? null;
+
+  const zeroColumns = detectZeroOverwriteColumns(snapshot, priorRow);
+  if (zeroColumns.length > 0) {
+    logger.error(
+      `[sbv] storeSbvSnapshot REJECTED — zero-value would overwrite good prior row`,
+      { zeroColumns, priorRow, fetchedAt: snapshot.fetchedAt },
+    );
+    return { skipped: true, zeroColumns };
+  }
 
   const upsertLatest = database.prepare(`
     INSERT OR REPLACE INTO sbv_rates
@@ -361,4 +443,6 @@ export function storeSbvSnapshot(
     usdVndOfficial: snapshot.usdVndOfficial,
     fetchedAt: snapshot.fetchedAt,
   });
+
+  return { skipped: false, zeroColumns: [] };
 }
