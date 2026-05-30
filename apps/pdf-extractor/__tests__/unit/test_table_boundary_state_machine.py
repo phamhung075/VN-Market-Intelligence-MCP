@@ -1,11 +1,20 @@
 """
-Unit tests — BCTC-TABLE-BOUNDARY state machine (BTB-DEV)
+Unit tests — BCTC-TABLE-BOUNDARY state machine (BTB-DEV, updated BTB-DRIFT-DEV)
 
 Tests cover:
-    Class A — _is_title_band: D-5 title-band detector (pure function)
+    Class A — _is_title_band: D-5 title-band detector (raw OCR text, pure function)
+    Class A2 — _has_new_title: D-5 detector on pre-extracted title_hints strings
+               (unit_grouper, canonical path after BTB-DRIFT-DEV)
     Class B — _fingerprints_continuous with stored_text_b: D-5 via continuity test
-    Class C — State-machine simulation (build_document_map loop logic)
+    Class C — State-machine simulation via group_pages_into_units (canonical after
+               BTB-DRIFT-DEV)
         Includes DV-1 and DV-2 deliberate-violation anti-false-green tests.
+
+BTB-DRIFT-DEV update (2026-05-30):
+    Class C's _simulate_state_machine now delegates to
+    infrastructure.unit_grouper.group_pages_into_units — the single canonical
+    grouping function called by both PATH A and PATH B. The fingerprint-based
+    simulation adapter converts fp dicts into the pages-list format.
 
 All tests are pure-function unit tests. Zero real PDF. Zero Tesseract. Zero DB.
 Zero network. AC-0 compliance: test data uses purely generic inputs.
@@ -24,10 +33,7 @@ from infrastructure.generic_md_table_extractor import (
     _is_title_band,
     _fingerprints_continuous,
 )
-
-# Import the updated _simulate_grouping via test_document_map helper
-# to avoid duplication — we reuse the same helper class from that file.
-# Alternatively, import the simulation logic directly here for independence.
+from infrastructure.unit_grouper import group_pages_into_units, _has_new_title
 
 
 # ---------------------------------------------------------------------------
@@ -68,92 +74,51 @@ def _simulate_state_machine(fingerprints: list, stored_texts: list = None) -> li
     """
     Pure-function simulation of the BCTC-TABLE-BOUNDARY state machine loop.
 
-    Mirrors the updated build_document_map loop exactly — used by Class C tests
-    without requiring a real PDF or Tesseract. Returns a list of unit dicts:
-        [{"pages": [N, ...], "page_type": "table"|"prose"|"blank"}, ...]
+    BTB-DRIFT-DEV update: delegates to group_pages_into_units (canonical) with
+    a thin adapter that converts fingerprint dicts → pages-list format.
 
-    This is the POST-FIX logic. To prove DV-1/DV-2 RED on the pre-fix code,
-    see the PROVEN-RED section at the bottom of this module.
+    stored_texts: when provided, non-empty strings are interpreted as title-band
+    signals via _is_title_band (backward-compat for Class B tests that inject raw
+    OCR text). For the canonical D-5 check we convert them to title_hints using
+    a simple heuristic: if stored_text contains a title band → title_hints=["TITLE"],
+    if continuation marker → title_hints=["tiếp theo"], else title_hints=[].
+
+    Returns a list of unit dicts:
+        [{"pages": [N, ...], "page_type": "table"|"prose"}, ...]
     """
     if stored_texts is None:
         stored_texts = [""] * len(fingerprints)
 
-    units = []
-    current_pages: list = []
-    current_fp = None
-    last_committed_d1_fp = None
-    pending_blanks: list = []
-    state = "NO_TABLE"
-
-    def flush():
-        nonlocal current_pages
-        if not current_pages:
-            return
-        schema_page_idx = 0
-        schema_fp = fingerprints[current_pages[0] - 1]  # page_num is 1-indexed
-        schema_type = schema_fp.get("page_type", "prose")
-        units.append({"pages": list(current_pages), "page_type": schema_type})
-        current_pages = []
-
+    pages = []
     for i, fp in enumerate(fingerprints):
         page_num = i + 1
         page_type = fp.get("page_type", "prose")
         stored_text = stored_texts[i] if i < len(stored_texts) else ""
 
-        if page_type == "blank":
-            pending_blanks.append(page_num)
-            continue
+        # Convert stored_text D-5 signal to title_hints format so that
+        # group_pages_into_units receives the same effective information.
+        # This preserves Class C test semantics after the delegation refactor.
+        title_hints: list = []
+        if stored_text and page_type == "table":
+            from infrastructure.generic_md_table_extractor import _is_title_band as _itb
+            lower = stored_text.lower()
+            _CONT = ("tiếp theo", "(continued)", "continued")
+            if any(m in lower for m in _CONT):
+                # Continuation marker: supply it so _has_new_title returns False
+                title_hints = ["tiếp theo"]
+            elif _itb(stored_text):
+                # Title band detected in raw text → supply a non-empty title hint
+                title_hints = ["TITLE_BAND_DETECTED"]
 
-        if state == "NO_TABLE":
-            pending_blanks = []
-            if page_type == "table":
-                # Flush any open prose unit before starting a table unit.
-                flush()
-                current_pages = [page_num]
-                current_fp = fp
-                last_committed_d1_fp = fp
-                state = "TABLE_OPEN"
-            else:
-                if current_fp is None:
-                    current_pages = [page_num]
-                    current_fp = fp
-                elif _fingerprints_continuous(current_fp, fp, stored_text_b=stored_text):
-                    current_pages.append(page_num)
-                    current_fp = fp
-                else:
-                    flush()
-                    current_pages = [page_num]
-                    current_fp = fp
+        pages.append({
+            "page_num": page_num,
+            "page_type": page_type,
+            "title_hints": title_hints,
+        })
 
-        elif state == "TABLE_OPEN":
-            if page_type == "prose":
-                pending_blanks = []
-                flush()
-                current_pages = [page_num]
-                current_fp = fp
-                last_committed_d1_fp = None
-                state = "NO_TABLE"
-            else:
-                assert last_committed_d1_fp is not None
-                continuation = _fingerprints_continuous(
-                    last_committed_d1_fp, fp, stored_text_b=stored_text
-                )
-                if continuation:
-                    current_pages.extend(pending_blanks)
-                    pending_blanks = []
-                    current_pages.append(page_num)
-                    last_committed_d1_fp = fp
-                    current_fp = fp
-                else:
-                    pending_blanks = []
-                    flush()
-                    current_pages = [page_num]
-                    current_fp = fp
-                    last_committed_d1_fp = fp
-                    # state stays TABLE_OPEN
-
-    flush()
-    return units
+    raw_units = group_pages_into_units(pages)
+    # Strip unit_id (not stable) to match the old simulation return shape
+    return [{"pages": u["pages"], "page_type": u["page_type"]} for u in raw_units]
 
 
 # ===========================================================================
@@ -240,6 +205,44 @@ class TestIsTitleBand:
         text2 = "Tiếp Theo\n1.234.567\n"
         # "tiếp theo" in "tiếp theo" → case-insensitive match → return False
         assert _is_title_band(text2) is False
+
+
+# ===========================================================================
+# Class A2 — _has_new_title (unit_grouper canonical D-5, BTB-DRIFT-DEV)
+# ===========================================================================
+
+class TestHasNewTitle:
+    """
+    Tests for _has_new_title — the D-5 detector used by group_pages_into_units.
+    Operates on pre-extracted title_hints strings (not raw OCR text).
+    BTB-DRIFT-DEV: replaces the per-path _is_title_band call in the hot path.
+    """
+
+    def test_a2_1_empty_list_false(self):
+        assert _has_new_title([]) is False
+
+    def test_a2_2_empty_strings_false(self):
+        assert _has_new_title(["", "   "]) is False
+
+    def test_a2_3_real_title_hint_fires_d5(self):
+        assert _has_new_title(["BAO CAO TAI CHINH"]) is True
+
+    def test_a2_4_tiep_theo_suppresses_d5(self):
+        assert _has_new_title(["tiếp theo"]) is False
+
+    def test_a2_5_tiep_theo_case_insensitive(self):
+        assert _has_new_title(["Tiếp Theo"]) is False
+
+    def test_a2_6_continued_suppresses_d5(self):
+        assert _has_new_title(["(continued)"]) is False
+
+    def test_a2_7_first_hint_continuation_suppresses_d5(self):
+        """Continuation marker on first non-empty hint suppresses D-5."""
+        assert _has_new_title(["tiếp theo", "BAO CAO"]) is False
+
+    def test_a2_8_first_hint_title_fires_d5(self):
+        """First non-empty hint is a real title → D-5 fires."""
+        assert _has_new_title(["BAO CAO", "tiếp theo"]) is True
 
 
 # ===========================================================================
@@ -551,18 +554,31 @@ class TestStateMachineSimulation:
         # Second unit: 1 prose page → type must be "prose"
         assert units[1]["page_type"] == "prose"
 
-    def test_geometry_break_opens_new_table_unit(self):
-        """TABLE_NEW: D-4 condition 2 fails (gutter count mismatch) → new table unit."""
+    def test_geometry_break_adjacency_model(self):
+        """
+        BTB-DRIFT-DEV semantic update (Architect brief R-2):
+        group_pages_into_units uses adjacency-only continuity (matching PATH B).
+        Two table pages with different gutter counts but no D-5 title signal are
+        kept in ONE unit — geometric D-4 checks are NOT applied at this layer.
+
+        The D-4 geometric check remains in _fingerprints_continuous (PATH A's
+        _fingerprints_continuous still exists for backward-compat) but it is no
+        longer in the grouping hot path.  If geometric continuity needs to be
+        re-added to the grouper in a future sprint, it would be an optional
+        parameter to group_pages_into_units.
+        """
         fp_a = _fp_table(gutter_count=3)
         fp_b = _fp_table(gutter_count=2)
 
         units = _simulate_state_machine([fp_a, fp_b])
 
-        assert len(units) == 2, (
-            f"Expected 2 table units from gutter-count mismatch, got {len(units)}"
+        # Adjacency-only: both are table pages, no title signal → stay in 1 unit
+        assert len(units) == 1, (
+            f"Expected 1 unit under adjacency model (no geometry check in grouper), "
+            f"got {len(units)}: {units}"
         )
         assert units[0]["page_type"] == "table"
-        assert units[1]["page_type"] == "table"
+        assert units[0]["pages"] == [1, 2]
 
     def test_single_page_table_document(self):
         """EC-1: Single D-1 page → 1 table unit."""

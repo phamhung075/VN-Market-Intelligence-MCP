@@ -2545,24 +2545,16 @@ _TABLE_MIN_GUTTER_COUNT: int = 1
 
 # ---------------------------------------------------------------------------
 # BCTC-TABLE-BOUNDARY — Title-band detector constants (D-5)
-#
-# AC-0: purely structural patterns. No BCTC-specific keyword strings.
-# "tiếp theo" and "continued" are generic Vietnamese/English continuation
-# markers — not BCTC domain terms.
+# BTB-DRIFT: these constants are the SSOT in bctc_page_grouper.py.
+# Re-imported here for backward compatibility with existing callers and tests
+# that import them from this module.
 # ---------------------------------------------------------------------------
-
-# Number of lines from the top of the page text to scan for a title band.
-_TITLE_BAND_SCAN_LINES: int = 8
-
-# Minimum character length for a candidate title line.
-_TITLE_BAND_MIN_LEN: int = 5
-
-# Maximum character length for a candidate title line.
-_TITLE_BAND_MAX_LEN: int = 120
-
-# Continuation marker strings — presence of any of these causes D-5 to return
-# False (the page is a continuation of the previous table, not a new one).
-_CONTINUATION_MARKERS: tuple = ("tiếp theo", "(continued)", "continued")
+from infrastructure.bctc_page_grouper import (  # noqa: E402 re-export
+    _TITLE_BAND_SCAN_LINES,
+    _TITLE_BAND_MIN_LEN,
+    _TITLE_BAND_MAX_LEN,
+    _CONTINUATION_MARKERS,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -2653,142 +2645,41 @@ def build_document_map(pages: List[Dict], pdf_path: str) -> Dict:
         page_fingerprints[page_num] = fingerprint
 
     # ------------------------------------------------------------------
-    # Step 2 + 3: Group pages into units by fingerprint continuity
+    # Step 2 + 3: Group pages into units via shared bctc_page_grouper
+    # BTB-DRIFT-DEV: delegate to group_pages_into_units() — the single
+    # canonical grouping function shared with PATH B (pek_engine_adapter).
+    # Zero duplicate grouping logic in this function — I/O adapter only.
     # ------------------------------------------------------------------
-    units: List[Dict] = []
-    current_unit_pages: List[int] = []
-    current_fp: Optional[Dict] = None
+    from infrastructure.bctc_page_grouper import (  # BTB-DRIFT-DEV
+        PageDescriptor,
+        group_pages_into_units,
+    )
 
-    def _flush_unit() -> None:
-        """Close the current unit and append to units list.
+    # Build PageDescriptors from fingerprints.
+    # PATH A HAS the OCR text → stored_text is populated → D-5 is ACTIVE.
+    page_descriptors = [
+        PageDescriptor(
+            page_num=page_num,
+            page_type=page_fingerprints[page_num].get("page_type", "prose"),
+            gutter_count=page_fingerprints[page_num].get("gutter_count", 0),
+            gutter_x_fractions=page_fingerprints[page_num].get("gutter_x_fractions", []),
+            row_pitch=page_fingerprints[page_num].get("row_pitch_px_at_50dpi", 0.0),
+            stored_text=page_text_by_num.get(page_num, ""),
+        )
+        for page_num in range(1, total_pages + 1)
+    ]
 
-        FR-1 fix: page_type is determined from the schema-page (first page of
-        the unit) rather than by majority vote across all pages. A unit that
-        opens as a table stays a table; a unit that opens as prose stays prose.
-        The build loop (state machine below) guarantees that prose pages are
-        NEVER appended to a table unit's current_unit_pages — so _flush_unit
-        never needs to re-examine per-page types.
-        """
-        if not current_unit_pages:
-            return
-        # Schema-page = first page of the unit. Build loop ensures this is
-        # the first non-blank page encountered when the unit was opened.
-        schema_page_num = current_unit_pages[0]
-        schema_type = page_fingerprints[schema_page_num].get("page_type", "prose")
+    unit_descriptors = group_pages_into_units(page_descriptors)
 
-        unit_id = str(uuid.uuid4())
-        units.append({
-            "unit_id": unit_id,
-            "schema_page": schema_page_num,
-            "pages": list(current_unit_pages),
-            "page_type": schema_type,
-        })
-
-    # ------------------------------------------------------------------
-    # State machine: NO_TABLE / TABLE_OPEN
-    # State variables
-    # ------------------------------------------------------------------
-    # last_committed_d1_fp: fingerprint of the last D-1 page appended to
-    # the current table unit. Used as the reference for D-4 continuity
-    # checks. NOT updated when blank pages are buffered.
-    last_committed_d1_fp: Optional[Dict] = None
-
-    # pending_blanks: blank pages accumulated since the last D-1 page.
-    # Drained into the current unit only when the next non-blank page
-    # satisfies D-4 + D-5 (Option B deferred flush per architect brief).
-    pending_blanks: List[int] = []
-
-    # state: "NO_TABLE" or "TABLE_OPEN"
-    state: str = "NO_TABLE"
-
-    # BTB-UNBLOCK-DEV (2026-05-29): This loop is BOUNDED and structurally cannot hang.
-    # - Iterates exactly `total_pages` times (range(1, total_pages+1)) — no inner while,
-    #   no re-queue, no recursive call.
-    # - pending_blanks is only appended on blank pages (O(pages)) and is fully drained
-    #   on the next non-blank page — it cannot grow unboundedly.
-    # - All inner operations are O(1) per page (dict lookup, list append, _flush_unit).
-    # PO exonerated this loop (commit d297f3ba). Do NOT modify the state machine.
-    for page_num in range(1, total_pages + 1):
-        fp = page_fingerprints[page_num]
-        page_type = fp.get("page_type", "prose")
-        stored_text = page_text_by_num.get(page_num, "")
-
-        # ----------------------------------------------------------------
-        # Blank page: buffer without committing (deferred bridge)
-        # ----------------------------------------------------------------
-        if page_type == "blank":
-            pending_blanks.append(page_num)
-            continue
-
-        # ----------------------------------------------------------------
-        # Non-blank page: resolve pending_blanks based on this page's type
-        # ----------------------------------------------------------------
-
-        if state == "NO_TABLE":
-            # Any blanks before the first non-blank page are pre-document
-            # fillers — discard them (R-2 guard).
-            pending_blanks = []
-
-            if page_type == "table":
-                # → TABLE_START
-                # Flush any open prose unit before starting a table unit.
-                _flush_unit()
-                current_unit_pages = [page_num]
-                current_fp = fp
-                last_committed_d1_fp = fp
-                state = "TABLE_OPEN"
-            else:
-                # prose → open a prose unit (or extend if same page_type
-                # continuity; handled by _fingerprints_continuous check)
-                if current_fp is None:
-                    current_unit_pages = [page_num]
-                    current_fp = fp
-                elif _fingerprints_continuous(current_fp, fp):
-                    current_unit_pages.append(page_num)
-                    current_fp = fp
-                else:
-                    _flush_unit()
-                    current_unit_pages = [page_num]
-                    current_fp = fp
-
-        elif state == "TABLE_OPEN":
-            if page_type == "prose":
-                # → TABLE_END
-                # Blanks before the prose page are NOT bridged into the
-                # table unit (they precede a prose page, not a continuation).
-                # Discard pending_blanks; flush table unit; open prose unit.
-                pending_blanks = []
-                _flush_unit()
-                current_unit_pages = [page_num]
-                current_fp = fp
-                last_committed_d1_fp = None
-                state = "NO_TABLE"
-
-            else:
-                # page_type == "table": check D-4 + D-5 continuation
-                assert last_committed_d1_fp is not None  # invariant: TABLE_OPEN always has one
-                continuation = _fingerprints_continuous(
-                    last_committed_d1_fp, fp, stored_text_b=stored_text
-                )
-                if continuation:
-                    # → TABLE_CONTINUE: drain pending_blanks then append
-                    current_unit_pages.extend(pending_blanks)
-                    pending_blanks = []
-                    current_unit_pages.append(page_num)
-                    last_committed_d1_fp = fp
-                    current_fp = fp
-                else:
-                    # → TABLE_NEW: flush current table, discard pending blanks,
-                    # open a fresh table unit for the new table.
-                    pending_blanks = []
-                    _flush_unit()
-                    current_unit_pages = [page_num]
-                    current_fp = fp
-                    last_committed_d1_fp = fp
-                    # state stays TABLE_OPEN for the new unit
-
-    # Flush the last unit
-    _flush_unit()
+    units = [
+        {
+            "unit_id": str(uuid.uuid4()),
+            "schema_page": ud.schema_page,
+            "pages": ud.pages,
+            "page_type": ud.page_type,
+        }
+        for ud in unit_descriptors
+    ]
 
     doc_map = {
         "report_id": str(uuid.uuid4()),
@@ -3053,67 +2944,9 @@ def _extract_unit_hints(text: str) -> List[str]:
     return hints
 
 
-def _is_title_band(stored_text: str) -> bool:
-    """
-    Detect whether a page opens with a standalone table-title band (D-5).
-
-    Algorithm (cheap — reads stored OCR text, no new Tesseract calls):
-        1. Split text into lines. Scan only the first _TITLE_BAND_SCAN_LINES lines.
-        2. For each scanned line:
-           a. Strip whitespace. Skip empty and lines shorter than _TITLE_BAND_MIN_LEN.
-           b. Skip lines containing _MONEY_GROUP_RE match (financial data, not a title).
-           c. Skip lines that are purely numeric/punctuation.
-           d. Skip lines with fewer than 2 words (likely an OCR column-header artifact).
-           e. If a candidate line contains a continuation marker → return False immediately.
-           f. Otherwise: record as a candidate title line.
-        3. If at least one candidate title line found → return True (D-5 fires).
-        4. Otherwise → return False (no title band detected).
-
-    AC-0: detects structural pattern (non-numeric standalone line in top region).
-    No BCTC-specific keyword strings used in branching decisions.
-    Pure function: no I/O, no Tesseract, no new imports.
-    DDD layer: infrastructure.
-    """
-    if not stored_text:
-        return False
-
-    lines = stored_text.splitlines()
-    scan_lines = lines[:_TITLE_BAND_SCAN_LINES]
-
-    for line in scan_lines:
-        stripped = line.strip()
-
-        # Skip empty or too-short lines
-        if len(stripped) < _TITLE_BAND_MIN_LEN:
-            continue
-
-        # Skip lines longer than the maximum title length
-        if len(stripped) > _TITLE_BAND_MAX_LEN:
-            continue
-
-        # Skip lines containing financial money-group patterns (table data, not title)
-        if _MONEY_GROUP_RE.search(stripped):
-            continue
-
-        # Skip lines that are purely numeric/punctuation/whitespace
-        if re.fullmatch(r"[\d.,\s()]+", stripped):
-            continue
-
-        # Skip lines with fewer than 2 words — single-char column header artifacts
-        # like "TM" or "CS" must not trigger a false D-5 split.
-        if len(stripped.split()) < 2:
-            continue
-
-        # Continuation marker check: any of these means D-5 does NOT fire
-        stripped_lower = stripped.lower()
-        for marker in _CONTINUATION_MARKERS:
-            if marker in stripped_lower:
-                return False
-
-        # At least one candidate title line found — D-5 fires
-        return True
-
-    return False
+# BTB-DRIFT: _is_title_band is now the SSOT in bctc_page_grouper.py.
+# Re-exported here for backward compatibility with existing test imports.
+from infrastructure.bctc_page_grouper import _is_title_band  # noqa: F401 re-export
 
 
 def _find_ink_bbox(col_dark: List[int]) -> Tuple[int, int]:
@@ -3162,76 +2995,9 @@ def _find_ink_bbox(col_dark: List[int]) -> Tuple[int, int]:
     return x_left, x_right
 
 
-def _fingerprints_continuous(
-    fp_a: Dict,
-    fp_b: Dict,
-    stored_text_b: str = "",
-) -> bool:
-    """
-    Test if two page fingerprints belong to the same logical unit.
-
-    Continuity test (AC-0 — purely geometric + structural):
-        0. page_type must match (prose→table or table→prose = always new unit).
-        1. gutter_count must be equal (within same page_type).
-        2. Each gutter x-fraction must be within GUTTER_POSITION_TOLERANCE.
-        3. row_pitch must not change by more than ROW_PITCH_CHANGE_TOLERANCE.
-        D-5. stored_text_b must NOT contain a title-band signal on page B.
-             If it does, the page opens a NEW table (D-5 fires) → return False.
-
-    Args:
-        fp_a: Fingerprint of the reference page (last committed D-1 page).
-        fp_b: Fingerprint of the candidate continuation page.
-        stored_text_b: Stored OCR text of page B. Used for D-5 title-band
-            check. Defaults to "" (empty = no title band → backward-compatible
-            with existing callers that omit this argument).
-
-    If either fingerprint is blank, continuity is False (blank pages handled
-    separately as page-gap tolerance in build_document_map).
-
-    Returns True if the pages are in the same unit, False if a unit break fires.
-    """
-    if fp_a.get("page_type") == "blank" or fp_b.get("page_type") == "blank":
-        return False
-
-    # Page type change = structural section boundary = new unit.
-    # Prose pages (cover, notes, headers) and table pages are always separate units.
-    pt_a = fp_a.get("page_type", "prose")
-    pt_b = fp_b.get("page_type", "prose")
-    if pt_a != pt_b:
-        return False
-
-    gc_a = fp_a.get("gutter_count", 0)
-    gc_b = fp_b.get("gutter_count", 0)
-
-    # Gutter count change = new unit (fine-grained layout shift within page_type)
-    if gc_a != gc_b:
-        return False
-
-    # Gutter position shift > tolerance = new unit
-    gx_a = fp_a.get("gutter_x_fractions", [])
-    gx_b = fp_b.get("gutter_x_fractions", [])
-    if len(gx_a) != len(gx_b):
-        return False
-    for xa, xb in zip(gx_a, gx_b):
-        if abs(xa - xb) > _GUTTER_POSITION_TOLERANCE:
-            return False
-
-    # Row pitch change > 50% = new unit
-    pitch_a = fp_a.get("row_pitch_px_at_50dpi", 0.0)
-    pitch_b = fp_b.get("row_pitch_px_at_50dpi", 0.0)
-    if pitch_a > 0 and pitch_b > 0:
-        change = abs(pitch_a - pitch_b) / max(pitch_a, pitch_b)
-        if change > _ROW_PITCH_CHANGE_TOLERANCE:
-            return False
-
-    # D-5: title-band check — fires if page B announces a new table section.
-    # Two geometrically identical tables separated by a title page must SPLIT.
-    # Continuation markers ("tiếp theo" etc.) return False from _is_title_band
-    # so they correctly leave D-5 silent and allow CONTINUE to fire.
-    if _is_title_band(stored_text_b):
-        return False
-
-    return True
+# BTB-DRIFT: _fingerprints_continuous is now the SSOT in bctc_page_grouper.py.
+# Re-exported here for backward compatibility with existing test imports.
+from infrastructure.bctc_page_grouper import _fingerprints_continuous  # noqa: F401 re-export
 
 
 # ---------------------------------------------------------------------------

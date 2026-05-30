@@ -60,6 +60,11 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from typing import Dict, List, Optional, Tuple, Any
 
+from infrastructure.bctc_page_grouper import (  # BTB-DRIFT-DEV
+    PageDescriptor,
+    group_pages_into_units,
+)
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -538,76 +543,13 @@ def _cells_to_row_bands(cells: List[Dict], table_y_min: int, table_y_max: int) -
     return row_bands
 
 
-def _group_bboxes_into_units(
-    pages_bboxes: Dict[int, List[Dict]],
-    page_dims: Dict[int, Tuple[int, int]],
-) -> List[Dict]:
-    """
-    Group pages into logical units using consecutive-table-page continuity.
-
-    PEK-MULTIPAGE algorithm (replaces RC-1 X-range threshold + RC-2 ghost-unit):
-        - Consecutive table pages aggregate into ONE unit.
-        - A prose or blank page acts as a unit boundary (finalizes the current
-          table unit if non-empty) but does NOT create a unit itself.
-        - Cap: at most 8 consecutive table pages per unit. On reaching 8, the
-          current unit is finalized and a new unit starts with the next table page.
-
-    RC-1 (CRITICAL — X-range threshold) eliminated:
-        The old 10% shift threshold fired on natural BCTC continuation-page
-        variance (repeated column-header, indented sub-items, footer), splitting
-        one financial statement into multiple single-page units. The new algorithm
-        uses page adjacency as the sole continuity signal.
-
-    RC-2 (HIGH — double finalize_unit on prose pages) eliminated structurally:
-        Prose pages never create units; double-finalize is gone.
-
-    Returns list of unit dicts per DocumentMap format.
-    """
-    _MAX_CONSECUTIVE_TABLE_PAGES = 8
-
-    units: List[Dict] = []
-    page_nums = sorted(pages_bboxes.keys())
-
-    if not page_nums:
-        return units
-
-    current_unit_pages: List[int] = []
-
-    def finalize_unit() -> None:
-        if not current_unit_pages:
-            return
-        unit_id = str(uuid.uuid4())
-        schema_page = current_unit_pages[0]
-        # All pages in a table unit were table pages — type is always "table".
-        units.append({
-            "unit_id": unit_id,
-            "schema_page": schema_page,
-            "pages": list(current_unit_pages),
-            "page_type": "table",
-        })
-
-    for page_num in page_nums:
-        bboxes = pages_bboxes[page_num]
-        table_bboxes = [b for b in bboxes if b.get("label") == _LAYOUT_CLASS_TABLE]
-
-        if not table_bboxes:
-            # Prose or blank page — boundary: finalize current table unit if any.
-            # Do NOT create a unit for this prose page (RC-2 fix).
-            finalize_unit()
-            current_unit_pages = []
-            continue
-
-        # Table page — extend current unit or start a new one.
-        if len(current_unit_pages) >= _MAX_CONSECUTIVE_TABLE_PAGES:
-            # Cap reached — finalize and start fresh with this page.
-            finalize_unit()
-            current_unit_pages = [page_num]
-        else:
-            current_unit_pages.append(page_num)
-
-    # Finalize any trailing table unit.
-    finalize_unit()
-    return units
+# BTB-DRIFT-DEV: _group_bboxes_into_units DELETED.
+# Replaced by the shared canonical grouper in bctc_page_grouper.py.
+# Anti-drift guard: test_anti_drift_grouper.py AD-2 asserts this function
+# does NOT exist in this module — if it re-appears, the drift test fails loudly.
+#
+# PATH B now calls group_pages_into_units() from bctc_page_grouper via
+# _build_page_descriptors_from_bboxes() helper in _run_extraction (Step 2).
 
 
 # ---------------------------------------------------------------------------
@@ -747,8 +689,52 @@ class PekEngineAdapter:
 
         # ------------------------------------------------------------------
         # Step 2: Group pages into logical units (DocumentMap)
+        # BTB-DRIFT-DEV: build PageDescriptors from PEK bboxes and delegate
+        # to the shared SSOT grouper in bctc_page_grouper.py.
+        # stored_text="" — PATH B has no OCR text at this stage; D-5 silently
+        # no-ops (correct by design; can be enabled if PATH B gains OCR access).
+        # row_pitch=0.0 — no pitch available from layout bboxes; pitch guard
+        # disabled when pitch_a or pitch_b is 0 (see _is_continuous).
         # ------------------------------------------------------------------
-        units_in_map = _group_bboxes_into_units(pages_bboxes, page_dims)
+        page_descriptors: List[PageDescriptor] = []
+        for pn in sorted(pages_bboxes.keys()):
+            bboxes_for_page = pages_bboxes[pn]
+            table_bboxes_for_page = [
+                b for b in bboxes_for_page if b.get("label") == _LAYOUT_CLASS_TABLE
+            ]
+            if not bboxes_for_page:
+                ptype = "blank"
+            elif table_bboxes_for_page:
+                ptype = "table"
+            else:
+                ptype = "prose"
+            # Gutter fractions from table bbox centre x-positions (fraction of page width)
+            w, _h = page_dims.get(pn, (2338, 3308))
+            gutter_fracs: List[float] = []
+            if w > 0 and table_bboxes_for_page:
+                gutter_fracs = [
+                    (b.get("bbox", [0, 0, 0, 0])[0] + b.get("bbox", [0, 0, 0, 0])[2]) / 2.0 / w
+                    for b in table_bboxes_for_page
+                ]
+            page_descriptors.append(PageDescriptor(
+                page_num=pn,
+                page_type=ptype,
+                gutter_count=len(table_bboxes_for_page),
+                gutter_x_fractions=gutter_fracs,
+                row_pitch=0.0,
+                stored_text="",
+            ))
+
+        unit_descriptors = group_pages_into_units(page_descriptors)
+        units_in_map: List[Dict] = [
+            {
+                "unit_id": str(uuid.uuid4()),
+                "schema_page": ud.schema_page,
+                "pages": ud.pages,
+                "page_type": ud.page_type,
+            }
+            for ud in unit_descriptors
+        ]
         total_pages = max(pages_bboxes.keys()) if pages_bboxes else 0
 
         document_map: Dict = {
@@ -818,6 +804,10 @@ class PekEngineAdapter:
 
         # ------------------------------------------------------------------
         # Step 5: Build units output (stitched_markdown from table cells)
+        # BTB-DRIFT-DEV: prose units emitted with empty markdown + row_count=0.
+        # The push handler (pushBctcLayoutHandler.ts) accepts page_type="prose"
+        # with row_count=0, stitched_markdown="", quarantined=False — confirmed
+        # path-agnostic (idempotency fix 60dfac7f). No handler change required.
         # ------------------------------------------------------------------
         units_output: List[Dict] = []
         quarantine_breakdown = {
@@ -829,8 +819,24 @@ class PekEngineAdapter:
         for unit in units_in_map:
             unit_id = unit.get("unit_id", str(uuid.uuid4()))
             pages_in_unit: List[int] = unit.get("pages", [])
+            page_type = unit.get("page_type", "table")
 
-            # Assemble stitched markdown from PaddleOCR table cells
+            if page_type != "table":
+                # Prose/blank unit — emit with empty markdown, not quarantined.
+                units_output.append({
+                    "unit_id": unit_id,
+                    "stitched_markdown": "",
+                    "row_count": 0,
+                    "quarantined": False,
+                    "quarantine_reason": None,
+                    "page_row_spans": [
+                        {"page": p, "row_start": 0, "row_end": 0}
+                        for p in pages_in_unit
+                    ],
+                })
+                continue
+
+            # Table unit — assemble stitched markdown from PaddleOCR table cells.
             stitched_md = self._assemble_unit_markdown(
                 pages_in_unit=pages_in_unit,
                 table_cells_by_page=table_cells_by_page,
