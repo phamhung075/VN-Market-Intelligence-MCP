@@ -1,5 +1,87 @@
 # QA — Notebook
 
+## cycle-157 · 2026-05-30 · AIT-QA — BCTC-AI-INPUT-TAB — APPROVED
+
+**Sprint:** BCTC-AI-INPUT-TAB | **Task:** AIT-QA | **Verdict:** APPROVED
+
+```
+date: 2026-05-30T19:45Z
+head_commit: b4ed9266 (AIT-DEV-1 + bctcInspectHandler +2 routes, server.ts +2 dispatch, 7th tab)
+container: live, 154 tools, freshly rebuilt --no-cache
+sentinel_doc_id: e8ea3df5-3f32-413d-a3eb-c71634c0438d (FPT 2026-Q1, pages 6-11 rasterized)
+tsc: 0 errors
+AIT-DEV-1.test.ts: 59 pass / 0 fail
+HC-human-confirm.test.ts: 53 pass / 0 fail (regression)
+HC-DEV-7-layout.test.ts: 58 pass / 0 fail (regression)
+1198/1206/1322 baseline: 21 pass / 0 fail (regression)
+DDD: PASS | security: PASS
+
+GATE 1 — LIVE PNG BYTES: PASS
+  curl page=6 → 200 image/png, xxd magic = 89 50 4E 47 (PNG header confirmed)
+  Not JSON echo, not base64 wrapper — raw PNG bytes served directly.
+
+GATE 2 — HONEST 404 ON MISS: PASS
+  curl page=999 → 404 application/json, body = {error:"png_not_found",doc_id:...,page:999}
+  NOT 200 with placeholder; not a generic 404 — exact signal confirmed.
+
+GATE 3 — PAGE-WINDOW ROUTE: PASS
+  GET /api/bctc-inspect/page-window/e8ea3df5...?page=6
+  → {found:true, doc_id:..., page:6, unit_id:"unit-0003", page_numbers:[6], row_count:1, confidence:0.9}
+  JSON with all required fields present.
+
+GATE 4 — UNCOMMITTED FIX RULING: COMMIT NEEDED = YES, TEST NEEDED = NO
+  Fix: getBctcPageImageTool.ts line 60-62:
+    OLD: join(process.cwd(), "data", "bctc-page-images", reportId, `page_${paddedPage}.png`)
+    NEW: join("/data/bctc-page-images", reportId, `page_${paddedPage}.png`)
+  Correctness: YES — the live container mounts the named volume at /data/bctc-page-images.
+    process.cwd() inside container = /app, so old path would resolve to /app/data/bctc-page-images
+    (does not exist). New path matches bctcInspectHandler.ts line 945 which uses the same formula.
+    Gate 1 confirms the route serving real PNG bytes works — the rebuild read working tree.
+    Without committing, next clean rebuild from HEAD would reintroduce the broken path.
+  Test needed: NO — the MCP tool handler is already covered by:
+    (a) AIT-DEV-1 test 3 exercises handleBctcInspectPageImage (the sibling HTTP handler) with
+        png_not_found branch for /data path miss — same volume-path invariant tested there.
+    (b) getBctcPageImageTool.ts uses injected deps (fileExists, readPng) for unit-testability;
+        the getPngPath() helper is pure (no I/O) and matches bctcInspectHandler.ts by inspection.
+    (c) Gate 1 live smoke proves end-to-end serving at the correct absolute path.
+    An additional unit test for getPngPath() would be trivial string assertion, not load-bearing.
+  ACTION: dev-mcp-server MUST commit this file with scoped git add before po EXIT sign-off.
+
+GATE 5 — HTML REGRESSION: PASS
+  GET http://localhost:3000/api/bctc-inspect → 103579 bytes HTML served live.
+  7 tabs present: data-tab=ocr|bang|md|soluyen|danhgia|suatay|aiinput (all confirmed in served HTML)
+  7th tab: data-tab="aiinput", id="rtab-aiinput", id="tab-panel-aiinput", label="Đầu vào AI"
+  navigateToPage: 16 occurrences in served HTML. switchTab+loadFlags+renderFlaggedCells: 20 occurrences.
+  50/50 split: left-pane/right-pane flex:1 pattern confirmed (21 matches).
+  All 25 legacy pane IDs present (confirmed by AIT-DEV-1 test suite ran against source HTML file,
+    not a fixture — AIT-DEV-1 reads bctc-inspector.html at line 324 via readFileSync with resolve()).
+  AIT-DEV-1 59/59 green = HTML assertions all passed against the real source file.
+
+GATE 6 — DB INTEGRITY: PASS
+  Direct in-container bun:sqlite read (new Database("/app/data/market.db")):
+  FPT financial_reports row e8ea3df5-3f32-413d-a3eb-c71634c0438d:
+    confirm_status=PENDING, final_confirmed_at=null — UNCHANGED.
+  Rasterization wrote only image files; report row not mutated.
+
+GATE 7 — tsc + AIT-DEV-1 (59) + HC regression (111): PASS
+  bun tsc --noEmit: 0 errors
+  AIT-DEV-1.test.ts: 59 pass / 0 fail
+  HC-human-confirm.test.ts: 53 pass / 0 fail
+  HC-DEV-7-layout.test.ts: 58 pass / 0 fail
+  1198/1206/1322: 21 pass / 0 fail
+  DDD: interface imports application (parsePdfFilenameTokens) — acceptable per DDD rules.
+       domain/ imports: no new domain files added.
+  Security: getBctcPageImageTool.ts uses Bun.env (not process.env), no hardcoded secrets.
+       bctcInspectHandler.ts new routes: no process.env, no SQL (uses existsSync/readFileSync/DB.prepare with parameterized queries).
+
+VERDICT: APPROVED
+ALL 7 GATE ITEMS: GREEN
+GATE-4-COMMIT-RULING: COMMIT NEEDED Y / TEST NEEDED N
+NEXT: dev-mcp-server | scoped commit getBctcPageImageTool.ts fix, then po | EXIT sign-off
+```
+
+---
+
 ## cycle-156 · 2026-05-30 · HC-QA-3 — BCTC-HUMAN-CONFIRM Gate-3 live re-gate — APPROVED
 
 **Sprint:** BCTC-HUMAN-CONFIRM | **Task:** HC-QA-3 | **Verdict:** APPROVED
