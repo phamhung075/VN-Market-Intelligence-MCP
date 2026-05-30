@@ -31,6 +31,10 @@ import {
   reAnchorCorrections,
 } from "../../../../infrastructure/db/bctcHumanCorrectionsStore.js";
 import type { HumanCorrectionRecord } from "../../../../infrastructure/db/bctcHumanCorrectionsStore.js";
+import {
+  detectMagnitudeViolations,
+  detectCrossStatementRevenue,
+} from "../../../../domain/services/financial-reports/bctcMagnitudeValidator.js";
 
 // ── DB row types ──────────────────────────────────────────────────────────────
 
@@ -206,6 +210,95 @@ export function buildFinalizeBctcRefineHandler(
       // (ARCH-DECIDE A: post-pass, parser internals 0-diff)
       const correctionMap = getCorrectionsMap(db, report_id);
       const finalRows = applyCorrections(allTableRows, correctionMap);
+
+      // ── DT-2 + DT-3: Aggregate report-level sanity checks ─────────────────
+      // Fires AFTER parse loop + applyCorrections, BEFORE INSERT transaction.
+      // NFR-5: CONFIRMED guard (Layer 1) already handled above — no re-check needed here.
+      const magnitudeViolations = detectMagnitudeViolations(finalRows);
+      const crossStmtViolations = detectCrossStatementRevenue(finalRows);
+      const allViolations = [...magnitudeViolations, ...crossStmtViolations];
+      const hasBlockViolation = allViolations.some((v) => v.severity === "BLOCK");
+
+      if (hasBlockViolation) {
+        // BLOCK: do NOT insert rows; set report to REJECTED_SANITY
+        db.transaction(() => {
+          // Update financial_reports.refine_status
+          db.prepare(
+            "UPDATE financial_reports SET refine_status = ? WHERE id = ?",
+          ).run("REJECTED_SANITY", report_id);
+
+          // Append violations to flags for all units in this report (audit trail)
+          const unitsForReport = db
+            .prepare<{ id: number; flags: string | null }, [string]>(
+              "SELECT id, flags FROM bctc_refined_units WHERE report_id = ?",
+            )
+            .all(report_id);
+
+          for (const unit of unitsForReport) {
+            const existingFlags: string[] = [];
+            try {
+              const parsed = JSON.parse(unit.flags ?? "[]");
+              if (Array.isArray(parsed)) existingFlags.push(...parsed);
+            } catch {
+              // ignore invalid JSON flags
+            }
+            const mergedFlags = [
+              ...existingFlags,
+              ...allViolations.map((v) => `dt23:${v.code}`),
+            ];
+            db.prepare(
+              "UPDATE bctc_refined_units SET flags = ? WHERE id = ?",
+            ).run(JSON.stringify(mergedFlags), unit.id);
+          }
+        })();
+
+        logger.warn("[finalize_bctc_refine] REJECTED_SANITY — DT-2/DT-3 BLOCK violations", {
+          report_id,
+          violations: allViolations,
+        });
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                ok: false,
+                report_id,
+                rejected_reason: allViolations,
+              }),
+            },
+          ],
+        };
+      }
+
+      // WARN-only violations: log but proceed with normal transaction
+      if (allViolations.length > 0) {
+        logger.warn("[finalize_bctc_refine] DT-2/DT-3 WARN violations (proceeding)", {
+          report_id,
+          violations: allViolations,
+        });
+      }
+
+      // ── DT-4: Identical-timestamp WARN (forensic signal, non-blocking) ───
+      // Checks if all DONE units for this report share an identical refined_at timestamp.
+      // Genuine parallel fan-out produces staggered timestamps; identical = suspicious.
+      // AC-TR1-4-1: logger.warn with DT4_IDENTICAL_TIMESTAMP. No rejection.
+      if (doneUnits.length > 1) {
+        const refinedAtValues = db
+          .prepare<{ refined_at: string }, [string]>(
+            "SELECT DISTINCT refined_at FROM bctc_refined_units WHERE report_id = ? AND window_status = 'DONE'",
+          )
+          .all(report_id);
+
+        const uniqueTimestamps = new Set(refinedAtValues.map((r) => r.refined_at));
+        if (uniqueTimestamps.size === 1) {
+          logger.warn("[finalize_bctc_refine] DT4_IDENTICAL_TIMESTAMP — all units share one refined_at", {
+            report_id,
+            refined_at: refinedAtValues[0]?.refined_at,
+            unit_count: doneUnits.length,
+          });
+        }
+      }
 
       // Atomic transaction: selective DELETE + INSERT + re-anchor + status update
       // EC-7 prevention: single SQLite transaction — no partial-delete window
