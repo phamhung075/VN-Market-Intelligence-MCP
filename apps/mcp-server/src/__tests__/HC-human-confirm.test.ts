@@ -4,6 +4,9 @@
  * HC-DEV-1 coverage: schema migrations (DV-HC-9), store CRUD + re-anchor
  * (DV-HC-11, DV-HC-12, DV-HC-13), and correction service (DV-HC-10).
  *
+ * HC-DEV-2 coverage: Layer 1 WHERE guard (DV-HC-3/Layer1), Layer 2 finalize
+ * guards (DV-HC-7, DV-HC-8), source_confidence INSERT persistence.
+ *
  * Anti-false-green constraints:
  * - All DB reads use new Database(':memory:') DI injection
  * - Persistence verified via DIRECT DB reads, NOT via service return value alone
@@ -20,6 +23,13 @@
  * Additional migration tests:
  *   MT-1 — confirm_status / final_confirmed_at / confirmed_by columns on financial_reports
  *   MT-2 — bctc_human_corrections table created with UNIQUE(report_id, row_id) constraint
+ *
+ * Tests in this file (HC-DEV-2 scope):
+ *   DV-HC-3-Layer1 — confirmed report excluded from getBctcPendingRefine WHERE clause
+ *   DV-HC-7  — finalize_bctc_refine on CONFIRMED report skips; rows + refine_status unchanged
+ *   DV-HC-8  — CORE INVARIANT: finalize on partially-corrected report; corrected row pinned,
+ *              source_confidence=1.0 survives; uncorrected rows updated with parser confidence
+ *   DV-HC-SC — source_confidence persists in INSERT: red→0.2, yellow→0.4, none→1.0, corrected→1.0
  */
 
 import { describe, it, expect, beforeEach } from "bun:test";
@@ -44,6 +54,12 @@ import {
 import {
   enumerateFlaggedCells,
 } from "../application/usecases/bctcFlagEnumerationService.js";
+import {
+  buildGetBctcPendingRefineHandler,
+} from "../interface/mcp/tools/financial-reports/getBctcPendingRefineTool.js";
+import {
+  buildFinalizeBctcRefineHandler,
+} from "../interface/mcp/tools/financial-reports/finalizeBctcRefineTool.js";
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -645,6 +661,22 @@ describe("enumerateFlaggedCells — EC-3 guard", () => {
   });
 });
 
+// ── Helper: seed bctc_refined_units ───────────────────────────────────────────
+
+function seedRefinedUnit(
+  db: Database,
+  reportId: string,
+  unitId: string,
+  markdown: string,
+  pageNumbers: number[] = [4],
+): void {
+  db.prepare(
+    `INSERT OR REPLACE INTO bctc_refined_units
+       (report_id, unit_id, page_numbers_json, markdown, row_count, confidence, window_status)
+     VALUES (?, ?, ?, ?, 1, 0.9, 'DONE')`,
+  ).run(reportId, unitId, JSON.stringify(pageNumbers), markdown);
+}
+
 // ── reAnchorCorrections anchor_missing ────────────────────────────────────────
 
 describe("reAnchorCorrections — anchor_missing when no row found", () => {
@@ -670,6 +702,330 @@ describe("reAnchorCorrections — anchor_missing when no row found", () => {
     const recs = getCorrectionsForReport(db, REPORT_UUID);
     expect(recs.length).toBe(1);
     expect(recs[0]!.anchor_status).toBe("anchor_missing");
+    db.close();
+  });
+});
+
+// ── HC-DEV-2: DV-HC-3-Layer1 — confirmed report excluded from pending refine ──
+
+describe("DV-HC-3-Layer1 — confirmed report excluded from getBctcPendingRefine WHERE clause", () => {
+  it("CONFIRMED report does not appear in pending refine results", async () => {
+    const db = openTestDb();
+
+    // Seed a CONFIRMED report with text_status=COMPLETE + refine_status=PENDING
+    db.prepare(
+      `INSERT INTO financial_reports
+         (id, action_code, company_name, exchange, domain,
+          period_year, period_quarter, period_type, period_start, period_end, sort_key,
+          parsed_at,
+          balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+          text_status, refine_status, confirm_status, pdf_path)
+       VALUES (?, 'VCB', 'Vietcombank', 'HOSE', 'banking',
+               2025, 4, 'quarterly', '2025-10-01', '2025-12-31', '2025-Q4',
+               datetime('now'),
+               '{}', '{}', '{}', '{}',
+               'COMPLETE', 'PENDING', 'CONFIRMED', '/data/VCB.pdf')`,
+    ).run(REPORT_UUID);
+
+    // Seed a PENDING (non-confirmed) report that SHOULD appear
+    db.prepare(
+      `INSERT INTO financial_reports
+         (id, action_code, company_name, exchange, domain,
+          period_year, period_quarter, period_type, period_start, period_end, sort_key,
+          parsed_at,
+          balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+          text_status, refine_status, confirm_status, pdf_path)
+       VALUES (?, 'ACB', 'ACB Bank', 'HOSE', 'banking',
+               2025, 4, 'quarterly', '2025-10-01', '2025-12-31', '2025-Q4',
+               datetime('now'),
+               '{}', '{}', '{}', '{}',
+               'COMPLETE', 'PENDING', 'PENDING', '/data/ACB.pdf')`,
+    ).run(REPORT_UUID_2);
+
+    const handler = buildGetBctcPendingRefineHandler(db);
+    const result = await handler({});
+
+    const parsed = JSON.parse(result.content[0].text) as Array<{ id: string }>;
+
+    // CONFIRMED report must NOT appear
+    const confirmedEntry = parsed.find((r) => r.id === REPORT_UUID);
+    expect(confirmedEntry).toBeUndefined();
+
+    // PENDING report MUST appear
+    const pendingEntry = parsed.find((r) => r.id === REPORT_UUID_2);
+    expect(pendingEntry).toBeDefined();
+
+    db.close();
+  });
+
+  it("report with confirm_status=NULL still appears in pending refine (backward compat)", async () => {
+    const db = openTestDb();
+
+    // NULL confirm_status — old rows before migration default. Must still appear.
+    db.prepare(
+      `INSERT INTO financial_reports
+         (id, action_code, company_name, exchange, domain,
+          period_year, period_quarter, period_type, period_start, period_end, sort_key,
+          parsed_at,
+          balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+          text_status, refine_status, pdf_path)
+       VALUES (?, 'VHM', 'Vinhomes', 'HOSE', 'real_estate',
+               2025, 4, 'quarterly', '2025-10-01', '2025-12-31', '2025-Q4',
+               datetime('now'),
+               '{}', '{}', '{}', '{}',
+               'COMPLETE', 'PARTIAL', '/data/VHM.pdf')`,
+    ).run(REPORT_UUID);
+
+    const handler = buildGetBctcPendingRefineHandler(db);
+    const result = await handler({ limit: 10 });
+
+    const parsed = JSON.parse(result.content[0].text) as Array<{ id: string }>;
+    const entry = parsed.find((r) => r.id === REPORT_UUID);
+    expect(entry).toBeDefined();
+
+    db.close();
+  });
+});
+
+// ── HC-DEV-2: DV-HC-7 — finalize on CONFIRMED report skips entirely ───────────
+
+describe("DV-HC-7 — finalize_bctc_refine on CONFIRMED report skips write entirely", () => {
+  it("returns skipped:true; rows unchanged; refine_status not updated", async () => {
+    const db = openTestDb();
+
+    // Seed a CONFIRMED report
+    db.prepare(
+      `INSERT INTO financial_reports
+         (id, action_code, company_name, exchange, domain,
+          period_year, period_quarter, period_type, period_start, period_end, sort_key,
+          parsed_at,
+          balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+          text_status, refine_status, confirm_status)
+       VALUES (?, 'VCB', 'Vietcombank', 'HOSE', 'banking',
+               2025, 4, 'quarterly', '2025-10-01', '2025-12-31', '2025-Q4',
+               datetime('now'),
+               '{}', '{}', '{}', '{}',
+               'COMPLETE', 'DONE', 'CONFIRMED')`,
+    ).run(REPORT_UUID);
+
+    // Seed a table row that must NOT be touched
+    const existingRowId = seedTableRow(db, REPORT_UUID, { value_current: 9999, label: "Sentinel" });
+
+    // Seed a bctc_refined_units row with different data (would change the value if finalize ran)
+    const markdown = [
+      "| Chỉ tiêu | Giá trị |",
+      "|---|---|",
+      "| Sentinel | 1 |",
+    ].join("\n");
+    seedRefinedUnit(db, REPORT_UUID, "unit-1", markdown, [4]);
+
+    // Call finalize — must skip
+    const handler = buildFinalizeBctcRefineHandler(db);
+    const result = await handler({ report_id: REPORT_UUID, report_status: "DONE" });
+
+    const parsed = JSON.parse(result.content[0].text) as {
+      ok: boolean; skipped?: boolean; reason?: string;
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.skipped).toBe(true);
+    expect(parsed.reason).toBe("confirmed");
+
+    // Anti-false-green: direct DB read — row must be unchanged
+    interface ValRow { value_current: number }
+    const rowAfter = db
+      .prepare<ValRow, [number]>("SELECT value_current FROM bctc_table_rows WHERE id = ?")
+      .get(existingRowId);
+    expect(rowAfter?.value_current).toBe(9999);  // sentinel value unchanged
+
+    // refine_status must NOT have been updated
+    interface StatusRow { refine_status: string }
+    const statusAfter = db
+      .prepare<StatusRow, [string]>("SELECT refine_status FROM financial_reports WHERE id = ?")
+      .get(REPORT_UUID);
+    expect(statusAfter?.refine_status).toBe("DONE");  // still the original "DONE"
+
+    db.close();
+  });
+});
+
+// ── HC-DEV-2: DV-HC-8 — CORE INVARIANT: corrections survive finalize re-run ───
+
+describe("DV-HC-8 — CORE INVARIANT: corrected value + source_confidence=1.0 survive finalize re-parse", () => {
+  it("corrected row pinned; uncorrected rows updated with parser confidence; confirm_status unchanged", async () => {
+    const db = openTestDb();
+
+    // Seed a PENDING report (not confirmed — finalize should run)
+    db.prepare(
+      `INSERT INTO financial_reports
+         (id, action_code, company_name, exchange, domain,
+          period_year, period_quarter, period_type, period_start, period_end, sort_key,
+          parsed_at,
+          balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+          text_status, refine_status, confirm_status)
+       VALUES (?, 'VCB', 'Vietcombank', 'HOSE', 'banking',
+               2025, 4, 'quarterly', '2025-10-01', '2025-12-31', '2025-Q4',
+               datetime('now'),
+               '{}', '{}', '{}', '{}',
+               'COMPLETE', 'PENDING', 'PENDING')`,
+    ).run(REPORT_UUID);
+
+    // Seed the initial table row (will be corrected by submitCorrection)
+    const correctedRowId = seedTableRow(db, REPORT_UUID, {
+      label: "Tiền và tương đương tiền",
+      page_number: 4,
+      statement_section: "general",
+      code: null,
+      value_current: 1000,
+      row_order: 0,
+    });
+
+    // Human corrects this row: old_value=1000, new_value=2500
+    const corrResult = submitCorrection(db, {
+      report_id: REPORT_UUID,
+      row_id: correctedRowId,
+      new_value: 2500,
+    });
+    expect(corrResult.ok).toBe(true);
+
+    // Verify correction was written
+    const map = getCorrectionsMap(db, REPORT_UUID);
+    expect(map.size).toBe(1);
+
+    // Seed bctc_refined_units with BOTH the corrected row AND an uncorrected row.
+    // Use 2-column format (label | value) so the parser unambiguously maps them.
+    // The corrected row has a yellow flag (source_confidence=0.4 from parser,
+    // but after applyCorrections post-pass it becomes 1.0 with value 2500).
+    const markdown = [
+      "| Chỉ tiêu | Giá trị |",
+      "|---|---|",
+      // corrected row — parser gives value 1000 (wrong), applyCorrections gives 2500 + confidence=1.0
+      "| Tiền và tương đương tiền | 1.000 [độ tin cậy thấp] |",
+      // uncorrected row — parser gives yellow flag, source_confidence=0.4
+      "| Doanh thu thuần | 5.000 [độ tin cậy thấp] |",
+    ].join("\n");
+    seedRefinedUnit(db, REPORT_UUID, "unit-1", markdown, [4]);
+
+    // Run finalize — must apply corrections post-pass
+    const handler = buildFinalizeBctcRefineHandler(db);
+    const result = await handler({ report_id: REPORT_UUID, report_status: "DONE" });
+
+    const parsed = JSON.parse(result.content[0].text) as {
+      ok: boolean; rows_parsed: number;
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.rows_parsed).toBeGreaterThan(0);
+
+    // Anti-false-green: direct DB reads
+
+    // 1. Corrected row: value_current must be 2500 (human correction), source_confidence=1.0
+    interface BtrRow { value_current: number | null; source_confidence: number; label: string }
+    const allRows = db
+      .prepare<BtrRow, [string]>(
+        "SELECT value_current, source_confidence, label FROM bctc_table_rows WHERE report_id = ? ORDER BY row_order",
+      )
+      .all(REPORT_UUID);
+
+    const correctedRow = allRows.find((r) => r.label === "Tiền và tương đương tiền");
+    expect(correctedRow).toBeDefined();
+    expect(correctedRow?.value_current).toBe(2500);       // human value, NOT parser value 1000
+    expect(correctedRow?.source_confidence).toBe(1.0);    // pinned by correction
+
+    // 2. Uncorrected row: value_current=5000, source_confidence=0.4 (yellow flag from parser)
+    const uncorrectedRow = allRows.find((r) => r.label === "Doanh thu thuần");
+    expect(uncorrectedRow).toBeDefined();
+    expect(uncorrectedRow?.value_current).toBe(5000);
+    expect(uncorrectedRow?.source_confidence).toBe(0.4);  // yellow flag from parser
+
+    // 3. confirm_status still PENDING (finalize must NOT change it)
+    interface StatusRow { confirm_status: string; refine_status: string }
+    const statusAfter = db
+      .prepare<StatusRow, [string]>(
+        "SELECT confirm_status, refine_status FROM financial_reports WHERE id = ?",
+      )
+      .get(REPORT_UUID);
+    expect(statusAfter?.confirm_status).toBe("PENDING");   // unchanged
+    expect(statusAfter?.refine_status).toBe("DONE");       // updated by finalize
+
+    db.close();
+  });
+});
+
+// ── HC-DEV-2: DV-HC-SC — source_confidence persists in INSERT ────────────────
+
+describe("DV-HC-SC — source_confidence persists in bctc_table_rows INSERT", () => {
+  it("red flag row has source_confidence=0.2; yellow=0.4; no flag=1.0; corrected=1.0", async () => {
+    const db = openTestDb();
+
+    db.prepare(
+      `INSERT INTO financial_reports
+         (id, action_code, company_name, exchange, domain,
+          period_year, period_quarter, period_type, period_start, period_end, sort_key,
+          parsed_at,
+          balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+          text_status, refine_status, confirm_status)
+       VALUES (?, 'VCB', 'Vietcombank', 'HOSE', 'banking',
+               2025, 4, 'quarterly', '2025-10-01', '2025-12-31', '2025-Q4',
+               datetime('now'),
+               '{}', '{}', '{}', '{}',
+               'COMPLETE', 'PENDING', 'PENDING')`,
+    ).run(REPORT_UUID);
+
+    // Seed a row to be corrected
+    const rowForCorrection = seedTableRow(db, REPORT_UUID, {
+      label: "Corrected Item",
+      page_number: 4,
+      statement_section: "general",
+      code: null,
+      value_current: 100,
+      row_order: 0,
+    });
+    submitCorrection(db, { report_id: REPORT_UUID, row_id: rowForCorrection, new_value: 999 });
+
+    // Seed refined units with four confidence variants (2-column: label | value)
+    const markdown = [
+      "| Chỉ tiêu | Giá trị |",
+      "|---|---|",
+      // red flag → source_confidence=0.2
+      "| Red Item | 1.000 [ĐỘ TIN CẬY THẤP — OCR 1.000 vs image 2.000] |",
+      // yellow flag → source_confidence=0.4
+      "| Yellow Item | 2.000 [độ tin cậy thấp] |",
+      // no flag → source_confidence=1.0
+      "| Clean Item | 3.000 |",
+      // corrected → applyCorrections overrides to source_confidence=1.0 and value=999
+      "| Corrected Item | 100 [độ tin cậy thấp] |",
+    ].join("\n");
+    seedRefinedUnit(db, REPORT_UUID, "unit-sc", markdown, [4]);
+
+    const handler = buildFinalizeBctcRefineHandler(db);
+    await handler({ report_id: REPORT_UUID, report_status: "DONE" });
+
+    // Direct DB read — verify all four confidence levels persisted
+    interface BtrRow { label: string; source_confidence: number; value_current: number | null }
+    const rows = db
+      .prepare<BtrRow, [string]>(
+        "SELECT label, source_confidence, value_current FROM bctc_table_rows WHERE report_id = ?",
+      )
+      .all(REPORT_UUID);
+
+    const rowMap = new Map(rows.map((r) => [r.label, r]));
+
+    const redRow = rowMap.get("Red Item");
+    expect(redRow).toBeDefined();
+    expect(redRow?.source_confidence).toBe(0.2);
+
+    const yellowRow = rowMap.get("Yellow Item");
+    expect(yellowRow).toBeDefined();
+    expect(yellowRow?.source_confidence).toBe(0.4);
+
+    const cleanRow = rowMap.get("Clean Item");
+    expect(cleanRow).toBeDefined();
+    expect(cleanRow?.source_confidence).toBe(1.0);
+
+    const correctedRow = rowMap.get("Corrected Item");
+    expect(correctedRow).toBeDefined();
+    expect(correctedRow?.source_confidence).toBe(1.0);  // pinned by applyCorrections
+    expect(correctedRow?.value_current).toBe(999);       // human-corrected value
+
     db.close();
   });
 });

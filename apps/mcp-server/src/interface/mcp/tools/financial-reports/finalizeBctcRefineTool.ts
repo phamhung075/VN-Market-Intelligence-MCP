@@ -26,6 +26,11 @@ import { z } from "zod";
 import { getDb } from "../../../../infrastructure/db/schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import { parseRefinedMarkdown } from "../../../../application/utils/refinedMarkdownParser.js";
+import {
+  getCorrectionsMap,
+  reAnchorCorrections,
+} from "../../../../infrastructure/db/bctcHumanCorrectionsStore.js";
+import type { HumanCorrectionRecord } from "../../../../infrastructure/db/bctcHumanCorrectionsStore.js";
 
 // ── DB row types ──────────────────────────────────────────────────────────────
 
@@ -34,6 +39,49 @@ interface RefinedUnitRow {
   page_numbers_json: string;
   markdown: string;
   window_status: string;
+}
+
+interface ConfirmStatusRow {
+  confirm_status: string | null;
+}
+
+// ── applyCorrections post-pass helper ─────────────────────────────────────────
+
+/**
+ * applyCorrections — post-pass override that replaces parser-computed values
+ * with human-confirmed corrections BEFORE the INSERT loop.
+ *
+ * ARCH-DECIDE A: Post-pass (Option A2). Parser internals are 0-diff.
+ * Key format: `${label}||${page_number}||${statement_section}||${code ?? ''}`
+ *
+ * @param rows          Parsed rows from parseRefinedMarkdown
+ * @param correctionsMap Map keyed by stable anchor key from getCorrectionsMap
+ * @returns New array with corrected rows overridden; uncorrected rows unchanged
+ */
+function applyCorrections(
+  rows: Array<{
+    report_id: string;
+    page_number: number;
+    statement_section: string;
+    row_order: number;
+    code: string | null;
+    label: string;
+    period_current: string;
+    value_current: number | null;
+    period_prior: string | null;
+    value_prior: number | null;
+    unit: string;
+    is_summary_row: number;
+    source_confidence: number;
+  }>,
+  correctionsMap: Map<string, HumanCorrectionRecord>,
+): typeof rows {
+  return rows.map((row) => {
+    const key = `${row.label}||${row.page_number}||${row.statement_section}||${row.code ?? ""}`;
+    const correction = correctionsMap.get(key);
+    if (!correction) return row;
+    return { ...row, value_current: correction.new_value, source_confidence: 1.0 };
+  });
 }
 
 // ── Zod input schema ──────────────────────────────────────────────────────────
@@ -77,6 +125,24 @@ export function buildFinalizeBctcRefineHandler(
         )
         .all(report_id);
 
+      // Layer 1 guard: if report is CONFIRMED, skip entirely — never clobber
+      const confirmRow = db
+        .prepare<ConfirmStatusRow, [string]>(
+          "SELECT confirm_status FROM financial_reports WHERE id = ?",
+        )
+        .get(report_id);
+      if (confirmRow?.confirm_status === "CONFIRMED") {
+        logger.info("[finalize_bctc_refine] report is CONFIRMED — skipping write", { report_id });
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ ok: true, skipped: true, reason: "confirmed" }),
+            },
+          ],
+        };
+      }
+
       // Parse all DONE windows into BctcTableRow objects
       // Done outside the transaction (pure computation, no I/O risk)
       let totalRows = 0;
@@ -93,6 +159,7 @@ export function buildFinalizeBctcRefineHandler(
         value_prior: number | null;
         unit: string;
         is_summary_row: number;
+        source_confidence: number;
       }> = [];
 
       for (const unit of doneUnits) {
@@ -130,25 +197,40 @@ export function buildFinalizeBctcRefineHandler(
             value_prior: tableRow.value_prior ?? null,
             unit: tableRow.unit,
             is_summary_row: tableRow.is_summary_row,
+            source_confidence: tableRow.source_confidence,
           });
         }
       }
 
-      // Atomic transaction: DELETE-then-INSERT + status update (all-or-nothing)
-      db.transaction(() => {
-        // Step 1: Delete existing table rows for this report
-        db.prepare("DELETE FROM bctc_table_rows WHERE report_id = ?").run(report_id);
+      // applyCorrections post-pass: overlay human corrections BEFORE INSERT
+      // (ARCH-DECIDE A: post-pass, parser internals 0-diff)
+      const correctionMap = getCorrectionsMap(db, report_id);
+      const finalRows = applyCorrections(allTableRows, correctionMap);
 
-        // Step 2: Insert all parsed rows from DONE windows
+      // Atomic transaction: selective DELETE + INSERT + re-anchor + status update
+      // EC-7 prevention: single SQLite transaction — no partial-delete window
+      db.transaction(() => {
+        // Layer 2: selective DELETE — preserve rows that have human corrections
+        // Rows covered by a correction are NOT deleted (their value_current was
+        // already updated by submitCorrection; they survive the re-parse intact).
+        db.prepare(
+          `DELETE FROM bctc_table_rows
+           WHERE report_id = ?
+             AND id NOT IN (
+               SELECT row_id FROM bctc_human_corrections WHERE report_id = ?
+             )`,
+        ).run(report_id, report_id);
+
+        // Insert all parsed rows from DONE windows (with corrections applied)
         const insertStmt = db.prepare(
           `INSERT INTO bctc_table_rows
              (report_id, page_number, statement_section, row_order, code, label,
               period_current, value_current, period_prior, value_prior, unit,
-              is_summary_row)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              is_summary_row, source_confidence)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         );
 
-        for (const row of allTableRows) {
+        for (const row of finalRows) {
           insertStmt.run(
             row.report_id,
             row.page_number,
@@ -162,11 +244,16 @@ export function buildFinalizeBctcRefineHandler(
             row.value_prior,
             row.unit,
             row.is_summary_row,
+            row.source_confidence ?? 1.0,
           );
           totalRows++;
         }
 
-        // Step 3: Update financial_reports.refine_status
+        // Re-anchor corrections to new row IDs (inside transaction after INSERT)
+        // Updates bctc_human_corrections.row_id to match new bctc_table_rows.id
+        reAnchorCorrections(db, report_id);
+
+        // Update financial_reports.refine_status
         db.prepare(
           "UPDATE financial_reports SET refine_status = ? WHERE id = ?",
         ).run(report_status, report_id);

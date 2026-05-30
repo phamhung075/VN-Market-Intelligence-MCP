@@ -82,6 +82,7 @@ export function buildGetBctcPendingRefineHandler(
            FROM financial_reports
            WHERE text_status = 'COMPLETE'
              AND refine_status IN ('PENDING', 'PARTIAL')
+             AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')
            ORDER BY parsed_at ASC
            ${limitClause}`,
         )
