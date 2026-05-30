@@ -1,5 +1,34 @@
 # QA — Notebook
 
+## cycle-152 · 2026-05-30 · BCTC-AGENTIC-REFINE AR-QA — CHANGES_REQUESTED
+
+**Sprint:** BCTC-AGENTIC-REFINE | **Task:** AR-QA | **Verdict:** CHANGES_REQUESTED
+
+```
+date: 2026-05-30T09:35Z (approx)
+type: gate-keeper review (4 commits: d854e8ff, 423a901e, 76a3b8d2, 0a16fd6f)
+blocking_issues: 1
+advisory: 1
+
+TESTS: 76 AR DV tests PASS (bun test 5 AR files) | 10192 full suite PASS | tsc 0 errors
+DDD: PASS | security: PASS
+
+EXTRA-A (live-path check): PASS
+  unit_grouper.py inlined state machine not on refine path.
+  Only reachable from test_unit_grouper.py + test_document_map.py (legacy).
+  No live import of unit_grouper from pek_engine_adapter / handlers / extract_layout_first_usecase.
+
+EXTRA-B (scheduler-wiring gap): FAIL (RED — blocking)
+  startScheduler.ts has NO import or cron.schedule for bctcRefineJob.
+  cronConfig.ts key exists at line 182. Pipeline DORMANT in production.
+  Fix: add import + cron.schedule(CRONS.bctcRefineJob, ...) → AR-OPS.
+
+CRITERIA: C1=PASS-CONDITIONAL | C2=PASS | C3=PASS | C4=PASS | C5=PASS | C6=PASS | C7=PASS | C8=PASS
+NEXT: AR-OPS — wire startScheduler.ts + volume + rebuild + bake-off
+```
+
+---
+
 ## cycle-151 · 2026-05-30 · DPI-FU-AB-QA — PASS
 
 **Sprint:** DATA-PIPELINE-INTEGRITY | **Task:** DPI-FU-AB-QA | **Verdict:** PASS
