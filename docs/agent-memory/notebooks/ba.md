@@ -1,6 +1,81 @@
 # BA — Notebook
 
-**Last updated:** 2026-05-30 | **Sprint:** DATA-PIPELINE-INTEGRITY (DPI-BA)
+**Last updated:** 2026-05-30 | **Sprint:** BCTC-TRUST-RED (TR-BA)
+
+## BCTC-TRUST-RED-BA · 2026-05-30
+
+Sprint BCTC-TRUST-RED spec complete. REQ file: `docs/REQ_BCTC-TRUST-RED.md`. Blocker B-1 (ACB UUID) is a dev-time blocker, not a PO blocker. Zero PO blockers. NEXT: pm (TR-PM).
+
+Key decisions encoded as requirements:
+
+- FR-TR0-1 (purge): One-time in-container SQL only — NOT committed to migration. ACB UUID must be resolved by dev before running. Pattern: `SELECT id FROM financial_reports WHERE action_code='ACB' ORDER BY sort_key DESC LIMIT 1`.
+- FR-TR0-2 (enum): `REJECTED_SANITY` added to `window_status` Zod enum in `pushBctcRefinedUnitTool.ts` + DDL comment in schema. No ALTER TABLE.
+- FR-TR0-3 (ingest gate): validateBctcUnit called in push handler before INSERT. BLOCK → write with `window_status='REJECTED_SANITY'`, return `{ok:false, rejected_reason}`. WARN → write with adjusted_confidence, ok:true.
+- FR-TR0-4 (publish guard): `checkPublishability(db, reportId)` private helper in `bctcFullTools.ts`. Evaluates PUB-1..PUB-4 in sequence. `refine_status` and `id` must be in `ReportRow` SELECT (already present per code read).
+- FR-TR1-1 (DT-1): `bctcSanityValidator.ts` new domain service. Pure function. Cyclic-substring check via doubled ascending/descending cycles. ≥ 2 distinct hits = BLOCK; 1 hit = WARN.
+- FR-TR1-2 (DT-2+DT-3): `bctcMagnitudeValidator.ts` new domain service. DT-2 income check + forced-zero balance check. DT-3 revenue contradiction (≥ 3 distinct values with >20% pairwise divergence). Label-match ambiguity → WARN not BLOCK (RISK-3 mitigation).
+- FR-TR1-3 (finalize wiring): DT-2/DT-3 called after applyCorrections, before transaction. BLOCK → skip INSERT, set refine_status='REJECTED_SANITY'. CONFIRMED guard (Layer 1) takes precedence.
+- FR-TR1-4 (DT-4): logger.warn only. No DB write. No block.
+- TR-2: Routed to BCTC-LAYOUT-FIRST as LF-QA acceptance criteria (EC-1/3/4/5/1b). PM must add.
+
+Zone: `apps/mcp-server/src/` only. Zero diff on: HCM-DISAMBIG-extraction.test.ts, pdf-extractor/*, docs/agents/refine_bctc_md/*.
+
+TASKS.md updated: TR-BA ✅ + TR-PM 🔄 added. Files left unstaged per commit-discipline. NEXT: pm (task breakdown).
+
+---
+
+**Last updated (prior):** 2026-05-30 | **Sprint:** BCTC-HUMAN-CONFIRM (HC-BA)
+
+## BCTC-HUMAN-CONFIRM-BA · 2026-05-30
+
+Sprint HC spec complete. REQ file: `docs/REQ_BCTC-HUMAN-CONFIRM.md`. Zero PO blockers. NEXT: architect (HC-ARCH).
+
+Zone: `apps/mcp-server/` only (additive). No pdf-extractor, no Remix, no PEK subtree.
+
+Key decisions resolved as requirements:
+- D1 (flag enumeration): scan `bctc_refined_units.markdown` at request time using existing `parseTrustFlag` regex — no separate flags index; join to `bctc_table_rows` by `(report_id, page_number, label)` for `row_id` anchor.
+- D2 (corrections table): new `bctc_human_corrections` with `UNIQUE(report_id, row_id)` — INSERT OR REPLACE for idempotency; `old_value` snapshot captured; per-cell pin survives cron re-run.
+- D3 (flow-back): re-parse-with-overrides is the requirement; `refinedMarkdownParser.ts` stays single point. ARCH-DECIDE A = override injection mechanism (post-pass patch vs in-parser parameter). Direct row patch forbidden.
+- D4 (lock semantics): report-level lock in `financial_reports.confirm_status` skips entire cron refine. Per-cell pin = Layer 2 safety for partial confirmations. Reset button required in viewer.
+- D5 (status dimension): new columns `confirm_status / final_confirmed_at / confirmed_by` on `financial_reports` — separate from `refine_status`, idempotent ALTER TABLE migration.
+- D6 (ESC-5): write-back sets `bctc_table_rows.source_confidence = 1.0` for corrected rows. `bctc_table_rows` needs new `source_confidence` column (additive migration, default 1.0).
+
+Critical schema gap identified: `bctc_table_rows` has no `source_confidence` column today — must be added in this sprint (FR-4). Existing rows default to 1.0 (non-breaking).
+
+ARCH-DECIDE B (row re-anchoring): after a full re-parse deletes + re-inserts `bctc_table_rows`, correction records become stale by `row_id`; stable re-anchor key = `(report_id, label, page_number, statement_section)` — Option B2 recommended.
+
+10 DV tests specified (DV-HC-1..DV-HC-10), all bun:sqlite in-memory. RED before/GREEN after same commit mandatory.
+
+HC-BA → DONE. TASKS.md updated (HC-BA ✅ + HC-ARCH added). NEXT: architect (HC-ARCH). PIPELINE: continue.
+
+---
+
+## BCTC-AGENTIC-REFINE-BA · 2026-05-30
+
+Sprint BCTC-AGENTIC-REFINE spec complete. REQ file: `docs/REQ_BCTC-AGENTIC-REFINE.md`. Zero PO blockers. NEXT: architect (AR-ARCH).
+
+Zone split CONFIRMED:
+- `apps/pdf-extractor/`: dev-pdf-extractor — `page_rasterizer.py`, `OcrTextSourcePort` interface (Mistral-swappable), remove YOLO+grouper+boundary machine. FR-1/2/14.
+- `apps/mcp-server/`: dev-mcp-server — 3 MCP tools (`get_bctc_page_text`, `get_bctc_page_image`, `get_bctc_refined`) + `bctc_refined_units` table + deterministic markdown→rows parser + refine orchestration/cron. FR-3/4/5/9/10/11/12/13.
+- `docs/agents/`: agent-father — `refine_bctc_md` agent `.md` (FR-6/7 model tier + caching).
+
+Key decisions encoded:
+- FR-5 (selective image loading): measurable rule `classify_page_for_image_load(ocr_text, prev_page_was_image) -> bool` — image required when text contains table structural tokens (`|`, digit sequences, Vietnamese column headers) OR when page is in continuation window. Target image-load ratio < 60% of pages.
+- FR-6: Refine model = Haiku or Sonnet (NOT Opus). Architect picks based on FPT bake-off accuracy/cost.
+- FR-7: Prompt caching for system prompt across pages within a report session.
+- FR-8: `BCTC_RASTER_DPI` env var; architect bake-off at 100/120/150 DPI; lowest reliable becomes default.
+- FR-10 (deterministic parser): single point of correctness for expert passes. Vietnamese trust flags `[ĐỘ TIN CẬY THẤP — ...]` → `confidence=0.2`; `[độ tin cậy thấp]` → `confidence=0.4`. DV test AC-FR10-4 mandatory RED-before/GREEN-after.
+- FR-13 (refine contract): numbers←OCR text / structure←image / disagreement→FLAG never guess. Balance check is catch-net only — FORBIDDEN as sole gate.
+- FR-12 (orchestration): `refine_status` field added to `financial_reports` (PENDING/IN_PROGRESS/DONE/FAILED); readiness gate skips IN_PROGRESS/PARTIAL without error.
+- FR-15 (bake-off DoD): QA reports token-per-report (FPT 46pp + ACB 33pp), image-load ratio, continuation correctness FPT[22,23], zero silent discrepancies.
+
+5 architect-deferred decisions (NOT blockers): D1 min DPI, D2 Haiku vs Sonnet, D3 page-image cap, D4 page-window hint survival, D5 `/api/rasterize` contract.
+
+AR-BA → DONE. TASKS.md updated. Files left unstaged. NEXT: architect (AR-ARCH).
+
+---
+
+**Last updated (prior):** 2026-05-30 | **Sprint:** DATA-PIPELINE-INTEGRITY (DPI-BA)
 
 ## DATA-PIPELINE-INTEGRITY-BA · 2026-05-30
 
