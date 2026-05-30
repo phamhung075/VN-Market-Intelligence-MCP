@@ -107,6 +107,8 @@ import { registerGetBctcRefinedTool } from "./financial-reports/getBctcRefinedTo
 import { registerGetBctcPendingRefineTool } from "./financial-reports/getBctcPendingRefineTool.js"; // AR-MCP-OPTY AC-1: get_bctc_pending_refine (#142)
 import { registerPushBctcRefinedUnitTool } from "./financial-reports/pushBctcRefinedUnitTool.js"; // AR-MCP-OPTY AC-2: push_bctc_refined_unit (#143)
 import { registerFinalizeBctcRefineTool } from "./financial-reports/finalizeBctcRefineTool.js"; // AR-MCP-OPTY AC-3: finalize_bctc_refine (#144)
+import { registerListFlaggedBctcCellsTool } from "./financial-reports/listFlaggedBctcCellsTool.js"; // HC-DEV-4: list_flagged_bctc_cells (#145)
+import { registerSubmitBctcCorrectionTool } from "./financial-reports/submitBctcCorrectionTool.js"; // HC-DEV-4: submit_bctc_correction (#146)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -218,4 +220,6 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerGetBctcPendingRefineTool,      // AR-MCP-OPTY AC-1: get_bctc_pending_refine (#142)
   registerPushBctcRefinedUnitTool,       // AR-MCP-OPTY AC-2: push_bctc_refined_unit (#143)
   registerFinalizeBctcRefineTool,        // AR-MCP-OPTY AC-3: finalize_bctc_refine (#144)
+  registerListFlaggedBctcCellsTool,      // HC-DEV-4: list_flagged_bctc_cells (#145)
+  registerSubmitBctcCorrectionTool,      // HC-DEV-4: submit_bctc_correction (#146)
 ];

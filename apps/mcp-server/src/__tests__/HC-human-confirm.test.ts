@@ -1385,3 +1385,228 @@ describe("DV-HC-6 — POST /confirm/{doc_id}/reset clears confirm_status; correc
     db.close();
   });
 });
+
+// ── HC-DEV-4 MCP Tool tests ───────────────────────────────────────────────────
+// Tests for MCP tools #145 (list_flagged_bctc_cells) and #146 (submit_bctc_correction).
+// DV-HC-10b: submit_bctc_correction MCP tool delegates to same service as HTTP handler.
+// Registry: both tools in toolRegistry array (verified by import resolving below).
+// ─────────────────────────────────────────────────────────────────────────────
+
+import {
+  buildListFlaggedBctcCellsHandler,
+  registerListFlaggedBctcCellsTool,
+} from "../interface/mcp/tools/financial-reports/listFlaggedBctcCellsTool.js";
+import {
+  buildSubmitBctcCorrectionHandler,
+  registerSubmitBctcCorrectionTool,
+} from "../interface/mcp/tools/financial-reports/submitBctcCorrectionTool.js";
+import { toolRegistry } from "../interface/mcp/tools/registry.js";
+
+// ── DV-HC-10b: submit_bctc_correction MCP tool delegates to same service ─────
+
+describe("DV-HC-10b — submit_bctc_correction MCP tool delegates to bctcCorrectionService", () => {
+  it("tool calls submitCorrection; persists to both tables (direct DB read)", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID);
+    const rowId = seedTableRow(db, REPORT_UUID, { value_current: 400 });
+
+    const handler = buildSubmitBctcCorrectionHandler(db);
+    const toolResult = await handler({
+      report_id: REPORT_UUID,
+      row_id: rowId,
+      new_value: 800,
+      correction_source: "human_ui",
+    });
+
+    // Tool must return JSON text
+    expect(toolResult.content[0].type).toBe("text");
+    const parsed = JSON.parse(toolResult.content[0].text) as {
+      ok: boolean; row_id: number; new_value: number; source_confidence: number;
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.row_id).toBe(rowId);
+    expect(parsed.new_value).toBe(800);
+    expect(parsed.source_confidence).toBe(1.0);
+
+    // Anti-false-green: DIRECT DB reads (NOT via tool return value alone)
+    // 1. Correction record persisted in bctc_human_corrections
+    interface CorrRow { new_value: number; correction_source: string }
+    const corrRow = db
+      .prepare<CorrRow, [string, number]>(
+        "SELECT new_value, correction_source FROM bctc_human_corrections WHERE report_id = ? AND row_id = ?",
+      )
+      .get(REPORT_UUID, rowId);
+    expect(corrRow).not.toBeNull();
+    expect(corrRow?.new_value).toBe(800);
+    expect(corrRow?.correction_source).toBe("human_ui");
+
+    // 2. bctc_table_rows updated: value_current + source_confidence = 1.0
+    interface BtrRow { value_current: number; source_confidence: number }
+    const btrRow = db
+      .prepare<BtrRow, [number]>(
+        "SELECT value_current, source_confidence FROM bctc_table_rows WHERE id = ?",
+      )
+      .get(rowId);
+    expect(btrRow?.value_current).toBe(800);
+    expect(btrRow?.source_confidence).toBe(1.0);
+
+    db.close();
+  });
+
+  it("tool returns ok:false + error:report_confirmed when report is CONFIRMED", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID, { confirm_status: "CONFIRMED" });
+    const rowId = seedTableRow(db, REPORT_UUID, { value_current: 100 });
+
+    const handler = buildSubmitBctcCorrectionHandler(db);
+    const toolResult = await handler({
+      report_id: REPORT_UUID,
+      row_id: rowId,
+      new_value: 999,
+    });
+
+    const parsed = JSON.parse(toolResult.content[0].text) as {
+      ok: boolean; error: string; http_status: number;
+    };
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toBe("report_confirmed");
+    expect(parsed.http_status).toBe(409);
+
+    db.close();
+  });
+
+  it("tool rejects invalid UUID via Zod schema — returns validation_error", async () => {
+    const db = openTestDb();
+    const handler = buildSubmitBctcCorrectionHandler(db);
+    const toolResult = await handler({
+      report_id: "not-a-valid-uuid",
+      row_id: 1,
+      new_value: 100,
+    });
+
+    const parsed = JSON.parse(toolResult.content[0].text) as {
+      error: string; details: unknown[];
+    };
+    expect(parsed.error).toBe("validation_error");
+    expect(Array.isArray(parsed.details)).toBe(true);
+
+    db.close();
+  });
+
+  it("tool rejects non-integer row_id via Zod schema — returns validation_error", async () => {
+    const db = openTestDb();
+    const handler = buildSubmitBctcCorrectionHandler(db);
+    const toolResult = await handler({
+      report_id: REPORT_UUID,
+      row_id: 1.5,  // not an integer
+      new_value: 100,
+    });
+
+    const parsed = JSON.parse(toolResult.content[0].text) as {
+      error: string; details: unknown[];
+    };
+    expect(parsed.error).toBe("validation_error");
+
+    db.close();
+  });
+});
+
+// ── list_flagged_bctc_cells MCP tool tests ────────────────────────────────────
+
+describe("list_flagged_bctc_cells MCP tool (#145) — delegates to bctcFlagEnumerationService", () => {
+  it("returns flagged cells matching the service output", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID, { refine_status: "DONE" });
+
+    // Seed a red-flag refined unit
+    const markdown = [
+      "| Mã | Chỉ tiêu | Giá trị |",
+      "|---|---|---|",
+      "| 110 | Tiền và tương đương tiền | 1.234 [ĐỘ TIN CẬY THẤP — OCR 1.234 vs image 1.500] |",
+    ].join("\n");
+    db.prepare(
+      `INSERT INTO bctc_refined_units
+         (report_id, unit_id, page_numbers_json, markdown, row_count, confidence, window_status)
+       VALUES (?, 'unit-mcp1', '[4]', ?, 1, 0.2, 'DONE')`,
+    ).run(REPORT_UUID, markdown);
+    seedTableRow(db, REPORT_UUID, {
+      label: "Tiền và tương đương tiền", page_number: 4,
+      statement_section: "general", code: null, value_current: 1234,
+    });
+
+    const handler = buildListFlaggedBctcCellsHandler(db);
+    const toolResult = await handler({ report_id: REPORT_UUID });
+
+    expect(toolResult.content[0].type).toBe("text");
+    const parsed = JSON.parse(toolResult.content[0].text) as {
+      doc_id: string;
+      has_flags: boolean;
+      flag_count: number;
+      flags: Array<{ flag_type: string; ocr_value: string | null; image_value: string | null }>;
+    };
+
+    expect(parsed.doc_id).toBe(REPORT_UUID);
+    expect(parsed.has_flags).toBe(true);
+    expect(parsed.flag_count).toBeGreaterThan(0);
+
+    const redFlag = parsed.flags.find((f) => f.flag_type === "red");
+    expect(redFlag).toBeDefined();
+    // Anti-false-green: exact match from seeded markdown
+    expect(redFlag?.ocr_value).toBe("1.234");
+    expect(redFlag?.image_value).toBe("1.500");
+
+    db.close();
+  });
+
+  it("returns empty flags list (not error) when no flags present (AC-FR8-2)", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID, { refine_status: "DONE" });
+    // No bctc_refined_units seeded — no flags
+
+    const handler = buildListFlaggedBctcCellsHandler(db);
+    const toolResult = await handler({ report_id: REPORT_UUID });
+
+    const parsed = JSON.parse(toolResult.content[0].text) as {
+      has_flags: boolean;
+      flags: unknown[];
+    };
+    expect(parsed.has_flags).toBe(false);
+    expect(Array.isArray(parsed.flags)).toBe(true);
+    expect(parsed.flags.length).toBe(0);
+
+    db.close();
+  });
+
+  it("rejects invalid UUID via Zod schema — returns validation_error", async () => {
+    const db = openTestDb();
+    const handler = buildListFlaggedBctcCellsHandler(db);
+    const toolResult = await handler({ report_id: "not-a-uuid" });
+
+    const parsed = JSON.parse(toolResult.content[0].text) as {
+      error: string; details: unknown[];
+    };
+    expect(parsed.error).toBe("validation_error");
+
+    db.close();
+  });
+});
+
+// ── Registry: both tools discoverable ─────────────────────────────────────────
+
+describe("HC-DEV-4 registry — both MCP tools registered in toolRegistry", () => {
+  it("registerListFlaggedBctcCellsTool is in the toolRegistry array", () => {
+    expect(toolRegistry.includes(registerListFlaggedBctcCellsTool)).toBe(true);
+  });
+
+  it("registerSubmitBctcCorrectionTool is in the toolRegistry array", () => {
+    expect(toolRegistry.includes(registerSubmitBctcCorrectionTool)).toBe(true);
+  });
+
+  it("toolRegistry array includes both new registration functions (confirms additive entry)", () => {
+    // The registry array contains registration functions (some register multiple tools each).
+    // After HC-DEV-4: 2 new entries for #145 and #146. The array length grows by 2.
+    // We verify both new functions are present (already verified by includes() above),
+    // and that the total is ≥ 103 (101 pre-HC-DEV-4 + 2 new).
+    expect(toolRegistry.length).toBeGreaterThanOrEqual(103);
+  });
+});
