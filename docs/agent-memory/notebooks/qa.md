@@ -1,5 +1,50 @@
 # QA — Notebook
 
+## cycle-156 · 2026-05-30 · HC-QA-3 — BCTC-HUMAN-CONFIRM Gate-3 live re-gate — APPROVED
+
+**Sprint:** BCTC-HUMAN-CONFIRM | **Task:** HC-QA-3 | **Verdict:** APPROVED
+
+```
+date: 2026-05-30T18:30Z
+head_commit: 441f8e18 (HC-FIX-2 — DELETE-before-reAnchor swap)
+container: dd904d63 (HC-OPS-REBUILD-3, toolCount=154, uptime ~4min)
+test_suite: HC-human-confirm.test.ts=53pass / 0fail
+tsc: 0 errors
+178-price-history: 7 fail (pre-existing baseline, unchanged)
+baseline-1198/1206/1322: 21 pass / 0 fail
+DDD: PASS | security: PASS (no new files, fix was order-swap only)
+
+GATE 3 LIVE RE-GATE — PASS (GREEN, all 3 idempotency runs)
+  Throwaway report: 99999999-8888-7777-6666-000000001111 (QA-GATE, NOT FPT/ACB)
+  Correction: QA-GATE-Tien-Run3, old_value=1000 → new_value=2500, row_id=21580
+  RUN 1: rows_parsed=2, QA-GATE-Tien-Run3 COUNT=1, value_current=2500,
+         source_confidence=1.0, anchor_status=ok, corrections_count=1 — PASS
+  RUN 2: rows_parsed=2, COUNT=1, value_current=2500, sc=1.0, anchor_status=ok — PASS
+  RUN 3: rows_parsed=2, COUNT=1, value_current=2500, sc=1.0, anchor_status=ok — PASS
+  Idempotent ×3: COUNT stays 1, anchor_status stays 'ok' every run — NO GROWTH, NO FLIP
+  Cleanup: reports=0, rows=0, corrections=0 for throwaway UUID — no orphan rows
+  FPT=2, ACB=1 reports intact (untouched read-only confirmed)
+
+GATE 4 NON-REGRESSION — PASS
+  DV-HC-14 in HC-human-confirm.test.ts (53pass/0fail):
+  genuine parser duplicate (label=Khác ×2 same stable key) → anchor_ambiguous + COUNT==2
+  swap does NOT regress genuine-ambiguous safe-fail — CONFIRMED GREEN
+
+GATE 7 NON-REGRESSION — PASS
+  HC-human-confirm.test.ts: 53 pass / 0 fail (incl DV-HC-8 anchor_status=ok + DV-HC-14)
+  baseline 1198/1206/1322: 21 pass / 0 fail
+  178-price-history: 7 fail (pre-existing, unchanged — no new failures)
+  tsc: 0 errors
+
+VERDICT: APPROVED
+SUMMARY: Gate 3 fully resolved — DELETE-old-pinned-rows BEFORE reAnchorCorrections (HC-FIX-2).
+  reAnchor now sees exactly 1 row per non-ambiguous corrected label → anchor_status=ok.
+  Idempotent ×3 confirmed. No regression on gates 4/7.
+NEXT: po | HC-EXIT sprint sign-off
+```
+
+---
+
 ## cycle-155 · 2026-05-30 · HC-QA-2 — BCTC-HUMAN-CONFIRM re-gate — CHANGES_REQUESTED (1 blocking, Gate 3 still)
 
 **Sprint:** BCTC-HUMAN-CONFIRM | **Task:** HC-QA-2 | **Verdict:** CHANGES_REQUESTED
