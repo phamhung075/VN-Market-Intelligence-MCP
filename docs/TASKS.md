@@ -56,14 +56,20 @@ PO live-probe 2026-05-29T17:29Z: `get_macro_snapshot` returns `dataSource:"live"
 
 ## Sprint BCTC-TABLE-BOUNDARY — Multi-Page Table Stitcher Boundary State Machine
 
-**Status:** OPEN — **BTB-DRIFT-DEV DONE 2026-05-30. NEXT = ops (BATCHED rebuild pdf-extractor + mcp-server, then ONE patient off-hours instrumented re-extraction FPT e71f845d + ACB, direct-DB verify, then qa).** Priority: HIGH. Zone: `apps/pdf-extractor/`.
+**Status:** ✅ SIGNED OFF (BTB-EXIT) 2026-05-30 — **User's over-merge bug RESOLVED on the live canonical path (PATH B).** PO independent re-verify (not rubber-stamp): (1) source-traced PATH B `_run_extraction` L728 calls shared `group_pages_into_units()`; `_group_bboxes_into_units` DELETED (AD-2); AD-1 asserts PATH A≡PATH B shapes (single-source proven, drift #3 closed). (2) direct live-DB read FPT=31 (27 table+4 prose) / ACB=22 (17 table+5 prose), 0 dup unit_ids, 0 dup page-spans — matches QA exactly; prose units PRESENT on live path. (3) over-merge sentinel: largest table-unit span FPT=2 pages [22,23] (genuine continuation), ACB=1 page — NO giant merged unit; bug gone. (4) text_table_extractor.py + PDF-Extract-Kit 0-diff (frozen); tree clean. 718/718 + 33/33 + 25/25 + anti-drift all green & non-hollow. Zone: `apps/pdf-extractor/`. **KNOWN-LIMITATION (shipped as documented, NOT a blocker → FU-BTB-OCR):** PATH B runs `stored_text=""` so D-5 title-band detector is disabled live and YOLO page-type classification has margin errors (a Balance-Sheet page can be mislabeled prose, a Notes page mislabeled table). This is page-TYPE labeling noise, NOT the grouping bug — AD-1 proves the boundary logic itself is correct regardless of label source.
+
+- ✅ BTB-EXIT (po): see status line — APPROVED 2026-05-30. Follow-up FU-BTB-OCR registered.
 
 - ✅ BTB-BA: Spec `docs/REQ_BCTC-TABLE-BOUNDARY.md` — 4 boundary states (START/CONTINUE/END/NEW), FR-1..5, DV tests, two real-data sentinels. NEXT: architect.
 - ✅ BTB-ARCH (architect): design state-machine transition (per-page type × geometric continuity × title-band × intervening-prose), title-band detector, revised _flush_unit, revised blank-bridge — brief `docs/architecture-briefs/2026-05-29-bctc-table-boundary.md`. NEXT: dev-pdf-extractor.
 - ✅ BTB-DEV (dev-pdf-extractor): 5-state machine (NO_TABLE/TABLE_OPEN/TABLE_END/TABLE_NEW + deferred blank buffer), _is_title_band D-5, schema-page-type _flush_unit — commit d297f3ba. DV-1 PROVEN-RED→GREEN. DV-2 PROVEN-RED→GREEN. 659/659 unit tests pass. NEXT: ops rebuild.
 - 🚫 BTB-OPS (ops): BLOCKED — 2 cycles, conflicting diagnoses (cycle-1 `df159c7f` write-wedge: units_stored=28 echo vs DB=0; cycle-2 force-recreate then "hang" at 13min/101%CPU, container KILLED). Held pending BTB-UNBLOCK.
-- 🔄 BTB-QA (qa): DV-1 + DV-2 PROVEN-RED pre-fix, then PROVEN-GREEN post-fix; direct DB verification both sentinels; REJECT if any prose page in a table unit's page_numbers_json.
-- 🔄 BTB-EXIT (po): independent live re-verify sentinels A + B via direct DB; sign off.
+- ✅ BTB-QA (qa) cycle-151: DV-1/DV-2 PROVEN-RED→GREEN; AD-1/AD-2/DV-1-B/DV-2-B/9-page all green & non-hollow; direct-DB both sentinels; no prose page inside any table unit. GREEN.
+- ✅ BTB-EXIT (po): independent live re-verify both sentinels via direct DB + source-trace of PATH B + over-merge sentinel. APPROVE 2026-05-30.
+
+### FU-BTB-OCR — feed OCR text into PATH B so D-5 title-band works live (registered by BTB-EXIT 2026-05-30)
+
+**Status:** OPEN, MEDIUM. Zone: `apps/pdf-extractor/`. Not a regression — pre-existing PATH-B characteristic surfaced by BTB. PATH B passes `stored_text=""` into the grouper, so the D-5 title-band detector silently no-ops and unit page-TYPE relies on YOLO geometry alone (margin errors: Balance-Sheet↔prose, Notes↔table mislabels). The boundary GROUPING is correct (AD-1 path-agreement proven); this follow-up improves page-TYPE LABEL accuracy. DoD: PATH B `_run_extraction` feeds the per-page OCR text into PageDescriptor so D-5 title-band fires live; a sentinel page known to be mislabeled by YOLO-only is corrected; AD-1 still green (no new drift).
 
 ### BTB-UNBLOCK — PO triage 2026-05-29T21:57Z (UNBLOCK, runtime not boundary code)
 
