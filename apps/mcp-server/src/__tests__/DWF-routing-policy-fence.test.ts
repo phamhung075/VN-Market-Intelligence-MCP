@@ -89,7 +89,7 @@ describe("DWF-DEV-MCP-2 — Routing-Policy Fence", () => {
     const rules = parsed.routing_policy;
     expect(rules.length).toBeGreaterThan(0);
 
-    const lastRule = rules[rules.length - 1];
+    const lastRule = rules[rules.length - 1]!;
 
     // Each wildcard axis must be "*"
     expect(lastRule.type).toBe("*");
@@ -134,7 +134,7 @@ describe("DWF-DEV-MCP-2 — Routing-Policy Fence", () => {
       // NO CATCH-ALL — deliberately omitted to prove the fence
     ];
 
-    const lastRule = rulesWithoutCatchAll[rulesWithoutCatchAll.length - 1];
+    const lastRule = rulesWithoutCatchAll[rulesWithoutCatchAll.length - 1]!;
 
     // The check below MUST go RED when catch-all is absent.
     // Catch-all requires: type="*", severity="*", zone="*"/"undefined", ticker="*"/"undefined"
@@ -176,7 +176,7 @@ describe("DWF-DEV-MCP-2 — Routing-Policy Fence", () => {
       },
     ];
 
-    const lastRule = rulesWithCatchAll[rulesWithCatchAll.length - 1];
+    const lastRule = rulesWithCatchAll[rulesWithCatchAll.length - 1]!;
 
     const isCatchAll =
       lastRule.type === "*" &&
