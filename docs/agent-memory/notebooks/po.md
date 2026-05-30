@@ -1,24 +1,22 @@
 # PO Notebook
 
-## Cycle 2026-05-31 — DWF-EXIT: DYN-WF-FOUNDATION SIGNED OFF (Phase 0 + Phase 2, live-verified)
+## Cycle 2026-05-30T23:23Z — P1-PO-APPROVE: DWF-PHASE1 spec APPROVED + 3 OQs resolved
 
-QA `reports/TASK_REPORT_DWF-QA.md` APPROVED all FR-P0-1..4 + FR-P2-5/6/7; both BLOCKING re-proven (R3 suffix-free key, R1 explicit ttl=180); all DV suites RED→GREEN; mcp-server force-recreated. **Did NOT trust the ledger — spot-checked LIVE via gateway in-container:**
-- `is_trading_day(2025-01-27)` → `{is_trading_day:false, session_status:"holiday"}` (Tết); `(2025-01-06)` → `open`. Tool #147 live.
-- TTL-cap fix LIVE: `task_claim(ttl_seconds=691200)` → `claimed:true`. The ops-found silent Zod 86400 cap in `coordinationTools.ts` is gone in-container (released after).
-- `routing-policy.json` → `.routing_policy` = 8 rules + catch-all `*/*/*/*`→po (key is `.routing_policy`, NOT `.rules`).
-- cowork-schedule enabled slots = 14; `pressure-state.json` = 9 schema fields present.
+Reviewed `docs/REQ_DYN-WF-PHASE1.md` (adaptive cadence — heartbeat consults cadence policy). **APPROVED.** Set `Status: APPROVED`. Critique-before-approve done: NFR-P1-1 holds — Phase 1 is additive between "leader won" and "fan-out"; leader lock + suffix-free `cowork-slot:<slot_id>` token + published-marker belt untouched; zone cross-service only (apps/mcp-server/ off-limits). 4 BLOCKERs are architect-scoped, correctly routed — did NOT solve them.
 
-**Verdict: APPROVE — sprint CLOSED.** Phase 2 cutover stable (leader lock + per-work-item idempotent token + published-marker belt). Released umbrella lock `task:DYN-WF-FOUNDATION` (ok:false = TTL already expired across long sprint, acceptable per signoff flow).
+**3 OQ decisions (recorded in spec § 8 with full rationale):**
+- OQ-P1-1 chef-intraday open/high → **CONFIRM 60 min.** Binding constraint = 16GB host-memory panic (heavy unified-agent sessions), not market coverage. 60 min = ~7 fires/peak-block, already 4x today. Never tighten in Phase 1. Open sessions NEVER suppressible (EC-6).
+- OQ-P1-2 staleness → **TIGHTEN to 20 min** (NOT BA's 30, NOT hard 15). One */15 tick + 5min jitter. Fallback is the SAFE direction (NFR-P1-3) so trigger eagerly. Architect updates FR-P1-6 + AC-P1-6-2/6-3.
+- OQ-P1-3 bctc-analyst-slot-1..4 → **SUPPRESS on holiday ONLY, FIRE on weekend.** BCTC is filing-driven not session-driven; no filings on holidays (waste), but companies file over weekends + host headroom highest then. Needs dedicated `bctc-offmarket` policy (holiday→null, weekend→1440, open→cron). Splits from BA's blanket holiday/weekend lumping — architect reconciles vs FR-P1-4/FR-P1-5.
 
-**Two NON-BLOCKING findings disposed:**
-1. 19 TS18048 test-only errors in `DWF-routing-policy-fence.test.ts` (commit 8105f8fd, `lastRule` undefined) → **DWF-TSC-DEBT PROMOTED to active FIX NOW** (not deferred). Test-only, suite GREEN via bun — did not block. Zone `apps/mcp-server/`. DV: tsc-clean on file + suite stays 7/0.
-2. `pressure-state.json` seed `calendar_status:"unknown"` → **ACCEPTED, no task** — initial-state-only, populates next live tick via Step 4.8.
+Verified: 14 enabled slots in cowork-schedule.json (matches BLOCKER-2). pressure-state.json = 9 fields, calendar_status currently "unknown".
 
-**DWF-PHASE1 GREENLIT as next sprint** — Phase 2 leader lock live + QA-stable ⇒ 0→2→1 ordering satisfied; the "Phase 1 worse than today" hazard is now closed by the live lock. P1-BA NEXT. Brief § Phase 1.
+NEXT: architect P1-ARCH.
 
 ## Carry-over
-- DWF-EXIT done. Next: dispatch P1-BA (DWF-PHASE1 spec) + DWF-TSC-DEBT fixer. Phases 3/4/5 STILL DEFERRED — do NOT relitigate.
-- DYN-WF settled invariants (never relitigate): deterministic-router only (OQ-6, no LLM), single-JSON pressure-state, opportunistic leader (bounded dark window), no new task_claim kind (cowork-slot), R1 explicit-TTL + R3 suffix-free key.
-- KNOWN-OPEN (other sprints): FF-DEAD (foreign-flow dead fleet-wide, HIGH, VPS zone) · FU-TRUST-REFRESH (FPT+ACB PENDING/empty) · BCTC-LAYOUT-FIRST Phase 0 READY · SIG-FOLLOWUP-DRYRUN (X-1).
-- TASKS.md scoped `git add <file>` ONLY — tree has MANY unrelated files (DWF/HCM/BTB); NEVER `-A`. main only, no branches.
-- task_claim schema = `task_id`/`task_kind`/`owner_agent`/`ttl_seconds` (NOT `kind`/no-owner). Gateway wrapper, bare tool names.
+- DWF-PHASE1 spec APPROVED → architect P1-ARCH: resolve BLOCKER-1..4 + ENCODE my OQ-P1-2 (20min, not 30) + OQ-P1-3 (bctc-offmarket holiday-only suppress).
+- DWF-EXIT done (Phase 0+2 live-signed). Phases 3/4/5 STILL DEFERRED — do NOT relitigate.
+- DWF settled invariants (never relitigate): deterministic-router only (no LLM), single-JSON pressure-state, opportunistic leader (bounded dark window), no new task_claim kind (cowork-slot), R1 explicit-TTL + R3 suffix-free key.
+- DWF-TSC-DEBT still open (19 TS18048 test-only in DWF-routing-policy-fence.test.ts, zone apps/mcp-server/).
+- KNOWN-OPEN (other sprints): FF-DEAD (foreign-flow dead, HIGH, VPS) · FU-TRUST-REFRESH (FPT+ACB empty) · BCTC-LAYOUT-FIRST Ph0 READY · SIG-FOLLOWUP-DRYRUN (X-1).
+- Hygiene: scoped `git add <file>` ONLY (tree has DWF/HCM/BTB unrelated files); NEVER `-A`. main only, no branches. task_claim schema = task_id/task_kind/owner_agent/ttl_seconds; gateway wrapper, bare tool names.
