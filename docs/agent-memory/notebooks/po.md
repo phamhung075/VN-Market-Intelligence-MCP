@@ -1,24 +1,23 @@
 # PO Notebook
 
-## Cycle 2026-05-30 — GREENLIT Sprint DYN-WF-FOUNDATION (Phase 0 + Phase 2)
+## Cycle 2026-05-30 — TRUST-EXIT: BCTC-TRUST-RED SIGNED OFF (critique-before-approve, live-verified)
 
-Phase-prioritized the dynamic-workflow architecture brief (`docs/architecture-briefs/2026-05-29-dynamic-workflow-architecture.md` + agents-architect Review 2026-05-30 CONDITIONAL ADOPT). Constraints were pre-settled (do NOT relitigate): phase cut 0+2 / defer 3/4/5, ordering 0→2→1, deterministic-router-only.
+Data-integrity RED closed. Trust layer was green-stamping fabricated FPT/ACB refine data (`refine_status=DONE`, confidence 0.80-0.85 on ordered digit-run values pushed via `push_bctc_refined_unit`; ACB gross=net_rev + zeroed equity/liab/cash passing a forced-zero balance check). Surfaced to analyst via `get_bctc_full`.
 
-**DECISION: greenlight Phase 0 + Phase 2 ONLY** as one self-contained, reversible, never-worse-than-today sprint. Phase 1 (adaptive cadence) registered as `DWF-PHASE1` BLOCKED on Phase-2-cutover QA sign-off (Phase 1 without Phase 2 is strictly worse — raises market-hours fire rate → more collision windows). 3/4/5 deferred.
+**Did NOT trust the ledger — spot-checked LIVE via gateway:**
+- `get_bctc_full(FPT)` → "Chưa có dữ liệu BCTC" (zero financial numbers). Publish guard holds.
+- `get_bctc_full(ACB)` → same refusal.
+- `get_bctc_refined(e8ea3df5-…)` → "no refined units found" (purged).
+- Code spot-check: ingest gate `validateBctcUnit` at `pushBctcRefinedUnitTool.ts:111` → BLOCK ⇒ `window_status='REJECTED_SANITY'` + `{ok:false, rejected_reason}` (never DONE). Publish guard `checkPublishability` PUB-1..4 at `bctcFullTools.ts:507` after `latestRow`. All 6 dev/test SHAs present on main.
 
-- **Phase 0** = instrument + SSOT, zero behavior change: prune dead slots · `routing-policy.json` read-only (consumed by nothing) · NEW `is_trading_day` tool (OQ-5: does NOT exist; `get_macro_calendar` = macro-events only) · per-tick `pressure-state.json` instrument-only (single JSON, NOT new SQLite table).
-- **Phase 2** = leader lock (`cowork-leader`, ttl≈2×heartbeat) + per-work-item idempotent token (`cowork-slot:<slot_id>`) + `published:<work-id>` belt. Reuses already-implemented `task_claim`/`task_heartbeat`/`task_release`, kind `cowork-slot`, NO new enum.
+**Verdict — anomaly CANNOT recur silently:** future fabricated push is REJECTED_SANITY at ingest (write seam); structured feed refuses to publish absent-decomposition / REJECTED_SANITY reports (serve seam). Gated at both seams.
 
-**Three review corrections folded as BLOCKING/documented ACs:** R3 = key MUST be suffix-free (`cowork-slot:<slot_id>`, NO nominal-tick suffix — suffix recreates the bug). R1 = explicit short TTL ~180s, NEVER the 3600s default (false-green starvation). R2 = force-recreate of mcp-server resets `pid-`-based SERVER_SESSION_ID → leader-lock dark window = leader TTL (~30min); document in Phase 2 ops runbook, do NOT shorten by guessing.
-
-Wrote `docs/SPRINT_GOAL.md` § DYN-WF-FOUNDATION (prepended) + registered sprint in `docs/TASKS.md` with full dispatch chain (DWF-BA→ARCH→PM→DEV→QA, DWF-PHASE1 locked). Claimed umbrella lock `task:DYN-WF-FOUNDATION` (sprint-task, claimed:true).
-
-**NEXT: ba** — write `docs/REQ_DYN-WF-FOUNDATION.md`. Zone is `multi`; architect (DWF-ARCH) owns the apps/mcp-server vs cross-service split after BA spec approved.
+Shipped: TR-0 (ingest gate + publish guard + purge), TR-1 (DDD-pure `bctcSanityValidator` DT-1 digit-run + `bctcMagnitudeValidator` DT-2/3/4). QA re-sweep a3f83b88 APPROVED, bun test exit 0, counts 8/18/17/5/13/59/19 @ 0-diff. ops rebuilt mcp-server fresh image (not restart). Updated `docs/SPRINT_GOAL.md` + pruned `docs/TASKS.md` 84→79L (≤80 cap), closed cluster as SHIPPED.
 
 ## Carry-over
-- Settled constraints from this brief — never reopen: 0+2 cut, 0→2→1 order, deterministic-router (OQ-6), single-JSON pressure-state (OQ-3), opportunistic-leader not daemon (OQ-2), no `*/15`→`*/5` until post-Phase-2.
-- `task_claim` infra is fully real (coordinationStore.ts + coordinationTools.ts); `migrateCoordinationTable()` resolved commit-mutex enum drift — kinds live: cowork-slot|sprint-task|dashboard-row|commit-mutex. No new kind needed.
-- SERVER_SESSION_ID is process-level (`pid-<pid>-ts-<startupMs>`), NOT CC-session-level — leader lock works at the single-Docker-mcp-server-process level (adequate).
-- TASKS.md scoped `git add <file>` ONLY — tree has MANY unrelated files; NEVER `-A`. main only, no branches.
-- Other open sprints (paused/parallel): BCTC-TRUST-RED (HIGHEST, in-flight), FF-DEAD (HIGH, vps uncontended), BCTC-LAYOUT-FIRST, SELF-IMPROVE X-1, CHEF-ATTN, FU-MON.
+- **KNOWN-OPEN:** (a) FU-TRUST-REFRESH — FPT+ACB now PENDING/empty; need genuine re-refine (real OCR, off-HOSE 02:00-08:59 UTC Mon-Fri) to restore real data — NOT this sprint. (b) TR-2 coverage folded into BCTC-LAYOUT-FIRST LF-QA gates. (c) DWF-TSC-DEBT — 19 tsc errors in `DWF-routing-policy-fence.test.ts` from DYN-WF commit 8105f8fd (`lastRule` undefined), pre-existing — belongs to DWF, tracked in TASKS not BCTC-TRUST-RED.
+- TASKS.md scoped `git add <file>` ONLY — tree has MANY unrelated files (DWF/HCM/BTB); NEVER `-A`. main only, no branches.
+- DYN-WF-FOUNDATION still GREENLIT (Phase 0+2), DWF-BA NEXT. Settled — never relitigate: 0+2 cut, 0→2→1 order, deterministic-router (OQ-6), single-JSON pressure-state, opportunistic-leader.
+- Open parallel sprints: FF-DEAD (HIGH, vps uncontended), BCTC-LAYOUT-FIRST, SELF-IMPROVE X-1, CHEF-ATTN, FU-MON.
 - Every new lock/policy MUST ship deliberate-violation proof, NOT "exit 0" (feedback_fence_false_green).
+- Sign-off + ledger language = ENGLISH; Vietnamese only for FB posts + MARKET Telegram group.

@@ -1,3 +1,23 @@
+# Sprint BCTC-TRUST-RED — Trust layer green-stamps fabricated data
+
+**BUILD STATUS 2026-05-30 — ✅ SIGNED OFF (PO, TRUST-EXIT). Sprint CLOSED.** Brief `docs/architecture-briefs/2026-05-30-bctc-trust-red.md` (4c8cfaf7), spec `docs/REQ_BCTC-TRUST-RED.md` (dde8fbcd). Data-integrity RED: refine trust layer reported `refine_status=DONE` + `confidence=0.80-0.85` on FABRICATED data (FPT Q1-2026 report `e8ea3df5…` carried ordered digit-run values `12345678901234`/`8901234567890` pushed via `push_bctc_refined_unit`; all 15 units shared one `refined_at`; ACB `get_bctc_full` showed `gross_profit=net_revenue` + zeroed equity/liab/cash passing a forced-zero balance check). The structured feed (`get_bctc_full`) surfaced this to analyst + market dishes.
+
+**Three seams shipped (dev-mcp-server, zone `apps/mcp-server/` only):**
+- **TR-0 ingest gate + publish guard + purge** — `pushBctcRefinedUnitTool.ts` calls `validateBctcUnit` pre-insert; BLOCK → `window_status='REJECTED_SANITY'` + `{ok:false, rejected_reason}` (never DONE). `bctcFullTools.ts` `checkPublishability` PUB-1..4 fires after `latestRow` query → refuses with "Chưa có dữ liệu BCTC" when refine_status not DONE/PARTIAL, no value_current rows, balance sheet has no non-summary child, or REJECTED_SANITY units present. FPT + ACB seeded rows purged → `refine_status=PENDING`, empty units. Commits 4278b61a · ebbdabbf · b08ab73a.
+- **TR-1 semantic validators** (DDD-pure, domain layer, no I/O) — `bctcSanityValidator.ts` DT-1 monotonic/cyclic digit-run detector (≥2 distinct digit-run values → BLOCK); `bctcMagnitudeValidator.ts` DT-2 gross≥net + balance-forced-zero, DT-3 cross-statement revenue contradiction (>20% divergence), DT-4 identical-timestamp WARN. Wired into finalize. Commit 04fc08db. `REJECTED_SANITY` added to `financial_reports.refine_status` + `bctc_refined_units.window_status` enums (TEXT column, no ALTER).
+- **TR-2 coverage** (opex codes 11/24/25/26, equity/liab decomposition, CF fragmentation, prior-period column drift) — ROUTED to BCTC-LAYOUT-FIRST as LF-QA acceptance criteria; NOT this sprint (extraction-layer fixes need dev-pdf-extractor + agent-father, would create zone conflict).
+
+**Critique-before-approve verified LIVE on main (not trusted from ledger):** all 6 dev/test commits present on main (4278b61a · ebbdabbf · 04fc08db · b08ab73a · 15dfc434 · caf6865d); QA re-sweep a3f83b88 APPROVED (`bun test` exit 0; authoritative per-suite counts sanity-gate 8 / sanityValidator 18 / magnitudeValidator 17 / 240-bctc-full 5 / idempotency 13 / AIT-DEV-1 59 / HCM-DISAMBIG 19 @ 0-diff). Live gateway spot-check by PO: `get_bctc_full(FPT)` → "Chưa có dữ liệu BCTC" (zero financial numbers); `get_bctc_full(ACB)` → same refusal; `get_bctc_refined(e8ea3df5…)` → "no refined units found" (purged). Publish guard holds end-to-end. ops rebuilt mcp-server (`--no-cache` fresh image, force-recreate not restart), container healthy.
+
+**Plain-language verdict — the anomaly CANNOT recur silently:** a future push of ordered-digit / fabricated values is REJECTED_SANITY at ingest (never DONE), and the structured feed refuses to publish any report whose decomposition is absent or whose units are REJECTED_SANITY. "Placeholder data carrying confidence, fed to analysis" is now gated at both the write seam and the serve seam.
+
+**KNOWN-OPEN follow-ups (honest):**
+- **FU-TRUST-REFRESH** — FPT + ACB are now PENDING/empty; they need a genuine re-refine (real OCR run, off-HOSE 02:00-08:59 UTC Mon-Fri) to restore real data. NOT part of this sprint.
+- **TR-2** — folded into BCTC-LAYOUT-FIRST (LF-QA gates: non-zero opex codes, non-zero equity/liab, non-zero EBITDA, OCF from page 9/10/16).
+- **DWF tsc debt (NOT ours, tracked)** — QA flagged 19 pre-existing tsc errors in `DWF-routing-policy-fence.test.ts` introduced by DYN-WF-FOUNDATION commit 8105f8fd (`lastRule` possibly undefined); confirmed pre-existing at `caf6865d~1`; belongs to DWF, log only.
+
+---
+
 # Sprint DYN-WF-FOUNDATION — Make fleet orchestration multi-session-safe, then SSOT-instrument it for demand-driven cadence
 
 **STATUS 2026-05-30 — 🟢 GREENLIT (PO, this cycle). Phase 0 + Phase 2 only. Phase 1 REGISTERED-BLOCKED on Phase 2 cutover. Phases 3/4/5 DEFERRED.** Brief `docs/architecture-briefs/2026-05-29-dynamic-workflow-architecture.md` (Sections 1-7 + agents-architect Review 2026-05-30, CONDITIONAL ADOPT). Constraints settled by brief + review — do NOT relitigate the phase cut, the 0→2→1 ordering, or the deterministic-router constraint.
