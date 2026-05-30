@@ -1,24 +1,23 @@
 # PO Notebook
 
-## Cycle 2026-05-30 — TRIAGE: BCTC-EXTRACT-COVERAGE backlog (DEFER, no sprint)
+## Cycle 2026-05-30 — RE-TRIAGE: BCTC trust-layer RED (OVERTURNS DEFER 09353af0)
 
-bctc-analyst validated refined extraction against real FPT Q1-2026 (report `e8ea3df5-…`, refine_status=DONE) and surfaced 5 concrete extraction defects. Logged as new OPEN sprint cluster **BCTC-EXTRACT-COVERAGE** in TASKS.md (76L, under 80 cap). DID NOT design fixes — architect's job if kicked off. Scoped `git add` only.
+Router re-read FPT Q1-2026 refined (report `e8ea3df5-…`) directly. Verified myself via gateway: `get_bctc_refined(report_id)` + `get_bctc_full(FPT/ACB/GAS/VHM)`. Prior DEFER (BCTC-EXTRACT-COVERAGE, 5 coverage gaps) was WRONG: this is a data-integrity RED, not deferrable coverage.
 
-**Backlog entries logged (analyst-ranked):**
-- EC-1 (HIGHEST VALUE, coverage): P&L opex codes 11/24/25/26 not captured → gross_profit=revenue (100%-margin artifact), operating_profit=0; blocks margin-attribution of FPT net-margin 22.6%→19.8% YoY.
-- EC-2 (data-integrity): sequential-digit garble units 0007/0012/0013 carry HIGH conf ~0.85; conf scores OCR legibility not semantic validity → add post-extraction sanity filter (monotonic-digit + magnitude). Distinct root cause.
-- EC-3 (coverage): equity/liabilities decomposition absent → ESC-2 balance gate can't fire.
-- EC-4 (coverage): cash-flow fragmentation unit-0006 pages 9/10/16; net-OCF + WC rows (CF 03–12) missing → OCF/NI uncomputable.
-- EC-5 (coverage): begin assets 88,142 tỷ vs end 68,586 tỷ (−22.2%/qtr) = suspect prior-period column pulled from wrong year.
+**DECISION: GO-NOW.** Renamed cluster BCTC-EXTRACT-COVERAGE → **BCTC-TRUST-RED**, re-ranked:
+- TR-0 (LEAD, new): no mock/placeholder data may carry refine_status=DONE + feed analysis. Quarantine FPT+ACB seeded rows; block structured feed when decomposition absent.
+- TR-1 (was EC-2): semantic sanity gate — ESCALATED DEFER→GO. conf+flags+balance all GREEN on fabricated/contradictory data.
+- TR-2 (was EC-1/3/4/5): coverage gaps DEMOTED → feed existing BCTC-LAYOUT-FIRST as acceptance evidence, not parallel sprint.
 
-**Root-cause read (for architect later, NOT designed here):** EC-1/3/4/5 = statement-coverage class (refine/extractor not capturing rows) — overlaps BCTC-LAYOUT-FIRST scope. EC-2 = separate post-proc validation gap (dev-mcp-server / refine-contract).
+**MOCK-vs-REAL determination: SEEDED/MOCK, not genuine OCR.** Evidence: (1) perfect ascending/cyclic digit runs (12345678901234, 8901234567890, 5678901234567) — OCR never emits ordered digits; (2) all 15 units identical `refined_at` 11:18:58 — real fan-out staggers; (3) exact values NOT in any committed fixture (grep clean) → runtime push_bctc_refined_unit into live market.db.
 
-**DECISION: DEFER (backlog only, no sprint now).** Rationale: WIP≤2 already pressured by OPEN HIGH sprints (FF-DEAD, SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST READY); the coverage class is the existing BCTC-LAYOUT-FIRST charter — these findings are validation evidence to FEED its scope, not a parallel competing sprint. EC-2 genuinely new but no live trading-decision dependency → not urgent. Task was explicitly TRIAGE-ONLY.
+**Cross-report contamination: CONFIRMED ≥2.** ACB get_bctc_full = same pathology (gross=net_rev, opProfit/EBITDA/equity/liab/cash=0, conf 38%). GAS+VHM = "Chưa có dữ liệu" (no BCTC). So FPT+ACB contaminated; GAS/VHM empty.
 
-**Next-kickoff hint:** when BCTC-LAYOUT-FIRST kicks off, hand EC-1/3/4/5 to architect as concrete acceptance evidence; spin EC-2 as a standalone small sanity-gate FIX (dev-mcp-server) any time — independent, cheap.
+**CHAIN to dispatch (router executes, NOT me):** architect FIRST (root-cause split TR-0 quarantine-gate / TR-1 sanity-gate / confirm TR-2 belongs to BCTC-LAYOUT-FIRST) → ba spec → dev-mcp-server (TR-0/TR-1 in refine-contract + structured-feed publish guard) → qa (inject fabricated unit, prove flag+block fires) → po EXIT. WIP: BCTC-TRUST-RED takes a slot; respect WIP≤2 (pause lower-priority CHEF-ATTN/SELF-IMPROVE X-1 if needed — FF-DEAD is uncontended VPS zone, can run parallel).
 
 ## Carry-over
-- DB: market.db at `/app/data/market.db` in mcp-server container (not `/data/market.db`). Page-image volume `/data/bctc-page-images`. `xxd` absent (use `od -An -tx1`); bun:sqlite via temp-file `bun run /tmp/q.ts`.
-- TASKS.md cap = 80L (file-size-caps.json class sprint-task-index). Now 76L.
-- Scoped `git add <file>` ONLY — tree has MANY unrelated uncommitted files (HCM-DISAMBIG-extraction.test.ts NOT mine); NEVER `-A`.
-- Open OTHER sprints: FF-DEAD (HIGH, vps-scripts/), FU-MON (Mon DPI Brent/Gold + get_foreign_flow probe), SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST, CHEF-ATTN, AR-FU-DETERMINISM (MED, deferred).
+- TASKS.md cap 80L (now 76L). Scoped `git add <file>` ONLY — tree has MANY unrelated files (HCM-DISAMBIG-extraction.test.ts NOT mine); NEVER `-A`.
+- DB: market.db at `/app/data/market.db` in mcp-server container. bun:sqlite via temp-file `bun run /tmp/q.ts`.
+- get_bctc_refined needs report_id (string), no `code` arg. get_bctc_full takes code.
+- Refine pipeline code IS real (bctcRefineJob, pushBctcRefinedUnitTool, refinedMarkdownParser) — the BUG is the data pushed + missing semantic gate, not absent code.
+- Open OTHER sprints: FF-DEAD (HIGH, vps-scripts/ uncontended), SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST (TR-2 feeds it), CHEF-ATTN, FU-MON, AR-FU-DETERMINISM (deferred).

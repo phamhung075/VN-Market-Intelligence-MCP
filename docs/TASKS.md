@@ -55,15 +55,15 @@
 
 ---
 
-## Sprint BCTC-EXTRACT-COVERAGE — Refined-extraction completeness + sanity gate
+## Sprint BCTC-TRUST-RED — Trust layer green-stamps fabricated data (ESCALATED)
 
-**Status:** OPEN — PO triage 2026-05-30. Source: bctc-analyst FPT Q1-2026 validation (report `e8ea3df5-3f32-413d-a3eb-c71634c0438d`, refine_status=DONE). Defects surfaced; **architect owns root-cause split** if/when kicked off. Zone: multi (refine + pdf-extractor + mcp-server).
+**Status:** OPEN — PO re-triage 2026-05-30T (OVERTURNS prior DEFER 09353af0). **Priority: HIGHEST (data-integrity RED).** Zone: multi (refine-contract + mcp-server + pdf-extractor). Source: router re-read of FPT Q1-2026 (report `e8ea3df5-3f32-413d-a3eb-c71634c0438d`) + spot-check ACB. **Architect owns root-cause split.** Lead item = TR-0; coverage gaps demoted behind it.
 
-- 🔄 EC-1 (HIGHEST VALUE, coverage): P&L opex codes NOT captured — 11/24/25/26 (COGS, selling, G&A). `get_bctc_full` → gross_profit=revenue (100%-margin artifact), operating_profit=0. Blocks gross-margin/operating-leverage/margin-attribution passes (can't attribute FPT net-margin 22.6%→19.8% YoY to COGS vs OPEX).
-- 🔄 EC-2 (data-integrity): sequential-digit garble in notes units 0007/0012/0013 (e.g. 1,234,567,890,123 VND) carries HIGH conf ~0.85 — confidence scores OCR legibility not semantic validity. Add post-extraction sanity filter (monotonic-sequential-digit + magnitude detector) to flag/down-confidence. Distinct root cause (post-proc, likely dev-mcp-server / refine-contract).
-- 🔄 EC-3 (coverage, likely same root as EC-1): equity/liabilities decomposition absent → aggregate balance passes but sub-totals unverifiable; ESC-2 gate (assets+liabilities+equity totals) can't fire.
-- 🔄 EC-4 (coverage): cash-flow fragmentation — unit-0006 spans non-contiguous pages 9/10/16; net-OCF line + working-capital rows (CF 03–12) missing → OCF total & OCF/NI uncomputable.
-- 🔄 EC-5 (coverage, suspect prior-period column drift): begin total-assets 88,142 tỷ vs end 68,586 tỷ = −22.2% in one quarter — prior-period column likely pulled from wrong year's page.
+**Determination — refined data is SEEDED/MOCK, not a genuine OCR extraction.** Evidence: (1) values are perfect ascending/cyclic digit runs (`12345678901234`, `2345678901234`, `8901234567890`, `5678901234567`) — OCR never emits ordered digit sequences; (2) all 15 units share one identical `refined_at` 2026-05-30 11:18:58 — a real fan-out refine writes units at staggered times; (3) these exact values are NOT in any committed fixture/seed source → pushed into live market.db at runtime via a manual/scripted `push_bctc_refined_unit`. Cross-report check: ACB `get_bctc_full` shows the same structured-feed pathology (gross=net_rev, opProfit/EBITDA/equity/liab/cash all 0); GAS+VHM = no BCTC data ("Chưa có dữ liệu"). So contamination is confirmed in ≥2 DONE reports (FPT, ACB).
+
+- 🔄 TR-0 (LEAD, RED): no mock/placeholder data may carry refine_status=DONE and feed analysis. Quarantine/purge the FPT + ACB seeded refined rows; block the structured feed from publishing when decomposition is absent (equity/liab/cash=0 must NOT pass as a real report). Architect designs gate; this is NOT a cosmetic coverage gap.
+- 🔄 TR-1 (was EC-2, ESCALATE DEFER→GO): semantic sanity gate — confidence + flags + balance-check all report GREEN on part-fabricated, self-contradictory data (3 irreconcilable prior-period revenues: 16,058 / 11,481 / 20,225 tỷ, none flagged). Confidence scores OCR legibility not semantic validity. Add monotonic-digit + magnitude + cross-statement-consistency detector that down-confidences/flags.
+- 🔄 TR-2 (was EC-1/3/4/5, coverage — FEEDS BCTC-LAYOUT-FIRST, not parallel): P&L opex 11/24/25/26 uncaptured (100%-margin artifact); equity/liab decomposition absent; CF fragmentation pages 9/10/16; prior-period column drift (88,142→68,586 tỷ). Hand to architect as acceptance evidence under existing BCTC-LAYOUT-FIRST charter.
 
 ## Backlogs
 
