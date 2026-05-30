@@ -4,25 +4,19 @@
 
 ---
 
-## Sprint BCTC-AGENTIC-REFINE — ✅ SIGNED OFF 2026-05-30 (AR-EXIT, APPROVE-WITH-CONDITIONS)
+## Sprint BCTC-HUMAN-CONFIRM — Human-in-the-loop correction layer for flagged BCTC cells
 
-Geometry middle (YOLO + bbox-grouping + `bctc_page_grouper.py` 5-state machine) REPLACED OUTRIGHT by an agent refine step. **Option-Y** (architect §0.7): orchestration runs in the host fleet-cron CC session; mcp-server is a pure data service. QA cycle-153 GREEN on all 7 §0.7.5 DV gate items via live FPT+ACB bake-off at HEAD `3b4c62a2` (100/100 AR tests, tsc clean). PO verified live: in-container cron removed, host cron skill `.claude/commands/crons/cron-refine-bctc.md` armed `'0 9,14,20 * * *'`, tools #141-144 registered, `spawn("claude")` deleted, PEK subtree 0-diff. Brief `docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md`; goal record `docs/SPRINT_GOAL.md`.
+**Status:** KICKOFF 2026-05-30 (PO, user-requested). **Priority: HIGH.** Zone: `apps/mcp-server/` (viewer + tools + parser overrides). Goal: `docs/SPRINT_GOAL.md`. User wants to review red/yellow flagged cells, hand-correct, lock report "ĐÃ XÁC NHẬN", and have corrected figures flow back into `bctc_table_rows` — surviving later cron refine re-runs. ADDITIVE on top of shipped BCTC-AGENTIC-REFINE; does NOT rebuild the refine pipeline.
 
-- 🔄 **AR-FU-DETERMINISM** (zone `apps/mcp-server` + `docs/agents/refine_bctc_md`): MEDIUM follow-up. QA Gate-3 idempotency showed store stable (18=18=18) but FPT run-1=91 vs run-2=18 row delta = Haiku refine subagents emit DIFFERENT markdown across fan-outs (LLM non-determinism UPSTREAM of the idempotent store). Store-correctness NOT affected; coverage variance IS a trust concern since refined rows are the sole figure source for the 6 expert passes. Scope: lower refine temperature / determinism guard / golden-markdown snapshot regression on FPT. NOT a store bug. DEFERRED behind live ticks.
-
----
-
-## Sprint DATA-PIPELINE-INTEGRITY — ✅ SIGNED OFF 2026-05-30
-
-All 4 user-facing data bugs root-caused, code-fixed, deployed. 3 of 4 fully live-DONE; DPI-3/DPI-4 CODE-DONE + path-PROVEN, awaiting market schedule. FU detail → `docs/REQ_DATA-PIPELINE-INTEGRITY.md` § Follow-ups.
-
-**DPI follow-ups** (zone `apps/mcp-server`): ✅ FU-A (`ff9a64ce`: `fedFundsRate=3.62` LIVE, regime→NEUTRAL) · ✅ FU-B (`ff9a64ce`: `earningYield=6.83` LIVE) · ✅ **FU-D** (`d7ee43d7`, PO-SIGNOFF 2026-05-30: two-layer SBV zero-write guard, 7/7 tests RED→GREEN + 36/36 suite, image `6c45aeed`. Live-proven re-probe `get_macro_snapshot` computedAt 10:08:37Z dataSource=live → carry spread=1.38 NEUTRAL, yield spread=1.83 FAIRLY_VALUED; direct-DB `sbv_rates` deposit=5/usd_vnd=26115 source=sbv. DPI-2b FULLY WHOLE — all 3 carry/yield inputs live. QA hit a harness parse-error on final RETURN; dispatcher+PO dual live re-probe covered the gap — no re-run needed.) · 🔄 FU-C (MEDIUM test-debt: retro-own `36a91a59` + foreign-flow real-schema test, `ohlcvForeignFlowStore.ts`; DEFERRED — yields WIP to HIGH BCTC-AGENTIC-REFINE) · ⏳ FU-MON (Monday: DPI-3/DPI-4 live-probe).
+- 🔄 **HC-BA** (ba): write requirement spec `docs/REQ_BCTC-HUMAN-CONFIRM.md` from `docs/SPRINT_GOAL.md`. Resolve: review-surface data shape (per-flag fields), correction persistence + audit trail, final-confirm lock semantics, flow-back path (re-parse-with-overrides vs row patch), cron survival precedence, ESC-5 clearing rule.
 
 ---
 
-## Sprint BCTC-TABLE-BOUNDARY — ✅ SIGNED OFF 2026-05-30
+## Closed sprints (live follow-ups only — full records in briefs/archive)
 
-User's over-merge bug RESOLVED on live canonical path (PATH B). FPT=31 (27 table+4 prose) / ACB=22 (17 table+5 prose), 0 dup unit_ids. Prose units emitted; largest table span=2 pages. BTB-DRIFT dual-path convergence completed (commits `06fb1f10` + `ae5bb26c`). Follow-up FU-BTB-OCR registered. Zone: `apps/pdf-extractor/`. See `docs/architecture-briefs/2026-05-30-bctc-table-boundary-drift-convergence.md`.
+- **BCTC-AGENTIC-REFINE** ✅ SIGNED OFF 2026-05-30. Brief `docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md`. 🔄 **AR-FU-DETERMINISM** (MED, `apps/mcp-server` + `docs/agents/refine_bctc_md`): Haiku refine fan-outs emit non-deterministic markdown coverage (FPT run-1=91 vs run-2=18); store-correctness unaffected, coverage variance a trust follow-up. Lower temp / determinism guard / golden-markdown snapshot. DEFERRED.
+- **DATA-PIPELINE-INTEGRITY** ✅ SIGNED OFF 2026-05-30. 🔄 FU-C (MED test-debt, `ohlcvForeignFlowStore.ts`, DEFERRED) · ⏳ FU-MON (Monday: DPI-3 Brent/Gold + DPI-4 `get_foreign_flow` live-probe).
+- **BCTC-TABLE-BOUNDARY** ✅ SIGNED OFF 2026-05-30. Over-merge bug resolved (FPT=31/ACB=22, 0 dup). FU-BTB-OCR registered. Brief `docs/architecture-briefs/2026-05-30-bctc-table-boundary-drift-convergence.md`.
 
 ---
 

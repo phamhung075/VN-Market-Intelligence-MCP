@@ -1,22 +1,22 @@
 # PO Notebook
 
-## Cycle 2026-05-30T11:30Z — AR-EXIT: BCTC-AGENTIC-REFINE ✅ SIGNED OFF (APPROVE-WITH-CONDITIONS)
+## Cycle 2026-05-30T11:43Z — KICKOFF: BCTC-HUMAN-CONFIRM (user-requested sprint)
 
-**Sprint CLOSED.** Sprint-closing PO gate. QA cycle-153 (commit `caa837f6`, newest) = GREEN on all 7 §0.7.5 DV gate items via LIVE FPT+ACB bake-off at HEAD `3b4c62a2`. The AR-QA-handoff.md top line still reads CHANGES_REQUESTED — that is the STALE pre-pivot cycle-152 record; the appended dev records (5a46809c/6dfeb759/c7a08c47) + the Option-Y pivot (639b1225/47c9f328/a1cb486e/3b4c62a2) all landed after it. Did NOT trust the stale header.
+**New sprint.** User intent (verbatim): *"I need one other layer, manual fix, user can fix where đánh dấu cảnh báo (đỏ/vàng) for make bctc more correct for final confirmed."* = human-in-the-loop correction layer ON TOP of the just-shipped BCTC-AGENTIC-REFINE output. ADDITIVE — does NOT rebuild the refine pipeline (that's AR-FU-DETERMINISM, separate).
 
-**Critique-before-approve (mandatory gate done):**
-- Option-Y verified DIRECTLY on main (not just ledger): (1) in-container bctcRefineJob cron GONE from cronConfig + startScheduler; (2) host fleet cron skill `.claude/commands/crons/cron-refine-bctc.md` armed `'0 9,14,20 * * *'` UTC → runs `refine_bctc_md/flow/main.md`; (3) tools #141-144 registered in registry.ts; (4) `spawn("claude")` only survives in DELETED-comment; (5) PEK subtree 0-diff. Clean DDD: mcp-server is now a pure data service, orchestration in the host fleet.
-- ONE flagged item weighed: QA Gate-3 idempotency store STABLE (18=18=18) but FPT run-1=91 vs run-2=18 row delta. Root = Haiku refine subagents emit DIFFERENT markdown across fan-outs (LLM non-determinism UPSTREAM of the idempotent store) — NOT a store bug. Trust-flag contract keeps it honest (variance = coverage, not invented values). But 91→18 coverage swing IS a trust concern since refined rows are the SOLE figure source for the 6 expert passes.
+**Scope written to SPRINT_GOAL.md:** (1) review surface in `/api/bctc-inspect` listing every red/yellow flagged cell (OCR value, image value, page, label/context); (2) hand-correct per cell; (3) lock report "ĐÃ XÁC NHẬN"; (4) corrected figures flow back into `bctc_table_rows` via parser-with-overrides (keep parser as single point of correctness); (5) survival invariant — cron refine re-run (`0 9,14,20 UTC`) must NOT clobber human confirmation; (6) audit trail who/when/old→new.
 
-**Verdict: APPROVE-WITH-CONDITIONS.** Store-correctness gate GREEN → sprint closed. Seeded ONE follow-up AR-FU-DETERMINISM (MEDIUM, zone apps/mcp-server + docs/agents/refine_bctc_md): lower refine temperature / determinism guard / golden-markdown snapshot regression on FPT. DEFERRED behind live ticks. Optional/future: Mistral OCR bake-off swap (user-LOCKED later swap, not a gap).
+**Grounding verified before scoping** (so BA/architect build on it, don't redo): refine output in `bctc_refined_units`; trust prefixes live IN the markdown; `refinedMarkdownParser.ts` maps red→0.2/yellow→0.4/none→1.0 into source_confidence+flag (THE single point of correctness — push corrections through it if possible); UI home = `bctc-inspector.html` + `bctcInspectHandler.ts` + `bctcInspectMdHandler.ts` (NOT Remix); tools #141-144 (`get_bctc_refined`/`get_bctc_pending_refine`/`push_bctc_refined_unit`/`finalize_bctc_refine`); `financial_reports.refine_status` exists — need a SEPARATE human-confirm dimension (architect decides, don't collapse).
 
-**Docs:** TASKS.md sprint → SIGNED OFF + AR-FU-DETERMINISM seeded (78L, under 80 cap). SPRINT_GOAL.md build-status → SIGNED OFF. AR-EXIT ACK appended to AR-QA-handoff.md.
+**KEY DESIGN QUESTIONS handed to BA/architect (NOT decided by PO — chain decides, user non-technical):** persistence + audit of corrections; flow-back path (re-parse-with-overrides vs row patch); final-confirm lock semantics (block whole report vs only confirmed cells); cron survival precedence (confirmed cell pinned/immutable vs cron re-flags only unconfirmed). The survival invariant is the critical correctness bar.
+
+**Docs:** SPRINT_GOAL.md overwritten (prior AR record archived in brief + TASKS closed-sprints block). TASKS.md → new sprint block + HC-BA task; closed sprints compressed to live-FU-only (72L, under 80 cap). Sprint umbrella lock `task:BCTC-HUMAN-CONFIRM` claimed (TTL 3600).
+
+**NEXT dispatch:** ba | write `docs/REQ_BCTC-HUMAN-CONFIRM.md` from SPRINT_GOAL.md.
 
 ## Carry-over
-- AR-FU-DETERMINISM (MED, apps/mcp-server + refine flow) — refine non-determinism coverage guard; fold a future uncontended mcp-server tick.
-- AR cron is HOST-FLEET now (`.claude/commands/crons/cron-refine-bctc.md`) — fires 09/14/20 UTC; if no refined rows appear, check the host cron session is live (not the mcp-server container).
-- Parallel-session zone-contention on apps/pdf-extractor + AR-* in apps/mcp-server NOW RELEASED (sprint closed) — future mcp-server work uncontended on that axis.
-- FU-MON Monday TIME-CRITICAL: re-probe DPI-3 (Brent/Gold post-06:00Z) + DPI-4 (get_foreign_flow post-open).
-- FF-DEAD (HIGH, vps-scripts/) OPEN — dev-vps-crawls diagnosing foreign-flow producer.
-- FU-C (MED, apps/mcp-server) deferred — foldable next tick.
+- BCTC-HUMAN-CONFIRM zone `apps/mcp-server/` — viewer + new correction tool + parser overrides. Watch for zone-contention with AR-FU-DETERMINISM (same app) if that gets picked up concurrently.
+- Non-negotiables live in SPRINT_GOAL.md § Non-negotiables — carry into EVERY handoff (additive-only, DV RED→GREEN same commit, direct market.db verify, Vietnamese copy, ops rebuild --no-cache).
+- AR-FU-DETERMINISM (MED) + DPI FU-C/FU-MON + FF-DEAD (HIGH, vps-scripts/) all OPEN — see TASKS closed-sprints block.
 - Scoped `git add <file>` ONLY — tree has MANY unrelated uncommitted files; NEVER `-A`.
+- After BA spec returns → review via `po/review-ba-spec.md`. After QA done → `po/sprint-signoff.md`.
