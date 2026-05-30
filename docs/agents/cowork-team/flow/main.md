@@ -1,4 +1,4 @@
-<!-- size-justification: ~380L — single dispatcher flow; cron-match logic extracted to .claude/scripts/cowork-match-slots.js. Step 4.6 slot-lock (Sprint 1955 Phase 2) + Step 4.7 tick-snapshot (1968c-P01) + Step 4.8 pressure-state emitter (DWF-DEV-CROSS-3) + §drift-min threshold table (1967-09) added inline for auditability. Error boundary + telemetry + collision guard remain inline. Split deferred until next architectural sprint. -->
+<!-- size-justification: 472L — single dispatcher flow; cron-match logic extracted to .claude/scripts/cowork-match-slots.js. Step 0b leader lock (DWF-DEV-CROSS-4 Phase 2) + Step 4.6 per-work-item token (R1/R3 blocking, suffix-free, ttl=180s) + Step 4.6b heartbeat (DWF-DEV-CROSS-4) + Step 4.7 tick-snapshot (1968c-P01) + Step 4.8 pressure-state emitter (DWF-DEV-CROSS-3) + §drift-min threshold table (1967-09) added inline for auditability. Error boundary + telemetry + collision guard remain inline. Split deferred until next architectural sprint. -->
 
 # cowork-team — Master Cron Dispatcher
 
@@ -31,6 +31,35 @@ Read DASHBOARD.md per skill `.claude/skills/signal-dashboard/SKILL.md` § READ.
 Find all cowork-addressed sections (po, tran-ngoc-bau, unified-agent, alert-commander).
 Collect `status=NEW` rows → load payloads → route to matching agent slot at Step 5 or log for PO.
 Mark each processed row `NEW → READ`. If DASHBOARD.md missing → log `"[cowork-team] dashboard skip"` and continue. Never fail-loud on this step.
+
+---
+
+## Step 0b — Claim cowork-leader lock (DWF-DEV-CROSS-4 Phase 2 — FR-P2-5)
+
+<!-- Leader lock: ensures exactly one session leads each tick. Two+ concurrent CLI sessions
+     sharing the same mcp-server Docker process cannot both dispatch. WIN → proceed.
+     LOSE → silent exit, no dispatch, no WORK message.
+     TTL = 1800s (2 × 15-min heartbeat). MUST be explicit — never rely on default 3600s (AC-P2-5-3).
+     Heartbeat: after dispatch body (Step 4.6b), extend TTL from current time.
+     Dark window after force-recreate: max 1800s — see docs/protocols/dwf-ops-runbook.md. -->
+
+```
+LEADER_CLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     "cowork-leader",
+  task_kind:   "cowork-slot",
+  ttl_seconds: 1800,
+  owner_agent: "cowork-dispatcher"
+}))
+```
+
+```
+if LEADER_CLAIM.claimed != true:
+  # Another session holds the leader lock — silent exit
+  log "[cowork] leader lock held by peer — silent exit"
+  EXIT
+```
+
+Win → proceed with dispatch body.
 
 ---
 
@@ -114,27 +143,27 @@ This is a WARNING only — do NOT block spawns. Intentional multi-slot fires (e.
 
 <!-- spawn-guard: policy-only — no runtime assertion; enforced by convention, not code check (ITEM-16 doc note, 1967-10). NEVER spawn dev-team agents from this dispatcher. -->
 
-<!-- decision: Step 4.6 Model 1 — Master holds lock 900s TTL, agents do NOT heartbeat.
-  Rationale: cowork-slots are time-bucketed by nominal_tick (floor-15min UTC). A 900s TTL
-  covers exactly one 15-min cycle. If the spawned agent stalls or the master crashes after
-  claiming, the lock auto-expires before the NEXT nominal_tick, which uses a fresh key
-  ("cowork-slot:<agent>:<next_tick>"). There is no risk of stale locks blocking future cycles.
-  Model 2 (master releases via agent signal) was considered but rejected: it requires the
-  spawned agent to signal back, adding coupling and a new failure mode. Model 1 is correct
-  for cowork-slot because the key is tick-scoped — see architecture brief §7 (2026-05-20).
-  Implementation note: release is called after each spawn attempt (success OR failure) via a
-  try/finally pattern. If ALL matched slots are held by other sessions, exit silently with
-  telemetry all_held=true. Partial holds (some won, some held): spawn only WON_SLOTS. -->
+<!-- decision: Step 4.6 REWRITTEN — DWF-DEV-CROSS-4 Phase 2 (R1 + R3 blocking).
+  OLD: key = cowork-slot:<agent>:<nominal_tick>; TTL = 900s (stale after next tick).
+  NEW: key = cowork-slot:<slot_id> (SUFFIX-FREE — R3); TTL = 180s (EXPLICIT, mandatory — R1).
 
-## Step 4.6 — Slot lock claim (Model 1: master holds the lock)
+  R3 rationale: A tick suffix (e.g. cowork-slot:chef-morning@2026-05-30T05:15:00Z) changes
+  the lock key at each 15-min boundary. A peer session at the next tick acquires a fresh key
+  for the same work — re-launching a job that is still running. Suffix-free key (slot_id only)
+  means the lock persists across ticks for as long as the job runs + renews.
+  KEY: cowork-slot:<slot_id> — slot_id is stable work identity (NOT agent name alone, because
+  same-agent multi-slot fires must get DISTINCT locks per slot_id).
 
-Compute `nominal_tick` = floor-15min of current UTC minute (same math as `cowork-match-slots.js`):
+  R1 rationale: Default TTL is 3600s. A crash after 5s would hold the lock for 3595 more
+  seconds. TTL=180s (~3 min) frees the lock within one dispatch cycle on crash, preventing
+  1-hour starvation. Long-running agents renew via heartbeat (Step 4.6b optional; required
+  in future phases with long dev chains). NEVER omit ttl_seconds — the test checks its presence.
 
-```bash
-ACTUAL_M=$(date -u +%M | sed 's/^0//')   # strip leading zero
-M=$(( (ACTUAL_M / 15) * 15 ))
-nominal_tick=$(date -u +%Y%m%dT%H)$(printf '%02d' $M)00Z
-```
+  Release: called after each spawn attempt (success OR failure) via try/finally. Per ARCH-DECIDE-B
+  the spawned agent's own heartbeat chain extends the lock for long jobs. For short cowork
+  jobs (< 3 min) the 180s TTL auto-frees after job completes without explicit release needed. -->
+
+## Step 4.6 — Per-work-item idempotent token (REWRITTEN — DWF-DEV-CROSS-4, R1+R3 blocking)
 
 Initialize tracking arrays:
 
@@ -143,14 +172,16 @@ WON_SLOTS=[]     # slots where task_claim returned claimed=true
 HELD_BY_OTHER=[] # slots where task_claim returned claimed=false
 ```
 
-For each slot in MATCHES, attempt claim:
+For each slot in MATCHES, attempt per-work-item claim:
 
 ```
+# KEY: suffix-free cowork-slot:<slot_id> — R3 BLOCKING (no nominal_tick, no time suffix)
+# TTL: explicit 180s — R1 BLOCKING (never the default 3600s)
 result = call_tool(server="vn-market", tool="task_claim", arguments={
-  task_id:     "cowork-slot:" + slot.agent + ":" + nominal_tick,
+  task_id:     "cowork-slot:" + slot.slot_id,
   task_kind:   "cowork-slot",
-  owner_agent: "cowork-team",
-  ttl_seconds: 900,
+  owner_agent: "cowork-dispatcher",
+  ttl_seconds: 180,
   payload:     JSON.stringify({ slot_id: slot.slot_id, agent: slot.agent, flow_path: slot.flow_path })
 })
 ```
@@ -159,8 +190,7 @@ On claim result:
 
 ```
 if result.claimed == false:
-  send_telegram(channel=work,
-    "[cowork-team] slot held by ${result.current_holder.owner_session} → skip ${slot.slot_id}")
+  log "[cowork] slot " + slot.slot_id + " already claimed — skip duplicate spawn"
   append slot to HELD_BY_OTHER
   continue to next slot
 
@@ -176,6 +206,27 @@ if WON_SLOTS is empty:
   # Do NOT send a WORK telegram. Do NOT attempt any spawns.
   EXIT (go to Step 6 with all_held=true)
 ```
+
+---
+
+## Step 4.6b — Heartbeat leader lock (DWF-DEV-CROSS-4 Phase 2 — ARCH-DECIDE-B)
+
+<!-- After all per-work-item slots are processed (win or skip), renew the leader lock TTL.
+     This extends expires_at from current time by 1800s so a long dispatch body (tick-snapshot
+     write + pressure-state emit + fan-out) does not self-expire the leader lock mid-tick.
+     Pattern: explicit task_heartbeat on each tick win (ARCH-DECIDE-B: cleaner than reclaim).
+     ok=false: lock was stolen (another session won during this long tick) — log, proceed anyway
+     (we already won all per-work-item slots; dispatch body continues; no spawn gate here). -->
+
+Only execute if WON_SLOTS is non-empty (skip on silent-exit path).
+
+```
+call_tool(server="vn-market", tool="task_heartbeat", arguments={
+  task_id: "cowork-leader"
+})
+```
+
+On heartbeat failure (`ok=false`): log `"[cowork-team] leader heartbeat failed — lock may have been stolen; continuing dispatch"`. Do NOT abort — per-work-item tokens were already won.
 
 ---
 
@@ -315,6 +366,28 @@ mv "$PRESSURE_TMPFILE" "docs/data/pressure-state.json"
 
 ## Step 5 — Parallel fan-out
 
+<!-- Published marker gate (FR-P2-7, DWF-DEV-CROSS-4 Phase 2 — ARCH-DECIDE-C):
+     The spawned agent flow MUST claim a published marker BEFORE calling send_telegram.
+     This is belt-and-suspenders with the per-work-item token: the token prevents duplicate
+     spawns; the publish marker prevents duplicate sends if a spawn somehow executes twice.
+
+     Pattern each spawned agent MUST follow (in its own flow, before send_telegram):
+       1. Compute work_date = current VN date (GMT+7) in YYYY-MM-DD format
+       2. Claim the published marker:
+          publish_claim = call_tool(server="vn-market", tool="task_claim", arguments={
+            task_id:     "published:" + slot_id + ":" + work_date,
+            task_kind:   "cowork-slot",
+            owner_agent: "<agent_id>",
+            ttl_seconds: 100800   # 28h per ARCH-DECIDE-D (daily slots)
+          })
+       3. if publish_claim.claimed == false:
+            log "[cowork] publish blocked — already published work-id=" + slot_id + ":" + work_date
+            EXIT (do not call send_telegram)
+       4. if publish_claim.claimed == true:
+            proceed with send_telegram(...)
+     Weekly slots (digest-sunday, tnb-audit): use work_date = ISO week (YYYY-WW) + ttl_seconds=691200 (8d).
+     The publisher owns the marker — the dispatcher (this flow) does NOT call publish markers. -->
+
 Fire **all** WON_SLOTS simultaneously in a single Agent tool message block. No sequential gating.
 
 For each slot in WON_SLOTS:
@@ -336,16 +409,17 @@ Track spawn results: success (no error) vs failure (agent tool returns error).
 - `send_telegram(channel=work, "[cowork-team] flow missing: <slot.slot_id> → <slot.flow_path>")`
 - Add to `errors[]`. Skip this slot's spawn.
 
-**After each spawn attempt (success OR failure) — release lock immediately (try/finally):**
+**After each spawn attempt (success OR failure) — release per-work-item token immediately (try/finally):**
 
 ```
 try:
   spawn agent for slot
 finally:
   call_tool(server="vn-market", tool="task_release", arguments={
-    task_id: "cowork-slot:" + slot.agent + ":" + nominal_tick
+    task_id: "cowork-slot:" + slot.slot_id
   })
-  # ok=false is acceptable (already expired or stolen) — ignore release errors
+  # ok=false is acceptable (already expired, stolen, or crashed) — ignore release errors
+  # NOTE: key uses slot.slot_id (suffix-free) matching the claim in Step 4.6
 ```
 
 ---

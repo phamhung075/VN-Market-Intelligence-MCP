@@ -273,7 +273,8 @@ export function claimTask(input: ClaimInput): ClaimResult {
   const db = getCoordinationDb();
   if (!db) return { claimed: false, error: "db_unavailable" };
 
-  const ttl = Math.min(Math.max(input.ttl_seconds ?? 3600, 60), 86400);
+  // Max TTL extended to 7 days (604800s) to support published markers (28h = 100800s per ARCH-DECIDE-D)
+  const ttl = Math.min(Math.max(input.ttl_seconds ?? 3600, 60), 604800);
 
   try {
     // Step 1 — INSERT OR IGNORE
