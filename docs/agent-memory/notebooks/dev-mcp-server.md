@@ -1,5 +1,26 @@
 # dev-mcp-server -- Notebook
 
+## c333 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-4) — COMMITTED dca93898
+
+**Task:** HC-DEV-4 — MCP tools #145/#146 + registry wiring
+
+**2 new tool files created:**
+- `listFlaggedBctcCellsTool.ts` — MCP tool #145 `list_flagged_bctc_cells`; thin wrapper → `bctcFlagEnumerationService.enumerateFlaggedCells`; Zod UUID input; `buildListFlaggedBctcCellsHandler(dbOverride?)` for testability
+- `submitBctcCorrectionTool.ts` — MCP tool #146 `submit_bctc_correction`; thin wrapper → `bctcCorrectionService.submitCorrection`; Zod schema rejects non-UUID / non-integer / non-numeric inputs; `buildSubmitBctcCorrectionHandler(dbOverride?)` for testability
+
+**registry.ts:** 2 new imports + 2 array entries at end (#145, #146). Array now 103 entries (was 101).
+
+**financial-reports/index.ts:** 4 barrel export lines added (2 functions + 2 types).
+
+**DV tests:** 52 pass, 0 fail (+10 new tests). tsc: 0 errors.
+- DV-HC-10b: submit_bctc_correction MCP tool persists to both tables (direct DB read); 409 on CONFIRMED; Zod rejects bad UUID / non-integer row_id
+- list_flagged_bctc_cells: returns matching flags; empty list (not error) on no flags (AC-FR8-2); Zod rejects bad UUID
+- Registry: `includes()` confirms both functions in toolRegistry; length ≥ 103
+
+**Pattern:** followed build*Handler(dbOverride?) + register*Tool(server: McpServer) pattern from getBctcPendingRefineTool.ts. Services are shared (zero duplication with HTTP handlers).
+
+**NEXT:** HC-DEV-6 (bctc-inspector.html panel); QA gate on full sprint.
+
 ## c332 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-3) — COMMITTED ae3c5039
 
 **Task:** HC-DEV-3 — HTTP route handlers + server dispatch
