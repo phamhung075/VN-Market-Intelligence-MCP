@@ -1,32 +1,26 @@
 /**
- * bctcRefineJob.ts — FR-12 BCTC Agentic Refine Orchestrator + Cron
+ * bctcRefineJob.ts — FR-12 BCTC Agentic Refine Helpers (AR-MCP-OPTY)
  *
  * Sprint BCTC-AGENTIC-REFINE
- * DDD layer: application (orchestration use case)
+ * DDD layer: application (orchestration use case helpers)
  *
- * 4-phase state machine per §0.6 architecture brief:
- *   Phase 0: Claim + readiness gate
- *   Phase 1: Window partition (sequential O(n) pages, continuation-aware)
- *   Phase 2: Fan-out (bounded Haiku subagent pool — NO DB writes)
- *   Phase 3: Aggregate → determine report-level status
- *   Phase 4: Collect-then-write (single-threaded transactional DB writes)
+ * OPTION-Y (§0.7.2 ruling): The production spawn path (spawn("claude",...)) and
+ * the cron entry point runBctcRefineJob() have been DELETED. Orchestration now
+ * lives on the host-level fleet cron (CC Agent/Task subagent fan-out).
  *
- * Critical invariants:
- * - partitionIntoWindows() completes BEFORE any subagent spawns
- * - Continuation tables NEVER split across window boundaries
- * - Subagents NEVER write to DB (orchestrator owns all DB writes)
- * - DELETE-then-INSERT idempotency in Phase 4
- * - FAILED windows stored in bctc_refined_units (never silently dropped)
+ * What remains:
+ *   - refineOneReport() — orchestrates a single report via DI deps (used by tests)
+ *   - spawnWindowSubagent() — thin wrapper; production path deleted; test mock path RETAINED
+ *   - partitionIntoWindows() — re-exported from application/utils/windowPartitioner
+ *   - runBoundedPool() — re-exported from application/utils/boundedPool
+ *   - fetchAllPageTexts() — page-text fetcher (used by refineOneReport in tests)
  *
- * Cron: '0 9,14,20 * * *' UTC (09:00, 14:00, 20:00) — outside OFF-HOSE window.
- * OFF-HOSE: 02:00-08:59 UTC Mon-Fri. All three cron times are safe.
+ * The 3 new MCP tools (get_bctc_pending_refine, push_bctc_refined_unit,
+ * finalize_bctc_refine) are the production entry points for the fleet cron.
  *
  * @module scheduler/financial-reports/bctcRefineJob
  */
 
-import { mkdirSync, existsSync, readFileSync, rmSync } from "node:fs";
-import { join, basename } from "node:path";
-import { spawn } from "node:child_process";
 import type { Database } from "bun:sqlite";
 import { logger } from "../../infrastructure/logger.js";
 import { getDb } from "../../infrastructure/db/schema.js";
@@ -34,6 +28,15 @@ import { claimTask, releaseTask } from "../../infrastructure/db/coordinationStor
 import { getPageText } from "../../infrastructure/fetchers/pdfExtractorClient.js";
 import { classifyPageForImageLoad } from "../../application/utils/pageClassifier.js";
 import { parseRefinedMarkdown } from "../../application/utils/refinedMarkdownParser.js";
+import { partitionIntoWindows as _partitionIntoWindows } from "../../application/utils/windowPartitioner.js";
+import { runBoundedPool as _runBoundedPool } from "../../application/utils/boundedPool.js";
+import { basename } from "node:path";
+
+// ── Re-exports (consumers importing from this file still work) ─────────────────
+
+export { partitionIntoWindows } from "../../application/utils/windowPartitioner.js";
+export { runBoundedPool } from "../../application/utils/boundedPool.js";
+export type { PageText, Window } from "../../application/utils/windowPartitioner.js";
 
 // ── Config ─────────────────────────────────────────────────────────────────────
 
@@ -42,18 +45,6 @@ const REFINE_WINDOW_TIMEOUT_S = parseInt(Bun.env.REFINE_WINDOW_TIMEOUT_S ?? "120
 const REFINE_MAX_WINDOW_PAGES = parseInt(Bun.env.REFINE_MAX_WINDOW_PAGES ?? "3", 10);
 
 // ── Types ──────────────────────────────────────────────────────────────────────
-
-export interface PageText {
-  page: number;
-  text: string;
-}
-
-export interface Window {
-  unit_id: string;
-  page_numbers: number[];
-  texts: string[];
-  needsImage: boolean[];
-}
 
 export interface WindowResult {
   unit_id: string;
@@ -64,144 +55,24 @@ export interface WindowResult {
   status: "DONE" | "FAILED";
 }
 
-// ── Window partitioning (sequential O(n), continuation-aware) ──────────────────
-
-const CONTINUATION_MARKER = /tiếp theo|continued/i;
+// ── Window subagent (test mock path RETAINED; production spawn path DELETED) ───
 
 /**
- * Partition page texts into windows respecting continuation-table invariant.
+ * spawnWindowSubagent — test-injectable subagent wrapper.
  *
- * CRITICAL: This function runs to completion before ANY subagent spawns.
- * A table spanning page N and N+1 MUST land in ONE window (never split).
+ * OPTION-Y (§0.7.2): The production spawn("claude", ...) block has been DELETED.
+ * This function now ONLY supports the test injection path (deps.spawnSubagent).
+ * If called without deps.spawnSubagent in production, it returns FAILED immediately.
  *
- * Algorithm:
- * - Standalone page → 1-page window
- * - If page N+1 header contains continuation marker → include in same window
- * - Multi-page capped at REFINE_MAX_WINDOW_PAGES (truncated_continuation flag)
- */
-export function partitionIntoWindows(
-  pageTexts: PageText[],
-  config: { maxWindowPages: number },
-): Window[] {
-  const windows: Window[] = [];
-  let i = 0;
-
-  while (i < pageTexts.length) {
-    const page = pageTexts[i]!;
-    const ocrText = page.text;
-
-    // Determine image classification for this page
-    const prevWasImage =
-      windows.length > 0 &&
-      (windows[windows.length - 1]!.needsImage.some(Boolean));
-    const needsImage = classifyPageForImageLoad(ocrText, prevWasImage);
-
-    // Check if next page has a continuation marker
-    const pageNums = [page.page];
-    const texts = [ocrText];
-    const needsImages = [needsImage];
-
-    let j = i + 1;
-    while (j < pageTexts.length && pageNums.length < config.maxWindowPages) {
-      const nextPage = pageTexts[j]!;
-      if (CONTINUATION_MARKER.test(nextPage.text)) {
-        pageNums.push(nextPage.page);
-        texts.push(nextPage.text);
-        const prevImg = needsImages[needsImages.length - 1]!;
-        needsImages.push(classifyPageForImageLoad(nextPage.text, prevImg));
-        j++;
-      } else {
-        break;
-      }
-    }
-
-    // Check if we hit the cap mid-continuation
-    const flags: string[] = [];
-    if (j < pageTexts.length && pageNums.length === config.maxWindowPages) {
-      const nextPage = pageTexts[j]!;
-      if (CONTINUATION_MARKER.test(nextPage.text)) {
-        flags.push("truncated_continuation");
-        logger.warn("[bctcRefine] continuation window truncated at maxWindowPages", {
-          startPage: page.page,
-          maxWindowPages: config.maxWindowPages,
-        });
-      }
-    }
-
-    windows.push({
-      unit_id: `unit-${String(windows.length).padStart(4, "0")}`,
-      page_numbers: pageNums,
-      texts,
-      needsImage: needsImages,
-    });
-
-    i = j;
-  }
-
-  return windows;
-}
-
-// ── Bounded concurrency pool ───────────────────────────────────────────────────
-
-/**
- * Run tasks with bounded concurrency (p-limit style semaphore).
- *
- * Never spawns more than `concurrency` tasks simultaneously.
- * All tasks run to completion (failures captured in results, never thrown).
- */
-async function runBoundedPool<T, R>(
-  items: T[],
-  concurrency: number,
-  fn: (item: T) => Promise<R>,
-): Promise<R[]> {
-  const results: R[] = new Array(items.length);
-  let nextIndex = 0;
-
-  async function worker(): Promise<void> {
-    while (true) {
-      const index = nextIndex++;
-      if (index >= items.length) break;
-      results[index] = await fn(items[index]!);
-    }
-  }
-
-  const workers: Promise<void>[] = [];
-  const poolSize = Math.min(concurrency, items.length);
-  for (let i = 0; i < poolSize; i++) {
-    workers.push(worker());
-  }
-  await Promise.all(workers);
-
-  return results;
-}
-
-// ── Subagent output file exchange ──────────────────────────────────────────────
-
-function getOutputDir(reportId: string): string {
-  return join(process.cwd(), "docs", "refine-output", reportId);
-}
-
-function getOutputFilePath(reportId: string, unitId: string): string {
-  return join(getOutputDir(reportId), `${unitId}.json`);
-}
-
-// ── Window subagent spawning ───────────────────────────────────────────────────
-
-/**
- * Spawn a refine_bctc_md Haiku subagent for a single window.
- *
- * This is a placeholder implementation that creates a mock output.
- * In production, this spawns a claude CLI subprocess with the refine_bctc_md agent.
- * The agent writes its output to docs/refine-output/{report_id}/{unit_id}.json.
- *
- * For the orchestrator test harness, deps.spawnSubagent can be overridden.
+ * The fleet cron on the host calls individual CC subagents via the Task tool;
+ * it does NOT call this function. This wrapper exists for test harness compatibility only.
  */
 export async function spawnWindowSubagent(
   reportId: string,
-  win: Window,
+  win: { unit_id: string; page_numbers: number[]; texts?: string[]; needsImage?: boolean[] },
   timeoutMs: number,
   deps: {
-    spawnSubagent?: (reportId: string, win: Window) => Promise<WindowResult>;
+    spawnSubagent?: (reportId: string, win: { unit_id: string; page_numbers: number[] }) => Promise<WindowResult>;
   } = {},
 ): Promise<WindowResult> {
   // Allow injection for testing
@@ -228,111 +99,26 @@ export async function spawnWindowSubagent(
     }
   }
 
-  // Production: spawn claude CLI subprocess
-  const outputDir = getOutputDir(reportId);
-  mkdirSync(outputDir, { recursive: true });
-  const outputFile = getOutputFilePath(reportId, win.unit_id);
-
-  // Build per-window context payload for the subagent
-  const payload = {
-    report_id: reportId,
+  // Production path DELETED per Option-Y ruling (§0.7.2).
+  // In-container spawn("claude",...) is non-runnable — claude CLI absent.
+  // The fleet cron handles subagent invocation on the host.
+  logger.warn("[bctcRefineJob] spawnWindowSubagent called without deps.spawnSubagent — returning FAILED (Option-Y: use fleet cron)", {
+    reportId,
+    unitId: win.unit_id,
+  });
+  return {
     unit_id: win.unit_id,
     page_numbers: win.page_numbers,
-    texts: win.texts,
-    needsImage: win.needsImage,
-    output_file: outputFile,
+    markdown: "",
+    confidence: 0.0,
+    flags: ["agent_error:no_spawn_path_option_y"],
+    status: "FAILED",
   };
-
-  const payloadJson = JSON.stringify(payload);
-
-  return new Promise<WindowResult>((resolve) => {
-    const timeout = setTimeout(() => {
-      proc.kill();
-      logger.warn("[bctcRefine] window subagent timed out", {
-        reportId,
-        unitId: win.unit_id,
-        timeoutMs,
-      });
-      resolve({
-        unit_id: win.unit_id,
-        page_numbers: win.page_numbers,
-        markdown: "",
-        confidence: 0.0,
-        flags: ["timeout"],
-        status: "FAILED",
-      });
-    }, timeoutMs);
-
-    const proc = spawn(
-      "claude",
-      [
-        "run",
-        "docs/agents/refine_bctc_md/flow/main.md",
-        "--input",
-        payloadJson,
-      ],
-      {
-        stdio: "pipe",
-        env: { ...process.env },
-      },
-    );
-
-    proc.on("close", (code) => {
-      clearTimeout(timeout);
-
-      // Read output file written by the subagent
-      try {
-        if (existsSync(outputFile)) {
-          const raw = readFileSync(outputFile, "utf-8");
-          const result = JSON.parse(raw) as WindowResult;
-          // Clean up output file
-          try { rmSync(outputFile); } catch { /* ignore */ }
-          resolve(result);
-        } else {
-          logger.warn("[bctcRefine] subagent output file missing", {
-            reportId,
-            unitId: win.unit_id,
-            exitCode: code,
-          });
-          resolve({
-            unit_id: win.unit_id,
-            page_numbers: win.page_numbers,
-            markdown: "",
-            confidence: 0.0,
-            flags: [`agent_error:exit_code_${code ?? "unknown"}_no_output`],
-            status: "FAILED",
-          });
-        }
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err);
-        resolve({
-          unit_id: win.unit_id,
-          page_numbers: win.page_numbers,
-          markdown: "",
-          confidence: 0.0,
-          flags: [`agent_error:${msg}`],
-          status: "FAILED",
-        });
-      }
-    });
-
-    proc.on("error", (err) => {
-      clearTimeout(timeout);
-      resolve({
-        unit_id: win.unit_id,
-        page_numbers: win.page_numbers,
-        markdown: "",
-        confidence: 0.0,
-        flags: [`agent_error:${err.message}`],
-        status: "FAILED",
-      });
-    });
-  });
 }
 
 // ── Row count helper ───────────────────────────────────────────────────────────
 
-function countRows(markdown: string): number {
+export function countRows(markdown: string): number {
   // Count pipe-table data rows (exclude header + separator)
   let count = 0;
   let pastSeparator = false;
@@ -363,9 +149,8 @@ async function fetchAllPageTexts(
   reportId: string,
   filename: string,
   deps: FetchPageTextsDeps = {},
-): Promise<PageText[]> {
-  // Determine total pages by iterating until we get empty responses
-  const pageTexts: PageText[] = [];
+): Promise<Array<{ page: number; text: string }>> {
+  const pageTexts: Array<{ page: number; text: string }> = [];
   let pageNum = 1;
   const MAX_PAGES = 200; // Safety cap
 
@@ -394,12 +179,12 @@ async function fetchAllPageTexts(
   return pageTexts;
 }
 
-// ── Core orchestration function ────────────────────────────────────────────────
+// ── Core orchestration function (used by tests; fleet cron uses MCP tools) ────
 
 export interface RefineOrchestratorDeps {
   db?: Database;
   getPageTextFn?: (reportId: string, filename: string, pageNum: number) => Promise<string>;
-  spawnSubagentFn?: (reportId: string, win: Window) => Promise<WindowResult>;
+  spawnSubagentFn?: (reportId: string, win: { unit_id: string; page_numbers: number[] }) => Promise<WindowResult>;
   concurrency?: number;
   windowTimeoutMs?: number;
   maxWindowPages?: number;
@@ -407,6 +192,7 @@ export interface RefineOrchestratorDeps {
 
 /**
  * Orchestrate the refine pipeline for a single report.
+ * Used by tests via dep injection. Fleet cron uses MCP tools instead.
  *
  * 4-phase state machine (binding per §0.6):
  * Phase 0: Claim + readiness gate
@@ -414,9 +200,6 @@ export interface RefineOrchestratorDeps {
  * Phase 2: Fan-out (bounded pool, no DB writes)
  * Phase 3: Aggregate → report-level status
  * Phase 4: Collect-then-write (single-threaded, transactional)
- *
- * @param reportId  Financial report ID
- * @param deps      Injectable deps for testing
  */
 export async function refineOneReport(
   reportId: string,
@@ -495,7 +278,7 @@ export async function refineOneReport(
       totalPages: pageTexts.length,
     });
 
-    const windows = partitionIntoWindows(pageTexts, { maxWindowPages });
+    const windows = _partitionIntoWindows(pageTexts, { maxWindowPages });
 
     logger.info("[bctcRefine] Phase 1 complete — windows partitioned", {
       reportId,
@@ -515,7 +298,7 @@ export async function refineOneReport(
       ? { spawnSubagent: deps.spawnSubagentFn }
       : {};
 
-    const rawResults = await runBoundedPool(
+    const rawResults = await _runBoundedPool(
       windows,
       concurrency,
       async (win): Promise<WindowResult> => {
@@ -607,14 +390,6 @@ export async function refineOneReport(
       reportId,
     );
 
-    // Clean up output directory
-    const outputDir = getOutputDir(reportId);
-    try {
-      if (existsSync(outputDir)) {
-        rmSync(outputDir, { recursive: true, force: true });
-      }
-    } catch { /* ignore cleanup errors */ }
-
     logger.info("[bctcRefine] complete", {
       reportId,
       reportStatus,
@@ -633,53 +408,4 @@ export async function refineOneReport(
     // Always release the task lock
     releaseTask(taskId, `pid-${process.pid}`);
   }
-}
-
-// ── Cron job entry point ───────────────────────────────────────────────────────
-
-/**
- * Run the BCTC refine job for all pending reports.
- *
- * Picks reports WHERE text_status = 'COMPLETE' AND refine_status = 'PENDING'
- * or refine_status = 'PARTIAL' (re-eligible on next cron).
- *
- * Cron schedule: '0 9,14,20 * * *' UTC
- *   - 09:00 UTC = 16:00 GMT+7 (after HOSE close at 15:00 GMT+7) ✓
- *   - 14:00 UTC = 21:00 GMT+7 ✓
- *   - 20:00 UTC = 03:00 GMT+7 next day ✓
- * All times outside OFF-HOSE 02:00-08:59 UTC Mon-Fri. ✓
- */
-export async function runBctcRefineJob(
-  deps: RefineOrchestratorDeps = {},
-): Promise<void> {
-  const db = deps.db ?? getDb();
-
-  // Pick pending or partially-refined reports
-  const pendingReports = db
-    .prepare<{ id: string }, []>(
-      `SELECT id FROM financial_reports
-       WHERE text_status = 'COMPLETE'
-         AND refine_status IN ('PENDING', 'PARTIAL')
-       ORDER BY parsed_at ASC
-       LIMIT 10`,
-    )
-    .all();
-
-  if (pendingReports.length === 0) {
-    logger.info("[bctcRefineJob] no pending reports");
-    return;
-  }
-
-  logger.info("[bctcRefineJob] starting", { count: pendingReports.length });
-
-  for (const { id } of pendingReports) {
-    try {
-      await refineOneReport(id, deps);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      logger.warn("[bctcRefineJob] report failed", { id, error: msg });
-    }
-  }
-
-  logger.info("[bctcRefineJob] cycle complete", { processed: pendingReports.length });
 }

@@ -6,14 +6,21 @@
 //   - Scenario A: all-DONE → all-DONE → all-DONE (stable)
 //   - Scenario B: all-DONE → PARTIAL (inject failure) → DONE (same count)
 //   - Scenario C: PARTIAL → DONE re-run (count stays = windows.length)
+//   - push_tool_pathway: DV tests for get_bctc_pending_refine, push_bctc_refined_unit,
+//     finalize_bctc_refine (AC-MCP-OPTY-6, AR-MCP-OPTY)
 //
 // Persistence verified by DIRECT bun:sqlite Database() query (NOT push echo).
 // bun:sqlite ONLY — no better-sqlite3.
+
+// RED_BEFORE = true  (push_tool_pathway describe block was written first as RED; same commit makes GREEN)
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { initFinancialReportsTables } from "../infrastructure/db/schema-financial-reports.js";
 import { refineOneReport } from "../scheduler/financial-reports/bctcRefineJob.js";
+import { buildGetBctcPendingRefineHandler } from "../interface/mcp/tools/financial-reports/getBctcPendingRefineTool.js";
+import { buildPushBctcRefinedUnitHandler } from "../interface/mcp/tools/financial-reports/pushBctcRefinedUnitTool.js";
+import { buildFinalizeBctcRefineHandler } from "../interface/mcp/tools/financial-reports/finalizeBctcRefineTool.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -344,5 +351,260 @@ describe("AR-refined-units-idempotency: window partition continuation invariant"
     expect(windows[0]!.page_numbers).toEqual([1]);
     expect(windows[1]!.page_numbers).toEqual([2]);
     expect(windows[2]!.page_numbers).toEqual([3]);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// push_tool_pathway — DV tests for AC-MCP-OPTY-6 (AR-MCP-OPTY)
+//
+// RED_BEFORE = true: this describe block was drafted before the 3 tool handlers
+// existed; making the handlers GREEN is part of the same commit.
+//
+// Tests:
+//   DV-push-1: 2 DONE + 1 FAILED windows → finalize → PARTIAL status,
+//              bctc_table_rows from DONE only, FAILED window isolated
+//   DV-push-2: Idempotency — re-push same units → COUNT stable (no dupes)
+//   DV-push-3: reset=true → prior units deleted, COUNT stabilises after re-push
+//   DV-push-4: all-DONE → DONE status + bctc_table_rows COUNT = sum of window rows
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Well-formed markdown fixture that produces exactly 2 table rows after parsing
+// Format: header | separator | data row 1 | data row 2
+const MARKDOWN_2_ROWS =
+  "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n" +
+  "|---|---|---|---|\n" +
+  "| 100 | Tiền và các khoản tương đương tiền | 1.000 | 900 |\n" +
+  "| 110 | Tiền | 500 | 400 |";
+
+// Fixture producing 1 table row
+const MARKDOWN_1_ROW =
+  "| Mã số | Chỉ tiêu | Số cuối kỳ | Số đầu kỳ |\n" +
+  "|---|---|---|---|\n" +
+  "| 200 | Đầu tư tài chính ngắn hạn | 2.000 | 1.800 |";
+
+describe("push_tool_pathway (AC-MCP-OPTY-6)", () => {
+  let db: Database;
+  let reportId: string;
+
+  // Handlers wired to test DB
+  let pushHandler: ReturnType<typeof buildPushBctcRefinedUnitHandler>;
+  let finalizeHandler: ReturnType<typeof buildFinalizeBctcRefineHandler>;
+  let pendingHandler: ReturnType<typeof buildGetBctcPendingRefineHandler>;
+
+  beforeEach(() => {
+    db = new Database(":memory:");
+    initFinancialReportsTables(db);
+    reportId = "FPT-PUSH-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+
+    // Seed a COMPLETE report (uses base schema columns only — no filename/page_count in financial_reports)
+    db.prepare(
+      `INSERT OR REPLACE INTO financial_reports
+         (id, action_code, company_name, exchange, domain,
+          period_year, period_quarter, period_type,
+          period_start, period_end, sort_key, parsed_at, extraction_confidence,
+          pdf_path, text_status, refine_status,
+          balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'COMPLETE', 'PENDING',
+               '{}', '{}', '{}', '{}')`,
+    ).run(
+      reportId,
+      "FPT",
+      "FPT Corp",
+      "HOSE",
+      "technology",
+      2024,
+      "Q4",
+      "Q4",
+      "2024-10-01",
+      "2024-12-31",
+      "2024-Q4",
+      new Date().toISOString(),
+      0.9,
+      "/app/data/pdfs/FPT_Q4_2024.pdf",
+    );
+
+    // Wire handlers to the in-memory test DB
+    pushHandler = buildPushBctcRefinedUnitHandler(db);
+    finalizeHandler = buildFinalizeBctcRefineHandler(db);
+    pendingHandler = buildGetBctcPendingRefineHandler(db);
+  });
+
+  // Helper: parse JSON text from MCP tool content
+  function parseToolResult(result: { content: [{ type: "text"; text: string }] }): unknown {
+    return JSON.parse(result.content[0]!.text);
+  }
+
+  // Helper: count rows in a table
+  function countDb(table: string, col: string, val: string): number {
+    const row = db.query<{ cnt: number }, [string]>(
+      `SELECT COUNT(*) as cnt FROM ${table} WHERE ${col} = ?`,
+    ).get(val);
+    return row?.cnt ?? 0;
+  }
+
+  function getRefineStatus(): string | null {
+    const row = db.query<{ refine_status: string }, [string]>(
+      "SELECT refine_status FROM financial_reports WHERE id = ?",
+    ).get(reportId);
+    return row?.refine_status ?? null;
+  }
+
+  // ── DV-push-1: 2 DONE + 1 FAILED → PARTIAL, FAILED isolated ──────────────
+
+  it("DV-push-1: 2-DONE + 1-FAILED → finalize PARTIAL → table_rows from DONE only", async () => {
+    // Push w1 (DONE, 2 rows)
+    const r1 = parseToolResult(await pushHandler({
+      report_id: reportId, unit_id: "w1", page_numbers: [1],
+      markdown: MARKDOWN_2_ROWS, confidence: 0.9, flags: [], window_status: "DONE",
+    })) as { ok?: boolean };
+    expect(r1.ok).toBe(true);
+
+    // Push w2 (DONE, 1 row)
+    const r2 = parseToolResult(await pushHandler({
+      report_id: reportId, unit_id: "w2", page_numbers: [2],
+      markdown: MARKDOWN_1_ROW, confidence: 0.85, flags: [], window_status: "DONE",
+    })) as { ok?: boolean };
+    expect(r2.ok).toBe(true);
+
+    // Push w3 (FAILED — no markdown)
+    const r3 = parseToolResult(await pushHandler({
+      report_id: reportId, unit_id: "w3", page_numbers: [3],
+      markdown: "", confidence: 0.0, flags: ["timeout"], window_status: "FAILED",
+    })) as { ok?: boolean };
+    expect(r3.ok).toBe(true);
+
+    // Assert: 3 units stored
+    expect(countDb("bctc_refined_units", "report_id", reportId)).toBe(3);
+
+    // Finalize with PARTIAL (some windows failed)
+    const fin = parseToolResult(await finalizeHandler({
+      report_id: reportId, report_status: "PARTIAL",
+    })) as { ok?: boolean; rows_parsed?: number };
+    expect(fin.ok).toBe(true);
+    expect(typeof fin.rows_parsed).toBe("number");
+    expect((fin.rows_parsed ?? 0)).toBeGreaterThan(0); // DONE windows contributed rows
+
+    // financial_reports.refine_status = PARTIAL
+    expect(getRefineStatus()).toBe("PARTIAL");
+
+    // bctc_table_rows: rows from w1 (2) + w2 (1) = 3 total (FAILED w3 → none)
+    const tableRowCount = countDb("bctc_table_rows", "report_id", reportId);
+    expect(tableRowCount).toBe(3);
+
+    // FAILED window w3 is stored in bctc_refined_units but NOT in bctc_table_rows
+    const w3Unit = db.query<{ window_status: string }, [string, string]>(
+      "SELECT window_status FROM bctc_refined_units WHERE report_id = ? AND unit_id = ?",
+    ).get(reportId, "w3");
+    expect(w3Unit?.window_status).toBe("FAILED");
+    // Confirm w3 rows NOT in bctc_table_rows (all rows from page 3 would be w3)
+    // Since w3 had no markdown, no rows from page 3 should appear
+    const w3TableRows = db.query<{ cnt: number }, [string, number]>(
+      "SELECT COUNT(*) as cnt FROM bctc_table_rows WHERE report_id = ? AND page_number = ?",
+    ).get(reportId, 3);
+    expect(w3TableRows?.cnt ?? 0).toBe(0);
+  });
+
+  // ── DV-push-2: Idempotency — re-push same units → COUNT stable ────────────
+
+  it("DV-push-2: re-push same 3 windows → bctc_refined_units COUNT stable (no dupes)", async () => {
+    const pushAll = async () => {
+      await pushHandler({ report_id: reportId, unit_id: "w1", page_numbers: [1], markdown: MARKDOWN_2_ROWS, confidence: 0.9, flags: [], window_status: "DONE" });
+      await pushHandler({ report_id: reportId, unit_id: "w2", page_numbers: [2], markdown: MARKDOWN_1_ROW, confidence: 0.85, flags: [], window_status: "DONE" });
+      await pushHandler({ report_id: reportId, unit_id: "w3", page_numbers: [3], markdown: "", confidence: 0.0, flags: ["timeout"], window_status: "FAILED" });
+    };
+
+    // Push once
+    await pushAll();
+    expect(countDb("bctc_refined_units", "report_id", reportId)).toBe(3);
+
+    // Re-push (INSERT OR REPLACE — idempotent)
+    await pushAll();
+    expect(countDb("bctc_refined_units", "report_id", reportId)).toBe(3); // stable, not 6
+
+    // Finalize
+    await finalizeHandler({ report_id: reportId, report_status: "PARTIAL" });
+    const count1 = countDb("bctc_table_rows", "report_id", reportId);
+
+    // Finalize again (DELETE-then-INSERT idempotency)
+    await finalizeHandler({ report_id: reportId, report_status: "PARTIAL" });
+    const count2 = countDb("bctc_table_rows", "report_id", reportId);
+
+    expect(count2).toBe(count1); // stable row count (FPT-42-dupes regression guard)
+    expect(count1).toBeGreaterThan(0);
+  });
+
+  // ── DV-push-3: reset=true → prior units deleted ────────────────────────────
+
+  it("DV-push-3: reset=true on first push deletes prior units; subsequent push restores count", async () => {
+    // Push 3 units first
+    await pushHandler({ report_id: reportId, unit_id: "w1", page_numbers: [1], markdown: MARKDOWN_2_ROWS, confidence: 0.9, flags: [], window_status: "DONE" });
+    await pushHandler({ report_id: reportId, unit_id: "w2", page_numbers: [2], markdown: MARKDOWN_1_ROW, confidence: 0.85, flags: [], window_status: "DONE" });
+    await pushHandler({ report_id: reportId, unit_id: "w3", page_numbers: [3], markdown: "", confidence: 0.0, flags: ["timeout"], window_status: "FAILED" });
+    expect(countDb("bctc_refined_units", "report_id", reportId)).toBe(3);
+
+    // Push w1 with reset=true → should DELETE all prior, then insert just w1
+    await pushHandler({ report_id: reportId, unit_id: "w1", page_numbers: [1], markdown: MARKDOWN_2_ROWS, confidence: 0.9, flags: [], window_status: "DONE", reset: true });
+    expect(countDb("bctc_refined_units", "report_id", reportId)).toBe(1); // only w1
+
+    // Push w2 + w3 without reset
+    await pushHandler({ report_id: reportId, unit_id: "w2", page_numbers: [2], markdown: MARKDOWN_1_ROW, confidence: 0.85, flags: [], window_status: "DONE" });
+    await pushHandler({ report_id: reportId, unit_id: "w3", page_numbers: [3], markdown: "", confidence: 0.0, flags: ["timeout"], window_status: "FAILED" });
+    expect(countDb("bctc_refined_units", "report_id", reportId)).toBe(3); // back to 3
+  });
+
+  // ── DV-push-4: all-DONE → DONE status + correct row count ─────────────────
+
+  it("DV-push-4: all-DONE → finalize DONE → table_rows count = sum of window rows", async () => {
+    // w1: 2 rows, w2: 1 row, w3: 2 rows → total 5 table rows expected
+    await pushHandler({ report_id: reportId, unit_id: "w1", page_numbers: [1], markdown: MARKDOWN_2_ROWS, confidence: 0.95, flags: [], window_status: "DONE" });
+    await pushHandler({ report_id: reportId, unit_id: "w2", page_numbers: [2], markdown: MARKDOWN_1_ROW, confidence: 0.9, flags: [], window_status: "DONE" });
+    await pushHandler({ report_id: reportId, unit_id: "w3", page_numbers: [3], markdown: MARKDOWN_2_ROWS, confidence: 0.88, flags: [], window_status: "DONE" });
+
+    expect(countDb("bctc_refined_units", "report_id", reportId)).toBe(3);
+
+    const fin = parseToolResult(await finalizeHandler({
+      report_id: reportId, report_status: "DONE",
+    })) as { ok?: boolean; rows_parsed?: number };
+    expect(fin.ok).toBe(true);
+    expect(fin.rows_parsed).toBe(5); // 2 + 1 + 2
+
+    expect(getRefineStatus()).toBe("DONE");
+
+    const tableRowCount = countDb("bctc_table_rows", "report_id", reportId);
+    expect(tableRowCount).toBe(5);
+  });
+
+  // ── DV-push-5: get_bctc_pending_refine returns seeded PENDING report ───────
+
+  it("DV-push-5: get_bctc_pending_refine returns seeded PENDING report", async () => {
+    const result = parseToolResult(await pendingHandler({})) as Array<{
+      id: string; filename: string; page_count: number; refine_status: string;
+    }>;
+    expect(Array.isArray(result)).toBe(true);
+    const found = result.find((r) => r.id === reportId);
+    expect(found).toBeDefined();
+    expect(found?.refine_status).toBe("PENDING");
+    // filename derived from pdf_path = basename("/app/data/pdfs/FPT_Q4_2024.pdf")
+    expect(found?.filename).toBe("FPT_Q4_2024.pdf");
+    // page_count from pdf_extracted_text — 0 when no OCR rows seeded (correct default)
+    expect(typeof found?.page_count).toBe("number");
+  });
+
+  // ── DV-push-6: PARTIAL status propagates when ≥1 window FAILED ────────────
+
+  it("DV-push-6: PARTIAL status propagates to financial_reports when ≥1 window FAILED", async () => {
+    await pushHandler({ report_id: reportId, unit_id: "w1", page_numbers: [1], markdown: MARKDOWN_2_ROWS, confidence: 0.9, flags: [], window_status: "DONE" });
+    await pushHandler({ report_id: reportId, unit_id: "w2", page_numbers: [2], markdown: "", confidence: 0.0, flags: ["agent_error:exit_1"], window_status: "FAILED" });
+
+    await finalizeHandler({ report_id: reportId, report_status: "PARTIAL" });
+
+    expect(getRefineStatus()).toBe("PARTIAL");
+    // Only DONE windows → table rows from w1 only
+    expect(countDb("bctc_table_rows", "report_id", reportId)).toBeGreaterThan(0);
+    // w2 FAILED → no rows from page 2
+    const w2Rows = db.query<{ cnt: number }, [string, number]>(
+      "SELECT COUNT(*) as cnt FROM bctc_table_rows WHERE report_id = ? AND page_number = ?",
+    ).get(reportId, 2);
+    expect(w2Rows?.cnt ?? 0).toBe(0);
   });
 });

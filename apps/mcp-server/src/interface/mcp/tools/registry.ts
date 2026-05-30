@@ -104,6 +104,9 @@ import { registerCoordinationTools } from "./system/coordinationTools.js"; // Ta
 import { registerGetBctcPageTextTool } from "./financial-reports/getBctcPageTextTool.js"; // BCTC-AGENTIC-REFINE FR-3: get_bctc_page_text (#139)
 import { registerGetBctcPageImageTool } from "./financial-reports/getBctcPageImageTool.js"; // BCTC-AGENTIC-REFINE FR-4: get_bctc_page_image (#140)
 import { registerGetBctcRefinedTool } from "./financial-reports/getBctcRefinedTool.js"; // BCTC-AGENTIC-REFINE FR-11: get_bctc_refined (#141)
+import { registerGetBctcPendingRefineTool } from "./financial-reports/getBctcPendingRefineTool.js"; // AR-MCP-OPTY AC-1: get_bctc_pending_refine (#142)
+import { registerPushBctcRefinedUnitTool } from "./financial-reports/pushBctcRefinedUnitTool.js"; // AR-MCP-OPTY AC-2: push_bctc_refined_unit (#143)
+import { registerFinalizeBctcRefineTool } from "./financial-reports/finalizeBctcRefineTool.js"; // AR-MCP-OPTY AC-3: finalize_bctc_refine (#144)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -212,4 +215,7 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerGetBctcPageTextTool,           // BCTC-AGENTIC-REFINE FR-3: get_bctc_page_text (#139)
   registerGetBctcPageImageTool,          // BCTC-AGENTIC-REFINE FR-4: get_bctc_page_image (#140)
   registerGetBctcRefinedTool,            // BCTC-AGENTIC-REFINE FR-11: get_bctc_refined (#141)
+  registerGetBctcPendingRefineTool,      // AR-MCP-OPTY AC-1: get_bctc_pending_refine (#142)
+  registerPushBctcRefinedUnitTool,       // AR-MCP-OPTY AC-2: push_bctc_refined_unit (#143)
+  registerFinalizeBctcRefineTool,        // AR-MCP-OPTY AC-3: finalize_bctc_refine (#144)
 ];
