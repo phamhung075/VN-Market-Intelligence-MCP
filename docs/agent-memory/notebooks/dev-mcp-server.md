@@ -1,5 +1,30 @@
 # dev-mcp-server -- Notebook
 
+## c332 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-3) — COMMITTED ae3c5039
+
+**Task:** HC-DEV-3 — HTTP route handlers + server dispatch
+
+**3 new handler files created:**
+- `bctcFlagsHandler.ts` — GET /api/bctc-inspect/flags/{doc_id}: UUID-validates docId; 404 if report not found; delegates to enumerateFlaggedCells; 200 with FlagEnumerationResult
+- `bctcCorrectHandler.ts` — POST /api/bctc-inspect/correct/{doc_id}: parses JSON body {row_id, new_value}; delegates to submitCorrection; returns 409/400/200
+- `bctcConfirmHandler.ts` — POST /api/bctc-inspect/confirm/{doc_id} + /reset: direct DB UPDATE confirm_status; idempotent confirm; reset preserves bctc_human_corrections (AC-FR3-2)
+
+**server.ts dispatch:** 4 new route entries added after /zones/ handler (before / info block):
+- GET /api/bctc-inspect/flags/{doc_id}
+- POST /api/bctc-inspect/correct/{doc_id}
+- POST /api/bctc-inspect/confirm/{doc_id}
+- POST /api/bctc-inspect/confirm/{doc_id}/reset (path-split on "reset" suffix)
+
+**DV tests:** 42/42 GREEN. HC-DEV-3 adds DV-HC-1, DV-HC-2, DV-HC-4, DV-HC-5, DV-HC-6 (+12 vs 30 baseline).
+- DV-HC-1: red flag exact ocr_value/image_value strings from seeded markdown
+- DV-HC-2: yellow flag null ocr_value/image_value
+- DV-HC-4: 409 on CONFIRMED report; 400 on invalid JSON; 400 on wrong input types
+- DV-HC-5: CONFIRMED written to DB (direct read); idempotent re-confirm; 400 invalid UUID
+- DV-HC-6: PENDING reset clears timestamp; corrections count unchanged; 400 invalid UUID
+tsc: 0 errors.
+
+**NEXT:** HC-DEV-4 (MCP tools: listFlaggedBctcCellsTool, submitBctcCorrectionTool + registry.ts); HC-DEV-6 (viewer panel now unblocked)
+
 ## c331 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-2) — COMMITTED 89100e07
 
 **Task:** HC-DEV-2 — Layer 1+2 cron-survival guards + source_confidence INSERT fix
