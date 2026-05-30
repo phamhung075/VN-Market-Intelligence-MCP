@@ -1,5 +1,15 @@
 # Agent Father — Notebook
 
+## c281 · 2026-05-30 — Create refine_bctc_md (AR-AGENT-A, BCTC-AGENTIC-REFINE)
+
+- Type: leaf subagent (Haiku runtime, Opus-authored one-time)
+- Files created: 7 (.claude/agents/refine_bctc_md.md + init.md + 5 flow files)
+- Registration: .claude/agents/refine_bctc_md.md created (CC registration); docs/ tree only (no roster/dispatch needed — leaf subagent spawned by orchestrator, not by dispatch table)
+- Validation: 7/7 passed (frontmatter line 1 ✓, all model:claude-haiku-3-5 ✓, authored_by:claude-opus-4 ✓, all within 120L cap ✓, refine contract verbatim in table/continuation/verify flows ✓, Vietnamese worked examples in all 3 refine flows ✓, output path pattern docs/refine-output/{report_id}/{unit_id}.json ✓)
+- Decision: Leaf subagent pattern — no notebook, no roster entry. Orchestrator spawns per-window. Fan-out per §0.6 architecture brief. Prose-page is text-only (cheapest); table/continuation/verify all call image tool.
+- Commit: d854e8ff
+- Blocks: AR-AGENT-B (bctc-analyst retier + ESC-5 confidence column)
+
 ## c280 · 2026-05-30 — Edit code-janitor (add escalation DASHBOARD reporting step)
 
 - Change: Added "Escalation Reporting" section to `docs/agents/code-janitor/flow/main.md`. When a sweep produces escalation-class findings (doublons not auto-fixed), code-janitor must (1) verify the payload JSON file exists (Rule 3 pointer integrity), (2) append one `## po` DASHBOARD row via signal-dashboard SKILL (id=cj-…, from=code-janitor, type=system-issue, payload=JSON path), (3) update _Updated: timestamp. Step is skipped entirely when all findings were auto-fixed.
@@ -143,82 +153,14 @@
 
 ---
 
-## c270 · 2026-05-25
+## Carry-over (c262–c270 summary)
 
-**Task:** Institutionalize user directive "rebuild container if dev team changes microservice code" — Restart ≠ Rebuild close-gate.
-
-**SSOT placed:** `docs/protocols/docker-deployment-runbook.md` § Microservice Code-Change Close Gate (new section, 28L). Canonical rule: microservice code change is NOT done until ops rebuilds the container (`docker compose up -d --build <svc>`, ONE at a time, 8 GB cap, ops-not-user) AND qa verifies live container build-time > commit-time + /health + tool count. 6-step close-gate table with actor column. Delegation rule explicit.
-
-**References wired (DRY — no prose duplication):**
-1. `.claude/flows/po/sprint-signoff.md` — pre-approve container rebuild check block added before approve/reject branch. Points to SSOT section. 46L → 51L (well under 120L cap).
-2. `.claude/flows/developer/microservice-main.md` — `REBUILD_REQUIRED: true` line + SSOT pointer added to RETURN block. 159L → 160L (size-justification present at line 1, unchanged).
-
-**Commit:** 6a919ea4 (3 files: docker-deployment-runbook.md + sprint-signoff.md + microservice-main.md)
-**Cap compliance:** protocols/ has no cap; sprint-signoff.md 51L ≤ 120L; microservice-main.md 160L size-justified.
-**No agent .md files touched** — no Cowork refresh prompt needed.
-**Note:** agent-md-factory skill confirmed absent (see c263/c264/c265/c269 notes); proceeded from guide directly.
-
----
-
-## c269 · 2026-05-25
-
-**Task:** P0-FE-3 — Bake G12 DoD gate into dev-frontend flow (SCALE pilot Phase 0 deliverable)
-
-**Agent registration check (.claude/agents/dev-frontend.md):**
-- Line 1 = `---` (PASS)
-- name: dev-frontend, color: cyan, description present, tools: Read/Edit/Write/Glob/Grep/Bash, model: sonnet (all PASS)
-- No fix required — already compliant.
-
-**Flow file (.claude/flows/dev-frontend/main.md):**
-Expanded 142L → 192L (size-justification updated). Sections added between "After code" commit block and "Documentation review":
-
-1. **G12 DoD Gate (MVR — Playwright render-green — mandatory — blocking from Day 0):** Two-command gate table (npm test Vitest + npm run test:e2e Playwright 3/3), both must exit 0. Blocking logic for Vitest non-zero AND Playwright non-zero separately stated. Evidence requirement: paste both summary lines into handoff before RETURN. MVR Streak Rule: P1-B1/P1-B2/P1-C each must carry render-gate evidence before marked DONE; broken streak = reopen + re-paste. References pilot-charter §G12 and frontend-phase-1-task-plan §MVR-vs-FULL + §G12 Streak Tasks.
-
-2. **ESLint Fence (G4 — Phase 2 concern for MVR track):** Phase 1 defers G4. Phase 2 target = eslint-plugin-import or eslint-plugin-boundaries blocking domain/formatters → lib/api imports. Explicitly noted as TS-service → ESLint (NOT depguard which is Go-only, per SI-3 design). Lazy-load trigger documented. Hard gate: DO NOT implement ESLint fence during Phase 1 tasks.
-
-**Commit:** e4812778
-**Template used:** dev-kinh-dich/main.md G12 gate pattern adapted for MVR/Playwright/Vitest context.
-**Note:** agent-md-factory skill does not exist at .claude/skills/agent-md-factory/SKILL.md — proceeded from guide + factory template patterns directly (same as c263/c264/c265).
-
----
-
-## c268 · 2026-05-25
-
-### Edit (market-analyst) — tools frontmatter defect fix
-
-- Change: Added `mcp__claude_ai_gateway__call_tool` to `tools:` frontmatter line
-- Files modified: 1 (`.claude/agents/market-analyst.md`)
-- Cascade: none — tools-only change, no name/routing/flow path/inter_agent impact; tool package already documents MCP usage
-- Validation: 5/5 passed — YAML frontmatter valid, head-1=`---`, tools line correct, all knowledge.always_load paths intact, version date bumped to 2026-05-25
-- Decision: Genuine defect. Flow calls 9 MCP tools (get_macro_snapshot, fetch_and_analyze, run_impact_chain, get_alerts, get_bctc_full, get_financial_summary, get_sector_comparison, compare_backtest_runs, export_backtest_run_csv) all via call_tool(server="vn-market"). Guide §5.1 cowork analysis tool set = `Read, Write, mcp__claude_ai_gateway__call_tool`. Missing MCP tool blocked ALL live analysis calls at the allowlist.
-
----
-
-## c267 · 2026-05-25
-
-**Task:** Frontmatter-ordering fix — 7 cowork agents unregistrable (line-1 HTML comment)
-
-**Root cause:** c261 Stage-1 JUSTIFY pass (claude-manager-helper) inserted `<!-- size-justification: -->` on line 1 of agent files, pushing the YAML `---` opener to line 2. Claude Code agent loader requires frontmatter to start on byte 0 (line 1 = `---`). Affected agents had no name/tools visible to the loader and were never registered as spawnable subagent types.
-
-**Files fixed (7 total — comment moved from line 1 to immediately after closing `---`):**
-- `.claude/agents/financial-analyst.md`
-- `.claude/agents/news-scout.md`
-- `.claude/agents/market-watcher.md`
-- `.claude/agents/report-analyzer.md`
-- `.claude/agents/ba.md` (additional — same defect class, found by full-dir scan)
-- `.claude/agents/pm.md` (additional)
-- `.claude/agents/system-auditor.md` (additional)
-
-**Verification:** `head -1` on all 7 = `---`. Full `.claude/agents/*.md` scan = zero remaining defects.
-**Cascade:** None — no name, routing, tools, or content change. Comment text preserved verbatim.
-**No commit made** — flow edit-apply notebook step only; commit not instructed by task.
-
----
-
-## Carry-over (c262–c266 summary)
-
-- c266: Microservice Build Standard F1–F7 FULL/LEAN promotion (commits 63fe61b0..176fcf6c)
-- c265: dev-api-gateway agent+flow — G12 DoD gate, three-tier ownership (c9cac80b)
-- c264: dev-rag-service agent+flow — G12 gate, Python lock, env-audit (0b5ef802)
+- c270: Docker rebuild-gate → docker-deployment-runbook.md + po/sprint-signoff.md + microservice-main.md (6a919ea4)
+- c269: G12 DoD gate baked into dev-frontend flow (e4812778)
+- c268: market-analyst tools frontmatter fix — added mcp__claude_ai_gateway__call_tool
+- c267: Frontmatter line-1 fix — 7 cowork agents unregistrable (HTML comment on line 1)
+- c266: Microservice Build Standard F1–F7 FULL/LEAN promotion (63fe61b0..176fcf6c)
+- c265: dev-api-gateway agent+flow — G12 DoD gate (c9cac80b)
+- c264: dev-rag-service agent+flow — G12 gate, Python lock (0b5ef802)
 - c263: dev-pdf-extractor flow — G12 gate service-specific override (e7541786)
 - c262: claude-manager-helper — Pass-5b carve-out contradiction fix (b7d647a6)
