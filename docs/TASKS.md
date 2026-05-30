@@ -55,6 +55,16 @@
 
 ---
 
+## Sprint BCTC-EXTRACT-COVERAGE — Refined-extraction completeness + sanity gate
+
+**Status:** OPEN — PO triage 2026-05-30. Source: bctc-analyst FPT Q1-2026 validation (report `e8ea3df5-3f32-413d-a3eb-c71634c0438d`, refine_status=DONE). Defects surfaced; **architect owns root-cause split** if/when kicked off. Zone: multi (refine + pdf-extractor + mcp-server).
+
+- 🔄 EC-1 (HIGHEST VALUE, coverage): P&L opex codes NOT captured — 11/24/25/26 (COGS, selling, G&A). `get_bctc_full` → gross_profit=revenue (100%-margin artifact), operating_profit=0. Blocks gross-margin/operating-leverage/margin-attribution passes (can't attribute FPT net-margin 22.6%→19.8% YoY to COGS vs OPEX).
+- 🔄 EC-2 (data-integrity): sequential-digit garble in notes units 0007/0012/0013 (e.g. 1,234,567,890,123 VND) carries HIGH conf ~0.85 — confidence scores OCR legibility not semantic validity. Add post-extraction sanity filter (monotonic-sequential-digit + magnitude detector) to flag/down-confidence. Distinct root cause (post-proc, likely dev-mcp-server / refine-contract).
+- 🔄 EC-3 (coverage, likely same root as EC-1): equity/liabilities decomposition absent → aggregate balance passes but sub-totals unverifiable; ESC-2 gate (assets+liabilities+equity totals) can't fire.
+- 🔄 EC-4 (coverage): cash-flow fragmentation — unit-0006 spans non-contiguous pages 9/10/16; net-OCF line + working-capital rows (CF 03–12) missing → OCF total & OCF/NI uncomputable.
+- 🔄 EC-5 (coverage, suspect prior-period column drift): begin total-assets 88,142 tỷ vs end 68,586 tỷ = −22.2% in one quarter — prior-period column likely pulled from wrong year's page.
+
 ## Backlogs
 
 - BCTC-TABLE-2 → QUEUED (multi-ticker; after LF-EXTRACT + LF-OVERLAY close)

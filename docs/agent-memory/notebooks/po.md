@@ -1,27 +1,24 @@
 # PO Notebook
 
-## Cycle 2026-05-30T19:46Z — AIT-EXIT: BCTC-AI-INPUT-TAB ✅ SIGNED OFF (G9-ready)
+## Cycle 2026-05-30 — TRIAGE: BCTC-EXTRACT-COVERAGE backlog (DEFER, no sprint)
 
-**Sprint CLOSED.** Additive 7th tab "Đầu vào AI" on `/api/bctc-inspect`: per selected page shows the exact agent-input bundle the refine AI received — rasterized PNG + OCR text + page-window (which adjacent pages co-loaded as a unit). Built b4ed9266 + path-fix cbe96137; QA cycle-157 APPROVED all 7 gates.
+bctc-analyst validated refined extraction against real FPT Q1-2026 (report `e8ea3df5-…`, refine_status=DONE) and surfaced 5 concrete extraction defects. Logged as new OPEN sprint cluster **BCTC-EXTRACT-COVERAGE** in TASKS.md (76L, under 80 cap). DID NOT design fixes — architect's job if kicked off. Scoped `git add` only.
 
-**Critique-before-approve (verified on main + in live container, NOT trusted from ledger):**
-- Both commits present on main; container healthy, built AFTER the commits → repo == live image.
-- Path-fix cbe96137 = exactly 1 file / 1 line: `getPngPath` join("/data/bctc-page-images",…) instead of `process.cwd()` (which is /app, no subtree). Correct + necessary.
-- Live route `page-image/{rid}?page=6` → HTTP 200 `image/png` 336971 bytes, magic `89 50 4e 47` = REAL PNG (not echo/placeholder).
-- Live route miss `page=99` → honest HTTP 404 `{"error":"png_not_found",…}`.
-- Live route `page-window/{rid}?page=6` → real `bctc_refined_units` (`unit-0003`, page_numbers [6], row_count 1, conf 0.9).
-- Real PNGs exist for FPT report `e8ea3df5-3f32-413d-a3eb-c71634c0438d` pages 6-11 in `/data/bctc-page-images` volume.
-- FPT `financial_reports` row UNTOUCHED — in-container bun:sqlite read (`/app/data/market.db`): `confirm_status=PENDING`, `refine_status=DONE`. Additive viewer-only, zero DB writes during QA.
-- Additive-only confirmed: HEAD HTML AND live-served HTML both expose all 7 `data-tab` ids (6 prior bang/danhgia/md/ocr/soluyen/suatay intact + new `aiinput`).
-- No false-green residue found.
+**Backlog entries logged (analyst-ranked):**
+- EC-1 (HIGHEST VALUE, coverage): P&L opex codes 11/24/25/26 not captured → gross_profit=revenue (100%-margin artifact), operating_profit=0; blocks margin-attribution of FPT net-margin 22.6%→19.8% YoY.
+- EC-2 (data-integrity): sequential-digit garble units 0007/0012/0013 carry HIGH conf ~0.85; conf scores OCR legibility not semantic validity → add post-extraction sanity filter (monotonic-digit + magnitude). Distinct root cause.
+- EC-3 (coverage): equity/liabilities decomposition absent → ESC-2 balance gate can't fire.
+- EC-4 (coverage): cash-flow fragmentation unit-0006 pages 9/10/16; net-OCF + WC rows (CF 03–12) missing → OCF/NI uncomputable.
+- EC-5 (coverage): begin assets 88,142 tỷ vs end 68,586 tỷ (−22.2%/qtr) = suspect prior-period column pulled from wrong year.
 
-**Docs:** SPRINT_GOAL.md build-status → ✅ SIGNED OFF (AIT-EXIT) with full critique evidence. TASKS.md → sprint collapsed into Closed-sprints one-liner; 66L (under 80 cap). Umbrella lock `task:BCTC-AI-INPUT-TAB` released (ok=false acceptable if TTL expired).
+**Root-cause read (for architect later, NOT designed here):** EC-1/3/4/5 = statement-coverage class (refine/extractor not capturing rows) — overlaps BCTC-LAYOUT-FIRST scope. EC-2 = separate post-proc validation gap (dev-mcp-server / refine-contract).
 
-**G9 summary produced** for operator in ENGLISH (language-boundary: VN reserved for market product only). What operator can now do: open `/api/bctc-inspect` for FPT, pick a page, open "Đầu vào AI" tab → see the PNG + OCR text + page-window the AI received.
+**DECISION: DEFER (backlog only, no sprint now).** Rationale: WIP≤2 already pressured by OPEN HIGH sprints (FF-DEAD, SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST READY); the coverage class is the existing BCTC-LAYOUT-FIRST charter — these findings are validation evidence to FEED its scope, not a parallel competing sprint. EC-2 genuinely new but no live trading-decision dependency → not urgent. Task was explicitly TRIAGE-ONLY.
+
+**Next-kickoff hint:** when BCTC-LAYOUT-FIRST kicks off, hand EC-1/3/4/5 to architect as concrete acceptance evidence; spin EC-2 as a standalone small sanity-gate FIX (dev-mcp-server) any time — independent, cheap.
 
 ## Carry-over
-- DB note: market.db lives at `/app/data/market.db` in mcp-server container (NOT `/data/market.db` — that path 404s). Page-image volume IS `/data/bctc-page-images`.
-- Env: `xxd` not in container (use `od -An -tx1`). bun:sqlite via temp-file `bun run /tmp/q.ts`, not stdin-pipe.
-- Open OTHER sprints: FF-DEAD (HIGH, vps-scripts/ foreign-flow dead fleet-wide); FU-MON (Monday DPI Brent/Gold + get_foreign_flow live-probe); SELF-IMPROVE-GATE X-1 dry-run; BCTC-LAYOUT-FIRST; CHEF-ATTN; AR-FU-DETERMINISM (MED, deferred).
-- Scoped `git add <file>` ONLY — tree has MANY unrelated uncommitted files (incl. HCM-DISAMBIG-extraction.test.ts, NOT mine); NEVER `-A`.
-- Optional UX follow-up if user wants: "lọc chỉ ô cảnh báo" filter + per-cell jump-to-page (not requested).
+- DB: market.db at `/app/data/market.db` in mcp-server container (not `/data/market.db`). Page-image volume `/data/bctc-page-images`. `xxd` absent (use `od -An -tx1`); bun:sqlite via temp-file `bun run /tmp/q.ts`.
+- TASKS.md cap = 80L (file-size-caps.json class sprint-task-index). Now 76L.
+- Scoped `git add <file>` ONLY — tree has MANY unrelated uncommitted files (HCM-DISAMBIG-extraction.test.ts NOT mine); NEVER `-A`.
+- Open OTHER sprints: FF-DEAD (HIGH, vps-scripts/), FU-MON (Mon DPI Brent/Gold + get_foreign_flow probe), SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST, CHEF-ATTN, AR-FU-DETERMINISM (MED, deferred).
