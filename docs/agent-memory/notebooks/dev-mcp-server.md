@@ -1,5 +1,38 @@
 # dev-mcp-server -- Notebook
 
+## c336 · 2026-05-30 (BCTC-AI-INPUT-TAB) — COMMITTED b4ed9266
+
+**Task:** BCTC-AI-INPUT-TAB — add 7th "Đầu vào AI" tab showing agent-input bundle per page
+
+**Additive only. 4 files touched, 736 lines added, 0 deleted.**
+
+**New handlers in bctcInspectHandler.ts:**
+- `handleBctcInspectPageImage` — serves PNG bytes from `/data/bctc-page-images/{docId}/page_{0001}.png`; 404 on miss; absolute volume path (NOT process.cwd())
+- `handleBctcInspectPageWindow` — queries `bctc_refined_units` via `json_each(page_numbers_json)`; always 200 (found:false on miss)
+
+**server.ts:** +2 dispatch blocks for page-image and page-window routes (after zones handler)
+
+**bctc-inspector.html:**
+- 7th tab button: `rtab-aiinput` / `data-tab="aiinput"` / label "Đầu vào AI"
+- 7th tab panel: `tab-panel-aiinput` with image, page-window, OCR, refine contract sub-sections
+- `let lastOcrData = null` state variable; populated in `renderOcr()` after `resp.json()`
+- `renderAiInputTab(docId, page)` — lazy (only when activeTab==='aiinput')
+- navigateToPage step 6: `if (activeTab === 'aiinput') await renderAiInputTab(...)`
+- switchTab: auto-trigger `renderAiInputTab` when `tabId === "aiinput"`
+
+**DV tests (AIT-DEV-1.test.ts) — 59 pass, 0 fail:**
+- PNG magic bytes [0x89,0x50,0x4e,0x47] byte-level contract
+- 404-on-miss with exact `png_not_found` signal (not JSON echo)
+- 400 on invalid UUID
+- page-window hit/miss
+- HTML 7-tab regression + 25 legacy pane IDs
+
+**Regressions:** HC-DEV-7 (111 pass) and HC-DEV-6 both GREEN.
+
+**Volume:** `/data/bctc-page-images` confirmed mounted in container (empty — no PNGs generated yet; route returns honest 404 until rasterizer runs).
+
+**REBUILD REQUIRED before live QA.** Next: qa.
+
 ## c335 · 2026-05-30 (HC-DEV-7 bctc-inspector layout) — COMMITTED [pending]
 
 **Task:** HC-DEV-7 — two-column 50/50 split + right-pane tab bar for bctc-inspector.html
