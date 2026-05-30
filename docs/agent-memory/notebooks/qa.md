@@ -1,5 +1,73 @@
 # QA — Notebook
 
+## cycle-155 · 2026-05-30 · HC-QA-2 — BCTC-HUMAN-CONFIRM re-gate — CHANGES_REQUESTED (1 blocking, Gate 3 still)
+
+**Sprint:** BCTC-HUMAN-CONFIRM | **Task:** HC-QA-2 | **Verdict:** CHANGES_REQUESTED
+
+```
+date: 2026-05-30T18:10Z
+head_commits: 9234e9c2(HC-FIX-1) + d5976d1e(HC-DEV-7)
+container: d2eb2708 (HC-OPS-REBUILD-2, toolCount=154)
+test_suites: HC-human-confirm.test.ts=52pass | HC-DEV-7-layout.test.ts=58pass | HC-DEV-6=53pass
+tsc: 0 errors
+178-price-history: 7 fail (pre-existing baseline, unchanged)
+DDD: PASS | security: PASS
+
+GATE 1 FLAG ENUMERATION: PASS (no regression — HC-human-confirm 52/52)
+GATE 2 CORRECTION PERSIST + AUDIT: PASS (no regression)
+GATE 4 RE-ANCHOR NEVER MIS-ATTACHES: PASS (DV-HC-11/12 pass)
+
+GATE 3 CORE INVARIANT — RE-GATE (THE FIX): PARTIAL — COUNT fixed, anchor_status STILL WRONG
+  HC-FIX-1 correctly eliminates duplicate rows: COUNT==1 per label after finalize (GOOD).
+  Live QA-GATE seed: report=99999999-8888-7777-6666-555544443332, row_id=21577 corrected,
+  Run 1 result: rows=2 (QA-Tiền id=21578 value=2500 sc=1.0, QA-Doanh id=21579 value=5000 sc=0.4) COUNT CORRECT.
+  BUT: anchor_status=anchor_ambiguous (FAIL — expected 'ok').
+  ROOT CAUSE: HC-FIX-1 execution order wrong.
+    Current: selective_DELETE → INSERT → reAnchorCorrections → DELETE_old_pinned.
+    At reAnchor time: OLD pinned row id=21577 still in DB + NEW row id=21578 both match label.
+    → reAnchor sees 2 rows for stable key → anchor_ambiguous (correct safe-fail logic,
+       but should never see 2 rows at re-anchor time).
+    After DELETE_old_pinned: only id=21578 survives. COUNT is correct.
+    But anchor_status is already written as anchor_ambiguous — too late.
+  CORRECT ORDER: INSERT → DELETE_old_pinned → reAnchorCorrections.
+    At reAnchor time after correct order: only NEW row exists → 1 match → anchor_status=ok.
+  DV-HC-8 is a PARTIAL false-green: COUNT assertion correct, but no anchor_status check.
+    Test passes (52/52) but misses the sequencing bug.
+  FIX NEEDED: Swap DELETE_old_pinned and reAnchorCorrections in transaction block:
+    finalizeBctcRefineTool.ts lines ~263-270:
+      Move `for (const oldRowId of pinnedRowIds) { db.prepare(DELETE...).run(...) }` 
+      to BEFORE `reAnchorCorrections(db, report_id)` call.
+    Also add anchor_status='ok' assertion to DV-HC-8 to close the false-green.
+
+GATE 5 FINAL-CONFIRM LOCK: PASS (no regression — DV-HC-7 + all 3 layers confirmed)
+GATE 6 ESC-5 CLEARS: PASS (source_confidence=1.0 on corrected rows confirmed live)
+GATE 7 ADDITIVE / NO REGRESSION: PASS
+  163/163 HC tests (52+58+53) — 0 fail
+  21/21 baseline (1198/1206/1322) — 0 fail
+  178-price-history 7 fail (unchanged pre-existing)
+  tsc 0 errors
+GATE 8 VIEWER (HC-DEV-7 50/50 + 6 tabs): PASS
+  50/50 split: .left-pane{flex:1} + .right-pane{flex:1} in served HTML
+  6 tabs: Văn bản OCR (default) | Bảng | Bảng Markdown | Số liệu | Đánh giá 6 cổng | Sửa tay
+  All 25 legacy pane IDs present (anti-regression: 24/24 checked PRESENT)
+  navigateToPage master, switchTab with suatay loadFlags wiring confirmed
+  Correction controls: hc-btn-confirm/hc-btn-reset, all 4 endpoints referenced
+  HC-DEV-7-layout.test.ts 58 pass | HC-DEV-6 53 pass
+NEW UI GATE (HC-DEV-7): PASS
+
+VERDICT: CHANGES_REQUESTED (1 blocking)
+BLOCKING: Gate 3 — anchor_status sequencing bug in finalizeBctcRefineTool.ts
+  reAnchorCorrections runs while OLD pinned row still in DB → finds 2 rows for same label
+  → anchor_ambiguous (should be 'ok'). Fix: move DELETE_old_pinned to BEFORE reAnchor.
+  Exact location: finalizeBctcRefineTool.ts ~line 262-270 — swap order of reAnchor + DELETE loop.
+  Also add anchor_status assertion to DV-HC-8 (closes the false-green gap).
+NEXT: fixer | fix reAnchorCorrections order (swap lines 263-270) + add anchor_status assert to DV-HC-8
+ROUTE: fixer round=2 (→ architect if round≥2 UNLESS this is a simple swap that's obviously correct)
+NOTE: COUNT==1 is fixed, values correct, source_confidence correct — only sequencing is wrong.
+```
+
+---
+
 ## cycle-154 · 2026-05-30 · HC-QA — BCTC-HUMAN-CONFIRM — CHANGES_REQUESTED (1 blocking)
 
 **Sprint:** BCTC-HUMAN-CONFIRM | **Task:** HC-QA | **Verdict:** CHANGES_REQUESTED
