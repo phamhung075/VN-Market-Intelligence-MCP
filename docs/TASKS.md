@@ -8,7 +8,20 @@
 
 **Status:** KICKOFF 2026-05-30 (PO, user-requested). **Priority: HIGH.** Zone: `apps/mcp-server/` (viewer + tools + parser overrides). Goal: `docs/SPRINT_GOAL.md`. User wants to review red/yellow flagged cells, hand-correct, lock report "ĐÃ XÁC NHẬN", and have corrected figures flow back into `bctc_table_rows` — surviving later cron refine re-runs. ADDITIVE on top of shipped BCTC-AGENTIC-REFINE; does NOT rebuild the refine pipeline.
 
-- 🔄 **HC-BA** (ba): write requirement spec `docs/REQ_BCTC-HUMAN-CONFIRM.md` from `docs/SPRINT_GOAL.md`. Resolve: review-surface data shape (per-flag fields), correction persistence + audit trail, final-confirm lock semantics, flow-back path (re-parse-with-overrides vs row patch), cron survival precedence, ESC-5 clearing rule.
+- ✅ **HC-BA** (ba): DONE. Spec → `docs/REQ_BCTC-HUMAN-CONFIRM.md`. All 6 design questions resolved as requirements. ARCH-DECIDE A (override injection mechanism) + ARCH-DECIDE B (row re-anchoring after re-parse) framed for architect.
+- ✅ **HC-ARCH** (architect): DONE. Brief → `docs/architecture-briefs/2026-05-30-bctc-human-confirm.md`. ARCH-DECIDE A = post-pass override (A2); ARCH-DECIDE B = stable key `(label, page_number, statement_section, code_or_null)` + `anchor_ambiguous` safe-fail. 9 new files, 8 modified, 1 agent-father edit. Zone: `apps/mcp-server/` + `docs/agents/` (1 file).
+- ✅ **HC-PM** (pm): DONE. Decomposed HC-ARCH brief §9 into 7 atomic tasks (HC-DEV-1..6 for dev-mcp-server, HC-AF-1 for agent-father). Handoffs: `docs/handoffs/HC-DEV-1.md` through `HC-DEV-6.md` + `HC-AF-1.md`. Summary: `docs/handoffs/HC-TASK-SUMMARY.md`.
+
+**Atomic Tasks (7 total):**
+- ✅ **HC-DEV-1** (dev-mcp-server): DONE. Schema migrations (3 idempotent blocks) + bctcHumanCorrectionsStore + bctcFlagEnumerationService + bctcCorrectionService. 25/25 DV GREEN. Commit 4c40939c. Blocks DEV-2/3/4 now unblocked.
+- ⬜ **HC-DEV-2** (dev-mcp-server): Layer 1+2 guards + source_confidence fix. Depends: DEV-1. Duration ~2h. Serialized.
+- ⬜ **HC-DEV-3** (dev-mcp-server): HTTP handlers + server dispatch. Depends: DEV-1. Duration ~1.5h. Blocks: DEV-6.
+- ⬜ **HC-DEV-4** (dev-mcp-server): MCP tools + registry. Depends: DEV-1. Duration ~1h. Independent.
+- ⬜ **HC-DEV-5** (dev-mcp-server): DV test suite (13 cases, bundled with production). Depends: DEV-1..4. Spread ~2h. Not separate step.
+- ⬜ **HC-DEV-6** (dev-mcp-server): Viewer panel "Sửa tay / Xác nhận cuối". Depends: DEV-1, DEV-3. Duration ~1.5h.
+- ⬜ **HC-AF-1** (agent-father): Flow guard Phase 0 Step 2b. Depends: DEV-1. Duration ~20min. Parallel to any dev-mcp-server task. Requires Cowork refresh.
+
+**Dispatch order:** HC-DEV-1 → parallel HC-DEV-2+AF-1 → HC-DEV-3/4 → HC-DEV-6. WIP≤2 (serialize within dev-mcp-server zone to avoid concurrent-commit-race). Total duration ~10h.
 
 ---
 
