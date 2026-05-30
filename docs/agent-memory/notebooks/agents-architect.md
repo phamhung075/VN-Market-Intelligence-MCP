@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-30T12:29:42Z
+
+**Brief:** `docs/architecture-briefs/2026-05-29-dynamic-workflow-architecture.md` (adversarial review appended)
+
+Phase ordering correction: Phase 2 (idempotent spawn token + leader lock) MUST precede Phase 1 (adaptive cadence) — adaptive cadence without leader lock amplifies collision risk. Three blocking issues identified: R1 (default 3600s TTL too long for per-work-item claims — must be explicit ~180s), R2 (server restart resets session discriminator causing TTL-length leader-lock dark window — document as ops invariant), R3 (per-work-item key must NOT include nominal-tick suffix — `cowork-slot:<slot_id>` only). VN calendar tool confirmed absent (OQ-5). Router must be deterministic-only, LLM classifier forbidden by CLAUDE.md (OQ-6). Defer 3/4/5 confirmed. `task_claim`/`task_heartbeat`/`task_release` all exist and are functional today — lease+renewal is NOT a new capability.
+
+**Signal dropped:** none — review appended to existing brief as `## agents-architect Review (2026-05-30)` section; agent-father to implement Phase 0 once PO approves.
+
+---
+
 ## 2026-05-29T04:37:46Z
 
 **Brief:** `docs/architecture-briefs/2026-05-29-bctc-analyst-merge.md` (REVISED v2)
