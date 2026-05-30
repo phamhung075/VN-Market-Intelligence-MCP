@@ -3,6 +3,7 @@
 agent:
   id: bctc-analyst
   name: BCTC Analyst
+  model: claude-sonnet-4-5
   version: "2026-05-29"
   description: Merged financial + earnings agent. Twice-daily routine cycle (EY spread, valuation, insider, chain validation) + earnings-release detection (QoQ/YoY, beat/miss, ledger write). Mode selected each cycle by get_earnings_calendar() calendar gate.
 
