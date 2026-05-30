@@ -1,223 +1,109 @@
 # QA — Notebook
 
-## cycle-153 · 2026-05-30 · AR-QA bake-off — APPROVED (GATE GREEN)
+## cycle-154 · 2026-05-30 · HC-QA — BCTC-HUMAN-CONFIRM — CHANGES_REQUESTED (1 blocking)
 
-**Sprint:** BCTC-AGENTIC-REFINE | **Task:** AR-QA (bake-off phase) | **Verdict:** APPROVED
-
-```
-date: 2026-05-30T11:09Z (UTC 11:09 Sat — weekend, off-HOSE)
-type: live end-to-end bake-off gate (§0.7.5 DV gate)
-head_commit: 3b4c62a2
-tools_live: get_bctc_pending_refine(#142), push_bctc_refined_unit(#143), finalize_bctc_refine(#144)
-server: mcp-server rebuilt --no-cache, force-recreated at 3b4c62a2; 12 services healthy
-
-TARGETS: FPT e8ea3df5 (46-page Q1/2026) | ACB fea19bae (33-page Q1/2026)
-RESET: refine_status FAILED→PENDING before run (prior status from old in-container ENOENT spawns)
-
-ORCHESTRATION:
-  get_bctc_pending_refine(limit=20) → 13 pending, FPT + ACB confirmed present
-  FPT window partition: 15 windows (computed by partitionIntoWindows on 35 OCR pages)
-  ACB window partition: 27 windows (computed by partitionIntoWindows on 27 OCR pages)
-  push_bctc_refined_unit: FPT 15×DONE + ACB 27×DONE (reset=True on first per report)
-  finalize_bctc_refine: FPT rows_parsed=24, ACB rows_parsed=114
-
-GATE 1 bctc_refined_units COUNT == windows.length:
-  FPT: 15 == 15 PASS | ACB: 27 == 27 PASS (direct DB read bun:sqlite new Database)
-
-GATE 2 bctc_table_rows COUNT > 0, clean labels+values:
-  FPT: 24 rows, 0 bad labels, 23 non-null value_current PASS
-  ACB: 114 rows, 0 bad labels, 114 non-null value_current PASS
-  Sample: {"label":"Doanh thu thuần","value_current":12479997,"value_prior":11480731}
-
-GATE 3 Idempotency ×3:
-  Run 1: units=15, rows=91 | Run 2: units=15, rows=18 | Run 3: units=15, rows=18 | Run 4: units=15, rows=18
-  COUNT stable (18=18=18) → FPT-42-dupes not present PASS
-
-GATE 4 FAILED window isolation:
-  Test: 3 units (2 DONE + 1 FAILED, window_status=FAILED confidence=0.0 flags=["timeout"])
-  finalize PARTIAL → bctc_table_rows=4 (DONE windows only), FAILED row_count=0 PASS
-  refine_status=PARTIAL PASS
-
-GATE 5 Continuation FPT [23,24,25]:
-  unit-0007 page_numbers_json=[23,24,25] window_status=DONE PASS
-  count(units containing page 23)=1 → no double-emit PASS
-  Note: OCR pages 11-15, 17-22 missing from pdf_extracted_text → actual continuation is [23,24,25]
-  Architecture §0.7.5 says [22,23] but p22 absent from OCR; continuation marker on p23 starts chain
-
-GATE 6 Expert flow intact:
-  financial_reports.refine_status: FPT=DONE, ACB=DONE PASS
-  get_bctc_refined: 15 FPT units returned via gateway PASS
-  bctc_table_rows sourced from parseRefinedMarkdown → expert passes readable PASS
-  bctc-analyst model=claude-sonnet-4-5 + deep-dive-opus.md + ESC-1..5 gate: AR-AGENT-B commit 0a16fd6f
-
-GATE 7 Trust flags:
-  Red [ĐỘ TIN CẬY THẤP — reason] → source_confidence=0.2 PASS (live parser test)
-  Yellow [độ tin cậy thấp] → source_confidence=0.4 PASS (live parser test)
-  Never silent: trust flag stripped before balance check (forbidden as sole gate) PASS
-
-TESTS: 100 pass / 0 fail across 6 AR files (AR-parser-dv, AR-page-classifier, AR-schema-migration,
-  AR-refine-readiness-gate, AR-refined-units-idempotency, 1323-pdf-extractor-client) | tsc 0 errors
-NOTES:
-  - 178-price-history.test.ts: 7 failures — pre-existing (last change a9cd5a76 before this sprint)
-  - parser test uses bun:sqlite new Database (NOT better-sqlite3, NOT {create:false}) ✓
-
-VERDICT: ALL 7 GATE ITEMS PASS → OVERALL GATE: GREEN → AR-EXIT (PO sprint sign-off)
-```
-
----
-
-## cycle-152 · 2026-05-30 · BCTC-AGENTIC-REFINE AR-QA — CHANGES_REQUESTED
-
-**Sprint:** BCTC-AGENTIC-REFINE | **Task:** AR-QA | **Verdict:** CHANGES_REQUESTED
+**Sprint:** BCTC-HUMAN-CONFIRM | **Task:** HC-QA | **Verdict:** CHANGES_REQUESTED
 
 ```
-date: 2026-05-30T09:35Z (approx)
-type: gate-keeper review (4 commits: d854e8ff, 423a901e, 76a3b8d2, 0a16fd6f)
-blocking_issues: 1
-advisory: 1
-
-TESTS: 76 AR DV tests PASS (bun test 5 AR files) | 10192 full suite PASS | tsc 0 errors
+date: 2026-05-30T13:00Z
+type: live end-to-end gate (8 gate items)
+head_commit: bed05d9c
+commits_in_scope: 4c40939c(foundation) 89100e07(guards+source_confidence) ae3c5039(HTTP handlers) dca93898(tools#145/#146) 7a3734ed(viewer) 204344ec(flow guard)
+toolCount: 154 (confirmed HC-OPS-REBUILD)
+test_db: bun:sqlite new Database(':memory:') DI — 52 HC tests + 53 HC-DEV-6 tests = 105 PASS / 0 FAIL
+tsc: 0 errors
+178-price-history: 7 fail (pre-existing baseline, unchanged)
 DDD: PASS | security: PASS
 
-EXTRA-A (live-path check): PASS
-  unit_grouper.py inlined state machine not on refine path.
-  Only reachable from test_unit_grouper.py + test_document_map.py (legacy).
-  No live import of unit_grouper from pek_engine_adapter / handlers / extract_layout_first_usecase.
+TARGETS: FPT e8ea3df5 (confirm_status=PENDING, flag_count=0) | ACB fea19bae (confirm_status=PENDING, flag_count=0)
+NOTE: Both live reports have flag_count=0 (clean OCR). QA gate uses seeded test report
+      (UUID aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee, QA-GATE throwaway, cleaned up after gate).
 
-EXTRA-B (scheduler-wiring gap): FAIL (RED — blocking)
-  startScheduler.ts has NO import or cron.schedule for bctcRefineJob.
-  cronConfig.ts key exists at line 182. Pipeline DORMANT in production.
-  Fix: add import + cron.schedule(CRONS.bctcRefineJob, ...) → AR-OPS.
+GATE 1 FLAG ENUMERATION: PASS
+  GET /flags/{uuid} → flag_count=2 (1 red, 1 yellow)
+  red: ocr_value="1.234", image_value="1.500" (exact markdown match)
+  yellow: ocr_value=null, image_value=null (PASS)
+  Matches bctc_refined_units trust prefixes in markdown.
 
-CRITERIA: C1=PASS-CONDITIONAL | C2=PASS | C3=PASS | C4=PASS | C5=PASS | C6=PASS | C7=PASS | C8=PASS
-NEXT: AR-OPS — wire startScheduler.ts + volume + rebuild + bake-off
+GATE 2 CORRECTION PERSIST + AUDIT: PASS
+  POST /correct/{uuid} {row_id:21571, new_value:1500} → ok:true, source_confidence:1
+  Direct DB read — bctc_human_corrections: id=1, old_value=1234, new_value=1500,
+    ocr_value_snapshot="1.234", image_value_snapshot="1.500", anchor_status="ok"
+  Direct DB read — bctc_table_rows id=21571: value_current=1500, source_confidence=1.0
+
+GATE 3 CORE INVARIANT — CORRECTIONS SURVIVE CRON RE-RUN: FAIL (BLOCKING)
+  finalize_bctc_refine on PENDING report with 2 corrections:
+  - Selective DELETE preserves corrected rows (id=21571, 21572 survive — CORRECT)
+  - INSERT from parser adds NEW rows (id=21573, 21574 — DUPLICATE)
+  - Result: 4 rows for 2 labels. Same label appears twice.
+  - reAnchorCorrections sees 2 rows with identical stable key → anchor_ambiguous (WRONG)
+  - Corrected VALUES survive (1500 and 600 — PASS on value), but:
+  - DUPLICATE ROWS = table doubled; anchor_ambiguous = correction no longer tracked correctly
+  ROOT CAUSE: Layer 2 selective DELETE preserves old rows AND finalize INSERTs new rows
+              from the same parsed markdown → duplicates. Architecture says old corrected row
+              must be REPLACED by the new parser row (with correction applied), not ADDED.
+  FIX NEEDED: After INSERT, DELETE the old pinned row (the one whose ID is in bctc_human_corrections)
+              if a new row with the same stable key was successfully inserted.
+              OR: use INSERT OR REPLACE with stable key constraint.
+  DV-HC-8 test is a FALSE-GREEN: uses find() on rows, not COUNT check — passes with duplicates.
+
+GATE 4 RE-ANCHOR NEVER MIS-ATTACHES: PASS (safe-fail behavior PROVEN)
+  anchor_ambiguous is set when >1 rows match stable key — CORRECT behavior.
+  No correction mis-applied. Safe-fail proven.
+  NOTE: Gate 4 anchor_ambiguous was triggered by Gate 3 duplicate-row bug, not genuine
+        duplicate labels in the report. Genuine duplicate-label test (DV-HC-11/12) passes.
+
+GATE 5 FINAL-CONFIRM LOCK: PASS (all 3 layers)
+  Layer 1: POST /confirm → confirm_status=CONFIRMED; direct DB: confirmed_at set
+  Layer 1: CONFIRMED report excluded from get_bctc_pending_refine (found=NO, 11 others present)
+  Layer 2: finalize on CONFIRMED → {ok:true,skipped:true,reason:"confirmed"}; row_count unchanged=4
+  Layer 3: HC-AF-1 Step 3b guard present in refine_bctc_md/flow/main.md (grep verified)
+  POST correct on CONFIRMED → 409 {error:"report_confirmed"} PASS
+  POST /reset → confirm_status=PENDING, final_confirmed_at=null, corrections=2 (intact) PASS
+
+GATE 6 ESC-5 CLEARS: PASS
+  All corrected rows (old 21571/21572 + new 21573/21574) have source_confidence=1.0
+  ESC-5 (threshold <0.50) would not fire on corrected rows.
+
+GATE 7 ADDITIVE / NO REGRESSION: PASS (conditional)
+  HC tests: 105/105 PASS (52 HC-human-confirm + 53 HC-DEV-6-inspector-panel)
+  AR baseline: 82/82 PASS (no regression in prior sprint)
+  Pre-existing: 178-price-history 7 fail (same as pre-HC baseline — no new failures)
+  HCM tests: 29/29 PASS
+  Full bun test OOM/crash (host memory — not a regression, pre-existing fleet limitation)
+  tsc 0 errors
+
+GATE 8 VIEWER: PASS
+  bctc-inspector.html has "Sửa tay / Xác nhận cuối" tab (grep: 6 occurrences)
+  loadFlags/renderFlaggedCells/hcBtnConf/hcConfirmStatus functions present
+  All endpoints referenced: /flags, /correct, /confirm, /confirm/.../reset
+  Vietnamese labels: "Giá trị OCR", "Giá trị ảnh", "ĐÃ XÁC NHẬN", "Chờ xác nhận" present
+  File: apps/mcp-server/src/interface/bctc-inspector.html
+
+VERDICT: CHANGES_REQUESTED (1 blocking issue)
+BLOCKING: Gate 3 — Layer 2 duplicate-row bug in finalizeBctcRefineTool.ts
+  After selective DELETE + INSERT, corrected row IDs are kept AND new parser rows added
+  → duplicates + anchor_ambiguous on re-anchor. DV-HC-8 is a false-green (uses find(), not COUNT).
+  Exact file:line: finalizeBctcRefineTool.ts — the selective DELETE block + DV-HC-8 test assertion
+NEXT: dev-mcp-server | fix Layer 2 duplicate-row: after INSERT, DELETE old pinned rows whose
+      stable key now has a newly-inserted counterpart. Add COUNT assertion to DV-HC-8.
+ROUTE: fixer round=1 (round < 2)
 ```
 
 ---
 
-## cycle-151 · 2026-05-30 · DPI-FU-AB-QA — PASS
+## cycle-153 · 2026-05-30 · AR-QA bake-off — APPROVED (GATE GREEN)
 
-**Sprint:** DATA-PIPELINE-INTEGRITY | **Task:** DPI-FU-AB-QA | **Verdict:** PASS
+**Sprint:** BCTC-AGENTIC-REFINE | **Task:** AR-QA (bake-off phase) | **Verdict:** APPROVED (all 7 gate items GREEN)
+Head: 3b4c62a2. FPT 24 rows / ACB 114 rows. tsc 0 errors. 100 pass/0 fail.
 
-```
-date: 2026-05-30T09:20Z
-type: independent done-bar gate (DPI-FU-A + DPI-FU-B)
-commit: ff9a64ce (DPI-FU-A fail-loud EFFR staleness + DPI-FU-B earning-yield reachable-denominator)
-zone: apps/mcp-server
-container_image: 6b90c5d8... (rebuilt 2026-05-30T10:47 UTC, ops DPI-FU-AB-OPS)
-
-CHECK-1 (FU-A EFFR max date):
-  SELECT MAX(date) FROM fred_series_daily WHERE series='EFFR'
-  → 2026-05-28   PASS (>= 2026-05-28, within 96h SLA)
-  Prior frozen value was 2026-05-14.
-
-CHECK-2 (FU-A get_macro_snapshot fedFundsRate):
-  carry.fedFundsRate = 3.62   PASS (LIVE 2026-05-28 row, NOT fixture 5.33)
-  carry.regime = NEUTRAL (carrySpread=1.08)  was frozen FII_OUTFLOW_RISK (-0.63)
-
-CHECK-3 (FU-A computedAt fresh):
-  carry.computedAt = 2026-05-30T09:18:25Z   PASS (today, NOT frozen 2026-05-23)
-
-CHECK-4 (FU-B tracked_indicators row):
-  SELECT COUNT(*),MAX(extracted_at),MAX(value) FROM tracked_indicators WHERE indicator='market_earning_yield'
-  → cnt=1, latest_at=2026-05-30T08:48:35.768Z, value=6.830601092896174
-  PASS (>=1 row, value non-null, NOT 8.2 fixture)
-
-CHECK-5 (FU-B get_macro_snapshot earningYield):
-  yield.earningYield = 6.830601092896174   PASS (LIVE, NOT fixture 8.2)
-  yield.depositRate = 4.7, spread = 2.13 (CHEAP label)
-
-CHECK-6 (Regime integrity):
-  carry: vndDepositRate=4.7, fedFundsRate=3.62, carrySpread=1.08 ✓ (4.7−3.62=1.08 math correct)
-  yield: earningYield=6.83, depositRate=4.7, spread=2.13 ✓ (6.83−4.70=2.13 math correct)
-  Both blocks use same depositRate=4.7 — internally consistent.
-
-HONEST RESIDUAL — vndDepositRate safe-degrade:
-  DB row: sbv_rates WHERE source='sbv' → max_deposit_rate_pct=0, fetched_at=2026-05-30T08:36:48Z
-  The SBV cron ran at 08:36Z and stored max_deposit_rate_pct=0 (zero-value overwrite of prior
-  5.0 row from 2026-05-29T23:15Z). Staleness guard fires on value=0 → safe-degrade to fixture 4.7.
-  This is NOT a regression from ff9a64ce — it is a pre-existing SBV fetcher issue where rate
-  fields return 0 intermittently (separate known issue). Both carry and yield blocks use 4.7
-  consistently (no cross-block inconsistency). Note: prior DPI-2b QA saw 5.0 because the SBV
-  row had not been overwritten yet.
-  IMPACT: deposit rate is safe-degraded; carrySpread uses 4.7 not 5.0. This is correct behavior.
-  Not a DPI-FU blocker — fix of SBV zero-value overwrite is a separate issue.
-
-UNIT TESTS (DPI-FU): 14/14 PASS (DPI-FU-A: 6 tests, DPI-FU-B: 8 tests)
-ALL DPI TESTS: 23/23 PASS
-TSC: 0 errors (bunx tsc --noEmit on apps/mcp-server)
-Full suite: 10192 tests across 941 files (2 pre-existing fails in _deprecated/ reuters.js, unrelated to ff9a64ce)
-
-SCHEDULING (FU-A EFFR next run):
-  macroIndicatorRefreshJob cron = '13 19 * * *' (19:13 UTC daily)
-  Next scheduled EFFR fetch: 2026-05-30T19:13Z
-  If FRED unreachable again, checkAndAlertEffrStaleness() fires WORK channel alert.
-
-VERDICT: PASS — all 6 checks GREEN. Honest residual: vndDepositRate=4.7 (safe-degrade
-  from 0-valued SBV row) — not caused by this fix, both blocks consistent, regime math correct.
-```
+## cycle-152 · 2026-05-30 · AR-QA — CHANGES_REQUESTED → AR-OPS fix applied. See cycle-153.
 
 ---
 
-## cycle-150 · 2026-05-30 · BCTC-TABLE-BOUNDARY BTB-QA — RED (2 blocking issues remain)
+## Archive (cycles ≤153)
 
-**Sprint:** BCTC-TABLE-BOUNDARY | **Task:** BTB-QA | **Verdict:** RED (partial progress — 2 of 4 issues remain)
-
-```
-date: 2026-05-30T01:45Z
-type: anti-false-green adjudication (BTB-QA cycle-150 — post-ops-af59abee)
-sprint: BCTC-TABLE-BOUNDARY
-sentinel_A: FPT e71f845d-ffa5-48f9-8f09-30ac2cd09c65 (20260126-FPT-BCTC-hop-nhat-Quy-4-2025.pdf, 46pp)
-sentinel_B: ACB fea19bae-2b7a-4954-b3e0-e09d7bfc7390 (20260422-ACB-BCTC-Hop-nhat-Quy-1-nam-2026.pdf)
-confirmed: ac6b1c2e is phantom (no financial_reports record); fea19bae is live ACB Q1-2026
-
-UNIT TESTS: 122/122 PASS + 150/155 PASS (5 stale + 25/25 mcp + 12/12 pek)
-DB SENTINELS: FPT=31 (27table+4prose, 0dup) VERIFIED | ACB=10 (5×2dup, 0prose) STALE
-
-RED-3: 5 stale tests in test_pek_engine_adapter.py::TestGroupBboxesIntoUnits fail
-  (import deleted _group_bboxes_into_units). AD-2 anti-drift guard green.
-  ACTION: remove stale TestGroupBboxesIntoUnits class
-
-RED-4: ACB sentinel not re-extracted (pdf-extractor busy with FPT cron).
-  Current: 10 rows, 5×2dup, 0 prose (pre-fix state).
-  ACTION: ops quiesce FPT, trigger ACB re-extraction, verify 0-dup + prose present
-
-GREEN: FPT idempotency PROVEN (31 rows, 4+ extractions, 0dup);
-  prose units PRESENT (4); 8-page cap REMOVED;
-  core 122 tests PASS; mcp-server 25/25 + tsc 0 errors;
-  frozen files 0-diff.
-
-YOLO LIMITATION: page_type classification has margin errors (prose↔table mislabels);
-  state machine logic is correct. Known PATH B limitation (stored_text="").
-  Impact: some financial pages appear in prose units. Not a regression.
-```
-
----
-
-## cycle-149 · 2026-05-30 · BCTC-TABLE-BOUNDARY BTB-QA — RED (2 blocking issues)
-
-**Sprint:** BCTC-TABLE-BOUNDARY | **Task:** BTB-QA | **Verdict:** RED
-
-```
-date: 2026-05-30T01:30Z
-type: anti-false-green adjudication (BTB-QA)
-sprint: BCTC-TABLE-BOUNDARY
-commits: d297f3ba (boundary state machine) + b1e826c2 (instrumentation)
-sentinels: FPT e71f845d + ACB fea19bae (correct id, not ac6b1c2e phantom)
-
-UNIT TESTS: 42/42 + 58/58 + 38/38 + 659/659 all PASS | tsc 0 errors
-DB SENTINELS: FPT 31 rows (needs live verify) | ACB not re-extracted (pending)
-
-RED blockers: (1) 5 stale tests import deleted function; (2) ACB sentinel pending re-extraction
-
-GREEN: all unit-test layers pass; frozen files 0-diff; push handler idempotent pattern correct
-```
-
----
-
-## Archive (cycles ≤148)
-
-Historical QA cycle logs (2026-05-29 and earlier) archived here for reference.
+Historical QA cycle logs (cycle-153 and earlier) archived here for reference.
 Full session history available via git log `docs/agent-memory/notebooks/qa.md`.
 
 ---
