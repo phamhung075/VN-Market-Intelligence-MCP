@@ -1,6 +1,42 @@
 # Developer — Notebook
 
-**Last updated:** 2026-05-25 | **Cycle:** BT-4 AC-2 — MCP_SERVER_URL explicit in docker-compose | **Sprint:** BCTC-TABLE
+**Last updated:** 2026-05-31 | **Cycle:** DWF-PHASE1 P1-DEV-1..7 — Adaptive Cadence | **Sprint:** DWF-PHASE1
+
+## Session 2026-05-31 — DWF-PHASE1 (P1-DEV-1..7)
+
+**Task:** Execute full DWF-PHASE1 dev task set (P1-DEV-1 through P1-DEV-7) — Adaptive Cadence implementation.
+
+**What was done:**
+
+Wave 1 (parallel):
+- P1-DEV-1: Created `docs/data/cadence-policy.json` — 19 rules, 3 policies (gatherer-standard/chef-intraday/bctc-offmarket), _staleness_threshold_minutes=20, _cron_fallback semantics for bctc-offmarket open/half_day/unknown.
+- P1-DEV-2: Created `.claude/scripts/cadence-policy.js` — CommonJS module (loadCadencePolicy, evaluateCadence, computeTiers, isStale). First-match wins, wildcard *, safe default 240 on no-match, dual isStale gate.
+- P1-DEV-4: Modified `docs/data/cowork-schedule.json` — added policy_id to all 14 enabled slots per BLOCKER-2 table (6 null, 4 bctc-offmarket, 1 chef-intraday, 4 gatherer-standard).
+
+Wave 2:
+- P1-DEV-3: Extended `.claude/scripts/cowork-match-slots.js` — adaptive mode via options={mode,pressureState,policyObj}. CLI entrypoint auto-detects adaptive via cadence-policy.json presence + isStale. Output slots gain due_reason + cadence_minutes.
+
+Wave 3:
+- P1-DEV-5: Added Steps 4.2-4.5b to `docs/agents/cowork-team/flow/main.md` — staleness gate, calendar suppression, cadence due-check, freshness downgrade, CADENCE_MATCHES rebind. BLOCKER-1 resolution: suppression BEFORE Step 4.6.
+
+Wave 4:
+- P1-DEV-6: Added Step 5b to cowork-team flow — batched atomic last_fired write (read→update-WON→.tmp→rename). Non-fatal on failure. Telemetry extended.
+
+Wave 3 parallel:
+- P1-DEV-7: Created `apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts` — 48 assertions, 13 DV test blocks (T-1..T-13c). All GREEN. RED proofs documented inline and verified.
+
+**Test result:** 48 pass / 0 fail / 142 expect() calls.
+**Commits:** 5a19485e (P1-DEV-1) / cf527304 (P1-DEV-2) / 7405d7c5 (P1-DEV-4) / 54077271 (P1-DEV-3) / 3799d6e2 (P1-DEV-5+6) / d8892afc (P1-DEV-7)
+**Zone:** cross-service (NFR-P1-5: zero apps/mcp-server/src/ production code changes)
+
+**Gotchas:**
+- cadence-policy.json gitignored by `data/` rule in .gitignore → needed `git add -f`
+- The PM summary says "28 rules" but the blueprint defines exactly 19 (8+6+5). Blueprint is authoritative.
+- Phase 2 invariants preserved: leader lock (Step 0b), suffix-free cowork-slot: token (Step 4.6), published-marker belt (Step 5) — all untouched. New steps 4.2-4.5b are purely additive between Step 4b and Step 4.6.
+
+**NEXT:** qa — run P1-QA integration verification against main.
+
+---
 
 ## Session 2026-05-25 — BT-4 AC-2 (infra-as-code hygiene)
 
