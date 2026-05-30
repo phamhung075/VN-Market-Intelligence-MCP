@@ -625,6 +625,155 @@
       border-color: #72c870;
       color: #72c870;
     }
+
+    /* ── HC-DEV-6: Sửa tay / Xác nhận cuối tab ── */
+    #hc-tab-btn {
+      display: inline-block;
+      font-size: 12px;
+      padding: 4px 12px;
+      background: #252525;
+      color: #aaa;
+      border: 1px solid #444;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-left: 8px;
+      user-select: none;
+    }
+    #hc-tab-btn.hc-tab-active {
+      background: #2d3b4a;
+      border-color: #4a9eff;
+      color: #4a9eff;
+    }
+    #hc-panel {
+      display: none;
+      border-bottom: 1px solid #3a3a3a;
+      padding: 12px 14px;
+      flex-shrink: 0;
+      background: #1a1e28;
+    }
+    .hc-confirm-badge {
+      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 4px;
+      background: #252525;
+      border: 1px solid #444;
+    }
+    .hc-confirm-status-text {
+      font-size: 13px;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .hc-btn-confirm {
+      font-size: 12px;
+      padding: 5px 12px;
+      background: #1a4a1a;
+      color: #72c870;
+      border: 1px solid #4a8a4a;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .hc-btn-confirm:disabled {
+      background: #222;
+      color: #555;
+      border-color: #333;
+      cursor: not-allowed;
+    }
+    .hc-btn-reset {
+      font-size: 12px;
+      padding: 5px 12px;
+      background: #2a2a2a;
+      color: #aaa;
+      border: 1px solid #555;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .hc-cell-list {
+      max-height: 540px;
+      overflow-y: auto;
+      margin-top: 8px;
+    }
+    .hc-cell-card {
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      background: #1e2028;
+    }
+    .hc-cell-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #d8d8d8;
+      margin-bottom: 4px;
+    }
+    .hc-cell-meta {
+      font-size: 11px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+    .hc-badge-red {
+      display: inline-block;
+      background: #7a1a1a;
+      color: #ff9090;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      letter-spacing: .04em;
+    }
+    .hc-badge-yellow {
+      display: inline-block;
+      background: #4a3800;
+      color: #ffd080;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 3px;
+      letter-spacing: .04em;
+    }
+    .hc-values-grid {
+      display: grid;
+      grid-template-columns: max-content 1fr;
+      gap: 2px 10px;
+      font-size: 11px;
+      margin: 6px 0;
+    }
+    .hc-val-key { color: #666; }
+    .hc-val-val { color: #c0c8d0; font-family: "SF Mono","Fira Code",monospace; }
+    .hc-correction-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    .hc-correction-row label { font-size: 12px; color: #888; flex-shrink: 0; }
+    .hc-input-val {
+      background: #1a1a2e;
+      color: #c8daf0;
+      border: 1px solid #3a4a6a;
+      border-radius: 3px;
+      padding: 4px 8px;
+      font-size: 12px;
+      width: 140px;
+      font-family: "SF Mono","Fira Code",monospace;
+    }
+    .hc-btn-save {
+      font-size: 11px;
+      padding: 4px 10px;
+      background: #1a3a5a;
+      color: #88c8ff;
+      border: 1px solid #2a5a8a;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    .hc-btn-save:hover { background: #1e4a72; }
+    .hc-status-ok { color: #72c870; font-size: 11px; }
+    .hc-status-pending { color: #d4a017; font-size: 11px; }
+    .hc-status-ambiguous { color: #e06060; font-size: 11px; }
+    .hc-no-flags { font-size: 12px; color: #72c870; padding: 8px 0; }
+    .hc-loading { font-size: 12px; color: #4a9eff; padding: 8px 0; }
+    .hc-error { font-size: 12px; color: #e06060; padding: 8px 0; }
+    .hc-locked-note { font-size: 11px; color: #555; font-style: italic; margin-top: 6px; }
     /* Debug view additions */
     .eval-debug-block {
       margin-top: 4px;
@@ -718,10 +867,29 @@
         <span class="eval-view-toggle-wrap">
           <button class="eval-view-btn active" id="eval-view-user" aria-pressed="true">Người dùng</button>
           <button class="eval-view-btn" id="eval-view-agent" aria-pressed="false">Agent (debug)</button>
+          <!-- HC-DEV-6: tab button for correction panel -->
+          <button id="hc-tab-btn" aria-pressed="false" title="Mở bảng sửa tay và xác nhận cuối">Sửa tay / Xác nhận cuối</button>
         </span>
       </div>
       <div id="eval-strip-content">
         <div class="missing-msg">Chưa chọn tài liệu.</div>
+      </div>
+    </div>
+
+    <!-- HC-DEV-6: Sửa tay / Xác nhận cuối panel (ADDITIVE — existing panes untouched) -->
+    <div id="hc-panel">
+      <div class="section-title" style="margin-bottom:8px">Sửa tay / Xác nhận cuối</div>
+
+      <!-- Trạng thái xác nhận báo cáo -->
+      <div class="hc-confirm-badge" id="hc-confirm-badge">
+        <span class="hc-confirm-status-text" id="hc-confirm-status-text">Trạng thái: Chờ xác nhận</span>
+        <button class="hc-btn-confirm" id="hc-btn-confirm" disabled>ĐÃ XÁC NHẬN toàn bộ báo cáo</button>
+        <button class="hc-btn-reset" id="hc-btn-reset" style="display:none">Đặt lại xác nhận</button>
+      </div>
+
+      <!-- Danh sách cảnh báo -->
+      <div class="hc-cell-list" id="hc-cell-list">
+        <div class="hc-loading">Chưa chọn tài liệu.</div>
       </div>
     </div>
 
@@ -2023,6 +2191,314 @@
   renderWithPdfJs = async function(pdfUrl) {
     await _origRenderWithPdfJs(pdfUrl);
     await maybeRenderZoneOverlayAfterPdfRender();
+  };
+
+  // ── HC-DEV-6: Sửa tay / Xác nhận cuối panel ─────────────────────────────
+  //
+  // ADDITIVE ONLY — does not touch any existing pane, function, or DOM element.
+  // Endpoints used:
+  //   GET  /api/bctc-inspect/flags/{doc_id}
+  //   POST /api/bctc-inspect/correct/{doc_id}     { row_id, new_value }
+  //   POST /api/bctc-inspect/confirm/{doc_id}
+  //   POST /api/bctc-inspect/confirm/{doc_id}/reset
+  //
+  // Tab toggle: the "Sửa tay / Xác nhận cuối" button is inside the eval-strip header.
+  // Clicking it shows/hides #hc-panel. #hc-panel starts hidden.
+  // Tab button has id="hc-tab-btn". Panel has id="hc-panel".
+  //
+  // State: hcPanelOpen (bool) + hcConfirmStatus (string).
+  // Loading: triggered on tab open (if doc selected) and on doc change when open.
+
+  let hcPanelOpen = false;
+  let hcConfirmStatus = "PENDING";
+
+  const hcTabBtn    = document.getElementById("hc-tab-btn");
+  const hcPanel     = document.getElementById("hc-panel");
+  const hcCellList  = document.getElementById("hc-cell-list");
+  const hcStatusTxt = document.getElementById("hc-confirm-status-text");
+  const hcBtnConf   = document.getElementById("hc-btn-confirm");
+  const hcBtnReset  = document.getElementById("hc-btn-reset");
+
+  // ── parseVnNumber ──────────────────────────────────────────────────────────
+  // Parses Vietnamese-formatted number strings entered by the user.
+  // Algorithm (same as TS parser): strip whitespace, replace comma with dot,
+  // parseFloat. Returns null when the result is NaN.
+  //
+  // Exported as a named helper so the DV test can import it directly via the
+  // URL-assertion test pattern (pure function, no DOM dependency).
+  function parseVnNumber(s) {
+    if (!s || typeof s !== "string") return null;
+    const cleaned = s.trim().replace(/\s/g, "").replace(/,/g, ".");
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+  }
+
+  // ── hcFlagsUrl / hcCorrectUrl / hcConfirmUrl / hcConfirmResetUrl ─────────
+  // Pure URL builders — the DV test asserts these exact URL patterns.
+  function hcFlagsUrl(docId) {
+    return `${BASE}/api/bctc-inspect/flags/${encodeURIComponent(docId)}`;
+  }
+  function hcCorrectUrl(docId) {
+    return `${BASE}/api/bctc-inspect/correct/${encodeURIComponent(docId)}`;
+  }
+  function hcConfirmUrl(docId) {
+    return `${BASE}/api/bctc-inspect/confirm/${encodeURIComponent(docId)}`;
+  }
+  function hcConfirmResetUrl(docId) {
+    return `${BASE}/api/bctc-inspect/confirm/${encodeURIComponent(docId)}/reset`;
+  }
+
+  // ── hcUpdateStatusBadge ────────────────────────────────────────────────────
+  // Updates the confirmation badge and button visibility to match hcConfirmStatus.
+  function hcUpdateStatusBadge(allFlags) {
+    if (hcConfirmStatus === "CONFIRMED") {
+      hcStatusTxt.textContent = "Trạng thái: ĐÃ XÁC NHẬN";
+      hcStatusTxt.style.color = "#72c870";
+      hcBtnConf.style.display = "none";
+      hcBtnReset.style.display = "inline-block";
+    } else {
+      hcStatusTxt.textContent = "Trạng thái: Chờ xác nhận";
+      hcStatusTxt.style.color = "#d4a017";
+      hcBtnConf.style.display = "inline-block";
+      hcBtnReset.style.display = "none";
+      // Enable confirm only when all red flags have a correction
+      const redFlags = (allFlags || []).filter(f => f.flag_type === "red");
+      const allRedCorrected = redFlags.length === 0 || redFlags.every(f => f.has_correction);
+      hcBtnConf.disabled = !allRedCorrected;
+      hcBtnConf.title = allRedCorrected
+        ? "Xác nhận toàn bộ báo cáo"
+        : "Cần sửa tất cả cảnh báo ĐỎ trước khi xác nhận";
+    }
+  }
+
+  // ── hcRenderCells ─────────────────────────────────────────────────────────
+  // Renders the flagged-cell list into #hc-cell-list.
+  function hcRenderCells(flags) {
+    if (!hcCellList) return;
+    if (!flags || flags.length === 0) {
+      hcCellList.innerHTML = `<div class="hc-no-flags">Không có cảnh báo cần sửa.</div>`;
+      return;
+    }
+
+    let html = "";
+    for (const flag of flags) {
+      const badge = flag.flag_type === "red"
+        ? `<span class="hc-badge-red">ĐỎ</span>`
+        : `<span class="hc-badge-yellow">VÀNG</span>`;
+
+      const ocrDisp   = flag.ocr_value   !== null ? flag.ocr_value   : "(không có)";
+      const imgDisp   = flag.image_value !== null ? flag.image_value : "(không có)";
+      const curDisp   = flag.current_value !== null ? String(flag.current_value) : "(null)";
+      const inputVal  = flag.corrected_value !== null
+        ? flag.corrected_value
+        : (flag.current_value !== null ? flag.current_value : "");
+
+      let statusHtml;
+      if (flag.anchor_status === "anchor_ambiguous") {
+        statusHtml = `<span class="hc-status-ambiguous">Cần xác nhận lại vị trí</span>`;
+      } else if (flag.has_correction) {
+        statusHtml = `<span class="hc-status-ok">Đã sửa: ${escHtml(String(flag.corrected_value))}</span>`;
+      } else {
+        statusHtml = `<span class="hc-status-pending">Chưa sửa</span>`;
+      }
+
+      const correctionInput = hcConfirmStatus !== "CONFIRMED"
+        ? `<div class="hc-correction-row">
+             <label for="hc-input-${flag.row_id}">Giá trị sửa:</label>
+             <input class="hc-input-val" type="number" step="any"
+               id="hc-input-${flag.row_id}"
+               data-row-id="${flag.row_id}"
+               value="${escHtml(String(inputVal))}"
+               placeholder="Nhập số" />
+             <button class="hc-btn-save" data-row-id="${flag.row_id}">Xác nhận sửa</button>
+           </div>`
+        : `<div class="hc-locked-note">Báo cáo đã xác nhận — không thể sửa.</div>`;
+
+      html += `<div class="hc-cell-card">
+        <div class="hc-cell-label">${escHtml(flag.label)} ${badge}</div>
+        <div class="hc-cell-meta">Trang ${flag.page_number} &bull; ${escHtml(flag.statement_section)}</div>
+        <div class="hc-values-grid">
+          <span class="hc-val-key">Giá trị OCR:</span>
+          <span class="hc-val-val">${escHtml(ocrDisp)}</span>
+          <span class="hc-val-key">Giá trị ảnh:</span>
+          <span class="hc-val-val">${escHtml(imgDisp)}</span>
+          <span class="hc-val-key">Giá trị hiện tại:</span>
+          <span class="hc-val-val">${escHtml(curDisp)}</span>
+          <span class="hc-val-key">Trạng thái:</span>
+          <span>${statusHtml}</span>
+        </div>
+        ${correctionInput}
+      </div>`;
+    }
+
+    hcCellList.innerHTML = html;
+
+    // Wire "Xác nhận sửa" buttons (event delegation approach)
+    hcCellList.querySelectorAll(".hc-btn-save").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const rowId = Number(btn.dataset.rowId);
+        await hcSubmitCorrection(rowId);
+      });
+    });
+  }
+
+  // ── hcLoadFlags ───────────────────────────────────────────────────────────
+  // Fetches GET /api/bctc-inspect/flags/{doc_id} and renders the panel.
+  async function hcLoadFlags(docId) {
+    if (!hcCellList) return;
+    hcCellList.innerHTML = `<div class="hc-loading">Đang tải danh sách cảnh báo...</div>`;
+    if (hcStatusTxt) { hcStatusTxt.textContent = "Trạng thái: Đang tải..."; hcStatusTxt.style.color = "#888"; }
+    if (hcBtnConf) hcBtnConf.disabled = true;
+    if (hcBtnReset) hcBtnReset.style.display = "none";
+
+    try {
+      const resp = await fetch(hcFlagsUrl(docId));
+      if (!resp.ok) {
+        hcCellList.innerHTML = `<div class="hc-error">Lỗi ${resp.status}: không thể tải cảnh báo.</div>`;
+        return;
+      }
+      const data = await resp.json();
+      hcConfirmStatus = data.confirm_status || "PENDING";
+
+      hcUpdateStatusBadge(data.flags || []);
+
+      if (!data.has_flags || !data.flags || data.flags.length === 0) {
+        hcCellList.innerHTML = `<div class="hc-no-flags">Không có cảnh báo cần sửa.</div>`;
+      } else {
+        hcRenderCells(data.flags);
+      }
+    } catch (err) {
+      hcCellList.innerHTML = `<div class="hc-error">Lỗi: ${escHtml(err.message)}</div>`;
+    }
+  }
+
+  // ── hcSubmitCorrection ────────────────────────────────────────────────────
+  // Posts to POST /api/bctc-inspect/correct/{doc_id} with {row_id, new_value}.
+  // On success, refreshes the flags list.
+  async function hcSubmitCorrection(rowId) {
+    if (!currentDocId) return;
+    const input = document.getElementById(`hc-input-${rowId}`);
+    if (!input) return;
+    const newValue = parseVnNumber(input.value);
+    if (newValue === null) {
+      // Show brief inline error without alert
+      const prev = input.style.borderColor;
+      input.style.borderColor = "#e06060";
+      setTimeout(() => { input.style.borderColor = prev; }, 1500);
+      return;
+    }
+
+    // Disable the save button while posting
+    const btn = hcCellList?.querySelector(`button.hc-btn-save[data-row-id="${rowId}"]`);
+    if (btn) { btn.disabled = true; btn.textContent = "Đang lưu..."; }
+
+    try {
+      const resp = await fetch(hcCorrectUrl(currentDocId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ row_id: rowId, new_value: newValue }),
+      });
+      if (!resp.ok) {
+        const body = await resp.json().catch(() => ({}));
+        if (hcCellList) {
+          const errDiv = document.createElement("div");
+          errDiv.className = "hc-error";
+          errDiv.textContent = `Lỗi: ${body.error || resp.status}`;
+          hcCellList.prepend(errDiv);
+          setTimeout(() => errDiv.remove(), 4000);
+        }
+        if (btn) { btn.disabled = false; btn.textContent = "Xác nhận sửa"; }
+        return;
+      }
+      // Refresh flags after successful correction
+      await hcLoadFlags(currentDocId);
+    } catch (err) {
+      if (btn) { btn.disabled = false; btn.textContent = "Xác nhận sửa"; }
+      if (hcCellList) {
+        const errDiv = document.createElement("div");
+        errDiv.className = "hc-error";
+        errDiv.textContent = `Lỗi: ${escHtml(err.message)}`;
+        hcCellList.prepend(errDiv);
+        setTimeout(() => errDiv.remove(), 4000);
+      }
+    }
+  }
+
+  // ── hcConfirmReport ───────────────────────────────────────────────────────
+  // Posts to POST /api/bctc-inspect/confirm/{doc_id}.
+  // On success, refreshes flags (panel updates to CONFIRMED lock state).
+  async function hcConfirmReport() {
+    if (!currentDocId) return;
+    if (!confirm("Xác nhận toàn bộ báo cáo? Sau khi xác nhận sẽ không thể sửa giá trị.")) return;
+    try {
+      const resp = await fetch(hcConfirmUrl(currentDocId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!resp.ok) {
+        alert(`Lỗi ${resp.status}: không thể xác nhận báo cáo.`);
+        return;
+      }
+      await hcLoadFlags(currentDocId);
+    } catch (err) {
+      alert(`Lỗi: ${escHtml(err.message)}`);
+    }
+  }
+
+  // ── hcResetConfirmation ───────────────────────────────────────────────────
+  // Posts to POST /api/bctc-inspect/confirm/{doc_id}/reset.
+  // On success, refreshes flags (panel reverts to PENDING editable state).
+  async function hcResetConfirmation() {
+    if (!currentDocId) return;
+    if (!confirm("Đặt lại xác nhận? Bạn sẽ có thể sửa lại giá trị.")) return;
+    try {
+      const resp = await fetch(hcConfirmResetUrl(currentDocId), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!resp.ok) {
+        alert(`Lỗi ${resp.status}: không thể đặt lại.`);
+        return;
+      }
+      await hcLoadFlags(currentDocId);
+    } catch (err) {
+      alert(`Lỗi: ${escHtml(err.message)}`);
+    }
+  }
+
+  // ── Wire HC panel buttons ─────────────────────────────────────────────────
+  if (hcTabBtn) {
+    hcTabBtn.addEventListener("click", () => {
+      hcPanelOpen = !hcPanelOpen;
+      if (hcPanel) hcPanel.style.display = hcPanelOpen ? "block" : "none";
+      hcTabBtn.classList.toggle("hc-tab-active", hcPanelOpen);
+      hcTabBtn.setAttribute("aria-pressed", String(hcPanelOpen));
+      if (hcPanelOpen && currentDocId) {
+        hcLoadFlags(currentDocId);
+      }
+    });
+  }
+  if (hcBtnConf) {
+    hcBtnConf.addEventListener("click", hcConfirmReport);
+  }
+  if (hcBtnReset) {
+    hcBtnReset.addEventListener("click", hcResetConfirmation);
+  }
+
+  // ── Extend resetPanes to also reset HC panel ──────────────────────────────
+  // Wraps the existing resetPanes (already defined above) to add HC cleanup.
+  // This is the minimal additive hook — resetPanes internals are 0-diff.
+  const _origResetPanes = resetPanes;
+  resetPanes = function() {
+    _origResetPanes();
+    hcPanelOpen = false;
+    hcConfirmStatus = "PENDING";
+    if (hcPanel) hcPanel.style.display = "none";
+    if (hcTabBtn) { hcTabBtn.classList.remove("hc-tab-active"); hcTabBtn.setAttribute("aria-pressed", "false"); }
+    if (hcCellList) hcCellList.innerHTML = `<div class="hc-loading">Chưa chọn tài liệu.</div>`;
+    if (hcStatusTxt) { hcStatusTxt.textContent = "Trạng thái: Chờ xác nhận"; hcStatusTxt.style.color = "#d4a017"; }
+    if (hcBtnConf) { hcBtnConf.disabled = true; hcBtnConf.style.display = "inline-block"; }
+    if (hcBtnReset) hcBtnReset.style.display = "none";
   };
 
   // ── Init ─────────────────────────────────────────────────────────────────
