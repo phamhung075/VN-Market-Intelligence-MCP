@@ -1,0 +1,28 @@
+{
+  "_ssot": "docs/data/cadence-policy.json",
+  "_description": "DWF-PHASE1 cadence policy table. First-match wins (array order). interval_minutes: null = suppress. guaranteed=true slots bypass this table entirely (cron governs).",
+  "_staleness_threshold_minutes": 20,
+  "policies": [
+    { "policy_id": "gatherer-standard", "calendar_status": "open",     "signal_backlog_tier": "high",   "volatility_tier": "*",   "interval_minutes": 30 },
+    { "policy_id": "gatherer-standard", "calendar_status": "open",     "signal_backlog_tier": "medium", "volatility_tier": "*",   "interval_minutes": 60 },
+    { "policy_id": "gatherer-standard", "calendar_status": "open",     "signal_backlog_tier": "low",    "volatility_tier": "high","interval_minutes": 60 },
+    { "policy_id": "gatherer-standard", "calendar_status": "open",     "signal_backlog_tier": "low",    "volatility_tier": "low", "interval_minutes": 240 },
+    { "policy_id": "gatherer-standard", "calendar_status": "half_day", "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": 60 },
+    { "policy_id": "gatherer-standard", "calendar_status": "holiday",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": 480 },
+    { "policy_id": "gatherer-standard", "calendar_status": "weekend",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": 480 },
+    { "policy_id": "gatherer-standard", "calendar_status": "unknown",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": 240 },
+
+    { "policy_id": "chef-intraday",     "calendar_status": "open",     "signal_backlog_tier": "*",      "volatility_tier": "high","interval_minutes": 60 },
+    { "policy_id": "chef-intraday",     "calendar_status": "open",     "signal_backlog_tier": "*",      "volatility_tier": "low", "interval_minutes": 120 },
+    { "policy_id": "chef-intraday",     "calendar_status": "half_day", "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": 120 },
+    { "policy_id": "chef-intraday",     "calendar_status": "holiday",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null },
+    { "policy_id": "chef-intraday",     "calendar_status": "weekend",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null },
+    { "policy_id": "chef-intraday",     "calendar_status": "unknown",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": 120 },
+
+    { "policy_id": "bctc-offmarket",    "calendar_status": "holiday",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null },
+    { "policy_id": "bctc-offmarket",    "calendar_status": "weekend",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": 1440 },
+    { "policy_id": "bctc-offmarket",    "calendar_status": "open",     "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "bctc-offmarket",    "calendar_status": "half_day", "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null, "_cron_fallback": true },
+    { "policy_id": "bctc-offmarket",    "calendar_status": "unknown",  "signal_backlog_tier": "*",      "volatility_tier": "*",   "interval_minutes": null, "_cron_fallback": true }
+  ]
+}
