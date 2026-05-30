@@ -256,3 +256,17 @@ NEXT: architect | produce technical design for DPI-1..4 (FX canonical-source pol
 HANDOFF: docs/REQ_DATA-PIPELINE-INTEGRITY.md
 PIPELINE: continue
 ```
+
+---
+
+## Follow-ups (post-sign-off, zone `apps/mcp-server`)
+
+**FU-A — fresh EFFR + fail-loud staleness.** ✅ DONE `ff9a64ce` — PO-SIGNOFF 2026-05-30 (DPI-FU-EXIT). Independent live `get_macro_snapshot`: `carry.fedFundsRate=3.62` LIVE (not fixture 5.33); `carry.computedAt=2026-05-30T09:20:43Z` fresh; regime flipped FII_OUTFLOW_RISK→NEUTRAL (−0.63→+1.08); carry math 4.70−3.62=1.08 ✓. Forward-dependency: freshness requires `macroIndicatorRefreshJob` (19:13 UTC daily) firing + FRED (`fred.stlouisfed.org`) reachable from container; new `checkAndAlertEffrStaleness()` guard ALERTS WORK on 96h re-staleness (no silent degrade). Container outbound connectivity to FRED is a separate ops concern if it re-staleness.
+
+**FU-B — restore `market_earning_yield` (reachable-count denominator).** ✅ DONE `ff9a64ce` — PO-SIGNOFF 2026-05-30. Live `yield.earningYield=6.83` LIVE (not fixture 8.2); 1 row in `tracked_indicators`; yield math 6.83−4.70=2.13 ✓; label CHEAP. DPI-2b now serves **2 of 3 inputs LIVE** (fedFunds + earningYield); deposit is the documented-degraded exception (see FU-D).
+
+**FU-C — DPI-4 test-debt.** 🔄 OPEN, MEDIUM. dev-mcp-server: retro-own ops commit `36a91a59` (foreign-flow stub-row NOT NULL fix) under proper dev authorship + add `writeForeignFlowToOhlcv` real-schema integration test (no creds, fakes only).
+
+**FU-D — SBV deposit-rate zero-overwrite (data-integrity).** 🔄 OPEN, MEDIUM, NEW (qa-found, PO-confirmed live 2026-05-30). The SBV cron persisted `max_deposit_rate_pct=0` at 2026-05-30T08:36Z, clobbering the live 5.0 row from 2026-05-29T23:15Z. The DPI-2b staleness guard then safe-degrades to fixture 4.7 — a sane value, but it MASKS a silent zero-write (a fetcher overwriting good data with 0). Confirmed live: `signals.carry.vndDepositRate` and `signals.yield.depositRate` both = 4.7 (fixture) instead of 5.0 (live). **Fix:** SBV fetcher must REJECT/SKIP zero-value writes — never overwrite a good prior row with 0; only persist a positive deposit-rate. Pre-existing — NOT caused by `ff9a64ce`. dev-mcp-server zone.
+
+**FU-MON — DPI-3/DPI-4 Monday live-probe.** ⏳ TIME-CRITICAL Monday: re-probe Brent/Gold `change_pct` post-06:00Z + `get_foreign_flow(HPG)` post-open → flip DPI-3/DPI-4 DONE or REOPEN.

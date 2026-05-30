@@ -1,24 +1,27 @@
 # PO Notebook
 
-## Cycle 2026-05-30T08:17Z — :07 dispatcher triage (Sat, HOSE closed)
+## Cycle 2026-05-30T09:20Z — DPI-FU-EXIT sign-off (Sat, HOSE closed)
 
-**HARD LANE CONSTRAINT (user /goal):** apps/pdf-extractor OWNED BY PARALLEL SESSION this cycle. Whole BTB / BTB-DRIFT / BCTC-LAYOUT-FIRST / BCTC-AGENTIC-REFINE / PEK family OFF-LIMITS. No dev-pdf-extractor / ops-rebuild / qa of pdf-extractor. If only candidate = pdf-extractor => return NOTHING.
+**HARD LANE CONSTRAINT (user /goal):** apps/pdf-extractor OWNED BY PARALLEL SESSION. BTB-DRIFT / BCTC-* / PEK / AR-* (pdf-extractor parts) OFF-LIMITS. AR umbrella still PAUSED. Acknowledged BTB-DRIFT done+handed-back — NOT signed off here.
 
-**Acknowledged-not-touched:** BTB-DRIFT chain (brief 2026-05-30-btb-drift-convergence.md + 06fb1f10 + e71f845d FPT 31u/4prose) DONE+committed, handed back to parallel session. BCTC-AGENTIC-REFINE umbrella (I kicked it off earlier this session, NEXT→ba) is multi-zone INCLUDING pdf-extractor => AR chain PAUSED this cycle, NOT driven into contended zone. Do not re-dispatch AR until lane released.
+**DPI-FU-A + DPI-FU-B → ✅ SIGNED OFF (live-PROVEN, not just trust-QA).**
+Independent live `get_macro_snapshot` re-probe (own call, computedAt=2026-05-30T09:20:43Z fresh):
+- FU-A: `carry.fedFundsRate=3.62` LIVE (not fixture 5.33); regime FII_OUTFLOW_RISK→NEUTRAL; carry 4.70−3.62=1.08 ✓.
+- FU-B: `yield.earningYield=6.83` LIVE (not fixture 8.2); spread 6.83−4.70=2.13 ✓; CHEAP.
+- DPI-2b now serves 2/3 inputs LIVE. Deposit=4.7 is fixture fallback (= FU-D evidence, live row clobbered).
+WIP freed by 2. Both via `ff9a64ce`. Signoff written to TASKS.md (thin) + REQ_DATA-PIPELINE-INTEGRITY.md § Follow-ups (detail/evidence).
 
-**BATCH dispatched (2 tasks, WIP=2, uncontended apps/mcp-server lane):**
-- DPI-FU-A — restore fresh EFFR (fred_series_daily latest 2026-05-14, 15d stale => DPI-2b fedFundsRate degrades to fixture 5.33). Live-win.
-- DPI-FU-B — restore market_earning_yield job (zero rows in tracked_indicators => DPI-2b earningYield degrades to fixture 8.2). Live-win.
-- NEXT → dev-mcp-server (impl) → ops rebuild mcp-server (stale-image rule) → qa verify via in-container direct DB read (NOT push echo): EFFR fresh + earning-yield rows>0 + DPI-2b returns LIVE not fixture.
+**Residuals disposed (all apps/mcp-server, dev-mcp-server):**
+- 🔄 **FU-D (NEW, MEDIUM)** — SBV fetcher zero-overwrite: cron wrote max_deposit_rate_pct=0 @08:36Z clobbering live 5.0; guard safe-degrades to fixture 4.7 (sane but MASKS silent zero-write). Fix: reject/skip zero-value writes. Pre-existing, NOT from ff9a64ce. → DRIVING THIS SESSION (uncontended weekend lane).
+- 🔄 FU-C (MEDIUM) — retro-own 36a91a59 + foreign-flow real-schema integration test. Left open (fold next tick).
+- ⏳ FU-MON (Monday TIME-CRITICAL) — DPI-3/DPI-4 live-probe.
 
-**Why FU-A/B over X-1 (HIGH):** X-1 is internal self-improve emit-path plumbing, no user-facing data. FU-A/B turn documented fixture-degrades into real live data the user sees TODAY — matches standing "trust = live tool data not fixtures" directive. Both same zone, same restoration nature => paired.
-
-**Routed as signals (NOT BATCH):** D4-abort #3006/#3008 → agents-architect (transient read race, re-route carried fwd); /news #3004 + BCTC-filings #3007 → cowork (data-availability); TASKS.md >80L + signal-file bloat → janitor. #3011 BTB-OPS = parallel-owned, no action.
+**DECISION — BATCH FU-D now (PIPELINE not complete).** Weekend, apps/mcp-server uncontended, WIP=0 post-signoff, matches fail-loud/no-silent-degrade directive. Small isolated FIX, same nature/zone/dev as FU-A/B.
 
 ## Carry-over
-- AR (BCTC-AGENTIC-REFINE) chain PAUSED — resume NEXT→ba only when pdf-extractor lane released by parallel session. Umbrella lock task:BCTC-AGENTIC-REFINE still claimed. User-LOCKED decisions in plan magical-cooking-cocoa.md (OCR=local Tesseract swappable, REPLACE outright, analyst feed=BOTH rows+refined).
-- Next-tick backlog (uncontended mcp-server): SELF-IMPROVE-GATE X-1 (HIGH, top), CHEF-ATTN (MED), DPI-FU-C (MED test-debt: retro-own 36a91a59 + writeForeignFlowToOhlcv real-schema integration test). string-vs-enum HELD.
-- FU-MON TIME-CRITICAL Monday: re-probe Brent/Gold delta post-06:00Z + get_foreign_flow(HPG) post-open → flip DONE or REOPEN.
-- commit-mutex enum NOW VALID (task_kind enum has 'commit-mutex') — prior drift fixed.
-- Scoped `git add <file>` only — working tree has MANY unrelated uncommitted files; NEVER `-A`.
-- HOUSEKEEPING non-blocking: TASKS.md >80L, signal-file bloat → janitor; never block exit on it.
+- AR (BCTC-AGENTIC-REFINE) chain PAUSED — resume NEXT→ba only when pdf-extractor lane released. Umbrella lock still claimed. Locked decisions in magical-cooking-cocoa.md.
+- FU-MON Monday: re-probe Brent/Gold post-06:00Z + get_foreign_flow(HPG) post-open → flip/REOPEN.
+- Next-tick backlog (uncontended mcp-server): X-1 SELF-IMPROVE (HIGH), CHEF-ATTN (MED), FU-C (MED). string-vs-enum HELD.
+- FU-A forward-dependency: macroIndicatorRefreshJob 19:13 UTC + FRED reachable; guard alerts WORK on 96h re-staleness.
+- TASKS.md=82L (>80 cap, was 81 pre-edit) — janitor housekeeping, non-blocking.
+- Scoped `git add <file>` only — tree has MANY unrelated uncommitted files; NEVER `-A`.

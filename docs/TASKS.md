@@ -10,21 +10,25 @@
 
 Replace YOLO + bbox-grouping + `bctc_page_grouper.py` 5-state machine OUTRIGHT with a cron-driven agent refine step (OCR text + crisp page image, numbers←text / structure←image / disagreement→FLAG never guess). Feed BOTH `bctc_table_rows` (via deterministic markdown→rows parser — the new single point of correctness) AND `get_bctc_refined`.
 
-- 🔄 AR-BA (ba): REQ decomposition + confirm pdf-extractor↔mcp-server zone split
-- 🔄 AR-ARCH (architect): brief — dead-text/OCR-mandate, refine contract, **deterministic markdown→rows parser spec (TIGHT)**, cron-refiner packaging, swappable OCR interface, replace-outright delete list
-- 🔄 AR-PM (pm): atomic tasks + handoffs in `docs/handoffs/`
-- 🔄 AR-PDF (dev-pdf-extractor): `page_rasterizer.py`; remove YOLO/grouping/boundary machine; OCR text feed
-- 🔄 AR-MCP (dev-mcp-server): 3 tools + `bctc_refined_units` table + markdown→rows parser + `get_bctc_refined` + refine orchestration/cron + idempotency/claim/gate
-- 🔄 AR-AGENT (agent-father): `refine_bctc_md` agent `.md`
-- 🔄 AR-QA (qa): bake-off FPT+ACB, parser+store DV (RED→GREEN), idempotency ≥3×, readiness gate, expert-flow-intact — all anti-false-green
-- 🔄 AR-OPS (ops): REBUILD both containers (build --no-cache + force-recreate)
-- 🔄 AR-EXIT (po): independent live re-verify
+- ✅ AR-BA (ba): REQ spec `docs/REQ_BCTC-AGENTIC-REFINE.md` — zone split confirmed, token-budget FRs + deterministic parser + refine contract encoded
+- ✅ AR-ARCH (architect): brief — dead-text/OCR-mandate, refine contract, **deterministic markdown→rows parser spec (TIGHT)**, cron-refiner packaging, swappable OCR interface, replace-outright delete list (§0–9, amendments x2)
+- ✅ AR-PM (pm): atomic handoffs created in `docs/handoffs/` — AR-OPS-PRE, AR-PDF, AR-MCP, AR-AGENT-A, AR-AGENT-B
+- 🔄 **AR-OPS-PRE** (ops, PREREQ): docker-compose volume + env vars; blocks AR-PDF + AR-MCP. Handoff: `docs/handoffs/AR-OPS-PRE-handoff.md`
+- 🔄 **AR-PDF** (dev-pdf-extractor): `page_rasterizer.py`; remove YOLO/grouping/boundary machine; OCR text feed. Blocker: AR-OPS-PRE. Handoff: `docs/handoffs/AR-PDF-handoff.md`
+- 🔄 **AR-MCP** (dev-mcp-server): 3 tools + `bctc_refined_units` table + markdown→rows parser + `get_bctc_refined` + refine orchestration/cron + idempotency/claim/gate (fan-out amended §0.6). Blocker: AR-OPS-PRE. Blocks: AR-AGENT-B. Handoff: `docs/handoffs/AR-MCP-handoff.md`
+- 🔄 **AR-AGENT-A** (agent-father): author `refine_bctc_md` flows (Opus author, Haiku runtime). Blocks: AR-AGENT-B. Handoff: `docs/handoffs/AR-AGENT-A-handoff.md`
+- 🔄 **AR-AGENT-B** (agent-father): retier `bctc-analyst` (Sonnet main + Opus deep-dive, ESC-1..5 gate). Blockers: AR-AGENT-A + AR-MCP. Blocks: AR-QA. Handoff: `docs/handoffs/AR-AGENT-B-handoff.md`
+- 🔄 AR-QA (qa): bake-off FPT+ACB, parser+store DV (RED→GREEN), idempotency ≥3×, readiness gate, expert-flow-intact — all anti-false-green. Blocker: AR-AGENT-A + AR-MCP.
+- 🔄 AR-OPS (ops): REBUILD both containers (build --no-cache + force-recreate). Blocker: AR-QA.
+- 🔄 AR-EXIT (po): independent live re-verify. Blocker: AR-OPS.
 
 ---
 
 ## Sprint DATA-PIPELINE-INTEGRITY — ✅ SIGNED OFF 2026-05-30
 
-All 4 user-facing data bugs root-caused, code-fixed, deployed. 3 of 4 fully live-DONE; DPI-3/DPI-4 CODE-DONE + path-PROVEN, awaiting market schedule. Follow-ups FU-A/FU-B/FU-C/FU-MON registered (zone: `apps/mcp-server`). See `docs/REQ_DATA-PIPELINE-INTEGRITY.md` + `docs/handoffs/DPI-ARCH.md` for details.
+All 4 user-facing data bugs root-caused, code-fixed, deployed. 3 of 4 fully live-DONE; DPI-3/DPI-4 CODE-DONE + path-PROVEN, awaiting market schedule. FU detail → `docs/REQ_DATA-PIPELINE-INTEGRITY.md` § Follow-ups.
+
+**DPI follow-ups** (zone `apps/mcp-server`): ✅ FU-A (`ff9a64ce`, PO-SIGNOFF 2026-05-30: `fedFundsRate=3.62` LIVE, regime→NEUTRAL) · ✅ FU-B (`ff9a64ce`, PO-SIGNOFF: `earningYield=6.83` LIVE) · 🔄 FU-C (MEDIUM, test-debt: retro-own `36a91a59` + foreign-flow real-schema test) · 🔄 **FU-D** (MEDIUM, NEW: SBV fetcher must reject zero-value writes — cron wrote `max_deposit_rate_pct=0` clobbering live 5.0, safe-degrades to fixture 4.7; pre-existing) · ⏳ FU-MON (Monday: DPI-3/DPI-4 live-probe).
 
 ---
 
