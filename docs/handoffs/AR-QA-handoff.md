@@ -226,10 +226,70 @@ PIPELINE: continue → AR-OPS (fix startScheduler.ts wiring + volume + rebuild)
 
 ---
 
+## [Developer] AR-MCP-ROUTE — HTTP Route Wiring Fix
+
+**Agent:** dev-mcp-server
+**Date:** 2026-05-30
+**Commit:** 6dfeb759
+
+```
+STATUS: DONE
+COMMIT: 6dfeb759
+
+GREP PROOF (apps/mcp-server/src/interface/mcp/server.ts):
+  71:  import { handleBctcRefineOnDemand } from "./routes/bctcRefineHandler.js";
+  1866: if (method === "POST" && pathname.startsWith("/api/refine-bctc/")) {
+  1867:   const reportId = pathname.slice("/api/refine-bctc/".length);
+  1868:   const handlerResp = await handleBctcRefineOnDemand(reportId || undefined);
+  1869:   const body = await handlerResp.text();
+  1870:   res.writeHead(handlerResp.status, { "Content-Type": "application/json" });
+  1871:   res.end(body);
+
+PATH CONTRACT RECONCILIATION:
+  bctcRefineHandler.ts expects report_id as a bare string parameter (not
+  a path segment to parse itself). server.ts slices "/api/refine-bctc/"
+  from pathname and passes the remainder as reportId — consistent.
+  Handler validates empty string → 400. AR-OPS path: POST /api/refine-bctc/{report_id}.
+
+ADAPTER NOTE:
+  handleBctcRefineOnDemand returns Promise<Response> (Web API).
+  server.ts bridges it to Node.js ServerResponse via .text() read +
+  res.writeHead(status) + res.end(body). Matches the handler's
+  Content-Type: application/json contract.
+
+REGISTRATION AUDIT — ALL SPRINT ARTIFACTS:
+  Artifact                     | Composition Root                      | Grep Line Proof
+  getBctcPageTextTool          | tools/registry.ts (import + array)    | L104 (import), L212 (array)
+  getBctcPageImageTool         | tools/registry.ts (import + array)    | L105 (import), L213 (array)
+  getBctcRefinedTool           | tools/registry.ts (import + array)    | L106 (import), L214 (array)
+  getBctcPageTextTool (export) | tools/financial-reports/index.ts      | L12
+  getBctcPageImageTool (export)| tools/financial-reports/index.ts      | L13
+  getBctcRefinedTool (export)  | tools/financial-reports/index.ts      | L14
+  bctcRefineJob (cron)         | scheduler/startScheduler.ts           | L70 (import), L962 (cron.schedule)
+  bctcRefineHandler (HTTP)     | interface/mcp/server.ts               | L71 (import), L1866 (route dispatch) [THIS FIX]
+
+NO OTHER UNREGISTERED HANDLERS: bctcRefineHandler.ts defines only one
+  export (handleBctcRefineOnDemand). No GET status route exists in the
+  handler file. No additional routes to wire.
+
+TYPECHECK: bun tsc --noEmit — 0 errors
+FILES TOUCHED: apps/mcp-server/src/interface/mcp/server.ts only
+STAGED: git add apps/mcp-server/src/interface/mcp/server.ts (scoped, single file)
+
+NEXT: AR-OPS
+  Action 1 (DONE by previous task 5a46809c): startScheduler.ts cron wiring.
+  Action 2 (DONE by this task 6dfeb759): server.ts HTTP route wiring.
+  Action 3: rebuild mcp-server container (--no-cache).
+  Action 4: run bake-off on FPT + ACB (POST /api/refine-bctc/{report_id}).
+  Action 5: confirm bake-off metrics to QA for Criterion 1 sign-off.
+```
+
+---
+
 ## [Developer] AR-MCP-WIRE — Blocking Fix Resolved
 
-**Agent:** dev-mcp-server  
-**Date:** 2026-05-30  
+**Agent:** dev-mcp-server
+**Date:** 2026-05-30
 **Commit:** 5a46809c
 
 ```
