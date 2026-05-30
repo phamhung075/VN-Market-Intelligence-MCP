@@ -1,5 +1,28 @@
 # dev-mcp-server -- Notebook
 
+## c330 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-1) — COMMITTED 4c40939c
+
+**Task:** HC-DEV-1 — Foundation layer for sprint BCTC-HUMAN-CONFIRM
+
+**Schema migrations (3 idempotent blocks, PRAGMA-first guard):**
+- ALTER bctc_table_rows ADD source_confidence REAL NOT NULL DEFAULT 1.0
+- ALTER financial_reports ADD confirm_status TEXT NOT NULL DEFAULT 'PENDING' + final_confirmed_at + confirmed_by
+- CREATE TABLE IF NOT EXISTS bctc_human_corrections (UNIQUE(report_id,row_id) + idx_bhc_stable_key)
+
+**Infrastructure:**
+- NEW bctcHumanCorrectionsStore.ts: 5 public functions (upsertCorrection, getCorrectionsForReport, getCorrectionsMap, hasCorrection, reAnchorCorrections). ARCH-DECIDE B: anchor key = (label||page_number||statement_section||code). anchor_ambiguous safe-fail: no mis-attach when >1 rows match.
+
+**Application:**
+- NEW bctcFlagEnumerationService.ts: enumerateFlaggedCells — scans bctc_refined_units.markdown via parseTrustFlag, joins to bctc_table_rows, hydrates corrections. EC-3 guard (refine_not_complete). Red flag OCR/image regex extractor.
+- NEW bctcCorrectionService.ts: submitCorrection — UUID+int validation, 409 CONFIRMED guard, 400 row_not_found, transactional upsertCorrection + UPDATE source_confidence=1.0. Shared by HTTP + MCP.
+
+**Utils:** exported parseTrustFlag + TrustFlagResult from refinedMarkdownParser (7-char additive, 0 logic diff).
+
+**DV tests:** HC-human-confirm.test.ts 25/25 GREEN. tsc: 0 errors.
+DV-HC-9 (idempotency x2), DV-HC-10 (service + both-table writes), DV-HC-11 (code disambiguator), DV-HC-12 (anchor_ambiguous), DV-HC-13 (idempotency x3).
+
+**BLOCKS UNBLOCKED:** HC-DEV-2, HC-DEV-3, HC-DEV-4 can now start.
+
 ## c329 · 2026-05-30 (BCTC-AGENTIC-REFINE AR-PREREQ-3 + AR-MCP-OPTY) — COMMITTED a1cb486e + 47c9f328
 
 **Tasks:** AR-PREREQ-3 (stop-the-bleed cron removal) + AR-MCP-OPTY (3 fleet-cron MCP tools)
