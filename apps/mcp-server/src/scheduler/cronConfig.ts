@@ -175,4 +175,9 @@ export const CRONS = {
    *  22:02 UTC = 05:02 GMT+7 next day, well outside HOSE market hours (02:00-08:59 UTC Mon-Fri).
    *  Collision check: 22:00 UTC = eveningSummary slot — offset by 2 min to avoid pile-up. */
   bctcEvalRecompute:          Bun.env.CRON_BCTC_EVAL_RECOMPUTE                     ?? '2 22 * * *',
+  /** bctcRefineJob — agentic BCTC refine orchestrator (Sprint BCTC-AGENTIC-REFINE, FR-12)
+   *  Runs at 09:00, 14:00, 20:00 UTC daily.
+   *  OFF-HOSE verified: all 3 times are OUTSIDE 02:00-08:59 UTC Mon-Fri window.
+   *  09:00 UTC = 16:00 GMT+7 (after HOSE close 15:00 GMT+7). 14:00 = 21:00 GMT+7. 20:00 = 03:00 GMT+7. */
+  bctcRefineJob:              Bun.env.CRON_BCTC_REFINE_JOB                          ?? '0 9,14,20 * * *',
 }

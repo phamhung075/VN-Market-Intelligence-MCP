@@ -397,6 +397,55 @@ export function initFinancialReportsTables(db: Database): void {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_vncf_code ON vnstock_cash_flow(code)`);
 
+  // ── BCTC-AGENTIC-REFINE: bctc_refined_units table (FR-9) ──────────────────
+  // Per-window refined markdown storage. Written exclusively by bctcRefineJob
+  // orchestrator (Phase 4 collect-then-write). Subagents NEVER write to this table.
+  // DELETE-then-INSERT idempotency; UNIQUE(report_id, unit_id) prevents dupes.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_refined_units (
+      id                INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id         TEXT    NOT NULL,
+      unit_id           TEXT    NOT NULL,
+      page_numbers_json TEXT    NOT NULL,
+      markdown          TEXT    NOT NULL,
+      row_count         INTEGER NOT NULL DEFAULT 0,
+      confidence        REAL    NOT NULL DEFAULT 0.0,
+      flags             TEXT,
+      window_status     TEXT    NOT NULL DEFAULT 'DONE',
+      refined_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+      UNIQUE(report_id, unit_id)
+    )
+  `);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_bru_report ON bctc_refined_units(report_id)`);
+
+  // ── BCTC-AGENTIC-REFINE: text_status + refine_status on financial_reports ─
+  // Idempotent migrations: check PRAGMA table_info before ALTER TABLE.
+  // text_status: OCR lifecycle (COMPLETE | IN_PROGRESS | PARTIAL)
+  //   Default COMPLETE for existing rows (they already have extracted OCR text).
+  // refine_status: refine lifecycle (PENDING | IN_PROGRESS | DONE | FAILED | PARTIAL)
+  //   Default PENDING for existing rows (they need to be refined).
+  try {
+    const refCols = db
+      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
+      .all();
+    const refColNames = new Set(refCols.map((c) => c.name));
+
+    if (!refColNames.has("text_status")) {
+      db.exec(
+        "ALTER TABLE financial_reports ADD COLUMN text_status TEXT NOT NULL DEFAULT 'COMPLETE'",
+      );
+      // Existing rows have completed OCR — default COMPLETE is correct.
+    }
+    if (!refColNames.has("refine_status")) {
+      db.exec(
+        "ALTER TABLE financial_reports ADD COLUMN refine_status TEXT NOT NULL DEFAULT 'PENDING'",
+      );
+      // Existing rows need refine — default PENDING is correct.
+    }
+  } catch {
+    // fresh DB — columns included via SQLITE_DDL or table does not yet exist
+  }
+
   // ── Task 1878a: backfill OCF on migration ─────────────────────────────────
   // Dev decision: wire backfillAllOCF into the migration block so new tickers
   // are covered automatically on every server start (idempotent UPDATE is a

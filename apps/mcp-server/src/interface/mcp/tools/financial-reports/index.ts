@@ -9,3 +9,6 @@ export { registerReportTools } from "./reports.js";
 export { registerComputeAccrualsTool } from "./computeAccrualsTool.js";
 export { registerGetCashFlowTool } from "./cashFlowTool.js";
 export { registerGetBctcOcfTool } from "./getBctcOcfTool.js";
+export { registerGetBctcPageTextTool } from "./getBctcPageTextTool.js"; // BCTC-AGENTIC-REFINE FR-3
+export { registerGetBctcPageImageTool } from "./getBctcPageImageTool.js"; // BCTC-AGENTIC-REFINE FR-4
+export { registerGetBctcRefinedTool } from "./getBctcRefinedTool.js"; // BCTC-AGENTIC-REFINE FR-11

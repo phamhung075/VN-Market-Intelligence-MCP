@@ -102,3 +102,104 @@ export async function checkPdfExtractorHealth(): Promise<boolean> {
     return false;
   }
 }
+
+// ── FR-3: get_bctc_page_text support ─────────────────────────────────────────
+
+export interface PageTextResult {
+  text: string;
+  source: "sqlite_ocr" | "mistral_ocr";
+}
+
+/**
+ * Fetch OCR text for a single page from the pdf-extractor service.
+ *
+ * Calls GET /api/page-text?filename={filename}&page_number={page_number}.
+ * Returns null when service is unreachable or page not found.
+ *
+ * @param filename    PDF filename (not path) as stored in pdf_extracted_text
+ * @param pageNumber  1-indexed page number
+ */
+export async function getPageText(
+  filename: string,
+  pageNumber: number,
+): Promise<PageTextResult | null> {
+  try {
+    const url = `${PDF_EXTRACTOR_BASE_URL}/api/page-text?filename=${encodeURIComponent(filename)}&page_number=${pageNumber}`;
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(30_000),
+    });
+
+    if (!response.ok) {
+      logger.warn("[pdfExtractorClient.getPageText] non-OK response", {
+        status: response.status,
+        filename,
+        pageNumber,
+      });
+      return null;
+    }
+
+    const data = (await response.json()) as {
+      text?: string;
+      source?: "sqlite_ocr" | "mistral_ocr";
+    };
+
+    if (data.text === undefined) return null;
+
+    return {
+      text: data.text,
+      source: data.source ?? "sqlite_ocr",
+    };
+  } catch (err) {
+    logger.debug("[pdfExtractorClient.getPageText] service unavailable", {
+      filename,
+      pageNumber,
+      error: err instanceof Error ? err.message : String(err),
+    });
+    return null;
+  }
+}
+
+// ── FR-4: get_bctc_page_image rasterize support ───────────────────────────────
+
+export interface RasterizeResult {
+  rasterized: number[];
+  paths: string[];
+}
+
+/**
+ * Trigger on-demand rasterization for specific pages of a report PDF.
+ *
+ * Calls POST /api/rasterize with { report_id, filename, pages }.
+ * Throws on failure so callers can fall back to an error state.
+ *
+ * @param reportId  Financial report ID
+ * @param filename  PDF filename (not path)
+ * @param pages     Array of 1-indexed page numbers to rasterize
+ */
+export async function rasterizePages(
+  reportId: string,
+  filename: string,
+  pages: number[],
+): Promise<RasterizeResult> {
+  const response = await fetch(`${PDF_EXTRACTOR_BASE_URL}/api/rasterize`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ report_id: reportId, filename, pages }),
+    signal: AbortSignal.timeout(120_000), // 2-min timeout for rasterization
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "(no body)");
+    throw new Error(`rasterize HTTP ${response.status}: ${text}`);
+  }
+
+  const data = (await response.json()) as {
+    rasterized?: number[];
+    paths?: string[];
+  };
+
+  return {
+    rasterized: data.rasterized ?? [],
+    paths: data.paths ?? [],
+  };
+}

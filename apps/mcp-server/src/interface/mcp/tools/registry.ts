@@ -101,6 +101,9 @@ import { registerGetBctcOcfTool } from "./financial-reports/getBctcOcfTool.js"; 
 import { registerGetIsmSubcomponentsTool } from "./macro/getIsmSubcomponentsTool.js"; // Task 1910a: get_ism_subcomponents (#133)
 import { registerGetAccuracyContextTool } from "./news-analysis/getAccuracyContextTool.js"; // 2026-05-17: get_accuracy_context (#134)
 import { registerCoordinationTools } from "./system/coordinationTools.js"; // Task task-lock Phase 1: task_claim, task_heartbeat, task_release, task_list_held (#135-#138)
+import { registerGetBctcPageTextTool } from "./financial-reports/getBctcPageTextTool.js"; // BCTC-AGENTIC-REFINE FR-3: get_bctc_page_text (#139)
+import { registerGetBctcPageImageTool } from "./financial-reports/getBctcPageImageTool.js"; // BCTC-AGENTIC-REFINE FR-4: get_bctc_page_image (#140)
+import { registerGetBctcRefinedTool } from "./financial-reports/getBctcRefinedTool.js"; // BCTC-AGENTIC-REFINE FR-11: get_bctc_refined (#141)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -206,4 +209,7 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerGetIsmSubcomponentsTool,      // Task 1910a: get_ism_subcomponents (#133)
   registerGetAccuracyContextTool,       // 2026-05-17: get_accuracy_context (#134)
   registerCoordinationTools,             // Task task-lock Phase 1: task_claim (#135), task_heartbeat (#136), task_release (#137), task_list_held (#138)
+  registerGetBctcPageTextTool,           // BCTC-AGENTIC-REFINE FR-3: get_bctc_page_text (#139)
+  registerGetBctcPageImageTool,          // BCTC-AGENTIC-REFINE FR-4: get_bctc_page_image (#140)
+  registerGetBctcRefinedTool,            // BCTC-AGENTIC-REFINE FR-11: get_bctc_refined (#141)
 ];
