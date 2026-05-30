@@ -1,5 +1,30 @@
 # dev-mcp-server -- Notebook
 
+## c329 · 2026-05-30 (BCTC-AGENTIC-REFINE AR-PREREQ-3 + AR-MCP-OPTY) — COMMITTED a1cb486e + 47c9f328
+
+**Tasks:** AR-PREREQ-3 (stop-the-bleed cron removal) + AR-MCP-OPTY (3 fleet-cron MCP tools)
+
+**Summary:** Option-Y ruling (§0.7.2): mcp-server becomes pure data service. Orchestration moves to host-level fleet cron.
+
+**Step A (AR-PREREQ-3, commit a1cb486e):**
+- Deleted `bctcRefineJob` key from `cronConfig.ts`
+- Deleted import + cron registration from `startScheduler.ts`
+- Stops active ENOENT failure loop (spawn("claude") in container with no claude CLI)
+
+**Step B (AR-MCP-OPTY, commit 47c9f328):**
+- NEW `application/utils/windowPartitioner.ts` — partitionIntoWindows() migrated
+- NEW `application/utils/boundedPool.ts` — runBoundedPool() migrated
+- MODIFIED `bctcRefineJob.ts` — production spawn path deleted, runBctcRefineJob() deleted, utilities re-exported
+- NEW `getBctcPendingRefineTool.ts` — tool #142: get_bctc_pending_refine
+- NEW `pushBctcRefinedUnitTool.ts` — tool #143: push_bctc_refined_unit (INSERT OR REPLACE idempotency)
+- NEW `finalizeBctcRefineTool.ts` — tool #144: finalize_bctc_refine (Phase-4 collect-then-write)
+- MODIFIED `registry.ts` — 3 imports + 3 array entries
+- MODIFIED test file — push_tool_pathway describe block (6 DV scenarios)
+
+**DV RED→GREEN:** 13/13 pass. tsc: 0 errors. No spawn() in production.
+
+**ops_rebuild_required: true** — next sprint task AR-OPS-REBUILD will rebuild container.
+
 ## c328 · 2026-05-30 (DATA-PIPELINE-INTEGRITY DPI-FU-D) — COMMITTED d7ee43d7
 
 **Task:** DPI-FU-D — SBV fetcher must reject zero-value deposit-rate writes
