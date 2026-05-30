@@ -27,7 +27,7 @@ function makeServer(db: Database): McpServer {
   return server;
 }
 
-/** Minimal financial_reports row — all required columns filled. */
+/** Minimal financial_reports row — all required columns filled. Returns the report ID. */
 function insertFinancialRow(
   db: Database,
   overrides: Partial<{
@@ -74,7 +74,7 @@ function insertFinancialRow(
     yoy_delta_json: string | null;
     qoq_delta_json: string | null;
   }> = {},
-): void {
+): string {
   const defaults = {
     action_code: "VCB",
     period_year: 2025,
@@ -188,6 +188,10 @@ function insertFinancialRow(
     defaults.yoy_delta_json,
     defaults.qoq_delta_json,
   );
+
+  // Return the inserted ID for use in related table inserts
+  const result = db.query<{ id: string }, [string, string]>("SELECT id FROM financial_reports WHERE action_code = ? AND sort_key = ? LIMIT 1").get(defaults.action_code, defaults.sort_key);
+  return result?.id ?? '';
 }
 
 /** Insert a rag_analyses row with the given sentiment for today. */
@@ -212,6 +216,38 @@ function insertRagRow(
     createdAt,
     createdAt,
     sentiment,
+  );
+}
+
+/** Insert a bctc_table_rows row for testing publishability. */
+function insertTableRow(
+  db: Database,
+  reportId: string,
+  section: string = "balance_sheet",
+  isSummary: number = 0,
+): void {
+  db.prepare(`INSERT INTO bctc_table_rows
+       (report_id, page_number, statement_section, row_order, label,
+        period_current, value_current, is_summary_row)
+     VALUES (?, 1, ?, 1, 'Test Label', 'Q1-2026', 100000, ?)`).run(
+    reportId,
+    section,
+    isSummary,
+  );
+}
+
+/** Insert a bctc_refined_units row for testing publishability. */
+function insertRefinedUnit(
+  db: Database,
+  reportId: string,
+  windowStatus: string = "DONE",
+): void {
+  db.prepare(`INSERT INTO bctc_refined_units
+       (report_id, unit_id, page_numbers_json, markdown, row_count, confidence, window_status)
+     VALUES (?, ?, '[1]', '| test |', 5, 0.85, ?)`).run(
+    reportId,
+    `unit-${reportId.slice(0, 8)}`,
+    windowStatus,
   );
 }
 
@@ -262,7 +298,39 @@ function makeDb(): Database {
     pb REAL,
     published_at TEXT NOT NULL DEFAULT '',
     yoy_delta_json TEXT,
-    qoq_delta_json TEXT
+    qoq_delta_json TEXT,
+    refine_status TEXT DEFAULT 'DONE'
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS bctc_table_rows (
+    id               INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id        TEXT    NOT NULL,
+    page_number      INTEGER NOT NULL,
+    statement_section TEXT   NOT NULL,
+    row_order        INTEGER NOT NULL,
+    code             TEXT,
+    label            TEXT    NOT NULL,
+    period_current   TEXT    NOT NULL,
+    value_current    REAL,
+    period_prior     TEXT,
+    value_prior      REAL,
+    unit             TEXT    NOT NULL DEFAULT 'billion_vnd',
+    is_summary_row   INTEGER NOT NULL DEFAULT 0,
+    extracted_at     TEXT    NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS bctc_refined_units (
+    id                INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id         TEXT    NOT NULL,
+    unit_id           TEXT    NOT NULL,
+    page_numbers_json TEXT    NOT NULL,
+    markdown          TEXT    NOT NULL,
+    row_count         INTEGER NOT NULL DEFAULT 0,
+    confidence        REAL    NOT NULL DEFAULT 0.0,
+    flags             TEXT,
+    window_status     TEXT    NOT NULL DEFAULT 'DONE',
+    refined_at        TEXT    NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(report_id, unit_id)
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS rag_analyses (
@@ -316,7 +384,7 @@ describe("Task 240 — get_bctc_full compound tool", () => {
 
   it("returns all 3 sections when financial + sentiment data exist", async () => {
     // Insert latest report (Q4/2025) and a prior report (Q3/2025) for comparison
-    insertFinancialRow(db, {
+    const id1 = insertFinancialRow(db, {
       action_code: "VCB",
       period_year: 2025,
       period_quarter: 4,
@@ -325,6 +393,9 @@ describe("Task 240 — get_bctc_full compound tool", () => {
       net_revenue: 45_200_000,
       net_profit: 8_100_000,
     });
+    insertTableRow(db, id1, "balance_sheet", 0);
+    insertRefinedUnit(db, id1);
+
     insertFinancialRow(db, {
       action_code: "VCB",
       period_year: 2025,
@@ -364,7 +435,9 @@ describe("Task 240 — get_bctc_full compound tool", () => {
   });
 
   it("renders sentiment section with no-data note when no RAG rows exist", async () => {
-    insertFinancialRow(db, { action_code: "VNM" });
+    const id = insertFinancialRow(db, { action_code: "VNM" });
+    insertTableRow(db, id, "balance_sheet", 0);
+    insertRefinedUnit(db, id);
 
     const server = makeServer(db);
     const text = await callTool(server, "get_bctc_full", { code: "VNM" });
@@ -376,7 +449,10 @@ describe("Task 240 — get_bctc_full compound tool", () => {
   });
 
   it("uppercases the code parameter automatically", async () => {
-    insertFinancialRow(db, { action_code: "FPT" });
+    const id = insertFinancialRow(db, { action_code: "FPT" });
+    insertTableRow(db, id, "balance_sheet", 0);
+    insertRefinedUnit(db, id);
+
     const server = makeServer(db);
 
     const text = await callTool(server, "get_bctc_full", { code: "fpt" });
@@ -385,13 +461,16 @@ describe("Task 240 — get_bctc_full compound tool", () => {
 
   it("filters by year when provided", async () => {
     // Insert two periods for same stock, different years
-    insertFinancialRow(db, {
+    const id1 = insertFinancialRow(db, {
       action_code: "VCB",
       period_year: 2024,
       period_quarter: 4,
       period_type: "Q4",
       sort_key: "2024-Q4",
     });
+    insertTableRow(db, id1, "balance_sheet", 0);
+    insertRefinedUnit(db, id1);
+
     insertFinancialRow(db, {
       action_code: "VCB",
       period_year: 2025,
