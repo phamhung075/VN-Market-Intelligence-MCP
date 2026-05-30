@@ -1,5 +1,69 @@
 # QA — Notebook
 
+## cycle-151 · 2026-05-30 · DPI-FU-AB-QA — PASS
+
+**Sprint:** DATA-PIPELINE-INTEGRITY | **Task:** DPI-FU-AB-QA | **Verdict:** PASS
+
+```
+date: 2026-05-30T09:20Z
+type: independent done-bar gate (DPI-FU-A + DPI-FU-B)
+commit: ff9a64ce (DPI-FU-A fail-loud EFFR staleness + DPI-FU-B earning-yield reachable-denominator)
+zone: apps/mcp-server
+container_image: 6b90c5d8... (rebuilt 2026-05-30T10:47 UTC, ops DPI-FU-AB-OPS)
+
+CHECK-1 (FU-A EFFR max date):
+  SELECT MAX(date) FROM fred_series_daily WHERE series='EFFR'
+  → 2026-05-28   PASS (>= 2026-05-28, within 96h SLA)
+  Prior frozen value was 2026-05-14.
+
+CHECK-2 (FU-A get_macro_snapshot fedFundsRate):
+  carry.fedFundsRate = 3.62   PASS (LIVE 2026-05-28 row, NOT fixture 5.33)
+  carry.regime = NEUTRAL (carrySpread=1.08)  was frozen FII_OUTFLOW_RISK (-0.63)
+
+CHECK-3 (FU-A computedAt fresh):
+  carry.computedAt = 2026-05-30T09:18:25Z   PASS (today, NOT frozen 2026-05-23)
+
+CHECK-4 (FU-B tracked_indicators row):
+  SELECT COUNT(*),MAX(extracted_at),MAX(value) FROM tracked_indicators WHERE indicator='market_earning_yield'
+  → cnt=1, latest_at=2026-05-30T08:48:35.768Z, value=6.830601092896174
+  PASS (>=1 row, value non-null, NOT 8.2 fixture)
+
+CHECK-5 (FU-B get_macro_snapshot earningYield):
+  yield.earningYield = 6.830601092896174   PASS (LIVE, NOT fixture 8.2)
+  yield.depositRate = 4.7, spread = 2.13 (CHEAP label)
+
+CHECK-6 (Regime integrity):
+  carry: vndDepositRate=4.7, fedFundsRate=3.62, carrySpread=1.08 ✓ (4.7−3.62=1.08 math correct)
+  yield: earningYield=6.83, depositRate=4.7, spread=2.13 ✓ (6.83−4.70=2.13 math correct)
+  Both blocks use same depositRate=4.7 — internally consistent.
+
+HONEST RESIDUAL — vndDepositRate safe-degrade:
+  DB row: sbv_rates WHERE source='sbv' → max_deposit_rate_pct=0, fetched_at=2026-05-30T08:36:48Z
+  The SBV cron ran at 08:36Z and stored max_deposit_rate_pct=0 (zero-value overwrite of prior
+  5.0 row from 2026-05-29T23:15Z). Staleness guard fires on value=0 → safe-degrade to fixture 4.7.
+  This is NOT a regression from ff9a64ce — it is a pre-existing SBV fetcher issue where rate
+  fields return 0 intermittently (separate known issue). Both carry and yield blocks use 4.7
+  consistently (no cross-block inconsistency). Note: prior DPI-2b QA saw 5.0 because the SBV
+  row had not been overwritten yet.
+  IMPACT: deposit rate is safe-degraded; carrySpread uses 4.7 not 5.0. This is correct behavior.
+  Not a DPI-FU blocker — fix of SBV zero-value overwrite is a separate issue.
+
+UNIT TESTS (DPI-FU): 14/14 PASS (DPI-FU-A: 6 tests, DPI-FU-B: 8 tests)
+ALL DPI TESTS: 23/23 PASS
+TSC: 0 errors (bunx tsc --noEmit on apps/mcp-server)
+Full suite: 10192 tests across 941 files (2 pre-existing fails in _deprecated/ reuters.js, unrelated to ff9a64ce)
+
+SCHEDULING (FU-A EFFR next run):
+  macroIndicatorRefreshJob cron = '13 19 * * *' (19:13 UTC daily)
+  Next scheduled EFFR fetch: 2026-05-30T19:13Z
+  If FRED unreachable again, checkAndAlertEffrStaleness() fires WORK channel alert.
+
+VERDICT: PASS — all 6 checks GREEN. Honest residual: vndDepositRate=4.7 (safe-degrade
+  from 0-valued SBV row) — not caused by this fix, both blocks consistent, regime math correct.
+```
+
+---
+
 ## cycle-150 · 2026-05-30 · BCTC-TABLE-BOUNDARY BTB-QA — RED (2 blocking issues remain)
 
 **Sprint:** BCTC-TABLE-BOUNDARY | **Task:** BTB-QA | **Verdict:** RED (partial progress — 2 of 4 issues remain)
