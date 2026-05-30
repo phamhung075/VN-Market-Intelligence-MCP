@@ -19,8 +19,10 @@ WATCHLIST_URL="${WATCHLIST_URL:-__MCP_BASE__/api/watchlist}"
 API_KEY="${API_KEY:-__API_KEY__}"
 
 # Configurable foreign flow field names
-FBUY_FIELD="${FOREIGN_FLOW_FBUY_FIELD:-fBuyVol}"
-FSELL_FIELD="${FOREIGN_FLOW_FSELL_FIELD:-fSellVol}"
+# API field audit 2026-05-30: bgapidatafeed.vps.com.vn returns fBVol/fSVolume/fRoom
+# (NOT fBuyVol/fSellVol — those names do NOT exist in the API.)
+FBUY_FIELD="${FOREIGN_FLOW_FBUY_FIELD:-fBVol}"
+FSELL_FIELD="${FOREIGN_FLOW_FSELL_FIELD:-fSVolume}"
 FROOM_FIELD="${FOREIGN_FLOW_ROOM_FIELD:-fRoom}"
 
 # ── Log setup ─────────────────────────────────────────────────────────────────

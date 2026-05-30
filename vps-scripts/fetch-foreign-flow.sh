@@ -18,8 +18,8 @@
 #    API_KEY                X-API-Key bearer token (VPS_PUSH_API_KEY)
 #
 #  Configurable field names (override if VPS API renames fields):
-#    FOREIGN_FLOW_FBUY_FIELD   field name for foreign buy volume   (default: fBuyVol)
-#    FOREIGN_FLOW_FSELL_FIELD  field name for foreign sell volume  (default: fSellVol)
+#    FOREIGN_FLOW_FBUY_FIELD   field name for foreign buy volume   (default: fBVol)
+#    FOREIGN_FLOW_FSELL_FIELD  field name for foreign sell volume  (default: fSVolume)
 #    FOREIGN_FLOW_ROOM_FIELD   field name for remaining buy room   (default: fRoom)
 #
 #  Log:
@@ -39,8 +39,12 @@ DEBUG_MODE="${DEBUG_MODE:-0}"
 PAYLOAD_SIZE_THRESHOLD="${PAYLOAD_SIZE_THRESHOLD:-50000}"  # bytes — warn if larger
 
 # Configurable foreign flow field names
-FBUY_FIELD="${FOREIGN_FLOW_FBUY_FIELD:-fBuyVol}"
-FSELL_FIELD="${FOREIGN_FLOW_FSELL_FIELD:-fSellVol}"
+# API field audit 2026-05-30: bgapidatafeed.vps.com.vn returns fBVol/fSVolume/fRoom
+# (NOT fBuyVol/fSellVol — those names do NOT exist in the API; the script was using
+# wrong defaults, producing foreignBuyVol=0/foreignSellVol=0 fleet-wide, causing
+# get_foreign_flow to return "never collected" for all tickers. Fix: correct defaults.)
+FBUY_FIELD="${FOREIGN_FLOW_FBUY_FIELD:-fBVol}"
+FSELL_FIELD="${FOREIGN_FLOW_FSELL_FIELD:-fSVolume}"
 FROOM_FIELD="${FOREIGN_FLOW_ROOM_FIELD:-fRoom}"
 
 # Helper: diagnostic log function
@@ -57,9 +61,13 @@ log_diagnostic() {
 # Log rotation — keep under 10 MB
 # Source shared constants (LOG_ROTATE_BYTES) from vps-lib.sh
 # shellcheck source=/root/vps-lib.sh
-[ -f /root/vps-lib.sh ] && LOG_ROTATE_BYTES=$(grep '^LOG_ROTATE_BYTES=' /root/vps-lib.sh | cut -d= -f2) || LOG_ROTATE_BYTES=10485760
+LOG_ROTATE_BYTES=10485760  # default 10 MB
+if [ -f /root/vps-lib.sh ]; then
+  _lib_val=$(grep '^LOG_ROTATE_BYTES=' /root/vps-lib.sh | cut -d= -f2)
+  [ -n "$_lib_val" ] && LOG_ROTATE_BYTES="$_lib_val"
+fi
 LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || echo 0)
-if [ "$LOG_SIZE" -gt $LOG_ROTATE_BYTES ]; then
+if [ "$LOG_SIZE" -gt "$LOG_ROTATE_BYTES" ]; then
   mv "$LOG" "$LOG.old"
   log_diagnostic "INFO" "Log rotated (was $LOG_SIZE bytes)"
 fi
