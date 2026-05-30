@@ -143,6 +143,211 @@ This is a WARNING only — do NOT block spawns. Intentional multi-slot fires (e.
 
 <!-- spawn-guard: policy-only — no runtime assertion; enforced by convention, not code check (ITEM-16 doc note, 1967-10). NEVER spawn dev-team agents from this dispatcher. -->
 
+---
+
+## Step 4.2 — Read and validate pressure-state.json (DWF-PHASE1)
+
+<!-- DWF-PHASE1 FR-P1-6: Staleness self-check on every tick (NFR-P1-7).
+     AC-P1-6-1: Missing → legacy cron fallback, zero behavioral difference from today.
+     AC-P1-6-2: emitted_at > 20 min old → fallback.
+     AC-P1-6-3: stale_warning=true → fallback even if emitted_at is recent.
+     _staleness_threshold_minutes is read from cadence-policy.json (SSOT — not hardcoded).
+     Rate-limit WORK telegram: only emit when staleness epoch changes (tick_id differs). -->
+
+```
+PRESSURE_FILE   = "docs/data/pressure-state.json"
+POLICY_FILE     = "docs/data/cadence-policy.json"
+PRESSURE_MODE   = "adaptive"   # default; may downgrade to "legacy" below
+PRESSURE_STATE  = null
+
+# Load cadence policy (needed for _staleness_threshold_minutes)
+if POLICY_FILE is missing or fails JSON parse:
+  log "[cowork] WARN: cadence-policy.json missing/malformed — cadence fallback to legacy cron"
+  PRESSURE_MODE = "legacy"
+  → skip to Step 4.5b (CADENCE_MATCHES = MATCHES; proceed to Step 4.6)
+else:
+  POLICY_OBJ = JSON.parse(readFile(POLICY_FILE))
+  STALENESS_THRESHOLD = POLICY_OBJ._staleness_threshold_minutes || 20
+
+# Load pressure state
+if PRESSURE_FILE is missing or fails JSON parse:
+  reason = "missing" if file absent else "malformed"
+  log "[cowork] WARN: pressure-state.json unavailable (" + reason + ") — cadence fallback to legacy cron"
+  send_telegram(channel=work, "[cowork] WARN: pressure-state.json unavailable — cadence fallback to legacy cron (reason: " + reason + ")")
+  PRESSURE_MODE = "legacy"
+  → skip to Step 4.5b (CADENCE_MATCHES = MATCHES; proceed to Step 4.6)
+else:
+  PRESSURE_STATE = JSON.parse(readFile(PRESSURE_FILE))
+  # isStale checks both stale_warning flag AND age threshold (AC-P1-6-2 / AC-P1-6-3)
+  stale = isStale(PRESSURE_STATE, STALENESS_THRESHOLD)   # from cadence-policy.js
+  if stale:
+    reason = "stale_warning_flag" if PRESSURE_STATE.stale_warning == true else "stale"
+    log "[cowork] WARN: pressure-state.json stale (reason: " + reason + ") — cadence fallback to legacy cron"
+    # Rate-limit telegram: only emit when tick_id changes vs previous staleness epoch
+    PRESSURE_MODE = "legacy"
+    → skip to Step 4.5b (CADENCE_MATCHES = MATCHES; proceed to Step 4.6)
+
+# PRESSURE_MODE = "adaptive" — proceed to Steps 4.3, 4.4, 4.5
+```
+
+If `PRESSURE_MODE = "legacy"` at end of this step: CADENCE_MATCHES = MATCHES (raw from Steps 2+3). Skip Steps 4.3–4.5. Proceed directly to Step 4.5b. This satisfies NFR-P1-3 (never worse than today).
+
+---
+
+## Step 4.3 — Calendar suppression (DWF-PHASE1)
+
+<!-- DWF-PHASE1 FR-P1-4: Suppress non-guaranteed slots on holiday/weekend.
+     BLOCKER-1 resolution: suppression runs BEFORE Step 4.6 per-work-item claim.
+     No token is acquired for suppressed slots — no task_release needed.
+     AC-P1-4-1: holiday → guaranteed slots still fire (never suppressed).
+     AC-P1-4-2: unknown → no suppression (conservative).
+     OQ-P1-3: bctc-offmarket + holiday → suppress; bctc-offmarket + weekend → NOT suppressed here
+               (cadence policy handles 1440-min rate for weekend bctc slots in Step 4.4). -->
+
+Only runs if `PRESSURE_MODE = "adaptive"`.
+
+```
+CALENDAR_STATUS = PRESSURE_STATE.calendar_status   # from Step 4.2
+
+SUPPRESS_CALENDAR = new Set()
+
+if CALENDAR_STATUS in ["holiday", "weekend"]:
+  for each slot in MATCHES:
+    if slot.guaranteed == true:
+      continue   # guaranteed slots never suppressed (NFR-P1-4)
+
+    if slot.policy_id == "bctc-offmarket":
+      if CALENDAR_STATUS == "holiday":
+        SUPPRESS_CALENDAR.add(slot.slot_id)
+        log "[cowork] calendar suppress: " + slot.slot_id + " reason=holiday (bctc-offmarket policy)"
+      # bctc-offmarket + weekend: NOT suppressed here — Step 4.4 cadence policy resolves 1440-min rate
+      continue
+
+    # All other non-guaranteed slots: suppress on holiday OR weekend
+    SUPPRESS_CALENDAR.add(slot.slot_id)
+    log "[cowork] calendar suppress: " + slot.slot_id + " reason=" + CALENDAR_STATUS
+
+# No token acquired → no task_release needed (BLOCKER-1 resolution)
+CALENDAR_ALLOWED = MATCHES.filter(s => !SUPPRESS_CALENDAR.has(s.slot_id))
+```
+
+For `CALENDAR_STATUS` values `"open"`, `"half_day"`, `"unknown"`: no suppression (conservative — AC-P1-4-2).
+
+---
+
+## Step 4.4 — Cadence due-check (adaptive mode) (DWF-PHASE1)
+
+<!-- DWF-PHASE1 FR-P1-3: evaluateCadence per slot; due = elapsed >= cadence.
+     EC-3: last_fired=null → always due (first-run semantics).
+     _cron_fallback: bctc-offmarket on open/half_day/unknown → cron governs.
+     AC-P1-3-1: last_fired=null → always included.
+     AC-P1-3-2: elapsed < cadence → not included.
+     AC-P1-3-3: elapsed >= cadence → included.
+     AC-P1-3-4: output slots carry due_reason + cadence_minutes fields. -->
+
+Only runs if `PRESSURE_MODE = "adaptive"`.
+
+```
+{ signal_backlog_tier, volatility_tier } = computeTiers(PRESSURE_STATE)
+  # signal_backlog_tier: low=0–2, medium=3–9, high=≥10
+  # volatility_tier: low if last_volatility_level in ["unknown","low"], high otherwise
+
+CADENCE_MATCHES = []
+
+for each slot in CALENDAR_ALLOWED:
+  if slot.policy_id == null:
+    # Legacy cron — already matched by Steps 2+3; pass through unchanged
+    CADENCE_MATCHES.push(slot with { due_reason: "cron", cadence_minutes: null })
+    continue
+
+  policy_result = evaluateCadence(slot.policy_id, CALENDAR_STATUS, signal_backlog_tier, volatility_tier, POLICY_OBJ)
+  # evaluateCadence: first-match in cadence-policy.json array; unmatched → interval_minutes=240
+
+  if policy_result._cron_fallback == true:
+    # bctc-offmarket on open/half_day/unknown — cron already matched this slot in Steps 2+3
+    CADENCE_MATCHES.push(slot with { due_reason: "cron", cadence_minutes: null })
+    continue
+
+  if policy_result.interval_minutes == null:
+    # Suppressed by policy (e.g. chef-intraday on holiday/weekend)
+    log "[cowork] cadence suppress: " + slot.slot_id + " policy=" + slot.policy_id + " reason=null_interval calendar=" + CALENDAR_STATUS
+    continue   # do not add to CADENCE_MATCHES; no token acquired
+
+  cadence_seconds = policy_result.interval_minutes * 60
+  last_fired_unix = slot.last_fired ? new Date(slot.last_fired).getTime() / 1000 : null
+
+  if last_fired_unix == null:
+    # EC-3: first-run semantics (last_fired=null → always due)
+    CADENCE_MATCHES.push(slot with { due_reason: "first_run", cadence_minutes: policy_result.interval_minutes })
+    continue
+
+  elapsed_seconds = now_unix - last_fired_unix
+  if elapsed_seconds >= cadence_seconds:
+    CADENCE_MATCHES.push(slot with { due_reason: "cadence", cadence_minutes: policy_result.interval_minutes })
+  else:
+    log "[cowork] cadence skip: " + slot.slot_id + " elapsed=" + Math.floor(elapsed_seconds) + "s cadence=" + cadence_seconds + "s"
+    # no token acquired — no release needed
+```
+
+---
+
+## Step 4.5 — Freshness silent-downgrade for gatherer slots (DWF-PHASE1)
+
+<!-- DWF-PHASE1 FR-P1-5: Suppress gatherer slots when all three conditions hold:
+     last_regime="unknown" AND signal_backlog=0 AND calendar_status in ["holiday","weekend"].
+     Condition: "nothing has changed and market is closed — no value in running gatherers."
+     AC-P1-5-1: Three-condition AND gate enforced (not two of three).
+     This downgrade applies only to non-guaranteed gatherers; guaranteed slots are never touched. -->
+
+Only runs if `PRESSURE_MODE = "adaptive"`.
+
+```
+GATHERER_SLOTS = ["news-scout-offhours", "market-watcher-offhours", "news-scout-sentiment", "market-watcher-eod"]
+
+DOWNGRADED = []
+
+if PRESSURE_STATE.last_regime == "unknown"
+   AND PRESSURE_STATE.signal_backlog == 0
+   AND CALENDAR_STATUS in ["holiday", "weekend"]:
+
+  for each slot in CADENCE_MATCHES:
+    if slot.slot_id in GATHERER_SLOTS AND slot.guaranteed == false:
+      DOWNGRADED.push(slot.slot_id)
+      log "[cowork] freshness downgrade: " + slot.slot_id + " — no regime, empty backlog, market closed"
+
+  CADENCE_MATCHES = CADENCE_MATCHES.filter(s => !DOWNGRADED.includes(s.slot_id))
+  # Note: these slots were in CADENCE_MATCHES but not yet claimed — no token release needed (BLOCKER-1)
+```
+
+---
+
+## Step 4.5b — Resolve final CADENCE_MATCHES (DWF-PHASE1)
+
+<!-- BLOCKER-1 resolution: CADENCE_MATCHES is the result after all Phase 1 gates.
+     Step 4.6 receives this set (rebind MATCHES = CADENCE_MATCHES).
+     Legacy mode: CADENCE_MATCHES = raw MATCHES from Steps 2+3 (no filtering). -->
+
+```
+# Rebind MATCHES for Step 4.6 compatibility
+# After this step: MATCHES contains only calendar-allowed + cadence-due + not-freshness-downgraded slots
+MATCHES = CADENCE_MATCHES
+```
+
+Telemetry fields added to Step 6 payload (for observability):
+```
+{
+  "pressure_mode":        "<adaptive|legacy>",
+  "calendar_status":      "<status>",
+  "suppressed_calendar":  ["<slot_ids suppressed in Step 4.3>"],
+  "suppressed_cadence":   ["<slot_ids skipped in Step 4.4 for null interval or elapsed<cadence>"],
+  "downgraded":           ["<slot_ids removed in Step 4.5>"],
+  "due_reasons":          { "<slot_id>": "<cadence|cron|first_run>" },
+  "cadence_minutes":      { "<slot_id>": <N|null> }
+}
+```
+
+---
+
 <!-- decision: Step 4.6 REWRITTEN — DWF-DEV-CROSS-4 Phase 2 (R1 + R3 blocking).
   OLD: key = cowork-slot:<agent>:<nominal_tick>; TTL = 900s (stale after next tick).
   NEW: key = cowork-slot:<slot_id> (SUFFIX-FREE — R3); TTL = 180s (EXPLICIT, mandatory — R1).
@@ -467,6 +672,59 @@ finally:
 
 ---
 
+## Step 5b — Batch `last_fired` write (DWF-PHASE1 FR-P1-7)
+
+<!-- BLOCKER-3 resolution: single batched read→update-all-WON→write.tmp→rename.
+     No per-slot writes (avoids lost-update race from parallel fan-out).
+     Only WON_SLOTS (successful spawns) update last_fired — failed spawns leave it unchanged.
+     Non-fatal on write failure: log WARN, continue to Step 6, do NOT roll back spawns.
+     AC-P1-7-1: last_fired written after successful spawn.
+     AC-P1-7-2: spawn failure → last_fired NOT written.
+     AC-P1-7-3: write failure is non-fatal; spawn already happened. -->
+
+Only execute if `WON_SLOTS` is non-empty (skip on silent-exit path).
+
+```
+FIRED_AT      = new Date().toISOString()   # UTC ISO8601 — same timestamp for all WON_SLOTS in this tick
+SCHED_FILE    = "docs/data/cowork-schedule.json"
+SCHED_TMPFILE = "docs/data/cowork-schedule.json.tmp"
+
+try:
+  # Single read — load entire schedule into memory
+  schedule = JSON.parse(readFileSync(SCHED_FILE, 'utf8'))
+
+  # Update in memory — only for WON_SLOTS (suppressed + held slots untouched)
+  WON_IDS = new Set(WON_SLOTS.map(s => s.slot_id))
+  for each slot in schedule.slots:
+    if WON_IDS.has(slot.slot_id):
+      slot.last_fired = FIRED_AT
+
+  # Atomic write: write to .tmp then rename (AC-P1-2-2 / NFR-P1-6)
+  writeFileSync(SCHED_TMPFILE, JSON.stringify(schedule, null, 2))
+  renameSync(SCHED_TMPFILE, SCHED_FILE)
+
+  log "[cowork-team] last_fired updated for slots: " + [...WON_IDS].join(", ") + " at " + FIRED_AT
+
+catch (e):
+  # Non-fatal: spawn already happened (Steps 0–5 complete). Next tick computes due from stale last_fired.
+  # Conservative: under-suppress (slot may fire again at next tick) — never over-suppress.
+  # Do NOT abort or roll back the spawn (FR-P1-7 AC-P1-7-3).
+  log "[cowork-team] WARN: last_fired write failed: " + e.message + " — slot(s): " + WON_SLOTS.map(s=>s.slot_id).join(", ")
+  # Telemetry captures the failure in last_fired_write_errors below
+```
+
+**Extend telemetry payload (Step 6):** Add these fields to the signal output:
+
+```json
+{
+  "last_fired_timestamp":    "<ISO8601 of write — same as FIRED_AT>",
+  "last_fired_slots":        ["<slot_ids whose last_fired was updated>"],
+  "last_fired_write_errors": "<null or error message if write failed>"
+}
+```
+
+---
+
 ## Step 6 — Write telemetry signal
 
 After each fire cycle (whether spawns happened or silent exit):
@@ -488,7 +746,17 @@ cat > docs/signals/cowork-team-${ISO}.json <<EOF
     "spawned": [<flow_paths of successfully spawned slots>],
     "silent": <true if MATCHES empty, false otherwise>,
     "drift_min": ${DRIFT_MIN},
-    "errors": [<{slot_id, error} per failed spawn>]
+    "errors": [<{slot_id, error} per failed spawn>],
+    "pressure_mode": "<adaptive|legacy>",
+    "calendar_status": "<status>",
+    "suppressed_calendar": ["<slot_ids suppressed in Step 4.3>"],
+    "suppressed_cadence": ["<slot_ids skipped in Step 4.4>"],
+    "downgraded": ["<slot_ids removed in Step 4.5>"],
+    "due_reasons": { "<slot_id>": "<cadence|cron|first_run>" },
+    "cadence_minutes": { "<slot_id>": "<N|null>" },
+    "last_fired_timestamp": "<ISO8601 or null>",
+    "last_fired_slots": ["<slot_ids updated>"],
+    "last_fired_write_errors": "<null or error message>"
   },
   "priority": "low",
   "createdAt": "${ISO}"
