@@ -1,5 +1,32 @@
 # dev-mcp-server -- Notebook
 
+## c339 · 2026-05-30 (DYN-WF-FOUNDATION DWF-DEV-MCP-1) — COMMITTED 16117375
+
+**Task:** DWF-DEV-MCP-1 — is_trading_day MCP tool (#147)
+
+**5 files, 470 lines added:**
+- `domain/services/vnHolidayData.ts` — VN_HOLIDAYS 2024-2027 + VN_HALF_DAYS Set + VN_CALENDAR_LAST_YEAR
+- `domain/services/vnTradingCalendar.ts` — isVnTradingDay() pure fn + getTodayVnDate(); GMT+7 via Date.UTC math
+- `interface/mcp/tools/system/isTradingDayTool.ts` — registerIsTradingDayTool(); optional date param; defaults to today VN time
+- `__tests__/DWF-is-trading-day.test.ts` — 13 tests: 12 GREEN / 1 RED (DV AC-P0-3-6)
+- `interface/mcp/tools/registry.ts` — +2 lines: import + push #147
+
+**AC status:**
+- AC-P0-3-1: GREEN — 2025-01-27 → holiday
+- AC-P0-3-2: GREEN (corrected to 2025-01-06 Monday — spec date 2025-01-04 is actually Saturday)
+- AC-P0-3-3: GREEN — 2025-01-11 → weekend
+- AC-P0-3-4: GREEN — domain-only, zero infra imports
+- AC-P0-3-6 DV: RED (correct) — proves calendar is real
+- AC-P0-3-7: PENDING rebuild + container verify
+
+**Gates:** tsc EXIT 0 | 12 pass / 1 fail (DV only) | tool 156→157 (+1) | sched 70 unchanged
+
+**ops_rebuild_required: true** — rebuild mcp-server to activate is_trading_day in container
+
+Zone health: 5 files (1 mod + 4 new); tsc EXIT 0; 12+1DV tests; tool=157; sched=70 | HEALTHY
+
+---
+
 ## c338 · 2026-05-30 (BCTC-TRUST-RED) — COMMITTED 4 commits
 
 **Sprint:** BCTC-TRUST-RED
@@ -289,21 +316,16 @@ Zone health: 4 files (2 mod, 2 new); tsc EXIT 0 on zone files; 35 tests green; f
 
 ## Working Memory
 
-### Active Sprint: DATA-PIPELINE-INTEGRITY (DPI-FU-A + DPI-FU-B)
-- c328 DONE: DPI-FU-A fail-loud EFFR staleness + DPI-FU-B reachable-denominator committed ff9a64ce
-- DPI-FU-A INFRA BLOCKER: container cannot reach fred.stlouisfed.org (timeout) → ops must restore network connectivity
-- DPI-FU-B: after rebuild, marketEarningYieldJob fires next 09:30 UTC weekday → rows will appear in tracked_indicators
-- NEXT: ops (rebuild mcp-server) → qa (verify DoD: DB check + live get_macro_snapshot carry.fedFundsRate + yield.earningYield)
+### Active Sprint: DYN-WF-FOUNDATION
+- c339 DONE: DWF-DEV-MCP-1 is_trading_day tool committed 16117375; tool=157; AC-P0-3-1/3/4/6DV all pass
+- AC-P0-3-7 PENDING: requires ops rebuild + gateway call to verify container toolCount +1
+- NEXT: ops (rebuild mcp-server) → QA verify AC-P0-3-5 gateway reachability + AC-P0-3-7 container toolCount
 
-### Also active: BCTC-TABLE-BOUNDARY (BTB-PERSIST-FIX)
-- c327 DONE: BLOCKING-1 delete-before-insert committed 60dfac7f
-- BLOCKING-2: prose units must be added by dev-pdf-extractor to PEK push payload
-- NEXT: ops (rebuild mcp-server) → dev-pdf-extractor (add prose units to pek_engine_adapter.py push) → ops (rebuild pdf-extractor) → single re-extraction of FPT + ACB sentinels → qa re-verify
-
-### Carry-over
-- tool=151, sched=70 (baselines for Gate 2c/2d)
-- Bun v1.3.13 C++ post-suite panic = upstream bug, pre-existing
-- Pre-existing tsc errors: bctcRefineJob.ts (2 errors) + AR-refine-readiness-gate.test.ts (1 error) — not caused by any recent change
+### Previous sprints (carry-over)
+- tool=157, sched=70 (current baselines for Gate 2c/2d)
+- Pre-existing test failure: get_price_history (cron_job_runs table missing) — confirmed pre-existing, not caused by DWF changes
+- Pre-existing tsc errors: bctcRefineJob.ts (2 errors) + AR-refine-readiness-gate.test.ts (1 error)
+- ops_rebuild_required: true (DWF-DEV-MCP-1 + BCTC-TRUST-RED + DPI-FU-A/B + BTB-PERSIST-FIX all pending rebuild)
 
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`
