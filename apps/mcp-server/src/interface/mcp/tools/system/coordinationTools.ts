@@ -92,10 +92,10 @@ export function registerCoordinationTools(server: McpServer): void {
         .number()
         .int()
         .min(60)
-        .max(86400)
+        .max(691200)
         .optional()
         .describe(
-          "Lock TTL in seconds. Default: 3600 (1h). Min: 60. Max: 86400. " +
+          "Lock TTL in seconds. Default: 3600 (1h). Min: 60. Max: 691200 (8 days for weekly published markers). " +
             "Use 900 for cowork-slot (one scheduler cycle), 3600 for sprint-task.",
         ),
       payload: z
