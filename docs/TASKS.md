@@ -13,6 +13,19 @@
 
 ---
 
+## Sprint BCTC-AI-INPUT-TAB — 7th viewer tab: per-page AI input bundle
+
+**Status:** KICKOFF — PO self-initiated 2026-05-30T19:07Z. **Priority: MEDIUM (operator-requested UX/debug).** Zone: **`apps/mcp-server/`** (the `/api/bctc-inspect` viewer is mcp-server's own served HTML — `src/interface/bctc-inspector.html` — NOT Remix). Additive-only; serializes on the single git tree. Goal: `docs/SPRINT_GOAL.md` (top section). WIP=2.
+
+Surface, per CURRENTLY SELECTED page (replays on `navigateToPage`): (1) rasterized agent-input PNG `data/bctc-page-images/{report_id}/page_{N}.png` via the `get_bctc_page_image` path — honest "chưa có ảnh" empty state if missing; (2) OCR text passed for that page; (3) page-window from `bctc_refined_units.page_numbers_json`; (4) optional read-only refine contract. New tab follows existing `switchTab`/`rtab-*`/`tab-panel` pattern; the existing 6 tabs + 50/50 split + 25 legacy pane IDs MUST stay green. Vietnamese tab LABEL only (the one exception); all sprint artifacts + comms ENGLISH.
+
+- 🔄 AIT-BA → AIT-ARCH (mini-brief: serving seam for PNG bytes to browser, tab wiring, per-page replay hook) → AIT-DEV (dev-mcp-server) → AIT-DEPLOY (ops rebuild --no-cache) → AIT-QA (DV RED→GREEN same commit; real PNG bytes; zero-regression on 6 tabs) → AIT-EXIT (po G9)
+- Anti-false-green: DV test lands SAME commit as production; new PNG route must return real `image/png` bytes (not echo); balance badge FORBIDDEN as gate (N/A).
+
+| AIT-BA | Requirement Spec for BCTC-AI-INPUT-TAB | pending | BA | — |
+
+---
+
 ## Sprint FF-DEAD — Foreign-flow pipeline dead fleet-wide
 
 **Status:** OPEN — PO triage 2026-05-30T10:14Z. **Priority: HIGH** (live-confirmed: `get_foreign_flow(code=FPT)` → source_tier 2, "never collected"; foreign net buy/sell dead for every ticker). Zone: **VPS-crawls (`vps-scripts/`) — UNCONTENDED** (separate from AR-* apps/ fan-out). Producer = `fetch-foreign-flow.sh` + `vn-foreign-flow.service`; receiver handler already exists in mcp-server.

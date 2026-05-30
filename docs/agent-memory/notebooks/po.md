@@ -1,5 +1,22 @@
 # PO Notebook
 
+## Cycle 2026-05-30T19:07Z — KICKOFF: BCTC-AI-INPUT-TAB (7th viewer tab, additive)
+
+**Self-initiated from operator verbatim** "add tab for see what ai receive of each page bctc". Goal written (SPRINT_GOAL.md top section), AIT-BA task added to TASKS.md, umbrella lock `task:BCTC-AI-INPUT-TAB` claimed:true (TTL 3600).
+
+**Scoped the surface BEFORE writing the goal (de-risk the architect's brief):**
+- Viewer = `apps/mcp-server/src/interface/bctc-inspector.html` (2603L embedded JS), served at `/api/bctc-inspect`. NOT Remix — mcp-server's own HTML. Confirmed zone = `apps/mcp-server/` only (single tree, serializes).
+- Tab pattern: `rtab-btn[data-tab]` buttons + `tab-panel[data-tab-panel]` panels, toggled by `switchTab(tabId)` (~L2578). `navigateToPage(pageNum)` (~L1249) = MASTER per-page replay orchestrator. 6 existing tabs: ocr/bang/md/soluyen/danhgia/suatay. New = 7th (`aiinput`).
+- Browser↔server = REST, NOT MCP tools. Per-page OCR today = `GET /api/bctc-inspect/ocr/{docId}?page=N` (~L1280). `docId` === `report_id`.
+- **KEY GAP for architect**: `get_bctc_page_image` (report_id→`data/bctc-page-images/{id}/page_{N}.png`, rasterize-on-miss) + `get_bctc_page_text` exist but are MCP-tool surface — NO browser-reachable HTTP route serves the PNG to an `<img>`. Architect must design an additive route (likely `GET /api/bctc-inspect/page-image/{docId}?page=N` returning real image/png bytes). Anti-false-green flag raised: prove REAL bytes not echo; honest "chưa có ảnh" empty state on miss.
+- Page-window source = `bctc_refined_units.page_numbers_json`.
+
+**Language boundary ENFORCED**: all sprint docs/comms ENGLISH; Vietnamese ONLY for the new tab's user-facing label (the one exception — existing all-Vietnamese operator tool).
+
+**Env note**: harness emitted spurious ENOSPC "tasks full" warnings on grep commands that produced empty stdout — red herring (disk 32Gi free). Workaround: redirect probe output to a project file + Read it. Worked.
+
+**Chain dispatched**: architect (mini-brief) → ba/pm right-size → dev-mcp-server → qa → ops rebuild → po-exit. WIP=2. Continue to G9 autonomously, no user contact until G9.
+
 ## Cycle 2026-05-30T18:34Z — HC-EXIT: BCTC-HUMAN-CONFIRM ✅ SIGNED OFF (G9-ready)
 
 **Sprint CLOSED.** QA HC-QA-3 cycle-156 APPROVED all 9 gates GREEN @ 441f8e18, container dd904d63 toolCount=154 healthy. Human-in-the-loop correction layer on `/api/bctc-inspect`: review red/yellow flagged cells (OCR vs image), hand-correct, lock "ĐÃ XÁC NHẬN"; corrections survive cron refine re-runs; 50/50 viewer + 6 tabs.
