@@ -1,8 +1,111 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-30T09:30 UTC | **Sprint:** BCTC-AGENTIC-REFINE
+**Last updated:** 2026-05-30T20:45 UTC | **Sprint:** BCTC-TRUST-RED
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## BCTC-TRUST-RED (2026-05-30T20:45 UTC) — DESIGN COMPLETE
+
+**Sprint:** BCTC-TRUST-RED
+
+**Root cause split (3 independent seams):**
+
+RC-0 — `pushBctcRefinedUnitTool.ts` has no ingest gate. Any caller can push digit-run values with high confidence and `window_status='DONE'` unconditionally. The FPT + ACB contamination entered this seam.
+
+RC-1 — Confidence in `bctc_refined_units` measures OCR legibility (Haiku self-report), not semantic validity. Neither `parseTrustFlag` nor `bctc_balance_checks` can detect ordered-digit fabrication or gross_profit=net_revenue. The three-way prior-period revenue contradiction (16,058 / 11,481 / 20,225 tỷ) was never checked.
+
+RC-2 — Coverage gaps (opex codes 11/24/25/26, equity/liab decomposition, CF pages 9/10/16) are extraction deficiencies, not trust failures. Routed to BCTC-LAYOUT-FIRST as acceptance criteria.
+
+**TR-0 seam:** `pushBctcRefinedUnitTool.ts` (ingest gate calling new domain validator) + `bctcFullTools.ts` (publish guard: PUB-1 through PUB-4).
+
+**TR-1 seam:** Two new domain services:
+- `bctcSanityValidator.ts` — DT-1 digit-run detector; called at ingest; BLOCK writes `window_status='REJECTED_SANITY'`.
+- `bctcMagnitudeValidator.ts` — DT-2 (gross=net_rev BLOCK), DT-3 (cross-stmt revenue contradiction BLOCK); called in `finalizeBctcRefineTool.ts` after parse, before INSERT; BLOCK writes `refine_status='REJECTED_SANITY'`, skips `bctc_table_rows` insert.
+
+**TR-2 disposition:** BCTC-LAYOUT-FIRST acceptance criteria. PM adds 4 LF-QA gate assertions.
+
+**New schema value REJECTED_SANITY:** additive to TEXT columns `refine_status` and `window_status`. No ALTER TABLE.
+
+**Publishable definition (PUB-1 to PUB-4):** refine_status IN (DONE,PARTIAL) + non-empty bctc_table_rows + balance_sheet has non-summary children + no REJECTED_SANITY units. All 4 checked in `checkPublishability()` helper added to `bctcFullTools.ts`.
+
+**Purge:** one-time SQL for FPT (e8ea3df5…) + ACB (dev must query UUID first). Resets to `refine_status='PENDING'`; deletes `bctc_refined_units` + `bctc_table_rows` for both reports.
+
+**QA mandate:** 6-case test file `TRUST-RED-sanity-gate.test.ts`. DB arbiter = `new Database(':memory:')` direct COUNT query. Never HTTP echo alone.
+
+**Files:** CREATE 3 (bctcSanityValidator.ts, bctcMagnitudeValidator.ts, TRUST-RED-sanity-gate.test.ts); MODIFY 4 (pushBctcRefinedUnitTool.ts, finalizeBctcRefineTool.ts, bctcFullTools.ts, schema-financial-reports.ts DDL comment).
+
+**Brief:** `docs/architecture-briefs/2026-05-30-bctc-trust-red.md`
+**Zone:** `apps/mcp-server/` only. dev-pdf-extractor: 0-diff. PDF-Extract-Kit subtree: pristine.
+
+---
+
+## AIT-ARCH (2026-05-30T19:30 UTC) — DESIGN COMPLETE
+
+**Sprint:** BCTC-AI-INPUT-TAB
+
+**PNG-serving decision (binding):** mcp-server reads PNG directly from the shared named volume (`bctc-page-images:/data/bctc-page-images`). Path formula: `/data/bctc-page-images/{reportId}/page_{0001}.png`. No proxy to pdf-extractor. Rationale: volume already mounted in mcp-server (proven by `getBctcPageImageTool.ts` using same `readFileSync` pattern as `handleBctcInspectPdf`).
+
+**Two new handlers** added to `bctcInspectHandler.ts` (additive exports, no new file):
+- `handleBctcInspectPageImage` — GET `/api/bctc-inspect/page-image/{docId}?page=N` → raw image/png bytes or 404
+- `handleBctcInspectPageWindow` — GET `/api/bctc-inspect/page-window/{docId}?page=N` → `bctc_refined_units` window JSON
+
+**OCR text reuse decision:** The `aiinput` tab reads from `lastOcrData` JS variable (already populated by `renderOcr()` on every `navigateToPage`). No new OCR endpoint.
+
+**Routing call:** Direct to `dev-mcp-server`. Skip BA/PM — design fully specified, single zone, two handlers, one tab.
+
+**Anti-false-green gate:** `AIT-DEV-1.test.ts` — PNG magic-byte check (not echo), 404-on-miss, 400-on-bad-UUID, page-window hit/miss, HTML structure regression (7th tab button + all 6 existing). RED-before/GREEN-after in same commit.
+
+**Brief:** `docs/architecture-briefs/2026-05-30-bctc-ai-input-tab.md`
+
+---
+
+## HC-ARCH-2 (2026-05-30) — TRANSACTION ORDERING ROOT-CAUSE RULING (QA-2 ESCALATION)
+
+**Task:** HC-ARCH-2. Recurring-bug-escalation on `finalizeBctcRefineTool.ts` Gate 3 — 2nd QA fail.
+
+**Root cause (one sentence):** `reAnchorCorrections` runs while both the old pinned row (preserved by selective DELETE) AND the new parser row co-exist for the same stable key, giving `matches.length=2` → false `anchor_ambiguous`.
+
+**Canonical order (binding):**
+1. Record pinnedRowIds
+2. Selective DELETE (preserve pinned old rows)
+3. INSERT parser rows (applyCorrections already applied)
+4. DELETE old pinned rows  ← MOVED BEFORE reAnchorCorrections
+5. reAnchorCorrections     ← now sees exactly 1 row per corrected label
+6. UPDATE refine_status
+
+**One-line fix:** swap steps 4 and 5 in the transaction block of `finalizeBctcRefineTool.ts`. No other file changes.
+
+**Tests:** DV-HC-8 amended (add `anchor_status='ok'` + `COUNT==1` assertions). DV-HC-14 new (genuine-ambiguous full-transaction test). Same commit as fix. RED-before/GREEN-after mandatory.
+
+**Genuine-ambiguous safe-fail:** not regressed. Step 4 only deletes OLD pinned rows. If parser emits 2 rows with same stable key (final-set duplicate), both survive → reAnchorCorrections sees 2 → anchor_ambiguous. Correct.
+
+**Addendum:** `docs/architecture-briefs/2026-05-30-bctc-human-confirm.md` §ADDENDUM HC-ARCH-2
+**Routing:** dev-mcp-server only. `finalizeBctcRefineTool.ts` + `HC-human-confirm.test.ts`. Do NOT touch `bctcHumanCorrectionsStore.ts`.
+
+---
+
+## BCTC-HUMAN-CONFIRM HC-ARCH (2026-05-30T11:00 UTC) — DESIGN COMPLETE
+
+**Task:** HC-ARCH. Architecture brief for BCTC human-in-the-loop correction layer.
+
+**ARCH-DECIDE A:** Post-pass override (Option A2). `applyCorrections()` private helper at `finalizeBctcRefineTool.ts` call site, keyed by `${label}||${page_number}||${statement_section}||${code ?? ''}`. `parseTrustFlag` exported from `refinedMarkdownParser.ts` (7-char additive, 0 logic change). Parser internals 0-diff.
+
+**ARCH-DECIDE B:** Stable key = `(report_id, label, page_number, statement_section, code_or_null)`. `reAnchorCorrections()` in new `bctcHumanCorrectionsStore.ts`. Genuinely ambiguous anchor (duplicate label+code+page+section) → `anchor_status = 'anchor_ambiguous'` (safe-fail, correction not applied). DV-HC-11/12 prove the guard.
+
+**Key gap found (BCTC-AGENTIC-REFINE residual):** `finalizeBctcRefineTool.ts` lines 143-165 INSERT omits `source_confidence` (parser populates it but it was dropped at accumulator + SQL level). Fix bundled into HC-DEV-2 scope. DV-HC-9 regression covers it.
+
+**Key gap found:** `parseTrustFlag` in `refinedMarkdownParser.ts` (line 92) is not exported. Must export for `bctcFlagEnumerationService.ts` to reuse without duplication.
+
+**File-list delta:** 9 CREATE (dev-mcp-server), 8 MODIFY (dev-mcp-server), 1 MODIFY (agent-father: `docs/agents/refine_bctc_md/flow/main.md`). 0 deletes.
+
+**Cron survival — two layers confirmed:**
+1. `getBctcPendingRefineTool.ts` WHERE clause filters `confirm_status != 'CONFIRMED'` at source (primary guard).
+2. `finalizeBctcRefineTool.ts` Layer 1 + Layer 2 guards (belt-and-suspenders + cell-level pin in single transaction).
+
+**Brief:** `docs/architecture-briefs/2026-05-30-bctc-human-confirm.md`
+**Handoff:** `docs/handoffs/HC-ARCH.md`
+
+---
 
 ## BCTC-AGENTIC-REFINE AR-ARCH-INVOKE (2026-05-30T09:30 UTC) — AMENDMENT 3 COMPLETE
 
