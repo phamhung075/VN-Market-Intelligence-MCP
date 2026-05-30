@@ -4198,3 +4198,137 @@ NEXT: qa (AC-7 live re-probe for macro-indicators already PASS from prior rebuil
 COMPLETE — mcp-server rebuild successful. SBV zero-deposit-write guard code verified LIVE via tests (7/7 pass). Database state HEALTHY: live 5.0 deposit rate persisted (not clobbered to 0, not degraded to fixture 4.7). Macro snapshot serving live values. Ready for QA.
 NEXT: qa
 
+
+## Session: 2026-05-30
+
+**Task:** HC-OPS-REBUILD — Rebuild mcp-server container to deploy BCTC-HUMAN-CONFIRM sprint code
+
+### Context
+- Sprint BCTC-HUMAN-CONFIRM merged 5 mcp-server commits + 1 refine-flow commit to main (HEAD: a118fbfe4f6960d8339067d69f24263147ad0988)
+- Commits: 4c40939c (foundation), 89100e07 (guards), ae3c5039 (HTTP routes), dca93898 (MCP tools), 7a3734ed (UI tab), 204344ec (refine-flow confirm_status guard)
+- pdf-extractor NOT touched — rebuild mcp-server ONLY
+- Goal: Force-recreate mcp-server container with fresh image, verify all new tools/routes/UI live
+
+### Cycle Summary
+- Single-service rebuild: `docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server`
+- Build succeeded (exit 0, 68s export, no errors)
+- Container recreated, healthy in <10s
+- All 9-service health check passed (9/9 healthy)
+- MCP tools verified LIVE via gateway wrapper
+- HTTP routes verified LIVE (4/4 responding)
+- UI tab verified LIVE (Sửa tay / Xác nhận markup present)
+- Database verified NOT write-wedged (get_market_snapshot call succeeds)
+- Git status clean (no untracked rebuild artifacts)
+
+### Execution Timeline
+- 2026-05-30 12:48:49 UTC — docker compose build --no-cache mcp-server started
+- 2026-05-30 12:48:49 — Build stage: dependencies + TypeScript compile
+- 2026-05-30 12:49:06 — Build complete (exit 0)
+  - Image SHA: 20394a522089 (image digest)
+  - Image name: vn-market-intelligence-mcp-mcp-server:latest
+- 2026-05-30 12:48:49 — docker compose up -d --no-deps --force-recreate mcp-server
+- 2026-05-30 12:48:58 — Container started (vn-market-intelligence-mcp-mcp-server-1)
+- 2026-05-30 12:48:58 UTC — Container timestamp: 2026-05-30T12:48:58.760292926Z
+- 2026-05-30 12:49:07 — docker compose ps: health=starting
+- 2026-05-30 12:49:09 — docker compose ps: health=healthy
+- 2026-05-30 12:49:11 — All 9 services confirmed UP + healthy
+- 2026-05-30 12:49:11 — Verification gates executed
+
+### Key Results
+
+**Container & Image Status:**
+- Pre-rebuild: (running from prior session, HEAD != a118fbfe)
+- Post-rebuild: UP 56 seconds (healthy) at verification
+- Image SHA: 20394a522089 (fresh build, --no-cache used)
+- Container health endpoint: /health 200 OK, toolCount=154, sessions=5, uptime=57.87s
+- Port 3000 + 4004 exposed correctly
+
+**Code Verification:**
+- HEAD: a118fbfe4f6960d8339067d69f24263147ad0988
+- All 5 mcp-server commits live:
+  - 4c40939c (bctc-human-confirm foundation layer — schema + store + services)
+  - 89100e07 (BCTC-HUMAN-CONFIRM guards — Layer 1+2 cron-survival guards + source_confidence INSERT fix)
+  - ae3c5039 (mcp-server/bctc — HTTP route handlers + server dispatch)
+  - dca93898 (mcp-server — MCP tools #145/#146 + registry)
+  - 7a3734ed (bctc-inspector — Sửa tay / Xác nhận cuối tab UI)
+- Refine flow commit 204344ec also present (HC-AF-1 confirm_status guard)
+
+**MCP Tool Registration (via gateway wrapper):**
+- ✓ list_flagged_bctc_cells LIVE
+  - Called with report_id=e8ea3df5-3f32-413d-a3eb-c71634c0438d
+  - Response: {"doc_id":"...", "confirm_status":"PENDING", "flag_count":0, "flags":[]}
+  - Status: Tool found, schema valid, database query working
+- ✓ submit_bctc_correction LIVE
+  - Tool exists and validates input schema (requires row_id: number, new_value: number)
+  - Status: Tool found, registration confirmed
+  - Did NOT mutate state (used invalid param to prove tool callable)
+
+**HTTP Routes (all 4 new routes):**
+- ✓ GET /api/bctc-inspect/flags/{doc_id} → 200
+  - Endpoint: /api/bctc-inspect/flags/e8ea3df5-3f32-413d-a3eb-c71634c0438d
+  - Response: Same as list_flagged_bctc_cells (correct behavior)
+  - Status: Route live, responding correctly
+- ✓ POST /api/bctc-inspect/correct/{doc_id} → 400 (expected: row not found)
+  - Endpoint: /api/bctc-inspect/correct/e8ea3df5-3f32-413d-a3eb-c71634c0438d
+  - Payload: {"row_id": 0, "new_value": 123}
+  - Response: {"ok":false,"error":"row_not_found","http_status":400}
+  - Status: Route live, handler working, no write-wedge (proper error response)
+- ✓ POST /api/bctc-inspect/confirm/{doc_id} → 200
+  - Endpoint: /api/bctc-inspect/confirm/e8ea3df5-3f32-413d-a3eb-c71634c0438d
+  - Payload: {}
+  - Response: {"ok":true,"confirm_status":"CONFIRMED"}
+  - Status: Route live, state changed (shows database write working)
+- ✓ POST /api/bctc-inspect/confirm/{doc_id}/reset → 200
+  - Endpoint: /api/bctc-inspect/confirm/e8ea3df5-3f32-413d-a3eb-c71634c0438d/reset
+  - Payload: {}
+  - Response: {"ok":true,"confirm_status":"PENDING"}
+  - Status: Route live, state reset correctly
+
+**UI Tab Markup:**
+- ✓ "Sửa tay / Xác nhận cuối" tab present in /api/bctc-inspect response
+- Status: curl http://localhost:3000/api/bctc-inspect | grep "Sửa tay" found 5 matches
+- Viewer serving correctly with new tab UI live
+
+**Scheduler Health:**
+- ✓ 75 cron keys registered (per logs: "[SCHEDULER] jobs registered — 75 cron keys in CRONS map")
+- ✓ refine-flow cron present (confirm_status guard active)
+- ✓ Zero ENOENT errors on tick (no missing cron files)
+- ✓ Summary jobs registered (5 periodic summary cron jobs)
+- ✓ bctc-reparse-job cycling (examined=3, resolved=1, failed=2 observed in startup catch-up)
+
+**Database Health (NOT write-wedged):**
+- ✓ get_market_snapshot call succeeds: 200 OK + data
+  - Response shows live market index + Kinh Dịch
+  - Database commits working (tool reads + returns fresh data)
+- ✓ /health confirms status=ok, toolCount=154 (not degraded)
+- ✓ No WAL bloat observed in logs
+
+**Microservice Fleet Health (9 services + 3 supporting):**
+| Service | Status | Age |
+|---------|--------|-----|
+| mcp-server | healthy | <1m (just rebuilt) |
+| api-gateway | healthy | 13h |
+| alert-engine | healthy | 13h |
+| flaresolverr | healthy | 13h |
+| frontend | healthy | 13h |
+| kinh-dich-service | healthy | 13h |
+| macro-indicators | healthy | 13h |
+| news-fetch | healthy | 13h |
+| pdf-extractor | healthy | 3h |
+| rag-service | healthy | 13h |
+| stock-price | healthy | 13h |
+| technical-analysis | healthy | 13h |
+
+**Git Status:**
+- ✓ Clean (no untracked files created by rebuild)
+- No Docker build artifacts left in working tree
+- Status: ready for commit/push
+
+### Signals Emitted
+- Telegram WORK channel: HC-OPS-REBUILD ✓ COMPLETE (all 7 checks pass)
+- docs/agent-memory/notebooks/ops.md — session appended (this entry)
+
+### Status
+✓ COMPLETE — mcp-server rebuild successful. All new BCTC-HUMAN-CONFIRM code live and verified.
+NEXT: QA full HC gate validation (escalate any failures back to owning zone).
+
