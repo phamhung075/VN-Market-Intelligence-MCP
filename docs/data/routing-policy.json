@@ -1,0 +1,81 @@
+{
+  "_ssot": "docs/data/routing-policy.json",
+  "_note": "Deterministic signal routing table. Maps signal envelope (type, severity, zone, ticker) to target agents + Telegram channel. First-match-wins evaluation. LLM/semantic routing is FORBIDDEN (CLAUDE.md §3). Catch-all always routes to po. Phase 0: read-only SSOT — nothing consumes this in Phase 0. Phase 3+ will use for adaptive dispatch.",
+  "_schema_version": "1.0.0",
+  "_authored_by": "developer · DWF-DEV-CROSS-2 · 2026-05-30",
+  "_rule_evaluation": "Array order, first match wins. Wildcard '*' matches any value on that axis. More-specific rules must appear before wildcards.",
+  "routing_policy": [
+    {
+      "type": "price_alert",
+      "severity": "high",
+      "zone": "*",
+      "ticker": "*",
+      "target_agents": ["alert-commander"],
+      "channel": "market",
+      "description": "High-severity price alerts → alert-commander (position-danger or watchlist-opportunity gate)"
+    },
+    {
+      "type": "price_alert",
+      "severity": "medium",
+      "zone": "*",
+      "ticker": "*",
+      "target_agents": ["market-watcher"],
+      "channel": "market",
+      "description": "Medium-severity price alerts → market-watcher for signal triage"
+    },
+    {
+      "type": "price_alert",
+      "severity": "low",
+      "zone": "*",
+      "ticker": "*",
+      "target_agents": ["market-watcher"],
+      "channel": "work",
+      "description": "Low-severity price alerts → market-watcher, status channel only"
+    },
+    {
+      "type": "macro_alert",
+      "severity": "*",
+      "zone": "*",
+      "ticker": "*",
+      "target_agents": ["unified-agent"],
+      "channel": "work",
+      "description": "All macro alerts → unified-agent for narrative synthesis"
+    },
+    {
+      "type": "news_signal",
+      "severity": "*",
+      "zone": "*",
+      "ticker": "*",
+      "target_agents": ["news-scout"],
+      "channel": "work",
+      "description": "All news signals → news-scout for sentiment and event triage"
+    },
+    {
+      "type": "bctc_signal",
+      "severity": "*",
+      "zone": "*",
+      "ticker": "*",
+      "target_agents": ["po"],
+      "channel": "work",
+      "description": "All BCTC (financial report) signals → po for sprint/task routing"
+    },
+    {
+      "type": "regime_change",
+      "severity": "*",
+      "zone": "*",
+      "ticker": "*",
+      "target_agents": ["unified-agent"],
+      "channel": "market",
+      "description": "All regime-change signals → unified-agent for market narrative update"
+    },
+    {
+      "type": "*",
+      "severity": "*",
+      "zone": "*",
+      "ticker": "*",
+      "target_agents": ["po"],
+      "channel": "work",
+      "description": "Catch-all fallback — any unmatched signal envelope routes to po (per CLAUDE.md §3 and FR-P0-2 OQ-6: LLM router forbidden, deterministic table only)"
+    }
+  ]
+}
