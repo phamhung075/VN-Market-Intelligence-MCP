@@ -1,5 +1,37 @@
 # dev-mcp-server -- Notebook
 
+## c335 · 2026-05-30 (HC-DEV-7 bctc-inspector layout) — COMMITTED [pending]
+
+**Task:** HC-DEV-7 — two-column 50/50 split + right-pane tab bar for bctc-inspector.html
+
+**PURELY PRESENTATIONAL.** No data-flow, fetch URL, or handler changes. All existing element IDs preserved.
+
+**CSS changes:**
+- `.left-pane`: added `min-width:0` (belt-and-suspenders flex 50%)
+- `.right-pane`: changed from `width:480px;flex-shrink:0` to `flex:1;overflow:hidden` (true 50/50 split)
+- Added `#right-tab-bar`, `.rtab-btn`, `.rtab-active` tab bar styles
+- Added `#right-tab-panels`, `.tab-panel`, `.tab-panel-active` panel container styles
+
+**HTML restructure (ADDITIVE — all IDs preserved, just moved into tab panels):**
+- Added `#right-tab-bar` with 6 `.rtab-btn` tab buttons (data-tab attributes)
+- Added `#right-tab-panels` with 6 `.tab-panel` panels (data-tab-panel attributes)
+- Tabs: Văn bản OCR (default) | Bảng | Bảng Markdown | Số liệu | Đánh giá 6 cổng | Sửa tay
+- `hc-panel` promoted to own "Sửa tay" tab (no longer needs JS show/hide — tab controls it)
+- `hc-tab-btn` kept in DOM (hidden via style="display:none") for legacy JS compatibility
+
+**JS additions:**
+- `switchTab(tabId)` function: toggles `.rtab-active` on buttons + `.tab-panel-active` on panels
+- Auto-loads HC flags when "Sửa tay" tab is activated with a doc selected
+- Wired all `.rtab-btn` click events
+- `hcTabBtn` click now calls `switchTab("suatay")` instead of old toggle
+
+**DV tests:**
+- HC-DEV-7-layout.test.ts: 58 pass, 0 fail (NEW)
+- HC-DEV-6-inspector-panel.test.ts: 53 pass, 0 fail (REGRESSION ZERO)
+- tsc: 0 errors
+
+**Zone health:** bctc-inspector.html layout refactored, bun test 0 fail on targeted files, PI3 6 failures pre-existing | HEALTHY
+
 ## c334 · 2026-05-30 (BCTC-HUMAN-CONFIRM HC-DEV-6) — COMMITTED 7a3734ed
 
 **Task:** HC-DEV-6 — bctc-inspector.html "Sửa tay / Xác nhận cuối" tab

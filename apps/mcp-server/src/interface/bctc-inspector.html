@@ -98,9 +98,10 @@
       gap: 0;
     }
 
-    /* ── Left pane: PDF ── */
+    /* ── Left pane: PDF (50% width) ── */
     .left-pane {
       flex: 1;
+      min-width: 0;
       border-right: 2px solid #444;
       overflow: auto;
       background: #111;
@@ -138,13 +139,53 @@
 
     /* ── Right pane: Figures + OCR ── */
     .right-pane {
-      width: 480px;
-      flex-shrink: 0;
-      overflow-y: auto;
+      flex: 1;
+      overflow: hidden;
       background: #181818;
       display: flex;
       flex-direction: column;
     }
+
+    /* ── Tab bar (HC-DEV-7) ── */
+    #right-tab-bar {
+      display: flex;
+      flex-shrink: 0;
+      background: #222;
+      border-bottom: 2px solid #4a9eff;
+      overflow-x: auto;
+      gap: 0;
+    }
+    .rtab-btn {
+      flex-shrink: 0;
+      background: #222;
+      color: #888;
+      border: none;
+      border-right: 1px solid #333;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .12s, color .12s;
+      line-height: 1.2;
+    }
+    .rtab-btn:hover { background: #2a2a2a; color: #c8c8c8; }
+    .rtab-btn.rtab-active {
+      background: #1a2a3a;
+      color: #4a9eff;
+      border-bottom: 2px solid #4a9eff;
+      margin-bottom: -2px;
+    }
+
+    /* ── Tab panels container ── */
+    #right-tab-panels {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+    .tab-panel { display: none; flex-direction: column; }
+    .tab-panel.tab-panel-active { display: flex; flex: 1; }
 
     /* ── Figures section ── */
     .figures-section {
@@ -850,90 +891,122 @@
     <iframe id="pdf-iframe" title="PDF fallback viewer"></iframe>
   </div>
 
-  <!-- RIGHT: Figures + OCR -->
+  <!-- RIGHT: tabbed content pane (HC-DEV-7 50/50 split) -->
   <div class="right-pane">
 
-    <div class="figures-section" id="figures-section">
-      <div class="section-title">Parsed Financial Figures</div>
-      <div id="figures-content">
-        <div class="missing-msg">No document selected.</div>
-      </div>
+    <!-- Tab bar -->
+    <div id="right-tab-bar">
+      <button class="rtab-btn rtab-active" data-tab="ocr" id="rtab-ocr">Văn bản OCR</button>
+      <button class="rtab-btn" data-tab="bang" id="rtab-bang">Bảng</button>
+      <button class="rtab-btn" data-tab="md" id="rtab-md">Bảng Markdown</button>
+      <button class="rtab-btn" data-tab="soluyen" id="rtab-soluyen">Số liệu</button>
+      <button class="rtab-btn" data-tab="danhgia" id="rtab-danhgia">Đánh giá 6 cổng</button>
+      <button class="rtab-btn" data-tab="suatay" id="rtab-suatay">Sửa tay</button>
     </div>
 
-    <!-- EVAL-STRIP: 6-gate eval strip (page-aware) — BCTC-EVAL-INSPECT-MERGE -->
-    <div id="eval-strip-section" style="display:none">
-      <div class="section-title eval-strip-title-row" style="margin-bottom:6px">
-        Kiểm tra chất lượng trích xuất
-        <span class="eval-view-toggle-wrap">
-          <button class="eval-view-btn active" id="eval-view-user" aria-pressed="true">Người dùng</button>
-          <button class="eval-view-btn" id="eval-view-agent" aria-pressed="false">Agent (debug)</button>
-          <!-- HC-DEV-6: tab button for correction panel -->
-          <button id="hc-tab-btn" aria-pressed="false" title="Mở bảng sửa tay và xác nhận cuối">Sửa tay / Xác nhận cuối</button>
-        </span>
-      </div>
-      <div id="eval-strip-content">
-        <div class="missing-msg">Chưa chọn tài liệu.</div>
-      </div>
-    </div>
+    <!-- Tab panels -->
+    <div id="right-tab-panels">
 
-    <!-- HC-DEV-6: Sửa tay / Xác nhận cuối panel (ADDITIVE — existing panes untouched) -->
-    <div id="hc-panel">
-      <div class="section-title" style="margin-bottom:8px">Sửa tay / Xác nhận cuối</div>
-
-      <!-- Trạng thái xác nhận báo cáo -->
-      <div class="hc-confirm-badge" id="hc-confirm-badge">
-        <span class="hc-confirm-status-text" id="hc-confirm-status-text">Trạng thái: Chờ xác nhận</span>
-        <button class="hc-btn-confirm" id="hc-btn-confirm" disabled>ĐÃ XÁC NHẬN toàn bộ báo cáo</button>
-        <button class="hc-btn-reset" id="hc-btn-reset" style="display:none">Đặt lại xác nhận</button>
-      </div>
-
-      <!-- Danh sách cảnh báo -->
-      <div class="hc-cell-list" id="hc-cell-list">
-        <div class="hc-loading">Chưa chọn tài liệu.</div>
-      </div>
-    </div>
-
-    <!-- MD-STAGE5: Markdown → rendered HTML table view (per-page, additive) -->
-    <div id="md-stage5-section" style="display:none">
-      <div class="section-title" style="margin-bottom:6px">Bảng Dữ Liệu (Markdown → Bảng)</div>
-      <div id="md-stage5-content">
-        <div class="md-stage5-no-data">Chưa chọn tài liệu.</div>
-      </div>
-    </div>
-
-    <!-- BT-3i-B: Structured table section -->
-    <div id="table-section" style="display:none">
-      <div class="section-title" style="margin-bottom:6px">Structured Table</div>
-      <div id="balance-badge"></div>
-      <div id="table-content"></div>
-    </div>
-
-    <!-- MD-INSPECT: Generic Markdown Tables section -->
-    <div id="md-tables-section" style="display:none">
-      <div class="section-title" style="margin-bottom:6px">Markdown Tables</div>
-      <div id="md-tables-content">
-        <div class="md-table-no-data">No markdown tables yet.</div>
-      </div>
-      <div id="md-ocr-markdown-block" style="display:none">
-        <div class="md-ocr-label">OCR as Markdown</div>
-        <pre id="md-ocr-markdown-pre"></pre>
-      </div>
-    </div>
-
-    <div class="ocr-section">
-      <div class="ocr-header">
-        <span class="section-title">OCR Text</span>
-        <div class="page-nav">
-          <button id="btn-prev-page" disabled>&#8249;</button>
-          <span id="page-indicator">—</span>
-          <button id="btn-next-page" disabled>&#8250;</button>
+      <!-- TAB: Văn bản OCR (default active) -->
+      <div class="tab-panel tab-panel-active" data-tab-panel="ocr">
+        <div class="ocr-section">
+          <div class="ocr-header">
+            <span class="section-title">Văn bản OCR</span>
+            <div class="page-nav">
+              <button id="btn-prev-page" disabled>&#8249;</button>
+              <span id="page-indicator">—</span>
+              <button id="btn-next-page" disabled>&#8250;</button>
+            </div>
+          </div>
+          <div id="ocr-text-content">
+            <div class="missing-msg">Chưa chọn tài liệu.</div>
+          </div>
         </div>
       </div>
-      <div id="ocr-text-content">
-        <div class="missing-msg">No document selected.</div>
-      </div>
-    </div>
 
+      <!-- TAB: Bảng (structured table) -->
+      <div class="tab-panel" data-tab-panel="bang">
+        <!-- BT-3i-B: Structured table section -->
+        <div id="table-section" style="padding:12px 14px;flex-shrink:0;background:#1c1c1c;flex:1;">
+          <div class="section-title" style="margin-bottom:6px">Bảng Cấu Trúc</div>
+          <div id="balance-badge"></div>
+          <div id="table-content"></div>
+        </div>
+      </div>
+
+      <!-- TAB: Bảng Markdown -->
+      <div class="tab-panel" data-tab-panel="md">
+        <!-- MD-STAGE5: Markdown → rendered HTML table view (per-page, additive) -->
+        <div id="md-stage5-section" style="border-bottom:1px solid #3a3a3a;padding:12px 14px;flex-shrink:0;background:#181c24;">
+          <div class="section-title" style="margin-bottom:6px">Bảng Dữ Liệu (Markdown → Bảng)</div>
+          <div id="md-stage5-content">
+            <div class="md-stage5-no-data">Chưa chọn tài liệu.</div>
+          </div>
+        </div>
+
+        <!-- MD-INSPECT: Generic Markdown Tables section -->
+        <div id="md-tables-section" style="padding:12px 14px;flex-shrink:0;background:#1a1c20;flex:1;">
+          <div class="section-title" style="margin-bottom:6px">Bảng Markdown Tổng Hợp</div>
+          <div id="md-tables-content">
+            <div class="md-table-no-data">Chưa có bảng markdown.</div>
+          </div>
+          <div id="md-ocr-markdown-block" style="display:none">
+            <div class="md-ocr-label">OCR as Markdown</div>
+            <pre id="md-ocr-markdown-pre"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Số liệu -->
+      <div class="tab-panel" data-tab-panel="soluyen">
+        <div class="figures-section" id="figures-section" style="flex:1;">
+          <div class="section-title">Số Liệu Tài Chính</div>
+          <div id="figures-content">
+            <div class="missing-msg">Chưa chọn tài liệu.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Đánh giá 6 cổng -->
+      <div class="tab-panel" data-tab-panel="danhgia">
+        <!-- EVAL-STRIP: 6-gate eval strip (page-aware) — BCTC-EVAL-INSPECT-MERGE -->
+        <div id="eval-strip-section" style="padding:12px 14px;flex-shrink:0;background:#181e18;flex:1;">
+          <div class="section-title eval-strip-title-row" style="margin-bottom:6px">
+            Kiểm tra chất lượng trích xuất
+            <span class="eval-view-toggle-wrap">
+              <button class="eval-view-btn active" id="eval-view-user" aria-pressed="true">Người dùng</button>
+              <button class="eval-view-btn" id="eval-view-agent" aria-pressed="false">Agent (debug)</button>
+              <!-- HC-DEV-6: legacy tab button kept in DOM for JS compatibility, hidden visually -->
+              <button id="hc-tab-btn" aria-pressed="false" title="Sửa tay / Xác nhận cuối" style="display:none">Sửa tay / Xác nhận cuối</button>
+            </span>
+          </div>
+          <div id="eval-strip-content">
+            <div class="missing-msg">Chưa chọn tài liệu.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: Sửa tay / Xác nhận cuối (HC-DEV-6 panel promoted to own tab) -->
+      <div class="tab-panel" data-tab-panel="suatay">
+        <!-- HC-DEV-6: Sửa tay / Xác nhận cuối panel (ADDITIVE — existing panes untouched) -->
+        <div id="hc-panel" style="display:flex;flex-direction:column;flex:1;padding:12px 14px;background:#1a1e28;">
+          <div class="section-title" style="margin-bottom:8px">Sửa tay / Xác nhận cuối</div>
+
+          <!-- Trạng thái xác nhận báo cáo -->
+          <div class="hc-confirm-badge" id="hc-confirm-badge">
+            <span class="hc-confirm-status-text" id="hc-confirm-status-text">Trạng thái: Chờ xác nhận</span>
+            <button class="hc-btn-confirm" id="hc-btn-confirm" disabled>ĐÃ XÁC NHẬN toàn bộ báo cáo</button>
+            <button class="hc-btn-reset" id="hc-btn-reset" style="display:none">Đặt lại xác nhận</button>
+          </div>
+
+          <!-- Danh sách cảnh báo -->
+          <div class="hc-cell-list" id="hc-cell-list">
+            <div class="hc-loading">Chưa chọn tài liệu.</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /#right-tab-panels -->
   </div>
 </div>
 
@@ -2466,17 +2539,10 @@
     }
   }
 
-  // ── Wire HC panel buttons ─────────────────────────────────────────────────
+  // ── Wire HC panel confirm/reset buttons ───────────────────────────────────
+  // hcTabBtn is hidden (moved to suatay tab) — keep click wiring for legacy safety
   if (hcTabBtn) {
-    hcTabBtn.addEventListener("click", () => {
-      hcPanelOpen = !hcPanelOpen;
-      if (hcPanel) hcPanel.style.display = hcPanelOpen ? "block" : "none";
-      hcTabBtn.classList.toggle("hc-tab-active", hcPanelOpen);
-      hcTabBtn.setAttribute("aria-pressed", String(hcPanelOpen));
-      if (hcPanelOpen && currentDocId) {
-        hcLoadFlags(currentDocId);
-      }
-    });
+    hcTabBtn.addEventListener("click", () => switchTab("suatay"));
   }
   if (hcBtnConf) {
     hcBtnConf.addEventListener("click", hcConfirmReport);
@@ -2493,13 +2559,42 @@
     _origResetPanes();
     hcPanelOpen = false;
     hcConfirmStatus = "PENDING";
-    if (hcPanel) hcPanel.style.display = "none";
-    if (hcTabBtn) { hcTabBtn.classList.remove("hc-tab-active"); hcTabBtn.setAttribute("aria-pressed", "false"); }
+    // hc-panel is always visible inside its tab — only reset its content
     if (hcCellList) hcCellList.innerHTML = `<div class="hc-loading">Chưa chọn tài liệu.</div>`;
     if (hcStatusTxt) { hcStatusTxt.textContent = "Trạng thái: Chờ xác nhận"; hcStatusTxt.style.color = "#d4a017"; }
     if (hcBtnConf) { hcBtnConf.disabled = true; hcBtnConf.style.display = "inline-block"; }
     if (hcBtnReset) hcBtnReset.style.display = "none";
   };
+
+  // ── HC-DEV-7: Right-pane tab switching ────────────────────────────────────
+  //
+  // Tabs: ocr | bang | md | soluyen | danhgia | suatay
+  // Default: ocr (active via HTML class)
+  // Clicking a tab button activates it and its corresponding panel.
+  // "Sửa tay" tab auto-loads flags when a doc is selected.
+
+  let activeTab = "ocr";
+
+  function switchTab(tabId) {
+    activeTab = tabId;
+    // Update button active class
+    document.querySelectorAll(".rtab-btn").forEach(btn => {
+      btn.classList.toggle("rtab-active", btn.dataset.tab === tabId);
+    });
+    // Update panel visibility
+    document.querySelectorAll(".tab-panel").forEach(panel => {
+      panel.classList.toggle("tab-panel-active", panel.dataset.tabPanel === tabId);
+    });
+    // "Sửa tay" tab: auto-load flags if a document is selected
+    if (tabId === "suatay" && currentDocId) {
+      hcLoadFlags(currentDocId);
+    }
+  }
+
+  // Wire tab button clicks
+  document.querySelectorAll(".rtab-btn").forEach(btn => {
+    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+  });
 
   // ── Init ─────────────────────────────────────────────────────────────────
   await loadDocList();
