@@ -1,8 +1,94 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-30T00:00 UTC | **Sprint:** DATA-PIPELINE-INTEGRITY
+**Last updated:** 2026-05-30T09:30 UTC | **Sprint:** BCTC-AGENTIC-REFINE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## BCTC-AGENTIC-REFINE AR-ARCH-INVOKE (2026-05-30T09:30 UTC) — AMENDMENT 3 COMPLETE
+
+**Task:** AR-ARCH-INVOKE. Rule on subagent invocation mechanism (§0.6 both options proven non-runnable at runtime). Blocking architecture decision.
+
+**Blocker confirmed:** `bctcRefineJob.ts` calls `spawn("claude", ...)` → ENOENT in-container. claude CLI absent in Bun/TS mcp-server container. All windows FAILED, row_count=0.
+
+**Decision: Option Y — host-level fleet cron (binding).** Reasoning:
+- spawn("claude",...) and Workflow-style parallel map are BOTH non-runnable in the container runtime.
+- Option X (in-container Anthropic Messages API) violates "keep running claude code" user directive; discards Opus-authored flow files (dead letters); embeds model invocation in a data microservice (DDD violation).
+- Option Y honors all three user directives: fleet CC session is the substrate; Opus-authored flows execute as-authored; CC Agent/Task = exact parallel Haiku fan-out per user intent.
+
+**Key changes from ruling (§0.7):**
+1. `spawn("claude",...)` block DELETED from `bctcRefineJob.ts`.
+2. `runBctcRefineJob()` cron entry REMOVED; `cronConfig.ts` entry REMOVED.
+3. `partitionIntoWindows()` + `runBoundedPool()` migrated to `application/utils/`.
+4. Three new MCP tools: `get_bctc_pending_refine`, `push_bctc_refined_unit`, `finalize_bctc_refine`.
+5. New fleet cron skill: `.claude/commands/crons/cron-refine-bctc.md` → `run docs/agents/refine_bctc_md/flow/main.md`.
+6. Agent-father Task A output contract: subagent returns structured JSON via CC Task result, NOT writes to `docs/refine-output/` filesystem. Fleet cron collects and calls `push_bctc_refined_unit` per window.
+7. PREREQ-3 (critical, unblocks OPS): remove `bctcRefineJob` cron key from `cronConfig.ts` immediately to stop the ENOENT failure loop.
+
+**DV anti-false-green (§0.7.5):** end-to-end proof required — get_bctc_pending_refine returns a seeded report; after full cron run, bctc_refined_units COUNT=windows.length with ≥1 DONE; after finalize, bctc_table_rows has non-null label + numeric value_current.
+
+**Brief amended:** `docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md` (amendment x3, §0.7 added).
+
+---
+
+## BCTC-AGENTIC-REFINE (2026-05-30T08:45 UTC) — DESIGN COMPLETE
+
+**Task:** AR-ARCH. Architecture brief for BCTC agent refine step replacing geometry middle.
+
+**Key decisions:**
+
+1. **Replace-outright confirmed:** `bctc_page_grouper.py` deleted + YOLO grouping removed from `pek_engine_adapter.py` + geometry stitching from `generic_md_table_extractor.py`. 3 orphan test files deleted. `text_table_extractor.py` 0-byte-diff.
+
+2. **Model tier:** Haiku at runtime (claude-haiku-3-5). Opus is authoring-time only (agent-father writes 4 focused sub-flows; Haiku executes per page). No live Opus.
+
+3. **Four sub-flows:** table-page / prose-page / continuation-stitch / disagreement-verify. Each narrow, self-contained, includes Vietnamese worked examples so Haiku cannot drift.
+
+4. **Schema drift caught:** BA spec used `row_label` / `value_previous` but live `bctc_table_rows` schema uses `label` / `value_prior`. Parser `BctcTableRow` type must use live column names.
+
+5. **`text_status` not in live schema:** must be added via idempotent ALTER TABLE migration with default `'COMPLETE'` for existing rows (existing rows have complete OCR in pdf_extracted_text).
+
+6. **`BCTC_PAGE_TEXT_BACKEND` env var** (new, distinct from existing `OCR_TEXT_BACKEND` which is for cell recognition). Default `sqlite`.
+
+7. **DPI:** 150 default, QA bake-off at 100/120/150. Page cap: 3 images per call.
+
+8. **`classify_page_for_image_load`:** absorbed from page-grouper constants into mcp-server application layer. No surviving import of bctc_page_grouper anywhere.
+
+9. **Volume mount:** `bctc-page-images` named volume shared between pdf-extractor (write) and mcp-server (read). Docker Compose ops prereq before dev work.
+
+10. **Idempotency:** DELETE-then-INSERT transaction for both `bctc_refined_units` and `bctc_table_rows`. FPT-42 dupes guard proven by ≥3× run test.
+
+**Risks flagged:** schema column name drift (resolved); `text_status` missing (resolved by migration); LF-OVERLAY viewer not updated in this sprint (backlog flag for PM); DV tests mandatory in same commit as production code.
+
+**Brief:** `docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md`
+
+---
+
+## BTB-DRIFT (2026-05-30T01:30 UTC) — DESIGN COMPLETE
+
+**Task:** BTB-DRIFT-ARCH. Convergence design for dual-path grouping drift (PATH A `build_document_map` / PATH B `_group_bboxes_into_units`).
+
+**Key decisions:**
+
+1. **PATH TRACE CONFIRMED:** `/extract-layout-first` is a LIVE SPRINT ASSET (BCTC-LAYOUT-FIRST LF-EXTRACT open). Cannot be deleted. PATH B (`pek_engine_adapter.py:L751`) is sole live user-facing grouper. Shared core module approach (not kill) is the only structurally correct option.
+
+2. **Design: new `infrastructure/bctc_page_grouper.py`** — SSOT: `PageDescriptor`, `UnitDescriptor`, `group_pages_into_units()`. Contains the D-5 predicate (`_is_title_band`) and `_is_continuous` (wraps `_fingerprints_continuous` logic). Both PATH A and PATH B call this shared function. `_group_bboxes_into_units` DELETED from `pek_engine_adapter.py`.
+
+3. **8-page cap REMOVED** — replaced by the `_is_continuous` geometric predicate (gutter_count, gutter_x_fractions within 5%, row_pitch within 50%, D-5 title-band). A >8-page real table stays open (geometry identical → CONTINUE). Two distinct adjacent tables split (geometry differs → TABLE_NEW). This is structurally correct vs. blunt count proxy.
+
+4. **Prose units emitted in PATH B.** `units_output` loop in `_run_extraction` emits `{stitched_markdown:"", row_count:0, quarantined:False, page_type:"prose"}` for prose UnitDescriptors. Push handler confirmed path-agnostic (0-diff in mcp-server).
+
+5. **D-5 active in PATH A (has OCR text), silent in PATH B** (`stored_text=""` → `_is_title_band("")` = False; documented limitation in handoff).
+
+6. **Anti-drift tests:** AD-2 asserts `_group_bboxes_into_units` does NOT exist in `pek_engine_adapter` after fix. AD-1 proves both paths produce identical unit boundaries from the same input. DV-1-B and DV-2-B and 9-page regression run through `group_pages_into_units()` directly.
+
+**Files authored:**
+1. `docs/architecture-briefs/2026-05-30-bctc-table-boundary-drift-convergence.md` — NEW
+2. `docs/handoffs/BTB-DRIFT.md` — NEW
+3. `docs/agent-memory/notebooks/architect.md` — this entry
+4. `docs/TASKS.md` — BTB-DRIFT architect step marked done
+
+**ops_rebuild_required:** yes (after dev commits BTB-DRIFT-DEV) — BATCHED with `60dfac7f` idempotency + BTB-UNBLOCK runtime mandate.
+
+---
 
 ## DATA-PIPELINE-INTEGRITY (2026-05-30T00:00 UTC) — DESIGN COMPLETE
 
@@ -59,40 +145,6 @@
 3. `docs/agent-memory/notebooks/architect.md` — this entry
 
 **ops_rebuild_required:** yes (after dev commits).
-
----
-
-## BCTC-EVAL-DUAL-VIEW (2026-05-29T18:45 UTC) — DESIGN COMPLETE
-
-**Task:** Add Agent/Debug view mode to the 6-gate eval strip (Task #9 extension).
-
-**Key decisions:**
-
-1. **Additive endpoint extension** — `bctcEvalPageHandler.ts` gains a `debug` sub-object per
-   `gate_strip` element. All existing fields byte-identical. Full-report endpoint frozen.
-
-2. **Segmented button toggle** (`Người dùng | Agent (debug)`) inside the existing
-   `eval-strip-section` title row. `localStorage` key `bctcEvalViewMode`. No page reload.
-   `lastEvalData` module var enables instant mode switch without re-fetch.
-
-3. **`renderGateStrip` stays pure** — mode is a parameter. User-view body unchanged.
-   `renderDebugBlock()` appended conditionally at end of per-gate loop.
-
-4. **`<details>/<summary>`** for per-stage debug block — collapsed by default, no JS accordion.
-
-5. **Honesty preserved** — stages 1,2,5,6 labeled `⚑ toàn báo cáo`. Stages 3/4 show genuine
-   page-scoped evidence (`ocr_filename`, `pek_row_count`, `pek_quarantined`). No fabrication.
-
-6. **S4 query extended** to also fetch `row_count`, `quarantined`, `quarantine_reason` from
-   `bctc_layout_units`. S3: `ocr_filename` (basename) now emitted in `debug.ocr_filename`.
-
-**7 work items M-1..M-7.** 3 in handler (additive), 3 in HTML (CSS+HTML+JS), 1 test extension.
-
-**Files authored:**
-1. `docs/architecture-briefs/2026-05-29-bctc-eval-dual-view.md` — NEW
-2. `docs/agent-memory/notebooks/architect.md` — this entry
-
-**ops_rebuild_required:** yes (HTML embedded via readFileSync).
 
 ---
 
