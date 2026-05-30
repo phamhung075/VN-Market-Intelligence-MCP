@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-05-19T07:15Z | **Sprint:** 1953a
+**Last updated:** 2026-05-30T11:50Z | **Sprint:** FF-DIAG
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
 
@@ -22,7 +22,7 @@ Zone: dev-zone (VPS scraper code)
 | cafef-index | /root/fetch-prices.sh (Step 3) | plain-requests-open-api | healthy | 2026-05-13 |
 | sbv-rates | /root/fetch-sbv.sh | plain-requests-open-api | healthy end-to-end | 2026-05-13 |
 | vn-news-rss | /root/fetch-vn-news.sh | ua-rotation-rss | healthy end-to-end (245 items 200 OK) | 2026-05-13 |
-| vn-foreign-flow | /root/fetch-foreign-flow.sh | plain-requests-open-api | healthy (101 items upserted) | 2026-05-13 |
+| vn-foreign-flow | /root/fetch-foreign-flow.sh | plain-requests-open-api | FIXED 2026-05-30 — field drift: fBuyVol→fBVol, fSellVol→fSVolume. FPT fBVol=110629 fSVolume=148534 confirmed. 103 items pushed 200 OK. | 2026-05-30 |
 | hsx-bctc (HNX/UPCOM) | /root/discover-bctc-urls-browser.py | hnx-ajax-post | OPERATIONAL — Q1/2026 BCTC flowing. SHB e2e PASS. | 2026-05-13T09:30Z |
 | hsx-bctc (HOSE/SSC) | /root/discover-bctc-urls-browser.py | ssc-playwright-download | OPERATIONAL — Q1/2026 BCTC flowing. ACB Q1 PASS (1953a pattern fix). | 2026-05-19 |
 
@@ -50,6 +50,7 @@ Zone: dev-zone (VPS scraper code)
 
 | Date | Source | Technique | Outcome |
 |------|--------|-----------|---------|
+| 2026-05-30T11:50Z | vn-foreign-flow | field-drift-fix | FF-DIAG DONE — root cause: API uses fBVol/fSVolume, script defaulted to fBuyVol/fSellVol (nonexistent → jq→0). All pushes had foreignBuyVol=0/foreignSellVol=0, get_foreign_flow returned "never collected" fleet-wide. Fix: correct defaults in fetch-foreign-flow.sh + run-foreign-flow-debug.sh. Also fixed LOG_ROTATE_BYTES fallback bug (unary operator stderr noise). Live proof: FPT fBVol=110629 fSVolume=148534, HPG fBVol=204669 fSVolume=279789, 103 items HTTP 200. Service restarted armed for Mon 02:00 UTC. Commit 0cbce0b4. |
 | 2026-05-19T07:15Z | discover-bctc-urls-browser.py | pattern-fix + repo-sync | 1953a DONE — zero-padded quý 01..04 patterns added to matches_quarter_and_year(). fetch-bctc.sh jq guard added. ACB Q1/2026 SUCCESS HTTP 200. Script committed to repo as vps-scripts/discover-bctc-urls-browser.py. deploy-vinahost.sh extended. Commit d946699b. |
 | 2026-05-18T06:00Z | vps-proxy-server.js | envelope-shape-fix | 1944a-vps DONE — `/proxy/bctc-discover/:ticker` now returns `{results:[{url,source,confidence}],error:null}` envelope. Deployed SCP + systemctl restart. Health 200 OK. 401 without key. Shape confirmed via curl (results=[] acceptable — script runs ~120s). |
 | 2026-05-13 | all 5 sources | reverse-documentation | Bootstrap catalog complete. 4 technique docs written. |
@@ -75,6 +76,26 @@ Zone: dev-zone (VPS scraper code)
 
 - TASK-BCTC-1: ops — increase TasksMax=512 + MemoryMax=512M in vn-bctc-fetch.service
 - TASK-BCTC-2: developer — reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC path
+
+---
+
+## Key Findings — 2026-05-30T11:50Z FF-DIAG Field Drift Fix
+
+### Foreign Flow Field Name Drift (bgapidatafeed.vps.com.vn)
+- API fields: `fBVol` (buy vol), `fSVolume` (sell vol), `fRoom` (remaining room)
+- Script was defaulting to `fBuyVol` / `fSellVol` — NEITHER exists in the API
+- jq `(.["fBuyVol"] // 0)` resolves to 0 for absent keys → all items pushed with foreignBuyVol=0, foreignSellVol=0
+- Handler's `foreign_volume = buyVol - sellVol = 0 - 0 = 0` → DB rows written but with zero volume
+- `get_foreign_flow` zero-detection guard fires (`history.every(r => r.foreignVolume === 0)`) → "never collected" for every ticker
+- fRoom was correct (field name unchanged) — that's why 102–103 items passed the jq filter (fRoom > 0)
+- Fix: `FBUY_FIELD` default `fBuyVol`→`fBVol`, `FSELL_FIELD` default `fSellVol`→`fSVolume`
+- Also fixed: LOG_ROTATE_BYTES one-liner left var empty when vps-lib.sh lacks the constant → "unary operator expected" stderr every run
+
+### LOG_ROTATE_BYTES Bug
+- Old: `[ -f /root/vps-lib.sh ] && LOG_ROTATE_BYTES=$(grep '^LOG_ROTATE_BYTES=' /root/vps-lib.sh | cut -d= -f2) || LOG_ROTATE_BYTES=10485760`
+- vps-lib.sh does NOT define `LOG_ROTATE_BYTES=` at top level → grep returns empty → `$LOG_ROTATE_BYTES` is empty string
+- `[ "$LOG_SIZE" -gt $LOG_ROTATE_BYTES ]` = `[ 8306911 -gt ]` → bash: unary operator expected
+- Fix: set default first, then conditionally override if vps-lib.sh provides a value
 
 ---
 
