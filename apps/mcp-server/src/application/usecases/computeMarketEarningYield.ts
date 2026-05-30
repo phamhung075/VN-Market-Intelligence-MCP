@@ -33,6 +33,7 @@ import {
   type MarketEarningYieldRefused,
 } from "../../domain/services/macro/marketEarningYield.js";
 import { logger } from "../../infrastructure/logger.js";
+import { sendTelegramWork } from "../../infrastructure/notifiers/telegram.js";
 
 // ---------------------------------------------------------------------------
 // Internal types
@@ -55,6 +56,12 @@ interface PriceRow {
 
 /** Source tag written to tracked_indicators. */
 const SOURCE = "bau_phase2";
+
+/**
+ * DPI-FU-B: Injectable Telegram sender (test seam).
+ * Defaults to sendTelegramWork; override in tests with a spy.
+ */
+export type SendWorkFn = (msg: string) => Promise<unknown>;
 
 // ---------------------------------------------------------------------------
 // Public result type
@@ -80,11 +87,22 @@ export interface ComputeMarketEarningYieldResult {
 /**
  * Computes market-wide earning yield and stores it in tracked_indicators.
  *
- * @param db - Optional Database instance (defaults to app singleton).
+ * DPI-FU-B: Coverage denominator is now the number of watchlist tickers that
+ * have ANY row in vnstock_financials (reachable tickers), not the full watchlist
+ * size. Tickers for which the vnstock API consistently returns no data are not
+ * counted as "failed" — they are simply excluded from the denominator so that
+ * coverage over the achievable set can be measured accurately.
+ *
+ * Fail-loud: sends a WORK channel alert when the job refuses due to coverage,
+ * so silent refusals are surfaced instead of silently producing no rows.
+ *
+ * @param db          - Optional Database instance (defaults to app singleton).
+ * @param sendWorkFn  - Optional Telegram sender (defaults to sendTelegramWork; override in tests).
  * @returns  ComputeMarketEarningYieldResult with stored/refused details.
  */
 export async function computeAndStoreMarketEarningYield(
   db?: Database,
+  sendWorkFn: SendWorkFn = sendTelegramWork,
 ): Promise<ComputeMarketEarningYieldResult> {
   const database = db ?? getDb();
 
@@ -104,6 +122,11 @@ export async function computeAndStoreMarketEarningYield(
   const validTickers: TickerPE[] = [];
   let latestYearReport = 0;
   let latestQuarter = 0;
+  // DPI-FU-B: count tickers that have ANY financial data in vnstock_financials.
+  // These are the "reachable" tickers — the denominator for coverage.
+  // Tickers with no rows at all are excluded from coverage calculation
+  // (vnstock API returns null for them; they are not "failed coverage").
+  let reachableCount = 0;
 
   for (const { code } of watchlistRows) {
     // Query the single most-recent row per ticker
@@ -118,6 +141,9 @@ export async function computeAndStoreMarketEarningYield(
       .get(code);
 
     if (!fin) continue;
+
+    // Ticker has at least one row in vnstock_financials — it is reachable
+    reachableCount++;
 
     // Track latest period for dataAsOf label
     if (
@@ -161,15 +187,35 @@ export async function computeAndStoreMarketEarningYield(
       : "unknown";
 
   // ── Step 3-4: Call domain fn ──────────────────────────────────────────────
-  const domainResult = computeMarketEarningYield(validTickers, totalCount, dataAsOf);
+  // DPI-FU-B: Pass reachableCount (tickers with ANY financial data) as the
+  // denominator instead of totalCount (full watchlist). Tickers for which the
+  // vnstock API consistently returns no data are not counted as coverage failures
+  // — they are excluded from the denominator so coverage is measured over the
+  // achievable set. Falls back to totalCount when reachableCount=0 (safety).
+  const coverageDenominator = reachableCount > 0 ? reachableCount : totalCount;
+  const domainResult = computeMarketEarningYield(validTickers, coverageDenominator, dataAsOf);
 
   // ── Step 5: Handle refusal ────────────────────────────────────────────────
   if ("refused" in domainResult) {
-    logger.warn(
+    const msg =
+      `[DPI-FU-B] market_earning_yield refused — ` +
+      `coverage ${domainResult.coverageCount}/${coverageDenominator} = ` +
+      `${(domainResult.coverageRatio * 100).toFixed(1)}% (need 70%). ` +
+      `Watchlist: ${totalCount} tickers, reachable: ${reachableCount}, valid PE: ${validCount}. ` +
+      `Action: check vnstock_fundamentals job + vnstock_financials coverage.`;
+    logger.error(
       `[market-earning-yield] coverage too low — ` +
-      `${domainResult.coverageCount}/${totalCount} = ` +
+      `${domainResult.coverageCount}/${coverageDenominator} reachable = ` +
       `${(domainResult.coverageRatio * 100).toFixed(1)}% (need 70%) — skipping DB write`,
     );
+    // DPI-FU-B fail-loud: alert WORK channel on refusal so silent no-rows is visible
+    try {
+      await sendWorkFn(msg);
+    } catch (alertErr) {
+      logger.warn("[market-earning-yield] failed to send refusal alert", {
+        error: alertErr instanceof Error ? alertErr.message : String(alertErr),
+      });
+    }
     return {
       stored: false,
       refused: domainResult,

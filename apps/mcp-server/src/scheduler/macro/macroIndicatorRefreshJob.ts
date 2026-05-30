@@ -118,6 +118,64 @@ async function telegramCallback(
   }
 }
 
+/** EFFR staleness SLA bound — 96 hours (covers FRED business-day lag + weekends). */
+export const EFFR_STALE_BOUND_MS = 96 * 60 * 60 * 1000;
+
+/**
+ * DPI-FU-A: Check EFFR staleness and alert WORK channel when stale >96h.
+ *
+ * Reads the latest EFFR date from fred_series_daily. If the most recent
+ * business day covered is older than EFFR_STALE_BOUND_MS, sends a
+ * WORK channel alert so ops can diagnose the network connectivity issue
+ * (container → fred.stlouisfed.org).
+ *
+ * Exported for unit tests.
+ */
+export async function checkAndAlertEffrStaleness(
+  db: ReturnType<typeof getDb>,
+  nowMs?: number,
+  sendWorkFn: (msg: string) => Promise<unknown> = sendTelegramWork,
+): Promise<void> {
+  try {
+    const row = db
+      .prepare<{ maxdate: string | null }, []>(
+        `SELECT MAX(date) AS maxdate FROM fred_series_daily WHERE series = 'EFFR'`,
+      )
+      .get();
+
+    if (!row || !row.maxdate) {
+      logger.error("[macroRefresh] EFFR stale-check: no rows in fred_series_daily for EFFR — FRED never successfully fetched");
+      await sendWorkFn(
+        "[DPI-FU-A] EFFR STALE ALERT: fred_series_daily has zero EFFR rows. " +
+        "Root cause: FRED (fred.stlouisfed.org) unreachable from container — check Docker network / outbound connectivity.",
+      );
+      return;
+    }
+
+    const latestDate = new Date(row.maxdate + "T00:00:00Z");
+    const ageMs = (nowMs ?? Date.now()) - latestDate.getTime();
+
+    if (ageMs > EFFR_STALE_BOUND_MS) {
+      const ageDays = (ageMs / 86_400_000).toFixed(1);
+      logger.error(
+        `[macroRefresh] EFFR stale: latest date ${row.maxdate} is ${ageDays} days old (>96h SLA)`,
+        { latestDate: row.maxdate, ageDays },
+      );
+      await sendWorkFn(
+        `[DPI-FU-A] EFFR STALE ALERT: latest DB date = ${row.maxdate} (${ageDays}d ago, >96h SLA). ` +
+        `Root cause: FRED (fred.stlouisfed.org) unreachable from mcp-server container. ` +
+        `Action required: check container outbound network / DNS / firewall rules.`,
+      );
+    } else {
+      logger.debug(`[macroRefresh] EFFR freshness OK: latest date ${row.maxdate}`);
+    }
+  } catch (err) {
+    logger.error("[macroRefresh] EFFR stale-check failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+}
+
 /**
  * Main job: fetch macro indicators from microservice, validate SLA.
  *
@@ -250,8 +308,13 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
         { effrRows: effrIorbResult.effrRows, iorbRows: effrIorbResult.iorbRows },
       );
     } else {
-      logger.warn("[macroRefresh] EFFR/IORB fetch returned null — FRED unavailable");
+      logger.error("[macroRefresh] EFFR/IORB fetch returned null — FRED unreachable");
     }
+    // DPI-FU-A: Fail-loud when EFFR is stale beyond the 96h SLA.
+    // The fetcher uses INSERT OR IGNORE so when FRED is unreachable the DB row
+    // date never advances. Detect staleness here and alert WORK channel so ops
+    // can diagnose the network connectivity issue (container → fred.stlouisfed.org).
+    await checkAndAlertEffrStaleness(db);
 
     // Fetch ISM Manufacturing sub-component series from FRED (Task 1910a)
     const ismResult = await fetchFredIsmSubcomponents(undefined, db);
