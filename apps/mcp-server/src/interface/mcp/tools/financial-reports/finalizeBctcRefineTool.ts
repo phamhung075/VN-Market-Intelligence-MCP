@@ -210,6 +210,15 @@ export function buildFinalizeBctcRefineHandler(
       // Atomic transaction: selective DELETE + INSERT + re-anchor + status update
       // EC-7 prevention: single SQLite transaction — no partial-delete window
       db.transaction(() => {
+        // Before selective DELETE, record which row IDs are pinned by corrections
+        // (these will be preserved, then deleted after re-anchor points to new rows)
+        const pinnedRowIds = db
+          .prepare<{ row_id: number }, [string]>(
+            `SELECT DISTINCT row_id FROM bctc_human_corrections WHERE report_id = ?`,
+          )
+          .all(report_id)
+          .map((r) => r.row_id);
+
         // Layer 2: selective DELETE — preserve rows that have human corrections
         // Rows covered by a correction are NOT deleted (their value_current was
         // already updated by submitCorrection; they survive the re-parse intact).
@@ -252,6 +261,13 @@ export function buildFinalizeBctcRefineHandler(
         // Re-anchor corrections to new row IDs (inside transaction after INSERT)
         // Updates bctc_human_corrections.row_id to match new bctc_table_rows.id
         reAnchorCorrections(db, report_id);
+
+        // Delete stale OLD pinned rows: after re-anchor updates correction row_ids to NEW inserted rows,
+        // remove the old row IDs that were preserved but are no longer needed.
+        // Invariant: exactly ONE row per corrected label survives carrying the corrected value + source_confidence=1.0
+        for (const oldRowId of pinnedRowIds) {
+          db.prepare(`DELETE FROM bctc_table_rows WHERE id = ? AND report_id = ?`).run(oldRowId, report_id);
+        }
 
         // Update financial_reports.refine_status
         db.prepare(

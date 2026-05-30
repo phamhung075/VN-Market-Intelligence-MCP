@@ -925,12 +925,20 @@ describe("DV-HC-8 — CORE INVARIANT: corrected value + source_confidence=1.0 su
       )
       .all(REPORT_UUID);
 
+    // ANTI-FALSE-GREEN: COUNT assertion — must be exactly 1 corrected row (not duplicates)
+    const correctedRowCount = allRows.filter((r) => r.label === "Tiền và tương đương tiền").length;
+    expect(correctedRowCount).toBe(1);
+
     const correctedRow = allRows.find((r) => r.label === "Tiền và tương đương tiền");
     expect(correctedRow).toBeDefined();
     expect(correctedRow?.value_current).toBe(2500);       // human value, NOT parser value 1000
     expect(correctedRow?.source_confidence).toBe(1.0);    // pinned by correction
 
     // 2. Uncorrected row: value_current=5000, source_confidence=0.4 (yellow flag from parser)
+    // ANTI-FALSE-GREEN: COUNT assertion — must be exactly 1 uncorrected row
+    const uncorrectedRowCount = allRows.filter((r) => r.label === "Doanh thu thuần").length;
+    expect(uncorrectedRowCount).toBe(1);
+
     const uncorrectedRow = allRows.find((r) => r.label === "Doanh thu thuần");
     expect(uncorrectedRow).toBeDefined();
     expect(uncorrectedRow?.value_current).toBe(5000);
