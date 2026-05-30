@@ -258,16 +258,18 @@ export function buildFinalizeBctcRefineHandler(
           totalRows++;
         }
 
-        // Re-anchor corrections to new row IDs (inside transaction after INSERT)
-        // Updates bctc_human_corrections.row_id to match new bctc_table_rows.id
-        reAnchorCorrections(db, report_id);
-
-        // Delete stale OLD pinned rows: after re-anchor updates correction row_ids to NEW inserted rows,
-        // remove the old row IDs that were preserved but are no longer needed.
-        // Invariant: exactly ONE row per corrected label survives carrying the corrected value + source_confidence=1.0
+        // Delete stale OLD pinned rows BEFORE re-anchor, so reAnchorCorrections
+        // sees exactly one row per corrected label (the newly inserted parser row).
+        // This prevents false anchor_ambiguous when the only duplicate is the transient old pinned row.
         for (const oldRowId of pinnedRowIds) {
           db.prepare(`DELETE FROM bctc_table_rows WHERE id = ? AND report_id = ?`).run(oldRowId, report_id);
         }
+
+        // Re-anchor corrections to new row IDs (inside transaction after INSERT + old-row cleanup)
+        // Updates bctc_human_corrections.row_id to match new bctc_table_rows.id
+        // At this point exactly one row per non-ambiguous corrected label exists.
+        // Genuine duplicates in the final row set will correctly flag anchor_ambiguous (not regressed).
+        reAnchorCorrections(db, report_id);
 
         // Update financial_reports.refine_status
         db.prepare(

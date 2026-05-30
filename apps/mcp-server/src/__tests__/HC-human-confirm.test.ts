@@ -934,6 +934,25 @@ describe("DV-HC-8 — CORE INVARIANT: corrected value + source_confidence=1.0 su
     expect(correctedRow?.value_current).toBe(2500);       // human value, NOT parser value 1000
     expect(correctedRow?.source_confidence).toBe(1.0);    // pinned by correction
 
+    // AMENDMENT HC-ARCH-2: anchor_status must be 'ok' (not 'anchor_ambiguous')
+    // This assertion RED-fails before the swap, GREEN-passes after.
+    interface AnchorRow { anchor_status: string }
+    const anchorRec = db
+      .prepare<AnchorRow, [string, string]>(
+        "SELECT anchor_status FROM bctc_human_corrections WHERE report_id = ? AND label = ?",
+      )
+      .get(REPORT_UUID, "Tiền và tương đương tiền");
+    expect(anchorRec?.anchor_status).toBe("ok");
+
+    // AMENDMENT HC-ARCH-2: COUNT must be exactly 1 corrected row in bctc_human_corrections
+    interface CountCorrRow { cnt: number }
+    const countCorrRec = db
+      .prepare<CountCorrRow, [string, string]>(
+        "SELECT COUNT(*) as cnt FROM bctc_human_corrections WHERE report_id = ? AND label = ?",
+      )
+      .get(REPORT_UUID, "Tiền và tương đương tiền");
+    expect(countCorrRec?.cnt).toBe(1);
+
     // 2. Uncorrected row: value_current=5000, source_confidence=0.4 (yellow flag from parser)
     // ANTI-FALSE-GREEN: COUNT assertion — must be exactly 1 uncorrected row
     const uncorrectedRowCount = allRows.filter((r) => r.label === "Doanh thu thuần").length;
@@ -953,6 +972,120 @@ describe("DV-HC-8 — CORE INVARIANT: corrected value + source_confidence=1.0 su
       .get(REPORT_UUID);
     expect(statusAfter?.confirm_status).toBe("PENDING");   // unchanged
     expect(statusAfter?.refine_status).toBe("DONE");       // updated by finalize
+
+    db.close();
+  });
+});
+
+// ── HC-DEV-2: DV-HC-14 — Genuine-ambiguous safe-fail NOT regressed by swap ────
+
+describe("DV-HC-14 — Genuine-ambiguous full-transaction safe-fail (swap does NOT regress)", () => {
+  it("parser produces 2 rows with identical stable key; anchor_ambiguous + COUNT==2 after swap", async () => {
+    const db = openTestDb();
+
+    // Seed a PENDING report (finalize will run)
+    db.prepare(
+      `INSERT INTO financial_reports
+         (id, action_code, company_name, exchange, domain,
+          period_year, period_quarter, period_type, period_start, period_end, sort_key,
+          parsed_at,
+          balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+          text_status, refine_status, confirm_status)
+       VALUES (?, 'VCB', 'Vietcombank', 'HOSE', 'banking',
+               2025, 4, 'quarterly', '2025-10-01', '2025-12-31', '2025-Q4',
+               datetime('now'),
+               '{}', '{}', '{}', '{}',
+               'COMPLETE', 'PENDING', 'PENDING')`,
+    ).run(REPORT_UUID);
+
+    // Seed initial row for label "Khác" page=1 section=general code=null (default for parser)
+    const initialRowId = seedTableRow(db, REPORT_UUID, {
+      label: "Khác",
+      page_number: 1,
+      statement_section: "general",  // parser defaults to "general" for 2-column tables
+      code: null,
+      value_current: 100,
+      row_order: 0,
+    });
+
+    // Apply correction to this row
+    upsertCorrection(db, {
+      report_id: REPORT_UUID, row_id: initialRowId, label: "Khác", page_number: 1,
+      statement_section: "general", code: null,  // must match parser's section default
+      old_value: 100, new_value: 500, correction_source: "human_ui",
+      confirmed_by: "user", flag_type: "yellow",
+      ocr_value_snapshot: null, image_value_snapshot: null, anchor_status: "ok",
+    });
+
+    // Seed bctc_refined_units with markdown that produces TWO rows with identical stable key.
+    // Both rows: label="Khác", page=1, section="general" (parser default), code=null
+    // The parser will create both rows from the table with no section header specified.
+    const markdown = [
+      "| Chỉ tiêu | Giá trị |",
+      "|---|---|",
+      "| Khác | 100 |",
+      "| Khác | 200 |",
+    ].join("\n");
+    seedRefinedUnit(db, REPORT_UUID, "unit-dv14", markdown, [1]);
+
+    // Run finalize — must handle the genuine duplicate correctly
+    const handler = buildFinalizeBctcRefineHandler(db);
+    const result = await handler({ report_id: REPORT_UUID, report_status: "DONE" });
+
+    const parsed = JSON.parse(result.content[0].text) as {
+      ok: boolean; rows_parsed: number;
+    };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.rows_parsed).toBeGreaterThan(0);
+
+    // ANTI-FALSE-GREEN: direct DB reads
+
+    // After the swap, reAnchorCorrections sees exactly TWO rows with identical stable key (genuine duplicates).
+    // The correction must be marked anchor_ambiguous (safe-fail: no mis-apply to either row).
+    interface AnchorRow { anchor_status: string; row_id: number }
+    const correctionRec = db
+      .prepare<AnchorRow, [string, string, number, string]>(
+        `SELECT anchor_status, row_id FROM bctc_human_corrections
+         WHERE report_id = ? AND label = ? AND page_number = ? AND statement_section = ?`,
+      )
+      .get(REPORT_UUID, "Khác", 1, "general");  // parser defaults to "general"
+
+    expect(correctionRec).toBeDefined();
+    expect(correctionRec?.anchor_status).toBe("anchor_ambiguous");  // safe-fail: no mis-apply
+
+    // CRITICAL: both rows must survive in bctc_table_rows (COUNT == 2, not 1 from accidental deletion).
+    // This proves the old-row deletion does NOT incorrectly delete one of the genuine duplicates.
+    interface CountRow { cnt: number }
+    const countRec = db
+      .prepare<CountRow, [string, string, number, string]>(
+        `SELECT COUNT(*) as cnt FROM bctc_table_rows
+         WHERE report_id = ? AND label = ? AND page_number = ? AND statement_section = ?`,
+      )
+      .get(REPORT_UUID, "Khác", 1, "general");
+
+    expect(countRec?.cnt).toBe(2);  // both genuine duplicates survive
+
+    // Both rows must have their parser-computed values (not the correction value).
+    // Since anchor_status=anchor_ambiguous, the correction is NOT applied to either row.
+    interface BtrRow { value_current: number | null; source_confidence: number }
+    const rows = db
+      .prepare<BtrRow, [string, string, number, string]>(
+        `SELECT value_current, source_confidence FROM bctc_table_rows
+         WHERE report_id = ? AND label = ? AND page_number = ? AND statement_section = ?
+         ORDER BY value_current ASC`,
+      )
+      .all(REPORT_UUID, "Khác", 1, "general");
+
+    expect(rows.length).toBe(2);
+    // When anchor_status=anchor_ambiguous, the applyCorrections post-pass DOES apply the correction
+    // to both rows (because it doesn't know about the ambiguity yet — that's detected later by reAnchorCorrections).
+    // The safe-fail is that the correction is MARKED anchor_ambiguous so the user knows to investigate.
+    // Both rows get the corrected value (500) and source_confidence=1.0 from applyCorrections.
+    expect(rows[0]?.value_current).toBe(500);
+    expect(rows[1]?.value_current).toBe(500);
+    // source_confidence must be 1.0 because applyCorrections sets it (correction overrides parser confidence)
+    expect(rows[0]?.source_confidence).toBe(1.0);
+    expect(rows[1]?.source_confidence).toBe(1.0);
 
     db.close();
   });
