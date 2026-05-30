@@ -69,6 +69,9 @@ import { handleBctcEvalPushStage } from "./routes/bctcEvalPushStageHandler.js";
 import { bctcEvalPageHandler } from "./routes/bctcEvalPageHandler.js";
 import { loadBctcEvalThresholds } from "../../application/usecases/computeBctcEval.js";
 import { handleBctcRefineOnDemand } from "./routes/bctcRefineHandler.js"; // BCTC-AGENTIC-REFINE FR-12: POST /api/refine-bctc/{report_id}
+import { handleBctcInspectFlags } from "./routes/bctcFlagsHandler.js"; // HC-DEV-3: GET /api/bctc-inspect/flags/{doc_id}
+import { handleBctcInspectCorrect } from "./routes/bctcCorrectHandler.js"; // HC-DEV-3: POST /api/bctc-inspect/correct/{doc_id}
+import { handleBctcInspectConfirm, handleBctcInspectConfirmReset } from "./routes/bctcConfirmHandler.js"; // HC-DEV-3: POST /api/bctc-inspect/confirm/{doc_id}[/reset]
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -500,6 +503,33 @@ export async function createBunServer(
     if (method === "GET" && pathname.startsWith("/api/bctc-inspect/zones/")) {
       const docId = pathname.slice("/api/bctc-inspect/zones/".length);
       handleBctcInspectZones(req, res, db, docId);
+      return;
+    }
+
+    // HC-DEV-3: BCTC Human-Confirm endpoints ─────────────────────────────────
+    // GET  /api/bctc-inspect/flags/{doc_id}          — flagged cell list
+    // POST /api/bctc-inspect/correct/{doc_id}        — submit correction
+    // POST /api/bctc-inspect/confirm/{doc_id}        — lock as CONFIRMED
+    // POST /api/bctc-inspect/confirm/{doc_id}/reset  — reset to PENDING
+    if (method === "GET" && pathname.startsWith("/api/bctc-inspect/flags/")) {
+      const docId = pathname.slice("/api/bctc-inspect/flags/".length);
+      await handleBctcInspectFlags(req, res, db, docId);
+      return;
+    }
+    if (method === "POST" && pathname.startsWith("/api/bctc-inspect/correct/")) {
+      const docId = pathname.slice("/api/bctc-inspect/correct/".length);
+      await handleBctcInspectCorrect(req, res, db, docId);
+      return;
+    }
+    if (method === "POST" && pathname.startsWith("/api/bctc-inspect/confirm/")) {
+      const parts = pathname.split("/");
+      if (parts[parts.length - 1] === "reset") {
+        const docId = parts[parts.length - 2] ?? "";
+        await handleBctcInspectConfirmReset(req, res, db, docId);
+      } else {
+        const docId = parts[parts.length - 1] ?? "";
+        await handleBctcInspectConfirm(req, res, db, docId);
+      }
       return;
     }
 

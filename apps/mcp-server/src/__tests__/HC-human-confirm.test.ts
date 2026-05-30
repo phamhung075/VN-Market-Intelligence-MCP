@@ -1029,3 +1029,359 @@ describe("DV-HC-SC — source_confidence persists in bctc_table_rows INSERT", ()
     db.close();
   });
 });
+
+// ── HC-DEV-3 DV tests ─────────────────────────────────────────────────────────
+// All tests below exercise the three HTTP route handlers via mock res injection.
+// DB state is verified via direct DB reads (anti-false-green contract).
+// ─────────────────────────────────────────────────────────────────────────────
+
+import {
+  handleBctcInspectFlags,
+} from "../interface/mcp/routes/bctcFlagsHandler.js";
+import {
+  handleBctcInspectCorrect,
+} from "../interface/mcp/routes/bctcCorrectHandler.js";
+import {
+  handleBctcInspectConfirm,
+  handleBctcInspectConfirmReset,
+} from "../interface/mcp/routes/bctcConfirmHandler.js";
+import type { IncomingMessage } from "node:http";
+
+// ── HTTP mock helpers ─────────────────────────────────────────────────────────
+
+interface MockRes {
+  statusCode: number;
+  body: string;
+  writeHead(code: number, _headers?: Record<string, string>): void;
+  end(data: string): void;
+}
+
+function makeMockRes(): MockRes {
+  const res: MockRes = {
+    statusCode: 0,
+    body: "",
+    writeHead(code: number) { this.statusCode = code; },
+    end(data: string) { this.body = data; },
+  };
+  return res;
+}
+
+/**
+ * Build a minimal IncomingMessage-like object for GET requests (no body).
+ */
+function makeGetReq(): IncomingMessage {
+  return {
+    method: "GET",
+    headers: {},
+    [Symbol.asyncIterator]: async function* () { /* no body */ },
+  } as unknown as IncomingMessage;
+}
+
+/**
+ * Build a minimal IncomingMessage-like object for POST requests with a JSON body.
+ */
+function makePostReq(jsonBody: unknown): IncomingMessage {
+  const bodyStr = JSON.stringify(jsonBody);
+  return {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    [Symbol.asyncIterator]: async function* () {
+      yield bodyStr;
+    },
+  } as unknown as IncomingMessage;
+}
+
+// ── DV-HC-1: GET /flags/{doc_id} returns red flags with ocr_value/image_value ─
+
+describe("DV-HC-1 — GET /flags/{doc_id} returns red flagged cells with ocr_value/image_value", () => {
+  it("seeds red-flag markdown; assert exact ocr_value and image_value strings", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID, { refine_status: "DONE" });
+
+    // Seed bctc_refined_units with known red-flag markdown
+    const markdown = [
+      "| Mã | Chỉ tiêu | Giá trị |",
+      "|---|---|---|",
+      "| 110 | Tiền và tương đương tiền | 1.234 [ĐỘ TIN CẬY THẤP — OCR 1.234 vs image 1.500] |",
+    ].join("\n");
+    db.prepare(
+      `INSERT INTO bctc_refined_units
+         (report_id, unit_id, page_numbers_json, markdown, row_count, confidence, window_status)
+       VALUES (?, 'unit-dv1', '[4]', ?, 1, 0.2, 'DONE')`,
+    ).run(REPORT_UUID, markdown);
+
+    // Seed matching bctc_table_rows row
+    seedTableRow(db, REPORT_UUID, {
+      label: "Tiền và tương đương tiền",
+      page_number: 4,
+      statement_section: "general",
+      code: null,
+      value_current: 1234,
+    });
+
+    const req = makeGetReq();
+    const res = makeMockRes();
+    await handleBctcInspectFlags(req, res as never, db, REPORT_UUID);
+
+    expect(res.statusCode).toBe(200);
+    const parsed = JSON.parse(res.body) as {
+      has_flags: boolean; flags: Array<{
+        flag_type: string; ocr_value: string | null; image_value: string | null;
+      }>;
+    };
+    expect(parsed.has_flags).toBe(true);
+
+    const redFlag = parsed.flags.find((f) => f.flag_type === "red");
+    expect(redFlag).toBeDefined();
+    // Anti-false-green: exact string match from the markdown seed
+    expect(redFlag?.ocr_value).toBe("1.234");
+    expect(redFlag?.image_value).toBe("1.500");
+
+    db.close();
+  });
+
+  it("returns 400 for invalid UUID", async () => {
+    const db = openTestDb();
+    const req = makeGetReq();
+    const res = makeMockRes();
+    await handleBctcInspectFlags(req, res as never, db, "not-a-uuid");
+    expect(res.statusCode).toBe(400);
+    const parsed = JSON.parse(res.body) as { error: string };
+    expect(parsed.error).toBe("invalid_uuid");
+    db.close();
+  });
+
+  it("returns 404 when report not found", async () => {
+    const db = openTestDb();
+    const req = makeGetReq();
+    const res = makeMockRes();
+    await handleBctcInspectFlags(req, res as never, db, REPORT_UUID);
+    expect(res.statusCode).toBe(404);
+    db.close();
+  });
+});
+
+// ── DV-HC-2: GET /flags/{doc_id} returns yellow flag with null ocr/image ──────
+
+describe("DV-HC-2 — GET /flags/{doc_id} yellow flag: null ocr_value and image_value", () => {
+  it("seeds yellow-flag markdown; asserts both ocr_value and image_value are null", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID, { refine_status: "DONE" });
+
+    const markdown = [
+      "| Chỉ tiêu | Giá trị |",
+      "|---|---|",
+      "| Doanh thu thuần | 5.000 [độ tin cậy thấp] |",
+    ].join("\n");
+    db.prepare(
+      `INSERT INTO bctc_refined_units
+         (report_id, unit_id, page_numbers_json, markdown, row_count, confidence, window_status)
+       VALUES (?, 'unit-dv2', '[3]', ?, 1, 0.4, 'DONE')`,
+    ).run(REPORT_UUID, markdown);
+
+    seedTableRow(db, REPORT_UUID, {
+      label: "Doanh thu thuần",
+      page_number: 3,
+      statement_section: "general",
+      code: null,
+      value_current: 5000,
+    });
+
+    const req = makeGetReq();
+    const res = makeMockRes();
+    await handleBctcInspectFlags(req, res as never, db, REPORT_UUID);
+
+    expect(res.statusCode).toBe(200);
+    const parsed = JSON.parse(res.body) as {
+      flags: Array<{
+        flag_type: string;
+        ocr_value: string | null;
+        image_value: string | null;
+      }>;
+    };
+
+    const yellowFlag = parsed.flags.find((f) => f.flag_type === "yellow");
+    expect(yellowFlag).toBeDefined();
+    // Anti-false-green: both must be null (yellow flags have no OCR vs image clause)
+    expect(yellowFlag?.ocr_value).toBeNull();
+    expect(yellowFlag?.image_value).toBeNull();
+
+    db.close();
+  });
+});
+
+// ── DV-HC-4: POST /correct/{doc_id} on confirmed report → 409 ─────────────────
+
+describe("DV-HC-4 — POST /correct/{doc_id} on CONFIRMED report returns 409", () => {
+  it("sets confirm_status=CONFIRMED first; asserts 409 response", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID, { confirm_status: "CONFIRMED", refine_status: "DONE" });
+    const rowId = seedTableRow(db, REPORT_UUID, { value_current: 500 });
+
+    const req = makePostReq({ row_id: rowId, new_value: 999 });
+    const res = makeMockRes();
+    await handleBctcInspectCorrect(req, res as never, db, REPORT_UUID);
+
+    // Anti-false-green: HTTP status must be exactly 409
+    expect(res.statusCode).toBe(409);
+    const parsed = JSON.parse(res.body) as { ok: boolean; error: string };
+    expect(parsed.ok).toBe(false);
+    expect(parsed.error).toBe("report_confirmed");
+
+    db.close();
+  });
+
+  it("returns 400 for invalid JSON body", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID);
+
+    const badReq = {
+      method: "POST",
+      headers: {},
+      [Symbol.asyncIterator]: async function* () { yield "not-json"; },
+    } as unknown as IncomingMessage;
+
+    const res = makeMockRes();
+    await handleBctcInspectCorrect(badReq, res as never, db, REPORT_UUID);
+    expect(res.statusCode).toBe(400);
+    const parsed = JSON.parse(res.body) as { error: string };
+    expect(parsed.error).toBe("invalid_json");
+    db.close();
+  });
+
+  it("returns 400 when row_id is not an integer", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID);
+
+    const req = makePostReq({ row_id: "not-a-number", new_value: 100 });
+    const res = makeMockRes();
+    await handleBctcInspectCorrect(req, res as never, db, REPORT_UUID);
+    expect(res.statusCode).toBe(400);
+    db.close();
+  });
+});
+
+// ── DV-HC-5: POST /confirm/{doc_id} sets confirm_status=CONFIRMED ─────────────
+
+describe("DV-HC-5 — POST /confirm/{doc_id} sets confirm_status=CONFIRMED", () => {
+  it("after POST, direct DB read shows confirm_status=CONFIRMED", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID, { confirm_status: "PENDING" });
+
+    const req = makePostReq({});
+    const res = makeMockRes();
+    await handleBctcInspectConfirm(req, res as never, db, REPORT_UUID);
+
+    expect(res.statusCode).toBe(200);
+    const parsed = JSON.parse(res.body) as { ok: boolean; confirm_status: string };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.confirm_status).toBe("CONFIRMED");
+
+    // Anti-false-green: DIRECT DB read, not HTTP response alone
+    interface StatusRow { confirm_status: string; final_confirmed_at: string | null }
+    const row = db
+      .prepare<StatusRow, [string]>(
+        "SELECT confirm_status, final_confirmed_at FROM financial_reports WHERE id = ?",
+      )
+      .get(REPORT_UUID);
+    expect(row?.confirm_status).toBe("CONFIRMED");
+    expect(row?.final_confirmed_at).not.toBeNull();  // timestamp was set
+
+    db.close();
+  });
+
+  it("idempotent: re-confirm updates timestamp, returns 200", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID, { confirm_status: "CONFIRMED" });
+
+    const req = makePostReq({});
+    const res = makeMockRes();
+    await handleBctcInspectConfirm(req, res as never, db, REPORT_UUID);
+    expect(res.statusCode).toBe(200);
+
+    // Direct DB read: still CONFIRMED
+    interface StatusRow { confirm_status: string }
+    const row = db
+      .prepare<StatusRow, [string]>("SELECT confirm_status FROM financial_reports WHERE id = ?")
+      .get(REPORT_UUID);
+    expect(row?.confirm_status).toBe("CONFIRMED");
+
+    db.close();
+  });
+
+  it("returns 400 for invalid UUID", async () => {
+    const db = openTestDb();
+    const req = makePostReq({});
+    const res = makeMockRes();
+    await handleBctcInspectConfirm(req, res as never, db, "bad-uuid");
+    expect(res.statusCode).toBe(400);
+    db.close();
+  });
+});
+
+// ── DV-HC-6: POST /confirm/{doc_id}/reset clears status; corrections remain ───
+
+describe("DV-HC-6 — POST /confirm/{doc_id}/reset clears confirm_status; corrections intact", () => {
+  it("after reset, confirm_status=PENDING; bctc_human_corrections count unchanged", async () => {
+    const db = openTestDb();
+    seedReport(db, REPORT_UUID, { confirm_status: "CONFIRMED" });
+    const rowId = seedTableRow(db, REPORT_UUID, { value_current: 1000 });
+
+    // Seed a correction record (must survive the reset)
+    upsertCorrection(db, {
+      report_id: REPORT_UUID, row_id: rowId, label: "Tiền", page_number: 4,
+      statement_section: "balance_sheet", code: null,
+      old_value: 1000, new_value: 2000, correction_source: "human_ui",
+      confirmed_by: "user", flag_type: "yellow",
+      ocr_value_snapshot: null, image_value_snapshot: null, anchor_status: "ok",
+    });
+
+    // Verify correction is there before reset
+    interface CountRow { cnt: number }
+    const beforeCount = db
+      .prepare<CountRow, [string]>(
+        "SELECT COUNT(*) as cnt FROM bctc_human_corrections WHERE report_id = ?",
+      )
+      .get(REPORT_UUID);
+    expect(beforeCount?.cnt).toBe(1);
+
+    // POST reset
+    const req = makePostReq({});
+    const res = makeMockRes();
+    await handleBctcInspectConfirmReset(req, res as never, db, REPORT_UUID);
+
+    expect(res.statusCode).toBe(200);
+    const parsed = JSON.parse(res.body) as { ok: boolean; confirm_status: string };
+    expect(parsed.ok).toBe(true);
+    expect(parsed.confirm_status).toBe("PENDING");
+
+    // Anti-false-green: DIRECT DB reads
+    interface StatusRow { confirm_status: string; final_confirmed_at: string | null }
+    const statusRow = db
+      .prepare<StatusRow, [string]>(
+        "SELECT confirm_status, final_confirmed_at FROM financial_reports WHERE id = ?",
+      )
+      .get(REPORT_UUID);
+    expect(statusRow?.confirm_status).toBe("PENDING");
+    expect(statusRow?.final_confirmed_at).toBeNull();  // timestamp cleared
+
+    // Corrections must NOT be deleted (AC-FR3-2)
+    const afterCount = db
+      .prepare<CountRow, [string]>(
+        "SELECT COUNT(*) as cnt FROM bctc_human_corrections WHERE report_id = ?",
+      )
+      .get(REPORT_UUID);
+    expect(afterCount?.cnt).toBe(1);  // correction record still there
+
+    db.close();
+  });
+
+  it("returns 400 for invalid UUID", async () => {
+    const db = openTestDb();
+    const req = makePostReq({});
+    const res = makeMockRes();
+    await handleBctcInspectConfirmReset(req, res as never, db, "not-uuid");
+    expect(res.statusCode).toBe(400);
+    db.close();
+  });
+});
