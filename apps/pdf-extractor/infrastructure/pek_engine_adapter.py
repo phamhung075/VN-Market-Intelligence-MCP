@@ -60,11 +60,6 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 from typing import Dict, List, Optional, Tuple, Any
 
-from infrastructure.bctc_page_grouper import (  # BTB-DRIFT-DEV
-    PageDescriptor,
-    group_pages_into_units,
-)
-
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -543,13 +538,9 @@ def _cells_to_row_bands(cells: List[Dict], table_y_min: int, table_y_max: int) -
     return row_bands
 
 
-# BTB-DRIFT-DEV: _group_bboxes_into_units DELETED.
-# Replaced by the shared canonical grouper in bctc_page_grouper.py.
-# Anti-drift guard: test_anti_drift_grouper.py AD-2 asserts this function
-# does NOT exist in this module — if it re-appears, the drift test fails loudly.
-#
-# PATH B now calls group_pages_into_units() from bctc_page_grouper via
-# _build_page_descriptors_from_bboxes() helper in _run_extraction (Step 2).
+# AR-PDF FR-14: YOLO bbox grouping removed. _group_bboxes_into_units and
+# bctc_page_grouper are both deleted. Each page is now emitted as its own
+# unit in _run_extraction Step 2 (minimal pass-through).
 
 
 # ---------------------------------------------------------------------------
@@ -688,15 +679,13 @@ class PekEngineAdapter:
             pages_bboxes, page_dims = self._get_page_dims_fallback(pdf_path)
 
         # ------------------------------------------------------------------
-        # Step 2: Group pages into logical units (DocumentMap)
-        # BTB-DRIFT-DEV: build PageDescriptors from PEK bboxes and delegate
-        # to the shared SSOT grouper in bctc_page_grouper.py.
-        # stored_text="" — PATH B has no OCR text at this stage; D-5 silently
-        # no-ops (correct by design; can be enabled if PATH B gains OCR access).
-        # row_pitch=0.0 — no pitch available from layout bboxes; pitch guard
-        # disabled when pitch_a or pitch_b is 0 (see _is_continuous).
+        # Step 2: Build DocumentMap — minimal pass-through (AR-PDF FR-14)
+        # YOLO bbox grouping and bctc_page_grouper removed.
+        # Each page becomes its own unit (no bbox-based boundary detection).
+        # The refine orchestrator (mcp-server) handles page-window grouping.
         # ------------------------------------------------------------------
-        page_descriptors: List[PageDescriptor] = []
+        total_pages = max(pages_bboxes.keys()) if pages_bboxes else 0
+        units_in_map: List[Dict] = []
         for pn in sorted(pages_bboxes.keys()):
             bboxes_for_page = pages_bboxes[pn]
             table_bboxes_for_page = [
@@ -708,34 +697,12 @@ class PekEngineAdapter:
                 ptype = "table"
             else:
                 ptype = "prose"
-            # Gutter fractions from table bbox centre x-positions (fraction of page width)
-            w, _h = page_dims.get(pn, (2338, 3308))
-            gutter_fracs: List[float] = []
-            if w > 0 and table_bboxes_for_page:
-                gutter_fracs = [
-                    (b.get("bbox", [0, 0, 0, 0])[0] + b.get("bbox", [0, 0, 0, 0])[2]) / 2.0 / w
-                    for b in table_bboxes_for_page
-                ]
-            page_descriptors.append(PageDescriptor(
-                page_num=pn,
-                page_type=ptype,
-                gutter_count=len(table_bboxes_for_page),
-                gutter_x_fractions=gutter_fracs,
-                row_pitch=0.0,
-                stored_text="",
-            ))
-
-        unit_descriptors = group_pages_into_units(page_descriptors)
-        units_in_map: List[Dict] = [
-            {
+            units_in_map.append({
                 "unit_id": str(uuid.uuid4()),
-                "schema_page": ud.schema_page,
-                "pages": ud.pages,
-                "page_type": ud.page_type,
-            }
-            for ud in unit_descriptors
-        ]
-        total_pages = max(pages_bboxes.keys()) if pages_bboxes else 0
+                "schema_page": pn,
+                "pages": [pn],
+                "page_type": ptype,
+            })
 
         document_map: Dict = {
             "report_id": report_id,

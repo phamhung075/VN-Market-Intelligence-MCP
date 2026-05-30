@@ -2544,17 +2544,24 @@ _TABLE_PAGE_MIN_MONEY_GROUPS: int = 3
 _TABLE_MIN_GUTTER_COUNT: int = 1
 
 # ---------------------------------------------------------------------------
-# BCTC-TABLE-BOUNDARY — Title-band detector constants (D-5)
-# BTB-DRIFT: these constants are the SSOT in bctc_page_grouper.py.
-# Re-imported here for backward compatibility with existing callers and tests
-# that import them from this module.
+# AR-PDF FR-14 — Title-band detector constants (D-5)
+# Inlined from bctc_page_grouper.py (deleted in AR-PDF sprint).
+# These constants are retained here for backward compatibility with
+# existing callers and tests that import them from this module.
 # ---------------------------------------------------------------------------
-from infrastructure.bctc_page_grouper import (  # noqa: E402 re-export
-    _TITLE_BAND_SCAN_LINES,
-    _TITLE_BAND_MIN_LEN,
-    _TITLE_BAND_MAX_LEN,
-    _CONTINUATION_MARKERS,
-)
+
+# Number of lines from the top of the page text to scan for a title band.
+_TITLE_BAND_SCAN_LINES: int = 8
+
+# Minimum character length for a candidate title line.
+_TITLE_BAND_MIN_LEN: int = 5
+
+# Maximum character length for a candidate title line.
+_TITLE_BAND_MAX_LEN: int = 120
+
+# Continuation marker strings — presence of any of these causes D-5 to return
+# False (the page is a continuation of the previous table, not a new one).
+_CONTINUATION_MARKERS: tuple = ("tiếp theo", "(continued)", "continued")
 
 
 # ---------------------------------------------------------------------------
@@ -2645,41 +2652,65 @@ def build_document_map(pages: List[Dict], pdf_path: str) -> Dict:
         page_fingerprints[page_num] = fingerprint
 
     # ------------------------------------------------------------------
-    # Step 2 + 3: Group pages into units via shared bctc_page_grouper
-    # BTB-DRIFT-DEV: delegate to group_pages_into_units() — the single
-    # canonical grouping function shared with PATH B (pek_engine_adapter).
-    # Zero duplicate grouping logic in this function — I/O adapter only.
+    # Step 2 + 3: Group pages into units using inlined fingerprint continuity
+    # AR-PDF FR-14: bctc_page_grouper.py deleted. Grouping now uses
+    # _fingerprints_continuous (inlined above) for the dict-based continuity
+    # test. The 5-state machine is removed; this path uses a simple
+    # scan-and-break grouping on fingerprint continuity.
     # ------------------------------------------------------------------
-    from infrastructure.bctc_page_grouper import (  # BTB-DRIFT-DEV
-        PageDescriptor,
-        group_pages_into_units,
-    )
+    units: list = []
+    current_unit_pages: list = []
+    current_schema_page: int = 1
+    current_page_type: str = "prose"
+    prev_fp: Optional[dict] = None
+    prev_text: str = ""
 
-    # Build PageDescriptors from fingerprints.
-    # PATH A HAS the OCR text → stored_text is populated → D-5 is ACTIVE.
-    page_descriptors = [
-        PageDescriptor(
-            page_num=page_num,
-            page_type=page_fingerprints[page_num].get("page_type", "prose"),
-            gutter_count=page_fingerprints[page_num].get("gutter_count", 0),
-            gutter_x_fractions=page_fingerprints[page_num].get("gutter_x_fractions", []),
-            row_pitch=page_fingerprints[page_num].get("row_pitch_px_at_50dpi", 0.0),
-            stored_text=page_text_by_num.get(page_num, ""),
-        )
-        for page_num in range(1, total_pages + 1)
-    ]
+    for page_num in range(1, total_pages + 1):
+        fp = page_fingerprints.get(page_num, {})
+        stored_text = page_text_by_num.get(page_num, "")
+        page_type = fp.get("page_type", "prose")
 
-    unit_descriptors = group_pages_into_units(page_descriptors)
+        if not current_unit_pages:
+            # Start first unit
+            current_unit_pages = [page_num]
+            current_schema_page = page_num
+            current_page_type = page_type
+            prev_fp = fp
+            prev_text = stored_text
+            continue
 
-    units = [
-        {
+        # Check if this page continues the current unit
+        if (
+            prev_fp is not None
+            and page_type == current_page_type
+            and page_type != "blank"
+            and _fingerprints_continuous(prev_fp, fp, stored_text_b=stored_text)
+        ):
+            current_unit_pages.append(page_num)
+        else:
+            # Close current unit
+            units.append({
+                "unit_id": str(uuid.uuid4()),
+                "schema_page": current_schema_page,
+                "pages": list(current_unit_pages),
+                "page_type": current_page_type,
+            })
+            # Start new unit
+            current_unit_pages = [page_num]
+            current_schema_page = page_num
+            current_page_type = page_type
+
+        prev_fp = fp
+        prev_text = stored_text
+
+    # Flush last unit
+    if current_unit_pages:
+        units.append({
             "unit_id": str(uuid.uuid4()),
-            "schema_page": ud.schema_page,
-            "pages": ud.pages,
-            "page_type": ud.page_type,
-        }
-        for ud in unit_descriptors
-    ]
+            "schema_page": current_schema_page,
+            "pages": list(current_unit_pages),
+            "page_type": current_page_type,
+        })
 
     doc_map = {
         "report_id": str(uuid.uuid4()),
@@ -2944,9 +2975,60 @@ def _extract_unit_hints(text: str) -> List[str]:
     return hints
 
 
-# BTB-DRIFT: _is_title_band is now the SSOT in bctc_page_grouper.py.
-# Re-exported here for backward compatibility with existing test imports.
-from infrastructure.bctc_page_grouper import _is_title_band  # noqa: F401 re-export
+# AR-PDF FR-14 — _is_title_band inlined from bctc_page_grouper.py (deleted in AR-PDF sprint).
+# Retained here for backward compatibility with existing test imports.
+# Financial money-group pattern used by _is_title_band below.
+_BCTC_MONEY_GROUP_RE = re.compile(r"\d{1,3}(?:[.,]\d{3})+")
+
+
+def _is_title_band(stored_text: str) -> bool:
+    """
+    Detect whether a page opens with a standalone table-title band (D-5).
+
+    Algorithm (cheap — reads stored OCR text, no new Tesseract calls):
+        1. Split text into lines. Scan only the first _TITLE_BAND_SCAN_LINES lines.
+        2. For each scanned line:
+           a. Strip whitespace. Skip empty and lines shorter than _TITLE_BAND_MIN_LEN.
+           b. Skip lines containing money-group pattern (financial data, not a title).
+           c. Skip lines that are purely numeric/punctuation.
+           d. Skip lines with fewer than 2 words (likely an OCR column-header artifact).
+           e. If a candidate line contains a continuation marker → return False immediately.
+           f. Otherwise: record as a candidate title line.
+        3. If at least one candidate title line found → return True (D-5 fires).
+        4. Otherwise → return False (no title band detected).
+
+    AC-0: detects structural pattern (non-numeric standalone line in top region).
+    No BCTC-specific keyword strings used in branching decisions.
+    Pure function: no I/O, no Tesseract.
+    """
+    if not stored_text:
+        return False
+
+    lines = stored_text.splitlines()
+    scan_lines = lines[:_TITLE_BAND_SCAN_LINES]
+
+    for line in scan_lines:
+        stripped = line.strip()
+
+        if len(stripped) < _TITLE_BAND_MIN_LEN:
+            continue
+        if len(stripped) > _TITLE_BAND_MAX_LEN:
+            continue
+        if _BCTC_MONEY_GROUP_RE.search(stripped):
+            continue
+        if re.fullmatch(r"[\d.,\s()]+", stripped):
+            continue
+        if len(stripped.split()) < 2:
+            continue
+
+        stripped_lower = stripped.lower()
+        for marker in _CONTINUATION_MARKERS:
+            if marker in stripped_lower:
+                return False
+
+        return True
+
+    return False
 
 
 def _find_ink_bbox(col_dark: List[int]) -> Tuple[int, int]:
@@ -2995,9 +3077,70 @@ def _find_ink_bbox(col_dark: List[int]) -> Tuple[int, int]:
     return x_left, x_right
 
 
-# BTB-DRIFT: _fingerprints_continuous is now the SSOT in bctc_page_grouper.py.
-# Re-exported here for backward compatibility with existing test imports.
-from infrastructure.bctc_page_grouper import _fingerprints_continuous  # noqa: F401 re-export
+# AR-PDF FR-14 — _fingerprints_continuous inlined from bctc_page_grouper.py (deleted in AR-PDF).
+# Retained here for backward compatibility with existing test imports.
+
+# Gutter position tolerance: two pages belong to the same unit if all gutter
+# x-fractions differ by less than this value (as fraction of page width).
+_GUTTER_POSITION_TOLERANCE: float = 0.05
+
+# Row pitch change tolerance: a unit break fires if row_pitch changes by more
+# than this fraction (50% = significantly different row density).
+_ROW_PITCH_CHANGE_TOLERANCE: float = 0.50
+
+
+def _fingerprints_continuous(
+    fp_a: dict,
+    fp_b: dict,
+    stored_text_b: str = "",
+) -> bool:
+    """
+    Test if two page fingerprint dicts belong to the same logical unit.
+
+    Translates dict-based fingerprints into comparable fields and applies
+    the same continuity test as the deleted bctc_page_grouper._fingerprints_continuous.
+
+    Args:
+        fp_a: Fingerprint dict of the reference page.
+        fp_b: Fingerprint dict of the candidate continuation page.
+        stored_text_b: Stored OCR text of page B (for D-5 title-band check).
+    """
+    if fp_a.get("page_type") == "blank" or fp_b.get("page_type") == "blank":
+        return False
+
+    pt_a = fp_a.get("page_type", "prose")
+    pt_b = fp_b.get("page_type", "prose")
+    if pt_a != pt_b:
+        return False
+
+    # Gutter count must match
+    gc_a = fp_a.get("gutter_count", 0)
+    gc_b = fp_b.get("gutter_count", 0)
+    if gc_a != gc_b:
+        return False
+
+    # Gutter x-fractions must be within tolerance
+    gx_a = fp_a.get("gutter_x_fractions", [])
+    gx_b = fp_b.get("gutter_x_fractions", [])
+    if len(gx_a) != len(gx_b):
+        return False
+    for xa, xb in zip(gx_a, gx_b):
+        if abs(xa - xb) > _GUTTER_POSITION_TOLERANCE:
+            return False
+
+    # Row pitch must not change by more than tolerance (only when both available)
+    pitch_a = fp_a.get("row_pitch_px_at_50dpi", 0.0)
+    pitch_b = fp_b.get("row_pitch_px_at_50dpi", 0.0)
+    if pitch_a > 0 and pitch_b > 0:
+        change = abs(pitch_a - pitch_b) / max(pitch_a, pitch_b)
+        if change > _ROW_PITCH_CHANGE_TOLERANCE:
+            return False
+
+    # D-5: title-band check — page B must not announce a new table section
+    if _is_title_band(stored_text_b):
+        return False
+
+    return True
 
 
 # ---------------------------------------------------------------------------

@@ -27,6 +27,10 @@ from application.extract_layout_first_usecase import ExtractLayoutFirstUseCase  
 from infrastructure.inspection_store import InspectionStore
 from interface.serializers import ExtractPDFRequestSchema, HealthResponse
 
+# AR-PDF FR-1/FR-2: rasterizer + OCR text source imports (lazy-loaded at call site)
+# Infrastructure imports are deferred into handlers to keep the interface layer
+# thin and avoid circular import issues at module load time.
+
 # PEK-INTEGRATE: market-hours guard (domain primitive — pure function, injected at call site)
 # REQ-PEK-11 Layer 2: POST /pek-extract returns HTTP 503 during VN market hours.
 # Domain import is permitted in interface layer (interface → domain is valid DDD flow).
@@ -155,6 +159,29 @@ class PekExtractRequestSchema(BaseModel):
     pdf_path: str
 
 
+# ---------------------------------------------------------------------------
+# AR-PDF FR-1/FR-2 — New request schemas
+# ---------------------------------------------------------------------------
+
+
+class RasterizeRequestSchema(BaseModel):
+    """
+    POST /api/rasterize — on-demand page rasterization request.
+
+    AR-PDF FR-1 AC-FR1.3: rasterize specific pages of a PDF report.
+    Idempotent: already-present pages are returned without re-rendering.
+
+    Fields:
+        report_id: Report identifier (used as output subdirectory name).
+        filename:  PDF filename (basename only) — resolved to data/pdfs/{filename}.
+        pages:     List of 1-indexed page numbers to rasterize.
+    """
+
+    report_id: str
+    filename: str
+    pages: list[int]
+
+
 async def _run_extract_layout_first(
     use_case: "ExtractLayoutFirstUseCase",
     report_id: str,
@@ -263,6 +290,8 @@ def register_routes(
     extract_layout_first_usecase: Optional["ExtractLayoutFirstUseCase"] = None,
     pek_engine_adapter: Optional[Any] = None,
     pek_push_client: Optional[Any] = None,
+    ocr_text_source: Optional[Any] = None,
+    pdf_data_dir: str = "data/pdfs",
 ) -> None:
     """Attach all routes to the given APIRouter."""
 
@@ -591,3 +620,130 @@ def register_routes(
             )
 
         return data
+
+    # ----------------------------------------------------------------
+    # AR-PDF FR-1 / FR-2 — Page rasterizer + OCR text endpoints
+    # ----------------------------------------------------------------
+
+    @router.post("/rasterize")
+    async def rasterize_pages(body: RasterizeRequestSchema) -> dict:
+        """
+        POST /api/rasterize
+
+        AR-PDF FR-1 AC-FR1.3: on-demand rasterization for missing pages.
+
+        Resolves filename → PDF path under data/pdfs/.
+        Calls rasterize_page() for each page only if PNG is missing (idempotent).
+        Already-present pages are counted in the response without re-rendering.
+
+        Accepts:  { report_id: str, filename: str, pages: list[int] }
+        Returns:  { rasterized: list[int], paths: list[str] }
+        Auth: none (internal service — same Docker network).
+
+        Returns HTTP 503 if page_rasterizer is not importable (missing pymupdf).
+        """
+        import logging as _log_mod
+        _log = _log_mod.getLogger(__name__)
+
+        try:
+            from infrastructure.page_rasterizer import rasterize_page
+        except ImportError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail={"error": f"page_rasterizer unavailable: {exc}"},
+            ) from exc
+
+        pdf_path = os.path.join(pdf_data_dir, body.filename)
+        if not os.path.exists(pdf_path):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={
+                    "error": "pdf_not_found",
+                    "filename": body.filename,
+                    "resolved_path": pdf_path,
+                },
+            )
+
+        import fitz  # type: ignore
+        try:
+            doc = fitz.open(pdf_path)
+            page_count = doc.page_count
+            doc.close()
+        except Exception as exc:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={"error": f"cannot_open_pdf: {exc}"},
+            ) from exc
+
+        dpi_env = int(os.getenv("BCTC_RASTER_DPI", "150"))
+        rasterized: list[int] = []
+        paths: list[str] = []
+
+        for page_num in body.pages:
+            if page_num < 1 or page_num > page_count:
+                _log.warning(
+                    "rasterize_pages: skip page=%d (out of range, pdf has %d pages) "
+                    "report_id=%s",
+                    page_num,
+                    page_count,
+                    body.report_id,
+                )
+                continue
+            try:
+                out_path = rasterize_page(
+                    pdf_path=pdf_path,
+                    report_id=body.report_id,
+                    page_number=page_num,
+                    dpi=dpi_env,
+                )
+                rasterized.append(page_num)
+                paths.append(str(out_path))
+            except Exception as exc:
+                _log.error(
+                    "rasterize_pages: FAILED page=%d report_id=%s error=%s",
+                    page_num,
+                    body.report_id,
+                    exc,
+                )
+
+        return {"rasterized": rasterized, "paths": paths}
+
+    @router.get("/page-text")
+    async def get_page_text(filename: str, page_number: int) -> dict:
+        """
+        GET /api/page-text?filename=<str>&page_number=<int>
+
+        AR-PDF FR-2 AC-FR1.3: retrieve stored OCR text for a page.
+        Supports get_bctc_page_text MCP tool (mcp-server calls this endpoint).
+
+        Returns { text: str, source: "sqlite_ocr" | "mistral_ocr" }
+        Returns { text: "" } (NOT 404) when no text found — empty string is valid.
+
+        Query params:
+            filename:    PDF filename (matches pdf_extracted_text.filename).
+            page_number: 1-indexed page number.
+
+        Auth: none (internal service).
+        """
+        if ocr_text_source is None:
+            # Graceful degrade — return empty text rather than 503.
+            # mcp-server treats "" as "no OCR available" and proceeds without it.
+            return {"text": "", "source": "sqlite_ocr"}
+
+        try:
+            text = ocr_text_source.get_page_text(filename, page_number)
+        except Exception as exc:
+            import logging as _log_mod
+            _log_mod.getLogger(__name__).warning(
+                "get_page_text: error filename=%s page_number=%d error=%s",
+                filename,
+                page_number,
+                exc,
+            )
+            text = ""
+
+        # Determine source label from backend env var
+        backend = os.getenv("BCTC_PAGE_TEXT_BACKEND", "sqlite").strip().lower()
+        source = "mistral_ocr" if backend == "mistral" else "sqlite_ocr"
+
+        return {"text": text, "source": source}

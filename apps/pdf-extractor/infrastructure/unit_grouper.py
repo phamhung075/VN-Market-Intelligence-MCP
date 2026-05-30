@@ -1,12 +1,11 @@
 """
-infrastructure/unit_grouper.py — compatibility shim (BTB-DRIFT-DEV)
+infrastructure/unit_grouper.py — compatibility shim
 
-This module was the original SSOT for page grouping.  After BTB-DRIFT-DEV,
-the SSOT moved to ``infrastructure.bctc_page_grouper``.
+AR-PDF FR-14: bctc_page_grouper.py deleted. This shim now uses inlined
+grouping logic from generic_md_table_extractor (which absorbed the constants
+and functions from bctc_page_grouper as part of the FR-14 replacement).
 
-This shim remains for backward compatibility with:
-  - ``build_document_map`` (PATH A) if still importing from here
-  - test helpers in ``test_grouping_convergence.py``
+This shim remains for backward compatibility with test_unit_grouper.py.
 
 Public API:
     ``group_pages_into_units(pages: List[Dict]) -> List[Dict]``
@@ -15,27 +14,188 @@ Public API:
 
         {"page_num": int, "page_type": str, "title_hints": List[str]}
 
-    Translates to ``PageDescriptor`` and delegates to
-    ``bctc_page_grouper.group_pages_into_units``.
-
-    title_hints are mapped to D-5 via stored_text: a non-empty hint that is
-    not a continuation marker is synthesised into a stored_text value that
-    ``_is_title_band`` will detect (a two-word non-numeric line).
-    Continuation-marker hints are forwarded as-is → _is_title_band returns
-    False → D-5 silent (correct).
-
 DDD layer: infrastructure.  Zero I/O, stdlib only.
 """
 from __future__ import annotations
 
 import uuid
-from typing import Dict, List
+from dataclasses import dataclass, field
+from typing import Dict, List, Optional
 
-from infrastructure.bctc_page_grouper import (
-    PageDescriptor,
-    group_pages_into_units as _group_pages_into_units,
-    _CONTINUATION_MARKERS,
-)
+# ---------------------------------------------------------------------------
+# Inlined constants from bctc_page_grouper (deleted in AR-PDF FR-14)
+# ---------------------------------------------------------------------------
+
+_TITLE_BAND_SCAN_LINES: int = 8
+_TITLE_BAND_MIN_LEN: int = 5
+_TITLE_BAND_MAX_LEN: int = 120
+_CONTINUATION_MARKERS: tuple = ("tiếp theo", "(continued)", "continued")
+_GUTTER_POSITION_TOLERANCE: float = 0.05
+_ROW_PITCH_CHANGE_TOLERANCE: float = 0.50
+
+import re as _re
+_MONEY_GROUP_RE = _re.compile(r"\d{1,3}(?:[.,]\d{3})+")
+
+
+@dataclass
+class PageDescriptor:
+    """Portable per-page descriptor for the inlined grouper."""
+    page_num: int
+    page_type: str
+    gutter_count: int
+    gutter_x_fractions: List[float] = field(default_factory=list)
+    row_pitch: float = 0.0
+    stored_text: str = ""
+
+
+@dataclass
+class UnitDescriptor:
+    """Logical document unit from group_pages_into_units."""
+    pages: List[int]
+    page_type: str
+    schema_page: int
+
+
+def _is_title_band(stored_text: str) -> bool:
+    """Detect title band (D-5). Inlined from deleted bctc_page_grouper."""
+    if not stored_text:
+        return False
+    lines = stored_text.splitlines()
+    for line in lines[:_TITLE_BAND_SCAN_LINES]:
+        stripped = line.strip()
+        if len(stripped) < _TITLE_BAND_MIN_LEN:
+            continue
+        if len(stripped) > _TITLE_BAND_MAX_LEN:
+            continue
+        if _MONEY_GROUP_RE.search(stripped):
+            continue
+        if _re.fullmatch(r"[\d.,\s()]+", stripped):
+            continue
+        if len(stripped.split()) < 2:
+            continue
+        stripped_lower = stripped.lower()
+        for marker in _CONTINUATION_MARKERS:
+            if marker in stripped_lower:
+                return False
+        return True
+    return False
+
+
+def _is_continuous(desc_a: PageDescriptor, desc_b: PageDescriptor) -> bool:
+    """Test if two PageDescriptors belong to the same logical unit."""
+    if desc_a.gutter_count != desc_b.gutter_count:
+        return False
+    gx_a = desc_a.gutter_x_fractions
+    gx_b = desc_b.gutter_x_fractions
+    if len(gx_a) != len(gx_b):
+        return False
+    for xa, xb in zip(gx_a, gx_b):
+        if abs(xa - xb) > _GUTTER_POSITION_TOLERANCE:
+            return False
+    pitch_a = desc_a.row_pitch
+    pitch_b = desc_b.row_pitch
+    if pitch_a > 0 and pitch_b > 0:
+        change = abs(pitch_a - pitch_b) / max(pitch_a, pitch_b)
+        if change > _ROW_PITCH_CHANGE_TOLERANCE:
+            return False
+    if _is_title_band(desc_b.stored_text):
+        return False
+    return True
+
+
+def _group_pages_into_units(pages: List[PageDescriptor]) -> List[UnitDescriptor]:
+    """
+    Group PageDescriptors into units. State machine inlined from deleted bctc_page_grouper.
+
+    Key behaviours (preserved from original state machine):
+    - Prose pages emit their own UnitDescriptor (never discarded).
+    - Blank pages are buffered and bridged into the current table unit only
+      when the next non-blank page is a continuation. If the next page is
+      prose or a different table, blanks are discarded.
+    - _is_continuous: same geometric + D-5 predicate as original.
+    - TABLE_OPEN state: flush on prose, TABLE_NEW on geometry change.
+    """
+    if not pages:
+        return []
+
+    units: List[UnitDescriptor] = []
+    current_pages: List[int] = []
+    current_type: Optional[str] = None
+    pending_blanks: List[int] = []
+    last_committed_d1: Optional[PageDescriptor] = None
+    current_prose_desc: Optional[PageDescriptor] = None
+    state: str = "NO_TABLE"
+
+    def flush() -> None:
+        nonlocal current_pages, current_type
+        if not current_pages:
+            return
+        units.append(UnitDescriptor(
+            pages=list(current_pages),
+            page_type=current_type or "prose",
+            schema_page=current_pages[0],
+        ))
+        current_pages = []
+
+    for desc in pages:
+        pt = desc.page_type
+
+        if pt == "blank":
+            pending_blanks.append(desc.page_num)
+            continue
+
+        if state == "NO_TABLE":
+            pending_blanks = []
+
+            if pt == "table":
+                flush()
+                current_pages = [desc.page_num]
+                current_type = "table"
+                last_committed_d1 = desc
+                current_prose_desc = None
+                state = "TABLE_OPEN"
+            else:
+                # prose
+                if not current_pages:
+                    current_pages = [desc.page_num]
+                    current_type = "prose"
+                    current_prose_desc = desc
+                elif current_prose_desc is not None and _is_continuous(current_prose_desc, desc):
+                    current_pages.append(desc.page_num)
+                    current_prose_desc = desc
+                else:
+                    flush()
+                    current_pages = [desc.page_num]
+                    current_type = "prose"
+                    current_prose_desc = desc
+
+        elif state == "TABLE_OPEN":
+            if pt == "prose":
+                pending_blanks = []
+                flush()
+                current_pages = [desc.page_num]
+                current_type = "prose"
+                last_committed_d1 = None
+                current_prose_desc = desc
+                state = "NO_TABLE"
+            else:
+                # pt == "table"
+                assert last_committed_d1 is not None
+                if _is_continuous(last_committed_d1, desc):
+                    current_pages.extend(pending_blanks)
+                    pending_blanks = []
+                    current_pages.append(desc.page_num)
+                    last_committed_d1 = desc
+                else:
+                    pending_blanks = []
+                    flush()
+                    current_pages = [desc.page_num]
+                    current_type = "table"
+                    last_committed_d1 = desc
+                    # state stays TABLE_OPEN
+
+    flush()
+    return units
 
 
 # ---------------------------------------------------------------------------

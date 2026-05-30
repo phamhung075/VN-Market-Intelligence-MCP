@@ -219,6 +219,38 @@ class OcrBackendPort(Protocol):
         ...
 
 
+class OcrTextSourcePort(Protocol):
+    """
+    Port: retrieve per-page OCR text already stored in pdf_extracted_text table.
+
+    AR-PDF FR-2: swappable interface for reading stored OCR text.
+    Current implementation reads pdf_extracted_text via sqlite3 (SqliteOcrTextSource).
+    Future: MistralOcrSource (raises NotImplementedError until wired).
+
+    DDD layer: domain — pure Protocol, zero infrastructure imports, zero I/O here.
+    Concrete adapters: infrastructure/ocr_text_source.py
+    Factory:          infrastructure/ocr_text_source_factory.py
+
+    Selection: BCTC_PAGE_TEXT_BACKEND env var (sqlite default / mistral future).
+    Note: this port is SEPARATE from OcrBackendPort (which handles cell/line TEXT
+    recognition). This port reads page-level OCR text already stored in the DB.
+    """
+
+    def get_page_text(self, filename: str, page_number: int) -> str:
+        """
+        Return OCR text for (filename, page_number).
+
+        Args:
+            filename:    PDF filename (not full path) — matches pdf_extracted_text.filename.
+            page_number: 1-indexed page number.
+
+        Returns:
+            OCR text string for the page. Empty string if no row found (never raises
+            on missing data — callers treat empty string as "no OCR text available").
+        """
+        ...
+
+
 class PekEngineAdapterPort(Protocol):
     """
     Port for the PDF-Extract-Kit engine adapter (PEK-INTEGRATE).
