@@ -88,8 +88,8 @@ describe("validateBctcUnit", () => {
     const result = validateBctcUnit(md, 0.85, [], "test-rpt");
     expect(result.valid).toBe(false);
     expect(result.violations.length).toBeGreaterThan(0);
-    expect(result.violations[0].severity).toBe("BLOCK");
-    expect(result.violations[0].code).toBe("DIGIT_RUN");
+    expect(result.violations[0]?.severity).toBe("BLOCK");
+    expect(result.violations[0]?.code).toBe("DIGIT_RUN");
     expect(result.adjusted_confidence).toBe(0.1); // min(0.85, 0.1)
   });
 
@@ -102,7 +102,7 @@ describe("validateBctcUnit", () => {
     // So both are digit-runs → BLOCK
     const result = validateBctcUnit(md, 0.85, [], "test-rpt");
     expect(result.valid).toBe(false);
-    expect(result.violations[0].code).toBe("DIGIT_RUN");
+    expect(result.violations[0]?.code).toBe("DIGIT_RUN");
   });
 
   // AC-TR1-1-2: exactly 1 digit-run → WARN
@@ -113,8 +113,8 @@ describe("validateBctcUnit", () => {
     const result = validateBctcUnit(md, 0.85, [], "test-rpt");
     expect(result.valid).toBe(true);
     expect(result.violations.length).toBe(1);
-    expect(result.violations[0].severity).toBe("WARN");
-    expect(result.violations[0].code).toBe("DIGIT_RUN_SINGLE");
+    expect(result.violations[0]?.severity).toBe("WARN");
+    expect(result.violations[0]?.code).toBe("DIGIT_RUN_SINGLE");
     expect(result.adjusted_confidence).toBe(0.4); // min(0.85, 0.4)
   });
 

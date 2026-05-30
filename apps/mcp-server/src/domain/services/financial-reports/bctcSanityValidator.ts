@@ -74,7 +74,7 @@ function extractNumericValuesFromMarkdown(markdown: string): string[] {
   let match: RegExpExecArray | null;
 
   while ((match = cellRegex.exec(markdown)) !== null) {
-    const cell = match[1].trim();
+    const cell = (match[1] ?? "").trim();
     // Strip Vietnamese/English thousand separators (comma and dot grouping)
     // Keep digits only after stripping
     const numStr = cell.replace(/[,\.]/g, "");

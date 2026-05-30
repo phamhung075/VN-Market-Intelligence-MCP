@@ -21,6 +21,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getDb } from "../../../../infrastructure/db/schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
+import { validateBctcUnit } from "../../../../domain/services/financial-reports/bctcSanityValidator.js";
 
 // ── Row count helper ───────────────────────────────────────────────────────────
 
@@ -53,7 +54,11 @@ const InputSchema = z.object({
   markdown: z.string().describe("Refined markdown output from the Haiku subagent"),
   confidence: z.number().min(0).max(1).describe("Confidence score 0.0-1.0"),
   flags: z.array(z.string()).describe("Flags from the subagent (e.g. ['timeout', 'agent_error:...'])"),
-  window_status: z.enum(["DONE", "FAILED"]).describe("Window processing status"),
+  window_status: z
+    .enum(["DONE", "FAILED", "REJECTED_SANITY"])
+    .describe(
+      "Window processing status. REJECTED_SANITY = terminal state, rejected by sanity gate at ingest.",
+    ),
   reset: z
     .boolean()
     .optional()
@@ -101,7 +106,28 @@ export function buildPushBctcRefinedUnitHandler(
       // Compute row_count from markdown
       const row_count = markdown ? countTableRows(markdown) : 0;
 
+      // ── DT-1 Sanity gate (fires AFTER reset DELETE, BEFORE INSERT) ──────────
+      // AC-TR0-3-6: gate fires after reset, not before.
+      const validation = validateBctcUnit(markdown, confidence, flags, report_id, undefined);
+
+      const blockViolations = validation.violations.filter((v) => v.severity === "BLOCK");
+      const hasBlock = blockViolations.length > 0;
+
+      // Effective window_status: override to REJECTED_SANITY on BLOCK
+      const effectiveStatus: "DONE" | "FAILED" | "REJECTED_SANITY" = hasBlock
+        ? "REJECTED_SANITY"
+        : window_status;
+
+      // Effective confidence: use adjusted_confidence from validator
+      const effectiveConfidence = validation.adjusted_confidence;
+
+      // Effective flags: append violations on BLOCK (audit trail)
+      const effectiveFlags = hasBlock
+        ? [...flags, ...blockViolations.map((v) => `sanity:${v.code}`)]
+        : flags;
+
       // INSERT OR REPLACE — idempotent via UNIQUE(report_id, unit_id)
+      // INSERT always happens (audit trail preserved) — only window_status changes on BLOCK
       db.prepare(
         `INSERT OR REPLACE INTO bctc_refined_units
            (report_id, unit_id, page_numbers_json, markdown, row_count, confidence, flags, window_status)
@@ -112,19 +138,35 @@ export function buildPushBctcRefinedUnitHandler(
         JSON.stringify(page_numbers),
         markdown,
         row_count,
-        confidence,
-        JSON.stringify(flags),
-        window_status,
+        effectiveConfidence,
+        JSON.stringify(effectiveFlags),
+        effectiveStatus,
       );
 
       logger.info("[push_bctc_refined_unit] upserted", {
         report_id,
         unit_id,
-        window_status,
+        window_status: effectiveStatus,
         row_count,
-        confidence,
+        confidence: effectiveConfidence,
         reset: reset ?? false,
+        sanity_block: hasBlock,
       });
+
+      if (hasBlock) {
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                ok: false,
+                unit_id,
+                rejected_reason: blockViolations,
+              }),
+            },
+          ],
+        };
+      }
 
       return {
         content: [
@@ -168,7 +210,11 @@ export function registerPushBctcRefinedUnitTool(server: McpServer): void {
       markdown: z.string().describe("Refined markdown output from the Haiku subagent"),
       confidence: z.number().min(0).max(1).describe("Confidence score 0.0-1.0"),
       flags: z.array(z.string()).describe("Flags from the subagent (e.g. ['timeout', 'agent_error:...'])"),
-      window_status: z.enum(["DONE", "FAILED"]).describe("Window processing status"),
+      window_status: z
+        .enum(["DONE", "FAILED", "REJECTED_SANITY"])
+        .describe(
+          "Window processing status. REJECTED_SANITY = terminal state, rejected by sanity gate at ingest.",
+        ),
       reset: z
         .boolean()
         .optional()

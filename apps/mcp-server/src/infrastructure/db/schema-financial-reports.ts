@@ -401,6 +401,12 @@ export function initFinancialReportsTables(db: Database): void {
   // Per-window refined markdown storage. Written exclusively by bctcRefineJob
   // orchestrator (Phase 4 collect-then-write). Subagents NEVER write to this table.
   // DELETE-then-INSERT idempotency; UNIQUE(report_id, unit_id) prevents dupes.
+  //
+  // window_status valid values: DONE | FAILED | REJECTED_SANITY
+  //   DONE           — window successfully refined and passed sanity checks
+  //   FAILED         — window processing failed (e.g. timeout, agent_error)
+  //   REJECTED_SANITY — terminal state: rejected by DT-1/DT-2/DT-3 sanity gate at ingest
+  //                     (BCTC-TRUST-RED sprint). Row is still written for audit trail visibility.
   db.exec(`
     CREATE TABLE IF NOT EXISTS bctc_refined_units (
       id                INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -422,8 +428,11 @@ export function initFinancialReportsTables(db: Database): void {
   // Idempotent migrations: check PRAGMA table_info before ALTER TABLE.
   // text_status: OCR lifecycle (COMPLETE | IN_PROGRESS | PARTIAL)
   //   Default COMPLETE for existing rows (they already have extracted OCR text).
-  // refine_status: refine lifecycle (PENDING | IN_PROGRESS | DONE | FAILED | PARTIAL)
+  // refine_status: refine lifecycle (PENDING | IN_PROGRESS | DONE | FAILED | PARTIAL | REJECTED_SANITY)
   //   Default PENDING for existing rows (they need to be refined).
+  //   REJECTED_SANITY — terminal state, report rejected by DT-2/DT-3 aggregate sanity gates
+  //   during finalize_bctc_refine (BCTC-TRUST-RED sprint). Not re-queued by cron until
+  //   manually reset to PENDING. No ALTER TABLE needed — TEXT column, additive value.
   try {
     const refCols = db
       .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
