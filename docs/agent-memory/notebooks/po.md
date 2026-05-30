@@ -1,26 +1,22 @@
 # PO Notebook
 
-## Cycle 2026-05-30T10:10Z — DPI-FU-D EXIT sign-off (Sat, HOSE closed)
+## Cycle 2026-05-30T11:30Z — AR-EXIT: BCTC-AGENTIC-REFINE ✅ SIGNED OFF (APPROVE-WITH-CONDITIONS)
 
-**HARD LANE CONSTRAINT (user /goal):** apps/pdf-extractor OWNED BY PARALLEL SESSION — OFF-LIMITS. My zone this session = apps/mcp-server only.
+**Sprint CLOSED.** Sprint-closing PO gate. QA cycle-153 (commit `caa837f6`, newest) = GREEN on all 7 §0.7.5 DV gate items via LIVE FPT+ACB bake-off at HEAD `3b4c62a2`. The AR-QA-handoff.md top line still reads CHANGES_REQUESTED — that is the STALE pre-pivot cycle-152 record; the appended dev records (5a46809c/6dfeb759/c7a08c47) + the Option-Y pivot (639b1225/47c9f328/a1cb486e/3b4c62a2) all landed after it. Did NOT trust the stale header.
 
-**DPI-FU-D → ✅ SIGNED OFF (live-PROVEN by PO independent re-probe — qa emitted NO verdict).**
-Chain: dev `d7ee43d7` two-layer SBV zero-write guard (job pre-flight skip+WORK-alert + persistence-boundary reject ≤0-over-good-prior, 5 sentinel rate cols; interbank_overnight left unguarded — 0 legit). 7/7 targeted RED→GREEN, 36/36 SBV suite. ops rebuilt image `6c45aeed`; fresh good fetch restored deposit=5.0 @09:45Z.
-PO authoritative gate (did NOT just trust dispatcher numbers):
-- `get_macro_snapshot` MY OWN call, computedAt=2026-05-30T10:08:37Z, dataSource=live → carry vndDepositRate=5 / fedFundsRate=3.62 / spread=1.38 NEUTRAL ✓; yield earningYield=6.83 / depositRate=5 / spread=1.83 FAIRLY_VALUED ✓; usdVnd=26115.
-- Direct-DB `sbv_rates` latest: max_deposit_rate_pct=5, usd_vnd_official=26115, source=sbv, fetched_at 2026-05-30T09:45:02Z — positive LIVE row, NOT 4.7 fixture.
-- **DPI-2b now FULLY WHOLE** — all 3 carry/yield inputs live, zero fixtures in play → fully closes the original carry/yield staleness symptom that started the whole DPI saga.
+**Critique-before-approve (mandatory gate done):**
+- Option-Y verified DIRECTLY on main (not just ledger): (1) in-container bctcRefineJob cron GONE from cronConfig + startScheduler; (2) host fleet cron skill `.claude/commands/crons/cron-refine-bctc.md` armed `'0 9,14,20 * * *'` UTC → runs `refine_bctc_md/flow/main.md`; (3) tools #141-144 registered in registry.ts; (4) `spawn("claude")` only survives in DELETED-comment; (5) PEK subtree 0-diff. Clean DDD: mcp-server is now a pure data service, orchestration in the host fleet.
+- ONE flagged item weighed: QA Gate-3 idempotency store STABLE (18=18=18) but FPT run-1=91 vs run-2=18 row delta. Root = Haiku refine subagents emit DIFFERENT markdown across fan-outs (LLM non-determinism UPSTREAM of the idempotent store) — NOT a store bug. Trust-flag contract keeps it honest (variance = coverage, not invented values). But 91→18 coverage swing IS a trust concern since refined rows are the SOLE figure source for the 6 expert passes.
 
-**QA harness-error noted honestly:** qa ran substantive checks (30 tool calls) but final RETURN hit a harness parse-error → no machine verdict. Dispatcher + PO dual live re-probe covered the gap. Tooling glitch, NOT a quality miss → no qa re-run needed for formal record.
+**Verdict: APPROVE-WITH-CONDITIONS.** Store-correctness gate GREEN → sprint closed. Seeded ONE follow-up AR-FU-DETERMINISM (MEDIUM, zone apps/mcp-server + docs/agents/refine_bctc_md): lower refine temperature / determinism guard / golden-markdown snapshot regression on FPT. DEFERRED behind live ticks. Optional/future: Mistral OCR bake-off swap (user-LOCKED later swap, not a gap).
 
-**FU-C → DEFERRED (not closed).** Pure apps/mcp-server (`ohlcvForeignFlowStore.ts`, commit `36a91a59`) — NO pdf-extractor coupling, so lane does NOT force defer. Deferred on WIP/value: MEDIUM test-debt, restoration arc (FU-A/B/D) now whole, BCTC-AGENTIC-REFINE is an active HIGH sprint mid fan-out → yield WIP rather than spin another dev-mcp-server agent. Foldable next uncontended tick.
-
-**DECISION — PIPELINE: complete.** FU-A/B/D restoration arc DONE. Only FU-C (deferrable MED) + FU-MON (Monday) remain.
+**Docs:** TASKS.md sprint → SIGNED OFF + AR-FU-DETERMINISM seeded (78L, under 80 cap). SPRINT_GOAL.md build-status → SIGNED OFF. AR-EXIT ACK appended to AR-QA-handoff.md.
 
 ## Carry-over
-- FU-MON Monday TIME-CRITICAL: re-probe DPI-3/DPI-4 live (Brent/Gold post-06:00Z + get_foreign_flow post-open) → flip/REOPEN.
-- FU-C (MED, apps/mcp-server only) deferred — fold next uncontended mcp-server tick; NO pdf-extractor coupling so my-lane-eligible later.
-- BCTC-AGENTIC-REFINE (HIGH) OPEN, fan-out in flight (AR-OPS-PRE→AR-PDF/AR-MCP + AR-AGENT-A/B); pdf-extractor parts = parallel-session lane. AR umbrella lock state: verify before any AR action.
-- BTB-DRIFT / apps/pdf-extractor = parallel-session-owned, NOT mine to sign off.
-- TASKS.md grew (FU-D evidence inline) — janitor housekeeping non-blocking; >80 cap.
+- AR-FU-DETERMINISM (MED, apps/mcp-server + refine flow) — refine non-determinism coverage guard; fold a future uncontended mcp-server tick.
+- AR cron is HOST-FLEET now (`.claude/commands/crons/cron-refine-bctc.md`) — fires 09/14/20 UTC; if no refined rows appear, check the host cron session is live (not the mcp-server container).
+- Parallel-session zone-contention on apps/pdf-extractor + AR-* in apps/mcp-server NOW RELEASED (sprint closed) — future mcp-server work uncontended on that axis.
+- FU-MON Monday TIME-CRITICAL: re-probe DPI-3 (Brent/Gold post-06:00Z) + DPI-4 (get_foreign_flow post-open).
+- FF-DEAD (HIGH, vps-scripts/) OPEN — dev-vps-crawls diagnosing foreign-flow producer.
+- FU-C (MED, apps/mcp-server) deferred — foldable next tick.
 - Scoped `git add <file>` ONLY — tree has MANY unrelated uncommitted files; NEVER `-A`.

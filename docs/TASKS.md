@@ -4,23 +4,11 @@
 
 ---
 
-## Sprint BCTC-AGENTIC-REFINE — Agent refine step replaces the geometry middle
+## Sprint BCTC-AGENTIC-REFINE — ✅ SIGNED OFF 2026-05-30 (AR-EXIT, APPROVE-WITH-CONDITIONS)
 
-**Status:** OPEN — PO kickoff 2026-05-30 (USER-APPROVED plan `/Users/admin/.claude/plans/magical-cooking-cocoa.md`). **Priority: HIGH (recurring-bug RCA-to-replace).** Zone: `multi` (`apps/pdf-extractor/` + `apps/mcp-server/`). Goal record: `docs/SPRINT_GOAL.md` § BCTC-AGENTIC-REFINE.
+Geometry middle (YOLO + bbox-grouping + `bctc_page_grouper.py` 5-state machine) REPLACED OUTRIGHT by an agent refine step. **Option-Y** (architect §0.7): orchestration runs in the host fleet-cron CC session; mcp-server is a pure data service. QA cycle-153 GREEN on all 7 §0.7.5 DV gate items via live FPT+ACB bake-off at HEAD `3b4c62a2` (100/100 AR tests, tsc clean). PO verified live: in-container cron removed, host cron skill `.claude/commands/crons/cron-refine-bctc.md` armed `'0 9,14,20 * * *'`, tools #141-144 registered, `spawn("claude")` deleted, PEK subtree 0-diff. Brief `docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md`; goal record `docs/SPRINT_GOAL.md`.
 
-Replace YOLO + bbox-grouping + `bctc_page_grouper.py` 5-state machine OUTRIGHT with a cron-driven agent refine step (OCR text + crisp page image, numbers←text / structure←image / disagreement→FLAG never guess). Feed BOTH `bctc_table_rows` (via deterministic markdown→rows parser — the new single point of correctness) AND `get_bctc_refined`.
-
-- ✅ AR-BA (ba): REQ spec `docs/REQ_BCTC-AGENTIC-REFINE.md` — zone split confirmed, token-budget FRs + deterministic parser + refine contract encoded
-- ✅ AR-ARCH (architect): brief — dead-text/OCR-mandate, refine contract, **deterministic markdown→rows parser spec (TIGHT)**, cron-refiner packaging, swappable OCR interface, replace-outright delete list (§0–9, amendments x2)
-- ✅ AR-PM (pm): atomic handoffs created in `docs/handoffs/` — AR-OPS-PRE, AR-PDF, AR-MCP, AR-AGENT-A, AR-AGENT-B
-- 🔄 **AR-OPS-PRE** (ops, PREREQ): docker-compose volume + env vars; blocks AR-PDF + AR-MCP. Handoff: `docs/handoffs/AR-OPS-PRE-handoff.md`
-- 🔄 **AR-PDF** (dev-pdf-extractor): `page_rasterizer.py`; remove YOLO/grouping/boundary machine; OCR text feed. Blocker: AR-OPS-PRE. Handoff: `docs/handoffs/AR-PDF-handoff.md`
-- 🔄 **AR-MCP** (dev-mcp-server): 3 tools + `bctc_refined_units` table + markdown→rows parser + `get_bctc_refined` + refine orchestration/cron + idempotency/claim/gate (fan-out amended §0.6). Blocker: AR-OPS-PRE. Blocks: AR-AGENT-B. Handoff: `docs/handoffs/AR-MCP-handoff.md`
-- 🔄 **AR-AGENT-A** (agent-father): author `refine_bctc_md` flows (Opus author, Haiku runtime). Blocks: AR-AGENT-B. Handoff: `docs/handoffs/AR-AGENT-A-handoff.md`
-- 🔄 **AR-AGENT-B** (agent-father): retier `bctc-analyst` (Sonnet main + Opus deep-dive, ESC-1..5 gate). Blockers: AR-AGENT-A + AR-MCP. Blocks: AR-QA. Handoff: `docs/handoffs/AR-AGENT-B-handoff.md`
-- 🔄 AR-QA (qa): bake-off FPT+ACB, parser+store DV (RED→GREEN), idempotency ≥3×, readiness gate, expert-flow-intact — all anti-false-green. Blocker: AR-AGENT-A + AR-MCP.
-- 🔄 AR-OPS (ops): REBUILD both containers (build --no-cache + force-recreate). Blocker: AR-QA.
-- 🔄 AR-EXIT (po): independent live re-verify. Blocker: AR-OPS.
+- 🔄 **AR-FU-DETERMINISM** (zone `apps/mcp-server` + `docs/agents/refine_bctc_md`): MEDIUM follow-up. QA Gate-3 idempotency showed store stable (18=18=18) but FPT run-1=91 vs run-2=18 row delta = Haiku refine subagents emit DIFFERENT markdown across fan-outs (LLM non-determinism UPSTREAM of the idempotent store). Store-correctness NOT affected; coverage variance IS a trust concern since refined rows are the sole figure source for the 6 expert passes. Scope: lower refine temperature / determinism guard / golden-markdown snapshot regression on FPT. NOT a store bug. DEFERRED behind live ticks.
 
 ---
 
@@ -28,13 +16,21 @@ Replace YOLO + bbox-grouping + `bctc_page_grouper.py` 5-state machine OUTRIGHT w
 
 All 4 user-facing data bugs root-caused, code-fixed, deployed. 3 of 4 fully live-DONE; DPI-3/DPI-4 CODE-DONE + path-PROVEN, awaiting market schedule. FU detail → `docs/REQ_DATA-PIPELINE-INTEGRITY.md` § Follow-ups.
 
-**DPI follow-ups** (zone `apps/mcp-server`): ✅ FU-A (`ff9a64ce`, PO-SIGNOFF 2026-05-30: `fedFundsRate=3.62` LIVE, regime→NEUTRAL) · ✅ FU-B (`ff9a64ce`, PO-SIGNOFF: `earningYield=6.83` LIVE) · ✅ **FU-D** (`d7ee43d7`, PO-SIGNOFF 2026-05-30: two-layer SBV zero-write guard — job pre-flight skip+WORK-alert + persistence-boundary reject of ≤0-over-good-prior on 5 sentinel rate cols. 7/7 targeted tests RED→GREEN, 36/36 SBV suite; ops rebuilt image `6c45aeed`. **Live-proven by PO independent re-probe:** `get_macro_snapshot` computedAt `2026-05-30T10:08:37Z` dataSource=live → carry `vndDepositRate=5`/`fedFundsRate=3.62`/spread=1.38 NEUTRAL ✓; yield `earningYield=6.83`/`depositRate=5`/spread=1.83 FAIRLY_VALUED ✓. Direct-DB `sbv_rates` latest: `max_deposit_rate_pct=5`, `usd_vnd_official=26115`, source=sbv, fetched_at `2026-05-30T09:45:02Z` — positive live row, not 4.7 fixture. **DPI-2b now FULLY WHOLE — all 3 carry/yield inputs live, zero fixtures in play — fully closing the original carry/yield staleness symptom that started the DPI saga.** QA-note: qa ran its substantive checks (30 tool calls) but hit a harness parse-error on its final RETURN → no machine verdict emitted; dispatcher + PO dual live re-probe covered the verdict gap honestly — tooling glitch, not a quality miss; no qa re-run needed for record.) · 🔄 FU-C (MEDIUM, test-debt: retro-own `36a91a59` + foreign-flow real-schema test — `apps/mcp-server` only, `ohlcvForeignFlowStore.ts`; DEFERRED 2026-05-30 = deferrable MEDIUM, restoration arc whole, yields WIP to active HIGH BCTC-AGENTIC-REFINE fan-out) · ⏳ FU-MON (Monday: DPI-3/DPI-4 live-probe).
+**DPI follow-ups** (zone `apps/mcp-server`): ✅ FU-A (`ff9a64ce`: `fedFundsRate=3.62` LIVE, regime→NEUTRAL) · ✅ FU-B (`ff9a64ce`: `earningYield=6.83` LIVE) · ✅ **FU-D** (`d7ee43d7`, PO-SIGNOFF 2026-05-30: two-layer SBV zero-write guard, 7/7 tests RED→GREEN + 36/36 suite, image `6c45aeed`. Live-proven re-probe `get_macro_snapshot` computedAt 10:08:37Z dataSource=live → carry spread=1.38 NEUTRAL, yield spread=1.83 FAIRLY_VALUED; direct-DB `sbv_rates` deposit=5/usd_vnd=26115 source=sbv. DPI-2b FULLY WHOLE — all 3 carry/yield inputs live. QA hit a harness parse-error on final RETURN; dispatcher+PO dual live re-probe covered the gap — no re-run needed.) · 🔄 FU-C (MEDIUM test-debt: retro-own `36a91a59` + foreign-flow real-schema test, `ohlcvForeignFlowStore.ts`; DEFERRED — yields WIP to HIGH BCTC-AGENTIC-REFINE) · ⏳ FU-MON (Monday: DPI-3/DPI-4 live-probe).
 
 ---
 
 ## Sprint BCTC-TABLE-BOUNDARY — ✅ SIGNED OFF 2026-05-30
 
 User's over-merge bug RESOLVED on live canonical path (PATH B). FPT=31 (27 table+4 prose) / ACB=22 (17 table+5 prose), 0 dup unit_ids. Prose units emitted; largest table span=2 pages. BTB-DRIFT dual-path convergence completed (commits `06fb1f10` + `ae5bb26c`). Follow-up FU-BTB-OCR registered. Zone: `apps/pdf-extractor/`. See `docs/architecture-briefs/2026-05-30-bctc-table-boundary-drift-convergence.md`.
+
+---
+
+## Sprint FF-DEAD — Foreign-flow pipeline dead fleet-wide
+
+**Status:** OPEN — PO triage 2026-05-30T10:14Z. **Priority: HIGH** (live-confirmed: `get_foreign_flow(code=FPT)` → source_tier 2, "never collected"; foreign net buy/sell dead for every ticker). Zone: **VPS-crawls (`vps-scripts/`) — UNCONTENDED** (separate from AR-* apps/ fan-out). Producer = `fetch-foreign-flow.sh` + `vn-foreign-flow.service`; receiver handler already exists in mcp-server.
+
+- 🔄 FF-DIAG (dev-vps-crawls): live diagnose — is `vn-foreign-flow.service` running? read `/var/log/vn-foreign-flow.log`; has the producer ever pushed 200-OK? verify field-name drift (`fBuyVol/fSellVol/fRoom` vs current VPS API) + `select(>0)` market-closed exit-0 vs real failure; confirm `foreign_flow` DB row count. Fix root cause in `vps-scripts/`. Source report: `docs/handoffs/MCP-SOURCE-PROBLEMS-20260529.md` § P1.
 
 ---
 

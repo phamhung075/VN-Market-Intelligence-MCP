@@ -286,6 +286,53 @@ NEXT: AR-OPS
 
 ---
 
+## [Developer] AR-MCP-FIX — PDF Extractor Route Prefix Mismatch
+
+**Agent:** dev-mcp-server
+**Date:** 2026-05-30
+**Commit:** c7a08c47
+
+```
+STATUS: DONE
+COMMIT: c7a08c47
+
+ROOT CAUSE:
+  pdfExtractorClient.ts called /api/page-text (L127) and /api/rasterize (L184).
+  pdf-extractor mounts ALL routes at root — no /api/ prefix — so every call
+  returned 404. This caused window_status=FAILED, row_count=0, confidence=0
+  for all reports (FPT + ACB bake-off failures observed by AR-OPS).
+
+FIX (4 surgical edits, no surrounding code touched):
+  L116 docstring: /api/page-text → /page-text
+  L127 fetch URL: ${BASE}/api/page-text → ${BASE}/page-text
+  L172 docstring: /api/rasterize → /rasterize
+  L184 fetch URL: ${BASE}/api/rasterize → ${BASE}/rasterize
+
+RED→GREEN PROOF (extended 1323-pdf-extractor-client.test.ts):
+  BEFORE fix: 16 pass, 2 fail
+    FAIL: "calls GET ${BASE}/page-text (not /api/page-text)"
+      expect(capturedUrl).not.toContain("/api/page-text") → FAILED (URL contained /api/)
+    FAIL: "calls POST ${BASE}/rasterize (not /api/rasterize)"
+      expect(capturedUrl).not.toContain("/api/rasterize") → FAILED (URL contained /api/)
+  AFTER fix: 18 pass, 0 fail
+  pdfExtractorClient.ts line coverage: 100% (was 43% — getPageText + rasterizePages uncovered)
+
+TEST COUNTS:
+  1323-pdf-extractor-client.test.ts: 18 pass, 0 fail (7 new URL-assertion tests added)
+  Full mcp-server suite: 10,206 tests across 942 files
+  bun tsc --noEmit: 0 errors
+
+FILES STAGED (C2 verified — no contamination):
+  apps/mcp-server/src/infrastructure/fetchers/pdfExtractorClient.ts
+  apps/mcp-server/src/__tests__/1323-pdf-extractor-client.test.ts
+
+NEXT: AR-OPS (rebuild mcp-server container only — no pdf-extractor change needed,
+  its routes were already correct; re-run FPT+ACB bake-off to confirm
+  window_status no longer FAILED)
+```
+
+---
+
 ## [Developer] AR-MCP-WIRE — Blocking Fix Resolved
 
 **Agent:** dev-mcp-server
@@ -326,4 +373,44 @@ NEXT: AR-OPS
   Action 3: rebuild container --no-cache, verify cron fires at 09:00/14:00/20:00 UTC
   Action 4: run bake-off on FPT + ACB (POST /api/refine-bctc/{id}) and confirm numeric agreement
   Action 5: report bake-off metrics back to QA for Criterion 1 sign-off
+```
+
+---
+
+## [PO] AR-EXIT — Sprint Sign-Off (APPROVE-WITH-CONDITIONS)
+
+**Agent:** po
+**Date:** 2026-05-30T11:30Z
+
+```
+VERDICT: APPROVE-WITH-CONDITIONS — Sprint BCTC-AGENTIC-REFINE CLOSED.
+
+NOTE ON THIS HANDOFF'S HEADER: the STATUS line above (CHANGES_REQUESTED, cycle-152)
+  is SUPERSEDED. The authoritative final QA verdict is cycle-153 (qa notebook,
+  commit caa837f6): GREEN on all 7 §0.7.5 DV gate items via live FPT+ACB bake-off
+  at HEAD 3b4c62a2. The blocking scheduler-wiring gap from cycle-152 was made moot
+  by the Option-Y pivot (§0.7) which DELETED the in-container cron entirely.
+
+CRITIQUE-BEFORE-APPROVE (PO verified directly on main, not from ledger):
+  - In-container bctcRefineJob cron REMOVED (cronConfig.ts + startScheduler.ts: 0 hits).
+  - Host fleet cron skill .claude/commands/crons/cron-refine-bctc.md armed '0 9,14,20 * * *' UTC.
+  - Tools #141-144 registered in registry.ts; spawn("claude") survives only in deleted-comment.
+  - PDF-Extract-Kit subtree 0-diff. Clean DDD (mcp-server = pure data service).
+
+CONDITION (1 follow-up seeded, NON-BLOCKING):
+  AR-FU-DETERMINISM (MEDIUM, zone apps/mcp-server + docs/agents/refine_bctc_md):
+  QA Gate-3 store idempotency STABLE (18=18=18) but FPT run-1=91 vs run-2=18 row delta
+  = Haiku refine subagents emit non-deterministic markdown coverage UPSTREAM of the
+  idempotent store. NOT a store bug. Coverage variance is a trust follow-up because
+  refined rows are the sole figure source for the 6 expert passes. Scope: lower refine
+  temperature / determinism guard / golden-markdown snapshot regression on FPT. DEFERRED.
+
+OPTIONAL/FUTURE: Mistral OCR bake-off swap (user-LOCKED later swap behind OcrTextSourcePort,
+  not a gap).
+
+DOCS UPDATED: docs/TASKS.md (SIGNED OFF + AR-FU-DETERMINISM seeded, 78L ≤80 cap),
+  docs/SPRINT_GOAL.md (build-status SIGNED OFF), docs/agent-memory/notebooks/po.md.
+
+NEXT: (none) — surfaces to USER for G9.
+PIPELINE: complete
 ```
