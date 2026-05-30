@@ -1,0 +1,11 @@
+{
+  "emitted_at": "2026-05-30T22:01:00Z",
+  "tick_id": "2026-05-30T22:00:00Z",
+  "signal_backlog": 0,
+  "last_regime": "unknown",
+  "last_volatility_level": "unknown",
+  "calendar_status": "unknown",
+  "dev_queue_depth": 0,
+  "host_headroom_mb": null,
+  "stale_warning": false
+}
