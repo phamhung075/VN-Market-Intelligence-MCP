@@ -1,3 +1,85 @@
+# Sprint BCTC-AGENTIC-REFINE — Replace the geometry middle with an agent refine step (trusted extraction feeding the expert analyst)
+
+**BUILD STATUS 2026-05-30T07:59Z — OPEN (PO kickoff from a USER-APPROVED PLAN — full design at `/Users/admin/.claude/plans/magical-cooking-cocoa.md`, READ IT FIRST). Full autonomy to plan/dispatch.** This is the architectural root-cause replacement for the recurring BCTC over-merge bug. The user complaint that started it: *"it merges all tables not correct."* We have shipped four sprints against the geometry middle (BCTC-MD-TABLE → BCTC-LAYOUT-FIRST → PEK-INTEGRATE → BCTC-TABLE-BOUNDARY, just signed off 2026-05-30). The boundary fix kept the system honest meanwhile, but the **root cause is the deterministic geometry middle itself** — DocLayout-YOLO page-type-from-image-with-no-text + the `bctc_page_grouper.py` 5-state machine that stitches by geometry. This sprint REPLACES that middle OUTRIGHT with an **agent refine step** that reads OCR text + crisp page images together and produces TRUSTED content the existing expert analyst flow consumes unchanged.
+
+> **Recurring-bug guard honored** (`feedback_recurring_bug_escalation`): ≥2 fix commits on `bctc_page_grouper.py`/`generic_md_table_extractor.py` → architect-grade RCA-to-replace, not another patch. This sprint IS that rethink. **Honest cost** (`feedback_ship_completion`): we RETIRE code shipped last week (`bctc_page_grouper.py` + its 42-test boundary machine). Expected, replace-outright — kept the system honest meanwhile, now redundant.
+
+## Investigation already done (verified this session — DO NOT redo, build on it)
+
+- **Dead text layer.** BCTC PDFs carry embedded subsetted CID/Identity-H fonts with broken ToUnicode → `pdftotext` returns **0 chars on every statement page** (FPT pp.6–20 = 0; ACB same). **OCR is mandatory.** Upside: those fonts rasterize to **crisp vector images** (not blurry scans), so OCR AND agent-vision are both high quality.
+- **Analyst feed surface.** `bctc-analyst` consumes `get_bctc_full()` + `bctc_table_rows` (the 6 expert passes) + `pdf_extracted_text` (footnote/segment) — NOT raw `bctc_layout_units`. So trusted content must land in `bctc_table_rows` + a refined-markdown tool.
+- **No rasterization exists today.** PEK = layout/text only; the viewer = in-browser pdf.js. `get_bctc_page_image` needs a NEW pymupdf rasterizer (genuinely new work, no images to reuse).
+- **MCP tool registry pattern.** New tool file in `apps/mcp-server/src/interface/mcp/tools/financial-reports/` + one import + one array entry in `tools/registry.ts` (no `server.ts` change).
+
+## Vision
+
+PDF BCTC → OCR text + crisp page images → **agent refine** (numbers anchored to text, structure/boundaries read from the image, disagreements FLAGGED not guessed) → **trusted content** → the EXISTING expert analyst flow (6-pass trick detection, EY-spread, peer/period compare, cash-flow forensics) consumes the trusted content UNCHANGED and produces a correct report. The agent solves cross-page continuation by *looking at adjacent page images*, not by geometry. The analysis half already exists; this sprint builds the trusted-extraction half that feeds it.
+
+## User-LOCKED decisions (FINAL — do NOT re-litigate)
+
+1. **OCR source** = local Tesseract NOW, behind a swappable interface (Mistral OCR API = later bake-off swap). No new paid dependency yet.
+2. **Rollout** = **REPLACE OUTRIGHT** — remove YOLO + bbox grouping + `bctc_page_grouper.py` 5-state machine; refine becomes the ONLY live path. (Old code stays in git history as the fallback of record.)
+3. **Analyst feed** = **BOTH** — parse refined markdown into `bctc_table_rows`/`financial_reports` (so `get_bctc_full` + all 6 expert passes work UNCHANGED) AND expose `get_bctc_refined` for the narrative passes.
+
+## The Refine Contract (the heart of trust — carry into every handoff)
+
+- **Numbers ← TEXT** (OCR is the numeric source of record).
+- **Structure / boundaries / labels ← IMAGE** (the agent reads table structure from the crisp page image).
+- **Text ≠ image on a number → FLAG, NEVER GUESS.** A disagreement gets a Vietnamese red/yellow trust prefix; the agent does not invent a value.
+- **Balance check (assets = liab + equity) is a CATCH-NET, not the gate** (`feedback_fence_false_green`: balance badge FORBIDDEN as sole gate — BCTC-TABLE-3 lesson).
+
+## What we BUILD (full detail in the plan; architect specs each)
+
+1. **`page_rasterizer.py`** — pymupdf, render page → PNG at fixed DPI, store `data/bctc-page-images/{report_id}/page_{N}.png`. [zone: `apps/pdf-extractor/`]
+2. **`get_bctc_page_text(report_id, page_number)`** — MCP tool, reads `pdf_extracted_text` via filename+page; OCR source abstracted (Mistral-swappable). [zone: `apps/mcp-server/`]
+3. **`get_bctc_page_image(report_id, pages[])`** — MCP tool, returns one+ page PNGs (multi-page = the split-table window). [zone: `apps/mcp-server/`]
+4. **`refine_bctc_md` refine agent** — cron-driven fleet Claude agent, one report at a time, under the refine contract above; balance check as catch-net. Authored via `agent-father` (frontmatter on line 1; agent-md factory rule).
+5. **`bctc_refined_units` table** — (report_id, unit_id, page_numbers_json, markdown, row_count, confidence, flags, refined_at), `UNIQUE(report_id, unit_id)`, DELETE-then-INSERT transaction (idempotent). [zone: `apps/mcp-server/`]
+6. **Markdown → `bctc_table_rows` parser** — **DETERMINISTIC, heavily tested. THE NEW SINGLE POINT OF CORRECTNESS** for the expert passes. `get_bctc_full` figures come from here now. Architect MUST spec this tightly — if it degrades, the expert analysis degrades silently. [zone: `apps/mcp-server/`]
+7. **`get_bctc_refined(report_id)`** — exposes refined markdown for the footnote/segment narrative passes (the "both" feed). [zone: `apps/mcp-server/`]
+8. **Refine orchestration** — cron tick (OFF-HOSE) → pick report where `text_status=COMPLETE AND refine_status=PENDING` → `task_claim` → readiness gate (skip IN_PROGRESS/PARTIAL, mark FAILED visibly) → cheap page-window hint (chooses which images to load; agent overrides) → refine → balance catch-net → idempotent store + parse-to-rows → `refine_status=DONE` → release claim. On-demand uses the same path. [zone: `apps/mcp-server/`]
+
+## What we REMOVE (replace-outright)
+
+- `apps/pdf-extractor/infrastructure/bctc_page_grouper.py` — 5-state machine, `_is_continuous`, `_is_title_band` (a slimmed page-window hint may survive — architect decides).
+- DocLayout-YOLO page-type classification + bbox grouping in `pek_engine_adapter.py` (`_run_extraction`).
+- Geometry table-stitching in `generic_md_table_extractor.py` + the now-orphan boundary tests (the 42-test machine from BCTC-TABLE-BOUNDARY).
+- **Bonus:** dropping YOLO frees local CPU/RAM (helps `project_host_memory_panic`).
+
+## What we KEEP / REUSE (unchanged)
+
+- OCR producing `pdf_extracted_text` (source for `get_bctc_page_text`; filename+page lookup, no report_id — confirmed).
+- Cron + OFF-HOSE guard, `task_claim` locking, DELETE-before-INSERT idempotency (`pushBctcLayoutHandler.ts:150`), fail-loud + heartbeat status, balance/6-gate eval.
+- `/api/bctc-inspect` viewer + the MD→table view shipped last week — renders refined units, no change.
+- The ENTIRE `bctc-analyst` expert flow (`docs/agents/bctc-analyst/flow/`) — UNCHANGED, fed via `bctc_table_rows` + `get_bctc_full`.
+
+## HARD CONSTRAINTS (non-negotiable — gate the whole chain)
+
+1. **main branch only.** Scoped `git add <file>` per file, NEVER `git add -A` (unrelated working-tree changes — there are many uncommitted — must stay unstaged). PDF-Extract-Kit subtree PRISTINE (`git -C apps/pdf-extractor/PDF-Extract-Kit diff` empty).
+2. **REBUILD, never restart-stale** (`feedback_rebuild_after_dev_change`, `project_mcp_server_write_wedge`) — `docker compose build --no-cache <svc> && up -d --no-deps --force-recreate <svc>`. Never hack-copy into a running container.
+3. **In-container DB verify = `bun:sqlite` plain `new Database(path)`** — NOT better-sqlite3, NOT `{create:false}` (sqlite3 binary absent in containers).
+4. **Anti-false-green** (`feedback_fence_false_green`, `feedback_silent_swallow_serial_bugs`, BCTC-TABLE-3): balance badge FORBIDDEN as sole gate. DV (deliberate-violation) tests RED-before/GREEN-after on the **markdown→rows parser** AND the **idempotent store**. Verify persistence via DIRECT in-container `market.db` read, NOT the push echo (`project_mcp_server_write_wedge`: 200-OK push ≠ committed row).
+5. **OFF-HOSE** — no extraction 02:00–08:59 UTC Mon–Fri. Today Sat 2026-05-30 → permitted.
+6. **Idempotency** — re-run same report ≥3× → row count STABLE (the FPT-42-dupes bug must not recur).
+
+## Success Metric (DoD — anti-false-green, end-to-end, verified by AGENTS not user visual sign-off)
+
+1. **Bake-off on FPT + ACB** (we have current output): refine runs, numeric agreement vs balance check + table-boundary correctness + Vietnamese accuracy measured. Promotion gate.
+2. **Continuation:** a known multi-page table (FPT span [22,23]) produces ONE unit with `page_numbers_json=[22,23]`, no double-emit on page 23.
+3. **Idempotency DV:** re-run ≥3× → row count stable; verified via DIRECT in-container `market.db` read (`bun:sqlite`).
+4. **Readiness gate:** trigger refine on a report whose OCR is IN_PROGRESS → SKIPS, does not refine garbage.
+5. **Parser DV:** deliberate-violation test on the markdown→rows parser goes RED before, GREEN after.
+6. **Expert flow intact:** `get_bctc_full(FPT)` returns figures sourced from the new parser; the 6 passes run unchanged; `bctc-analyst` produces a report.
+7. **Replace-outright proven:** `bctc_page_grouper.py` + YOLO grouping GONE from the live path (grep/git proof); PDF-Extract-Kit subtree 0-diff.
+
+All verified by agents calling live tools + DIRECT DB reads post-rebuild (`feedback_trust_verification_is_system_job`). Goal stays ARMED until every metric proves.
+
+## Owner Chain (router-only — main terminal does not implement)
+
+ba (REQ decomposition + zone-split confirm) → architect (`docs/architecture-briefs/` brief: dead-text-layer + OCR mandate; the refine contract; **the markdown→rows parser spec — DETERMINISTIC, the heart of correctness, spec it TIGHTLY**; the cron-driven refiner packaging; the swappable OCR interface; the replace-outright delete list; routes microservice-doc edits to the matching dev-* owner) → pm (atomic tasks, handoffs in `docs/handoffs/`) → dev-pdf-extractor (rasterizer; remove YOLO/grouping/boundary machine; OCR text endpoint feed) + dev-mcp-server (3 tools, `bctc_refined_units` table, markdown→rows parser, `get_bctc_refined`, refine orchestration + cron, idempotency/claim/gate) + agent-father (refine agent `.md`) → qa (bake-off + DV gates + idempotency + readiness + expert-flow-intact, all anti-false-green) → ops (REBUILD both containers, force-recreate) → po (BCTC-AR-EXIT independent live re-verify). **Zone: `multi`** — architect confirms the pdf-extractor ↔ mcp-server split (rasterizer + YOLO-removal = pdf-extractor; tools + table + parser + orchestration = mcp-server). Critique-before-approve at every gate.
+
+---
+
 # Sprint DATA-PIPELINE-INTEGRITY — Macro + Foreign-Flow Live-Data Correctness (4 root-caused bugs)
 
 **BUILD STATUS 2026-05-30 — ✅ SIGNED OFF (DPI-EXIT). CRITICAL incident CLOSED.** All 4 root-caused code bugs fixed, deployed (force-recreate), and verified by PO independent live re-probe corroborating the QA+ops ledger. **3 of 4 surfaces fully live-DONE (FX dual-path unified at 26115; carry/yield computedAt fresh today; vndDepositRate=5.0 wired live). DPI-3 (Brent/Gold delta) + DPI-4 (foreign-flow) are CODE-DONE + path-PROVEN, with honest schedule/market-hours residuals** — DPI-3 confirms at the next 06:00 UTC daily cron, DPI-4 at Monday HOSE open (weekend VPS source returns zero by design). NOT false-green (`feedback_fence_false_green`): the four headline symptoms are root-caused + code-fixed + path-proven; two await natural ticks no human can force on a weekend. Follow-ups FU-A (FRED EFFR stale), FU-B (earning_yield zero rows), FU-C (own commit 36a91a59 + real-schema test), FU-MON (Monday live-confirm) registered in `docs/TASKS.md` § DPI-FOLLOWUPS. Two zones: `apps/macro-indicators` (DPI-1/2/2b) + `apps/mcp-server` (DPI-3/4).

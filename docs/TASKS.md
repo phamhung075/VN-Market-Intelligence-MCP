@@ -4,6 +4,24 @@
 
 ---
 
+## Sprint BCTC-AGENTIC-REFINE — Agent refine step replaces the geometry middle
+
+**Status:** OPEN — PO kickoff 2026-05-30 (USER-APPROVED plan `/Users/admin/.claude/plans/magical-cooking-cocoa.md`). **Priority: HIGH (recurring-bug RCA-to-replace).** Zone: `multi` (`apps/pdf-extractor/` + `apps/mcp-server/`). Goal record: `docs/SPRINT_GOAL.md` § BCTC-AGENTIC-REFINE.
+
+Replace YOLO + bbox-grouping + `bctc_page_grouper.py` 5-state machine OUTRIGHT with a cron-driven agent refine step (OCR text + crisp page image, numbers←text / structure←image / disagreement→FLAG never guess). Feed BOTH `bctc_table_rows` (via deterministic markdown→rows parser — the new single point of correctness) AND `get_bctc_refined`.
+
+- 🔄 AR-BA (ba): REQ decomposition + confirm pdf-extractor↔mcp-server zone split
+- 🔄 AR-ARCH (architect): brief — dead-text/OCR-mandate, refine contract, **deterministic markdown→rows parser spec (TIGHT)**, cron-refiner packaging, swappable OCR interface, replace-outright delete list
+- 🔄 AR-PM (pm): atomic tasks + handoffs in `docs/handoffs/`
+- 🔄 AR-PDF (dev-pdf-extractor): `page_rasterizer.py`; remove YOLO/grouping/boundary machine; OCR text feed
+- 🔄 AR-MCP (dev-mcp-server): 3 tools + `bctc_refined_units` table + markdown→rows parser + `get_bctc_refined` + refine orchestration/cron + idempotency/claim/gate
+- 🔄 AR-AGENT (agent-father): `refine_bctc_md` agent `.md`
+- 🔄 AR-QA (qa): bake-off FPT+ACB, parser+store DV (RED→GREEN), idempotency ≥3×, readiness gate, expert-flow-intact — all anti-false-green
+- 🔄 AR-OPS (ops): REBUILD both containers (build --no-cache + force-recreate)
+- 🔄 AR-EXIT (po): independent live re-verify
+
+---
+
 ## Sprint DATA-PIPELINE-INTEGRITY — ✅ SIGNED OFF 2026-05-30
 
 All 4 user-facing data bugs root-caused, code-fixed, deployed. 3 of 4 fully live-DONE; DPI-3/DPI-4 CODE-DONE + path-PROVEN, awaiting market schedule. Follow-ups FU-A/FU-B/FU-C/FU-MON registered (zone: `apps/mcp-server`). See `docs/REQ_DATA-PIPELINE-INTEGRITY.md` + `docs/handoffs/DPI-ARCH.md` for details.

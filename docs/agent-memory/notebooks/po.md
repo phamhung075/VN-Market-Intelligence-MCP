@@ -1,21 +1,23 @@
 # PO Notebook
 
-## Cycle 2026-05-30 — BTB-EXIT sign-off (BCTC-TABLE-BOUNDARY) — APPROVE
+## Cycle 2026-05-30 — KICKOFF Sprint BCTC-AGENTIC-REFINE
 
-**Verdict: APPROVE.** Critique-before-approve, NOT rubber-stamp — I independently re-verified all 4 critique points rather than trusting qa cycle-151:
+USER-APPROVED plan `/Users/admin/.claude/plans/magical-cooking-cocoa.md` (read in full). Root-cause replacement for the recurring BCTC over-merge bug — 4 prior sprints patched the geometry middle; this REPLACES it OUTRIGHT with a cron-driven agent refine step.
 
-1. **PATH B canonical (drift #3 closed):** source-traced `pek_engine_adapter.py` — `_run_extraction` L728 calls shared `group_pages_into_units()`; `_group_bboxes_into_units` DELETED (L546). AD-1 test asserts PATH A≡PATH B unit shapes → single-source proven, not coincidental agreement. AD-2 asserts `not hasattr(...deleted fn)`. Tests non-hollow (concrete page-assignment asserts).
-2. **Live-DB direct read (not push echo):** FPT=31 (27 table+4 prose), ACB=22 (17 table+5 prose), 0 dup unit_ids, 0 dup page-spans — EXACT match to qa. Prose units PRESENT on live path. Over-merge sentinel: largest table-unit span FPT=2 [22,23] (genuine continuation), ACB=1 — NO giant merged unit. User bug GONE.
-3. **bctc-eval S4/S5 red = OUT OF SCOPE:** confirmed `text_table_extractor.py` 0-diff (frozen). Red is the row-extraction pipeline, not the boundary grouper. Not regressed by BTB.
-4. **YOLO/D-5 known-limitation:** PATH B `stored_text=""` → D-5 disabled, YOLO page-TYPE margin errors. SHIPPED as documented (not blocker) — it's LABEL noise, AD-1 proves GROUPING is correct regardless. Follow-up FU-BTB-OCR registered.
+**What:** OCR text + crisp pymupdf-rasterized page image → refine agent (numbers←text / structure←image / disagreement→FLAG never guess, balance = catch-net not gate) → trusted content. Feed BOTH `bctc_table_rows` (deterministic markdown→rows parser) AND `get_bctc_refined`. The existing `bctc-analyst` 6-pass expert flow consumes it UNCHANGED.
 
-**Frozen confirmed:** text_table_extractor.py + PDF-Extract-Kit 0-diff; pdf-extractor src/tests tree clean. Commits 06fb1f10/ae5bb26c/60dfac7f/cf77271e/a164eeee all in history.
+**User-LOCKED (do NOT re-litigate):** (1) OCR = local Tesseract behind swappable iface (Mistral later); (2) REPLACE OUTRIGHT — delete YOLO + bbox grouping + `bctc_page_grouper.py` 5-state machine; (3) analyst feed = BOTH (rows + refined md).
 
-**Actions:** TASKS.md BCTC-TABLE-BOUNDARY → SIGNED OFF; BTB-QA/BTB-EXIT ✅; FU-BTB-OCR OPEN MEDIUM. Umbrella lock release ok:false (TTL expired — acceptable). User G9 summary returned to main terminal (plain Vietnamese-aware).
+**Highest-risk item flagged to architect:** the markdown→`bctc_table_rows` parser is the NEW single point of correctness — must be DETERMINISTIC + heavily tested or expert analysis degrades silently. Architect must spec it TIGHTLY. DV RED→GREEN on parser AND idempotent store.
+
+**Actions this cycle:** SPRINT_GOAL.md § BCTC-AGENTIC-REFINE prepended (full vision/contract/build-list/remove-list/DoD/owner-chain). TASKS.md seeded (AR-BA..AR-EXIT, 9 tasks, zone:multi). Umbrella lock `task:BCTC-AGENTIC-REFINE` claimed (claimed:true, sprint-task kind, TTL 3600). NEXT → ba (REQ decomposition + zone-split confirm).
 
 ## Carry-over
-- FU-BTB-OCR (OPEN, MED, dev-pdf-extractor): feed per-page OCR text into PATH B PageDescriptor so D-5 title-band fires live + fixes YOLO label margin errors. Keep AD-1 green (no new drift).
-- FU-MON TIME-CRITICAL Monday: re-probe Brent/Gold delta after 06:00 UTC cron + get_foreign_flow(HPG) after ~02:15 UTC HOSE open. Flip DONE or REOPEN.
-- pdf-extractor container shows `unhealthy` — not BTB-blocking (extraction done, units in DB) but worth an ops health-probe next triage.
-- HOUSEKEEPING (non-blocking): qa.md notebook is 6696L (≫200L discipline) + TASKS.md ~150L (>80L janitor cap). Warrant claude-manager-helper prune — do NOT block any exit on it. Did not action this cycle.
-- Still OPEN (WIP budget): SELF-IMPROVE-GATE X-1 (HIGH), BCTC-LAYOUT-FIRST (HIGH), CHEF-ATTN (MED), DPI-FOLLOWUPS FU-A/B/C (MED). string-vs-enum HELD.
+- **SUPERSESSION:** BCTC-AGENTIC-REFINE replaces the geometry middle that BCTC-LAYOUT-FIRST (LF-EXTRACT) + the just-signed BCTC-TABLE-BOUNDARY built. When AR ships, close BCTC-LAYOUT-FIRST LF-EXTRACT as superseded (LF-OVERLAY UX layer survives — refined units render in the same viewer). Reconcile at AR-ARCH brief.
+- AR chain gates: critique-before-approve EVERY hop. Verify: parser DV red-before, idempotency ≥3× via in-container `bun:sqlite` direct read (NOT push echo), readiness gate skips IN_PROGRESS, FPT span [22,23] = ONE unit, replace-outright grep-proof (YOLO/grouper gone), PDF-Extract-Kit 0-diff.
+- Scoped `git add <file>` only — working tree has MANY unrelated uncommitted files; NEVER `-A`.
+- FU-BTB-OCR (OPEN MED) — may be mooted by AR (PATH B / OCR-text-into-descriptor is replaced wholesale). Revisit at AR-EXIT.
+- FU-MON TIME-CRITICAL Monday: re-probe Brent/Gold delta after 06:00 UTC + get_foreign_flow(HPG) after HOSE open. Flip DONE or REOPEN.
+- pdf-extractor container `unhealthy` — ops health-probe next triage (AR will rebuild it anyway).
+- HOUSEKEEPING (non-blocking): qa.md ≫200L, TASKS.md >80L cap → claude-manager-helper prune; never block an exit on it.
+- Still OPEN (WIP): SELF-IMPROVE-GATE X-1 (HIGH), CHEF-ATTN (MED), DPI-FOLLOWUPS FU-A/B/C (MED). string-vs-enum HELD.
