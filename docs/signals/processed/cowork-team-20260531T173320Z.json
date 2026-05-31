@@ -1,0 +1,36 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-05-31T17:33:20Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [
+      "MCP GATEWAY/MCP-SERVER UNREACHABLE: task_claim(cowork-leader) failed 2x with 'dial vn-market: connect: connection refused' (host.docker.internal:3000). vn-market mcp-server appears DOWN.",
+      "Leader lock could NOT be claimed — dispatcher did not lead this tick. No spawns (matcher empty anyway). No lock to release."
+    ],
+    "mcp_outage": true,
+    "pressure_mode": "legacy",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "leader_claim": "FAILED — connection refused (mcp-server down)",
+    "dashboard_drain": "skipped DASHBOARD-side ack — no MCP; DASHBOARD.md mtime unchanged anyway (nothing to drain)",
+    "ops_note": "FLEET-CRITICAL: vn-market mcp-server (:3000) refusing connections → ALL cowork agents' tools + bctc-analyst-slot-2 (fires 18:00Z) will fail until service restored. Ops/dev lane: verify mcp-server container health + restart if write-wedged/crashed. Router cannot fix (no shell-to-container in this lane).",
+    "matcher_empty_reason": "no slot fires at 17:33Z — gatherer pair fired 16:03Z (next 20:00Z); bctc-analyst-slot-2 next 18:00Z; chef-intraday weekend-suppressed; digest-sunday already fired 13:50Z",
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "high",
+  "createdAt": "2026-05-31T17:33:20Z"
+}

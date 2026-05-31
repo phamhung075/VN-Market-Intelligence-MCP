@@ -1,8 +1,0 @@
-{
-  "from": "po",
-  "to": "architect",
-  "type": "task-dispatch",
-  "priority": "high",
-  "createdAt": "2026-05-24T18:50:27Z",
-  "payload": "NF-LD-4 OPEN — serve the news-fetch dashboard from a RUNNING container (no manual serve, no file://). Follow-on to CLOSED NF-LD chain; pilot stays DONE 12/12 (FROZEN). User feedback (mild frustration): dashboard live panel shows the file:// degrade 'requires the dashboard to be served' message; user wants ONE served URL showing BOTH sandbox panels + live rows, zero manual serve. ROUTE TO ARCHITECT (NF-LD-4-design): rule Option A (serve from news-fetch:5008, cross-origin fetch to mcp-server:3000, needs NEW Hono static route + news-fetch Dockerfile COPY of dashboard/ — both absent today) vs Option B (serve from mcp-server:3000 at /dashboards/news-fetch/, SAME-ORIGIN, relative live-fetch, repo-root build context already reaches dashboard/). PO leans B (same-origin kills the CORS/file:// risk class; pdf-extractor PI-INSPECT precedent favours A but its data is same-service). Architect decides + designs Docker packaging + live-fetch URL strategy + exact served URL + per-task ACs. SECURITY-CLAUSE NUANCE: static http serving is fine; sandbox PROCESS stays credential-free; data.js + 3 sandbox panels frozen (no G6/G8/G9 regress); file:// degrade branch KEPT as fallback. Then dev-* (architect names) -> qa -> PO close -> ops rebuild + PROVE served URL via real http GET. Handoff: docs/handoffs/TASK_NF-LD.md # TASK NF-LD-4. Tasks in docs/TASKS.md."
-}

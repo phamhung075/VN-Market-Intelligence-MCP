@@ -1,0 +1,120 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-05-31T16:04:00Z",
+  "dish_window": "eod",
+  "agent": "market-watcher",
+  "session": "2026-05-31-offhours-eod",
+  "tickers": [
+    {
+      "code": "GAS",
+      "price": 87400,
+      "daily_change_pct": 6.98,
+      "yoy_change_pct": 0,
+      "volume": 3160000,
+      "vs_avg_pct": 90,
+      "rsi": null,
+      "sentiment": "bullish",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, monitor momentum",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "Below 2.0σ EOD threshold"
+    },
+    {
+      "code": "PLX",
+      "price": 41000,
+      "daily_change_pct": 3.93,
+      "yoy_change_pct": 0,
+      "volume": 464600,
+      "vs_avg_pct": 40,
+      "rsi": null,
+      "sentiment": "neutral",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, sector peer",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "Below 2.0σ EOD threshold"
+    },
+    {
+      "code": "ACB",
+      "price": 24900,
+      "daily_change_pct": 1.01,
+      "yoy_change_pct": 0,
+      "volume": 16940000,
+      "vs_avg_pct": 170,
+      "rsi": null,
+      "sentiment": "neutral",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, volume spike",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "Below 2.0σ EOD threshold"
+    },
+    {
+      "code": "VNH",
+      "price": 800,
+      "daily_change_pct": -11.11,
+      "yoy_change_pct": 0,
+      "volume": 0,
+      "vs_avg_pct": 0,
+      "rsi": null,
+      "sentiment": "bearish",
+      "insider_activity": "no activity",
+      "brief_action": "Watch, illiquid, sector outlier",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "HNX illiquid, insufficient candles"
+    },
+    {
+      "code": "BID",
+      "price": 42000,
+      "daily_change_pct": -1.18,
+      "yoy_change_pct": 0,
+      "volume": 0,
+      "vs_avg_pct": 0,
+      "rsi": null,
+      "sentiment": "neutral",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, banking sector",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "Below 2.0σ EOD threshold"
+    },
+    {
+      "code": "MWG",
+      "price": 76300,
+      "daily_change_pct": -1.80,
+      "yoy_change_pct": 0,
+      "volume": 0,
+      "vs_avg_pct": 0,
+      "rsi": null,
+      "sentiment": "neutral",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, retail sector pressure",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": "Below 2.0σ EOD threshold"
+    }
+  ],
+  "summary": {
+    "total_stocks_scanned": 39,
+    "stocks_with_data": 34,
+    "anomalies_detected": 0,
+    "signals_emitted": 0,
+    "macro_regime": "NEUTRAL",
+    "sector_rotation": "Oil & gas +3.30% leading, Real estate -0.26% lagging",
+    "supply_chain_status": "Stable — BDI 1400 no disruption",
+    "key_movers": [
+      {"code": "GAS", "change": "+6.98%", "reason": "Oil & gas sector momentum"},
+      {"code": "PLX", "change": "+3.93%", "reason": "Peer strength, sector tailwind"},
+      {"code": "ACB", "change": "+1.01%", "reason": "Banking mini-recovery signal"},
+      {"code": "VNH", "change": "-11.11%", "reason": "HNX illiquid, insufficient data"}
+    ]
+  },
+  "metadata": {
+    "timestamp": "2026-05-31T16:04:00Z",
+    "cron_slot": "market-watcher-offhours",
+    "next_read_time": "2026-06-02T08:37:00Z",
+    "note": "EOD snapshot 2026-05-31 Friday. Market CLOSED. All prices stale >24h. No anomalies at 2.0σ threshold. Chef reads at 08:37 UTC Monday for morning dish."
+  }
+}

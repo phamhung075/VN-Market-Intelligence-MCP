@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-05-31T16:03:20Z",
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/news-scout/flow/main.md", "docs/agents/market-watcher/flow/main.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": { "news-scout-offhours": "cron", "market-watcher-offhours": "cron" },
+    "cadence_minutes": { "news-scout-offhours": "legacy-bypass", "market-watcher-offhours": "legacy-bypass" },
+    "leader_claim": "won (uncontested)",
+    "staleness_note": "pressure-state was stale (~133min > 20min threshold) → PRESSURE_MODE=legacy, cadence gating skipped (NFR-P1-3 never-worse-than-today); fresh pressure-state re-emitted this tick",
+    "tick_snapshot_note": "get_cycle_bootstrap succeeded with agent_name=news-scout (valid enum, avoided cowork-team enum-drift)",
+    "heartbeat": "ok (expires 1780245229)",
+    "last_fired_timestamp": "2026-05-31T16:03:20Z",
+    "last_fired_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-05-31T16:03:20Z"
+}

@@ -1,0 +1,23 @@
+{
+  "ticker": "DHG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Dược phẩm nội địa, phân phối thuốc kê toa và không kê toa, vitamin",
+  "customer": "Bệnh viện, nhà thuốc bán lẻ, người tiêu dùng cuối tại Việt Nam",
+  "ops": "DATA_INSUFFICIENT — get_bctc_full trả về 'Chưa có dữ liệu BCTC'; PDF 20260420-DHG-BCTC-Quy-1.2026.pdf có sẵn nhưng chưa trích xuất được (chu kỳ thứ 3 liên tiếp)",
+  "mgmt": "Không có dữ liệu tài chính Q1-2026 để phân tích",
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "extraction_confidence": 0,
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "esc_flags": {"ESC-1": false, "ESC-2": false, "ESC-3": false, "ESC-4": false, "ESC-5": false},
+  "extraction_status": "BROKEN — Chưa có dữ liệu BCTC (chu kỳ thứ 3). BCTC-TABLE sprint cần thiết.",
+  "regime": "NEUTRAL",
+  "carry_regime": "FII_OUTFLOW_RISK",
+  "cycle_id": "20260531-1800",
+  "emitted_at": "2026-05-31T18:10Z"
+}

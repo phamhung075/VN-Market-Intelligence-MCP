@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-05-31T15:48:20Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime unchanged since last tick (17:30Z local) — already drained, no new cowork-addressed rows",
+    "matcher_empty_reason": "no slot fires at 15:48Z — bctc-analyst-slot-1 already fired 15:03Z; next gatherer pair 16:00Z; chef-intraday weekend-suppressed; digest-sunday already fired 13:50Z",
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-05-31T15:48:20Z"
+}

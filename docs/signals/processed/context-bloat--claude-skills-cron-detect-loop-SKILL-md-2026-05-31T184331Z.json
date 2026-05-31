@@ -1,0 +1,15 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-05-31T18:43:31Z",
+  "payload": {
+    "file": ".claude/skills/cron-detect-loop/SKILL.md",
+    "line_count": 122,
+    "cap": 120,
+    "class": "skill-file",
+    "overage": 2,
+    "action_required": "prune_or_split"
+  }
+}
