@@ -1,10 +1,11 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-31T05:27Z (:07 tick, manual run — VN Sat ~12:27, market CLOSED weekend)
+**Written:** 2026-05-31T06:27Z (:07 tick, manual run — VN Sat ~13:27, market CLOSED weekend)
 
-## tick-20260531T0527Z (~29s) — IDLE EXIT (3rd consecutive byte-identical), drain-only
-- PREFLIGHT pass. 4 loose = all cowork-fire heartbeats → noise (790→**794**), 15 stale processed/ pruned, commit **381af549**. 0 routed-to-po. 0 NEW dashboard rows.
-- Queue {#3011,#3012,#3014} byte-identical to tick-0427 (and 0227) → **no PO re-spawn (C-6)**. pipeline IDLE, TASKS.md 61≤80, expire_monitoring=0, branches=main. Carry-forward unchanged (see tick-0427 block). Pattern: stable idle hourly heartbeat; first real change expected at Monday VN open (pollNews + FU-MON).
+## tick-0527→0627Z (consecutive IDLE, byte-identical queue) — drain-only, no PO re-spawn (C-6)
+- Stable hourly idle heartbeat. Each tick: ~4 cowork-fire heartbeats drained as noise, queue {#3011,#3012,#3014} byte-identical, 0 NEW dashboard rows, pipeline IDLE, TASKS.md 61≤80, expire_monitoring=0, branches=main, WIP 0/2.
+- DB progression: 0527 → 794 (commit 381af549) | 0627 → **798** (commit 4dde7b9f). Stale processed/ pruned each tick (15, 13).
+- Carry-forward UNCHANGED (see tick-0427 block). First real change expected at **Monday VN open**: pollNews #3012/#3014 recover-or-escalate + MACRO-CMDTY-DELTA FU-MON signed-delta first real-move confirm. #3011 BTB write-wedge held in OPEN BCTC-LAYOUT-FIRST awaiting architect lane.
 
 ---
 
