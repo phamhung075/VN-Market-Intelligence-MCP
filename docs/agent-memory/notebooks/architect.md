@@ -1,8 +1,38 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-31 10:45 UTC | **Sprint:** FU-TRUST-REFRESH
+**Last updated:** 2026-05-31 15:00 UTC | **Sprint:** ENV-ISOLATION (investigation)
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## ENV-ISOLATION INVESTIGATION (2026-05-31T15:00 UTC) — FINDINGS COMPLETE
+
+**Sprint:** ENV-ISOLATION (proposed, operator approval required)
+**Mode:** Investigation + options analysis — read-only, no sprint opened
+
+**Finding 1 — DB topology:** ONE market.db in Docker named volume `vn-market-intelligence-mcp_market_data`. Mounted at `/app/data` in ALL services (mcp-server rw; technical-analysis/macro-indicators/kinh-dich-service/news-fetch with `DB_READONLY=true`; pdf-extractor reads `pdf_extracted_text` table via `MARKET_DB_PATH`). No staging copy exists. mcp-server is the SOLE WRITER by architecture (`docs/ARCHITECTURE.md` confirmed). Cowork analysis agents reach DB only through MCP tools via gateway (no direct DB connection from any agent).
+
+**Finding 2 — Test isolation:** mcp-server TS tests: UNIVERSAL `:memory:` isolation via `apps/mcp-server/src/__tests__/setup.ts` preload (`Bun.env["DB_PATH"]=":memory:"`). Two dedicated isolation test files enforce the invariant (1400-db-isolation.test.ts, 1347a-test-db-isolation.test.ts). Python pdf-extractor tests: use `tempfile.mkdtempSync()` isolated paths. Migration tests: all use `:memory:` or tmp paths. GAP: `scripts/run-bt7-backfill.ts` has a hardcoded absolute dev-machine path with `readwrite: true`; `scripts/purge-phantom-reports.ts` opens `data/market.db` writably with no env guard.
+
+**Finding 3 — Write vectors (4 classes):**
+- W-1: HTTP push routes (17 POST routes in server.ts) — called by VPS services pushing real market data. No env gate.
+- W-2: MCP tool calls via gateway (push_bctc_refined_unit, finalize_bctc_refine, bctc_skip, set_alert, update_watchlist, save_news_analysis, save_macro_evidence, save_agent_memory_update). No env gate. W-2 is the contamination path in BCTC-TRUST-RED.
+- W-3: Cron-driven use cases (40+ jobs) — all produce derived data from existing production data; no hallucination path.
+- W-4: One-shot maintenance scripts on host (run-bt7-backfill.ts, purge-phantom-reports.ts) — write to on-disk market.db with no env guard.
+
+**Finding 4 — Provenance:** NO environment/source/is_synthetic column exists on any table. Existing flags track quality (source_confidence, ocr_confidence, refine_status, window_status=REJECTED_SANITY) and lifecycle — not which environment produced the row. TRUST-RED gates block fabricated data semantically; they do not tag origin environment.
+
+**Recommendation:** Option 2 (separate physical DB file per environment via `DB_PATH`) + Option 1 audit supplement (data_env column on bctc_refined_units + bctc_table_rows for forensic tracing). Physical file boundary stops W-2 structurally; audit column gives post-incident tracing. Option 3 (full second stack) is blocked by 16GB Mac / 8GB Docker cap — cannot run two full stacks simultaneously.
+
+**5 OD flags for operator:**
+- OD-1: Approve Option 2 + audit supplement as the path
+- OD-2: Same named volume / different filename OR separate named volume for dev DB?
+- OD-3: data_env column on BCTC tables only OR all write tables?
+- OD-4: Promotion step as bespoke script (ENV-2b) in sprint OR manual ops SOP?
+- OD-5: Sequence after FU-TRUST-REFRESH ships, or in parallel?
+
+**Brief:** `docs/architecture-briefs/2026-05-31-test-prod-data-isolation.md`
+
+---
 
 ## FU-TRUST-REFRESH FU-0 SEAM DECISION (2026-05-31T10:45 UTC) — DECISION COMPLETE
 
