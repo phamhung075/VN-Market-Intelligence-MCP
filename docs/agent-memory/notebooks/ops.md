@@ -5049,3 +5049,179 @@ NEXT: QA full HC gate validation (escalate any failures back to owning zone).
 - FU-3 (re-refine, off-HOSE permitted Saturday) CLEARED TO PROCEED ✓
 - Pipeline: Continue to FU-3
 
+
+---
+
+## Session: 2026-05-31 FU-TRUST-REFRESH Sprint — FU-3 Task (Refine Trigger Attempt)
+
+**Task:** FU-3 — Re-trigger BCTC refine for FPT + ACB Q1-2026 after OCR seam fix verification (FU-2 PASSED)
+
+### Precondition Check
+- pdf-extractor rebuilt (FU-2 verified): af50d67a, /health ocr_source_ok:true, /page-text returns real Vietnamese OCR
+- 73 pages rasterized: data/bctc-page-images/{fpt-q1-2026,acb-q1-2026}/
+- FPT (e8ea3df5-3f32-413d-a3eb-c71634c0438d) refine_status=PENDING, page_count=46, text_status=COMPLETE
+- ACB (fea19bae-2b7a-4954-b3e0-e09d7bfc7390) refine_status=PENDING, page_count=33, text_status=COMPLETE
+
+### Trigger Mechanism Analysis
+
+**Identified mechanism:** On-demand HTTP endpoint `/api/refine-bctc/{report_id}` (bctcRefineHandler.ts)
+- POST to `http://localhost:3000/api/refine-bctc/{report_id}` fires `refineOneReport(id)` async
+- Returns 202 Accepted immediately; refine job runs in background
+- Refine orchestrator is the same code path as cron (bctcRefineJob.ts)
+
+### Trigger Execution
+
+**2026-05-31 11:03:02 UTC** — FPT refine triggered:
+```
+curl -X POST http://localhost:3000/api/refine-bctc/e8ea3df5-3f32-413d-a3eb-c71634c0438d
+Response: 202 Accepted
+```
+
+**2026-05-31 11:03:04 UTC** — ACB refine triggered:
+```
+curl -X POST http://localhost:3000/api/refine-bctc/fea19bae-2b7a-4954-b3e0-e09d7bfc7390
+Response: 202 Accepted
+```
+
+### Refine Execution Flow — FAILED
+
+**FPT Refine Job Log (e8ea3df5...)**
+- Phase 1 (text fetch): COMPLETE — 10 pages fetched, text_status=COMPLETE ✓
+- Phase 1 (window partition): COMPLETE — 7 windows created (table/prose/continuation pages)
+- Phase 2 (subagent spawn): FAILED — 7 windows → 7 FAILED
+  - All units return: `spawnWindowSubagent called without deps.spawnSubagent — returning FAILED (Option-Y: use fleet cron)`
+- Phase 3 (aggregate): reportStatus=FAILED, done=0, failed=7
+- Phase 4 (DB write): refine_status set to FAILED
+
+**ACB Refine Job Log (fea19bae...)**
+- Phase 1 (text fetch): COMPLETE — 6 pages fetched, text_status=COMPLETE ✓
+- Phase 1 (window partition): COMPLETE — 6 windows created
+- Phase 2 (subagent spawn): FAILED — 6 windows → 6 FAILED
+  - All units return: `spawnWindowSubagent called without deps.spawnSubagent — returning FAILED (Option-Y: use fleet cron)`
+- Phase 3 (aggregate): reportStatus=FAILED, done=0, failed=6
+- Phase 4 (DB write): refine_status set to FAILED
+
+### Root Cause Diagnosis
+
+**BLOCKER: Refine Orchestrator requires Claude Agent spawning capability**
+
+The refine orchestrator (`docs/agents/refine_bctc_md/flow/main.md`, Phase 2) must:
+1. Call `get_bctc_pending_refine(limit=1)` to fetch pending report
+2. For each window, spawn a `refine_bctc_md` subagent via Claude Agent/Task mechanism:
+   ```
+   task_result = await spawn_agent(
+     agent_id: "refine_bctc_md",
+     flow_path: <sub_flow_path>,
+     input: { report_id, unit_id, page_type, page_numbers, needs_image }
+   )
+   ```
+3. Collect Task return values
+4. Push refined units via `push_bctc_refined_unit` (per unit, reset_next=true on first)
+5. Finalize via `finalize_bctc_refine`
+
+The on-demand HTTP handler **does not have** `deps.spawnSubagent` (Option-Y agent spawning). The handler is synchronous; it can only call MCP tools, not spawn Claude agents.
+
+**Architecture Issue:** refine_bctc_md/init.md states:
+```
+inter_agent:
+  recv:
+    - {from: refine_bctc_md/flow/main.md (fleet-cron orchestrator), via: CC_Task_spawn, on: per_window_refine_request}
+```
+
+The fleet-cron orchestrator is MEANT TO BE RUN AS A CLAUDE AGENT to use CC Task mechanism for subagent spawn.
+
+### What Must Happen Next (FU-3 BLOCKED)
+
+**Correct approach:** The refine_bctc_md/flow/main.md orchestrator must be invoked as a Claude agent, not via HTTP endpoint.
+
+**Required:** Spawn the refine agent orchestrator:
+```
+Agent ID: refine_bctc_md
+Flow Path: docs/agents/refine_bctc_md/flow/main.md
+Agent Model: claude-haiku-3-5 (per init.md)
+Input: none (agent fetches pending reports internally)
+```
+
+**To complete FU-3, the router must:**
+1. Invoke a Claude agent dispatch to spawn `refine_bctc_md` agent
+2. That agent runs the orchestrator flow (docs/agents/refine_bctc_md/flow/main.md)
+3. Orchestrator picks up FPT + ACB from PENDING queue
+4. Subagents process each window, produce trusted markdown
+5. Markdown→rows parser fills bctc_table_rows
+6. refine_status transitions to DONE (for both reports)
+
+**I cannot spawn Claude agents from Ops**. The refine mechanism requires agent-level control (Option-Y Task spawning), not infrastructure/HTTP control.
+
+### Current DB State
+
+**Before FU-3 restart:**
+- FPT: refine_status=FAILED (from failed refine attempt above)
+- ACB: refine_status=FAILED (from failed refine attempt above)
+- Both need reset to PENDING before re-triggering
+
+**Required cleanup:**
+```
+UPDATE financial_reports 
+SET refine_status = 'PENDING' 
+WHERE id IN ('e8ea3df5-3f32-413d-a3eb-c71634c0438d', 'fea19bae-2b7a-4954-b3e0-e09d7bfc7390');
+```
+
+### Status
+
+**FU-3 BLOCKED — awaiting router to spawn Claude refine agent**
+- Refine mechanism verified: requires `refine_bctc_md` agent spawned
+- HTTP on-demand trigger insufficient (lacks agent spawning)
+- FPT + ACB refine_status now FAILED; must reset to PENDING before agent spawn
+- Ready for handoff to router for agent dispatch
+
+**Do NOT proceed with manual gate verification (FU-4) until FU-3 refine completes with refine_status=DONE for both reports.**
+
+### Final Verification (Post-Attempt)
+
+**FPT (e8ea3df5-3f32-413d-a3eb-c71634c0438d) get_bctc_refined:**
+- Total units: 7 (pages 1-10 partitioned)
+- All units: window_status=FAILED, confidence=0.0
+- Flag: agent_error:no_spawn_path_option_y
+- refined_at: 2026-05-31 11:05:31 (failed attempt)
+- Markdown: empty for all units
+
+**ACB (fea19bae-2b7a-4954-b3e0-e09d7bfc7390) get_bctc_refined:**
+- Total units: 6 (pages 1-6 partitioned)
+- All units: window_status=FAILED, confidence=0.0
+- Flag: agent_error:no_spawn_path_option_y
+- refined_at: 2026-05-31 11:03:05 (failed attempt)
+- Markdown: empty for all units
+
+### Escalation
+
+**CRITICAL: FU-3 cannot complete without Claude agent spawning capability.**
+
+The refine mechanism is architecturally sound but **requires the refine_bctc_md agent to be spawned via the Claude agent framework** (Option-Y Task mechanism). The on-demand HTTP endpoint is insufficient.
+
+**Required next step:** Router must invoke:
+```
+spawn refine_bctc_md agent
+flow: docs/agents/refine_bctc_md/flow/main.md
+model: claude-haiku-3-5
+```
+
+That agent will:
+1. Fetch FPT + ACB from PENDING queue (if reset)
+2. Partition pages into windows
+3. Spawn subagents for each window (one-per-window concurrency=5)
+4. Collect results and finalize
+
+**Reset required before agent spawn:**
+```sql
+UPDATE financial_reports 
+SET refine_status = 'PENDING' 
+WHERE id IN (
+  'e8ea3df5-3f32-413d-a3eb-c71634c0438d',  -- FPT Q1-2026
+  'fea19bae-2b7a-4954-b3e0-e09d7bfc7390'   -- ACB Q1-2026
+);
+```
+
+Both reports are currently refine_status=FAILED with empty units. Do NOT proceed with FU-4 (qa gate verification) until refine_status=DONE and units have real markdown content.
+
+**FU-3 Status: BLOCKED — Awaiting agent dispatch from router**
+
