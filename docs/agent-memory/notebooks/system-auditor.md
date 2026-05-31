@@ -3,6 +3,35 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
+## Audit Run Tier-1 (22:37–22:38 UTC 2026-06-01)
+
+- Tier: 1 | Runtime check: 2 containers (mcp-server, mcp-gateway) both UP
+- Container liveness: PASS (both healthy, 1h 20m uptime for mcp-server)
+- Health endpoints: mcp-server /health 200 OK, gateway healthy
+- Restart count: mcp-server = 1 (PASS, ≤ 2 threshold)
+- Memory: mcp-server 26.34% (PASS, < 85%)
+- Disk: /data 36% used, 25GB free (PASS)
+- Cron jobs: 73 tracked, 100% healthy (no gaps detected)
+- Circuit breakers: 16/16 green (no failures)
+- Data freshness context: VN market CLOSED (22:37 UTC = 05:37 HCM, outside 02:00–08:59 M–F trading window)
+  - Price data 61 min old: EXPECTED (market closed)
+  - BCTC data 75 h old: EXPECTED (weekly cadence, no new filings due end-May)
+  - Foreign-flow stale: EXPECTED (market closed)
+- Duration: < 60s
+- Status: HEALTHY
+
+### Anomalies
+
+None. All checks passed. Prior Tier-2 findings (price/BCTC/flows stale) remain suppressed as expected market-closed conditions.
+
+### Notes
+
+- 2 deployed services (mcp-server + mcp-gateway) is CORRECT per operating constraints (the 9-service compose is dev-zone Factory-v2, not deployed)
+- No docker restart loops detected
+- No memory pressure
+- No container tooling missing (pdftoppm/tesseract checks deferred to Tier-3)
+- Next Tier-1 in ~30 min; Tier-2 at 02:30 UTC will show price/flows fresh post-market-open
+
 ## Audit Run Tier-2 (22:30–22:32 UTC 2026-05-31)
 
 - Tier: 2 | Services checked: 2 active (mcp-server UP, mcp-gateway UP) | Cron jobs: 73/73 tracked | Duration: < 300s
