@@ -5369,3 +5369,101 @@ net_profit: 4,320,388 million VND
 ✗ FAIL — FU-6 REBUILD COMPLETE; FU-5 RE-FINALIZE EXECUTED; SCALAR VALUES INCORRECT DUE TO PARSER BUG
 **QA Gate (FU-4 re-run) NOT CLEARED** — corrupt scalars cannot be verified as correct. Dev-mcp-server must fix parseVnNumber() to handle "(value)" format, then FU-6 must re-execute.
 
+
+---
+
+## Session: 2026-05-31 — FU-TRUST-REFRESH FU-6-redo (STOPPED — CRITICAL BUG)
+
+**Task:** FU-6-redo — apply FU-5b parser fix live and re-finalize FPT + ACB
+
+### Execution Summary
+
+1. **Container Rebuild:**
+   - ✓ Rebuilt mcp-server with `docker compose build --no-cache mcp-server`
+   - ✓ Force-recreated container with fresh image SHA 5419300885e6 (was stale 4ce3ea15f73a)
+   - ✓ Container healthy, health endpoint returns 200 OK
+
+2. **Re-finalization via Gateway:**
+   - ✓ Called finalize_bctc_refine for FPT (e8ea3df5): {ok:true, rows_parsed:145}
+   - ✓ Called finalize_bctc_refine for ACB (fea19bae): {ok:true, rows_parsed:106}
+   - ✓ Called POST /api/bctc-eval/recompute for both → eval timestamps refreshed (2026-05-31 12:24:21)
+
+3. **Direct DB Verification (via docker volume):**
+   - ✓ Both reports refine_status=DONE
+   - ✓ Both reports bctc_table_rows inserted (145 for FPT, 106 for ACB)
+
+### CRITICAL BUG DETECTED — SCALARS STILL WRONG
+
+**FPT Q1-2026 Scalars:**
+```
+database (after re-finalize):
+  total_assets:       3,399,067.564489  ← WRONG (should be 68,586,094 million VND)
+  equity_total:       40,122,036.570361 ← CORRECT (matches markdown)
+  total_liabilities:  28,464,058.214856 ← CORRECT (can infer from: TA - EQ)
+  net_revenue:        12,479,997.206775 ← CORRECT (matches markdown)
+  gross_profit:       4,244,889.890688  ← CORRECT (matches markdown)
+  net_profit:         2,476,789.833481  ← CORRECT (matches markdown)
+```
+
+**Root Cause Analysis:**
+
+The bctc_table_rows ARE correct:
+```
+code 100 (short-term assets):   41,527,873,060,120 VND
+code 200 (long-term assets):    27,058,221,725,097 VND
+code 280 (total assets):         68,586,094,785,217 VND ← 100 + 200 ✓
+code 400 (equity):              40,122,036,570,361 VND ← correct
+```
+
+BUT bctcScalarAggregator (domain/services/financial-reports/bctcScalarAggregator.ts) has a BUG:
+
+- **Line 253:** `let total_assets = scale(findByCode(rows, "270"));`
+- **Issue:** FPT's code "270" is NOT total assets — it's a BALANCE SHEET SUB-ITEM: "V. Tài sản dài hạn khác" (Long-term assets - Other) = 3,399,067,564,489 VND
+- **Expected:** Code "270" should not exist in FPT at all OR should not be used for total_assets
+- **Correct codes:** FPT uses code "280" (Tổng cộng tài sản) or "440" (Tổng cộng nguồn vốn) for total assets, both = 68,586,094,785,217 VND
+
+**Why FU-5b Didn't Fix This:**
+
+FU-5b (commit bfd25762) fixed parseVnNumber to handle parentheses-wrapped negatives like "(35.872.175.224)" → -35872175224. The parseVnNumber FIX is correct and present in the running container.
+
+However, the REAL problem is NOT in parseVnNumber. The problem is:
+1. Row extraction correctly parses the balance sheet rows (verified: code 100, 200, 280, 440 all present with correct values)
+2. But bctcScalarAggregator.aggregateScalars() picks code "270" (a SUB-item) instead of code "280" or code "440" (the actual total)
+3. This is a MAPPING/LOGIC bug in bctcScalarAggregator, NOT a parsing bug
+
+**Verification:**
+- bctc_table_rows for code 270: value_current = 3,399,067,564,489 (long-term other assets)
+- bctc_table_rows for code 280: value_current = 68,586,094,785,217 (total assets)
+- bctc_table_rows for code 440: value_current = 68,586,094,785,217 (total equity+liabilities)
+- financial_reports.total_assets: 3,399,067.564489 ← uses code 270 (wrong)
+
+**ACB Q1-2026 Scalars (Also Wrong):**
+```
+database:
+  total_assets:       1,030,900,741.0   ← WRONG (absurd order of magnitude)
+  equity_total:       1,030,900,741.0   ← WRONG (shouldn't equal total_assets)
+  total_liabilities:  932,149,689.0     ← WRONG (order of magnitude off)
+  net_revenue:        8,157,465.0       ← WRONG
+  gross_profit:       6,989,162.0       ← WRONG
+  net_profit:         74,311.0          ← WRONG
+```
+
+ACB's scalars are also broken, likely from the same bctcScalarAggregator bug or a different issue.
+
+### Decision
+
+**DO NOT GREEN this task.** Per CRITICAL HONESTY directive in task description:
+
+> if scalars are STILL wrong (any of: equity=0, gross=net, total_assets=0, or absurd magnitudes from wrong divisor), do NOT green it — paste the actual values and STOP for dev.
+
+FPT total_assets is 3.4M instead of 68.6B (wrong divisor application or wrong code lookup). This is a genuine bug in bctcScalarAggregator that requires dev intervention.
+
+**Recommendation:**
+
+1. **dev-team:** Fix bctcScalarAggregator to handle code "280" as an alternative for total_assets (line 253-256), ahead of code "270" OR fix the row extraction to NOT include code "270" as a duplicate balance sheet line.
+2. **qa-team:** Re-run FU-6 after dev commits the fix.
+
+### Status
+
+**BLOCKED** — Awaiting dev fix to bctcScalarAggregator code → total_assets mapping.
+
