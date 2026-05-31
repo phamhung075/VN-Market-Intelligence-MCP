@@ -1,5 +1,45 @@
 # QA — Notebook
 
+## cycle-172 · 2026-05-31 · BANK-QA-2 — BANK-AWARE-BCTC — CHANGES_REQUESTED
+
+**Sprint:** BANK-AWARE-BCTC | **Task:** BANK-QA-2 | **Verdict:** CHANGES_REQUESTED — 1 blocking
+
+```
+date: 2026-05-31T~18:30Z
+method: bun test (scoped 7 files) + tsc + sqlite3 in-container direct reads
+
+TEST COUNTS:
+  BANK-AWARE-1 (DV-BANK-1..7): 26/0 PASS
+  HCM-DISAMBIG: 19/0 PASS (0-diff confirmed)
+  240-bctc-full: 5/0 PASS
+  7-file combined run: 82 pass / 1 FAIL
+  tsc: 0 errors | DDD: PASS | Security: PASS
+
+FAILING TEST:
+  FU-6f-eval-blob-blockers.test.ts:387 — DV-FU6F-B1-3
+  Expected stage_statuses[6]="red", received "yellow"
+  Root: VNM seeded with 2-digit codes only ("10","60") → isBankFormFromRows=true
+        → goldenAnchors drops gross_profit → 2/2=1.0 → not red.
+  This is a FU-TRUST-REFRESH test (FU-6f), not a BANK-AWARE-BCTC test.
+
+DV-BANK-7 GENUINE: Seed-4 (codes "01","02","I","B") proves structural over domain string.
+  OLD: isBankForm("other")=false (wrong for ACB). NEW: isBankFormFromRows=true (correct).
+
+CORPUS REGRESSION:
+  FPT 2026-Q1: gross=4,244,889 (34%) / net=2,476,789 / balance=0% / NO misclassification PASS
+  ACB 2026-Q1: gross=null / net=4,320,388 / balance=0% / bank correctly classified PASS
+  VCB 2025-Q4: PENDING (0 rows, not finalized) — gross=net=100% pre-existing artifact, not regression
+
+BLOCKING (1):
+  FU-6f-eval-blob-blockers.test.ts:387 — DV-FU6F-B1-3 discriminator edge case
+  Fix: add 3-digit balance code to test fixture OR tighten discriminator for 2-digit-only sets
+```
+
+REPORT: reports/TASK_REPORT_BANK-QA-2.md
+NEXT: dev-mcp-server | DV-FU6F-B1-3 fix — discriminator edge case (2-digit-only corporate seed)
+
+---
+
 ## cycle-171 · 2026-05-31 · FU-4 CLOSING GATE — FU-TRUST-REFRESH — CHANGES_REQUESTED
 
 **Sprint:** FU-TRUST-REFRESH | **Task:** FU-4 CLOSING GATE | **Verdict:** CHANGES_REQUESTED — 2 new blocking
