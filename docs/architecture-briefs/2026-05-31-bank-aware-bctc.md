@@ -830,3 +830,215 @@ on main; BANK-DEV-2 is an in-place amendment to correct it.
 
 **Sequencing:** BANK-DEV-2 → BANK-OPS-1 (rebuild) → BANK-QA-1 (live verify). BANK-OPS-1
 and BANK-QA-1 task specs are unchanged from the original brief (Sections 7 and 8).
+
+---
+
+## BANK-ARCH-3 — Discriminator Edge-Case Ruling (QA escalation from BANK-QA-2)
+
+**Date:** 2026-05-31
+**Gate status:** BLOCKING BANK-DEV-3. Architect-ruled per recurring-bug-escalation policy
+(bctcFormType.ts has now received 2 fix commits: BANK-DEV-1 domain-keyed → BANK-DEV-2
+structural 3-digit-absence; next touch requires architect gate before any dev point-fix).
+
+---
+
+### Edge Case Surfaced (DV-FU6F-B1-3)
+
+Test `DV-FU6F-B1-3` at `apps/mcp-server/src/__tests__/FU-6f-eval-blob-blockers.test.ts:374`
+expects `stage_statuses[6] === "red"` for a VNM (corporate, consumer_goods) fixture where
+`gross_profit=null`. It received `"yellow"` after BANK-DEV-2.
+
+Root cause: the VNM fixture seeds ONLY 2-digit income codes `("10","60")`. Neither matches
+`/^[0-9]{3}/` → `isBankFormFromRows` finds no 3-digit code → returns `true` (bank path) →
+`goldenAnchors = ["net_revenue","net_profit"]` (gross_profit dropped) → 2/2 = 1.0 →
+stage-6 not red. A CORPORATE income-only extraction is therefore indistinguishable from a
+bank report by the absence-of-3-digit-codes signal alone.
+
+---
+
+### Production Reachability — Option B Forbidden
+
+The state "corporate report, rows present, zero 3-digit codes" IS reachable in production:
+`computeBctcEval` is a diagnostic layer called at any time, including before finalization
+completes. A partial extraction where OCR captured income-statement rows but balance-sheet
+rows failed would produce exactly this row set. Income statement codes in Mẫu B01-DN are
+2-digit numeric (10, 11, 20, 21, 30, 40, 50, 60) — none are 3-digit. Option B ("fixture is
+unrealistic — seed a 3-digit code") is therefore FORBIDDEN: it papers over a real production
+state with a stronger fixture, hiding the discriminator defect. The DV-FU6F-B1-3 test must
+end GREEN by being CORRECT, not by being made easier.
+
+---
+
+### Decision: Option C — Positive Bank Evidence Required
+
+**Ruling:** Replace the NEGATIVE corporate signal (absence of 3-digit codes) in
+`isBankFormFromRows` with a POSITIVE bank signal: at least one code in the row set must
+contain a letter character (`/[A-Za-z]/`). This is Option C — a structurally tighter
+discriminator not listed in the original option set.
+
+**Rationale (one paragraph):** The absence-of-3-digit-codes signal is necessary but not
+sufficient: it correctly identifies banks when the full row set is present (ACB always has
+Roman/alpha codes; corporates always have 3-digit balance codes) but breaks on partial
+extractions where only 2-digit income codes landed. The positive bank signal — presence of
+at least one code containing a letter — is both necessary and sufficient: every real bank
+report (Mẫu B02-TCTD) uses Roman numeral codes (I, II, III, …, XIII) and section headers
+(A, B) which contain letters; no corporate report code in the Mẫu B01-DN scheme (10, 11,
+20, 100-440) ever contains a letter. A corporate income-only extraction (`["10","60"]`) has
+zero letter-containing codes → correctly returns `false` (corporate). ACB's actual live
+codes (`["01","02","I","A","B","I.1"]`) contain letters → correctly returns `true` (bank).
+The empty-rows fail-safe (`rows.length === 0 → false`) is unchanged. This change requires
+no belt-and-suspenders scalar fallback in the SSOT function itself; the discriminator is
+self-contained and context-free. The `computeBctcEval` scalar fallback (C-6,
+`total_assets > 1e9`) is retained as belt-and-suspenders for the case where rows are
+genuinely absent at eval time (pre-finalization), but it no longer needs to compensate for
+a weak structural signal.
+
+**Rejected alternatives:**
+
+- **Option A (tighten discriminator with scalar inside SSOT):** Scalar signals (`total_assets`,
+  `gross_profit`) belong to the application layer, not the domain layer. Injecting them into
+  `isBankFormFromRows` (a domain-layer pure function operating only on code strings) would
+  violate DDD layer separation. The scalar fallback stays in `computeBctcEval.ts` only.
+
+- **Option B (fixture must seed 3-digit code):** Forbidden — production state is reachable
+  (see above). The DV-FU6F-B1-3 test is a correct GREEN guard; it must pass as written.
+
+- **The current BANK-DEV-2 signal (absence of 3-digit codes):** Correct for full row sets,
+  broken for partial extractions. Not sufficient as the SSOT.
+
+---
+
+### New `isBankFormFromRows` Specification
+
+**Signal:** `true` when at least one code in the row set matches `/[A-Za-z]/` (contains a
+letter). `false` otherwise, including when rows is empty.
+
+```typescript
+/**
+ * isBankFormFromRows — canonical bank-form discriminator.
+ *
+ * BANK-ARCH-3 revision: POSITIVE bank evidence required.
+ * Returns true when the row set contains at least one code with a letter
+ * character (Roman numerals I–XIII, section headers A/B, sub-codes I.1/I.2
+ * used exclusively by Mẫu B02-TCTD bank reports). Corporate Mẫu B01-DN codes
+ * (10-60 income; 100-440 balance) are entirely numeric — no letters.
+ *
+ * WHY positive evidence: absence of 3-digit codes is necessary but not
+ * sufficient — a partial corporate extraction with income-only 2-digit rows
+ * (code "10","60") also has zero 3-digit codes, breaking the prior signal.
+ * A letter-containing code is ONLY produced by Mẫu B02-TCTD. Never by B01-DN.
+ *
+ * Fail-loud contract: if rows is empty, returns false (fail-safe: no bank
+ * promotion without positive evidence). Consistent with BANK-DEV-2.
+ *
+ * @param rows   All bctc_table_rows for the report (full set or code-only projection).
+ * @returns true if the report follows Mẫu B02-TCTD (bank form); false for corporate.
+ */
+export function isBankFormFromRows(rows: BctcCodeRow[]): boolean {
+  if (rows.length === 0) return false; // fail-safe: no rows → assume corporate
+  return rows.some(r => /[A-Za-z]/.test(r.code ?? ""));
+}
+```
+
+`isBankFormFromDb` is unchanged — it queries, then delegates to `isBankFormFromRows`. No
+signature change. Zero call-site changes in any consumer (C-1 through C-7) — they all call
+`isBankFormFromDb` or `isBankFormFromRows` with the same arguments.
+
+---
+
+### DV-BANK-7 Test Updates Required
+
+`DV-BANK-7` in `BANK-AWARE-1-consumer-audit.test.ts` (lines 232–303) currently has two
+seeds whose expected values change under the new signal, and one whose comment must update:
+
+**Seed 4 (`["01","02","I","B"]`):** Expected `true`. Result under new signal: "I" and "B"
+contain letters → `true`. UNCHANGED. Comment must update: reason is now "contains letter
+codes (I, B)" not "no 3-digit code".
+
+**Edge case `["99"]` (line 280):** Currently expects `true` (no 3-digit code = bank). Under
+new signal: "99" has no letters → `false` (not bank evidence). Expected value MUST CHANGE
+to `false`. This is correct: code "99" is not a real bank code; it is an orphaned 2-digit
+numeric that should be treated as corporate/ambiguous.
+
+**Edge case `["1000"]` (line 285):** Currently expects `false`. Under new signal: "1000"
+has no letters → `false`. UNCHANGED.
+
+**Mixed case `["I","II","100",null]` (line 293):** Currently expects `false` (3-digit code
+present = corporate wins). Under new signal: "I" and "II" contain letters → `true`. Expected
+value MUST CHANGE to `true`. Rationale: a single 3-digit code alongside Roman-numeral codes
+is more likely an OCR misread of a Roman numeral than a corporate form marker. The positive
+bank signal (presence of letter codes) is stronger evidence than presence of one ambiguous
+numeric code. If a developer disagrees: the test comment must document this explicitly and the
+ruling here stands unless BANK-ARCH-4 overrides. Note: in practice, any real corporate
+report has MANY 3-digit codes (100, 200, 300, 400 minimum); a single "100" among Romans
+is an extraction artifact, not a corporate marker.
+
+**Add Seed 5 (new):** `["10","60"]` (income-only corporate, 2-digit numeric) → expected
+`false`. This is the exact VNM fixture scenario; the test must name it explicitly as the
+regression guard for DV-FU6F-B1-3.
+
+---
+
+### BANK-DEV-3 Task Specification
+
+**Task:** BANK-DEV-3
+**Zone:** `apps/mcp-server/`
+**Assignee:** dev-mcp-server
+**Gate:** Architect-ruled (BANK-ARCH-3). No dev touch of bctcFormType.ts without this ruling.
+**Blocker resolved by:** this section.
+
+**Scope (minimal — single function body change):**
+
+1. **Modify `isBankFormFromRows` in `bctcFormType.ts`** (line 50):
+   Replace: `return !rows.some((r) => /^[0-9]{3}/.test(r.code ?? ""));`
+   With:    `return rows.some((r) => /[A-Za-z]/.test(r.code ?? ""));`
+   Update the JSDoc above the function to describe the positive-evidence rationale
+   (copy the spec above verbatim). No other changes to the file.
+
+2. **Update DV-BANK-7 in `BANK-AWARE-1-consumer-audit.test.ts`:**
+   - Seed 4 comment: update reason ("contains letter code I, B" not "no 3-digit code").
+     Expected value stays `true`.
+   - Edge `["99"]`: change expected from `true` to `false`. Update description to
+     "2-digit numeric, no letter → false (not bank evidence)".
+   - Mixed `["I","II","100",null]`: change expected from `false` to `true`. Update
+     description to "Roman codes with one 3-digit — letter evidence wins; 3-digit alone
+     does not override positive bank signal".
+   - Add Seed 5: `["10","60"]` → `false`. Description: "Income-only corporate (2-digit
+     numeric, no letter) → false — the DV-FU6F-B1-3 regression guard".
+
+3. **Verify DV-FU6F-B1-3 now passes:** The VNM fixture seeds `["10","60"]` — no letters →
+   `isBankFormFromRows` returns `false` → corporate path → `goldenAnchors` includes
+   `gross_profit` → 2/3 = 0.667 < 0.9 → stage-6 `red`. Test assertion `toBe("red")` passes.
+
+4. **Verify DV-BANK-1 through DV-BANK-6 still pass:** ACB codes (`["I","A","B","I.1","01"]`)
+   contain letters → `true` → bank path intact. FPT codes (`["100","110","120",...]`) have
+   no letters → `false` → corporate path intact. All existing DV-BANK tests pass without
+   fixture changes.
+
+5. **No changes to any consumer call site** (C-1 through C-7). `isBankFormFromDb` signature
+   and body unchanged. `computeBctcEval.ts` scalar belt-and-suspenders unchanged (still valid
+   as a pre-finalization fallback when rows are genuinely absent).
+
+6. **Do NOT touch:**
+   - HCM-DISAMBIG test file.
+   - PDF-Extract-Kit subtree.
+   - `text_table_extractor.py`.
+   - `bctcScalarAggregator.ts`.
+   - `computeBctcEval.ts` (the scalar fallback is unchanged and correct).
+   - Any file outside `bctcFormType.ts` and `BANK-AWARE-1-consumer-audit.test.ts`.
+
+**Acceptance criteria:**
+- `bun test apps/mcp-server/src/__tests__/BANK-AWARE-1-consumer-audit.test.ts` → all
+  DV-BANK-1..7 PASS (with updated Seed expectations).
+- `bun test apps/mcp-server/src/__tests__/FU-6f-eval-blob-blockers.test.ts` → all 3
+  DV-FU6F-B1-* tests PASS, including DV-FU6F-B1-3 returning `"red"`.
+- `bun tsc --noEmit` → 0 errors.
+- `get_bctc_full(code="ACB")` via gateway after BANK-OPS container rebuild: still serves
+  full financial summary (bank path still fires — ACB codes have letters).
+- `get_bctc_full(code="FPT")` still returns correct corporate data (regression gate).
+
+**RED-before-GREEN expectation for BANK-DEV-3:**
+Before the one-line `isBankFormFromRows` body change:
+- DV-FU6F-B1-3 → FAIL (received "yellow", expected "red").
+- DV-BANK-7 Seed 5 (new) → FAIL (current code returns `true` for `["10","60"]`).
+After the change: all tests GREEN.
