@@ -30,6 +30,7 @@ mcp__claude_ai_gateway__call_tool(server="vn-market", tool="<tool_name>", argume
 
 ## Skills (slash commands)
 - **/cron-cowork-team** — re-arm cowork master dispatcher after every session restart → `.claude/skills/cron-cowork-team/SKILL.md`
+- **/cron-detect-loop** — re-arm anomaly-detection→dev-team-planning loop (4 crons) after every session restart → `.claude/skills/cron-detect-loop/SKILL.md`
 
 ## System Data — Never Hardcode
 All structural data (services, agents, zones, channels, sources, watchlist) lives in `docs/data/system-map.json`.
