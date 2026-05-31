@@ -1,5 +1,30 @@
 # dev-mcp-server -- Notebook
 
+## c344 · 2026-05-31 (FU-TRUST-REFRESH FU-6d) — COMMITTED 88a07bb4
+
+**Task:** FU-6d — generalize all 3 bank-path scalar resolution bugs to end the recurrence cycle
+
+**Root causes fixed (3 QA blocks from TASK_REPORT_FU-4-REGATE.md):**
+
+BLOCK-A (null-valued section header wins equity pick):
+- "NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" (code B, value=null) appears before "VỐN CHỦ SỞ HỮU" (code VIII, value=98,751,052) in row_order; P_BANK_EQUITY_EXCLUDE doesn't reject it (lacks TỔNG prefix); both have is_summary_row=0 → candidates[0] (null header) wins → equity=null → stale 1,030,900,741 persists.
+- FIX GENERALIZED: `findByLabel` and `findByLabelExcluding` now prefer non-null candidates over null-valued ones, applied to ALL sections (bank AND corporate). Null-valued section headers can never win over real data rows.
+
+BLOCK-B (Roman code VIII/IX collision on bank path):
+- Code "VIII" appears on both balance-sheet "Chứng khoán đầu tư" (147,029,433M) and income "Lợi nhuận trước thuế" (5,368,138M). Code "IX" on both "Góp vốn, đầu tư dài hạn" (74,311M) and income "Lợi nhuận sau thuế" (4,320,388M). Without labelHint, balance-sheet row wins by row_order.
+- FIX GENERALIZED: Added `P_BANK_CODE_VIII_PBT_HINT` and `P_BANK_CODE_IX_NET_PROFIT_HINT`. All bank income codes now have labelHints (I/VIII/IX — complete enum, II–VII/X–XIII not mapped, no collision risk). Also made labelHint STRICT: no hinted match → return null (not un-hinted fallback), so label-based lookup fires.
+- ALSO FIXED: P_PBT regex bug — `tr[uướ]c` cannot match "trước" because "ướ" is two Unicode codepoints (U+01B0 + U+1EDB); character class matches only one. Fixed to `tr(?:ước|uoc|u[oớ]c)` in both P_PBT and P_BANK_CODE_VIII_PBT_HINT.
+
+BLOCK-C (enforceBalanceIdentity fails open on null equity):
+- When equity_total=null, function returned null (no violation) → caller skipped log + UPDATE → stale wrong value persisted invisibly.
+- FIX: Distinguish structural absence (all three null = income-only report → skip check) from resolution failure (at least one non-null but others null → "REQUIRED SCALARS UNRESOLVED: {names}" violation). Caller already handles non-null violation with log.error + skip UPDATE.
+
+**Realistic fixtures (anti-false-green):** FU-6d-scalar-correctness.test.ts uses actual ACB row shapes: Roman codes reused across sections, null-valued section headers, is_summary_row=0 for both collision rows. Prior idealized fixtures didn't reproduce these collisions.
+
+**Gates:** tsc --noEmit EXIT 0 | 27 pass / 0 fail (FU-5 + FU-6 + FU-6d) | RED proven before fix, GREEN after
+
+**ops_rebuild_required: true** — rebuild mcp-server + re-finalize ACB (fea19bae) + FPT (e8ea3df5 regression confirm) + recompute eval, QA re-gates. Expected ACB post-fix: total_assets=1,030,900,741 / equity_total=98,751,052 / total_liabilities=932,149,689 / PBT=5,368,138 / net_profit=4,320,388 / net_revenue=6,989,162 / balance deviation≈0%.
+
 ## c343 · 2026-05-31 (FU-TRUST-REFRESH FU-6c) — COMMITTED 736cac22
 
 **Task:** FU-6c — bctcScalarAggregator root-cause fix: label-canonical + balance-identity invariant
