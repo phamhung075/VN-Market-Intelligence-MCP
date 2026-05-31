@@ -6,7 +6,7 @@
 
 ## Closed sprints (live follow-ups only — full records in briefs/archive)
 
-- BCTC-TRUST-RED ✅ e0c900d0 → FU-TRUST-REFRESH ✅ EXIT-WITH-CAVEAT 2026-05-31 (mock GONE; FPT serving; ACB scalars correct but `get_bctc_full(ACB)` blocked on bank-form B02-TCTD — DATA trustworthy / SERVING blocked; record→SPRINT_GOAL §FU-EXIT) → BANK-AWARE-BCTC ACTIVE below · BCTC-AI-INPUT-TAB ✅ b4ed9266 · BCTC-HUMAN-CONFIRM ✅ 441f8e18 · BCTC-AGENTIC-REFINE ✅ 🔄 AR-FU-DETERMINISM DEFERRED · DATA-PIPELINE-INTEGRITY ✅ 🔄 FU-C DEFERRED ⏳ FU-MON (Monday) · BCTC-TABLE-BOUNDARY ✅ FU-BTB-OCR registered
+- BCTC-TRUST-RED ✅ e0c900d0 → FU-TRUST-REFRESH ✅ EXIT-WITH-CAVEAT 2026-05-31 → BANK-AWARE-BCTC ✅ PO-EXIT 2026-05-31 (941bf552 HYBRID; QA 040409f9; live img 7f413304; ACB B02-TCTD serves raw + FPT B01-DN 0-regression, both router-raw-verified; 🔄 FU-BANK-CODECOL below) · BCTC-AI-INPUT-TAB ✅ b4ed9266 · BCTC-HUMAN-CONFIRM ✅ 441f8e18 · BCTC-AGENTIC-REFINE ✅ 🔄 AR-FU-DETERMINISM DEFERRED · DATA-PIPELINE-INTEGRITY ✅ 🔄 FU-C DEFERRED ⏳ FU-MON (Monday) · BCTC-TABLE-BOUNDARY ✅ FU-BTB-OCR registered
 - DYN-WF-FOUNDATION ✅ DWF-EXIT 2026-05-31 (84643927…eee22112) · DWF-PHASE1 ✅ P1-PO-EXIT 2026-05-31 (5a19485e…38d241c5) ⛔ Phase 3+ DEFERRED · MACRO-CMDTY-DELTA ✅ PO-EXIT 2026-05-31 (e510e5df…fdc17265) 🔄 FU-MON · FF-DEAD ✅ fixed 0cbce0b4 ⏳ FU-MON · PEK-INTEGRATE ✅ DONE-PENDING-G9 2026-05-28 (12 corpus has_pek:true; awaits USER verbal G9)
 
 ---
@@ -22,17 +22,6 @@
 - ✅ **TSH-3 (dev-mcp-server)** — DONE f4da532f 2026-05-31. get_calibration_report (calibration_snapshots/Brier), get_label_accuracy_report (market_messages/human-label), get_prediction_accuracy (Polymarket precision) — all three now name source + distinct question. Ops rebuild #2 required.
 - ✅ **TSH-4 (dev-mcp-server)** — DONE f4da532f 2026-05-31. get_patterns (LanceDB rag_analyses / semantic precedent) vs get_technical_indicators (Go TA service port 5003 / price-derived). Ops rebuild #2 required.
 - 🔄 **TSH-5 (PM/system-auditor)** — LAST: reconcile `toolCount` + `infrastructureStatus.toolCount` in `docs/data/project-stats.json` to live count after TSH-1 rebuild (expected 153). AC: both fields + date 2026-05-31; scoped single-file commit.
-
----
-
-## Sprint BANK-AWARE-BCTC — Make EVERY BCTC consumer bank-form (B02-TCTD) aware in ONE pass
-
-**Status:** OPEN 2026-05-31 (SPLIT from FU-TRUST-REFRESH, recurring-bug escalation). **Priority: HIGH.** Zone: `apps/mcp-server/`. Class patched 3× (FU-6d/FU-6f B-1/B-3) + still blocks ACB → `feedback_recurring_bug_escalation` + `feedback_silent_swallow_serial_bugs`. Full shape → SPRINT_GOAL §BANK-AWARE-BCTC.
-
-- ✅ **BANK-ARCH (architect)** — 7 consumers enumerated; `isBankForm(domain)` discriminator; `bctcFormType.ts` SSOT; DV-BANK-1..6 anti-false-green suite designed. Brief: `docs/architecture-briefs/2026-05-31-bank-aware-bctc.md`. NEXT: pm → BANK-DEV.
-- ⛔ **BANK-DEV (dev-mcp-server)** — GATED on BANK-ARCH. Implement bank-aware handling across ALL enumerated consumers in one change set; deliberate-violation test per consumer (RED-before-GREEN).
-- ⛔ **BANK-OPS (ops)** — GATED on BANK-DEV. Rebuild mcp-server (`--no-cache`+force-recreate) + re-finalize/re-eval ACB (`fea19bae`). Serialize vs ENV-ISOLATION EI-P2-2 rebuild (same zone).
-- ⛔ **BANK-QA (qa)** — GATED on BANK-OPS. `get_bctc_full(ACB)` serves real bank data RAW in-container (no refusal); eval stage-6 not-red; FPT 0-regression; all DV tests RED-before-GREEN.
 
 ---
 
@@ -72,7 +61,7 @@
 
 ## Backlogs
 
-- BCTC-TABLE-2 → QUEUED (multi-ticker; after LF-EXTRACT + LF-OVERLAY close) · KD-QREF-LANG OPEN (EN/VI switch) · code-janitor DOUBLON CLEAN candidate (3 live + 10 proposed, HELD, batch when apps/mcp-server has no active reliability sprint) · Phase 0/1 pilot backlogs frozen → `docs/TASKS_ARCHIVE.md`
+- FU-BANK-CODECOL (dev-mcp-server, NOT gated) — VN label text leaks into `code` column of bctc_table_rows (markdown→rows column-alignment defect); hybrid discriminator immune (anchored regex won't match prose) but real data-quality bug · BCTC-TABLE-2 → QUEUED (multi-ticker; after LF-EXTRACT + LF-OVERLAY close) · KD-QREF-LANG OPEN (EN/VI switch) · code-janitor DOUBLON CLEAN candidate (3 live + 10 proposed, HELD, batch when apps/mcp-server has no active reliability sprint) · Phase 0/1 pilot backlogs frozen → `docs/TASKS_ARCHIVE.md`
 
 ---
 
