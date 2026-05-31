@@ -20,7 +20,7 @@
 **Status:** ✅ SIGNED OFF 2026-05-31 (DWF-EXIT, PO). **Phase 0 + Phase 2 SHIPPED.** Closes the duplicate-publish class + session-scoped SPOF (4× chef-morning dup, 2026-05-29). Zone: multi. Goal: `docs/SPRINT_GOAL.md` § DYN-WF-FOUNDATION (status header). Brief: `docs/architecture-briefs/2026-05-29-dynamic-workflow-architecture.md`. Spec: `docs/REQ_DYN-WF-FOUNDATION.md`. QA: `reports/TASK_REPORT_DWF-QA.md` APPROVED (all FR-P0-1..4 + FR-P2-5/6/7 PASS; both BLOCKING re-proven; all DV suites RED→GREEN; mcp-server force-recreated). **PO critique-before-approve on live container (not trusted from ledger):** `is_trading_day(2025-01-27)`→holiday, `(2025-01-06)`→open; TTL-cap fix LIVE (`task_claim ttl_seconds=691200`→`claimed:true`, ops-found Zod 86400 silent cap gone); `routing-policy.json` `.routing_policy`=8 rules + catch-all→po; 14 enabled slots; `pressure-state.json` 9 fields. Commits: 84643927·8105f8fd·fa25aa5f·288e8888·e0f200c3·c937599b·149f64e8·eee22112.
 
 - ✅ DWF-BA / DWF-ARCH / DWF-PM / DWF-DEV / DWF-QA — all CLOSED, sign-off above.
-- 🔄 **DWF-TSC-DEBT (PROMOTED to active FIX, PO call at DWF-EXIT):** 19 TS18048 errors in `DWF-routing-policy-fence.test.ts` (`lastRule` possibly undefined), introduced by commit 8105f8fd, pre-existing at `caf6865d~1`. Test-only, no production impact (suite GREEN via bun test) — did NOT block sign-off. Spin a fixer NOW (not deferred): type-narrowing in the test file only. Zone: `apps/mcp-server/`. DV: tsc clean on the file (0 errors) + suite still 7/0 GREEN.
+- ✅ **DWF-TSC-DEBT** RESOLVED / NO-OP 2026-05-31 (PO dev-team triage, verified-not-dispatched). The promoted-FIX premise ("19 TS18048 errors, `lastRule` possibly undefined") was **already satisfied at triage time** — PO ran raw checks, not badges: `tsc --noEmit` over `apps/mcp-server` = **0 errors total / 0 TS18048 / 0 in `DWF-routing-policy-fence.test.ts`**; the file already carries `!` non-null assertions at L92 (`rules[rules.length-1]!`) + L137 — that IS the type-narrowing the DV demanded. `bun test DWF-routing-policy-fence.test.ts` = **7 pass / 0 fail**. Both DV conditions met. Spinning a fixer would have been a false-RED dispatch → not dispatched, no code change, no commit. Likely narrowed during the DWF-PHASE1 commit range (5a19485e..d8892afc) after the 8105f8fd debt landed.
 - 🔄 **pressure-state seed** (finding #2, ACCEPTED — no task): seed `calendar_status:"unknown"` is initial-state-only; populates on next live cowork tick when Step 4.8 calls `is_trading_day`. No defect, no follow-up.
 
 ---
@@ -47,9 +47,17 @@
 
 ## Sprint FF-DEAD — Foreign-flow pipeline dead fleet-wide
 
-**Status:** OPEN — PO triage 2026-05-30T10:14Z. **Priority: HIGH** (live-confirmed: `get_foreign_flow(code=FPT)` → source_tier 2, "never collected"; foreign net buy/sell dead for every ticker). Zone: **VPS-crawls (`vps-scripts/`) — UNCONTENDED** (separate from AR-* apps/ fan-out). Producer = `fetch-foreign-flow.sh` + `vn-foreign-flow.service`; receiver handler already exists in mcp-server.
+**Status:** ✅ FIXED — pending FU-MON in-the-wild confirm (PO live-verified 2026-05-31T00:33Z). Root cause was VPS field-name drift; FF-DIAG fix shipped commit `0cbce0b4`, service redeployed. **PO raw-value re-probe THIS tick (not a badge):** `get_foreign_flow(FPT)` now returns a REAL daily history — `2026-05-30` net vol **−37905** shares, foreign room **34.75M**, with per-day rows back to 05-19. No longer `source_tier:2 "never collected"`. Pipeline is live and producing rows. Zone: VPS-crawls (`vps-scripts/`). ⏳ **FU-MON** (Monday VN open): probe `get_foreign_flow` for a non-zero net during live trading hours to confirm in-the-wild (the −37905 was a single populated day on a closed market — confirms ingest works, FU-MON confirms continuous collection). NOT dispatchable until Monday open. Source report: `docs/handoffs/MCP-SOURCE-PROBLEMS-20260529.md` § P1.
 
-- 🔄 FF-DIAG (dev-vps-crawls): live diagnose — is `vn-foreign-flow.service` running? read `/var/log/vn-foreign-flow.log`; has the producer ever pushed 200-OK? verify field-name drift (`fBuyVol/fSellVol/fRoom` vs current VPS API) + `select(>0)` market-closed exit-0 vs real failure; confirm `foreign_flow` DB row count. Fix root cause in `vps-scripts/`. Source report: `docs/handoffs/MCP-SOURCE-PROBLEMS-20260529.md` § P1.
+- ✅ FF-DIAG (dev-vps-crawls) — DONE, field-name drift fix `0cbce0b4` live, foreign_flow rows confirmed non-empty via live `get_foreign_flow(FPT)`.
+
+---
+
+## Sprint MACRO-CMDTY-DELTA — Brent/Gold change% stuck at +0.00%
+
+**Status:** OPEN — PO dev-team triage 2026-05-31T00:33Z (BATCH FIX). **Priority: LOW.** Zone: **`apps/macro-indicators/` — UNCONTENDED**. Source report `docs/handoffs/MCP-SOURCE-PROBLEMS-20260529.md` § P4; DASHBOARD row cow-20260529T221054-MCP-P4.
+
+- 🔄 MACRO-CMDTY-DELTA-FIX (dev-macro-indicators): the commodity change-% is emitted as a flat `+0.00%` for Brent + Gold even though absolute values are live and a real delta exists. **PO live-confirmed THIS tick** (not a badge): `get_cycle_bootstrap` MACRO block = `BRENT 91,12 (+0.00%)` and `GOLD 4.593 (+0.00%)`; live news same tick reports "giá vàng tăng mạnh" + "giá dầu giảm sâu" → directional deltas are real and being lost. Diagnose-first: where does the commodity change-% get computed — is a prior-close baseline missing/zero (→ division yields 0), or is the same value used for current+previous? Fix the change-% calc so Brent/Gold show a signed non-zero delta vs prior close. Violates the `market-data-needs-direction` rule. DV: `get_cycle_bootstrap` (or `get_macro_snapshot`) shows a non-zero signed change% for Brent + Gold when the underlying value moved; flat market = honest 0.00% only if the value genuinely didn't move. Single-zone; no cross-service. Likely XS/S.
 
 ---
 

@@ -1,93 +1,36 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "IDLE for THIS session's lane (apps/macro-indicators) — Sprint MACRO-LIVE-PRICES CLOSED DONE this :07 tick (2026-05-27 ~22:30Z). Bug #3003 RESOLVED end-to-end: get_macro_snapshot now serves live oil 92.86/gold 4488.5/usdvnd 26273 dataSource=live (was 2026-05-23 fixture seed 82.5/2350/24500 for 4 cron cycles). NEWS-CMD also DONE (PO sign-off 20:52:50Z, prior tick). ⛔ LANE SEPARATION: a PARALLEL SESSION owns the apps/mcp-server lane (NEWS-FULLDAY, RECAP-CMD, SELF-IMPROVE-GATE) AND apps/pdf-extractor/PEK-INTEGRATE — THIS session must NOT dispatch any of those (see bctc_reconciliation.session_handoff). MACRO-RATES-LIVE backlogged (carry/yield sub-signal staleness, separate scope, no active incident).",
-  "currentSprint": "NONE active in this session's lane. MACRO-LIVE-PRICES (apps/macro-indicators) CLOSED DONE: full chain ba(17c431e4)->PO-spec-gate->architect(7753c172, Option A + 26h staleness + RFC3339Nano)->pm(ece4bea9, MLP-D1..D5)->dev-macro-indicators(6102620a, SQLiteCommodityRepository live-wiring, go test 13pkg PASS)->ops(image 2714fa34dd4f force-recreated, COMMODITY_LIVE_MODE=true healthy)->qa(cd673c3c PASS, signal qa-mlp-2026-05-27T223236Z.json)->PO MLP-EXIT(f33c1eda DONE). SSOT docs/REQ_MACRO-LIVE-PRICES.md + docs/architecture-briefs/2026-05-28-macro-live-prices.md.",
-  "activeTaskId": "NONE (macro lane idle). MACRO-LIVE-PRICES DONE @f33c1eda. MACRO-RATES-LIVE = backlog stub only (not dispatched).",
-  "nextAgent": "NONE — do NOT resume any prior nextAgent (the stale NEWS-CMD-QA reference from the 20:36Z snapshot is OBSOLETE — NEWS-CMD is DONE). Next :07 tick: PO triage. ⛔ THIS session's dispatcher must NOT claim apps/mcp-server tasks (NEWS-FULLDAY/RECAP-CMD/SELF-IMPROVE-GATE) or any PEK-*/apps/pdf-extractor task — the PARALLEL SESSION owns those lanes; the per-task dispatcher-wrap claim will collide/skip if attempted. Stay in apps/macro-indicators (or other uncontended zones).",
-  "nextPrompt": "Macro lane IDLE — :07 tick 2026-05-27T22:41Z already triaged → PO returned NOTHING (no urgent/high-value uncontended work). MACRO-RATES-LIVE DEFERRED: carry/yield inputs are hardcoded fixtures (handlers_carry.go/handlers_yield.go/usecases.go, computedAt 2026-05-23) with NO existing DB source — live-wiring needs new SBV(VPS)/FRED/earnings-yield fetchers = SPRINT-M cross-zone; rates are slow-moving (no SBV/FOMC move since 23-May) so signals still accurate, staleness is cosmetic. RE-OPEN TRIGGER: an actual SBV or FOMC rate change. Parallel session owns mcp-server (NEWS-FULLDAY/RECAP-CMD shipped+QA-approved, PO EXIT pending) + pdf-extractor/PEK. Next tick: re-triage only if a NEW report/signal lands in an uncontended zone; else idle is correct. Never ask user to run/deploy.",
-  "bctc_reconciliation": {
-    "abandoned": "BCTC-LAYOUT-FIRST (LF-FIX) — the prior pipeline-state (updatedAt 2026-05-26T19:25Z) claimed 'LF-FIX (dev-pdf-extractor) IN-FLIGHT, lock task:LF-FIX ttl7200'. That 2h lock expired ~2026-05-26T21:25Z (~23h ago); ZERO LF-FIX progress committed. SUPERSEDED, not re-dispatched.",
-    "superseded_by": "Sprint PEK-INTEGRATE (TASKS.md §Sprint PEK-INTEGRATE) — OPENED 2026-05-26T20:37Z by PO from EXPLICIT USER DIRECTIVE ('rewrite apps/pdf-extractor to use this sub repo'). PEK-INTEGRATE SUPERSEDES the ENGINE layer (LF-EXTRACT) of BCTC-LAYOUT-FIRST and ABSORBS its UX layer (LF-OVERLAY). LF-EXTRACT/LF-DEPLOY/LF-QA PAUSED. The zone_page() gutter-detection fix that LF-FIX was meant to make is moot — the column-guessing engine is being REPLACED by PDF-Extract-Kit (PaddleOCR PP-StructureV2 table mode), not patched.",
-    "pek_state": "PEK-INTEGRATE = DONE-PENDING-G9 (PO PEK-EXIT 2026-05-27T14:04:39Z). QA returned GREEN 12/12 corpus (commit 8535b175, image 439d42948589). BUT G9 was REJECTED on a page-coverage defect (multi-page financial statements not grouped) → Round-5 escalation PEK-MULTIPAGE. Dev fixes committed: 2e228f0d (_group_bboxes_into_units rewrite, 646 tests pass) + ed347661 (PEK-ROWCOUNT — count pipe rows not newlines, per architect PEK-QA-ADJUDICATE). Architect ADJUDICATED Gate B: row_count>=10 was the WRONG metric (markdown structure packs a page into 1 pipe row); revised Gate B = md_len >= 1000. Dev fix DONE; the LAST remaining step is ops --no-cache rebuild + DELETE stale layout units + re-extract all 12 corpus reports, then qa re-sweep under the revised 4-gate contract. DISPATCHED this tick (parallel, off-WIP-cap).",
-    "session_handoff": "⛔ 2026-05-27T20:40Z USER DIRECTIVE: apps/pdf-extractor is OWNED BY A PARALLEL SESSION. THIS session's dev-team :07 dispatcher MUST NOT dispatch ANY pdf-extractor/PEK work (no ops rebuild, no re-extract, no qa re-sweep, no dev-pdf-extractor spawn). Before the directive landed, ops in THIS session had ALREADY: rebuilt pdf-extractor --no-cache (smoke gate PASS: numpy 2.2.6/cv2 4.13.0/paddleocr/doclayout_yolo/torch 2.5.1+cpu), cleared bctc_layout_units 17→0 + bctc_page_zones 124→0, and TRIGGERED re-extraction of ALL 12 corpus reports (running server-side at handoff). ⚠ COLLISION RISK: those 12 re-extractions may still be writing market.db concurrently with the parallel session — PARALLEL SESSION OWNS RECONCILIATION. Lock task:PEK-MULTIPAGE-REDEPLOY-QA was RELEASED; do NOT re-claim from this session.",
+  "status": "IDLE → 1 FIX dispatched this tick. dev-team :07 tick 2026-05-31T00:33Z (Saturday ~07:27 VN, market CLOSED weekend). PO triage on a HEALTHY gateway (live call_tool calls succeeded this session). DWF-PHASE1 + DYN-WF-FOUNDATION both CLOSED/SHIPPED. WIP after this tick = 1/2 (MACRO-CMDTY-DELTA). The 2026-05-27 'parallel session owns apps/mcp-server + apps/pdf-extractor' handoff is now OBSOLETE/CLEARED (see session_handoff_status below) — single-lane operation confirmed by DWF-PHASE1 running freely in cross-service/mcp-server zone + PEK-INTEGRATE being DONE-PENDING-G9.",
+  "currentSprint": "MACRO-CMDTY-DELTA (apps/macro-indicators) — OPEN, BATCH FIX dispatched this tick. Brent/Gold change% stuck at +0.00% (live-confirmed by PO raw-value probe). LOW priority, uncontended zone.",
+  "activeTaskId": "MACRO-CMDTY-DELTA-FIX (dev-macro-indicators). All prior pilot sprints terminal-DONE.",
+  "nextAgent": "dev-team Step 3 routes the MACRO-CMDTY-DELTA FIX (diagnose-first, single-zone apps/macro-indicators). Then qa → po EXIT.",
+  "nextPrompt": "MACRO-CMDTY-DELTA FIX in flight (apps/macro-indicators, LOW). Other OPEN sprints are idle and available next ticks (WIP permitting): BCTC-LAYOUT-FIRST Phase 0 (LF-EXTRACT/LF-OVERLAY — the LF-OVERLAY push-bctc-layout persistence path IS the root of analysis-agent report #3011 BTB-OPS 0-units blocker; wants architect diagnosis of POST /api/push-bctc-layout, write-wedge pattern per project_mcp_server_write_wedge); SELF-IMPROVE-GATE X-1 synthetic dry-run; CHEF-ATTN; held CLEAN candidate (code-janitor DOUBLON 3-live + 10-proposed, batch when apps/mcp-server has no active reliability sprint). VERIFIED-NOT-DISPATCHED this tick: DWF-TSC-DEBT already resolved (tsc 0 errors, suite 7/0 GREEN — premise stale); FF-DEAD live-fixed (get_foreign_flow(FPT) returns real rows, FU-MON Monday confirm only); #3012 pollNews outage = transient (sources OK live). Next tick: re-triage if NEW report/signal in an uncontended zone.",
+  "session_handoff_status": {
+    "cleared": "2026-05-31T00:33Z — the prior 'parallel session owns apps/mcp-server + apps/pdf-extractor' directive (dated 2026-05-27T20:40Z) is OBSOLETE and no longer binding. Evidence: (1) DWF-PHASE1 ran freely this session in cross-service + apps/mcp-server zone (read-only flow/scripts, but the zone gate did not block it); (2) DYN-WF-FOUNDATION touched mcp-server (task_claim TTL fix, routing-policy) and force-recreated the container without a parallel-session collision; (3) PEK-INTEGRATE = DONE-PENDING-G9 (pdf-extractor work concluded). No live evidence of a second concurrent dispatcher. Future ticks may dispatch apps/mcp-server + apps/pdf-extractor work normally, subject only to WIP<=2 + zone-isolation between concurrently-running tasks.",
     "does_not_consume_wip": true
   },
-  "news_fetch_pilot": {
-    "phase": "terminal",
-    "status": "DONE",
-    "phase0": "CLOSED 2026-05-24T07:34Z",
-    "phase1": "CLOSED/APPROVED 2026-05-24T08:39Z (QA gate PASS @c8a2f7cb)",
-    "phase2": "CLOSED 2026-05-24T09:45Z (QA P2-NF-Z APPROVED @41e4b2ce → PO terminal 12/12 atomic close)",
-    "goalsEarned": 12,
-    "all_12_yes": true,
-    "decisionMatrix": {
-      "speed": "YES",
-      "trust": "YES",
-      "scale": "YES",
-      "verdict": "scale"
-    },
-    "verdict": "scale",
-    "outcome": "SCALE (3xYES) — 6th pilot to SCALE; generic developer owner, no specialist agent",
-    "anchor_tag": "news-fetch-pre-refactor @ 31483c8c (local-only, INTACT)",
-    "closure_signal": "docs/signals/po-news-fetch-closure-20260524T094500Z.json",
-    "qa_close_gate_signal": "docs/signals/qa-news-fetch-p2-close-20260524T000003Z.json (@41e4b2ce)",
-    "pending_dispatcher_action": "DONE — WORK telegram SENT 2026-05-25T17:04Z by dispatcher (main-router) after MCP restored via `claude --continue`. Announced: news-fetch SCALE CLOSED 12/12 YES, verdict=scale, 6th SCALE, terminal commit b3407530.",
-    "goalflip_rule": "§4.5 — all 12 flipped TBD/EARNED-PENDING→YES in ONE atomic terminal-close commit; matrix populated same commit"
+  "this_tick_triage": {
+    "tick": "2026-05-31T00:33Z",
+    "gateway": "HEALTHY (live call_tool: get_foreign_flow, get_cycle_bootstrap, get_bctc_full, get_system_status all returned live data)",
+    "batch": "1 FIX — MACRO-CMDTY-DELTA (LOW, apps/macro-indicators)",
+    "dashboard_rows_dispositioned": [
+      "cow-20260530T0803-TASKCLAIM-SCHEMA → READ (split-lane, neither prong a dev FIX: server already enforces new schema = doc-only; flow .md = cowork/agent-father lane)",
+      "cje-20260530T0016-DOUBLON → READ (valid but LOW cosmetic untested-path refactor; HELD as batched CLEAN candidate, zone-adjacent to LF-OVERLAY)",
+      "cow-20260529T221054-MCP-P4 → READ (live-confirmed still present → dispatched as MACRO-CMDTY-DELTA)"
+    ],
+    "verified_not_dispatched": {
+      "DWF-TSC-DEBT": "ALREADY RESOLVED — tsc --noEmit over apps/mcp-server = 0 errors / 0 TS18048 / 0 in DWF fence test; file uses ! assertions L92/L137; bun test 7 pass/0 fail. No fixer (false-RED avoided).",
+      "FF-DEAD": "LIVE-FIXED — get_foreign_flow(FPT) returns real daily history (05-30 net vol -37905, room 34.75M); FF-DIAG 0cbce0b4 is live. Only FU-MON Monday in-the-wild probe remains.",
+      "report_3012_pollNews": "TRANSIENT — Source Health shows CafeF/VnExpress/tuoitre/vietstock all 'OK 5 phut truoc' live; midnight 0-items was off-hours transient, not an outage.",
+      "report_3011_BTB_persistence": "REAL but IN-SCOPE of OPEN BCTC-LAYOUT-FIRST (LF-OVERLAY = POST /api/push-bctc-layout; handler pushBctcLayoutHandler.ts exists, units don't persist — write-wedge). Not a new standalone FIX; it is the LF-OVERLAY task needing architect diagnosis. get_bctc_full(FPT) empty is EXPECTED (purged to PENDING by BCTC-TRUST-RED, awaiting genuine re-refine)."
+    }
   },
-  "mcp_server_pilot": {
-    "phase": "terminal",
-    "status": "DONE",
-    "goalsEarned": 12,
-    "all_12_yes": true,
-    "decisionMatrix": {
-      "speed": "YES",
-      "trust": "YES",
-      "scale": "YES",
-      "verdict": "scale"
-    },
-    "verdict": "scale",
-    "outcome": "SCALE (3×YES) — 11th and FINAL pilot of the 2026-05-22 three-tier deep-module rollout; dev-mcp-server specialist owner, TS (Bun). Terminal CLOSED 2026-05-26T07:36Z. Three-tier rollout 11/11 COMPLETE.",
-    "closure_signal": "docs/signals/qa-mcp-server-p2-close-2026-05-26T073000Z.json"
-  },
-  "frontend_pilot": {
-    "phase": "terminal",
-    "status": "DONE",
-    "goalsEarned": 10,
-    "graded": "10 YES + 2 N/A (G3, G5) = 12 total",
-    "decisionMatrix": {
-      "speed": "YES",
-      "trust": "YES",
-      "scale": "YES",
-      "verdict": "scale"
-    },
-    "verdict": "scale",
-    "outcome": "SCALE (3×YES) — separate frontend pilot; dev-frontend specialist owner, Remix + TS. Terminal CLOSED 2026-05-26T15:42Z (commit 2f33d871).",
-    "closure_signal": "docs/signals/po-frontend-closure-2026-05-26T154200Z.json",
-    "architect_risk_flags_filed": [
-      "R-HIGH: macro /macro/snapshot body-contract test gap — CLOSED via MAINT MACRO-CONTRACT @80c776de",
-      "R-MED: mcp-server clients.ts signals type mismatch — CLOSED via MAINT CLIENTS-TYPE @5d49e3be",
-      "R-LOW: ARCHITECTURE.md macro Go/TS doc drift — PARKED MAINT ARCH-DOC-DRIFT"
-    ]
-  },
-  "maint_residual": "MAINT batch (TASKS.md §MAINT, opened 2026-05-26T19:40Z) — off-WIP-cap residual. DONE: MACRO-CONTRACT @80c776de, CLIENTS-TYPE @5d49e3be, SSOT-REFRESH @862c41cf (toolCount 3-way divergence CLOSED → all 146), CLEAN-1972 (branch DISCARDED, zero coverage lost). DRIFT-3 Phase A merged (236dfc8b/1e3b3803/09998906); ops live-E2E + Phase B (pdf Dockerfile) deferred. PARKED: ARCH-DOC-DRIFT (doc-only, lowest), MACRO-VNINDEX-DATA-GAP (defer under host load), NEWS-INGEST-2c dashboard <option> (cosmetic).",
-  "deploy_drift": {
-    "DRIFT-1": "RESOLVED 2026-05-25T19:19Z — ops rebuilt macro-indicators; get_macro_snapshot + get_macro_calendar both 200 with real data.",
-    "DRIFT-2": "PARTIAL 2026-05-25T19:20Z — kinh-dich /health 200, reachable; hexagram MCP tools return 501 'pending B-bucket primitive wiring' (owned by dev-kinh-dich Go pilot, NOT a deploy bug). Layer-5 hexagram overlay stays unavailable to cowork until the pilot wires endpoints.",
-    "DRIFT-3": "Phase A merged (ARG GIT_SHA + verify-deploy-sha.sh + runbook). ops live-E2E + Phase B deferred to a free ops/architect lane.",
-    "PREMISE-FALSIFIED": "ops PROVED 2026-05-25 that an agent can safely rebuild containers under the 8GB Docker cap (host held at 1.8/8 GiB, no panic). Docker rebuilds are ops/QA-dispatchable. NEVER route docker rebuilds to the user."
-  },
-  "dashboard_actioned": "po dev-team triage 2026-05-27T20:36Z: ACK'd tnb-c81-audit-handoff + tnb-F9-sprint-escalation (both NEW → READ; F9 = data-availability-blocked [BCTC Q1 banking/real-estate not filed] + chef is a COWORK flow, NOT a dev sprint this tick — routed as cowork-lane/deferred-on-data, see TNB ACK). c80 was un-ACK'd 2 cycles — ACK'd via tnb-audit-latest.md PO ACK block. CW-DISPATCH-STEP47-BOOTSTRAP-ENUM (## ops, LOW, ZERO blocker — cowork falls back to direct bootstrap) = real dev-mcp-server backlog candidate (add 'cowork-team' to get_cycle_bootstrap enum, OR flow passes a valid agent name) but NOT dispatched this tick (WIP discipline, NEWS-CMD active). CHEF-EOD-MACRO-MISATTRIB + MARKET-SLOTS-DARK + HSG-FIRE-SEVERITY-RECAL etc. = cowork-team lane, NOT dev-team-spawnable. SIGNAL-BACKLOG-MAINT = janitor lane (already half-pruned @4f766da2 + @19cb55fb).",
-  "signal_backlog": "Half-drained this session (commit 4f766da2 + 19cb55fb removed ~308 context-bloat/telemetry signals). Remainder = janitor/code-janitor lane (self-cron maintenance, NOT dev-team-spawnable). NONE are new dev work not already in TASKS.md.",
-  "updatedAt": "2026-05-29T12:29:09Z",
-  "updatedBy": "dev-team :07 dispatcher (this session, macro lane) — tick 12:29Z (ICT 19:29, market CLOSED): PO triage. ⚠ MCP DEGRADED: mcp__claude_ai_gateway__call_tool NOT in this session's tool surface (claude mcp list shows gateway ✓ at CLI but session born stale per project_mcp_gateway_architecture) → could NOT run the 2 mandatory live calls (read_telegram_reports/list_unresolved_reports). Triaged on file inputs only (DASHBOARD + TASKS.md + git + pipeline-state + tnb-audit-latest). VERDICT: NOTHING (idle). Assessed all genuinely-NEW DASHBOARD ## po rows: cowork-DUPLICATE-PUBLISH-20260529T0526 (HIGH) = COWORK-LANE (harden cowork-team dispatcher Step 5 spawn-retry guard per feedback_spawn_retry_under_lag — NOT an apps/<service>/ zone) → marked READ + routed cowork/agent-father lane, NO dev BATCH; CHEF-EOD-MACRO-MISATTRIB / HSG-FIRE-SEVERITY-RECAL / MARKET-SLOTS-DARK / NEWSFETCH-FALSECRIT = cowork-lane (prior-disposed); FETCH-ANALYZE-PROFILE SPIKE = apps/mcp-server OFF-LIMITS (parallel session); TNB c82 already ACK'd 02:23Z (F9/F2 data-blocked). Macro lane (apps/macro-indicators) idle; MACRO-RATES-LIVE = backlog stub, MED, no incident, re-open trigger = SBV/FOMC move (none since 23-May). Maintenance noted not dispatched: signals.db drain dead since May 22 (872-file backlog) + TASKS.md 670L over 80L cap = janitor/governance lane, NOT dev-team-spawnable. Next tick: re-triage only if NEW report/signal in an uncontended zone; reload session to restore gateway tools. _Prior 04:20Z: (ICT 11:20, market OPEN, mid-morning): PREFLIGHT pass (HEAD.lock absent, worktree clean @b061c78c). Recon: 4 NEW cowork-fire since last tick (b061c78c @03:20Z) — 03:30/03:45Z silent matched_slots:[], 04:00Z NON-SILENT (won_slots:['news-scout-offhours','market-watcher-offhours'], 2-agent fan-out spawned cleanly), 04:15Z NON-SILENT (chef-intraday won_slots:['chef-intraday'], 3rd market-hours chef-intraday fire today after 02:15/03:15Z, clean); + 3 notebook context-bloat (news-scout 04:02/04:03Z + unified-agent 04:17Z → janitor lane, NOT dev-team). DASHBOARD ## po: status unchanged from 03:20Z scan — c82 READ persists, older 2026-05-26 backlog rows remain NEW (cowork-lane informational, prior-disposed). No new TNB handoffs (c83 expected ~20:13Z, ~16h out). No new PO triage signals. No new dev-actionable reports. Parallel session quiet. pendingSignals[] = empty after drain. Macro lane (apps/macro-indicators) idle. Verdict: IDLE HEARTBEAT — c82 ACK held, no NEW report/signal in uncontended zone per nextPrompt rule. Next tick: re-triage only if a NEW report/signal lands.",
-  "d4_audit_transient": {
-    "report_id": 3006,
-    "fired_at": "2026-05-28T03:00:00Z",
-    "text": "[system-auditor] D4 ABORT: TASKS.md unreadable — possible Seam 3 corruption: TASKS.md not found",
-    "verified_state": "TASKS.md HEALTHY at 03:30Z: 199073B / 649L / present / parse-clean / mtime 02:54 (untouched ~3h before auditor ran)",
-    "diagnosis": "FIRST-OCCURRENCE TRANSIENT — likely wrong-CWD or transient I/O in system-auditor agent runtime, NOT actual TASKS.md corruption. handler reads docs/TASKS.md via Read tool; fails-closed on FS error (handlers.md L120). No prior D4 ABORT in agent-memory/signals.",
-    "escalation_policy": "per feedback_recurring_bug_escalation: 1 occurrence < 2 threshold, no architect rethink yet. If D4 re-fires same alert at next 03:00Z (2026-05-29) → recurring, escalate to architect for system-auditor agent runtime investigation.",
-    "action_this_tick": "NONE. TASKS.md healthy, no actual fix needed. Report left unresolved (no resolve_report tool available; next D4 cycle in ~23.5h will either re-fire (recurrence) or not (transient confirmed).",
-    "out_of_scope_for_this_session": "system-auditor agent is cowork-team scope; its agent .md/runtime is not edited by this dev-team session unless escalated"
-  }
+  "open_sprints_idle": [
+    "BCTC-LAYOUT-FIRST (Phase 0 READY — LF-EXTRACT/LF-OVERLAY/LF-DEPLOY/LF-QA; multi zone; LF-OVERLAY = root of report #3011)",
+    "SELF-IMPROVE-GATE (X-1 SIG-FOLLOWUP-DRYRUN synthetic dry-run; apps/mcp-server)",
+    "CHEF-ATTN (READY; apps/mcp-server)"
+  ],
+  "backlogs": "BCTC-TABLE-2 (queued after LF-EXTRACT+LF-OVERLAY) · KD-QREF-LANG (EN/VI switch) · code-janitor DOUBLON CLEAN candidate (3 live + 10 proposed, held).",
+  "updatedAt": "2026-05-31T00:33:00Z",
+  "updatedBy": "dev-team :07 dispatcher (PO triage) — tick 2026-05-31T00:33Z. Gateway HEALTHY. BATCH(1) FIX = MACRO-CMDTY-DELTA. 3 NEW DASHBOARD ## po rows dispositioned + marked READ. DWF-TSC-DEBT verified already-resolved (not dispatched). FF-DEAD verified live-fixed. Stale 2026-05-27 parallel-session handoff cleared. WIP 1/2."
 }
