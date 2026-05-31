@@ -1,13 +1,17 @@
 /**
  * Task 285 — Kinh Dich MCP Tools
  *
- * 6 MCP tools exposing the Kinh Dich engine to Claude agents:
+ * 5 MCP tools exposing the Kinh Dich engine to Claude agents:
  *   - get_kinhdich_reading       — full reading for a watchlist stock
- *   - get_market_hexagram        — VN-Index + macro composite reading
  *   - get_hexagram_history       — timeline of past readings for a stock
  *   - get_transition_probabilities — Markov top-N next hexagrams
  *   - run_hexagram_backtest      — accuracy report for stored readings
  *   - explain_hexagram           — full Vietnamese explanation for hexagram 1-64
+ *
+ * Note: get_market_hexagram was deregistered (TSH-1, 2026-05-31). The
+ * /market endpoint in kinh-dich-service returns 501 (not implemented).
+ * Re-wire as a separate feature sprint (KINH-DICH-MARKET) when the
+ * kinh-dich-service /market endpoint is fully implemented.
  *
  * P2-KD-G: All 6 tool handlers rewired to HTTP calls to kinh-dich-service
  * (port 5005). Zero direct domain imports from mcp-server parallel copy.
@@ -28,7 +32,6 @@ import type { DomainType } from "../../../../../bctc-schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import {
   getKinhDichReading,
-  getMarketHexagram,
   getKinhDichHistory,
   getHexagramTransitions,
   runKinhDichBacktest,
@@ -498,46 +501,6 @@ export function registerKinhDichTools(server: McpServer): void {
             {
               type: "text" as const,
               text: `Lỗi khi đọc Kinh Dịch cho ${code}: ${(err as Error).message}`,
-            },
-          ],
-        };
-      }
-    },
-  );
-
-  // ── 2. get_market_hexagram ───────────────────────────────────────────────
-
-  server.tool(
-    "get_market_hexagram",
-    "Compute a market-wide Kinh Dich hexagram for the VN-Index + macro environment. Uses VN-Index 5d/20d/60d momentum for hao 1-3 and USD/VND, oil, gold sigma deviations for hao 4-6.",
-    {},
-    async () => {
-      try {
-        await initDatabase();
-
-        // Delegate to kinh-dich-service (port 5005)
-        const reading = await getMarketHexagram();
-
-        const lines: string[] = [];
-        lines.push(`=== QUẺ THỊ TRƯỜNG (VN-Index + Vĩ mô) ===`);
-        lines.push(`Quẻ ${reading.hexagram} — ${reading.name}`);
-        lines.push(`Xu hướng: ${reading.trend}`);
-        lines.push(`Tín hiệu: ${reading.signal}`);
-        lines.push(`Độ tin cậy: ${Math.round(reading.confidence * 100)}%`);
-        lines.push(`Cập nhật: ${reading.timestamp}`);
-
-        return {
-          content: [{ type: "text" as const, text: lines.join("\n") }],
-        };
-      } catch (err) {
-        logger.error("[get_market_hexagram] Error", {
-          error: err instanceof Error ? err.message : String(err),
-        });
-        return {
-          content: [
-            {
-              type: "text" as const,
-              text: `Lỗi khi tính quẻ thị trường: ${(err as Error).message}`,
             },
           ],
         };
