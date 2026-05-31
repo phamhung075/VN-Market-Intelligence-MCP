@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260531T080324Z",
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/news-scout/flow/main.md", "docs/agents/market-watcher/flow/main.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "pressure_mode_reason": "pressure-state.json stale (emitted 04:06:39Z, ~237min > 20min threshold) — NFR-P1-3 legacy fallback; re-emitted fresh this tick",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": { "news-scout-offhours": "cron", "market-watcher-offhours": "cron" },
+    "cadence_minutes": { "news-scout-offhours": null, "market-watcher-offhours": null },
+    "last_fired_timestamp": "2026-05-31T08:07:28Z",
+    "last_fired_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "20260531T080324Z"
+}

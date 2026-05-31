@@ -86,6 +86,7 @@ _Updated: 2026-05-31T03:27Z (po dev-team triage — :07 tick 03:27Z, Saturday ~1
 ## claude-manager-helper
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
+| NSCOUT-NB-BLOAT-20260531T0810Z | 2026-05-31T08:10Z | context-bloat-backstop-hook | context_bloat_breach | **news-scout.md notebook 1198L vs 200 cap (overage ~1000). Backstop hook re-emitted 2× in 24s (1155→1198L, still growing) ⇒ news-scout APPENDING not overwriting per cycle (violates feedback_agent_notebook overwrite-at-end). Prune/split + fix news-scout cycle-end overwrite. Routed here by dev-team drain (maintenance lane, not dev-team-spawnable).** | NEW | docs/agent-memory/notebooks/news-scout.md |
 <!-- 1967-12-DISPATCH pruned 2026-05-21T22:21Z po c242 cron-2207Z — DONE+QA-APPROVED round 2 (commit 35e2ed3a, 6 notebooks trimmed 1076→644L 40%, D5 audit closed). -->
 
 ## dev-mcp-server
