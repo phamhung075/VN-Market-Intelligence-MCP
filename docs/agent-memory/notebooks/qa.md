@@ -1,5 +1,42 @@
 # QA — Notebook
 
+## cycle-166 · 2026-05-31 · TSH-2/3/4 QA — TOOL-SURFACE-HYGIENE — CHANGES_REQUESTED
+
+**Sprint:** TOOL-SURFACE-HYGIENE | **Task:** TSH-2+TSH-3+TSH-4 | **Verdict:** CHANGES_REQUESTED — 1 blocking (stale container image)
+
+```
+date: 2026-05-31T13:30Z
+commit_under_review: f4da532f (chore: clarify 6 tool descriptions)
+task: string-only description change — Smart-Skip: DDD+security SKIP; full suite+tsc deferred until rebuilt
+
+CONTAINER STATUS:
+  toolCount: 154 (CORRECT — 155 - 1 TSH-1 = 154)
+  get_market_hexagram: ABSENT (TSH-1 regression: PASS)
+  image built at: 2026-05-31T10:42:27Z
+  commit f4da532f authored at: 2026-05-31T11:13:20Z (31 min AFTER image build)
+  container started at: 2026-05-31T11:14:35Z → RUNNING STALE IMAGE
+
+LIVE SURFACE vs EXPECTED (all 6 tools):
+  mark_alert_outcome:        MISSING "SQLite alerts table" / "POST-HOC" / timing distinction
+  write_alert_verdict:       MISSING "alert-verdicts.json" / "NOT SQLite" / "AT FIRE TIME" / cross-ref
+  get_calibration_report:    MISSING "calibration_snapshots" / "Machine-computed Brier" / distinction block
+  get_label_accuracy_report: MISSING "market_messages table" / "Human-labelled" / distinction block
+  get_prediction_accuracy:   MISSING "Computed from Polymarket" / "predictionOutcomeJob" / distinction block
+  get_patterns:              MISSING "LanceDB rag_analyses" / "Distinct from get_technical_indicators"
+
+HOST HEAD SOURCE: all 6 descriptions correct in committed source (f4da532f verified).
+ROOT CAUSE: image predates commit by 31 min. Container has not been rebuilt from f4da532f HEAD.
+
+BLOCKING (1):
+  docker-compose.yml mcp-server — ops must rebuild image from HEAD + force-recreate container.
+  `docker compose build --no-cache mcp-server && docker compose up -d --force-recreate mcp-server`
+```
+
+REPORT: reports/TASK_REPORT_TSH-2-3-4.md
+NEXT: ops | rebuild mcp-server image from HEAD (f4da532f is latest) + force-recreate; then QA re-gate
+
+---
+
 ## cycle-165 · 2026-05-31 · TSH-1 QA — TOOL-SURFACE-HYGIENE — CHANGES_REQUESTED
 
 **Sprint:** TOOL-SURFACE-HYGIENE | **Task:** TSH-1 | **Verdict:** CHANGES_REQUESTED — 2 blocking
