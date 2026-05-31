@@ -1,5 +1,5 @@
 # PLX — Analysis Ledger 2026
-**Sector**: other | **Exchange**: HOSE
+**Sector**: oil_gas | **Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

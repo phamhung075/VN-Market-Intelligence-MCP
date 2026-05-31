@@ -1,5 +1,5 @@
 # VNH — Analysis Ledger 2026
-**Sector**: real_estate | **Exchange**: HNX
+**Sector**: agriculture | **Exchange**: HNX
 
 ## [Report Analyzer] Fundamentals & Valuation
 

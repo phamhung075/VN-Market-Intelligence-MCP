@@ -1,6 +1,6 @@
 # GVR — Analysis Ledger 2026
 
-**Sector**: Oil & Gas | **Exchange**: HOSE
+**Sector**: agriculture | **Exchange**: HOSE
 
 ---
 
