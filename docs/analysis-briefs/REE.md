@@ -1,5 +1,5 @@
 # REE — Analysis Ledger 2026
-**Sector**: utilities | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

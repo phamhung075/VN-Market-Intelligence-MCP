@@ -1,6 +1,6 @@
 # DHG — Analysis Ledger 2026
 
-**Sector**: Pharma | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ---
 

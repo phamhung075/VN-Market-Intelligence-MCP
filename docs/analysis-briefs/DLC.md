@@ -1,5 +1,5 @@
 # DLC — Analysis Ledger 2026
-**Sector**: Agriculture | **Exchange**: UPCOM
+**Exchange**: UPCOM
 
 ## [Report Analyzer] Fundamentals & Valuation
 

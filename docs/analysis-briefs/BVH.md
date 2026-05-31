@@ -1,6 +1,6 @@
 # BVH — Analysis Ledger 2026
 
-**Sector**: insurance | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 - Q1/2026 profit: 1.006 trillion VND (+18.7% YoY) — strong earnings beat

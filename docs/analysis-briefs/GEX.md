@@ -1,6 +1,6 @@
 # GEX — Analysis Ledger 2026
 
-**Sector**: Utilities | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

@@ -1,5 +1,5 @@
 # GAS — Analysis Ledger 2026
-**Sector**: oil_gas | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

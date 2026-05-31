@@ -1,5 +1,5 @@
 # D2D — Analysis Ledger 2026
-**Sector**: real_estate | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

@@ -1,6 +1,6 @@
 # MWG — Analysis Ledger 2026
 
-**Sector**: retail | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

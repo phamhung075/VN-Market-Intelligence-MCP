@@ -46,7 +46,7 @@ Final cap: TIGHTENING + verdict=Buy + sector=HEADWIND → downgrade to Hold.
 **3. Ledger entry** — if `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
-**Sector**: {domain} | **Exchange**: {exchange}
+**Exchange**: {exchange}
 
 ## [Report Analyzer] Fundamentals & Valuation
 

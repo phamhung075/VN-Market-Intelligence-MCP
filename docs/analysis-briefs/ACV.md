@@ -1,5 +1,5 @@
 # ACV — Analysis Ledger 2026
-**Sector**: Aviation | **Exchange**: UPCOM
+**Exchange**: UPCOM
 
 ## [Report Analyzer] Fundamentals & Valuation
 

@@ -1,6 +1,6 @@
 # CTG — Analysis Ledger 2026
 
-**Sector**: banking | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ---
 

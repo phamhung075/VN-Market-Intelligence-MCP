@@ -1,5 +1,5 @@
 # NKG — Analysis Ledger 2026
-**Sector**: steel | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

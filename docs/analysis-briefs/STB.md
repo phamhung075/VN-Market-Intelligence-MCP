@@ -1,6 +1,6 @@
 # STB — Analysis Ledger 2026
 
-**Sector**: banking | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

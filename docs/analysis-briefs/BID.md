@@ -1,6 +1,6 @@
 # BID — Analysis Ledger 2026
 
-**Sector**: Banking | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ---
 

@@ -1,5 +1,5 @@
 # BDI — Analysis Ledger 2026
-**Sector**: Agriculture | **Exchange**: HNX
+**Exchange**: HNX
 
 ## [Report Analyzer] Fundamentals & Valuation
 

@@ -18,7 +18,7 @@ Apply regime multiplier AFTER additive boost: HEADWIND ×0.7 | TAILWIND+EASING �
 If `docs/analysis-briefs/{TICKER}.md` does not exist → create it first:
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
-**Sector**: {domain} | **Exchange**: {exchange}
+**Exchange**: {exchange}
 
 ## [Report Analyzer] Fundamentals & Valuation
 

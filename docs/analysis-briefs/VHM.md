@@ -1,6 +1,6 @@
 # VHM — Analysis Ledger 2026
 
-**Sector**: Real Estate | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ---
 

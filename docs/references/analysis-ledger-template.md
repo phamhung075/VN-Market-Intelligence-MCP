@@ -4,7 +4,7 @@ When creating a new ledger file at `docs/analysis-briefs/{TICKER}.md`:
 
 ```markdown
 # {TICKER} — Analysis Ledger {YEAR}
-**Sector**: {domain} | **Exchange**: {exchange}
+**Exchange**: {exchange}
 
 ## [Report Analyzer] Fundamentals & Valuation
 

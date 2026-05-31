@@ -1,5 +1,5 @@
 # SIS — Analysis Ledger 2026
-**Sector**: Mixed | **Exchange**: HOSE/UPCOM/HNX
+**Exchange**: HOSE/UPCOM/HNX
 
 ## [Report Analyzer] Fundamentals & Valuation
 

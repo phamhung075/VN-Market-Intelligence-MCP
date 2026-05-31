@@ -1,6 +1,6 @@
 # HPG — Analysis Ledger 2026
 
-**Sector**: Steel | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

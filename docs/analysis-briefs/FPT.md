@@ -1,6 +1,6 @@
 # FPT — Analysis Ledger 2026
 
-**Sector**: tech | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 - Tech sector: Strong global demand, FDI flows supporting growth

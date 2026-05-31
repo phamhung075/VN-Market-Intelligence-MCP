@@ -1,5 +1,5 @@
 # DPM — Analysis Ledger 2026
-**Sector**: chemicals | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 

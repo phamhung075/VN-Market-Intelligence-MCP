@@ -1,5 +1,5 @@
 # HVN — Analysis Ledger 2026
-**Sector**: Aviation | **Exchange**: HOSE
+**Exchange**: HOSE
 
 ## [Report Analyzer] Fundamentals & Valuation
 
