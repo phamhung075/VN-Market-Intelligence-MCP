@@ -4,6 +4,38 @@
 
 [3 most recent cycles retained below. Archive in git history.]
 
+## FU-TRUST-REFRESH INVESTIGATION (2026-05-31T09:30 UTC) — FINDINGS COMPLETE
+
+**Sprint:** FU-TRUST-REFRESH (proposed, awaiting operator approval)
+**Mode:** Investigation-only — no sprint opened
+
+**Problem 1 — Root cause of mock data (binding finding):**
+
+Option (b) confirmed: Haiku refine agent hallucinated on empty OCR text. Root cause = `/page-text` endpoint in pdf-extractor permanently returns `""` because `ocr_text_source` is never wired in `main.py` `register_routes()` call. The `SqliteOcrTextSource` factory exists and is correct but is never instantiated in the composition root. Proven by live API call: `GET /page-text?filename=FPT-Q1-2026.pdf&page_number=7 → {"text":"","source":"sqlite_ocr"}`. OCR text IS real in SQLite (FPT: 35 pages with real Vietnamese text; ACB: 27 pages). No seed script, no manual push — fleet cron ran with empty OCR, Haiku produced digit-run fill-in. DT-4 forensic signal (identical timestamps) matches this: zero API latency for empty-string returns staggers none.
+
+**Problem 2 — Genuine re-refine path:**
+
+Gap R-1 (CRITICAL): wire `ocr_text_source` in pdf-extractor `main.py`. Fix: add `MARKET_DB_PATH` env var in docker-compose + `config.py`; construct `SqliteOcrTextSource(market_db_path)` in `create_app()`; pass to `register_routes()`. Must also mount `market.db` volume in pdf-extractor service (currently only in mcp-server). Gap R-2 (MEDIUM): FPT pages 11–15 absent from `pdf_extracted_text` (pages 1–10 + 16–46 present). These likely contain opex detail. Gap R-3 (LOW): ACB has 0 rasterized page images; FPT has 6 (pages 6–11). Recommended path: Option A (wire seam, minimal) + Option C (rasterize all pages for both reports via ops gateway calls). Together = 30/35 FPT pages + 27/27 ACB pages with real OCR + images.
+
+**Problem 3 — TR-2 coverage gaps:**
+
+Confirm BCTC-LAYOUT-FIRST routing for equity decomposition, CF continuation, prior-period column normalization. Hold EC-1 opex verdict until after re-refine (pages 11–15 absence may explain opex gap; re-refine may fill it). EBITDA=0 parser mapping is a micro-fix (~10L in refinedMarkdownParser.ts or finalizeBctcRefineTool.ts) — recommend folding into FU-TRUST-REFRESH (OD-3 operator decision).
+
+**Operator decision flags (5):**
+- OD-1: Approve FU-TRUST-REFRESH sprint
+- OD-2: Confirm dev-pdf-extractor zone for FU-1 (seam fix)
+- OD-3: Include EBITDA parser mapping in FU-TRUST-REFRESH or defer to BCTC-LAYOUT-FIRST
+- OD-4: After re-refine, evaluate opex codes 11/24/25/26 appearance (may be on missing pages 11–15)
+- OD-5: Confirm market.db read-only mount in pdf-extractor service is approved
+
+**Sprint scope (if OD-1 approved):** 3–5 tasks. ONE sprint, not several. FU-1 (infra fix, dev-pdf-extractor) + FU-2 (rasterize, ops) + FU-3 (trigger refine, ops) + FU-4 (verify, qa) + FU-5 optional (EBITDA, dev-mcp-server).
+
+**Key risk:** If `market.db` volume not mounted in pdf-extractor before rebuild, seam silently returns `""` again (no error, just empty). Mitigation: ops verify volume mount before rebuild; add startup ERROR log in `ocr_text_source.py` on DB unreachable.
+
+**Brief:** `docs/architecture-briefs/2026-05-31-bctc-trust-remediation-investigation.md`
+
+---
+
 ## DWF-PHASE1 P1-ARCH (2026-05-31T00:25 UTC) — DESIGN COMPLETE
 
 **Sprint:** DWF-PHASE1 (Adaptive Cadence)
