@@ -33,21 +33,26 @@ export interface BctcCodeRow {
 /**
  * isBankFormFromRows — canonical bank-form discriminator.
  *
- * Returns true when the row set contains NO 3-digit numeric codes in the
- * Mẫu B01-DN corporate range (codes matching /^[0-9]{3}/). Bank reports
- * (Mẫu B02-TCTD) use Roman-numeral codes (I–XIII) and short alphabetic
- * codes (A, B) exclusively. Corporate reports always have codes 100-440
- * (current_assets=100, total_assets=270/280, equity=400, etc.).
+ * BANK-ARCH-3 revision: POSITIVE bank evidence required.
+ * Returns true when the row set contains at least one code with a letter
+ * character (Roman numerals I–XIII, section headers A/B, sub-codes I.1/I.2
+ * used exclusively by Mẫu B02-TCTD bank reports). Corporate Mẫu B01-DN codes
+ * (10-60 income; 100-440 balance) are entirely numeric — no letters.
  *
- * Fail-loud contract: if rows is empty, returns false (assumes corporate
- * until evidence proves otherwise — no silent bank promotion on empty data).
+ * WHY positive evidence: absence of 3-digit codes is necessary but not
+ * sufficient — a partial corporate extraction with income-only 2-digit rows
+ * (code "10","60") also has zero 3-digit codes, breaking the prior signal.
+ * A letter-containing code is ONLY produced by Mẫu B02-TCTD. Never by B01-DN.
+ *
+ * Fail-loud contract: if rows is empty, returns false (fail-safe: no bank
+ * promotion without positive evidence). Consistent with BANK-DEV-2.
  *
  * @param rows   All bctc_table_rows for the report (full set or code-only projection).
  * @returns true if the report follows Mẫu B02-TCTD (bank form); false for corporate.
  */
 export function isBankFormFromRows(rows: BctcCodeRow[]): boolean {
   if (rows.length === 0) return false; // fail-safe: no rows → assume corporate
-  return !rows.some((r) => /^[0-9]{3}/.test(r.code ?? ""));
+  return rows.some((r) => /[A-Za-z]/.test(r.code ?? ""));
 }
 
 /**

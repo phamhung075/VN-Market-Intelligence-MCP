@@ -216,18 +216,21 @@ const EVAL_THRESHOLDS: BctcEvalThresholds = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DV-BANK-7: isBankFormFromRows discriminator regression (BANK-ARCH-2 / BANK-DEV-2)
+// DV-BANK-7: isBankFormFromRows discriminator regression (BANK-ARCH-3 / BANK-DEV-3)
 // ─────────────────────────────────────────────────────────────────────────────
 //
 // RED-before-GREEN protocol:
-//   BEFORE fix (isBankForm(domain)): all these tests would fail because the old
-//     function tested domain strings, not row codes.
-//   AFTER fix (isBankFormFromRows): structural signal — 3-digit code absence.
+//   BEFORE fix (isBankFormFromRows — 3-digit absence): ["99"] returned true,
+//     mixed ["I","II","100",null] returned false, and ["10","60"] returned true.
+//   AFTER fix (positive evidence — /[A-Za-z]/ signal):
+//     ["99"] → false (no letter — not bank evidence).
+//     ["I","II","100",null] → true (letters present — positive bank evidence wins).
+//     ["10","60"] → false (2-digit numeric, no letter — corporate income-only).
 //
 // Seed 1: corporate rows with 3-digit codes → false (corporate)
-// Seed 2: bank rows with Roman/null codes → true (bank)
+// Seed 2: bank rows with Roman/null codes → true (bank, contains letters)
 // Seed 3: empty rows → false (fail-safe: no silent bank promotion)
-// Seed 4: rows with 1-digit and alphabetic codes, no 3-digit → true (bank)
+// Seed 4: rows with alphabetic and Roman codes → true (contains letter codes I, B)
 
 describe("DV-BANK-7 — isBankFormFromRows structural discriminator regression", () => {
   it("Seed 1: rows with 3-digit codes [100,200,300,400] → false (corporate)", () => {
@@ -263,11 +266,11 @@ describe("DV-BANK-7 — isBankFormFromRows structural discriminator regression",
     expect(isBankFormFromRows([])).toBe(false);
   });
 
-  it("Seed 4: rows with 1-digit and alphabetic codes only [01,02,I,B] → true (bank)", () => {
-    // ACB-pattern: single-digit numeric codes (01-09), alphabetic (A, B), Roman (I)
-    // None match /^[0-9]{3}/ → bank form
-    // BEFORE: domain-based — would return false for domain="other" (the live DB value)
-    // AFTER: structural — no 3-digit code → bank → true
+  it("Seed 4: rows with alphabetic and Roman codes [01,02,I,B] → true (bank)", () => {
+    // ACB-pattern: single-digit numeric codes (01-09), alphabetic (A, B), Roman (I).
+    // BANK-ARCH-3: "I" and "B" contain letters → positive bank evidence → true.
+    // BEFORE (BANK-DEV-2 absence signal): no 3-digit code → true (same result, different reason).
+    // AFTER (positive evidence): letter in "I" or "B" → true (contains letter code I, B).
     const rows = [
       { code: "01" },
       { code: "02" },
@@ -277,9 +280,12 @@ describe("DV-BANK-7 — isBankFormFromRows structural discriminator regression",
     expect(isBankFormFromRows(rows)).toBe(true);
   });
 
-  it("Edge: row with code '99' (2-digit) → true (not a 3-digit code)", () => {
+  it("Edge: row with code '99' (2-digit numeric, no letter) → false (not bank evidence)", () => {
+    // BANK-ARCH-3: positive signal. '99' contains no letter → not bank evidence → false.
+    // Under BANK-DEV-2 (absence signal): no 3-digit → true. That was wrong.
+    // Under BANK-DEV-3 (positive evidence): no letter → false (corporate/ambiguous).
     const rows = [{ code: "99" }];
-    expect(isBankFormFromRows(rows)).toBe(true);
+    expect(isBankFormFromRows(rows)).toBe(false);
   });
 
   it("Edge: row with code '1000' (4-digit) → false (4-digit also not a bank code, but matches /^[0-9]{3}/)", () => {
@@ -290,14 +296,34 @@ describe("DV-BANK-7 — isBankFormFromRows structural discriminator regression",
     expect(isBankFormFromRows(rows)).toBe(false);
   });
 
-  it("Mixed: one 3-digit code among many Roman codes → false (any corporate code = corporate)", () => {
-    // One OCR misread turning Roman "I" into a number is not sufficient to flip —
-    // but if a true 3-digit code is present, the report is corporate.
+  it("Mixed: Roman codes with one 3-digit code [I,II,100,null] → true (letter evidence wins)", () => {
+    // BANK-ARCH-3: positive signal. "I" and "II" contain letters → positive bank evidence.
+    // The one 3-digit code "100" does NOT override positive bank signal — architect ruling:
+    // a single 3-digit code among Romans is more likely an OCR misread of a Roman numeral
+    // than a corporate form marker. Real corporate reports have MANY 3-digit codes (100, 200,
+    // 300, 400 minimum); a single "100" among Romans is an extraction artifact.
+    // BEFORE (BANK-DEV-2 absence signal): any 3-digit code → false (corporate). Wrong.
+    // AFTER (positive evidence): letter in "I"/"II" → true (Roman codes with one 3-digit —
+    //   letter evidence wins; 3-digit alone does not override positive bank signal).
     const rows = [
       { code: "I" },
       { code: "II" },
-      { code: "100" }, // one 3-digit code present → corporate
+      { code: "100" }, // one 3-digit code — does not override letter evidence
       { code: null },
+    ];
+    expect(isBankFormFromRows(rows)).toBe(true);
+  });
+
+  it("Seed 5: rows with 2-digit income codes only [10,60] → false (corporate income-only, DV-FU6F-B1-3 regression guard)", () => {
+    // THE DV-FU6F-B1-3 REGRESSION GUARD.
+    // A corporate income-only extraction (e.g. VNM: only income rows OCR'd, balance not yet
+    // extracted) produces codes ["10","60"] — Mẫu B01-DN income codes 10 (Doanh thu thuần)
+    // and 60 (Lợi nhuận sau thuế). Neither contains a letter.
+    // BANK-DEV-2 (absence signal): no 3-digit code → true (bank). WRONG — caused DV-FU6F-B1-3 to fail.
+    // BANK-DEV-3 (positive evidence): no letter → false (corporate/ambiguous). CORRECT.
+    const rows = [
+      { code: "10" },
+      { code: "60" },
     ];
     expect(isBankFormFromRows(rows)).toBe(false);
   });
