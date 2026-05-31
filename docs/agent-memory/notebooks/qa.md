@@ -1,5 +1,54 @@
 # QA — Notebook
 
+## cycle-165 · 2026-05-31 · TSH-1 QA — TOOL-SURFACE-HYGIENE — CHANGES_REQUESTED
+
+**Sprint:** TOOL-SURFACE-HYGIENE | **Task:** TSH-1 | **Verdict:** CHANGES_REQUESTED — 2 blocking
+
+```
+date: 2026-05-31T11:10Z
+commit: c29f36cf (feat(mcp-tools): deregister get_market_hexagram)
+files_in_commit: apps/mcp-server/src/interface/mcp/tools/kinhdich/kinhDichTools.ts only
+
+TARGETED TESTS:
+  298-macro-score-fix.test.ts: 11 pass / 0 fail (computeMacroIndicatorScore RETAINED — GREEN)
+  285-kinhdich-tools.test.ts: 19 pass / 9 fail (7 pre-existing infra + 2 NEW from missing test update)
+  251-mcp-tools.test.ts: 13 pass / 0 fail
+  087-server-wiring.test.ts: 10 pass / 0 fail
+  tsc --noEmit: 0 errors
+  Full suite: OOM crash (pre-existing host memory limitation — not new)
+
+CONTAINER VERIFICATION:
+  Container: Up 2026-05-31T10:49Z (rebuilt after c29f36cf)
+  /health: {"status":"ok","toolCount":154}
+  get_market_hexagram: ABSENT from deployed kinhDichTools.ts (docker exec grep confirmed)
+  5 sibling tools: PRESENT (get_kinhdich_reading, get_hexagram_history,
+    get_transition_probabilities, run_hexagram_backtest, explain_hexagram)
+
+/HEALTH TOOLCOUNT INVESTIGATION:
+  Router claimed: "was 154, now 153" — WRONG BASELINE.
+  Actual pre-TSH-1 baseline: 155 (cycle-162 notebook, 2026-05-31T01:10Z toolCount=155).
+  155 - 1 (get_market_hexagram) = 154 CORRECT.
+  /health toolCount IS dynamic (server.ts:204-208 probe at startup, SDK _registeredTools field).
+  NOT a hardcoded literal. NOT a stale metric. No fix needed.
+
+DDD: PASS (interface layer, infra imports permitted)
+Security: PASS (no process.env, no secrets)
+
+BLOCKING (2):
+  285-kinhdich-tools.test.ts:83-85 — registers get_market_hexagram expects tool defined (now absent)
+  285-kinhdich-tools.test.ts:103-115 — registers exactly 6 new tools includes get_market_hexagram
+  Fix: remove/update both test cases to reflect deregistration; change "6" to "5"
+
+NON-BLOCKING (pre-existing):
+  7 explain_hexagram failures: 501 from kinh-dich-service B-bucket (since P2-KD-G 2026-05-24)
+  registry.ts:172 comment: "6 Kinh Dich tools" stale (cosmetic)
+```
+
+REPORT: reports/TASK_REPORT_TSH-1.md
+NEXT: fixer | update 285-kinhdich-tools.test.ts — remove get_market_hexagram test + fix "6"→"5"
+
+---
+
 ## cycle-164 · 2026-05-31 · ENV-ISOLATION EI-P1 Gate — APPROVED
 
 **Sprint:** ENV-ISOLATION | **Task:** EI-P1-1 + EI-P1-2 + EI-P1-3 | **Verdict:** APPROVED — all gates GREEN
