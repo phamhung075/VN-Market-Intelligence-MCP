@@ -1,45 +1,32 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-17T07:22Z (c154 — TNB c64 CRITICAL processed, Docker ~7h frozen)
+**Written:** 2026-05-31T01:20Z (:07 tick, manual run — VN Sat ~08:20, market CLOSED)
 
-## c154 (2026-05-17T07:07Z → 2026-05-17T07:22Z, ~15min)
+## tick-20260531T0027Z (~50min) — MACRO-CMDTY-DELTA shipped end-to-end
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | HEAD.lock (982s, 0B, no pid, com.apple 65585) | Removed — 5th this session |
-| 0a drain-signals | 4 signal files | 3x DNS new + TNB audit-handoff → processed/ |
-| TNB c64 | Read docs/handoffs/tnb-audit-latest.md | CRITICAL — Monday market open at risk |
-| PO triage | TNB findings → 3 new tasks | 1930a/b/c created in TASKS.md |
-| Archive | Done entries c141-c147 | docs/archive/sprints-c141-c147.md (TASKS.md 69L) |
-| Docker CLI | background timeout 8s | STILL_HUNG (~7h) |
-| Port probes | 3000/5004 curl | TIMEOUT |
-| Session gate | All tasks blocked F1 USER | Idle |
+| 0 PREFLIGHT | HEAD.lock absent, worktree clean | pass |
+| 0a drain | 264 loose signals (>50) + db mtime >24h → full drain | 254 DB-insert/10 dup/264→processed/, pruned 814→766 + 10 files. Commit 7aac8fef. ALL stale/noise — 0 new dev work from loose path |
+| 0a-D dashboard | 3 NEW ## po rows | DOUBLON / TASKCLAIM-SCHEMA / MCP-P4 → fed to PO |
+| 0b pipeline | pipeline-state STALE (2026-05-29, nextAgent NONE) | no resume → Step 1 |
+| 1 PO triage | BATCH([MACRO-CMDTY-DELTA FIX]) | verified-raw avoided 3 false-RED: DWF-TSC-DEBT already resolved, FF-DEAD already live-fixed (0cbce0b4), #3012 transient. DOUBLON HELD, TASKCLAIM-SCHEMA→doc/cowork lane, #3011→BCTC-LAYOUT-FIRST WIP-gated |
+| 3 exec | FIX zone apps/macro-indicators/ → dev-macro-indicators | BLOCKED/zone-handoff (root cause in apps/mcp-server, not its zone) — good diagnose-first |
+| 3 re-route | dev-mcp-server | disproved handoff hypothesis (993 rows, no zeros); REAL cause = off-market repeated-close, prev-close `ORDER BY fetched_at DESC LIMIT 1` compared price to identical 1h row → permanent 0.00%. Fix = prev-calendar-day baseline. e510e5df+fdc17265, YF-14/15 |
+| 3 ops | rebuild + force-recreate mcp-server | image 802d6463e665 healthy, fleet 12/12 healthy |
+| qa gate-1 | CHANGES_REQUESTED | prod correct but broke DPI-3 AC-2/AC-3 (same-day seeds vs new prev-day query) |
+| fixer | dab1bf86 | 3 test timestamps → cross-day, test-only, prod untouched |
+| qa re-gate | APPROVED | DPI-3 4/4 (real non-zero deltas), 025 16/16, fleet 10153/346 (pre-existing drift, 0 overlap), tsc clean |
+| po EXIT | APPROVE 3889587e | TASKS DONE, MCP-P4 RESOLVED, pipeline-state refreshed, WIP 0/2 |
 
-### TNB c64 key escalations
+### Carry-forward (NOT this lane — flagged to WORK, infra/cowork lane)
 
-| Finding | Severity | Action taken |
-|---------|----------|--------------|
-| 1928a all cowork dark 10+h, Monday open at risk | CRITICAL | F1 USER pending — escalated in notebook |
-| verdictResolutionJob WATCHLIST-31/MACRO_GOLD/VNH still repeating post-1926a | MEDIUM | → **1930a** created |
-| FA OCF get_cash_flow implausible values (FPT=504, VCB=1.42×10⁸) | HIGH | → **1930b** created |
-| LanceDB 'LENC' recorruption post-1925a | MEDIUM | → **1930c** created |
-| digest-predict 6+ day silence | CRITICAL | 1907a existing — Docker restart unblocks |
-| BCTC Q1-2026 banking cohort unconfirmed | HIGH | Ops task post-restart |
-| PO handoff ACK loop broken (c62+c63 unACK'd) | MEDIUM | Noted — PO dark while cowork down |
+- **#3011** BTB persistence blocker (push-bctc-layout write-wedge) — lives in OPEN BCTC-LAYOUT-FIRST (LF-OVERLAY), WIP-gated; PO did not open this tick. Real, awaiting architect diagnosis when a lane frees.
+- **#3012 + #3014** pollNews 0-items, sources degrading 6/7→3/7 over the weekend (VN Sat off-hours). Infra/cowork lane (news-fetch/VPS/dev-vps-crawls), NOT a dev-team apps/ sprint. Flagged to WORK for ops/cowork pickup. Watch: if still 0-items at Monday VN open → real outage, escalate.
+- **DOUBLON** (cje-...): valid LOW cosmetic dedup in apps/mcp-server/src/infrastructure/fetchers; HELD as future idle-tick CLEAN batch.
+- **TASKCLAIM-SCHEMA**: doc-only (dev-mcp-server document new contract) + cowork-flow update; commit-mutex-enum-drift workaround now obsolete (cowork-slot accepted).
+- **tool count** live = 155 (not 157 — dev mis-report, no regression).
 
-### c155 carry-forward
-
-**CRITICAL — Monday VN market opens 02:00 UTC 2026-05-18. All alert systems dark.**
-
-F1 USER Docker restart unblocks:
-```
-pkill -9 Docker && open -a Docker
-```
-
-After restart, in order:
-1. `docker-compose up -d --build macro-indicators mcp-server` (1927a PMI)
-2. `docker exec mcp-server sqlite3 /app/data/market.db "SELECT * FROM alerts LIMIT 1"` — if corrupted: DROP alerts/alert_mutes/custom_alert_rules/price_alerts → `docker restart mcp-server` (1929a)
-3. `docker exec alert-engine sqlite3 /app/data/alert_engine.db "SELECT COUNT(*) FROM alert_engine_records"` (1922i)
-4. `docker exec rag-service python3 -c "import lancedb; db=lancedb.connect('/app/data'); db.drop_table('rag_entries')"` → `docker restart rag-service` (1930c)
-5. Find mcp-gateway config → add extra_hosts: host-gateway (1928a structural)
-6. Verify BCTC Q1-2026: `get_bctc_full` for ACB/BID/CTG/EIB/MBB/VCB/VPB
+### Notes
+- task_release ok:false on MACRO-CMDTY-DELTA (TTL expired over ~50min pipeline — tolerated per flow).
+- Durable cron flag did not persist this session (registered session-only) — needs re-arm after restart.
