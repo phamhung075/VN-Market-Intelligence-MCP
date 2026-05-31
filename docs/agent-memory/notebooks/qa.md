@@ -1,5 +1,34 @@
 # QA — Notebook
 
+## cycle-161 · 2026-05-31 · P1-QA — DWF-PHASE1 Adaptive Cadence — APPROVED
+
+**Sprint:** DWF-PHASE1 | **Task:** P1-QA | **Verdict:** APPROVED — all 8 gates GREEN
+
+```
+date: 2026-05-31
+sprint: DWF-PHASE1
+
+TEST SUITE: 48/48 PASS — apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts
+  (13 test groups, 48 individual assertions)
+
+RED PROOFS: T-2 (chef-intraday/holiday rule removal → RED), T-8 (due_reason strip → RED), T-12 (null-open injection → RED). All 3 verified.
+
+SCHEMA: 14 enabled slots with policy_id + last_fired. 19 rules, 3 policy IDs. staleness_threshold=20 in SSOT.
+
+NFR-P1-1: Step 0b leader lock, Step 4.6 suffix-free cowork-slot:<slot_id> ttl=180, Step 5 published-marker — all UNTOUCHED.
+NFR-P1-5: Zero mcp-server production code changes.
+BLOCKER-3: Step 5b single batched tmp→rename verified.
+BLOCKER-1: No task_claim in Steps 4.2–4.5b. Suppression before claim — no orphan tokens.
+
+LEGACY FALLBACK (QA-9): pressure-state.json deletion → mode=legacy confirmed.
+ADAPTIVE MODE (QA-7/8): fresh pressure-state → due_reason + cadence_minutes on all output slots confirmed.
+
+REPORT: reports/TASK_REPORT_P1-QA.md
+NEXT: po (P1-PO-EXIT)
+```
+
+---
+
 ## cycle-160 · 2026-05-31 · DWF-QA — DYN-WF-FOUNDATION Phase 0+2 — APPROVED
 
 **Sprint:** DYN-WF-FOUNDATION | **Task:** DWF-QA | **Verdict:** APPROVED
