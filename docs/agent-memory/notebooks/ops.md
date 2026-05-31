@@ -5225,3 +5225,34 @@ Both reports are currently refine_status=FAILED with empty units. Do NOT proceed
 
 **FU-3 Status: BLOCKED — Awaiting agent dispatch from router**
 
+
+## 2026-05-31 Session: TOOL-SURFACE-HYGIENE Rebuild #2 (SUCCEEDED)
+
+**Issue**: Rebuild #1 reported success but running container proved STALE (QA found OLD descriptions at 11:14:33 UTC build, 1 minute AFTER the code commit at 11:13:20 UTC, yet container still showed pre-commit code). Previous force-recreate relaunched old image.
+
+**Root Cause**: Docker image layer caching from rebuild #1 was old; container relaunch picked up stale cached layers even though build.
+
+**Action Taken**:
+1. Confirmed HEAD at f4da532f (2026-05-31 11:13:20 UTC) — TOOL-SURFACE-HYGIENE description updates present
+2. Hard rebuild: `docker compose build --no-cache mcp-server` — confirmed actual COPY/RUN steps executed (NOT cached)
+3. Force recreate: `docker compose up -d --force-recreate mcp-server` — new image pulled
+4. Verified image creation: 2026-05-31T11:25:47Z (AFTER commit 11:13:20)
+
+**MANDATORY PROOF GATE PASSED**:
+- grep "LanceDB rag_analyses" in /app/src/interface/mcp/tools/market-data/marketTools.ts → FOUND line 330
+- grep "docs/data/alert-verdicts.json" in /app/src/interface/mcp/tools/alerts/alertVerdictTools.ts → FOUND line 109
+- Container healthy: State.Health.Status = healthy, /health.status = ok
+
+**Post-Rebuild 9-Service Health Check** (all healthy):
+- mcp-server (3000): ok, toolCount=154
+- pdf-extractor (5001): ok
+- rag-service (5002): ok
+- technical-analysis (5003): ok
+- macro-indicators (5004): ok
+- kinh-dich-service (5005): ok
+- alert-engine (5006): ok
+- news-fetch (5008): ok
+- stock-price (5010): ok
+
+**Status**: CLOSED ✅ — Rebuild #2 succeeded, new source is in running container.
+
