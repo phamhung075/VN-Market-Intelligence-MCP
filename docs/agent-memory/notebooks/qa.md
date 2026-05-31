@@ -1,5 +1,41 @@
 # QA — Notebook
 
+## cycle-168 · 2026-05-31 · TSH-2/3/4 RE-VERIFY — TOOL-SURFACE-HYGIENE — APPROVED
+
+**Sprint:** TOOL-SURFACE-HYGIENE | **Task:** TSH-2+TSH-3+TSH-4 re-verify | **Verdict:** APPROVED — all 6 distinctions live
+
+```
+date: 2026-05-31T13:38Z
+commit_under_review: f4da532f (chore: clarify 6 tool descriptions)
+ops_session_commit: ca53c8de (ops confirmed real rebuild)
+
+CONTAINER:
+  image built:  2026-05-31T11:25:47Z (+12min after commit f4da532f @ 11:13:20Z) — post-commit CONFIRMED
+  started:      2026-05-31T11:27:55Z
+  toolCount:    154 CONFIRMED | get_market_hexagram: ABSENT (2 comment lines only)
+
+GATEWAY CACHE: SSE at localhost:4004 → container:3000. Session started after rebuild.
+  Schema loaded from new container at SSE handshake. No stale cache. list_server_tools denied;
+  evidence via in-container grep (authoritative source of registered descriptions).
+
+ALL 6 DISTINCTIONS LIVE (in-container grep):
+  mark_alert_outcome:        alertAccuracy.ts:496   "Writes to SQLite alerts table (market.db)..."
+                             alertAccuracy.ts:497   "POST-HOC only" + timing contrast
+  write_alert_verdict:       alertVerdictTools.ts:109 "docs/data/alert-verdicts.json (file store, "
+                             alertVerdictTools.ts:110 "NOT the SQLite alerts table). Call AT FIRE TIME"
+  get_calibration_report:    calibrationTools.ts:284  "calibration_snapshots table (SQLite). Machine-computed Brier"
+  get_label_accuracy_report: calibrationTools.ts:354  "market_messages table (SQLite). Human-labelled signal quality"
+  get_prediction_accuracy:   predictionTools.ts:167   "Computed from Polymarket prediction signals only (predictionOutcomeJob)"
+  get_patterns:              marketTools.ts:330/332   "LanceDB rag_analyses" + "Distinct from get_technical_indicators"
+
+DDD/Security/tsc: Smart-Skip (string-only change)
+```
+
+REPORT: reports/TASK_REPORT_TSH-2-3-4.md (verdict updated APPROVED)
+NEXT: pm | mark TSH-2/TSH-3/TSH-4 DONE
+
+---
+
 ## cycle-167 · 2026-05-31 · FU-4 QA — FU-TRUST-REFRESH — CHANGES_REQUESTED
 
 **Sprint:** FU-TRUST-REFRESH | **Task:** FU-4 | **Verdict:** CHANGES_REQUESTED — 2 blocking
