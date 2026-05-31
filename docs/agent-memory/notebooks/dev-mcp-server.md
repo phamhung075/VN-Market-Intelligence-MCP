@@ -1,5 +1,29 @@
 # dev-mcp-server -- Notebook
 
+## c341 · 2026-05-31 (FU-TRUST-REFRESH FU-5) — COMMITTED 6cc75437
+
+**Task:** FU-5 — BLOCK-1 scalar backfill + BLOCK-2 eval recompute in finalizeBctcRefineTool
+
+**Root cause (from QA FU-4):**
+- financial_reports scalar columns (equity_total, gross_profit, total_assets, total_liabilities) written by legacy VNStock parser at 2026-05-24 and NOT updated by BCTC-AGENTIC-REFINE pipeline
+- FPT: equity_total=0, gross_profit=net_revenue (100% margin) — mock signatures
+- ACB: total_assets=0, equity_total=0, gross_profit=net_revenue
+- bctc_eval for ACB: stale red (computed 2026-05-28, pre-refine)
+- get_bctc_full returned trust-violating values; trust sprint blocked
+
+**Fix (3 files):**
+- NEW `bctcScalarAggregator.ts` (domain service, pure): aggregates bctc_table_rows → financial_reports scalar columns. Code→column mapping: 10→net_revenue, 20→gross_profit, 50→profit_before_tax, 60→net_profit, 270/440→total_assets, 300→total_liabilities, 400→equity_total, 100→current_assets. Bank fallback: Roman codes (I/VIII/IX) + label patterns. Unit auto-detect: max value > 1e11 → raw VND (÷1e6); else million VND (÷1). NULL for absent codes — never forced zero.
+- MODIFIED `finalizeBctcRefineTool.ts`: after atomic row INSERT, calls aggregateScalars() → dynamic SET clause UPDATE on financial_reports. Then inline computeBctcEval() (non-fatal, try/catch).
+- NEW `FU-5-scalar-backfill.test.ts`: 8 DV tests — DV-FU5-7 deliberate-violation (RED→GREEN), DV-FU5-4 idempotency, DV-FU5-3 NULL-not-zero, DV-FU5-5/6 unit detection.
+
+**Gates:** tsc EXIT 0 | 8 pass / 0 fail (FU-5 file) | TRUST-RED + HC-human-confirm unchanged 69 pass | tool=156 | sched=70
+
+**ops_rebuild_required: true** — must rebuild container + re-run finalize_bctc_refine for e8ea3df5 (FPT) and fea19bae (ACB) to apply backfill to live DB. QA must re-gate after.
+
+Zone health: 3 files (2 new, 1 modified); tsc EXIT 0; 8+61 tests green; tool=156; sched=70 | HEALTHY
+
+---
+
 ## c340 · 2026-05-31 (MACRO-CMDTY-DELTA) — COMMITTED e510e5df
 
 **Task:** MACRO-CMDTY-DELTA FIX — Brent/Gold change% stuck at 0.00% in get_cycle_bootstrap MACRO block
