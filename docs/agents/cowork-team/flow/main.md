@@ -1,4 +1,4 @@
-<!-- size-justification: 510L — single dispatcher flow; cron-match logic extracted to .claude/scripts/cowork-match-slots.js. Step 0b leader lock (DWF-DEV-CROSS-4 Phase 2) + Step 4.6 per-work-item token (R1/R3 blocking, suffix-free, ttl=180s) + Step 4.6b heartbeat (DWF-DEV-CROSS-4) + Step 4.7 tick-snapshot (1968c-P01) + Step 4.8 pressure-state emitter (DWF-DEV-CROSS-3) + §drift-min threshold table (1967-09) + Step 5 published-marker gate instruction text (DWF-DEV-CROSS-5 FR-P2-7) added inline for auditability. Error boundary + telemetry + collision guard remain inline. Split deferred until next architectural sprint. -->
+<!-- size-justification: 510L — single dispatcher flow; cron-match logic extracted to scripts/agents-flow/cowork-match-slots.js. Step 0b leader lock (DWF-DEV-CROSS-4 Phase 2) + Step 4.6 per-work-item token (R1/R3 blocking, suffix-free, ttl=180s) + Step 4.6b heartbeat (DWF-DEV-CROSS-4) + Step 4.7 tick-snapshot (1968c-P01) + Step 4.8 pressure-state emitter (DWF-DEV-CROSS-3) + §drift-min threshold table (1967-09) + Step 5 published-marker gate instruction text (DWF-DEV-CROSS-5 FR-P2-7) added inline for auditability. Error boundary + telemetry + collision guard remain inline. Split deferred until next architectural sprint. -->
 
 # cowork-team — Master Cron Dispatcher
 
@@ -76,12 +76,12 @@ Save as NOW_ISO. Slot-matcher script reads the system clock directly — no fiel
 ## Step 2+3 — Match enabled slots (single call)
 
 ```bash
-RAW=$(node .claude/scripts/cowork-match-slots.js)
+RAW=$(node scripts/agents-flow/cowork-match-slots.js)
 MATCHES=$(echo "$RAW" | jq '.slots')
 DRIFT_MIN=$(echo "$RAW" | jq '.drift_min')
 ```
 
-Script SSOT: `.claude/scripts/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns `{"slots": [{slot_id, agent, flow_path, cron, trigger_prompt}, ...], "drift_min": <N>}`. `drift_min` = `actualUTCMinute − nominalTick` (always 0–14).
+Script SSOT: `scripts/agents-flow/cowork-match-slots.js` — reads `docs/data/cowork-schedule.json`, filters `enabled && !_disabled_by`, cron ±2min window, returns `{"slots": [{slot_id, agent, flow_path, cron, trigger_prompt}, ...], "drift_min": <N>}`. `drift_min` = `actualUTCMinute − nominalTick` (always 0–14).
 
 **On script error** (non-zero exit / non-JSON output / schedule.json missing):
 - `send_telegram(channel=work, "[cowork-team] slot-matcher failed: <stderr first line>")`

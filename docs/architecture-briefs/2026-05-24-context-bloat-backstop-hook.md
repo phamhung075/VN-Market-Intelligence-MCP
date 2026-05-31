@@ -46,7 +46,7 @@ The hook reads caps with a single `jq` expression from `docs/data/file-size-caps
 ```json
 {
   "_ssot": "docs/data/file-size-caps.json",
-  "_note": "Line caps for governed context-surface files. Read by .claude/scripts/context-bloat-backstop.sh. Maintained by agents-architect policy. Code and data JSON are explicitly NOT governed.",
+  "_note": "Line caps for governed context-surface files. Read by scripts/agents-flow/context-bloat-backstop.sh. Maintained by agents-architect policy. Code and data JSON are explicitly NOT governed.",
   "_maintained_by": "agents-architect (policy) / agent-father (implementation)",
   "caps": [
     {
@@ -100,7 +100,7 @@ Agent-father adds a `PostToolUse` key alongside the existing `PreToolUse` and `S
     "hooks": [
       {
         "type": "command",
-        "command": "bash \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/.claude/scripts/context-bloat-backstop.sh\" 2>/dev/null || true"
+        "command": "bash \"$(git rev-parse --show-toplevel 2>/dev/null || pwd)/scripts/agents-flow/context-bloat-backstop.sh\" 2>/dev/null || true"
       }
     ]
   }
@@ -113,7 +113,7 @@ Notes:
 - `matcher: "Write|Edit|NotebookEdit"` targets all file-write surfaces; `Read` and `Bash` excluded (read-only, no state change)
 - No `CLAUDE_TOOL_INPUT` or `CLAUDE_TOOL_OUTPUT` env var parsing required — the script inspects the written file by resolving the path itself (see §3.2)
 
-### 3.2 Script Specification — `.claude/scripts/context-bloat-backstop.sh`
+### 3.2 Script Specification — `scripts/agents-flow/context-bloat-backstop.sh`
 
 **Hard performance requirement:** For non-governed paths, the script must classify and exit within a single glob match + early return. The hot path (non-governed file) is: one `case` match → `exit 0`. No `wc -l` is called for non-governed files.
 
@@ -251,7 +251,7 @@ On each cron cycle, after the existing Pass 5 (size-caps via git-diff), the jani
 | # | File | Action | Notes |
 |---|---|---|---|
 | F1 | `.claude/settings.local.json` | Add `PostToolUse` block | See §3.1 exact JSON |
-| F2 | `.claude/scripts/context-bloat-backstop.sh` | CREATE new script | See §3.2 pseudocode; make executable (`chmod +x`) |
+| F2 | `scripts/agents-flow/context-bloat-backstop.sh` | CREATE new script | See §3.2 pseudocode; make executable (`chmod +x`) |
 | F3 | `docs/data/file-size-caps.json` | CREATE new SSOT file | See §2 exact JSON structure |
 | F4 | `.claude/flows/claude-manager-helper/main.md` | ADD Pass 5b | After existing Pass 5; consume `context-bloat-*.json` signals |
 | F5 | `.claude/agents/claude-manager-helper.md` | UPDATE `capabilities` + `knowledge.lazy_load` | Add `context_bloat_breach` signal consumption to capabilities; add `docs/data/file-size-caps.json` as lazy_load trigger `pass_5b_bloat` |

@@ -2,7 +2,7 @@
 // cowork-team slot matcher — reads docs/data/cowork-schedule.json, returns slots
 // whose cron matches current UTC ±2min window.
 //
-// Usage: node .claude/scripts/cowork-match-slots.js
+// Usage: node scripts/agents-flow/cowork-match-slots.js
 //   No args — reads system clock. Output: JSON object {slots: [...], drift_min: N}.
 //   Empty slots → silent exit per flow Step 4.
 //

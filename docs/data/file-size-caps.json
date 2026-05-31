@@ -1,6 +1,6 @@
 {
   "_ssot": "docs/data/file-size-caps.json",
-  "_note": "Line caps for governed context-surface files. Read by .claude/scripts/context-bloat-backstop.sh. Maintained by agents-architect policy. Code and data JSON are explicitly NOT governed.",
+  "_note": "Line caps for governed context-surface files. Read by scripts/agents-flow/context-bloat-backstop.sh. Maintained by agents-architect policy. Code and data JSON are explicitly NOT governed.",
   "_maintained_by": "agents-architect (policy) / agent-father (implementation)",
   "caps": [
     {

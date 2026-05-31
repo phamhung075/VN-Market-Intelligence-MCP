@@ -40,7 +40,7 @@ Phase 1 logic (Steps 4.2–4.5b suppression + Step 5b last_fired write) sits ent
 
 ## 5. No container rebuild — CONFIRMED
 
-This sprint touched only cron-read scripts (`.claude/scripts/cadence-policy.js`, `cowork-match-slots.js`), flow markdown, and JSON config (`cadence-policy.json`, `cowork-schedule.json`). Zone is `cross-service` only. Unlike Phase 0/2 there is no mcp-server image change → **no `docker compose up -d --build` required.** The microservice close-gate does not apply.
+This sprint touched only cron-read scripts (`scripts/agents-flow/cadence-policy.js`, `cowork-match-slots.js`), flow markdown, and JSON config (`cadence-policy.json`, `cowork-schedule.json`). Zone is `cross-service` only. Unlike Phase 0/2 there is no mcp-server image change → **no `docker compose up -d --build` required.** The microservice close-gate does not apply.
 
 ## 6. Next phase — does NOT auto-initiate
 

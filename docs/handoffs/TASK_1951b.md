@@ -110,7 +110,7 @@ None — observational only. All changes recorded in WORK Telegram + OBSERVATION
 
 Root-cause hypothesis: CronCreate jobs only fire while REPL is idle. If Claude is mid-query at nominal tick, the fire is deferred until idle — observed deferral ~7min.
 
-**Impact:** `.claude/scripts/cowork-match-slots.js` matches `now ±2min` against cron expressions. When fire happens at :07, the window is `[05–09]`, which never includes `:00` (the nominal `*/15` slot). Every fire silent-exits without spawning any agent. AC-6 idempotency observation is uncorrupted (lane B never publishes), but **no master-dispatched chef tick will ever reach MARKET** under current matcher logic.
+**Impact:** `scripts/agents-flow/cowork-match-slots.js` matches `now ±2min` against cron expressions. When fire happens at :07, the window is `[05–09]`, which never includes `:00` (the nominal `*/15` slot). Every fire silent-exits without spawning any agent. AC-6 idempotency observation is uncorrupted (lane B never publishes), but **no master-dispatched chef tick will ever reach MARKET** under current matcher logic.
 
 **Cutover decision:** 1951d (delete 12 legacy RemoteTriggers) is held until SPIKE-1951f architect decision lands and 1951g fix merges. AC-6 PASS alone is INSUFFICIENT — it only proves "lane B publishes nothing", not "lane B publishes correctly".
 

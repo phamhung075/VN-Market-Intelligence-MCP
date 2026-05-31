@@ -2,7 +2,7 @@
 // Test harness for cowork-match-slots.js — 8 drift scenarios
 // Architecture brief: docs/architecture-briefs/2026-05-18-spike-1951f-fire-drift-fix.md
 //
-// Run: node .claude/scripts/cowork-match-slots.test.js
+// Run: node scripts/agents-flow/cowork-match-slots.test.js
 // Exit 0 = all pass, Exit 1 = any fail.
 
 'use strict';
@@ -17,7 +17,7 @@ const schedPath = path.join(process.cwd(), 'docs/data/cowork-schedule.json');
 const sched = JSON.parse(fs.readFileSync(schedPath, 'utf8'));
 
 // This require must succeed — if the script does not export, we fail loud.
-const { cronMatches, matchSlots } = require(path.join(process.cwd(), '.claude/scripts/cowork-match-slots.js'));
+const { cronMatches, matchSlots } = require(path.join(process.cwd(), 'scripts/agents-flow/cowork-match-slots.js'));
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -35,7 +35,7 @@ One table, three `task_kind` discriminators. Identical semantics across all thre
 | `sprint-task` | `task:<task_id>` | `task:1954b` | Two dev-* agents claim same TASKS.md row |
 | `dashboard-row` | `dash:<recipient>:<row_id>` | `dash:po:1954-A-29-1` | Two drain-signals.md runs consume same NEW row |
 
-The `<nominal_tick>` in `cowork-slot` is the rounded-down UTC minute (e.g. `14:00:00Z` for any fire between 14:00 and 14:14 inclusive). This is already computed by `.claude/scripts/cowork-match-slots.js` as `drift_min`; nominal_tick = fire_time minus drift_min seconds.
+The `<nominal_tick>` in `cowork-slot` is the rounded-down UTC minute (e.g. `14:00:00Z` for any fire between 14:00 and 14:14 inclusive). This is already computed by `scripts/agents-flow/cowork-match-slots.js` as `drift_min`; nominal_tick = fire_time minus drift_min seconds.
 
 ---
 

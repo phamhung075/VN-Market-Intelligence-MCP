@@ -4,10 +4,10 @@
  * Sprint: DWF-PHASE1 — P1-DEV-7
  * Zone:   test-harness (mcp-server zone for bun:test runner reuse; ZERO mcp-server production code under test)
  *
- * Tests .claude/scripts/cadence-policy.js (evaluateCadence, loadCadencePolicy, computeTiers, isStale)
- * and the adaptive mode of .claude/scripts/cowork-match-slots.js.
+ * Tests scripts/agents-flow/cadence-policy.js (evaluateCadence, loadCadencePolicy, computeTiers, isStale)
+ * and the adaptive mode of scripts/agents-flow/cowork-match-slots.js.
  *
- * Import path traversal: apps/mcp-server/src/__tests__/ → ../../../../.claude/scripts/
+ * Import path traversal: apps/mcp-server/src/__tests__/ → ../../../../scripts/agents-flow/
  *
  * RED→GREEN doctrine: each test has an inline comment describing the deliberate-violation proof
  * (what change would make the test go RED). The live test runs the GREEN assertion.
@@ -22,11 +22,11 @@ import * as os from "os";
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { evaluateCadence, loadCadencePolicy, computeTiers, isStale } =
-  require("../../../../.claude/scripts/cadence-policy.js");
+  require("../../../../scripts/agents-flow/cadence-policy.js");
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const { matchSlots } =
-  require("../../../../.claude/scripts/cowork-match-slots.js");
+  require("../../../../scripts/agents-flow/cowork-match-slots.js");
 
 // ─── Shared fixtures ────────────────────────────────────────────────────────
 

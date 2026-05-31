@@ -1,18 +1,18 @@
   Quick start
 
   # Start a sprint session
-  bash .claude/scripts/tmux-agent.sh setup sprint
+  bash scripts/agents-flow/tmux-agent.sh setup sprint
 
   # Attach to it
   tmux attach -t vn-market
 
   # Or open just one agent window
-  bash .claude/scripts/tmux-agent.sh open developer
+  bash scripts/agents-flow/tmux-agent.sh open developer
 
   # Send a command to a pane
-  bash .claude/scripts/tmux-agent.sh send dev "bun test --watch"
+  bash scripts/agents-flow/tmux-agent.sh send dev "bun test --watch"
 
   # Clean up
-  bash .claude/scripts/tmux-agent.sh teardown
+  bash scripts/agents-flow/tmux-agent.sh teardown
 
-  The skill is now registered as /tmux-layout and the script is ready at .claude/scripts/tmux-agent.sh.
+  The skill is now registered as /tmux-layout and the script is ready at scripts/agents-flow/tmux-agent.sh.

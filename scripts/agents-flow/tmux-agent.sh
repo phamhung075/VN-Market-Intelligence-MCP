@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ──────────────────────────────────────────────────────────────
 # tmux-agent.sh — Tmux layout manager for VN Market Intelligence MCP
-# Usage: bash .claude/scripts/tmux-agent.sh <command> [args...]
+# Usage: bash scripts/agents-flow/tmux-agent.sh <command> [args...]
 #
 # Compatible with bash 3.2+ (macOS default) — no associative arrays.
 # ──────────────────────────────────────────────────────────────
@@ -307,7 +307,7 @@ usage() {
 tmux-agent.sh — Tmux layout manager for VN Market Intelligence MCP
 
 Usage:
-  bash .claude/scripts/tmux-agent.sh <command> [args...]
+  bash scripts/agents-flow/tmux-agent.sh <command> [args...]
 
 Commands:
   setup [preset]              Create full layout (sprint|dev-focus|review)
@@ -326,12 +326,12 @@ Agents:
   po, ba, architect, pm, developer, qa, fixer, market-analyst, logs
 
 Examples:
-  bash .claude/scripts/tmux-agent.sh setup sprint
-  bash .claude/scripts/tmux-agent.sh setup dev-focus
-  bash .claude/scripts/tmux-agent.sh open developer
-  bash .claude/scripts/tmux-agent.sh split h "tests" "bun test --watch"
-  bash .claude/scripts/tmux-agent.sh send dev "bun test"
-  bash .claude/scripts/tmux-agent.sh teardown
+  bash scripts/agents-flow/tmux-agent.sh setup sprint
+  bash scripts/agents-flow/tmux-agent.sh setup dev-focus
+  bash scripts/agents-flow/tmux-agent.sh open developer
+  bash scripts/agents-flow/tmux-agent.sh split h "tests" "bun test --watch"
+  bash scripts/agents-flow/tmux-agent.sh send dev "bun test"
+  bash scripts/agents-flow/tmux-agent.sh teardown
 USAGE
 }
 

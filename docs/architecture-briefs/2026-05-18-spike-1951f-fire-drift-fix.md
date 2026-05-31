@@ -68,7 +68,7 @@ Option C is a regression: loses the ability to dispatch sub-hourly slots in the 
 
 ## 3. Exact Fix Specification
 
-**File:** `.claude/scripts/cowork-match-slots.js`
+**File:** `scripts/agents-flow/cowork-match-slots.js`
 
 ### Change — lines 15–17 (variable declarations)
 
@@ -160,7 +160,7 @@ During the Sprint 1951 24h parallel-run, legacy RemoteTriggers and the master Cr
 
 ## 6. Regression Test Plan
 
-The test file should be placed at `.claude/scripts/cowork-match-slots.test.js` (or equivalent Jest/Node test runner used by the project).
+The test file should be placed at `scripts/agents-flow/cowork-match-slots.test.js` (or equivalent Jest/Node test runner used by the project).
 
 ### TC-1: On-time fire matches */15 slot (baseline)
 - Input: actual M=0, H=3, DOW=Monday
@@ -223,11 +223,11 @@ Correction again: 29//15 = 1 remainder 14. floor(29/15)*15 = 15. The :28-minute 
 
 | File | Change | Owner |
 |------|--------|-------|
-| `.claude/scripts/cowork-match-slots.js` | Line 16: rename `M` to `actualM`, add nominal-tick rounding line | dev-mcp-server / agent-father |
+| `scripts/agents-flow/cowork-match-slots.js` | Line 16: rename `M` to `actualM`, add nominal-tick rounding line | dev-mcp-server / agent-father |
 | `docs/data/cowork-schedule.json` | Add `_slot_minute_rule` note to `_notes` block | agent-father |
 
 Optional (recommended):
-| `.claude/scripts/cowork-match-slots.test.js` | New file: TC-1 through TC-7 | dev-mcp-server |
+| `scripts/agents-flow/cowork-match-slots.test.js` | New file: TC-1 through TC-7 | dev-mcp-server |
 
 ---
 

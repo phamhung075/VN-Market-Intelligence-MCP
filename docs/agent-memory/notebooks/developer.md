@@ -10,11 +10,11 @@
 
 Wave 1 (parallel):
 - P1-DEV-1: Created `docs/data/cadence-policy.json` — 19 rules, 3 policies (gatherer-standard/chef-intraday/bctc-offmarket), _staleness_threshold_minutes=20, _cron_fallback semantics for bctc-offmarket open/half_day/unknown.
-- P1-DEV-2: Created `.claude/scripts/cadence-policy.js` — CommonJS module (loadCadencePolicy, evaluateCadence, computeTiers, isStale). First-match wins, wildcard *, safe default 240 on no-match, dual isStale gate.
+- P1-DEV-2: Created `scripts/agents-flow/cadence-policy.js` — CommonJS module (loadCadencePolicy, evaluateCadence, computeTiers, isStale). First-match wins, wildcard *, safe default 240 on no-match, dual isStale gate.
 - P1-DEV-4: Modified `docs/data/cowork-schedule.json` — added policy_id to all 14 enabled slots per BLOCKER-2 table (6 null, 4 bctc-offmarket, 1 chef-intraday, 4 gatherer-standard).
 
 Wave 2:
-- P1-DEV-3: Extended `.claude/scripts/cowork-match-slots.js` — adaptive mode via options={mode,pressureState,policyObj}. CLI entrypoint auto-detects adaptive via cadence-policy.json presence + isStale. Output slots gain due_reason + cadence_minutes.
+- P1-DEV-3: Extended `scripts/agents-flow/cowork-match-slots.js` — adaptive mode via options={mode,pressureState,policyObj}. CLI entrypoint auto-detects adaptive via cadence-policy.json presence + isStale. Output slots gain due_reason + cadence_minutes.
 
 Wave 3:
 - P1-DEV-5: Added Steps 4.2-4.5b to `docs/agents/cowork-team/flow/main.md` — staleness gate, calendar suppression, cadence due-check, freshness downgrade, CADENCE_MATCHES rebind. BLOCKER-1 resolution: suppression BEFORE Step 4.6.

@@ -84,7 +84,7 @@ Step 4: If no signal after 2 ticks (30 min):
   → Read docs/agents/cowork-team/flow/main.md — check for syntax errors
   → Verify docs/data/cowork-schedule.json is valid JSON:
       jq '.' docs/data/cowork-schedule.json
-  → Check .claude/scripts/cowork-match-slots.js exists
+  → Check scripts/agents-flow/cowork-match-slots.js exists
   → If any file missing: escalate to dev-mcp-server (Section 6)
 ```
 
@@ -155,8 +155,8 @@ jq '.' docs/data/cowork-schedule.json | head -5
 ### Check slot-matcher script
 
 ```bash
-ls .claude/scripts/cowork-match-slots.js
-node .claude/scripts/cowork-match-slots.js
+ls scripts/agents-flow/cowork-match-slots.js
+node scripts/agents-flow/cowork-match-slots.js
 ```
 
 Expected: JSON output `{"slots": [...], "drift_min": <N>}`. Non-JSON output or non-zero exit = script error → escalate to dev-mcp-server.

@@ -240,7 +240,7 @@ The cadence decision (is this slot due?) must be computable from local files onl
 |---|---|---|
 | `cadence-policy.json` — policy look-up table | Infrastructure (policy config) | `docs/data/cadence-policy.json` |
 | `policy_id` + `last_fired` fields in schedule | Infrastructure (config) | `docs/data/cowork-schedule.json` |
-| `cowork-match-slots.js` adaptive mode | Application (orchestration logic) | `.claude/scripts/cowork-match-slots.js` |
+| `cowork-match-slots.js` adaptive mode | Application (orchestration logic) | `scripts/agents-flow/cowork-match-slots.js` |
 | Cadence suppression + fallback logic | Application (orchestration) | `docs/agents/cowork-team/flow/main.md` Steps 4.3–4.5 (new) |
 | `last_fired` write step | Application (state tracking) | `docs/agents/cowork-team/flow/main.md` Step 5b (new) |
 | Calendar suppression call | Application (orchestration) | `docs/agents/cowork-team/flow/main.md` Step 4.2 (new) |
@@ -294,7 +294,7 @@ Step 5 fans out all WON_SLOTS in parallel. If multiple slots win and the `last_f
 
 **BLOCKER-4 (TEST FILE ZONE): `DWF-phase1-cadence.test.ts` location.**
 
-The cadence policy evaluation is pure JSON look-up logic — no DB, no MCP calls. If architect routes it to `apps/mcp-server/src/__tests__/`, the test can import a JS/TS cadence evaluator module from `apps/mcp-server/src/` (or a shared utilities path). If the evaluator lives entirely in `.claude/scripts/cowork-match-slots.js` (a Node.js script), the test would need a different harness (e.g. Jest/bun running against the script directly). Architect to decide where the evaluator module lives and which test harness applies.
+The cadence policy evaluation is pure JSON look-up logic — no DB, no MCP calls. If architect routes it to `apps/mcp-server/src/__tests__/`, the test can import a JS/TS cadence evaluator module from `apps/mcp-server/src/` (or a shared utilities path). If the evaluator lives entirely in `scripts/agents-flow/cowork-match-slots.js` (a Node.js script), the test would need a different harness (e.g. Jest/bun running against the script directly). Architect to decide where the evaluator module lives and which test harness applies.
 
 ---
 

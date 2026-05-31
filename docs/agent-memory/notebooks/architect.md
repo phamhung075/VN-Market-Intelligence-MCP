@@ -1,8 +1,37 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-30T20:45 UTC | **Sprint:** BCTC-TRUST-RED
+**Last updated:** 2026-05-31 00:25 UTC | **Sprint:** DWF-PHASE1
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## DWF-PHASE1 P1-ARCH (2026-05-31T00:25 UTC) — DESIGN COMPLETE
+
+**Sprint:** DWF-PHASE1 (Adaptive Cadence)
+
+**4 BLOCKERs resolved:**
+
+BLOCKER-1 — Suppression BEFORE claim. Calendar suppression (Step 4.3) + cadence due-check (Step 4.4) + freshness downgrade (Step 4.5) all gate the CADENCE_MATCHES set BEFORE Step 4.6 per-work-item claim. A suppressed slot never acquires a `cowork-slot:<slot_id>` token. AC-P1-4-3 is satisfied by design (no token = no release obligation). Phase 2 invariants (Step 0b leader lock, Step 4.6 suffix-free claim, Step 5 publish marker) are UNTOUCHED — Phase 1 is purely additive between Step 4b and Step 4.6.
+
+BLOCKER-2 — All 14 enabled slots assigned: 6 guaranteed→`null` (cron governs), 4 bctc-analyst-slot-*→`bctc-offmarket`, 4 gatherers→`gatherer-standard`. `chef-intraday`→`chef-intraday` policy. Missing-policy→conservative null fallback + WARN log.
+
+BLOCKER-3 — Single batched read→update-all-WON→tmp→rename in new Step 5b after fan-out. Non-fatal: failed write logs WARN + does not abort spawn. Only WON_SLOTS with successful spawns update `last_fired`.
+
+BLOCKER-4 — Cadence evaluator in `scripts/agents-flow/cadence-policy.js` (CommonJS, cowork zone). Test file `apps/mcp-server/src/__tests__/DWF-phase1-cadence.test.ts` uses bun:test harness (zero mcp-server production code under test; imports evaluator via relative path from test to scripts/agents-flow/).
+
+**OQ encodings:**
+- OQ-P1-2: staleness threshold = 20 min stored as `_staleness_threshold_minutes` in `cadence-policy.json`. AC-P1-6-2/6-3 boundaries updated: 25min→fallback; 18min→adaptive.
+- OQ-P1-3: new `bctc-offmarket` policy: holiday→null, weekend→1440, open/half_day/unknown→`_cron_fallback: true`. Reconciled with FR-P1-4 (bctc slots exempt from blanket weekend suppress; gatherer FR-P1-5 unaffected).
+
+**Key design decisions:**
+- `cadence-policy.json` carries `_cron_fallback: true` flag for bctc-offmarket open/half_day/unknown rows — evaluator must distinguish "suppress" null vs "cron governs" null.
+- EC-6 audit passed: no `open` + `chef-intraday` row has `interval_minutes: null`.
+- Step 4.3 calendar suppression logic explicitly exempts bctc-offmarket-weekend path (cadence policy handles 1440-min rate there, not blanket suppress).
+
+**Files:** CREATE 2 (`cadence-policy.json`, `cadence-policy.js`), MODIFY 3 (`cowork-match-slots.js`, `cowork-schedule.json`, `cowork-team/flow/main.md`), CREATE 1 test. Total 6 files. Zero `apps/mcp-server/src/` production code changes.
+
+**Brief:** `docs/architecture-briefs/2026-05-31-dwf-phase1-adaptive-cadence.md`
+
+---
 
 ## BCTC-TRUST-RED (2026-05-30T20:45 UTC) — DESIGN COMPLETE
 
