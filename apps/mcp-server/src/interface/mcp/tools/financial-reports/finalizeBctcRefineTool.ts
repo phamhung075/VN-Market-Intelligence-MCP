@@ -35,6 +35,13 @@ import {
   detectMagnitudeViolations,
   detectCrossStatementRevenue,
 } from "../../../../domain/services/financial-reports/bctcMagnitudeValidator.js";
+import {
+  aggregateScalars,
+} from "../../../../domain/services/financial-reports/bctcScalarAggregator.js";
+import {
+  computeBctcEval,
+  loadBctcEvalThresholds,
+} from "../../../../application/usecases/computeBctcEval.js";
 
 // ── DB row types ──────────────────────────────────────────────────────────────
 
@@ -369,6 +376,91 @@ export function buildFinalizeBctcRefineHandler(
           "UPDATE financial_reports SET refine_status = ? WHERE id = ?",
         ).run(report_status, report_id);
       })();
+
+      // ── BLOCK-1 FIX: Backfill financial_reports scalar aggregate columns ──
+      // Source: freshly inserted bctc_table_rows (the refined truth).
+      // Reuses bctcScalarAggregator (domain, pure, zero I/O) — DRY:
+      // same code→column mapping as the original parseBctcReport/storeReport path.
+      // Runs OUTSIDE the main transaction (read+write is safe — all rows committed).
+      // NULL semantics preserved: absent line items stay NULL, not 0.
+      try {
+        interface ScalarRow {
+          code: string | null;
+          label: string;
+          value_current: number | null;
+          statement_section: string;
+          is_summary_row: number;
+          unit: string;
+        }
+        const scalarRows = db
+          .prepare<ScalarRow, [string]>(
+            `SELECT code, label, value_current, statement_section, is_summary_row, unit
+             FROM bctc_table_rows
+             WHERE report_id = ?`,
+          )
+          .all(report_id);
+
+        const agg = aggregateScalars(scalarRows);
+
+        // Build the SET clause dynamically — only update columns where the
+        // aggregator produced a non-null value. NULL = "line absent" and must
+        // NOT overwrite an existing non-null value with a forced zero.
+        const updates: Array<{ col: string; val: number }> = [];
+        if (agg.net_revenue       !== null) updates.push({ col: "net_revenue",       val: agg.net_revenue });
+        if (agg.gross_profit      !== null) updates.push({ col: "gross_profit",      val: agg.gross_profit });
+        if (agg.profit_before_tax !== null) updates.push({ col: "profit_before_tax", val: agg.profit_before_tax });
+        if (agg.net_profit        !== null) updates.push({ col: "net_profit",        val: agg.net_profit });
+        if (agg.total_assets      !== null) updates.push({ col: "total_assets",      val: agg.total_assets });
+        if (agg.current_assets    !== null) updates.push({ col: "current_assets",    val: agg.current_assets });
+        if (agg.total_liabilities !== null) updates.push({ col: "total_liabilities", val: agg.total_liabilities });
+        if (agg.equity_total      !== null) updates.push({ col: "equity_total",      val: agg.equity_total });
+        if (agg.gross_margin_pct  !== null) updates.push({ col: "gross_margin_pct",  val: agg.gross_margin_pct });
+        if (agg.net_margin_pct    !== null) updates.push({ col: "net_margin_pct",    val: agg.net_margin_pct });
+
+        if (updates.length > 0) {
+          const setClauses = updates.map((u) => `${u.col} = ?`).join(", ");
+          const bindVals: (number | string)[] = [...updates.map((u) => u.val), report_id];
+          // bun:sqlite Statement.run accepts a rest array of binding values
+          (db.prepare(`UPDATE financial_reports SET ${setClauses} WHERE id = ?`) as {
+            run: (...args: (number | string)[]) => unknown;
+          }).run(...bindVals);
+          logger.info("[finalize_bctc_refine] scalar backfill complete", {
+            report_id,
+            updated_cols: updates.map((u) => u.col),
+          });
+        } else {
+          logger.warn("[finalize_bctc_refine] scalar backfill: no non-null scalars found", {
+            report_id,
+          });
+        }
+      } catch (scalarErr) {
+        // Non-fatal: log and continue — table rows are committed; scalar backfill
+        // failure is surfaced in logs for FU-6 ops to investigate.
+        logger.warn("[finalize_bctc_refine] scalar backfill error (non-fatal)", {
+          report_id,
+          error: scalarErr instanceof Error ? scalarErr.message : String(scalarErr),
+        });
+      }
+
+      // ── BLOCK-2 FIX: Recompute bctc_eval stages 4-6 post-refine ─────────────
+      // The eval was computed against pre-refine data (stale red for ACB).
+      // Recompute inside finalize so the eval reflects the freshly refined rows.
+      // Approach: inline recompute (stages 4-6 are fast — DB reads only, no PDF).
+      // If threshold loading fails (no thresholds file in test env), skip gracefully.
+      try {
+        const projectRoot = Bun.env["PROJECT_ROOT"] ?? process.cwd();
+        const thresholds = loadBctcEvalThresholds(projectRoot);
+        await computeBctcEval(db, report_id, thresholds);
+        logger.info("[finalize_bctc_refine] bctc_eval recomputed post-refine", { report_id });
+      } catch (evalErr) {
+        // Non-fatal: eval recompute failure must NOT block the finalize response.
+        // The table rows and scalar backfill are already committed.
+        // Ops can trigger a manual recompute via POST /api/bctc-eval/recompute/{id}.
+        logger.warn("[finalize_bctc_refine] eval recompute error (non-fatal) — manual recompute available", {
+          report_id,
+          error: evalErr instanceof Error ? evalErr.message : String(evalErr),
+        });
+      }
 
       logger.info("[finalize_bctc_refine] complete", {
         report_id,
