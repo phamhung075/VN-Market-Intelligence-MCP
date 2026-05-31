@@ -1,0 +1,19 @@
+{
+  "from": "po",
+  "kind": "maintenance-route",
+  "createdAt": "2026-05-29T23:59:00Z",
+  "routes": [
+    {
+      "to": "agents-architect",
+      "topic": "system-auditor-D4-abort-recurring",
+      "severity": "med",
+      "detail": "system-auditor D4 ABORT 'TASKS.md unreadable' fired 2026-05-28T03:00Z AND re-fired 2026-05-29T03:00Z (report #3006/#3008). Escalation policy (pipeline-state d4_audit_transient) said: re-fire on 05-29 => recurring => architect. It DID re-fire. TASKS.md is HEALTHY now (141L, parse-clean) => the auditor's read step has a transient/race failure mode (likely reads during a mid-edit window or wc/parse timing), NOT a real corruption. system-auditor is cowork/maintenance scope (NOT dev-team-spawnable). agents-architect: harden the auditor's TASKS.md read (retry-on-empty / read-after-stat / lock-aware) so a transient read can't fire a false D4 ABORT. Not a dev-team BATCH."
+    },
+    {
+      "to": "janitor",
+      "topic": "context-bloat-TASKS-md",
+      "severity": "low",
+      "detail": "docs/TASKS.md = 141 lines, exceeds 80L cap (docs/data/file-size-caps.json). Several CLOSED sprints (SIGDRAIN-PERSIST/BOOTSTRAP-ENUM-BCTC/VNH-SECTOR-FIX top block; DPI fully signed-off) are candidates to migrate to TASKS_ARCHIVE.md. Governance/janitor lane — do NOT dev-team-spawn. Also 65 signal files accumulating (mostly context-bloat heartbeat noise) — drain candidate per SIGDRAIN-PERSIST guard."
+    }
+  ]
+}

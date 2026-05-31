@@ -1,0 +1,28 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-05-30T19:48:00Z",
+  "detail": {
+    "cycle": "c84",
+    "slot": "tnb-audit",
+    "dish_audited": "chef-evening 2026-05-30T19:48Z",
+    "overall": "NEEDS_ATTENTION",
+    "direction": "STABLE",
+    "dish_score": "4/6 (L1=PASS, L2=PARTIAL, L3=PARTIAL, L4=PARTIAL, L5=PARTIAL, L6=PASS)",
+    "nine_step_score": "5.5/9 NEEDS_ATTENTION",
+    "auto_cures": 0,
+    "mcp_gateway": "BLOCKED_MODE_A",
+    "mcp_tools_failed": ["mcp__claude_ai_gateway__call_tool"],
+    "consecutive_mcp_blocked_cycles": 2,
+    "business_context_f9": "IMPROVING (ACB bctc_signal #4376 has product/customer/ops/mgmt cited in WORK dish)",
+    "carry_regime_note": "FII_OUTFLOW_RISK -> NEUTRAL (improved)",
+    "real_estate_non_fire": "CORRECT (sector divergence, no convergence rule)",
+    "findings_count": 7,
+    "findings_critical": 0,
+    "findings_med": 4,
+    "findings_low": 3
+  }
+}

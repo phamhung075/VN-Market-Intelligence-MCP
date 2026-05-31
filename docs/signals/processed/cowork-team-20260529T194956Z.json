@@ -1,0 +1,18 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T194956Z",
+    "matched_slots": ["chef-evening"],
+    "won_slots": ["chef-evening"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [{"step": "4.7", "error": "tick-snapshot skipped — known get_cycle_bootstrap enum bug (agent_name=cowork-team); agent falls back to direct bootstrap (zero-blocker)"}]
+  },
+  "priority": "low",
+  "createdAt": "20260529T194956Z"
+}

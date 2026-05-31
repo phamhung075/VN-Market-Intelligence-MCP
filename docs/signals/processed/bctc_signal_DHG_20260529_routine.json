@@ -1,0 +1,22 @@
+{
+  "ticker": "DHG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Dược phẩm sản xuất trong nước, thuốc generic và OTC phân phối toàn quốc",
+  "customer": "Bệnh viện, nhà thuốc, và người tiêu dùng cuối (OTC); Taisho Pharmaceutical nắm cổ phần lớn",
+  "ops": "DATA_INSUFFICIENT — Net Revenue=0 (lỗi trích xuất), Net Profit=315.7 ty VND (lỗi margin tính toán), EPS=4,971 VND — chỉ EPS đáng tin. Confidence 44%. Volume spike 3.0x ngày 2026-05-29 (alert).",
+  "mgmt": "Không đủ dữ liệu BCTC để đánh giá track record quý này",
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "eps_vnd": 4971,
+  "extraction_confidence_pct": 44,
+  "extraction_status": "BROKEN — Net Revenue zero, absurd margin ratios",
+  "regime": "EASING",
+  "cycle_id": "20260529-2100",
+  "emitted_at": "2026-05-29T21:08Z",
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "e1_status": "SKIPPED — extraction broken, no reliable data for passes"
+}

@@ -1,0 +1,18 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260529T201956Z",
+    "matched_slots": ["tnb-audit"],
+    "won_slots": ["tnb-audit"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/tran-ngoc-bau/flow/main.md"],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [{"step": "4.7", "error": "tick-snapshot skipped — known get_cycle_bootstrap enum bug (agent_name=cowork-team); agent falls back to direct bootstrap (zero-blocker)"}]
+  },
+  "priority": "low",
+  "createdAt": "20260529T201956Z"
+}

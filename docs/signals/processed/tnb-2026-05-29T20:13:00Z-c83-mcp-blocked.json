@@ -1,0 +1,8 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[tran-ngoc-bau] c83 Bootstrap Step 0c BLOCKED — MCP gateway unavailable (.mcp.json empty, no servers registered). Cannot call get_system_status, get_macro_snapshot, read_telegram_reports, or send_telegram. Audit cycle EXIT per bootstrap.md gateway-down handling. File-evidence mode skipped per policy. Notebook appended. c83 is BLOCKED.",
+  "priority": "high",
+  "createdAt": "2026-05-29T20:13:00Z"
+}

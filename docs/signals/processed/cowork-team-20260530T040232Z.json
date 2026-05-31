@@ -1,0 +1,18 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260530T040232Z",
+    "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/news-scout/flow/main.md", "docs/agents/market-watcher/flow/main.md"],
+    "silent": false,
+    "drift_min": 2,
+    "errors": []
+  },
+  "priority": "low",
+  "createdAt": "20260530T040232Z"
+}

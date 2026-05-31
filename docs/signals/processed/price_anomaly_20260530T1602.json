@@ -1,0 +1,161 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-05-30T16:02:59Z",
+  "dish_window": "eod",
+  "watchlist_summary": {
+    "total_tickers": 39,
+    "major_movers": [
+      {
+        "code": "GAS",
+        "price": 87400,
+        "daily_change_pct": 6.98,
+        "yoy_change_pct": 14.5,
+        "volume": 3160000,
+        "vs_avg_pct": 90,
+        "rsi": null,
+        "sentiment": "bullish — oil & gas sector momentum, Brent stable 91.12 USD/bbl, supply-side tightness",
+        "insider_activity": "no activity",
+        "brief_action": "Hold — monitor Brent support",
+        "regime_flag": "NEUTRAL",
+        "anomaly": false,
+        "anomaly_reason": null,
+        "sector": "oil_gas"
+      },
+      {
+        "code": "PLX",
+        "price": 41000,
+        "daily_change_pct": 3.93,
+        "yoy_change_pct": 10.3,
+        "volume": 4650000,
+        "vs_avg_pct": 109,
+        "rsi": null,
+        "sentiment": "bullish — oil sector recovery from crisis lows, Brent supports near-term",
+        "insider_activity": "no activity",
+        "brief_action": "Hold with stop-loss — tactical momentum",
+        "regime_flag": "NEUTRAL",
+        "anomaly": false,
+        "anomaly_reason": null,
+        "sector": "oil_gas"
+      },
+      {
+        "code": "ACB",
+        "price": 24900,
+        "daily_change_pct": 1.01,
+        "yoy_change_pct": 5.9,
+        "volume": 16940000,
+        "vs_avg_pct": 144,
+        "rsi": null,
+        "sentiment": "neutral — banking sector stabilization, FII carry pressure easing",
+        "insider_activity": "no activity",
+        "brief_action": "Hold — accumulate on dips",
+        "regime_flag": "NEUTRAL",
+        "anomaly": false,
+        "anomaly_reason": null,
+        "sector": "banking"
+      },
+      {
+        "code": "VHM",
+        "price": 156000,
+        "daily_change_pct": -1.08,
+        "yoy_change_pct": 1.43,
+        "volume": 5610000,
+        "vs_avg_pct": 164,
+        "rsi": null,
+        "sentiment": "neutral — real estate sector stabilization, consolidation near support 150k",
+        "insider_activity": "no activity",
+        "brief_action": "Hold — wait for sector breakout",
+        "regime_flag": "NEUTRAL",
+        "anomaly": false,
+        "anomaly_reason": null,
+        "sector": "real_estate"
+      },
+      {
+        "code": "VRE",
+        "price": 32250,
+        "daily_change_pct": 0.0,
+        "yoy_change_pct": 0.78,
+        "volume": null,
+        "vs_avg_pct": null,
+        "rsi": null,
+        "sentiment": "neutral — retail property mega-cap consolidation flat, sector stabilization",
+        "insider_activity": "no activity",
+        "brief_action": "Hold — await sector confirmation",
+        "regime_flag": "NEUTRAL",
+        "anomaly": false,
+        "anomaly_reason": null,
+        "sector": "real_estate"
+      }
+    ],
+    "sector_summary": {
+      "oil_gas": {
+        "leader": true,
+        "change_1d_pct": 3.3,
+        "change_5d_pct": 3.41,
+        "sentiment": "bullish — Brent stable, supply-side support"
+      },
+      "banking": {
+        "change_1d_pct": -0.16,
+        "change_5d_pct": -0.16,
+        "sentiment": "neutral — consolidation, FII pressure easing"
+      },
+      "real_estate": {
+        "change_1d_pct": 0.51,
+        "change_5d_pct": -1.37,
+        "sentiment": "neutral — stabilization from pressure, support held"
+      }
+    },
+    "macro_snapshot": {
+      "brent_crude_usd": 91.12,
+      "gold_usd_oz": 4593,
+      "usd_vnd": 26115,
+      "interest_rate_pct": 7,
+      "vnindex_estimated": 1909,
+      "market_sentiment": "NEUTRAL — oil momentum bullish, carry pressure stable, macro backdrop improving"
+    }
+  },
+  "tickers": [
+    {"code": "BDI", "price": null, "daily_change_pct": null, "yoy_change_pct": null, "anomaly": false},
+    {"code": "DLC", "price": null, "daily_change_pct": null, "yoy_change_pct": null, "anomaly": false},
+    {"code": "GVR", "price": 34900, "daily_change_pct": 1.6, "yoy_change_pct": null, "anomaly": false},
+    {"code": "VNH", "price": 800, "daily_change_pct": -11.11, "yoy_change_pct": null, "anomaly": false},
+    {"code": "ACV", "price": 43900, "daily_change_pct": 0.23, "yoy_change_pct": null, "anomaly": false},
+    {"code": "HVN", "price": 21400, "daily_change_pct": -0.47, "yoy_change_pct": null, "anomaly": false},
+    {"code": "BID", "price": 42000, "daily_change_pct": -1.18, "yoy_change_pct": null, "anomaly": false},
+    {"code": "CTG", "price": 34800, "daily_change_pct": -0.14, "yoy_change_pct": null, "anomaly": false},
+    {"code": "EIB", "price": 21300, "daily_change_pct": -0.23, "yoy_change_pct": null, "anomaly": false},
+    {"code": "MBB", "price": 25000, "daily_change_pct": 0.0, "yoy_change_pct": null, "anomaly": false},
+    {"code": "VCB", "price": 62000, "daily_change_pct": -1.27, "yoy_change_pct": null, "anomaly": false},
+    {"code": "VPB", "price": 27100, "daily_change_pct": -0.73, "yoy_change_pct": null, "anomaly": false},
+    {"code": "DPM", "price": 25900, "daily_change_pct": 0.19, "yoy_change_pct": null, "anomaly": false},
+    {"code": "DAG", "price": 1400, "daily_change_pct": 0.0, "yoy_change_pct": null, "anomaly": false},
+    {"code": "DHG", "price": 93700, "daily_change_pct": -0.74, "yoy_change_pct": null, "anomaly": false},
+    {"code": "D2D", "price": 31400, "daily_change_pct": -1.87, "yoy_change_pct": null, "anomaly": false},
+    {"code": "KBC", "price": 30500, "daily_change_pct": -0.33, "yoy_change_pct": null, "anomaly": false},
+    {"code": "NVL", "price": 15100, "daily_change_pct": 0.33, "yoy_change_pct": null, "anomaly": false},
+    {"code": "TCH", "price": 15050, "daily_change_pct": -2.59, "yoy_change_pct": null, "anomaly": false},
+    {"code": "VIC", "price": 211300, "daily_change_pct": 0.24, "yoy_change_pct": null, "anomaly": false},
+    {"code": "MWG", "price": 76300, "daily_change_pct": -1.8, "yoy_change_pct": null, "anomaly": false},
+    {"code": "HCM", "price": 27450, "daily_change_pct": -0.36, "yoy_change_pct": null, "anomaly": false},
+    {"code": "SSI", "price": 27500, "daily_change_pct": -0.18, "yoy_change_pct": null, "anomaly": false},
+    {"code": "VCI", "price": 24650, "daily_change_pct": -1.4, "yoy_change_pct": null, "anomaly": false},
+    {"code": "VDC", "price": null, "daily_change_pct": null, "yoy_change_pct": null, "anomaly": false},
+    {"code": "HPG", "price": 24000, "daily_change_pct": 0.0, "yoy_change_pct": null, "anomaly": false},
+    {"code": "HSG", "price": 12450, "daily_change_pct": -0.8, "yoy_change_pct": null, "anomaly": false},
+    {"code": "NKG", "price": 13650, "daily_change_pct": -0.36, "yoy_change_pct": null, "anomaly": false},
+    {"code": "FPT", "price": 71600, "daily_change_pct": 0.56, "yoy_change_pct": null, "anomaly": false},
+    {"code": "SIS", "price": null, "daily_change_pct": null, "yoy_change_pct": null, "anomaly": false},
+    {"code": "JSH", "price": null, "daily_change_pct": null, "yoy_change_pct": null, "anomaly": false},
+    {"code": "POW", "price": 13700, "daily_change_pct": -1.08, "yoy_change_pct": null, "anomaly": false},
+    {"code": "PPC", "price": 9810, "daily_change_pct": -0.2, "yoy_change_pct": null, "anomaly": false},
+    {"code": "REE", "price": 52700, "daily_change_pct": -0.57, "yoy_change_pct": null, "anomaly": false}
+  ],
+  "cycle_metrics": {
+    "tickers_scanned": 39,
+    "anomalies_detected": 0,
+    "price_anomalies": 0,
+    "volume_spikes": 0,
+    "chain_confirms": 0,
+    "ledger_updated": 5,
+    "ledger_failed": 0
+  }
+}

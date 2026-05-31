@@ -1,0 +1,63 @@
+{
+  "cycle_id": "20260530-2002",
+  "slot": "market-watcher-offhours",
+  "timestamp": "2026-05-30T20:02:58.262Z",
+  "mode": "offhours",
+  "market_status": "CLOSED",
+  "cycle_summary": {
+    "watchlist_scanned": 39,
+    "anomalies_detected": 0,
+    "anomalies_posted": 0,
+    "volume_spikes_detected": 0,
+    "chain_confirmations": 0,
+    "regime": "NEUTRAL",
+    "carry_regime": "FII_OUTFLOW_RISK",
+    "adaptive_threshold_sigma": 2.5,
+    "detail": "Offhours closed-market cycle. All watchlist prices stale from 2026-05-29 08:59 UTC. No intraday price moves detected. GAS +6.98% move from prior cycle already suppressed per AutoCure c47 (off-hours duplicate guard: same closing price, same session). Macro backdrop: USD/VND 26,115 (bearish), Brent 91.12 (flat), Gold 4,593 (stable). Supply chain stable (BDI 1,400). Energy grid nominal. Climate: early heat season noted, no portfolio tickers directly affected. Sector rotation: Oil & gas constructive (+3.41% / 5d), real estate consolidation (-1.37% / 5d), banking stabilization (-0.16% / 5d). System healthy (137 pending alerts from non-price sources)."
+  },
+  "macro_snapshot": {
+    "brent_crude_usd": 91.12,
+    "gold_usd_oz": 4593,
+    "usd_vnd": 26115,
+    "interest_rate_pct": 7,
+    "market_earnings_yield_pct": 6.83,
+    "market_median_pe": 14.64,
+    "bdi_index": 1400,
+    "regime_signal": "NEUTRAL",
+    "dxy_signal": "USD_STRENGTHENING",
+    "us10y_signal": "STABLE"
+  },
+  "sector_alerts": {
+    "oil_gas_trend": "CONSTRUCTIVE",
+    "real_estate_trend": "CONSOLIDATION",
+    "banking_trend": "STABILIZATION",
+    "tech_trend": "MILD_DECLINE",
+    "pharma_trend": "STABLE",
+    "hot_money_concentration": false
+  },
+  "anomalies": [],
+  "suppressed_signals": [
+    {
+      "stock_code": "GAS",
+      "move_pct": 6.98,
+      "move_sigma": 1.85,
+      "reason": "off-hours duplicate guard (same closing price from prior session, signal already emitted c1152/c1153)"
+    }
+  ],
+  "chain_findings": [
+    {
+      "stock_code": "ACB",
+      "signal_type": "fundamental_validation",
+      "from_agent": "bctc-analyst",
+      "created_at": "2026-05-30T18:05:05Z"
+    },
+    {
+      "stock_code": "FPT",
+      "signal_type": "fundamental_validation",
+      "from_agent": "bctc-analyst",
+      "created_at": "2026-05-30T18:05:13Z"
+    }
+  ],
+  "next_scheduled_cycle": "2026-06-02T02:00Z",
+  "notes": "Weekend offhours scan. Market reopens Monday. No trading action triggered. Watchlist baseline confirmed stable. Monitor: GAS/PLX momentum confirmation at market open, banking FII carry pressure, real estate technical support hold, macro USD/VND carry regime reversal signal."
+}

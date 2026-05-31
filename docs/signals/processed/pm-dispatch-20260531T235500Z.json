@@ -1,0 +1,105 @@
+{
+  "from": "pm",
+  "to": ["dev-team", "dev-mcp-server", "qa"],
+  "type": "task-dispatch",
+  "timestamp": "2026-05-31T23:55:00Z",
+  "sprint": "DWF-PHASE1",
+  "task": "P1-PM",
+  "status": "COMPLETE — ready for developer dispatch",
+  "payload": {
+    "summary": "PM decomposed DWF-PHASE1 blueprint into 8 atomic subtasks + 1 QA gate. All BLOCKERs from architect brief resolved. All 12 BLOCKING ACs from BA spec mapped to DV tests (T-1..T-13 RED→GREEN). Zone routing assigned (cross-service + test-harness).",
+    "handoff_files": [
+      "docs/handoffs/P1-PM-SUMMARY.md",
+      "docs/handoffs/TASK_P1-DEV-1.md",
+      "docs/handoffs/TASK_P1-DEV-2.md",
+      "docs/handoffs/TASK_P1-DEV-3.md",
+      "docs/handoffs/TASK_P1-DEV-4.md",
+      "docs/handoffs/TASK_P1-DEV-5.md",
+      "docs/handoffs/TASK_P1-DEV-6.md",
+      "docs/handoffs/TASK_P1-DEV-7.md",
+      "docs/handoffs/TASK_P1-QA.md"
+    ],
+    "dispatch_waves": {
+      "wave_1": {
+        "name": "Parallel tier-1 (independent)",
+        "agents": ["P1-DEV-1", "P1-DEV-2"],
+        "blocking_deps": [],
+        "estimated_hours": 2.5,
+        "note": "P1-DEV-4 can also run in parallel; 3 agents max allowed but WIP=2 suggested to keep headroom"
+      },
+      "wave_2": {
+        "name": "Parallel tier-1b",
+        "agents": ["P1-DEV-4"],
+        "blocking_deps": [],
+        "estimated_hours": 1,
+        "note": "Can run with Wave 1 or as immediate follow-up"
+      },
+      "wave_3": {
+        "name": "Sequential tier-2a + Parallel tier-3",
+        "agents": ["P1-DEV-3", "P1-DEV-7"],
+        "blocking_deps": ["P1-DEV-1", "P1-DEV-2"],
+        "estimated_hours": 3,
+        "note": "P1-DEV-3 requires evaluator from DEV-2 + policy from DEV-1. P1-DEV-7 can run in parallel after DEV-1/2 complete."
+      },
+      "wave_4": {
+        "name": "Sequential tier-2b",
+        "agents": ["P1-DEV-5"],
+        "blocking_deps": ["P1-DEV-3", "P1-DEV-4"],
+        "estimated_hours": 2.5,
+        "note": "Requires matcher from DEV-3 and schedule from DEV-4"
+      },
+      "wave_5": {
+        "name": "Sequential tier-2c",
+        "agents": ["P1-DEV-6"],
+        "blocking_deps": ["P1-DEV-5"],
+        "estimated_hours": 1,
+        "note": "Must wait for Step 5b insertion point (after fan-out in cowork flow)"
+      },
+      "wave_6": {
+        "name": "Sequential final gate",
+        "agents": ["P1-QA"],
+        "blocking_deps": ["P1-DEV-1", "P1-DEV-2", "P1-DEV-3", "P1-DEV-4", "P1-DEV-5", "P1-DEV-6", "P1-DEV-7"],
+        "estimated_hours": 3,
+        "note": "Integration verification + live tick trace + 8 verification gates"
+      }
+    },
+    "total_estimated_hours": "13.5 developer + 3 qa = 16.5h",
+    "wip_limit_policy": "Max 2 In Progress per wave; stagger wave starts to keep headroom",
+    "test_coverage": {
+      "unit_tests": 12,
+      "integration_stubs": 3,
+      "total_dv_tests": 13,
+      "all_blocking_acs_covered": true,
+      "nfr_p1_1_verified": true
+    },
+    "zone_assignments": {
+      "cross_service": ["P1-DEV-1", "P1-DEV-2", "P1-DEV-3", "P1-DEV-4", "P1-DEV-5", "P1-DEV-6"],
+      "test_harness": ["P1-DEV-7"],
+      "qa_verification": ["P1-QA"]
+    },
+    "blocking_issues_resolved": 4,
+    "blocker_1_resolution": "Suppression BEFORE per-work-item claim (Steps 4.2–4.5b gate CADENCE_MATCHES before Step 4.6; no token acquired for suppressed slots)",
+    "blocker_2_resolution": "All 14 slots assigned policy_id (6 guaranteed→null, 4 bctc→bctc-offmarket, 4 gatherers→gatherer-standard; missing-policy fallback to null)",
+    "blocker_3_resolution": "Single batched read→update-all-WON→tmp→rename in Step 5b (no parallel per-slot writes; non-fatal on write failure)",
+    "blocker_4_resolution": "Evaluator in .claude/scripts/cadence-policy.js (CommonJS module in cowork zone); test in apps/mcp-server/src/__tests__/ (bun:test harness reuse, zero mcp-server production code under test)",
+    "open_questions_resolved": 3,
+    "oq_p1_1": "chef-intraday open/high = 60 min CONFIRMED (host-memory bound; never suppress on open)",
+    "oq_p1_2": "staleness threshold = 20 min (NOT 30; one tick + 5min jitter); AC-P1-6-2/6-3 boundary tests updated",
+    "oq_p1_3": "bctc-analyst-slot-1..4 SUPPRESS on holiday ONLY (filing-driven), FIRE on weekend (catch-up value); needs bctc-offmarket policy",
+    "nfr_p1_1_impact": "Leader lock (Step 0b) + suffix-free cowork-slot:<slot_id> token (Step 4.6) + published-marker belt (Step 5) UNTOUCHED. Phase 1 is purely additive between Step 4b and Step 4.6. Higher fire-rate paths still enter Step 4.6 (no bypass).",
+    "commit_guidance": "All tasks commit on main (no branch). Use docs/policies/commit-convention.md § P1-DEV-N for message format. PM tracks WIP in docs/TASKS.md. QA produces reports/TASK_REPORT_P1-QA.md for PO critique-before-approve.",
+    "qa_sign_off_criteria": [
+      "All 13 unit tests PASS",
+      "3 RED proofs verified (T-2, T-8, T-12)",
+      "Schema validation PASS (14 slots, 28 rules)",
+      "Flow steps correctly inserted (4.2–4.5b + 5b)",
+      "Live tick telemetry complete (pressure_mode, calendar_status, suppressed_*, due_reasons, cadence_minutes, last_fired_*)",
+      "14-slot dispatch verified",
+      "Legacy fallback tested (pressure-state.json deletion)",
+      "Phase 2 safety verified (NFR-P1-1, leader lock untouched)"
+    ]
+  },
+  "next_action": "PM dispatches Wave 1 (P1-DEV-1 + P1-DEV-2) to dev-team; tracks WIP in docs/TASKS.md",
+  "priority": "HIGH",
+  "createdAt": "2026-05-31T23:55:00Z"
+}
