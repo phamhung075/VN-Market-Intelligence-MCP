@@ -135,14 +135,25 @@ function detectDivisor(rows: AggregatorRow[]): number {
  * @param rows           All rows to search
  * @param code           Exact code to match (trimmed)
  * @param labelHint      Optional: filter matches to rows whose label also matches
- *                       this pattern. If no hinted match found, falls back to
- *                       un-hinted result (the hint narrows, never eliminates).
+ *                       this pattern. When provided and a hinted match is found,
+ *                       the hinted row wins. When provided but NO hinted match exists,
+ *                       returns null (strict hint — caller's label-based fallback fires).
+ *                       This is the correct behavior for bank Roman-code disambiguation:
+ *                       if code "VIII" has no "lợi nhuận trước thuế" row, the balance-
+ *                       sheet collision row must NOT be returned; the caller's P_PBT
+ *                       label lookup should run instead.
  * @param statementSection  Optional: restrict to rows in this section
  *
  * Priority: is_summary_row=1 > is_summary_row=0 (header rows take precedence).
  *
  * FIX (FU-6c): Added labelHint to resolve code "I" collision between bank balance
  * sheet ("Tiền mặt, vàng bạc, đá quý") and income statement ("Thu nhập lãi thuần").
+ *
+ * FIX (FU-6d BLOCK-B): labelHint is now STRICT — no hinted match → return null,
+ * allowing the caller's label-based fallback to run. Previously the un-hinted result
+ * was returned as a fallback, which caused balance-sheet collision rows to win when
+ * the target income row was absent (e.g., code "VIII" returning "Chứng khoán đầu tư"
+ * instead of null when "Lợi nhuận trước thuế" is not in the row set).
  */
 function findByCode(
   rows: AggregatorRow[],
@@ -164,11 +175,13 @@ function findByCode(
       const best = summaryHinted ?? hinted[0]!;
       return best.value_current ?? null;
     }
-    // No hinted match — fall through to un-hinted with a note (caller-visible via null risk)
-    // The un-hinted fallback ensures backward-compatibility for simpler fixtures.
+    // FU-6d BLOCK-B: strict hint — no match → return null so caller's fallback fires.
+    // Prevents balance-sheet collision rows from winning when the target income row
+    // is absent. The caller should fall through to label-based lookup.
+    return null;
   }
 
-  // No hint or hint found no match — use summary preference
+  // No hint — use summary preference
   const summaryMatch = candidates.find((r) => r.is_summary_row === 1);
   const best = summaryMatch ?? candidates[0]!;
   return best.value_current ?? null;
@@ -178,7 +191,11 @@ function findByCode(
 
 /**
  * Find a value by label pattern in a specific statement section.
- * Returns the first match (summary preferred).
+ * Returns the best match (summary preferred, non-null preferred over null-valued headers).
+ *
+ * FIX (FU-6d) — NULL-VALUE SKIP (BLOCK-A generalization):
+ * Prefer non-null candidates over null-valued section headers.
+ * Same policy as findByLabelExcluding — null-valued rows are never a valid pick.
  */
 function findByLabel(
   rows: AggregatorRow[],
@@ -189,15 +206,20 @@ function findByLabel(
     (r) => r.statement_section === section && pattern.test(r.label),
   );
   if (matching.length === 0) return null;
-  const summaryMatch = matching.find((r) => r.is_summary_row === 1);
-  const best = summaryMatch ?? matching[0]!;
+
+  // FU-6d BLOCK-A: prefer non-null candidates over null-valued section headers
+  const nonNull = matching.filter((r) => r.value_current !== null);
+  const pool = nonNull.length > 0 ? nonNull : matching;
+
+  const summaryMatch = pool.find((r) => r.is_summary_row === 1);
+  const best = summaryMatch ?? pool[0]!;
   return best.value_current ?? null;
 }
 
 /**
  * Find a value by label with EXCLUSION filter.
  *
- * Returns the first summary-preferred match where the label matches `includePattern`
+ * Returns the best match where the label matches `includePattern`
  * AND does NOT match `excludePattern`.
  *
  * FIX (FU-6c): Used for bank equity resolution to exclude
@@ -206,6 +228,13 @@ function findByLabel(
  *
  * Also used for bank total_assets to exclude rows containing "nợ" or "nguồn vốn"
  * (prevents "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" from matching total_assets pattern).
+ *
+ * FIX (FU-6d) — NULL-VALUE SKIP (BLOCK-A generalization):
+ * A null-valued candidate is a section header with no actual data. It must NEVER win
+ * over a non-null candidate, regardless of row_order or is_summary_row.
+ * Priority order: (1) is_summary_row=1 AND non-null, (2) any non-null candidate,
+ * (3) is_summary_row=1 with null value, (4) null candidate — return null.
+ * Applied globally to ALL label-based resolution (bank AND corporate paths).
  */
 function findByLabelExcluding(
   rows: AggregatorRow[],
@@ -220,8 +249,15 @@ function findByLabelExcluding(
       !excludePattern.test(r.label),
   );
   if (matching.length === 0) return null;
-  const summaryMatch = matching.find((r) => r.is_summary_row === 1);
-  const best = summaryMatch ?? matching[0]!;
+
+  // FU-6d BLOCK-A: prefer non-null candidates over null-valued section headers.
+  // A null-valued row is a section heading with no data — it must never win over
+  // a real data row, regardless of row_order.
+  const nonNull = matching.filter((r) => r.value_current !== null);
+  const pool = nonNull.length > 0 ? nonNull : matching;
+
+  const summaryMatch = pool.find((r) => r.is_summary_row === 1);
+  const best = summaryMatch ?? pool[0]!;
   return best.value_current ?? null;
 }
 
@@ -291,9 +327,44 @@ function enforceBalanceIdentity(
   total_liabilities: number | null,
   equity_total: number | null,
 ): string | null {
-  if (total_assets === null || total_liabilities === null || equity_total === null) {
-    return null; // Cannot enforce when any component is absent
+  // FU-6d BLOCK-C: FAIL-LOUD on partially-unresolved required balance scalars.
+  //
+  // {total_assets, total_liabilities, equity_total} are REQUIRED for the balance
+  // identity check. When ALL three are null, the balance sheet is simply absent
+  // from the row set (income-statement-only report) → silently skip the check.
+  // But when AT LEAST ONE is non-null (balance sheet partially present), a null
+  // among the three means a resolution failure, not structural absence.
+  //
+  // This distinction handles two cases correctly:
+  //   (a) Income-only fixture (DV-FU5-3): all three null → skip check (return null)
+  //   (b) ACB live bug: total_assets=1,030,900,741, liabilities=932,149,689, equity=null
+  //       → equity null with the other two present = resolution failure → FAIL-LOUD
+  //
+  // Legitimately-absent fields (bank gross_profit, bank current_assets) are NOT in
+  // this set and must NOT trigger the violation — they are separate scalar columns
+  // that the balance identity never references.
+  //
+  // Returning a non-null violation here causes the caller (finalizeBctcRefineTool)
+  // to log.error + skip the scalar UPDATE — the stale value persists but is VISIBLE
+  // in logs, not silently ignored (fail-loud-on-null vs old fail-open-on-null).
+  //
+  // OLD behavior: return null when any component is absent (silent pass → stale persists)
+  // NEW behavior: if all three absent → null (skip); if any absent but not all → violation
+  const allAbsent = total_assets === null && total_liabilities === null && equity_total === null;
+  if (allAbsent) {
+    return null; // Balance sheet structurally absent — nothing to enforce
   }
+  if (total_assets === null || total_liabilities === null || equity_total === null) {
+    const missing = (
+      [
+        total_assets      === null ? "total_assets"      : null,
+        total_liabilities === null ? "total_liabilities" : null,
+        equity_total      === null ? "equity_total"      : null,
+      ] as (string | null)[]
+    ).filter((s): s is string => s !== null).join(", ");
+    return `REQUIRED SCALARS UNRESOLVED: ${missing} — balance identity cannot be verified`;
+  }
+
   if (total_assets === 0) return null; // Division guard
 
   const computed = total_liabilities + equity_total;
@@ -336,7 +407,10 @@ const P_BANK_EQUITY = /v[oố]n\s+ch[uủ]\s+s[oở]\s+h[uữ]u/i;
 const P_BANK_EQUITY_EXCLUDE = /t[oổ]ng\s+n[oợ]\s+ph[aả]i\s+tr[aả]|ngu[oồ]n\s+v[oố]n/i;
 
 // Both types: profit before tax
-const P_PBT = /l[oợ]i\s+nhu[aậ]n\s+tr[uướ]c\s+thu[eế]|profit\s+before\s+tax/i;
+// FU-6d: "trước" = tr + ư(U+01B0) + ớ(U+1EDB) + c — two codepoints between tr and c.
+// Character class [uướ] cannot match TWO codepoints, so old /tr[uướ]c/ failed silently.
+// Fix: use non-capturing alternation tr(?:ước|uoc|u[oớ]c) to handle all OCR/encoding variants.
+const P_PBT = /l[oợ]i\s+nhu[aậ]n\s+tr(?:ước|uoc|u[oớ]c)\s+thu[eế]|profit\s+before\s+tax/i;
 
 // Both types: net profit (Lợi nhuận sau thuế)
 const P_NET_PROFIT = /l[oợ]i\s+nhu[aậ]n\s+sau\s+thu[eế]|net\s+profit|net\s+income/i;
@@ -344,6 +418,37 @@ const P_NET_PROFIT = /l[oợ]i\s+nhu[aậ]n\s+sau\s+thu[eế]|net\s+profit|net\s
 // Bank code "I" labelHint: must match income statement rows, not balance sheet assets
 // Excludes "Tiền mặt, vàng bạc, đá quý" (code "I" in bank balance sheet) from matching
 const P_BANK_CODE_I_HINT = /thu\s+nh[aậ]p|doanh\s+thu/i;
+
+// FU-6d BLOCK-B: Bank code "VIII" labelHint for profit_before_tax
+// ACB uses code "VIII" for BOTH balance-sheet "Chứng khoán đầu tư" (147,029,433M)
+// AND income-statement "Lợi nhuận trước thuế" (5,368,138M). Without hint, candidates[0]
+// (balance-sheet asset at lower row_order) wins → wrong pick.
+// Hint narrows to the income-statement row. If no match, falls through to label lookup.
+// FU-6d: use tr(?:ước|uoc|u[oớ]c) — same encoding fix as P_PBT (see P_PBT comment above).
+const P_BANK_CODE_VIII_PBT_HINT = /l[oợ]i\s+nhu[aậ]n\s+tr(?:ước|uoc|u[oớ]c)\s+thu[eế]/i;
+
+// FU-6d BLOCK-B: Bank code "IX" labelHint for net_profit
+// ACB uses code "IX" for BOTH balance-sheet "Góp vốn, đầu tư dài hạn" (74,311M)
+// AND income-statement "Lợi nhuận sau thuế TNDN" (4,320,388M). Without hint,
+// the balance-sheet asset at lower row_order wins → net_profit = 74,311M (WRONG).
+// Hint narrows to the income-statement row. If no match, falls through to label lookup.
+const P_BANK_CODE_IX_NET_PROFIT_HINT = /l[oợ]i\s+nhu[aậ]n\s+sau\s+thu[eế]/i;
+
+// BANK PATH ROMAN-CODE AUDIT (FU-6d) — complete enumeration:
+//   Code "I"   → net_revenue:         labelHint = P_BANK_CODE_I_HINT      (done FU-6c)
+//   Code "II"  → not used for income: no collision risk (not mapped in aggregator)
+//   Code "III" → not used for income: no collision risk
+//   Code "IV"  → not used for income: no collision risk
+//   Code "V"   → not used for income: no collision risk
+//   Code "VI"  → not used for income: no collision risk
+//   Code "VII" → not used for income: no collision risk
+//   Code "VIII"→ profit_before_tax:   labelHint = P_BANK_CODE_VIII_PBT_HINT  (FU-6d)
+//   Code "IX"  → net_profit:          labelHint = P_BANK_CODE_IX_NET_PROFIT_HINT (FU-6d)
+//   Code "X"   → not used for income: no collision risk (not mapped in aggregator)
+//   Code "XI"  → not used for income: no collision risk
+//   Code "XII" → not used for income: no collision risk
+//   Code "XIII"→ not used for income: no collision risk (aggregator uses IX for net_profit)
+// All mapped bank income codes (I, VIII, IX) now have labelHints. No further rounds needed.
 
 // ── Main aggregator ───────────────────────────────────────────────────────────
 
@@ -412,10 +517,15 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
   const gross_profit = scale(findByCode(rows, "20"));
   // No label fallback for gross_profit — absent for banks → NULL
 
-  // profit_before_tax: corporate code "50", bank code "VIII" or label-based
+  // profit_before_tax: corporate code "50", bank code "VIII" (with labelHint) or label-based
   let profit_before_tax = scale(findByCode(rows, "50"));
   if (profit_before_tax === null) {
-    profit_before_tax = scale(findByCode(rows, "VIII"));
+    // Bank: code "VIII" (Roman numeral, Mẫu B02-TCTD)
+    // FU-6d BLOCK-B fix: labelHint filters out balance-sheet "Chứng khoán đầu tư"
+    // (ACB uses code "VIII" for both balance-sheet assets and income "Lợi nhuận trước thuế").
+    // If hint finds no match, findByCode falls back to un-hinted (no ACB collision in that case).
+    // Then label-based lookup as second fallback.
+    profit_before_tax = scale(findByCode(rows, "VIII", P_BANK_CODE_VIII_PBT_HINT));
   }
   if (profit_before_tax === null) {
     profit_before_tax = scale(
@@ -424,10 +534,15 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     );
   }
 
-  // net_profit: corporate code "60", bank code "IX" or label-based
+  // net_profit: corporate code "60", bank code "IX" (with labelHint) or label-based
   let net_profit = scale(findByCode(rows, "60"));
   if (net_profit === null) {
-    net_profit = scale(findByCode(rows, "IX"));
+    // Bank: code "IX" (Roman numeral, Mẫu B02-TCTD)
+    // FU-6d BLOCK-B fix: labelHint filters out balance-sheet "Góp vốn, đầu tư dài hạn"
+    // (ACB uses code "IX" for both balance-sheet assets and income "Lợi nhuận sau thuế").
+    // If hint finds no match, findByCode falls back to un-hinted.
+    // Then label-based lookup as second fallback.
+    net_profit = scale(findByCode(rows, "IX", P_BANK_CODE_IX_NET_PROFIT_HINT));
   }
   if (net_profit === null) {
     net_profit = scale(
