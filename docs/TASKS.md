@@ -8,16 +8,14 @@
 
 - BCTC-TRUST-RED ✅ e0c900d0 → FU-TRUST-REFRESH ✅ EXIT-WITH-CAVEAT 2026-05-31 → BANK-AWARE-BCTC ✅ PO-EXIT 2026-05-31 (941bf552 HYBRID; QA 040409f9; live img 7f413304; ACB B02-TCTD serves raw + FPT B01-DN 0-regression, both router-raw-verified; 🔄 FU-BANK-CODECOL below) · BCTC-AI-INPUT-TAB ✅ b4ed9266 · BCTC-HUMAN-CONFIRM ✅ 441f8e18 · BCTC-AGENTIC-REFINE ✅ 🔄 AR-FU-DETERMINISM DEFERRED · DATA-PIPELINE-INTEGRITY ✅ 🔄 FU-C DEFERRED ⏳ FU-MON (Monday) · BCTC-TABLE-BOUNDARY ✅ FU-BTB-OCR registered
 - DYN-WF-FOUNDATION ✅ DWF-EXIT 2026-05-31 (84643927…eee22112) · DWF-PHASE1 ✅ P1-PO-EXIT 2026-05-31 (5a19485e…38d241c5) ⛔ Phase 3+ DEFERRED · MACRO-CMDTY-DELTA ✅ PO-EXIT 2026-05-31 (e510e5df…fdc17265) 🔄 FU-MON · FF-DEAD ✅ fixed 0cbce0b4 ⏳ FU-MON · PEK-INTEGRATE ✅ DONE-PENDING-G9 2026-05-28 (12 corpus has_pek:true; awaits USER verbal G9)
+- BRIEF-SECTOR-DRIFT ✅ DONE/QA-APPROVED 2026-05-31 (4670393a BSD-1+2 · ef146e1a+61b0e224 BSD-3) — VNH/PLX/GVR brief sector→seed SSOT; **Sector**: line dropped from template+43 briefs+2 flows (drift structurally impossible); test 4/4, tsc 0, zone-split clean
 
 ---
 
-## Sprint BRIEF-SECTOR-DRIFT — Stale brief sector vs seedWatchlist SSOT (VNH recurrence)
+## Sprint AUDITOR-NO-DESTRUCT — system-auditor must be detect-only (P0 incident hardening)
 
-**Status:** ✅ DONE 2026-05-31. QA APPROVED. Commits 4670393a (BSD-1+BSD-2) · ef146e1a (BSD-3 docs) · 61b0e224 (BSD-3 test).
-- ✅ **BSD-1** — DONE 4670393a. VNH→agriculture, PLX→oil_gas, GVR→agriculture in analysis-briefs. QA: **Sector** grep 0 (raw confirmed).
-- ✅ **BSD-2** — DONE 4670393a. VNH removed from BĐS lists in 3 published files; 1 đính-chính line each; 4th file (GVR.md) had no VNH content (confirmed). QA APPROVED.
-- ✅ **BSD-3** — DONE ef146e1a+61b0e224. Dropped **Sector**: from template+43 briefs+2 flows. Drift structurally impossible. Test 4/4 pass; tsc exit 0; zone-split clean (ef146e1a=docs-only, 61b0e224=apps-only). QA APPROVED.
-- ✅ **BSD-QA** — DONE. AC-1: grep 0 confirmed raw. AC-2: 0 VNH↔BĐS coupling; 1 đính-chính per file; 4th file no-VNH confirmed. AC-3: 4 pass 0 fail; positive-control fixture live; tsc 0 errors; no regression (BANK-AWARE-1 33/33). AC-4: zone-split verified. QA: APPROVED 2026-05-31.
+**Status:** BACKLOG 2026-05-31. **Pri: HIGH.** Zone: agents-architect (policy) → agent-father (auditor .md/flow guard). Trigger: 2026-05-31 21:08:03Z P0 — false-positive A-30-HOST-DISK ENOSPC critical (retracted 9c381ed3; `df`=26GiB free) drove the Tier-1 system-auditor to `docker stop` the mcp-server (SIGTERM/exit0), taking ALL 154 tools + crons + market data + Telegram offline ~9–129 min until ops relaunched (no rebuild). Corroborated Telegram report id 3016.
+- 🔄 **AUD-ND-1 (agents-architect → agent-father)** — system-auditor flow MUST be detect/PLAN-ONLY: forbid ALL destructive/runtime-mutating shell ops (docker stop/kill/rm/restart, compose down, kill, rm -rf of live dirs). Any "remediation" emits a signal/DASHBOARD row, never acts. Add explicit "NEVER run destructive docker/kill/rm" invariant to auditor .md + guard/allowlist narrowing effective Bash to read-only probes. AC: simulated ENOSPC false-positive → DASHBOARD/signal row + ZERO infra mutation; invariant present in flow; regression note links this incident (9c381ed3 + report 3016). Route normal po→architect→agent-father next cycle.
 
 ## Sprint TOOL-SURFACE-HYGIENE — Clean the vn-market MCP tool surface
 
@@ -69,7 +67,7 @@
 
 ## Backlogs
 
-- FU-BANK-CODECOL (dev-mcp-server, NOT gated) — VN label text leaks into `code` column of bctc_table_rows (markdown→rows column-alignment defect); hybrid discriminator immune (anchored regex won't match prose) but real data-quality bug · BCTC-TABLE-2 → QUEUED (multi-ticker; after LF-EXTRACT + LF-OVERLAY close) · KD-QREF-LANG OPEN (EN/VI switch) · code-janitor DOUBLON CLEAN candidate (3 live + 10 proposed, HELD, batch when apps/mcp-server has no active reliability sprint) · Phase 0/1 pilot backlogs frozen → `docs/TASKS_ARCHIVE.md`
+- TNB-GATEWAY-PROBE (agent-father, LOW, weekend-safe) — recurring (c83+c84, 2 consecutive) tnb false "mcp-blocked": bootstrap Step 0c reads empty `.mcp.json` instead of probing the healthy gateway. Fix: Step 0c PROBES gateway by call_tool-ing a real tool, not reading `.mcp.json`. AC: tnb session with healthy gateway emits 0 bug-escalation; .mcp.json read removed from bootstrap. Route po→architect/agent-father next cycle. · FU-BANK-CODECOL (dev-mcp-server, NOT gated) — VN label text leaks into `code` column of bctc_table_rows (markdown→rows column-alignment defect); hybrid discriminator immune (anchored regex won't match prose) but real data-quality bug · BCTC-TABLE-2 → QUEUED (multi-ticker; after LF-EXTRACT + LF-OVERLAY close) · KD-QREF-LANG OPEN (EN/VI switch) · code-janitor DOUBLON CLEAN candidate (3 live + 10 proposed, HELD, batch when apps/mcp-server has no active reliability sprint) · Phase 0/1 pilot backlogs frozen → `docs/TASKS_ARCHIVE.md`
 
 ---
 

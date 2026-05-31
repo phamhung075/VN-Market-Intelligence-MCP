@@ -1,28 +1,25 @@
 # PO Notebook
 
-## Cycle 2026-05-31 — BANK-AWARE-BCTC PO-EXIT (CLOSE)
+## Cycle 2026-05-31 ~21:21Z — dev-team triage (Sunday night, VN market CLOSED)
 
-QA signalled sprint-complete (040409f9). EXIT sign-off on bank-form B02-TCTD awareness across 7 BCTC consumers via single SSOT discriminator `bctcFormType.ts`.
+Backend healthy again (ops restored mcp-server, 154 tools). Triaged 6 pendingSignals + 1 P0 incident.
 
-**VERDICT: ✅ CLOSE.** All gates GREEN + independently router-raw-verified (NOT relayed badges — `feedback_router_verify_raw_not_badges`).
+**pendingSignals[] decisions (triage-signals.md table):**
+1-4. bctc_signal ACB/DHG/EIB/FPT (routine) — feed bctc enrichment pipeline, NOT dev work → SKIP (table row: bctc_signal default skip).
+5. microservice_degraded "MCP-STACK-DOWN" — ALREADY RESOLVED (same outage as P0 below). Already drained DB 88d8076d. No repair task. Telegram incident report id 3016 (analysis-agent) → process_telegram_report(fixed), msg deleted.
+6. bug-escalation tnb "c84-mcp-blocked" — recurring STRUCTURAL gap (c83+c84, 2 consecutive). Gateway healthy; false alarm from tnb bootstrap reading empty .mcp.json. Per recurring-bug-escalation (≥2) → opened ONE LOW backlog **TNB-GATEWAY-PROBE** (agent-father): Step 0c PROBE gateway via call_tool, not read .mcp.json. Weekend-safe.
 
-**My own raw verify (live `get_bctc_full` via gateway, I opened the values):**
-- ACB (bank B02-TCTD): SERVES RAW, NO "no decomposition/forced-zero" refusal (the FU-EXIT block is GONE). Balance reconciles TA 1.030.900,7 = Liab 932.149,7 + Eq 98.751,1. Gross absent (NULL-legal), Current Ratio "N/A (bank)".
-- FPT (corporate B01-DN): 0-regression. Gross 4.244,9 (34%) RESTORED, Current Ratio 1.00x, balance TA 68.586,1 = 28.464,1 + 40.122, conf 81%.
-- Discriminator grep-confirmed = brief: ROMAN_SECTION anchored Roman/section regex AND `^[0-9]{3}` corporate veto (L76-78). toolCount 154, health ok, live img 7f413304.
+**P0 INCIDENT → PRIORITY OUTPUT (this is the real task this tick):**
+21:08:03Z mcp-server `docker stop` (SIGTERM/exit0, graceful — NOT crash) took ENTIRE backend offline ~9–129min. Root cause router-verified: false-positive A-30-HOST-DISK ENOSPC critical (df=26GiB free, claude-501=2.3MB; retracted 9c381ed3) drove Tier-1 system-auditor to STOP a production container. SYSTEMIC BUG: auditor is a DETECTOR but its flow+Bash let a false positive MUTATE runtime infra. Telegram report 3016 corroborates (false-ENOSPC trigger).
+→ Wrote TASKS.md BACKLOG **AUDITOR-NO-DESTRUCT** (HIGH, weekend-safe code/doc-only): AUD-ND-1 = auditor flow detect/PLAN-ONLY, forbid ALL destructive shell (docker stop/kill/rm/restart, compose down, kill, rm -rf live dirs); remediation emits signal/DASHBOARD row, never acts; explicit invariant + read-only-Bash narrowing. AC: simulated ENOSPC → row + ZERO mutation. Zone: agents-architect (policy) → agent-father (impl). Route normal chain NEXT cycle.
 
-**Process win — both standing rules fired:**
-- recurring-bug-escalation: 3rd touch on bctcFormType.ts forced architect root-cause, not another point-fix. 4 iterations: domain-keyed → no-3-digit=bank → any-letter=bank → HYBRID (941bf552 FINAL).
-- router-verify-raw-not-badges: caught the DEV-3 FPT regression INVISIBLE to the green suite — FPT real VAS codes 411a/420a/420b/26b contain letters, so architect's "corporate codes purely numeric" premise was empirically false. Only live get_bctc_full reading exposed it. DV test now seeded with FPT's REAL codes → iteration #5 cannot regress silently.
+**TASKS.md hygiene:** added 3 entries (AUDITOR-NO-DESTRUCT sprint, AUD-ND-1, TNB-GATEWAY-PROBE backlog), collapsed DONE/QA-APPROVED BRIEF-SECTOR-DRIFT sprint (7L) → 1 closed-followup line. Net 76→74L (under 80 cap).
 
-**Follow-ups seeded (do NOT block EXIT):**
-- FU-BANK-CODECOL (TASKS Backlogs) — VN label text leaks into `code` column of bctc_table_rows (markdown→rows column-alignment defect). Hybrid immune (anchored regex won't match prose) but real data-quality bug. NOT gated.
-- Out-of-scope, recorded not seeded (pre-existing/unrelated): VCB refine_status=PENDING/0-rows placeholder; FPT YoY 2025-Q4 gross-margin-100% prior-period contamination (FU-TRUST-REFRESH #16 caveat, current 2026-Q1 clean); 135 pre-existing full-suite failures.
+**RETURN to dev-team: NOTHING.** Both backlog entries WRITTEN; no DISPATCHABLE weekend work (market closed, all real work = next-cycle architect/agent-father chain; AUDITOR-NO-DESTRUCT is policy→agent-md, not a FIX this tick). Honest idle-with-backlog per main.md No-Task Guard.
 
-**Writes:** SPRINT_GOAL §BANK-AWARE-BCTC status→PO-EXIT/CLOSED + full sign-off block. TASKS.md: section removed → closed-sprints follow-up line (68L, was 81L, under 80L cap). FU-BANK-CODECOL seeded to Backlogs.
+**Lessons applied:** router-verify-raw (df disproved ENOSPC, not relayed); recurring-bug-escalation (tnb c83+c84 → ONE task); ship-completion (registered, didn't slice).
 
-## Carry-over
-- ENV-ISOLATION-P2 schedulable; serialize EI-P2-2 mcp-server rebuild vs any future apps/mcp-server rebuild (BANK-OPS now done, no longer a collision). Flag to router.
-- TOOL-SURFACE-HYGIENE: TSH-1 (deregister get_market_hexagram) still pending, ships first; TSH-5 stat reconcile last (expect toolCount 153 after — note: live is 154 with hexagram still present).
-- FU-BANK-CODECOL pickable when apps/mcp-server has no active reliability sprint.
-- ACB confidence shows 38% live — tied to known code-column/pre-finalization artifacts, not a BANK-AWARE regression.
+### Carry-over
+- NEXT CYCLE: route AUDITOR-NO-DESTRUCT po→architect→agent-father (auditor detect-only guard). Route TNB-GATEWAY-PROBE po→agent-father (bootstrap Step 0c gateway probe).
+- WATCH: system-auditor must NOT re-trigger destructive remediation before AUD-ND-1 ships — any further false-ENOSPC could re-stop a container. If recurs this weekend → escalate priority.
+- Open weekend-gated: TOOL-SURFACE-HYGIENE (TSH-1/5 pending rebuild), ENV-ISOLATION P2 (gate released), SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST, NB-PRUNE-FIX, CHEF-ATTN.
