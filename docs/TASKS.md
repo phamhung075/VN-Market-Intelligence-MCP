@@ -7,7 +7,7 @@
 ## Closed sprints (live follow-ups only — full records in briefs/archive)
 
 - BCTC-TRUST-RED ✅ e0c900d0 → FU-TRUST-REFRESH ✅ EXIT-WITH-CAVEAT 2026-05-31 (mock GONE; FPT serving; ACB scalars correct but `get_bctc_full(ACB)` blocked on bank-form B02-TCTD — DATA trustworthy / SERVING blocked; record→SPRINT_GOAL §FU-EXIT) → BANK-AWARE-BCTC ACTIVE below · BCTC-AI-INPUT-TAB ✅ b4ed9266 · BCTC-HUMAN-CONFIRM ✅ 441f8e18 · BCTC-AGENTIC-REFINE ✅ 🔄 AR-FU-DETERMINISM DEFERRED · DATA-PIPELINE-INTEGRITY ✅ 🔄 FU-C DEFERRED ⏳ FU-MON (Monday) · BCTC-TABLE-BOUNDARY ✅ FU-BTB-OCR registered
-- DYN-WF-FOUNDATION ✅ DWF-EXIT 2026-05-31 (84643927…eee22112) · DWF-PHASE1 ✅ P1-PO-EXIT 2026-05-31 (5a19485e…38d241c5) ⛔ Phase 3+ DEFERRED · MACRO-CMDTY-DELTA ✅ PO-EXIT 2026-05-31 (e510e5df…fdc17265) 🔄 FU-MON · FF-DEAD ✅ fixed 0cbce0b4 ⏳ FU-MON
+- DYN-WF-FOUNDATION ✅ DWF-EXIT 2026-05-31 (84643927…eee22112) · DWF-PHASE1 ✅ P1-PO-EXIT 2026-05-31 (5a19485e…38d241c5) ⛔ Phase 3+ DEFERRED · MACRO-CMDTY-DELTA ✅ PO-EXIT 2026-05-31 (e510e5df…fdc17265) 🔄 FU-MON · FF-DEAD ✅ fixed 0cbce0b4 ⏳ FU-MON · PEK-INTEGRATE ✅ DONE-PENDING-G9 2026-05-28 (12 corpus has_pek:true; awaits USER verbal G9)
 
 ---
 
@@ -47,28 +47,26 @@
 
 ## Sprint SELF-IMPROVE-GATE — Gated Self-Improvement Loop
 
-**Status:** OPEN — Phase 2 (lane-B code gate) live 2026-05-28. PO: APPROVE-WITH-CONDITIONS (062a6569 + ef109a76). X-1 open. **Priority: HIGH.** Zone: `apps/mcp-server/`.
-
-- ✅ Phase 1 (flow wiring → `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md`) + Phase 2 code (`selfImproveOrchestratorJob` + degradationRules + improveCheckStore, GATE-PROOF PROVEN-RED)
-- 🔄 SIG-FOLLOWUP-DRYRUN (X-1): synthetic-data dry-run, D-IMPROVE emit path end-to-end
+**Status:** OPEN — Phase 2 (lane-B code gate) live 2026-05-28. PO APPROVE-WITH-CONDITIONS (062a6569 + ef109a76). **Pri: HIGH.** Zone: `apps/mcp-server/`. ✅ Phase1 (brief `…/2026-05-27-gated-self-improvement-loop.md`) + Phase2 code (selfImproveOrchestratorJob + degradationRules + improveCheckStore, GATE-PROOF PROVEN-RED). 🔄 SIG-FOLLOWUP-DRYRUN (X-1): synthetic dry-run, D-IMPROVE emit path e2e.
 
 ---
 
-## Sprint PEK-INTEGRATE ✅ DONE-PENDING-G9 (2026-05-28). 12 corpus has_pek:true. Condition: USER verbal G9.
+## Sprint NB-PRUNE-FIX — Notebook prune anchor-format mismatch (fleet bloat)
+
+**Status:** OPEN 2026-05-31 (recurring `context_bloat_breach`; manual prune 41c9ac73). **Pri: HIGH.** Zone: `.claude/skills/` + agent flow `.md` (disjoint from peer `apps/mcp-server/`). Fresh first-fix — normal chain.
+
+- **Defect (call-site/contract mismatch, skill internally correct):** `.claude/skills/notebook-write/SKILL.md` prune+guard (AC-2/3/5) greps ONLY `^## c[0-9]`, but agents emit `## <ISO-ts>`/`## Session:` headings → prune Edits no-op, retention never fires → unbounded growth (ops 5871L, dev-alert-engine 389L, unified-agent 377L, agents-architect 316L; ALL 0 `## c` sections). Notes also inconsistent: po/main.md L126 "OVERWRITE ≤50L" vs developer L125 "append c<NNN>".
+- 🔄 **NB-PRUNE-1 (developer)** — Reconcile anchor contract in SKILL to match heading format agents actually write (`## <ISO-ts>`, grep `^## [0-9]`) + fix mis-describing flow notes. Target: `.claude/skills/notebook-write/SKILL.md` + offending flow `.md`. Baseline: 5 notebooks >cap (≥223L), 0 `## c` fleet-wide. AC: skill run on a >3-section sample (e.g. agents-architect.md) prunes oldest → wc -l ≤200 + oldest section gone. **QA REQUIRED** (deliberate-violation: 6-section notebook, prove prune fires).
 
 ## Sprint BCTC-LAYOUT-FIRST — Document-Structure-First Extraction
 
-**Status:** OPEN — Phase 0 READY. **Priority: HIGH.** Zone: multi. Brief `docs/architecture-briefs/2026-05-26-bctc-layout-first-pipeline.md`.
-
-- 🔄 LF-EXTRACT (dev-pdf-extractor) · 🔄 LF-OVERLAY (zone-toggle only, persist ✅ per SPIKE_3011 2a4e036d, 177 units confirmed) · 🔄 LF-DEPLOY + LF-QA (TR-2 gate: opex 11/24/25/26 + equity + EBITDA + OCF) + LF-EXIT
+**Status:** OPEN — Phase 0 READY. **Pri: HIGH.** Zone: multi. Brief `…/2026-05-26-bctc-layout-first-pipeline.md`. 🔄 LF-EXTRACT (dev-pdf-extractor) · 🔄 LF-OVERLAY (zone-toggle only, persist ✅ SPIKE_3011 2a4e036d, 177 units) · 🔄 LF-DEPLOY + LF-QA (TR-2: opex 11/24/25/26 + equity + EBITDA + OCF) + LF-EXIT
 
 ---
 
 ## Sprint CHEF-ATTN — Bootstrap Attention Diversity Cap
 
-**Status:** READY (2026-05-27). Per-stock diversity cap on `buildAlertsSection`. **Priority: MEDIUM.** Zone: `apps/mcp-server/`.
-
-- 🔄 CHEF-ATTN-BA → IMPL (dev-mcp-server) → DEPLOY (ops) → QA → EXIT (po)
+**Status:** READY (2026-05-27). Per-stock diversity cap on `buildAlertsSection`. **Pri: MEDIUM.** Zone: `apps/mcp-server/`. 🔄 CHEF-ATTN-BA → IMPL (dev-mcp-server) → DEPLOY (ops) → QA → EXIT (po).
 
 ---
 
