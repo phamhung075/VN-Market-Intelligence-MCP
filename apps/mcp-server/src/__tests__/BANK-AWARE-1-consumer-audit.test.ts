@@ -27,7 +27,7 @@ import { describe, it, expect } from "bun:test";
 import { Database } from "bun:sqlite";
 
 // ── imports under test ────────────────────────────────────────────────────────
-import { isBankForm } from "../domain/services/financial-reports/bctcFormType.js";
+import { isBankFormFromRows } from "../domain/services/financial-reports/bctcFormType.js";
 import {
   checkPublishability,
   buildSummarySection,
@@ -153,6 +153,7 @@ function makeEvalDb(): Database {
     net_revenue REAL,
     gross_profit REAL,
     net_profit REAL,
+    total_assets REAL,
     parsed_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
@@ -215,36 +216,90 @@ const EVAL_THRESHOLDS: BctcEvalThresholds = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DV-BANK-0: isBankForm canonical discriminator smoke test
+// DV-BANK-7: isBankFormFromRows discriminator regression (BANK-ARCH-2 / BANK-DEV-2)
 // ─────────────────────────────────────────────────────────────────────────────
+//
+// RED-before-GREEN protocol:
+//   BEFORE fix (isBankForm(domain)): all these tests would fail because the old
+//     function tested domain strings, not row codes.
+//   AFTER fix (isBankFormFromRows): structural signal — 3-digit code absence.
+//
+// Seed 1: corporate rows with 3-digit codes → false (corporate)
+// Seed 2: bank rows with Roman/null codes → true (bank)
+// Seed 3: empty rows → false (fail-safe: no silent bank promotion)
+// Seed 4: rows with 1-digit and alphabetic codes, no 3-digit → true (bank)
 
-describe("DV-BANK-0 — isBankForm canonical discriminator (bctcFormType.ts)", () => {
-  it("returns true for domain='banking' (ACB, VCB, BID pattern)", () => {
-    expect(isBankForm("banking")).toBe(true);
+describe("DV-BANK-7 — isBankFormFromRows structural discriminator regression", () => {
+  it("Seed 1: rows with 3-digit codes [100,200,300,400] → false (corporate)", () => {
+    // Corporate Mẫu B01-DN: codes 100-440 always present
+    // BEFORE: isBankForm("technology") = false — coincidentally same, but by domain string
+    // AFTER: structural — has 3-digit code → corporate → false
+    const rows = [
+      { code: "100" },
+      { code: "200" },
+      { code: "300" },
+      { code: "400" },
+    ];
+    expect(isBankFormFromRows(rows)).toBe(false);
   });
 
-  it("returns true for domain='bank' (alternate spelling)", () => {
-    expect(isBankForm("bank")).toBe(true);
+  it("Seed 2: rows with Roman/null codes [I,II,VIII,IX,null] → true (bank)", () => {
+    // Bank Mẫu B02-TCTD: Roman numerals and nulls only
+    // BEFORE: isBankForm("banking") = true — correct but by domain string
+    // AFTER: structural — no 3-digit code → bank → true
+    const rows = [
+      { code: "I" },
+      { code: "II" },
+      { code: "VIII" },
+      { code: "IX" },
+      { code: null },
+    ];
+    expect(isBankFormFromRows(rows)).toBe(true);
   });
 
-  it("returns true for domain='BANKING' (case-insensitive)", () => {
-    expect(isBankForm("BANKING")).toBe(true);
+  it("Seed 3: empty rows → false (fail-safe: no silent bank promotion without evidence)", () => {
+    // BEFORE: isBankForm(undefined) = false — coincidentally same, different reason
+    // AFTER: empty rows → fail-safe → false
+    expect(isBankFormFromRows([])).toBe(false);
   });
 
-  it("returns false for domain='technology' (FPT, CMG pattern)", () => {
-    expect(isBankForm("technology")).toBe(false);
+  it("Seed 4: rows with 1-digit and alphabetic codes only [01,02,I,B] → true (bank)", () => {
+    // ACB-pattern: single-digit numeric codes (01-09), alphabetic (A, B), Roman (I)
+    // None match /^[0-9]{3}/ → bank form
+    // BEFORE: domain-based — would return false for domain="other" (the live DB value)
+    // AFTER: structural — no 3-digit code → bank → true
+    const rows = [
+      { code: "01" },
+      { code: "02" },
+      { code: "I" },
+      { code: "B" },
+    ];
+    expect(isBankFormFromRows(rows)).toBe(true);
   });
 
-  it("returns false for domain='real_estate' (VHM, NVL pattern)", () => {
-    expect(isBankForm("real_estate")).toBe(false);
+  it("Edge: row with code '99' (2-digit) → true (not a 3-digit code)", () => {
+    const rows = [{ code: "99" }];
+    expect(isBankFormFromRows(rows)).toBe(true);
   });
 
-  it("returns false for null domain (unset)", () => {
-    expect(isBankForm(null)).toBe(false);
+  it("Edge: row with code '1000' (4-digit) → false (4-digit also not a bank code, but matches /^[0-9]{3}/)", () => {
+    // /^[0-9]{3}/ matches "1000" because "100" is the first 3 chars
+    // 4-digit codes are not expected in either form, but the regex is prefix-only
+    // Test documents the regex behaviour explicitly.
+    const rows = [{ code: "1000" }];
+    expect(isBankFormFromRows(rows)).toBe(false);
   });
 
-  it("returns false for empty string domain", () => {
-    expect(isBankForm("")).toBe(false);
+  it("Mixed: one 3-digit code among many Roman codes → false (any corporate code = corporate)", () => {
+    // One OCR misread turning Roman "I" into a number is not sufficient to flip —
+    // but if a true 3-digit code is present, the report is corporate.
+    const rows = [
+      { code: "I" },
+      { code: "II" },
+      { code: "100" }, // one 3-digit code present → corporate
+      { code: null },
+    ];
+    expect(isBankFormFromRows(rows)).toBe(false);
   });
 });
 
@@ -656,35 +711,36 @@ describe("DV-BANK-4 — C-5: bctcValidator gross_profit false warning suppressed
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DV-BANK-5: C-6 — computeBctcEval Stage-6 defensive fallback (domain="")
+// DV-BANK-5: C-6 — computeBctcEval Stage-6 structural bank detection
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// BEFORE fix: when domain="" (unset), isBankDomain=false → corporate anchors
-//   → gross_profit in goldenAnchors → null gross_profit → 2/3=0.667 < 0.9 → red.
-// AFTER fix: defensive fallback: domain=="" AND gross_profit=null AND net_revenue!=null
-//   → infer bank form → anchors=["net_revenue","net_profit"] → 2/2=1.0 → green.
+// BEFORE fix (BANK-DEV-1): isBankDomain = /bank/i.test(domain) — domain="other" → false
+//   → corporate anchors → gross_profit in goldenAnchors → null gross_profit → red.
+// AFTER fix (BANK-DEV-2): PRIMARY = isBankFormFromDb (structural 3-digit code absence).
+//   Bank rows have Roman/short codes → isBankFormFromDb=true → bank anchors → green.
+//   Corporate rows have 3-digit codes → isBankFormFromDb=false → corporate anchors.
 
-describe("DV-BANK-5 — C-6: computeBctcEval Stage-6 defensive fallback for unset domain", () => {
-  it("domain='' + gross_profit=null + net_revenue set → stage-6 NOT red (bank fallback fires)", async () => {
+describe("DV-BANK-5 — C-6: computeBctcEval Stage-6 structural bank detection", () => {
+  it("bank rows (no 3-digit codes) + gross_profit=null → stage-6 NOT red (structural primary fires)", async () => {
     const db = makeEvalDb();
-    const reportId = "test-bank-eval-domain-empty";
+    const reportId = "test-bank-eval-roman-codes";
 
-    // Seed: financial_reports with domain="" (unset — parseBctcReport default)
-    // but gross_profit=null (notApplicable for banks) and net_revenue non-null
+    // Seed: domain="other" (the live DB value — not "banking") to prove domain is bypassed
     db.prepare(
-      `INSERT INTO financial_reports (id, action_code, domain, net_revenue, gross_profit, net_profit, parsed_at)
-       VALUES (?, 'ACB', '', ?, NULL, ?, datetime('now'))`,
-    ).run(reportId, ACB_NET_REVENUE, ACB_NET_PROFIT);
+      `INSERT INTO financial_reports (id, action_code, domain, net_revenue, gross_profit, net_profit, total_assets, parsed_at)
+       VALUES (?, 'ACB', 'other', ?, NULL, ?, ?, datetime('now'))`,
+    ).run(reportId, ACB_NET_REVENUE, ACB_NET_PROFIT, ACB_TOTAL_ASSETS);
 
-    // Seed: minimal bctc_table_rows (stage 4 needs rows)
+    // Seed: bank rows with Roman-numeral codes — none match /^[0-9]{3}/
+    // → isBankFormFromDb = true → bank anchors ["net_revenue","net_profit"]
+    const bankCodes: (string | null)[] = ["I", "II", "III", "A", "B", null, "IV", "V", "VI", "VII", "VIII", "IX"];
     for (let i = 0; i < 12; i++) {
       db.prepare(
         `INSERT INTO bctc_table_rows (report_id, code, label, value_current, row_order)
          VALUES (?, ?, ?, ?, ?)`,
-      ).run(reportId, String(i + 1), `Label ${i}`, 1000 * (i + 1), i);
+      ).run(reportId, bankCodes[i] ?? null, `Label ${i}`, 1000 * (i + 1), i);
     }
 
-    // Seed: bctc_md_tables (stage 5)
     db.prepare(
       `INSERT INTO bctc_md_tables (report_id, md_tables_json, table_count, page_count)
        VALUES (?, '[{"rows":5}]', 1, 1)`,
@@ -692,26 +748,30 @@ describe("DV-BANK-5 — C-6: computeBctcEval Stage-6 defensive fallback for unse
 
     const result = await computeBctcEval(db, reportId, EVAL_THRESHOLDS);
 
-    // BEFORE fix: stage_statuses[6] = "red" (gross_profit missing anchor, 2/3=0.667 < 0.9)
-    // AFTER fix: defensive fallback fires → bank anchors → 2/2=1.0 → stage-6 green
+    // BEFORE fix (BANK-DEV-1): domain="other" → isBankDomain=false → corporate anchors
+    //   → gross_profit anchor fails → stage-6 red
+    // AFTER fix (BANK-DEV-2): isBankFormFromDb=true (no 3-digit codes) → bank anchors
+    //   → 2/2=1.0 → stage-6 green
     expect(result.stage_statuses[6]).not.toBe("red");
   });
 
-  it("domain='banking' + gross_profit=null + net_revenue set → stage-6 NOT red (primary path)", async () => {
+  it("bank rows + domain='other' + gross_profit=null → stage-6 NOT red (structural over domain string)", async () => {
     const db = makeEvalDb();
-    const reportId = "test-bank-eval-domain-banking";
+    const reportId = "test-bank-eval-domain-other";
 
-    // Primary path: domain="banking" → isBankDomain=true directly
+    // domain="other" mirrors the exact live DB state for ALL 12 tickers
     db.prepare(
-      `INSERT INTO financial_reports (id, action_code, domain, net_revenue, gross_profit, net_profit, parsed_at)
-       VALUES (?, 'VCB', 'banking', ?, NULL, ?, datetime('now'))`,
-    ).run(reportId, ACB_NET_REVENUE, ACB_NET_PROFIT);
+      `INSERT INTO financial_reports (id, action_code, domain, net_revenue, gross_profit, net_profit, total_assets, parsed_at)
+       VALUES (?, 'VCB', 'other', ?, NULL, ?, ?, datetime('now'))`,
+    ).run(reportId, ACB_NET_REVENUE, ACB_NET_PROFIT, ACB_TOTAL_ASSETS);
 
+    // Bank rows: Roman codes only
+    const bankCodes2: (string | null)[] = ["I", "II", "III", "A", "B", null, "IV", "V", "VI", "VII", "VIII", "IX"];
     for (let i = 0; i < 12; i++) {
       db.prepare(
         `INSERT INTO bctc_table_rows (report_id, code, label, value_current, row_order)
          VALUES (?, ?, ?, ?, ?)`,
-      ).run(reportId, String(i + 1), `Label ${i}`, 1000 * (i + 1), i);
+      ).run(reportId, bankCodes2[i] ?? null, `Label ${i}`, 1000 * (i + 1), i);
     }
 
     db.prepare(
@@ -723,21 +783,24 @@ describe("DV-BANK-5 — C-6: computeBctcEval Stage-6 defensive fallback for unse
     expect(result.stage_statuses[6]).not.toBe("red");
   });
 
-  it("CORPORATE: domain='technology' + gross_profit=null → stage-6 RED (not a bank — regression guard)", async () => {
+  it("CORPORATE: 3-digit codes + gross_profit=null → stage-6 RED (structural correctly identifies corporate)", async () => {
     const db = makeEvalDb();
-    const reportId = "test-corp-eval-gp-null";
+    const reportId = "test-corp-eval-3digit-codes";
 
-    // Corporate with gross_profit=null → must still fail stage-6 (missing anchor)
+    // Corporate rows have 3-digit codes → isBankFormFromDb=false → corporate anchors
+    // gross_profit=null → anchor fails → stage-6 red
     db.prepare(
-      `INSERT INTO financial_reports (id, action_code, domain, net_revenue, gross_profit, net_profit, parsed_at)
-       VALUES (?, 'FPT', 'technology', 50000, NULL, 10000, datetime('now'))`,
+      `INSERT INTO financial_reports (id, action_code, domain, net_revenue, gross_profit, net_profit, total_assets, parsed_at)
+       VALUES (?, 'FPT', 'other', 50000, NULL, 10000, 50000, datetime('now'))`,
     ).run(reportId);
 
+    // Corporate rows: 3-digit codes present → isBankFormFromDb = false
+    const corpCodes: string[] = ["100", "110", "120", "130", "200", "210", "270", "280", "300", "310", "400", "410"];
     for (let i = 0; i < 12; i++) {
       db.prepare(
         `INSERT INTO bctc_table_rows (report_id, code, label, value_current, row_order)
          VALUES (?, ?, ?, ?, ?)`,
-      ).run(reportId, String(i + 1), `Label ${i}`, 1000 * (i + 1), i);
+      ).run(reportId, corpCodes[i]!, `Label ${i}`, 1000 * (i + 1), i);
     }
 
     db.prepare(
@@ -746,7 +809,8 @@ describe("DV-BANK-5 — C-6: computeBctcEval Stage-6 defensive fallback for unse
     ).run(reportId);
 
     const result = await computeBctcEval(db, reportId, EVAL_THRESHOLDS);
-    // Corporate with gross_profit=null → still red (not a bank; fallback must NOT fire)
+    // Corporate with gross_profit=null + 3-digit codes → isBankFormFromDb=false
+    // → corporate anchors include gross_profit → missing → stage-6 red
     expect(result.stage_statuses[6]).toBe("red");
   });
 });

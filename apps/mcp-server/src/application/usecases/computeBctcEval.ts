@@ -28,6 +28,7 @@ import {
   stageName,
 } from "../../infrastructure/db/bctcEvalStore.js";
 import type { EvalStageResult } from "../../domain/services/bctcEvalDetectors.js";
+import { isBankFormFromDb } from "../../domain/services/financial-reports/bctcFormType.js";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -59,6 +60,7 @@ interface FinancialReportDb {
   net_revenue: number | null;
   net_profit: number | null;
   gross_profit: number | null;
+  total_assets: number | null;
   parsed_at: string;
   /** Domain stored by parseBctcReport (e.g. "banking", "technology", "real_estate"). */
   domain: string | null;
@@ -146,11 +148,11 @@ export async function computeBctcEval(
   // ── Stage 6: STRUCTURED_EXTRACT ────────────────────────────────────────────
   const frRow = db
     .prepare<FinancialReportDb, [string]>(
-      `SELECT net_revenue, gross_profit, net_profit, parsed_at, domain
+      `SELECT net_revenue, gross_profit, net_profit, total_assets, parsed_at, domain
        FROM financial_reports
        WHERE id = ?`,
     )
-    .get(reportId) as (FinancialReportRecord & { domain: string | null }) | null;
+    .get(reportId) as (FinancialReportRecord & { domain: string | null; total_assets: number | null }) | null;
 
   // Read balance_pass from bctc_balance_checks (signal-only, not a gate)
   const balRow = db
@@ -171,27 +173,23 @@ export async function computeBctcEval(
 
   // Golden anchors: fields we expect to be populated for a complete extract.
   //
-  // FU-6f B-1 FIX: domain-aware anchor set.
+  // BANK-DEV-2: structural signal from bctc_table_rows replaces domain-string check.
+  // domain="other" for ALL 12 live tickers — domain cannot discriminate banks.
   //
-  // Bank reports (domain contains "bank" or "banking") structurally have NO gross_profit
-  // concept (Mẫu B02-TCTD does not include a COGS/gross-margin line). FU-6e correctly
-  // SET NULL for this column. Including gross_profit in goldenAnchors for banks causes
-  // a false-red: 2/3=0.667 < 0.9 threshold even though the data is correct.
+  // PRIMARY: isBankFormFromDb — structural 3-digit-code absence signal.
+  // BELT-AND-SUSPENDERS: scalar heuristic fallback (gross_profit null + net_revenue
+  // present + total_assets > 1T VND) for cases where rows are absent at eval time
+  // (e.g. eval called before finalize_bctc_refine completes).
   //
-  // DRY: We reuse the domain field already stored by parseBctcReport — no new detector.
-  // Same isBankPath signal the aggregator uses (code "10" absence), just read from domain
-  // column here since table rows are not available in this use case.
-  //
-  // Corporate (domain != bank): gross_profit remains in goldenAnchors — unchanged requirement.
-  //
-  // C-6 defensive fallback (BANK-DEV-1): if domain is empty/unset but gross_profit is null
-  // AND net_revenue is non-null, infer bank form. A bank with unset domain would otherwise
-  // get corporate anchors → false-red on gross_profit. Belt-and-suspenders: primary path
-  // is domain; this fallback covers the parseBctcReport default domain="other" edge case.
-  const reportDomain = frRow?.domain ?? "";
-  const isBankDomain = /bank/i.test(reportDomain) ||
-    // Fallback: domain unset ("" or "other") but gross_profit null + net_revenue present
-    (reportDomain === "" && frRow?.gross_profit === null && frRow?.net_revenue !== null);
+  // Corporate (not bank): gross_profit remains in goldenAnchors — unchanged requirement.
+  const isBankDomain = isBankFormFromDb(db, reportId) ||
+    // Fallback: structural query has no rows yet; scalar signals indicate bank
+    (frRow?.gross_profit === null &&
+     frRow?.net_revenue !== null &&
+     frRow?.total_assets !== null &&
+     (frRow.total_assets as number) > 1e9);
+  // Note: total_assets > 1T VND (1e9 million VND) distinguishes banks (ACB=1,030B;
+  // VCB>>1T) from small corporates where gross_profit=null might be extraction gap.
   const goldenAnchors = isBankDomain
     ? ["net_revenue", "net_profit"]
     : ["net_revenue", "net_profit", "gross_profit"];

@@ -219,7 +219,9 @@ function insertRagRow(
   );
 }
 
-/** Insert a bctc_table_rows row for testing publishability. */
+/** Insert a bctc_table_rows row for testing publishability.
+ * BANK-DEV-2: code='270' (3-digit corporate code) so isBankFormFromDb returns
+ * false (corporate), preserving the original corporate-path PUB-3 logic. */
 function insertTableRow(
   db: Database,
   reportId: string,
@@ -227,9 +229,9 @@ function insertTableRow(
   isSummary: number = 0,
 ): void {
   db.prepare(`INSERT INTO bctc_table_rows
-       (report_id, page_number, statement_section, row_order, label,
+       (report_id, page_number, statement_section, row_order, code, label,
         period_current, value_current, is_summary_row)
-     VALUES (?, 1, ?, 1, 'Test Label', 'Q1-2026', 100000, ?)`).run(
+     VALUES (?, 1, ?, 1, '270', 'Test Label', 'Q1-2026', 100000, ?)`).run(
     reportId,
     section,
     isSummary,

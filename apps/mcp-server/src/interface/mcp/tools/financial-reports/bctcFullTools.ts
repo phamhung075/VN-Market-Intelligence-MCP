@@ -24,7 +24,7 @@ import { computePeriodDelta } from "../../../../domain/services/financial-report
 import { computeSentimentTrend } from "../../../../domain/services/sentimentTrend.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import type { FinancialMetrics } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
-import { isBankForm } from "../../../../domain/services/financial-reports/bctcFormType.js";
+import { isBankFormFromDb } from "../../../../domain/services/financial-reports/bctcFormType.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -588,9 +588,11 @@ export function registerBctcFullTools(
         }
 
         // ── Compute bank-form discriminator ──────────────────────────────
-        // Derived from financial_reports.domain (e.g. "banking" for VCB, ACB).
-        // Used by all consumers (C-1..C-3) to apply bank-aware logic.
-        const bankForm = isBankForm(latestRow.domain);
+        // BANK-DEV-2: structural signal from bctc_table_rows (3-digit code absence).
+        // Domain column is universally "other" in live DB — cannot be used.
+        // isBankFormFromDb issues SELECT code FROM bctc_table_rows WHERE report_id = ?
+        // and returns true when NO 3-digit numeric codes exist (bank Mẫu B02-TCTD).
+        const bankForm = isBankFormFromDb(db, latestRow.id);
 
         // ── PUB-1..4 Publishability guard ─────────────────────────────────
         // PUB-1: refine_status IN ('DONE', 'PARTIAL')

@@ -35,7 +35,7 @@ import {
   detectMagnitudeViolations,
   detectCrossStatementRevenue,
 } from "../../../../domain/services/financial-reports/bctcMagnitudeValidator.js";
-import { isBankForm } from "../../../../domain/services/financial-reports/bctcFormType.js";
+import { isBankFormFromRows } from "../../../../domain/services/financial-reports/bctcFormType.js";
 import {
   aggregateScalars,
 } from "../../../../domain/services/financial-reports/bctcScalarAggregator.js";
@@ -56,10 +56,6 @@ interface RefinedUnitRow {
 
 interface ConfirmStatusRow {
   confirm_status: string | null;
-}
-
-interface DomainRow {
-  domain: string | null;
 }
 
 // ── applyCorrections post-pass helper ─────────────────────────────────────────
@@ -228,14 +224,11 @@ export function buildFinalizeBctcRefineHandler(
       // Fires AFTER parse loop + applyCorrections, BEFORE INSERT transaction.
       // NFR-5: CONFIRMED guard (Layer 1) already handled above — no re-check needed here.
 
-      // C-4 (BANK-DEV-1): query domain to determine bank-form before DT-2 so that
-      // detectMagnitudeViolations can skip DT-2a and extend DT-2b for bank reports.
-      const domainRow = db
-        .prepare<DomainRow, [string]>(
-          "SELECT domain FROM financial_reports WHERE id = ?",
-        )
-        .get(report_id);
-      const reportIsBankForm = isBankForm(domainRow?.domain ?? null);
+      // C-4 (BANK-DEV-2): structural bank detection from finalRows (already loaded).
+      // isBankFormFromRows returns true when finalRows has NO 3-digit numeric codes
+      // (bank Mẫu B02-TCTD uses Roman/single-digit/alphabetic codes only).
+      // Domain column is universally "other" in live DB — not used.
+      const reportIsBankForm = isBankFormFromRows(finalRows);
 
       const magnitudeViolations = detectMagnitudeViolations(finalRows, reportIsBankForm);
       const crossStmtViolations = detectCrossStatementRevenue(finalRows);
