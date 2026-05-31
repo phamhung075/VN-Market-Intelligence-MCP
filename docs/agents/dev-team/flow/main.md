@@ -1,20 +1,44 @@
-<!-- size-justification: 172L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). -->
+<!-- size-justification: 280L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
-## Team Boundary (Sprint 1951c)
+## Team Boundary (Sprint 2026-05-31 — expanded)
 
-This flow fan out ONLY dev-team subagents:
+This flow may spawn any INDIVIDUAL agent. Taxonomy:
+
 - **dev-core:** po, ba, architect, pm, developer, qa, fixer
-- **dev-zone:** dev-mcp-server, dev-api-gateway, dev-stock-price, dev-technical-analysis, dev-macro-indicators, dev-kinh-dich, dev-alert-engine, dev-pdf-extractor, dev-rag-service, dev-frontend, dev-mainserver-crawls, dev-vps-crawls
-- **ops** lane (ops, ops-mainserver-fetch, ops-vps-fetch) — shared infra lane; spawned on infra/fetch incident, not cowork agents
+- **dev-zone:** dev-mcp-server, dev-api-gateway, dev-stock-price, dev-technical-analysis, dev-macro-indicators, dev-kinh-dich, dev-alert-engine, dev-pdf-extractor, dev-rag-service, dev-frontend, dev-mainserver-crawls, dev-vps-crawls, dev-news-fetch
+- **ops** lane (ops, ops-mainserver-fetch, ops-vps-fetch) — spawned on infra/fetch incident
+- **maintenance** lane (claude-manager-helper, code-janitor, agent-father, agents-architect, system-auditor, cowork-refactory-expert, idea-forge) — on-demand only; mutex-wrap REQUIRED (see below)
+- **cowork** lane (news-scout, market-watcher, bctc-analyst, alert-commander, digest-predict, unified-agent, tran-ngoc-bau, fb-market-poster, qa-responder, market-analyst, refine_bctc_md) — on-demand only; mutex-wrap REQUIRED (see below)
 <!-- roster mirrors docs/data/system-map.json .project.agents[]; re-sync here when roster changes -->
 
-NEVER spawn cowork-team agents (news-scout, market-watcher, bctc-analyst, alert-commander, digest-predict, unified-agent, tran-ngoc-bau, fb-market-poster, qa-responder, market-analyst) from this flow.
-<!-- spawn-guard: policy-only — no runtime assertion; enforced by convention, not code check (ITEM-16 doc note, 1967-10) -->
+**NEVER spawn the `cowork-team` or `dev-team` dispatcher flows** — those are team dispatchers; spawning them here recurses infinitely. This guard is non-negotiable.
+<!-- spawn-guard: policy-only — no runtime assertion; enforced by convention, not code check. Individual agents are safe; dispatcher FLOWS are not. -->
 
-Cross-team work (e.g. cowork agent reports a code bug): write a signal row to `docs/signals/DASHBOARD.md` per skill `.claude/skills/signal-dashboard/SKILL.md`. The cowork-team flow reads the dashboard at its next cycle.
+**Cross-team work** (cowork agent reports a code bug): write a signal row to `docs/signals/DASHBOARD.md` per skill `.claude/skills/signal-dashboard/SKILL.md`. This remains the primary channel. Direct on-demand cowork spawn is ADDITIONAL (for cases where dev-team needs immediate cowork output after a code change).
 
-Maintenance agents (agent-father, agents-architect, claude-manager-helper, code-janitor, system-auditor, cowork-refactory-expert, idea-forge) are invoked by main terminal or self-cron — NEVER spawned by this dispatcher.
+**On-demand spawn of maintenance/cowork agents — mutex-wrap REQUIRED:**
+Before spawning any agent from the maintenance or cowork lanes, claim a lock keyed on the agent id to prevent double-running a concurrent cron instance:
+```
+agent_spawn_key = "task:on-demand:" + agent_id + ":" + $(date -u +"%Y%m%d")
+outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
+  task_id:     agent_spawn_key,
+  task_kind:   "sprint-task",
+  owner_agent: "dev-team",
+  ttl_seconds: 3600,
+  payload:     '{"site":"on-demand","spawning":"' + agent_id + '"}'
+})
+if not outer_claim.claimed:
+  log "[dev-team] SKIP on-demand " + agent_id + " — cron holds lock (" + outer_claim.current_holder.owner_agent + ")"
+  send_telegram(channel="work", "[dev-team] on-demand " + agent_id + " SKIP — cron holds lock")
+  # fall through; do NOT spawn
+else:
+  try:
+    Agent(agent_id, context...)
+  finally:
+    call_tool(server="vn-market", tool="task_release", arguments={ task_id: agent_spawn_key })
+```
+Skill ref: `.claude/skills/task-lock/SKILL.md` § Dispatcher-Wrap Pattern.
 
 ## Input
 `read_telegram_reports(status="new")` | `list_unresolved_reports()` | docs/TASKS.md | git log (last 30 commits) | `git branch`

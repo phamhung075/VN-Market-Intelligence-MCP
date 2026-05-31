@@ -844,6 +844,13 @@
         "zone": "apps/mcp-server"
       },
       {
+        "id": "dev-news-fetch",
+        "type": "dev-zone",
+        "zone": "apps/news-fetch",
+        "owner_agent": "developer",
+        "note": "No dedicated specialist; generic developer routed here by zone. Flow: docs/agents/dev-news-fetch/flow/main.md"
+      },
+      {
         "id": "alert-commander",
         "type": "cowork"
       },
