@@ -338,6 +338,28 @@ Zone health: 4 files (2 mod, 2 new); tsc EXIT 0 on zone files; 35 tests green; f
 
 ---
 
+## c341 · 2026-05-31 (TOOL-SURFACE-HYGIENE TSH-2+TSH-3+TSH-4) — COMMITTED f4da532f
+
+**Tasks:** TSH-2 (alert pair), TSH-3 (macro accuracy trio), TSH-4 (market-data pair) + registry.ts comment fix
+
+**Description-string-only batch — ZERO logic change:**
+- `alertAccuracy.ts` mark_alert_outcome: added store+timing (SQLite alerts table, POST-HOC)
+- `alertVerdictTools.ts` write_alert_verdict: added store+timing (JSON alert-verdicts file, AT FIRE TIME)
+- `calibrationTools.ts` get_calibration_report: named calibration_snapshots + Brier/machine scope
+- `calibrationTools.ts` get_label_accuracy_report: named market_messages + human-label scope
+- `predictionTools.ts` get_prediction_accuracy: named Polymarket signals + precision computation
+- `marketTools.ts` get_patterns: named LanceDB rag_analyses + semantic precedent use case
+- `technicalIndicatorTools.ts` get_technical_indicators: named Go TA service port 5003 + quantitative
+- `registry.ts` line 172 comment: "6 Kinh Dich tools" → "5" (TSH-1 already deregistered one)
+
+**Gates:** tsc --noEmit EXIT 0 / 7 files changed 37 insertions / 0 handler/schema/logic delta
+
+**ops_rebuild_required: true** — ops rebuild #2 required for new descriptions to appear in live list_server_tools
+
+Zone health: description strings only; tsc EXIT 0; tool count unchanged at 153 (TSH-1 already done); sched=70 | HEALTHY
+
+---
+
 ## Working Memory
 
 ### Active Sprint: DYN-WF-FOUNDATION
