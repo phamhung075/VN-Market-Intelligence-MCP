@@ -466,6 +466,105 @@ export function buildFinalizeBctcRefineHandler(
               updated_cols: updates.map((u) => u.col),
               null_cleared_cols: nullClearCols,
             });
+
+            // FU-6f B-2 FIX: sync JSON blobs for not-applicable columns.
+            //
+            // When FU-6e null-cleared scalar columns (e.g. gross_profit for banks),
+            // the income_stmt_json and balance_sheet_json blobs were NOT updated.
+            // This left stale values (e.g. ACB income_stmt_json.grossProfit=6,989,162)
+            // visible to /api/bctc-inspect and raw JSON views.
+            //
+            // Fix: for each not-applicable scalar column, null the corresponding camelCase
+            // field in the appropriate JSON blob and re-serialize it.
+            //
+            // Mapping (snake_case scalar → blob + camelCase key):
+            //   gross_profit  → income_stmt_json  .grossProfit
+            //   current_assets → balance_sheet_json .currentAssets (via nested structure)
+            //   gross_margin_pct → ratios_json (skip: not a blob field at this layer)
+            //
+            // Constraint: only update if the blob column actually exists and contains
+            // the target key. This is generalized to the notApplicable set.
+            if (nullClearCols.length > 0) {
+              // income_stmt_json field mapping: scalar col → camelCase key in blob
+              const incomeStmtFieldMap: Record<string, string> = {
+                gross_profit: "grossProfit",
+                // cogs is the counterpart; banks have no COGS — also null it
+                // (derived from gross_profit absence; keep consistent)
+              };
+
+              // balance_sheet_json field mapping: scalar col → camelCase key in blob
+              // currentAssets lives in a nested structure {currentAssets: {total: ...}}
+              // We null the top-level key only — safe for bank where the concept is absent.
+              const balanceSheetFieldMap: Record<string, string> = {
+                current_assets: "currentAssets",
+              };
+
+              const nullsInIncomeBlob = nullClearCols
+                .map((col) => incomeStmtFieldMap[col])
+                .filter((k): k is string => k !== undefined);
+
+              const nullsInBalanceBlob = nullClearCols
+                .map((col) => balanceSheetFieldMap[col])
+                .filter((k): k is string => k !== undefined);
+
+              if (nullsInIncomeBlob.length > 0) {
+                const blobRow = db
+                  .prepare<{ income_stmt_json: string | null }, [string]>(
+                    "SELECT income_stmt_json FROM financial_reports WHERE id = ?",
+                  )
+                  .get(report_id);
+
+                if (blobRow?.income_stmt_json) {
+                  try {
+                    const blob = JSON.parse(blobRow.income_stmt_json) as Record<string, unknown>;
+                    for (const key of nullsInIncomeBlob) {
+                      blob[key] = null;
+                    }
+                    db.prepare(
+                      "UPDATE financial_reports SET income_stmt_json = ? WHERE id = ?",
+                    ).run(JSON.stringify(blob), report_id);
+                    logger.info("[finalize_bctc_refine] income_stmt_json blob synced (null-clear)", {
+                      report_id,
+                      nulled_keys: nullsInIncomeBlob,
+                    });
+                  } catch (blobErr) {
+                    logger.warn("[finalize_bctc_refine] income_stmt_json blob sync failed (non-fatal)", {
+                      report_id,
+                      error: blobErr instanceof Error ? blobErr.message : String(blobErr),
+                    });
+                  }
+                }
+              }
+
+              if (nullsInBalanceBlob.length > 0) {
+                const bsRow = db
+                  .prepare<{ balance_sheet_json: string | null }, [string]>(
+                    "SELECT balance_sheet_json FROM financial_reports WHERE id = ?",
+                  )
+                  .get(report_id);
+
+                if (bsRow?.balance_sheet_json) {
+                  try {
+                    const blob = JSON.parse(bsRow.balance_sheet_json) as Record<string, unknown>;
+                    for (const key of nullsInBalanceBlob) {
+                      blob[key] = null;
+                    }
+                    db.prepare(
+                      "UPDATE financial_reports SET balance_sheet_json = ? WHERE id = ?",
+                    ).run(JSON.stringify(blob), report_id);
+                    logger.info("[finalize_bctc_refine] balance_sheet_json blob synced (null-clear)", {
+                      report_id,
+                      nulled_keys: nullsInBalanceBlob,
+                    });
+                  } catch (blobErr) {
+                    logger.warn("[finalize_bctc_refine] balance_sheet_json blob sync failed (non-fatal)", {
+                      report_id,
+                      error: blobErr instanceof Error ? blobErr.message : String(blobErr),
+                    });
+                  }
+                }
+              }
+            }
           } else {
             logger.warn("[finalize_bctc_refine] scalar backfill: no non-null scalars found", {
               report_id,

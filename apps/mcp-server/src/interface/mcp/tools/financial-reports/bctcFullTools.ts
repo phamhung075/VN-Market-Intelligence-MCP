@@ -375,10 +375,35 @@ function checkPublishability(db: Database, reportId: string): PublishabilityChec
     };
   }
 
-  // PUB-3: balance sheet has at least one non-summary child row
+  // PUB-3: balance sheet has at least one non-summary child row.
+  //
+  // FU-6f B-3 FIX: also accept balance rows in statement_section='general'.
+  //
+  // Root cause: refinedMarkdownParser SECTION_HEADERS did not detect the balance-sheet
+  // header for FPT and ACB, causing all balance rows to land in statement_section='general'
+  // (the BCTC-LAYOUT-FIRST follow-up will fix the labeling). Until then, PUB-3 must
+  // also accept 'general' rows that carry standard Vietnamese balance-sheet codes (100-440):
+  //   assets 100-299, liabilities 300-399, equity 400-440 (Mẫu B01-DN / B02-TCTD).
+  //
+  // The code-range check prevents income-statement rows (codes 1-99, 500+) from passing
+  // as fake balance rows. Summary rows (is_summary_row=1) still excluded (PUB-3 intent:
+  // decomposition, not just totals).
+  //
+  // This does NOT change statement_section labels — it only broadens the publishability
+  // check to match current parser reality. BCTC-LAYOUT-FIRST will re-label correctly.
   const balanceChildren = db
     .query<{ cnt: number }, [string]>(
-      "SELECT COUNT(*) as cnt FROM bctc_table_rows WHERE report_id = ? AND statement_section = 'balance_sheet' AND is_summary_row = 0",
+      `SELECT COUNT(*) as cnt FROM bctc_table_rows
+       WHERE report_id = ?
+         AND is_summary_row = 0
+         AND (
+           statement_section = 'balance_sheet'
+           OR (
+             statement_section = 'general'
+             AND code IS NOT NULL
+             AND CAST(code AS INTEGER) BETWEEN 100 AND 440
+           )
+         )`,
     )
     .get(reportId);
 

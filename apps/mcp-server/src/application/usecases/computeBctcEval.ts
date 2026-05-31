@@ -60,6 +60,8 @@ interface FinancialReportDb {
   net_profit: number | null;
   gross_profit: number | null;
   parsed_at: string;
+  /** Domain stored by parseBctcReport (e.g. "banking", "technology", "real_estate"). */
+  domain: string | null;
 }
 
 interface BalanceCheckDb {
@@ -144,11 +146,11 @@ export async function computeBctcEval(
   // ── Stage 6: STRUCTURED_EXTRACT ────────────────────────────────────────────
   const frRow = db
     .prepare<FinancialReportDb, [string]>(
-      `SELECT net_revenue, gross_profit, net_profit, parsed_at
+      `SELECT net_revenue, gross_profit, net_profit, parsed_at, domain
        FROM financial_reports
        WHERE id = ?`,
     )
-    .get(reportId) as FinancialReportRecord | null;
+    .get(reportId) as (FinancialReportRecord & { domain: string | null }) | null;
 
   // Read balance_pass from bctc_balance_checks (signal-only, not a gate)
   const balRow = db
@@ -167,8 +169,25 @@ export async function computeBctcEval(
     parsed_at: new Date().toISOString(),
   };
 
-  // Golden anchors: fields we expect to be populated for a complete extract
-  const goldenAnchors = ["net_revenue", "net_profit", "gross_profit"];
+  // Golden anchors: fields we expect to be populated for a complete extract.
+  //
+  // FU-6f B-1 FIX: domain-aware anchor set.
+  //
+  // Bank reports (domain contains "bank" or "banking") structurally have NO gross_profit
+  // concept (Mẫu B02-TCTD does not include a COGS/gross-margin line). FU-6e correctly
+  // SET NULL for this column. Including gross_profit in goldenAnchors for banks causes
+  // a false-red: 2/3=0.667 < 0.9 threshold even though the data is correct.
+  //
+  // DRY: We reuse the domain field already stored by parseBctcReport — no new detector.
+  // Same isBankPath signal the aggregator uses (code "10" absence), just read from domain
+  // column here since table rows are not available in this use case.
+  //
+  // Corporate (domain != bank): gross_profit remains in goldenAnchors — unchanged requirement.
+  const reportDomain = frRow?.domain ?? "";
+  const isBankDomain = /bank/i.test(reportDomain);
+  const goldenAnchors = isBankDomain
+    ? ["net_revenue", "net_profit"]
+    : ["net_revenue", "net_profit", "gross_profit"];
 
   const stage6Result = evalStage6StructuredExtract(
     reportRecord,
