@@ -1,8 +1,42 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-31 20:00 UTC | **Sprint:** FU-TRUST-REFRESH FU-6-redo (design complete)
+**Last updated:** 2026-05-31 21:00 UTC | **Sprint:** BANK-AWARE-BCTC BANK-ARCH (design complete)
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## BANK-AWARE-BCTC BANK-ARCH (2026-05-31T21:00 UTC) — DESIGN COMPLETE
+
+**Sprint:** BANK-AWARE-BCTC | Task: BANK-ARCH (hard gate — recurring-bug escalation x4)
+**Mode:** Exhaustive consumer enumeration — brownfield read-only, no code written.
+
+**Root cause: four bank-vs-corporate mismatches surfaced one-per-rebuild because every consumer was written for Mẫu B01-DN corporate structure. Bank Mẫu B02-TCTD differs: no gross_profit, no current_assets, Roman-numeral codes that collide across BS/IS sections, and all rows landing in statement_section="general".**
+
+**7 bank-unaware consumers enumerated (6 files):**
+1. C-1 `bctcFullTools.ts` PUB-3: `CAST(code AS INTEGER) BETWEEN 100 AND 440` → bank Roman codes CAST to NULL → zero rows → ACB blocked.
+2. C-2 `bctcFullTools.ts` buildSummarySection: renders `Gross Profit: 0.0 tỷ VND` for banks (null→0).
+3. C-3 `bctcFullTools.ts` rowToMetrics/buildComparisonSection: grossProfit=0 in QoQ comparison (misleading).
+4. C-4 `bctcMagnitudeValidator.ts` DT-2a: searches `statement_section="income_statement"` but bank rows all in `general`; also DT-2b searches `balance_sheet` — banks have 0 rows there.
+5. C-5 `bctcValidator.ts`: `netProfit > grossProfit && grossProfit >= 0` fires false WARNING for every bank (4.3M > 0).
+6. C-6 `computeBctcEval.ts` Stage 6: partially fixed (FU-6f B-1) but lacks defensive fallback when domain="".
+7. C-7 `bctcValidator.ts` assetDecomposition: SAFE by accident but should be explicitly guarded.
+
+**Discriminator: `isBankForm(domain: string|null): boolean` = `/bank/i.test(domain ?? "")`**
+Single SSOT in new file `bctcFormType.ts`. All consumers import from here. Domain column already exists on `financial_reports` (DDL line 732 in bctc-schema.ts, indexed `idx_fr_domain`).
+
+**Change list (5 files modified, 2 new):**
+- NEW `bctcFormType.ts`: canonical `isBankForm()` utility
+- `bctcFullTools.ts`: PUB-3 bank SQL path + gross_profit display + QoQ bank guard
+- `bctcMagnitudeValidator.ts`: `isBankForm` param, skip DT-2a, extend DT-2b to `general`
+- `bctcValidator.ts`: `isBankForm` on ValidatableReport, guard gross_profit comparisons
+- `computeBctcEval.ts`: defensive fallback when domain="" + gross_profit null
+- `finalizeBctcRefineTool.ts`: thread `isBankForm` to magnitude validator
+- NEW `BANK-AWARE-1-consumer-audit.test.ts`: DV-BANK-1..6 (all RED-before-GREEN)
+
+**Anti-false-green (DV-BANK-6 acceptance proof):** `get_bctc_full(ACB)` via gateway returns real data; `equity_total=98,751,052M` confirmed via `get_bctc_refined`; in-container bun:sqlite COUNT > 0; balance badge FORBIDDEN as sole gate.
+
+**Brief:** `docs/architecture-briefs/2026-05-31-bank-aware-bctc.md`
+
+---
 
 ## FU-TRUST-REFRESH FU-6-redo ARCH (2026-05-31T20:00 UTC) — DESIGN COMPLETE
 

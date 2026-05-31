@@ -29,7 +29,7 @@
 
 **Status:** OPEN 2026-05-31 (SPLIT from FU-TRUST-REFRESH, recurring-bug escalation). **Priority: HIGH.** Zone: `apps/mcp-server/`. Class patched 3× (FU-6d/FU-6f B-1/B-3) + still blocks ACB → `feedback_recurring_bug_escalation` + `feedback_silent_swallow_serial_bugs`. Full shape → SPRINT_GOAL §BANK-AWARE-BCTC.
 
-- 🔄 **BANK-ARCH (architect) — RUNS FIRST, hard gate.** One-pass enumerate EVERY consumer assuming corporate structure (codes 100–440, gross_profit-mandatory, decomposition guard, eval stage-6 balance extraction, PUB-1..4, grep hardcoded codes/non-null asserts) + design ONE discriminator-based (is_bank_form / B02-TCTD) handling for ALL. NO point-fix PUB-3-for-banks alone. Output: `docs/architecture-briefs/2026-05-31-bank-aware-bctc.md`. NEXT: pm → dev-mcp-server.
+- ✅ **BANK-ARCH (architect)** — 7 consumers enumerated; `isBankForm(domain)` discriminator; `bctcFormType.ts` SSOT; DV-BANK-1..6 anti-false-green suite designed. Brief: `docs/architecture-briefs/2026-05-31-bank-aware-bctc.md`. NEXT: pm → BANK-DEV.
 - ⛔ **BANK-DEV (dev-mcp-server)** — GATED on BANK-ARCH. Implement bank-aware handling across ALL enumerated consumers in one change set; deliberate-violation test per consumer (RED-before-GREEN).
 - ⛔ **BANK-OPS (ops)** — GATED on BANK-DEV. Rebuild mcp-server (`--no-cache`+force-recreate) + re-finalize/re-eval ACB (`fea19bae`). Serialize vs ENV-ISOLATION EI-P2-2 rebuild (same zone).
 - ⛔ **BANK-QA (qa)** — GATED on BANK-OPS. `get_bctc_full(ACB)` serves real bank data RAW in-container (no refusal); eval stage-6 not-red; FPT 0-regression; all DV tests RED-before-GREEN.
