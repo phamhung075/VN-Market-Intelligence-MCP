@@ -4972,3 +4972,80 @@ NEXT: QA full HC gate validation (escalate any failures back to owning zone).
 - Ready for QA integration testing
 - Pipeline: Continue
 
+
+---
+
+## Session: 2026-05-31 (FU-TRUST-REFRESH)
+
+**Task:** FU-2 — Verify FU-1 OCR-text seam is LIVE and rasterize FPT + ACB statement pages
+
+### Context
+- FU-1 (commit af50d67a) wired pdf-extractor to read real OCR text from market.db's pdf_extracted_text table
+- Running container was stale (built 2026-05-31 10:12:12, commit af50d67a 11:40:34)
+- Goal: REBUILD to load FU-1, verify /page-text seam works, then rasterize FPT(46)+ACB(27) pages for refine stage
+
+### Step 1 — Container Rebuild & Verification
+
+**Image Status:**
+- Pre-rebuild: sha256:f3c5dddaf1f362357ee0cd282f1bf2bd3f68a6af9ac73549b4ebeca94a156268 (2026-05-31 10:12:12)
+- Rebuild: `docker compose build --no-cache pdf-extractor` (succeeded 2026-05-31 12:58:10)
+- Post-rebuild: Fresh image loaded with af50d67a code (confirmed 276.6s full rebuild)
+- Container force-recreated and healthy in 6 seconds
+
+**Health & Environment Verification:**
+- GET /health → 200 OK, status=ok, ocr_source_ok=true
+- APP_ENV=production (confirmed via docker inspect)
+- MARKET_DB_PATH=/app/data/market.db (confirmed via docker inspect)
+
+**OCR-Text Seam Verification:**
+- FPT (20260424-FPT-BCTC-hop-nhat-Quy-1-nam-2026.pdf, page 7):
+  - Returned: Real Vietnamese OCR text (2764+ characters including financial headers, diacritics, numbers)
+  - Sample: "CÔNG TY CỔ PHẦN FPT ... Doanh thu bán hàng và cung cấp dịch vụ ... 12.485.836.704.352"
+  - source_reachable=true, source=sqlite_ocr
+  - Evidence: Text includes actual financial data (not empty/mocked)
+
+- ACB (20260422-ACB-BCTC-Hop-nhat-Quy-1-nam-2026.pdf, page 4):
+  - Returned: Real Vietnamese OCR text (1800+ characters including bank statement headers)
+  - Sample: "NGÂN HÀNG THƯƠNG MẠI CỦA PHA ÁN CHÂU ... BAO CÁO TÌNH HÌNH TÀI CHÍNH HỢP NHẤT ... 32.326.635"
+  - source_reachable=true, source=sqlite_ocr
+  - Evidence: Text includes actual financial data (not empty/mocked)
+
+**Verdict:** OCR-text seam is LIVE and functional. ✓ PASS
+
+### Step 2 — Rasterization
+
+**FPT Report (46 pages):**
+- Endpoint: POST /rasterize with {report_id: "fpt-q1-2026", filename: "20260424-FPT-BCTC-hop-nhat-Quy-1-nam-2026.pdf", pages: [1-46]}
+- Response: All 46 pages successfully rasterized (HTTP 200)
+- Output location: /data/bctc-page-images/fpt-q1-2026/
+- File count: 46 PNG files verified
+- Sample file: page_0001.png (1.1M), page_0007.png (412K) — realistic sizes
+
+**ACB Report (27 pages):**
+- Endpoint: POST /rasterize with {report_id: "acb-q1-2026", filename: "20260422-ACB-BCTC-Hop-nhat-Quy-1-nam-2026.pdf", pages: [1-27]}
+- Response: All 27 pages successfully rasterized (HTTP 200)
+- Output location: /data/bctc-page-images/acb-q1-2026/
+- File count: 27 PNG files verified
+- Sample file: page_0001.png (194K), page_0007.png (1.1M) — realistic sizes
+
+**Total Rasterized:** 73 PNG pages (16M for FPT, 23M for ACB)
+
+**Log Evidence:**
+- pdf-extractor logs confirm all 46 FPT pages: `rasterize_page: rendered report_id=fpt-q1-2026 page=46 dpi=150`
+- pdf-extractor logs confirm all 27 ACB pages: `rasterize_page: rendered report_id=acb-q1-2026 page=27 dpi=150`
+
+### Signals Emitted
+- FU-1 OCR seam: LIVE (real text verified for FPT + ACB)
+- FU-2 rasterization: COMPLETE (73 pages ready at /data/bctc-page-images/)
+- FU-3 clearance: UNBLOCKED (page images available for refine orchestration)
+
+### Status
+✓ COMPLETE — FU-2 verification + rasterization successful.
+- Container rebuilt with FU-1 code ✓
+- /page-text OCR seam live + proven real ✓
+- /rasterize endpoint operational ✓
+- FPT: 46 pages rasterized ✓
+- ACB: 27 pages rasterized ✓
+- FU-3 (re-refine, off-HOSE permitted Saturday) CLEARED TO PROCEED ✓
+- Pipeline: Continue to FU-3
+
