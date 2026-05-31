@@ -58,36 +58,34 @@ class SqliteOcrTextSource:
         Returns empty string if no row found — NEVER raises on missing data.
         Callers treat empty string as "no OCR text available for this page".
 
+        FU-1: Uses read-only URI connection (`file:...?mode=ro`) to prevent any
+        accidental write from within pdf-extractor. Raises on source errors so
+        the handler can distinguish "DB unreachable" from "page has no text".
+
         Args:
             filename:    PDF filename key (matches pdf_extracted_text.filename).
             page_number: 1-indexed page number.
 
         Returns:
             OCR text string, or "" if no row found.
+
+        Raises:
+            Exception: if the DB is unreachable or query fails (caller must catch
+                       and set source_reachable=false in the HTTP response).
         """
+        uri = f"file:{self.db_path}?mode=ro"
+        conn = sqlite3.connect(uri, uri=True)
         try:
-            conn = sqlite3.connect(self.db_path)
-            try:
-                cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT text_content FROM pdf_extracted_text "
-                    "WHERE filename = ? AND page_number = ?",
-                    (filename, page_number),
-                )
-                row = cursor.fetchone()
-                return row[0] if row and row[0] is not None else ""
-            finally:
-                conn.close()
-        except Exception as exc:
-            logger.warning(
-                "SqliteOcrTextSource.get_page_text: db_path=%s filename=%s "
-                "page_number=%d error=%s — returning empty string",
-                self.db_path,
-                filename,
-                page_number,
-                exc,
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT text_content FROM pdf_extracted_text "
+                "WHERE filename = ? AND page_number = ?",
+                (filename, page_number),
             )
-            return ""
+            row = cursor.fetchone()
+            return row[0] if row and row[0] is not None else ""
+        finally:
+            conn.close()
 
 
 class MistralOcrSource:

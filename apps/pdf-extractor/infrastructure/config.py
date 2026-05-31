@@ -16,6 +16,7 @@ class Config:
     port: int
     log_level: str
     mcp_server_url: str  # BT-3-A: base URL for mcp-server HTTP push client
+    market_db_path: str  # FU-1: path to shared market.db for OCR text source (SqliteOcrTextSource)
 
     @classmethod
     def from_env(cls) -> "Config":
@@ -26,4 +27,5 @@ class Config:
             port=int(os.getenv("PORT", "5001")),
             log_level=os.getenv("LOG_LEVEL", "INFO"),
             mcp_server_url=os.getenv("MCP_SERVER_URL", "http://mcp-server:3000"),
+            market_db_path=os.getenv("MARKET_DB_PATH", "/app/data/market.db"),
         )

@@ -92,6 +92,7 @@ services:
       PADDLE_OCR_BASE_DIR: /app/PDF-Extract-Kit/models/paddleocr
       BCTC_RASTER_DPI: '150'
       BCTC_PAGE_TEXT_BACKEND: sqlite
+      MARKET_DB_PATH: /app/data/market.db
     restart: unless-stopped
     healthcheck:
       test:

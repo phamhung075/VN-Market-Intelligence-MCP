@@ -134,14 +134,27 @@ class TestSqliteOcrTextSource(unittest.TestCase):
         result = src.get_page_text("NONEXISTENT.pdf", 1)
         self.assertEqual(result, "")
 
-    def test_returns_empty_string_on_bad_db_path(self) -> None:
-        """get_page_text returns '' gracefully when db_path is invalid (no crash)."""
+    def test_raises_on_bad_db_path(self) -> None:
+        """
+        FU-1: get_page_text RAISES on a non-existent db_path.
+
+        PREVIOUS behaviour (pre-FU-1): silently return "".
+        NEW behaviour (FU-1): raise sqlite3.OperationalError so the handler
+        can return source_reachable:false instead of a silent empty string.
+
+        The silent-swallow was the root cause of the fabrication defect:
+        a refine agent receiving text="" with ok:true had no signal to abort.
+        The caller (/page-text handler) catches the exception and returns
+        source_reachable:false — a distinct error signal.
+
+        See FU-1 RISK-1 in test_fu1_fail_loud.py for the end-to-end proof.
+        """
         from infrastructure.ocr_text_source import SqliteOcrTextSource
         src = SqliteOcrTextSource("/nonexistent/path/market.db")
 
-        # Must not raise — return "" instead
-        result = src.get_page_text("any.pdf", 1)
-        self.assertEqual(result, "")
+        # Must raise — NOT silently return ""
+        with self.assertRaises(Exception):
+            src.get_page_text("any.pdf", 1)
 
     def test_returns_empty_string_when_text_content_is_null(self) -> None:
         """get_page_text returns '' when text_content is NULL in the DB."""

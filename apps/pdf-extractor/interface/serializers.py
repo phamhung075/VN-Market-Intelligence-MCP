@@ -34,7 +34,14 @@ class ExtractPDFRequestSchema(BaseModel):
 
 
 class HealthResponse(BaseModel):
-    """Pydantic model: GET /health response."""
+    """Pydantic model: GET /health response.
+
+    FU-1: ocr_source_ok reflects the startup probe result for SqliteOcrTextSource.
+    False means MARKET_DB_PATH is wrong / volume unmounted — /page-text will return
+    source_reachable:false for all calls. Fix the env var or mount before re-running
+    refine (a misconfigured source silently returning '' causes fabrication).
+    """
 
     status: Literal["ok"] = "ok"
     service: str = "pdf-extractor"
+    ocr_source_ok: bool = True

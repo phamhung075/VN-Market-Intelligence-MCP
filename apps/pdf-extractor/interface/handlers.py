@@ -291,6 +291,7 @@ def register_routes(
     pek_engine_adapter: Optional[Any] = None,
     pek_push_client: Optional[Any] = None,
     ocr_text_source: Optional[Any] = None,
+    ocr_source_ok: bool = True,
     pdf_data_dir: str = "data/pdfs",
 ) -> None:
     """Attach all routes to the given APIRouter."""
@@ -301,8 +302,13 @@ def register_routes(
 
     @router.get("/health", response_model=HealthResponse)
     async def health() -> HealthResponse:
-        """Liveness probe."""
-        return HealthResponse()
+        """Liveness probe.
+
+        FU-1 RISK-1: ocr_source_ok reflects startup probe for SqliteOcrTextSource.
+        False = MARKET_DB_PATH wrong or volume unmounted — /page-text will return
+        source_reachable:false. Fix before running refine to avoid fabrication.
+        """
+        return HealthResponse(ocr_source_ok=ocr_source_ok)
 
     @router.post("/extract-tables")
     async def extract_tables(body: ExtractTablesRequestSchema) -> dict:
@@ -717,7 +723,14 @@ def register_routes(
         Supports get_bctc_page_text MCP tool (mcp-server calls this endpoint).
 
         Returns { text: str, source: "sqlite_ocr" | "mistral_ocr" }
-        Returns { text: "" } (NOT 404) when no text found — empty string is valid.
+        Returns { text: "" } (NOT 404) when no text found — empty string is valid
+            for a page that genuinely has no OCR text.
+
+        FU-1 RISK-1: Returns { source_reachable: false } when the underlying source
+            raises an exception (DB unreachable, path wrong, volume unmounted).
+            This is DISTINCT from "page has no text" (which returns text: "").
+            mcp-server must treat source_reachable:false as ERROR, not as empty text,
+            to prevent fabrication by the refine agent.
 
         Query params:
             filename:    PDF filename (matches pdf_extracted_text.filename).
@@ -726,24 +739,35 @@ def register_routes(
         Auth: none (internal service).
         """
         if ocr_text_source is None:
-            # Graceful degrade — return empty text rather than 503.
-            # mcp-server treats "" as "no OCR available" and proceeds without it.
-            return {"text": "", "source": "sqlite_ocr"}
-
-        try:
-            text = ocr_text_source.get_page_text(filename, page_number)
-        except Exception as exc:
+            # FU-1: ocr_text_source is now always wired in create_app().
+            # This branch is only hit if register_routes is called without injection
+            # (e.g. legacy test harness). Surface source_reachable:false so callers
+            # treat this as an error, not as a page with no text.
             import logging as _log_mod
-            _log_mod.getLogger(__name__).warning(
-                "get_page_text: error filename=%s page_number=%d error=%s",
-                filename,
-                page_number,
-                exc,
+            _log_mod.getLogger(__name__).error(
+                "get_page_text: ocr_text_source is None — seam not wired. "
+                "MARKET_DB_PATH or select_ocr_text_source call missing in create_app()."
             )
-            text = ""
+            return {"text": "", "source": "sqlite_ocr", "source_reachable": False}
 
         # Determine source label from backend env var
         backend = os.getenv("BCTC_PAGE_TEXT_BACKEND", "sqlite").strip().lower()
         source = "mistral_ocr" if backend == "mistral" else "sqlite_ocr"
 
-        return {"text": text, "source": source}
+        try:
+            text = ocr_text_source.get_page_text(filename, page_number)
+        except Exception as exc:
+            import logging as _log_mod
+            _log_mod.getLogger(__name__).error(
+                "get_page_text: source_reachable=False filename=%s page_number=%d error=%s — "
+                "returning source_reachable:false (not empty string) to prevent fabrication",
+                filename,
+                page_number,
+                exc,
+            )
+            # FU-1 RISK-1: Do NOT return {"text": ""} silently.
+            # source_reachable:false signals to mcp-server that the OCR pipeline
+            # is broken, not that the page is empty. Refine must not proceed.
+            return {"text": "", "source": source, "source_reachable": False}
+
+        return {"text": text, "source": source, "source_reachable": True}

@@ -9,6 +9,7 @@ Port: 5001 (configurable via $PORT env var)
 
 import logging
 import os
+import sqlite3
 
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
@@ -37,12 +38,49 @@ from infrastructure.ocr_text_fetch_client import OcrTextFetchClient  # MD-EXTRAC
 from infrastructure.layout_first_push_client import LayoutFirstPushClient  # LF-EXTRACT
 from infrastructure.pek_engine_adapter import PekEngineAdapter  # PEK-INTEGRATE
 from infrastructure.ocr_backends import select_ocr_backend  # PEK-IMPL-OCR
+from infrastructure.ocr_text_source_factory import select_ocr_text_source  # FU-1
 from domain.services import ExtractPDFService
 from application.usecases import ExtractPDFUseCase
 from application.extract_tables_usecase import ExtractTablesUseCase
 from application.extract_md_tables_usecase import ExtractMdTablesUseCase  # MD-EXTRACT
 from application.extract_layout_first_usecase import ExtractLayoutFirstUseCase  # LF-EXTRACT
 from interface.handlers import register_routes
+
+logger = logging.getLogger(__name__)
+
+
+def _probe_ocr_source(market_db_path: str) -> bool:
+    """
+    FU-1 RISK-1: Startup probe for SqliteOcrTextSource.
+
+    Attempts SELECT 1 FROM pdf_extracted_text LIMIT 1 via read-only URI.
+    Returns True if the table is reachable, False otherwise.
+
+    On failure, logs FATAL at ERROR level so ops can see it in container logs.
+    The app MUST still start (do not raise) — container must be up to diagnose.
+    The return value is surfaced in /health ocr_source_ok field.
+    """
+    uri = f"file:{market_db_path}?mode=ro"
+    try:
+        conn = sqlite3.connect(uri, uri=True)
+        try:
+            conn.execute("SELECT 1 FROM pdf_extracted_text LIMIT 1")
+        finally:
+            conn.close()
+        logger.info(
+            "FU-1 startup probe: OCR text source reachable at %s — /page-text is live",
+            market_db_path,
+        )
+        return True
+    except Exception as exc:
+        logger.error(
+            "FATAL: OCR text source unreachable at %s — /page-text will return '' for ALL pages. "
+            "Re-refine WILL fabricate. Fix MARKET_DB_PATH or volume mount before running refine. "
+            "error=%s",
+            market_db_path,
+            exc,
+        )
+        return False
 
 
 def create_app() -> FastAPI:
@@ -55,6 +93,15 @@ def create_app() -> FastAPI:
     cfg = Config.from_env()
 
     ensure_dirs(cfg)
+
+    # FU-1: OCR text source — wire SqliteOcrTextSource via factory.
+    # BCTC_PAGE_TEXT_BACKEND=sqlite is set in docker-compose.yml → factory selects
+    # SqliteOcrTextSource(cfg.market_db_path) automatically.
+    ocr_text_source = select_ocr_text_source(cfg.market_db_path)
+
+    # FU-1 RISK-1: startup self-check — fires once after ocr_text_source is built.
+    # On failure: ERROR log + ocr_source_ok=False in /health. App still starts.
+    ocr_source_ok = _probe_ocr_source(cfg.market_db_path)
 
     # --- Infrastructure layer ---
     doc_repo = SQLitePDFDocumentRepository(db_path=cfg.db_path)
@@ -166,6 +213,8 @@ def create_app() -> FastAPI:
         extract_layout_first_usecase=extract_layout_first_usecase,  # LF-EXTRACT
         pek_engine_adapter=pek_adapter,     # PEK-INTEGRATE
         pek_push_client=pek_push_client,    # PEK-INTEGRATE: reuses LayoutFirstPushClient
+        ocr_text_source=ocr_text_source,    # FU-1: wires /page-text handler
+        ocr_source_ok=ocr_source_ok,        # FU-1 RISK-1: startup probe result → /health
     )
     app.include_router(router)
 
