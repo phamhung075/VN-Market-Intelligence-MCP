@@ -3,6 +3,37 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
+## Audit Run Tier-1 (23:07–23:09 UTC 2026-06-01)
+
+- Tier: 1 | Runtime check: 2 containers (mcp-server, mcp-gateway) both UP
+- Container liveness: PASS (both healthy)
+  - mcp-server: Up 2h, /health 200 OK, 154 tools loaded, 72 sessions
+  - mcp-gateway: Up 4d, healthy
+- Restart count: mcp-server = 1 (PASS, ≤ 2 threshold)
+- Memory: mcp-server 35.98% (PASS, < 85% threshold)
+- Disk: / 35% used, 26GB free (PASS)
+- Cron jobs: 73+ tracked, 98–100% success rates (intelligenceCycle 99.4%, bctcQueueEnricher 99.1%)
+- Circuit breakers: 16/16 green (0 failures across all source hosts)
+- Database: market.db 205 MB, WAL 1.50 MB (healthy)
+- Data freshness context: VN market CLOSED (23:07 UTC = 06:07 HCM Saturday, outside 02:00–08:59 M–F trading window)
+  - Price data stale (market closed): EXPECTED
+  - BCTC data stale (75h, weekly cadence end-May): EXPECTED
+  - Foreign-flow stale (market closed): EXPECTED
+- Duration: < 60s
+- Status: HEALTHY
+
+### Anomalies
+
+None. All runtime checks passed. System running normally.
+
+### Notes
+
+- 2 deployed services (mcp-server + mcp-gateway) is CORRECT per operating constraints
+- Full 9-service compose (stock-price, technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, rag-service, news-fetch, frontend, api-gateway) is Factory-v2 dev-zone, not deployed to production host
+- No restart loops, no memory pressure, no container tooling missing (Tier-3 checks defer pdftoppm/tesseract)
+- Rate limiting observed on vnstock JSH (normal backoff outside hours)
+- Next Tier-1 in ~30 min; Tier-2 at 02:30 UTC will show price/flows fresh post-market-open
+
 ## Audit Run Tier-1 (22:37–22:38 UTC 2026-06-01)
 
 - Tier: 1 | Runtime check: 2 containers (mcp-server, mcp-gateway) both UP
