@@ -6,7 +6,7 @@
 
 ## Closed sprints (live follow-ups only — full records in briefs/archive)
 
-- BCTC-TRUST-RED ✅ e0c900d0 → FU-TRUST-REFRESH ACTIVE below · BCTC-AI-INPUT-TAB ✅ b4ed9266 · BCTC-HUMAN-CONFIRM ✅ 441f8e18 · BCTC-AGENTIC-REFINE ✅ 🔄 AR-FU-DETERMINISM DEFERRED · DATA-PIPELINE-INTEGRITY ✅ 🔄 FU-C DEFERRED ⏳ FU-MON (Monday) · BCTC-TABLE-BOUNDARY ✅ FU-BTB-OCR registered
+- BCTC-TRUST-RED ✅ e0c900d0 → FU-TRUST-REFRESH ✅ EXIT-WITH-CAVEAT 2026-05-31 (mock GONE; FPT serving; ACB scalars correct but `get_bctc_full(ACB)` blocked on bank-form B02-TCTD — DATA trustworthy / SERVING blocked; record→SPRINT_GOAL §FU-EXIT) → BANK-AWARE-BCTC ACTIVE below · BCTC-AI-INPUT-TAB ✅ b4ed9266 · BCTC-HUMAN-CONFIRM ✅ 441f8e18 · BCTC-AGENTIC-REFINE ✅ 🔄 AR-FU-DETERMINISM DEFERRED · DATA-PIPELINE-INTEGRITY ✅ 🔄 FU-C DEFERRED ⏳ FU-MON (Monday) · BCTC-TABLE-BOUNDARY ✅ FU-BTB-OCR registered
 - DYN-WF-FOUNDATION ✅ DWF-EXIT 2026-05-31 (84643927…eee22112) · DWF-PHASE1 ✅ P1-PO-EXIT 2026-05-31 (5a19485e…38d241c5) ⛔ Phase 3+ DEFERRED · MACRO-CMDTY-DELTA ✅ PO-EXIT 2026-05-31 (e510e5df…fdc17265) 🔄 FU-MON · FF-DEAD ✅ fixed 0cbce0b4 ⏳ FU-MON
 
 ---
@@ -25,19 +25,14 @@
 
 ---
 
-## Sprint FU-TRUST-REFRESH — Wire dead OCR seam, then genuine re-refine FPT+ACB
+## Sprint BANK-AWARE-BCTC — Make EVERY BCTC consumer bank-form (B02-TCTD) aware in ONE pass
 
-**Status:** OPEN 2026-05-31. **Priority: HIGH.** Zone: dev-pdf-extractor + ops + qa. Brief `aa753e5e`. Seam fixed (FU-1 done). Sequential: FU-2→FU-3→FU-4.
+**Status:** OPEN 2026-05-31 (SPLIT from FU-TRUST-REFRESH, recurring-bug escalation). **Priority: HIGH.** Zone: `apps/mcp-server/`. Class patched 3× (FU-6d/FU-6f B-1/B-3) + still blocks ACB → `feedback_recurring_bug_escalation` + `feedback_silent_swallow_serial_bugs`. Full shape → SPRINT_GOAL §BANK-AWARE-BCTC.
 
-- ✅ **FU-0** — Option A `SqliteOcrTextSource(MARKET_DB_PATH)` e7056ce3. FU-1 UNBLOCKED.
-- ✅ **FU-1 (dev-pdf-extractor)** — af50d67a QA APPROVE. Seam wired; FPT p7 real text 2764 chars; 783 pass / 40 pre-existing fail (0 regression). Container :5001 healthy. FU-2 UNBLOCKED.
-- 🔄 **FU-2 (ops)** — rasterize FPT(46)+ACB(27). Disk-intensive (73 PNGs). BLOCKS FU-3.
-- 🔄 **FU-3 (ops, off-HOSE)** — run refine cron (Sat permitted). BLOCKS FU-4.
-- 🔄 **FU-4 (qa)** — `get_bctc_full` real numbers; COUNT>0; refine_status=DONE; OD-4 opex verdict.
-- 🔄 **FU-5 (dev-mcp-server)** — 6cc75437 IMPL done; awaiting QA. BLOCK-1: scalar backfill (bctcScalarAggregator + finalize UPDATE). BLOCK-2: inline eval recompute. 8 DV tests GREEN. ops must rebuild + re-finalize FPT+ACB before QA re-gate.
-- ⛔ **FU-6 (ops)** — GATED on FU-5 QA APPROVED. rebuild mcp-server + re-finalize e8ea3df5 (FPT) + fea19bae (ACB).
-- ✅ **FU-6-redo ARCH** — 2026-05-31. Root-cause: aggregator-only (upstream clean). FPT: code "270" = "Tài sản dài hạn khác" (3.4T), real total_assets at code "280". ACB: equity label pattern matches "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" before pure equity row; code "I" collision balance-sheet vs income. Fix: label-canonical + exclusion-filter + section-scoped code lookup + balance-identity invariant. Brief `docs/architecture-briefs/2026-05-31-bctc-scalar-aggregator-root-cause.md`. NEXT: pm → dev-mcp-server FU-6-redo-DEV.
-- ⛔ **FU-6-redo-DEV (dev-mcp-server)** — GATED on ARCH above. Implement: `findTotalAssetsCorporate`, `findByLabelExcluding`, `labelHint` on `findByCode`, `enforceBalanceIdentity` (structured return), update `aggregateScalars` resolution, update `finalizeBctcRefineTool.ts` call site, amend DV-FU5-1/2, add `FU-6-scalar-correctness.test.ts` (DV-FU6-1…5). RED-before-GREEN mandatory. Files: bctcScalarAggregator.ts + FU-6-scalar-correctness.test.ts + FU-5-scalar-backfill.test.ts + finalizeBctcRefineTool.ts (call site only).
+- 🔄 **BANK-ARCH (architect) — RUNS FIRST, hard gate.** One-pass enumerate EVERY consumer assuming corporate structure (codes 100–440, gross_profit-mandatory, decomposition guard, eval stage-6 balance extraction, PUB-1..4, grep hardcoded codes/non-null asserts) + design ONE discriminator-based (is_bank_form / B02-TCTD) handling for ALL. NO point-fix PUB-3-for-banks alone. Output: `docs/architecture-briefs/2026-05-31-bank-aware-bctc.md`. NEXT: pm → dev-mcp-server.
+- ⛔ **BANK-DEV (dev-mcp-server)** — GATED on BANK-ARCH. Implement bank-aware handling across ALL enumerated consumers in one change set; deliberate-violation test per consumer (RED-before-GREEN).
+- ⛔ **BANK-OPS (ops)** — GATED on BANK-DEV. Rebuild mcp-server (`--no-cache`+force-recreate) + re-finalize/re-eval ACB (`fea19bae`). Serialize vs ENV-ISOLATION EI-P2-2 rebuild (same zone).
+- ⛔ **BANK-QA (qa)** — GATED on BANK-OPS. `get_bctc_full(ACB)` serves real bank data RAW in-container (no refusal); eval stage-6 not-red; FPT 0-regression; all DV tests RED-before-GREEN.
 
 ---
 
@@ -45,7 +40,7 @@
 
 **Status:** P1 ✅ PO-EXIT 2026-05-31 (9eab754f·89e9b5b8·0c9bed2a, QA cycle-164 APPROVED `reports/TASK_REPORT_EI-P1.md`); P2 ⛔ GATED. **Pri: MEDIUM.** Zone: multi. Brief `…/2026-05-31-fleet-env-isolation-architecture.md` (6e8f3d23). Full shape → `docs/SPRINT_GOAL.md` ENV-ISOLATION §.
 - ✅ **EI-P1-1/2/3** — PO raw-verified (not badge): rendered `docker compose config` = 9 `APP_ENV: production` (mcp/pdf/rag/ta/macro/kinhdich/news/stock/alert) + `COORDINATION_DB_PATH` on mcp-server, none on api-gateway/frontend/flaresolverr; both maintenance scripts carry live guard logic (resolved-path print before write + `--force-dev`); `dev-environment.md` (241L) covers start/seed/promote-FK/LanceDB/restore/RISK-5. HCM-DISAMBIG 0-diff, PEK pristine, 3 commits scoped per-file on main.
-- ⛔ **P2 (GATED — MUST NOT start before FU-TRUST-REFRESH FU-4 sign-off, OD-C/OD-F):** EI-P2-1 startup assertion → EI-P2-2 `data_env` ×5 tables → EI-P2-3 `docker-compose.dev.yml` → EI-P2-QA ENV-GUARD-1.
+- 🟢 **P2 (GATE RELEASED 2026-05-31 — FU-TRUST-REFRESH FU-4 data-trust satisfied at FU-EXIT; now schedulable):** EI-P2-1 startup assertion → EI-P2-2 `data_env` ×5 tables → EI-P2-3 `docker-compose.dev.yml` → EI-P2-QA ENV-GUARD-1. Serialize EI-P2-2 mcp-server rebuild vs BANK-AWARE-BCTC BANK-OPS (same zone).
 - 🔄 **FU-EI-COMPOSE (backlog, NOT gated):** 2 pre-existing non-P1 items from QA report — (1) `alert-engine` missing `DB_PATH=/app/data/market.db` in compose (brief §2.1); (2) `run-bt7-backfill.ts` ~L20 hardcoded import path. Compose/scripts surface, no schema/refine coupling → pickable independent of P2 gate.
 
 ---

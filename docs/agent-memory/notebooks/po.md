@@ -1,23 +1,26 @@
 # PO Notebook
 
-## Cycle 2026-05-31 — ENV-ISOLATION-P1 EXIT SIGN-OFF (APPROVED)
+## Cycle 2026-05-31T14:59Z — FU-TRUST-REFRESH EXIT-WITH-CAVEAT + SPLIT → BANK-AWARE-BCTC
 
-QA cycle-164 APPROVED EI-P1-1/2/3 (`reports/TASK_REPORT_EI-P1.md`, commit 8a0081db). I signed off P1 after critique-before-approve on RAW source — did NOT relay the QA badge (`feedback_router_verify_raw_not_badges`).
+Operator decision cycle: recurring bank-vs-corporate bug-class surfaced 4× → rule scope + mandate architect root-cause.
 
-**Raw verification done (not trusted from QA):**
-- `docker compose config` rendered = exactly **9** `APP_ENV: production` on DB services (mcp/pdf/rag/ta/macro/kinhdich/news/stock/alert), `COORDINATION_DB_PATH` on mcp-server, ABSENT on api-gateway/frontend/flaresolverr. Matches EI-P1-1 acceptance.
-- Both maintenance scripts carry live guard logic in source (`scripts/purge-phantom-reports.ts` APP_ENV check; `scripts/run-bt7-backfill.ts` DB_PATH/market.db check) — resolved-path print before write + `--force-dev`. QA captured RED REFUSED stdout for both.
-- `docs/protocols/dev-environment.md` (241L) covers start/seed/promote(FK §4.1)/LanceDB/restore/RISK-5. Confirmed.
-- 3 commits (9eab754f·89e9b5b8·0c9bed2a) on main, scoped per-file. HCM-DISAMBIG 0-diff, PEK pristine.
+**Raw verification (live gateway, NOT relayed badges — `feedback_router_verify_raw_not_badges`):**
+- `get_bctc_full(FPT)` → real balanced numbers (TA 68.586,1 / Eq 40.122 / Liab 28.464,1 / NRev 12.480 / Gross 4.244,9≠Net / NP 2.476,8; conf 81%). Op/EBITDA/Cash=0 = known TR-2/BCTC-LAYOUT-FIRST, NOT regression. FPT consumable.
+- `get_bctc_full(ACB)` → "balance sheet has no decomposition — forced-zero pass suspected". Block confirmed live. ACB scalars (per QA bun:sqlite + router) correct+balanced; gross NULL-legal (bank). DATA trustworthy, SERVING blocked.
 
-**Decisions recorded:**
-- P1 marked DONE in TASKS.md + SPRINT_GOAL.md.
-- 2 non-blocking pre-existing items → NEW ungated backlog `FU-EI-COMPOSE` (alert-engine missing `DB_PATH` in compose; run-bt7-backfill ~L20 hardcoded import path). NOT folded into P2 — neither touches schema/refine path, so they must NOT inherit P2's FU-4 gate (OD-F rationale: split keeps low-risk ops/scripts work unblocked).
-- P2 stays ⛔ GATED behind FU-TRUST-REFRESH FU-4 (OD-C/OD-F). Confirmed FU-4 still PENDING (FU-2 NEXT) → P2 NOT opened.
-- `task_release(task:ENV-ISOLATION-P1)` → ok=false (TTL already expired, acceptable per signoff flow).
+**RULING 1 — SPLIT (not hold).** Core goal (kill mock data → real verified scalars FPT+ACB; FPT fully consumable) MET + raw-verified. Residual ACB block = distinct cross-cutting "bank-awareness across BCTC consumers" theme (B02-TCTD), NOT a continuation of OCR-seam/re-refine. Holding would conflate themes, keep ENV-P2 gated on already-achieved data-trust, and invite another point-fix. → FU-TRUST-REFRESH EXIT-WITH-CAVEAT (caveat stated explicitly so it's not a hidden false-green); new sprint BANK-AWARE-BCTC.
+
+**RULING 2 — ARCHITECT ROOT-CAUSE FIRST (hard gate).** Class patched 3× this sprint (FU-6d aggregator, FU-6f B-1 eval anchors, FU-6f B-3 PUB-3-corporate-only) + still blocks ACB → `feedback_recurring_bug_escalation` + `feedback_silent_swallow_serial_bugs`. BANK-ARCH must enumerate EVERY corporate-assuming consumer (codes 100–440, gross_profit-mandatory, decomposition guard, eval stage-6 balance extraction, PUB-1..4, grep hardcoded codes) + design ONE discriminator-based (is_bank_form/B02-TCTD) handling for ALL in one pass. NO point-fix PUB-3-for-banks alone. Routed: BANK-ARCH (architect) → pm → dev-mcp-server.
+
+**RULING 3 — new sprint seeded.** SPRINT_GOAL §BANK-AWARE-BCTC (vision/scope/SM/constraints) + TASKS BANK-ARCH→BANK-DEV→BANK-OPS→BANK-QA. FU-TRUST-REFRESH EXIT recorded with explicit caveat. Brief target `docs/architecture-briefs/2026-05-31-bank-aware-bctc.md`.
+
+**ENV-ISOLATION-P2 GATE: 🟢 RELEASED.** OD-C required P2 schema to wait for the genuine re-refine — which HAPPENED (FU-1 seam + real FPT+ACB scalars). FU-4 data-trust intent MET. Residual ACB SERVING block is consumer-layer, does NOT touch P2's schema/refine write-path → does NOT extend the gate. P2 schedulable. NOTE: serialize EI-P2-2 mcp-server rebuild vs BANK-OPS rebuild (both `apps/mcp-server/` zone).
+
+**Locks:** `task_release(task:FU-TRUST-REFRESH)` ok=false (TTL expired, acceptable). `task_claim(task:BANK-AWARE-BCTC)` claimed:true.
 
 ## Carry-over
-- **TASKS.md cap:** 80L cap, currently 82L. ENV-ISOLATION block already compact; the 2L overage is in OTHER active sprints' content (do NOT trim per task scope). A janitor compacted other sprints concurrently this cycle. Flag for next janitor pass if it grows.
-- ENV-ISOLATION-P2 unblocks ONLY after qa signs off FU-TRUST-REFRESH FU-4. Until then do not dispatch any EI-P2-* work.
-- FU-EI-COMPOSE pickable anytime (ungated) — small ops + cross-service scripts FIX.
-- TOOL-SURFACE-HYGIENE: ARCH-TSH (architect) still pending. FU-TRUST-REFRESH: FU-2 (ops, rasterize) NEXT.
+- **NEXT dispatch (router):** spawn `architect` for BANK-ARCH (run `docs/agents/architect/flow/main.md`) — the hard-gated one-pass bank-aware enumeration. Do NOT spawn dev before the brief lands.
+- ENV-ISOLATION-P2 now schedulable (gate released). When it runs, serialize its mcp-server rebuild against BANK-OPS (same zone) — flag to router.
+- TOOL-SURFACE-HYGIENE: TSH-1 (dev-mcp-server deregister get_market_hexagram) still pending, ships first there; TSH-5 stat reconcile last.
+- **TASKS.md cap:** 81L vs 80L cap (-1L vs the 82L I inherited; net improvement). All content load-bearing active scope — flag for janitor, do NOT trim sprint scope.
+- FU-EI-COMPOSE backlog still pickable (ungated).
