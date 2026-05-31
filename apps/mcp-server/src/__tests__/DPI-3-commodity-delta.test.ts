@@ -55,7 +55,7 @@ describe("DPI-3 AC-2: computeDelta logic via store round-trip", () => {
     const db = getDb();
 
     // Seed a prior tick into commodity_prices_history (older timestamp)
-    const t0 = "2026-05-29T06:00:00.000Z";
+    const t0 = "2026-05-28T06:00:00.000Z";
     const t1 = "2026-05-29T07:00:00.000Z";
 
     db.prepare(`
@@ -144,8 +144,8 @@ describe("DPI-3 AC-3: ON CONFLICT branch updates change columns", () => {
 
   it("second storeCommoditySnapshot updates change_pct, not keeps stale 0", () => {
     const db = getDb();
-    const t0 = "2026-05-29T06:00:00.000Z";
-    const t1 = "2026-05-29T07:00:00.000Z";
+    const t0 = "2026-05-27T06:00:00.000Z";
+    const t1 = "2026-05-28T07:00:00.000Z";
     const t2 = "2026-05-29T08:00:00.000Z";
 
     // First snapshot → no history yet, delta=0
