@@ -4,6 +4,32 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ## Working Memory
 
+### 2026-05-31 — FU-TRUST-REFRESH/FU-1 COMPLETE (af50d67a)
+
+**Task:** FU-1 | Sprint: FU-TRUST-REFRESH | Status: DONE — NEXT: ops FU-2 (rebuild + rasterize)
+
+**Root cause fixed:** `/page-text` endpoint returned `{"text":"","source":"sqlite_ocr"}` permanently because `main.py create_app()` never constructed/passed `ocr_text_source` to `register_routes()`. Real OCR text (FPT 35 pages, ACB 27 pages) existed in `pdf_extracted_text` but never reached the Haiku refine agent — which fabricated digit-run placeholders instead.
+
+**Files changed (commit af50d67a):**
+- `infrastructure/config.py` — added `market_db_path: str` + `MARKET_DB_PATH` env var (default `/app/data/market.db`)
+- `main.py` — import `select_ocr_text_source`; call `_probe_ocr_source` startup self-check; pass `ocr_text_source + ocr_source_ok` to `register_routes()`
+- `interface/serializers.py` — `HealthResponse` gets `ocr_source_ok: bool` field (RISK-1 surface)
+- `interface/handlers.py` — `register_routes()` accepts `ocr_source_ok`; `/health` exposes it; `/page-text` returns `source_reachable:false` on exception (NOT silent empty string)
+- `infrastructure/ocr_text_source.py` — `SqliteOcrTextSource.get_page_text` uses read-only URI (`file:...?mode=ro`); raises on unreachable DB
+- `docker-compose.yml` — added `MARKET_DB_PATH: /app/data/market.db` to pdf-extractor env block
+- `__tests__/unit/test_fu1_fail_loud.py` — NEW: 10 deliberate-violation tests (RED-before/GREEN-after)
+- `__tests__/unit/test_ocr_text_source.py` — updated: `test_raises_on_bad_db_path` confirms new raises contract
+
+**DoD evidence (live container):**
+- `GET /page-text?filename=20260424-FPT-BCTC-hop-nhat-Quy-1-nam-2026.pdf&page_number=7` → `source_reachable:true`, 2764 chars real Vietnamese text including "Doanh thu bán hàng và cung cấp dịch vụ", "Lợi nhuận gộp về bán hàng"
+- `/health` → `{"status":"ok","ocr_source_ok":true}`
+- DV test: `MARKET_DB_PATH=/nonexistent` → probe returns False + `/health ocr_source_ok:false` + `/page-text source_reachable:false`
+- 23/23 unit tests PASS (10 fail-loud DV + 13 ocr_text_source). text_table_extractor.py 0-diff. PEK PRISTINE.
+
+**REBUILD REQUIRED before FU-3 re-refine:** Container was already rebuilt prior to this session (af50d67a is on main and the running container reflects current HEAD). Confirm with ops (FU-2) before triggering refine cron.
+
+---
+
 ### 2026-05-30 — BTB-DRIFT-DEV COMPLETE (06fb1f10 + test_anti_drift_grouper)
 
 **Task:** BTB-DRIFT-DEV | Sprint: BCTC-TABLE-BOUNDARY | Status: DONE — NEXT: ops (rebuild + off-hours re-extract)
