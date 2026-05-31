@@ -1,3 +1,50 @@
+# Sprint FU-TRUST-REFRESH — Wire the dead OCR seam, then genuinely re-refine FPT + ACB
+
+**STATUS 2026-05-31T09:20Z — OPEN (PO self-initiated, OD adjudication below). Priority: HIGH.** Follow-up to BCTC-TRUST-RED (CLOSED e0c900d0). Brief `docs/architecture-briefs/2026-05-31-bctc-trust-remediation-investigation.md` (aa753e5e). Zone: dev-pdf-extractor (`apps/pdf-extractor/`) + ops (docker-compose) + qa.
+
+## Why this sprint
+BCTC-TRUST-RED shipped gates that BLOCK fabricated data and refuse to publish; FPT (`e8ea3df5`) and ACB (`fea19bae`) were purged → `refine_status=PENDING`, 0 units, 0 rows. The gates stop bad data but do NOT produce good data. The architect root-caused the fabrication (binding): the Haiku refine agent fabricated digit-run placeholders when it received EMPTY OCR text. Root cause is an unwired dependency-injection seam — `/page-text` handler (`apps/pdf-extractor/interface/handlers.py:728`) returns `{"text":""}` permanently because `main.py create_app()` never constructs/passes `ocr_text_source` to `register_routes()`. Real OCR text EXISTS in `pdf_extracted_text` (FPT 35 pages, ACB 27 pages, real Vietnamese financial text) but never reaches the agent. **A re-refine TODAY would re-fabricate.** The seam (Gap R-1) must be fixed and proven returning real text BEFORE any re-refine.
+
+## Vision
+One sentence: **The `/page-text` endpoint returns the real per-page OCR text that already lives in the DB, so a genuine off-HOSE re-refine of FPT + ACB produces real extracted financial values (not digit-runs) that pass the TRUST-RED gates and restore `get_bctc_full` to honest data.**
+
+## Operator-decision adjudication (PO, full autonomy — rationale binding)
+- **OD-1 — open FU-TRUST-REFRESH? → YES (APPROVED).** The seam fix is the gating prerequisite for ever restoring real BCTC data; the gates alone leave the product showing "Chưa có dữ liệu" indefinitely. Bounded 4-task sprint (5th optional).
+- **OD-2 — dev-pdf-extractor owns FU-1 (seam wiring)? → YES (CONFIRMED).** `apps/pdf-extractor/main.py` + `infrastructure/config.py` + `interface/handlers.py` are all the dev-pdf-extractor zone. Zone-clean, no cross-service code edit.
+- **OD-3 — include FU-5 (EBITDA `operating_profit→ebitda` parser mapping, `apps/mcp-server/` zone) here, or defer? → DEFER to BCTC-LAYOUT-FIRST.** Rationale: FU-5 is a `apps/mcp-server/` change — a DIFFERENT zone from FU-1's `apps/pdf-extractor/`. Folding it in makes this a multi-zone sprint and risks an mcp-server rebuild colliding with the focused pdf-extractor rebuild. EBITDA=0 is already a TR-2 / BCTC-LAYOUT-FIRST LF-QA acceptance criterion. Keep FU-TRUST-REFRESH single-zone (pdf-extractor) for a clean fast unblock. (Architect recommended include; PO overrides on zone-discipline grounds — the recurring-bug history of cross-zone rebuild collisions outweighs the ~10-line convenience.)
+- **OD-4 — FPT pages 11–15 absent from OCR (likely opex codes 11/24/25/26); accept re-refine may not recover them, route residual to BCTC-LAYOUT-FIRST? → ACCEPT + CONDITIONAL ROUTE.** Re-refine proceeds with the pages that DO exist (30/35 FPT, all 27 ACB); the agent receives an honest `text=""` for 11–15 and degrades gracefully (`image_unavailable`) — it will NOT fabricate (DT-1 gate + honest-empty signal). FU-4 QA explicitly evaluates whether opex codes 11/24/25/26 appear post-refine. If still absent, escalate to BCTC-LAYOUT-FIRST for targeted re-OCR of those 5 pages (do NOT trigger PEK for 5 pages inside this sprint — over-engineering).
+- **OD-5 — approve mounting market.db READ-ONLY into pdf-extractor? → FLAGGED BACK TO ARCHITECT (design re-pick required; do NOT force a mount).** Two findings change the picture: **(1)** the architect's brief states the `market_data` volume is "currently only mounted in mcp-server" — this is FACTUALLY WRONG. `docker-compose.yml` already mounts `market_data:/app/data` (read-write) in BOTH services; pdf-extractor already has the volume. So no NEW mount is needed — only `MARKET_DB_PATH` wiring (and ideally tightening to `:ro`, but the shared named volume can't be split per-service read-only without restructuring). **(2)** the codebase ALREADY contains an HTTP alternative the brief did not weigh: `infrastructure/ocr_text_fetch_client.py` (`OcrTextFetchClient` → `GET /api/bctc-inspect/ocr/{report_id}?page=N` on mcp-server) — exactly the "pdf-extractor calls an mcp-server endpoint for page text" alternative OD-5 asks about. It is the looser-coupled option but is NOT currently wired into the `/page-text` factory (factory only offers sqlite|mistral). **PO decision:** the choice between (a) direct SqliteOcrTextSource read of the shared volume vs (b) HTTP-fetch via the existing OcrTextFetchClient is a genuine design trade-off (coupling vs. an extra network hop on the refine hot path) that the architect must adjudicate with the corrected volume facts in hand. Architect runs FU-0 (design pick) FIRST; FU-1 implements whichever seam the architect picks.
+
+## Scope
+IN:
+- **FU-0 (architect)** — Re-decide the OCR seam approach with corrected facts: (a) direct `SqliteOcrTextSource(MARKET_DB_PATH)` on the already-mounted `market_data` volume, OR (b) wire the existing `OcrTextFetchClient` (HTTP → mcp-server `/api/bctc-inspect/ocr`). Output: a 1-page addendum picking one, with the env/config + factory changes named. Note volume is already mounted (no new mount); decide read-only feasibility.
+- **FU-1 (dev-pdf-extractor)** — Implement the architect's chosen seam so `/page-text` returns real OCR text. If (a): add `market_db_path` to `config.py` (env `MARKET_DB_PATH`, default `/app/data/market.db`), construct source in `main.py create_app()`, pass `ocr_text_source=` to `register_routes()`. If (b): extend the factory to offer the fetch-client backend and wire it. Add a fail-loud startup check (RISK-1: log a one-time ERROR if the source is unreachable, not a silent per-call `""`). **Acceptance: live `get_bctc_page_text(FPT, page=7)` via gateway returns real Vietnamese text (≥100 chars), NOT `""`.**
+- **FU-2 (ops)** — After FU-1 ships: rebuild pdf-extractor (`build --no-cache` + `force-recreate`, not restart-stale); confirm the seam live; rasterize all FPT (46) + ACB (27) pages via `/rasterize` so the agent has image context for every window (Option C coverage). Verify images in `/data/bctc-page-images/{id}/`.
+- **FU-3 (ops, AFTER FU-1+FU-2, off-HOSE only)** — Confirm FPT+ACB still PENDING; run the refine cron off-HOSE (permitted now: Sat 2026-05-31; on weekdays only 09:00–01:59 UTC). Monitor per-window results via `get_bctc_refined`.
+- **FU-4 (qa)** — `get_bctc_full(FPT)` + `get_bctc_full(ACB)` return real financial data (not digit-runs); `bctc_table_rows COUNT > 0`; `refine_status=DONE`; DT-1/DT-2/DT-3 did not falsely block (check push/finalize return values per RISK-2/RISK-4). Evaluate OD-4: did opex codes 11/24/25/26 appear? Verdict feeds BCTC-LAYOUT-FIRST.
+
+OUT:
+- **FU-5 (EBITDA mapping)** — DEFERRED to BCTC-LAYOUT-FIRST (OD-3, zone discipline).
+- Re-OCR of FPT pages 11–15 via PEK — DEFERRED to BCTC-LAYOUT-FIRST (OD-4) if opex still missing post-refine.
+- All TR-2 sub-flow enrichments (equity decomposition, CF continuation, prior-period column) — stay in BCTC-LAYOUT-FIRST.
+- Any new MCP tool, new SQLite table, new schema enum. Purely additive DI wiring + ops rasterize + verify.
+
+## Success Metric
+1. `get_bctc_page_text(FPT, page=7)` returns real text (≥100 chars), proven live via gateway (the binding acceptance — "HTTP 200 with empty string" is NOT pass).
+2. Post-refine: `get_bctc_full(FPT)` and `get_bctc_full(ACB)` show real financial numbers; `bctc_table_rows COUNT > 0`; `refine_status=DONE`; zero `REJECTED_SANITY` units from genuine fabrication (a DT-3 cross-stmt block on REAL inconsistent data is a separate evaluate-don't-clear path per RISK-2).
+3. OD-4 verdict recorded: opex codes 11/24/25/26 present or routed to BCTC-LAYOUT-FIRST.
+4. FU-1 ships with a fail-loud startup DB-reachability check (RISK-1 mitigation), proven by a deliberate-violation that an unreachable source ERRORs at startup rather than returning silent `""`.
+
+## Constraints (non-negotiable)
+- WIP-aware ordering: **FU-0 (if architect needed for OD-5) → FU-1 → FU-2 → FU-3 → FU-4**, strictly sequential (FU-1 blocks FU-2 blocks FU-3 blocks FU-4). FU-3 off-HOSE-gated.
+- main branch only, NO branches · scoped `git add <file>` per file, NEVER `-A` (tree carries many unrelated HCM/handoff/notebook changes — do NOT touch HCM-DISAMBIG or unrelated files) · MCP via `mcp__claude_ai_gateway__call_tool` gateway wrapper, bare tool names.
+- ops REBUILDs pdf-extractor after FU-1 (`build --no-cache` + `force-recreate`, never restart-stale); verify seam live in-container BEFORE FU-3.
+- off-HOSE: no live extraction 02:00–08:59 UTC Mon–Fri. FU-3 only runs in the permitted window (today Sat 2026-05-31 = permitted).
+- Fail-loud, not silent (RISK-1): never re-introduce a path where `/page-text` returns `""` on a misconfig without an ERROR.
+- All sprint artifacts + agent-to-agent comms in ENGLISH (Vietnamese ONLY for FB posts + MARKET Telegram group).
+
+---
+
 # Sprint BCTC-TRUST-RED — Trust layer green-stamps fabricated data
 
 **BUILD STATUS 2026-05-30 — ✅ SIGNED OFF (PO, TRUST-EXIT). Sprint CLOSED.** Brief `docs/architecture-briefs/2026-05-30-bctc-trust-red.md` (4c8cfaf7), spec `docs/REQ_BCTC-TRUST-RED.md` (dde8fbcd). Data-integrity RED: refine trust layer reported `refine_status=DONE` + `confidence=0.80-0.85` on FABRICATED data (FPT Q1-2026 report `e8ea3df5…` carried ordered digit-run values `12345678901234`/`8901234567890` pushed via `push_bctc_refined_unit`; all 15 units shared one `refined_at`; ACB `get_bctc_full` showed `gross_profit=net_revenue` + zeroed equity/liab/cash passing a forced-zero balance check). The structured feed (`get_bctc_full`) surfaced this to analyst + market dishes.

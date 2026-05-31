@@ -6,7 +6,7 @@
 
 ## Closed sprints (live follow-ups only — full records in briefs/archive)
 
-- **BCTC-TRUST-RED** ✅ SIGNED OFF 2026-05-30. Data-integrity RED closed (ingest gate `validateBctcUnit`→REJECTED_SANITY + publish guard `checkPublishability` PUB-1..4; FPT+ACB purged→PENDING; DDD `bctcSanityValidator` + `bctcMagnitudeValidator`). Brief `docs/architecture-briefs/2026-05-30-bctc-trust-red.md`. PO live spot-check: `get_bctc_full(FPT/ACB)`→no numbers. 🔄 **FU-TRUST-REFRESH** — FPT+ACB PENDING/empty, need genuine re-refine (real OCR, off-HOSE).
+- **BCTC-TRUST-RED** ✅ SIGNED OFF 2026-05-30 (e0c900d0). Ingest gate + publish guard + DDD validators; FPT+ACB purged→PENDING. Brief `docs/architecture-briefs/2026-05-30-bctc-trust-red.md`. Follow-up now ACTIVE as sprint **FU-TRUST-REFRESH** below.
 - **BCTC-AI-INPUT-TAB** ✅ SIGNED OFF 2026-05-30. Additive 7th tab "Đầu vào AI" on `/api/bctc-inspect` (per-page agent-input PNG + OCR text + page-window). QA cycle-157 all 7 gates @ b4ed9266. Live-verified real PNG / honest 404 / DB row untouched.
 - **BCTC-HUMAN-CONFIRM** ✅ SIGNED OFF 2026-05-30. Human correction layer on `/api/bctc-inspect` (review red/yellow cells, hand-correct, lock "ĐÃ XÁC NHẬN"; 3-layer lock survives cron re-runs; 50/50 viewer + 6 tabs). QA HC-QA-3 cycle-156 all 9 gates @ 441f8e18. Brief `docs/architecture-briefs/2026-05-30-bctc-human-confirm.md`.
 - **BCTC-AGENTIC-REFINE** ✅ SIGNED OFF 2026-05-30. Brief `docs/architecture-briefs/2026-05-30-bctc-agentic-refine.md`. 🔄 **AR-FU-DETERMINISM** (MED, DEFERRED): Haiku refine non-deterministic markdown coverage (FPT run-1=91 vs run-2=18); store-correctness unaffected.
@@ -16,6 +16,19 @@
 - **DWF-PHASE1** ✅ DONE/SHIPPED 2026-05-31 (P1-PO-EXIT). Adaptive cadence (heartbeat consults Cadence Policy); zero `apps/mcp-server/` prod code, NO rebuild. `cadence-policy.json` (19 rules/3 IDs) + `cadence-policy.js` evaluator + `cowork-match-slots.js` adaptive `--mode` + 14 slots `policy_id`+`last_fired` + flow Steps 4.2–4.5b/5b + `DWF-phase1-cadence.test.ts` (48 assertions). QA P1-QA 8 gates GREEN. PO critique-before-approve: ran suite (48/48), own RED proof on EC-6 chef-intraday null-injection (load-bearing). Brief `docs/architecture-briefs/2026-05-31-dwf-phase1-adaptive-cadence.md`, sign-off `docs/handoffs/P1-PO-EXIT-signoff.md`. Commits 5a19485e..d8892afc · fbdba703 · 7a461eb7 · 38d241c5. ⛔ Phase 3+ (content-router/workgraph/backpressure) DEFERRED — operator-gated.
 - **MACRO-CMDTY-DELTA** ✅ DONE/SHIPPED 2026-05-31T01:34Z (PO-EXIT APPROVE). Brent/Gold change%=+0.00% root cause in `apps/mcp-server/` (NOT macro-indicators): off-market repeated-close prev-close query matched ~1h-old identical row → fixed with previous-calendar-day baseline (`date(fetched_at) < date(?) AND brent/gold > 0`). PO raw-verified honest-flat 0.00% + correct logic + DPI-3 4 pass + clean scope. Report `docs/handoffs/MCP-SOURCE-PROBLEMS-20260529.md` § P4, DASHBOARD cow-20260529T221054-MCP-P4 RESOLVED. Commits e510e5df · dab1bf86 · fdc17265, image 802d6463e665. 🔄 FU: signed-non-zero in-the-wild on next real move (~Monday open).
 - **FF-DEAD** ✅ FIXED 2026-05-31 (PO live-verified). Foreign-flow pipeline dead fleet-wide; root cause VPS field-name drift; FF-DIAG fix `0cbce0b4` live + redeployed. PO raw-reprobe: `get_foreign_flow(FPT)` returns real daily history (2026-05-30 net −37905, foreign room 34.75M). Zone `vps-scripts/`. ⏳ **FU-MON** (Monday open): probe non-zero net during live trading to confirm in-the-wild. Report `docs/handoffs/MCP-SOURCE-PROBLEMS-20260529.md` § P1.
+
+---
+
+## Sprint FU-TRUST-REFRESH — Wire dead OCR seam, then genuine re-refine FPT+ACB
+
+**Status:** OPEN 2026-05-31 (PO self-init, all 5 ODs adjudicated). **Priority: HIGH.** Zone: dev-pdf-extractor (`apps/pdf-extractor/`) + ops + qa. Brief `docs/architecture-briefs/2026-05-31-bctc-trust-remediation-investigation.md` (aa753e5e). Goal `docs/SPRINT_GOAL.md` (FU-TRUST-REFRESH § — full OD rationale). Root cause: `/page-text` (handlers.py:728) returns `""` permanently (main.py never wires `ocr_text_source`); real OCR exists in `pdf_extracted_text` (FPT 35p / ACB 27p); re-refine TODAY would re-fabricate → seam fix is gating prereq. **WIP-aware: FU-0→FU-1→FU-2→FU-3→FU-4, strictly sequential.**
+
+- 🔄 **FU-0 (architect)** — OD-5 design re-pick: direct `SqliteOcrTextSource(MARKET_DB_PATH)` on the ALREADY-mounted `market_data` volume (brief's "only in mcp-server" claim is wrong) vs. wire the existing `OcrTextFetchClient` HTTP path (→ mcp-server `/api/bctc-inspect/ocr`). 1-page addendum, pick one, name config/factory changes. **BLOCKS FU-1.**
+- 🔄 **FU-1 (dev-pdf-extractor)** — implement chosen seam so `/page-text` returns real OCR; add fail-loud startup DB-reachability check (RISK-1). Accept: live `get_bctc_page_text(FPT,page=7)`≥100 real chars, NOT `""`. **BLOCKS FU-2.**
+- 🔄 **FU-2 (ops)** — rebuild pdf-extractor (`--no-cache`+force-recreate); confirm seam live; rasterize all FPT(46)+ACB(27) pages. **BLOCKS FU-3.**
+- 🔄 **FU-3 (ops, off-HOSE only)** — confirm PENDING, run refine cron (today Sat=permitted; weekday 09:00–01:59 UTC), monitor `get_bctc_refined`. **BLOCKS FU-4.**
+- 🔄 **FU-4 (qa)** — `get_bctc_full(FPT/ACB)` real numbers; `bctc_table_rows COUNT>0`; `refine_status=DONE`; gates didn't falsely block (RISK-2/4). OD-4 verdict: opex 11/24/25/26 present or → BCTC-LAYOUT-FIRST.
+- ⛔ **FU-5 (EBITDA mapping, `apps/mcp-server/`)** — DEFERRED to BCTC-LAYOUT-FIRST per OD-3 (zone discipline; not this single-zone sprint).
 
 ---
 
