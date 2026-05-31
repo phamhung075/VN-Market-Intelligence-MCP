@@ -1,0 +1,8 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[tran-ngoc-bau] c84 BLOCKED — MCP gateway call_tool wrapper absent in this spawned-agent session. Cannot call get_system_status, get_macro_snapshot, read_telegram_reports, send_telegram. Audit cycle EXIT per bootstrap.md gateway-down policy failure-mode-A. This is the 2nd consecutive blocked cycle (c83 also BLOCKED 2026-05-29T20:13Z). PO triaged c83 as FALSE ALARM — gateway healthy, cowork spawned-session structural issue. Recommend agent-father hardening: tnb bootstrap must PROBE gateway (call a tool) rather than assume gateway absent. Weekend market closed; no urgent dish gaps. c84 file-evidence summary appended to notebook.",
+  "priority": "high",
+  "createdAt": "2026-05-31T20:13:00Z"
+}

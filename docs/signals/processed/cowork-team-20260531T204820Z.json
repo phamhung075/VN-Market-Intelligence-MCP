@@ -1,0 +1,27 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-05-31T20:48:20Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (22:21:16 local) since prior tick — Step 0a skipped. (tnb-c84-blocked still NEW in ## po, awaiting dev-team/PO drain.)",
+    "staleness_note": "pressure-state unchanged (emitted 16:03Z), age ~285min > 20min threshold → PRESSURE_MODE=legacy. No slots matched so cadence gating moot.",
+    "tick_snapshot_note": "Matcher empty at 20:48Z (silent tick). No get_cycle_bootstrap (no work to dispatch). Next real match: bctc-analyst-slot-3 at 21:00Z (cron 0 21 * * *).",
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-05-31T20:48:20Z"
+}

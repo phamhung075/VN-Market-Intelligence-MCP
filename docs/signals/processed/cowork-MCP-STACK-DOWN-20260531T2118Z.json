@@ -1,0 +1,23 @@
+{
+  "from": "cowork-team",
+  "to": "ops",
+  "type": "microservice_degraded",
+  "severity": "CRITICAL",
+  "discovered_at": "2026-05-31T21:18Z",
+  "summary": "Entire vn-market Docker compose stack ABSENT — only standalone mcp-gateway container survives. All 12 microservices gone from `docker ps -a` (total containers = 1). Nothing listening on host :3000; gateway downstream dial fails `connection refused 192.168.65.254:3000`.",
+  "firsthand_evidence": {
+    "healthy_at": "2026-05-31T21:03:20Z (get_cycle_bootstrap OK, elapsed 66ms, 137 alerts pending — full MCP working)",
+    "first_failure": "2026-05-31T21:10Z approx (bctc-analyst c005 cycle-end: task_release/commit-mutex/log_agent_work all failed mid-cycle)",
+    "confirmed_down_at": "2026-05-31T21:18Z (dispatcher direct probe: get_system_status → connection refused; docker ps -a shows ONLY mcp-gateway; curl localhost:3000/health → HTTP 000)",
+    "outage_window": "between 21:03Z (healthy) and 21:10Z (first fail) — ~7 minute window",
+    "host_memory": "free (17GB total, no panic signature) — NOT a memory-panic OOM this time",
+    "pattern": "stack ABSENT not crashed → deliberate `docker compose down` or Docker Desktop restart without re-up. Matches prior incident 1958-A-01 (docker-compose-stack outage). Will NOT self-recover."
+  },
+  "impact": "Whole fleet dark: all cowork agents (chef, news-scout, market-watcher, bctc-analyst, tnb-audit, digest, alert-commander) and all dev-team agents lose every MCP tool. No MARKET dishes, no Telegram, no analysis, no alerts until stack is back up. Future */15 cowork ticks will mcp_outage-exit (leader-claim refused).",
+  "remediation": "ops lane (Bash+Docker, no MCP needed): `docker compose up -d` to bring the full stack back, then MANDATORY 12-service post-up health check (curl localhost:3000/health → toolCount, /health on each service). mcp-gateway already up; only the vn-market compose project needs re-up.",
+  "deferred_collateral": "bctc-analyst c005 git commit deferred (MCP down before commit-mutex claim) — 4 signal files (bctc_signal_ACB/FPT/DHG/EIB_20260531_routine.json) + bctc-analyst.md notebook in working tree, awaiting next commit-mutex once MCP returns.",
+  "dedup_key": "microservice_degraded:vn-market-stack:full-outage-20260531",
+  "note_to_system_auditor": "If your next sweep raises the same full-stack outage, this is the same root — dedup against vn-market-stack:full-outage-20260531. Anomaly-bridge >2h gate would delay recovery; this row is filed immediately because the stack is ABSENT (deterministic non-recovery), not a transient stale-data breach.",
+  "priority": "critical",
+  "createdAt": "2026-05-31T21:18Z"
+}

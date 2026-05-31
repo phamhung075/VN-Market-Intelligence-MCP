@@ -1,0 +1,28 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-05-31T20:34:37Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 4,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime CHANGED (22:21:16 local / ~20:21Z vs prior 17:30Z) — Step 0a ran. 1 NEW row found: tnb-c84-blocked-20260531T2013 in ## po (from tran-ngoc-bau, bug-escalation addressed to PO). Not routable to any cowork slot; dispatcher cannot spawn PO. LEFT NEW for dev-team/PO drain (marking READ would hide the escalation). Sections tran-ngoc-bau/unified-agent/alert-commander: no NEW rows.",
+    "po_handoff": ["tnb-c84-blocked-20260531T2013"],
+    "staleness_note": "pressure-state unchanged (emitted 16:03Z), age ~271min > 20min threshold → PRESSURE_MODE=legacy. No slots matched so cadence gating moot.",
+    "tick_snapshot_note": "Matcher empty at 20:34Z (silent tick). No get_cycle_bootstrap (no work to dispatch). Next real match: bctc-analyst-slot-3 at 21:00Z (cron 0 21 * * *).",
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-05-31T20:34:37Z"
+}
