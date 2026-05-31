@@ -1,5 +1,21 @@
 # dev-mcp-server -- Notebook
 
+## c346 · 2026-05-31 (FU-TRUST-REFRESH FU-6f) — COMMITTED 9aa2b2eb
+
+**Task:** FU-6f — fix B-1 bank eval anchors, B-2 income_stmt_json blob sync, B-3 PUB-3 balance section fix.
+
+**B-1 (BLOCKING):** `computeBctcEval.ts` — reads `domain` from `financial_reports`. When domain matches /bank/i, goldenAnchors=["net_revenue","net_profit"] (excludes gross_profit). Corporate unchanged (3 anchors). Fixes ACB eval false-red: 2/3=0.667 < 0.9 → stage-6 red. bctc-eval-routes.test.ts schema updated with `domain TEXT` column (missing → 500 error).
+
+**B-2 (BLOCKING):** `finalizeBctcRefineTool.ts` — after scalar null-clear (FU-6e), also syncs JSON blobs. Mapping: gross_profit→grossProfit in income_stmt_json; current_assets→currentAssets in balance_sheet_json. Non-fatal blob sync errors logged. ACB income_stmt_json.grossProfit: 6,989,162 → null.
+
+**B-3 (scope-contained fix):** `bctcFullTools.ts` checkPublishability PUB-3 — OR clause: also accepts 'general' rows with CAST(code AS INTEGER) BETWEEN 100 AND 440. Fixes "balance sheet has no decomposition — forced-zero pass suspected" for FPT+ACB where parser lands balance rows in 'general'. Full section-label rework deferred to BCTC-LAYOUT-FIRST. B-3 does NOT need re-refine (no re-parse required; query change only).
+
+**Tests:** 8 new DV-FU6F-* tests RED→GREEN. 134 pass / 0 fail across 11 files. tsc: 0 errors.
+
+**ops_rebuild_required:** rebuild mcp-server → re-finalize ACB (fea19bae) + FPT (e8ea3df5) → recompute eval both → QA re-gate. B-3 does NOT require re-refine (no new parse step).
+
+---
+
 ## c345 · 2026-05-31 (FU-TRUST-REFRESH FU-6e) — COMMITTED b63d7988
 
 **Task:** FU-6e — not-applicable null-clear for bank scalars (last QA blocker)
@@ -71,8 +87,10 @@ Key sprints: MACRO-CMDTY-DELTA (c340), DYN-WF-FOUNDATION DWF-DEV-MCP-1 is_tradin
 ## Working Memory
 
 ### Active Sprint: FU-TRUST-REFRESH
-- FU-6e DONE: committed b63d7988; ops_rebuild_required: true
-- Next: ops (rebuild mcp-server) → re-finalize ACB (fea19bae) + FPT (e8ea3df5) → QA final re-gate
+- FU-6e DONE: committed b63d7988
+- FU-6f DONE: committed 9aa2b2eb (B-1 bank anchors, B-2 income_stmt_json sync, B-3 PUB-3 fix)
+- ops_rebuild_required: true (rebuild mcp-server → re-finalize ACB fea19bae + FPT e8ea3df5 → recompute eval both → QA re-gate)
+- B-3 note: no re-refine needed for PUB-3 fix; query change only
 
 ### Baselines
 - tool=157, sched=70 (from c339)
