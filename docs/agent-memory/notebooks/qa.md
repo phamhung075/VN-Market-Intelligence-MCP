@@ -1,5 +1,48 @@
 # QA — Notebook
 
+## cycle-162 · 2026-05-31 · MACRO-CMDTY-DELTA QA — CHANGES_REQUESTED
+
+**Sprint:** MACRO-CMDTY-DELTA | **Task:** QA gate | **Verdict:** CHANGES_REQUESTED — 1 blocking
+
+```
+date: 2026-05-31T01:10Z
+commits_in_scope: e510e5df (fix yahooFinance.ts) + fdc17265 (notebook)
+container: vn-market-intelligence-mcp-mcp-server-1, Up 2min (healthy), toolCount=155
+
+LIVE BOOTSTRAP (get_cycle_bootstrap, agent_name=report-analyzer):
+  BRENT: 91.12, change_pct = +0.00%
+  GOLD:  4593,  change_pct = +0.00%
+  VERDICT: HONEST 0.00% — prev-day close = same price (91.12/4593 from 2026-05-30T23:00).
+  Weekend/off-market: prices flat since 2026-05-30T05:45Z. New query working correctly.
+
+DB CROSS-CHECK (in-container bun:sqlite on /app/data/market.db):
+  market_prices BRENT: price=91.12, change_amt=0, change_pct=0, updated_at=2026-05-31T00:15:02.101Z
+  market_prices GOLD:  price=4593,  change_amt=0, change_pct=0, updated_at=2026-05-31T00:15:02.101Z
+  prev-day query returns 2026-05-30T23:00:04.775Z row (brent=91.12, gold=4593)
+  Current snapshot = 91.12/4593 → delta = 0 correctly. Fix logic VERIFIED.
+
+YF-14 (regression guard): PASS — off-market repeated same price yields real day-over-day delta (seeded prev-day=90, today=91.12 → +1.244%)
+YF-15 (regression guard): PASS — zero-valued history rows skipped by AND brent_crude_usd > 0
+025-yahoo-finance.test.ts: 16 pass / 0 fail
+
+BLOCKING REGRESSION — DPI-3-commodity-delta.test.ts:
+  AC-2 (price 80→100 →25%) FAIL
+  AC-3 (ON CONFLICT update change_pct) FAIL
+  4 pass / 2 fail
+  Root: same-day t0/t1 timestamps (2026-05-29T06 and T07) not found by new
+  date(fetched_at) < date(snapshotDate) query. Fix: cross-day timestamps only.
+  Test-only fix (no production code change needed).
+
+tsc: 0 errors (npx tsc --noEmit clean)
+Tool count: live=155, dev claim=157 — no regression (baseline was 155). Dev mis-reported.
+DDD: PASS | security: PASS
+
+REPORT: reports/TASK_REPORT_MACRO-CMDTY-DELTA.md
+NEXT: fixer | fix DPI-3 AC-2/AC-3 timestamps to span two calendar days
+```
+
+---
+
 ## cycle-161 · 2026-05-31 · P1-QA — DWF-PHASE1 Adaptive Cadence — APPROVED
 
 **Sprint:** DWF-PHASE1 | **Task:** P1-QA | **Verdict:** APPROVED — all 8 gates GREEN
