@@ -88,15 +88,29 @@ export interface ScalarAggregate {
 
 /**
  * ScalarAggregateResult — wraps the scalars with an optional balance-identity
- * violation string. When balanceViolation is non-null, the scalars are internally
- * inconsistent and MUST NOT be written to financial_reports.
+ * violation string and a set of NOT-APPLICABLE column names.
  *
- * The caller (finalizeBctcRefineTool) checks this field and logs.error + skips
- * the UPDATE when violation is present. Domain layer stays pure — no logger import.
+ * When balanceViolation is non-null, the scalars are internally inconsistent and
+ * MUST NOT be written to financial_reports. Domain layer stays pure — no logger import.
+ *
+ * notApplicable: columns that are structurally absent for this report type (NOT a
+ * parse miss — the concept simply does not exist). The finalize tool must SET these
+ * columns to NULL explicitly to clear any stale legacy value (e.g. ACB gross_profit
+ * persisting from the original pdf-parse ingest). Columns NOT in this set and whose
+ * scalar is null are SKIPPED (preserve prior value — FU-5 intent for transient misses).
+ *
+ * FU-6e: bank report type → notApplicable = ["gross_profit", "current_assets",
+ * "gross_margin_pct"]. Corporate → notApplicable = [].
+ *
+ * Report-type detection: bank path is triggered when code "10" (corporate net_revenue)
+ * is absent from the row set — the same branch the aggregator uses to fall through to
+ * the bank code "I" path. DRY: no separate detector.
  */
 export interface ScalarAggregateResult {
   scalars: ScalarAggregate;
   balanceViolation: string | null;
+  /** Column names that are NOT APPLICABLE for this report type (must be SET NULL, not skipped). */
+  notApplicable: string[];
 }
 
 // ── Unit scale detection ──────────────────────────────────────────────────────
@@ -486,10 +500,28 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
   };
 
   if (rows.length === 0) {
-    return { scalars: emptyScalars, balanceViolation: null };
+    return { scalars: emptyScalars, balanceViolation: null, notApplicable: [] };
   }
 
   const divisor = detectDivisor(rows);
+
+  // ── Bank-path detection (DRY — same signal as the aggregator's fallback chain) ─
+  // When code "10" (corporate Doanh thu thuần) is absent, the aggregator falls
+  // through to code "I" + label-based bank path. We use the same absence test to
+  // classify the report type — no second independent detector.
+  //
+  // NOT-APPLICABLE columns for each type (FU-6e):
+  //   BANK: gross_profit (no COGS concept), current_assets (no code "100" concept),
+  //         gross_margin_pct (derived from gross_profit — invalid without it).
+  //   CORPORATE: [] (banks-have-that-corps-lack: none relevant at this time).
+  //
+  // "Absent code" means no row with that exact code trim-matches in the set.
+  // findByCode(rows, "10") returning null is the canonical check — it mirrors
+  // the aggregator's own first-attempt logic exactly.
+  const isBankPath = findByCode(rows, "10") === null;
+  const notApplicable: string[] = isBankPath
+    ? ["gross_profit", "current_assets", "gross_margin_pct"]
+    : [];
 
   // ── Helper: apply unit scale and return null for null inputs ─────────────────
   const scale = (v: number | null): number | null =>
@@ -632,5 +664,5 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     equity_total,
   );
 
-  return { scalars, balanceViolation };
+  return { scalars, balanceViolation, notApplicable };
 }

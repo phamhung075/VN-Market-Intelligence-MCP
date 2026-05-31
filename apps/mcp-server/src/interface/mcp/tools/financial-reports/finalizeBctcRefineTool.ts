@@ -414,10 +414,27 @@ export function buildFinalizeBctcRefineHandler(
           });
         } else {
           const agg = aggResult.scalars;
+          const naSet = new Set(aggResult.notApplicable);
 
-          // Build the SET clause dynamically — only update columns where the
-          // aggregator produced a non-null value. NULL = "line absent" and must
-          // NOT overwrite an existing non-null value with a forced zero.
+          // FU-6e: 3-case scalar UPDATE logic
+          //
+          // Case 1 — NOT-APPLICABLE for this report type (e.g. bank gross_profit):
+          //   The aggregator signals this via notApplicable[]. These columns MUST be
+          //   SET NULL explicitly to clear any stale legacy pdf-parse value. A bank will
+          //   never have gross_profit, so any existing value is always wrong.
+          //
+          // Case 2 — EXPECTED but transiently null (e.g. corporate gross_profit that
+          //   failed to parse this run): SKIP (preserve prior value). FU-5 intent preserved.
+          //   Detection: aggregator returned null AND column is NOT in notApplicable.
+          //
+          // Case 3 — Resolved to a real non-null value: SET value (existing behavior).
+          //
+          // The gross_margin_pct column is included in notApplicable for bank reports
+          // (it is derived from gross_profit — invalid without it). net_margin_pct is
+          // NOT in notApplicable because banks do have net profit; if it resolves null
+          // that is a transient parse miss, not a structural absence.
+
+          // Resolved non-null scalars → SET value (Case 3)
           const updates: Array<{ col: string; val: number }> = [];
           if (agg.net_revenue       !== null) updates.push({ col: "net_revenue",       val: agg.net_revenue });
           if (agg.gross_profit      !== null) updates.push({ col: "gross_profit",      val: agg.gross_profit });
@@ -430,16 +447,24 @@ export function buildFinalizeBctcRefineHandler(
           if (agg.gross_margin_pct  !== null) updates.push({ col: "gross_margin_pct",  val: agg.gross_margin_pct });
           if (agg.net_margin_pct    !== null) updates.push({ col: "net_margin_pct",    val: agg.net_margin_pct });
 
-          if (updates.length > 0) {
-            const setClauses = updates.map((u) => `${u.col} = ?`).join(", ");
+          // NOT-APPLICABLE columns → SET NULL (Case 1): clear stale legacy values
+          const nullClearCols: string[] = [...naSet];
+
+          if (updates.length > 0 || nullClearCols.length > 0) {
+            // Build a single UPDATE statement: resolved columns SET value,
+            // not-applicable columns SET NULL, everything else untouched (Case 2 skip).
+            const setClauses: string[] = [
+              ...updates.map((u) => `${u.col} = ?`),
+              ...nullClearCols.map((col) => `${col} = NULL`),
+            ];
             const bindVals: (number | string)[] = [...updates.map((u) => u.val), report_id];
-            // bun:sqlite Statement.run accepts a rest array of binding values
-            (db.prepare(`UPDATE financial_reports SET ${setClauses} WHERE id = ?`) as {
+            (db.prepare(`UPDATE financial_reports SET ${setClauses.join(", ")} WHERE id = ?`) as {
               run: (...args: (number | string)[]) => unknown;
             }).run(...bindVals);
             logger.info("[finalize_bctc_refine] scalar backfill complete", {
               report_id,
               updated_cols: updates.map((u) => u.col),
+              null_cleared_cols: nullClearCols,
             });
           } else {
             logger.warn("[finalize_bctc_refine] scalar backfill: no non-null scalars found", {
