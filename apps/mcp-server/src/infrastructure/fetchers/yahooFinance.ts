@@ -423,19 +423,33 @@ export function storeCommoditySnapshot(
 ): void {
   const database = db ?? getDb();
 
-  // DPI-3: Read prev-close for BRENT and GOLD BEFORE the write transaction.
-  // Use the most recent history row strictly before the current snapshot's
-  // fetched_at so we always compare against the prior tick (not the current one).
-  // On first run or when history is empty, these return null → deltas default to 0.
+  // DPI-3 / MACRO-CMDTY-DELTA: Read prev-close for BRENT and GOLD BEFORE the
+  // write transaction.
+  //
+  // Root cause of permanent-0% bug: Yahoo Finance regularMarketPrice returns
+  // the same daily close value repeatedly during off-market hours. The old
+  // query (ORDER BY fetched_at DESC LIMIT 1) would find a row from 1 hour ago
+  // with the same price → computeDelta(x, x) = 0 forever.
+  //
+  // Fix: look back to the PREVIOUS calendar day's earliest row so we compute
+  // a meaningful day-over-day delta. If no previous-day row exists (first run
+  // or history is empty) → null → delta=0 (honest: no baseline yet).
+  //
+  // "Previous calendar day" is relative to the snapshot's UTC date, so it is
+  // timezone-consistent with the fetched_at values written by fetchYahooFinancePrices.
+  const snapshotDate = snapshot.fetchedAt.slice(0, 10); // "YYYY-MM-DD"
+
   const prevBrent: number | null =
     (
       database
         .prepare(
           `SELECT brent_crude_usd FROM commodity_prices_history
-           WHERE source = 'yahoo' AND fetched_at < ?
+           WHERE source = 'yahoo'
+             AND date(fetched_at) < date(?)
+             AND brent_crude_usd > 0
            ORDER BY fetched_at DESC LIMIT 1`,
         )
-        .get(snapshot.fetchedAt) as { brent_crude_usd?: number } | null
+        .get(snapshotDate) as { brent_crude_usd?: number } | null
     )?.brent_crude_usd ?? null;
 
   const prevGold: number | null =
@@ -443,10 +457,12 @@ export function storeCommoditySnapshot(
       database
         .prepare(
           `SELECT gold_usd_per_oz FROM commodity_prices_history
-           WHERE source = 'yahoo' AND fetched_at < ?
+           WHERE source = 'yahoo'
+             AND date(fetched_at) < date(?)
+             AND gold_usd_per_oz > 0
            ORDER BY fetched_at DESC LIMIT 1`,
         )
-        .get(snapshot.fetchedAt) as { gold_usd_per_oz?: number } | null
+        .get(snapshotDate) as { gold_usd_per_oz?: number } | null
     )?.gold_usd_per_oz ?? null;
 
   const brentDelta = computeDelta(snapshot.brentCrudeUSD, prevBrent);

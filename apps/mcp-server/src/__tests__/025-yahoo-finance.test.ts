@@ -500,4 +500,222 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     expect(result!.goldUSDPerOz).toBeCloseTo(2222.22, 1);
     expect(result!.usdVndRate).toBeCloseTo(24999.0, 0);
   });
+
+  // ── YF-14: MACRO-CMDTY-DELTA — prev-day close produces real delta ─────────
+  // Regression guard: Yahoo Finance returns the same daily close price
+  // repeatedly during off-market hours. The old prev query used
+  // ORDER BY fetched_at DESC LIMIT 1, which found a row from 1 hour ago with
+  // the same price → computeDelta(x, x) = 0 → permanent 0.00% in bootstrap.
+  //
+  // Fix: look back to the PREVIOUS calendar day's latest row so deltas are
+  // day-over-day (meaningful) rather than tick-over-tick (flat during off-hours).
+  it("YF-14: storeCommoditySnapshot uses previous-day close for delta — off-market repeated price must NOT zero out a real move", () => {
+    const db = new Database(":memory:");
+    db.exec(`
+      CREATE TABLE commodity_prices (
+        source TEXT PRIMARY KEY,
+        brent_crude_usd REAL NOT NULL DEFAULT 0,
+        gold_usd_per_oz REAL NOT NULL DEFAULT 0,
+        usd_vnd_rate REAL NOT NULL DEFAULT 0,
+        vix REAL NOT NULL DEFAULT 0,
+        sp500 REAL NOT NULL DEFAULT 0,
+        shanghai_comp REAL NOT NULL DEFAULT 0,
+        hang_seng REAL NOT NULL DEFAULT 0,
+        dxy REAL NOT NULL DEFAULT 0,
+        cny_vnd_rate REAL NOT NULL DEFAULT 0,
+        copper_usd REAL NOT NULL DEFAULT 0,
+        silver_usd_per_oz REAL NOT NULL DEFAULT 0,
+        jpy_vnd_rate REAL NOT NULL DEFAULT 0,
+        us10y_yield REAL NOT NULL DEFAULT 0,
+        fetched_at TEXT NOT NULL
+      );
+      CREATE TABLE commodity_prices_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source TEXT NOT NULL,
+        brent_crude_usd REAL NOT NULL DEFAULT 0,
+        gold_usd_per_oz REAL NOT NULL DEFAULT 0,
+        usd_vnd_rate REAL NOT NULL DEFAULT 0,
+        vix REAL NOT NULL DEFAULT 0,
+        sp500 REAL NOT NULL DEFAULT 0,
+        shanghai_comp REAL NOT NULL DEFAULT 0,
+        hang_seng REAL NOT NULL DEFAULT 0,
+        dxy REAL NOT NULL DEFAULT 0,
+        cny_vnd_rate REAL NOT NULL DEFAULT 0,
+        copper_usd REAL NOT NULL DEFAULT 0,
+        silver_usd_per_oz REAL NOT NULL DEFAULT 0,
+        jpy_vnd_rate REAL NOT NULL DEFAULT 0,
+        us10y_yield REAL NOT NULL DEFAULT 0,
+        fetched_at TEXT NOT NULL
+      );
+      CREATE TABLE market_prices (
+        code TEXT PRIMARY KEY,
+        price REAL,
+        change_amt REAL,
+        change_pct REAL,
+        volume REAL,
+        updated_at TEXT
+      );
+      CREATE TABLE tracked_indicators (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        indicator TEXT NOT NULL,
+        value REAL NOT NULL,
+        unit TEXT NOT NULL DEFAULT '',
+        source TEXT NOT NULL DEFAULT '',
+        extracted_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `);
+
+    // Seed yesterday's close in history (the prior-day baseline)
+    // Brent: 90.00, Gold: 4500.0 — these are yesterday's values
+    db.exec(`
+      INSERT INTO commodity_prices_history
+        (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate,
+         vix, sp500, shanghai_comp, hang_seng, dxy, cny_vnd_rate,
+         copper_usd, silver_usd_per_oz, jpy_vnd_rate, us10y_yield, fetched_at)
+      VALUES
+        ('yahoo', 90.00, 4500.0, 25000.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2026-05-30T08:00:00.000Z'),
+        ('yahoo', 90.00, 4500.0, 25000.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2026-05-30T09:00:00.000Z'),
+        ('yahoo', 90.00, 4500.0, 25000.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2026-05-30T10:00:00.000Z')
+    `);
+
+    // Simulate today: Yahoo returns SAME price as 1 hour ago (off-market repeat)
+    // The last history row for today would have brent=91.12, gold=4593
+    // but the CURRENT row we're storing also has brent=91.12, gold=4593
+    // Old bug: prev = most-recent row = 91.12 → delta = 0
+    // Fix: prev = previous-day row = 90.00 → real delta computed
+    const todaySnap: CommoditySnapshot = {
+      brentCrudeUSD: 91.12,
+      goldUSDPerOz: 4593.0,
+      usdVndRate: 25100.0,
+      vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
+      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
+      fetchedAt: "2026-05-31T00:15:00.000Z",
+    };
+
+    storeCommoditySnapshot(todaySnap, db);
+
+    const brentRow = db
+      .query<{ price: number; change_amt: number; change_pct: number }, []>(
+        "SELECT price, change_amt, change_pct FROM market_prices WHERE code = 'BRENT'",
+      )
+      .get();
+
+    const goldRow = db
+      .query<{ price: number; change_amt: number; change_pct: number }, []>(
+        "SELECT price, change_amt, change_pct FROM market_prices WHERE code = 'GOLD'",
+      )
+      .get();
+
+    // Brent: 91.12 vs 90.00 → +1.12 / +1.244...%
+    expect(brentRow).not.toBeNull();
+    expect(brentRow!.price).toBeCloseTo(91.12, 2);
+    expect(brentRow!.change_amt).toBeGreaterThan(0);
+    expect(brentRow!.change_pct).toBeGreaterThan(0);
+    expect(brentRow!.change_pct).toBeCloseTo(((91.12 - 90.00) / 90.00) * 100, 2);
+
+    // Gold: 4593 vs 4500 → +93 / +2.066...%
+    expect(goldRow).not.toBeNull();
+    expect(goldRow!.price).toBeCloseTo(4593.0, 0);
+    expect(goldRow!.change_amt).toBeGreaterThan(0);
+    expect(goldRow!.change_pct).toBeGreaterThan(0);
+    expect(goldRow!.change_pct).toBeCloseTo(((4593.0 - 4500.0) / 4500.0) * 100, 2);
+
+    db.close();
+  });
+
+  // ── YF-15: MACRO-CMDTY-DELTA — zero-valued history row must be skipped ────
+  // The > 0 guard on the prev lookup must ignore any row where brent/gold=0
+  // (e.g. written before the fetcher was wired up) — must not produce delta=0
+  // when current price is real and only a valid prior row exists from yesterday.
+  it("YF-15: storeCommoditySnapshot skips zero-valued history rows as prior-close candidates", () => {
+    const db = new Database(":memory:");
+    db.exec(`
+      CREATE TABLE commodity_prices (
+        source TEXT PRIMARY KEY,
+        brent_crude_usd REAL NOT NULL DEFAULT 0,
+        gold_usd_per_oz REAL NOT NULL DEFAULT 0,
+        usd_vnd_rate REAL NOT NULL DEFAULT 0,
+        vix REAL NOT NULL DEFAULT 0,
+        sp500 REAL NOT NULL DEFAULT 0,
+        shanghai_comp REAL NOT NULL DEFAULT 0,
+        hang_seng REAL NOT NULL DEFAULT 0,
+        dxy REAL NOT NULL DEFAULT 0,
+        cny_vnd_rate REAL NOT NULL DEFAULT 0,
+        copper_usd REAL NOT NULL DEFAULT 0,
+        silver_usd_per_oz REAL NOT NULL DEFAULT 0,
+        jpy_vnd_rate REAL NOT NULL DEFAULT 0,
+        us10y_yield REAL NOT NULL DEFAULT 0,
+        fetched_at TEXT NOT NULL
+      );
+      CREATE TABLE commodity_prices_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        source TEXT NOT NULL,
+        brent_crude_usd REAL NOT NULL DEFAULT 0,
+        gold_usd_per_oz REAL NOT NULL DEFAULT 0,
+        usd_vnd_rate REAL NOT NULL DEFAULT 0,
+        vix REAL NOT NULL DEFAULT 0,
+        sp500 REAL NOT NULL DEFAULT 0,
+        shanghai_comp REAL NOT NULL DEFAULT 0,
+        hang_seng REAL NOT NULL DEFAULT 0,
+        dxy REAL NOT NULL DEFAULT 0,
+        cny_vnd_rate REAL NOT NULL DEFAULT 0,
+        copper_usd REAL NOT NULL DEFAULT 0,
+        silver_usd_per_oz REAL NOT NULL DEFAULT 0,
+        jpy_vnd_rate REAL NOT NULL DEFAULT 0,
+        us10y_yield REAL NOT NULL DEFAULT 0,
+        fetched_at TEXT NOT NULL
+      );
+      CREATE TABLE market_prices (
+        code TEXT PRIMARY KEY,
+        price REAL,
+        change_amt REAL,
+        change_pct REAL,
+        volume REAL,
+        updated_at TEXT
+      );
+      CREATE TABLE tracked_indicators (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        indicator TEXT NOT NULL,
+        value REAL NOT NULL,
+        unit TEXT NOT NULL DEFAULT '',
+        source TEXT NOT NULL DEFAULT '',
+        extracted_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+    `);
+
+    // Two zero rows yesterday (bad bootstrap rows) followed by one valid row
+    db.exec(`
+      INSERT INTO commodity_prices_history
+        (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate,
+         vix, sp500, shanghai_comp, hang_seng, dxy, cny_vnd_rate,
+         copper_usd, silver_usd_per_oz, jpy_vnd_rate, us10y_yield, fetched_at)
+      VALUES
+        ('yahoo', 0, 0, 25000.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2026-05-30T06:00:00.000Z'),
+        ('yahoo', 0, 0, 25000.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2026-05-30T07:00:00.000Z'),
+        ('yahoo', 90.00, 4500.0, 25000.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '2026-05-30T08:00:00.000Z')
+    `);
+
+    const todaySnap: CommoditySnapshot = {
+      brentCrudeUSD: 91.12,
+      goldUSDPerOz: 4593.0,
+      usdVndRate: 25100.0,
+      vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
+      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
+      fetchedAt: "2026-05-31T00:15:00.000Z",
+    };
+
+    storeCommoditySnapshot(todaySnap, db);
+
+    const brentRow = db
+      .query<{ change_pct: number }, []>(
+        "SELECT change_pct FROM market_prices WHERE code = 'BRENT'",
+      )
+      .get();
+
+    // Must NOT be 0 — the valid prior row (90.00) was found, skipping the zeros
+    expect(brentRow).not.toBeNull();
+    expect(brentRow!.change_pct).toBeGreaterThan(0);
+
+    db.close();
+  });
 });
