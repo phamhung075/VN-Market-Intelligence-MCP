@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-31T16:56:03Z
+
+**Brief:** `docs/architecture-briefs/2026-05-31-dev-team-spawn-boundary-expansion.md`
+
+Dev-team's blanket NEVER-spawn fences (lines 12 + 17) are too broad: they block maintenance agents (claude-manager-helper et al.) and all cowork agents from on-demand spawns, leaving dev-team with no recourse for context-bloat breaches or immediate cowork re-runs post-fix. Brief replaces both fences with a targeted guard (NEVER spawn the `cowork-team` or `dev-team` dispatcher flows), adds four spawn lanes (dev-core, dev-zone+dev-news-fetch, ops, maintenance-on-demand, cowork-on-demand), mandates mutex-wrap (task_claim keyed on agent_id+date) for all maintenance/cowork on-demand spawns to prevent cron double-runs, and registers `apps/news-fetch/` as a dev-zone in system-map.json.
+
+**Signal dropped:** `docs/signals/dev-team-spawn-boundary-expansion-20260531T165603Z.json` → agent-father
+
+---
+
 ## 2026-05-30T12:48:10Z
 
 **Brief:** `docs/architecture-briefs/2026-05-29-dynamic-workflow-architecture.md` (Section 7 reconciliation)

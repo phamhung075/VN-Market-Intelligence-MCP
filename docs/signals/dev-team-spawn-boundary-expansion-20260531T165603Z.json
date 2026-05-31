@@ -1,0 +1,20 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "priority": "normal",
+  "createdAt": "2026-05-31T16:56:03Z",
+  "payload": "docs/architecture-briefs/2026-05-31-dev-team-spawn-boundary-expansion.md",
+  "summary": "Expand dev-team spawn boundary: add maintenance + cowork lanes (on-demand, mutex-wrap required), add dev-news-fetch to dev-zone roster, register apps/news-fetch/ in system-map.json, replace blanket NEVER-spawn fences with targeted dispatcher-flow guard.",
+  "files_to_touch": [
+    "docs/agents/dev-team/flow/main.md",
+    "docs/data/system-map.json"
+  ],
+  "constraints": [
+    "NEVER-spawn must name cowork-team and dev-team dispatcher flows (not individual agents)",
+    "On-demand maintenance/cowork spawns MUST use mutex-wrap (task_claim keyed on agent_id+date)",
+    "SSOT mirror comment and cross-team DASHBOARD note must be retained",
+    "Verify wc -l after edit; update size-justification comment on line 1 of main.md",
+    "Commit both files atomically in one commit"
+  ]
+}
