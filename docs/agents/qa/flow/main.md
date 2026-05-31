@@ -1,4 +1,4 @@
-<!-- size-justification: 198L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval checklist steps are tightly sequential and cannot decompose without losing gate ordering. -->
+<!-- size-justification: 201L — atomic QA gate flow with JUMP-TO dispatch + BCTC eval hard-gate + mock-production guard (pipeline / approved / changes-requested / architect-review / clean / emergency); TDD/DDD/security/eval/mock-guard checklist steps are tightly sequential and cannot decompose without losing gate ordering. -->
 # QA — Main Flow
 
 **Tools:** `docs/agents/tools/package/qa.md`
@@ -64,6 +64,7 @@ Read handoff using delta-read skill:
 - Test-only change → skip DDD + security. Run: unit + regression + tsc.
 - String literal only → skip DDD + security. Run: full suite + tsc.
 - Never skip `bun test` + `bun tsc --noEmit`.
+- Never skip `mock-guard` when modified files include any production source (non-test, non-fixture).
 
 <!-- jump:pipeline -->
 ## Pipeline
@@ -103,6 +104,8 @@ grep -r "from.*infrastructure" <modified_files>  # must return NOTHING
 grep -r "from.*application" <modified_files>     # must return NOTHING
 grep -r "process\.env" src/                      # must return NOTHING
 grep -r "password\|secret\|token" src/ | grep -v test | grep -v "//"
+bash scripts/audits/mock-guard.sh --files "<space-separated modified production files>"
+# Exit 1 = HARD-FAIL (fabricated data) → CHANGES_REQUESTED; Exit 2 = CAUTION → log in report, non-blocking; Exit 0 = PASS
 ```
 Verdict routing:
 - All checks pass AND no arch concern → JUMP TO `approved`

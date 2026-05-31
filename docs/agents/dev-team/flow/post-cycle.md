@@ -12,6 +12,19 @@ expire_monitoring_reports()  # flips monitoring reports >72h to "wontfix"
 log: "[dev-team] Expired {result.expired} monitoring reports"
 ```
 
+**4.0.5 — Mock-in-production backstop:**
+```bash
+bash scripts/audits/mock-guard.sh --full
+# Scopes to apps/*/src production paths; excludes tests/sandbox/scenarios/spike/.venv
+```
+If exit 1 (HARD-FAIL): write signal row to `## po` section in `docs/signals/DASHBOARD.md`
+  (skill: `.claude/skills/signal-dashboard/SKILL.md`) with type `system-issue`,
+  summary `mock-guard HARD-FAIL: fabricated data in production source`, payload `-`.
+  Also route same signal row to `## agents-architect` section.
+  Do NOT block cycle exit — this is detective-only at the backstop level.
+If exit 2 (CAUTION): log `[dev-team] mock-guard CAUTION: ambiguous markers found` to WORK only.
+If exit 0: silent.
+
 **4.1 — Post-execution checks:**
 1. Non-main branches remain → add CLEAN batch → Step 1.
 2. `read_telegram_reports(status="new").length > 0` → `send_telegram(work, "Found N new report(s)")` → Step 1.
