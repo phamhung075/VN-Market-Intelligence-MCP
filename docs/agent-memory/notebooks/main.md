@@ -1,6 +1,18 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-31T02:27Z (:07 tick, manual run — VN Sat ~09:27, market CLOSED weekend)
+**Written:** 2026-05-31T03:27Z (:07 tick, manual run — VN Sat ~10:27, market CLOSED weekend)
+
+## tick-20260531T0327Z (~6min) — NEW report #3015 FALSE-RED resolved, BATCH=NOTHING
+- PREFLIGHT pass. 4 loose signals = ALL cowork-fire heartbeats → drained noise (780→784). Commit (this tick). 0 routed-to-po. DASHBOARD ## po 0 NEW.
+- **Queue CHANGED** (vs prior 2 idle ticks): NEW report **#3015** (system-auditor 03:00Z "TASKS.md unreadable — Seam 3 corruption / not found"). Dispatcher verify-raw FIRST: TASKS.md INTACT (7063B, 61L, valid header+footer, tracked, committed 356ce861, clean) → FALSE-RED, 3rd of known probe-false-positive class (cf #3006/#3008). Queue changed → spawned PO (correct; not C-6 territory).
+- **PO triage → NOTHING.** Independently re-verified TASKS.md intact, resolved #3015 via process_telegram_report(wontfix, msg 2627 deleted), routed D4 probe-harden to system-auditor/agent-father lane (## po row SYSAUDITOR-D4-TASKS-FALSERED), commit **da666edb** (DASHBOARD only). #3011/#3012/#3014 UNCHANGED. WIP 0/2.
+- expire_monitoring=0, branches=main only.
+
+### Lesson reinforced
+- system-auditor D4 "TASKS.md unreadable" is a RECURRING false-positive (now 3rd: #3006/#3008/#3015). Probe reads through a failing seam (bind-mount/path/stale-fs); file is always intact on live fs. Hardening backlogged to agent-father (alongside A-11/A-30/C-06/C-07 probe-map fixes). Always verify-raw before treating as corruption.
+
+---
+
 
 ## tick-20260531T0227Z (~2min) — IDLE EXIT, no PO re-spawn (C-6 anti-loop)
 - PREFLIGHT pass (HEAD.lock absent, main, no worktrees). 3 loose signals = ALL cowork-fire heartbeats (silent, empty slots) → drained noise (777→780), 0 routed-to-po. Commit (this tick).
