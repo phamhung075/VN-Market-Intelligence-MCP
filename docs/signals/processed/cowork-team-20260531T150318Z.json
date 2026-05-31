@@ -1,0 +1,49 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-05-31T15:03:18Z",
+    "matched_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-1": "cron"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-1": "legacy-bypass"
+    },
+    "leader_claim": "won (uncontested)",
+    "tick_snapshot_error": null,
+    "tick_snapshot_note": "get_cycle_bootstrap succeeded with agent_name=bctc-analyst (valid enum, avoided the cowork-team enum-drift)",
+    "last_fired_timestamp": "2026-05-31T15:03:18Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-1"
+    ],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-05-31T15:03:18Z",
+  "_processed": {
+    "fingerprint": "47c7fc6aee628ffc0534829a05dd0606afce60adda1a995cedfabc74808adea3",
+    "processedAt": "2026-05-31T15:29:01Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-maintenance"
+  }
+}
