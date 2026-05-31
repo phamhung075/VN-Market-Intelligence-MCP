@@ -257,6 +257,9 @@ Also inspect the Tier-2 stale-source findings emitted above: any source with `se
 After processing all candidates, log `"[D-IMPROVE] emitted {N} proposals, skipped {M} (duplicates), skipped {K} (bad candidates)"`.
 Append summary to this Tier-2 run's notebook entry.
 
+→ skill: `.claude/skills/anomaly-task-bridge/SKILL.md`
+  inputs: `AUDIT_TIER = 2`, `PROJECT_ROOT` already set
+
 ---
 
 ## Existing Doc/Memory Audit (Tier-3 only — skip in Tier-1 and Tier-2)
@@ -386,6 +389,9 @@ mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "post_agent_signal
   dedup_skipped: N
 }})
 ```
+
+→ skill: `.claude/skills/anomaly-task-bridge/SKILL.md`
+  inputs: `AUDIT_TIER = 3`, `PROJECT_ROOT` already set
 
 ### Tier-3 WORK Notification
 ```
