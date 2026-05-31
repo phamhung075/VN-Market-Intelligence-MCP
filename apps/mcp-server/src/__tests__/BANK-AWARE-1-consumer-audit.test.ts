@@ -216,27 +216,34 @@ const EVAL_THRESHOLDS: BctcEvalThresholds = {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DV-BANK-7: isBankFormFromRows discriminator regression (BANK-ARCH-3 / BANK-DEV-3)
+// DV-BANK-7: isBankFormFromRows discriminator regression (BANK-ARCH-4 / BANK-DEV-4)
 // ─────────────────────────────────────────────────────────────────────────────
 //
-// RED-before-GREEN protocol:
-//   BEFORE fix (isBankFormFromRows — 3-digit absence): ["99"] returned true,
-//     mixed ["I","II","100",null] returned false, and ["10","60"] returned true.
-//   AFTER fix (positive evidence — /[A-Za-z]/ signal):
-//     ["99"] → false (no letter — not bank evidence).
-//     ["I","II","100",null] → true (letters present — positive bank evidence wins).
-//     ["10","60"] → false (2-digit numeric, no letter — corporate income-only).
+// Signal: bank ⟺ hasRomanOrSection(rows) AND NOT hasCorpBalance(rows)
+//   ROMAN_SECTION = /^(XIII|XII|XI|IX|VIII|VII|VI|IV|III|II|I|X|V)(\.\d+)?$|^[AB]$/
+//   CORP_BALANCE  = /^[0-9]{3}/
 //
-// Seed 1: corporate rows with 3-digit codes → false (corporate)
-// Seed 2: bank rows with Roman/null codes → true (bank, contains letters)
+// RED-before-GREEN protocol for BANK-DEV-4:
+//   BEFORE (BANK-DEV-3 any-letter /[A-Za-z]/):
+//     Seed 6 [100,270,411a,420a,420b] → true (WRONG — 411a has letter)
+//     Mixed [I,II,100,null] → true (WRONG — BANK-ARCH-3 letter-wins ruling)
+//   AFTER (BANK-DEV-4 hybrid):
+//     Seed 6 → false (CORP_BALANCE fires on 100/270 — FPT real codes correctly CORPORATE)
+//     Mixed [I,II,100,null] → false (CORP_BALANCE veto fires on 100)
+//
+// Seed 1: corporate rows with 3-digit codes → false (CORP_BALANCE fires)
+// Seed 2: bank rows with Roman/null codes → true (ROMAN_SECTION matches; no 3-digit)
 // Seed 3: empty rows → false (fail-safe: no silent bank promotion)
-// Seed 4: rows with alphabetic and Roman codes → true (contains letter codes I, B)
+// Seed 4: rows with alphabetic and Roman codes → true (I matches Roman, B matches [AB]$)
+// Seed 5: income-only corporate [10,60] → false (DV-FU6F-B1-3 regression guard)
+// Seed 6: FPT real codes [100,270,411a,420a,420b] → false (BANK-DEV-3 regression guard)
+// Seed 7: ACB real codes [A,B,I,I.1,XIII,01,null] → true (bank path intact)
 
 describe("DV-BANK-7 — isBankFormFromRows structural discriminator regression", () => {
   it("Seed 1: rows with 3-digit codes [100,200,300,400] → false (corporate)", () => {
-    // Corporate Mẫu B01-DN: codes 100-440 always present
-    // BEFORE: isBankForm("technology") = false — coincidentally same, but by domain string
-    // AFTER: structural — has 3-digit code → corporate → false
+    // Corporate Mẫu B01-DN: codes 100-440 always present.
+    // BANK-DEV-4 (hybrid): CORP_BALANCE fires on 100/200/300/400 → hasCorpBalance=true
+    //   → result=false (CORPORATE). hasRomanOrSection=false also.
     const rows = [
       { code: "100" },
       { code: "200" },
@@ -296,36 +303,72 @@ describe("DV-BANK-7 — isBankFormFromRows structural discriminator regression",
     expect(isBankFormFromRows(rows)).toBe(false);
   });
 
-  it("Mixed: Roman codes with one 3-digit code [I,II,100,null] → true (letter evidence wins)", () => {
-    // BANK-ARCH-3: positive signal. "I" and "II" contain letters → positive bank evidence.
-    // The one 3-digit code "100" does NOT override positive bank signal — architect ruling:
-    // a single 3-digit code among Romans is more likely an OCR misread of a Roman numeral
-    // than a corporate form marker. Real corporate reports have MANY 3-digit codes (100, 200,
-    // 300, 400 minimum); a single "100" among Romans is an extraction artifact.
-    // BEFORE (BANK-DEV-2 absence signal): any 3-digit code → false (corporate). Wrong.
-    // AFTER (positive evidence): letter in "I"/"II" → true (Roman codes with one 3-digit —
-    //   letter evidence wins; 3-digit alone does not override positive bank signal).
+  it("Mixed: Roman codes with one 3-digit code [I,II,100,null] → false (corporate veto fires)", () => {
+    // BANK-ARCH-4 ruling (overrides BANK-ARCH-3): "100" is an unambiguous VAS B01-DN code.
+    // Its presence fires the CORP_BALANCE veto → result=false (CORPORATE).
+    // BANK-ARCH-3 had ruled "letter evidence wins" — that was wrong: "100" only appears
+    // in B01-DN; a single 3-digit code among Romans is treated as corporate unconditionally.
+    // BEFORE (BANK-DEV-3 any-letter): "I"/"II" contain letters → true (bank). WRONG.
+    // AFTER (BANK-DEV-4 hybrid): "I"/"II" match ROMAN_SECTION (hasRomanOrSection=true) BUT
+    //   "100" fires CORP_BALANCE veto (hasCorpBalance=true) → false (CORPORATE). CORRECT.
     const rows = [
       { code: "I" },
       { code: "II" },
-      { code: "100" }, // one 3-digit code — does not override letter evidence
+      { code: "100" }, // unambiguous B01-DN code — fires corporate veto
       { code: null },
     ];
-    expect(isBankFormFromRows(rows)).toBe(true);
+    expect(isBankFormFromRows(rows)).toBe(false);
   });
 
   it("Seed 5: rows with 2-digit income codes only [10,60] → false (corporate income-only, DV-FU6F-B1-3 regression guard)", () => {
     // THE DV-FU6F-B1-3 REGRESSION GUARD.
     // A corporate income-only extraction (e.g. VNM: only income rows OCR'd, balance not yet
     // extracted) produces codes ["10","60"] — Mẫu B01-DN income codes 10 (Doanh thu thuần)
-    // and 60 (Lợi nhuận sau thuế). Neither contains a letter.
-    // BANK-DEV-2 (absence signal): no 3-digit code → true (bank). WRONG — caused DV-FU6F-B1-3 to fail.
-    // BANK-DEV-3 (positive evidence): no letter → false (corporate/ambiguous). CORRECT.
+    // and 60 (Lợi nhuận sau thuế). Neither matches ROMAN_SECTION; neither starts with 3 digits.
+    // hasRomanOrSection = false → result = false (CORPORATE). CORRECT.
     const rows = [
       { code: "10" },
       { code: "60" },
     ];
     expect(isBankFormFromRows(rows)).toBe(false);
+  });
+
+  it("Seed 6: FPT real VAS sub-codes [100, 270, 411a, 420a, 420b] → false (CORPORATE)", () => {
+    // THE BANK-DEV-3 REGRESSION GUARD.
+    // FPT (corporate Mẫu B01-DN) has letter-suffixed VAS sub-codes: 411a, 420a, 420b, 26b.
+    // BANK-DEV-3 (any-letter signal): "411a" contains "a" → isBankFormFromRows=true. WRONG.
+    // BANK-DEV-4 (hybrid): "411a" does not match ROMAN_SECTION (anchored); "100"/"270" fire
+    //   CORP_BALANCE veto → hasCorpBalance=true → result=false (CORPORATE). CORRECT.
+    // This seed uses real codes from FPT report e8ea3df5 (live DB read 2026-05-31).
+    const rows = [
+      { code: "100" },  // current_assets — unambiguous B01-DN balance code
+      { code: "270" },  // total_assets
+      { code: "411a" }, // VAS sub-code with letter suffix — NOT a Roman numeral
+      { code: "420a" }, // VAS sub-code
+      { code: "420b" }, // VAS sub-code
+    ];
+    // BEFORE fix (BANK-DEV-3): isBankFormFromRows = true (letter in "411a","420a","420b")
+    // AFTER fix (BANK-DEV-4): isBankFormFromRows = false (CORP_BALANCE fires on 100/270)
+    expect(isBankFormFromRows(rows)).toBe(false);
+  });
+
+  it("Seed 7: ACB real Roman codes [A, B, I, I.1, XIII, 01, null] → true (BANK)", () => {
+    // ACB (bank Mẫu B02-TCTD) real codes from report fea19bae (live DB read 2026-05-31).
+    // Roman numerals I–XIII, section headers A/B, short numeric 01-09, nulls.
+    // All iterations agree ACB is bank; this seed proves the hybrid signal still holds.
+    const rows = [
+      { code: "A" },    // section header — matches ^[AB]$
+      { code: "B" },    // section header
+      { code: "I" },    // Roman I — matches ROMAN_SECTION
+      { code: "I.1" },  // decimal sub-item
+      { code: "XIII" }, // Roman XIII
+      { code: "01" },   // short numeric — neither Roman nor 3-digit
+      { code: null },
+    ];
+    // hasRomanOrSection = true (A, B, I, I.1, XIII all match)
+    // hasCorpBalance = false (no ^[0-9]{3} codes — "01" is only 2 digits)
+    // Result: true AND NOT false = true (BANK)
+    expect(isBankFormFromRows(rows)).toBe(true);
   });
 });
 
