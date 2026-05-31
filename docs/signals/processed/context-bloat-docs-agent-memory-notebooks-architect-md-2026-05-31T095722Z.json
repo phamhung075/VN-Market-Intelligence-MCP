@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-05-31T09:57:22Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/architect.md",
+    "line_count": 369,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 169,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "c196d27e17022b2f57644a1c81c7b73acef9d09cad618bda557cd6e67b30345d",
+    "processedAt": "2026-05-31T10:01:19Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-maintenance"
+  }
+}
