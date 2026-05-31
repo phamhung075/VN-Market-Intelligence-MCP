@@ -1042,3 +1042,382 @@ Before the one-line `isBankFormFromRows` body change:
 - DV-FU6F-B1-3 → FAIL (received "yellow", expected "red").
 - DV-BANK-7 Seed 5 (new) → FAIL (current code returns `true` for `["10","60"]`).
 After the change: all tests GREEN.
+
+---
+
+## BANK-ARCH-4 — Final Discriminator Ruling (BANK-DEV-3 production regression)
+
+**Date:** 2026-05-31
+**Gate status:** BLOCKING BANK-DEV-4. Iteration #4 per recurring-bug-escalation policy.
+**Signal being replaced:** BANK-ARCH-3 `rows.some(r => /[A-Za-z]/.test(r.code ?? ""))` — any letter.
+**Why it failed in production:** Real VAS Mẫu B01-DN corporate sub-codes carry letter suffixes
+(`411a`, `420a`, `420b`, `26b`). These are STANDARD Vietnamese Accounting Standards sub-item
+codes — not OCR artifacts. The any-letter premise was empirically false.
+
+---
+
+### Empirical Refutation of the Any-Letter Premise
+
+BANK-ARCH-3's rationale stated: "Corporate Mẫu B01-DN codes (10-60 income; 100-440 balance)
+are entirely numeric — no letters." This was an assumption, not a verified fact. The live DB
+read for FPT (report e8ea3df5…) refutes it:
+
+**FPT (corporate Mẫu B01-DN) codes that contain letters:**
+
+| Code   | Type                       | Matches `/[A-Za-z]/` | Anchored Roman? |
+|--------|----------------------------|----------------------|-----------------|
+| `26b`  | VAS sub-item (numeric+letter suffix) | YES | NO |
+| `411a` | VAS sub-item (numeric+letter suffix) | YES | NO |
+| `411`  | VAS item (numeric)         | NO                   | NO  |
+| `420a` | VAS sub-item               | YES                  | NO  |
+| `420b` | VAS sub-item               | YES                  | NO  |
+
+FPT also has leaked Vietnamese label text in the code column ("Chỉ tiêu", "Doanh thu thuần",
+"Lợi nhuận…") — these also contain letters. The label-leak is a separate parser defect (flagged
+below). Both the VAS sub-codes and the label-leak share the property: they contain letters but
+are NOT anchored Roman numerals.
+
+**Consequence under current any-letter code:**
+`isBankFormFromRows(FPT_ROWS)` → `true` (bank) → FPT gross_profit suppressed, PUB-3 uses bank
+path, bctcValidator skips gross_profit comparisons. FPT is treated as a bank. REGRESSION.
+
+**Summary of three-iteration signal history:**
+
+| Iteration  | Signal                            | ACB  | FPT   | Income-only `["10","60"]` |
+|------------|-----------------------------------|------|-------|---------------------------|
+| BANK-DEV-1 | `domain="banking"`                | FAIL | OK    | OK                        |
+| BANK-DEV-2 | `!rows.some(/^[0-9]{3}/)`         | OK   | OK    | FAIL (→ bank)             |
+| BANK-DEV-3 | `rows.some(/[A-Za-z]/)`           | OK   | FAIL  | OK                        |
+| BANK-DEV-4 | **Hybrid (this ruling)**          | OK   | OK    | OK                        |
+
+---
+
+### Chosen Signal — Hybrid Positive-Bank with Corporate Veto
+
+**Signal one-liner:**
+
+```
+bank ⟺ hasAnchoredRomanOrSection(rows) AND NOT hasCanonicalThreeDigitBalance(rows)
+```
+
+**Formal definition:**
+
+```typescript
+const ROMAN_SECTION = /^(XIII|XII|XI|IX|VIII|VII|VI|IV|III|II|I|X|V)(\.\d+)?$|^[AB]$/;
+const CORP_BALANCE   = /^[0-9]{3}/;
+
+export function isBankFormFromRows(rows: BctcCodeRow[]): boolean {
+  if (rows.length === 0) return false;
+  const hasRomanOrSection = rows.some(r => ROMAN_SECTION.test(r.code ?? ""));
+  const hasCorpBalance    = rows.some(r => CORP_BALANCE.test(r.code ?? ""));
+  return hasRomanOrSection && !hasCorpBalance;
+}
+```
+
+**Why this signal is correct for ALL known cases:**
+
+**Part 1 — Positive bank evidence (anchored Roman/section):**
+Bank Mẫu B02-TCTD uses section codes `A`, `B` (asset/liability blocks) and Roman numeral
+sub-codes `I` through `XIII` and decimal sub-items (`I.1`, `I.2`, `II.1`…). These are anchored
+— the regex `^(XIII|XII|XI|IX|VIII|VII|VI|IV|III|II|I|X|V)(\.\d+)?$|^[AB]$` matches only
+exact Roman numerals and exactly `A` or `B`. It does NOT match:
+- `411a` (does not start with a Roman token when anchored with `$`)
+- `420b` (not a Roman numeral — starts with `4`)
+- `26b` (starts with digit `2` — not `A` or `B` exactly)
+- `"Chỉ tiêu"` or any Vietnamese prose (no prosaic string is a Roman numeral)
+
+**Part 2 — Corporate veto (3-digit balance code):**
+Corporate Mẫu B01-DN canonical balance codes: `100` (current_assets), `200` (non-current_assets),
+`270` (total_assets), `280` (total_assets alt), `300` (short-term_liabilities), `400` (equity
+parent), `440` (equity total). The pattern `^[0-9]{3}` matches any code whose first three
+characters are digits — including `100`, `110`, `111`, `120`, `200`, `270`, `400`, etc.
+Banks (Mẫu B02-TCTD) have zero such codes; the veto only fires for corporate forms.
+
+The veto handles the mixed OCR case `["I","II","100",null]`: "I" and "II" satisfy Part 1, but
+"100" fires the veto → CORPORATE. This is correct: `100` is an unambiguous VAS B01-DN code;
+if it is present, the form is corporate regardless of any Roman codes (which would be OCR
+artifacts). BANK-ARCH-3's opposite ruling ("letter evidence wins over 3-digit") was wrong
+because it treated `100` as potentially ambiguous — it is not. `100` only appears in B01-DN.
+
+---
+
+### Truth Table — All Three Mandatory Cases
+
+| Case | Representative codes | hasRomanOrSection | hasCorpBalance | Result |
+|------|---------------------|-------------------|----------------|--------|
+| (a) ACB — bank | `A, B, I, I.1, II, III, XIII, 01, 09, null` | `A`→YES, `B`→YES, `I`→YES | none match `^[0-9]{3}` | TRUE → BANK ✓ |
+| (b) FPT — corporate | `100, 110, 200, 270, 400, 440, 411a, 420a, 420b, 26b` | `411a`→NO, `420a`→NO, `26b`→NO, `100`→NO (not Roman), no anchored Roman | `100`→YES, `200`→YES, `270`→YES | FALSE → CORPORATE ✓ |
+| (c) Income-only corporate `["10","60"]` | `10, 60` | neither matches Roman/section | neither matches `^[0-9]{3}` | FALSE AND (NOT FALSE) = FALSE — wait: `hasRomanOrSection`=FALSE → result=FALSE | FALSE → CORPORATE ✓ |
+
+Expanded row-by-row for ACB (sample of 8 codes):
+
+| Code | Matches ROMAN_SECTION? | Matches CORP_BALANCE? |
+|------|------------------------|----------------------|
+| `A`  | YES (`^[AB]$`) | NO |
+| `B`  | YES (`^[AB]$`) | NO |
+| `I`  | YES (`^(…I…)$`) | NO |
+| `I.1`| YES (`^I(\.\d+)?$`) | NO |
+| `XIII` | YES | NO |
+| `01` | NO | NO |
+| `09` | NO | NO |
+| null | NO | NO |
+
+→ `hasRomanOrSection = true`, `hasCorpBalance = false` → **BANK**
+
+Expanded row-by-row for FPT (representative codes, both numeric and letter-suffixed):
+
+| Code | Matches ROMAN_SECTION? | Matches CORP_BALANCE? |
+|------|------------------------|----------------------|
+| `100` | NO (not a Roman numeral; `^[AB]$` doesn't match) | YES |
+| `270` | NO | YES |
+| `440` | NO | YES |
+| `411a` | NO (anchored: `411a` is not `I`, `II`, …, `XIII`) | YES (`^[0-9]{3}` matches prefix `411`) |
+| `420a` | NO | YES (`^[0-9]{3}` matches `420`) |
+| `420b` | NO | YES (`^[0-9]{3}` matches `420`) |
+| `26b` | NO | NO (`26b` starts with `2`, `6`, `b` — only 2 leading digits, `^[0-9]{3}` needs 3) |
+| Vietnamese prose (`"Chỉ tiêu"`) | NO | NO |
+
+→ `hasRomanOrSection = false` → **CORPORATE** (regardless of `hasCorpBalance`)
+
+Income-only `["10","60"]`:
+
+| Code | Matches ROMAN_SECTION? | Matches CORP_BALANCE? |
+|------|------------------------|----------------------|
+| `10` | NO | NO (`10` is only 2 digits) |
+| `60` | NO | NO |
+
+→ `hasRomanOrSection = false` → **CORPORATE** ✓
+
+**All three mandatory cases pass. No false-bank, no false-corporate.**
+
+---
+
+### Why the Hybrid Is Robust to the Label-Leak
+
+FPT's code column contains Vietnamese prose strings (`"Chỉ tiêu"`, `"Doanh thu thuần"`,
+`"Lợi nhuận sau thuế TNDN"`, `"Tổng lợi nhuận kế toán trước thuế"`). These strings:
+- Do NOT match `ROMAN_SECTION` (no Vietnamese prose is a Roman numeral or exactly `A`/`B`).
+- Do NOT match `CORP_BALANCE` (they do not start with three digits).
+
+The hybrid signal is therefore immune to label-column leakage into the code column. The
+anchored regex achieves this without special handling.
+
+---
+
+### Data Quality Follow-up: Label-Leak into `code` Column
+
+**BCTC-CODE-COLUMN-HYGIENE (separate task, do NOT fix in BANK-DEV-4)**
+
+The live FPT `bctc_table_rows` data contains Vietnamese label strings in the `code` column:
+- `"Chỉ tiêu"`, `"Doanh thu thuần về bán hàng và cung cấp dịch vụ"`,
+- `"Lợi nhuận gộp về bán hàng và cung cấp dịch vụ"`,
+- `"Tổng lợi nhuận kế toán trước thuế"`, etc.
+
+These are labels, not codes. The `label` column is the correct home. Root cause: the markdown→rows
+parser (`text_table_extractor.py` or the upstream markdown table parser) is misaligning columns,
+writing label-column content into the code column for certain rows.
+
+**Impact now:** Low — the hybrid discriminator is immune. The label-leak does not cause bank/
+corporate misclassification under the new signal.
+**Impact potential:** High — any consumer that parses `code` as a numeric or pattern-matched
+string will produce incorrect results when it encounters a Vietnamese prose string. The
+`bctcScalarAggregator`'s `findByCode` function does a string comparison on code; a label-as-code
+will never match a numeric code, so it silently produces null for those rows. This means some
+income-statement values may be missed for FPT.
+
+**Recommended task:** `BCTC-CODE-COLUMN-HYGIENE`
+- Zone: `apps/mcp-server/` (parser) + `dev-pdf-extractor/` (text_table_extractor.py)
+- Signal: `SELECT code FROM bctc_table_rows WHERE code REGEXP '[^\x00-\x7F]'` (non-ASCII) counts
+  as a health metric; alert if > 0 per report.
+- Fix: at ingestion time, if `code` column value contains non-ASCII or whitespace, swap it to
+  `label` and set `code = NULL`, OR flag for human review in the BCTC inspect UI.
+- This task is BLOCKED until BANK-DEV-4 is shipped (do not touch the parser before the
+  discriminator is stable).
+
+---
+
+### BANK-DEV-4 Task Specification
+
+**Task:** BANK-DEV-4
+**Zone:** `apps/mcp-server/`
+**Assignee:** dev-mcp-server
+**Gate:** Architect-ruled (BANK-ARCH-4). This is the FOURTH and FINAL iteration.
+**Recurring-bug-escalation status:** FULL FORCE — no point-fix permitted; this spec is exhaustive.
+
+#### Files That Change
+
+1. `apps/mcp-server/src/domain/services/financial-reports/bctcFormType.ts` — function body only
+2. `apps/mcp-server/src/__tests__/BANK-AWARE-1-consumer-audit.test.ts` — DV-BANK-7 seeds update
+
+No other files change. Call-site signatures are unchanged (C-1 through C-7 all call
+`isBankFormFromRows` or `isBankFormFromDb` with the same arguments). `isBankFormFromDb` body
+is unchanged — it queries and delegates. `computeBctcEval.ts` scalar belt-and-suspenders is
+unchanged.
+
+#### Exact `isBankFormFromRows` Body
+
+Replace the current body (line 54–55 in `bctcFormType.ts`) with:
+
+```typescript
+/**
+ * isBankFormFromRows — canonical bank-form discriminator.
+ *
+ * BANK-ARCH-4 revision: HYBRID positive-bank + corporate-veto.
+ *
+ * Signal: bank ⟺ (row set contains at least one anchored Roman-numeral or
+ * section code) AND (row set contains NO canonical 3-digit corporate balance code).
+ *
+ * Anchored Roman/section pattern: /^(XIII|XII|XI|IX|VIII|VII|VI|IV|III|II|I|X|V)(\.\d+)?$|^[AB]$/
+ *   Matches: I, II, III, IV, V, VI, VII, VIII, IX, X, XI, XII, XIII (and decimal
+ *   sub-items I.1, I.2, II.1 …), plus exactly A or B (section headers).
+ *   Does NOT match: 411a, 420a, 420b, 26b (VAS sub-codes with letter suffix),
+ *   Vietnamese prose strings (no prosaic string is an anchored Roman numeral).
+ *
+ * Corporate veto pattern: /^[0-9]{3}/
+ *   Matches any code whose first 3 chars are digits (100, 200, 270, 400, 411a, 420a …).
+ *   Banks have zero such codes. A single occurrence rules out bank form.
+ *
+ * Three mandatory cases verified (BANK-ARCH-4 truth table):
+ *   (a) ACB  [A, B, I, I.1, XIII, 01, null] → true  (BANK)
+ *   (b) FPT  [100, 270, 440, 411a, 420a]    → false (CORPORATE)
+ *   (c) VNM  [10, 60]                        → false (CORPORATE — income-only)
+ *
+ * Fail-loud contract: empty rows → false (no bank promotion without positive evidence).
+ *
+ * History:
+ *   BANK-DEV-1: domain="banking" — wrong, all tickers have domain="other"
+ *   BANK-DEV-2: !rows.some(/^[0-9]{3}/) — broken on income-only corporates
+ *   BANK-DEV-3: rows.some(/[A-Za-z]/) — broken on VAS letter-suffix codes (411a, 420a)
+ *   BANK-DEV-4: hybrid (this) — correct for all known cases
+ *
+ * @param rows  All bctc_table_rows for the report (full set or code-only projection).
+ * @returns true if the report follows Mẫu B02-TCTD (bank form); false for corporate.
+ */
+export function isBankFormFromRows(rows: BctcCodeRow[]): boolean {
+  if (rows.length === 0) return false; // fail-safe: no rows → assume corporate
+  const ROMAN_SECTION = /^(XIII|XII|XI|IX|VIII|VII|VI|IV|III|II|I|X|V)(\.\d+)?$|^[AB]$/;
+  const CORP_BALANCE  = /^[0-9]{3}/;
+  const hasRomanOrSection = rows.some(r => ROMAN_SECTION.test(r.code ?? ""));
+  const hasCorpBalance    = rows.some(r => CORP_BALANCE.test(r.code ?? ""));
+  return hasRomanOrSection && !hasCorpBalance;
+}
+```
+
+**JSDoc** must be updated verbatim as shown above (history block, three mandatory cases, pattern
+explanations). The module-level JSDoc block at the top of the file must update the sprint line
+from `BANK-DEV-2` to `BANK-DEV-4` and the signal description from "positive any-letter" to
+"hybrid positive-bank + corporate-veto".
+
+#### DV-BANK-7 Test Updates (exact changes)
+
+The following DV-BANK-7 seeds must be updated in
+`apps/mcp-server/src/__tests__/BANK-AWARE-1-consumer-audit.test.ts`:
+
+**Seed 1 `["100","200","300","400"]` → `false`:** Expected value unchanged. Reason changes: was
+"no letter → false"; now "CORP_BALANCE fires (100/200/300/400) → corporate veto". Update comment.
+
+**Seed 2 `["I","II","VIII","IX",null]` → `true`:** Expected value unchanged. Reason: "I"/"II"
+match ROMAN_SECTION, no `^[0-9]{3}` codes → bank. Update comment.
+
+**Seed 3 `[]` → `false`:** Unchanged.
+
+**Seed 4 `["01","02","I","B"]` → `true`:** Expected value unchanged. Reason: "I" matches Roman,
+"B" matches `^[AB]$`; "01"/"02" do not match `^[0-9]{3}` (only 2 digits) → bank. Update comment.
+
+**Edge `["99"]` → `false`:** Expected value unchanged (was already changed to `false` in
+BANK-DEV-3). Reason: no ROMAN_SECTION match → `hasRomanOrSection=false` → corporate. Update comment.
+
+**Edge `["1000"]` → `false`:** Expected value unchanged. Reason: `1000` starts with `^[0-9]{3}`
+(`100` prefix) → CORP_BALANCE fires → BUT also `hasRomanOrSection=false` → result is `false`
+for two independent reasons. Update comment.
+
+**Mixed `["I","II","100",null]` → `false` (CHANGE from `true`):** Under BANK-ARCH-3 this was
+changed to `true` ("letter evidence wins"). Under BANK-ARCH-4: "I"/"II" match ROMAN_SECTION BUT
+"100" fires CORP_BALANCE veto → `false` (CORPORATE). This is correct: `100` is the unambiguous
+VAS B01-DN current_assets code; its presence rules out bank form unconditionally. Update
+description to "Roman codes present but 3-digit balance code 100 fires corporate veto → false".
+
+**Seed 5 `["10","60"]` → `false`:** Expected value unchanged (was already `false` in BANK-DEV-3).
+Reason: "10"/"60" do not match ROMAN_SECTION and do not match `^[0-9]{3}` → `hasRomanOrSection=
+false` → corporate. This is the DV-FU6F-B1-3 regression guard. Update comment.
+
+**Add Seed 6 (new — FPT real letter-suffixed codes asserting CORPORATE):**
+```typescript
+it("Seed 6: FPT real VAS sub-codes [100, 270, 411a, 420a, 420b] → false (CORPORATE)", () => {
+  // THE BANK-DEV-3 REGRESSION GUARD.
+  // FPT (corporate Mẫu B01-DN) has letter-suffixed VAS sub-codes: 411a, 420a, 420b, 26b.
+  // BANK-DEV-3 (any-letter signal): "411a" contains "a" → isBankFormFromRows=true. WRONG.
+  // BANK-DEV-4 (hybrid): "411a" does not match ROMAN_SECTION (anchored); "100"/"270" fire
+  //   CORP_BALANCE veto → hasCorpBalance=true → result=false (CORPORATE). CORRECT.
+  // This seed uses real codes from FPT report e8ea3df5 (live DB read 2026-05-31).
+  const rows = [
+    { code: "100" },  // current_assets — unambiguous B01-DN balance code
+    { code: "270" },  // total_assets
+    { code: "411a" }, // VAS sub-code with letter suffix — NOT a Roman numeral
+    { code: "420a" }, // VAS sub-code
+    { code: "420b" }, // VAS sub-code
+  ];
+  // BEFORE fix (BANK-DEV-3): isBankFormFromRows = true (letter in "411a","420a","420b")
+  // AFTER fix (BANK-DEV-4): isBankFormFromRows = false (CORP_BALANCE fires on 100/270)
+  expect(isBankFormFromRows(rows)).toBe(false);
+});
+```
+
+**Add Seed 7 (new — ACB real Roman codes asserting BANK):**
+```typescript
+it("Seed 7: ACB real Roman codes [A, B, I, I.1, XIII, 01, null] → true (BANK)", () => {
+  // ACB (bank Mẫu B02-TCTD) real codes from report fea19bae (live DB read 2026-05-31).
+  // Roman numerals I–XIII, section headers A/B, short numeric 01-09, nulls.
+  // All iterations agree ACB is bank; this seed proves the hybrid signal still holds.
+  const rows = [
+    { code: "A" },    // section header — matches ^[AB]$
+    { code: "B" },    // section header
+    { code: "I" },    // Roman I — matches ROMAN_SECTION
+    { code: "I.1" },  // decimal sub-item
+    { code: "XIII" }, // Roman XIII
+    { code: "01" },   // short numeric — neither Roman nor 3-digit
+    { code: null },
+  ];
+  // hasRomanOrSection = true (A, B, I, I.1, XIII all match)
+  // hasCorpBalance = false (no ^[0-9]{3} codes — "01" is only 2 digits)
+  // Result: true AND NOT false = true (BANK)
+  expect(isBankFormFromRows(rows)).toBe(true);
+});
+```
+
+#### RED-before-GREEN Expectation for BANK-DEV-4
+
+Under current production code (BANK-DEV-3, any-letter `/[A-Za-z]/`):
+
+| Test | BEFORE (current) | AFTER (BANK-DEV-4) |
+|------|-----------------|---------------------|
+| DV-BANK-7 Seed 6 (new — FPT codes) | FAIL (`true`, expected `false`) | PASS (`false`) |
+| DV-BANK-7 Mixed `["I","II","100",null]` | FAIL (now `true`, will become `false`) | PASS (`false`) |
+| DV-BANK-7 Seed 1 `["100","200","300","400"]` | PASS (`false`) | PASS (`false`) |
+| DV-BANK-7 Seed 2 `["I","II","VIII","IX",null]` | PASS (`true`) | PASS (`true`) |
+| DV-BANK-7 Seed 3 `[]` | PASS (`false`) | PASS (`false`) |
+| DV-BANK-7 Seed 4 `["01","02","I","B"]` | PASS (`true`) | PASS (`true`) |
+| DV-BANK-7 Edge `["99"]` | PASS (`false`) | PASS (`false`) |
+| DV-BANK-7 Seed 5 `["10","60"]` | PASS (`false`) | PASS (`false`) |
+| DV-BANK-7 Seed 7 (new — ACB codes) | PASS under any-letter, verify | PASS (`true`) |
+| DV-FU6F-B1-3 (VNM income-only) | PASS (`"red"`) — fixed by BANK-DEV-3 | PASS (`"red"`) |
+| DV-BANK-1..6 (ACB pipeline) | PASS | PASS |
+
+**Minimum RED assertions before fix:** Seed 6 FAILS (most critical — the production regression).
+Mixed `["I","II","100",null]` also FAILS (changes from `true` to `false`).
+Developer MUST confirm both FAIL before applying the body change.
+
+#### Acceptance Criteria
+
+- `bun test apps/mcp-server/src/__tests__/BANK-AWARE-1-consumer-audit.test.ts` → ALL DV-BANK-1..7
+  (including Seeds 6 and 7) PASS.
+- `bun test apps/mcp-server/src/__tests__/FU-6f-eval-blob-blockers.test.ts` → DV-FU6F-B1-3 PASS
+  (regression guard — corporate income-only still red).
+- `bun tsc --noEmit` → 0 errors.
+- `get_bctc_full(code="ACB")` via gateway after BANK-OPS rebuild: full financial summary (bank
+  path fires — ACB codes I, A, B match ROMAN_SECTION; no 3-digit codes → CORP_BALANCE veto
+  does not fire).
+- `get_bctc_full(code="FPT")` returns correct corporate data including gross_profit line (the
+  BANK-DEV-3 regression is fixed — 411a/420a no longer trigger bank path).
+- TypeScript compile is the fleet-wide safety net: regex constants are declared inside the
+  function body (no module-level state), zero side effects.
