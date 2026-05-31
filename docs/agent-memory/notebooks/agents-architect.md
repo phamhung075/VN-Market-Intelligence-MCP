@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-05-31T18:24:44Z
+
+**Brief:** `docs/architecture-briefs/2026-05-31-anomaly-to-dev-task-bridge.md`
+
+Gap validated: system-auditor detects infrastructure anomalies (D1/D2/D3/D4) and fires BUG Telegrams, but no mechanical path creates a tracked sprint task in TASKS.md for anomalies that don't self-resolve. D-IMPROVE covers improvement proposals; this bridge covers repair tasks. Designed `anomaly-task-bridge` skill (≤120L): reads DASHBOARD rows older than 2h, deduplicates against TASKS.md + signals_processed, emits `repair_task_request` signal to PO which creates a BACKLOG TASKS.md entry for the relevant zone owner. Three-file Phase 1 implementation (new skill + two flow edits) with zero new cron/agent/Docker overhead.
+
+**Signal dropped:** `docs/signals/anomaly-to-dev-task-bridge-20260531.json` → agent-father
+
+---
+
 ## 2026-05-31T16:56:03Z
 
 **Brief:** `docs/architecture-briefs/2026-05-31-dev-team-spawn-boundary-expansion.md`
