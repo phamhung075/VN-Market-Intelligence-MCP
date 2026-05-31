@@ -17,5 +17,11 @@
     "deterministic_ac": "An off-season quarterly source and a market-closed per-tick source both produce ZERO data_stale anomalies; a genuinely-broken per-tick source DURING the trading window still fires. Thresholds read from a per-source SLA SSOT."
   },
   "dedup_key": "repair_task_request:dev-team:AUDITOR-SLA-CADENCE",
-  "note": "PLAN-ONLY, LOW priority quality/precision fix (no host-danger this tick: auditor wrote no DASHBOARD row). For the next po->architect->agent-father cycle; fold into AUDITOR-NO-DESTRUCT / FLEET-HOST-SAFETY. Drains to PO at next :07 dev-team tick."
+  "note": "PLAN-ONLY, LOW priority quality/precision fix (no host-danger this tick: auditor wrote no DASHBOARD row). For the next po->architect->agent-father cycle; fold into AUDITOR-NO-DESTRUCT / FLEET-HOST-SAFETY. Drains to PO at next :07 dev-team tick.",
+  "_drain": {
+    "fingerprint": "2f0ca3541cabcfd88062ad0be86af5e5bc043f593469eebb4dc6fc116ea30d9f",
+    "processedAt": "2026-05-31T23:16:48.558Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
 }

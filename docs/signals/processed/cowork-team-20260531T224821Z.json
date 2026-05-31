@@ -1,0 +1,33 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-05-31T22:48:21Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (00:21 local / ~22:21Z) since prior tick — Step 0a skipped. No cowork-addressed NEW rows pending (po_handoff backlog cleared last tick).",
+    "staleness_note": "pressure-state unchanged (emitted 16:03Z), age ~405min > 20min threshold → PRESSURE_MODE=legacy. No slots matched so cadence gating moot.",
+    "tick_snapshot_note": "Matcher empty at 22:48Z (silent tick). MCP healthy (leader-claim succeeded). VN CLOSED weekend. Next real match: bctc-analyst-slot-0 at 00:00Z (cron 0 0 * * *).",
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-05-31T22:48:21Z",
+  "_drain": {
+    "fingerprint": "64f0d766f75ca39b49de67edfafd9b30a02b6096c5801394361fd207b6ec078a",
+    "processedAt": "2026-05-31T23:16:48.558Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
