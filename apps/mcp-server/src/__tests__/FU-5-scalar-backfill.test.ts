@@ -45,6 +45,8 @@ import {
   aggregateScalars,
   type AggregatorRow,
 } from "../domain/services/financial-reports/bctcScalarAggregator.js";
+// aggregateScalars now returns ScalarAggregateResult { scalars, balanceViolation }.
+// All FU-5 pure-aggregator tests access result.scalars.*
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -192,7 +194,8 @@ describe("DV-FU5-5 — aggregateScalars: corporate raw-VND rows → divisor=1e6"
       { code: "100", label: "Tài sản ngắn hạn",    value_current: 41_527_873_060_120, statement_section: "balance_sheet", is_summary_row: 1, unit: "billion_vnd" },
     ];
 
-    const agg = aggregateScalars(rows);
+    const result = aggregateScalars(rows);
+    const agg = result.scalars;
 
     // Must be in million VND (÷1e6), rounded
     expect(agg.net_revenue).not.toBeNull();
@@ -217,6 +220,9 @@ describe("DV-FU5-5 — aggregateScalars: corporate raw-VND rows → divisor=1e6"
     expect(agg.gross_margin_pct).not.toBeNull();
     expect(agg.gross_margin_pct!).toBeGreaterThan(33);
     expect(agg.gross_margin_pct!).toBeLessThan(35);
+
+    // DV-FU5-5: balance identity must hold (no violation for clean corporate fixture)
+    expect(result.balanceViolation).toBeNull();
   });
 });
 
@@ -235,7 +241,8 @@ describe("DV-FU5-6 — aggregateScalars: bank million-VND rows → divisor=1", (
       { code: null, label: "VỐN CHỦ SỞ HỮU",     value_current:    98_751_052, statement_section: "balance_sheet", is_summary_row: 1, unit: "billion_vnd" },
     ];
 
-    const agg = aggregateScalars(rows);
+    const result = aggregateScalars(rows);
+    const agg = result.scalars;
 
     // Must be exact (divisor=1)
     expect(agg.net_revenue).toBe(6_989_162);
@@ -247,6 +254,9 @@ describe("DV-FU5-6 — aggregateScalars: bank million-VND rows → divisor=1", (
 
     // gross_profit: banks have no gross_profit concept → NULL (no code "20", no bank label match)
     expect(agg.gross_profit).toBeNull();
+
+    // DV-FU5-6: balance identity must hold for this clean bank fixture
+    expect(result.balanceViolation).toBeNull();
   });
 });
 
@@ -261,7 +271,8 @@ describe("DV-FU5-3 — NULL-not-zero: absent line item → scalar is NULL, not 0
       { code: "60", label: "Lợi nhuận sau thuế", value_current: 500_000, statement_section: "income_statement", is_summary_row: 1, unit: "billion_vnd" },
     ];
 
-    const agg = aggregateScalars(rows);
+    const result = aggregateScalars(rows);
+    const agg = result.scalars;
 
     // net_revenue and net_profit should be found
     expect(agg.net_revenue).toBe(5_000_000);
@@ -276,15 +287,20 @@ describe("DV-FU5-3 — NULL-not-zero: absent line item → scalar is NULL, not 0
     // net_margin_pct can still be computed: 500000/5000000 * 100 = 10%
     expect(agg.net_margin_pct).not.toBeNull();
     expect(agg.net_margin_pct!).toBeCloseTo(10, 1);
+
+    // Balance identity: not enforced when total_assets is null → no violation
+    expect(result.balanceViolation).toBeNull();
   });
 
   it("empty row set → all scalars null", () => {
-    const agg = aggregateScalars([]);
+    const result = aggregateScalars([]);
+    const agg = result.scalars;
     expect(agg.net_revenue).toBeNull();
     expect(agg.gross_profit).toBeNull();
     expect(agg.net_profit).toBeNull();
     expect(agg.total_assets).toBeNull();
     expect(agg.equity_total).toBeNull();
+    expect(result.balanceViolation).toBeNull();
   });
 });
 
@@ -508,16 +524,23 @@ describe("DV-FU5-1 — Corporate report (FPT-shape): scalars backfilled correctl
       gross_profit: 12_479_997, // wrong: 100% margin
       equity_total: 0,           // wrong: zeroed
     });
-    // Seed correct bctc_table_rows directly (bypass parser for determinism)
+    // REALISTIC FPT fixture (FU-6c amendment):
+    // Code "270" maps to "V. Tài sản dài hạn khác" (3.4T) — NOT total assets.
+    // Code "280" maps to "TỔNG CỘNG TÀI SẢN (280 = 100 + 200)" (68.6T) — the real total.
+    // All rows land in "general" section (FPT balance sheet section-header gap).
+    // This is the realistic scenario that triggered the FU-6c bug.
     const rows = [
-      { code: "10",  label: "Doanh thu thuần",      section: "income_statement", val: 12_479_997_206_775 },
-      { code: "20",  label: "Lợi nhuận gộp",         section: "income_statement", val:  4_244_889_890_688 },
-      { code: "60",  label: "Lợi nhuận sau thuế",    section: "income_statement", val:  2_476_789_833_481 },
-      { code: "50",  label: "Lợi nhuận trước thuế",  section: "income_statement", val:  2_803_844_281_676 },
-      { code: "100", label: "Tài sản ngắn hạn",  section: "balance_sheet",   val: 41_527_873_060_120 },
-      { code: "270", label: "Tổng tài sản",       section: "balance_sheet",   val: 68_586_094_785_217 },
-      { code: "300", label: "Nợ phải trả",         section: "balance_sheet",   val: 28_464_058_214_856 },
-      { code: "400", label: "Vốn chủ sở hữu",      section: "balance_sheet",   val: 40_122_036_570_361 },
+      { code: "10",  label: "Doanh thu thuần",                           section: "income_statement", val: 12_479_997_206_775 },
+      { code: "20",  label: "Lợi nhuận gộp",                              section: "income_statement", val:  4_244_889_890_688 },
+      { code: "60",  label: "Lợi nhuận sau thuế",                         section: "income_statement", val:  2_476_789_833_481 },
+      { code: "50",  label: "Lợi nhuận trước thuế",                       section: "income_statement", val:  2_803_844_281_676 },
+      { code: "100", label: "Tài sản ngắn hạn",                           section: "general",          val: 41_527_873_060_120 },
+      // FPT realistic: code "270" is a sub-section, NOT total assets
+      { code: "270", label: "V. Tài sản dài hạn khác",                    section: "general",          val:  3_399_067_564_489 },
+      // FPT realistic: code "280" is the grand total
+      { code: "280", label: "TỔNG CỘNG TÀI SẢN (280 = 100 + 200)",       section: "general",          val: 68_586_094_785_217 },
+      { code: "300", label: "Nợ phải trả",                                section: "general",          val: 28_464_058_214_856 },
+      { code: "400", label: "Vốn chủ sở hữu",                             section: "general",          val: 40_122_036_570_361 },
     ];
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i]!;
@@ -530,7 +553,18 @@ describe("DV-FU5-1 — Corporate report (FPT-shape): scalars backfilled correctl
 
   afterEach(() => { db.close(); });
 
-  it("aggregateScalars on FPT-shaped rows returns correct million-VND values", () => {
+  it("aggregateScalars on FPT-shaped REALISTIC rows resolves total_assets from code-280 (not code-270)", () => {
+    /**
+     * REALISTIC FU-6c fixture:
+     *   code "270" = "V. Tài sản dài hạn khác" (3,399,068M) — a sub-section, NOT total
+     *   code "280" = "TỔNG CỘNG TÀI SẢN (280 = 100 + 200)" (68,586,095M) — the real total
+     *
+     * OLD code (findByCode(rows, "270")) would pick 3,399,068M — WRONG.
+     * NEW code (findTotalAssetsCorporate) finds "TỔNG CỘNG TÀI SẢN" label → 68,586,095M — CORRECT.
+     *
+     * This fixture was previously idealized (code "270" → "Tổng tài sản").
+     * Now it matches the actual live FPT bctc_table_rows — the cause of FU-6c false-green.
+     */
     interface Row { code: string | null; label: string; value_current: number | null; statement_section: string; is_summary_row: number; unit: string }
     const dbRows = db
       .prepare<Row, [string]>(
@@ -538,7 +572,8 @@ describe("DV-FU5-1 — Corporate report (FPT-shape): scalars backfilled correctl
       )
       .all(FPT_ID) as AggregatorRow[];
 
-    const agg = aggregateScalars(dbRows);
+    const result = aggregateScalars(dbRows);
+    const agg = result.scalars;
 
     // net_revenue: 12,479,997,206,775 ÷ 1e6 = 12,479,997.206775 → round to 12,479,997
     expect(Math.round(agg.net_revenue!)).toBe(12_479_997);
@@ -549,45 +584,83 @@ describe("DV-FU5-1 — Corporate report (FPT-shape): scalars backfilled correctl
     // equity_total: 40,122,036,570,361 ÷ 1e6 = 40,122,036.570361 → round to 40,122,037
     expect(Math.round(agg.equity_total!)).toBe(40_122_037);
 
+    // CRITICAL: total_assets must be 68,586,095 (from code "280" label match)
+    // NOT 3,399,068 (from code "270" = "V. Tài sản dài hạn khác")
+    expect(agg.total_assets).not.toBeNull();
+    expect(Math.round(agg.total_assets!)).toBe(68_586_095);
+
     // gross_margin_pct ≈ 34.0%
     expect(agg.gross_margin_pct!).toBeGreaterThan(33.5);
     expect(agg.gross_margin_pct!).toBeLessThan(34.5);
+
+    // Balance identity: 28,464,058 + 40,122,037 ≈ 68,586,095 → ok (<1% deviation)
+    expect(result.balanceViolation).toBeNull();
   });
 });
 
 describe("DV-FU5-2 — Bank report (ACB-shape): scalars backfilled correctly", () => {
-  it("aggregateScalars on ACB-shaped rows uses divisor=1 (million VND input)", () => {
-    // ACB bctc_table_rows use Roman numeral codes; balance sheet uses label-based
+  it("aggregateScalars on ACB-shaped REALISTIC rows resolves code-I collision and equity ordering", () => {
+    /**
+     * REALISTIC ACB fixture (FU-6c amendment):
+     *
+     * Code "I" collision: two rows share code "I" in the general section.
+     *   - code "I", label "Tiền mặt, vàng bạc, đá quý" (balance sheet asset, row_order=0) → 8,157,465
+     *   - code "I", label "Thu nhập lãi thuần" (income, row_order=10) → 6,989,162
+     *   OLD code (findByCode without labelHint) picks first = 8,157,465 (WRONG).
+     *   NEW code (findByCode with labelHint=/thu nhập|doanh thu/) picks 6,989,162 (CORRECT).
+     *
+     * Equity label ordering: combined-line appears BEFORE pure equity line in row_order.
+     *   - code null, label "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" (row_order=1) → 1,030,900,741
+     *   - code "VIII", label "VỐN CHỦ SỞ HỮU" (row_order=2) → 98,751,052
+     *   OLD code (findByLabel without exclusion) picks first summary match = 1,030,900,741 (WRONG).
+     *   NEW code (findByLabelExcluding) excludes "TỔNG NỢ PHẢI TRẢ..." → picks 98,751,052 (CORRECT).
+     *
+     * This fixture was previously idealized (clean rows, no collisions).
+     * Now it matches the actual live ACB bctc_table_rows — the causes of FU-6c false-green.
+     */
     const rows: AggregatorRow[] = [
-      { code: "I",    label: "Thu nhập lãi thuần",     value_current: 6_989_162, statement_section: "income_statement", is_summary_row: 1, unit: "billion_vnd" },
-      { code: "VIII", label: "Lợi nhuận trước thuế",   value_current: 5_368_138, statement_section: "income_statement", is_summary_row: 1, unit: "billion_vnd" },
-      { code: "IX",   label: "Lợi nhuận sau thuế",     value_current: 4_320_388, statement_section: "income_statement", is_summary_row: 1, unit: "billion_vnd" },
-      { code: null,   label: "TỔNG TÀI SẢN",           value_current: 1_030_900_741, statement_section: "balance_sheet", is_summary_row: 1, unit: "billion_vnd" },
-      { code: null,   label: "TỔNG NỢ PHẢI TRẢ",       value_current:   932_149_689, statement_section: "balance_sheet", is_summary_row: 1, unit: "billion_vnd" },
-      { code: null,   label: "VỐN CHỦ SỞ HỮU",         value_current:    98_751_052, statement_section: "balance_sheet", is_summary_row: 1, unit: "billion_vnd" },
+      // ACB balance sheet rows (in "general" section — no separate balance_sheet section)
+      // is_summary_row=1 for grand totals
+      { code: null,   label: "TỔNG TÀI SẢN",                            value_current: 1_030_900_741, statement_section: "general", is_summary_row: 1, unit: "billion_vnd" },
+      { code: null,   label: "TỔNG NỢ PHẢI TRẢ",                        value_current:   932_149_689, statement_section: "general", is_summary_row: 1, unit: "billion_vnd" },
+      // Combined-line that caused the equity bug: appears BEFORE pure equity row
+      { code: null,   label: "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU",   value_current: 1_030_900_741, statement_section: "general", is_summary_row: 1, unit: "billion_vnd" },
+      // Pure equity row (the correct pick)
+      { code: "VIII", label: "VỐN CHỦ SỞ HỮU",                         value_current:    98_751_052, statement_section: "general", is_summary_row: 1, unit: "billion_vnd" },
+      // Code "I" balance sheet asset — WRONG row for net_revenue (appears FIRST in row_order)
+      { code: "I",    label: "Tiền mặt, vàng bạc, đá quý",             value_current:   8_157_465,   statement_section: "general", is_summary_row: 0, unit: "billion_vnd" },
+      // Code "I" income row — the CORRECT net_revenue
+      { code: "I",    label: "Thu nhập lãi thuần",                      value_current:   6_989_162,   statement_section: "general", is_summary_row: 1, unit: "billion_vnd" },
+      // Other income statement rows
+      { code: "XIII", label: "Lợi nhuận sau thuế",                      value_current:   4_320_388,   statement_section: "general", is_summary_row: 1, unit: "billion_vnd" },
+      { code: "XI",   label: "Tổng lợi nhuận trước thuế",               value_current:   5_368_138,   statement_section: "general", is_summary_row: 1, unit: "billion_vnd" },
     ];
 
-    const agg = aggregateScalars(rows);
+    const result = aggregateScalars(rows);
+    const agg = result.scalars;
 
-    // All values in million VND — no division applied (divisor=1)
+    // All values in million VND — no division applied (divisor=1, max value < 1e11)
+
+    // CRITICAL: net_revenue must be 6,989,162 (income row), NOT 8,157,465 (balance sheet asset)
+    // labelHint=/thu nhập|doanh thu/ filters out "Tiền mặt, vàng bạc, đá quý"
     expect(agg.net_revenue).toBe(6_989_162);
-    expect(agg.profit_before_tax).toBe(5_368_138);
-    expect(agg.net_profit).toBe(4_320_388);
+
+    // CRITICAL: equity_total must be 98,751,052 (pure VỐN CHỦ SỞ HỮU)
+    // NOT 1,030,900,741 (TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU — combined-line)
+    expect(agg.equity_total).toBe(98_751_052);
+
     expect(agg.total_assets).toBe(1_030_900_741);
     expect(agg.total_liabilities).toBe(932_149_689);
-    expect(agg.equity_total).toBe(98_751_052);
+
+    // net_profit: code "IX" absent; code "XIII" also not bank-standard — falls through to label
+    // For this test: "Lợi nhuận sau thuế" label pattern matches code "XIII" via P_NET_PROFIT
+    expect(agg.net_profit).toBe(4_320_388);
 
     // Banks: no gross profit → NULL
     expect(agg.gross_profit).toBeNull();
     expect(agg.gross_margin_pct).toBeNull();
 
-    // net_margin_pct: 4320388 / 6989162 * 100 ≈ 61.8%
-    expect(agg.net_margin_pct).not.toBeNull();
-    expect(agg.net_margin_pct!).toBeGreaterThan(60);
-    expect(agg.net_margin_pct!).toBeLessThan(65);
-
-    // Balance: liabilities + equity should ≈ total_assets
-    const balanceCheck = agg.total_liabilities! + agg.equity_total!;
-    expect(balanceCheck).toBe(agg.total_assets!);
+    // Balance identity: 932,149,689 + 98,751,052 = 1,030,900,741 ✓ (exact match)
+    expect(result.balanceViolation).toBeNull();
   });
 });

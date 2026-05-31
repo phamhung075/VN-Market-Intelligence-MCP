@@ -38,6 +38,7 @@ import {
 import {
   aggregateScalars,
 } from "../../../../domain/services/financial-reports/bctcScalarAggregator.js";
+import type { ScalarAggregateResult } from "../../../../domain/services/financial-reports/bctcScalarAggregator.js";
 import {
   computeBctcEval,
   loadBctcEvalThresholds,
@@ -400,38 +401,51 @@ export function buildFinalizeBctcRefineHandler(
           )
           .all(report_id);
 
-        const agg = aggregateScalars(scalarRows);
+        const aggResult: ScalarAggregateResult = aggregateScalars(scalarRows);
 
-        // Build the SET clause dynamically — only update columns where the
-        // aggregator produced a non-null value. NULL = "line absent" and must
-        // NOT overwrite an existing non-null value with a forced zero.
-        const updates: Array<{ col: string; val: number }> = [];
-        if (agg.net_revenue       !== null) updates.push({ col: "net_revenue",       val: agg.net_revenue });
-        if (agg.gross_profit      !== null) updates.push({ col: "gross_profit",      val: agg.gross_profit });
-        if (agg.profit_before_tax !== null) updates.push({ col: "profit_before_tax", val: agg.profit_before_tax });
-        if (agg.net_profit        !== null) updates.push({ col: "net_profit",        val: agg.net_profit });
-        if (agg.total_assets      !== null) updates.push({ col: "total_assets",      val: agg.total_assets });
-        if (agg.current_assets    !== null) updates.push({ col: "current_assets",    val: agg.current_assets });
-        if (agg.total_liabilities !== null) updates.push({ col: "total_liabilities", val: agg.total_liabilities });
-        if (agg.equity_total      !== null) updates.push({ col: "equity_total",      val: agg.equity_total });
-        if (agg.gross_margin_pct  !== null) updates.push({ col: "gross_margin_pct",  val: agg.gross_margin_pct });
-        if (agg.net_margin_pct    !== null) updates.push({ col: "net_margin_pct",    val: agg.net_margin_pct });
-
-        if (updates.length > 0) {
-          const setClauses = updates.map((u) => `${u.col} = ?`).join(", ");
-          const bindVals: (number | string)[] = [...updates.map((u) => u.val), report_id];
-          // bun:sqlite Statement.run accepts a rest array of binding values
-          (db.prepare(`UPDATE financial_reports SET ${setClauses} WHERE id = ?`) as {
-            run: (...args: (number | string)[]) => unknown;
-          }).run(...bindVals);
-          logger.info("[finalize_bctc_refine] scalar backfill complete", {
+        // FU-6c: balance-identity gate — if the aggregator detected an internally
+        // inconsistent result (wrong-row pick), log.error and SKIP the UPDATE.
+        // Preserving stale/null scalars is safer than writing known-wrong numbers.
+        // The table rows are already committed; ops can re-finalize after the fix.
+        if (aggResult.balanceViolation !== null) {
+          logger.error("[finalize_bctc_refine] balance identity violated — scalar UPDATE skipped", {
             report_id,
-            updated_cols: updates.map((u) => u.col),
+            violation: aggResult.balanceViolation,
           });
         } else {
-          logger.warn("[finalize_bctc_refine] scalar backfill: no non-null scalars found", {
-            report_id,
-          });
+          const agg = aggResult.scalars;
+
+          // Build the SET clause dynamically — only update columns where the
+          // aggregator produced a non-null value. NULL = "line absent" and must
+          // NOT overwrite an existing non-null value with a forced zero.
+          const updates: Array<{ col: string; val: number }> = [];
+          if (agg.net_revenue       !== null) updates.push({ col: "net_revenue",       val: agg.net_revenue });
+          if (agg.gross_profit      !== null) updates.push({ col: "gross_profit",      val: agg.gross_profit });
+          if (agg.profit_before_tax !== null) updates.push({ col: "profit_before_tax", val: agg.profit_before_tax });
+          if (agg.net_profit        !== null) updates.push({ col: "net_profit",        val: agg.net_profit });
+          if (agg.total_assets      !== null) updates.push({ col: "total_assets",      val: agg.total_assets });
+          if (agg.current_assets    !== null) updates.push({ col: "current_assets",    val: agg.current_assets });
+          if (agg.total_liabilities !== null) updates.push({ col: "total_liabilities", val: agg.total_liabilities });
+          if (agg.equity_total      !== null) updates.push({ col: "equity_total",      val: agg.equity_total });
+          if (agg.gross_margin_pct  !== null) updates.push({ col: "gross_margin_pct",  val: agg.gross_margin_pct });
+          if (agg.net_margin_pct    !== null) updates.push({ col: "net_margin_pct",    val: agg.net_margin_pct });
+
+          if (updates.length > 0) {
+            const setClauses = updates.map((u) => `${u.col} = ?`).join(", ");
+            const bindVals: (number | string)[] = [...updates.map((u) => u.val), report_id];
+            // bun:sqlite Statement.run accepts a rest array of binding values
+            (db.prepare(`UPDATE financial_reports SET ${setClauses} WHERE id = ?`) as {
+              run: (...args: (number | string)[]) => unknown;
+            }).run(...bindVals);
+            logger.info("[finalize_bctc_refine] scalar backfill complete", {
+              report_id,
+              updated_cols: updates.map((u) => u.col),
+            });
+          } else {
+            logger.warn("[finalize_bctc_refine] scalar backfill: no non-null scalars found", {
+              report_id,
+            });
+          }
         }
       } catch (scalarErr) {
         // Non-fatal: log and continue — table rows are committed; scalar backfill

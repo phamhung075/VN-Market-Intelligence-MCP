@@ -1,5 +1,37 @@
 # dev-mcp-server -- Notebook
 
+## c343 · 2026-05-31 (FU-TRUST-REFRESH FU-6c) — COMMITTED [pending]
+
+**Task:** FU-6c — bctcScalarAggregator root-cause fix: label-canonical + balance-identity invariant
+
+**Root causes fixed (3 confirmed by architect against live rows):**
+- FPT total_assets: code "270" → "V. Tài sản dài hạn khác" (3.4T); real total is code "280" → "TỔNG CỘNG TÀI SẢN" (68.6T). Old aggregator hardcoded "270" first.
+- ACB equity_total: P_BANK_EQUITY matched "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" (1,030.9B) before "VỐN CHỦ SỞ HỮU" (98.75B) due to row_order + substring match.
+- ACB net_revenue: code "I" collision — balance sheet "Tiền mặt, vàng bạc, đá quý" (8,157,465M) picked before income "Thu nhập lãi thuần" (6,989,162M).
+
+**Fix (4 files):**
+1. MODIFIED `bctcScalarAggregator.ts`: (a) `findTotalAssetsCorporate`: label-canonical search for `tổng cộng tài sản|tổng tài sản`, prefers code 280/270 over 440 (equity side); (b) `findByLabelExcluding(rows, section, include, exclude)`: excludes "TỔNG NỢ PHẢI TRẢ..." from equity match, excludes "nợ/nguồn vốn" from bank total_assets match; (c) `findByCode` extended with optional `labelHint: RegExp` + `statementSection?` — code "I" bank net_revenue lookup requires label matching `/thu nhập|doanh thu/i`; (d) `enforceBalanceIdentity`: returns string|null; (e) `aggregateScalars` returns `ScalarAggregateResult { scalars, balanceViolation }` — domain-pure, no logger import.
+2. MODIFIED `finalizeBctcRefineTool.ts` (call site only): checks `aggResult.balanceViolation !== null` → `logger.error` + SKIP scalar UPDATE. Existing scalars preserved (stale but not wrong). Tool still returns ok:true for rows/refine_status path.
+3. NEW `FU-6-scalar-correctness.test.ts`: 7 DV tests — DV-FU6-1 (FPT code-280 wins), DV-FU6-2a (invariant fires for wrong total_assets), DV-FU6-2b (ACB correct after exclusion), DV-FU6-3 (code "I" collision), DV-FU6-4 (equity label exclusion), DV-FU6-5a (FPT live-bug exact values → invariant), DV-FU6-5b (ACB live-bug → invariant). All RED→GREEN proven.
+4. AMENDED `FU-5-scalar-backfill.test.ts`: DV-FU5-1 fixture now uses code "280" realistic (not code "270" ideal), DV-FU5-2 includes code "I" collision + equity ordering. All 8 FU-5 tests still GREEN. All call sites updated to `result.scalars.*`.
+5. AMENDED `FU-5b-parens-negative-parser.test.ts`: 2 aggregator call sites updated to `result.scalars.*`. Both FU-5b tests still GREEN.
+
+**Balance-identity invariant (load-bearing gate):**
+- FPT: total_assets=3,399,068M vs liabilities=28,464,058M + equity=40,122,037M → deviation=1,917% → VIOLATION
+- ACB: equity=1,030,900,741M + liabilities=932,149,689M vs total=1,030,900,741M → deviation=90.4% → VIOLATION
+- Both live bugs CAUGHT by the invariant (DV-FU6-5a, DV-FU6-5b, DV-FU6-2a).
+
+**Follow-up finding (NOT in scope for FU-6c):**
+FPT balance sheet rows land in `statement_section="general"` not `"balance_sheet"` because `refinedMarkdownParser.ts` SECTION_HEADERS didn't detect "BẢNG CÂN ĐỐI KẾ TOÁN" in FPT's refine output (BCTC-LAYOUT-FIRST gap). The aggregator fix works regardless of section (label search spans all sections). But the section mis-assignment should be fixed separately.
+
+**Gates:** tsc --noEmit EXIT 0 | 38 pass / 0 fail (FU-5 + FU-5b + FU-6 files) | balance identity invariant catches both live bugs
+
+**ops_rebuild_required: true** — rebuild mcp-server + re-finalize FPT (e8ea3df5) + ACB (fea19bae). QA re-gates after. Expected scalars post-fix: FPT total_assets=68,586,095M / liabilities=28,464,058M / equity=40,122,037M / net_rev=12,479,997M / gross=4,244,890M / net_profit=2,476,790M. ACB total_assets=1,030,900,741M / equity=98,751,052M / liabilities=932,149,689M / net_profit=4,320,388M / net_rev=6,989,162M.
+
+Zone health: 4 files (1 modified, 1 new, 2 amended); tsc EXIT 0; 38 tests green; HEALTHY
+
+---
+
 ## c342 · 2026-05-31 (FU-TRUST-REFRESH FU-5b) — COMMITTED bfd25762
 
 **Task:** FU-5b — parseVnNumber parens-negative fix + fail-loud one-pass audit

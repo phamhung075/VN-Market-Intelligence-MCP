@@ -341,7 +341,8 @@ describe("DV-FU5b-15: Full mini-report with parens-negatives: gross_profit ≠ n
       unit: r.unit,
     }));
 
-    const agg = aggregateScalars(aggRows);
+    const aggResult = aggregateScalars(aggRows);
+    const agg = aggResult.scalars;
 
     // CORE ASSERTION 1: gross_profit must NOT equal net_revenue
     // RED without fix: parens-COGS row dropped → code 20 might still parse if present,
@@ -392,7 +393,8 @@ describe("DV-FU5b-16: ACB bank shape — TỔNG NỢ PHẢI TRẢ label → tota
       { code: null, label: "VỐN CHỦ SỞ HỮU",     value_current:    98_751_052, statement_section: "balance_sheet", is_summary_row: 1, unit: "billion_vnd" },
     ];
 
-    const agg = aggregateScalars(rows);
+    const aggResult = aggregateScalars(rows);
+    const agg = aggResult.scalars;
 
     // total_liabilities: label pattern P_BANK_TOTAL_LIABILITIES matches "TỔNG NỢ PHẢI TRẢ"
     expect(agg.total_liabilities).not.toBeNull();
@@ -408,6 +410,9 @@ describe("DV-FU5b-16: ACB bank shape — TỔNG NỢ PHẢI TRẢ label → tota
 
     // balance cross-check (QA FU-4 verified this)
     expect(agg.total_liabilities! + agg.equity_total!).toBe(agg.total_assets!);
+
+    // Balance identity: 932,149,689 + 98,751,052 = 1,030,900,741 → no violation
+    expect(aggResult.balanceViolation).toBeNull();
   });
 });
 
