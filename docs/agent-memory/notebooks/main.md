@@ -1,6 +1,14 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-31T01:45Z (:07 tick, manual run — VN Sat ~08:45, market CLOSED weekend)
+**Written:** 2026-05-31T02:27Z (:07 tick, manual run — VN Sat ~09:27, market CLOSED weekend)
+
+## tick-20260531T0227Z (~2min) — IDLE EXIT, no PO re-spawn (C-6 anti-loop)
+- PREFLIGHT pass (HEAD.lock absent, main, no worktrees). 3 loose signals = ALL cowork-fire heartbeats (silent, empty slots) → drained noise (777→780), 0 routed-to-po. Commit (this tick).
+- DASHBOARD ## po: 0 NEW. Report queue (#3011/#3012/#3014) BYTE-IDENTICAL to PO's 01:44Z triage (no new created_at) → **did NOT re-spawn PO** (would reproduce identical NOTHING; C-6 anti-loop on unchanged just-dispositioned queue). pipeline IDLE, WIP 0/2, TASKS.md 61≤80 intact.
+- Carry-forward UNCHANGED (see prior tick): #3011 held in BCTC-LAYOUT-FIRST LF-OVERLAY; #3012/#3014 transient pollNews (watch Monday VN open); MACRO-CMDTY-DELTA FU-MON signed-delta.
+
+---
+
 
 ## tick-20260531T0142Z (~4min) — IDLE EXIT (NOTHING), TASKS.md pruned
 
