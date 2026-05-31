@@ -1,5 +1,29 @@
 # dev-mcp-server -- Notebook
 
+## c340 · 2026-05-31 (MACRO-CMDTY-DELTA) — COMMITTED e510e5df
+
+**Task:** MACRO-CMDTY-DELTA FIX — Brent/Gold change% stuck at 0.00% in get_cycle_bootstrap MACRO block
+
+**Root cause (verified, not assumed):**
+- DB shows 993 history rows, min_brent=86.33 (no zero rows) — hypothesis of zero-valued rows was WRONG
+- Actual cause: Yahoo Finance regularMarketPrice repeats the SAME daily close price during off-market hours
+- Last 24h: brent=91.12 for 19 consecutive rows; prev query (ORDER BY fetched_at DESC LIMIT 1) finds most-recent row = same value → computeDelta(91.12, 91.12) = {pct:0} permanently
+- market_prices UPSERT overwrites change_pct=0 on every cron tick during off-hours
+
+**Fix (2 files):**
+- `yahooFinance.ts`: changed prev-close lookup from most-recent-row to previous-calendar-day row — `date(fetched_at) < date(snapshotDate)` + `AND brent/gold > 0` guard to skip any zero bootstrap rows
+- `025-yahoo-finance.test.ts`: added YF-14 (off-market repeated price must not zero real delta) + YF-15 (zero-valued history rows skipped as prior-close candidates) — both RED→GREEN
+
+**Gates:** tsc EXIT 0 | 16 pass / 0 fail (025 file) | full suite exit 0 | tool=157 | sched=70
+
+**Live DB state:** 993 history rows, min_brent=86.33, min_gold=4399.2 — all valid; next cron tick will compute day-over-day (91.12 vs 91.7 prev-day close = -0.63%)
+
+**ops_rebuild_required: true** — container runs stale code; next Yahoo cron tick won't show real deltas until ops rebuilds mcp-server
+
+Zone health: 2 files modified; tsc EXIT 0; 16 tests green; tool=157; sched=70 | HEALTHY
+
+---
+
 ## c339 · 2026-05-30 (DYN-WF-FOUNDATION DWF-DEV-MCP-1) — COMMITTED 16117375
 
 **Task:** DWF-DEV-MCP-1 — is_trading_day MCP tool (#147)
