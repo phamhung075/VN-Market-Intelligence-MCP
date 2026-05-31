@@ -1,5 +1,28 @@
 # BA — Notebook
 
+**Last updated:** 2026-05-31 | **Sprint:** DWF-PHASE1 (P1-BA)
+
+## DWF-PHASE1-BA · 2026-05-31
+
+Sprint DWF-PHASE1 spec complete. REQ file: `docs/REQ_DYN-WF-PHASE1.md`. Three PO-level open questions (OQ-P1-1..3). Four architect blockers (BLOCKER-1..4). NEXT: architect (P1-ARCH).
+
+Key decisions encoded:
+- FR-P1-1: Cadence policy table in `docs/data/cadence-policy.json`. Pure deterministic look-up `(policy_id, calendar_status, signal_backlog_tier, volatility_tier) → interval_minutes`. First-match-wins, `*` wildcard. No LLM classifier (CLAUDE.md §3 hard constraint). Null result = suppress (non-guaranteed only).
+- FR-P1-2: `policy_id` + `last_fired` fields additive to cowork-schedule.json slots. Absent/null = legacy cron fallback (backward-compatible). `guaranteed=true` slots use cron floor regardless of policy.
+- FR-P1-3: `cowork-match-slots.js` gains `--mode=adaptive` path. Legacy cron for null-policy slots, due-based for policy slots. `last_fired=null` → always due (first-run). Output schema unchanged except two new observability fields.
+- FR-P1-4: Calendar suppression — single `is_trading_day` call per tick (not per slot). Holiday/weekend suppresses all non-guaranteed slots. Tool failure → unknown → no suppression (conservative). CRITICAL: suppression must happen BEFORE per-work-item claim OR suppression path must call task_release. This is BLOCKER-1 for architect.
+- FR-P1-5: Three-condition freshness downgrade for gatherers: last_regime=unknown AND signal_backlog=0 AND holiday/weekend. Advisory, non-guaranteed only.
+- FR-P1-6: Pressure-state staleness gate (30 min / stale_warning) → legacy cron fallback. Degradation is never worse than today.
+- FR-P1-7: `last_fired` write after successful spawn only (not on failure). Atomic write pattern. BLOCKER-3: must be single batched patch for all WON_SLOTS (not per-slot parallel — lost-update risk).
+
+Phase-2 regression surface explicitly encoded in NFR-P1-1: leader lock + suffix-free token + published-marker belt must not be touched. Every new insertion point is additive between "leader won" and "fan-out."
+
+Zone: cross-service only (`cowork-match-slots.js`, `cowork-team/flow/main.md`, `docs/data/cowork-schedule.json`, `docs/data/cadence-policy.json`). Zero diff on `apps/mcp-server/`.
+
+TASKS.md updated: P1-BA ✅ + P1-ARCH 🔄 added. Files left unstaged per commit-discipline. NEXT: architect (P1-ARCH).
+
+---
+
 **Last updated:** 2026-05-30 | **Sprint:** BCTC-TRUST-RED (TR-BA)
 
 ## BCTC-TRUST-RED-BA · 2026-05-30
