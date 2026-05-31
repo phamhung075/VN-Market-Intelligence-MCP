@@ -2,7 +2,7 @@
   "_maintained_by": "PM / system-auditor",
   "_trigger": "sprint start/end, tool/cron count change, baseline test update",
   "_lastRefreshedBy": "PM Sprint 1954 created 2026-05-19. CRITICAL HOTFIX 1954a unblocks queue seeding for all 30 watchlist tickers (backfillBctcQ12026 column-name fix, ship today). Structural tasks 1954b→1954f sequence per architect brief §5: consolidate 4 write paths → define ACK token → DPI escalation → backfill stranded PDFs → QA verify. Recurring-bug-escalation flag: 3rd BCTC fix in 24h (1953b, 1953c+f, 1954a). WIP=0 (awaiting PO sign-off). previousSprint = 1948 (QUEUED, gate-blocked until 2026-05-20T07:22Z).",
-  "lastUpdated": "2026-05-20",
+  "lastUpdated": "2026-05-31",
   "currentSprint": {
     "number": 1954,
     "status": "BACKLOG pending (1954a ready to ship as HOTFIX today; 1954b→1954f sequence gates on 1954a completion)",
@@ -31,7 +31,7 @@
   "smoke_window_1912a_planned_end": "2026-05-15T14:00:00Z",
   "smoke_window_1912a_status": "USER-OVERRIDE-CLOSED-EARLY c105 (~22h short, cutover executed cleanly)",
   "smoke_window_1912a_ac6_verdict": "PARITY PASS (Go 9277/9277 = TS 9277/9277)",
-  "toolCount": 146,
+  "toolCount": 154,
   "schedulerFileCount": 64,
   "cronJobCount": 69,
   "_cronJobCountNote": "RECONCILED 2026-05-25 (P0-MCP-EXIT, po) 77→68. Sprint BCTC-EVAL-SUBSTRATE: +1 bctcEvalRecompute → 69. 69 = `grep -c cron.schedule apps/mcp-server/src/scheduler/startScheduler.ts` = the operative dev-mcp-server Gate-2d probe + Phase-1 regression tripwire. cronConfig.ts named CRON keys=74.",
@@ -48,11 +48,11 @@
   "lastFixApplied": "Sprint 1947 CLOSED 2026-05-18T09:09Z (SPIKE-1947 architect-committed `b55ea5c8`, all 5 ACs met). Sprint 1948 QUEUED with 4 BLOCKED tasks (1948a S DB, 1948b S domain, 1948c M scheduler, OBSERVE-1948d 7d gate). WIP=0 — no dev dispatch until post-1945-verdict-resolution-scored-pct gate clears 2026-05-20T07:22Z.",
   "currentSprintNotes": "c187 (2026-05-18T09:09Z): Sprint 1947 CLOSED. Sprint 1948 QUEUED. Anchor 1948c (selfImproveOrchestratorJob.ts) blocks on 1948a+1948b which both block on gate at 2026-05-20T07:22Z. WIP=0. Reasoning for hard block: Phase 1 reads alert_accuracy.accuracy_rate as its detection input; if post-1945 gate misses (scored_pct still 36%), the resolution-pipeline fix takes priority — shipping Phase 1 on a poisoned input substrate would falsely flag every signal_type as 'degraded'. Six existing OBSERVE gates carry through unchanged: post-1944-financial-reports-q1-2026 (12:00Z today), post-1942-fa-verify (~23Z tonight), post-1945-verdict-resolution-scored-pct + post-1945-bug-storm-silence (2026-05-20T07:22Z — PHASE 1 GATE), 1941b-signal-outcomes-seed-window (2026-05-25), 1922g-pharma-events-source-verify (2026-06-01). SPIKE-1947 said 3 of these 6 can retire once Phase 1 proves stable.",
   "infrastructureStatus": {
-    "lastUpdated": "2026-05-18",
+    "lastUpdated": "2026-05-31",
     "mcpServerHealth": "healthy",
     "mcpEndpoint": "localhost:3000",
     "connectionStatus": "OK",
-    "toolCount": 146,
+    "toolCount": 154,
     "lastSuccessfulCycle": "2026-05-18T07:22:00Z"
   }
 }
