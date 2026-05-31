@@ -32,6 +32,14 @@
 
 ---
 
+## Sprint ENV-ISOLATION — Fleet-wide test/prod data isolation (split P1/P2)
+
+**Status:** OPEN 2026-05-31 (PO adjudicated all 6 ODs). **Pri: MEDIUM.** Zone: multi (ops + `apps/mcp-server/` + `scripts/` + rag compose). Brief `…/2026-05-31-fleet-env-isolation-architecture.md` (6e8f3d23). **Full shape + acceptance + OD rationale → `docs/SPRINT_GOAL.md` ENV-ISOLATION §.** Model: single-stack dev override, `.dev` datastores, `APP_ENV` default `production`, dev port 3099. **OD:** A=same-volume·B=5 tables·C=P1-now/P2-after-FU-TRUST-REFRESH·D=manual SOP·E=defer partial·F=SPLIT.
+- 🔄 **P1 (NOW):** EI-P1-1 ops (`APP_ENV: production`+explicit `COORDINATION_DB_PATH` in `docker-compose.yml`) · EI-P1-2 developer `scripts/` (guard `run-bt7-backfill.ts`+`purge-phantom-reports.ts`, fail-loud) · EI-P1-3 developer/ops `docs/` (`docs/protocols/dev-environment.md`).
+- ⛔ **P2 (GATED, only after FU-TRUST-REFRESH FU-4 — FU-2 currently NEXT):** EI-P2-1 dev-mcp-server (startup assertion + `setup.ts APP_ENV=test`) → EI-P2-2 dev-mcp-server (`data_env` audit col ×5 tables, INSERT stamp, no read-filter; ops rebuild after) → EI-P2-3 ops/rag (`docker-compose.dev.yml`) → EI-P2-QA qa (ENV-GUARD-1 deliberate-violation, 0-regression). **Dispatch:** ops EI-P1-1 → developer EI-P1-2/3 ‖ then P2 chain.
+
+---
+
 ## Sprint SELF-IMPROVE-GATE — Gated Self-Improvement Loop
 
 **Status:** OPEN — Phase 2 (lane-B code gate) live 2026-05-28. PO: APPROVE-WITH-CONDITIONS (062a6569 + ef109a76). X-1 open. **Priority: HIGH.** Zone: `apps/mcp-server/`.
