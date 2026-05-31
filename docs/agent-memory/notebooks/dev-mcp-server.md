@@ -1,6 +1,6 @@
 # dev-mcp-server -- Notebook
 
-## c342 · 2026-05-31 (FU-TRUST-REFRESH FU-5b) — IN PROGRESS
+## c342 · 2026-05-31 (FU-TRUST-REFRESH FU-5b) — COMMITTED bfd25762
 
 **Task:** FU-5b — parseVnNumber parens-negative fix + fail-loud one-pass audit
 
