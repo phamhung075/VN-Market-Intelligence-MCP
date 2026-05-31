@@ -532,8 +532,26 @@ export function handleBctcInspectOcr(
         return;
       }
 
-      // PEK units exist for the report but no unit covers this page — coverage gap.
-      // Do NOT fall back to pdf_extracted_text silently — emit pek_coverage_gap:true.
+      // PEK units exist for the report but no unit covers this page as a 'table' unit.
+      // Prose pages have a PEK unit with page_type='prose' but stitched_markdown=''.
+      // PROSE-DEV-1 fix: fall back to pdf_extracted_text raw OCR for the page content.
+      // pek_coverage_gap:true stays — it signals "no PEK-refined table content here".
+      let proseFallbackText = "";
+      let proseFallbackConfidence = 0;
+      if (filename) {
+        const rawRow = db
+          .prepare<{ text_content: string; confidence: number }, [string, number]>(`
+            SELECT text_content, confidence
+            FROM pdf_extracted_text
+            WHERE filename = ?
+              AND page_number = ?
+            LIMIT 1
+          `)
+          .get(filename, page) as { text_content: string; confidence: number } | null;
+        proseFallbackText = rawRow?.text_content ?? "";
+        proseFallbackConfidence = rawRow?.confidence ?? 0;
+      }
+
       const response: OcrPageResponse = {
         doc_id: docId,
         filename,
@@ -541,8 +559,8 @@ export function handleBctcInspectOcr(
           ? (db.prepare(`SELECT COUNT(*) as cnt FROM pdf_extracted_text WHERE filename = ?`).get(filename) as { cnt: number } | null)?.cnt ?? 0
           : 0,
         page,
-        text_content: "",
-        confidence: 0,
+        text_content: proseFallbackText,
+        confidence: proseFallbackConfidence,
         has_more: false,
         has_pek: true,
         pek_coverage_gap: true,

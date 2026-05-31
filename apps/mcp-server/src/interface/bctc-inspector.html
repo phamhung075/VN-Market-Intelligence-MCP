@@ -1400,7 +1400,13 @@
         // PEK stitched_markdown — pre-formatted pipe-table markdown
         ocrTextContent.textContent = data.text_content;
       } else if (data.has_pek === true && data.pek_coverage_gap === true) {
-        ocrTextContent.innerHTML = `<div class="missing-msg">No PEK unit for page ${page} (non-table page).</div>`;
+        // PROSE-DEV-1: coverage gap but raw OCR text may be available (prose page fallback).
+        // Gap banner is already inserted above; render raw OCR text when present.
+        if (data.text_content) {
+          ocrTextContent.textContent = data.text_content;
+        } else {
+          ocrTextContent.innerHTML = `<div class="missing-msg">No OCR text for page ${page} (non-table page).</div>`;
+        }
       } else if (totalPages === 0) {
         ocrTextContent.innerHTML = `
           <div class="missing-msg">
