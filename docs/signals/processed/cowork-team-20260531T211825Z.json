@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-05-31T21:18:25Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 4,
+    "errors": [],
+    "mcp_outage": false,
+    "mcp_recovery": "STACK RECOVERED this tick. Prior tick (21:18Z last turn) confirmed full vn-market stack outage; this tick mcp-server is back `Up ~1m (healthy)` (restarted ~21:17:43Z). get_system_status returns full data, 16/16 circuit breakers OK, :3000/health HTTP 200, Telegram env SET. Outage window ~21:10Z→21:17:43Z (~7-8min), self-recovered or ops re-upped before this fire. Leader-claim succeeded {claimed:true}.",
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime CHANGED (23:12 local / ~21:12Z vs prior ~21:01Z) — Step 0a ran. NO cowork-routable NEW rows: tnb-c84-blocked-20260531T2013 (## po) is PO-addressed bug-escalation → LEFT NEW for dev-team/PO drain; tnb-audit/unified-agent rows already READ/processed; alert-commander empty. ACTION taken: my own CRITICAL ## ops row cow-20260531T2118 (full-stack outage filed last turn) marked NEW→RESOLVED with firsthand recovery evidence — prevents redundant ops `docker compose up -d` on an already-healthy stack.",
+    "po_handoff": ["tnb-c84-blocked-20260531T2013"],
+    "ops_resolved": ["cow-20260531T2118"],
+    "staleness_note": "pressure-state unchanged (emitted 16:03Z), age ~315min > 20min threshold → PRESSURE_MODE=legacy. No slots matched so cadence gating moot.",
+    "tick_snapshot_note": "Matcher empty at 21:18Z (silent tick). get_system_status probed (recovery verification, not dispatch bootstrap). VN CLOSED weekend. Residual degradations (not full outage): pdf-extractor unavailable (OCR fallback), GAS 2026-Q1 zero-confidence skip, prices 60.3h stale / BCTC 73.9h stale (weekend expected). Next real match: bctc-analyst-slot-0 at 00:00Z (cron 0 0 * * *) — slot-3 already fired 21:03Z.",
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-05-31T21:18:25Z"
+}

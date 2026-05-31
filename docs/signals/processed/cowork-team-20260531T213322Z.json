@@ -1,0 +1,28 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-05-31T21:33:22Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime CHANGED (23:20 local / ~21:20Z) but the change was my OWN edit last tick (marking ## ops outage row cow-20260531T2118 RESOLVED). Re-scanned anyway: only NEW cowork-addressed row is tnb-c84-blocked-20260531T2013 (## po, PO-addressed bug-escalation, not cowork-routable) → LEFT NEW for dev-team/PO drain. No new routable rows since prior tick.",
+    "po_handoff": ["tnb-c84-blocked-20260531T2013"],
+    "staleness_note": "pressure-state unchanged (emitted 16:03Z), age ~330min > 20min threshold → PRESSURE_MODE=legacy. No slots matched so cadence gating moot.",
+    "tick_snapshot_note": "Matcher empty at 21:33Z (silent tick). MCP healthy (leader-claim succeeded, no outage). VN CLOSED weekend. Next real match: bctc-analyst-slot-0 at 00:00Z (cron 0 0 * * *).",
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-05-31T21:33:22Z"
+}

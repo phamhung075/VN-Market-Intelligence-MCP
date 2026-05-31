@@ -1,0 +1,20 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "medium",
+  "severity": "MEDIUM",
+  "discovered_at": "2026-05-31T22:15Z",
+  "createdAt": "2026-05-31T22:15Z",
+  "summary": "system-auditor A-01 (container-present check) false-positives a CRITICAL fleet outage by comparing live `docker ps` against the FULL docker-compose service DEFINITION (12 services) instead of the INTENDED RUNTIME SET. On this host the intended runtime is the minimal mcp-server + mcp-gateway stack (the full fleet kernel-panics the 16GB Mac — project_host_memory_panic); the other 11 services are in-repo dev-zone/Factory-v2 architecture, NOT deployed. Second auditor false-positive in two ticks (first was false-ENOSPC 2026-05-31). Router retracted DASHBOARD row TIER1-20260531-SERVICES-DOWN (commit 94237862).",
+  "payload": {
+    "check_id": "A-01-EXPECTED-SET",
+    "zone_owner": "agents-architect -> agent-father (system-auditor flow)",
+    "problem": "A-01 expected-container set is the full compose definition; should be an explicit intended-runtime-set SSOT. Absent that, every audit on a deliberately-minimal host emits a CRITICAL 'fleet outage', which (left OPEN) the anomaly-task-bridge would promote into a bogus 'restart 9 services' repair task -> ops `compose up` full fleet -> host kernel panic.",
+    "proposed_fix": "Define an intended-runtime-set SSOT (e.g. docs/data/system-map.json active-services list, or an explicit field). A-01 checks live containers against THAT set, not the full compose definition. Services defined-but-not-in-runtime-set = INFO/expected, never CRITICAL.",
+    "relation": "Same auditor-reliability theme as existing TASKS.md sprint AUDITOR-NO-DESTRUCT / AUD-ND-1 (forbid destructive shell). PO to decide: fold in as sibling AC, or open AUDITOR-RUNTIME-SET. Deterministic AC: on a minimal-stack host, A-01 emits 0 CRITICAL for not-deployed dev-zone services across 7 days.",
+    "evidence": "docker ps -a = 2 containers (mcp-server, mcp-gateway); 0 containers ever for the 11 'missing' services; 0 die events 6h; 16 circuit breakers 0 failures; health 200 / 154 tools; crons 98-100%."
+  },
+  "dedup_key": "repair_task_request:system-auditor:A-01-EXPECTED-SET",
+  "note": "PLAN-ONLY. No code mutated by detection. PO triage-signals.md is authoritative handler -> exactly ONE backlog entry (or fold into AUDITOR-NO-DESTRUCT)."
+}

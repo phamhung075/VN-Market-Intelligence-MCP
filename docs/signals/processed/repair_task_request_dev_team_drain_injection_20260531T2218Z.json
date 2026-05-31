@@ -1,0 +1,21 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "high",
+  "severity": "HIGH",
+  "discovered_at": "2026-05-31T22:18:00Z",
+  "createdAt": "2026-05-31T22:18:00Z",
+  "summary": "Dev-team Step 0a drain logic must be injection-safe. The drain script built shell command strings containing agent-authored signal payloads; a cowork-fire payload held backtick-wrapped `docker compose up -d` text and /bin/sh ran it via command substitution -> the FULL 12-service fleet started on the 16GB host (project_host_memory_panic risk). Caught+remediated in ~2min (docker stop+rm 11 containers; host 62% free, no panic). Same fleet-host-danger theme as A-01-EXPECTED-SET and AUDITOR-NO-DESTRUCT.",
+  "payload": {
+    "check_id": "DRAIN-INJECTION-SAFE",
+    "zone_owner": "agents-architect -> agent-father (dev-team/flow/drain-signals.md + any scripted signal handling)",
+    "problem": "Any code path that interpolates signal/DASHBOARD/agent-authored payload text into a shell command line is a command-injection vector. On this host the worst-case injected command (`docker compose up`) is a host-kernel-panic trigger.",
+    "proposed_fix": "Drain-signals.md MUST forbid passing payloads through a shell command line. DB writes from a script: write full SQL to a temp file (fs.writeFileSync, no shell) then `sqlite3 db < file.sql`, OR use a bound-parameter driver (bun:sqlite). Add an explicit invariant + a guard note in drain-signals.md. Optionally add a defense-in-depth host guard so `docker compose up` of the non-runtime-set services is blocked on this host.",
+    "relation": "Sibling of repair_task_request:system-auditor:A-01-EXPECTED-SET and sprint AUDITOR-NO-DESTRUCT. Common root: on this host the full fleet must NEVER be `up`. PO to fold into a fleet-safety theme or open DRAIN-INJECTION-SAFE.",
+    "evidence": "docker ps showed all 12 services Started 22:17Z; router stopped+removed 11; final docker ps -a = mcp-server(healthy)+mcp-gateway(healthy) only; host vm_stat 62% free; mcp /health 200.",
+    "deterministic_ac": "A signal whose payload contains backticks/$()/quotes drains with zero infra side effects (docker ps unchanged before/after drain) and the DB row is written correctly."
+  },
+  "dedup_key": "repair_task_request:dev-team:DRAIN-INJECTION-SAFE",
+  "note": "PLAN-ONLY record. Drained inline this tick into pendingSignals for PO; also persisted to processed/ as audit. PO triage-signals.md authoritative."
+}
