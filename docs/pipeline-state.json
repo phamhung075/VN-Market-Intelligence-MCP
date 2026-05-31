@@ -1,29 +1,28 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "IDLE → 1 FIX dispatched this tick. dev-team :07 tick 2026-05-31T00:33Z (Saturday ~07:27 VN, market CLOSED weekend). PO triage on a HEALTHY gateway (live call_tool calls succeeded this session). DWF-PHASE1 + DYN-WF-FOUNDATION both CLOSED/SHIPPED. WIP after this tick = 1/2 (MACRO-CMDTY-DELTA). The 2026-05-27 'parallel session owns apps/mcp-server + apps/pdf-extractor' handoff is now OBSOLETE/CLEARED (see session_handoff_status below) — single-lane operation confirmed by DWF-PHASE1 running freely in cross-service/mcp-server zone + PEK-INTEGRATE being DONE-PENDING-G9.",
-  "currentSprint": "MACRO-CMDTY-DELTA (apps/macro-indicators) — OPEN, BATCH FIX dispatched this tick. Brent/Gold change% stuck at +0.00% (live-confirmed by PO raw-value probe). LOW priority, uncontended zone.",
-  "activeTaskId": "MACRO-CMDTY-DELTA-FIX (dev-macro-indicators). All prior pilot sprints terminal-DONE.",
-  "nextAgent": "dev-team Step 3 routes the MACRO-CMDTY-DELTA FIX (diagnose-first, single-zone apps/macro-indicators). Then qa → po EXIT.",
-  "nextPrompt": "MACRO-CMDTY-DELTA FIX in flight (apps/macro-indicators, LOW). Other OPEN sprints are idle and available next ticks (WIP permitting): BCTC-LAYOUT-FIRST Phase 0 (LF-EXTRACT/LF-OVERLAY — the LF-OVERLAY push-bctc-layout persistence path IS the root of analysis-agent report #3011 BTB-OPS 0-units blocker; wants architect diagnosis of POST /api/push-bctc-layout, write-wedge pattern per project_mcp_server_write_wedge); SELF-IMPROVE-GATE X-1 synthetic dry-run; CHEF-ATTN; held CLEAN candidate (code-janitor DOUBLON 3-live + 10-proposed, batch when apps/mcp-server has no active reliability sprint). VERIFIED-NOT-DISPATCHED this tick: DWF-TSC-DEBT already resolved (tsc 0 errors, suite 7/0 GREEN — premise stale); FF-DEAD live-fixed (get_foreign_flow(FPT) returns real rows, FU-MON Monday confirm only); #3012 pollNews outage = transient (sources OK live). Next tick: re-triage if NEW report/signal in an uncontended zone.",
+  "status": "IDLE — MACRO-CMDTY-DELTA CLOSED/SHIPPED this tick (po-EXIT APPROVE 2026-05-31T01:34Z, raw-verified). dev-team :07 tick 2026-05-31T00:33Z (Saturday ~07:27 VN, market CLOSED weekend). PO triage + EXIT on a HEALTHY gateway (live call_tool calls succeeded this session). DWF-PHASE1 + DYN-WF-FOUNDATION both CLOSED/SHIPPED. WIP after EXIT = 0/2. The 2026-05-27 'parallel session owns apps/mcp-server + apps/pdf-extractor' handoff remains OBSOLETE/CLEARED (single-lane operation confirmed).",
+  "currentSprint": "NONE active. MACRO-CMDTY-DELTA CLOSED/SHIPPED (apps/mcp-server) — Brent/Gold change% stuck-at-0.00% root cause was an off-market repeated-close prev-close query matching a ~1h-old identical row; fixed with previous-calendar-day baseline. PO raw-verified honest-flat 0.00% + correct logic + green tests + clean scope. Commits e510e5df + dab1bf86 + fdc17265, image 802d6463e665.",
+  "activeTaskId": "NONE. MACRO-CMDTY-DELTA terminal-DONE. All prior pilot sprints terminal-DONE.",
+  "nextAgent": "dev-team :07 dispatcher (next tick) — re-triage if NEW report/signal in an uncontended zone, else idle.",
+  "nextPrompt": "MACRO-CMDTY-DELTA SHIPPED. One open FU: confirm a signed NON-ZERO Brent/Gold change% in `get_cycle_bootstrap` on the next real calendar-day move (next trading session ~Monday open) — the fix is correct but the current 0.00% is honest weekend-flat, so in-the-wild signed-delta proof comes only when prices actually move. Other OPEN sprints idle and available next ticks (WIP permitting): BCTC-LAYOUT-FIRST Phase 0 (LF-EXTRACT/LF-OVERLAY — LF-OVERLAY push-bctc-layout persistence is the root of analysis-agent report #3011 BTB-OPS 0-units blocker, wants architect diagnosis of POST /api/push-bctc-layout, write-wedge per project_mcp_server_write_wedge); SELF-IMPROVE-GATE X-1 synthetic dry-run; CHEF-ATTN; held CLEAN candidate (code-janitor DOUBLON 3-live + 10-proposed, batch when apps/mcp-server has no active reliability sprint). VERIFIED-NOT-DISPATCHED prior tick: DWF-TSC-DEBT already resolved; FF-DEAD live-fixed (FU-MON Monday confirm only); #3012 pollNews transient.",
   "session_handoff_status": {
-    "cleared": "2026-05-31T00:33Z — the prior 'parallel session owns apps/mcp-server + apps/pdf-extractor' directive (dated 2026-05-27T20:40Z) is OBSOLETE and no longer binding. Evidence: (1) DWF-PHASE1 ran freely this session in cross-service + apps/mcp-server zone (read-only flow/scripts, but the zone gate did not block it); (2) DYN-WF-FOUNDATION touched mcp-server (task_claim TTL fix, routing-policy) and force-recreated the container without a parallel-session collision; (3) PEK-INTEGRATE = DONE-PENDING-G9 (pdf-extractor work concluded). No live evidence of a second concurrent dispatcher. Future ticks may dispatch apps/mcp-server + apps/pdf-extractor work normally, subject only to WIP<=2 + zone-isolation between concurrently-running tasks.",
+    "cleared": "2026-05-31T00:33Z — the prior 'parallel session owns apps/mcp-server + apps/pdf-extractor' directive (dated 2026-05-27T20:40Z) is OBSOLETE and no longer binding. Evidence: (1) DWF-PHASE1 ran freely this session in cross-service + apps/mcp-server zone; (2) DYN-WF-FOUNDATION touched mcp-server and force-recreated the container without a parallel-session collision; (3) PEK-INTEGRATE = DONE-PENDING-G9; (4) THIS tick MACRO-CMDTY-DELTA fixed + rebuilt apps/mcp-server with no collision. Future ticks may dispatch apps/mcp-server + apps/pdf-extractor work normally, subject only to WIP<=2 + zone-isolation between concurrently-running tasks.",
     "does_not_consume_wip": true
   },
-  "this_tick_triage": {
-    "tick": "2026-05-31T00:33Z",
-    "gateway": "HEALTHY (live call_tool: get_foreign_flow, get_cycle_bootstrap, get_bctc_full, get_system_status all returned live data)",
-    "batch": "1 FIX — MACRO-CMDTY-DELTA (LOW, apps/macro-indicators)",
-    "dashboard_rows_dispositioned": [
-      "cow-20260530T0803-TASKCLAIM-SCHEMA → READ (split-lane, neither prong a dev FIX: server already enforces new schema = doc-only; flow .md = cowork/agent-father lane)",
-      "cje-20260530T0016-DOUBLON → READ (valid but LOW cosmetic untested-path refactor; HELD as batched CLEAN candidate, zone-adjacent to LF-OVERLAY)",
-      "cow-20260529T221054-MCP-P4 → READ (live-confirmed still present → dispatched as MACRO-CMDTY-DELTA)"
+  "last_closed": {
+    "task": "MACRO-CMDTY-DELTA",
+    "outcome": "APPROVE / SHIPPED",
+    "po_exit": "2026-05-31T01:34Z",
+    "commits": ["e510e5df (prod fix + YF-14/15 tests)", "dab1bf86 (test-only cross-day shift)", "fdc17265 (dev notebook)"],
+    "image": "802d6463e665",
+    "po_raw_verified": [
+      "live get_cycle_bootstrap MACRO = BRENT 91,12 (+0.00%) / GOLD 4.593 (+0.00%) — HONEST flat-weekend (prices unchanged since 2026-05-30, market closed)",
+      "prod prev-close query confirmed: date(fetched_at) < date(?) AND brent/gold > 0 (was fetched_at < ? matching ~1h-old identical row)",
+      "DPI-3 ran by PO = 4 pass / 0 fail; assertions are real non-zero deltas (25.0% / -20.0% / amt 20·500), NOT neutered",
+      "git scope: dab1bf86 = test-only 1 file 6 lines; yahooFinance.ts untouched since e510e5df"
     ],
-    "verified_not_dispatched": {
-      "DWF-TSC-DEBT": "ALREADY RESOLVED — tsc --noEmit over apps/mcp-server = 0 errors / 0 TS18048 / 0 in DWF fence test; file uses ! assertions L92/L137; bun test 7 pass/0 fail. No fixer (false-RED avoided).",
-      "FF-DEAD": "LIVE-FIXED — get_foreign_flow(FPT) returns real daily history (05-30 net vol -37905, room 34.75M); FF-DIAG 0cbce0b4 is live. Only FU-MON Monday in-the-wild probe remains.",
-      "report_3012_pollNews": "TRANSIENT — Source Health shows CafeF/VnExpress/tuoitre/vietstock all 'OK 5 phut truoc' live; midnight 0-items was off-hours transient, not an outage.",
-      "report_3011_BTB_persistence": "REAL but IN-SCOPE of OPEN BCTC-LAYOUT-FIRST (LF-OVERLAY = POST /api/push-bctc-layout; handler pushBctcLayoutHandler.ts exists, units don't persist — write-wedge). Not a new standalone FIX; it is the LF-OVERLAY task needing architect diagnosis. get_bctc_full(FPT) empty is EXPECTED (purged to PENDING by BCTC-TRUST-RED, awaiting genuine re-refine)."
-    }
+    "followup": "signed-non-zero in-the-wild verification on the next real Brent/Gold move (next trading session ~Monday open)",
+    "note": "dev's '157 tools' was a mis-report — live count is 155 = baseline, NOT a regression."
   },
   "open_sprints_idle": [
     "BCTC-LAYOUT-FIRST (Phase 0 READY — LF-EXTRACT/LF-OVERLAY/LF-DEPLOY/LF-QA; multi zone; LF-OVERLAY = root of report #3011)",
@@ -31,6 +30,6 @@
     "CHEF-ATTN (READY; apps/mcp-server)"
   ],
   "backlogs": "BCTC-TABLE-2 (queued after LF-EXTRACT+LF-OVERLAY) · KD-QREF-LANG (EN/VI switch) · code-janitor DOUBLON CLEAN candidate (3 live + 10 proposed, held).",
-  "updatedAt": "2026-05-31T00:33:00Z",
-  "updatedBy": "dev-team :07 dispatcher (PO triage) — tick 2026-05-31T00:33Z. Gateway HEALTHY. BATCH(1) FIX = MACRO-CMDTY-DELTA. 3 NEW DASHBOARD ## po rows dispositioned + marked READ. DWF-TSC-DEBT verified already-resolved (not dispatched). FF-DEAD verified live-fixed. Stale 2026-05-27 parallel-session handoff cleared. WIP 1/2."
+  "updatedAt": "2026-05-31T01:34:49Z",
+  "updatedBy": "po-EXIT (dev-team :07 PO sign-off) — tick 2026-05-31T00:33Z. APPROVE MACRO-CMDTY-DELTA after critique-before-approve raw verification (live get_cycle_bootstrap + DPI-3 run + git scope + prod-query inspection). TASKS.md + DASHBOARD MCP-P4 marked DONE/RESOLVED. WIP 0/2."
 }
