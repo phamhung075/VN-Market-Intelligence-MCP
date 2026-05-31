@@ -11,6 +11,14 @@
 
 ---
 
+## Sprint BRIEF-SECTOR-DRIFT — Stale brief sector vs seedWatchlist SSOT (VNH recurrence)
+
+**Status:** ✅ DONE 2026-05-31. QA APPROVED. Commits 4670393a (BSD-1+BSD-2) · ef146e1a (BSD-3 docs) · 61b0e224 (BSD-3 test).
+- ✅ **BSD-1** — DONE 4670393a. VNH→agriculture, PLX→oil_gas, GVR→agriculture in analysis-briefs. QA: **Sector** grep 0 (raw confirmed).
+- ✅ **BSD-2** — DONE 4670393a. VNH removed from BĐS lists in 3 published files; 1 đính-chính line each; 4th file (GVR.md) had no VNH content (confirmed). QA APPROVED.
+- ✅ **BSD-3** — DONE ef146e1a+61b0e224. Dropped **Sector**: from template+43 briefs+2 flows. Drift structurally impossible. Test 4/4 pass; tsc exit 0; zone-split clean (ef146e1a=docs-only, 61b0e224=apps-only). QA APPROVED.
+- ✅ **BSD-QA** — DONE. AC-1: grep 0 confirmed raw. AC-2: 0 VNH↔BĐS coupling; 1 đính-chính per file; 4th file no-VNH confirmed. AC-3: 4 pass 0 fail; positive-control fixture live; tsc 0 errors; no regression (BANK-AWARE-1 33/33). AC-4: zone-split verified. QA: APPROVED 2026-05-31.
+
 ## Sprint TOOL-SURFACE-HYGIENE — Clean the vn-market MCP tool surface
 
 **Status:** OPEN 2026-05-31. **Priority: MEDIUM.** Zone: `apps/mcp-server/` (#1 may route to kinh-dich-service if wire). Live toolCount=154. Full context → `docs/SPRINT_GOAL.md` §.
