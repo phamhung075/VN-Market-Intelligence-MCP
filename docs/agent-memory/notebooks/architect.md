@@ -1,8 +1,29 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-31 22:30 UTC | **Sprint:** BANK-AWARE-BCTC BANK-ARCH-2 (discriminator correction)
+**Last updated:** 2026-05-31 23:00 UTC | **Sprint:** PROSE-DEV-1 (prose text loss root-cause)
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## PROSE-DEV-1 (2026-05-31T23:00 UTC) — PROSE TEXT LOSS ROOT CAUSE
+
+**Sprint:** PROSE-DEV-1 | Task: ARCH (operator defect — prose pages blank in Văn bản OCR tab)
+
+**Root cause: display layer only (Layer C). Zone: dev-mcp-server.**
+
+**Evidence (concrete, from live DB + code):**
+- Layer A (extraction): CLEAN. `pdf_extracted_text` has all 27 ACB pages, text_len 352-2327.
+- Layer B (storage/refine): CLEAN. `bctc_refined_units` has 27 DONE prose units, md_len 129-2431.
+- Layer C (viewer): ROOT CAUSE. `handleBctcInspectOcr` in `bctcInspectHandler.ts` queries `bctc_layout_units WHERE page_type='table'`. ACB has 5 prose-typed PEK units with `stitched_markdown=""`. When a prose page is requested: table filter returns null → coverage-gap path emits `text_content:""` → viewer shows "No PEK unit for page N". Raw OCR in `pdf_extracted_text` is never consulted.
+
+**Fix (PROSE-DEV-1):**
+1. `bctcInspectHandler.ts`: in coverage-gap branch, add `pdf_extracted_text` fallback query for the requested page. Serve `text_content: rawRow.text_content` (+ `confidence: rawRow.confidence`) while keeping `pek_coverage_gap:true`.
+2. `bctc-inspector.html`: render `text_content` when `pek_coverage_gap=true` (remove static "No PEK unit" message, replace with gap banner + raw text).
+
+**DV test:** `PROSE-DEV-1-prose-text-display.test.ts` — DV-1 RED (text_content="" before) / GREEN (text_content="Prose page one content" after). DV-2/DV-3 regressions green throughout.
+
+**Brief:** `docs/architecture-briefs/2026-05-31-prose-text-loss.md`
+
+---
 
 ## BANK-AWARE-BCTC BANK-ARCH-2 (2026-05-31T22:30 UTC) — DISCRIMINATOR CORRECTION
 
