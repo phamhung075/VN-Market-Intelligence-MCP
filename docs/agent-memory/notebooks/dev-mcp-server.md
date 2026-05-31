@@ -1,5 +1,32 @@
 # dev-mcp-server -- Notebook
 
+## c342 · 2026-05-31 (FU-TRUST-REFRESH FU-5b) — IN PROGRESS
+
+**Task:** FU-5b — parseVnNumber parens-negative fix + fail-loud one-pass audit
+
+**Root cause (from FU-6 ops findings):**
+- `parseVnNumber("(35.872.175.224)")` → NaN (logs "non-numeric value_current" 50+ times)
+- Parens-negative rows (COGS code 11, some equity/liability lines) SILENTLY DROPPED by `continue` in parser
+- Aggregator can't find dropped rows → equity_total=0, gross_profit=net_revenue
+- Third serial seam in refined-markdown→rows→scalars path (empty-OCR, scalar-backfill, now parens)
+
+**Fix (2 files, same commit):**
+- MODIFIED `refinedMarkdownParser.ts`: (a) parseVnNumber handles full VN BCTC format class: parens-negative → negate, en-dash/ellipsis → null, footnote superscripts stripped, leading minus; (b) FAIL-LOUD: unparseable cells never dropped — row retained with value_current=null + confidence=0.1 + [UNPARSEABLE] error logged with report_id+page+label+raw
+- NEW `FU-5b-parens-negative-parser.test.ts`: 23 DV tests — DV-FU5b-1 parens-negative RED→GREEN, DV-FU5b-13 row-retention (no drop), DV-FU5b-14 genuinely-unparseable retained, DV-FU5b-15 full mini-report gross≠net AND equity≠0, DV-FU5b-18 regression fence (zero UNPARSEABLE errors)
+
+**BLOCK-2 finding:** inline eval recompute in finalizeBctcRefineTool WORKS correctly (confirmed: test shows "bctc_eval recomputed post-refine"). FU-6 failure was transient (likely write-wedge or thresholds unavailable at that moment). Current code path is correct; post-rebuild re-finalize will run it fresh. POST /api/bctc-eval/recompute/{id} is valid manual fallback.
+
+**One-pass audit result (complete enumeration):**
+- Remaining unparseable formats: NONE (DV-FU5b-18 fence: 0 [UNPARSEABLE] errors on FPT+ACB shaped markdown)
+- Remaining aggregator unmapped scalars: NONE (corporate codes 10/20/60/270/300/400; bank codes I/VIII/IX + label patterns — all confirmed via DV-FU5b-15/16 and existing FU-5 tests)
+- FPT bctc_table_rows were REGRESSED by FU-6 re-finalize (parens rows dropped). Fix restores them.
+
+**Gates:** tsc EXIT 0 | 23+8=31 pass / 0 fail | FU-5 stays green | ops_rebuild_required: true
+
+**ops_rebuild_required: true** — rebuild mcp-server + re-finalize BOTH reports (e8ea3df5 FPT + fea19bae ACB). QA re-gates after.
+
+---
+
 ## c341 · 2026-05-31 (FU-TRUST-REFRESH FU-5) — COMMITTED 6cc75437
 
 **Task:** FU-5 — BLOCK-1 scalar backfill + BLOCK-2 eval recompute in finalizeBctcRefineTool

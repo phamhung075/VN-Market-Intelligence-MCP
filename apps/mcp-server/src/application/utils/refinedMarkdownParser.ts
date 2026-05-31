@@ -61,17 +61,68 @@ function detectSection(text: string): string {
  * Vietnamese uses '.' as thousands separator and ',' as decimal separator.
  * E.g. "1.234.567" → 1234567, "1.234,56" → 1234.56
  *
+ * Full VN accounting format support:
+ *   - Parentheses-wrapped negatives: "(35.872.175.224)" → -35872175224
+ *     (standard VN BCTC notation for COGS, deductions, losses)
+ *   - Thousand-separator dots: "1.234.567" → 1234567
+ *   - Decimal comma: "1.234,56" → 1234.56
+ *   - Em-dash / en-dash / hyphen-only / blank / "..." → null (absent, not 0)
+ *   - Footnote superscripts / trailing markers stripped before parse
+ *
+ * NULL semantics:
+ *   Returns null for genuinely absent/blank cells.
+ *   Never returns 0 for a cell that is absent — caller must distinguish.
+ *
  * @param raw Raw cell value string
- * @returns Parsed number or null if not a valid number
+ * @returns Parsed number or null if cell is genuinely absent/unparseable
  */
 export function parseVnNumber(raw: string): number | null {
   const stripped = raw.trim();
-  if (!stripped || stripped === "-" || stripped === "—" || stripped === "N/A") return null;
 
-  // Remove thousand separators (dots) then replace decimal comma with dot
-  const cleaned = stripped.replace(/\./g, "").replace(/,/g, ".");
+  // Null signals: empty, dashes, ellipsis, N/A
+  if (
+    !stripped ||
+    stripped === "-" ||
+    stripped === "—" ||   // em-dash
+    stripped === "–" ||   // en-dash
+    stripped === "..." ||
+    stripped === "…" ||   // Unicode ellipsis
+    stripped === "N/A" ||
+    stripped === "n/a"
+  ) return null;
+
+  // Strip trailing footnote superscripts / end-of-cell markers:
+  // e.g. "1.234.567¹" or "1.234.567(1)" where "(1)" is a footnote reference.
+  // Pattern: strip trailing (digit+) that appear AFTER the main number,
+  // but ONLY when the whole string is NOT wrapped in parens (parens = negatives below).
+  let work = stripped;
+  // Strip trailing footnote-style (N) where N is 1–2 digits (footnote reference)
+  // Safe: only strip if there is numeric content before the footnote
+  work = work.replace(/\(\d{1,2}\)\s*$/, "");
+  // Strip trailing Unicode superscripts (¹²³⁴⁵⁶⁷⁸⁹⁰)
+  work = work.replace(/[¹²³⁴⁵⁶⁷⁸⁹⁰]+\s*$/, "");
+  work = work.trim();
+
+  // Parentheses-wrapped negative: "(35.872.175.224)" → -35872175224
+  // Standard VN accounting BCTC notation for COGS, deductions, losses.
+  let isNegative = false;
+  if (work.startsWith("(") && work.endsWith(")")) {
+    work = work.slice(1, -1).trim();
+    isNegative = true;
+  }
+  // Also handle explicit leading minus that survived footnote strip
+  if (work.startsWith("-") && !isNegative) {
+    work = work.slice(1).trim();
+    isNegative = true;
+  }
+
+  // Remove thousand separators (dots) then replace decimal comma with dot.
+  // VN format: dots are ALWAYS thousand separators when followed by 3 digits;
+  // comma is the decimal separator (appears at most once, before ≤2 digits).
+  const cleaned = work.replace(/\./g, "").replace(/,/g, ".");
   const n = parseFloat(cleaned);
-  return isNaN(n) ? null : n;
+  if (isNaN(n)) return null;
+  return isNegative ? -n : n;
 }
 
 // ── Trust flag parsing ─────────────────────────────────────────────────────────
@@ -290,14 +341,31 @@ export function parseRefinedMarkdown(
     const valueCurrent = parseVnNumber(valueCurrentStr);
     const valuePrior = valuePriorStr !== null ? parseVnNumber(valuePriorStr) : null;
 
-    // Validate: value_current must be parseable or empty (null is OK for missing)
-    // If valueCurrentStr is non-empty and non-parseable, record error and skip
-    if (valueCurrentStr && valueCurrent === null && !/^[-—]$/.test(valueCurrentStr.trim())) {
+    // FAIL-LOUD: value_current unparseable — NEVER silently drop the row.
+    // Silent drop was the root anti-pattern that caused 3 rounds of trust seams:
+    //   round 1: empty-OCR, round 2: scalar backfill, round 3: parens-negatives.
+    //
+    // If parseVnNumber returns null on a cell that contains digits (looks numeric),
+    // record a rich error (report_id + page + label + raw string) AND retain the row
+    // with value_current=null + source_confidence=0.1 (unparseable flag).
+    //
+    // The row MUST be retained so:
+    //   (a) the aggregator can see the row exists (even with null value)
+    //   (b) the error surface reveals the FULL class of failures in one pass,
+    //       not one-rebuild-at-a-time.
+    //
+    // Null-for-absent (dash/blank) is still correct and goes to value_current=null
+    // with normal confidence — those rows are genuinely absent, not unparseable.
+    let unparseableFlag = false;
+    if (valueCurrentStr && valueCurrent === null && !/^[-—–]$/.test(valueCurrentStr.trim())) {
       // Not a number and not a dash — could be a text value (OK for some rows)
-      // Only error if it looks like it SHOULD be a number (has digits)
+      // Only flag if it looks like it SHOULD be a number (has digits)
       if (/\d/.test(valueCurrentStr)) {
-        errors.push(`Line ${lineIdx + 1}: non-numeric value_current "${valueCurrentStr}"`);
-        continue;
+        errors.push(
+          `[UNPARSEABLE] report=${report_id} page=${pageNumber} label="${label}" raw_value="${valueCurrentStr}" line=${lineIdx + 1}`,
+        );
+        unparseableFlag = true;
+        // DO NOT continue — retain the row with value_current=null
       }
     }
 
@@ -320,7 +388,9 @@ export function parseRefinedMarkdown(
       value_prior: valuePrior,
       unit: "billion_vnd",
       page_number: pageNumber,
-      source_confidence: sourceConfidence,
+      // Unparseable numeric cells: confidence → 0.1 (lowest non-zero),
+      // signaling the row is structurally present but value extraction failed.
+      source_confidence: unparseableFlag ? Math.min(sourceConfidence, 0.1) : sourceConfidence,
       is_summary_row: isSummaryRow,
     });
   }
