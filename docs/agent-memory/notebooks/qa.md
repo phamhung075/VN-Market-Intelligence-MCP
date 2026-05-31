@@ -1,5 +1,75 @@
 # QA — Notebook
 
+## cycle-164 · 2026-05-31 · ENV-ISOLATION EI-P1 Gate — APPROVED
+
+**Sprint:** ENV-ISOLATION | **Task:** EI-P1-1 + EI-P1-2 + EI-P1-3 | **Verdict:** APPROVED — all gates GREEN
+
+```
+date: 2026-05-31T12:25Z
+commits: 9eab754f (EI-P1-1 docker-compose.yml) / 89e9b5b8 (EI-P1-2 scripts) / 0c9bed2a (EI-P1-3 docs)
+files_in_scope: docker-compose.yml / scripts/run-bt7-backfill.ts / scripts/purge-phantom-reports.ts / docs/protocols/dev-environment.md
+
+DELIBERATE-VIOLATION RED TESTS (load-bearing checks — run live):
+
+  purge-phantom-reports.ts / APP_ENV=dev (no --force-dev):
+    stdout: [purge] APP_ENV=dev
+            [purge] DB_PATH (resolved)=.../data/market.db
+            [purge] REFUSED: APP_ENV="dev" is not "production". Pass --force-dev to override.
+    exit: 1  ← RED CONFIRMED
+
+  purge-phantom-reports.ts / APP_ENV unset (production default):
+    stdout: [purge] APP_ENV=production
+            [purge] DB_PATH (resolved)=.../data/market.db
+            [purge] deleted 0 phantom rows (created_at < 1000000)
+    exit: 0  ← GREEN CONFIRMED (does not refuse)
+
+  purge-phantom-reports.ts / APP_ENV=production explicit:
+    exit: 0  ← GREEN CONFIRMED (same as unset)
+
+  run-bt7-backfill.ts / DB_PATH=/tmp/nonexistent-dev.db (no --force-dev):
+    stdout: [run-bt7-backfill] APP_ENV=production
+            [run-bt7-backfill] DB_PATH (resolved)=/tmp/nonexistent-dev.db
+            [run-bt7-backfill] REFUSED: resolved DB path "/tmp/nonexistent-dev.db" does not end with "market.db". Looks like a dev/test datastore. Pass --force-dev to override.
+    exit: 1  ← RED CONFIRMED
+
+  run-bt7-backfill.ts / DB_PATH=/tmp/nonexistent-dev.db --force-dev:
+    stdout: WARNING: running against non-production DB ".../nonexistent-dev.db" (--force-dev supplied).
+            [run-bt7-backfill] Opening DB: /tmp/nonexistent-dev.db
+            [run-bt7-backfill] FATAL: SQLiteError: unable to open database file
+    exit: 1 (no prod mutation — correct: DB doesn't exist, no write attempted)  ← WARNING path CONFIRMED
+
+COMPOSE VERIFICATION:
+  docker compose config: exit 0 (parses clean; version obsolete warning is benign)
+  APP_ENV=production in rendered config:
+    mcp-server: YES | pdf-extractor: YES | rag-service: YES
+    technical-analysis: YES | macro-indicators: YES | kinh-dich-service: YES
+    news-fetch: YES | stock-price: YES | alert-engine: YES
+    (total: 9 DB-using services — matches SPRINT_GOAL EI-P1-1 list exactly)
+  api-gateway: NO | frontend: NO | flaresolverr: NO  (no DB — correct)
+  COORDINATION_DB_PATH: /app/data/coordination.db present in mcp-server block
+
+ZERO-REGRESSION:
+  git diff HEAD -- apps/mcp-server/src/__tests__/HCM-DISAMBIG-extraction.test.ts: 0 lines (clean)
+  PDF-Extract-Kit subtree: pristine (git status empty)
+  Each commit scoped to its files only (verified via git diff --name-only per commit)
+  All 3 commits on main branch (NO-BRANCH policy compliant)
+
+SOP DOC (EI-P1-3):
+  docs/protocols/dev-environment.md: 241L (not governed by file-size-caps.json — only notebooks/TASKS/flows/skills/agents are)
+  Covers: start (§2) / seed (§3) / promote FK-ordered (§4.1-4.2 + transaction wrapper) / LanceDB (§5) / restore (§6) / RISK-5 volume warning (§7)
+  FK order explicitly: financial_reports row FIRST, then bctc_refined_units, then bctc_table_rows
+
+NOTES:
+  - alert-engine is missing DB_PATH=/app/data/market.db in docker-compose.yml (architecture brief §2.1 says it reads market.db for price thresholds). This is PRE-EXISTING — not introduced by EI-P1. EI-P1-1 scope is "add APP_ENV" (done); adding DB_PATH to alert-engine was not in the sprint task.
+  - run-bt7-backfill.ts line 20 import still uses hardcoded absolute path — pre-existing from original file (only DB_PATH string was in scope for EI-P1-2 fix).
+  - Both pre-existing notes are non-blocking for P1 gate (out of sprint scope). Log for follow-up.
+```
+
+REPORT: reports/TASK_REPORT_EI-P1.md
+NEXT: po | mark EI-P1-1/EI-P1-2/EI-P1-3 DONE, continue ENV-ISOLATION sprint (P2 gated behind FU-TRUST-REFRESH)
+
+---
+
 ## cycle-163 · 2026-05-31 · FU-TRUST-REFRESH/FU-1 QA — APPROVED
 
 **Sprint:** FU-TRUST-REFRESH | **Task:** FU-1 | **Verdict:** APPROVED — all gates GREEN
