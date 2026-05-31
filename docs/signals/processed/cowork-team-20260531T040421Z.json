@@ -1,0 +1,58 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260531T040421Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 4,
+    "errors": [
+      {
+        "step": "4.7",
+        "error": "get_cycle_bootstrap rejected agent_name=cowork-team (enum drift: valid values are news-scout|financial-analyst|market-watcher|alert-commander|digest-predict|qa-responder|unified-agent|report-analyzer|bctc-analyst). Tick-snapshot skipped; spawned agents fall back to direct get_cycle_bootstrap. Non-blocking."
+      }
+    ],
+    "pressure_mode": "legacy",
+    "pressure_mode_reason": "pressure-state.json stale (emitted_at 2026-05-30T22:01Z, ~363min > 20min threshold); re-emitted fresh this tick",
+    "calendar_status": "weekend",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null
+    },
+    "last_fired_timestamp": "2026-05-31T04:07:09Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "20260531T040421Z",
+  "_drain": {
+    "fingerprint": "53680cb8c18b2a6f30eea87f22634dd92d4632163c47d5619713342b29f4f750",
+    "processedAt": "2026-05-31T04:29:20Z",
+    "processedBy": "dev-team",
+    "result": "skipped-noise"
+  }
+}
