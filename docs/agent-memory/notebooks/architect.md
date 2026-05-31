@@ -1,8 +1,49 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-31 17:00 UTC | **Sprint:** ENV-ISOLATION-FLEET (design complete)
+**Last updated:** 2026-05-31 20:00 UTC | **Sprint:** FU-TRUST-REFRESH FU-6-redo (design complete)
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## FU-TRUST-REFRESH FU-6-redo ARCH (2026-05-31T20:00 UTC) — DESIGN COMPLETE
+
+**Sprint:** FU-TRUST-REFRESH | Task: FU-6-redo (recurring-bug escalation)
+**Mode:** Holistic root-cause — read actual bctc_table_rows before designing. No code written.
+
+**Root cause: aggregator-only. Upstream (OCR/refine/parse) is clean.**
+
+**Three confirmed bugs (grounded in live DB rows):**
+1. FPT total_assets: code "270" = "V. Tài sản dài hạn khác" (3.4T). Real total_assets at code "280" = "TỔNG CỘNG TÀI SẢN (280 = 100 + 200)" (68.6T). Aggregator's hardcoded "270" assumption is wrong for FPT's Mẫu B01-DN variant.
+2. ACB equity_total: `findByLabel` for "vốn chủ sở hữu" matches "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" (1,030,900,741M) first because it appears earlier in row_order with is_summary_row=1. Correct equity: code "VIII" / "VỐN CHỦ SỞ HỮU" (98,751,052M).
+3. ACB net_revenue: code "I" collision — balance sheet row "Tiền mặt, vàng bạc, đá quý" (8,157,465M) appears before income row "Thu nhập lãi thuần" (6,989,162M). No section filter on `findByCode`.
+
+**Resolution: label-canonical + exclusion-filter + section-scoped code lookup + balance-identity invariant.**
+
+**False-green explanation:** DV-FU5-1/2 used idealized fixtures where code "270" was labeled "Tổng tài sản" and code "I" was unambiguous. Real data differs. The balance-identity invariant (total_assets ≈ liabilities + equity, ±1%) is the natural correctness gate — both FPT (3.4T ≠ 28.5T + 40.1T) and ACB (1,030.9B ≠ 932.1B + 1,030.9B) would have thrown.
+
+**Change list (4 files, dev-mcp-server only):**
+- `bctcScalarAggregator.ts`: `findTotalAssetsCorporate`, `findByLabelExcluding`, `labelHint` param on `findByCode`, `enforceBalanceIdentity` (structured return `{scalars, balanceViolation}`)
+- `finalizeBctcRefineTool.ts`: call site only — check `balanceViolation`, skip UPDATE + log.error if violated
+- `FU-6-scalar-correctness.test.ts`: NEW — DV-FU6-1 through DV-FU6-5 (realistic fixtures + deliberate-wrong-pick that invariant must catch)
+- `FU-5-scalar-backfill.test.ts`: amend DV-FU5-1 (use code "280" for FPT) + DV-FU5-2 (add code "I" collision)
+
+**Brief:** `docs/architecture-briefs/2026-05-31-bctc-scalar-aggregator-root-cause.md`
+
+---
+
+## TOOL-SURFACE-HYGIENE DESIGN (2026-05-31T18:00 UTC) — DESIGN COMPLETE
+
+**Sprint:** TOOL-SURFACE-HYGIENE
+**Mode:** Brownfield analysis + design decisions — no code modified
+
+**ARCH-DECIDE-1 (FR-1):** 1b DEREGISTER chosen. Wire (1a) is not cheap — requires net-new application logic in kinh-dich-service for VN-Index 5d/20d/60d + macro sigma aggregation, different zone, different dev owner. 1b is a 35-line removal. Decisive factor: live-but-501 oracle is the CHEF-confab footgun from feedback memory. Zone: apps/mcp-server/. Risk: dead import of getMarketHexagram must be cleaned.
+
+**ARCH-DECIDE-2 (FR-2/3/4):** All three pairs confirmed GENUINELY DISTINCT after source diff. Different datastores (SQLite alerts table vs JSON file), different lifecycle positions (post-hoc vs fire-time vs weekly batch), different data sources (calibration_snapshots vs market_messages vs predictionOutcomeJob). No merges. All converted to description-clarify tasks.
+
+**ARCH-DECIDE-3 (FR-5):** WONTFIX-LOW. Two structural barriers: (a) return schema divergence (bctc uses `queued` field, others use `service`) would break callers on a unified schema; (b) `trigger_news_vps_fetch` and `trigger_sbv_vps_fetch` have no `tickers` param — a unified tool would allow nonsensical tickers calls. Zero confusion observed in practice. Consolidation cost exceeds benefit.
+
+**Tasks spawned:** TSH-1 (deregister, ships first) → TSH-2/3/4 (descriptions, batchable) → TSH-5 (stat reconcile, last). All zone: apps/mcp-server/ except TSH-5 (docs/).
+
+**Rebuild gates:** ops rebuild #1 after TSH-1; ops rebuild #2 after TSH-2/3/4 batch. QA raw-verifies via list_server_tools in-container each time.
 
 ## ENV-ISOLATION-FLEET DESIGN (2026-05-31T17:00 UTC) — DESIGN COMPLETE
 

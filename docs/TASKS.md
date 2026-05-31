@@ -36,6 +36,8 @@
 - 🔄 **FU-4 (qa)** — `get_bctc_full` real numbers; COUNT>0; refine_status=DONE; OD-4 opex verdict.
 - 🔄 **FU-5 (dev-mcp-server)** — 6cc75437 IMPL done; awaiting QA. BLOCK-1: scalar backfill (bctcScalarAggregator + finalize UPDATE). BLOCK-2: inline eval recompute. 8 DV tests GREEN. ops must rebuild + re-finalize FPT+ACB before QA re-gate.
 - ⛔ **FU-6 (ops)** — GATED on FU-5 QA APPROVED. rebuild mcp-server + re-finalize e8ea3df5 (FPT) + fea19bae (ACB).
+- ✅ **FU-6-redo ARCH** — 2026-05-31. Root-cause: aggregator-only (upstream clean). FPT: code "270" = "Tài sản dài hạn khác" (3.4T), real total_assets at code "280". ACB: equity label pattern matches "TỔNG NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" before pure equity row; code "I" collision balance-sheet vs income. Fix: label-canonical + exclusion-filter + section-scoped code lookup + balance-identity invariant. Brief `docs/architecture-briefs/2026-05-31-bctc-scalar-aggregator-root-cause.md`. NEXT: pm → dev-mcp-server FU-6-redo-DEV.
+- ⛔ **FU-6-redo-DEV (dev-mcp-server)** — GATED on ARCH above. Implement: `findTotalAssetsCorporate`, `findByLabelExcluding`, `labelHint` on `findByCode`, `enforceBalanceIdentity` (structured return), update `aggregateScalars` resolution, update `finalizeBctcRefineTool.ts` call site, amend DV-FU5-1/2, add `FU-6-scalar-correctness.test.ts` (DV-FU6-1…5). RED-before-GREEN mandatory. Files: bctcScalarAggregator.ts + FU-6-scalar-correctness.test.ts + FU-5-scalar-backfill.test.ts + finalizeBctcRefineTool.ts (call site only).
 
 ---
 
