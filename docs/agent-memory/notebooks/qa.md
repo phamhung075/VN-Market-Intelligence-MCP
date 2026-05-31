@@ -1,5 +1,66 @@
 # QA — Notebook
 
+## cycle-167 · 2026-05-31 · FU-4 QA — FU-TRUST-REFRESH — CHANGES_REQUESTED
+
+**Sprint:** FU-TRUST-REFRESH | **Task:** FU-4 | **Verdict:** CHANGES_REQUESTED — 2 blocking
+
+```
+date: 2026-05-31T13:30Z
+reports: FPT e8ea3df5 (Q1-2026) / ACB fea19bae (Q1-2026)
+method: direct in-container bun:sqlite DB read (new Database("/app/data/market.db"))
+
+STRUCTURAL (verified directly — not from FU-3 self-report):
+  FPT bctc_refined_units: 15 units / all DONE / 0 FAILED / 0 REJECTED_SANITY
+  FPT bctc_table_rows: 114 rows / extracted_at=2026-05-31 11:19:16
+  FPT refined_at: 2026-05-31 11:19:09 (fresh, NOT mock 2026-05-30 11:18:58)
+  ACB bctc_refined_units: 27 units / all DONE / 0 FAILED / 0 REJECTED_SANITY
+  ACB bctc_table_rows: 84 rows / extracted_at=2026-05-31 11:21:17
+  ACB refined_at: 2026-05-31 11:21:12 (fresh)
+  confirm_status: PENDING for both (human-confirm untouched)
+
+TRUST DETECTORS:
+  DT-1 digit-run: 0 hits (code 130 starts 12347990, NOT 12345678)
+  DT-2 gross=net in table rows: FPT gross margin=34.0% (REAL). NOT gross=net.
+  DT-3 cross-statement revenue: FPT diff=206,775 VND rounding only. ACB net_profit matches equity section exactly.
+  DT-4 identical-timestamp: All units share one ts per report (single-session push). NON-BLOCKING — values are distinct and real.
+
+BALANCE CROSS-FOOT:
+  FPT: 41,527,873,060,120 + 27,058,221,725,097 = 68,586,094,785,217 = code 440. PASSES.
+  FPT: 28,464,058,214,856 + 40,122,036,570,361 = 68,586,094,785,217. PASSES.
+  ACB: 932,149,689 + 98,751,052 = 1,030,900,741. PASSES EXACTLY.
+
+KEY FIGURES ON RECORD:
+  FPT: Net Revenue=12,479,997M VND, Gross=4,244,890M, Net Profit=2,476,790M, Total Assets=68,586,095M
+  ACB: Net Interest Income=6,989,162M, PBT=5,368,138M, Net Profit=4,320,388M, Total Assets=1,030,900,741M
+
+BLOCKING (2):
+  1. financial_reports aggregate fields (gross_profit=net_revenue, equity_total=0 for FPT,
+     total_assets=0 for ACB) NOT updated by re-refine. get_bctc_full returns equity=0
+     and gross_margin=100% for FPT. Fix: aggregator step to backfill from bctc_table_rows.
+  2. ACB bctc_eval stale red (TABLE_RECONSTRUCT, computed 2026-05-28 pre-refine).
+     Current rows clean (code_coverage=92.9%, 0 dups). Fix: recompute eval post-refine.
+
+DEGRADATION RULINGS:
+  image_unavailable windows: NON-BLOCKING (primary stmts balance_check:PASSED)
+  complex note prose: NON-BLOCKING (labeled, not fabricated; named FU-5)
+  [độ tin cậy thấp] flagging: CORRECT BEHAVIOR (flag not guess)
+  DT-4 ts-warn: NON-BLOCKING (values distinct, real)
+
+ANALYST FLOW:
+  get_bctc_refined: consumable (markdown with real figures)
+  get_bctc_full: NOT analysis-grade until BLOCK-1 fixed
+  bctc-analyst flow: uses get_bctc_refined — can proceed, but BLOCK-1 must be fixed before any
+  agent consuming get_bctc_full is trusted to output correct analysis
+
+NOTE: bctc-analyst flow reads get_bctc_refined (bctc_refined_units markdown), NOT financial_reports
+aggregate fields. So BLOCK-1 does not block bctc-analyst directly but blocks get_bctc_full consumers.
+```
+
+REPORT: reports/TASK_REPORT_FU-4.md
+NEXT: dev-mcp-server | BLOCK-1 aggregator backfill from bctc_table_rows → financial_reports scalars after finalize; BLOCK-2 recompute bctc_eval for both reports
+
+---
+
 ## cycle-166 · 2026-05-31 · TSH-2/3/4 QA — TOOL-SURFACE-HYGIENE — CHANGES_REQUESTED
 
 **Sprint:** TOOL-SURFACE-HYGIENE | **Task:** TSH-2+TSH-3+TSH-4 | **Verdict:** CHANGES_REQUESTED — 1 blocking (stale container image)
