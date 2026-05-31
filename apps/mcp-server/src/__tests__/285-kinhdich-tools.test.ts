@@ -80,10 +80,6 @@ describe("Task 285 — Kinh Dich MCP Tools", () => {
       expect(tools["get_kinhdich_reading"]).toBeDefined();
     });
 
-    it("registers get_market_hexagram", () => {
-      expect(tools["get_market_hexagram"]).toBeDefined();
-    });
-
     it("registers get_hexagram_history", () => {
       expect(tools["get_hexagram_history"]).toBeDefined();
     });
@@ -100,10 +96,9 @@ describe("Task 285 — Kinh Dich MCP Tools", () => {
       expect(tools["explain_hexagram"]).toBeDefined();
     });
 
-    it("registers exactly 6 new tools", () => {
+    it("registers exactly 5 new tools", () => {
       const kinhDichToolNames = [
         "get_kinhdich_reading",
-        "get_market_hexagram",
         "get_hexagram_history",
         "get_transition_probabilities",
         "run_hexagram_backtest",
