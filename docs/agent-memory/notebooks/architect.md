@@ -1,8 +1,33 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-31 21:00 UTC | **Sprint:** BANK-AWARE-BCTC BANK-ARCH (design complete)
+**Last updated:** 2026-05-31 22:30 UTC | **Sprint:** BANK-AWARE-BCTC BANK-ARCH-2 (discriminator correction)
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## BANK-AWARE-BCTC BANK-ARCH-2 (2026-05-31T22:30 UTC) — DISCRIMINATOR CORRECTION
+
+**Sprint:** BANK-AWARE-BCTC | Task: BANK-ARCH-2 (QA escalation — discriminator signal wrong)
+
+**Root finding:** ALL 12 live DB tickers have `domain="other"`. The `domain` column is permanently mis-populated by the ingest path. `isBankForm("other")=false` → entire BANK-DEV-1 implementation bypassed. ACB still blocked at PUB-3.
+
+**Secondary finding:** Aggregator's `findByCode(rows,"10")===null` also unreliable as a global signal — FPT (corporate) also has no code "10" in `bctc_table_rows` (section classifier mislabels all FPT rows as balance_sheet). The aggregator self-corrects via the fallback chain but the signal can't be exported as a SSOT.
+
+**Correct structural signal:** presence of any 3-digit numeric code (regex `/^[0-9]{3}/`) in `bctc_table_rows` for the report. Corporates (FPT=79, HPG=26, DHG=62 such rows) vs banks (ACB=0, SHB=0, EIB=0). Signal is clean, zero false positives/negatives in live data.
+
+**New SSOT:** `isBankFormFromRows(rows: BctcCodeRow[]): boolean` + `isBankFormFromDb(db, reportId)`. Old `isBankForm(domain)` deleted — compile errors enforce fleet-wide correction.
+
+**Key call-site changes:**
+- `bctcFullTools.ts` line ~593: `isBankForm(latestRow.domain)` → `isBankFormFromDb(db, latestRow.id)`
+- `finalizeBctcRefineTool.ts`: `isBankForm(domain)` → `isBankFormFromRows(finalRows)` (rows already loaded)
+- C-2, C-3, C-5, C-7: self-correct when upstream `bankForm` is correct — no signature change
+- C-6 `computeBctcEval.ts`: primary `isBankFormFromDb`; scalar belt-and-suspenders if DB unavailable
+
+**New test DV-BANK-7:** 4-seed discriminator regression in `BANK-AWARE-1-consumer-audit.test.ts`.
+
+**Brief amended:** `docs/architecture-briefs/2026-05-31-bank-aware-bctc.md` § BANK-ARCH-2
+**BANK-DEV-2 task spec:** in § BANK-ARCH-2 of the brief.
+
+---
 
 ## BANK-AWARE-BCTC BANK-ARCH (2026-05-31T21:00 UTC) — DESIGN COMPLETE
 
