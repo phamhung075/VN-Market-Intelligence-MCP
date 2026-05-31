@@ -1,4 +1,4 @@
-<!-- size-justification: 280L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). -->
+<!-- size-justification: 280L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 ## Team Boundary (Sprint 2026-05-31 — expanded)
@@ -77,6 +77,9 @@ ts          = $(date -u +%Y%m%dT%H%M%SZ)
 start_epoch = $(date +%s)
 ts_human    = $(date "+%Y-%m-%d %H:%M:%S %Z")   # local wall-clock for readability
 send_telegram(channel="work", message="[dev-team] cron START — actual fire {ts_human} ({ts})")
+# Self-arm detect→plan loop (idempotent — skill Step 1 CronList guard makes this a no-op once armed)
+→ skill: .claude/skills/cron-detect-loop/SKILL.md
+# Guarantees system-auditor Tier-1/2/3 + dev-team crons stay live while this always-on session runs.
 
 if .git/HEAD.lock not exists:
   # T5: worktree prune (always, lock absent branch)
@@ -102,9 +105,6 @@ else:
     # T1: capture lsof + lock metadata before removal
     lsof .git/HEAD.lock 2>&1 > docs/agent-memory/sessions/preflight-lsof-{ts}.log
     ls -laT .git/HEAD.lock >> docs/agent-memory/sessions/preflight-lsof-{ts}.log
-    # T1 (future commit steps): wrap git commit as:
-    #   GIT_TRACE=1 GIT_TRACE_PACK_ACCESS=1 git commit ... \
-    #     2>&1 | tee -a docs/agent-memory/sessions/git-trace-{ts}.log
     # F4 (c59-T2): all commit steps use git_commit_retry idiom on index.lock/HEAD.lock
     #   → docs/protocols/head-lock-self-cure.md § F4
     rm .git/HEAD.lock
