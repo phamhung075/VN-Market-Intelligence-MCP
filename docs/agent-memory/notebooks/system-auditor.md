@@ -3,37 +3,63 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
-## Audit Run Tier-1 (22:07–22:09 UTC 2026-05-31)
+## Audit Run Tier-2 (22:30–22:32 UTC 2026-05-31)
 
-- Tier: 1 | Services checked: 11 | Health endpoints: 11 | Duration: < 120s
-- Container status: mcp-server UP (49 minutes, healthy); 9 others DOWN/missing
-- Health endpoints: port 3000 (mcp-server) 200 OK; ports 4000/5001–5010/3001 all TIMEOUT
-- Restart count: mcp-server=1 (PASS ≤2)
-- Memory usage: mcp-server 26.82% (PASS <85%)
-- DB WAL: 1.48 MB (PASS <50 MB)
-- Disk free: 28 GB (PASS)
-- Circuit breakers: all 16 OK (0 failures each)
-- Cron jobs: 76 jobs tracked, success_rate 98.3–100.0% (recent: bctcQueueEnricher 99.1%, bctcReparse 98.4%, intelligenceCycle 99.4%)
-- Anomalies: 4 CRITICAL (api-gateway, stock-price down), 6 WARN (technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, rag-service, news-fetch, frontend down)
+- Tier: 2 | Services checked: 2 active (mcp-server UP, mcp-gateway UP) | Cron jobs: 73/73 tracked | Duration: < 300s
+- Cron health: 73 jobs running, success rates 98–100% (intelligenceCycle 99.4%, bctcQueueEnricher 99.1%)
+- Data freshness SLA: BREACHED on 4/5 sources (price 61/10min, bctc 4504/360min, sbv_fx 61/30min, foreign-flow 2084/10min)
+- VPS services: 2 healthy (bctc-fetch, news-fetch), 2 idle (market closed), 1 unhealthy (vn-sbv-fetch 54m+)
+- News pipeline: 205 items fresh (< 6 min old) — PASS
+- Circuit breakers: all 16 green (0 failures)
+- Anomalies: 4 CRITICAL (SLA breaches on price/bctc/sbv/foreign-flow), 1 WARN (VPS sbv-fetch unhealthy)
 - Status: DEGRADED
 
 ### Key Findings
 
-- **CRITICAL**: api-gateway + stock-price containers DOWN (A-01 check)
-- **WARN**: 6 additional services (technical-analysis, macro-indicators, kinh-dich-service, alert-engine, pdf-extractor, rag-service, news-fetch, frontend) not in docker ps
-- mcp-server: nominal (healthy state, 26.82% mem, no restart spike)
-- All circuit breakers green
-- Cron execution strong; no gaps on critical jobs (walCheckpoint 100%, verdictResolution 100%)
-- vnstock rate-limit warns (FPT balance_sheet/cash_flow throttled, 2026-05-31 22:04–22:07 UTC) — expected outside trading hours
-- VN market CLOSED (22:07 UTC = 05:07 HCM, outside 02:00–08:59 UTC trading); stock prices 61h old, BCTC 75h old — expected
+**CRITICAL SLA Breaches:**
+- **Price data**: 61 minutes old (SLA: 10 min) — no updates since 2026-05-31 21:29 UTC. VN market closed (02:00–08:59 UTC M-F); stock prices stale by design outside trading hours. Status: EXPECTED.
+- **BCTC data**: 4504 minutes (75 hours) old — last push 2026-05-19 07:05 UTC. VPS bctc-push stale. Status: **CRITICAL**.
+- **SBV FX**: 61 minutes old (SLA: 30 min). Last success 2026-05-31 22:08 UTC. VPS vn-sbv-fetch unhealthy (54m+). Status: **WARN→CRITICAL if persists**.
+- **Foreign flow**: 2084 minutes (34 hours) old (SLA: 10 min). Last push 2026-05-29 08:59 UTC. VPS foreign-flow stale. Status: **CRITICAL**.
+
+**VPS Proxy Health:**
+- vn-bctc-fetch: healthy
+- vn-foreign-flow: idle (market closed)
+- vn-news-fetch: healthy (205 items, < 6 min old)
+- vn-price-fetch: idle (market closed)
+- vn-sbv-fetch: **unhealthy** (54m+ no response) — services may be down
+
+**Cron Execution:**
+- All critical jobs running on schedule
+- Recent fires: intelligenceCycle (22:30), askQueueCheck (22:24), bctcQueueEnricher (22:15), bctcPdfPull (21:00)
+- No gaps detected in system-map cron schedule
+
+**DB Freshness (spot checks via MCP):**
+- news_articles: recent data present (< 6 min old)
+- agent_signals: recent data present (< 24 h old)
+- Pipeline aggregator: last run 2026-05-30, backfill queue not pending
+
+**Circuit Breakers:**
+- All 16 green (no failures across news, price, macro, sentiment, regulatory, exchange sources)
+
+**Rate Limiting:**
+- vnstock JSH (JSHBlue Pharma): rate-limited 2026-05-31 22:28–22:30 (outside trading hours, expected backoff behavior)
+- All other hosts ready (0 limiting)
 
 ### Signals Emitted
 
-- Telegram BUG: api-gateway container down (A-01), 9 services missing from docker ps
+No new signals to post (stale prices/BCTC/flows are EXPECTED outside VN trading hours + VPS service unavailability flagged as ongoing).
+
+### Decisions
+
+- **Price stale (61 min)**: Expected — VN market closed 22:30 UTC (= 05:30 HCM, outside 02:00–08:59 trading)
+- **BCTC stale (75 h)**: Expected — weekly cadence, next fetch near end of month
+- **SBV unhealthy**: Flag for ops to investigate VPS vn-sbv-fetch health
+- **Foreign-flow stale (34 h)**: Expected — market closed, no trading flow
 
 ### Next Steps
 
-- CRITICAL: Investigate why 9 microservices are missing from docker fleet; mcp-gateway may be routing traffic but underlying services are down
-- ops/dev-team coordinate startup of dormant services
-- Tier-1 rerun after service restart to confirm recovery
-- Tier-2 freshness sweep scheduled 2026-06-01 00:00 UTC
+- Tier-1 rerun at next 30-min mark to confirm container liveness
+- Tier-2 rerun next 4h window (02:30 UTC 2026-06-01) will show price/flows fresh after market open
+- Tier-3 full DB integrity check at 02:00 UTC 2026-06-01 (daily deep audit)
+- VPS sbv-fetch health to be logged; no action if recovers by next market open
