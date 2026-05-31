@@ -1,8 +1,32 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-31 00:25 UTC | **Sprint:** DWF-PHASE1
+**Last updated:** 2026-05-31 10:45 UTC | **Sprint:** FU-TRUST-REFRESH
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## FU-TRUST-REFRESH FU-0 SEAM DECISION (2026-05-31T10:45 UTC) — DECISION COMPLETE
+
+**Sprint:** FU-TRUST-REFRESH | Task: FU-0 (architect seam pick)
+
+**Two corrected facts from PO OD-5 audit:**
+1. `market_data:/app/data` volume ALREADY mounted in BOTH mcp-server AND pdf-extractor in docker-compose.yml. Prior brief said "only in mcp-server" — WRONG. No new volume mount needed.
+2. `apps/pdf-extractor/infrastructure/ocr_text_fetch_client.py` (OcrTextFetchClient) EXISTS and is already instantiated in main.py. However it is keyed by `(report_id)` not `(filename, page_number)` — incompatible with the `/page-text` handler signature. Wiring it as the `/page-text` backend would require redesigning the handler and cascading to mcp-server's `get_bctc_page_text` tool. Out of scope.
+
+**Decision: OPTION A — direct SQLite read via SqliteOcrTextSource(MARKET_DB_PATH)**
+
+Rationale: (1) Volume already mounted — no infrastructure change beyond one env var. (2) Option B's OcrTextFetchClient interface (`report_id`) is incompatible with `/page-text` handler (`filename, page_number`) — bridging it adds blast radius outside pdf-extractor zone. (3) Option A is ~10 lines, purely additive, proven infrastructure code. (4) Cross-service DB read coupling is the existing architecture pattern (technical-analysis, macro-indicators, kinh-dich-service all read market.db directly). (5) `BCTC_PAGE_TEXT_BACKEND=sqlite` already set in docker-compose.yml — factory selects SqliteOcrTextSource automatically.
+
+**FU-1 change list (3 files, ~10 lines):**
+- `apps/pdf-extractor/infrastructure/config.py`: add `market_db_path` field, reads `MARKET_DB_PATH` env (default `/app/data/market.db`)
+- `apps/pdf-extractor/main.py`: import `select_ocr_text_source`; construct `ocr_text_source = select_ocr_text_source(cfg.market_db_path)` in `create_app()`; pass to `register_routes(..., ocr_text_source=ocr_text_source)`
+- `docker-compose.yml`: add `MARKET_DB_PATH: /app/data/market.db` to pdf-extractor environment block
+- (Recommended) `ocr_text_source.py`: harden `sqlite3.connect()` to `mode=ro` URI
+
+**Fail-loud spec:** startup self-check in `create_app()` after constructing `ocr_text_source` — attempt `SELECT 1 FROM pdf_extracted_text LIMIT 1`; on failure log ERROR (not WARNING), set `ocr_source_ok: false` in `/health` response. Per-call: `/page-text` returns `source_reachable: false` on exception (not silent `""`). mcp-server's `get_bctc_page_text` must treat `source_reachable: false` as ERROR, not pass `""` to refine agent. Deliberate-violation test ships in same commit: point `MARKET_DB_PATH` at missing path, assert `/health` returns `ocr_source_ok: false`.
+
+**Brief addendum:** `docs/architecture-briefs/2026-05-31-bctc-trust-remediation-investigation.md` § FU-0 Seam Decision
+
+---
 
 ## FU-TRUST-REFRESH INVESTIGATION (2026-05-31T09:30 UTC) — FINDINGS COMPLETE
 

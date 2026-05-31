@@ -287,3 +287,95 @@ NOTE: FU-TRUST-REFRESH is purely additive — one DI wiring fix in pdf-extractor
       market.db volume already exists; ops adds a read-only mount to pdf-extractor).
       dev-mcp-server EBITDA fix is a parser mapping addition (optional, operator decision).
 ```
+
+---
+
+## FU-0 Seam Decision
+
+**Author:** architect  
+**Date:** 2026-05-31  
+**Status:** DECISION — binding for FU-1 implementation
+
+### Corrected Facts (PO OD-5 audit)
+
+**Corrected Fact 1 — Volume mount.** The prior brief stated the `market_data` volume was "currently only mounted in mcp-server." This is WRONG. Verified in `docker-compose.yml`:
+- `mcp-server` service: `market_data:/app/data` (line 12, rw)
+- `pdf-extractor` service: `market_data:/app/data` (line 80, rw)
+
+Both services already share the same named volume. No new volume mount is needed for either option. The `:ro` tightening for pdf-extractor is desirable but NOT required as a blocking step — the named volume cannot be independently `:ro` per-service without restructuring (Docker Compose does not support per-consumer read-only mode for named volumes at the compose level). The existing rw mount is safe because `SqliteOcrTextSource` only issues SELECT queries and `sqlite3.connect()` in read-only mode can be forced via URI (`file:path?mode=ro`). Recommend dev-pdf-extractor adds `mode=ro` URI flag in `SqliteOcrTextSource.__init__` as a one-liner safety guard.
+
+The ONLY missing element for Option A is the `MARKET_DB_PATH` environment variable wired from docker-compose into config.py, and the `create_app()` wiring call.
+
+**Corrected Fact 2 — OcrTextFetchClient exists but is NOT the right seam for /page-text.** The prior brief did not weigh the existing `apps/pdf-extractor/infrastructure/ocr_text_fetch_client.py`. It exists and is already imported and instantiated in `main.py` (line 96: `ocr_fetch_client = OcrTextFetchClient(...)`). However, it is implemented with a DIFFERENT interface signature:
+- `OcrTextFetchClient.fetch_ocr_text(report_id: str) -> str` — takes a `report_id` UUID, concatenates all pages
+- `OcrTextFetchClient.fetch_ocr_pages(report_id: str) -> List[{page_number, text}]` — takes a `report_id` UUID
+
+The `/page-text` handler signature is `GET /page-text?filename=<str>&page_number=<int>` — called by mcp-server with `(filename, page_number)`, not `(report_id)`. The `OcrTextSourcePort.get_page_text(filename, page_number)` interface does not match `OcrTextFetchClient`'s `fetch_ocr_text(report_id)` — these are two different lookup keys. To use Option B, either: (a) the `/page-text` handler must be redesigned to accept `report_id` instead of `filename`, requiring a corresponding change to `get_bctc_page_text` in mcp-server; or (b) a new `report_id`-to-`filename` reverse-lookup must be added to the fetch client. Neither is in scope for this sprint. Option B is therefore NOT a drop-in extension of the factory.
+
+### Option Analysis
+
+**Option A — Direct SQLite read via `SqliteOcrTextSource(MARKET_DB_PATH)`**
+
+Mechanism: Add `market_db_path: str` to `Config` (reads `MARKET_DB_PATH` env var, default `/app/data/market.db`). In `main.py create_app()`, call `select_ocr_text_source(cfg.market_db_path)` and pass result as `ocr_text_source=` to `register_routes()`. The `BCTC_PAGE_TEXT_BACKEND=sqlite` env var is already set in docker-compose.yml (line 94) — the factory will select `SqliteOcrTextSource` automatically.
+
+Files: 3 files, ~10 lines total.  
+Volume: already mounted (corrected above). No compose change needed except adding the env var.  
+Coupling: pdf-extractor reads `pdf_extracted_text` table from market.db. This is a shared-DB read dependency (cross-service coupling at the storage layer). Both services already share this volume; the `pdf_extracted_text` table is populated by mcp-server's OCR extraction pipeline. The coupling is already present by architecture (shared volume); this formalizes a read path that exists implicitly.  
+Risk: LOW — purely additive DI wiring. `SqliteOcrTextSource` is proven code (existing implementation). Per-call connection open/close is correct (no connection pool needed for read-only lookup). The `sqlite3.connect()` can be hardened to `:ro` URI mode.
+
+**Option B — HTTP fetch via `OcrTextFetchClient` (extended factory)**
+
+Mechanism: The existing `OcrTextFetchClient` uses `(report_id)` as the lookup key. The `/page-text` handler uses `(filename, page_number)`. These are incompatible interfaces. Bridging them requires EITHER redesigning the `/page-text` route signature (cascading change into mcp-server's `get_bctc_page_text` tool) OR adding a reverse-lookup adapter. Neither is additive-only and both expand the blast radius beyond the pdf-extractor zone.
+
+Additionally, the `/api/bctc-inspect/ocr/{report_id}?page=N` endpoint exists and works (confirmed in `bctcInspectHandler.ts` `handleBctcInspectOcr()`), but it is the viewer's REST endpoint — it performs additional work (PEK unit lookup priority, figures fetch, secondary OCR join for null pdf_path rows). Using it as the data pipe for the refine agent's OCR reads would create a dependency on a viewer-facing HTTP round-trip on the hot path.
+
+The `OcrTextFetchClient` is correctly used for its current purpose (MD-EXTRACT-2 / LF-EXTRACT, where the use case owns `report_id`). It is NOT the right tool for the `/page-text` handler which is keyed by `(filename, page_number)`.
+
+### Decision: OPTION A — Direct SQLite
+
+**Chosen seam: `SqliteOcrTextSource(MARKET_DB_PATH)` wired directly in `create_app()` → `register_routes(ocr_text_source=...)`.**
+
+**Rationale:**
+1. Volume already mounted (corrected fact) — no infrastructure change required beyond the env var.
+2. Option B's `OcrTextFetchClient` interface is incompatible with the `/page-text` handler's `(filename, page_number)` signature. Making it compatible requires changes outside the pdf-extractor zone (mcp-server's `get_bctc_page_text` tool), violating the sprint's zone-discipline constraint.
+3. Option A is strictly additive — 3 files, ~10 lines — and uses proven, already-tested infrastructure code. No new abstractions.
+4. Cross-service DB coupling concern: both services already share the named volume by design. `pdf_extracted_text` is written by mcp-server and read by pdf-extractor (OCR ingest → refine seam). This coupling is the intended architecture. Direct SQLite read is lower-risk than an HTTP round-trip on the refine hot path.
+5. DDD layer: `SqliteOcrTextSource` is correctly classified as infrastructure. Reading a shared named volume's SQLite file from infrastructure is a legitimate pattern in this architecture (precedent: `technical-analysis`, `macro-indicators`, `kinh-dich-service` all read `market.db` directly via `DB_PATH`).
+
+**Read-only hardening (recommended):** In `SqliteOcrTextSource.__init__` or `get_page_text`, use URI `sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)` to enforce read-only at the connection level. This is a one-liner safety guard that prevents any accidental write from within pdf-extractor.
+
+### FU-1 Change List for dev-pdf-extractor
+
+| File | Change |
+|---|---|
+| `apps/pdf-extractor/infrastructure/config.py` | Add `market_db_path: str` field. In `from_env()`: `market_db_path=os.getenv("MARKET_DB_PATH", "/app/data/market.db")`. |
+| `apps/pdf-extractor/main.py` | Add import: `from infrastructure.ocr_text_source_factory import select_ocr_text_source`. In `create_app()` after `cfg = Config.from_env()`: `ocr_text_source = select_ocr_text_source(cfg.market_db_path)`. Pass to `register_routes(router, ..., ocr_text_source=ocr_text_source)`. |
+| `docker-compose.yml` | In `pdf-extractor` environment block: add `MARKET_DB_PATH: /app/data/market.db`. (Volume already mounted; no volumes: change.) |
+| `apps/pdf-extractor/infrastructure/ocr_text_source.py` | (RECOMMENDED, not blocking) Harden `SqliteOcrTextSource.get_page_text` to use `sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)` for read-only enforcement. |
+
+No other files change. `BCTC_PAGE_TEXT_BACKEND=sqlite` is already set in docker-compose.yml — the factory selects `SqliteOcrTextSource` automatically on startup.
+
+**Acceptance criterion (binding):** `get_bctc_page_text(report_id="e8ea3df5...", page=7)` via gateway returns a string of ≥ 100 Vietnamese characters. HTTP 200 with empty string is NOT pass.
+
+### Fail-Loud Spec (RISK-1 Mitigation)
+
+**Core lesson:** The seam failing silently — returning `""` with HTTP 200 — is what allowed the fabrication to proceed undetected. An agent receiving `""` with `ok:true` had no signal to abort or degrade.
+
+**Requirement:** FU-1 MUST add a startup self-check in `create_app()` that fires once immediately after `ocr_text_source` is constructed. The check MUST:
+
+1. **Attempt to open the DB.** Call `sqlite3.connect(f"file:{cfg.market_db_path}?mode=ro", uri=True)` and run `SELECT 1 FROM pdf_extracted_text LIMIT 1`. If this raises any exception (file not found, permission denied, table not found):
+   - Log at ERROR level: `"FATAL: OCR text source unreachable at {path} — /page-text will return '' for ALL pages. Re-refine WILL fabricate. Fix MARKET_DB_PATH or volume mount before running refine."` 
+   - The app MUST still start (do not crash startup — ops needs the container running to diagnose). But the error MUST be visible in logs and in `/health` response.
+
+2. **Surface in `/health` response.** The health endpoint should include an `ocr_source_ok: bool` field. `false` when the startup check failed. This lets ops confirm the seam is live before triggering FU-3 refine.
+
+3. **Per-call guard.** If `SqliteOcrTextSource.get_page_text` catches an exception, it currently logs WARNING and returns `""`. This is acceptable for transient per-call errors BUT the handler (`/page-text`) must add a response field `source_reachable: false` when the underlying source raised an exception (distinct from "page genuinely has no text"). mcp-server's `get_bctc_page_text` tool should check for this field and treat `source_reachable: false` as an ERROR (not a silent empty string), surfacing it in the tool response rather than silently passing `""` to the refine agent.
+
+**Deliberate-violation proof required (anti-false-green):** The fail-loud spec must be proven by a test that:
+- Points `MARKET_DB_PATH` at a non-existent path.
+- Asserts that `/health` returns `ocr_source_ok: false`.
+- Asserts that a `/page-text` call returns `source_reachable: false` (not a silent `{text: ""}`).
+
+This test ships in the SAME commit as the production wiring (RED-before / GREEN-after per `feedback_fence_false_green`). A startup that logs `INFO: OCR source ready` when the DB is missing is a false-green and is not acceptance.
+
+**The invariant this enforces:** A future misconfiguration where `MARKET_DB_PATH` is wrong or the volume is unmounted CANNOT silently produce empty OCR text that flows through to a refine agent. The system must ERROR loudly, not degrade quietly.
