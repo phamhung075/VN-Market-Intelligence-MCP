@@ -1,5 +1,47 @@
 # QA — Notebook
 
+## cycle-171 · 2026-05-31 · FU-4 CLOSING GATE — FU-TRUST-REFRESH — CHANGES_REQUESTED
+
+**Sprint:** FU-TRUST-REFRESH | **Task:** FU-4 CLOSING GATE | **Verdict:** CHANGES_REQUESTED — 2 new blocking
+
+```
+date: 2026-05-31T17:30Z
+reports: FPT e8ea3df5 / ACB fea19bae
+method: direct in-container bun:sqlite + bctc-eval API + source inspection
+
+SCALAR STATUS (all prior BLOCK-A/B/C remain resolved):
+  FPT: gross=4,244,890 / margin=34% / net=2,476,790 / assets=68,586,095 / equity=40,122,037
+       balance=0% / DT-1 CLEAN / DT-2 PASS / rows=145 / PENDING / DONE
+  ACB: gross_profit=NULL (cleared FU-6e) / gross_margin_pct=NULL / equity=98,751,052
+       PBT=5,368,138 / net=4,320,388 / net_revenue=6,989,162 / assets=1,030,900,741
+       balance=0% / DT-1 CLEAN / DT-2 PASS (NULL≠net_revenue) / rows=106 / PENDING / DONE
+
+BCTC EVAL:
+  FPT: overall=yellow (stage-4 GREEN; stages 1-3 backfill; stage-6 yellow balance-signal only)
+  ACB: overall=RED — stage-6 RED: golden_row_match=0.667 < 0.9
+       Root: computeBctcEval.ts:171 goldenAnchors=["net_revenue","net_profit","gross_profit"]
+       hardcoded for all domains; bank gross_profit=null → scored as missing anchor.
+       Eval config bug (pre-existing gap exposed by correct FU-6e fix).
+
+get_bctc_full: serves from scalar cols (bctcFullTools.ts:125 row.gross_profit).
+  FPT gross=4,244,890 PASS | ACB gross=null PASS (no stale 100% margin)
+
+TESTS: FU-6e 6/0 | FU-6 suite 56/0 | tsc 0 errors | DDD PASS | Security PASS
+TREE: HCM-DISAMBIG 0-diff | PDF-Extract-Kit 0-diff | FU-6 files all committed
+
+BLOCKING (2):
+  B-1 computeBctcEval.ts:171 — goldenAnchors bank-unaware → ACB eval RED
+      Fix: exclude gross_profit for bank domain; re-run eval for fea19bae
+  B-2 finalizeBctcRefineTool.ts — income_stmt_json.grossProfit still 6,989,162 stale
+      Fix: null-clear blob field alongside scalar in NOT-APPLICABLE path
+```
+
+REPORT: reports/TASK_REPORT_FU-4-CLOSING-GATE.md
+NEXT: dev-mcp-server | B-1 domain-aware goldenAnchors + B-2 income_stmt_json sync;
+      ops | re-run eval ACB; re-gate
+
+---
+
 ## cycle-170 · 2026-05-31 · FU-4 FINAL RE-GATE — FU-TRUST-REFRESH — CHANGES_REQUESTED
 
 **Sprint:** FU-TRUST-REFRESH | **Task:** FU-4 FINAL RE-GATE | **Verdict:** CHANGES_REQUESTED — 1 new blocking (DT-2 ACB gross_profit)
