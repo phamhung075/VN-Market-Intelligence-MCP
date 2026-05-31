@@ -1,0 +1,21 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-05-31T10:12:17Z",
+  "payload": {
+    "file": "docs/TASKS.md",
+    "line_count": 93,
+    "cap": 80,
+    "class": "sprint-task-index",
+    "overage": 13,
+    "action_required": "prune_or_split"
+  },
+  "_processed": {
+    "fingerprint": "dd7f0d05e4d836db23f4cdf482a3c665a057656d17bec5acc17cd7094dd49ef6",
+    "processedAt": "2026-05-31T10:27:45Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-maintenance"
+  }
+}
