@@ -1,8 +1,41 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-31 15:00 UTC | **Sprint:** ENV-ISOLATION (investigation)
+**Last updated:** 2026-05-31 17:00 UTC | **Sprint:** ENV-ISOLATION-FLEET (design complete)
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## ENV-ISOLATION-FLEET DESIGN (2026-05-31T17:00 UTC) — DESIGN COMPLETE
+
+**Sprint:** ENV-ISOLATION-FLEET (operator review required before any build)
+**Mode:** Complete system design — read-only, no sprint opened, no code modified
+
+**Fleet inventory confirmed from system-map.json + docker-compose.yml:**
+- 7 SQLite files: market.db (mcp-server writer; TA/macro/kinh-dich/news-fetch/stock-price readers; pdf-extractor reads pdf_extracted_text via MARKET_DB_PATH), coordination.db (mcp-server only), stock_price.db (stock-price private), alert_engine.db (alert-engine private), pdf_extractor.db (pdf-extractor private), rag_service.db (rag-service private)
+- 1 LanceDB: /app/data/lancedb (rag-service sole writer/reader)
+- Key correction from prior brief: stock-price ALSO reads market.db via DB_PATH (confirmed in cmd/server/main.go line 31); alert-engine ALSO reads market.db via DB_PATH (confirmed in infrastructure/config.go line 30)
+- news-fetch and frontend: ZERO DB access confirmed (no DB_PATH reads in their source)
+
+**Chosen model:** Single-Stack Dev Override with Physical Datastore Boundaries. APP_ENV=production default (no-op for prod). Dev = explicit opt-in via docker-compose.dev.yml. One fleet-wide env var name.
+
+**DB_PATH convention (dev):** market.dev.db (same volume, .dev suffix). LANCEDB_PATH dev: /app/data/lancedb.dev. All services get dev filenames in docker-compose.dev.yml.
+
+**Key design decisions:**
+1. Dev mcp-server port 3099:3000 → VPS never hits dev; gateway always hits prod port 3000 → prod analysis path always reads prod data
+2. Startup assertion: if APP_ENV=production and DB_PATH ends with .dev.db → refuse start (fail-loud)
+3. data_env audit column on bctc_refined_units, bctc_table_rows, news_analysis, macro_evidence, agent_signals (AUDIT only, not a read filter)
+4. Maintenance scripts: replace hardcoded path (run-bt7-backfill.ts) + APP_ENV guard (purge-phantom-reports.ts)
+5. :memory: tests: add APP_ENV=test to setup.ts preload (one line) → data_env stamps 'test' → no prod contamination
+6. Promotion: bespoke promote-bctc-to-prod.ts (parent-before-child FK order, transaction-wrapped)
+
+**4 rollout phases:** P1 ops-only (compose explicit env vars) → P2 code (startup assertion + schema columns + ENV-GUARD-1 test) → P3 dev override + script guards + SOP → P4 promotion/seed scripts + LanceDB SOP
+
+**Sequencing:** P1 now. P2 waits for FU-TRUST-REFRESH re-refine of FPT/ACB to complete. P3 and P4 after P2. BCTC-LAYOUT-FIRST is disjoint, can proceed in parallel.
+
+**6 OD flags:** OD-A (volume strategy), OD-B (table scope), OD-C (timing), OD-D (promotion script vs SOP), OD-E (partial stack), OD-F (sprint split)
+
+**Brief:** `docs/architecture-briefs/2026-05-31-fleet-env-isolation-architecture.md`
+
+---
 
 ## ENV-ISOLATION INVESTIGATION (2026-05-31T15:00 UTC) — FINDINGS COMPLETE
 
