@@ -1,32 +1,30 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-31T01:20Z (:07 tick, manual run — VN Sat ~08:20, market CLOSED)
+**Written:** 2026-05-31T01:45Z (:07 tick, manual run — VN Sat ~08:45, market CLOSED weekend)
 
-## tick-20260531T0027Z (~50min) — MACRO-CMDTY-DELTA shipped end-to-end
+## tick-20260531T0142Z (~4min) — IDLE EXIT (NOTHING), TASKS.md pruned
 
 | Step | Action | Result |
 |------|--------|--------|
-| 0 PREFLIGHT | HEAD.lock absent, worktree clean | pass |
-| 0a drain | 264 loose signals (>50) + db mtime >24h → full drain | 254 DB-insert/10 dup/264→processed/, pruned 814→766 + 10 files. Commit 7aac8fef. ALL stale/noise — 0 new dev work from loose path |
-| 0a-D dashboard | 3 NEW ## po rows | DOUBLON / TASKCLAIM-SCHEMA / MCP-P4 → fed to PO |
-| 0b pipeline | pipeline-state STALE (2026-05-29, nextAgent NONE) | no resume → Step 1 |
-| 1 PO triage | BATCH([MACRO-CMDTY-DELTA FIX]) | verified-raw avoided 3 false-RED: DWF-TSC-DEBT already resolved, FF-DEAD already live-fixed (0cbce0b4), #3012 transient. DOUBLON HELD, TASKCLAIM-SCHEMA→doc/cowork lane, #3011→BCTC-LAYOUT-FIRST WIP-gated |
-| 3 exec | FIX zone apps/macro-indicators/ → dev-macro-indicators | BLOCKED/zone-handoff (root cause in apps/mcp-server, not its zone) — good diagnose-first |
-| 3 re-route | dev-mcp-server | disproved handoff hypothesis (993 rows, no zeros); REAL cause = off-market repeated-close, prev-close `ORDER BY fetched_at DESC LIMIT 1` compared price to identical 1h row → permanent 0.00%. Fix = prev-calendar-day baseline. e510e5df+fdc17265, YF-14/15 |
-| 3 ops | rebuild + force-recreate mcp-server | image 802d6463e665 healthy, fleet 12/12 healthy |
-| qa gate-1 | CHANGES_REQUESTED | prod correct but broke DPI-3 AC-2/AC-3 (same-day seeds vs new prev-day query) |
-| fixer | dab1bf86 | 3 test timestamps → cross-day, test-only, prod untouched |
-| qa re-gate | APPROVED | DPI-3 4/4 (real non-zero deltas), 025 16/16, fleet 10153/346 (pre-existing drift, 0 overlap), tsc clean |
-| po EXIT | APPROVE 3889587e | TASKS DONE, MCP-P4 RESOLVED, pipeline-state refreshed, WIP 0/2 |
+| 0 PREFLIGHT | HEAD.lock absent, no worktrees, branch=main | pass; cron START announced |
+| 0a drain | 11 loose signals (<50, db mtime ~1h) | drained anyway: 11 inserted (766→777), 12 stale processed/ pruned. Commit e63a68f5 |
+| 0a routing | 4× context_bloat_breach TASKS.md=103>80 → routed-to-po | 6 bloat total (4 TASKS.md actionable + 2 notebook→janitor lane); 5 cowork-fire heartbeats = noise |
+| 0a-D dashboard | ## po section | NO NEW rows (all READ/RESOLVED). NEW markers elsewhere = other agents' own sections (agent-father/dev-mcp-server/ba), not dev-team's |
+| 0b pipeline | IDLE, activeTaskId NONE, updatedAt 01:34Z (~10min) | no resume → Step 1 |
+| 1 PO triage | **BATCH=NOTHING** (idle EXIT) | claim task:po-triage-20260531 OK→released ok:true. PO pruned TASKS.md **103→61** (commit 356ce861, index-only). Reports: #3011 held (LF-OVERLAY in OPEN BCTC-LAYOUT-FIRST), #3012+#3014 transient pollNews cowork-lane. WIP 0/2 |
+| 2/3 | skipped (NOTHING) | no execution |
+| 4 post-cycle | expire_monitoring=0, branches=main only | C-6 anti-loop: PO consumed report queue this tick, no NEW dispatchable → idle exit, no re-loop |
+| notebooks | po.md committed ebdd2729 (handed to dispatcher); main.md this commit | |
 
-### Carry-forward (NOT this lane — flagged to WORK, infra/cowork lane)
-
-- **#3011** BTB persistence blocker (push-bctc-layout write-wedge) — lives in OPEN BCTC-LAYOUT-FIRST (LF-OVERLAY), WIP-gated; PO did not open this tick. Real, awaiting architect diagnosis when a lane frees.
-- **#3012 + #3014** pollNews 0-items, sources degrading 6/7→3/7 over the weekend (VN Sat off-hours). Infra/cowork lane (news-fetch/VPS/dev-vps-crawls), NOT a dev-team apps/ sprint. Flagged to WORK for ops/cowork pickup. Watch: if still 0-items at Monday VN open → real outage, escalate.
-- **DOUBLON** (cje-...): valid LOW cosmetic dedup in apps/mcp-server/src/infrastructure/fetchers; HELD as future idle-tick CLEAN batch.
-- **TASKCLAIM-SCHEMA**: doc-only (dev-mcp-server document new contract) + cowork-flow update; commit-mutex-enum-drift workaround now obsolete (cowork-slot accepted).
-- **tool count** live = 155 (not 157 — dev mis-report, no regression).
+### Carry-forward (NOT this lane — unchanged from prior tick)
+- **#3011** BTB push-bctc-layout 0-units write-wedge — lives in OPEN BCTC-LAYOUT-FIRST (LF-OVERLAY), WIP-gated, wants architect diagnosis when a lane frees. Multi-zone, not an off-hours direct FIX.
+- **#3012 + #3014** pollNews 0-items — transient/recurring heartbeat (cowork-news/VPS-crawls lane). Watch: if still 0-items at Monday VN open → real outage, escalate.
+- **DOUBLON** (cje-...): LOW cosmetic dedup in apps/mcp-server/src/infrastructure/fetchers; HELD as future idle-tick CLEAN batch (3 live + 10 proposed).
+- **TASKCLAIM-SCHEMA**: doc-only + cowork-flow lane; commit-mutex-enum-drift workaround obsolete (cowork-slot accepted).
+- **FU-MON**: MACRO-CMDTY-DELTA signed-non-zero Brent/Gold delta confirm at next real move (~Monday open). FF-DEAD FU-MON probe too.
 
 ### Notes
-- task_release ok:false on MACRO-CMDTY-DELTA (TTL expired over ~50min pipeline — tolerated per flow).
-- Durable cron flag did not persist this session (registered session-only) — needs re-arm after restart.
+- TASKS.md invariant restored (61 ≤ 80). The 4 bloat signals were one repeated breach.
+- signals.db is git-ignored (local dedup cache) — DB inserts not committed, file-move to processed/ is SSOT.
+- Durable cron flag still session-only — needs re-arm after restart.
+- Pre-existing dirty tree (architect.md, ba.md, tool-usage-stats.json) NOT touched — not this tick's work.
