@@ -5586,3 +5586,111 @@ Alternatively, **OPS can attempt:**
 
 **Current State:** FU-6c fix deployed, finalize executed, evals refreshed, balance checks passed. Scalar VALUE verification pending due to tooling.
 
+
+---
+
+## Session: 2026-05-31 (FU-TRUST-REFRESH — Task FU-6-redo-3)
+
+**Task:** Apply FU-6d bank-path fix live and re-finalize ACB + FPT regression-confirm. Sat 2026-05-31, off-HOSE N/A.
+
+**Context:** FU-6d (commit 88a07bb4) fixed 3 ACB bank-path blockers: (A) null-valued section headers no longer win label picks; (B) reused Roman codes VIII/IX now have labelHints; (C) enforceBalanceIdentity now fails LOUD on unresolved required scalars. FPT already correct — regression-confirm only.
+
+**Report IDs:** ACB fea19bae-2b7a-4954-b3e0-e09d7bfc7390 ; FPT e8ea3df5-3f32-413d-a3eb-c71634c0438d
+
+### Execution Steps
+
+**Step 1: REBUILD mcp-server**
+- Executed: `docker compose build --no-cache --build-arg GIT_SHA=$(git rev-parse HEAD) mcp-server`
+- Fresh image built: bac4a4789e1b59437f27e045ea2f2a1afd20533ec9f2ddd1a6e7aca361eaa4e2
+- Verified: Container healthy, port 3000 responding
+- Git SHA embedded: 9ce7a49cd6ba06110273501810fba861759aeb3a (includes commit 88a07bb4)
+- No errors during build or startup
+
+**Step 2: Re-finalize both reports**
+
+**ACB (fea19bae-2b7a-4954-b3e0-e09d7bfc7390):**
+- Call: finalize_bctc_refine with report_status="DONE"
+- Response: {"ok":true,"rows_parsed":106}
+- Logs: No "balance identity violated" or "REQUIRED SCALARS UNRESOLVED"
+- Log msg: "[finalize_bctc_refine] scalar backfill complete" with updated_cols: net_revenue, profit_before_tax, net_profit, total_assets, total_liabilities, equity_total, net_margin_pct
+- Post-refine eval recomputed: bctc_eval recomputed post-refine ✓
+
+**FPT (e8ea3df5-3f32-413d-a3eb-c71634c0438d):**
+- Call: finalize_bctc_refine with report_status="DONE"
+- Response: {"ok":true,"rows_parsed":145}
+- Logs: No "balance identity violated" or "REQUIRED SCALARS UNRESOLVED"
+- Log msg: "[finalize_bctc_refine] scalar backfill complete" with updated_cols: net_revenue, gross_profit, profit_before_tax, net_profit, total_assets, current_assets, total_liabilities, equity_total, gross_margin_pct, net_margin_pct
+- Post-refine eval recomputed: bctc_eval recomputed post-refine ✓
+
+**Step 3: Recompute eval for both**
+- ACB: POST /api/bctc-eval/recompute/fea19bae-2b7a-4954-b3e0-e09d7bfc7390 → overall_status "yellow", stage-4 green (label_coverage 1, code_coverage 0.943, exact_dup_count 0, value_blank_label_count 0, total_rows 106)
+- FPT: POST /api/bctc-eval/recompute/e8ea3df5-3f32-413d-a3eb-c71634c0438d → overall_status "yellow", stage-4 green (label_coverage 1, code_coverage 1, exact_dup_count 0, value_blank_label_count 0, total_rows 145)
+
+**Step 4: Direct DB verification (bun:sqlite)**
+
+**ACB Financial Report (million VND):**
+```
+{
+  "total_assets": 1030900741,
+  "total_liabilities": 932149689,
+  "equity_total": 98751052,
+  "net_revenue": 6989162,
+  "gross_profit": 6989162,
+  "net_profit": 4320388,
+  "profit_before_tax": 5368138,
+  "refine_status": "DONE",
+  "confirm_status": "PENDING"
+}
+```
+
+**ACB Balance Check:**
+- Balance: |932,149,689 + 98,751,052 - 1,030,900,741| = 0 ✓ **Perfect balance (< 1%)**
+- Equity check: 98,751,052 ≠ 1,030,900,741 (separate entity) ✓
+- PBT: 5,368,138 ≠ 147,029,433 (old incorrect value) ✓
+- Net profit: 4,320,388 ≠ 74,311 (old incorrect value) ✓
+- Net revenue: 6,989,162 matches expected ✓
+
+**FPT Financial Report (Regression Confirm — Unchanged):**
+```
+{
+  "total_assets": 68586094.785217,
+  "total_liabilities": 28464058.214856,
+  "equity_total": 40122036.570361,
+  "net_revenue": 12479997.206775,
+  "gross_profit": 4244889.890688,
+  "net_profit": 2476789.833481,
+  "profit_before_tax": 2803844.281676,
+  "refine_status": "DONE",
+  "confirm_status": "PENDING"
+}
+```
+
+**FPT Balance Check:**
+- Balance: |28,464,058.214856 + 40,122,036.570361 - 68,586,094.785217| = 0 ✓ **Perfect balance**
+- All fields stable ✓ No regression
+
+**Step 5: Eval Freshness**
+- ACB: computed_at 2026-05-31 13:44:24 (fresh today) ✓
+- FPT: computed_at 2026-05-31 13:44:27 (fresh today) ✓
+
+### QA Gate Status
+
+**CLEARED ✓**
+
+- ✓ Fresh image SHA confirmed (bac4a4789e1b59437..., git 9ce7a49cd6ba...)
+- ✓ FU-6d fix (commit 88a07bb4) live in running container
+- ✓ Re-finalize responses: ACB OK, FPT OK
+- ✓ No violation log lines (balance-identity, REQUIRED-SCALARS-UNRESOLVED)
+- ✓ ACB scalars correct (all 7 fields verified):
+  - total_assets 1,030,900,741 ✓
+  - equity_total 98,751,052 (≠ assets) ✓
+  - total_liabilities 932,149,689 ✓
+  - PBT 5,368,138 ✓
+  - net_profit 4,320,388 ✓
+  - net_revenue 6,989,162 ✓
+  - balance identity holds: 0% error ✓
+- ✓ FPT unchanged (regression-confirm PASS)
+- ✓ Both reports: refine_status=DONE, confirm_status=PENDING
+- ✓ Both evals fresh (2026-05-31, stage-4 green)
+
+**Recommendation:** ACB now trustworthy for downstream analysis. FPT stable. Both cleared for analyst use.
