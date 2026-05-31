@@ -34,7 +34,8 @@
 - 🔄 **FU-2 (ops)** — rasterize FPT(46)+ACB(27). Disk-intensive (73 PNGs). BLOCKS FU-3.
 - 🔄 **FU-3 (ops, off-HOSE)** — run refine cron (Sat permitted). BLOCKS FU-4.
 - 🔄 **FU-4 (qa)** — `get_bctc_full` real numbers; COUNT>0; refine_status=DONE; OD-4 opex verdict.
-- ⛔ **FU-5 (EBITDA)** — DEFERRED to BCTC-LAYOUT-FIRST (OD-3 zone discipline).
+- 🔄 **FU-5 (dev-mcp-server)** — 6cc75437 IMPL done; awaiting QA. BLOCK-1: scalar backfill (bctcScalarAggregator + finalize UPDATE). BLOCK-2: inline eval recompute. 8 DV tests GREEN. ops must rebuild + re-finalize FPT+ACB before QA re-gate.
+- ⛔ **FU-6 (ops)** — GATED on FU-5 QA APPROVED. rebuild mcp-server + re-finalize e8ea3df5 (FPT) + fea19bae (ACB).
 
 ---
 
