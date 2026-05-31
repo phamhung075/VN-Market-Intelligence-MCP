@@ -1,15 +1,28 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "IDLE — MACRO-CMDTY-DELTA CLOSED/SHIPPED this tick (po-EXIT APPROVE 2026-05-31T01:34Z, raw-verified). dev-team :07 tick 2026-05-31T00:33Z (Saturday ~07:27 VN, market CLOSED weekend). PO triage + EXIT on a HEALTHY gateway (live call_tool calls succeeded this session). DWF-PHASE1 + DYN-WF-FOUNDATION both CLOSED/SHIPPED. WIP after EXIT = 0/2. The 2026-05-27 'parallel session owns apps/mcp-server + apps/pdf-extractor' handoff remains OBSOLETE/CLEARED (single-lane operation confirmed).",
-  "currentSprint": "NONE active. MACRO-CMDTY-DELTA CLOSED/SHIPPED (apps/mcp-server) — Brent/Gold change% stuck-at-0.00% root cause was an off-market repeated-close prev-close query matching a ~1h-old identical row; fixed with previous-calendar-day baseline. PO raw-verified honest-flat 0.00% + correct logic + green tests + clean scope. Commits e510e5df + dab1bf86 + fdc17265, image 802d6463e665.",
-  "activeTaskId": "NONE. MACRO-CMDTY-DELTA terminal-DONE. All prior pilot sprints terminal-DONE.",
-  "nextAgent": "dev-team :07 dispatcher (next tick) — re-triage if NEW report/signal in an uncontended zone, else idle.",
+  "status": "IDLE — SPIKE_3011-LF-PERSIST-DIAG CLOSED this tick (dev-team :07 tick 2026-05-31T08:28Z, Sunday ~15:28 VN, market CLOSED weekend). VERDICT STALE-FALSE-RED: report #3011 BTB-OPS 'units_stored=28 but bctc_layout_units=0 rows' is a FALSE alarm. dev-mcp-server (mode:spike) live re-pushed → units_stored=2; in-container bun COUNT=2 (match); table has 177 rows NOT 0. Dispatcher INDEPENDENTLY re-confirmed (not a badge relay): docker exec bun COUNT bctc_layout_units=177 / bctc_page_zones=569. #3011 conflated wrong handler (write-wedge was pushBctcTableHandler not pushBctcLayoutHandler) + a since-fixed idempotency bug (60dfac7f, too-many-rows not zero); FPT 2024-Q4 absent from DB (only 2025-Q4 + 2026-Q1). Report #3011 resolved wontfix (processed=true). NO LF-OVERLAY persist FIX needed. WIP after close = 0/2.",
+  "currentSprint": "NONE active. SPIKE_3011-LF-PERSIST-DIAG closed STALE-FALSE-RED (findings docs/spikes/SPIKE_3011-LF-PERSIST-DIAG.md commit 2a4e036d). BCTC-LAYOUT-FIRST/LF-OVERLAY persistence de-risked — remaining LF-OVERLAY scope is zone-toggle UI only. Prior closed: MACRO-CMDTY-DELTA SHIPPED (e510e5df+dab1bf86+fdc17265, image 802d6463e665).",
+  "activeTaskId": "NONE. SPIKE_3011-LF-PERSIST-DIAG terminal-DONE. MACRO-CMDTY-DELTA terminal-DONE.",
+  "nextAgent": "dev-team :07 dispatcher (next tick) — re-triage if NEW report/signal in an uncontended zone, else idle. Open idle sprints available WIP-permitting: BCTC-LAYOUT-FIRST/LF-EXTRACT+LF-OVERLAY(zone-toggle), SELF-IMPROVE-GATE X-1, CHEF-ATTN.",
   "nextPrompt": "MACRO-CMDTY-DELTA SHIPPED. One open FU: confirm a signed NON-ZERO Brent/Gold change% in `get_cycle_bootstrap` on the next real calendar-day move (next trading session ~Monday open) — the fix is correct but the current 0.00% is honest weekend-flat, so in-the-wild signed-delta proof comes only when prices actually move. Other OPEN sprints idle and available next ticks (WIP permitting): BCTC-LAYOUT-FIRST Phase 0 (LF-EXTRACT/LF-OVERLAY — LF-OVERLAY push-bctc-layout persistence is the root of analysis-agent report #3011 BTB-OPS 0-units blocker, wants architect diagnosis of POST /api/push-bctc-layout, write-wedge per project_mcp_server_write_wedge); SELF-IMPROVE-GATE X-1 synthetic dry-run; CHEF-ATTN; held CLEAN candidate (code-janitor DOUBLON 3-live + 10-proposed, batch when apps/mcp-server has no active reliability sprint). VERIFIED-NOT-DISPATCHED prior tick: DWF-TSC-DEBT already resolved; FF-DEAD live-fixed (FU-MON Monday confirm only); #3012 pollNews transient.",
   "session_handoff_status": {
     "cleared": "2026-05-31T00:33Z — the prior 'parallel session owns apps/mcp-server + apps/pdf-extractor' directive (dated 2026-05-27T20:40Z) is OBSOLETE and no longer binding. Evidence: (1) DWF-PHASE1 ran freely this session in cross-service + apps/mcp-server zone; (2) DYN-WF-FOUNDATION touched mcp-server and force-recreated the container without a parallel-session collision; (3) PEK-INTEGRATE = DONE-PENDING-G9; (4) THIS tick MACRO-CMDTY-DELTA fixed + rebuilt apps/mcp-server with no collision. Future ticks may dispatch apps/mcp-server + apps/pdf-extractor work normally, subject only to WIP<=2 + zone-isolation between concurrently-running tasks.",
     "does_not_consume_wip": true
   },
   "last_closed": {
+    "task": "SPIKE_3011-LF-PERSIST-DIAG",
+    "outcome": "CLOSED / STALE-FALSE-RED",
+    "closed_at": "2026-05-31T08:45Z",
+    "findings_doc": "docs/spikes/SPIKE_3011-LF-PERSIST-DIAG.md (commit 2a4e036d)",
+    "spike_raw_evidence": [
+      "live re-push via push path → units_stored=2; in-container bun COUNT(bctc_layout_units WHERE report_id)=2 (match)",
+      "table not empty: 177 bctc_layout_units rows across 5 reports pre-existing",
+      "re-push idempotent: 2nd push new unit_ids returns 2 not 4 (DELETE-before-INSERT fires)"
+    ],
+    "dispatcher_independent_raw_verify": "docker exec vn-market-intelligence-mcp-mcp-server-1 bun COUNT → bctc_layout_units=177, bctc_page_zones=569 (NOT 0). Refutes #3011 '0 rows' on the live image directly, not via the spike's badge.",
+    "root_of_3011_false_red": "conflated pushBctcTableHandler write-wedge (2026-05-26 lesson) with pushBctcLayoutHandler (post-commit COUNT guard since first commit 2326ebb6) + since-fixed idempotency bug 60dfac7f (too-many rows, not zero). FPT 2024-Q4 not in financial_reports (only 2025-Q4, 2026-Q1).",
+    "report_3011": "resolved wontfix, processed=true (Telegram msg 2615 delete_success=false — likely >48h, non-fatal)",
+    "_prior_closed": {
     "task": "MACRO-CMDTY-DELTA",
     "outcome": "APPROVE / SHIPPED",
     "po_exit": "2026-05-31T01:34Z",
@@ -23,13 +36,14 @@
     ],
     "followup": "signed-non-zero in-the-wild verification on the next real Brent/Gold move (next trading session ~Monday open)",
     "note": "dev's '157 tools' was a mis-report — live count is 155 = baseline, NOT a regression."
+    }
   },
   "open_sprints_idle": [
-    "BCTC-LAYOUT-FIRST (Phase 0 READY — LF-EXTRACT/LF-OVERLAY/LF-DEPLOY/LF-QA; multi zone; LF-OVERLAY = root of report #3011)",
+    "BCTC-LAYOUT-FIRST (Phase 0 READY — LF-EXTRACT/LF-OVERLAY/LF-DEPLOY/LF-QA; multi zone; LF-OVERLAY persistence DE-RISKED — #3011 was FALSE-RED, remaining scope zone-toggle UI only)",
     "SELF-IMPROVE-GATE (X-1 SIG-FOLLOWUP-DRYRUN synthetic dry-run; apps/mcp-server)",
     "CHEF-ATTN (READY; apps/mcp-server)"
   ],
   "backlogs": "BCTC-TABLE-2 (queued after LF-EXTRACT+LF-OVERLAY) · KD-QREF-LANG (EN/VI switch) · code-janitor DOUBLON CLEAN candidate (3 live + 10 proposed, held).",
-  "updatedAt": "2026-05-31T01:34:49Z",
-  "updatedBy": "po-EXIT (dev-team :07 PO sign-off) — tick 2026-05-31T00:33Z. APPROVE MACRO-CMDTY-DELTA after critique-before-approve raw verification (live get_cycle_bootstrap + DPI-3 run + git scope + prod-query inspection). TASKS.md + DASHBOARD MCP-P4 marked DONE/RESOLVED. WIP 0/2."
+  "updatedAt": "2026-05-31T08:45:30Z",
+  "updatedBy": "dev-team :07 dispatcher SPIKE-close — tick 2026-05-31T08:28Z. SPIKE_3011-LF-PERSIST-DIAG dispatched to dev-mcp-server (mode:spike) → VERDICT STALE-FALSE-RED. Dispatcher independently raw-verified in-container COUNT=177/569 (refutes #3011 0-rows). Report #3011 resolved wontfix. WIP 1/2→0/2 IDLE. TASKS.md + DASHBOARD + pipeline-state updated; spike findings 2a4e036d committed by dev-mcp-server."
 }

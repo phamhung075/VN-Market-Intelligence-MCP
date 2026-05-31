@@ -39,7 +39,8 @@
 **Status:** OPEN — Phase 0 READY (LF-DESIGN done). **Priority: HIGH (recurring-bug RCA).** Zone: multi (pdf-extractor + mcp-server). Brief `docs/architecture-briefs/2026-05-26-bctc-layout-first-pipeline.md`.
 
 - 🔄 LF-EXTRACT (dev-pdf-extractor): Tier 0-3 + zone-geometry JSON
-- 🔄 LF-OVERLAY (dev-mcp-server): `POST /api/push-bctc-layout` + zone toggle. **= root of report #3011 BTB-OPS 0-units persist blocker** (28 extracted, 0 in `bctc_layout_units`; handler `pushBctcLayoutHandler.ts` exists, units don't persist — write-wedge per project_mcp_server_write_wedge). Wants architect diagnosis of `POST /api/push-bctc-layout`.
+- 🔄 LF-OVERLAY (dev-mcp-server): `POST /api/push-bctc-layout` + zone toggle. **Persistence NO LONGER a blocker** — report #3011 was FALSE-RED (see SPIKE below): handler persists correctly on current image. Remaining LF-OVERLAY scope = zone-toggle UI feature only, not a write-wedge fix.
+  - ✅ **SPIKE_3011-LF-PERSIST-DIAG** — DONE 2026-05-31T08:45Z (dev-mcp-server, mode:spike, findings `docs/spikes/SPIKE_3011-LF-PERSIST-DIAG.md` commit `2a4e036d`). **VERDICT: STALE-FALSE-RED.** Live re-push → `units_stored=2`; in-container bun COUNT=2 (match); table has 177 `bctc_layout_units` rows (NOT 0). Dispatcher independently re-confirmed COUNT=177 / `bctc_page_zones`=569. #3011 conflated wrong handler (write-wedge was `pushBctcTableHandler`, not `pushBctcLayoutHandler`) + a since-fixed idempotency bug (`60dfac7f`, produced too-many not zero rows); FPT 2024-Q4 doesn't exist in DB (only 2025-Q4 + 2026-Q1). **Report #3011 resolved wontfix (processed=true). No LF-OVERLAY persist FIX needed.**
 - 🔄 LF-DEPLOY + LF-QA + LF-EXIT: sequential single-doc, DIRECT DB arbiter. **LF-QA absorbs TR-2** (BCTC-TRUST-RED): refine_status=DONE must yield non-zero opex codes 11/24/25/26, non-zero equity+liab, non-zero EBITDA, ≥1 OCF row from page 9/10/16.
 
 ---
