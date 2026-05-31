@@ -56,7 +56,7 @@
 **Status:** OPEN 2026-05-31 (recurring `context_bloat_breach`; manual prune 41c9ac73). **Pri: HIGH.** Zone: `.claude/skills/` + agent flow `.md` (disjoint from peer `apps/mcp-server/`). Fresh first-fix — normal chain.
 
 - **Defect (call-site/contract mismatch, skill internally correct):** `.claude/skills/notebook-write/SKILL.md` prune+guard (AC-2/3/5) greps ONLY `^## c[0-9]`, but agents emit `## <ISO-ts>`/`## Session:` headings → prune Edits no-op, retention never fires → unbounded growth (ops 5871L, dev-alert-engine 389L, unified-agent 377L, agents-architect 316L; ALL 0 `## c` sections). Notes also inconsistent: po/main.md L126 "OVERWRITE ≤50L" vs developer L125 "append c<NNN>".
-- 🔄 **NB-PRUNE-1 (developer)** — Reconcile anchor contract in SKILL to match heading format agents actually write (`## <ISO-ts>`, grep `^## [0-9]`) + fix mis-describing flow notes. Target: `.claude/skills/notebook-write/SKILL.md` + offending flow `.md`. Baseline: 5 notebooks >cap (≥223L), 0 `## c` fleet-wide. AC: skill run on a >3-section sample (e.g. agents-architect.md) prunes oldest → wc -l ≤200 + oldest section gone. **QA REQUIRED** (deliberate-violation: 6-section notebook, prove prune fires).
+- 🔍 **NB-PRUNE-1 (developer)** — REVIEW 2026-05-31 (7166db01). Anchor widened to `^## ` in SKILL.md (104L). Repro: agents-architect fixture 316L→27L (## ISO-ts), ops fixture 5871L→117L (## Session:) — both ≤200L, last-3 retained. TODO left for po/developer invocation-note contradiction. **QA REQUIRED** (deliberate-violation: 6-section notebook, prove prune fires).
 
 ## Sprint BCTC-LAYOUT-FIRST — Document-Structure-First Extraction
 
