@@ -1,6 +1,6 @@
 # dev-mcp-server -- Notebook
 
-## c343 · 2026-05-31 (FU-TRUST-REFRESH FU-6c) — COMMITTED [pending]
+## c343 · 2026-05-31 (FU-TRUST-REFRESH FU-6c) — COMMITTED 736cac22
 
 **Task:** FU-6c — bctcScalarAggregator root-cause fix: label-canonical + balance-identity invariant
 
