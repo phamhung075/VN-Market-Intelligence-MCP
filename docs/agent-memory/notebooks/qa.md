@@ -1,5 +1,63 @@
 # QA — Notebook
 
+## cycle-169 · 2026-05-31 · FU-4 RE-GATE — FU-TRUST-REFRESH — CHANGES_REQUESTED
+
+**Sprint:** FU-TRUST-REFRESH | **Task:** FU-4 RE-GATE | **Verdict:** CHANGES_REQUESTED — 3 blocking
+
+```
+date: 2026-05-31T15:10Z
+reports: FPT e8ea3df5 / ACB fea19bae
+method: direct in-container bun:sqlite + aggregateScalars() live call
+
+FPT SCALARS (CORRECT):
+  total_assets=68,586,094.79M, total_liabilities=28,464,058.21M, equity_total=40,122,036.57M
+  net_revenue=12,479,997.21M, gross_profit=4,244,889.89M (34%), net_profit=2,476,789.83M
+  refine_status=DONE, confirm_status=PENDING
+  Balance: 28,464,058.21 + 40,122,036.57 = 68,586,094.79 → deviation=0% PASS
+  DT-1: PASS | DT-2 (gross≠net): PASS | bctc_eval stage-4: green 2026-05-31 | rows=145
+
+ACB SCALARS (WRONG — 4 columns):
+  equity_total=1,030,900,741 (= total_assets; STALE WRONG — correct=98,751,052)
+  gross_profit=6,989,162 (= net_revenue; STALE WRONG — correct=null for bank)
+  profit_before_tax=147,029,433 (wrong pick: "Chứng khoán đầu tư"; correct≈5,368,138)
+  net_profit=74,311 (wrong pick: "Góp vốn, đầu tư dài hạn"; correct≈4,320,388)
+  net_revenue=6,989,162 CORRECT | total_assets=1,030,900,741 CORRECT
+  balance deviation = 90.4% (FAIL — but not detected, see BLOCK-C)
+  bctc_eval stage-4: green 2026-05-31 | rows=106 | refined_units=27/27 DONE
+
+RED FLAG 1 — equity_total:
+  aggregateScalars() returns equity_total=NULL for ACB.
+  Root: findByLabelExcluding picks candidates[0] = "NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU"
+  (code B, value=null) before "VỐN CHỦ SỞ HỮU" (code VIII, value=98,751,052).
+  "NỢ PHẢI TRẢ VÀ VỐN CHỦ SỞ HỮU" passes both include and exclude filter
+  (P_BANK_EQUITY_EXCLUDE only rejects if "TỔNG" prefix present). null-valued row wins by order.
+  finalize null-guard skips writing null → stale 1,030,900,741 persists.
+
+RED FLAG 2 — enforceBalanceIdentity FAIL-OPEN on null equity:
+  equity_total=null → enforceBalanceIdentity returns null (line 294).
+  Caller sees no violation → logs no error → stale scalars silently persist.
+  This is fail-open. A null required scalar MUST return a violation string (fail-loud).
+
+ADDITIONAL: codes VIII/IX collision (same Roman numeral used for balance sheet AND income
+  statement headers in ACB). No labelHint for VIII/IX → candidates[0] picks wrong row.
+  Fix: add labelHint for profit_before_tax (VIII) and net_profit (IX), same as I→P_BANK_CODE_I_HINT.
+
+get_bctc_full for ACB: serves wrong equity/gross_profit/profit_before_tax/net_profit (stale).
+
+FPT VERDICT: all 4 prior failure conditions CLEAN. FPT PASS.
+ACB VERDICT: 4 wrong scalars. FAIL.
+```
+
+BLOCKING (3):
+  BLOCK-A: bctcScalarAggregator.ts:470-480 — equity null-valued row wins over correct row
+  BLOCK-B: bctcScalarAggregator.ts:415-437 — codes VIII/IX need labelHint (profit_before_tax/net_profit)
+  BLOCK-C: bctcScalarAggregator.ts:294 — enforceBalanceIdentity returns null on null component (fail-open)
+
+REPORT: reports/TASK_REPORT_FU-4-REGATE.md
+NEXT: dev-mcp-server | BLOCK-A + BLOCK-B + BLOCK-C fixes in bctcScalarAggregator.ts; re-finalize ACB; re-gate
+
+---
+
 ## cycle-168 · 2026-05-31 · TSH-2/3/4 RE-VERIFY — TOOL-SURFACE-HYGIENE — APPROVED
 
 **Sprint:** TOOL-SURFACE-HYGIENE | **Task:** TSH-2+TSH-3+TSH-4 re-verify | **Verdict:** APPROVED — all 6 distinctions live
