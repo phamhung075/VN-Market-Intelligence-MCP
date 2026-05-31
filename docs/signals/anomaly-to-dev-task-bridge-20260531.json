@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-05-31-anomaly-to-dev-task-bridge.md",
+  "priority": "normal",
+  "createdAt": "2026-05-31T18:24:44Z",
+  "notes": "Implement Phase 1 only: (1) CREATE .claude/skills/anomaly-task-bridge/SKILL.md ≤120L, (2) EDIT docs/agents/system-auditor/flow/main.md — add skill invocation after D-IMPROVE block (Tier-2) and after Tier-3 DB Integrity block, (3) EDIT docs/agents/po/flow/triage-signals.md — add repair_task_request routing row. Sequence: create skill first, then edit system-auditor, then edit po. Single atomic commit. DO NOT implement Phase 2 (auto-close). DO NOT create new cron, new agent, or new Docker service. Full contract in brief §2."
+}
