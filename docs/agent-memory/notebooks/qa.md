@@ -1,5 +1,58 @@
 # QA — Notebook
 
+## cycle-163 · 2026-05-31 · FU-TRUST-REFRESH/FU-1 QA — APPROVED
+
+**Sprint:** FU-TRUST-REFRESH | **Task:** FU-1 | **Verdict:** APPROVED — all gates GREEN
+
+```
+date: 2026-05-31T12:00Z
+commit: af50d67a (feat pdf-extractor: FU-TRUST-REFRESH/FU-1 wire /page-text OCR seam + fail-loud)
+files_in_commit: 8 — all in apps/pdf-extractor/ + docker-compose.yml
+container: vn-market-intelligence-mcp-pdf-extractor-1, Up healthy, :5001
+
+TEST SUITE (full):
+  python3 -m pytest __tests__/ → 783 pass / 40 fail / 1 skip (18.39s)
+  40 failures: pre-existing baseline at parent e7056ce3 (verified by checkout + run)
+  FU-1 new tests added: 23 tests (10 in test_fu1_fail_loud.py + 13 updated in test_ocr_text_source.py)
+  Net delta: +23 passing tests (760 → 783), 0 regressions
+
+FU-1 SPECIFIC TESTS:
+  test_fu1_fail_loud.py: 10 pass / 0 fail
+  test_ocr_text_source.py: 13 pass / 0 fail (includes new raises_on_bad_db_path test)
+  Combined: 23 pass / 0 fail
+
+FAIL-LOUD RED PATH (live in-container exec):
+  docker exec vn-market-intelligence-mcp-pdf-extractor-1 python3 -c "..."
+  PROBE_BAD_PATH: False  (probe returns False on /nonexistent/bad.db — correct)
+  HEALTH_BAD: 200 {"status":"ok","service":"pdf-extractor","ocr_source_ok":false}
+  PAGE_TEXT_BAD: 200 {"text":"","source":"sqlite_ocr","source_reachable":false}
+  log line emitted: "error=unable to open database file — returning source_reachable:false (not empty string) to prevent fabrication"
+  NOT a silent {"text":""}. fabrication vector killed. RED path PROVEN.
+
+NO-REGRESSION (second real report):
+  /page-text?filename=000000015802468_Bao_cao_tai_chinh_Rieng_nam_2025.pdf&page_number=20
+  → source_reachable:true, real Vietnamese+English BCTC text, 3000+ chars, full diacritics
+  source: sqlite_ocr — confirmed.
+
+BASELINE HEALTH:
+  /health → {"status":"ok","service":"pdf-extractor","ocr_source_ok":true}  (before and after RED test)
+
+COMMIT HYGIENE:
+  atomic: 8 files only (apps/pdf-extractor/* + docker-compose.yml)
+  one parent: e7056ce3 (non-merge)
+  no .DS_Store, no secrets, no -a flag
+  on main (NO-BRANCH policy compliant)
+
+DDD: PASS (ocr_text_source.py imports only stdlib sqlite3; factory imports only from infrastructure)
+Security: PASS (no process.env, no hardcoded secrets; read-only URI mode=ro prevents accidental writes)
+tsc: N/A (Python service)
+```
+
+REPORT: reports/TASK_REPORT_FU-1.md
+NEXT: po | mark FU-1 done, continue FU-TRUST-REFRESH sprint
+
+---
+
 ## cycle-162 · 2026-05-31 · MACRO-CMDTY-DELTA QA — CHANGES_REQUESTED
 
 **Sprint:** MACRO-CMDTY-DELTA | **Task:** QA gate | **Verdict:** CHANGES_REQUESTED — 1 blocking
