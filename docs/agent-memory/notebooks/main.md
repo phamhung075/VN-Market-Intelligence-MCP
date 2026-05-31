@@ -1,6 +1,13 @@
 # Dev Team — Sprint Boundary Notebook
 
-**Written:** 2026-05-31T04:27Z (:07 tick, manual run — VN Sat ~11:27, market CLOSED weekend)
+**Written:** 2026-05-31T05:27Z (:07 tick, manual run — VN Sat ~12:27, market CLOSED weekend)
+
+## tick-20260531T0527Z (~29s) — IDLE EXIT (3rd consecutive byte-identical), drain-only
+- PREFLIGHT pass. 4 loose = all cowork-fire heartbeats → noise (790→**794**), 15 stale processed/ pruned, commit **381af549**. 0 routed-to-po. 0 NEW dashboard rows.
+- Queue {#3011,#3012,#3014} byte-identical to tick-0427 (and 0227) → **no PO re-spawn (C-6)**. pipeline IDLE, TASKS.md 61≤80, expire_monitoring=0, branches=main. Carry-forward unchanged (see tick-0427 block). Pattern: stable idle hourly heartbeat; first real change expected at Monday VN open (pollNews + FU-MON).
+
+---
+
 
 ## tick-20260531T0427Z (~Nmin) — IDLE EXIT, no PO re-spawn (C-6 anti-loop), big processed/ prune
 - PREFLIGHT pass (HEAD.lock absent, main, single clean worktree). 6 loose signals (<50, db mtime ~1h) → drained: **6 inserted (784→790)**, 0 dups, **247 stale processed/ files pruned (>7d)**, commit **b1af5a76**. 0 routed-to-po.
