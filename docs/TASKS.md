@@ -19,6 +19,16 @@
 
 ---
 
+## Sprint TOOL-SURFACE-HYGIENE — Clean the vn-market MCP tool surface
+
+**Status:** OPEN 2026-05-31 (PO self-init, operator-approved). **Priority: MEDIUM.** Zone: `apps/mcp-server/` (dev-mcp-server) — #1 may route to kinh-dich-service zone IF architect picks "wire". NOT BCTC (no recurring-bug conflict). Goal `docs/SPRINT_GOAL.md` (TOOL-SURFACE-HYGIENE § — full context + PO raw-source findings). Live tool count PO-verified = **154** (matches HC-EXIT container probe); stale `project-stats.json toolCount=146`.
+
+**PO raw-source findings (binding, feed the brief):** (1) the 501 on `get_market_hexagram` is emitted by **kinh-dich-service /market (port 5005)**, NOT a mcp-server stub — `kinhDichTools.ts:510` delegates honestly via `clients.ts:505`. "Wire"=kinh-dich-service zone; "deregister"=`apps/mcp-server/` zone. (2) NO double-registration — `marketTools.ts:64` is the private helper `appendMarketHexagram`, not a tool. (3) the other 5 kinhdich tools are wired; scope is `get_market_hexagram` ONLY.
+
+- 🔄 **BA-TSH (BA)** — pending. Requirement spec for SPRINT_GOAL.md § TOOL-SURFACE-HYGIENE. Decompose into: #1 (CONFIRMED, ship first — architect picks wire vs deregister + names zone), #2 `mark_alert_outcome` vs `write_alert_verdict` (diff-before-merge), #3 macro accuracy trio (diff), #4 `get_patterns` vs `get_technical_indicators` (diff), #5 `trigger_*_vps_fetch` ×5 (OPTIONAL/LOW), #6 `toolCount` 146→154 reconcile (LAST). OUT: BCTC tools, the 3 cleared pairs, other 5 kinhdich tools. Owner: dev-mcp-server (+ kinh-dich-service dev if #1=wire). Architect brief REQUIRED for #2/#3/#4 source diffs before any merge.
+
+---
+
 ## Sprint FU-TRUST-REFRESH — Wire dead OCR seam, then genuine re-refine FPT+ACB
 
 **Status:** OPEN 2026-05-31 (PO self-init, all 5 ODs adjudicated). **Priority: HIGH.** Zone: dev-pdf-extractor (`apps/pdf-extractor/`) + ops + qa. Brief `docs/architecture-briefs/2026-05-31-bctc-trust-remediation-investigation.md` (aa753e5e). Goal `docs/SPRINT_GOAL.md` (FU-TRUST-REFRESH § — full OD rationale). Root cause: `/page-text` (handlers.py:728) returns `""` permanently (main.py never wires `ocr_text_source`); real OCR exists in `pdf_extracted_text` (FPT 35p / ACB 27p); re-refine TODAY would re-fabricate → seam fix is gating prereq. **WIP-aware: FU-0→FU-1→FU-2→FU-3→FU-4, strictly sequential.**
@@ -35,7 +45,7 @@
 ## Sprint ENV-ISOLATION — Fleet-wide test/prod data isolation (split P1/P2)
 
 **Status:** OPEN 2026-05-31 (PO adjudicated all 6 ODs). **Pri: MEDIUM.** Zone: multi (ops + `apps/mcp-server/` + `scripts/` + rag compose). Brief `…/2026-05-31-fleet-env-isolation-architecture.md` (6e8f3d23). **Full shape + acceptance + OD rationale → `docs/SPRINT_GOAL.md` ENV-ISOLATION §.** Model: single-stack dev override, `.dev` datastores, `APP_ENV` default `production`, dev port 3099. **OD:** A=same-volume·B=5 tables·C=P1-now/P2-after-FU-TRUST-REFRESH·D=manual SOP·E=defer partial·F=SPLIT.
-- 🔄 **P1 (NOW):** EI-P1-1 ops (`APP_ENV: production`+explicit `COORDINATION_DB_PATH` in `docker-compose.yml`) · EI-P1-2 developer `scripts/` (guard `run-bt7-backfill.ts`+`purge-phantom-reports.ts`, fail-loud) · EI-P1-3 developer/ops `docs/` (`docs/protocols/dev-environment.md`).
+- 🔄 **P1 (NOW):** EI-P1-1 ops (`APP_ENV: production`+explicit `COORDINATION_DB_PATH` in `docker-compose.yml`) · ✅ **EI-P1-2 DONE** (scripts/ guards: `run-bt7-backfill.ts`+`purge-phantom-reports.ts` — APP_ENV/DB_PATH printed, refuse on mismatch unless `--force-dev`) · ✅ **EI-P1-3 DONE** (`docs/protocols/dev-environment.md` — start/seed/promote FK-ordered/LanceDB/restore/RISK-5).
 - ⛔ **P2 (GATED, only after FU-TRUST-REFRESH FU-4 — FU-2 currently NEXT):** EI-P2-1 dev-mcp-server (startup assertion + `setup.ts APP_ENV=test`) → EI-P2-2 dev-mcp-server (`data_env` audit col ×5 tables, INSERT stamp, no read-filter; ops rebuild after) → EI-P2-3 ops/rag (`docker-compose.dev.yml`) → EI-P2-QA qa (ENV-GUARD-1 deliberate-violation, 0-regression). **Dispatch:** ops EI-P1-1 → developer EI-P1-2/3 ‖ then P2 chain.
 
 ---

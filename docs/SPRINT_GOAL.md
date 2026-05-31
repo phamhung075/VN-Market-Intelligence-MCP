@@ -1,3 +1,46 @@
+# Sprint TOOL-SURFACE-HYGIENE — Clean the vn-market MCP tool surface (no live-but-fake oracles, no silent dup writers, no stale tool count)
+
+**STATUS 2026-05-31T10:08Z — OPEN (PO self-initiated, operator-approved 2026-05-31). Priority: MEDIUM (one confirmed defect #1 ships first; rest are diff-before-merge).** Zone: `apps/mcp-server/` (dev-mcp-server) for #1-deregister/#2/#3/#4/#6; possibly kinh-dich-service zone if architect picks "wire" for #1. NOT BCTC. Brief → architect (TBD). Source-verified by PO (raw, not relayed): live registration count = **154** (`grep -ro 'server.tool(' apps/mcp-server/src/interface/mcp/tools/ | wc -l`), corroborated by HC-EXIT container probe `toolCount=154`.
+
+## Vision
+One sentence: **Every registered vn-market MCP tool is either truly wired or absent — no live-but-501 oracle, no silent duplicate writers, no stale tool count — so agents can trust the surface they call.**
+
+## Scope
+IN:
+- **#1 (CONFIRMED — ship FIRST, the only confirmed defect):** `get_market_hexagram` returns runtime 501 "Not implemented - pending B-bucket primitive wiring". Architect decides: (a) wire the downstream endpoint, OR (b) deregister the mcp tool. Default lean (router): deregister unless wiring is cheap — a live-but-fake oracle is the prior CHEF-confabulation footgun (`feedback_chef_kinhdich_confab`). **Scope is THIS ONE tool only**; the other 5 kinhdich tools are wired (they arg-validate, not 501) — do NOT touch them.
+- **#2 (SUSPECTED — diff before any merge):** `mark_alert_outcome` (`alerts/alertAccuracy.ts:495`) vs `write_alert_verdict` (`alerts/alertVerdictTools.ts:108`) — both appear to WRITE an alert result. Architect diffs both handlers + DB targets; merge ONLY if truly duplicate, else document the distinction in descriptions.
+- **#3 (SUSPECTED — diff before any merge):** macro accuracy trio `get_calibration_report` / `get_label_accuracy_report` / `get_prediction_accuracy` (`macro/`) — diff outputs; consolidate or clarify.
+- **#4 (SUSPECTED — diff before any merge):** `get_patterns` vs `get_technical_indicators` (`market-data/`) — diff; clarify or merge.
+- **#5 (OPTIONAL / LOW):** 5× `trigger_*_vps_fetch` (bctc/foreign_flow/news/price/sbv, `system/`) → optional single `trigger_vps_fetch(source)`. Thin harmless debug-triggers; do ONLY if architect deems the churn worthwhile.
+- **#6 (STAT RECONCILE):** `docs/data/project-stats.json` `toolCount` + `infrastructureStatus.toolCount` 146 → live 154 (PO-verified). system-auditor/PM owns the field; reconcile as the LAST step after #1-#5 churn settles so the final number is accurate.
+
+OUT:
+- **Any BCTC / financial-reports tool** — recurring-bug zone, NOT touched this sprint (no conflict: this sprint is not BCTC).
+- The 3 EXPLICITLY-CLEARED pairs (probed distinct, KEEP BOTH, do NOT touch): `get_vps_proxy_health` vs `get_vps_service_health`; `get_cron_health` vs `get_pipeline_health`; `get_positions` vs `get_user_positions_for_analysis` (intentional VN-display vs eng-analysis split per language-boundary).
+- The other 5 kinhdich tools (wired). No new tools, no behavior changes beyond the 6 items.
+
+## Critical context for the Architect (PO raw-source verification — NOT relayed from the router, per router-verify-raw)
+- **The 501 is NOT a mcp-server stub.** `kinhdich/kinhDichTools.ts:510` correctly delegates to `getMarketHexagram()` → `infrastructure/microservices/clients.ts:505` → `GET {kinhDich}/market` on **kinh-dich-service (port 5005)**. The mcp handler surfaces the downstream error honestly. The "pending B-bucket primitive wiring" 501 is emitted by the **kinh-dich-service**, not by mcp-server. Therefore:
+  - "Wire it" (#1a) = **kinh-dich-service zone** (different dev owner). "Deregister tool" (#1b) = **`apps/mcp-server/` zone** (dev-mcp-server). The architect MUST name the zone explicitly in the brief, and the resulting task's `zone:` must match.
+- **NO double-registration.** `get_market_hexagram` is registered exactly once (`kinhDichTools.ts:510`). `marketTools.ts:64` is the private helper `appendMarketHexagram`, NOT a tool registration — the marketTools registrations are `get_market_snapshot` + `get_patterns` (lines 124/328). (PO flagged a possible dup, then cleared it by reading raw source.)
+- **Live registration count = 154** — matches the router probe and the HC-EXIT container `toolCount=154`. The stale `146` is dated 2026-05-20.
+
+## Success Metric
+1. **#1:** `get_market_hexagram` is no longer reachable as a live-but-501 oracle — it either returns a real reading OR is absent from the registry (architect's chosen path), verified by QA via the gateway wrapper in-container (raw response, not a badge).
+2. **#2/#3/#4:** each pair/trio has a WRITTEN source diff in the brief; true duplicates merged with no caller breakage; non-duplicates disambiguated in their tool descriptions. NO blind merge.
+3. **#6:** `toolCount` + `infrastructureStatus.toolCount` reflect the live registration count AFTER this sprint's churn settles.
+4. No BCTC tool touched; none of the 3 cleared pairs touched; the other 5 kinhdich tools untouched.
+5. mcp-server container REBUILT (`build --no-cache` + force-recreate, never restart-stale) after any dev change (`feedback_rebuild_after_dev_change`); QA verifies the surface in-container.
+
+## Constraints (non-negotiable)
+- WIP / sequencing: **#1 ships FIRST** (only confirmed defect). #2/#3/#4 each gate on a written source diff BEFORE merge. #5 optional (architect's discretion). #6 reconciled LAST.
+- main branch only, NO branches · scoped `git add <file>` per file, NEVER `-A` (tree carries many unrelated HCM/handoff/notebook changes) · MCP via `mcp__claude_ai_gateway__call_tool` gateway wrapper, bare tool names.
+- ops REBUILDs mcp-server after dev changes (`build --no-cache` + force-recreate, never restart-stale); QA verifies the live tool surface in-container, raw responses not badges (`feedback_router_verify_raw_not_badges`).
+- Every removal/merge proven safe: a deregistered tool absent from the gateway list; a merged tool's callers (cron jobs, other tools) re-pointed and tested — "exit 0" is NOT acceptance (`feedback_fence_false_green`).
+- All sprint artifacts + agent-to-agent comms in ENGLISH (Vietnamese ONLY for FB posts + MARKET Telegram group). Any kinhdich user-facing Vietnamese strings preserved if #1a is chosen.
+
+---
+
 # Sprint ENV-ISOLATION — Fleet-wide test/prod data isolation via single-stack dev override + physical datastore boundaries
 
 **STATUS 2026-05-31T10:04Z — OPEN (PO adjudicated all 6 ODs, full autonomy). Priority: MEDIUM (structural complement to the already-shipped TRUST-RED semantic gates — not a live RED).** SPLIT into two sub-sprints (OD-F). Brief `docs/architecture-briefs/2026-05-31-fleet-env-isolation-architecture.md` (6e8f3d23); predecessor `docs/architecture-briefs/2026-05-31-test-prod-data-isolation.md` (192f6c56). Model: **Single-Stack Dev Override with Physical Datastore Boundaries** (one compose project, `APP_ENV` selector defaulting to `production`, `.dev`-suffixed DB files in the same `market_data` volume, dev mcp-server on port 3099 so the VPS/gateway — both hardwired to port 3000 — are structurally invisible to dev). Zone: multi (ops + `apps/mcp-server/` + `scripts/` cross-service + dev-rag-service compose).
