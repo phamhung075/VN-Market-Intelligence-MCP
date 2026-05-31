@@ -516,6 +516,9 @@ export async function parseBctcReport(
       });
 
   // ── Step 5d: Validate the extracted data (Task 132) ──────────────────────
+  // C-5 (BANK-DEV-1): pass isBankForm so bctcValidator skips gross_profit comparisons
+  // and asset decomposition check for bank reports (Mẫu B02-TCTD). isBank is already
+  // computed above from BANKING_TICKERS for the operatingProfit proxy logic.
   const validation = validateFinancialReport({
     balanceSheet: {
       totalAssets: balanceSheet.totalAssets,
@@ -533,6 +536,7 @@ export async function parseBctcReport(
       operatingCF: cashFlow.operatingCF,
     },
     extractionConfidence,
+    isBankForm: isBank,
   });
 
   // Determine validation status and notes for persistence

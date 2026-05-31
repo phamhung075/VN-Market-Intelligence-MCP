@@ -40,53 +40,73 @@ export interface MagnitudeRow {
  * AC-TR1-2-4: realistic balance → no BLOCK
  * AC-TR1-2-7: ambiguous label match → WARN not BLOCK (safe-degrade)
  *
- * @param rows Parsed rows from finalize (passed by value — pure function, no I/O)
+ * C-4 bank-form awareness (BANK-DEV-1):
+ *   When isBankForm=true:
+ *   - DT-2a skipped entirely: banks have no COGS/gross_profit concept (Mẫu B02-TCTD).
+ *   - DT-2b also searches statement_section='general' for balance-sheet rows because
+ *     all ACB/VCB bank rows land in 'general' (no 'balance_sheet' section label yet).
+ *
+ * @param rows       Parsed rows from finalize (passed by value — pure function, no I/O)
+ * @param isBankForm True when the report follows Mẫu B02-TCTD (banking entity).
+ *                   Caller derives this via isBankForm(domain) from financial_reports.domain.
  * @returns Array of SanityViolation; empty = no violations detected
  */
-export function detectMagnitudeViolations(rows: MagnitudeRow[]): SanityViolation[] {
+export function detectMagnitudeViolations(rows: MagnitudeRow[], isBankForm = false): SanityViolation[] {
   const violations: SanityViolation[] = [];
 
   // ── DT-2a: Income statement — gross_profit >= net_revenue ─────────────────
+  // C-4: skip entirely for banks — no COGS/gross_profit concept in Mẫu B02-TCTD.
+  // Bank income rows also land in statement_section='general', so incomeRows.length===0
+  // for banks anyway; this guard makes the intent explicit and future-proof.
 
-  const incomeRows = rows.filter((r) => r.statement_section === "income_statement");
-  const summaryIncomeRows = incomeRows.filter((r) => r.is_summary_row === 1);
+  if (!isBankForm) {
+    const incomeRows = rows.filter((r) => r.statement_section === "income_statement");
+    const summaryIncomeRows = incomeRows.filter((r) => r.is_summary_row === 1);
 
-  const netRevenueRow = summaryIncomeRows.find((r) =>
-    /doanh thu thu[aầâ]n|doanh thu thu[^\s|]n|net revenue/i.test(r.label),
-  );
-  const grossProfitRow = summaryIncomeRows.find((r) =>
-    /l[oợ]i nhu[aậ]n g[oộ]p|gross profit/i.test(r.label),
-  );
+    const netRevenueRow = summaryIncomeRows.find((r) =>
+      /doanh thu thu[aầâ]n|doanh thu thu[^\s|]n|net revenue/i.test(r.label),
+    );
+    const grossProfitRow = summaryIncomeRows.find((r) =>
+      /l[oợ]i nhu[aậ]n g[oộ]p|gross profit/i.test(r.label),
+    );
 
-  if (netRevenueRow && grossProfitRow) {
-    // Both labels matched high-confidence (regex-based: if match was found, confidence ≥ 0.8)
-    const nrVal = netRevenueRow.value_current;
-    const gpVal = grossProfitRow.value_current;
+    if (netRevenueRow && grossProfitRow) {
+      // Both labels matched high-confidence (regex-based: if match was found, confidence ≥ 0.8)
+      const nrVal = netRevenueRow.value_current;
+      const gpVal = grossProfitRow.value_current;
 
-    if (nrVal != null && gpVal != null) {
-      if (gpVal >= nrVal * 0.999) {
-        violations.push({
-          code: "MAGNITUDE_GROSS_EQ_NET",
-          description: `Gross profit (${gpVal}) >= net revenue (${nrVal}) — impossible margin for a real company`,
-          severity: "BLOCK",
-        });
+      if (nrVal != null && gpVal != null) {
+        if (gpVal >= nrVal * 0.999) {
+          violations.push({
+            code: "MAGNITUDE_GROSS_EQ_NET",
+            description: `Gross profit (${gpVal}) >= net revenue (${nrVal}) — impossible margin for a real company`,
+            severity: "BLOCK",
+          });
+        }
       }
+      // If values are null — label matched but no data; skip DT-2a (cannot check)
+    } else if (incomeRows.length > 0 && (!netRevenueRow || !grossProfitRow)) {
+      // Income section present but labels ambiguous — safe-degrade to WARN
+      violations.push({
+        code: "MAGNITUDE_LABEL_AMBIGUOUS",
+        description:
+          "Income statement present but net_revenue or gross_profit label match ambiguous; DT-2 income check skipped",
+        severity: "WARN",
+      });
     }
-    // If values are null — label matched but no data; skip DT-2a (cannot check)
-  } else if (incomeRows.length > 0 && (!netRevenueRow || !grossProfitRow)) {
-    // Income section present but labels ambiguous — safe-degrade to WARN
-    violations.push({
-      code: "MAGNITUDE_LABEL_AMBIGUOUS",
-      description:
-        "Income statement present but net_revenue or gross_profit label match ambiguous; DT-2 income check skipped",
-      severity: "WARN",
-    });
   }
 
   // ── DT-2b: Balance sheet — forced-zero check ──────────────────────────────
+  // C-4 bank extension: also search statement_section='general' for banks.
+  // ACB/VCB bank rows: all 95 balance-sheet rows land in 'general' section
+  // (BCTC-LAYOUT-FIRST will re-label correctly later). DT-2b must reach them.
+
+  const balanceSections = isBankForm
+    ? ["balance_sheet", "general"]
+    : ["balance_sheet"];
 
   const balanceRows = rows.filter(
-    (r) => r.statement_section === "balance_sheet" && r.is_summary_row === 1,
+    (r) => balanceSections.includes(r.statement_section) && r.is_summary_row === 1,
   );
 
   const totalAssetsRow = balanceRows.find((r) =>

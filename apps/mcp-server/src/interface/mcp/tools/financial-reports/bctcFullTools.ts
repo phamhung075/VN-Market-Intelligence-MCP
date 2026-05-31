@@ -24,12 +24,14 @@ import { computePeriodDelta } from "../../../../domain/services/financial-report
 import { computeSentimentTrend } from "../../../../domain/services/sentimentTrend.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import type { FinancialMetrics } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
+import { isBankForm } from "../../../../domain/services/financial-reports/bctcFormType.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface ReportRow {
+/** Exported for testability (DV-BANK-2). */
+export interface ReportRow {
   id: string;
   action_code: string;
   company_name: string | null;
@@ -39,6 +41,8 @@ interface ReportRow {
   sort_key: string;
   audit_status: string;
   extraction_confidence: number;
+  /** Domain stored at ingest (e.g. "banking" for VCB, ACB). Used for bank-form detection. */
+  domain: string | null;
   net_revenue: number;
   gross_profit: number;
   operating_profit: number;
@@ -119,10 +123,20 @@ function fmtChange(changeAbsolute: number, changePct: number | null, unit = ""):
 // Row → FinancialMetrics
 // ─────────────────────────────────────────────────────────────────────────────
 
-function rowToMetrics(row: ReportRow): FinancialMetrics {
+/**
+ * rowToMetrics — map a DB row to FinancialMetrics for period-delta computation.
+ *
+ * C-3 bank guard: for bank reports, grossProfit is structurally absent (null in DB).
+ * null→0 in JS would produce a misleading "0.0% -> 0.0% (+0.0 pp)" gross-margin QoQ
+ * comparison. To prevent this, grossMarginPct is set to NaN for banks so that
+ * computePeriodDelta propagates NaN and buildComparisonSection omits the gross-margin line.
+ */
+function rowToMetrics(row: ReportRow, bankForm = false): FinancialMetrics {
   return {
     netRevenue: row.net_revenue,
-    grossProfit: row.gross_profit,
+    // C-3: for banks, gross_profit is null (notApplicable); use NaN as sentinel
+    // so downstream gross-margin delta renders as N/A rather than 0.0%.
+    grossProfit: bankForm ? NaN : row.gross_profit,
     operatingProfit: row.operating_profit,
     netProfit: row.net_profit,
     ebitda: row.ebitda,
@@ -133,7 +147,8 @@ function rowToMetrics(row: ReportRow): FinancialMetrics {
     cash: row.cash,
     operatingCF: row.operating_cf,
     freeCashFlow: row.free_cash_flow,
-    grossMarginPct: row.gross_margin_pct ?? 0,
+    // C-3: gross_margin_pct is null/0 for banks — use NaN as sentinel
+    grossMarginPct: bankForm ? NaN : (row.gross_margin_pct ?? 0),
     netMarginPct: row.net_margin_pct ?? 0,
     roe: row.roe ?? 0,
     debtToEquity: row.debt_to_equity ?? 0,
@@ -146,8 +161,26 @@ function rowToMetrics(row: ReportRow): FinancialMetrics {
 
 /**
  * Build the BCTC SUMMARY section from the latest financial_reports row.
+ *
+ * C-2 bank guard: for bank reports (Mẫu B02-TCTD), gross_profit is structurally
+ * absent. fmtBillions(null) returns "0.0 tỷ VND" (null→0 in JS division), which is
+ * misleading — a bank has no gross profit concept, not zero gross profit.
+ * For banks: substitute with net_revenue line labeled as "Net Interest Income" (proxy).
+ * Also omit Current Ratio (derived from current_assets which banks do not report).
+ *
+ * Exported for testability (DV-BANK-2).
  */
-function buildSummarySection(code: string, row: ReportRow): string {
+export function buildSummarySection(code: string, row: ReportRow, bankForm = false): string {
+  // C-2: gross profit line — banks show net interest income proxy instead
+  const grossProfitLine = bankForm
+    ? `Net Interest Inc.: ${fmtBillions(row.net_revenue)}  (net interest income — maps to net_revenue)`
+    : `Gross Profit     : ${fmtBillions(row.gross_profit)}  (${fmtPct(row.gross_margin_pct)})`;
+
+  // C-2: current ratio — N/A for banks (no current_assets concept in Mẫu B02-TCTD)
+  const currentRatioLine = bankForm
+    ? `Current Ratio    : N/A (bank — no current assets concept)`
+    : `Current Ratio    : ${fmtX(row.current_ratio)}`;
+
   const lines: string[] = [
     `=== BCTC SUMMARY: ${code} ===`,
     `Period: ${row.sort_key} (${row.audit_status})`,
@@ -155,7 +188,7 @@ function buildSummarySection(code: string, row: ReportRow): string {
     ``,
     `--- Income Statement ---`,
     `Net Revenue      : ${fmtBillions(row.net_revenue)}`,
-    `Gross Profit     : ${fmtBillions(row.gross_profit)}  (${fmtPct(row.gross_margin_pct)})`,
+    grossProfitLine,
     `Operating Profit : ${fmtBillions(row.operating_profit)}  (${fmtPct(row.operating_margin_pct)})`,
     `EBITDA           : ${fmtBillions(row.ebitda)}`,
     `Net Profit       : ${fmtBillions(row.net_profit)}  (${fmtPct(row.net_margin_pct)})`,
@@ -170,7 +203,7 @@ function buildSummarySection(code: string, row: ReportRow): string {
     `--- Ratios ---`,
     `ROE              : ${fmtPct(row.roe)}`,
     `ROA              : ${fmtPct(row.roa)}`,
-    `Current Ratio    : ${fmtX(row.current_ratio)}`,
+    currentRatioLine,
     `D/E Ratio        : ${fmtX(row.debt_to_equity)}`,
     `Net Debt/EBITDA  : ${fmtX(row.net_debt_to_ebitda)}`,
     `P/E              : ${fmtX(row.pe)}`,
@@ -188,11 +221,16 @@ function buildSummarySection(code: string, row: ReportRow): string {
  *   - If latest is Q1, compare to Q4 of prior year (YoY logic simplified: prior year same quarter)
  *   - Otherwise compare to the immediately preceding quarter of the same year
  * Falls back to the most recent prior row if the above is not available.
+ *
+ * C-3 bank guard: the gross-margin QoQ line is omitted for bank reports.
+ * rowToMetrics sets grossMarginPct=NaN for banks, which would produce "NaN% -> NaN%".
+ * Simpler and cleaner to omit the line entirely when bankForm=true.
  */
 function buildComparisonSection(
   db: Database,
   code: string,
   latest: ReportRow,
+  bankForm = false,
 ): string {
   // Determine the prior sort_key to look up
   const latestQ = latest.period_quarter ?? 0;
@@ -234,8 +272,8 @@ function buildComparisonSection(
   }
 
   const deltaType = latest.period_year !== priorRow.period_year ? "YoY" : "QoQ";
-  const m1 = rowToMetrics(latest);
-  const m2 = rowToMetrics(priorRow);
+  const m1 = rowToMetrics(latest, bankForm);
+  const m2 = rowToMetrics(priorRow, bankForm);
   const delta = computePeriodDelta(m1, m2, deltaType);
 
   const p1 = latest.sort_key;
@@ -248,7 +286,12 @@ function buildComparisonSection(
     `Net Revenue  : ${fmtBillions(m2.netRevenue)} -> ${fmtBillions(m1.netRevenue)}  ${fmtChange((m1.netRevenue - m2.netRevenue) / 1000, delta.netRevenue.changePct, " ty")}`,
     `Net Profit   : ${fmtBillions(m2.netProfit)} -> ${fmtBillions(m1.netProfit)}  ${fmtChange((m1.netProfit - m2.netProfit) / 1000, delta.netProfit.changePct, " ty")}`,
     `EPS          : ${fmtVnd(m2.eps)} -> ${fmtVnd(m1.eps)}  ${fmtChange(delta.eps.changeAbsolute, delta.eps.changePct, " VND")}`,
-    `Gross Margin : ${fmtPct(m2.grossMarginPct)} -> ${fmtPct(m1.grossMarginPct)}  (${delta.grossMarginPP.changePP >= 0 ? "+" : ""}${delta.grossMarginPP.changePP.toFixed(1)} pp)`,
+    // C-3: omit gross-margin QoQ line for banks (structurally absent, shows as 0.0% → 0.0%)
+    ...(bankForm
+      ? []
+      : [
+          `Gross Margin : ${fmtPct(m2.grossMarginPct)} -> ${fmtPct(m1.grossMarginPct)}  (${delta.grossMarginPP.changePP >= 0 ? "+" : ""}${delta.grossMarginPP.changePP.toFixed(1)} pp)`,
+        ]),
     `Net Margin   : ${fmtPct(m2.netMarginPct)} -> ${fmtPct(m1.netMarginPct)}  (${delta.netMarginPP.changePP >= 0 ? "+" : ""}${delta.netMarginPP.changePP.toFixed(1)} pp)`,
     `ROE          : ${fmtPct(m2.roe)} -> ${fmtPct(m1.roe)}  (${delta.roePP.changePP >= 0 ? "+" : ""}${delta.roePP.changePP.toFixed(1)} pp)`,
   ];
@@ -342,11 +385,18 @@ interface PublishabilityCheck {
  * PUB-3: ≥1 balance_sheet non-summary row (is_summary_row=0)
  * PUB-4: No REJECTED_SANITY units, or partial rejection with warning
  *
- * @param db        Database instance (injected for testability)
- * @param reportId  Financial report UUID
+ * C-1 bank guard: banks (Mẫu B02-TCTD) have Roman-numeral codes (I, VIII, IX…) that
+ * CAST to NULL, so the corporate `CAST(code AS INTEGER) BETWEEN 100 AND 440` predicate
+ * matches zero rows for ACB/VCB → publishable=false (false block). For banks, PUB-3
+ * accepts any non-summary 'general' row with value_current IS NOT NULL instead.
+ *
+ * @param db          Database instance (injected for testability)
+ * @param reportId    Financial report UUID
+ * @param bankForm    True when the report follows Mẫu B02-TCTD (bank form).
  * @returns PublishabilityCheck with publishable flag and optional reason/warning
  */
-function checkPublishability(db: Database, reportId: string): PublishabilityCheck {
+/** Exported for testability (DV-BANK-1). */
+export function checkPublishability(db: Database, reportId: string, bankForm = false): PublishabilityCheck {
   // PUB-1: refine_status must be DONE or PARTIAL
   const report = db
     .query<{ refine_status: string }, [string]>(
@@ -385,27 +435,41 @@ function checkPublishability(db: Database, reportId: string): PublishabilityChec
   // also accept 'general' rows that carry standard Vietnamese balance-sheet codes (100-440):
   //   assets 100-299, liabilities 300-399, equity 400-440 (Mẫu B01-DN / B02-TCTD).
   //
-  // The code-range check prevents income-statement rows (codes 1-99, 500+) from passing
-  // as fake balance rows. Summary rows (is_summary_row=1) still excluded (PUB-3 intent:
-  // decomposition, not just totals).
+  // C-1 bank path (BANK-DEV-1): bank rows have Roman-numeral codes (I, VIII, IX…) that
+  // CAST to NULL, so CAST(code AS INTEGER) BETWEEN 100 AND 440 matches zero rows.
+  // ACB live data: 95 'general' rows, 0 'balance_sheet' rows, all codes Roman/null.
+  // For banks: accept any non-summary 'general' row with value_current IS NOT NULL.
+  // This preserves the "real data exists, not forced-zero" intent of PUB-3.
   //
   // This does NOT change statement_section labels — it only broadens the publishability
   // check to match current parser reality. BCTC-LAYOUT-FIRST will re-label correctly.
-  const balanceChildren = db
-    .query<{ cnt: number }, [string]>(
-      `SELECT COUNT(*) as cnt FROM bctc_table_rows
-       WHERE report_id = ?
-         AND is_summary_row = 0
-         AND (
-           statement_section = 'balance_sheet'
-           OR (
-             statement_section = 'general'
-             AND code IS NOT NULL
-             AND CAST(code AS INTEGER) BETWEEN 100 AND 440
-           )
-         )`,
-    )
-    .get(reportId);
+  const balanceChildren = bankForm
+    ? // C-1 bank path: any non-summary general row with real value
+      db
+        .query<{ cnt: number }, [string]>(
+          `SELECT COUNT(*) as cnt FROM bctc_table_rows
+           WHERE report_id = ?
+             AND is_summary_row = 0
+             AND statement_section = 'general'
+             AND value_current IS NOT NULL`,
+        )
+        .get(reportId)
+    : // Corporate path (unchanged): balance_sheet OR general with numeric code 100-440
+      db
+        .query<{ cnt: number }, [string]>(
+          `SELECT COUNT(*) as cnt FROM bctc_table_rows
+           WHERE report_id = ?
+             AND is_summary_row = 0
+             AND (
+               statement_section = 'balance_sheet'
+               OR (
+                 statement_section = 'general'
+                 AND code IS NOT NULL
+                 AND CAST(code AS INTEGER) BETWEEN 100 AND 440
+               )
+             )`,
+        )
+        .get(reportId);
 
   if (!balanceChildren || balanceChildren.cnt === 0) {
     return {
@@ -523,13 +587,18 @@ export function registerBctcFullTools(
           };
         }
 
+        // ── Compute bank-form discriminator ──────────────────────────────
+        // Derived from financial_reports.domain (e.g. "banking" for VCB, ACB).
+        // Used by all consumers (C-1..C-3) to apply bank-aware logic.
+        const bankForm = isBankForm(latestRow.domain);
+
         // ── PUB-1..4 Publishability guard ─────────────────────────────────
         // PUB-1: refine_status IN ('DONE', 'PARTIAL')
         // PUB-2: ≥1 extracted row with value_current IS NOT NULL
         // PUB-3: balance sheet has ≥1 non-summary child row (no forced-zero)
         // PUB-4: no REJECTED_SANITY units, or partial rejection warning
         // If any gate fails, return human-readable refusal — no financial data served.
-        const pubCheck = checkPublishability(db, latestRow.id);
+        const pubCheck = checkPublishability(db, latestRow.id, bankForm);
         if (!pubCheck.publishable) {
           return {
             content: [
@@ -551,8 +620,8 @@ export function registerBctcFullTools(
         }
 
         // ── 2. Build the three sections ──────────────────────────────────
-        const summarySection = buildSummarySection(upperCode, latestRow);
-        const comparisonSection = buildComparisonSection(db, upperCode, latestRow);
+        const summarySection = buildSummarySection(upperCode, latestRow, bankForm);
+        const comparisonSection = buildComparisonSection(db, upperCode, latestRow, bankForm);
         const sentimentSection = buildSentimentSection(db, upperCode);
 
         const output = [summarySection, "", comparisonSection, "", sentimentSection].join("\n");

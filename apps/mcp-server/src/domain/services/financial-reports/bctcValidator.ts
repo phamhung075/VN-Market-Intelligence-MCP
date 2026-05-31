@@ -58,6 +58,13 @@ export interface ValidatableReport {
     operatingCF?: number;
   };
   extractionConfidence?: number;
+  /**
+   * isBankForm — true when the report follows Mẫu B02-TCTD (banking entity).
+   * When true, gross_profit comparisons (C-5) and asset decomposition (C-7) are
+   * skipped because neither concept applies to bank balance sheets.
+   * Derived from financial_reports.domain via isBankForm() (bctcFormType.ts).
+   */
+  isBankForm?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -207,7 +214,10 @@ export function validateFinancialReport(report: ValidatableReport): ValidationRe
   }
 
   // Asset decomposition: currentAssets + nonCurrentAssets ≈ totalAssets
-  if (totalAssets !== 0 && (currentAssets !== 0 || nonCurrentAssets !== 0)) {
+  // C-7 bank guard: banks have no current_assets concept (Mẫu B02-TCTD has no code-100
+  // subdivision). Both currentAssets and nonCurrentAssets will be null→0, making the
+  // decomposition check structurally inapplicable and potentially spurious.
+  if (!report.isBankForm && totalAssets !== 0 && (currentAssets !== 0 || nonCurrentAssets !== 0)) {
     const subTotal = currentAssets + nonCurrentAssets;
     const decompositionDiff = relativeDiff(totalAssets, subTotal);
     if (decompositionDiff > ASSET_DECOMPOSITION_THRESHOLD) {
@@ -237,18 +247,24 @@ export function validateFinancialReport(report: ValidatableReport): ValidationRe
       }
     }
 
-    // Gross profit must not exceed revenue
-    if (grossProfit > netRevenue) {
-      errors.push(
-        `Gross profit exceeds revenue: grossProfit (${fmt(grossProfit)}) > netRevenue (${fmt(netRevenue)})`,
-      );
-    }
+    // C-5 bank guard: banks have no gross_profit / COGS concept (Mẫu B02-TCTD).
+    // gross_profit is SET NULL by the aggregator's notApplicable path for banks.
+    // null→0 via `?? 0` would trigger both checks spuriously (e.g. netProfit=4,320,388 > 0).
+    // Skip both gross_profit comparisons for bank reports entirely.
+    if (!report.isBankForm) {
+      // Gross profit must not exceed revenue
+      if (grossProfit > netRevenue) {
+        errors.push(
+          `Gross profit exceeds revenue: grossProfit (${fmt(grossProfit)}) > netRevenue (${fmt(netRevenue)})`,
+        );
+      }
 
-    // Net profit > gross profit is a warning (could be non-operating income)
-    if (netProfit > grossProfit && grossProfit >= 0) {
-      warnings.push(
-        `Net profit exceeds gross profit: netProfit (${fmt(netProfit)}) > grossProfit (${fmt(grossProfit)}) — possible non-operating income`,
-      );
+      // Net profit > gross profit is a warning (could be non-operating income)
+      if (netProfit > grossProfit && grossProfit >= 0) {
+        warnings.push(
+          `Net profit exceeds gross profit: netProfit (${fmt(netProfit)}) > grossProfit (${fmt(grossProfit)}) — possible non-operating income`,
+        );
+      }
     }
 
     // Zero revenue with positive profit

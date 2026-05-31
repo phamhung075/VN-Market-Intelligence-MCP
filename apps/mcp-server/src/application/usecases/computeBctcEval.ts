@@ -183,8 +183,15 @@ export async function computeBctcEval(
   // column here since table rows are not available in this use case.
   //
   // Corporate (domain != bank): gross_profit remains in goldenAnchors — unchanged requirement.
+  //
+  // C-6 defensive fallback (BANK-DEV-1): if domain is empty/unset but gross_profit is null
+  // AND net_revenue is non-null, infer bank form. A bank with unset domain would otherwise
+  // get corporate anchors → false-red on gross_profit. Belt-and-suspenders: primary path
+  // is domain; this fallback covers the parseBctcReport default domain="other" edge case.
   const reportDomain = frRow?.domain ?? "";
-  const isBankDomain = /bank/i.test(reportDomain);
+  const isBankDomain = /bank/i.test(reportDomain) ||
+    // Fallback: domain unset ("" or "other") but gross_profit null + net_revenue present
+    (reportDomain === "" && frRow?.gross_profit === null && frRow?.net_revenue !== null);
   const goldenAnchors = isBankDomain
     ? ["net_revenue", "net_profit"]
     : ["net_revenue", "net_profit", "gross_profit"];

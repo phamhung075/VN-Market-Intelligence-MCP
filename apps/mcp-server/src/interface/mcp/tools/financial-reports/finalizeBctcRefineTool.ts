@@ -35,6 +35,7 @@ import {
   detectMagnitudeViolations,
   detectCrossStatementRevenue,
 } from "../../../../domain/services/financial-reports/bctcMagnitudeValidator.js";
+import { isBankForm } from "../../../../domain/services/financial-reports/bctcFormType.js";
 import {
   aggregateScalars,
 } from "../../../../domain/services/financial-reports/bctcScalarAggregator.js";
@@ -55,6 +56,10 @@ interface RefinedUnitRow {
 
 interface ConfirmStatusRow {
   confirm_status: string | null;
+}
+
+interface DomainRow {
+  domain: string | null;
 }
 
 // ── applyCorrections post-pass helper ─────────────────────────────────────────
@@ -222,7 +227,17 @@ export function buildFinalizeBctcRefineHandler(
       // ── DT-2 + DT-3: Aggregate report-level sanity checks ─────────────────
       // Fires AFTER parse loop + applyCorrections, BEFORE INSERT transaction.
       // NFR-5: CONFIRMED guard (Layer 1) already handled above — no re-check needed here.
-      const magnitudeViolations = detectMagnitudeViolations(finalRows);
+
+      // C-4 (BANK-DEV-1): query domain to determine bank-form before DT-2 so that
+      // detectMagnitudeViolations can skip DT-2a and extend DT-2b for bank reports.
+      const domainRow = db
+        .prepare<DomainRow, [string]>(
+          "SELECT domain FROM financial_reports WHERE id = ?",
+        )
+        .get(report_id);
+      const reportIsBankForm = isBankForm(domainRow?.domain ?? null);
+
+      const magnitudeViolations = detectMagnitudeViolations(finalRows, reportIsBankForm);
       const crossStmtViolations = detectCrossStatementRevenue(finalRows);
       const allViolations = [...magnitudeViolations, ...crossStmtViolations];
       const hasBlockViolation = allViolations.some((v) => v.severity === "BLOCK");
