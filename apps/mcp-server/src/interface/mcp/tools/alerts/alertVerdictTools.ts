@@ -106,9 +106,13 @@ const WRITE_ALERT_VERDICT_SHAPE = WRITE_ALERT_VERDICT_SCHEMA.shape;
 export function registerAlertVerdictTools(server: McpServer): void {
   server.tool(
     "write_alert_verdict",
-    "Record a pending verdict after alert-commander fires a MARKET alert. " +
+    "Writes a NEW pending AlertVerdict row to docs/data/alert-verdicts.json (file store, " +
+      "NOT the SQLite alerts table). Call AT FIRE TIME (alert-commander step 4a). Verdict starts " +
+      "as 'pending' and is resolved later by the verdict resolution job. Distinct from " +
+      "mark_alert_outcome which scores an existing SQLite alerts row post-hoc. " +
+      "Record a pending verdict after alert-commander fires a MARKET alert. " +
       "Generates a UUID, writes one AlertVerdict row with verdict='pending' to the " +
-      "alert-verdicts store. Used by alert-commander at fire time (step 4a). " +
+      "alert-verdicts store. " +
       "alertSource must be one of: urgent_news, verified_chain, chain_catalyst, " +
       "price_anomaly, position_danger, watchlist_opportunity, legal_risk, crisis_velocity.",
     WRITE_ALERT_VERDICT_SHAPE,

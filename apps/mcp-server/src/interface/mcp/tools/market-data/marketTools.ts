@@ -327,7 +327,11 @@ export function registerMarketTools(server: McpServer): void {
   // ── 2. get_patterns ────────────────────────────────────────────────────────
   server.tool(
     "get_patterns",
-    "Query historical precedents from RAG memory for a specific stock and event keyword. " +
+    "Reads from RAG memory (LanceDB rag_analyses). Semantic/keyword historical " +
+      "precedent lookup — answers 'how did this stock respond to events like X in the past?' " +
+      "Distinct from get_technical_indicators which computes price-derived quantitative " +
+      "indicators (RSI/MACD/MA) from the Go TA service. " +
+      "Query historical precedents from RAG memory for a specific stock and event keyword. " +
       "Returns aggregate statistics: average impact score, dominant direction, and a list of " +
       "matching past analyses. Useful for understanding how a stock has historically responded " +
       "to similar events.",

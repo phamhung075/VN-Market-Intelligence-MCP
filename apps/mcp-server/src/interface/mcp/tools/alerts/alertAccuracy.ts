@@ -493,7 +493,11 @@ export function registerAlertAccuracyTool(server: McpServer): void {
 export function registerMarkAlertOutcomeTool(server: McpServer): void {
   server.tool(
     "mark_alert_outcome",
-    "Manually record the outcome of an alert as HIT, MISS, or UNKNOWN. " +
+    "Writes to SQLite alerts table (market.db), updating the outcome/outcome_at/outcome_detail " +
+      "columns of an existing alert row. POST-HOC only — call after the real price outcome is " +
+      "known, not at fire time. Distinct from write_alert_verdict which writes a pending row " +
+      "to the alert-verdicts JSON file at fire time. " +
+      "Manually record the outcome of an alert as HIT, MISS, or UNKNOWN. " +
       "Used by Alert Commander after verifying whether the predicted direction materialised.",
     {
       alert_id: z.string().describe("The ID of the alert to score"),

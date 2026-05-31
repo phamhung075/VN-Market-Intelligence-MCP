@@ -164,9 +164,12 @@ export function registerPredictionTools(server: McpServer): void {
   // ── get_prediction_accuracy ──────────────────────────────────────────────
   server.tool(
     "get_prediction_accuracy",
-    "Returns retrospective accuracy metrics for Polymarket prediction signals — " +
+    "Computed from Polymarket prediction signals only (predictionOutcomeJob). " +
+      "Measures precision = confirmed/(confirmed+false_positive) for volume_spike/ " +
+      "probability_shift signals vs ±2% price moves. Distinct from get_calibration_report " +
+      "(Brier/machine accuracy) and get_label_accuracy_report (human-labelled quality). " +
+      "Returns retrospective accuracy metrics for Polymarket prediction signals — " +
       "how often volume_spike or probability_shift signals actually predicted VN stock moves. " +
-      "Precision = confirmed / (confirmed + false_positive). " +
       "Outcomes are validated weekly by comparing signal direction against ±2% price moves in the 48h window.",
     {
       days: z.coerce

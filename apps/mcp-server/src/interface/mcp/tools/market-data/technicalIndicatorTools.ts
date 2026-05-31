@@ -512,7 +512,11 @@ export function registerTechnicalIndicatorTools(
 ): void {
   server.tool(
     "get_technical_indicators",
-    "Compute RSI(14), MACD(12,26,9), MA(5/20/50), and Bollinger Bands(20,2σ) " +
+    "Calls Go TA microservice (port 5003), falls back to local price history. " +
+      "Quantitative price-derived indicators (RSI, MACD, MA, Bollinger Bands). " +
+      "Distinct from get_patterns which does semantic historical precedent lookup " +
+      "from RAG memory. " +
+      "Compute RSI(14), MACD(12,26,9), MA(5/20/50), and Bollinger Bands(20,2σ) " +
       "for a VN stock ticker using existing price history. Returns a Vietnamese-" +
       "friendly plain-text report with a TANG/GIAM/TRUNG TINH conclusion block. " +
       "Calls the Go TA microservice (port 5003) via HTTP POST /ta/indicators; " +

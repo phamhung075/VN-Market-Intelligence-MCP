@@ -281,7 +281,11 @@ export function registerCalibrationTools(
 
   server.tool(
     "get_calibration_report",
-    "Returns the latest weekly calibration report for the prediction engine. " +
+    "Reads from calibration_snapshots table (SQLite). Machine-computed Brier score — " +
+      "measures how well probability estimates match actual outcomes. Weekly snapshot. " +
+      "Distinct from get_label_accuracy_report (human-labelled signal quality) and " +
+      "get_prediction_accuracy (Polymarket signal precision). " +
+      "Returns the latest weekly calibration report for the prediction engine. " +
       "Shows overall Brier score, breakdown by agent/stock/direction, calibration curve " +
       "(predicted probability vs actual hit rate), trend vs last week, and top/worst predictions. " +
       "Data is at most 7 days stale (written weekly Sunday 20:00 VN). " +
@@ -347,7 +351,11 @@ export function registerCalibrationTools(
 
   server.tool(
     "get_label_accuracy_report",
-    "Returns per-agent signal accuracy computed from human verdict labels on MARKET channel messages. " +
+    "Reads from market_messages table (SQLite). Human-labelled signal quality — " +
+      "counts operator 'signal' vs 'noise' verdicts per agent. Distinct from " +
+      "get_calibration_report (Brier/machine accuracy) and get_prediction_accuracy " +
+      "(Polymarket signal precision). " +
+      "Returns per-agent signal accuracy computed from human verdict labels on MARKET channel messages. " +
       "Each row shows how often an agent's messages were labelled 'signal' vs 'noise' by the user. " +
       "Use this alongside get_calibration_report to understand which agents generate genuine signals. " +
       "since_days controls the lookback window (default 90 days, matching the calibration engine window).",
