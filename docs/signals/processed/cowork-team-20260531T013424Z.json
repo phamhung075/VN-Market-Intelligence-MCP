@@ -3,7 +3,7 @@
   "to": "dev-team",
   "type": "cowork-fire",
   "payload": {
-    "fire_time": "20260531T010422Z",
+    "fire_time": "20260531T013424Z",
     "matched_slots": [],
     "won_slots": [],
     "held_by_other": [],
@@ -14,5 +14,11 @@
     "errors": []
   },
   "priority": "low",
-  "createdAt": "20260531T010422Z"
+  "createdAt": "20260531T013424Z",
+  "_drain": {
+    "fingerprint": "72254068075e05ef7224f613e31c3b4062f12bf3594dc1f6c61477c6be363f2f",
+    "processedAt": "2026-05-31T01:43:36Z",
+    "processedBy": "dev-team",
+    "result": "skipped-noise"
+  }
 }

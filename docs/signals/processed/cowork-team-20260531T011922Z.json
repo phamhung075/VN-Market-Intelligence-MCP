@@ -14,5 +14,11 @@
     "errors": []
   },
   "priority": "low",
-  "createdAt": "20260531T011922Z"
+  "createdAt": "20260531T011922Z",
+  "_drain": {
+    "fingerprint": "331fc89bab14143f4bf700873298bda63e1aed3761e17c6775d4dc49b8cfd90a",
+    "processedAt": "2026-05-31T01:43:36Z",
+    "processedBy": "dev-team",
+    "result": "skipped-noise"
+  }
 }

@@ -11,5 +11,11 @@
     "class": "sprint-task-index",
     "overage": 23,
     "action_required": "prune_or_split"
+  },
+  "_drain": {
+    "fingerprint": "0626a62cc564bce94702c516943975264890cef27633613403e3a0cd0879a7c1",
+    "processedAt": "2026-05-31T01:43:36Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
   }
 }
