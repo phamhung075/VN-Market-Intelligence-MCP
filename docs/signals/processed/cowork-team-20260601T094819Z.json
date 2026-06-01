@@ -1,0 +1,18 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-06-01T09:48:19Z",
+  "payload": {
+    "tick_utc": "2026-06-01T09:48:19Z",
+    "nominal_tick": "2026-06-01T09:45:00Z",
+    "drift_min": 3,
+    "matched": [],
+    "won": [],
+    "outcome": "silent-exit-empty-match",
+    "market_status": "closed",
+    "empty_note": "Post-close tick; offhours pair next ~12:03Z. Expected silent.",
+    "dashboard_drain": { "mtime_changed": false, "now_local": "2026-06-01T11:22:55", "note": "unchanged — drain gate not fired" }
+  }
+}

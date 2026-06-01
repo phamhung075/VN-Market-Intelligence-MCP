@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-06-01T09:33:21Z",
+  "payload": {
+    "tick_utc": "2026-06-01T09:33:21Z",
+    "nominal_tick": "2026-06-01T09:30:00Z",
+    "drift_min": 3,
+    "matched": [],
+    "won": [],
+    "outcome": "silent-exit-empty-match",
+    "market_status": "closed",
+    "empty_note": "Post-close tick; offhours pair next ~12:03Z. Expected silent.",
+    "dashboard_drain": {
+      "mtime_changed": true,
+      "prior_local": "2026-06-01T10:51:19",
+      "now_local": "2026-06-01T11:22:55",
+      "cowork_addressed_new_rows": 0,
+      "note": "mtime moved by row arc-20260601T092133 (agents-architect brief_complete, signal-dashboard SKILL cap-extract) — maintenance lane (agents-architect->agent-father), NOT cowork-addressed. Nothing for dispatcher to route."
+    }
+  }
+}

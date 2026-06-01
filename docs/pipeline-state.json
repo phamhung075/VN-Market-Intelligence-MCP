@@ -6,10 +6,10 @@
     "status":         "idle",
     "active_task_id": null,
     "next_agent":     null,
-    "next_action":    "dev-team :07 next tick — drain signals then PO triage",
+    "next_action":    "dev-team :07 next tick — drain signals; PO triage VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH) + VPS-BS4-INSTALL (LOW)",
     "wip":            0,
     "wip_max":        2,
-    "updated_at":     "2026-06-01T09:14:42Z",
+    "updated_at":     "2026-06-01T10:09:54Z",
     "updated_by":     "dev-team"
   },
 
@@ -23,14 +23,16 @@
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
     "current_sprint":  null,
-    "last_closed":     "RE-CAP-1 (2026-06-01T09:14Z, maintenance): signal-dashboard SKILL.md 192→118L via lazy-load extract → sibling dashboard-protocol.md (115L); §READ/§WRITE/§PRUNE contracts pointered not deleted. Raw-verified. Root: b38ac812 resume-economy content was load-bearing. Brief 2026-06-01-context-resume-economy already fully implemented (b38ac812) — PO caught via raw-verify. Prior: VPS-NEWS-CAFEF-VNECO (b99bf783).",
+    "last_closed":     "VPS news-push LIVE outage RESTORED (2026-06-01T10:09Z tick, ops 53c3d888): all 14 feeds http=000 since ~09:07Z — /root/fetch-vn-news.sh shipped unrendered __MCP_BASE__/__API_KEY__ placeholders (deploy regression from cafef 814088b0 clobbering rendered live script). ops rendered creds, fixed same in fetch-foreign-flow.sh, verified raw http=200 received=242 cursor 0→1780331100. My socat-reboot hypothesis was WRONG (uptime 48d) — ops verify-raw corrected it. FU-OPS-CAFEF-1 PASS (cafef 20+20/cycle ×7, 0 PERMANENTLY_BLOCKED — is_blocked() fix holding). Prior: RE-CAP-1 (signal-dashboard 192→118L, 7aa3abbf).",
     "watch_items": [
       "CHEF morning-dish: verify guaranteed publish under macro-down on next fire",
       "CHEF-TS-STAMP (LOW cosmetic): cycle-timestamp + next-slot-date mis-stamp; watch next tick",
-      "CAFEF-VNECO FU (TASKS.md): FU-OPS-CAFEF-1 (2-cycle log spot-check cafef>0), FU-OPS-CAFEF-2 (bs4-vs-regex path), FU-DEV-CAFEF-1 (wire /proxy/article-body into push-news ingestion)",
+      "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion — endpoint live but no consumer yet",
       "ops 275L / dev-alert-engine 389L / dev-rag-service 223L still >cap (NB-PRUNE-FIX scope)"
     ],
     "open_sprints": [
+      "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, NEW 06-01): vps-scripts/fetch-vn-news.sh L7-8 hardcode __MCP_BASE__/__API_KEY__ → every redeploy clobbers rendered live script → silent news-push outage (just cost ~1h). Fix: deploy-time render + pre-deploy placeholder-leak guard (reject __[A-Z_]+__); prefer ${VAR:-default} env-fallback form like fetch-foreign-flow.sh. dev-vps-crawls + ops.",
+      "VPS-BS4-INSTALL (LOW, NEW 06-01): beautifulsoup4 not installed on VPS → /proxy/article-body on 5000ch regex fallback not 8000ch bs4 primary. Fix: pip3 install beautifulsoup4 (no service restart).",
       "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE: within-section trimming + per-flow prune-invocation audit",
       "CHEF-FLOW-CAP-REFACTOR: chef.md 258L > 120L cap; extract Steps 6/6.5/7 to chef-write-dish.md",
       "CHEF-TS-STAMP: cosmetic telemetry bug; confirm pattern before dispatch",
