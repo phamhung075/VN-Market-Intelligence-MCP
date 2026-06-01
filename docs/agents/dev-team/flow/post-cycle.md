@@ -57,6 +57,8 @@ After compact: resume from Step 1 via smart-compact-protocol.md.
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
+**Self-critique** → skill: `.claude/skills/self-critique/SKILL.md`
+
 ---
 
 ## Step 4.9 — Cycle Elapsed Announce

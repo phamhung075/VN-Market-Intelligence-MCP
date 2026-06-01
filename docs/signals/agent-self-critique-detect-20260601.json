@@ -5,5 +5,29 @@
   "payload": "docs/architecture-briefs/2026-06-01-agent-self-critique-detect-source.md",
   "priority": "normal",
   "createdAt": "2026-06-01T21:06:42Z",
-  "notes": "BLOCKED on PO approval. Agent-father MUST NOT act until PO approves. When approved, implement EDIT-1, EDIT-2, EDIT-3 in §7 (Phase 1 only — 3 files). Then run shadow pilot per §8 (14 days) before fleet-wide. Phase 2 = promote/kill decision after pilot."
+  "poVerdict": "APPROVE-WITH-CONDITIONS",
+  "poVerdictAt": "2026-06-01T21:11:41Z",
+  "poVerdictRecordedIn": "docs/architecture-briefs/2026-06-01-agent-self-critique-detect-source.md §11",
+  "blockedOn": "operator-greenlight",
+  "conditions": ["C1 shadow-pilot-mandatory-not-skip-to-fleet", "C2 T2-watch-overreport", "C3 daily-cap-tiebreak-explicit", "C4 name-live-FIVE-field-gate-incl-C-3", "C5 verify-commit-batching-no-dash-A"],
+  "implementationStatus": "PHASE-1-DONE",
+  "implementedAt": "2026-06-01",
+  "implementedBy": "agent-father",
+  "filesChanged": [
+    ".claude/skills/cowork-end-cycle/SKILL.md",
+    "docs/agents/dev-team/flow/post-cycle.md",
+    ".claude/skills/self-critique/SKILL.md"
+  ],
+  "lineCounts": {
+    ".claude/skills/cowork-end-cycle/SKILL.md": 15,
+    "docs/agents/dev-team/flow/post-cycle.md": 76,
+    ".claude/skills/self-critique/SKILL.md": 103
+  },
+  "conditionsFolded": {
+    "C3": "SC-0 tie-break: lowest T-code wins (T1<T2<T3<T4<T5) — deterministic, stated in SKILL.md",
+    "C4": "SC-2 explicitly names C-3 check (Lane-C-in-disguise) as the live fifth PO gate field, citing triage-signals.md line 17",
+    "C5": "SC-5 uses commit-mutex + explicit own_paths only; -A/. forbidden; half-stage guard on error — PENDING QA verification"
+  },
+  "nextStep": "QA must verify C5: commit batching cannot fall back to -A/. and cannot half-stage the index. THEN shadow pilot may be armed (news-scout + dev-team post-cycle, 14 days, per §8). Do NOT start shadow pilot before QA C5 pass.",
+  "notes": "C1 (pilot mandatory) and C2 (T2 watch) are operational pilot conditions — carried into shadow pilot, not code changes. Phase 2 = promote/kill decision after 14-day pilot per §8 criteria."
 }
