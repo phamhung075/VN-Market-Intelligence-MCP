@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-01T22:00Z",
-  "_updated_by": "agent-father",
+  "_updated_at": "2026-06-02T00:00Z",
+  "_updated_by": "po",
 
   "head": {
-    "status": "in_progress",
-    "active_task_id": "OSC-1",
-    "next_agent": "agent-father",
-    "next_action": "ORCH-STATE-CONSOLIDATE drive-to-DONE (operator fan-out). BA/ARCH/PM ALL DONE (brief 46632eb0; OSC-1..5 fully decomposed in TASKS.md w/ zones+AC+sequencing). EXECUTE: [A solo] agent-father OSC-1 ONLY: mkdir docs/data/orch/, write orch-state.json _schema:v3 = merge pipeline-state head/dashboard_section_cache/narrative/session_handoff_status VERBATIM + task_board from open TASKS.md sprints + signal_queue from DASHBOARD NEW rows (summary<=120, payload_ref, NO raw payload); DO NOT delete any old file. NO agent cycles between OSC-1->OSC-2 (RISK-2 phantom dual-write). [B atomic ONE-COMMIT by ONE committer] OSC-2+OSC-3: dev-mcp-server prepares §4.1 code (1837a path, tasksMdJanitorJob L308/L421, dailyDashboardJob L495, improvementSignalWriter L30/252-261 + 3 test fixtures, atomic temp->rename helper) in working tree; agent-father prepares all §1.1/§2.1 agent-file re-points + OSC-3 signal-dashboard SKILL/dashboard-protocol rewrite in working tree; committer runs 3 bun tests GREEN, THEN git rm the 5 md/json files (markdown deletion STRICTLY LAST), THEN ONE commit under commit-mutex (task_kind:commit-mutex, owner_agent set, ttl>=60). Two committers MUST NOT commit simultaneously (feedback_concurrent_commit_race). [C parallel fan-out, isolated zones] dev-mcp-server OSC-4a (GET /api/orchestration read-only, last_updated_iso, summary/severity/status only HC-2) || dev-frontend OSC-4c (dashboard route — REUSE shipped FRONTEND-BCTC-TAB A2 splat-proxy api.bctc-inspect.\\$.tsx precedent, NOT Go gateway:4000; stale amber badge) || ops OSC-4b (compose mount orch-state.json:rw + up -d --build mcp-server REBUILD not restart, single-service). [D] qa OSC-5 PLAN-ONLY: atomic-write PROVEN-RED (simulated 2-agent RETURN: no-clobber, no-sibling-overwrite, no-partial-corruption — inject failure to prove caught) + 3-test+grep reader regression + endpoint HC-1/HC-2 raw-verify (read VALUES not badges). CONSTRAINTS: zone-isolation, explicit-file staging (NO add -A, NO --force, .env never staged), all on main, single-service ops (16GB host-panic), detectors/qa PLAN-ONLY. Decision (A): D4-R4 alarm 30s on orch-state.json. ROUTER-REPORT at: (a) OSC-2 atomic commit lands, (b) qa proves atomic-write, (c) sprint COMPLETE.",
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "NORMAL triage RESUMED — RISK-2 head-write freeze is LIFTED (ORCH-STATE-CONSOLIDATE closed; orch-state.json is the sole SSOT; atomic temp->rename writes proven by QA). Agents may write .head again under WIP<=2 + fresh-read contract. Next pick: triage open_sprints — highest-signal queue items are the HIGH NEW signals (tnb-c85 morning-dish pipeline_degraded, 1967b-RERUN architect audit) and FLEET-HOST-SAFETY remaining tasks (DRAIN-INJECTION-SAFE, A-01-EXPECTED-SET, AUDITOR-SLA-CADENCE). Caveat QA flagged: helper is atomic but a non-fresh-read caller can still stale-read->sibling-clobber — see FU-ORCH-HEAD-CAS backlog; mitigated today by WIP=2 + fresh-read contract.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-01T21:17Z",
+    "updated_at": "2026-06-02T00:00Z",
     "updated_by": "po"
   },
 
@@ -24,28 +24,28 @@
 
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
-    "current_sprint": "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, 06-01T15:30Z T2+T3+T4 DONE): DECISION-A consolidate complete. T2 DONE: GUARD-1 in 8 render blocks of deploy-vinahost.sh (sections 1-8; section 9 no-render commented). T3 DONE: section 10 article-body-fetcher.py + idempotent pip3 bs4 + post-SCP ls verify. T4 DONE: VERIFYEOF post-deploy block appended, deploy-vps-proxy.sh DELETED, .env VULTR_IP/USERNAME/PASSWORD removed (comment left), .env.example decommission note added, fetch-foreign-flow.sh comment updated. bash -n SYNTAX OK. GUARD-1 deliberate-violation exit 1 confirmed. NEXT: T5 ops redeploy → T6 qa.",
-    "last_closed": "P0 mcp-server :3000 backend OUTAGE → RECOVERED (2026-06-01 ~14:30, ops `docker compose up -d mcp-server`): container vn-market-intelligence-mcp-mcp-server-1 SIGTERM-killed (signal=15, NOT OOM) while host HEALTHY (55% mem free) → full-fleet+mutex-system down; router caught it via failed call_tool, verified raw (curl :3000=000→200 toolCount154, socat :4000 200, gateway round-trip OK). CULPRIT UNIDENTIFIED — suspected AUD-ND-1 regression (detector docker-stopped backend on false signal; 4th fleet-host-danger candidate). Single-service relaunch (NOT fleet, NOT rebuild — clean-exit→relaunch lesson). Prior: VPS news-push outage RESTORED 10:09Z ops 53c3d888 (unrendered placeholders, http=200 received=242).",
+    "current_sprint": "idle — awaiting triage. ORCH-STATE-CONSOLIDATE closed (SPRINT-SIGNOFF). Highest-signal next picks: HIGH NEW signal tnb-c85 (morning-dish pipeline_degraded, agent-father fixed DONE-PENDING-LIVE-VERIFY), 1967b-RERUN architect audit, and FLEET-HOST-SAFETY open tasks (DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE). RISK-2 head-write freeze LIFTED — agents may write .head again (WIP<=2 + fresh-read).",
+    "last_closed": "ORCH-STATE-CONSOLIDATE DONE (OSC-1..5, QA APPROVE) — single JSON SSOT docs/data/orch/orch-state.json shipped; 6 state files retired (TASKS/TASKS_ARCHIVE/DASHBOARD/DASHBOARD_ARCHIVE/SPRINT_GOAL/pipeline-state.json), ~100 readers re-pointed, signal-dashboard skill+protocol rewritten to .signal_queue, atomic temp->rename writes. GET /api/orchestration (HC-2 DTO) + /dashboard/orchestration route live 200; mcp-server+frontend rebuilt. QA: atomic-write proven-red, 47 pass/1 skip/0 fail, zero dangling readers.",
     "watch_items": [
-      "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 while host healthy, culprit unidentified — verify detectors are PLAN-ONLY; check system-auditor/cron logs for the docker-stop. 4th host-danger candidate.",
-      "CHEF morning-dish: verify guaranteed publish under macro-down on next fire",
-      "CHEF-TS-STAMP (LOW cosmetic): cycle-timestamp + next-slot-date mis-stamp; watch next tick",
+      "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 06-01 while host healthy, culprit unidentified — verify detectors are PLAN-ONLY; check system-auditor/cron logs. 4th host-danger candidate.",
+      "ORCH-HEAD-CAS WINDOW: atomic helper is safe, but a non-fresh-read caller can stale-read->sibling-clobber .head — FU-ORCH-HEAD-CAS backlog; mitigated by WIP=2 + fresh-read contract.",
+      "tnb-c85 morning-dish fix is DONE-PENDING-LIVE-VERIFY — confirm next morning fire publishes.",
       "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion — endpoint live but no consumer yet",
       "ops 275L / dev-alert-engine 389L / dev-rag-service 223L still >cap (NB-PRUNE-FIX scope)"
     ],
     "open_sprints": [
-      "VPS-DEPLOY-PLACEHOLDER-GUARD: live status in current_sprint (DECISION-A consolidate, →pm). Old GUARD-1/2/3 impl (96446b5d) on dead vps-proxy SUPERSEDED by consolidation; refs: ba spec TASK_VPS-PLACEHOLDER-GUARD.md + brief 2026-06-01-vps-deployer-consolidation.md. Root: cafef 814088b0 bypassed renderer + stale VULTR_IP in .env masked decommission.",
+      "FLEET-HOST-SAFETY: DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE open (AUD-ND-1 + VPS-SOCAT-PERSIST DONE)",
       "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE: within-section trimming + per-flow prune-invocation audit",
       "CHEF-FLOW-CAP-REFACTOR: chef.md 258L > 120L cap; extract Steps 6/6.5/7 to chef-write-dish.md",
       "CHEF-TS-STAMP: cosmetic telemetry bug; confirm pattern before dispatch",
       "SSC-IBOARD-MIGRATE: replacement-source recon for dead iboard financial source",
-      "TOOL-SURFACE-HYGIENE: TSH-1 deregister get_market_hexagram after gateway wedge cleared",
+      "MCP-SURFACE-GAPS: MSG-1 foreign-flow aggregate / MSG-3 phantom-tool discoverability (MSG-2 DONE)",
       "BCTC-LAYOUT-FIRST: Phase 0 READY — LF-EXTRACT/LF-OVERLAY",
       "SELF-IMPROVE-GATE: X-1 synthetic dry-run",
-      "CHEF-ATTN: READY",
-      "ENV-ISOLATION-P2: gate RELEASED, unscheduled"
+      "ENV-ISOLATION: P2 gate RELEASED, unscheduled",
+      "CHEF-ATTN: READY"
     ],
-    "backlogs": "FLEET-HOST-SAFETY (AUD-ND-1/DRAIN-INJECTION-SAFE/A-01-EXPECTED-SET/AUDITOR-SLA-CADENCE/VPS-SOCAT-PERSIST) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures"
+    "backlogs": "FU-ORCH-HEAD-CAS · FU-SIGNAL-DASHBOARD-CAP · FLEET-HOST-SAFETY (AUD-ND-1-LIVE-PROVEN-RED/DRAIN-INJECTION-SAFE/A-01-EXPECTED-SET/AUDITOR-SLA-CADENCE) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures"
   },
 
   "session_handoff_status": {
@@ -54,14 +54,15 @@
   },
 
   "task_board": {
-    "_updated_at": "2026-06-01T22:00Z",
-    "_updated_by": "agent-father",
+    "_updated_at": "2026-06-02T00:00Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "ORCH-STATE-CONSOLIDATE",
         "label": "Single JSON SSOT, delete 4 orchestration markdown files",
-        "status": "active",
+        "status": "DONE",
         "opened_at": "2026-06-01",
+        "closed_at": "2026-06-02",
         "tasks": [
           {
             "task_id": "OSC-1",
@@ -69,9 +70,10 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": null,
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
-            "zone": "docs/"
+            "zone": "docs/",
+            "note": "2ed8b93f"
           },
           {
             "task_id": "OSC-2",
@@ -79,9 +81,10 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server+agent-father",
             "depends": "OSC-1",
-            "status": "TODO",
+            "status": "DONE",
             "size": "L",
-            "zone": "apps/mcp-server/ + docs/"
+            "zone": "apps/mcp-server/ + docs/",
+            "note": "4fb46f68 + residual b8742fcb — 6 state files retired, ~100 readers re-pointed"
           },
           {
             "task_id": "OSC-3",
@@ -89,9 +92,10 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": "OSC-2",
-            "status": "TODO",
+            "status": "DONE",
             "size": "M",
-            "zone": ".claude/skills/"
+            "zone": ".claude/skills/",
+            "note": "signal-dashboard skill + dashboard-protocol rewritten to .signal_queue (see FU-SIGNAL-DASHBOARD-CAP cap re-check)"
           },
           {
             "task_id": "OSC-4",
@@ -99,9 +103,10 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server+ops+dev-frontend",
             "depends": "OSC-2",
-            "status": "TODO",
+            "status": "DONE",
             "size": "M",
-            "zone": "apps/mcp-server/ + docker-compose.yml + apps/frontend/"
+            "zone": "apps/mcp-server/ + docker-compose.yml + apps/frontend/",
+            "note": "c8a76a48 + 9dd53a21 — HC-2 DTO endpoint + /dashboard/orchestration route, orch dir bind-mounted rw, mcp-server+frontend rebuilt, live 200"
           },
           {
             "task_id": "OSC-5",
@@ -109,9 +114,10 @@
             "type": "sprint-task",
             "owner": "qa",
             "depends": "OSC-4",
-            "status": "TODO",
+            "status": "DONE",
             "size": "M",
-            "zone": "qa"
+            "zone": "qa",
+            "note": "QA APPROVE — atomic-write proven-red, 47 pass/1 skip/0 fail, zero dangling readers, HC-1/HC-2 pass"
           }
         ]
       },
@@ -384,6 +390,16 @@
       }
     ],
     "backlog": [
+      {
+        "id": "FU-ORCH-HEAD-CAS",
+        "summary": "Add a version/CAS guard on .head writes to fully close the caller stale-read->sibling-clobber window QA flagged (helper is atomic; risk is a non-fresh-read caller; today mitigated by WIP=2 + fresh-read contract)",
+        "priority": "normal"
+      },
+      {
+        "id": "FU-SIGNAL-DASHBOARD-CAP",
+        "summary": "signal-dashboard SKILL.md + dashboard-protocol.md tripped the context-bloat size hook after the OSC-3 rewrite — re-check vs file-size-caps.json and split if over",
+        "priority": "normal"
+      },
       {
         "id": "BCTC-CTG-ATTACHMENT-FETCH",
         "summary": "CTG cover-letter-only PDF fetched; need real BCTC attachment (size/page sanity gate)",
@@ -751,7 +767,8 @@
         "scope_out": ["agent-notebook / analysis-brief surfacing on dashboard", "any change to :07 RETURN write contract schema fields", "SSE/websocket live push"],
         "success_metric": "orch-state.json sole orchestration SSOT (4 markdown files ENOENT); 3 bun tests green on new path; :3001 renders live orch-state via api-gateway:4000 with honest stale badge; QA proves atomic-write no-clobber; 0 raw signal payload in HTTP response.",
         "open_decision": "D4-R4 concurrent-commit alarm: DEFAULTED to (A) — 30s window on orch-state.json (sensitivity over quiet).",
-        "status": "OPEN"
+        "status": "CLOSED",
+        "note": "CLOSED 2026-06-02 SPRINT-SIGNOFF. OSC-1..5 DONE, QA APPROVE. 6 state files retired, ~100 readers re-pointed, endpoint+dashboard live 200. Follow-ups: FU-ORCH-HEAD-CAS, FU-SIGNAL-DASHBOARD-CAP."
       },
       {
         "sprint_id": "FLEET-HOST-SAFETY",
@@ -767,7 +784,7 @@
         "scope_in": ["PLACEHOLDER-GUARD-1 leak guard in deploy-vps-proxy.sh", "PLACEHOLDER-GUARD-2 convert 6 hardcode-form scripts to ${VAR:-default}", "PLACEHOLDER-GUARD-3 bring article-body-fetcher.py under deploy-vps-proxy.sh", "VPS-BS4-INSTALL beautifulsoup4"],
         "scope_out": ["any change to cafef-index price source", "new MCP tools"],
         "success_metric": "Deliberate-violation deploy with unrendered template FAILS LOUD. Post-deploy SSH probe empty. 14 news feeds land for >=2 cycles after full redeploy.",
-        "status": "OPEN",
+        "status": "CLOSED",
         "note": "T2/T3/T4 DONE (ed967839). T5 ops live-deploy 5ba761c6 done. T6-QA APPROVED. CLOSED 2026-06-01."
       },
       {
