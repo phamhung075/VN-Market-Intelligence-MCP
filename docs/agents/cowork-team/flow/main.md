@@ -1,4 +1,4 @@
-<!-- size-justification: 510L — single dispatcher flow; cron-match logic extracted to scripts/agents-flow/cowork-match-slots.js. Step 0b leader lock (DWF-DEV-CROSS-4 Phase 2) + Step 4.6 per-work-item token (R1/R3 blocking, suffix-free, ttl=180s) + Step 4.6b heartbeat (DWF-DEV-CROSS-4) + Step 4.7 tick-snapshot (1968c-P01) + Step 4.8 pressure-state emitter (DWF-DEV-CROSS-3) + §drift-min threshold table (1967-09) + Step 5 published-marker gate instruction text (DWF-DEV-CROSS-5 FR-P2-7) added inline for auditability. Error boundary + telemetry + collision guard remain inline. Split deferred until next architectural sprint. -->
+<!-- size-justification: 783L — single dispatcher flow; cron-match logic extracted to scripts/agents-flow/cowork-match-slots.js. Step 0b leader lock (DWF-DEV-CROSS-4 Phase 2) + Step 4.6 per-work-item token (R1/R3 blocking, suffix-free, ttl=180s) + Step 4.6b heartbeat (DWF-DEV-CROSS-4) + Step 4.7 tick-snapshot (1968c-P01) + Step 4.8 pressure-state emitter (DWF-DEV-CROSS-3) + §drift-min threshold table (1967-09) + Step 5 published-marker gate instruction text (DWF-DEV-CROSS-5 FR-P2-7) added inline for auditability. Error boundary + telemetry + collision guard remain inline. Split deferred until next architectural sprint. -->
 
 # cowork-team — Master Cron Dispatcher
 
@@ -464,7 +464,7 @@ trap "rm -f \"$MC_STAGE\" \"$MACRO_STAGE\"" EXIT
 # Call get_cycle_bootstrap once for the snapshot payload
 # Executor receives as conversation text; stage to MC_STAGE for jq --rawfile
 BOOTSTRAP_RESULT=$(call_tool(server="vn-market", tool="get_cycle_bootstrap",
-  arguments={"agent_name": "cowork-team"}))
+  arguments={"agent_name": "unified-agent"}))
 echo "$BOOTSTRAP_RESULT" > "$MC_STAGE"
 
 # Call get_macro_snapshot once for the macro payload
@@ -530,8 +530,7 @@ if [ -f "docs/data/cycle-snapshot-latest.json" ]; then
 fi
 
 # dev_queue_depth: approximate count of OPEN/IN_PROGRESS tasks in TASKS.md
-DEV_QUEUE_DEPTH=$(grep -cE '\|\s*(OPEN|IN_PROGRESS)\s*\|' docs/TASKS.md 2>/dev/null || echo 0)
-DEV_QUEUE_DEPTH=${DEV_QUEUE_DEPTH:-0}
+DEV_QUEUE_DEPTH=$(grep -cE '\|\s*(OPEN|IN_PROGRESS)\s*\|' docs/TASKS.md 2>/dev/null); DEV_QUEUE_DEPTH=${DEV_QUEUE_DEPTH:-0}
 
 # host_headroom_mb: available RAM in MB (best-effort, null on failure)
 HOST_HEADROOM_MB="null"
