@@ -11,6 +11,18 @@ Key milestones: cycle-159 BCTC-TRUST-RED APPROVED | cycle-157 AIT-QA APPROVED | 
 
 ---
 
+## cycle-176 · 2026-06-01 · PLACEHOLDER-GUARD-QA — VPS-DEPLOY-PLACEHOLDER-GUARD — APPROVED
+
+Sprint: VPS-DEPLOY-PLACEHOLDER-GUARD | Task: PLACEHOLDER-GUARD-QA | Verdict: APPROVED (LOCAL GATE)
+Commit: 96446b5d (impl) | Report: reports/TASK_REPORT_VPS-DEPLOY-PLACEHOLDER-GUARD-QA.md
+Files: scripts/deploy-vps-proxy.sh, 6 vps-scripts, article-body-fetcher.py
+
+C1 bash-n: 7 scripts + py_compile — all exit 0. C2 deliberate-violation: partial-sub (MCP_BASE only, API_KEY left) → GUARD-1 fires non-zero before any scp — CONFIRMED. C3 clean-render: 5 deployer-managed scripts CLEAN; fetch-tradingeconomics.sh annotated (L15 __TE_API_KEY__ sentinel not subbed by deploy-vps-proxy.sh — tradingeconomics NOT in that deployer's scope; deploy-vinahost.sh subs it; VULTR post-deploy guard unaffected). C4 marker-rename: __HTTP__/__heartbeat__ fully absent, _HTTP_/_heartbeat_ consistent across all producers+consumers. C5 env-unset: all __MCP_BASE__/__API_KEY__ only inside ${VAR:-...} defaults — design holds. C6 GUARD-3: py_compile exit 0, deploy block present (scp+chmod+x+pip3 install idempotent).
+
+Next: ops — VPS-BS4-INSTALL one-off + full redeploy via deploy-vps-proxy.sh + post-deploy verify CLEAN + 14-feed ×2 cycles.
+
+---
+
 ## cycle-175 · 2026-06-01 · CAFEF-VNECO-QA — VPS-NEWS-CAFEF-VNECO — APPROVED
 
 Sprint: VPS-NEWS-CAFEF-VNECO | Task: CAFEF-VNECO-QA | Verdict: APPROVED
