@@ -273,3 +273,48 @@ Update Cloudflare tunnel ingress config to route `/api/*` directly to localhost:
 **Duration:** 65 hours from last successful price fetch (2026-05-29 08:59 → 2026-06-01 02:39)
 **Data Loss:** None (all recovered data consistent, no gaps)
 **Outage Window:** ~24m (from alert to recovery)
+
+---
+
+## Session: 2026-06-01 (VN-NEWS-FETCH-HTTP-000-FIX)
+
+**Incident:** VN news pipeline broken — all push cycles reporting http=000 since ~10:07Z
+
+**Root Cause Found:** VPS fetch-vn-news.sh script had unresolved placeholder values:
+- `API_URL="__MCP_BASE__/api/push-news"` (literal string, never replaced with actual Cloudflare URL)
+- `API_KEY="__API_KEY__"` (literal placeholder, never populated)
+
+These caused curl to attempt POST to the literal hostname `__MCP_BASE__`, resulting in connection failure (http=000).
+
+**Hypothesis Corrected:** The earlier assumption that "VPS reboot killed socat" was incorrect:
+- socat bridge on Mac host (localhost:4000→:3000) was ALIVE and responding (verified: curl http://localhost:4000/health returned 200)
+- VPS uptime is 48 days (no reboot today)
+- The actual issue was VPS script configuration, not infrastructure
+
+**Fix Applied (2026-06-01 10:19Z):**
+1. SSH to VPS and checked /root/vn-market.env.bak-1780288599 for API credentials
+2. Extracted: `VPS_API_KEY=38955a0a253435cdaa44f5a705ad925d1ec756585a66fe5494dcd867b6d34197`
+3. Updated /root/fetch-vn-news.sh:
+   - `sed -i 's|__MCP_BASE__|https://zenmidi.com|g'` 
+   - `sed -i 's|__API_KEY__|38955a0a...db34197|g'`
+4. Verified fix with manual run: fetch-vn-news.sh → **http=200 + 242 items received**
+
+**Post-Restore Verification:**
+```
+2026-06-01T10:19:31Z [NEWS  ] INFO  PUSH 242 items → /api/push-news http=200 dur=1374ms resp={"ok":true,"received":242}
+2026-06-01T10:19:31Z [NEWS  ] INFO  cursor advanced from 0 to 1780331100
+2026-06-01T10:19:31Z [NEWS  ] INFO  === DONE in 65s ===
+```
+
+**Pipeline Status:** RESTORED ✓
+- VN news fetcher now successfully pushes to mcp-server
+- 14 RSS feeds healthy, 242 items in current cycle
+- End-to-end: fetch → dedupe → push → DB ✓
+
+**Outstanding Issues:**
+- Same placeholder bug likely exists in other VPS fetch scripts (vn-price-fetch, vn-foreign-flow, vn-sbv-fetch, vn-bctc-fetch)
+- Should conduct audit of all /root/fetch-*.sh scripts and apply same fix
+- Permanent Cloudflare tunnel config update still pending (route `/api/*`→:3000 directly, eliminate socat bridge)
+
+**Incident Duration:** ~12 minutes from alert to full restoration (2026-06-01 10:07Z → 10:19Z)
+**Data Loss:** None (news items queued server-side, all pushed after fix)
