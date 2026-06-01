@@ -60,6 +60,16 @@ AUD-ND-1 (CRITICAL): system-auditor had no explicit prohibition on destructive o
 
 ---
 
+## 2026-06-01T20:58:53Z
+
+**Brief:** `docs/architecture-briefs/2026-06-01-orch-state-consolidate.md`
+
+Operator-directed JSON-first SSOT design: 3 files under `docs/data/orch/` (pipeline-state.json moved, task-board.json new, signal-queue.json new); markdown views become generated-only output. Highest-risk item is the `pipeline-state.json` path rename — 14 reader sites across code and agent files must land in ONE atomic commit to prevent test breakage; OSC-5 (flip readers off Markdown) is deferred to a PO-gated hardening period.
+
+**Signal dropped:** (no separate signal file — brief is the handoff; router to route OSC-1/2/3/4 to agent-father + dev-mcp-server + ops per §5 task batch)
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
