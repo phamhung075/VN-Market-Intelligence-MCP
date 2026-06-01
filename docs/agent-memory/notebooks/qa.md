@@ -11,6 +11,21 @@ Key milestones: cycle-159 BCTC-TRUST-RED APPROVED | cycle-157 AIT-QA APPROVED | 
 
 ---
 
+## cycle-175 · 2026-06-01 · CAFEF-VNECO-QA — VPS-NEWS-CAFEF-VNECO — APPROVED
+
+Sprint: VPS-NEWS-CAFEF-VNECO | Task: CAFEF-VNECO-QA | Verdict: APPROVED
+Commits: 814088b0 (P1+P2 code), 91bdb305 (TASKS handoff)
+Files: vps-scripts/fetch-vn-news.sh, vps-proxy-server.js, article-body-fetcher.py
+
+P1 — is_blocked() fix: bare grep -qi "robot" on RSS body → anchored CF challenge-page patterns only (just a moment..., checking your browser, cf-browser-verification, _cf_chl_, captcha-in-title). Static analysis PASS: old false-positive path gone, real CF IUAM/managed-challenge detection preserved. bash -n syntax: 0 errors. LOG_ROTATE_BYTES fix correct (default-first, conditional-override, quoted comparison). AC-1 dev live evidence: cafef 0→20+20 items 2026-06-01T08:58Z cycle. QA recommends ops spot-check ≥2 cycles in /var/log/vn-news-fetch.log (QA lane has no VPS SSH).
+
+P2 — /proxy/article-body: spawn array (no shell interp, no shell=True), HTTPS enforced at server layer before spawn, X-API-Key auth required, domain whitelist bypass-proof (userinfo@/subdomain/http/encoded all rejected via Node.js URL + Python urlparse), Set(cafef.vn, vneconomy.vn) exact match. google.com → 400 confirmed by code logic. body_text cap: 8000ch (BeautifulSoup path, intentional) / 5000ch regex-fallback (also intentional). Ops: verify pip3 show beautifulsoup4 on VPS.
+
+VPS-SOCAT-PERSIST http=000 confirmed pre-existing (not this sprint).
+Report: reports/TASK_REPORT_CAFEF-VNECO-QA.md
+
+---
+
 ## cycle-174 · 2026-05-31 · BANK-QA-3 — BANK-AWARE-BCTC — APPROVED
 
 **Sprint:** BANK-AWARE-BCTC | **Task:** BANK-QA-3 | **Verdict:** APPROVED
