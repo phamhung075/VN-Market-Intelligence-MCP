@@ -1,0 +1,32 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T08:33:19Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "n/a (no cron candidates — mode irrelevant)",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {},
+    "cadence_minutes": {},
+    "leader_claim": "not claimed (silent tick — zero spawns, no double-spawn risk)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (05:31:04Z) since prior tick — Step 0a skipped. No NEW cowork-addressed rows pending.",
+    "empty_note": "No cron candidates at all this tick. chef-intraday raw cron '13 2-8 * * 1-5' window-matches only at the :15-past nominal tick (floor-15=:15, cron minute 13 within +-2). At 08:33 nominal tick=08:30, minute 13 not within +-2 of 30 -> no match. Offhours pair '0 */4' next ~12:03Z. chef-morning '15 5' is tomorrow weekday. True empty -> silent exit regardless of mode.",
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T08:33:19Z"
+}

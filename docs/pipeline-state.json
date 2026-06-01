@@ -6,10 +6,10 @@
     "status":         "idle",
     "active_task_id": null,
     "next_agent":     null,
-    "next_action":    "dev-team :07 cold start — drain signals then PO triage",
+    "next_action":    "dev-team :07 next tick — drain signals then PO triage",
     "wip":            0,
     "wip_max":        2,
-    "updated_at":     "2026-06-01T08:09:00Z",
+    "updated_at":     "2026-06-01T09:14:42Z",
     "updated_by":     "dev-team"
   },
 
@@ -23,10 +23,11 @@
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
     "current_sprint":  null,
-    "last_closed":     "VPS-NEWS-CAFEF-VNECO (2026-06-01): P1 is_blocked() fix restored cafef+vneconomy feed; P2 /proxy/article-body endpoint deployed VPS:8765. FU: ops spot-check 2-cycle log, verify beautifulsoup4; dev wire to push-news (next sprint).",
+    "last_closed":     "RE-CAP-1 (2026-06-01T09:14Z, maintenance): signal-dashboard SKILL.md 192→118L via lazy-load extract → sibling dashboard-protocol.md (115L); §READ/§WRITE/§PRUNE contracts pointered not deleted. Raw-verified. Root: b38ac812 resume-economy content was load-bearing. Brief 2026-06-01-context-resume-economy already fully implemented (b38ac812) — PO caught via raw-verify. Prior: VPS-NEWS-CAFEF-VNECO (b99bf783).",
     "watch_items": [
       "CHEF morning-dish: verify guaranteed publish under macro-down on next fire",
       "CHEF-TS-STAMP (LOW cosmetic): cycle-timestamp + next-slot-date mis-stamp; watch next tick",
+      "CAFEF-VNECO FU (TASKS.md): FU-OPS-CAFEF-1 (2-cycle log spot-check cafef>0), FU-OPS-CAFEF-2 (bs4-vs-regex path), FU-DEV-CAFEF-1 (wire /proxy/article-body into push-news ingestion)",
       "ops 275L / dev-alert-engine 389L / dev-rag-service 223L still >cap (NB-PRUNE-FIX scope)"
     ],
     "open_sprints": [

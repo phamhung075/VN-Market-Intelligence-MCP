@@ -4,6 +4,13 @@
 
 > Archive: `docs/archive/notebooks/dev-team-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
+## Current state (:07 on-demand — 2026-06-01T09:14Z) — RE-CAP-1 shipped (maintenance lane)
+
+- PREFLIGHT clean (HEAD b99bf783, single main worktree). Drained 14 signals: 9 `context_bloat_breach` (2× signal-dashboard SKILL.md @192/120 PERSISTENT; 7× TASKS.md @81/80 — EDIT-TRANSIENTS, live count raw-verified = 80=cap, NO ACTION), 1 `brief_complete` (context-resume-economy), 4 cowork-fire heartbeats. 0 telegram. DASHBOARD git-clean (same 5 known-stale P2-*/1967b breadcrumbs).
+- **PO raw-verified the brief was ALREADY IMPLEMENTED** — commit b38ac812 shipped all 3 phases (DASHBOARD delta-read + mandatory prune + pipeline-state v2 head) same session it was authored (~410k tok/day savings). Brief's measured "224L/7KB prose" was its pre-impl snapshot. PO did NOT trust the brief at face value → caught it. The ONE residual: signal-dashboard SKILL.md 192>120 cap (b38ac812's content is now load-bearing → fleet resume-economy depends on §READ/§WRITE/§PRUNE) → filed RE-CAP-1 = lazy-load extract, NOT prune.
+- **Chain (all maintenance-lane, mutex-wrapped):** po triage 74caacf9 → agents-architect brief 1eb792ac (extract boundary: 72L of §WRITE/§READ/§PRUNE bodies → sibling dashboard-protocol.md, condensed summaries+pointers stay) → agent-father impl abbbbdba. **RAW-VERIFIED (not relayed):** SKILL.md 192→**118L** (≤120 ✓), child dashboard-protocol.md 115L, frontmatter `---` line 1 ✓, all 3 `## WRITE/READ/PRUNE` anchors + 3 child-pointers resolve, no content lost. RE-CAP-1 DONE (qa-waived: pure .md relocation, self-verifying). drain-signals.md `§ PRUNE` ref still resolves.
+- WIP 0/2 (maintenance lane does not consume sprint WIP). 3 on-demand spawns each mutex-wrapped (S3 po-triage + agents-architect + agent-father) and released.
+
 ## Current state (:07 on-demand — 2026-06-01T08:09Z) — light; chef timestamp-anomaly found
 
 - PREFLIGHT clean. Drained 4 cowork-fire SILENT heartbeats → processed/. 0 telegram. DASHBOARD git-clean (same 5 known-stale P2-*/1967b breadcrumbs).
@@ -18,12 +25,10 @@
 - **Status upgrade:** chef hardening DONE-PENDING-LIVE-VERIFY → **PARTIALLY-VERIFIED-LIVE**. Narrow residual: guaranteed-MORNING-publish degraded-dish-floor not re-exercised (today's 05:23 morning fired BEFORE the 05:31 fix; chef computes next morning 06-03). Distinction held per verify-raw: intraday silent-exit (0 convergence) = designed behavior, only morning/evening slots are guaranteed-publish where the floor applies.
 - No code sprint dispatched (verification was raw-read + bookkeeping). Open backlog non-time-sensitive; next-pickable queued in pipeline-state.
 
-## Current state (:07 on-demand — 2026-06-01T06:09Z) — IDLE
-
-- PREFLIGHT clean. Drained 3 cowork-fire SILENT heartbeats → processed/ (no slots due, nothing spawned). 0 telegram reports. DASHBOARD git-clean — the 5 `| NEW |` rows are all known-stale breadcrumbs (dev-mcp-server P2-* impl_done 2026-05-25 + ancient po 1967b), not inbound.
-- No chef fire in these ticks → chef-hardening live-verify STILL PENDING next actual chef cron fire. WIP 0/2. IDLE exit (no new trigger; open backlog non-time-sensitive, next-pickable queued in pipeline-state).
-
 ## Lessons / patterns
+
+- **brief_complete can arrive AFTER its own impl already shipped same-session** — the context-resume-economy brief was fully implemented (b38ac812) before its signal was even drained; PO raw-verified current code state and caught it instead of re-dispatching done work. Always verify the brief's claimed pre-state against live code before scoping.
+- **A SKILL/flow file can breach its cap *because* a fresh feature added load-bearing content** — the fix is lazy-load extraction (pointer the bodies to a sibling .md), NEVER a naive prune that would delete a live contract. Route .md cap fixes through architect→agent-father (agent-md-factory), not code CLEAN→qa.
 
 - Worktree harness auto-merge works when tracks are disjoint (no conflicts).
 - PO file/line refs are advisory — source-of-truth is grep. Developer must verify before blind-edit.

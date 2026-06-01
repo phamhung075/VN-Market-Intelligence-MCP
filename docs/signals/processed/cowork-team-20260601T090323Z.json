@@ -1,0 +1,26 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-06-01T09:03:23Z",
+  "payload": {
+    "tick_utc": "2026-06-01T09:03:23Z",
+    "nominal_tick": "2026-06-01T09:00:00Z",
+    "drift_min": 3,
+    "matched": [],
+    "won": [],
+    "outcome": "silent-exit-empty-match",
+    "pressure_mode": "n/a (no cron candidates)",
+    "market_status": "closed (post 08:59Z close; next open Tue 02:00Z)",
+    "empty_note": "Post-market-close tick. No slot cron matches the 09:00 nominal window: chef-eod fired 08:48, chef-intraday only matches :15-past hourly within 02-08h, offhours pair next ~12:03Z. Expected silent exit.",
+    "dashboard_drain": {
+      "mtime_changed": true,
+      "prior_local": "2026-06-01T07:31:04",
+      "now_local": "2026-06-01T10:51:19",
+      "cowork_addressed_new_rows": 0,
+      "note": "Drain gate fired (mtime moved). No actionable cowork-addressed NEW rows for tran-ngoc-bau/unified-agent/alert-commander. cow-MACRO-DOWN row resolved EXPECTED-NO-ACTION by dev-team raw-verify (macro-indicators absent-by-design, not crashed; CW-STEP47-HYGIENE backlog owns durable fix). TNB-CHEF-FROZEN already VERIFIED/downgraded."
+    },
+    "pressure_state_age": "pressure-state emitted 08:48:19Z (~15min old at tick); not re-emitted (silent tick, Step 4.8 WON-only)"
+  }
+}
