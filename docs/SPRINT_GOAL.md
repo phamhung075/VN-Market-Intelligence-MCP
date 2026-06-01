@@ -1,3 +1,22 @@
+# Sprint ORCH-STATE-CONSOLIDATE — One JSON SSOT, delete the 4 orchestration markdown files
+
+**Status:** OPEN 2026-06-01 (operator-greenlit). **Pri: HIGH.** **BA/ARCH DONE** — authoritative blueprint `docs/architecture-briefs/2026-06-01-orch-state-consolidate.md` (v2, 46632eb0). Board: `docs/TASKS.md` § Sprint ORCH-STATE-CONSOLIDATE (OSC-1…OSC-5).
+
+## Vision
+Collapse all multi-agent orchestration state into ONE machine-readable SSOT `docs/data/orch/orch-state.json` (sections head/task_board/signal_queue/narrative), delete TASKS.md + TASKS_ARCHIVE.md + DASHBOARD.md + DASHBOARD_ARCHIVE.md, and let humans read state through the localhost:3001 dashboard / raw JSON — eliminating markdown-parse fragility and dual-source drift.
+
+## Scope
+IN: single SSOT JSON + atomic temp-file-then-rename write protocol (§2.3) · re-point all 40+ readers (code + agent flows/skills/protocols) · delete the 4 markdown files · read-only `GET /api/orchestration` endpoint (mcp-server) + docker mount + frontend dashboard route via api-gateway:4000 · QA atomic-write PROVEN-RED + reader-migration regression. Subsumes the `2026-06-01-dashboard-state-sync.md` pipeline endpoint (JSON-twin concept obsolete — the JSON IS the SSOT).
+OUT: agent-notebook / analysis-brief surfacing on dashboard (deferred) · any change to the :07 RETURN write contract schema fields (path + storage-section only) · SSE/websocket live push (hourly cadence — loader poll suffices).
+
+## Open decision — DEFAULTED to (A)
+D4-R4 concurrent-commit alarm stays 30s on `orch-state.json` (better sensitivity, slightly more noise). Operator did not pick (B); PO takes (A).
+
+## Success Metric
+`orch-state.json` is the sole orchestration SSOT (4 markdown files ENOENT) · the 3 bun tests (1837a/1854a/1948d) green on the new path · `:3001` renders live orch-state via api-gateway:4000 with honest stale badge · QA proves atomic-write no-clobber under simulated 2-agent RETURN · 0 raw signal payload in any HTTP response · :07 agent-chaining contract unbroken (single atomic commit for the path move + all readers).
+
+---
+
 # Sprint FLEET-HOST-SAFETY — On the 16GB host, the full fleet must NEVER be `up`
 
 **Status:** OPEN 2026-06-01 (was BACKLOG). **Pri: AUD-ND-1 = CRITICAL / TOP-OF-QUEUE (escalated 2026-06-01 — see below) · DRAIN-INJECTION-SAFE HIGH · A-01 MEDIUM.** Zone: agents-architect (policy) → agent-father (auditor .md/flow) + cross-service (dev-team drain script). Root: intended runtime = minimal mcp-server + mcp-gateway only; the other 11 compose svcs are dev-zone/Factory-v2, NOT deployed; any path that starts/restarts them (or false-flags their absence) risks host kernel panic (project_host_memory_panic). Now 4 live triggers, severity graduated to irreversible data loss.

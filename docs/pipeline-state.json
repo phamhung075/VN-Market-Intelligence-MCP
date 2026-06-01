@@ -2,14 +2,14 @@
   "_schema": "v2",
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": null,
-    "next_action": "AUD-ND-1 (CRITICAL) IMPLEMENTED+QA-PASS :07 (d30f9221; brief 131f0731): system-auditor PLAN-ONLY invariant + Bash read-only allowlist; QA flow-walk confirmed 0 destructive authored step, all CRITICAL paths emit-not-act, invariant positioned before decision points. Deferred: AUD-ND-1-LIVE-PROVEN-RED (ops-supervised off-hours injection), SA-FLOW-CAP (494L pre-existing). Reports 3022/3023/3024 processed+cleared. Pipeline idle -> next tick PO triage. Next FLEET-HOST-SAFETY priority: A-01-EXPECTED-SET (false-positive source) + DRAIN-INJECTION-SAFE. Also open: MSG-1 (HIGH, needs BA), FU-FIXER-NO-FORCE, BCTC-CTG-ATTACHMENT-FETCH.",
+    "status": "in_progress",
+    "active_task_id": "ORCH-STATE-CONSOLIDATE",
+    "next_agent": "pm",
+    "next_action": "PM: slot OSC-1..OSC-5 (brief 2026-06-01-orch-state-consolidate.md §6) into the dev chain. SEQUENCE: OSC-1 (agent-father create orch-state.json) FIRST -> OSC-2 (ATOMIC ONE-COMMIT: dev-mcp-server code 4.1 + agent-father re-point 40+ readers + git rm 5 files; single committer; ALL tests green pre-commit) +OSC-3 (agent-father signal-dashboard SKILL rewrite) SAME WINDOW -> OSC-4 (dev-mcp-server /api/orchestration endpoint + ops docker mount/REBUILD + dev-frontend dashboard route via gateway:4000) -> OSC-5 (qa atomic-write PROVEN-RED + reader regression, PLAN-ONLY). NO agent cycle between OSC-1 and OSC-2 (RISK-2). NO git add -A/--force, .env never staged. Decision DEFAULTED to (A): D4-R4 alarm 30s on orch-state.json.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-01T20:20Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-01T21:15Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
