@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "summary": "RE-CAP-1: signal-dashboard SKILL.md 192L→≤120L lazy-load extract",
+  "payload": "docs/architecture-briefs/2026-06-01-signal-dashboard-cap-extract.md",
+  "priority": "normal",
+  "createdAt": "2026-06-01T09:21:33Z"
+}

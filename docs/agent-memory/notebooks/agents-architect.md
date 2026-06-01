@@ -40,6 +40,16 @@ Fleet-wide context-resume wastes ~410k tokens/day: DASHBOARD.md (153 KB, 63 dead
 
 ---
 
+## 2026-06-01T09:21:33Z
+
+**Brief:** `docs/architecture-briefs/2026-06-01-signal-dashboard-cap-extract.md`
+
+RE-CAP-1 hygiene fix: `.claude/skills/signal-dashboard/SKILL.md` is 192L (overage 72 vs 120L skill-file cap). The §WRITE/§READ/§PRUNE protocol bodies added in b38ac812 are load-bearing (fleet resume-economy contract); designed lazy-load extraction — move those three section bodies verbatim to a new sibling `dashboard-protocol.md` child, condensing each to a ~3-line summary + pointer in the parent, projecting parent to ~118L. All callers (drain-signals.md 0a-D-PRUNE) remain resolvable; §PRUNE section header + mandatory-call statement stay in SKILL.md.
+
+**Signal dropped:** `docs/signals/signal-dashboard-cap-extract-20260601T092133Z.json` → agent-father
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
