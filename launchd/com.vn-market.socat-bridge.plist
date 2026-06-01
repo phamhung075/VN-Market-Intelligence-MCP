@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.vn-market.socat-bridge</string>
+
+  <key>Program</key>
+  <string>/usr/local/bin/socat</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>socat</string>
+    <string>TCP-LISTEN:4000,reuseaddr,fork</string>
+    <string>TCP:127.0.0.1:3000</string>
+  </array>
+
+  <!-- Boot persistence: auto-start on login -->
+  <key>RunAtLoad</key>
+  <true/>
+
+  <!-- Crash recovery: restart on exit -->
+  <key>KeepAlive</key>
+  <true/>
+
+  <!-- Back off after repeated crashes -->
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+
+  <!-- Logs to user home (writable) -->
+  <key>StandardOutPath</key>
+  <string>/Users/admin/Library/Logs/socat-bridge.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/admin/Library/Logs/socat-bridge-error.log</string>
+
+  <!-- Inherit user PATH -->
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/usr/local/bin:/usr/bin:/bin</string>
+  </dict>
+</dict>
+</plist>
