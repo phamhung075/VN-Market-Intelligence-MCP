@@ -3,7 +3,29 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
-## Audit Run Tier-3 (00:30–00:32 UTC 2026-06-01)
+## Audit Run Tier-1 (00:37–00:38 UTC 2026-06-01)
+
+- Tier: 1 | Runtime check: 2 containers (mcp-server, mcp-gateway) both UP
+- Container liveness: PASS (both healthy, mcp-server uptime 3h, mcp-gateway uptime 4d+)
+  - mcp-server: /health 200 OK, 154 tools, 174 sessions, restart count 1 (PASS ≤2), memory 39.32% (PASS <85%)
+  - mcp-gateway: healthy, uptime 4d+
+- Factory-v2 dev-zone (9 services): correctly DOWN per operating constraints
+- Circuit breakers: 16/16 green (0 failures, 0 half-open)
+- Cron jobs: 73+ tracked, success rates 98–100% (intelligenceCycle 99.4%, bctcQueueEnricher 99.1%, all on schedule)
+- Database: market.db 205.45 MB, WAL 3.06 MB (healthy)
+- Data freshness context: VN market CLOSED (00:37 UTC = 07:37 HCM Sunday, outside 02:00–08:59 M–F trading window)
+  - Price data stale (63h+): EXPECTED (market closed)
+  - BCTC data stale (77h+): EXPECTED (weekly cadence, no new filings end-May)
+  - Foreign-flow stale: EXPECTED (market closed)
+  - News: fresh (< 6 min old) → PASS
+  - SBV FX: fresh (< 6 min old) → PASS
+- VPS proxy health: news OK (123 pushes/24h), sbv OK (45 pushes/24h), bctc STALE (expected), prices STALE (expected)
+- System status: 10 unresolved errors (vnstock rate-limit backoff outside hours, transient)
+- Duration: < 60s
+- Anomalies: 0 new
+- Status: HEALTHY
+
+### Audit Run Tier-3 (00:30–00:32 UTC 2026-06-01)
 
 - Tier: 3 | Deep DB integrity + container tooling audit | Duration: < 120s
 - Deployed services: 2/2 UP (mcp-server, mcp-gateway) | Factory-v2 dev-zone (9 services): correctly DOWN
