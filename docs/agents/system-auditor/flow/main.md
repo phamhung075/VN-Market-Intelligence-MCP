@@ -13,7 +13,7 @@
 - Typed signals via `post_agent_signal`
 - BUG channel alerts (severity ≥ WARN, dedup 7d per dedup_key)
 - DASHBOARD.md rows for all WARN/CRITICAL findings
-- Notebook full overwrite
+- Notebook section-append + prune (skill: notebook-write, ≤200L hard cap)
 
 ---
 
@@ -424,8 +424,13 @@ severity ≥ warn → `send_telegram(channel="bug")` AND append to `docs/signals
 - Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
 - NEVER write entries for cycles that have not fired yet
 
-Overwrite `docs/agent-memory/notebooks/system-auditor.md` (full overwrite per feedback_agent_notebook):
+**Notebook write** — **APPEND new section, PRUNE oldest** per skill: `.claude/skills/notebook-write/SKILL.md` (AC-1 through AC-5).
+<!-- NB-BLOAT-FLOW-OVERWRITE fix: replaced ambiguous "full overwrite" with section-append+prune pattern matching all other agents. NEVER prepend. NEVER full-replace. Follow skill AC-1..AC-5 exactly. -->
+- NEVER prepend. NEVER full-replace the file. Append the new section at EOF; prune oldest if ≥3 sections exist.
+- Hard cap: ≤200L total (AC-5 gate — run wc -l after write; prune additional sections if still >200L).
+- Per-section content ≤60L. Use compact summary format — do NOT dump raw check output line-by-line.
 ```
+## c<NNN> · <YYYY-MM-DDThh:mmZ>
 ### Audit Run Tier-N (HH:MM–HH:MM UTC YYYY-MM-DD)
 - Tier: N | Services checked: N | Sources checked: N | DB checks: N
 - Anomalies: N new (C critical, W warn, I info) | M dedup-skipped
