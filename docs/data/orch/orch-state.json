@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-01T22:34Z",
+  "_updated_at": "2026-06-01T23:14Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "A-01-EXPECTED-SET DONE (fa02735e — host_runtime_set SSOT now gates auditor Tier-1 severity; not-deployed-by-design svcs → INFO/grey, never CRITICAL; root-cause fix for the false-RED→destructive class, pairs w/ AUD-ND-1). Runtime AC (0 false-CRITICAL over 7d) monitored across coming auditor cycles. Residual logged: A-01b-DASHBOARD-HEALTH-FILTER (frontend/api-gateway /health plane still false-RED — needs same SSOT filter, code change). NORMAL triage resumed — next pick: FLEET-HOST-SAFETY remaining (DRAIN-INJECTION-SAFE, AUDITOR-SLA-CADENCE, A-01b) or higher-signal queue items. WIP 0/2.",
-    "wip": 0,
+    "status": "dispatched",
+    "active_task_id": "DRAIN-INJECTION-SAFE",
+    "next_agent": "agent-father",
+    "next_action": "DISPATCHED DRAIN-INJECTION-SAFE (FLEET-HOST-SAFETY, FIX/agent-father, S, zone docs/agents/dev-team/flow/, PLAN-ONLY agent-flow edit). Root-cause fix for the LIVE host-danger trigger: dev-team drain builds SQL/command strings by string-concatenating agent-authored signal fields (drain-signals.md L31, execute-tier.md L42, main.md L29/172/202) — a backtick-wrapped payload once command-substituted `docker compose up -d` and near-started the full fleet (feedback_signal_payload_shell_injection). Mandate: NEVER interpolate signal/payload fields into a /bin/sh cmd line — write SQL to a file then `sqlite3 db < file`, or use a bound-param driver. AUD-ND-1 (destructive-stop side) already DONE; this is the still-open injection side of the same host-danger class. AC: a payload containing backticks/`$()` drains DB correctly + `docker ps` unchanged (no spawned container). WIP 1/2.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-01T22:45Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-01T23:14Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -21,7 +21,7 @@
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
-    "current_sprint": "FLEET-HOST-SAFETY active — dispatched A-01-EXPECTED-SET (agent-father, S): A-01 check vs intended-runtime-set SSOT not full compose, kills the false-RED -> destructive-remediation class (defense-in-depth with shipped AUD-ND-1). DRAIN-INJECTION-SAFE + AUDITOR-SLA-CADENCE remain TODO. Deferred this tick: 1967b architect orchestration audit (REQ_1967 spec ready, behind host-safety).",
+    "current_sprint": "FLEET-HOST-SAFETY active — dispatched DRAIN-INJECTION-SAFE (agent-father, S, PLAN-ONLY flow edit): kill the LIVE injection-side host-danger trigger (signal/payload string-concatenated into /bin/sh — once command-substituted `docker compose up -d`, near host-panic). A-01-EXPECTED-SET + AUD-ND-1 DONE; this closes the still-open injection half of the same class. AUDITOR-SLA-CADENCE + A-01b remain TODO. Deferred: FRONTEND-BCTC-TAB (brief locked, dev-frontend) + 1967b architect audit (behind host-safety).",
     "last_closed": "ORCH-STATE-CONSOLIDATE DONE (OSC-1..5, QA APPROVE) — single JSON SSOT docs/data/orch/orch-state.json shipped; 6 state files retired (TASKS/TASKS_ARCHIVE/DASHBOARD/DASHBOARD_ARCHIVE/SPRINT_GOAL/pipeline-state.json), ~100 readers re-pointed, signal-dashboard skill+protocol rewritten to .signal_queue, atomic temp->rename writes. GET /api/orchestration (HC-2 DTO) + /dashboard/orchestration route live 200; mcp-server+frontend rebuilt. QA: atomic-write proven-red, 47 pass/1 skip/0 fail, zero dangling readers.",
     "watch_items": [
       "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 06-01 while host healthy, culprit unidentified — verify detectors PLAN-ONLY; check system-auditor/cron logs. 4th host-danger candidate.",
@@ -139,9 +139,10 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": null,
-            "status": "TODO",
+            "status": "in-progress",
             "size": "S",
-            "zone": "docs/agents/dev-team/flow/"
+            "zone": "docs/agents/dev-team/flow/",
+            "note": "DISPATCHED 2026-06-01T23:14Z. Targets string-concat of signal fields into SQL/sh cmds: drain-signals.md L31, execute-tier.md L42, main.md L29/172/202. Fix = SQL-to-file then `sqlite3 db < file` (or bound-param); never interpolate payload into /bin/sh. AC: backtick/$() payload drains correctly + docker ps unchanged."
           },
           {
             "task_id": "A-01-EXPECTED-SET",
@@ -404,7 +405,12 @@
       },
       {
         "id": "FU-SIGNAL-DASHBOARD-CAP",
-        "summary": "signal-dashboard SKILL.md + dashboard-protocol.md tripped the context-bloat size hook after the OSC-3 rewrite — re-check vs file-size-caps.json and split if over",
+        "summary": "signal-dashboard bloat CONFIRMED still over cap (measured 2026-06-01T23:14Z): SKILL.md 133L (+13) + dashboard-protocol.md 180L (+60) vs 120 skill-file cap. 3 context-bloat-hook signals fed this (self-critique-SKILL already self-cured to 118L, dropped). Lazy-load split → claude-manager-helper/agent-father; overlaps RE-CAP-1 (NB-PRUNE-FIX) — collapse into one cap-fix task when scheduled.",
+        "priority": "normal"
+      },
+      {
+        "id": "FRONTEND-BCTC-TAB",
+        "summary": "agents-architect brief LOCKED (2026-06-01-frontend-bctc-inspect-tab.md, FBT-ARCH A2 proxy): surface BCTC Inspect viewer as new frontend dashboard tab — two resource routes + one NAV_ITEMS line, apps/frontend/ only, ZERO mcp-server edits. Target dev-frontend. Deferred behind FLEET-HOST-SAFETY; pairs naturally with A-01b (same dev-frontend zone) when host-safety closes.",
         "priority": "normal"
       },
       {
