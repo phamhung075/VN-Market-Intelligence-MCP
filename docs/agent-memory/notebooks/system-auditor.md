@@ -3,6 +3,43 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
+## c003 · 2026-06-01T04:07Z
+### Audit Run Tier-1 (04:07–04:08 UTC 2026-06-01)
+- Tier: 1 | Services checked: 2 (intended runtime) | Crons polled: 82
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY
+
+### Container Status (Intended Runtime Only)
+- mcp-server: Up 7h, healthy, restart_count=1 ✓, memory=77.95% ✓
+- mcp-gateway: Up 5d (no direct check in Tier-1)
+
+### Cron Health
+- 82 jobs polled, 100% firing; min success_rate=98.4% (bctcQueueEnricherJob) past 7d
+- intelligenceCycleJob: 99.4% | bctcReparseJob: 98.4%
+- All others ≥99% or 100% success_rate
+
+### Data Freshness (Real-time Snapshot)
+- Prices (HOSE): 3 min old ✓
+- News (RSS): 2 min old ✓
+- Foreign-flow: 0 min old (last 2026-06-01 04:06:47) ✓
+- Commodities: 52 min old ✓
+- SBV FX rates: 52 min old ✓
+- Polymarket: 38 min old ✓
+- BCTC: 80.7h old — KNOWN-IN-PROGRESS (VPS-SOCAT-PERSIST tracked)
+
+### VPS Proxy Status (Push Pipeline)
+- Prices: ok, 74 pushes/24h, 0 errors, last 2026-06-01 04:04:26 ✓
+- News: last 2026-06-01 03:53:31 (stale flag) — KNOWN-IN-PROGRESS
+- SBV: ok, 45 pushes/24h, 0 errors ✓
+- BCTC: last 2026-05-19 07:05 — KNOWN-IN-PROGRESS
+
+### API Rate Limits
+- 14 sources checked, all ready, 0% utilization ✓
+
+### Notes
+- Tier-1 pass clean. All known stale items (news, BCTC via VPS-SOCAT-PERSIST) already tracked; not raised as new.
+- mcp-server memory 77.95% is healthy (< 85% threshold per brief); restart_count=1 OK.
+
 ## c002 · 2026-06-01T03:38Z
 ### Audit Run Tier-1 (03:37–03:38 UTC 2026-06-01)
 - Tier: 1 | Services checked: 2 (intended runtime) | Sources checked: 7 | DB checks: 0
