@@ -8,26 +8,35 @@
   "poVerdict": "APPROVE-WITH-CONDITIONS",
   "poVerdictAt": "2026-06-01T21:11:41Z",
   "poVerdictRecordedIn": "docs/architecture-briefs/2026-06-01-agent-self-critique-detect-source.md §11",
-  "blockedOn": "operator-greenlight",
+  "operatorGreenlight": "APPROVE (2026-06-01)",
   "conditions": ["C1 shadow-pilot-mandatory-not-skip-to-fleet", "C2 T2-watch-overreport", "C3 daily-cap-tiebreak-explicit", "C4 name-live-FIVE-field-gate-incl-C-3", "C5 verify-commit-batching-no-dash-A"],
-  "implementationStatus": "PHASE-1-DONE",
+  "implementationStatus": "PHASE-1-COMPLETE-SHADOW-LIVE",
   "implementedAt": "2026-06-01",
   "implementedBy": "agent-father",
   "filesChanged": [
     ".claude/skills/cowork-end-cycle/SKILL.md",
     "docs/agents/dev-team/flow/post-cycle.md",
-    ".claude/skills/self-critique/SKILL.md"
+    ".claude/skills/self-critique/SKILL.md",
+    "docs/agents/po/flow/triage-signals.md"
   ],
-  "lineCounts": {
-    ".claude/skills/cowork-end-cycle/SKILL.md": 15,
-    "docs/agents/dev-team/flow/post-cycle.md": 76,
-    ".claude/skills/self-critique/SKILL.md": 103
+  "commits": {
+    "39639d2b": "Phase-1 impl — DETECT skill + end-of-cycle hooks (EDIT-1/2/3)",
+    "7818b4d4": "C1 pilot-scope allowlist gate at SC-0 {news-scout,dev-team}",
+    "92f52421": "C1 PO-side shadow-no-dispatch branch in triage-signals.md line 17 (+ brief §8 back-pointer, + committed dangling PO §11 verdict)"
   },
-  "conditionsFolded": {
-    "C3": "SC-0 tie-break: lowest T-code wins (T1<T2<T3<T4<T5) — deterministic, stated in SKILL.md",
-    "C4": "SC-2 explicitly names C-3 check (Lane-C-in-disguise) as the live fifth PO gate field, citing triage-signals.md line 17",
-    "C5": "SC-5 uses commit-mutex + explicit own_paths only; -A/. forbidden; half-stage guard on error — PENDING QA verification"
+  "conditionsClosed": {
+    "C1": "TWO halves both closed: (a) self-critique SC-0 pilot-scope gate — only news-scout+dev-team run, all other cowork agents exit silently; (b) PO triage shadow branch — Created-by ∈ {news-scout,dev-team} → full critique + verdict but ZERO dispatch (LANE-A signal + LANE-B batch suppressed), shadow-log + WORK telegram. QA PASS on (a); router-raw-verified on (b).",
+    "C2": "Operational watch-item carried into the 14-day pilot — T2 over-report >50% of a flow's false-positives → tighten/drop before promote. No code.",
+    "C3": "SC-0 deterministic tie-break (lowest T-code wins T1<T2<T3<T4<T5). QA PASS.",
+    "C4": "SC-2 names the live FIVE-field gate incl. C-3 (Lane-C-in-disguise), cites triage-signals.md line 17. QA PASS.",
+    "C5": "SC-5 commit-mutex + explicit own_paths only; never -A/.; release-on-error, no half-stage. QA PASS (commit-mutex contract owner_agent/ttl_seconds:60 confirmed)."
   },
-  "nextStep": "QA must verify C5: commit batching cannot fall back to -A/. and cannot half-stage the index. THEN shadow pilot may be armed (news-scout + dev-team post-cycle, 14 days, per §8). Do NOT start shadow pilot before QA C5 pass.",
-  "notes": "C1 (pilot mandatory) and C2 (T2 watch) are operational pilot conditions — carried into shadow pilot, not code changes. Phase 2 = promote/kill decision after 14-day pilot per §8 criteria."
+  "qa": {
+    "verdict": "PASS",
+    "report": "reports/TASK_REPORT_SELF-CRITIQUE-QA.md",
+    "covered": ["C1-pilot-scope-gate", "C5-commit-safety", "S1-S5"],
+    "note": "PO shadow branch (C1 second half) added AFTER this QA round; router-raw-verified (additive branch, ELSE preserves normal dispatch verbatim)."
+  },
+  "nextStep": "Shadow pilot is LIVE (passive — activates on next news-scout cowork cycle + next dev-team post-cycle). Window: 14 calendar days from 2026-06-01 → ~2026-06-15. During window: PO logs would-be verdicts in each IMP doc + WORK telegram, NO dispatch. After window: PO runs §8 promote/kill assessment (signal rate, lane distribution, would-approve rate, false-positive rate) → returns promote/kill recommendation to operator. Phase-2 (fleet-wide) requires a SEPARATE operator greenlight; on promote, remove the SC-0 pilot gate + the triage shadow branch.",
+  "notes": "All 5 PO conditions closed. Pilot is genuinely shadow: PLAN-ONLY skill (writes DRAFT only) + pilot-scope gate + PO no-dispatch branch. Kill path (§8): delete Step 4 from cowork-end-cycle/SKILL.md, the post-cycle.md pointer, the SC-0 pilot gate, the triage shadow branch; archive self-critique/SKILL.md. Zero new cron/agent/Docker — host-budget unchanged (project_host_memory_panic clear)."
 }
