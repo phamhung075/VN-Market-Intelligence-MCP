@@ -1,4 +1,4 @@
-<!-- size-justification: 280L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline 12L) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). -->
+<!-- size-justification: 295L — thin orchestration dispatcher; JUMP-TO table + Steps 0a (sub-flow) + 0b session-gate (inline, expanded for v2 head-only read + legacy v1 fallback) + 1 PO triage (inline 5L) + 2 planning matrix + 3/4 sub-flow pointers + invariants. PREFLIGHT expanded c57: T1 lsof capture, T2 lock-size logging, T5 worktree prune, T6 24h expiry sweep. c59-T2 F4 retry ref (+2L). Steps 0b/1/2 too small to extract; sub-flows absorb Steps 0a/3/4. c-obs: cron-start announce + start_epoch for elapsed tracking (+5L). Team Boundary expanded 2026-05-31: full 5-lane taxonomy + mutex-wrap pseudocode for on-demand maintenance/cowork spawns (+24L). PREFLIGHT self-arm cron-detect-loop skill pointer (+3L, -3L T1-future-comment = net 0). Step 0b expanded: pipeline-state v2 head-only read + legacy v1 fallback + narrative lazy-load contract (+12L). -->
 # Dev Team — Cron Orchestration Flow (Thin Dispatcher)
 
 ## Team Boundary (Sprint 2026-05-31 — expanded)
@@ -148,29 +148,41 @@ If empty AND TASKS.md empty AND no Telegram reports → JUMP TO `session-gate`.
 <!-- jump:pipeline-resume -->
 ## Step 0b — Pipeline Resume + Session Gate
 
-- `in_progress` AND `nextAgent` AND `updatedAt < 24h` → dispatcher-wrap then spawn `nextAgent`. JUMP TO `execute`.
+Read ONLY `head` block from `docs/pipeline-state.json` for routing (~150 tokens):
+```
+head.status       → routing enum: "idle" | "in_progress" | "blocked" | "stale"
+head.active_task_id → claim key for dispatcher-wrap mutex
+head.next_agent   → kebab-case agent id to resume
+head.next_action  → ≤20-word spawn prompt suffix (no prose parsing)
+head.updated_at   → staleness check
+```
+`narrative.*` block is lazy-loaded only on explicit human-facing resume request — do NOT read at cold start.
+
+**v1 pipeline-state.json (no `head` key):** read `status`/`activeTaskId`/`nextAgent`/`updatedAt` fields directly (legacy prose fields). Self-heal to v2 on next write (first writer detects `_schema` absent and writes v2).
+
+- `head.status == "in_progress"` AND `head.next_agent` non-null AND `head.updated_at < 24h` → dispatcher-wrap then spawn `head.next_agent`. JUMP TO `execute`.
   ```
   # S2 dispatcher-wrap:
-  bare_task_id = pipeline_state.activeTaskId   # read from docs/pipeline-state.json
+  bare_task_id = head.active_task_id   # from docs/pipeline-state.json head block
   resume_key   = "task:" + bare_task_id
   outer_claim  = call_tool(server="vn-market", tool="task_claim", arguments={
     task_id: resume_key, task_kind: "sprint-task",
     owner_agent: "dev-team", ttl_seconds: 3600,
-    payload: '{"site":"S2","spawning":"' + nextAgent + '"}'
+    payload: '{"site":"S2","spawning":"' + head.next_agent + '"}'
   })
   if not outer_claim.claimed:
     log "[dev-team] SKIP pipeline resume " + resume_key + " — held by peer session"
     # fall through to Step 1 (do NOT spawn)
   else:
     try:
-      Agent(nextAgent, context...)
+      Agent(head.next_agent, context... + head.next_action)
     finally:
       call_tool(server="vn-market", tool="task_release", arguments={ task_id: resume_key })
       # ok=false is acceptable (TTL expired or inner self-claim already released)
     JUMP TO execute
   ```
-- `in_progress` AND `updatedAt ≥ 24h` → stale crash, reset to `"idle"`. Fall through to Step 1.
-- `"idle"` or missing → fall through to Step 1.
+- `head.status == "in_progress"` AND `head.updated_at ≥ 24h` → stale crash, reset `head.status` to `"idle"`. Fall through to Step 1.
+- `head.status == "idle"` or `head` missing or v1 schema → fall through to Step 1.
 
 <!-- jump:session-gate -->
 **Session Gate:** TASKS.md empty AND no Telegram reports AND `pendingSignals` empty → `send_telegram(work, "Dev loop idle.")` → JUMP TO `end`.

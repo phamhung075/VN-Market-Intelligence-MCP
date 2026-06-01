@@ -42,6 +42,25 @@ For each NEW row:
 
 If DASHBOARD.md missing or no dev-team section → log "[dev-team] dashboard skip" and continue. Never fail-loud.
 
+**0a-D-PRUNE — MANDATORY prune after DASHBOARD row consumption:**
+
+After all NEW rows from 0a-D are marked READ:
+```
+1. Remove all rows where status = DONE (immediate)
+   Archive each pruned row to docs/signals/DASHBOARD_ARCHIVE.md:
+   | {id} | {ts} | {from} | {type} | pruned:{ISO-now} |
+2. Remove all rows where status = READ AND ts < now() - 48h
+   Archive each pruned row to DASHBOARD_ARCHIVE.md (same format)
+3. Cap _Updated: header to ONE line:
+   _Updated: {ISO-now} — dev-team {≤8-word tick summary}_
+4. Update dashboard_section_cache in docs/pipeline-state.json:
+   {section_name: "po", start_line: <current po section start>, last_mtime: <new mtime>, last_linecount: <new linecount>}
+5. Commit: git add docs/signals/DASHBOARD.md docs/signals/DASHBOARD_ARCHIVE.md
+           git commit -m "chore(signals): drain + prune {ts}"
+```
+NEW rows are NEVER pruned. DASHBOARD_ARCHIVE.md is append-only (never read back for routing).
+Skip prune gracefully if DASHBOARD.md was missing/skipped in 0a-D.
+
 ---
 
 **0a-0 — Open signals.db:**

@@ -1,46 +1,50 @@
 {
+  "_schema": "v2",
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "IDLE (dev-team :07 ON-DEMAND run 2026-06-01T08:09Z, Monday, VN market OPEN ~close). PREFLIGHT clean. Drained 4 cowork-fire silent heartbeats; 0 telegram; DASHBOARD git-clean (5 NEW = known-stale P2-*/1967b breadcrumbs). Chef PARTIALLY-VERIFIED-LIVE reinforced: a new intraday section landed since 07:09 (git +72L) with the same healthy pattern (get_cycle_bootstrap, zero self-abort, clean silent-exit). NEW low-pri bug caught via verify-raw: chef telemetry mis-stamps cycle timestamps (a section written AFTER 07:09 self-labels 'intraday 02:13 UTC'; all sections repeat 'Next morning 06-03 (Monday)' but 06-03 is Wednesday). LOW severity — cron schedule + publish logic unaffected, only human-readable cycle-time/next-slot strings wrong. Tracked as CHEF-TS-STAMP FU (fold into chef bucket); NOT acted (single instance, cosmetic, WIP/gateway discipline); WATCH next tick for pattern. WIP 0/2.",
-  "currentSprint": "No code (apps/<service>/) sprint dispatched — both closes were maintenance/agent-system lanes (claude-manager-helper + agent-father), executed + router-raw-verified. Open durable fixes: NB-PRUNE-FIX/NB-BLOAT-FLOW-OVERWRITE (now widened: within-section trimming + per-flow prune-invocation audit) and a new non-blocking architect FU (chef.md 258L > 120L flow cap → extract Steps 6/6.5/7 to chef-write-dish.md).",
-  "activeTaskId": "NONE — chef-hardening PARTIALLY-VERIFIED-LIVE this tick (intraday path proven clean; only guaranteed-morning-floor pending next morning slot). No code sprint in flight.",
-  "nextAgent": "dev-team :07 dispatcher next tick. WATCH (narrowed): next MORNING chef cron fire (chef computes 06-03; or tomorrow 06-02 05:23 if a morning slot is due) to confirm the GUARANTEED-publish degraded-dish-floor under macro-down — the only residual; intraday silent-exit + no-self-abort + graceful-degradation ALREADY verified live this tick. Pickable-if-WIP-permits: NB-BLOAT-FLOW-OVERWRITE (developer + architect/agent-father); CHEF-FLOW-CAP-REFACTOR (architect, NEW non-blocking FU); SSC-IBOARD-MIGRATE (dev-vps-crawls); SELF-IMPROVE-GATE X-1; BCTC-LAYOUT-FIRST LF-EXTRACT; CHEF-ATTN. TSH-1 only if spawned-agent gateway wedge confirmed cleared.",
-  "nextPrompt": "Chef morning-dish no-publish was hardened this tick (agent-father: get_cycle_bootstrap signals, non-blocking macro/hexagram degradation, no_self_abort teeth + degraded-dish floor; get_portfolio_conviction confirmed live as per-ticker hexagram source). VERIFY on next chef cron fire that a dish actually publishes under macro-down. Context-bloat remains the recurring theme: NB-PRUNE-1 anchor-fix did NOT propagate (news-scout grew to 6 sections) and 3 notebooks can't reach cap via last-3 prune — NB-BLOAT-FLOW-OVERWRITE scope widened (TASKS.md L59). New non-blocking architect FU: chef.md 258L>120L cap. Equal-priority backlog unchanged: SSC-IBOARD-MIGRATE; SELF-IMPROVE-GATE X-1; BCTC-LAYOUT-FIRST; CHEF-ATTN. Hygiene still open: DUPLICATE main-server socat PIDs (1551+19389) → fold into VPS-SOCAT-PERSIST.",
+
+  "head": {
+    "status":         "idle",
+    "active_task_id": null,
+    "next_agent":     null,
+    "next_action":    "dev-team :07 cold start — drain signals then PO triage",
+    "wip":            0,
+    "wip_max":        2,
+    "updated_at":     "2026-06-01T08:09:00Z",
+    "updated_by":     "dev-team"
+  },
+
+  "dashboard_section_cache": {
+    "section_name":   "po",
+    "start_line":     8,
+    "last_mtime":     "2026-06-01T08:09:00Z",
+    "last_linecount": 224
+  },
+
+  "narrative": {
+    "_cap": "≤30 lines total — prune oldest on overflow",
+    "current_sprint":  null,
+    "last_closed":     "cow-CHEF-MORNING-NOPUBLISH: unified-agent chef.md hardened (no_self_abort, get_cycle_bootstrap signals, get_portfolio_conviction hexagram source, degraded-dish floor). DONE-PENDING-LIVE-VERIFY next chef fire.",
+    "watch_items": [
+      "CHEF morning-dish: verify guaranteed publish under macro-down on next fire",
+      "CHEF-TS-STAMP (LOW cosmetic): cycle-timestamp + next-slot-date mis-stamp; watch next tick",
+      "ops 275L / dev-alert-engine 389L / dev-rag-service 223L still >cap (NB-PRUNE-FIX scope)"
+    ],
+    "open_sprints": [
+      "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE: within-section trimming + per-flow prune-invocation audit",
+      "CHEF-FLOW-CAP-REFACTOR: chef.md 258L > 120L cap; extract Steps 6/6.5/7 to chef-write-dish.md",
+      "CHEF-TS-STAMP: cosmetic telemetry bug; confirm pattern before dispatch",
+      "SSC-IBOARD-MIGRATE: replacement-source recon for dead iboard financial source",
+      "TOOL-SURFACE-HYGIENE: TSH-1 deregister get_market_hexagram after gateway wedge cleared",
+      "BCTC-LAYOUT-FIRST: Phase 0 READY — LF-EXTRACT/LF-OVERLAY",
+      "SELF-IMPROVE-GATE: X-1 synthetic dry-run",
+      "CHEF-ATTN: READY",
+      "ENV-ISOLATION-P2: gate RELEASED, unscheduled"
+    ],
+    "backlogs": "FLEET-HOST-SAFETY (AUD-ND-1/DRAIN-INJECTION-SAFE/A-01-EXPECTED-SET/AUDITOR-SLA-CADENCE/VPS-SOCAT-PERSIST) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures"
+  },
+
   "session_handoff_status": {
     "cleared": "2026-05-31T00:33Z — prior parallel-session zone-ownership directive obsolete. Dispatch apps/mcp-server + apps/pdf-extractor normally, WIP<=2 + zone-isolation between concurrent tasks.",
     "does_not_consume_wip": true
-  },
-  "last_closed": {
-    "task": "cow-CHEF-MORNING-NOPUBLISH — chef guaranteed-dish no-self-abort + graceful-degradation hardening",
-    "outcome": "HARDENED+RAW-VERIFIED (DONE-PENDING-LIVE-VERIFY next chef fire)",
-    "closed_at": "2026-06-01T05:31Z",
-    "lane": "agent-father (maintenance; mutex task:on-demand:agent-father:20260601)",
-    "evidence": "Edited unified-agent/init.md (no_self_abort teeth: BLOCKERS/'would you like me to' forbidden, names degraded-dish floor) + flow/chef.md (Step 0 signals via get_cycle_bootstrap, get_market_hexagram/get_macro_snapshot now OPTIONAL non-blocking, Step 5 hexagram source get_kinhdich_reading→get_portfolio_conviction, +degraded-dish-floor paragraph). Router VERIFIED the swap LIVE: get_portfolio_conviction(FPT)=Kiển(39)/BAN with biến-quẻ+độ-tin-cậy — real per-ticker hexagram source, confirms feedback_chef_kinhdich_confab. chef.md 255→258L (already >120 cap pre-edit; FU to architect).",
-    "_prior_closed": {
-      "task": "context_bloat_breach (news-scout.md 221L) + opportunistic 4-notebook sweep",
-      "outcome": "PRUNED+VERIFIED (live, git-safe)",
-      "closed_at": "2026-06-01T05:20Z",
-      "lane": "maintenance (claude-manager-helper; mutex task:on-demand:claude-manager-helper:20260601)",
-      "evidence": "news-scout 221→98, bctc-analyst 218→124, qa 243→63, agents-architect 326→37, ops 5914→275 (last-3 retained). HEAD line counts confirm dropped sections git-recoverable (ops HEAD=5914). RESIDUAL >cap (router raw-verified, contra agent 'all under cap'): ops 275 / dev-alert-engine 389 / dev-rag-service 223. Evidence + AC-widen appended TASKS.md L59 (Sprint NB-PRUNE-FIX).",
-      "_prior_closed": {
-        "task": "VPS-PROXY-RESTORE (Fix1 vn-foreign-flow env + Fix3 vps-proxy TasksMax)",
-        "outcome": "APPLIED+VERIFIED (live)",
-        "closed_at": "2026-06-01T04:40Z",
-        "lane": "ops (ops-vps-fetch, SSH; gateway-independent)"
-      }
-    }
-  },
-  "open_sprints_idle": [
-    "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE (developer + architect/agent-father — recurring context_bloat_breach; scope widened 2026-06-01: within-section trimming + per-flow prune-invocation audit; ops/dev-alert-engine/dev-rag-service can't reach cap via last-3 prune)",
-    "CHEF-FLOW-CAP-REFACTOR (architect, NEW non-blocking 2026-06-01 — chef.md 258L > 120L flow cap; extract Steps 6/6.5/7 to chef-write-dish.md lazy-load child)",
-    "CHEF-TS-STAMP (LOW non-blocking 2026-06-01T08:09Z — chef cycle-timestamp + next-slot-date annotation bug: section written post-07:09 self-labels '02:13 UTC'; 'Next morning 06-03 (Monday)' but 06-03=Wednesday. Cosmetic/telemetry only; cron+publish unaffected. Confirm pattern before dispatch; fold into chef FU bucket)",
-    "SSC-IBOARD-MIGRATE (dev-vps-crawls — SSC iboard financial source permanently gone, replacement-source recon; MED)",
-    "TOOL-SURFACE-HYGIENE (TSH-1 deregister get_market_hexagram — verify spawned-agent gateway wedge cleared first; TSH-5 waits on TSH-1 rebuild)",
-    "BCTC-LAYOUT-FIRST (Phase 0 READY — LF-EXTRACT/LF-OVERLAY; persistence DE-RISKED)",
-    "SELF-IMPROVE-GATE (X-1 synthetic dry-run; apps/mcp-server)",
-    "CHEF-ATTN (READY; apps/mcp-server)",
-    "ENV-ISOLATION-P2 (gate RELEASED, unscheduled)"
-  ],
-  "backlogs": "FLEET-HOST-SAFETY (AUD-ND-1 / DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE / VPS-SOCAT-PERSIST) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures.",
-  "updatedAt": "2026-06-01T08:09:00Z",
-  "updatedBy": "dev-team :07 ON-DEMAND run 2026-06-01T08:09Z. Drained 4 cowork-fire heartbeats; 0 telegram; DASHBOARD git-clean. Chef PARTIALLY-VERIFIED-LIVE reinforced by a new healthy intraday section. Caught NEW low-pri CHEF-TS-STAMP bug (cycle-timestamp + next-slot-date mis-stamp; cosmetic, cron/publish unaffected) — tracked, not acted (single instance), watch next tick. WIP 0/2."
+  }
 }
