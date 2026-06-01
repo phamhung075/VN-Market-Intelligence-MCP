@@ -1,5 +1,19 @@
 # PO Notebook
 
+## 2026-06-01T20:43Z — SCOPE FRONTEND-BCTC-TAB (operator: BCTC viewer as :3001 dashboard tab)
+
+Operator: "need move this page to new tab on localhost:3001". Router pre-verified "this page" = BCTC inspect viewer served ONLY by mcp-server `:3000/api/bctc-inspect` (`bctc-inspector.html`, 6 tabs + human-confirm + Task#18 prose fix a10448b0 closed today). Want it as a tab in the Remix dashboard on :3001.
+
+**DECISION (raw-verified, not relayed):** Option **A — EMBED via A2 frontend server-side PROXY route**. NOT iframe-direct (A1), NOT native re-port (B).
+- Raw evidence I checked myself: viewer is one self-contained 2692L HTML, all JS inline, **`const BASE = ""` (L1043)** → ALL data calls (`/api/bctc-inspect/*`: page-window/table/md/zones/docs + hc-correct/confirm/reset POSTs) are same-origin relative. Frontend already has the proxy convention (`app/lib/api/bctc-eval-client.ts` uses `MCP_SERVER_BASE_URL`=`http://mcp-server:3000`) + simple `NAV_ITEMS` array in `dashboard.tsx`.
+- A2 proxies HTML + `/api/bctc-inspect/*` through Remix → everything same-origin on :3001 → `BASE=""` untouched + env-agnostic (dev vs CF-tunnel prod). A1 hardcodes a browser-reachable :3000 host = fragile. B = re-implement 6 tabs+human-confirm+today's prose fix = regression surface. **ZERO mcp-server edit** in all variants.
+- Why architect FIRST (thin brief, not skip): A1-vs-A2 + the proxy-path contract (which sub-paths incl. POST human-confirm + PDF page-window streaming + content-type passthrough) + iframe-vs-inline-render is a real bounded design call. One page, no impl.
+
+**Opened sprint FRONTEND-BCTC-TAB (MEDIUM, zone `apps/frontend/` only):** FBT-ARCH (brief) → FBT-DEV (route `dashboard.bctc-inspect.tsx` + proxy resource route + NAV_ITEMS entry) → FBT-QA (live: tab loads all 6 tabs + ≥1 human-confirm round-trip; :3000 byte-for-byte unregressed) → FBT-OPS (REBUILD frontend down→build→up, never restart-stale).
+**SERIALIZE NOTE:** VPS-DEPLOY-PLACEHOLDER-GUARD already CLOSED today; if any VPS/mcp-server work re-opens, serialize COMMITS (shared git index) — disjoint zone so no tree collision.
+
+**Dispatch:** po→agents-architect (FBT-ARCH) → dev-frontend (FBT-DEV) → qa (FBT-QA) → ops (FBT-OPS).
+
 ## 2026-06-01T17:35Z — INTAKE router-found MCP defects A–E → MCP-SURFACE-GAPS + bumped AUD-ND-1
 
 Router handed 5 router-verified MCP defects. I re-confirmed A/B/C/D LIVE via gateway myself (raw, not relayed):
