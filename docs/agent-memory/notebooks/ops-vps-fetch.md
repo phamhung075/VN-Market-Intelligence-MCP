@@ -97,6 +97,24 @@ Recon docs: docs/vps-sources/cafef-article-body/recon.md + docs/vps-sources/vnec
 
 ---
 
+## c003 · 2026-06-01T10:09Z
+
+Trigger: dev-team :07 tick — verify VPS-NEWS-CAFEF-VNECO sprint (b99bf783) in production.
+
+**FU-OPS-CAFEF-1 — is_blocked() fix holding: PASS**
+- Inspected 6 consecutive cycles in /var/log/vn-news-fetch.log (cycles 1696–1700 + boot runs).
+- cafef-market and cafef-biz: 20 items per cycle in every cycle inspected. Zero occurrences of PERMANENTLY_BLOCKED anywhere in the 264-line log. Zero is_blocked() false-positive hits on cafef.
+- The updated is_blocked() function matches only CF-structural patterns (Just a moment / Checking your browser / challenge-platform / _cf_chl_ / Attention Required CF title / HTTP 403/429/000) — no bare keyword matching.
+- Separate anomaly: MCP push is failing every cycle (http=000) — this is the known socat/api-gateway :4000→:3000 issue (VPS-SOCAT-PERSIST), unrelated to the cafef fix.
+- cursor_epoch=0 every cycle — cursor file is missing. Items re-pushed every 15 min with no dedup. This is a separate bug, not in scope for this sprint.
+
+**FU-OPS-CAFEF-2 — bs4 path: FAIL (regex fallback active)**
+- pip3 show beautifulsoup4 → Package(s) not found. python3 -c 'import bs4' → ModuleNotFoundError.
+- article-body-fetcher.py deployed at /root/article-body-fetcher.py (VPS-NEWS-CAFEF-VNECO sprint). Code confirmed: `try: from bs4 import BeautifulSoup except ImportError: BeautifulSoup = None`. Since bs4=None, both extract_cafef() and extract_vneconomy() fall through to the regex path, which hard-caps output at 5000 chars instead of the 8000-char bs4 path.
+- /proxy/article-body endpoint exists via vn-vps-proxy.service (vps-proxy-server.js). Confirmed service running.
+
+**Follow-up required:** Install beautifulsoup4 on VPS to activate the primary extraction path. `pip3 install beautifulsoup4` is sufficient (requests already installed — article-body-fetcher.py imported it successfully). Track as VPS-BS4-INSTALL.
+
 ## c001 · 2026-06-01T11:38Z
 
 Trigger: operator-directed safe-recovery fixes (3 scoped items). Market hours active (~04:4xZ Mon).
