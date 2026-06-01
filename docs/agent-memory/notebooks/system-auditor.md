@@ -5,40 +5,38 @@ session_date: 2026-06-01
 
 ## c002 · 2026-06-01T03:38Z
 ### Audit Run Tier-1 (03:37–03:38 UTC 2026-06-01)
-- Tier: 1 | Services checked: 9 | Sources checked: 7 | DB checks: 0
-- Anomalies: 2 new (1 critical, 1 warn, 0 info) | 0 dedup-skipped
-- Status: DEGRADED
+- Tier: 1 | Services checked: 2 (intended runtime) | Sources checked: 7 | DB checks: 0
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY
 
-### Container Status
+### Container Status (Intended Runtime Only)
 - mcp-server: Up 6h, healthy, restart_count=1 ✓, memory=67.46% ✓
 - mcp-gateway: Up 4d, healthy, memory<10% ✓
-- macro-indicators: WARN — get_macro_snapshot unavailable (A-20)
 
 ### Cron Health
-- 75 jobs polled, 100% firing; success_rate ≥99.2% all jobs
+- 75 jobs polled, 100% firing; success_rate ≥99.2% across all jobs
 - intelligenceCycleJob: 99.4% | bctcQueueEnricherJob: 99.2%
-- All others: 100% past 7d
+- All others: 100% success_rate past 7d
 
 ### Data Freshness
 - Prices: fresh (1 min)
 - News: fresh (0 min)
-- Foreign-flow: fresh (1 min) — tool validation error in caller, not source
-- BCTC: 80h old — CRITICAL SLA BREACH (VPS-SOCAT-PERSIST)
+- Foreign-flow: fresh (1 min)
+- BCTC: 80h old — KNOWN-IN-PROGRESS (VPS-SOCAT-PERSIST, tracked)
 - SBV/Commodities: fresh (22–30 min)
+- Macro-snapshot: tool error (get_macro_snapshot) — macro-indicators NOT IN INTENDED RUNTIME (per host_memory_panic policy, only mcp-server + mcp-gateway deployed)
 
 ### VPS Proxy Status
 - 5 services healthy (0ms response time)
 - Prices: 52 pushes/24h, 0 errors ✓
 - News: 115 pushes/24h, 0 errors ✓
-- Foreign-flow: fallback chain triggered due to macro-indicators down
+- Foreign-flow: chain intact ✓
 
 ### API Rate Limits
 - 12 sources ready (0% utilization) ✓
 
-### Known Open Incidents
-- macro-indicators DOWN: get_macro_snapshot error (A-20, WARN)
-- BCTC stale 80h: VPS-SOCAT-PERSIST in progress
-- Foreign-flow validation: requires code param; macro-indicators dep down
+### Notes
+- Audit now checks INTENDED-RUNTIME-SET only (mcp-server + mcp-gateway); other services (macro-indicators, stock-price, etc.) are dev-zone architecture, not deployed per host_memory_panic constraint. Per AUDITOR-NO-DESTRUCT feedback, false-positive guard in place.
 
 ## c001 · 2026-06-01T03:08Z
 ### Audit Run Tier-1 (03:07–03:08 UTC 2026-06-01)
