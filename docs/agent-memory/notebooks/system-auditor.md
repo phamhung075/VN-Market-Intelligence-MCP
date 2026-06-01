@@ -3,7 +3,77 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
-## Audit Run Tier-2 (02:30–02:31 UTC 2026-06-01)
+## Audit Run Tier-1 (02:37–02:40 UTC 2026-06-01)
+
+- Tier: 1 | Runtime ping: container liveness + health + cron fire
+- Market status: OPEN (Monday 09:37 VN, within M–F 02:00–08:59 UTC window)
+- Wall time: ~65s (under 120s target)
+
+### Container Status (A-01, A-02)
+- mcp-server: Up 5h, healthy ✓
+  - /health: HTTP 200 ✓
+  - restart_count: 1 ≤ 2 ✓
+  - memory: 56.50% < 85% ✓
+- mcp-gateway: Up 4d, healthy ✓
+  - /health: HTTP 200 ✓
+  - memory: <10% ✓
+
+### Health Endpoints (A-12, A-13)
+- mcp-server:3000/health: PASS
+- mcp-gateway:4040/health: PASS
+
+### MCP System Status (via gateway)
+- Circuit breakers: 16/16 green (0 failures, 0 half-open)
+- cron success_rate: 99%+ median
+  - intelligenceCycleJob: 99.4%
+  - bctcQueueEnricherJob: 99.2%
+  - vnstockFundamentalsRefresh: RUNNING (OK)
+  - No jobs with success_rate < 80%
+
+### Database
+- market.db: 206.29 MB
+- WAL: 6.40 MB < 50MB (healthy)
+- PRAGMA integrity_check: (not checked in Tier-1 — Tier-3 only)
+
+### Data Freshness (Tier-1 snapshot for reference)
+- Prices (HOSE): 2 min old (fresh)
+- News: 7 min old (fresh)
+- Commodities: 22 min old (fresh)
+- SBV FX: 22 min old (fresh)
+- BCTC: 79.2h old (stale — expected, outside earnings window)
+
+### VPS Proxy Status (from MCP cache)
+**KNOWN-IN-PROGRESS incident: VPS degraded**
+- prices: stale (65.5h, last push 2026-05-29 08:59)
+- news: OK (last push 2026-06-01 02:30)
+- sbv: OK (last push 2026-06-01 02:08)
+- bctc: stale (571h = 13d, last push 2026-05-19 07:05)
+
+This is the same VPS proxy infrastructure issue reported in Tier-2 run. Router has ALREADY confirmed via raw VPS health probe and dispatched ops to recover.
+
+### Anomalies Detected
+**NONE NEW in Tier-1.** All 2 deployed services healthy. Cron fire gaps: 0. VPS staleness is KNOWN-IN-PROGRESS (not flagged as new).
+
+### Dedup Check (7-day window)
+No new anomalies → no BUG alert emitted.
+
+### Status: HEALTHY
+- Tier-1 runtime: fully operational
+- 2 services up, health endpoints 200
+- Cron jobs firing normally
+- No new infrastructure anomalies
+
+### Next Steps
+- VPS proxy recovery ongoing (ops team)
+- No developer action needed
+- Tier-2 freshness sweep: next 02:00 UTC (in 22h)
+- Tier-3 deep DB integrity: next 02:00 UTC (in 22h)
+
+---
+
+## Previous Audit Runs
+
+### Audit Run Tier-2 (02:30–02:31 UTC 2026-06-01)
 
 - Tier: 2 | Freshness sweep + VPS health check
 - Market status: OPEN (Monday 09:30 VN time, within M–F 02:00–08:59 UTC window)
@@ -81,8 +151,6 @@ Sent to BUG channel (message_id: 2640) with all 4 critical findings.
 - Tier-3 deep integrity check scheduled for next daily 02:00 UTC (if anomaly not cleared by then)
 
 ---
-
-## Previous Audit Runs
 
 ### Audit Run Tier-1 (02:07–02:09 UTC 2026-06-01)
 
