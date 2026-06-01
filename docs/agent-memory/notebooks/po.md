@@ -1,5 +1,13 @@
 # PO Notebook
 
+## 2026-06-01T21:06Z — EXIT FRONTEND-BCTC-TAB — APPROVE, sprint CLOSED (38642fc2)
+
+**Verdict: APPROVE.** BCTC Inspect viewer now a dashboard tab on :3001 via A2 server-side proxy, ZERO mcp-server edits — operator request met with no regression surface.
+- Evidence raw-verified by me (not relayed): dev 80f2911b = frontend-only (+205L, 2 router-caught brief defects fixed pre-dev: /api prefix kept; 2nd /api/bctc-eval/* splat). QA 5046a7da APPROVED 5/5 — PDF 16.6MB + PNG 273KB MD5-identical :3001 vs :3000, 7 sub-paths parity, eval 200 parity, human-confirm POST round-trip proven via bun:sqlite DB read+reset, mcp-server img SHA distinct + :3000 still 200. Brief `…/2026-06-01-frontend-bctc-inspect-tab.md` present (A2 locked, affirms no mcp-server edit).
+- Closed sprint in TASKS.md (collapsed 8-line OPEN block → 1 closed-sprint line); pruned 77→69L (≤80 cap). task_release ok=false (TTL expired across sprint — acceptable per flow). EXIT commit 38642fc2.
+- DEFERRED/OUT-OF-SCOPE (recorded, NOT blocking): 13 docs lack rasterized PNG → page-image 404 on those (only FPT/ACB Q1 have PNGs) = pre-existing data-coverage gap, NOT a proxy bug. Tab label "BCTC Inspect" English for casing consistency.
+- No new follow-up sprint warranted; data-coverage PNG gap belongs to the BCTC rasterization pipeline, not this proxy.
+
 ## 2026-06-01T20:43Z — SCOPE FRONTEND-BCTC-TAB (operator: BCTC viewer as :3001 dashboard tab)
 
 Operator: "need move this page to new tab on localhost:3001". Router pre-verified "this page" = BCTC inspect viewer served ONLY by mcp-server `:3000/api/bctc-inspect` (`bctc-inspector.html`, 6 tabs + human-confirm + Task#18 prose fix a10448b0 closed today). Want it as a tab in the Remix dashboard on :3001.
