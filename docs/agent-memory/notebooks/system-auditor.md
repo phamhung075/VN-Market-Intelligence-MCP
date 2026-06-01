@@ -3,6 +3,74 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
+## Audit Run Tier-1 (03:07–03:08 UTC 2026-06-01)
+
+- Tier: 1 | Runtime ping: container liveness + health + restart count + memory
+- Market status: OPEN (Monday 10:07 VN, within M–F 02:00–08:59 UTC window)
+- Wall time: ~60s (under 120s target)
+
+### Container Status (A-01, A-02)
+- mcp-server: Up 6h, healthy ✓
+  - /health: HTTP 200, status=ok ✓
+  - restart_count: 1 ≤ 2 ✓
+  - memory: 67.46% < 85% ✓
+- mcp-gateway: Up 4d, healthy ✓
+  - /health: HTTP 200 ✓
+  - memory: <10% ✓
+
+### Health Endpoints (A-12, A-13)
+- mcp-server:3000/health: PASS (154 tools, 297 sessions)
+- mcp-gateway: PASS (proxy operational)
+
+### MCP System Status (via gateway)
+- Circuit breakers: 16/16 green (0 failures, 0 half-open) ✓
+- cron success_rate: 99%+ median, ALL jobs firing normally
+  - intelligenceCycleJob: 99.4% (539 runs, last 2026-06-01 02:45)
+  - bctcQueueEnricherJob: 99.2% (476 runs, last 2026-06-01 02:45)
+  - foreignFlowFetcherJob: 100% (1576 runs, last 2026-06-01 03:07)
+  - No jobs with success_rate < 80%
+  - No cron fire gaps detected (2x cadence check: PASS)
+
+### Database
+- market.db: 206.32 MB ✓
+- WAL: 9.47 MB < 50MB (healthy) ✓
+- PRAGMA integrity_check: (deferred to Tier-3)
+
+### Data Freshness (Tier-1 snapshot)
+- Prices (HOSE): 1 min old (fresh) ✓
+- News: 4 min old (fresh) ✓
+- Commodities: 22 min old (fresh) ✓
+- SBV FX: 22 min old (fresh) ✓
+- BCTC: 79.7h old (STALE — expected, outside earnings window, known incident)
+
+### VPS Proxy Status
+**KNOWN-IN-PROGRESS incident (ALREADY TRACKED):**
+- prices: stale (65.5h, last push 2026-05-29)
+- news: OK (last push 2026-06-01 03:03)
+- sbv: OK (last push 2026-06-01 02:38)
+- bctc: stale (571h = 13d, last push 2026-05-19)
+- foreign-flow: OK (last push 2026-06-01 03:07)
+
+VPS proxy infrastructure issue reported in prior Tier-2 run. Router already aware. No new anomalies.
+
+### Anomalies Detected
+**NONE NEW in Tier-1.** All 2 deployed services healthy. No cron gaps. Factory services (11) correctly NOT running.
+
+### Dedup Check (7-day window)
+No new anomalies → no BUG alert emitted.
+
+### Status: HEALTHY
+- Tier-1 runtime: fully operational
+- 2 services up, health endpoints 200
+- Cron jobs firing normally (73+)
+- No new infrastructure anomalies
+- Known VPS degradation does NOT trigger new CRITICAL (already tracked)
+
+### Summary
+Tier-1 PASS. Infrastructure stable. Proceed with Tier-2 and Tier-3 as scheduled.
+
+---
+
 ## Audit Run Tier-1 (02:37–02:40 UTC 2026-06-01)
 
 - Tier: 1 | Runtime ping: container liveness + health + cron fire
