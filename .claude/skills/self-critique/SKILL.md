@@ -12,7 +12,12 @@ PLAN-ONLY: may ONLY write a DRAFT proposal doc + DASHBOARD row.
 Zero auto-repair. Zero flow/agent/.md edits. Zero DB mutations. Zero spawned agents.
 If no trigger fires → skip silently. Write nothing.
 
-### Step SC-0 — Throttle gate (daily cap)
+### Step SC-0 — Pilot-scope gate + daily cap
+
+**C1 SHADOW-PILOT SCOPE (brief §8 SSOT — remove at Phase-2 promote decision):**
+If agent-id NOT IN {`news-scout`, `dev-team`} → log `"[self-critique] skip: agent <agent-id> outside C1 pilot scope"` → EXIT silently.
+This gate enforces PO condition C1 (brief §8): 14-day shadow pilot scoped to two flows only.
+Remove this gate when §8 promote criteria are met and PO authorises fleet-wide rollout.
 
 Glob `docs/improvement-proposals/IMP-<YYYYMMDD>-<agent-id>-*.md` (VN date, GMT+7).
 If any match → log `"[self-critique] skip: open proposal already exists for <agent-id> today"` → EXIT.
