@@ -11,6 +11,24 @@ Key milestones: cycle-159 BCTC-TRUST-RED APPROVED | cycle-157 AIT-QA APPROVED | 
 
 ---
 
+## cycle-178 · 2026-06-02 · T6-QA-GATE — VPS-DEPLOY-PLACEHOLDER-GUARD — FAIL (AC-6 blocked)
+
+Sprint: VPS-DEPLOY-PLACEHOLDER-GUARD | Task: T6-QA-GATE | Verdict: FAIL | Report: reports/TASK_REPORT_VPS-DEP-T6-QA-GATE.md
+
+ACs verified raw (7/8 PASS, 1 FAIL):
+AC-1 PASS: GUARD-1 pre-SCP fires non-zero on `__API_KEY__` injection; clean render exits 0. Real placeholders caught: `__MCP_BASE__`, `__API_KEY__`, `__TE_API_KEY__`. Post-deploy SSH verify (uppercase-only `__[A-Z][A-Z0-9_]*__`) does NOT flag Python `__name__`/`__main__`. Pre-SCP guards retain mixed-case (intentional: shell scripts only, no Python dunders in render path).
+AC-2 PASS: Deploy script pre-SCP guard confirmed before any $SCP in all 8 render blocks.
+AC-3 PASS: Live VPS injection `# __INJECTED_TEST__` → grep -rl detects /root/fetch-prices.sh → cleaned immediately.
+AC-4 PASS: `__TE_API_KEY__` sentinel at vps-scripts/fetch-tradingeconomics.sh L15 intact; empty-string expansion test passes GUARD-1.
+AC-5 PASS: deploy-vps-proxy.sh absent from git HEAD (git ls-tree + filesystem both clean).
+AC-6 FAIL: `.env` L10 comment-tombstone `# Vultr decommissioned 2026-04-13 — VULTR_IP / VULTR_USERNAME / VULTR_PASSWORD removed. Do not restore.` — literal `grep "VULTR_IP" .env` returns FOUND (exit 0). No active VULTR variable but AC criterion requires exit 1. Fix: remove the comment line from .env.
+AC-7 PASS: article-body-fetcher.py (-rwxr-xr-x 9365 bytes) + beautifulsoup4 4.14.3 confirmed live on VPS.
+AC-8 PASS: All 9 services active (systemctl is-active ×9); proxy HTTP 200; 5 service logs show successful push entries; no permanent http=000.
+
+Blocker: 1-line fix in .env (remove comment). Sprint NOT closeable until AC-6 resolved. Escalate to dev-vps-crawls.
+
+---
+
 ## cycle-176 · 2026-06-01 · PLACEHOLDER-GUARD-QA — VPS-DEPLOY-PLACEHOLDER-GUARD — APPROVED
 
 Sprint: VPS-DEPLOY-PLACEHOLDER-GUARD | Task: PLACEHOLDER-GUARD-QA | Verdict: APPROVED (LOCAL GATE)
