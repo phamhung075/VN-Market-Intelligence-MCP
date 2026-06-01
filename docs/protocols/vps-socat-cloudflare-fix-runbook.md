@@ -3,7 +3,9 @@
 **Document Date:** 2026-06-01  
 **Urgency:** Medium (fragile, silent failure risk on Mac reboot)  
 **Operator Audience:** Cloudflare Zero Trust dashboard admin  
-**Current Status:** socat bridge LIVE (`:4000 → :3000`), temporary but UNSUPERVISED  
+**Current Status:** ✅ APPLIED & PROVEN 2026-06-01 — operator repointed `/api → http://localhost:3000`; VPS push endpoints (push-prices/news/sbv-rates/foreign-flow) verified 200 end-to-end through the tunnel direct to mcp-server `:3000`. socat (`:4000→:3000`) RETAINED under launchd as a fallback until Tuesday market-open confirms live VPS flow, then to be disabled.
+
+> ⚠️ **CORRECTION (read before re-running):** An earlier draft of this runbook told operators to change the `/gateway` rule from `:4040` → `:4000`. **That is WRONG and dangerous** — `:4040` is the live, healthy `mcp-gateway` container (verified `docker ps`). Changing it BREAKS the gateway. **Leave `/gateway → http://localhost:4040` untouched.** Also: `/api` already EXISTS in the dashboard (it pointed at `:4000`), so this is an EDIT of the existing rule, not an "add". And `/api/health` returns **404** (mcp-server exposes health at `/health`, not `/api/health`) — use the push-endpoint reachability check in Step 5, not `/api/health`.
 
 ---
 
@@ -50,74 +52,53 @@ You should see a table like:
 | 2 | zenmidi.com | `^/gateway` | `http://localhost:4040` |
 | 3 | (catch-all) | — | (default) |
 
-#### Step 2: ADD New Rule for `/api/*`
+#### Step 2: EDIT the existing `/api` rule
 
-Click **"+ Add a public hostname"** button.
+`/api` ALREADY EXISTS in the Public Hostname table (it points at `http://localhost:4000` = the socat band-aid). Click **Edit** on that row and change ONLY its Service URL:
 
-Fill in the form:
+| Field | From | To |
+|-------|------|-----|
+| Service URL (`/api`) | `http://localhost:4000` | `http://localhost:3000` |
 
-| Field | Value |
-|-------|-------|
-| Subdomain | `zenmidi.com` |
-| Path | `/api` |
-| Service URL | `http://localhost:3000` |
+Click **Save**. Leave Subdomain/Path as-is.
 
-Click **Save**.
-
-**CRITICAL:** After save, the new rule will appear in the table. Use the drag handle or "Move" button to position it **ABOVE the catch-all rule** and the `/vn-market` rule. Order must be:
+Final correct table (only `/api` changes; the other two stay exactly as they are):
 
 ```
-1. /api → http://localhost:3000     ← NEWLY ADDED
-2. ^/vn-market → http://localhost:3000
-3. ^/gateway → http://localhost:4000
+1. zenmidi.com ^/vn-market → http://localhost:3000   (leave)
+2. zenmidi.com ^/gateway   → http://localhost:4040   (LEAVE — live mcp-gateway, do NOT change)
+3. zenmidi.com ^/api       → http://localhost:3000   ← the one edit (was :4000)
 4. (catch-all)
 ```
 
-Prefix-matching is left-to-right; `/api` must come before `/vn-market` to avoid prefix collision.
+Order is fine as-is since each rule has a distinct path prefix.
 
-#### Step 3: VERIFY the `/gateway` Rule Port
+#### Step 3: Do NOT touch `/gateway`
 
-Check the row for `/gateway`. The current Service URL is likely:
+`/gateway → http://localhost:4040` is **CORRECT** — `:4040` is the live, healthy `mcp-gateway` container (verify with `docker ps`). Leave it unchanged. (A prior draft wrongly said to change it to `:4000`; that would break the gateway.)
 
-```
-http://localhost:4040
-```
+#### Step 4: Wait for propagation
 
-This is **WRONG** — port 4040 is not running. Change it to:
-
-```
-http://localhost:4000
-```
-
-Click **Edit** on that row, change the Service URL, and **Save**.
-
-#### Step 4: Save All Changes
-
-Once both rules are in place and correctly ordered, the dashboard will auto-save. **Wait 10–60 seconds** for the tunnel to pull the updated config from Cloudflare API.
+The dashboard auto-saves. **Wait 10–60 seconds** for the tunnel to pull the updated config from the Cloudflare API.
 
 #### Step 5: Verify the Public Routes
 
-Run these curls from **outside localhost** (or from a separate terminal on the same host):
+`/api/health` does NOT exist (mcp-server serves health at `/health`, so `/api/health` → 404 — do not use it as a check). Verify route reachability via the real callback paths instead:
 
 ```bash
-# Test 1: /api/health (no auth) — should return 200 + health JSON
-curl -s -o /dev/null -w "%{http_code}\n" https://zenmidi.com/api/health
-# Expected: 200
+# Test 1: /api push path reaches mcp-server — auth-required, must NOT be 502
+curl -s -o /dev/null -w "%{http_code}\n" https://zenmidi.com/api/push-prices
+# Expected: 401 (route reaches mcp-server, auth enforced). 502 = route still broken.
 
-# Test 2: /vn-market/health — verify regression (should still work)
+# Test 2: /vn-market/health — regression check (should still work)
 curl -s -o /dev/null -w "%{http_code}\n" https://zenmidi.com/vn-market/health
 # Expected: 200
 
-# Test 3: /api/watchlist (VPS callback path) — auth required, should NOT 502
-curl -s -o /dev/null -w "%{http_code}\n" https://zenmidi.com/api/watchlist
-# Expected: 401 or 403 (auth failure is OK; 502 is BAD)
-
-# Test 4: Full health check — list all 154 tools
-curl -s https://zenmidi.com/api/health | jq '.toolCount'
-# Expected: 154
+# Test 3 (definitive): a REAL authenticated VPS push (run from the VPS with its X-API-Key)
+#   returns 200 + {updated/upserted/received: N} and appears in mcp-server logs as an /api/* hit.
 ```
 
-**If any test returns 404 or 502** after 90 seconds, perform a hard tunnel restart:
+**If Test 1 returns 502** after 90 seconds, perform a hard tunnel restart:
 
 ```
 Cloudflare dashboard → Zero Trust → Tunnels → (zenmidi.com) → overflow menu → "Restart tunnel"
@@ -167,11 +148,11 @@ launchctl list | grep socat
 If the new routing breaks something:
 
 1. **Cloudflare dashboard** → same tunnel → "Public Hostname" tab.
-2. Delete the `/api` rule added in Step 2.
-3. Revert the `/gateway` service URL back to `http://localhost:4040`.
+2. Revert the `/api` rule's Service URL back to `http://localhost:4000` (the socat bridge).
+3. Do NOT touch `/gateway` (it stays `:4040`).
 4. **Save** → wait 60s for propagation.
 
-The system reverts to the socat-bridged state (if socat is still running or re-armed).
+The system reverts to the socat-bridged state (socat must be running or re-armed via `launchctl load`).
 
 ---
 
@@ -183,7 +164,7 @@ After this fix completes:
 ✓ VPS fetch callbacks (watchlist, push-prices, push-news, etc.) return 200 + data  
 ✓ socat bridge can be permanently disabled  
 ✓ Mac reboot does NOT re-break the route (it's tunnel config, not a local process)  
-✓ Full 154-tool health check accessible at `https://zenmidi.com/api/health`  
+✓ VPS `/api/push-*` callbacks return 200 (auth-enforced; 401 without key, never 502)  
 
 ---
 
@@ -192,8 +173,8 @@ After this fix completes:
 Keep these for future diagnosis:
 
 ```bash
-# Verify public tunnel routes
-curl -s -w "\nStatus: %{http_code}\n" https://zenmidi.com/api/health | head -5
+# Verify public tunnel route reaches mcp-server (401 = reachable+auth, 502 = broken)
+curl -s -o /dev/null -w "Status: %{http_code}\n" https://zenmidi.com/api/push-prices
 
 # Verify local mcp-server still responds
 curl -s http://localhost:3000/health | jq '.status'

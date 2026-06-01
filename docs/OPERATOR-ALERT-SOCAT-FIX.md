@@ -1,8 +1,10 @@
 # OPERATOR ALERT: VPS Socat Bridge Fragility Fix
 
 **Date:** 2026-06-01  
-**Urgency:** Medium  
-**Action Required:** Cloudflare Zero Trust dashboard change (3 minutes, no code deployment needed)  
+**Status:** ✅ DONE 2026-06-01 — operator repointed `/api → http://localhost:3000`; VPS push endpoints verified 200 end-to-end. socat retained as fallback until Tuesday open.  
+**Urgency:** Resolved (kept for reference / rollback)  
+
+> ⚠️ The steps below are corrected. An earlier version wrongly said to change `/gateway` to `:4000` and to add a new `/api` rule and curl `/api/health`. The TRUTH: `/api` already existed (was `:4000`) → just EDIT it to `:3000`; `/gateway` stays `:4040` (live mcp-gateway — do NOT touch); `/api/health` 404s, verify via `/api/push-prices` instead.
 
 ---
 
@@ -30,40 +32,24 @@ Update the Cloudflare tunnel ingress rule to route `/api/*` **directly** to `loc
 
 1. Log into **Cloudflare Zero Trust Dashboard**
 2. Navigate to: `Zero Trust → Networks → Tunnels → zenmidi.com → Configure → Public Hostname`
-3. **Click "+ Add a public hostname"**
-   - Subdomain: `zenmidi.com`
-   - Path: `/api`
-   - Service: `http://localhost:3000`
+3. **Edit the EXISTING `/api` rule** (it currently points to `http://localhost:4000`):
+   - Change Service URL → `http://localhost:3000`
    - Click **Save**
-
-4. **Reorder the new rule** to come BEFORE the `/vn-market` rule (drag or use "Move" button)
-   - Order should be: `/api` → `/vn-market` → `/gateway` → catch-all
-
-5. **Fix the `/gateway` rule** (while you're there):
-   - Current: `http://localhost:4040` (WRONG — port 4040 isn't running)
-   - Change to: `http://localhost:4000`
-   - Click **Save**
-
-6. **Wait 10–60 seconds** for Cloudflare to propagate the change
-
-7. **Verify** (run these from terminal):
+4. **Leave `/vn-market` (`:3000`) and `/gateway` (`:4040`) UNTOUCHED.** `:4040` is the live mcp-gateway — changing it breaks the gateway.
+5. **Wait 10–60 seconds** for Cloudflare to propagate.
+6. **Verify** (route reaches mcp-server; `/api/health` 404s so don't use it):
    ```bash
-   curl -s -o /dev/null -w "%{http_code}\n" https://zenmidi.com/api/health
-   # Expected: 200
-   
-   curl -s https://zenmidi.com/api/health | jq '.toolCount'
-   # Expected: 154
+   curl -s -o /dev/null -w "%{http_code}\n" https://zenmidi.com/api/push-prices
+   # Expected: 401 (reachable + auth enforced). 502 = still broken.
    ```
-
-8. **Disable socat** (once verified):
+7. **Disable socat** (only after a real VPS push confirms live flow):
    ```bash
-   launchctl unload ~/Library/LaunchAgents/com.vn-market.socat-bridge.plist
+   launchctl bootout gui/$(id -u)/com.vn-market.socat-bridge
    ```
-
-9. **Verify socat is off**:
+8. **Verify socat is off**:
    ```bash
-   ps aux | grep socat | grep -v grep
-   # Should return empty
+   pgrep -fl socat        # empty
+   launchctl list | grep socat   # empty
    ```
 
 ---
@@ -88,10 +74,10 @@ docs/protocols/vps-socat-cloudflare-fix-runbook.md
 ## If Something Breaks
 
 If the Cloudflare rule change breaks anything:
-1. Delete the `/api` rule you added
-2. Revert `/gateway` back to `:4040`
+1. Revert the `/api` rule's Service URL back to `http://localhost:4000` (socat bridge)
+2. Leave `/gateway` alone (`:4040`)
 3. Wait 60 seconds
-4. System reverts to socat-bridged state (can re-arm socat if needed)
+4. System reverts to socat-bridged state (socat must be running, or re-arm via `launchctl load`)
 
 ---
 
