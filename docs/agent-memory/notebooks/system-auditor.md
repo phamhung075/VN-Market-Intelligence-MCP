@@ -3,6 +3,37 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
+## Audit Run Tier-1 (00:07–00:09 UTC 2026-06-01)
+
+- Tier: 1 | Runtime check: 2 containers (mcp-server, mcp-gateway) both UP
+- Container liveness: PASS (both healthy, mcp-server uptime 2h 49m, mcp-gateway uptime 4d+)
+  - mcp-server: /health 200 OK, restart count 1 (PASS, ≤ 2 threshold)
+  - mcp-gateway: healthy
+- Circuit breakers: 16/16 green (0 failures, 0 half-open circuits)
+- Cron jobs: 73+ tracked, success rates 98–100% (intelligenceCycle 99.4%, bctcQueueEnricher 99.1%)
+- Database: market.db 205 MB, WAL 3.06 MB (healthy)
+- Data freshness context: VN market CLOSED (00:07 UTC Sunday = 07:07 HCM, before Monday 02:00 UTC market open)
+  - Price data stale (63h): EXPECTED (market closed)
+  - BCTC data stale (76h): EXPECTED (weekly cadence, no new filings end-May)
+  - Foreign-flow stale: EXPECTED (market closed)
+- VPS proxy health: news OK (fresh < 6min), sbv OK, bctc STALE (expected), prices STALE (expected)
+- System status: 10 unresolved errors (mostly vnstock rate-limit backoff outside hours, 1 macro-snapshot transient failure)
+- Duration: < 60s
+- Status: HEALTHY
+
+### Anomalies
+
+None. All runtime checks passed. Container health, restart counts, circuit breakers, cron execution all nominal.
+
+### Notes
+
+- 2 deployed services (mcp-server + mcp-gateway) is CORRECT per operating constraints
+- Full 9-service compose is Factory-v2 dev-zone, not deployed to production
+- Tier-2 at next 4h window (04:07 UTC) will show price/flows freshness post-market-open Monday
+- No memory pressure, no container tooling missing (pdftoppm/tesseract checks deferred to Tier-3)
+
+---
+
 ## Audit Run Tier-1 (23:07–23:09 UTC 2026-06-01)
 
 - Tier: 1 | Runtime check: 2 containers (mcp-server, mcp-gateway) both UP
