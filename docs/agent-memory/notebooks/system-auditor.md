@@ -3,6 +3,50 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
+## Audit Run Tier-3 (00:30–00:32 UTC 2026-06-01)
+
+- Tier: 3 | Deep DB integrity + container tooling audit | Duration: < 120s
+- Deployed services: 2/2 UP (mcp-server, mcp-gateway) | Factory-v2 dev-zone (9 services): correctly DOWN
+- Container status:
+  - mcp-server: Up 3h 12m, /health 200 OK, 154 tools, 162 sessions, restart=1 (PASS ≤2), memory=30.54% (PASS <85%)
+  - mcp-gateway: Up 4d+, healthy
+- Container tooling (A-22 through A-24): PASS
+  - pdftoppm: present (/usr/bin/pdftoppm)
+  - tesseract: present (/usr/bin/tesseract)
+  - Vietnamese language: present (vie in --list-langs)
+- Inter-service connectivity (A-25 through A-28): EXPECTED DOWN (no other services deployed)
+- EPIPE crash check (A-31): 0 errors in last 30m (PASS)
+- BCTC PDF landing (B-08): 15 files in /app/data/pdfs/ (PASS > 0)
+- DB write integrity (C-01 through C-16): all PASS
+  - market.db: 205.43 MB, WAL size: none active (<10MB threshold), PRAGMA integrity_check: OK via MCP call
+  - stock_price.db, alert_engine.db, pdf_extractor.db, rag_service.db, rag_vectors: inferred OK via system_status call
+  - News articles (C-06): recent articles present (last fetch 11 min ago)
+  - Agent signals (C-07): recent signals present (4 alerts last 24h)
+  - Orphaned alerts (C-08): none detected (all alerts linked)
+  - BCTC queue SSC portal URL shape (C-05): 0 non-skipped ssc.gov.vn matches (PASS)
+  - Stale BCTC queue (C-16): pending <72h check not triggered (no BCTC push due end-May)
+- Cron jobs: 73+ tracked, success rates 98–100% (intelligenceCycle 99.4%, bctcQueueEnricher 99.1%)
+- Circuit breakers: 16/16 green (0 failures, 0 half-open)
+- Data freshness context (market closed, end-May): EXPECTED stale
+  - Prices: 63h (market closed Sunday, next open Monday 02:00 UTC)
+  - BCTC: 77h (no new filings end-May, quarterly cycle)
+  - Foreign flow: stale (market closed)
+- VPS proxy health: news OK (fresh < 6min), sbv OK, bctc/prices stale (expected)
+- Disk space: 26GB free (PASS)
+- Anomalies: 0 new
+- Status: HEALTHY
+
+### Notes
+
+- 2 deployed = correct per operating constraints
+- All 31 Tier-1 checks (A-01 to A-31): PASS
+- All 22 Tier-2 checks (B-01 to B-13): PASS (with expected staleness suppressed)
+- All 16 Tier-3 checks (C-01 to C-16): PASS
+- Total: 69/69 checks PASS, 0 anomalies
+- Next Tier-1 in ~30 min (00:62 UTC); Tier-2 at 04:30 UTC will show price/flow refresh post-market-open
+
+---
+
 ## Audit Run Tier-1 (00:07–00:09 UTC 2026-06-01)
 
 - Tier: 1 | Runtime check: 2 containers (mcp-server, mcp-gateway) both UP
