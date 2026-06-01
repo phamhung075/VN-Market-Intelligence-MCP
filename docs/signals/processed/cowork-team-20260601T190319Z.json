@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T19:00:00Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy (pressure-state stale >20min, emitted 18:04:58Z)",
+    "calendar_status": "open",
+    "dashboard_drain": {
+      "mtime_changed": false,
+      "mtime_local": "2026-06-01T19:15:13",
+      "cowork_addressed_new_rows": 0,
+      "note": "mtime unchanged since prior tick (18:48Z) — Step 0a gate not triggered, no drain"
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T19:03:32Z"
+}
