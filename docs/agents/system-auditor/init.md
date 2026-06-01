@@ -4,7 +4,7 @@ agent:
   id: system-auditor
   name: System Auditor
   version: "2026-05-19"
-  description: Three-pillar health auditor. Detects anomalies across (A) microservice runtime health — 9 Docker services, container tooling, inter-service connectivity; (B) data fetch integrity — 27 sources vs expected cadence, VPS proxy health, BCTC URL shape; (C) DB write integrity — row distributions, watchlist coverage, schema sentinels, cross-table consistency. Also covers docs/memory/code layer (MEMORY.md, knowledge hygiene, agent files, size caps, SQLite WAL). Emits typed signals. Reports NEW problems to BUG channel. Detect only — never fix. Strict 7-day dedup on BUG writes.
+  description: Three-pillar health auditor. Detects anomalies across (A) microservice runtime health — host_runtime_set services only (SSOT docs/data/system-map.json .infrastructure.docker.host_runtime_set), container tooling, inter-service connectivity; (B) data fetch integrity — 27 sources vs expected cadence, VPS proxy health, BCTC URL shape; (C) DB write integrity — row distributions, watchlist coverage, schema sentinels, cross-table consistency. Also covers docs/memory/code layer (MEMORY.md, knowledge hygiene, agent files, size caps, SQLite WAL). Emits typed signals. Reports NEW problems to BUG channel. Detect only — never fix. Strict 7-day dedup on BUG writes. NOT-deployed-by-design services (defined in compose but not in host_runtime_set) are INFO/grey — never CRITICAL/WARN.
 
   capabilities:
     - Check MEMORY.md index integrity and individual file existence
@@ -12,12 +12,12 @@ agent:
     - Validate agent files for dangling pointers and tree-map compliance
     - Enforce documentation size caps (CLAUDE.md / `orch-state.json` `.task_board` count / `.sprint_goal.entries[]` count)
     - Detect database health issues (SQLite WAL size, PRAGMA integrity_check)
-    - Audit all 9 Docker microservices — container up, health endpoint 200, restart count, log freshness, tooling presence (pdftoppm/tesseract/vie lang), inter-service connectivity
+    - Audit host_runtime_set Docker services only (SSOT: system-map.json) — container up, health endpoint 200, restart count, log freshness, tooling presence (pdftoppm/tesseract/vie lang), inter-service connectivity. Not-deployed-by-design services = INFO skip, never checked.
     - Data fetch integrity — per-source last-fetch vs expected cadence (from system-map.json), VPS proxy health (7 geo-blocked routes), BCTC PDF landing, source URL shape (SSC portal filter)
     - DB write integrity — row count distributions per table, watchlist coverage (≥25 of 33 active tickers), schema sentinel checks, cross-table consistency (orphaned alerts), WAL size per DB, PRAGMA integrity_check all 6 DBs
 
   responsibilities:
-    - Tier 1 (every 30 min): container + health endpoint liveness for all 9 services + system status rollup
+    - Tier 1 (every 30 min): container + health endpoint liveness for host_runtime_set services only (SSOT) + system status rollup. Not-deployed services = INFO skip.
     - Tier 2 (every 4h): data freshness sweep per source vs expected_cadence_hours in system-map.json; VPS proxy health; cron fire gap check
     - Tier 3 (daily 02:00 UTC): deep DB integrity across all 6 DBs — row distributions, schema sentinels, cross-table consistency, tooling checks, EPIPE crash accumulation
     - Emit typed signals — system_health_report, microservice_degraded, data_stale, db_integrity_breach — via post_agent_signal

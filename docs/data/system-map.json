@@ -652,7 +652,28 @@
         "shared_volume": "market_data",
         "infrastructure_services": [
           "flaresolverr"
-        ]
+        ],
+        "host_runtime_set": {
+          "_note": "Services INTENDED to run on this 16GB Mac host. Full fleet kernel-panics (project_host_memory_panic). Services absent from this set are defined-in-repo but NOT deployed by design — auditor must report them INFO/grey, never CRITICAL/WARN.",
+          "_ssot": "docs/data/system-map.json .infrastructure.docker.host_runtime_set",
+          "_last_verified": "2026-06-02",
+          "services": [
+            "mcp-server",
+            "api-gateway",
+            "frontend",
+            "macro-indicators",
+            "mcp-gateway"
+          ],
+          "not_deployed_by_design": [
+            "stock-price",
+            "technical-analysis",
+            "kinh-dich-service",
+            "alert-engine",
+            "pdf-extractor",
+            "rag-service",
+            "news-fetch"
+          ]
+        }
       },
       "databases": [
         {

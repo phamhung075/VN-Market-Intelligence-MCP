@@ -2,7 +2,7 @@
 
 # System Auditor — Audit Dimensions
 
-<!-- size-justification: ~80L — canonical dimension registry; each dimension is a one-table entry + acceptance reference. Tightly coupled check-ID traceability. -->
+<!-- size-justification: 166L — canonical dimension registry; each dimension is a one-table entry + acceptance reference. Tightly coupled check-ID traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set gating note to D1. -->
 
 This file is the canonical registry of what system-auditor checks and why. Each dimension maps to check IDs in `docs/agents/system-auditor/flow/main.md` and acceptance criteria in architecture briefs.
 
@@ -13,7 +13,8 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 **Tier:** 1 (every 30 min)
 **Check IDs:** A-01 through A-31
 **Scope:** Container liveness, health endpoint HTTP 200, restart count, memory pressure, tooling presence (pdftoppm/tesseract/vie lang), inter-service connectivity.
-**Pass condition:** All 9 services Up, health 200, restarts ≤ 2, memory < 85%, tooling present.
+**Pass condition:** All services in `host_runtime_set.services[]` (SSOT: `docs/data/system-map.json .infrastructure.docker.host_runtime_set`) are Up, health 200, restarts ≤ 2, memory < 85%, tooling present. Services in `not_deployed_by_design[]` are INFO/grey — never checked, never emit CRITICAL/WARN.
+**A-01-EXPECTED-SET fix (2026-06-02):** Severity is gated on `host_runtime_set.services[]`, not the full compose service list. Not-deployed-by-design services emit `"[A-01] <id>: not-deployed-by-design — SKIP (INFO/grey)"` and are silently skipped. No BUG alert. No DASHBOARD row.
 **Signal type:** `microservice_degraded`
 
 ---

@@ -1,4 +1,4 @@
-<!-- size-justification: 175L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. -->
+<!-- size-justification: 511L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -48,7 +48,9 @@ AUD-ND-1 regression history:
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `system-auditor`)
 
 **Step 0c — Load system-map.json** — lazy-load trigger: `runtime_or_fetch_or_db_audit`. Read `docs/data/system-map.json` and extract:
-- `project.microservices[]` → service ids, external_ports, zones
+- `project.microservices[]` → service ids, external_ports, zones (full catalog — for health endpoint ports and zone_owner lookup)
+- `project.infrastructure.docker.host_runtime_set.services[]` → **INTENDED runtime set** — the only set used for container-UP checks in Tier-1. Services NOT in this list are not deployed by design and MUST be reported INFO/grey, never CRITICAL/WARN.
+- `project.infrastructure.docker.host_runtime_set.not_deployed_by_design[]` → cross-check list for INFO labelling
 - `project.data_sources[]` → source ids, expected_cadence_hours, stale_threshold_hours, geo_blocked
 - `project.infrastructure.databases[]` → DB ids, paths
 - `project.zones[]` → zone id → specialist (zone_owner)
@@ -69,20 +71,35 @@ Read `AUDIT_TIER` (default 3 if not set).
 
 **Wall time target: < 120s. Scope: container liveness + health endpoint + restart count + memory.**
 
-### Container Status (A-01 through A-11)
-For each service in system-map.json microservices:
+### Container Status (A-01 through A-11) — SSOT-gated severity
+
+**INTENDED RUNTIME SET (SSOT):** read `project.infrastructure.docker.host_runtime_set.services[]` from system-map.json. Only these services are checked for UP/DOWN severity. Services in `not_deployed_by_design[]` are NOT checked for container liveness — they are skipped with an INFO log entry: `"[A-01] <service_id>: not-deployed-by-design — INFO/grey"`.
+
+For each service in `host_runtime_set.services[]`:
 ```bash
 docker ps --filter name=<service-id> --format "{{.Status}}"
 ```
 - Contains `Up` → PASS
-- Missing / Exited → FAIL: severity per brief (CRITICAL for mcp-server/api-gateway/stock-price/alert-engine; WARN for pdf-extractor/rag-service/news-fetch; INFO for frontend)
+- Missing / Exited → FAIL: severity per runtime role:
+  - `mcp-server`: CRITICAL (core data pipeline, all agents depend on it)
+  - `api-gateway`: WARN (socat-bridged to mcp-server; loss = VPS fetch callbacks 502)
+  - `frontend`: INFO (UI only; no data impact)
+  - `macro-indicators`: WARN (used by CHEF/news-scout TNB Layer 2/3)
+  - `mcp-gateway`: WARN (claude.ai cowork agents use this; loss = cowork outage)
 
-### Health Endpoints (A-12 through A-20)
-For each service with external_port:
+For each service in `not_deployed_by_design[]`:
+- **Do NOT run `docker ps`**. Log `"[A-01] <service_id>: not-deployed-by-design — SKIP (INFO/grey)"` and continue.
+- **Do NOT emit any signal, DASHBOARD row, or BUG alert** for not-deployed services.
+- Do NOT raise severity based on the full compose service count.
+
+### Health Endpoints (A-12 through A-20) — SSOT-gated
+
+For each service in `host_runtime_set.services[]` that has an `external_port` (look up port from `project.microservices[]` by id):
 ```bash
 curl -sf --max-time 3 http://localhost:<external_port>/health
 ```
-- HTTP 200 → PASS; else → FAIL at severity per brief
+- HTTP 200 → PASS; else → FAIL at severity matching the container-status severity table above.
+- Services in `not_deployed_by_design[]` → skip health endpoint check entirely. No curl, no alert.
 
 ### Restart Count (A-21)
 ```bash
