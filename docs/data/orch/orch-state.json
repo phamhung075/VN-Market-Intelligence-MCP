@@ -1,37 +1,34 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-02T00:00Z",
+  "_updated_at": "2026-06-01T22:34Z",
   "_updated_by": "po",
-
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "NORMAL triage RESUMED — RISK-2 head-write freeze is LIFTED (ORCH-STATE-CONSOLIDATE closed; orch-state.json is the sole SSOT; atomic temp->rename writes proven by QA). Agents may write .head again under WIP<=2 + fresh-read contract. Next pick: triage open_sprints — highest-signal queue items are the HIGH NEW signals (tnb-c85 morning-dish pipeline_degraded, 1967b-RERUN architect audit) and FLEET-HOST-SAFETY remaining tasks (DRAIN-INJECTION-SAFE, A-01-EXPECTED-SET, AUDITOR-SLA-CADENCE). Caveat QA flagged: helper is atomic but a non-fresh-read caller can still stale-read->sibling-clobber — see FU-ORCH-HEAD-CAS backlog; mitigated today by WIP=2 + fresh-read contract.",
-    "wip": 0,
+    "status": "dispatched",
+    "active_task_id": "A-01-EXPECTED-SET",
+    "next_agent": "agent-father",
+    "next_action": "FIX A-01-EXPECTED-SET (FLEET-HOST-SAFETY, S, zone docs/agents/system-auditor/). Root-cause durable fix for the recurring false-RED -> destructive-remediation class: system-auditor A-01 must check container health against an intended-runtime-set SSOT (mcp-server + mcp-gateway only on 16GB host) NOT the full docker-compose service list. not-deployed != crashed. Closes the false-DOWN that twice led to outages (auditor destructive ENOSPC stop + dashboard 7 false-RED). Pairs with shipped AUD-ND-1 (PLAN-ONLY teeth) as defense-in-depth. AC: 0 CRITICAL emitted for not-deployed svcs over 7d; A-01 reads intended-runtime SSOT. PLAN-ONLY: agent-father edits agent-def files only, NO docker ops, NO fleet start. Explicit-file staging, main branch. After dispatch verify via raw signal_queue (no false-green badge).",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T00:00Z",
+    "updated_at": "2026-06-01T22:34Z",
     "updated_by": "po"
   },
-
   "dashboard_section_cache": {
     "section_name": "po",
     "start_line": 8,
     "last_mtime": "2026-06-01T08:09:00Z",
     "last_linecount": 224
   },
-
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
-    "current_sprint": "idle — awaiting triage. ORCH-STATE-CONSOLIDATE closed (SPRINT-SIGNOFF). Highest-signal next picks: HIGH NEW signal tnb-c85 (morning-dish pipeline_degraded, agent-father fixed DONE-PENDING-LIVE-VERIFY), 1967b-RERUN architect audit, and FLEET-HOST-SAFETY open tasks (DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE). RISK-2 head-write freeze LIFTED — agents may write .head again (WIP<=2 + fresh-read).",
+    "current_sprint": "FLEET-HOST-SAFETY active — dispatched A-01-EXPECTED-SET (agent-father, S): A-01 check vs intended-runtime-set SSOT not full compose, kills the false-RED -> destructive-remediation class (defense-in-depth with shipped AUD-ND-1). DRAIN-INJECTION-SAFE + AUDITOR-SLA-CADENCE remain TODO. Deferred this tick: 1967b architect orchestration audit (REQ_1967 spec ready, behind host-safety).",
     "last_closed": "ORCH-STATE-CONSOLIDATE DONE (OSC-1..5, QA APPROVE) — single JSON SSOT docs/data/orch/orch-state.json shipped; 6 state files retired (TASKS/TASKS_ARCHIVE/DASHBOARD/DASHBOARD_ARCHIVE/SPRINT_GOAL/pipeline-state.json), ~100 readers re-pointed, signal-dashboard skill+protocol rewritten to .signal_queue, atomic temp->rename writes. GET /api/orchestration (HC-2 DTO) + /dashboard/orchestration route live 200; mcp-server+frontend rebuilt. QA: atomic-write proven-red, 47 pass/1 skip/0 fail, zero dangling readers.",
     "watch_items": [
-      "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 06-01 while host healthy, culprit unidentified — verify detectors are PLAN-ONLY; check system-auditor/cron logs. 4th host-danger candidate.",
-      "ORCH-HEAD-CAS WINDOW: atomic helper is safe, but a non-fresh-read caller can stale-read->sibling-clobber .head — FU-ORCH-HEAD-CAS backlog; mitigated by WIP=2 + fresh-read contract.",
-      "tnb-c85 morning-dish fix is DONE-PENDING-LIVE-VERIFY — confirm next morning fire publishes.",
-      "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion — endpoint live but no consumer yet",
-      "ops 275L / dev-alert-engine 389L / dev-rag-service 223L still >cap (NB-PRUNE-FIX scope)"
+      "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 06-01 while host healthy, culprit unidentified — verify detectors PLAN-ONLY; check system-auditor/cron logs. 4th host-danger candidate.",
+      "ORCH-HEAD-CAS WINDOW: atomic helper safe, but non-fresh-read caller can stale-read->sibling-clobber .head — FU-ORCH-HEAD-CAS backlog; mitigated by WIP<=2 + fresh-read.",
+      "tnb-c85 morning-dish fix DONE-PENDING-LIVE-VERIFY — confirm next morning fire 05:23Z publishes.",
+      "1967b architect orchestration audit DEFERRED (REQ_1967 ready) — re-queue when FLEET-HOST-SAFETY closes.",
+      "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion."
     ],
     "open_sprints": [
       "FLEET-HOST-SAFETY: DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE open (AUD-ND-1 + VPS-SOCAT-PERSIST DONE)",
@@ -47,12 +44,10 @@
     ],
     "backlogs": "FU-ORCH-HEAD-CAS · FU-SIGNAL-DASHBOARD-CAP · FLEET-HOST-SAFETY (AUD-ND-1-LIVE-PROVEN-RED/DRAIN-INJECTION-SAFE/A-01-EXPECTED-SET/AUDITOR-SLA-CADENCE) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures"
   },
-
   "session_handoff_status": {
     "cleared": "2026-05-31T00:33Z — prior parallel-session zone-ownership directive obsolete. Dispatch apps/mcp-server + apps/pdf-extractor normally, WIP<=2 + zone-isolation between concurrent tasks.",
     "does_not_consume_wip": true
   },
-
   "task_board": {
     "_updated_at": "2026-06-02T00:00Z",
     "_updated_by": "po",
@@ -483,7 +478,6 @@
     ],
     "archive": []
   },
-
   "signal_queue": {
     "_updated_at": "2026-06-01T22:00Z",
     "_updated_by": "agent-father",
@@ -507,8 +501,9 @@
         "type": "audit-handoff",
         "summary": "HIGH. c85: morning dish FAILED (no_self_abort violation, agent-father fixed same tick DONE-PENDING-LIVE-VERIFY). pipeline_degraded=TRUE.",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+        "status": "READ",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md",
+        "po_disposition": "READ 2026-06-01T22:34Z PO: morning-dish fix DONE-PENDING-LIVE-VERIFY (agent-father same-tick init.md+chef.md). No new dev task — monitor next morning fire 05:23Z (watch_item tracks). F1-F6 all pre-existing/tracked (macro absent-by-design, BCTC overdue, VIRA absent, F9, hexagram dark)."
       },
       {
         "id": "CW-FLOW-STEP478-DEFECTS-20260601T1603Z",
@@ -628,8 +623,9 @@
         "type": "design_brief_request",
         "summary": "DISPATCH READY. BA 1967a APPROVED. RE-RUN 1967b architect audit: REQ-1967 checklist (signal-naming / per-flow JUMP-TO / recursive-spawn guard / task-lock symmetry / 35-agent audit).",
         "severity": "INFO",
-        "status": "NEW",
-        "payload_ref": "docs/signals/po-1967b-rerun.json"
+        "status": "READ",
+        "payload_ref": "docs/signals/po-1967b-rerun.json",
+        "po_disposition": "READ 2026-06-01T22:34Z PO: REQ_1967.md spec real+dispatch-ready (7 surfaces, 0 blockers). DEFERRED behind higher-priority FLEET-HOST-SAFETY FIX this cycle. Re-queue when host-safety closes. payload_ref po-1967b-rerun.json dangling (absent) — spec is the authoritative artifact."
       },
       {
         "id": "1965-COVERAGE-SWEEP",
@@ -672,8 +668,9 @@
         "type": "impl_done",
         "summary": "P2-G COMPLETE — G9 dashboard live panels. commit 7520428b. modules.json 12 barrels; live toolCount from /health.",
         "severity": "INFO",
-        "status": "NEW",
-        "payload_ref": null
+        "status": "READ",
+        "payload_ref": null,
+        "po_disposition": "READ 2026-06-01T22:34Z PO: impl_done acknowledgment (G9 dashboard panels, 7520428b). No action."
       },
       {
         "id": "P1-MCP-QA-20260525T1726Z",
@@ -683,8 +680,9 @@
         "type": "review_request",
         "summary": "GATED on P1-MCP-REBUILD. Live full-tool-suite verify. Regression tripwires: bun test >=9408/<=348; toolCount=146; sched=68.",
         "severity": "INFO",
-        "status": "NEW",
-        "payload_ref": "docs/data/pilot-status-mcp-server.json"
+        "status": "READ",
+        "payload_ref": "docs/data/pilot-status-mcp-server.json",
+        "po_disposition": "READ 2026-06-01T22:34Z PO: STALE (2026-05-25). toolCount=146 tripwire superseded by post-hygiene surface; P1-MCP-REBUILD gate moot. Skip."
       },
       {
         "id": "BRANCH-CLEANUP-1972",
@@ -754,7 +752,6 @@
       }
     ]
   },
-
   "sprint_goal": {
     "_updated_at": "2026-06-01T22:00Z",
     "_updated_by": "agent-father",
@@ -763,8 +760,18 @@
       {
         "sprint_id": "ORCH-STATE-CONSOLIDATE",
         "vision": "Collapse all multi-agent orchestration state into ONE machine-readable SSOT docs/data/orch/orch-state.json, delete TASKS.md + TASKS_ARCHIVE.md + DASHBOARD.md + DASHBOARD_ARCHIVE.md, let humans read state via localhost:3001 dashboard / raw JSON.",
-        "scope_in": ["single SSOT JSON + atomic temp-file-then-rename write protocol", "re-point all 40+ readers (code + agent flows/skills/protocols)", "delete the 4 markdown files", "read-only GET /api/orchestration endpoint + docker mount + frontend route via api-gateway:4000", "QA atomic-write PROVEN-RED + reader-migration regression"],
-        "scope_out": ["agent-notebook / analysis-brief surfacing on dashboard", "any change to :07 RETURN write contract schema fields", "SSE/websocket live push"],
+        "scope_in": [
+          "single SSOT JSON + atomic temp-file-then-rename write protocol",
+          "re-point all 40+ readers (code + agent flows/skills/protocols)",
+          "delete the 4 markdown files",
+          "read-only GET /api/orchestration endpoint + docker mount + frontend route via api-gateway:4000",
+          "QA atomic-write PROVEN-RED + reader-migration regression"
+        ],
+        "scope_out": [
+          "agent-notebook / analysis-brief surfacing on dashboard",
+          "any change to :07 RETURN write contract schema fields",
+          "SSE/websocket live push"
+        ],
         "success_metric": "orch-state.json sole orchestration SSOT (4 markdown files ENOENT); 3 bun tests green on new path; :3001 renders live orch-state via api-gateway:4000 with honest stale badge; QA proves atomic-write no-clobber; 0 raw signal payload in HTTP response.",
         "open_decision": "D4-R4 concurrent-commit alarm: DEFAULTED to (A) — 30s window on orch-state.json (sensitivity over quiet).",
         "status": "CLOSED",
@@ -773,16 +780,33 @@
       {
         "sprint_id": "FLEET-HOST-SAFETY",
         "vision": "On the 16GB host, the full fleet must NEVER be up. Intended runtime = minimal mcp-server + mcp-gateway only.",
-        "scope_in": ["AUD-ND-1 PLAN-ONLY invariant (SHIPS FIRST)", "DRAIN-INJECTION-SAFE no shell interpolation of signal payloads", "A-01-EXPECTED-SET intended-runtime-set SSOT", "AUDITOR-SLA-CADENCE per-source SLA", "VPS-SOCAT-PERSIST durable CF tunnel fix"],
-        "scope_out": ["any fleet start/restart (ops is sole remediation agent)", "detectors docker ops"],
+        "scope_in": [
+          "AUD-ND-1 PLAN-ONLY invariant (SHIPS FIRST)",
+          "DRAIN-INJECTION-SAFE no shell interpolation of signal payloads",
+          "A-01-EXPECTED-SET intended-runtime-set SSOT",
+          "AUDITOR-SLA-CADENCE per-source SLA",
+          "VPS-SOCAT-PERSIST durable CF tunnel fix"
+        ],
+        "scope_out": [
+          "any fleet start/restart (ops is sole remediation agent)",
+          "detectors docker ops"
+        ],
         "success_metric": "AUD-ND-1: simulated false-positive -> DASHBOARD/signal row + ZERO infra mutation. A-01: 0 CRITICAL for not-deployed svcs 7 days. DRAIN: payload with backticks drains DB correctly, docker ps unchanged.",
         "status": "OPEN"
       },
       {
         "sprint_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
         "vision": "A VPS fetch-script can never again silently outage by shipping an unrendered __PLACEHOLDER__ — enforced by pre-deploy/post-deploy leak guard + env-fallback form + enforced render path.",
-        "scope_in": ["PLACEHOLDER-GUARD-1 leak guard in deploy-vps-proxy.sh", "PLACEHOLDER-GUARD-2 convert 6 hardcode-form scripts to ${VAR:-default}", "PLACEHOLDER-GUARD-3 bring article-body-fetcher.py under deploy-vps-proxy.sh", "VPS-BS4-INSTALL beautifulsoup4"],
-        "scope_out": ["any change to cafef-index price source", "new MCP tools"],
+        "scope_in": [
+          "PLACEHOLDER-GUARD-1 leak guard in deploy-vps-proxy.sh",
+          "PLACEHOLDER-GUARD-2 convert 6 hardcode-form scripts to ${VAR:-default}",
+          "PLACEHOLDER-GUARD-3 bring article-body-fetcher.py under deploy-vps-proxy.sh",
+          "VPS-BS4-INSTALL beautifulsoup4"
+        ],
+        "scope_out": [
+          "any change to cafef-index price source",
+          "new MCP tools"
+        ],
         "success_metric": "Deliberate-violation deploy with unrendered template FAILS LOUD. Post-deploy SSH probe empty. 14 news feeds land for >=2 cycles after full redeploy.",
         "status": "CLOSED",
         "note": "T2/T3/T4 DONE (ed967839). T5 ops live-deploy 5ba761c6 done. T6-QA APPROVED. CLOSED 2026-06-01."
@@ -790,8 +814,18 @@
       {
         "sprint_id": "TOOL-SURFACE-HYGIENE",
         "vision": "Every registered vn-market MCP tool is either truly wired or absent — no live-but-501 oracle, no silent duplicate writers, no stale tool count.",
-        "scope_in": ["#1 get_market_hexagram deregister (SHIPS FIRST)", "#2 mark_alert_outcome vs write_alert_verdict diff", "#3 macro accuracy trio diff", "#4 get_patterns vs get_technical_indicators diff", "#5 optional trigger_*_vps_fetch consolidation", "#6 toolCount reconcile"],
-        "scope_out": ["any BCTC tool", "the 3 explicitly-cleared pairs"],
+        "scope_in": [
+          "#1 get_market_hexagram deregister (SHIPS FIRST)",
+          "#2 mark_alert_outcome vs write_alert_verdict diff",
+          "#3 macro accuracy trio diff",
+          "#4 get_patterns vs get_technical_indicators diff",
+          "#5 optional trigger_*_vps_fetch consolidation",
+          "#6 toolCount reconcile"
+        ],
+        "scope_out": [
+          "any BCTC tool",
+          "the 3 explicitly-cleared pairs"
+        ],
         "success_metric": "get_market_hexagram absent from gateway registry. All pairs have written source diff. toolCount reconciled.",
         "status": "CLOSED",
         "note": "CLOSED 2026-06-01. TSH-1..6 all shipped. Live toolCount=154. TSH-7 BACKLOG."
@@ -799,8 +833,14 @@
       {
         "sprint_id": "ENV-ISOLATION",
         "vision": "A developer can opt into a dev environment where every write lands in .dev-suffixed datastores while production runs byte-for-byte unchanged.",
-        "scope_in": ["P1: APP_ENV compose tags + maintenance script guards + dev-environment.md SOP", "P2: startup assertion + data_env 5 tables + docker-compose.dev.yml + ENV-GUARD-1"],
-        "scope_out": ["second simultaneous stack", "cloud migration"],
+        "scope_in": [
+          "P1: APP_ENV compose tags + maintenance script guards + dev-environment.md SOP",
+          "P2: startup assertion + data_env 5 tables + docker-compose.dev.yml + ENV-GUARD-1"
+        ],
+        "scope_out": [
+          "second simultaneous stack",
+          "cloud migration"
+        ],
         "success_metric": "P1 DONE. P2 gate RELEASED. ENV-GUARD-1 deliberate-violation proves startup assertion.",
         "status": "OPEN",
         "note": "P1 SIGNED OFF. P2 gate RELEASED 2026-05-31T11:30Z (FU-TRUST-REFRESH FU-4 data-trust satisfied)."
@@ -808,15 +848,25 @@
       {
         "sprint_id": "SELF-IMPROVE-GATE",
         "vision": "Three-lane gated self-improvement loop (auto-md / proven-code-gate / human-escalate) with PO critique-before-approve.",
-        "scope_in": ["Phase 1 flows (5 flows) SHIPPED", "Phase 2 code gate (selfImproveOrchestratorJob) SHIPPED shadow-mode", "X-1 synthetic dry-run (D-IMPROVE emit path e2e) NEXT"],
-        "scope_out": ["X-2 1941c batch false-green"],
+        "scope_in": [
+          "Phase 1 flows (5 flows) SHIPPED",
+          "Phase 2 code gate (selfImproveOrchestratorJob) SHIPPED shadow-mode",
+          "X-1 synthetic dry-run (D-IMPROVE emit path e2e) NEXT"
+        ],
+        "scope_out": [
+          "X-2 1941c batch false-green"
+        ],
         "success_metric": "X-1 synthetic dry-run proves emit seam end-to-end.",
         "status": "OPEN"
       },
       {
         "sprint_id": "NB-PRUNE-FIX",
         "vision": "Fleet notebook prune fires correctly on all heading formats (## Session: / ## ISO-ts / ## cNNN).",
-        "scope_in": ["NB-PRUNE-1 anchor widen DONE", "NB-BLOAT-FLOW-OVERWRITE system-auditor prepend drift", "RE-CAP-1 signal-dashboard SKILL lazy-load"],
+        "scope_in": [
+          "NB-PRUNE-1 anchor widen DONE",
+          "NB-BLOAT-FLOW-OVERWRITE system-auditor prepend drift",
+          "RE-CAP-1 signal-dashboard SKILL lazy-load"
+        ],
         "scope_out": [],
         "success_metric": "system-auditor.md <=50L after one audit cycle. SKILL.md <=120L. No context_bloat_breach for those files 14 days.",
         "status": "OPEN"
@@ -824,7 +874,10 @@
       {
         "sprint_id": "BCTC-LAYOUT-FIRST",
         "vision": "Layout-first BCTC extraction pipeline for accurate table extraction.",
-        "scope_in": ["LF-EXTRACT Phase 0", "LF-OVERLAY Phase 0"],
+        "scope_in": [
+          "LF-EXTRACT Phase 0",
+          "LF-OVERLAY Phase 0"
+        ],
         "scope_out": [],
         "success_metric": "LF-EXTRACT/LF-OVERLAY Phase 0 shipped and QA-approved.",
         "status": "OPEN",
@@ -833,7 +886,13 @@
       {
         "sprint_id": "CHEF-ATTN",
         "vision": "Per-stock diversity cap for chef cowork agent.",
-        "scope_in": ["BA spec", "IMPL", "DEPLOY", "QA", "EXIT"],
+        "scope_in": [
+          "BA spec",
+          "IMPL",
+          "DEPLOY",
+          "QA",
+          "EXIT"
+        ],
         "scope_out": [],
         "success_metric": "Diversity cap live, QA-approved.",
         "status": "OPEN",

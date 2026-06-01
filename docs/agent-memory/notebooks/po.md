@@ -1,69 +1,19 @@
 # PO Notebook
 
-## 2026-06-01T21:17Z — DRIVE ORCH-STATE-CONSOLIDATE to DONE (operator fan-out directive)
+## 2026-06-01T22:34Z — TRIAGE (dev-team :07 fire) — dispatch A-01-EXPECTED-SET; defer 1967b
 
-**Directive:** "fan out agent for complete all" — run ORCH-STATE-CONSOLIDATE to DONE at max safe parallelism this session.
-**State on entry:** BA/ARCH/PM ALL DONE — brief `…/2026-06-01-orch-state-consolidate.md` v2 (46632eb0, DESIGN COMPLETE w/ full 40+-reader inventory, v3 schema, §6 task batch, sequencing, 6 risk flags). SPRINT_GOAL §ORCH-STATE-CONSOLIDATE authored; TASKS.md §sprint has OSC-1..5 fully decomposed (zones+AC+sequencing). NOTHING built yet: orch-state.json ENOENT, pipeline-state/TASKS/DASHBOARD all present, no OSC commits. So sprint is READY-TO-EXECUTE, not READY-TO-PLAN.
-**My action:** advanced pipeline-state head from `next_agent:pm` (stale — PM already decomposed) → `next_agent:agent-father active_task_id:OSC-1` with full operator execution sequence baked into next_action. JSON re-validated (jq OK).
-**Verified soundness (raw, not relayed):** 3 zones truly file-isolated — apps/mcp-server/** (code+tests+/api/orchestration) | apps/frontend/**+api-gateway (dashboard route) | docs/**+.claude/skills/** (40+ re-points + SKILL rewrite). Reader counts repo-wide: 83 pipeline-state, 198 TASKS.md (most are TASKS.md-self/archive/brief PROSE = NOT functional; AC5 scoped to quoted-path `"docs/TASKS.md"` so correct), 51 DASHBOARD.md. Code anchors confirmed: tasksMdJanitorJob L308 tasksMdPath/L421 git-log; improvementSignalWriter L30 DASHBOARD_PATH/L252 appendDashboardRow; 3 tests + frontend api.bctc-inspect.$.tsx splat-proxy precedent all exist.
-**2 corrections I flagged into the dispatch (operator's whole risk):**
-1. OSC-2+OSC-3 is NOT two parallel committers — it is ONE committer assembling dev-mcp-server code + agent-father agent-files into ONE commit under commit-mutex (feedback_concurrent_commit_race: parallel workers share one git index). Markdown deletion (git rm 5 files) STRICTLY LAST inside that commit, only after every reader re-pointed + 3 bun tests green. NO agent cycles between OSC-1→OSC-2 (RISK-2 phantom dual-write).
-2. OSC-4c frontend route: brief says "api-gateway:4000" but the just-shipped FRONTEND-BCTC-TAB (38642fc2) used A2 server-side splat-proxy frontend→:3000 directly. dev-frontend must REUSE that proven precedent (api.bctc-inspect.$.tsx), not invent a Go gateway:4000 hop — flagged in next_action so dev-frontend resolves consistently.
-**Constraints carried into dispatch:** zone-isolation, explicit-file staging (NO add -A / NO --force, .env never staged), all on main, single-service ops REBUILD-not-restart (16GB host-panic), detectors/qa PLAN-ONLY, atomic temp->rename write protocol (§2.3) mandatory. Decision (A): D4-R4 alarm 30s on orch-state.json.
-**Cannot self-spawn (PO has Read/Edit/Write/Bash+gateway, no Agent tool).** Drive = pipeline-state head is the SSOT the router reads to fan out. Router executes: agent-father OSC-1 → atomic OSC-2/3 commit → parallel OSC-4 (mcp/frontend/ops) → qa OSC-5. Router-report gates: (a) OSC-2 commit lands, (b) qa proves atomic-write, (c) COMPLETE.
-**Carry-over:** next live tick = agent-father OSC-1 (solo, no cycle before OSC-2). All other open sprints (FLEET-HOST-SAFETY AUD-ND-1 done/A-01+DRAIN open, MSG-1 HIGH-needs-BA, VPS-PLACEHOLDER-GUARD closed) deferred behind this operator-priority drive.
+**Inputs:** orch-state.json head idle/WIP0 (RISK-2 freeze LIFTED, OSC closed 93b91205). 4 NEW signal_queue rows. Telegram: no new reports, 0 unresolved (verified raw via gateway, not relayed). TNB c85 read.
 
-## 2026-06-01T21:06Z — EXIT FRONTEND-BCTC-TAB — APPROVE, sprint CLOSED (38642fc2)
+**4 NEW signals disposed → all READ (with po_disposition written into each row):**
+- `tnb-c85` (HIGH audit-handoff): morning-dish F7 fix is DONE-PENDING-LIVE-VERIFY (agent-father same-tick init.md+chef.md). No new dev task — monitor next morning fire 05:23Z (watch_item). ACK appended to tnb-audit-latest.md.
+- `1967b-RERUN` (INFO): REQ_1967.md spec is REAL + dispatch-ready (7 surfaces, NFRs, 0 PO blockers) — verified raw on disk + git f7ef1b23. payload_ref po-1967b-rerun.json is DANGLING (absent) but spec is the authoritative artifact. DEFERRED behind higher-priority FLEET-HOST-SAFETY FIX; re-queue when host-safety closes.
+- `P2-G-DONE` (INFO): impl_done ack (7520428b), no action.
+- `P1-MCP-QA` (INFO): STALE 2026-05-25 — toolCount=146 tripwire superseded post-hygiene, P1-MCP-REBUILD gate moot. Skipped.
 
-**Verdict: APPROVE.** BCTC Inspect viewer now a dashboard tab on :3001 via A2 server-side proxy, ZERO mcp-server edits — operator request met with no regression surface.
-- Evidence raw-verified by me (not relayed): dev 80f2911b = frontend-only (+205L, 2 router-caught brief defects fixed pre-dev: /api prefix kept; 2nd /api/bctc-eval/* splat). QA 5046a7da APPROVED 5/5 — PDF 16.6MB + PNG 273KB MD5-identical :3001 vs :3000, 7 sub-paths parity, eval 200 parity, human-confirm POST round-trip proven via bun:sqlite DB read+reset, mcp-server img SHA distinct + :3000 still 200. Brief `…/2026-06-01-frontend-bctc-inspect-tab.md` present (A2 locked, affirms no mcp-server edit).
-- Closed sprint in TASKS.md (collapsed 8-line OPEN block → 1 closed-sprint line); pruned 77→69L (≤80 cap). task_release ok=false (TTL expired across sprint — acceptable per flow). EXIT commit 38642fc2.
-- DEFERRED/OUT-OF-SCOPE (recorded, NOT blocking): 13 docs lack rasterized PNG → page-image 404 on those (only FPT/ACB Q1 have PNGs) = pre-existing data-coverage gap, NOT a proxy bug. Tab label "BCTC Inspect" English for casing consistency.
-- No new follow-up sprint warranted; data-coverage PNG gap belongs to the BCTC rasterization pipeline, not this proxy.
+**TNB c85 = NEEDS_ATTENTION / STABLE-WATCH.** F7 HIGH already cured; F1-F6 all MED/LOW pre-existing (macro absent-by-design, BCTC overdue, VIRA pending, F9 12th cycle, hexagram dark) — none new, all tracked/data-blocked. 0 new tasks from TNB.
 
-## 2026-06-01T20:43Z — SCOPE FRONTEND-BCTC-TAB (operator: BCTC viewer as :3001 dashboard tab)
+**PICK (single, highest-value, WIP 1/2): A-01-EXPECTED-SET** (FLEET-HOST-SAFETY, FIX-class, agent-father, S, zone docs/agents/system-auditor/). Rationale: priority order = recurring bugs/host-danger first. A-01 false-RED (not-deployed≠crashed) twice caused outages — auditor destructive ENOSPC stop + dashboard 7 false-DOWN. Fix = check vs intended-runtime-set SSOT (mcp-server+mcp-gateway only) NOT full compose. Pairs with shipped AUD-ND-1 PLAN-ONLY teeth as defense-in-depth (kills the trigger AUD-ND-1 neutralizes). Outranks 1967b (exploratory audit, no immediate risk reduction). PLAN-ONLY: agent-father agent-def edits only, NO docker ops. AC: 0 CRITICAL for not-deployed svcs 7d.
 
-Operator: "need move this page to new tab on localhost:3001". Router pre-verified "this page" = BCTC inspect viewer served ONLY by mcp-server `:3000/api/bctc-inspect` (`bctc-inspector.html`, 6 tabs + human-confirm + Task#18 prose fix a10448b0 closed today). Want it as a tab in the Remix dashboard on :3001.
+**Wrote head atomically (temp→rename, fresh-read-only-my-section, WIP 1/2):** dispatched agent-father A-01-EXPECTED-SET. narrative.current_sprint + watch_items trimmed. JSON re-validated.
 
-**DECISION (raw-verified, not relayed):** Option **A — EMBED via A2 frontend server-side PROXY route**. NOT iframe-direct (A1), NOT native re-port (B).
-- Raw evidence I checked myself: viewer is one self-contained 2692L HTML, all JS inline, **`const BASE = ""` (L1043)** → ALL data calls (`/api/bctc-inspect/*`: page-window/table/md/zones/docs + hc-correct/confirm/reset POSTs) are same-origin relative. Frontend already has the proxy convention (`app/lib/api/bctc-eval-client.ts` uses `MCP_SERVER_BASE_URL`=`http://mcp-server:3000`) + simple `NAV_ITEMS` array in `dashboard.tsx`.
-- A2 proxies HTML + `/api/bctc-inspect/*` through Remix → everything same-origin on :3001 → `BASE=""` untouched + env-agnostic (dev vs CF-tunnel prod). A1 hardcodes a browser-reachable :3000 host = fragile. B = re-implement 6 tabs+human-confirm+today's prose fix = regression surface. **ZERO mcp-server edit** in all variants.
-- Why architect FIRST (thin brief, not skip): A1-vs-A2 + the proxy-path contract (which sub-paths incl. POST human-confirm + PDF page-window streaming + content-type passthrough) + iframe-vs-inline-render is a real bounded design call. One page, no impl.
-
-**Opened sprint FRONTEND-BCTC-TAB (MEDIUM, zone `apps/frontend/` only):** FBT-ARCH (brief) → FBT-DEV (route `dashboard.bctc-inspect.tsx` + proxy resource route + NAV_ITEMS entry) → FBT-QA (live: tab loads all 6 tabs + ≥1 human-confirm round-trip; :3000 byte-for-byte unregressed) → FBT-OPS (REBUILD frontend down→build→up, never restart-stale).
-**SERIALIZE NOTE:** VPS-DEPLOY-PLACEHOLDER-GUARD already CLOSED today; if any VPS/mcp-server work re-opens, serialize COMMITS (shared git index) — disjoint zone so no tree collision.
-
-**Dispatch:** po→agents-architect (FBT-ARCH) → dev-frontend (FBT-DEV) → qa (FBT-QA) → ops (FBT-OPS).
-
-## 2026-06-01T17:35Z — INTAKE router-found MCP defects A–E → MCP-SURFACE-GAPS + bumped AUD-ND-1
-
-Router handed 5 router-verified MCP defects. I re-confirmed A/B/C/D LIVE via gateway myself (raw, not relayed):
-- **A** `get_foreign_flow {}` → `code` Required (per-ticker only); no market aggregate. → **MSG-1 (dev-mcp-server, HIGH, FEATURE)** — extend or add `get_foreign_flow_market`; NEEDS BA; may pull dev-stock-price/VPS source. Highest product value (daily FB/MARKET headline "khối ngoại bán ròng N tỷ").
-- **B** `get_market_snapshot {3 codes}` → **4** trailing "Kinh Dịch: Chưa đủ dữ liệu" lines (N+1, worse than reported). **= SAME defect as TSH-6** (bare-catch :5005-down fallback). NOT a new task → folded as QA evidence onto TSH-6 (its OMIT-on-down AC kills all the lines). MSG-2 = placeholder only.
-- **C** `source_tier:2` always (never tier-1). **= read-path VPS-SOCAT-PERSIST already owns** ("tier-1 restoration unconfirmed"). Folded as C-TIER1-CEILING doc-only AC there. NO new sprint. Decide-and-document, not "fix".
-- **D** `get_market_breadth`/`get_top_movers` "not found via gateway" — root-caused: they **DO NOT EXIST in source** (0 `server.tool` match, NOT in 154 count). So NO count-vs-resolve mismatch — prior agent expected phantom tools. Reframed: discoverability gap, not registration bug. → **MSG-3 (dev-mcp-server, LOW, DOC)**: record absence in mcp-tools.md; if breadth/movers wanted = feature → fold into MSG-1's market-aggregate family.
-- **E** AUD-ND-1 already tracked (FLEET-HOST-SAFETY). NEW evidence: Monday 2026-06-01 trading-hours auditor `docker stop` → live-only-no-backfill → PERMANENT intraday data loss (3rd manifestation, downtime→data-loss). **Bumped AUD-ND-1 HIGH→CRITICAL/top-of-queue** in TASKS + SPRINT_GOAL; added data-loss AC addendum (regression must run in simulated market-open). Did NOT duplicate.
-
-NOTE honored: macro-indicators-unavailable + VPS-SOCAT acute = ops live infra; I only left the conditional "dev task ONLY if ops says code rebuild needed."
-
-**Recommended sprint order:** AUD-ND-1 (CRITICAL, ships first) → TSH-1/TSH-6 (in-flight, includes B) → MSG-1 (HIGH feature, after mcp rebuilds settle) → MSG-3 + C doc (LOW, ride-along). MSG-2 dormant.
-ENOSPC hit mid-session (per-task tmpfs full) — root disk fine; bash output unreliable, used repo-file redirect workaround.
-
-## 2026-06-01T17:23Z — TRIAGE operator-bug → opened TSH-6 (FIX) + TSH-7 (backlog)
-
-**Operator-reported product defect:** `get_market_snapshot` always shows misleading "Kinh Dịch: Chưa đủ dữ liệu để tính quẻ". Router raw-diagnosed (NOT relayed): kinh-dich-service:5005 not deployed (docker ps = only mcp-server + mcp-gateway, host-panic constraint / A-01-EXPECTED-SET) → fetch connection-refused → bare `catch {}` swallows → emits fallback that FALSELY implies data shortage. 3 sites: marketTools.ts appendMarketHexagram(62-69)/appendStockHexagram(72-80) + analysis.ts appendStockHexagramHttp(63-78). I confirmed docker ps + grep'd the 3 sites raw myself.
-
-**Verdict: Approach C-omit. FIX-class, NO new architect cycle.** Rationale: the architect ALREADY ruled the SAME dead-:5005 dep for the standalone tool (TSH-1, ARCH-DECIDE-1 FR-1=1b DEREGISTER in `…/2026-05-31-tool-surface-hygiene.md`): "absent is safer than lying"; wire :5005 later as feature sprint KINH-DICH-MARKET, "not squeezed into a hygiene sprint." That precedent governs the embedded path too.
-- (A) deploy :5005 — REJECTED (host-memory panic + intended-runtime).
-- (B) inline revert — REJECTED (re-introduces the P1-F G5 domain→infra violation; ARCH-DECIDE-1 already pre-decided against).
-- (C) honest-omit — CHOSEN. On connection-refused/non-200 → OMIT block entirely + logger.warn (kills silent-swallow `feedback_silent_swallow_serial_bugs`); on genuine 200-insufficient-data → keep honest VN line. Plain VN (`feedback_market_report_plain_vietnamese`).
-
-**Opened:** TSH-6 under TOOL-SURFACE-HYGIENE (dev-mcp-server, MEDIUM, operator-reported). Handoff `docs/handoffs/TSH-6-kinhdich-honest-omit.md`. 5 ACs incl. live gateway raw-verify (not badge, RISK-2 / `feedback_router_verify_raw_not_badges`). Ops REBUILD required. Can batch rebuild with TSH-2/3/4/TSH-4 (same marketTools.ts).
-**Opened (backlog):** TSH-7 — secondary UX, default get_market_snapshot to watchlist when no `codes`. SPRINT-S, NOT gating. GOTCHA: watchlist NOT inline in system-map.json (only `_ssot` pointers) — tickers live in SQLite `watchlist` table. Needs BA spec.
-
-**Routing:** PM → dev-mcp-server → ops rebuild → qa live raw-verify → PO sign-off.
-
-**Carry-over / queued ahead/alongside:**
-- TSH-1 (dev-mcp-server) SHIPS FIRST in this sprint — deregister get_market_hexagram tool; getMarketHexagram export stays LIVE (still used by appendMarketHexagram) so TSH-6 safe.
-- ENV-ISOLATION-P2 schedulable — SERIALIZE EI-P2-2 mcp-server rebuild vs all TOOL-SURFACE-HYGIENE rebuilds (same zone, never parallel).
-- HIGH backlog ahead: VPS-DEPLOY-PLACEHOLDER-GUARD (T1 ops-recon HARD GATE) · NB-PRUNE-FIX.
+**Carry-over (deferred, valid):** 1967b architect orchestration audit (SPIKE-L) · DRAIN-INJECTION-SAFE + AUDITOR-SLA-CADENCE (FLEET-HOST-SAFETY remaining) · MSG-1 foreign-flow aggregate · NB-PRUNE-FIX · AUD-ND-1-REGRESSION watch (mcp-server SIGTERM ~14:30 06-01, culprit unknown — verify detectors PLAN-ONLY). Next live tick = agent-father A-01-EXPECTED-SET.
