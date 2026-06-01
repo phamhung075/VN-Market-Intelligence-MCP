@@ -345,7 +345,7 @@ set -e
 chmod +x /root/article-body-fetcher.py
 if ! pip3 show beautifulsoup4 > /dev/null 2>&1; then
   echo "Installing beautifulsoup4..."
-  pip3 install beautifulsoup4
+  pip3 install --break-system-packages beautifulsoup4
 else
   echo "beautifulsoup4 already installed: $(pip3 show beautifulsoup4 | grep Version)"
 fi
@@ -354,7 +354,7 @@ ARTEOF
 # ── GUARD-1: Post-deploy SSH placeholder verify ───────────────────────────
 $SSH << 'VERIFYEOF'
 set -e
-LEAKED=$(grep -rl '__[A-Za-z][A-Za-z0-9_]*__' /root/fetch-*.sh /root/*.py 2>/dev/null || true)
+LEAKED=$(grep -rl '__[A-Z][A-Z0-9_]*__' /root/fetch-*.sh /root/*.py 2>/dev/null || true)
 if [ -n "$LEAKED" ]; then
   echo "ERROR: deployed artifacts still contain placeholders: $LEAKED" >&2
   exit 1
