@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-01T22:34Z",
   "_updated_by": "po",
   "head": {
-    "status": "dispatched",
-    "active_task_id": "A-01-EXPECTED-SET",
-    "next_agent": "agent-father",
-    "next_action": "FIX A-01-EXPECTED-SET (FLEET-HOST-SAFETY, S, zone docs/agents/system-auditor/). Root-cause durable fix for the recurring false-RED -> destructive-remediation class: system-auditor A-01 must check container health against an intended-runtime-set SSOT (mcp-server + mcp-gateway only on 16GB host) NOT the full docker-compose service list. not-deployed != crashed. Closes the false-DOWN that twice led to outages (auditor destructive ENOSPC stop + dashboard 7 false-RED). Pairs with shipped AUD-ND-1 (PLAN-ONLY teeth) as defense-in-depth. AC: 0 CRITICAL emitted for not-deployed svcs over 7d; A-01 reads intended-runtime SSOT. PLAN-ONLY: agent-father edits agent-def files only, NO docker ops, NO fleet start. Explicit-file staging, main branch. After dispatch verify via raw signal_queue (no false-green badge).",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "A-01-EXPECTED-SET DONE (fa02735e — host_runtime_set SSOT now gates auditor Tier-1 severity; not-deployed-by-design svcs → INFO/grey, never CRITICAL; root-cause fix for the false-RED→destructive class, pairs w/ AUD-ND-1). Runtime AC (0 false-CRITICAL over 7d) monitored across coming auditor cycles. Residual logged: A-01b-DASHBOARD-HEALTH-FILTER (frontend/api-gateway /health plane still false-RED — needs same SSOT filter, code change). NORMAL triage resumed — next pick: FLEET-HOST-SAFETY remaining (DRAIN-INJECTION-SAFE, AUDITOR-SLA-CADENCE, A-01b) or higher-signal queue items. WIP 0/2.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-01T22:34Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-01T22:45Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -49,8 +49,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T00:00Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-01T22:45Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "ORCH-STATE-CONSOLIDATE",
@@ -149,9 +149,10 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": null,
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
-            "zone": "docs/agents/system-auditor/"
+            "zone": "docs/agents/system-auditor/",
+            "note": "fa02735e DONE-PENDING-LIVE-VERIFY"
           },
           {
             "task_id": "AUDITOR-SLA-CADENCE",
@@ -173,6 +174,17 @@
             "size": "S",
             "zone": "ops/VPS",
             "note": "CLOSED 2026-06-01: launchd plist com.vn-market.socat-bridge installed"
+          },
+          {
+            "task_id": "A-01b-DASHBOARD-HEALTH-FILTER",
+            "title": "frontend+api-gateway /health must read host_runtime_set SSOT; render not_deployed_by_design as INFO/grey not DOWN",
+            "type": "sprint-task",
+            "owner": "dev-frontend",
+            "depends": "A-01-EXPECTED-SET",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/frontend/ + apps/api-gateway/",
+            "note": "residual flagged by agent-father during A-01; closes the dashboard 7-false-RED plane (project_dashboard_two_data_planes)"
           }
         ]
       },
