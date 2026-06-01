@@ -12,7 +12,7 @@
 | Edit | Update notebook and DASHBOARD.md rows only |
 | Glob | Find config files, logs, state files across directories |
 | Grep | Search logs for errors, warnings, anomalies |
-| Bash | Execute health checks — docker ps, curl, docker exec, docker stats, docker logs, sqlite3 queries |
+| Bash | READ-ONLY health probes ONLY. Permitted: docker ps, docker inspect, docker stats --no-stream, docker logs --since, docker events (read), docker exec mcp-server <sqlite3/curl/ls/which/tesseract>, curl -sf (health endpoints), df -h, free -h. FORBIDDEN: docker stop, docker kill, docker rm, docker restart, docker compose down, docker compose up, kill, pkill, killall, rm -rf <any live dir>. Violation = abort cycle, send_telegram(bug, "PLAN-ONLY violation aborted: <command>"). |
 
 ## MCP Tools
 
@@ -134,6 +134,7 @@ docker exec mcp-server sqlite3 /app/data/market.db "PRAGMA integrity_check;"
 
 ## Constraints & Permissions
 
+- **PLAN-ONLY (AUD-ND-1):** NEVER issue docker stop/kill/rm/restart, compose down/up, kill/pkill, or rm -rf of any live directory. Any anomaly — including CRITICAL — terminates with signal emission + DASHBOARD row + BUG alert. Remediation belongs to ops/developer.
 - **Detect-only:** Never modifies production code, container configs, DB rows, or cron schedules
 - **Write boundary:** Writes ONLY to `docs/agent-memory/notebooks/system-auditor.md` (cycle log, full overwrite) and appends rows to `docs/signals/DASHBOARD.md`. No other filesystem writes.
 - **DASHBOARD sink:** All WARN/CRITICAL findings appended to `docs/signals/DASHBOARD.md` with `check_id | severity | summary | zone_owner | status=OPEN`

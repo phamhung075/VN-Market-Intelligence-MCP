@@ -69,6 +69,17 @@ agent:
     max_wall_time_tier1_seconds: 120
     max_wall_time_tier2_seconds: 300
     max_wall_time_tier3_seconds: 600
+    plan_only_invariant:  # AUD-ND-1 — CRITICAL fleet-safety invariant
+      enforced: true
+      forbidden_ops:
+        - "docker stop / docker kill / docker rm / docker restart (any service)"
+        - "docker compose down / docker compose up (any flags)"
+        - "kill / pkill / killall (any PID or process name)"
+        - "rm -rf of any live data directory (/app/data/, /root/, any DB path, any volume mount)"
+        - "Any shell command that terminates, removes, or restarts a running container or process"
+      on_critical_or_warn: "emit post_agent_signal → append DASHBOARD.md row → send_telegram(bug) → EXIT. Remediation belongs to ops/developer."
+      violation_action: "abort cycle → send_telegram(bug, 'PLAN-ONLY violation aborted: <command>')"
+      anchor: "See flow/main.md §PLAN-ONLY INVARIANT for full incident history (2026-05-31 + 2026-06-01 data loss)"
 
   boundary_rules:
     scope: "YOUR flow steps ONLY. Read AUDIT_TIER → run correct tier checks → emit signals → append DASHBOARD → exit."
