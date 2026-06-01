@@ -5,12 +5,12 @@
   "head": {
     "status":         "planning",
     "active_task_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
-    "next_agent":     "architect",
-    "next_action":    "WRONG-DEPLOYER finding: GUARD-1/3 landed in scripts/deploy-vps-proxy.sh (VULTR_IP) but live host is Vinahost via scripts/deploy-vinahost.sh (renders news, ZERO guards, ships 3 extra scripts incl TE w/ __TE_API_KEY__). Decide: confirm live deployer (ops recon env IPs+push origin) → consolidate OR mirror guards into deploy-vinahost.sh + convert/guard fetch-tradingeconomics/gso/enrich-bctc. Impl code is sound; placement wrong.",
+    "next_agent":     "pm",
+    "next_action":    "DECISION A (consolidate): retire deploy-vps-proxy.sh (Vultr dead); migrate GUARD-1/2/3 + article-body-fetcher into deploy-vinahost.sh; remove VULTR_IP from .env. OPS-RECON gates T2/T3/T4. Brief: docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md. Decompose into T1(ops-recon) T2(GUARD-1 migrate) T3(GUARD-3 migrate) T4(retire+env-clean) T5(QA).",
     "wip":            0,
     "wip_max":        2,
-    "updated_at":     "2026-06-01T13:20Z",
-    "updated_by":     "dev-team"
+    "updated_at":     "2026-06-01T14:12Z",
+    "updated_by":     "architect"
   },
 
   "dashboard_section_cache": {
@@ -22,7 +22,7 @@
 
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
-    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, blocked@architect 06-01T13:20Z): GUARD-1/2/3 IMPL+QA-local PASS (96446b5d code sound, marker-rename+clean-render raw-verified) BUT router caught guards landed in deploy-vps-proxy.sh=VULTR while live host=Vinahost via deploy-vinahost.sh (renders news, 0 guards). Deploy-readiness BLOCKED; ops redeploy NOT dispatched. Architect to confirm live deployer + mirror/consolidate.",
+    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, planning→pm 06-01T14:12Z): DECISION-A ISSUED — consolidate to single deployer deploy-vinahost.sh; retire deploy-vps-proxy.sh (Vultr dead 2026-04-13); migrate GUARD-1/2/3+article-body into deploy-vinahost.sh; remove VULTR_IP from .env. OPS-RECON (T1) gates T2/T3/T4. Brief: docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md. PM to decompose 5 tasks.",
     "last_closed":     "VPS news-push LIVE outage RESTORED (2026-06-01T10:09Z tick, ops 53c3d888): all 14 feeds http=000 since ~09:07Z — /root/fetch-vn-news.sh shipped unrendered __MCP_BASE__/__API_KEY__ placeholders (deploy regression from cafef 814088b0 clobbering rendered live script). ops rendered creds, fixed same in fetch-foreign-flow.sh, verified raw http=200 received=242 cursor 0→1780331100. My socat-reboot hypothesis was WRONG (uptime 48d) — ops verify-raw corrected it. FU-OPS-CAFEF-1 PASS (cafef 20+20/cycle ×7, 0 PERMANENTLY_BLOCKED — is_blocked() fix holding). Prior: RE-CAP-1 (signal-dashboard 192→118L, 7aa3abbf).",
     "watch_items": [
       "CHEF morning-dish: verify guaranteed publish under macro-down on next fire",
@@ -31,7 +31,7 @@
       "ops 275L / dev-alert-engine 389L / dev-rag-service 223L still >cap (NB-PRUNE-FIX scope)"
     ],
     "open_sprints": [
-      "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, planning→dev-vps-crawls): ba spec docs/handoffs/TASK_VPS-PLACEHOLDER-GUARD.md + pm decomposed 5 tasks (VPS-BS4-INSTALL ops one-off · GUARD-2 env-fallback x6 incl TE_API_KEY empty-string · GUARD-1 leak-guard pre-scp+post-deploy-SSH-glob · GUARD-3 article-body+bs4 under deployer · GUARD-QA). Handoffs TASK_PLACEHOLDER-GUARD-1/2/3 + TASK_VPS-BS4-INSTALL. Build phase next tick. Root: cafef 814088b0 bypassed renderer.",
+      "VPS-DEPLOY-PLACEHOLDER-GUARD: live status in current_sprint (DECISION-A consolidate, →pm). Old GUARD-1/2/3 impl (96446b5d) on dead vps-proxy SUPERSEDED by consolidation; refs: ba spec TASK_VPS-PLACEHOLDER-GUARD.md + brief 2026-06-01-vps-deployer-consolidation.md. Root: cafef 814088b0 bypassed renderer + stale VULTR_IP in .env masked decommission.",
       "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE: within-section trimming + per-flow prune-invocation audit",
       "CHEF-FLOW-CAP-REFACTOR: chef.md 258L > 120L cap; extract Steps 6/6.5/7 to chef-write-dish.md",
       "CHEF-TS-STAMP: cosmetic telemetry bug; confirm pattern before dispatch",
