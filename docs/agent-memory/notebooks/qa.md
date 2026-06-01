@@ -13,12 +13,6 @@ Key milestones: cycle-159 BCTC-TRUST-RED APPROVED | cycle-157 AIT-QA APPROVED | 
 
 
 
-## cycle-177 · 2026-06-01 · PROSE-TEXT-LOSS — Task #18 — APPROVED
-
-Sprint: PROSE-TEXT-LOSS | Task: #18 PROSE-DEV-1 | Verdict: APPROVED
-Commit: a10448b0 (fix) | 3 files changed
-
-G1 TSC: 0 errors (full bun tsc --noEmit clean). G2 DV suite 5/5 PASS; DV-1 genuinely RED before fix confirmed via git diff (pre-fix: text_content:"", confidence:0 hardcoded in coverage-gap branch; new SELECT from pdf_extracted_text was not present — not a tautology). G3 Neighboring suites: pek-render-seam 12/0, 1271-bctc-inspect-md + 1273-bctc-inspect-overlay 16/0 — all green. G4 LIVE-SERVE: FPT doc e8ea3df5 page 1 → text_content 2081ch (pek_coverage_gap:true), page 2 → 134ch confidence:0.8 — non-empty confirmed. G5 Image SHA 33e4386c confirmed (new vs prior 4446a6e9, built 2026-06-01T17:17Z). DDD: interface→application import pre-existing (correct layer); no new imports. Security: no process.env, no secrets, no hardcoded creds.
 
 ## cycle-173 · 2026-05-31 · NB-PRUNE-1 — NB-PRUNE-FIX — APPROVED
 
@@ -42,3 +36,24 @@ AC4 tsc: 0 errors (bun tsc --noEmit exit 0, no output).
 
 **TSH-5 stat reconcile — PASS (already done, no edit needed)**
 project-stats.json already shows toolCount=154 (both top-level and infrastructureStatus) from commit 643d4619. Live count matches. No edit required.
+
+## cycle-180 · 2026-06-01T20:00Z · AUD-ND-1 PLAN-ONLY gate — PASS-STATIC+FLOWWALK
+
+Sprint: AUD-ND-1 | Commit verified: d30f9221 | Gate: static + flow-walk (read-only)
+
+**A. Static — 3 files**
+flow/main.md L4: `## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)` immediately after top heading (L2), before any capability/step text. 5 forbidden-ops lines L9-13 present. Positive contract (signal→DASHBOARD→BUG→EXIT) L15-19 present. Incident anchor L24-26 present (2 incidents). PASS.
+init.md L72-82: `plan_only_invariant:` under `constraints:` with `enforced: true`, `forbidden_ops:` 5 entries, `on_critical_or_warn:`, `violation_action:`, `anchor:`. Indentation consistent YAML. PASS.
+tools/package/system-auditor.md L15 Bash row: allowlist + forbidden list verbatim. L137 `## Constraints & Permissions` PLAN-ONLY line present. PASS.
+.claude/agents/system-auditor.md: line 1 = `---` (frontmatter intact). PASS.
+
+**B. Flow-walk**
+B1 Destructive authored steps: NONE found. All bash blocks in flow are read-only (docker ps, docker inspect, docker stats --no-stream, docker logs, docker exec sqlite3/curl/ls/which/tesseract, git log, date -u). No docker stop/kill/rm/restart/compose authored anywhere. Brief claim verified.
+B2 All CRITICAL/WARN paths: Tier-1 L107-121 `Emit per failure` → post_agent_signal + send_telegram(bug) + DASHBOARD.md. Tier-2 L173-189 `Emit per stale source` → same pattern. Tier-3 L387-403 `Emit per failing check` → same. L482-485 error cases: `report as CRITICAL anomaly → EXIT after Telegram BUG alert`. Zero mutation branch found.
+B3 Invariant positioning: L4 (immediately after L2 heading), BEFORE Step 0a at L46, BEFORE any tier dispatch at L58, BEFORE any check that could produce a CRITICAL finding. Unmissable — LLM reading the flow sees PLAN-ONLY before any decision point. PASS.
+B4 Allowlist vs flow needs: all Bash in flow (docker ps/inspect/stats/logs/exec, curl, git log, date -u, wc -l) are within the allowlist. No conflict found. Detection capability intact.
+
+**C. Caps/hygiene**
+flow/main.md: 494L actual vs 120L cap, stale size-justification comment claims 175L. Pre-existing violation (file was 469L before this commit per agent-father note). Do NOT fix in this dispatch — invariant block must stay in-flow. Follow-up required (separate hygiene task).
+
+LIVE-INJECTION PROVEN-RED: DEFERRED. Requires controlled off-hours ops-supervised run. NOT part of this gate.

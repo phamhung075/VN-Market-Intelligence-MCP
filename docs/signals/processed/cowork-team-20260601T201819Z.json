@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T20:15:00Z",
+    "tick_id": "2026-06-01T20:15:00Z",
+    "drift_min": 3,
+    "silent": false,
+    "pressure_mode": "legacy",
+    "dashboard_drain": {
+      "mtime_changed": false,
+      "mtime": "2026-06-01T19:15:13"
+    },
+    "matched": [
+      "tnb-audit"
+    ],
+    "won": [
+      "tnb-audit"
+    ],
+    "spawned": [
+      {
+        "slot": "tnb-audit",
+        "agent": "tran-ngoc-bau",
+        "agentId": "aa4e4c8dcd12dbd3f"
+      }
+    ]
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T20:18:50Z"
+}

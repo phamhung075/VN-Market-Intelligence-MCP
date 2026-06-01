@@ -1,0 +1,18 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief_ready",
+  "priority": "critical",
+  "brief": "docs/architecture-briefs/2026-06-01-detector-plan-only-safety.md",
+  "sprint": "FLEET-HOST-SAFETY",
+  "task_id": "AUD-ND-1",
+  "createdAt": "2026-06-01T20:19:21Z",
+  "summary": "PLAN-ONLY safety invariant for system-auditor. 3 files to edit (flow/main.md, init.md, tools/package/system-auditor.md). Insert explicit PLAN-ONLY INVARIANT block + Bash allowlist replacing unconstrained Bash grant. QA must run PROVEN-RED deliberate-false-positive simulation asserting zero infra mutation.",
+  "files_to_edit": [
+    "docs/agents/system-auditor/flow/main.md",
+    "docs/agents/system-auditor/init.md",
+    "docs/agents/tools/package/system-auditor.md"
+  ],
+  "qatask": "AUD-ND-1-PROVEN-RED — synthetic ENOSPC+container-down false-positive → assert signal/DASHBOARD/BUG emitted + docker ps mcp-server unchanged",
+  "do_not_touch": ["docs/agents/ops/"]
+}
