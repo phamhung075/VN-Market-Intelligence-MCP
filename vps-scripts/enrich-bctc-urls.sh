@@ -5,9 +5,9 @@
 # For each item, tries to discover direct PDF URLs from HOSE/HNX/UPCOM.
 # Posts discovered URLs back to main server via /api/enrich-queue-item.
 
-API_ENRICH_URL="__MCP_BASE__/api/enrich-queue-item"
-QUEUE_URL="__MCP_BASE__/api/bctc-fetch-queue?skip_enrichment=true"
-API_KEY="__API_KEY__"
+API_ENRICH_URL="${BCTC_ENRICH_URL:-__MCP_BASE__/api/enrich-queue-item}"
+QUEUE_URL="${BCTC_QUEUE_URL:-__MCP_BASE__/api/bctc-fetch-queue?skip_enrichment=true}"
+API_KEY="${API_KEY:-__API_KEY__}"
 LOG="/var/log/vn-bctc-enrich.log"
 
 # Log rotation

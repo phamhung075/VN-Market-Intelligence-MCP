@@ -12,10 +12,10 @@
 #
 # Set these env vars in the systemd unit's EnvironmentFile to override defaults.
 
-API_URL="__MCP_BASE__/api/push-prices"
-FOREIGN_FLOW_URL="__MCP_BASE__/api/push-foreign-flow"
-WATCHLIST_URL="__MCP_BASE__/api/watchlist"
-API_KEY="__API_KEY__"
+API_URL="${PRICES_API_URL:-__MCP_BASE__/api/push-prices}"
+FOREIGN_FLOW_URL="${PRICES_FF_URL:-__MCP_BASE__/api/push-foreign-flow}"
+WATCHLIST_URL="${PRICES_WATCHLIST_URL:-__MCP_BASE__/api/watchlist}"
+API_KEY="${API_KEY:-__API_KEY__}"
 LOG="/var/log/vn-price-fetch.log"
 
 # Configurable foreign flow field names (can be overridden via environment)

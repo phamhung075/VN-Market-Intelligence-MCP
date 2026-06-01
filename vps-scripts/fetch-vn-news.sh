@@ -4,8 +4,8 @@
 #          NguoiLaoDong, VietnamBiz, VnBusiness, BaoDauTu
 # Pushes all items to MCP server via POST /api/push-news.
 
-API_URL="__MCP_BASE__/api/push-news"
-API_KEY="__API_KEY__"
+API_URL="${VN_NEWS_API_URL:-__MCP_BASE__/api/push-news}"
+API_KEY="${API_KEY:-__API_KEY__}"
 LOG="/var/log/vn-news-fetch.log"
 CURSOR_FILE="${VN_NEWS_CURSOR_FILE:-/var/lib/vn-news/cursor}"
 
@@ -125,15 +125,15 @@ fetch_rss() {
   for ATTEMPT in 1 2 3; do
     UA=$(next_ua)
     T0=$(date -u +%s%3N)
-    BODY=$(curl -s -w "\n__HTTP__%{http_code}" \
+    BODY=$(curl -s -w "\n_HTTP_%{http_code}" \
       --connect-timeout 10 --max-time 20 --compressed \
       -H "User-Agent: $UA" \
       -H "Accept: application/rss+xml,application/xml,text/xml,*/*" \
       -H "Accept-Language: vi-VN,vi;q=0.9,en-US;q=0.8" \
       -H "Referer: https://www.google.com/" \
       -L "$URL" 2>/dev/null)
-    HTTP_CODE=$(echo "$BODY" | grep "__HTTP__" | sed 's/__HTTP__//')
-    BODY=$(echo "$BODY" | grep -v "__HTTP__")
+    HTTP_CODE=$(echo "$BODY" | grep "_HTTP_" | sed 's/_HTTP_//')
+    BODY=$(echo "$BODY" | grep -v "_HTTP_")
     DUR=$(( $(date -u +%s%3N) - T0 ))
 
     if is_blocked "$BODY" "$HTTP_CODE"; then
@@ -298,15 +298,15 @@ if [ "$TOTAL" = "0" ]; then
   # Send a heartbeat sentinel so vps_push_log registers a row (satisfies suppression gate).
   # The MCP server rejects an empty array with 400, so we wrap in a single sentinel item
   # that pollNews will treat as a no-op (unknown source key, no URL → de-duped / skipped).
-  SENTINEL='[{"title":"__heartbeat__","url":"","publishedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","content":"","source":"heartbeat"}]'
-  HB_RESP=$(curl -s -w "\n__HTTP__%{http_code}" \
+  SENTINEL='[{"title":"_heartbeat_","url":"","publishedAt":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'","content":"","source":"heartbeat"}]'
+  HB_RESP=$(curl -s -w "\n_HTTP_%{http_code}" \
     --connect-timeout 10 --max-time 20 \
     -X POST "$API_URL" \
     -H "Content-Type: application/json" \
     -H "X-API-Key: $API_KEY" \
     -H "User-Agent: VN-Market-VPS-Proxy/1.0" \
     -d "$SENTINEL")
-  HB_HTTP=$(echo "$HB_RESP" | grep "__HTTP__" | sed 's/__HTTP__//')
+  HB_HTTP=$(echo "$HB_RESP" | grep "_HTTP_" | sed 's/_HTTP_//')
   echo "$(TS) [NEWS  ] INFO  heartbeat sentinel sent http=$HB_HTTP" >> "$LOG"
   ELAPSED=$(( $(date -u +%s) - START_S ))
   echo "$(TS) [NEWS  ] INFO  === DONE in ${ELAPSED}s (heartbeat only) ===" >> "$LOG"
@@ -318,15 +318,15 @@ TMP_JSON=$(mktemp)
 echo "$ALL_JSON" > "$TMP_JSON"
 
 T0=$(date -u +%s%3N)
-RESP=$(curl -s -w "\n__HTTP__%{http_code}" \
+RESP=$(curl -s -w "\n_HTTP_%{http_code}" \
   --connect-timeout 10 --max-time 20 \
   -X POST "$API_URL" \
   -H "Content-Type: application/json" \
   -H "X-API-Key: $API_KEY" \
   -H "User-Agent: VN-Market-VPS-Proxy/1.0" \
   --data "@$TMP_JSON")
-HTTP_CODE=$(echo "$RESP" | grep "__HTTP__" | sed 's/__HTTP__//')
-RESP_BODY=$(echo "$RESP" | grep -v "__HTTP__")
+HTTP_CODE=$(echo "$RESP" | grep "_HTTP_" | sed 's/_HTTP_//')
+RESP_BODY=$(echo "$RESP" | grep -v "_HTTP_")
 DUR=$(( $(date -u +%s%3N) - T0 ))
 rm -f "$TMP_JSON"
 

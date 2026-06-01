@@ -5,8 +5,8 @@
 # Runs hourly from vn-gso-fetch.service.
 # NOTE: browser automation removed (VPS too lite for Chromium).
 
-API_URL="__MCP_BASE__/api/push-gso"
-API_KEY="__API_KEY__"
+API_URL="${GSO_API_URL:-__MCP_BASE__/api/push-gso}"
+API_KEY="${API_KEY:-__API_KEY__}"
 LOG="/var/log/vn-gso-fetch.log"
 COUNTRY="VN"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"

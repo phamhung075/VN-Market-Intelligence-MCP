@@ -4,9 +4,9 @@
 # pushes to MCP server via POST /api/push-tradingeconomics.
 # Runs hourly from vn-tradingeconomics-fetch.service.
 
-API_URL="__MCP_BASE__/api/push-tradingeconomics"
-API_KEY="__API_KEY__"
-TE_API_KEY="__TE_API_KEY__"
+API_URL="${TE_PUSH_URL:-__MCP_BASE__/api/push-tradingeconomics}"
+API_KEY="${API_KEY:-__API_KEY__}"
+TE_API_KEY="${TRADING_ECONOMICS_API_KEY:-}"
 LOG="/var/log/vn-tradingeconomics-fetch.log"
 COUNTRY="VN"
 

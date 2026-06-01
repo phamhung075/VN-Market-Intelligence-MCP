@@ -39,6 +39,11 @@ TMP_FETCH=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-prices.sh > "$TMP_FETCH"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP_FETCH"; then
+  echo "GUARD-1 FAIL: placeholder leak in $TMP_FETCH — deploy aborted" >&2
+  rm -f "$TMP_FETCH"
+  exit 1
+fi
 
 # Step 2: Upload both scripts + the unit file.
 echo "Uploading scripts..."
@@ -82,6 +87,11 @@ TMP_BCTC=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-bctc.sh > "$TMP_BCTC"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP_BCTC"; then
+  echo "GUARD-1 FAIL: placeholder leak in $TMP_BCTC — deploy aborted" >&2
+  rm -f "$TMP_BCTC"
+  exit 1
+fi
 
 $SCP "$TMP_BCTC"                    ${VULTR_USER}@${VULTR_IP}:/root/fetch-bctc.sh
 $SCP vps-scripts/fetch-bctc-loop.sh ${VULTR_USER}@${VULTR_IP}:/root/fetch-bctc-loop.sh
@@ -108,6 +118,11 @@ TMP_NEWS=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-vn-news.sh > "$TMP_NEWS"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP_NEWS"; then
+  echo "GUARD-1 FAIL: placeholder leak in $TMP_NEWS — deploy aborted" >&2
+  rm -f "$TMP_NEWS"
+  exit 1
+fi
 
 $SCP "$TMP_NEWS"                       ${VULTR_USER}@${VULTR_IP}:/root/fetch-vn-news.sh
 $SCP vps-scripts/fetch-vn-news-loop.sh ${VULTR_USER}@${VULTR_IP}:/root/fetch-vn-news-loop.sh
@@ -134,6 +149,11 @@ TMP_SBV=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-sbv.sh > "$TMP_SBV"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP_SBV"; then
+  echo "GUARD-1 FAIL: placeholder leak in $TMP_SBV — deploy aborted" >&2
+  rm -f "$TMP_SBV"
+  exit 1
+fi
 
 $SCP "$TMP_SBV"                    ${VULTR_USER}@${VULTR_IP}:/root/fetch-sbv.sh
 $SCP vps-scripts/fetch-sbv-loop.sh ${VULTR_USER}@${VULTR_IP}:/root/fetch-sbv-loop.sh
@@ -160,6 +180,11 @@ TMP_FF=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-foreign-flow.sh > "$TMP_FF"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP_FF"; then
+  echo "GUARD-1 FAIL: placeholder leak in $TMP_FF — deploy aborted" >&2
+  rm -f "$TMP_FF"
+  exit 1
+fi
 
 $SCP "$TMP_FF"                              ${VULTR_USER}@${VULTR_IP}:/root/fetch-foreign-flow.sh
 $SCP vps-scripts/fetch-foreign-flow-loop.sh ${VULTR_USER}@${VULTR_IP}:/root/fetch-foreign-flow-loop.sh
@@ -177,6 +202,34 @@ sleep 2
 echo "=== Foreign Flow unit status ==="
 systemctl --no-pager -l status vn-foreign-flow.service | head -15
 FFEOF
+
+# ── VN Article Body Fetcher deploy (GUARD-3) ─────────────────────────────
+echo ""
+echo "Deploying VN article body fetcher..."
+$SCP vps-scripts/article-body-fetcher.py ${VULTR_USER}@${VULTR_IP}:/root/article-body-fetcher.py
+
+$SSH << 'ARTEOF'
+set -e
+chmod +x /root/article-body-fetcher.py
+# Install beautifulsoup4 if not present (idempotent)
+if ! pip3 show beautifulsoup4 > /dev/null 2>&1; then
+  echo "Installing beautifulsoup4..."
+  pip3 install beautifulsoup4
+else
+  echo "beautifulsoup4 already installed: $(pip3 show beautifulsoup4 | grep Version)"
+fi
+ARTEOF
+
+# ── GUARD-1: Post-deploy SSH placeholder verify ───────────────────────────
+$SSH << 'VERIFYEOF'
+set -e
+LEAKED=$(grep -rl '__[A-Za-z][A-Za-z0-9_]*__' /root/fetch-*.sh /root/*.py 2>/dev/null || true)
+if [ -n "$LEAKED" ]; then
+  echo "ERROR: deployed artifacts still contain placeholders: $LEAKED" >&2
+  exit 1
+fi
+echo "GUARD-1 post-deploy verify: CLEAN (0 placeholder leaks)"
+VERIFYEOF
 
 echo ""
 echo "══════════════════════════════════════════"

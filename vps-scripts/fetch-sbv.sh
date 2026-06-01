@@ -4,8 +4,8 @@
 # and pushes to MCP server via POST /api/push-sbv-rates.
 # Same auth pattern as fetch-prices.sh.
 
-API_URL="__MCP_BASE__/api/push-sbv-rates"
-API_KEY="__API_KEY__"
+API_URL="${SBV_API_URL:-__MCP_BASE__/api/push-sbv-rates}"
+API_KEY="${API_KEY:-__API_KEY__}"
 LOG="/var/log/vn-sbv-fetch.log"
 
 VCB_URL="https://portal.vietcombank.com.vn/Usercontrols/TVPortal.TyGia/pXML.aspx?b=68"
