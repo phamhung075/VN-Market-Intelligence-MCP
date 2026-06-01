@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-01T23:14Z",
   "_updated_by": "po",
   "head": {
-    "status": "dispatched",
-    "active_task_id": "DRAIN-INJECTION-SAFE",
-    "next_agent": "agent-father",
-    "next_action": "DISPATCHED DRAIN-INJECTION-SAFE (FLEET-HOST-SAFETY, FIX/agent-father, S, zone docs/agents/dev-team/flow/, PLAN-ONLY agent-flow edit). Root-cause fix for the LIVE host-danger trigger: dev-team drain builds SQL/command strings by string-concatenating agent-authored signal fields (drain-signals.md L31, execute-tier.md L42, main.md L29/172/202) — a backtick-wrapped payload once command-substituted `docker compose up -d` and near-started the full fleet (feedback_signal_payload_shell_injection). Mandate: NEVER interpolate signal/payload fields into a /bin/sh cmd line — write SQL to a file then `sqlite3 db < file`, or use a bound-param driver. AUD-ND-1 (destructive-stop side) already DONE; this is the still-open injection side of the same host-danger class. AC: a payload containing backticks/`$()` drains DB correctly + `docker ps` unchanged (no spawned container). WIP 1/2.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "DRAIN-INJECTION-SAFE DONE (4cd55d01 — dev-team flow payload strings → structured call_tool objects; injection-safe invariant added at main.md Invariants + inline). With AUD-ND-1 + A-01-EXPECTED-SET, all 3 dev-team-side fleet-host-danger triggers of the destructive+injection class are now closed. Residual logged: DRAIN-INJECTION-SAFE-2 (same concat pattern in pm/developer/po/agent-father flows — likely JSON-correctness not shell-injection since those run via call_tool not bash; PO to assess severity). NORMAL triage resumed — next pick: AUDITOR-SLA-CADENCE / A-01b / DRAIN-INJECTION-SAFE-2 or other sprint TODOs. WIP 0/2.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-01T23:14Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-01T23:22Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -49,7 +49,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-01T22:45Z",
+    "_updated_at": "2026-06-01T23:22Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -139,10 +139,10 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": null,
-            "status": "in-progress",
+            "status": "DONE",
             "size": "S",
             "zone": "docs/agents/dev-team/flow/",
-            "note": "DISPATCHED 2026-06-01T23:14Z. Targets string-concat of signal fields into SQL/sh cmds: drain-signals.md L31, execute-tier.md L42, main.md L29/172/202. Fix = SQL-to-file then `sqlite3 db < file` (or bound-param); never interpolate payload into /bin/sh. AC: backtick/$() payload drains correctly + docker ps unchanged."
+            "note": "4cd55d01"
           },
           {
             "task_id": "A-01-EXPECTED-SET",
@@ -492,6 +492,11 @@
         "id": "CHEF-TS-STAMP",
         "summary": "Cosmetic: cycle-timestamp + next-slot-date mis-stamp; confirm pattern before dispatch",
         "priority": "low"
+      },
+      {
+        "id": "DRAIN-INJECTION-SAFE-2",
+        "summary": "Apply the DRAIN-INJECTION-SAFE structured-payload fix to the 6 residual concat sites flagged by agent-father (OUT-OF-SCOPE of the dev-team-flow task): pm/init.md L122 (dev_agent), developer/init.md L34 (dev_agent), developer/flow/main.md L62 (task_title+branch_name), developer/flow/microservice-main.md L68 (task_title+branch_name), po/flow/sprint-kickoff.md L37 (sprint_id), agent-father/flow/edit-apply.md L12 (change_description+target_files). PO assess severity — these mostly feed call_tool JSON args (JSON-correctness risk) vs the dev-team dispatcher sites which the main terminal executes in a real shell (true injection). PLAN-ONLY agent-def edits.",
+        "priority": "normal"
       }
     ],
     "archive": []
