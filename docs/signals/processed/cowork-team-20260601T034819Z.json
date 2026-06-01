@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T03:48:19Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime CHANGED (02:21:49Z -> 03:38:51Z) — Step 0a drain ran. ZERO NEW cowork-addressed rows: po all READ, tran-ngoc-bau READ, unified-agent VERIFIED, alert-commander empty. mtime bump = dev-team/po self-updates to non-cowork sections. Nothing to route.",
+    "staleness_note": "pressure-state ~28min old (emitted 03:20:26Z) > 20min threshold -> PRESSURE_MODE=legacy (raw cron governs, no adaptive suppression). chef-intraday last_fired 03:20:44Z (next 04:13Z); next offhours 0 */4 at 04:00Z. Empty tick expected.",
+    "spawn_outcome_note": "No slots matched at 03:48Z. Silent exit, no work-item token, no heartbeat, no snapshot, no pressure emit, no spawn, no last_fired write."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T03:48:19Z",
+  "_drain": {
+    "fingerprint": "57dba7f584c5023022903a0d59d353c8624227fbe7570dac53562c76b036e73c",
+    "processedAt": "2026-06-01T04:15:04.268Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

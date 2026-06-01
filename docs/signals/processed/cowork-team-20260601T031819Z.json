@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T03:18:19Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [
+      "Step 4.7: get_cycle_bootstrap rejected agent_name='cowork-team' (enum) — retried with 'unified-agent' OK; macro-indicators service unavailable so snapshot macro_snapshot=error stub. NON-BLOCKING: snapshot still written with live market_context."
+    ],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (~02:21:49Z) since prior tick — Step 0a skipped. No NEW cowork-addressed rows pending.",
+    "staleness_note": "pressure-state ~60min old (emitted 02:18:19Z) > 20min threshold at tick start -> PRESSURE_MODE=legacy (raw cron governs, no adaptive suppression). Re-emitted fresh at 03:20:26Z this non-empty tick (Step 4.8): calendar_status=open, signal_backlog=0, host_headroom_mb=1138.",
+    "spawn_outcome_note": "chef-intraday matched (unified-agent CHEF intraday, cron 13 2-8 * * 1-5, last_fired 02:18:19Z -> due). Per-work-item token cowork-slot:chef-intraday claimed {claimed:true} ttl=180, leader heartbeat ok (expires extended), tick-snapshot cycle-snapshot-03:18.json written (live market_context, macro=down stub), flow path verified present, spawned unified-agent (agentId aae69a8df8b9d8ec2, background, single attempt no retry). Token released {ok:true}. Published-marker gate enforced inside agent flow (FR-P2-7). Awaiting completion notification.",
+    "tick_snapshot": "docs/data/cycle-snapshot-03:18.json (market OPEN, 4 CRITICAL macro_deviation alerts Brent/Gold extreme sigma)",
+    "last_fired_timestamp": "2026-06-01T03:20:44Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T03:18:19Z",
+  "_drain": {
+    "fingerprint": "2290dbefeedd393edb8bc8c00e484f4ebe3b732eabaa803f0f6bb38afd9eb9a8",
+    "processedAt": "2026-06-01T04:15:04.268Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

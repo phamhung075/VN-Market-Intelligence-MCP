@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T03:33:20Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "adaptive",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (02:21:49Z) since prior tick — Step 0a skipped. No NEW cowork-addressed rows.",
+    "staleness_note": "pressure-state ~13min old (emitted 03:20:26Z) < 20min threshold -> PRESSURE_MODE=adaptive. Matcher empty so no adaptive gates exercised. chef-intraday last_fired 03:20:44Z (next 04:13Z); next offhours 0 */4 at 04:00Z. Empty tick expected.",
+    "spawn_outcome_note": "No slots matched at 03:33Z. Silent exit, no work-item token, no heartbeat, no snapshot, no pressure emit, no spawn, no last_fired write."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T03:33:20Z",
+  "_drain": {
+    "fingerprint": "b63813ad0838ed9d280ffcb4911de98790fd727072322fb40a57ccbcb78f97b4",
+    "processedAt": "2026-06-01T04:15:04.268Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
