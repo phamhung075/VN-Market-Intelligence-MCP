@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T04:33:19Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (04:18:12Z) since prior tick — Step 0a skipped. No NEW cowork-addressed rows pending.",
+    "staleness_note": "pressure-state last emitted 04:03:21Z (~30min old) > 20min threshold -> legacy. Empty match -> not re-emitted (Step 4.8 only on non-empty WON).",
+    "match_note": "No slots due at 04:33Z. chef-intraday next ~05:20Z (cadence 7200s from last_fired 03:20:44Z); offhours pair next ~08:00Z. Silent exit, leader released."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T04:33:19Z"
+}

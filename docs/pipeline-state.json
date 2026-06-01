@@ -1,48 +1,45 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "IDLE (dev-team :07 tick 2026-05-31T19:16Z, weekend, VN market CLOSED). RECONCILED the 15:26Z record against TASKS.md L9 reality: BOTH FU-TRUST-REFRESH (✅ EXIT-WITH-CAVEAT) AND BANK-AWARE-BCTC (✅ PO-EXIT 7eed1177 — ACB B02-TCTD serves raw + FPT B01-DN 0-regression, both router-raw-verified; FU-BANK-CODECOL seeded as backlog) are now CLOSED — the prior 15:26Z 'FU-2 ops rasterize NEXT' + 'BANK-AWARE peer-owned pm→dev-mcp-server' guidance is OBSOLETE. THIS :07 tick: cron-detect-loop self-arm verified (all 4 crons live, no action); Step 0a drained 40 telemetry/stale signals + archived (91a9cc89, signals_processed DB 906) — 15 cowork-fire weekend heartbeats + 13 context-bloat→CMH + 4 routine bctc_signal product files + 1 price_anomaly + 2 agent-father briefs (dev-team-spawn-boundary-expansion + anomaly-to-dev-task-bridge, BOTH verified already fully implemented) ⇒ pendingSignals[] EMPTY, no repair_task_request. PO BOARD TRIAGE: read_telegram_reports(new)=none, list_unresolved_reports=[], git clean (last 8 commits all this session's agents, no foreign peer committing). RETURN=NOTHING. Dispatcher-side WIP 0/2.",
-  "currentSprint": "TOOL-SURFACE-HYGIENE OPEN — TSH-1 (deregister get_market_hexagram, server.tool block kinhDichTools.ts:509-545 only; KEEP clients.ts:505 export — 2 other live callers) is PO-approved + ready but HARD-BLOCKED on subagent-harness env wedge (session restart required). NOT dispatchable this tick. Other OPEN-but-idle backlog (none degraded/time-sensitive): SELF-IMPROVE-GATE X-1 (synthetic dry-run, apps/mcp-server), BCTC-LAYOUT-FIRST LF-EXTRACT/LF-OVERLAY (multi/zone-toggle UI; persistence DE-RISKED, #3011 FALSE-RED), CHEF-ATTN (apps/mcp-server). ENV-ISOLATION-P2 gate RELEASED but unscheduled.",
-  "activeTaskId": "NONE — no active sprint in flight. All this-session sprints closed (BANK-AWARE-BCTC, FU-TRUST-REFRESH); TSH-1 env-blocked; remaining backlog is improvement-only, not degraded.",
-  "nextAgent": "dev-team :07 dispatcher next tick — PREFLIGHT (git locks / peer cadence) then Step 0a signal drain, then PO triage. Pickable-if-WIP-permits: SELF-IMPROVE-GATE X-1 (synthetic dry-run; apps/mcp-server), BCTC-LAYOUT-FIRST LF-EXTRACT (dev-pdf-extractor) / LF-OVERLAY (zone-toggle UI; multi), CHEF-ATTN (apps/mcp-server). DO NOT dispatch TSH-1 until the subagent-harness env wedge is cleared by a session restart. No foreign peer owns any zone this tick — zone-isolation + WIP<=2 still apply between any concurrent dispatches.",
-  "nextPrompt": "No immediate-priority work this tick (weekend + market closed; no failing infra, no user request, no degraded signal). Genuinely-open engineering backlog, all equal-priority + non-time-sensitive — pick any one when a tick decides to advance the board (WIP<=2): SELF-IMPROVE-GATE X-1 synthetic dry-run (D-IMPROVE emit path e2e; apps/mcp-server); BCTC-LAYOUT-FIRST LF-EXTRACT (dev-pdf-extractor) + LF-OVERLAY (zone-toggle UI, multi); CHEF-ATTN per-stock diversity cap (apps/mcp-server). BLOCKED: TOOL-SURFACE-HYGIENE TSH-1 (subagent-harness env wedge → needs session restart). Standing FUs (Monday/live-move gated): MACRO-CMDTY-DELTA signed-non-zero Brent/Gold; FF-DEAD FU-MON live-net; DATA-PIPELINE-INTEGRITY FU-MON. Maintenance lane (claude-manager-helper, NOT dev-team): notebook append-not-overwrite bloat — architect + news-scout still flagged for RCA on DASHBOARD ## claude-manager-helper.",
+  "status": "IDLE (dev-team :07 ON-DEMAND run 2026-06-01T04:22Z, Monday, VN market OPEN ~11:22 ICT). PREFLIGHT clean (no HEAD.lock, no worktrees). Step 0a drained 1 cowork-fire silent heartbeat → processed/ (pendingSignals EMPTY). DASHBOARD: 0 NEW po-addressed rows (4 stale dev-mcp-server impl_done breadcrumbs + 1 old agents-architect row, none inbound). Telegram: 5 NEW reports — #3017 Tier-1 '9-svc down'=FALSE-POS (retracted #3018) + #3019 drain-shell-injection=caught/fixed + #3021 A-20 macro=false-pos(not-in-runtime) all map to FLEET-HOST-SAFETY tracked items; GENUINE = #3020 Tier-2 VPS proxy stale. ROOT-CAUSED via ops-vps-fetch (NOT VPS-SOCAT — main-server socat alive, mcp-server /health 200): 3 distinct VPS-side faults. FIXED LIVE: (1) vn-foreign-flow.service lost EnvironmentFile in 2026-05-30 redeploy → re-wired, live PUSH 200 upserted 102 (B-02/B-06 cleared); (3) vn-vps-proxy TasksMax 16→32 → bctc-discover python3 EAGAIN gone (B-03 cleared). RESIDUAL: SSC-IBOARD-MIGRATE (B-01) — iboard-query.ssc.vn GLOBALLY DEAD, registered backlog. All 5 telegram reports processed+cleared. WIP 0/2.",
+  "currentSprint": "No code sprint dispatched this tick. The genuine work was VPS infra recovery (ops lane, executed). TOOL-SURFACE-HYGIENE TSH-1 (deregister get_market_hexagram) remains PO-ready but historically env-wedged for spawned code agents (verify on a fresh session before dispatch). Other OPEN-idle: SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST LF-EXTRACT/LF-OVERLAY, CHEF-ATTN, ENV-ISOLATION-P2 (gate released, unscheduled).",
+  "activeTaskId": "NONE — VPS-PROXY-RESTORE Fix1+Fix3 closed live this tick; SSC-IBOARD-MIGRATE registered as backlog (dev-vps-crawls, not yet dispatched). No code sprint in flight.",
+  "nextAgent": "dev-team :07 dispatcher next tick. Pickable-if-WIP-permits: SSC-IBOARD-MIGRATE (dev-vps-crawls recon — find replacement SSC financial source); SELF-IMPROVE-GATE X-1 (apps/mcp-server); BCTC-LAYOUT-FIRST LF-EXTRACT (dev-pdf-extractor)/LF-OVERLAY (multi); CHEF-ATTN (apps/mcp-server). TSH-1 only if spawned-agent gateway wedge confirmed cleared this session.",
+  "nextPrompt": "Genuine VPS data outage resolved this tick (foreign-flow + bctc-discover concurrency restored live). Residual: SSC-IBOARD-MIGRATE — the SSC iboard financial-data domain is permanently gone (SSC migrated off .vn TLD); B-01 ssc-iboard source needs a replacement-source recon sprint (dev-vps-crawls; candidates congbothongtin.ssc.gov.vn / hsx.vn FinancialReport / HNX AJAX) — MED priority, not host-critical. Other equal-priority non-time-sensitive backlog: SELF-IMPROVE-GATE X-1; BCTC-LAYOUT-FIRST LF-EXTRACT+LF-OVERLAY; CHEF-ATTN. Standing FUs (live-move gated): MACRO-CMDTY-DELTA signed-non-zero Brent/Gold. Hygiene noted: DUPLICATE main-server socat PIDs (1551+19389 both :4000) — benign, clean to one when VPS-SOCAT-PERSIST is implemented.",
   "session_handoff_status": {
-    "cleared": "2026-05-31T00:33Z — prior 'parallel session owns apps/mcp-server + apps/pdf-extractor' directive (2026-05-27T20:40Z) is OBSOLETE/non-binding. This tick dispatched apps/pdf-extractor (FU-1) with no collision. Future ticks may dispatch apps/mcp-server + apps/pdf-extractor normally, subject to WIP<=2 + zone-isolation between concurrent tasks.",
+    "cleared": "2026-05-31T00:33Z — prior parallel-session zone-ownership directive obsolete. Dispatch apps/mcp-server + apps/pdf-extractor normally, WIP<=2 + zone-isolation between concurrent tasks.",
     "does_not_consume_wip": true
   },
   "last_closed": {
-    "task": "FU-TRUST-REFRESH/FU-1",
-    "outcome": "DONE / QA-APPROVE",
-    "closed_at": "2026-05-31T10:00Z",
-    "commit": "af50d67a",
-    "zone": "apps/pdf-extractor/",
-    "files_8": ["infrastructure/config.py", "main.py", "infrastructure/ocr_text_source.py", "interface/serializers.py", "interface/handlers.py", "docker-compose.yml", "__tests__/unit/test_fu1_fail_loud.py (new, 10 tests)", "__tests__/unit/test_ocr_text_source.py (updated)"],
-    "dispatcher_independent_raw_verify": "curl localhost:5001/page-text FPT p7 → source_reachable:true source:sqlite_ocr 2764 chars 200 VN diacritics real BCTC text (CÔNG TY CỔ PHẦN FPT…CHỈ TIÊU); /health ocr_source_ok:true. Merge-gate index-check/tree-verify/c2-alert all pass.",
-    "qa_raw_seal": "suite 783 pass / 40 fail / 1 skip — all 40 failures PRE-EXISTING (QA checked out parent e7056ce3, reproduced identical 40 names) = ZERO regression; +23 new pass. Fail-loud RED-path proven live (bad MARKET_DB_PATH → probe False, /health ocr_source_ok:false, /page-text source_reachable:false NOT silent ''). ACB p20 no-regression. Commit hygiene/DDD/security PASS. Report reports/TASK_REPORT_FU-1.md.",
-    "fu_debt": "40 pre-existing pdf-extractor suite failures (test-debt, not FU-TRUST-REFRESH scope) — register for a future CLEAN/test-debt sprint.",
+    "task": "VPS-PROXY-RESTORE (Fix1 vn-foreign-flow env + Fix3 vps-proxy TasksMax)",
+    "outcome": "APPLIED+VERIFIED (live)",
+    "closed_at": "2026-06-01T04:40Z",
+    "lane": "ops (ops-vps-fetch, SSH; gateway-independent)",
+    "evidence": "Fix1: vn-foreign-flow.service EnvironmentFile=-/etc/vn-market.env re-wired + 3 keys; post-restart log 04:37:11Z WATCHLIST_FETCH 828ms / 111 codes / PUSH_RESPONSE HTTP 200 upserted 102. Fix3: vn-vps-proxy.service TasksMax 16->32, pids.max=32, /health ok:true. Backups kept on VPS. Fix2 ssc-iboard=RECON-ONLY (domain globally dead, no alternate found) -> SSC-IBOARD-MIGRATE backlog.",
+    "distinct_from": "VPS-SOCAT-PERSIST (main-server socat :4000->:3000, still open, found UP with duplicate PIDs 1551+19389)",
     "_prior_closed": {
-      "task": "SPIKE_3011-LF-PERSIST-DIAG",
-      "outcome": "CLOSED / STALE-FALSE-RED",
-      "closed_at": "2026-05-31T08:45Z",
-      "findings_doc": "docs/spikes/SPIKE_3011-LF-PERSIST-DIAG.md (commit 2a4e036d)",
-      "summary": "report #3011 'units_stored=28 but bctc_layout_units=0' was FALSE — live in-container COUNT=177 (bctc_layout_units)/569 (bctc_page_zones). Conflated wrong handler + since-fixed idempotency bug 60dfac7f + non-existent FPT 2024-Q4. #3011 resolved wontfix. NO LF-OVERLAY persist fix needed.",
+      "task": "FU-TRUST-REFRESH/FU-1",
+      "outcome": "DONE / QA-APPROVE",
+      "closed_at": "2026-05-31T10:00Z",
+      "commit": "af50d67a",
+      "zone": "apps/pdf-extractor/",
+      "fu_debt": "40 pre-existing pdf-extractor suite failures (test-debt, future CLEAN sprint)",
       "_prior_closed": {
-        "task": "MACRO-CMDTY-DELTA",
-        "outcome": "APPROVE / SHIPPED",
-        "po_exit": "2026-05-31T01:34Z",
-        "commits": ["e510e5df", "dab1bf86", "fdc17265"],
-        "image": "802d6463e665",
-        "followup": "signed-non-zero in-the-wild Brent/Gold on next real move (~Monday open)"
+        "task": "SPIKE_3011-LF-PERSIST-DIAG",
+        "outcome": "CLOSED / STALE-FALSE-RED",
+        "closed_at": "2026-05-31T08:45Z",
+        "summary": "report #3011 units_stored=28 vs bctc_layout_units=0 was FALSE (live COUNT=177/569). #3011 wontfix."
       }
     }
   },
   "open_sprints_idle": [
-    "TOOL-SURFACE-HYGIENE (TSH-1 deregister get_market_hexagram — PO-approved but BLOCKED on subagent-harness env wedge / session restart; TSH-5 toolCount reconcile waits on TSH-1 rebuild)",
-    "BCTC-LAYOUT-FIRST (Phase 0 READY — LF-EXTRACT/LF-OVERLAY; persistence DE-RISKED, #3011 FALSE-RED, remaining LF-OVERLAY scope = zone-toggle UI)",
-    "SELF-IMPROVE-GATE (X-1 SIG-FOLLOWUP-DRYRUN synthetic dry-run; apps/mcp-server)",
+    "SSC-IBOARD-MIGRATE (NEW 2026-06-01, dev-vps-crawls — SSC iboard financial source permanently gone, needs replacement-source recon; MED)",
+    "TOOL-SURFACE-HYGIENE (TSH-1 deregister get_market_hexagram — PO-approved; verify spawned-agent gateway wedge cleared before dispatch; TSH-5 waits on TSH-1 rebuild)",
+    "BCTC-LAYOUT-FIRST (Phase 0 READY — LF-EXTRACT/LF-OVERLAY; persistence DE-RISKED)",
+    "SELF-IMPROVE-GATE (X-1 synthetic dry-run; apps/mcp-server)",
     "CHEF-ATTN (READY; apps/mcp-server)",
-    "ENV-ISOLATION-P2 (gate RELEASED, unscheduled — EI-P2-1→P2-2→P2-3→QA)"
+    "ENV-ISOLATION-P2 (gate RELEASED, unscheduled)"
   ],
-  "backlogs": "BCTC-TABLE-2 (after LF-EXTRACT+LF-OVERLAY) · KD-QREF-LANG (EN/VI switch) · code-janitor DOUBLON CLEAN (3 live + 10 proposed, held) · FU-DEBT 40 pre-existing pdf-extractor test failures.",
-  "updatedAt": "2026-05-31T19:23:34Z",
-  "updatedBy": "PO board-triage for dev-team :07 dispatcher — tick 2026-05-31T19:16Z (weekend, market CLOSED). Reconciled the 15:26Z record to TASKS.md L9 reality: FU-TRUST-REFRESH + BANK-AWARE-BCTC BOTH now ✅ CLOSED (their 'next ops/peer' guidance was obsolete). Dispatcher already done this tick: cron-detect-loop self-arm verified (4 crons live); Step 0a drained+archived 40 telemetry/stale signals (91a9cc89; DB 906) ⇒ pendingSignals[] EMPTY. PO triage: read_telegram_reports(new)=none; list_unresolved_reports=[]; git tree clean, last 8 commits all this session's agents (no foreign peer). RETURN=NOTHING — TSH-1 (only PO-ready item) hard-blocked on subagent-harness env wedge; remaining backlog (X-1 / LF-EXTRACT+LF-OVERLAY / CHEF-ATTN) is improvement-only, non-degraded, non-time-sensitive ⇒ no reason to burn a weekend-night dispatch. WIP 0/2."
+  "backlogs": "FLEET-HOST-SAFETY (AUD-ND-1 / DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE / VPS-SOCAT-PERSIST) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures.",
+  "updatedAt": "2026-06-01T04:42:00Z",
+  "updatedBy": "dev-team :07 ON-DEMAND run 2026-06-01T04:22Z. Drained 1 heartbeat; triaged 5 telegram reports (4 false-pos/fixed/tracked, 1 genuine VPS staleness). Root-caused genuine item via ops-vps-fetch = 3 distinct VPS faults (NOT VPS-SOCAT). Executed 2 SAFE live fixes (foreign-flow env + proxy TasksMax) APPLIED+VERIFIED; recon'd ssc-iboard (globally dead -> SSC-IBOARD-MIGRATE backlog). Processed+cleared all 5 reports. TASKS.md updated (VPS-PROXY-RESTORE line). WIP 0/2."
 }

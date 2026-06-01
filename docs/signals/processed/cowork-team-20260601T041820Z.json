@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T04:18:20Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime CHANGED (03:38:51Z -> 04:18:12Z) BUT change = dispatcher's OWN 04:06Z ops-row write (cow-MACRO-DOWN-20260601T0406, addressed to ops). Step 0a verify: scanned po/tran-ngoc-bau/unified-agent/alert-commander sections — ZERO NEW cowork-addressed rows. No inbound drain.",
+    "staleness_note": "pressure-state last emitted 04:03:21Z (~15min old) -> at/near 20min threshold; legacy assumed. Empty match -> not re-emitted this silent tick (Step 4.8 only on non-empty WON).",
+    "match_note": "chef-intraday cadence-skipped by matcher: elapsed=3456s < cadence=7200s (last_fired 03:20:44Z, next due ~05:20Z). offhours pair fired 04:03Z (next ~08:00Z). No slots due at 04:18Z -> silent exit, leader released."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T04:18:20Z"
+}
