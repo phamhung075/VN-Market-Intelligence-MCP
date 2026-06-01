@@ -1,0 +1,46 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T18:00:00Z",
+    "matched_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      {
+        "slot_id": "bctc-analyst-slot-2",
+        "agent": "bctc-analyst",
+        "agentId": "a44f078b9a2f358d3"
+      }
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy (pressure-state was stale at match time; refreshed this tick)",
+    "calendar_status": "open",
+    "dashboard_drain": {
+      "mtime_changed": false,
+      "mtime_local": "2026-06-01T19:15:13",
+      "cowork_addressed_new_rows": 0,
+      "note": "mtime unchanged since prior tick — Step 0a gate not triggered, no drain"
+    },
+    "last_fired_timestamp": "2026-06-01T18:03:21Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-2"
+    ],
+    "last_fired_write_errors": null,
+    "pressure_emitted": {
+      "signal_backlog": 5,
+      "dev_queue_depth": 0,
+      "host_headroom_mb": 6583
+    }
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T18:05:09Z"
+}

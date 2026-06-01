@@ -1,0 +1,83 @@
+{
+  "from": "ops",
+  "to": "po",
+  "type": "infrastructure_incident_recovered",
+  "severity": "MEDIUM",
+  "discovered_at": "2026-06-01T04:06Z",
+  "recoveredAt": "2026-06-01T19:30Z",
+  "createdAt": "2026-06-01T19:31Z",
+  "summary": "Two live infrastructure issues reported, diagnosed, and hardened: (1) macro-indicators service was not running — restarted with `docker-compose up -d macro-indicators`; (2) socat bridge :4000→:3000 was hand-managed (PID 1551, unmanaged, would die on reboot) — replaced with launchd plist (com.vn-market.socat-bridge, KeepAlive=true) for persistent reboot recovery.",
+  "payload": {
+    "incident_1": {
+      "id": "macro-indicators-down",
+      "service": "macro-indicators",
+      "root_cause": "Container not running (absent from docker-compose ps output)",
+      "fix": "docker-compose up -d macro-indicators",
+      "verification": {
+        "container_status": "Up (healthy)",
+        "health_probe": "/health → 200 OK",
+        "raw_proof": {
+          "get_macro_snapshot": {
+            "status": "ok",
+            "vnIndex": 1844.54,
+            "dataSource": "live",
+            "signals": {
+              "investment-clock": { "tier": "VN_DIRECT", "score": 8 },
+              "carry": { "regime": "FII_OUTFLOW_RISK", "carrySpread": -0.33 },
+              "yield": { "label": "CHEAP", "spread": 3.2 }
+            },
+            "fetchedAt": "2026-06-01T17:30:14.186Z"
+          }
+        }
+      },
+      "impact": "TNB Layer 2/3 macro stack (US PMI/Fed/US10Y/DXY + VN CPI/FX-reserves) restored. Regime extraction + cycle-bootstrap now have live macro data.",
+      "status": "RECOVERED"
+    },
+    "incident_2": {
+      "id": "socat-bridge-not-persistent",
+      "service": "socat (api-gateway bridge)",
+      "root_cause": "Hand-started socat (PID 1551) not supervised by launchd — dies on Mac reboot, reopens multi-day VPS outage",
+      "fix": "Created launchd plist: launchd/com.vn-market.socat-bridge.plist",
+      "plist_details": {
+        "Label": "com.vn-market.socat-bridge",
+        "Program": "/usr/local/bin/socat",
+        "ProgramArguments": ["socat", "TCP-LISTEN:4000,reuseaddr,fork", "TCP:127.0.0.1:3000"],
+        "RunAtLoad": true,
+        "KeepAlive": true,
+        "ThrottleInterval": 10,
+        "Logs": "~/Library/Logs/socat-bridge*.log"
+      },
+      "verification": {
+        "launchctl_status": {
+          "Label": "com.vn-market.socat-bridge",
+          "PID": 54664,
+          "LastExitStatus": 0,
+          "Program": "/usr/local/bin/socat"
+        },
+        "port_binding": "lsof -i :4000 → TCP *:terabase (LISTEN), PID 54664",
+        "gateway_health": "curl http://localhost:4000/health → 200 OK, status:ok",
+        "vps_endpoints": {
+          "get_market_snapshot": {
+            "source_tier": 2,
+            "vnIndex": "1,844.54",
+            "fetchedAt": "2026-06-01T17:31:23.144Z"
+          },
+          "get_foreign_flow_hpg": {
+            "source_tier": 2,
+            "direction": "neutral",
+            "daily_history": [{"date": "2026-06-01", "net_volume": -26379}]
+          }
+        }
+      },
+      "caveat": "Both endpoints return source_tier:2 (database-served from prior fetches) — this is EXPECTED and NORMAL. Tier-1 live VPS sources are scheduled separately (e.g. vpsProxyWatchdog every 10 min). The snapshot endpoints serve cached values, not live updates.",
+      "status": "RECOVERED & HARDENED FOR REBOOT",
+      "persistence_mechanism": "launchd RunAtLoad=true + KeepAlive=true ensures service survives reboot and crashes automatically"
+    },
+    "dedup_key": "infrastructure_recovery:macro-indicators:socat-bridge:20260601",
+    "related_signals": [
+      "cow-MACRO-DOWN-20260601T0406 (macro unavailable — 3 consecutive cowork cycles)",
+      "repair_task_request_ops_vps_socat_persist_20260601T0241Z (socat fragility escalation from 2026-06-01T02:41Z)"
+    ]
+  },
+  "dashboard_reconcile": "Tier-1 recovery complete. Audit signals: cow-MACRO-DOWN→RESOLVED (macro-indicators now UP); VPS-SOCAT-PERSIST→HARDENED (launchd supervision in place, survives reboot). No remaining CRITICAL infra items tied to these incidents."
+}

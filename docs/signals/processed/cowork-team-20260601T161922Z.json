@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260601T161922Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "n/a (silent path — Step 4.2 not reached)",
+    "calendar_status": "open",
+    "signal_backlog": 1,
+    "dashboard_drain": {
+      "mtime_changed": true,
+      "mtime_local": "2026-06-01T18:10:20",
+      "cowork_addressed_new_rows": 0,
+      "note": "mtime bump = own agent-father flow-defect row L32 + dev-team raw-verify on ops cow-MACRO-DOWN row L74; no cowork-addressed (po/tnb/unified/alert) NEW rows to route"
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "20260601T161922Z"
+}

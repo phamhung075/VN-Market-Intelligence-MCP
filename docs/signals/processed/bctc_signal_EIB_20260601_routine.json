@@ -5,30 +5,21 @@
   "mode": "routine",
   "beat_miss": null,
   "net_profit_delta_pct": null,
-  "product": "Ngân hàng thương mại — cho vay doanh nghiệp và cá nhân, ngoại tệ",
-  "customer": "Doanh nghiệp xuất nhập khẩu, khách hàng cá nhân",
-  "ops": "DATA_INSUFFICIENT — Chưa có dữ liệu BCTC (5th consecutive cycle). Peer group: PE 37.7 / ROE 4% anomaly đáng lo ngại khi có dữ liệu.",
-  "mgmt": "DATA_INSUFFICIENT — VPB audit Lạng Sơn (peer risk signal). EIB cần BCTC-TABLE sprint để sửa extraction.",
-  "valuation_verdict": "DATA_INSUFFICIENT",
-  "bctc_confidence": 0,
-  "extraction_impaired": true,
-  "esc_flags": {
-    "ESC1": false,
-    "ESC2": false,
-    "ESC3": false,
-    "ESC4": false,
-    "ESC5": false
-  },
+  "product": "Commercial banking — retail and corporate lending, trade finance (Eximbank)",
+  "customer": "SME importers/exporters, retail borrowers",
+  "ops": "DATA_INSUFFICIENT — extraction broken 7th consecutive cycle; PE=37.7/ROE=4% anomaly from sector data only — cannot confirm without extraction",
+  "mgmt": "DATA_INSUFFICIENT — BCTC-TABLE sprint blocker prevents analysis",
+  "valuation": "DATA_INSUFFICIENT",
+  "sector_pe_note": "PE=37.7, PB=1.6, ROE=4% from sector comparison (anomalous — cannot analyze without extraction)",
+  "bctc_confidence": null,
+  "bctc_extraction_impaired": true,
+  "extraction_error": "Chưa có dữ liệu BCTC — 7th consecutive cycle",
+  "esc_flags": {"ESC1": false, "ESC2": false, "ESC3": false, "ESC4": false, "ESC5": false},
   "trick_summary": null,
   "trick_confidence": "none",
   "trick_pass_versions": [],
   "signal_id": null,
-  "cycle_id": "20260601-0000",
-  "emitted_at": "2026-06-01T00:15Z",
-  "_drain": {
-    "fingerprint": "f391b61f49e1d052ce10e6e295dd478cfac4b9c8a55280efaa218403273a4cab",
-    "processedAt": "2026-06-01T00:16:43.380Z",
-    "processedBy": "dev-team",
-    "result": "routed-to-po"
-  }
+  "cycle_id": "20260601-1800",
+  "emitted_at": "2026-06-01T18:10Z",
+  "slot": "bctc-analyst-slot-2"
 }

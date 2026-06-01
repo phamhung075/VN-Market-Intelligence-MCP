@@ -1,0 +1,82 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-06-01T16:10:00Z",
+  "dish_window": "eod",
+  "tickers": [
+    {
+      "code": "D2D",
+      "price": 32.6,
+      "daily_change_pct": 3.82,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Bullish divergence vs real estate sector decline",
+      "insider_activity": "no activity",
+      "brief_action": "Hold on strength",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": ">2sigma move: +3.82% vs real estate -2.95% avg"
+    },
+    {
+      "code": "GAS",
+      "price": 84.2,
+      "daily_change_pct": -3.66,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Oil sector weakness amid Brent strength",
+      "insider_activity": "no activity",
+      "brief_action": "Watch macro oil news",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": ">2sigma move: -3.66% vs sector -2.21% avg"
+    },
+    {
+      "code": "MWG",
+      "price": 79.1,
+      "daily_change_pct": 3.67,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Retail sector strength, consumer trend positive",
+      "insider_activity": "no activity",
+      "brief_action": "Monitor consumer trend",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": ">2sigma move: +3.67% vs retail +0.25% avg"
+    },
+    {
+      "code": "VCB",
+      "price": 62.2,
+      "daily_change_pct": 0.32,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Banking sector selloff, systemic weakness",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, monitor rebound",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    },
+    {
+      "code": "FPT",
+      "price": 72.9,
+      "daily_change_pct": 1.82,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "Tech sector resilience despite FII outflow",
+      "insider_activity": "no activity",
+      "brief_action": "Hold, watch FDI flows",
+      "regime_flag": "NEUTRAL",
+      "anomaly": false,
+      "anomaly_reason": null
+    }
+  ]
+}

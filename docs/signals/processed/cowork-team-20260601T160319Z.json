@@ -1,0 +1,61 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "2026-06-01T16:03:19Z",
+  "payload": {
+    "fire_time": "2026-06-01T16:03:19Z",
+    "nominal_tick": "2026-06-01T16:00:00Z",
+    "drift_min": 3,
+    "outcome": "spawned",
+    "silent": false,
+    "all_held": false,
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "held_by_other": [],
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "agent_ids": {
+      "news-scout-offhours": "ad1cdca91b7cc2ac3",
+      "market-watcher-offhours": "a31c2085bf538dcbd",
+      "market-watcher-eod": "a947bda8860fbbf47"
+    },
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron",
+      "market-watcher-eod": "cron"
+    },
+    "last_fired_timestamp": "2026-06-01T16:08:00.000Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours",
+      "market-watcher-eod"
+    ],
+    "last_fired_write_errors": null,
+    "collision_warning": "agent_id=market-watcher in 2 slots (offhours+eod, recurring 16:00 weekday overlap) — WORK telegram sent, all spawned per R3",
+    "flow_defects_observed": [
+      "Step4.7 get_cycle_bootstrap literal agent_name=cowork-team rejected by enum (retried market-watcher, snapshot written)",
+      "Step4.8 line533 grep -c || echo 0 double-emits 0 corrupting pressure-state when dev_queue=0 (re-emitted clean via jq -n)"
+    ],
+    "dashboard_drain": {
+      "mtime_changed": false,
+      "now_local": "2026-06-01T13:11:44",
+      "note": "unchanged — drain gate not fired"
+    }
+  }
+}
