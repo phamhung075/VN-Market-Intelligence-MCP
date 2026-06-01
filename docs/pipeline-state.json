@@ -5,11 +5,11 @@
   "head": {
     "status":         "planning",
     "active_task_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
-    "next_agent":     "dev-vps-crawls",
-    "next_action":    "GUARD-2 env-fallback 6 scripts; TE_API_KEY empty-string fallback",
+    "next_agent":     "architect",
+    "next_action":    "WRONG-DEPLOYER finding: GUARD-1/3 landed in scripts/deploy-vps-proxy.sh (VULTR_IP) but live host is Vinahost via scripts/deploy-vinahost.sh (renders news, ZERO guards, ships 3 extra scripts incl TE w/ __TE_API_KEY__). Decide: confirm live deployer (ops recon env IPs+push origin) → consolidate OR mirror guards into deploy-vinahost.sh + convert/guard fetch-tradingeconomics/gso/enrich-bctc. Impl code is sound; placement wrong.",
     "wip":            0,
     "wip_max":        2,
-    "updated_at":     "2026-06-01T12:18Z",
+    "updated_at":     "2026-06-01T13:20Z",
     "updated_by":     "dev-team"
   },
 
@@ -22,7 +22,7 @@
 
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
-    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, planning@dev-vps-crawls — ba spec + pm decompose DONE 06-01T12:18Z; build phase GUARD-2/1/3+bs4+QA flows next :07 tick via resume-gate)",
+    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, blocked@architect 06-01T13:20Z): GUARD-1/2/3 IMPL+QA-local PASS (96446b5d code sound, marker-rename+clean-render raw-verified) BUT router caught guards landed in deploy-vps-proxy.sh=VULTR while live host=Vinahost via deploy-vinahost.sh (renders news, 0 guards). Deploy-readiness BLOCKED; ops redeploy NOT dispatched. Architect to confirm live deployer + mirror/consolidate.",
     "last_closed":     "VPS news-push LIVE outage RESTORED (2026-06-01T10:09Z tick, ops 53c3d888): all 14 feeds http=000 since ~09:07Z — /root/fetch-vn-news.sh shipped unrendered __MCP_BASE__/__API_KEY__ placeholders (deploy regression from cafef 814088b0 clobbering rendered live script). ops rendered creds, fixed same in fetch-foreign-flow.sh, verified raw http=200 received=242 cursor 0→1780331100. My socat-reboot hypothesis was WRONG (uptime 48d) — ops verify-raw corrected it. FU-OPS-CAFEF-1 PASS (cafef 20+20/cycle ×7, 0 PERMANENTLY_BLOCKED — is_blocked() fix holding). Prior: RE-CAP-1 (signal-dashboard 192→118L, 7aa3abbf).",
     "watch_items": [
       "CHEF morning-dish: verify guaranteed publish under macro-down on next fire",
