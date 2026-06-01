@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T02:34:13Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "adaptive",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime CHANGED (~02:21:49Z) since prior tick → Step 0a drain RAN. Scanned po/tran-ngoc-bau/unified-agent/alert-commander sections: all rows status=READ/RESOLVED/VERIFIED, alert-commander empty. ZERO NEW cowork-addressed rows — mtime bump was dev-team/po self-updates, nothing to route.",
+    "staleness_note": "pressure-state ~16min old (emitted 02:18:19Z) <= 20min at tick start, stale_warning=false -> PRESSURE_MODE=adaptive. Matcher empty so adaptive gates (4.3/4.4/4.5) had no slots to evaluate; no suppression. pressure-state NOT re-emitted (Step 4.8 non-empty-only).",
+    "silent_reason": "cowork-match-slots.js returned {\"slots\":[],\"drift_min\":3}. No slot cron within +-2min of 02:34 UTC. chef-intraday (13 2-8 * * 1-5) already fired this hour at 02:18:19Z; next chef-intraday hourly fire 03:13Z; next offhours (0 */4 * * *) due 04:00Z. Empty is EXPECTED."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T02:34:13Z",
+  "_drain": {
+    "fingerprint": "f6092122aaf99910d8346d90155e0a68de2878d2ab75f2f7513f07e7657f9b6e",
+    "processedAt": "2026-06-01T03:15:39.501Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

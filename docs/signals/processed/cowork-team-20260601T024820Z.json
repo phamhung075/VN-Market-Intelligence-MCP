@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T02:48:20Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (~02:21:49Z) since prior tick — Step 0a skipped. No NEW cowork-addressed rows pending.",
+    "staleness_note": "pressure-state ~30min old (emitted 02:18:19Z) > 20min at tick start -> PRESSURE_MODE=legacy (raw cron governs). Aged out from consecutive silent ticks (Step 4.8 re-emits only on non-empty). EXPECTED. Not re-emitted (matcher empty).",
+    "silent_reason": "cowork-match-slots.js returned {\"slots\":[],\"drift_min\":3}. No slot cron within +-2min of 02:48 UTC. Next chef-intraday (13 2-8 * * 1-5) fire 03:13Z; next offhours (0 */4 * * *) due 04:00Z. Empty is EXPECTED."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T02:48:20Z",
+  "_drain": {
+    "fingerprint": "1905dd43eb91e39e84a72506a50d57888d0af290d311b6c5a631d0fbd69541e1",
+    "processedAt": "2026-06-01T03:15:39.501Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

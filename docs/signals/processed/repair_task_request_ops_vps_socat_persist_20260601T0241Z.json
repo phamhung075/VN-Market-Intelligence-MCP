@@ -1,0 +1,27 @@
+{
+  "from": "dev-team",
+  "to": "po",
+  "type": "repair_task_request",
+  "priority": "medium",
+  "severity": "MEDIUM",
+  "discovered_at": "2026-06-01T02:41:00Z",
+  "createdAt": "2026-06-01T02:41:00Z",
+  "summary": "VPS-proxy 65h outage was recovered by ops (commit 06e0b5da) via a MANUAL socat bridge (PID 1551, :4000->127.0.0.1:3000). FUNCTIONAL but FRAGILE: not reboot-persistent, undocumented in repo -> will silently re-break on Mac restart and reopen the same multi-day outage. Also read-path still returns source_tier:2 (full tier-1 restoration NOT confirmed). Permanent fix pending.",
+  "payload": {
+    "check_id": "VPS-SOCAT-PERSIST",
+    "zone_owner": "ops -> dev-mcp-server / ops (Cloudflare tunnel ingress + host service supervision)",
+    "problem": "Root cause: Cloudflare tunnel (token-mode, on Mac) routes /api/* -> localhost:4000 (api-gateway microservice, never deployed on this host) -> 502 Bad Gateway, breaking every VPS fetch callback (watchlist etc). ops bridged :4000 -> :3000 (mcp-server) with a hand-started socat. socat is NOT supervised (no launchd plist), so a Mac reboot drops it and reopens the outage. The repo-tracked ~/.cloudflared/config.yml is inert (token-mode tunnel ignores it) per project_telegram_webhook_cloudflare_routing.",
+    "proposed_fix": "Durable options: (a) update the Cloudflare tunnel ingress rule (dashboard / token-mode) so /api/* -> http://localhost:3000 directly, removing socat entirely; OR (b) if socat must remain, wrap it in a launchd plist (KeepAlive=true) so it survives reboot, and document it in the repo. Then re-verify get_market_snapshot / get_foreign_flow return source_tier:1, OR confirm tier-2 is the normal DB-served tier (so the tier number is not a false alarm).",
+    "verification_done": "Router raw-verified POST-recovery (not relayed from ops): get_foreign_flow code=HPG now shows a 2026-06-01 row (previously stuck at 2026-05-30); get_market_snapshot VN-Index live 1,867.80 fresh ts; docker ps = mcp-server + mcp-gateway only (host minimal, ~41% free); socat PID 1551 holds :4000 LISTEN. BUT both data tools STILL return source_tier:2 -> full tier-1 restoration is UNCONFIRMED.",
+    "deterministic_ac": "After a simulated host reboot (or `kill` of the socat PID), VPS /api/* calls still return 200 and fresh data keeps flowing with NO manual intervention; and the source_tier semantics are confirmed (tier-2 normal vs tier-1 expected).",
+    "dashboard_reconcile": "Tier-2 auditor findings B-01/B-02/B-03/B-06 should be flipped from CRITICAL to RECOVERED-FRAGILE, referencing ops commit 06e0b5da and this follow-up."
+  },
+  "dedup_key": "repair_task_request:dev-team:VPS-SOCAT-PERSIST",
+  "note": "PLAN-ONLY record for next PO triage. ops acute recovery already shipped (06e0b5da). Router raw-verified the recovery + the two caveats; this signal exists so the FRAGILITY is tracked durably, not just mentioned in Telegram.",
+  "_drain": {
+    "fingerprint": "32ee1a3e5feaf6f04abf51ceed977f96f2321cea847197ecf3a3d52e5077c3b9",
+    "processedAt": "2026-06-01T03:15:39.501Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

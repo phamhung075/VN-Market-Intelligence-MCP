@@ -1,19 +1,22 @@
 # PO Notebook
 
-## 2026-05-31T22:23Z — dev-team tick signal triage (5 signals)
+## 2026-06-01 — dev-team triage (tick 0315Z)
 
-Theme: **fleet-host-safety** — on this 16GB host the full 12-svc fleet kernel-panics (project_host_memory_panic); intended runtime = mcp-server + mcp-gateway only. 3 of 5 signals share it → folded into ONE sprint.
+**Inputs:** 6 signals drained (1 context_bloat HIGH, 1 repair_task MEDIUM, 4 cowork-fire LOW NOOP) + 4 new Telegram reports (3017/3018/3019/3020) + TASKS.md (77L→79L) + git log -30.
 
-- **#1 DRAIN-INJECTION-SAFE (HIGH)** — ACCEPT. Live incident: drain script shell-interpolated a payload holding backtick `docker compose up -d` → /bin/sh started full fleet (router stop+rm 11 in 2min, no panic). New → 🔄 task under FLEET-HOST-SAFETY. Zone agents-architect→agent-father (cross-service drain). AC: payload w/ backticks/$() drains, docker ps unchanged + DB row correct, 7d.
-- **#2 A-01-EXPECTED-SET (MED)** — ACCEPT as SIBLING of AUD-ND-1 (same architect→agent-father auditor flow). Auditor compares live docker ps vs FULL compose def → false CRITICAL fleet-outage (2nd auditor false-positive in 2 ticks). Fix: intended-runtime-set SSOT in system-map.json; defined-not-runtime = INFO.
-- Renamed sprint AUDITOR-NO-DESTRUCT → **FLEET-HOST-SAFETY** holding AUD-ND-1 + DRAIN-INJECTION-SAFE + A-01-EXPECTED-SET (one architect engagement, one agent-father track).
-- **#3 tnb-c84-blocked (FALSE-ALARM pattern)** — SKIP duplicate. Already in Backlogs as TNB-GATEWAY-PROBE (text already "c83+c84, 2 consecutive"). Structural spawned-session gap, gateway healthy, weekend, no dish gap.
-- **#4 CW-DISPATCH-STEP47-ENUM (MED, zero-blocker)** — ACCEPT to Backlogs (LOW). get_cycle_bootstrap rejects agent_name="cowork-team"; falls back to direct bootstrap so no blocker.
-- **#5 NSCOUT/ARCH-NB-BLOAT (MED)** — ACCEPT to Backlogs as NB-BLOAT-FLOW-OVERWRITE, sibling of NB-PRUNE-FIX. NB-PRUNE-1 fixed the prune-SKILL anchor but NOT the news-scout/architect flow call-sites that still APPEND. Distinct.
+**Decisions — BATCH of 2:**
+1. **NB-BLOAT-FLOW-OVERWRITE → FIX (PROMOTED).** system-auditor.md re-breached 26L→**249L** within hours of prune 1013a624 (≥10 prepend notebook commits overnight). SKILL anchor fix (NB-PRUNE-1, 7166db01) was correct but system-auditor agent STILL PREPENDS per flow drift. Durable fix = unambiguous full-overwrite instruction in `docs/agents/system-auditor/flow/main.md` (~L427) via agent-md-factory. Highest-freq drain noise (every 30-min audit). Zone cross-service / agent-flow.
+2. **VPS-SOCAT-PERSIST → architect→ops (MEDIUM, PLAN-ONLY).** Acute 65h /api 502 outage already recovered (06e0b5da) via MANUAL unsupervised socat :4000→:3000 (PID 1551). Fragile: no launchd → dies on reboot → reopens multi-day outage. source_tier still 2 (tier-1 unconfirmed). Architect picks (a) repoint CF tunnel ingress →:3000 directly OR (b) launchd KeepAlive plist + doc. Folded into FLEET-HOST-SAFETY (same 16GB-host infra-safety theme). NOT acute (data flowing).
 
-TASKS.md 76/80L. WIP: only BACKLOG added, no new In-Progress.
+**NOOP / already-tracked:**
+- Telegram 3017+3018 (A-01 false fleet-down + retraction) → FLEET-HOST-SAFETY/A-01-EXPECTED-SET.
+- Telegram 3019 (drain shell-injection incident) → FLEET-HOST-SAFETY/DRAIN-INJECTION-SAFE.
+- Telegram 3020 (B-01/B-02/B-03/B-06 VPS staleness) → covered by VPS-SOCAT-PERSIST + AUDITOR-SLA-CADENCE; DASHBOARD reconcile noted in task.
+- 4× cowork-fire heartbeats → informational NOOP.
 
-### Carry-over
-- NEXT CYCLE: route FLEET-HOST-SAFETY po→architect→agent-father (3 tasks, one chain; pri AUD-ND-1 + DRAIN-INJECTION-SAFE first).
-- WATCH: 3 false-fleet-danger events in 2 days (false-ENOSPC stop, drain-injection up, A-01 false-outage). If a 4th → escalate the host-level `compose up` block (currently "optional" in DRAIN-INJECTION-SAFE) to mandatory.
-- Open weekend-gated: TOOL-SURFACE-HYGIENE (TSH-1/5 rebuild), ENV-ISOLATION P2 (gate released), SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST, NB-PRUNE-FIX, CHEF-ATTN.
+**WIP:** 0 truly in_progress (all sprints OPEN/READY/GATED awaiting dispatch). Batching 2 honors WIP≤2.
+
+**Carry-over:**
+- VPS source_tier:2 — confirm whether tier-2 (DB-served) is NORMAL or a degradation; if normal, AUDITOR-SLA-CADENCE should stop flagging it.
+- system-auditor notebook keeps breaching every 30min until NB-BLOAT-FLOW-OVERWRITE ships — expect repeat context_bloat_breach signals each tick meanwhile (do NOT re-promote; it's active).
+- TASKS.md at 79L — near 80L cap; next triage may need to migrate a closed sprint to TASKS_ARCHIVE.md.
