@@ -54,16 +54,24 @@ interface WatchlistRow {
 // G5-inverse: HTTP-routed kinh-dich block formatter
 // Replaces appendKinhDich() which was reading from local SQLite (G5 violation).
 // Now routes via kinh-dich-service:5005 via clients.ts.
-// Never throws — on error returns baseOutput + fallback line.
+//
+// TSH-6 (honest-omit): two distinct failure paths:
+//   - service-down (throw / non-200) → OMIT block entirely, log warn
+//   - genuine data-short (200 OK, empty/null hexagram fields) → honest VN line
 // ─────────────────────────────────────────────────────────────────────────────
 
-const KINH_DICH_FALLBACK_ANALYSIS = "\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ.";
+/** Honest Vietnamese fallback: only emitted when the service is UP but data is insufficient. */
+const KINH_DICH_DATA_SHORT_ANALYSIS = "\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ.";
 
 /** Append per-stock hexagram reading to baseOutput via HTTP (replaces appendKinhDich). */
 async function appendStockHexagramHttp(code: string, baseOutput: string): Promise<string> {
   if (!code) return baseOutput;
   try {
     const reading = await getKinhDichReading(code, 30);
+    // Genuine data-short: service reachable but no valid hexagram returned.
+    if (!reading.hexagram || !reading.name) {
+      return baseOutput + KINH_DICH_DATA_SHORT_ANALYSIS;
+    }
     const confStr = reading.confidence != null && !isNaN(reading.confidence)
       ? `${Math.round(reading.confidence * 100)}%` : "";
     const block = [
@@ -72,8 +80,14 @@ async function appendStockHexagramHttp(code: string, baseOutput: string): Promis
       ...(confStr ? [`Độ tin cậy: ${confStr}`] : []),
     ].join("\n");
     return baseOutput + block;
-  } catch {
-    return baseOutput + KINH_DICH_FALLBACK_ANALYSIS;
+  } catch (error) {
+    // Service-down (ECONNREFUSED, timeout, non-200): omit block entirely.
+    logger.warn("[kinhdich] service unreachable — omitting hexagram block", {
+      fn: "appendStockHexagramHttp",
+      code,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return baseOutput;
   }
 }
 

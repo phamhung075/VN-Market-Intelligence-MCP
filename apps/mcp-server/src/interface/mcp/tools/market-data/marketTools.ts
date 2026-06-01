@@ -43,10 +43,14 @@ interface MarketPriceRow {
 // G5-inverse helpers: HTTP-routed kinh-dich block formatters
 // Replaces appendKinhDich() which was reading from local SQLite (G5 violation).
 // Now routes via kinh-dich-service:5005 via clients.ts.
-// Never throws — on error returns baseOutput + fallback line.
+//
+// TSH-6 (honest-omit): two distinct failure paths:
+//   - service-down (throw / non-200) → OMIT block entirely, log warn
+//   - genuine data-short (200 OK, empty/null hexagram fields) → honest VN line
 // ─────────────────────────────────────────────────────────────────────────────
 
-const KINH_DICH_FALLBACK = "\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ.";
+/** Honest Vietnamese fallback: only emitted when the service is UP but data is insufficient. */
+const KINH_DICH_DATA_SHORT = "\n---\nKinh Dịch: Chưa đủ dữ liệu để tính quẻ.";
 
 function formatKinhDichBlock(name: string, hexagram: number, signal: string, confidence: number): string {
   const confStr = confidence != null && !isNaN(confidence) ? `${Math.round(confidence * 100)}%` : "";
@@ -62,9 +66,18 @@ function formatKinhDichBlock(name: string, hexagram: number, signal: string, con
 async function appendMarketHexagram(baseOutput: string): Promise<string> {
   try {
     const reading = await getMarketHexagram();
+    // Genuine data-short: service reachable but no valid hexagram returned.
+    if (!reading.hexagram || !reading.name) {
+      return baseOutput + KINH_DICH_DATA_SHORT;
+    }
     return baseOutput + formatKinhDichBlock(reading.name, reading.hexagram, reading.trend, reading.confidence ?? 0);
-  } catch {
-    return baseOutput + KINH_DICH_FALLBACK;
+  } catch (error) {
+    // Service-down (ECONNREFUSED, timeout, non-200): omit block entirely.
+    logger.warn("[kinhdich] service unreachable — omitting hexagram block", {
+      fn: "appendMarketHexagram",
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return baseOutput;
   }
 }
 
@@ -73,9 +86,19 @@ async function appendStockHexagram(code: string, baseOutput: string): Promise<st
   if (!code) return baseOutput;
   try {
     const reading = await getKinhDichReading(code, 30);
+    // Genuine data-short: service reachable but no valid hexagram returned.
+    if (!reading.hexagram || !reading.name) {
+      return baseOutput + KINH_DICH_DATA_SHORT;
+    }
     return baseOutput + formatKinhDichBlock(reading.name, reading.hexagram, reading.signal, reading.confidence);
-  } catch {
-    return baseOutput + KINH_DICH_FALLBACK;
+  } catch (error) {
+    // Service-down (ECONNREFUSED, timeout, non-200): omit block entirely.
+    logger.warn("[kinhdich] service unreachable — omitting hexagram block", {
+      fn: "appendStockHexagram",
+      code,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return baseOutput;
   }
 }
 
