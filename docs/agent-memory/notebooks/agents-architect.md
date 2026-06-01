@@ -60,6 +60,16 @@ AUD-ND-1 (CRITICAL): system-auditor had no explicit prohibition on destructive o
 
 ---
 
+## 2026-06-01T21:12:21Z
+
+**Brief:** `docs/architecture-briefs/2026-06-01-orch-state-consolidate.md` (v2 — operator refinement)
+
+Operator strengthened the direction: TASKS.md + DASHBOARD.md fully deleted (not generated views); ONE single JSON file (`docs/data/orch/orch-state.json`). Full reader inventory completed — 40+ reader sites in code + agent flows identified with file:line citations, all have clean migration paths, no blocker found. Concurrency re-analysis: WIP<=2 + commit-mutex + dashboard-row lock means real concurrent writers = 1 at a time; single-file is safe with atomic temp-rename write protocol. Schema v3 merges all four sections (head/task_board/signal_queue/narrative) into one file. One greenlight question surfaced for operator: D4-R4 concurrent-commit alarm threshold (default: keep 30s window, accept slightly more noise on unified file).
+
+**Signal dropped:** (brief is the handoff — no separate signal file; router routes OSC-1/2/3/4 to agent-father + dev-mcp-server + ops)
+
+---
+
 ## 2026-06-01T20:58:53Z
 
 **Brief:** `docs/architecture-briefs/2026-06-01-orch-state-consolidate.md`

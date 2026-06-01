@@ -1,70 +1,205 @@
-<!-- size-justification: 310L — operator-directed design brief (ORCH-STATE-CONSOLIDATE). Covers JSON schema recommendation, exact migration plan for every pipeline-state.json reader (file:line citations), markdown-generation ownership/cadence, and all 4 hard constraints. All content is load-bearing for PM → agent-father handoff. -->
+<!-- size-justification: 420L — operator-directed design brief (ORCH-STATE-CONSOLIDATE v2). Covers: TASKS.md+DASHBOARD.md full deletion decision with complete reader inventory (file:line citations for every process that reads either file), single-file vs N-file concurrency analysis, exact write protocol, migration plan for all readers, and all hard constraints. All content is load-bearing for PM → agent-father handoff. -->
 
-# Architecture Brief — ORCH-STATE-CONSOLIDATE (JSON-SSOT Direction)
+# Architecture Brief — ORCH-STATE-CONSOLIDATE v2 (Full Deletion + Single JSON SSOT)
 
 **Date:** 2026-06-01
 **Author:** agents-architect
-**Status:** DESIGN COMPLETE — handoff to PM / agent-father
-**Operator decision:** JSON-first; markdown becomes generated view, never hand-authored.
+**Status:** DESIGN COMPLETE v2 — operator refinement incorporated — handoff to PM / agent-father
+**Operator direction v2:** TASKS.md and DASHBOARD.md deleted entirely. ONE single JSON SSOT file.
 
 ---
 
 ## 0. Scope & Constraint Summary
 
-This brief folds the operator's chosen direction into a concrete design.
-
 Hard constraints (all preserved):
-- **HC-1:** Frontend accesses orchestration state via `api-gateway:4000` only — no direct file reads, no new bypass.
-- **HC-2:** Raw signal payloads (DASHBOARD rows with embedded shell-injection characters) are never exposed in HTTP responses.
+- **HC-1:** Frontend accesses orchestration state via `api-gateway:4000` only — no direct file reads.
+- **HC-2:** Raw signal payloads never exposed in HTTP responses.
 - **HC-3:** No secret leakage via any new endpoint.
-- **HC-4:** The `:07 RETURN write contract` (every dev-team agent writes `docs/pipeline-state.json` before returning) is preserved verbatim.
+- **HC-4:** The `:07 RETURN write contract` (every dev-team agent writes pipeline-state before returning) is preserved verbatim. Schema must not break `tasksMdJanitorJob.ts` + `1837a-pipeline-state.test.ts` without an atomic same-commit migration.
+
+**v2 changes from v1:**
+1. TASKS.md and DASHBOARD.md are **deleted**, not kept as generated views.
+2. The three JSON files (pipeline-state / task-board / signal-queue) are **merged into one** `docs/data/orch/orch-state.json`.
 
 ---
 
-## 1. JSON Schema — Recommended Shape
+## 1. CHANGE 1 — Full Deletion of TASKS.md and DASHBOARD.md
 
-### 1.1 Design decision: one JSON file per concern, under a single `docs/data/orch/` owner
+### 1.1 Complete Reader Inventory
 
-Full absorption into one mega-document is rejected. Rationale:
+Before deletion is safe, every process that reads either file as input must be identified and re-pointed.
 
-- `pipeline-state.json` is **write-hot** (written by every agent at RETURN, ~hourly, requires CAS in pm/flow/main.md). Task board and signal queue change on different cadences.
-- Merging write-hot and write-cold surfaces into one file creates a concurrent-write hazard across every reader — a direct regression on the `feedback_concurrent_commit_race` lesson.
-- `tasksMdJanitorJob.ts` holds a typed `PipelineState` interface locked to the current field set. Absorbing task board and signals into the same file widens the migration surface unnecessarily.
+#### TASKS.md readers
 
-**Chosen shape: 3 JSON files, shared parent directory `docs/data/orch/`, single logical owner (the dev-team pipeline).**
+| Reader | File | Line(s) | Read type | Migration |
+|---|---|---|---|---|
+| Janitor R-3 owner/status cross-check | `apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts` | L308, L366–413 | `readFile(tasksMdPath)` → `parseTaskRows()` | Replace with `jq .task_board.tasks[]` read from `orch-state.json` (§1.3) |
+| Janitor R-4 concurrent-commit detection | `tasksMdJanitorJob.ts` | L421 | `git log -- docs/TASKS.md` | Replace with `git log -- docs/data/orch/orch-state.json`; concurrent-write alarm remains valid on the unified file |
+| Daily dashboard task counts | `apps/mcp-server/src/scheduler/system/dailyDashboardJob.ts` | L495–497 | `fs.readFileSync(tasksPath)` → `parseTaskCounts()` | Replace `parseTaskCounts()` with a jq count of `orch-state.json .task_board` tasks by status |
+| Daily dashboard test fixture | `apps/mcp-server/src/__tests__/1854a-daily-dashboard-job.test.ts` | L47–113 | inline `TASKS_MD` string → `parseTaskCounts()` | Replace test fixture + function with JSON-based count; same assertions |
+| System-auditor D4 TASKS.md cross-check | `docs/agents/system-auditor/audit-dimensions.md` | L41–69, L86–128 | agent reads markdown | Re-point to `orch-state.json` `.task_board.tasks[]` (jq); D4-R3/R4 logic unchanged, only input path changes |
+| System-auditor handlers R-3 | `docs/agents/system-auditor/handlers.md` | L48–121 | agent reads markdown | Same: re-point all `docs/TASKS.md` refs to `orch-state.json` |
+| PM flow — gate + planning + status update | `docs/agents/pm/flow/main.md` | L39–88 | agent reads/writes markdown | All PM writes go to `orch-state.json` `.task_board`; wc-l gate becomes `jq '.task_board.tasks | length'` check |
+| PM flow — task-archive sub-flow | `docs/agents/pm/flow/task-archive.md` | L3–45 | agent reads/writes markdown | Archive logic operates on `orch-state.json`; archived tasks move to `.task_board.archive[]`; `docs/TASKS_ARCHIVE.md` also deleted |
+| PM init.md | `docs/agents/pm/init.md` | L7, L12, L17, L32, L83, L96–97 | capability declarations | Agent-father: replace all `docs/TASKS.md` references with `docs/data/orch/orch-state.json` |
+| PO flow — sprint signoff | `docs/agents/po/flow/sprint-signoff.md` | L18, L43 | agent reads/writes | Re-point to `orch-state.json` |
+| PO flow — channel-audit | `docs/agents/po/flow/channel-audit.md` | L52–95 | agent reads/writes | Re-point grep to jq query |
+| PO flow — triage-signals | `docs/agents/po/flow/triage-signals.md` | L14, L18 | agent reads/writes | Re-point `docs/TASKS.md` scans to jq on `orch-state.json` |
+| PO flow — triage-tnb | `docs/agents/po/flow/triage-tnb.md` | L11 | agent reads | Re-point |
+| PO flow — telegram-reports | `docs/agents/po/flow/telegram-reports.md` | L74–91 | agent reads/writes | Re-point grep to jq |
+| PO flow — main | `docs/agents/po/flow/main.md` | L9, L20, L69, L90, L98 | agent reads | Re-point |
+| PO flow — market-group | `docs/agents/po/flow/market-group.md` | L12 | agent reads | Re-point |
+| PO init.md | `docs/agents/po/init.md` | L89–90 | capability declarations | Agent-father: replace references |
+| Developer flow — main | `docs/agents/developer/flow/main.md` | L49, L138 | agent reads/writes status | Re-point to `orch-state.json` task status update |
+| Developer flow — microservice-main | `docs/agents/developer/flow/microservice-main.md` | L51, L152 | agent reads/writes status | Re-point |
+| Developer init.md | `docs/agents/developer/init.md` | L27 | SSOT reference | Re-point |
+| Fixer flow — main | `docs/agents/fixer/flow/main.md` | L12, L25, L92 | agent reads/writes status | Re-point |
+| Anomaly-task-bridge skill | `.claude/skills/anomaly-task-bridge/SKILL.md` | L29–30, L47, L71–81, L97–98 | READS DASHBOARD.md + TASKS.md | Re-point DASHBOARD read to `orch-state.json .signal_queue.rows`; TASKS.md dedup check to `orch-state.json .task_board.tasks[]` |
+| Signal-dashboard skill | `.claude/skills/signal-dashboard/SKILL.md` | All §WRITE/§READ/§PRUNE steps | writes DASHBOARD.md | Entire skill re-targets `orch-state.json .signal_queue`; §WRITE appends to `.signal_queue.rows[]`; §READ uses jq delta; §PRUNE archives resolved rows |
+| Signal-dashboard dashboard-protocol | `.claude/skills/signal-dashboard/dashboard-protocol.md` | L40–103 | reads/writes DASHBOARD.md | Full re-target to `orch-state.json` |
+| Commit skill | `.claude/skills/commit/SKILL.md` | L21, L39 | references TASKS.md path | Update references to `orch-state.json` |
+| Dispatch skill | `.claude/skills/dispatch/SKILL.md` | L66–97 | references TASKS.md as handoff target | Update references |
+| Cron-detect-loop skill | `.claude/skills/cron-detect-loop/SKILL.md` | L25 | references TASKS.md BACKLOG | Re-point |
+| Doc-heal-system skill | `.claude/skills/doc-heal-system/SKILL.md` | L33 | `TASKS.md ≤80` cap check | Remove cap (TASKS.md gone); no replacement needed |
+| Doc-heal-system phases | `.claude/skills/doc-heal-system/phases.md` | L67 | `TASKS.md` cap + archive trigger | Remove |
+| Doc-heal-system reference | `.claude/skills/doc-heal-system/reference.md` | L44 | `wc -l TASKS.md` | Remove |
+| Token-economy skill | `.claude/skills/token-economy/SKILL.md` | L39 | "Done row = LITE" | Update to reference `orch-state.json` done tasks |
+| Token-economy policies | `.claude/skills/token-economy/policies.md` | L7 | "docs/TASKS.md entries" | Update reference |
+| Project-root skill | `.claude/skills/project-root/SKILL.md` | L20 | path reference | Update to `orch-state.json` path |
+| Anti-hallucination skill | `.claude/skills/anti-hallucination/SKILL.md` | L70 | `NO docs/TASKS.md` rule | Update: `NO docs/TASKS.md` → valid, add `docs/data/orch/orch-state.json` as allowed |
+| Agent-chaining-protocol | `docs/protocols/agent-chaining-protocol.md` | L73, L127 | SSOT list | Replace `docs/TASKS.md` with `docs/data/orch/orch-state.json` |
+| Execute-tier flow | `docs/agents/dev-team/flow/execute-tier.md` | L69 | shared-SSOT list | Replace `TASKS.md` with `orch-state.json` |
+| Docker deployment runbook | `docs/protocols/docker-deployment-runbook.md` | L125 | ops instruction | Replace |
+| Cowork master cron runbook | `docs/protocols/cowork-master-cron-runbook.md` | L214 | task reference | Replace |
+| Smart-compact protocol | `docs/protocols/smart-compact-protocol-offload.md` | L26, L52 | pm reference | Replace |
+| Dev standards policy | `docs/policies/dev-standards.md` | L87 | SSOT list | Replace |
+| Docs-org-enforcement policy | `docs/policies/docs-organization-enforcement.md` | L57, L77 | file registry + exclusion | Remove `TASKS.md` entry; no replacement (file deleted) |
+| Docs-org-location-table | `docs/policies/docs-organization-location-table.md` | L12 | location table | Remove row; add `orch-state.json` row |
+| PM bundle reference | `docs/references/bundles/bundle-pm.md` | L21 | cap reference | Update |
+| Agent roster | `docs/references/agent-roster.md` | L30 | PM description | Update |
+| Workflow map | `docs/references/workflow-map.md` | L93, L131 | flow table | Update |
+| Workflow map cycles | `docs/references/workflow-map-cycles.md` | L77 | cycle reference | Update |
+| Agent spawn template | `docs/references/agent-spawn-template.md` | L68, L76, L108 | spawn examples | Update |
+| Agent notebook protocol | `docs/protocols/agent-notebook-protocol.md` | L45 | decision pointer | Update |
+
+#### DASHBOARD.md readers
+
+| Reader | File | Line(s) | Read type | Migration |
+|---|---|---|---|---|
+| ImprovementSignalWriter | `apps/mcp-server/src/infrastructure/signals/improvementSignalWriter.ts` | L30, L252–261 | `DASHBOARD_PATH` constant; `appendDashboardRow()` | Re-point `DASHBOARD_PATH` to `orch-state.json`; `appendDashboardRow()` → JSON array append |
+| ImprovementSignalWriter test | `apps/mcp-server/src/__tests__/1948d-improvement-signal-writer.test.ts` | L187, L324 | tmpDir DASHBOARD.md fixture | Update test fixture to use `orch-state.json` JSON structure |
+| tasksMdJanitorJob DASHBOARD write | `tasksMdJanitorJob.ts` | L210–259, L443, L464 | `appendDashboardRow()` | Re-point to JSON append helper |
+| CoordinationTools doc string | `apps/mcp-server/src/interface/mcp/tools/system/coordinationTools.ts` | L71 | doc string only — NOT a file read | Update string; no behavior change |
+| System-auditor tool-package | `docs/agents/tools/package/system-auditor.md` | L11–12, L139–140 | capability declaration | Re-point to `orch-state.json` |
+| Anomaly-task-bridge skill | `.claude/skills/anomaly-task-bridge/SKILL.md` | L4–5, L29–30, L71, L81, L97 | READS DASHBOARD.md | (already listed above) |
+| Signal-dashboard skill + protocol | (already listed above) | — | — | — |
+| Dev-team drain-signals | `docs/agents/dev-team/flow/drain-signals.md` | L6, L16–62 | reads + writes DASHBOARD.md | Re-point to `orch-state.json .signal_queue` |
+| Dev-team main flow | `docs/agents/dev-team/flow/main.md` | L18, L62 | reads + writes DASHBOARD.md | Re-point |
+| Dev-team post-cycle | `docs/agents/dev-team/flow/post-cycle.md` | L20 | writes DASHBOARD.md | Re-point |
+| PM flow — DASHBOARD write guard | `docs/agents/pm/flow/main.md` | L117–133 | reads pipeline-state, writes DASHBOARD.md | Guard logic unchanged; write target → `orch-state.json .signal_queue` |
+| PO triage-signals | `docs/agents/po/flow/triage-signals.md` | L14, L18 | writes DASHBOARD.md rows | Re-point to `orch-state.json .signal_queue` |
+| System audit runbook | `docs/protocols/system-audit-runbook.md` | L147 | DASHBOARD reference | Update |
+| Cowork master cron runbook | `docs/protocols/cowork-master-cron-runbook.md` | L215 | DASHBOARD reference | Update |
+| Dispatch skill | `.claude/skills/dispatch/SKILL.md` | L93 | DASHBOARD reference | Update |
+
+#### No-blocker verdict
+
+Every reader above has a clean migration path: replace file path + Markdown parser with jq query on `orch-state.json`. No reader requires TASKS.md or DASHBOARD.md to exist as a Markdown file for functional reasons. **Deletion is safe after migration.**
+
+### 1.2 What gets deleted
 
 ```
-docs/data/orch/
-  pipeline-state.json   ← existing file, MOVED (see §2 migration)
-  task-board.json       ← replaces docs/TASKS.md as SSOT (new)
-  signal-queue.json     ← replaces docs/signals/DASHBOARD.md as SSOT (new)
+docs/TASKS.md                    — deleted (replaced by orch-state.json .task_board)
+docs/TASKS_ARCHIVE.md            — deleted (replaced by .task_board.archive[])
+docs/signals/DASHBOARD.md        — deleted (replaced by orch-state.json .signal_queue)
+docs/signals/DASHBOARD_ARCHIVE.md — deleted (replaced by .signal_queue.archive[])
 ```
 
-All three share a common envelope:
+The PM TASKS.md write steps (creation, status update, archive) and the signal-dashboard SKILL write steps are the **writers** — they are replaced by JSON writes to `orch-state.json` in-place. This confirms deletion is safe: once writers are migrated, the files are never regenerated.
+
+---
+
+## 2. CHANGE 2 — Single JSON SSOT: Concurrency Analysis
+
+### 2.1 Honest concurrency audit
+
+The v1 brief rejected merging into one file citing a "concurrent-write hazard." This section re-evaluates that claim honestly under WIP<=2 + commit-mutex + atomic-write discipline.
+
+**Write cadences per section:**
+
+| Section | Writers | Cadence | Concurrent? |
+|---|---|---|---|
+| `.head` (pipeline-state) | dev-team pipeline agents (developer, qa, fixer, pm, architect, ba, po) | At agent RETURN — sequential, serialized through `commit-mutex` | Never concurrent: commit-mutex enforces one git commit at a time across ALL agents |
+| `.task_board` | PM agent only | At sprint planning, tier completion, task status update | Single writer per session; PM is spawned sequentially by dev-team dispatch |
+| `.signal_queue` | signal-dashboard SKILL callers (any agent) | At any agent cycle — but serialized through `dashboard-row` task_claim lock | `task_claim(task_kind: "dashboard-row")` serializes concurrent SKILL calls |
+
+**Real concurrency at :07 RETURN under WIP=2:**
+
+WIP_MAX=2 means at most 2 developer agents run in parallel. BUT: both write pipeline-state at RETURN, and the commit-mutex (`task_claim(task_kind: "commit-mutex")`) serializes those git commits. The file-write itself is done by whichever agent holds the mutex — the second agent waits, then writes fresh. This is sequential file access, not concurrent.
+
+TASKS.md writes (PM) and pipeline-state writes (developer/qa/fixer at RETURN) are in **different pipeline phases**: TASKS.md is updated during planning (Step 2) or after tier completion (Step 3), not during developer execution. A developer at RETURN writing pipeline-state and a PM updating task status would both require the commit-mutex — they serialize naturally.
+
+**Conclusion:** Under the existing WIP<=2 + commit-mutex + `dashboard-row` lock discipline, the REAL number of simultaneous writers to any section is **1 at a time**. The "concurrent-write hazard" cited in v1 was overstated. The only genuine risk is a **code-level race** if two processes (e.g., the daily cron job and an agent) both do read-modify-write without atomic discipline.
+
+### 2.2 Single-file verdict: SAFE — with atomic-write protocol
+
+A single merged JSON file `docs/data/orch/orch-state.json` is safe because:
+
+1. **Commit-mutex serializes all git commits.** Two agents cannot commit simultaneously.
+2. **task_claim(dashboard-row) serializes signal queue appends.** Any caller of signal-dashboard §WRITE holds the lock.
+3. **PM is single-writer for task_board** within the dev-team pipeline (sequential dispatch).
+4. **The only unguarded risk** is a cron job (e.g., `tasksMdJanitorJob`) doing a direct file read-modify-write at the same instant an agent is writing. This is mitigated by the **atomic temp-file-then-rename write protocol** (§2.3).
+
+**Honoring the operator's preference: ONE file.**
+
+### 2.3 Atomic write protocol (mandatory for all writers)
+
+Every writer of `orch-state.json` MUST use atomic temp-file-then-rename:
+
+```bash
+# Read current state
+CURRENT=$(cat docs/data/orch/orch-state.json)
+
+# Apply mutation (e.g., update head, append signal row, update task status)
+UPDATED=$(echo "$CURRENT" | jq '...')
+
+# Write atomically
+TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
+echo "$UPDATED" > "$TMP"
+mv "$TMP" docs/data/orch/orch-state.json   # atomic on POSIX filesystems
+```
+
+For TypeScript code writers (`tasksMdJanitorJob.ts`, `improvementSignalWriter.ts`, `dailyDashboardJob.ts`):
+```typescript
+import { writeFileSync, renameSync } from "fs";
+import { tmpdir } from "os";
+import { join } from "path";
+
+function writeOrchStateAtomic(path: string, data: object): void {
+  const tmp = path + ".tmp." + Date.now();
+  writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
+  renameSync(tmp, path);  // atomic on POSIX
+}
+```
+
+After every write: `jq . docs/data/orch/orch-state.json > /dev/null || ERROR` (fail-loud-protocol).
+
+---
+
+## 3. Unified Schema — `docs/data/orch/orch-state.json`
+
+One file. Three named sections. Common envelope.
+
 ```jsonc
 {
   "_schema": "v3",
   "_ssot": true,
   "_updated_at": "<ISO-8601 UTC>",
   "_updated_by": "<agent-id>",
-  // ... concern-specific payload
-}
-```
 
-`docs/TASKS.md` and `docs/signals/DASHBOARD.md` become **generated views** — written by
-a renderer, never hand-edited. See §3.
-
----
-
-### 1.2 `pipeline-state.json` (moved to `docs/data/orch/pipeline-state.json`)
-
-Schema: **v2 as-is** — no field changes. This preserves the :07 write contract exactly.
-
-```jsonc
-{
-  "_schema": "v2",              // bump to "v3" only when content changes, not on move
-  "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "head": {
+    // ← UNCHANGED from current pipeline-state.json v2 schema
+    // All :07 RETURN writers write ONLY this section
     "status": "idle | in_progress | blocked | stale",
     "active_task_id": null,
     "next_agent": null,
@@ -74,368 +209,242 @@ Schema: **v2 as-is** — no field changes. This preserves the :07 write contract
     "updated_at": "<ISO-8601 UTC>",
     "updated_by": "<agent-id>"
   },
-  "dashboard_section_cache": { ... },   // unchanged
-  "narrative": { ... },                 // unchanged
-  "session_handoff_status": { ... }     // unchanged
+
+  "dashboard_section_cache": { ... },   // ← from current pipeline-state.json v2, unchanged
+  "narrative": { ... },                 // ← from current pipeline-state.json v2, unchanged
+  "session_handoff_status": { ... },    // ← from current pipeline-state.json v2, unchanged
+
+  "task_board": {
+    "_updated_at": "<ISO-8601 UTC>",
+    "_updated_by": "<agent-id>",
+    "active_sprints": [
+      {
+        "id": "<sprint-id>",
+        "status": "active | paused | pending-gate",
+        "tasks": [
+          {
+            "task_id": "<NNN[a-z]?>",
+            "title": "<≤60 chars>",
+            "type": "sprint-task | backlog | on-demand",
+            "owner": "<agent-id>",
+            "depends": "<task_id | null>",
+            "status": "TODO | IN_PROGRESS | DONE | BLOCKED | DEFERRED",
+            "size": "XS | S | M | L | null"
+          }
+        ]
+      }
+    ],
+    "backlog": [
+      { "id": "<slug>", "summary": "<≤80 chars>", "priority": "high | normal | low" }
+    ],
+    "archive": [
+      // tasks moved here when Done sprint is closed — replaces TASKS_ARCHIVE.md
+      { "task_id": "...", "title": "...", "closed_at": "<ISO>" }
+    ]
+  },
+
+  "signal_queue": {
+    "_updated_at": "<ISO-8601 UTC>",
+    "_updated_by": "<agent-id>",
+    "rows": [
+      {
+        "id": "<signal-id>",
+        "ts": "<ISO-8601 UTC>",
+        "from": "<agent-id>",
+        "to": "<agent-id>",
+        "type": "audit-handoff | bug-escalation | dispatcher-incident | system_issue | ...",
+        "summary": "<≤120 chars — NO raw payload>",
+        "severity": "CRITICAL | HIGH | MED | LOW | INFO",
+        "status": "NEW | READ | RESOLVED | PARTIAL",
+        "payload_ref": "<path-to-handoff-file or null>"
+      }
+    ],
+    "archive": [
+      // rows older than 7 days with status RESOLVED|READ → pruned here
+    ]
+  }
 }
 ```
 
-No structural changes to v2. The only change is the **file path** (see §2).
+**Section write ownership:**
+- `head` + `dashboard_section_cache` + `narrative` + `session_handoff_status`: dev-team pipeline agents (RETURN step)
+- `task_board`: PM agent (planning/status steps)
+- `signal_queue.rows`: signal-dashboard SKILL callers, improvementSignalWriter, tasksMdJanitorJob
+
+**Cross-section write rule:** Any agent that updates its owned section reads the full file, modifies only its section, writes atomically (§2.3). Never overwrite a sibling section.
 
 ---
 
-### 1.3 `task-board.json` (new — replaces TASKS.md as machine SSOT)
+## 4. Migration Plan
 
-```jsonc
-{
-  "_schema": "v1",
-  "_ssot": true,
-  "_updated_at": "<ISO-8601 UTC>",
-  "_updated_by": "<agent-id>",
-  "active_sprints": [
-    {
-      "id": "<sprint-id>",           // e.g. "TOOL-SURFACE-HYGIENE"
-      "status": "active | paused | pending-gate",
-      "tasks": [
-        {
-          "task_id": "<NNN[a-z]?>",  // e.g. "TSH-1"
-          "title": "<≤60 chars>",
-          "type": "sprint-task | backlog | on-demand",
-          "owner": "<agent-id>",
-          "depends": "<task_id | null>",
-          "status": "TODO | IN_PROGRESS | DONE | BLOCKED | DEFERRED",
-          "size": "XS | S | M | L | null"
-        }
-      ]
-    }
-  ],
-  "backlog": [
-    { "id": "<backlog-slug>", "summary": "<≤80 chars>", "priority": "high | normal | low" }
-  ]
-}
-```
+### 4.1 Code migrations (dev-mcp-server)
 
-**What the frontend endpoint surfaces** (`GET /api/orchestration/tasks`): sprint id/status,
-task id/status/title/owner — no raw payload, no agent-internal notes.
+| File | Change | Detail |
+|---|---|---|
+| `1837a-pipeline-state.test.ts:L16` | Path update | `"../../../../docs/pipeline-state.json"` → `"../../../../docs/data/orch/orch-state.json"` |
+| `tasksMdJanitorJob.ts:L308–310` | Path + parser | `tasksMdPath` → `orchStatePath`; replace `parseTaskRows(readFile(tasksMdPath))` with `jq .task_board.tasks[]` parse; replace `appendDashboardRow(dashboardPath,...)` with JSON array append helper using atomic write |
+| `tasksMdJanitorJob.ts:L421` | Git log path | `-- docs/TASKS.md` → `-- docs/data/orch/orch-state.json` |
+| `dailyDashboardJob.ts:L495` | Path + parser | `tasksPath` → `orchStatePath`; replace `parseTaskCounts(fs.readFileSync(...))` with JSON count of `task_board.tasks[]` by status |
+| `1854a-daily-dashboard-job.test.ts:L47–113` | Test fixture | Replace inline `TASKS_MD` markdown fixture with JSON `task_board` fixture; update `parseTaskCounts` → `countTasksFromJson` |
+| `improvementSignalWriter.ts:L30` | Path constant | `DASHBOARD_PATH` → `ORCH_STATE_PATH = resolve(REPO_ROOT, "docs/data/orch/orch-state.json")` |
+| `improvementSignalWriter.ts:L252–261` | Writer | `appendDashboardRow()` → `appendSignalQueueRow()` using atomic write |
+| `1948d-improvement-signal-writer.test.ts:L187, L324` | Test fixture | `DASHBOARD.md` tmpfile → `orch-state.json` tmpfile with JSON structure |
 
----
+**AC for code migrations:**
+- `bun test 1837a-pipeline-state` exits 0 with file at new path
+- `bun test 1854a-daily-dashboard` exits 0 with JSON-based fixture
+- `bun test 1948d-improvement-signal-writer` exits 0 with JSON fixture
+- `grep -r "docs/pipeline-state.json\|docs/TASKS.md\|docs/signals/DASHBOARD.md" apps/` → 0 functional hits (doc-string-only OK)
 
-### 1.4 `signal-queue.json` (new — replaces DASHBOARD.md as machine SSOT)
+### 4.2 Agent/skill/protocol migrations (agent-father)
 
-```jsonc
-{
-  "_schema": "v1",
-  "_ssot": true,
-  "_updated_at": "<ISO-8601 UTC>",
-  "_updated_by": "<agent-id>",
-  "rows": [
-    {
-      "id": "<signal-id>",
-      "ts": "<ISO-8601 UTC>",
-      "from": "<agent-id>",
-      "to": "<agent-id>",
-      "type": "audit-handoff | bug-escalation | dispatcher-incident | system_issue | ...",
-      "summary": "<≤120 chars — NO raw payload>",
-      "severity": "CRITICAL | HIGH | MED | LOW | INFO",
-      "status": "NEW | READ | RESOLVED | PARTIAL",
-      "payload_ref": "<path-to-handoff-file or null>"   // pointer, never inline payload
-    }
-  ]
-}
-```
+All occurrences of `docs/pipeline-state.json` → `docs/data/orch/orch-state.json` (§2.1 reader list).
+All occurrences of `docs/TASKS.md` → `docs/data/orch/orch-state.json .task_board` (§1.1 reader list).
+All occurrences of `docs/signals/DASHBOARD.md` → `docs/data/orch/orch-state.json .signal_queue` (§1.1 reader list).
 
-`payload_ref` is a pointer to a handoff file path — never an inline payload blob.
-HC-2 is enforced structurally: the raw DASHBOARD payload cells are absent from this schema.
+Signal-dashboard SKILL (both `SKILL.md` and `dashboard-protocol.md`) requires a full rewrite of §WRITE/§READ/§PRUNE to operate on JSON. This is the highest-effort agent-father task.
 
-**Queryable with jq:** `jq '.rows[] | select(.status=="NEW")' docs/data/orch/signal-queue.json`
-**Dashboard-friendly:** all fields are flat, typed, and bounded-length.
+### 4.3 File system changes
 
----
-
-## 2. Migration — `pipeline-state.json` Readers
-
-This is the highest-risk section. All current readers must be updated atomically.
-
-### 2.1 Reader inventory (file:line)
-
-| Reader | File | Lines | Read type |
-|---|---|---|---|
-| Schema test | `apps/mcp-server/src/__tests__/1837a-pipeline-state.test.ts` | L16–19 | `PIPELINE_STATE_PATH = resolve(import.meta.dir, "../../../../docs/pipeline-state.json")` |
-| Janitor job (R-2 step) | `apps/mcp-server/src/scheduler/system/tasksMdJanitorJob.ts` | L309 | `const pipelinePath = resolve(projectRoot, "docs", "pipeline-state.json")` |
-| Dev-team drain | `docs/agents/dev-team/flow/drain-signals.md` | §Step 4 | writes `dashboard_section_cache` field |
-| Dev-team main flow | `docs/agents/dev-team/flow/main.md` | L151–185 | Step 0b — head-only read for routing |
-| PM flow CAS guard | `docs/agents/pm/flow/main.md` | L119–133 | fresh read before DASHBOARD write |
-| PO tools | `docs/agents/tools/package/po.md` | L110 | "Check pipeline-state.json status" |
-| System-auditor D4 | `docs/agents/system-auditor/audit-dimensions.md` | L52–53, L86, L98, L103 | D4-R2 cross-check + DN-W2 mtime |
-| System-auditor handlers | `docs/agents/system-auditor/handlers.md` | L31–46, L122 | R-2 cross-check logic |
-| Alert-commander dispatch log | `docs/agents/alert-commander/flow/stage-dispatch-log.md` | L53 | `jq -r '.currentSprint // "idle"' docs/pipeline-state.json` |
-| TNB handoff | `docs/agents/tran-ngoc-bau/flow/auto-cure-and-handoff.md` | L88 | negative rule — "Do NOT write" |
-| Project-root skill | `.claude/skills/project-root/SKILL.md` | L19 | path reference |
-| Signal-dashboard skill | `.claude/skills/signal-dashboard/dashboard-protocol.md` | L42 | `dashboard_section_cache` read |
-| Agent-chaining-protocol | `docs/protocols/agent-chaining-protocol.md` | L42–47, L73, L94, L127, L156 | write contract + shared-SSOT list |
-| Execute-tier isolation | `docs/agents/dev-team/flow/execute-tier.md` | L69 | shared-SSOT list |
-
-### 2.2 Migration strategy: rename-with-shim
-
-**Strategy: move the file; update the path in all readers. Do NOT restructure the file contents.**
-
-Rationale: the v2 schema is already correct and load-bearing. A content restructure would
-require coordinating all readers simultaneously across code and agent files. A path rename
-is a one-pass search-and-replace.
-
-**Step M-1 — Create new directory and move file:**
 ```bash
+# Create directory
 mkdir -p docs/data/orch/
-git mv docs/pipeline-state.json docs/data/orch/pipeline-state.json
+
+# Migrate pipeline-state.json content into orch-state.json (expand schema to v3)
+# agent-father writes the initial orch-state.json by merging current pipeline-state.json
+# with empty task_board{} and signal_queue{} sections
+
+# Delete old files (after all writers migrated)
+git rm docs/pipeline-state.json
+git rm docs/TASKS.md docs/TASKS_ARCHIVE.md 2>/dev/null || true
+git rm docs/signals/DASHBOARD.md docs/signals/DASHBOARD_ARCHIVE.md 2>/dev/null || true
 ```
 
-**Step M-2 — Update code readers (dev-mcp-server task):**
-
-| File | Old path | New path |
-|---|---|---|
-| `1837a-pipeline-state.test.ts:L16` | `"../../../../docs/pipeline-state.json"` | `"../../../../docs/data/orch/pipeline-state.json"` |
-| `tasksMdJanitorJob.ts:L309` | `resolve(projectRoot, "docs", "pipeline-state.json")` | `resolve(projectRoot, "docs", "data", "orch", "pipeline-state.json")` |
-
-**Step M-3 — Update agent/skill/protocol files (agent-father task):**
-
-All occurrences of `docs/pipeline-state.json` in the agent/skill/flow files listed in §2.1
-become `docs/data/orch/pipeline-state.json`. This includes:
-- `docs/protocols/agent-chaining-protocol.md` (5 occurrences, including the PIPELINE_STATE_WRITE template)
-- `docs/agents/dev-team/flow/main.md` (4 occurrences in Step 0b)
-- `docs/agents/dev-team/flow/drain-signals.md` (Step 4 reference)
-- `docs/agents/pm/flow/main.md` (L119–133, 4 occurrences)
-- `docs/agents/po/flow/` or tools package reference (L110)
-- `docs/agents/system-auditor/audit-dimensions.md` (all D4/DN refs)
-- `docs/agents/system-auditor/handlers.md` (all R-2/R-122 refs)
-- `docs/agents/alert-commander/flow/stage-dispatch-log.md` (L53 jq path)
-- `docs/agents/tran-ngoc-bau/flow/auto-cure-and-handoff.md` (L88 negative rule)
-- `.claude/skills/project-root/SKILL.md` (L19 path reference)
-- `.claude/skills/signal-dashboard/dashboard-protocol.md` (L42)
-- `docs/agents/dev-team/flow/execute-tier.md` (L69)
-
-**Step M-4 — Update docker-compose.yml volume mounts (ops task):**
-
-The existing brief (2026-06-01-dashboard-state-sync.md §3) noted that
-`docs/pipeline-state.json` is NOT currently mounted in the mcp-server container.
-After the rename, the future ops mount target must be:
-```yaml
-- ./docs/data/orch/pipeline-state.json:/app/docs/data/orch/pipeline-state.json:ro
-```
-(This mount is part of the dashboard-state-sync sprint, not a blocker for the rename.)
-
-**Step M-5 — Update file-size-caps.json if a cap is added for orch/ files.**
-Current `file-size-caps.json` has no cap on `docs/pipeline-state.json` (data JSON is
-explicitly excluded from governance). No change needed to caps.
-
-**Atomicity rule:** M-1 + M-2 + M-3 must land in ONE commit. A split commit leaves the
-schema test broken between commits. M-4 and M-5 can be separate commits (non-breaking).
+**Atomicity rule:** The initial `orch-state.json` creation + `pipeline-state.json` deletion + ALL code path updates MUST land in ONE commit. Any split leaves `1837a-pipeline-state.test.ts` broken.
 
 ---
 
-## 3. Markdown Generation — Who, When, and the Human Workflow Change
-
-### 3.1 Who renders
-
-Two separate renderers — one per generated file:
-
-| Generated file | Renderer | Trigger |
-|---|---|---|
-| `docs/TASKS.md` | PO agent (existing write step) | At every PO TASKS.md write, emit JSON-first to `docs/data/orch/task-board.json`, then render Markdown from JSON |
-| `docs/signals/DASHBOARD.md` | signal-dashboard SKILL (§WRITE step) | At every SKILL §WRITE call, emit JSON-first to `docs/data/orch/signal-queue.json`, then render Markdown from JSON |
-
-Both renderers follow **JSON-first, Markdown-second**: write the JSON atomically, then
-regenerate the Markdown. If Markdown render fails, the JSON is still correct (safe fallback).
-
-### 3.2 When (cadence)
-
-- `task-board.json` is updated whenever PO writes TASKS.md — typically at sprint start,
-  task close, or backlog triage. Cadence: several times per day.
-- `signal-queue.json` is updated whenever any agent appends a DASHBOARD row via the
-  signal-dashboard SKILL §WRITE step. Cadence: roughly every agent cycle (hourly).
-- Both are **event-driven**, not cron-driven. No separate :07 janitor is needed for these.
-
-### 3.3 The human workflow change — honest cost assessment
-
-**This is a real workflow change with real costs. Both must be stated clearly.**
-
-**Before:** Humans and agents hand-edit `docs/TASKS.md` and `docs/signals/DASHBOARD.md`
-directly using a text editor or file write. The files are the canonical source.
-
-**After:** Neither file may be hand-edited. They are generated from JSON.
-- To add a task: edit `docs/data/orch/task-board.json` (or use a form/agent command that
-  writes to the JSON — a proper "PO BATCH" write goes to JSON, renderer regenerates Markdown).
-- To update a signal row: the signal-dashboard SKILL writes JSON-first; manual status
-  updates (e.g., READ → RESOLVED) must go through a dedicated skill invocation or a
-  direct JSON edit followed by a renderer pass — NOT a Markdown edit.
-
-**Costs:**
-1. **Operator friction.** The operator currently reads DASHBOARD.md directly for a quick
-   status scan. That reading experience is unchanged (Markdown view still exists, still
-   readable). The write path changes: the operator cannot hand-fix a status cell in the
-   Markdown — they must know to edit the JSON or call the SKILL.
-2. **Agent migration scope.** Every agent that currently reads `docs/TASKS.md` for task
-   discovery (dev-team Step 0b/Step 1, system-auditor D4, janitor R-3) has been
-   reading the Markdown. After consolidation, they should read `task-board.json` instead
-   (simpler: jq-queryable, no Markdown table parser needed). The `parseTasksMd` function
-   in `tasksMdJanitorJob.ts:L102` becomes vestigial once the janitor reads JSON.
-3. **Bootstrap period risk.** Until all agent writes go through JSON-first renderers,
-   both files can exist in temporarily inconsistent states. Must enforce: old Markdown
-   writes are gated out before enabling read-from-JSON. Do NOT run both paths simultaneously.
-
-**Mitigation:** Run a one-sprint hardening period where JSON is written alongside Markdown
-(JSON written first; Markdown still written as before) before flipping readers to the JSON.
-This surfaces any renderer gap without breaking agent operations.
-
----
-
-## 4. Hard Constraint Compliance Check
+## 5. Hard Constraint Compliance Check
 
 | Constraint | How satisfied |
 |---|---|
-| HC-1: frontend → api-gateway only | Unchanged. `GET /api/orchestration/*` endpoints in mcp-server are reached via api-gateway `/api/*` catch-all, exactly as in the prior brief. |
-| HC-2: no raw signal payloads in HTTP | `signal-queue.json` schema excludes payload blobs; only `summary` (≤120 chars) and `payload_ref` (path pointer) are stored. HTTP endpoint reads only from this JSON. DASHBOARD.md raw cells never parsed in HTTP handler. |
-| HC-3: no secret leakage | `docs/data/orch/` contains only structural orchestration state (task IDs, statuses, summaries). No `.env` keys, no Telegram channel IDs, no VPS credentials. Volume mount scope: `docs/data/orch/` only. |
-| HC-4: :07 RETURN write contract | Preserved verbatim. The only change is the file path (`docs/data/orch/pipeline-state.json`). The write template in `agent-chaining-protocol.md § PIPELINE_STATE_WRITE` is updated to the new path as part of M-3. Schema v2 fields unchanged. |
+| HC-1: frontend → api-gateway only | Unchanged. `GET /api/orchestration/*` routes serve data from `orch-state.json` via api-gateway. No direct file reads from frontend. |
+| HC-2: no raw signal payloads in HTTP | `signal_queue.rows[].summary` is ≤120 chars; `payload_ref` is a path pointer. HTTP endpoint reads only these fields. Raw payload cells absent from schema. |
+| HC-3: no secret leakage | `docs/data/orch/` contains structural orchestration state only. Volume mount scope: `docs/data/orch/` only. |
+| HC-4: :07 RETURN write contract | Preserved. Writers update only the `head` / `dashboard_section_cache` / `narrative` / `session_handoff_status` sections. The write template in `agent-chaining-protocol.md § PIPELINE_STATE_WRITE` is updated to the new path. Schema v2 fields for these sections are unchanged (schema version bumps to v3 at the envelope level only). `tasksMdJanitorJob.ts` reads `task_board` section (new path, new parser) — same-commit migration required. |
 
 ---
 
-## 5. Task Batch for PM
+## 6. Task Batch for PM
 
-### OSC-1 — Create `docs/data/orch/` and define schemas (agent-father)
+### OSC-1 — Create `orch-state.json` with migrated pipeline-state content (agent-father)
 
 ```
-zone: docs/ (agent-father only — no code)
+zone: docs/ (agent-father only)
 action:
-  - Create docs/data/orch/ directory
-  - Define docs/data/orch/task-board.json (schema v1, empty initial state)
-  - Define docs/data/orch/signal-queue.json (schema v1, empty initial state)
-  - DO NOT move pipeline-state.json yet (wait for OSC-2)
+  - mkdir -p docs/data/orch/
+  - Write docs/data/orch/orch-state.json by merging current docs/pipeline-state.json
+    content + empty task_board{} + empty signal_queue{} sections; _schema: "v3"
+  - Populate task_board from current docs/TASKS.md content (manual migration of open tasks)
+  - Populate signal_queue from current docs/signals/DASHBOARD.md rows (manual migration of NEW rows)
+  - DO NOT delete old files yet (wait for OSC-2 atomic migration)
 ac:
-  - OSC-1-AC1: jq . on both new files exits 0
-  - OSC-1-AC2: Both files have _schema, _ssot, _updated_at, _updated_by fields
-sequencing: FIRST — must land before OSC-2
+  - OSC-1-AC1: jq . orch-state.json exits 0
+  - OSC-1-AC2: orch-state.json has all 4 top-level sections (head/task_board/signal_queue/narrative)
+  - OSC-1-AC3: head fields match current pipeline-state.json head block exactly
+sequencing: FIRST
 ```
 
-### OSC-2 — Migrate `pipeline-state.json` path (atomic: code + agent files)
+### OSC-2 — Atomic code + agent + file migration (dev-mcp-server + agent-father)
 
 ```
-zone: apps/mcp-server/ + docs/ (dev-mcp-server + agent-father — coordinated)
+zone: apps/mcp-server/ + docs/ (coordinated, ONE commit)
 action:
-  - git mv docs/pipeline-state.json docs/data/orch/pipeline-state.json
-  - Update 1837a-pipeline-state.test.ts:L16 (new resolve path)
-  - Update tasksMdJanitorJob.ts:L309 (new resolve path)
-  - Update all 13 agent/skill/flow file references (§2.3 list — agent-father)
-  - One atomic commit covering all changes
+  - Update all code readers (§4.1 table — 8 file changes)
+  - Update all agent/skill/protocol files (§4.2 — agent-father)
+  - git rm docs/pipeline-state.json docs/TASKS.md docs/TASKS_ARCHIVE.md
+    docs/signals/DASHBOARD.md docs/signals/DASHBOARD_ARCHIVE.md
+  - Commit atomically: ALL changes in one commit
 ac:
-  - OSC-2-AC1: bun test 1837a-pipeline-state exits 0 (file found at new path)
-  - OSC-2-AC2: grep -r "docs/pipeline-state.json" (old path) → 0 matches in repo
-  - OSC-2-AC3: git mv shows R100 rename, no new file creation
-sequencing: After OSC-1. Code + agent files must commit together — no split commit.
-risk: HIGHEST. Serialize. Run bun test before committing.
+  - OSC-2-AC1: bun test 1837a-pipeline-state exits 0
+  - OSC-2-AC2: bun test 1854a-daily-dashboard exits 0
+  - OSC-2-AC3: bun test 1948d-improvement-signal-writer exits 0
+  - OSC-2-AC4: grep -r "docs/pipeline-state.json" . → 0 matches
+  - OSC-2-AC5: grep -r '"docs/TASKS.md"' . → 0 functional matches
+  - OSC-2-AC6: grep -r '"docs/signals/DASHBOARD.md"' . → 0 functional matches
+  - OSC-2-AC7: ls docs/pipeline-state.json docs/TASKS.md docs/signals/DASHBOARD.md → all ENOENT
+sequencing: After OSC-1. HIGHEST RISK — serialize, run all tests before committing.
+risk: HIGHEST. Split commit leaves test suite broken and pipeline write-wedged.
 ```
 
-### OSC-3 — Add JSON-first renderer to signal-dashboard SKILL (agent-father)
+### OSC-3 — Rewrite signal-dashboard SKILL (agent-father)
 
 ```
 zone: .claude/skills/signal-dashboard/ (agent-father only)
 action:
-  - In SKILL.md §WRITE: before appending DASHBOARD.md row, write/update the
-    corresponding row in docs/data/orch/signal-queue.json (JSON-first invariant)
-  - Renderer: append row to signal-queue.json `rows[]` array; update _updated_at/_updated_by
-  - Do NOT change DASHBOARD.md write logic yet (hardening period — run both paths)
+  - Rewrite SKILL.md §WRITE: append to orch-state.json .signal_queue.rows[] (atomic write)
+  - Rewrite SKILL.md §READ: two-phase delta-read on orch-state.json (jq .signal_queue._updated_at + rows[])
+  - Rewrite SKILL.md §PRUNE: archive rows older than 7d with status RESOLVED|READ
+  - Rewrite dashboard-protocol.md to target orch-state.json
 ac:
-  - OSC-3-AC1: After a signal-dashboard §WRITE call, signal-queue.json contains the
-               new row with correct fields; jq . exits 0
-  - OSC-3-AC2: DASHBOARD.md still updated as before (no regression)
-sequencing: After OSC-1. Independent of OSC-2.
+  - OSC-3-AC1: After a §WRITE call, orch-state.json .signal_queue.rows contains the new row; jq exits 0
+  - OSC-3-AC2: §READ returns only NEW rows for the requesting agent
+sequencing: Parallel with OSC-2 (same commit window).
 ```
 
-### OSC-4 — Add JSON-first renderer to PO TASKS.md write (agent-father)
-
-```
-zone: docs/agents/po/flow/ (agent-father only)
-action:
-  - In PO's TASKS.md write step: before writing TASKS.md, write/update task-board.json
-    from the same data (JSON-first invariant)
-  - Hardening period: TASKS.md still written as before
-ac:
-  - OSC-4-AC1: After a PO TASKS.md update, task-board.json reflects the same sprint/task state
-  - OSC-4-AC2: TASKS.md unchanged (no regression)
-sequencing: After OSC-1. Independent of OSC-2/3.
-```
-
-### OSC-5 — Flip readers to JSON (after hardening period) — DEFERRED
-
-```
-NOT scheduled in this sprint. Conditions to release gate:
-  - OSC-3 + OSC-4 proven in ≥3 consecutive PO/signal writes (human-verified JSON correctness)
-  - parseTasksMd in tasksMdJanitorJob.ts can be replaced with jq read of task-board.json
-  - system-auditor D4 R-3 step reads task-board.json instead of TASKS.md
-  - TASKS.md and DASHBOARD.md become truly read-only generated output
-  - Operator acknowledged: hand-editing those files is no longer valid after this gate
-Gate owner: PO. Release only after explicit PO sprint sign-off.
-```
-
-### OSC-6 — Docker-compose volume mount update (ops)
+### OSC-4 — Docker-compose volume mount update (ops)
 
 ```
 zone: docker-compose.yml (ops)
 action:
-  - Change the future pipeline-state.json mount target (for dashboard-state-sync sprint)
-    from ./docs/pipeline-state.json to ./docs/data/orch/pipeline-state.json
-  - Add mounts for task-board.json and signal-queue.json when dashboard-state-sync sprint runs
-sequencing: After OSC-2 lands. Blocking only for dashboard-state-sync sprint, not OSC-1/3/4.
+  - Change pipeline-state.json mount target to: ./docs/data/orch/orch-state.json:/app/docs/data/orch/orch-state.json:rw
+    (rw because cron jobs write signal_queue rows)
+sequencing: After OSC-2 lands. Non-blocking for agent operations.
 ```
 
 ---
 
-## 6. Sequencing Diagram
+## 7. Sequencing Diagram
 
 ```
-OSC-1 (create orch/)
-  ├─→ OSC-2 (migrate pipeline-state path) — code + agent-files atomic
-  ├─→ OSC-3 (signal-queue JSON renderer) — independent
-  └─→ OSC-4 (task-board JSON renderer) — independent
-
-OSC-2 + OSC-3 + OSC-4 all done → hardening period (≥3 live writes each)
-  └─→ OSC-5 (flip readers) — deferred, PO-gated
-
-OSC-2 done → OSC-6 (volume mount) — ops, non-blocking
+OSC-1 (create orch-state.json, migrate content)
+  └─→ OSC-2 (atomic: delete old files + update all code + all agent files) — ONE commit
+        ├─ OSC-3 (rewrite signal-dashboard SKILL) — same window as OSC-2
+        └─→ OSC-4 (volume mount) — ops, non-blocking
 ```
 
 ---
 
-## 7. Risk Flags
+## 8. Risk Flags
 
-**RISK-1 (HIGHEST — split-commit breaks test):** OSC-2 must be ONE atomic commit across
-code files and agent/protocol files. Any split leaves `1837a-pipeline-state.test.ts`
-pointing at the old path while the file is at the new path → test fails → container
-rebuild fails. Mitigation: dev-mcp-server and agent-father coordinate on the same commit.
-In practice: agent-father does the agent-file replacements, dev-mcp-server does the code
-replacements, one committer assembles both changesets before committing.
+**RISK-1 (HIGHEST — split commit breaks test + pipeline):** OSC-2 must be ONE atomic commit. Any split leaves `1837a-pipeline-state.test.ts` pointing at the old path and agents writing to the deleted `docs/pipeline-state.json`. Mitigation: agent-father does agent-file replacements, dev-mcp-server does code replacements, one committer assembles both changesets.
 
-**RISK-2 (HIGH — parallel-write during migration window):** Between OSC-2 landing and
-all agent sessions reloading, a concurrent agent may write `docs/pipeline-state.json`
-(old path). New file at old path = phantom file, test passes but janitor reads wrong location.
-Mitigation: run OSC-2 off-peak (after market close, no active agent sessions); verify
-`ls docs/pipeline-state.json` returns ENOENT after migration.
+**RISK-2 (HIGH — phantom write during migration window):** Between OSC-1 (orch-state.json created) and OSC-2 (pipeline-state.json deleted), a concurrent agent may write both files. Mitigation: run OSC-2 immediately after OSC-1 in the same session, no agent cycles between them.
 
-**RISK-3 (MED — renderer false-green):** OSC-3/4 renderers that write JSON silently may
-produce invalid JSON on edge-case payload (e.g., summary with unescaped quotes from DASHBOARD).
-Mitigation: renderer must `jq . < signal-queue.json > /dev/null || ERROR` as a post-write
-guard (fail-loud-protocol). Do NOT treat write-success as JSON-valid.
+**RISK-3 (HIGH — signal-dashboard SKILL is used by many agents):** OSC-3 rewrites the §WRITE protocol. Any agent holding an old session and calling §WRITE after OSC-2 will write to the now-deleted DASHBOARD.md. Mitigation: OSC-3 lands in the same commit window as OSC-2; alert active agent sessions to reload.
 
-**RISK-4 (MED — operator workflow confusion):** Operator habit of hand-editing TASKS.md
-or DASHBOARD.md will silently overwrite generated content on the next renderer run.
-Mitigation: add a generated-file header comment to both files:
-`<!-- GENERATED FILE — edit docs/data/orch/task-board.json instead — changes here will be overwritten -->`.
-Do this in OSC-4/OSC-3 before the hardening period begins, not at OSC-5.
+**RISK-4 (MED — cross-section overwrite):** A writer that reads the full orch-state.json, modifies one section, and writes back can accidentally overwrite sibling sections modified by another writer between its read and write. Mitigation: enforce the atomic-write protocol (§2.3) + single-writer-per-section discipline. The commit-mutex prevents simultaneous commits; the `dashboard-row` lock prevents simultaneous signal_queue appends.
 
-**RISK-5 (LOW — caps governance):** `docs/data/orch/*.json` are data JSON files.
-`file-size-caps.json` explicitly excludes "Code and data JSON" from governance. No cap
-entry needed. Signal-queue.json can grow unboundedly — add a pruning policy (max 200 rows,
-archive RESOLVED+READ rows > 7 days) to the signal-dashboard SKILL in OSC-3.
+**RISK-5 (MED — JSON corruption on partial write):** A crash mid-write to orch-state.json can produce invalid JSON if not using temp-then-rename. Mitigation: §2.3 protocol mandatory; add `jq . orch-state.json > /dev/null || ERROR` post-write guard everywhere.
+
+**RISK-6 (LOW — caps governance):** `docs/data/orch/orch-state.json` is a data JSON file, excluded from the `file-size-caps.json` governance. Signal queue can grow unboundedly — add pruning policy (max 200 rows, archive RESOLVED+READ > 7 days) to signal-dashboard SKILL §PRUNE in OSC-3.
 
 ---
 
-_Brief owner: agents-architect. Implementation: route OSC-1/3/4/5 to agent-father; OSC-2 to dev-mcp-server + agent-father; OSC-6 to ops._
+## 9. Greenlight Decision Needed
+
+**ONE remaining decision for operator:**
+
+> **The `tasksMdJanitorJob.ts` R-3 step currently cross-checks task status in TASKS.md against the task_locks SQLite table.** After migration, this cross-check reads `orch-state.json .task_board.tasks[]` instead. The functional check is preserved.
+>
+> However, the D4-R4 concurrent-commit detection currently git-logs `docs/TASKS.md`. After migration, it git-logs `docs/data/orch/orch-state.json`. The alarm threshold (two commits within 30s) becomes a write-frequency alarm on the unified file — which will fire more often since `orch-state.json` is written by more agents.
+>
+> **Decision needed:** Should the D4-R4 concurrent-commit alarm be:
+> - (A) Kept as-is on `orch-state.json` with the same 30s window — will generate more noise but catches actual race conditions on the unified file. **Default: operator takes no action, brief proceeds with (A).**
+> - (B) Relaxed (60s window) or scoped to only detect simultaneous `head`-section writes — quieter but less sensitive.
+>
+> If no response: proceed with **(A)**.
+
+---
+
+_Brief owner: agents-architect. Implementation routing: OSC-1/3 → agent-father; OSC-2 → dev-mcp-server + agent-father (coordinated); OSC-4 → ops._
