@@ -97,7 +97,9 @@ except Exception:
     cp "$LOCAL_PATH" "$TMP_PDF"
   else
     echo "$(date -u) $CODE $QTR/$YEAR: downloading from $PDF_URL" >> "$LOG"
-    HTTP_CODE=$(curl -s -L -o "$TMP_PDF" -w "%{http_code}" \
+    # -k: owa.hnx.vn serves an incomplete TLS chain (missing GlobalSign intermediate); cert itself valid.
+    # TODO harden to --cacert <bundled-intermediate>. See BCTC-HNX-SSL 2026-06-01.
+    HTTP_CODE=$(curl -s -k -L -o "$TMP_PDF" -w "%{http_code}" \
       --connect-timeout 30 --max-time 120 \
       -H "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/124.0.0.0 Safari/537.36" \
       -H "Referer: https://hnx.vn/" \
