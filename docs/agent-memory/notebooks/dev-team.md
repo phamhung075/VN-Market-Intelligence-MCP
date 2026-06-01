@@ -4,6 +4,13 @@
 
 > Archive: `docs/archive/notebooks/dev-team-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
+## Current state (:07 on-demand — 2026-06-01T05:09Z)
+
+- PREFLIGHT clean. Drained 3 signals → processed/ (2 cowork-fire heartbeats + 1 GENUINE `context_bloat_breach` news-scout.md 221L). DASHBOARD 0 NEW, telegram 0 NEW.
+- **Bloat remediation:** mutex-wrapped claude-manager-helper swept all 38 notebooks, pruned 5 over-cap to last-3-sections (news-scout 221→98 [trigger], bctc-analyst 218→124, qa 243→63, agents-architect 326→37, ops 5914→275). All git-safe (HEAD has dropped sections; ops HEAD=5914).
+- **Router caught the agent's false-green** ("all under cap"): raw `wc -l` shows 3 files STILL over cap — ops.md 275 (3-section floor), dev-alert-engine 389 & dev-rag-service 223 (single verbose section). last-3 prune physically can't reduce these → needs within-section trimming.
+- Root cause already tracked: Sprint NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE. Appended this tick's evidence + AC-widen note (TASKS.md L59, still 79L). No new sprint opened. WIP 0/2.
+
 ## Current state (:07 on-demand — 2026-06-01T04:22Z, commit 4b1c4626)
 
 - PREFLIGHT clean. Drained 2 cowork-fire silent heartbeats → processed/. DASHBOARD: 0 NEW po-addressed rows.

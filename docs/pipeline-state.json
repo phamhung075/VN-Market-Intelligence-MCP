@@ -1,45 +1,39 @@
 {
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
-  "status": "IDLE (dev-team :07 ON-DEMAND run 2026-06-01T04:22Z, Monday, VN market OPEN ~11:22 ICT). PREFLIGHT clean (no HEAD.lock, no worktrees). Step 0a drained 1 cowork-fire silent heartbeat → processed/ (pendingSignals EMPTY). DASHBOARD: 0 NEW po-addressed rows (4 stale dev-mcp-server impl_done breadcrumbs + 1 old agents-architect row, none inbound). Telegram: 5 NEW reports — #3017 Tier-1 '9-svc down'=FALSE-POS (retracted #3018) + #3019 drain-shell-injection=caught/fixed + #3021 A-20 macro=false-pos(not-in-runtime) all map to FLEET-HOST-SAFETY tracked items; GENUINE = #3020 Tier-2 VPS proxy stale. ROOT-CAUSED via ops-vps-fetch (NOT VPS-SOCAT — main-server socat alive, mcp-server /health 200): 3 distinct VPS-side faults. FIXED LIVE: (1) vn-foreign-flow.service lost EnvironmentFile in 2026-05-30 redeploy → re-wired, live PUSH 200 upserted 102 (B-02/B-06 cleared); (3) vn-vps-proxy TasksMax 16→32 → bctc-discover python3 EAGAIN gone (B-03 cleared). RESIDUAL: SSC-IBOARD-MIGRATE (B-01) — iboard-query.ssc.vn GLOBALLY DEAD, registered backlog. All 5 telegram reports processed+cleared. WIP 0/2.",
-  "currentSprint": "No code sprint dispatched this tick. The genuine work was VPS infra recovery (ops lane, executed). TOOL-SURFACE-HYGIENE TSH-1 (deregister get_market_hexagram) remains PO-ready but historically env-wedged for spawned code agents (verify on a fresh session before dispatch). Other OPEN-idle: SELF-IMPROVE-GATE X-1, BCTC-LAYOUT-FIRST LF-EXTRACT/LF-OVERLAY, CHEF-ATTN, ENV-ISOLATION-P2 (gate released, unscheduled).",
-  "activeTaskId": "NONE — VPS-PROXY-RESTORE Fix1+Fix3 closed live this tick; SSC-IBOARD-MIGRATE registered as backlog (dev-vps-crawls, not yet dispatched). No code sprint in flight.",
-  "nextAgent": "dev-team :07 dispatcher next tick. Pickable-if-WIP-permits: SSC-IBOARD-MIGRATE (dev-vps-crawls recon — find replacement SSC financial source); SELF-IMPROVE-GATE X-1 (apps/mcp-server); BCTC-LAYOUT-FIRST LF-EXTRACT (dev-pdf-extractor)/LF-OVERLAY (multi); CHEF-ATTN (apps/mcp-server). TSH-1 only if spawned-agent gateway wedge confirmed cleared this session.",
-  "nextPrompt": "Genuine VPS data outage resolved this tick (foreign-flow + bctc-discover concurrency restored live). Residual: SSC-IBOARD-MIGRATE — the SSC iboard financial-data domain is permanently gone (SSC migrated off .vn TLD); B-01 ssc-iboard source needs a replacement-source recon sprint (dev-vps-crawls; candidates congbothongtin.ssc.gov.vn / hsx.vn FinancialReport / HNX AJAX) — MED priority, not host-critical. Other equal-priority non-time-sensitive backlog: SELF-IMPROVE-GATE X-1; BCTC-LAYOUT-FIRST LF-EXTRACT+LF-OVERLAY; CHEF-ATTN. Standing FUs (live-move gated): MACRO-CMDTY-DELTA signed-non-zero Brent/Gold. Hygiene noted: DUPLICATE main-server socat PIDs (1551+19389 both :4000) — benign, clean to one when VPS-SOCAT-PERSIST is implemented.",
+  "status": "IDLE (dev-team :07 ON-DEMAND run 2026-06-01T05:09Z, Monday, VN market OPEN). PREFLIGHT clean (no HEAD.lock, no worktrees). Step 0a drained 3 signals → processed/ (2 cowork-fire silent heartbeats + 1 GENUINE context_bloat_breach for news-scout.md 221L). DASHBOARD: 0 NEW po-addressed rows. Telegram: 0 NEW reports. ACTION: context_bloat_breach remediated — spawned claude-manager-helper (maintenance lane, mutex-wrapped), swept all 38 notebooks, manually pruned 5 over-cap to last-3-sections: news-scout 221→98 (trigger), bctc-analyst 218→124, qa 243→63, agents-architect 326→37, ops 5914→275. ALL git-safe (dropped sections live in HEAD history; ops HEAD=5914 confirmed recoverable). Router VERIFIED RAW (not the agent's false-green 'all under cap'): 3 files STILL over cap — ops.md 275 (3-section policy floor), dev-alert-engine 389 & dev-rag-service 223 (single verbose section, last-3 prune can't reduce). Root cause already tracked = Sprint NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE; appended this tick's evidence + AC-widen note (within-section trimming). WIP 0/2.",
+  "currentSprint": "No code sprint dispatched this tick. Work was context-bloat maintenance (claude-manager-helper lane, executed + router-raw-verified). NB-PRUNE-FIX/NB-BLOAT-FLOW-OVERWRITE remains the OPEN durable fix (developer→ assisted by architect/agent-father for flow-touch) now with widened scope: prepend→overwrite AND within-section trimming for single-verbose-section notebooks (dev-alert-engine 389, dev-rag-service 223) + per-flow audit that every agent's notebook-write actually invokes the prune step (news-scout proven not to).",
+  "activeTaskId": "NONE — context_bloat_breach news-scout.md closed live this tick (pruned+verified). No code sprint in flight.",
+  "nextAgent": "dev-team :07 dispatcher next tick. Pickable-if-WIP-permits: NB-BLOAT-FLOW-OVERWRITE (developer + architect/agent-father for flow-touch — now top recurring drain-noise source); SSC-IBOARD-MIGRATE (dev-vps-crawls recon); SELF-IMPROVE-GATE X-1 (apps/mcp-server); BCTC-LAYOUT-FIRST LF-EXTRACT (dev-pdf-extractor); CHEF-ATTN (apps/mcp-server). TSH-1 only if spawned-agent gateway wedge confirmed cleared.",
+  "nextPrompt": "Context-bloat fleet-wide is the live recurring theme: NB-PRUNE-1 (anchor widen) shipped but did NOT propagate — news-scout still grew to 6 sections this tick, and 3 notebooks (ops 275 / dev-alert-engine 389 / dev-rag-service 223) cannot reach the 200 cap via the last-3-sections prune at all (3-section floor / single verbose section). NB-BLOAT-FLOW-OVERWRITE scope widened (TASKS.md L59) to cover within-section trimming + a per-agent audit that each flow actually invokes notebook-write's prune. Equal-priority non-time-sensitive backlog unchanged: SSC-IBOARD-MIGRATE; SELF-IMPROVE-GATE X-1; BCTC-LAYOUT-FIRST; CHEF-ATTN. Standing FUs (live-move gated): MACRO-CMDTY-DELTA signed Brent/Gold. Hygiene still open: DUPLICATE main-server socat PIDs (1551+19389 both :4000) → fold into VPS-SOCAT-PERSIST.",
   "session_handoff_status": {
     "cleared": "2026-05-31T00:33Z — prior parallel-session zone-ownership directive obsolete. Dispatch apps/mcp-server + apps/pdf-extractor normally, WIP<=2 + zone-isolation between concurrent tasks.",
     "does_not_consume_wip": true
   },
   "last_closed": {
-    "task": "VPS-PROXY-RESTORE (Fix1 vn-foreign-flow env + Fix3 vps-proxy TasksMax)",
-    "outcome": "APPLIED+VERIFIED (live)",
-    "closed_at": "2026-06-01T04:40Z",
-    "lane": "ops (ops-vps-fetch, SSH; gateway-independent)",
-    "evidence": "Fix1: vn-foreign-flow.service EnvironmentFile=-/etc/vn-market.env re-wired + 3 keys; post-restart log 04:37:11Z WATCHLIST_FETCH 828ms / 111 codes / PUSH_RESPONSE HTTP 200 upserted 102. Fix3: vn-vps-proxy.service TasksMax 16->32, pids.max=32, /health ok:true. Backups kept on VPS. Fix2 ssc-iboard=RECON-ONLY (domain globally dead, no alternate found) -> SSC-IBOARD-MIGRATE backlog.",
-    "distinct_from": "VPS-SOCAT-PERSIST (main-server socat :4000->:3000, still open, found UP with duplicate PIDs 1551+19389)",
+    "task": "context_bloat_breach (news-scout.md 221L) + opportunistic 4-notebook sweep",
+    "outcome": "PRUNED+VERIFIED (live, git-safe)",
+    "closed_at": "2026-06-01T05:20Z",
+    "lane": "maintenance (claude-manager-helper; mutex task:on-demand:claude-manager-helper:20260601)",
+    "evidence": "news-scout 221→98, bctc-analyst 218→124, qa 243→63, agents-architect 326→37, ops 5914→275 (last-3-sections retained each). HEAD line counts confirm all dropped sections recoverable from git (ops HEAD=5914). RESIDUAL over-cap (router raw-verified, contra agent claim): ops 275 / dev-alert-engine 389 / dev-rag-service 223. Root cause = Sprint NB-PRUNE-FIX (already open); evidence + AC-widen appended TASKS.md L59.",
     "_prior_closed": {
-      "task": "FU-TRUST-REFRESH/FU-1",
-      "outcome": "DONE / QA-APPROVE",
-      "closed_at": "2026-05-31T10:00Z",
-      "commit": "af50d67a",
-      "zone": "apps/pdf-extractor/",
-      "fu_debt": "40 pre-existing pdf-extractor suite failures (test-debt, future CLEAN sprint)",
-      "_prior_closed": {
-        "task": "SPIKE_3011-LF-PERSIST-DIAG",
-        "outcome": "CLOSED / STALE-FALSE-RED",
-        "closed_at": "2026-05-31T08:45Z",
-        "summary": "report #3011 units_stored=28 vs bctc_layout_units=0 was FALSE (live COUNT=177/569). #3011 wontfix."
-      }
+      "task": "VPS-PROXY-RESTORE (Fix1 vn-foreign-flow env + Fix3 vps-proxy TasksMax)",
+      "outcome": "APPLIED+VERIFIED (live)",
+      "closed_at": "2026-06-01T04:40Z",
+      "lane": "ops (ops-vps-fetch, SSH; gateway-independent)",
+      "evidence": "Fix1 foreign-flow EnvironmentFile re-wired → live PUSH 200 upserted 102 (B-02/B-06 cleared); Fix3 vps-proxy TasksMax 16→32 → bctc-discover EAGAIN gone (B-03). Fix2 ssc-iboard domain globally dead → SSC-IBOARD-MIGRATE backlog.",
+      "distinct_from": "VPS-SOCAT-PERSIST (main-server socat :4000->:3000, still open, duplicate PIDs 1551+19389)"
     }
   },
   "open_sprints_idle": [
-    "SSC-IBOARD-MIGRATE (NEW 2026-06-01, dev-vps-crawls — SSC iboard financial source permanently gone, needs replacement-source recon; MED)",
-    "TOOL-SURFACE-HYGIENE (TSH-1 deregister get_market_hexagram — PO-approved; verify spawned-agent gateway wedge cleared before dispatch; TSH-5 waits on TSH-1 rebuild)",
+    "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE (developer + architect/agent-father — recurring context_bloat_breach; scope widened 2026-06-01: within-section trimming + per-flow prune-invocation audit; ops/dev-alert-engine/dev-rag-service can't reach cap via last-3 prune)",
+    "SSC-IBOARD-MIGRATE (dev-vps-crawls — SSC iboard financial source permanently gone, needs replacement-source recon; MED)",
+    "TOOL-SURFACE-HYGIENE (TSH-1 deregister get_market_hexagram — verify spawned-agent gateway wedge cleared before dispatch; TSH-5 waits on TSH-1 rebuild)",
     "BCTC-LAYOUT-FIRST (Phase 0 READY — LF-EXTRACT/LF-OVERLAY; persistence DE-RISKED)",
     "SELF-IMPROVE-GATE (X-1 synthetic dry-run; apps/mcp-server)",
     "CHEF-ATTN (READY; apps/mcp-server)",
     "ENV-ISOLATION-P2 (gate RELEASED, unscheduled)"
   ],
   "backlogs": "FLEET-HOST-SAFETY (AUD-ND-1 / DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE / VPS-SOCAT-PERSIST) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures.",
-  "updatedAt": "2026-06-01T04:42:00Z",
-  "updatedBy": "dev-team :07 ON-DEMAND run 2026-06-01T04:22Z. Drained 1 heartbeat; triaged 5 telegram reports (4 false-pos/fixed/tracked, 1 genuine VPS staleness). Root-caused genuine item via ops-vps-fetch = 3 distinct VPS faults (NOT VPS-SOCAT). Executed 2 SAFE live fixes (foreign-flow env + proxy TasksMax) APPLIED+VERIFIED; recon'd ssc-iboard (globally dead -> SSC-IBOARD-MIGRATE backlog). Processed+cleared all 5 reports. TASKS.md updated (VPS-PROXY-RESTORE line). WIP 0/2."
+  "updatedAt": "2026-06-01T05:20:00Z",
+  "updatedBy": "dev-team :07 ON-DEMAND run 2026-06-01T05:09Z. Drained 3 signals (2 heartbeats + 1 context_bloat_breach). Remediated bloat via mutex-wrapped claude-manager-helper: pruned 5 over-cap notebooks (git-safe), router-raw-verified line counts (caught agent false-green — 3 files still over cap by policy floor). Appended evidence to existing Sprint NB-PRUNE-FIX (TASKS.md 79L). 0 telegram reports. WIP 0/2."
 }
