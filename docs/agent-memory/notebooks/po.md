@@ -1,5 +1,18 @@
 # PO Notebook
 
+## 2026-06-01T21:17Z — DRIVE ORCH-STATE-CONSOLIDATE to DONE (operator fan-out directive)
+
+**Directive:** "fan out agent for complete all" — run ORCH-STATE-CONSOLIDATE to DONE at max safe parallelism this session.
+**State on entry:** BA/ARCH/PM ALL DONE — brief `…/2026-06-01-orch-state-consolidate.md` v2 (46632eb0, DESIGN COMPLETE w/ full 40+-reader inventory, v3 schema, §6 task batch, sequencing, 6 risk flags). SPRINT_GOAL §ORCH-STATE-CONSOLIDATE authored; TASKS.md §sprint has OSC-1..5 fully decomposed (zones+AC+sequencing). NOTHING built yet: orch-state.json ENOENT, pipeline-state/TASKS/DASHBOARD all present, no OSC commits. So sprint is READY-TO-EXECUTE, not READY-TO-PLAN.
+**My action:** advanced pipeline-state head from `next_agent:pm` (stale — PM already decomposed) → `next_agent:agent-father active_task_id:OSC-1` with full operator execution sequence baked into next_action. JSON re-validated (jq OK).
+**Verified soundness (raw, not relayed):** 3 zones truly file-isolated — apps/mcp-server/** (code+tests+/api/orchestration) | apps/frontend/**+api-gateway (dashboard route) | docs/**+.claude/skills/** (40+ re-points + SKILL rewrite). Reader counts repo-wide: 83 pipeline-state, 198 TASKS.md (most are TASKS.md-self/archive/brief PROSE = NOT functional; AC5 scoped to quoted-path `"docs/TASKS.md"` so correct), 51 DASHBOARD.md. Code anchors confirmed: tasksMdJanitorJob L308 tasksMdPath/L421 git-log; improvementSignalWriter L30 DASHBOARD_PATH/L252 appendDashboardRow; 3 tests + frontend api.bctc-inspect.$.tsx splat-proxy precedent all exist.
+**2 corrections I flagged into the dispatch (operator's whole risk):**
+1. OSC-2+OSC-3 is NOT two parallel committers — it is ONE committer assembling dev-mcp-server code + agent-father agent-files into ONE commit under commit-mutex (feedback_concurrent_commit_race: parallel workers share one git index). Markdown deletion (git rm 5 files) STRICTLY LAST inside that commit, only after every reader re-pointed + 3 bun tests green. NO agent cycles between OSC-1→OSC-2 (RISK-2 phantom dual-write).
+2. OSC-4c frontend route: brief says "api-gateway:4000" but the just-shipped FRONTEND-BCTC-TAB (38642fc2) used A2 server-side splat-proxy frontend→:3000 directly. dev-frontend must REUSE that proven precedent (api.bctc-inspect.$.tsx), not invent a Go gateway:4000 hop — flagged in next_action so dev-frontend resolves consistently.
+**Constraints carried into dispatch:** zone-isolation, explicit-file staging (NO add -A / NO --force, .env never staged), all on main, single-service ops REBUILD-not-restart (16GB host-panic), detectors/qa PLAN-ONLY, atomic temp->rename write protocol (§2.3) mandatory. Decision (A): D4-R4 alarm 30s on orch-state.json.
+**Cannot self-spawn (PO has Read/Edit/Write/Bash+gateway, no Agent tool).** Drive = pipeline-state head is the SSOT the router reads to fan out. Router executes: agent-father OSC-1 → atomic OSC-2/3 commit → parallel OSC-4 (mcp/frontend/ops) → qa OSC-5. Router-report gates: (a) OSC-2 commit lands, (b) qa proves atomic-write, (c) COMPLETE.
+**Carry-over:** next live tick = agent-father OSC-1 (solo, no cycle before OSC-2). All other open sprints (FLEET-HOST-SAFETY AUD-ND-1 done/A-01+DRAIN open, MSG-1 HIGH-needs-BA, VPS-PLACEHOLDER-GUARD closed) deferred behind this operator-priority drive.
+
 ## 2026-06-01T21:06Z — EXIT FRONTEND-BCTC-TAB — APPROVE, sprint CLOSED (38642fc2)
 
 **Verdict: APPROVE.** BCTC Inspect viewer now a dashboard tab on :3001 via A2 server-side proxy, ZERO mcp-server edits — operator request met with no regression surface.
