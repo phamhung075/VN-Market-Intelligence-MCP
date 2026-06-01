@@ -31,6 +31,8 @@ Input: `$DISH_TYPE` = `morning` | `intraday` | `eod` | `evening`
 
 ## Step 0 — GATHER
 
+Call `get_cycle_bootstrap(agent_id="unified-agent")` first. The response includes an `agent_signals` array (cross-agent signal index) — use this directly. Do NOT call `get_agent_signals(agent=…)` as a hard gate; if bootstrap already returned signals, the gather step is unblocked regardless of whether a standalone `get_agent_signals` call is available.
+
 Read all `docs/signals/*.json` with `mtime` within last 24h (or since last dish logged in notebook).
 
 Collect file groups:
@@ -39,10 +41,9 @@ Collect file groups:
 - `bctc_signal_*` — from bctc-analyst (merged agent; was financial-analyst)
 - `fundamental_*` — from report-analyzer [TRANSITION: dual-accept `signal_type == "bctc_signal" OR signal_type == "fundamental"` during soak window H-18→H-19; remove `fundamental` branch after H-19 archive]
 
-Also call:
-- `get_market_hexagram()` — market-wide Kinh Dịch state
-- `get_macro_snapshot()` — US/VN macro snapshot
-- `get_agent_signals(hours=24)` — cross-agent signal index
+Supplementary calls (all OPTIONAL — failure/absence is NOT a blocker):
+- `get_market_hexagram()` — market-wide Kinh Dịch state. **501 / tool-not-found = expected; treat as `market_hexagram=unavailable`.** Per memory `feedback_chef_kinhdich_confab`: per-ticker hexagrams come from `get_portfolio_conviction` (Step 5), NOT this call. A 501 here does NOT mean hexagram data is absent.
+- `get_macro_snapshot()` — US/VN macro snapshot. **Service unavailable / 5xx = expected** (macro-indicators not in intended runtime; tracked ops board `cow-MACRO-DOWN`). If unavailable: set `macro_state=unavailable` and continue. Do NOT abort.
 
 Note signal count + IDs for LOG step.
 
@@ -65,7 +66,9 @@ Group signals by ticker, then by sector.
 emit SILENT Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § SILENT Telemetry`
 → return `DONE: intraday-silent | PIPELINE: complete` and EXIT. No MARKET message.
 
-**Gate-fired contract:** When ≥1 cluster qualifies (or `$DISH_TYPE` is `morning` / `eod` / `evening`), Steps 2–8 are MANDATORY. The agent MUST proceed through all steps and publish. Self-refusal — any English prose such as "I cannot complete the full end-to-end execution here" or "these require sequential MCP calls" — is a flow violation. If an unrecoverable blocker is hit, emit `FAILED` telemetry with `reason="<actual error>"` and EXIT non-zero. There is no third path between SENT and FAILED.
+**Gate-fired contract:** When ≥1 cluster qualifies (or `$DISH_TYPE` is `morning` / `eod` / `evening`), Steps 2–8 are MANDATORY. The agent MUST proceed through all steps and publish. Self-refusal — any English prose such as "I cannot complete the full end-to-end execution here", "these require sequential MCP calls", "BLOCKERS:", or "would you like me to…" — is a flow violation. There is no third path between SENT and FAILED.
+
+**Degraded-dish floor (minimum valid dish):** If ≥1 supplementary source is down (macro unavailable, `get_market_hexagram` absent, partial signal set), the dish MUST still be published with: (1) available signal clusters only; (2) explicit degradation note in Block B WORK message listing which sources were unavailable (e.g. `macro=unavailable | market_hexagram=unavailable`); (3) Block A MARKET prose must not mention unavailable sources — omit that layer cleanly; (4) conviction scores capped at `medium` when macro is absent. This is the guaranteed floor: a dish with degradation notes beats no dish every time.
 
 **Morning/EOD/Evening:** always continue even if 0 clusters (publish regime-state update at minimum).
 
@@ -122,10 +125,10 @@ Confidence scoring:
 ## Step 5 — LAYER 5 (Kinh Dịch overlay)
 
 For each qualifying cluster ticker:
-- Call `get_kinhdich_reading(ticker)` — include hexagram name + state in narrative
-- Flag Lão Dương (老陽, peak Yang) or Lão Âm (老陰, peak Yin) explicitly — these are reversal signals
+- Call `get_portfolio_conviction(ticker)` — per-ticker hexagram state is embedded in this response. Per memory `feedback_chef_kinhdich_confab`: this is the authoritative source for per-ticker hexagrams; `get_market_hexagram` returning 501 does NOT indicate hexagram data is unavailable.
+- Flag Lão Dương (老陽, peak Yang) or Lão Âm (老陰, peak Yin) explicitly — these are reversal signals.
 
-For dish header: use `get_market_hexagram()` result as market-wide context.
+For dish header: if `get_market_hexagram()` returned a result in Step 0, use it as market-wide context. If it was absent/501 (`market_hexagram=unavailable`), skip the market-wide hexagram header line — do NOT abort or degrade conviction.
 
 ---
 

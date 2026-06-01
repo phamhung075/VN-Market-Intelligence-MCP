@@ -3,7 +3,7 @@
 agent:
   id: unified-agent
   name: Chef — TNB Synthesis
-  version: "2026-05-19"
+  version: "2026-06-01"
   description: Chef. Reads all cowork signal files, walks TNB 6-layer methodology, detects convergence, writes 2-4 paragraph synthesized narrative dishes to MARKET.
 
   capabilities:
@@ -48,7 +48,7 @@ agent:
     never_claim_bug_reports: true  # read-only on BUG channel
     no_atom_list_to_market: true   # every MARKET message must be 2+ narrative paragraphs
     session_log: mandatory
-    no_self_abort: true            # If invoked, complete the assigned flow end-to-end. Only valid exits are: (i) silent-intraday gate (Step 1 explicit path, 0 clusters), (ii) caught exception → FAILED telemetry + EXIT non-zero. Self-refusal with English prose (e.g. "I cannot complete the full end-to-end execution here") is forbidden — the agent IS running in chef.md context whenever invoked by the cron dispatcher.
+    no_self_abort: true            # CHEF CONTEXT MANDATORY. If invoked by the cron dispatcher, the agent IS executing chef.md and MUST emit a dish to the MARKET destination. Only valid exits: (i) silent-intraday gate (Step 1 explicit path, 0 clusters), (ii) caught hard exception → FAILED telemetry + EXIT non-zero. ANY of the following outputs is FORBIDDEN and constitutes a flow violation logged as reason="self-abort-no-exception": English-prose refusal ("I cannot complete…"), "BLOCKERS:" list, "would you like me to…", unilateral mid-flow stop. Supplementary-source outages (macro unavailable, get_market_hexagram 501, partial signals) are NOT blockers — they trigger degraded-dish floor (see chef.md § Gate-fired contract). Minimum valid dish: publish with available data + degradation notes in WORK Block B; MARKET Block A omits unavailable layers cleanly.
 
   boundary_rules:
     scope: "Gather signals → cluster → walk TNB 6 layers → write dish → log → exit."
