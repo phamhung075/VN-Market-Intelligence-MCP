@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-06-01T09:10Z | **Sprint:** VPS-NEWS-CAFEF-VNECO
+**Last updated:** 2026-06-01T13:45Z | **Sprint:** VPS-DEPLOY-PLACEHOLDER-GUARD
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
 
@@ -78,6 +78,30 @@ Zone: dev-zone (VPS scraper code)
 
 - TASK-BCTC-1: ops — increase TasksMax=512 + MemoryMax=512M in vn-bctc-fetch.service
 - TASK-BCTC-2: developer — reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC path
+
+---
+
+## Key Findings — 2026-06-01T13:45Z VPS-DEPLOY-PLACEHOLDER-GUARD
+
+### GUARD-2: All 6 vps-scripts converted to ${VAR:-default} env-fallback form
+- Root cause: 6 scripts had bare `API_URL="__MCP_BASE__/..."` — deploy bypass (scp without render) → literal placeholder reaches curl → http=000 → silent outage
+- Fix: convert to `${ENV_VAR:-__MCP_BASE__/path}` mirroring fetch-foreign-flow.sh L32-34
+- TE_API_KEY special case: empty-string fallback `${TRADING_ECONOMICS_API_KEY:-}` per Option A (no sed rule in deployer; existing L15-17 guard handles empty correctly)
+- fetch-vn-news.sh extra fix: internal curl-response markers `__HTTP__` / `__heartbeat__` renamed to `_HTTP_` / `_heartbeat_` (single underscores) to avoid GUARD-1 regex false-block
+- All 6 files: bash -n OK. Clean-render (sed substitution): no placeholder leaks confirmed locally.
+
+### GUARD-1: Pre-scp assert + post-deploy SSH verify in deploy-vps-proxy.sh
+- 5 pre-scp assert blocks added (one after each TMP render: TMP_FETCH, TMP_BCTC, TMP_NEWS, TMP_SBV, TMP_FF)
+- Regex: `__[A-Za-z][A-Za-z0-9_]*__` (mixed-case, future-proof)
+- Post-deploy VERIFYEOF heredoc: `grep -rl '...' /root/fetch-*.sh /root/*.py` glob — fires if any deployed artifact holds a placeholder
+- Deliberate-violation local proof: inject `__GUARD_TEST_TOKEN__` into fixture, sed render, assert → exit 1 confirmed BEFORE any scp step
+
+### GUARD-3: article-body-fetcher.py brought under canonical deployer
+- Direct scp block (no sed — zero placeholders in file)
+- SSH ARTEOF heredoc: chmod +x + idempotent pip3 install beautifulsoup4
+- Closes cafef ad-hoc-scp bypass
+
+Commit: 96446b5d. No Docker rebuild required.
 
 ---
 
