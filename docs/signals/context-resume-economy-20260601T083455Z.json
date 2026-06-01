@@ -1,0 +1,63 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "priority": "high",
+  "createdAt": "2026-06-01T08:34:55Z",
+  "payload": "docs/architecture-briefs/2026-06-01-context-resume-economy.md",
+  "summary": "Context-resume economy upgrade: DASHBOARD delta-read + mandatory prune + pipeline-state v2 structured head. ~95% fleet token reduction (~410k tokens/day). 3-phase implementation.",
+  "implementation_phases": [
+    {
+      "phase": 1,
+      "label": "SKILL + PRUNE — highest impact, low blast radius",
+      "files": [
+        ".claude/skills/signal-dashboard/SKILL.md",
+        "docs/agents/dev-team/flow/drain-signals.md",
+        "docs/signals/DASHBOARD.md"
+      ],
+      "actions": [
+        "signal-dashboard SKILL § READ: replace full-file-read with Phase-1 mtime/linecount check + Phase-2 section-only read with start_line cache contract",
+        "signal-dashboard SKILL § WRITE: cap _Updated: to one line (ISO + agent-id + ≤8-word summary)",
+        "signal-dashboard SKILL § PRUNE: mark mandatory (not optional); note it must be called from drain-signals.md and cowork equivalents",
+        "drain-signals.md: add PRUNE call after step 0a-D row consumption",
+        "DASHBOARD.md: immediate prune pass — remove DONE/stale-READ rows; cap _Updated: header to one line"
+      ]
+    },
+    {
+      "phase": 2,
+      "label": "pipeline-state.json v2 schema",
+      "files": [
+        "docs/pipeline-state.json",
+        "docs/agents/dev-team/flow/main.md"
+      ],
+      "actions": [
+        "pipeline-state.json: restructure to v2 schema with head block (status_enum, active_task_id, next_agent, next_action ≤20 words, wip, wip_max, updated_at, updated_by) + dashboard_section_cache + narrative block (capped ≤30 lines). Migrate current prose content.",
+        "dev-team/flow/main.md Step 0b: read head.status / head.next_agent / head.active_task_id for routing only; narrative lazy-loaded only on explicit resume"
+      ]
+    },
+    {
+      "phase": 3,
+      "label": "Cowork pipeline-state equivalents (optional follow-up)",
+      "files": ["any cowork agent pipeline-state-equivalent files with prose-blob anti-pattern"],
+      "actions": [
+        "Audit cowork agents for pipeline-state-equivalent prose blobs; apply v2 schema where found"
+      ]
+    }
+  ],
+  "constraints": [
+    "NO branches — all work on main",
+    "SSOT discipline — signal-dashboard SKILL is the single SSOT for DASHBOARD protocol; one edit propagates to all callers without per-agent edits",
+    "Backward-compat — cache fields (last_mtime, last_linecount, start_line) are optional; absent = fall back to section read (no break)",
+    "pipeline-state v2 migration is self-healing — first writer detects _schema absent and upgrades",
+    "agent-md-factory rules apply to all .md edits"
+  ],
+  "quantified_savings": {
+    "dashboard_tokens_per_read_before": 38000,
+    "dashboard_tokens_per_read_after": "0–400 (skip or section-only)",
+    "fleet_dashboard_tokens_per_day_before": 380000,
+    "fleet_dashboard_tokens_per_day_after": 4000,
+    "pipeline_state_routing_tokens_per_tick_before": 1750,
+    "pipeline_state_routing_tokens_per_tick_after": 150,
+    "total_estimated_daily_saving": "~410k tokens/day (~95% resume cost reduction)"
+  }
+}

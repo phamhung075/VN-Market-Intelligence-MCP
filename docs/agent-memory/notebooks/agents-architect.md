@@ -30,6 +30,16 @@ Sprint 1967b canonical re-run: 22 findings across 7 surfaces (13 ratified from v
 
 ---
 
+## 2026-06-01T08:34:55Z
+
+**Brief:** `docs/architecture-briefs/2026-06-01-context-resume-economy.md`
+
+Fleet-wide context-resume wastes ~410k tokens/day: DASHBOARD.md (153 KB, 63 dead non-NEW rows, unbounded `_Updated:` header) is read in full every cron tick by 10+ agents; pipeline-state.json resume fields are freeform prose; the existing handoff-delta-read skill is not wired into DASHBOARD. Designed three-phase fix: (1) signal-dashboard SKILL upgraded to mtime/linecount Phase-1 skip + section-only Phase-2 read + mandatory PRUNE enforced in drain-signals.md; (2) pipeline-state.json v2 schema with machine-readable `head` block for routing and capped `narrative`; (3) optional cowork equivalents audit. Target: ~38k→~0–400 tokens/DASHBOARD read, ~1750→~150 tokens/pipeline-state routing read, ~95% fleet resume token reduction.
+
+**Signal dropped:** `docs/signals/context-resume-economy-20260601T083455Z.json` → agent-father
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
