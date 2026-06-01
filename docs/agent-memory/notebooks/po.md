@@ -1,26 +1,21 @@
 # PO Notebook
 
-## 2026-06-01T11:15Z — triage 2 VPS follow-ups → OPENED VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH)
+## 2026-06-01T15:25Z — EXIT sign-off PROSE-TEXT-LOSS (Task #18) → CLOSED
 
-Spawned by dev-team :07 tick to triage 2 newly-filed follow-ups. WIP 0/2. No new actionable file-signals (cowork-fire heartbeats drained).
+Spawned for EXIT sign-off only (chain already complete: architect→dev→ops→qa).
 
-**Verdict (raw-verified myself, NOT relaying ops badge):**
-- **VPS-DEPLOY-PLACEHOLDER-GUARD = HIGH confirmed → OPEN NOW.** Headroom (0/2) + recurring silent-outage class (cost ~1h, all 14 news feeds http=000 to literal `__MCP_BASE__`).
-- **VPS-BS4-INSTALL = LOW confirmed → BUNDLED** into GUARD-3 (deployer owns the dep) + ops one-off pip install now.
+**Verdict: APPROVED / DONE-CLOSED.** Display-only bug, no data ever lost.
+- Root cause (Layer C / display): `handleBctcInspectOcr` queried `bctc_layout_units WHERE page_type='table'`, so prose pages fell to the coverage-gap branch with `text_content:""` while `pdf_extracted_text` held valid OCR for EVERY page.
+- Fix a10448b0: gap-branch now `SELECT text_content,confidence FROM pdf_extracted_text WHERE filename=? AND page_number=?`; html renders `data.text_content`; `pek_coverage_gap:true` preserved (correct signal). +5 DV cases, DV-1 RED→GREEN with genuine pre-fix RED proof.
+- OPS rebuild img 33e4386c ≠ prior 4446a6e9, container healthy, both greps confirm fix in /app/src.
 
-**KEY raw findings (corrected the filed framing):**
-- The render step EXISTS and WORKS: `scripts/deploy-vps-proxy.sh` L108-110 does `sed __MCP_BASE__/__API_KEY__` for fetch-vn-news.sh. So root cause is a **deploy-process BYPASS**, not a missing renderer. cafef sprint (814088b0) deployed fetch-vn-news.sh + new article-body-fetcher.py via an ad-hoc path that skipped this deployer → clobbered the live rendered `/root/` script with the raw template.
-- Proof of bypass: `deploy-vps-proxy.sh` deploys NEITHER article-body-fetcher.py NOR bs4 → cafef artifacts never went through it.
-- **Blast radius wider than filed:** 6 scripts hardcode the no-fallback form (fetch-vn-news/gso/sbv/tradingeconomics/prices + enrich-bctc-urls); 9 use safe `${VAR:-…}` form. fetch-foreign-flow.sh L32-34 is the safe template to mirror.
+**ROUTER RAW-VERIFY (not relaying QA badge):** read live `/api/bctc-inspect/ocr` myself — FPT (e8ea3df5) p1=2081ch real OCR ("CÔNG TY CỔ PHẦN FPT…"), p2=134ch ("BÁO CÁO TÀI CHÍNH HỢP NHẤT… QUÝ I 2026"); table pp.22/25 unaffected. Lesson [[feedback_router_verify_raw_not_badges]] applied.
 
-**Scope = combination a+b+c** (architect refines boundary):
-- GUARD-1 (b, cross-service): leak guard rejects `__[A-Z_]+__` pre-scp + post-deploy SSH grep empty.
-- GUARD-2 (c, dev-vps-crawls): convert 6 hardcode scripts to env-fallback.
-- GUARD-3 (a, cross-service+ops): bring article-body-fetcher.py + bs4 under the deployer (closes the bypass).
+**Recorded:** TASKS.md closed-sprints + EXIT commit defd3fdd; TASKS pruned 82→80L (collapsed DONE TSH-2/3/4 into one line). commit-mutex claim→release clean round-trip.
 
-**Routed:** po→architect (signal `docs/signals/po-20260601T111530Z.json`). pipeline-state: current_sprint set, status=planning, next_agent=architect. SPRINT_GOAL.md prepended; TASKS.md +4-item block.
+**Out-of-scope (pre-existing, NOT regressions, NOT reopened):** pp.22/25 identical content (one PEK segment-window) · VCB refine_status=PENDING placeholder · FU-BANK-CODECOL backlog · FPT YoY 2025-Q4 GM-100% → FU-TRUST-REFRESH.
 
-**Carry-over:**
-- FU-DEV-CAFEF-1 (wire /proxy/article-body into push-news) stays AWAITING USER GREENLIGHT — did NOT open.
-- TASKS.md now 90L (>80 cap) from the new active sprint block. Acceptable transient for active HIGH work; next closed sprint MUST migrate to TASKS_ARCHIVE before adding more (this is the 2nd cycle I've flagged this — it's the NB-PRUNE-FIX/ctx_bloat theme, not over-prunable live).
-- RE-CAP-1 still the prior dispatch awaiting architect→agent-father (signal-dashboard SKILL lazy-load).
+**Carry-over / next queued (reported to router):**
+- **TSH-1 (dev-mcp-server, MEDIUM)** SHIPS FIRST — deregister `get_market_hexagram` (kinhDichTools.ts:510–546) + drop orphan import. Then ops rebuild #1.
+- **ENV-ISOLATION-P2 (#15, MEDIUM)** GATE-RELEASED/schedulable — EI-P2-1→2→3→QA. SERIALIZE the EI-P2-2 mcp-server rebuild against TSH-1 rebuild (same `apps/mcp-server/` zone) — never parallel.
+- HIGH backlog still ahead of these: VPS-DEPLOY-PLACEHOLDER-GUARD (T1 ops-recon HARD GATE) · NB-PRUNE-FIX (NB-BLOAT-FLOW-OVERWRITE active).
