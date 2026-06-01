@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: "/dashboard/vps", label: "VPS Proxy" },
   { to: "/dashboard/db", label: "Database" },
   { to: "/dashboard/bctc-eval", label: "BCTC Eval" },
+  { to: "/dashboard/bctc-inspect", label: "BCTC Inspect" },
 ] as const;
 
 export default function DashboardLayout() {
