@@ -80,6 +80,16 @@ Operator pushback on prior brief's 5-surface model (3 existing + 2 proposed twin
 
 ---
 
+## 2026-06-01T21:06:42Z
+
+**Brief:** `docs/architecture-briefs/2026-06-01-agent-self-critique-detect-source.md`
+
+Added a new decentralized DETECT source to the SELF-IMPROVE-GATE pipeline: an end-of-cycle self-critique step (sibling of doc-self-heal) that fires only on 5 machine-anchored triggers (T1 tool failure, T2 capability gap, T3 low-confidence result, T4 recurring notebook workaround, T5 budget overrun), writes a DRAFT IMP-*.md proposal, and feeds the existing agents-architect → PO → agent-father pipeline unchanged. Design requires 3 file edits (cowork-end-cycle SKILL +1L, dev-team post-cycle +1L, new self-critique SKILL ~90L) plus a 14-day shadow pilot on news-scout and dev-team before fleet-wide.
+
+**Signal dropped:** `docs/signals/agent-self-critique-detect-20260601.json` → agent-father (BLOCKED on PO approval)
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).

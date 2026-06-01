@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-06-01-agent-self-critique-detect-source.md",
+  "priority": "normal",
+  "createdAt": "2026-06-01T21:06:42Z",
+  "notes": "BLOCKED on PO approval. Agent-father MUST NOT act until PO approves. When approved, implement EDIT-1, EDIT-2, EDIT-3 in §7 (Phase 1 only — 3 files). Then run shadow pilot per §8 (14 days) before fleet-wide. Phase 2 = promote/kill decision after pilot."
+}
