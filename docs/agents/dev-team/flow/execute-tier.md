@@ -34,12 +34,15 @@ Batches of type SPIKE carry `mode: "spike"` — the spawned developer (or dev-* 
 # Step 1 — Claim each task in the tier batch:
 spawned_batch = []
 for each (agent, task_id) in tier_batch:
+  # SAFE-JSON: payload built as a structured object — NEVER interpolate task_id/agent into a /bin/sh string.
+  # INVARIANT: no agent-authored or PM-authored field (task_id, agent name, zone) may appear
+  #            in a shell command line. Use jq --arg pattern if a bash step is ever needed here.
   outer_claim = call_tool(server="vn-market", tool="task_claim", arguments={
     task_id:     "task:" + task_id,
     task_kind:   "sprint-task",
     owner_agent: "dev-team",
     ttl_seconds: 3600,
-    payload:     '{"site":"S1","spawning":"' + agent + '"}'
+    payload:     {site: "S1", spawning: agent}   // structured object, not a shell-built string
   })
   if not outer_claim.claimed:
     log "[dev-team] SKIP task:" + task_id + " — held by " + outer_claim.current_holder.owner_agent

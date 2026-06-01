@@ -23,12 +23,19 @@ Find rows where `to` matches `po` or any dev-team-addressed agent. Collect `stat
 For each NEW row:
   row_key = "dash:signal_queue:" + row.id
 
+  # SAFE-JSON: build payload with jq --arg (bound params) — NEVER interpolate row fields into a shell string.
+  # INVARIANT: agent-authored fields (row.id / row.from / row.type) MUST NOT appear in a /bin/sh command line.
+  # Pattern: echo '{}' | jq --arg rid "$row_id" --arg frm "$row_from" --arg typ "$row_type" \
+  #           '{row_id:$rid,from:$frm,type:$typ}' > /tmp/drain_payload.json
+  # Then pass the file content (or the JSON object directly) to call_tool arguments — no shell interpolation.
+  claim_payload = {row_id: row.id, from: row.from, type: row.type}   # structured object, not a shell-built string
+
   result = call_tool(server="vn-market", tool="task_claim", arguments={
     task_id:     row_key,
     task_kind:   "dashboard-row",
     owner_agent: "dev-team",
     ttl_seconds: 1800,
-    payload:     '{"row_id":"' + row.id + '","from":"' + row.from + '","type":"' + row.type + '"}'
+    payload:     claim_payload   // pass as JSON object, not concatenated string
   })
 
   if not result.claimed:
