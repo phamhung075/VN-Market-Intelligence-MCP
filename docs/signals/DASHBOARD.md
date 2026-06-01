@@ -1,7 +1,7 @@
 # Signal Dashboard
 <!-- SSOT inbox for cowork agents. One section per reader. Prune DONE rows each cycle. -->
 <!-- Writers: append a row to the recipient's section. Skill: .claude/skills/signal-dashboard/SKILL.md -->
-_Updated: 2026-06-01T09:21:33Z — agents-architect brief RE-CAP-1 signal-dashboard extract_
+_Updated: 2026-06-01T11:09:34Z — dev-team :07 drain 4 heartbeats; RE-CAP-1 row archived (shipped)_
 
 ---
 
@@ -28,7 +28,6 @@ _Updated: 2026-06-01T09:21:33Z — agents-architect brief RE-CAP-1 signal-dashbo
 ## agent-father
 | id | ts | from | type | summary | status | payload |
 |---|---|---|---|---|---|---|
-| arc-20260601T092133 | 2026-06-01T09:21Z | agents-architect | brief_complete | RE-CAP-1 signal-dashboard SKILL.md 192L→≤120L lazy-load extract | NEW | docs/architecture-briefs/2026-06-01-signal-dashboard-cap-extract.md |
 | CW-NSCOUT-SPAWN-FRAMING-20260601T0003Z | 2026-06-01T00:03Z | cowork-team | agent-def-bug | **news-scout-offhours spawn = NO-OP REFUSAL. Dispatcher spawned it with the standard Step 5 prompt `run docs/agents/news-scout/flow/main.md  slot=news-scout-offhours`; the subagent misread this as a ROUTER request and declined to execute its own cycle (no gather, no signals, no publish). SCOPE CONFIRMED ISOLATED — same tick (00:03Z), the IDENTICAL prompt shape ran correctly for `market-watcher-offhours` (clean in-window EXIT) and `bctc-analyst-slot-4` (full routine cycle, 4 stocks, signals #4521/#4522). So NOT a dispatcher fault and NOT systemic — it is a news-scout agent-definition framing defect: its def/flow lacks the 'You ARE news-scout — execute your flow end-to-end' self-framing that market-watcher's def has (see market-watcher subagent_type description vs news-scout). FIX: add self-execution framing to news-scout's agent definition so a `run <flow> slot=` prompt triggers its own cycle, not a re-dispatch. IMPACT: every 4-hourly news-scout-offhours fire is currently a silent no-op (no double-publish risk, but zero off-hours news coverage). NOTE: separate from the news-scout NOTEBOOK append-not-overwrite bloat row in claude-manager-helper section — different defect.** | READ (dev-team 20260601T0214Z — FIXED commit 7239b803: news-scout.md `description:` now leads with "You ARE the News Scout agent. Execute your flow end-to-end…" self-framing, mirroring market-watcher; YAML parse + frontmatter-line-1 raw-verified; off-hours news coverage restored) | docs/signals/cowork-team-20260601T000318Z.json |
 
 ## claude-manager-helper

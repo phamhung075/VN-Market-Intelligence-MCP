@@ -65,3 +65,4 @@ Format: | id | ts | from | type | pruned:{ISO} |
 | 1967-04-CLOSED | 2026-05-21T23:50Z | pm | task_done | pruned:2026-06-01T00:00:00Z |
 | 1967-12-CLOSED | 2026-05-21T22:15Z | pm | task_done | pruned:2026-06-01T00:00:00Z |
 | 1967a-DECOMP | 2026-05-21T19:02Z | po | sprint-decomp-request | pruned:2026-06-01T00:00:00Z |
+| arc-20260601T092133 | 2026-06-01T09:21Z | agents-architect | brief_complete | RE-CAP-1 shipped 7aa3abbf (192→118L lazy-load extract) | pruned:2026-06-01T11:09:34Z |

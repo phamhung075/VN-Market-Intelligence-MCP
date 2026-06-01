@@ -1,0 +1,29 @@
+{
+  "from": "architect",
+  "to": "dev-team",
+  "ts": "2026-06-01T11:20Z",
+  "kind": "brief_complete",
+  "payload": {
+    "sprint": "VPS-DEPLOY-PLACEHOLDER-GUARD",
+    "brief": "docs/architecture-briefs/2026-06-01-vps-deploy-placeholder-guard.md",
+    "next_agent": "ba",
+    "next_action": "ba spec 3 guard tasks for pm -> dev-vps-crawls + ops -> qa",
+    "build_standard": "not-applicable",
+    "zone": "vps-scripts/ + scripts/ (both dev-vps-crawls)",
+    "decisions": {
+      "guard1_mechanism": "pre-scp grep assert on TMP file (regex __[A-Za-z][A-Za-z0-9_]*__) + post-deploy SSH glob verify on /root/fetch-*.sh + /root/article-body-fetcher.py; exit 1 fail-loud before scp",
+      "guard1_dv_test": "inject __GUARD_TEST_TOKEN__ into fixture source file (sed does not know it) -> pre-scp assert fires exit 1 before any scp; proven without touching VPS",
+      "guard2_scope": "ALL-6 scripts in one slice (symmetric blast radius, env-fallback mirrors fetch-foreign-flow.sh L32-34)",
+      "guard2_te_api_key": "TE_API_KEY uses EMPTY-STRING fallback not __TE_API_KEY__ to avoid GUARD-1 false-block; existing guard at L13-17 handles empty case correctly",
+      "guard2_no_new_vps_env_needed": "rendered literal is the fallback; env vars are for override/resilience, not required for production operation",
+      "guard3_scope": "article-body-fetcher.py scp (no sed render) + idempotent pip3 install beautifulsoup4 in SSH heredoc; tradingeconomics/gso/enrich-bctc deferred",
+      "vps_bs4_install": "ops runs immediate pip3 install NOW (no restart); durable ownership via GUARD-3 deploy block",
+      "no_docker_rebuild": true
+    },
+    "risks": [
+      "RISK-TE-DEPLOY: fetch-tradingeconomics.sh not under canonical deployer; deferred (no TRADING_ECONOMICS_API_KEY confirmed in .env)",
+      "RISK-PARTIAL-GUARD2: gso/tradingeconomics/enrich not in canonical deployer -> GUARD-1 pre-scp does not cover ad-hoc deploys of those 3; env-fallback (GUARD-2) is primary defense",
+      "RISK-POSTDEPLOY-SCOPE: use glob /root/fetch-*.sh /root/*.py not explicit filenames in post-deploy verify to avoid future coverage erosion"
+    ]
+  }
+}

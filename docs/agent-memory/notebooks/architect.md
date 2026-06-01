@@ -1,8 +1,30 @@
 # Architect — Notebook
 
-**Last updated:** 2026-05-31 23:00 UTC | **Sprint:** PROSE-DEV-1 (prose text loss root-cause)
+**Last updated:** 2026-06-01 11:20 UTC | **Sprint:** VPS-DEPLOY-PLACEHOLDER-GUARD
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## VPS-DEPLOY-PLACEHOLDER-GUARD (2026-06-01T11:20 UTC) — DEPLOY GUARD DESIGN
+
+**Sprint:** VPS-DEPLOY-PLACEHOLDER-GUARD | Task: ARCH (a/b/c boundary design)
+
+**Root cause confirmed (raw-read):** `scripts/deploy-vps-proxy.sh` render step EXISTS (L108-110) but cafef sprint 814088b0 bypassed it via ad-hoc scp, clobbering `/root/fetch-vn-news.sh` with raw template. 6 hardcode-no-fallback scripts; 9 already safe.
+
+**Key brownfield findings:**
+- Deploy script deploys 5 services (prices/bctc/news/sbv/foreign-flow). NOT deployed: tradingeconomics, gso, enrich-bctc-urls, article-body-fetcher.py.
+- `article-body-fetcher.py` has ZERO `__PLACEHOLDER__` tokens (it takes `--url` as CLI arg, no MCP contact directly). Pre-scp assert trivially passes for it.
+- `fetch-tradingeconomics.sh` has a 3rd placeholder `__TE_API_KEY__`. Deploy script has no sed rule for it. GUARD-2 must use empty-string fallback for TE_API_KEY (not `__TE_API_KEY__`) to avoid GUARD-1 false-block.
+
+**Decisions:**
+- GUARD-2: ALL-6 scripts in one slice (symmetric blast radius, convert-all prevents future recurrence of same class)
+- GUARD-1 regex: `__[A-Za-z][A-Za-z0-9_]*__` (case-insensitive, broader than original brief)
+- GUARD-3 scope: article-body-fetcher.py + pip3 install bs4 only; tradingeconomics/gso/enrich deferred
+- Zone: dev-vps-crawls owns all three guards + scripts/deploy-vps-proxy.sh changes
+- DV test: inject `__GUARD_TEST_TOKEN__` into fixture → pre-scp assert must exit 1 before scp
+
+**Brief:** `docs/architecture-briefs/2026-06-01-vps-deploy-placeholder-guard.md`
+
+---
 
 ## PROSE-DEV-1 (2026-05-31T23:00 UTC) — PROSE TEXT LOSS ROOT CAUSE
 

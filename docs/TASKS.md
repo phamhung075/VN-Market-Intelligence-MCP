@@ -23,6 +23,16 @@
 
 ---
 
+## Sprint VPS-DEPLOY-PLACEHOLDER-GUARD — VPS fetch-script deploys placeholder-safe
+
+**Status:** OPEN 2026-06-01 (PO self-initiated; triaged dev-team :07). **Pri: HIGH.** Zone: dev-vps-crawls (`vps-scripts/`) + cross-service `scripts/deploy-vps-proxy.sh` + ops (VPS render/install). Goal §VPS-DEPLOY-PLACEHOLDER-GUARD. Root (PO raw-verified): ~1h news outage 09:07–10:09Z, all 14 feeds http=000 to literal `__MCP_BASE__`; cafef sprint 814088b0 deployed `fetch-vn-news.sh`+`article-body-fetcher.py` via a path that BYPASSED the working renderer in `deploy-vps-proxy.sh` L108-110 → raw template clobbered live `/root/` script. Blast radius: 6 scripts hardcode `__MCP_BASE__`/`__API_KEY__` with NO env fallback (fetch-vn-news/gso/sbv/tradingeconomics/prices + enrich-bctc-urls); 9 use safe `${VAR:-…}` form. ops stopped bleeding (53c3d888, http=200 received=242). NEXT: architect (a/b/c boundary).
+- 🔄 **PLACEHOLDER-GUARD-1 (cross-service, b)** — leak guard: deploy rejects/flags any artifact still containing `__[A-Z_]+__` (pre-scp assert in deploy-vps-proxy.sh + post-deploy SSH `grep -l '__[A-Z_]\+__' /root/fetch-*.sh` must be empty). AC: deliberate-violation fixture FAILS LOUD before scp.
+- 🔄 **PLACEHOLDER-GUARD-2 (dev-vps-crawls, c)** — convert 6 hardcode scripts to `${VAR:-__MCP_BASE__/…}` env-fallback (mirror fetch-foreign-flow.sh L32-34). AC: env unset → no literal `__MCP_BASE__` reaches curl. (architect: all-6 vs news-critical-first.)
+- 🔄 **PLACEHOLDER-GUARD-3 (cross-service + ops, a)** — bring `article-body-fetcher.py` + `pip3 install beautifulsoup4` under `deploy-vps-proxy.sh` (it deploys neither today → that's the bypass). Closes the ad-hoc-scp gap.
+- 🔄 **VPS-BS4-INSTALL (ops, LOW, bundled)** — bs4 not on VPS (raw `pip3 show beautifulsoup4`→not found) → article-body-fetcher.py on 5000ch regex fallback not 8000ch bs4. ops one-off `pip3 install beautifulsoup4` now (no restart) to restore quality; durable ownership = GUARD-3. AC: `pip3 show beautifulsoup4` returns version; /proxy/article-body uses bs4 path.
+
+---
+
 ## Sprint TOOL-SURFACE-HYGIENE — Clean the vn-market MCP tool surface
 
 **Status:** OPEN 2026-05-31. **Priority: MEDIUM.** Zone: `apps/mcp-server/` (#1 may route to kinh-dich-service if wire). Live toolCount=154. Full context → `docs/SPRINT_GOAL.md` §.

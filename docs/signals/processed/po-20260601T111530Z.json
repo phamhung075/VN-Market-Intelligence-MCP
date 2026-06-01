@@ -1,0 +1,31 @@
+{
+  "from": "po",
+  "to": "dev-team",
+  "ts": "2026-06-01T11:15:30Z",
+  "kind": "sprint_opened",
+  "payload": {
+    "sprint": "VPS-DEPLOY-PLACEHOLDER-GUARD",
+    "priority": "HIGH",
+    "decision": "OPEN-NOW",
+    "rationale": "Recurring silent-outage class (just cost ~1h, all 14 news feeds http=000). Deploy-process gap, not one-off: cafef sprint 814088b0 bypassed the working renderer in scripts/deploy-vps-proxy.sh, clobbering live /root/fetch-vn-news.sh with the raw __MCP_BASE__/__API_KEY__ template. Blast radius wider than filed (6 hardcode-no-fallback scripts). WIP 0/2 gives headroom.",
+    "zone": "multi",
+    "next_agent": "architect",
+    "next_action": "Refine a/b/c boundary + ownership: GUARD-1 (leak guard, cross-service) / GUARD-2 (env-fallback convert 6 scripts, dev-vps-crawls) / GUARD-3 (article-body-fetcher.py + bs4 under deploy-vps-proxy.sh, cross-service+ops). Then route ba->pm->dev-vps-crawls/ops->qa.",
+    "bundled_items": [
+      {"id": "VPS-BS4-INSTALL", "priority": "LOW", "disposition": "BUNDLED into GUARD-3; ops runs immediate one-off pip3 install beautifulsoup4 (no restart) to restore /proxy/article-body 8000ch bs4 path; durable deployer-ownership via GUARD-3"}
+    ],
+    "raw_verified": [
+      "vps-scripts/fetch-vn-news.sh L7-8 hardcode (no env fallback)",
+      "vps-scripts/fetch-foreign-flow.sh L32-34 safe ${VAR:-...} form",
+      "scripts/deploy-vps-proxy.sh L108-110 DOES render fetch-vn-news.sh (sed both placeholders) -> render step exists, was bypassed",
+      "scripts/deploy-vps-proxy.sh deploys neither article-body-fetcher.py nor bs4 -> confirms cafef deploy bypass",
+      "6 hardcode-form scripts: fetch-vn-news, fetch-gso, fetch-sbv, fetch-tradingeconomics, fetch-prices, enrich-bctc-urls"
+    ],
+    "constraints": "PLAN-ONLY for 16GB host/Docker; VPS-side script+pip via dev-vps-crawls+ops SSH lane (gateway-independent); main terminal does not touch VPS; all on main.",
+    "do_not_open": "FU-DEV-CAFEF-1 (wire /proxy/article-body into push-news) — AWAITING USER GREENLIGHT, not in this sprint.",
+    "artifacts": {
+      "sprint_goal": "docs/SPRINT_GOAL.md (prepended VPS-DEPLOY-PLACEHOLDER-GUARD)",
+      "tasks": "docs/TASKS.md (Sprint VPS-DEPLOY-PLACEHOLDER-GUARD, 4 items)"
+    }
+  }
+}

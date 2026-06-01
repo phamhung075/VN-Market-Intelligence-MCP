@@ -1,4 +1,37 @@
-# Sprint VPS-NEWS-CAFEF-VNECO — Route cafef.vn + vneconomy.vn Vietnamese info fetching through the Vinahost VPS (recon-first)
+# Sprint VPS-DEPLOY-PLACEHOLDER-GUARD — Make VPS fetch-script deploys placeholder-safe (no more silent unrendered-template outages)
+
+**STATUS 2026-06-01T11:09Z — OPEN (PO self-initiated, triaged from dev-team :07 tick follow-up). Priority: HIGH.** Zone: `dev-vps-crawls` (owns `vps-scripts/`) + cross-service deploy script `scripts/deploy-vps-proxy.sh` + ops (VPS-side render/install). WIP≤2 (0/2 at open). Brief → architect.
+
+## Root cause (PO raw-verified this session — NOT relaying ops badge)
+~1h silent news-push outage 2026-06-01 ~09:07–10:09Z: ALL 14 VN news feeds fetched but pushed to literal hostname `__MCP_BASE__` → `http=000` → nothing landed in mcp-server DB. ops stopped the bleeding (53c3d888: rendered creds from `/root/vn-market.env.bak`, raw http=200 received=242, cursor advanced). DURABLE problem remains.
+
+Raw-read confirms the mechanism is a **deploy-process gap, not a one-off**:
+- `vps-scripts/fetch-vn-news.sh` L7-8 **hardcode** `API_URL="__MCP_BASE__/api/push-news"` / `API_KEY="__API_KEY__"` — NO env fallback. If a deploy ships the raw template without the render step, the script breaks HARD (curl to literal `__MCP_BASE__`).
+- The canonical deployer `scripts/deploy-vps-proxy.sh` **DOES render correctly** (L108-110 `sed -e "s|__MCP_BASE__|…" -e "s|__API_KEY__|…" vps-scripts/fetch-vn-news.sh > $TMP_NEWS` then scp). So the render step EXISTS — the cafef sprint (814088b0) deployed `fetch-vn-news.sh` (+ new `article-body-fetcher.py`) via a path that BYPASSED this renderer, clobbering the live rendered `/root/` script with the raw template. Nothing enforced the render; nothing rejected the placeholder leak.
+- **Blast radius is wider than filed:** 6 scripts use the dangerous hardcode-no-fallback form (`fetch-vn-news.sh`, `fetch-gso.sh`, `fetch-sbv.sh`, `fetch-tradingeconomics.sh`, `enrich-bctc-urls.sh`, `fetch-prices.sh`). 9 use the safe `${VAR:-__MCP_BASE__/...}` env-fallback form (incl `fetch-foreign-flow.sh` L32-34) which degrades gracefully if render is skipped. `deploy-vps-proxy.sh` also does NOT deploy `article-body-fetcher.py` at all → confirms the cafef deploy went around the canonical path.
+
+## Vision
+One sentence: **A VPS fetch-script can never again silently outage by shipping an unrendered `__PLACEHOLDER__` — enforced by (b) a pre-deploy/post-deploy leak guard that rejects any deployed artifact still containing `__[A-Z_]+__`, AND (c) converting the 6 hardcode-form scripts to the `${VAR:-default}` env-fallback form so an un-rendered deploy degrades to env vars instead of hitting a literal hostname, AND (a) ensuring every deploy of these scripts routes through `scripts/deploy-vps-proxy.sh`'s render step (or an equivalent enforced render) — with `article-body-fetcher.py` + `beautifulsoup4` brought under the same deployer so future cafef-style sprints can't bypass it.**
+
+## Scope (architect refines a/b/c boundary + ownership)
+- **PLACEHOLDER-GUARD-1 (guard, b)** — leak guard: any artifact about to land (or just landed) on `/root/` containing `__[A-Z_]+__` is REJECTED (deploy fails loud) / flagged. Belongs in `scripts/deploy-vps-proxy.sh` (pre-scp assert on rendered TMP) + ideally a post-deploy SSH verify (`grep -l '__[A-Z_]\+__' /root/fetch-*.sh` must be empty). Cross-service zone.
+- **PLACEHOLDER-GUARD-2 (env-fallback, c)** — convert the 6 hardcode-form scripts to `${VAR:-__MCP_BASE__/...}` form (mirror `fetch-foreign-flow.sh`). dev-vps-crawls zone. Lower blast radius even if render is skipped. (architect: decide whether all 6 in one slice or just the news-push-critical ones first.)
+- **PLACEHOLDER-GUARD-3 (deploy coverage, a)** — bring `article-body-fetcher.py` (and `pip3 install beautifulsoup4` — see VPS-BS4-INSTALL below) under `scripts/deploy-vps-proxy.sh` so the cafef artifacts deploy via the rendered/enforced path, not ad-hoc scp. Closes the bypass that caused this. Cross-service + ops.
+- **VPS-BS4-INSTALL (bundled, LOW)** — `beautifulsoup4` not installed on VPS (raw: `pip3 show beautifulsoup4` → not found) → `/root/article-body-fetcher.py` silently runs regex fallback (5000-char cap) not bs4 primary (8000-char cap). Fix: `pip3 install beautifulsoup4` (no service restart — per-request invocation). Bundle the *install* into GUARD-3's deploy-coverage (so the deployer owns the dep) + ops runs the immediate one-off pip install to restore extraction quality now. ops zone.
+
+## AC (architect/QA refine)
+- A deploy run with an UNRENDERED template (inject a fixture still holding `__MCP_BASE__`) FAILS LOUD before/at the scp step — proven by a deliberate-violation test, not a green badge.
+- Post-deploy SSH probe `grep -l '__[A-Z_]\+__' /root/fetch-*.sh /root/article-body-fetcher.py` returns EMPTY.
+- The 6 converted scripts: with env UNSET, the script falls back to a documented default form (no literal `__MCP_BASE__` reaches curl) — or fails loud — never silently http=000.
+- `pip3 show beautifulsoup4` on VPS returns a version; `/proxy/article-body` uses the 8000-char bs4 path (spot-verify one article body length > 5000 where applicable).
+- 14 news feeds land (received>0, cursor advances) for ≥2 cycles after a full redeploy via the enforced path.
+
+## Constraints
+PLAN-ONLY for anything touching the 16GB host / Docker (no stop/kill/rm/restart). VPS-side script + pip changes route through dev-vps-crawls + ops via the SSH lane (gateway-independent) — main terminal does not touch the VPS. All work on `main`.
+
+---
+
+# Sprint VPS-NEWS-CAFEF-VNECO — Route cafef.vn + vneconomy.vn Vietnamese info fetching through the Vinahost VPS (recon-first) [CLOSED ✅ 2026-06-01]
 
 **STATUS 2026-06-01T08:43Z — OPEN (PO self-initiated from operator feature request). Priority: MEDIUM.** Zone: VPS-crawler lane → recon `ops-vps-fetch` (`docs/vps-sources/`), impl `dev-vps-crawls` (`docs/vps-crawl-techniques/` + VPS scripts) and/or `apps/mcp-server/` (fetcher rewire to VPS proxy). WIP≤2. Brief → architect (TBD after recon).
 
