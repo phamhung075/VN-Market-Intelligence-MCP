@@ -3,14 +3,14 @@
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
 
   "head": {
-    "status":         "planning",
+    "status":         "ready-for-ops",
     "active_task_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
-    "next_agent":     "dev-vps-crawls",
-    "next_action":    "T1 PASSED (ops recon: Vinahost 125.212.251.27 live, 0 placeholder leaks, services active). Proceed T2+T3 in PARALLEL (WIP2): T2 migrate GUARD-1 leak-guard into ALL deploy-vinahost.sh blocks; T3 migrate article-body-fetcher.py block (+idempotent pip3 bs4) into deploy-vinahost.sh. Handoffs TASK_VPS-DEP-T2-GUARD1-MIGRATE.md + T3-GUARD3-MIGRATE.md. KEEP fetch-tradingeconomics __TE_API_KEY__ sentinel. Then T4(env-clean)→T5(ops deploy)→T6(qa).",
+    "next_agent":     "ops",
+    "next_action":    "T2+T3+T4 DONE (dev-vps-crawls). deploy-vinahost.sh: GUARD-1 in 8 render blocks, section 10 article-body-fetcher, VERIFYEOF post-deploy verify. deploy-vps-proxy.sh DELETED. .env VULTR_IP/USERNAME/PASSWORD removed. bash -n PASS. GUARD-1 deliberate-violation: exit 1 confirmed. Proceed T5: SSH Vinahost, run ./scripts/deploy-vinahost.sh, verify 14 feeds + article-body endpoint. T6 is qa gate (TASK_VPS-DEP-T6-QA-GATE.md).",
     "wip":            0,
     "wip_max":        2,
-    "updated_at":     "2026-06-01T14:35Z",
-    "updated_by":     "dev-team"
+    "updated_at":     "2026-06-01T15:30Z",
+    "updated_by":     "dev-vps-crawls"
   },
 
   "dashboard_section_cache": {
@@ -22,7 +22,7 @@
 
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
-    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, planning→dev-vps-crawls 06-01T14:35Z): DECISION-A consolidate. T1 ops-recon PASSED (Vinahost 125.212.251.27 live, 0 leaks, services active — operator confirmed Vultr dead). NEXT: T2+T3 PARALLEL (dev-vps-crawls) migrate GUARD-1 leak-guard + article-body-fetcher.py into LIVE deploy-vinahost.sh; then T4 env-clean (delete deploy-vps-proxy.sh + remove VULTR_IP), T5 ops redeploy+14-feed verify, T6 qa. Handoffs TASK_VPS-DEP-T{1..6}.md. KEEP TE __TE_API_KEY__ sentinel. Build runs next tick (not crammed post-P0).",
+    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, 06-01T15:30Z T2+T3+T4 DONE): DECISION-A consolidate complete. T2 DONE: GUARD-1 in 8 render blocks of deploy-vinahost.sh (sections 1-8; section 9 no-render commented). T3 DONE: section 10 article-body-fetcher.py + idempotent pip3 bs4 + post-SCP ls verify. T4 DONE: VERIFYEOF post-deploy block appended, deploy-vps-proxy.sh DELETED, .env VULTR_IP/USERNAME/PASSWORD removed (comment left), .env.example decommission note added, fetch-foreign-flow.sh comment updated. bash -n SYNTAX OK. GUARD-1 deliberate-violation exit 1 confirmed. NEXT: T5 ops redeploy → T6 qa.",
     "last_closed":     "P0 mcp-server :3000 backend OUTAGE → RECOVERED (2026-06-01 ~14:30, ops `docker compose up -d mcp-server`): container vn-market-intelligence-mcp-mcp-server-1 SIGTERM-killed (signal=15, NOT OOM) while host HEALTHY (55% mem free) → full-fleet+mutex-system down; router caught it via failed call_tool, verified raw (curl :3000=000→200 toolCount154, socat :4000 200, gateway round-trip OK). CULPRIT UNIDENTIFIED — suspected AUD-ND-1 regression (detector docker-stopped backend on false signal; 4th fleet-host-danger candidate). Single-service relaunch (NOT fleet, NOT rebuild — clean-exit→relaunch lesson). Prior: VPS news-push outage RESTORED 10:09Z ops 53c3d888 (unrendered placeholders, http=200 received=242).",
     "watch_items": [
       "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 while host healthy, culprit unidentified — verify detectors are PLAN-ONLY; check system-auditor/cron logs for the docker-stop. 4th host-danger candidate.",

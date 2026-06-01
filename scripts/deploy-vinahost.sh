@@ -1,6 +1,6 @@
 #!/bin/bash
 # ═══════════════════════════════════════════════════════════════════════════
-# Vinahost VPS Deploy — All 9 VN data proxy services
+# Vinahost VPS Deploy — All 9 VN data proxy services + article body fetcher
 # Usage: ./deploy-vinahost.sh
 #
 # Deploys to Vinahost Vietnam ($VINAHOST_IP) — in-country, no geo-block.
@@ -15,6 +15,7 @@
 #   vn-bctc-enrich.timer            — BCTC URL enricher every 6h
 #   vn-tradingeconomics-fetch.service — Trading Economics macro indicators every 1h
 #   vn-vps-proxy.service            — HTTP proxy server (BCTC Playwright + SSC iboard, :8765)
+#   article-body-fetcher.py         — cafef/vneconomy article body extractor (CLI, :8765/proxy/article-body)
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -51,6 +52,11 @@ TMP=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-prices.sh > "$TMP"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP"; then
+  echo "GUARD-1 FAIL: placeholder leak in fetch-prices.sh — deploy aborted" >&2
+  rm -f "$TMP"
+  exit 1
+fi
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-prices.sh
 $SCP vps-scripts/fetch-prices-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-prices-loop.sh
 $SCP vps-scripts/verify-deploy-price-fetch.sh ${VH_USER}@${VH_IP}:/root/verify-deploy-price-fetch.sh
@@ -89,6 +95,11 @@ TMP=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-bctc.sh > "$TMP"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP"; then
+  echo "GUARD-1 FAIL: placeholder leak in fetch-bctc.sh — deploy aborted" >&2
+  rm -f "$TMP"
+  exit 1
+fi
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-bctc.sh
 $SCP vps-scripts/fetch-bctc-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-bctc-loop.sh
 $SCP vps-scripts/vn-bctc-fetch.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-bctc-fetch.service
@@ -114,6 +125,11 @@ TMP=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-vn-news.sh > "$TMP"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP"; then
+  echo "GUARD-1 FAIL: placeholder leak in fetch-vn-news.sh — deploy aborted" >&2
+  rm -f "$TMP"
+  exit 1
+fi
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-vn-news.sh
 $SCP vps-scripts/fetch-vn-news-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-vn-news-loop.sh
 $SCP vps-scripts/vn-news-fetch.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-news-fetch.service
@@ -137,6 +153,11 @@ TMP=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-sbv.sh > "$TMP"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP"; then
+  echo "GUARD-1 FAIL: placeholder leak in fetch-sbv.sh — deploy aborted" >&2
+  rm -f "$TMP"
+  exit 1
+fi
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-sbv.sh
 $SCP vps-scripts/fetch-sbv-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-sbv-loop.sh
 $SCP vps-scripts/vn-sbv-fetch.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-sbv-fetch.service
@@ -160,6 +181,11 @@ TMP=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/fetch-foreign-flow.sh > "$TMP"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP"; then
+  echo "GUARD-1 FAIL: placeholder leak in fetch-foreign-flow.sh — deploy aborted" >&2
+  rm -f "$TMP"
+  exit 1
+fi
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-foreign-flow.sh
 $SCP vps-scripts/fetch-foreign-flow-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-foreign-flow-loop.sh
 $SCP vps-scripts/vn-foreign-flow.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-foreign-flow.service
@@ -183,6 +209,11 @@ TMP=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/ohlcv-backfill-poll.sh > "$TMP"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP"; then
+  echo "GUARD-1 FAIL: placeholder leak in ohlcv-backfill-poll.sh — deploy aborted" >&2
+  rm -f "$TMP"
+  exit 1
+fi
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/ohlcv-backfill-poll.sh
 $SCP vps-scripts/vn-ohlcv-backfill.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-ohlcv-backfill.service
 $SCP vps-scripts/vn-ohlcv-backfill.timer   ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-ohlcv-backfill.timer
@@ -206,6 +237,11 @@ TMP=$(mktemp)
 sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     vps-scripts/enrich-bctc-urls.sh > "$TMP"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP"; then
+  echo "GUARD-1 FAIL: placeholder leak in enrich-bctc-urls.sh — deploy aborted" >&2
+  rm -f "$TMP"
+  exit 1
+fi
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/enrich-bctc-urls.sh
 $SCP vps-scripts/vn-bctc-enrich.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-bctc-enrich.service
 $SCP vps-scripts/vn-bctc-enrich.timer   ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-bctc-enrich.timer
@@ -231,6 +267,15 @@ sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
     -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
     -e "s|__TE_API_KEY__|${TRADING_ECONOMICS_API_KEY:-}|g" \
     vps-scripts/fetch-tradingeconomics.sh > "$TMP"
+# GUARD-1: assert fires AFTER all three tokens are rendered.
+# ${TRADING_ECONOMICS_API_KEY:-} expands to empty string when unset — NOT the literal
+# sentinel — so GUARD-1 correctly passes. The __TE_API_KEY__ sentinel in the deployed
+# script (L15) is a VPS-side defence-in-depth guard, NOT a leak; it is preserved as-is.
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP"; then
+  echo "GUARD-1 FAIL: placeholder leak in fetch-tradingeconomics.sh — deploy aborted" >&2
+  rm -f "$TMP"
+  exit 1
+fi
 $SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-tradingeconomics.sh
 $SCP vps-scripts/vn-tradingeconomics-fetch.service ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-tradingeconomics-fetch.service
 rm "$TMP"
@@ -247,6 +292,8 @@ systemctl --no-pager -l status vn-tradingeconomics-fetch.service | head -12
 TEEOF
 
 # ── 9. VPS HTTP Proxy Server (BCTC Playwright discover, port 8765) ──────────
+# No sed render needed for this block — only SCP of binary + unit file.
+# No GUARD-1 assert required (no placeholder tokens injected).
 echo ""
 echo "Deploying VPS HTTP proxy server (BCTC Playwright + SSC iboard, port 8765)..."
 $SCP vps-scripts/vps-proxy-server.js ${VH_USER}@${VH_IP}:/root/vps-proxy-server.js
@@ -284,6 +331,36 @@ echo "=== vn-vps-proxy status ==="
 systemctl --no-pager -l status vn-vps-proxy.service | head -12
 PROXYEOF
 
+# ── 10. Article body fetcher (cafef/vneconomy GUARD-3) ──────────────────────
+# No sed render needed — article-body-fetcher.py takes --url as CLI arg, no __TOKEN__ sentinels.
+# No GUARD-1 assert required. Post-SCP ls confirms upload.
+echo ""
+echo "Deploying VN article body fetcher..."
+$SCP vps-scripts/article-body-fetcher.py ${VH_USER}@${VH_IP}:/root/article-body-fetcher.py
+
+$SSH ls -la /root/article-body-fetcher.py
+
+$SSH << 'ARTEOF'
+set -e
+chmod +x /root/article-body-fetcher.py
+if ! pip3 show beautifulsoup4 > /dev/null 2>&1; then
+  echo "Installing beautifulsoup4..."
+  pip3 install beautifulsoup4
+else
+  echo "beautifulsoup4 already installed: $(pip3 show beautifulsoup4 | grep Version)"
+fi
+ARTEOF
+
+# ── GUARD-1: Post-deploy SSH placeholder verify ───────────────────────────
+$SSH << 'VERIFYEOF'
+set -e
+LEAKED=$(grep -rl '__[A-Za-z][A-Za-z0-9_]*__' /root/fetch-*.sh /root/*.py 2>/dev/null || true)
+if [ -n "$LEAKED" ]; then
+  echo "ERROR: deployed artifacts still contain placeholders: $LEAKED" >&2
+  exit 1
+fi
+echo "GUARD-1 post-deploy verify: CLEAN (0 placeholder leaks)"
+VERIFYEOF
 
 echo ""
 echo "══════════════════════════════════════════"

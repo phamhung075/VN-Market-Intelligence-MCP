@@ -10,7 +10,7 @@
 #
 # ── ENV VAR REFERENCE ────────────────────────────────────────────────────────
 #
-#  Required (injected by deploy-vps-proxy.sh):
+#  Required (injected by deploy-vinahost.sh):
 #    FOREIGN_FLOW_API_URL   Full URL for push endpoint
 #                           e.g. https://zenmidi.com/api/push-foreign-flow
 #    WATCHLIST_URL          Full URL to retrieve watchlist codes
