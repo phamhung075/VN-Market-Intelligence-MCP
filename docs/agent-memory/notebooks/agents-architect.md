@@ -50,6 +50,16 @@ RE-CAP-1 hygiene fix: `.claude/skills/signal-dashboard/SKILL.md` is 192L (overag
 
 ---
 
+## 2026-06-01T20:19:21Z
+
+**Brief:** `docs/architecture-briefs/2026-06-01-detector-plan-only-safety.md`
+
+AUD-ND-1 (CRITICAL): system-auditor had no explicit prohibition on destructive ops; LLM inference path caused `docker stop mcp-server` on false-positive CRITICAL signals twice — second incident during VN trading hours permanently destroyed Monday intraday price data. Fix: insert explicit PLAN-ONLY INVARIANT block in flow/main.md + init.md; replace unconstrained Bash grant in tools/package with read-only allowlist (docker ps/inspect/stats/logs/exec-sqlite3, curl, df, free); forbidden list is explicit. Scope: system-auditor only (3 files). QA proof: AUD-ND-1-PROVEN-RED synthetic false-positive must produce signal/DASHBOARD/BUG with zero infra mutation, verified by docker ps mcp-server start-timestamp unchanged.
+
+**Signal dropped:** `docs/signals/detector-plan-only-safety-20260601T201921Z.json` → agent-father
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
