@@ -70,6 +70,16 @@ Operator-directed JSON-first SSOT design: 3 files under `docs/data/orch/` (pipel
 
 ---
 
+## 2026-06-01T20:58:24Z
+
+**Brief:** `docs/architecture-briefs/2026-06-01-orch-state-consolidation.md`
+
+Operator pushback on prior brief's 5-surface model (3 existing + 2 proposed twins) resolved. Two proposed twins (`tasks-state.json`, `signals-state.json`) rejected; replaced by ONE `docs/data/orch-state.json` projection. Critical latent bug discovered: 1837a schema test expects v1 root fields (`activeTaskId`, `status`) but live pipeline-state.json is v2 (`head.active_task_id`) — test silently fails, janitorJob reads wrong field path, alert-commander reads `.currentSprint` which is absent in v2. Phase 0 schema fix unblocked and mandatory regardless of option chosen (B=recommended one-projection / C=pipeline-only minimal). Option B: 3 canonical files + 1 machine projection, 6-phase plan, 10–14 tasks, awaiting operator greenlight.
+
+**Signal dropped:** `docs/signals/orch-state-consolidation-20260601T205824Z.json` → agent-father
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
