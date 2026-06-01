@@ -2,14 +2,13 @@
 
 > **Active sprints only.** Historical: `docs/TASKS_ARCHIVE.md` | WIP≤2 | Decisions: `docs/po-decisions/` | Goals: `docs/SPRINT_GOAL.md`
 
----
-
 ## Closed sprints (live follow-ups only — full records in briefs/archive)
 
 - BCTC-TRUST-RED ✅ e0c900d0 → FU-TRUST-REFRESH ✅ EXIT-WITH-CAVEAT 2026-05-31 → BANK-AWARE-BCTC ✅ PO-EXIT 2026-05-31 (941bf552 HYBRID; QA 040409f9; live img 7f413304; ACB B02-TCTD serves raw + FPT B01-DN 0-regression, both router-raw-verified; 🔄 FU-BANK-CODECOL below) · BCTC-AI-INPUT-TAB ✅ b4ed9266 · BCTC-HUMAN-CONFIRM ✅ 441f8e18 · BCTC-AGENTIC-REFINE ✅ 🔄 AR-FU-DETERMINISM DEFERRED · DATA-PIPELINE-INTEGRITY ✅ 🔄 FU-C DEFERRED ⏳ FU-MON (Monday) · BCTC-TABLE-BOUNDARY ✅ FU-BTB-OCR registered
 - DYN-WF-FOUNDATION ✅ DWF-EXIT 2026-05-31 (84643927…eee22112) · DWF-PHASE1 ✅ P1-PO-EXIT 2026-05-31 (5a19485e…38d241c5) ⛔ Phase 3+ DEFERRED · MACRO-CMDTY-DELTA ✅ PO-EXIT 2026-05-31 (e510e5df…fdc17265) 🔄 FU-MON · FF-DEAD ✅ fixed 0cbce0b4 ⏳ FU-MON · PEK-INTEGRATE ✅ DONE-PENDING-G9 2026-05-28 (12 corpus has_pek:true; awaits USER verbal G9)
 - VPS-NEWS-CAFEF-VNECO ✅ 2026-06-01 (814088b0+91bdb305, QA APPROVED; P1 is_blocked() fix restored cafef+vneconomy feed; P2 /proxy/article-body on VPS:8765, 5k/8k body extract). 🔄 FU-OPS-CAFEF-1/2 (spot-check ≥2 cycles cafef-market/biz>0 zero PERMANENTLY_BLOCKED; verify beautifulsoup4 + extraction cap) · 🔄 FU-DEV-CAFEF-1 (wire /proxy/article-body into /api/push-news = next sprint candidate) · **RESUME-ECONOMY** ✅ 2026-06-01 (b38ac812; brief `…/2026-06-01-context-resume-economy.md`): DASHBOARD delta-read + mandatory PRUNE + pipeline-state v2 head/narrative + main.md Step 0b head-only — ALL 3 phases shipped same session (router raw-verified). 🔄 RE-CAP-1 below = sole residual; stale cache linecount self-heals next write (brief §5).
 - PROSE-TEXT-LOSS (Task #18) ✅ PO-EXIT 2026-06-01 — DISPLAY-ONLY (no data lost): bctc-inspect blanked OCR on prose pages (pek_coverage_gap=true) — handleBctcInspectOcr never fell back to pdf_extracted_text (holds every page). Brief fe9683c5 (Layer C only) · fix a10448b0 (gap-branch SELECT text_content/confidence FROM pdf_extracted_text; html renders it; +5 DV DV-1 RED→GREEN) · OPS rebuild img 33e4386c≠4446a6e9 healthy. QA APPROVED `reports/TASK_REPORT_PROSE-DEV-1.md` (cef5fca5): tsc 0-new · DV 5/5 genuine-RED · neighbors green · LIVE FPT e8ea3df5 p1=2081ch/p2=134ch + pek_coverage_gap:true · SHA differs. ROUTER RAW-VERIFY: read live /ocr — FPT p1=2081ch real, p2=134ch, table pp.22/25 unaffected. 🔄 OUT-OF-SCOPE (pre-existing): pp.22/25 identical (PEK segment-window) · VCB refine_status=PENDING · FU-BANK-CODECOL · FPT YoY 2025-Q4 GM-100% → FU-TRUST-REFRESH.
+- VPS-DEPLOY-PLACEHOLDER-GUARD ✅ 2026-06-01 (DECISION-A consolidate; T2/T3/T4 ed967839, T5 ops live-deploy 5ba761c6 — 9 services active on Vinahost + article-body-fetcher/bs4, GUARD-1 clean; T1 recon folded into T5). T6-QA APPROVED 7/8 raw (71cce86b); AC-6 closed by `.env` tombstone reword (working-tree, .env stays gitignored). ⚠️ **SECURITY (contained):** fixer `git add -f`'d the gitignored `.env` (ALL secrets incl. Vinahost root pw) into UNPUSHED commit d77f4294 — router caught it via raw diff (`new file mode`), `reset --soft` + untracked, `.env` purged from all history, never reached origin (was 139-ahead) → **no exposure, no rotation**. 🔄 FU-FIXER-NO-FORCE (HIGH, agent-father): harden fixer + all dev agents against `git add -f`/force-add of gitignored paths — the no-`--force` binding must be enforced in agent flows, not just documented.
 
 ---
 
@@ -21,22 +20,9 @@
 
 ---
 
-## Sprint VPS-DEPLOY-PLACEHOLDER-GUARD — Consolidate deployer (DECISION-A)
-
-**Status:** OPEN 2026-06-01. **Pri: HIGH.** Zone: dev-vps-crawls + ops + qa. Brief: `docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md`. Root: cafef 814088b0 + VULTR dead. **DECOMPOSITION:** T1 pre-gate, T2/T3 parallel, T4 env, T5 deploy, T6 gate. **RETIRED:** PLACEHOLDER-GUARD-1/2/3/QA + VPS-BS4-INSTALL.
-- 🔄 **T1-OPS-RECON (ops)** — SSH Vinahost verify: no leaks, all 5 active, socat alive. HARD GATE. → `TASK_VPS-DEP-T1-OPS-RECON.md`
-- ✅ **T2-GUARD1-MIGRATE (DONE 2026-06-02 ed967839) (dev-vps-crawls)** — Port GUARD-1 into 9 blocks. Gates T1. Parallel T3. → `TASK_VPS-DEP-T2-GUARD1-MIGRATE.md`
-- ✅ **T3-GUARD3-MIGRATE (DONE 2026-06-02 ed967839) (dev-vps-crawls)** — Section 10 article-body-fetcher+bs4. Gates T1. Parallel T2. → `TASK_VPS-DEP-T3-GUARD3-MIGRATE.md`
-- ✅ **T4-RETIRE-ENV (DONE 2026-06-02 ed967839) (dev-vps-crawls)** — Post-verify, del vps-proxy.sh, VULTR_* from .env. Gates T2/T3. → `TASK_VPS-DEP-T4-RETIRE-ENV.md`
-- ✅ **T5-OPS-DEPLOY (ops) — DONE 2026-06-02 ed967839** — Execute deploy; verify 9 active + 14-feed HTTP=200. Gates T4. → `TASK_VPS-DEP-T5-OPS-DEPLOY.md`
-- 🔄 **T6-QA-GATE (qa)** — Gate: GUARD-1 blocks dirty, clean passes, SSH detects leak, TE_API_KEY OK, vps-proxy gone, .env clean. Gates T5. → `TASK_VPS-DEP-T6-QA-GATE.md`
-
----
-
 ## Sprint TOOL-SURFACE-HYGIENE — Clean the vn-market MCP tool surface
 
 **Status:** OPEN 2026-05-31. **Priority: MEDIUM.** Zone: `apps/mcp-server/` (#1 may route to kinh-dich-service if wire). Live toolCount=154. Full context → `docs/SPRINT_GOAL.md` §.
-
 - ✅ **BA-TSH** — DONE 2026-05-31. Spec `docs/REQ_TOOL-SURFACE-HYGIENE.md`. FR-1: 1a=wire/kinh-dich-zone vs 1b=deregister/mcp-zone. FR-2 DISTINCT (SQLite alerts vs JSON file). FR-3 DISTINCT (3 sources). FR-4 DISTINCT (RAG vs Go TA). FR-5 optional. FR-6 last. NEXT: architect.
 - ✅ **ARCH-TSH** — DONE 2026-05-31. Decision: FR-1=**1b DEREGISTER** (`apps/mcp-server/` zone). FR-2/3/4 all DISTINCT — description-clarify tasks. FR-5 WONTFIX-LOW (schema divergence + param shape incompatibility make consolidation harmful). Brief `docs/architecture-briefs/2026-05-31-tool-surface-hygiene.md`. NEXT: pm → dev-mcp-server.
 - 🔄 **TSH-1 (dev-mcp-server)** — Remove `server.tool("get_market_hexagram")` block `kinhDichTools.ts:510–546`; remove dead `getMarketHexagram` import if orphaned. AC: tool absent from `list_server_tools("vn-market")` in-container after rebuild; other 5 kinhdich tools intact; 0 new tsc errors. **SHIPS FIRST. Ops rebuild #1 after.**
@@ -50,11 +36,8 @@
 ## Sprint MCP-SURFACE-GAPS — Router-found MCP defects (intake 2026-06-01)
 
 **Status:** OPEN 2026-06-01. **Zone:** `apps/mcp-server/` (dev-mcp-server) unless noted. Source: router direct-gateway-verify session 2026-06-01 (raw evidence below — re-confirmed live by PO, not relayed). NEEDS BA spec before any impl (changes tool output shape / adds a tool). Sibling to TOOL-SURFACE-HYGIENE (same surface theme) — sequence AFTER TSH-1/TSH-6 land to avoid mcp-server rebuild collisions.
-
 - 🔄 **MSG-1 (dev-mcp-server) — FEATURE, HIGH** — no market-wide foreign-flow aggregate. PO raw-verify: `get_foreign_flow {}` → InputValidationError `code` Required (strictly per-ticker); no tool returns the market total net buy/sell (e.g. "khối ngoại bán ròng 633 tỷ, phiên thứ N"). Today every consumer must scrape the web for the headline number the FB/MARKET dish needs daily. **Approach (BA to scope):** either extend `get_foreign_flow` to make `code` optional → market aggregate when omitted, OR add `get_foreign_flow_market` (cleaner, no overloaded contract). Data source: confirm the VPS foreign-flow feed exposes a market total or whether it must be summed server-side from per-ticker rows — may pull in dev-stock-price / VPS foreign-flow source. AC: a gateway call with no `code` returns market net value (tỷ VND) + direction + consecutive-session count; raw-verified via gateway; documented in mcp-tools standard. Pri HIGH (unblocks daily product headline; highest product value of this batch). **Cross-ref A.**
-
 - 🔄 **MSG-2 (dev-mcp-server) — DUP-of-TSH-6, DO NOT double-fix** — `get_market_snapshot` repeats `"Kinh Dịch: Chưa đủ dữ liệu để tính quẻ."` once per code (PO live-verify with 3 codes → **4** trailing lines: 1 per-code ×3 + 1 market-level). Token waste + parse clutter. **This is the SAME defect as TSH-6** (bare-catch :5005-down emits a misleading fallback line) — the per-code multiplication is just its visible amplitude. TSH-6's AC-1 (OMIT the block entirely on service-down) already eliminates ALL these lines. **RESOLUTION: append this per-code-multiplication evidence + the 3-code N+1 repro to TSH-6's QA verify criteria; do NOT open a separate task.** If after TSH-6 ships a genuine 200-with-data still duplicates per-code, re-open as MSG-2 (footer-scope bug in `appendStockHexagram` loop). Pri MEDIUM (rides TSH-6). **Cross-ref B.**
-
 - 🔄 **MSG-3 (dev-mcp-server) — SURFACE-HYGIENE / DOC, LOW** — phantom-tool discoverability gap, NOT a gateway-registration inconsistency. PO root-caused defect D: `get_market_breadth` and `get_top_movers` return "Tool not found" via the gateway because **they do not exist in the mcp-server source at all** (zero `server.tool` match) — they are NOT in the 154 count, so there is no count-vs-resolve mismatch. The prior agent invented/expected tool names that were never built. `get_foreign_flow` (and breadth-adjacent data) resolve fine. **RESOLUTION:** (a) record in `docs/standards/mcp-tools.md` that there is no market-breadth / top-movers tool (so future agents don't expect them); (b) if market breadth/top-movers is genuinely wanted as product, that is a NEW FEATURE request → fold into MSG-1's BA scoping as a related "market-aggregate tools" family (foreign-flow-market + breadth + movers) rather than a defect. Pri LOW (doc/expectation fix; feature portion defers to product decision). **Cross-ref D — reframed: discoverability gap, not registration bug.**
 
 ---

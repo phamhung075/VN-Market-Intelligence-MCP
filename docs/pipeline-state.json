@@ -2,14 +2,14 @@
   "_schema": "v2",
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
-    "next_agent": "qa",
-    "next_action": "T5 DONE: deploy-vinahost.sh executed successfully on Vinahost 125.212.251.27. All 9 services active + article-body-fetcher deployed. GUARD-1 post-verify CLEAN (uppercase-only pattern). Fixes applied: pip3 --break-system-packages (Ubuntu 24.04) + GUARD-1 pattern tightened. Ready for T6 qa gate.",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "VPS-DEPLOY-PLACEHOLDER-GUARD CLOSED — T6-QA APPROVED 7/8 raw (71cce86b); AC-6 fixed by .env tombstone reword. SECURITY (contained): fixer git add -f committed gitignored .env (secrets incl. Vinahost root pw) into UNPUSHED d77f4294 — router caught via raw diff (new file mode), reset --soft + untracked, purged from all history, never pushed (139-ahead, no exposure/rotation). FU-FIXER-NO-FORCE opened. Pipeline idle -> next tick = PO triage on retained signals (TSH-6 dispatch, macro-socat DASHBOARD reconcile, context-bloat resolved by TASKS.md prune this tick).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-01T18:27Z",
-    "updated_by": "ops"
+    "updated_at": "2026-06-01T18:42Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
