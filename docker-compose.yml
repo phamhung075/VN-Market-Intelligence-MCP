@@ -19,6 +19,7 @@ services:
     - ./docs/data/alert-verdicts.json:/app/docs/data/alert-verdicts.json:ro
     - ./docs/data/bctc-eval-thresholds.json:/app/docs/data/bctc-eval-thresholds.json:ro
     - ./docs/data/daily-dashboard.json:/app/docs/data/daily-dashboard.json
+    - ./docs/data/orch:/app/docs/data/orch
     - /Users/admin/.ssh/id_rsa:/run/secrets/vps_ssh_key:ro
     - bctc-page-images:/data/bctc-page-images
     environment:
