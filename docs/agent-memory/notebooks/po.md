@@ -1,22 +1,27 @@
 # PO Notebook
 
-## 2026-06-01 — sprint kickoff VPS-NEWS-CAFEF-VNECO (operator feature request)
+## 2026-06-01T09:17Z — triage RESUME-ECONOMY brief + 13 drained signals
 
-**Request:** "Add cafef.vn and vneconomy.vn to fetch Vietnamese info pages on the VPS."
+**Decision: BATCH (1 CLEAN task, no new sprint).** Spawned by dev-team :07 Step 1.
 
-**CRITICAL SCOPE CORRECTION (raw-source verified BEFORE planning — not greenfield):**
-- `cafef.ts` + `vneconomy.ts` ALREADY exist as DIRECT axios RSS fetchers in `apps/mcp-server/src/infrastructure/fetchers/`, wired into `fetch_and_analyze` (`news-analysis/analysis.ts:177/214`), tested (`021-rss-cafef.test.ts`).
-- A VPS news pipeline ALREADY covers both: source `news-vps` `/proxy/news` in system-map, VPS `fetch-vn-news.sh` (not in repo) pushed 14 RSS feeds incl cafef + vneconomy → `/api/push-news`. Recon `docs/vps-sources/vn-news-rss/recon.md` (2026-05-13) = both 200, no anti-bot from VPS.
-- `cafef-index` (`banggia.cafef.vn`) is a separate ACTIVE PRICE source via VPS — untouched.
-- So TWO parallel paths exist: (a) DIRECT axios from France host (geo/CF-challenge exposed) vs (b) VPS proxy (geo-safe). RSS = headline+summary, NOT full article body — operator said "info pages" (body?).
+**KEY FINDING — brief already shipped.** The context-resume-economy brief (`…/2026-06-01-context-resume-economy.md`) was implemented in the SAME session it was authored — commit **b38ac812** `feat(resume-economy)`. Router raw-verified all 3 phases live, NOT relaying badges:
+- SKILL.md §READ = full two-phase delta-read (mtime/linecount Phase-1 + section-only Phase-2 + start_line cache) ✅
+- SKILL.md §WRITE = `_Updated:` capped one line ✅; §PRUNE = "MANDATORY", "called from drain-signals.md" ✅
+- drain-signals.md = `0a-D-PRUNE` block present (grep confirmed) ✅
+- pipeline-state.json = `_schema:"v2"` + head/narrative/dashboard_section_cache ✅
+- main.md Step 0b = v2 head-only read (size-justification L1 confirms) ✅
+- DASHBOARD.md = 137L (brief's "224L/7KB prose" was the PRE-impl snapshot — STALE). `_Updated` already one line.
 
-**Decision:** ROUTING/COVERAGE sprint, NOT new integration. RECON-FIRST mandatory (ops-vps-fetch SSH lane, gateway-independent). Recon answers 3 Qs: (1) direct path geo-failing today? (2) does VPS pipeline already serve cafef/vneco end-to-end NOW (overlap — don't rebuild)? (3) "info pages" = full article BODY → document article-page structure + HTTP-only recipe. SPRINT_GOAL + TASKS written; sprint lock claimed.
+**Sole residual = RE-CAP-1.** SKILL.md = 192L vs 120 cap (overage 72) = the persistent `context_bloat_breach` ×2 (signal #2). NOT a naive prune — signal #2 correctly flagged that deleting content breaks the resume-economy contract every fleet agent now depends on. FIX = agent-md-factory lazy-load (extract verbatim protocol blocks to a pointered sibling .md, keep the 3 contracts). Routed po→architect→agent-father (.md SSOT skill → agent-md-factory mandatory). Filed under existing Sprint NB-PRUNE-FIX (same skill/flow-.md cap theme), NOT a new sprint.
 
-**Sequence (WIP≤2):** CAFEF-VNECO-RECON (ops-vps-fetch) → architect (integration point + minimum-viable + fold-vs-distinct) → ba → pm → dev-vps-crawls (+dev-mcp-server if rewire) → qa.
+**Other signals — all NO-ACTION (verified):**
+- ctx_bloat ×7 `docs/TASKS.md` = edit-transients; live 80L at cap (router-verified) — informational.
+- cowork-fire ×4 = post-close heartbeats.
+- Telegram new = empty. WIP 0/2.
 
-**Overlap:** SSC-IBOARD-MIGRATE is DISTINCT (dead PRICE source) — do NOT fold; same dev-vps-crawls zone so router serializes.
+**TASKS.md pruning** (was at 80 cap): folded RESUME-ECONOMY close onto CAFEF closed-line + collapsed 2 orphan blank lines → back to exactly 80L.
 
 **Carry-over:**
-- Recon may EXIT the sprint early if it proves the VPS pipeline already serves both AND direct path is fine — then sprint collapses to resilience-confirm + doc-refresh. Watch for that verdict.
-- The "full article body vs RSS summary" question is the real ambiguity — architect decides in-scope-now vs deferred after recon documents article-page anti-bot.
-- TASKS.md growing (~95L) — migrate a closed sprint to archive next triage.
+- RE-CAP-1 is the next dispatch — architect must decide the extract boundary; warn agent-father NOT to delete §READ/WRITE/PRUNE contracts (only pointer them).
+- Stale `dashboard_section_cache.last_linecount:224` vs live 137 → self-heals on next DASHBOARD write per brief §5; left as no-action (don't hand-edit volatile cache).
+- TASKS.md again at 80 cap — next closed sprint must migrate to archive before any new entry.
