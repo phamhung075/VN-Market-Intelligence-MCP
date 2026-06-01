@@ -3,7 +3,7 @@
 **Tools:** `docs/agents/tools/package/architect.md`
 
 ## Input
-BA spec or user requirement, `docs/TASKS.md` task number, recent agent notebooks (`docs/agent-memory/notebooks/*.md`)
+BA spec or user requirement, `docs/data/orch/orch-state.json .task_board` task number, recent agent notebooks (`docs/agent-memory/notebooks/*.md`)
 
 ## Output
 `[Architect] Brownfield Findings` appended to `docs/handoffs/TASK_NNN.md` | PM notified
