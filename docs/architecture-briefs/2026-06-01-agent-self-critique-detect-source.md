@@ -498,6 +498,11 @@ A shadow pilot on 1–2 flows first allows measurement before fleet-wide rollout
 
 ### Shadow Mode Protocol
 
+**Implementation note:** the shadow-no-dispatch rule (step 3 below) is implemented as a
+SHADOW-PILOT pre-branch in `docs/agents/po/flow/triage-signals.md` `improvement_proposal`
+row — the branch fires when `Created by` ∈ {news-scout, dev-team}. Remove that branch at
+the Phase-2 promote decision.
+
 During the pilot (recommended: 14 calendar days):
 
 1. The self-critique skill writes `IMP-*.md` and DASHBOARD rows as designed (§7 EDIT-3).
@@ -570,6 +575,120 @@ Signal file: `docs/signals/agent-self-critique-detect-20260601.json`
   "notes": "BLOCKED on PO approval. Agent-father MUST NOT act until PO approves. When approved, implement EDIT-1, EDIT-2, EDIT-3 in §7 (Phase 1 only — 3 files). Then run shadow pilot per §8 (14 days) before fleet-wide. Phase 2 = promote/kill decision after pilot."
 }
 ```
+
+---
+
+## 11. PO Critique + Gate Verdict (filled by PO — MANDATORY)
+
+**Reviewed:** 2026-06-01T21:11:41Z · **PO** · governance: `2026-05-27-gated-self-improvement-loop.md` §4
+**Status of this design:** DESIGN-ONLY. Stays BLOCKED for operator greenlight even on approval (operator is actively reviewing).
+
+> Note on field count: the LIVE PO gate (`docs/agents/po/flow/triage-signals.md` line 17) now enforces
+> **FIVE** critique fields, not the four the parent brief §4 named. The fifth is the
+> **Lane-C-in-disguise check (C-3)**. This brief's §3 and §4 reference only "the 4 fields" and
+> the §3 lane pre-check is the right shape but does NOT name C-3 by its live identifier. I apply all
+> five below and raise the undercount as condition C4.
+
+### (1) What could break — break-risk
+Low. The step is additive and rides two existing end-of-cycle composition points
+(`cowork-end-cycle/SKILL.md`, currently 14L → 15L; `dev-team/flow/post-cycle.md` Step 4.5, doc-self-heal
+sits at line 58 with Step 4.9 immediately after — the named insertion point is real and clean). No existing
+step is moved or removed. Failure mode if the new skill throws: it executes AFTER notebook-write and
+doc-self-heal, so a self-critique fault cannot corrupt the notebook or the heal. The one real break vector is
+the **shared git index** (cowork + dev-team on `main`): a self-critique commit racing the notebook-write
+commit. S5 + SC-5 batch both into ONE mutex-guarded commit with explicit paths — this is the correct, already-
+proven mitigation (`feedback_concurrent_commit_race`). Acceptable.
+
+### (2) False-green / silent-swallow risk
+Moderate, and structurally the sharpest concern — an agent grading its own work is the weakest reviewer in
+the fleet (the design says so itself, S2). The mitigation is sound in shape: the agent is reduced to a
+**reporter of machine-observable facts** (T1 error codes, T3 confidence scores, T4 notebook-grep), with the
+quality judgment held by the independent architect (IP-2) and PO gate. The author cannot self-approve or
+self-implement (S2), and the step is PLAN-ONLY (S1). The residual silent-swallow risk is the **inverse** of
+the usual one: not that a bad proposal slips through (the downstream gate catches that), but that a real gap
+is silently NOT reported — i.e. T1–T5 under-fire. That is acceptable for a v1 DETECT source: a missed
+detection is a non-event (status quo), not a regression. The shadow pilot (§8) is the correct instrument to
+measure the false-NEGATIVE and false-positive rates before trust. Adequately neutered for design approval.
+
+### (3) Is the success signal gameable — gameability
+This is where I push hardest, per the operator's instruction. Two layers:
+- **The triggers themselves (§2)** are genuinely machine-anchored. T1 = HTTP/source_tier (not author opinion),
+  T3 = a numeric `confidence < 0.5` threshold, T4 = an exact/near grep of the agent's OWN notebook, T5 = a
+  numeric time/step ratio. T2 is the softest — "skipped or improvised because a capability was missing" leans
+  on a session-log annotation the agent writes about itself, which is the one subjective backdoor. The §2
+  Exclusions block fences off the obvious abuse ("output could be better", aesthetics, tone, and crucially
+  *"any proposal that would change the success criteria by which the cycle is judged — lane-C forever"*). That
+  last exclusion is the key anti-gaming clause: the agent cannot propose to rewrite the terms of its own
+  evaluation. Good.
+- **The gate is NOT the trigger — the gate is downstream.** Even a gamed/garbage trigger only produces a DRAFT
+  that must clear architect IP-2 (evidence-concrete check, IP-3) AND the five-field PO gate. The success of the
+  *system* is not gameable by the author because the author is not in the approval path. This is the load-bearing
+  property and it holds.
+- **Residual:** T2's self-annotation is gameable in the narrow sense that an agent could over-report
+  improvisation to farm proposals — but the ≤1/agent/day cap (S4/SC-0) bounds the blast radius to one DRAFT,
+  and architect IP-3 rejects vague evidence. Acceptable with the pilot watching T2 specifically.
+
+### (4) Host-load impact
+**Confirmed APPROVED against `project_host_memory_panic`.** That incident was RAM+swap exhaustion → SSD
+swap death-spiral → SMC watchdog timeout → forced reset, driven by NEW concurrent processes (13-container fleet
++ host Mongo + parallel cron/agents + builds spiking together on 16GB). This design adds **zero new process,
+zero new cron tick, zero new Docker service, zero new agent.** It runs inside an already-resident agent session
+at end-of-cycle. RAM delta = 0 MB. Disk = 0 KB on clean cycles (silent), ~2–4 KB only on a triggered cycle.
+Token delta ~50–100/clean, ~400–700/triggered, ≤1 proposal/agent/day → fleet ceiling ~13 DRAFTs/day,
+0–2 expected. Nothing here touches the swap/RAM failure axis. The §6 "zero new cron/agent" claim is true and
+verified.
+
+### (5) Lane-C-in-disguise check (C-3) — the LIVE fifth field
+Does the design, regardless of label, edit the gate/audit logic, the loop's own success criteria, an
+irreversible action, or user-facing comprehensibility? **No — and it explicitly forbids itself from doing so.**
+The §2 final exclusion ("any proposal that would change the success criteria by which the cycle is judged —
+lane-C forever") IS the C-3 guard applied at the trigger layer. The design adds a DETECT mouth; it does not
+touch the three-lane classification rule, the PO gate, or any success metric. Proposals it emits about
+comprehensibility/tone are routed LANE-C-forever by §3. One gap: the per-proposal C-3 judgment still depends on
+the live PO gate (triage-signals line 17), which is correct — but the skill spec (SC-2, §7 EDIT-3) only names
+the three-lane pre-check and does not echo C-3 by name, so an agent author could mis-label a disguised lane-C
+item LANE-A. That is caught downstream (architect IP-2 + PO C-3) but should be named at the author layer too →
+condition C4.
+
+---
+
+### VERDICT: **APPROVE-WITH-CONDITIONS**
+
+The design is the right shape: a PLAN-ONLY decentralized DETECT source that reduces a weak self-reviewer to a
+reporter of machine facts and routes everything through the independent, already-live architect→PO→implement
+gate. S1 (plan-only) + S2 (no self-approve/implement) adequately neuter the agent-grades-own-work risk for a
+gated v1. The §2 triggers are machine-anchored (T2 is the softest; pilot must watch it). Host-load is genuinely
+zero-new-infra and clears `project_host_memory_panic`. The §8 shadow pilot (news-scout + dev-team post-cycle,
+14d, explicit promote/kill numeric criteria) IS a sufficient proven-red gate before fleet-wide — it measures
+signal rate, lane distribution, would-approve rate, and false-positive rate, with a hard kill on >5/agent/week
+or <30% approval. Approved as a design.
+
+**This APPROVAL does NOT release implementation.** It stays BLOCKED for the operator's final greenlight per the
+task instruction (operator is actively reviewing). Agent-father MUST NOT act on this verdict alone.
+
+**Conditions (all must hold at implementation time, after operator greenlight):**
+- **C1 — Shadow pilot is mandatory, not optional.** Phase 1 ships EDIT-1/2/3 but in shadow per §8: PO records a
+  would-be verdict in each IMP doc and does NOT dispatch to agent-father/dev-team for the full 14 days. Fleet-
+  wide rollout is a SEPARATE post-pilot promote decision gated on the §8 promote criteria. No skipping straight
+  to fleet-wide.
+- **C2 — T2 is the watch item.** T2 (capability-gap self-annotation) is the one non-fully-machine trigger.
+  During the pilot, every T2 proposal must be inspected for over-reporting; if T2 produces >50% of a flow's
+  false-positives, T2 is tightened or dropped before promote.
+- **C3 — Daily-cap collision check.** SC-0 throttles to ≤1 IMP per agent per VN-day by globbing
+  `IMP-<YYYYMMDD>-<agent-id>-*`. Verify the ID convention (`IMP-<date>-<agent-id>-<T>-<slug>`, §4) makes that
+  glob exact and that two different triggers on the same agent/day collide to ONE proposal deterministically
+  (highest-severity wins, or first-fired) — define the tie-break in EDIT-3, do not leave it implicit.
+- **C4 — Name the live FIVE-field gate, including C-3.** EDIT-3 (SC-2) and the brief's §3/§4 reference only
+  "the 4 fields" / the three-lane pre-check. The LIVE PO gate (triage-signals.md line 17) enforces FIVE,
+  including the Lane-C-in-disguise (C-3) check. Update the brief's §3/§4/§9 wording and the self-critique skill's
+  lane pre-check to name C-3 explicitly, so author-layer labeling matches the gate it feeds. (Doc-accuracy fix;
+  does not change the runtime gate, which already enforces five.)
+- **C5 — Commit batching is load-bearing, verify it.** SC-5 batches the IMP doc + DASHBOARD row into the
+  notebook-write commit (one commit, two-to-three explicit paths, mutex-guarded). Implementation QA must confirm
+  no path falls back to `-A`/`.` and that a self-critique fault cannot leave a half-staged index
+  (`feedback_concurrent_commit_race`, `feedback_subagent_force_add_secret_leak`).
+
+Empty-critique auto-reject doctrine satisfied: all five fields above are filled with substantive answers, none "N/A".
 
 ---
 
