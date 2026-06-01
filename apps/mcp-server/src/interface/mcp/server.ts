@@ -74,6 +74,8 @@ import { handleBctcRefineOnDemand } from "./routes/bctcRefineHandler.js"; // BCT
 import { handleBctcInspectFlags } from "./routes/bctcFlagsHandler.js"; // HC-DEV-3: GET /api/bctc-inspect/flags/{doc_id}
 import { handleBctcInspectCorrect } from "./routes/bctcCorrectHandler.js"; // HC-DEV-3: POST /api/bctc-inspect/correct/{doc_id}
 import { handleBctcInspectConfirm, handleBctcInspectConfirmReset } from "./routes/bctcConfirmHandler.js"; // HC-DEV-3: POST /api/bctc-inspect/confirm/{doc_id}[/reset]
+import { handleGetOrchestration } from "./routes/orchestrationHandler.js"; // OSC-4a: GET /api/orchestration
+import { getOrchStatePath } from "../../infrastructure/orchStateStore.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -1915,6 +1917,15 @@ export async function createBunServer(
       const body = await handlerResp.text();
       res.writeHead(handlerResp.status, { "Content-Type": "application/json" });
       res.end(body);
+      return;
+    }
+
+    // ── OSC-4a: GET /api/orchestration — read-only orch-state.json projection ──
+    // HC-2 SAFETY: only safe fields exposed (see orchestrationHandler.ts).
+    // Returns 200+DTO on success; 503 if orch-state.json missing/unreadable.
+    if (method === "GET" && pathname === "/api/orchestration") {
+      const orchPath = getOrchStatePath(process.cwd());
+      handleGetOrchestration(req, res, orchPath);
       return;
     }
 
