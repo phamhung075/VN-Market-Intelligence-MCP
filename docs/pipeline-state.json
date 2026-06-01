@@ -5,10 +5,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": null,
-    "next_action": "VPS-DEPLOY-PLACEHOLDER-GUARD CLOSED — T6-QA APPROVED 7/8 raw (71cce86b); AC-6 fixed by .env tombstone reword. SECURITY (contained): fixer git add -f committed gitignored .env (secrets incl. Vinahost root pw) into UNPUSHED d77f4294 — router caught via raw diff (new file mode), reset --soft + untracked, purged from all history, never pushed (139-ahead, no exposure/rotation). FU-FIXER-NO-FORCE opened. Pipeline idle -> next tick = PO triage on retained signals (TSH-6 dispatch, macro-socat DASHBOARD reconcile, context-bloat resolved by TASKS.md prune this tick).",
+    "next_action": "TOOL-SURFACE-HYGIENE CLOSED 2026-06-01 — TSH-6 kinh-dich honest-omit shipped (9b895ffd), mcp-server rebuilt --no-cache, router+qa live-verified get_market_snapshot has NO trailing fallback while :5005 down; qa raw tools/list = 154 tools, get_market_hexagram ABSENT (TSH-1 confirmed done, project-stats consistent at 154). MSG-2 resolved by same fix. VPS-SOCAT-PERSIST CLOSED (launchd plist). Pipeline idle -> next tick PO triage. Open product items: MSG-1 (foreign-flow market aggregate, HIGH, needs BA — rebuild-collision gate now cleared). FU-FIXER-NO-FORCE (HIGH agent-father) + AUD-ND-1 (CRITICAL) still queued.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-01T18:42Z",
+    "updated_at": "2026-06-01T19:40Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
