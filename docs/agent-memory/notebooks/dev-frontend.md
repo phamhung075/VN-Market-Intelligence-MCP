@@ -104,12 +104,26 @@ Phase 2 P2-A/B/C DONE. ESLint fence (G4) installed: eslint.config.mjs + eslint-p
 
 Zone health: 20/20 test files GREEN (204 assertions), tsc clean, build ✓, new BCTC eval surface complete | HEALTHY
 
+## Cycle FBT-DEV — 2026-06-01 (FRONTEND-BCTC-TAB sprint)
+
+- Task: surface mcp-server BCTC Inspect viewer at /dashboard/bctc-inspect via A2 server-side proxy.
+- Files created/modified (apps/frontend/ ONLY, tsc --noEmit clean):
+  - dashboard.bctc-inspect.tsx: resource route, raw Response, fetches upstream /api/bctc-inspect (WITH /api).
+  - api.bctc-inspect.$.tsx: splat proxy for /api/bctc-inspect/* (GET+POST, binary-safe arrayBuffer, status relay).
+  - api.bctc-eval.$.tsx: second splat proxy for /api/bctc-eval/* (correction 2 — eval tab fetches this prefix).
+  - dashboard.tsx: NAV_ITEMS += { to: "/dashboard/bctc-inspect", label: "BCTC Inspect" } after "BCTC Eval".
+- Router corrections applied: (1) upstream = /api/bctc-inspect not /bctc-inspect; (2) /api/bctc-eval/* separate splat.
+- No collision: dashboard.bctc-eval.* = /dashboard prefix; api.bctc-eval.$ = /api prefix. Confirmed distinct.
+- tsc --noEmit: exit 0 (zero errors). Commit: 80f2911b.
+- Key patterns: arrayBuffer pipe (never .text()/.json() on binary); relay upstream Content-Type + status; 4xx→4xx.
+- Zone health: tsc clean, 4 files changed (205 insertions), FRONTEND-BCTC-TAB SHIPPED | ops rebuild pending.
+
 ## Carry-over (next session)
 
 - P2-D: QA gate — freeze anchor confirm (QA reads eslint.config.mjs git log, emits G4 evidence signal)
 - P2-E: QA gate — frontend-pre-inject tag + G10 bug injection (QA task)
-- P2-F: DONE 2026-05-26
 - P2-G: G11 2-trial regression alarm coupling proof (QA+dev task)
 - P2-H: Ops must REBUILD frontend container then RE-RUN Playwright 4/4 against :3001
+- FBT: ops rebuilds frontend container; qa verifies /dashboard/bctc-inspect live + eval tab.
 - Dev note: always use PORT=3099 (or similar) for host-side Playwright; Docker holds 3001 even when container stopped
 - Dev note: `lint:fence` script requires ESLINT_USE_FLAT_CONFIG=true (already baked into script)
