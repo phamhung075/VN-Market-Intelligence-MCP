@@ -4,6 +4,13 @@
 
 > Archive: `docs/archive/notebooks/dev-team-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
+## Current state (:07 on-demand — 2026-06-01T07:09Z) — CHEF-HARDENING PARTIALLY-VERIFIED-LIVE
+
+- PREFLIGHT clean. Drained 4 cowork-fire SILENT heartbeats → processed/ (no slots due). 0 telegram reports. DASHBOARD git-clean (5 `| NEW |` rows are the known-stale dev-mcp-server P2-* impl_done 2026-05-25 + ancient po 1967b breadcrumbs, not inbound). WIP 0/2.
+- **Chef live-verify advanced (raw-read unified-agent.md notebook, gateway-free):** chef fired 3× today post-context (02:17/03:22/06:18 UTC), all intraday. RAW EVIDENCE: (1) **zero self-abort signature** anywhere (grep blocker/would-you-like/refusal/cannot-proceed = NONE) — the original no_self_abort English-prose violation is GONE; (2) **get_cycle_bootstrap used 3×** — the new signal path (replaced get_agent_signals hard gate) is live; (3) **graceful degradation PROVEN LIVE** — 03:22 run hit "macro_snapshot service offline"+early-timeout and STILL completed full Layer-6 analysis instead of aborting (the non-blocking-degradation teeth working); (4) 06:18 (first run AFTER 05:31 hardening) executed clean, silent-exited via the LEGITIMATE intraday conditional-publish gate (0 convergence clusters) — correct design, NOT the bug.
+- **Status upgrade:** chef hardening DONE-PENDING-LIVE-VERIFY → **PARTIALLY-VERIFIED-LIVE**. Narrow residual: guaranteed-MORNING-publish degraded-dish-floor not re-exercised (today's 05:23 morning fired BEFORE the 05:31 fix; chef computes next morning 06-03). Distinction held per verify-raw: intraday silent-exit (0 convergence) = designed behavior, only morning/evening slots are guaranteed-publish where the floor applies.
+- No code sprint dispatched (verification was raw-read + bookkeeping). Open backlog non-time-sensitive; next-pickable queued in pipeline-state.
+
 ## Current state (:07 on-demand — 2026-06-01T06:09Z) — IDLE
 
 - PREFLIGHT clean. Drained 3 cowork-fire SILENT heartbeats → processed/ (no slots due, nothing spawned). 0 telegram reports. DASHBOARD git-clean — the 5 `| NEW |` rows are all known-stale breadcrumbs (dev-mcp-server P2-* impl_done 2026-05-25 + ancient po 1967b), not inbound.
@@ -18,13 +25,6 @@
 - **Mid-tick: drained a NEW po-DASHBOARD row `cow-CHEF-MORNING-NOPUBLISH`** — guaranteed morning MARKET dish failed (spawned chef self-aborted with English-prose refusal, violating no_self_abort). cowork dispatcher had already triaged (2 of 3 cited blockers FALSE) + assigned agent-father lane. Spawned agent-father (mutex-wrapped) → hardened init.md + flow/chef.md: signals via get_cycle_bootstrap, macro/get_market_hexagram now non-blocking degradations, Step 5 hexagram source → get_portfolio_conviction, no_self_abort teeth + degraded-dish floor. **Router VERIFIED the Step-5 swap LIVE** (get_portfolio_conviction(FPT)=Kiển(39)/BAN — real hexagram source, confirms feedback_chef_kinhdich_confab). DONE-PENDING-LIVE-VERIFY next chef fire. FU: chef.md 258L>120L → architect extract.
 - **Lesson:** a cowork dispatcher CANNOT spawn agent-father/dev-team — it routes the incident to a `## po` DASHBOARD row; dev-team IS the pickup for agent-father-lane fixes. agent-father (file-editing, gateway-independent) executes fine when spawned even if gateway-dependent code agents are wedged — same lane-specificity as ops-vps-fetch.
 - WIP 0/2.
-
-## Current state (:07 on-demand — 2026-06-01T04:22Z, commit 4b1c4626)
-
-- PREFLIGHT clean. Drained 2 cowork-fire silent heartbeats → processed/. DASHBOARD: 0 NEW po-addressed rows.
-- 5 NEW telegram reports triaged: 4 false-pos/already-fixed/tracked (#3017+#3018 false-pos+retraction, #3019 drain-shell-injection caught/fixed, #3021 A-20 macro false-pos), 1 GENUINE (#3020 Tier-2 VPS proxy stale). All 5 processed+cleared.
-- **VPS recovery (genuine win):** ops-vps-fetch root-caused #3020 as NOT VPS-SOCAT (main-server socat :4000→:3000 alive, mcp-server /health 200) but 3 distinct VPS-side faults. Fixed live: Fix1 vn-foreign-flow.service lost EnvironmentFile in 2026-05-30 redeploy → re-wired (PUSH 200 upserted 102); Fix3 vn-vps-proxy TasksMax 16→32 → bctc-discover EAGAIN gone. Fix2 ssc-iboard `iboard-query.ssc.vn` globally dead → SSC-IBOARD-MIGRATE backlog (dev-vps-crawls).
-- WIP 0/2. No code sprint dispatched (TSH-1 still pending spawned-agent gateway-wedge clear).
 
 ## Lessons / patterns
 

@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T06:48:19Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (05:31:04Z) since prior tick — Step 0a skipped. No NEW cowork-addressed rows pending.",
+    "silent_note": "Matcher returned 0 slots (drift 3). chef-intraday last fired 06:18:21Z (cadence 7200s) -> next ~08:18Z, and its cron 13 2-8 only enters the +/-2min window at the :15-past tick. offhours pair (cron 0 */4) next ~08:00Z. No side effects on silent tick (no snapshot/heartbeat/pressure-emit — WON-non-empty gated). pressure-state remains 06:18:21Z emission.",
+    "pressure_mode": "n/a (silent tick)",
+    "calendar_status": "open"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T06:48:19Z"
+}
