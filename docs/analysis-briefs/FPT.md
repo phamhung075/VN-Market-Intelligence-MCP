@@ -13,10 +13,8 @@
 
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-12 16:00 | Close: 70,600 VND | RSI: N/A | Vol: 8.53M (166% avg) | YoY: N/A
-
-- Last price: 75.500 (+1.48%) as of 2026-05-01 05:34
-- Positive momentum — tech sector benefiting from US-VN relations
-- Carry regime: FII_OUTFLOW_RISK — watch for institutional profit-taking despite positive news
+2026-05-01 05:34 | Close: 75,500 VND (+1.48%) | RSI: N/A | Vol: N/A | YoY: N/A | Note: Tech sector benefiting from US-VN relations
+2026-06-01 08:59 | Close: 72,900 VND (+1.82%) | RSI: N/A | Vol: N/A | YoY: N/A | Note: Tech sector resilience amid FII outflow
 
 ## [Unified Agent] Quarterly Syntheses
 2026-05-14 16:00 | Close: 73,900 VND | RSI: N/A(16c) | Vol: 2.16M (~42% avg) | YoY: N/A

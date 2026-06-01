@@ -1,18 +1,48 @@
 # Digest Predict — Notebook
 
-**Last updated:** — | **Sprint:** —
+**Last updated:** 2026-05-31 13:51 UTC | **Sprint:** weekly
 
 ## Current state
 
-(no session recorded)
+Weekly digest sent. VN-Index 1.863 flat. FPT position lỗ 10,83% — khuyến nghị giảm bớt.
 
 ## Last session summary
 
-(none)
+- **cycle_date**: 2026-05-31
+- **slot**: digest-sunday (manual, off-cadence Saturday run)
+- **findings**:
+  - VN-Index 1.863,49 (-0,01%) — đi ngang, điều chỉnh chưa kết thúc
+  - HNX +3,28% — small/mid cap nổi bật
+  - GAS +6,98% | BSR +4,39% | PLX +3,93% (dầu khí phục hồi từ đáy tuần trước)
+  - VNH -11,11% | HNG -4,11% | OPC -6,24%
+  - REGIME: NEUTRAL | DXY: USD STRENGTHENING (26.115) | Carry: NEUTRAL (1,38pp)
+  - Gold $4.593 (+5,38σ extreme high — risk-off signal)
+  - Oil $91,12 NEUTRAL — phục hồi từ -4,23σ cực thấp tuần trước
+  - Equity EY spread 3,20pp > deposit rate — vẫn HẤP DẪN tích lũy
+  - FPT: 5.000cp @ 80.300 | giá 71.600 | lỗ 10,83% — quẻ Kiển (39) BAN, GIẢM BỚT
+  - FPT PE 13,8 vs ngành 17,3 (chiết khấu -20%) nhưng ngoại bán ròng -38K cp/5 phiên
+  - CMG: 2 vi phạm chứng khoán tuần này
+  - PC1: chủ tịch chưa rõ pháp lý từ 19/5
+  - VPB: kiểm toán cho vay Lạng Sơn
+  - Cascade rules: 0 evaluated (tất cả hits, 0 win-rate)
+  - Alert accuracy: N=5 (không đủ mẫu, cần ≥20)
+  - kinh-dich backtest: 501 NOT IMPLEMENTED (vẫn carry-over)
+  - TASKS.md lỗi liên tiếp 3 lần (system-auditor D4 abort)
+  - VPS pollNews mất tín hiệu 2 lần trong tuần (3/7 nguồn hoạt động)
+  - BCTC push pipeline vỡ (pdf-extractor → mcp-server HTTP stalled)
+- **actions**:
+  - Digest gửi MARKET ✓
+  - Status gửi WORK ✓
+  - log_agent_work id=1180 in progress
+- **next_cycle_hint**: Kiểm tra FPT tuần tới — nếu vẫn yếu hơn ngành + ngoại bán ròng → cắt 50% vị thế. Dầu khí theo dõi địa chính trị. Kinh Dịch backtest 501 — đề nghị PO ưu tiên.
+- **carry_over**: kinh-dich-service backtest 501 (3 chu kỳ liên tiếp) → leo thang PO ngay; TASKS.md corruption → dev-team; BCTC push pipeline blocked
+- **estimated_tokens**: 14000
 
 ## Known patterns / preferences
 
-(none recorded)
+- Kinh Dịch backtest 501 từ ≥2026-05-25 — cần dev-team B-bucket wiring
+- FPT vị thế lỗ dai dẳng qua nhiều chu kỳ — theo dõi điều kiện cắt bớt
+- cascade rules 0 evaluated — win-rate pipeline không hoạt động, cần kiểm tra
 
 ## Cycle — 06:41 UTC
 

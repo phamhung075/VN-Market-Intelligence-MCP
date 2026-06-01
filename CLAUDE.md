@@ -17,6 +17,7 @@ Main terminal = router only. Never implement directly. Always delegate.
 - Read docs before changing anything; update docs after
 - NO branches — all work stays on `main`
 - All agents backgrounded by default
+- Fix root cause definitif not recurrent symtom
 
 ## MCP Tools — call_tool wrapper ONLY
 The `vn-market` server is intentionally NOT registered in `.mcp.json` (cleaned out) to keep the tool surface small — its 146 tools are NOT loaded directly. The server still exists as a downstream of the `claude.ai gateway`.

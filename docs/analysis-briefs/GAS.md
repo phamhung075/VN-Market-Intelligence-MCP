@@ -10,14 +10,8 @@
 
 ## [Market Watcher] Price, Volume, Technicals
 2026-05-12 16:00 | Close: 76,500 VND | RSI: N/A | Vol: 1.56M (185% avg) | YoY: N/A
-
-
-## [Market Watcher] Price, Volume, Technicals
-
-### 2026-05-01 · EOD
-**2026-05-01 16:00** | Close: 75,200 VND (+2.31% daily) | RSI: N/A | Volume: avg vol | Sentiment: Bullish
-Oil & gas sector strength continues. GAS outperforming amid positive retail gas pricing environment. Insider: no activity
-Action: Hold / Monitor upside
+2026-05-01 16:00 | Close: 75,200 VND (+2.31% daily) | RSI: N/A | Volume: avg vol | Sentiment: Bullish
+2026-06-01 08:59 | Close: 84,200 VND (-3.66%) | RSI: N/A | Vol: N/A | YoY: N/A | Note: Oil sector weakness (-2.21% avg), Brent +4.54%
 
 ## [Unified Agent] Quarterly Syntheses
 2026-05-14 16:00 | Close: 83,600 VND | RSI: N/A(16c) | Vol: 406.8K (N/A% avg) | YoY: N/A
