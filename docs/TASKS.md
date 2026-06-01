@@ -18,14 +18,15 @@
 
 ---
 
-## Sprint VPS-DEPLOY-PLACEHOLDER-GUARD — VPS fetch-script deploys placeholder-safe
+## Sprint VPS-DEPLOY-PLACEHOLDER-GUARD — Consolidate deployer (DECISION-A)
 
-**Status:** OPEN 2026-06-01. **Pri: HIGH.** Zone: dev-vps-crawls + ops. Brief: `docs/architecture-briefs/2026-06-01-vps-deploy-placeholder-guard.md`. Root: news outage (cafef bypass). WIP≤2.
-- 🔄 **VPS-BS4-INSTALL (ops)** — `pip3 install beautifulsoup4` on VPS (immediate, independent). → TASK `TASK_VPS-BS4-INSTALL.md`.
-- 🔄 **PLACEHOLDER-GUARD-2** (dev-vps-crawls) — Convert 6 hardcode scripts to env-fallback (fetch-vn-news/gso/sbv/tradingeconomics/prices/enrich-bctc-urls). TE_API_KEY=empty-string fallback. → TASK `TASK_PLACEHOLDER-GUARD-2.md`.
-- 🔄 **PLACEHOLDER-GUARD-1** (dev-vps-crawls) — Leak guard: pre-scp assert + post-deploy SSH verify in `deploy-vps-proxy.sh` (5 TMP blocks + glob `/root/fetch-*.sh /root/*.py`). → TASK `TASK_PLACEHOLDER-GUARD-1.md`.
-- 🔄 **PLACEHOLDER-GUARD-3** (dev-vps-crawls) — Article-body-fetcher.py deploy block (scp + idempotent pip3 install). → TASK `TASK_PLACEHOLDER-GUARD-3.md`.
-- 🔄 **PLACEHOLDER-GUARD-QA** (qa + ops) — Full redeploy; deliberate-violation test; post-deploy verify CLEAN; 14-feed cycle confirm.
+**Status:** OPEN 2026-06-01. **Pri: HIGH.** Zone: dev-vps-crawls + ops + qa. Brief: `docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md`. Root: cafef 814088b0 + VULTR dead. **DECOMPOSITION:** T1 pre-gate, T2/T3 parallel, T4 env, T5 deploy, T6 gate. **RETIRED:** PLACEHOLDER-GUARD-1/2/3/QA + VPS-BS4-INSTALL.
+- 🔄 **T1-OPS-RECON (ops)** — SSH Vinahost verify: no leaks, all 5 active, socat alive. HARD GATE. → `TASK_VPS-DEP-T1-OPS-RECON.md`
+- 🔄 **T2-GUARD1-MIGRATE (dev-vps-crawls)** — Port GUARD-1 into 9 blocks. Gates T1. Parallel T3. → `TASK_VPS-DEP-T2-GUARD1-MIGRATE.md`
+- 🔄 **T3-GUARD3-MIGRATE (dev-vps-crawls)** — Section 10 article-body-fetcher+bs4. Gates T1. Parallel T2. → `TASK_VPS-DEP-T3-GUARD3-MIGRATE.md`
+- 🔄 **T4-RETIRE-ENV (dev-vps-crawls)** — Post-verify, del vps-proxy.sh, VULTR_* from .env. Gates T2/T3. → `TASK_VPS-DEP-T4-RETIRE-ENV.md`
+- 🔄 **T5-OPS-DEPLOY (ops)** — Execute deploy; verify 9 active + 14-feed HTTP=200. Gates T4. → `TASK_VPS-DEP-T5-OPS-DEPLOY.md`
+- 🔄 **T6-QA-GATE (qa)** — Gate: GUARD-1 blocks dirty, clean passes, SSH detects leak, TE_API_KEY OK, vps-proxy gone, .env clean. Gates T5. → `TASK_VPS-DEP-T6-QA-GATE.md`
 
 ---
 

@@ -5,12 +5,12 @@
   "head": {
     "status":         "planning",
     "active_task_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
-    "next_agent":     "pm",
-    "next_action":    "DECISION A (consolidate): retire deploy-vps-proxy.sh (Vultr dead); migrate GUARD-1/2/3 + article-body-fetcher into deploy-vinahost.sh; remove VULTR_IP from .env. OPS-RECON gates T2/T3/T4. Brief: docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md. Decompose into T1(ops-recon) T2(GUARD-1 migrate) T3(GUARD-3 migrate) T4(retire+env-clean) T5(QA).",
+    "next_agent":     "ops",
+    "next_action":    "T1 OPS-RECON (pre-gate): SSH Vinahost, verify no placeholder leaks + all 5 services active + socat alive. Unblocks T2/T3/T4.",
     "wip":            0,
     "wip_max":        2,
-    "updated_at":     "2026-06-01T14:12Z",
-    "updated_by":     "architect"
+    "updated_at":     "2026-06-01T16:30Z",
+    "updated_by":     "pm"
   },
 
   "dashboard_section_cache": {
@@ -22,7 +22,7 @@
 
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
-    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, planning→pm 06-01T14:12Z): DECISION-A ISSUED — consolidate to single deployer deploy-vinahost.sh; retire deploy-vps-proxy.sh (Vultr dead 2026-04-13); migrate GUARD-1/2/3+article-body into deploy-vinahost.sh; remove VULTR_IP from .env. OPS-RECON (T1) gates T2/T3/T4. Brief: docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md. PM to decompose 5 tasks.",
+    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, planning→ops 06-01T16:30Z): DECISION-A DECOMPOSED — 6 atomic tasks T1–T6 (T1 ops-recon pre-gate, T2/T3 dev parallel GUARD-1/3 migrate, T4 dev env-clean, T5 ops redeploy, T6 qa gate). Handoffs: TASK_VPS-DEP-T{1,2,3,4,5,6}.md. Old PLACEHOLDER-GUARD-1/2/3/QA + VPS-BS4-INSTALL RETIRED (superseded by consolidation DECISION-A). Brief: docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md. PM signature verified (VULTR decommission + Vinahost live confirmed by operator).",
     "last_closed":     "VPS news-push LIVE outage RESTORED (2026-06-01T10:09Z tick, ops 53c3d888): all 14 feeds http=000 since ~09:07Z — /root/fetch-vn-news.sh shipped unrendered __MCP_BASE__/__API_KEY__ placeholders (deploy regression from cafef 814088b0 clobbering rendered live script). ops rendered creds, fixed same in fetch-foreign-flow.sh, verified raw http=200 received=242 cursor 0→1780331100. My socat-reboot hypothesis was WRONG (uptime 48d) — ops verify-raw corrected it. FU-OPS-CAFEF-1 PASS (cafef 20+20/cycle ×7, 0 PERMANENTLY_BLOCKED — is_blocked() fix holding). Prior: RE-CAP-1 (signal-dashboard 192→118L, 7aa3abbf).",
     "watch_items": [
       "CHEF morning-dish: verify guaranteed publish under macro-down on next fire",

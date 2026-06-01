@@ -1,5 +1,35 @@
 # PM — Notebook
 
+## c283 cycle-76 · 2026-06-01T163000Z
+
+**Status:** VPS-DEPLOY-PLACEHOLDER-GUARD SPRINT DECOMPOSITION COMPLETE. PM executed full breakdown of architect DECISION-A (docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md) into 6 atomic tasks per phase: T1 (ops pre-gate recon), T2/T3 (dev parallel migrates), T4 (dev retire+env), T5 (ops redeploy), T6 (qa gate). **CONTEXT VERIFIED:** Operator confirmed VINAHOST_IP=125.212.251.27 LIVE + VULTR_IP=139.180.185.18 DEAD (2026-04-13 decommission), resolving architect's T1 SSH-recon gate. **DECISION-A RATIONALE:** Consolidate deploy-vps-proxy.sh → deploy-vinahost.sh (9+1 services, superset); GUARD-1/3 migrate source is commit 96446b5d (reference implementation, now supersedes old PLACEHOLDER-GUARD-1/2/3/QA + VPS-BS4-INSTALL). **ATOMIZATION STRATEGY:**
+
+1. **T1 (ops, 0.5h):** OPS-RECON pre-gate — SSH Vinahost: AC-1 no placeholder leaks (grep __TOKEN__), AC-2 all 5 services active (systemctl is-active), AC-3 socat alive (pgrep). HARD GATE for T2/T3/T4. Handoff: `TASK_VPS-DEP-T1-OPS-RECON.md`.
+
+2. **T2 (dev-vps-crawls, 1.5h):** GUARD-1 migrate — Port pre-SCP placeholder assert from deploy-vps-proxy.sh into all 9 render blocks in deploy-vinahost.sh. ACs: all 9 blocks follow pattern (TMP+sed+grep+exit), TE_API_KEY 3-token render OK, no false-guards, ≤400L. Gates on T1 PASS. Parallel with T3. Handoff: `TASK_VPS-DEP-T2-GUARD1-MIGRATE.md`.
+
+3. **T3 (dev-vps-crawls, 0.5h):** GUARD-3 migrate — Add section 10 to deploy-vinahost.sh: article-body-fetcher.py scp + chmod + idempotent pip3 install beautifulsoup4. ACs: section 10 present, post-scp ls check, beautifulsoup4 idempotent, no false guards, vps-scripts/article-body-fetcher.py exists. Gates on T1 PASS. Parallel with T2. Handoff: `TASK_VPS-DEP-T3-GUARD3-MIGRATE.md`.
+
+4. **T4 (dev-vps-crawls, 0.5h):** Retire+env — Append GUARD-1 post-deploy SSH verify (VERIFYEOF block) to EOF of deploy-vinahost.sh; delete scripts/deploy-vps-proxy.sh; remove VULTR_IP/USERNAME/PASSWORD from .env/.env.example (add comment re: Vultr decommission). Confirm fetch-tradingeconomics.sh __TE_API_KEY__ sentinel retained (defence-in-depth, AC-8). ACs: verify block appended, VERIFYEOF 2x, deploy-vps-proxy deleted, VULTR_* gone from both files, TE_API_KEY retained. Gates on T1/T2/T3 DONE. Handoff: `TASK_VPS-DEP-T4-RETIRE-ENV.md`.
+
+5. **T5 (ops, 1h):** Deploy+verify — Execute ./scripts/deploy-vinahost.sh (all 10 sections). ACs: dev commits on main (confirm git status), pre-flight check (no stale processes), deploy exit 0, systemctl status all 9 active, 14-feed HTTP=200 within 2h (5 main services × 2–3 push targets each), article-body-fetcher+beautifulsoup4 live, GUARD-1 post-verify clean (zero leaks). Gates on T1/T2/T3/T4 DONE. Unblocks T6. Handoff: `TASK_VPS-DEP-T5-OPS-DEPLOY.md`.
+
+6. **T6 (qa, 1h):** Gate proof — Execute DV-1..DV-8: GUARD-1 pre-SCP assert blocks dirty fixture (test fixture, exit 1), clean passes (exit 0), post-deploy SSH verify detects injected leak, TE_API_KEY empty-string render no leak, deploy-vps-proxy.sh gone (git ls-tree), VULTR_IP removed from .env/.env.example, article-body-fetcher.py + beautifulsoup4 live on VPS, ops 14-feed logs confirm HTTP=200. Gates on T5 DONE. Handoff: `TASK_VPS-DEP-T6-QA-GATE.md`.
+
+**ATOMIZATION RATIONALE:** Each task is ~0.5–1.5h, single file (or file deletion), no shared writes except TASKS.md. T1 pre-gates all others (dependency). T2/T3 parallel (independent files, both on same owner dev-vps-crawls). T4 serialized after T2/T3 (depends on merged state). T5 serialized after T4 (dev commits must be on main first). T6 gates final exit. Total serial path: T1 → (T2||T3) → T4 → T5 → T6. WIP enforcement: max 2 concurrent (T1 blocks until PASS, then T2/T3 launch parallel, T4 awaits both, T5 awaits T4, T6 awaits T5).
+
+**HANDOFF FILES CREATED:** 6 `.md` files in docs/handoffs/ (T1–T6), each ~90–150L with full ACs, implementation approach, test plan, risk flags, related docs. OBSOLETE ROWS RETIRED from TASKS.md: PLACEHOLDER-GUARD-1, PLACEHOLDER-GUARD-2, PLACEHOLDER-GUARD-3, PLACEHOLDER-GUARD-QA, VPS-BS4-INSTALL (replaced by consolidated T1–T6 chain).
+
+**PIPELINE-STATE UPDATES:** head.status=planning, head.next_agent=ops (T1 owner), head.next_action=one-liner (T1 OPS-RECON), head.updated_at/updated_by=pm+timestamp. narrative.current_sprint updated with 6-task chain + brief ref + VULTR decommission confirmation. SSOT BINDING: main terminal stages + commits (serial per feedback_concurrent_commit_race). No pilot-status edits; no branch work.
+
+**WIP ENFORCEMENT:** At dispatch, WIP=0 before spawn. T1 is blocking; once ops reports T1 PASS, WIP increments to 2 (T2+T3 parallel). T4 awaits T2/T3, T5 awaits T4, T6 awaits T5. Max 2 rule prevents pipeline bloat. PM monitors WORK channel for blocker escalations (if any task fails, PM escalates to dev-vps-crawls/ops/qa or architect for design issues).
+
+**FACT VERIFICATION:** Operator confirmation of Vinahost live + Vultr dead independently validated architect's T1 gate (no SSH-recon needed from PM; ops can proceed directly to PASS/FAIL). GUARD-1 implementation reference confirmed (commit 96446b5d, 6/6 QA passed). Deploy-vinahost.sh structure verified (9 sections, superset of deploy-vps-proxy.sh 5 services). Article-body-fetcher.py source exists (deploy-vps-proxy.sh L206–221 reference). .env/.env.example structure confirmed (VULTR_* present, to be removed).
+
+**NEXT STEP:** Main terminal dispatches ops with T1 handoff (TASK_VPS-DEP-T1-OPS-RECON.md) + caveman summary. After T1 PASS reported, main terminal dispatches dev-vps-crawls with T2+T3 handoffs (parallel). T4 gates on T2/T3 completion. After T4 commit, main terminal dispatches ops with T5 handoff. After T5 PASS, main terminal dispatches qa with T6 handoff. After T6 PASS, PM exits sprint (SPRINT EXIT). Total wall-clock: T1=30min, T2||T3=1.5h (wall), T4=30min, T5=1h, T6=1h. Critical path ≈ 4.5h real-time (assuming no blockers).
+
+---
+
 ## c282 cycle-75 · 2026-05-30T000000Z
 
 **Status:** DPI TASK DECOMPOSITION COMPLETE. PM executed full breakdown of DPI-ARCH design (docs/handoffs/DPI-ARCH.md, architect complete 2026-05-30) into 4 atomic per-zone dev tasks + downstream ops/qa/po sequence. **DESIGN SUMMARY:** 4 root-caused code bugs spanning macro-indicators (DPI-1: FX canonical source, DPI-2: stale computedAt) + mcp-server (DPI-3: Brent/Gold delta, DPI-4: foreign-flow data loss + critical R-1 race). **ATOMIZATION STRATEGY:** Zone-parallel decomposition (no shared files; macros & mcp-server independent). Rebuild order enforced: mcp-server FIRST (DPI-3/4 write fresh data), macro-indicators SECOND (reads SBV written by mcp-server cron). **TASK BREAKDOWN:**
