@@ -5,12 +5,12 @@
   "head": {
     "status":         "planning",
     "active_task_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
-    "next_agent":     "ops",
-    "next_action":    "T1 OPS-RECON (pre-gate): SSH Vinahost, verify no placeholder leaks + all 5 services active + socat alive. Unblocks T2/T3/T4.",
+    "next_agent":     "dev-vps-crawls",
+    "next_action":    "T1 PASSED (ops recon: Vinahost 125.212.251.27 live, 0 placeholder leaks, services active). Proceed T2+T3 in PARALLEL (WIP2): T2 migrate GUARD-1 leak-guard into ALL deploy-vinahost.sh blocks; T3 migrate article-body-fetcher.py block (+idempotent pip3 bs4) into deploy-vinahost.sh. Handoffs TASK_VPS-DEP-T2-GUARD1-MIGRATE.md + T3-GUARD3-MIGRATE.md. KEEP fetch-tradingeconomics __TE_API_KEY__ sentinel. Then T4(env-clean)→T5(ops deploy)→T6(qa).",
     "wip":            0,
     "wip_max":        2,
-    "updated_at":     "2026-06-01T16:30Z",
-    "updated_by":     "pm"
+    "updated_at":     "2026-06-01T14:35Z",
+    "updated_by":     "dev-team"
   },
 
   "dashboard_section_cache": {
@@ -22,9 +22,10 @@
 
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
-    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, planning→ops 06-01T16:30Z): DECISION-A DECOMPOSED — 6 atomic tasks T1–T6 (T1 ops-recon pre-gate, T2/T3 dev parallel GUARD-1/3 migrate, T4 dev env-clean, T5 ops redeploy, T6 qa gate). Handoffs: TASK_VPS-DEP-T{1,2,3,4,5,6}.md. Old PLACEHOLDER-GUARD-1/2/3/QA + VPS-BS4-INSTALL RETIRED (superseded by consolidation DECISION-A). Brief: docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md. PM signature verified (VULTR decommission + Vinahost live confirmed by operator).",
-    "last_closed":     "VPS news-push LIVE outage RESTORED (2026-06-01T10:09Z tick, ops 53c3d888): all 14 feeds http=000 since ~09:07Z — /root/fetch-vn-news.sh shipped unrendered __MCP_BASE__/__API_KEY__ placeholders (deploy regression from cafef 814088b0 clobbering rendered live script). ops rendered creds, fixed same in fetch-foreign-flow.sh, verified raw http=200 received=242 cursor 0→1780331100. My socat-reboot hypothesis was WRONG (uptime 48d) — ops verify-raw corrected it. FU-OPS-CAFEF-1 PASS (cafef 20+20/cycle ×7, 0 PERMANENTLY_BLOCKED — is_blocked() fix holding). Prior: RE-CAP-1 (signal-dashboard 192→118L, 7aa3abbf).",
+    "current_sprint":  "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, planning→dev-vps-crawls 06-01T14:35Z): DECISION-A consolidate. T1 ops-recon PASSED (Vinahost 125.212.251.27 live, 0 leaks, services active — operator confirmed Vultr dead). NEXT: T2+T3 PARALLEL (dev-vps-crawls) migrate GUARD-1 leak-guard + article-body-fetcher.py into LIVE deploy-vinahost.sh; then T4 env-clean (delete deploy-vps-proxy.sh + remove VULTR_IP), T5 ops redeploy+14-feed verify, T6 qa. Handoffs TASK_VPS-DEP-T{1..6}.md. KEEP TE __TE_API_KEY__ sentinel. Build runs next tick (not crammed post-P0).",
+    "last_closed":     "P0 mcp-server :3000 backend OUTAGE → RECOVERED (2026-06-01 ~14:30, ops `docker compose up -d mcp-server`): container vn-market-intelligence-mcp-mcp-server-1 SIGTERM-killed (signal=15, NOT OOM) while host HEALTHY (55% mem free) → full-fleet+mutex-system down; router caught it via failed call_tool, verified raw (curl :3000=000→200 toolCount154, socat :4000 200, gateway round-trip OK). CULPRIT UNIDENTIFIED — suspected AUD-ND-1 regression (detector docker-stopped backend on false signal; 4th fleet-host-danger candidate). Single-service relaunch (NOT fleet, NOT rebuild — clean-exit→relaunch lesson). Prior: VPS news-push outage RESTORED 10:09Z ops 53c3d888 (unrendered placeholders, http=200 received=242).",
     "watch_items": [
+      "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 while host healthy, culprit unidentified — verify detectors are PLAN-ONLY; check system-auditor/cron logs for the docker-stop. 4th host-danger candidate.",
       "CHEF morning-dish: verify guaranteed publish under macro-down on next fire",
       "CHEF-TS-STAMP (LOW cosmetic): cycle-timestamp + next-slot-date mis-stamp; watch next tick",
       "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion — endpoint live but no consumer yet",
