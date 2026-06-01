@@ -3,14 +3,14 @@
   "_maintained_by": "every agent at RETURN via agent-chaining-protocol",
 
   "head": {
-    "status":         "ready-for-ops",
+    "status":         "in_progress",
     "active_task_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
     "next_agent":     "ops",
-    "next_action":    "T2+T3+T4 DONE (dev-vps-crawls). deploy-vinahost.sh: GUARD-1 in 8 render blocks, section 10 article-body-fetcher, VERIFYEOF post-deploy verify. deploy-vps-proxy.sh DELETED. .env VULTR_IP/USERNAME/PASSWORD removed. bash -n PASS. GUARD-1 deliberate-violation: exit 1 confirmed. Proceed T5: SSH Vinahost, run ./scripts/deploy-vinahost.sh, verify 14 feeds + article-body endpoint. T6 is qa gate (TASK_VPS-DEP-T6-QA-GATE.md).",
+    "next_action":    "T2+T3+T4 DONE+ROUTER-RAW-VERIFIED (afe31443): deploy-vinahost.sh GUARD-1 ×9 + section-10 article-body-fetcher + bs4; deploy-vps-proxy.sh DELETED from HEAD; .env 0 live VULTR_ lines; bash -n PASS; __TE_API_KEY__ sentinel intact. T5 (ops, LIVE redeploy — fresh tick per high-stakes discipline): SSH Vinahost 125.212.251.27, run ./scripts/deploy-vinahost.sh (GUARD-1 aborts on any __PLACEHOLDER__ leak = fail-safe), verify 14 feeds http=200 + /proxy/article-body endpoint live. Then T6 qa gate (TASK_VPS-DEP-T6-QA-GATE.md).",
     "wip":            0,
     "wip_max":        2,
-    "updated_at":     "2026-06-01T15:30Z",
-    "updated_by":     "dev-vps-crawls"
+    "updated_at":     "2026-06-01T16:11Z",
+    "updated_by":     "dev-team"
   },
 
   "dashboard_section_cache": {

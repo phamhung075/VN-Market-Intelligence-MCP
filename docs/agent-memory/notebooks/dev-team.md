@@ -4,6 +4,14 @@
 
 > Archive: `docs/archive/notebooks/dev-team-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
+## Current state (:07 — 2026-06-01T16:09Z) — VPS T2+T3+T4 SHIPPED+raw-verified; Vultr removed from repo; head→ops T5
+
+- PREFLIGHT clean, backend HEALTHY (:3000=200), no P0. Drained 4 routine (3 cowork-fire + 1 price_anomaly dup) → 0 inbox.
+- **Prior tick's VPS lock was STALE** (claimed 15:06Z, TTL 16:08Z expired; deploy-vinahost.sh untouched, .env still had VULTR_ = build never ran — the in-flight tick crashed/stalled). Confirmed via `task_claim` → `claimed:true, stolen:true`. The 15:25–16:02Z commits were claude-manager-helper file-location cleanup, NOT the VPS build. So the WATCH from 15:30Z resolved = stale lock, claimed fresh this tick.
+- **Resumed dev-vps-crawls (S2 mutex, ttl 3600) for T2+T3+T4 as ONE agent** (all its zone, all edit deploy-vinahost.sh/.env → sequential not parallel; the head's old "PARALLEL WIP2" was wrong = same-file collision). Returned afe31443 (5 files, +86/−253).
+- **ROUTER RAW-VERIFIED (not relayed):** `git ls-tree HEAD scripts/`=0 deploy-vps-proxy (file gone) · `.env` 0 live VULTR_ lines · commit scope = 5 intended files only (.env git-ignored, correctly absent) · `bash -n` SYNTAX OK · GUARD-1 ×9 (8 render blocks + verify) · article-body-fetcher.py block + idempotent pip3 bs4 (L335-350) · `__TE_API_KEY__` sentinel intact fetch-tradingeconomics.sh:15. **Operator directive "remove vultr" SATISFIED at repo level.** I caught .env line 12 `VULTR_PASSWORD` (plaintext cred) + told agent to strip all 3 VULTR_ lines (handoff said only IP/USERNAME) — done.
+- Fixed head: agent wrote `status=ready-for-ops` (non-enum → resume gate wouldn't fire) + stale `updated_at=15:30Z` → corrected to `status=in_progress`, `updated_at=16:11Z`, `updated_by=dev-team`, next_agent=ops. **DID NOT cram T5** = LIVE production redeploy to Vinahost = the explicitly high-stakes "redeploy LIVE host" step → fresh tick (GUARD-1 now makes the deploy fail-safe; no urgency, live host runs old-but-working scripts). Released VPS mutex. WIP back to 0.
+
 ## Current state (:07 — 2026-06-01T15:30Z) — VPS build IN-FLIGHT under a concurrent tick; this tick deferred (no double-spawn)
 
 - PREFLIGHT clean (HEAD.lock absent, worktree prune empty). Backend HEALTHY (curl :3000=200, :4000 socat=200) — NO P0 this tick (last tick's mcp-server recovery holding). Drained 14 routine signals (5 `context_bloat_breach` docs/TASKS.md now-stale @ raw wc=80=cap → false-positive family · 5 cowork-fire heartbeats · 4 bctc routine) → 0 inbox. New cowork-fire 153320Z arrived POST-drain → next-tick. DASHBOARD OPEN rows are 2026-05-21/22 auditor false-positive cruft (10d old, separate hygiene debt — not drained this tick).
