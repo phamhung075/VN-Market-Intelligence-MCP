@@ -4,6 +4,11 @@
 
 > Archive: `docs/archive/notebooks/dev-team-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
+## Current state (:07 on-demand — 2026-06-01T06:09Z) — IDLE
+
+- PREFLIGHT clean. Drained 3 cowork-fire SILENT heartbeats → processed/ (no slots due, nothing spawned). 0 telegram reports. DASHBOARD git-clean — the 5 `| NEW |` rows are all known-stale breadcrumbs (dev-mcp-server P2-* impl_done 2026-05-25 + ancient po 1967b), not inbound.
+- No chef fire in these ticks → chef-hardening live-verify STILL PENDING next actual chef cron fire. WIP 0/2. IDLE exit (no new trigger; open backlog non-time-sensitive, next-pickable queued in pipeline-state).
+
 ## Current state (:07 on-demand — 2026-06-01T05:09Z)
 
 - PREFLIGHT clean. Drained 3 signals → processed/ (2 cowork-fire heartbeats + 1 GENUINE `context_bloat_breach` news-scout.md 221L). DASHBOARD 0 NEW, telegram 0 NEW.
@@ -20,12 +25,6 @@
 - 5 NEW telegram reports triaged: 4 false-pos/already-fixed/tracked (#3017+#3018 false-pos+retraction, #3019 drain-shell-injection caught/fixed, #3021 A-20 macro false-pos), 1 GENUINE (#3020 Tier-2 VPS proxy stale). All 5 processed+cleared.
 - **VPS recovery (genuine win):** ops-vps-fetch root-caused #3020 as NOT VPS-SOCAT (main-server socat :4000→:3000 alive, mcp-server /health 200) but 3 distinct VPS-side faults. Fixed live: Fix1 vn-foreign-flow.service lost EnvironmentFile in 2026-05-30 redeploy → re-wired (PUSH 200 upserted 102); Fix3 vn-vps-proxy TasksMax 16→32 → bctc-discover EAGAIN gone. Fix2 ssc-iboard `iboard-query.ssc.vn` globally dead → SSC-IBOARD-MIGRATE backlog (dev-vps-crawls).
 - WIP 0/2. No code sprint dispatched (TSH-1 still pending spawned-agent gateway-wedge clear).
-
-## Current state (c170 — 2026-05-17T19:44Z)
-
-- PREFLIGHT: HEAD.lock cleared. Prune clean.
-- MCP URL root cause identified: `https://zenmidi.com/mcp` wrong → correct `https://zenmidi.com/vn-market/mcp`. 15 files updated. Commit: 88920963. 1938a DONE.
-- ACTION REQUIRED FOR USER: Reload Claude Desktop (Cmd+R) for cowork workspace changes to take effect.
 
 ## Lessons / patterns
 
