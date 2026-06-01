@@ -10,11 +10,17 @@ LOG="/var/log/vn-news-fetch.log"
 CURSOR_FILE="${VN_NEWS_CURSOR_FILE:-/var/lib/vn-news/cursor}"
 
 # ── Log rotation (10 MB cap) ──────────────────────────────────────────────
-# Source shared constants (LOG_ROTATE_BYTES) from vps-lib.sh
-# shellcheck source=/root/vps-lib.sh
-[ -f /root/vps-lib.sh ] && LOG_ROTATE_BYTES=$(grep '^LOG_ROTATE_BYTES=' /root/vps-lib.sh | cut -d= -f2) || LOG_ROTATE_BYTES=10485760
+# Set default first, then conditionally override from vps-lib.sh.
+# IMPORTANT: must set default before the conditional — if vps-lib.sh does not
+# define LOG_ROTATE_BYTES, the grep returns empty and LOG_ROTATE_BYTES is unset,
+# causing "unary operator expected" in the -gt comparison.
+LOG_ROTATE_BYTES=10485760
+if [ -f /root/vps-lib.sh ]; then
+  _LRB=$(grep '^LOG_ROTATE_BYTES=' /root/vps-lib.sh | cut -d= -f2)
+  [ -n "$_LRB" ] && LOG_ROTATE_BYTES="$_LRB"
+fi
 LOG_SIZE=$(stat -c%s "$LOG" 2>/dev/null || echo 0)
-if [ "$LOG_SIZE" -gt $LOG_ROTATE_BYTES ]; then mv "$LOG" "$LOG.old"; fi
+if [ "$LOG_SIZE" -gt "$LOG_ROTATE_BYTES" ]; then mv "$LOG" "$LOG.old"; fi
 
 TS() { date -u +%Y-%m-%dT%H:%M:%SZ; }
 START_S=$(date -u +%s)
@@ -90,12 +96,23 @@ next_ua() {
 }
 
 # ── Block detection ───────────────────────────────────────────────────────
+# Match ONLY actual Cloudflare/anti-bot challenge-page structural patterns.
+# DO NOT match bare topic keywords (e.g. "robot", "cloudflare") that appear
+# legitimately in Vietnamese finance articles — this caused cafef/vnexpress/
+# tuoitre/nhandan to be PERMANENTLY_BLOCKED since 2026-04-22 whenever an RSS
+# item mentioned "robot hình người" (humanoid robot) or similar.
 is_blocked() {
   local body="$1" http_code="$2"
+  # HTTP error codes that definitively indicate blocking/rate-limiting
   [ "$http_code" = "403" ] && return 0
   [ "$http_code" = "429" ] && return 0
   [ "$http_code" = "000" ] && return 0
-  echo "$body" | grep -qi "captcha\|robot\|cloudflare\|access denied\|just a moment\|unusual traffic\|verify you are human" && return 0
+  # CF IUAM (I'm Under Attack Mode) challenge page — title is exact
+  echo "$body" | grep -qi "just a moment\.\.\." && return 0
+  # CF managed challenge / browser check page structural markers
+  echo "$body" | grep -qi "checking your browser\|cf-browser-verification\|challenge-platform\|_cf_chl_\|Attention Required! | Cloudflare" && return 0
+  # Generic CAPTCHA challenge page (must be a full challenge page, not a passing mention)
+  echo "$body" | grep -qi "<title>.*captcha\|captcha.*<\/title>" && return 0
   return 1
 }
 

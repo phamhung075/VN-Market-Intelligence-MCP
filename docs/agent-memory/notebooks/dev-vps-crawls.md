@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-05-30T11:50Z | **Sprint:** FF-DIAG
+**Last updated:** 2026-06-01T09:10Z | **Sprint:** VPS-NEWS-CAFEF-VNECO
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
 
@@ -21,7 +21,8 @@ Zone: dev-zone (VPS scraper code)
 | vps-prices | /root/fetch-prices.sh | plain-requests-open-api | healthy end-to-end (112 items 200 OK) | 2026-05-13 |
 | cafef-index | /root/fetch-prices.sh (Step 3) | plain-requests-open-api | healthy | 2026-05-13 |
 | sbv-rates | /root/fetch-sbv.sh | plain-requests-open-api | healthy end-to-end | 2026-05-13 |
-| vn-news-rss | /root/fetch-vn-news.sh | ua-rotation-rss | healthy end-to-end (245 items 200 OK) | 2026-05-13 |
+| vn-news-rss | /root/fetch-vn-news.sh | ua-rotation-rss | FIXED 2026-06-01 — is_blocked() false-positive on "robot" → cafef/vnexpress/tuoitre/nhandan restored. cafef-market: 20 items, cafef-biz: 20 items (was 0 since 2026-04-22). | 2026-06-01 |
+| article-body | /root/article-body-fetcher.py | plain-requests-open-api | NEW 2026-06-01 — cafef.vn + vneconomy.vn article body fetch. Endpoint: VPS:8765/proxy/article-body?url=. cafef 5000ch 200 OK, vneco 5000ch 200 OK. | 2026-06-01 |
 | vn-foreign-flow | /root/fetch-foreign-flow.sh | plain-requests-open-api | FIXED 2026-05-30 — field drift: fBuyVol→fBVol, fSellVol→fSVolume. FPT fBVol=110629 fSVolume=148534 confirmed. 103 items pushed 200 OK. | 2026-05-30 |
 | hsx-bctc (HNX/UPCOM) | /root/discover-bctc-urls-browser.py | hnx-ajax-post | OPERATIONAL — Q1/2026 BCTC flowing. SHB e2e PASS. | 2026-05-13T09:30Z |
 | hsx-bctc (HOSE/SSC) | /root/discover-bctc-urls-browser.py | ssc-playwright-download | OPERATIONAL — Q1/2026 BCTC flowing. ACB Q1 PASS (1953a pattern fix). | 2026-05-19 |
@@ -50,6 +51,7 @@ Zone: dev-zone (VPS scraper code)
 
 | Date | Source | Technique | Outcome |
 |------|--------|-----------|---------|
+| 2026-06-01T09:10Z | vn-news-rss + article-body | is_blocked-fix + plain-requests-open-api | VPS-NEWS-CAFEF-VNECO DONE — P1: fixed is_blocked() false-positive on "robot" keyword; cafef-market/cafef-biz/vnexpress/tuoitre/nhandan PERMANENTLY_BLOCKED → all restored (cafef 0→20 items each). P2: article-body-fetcher.py + /proxy/article-body endpoint deployed; cafef 5000ch OK + vneconomy 5000ch OK. Also fixed LOG_ROTATE_BYTES unset bug (vn-news-rss had same pattern as ff-diag fix). |
 | 2026-05-30T11:50Z | vn-foreign-flow | field-drift-fix | FF-DIAG DONE — root cause: API uses fBVol/fSVolume, script defaulted to fBuyVol/fSellVol (nonexistent → jq→0). All pushes had foreignBuyVol=0/foreignSellVol=0, get_foreign_flow returned "never collected" fleet-wide. Fix: correct defaults in fetch-foreign-flow.sh + run-foreign-flow-debug.sh. Also fixed LOG_ROTATE_BYTES fallback bug (unary operator stderr noise). Live proof: FPT fBVol=110629 fSVolume=148534, HPG fBVol=204669 fSVolume=279789, 103 items HTTP 200. Service restarted armed for Mon 02:00 UTC. Commit 0cbce0b4. |
 | 2026-05-19T07:15Z | discover-bctc-urls-browser.py | pattern-fix + repo-sync | 1953a DONE — zero-padded quý 01..04 patterns added to matches_quarter_and_year(). fetch-bctc.sh jq guard added. ACB Q1/2026 SUCCESS HTTP 200. Script committed to repo as vps-scripts/discover-bctc-urls-browser.py. deploy-vinahost.sh extended. Commit d946699b. |
 | 2026-05-18T06:00Z | vps-proxy-server.js | envelope-shape-fix | 1944a-vps DONE — `/proxy/bctc-discover/:ticker` now returns `{results:[{url,source,confidence}],error:null}` envelope. Deployed SCP + systemctl restart. Health 200 OK. 401 without key. Shape confirmed via curl (results=[] acceptable — script runs ~120s). |
@@ -78,6 +80,25 @@ Zone: dev-zone (VPS scraper code)
 - TASK-BCTC-2: developer — reverse-engineer hsx.vn SPA XHR API for no-browser HOSE BCTC path
 
 ---
+
+## Key Findings — 2026-06-01T09:10Z VPS-NEWS-CAFEF-VNECO
+
+### is_blocked() False-Positive on "robot" (P1 — production data loss since 2026-04-22)
+- Root cause: `grep -qi "robot"` on the full RSS response body matched legitimate Vietnamese article titles ("robot hình người" = humanoid robot) — triggered on cafef, vnexpress, tuoitre, nhandan
+- Impact: cafef-market and cafef-biz stuck at 0 items every cycle for ~40 days; vnexpress/tuoitre/nhandan intermittently 0
+- Fix: replaced the bare keyword grep with anchored CF challenge-page structural patterns: `just a moment...`, `checking your browser`, `cf-browser-verification`, `challenge-platform`, `_cf_chl_`, `<title>.*captcha`
+- Also fixed LOG_ROTATE_BYTES unset bug (same pattern as FF-DIAG fix — vps-lib.sh lacks the constant, grep returns empty, unary operator expected in -gt)
+- Evidence: cafef-market 0→20 items, cafef-biz 0→20 items, vnexpress 0→20 items, tuoitre 0→20 items, nhandan 0→20+10 items in first post-fix cycle (2026-06-01T08:58Z)
+- Repo copy: `vps-scripts/fetch-vn-news.sh` updated to match VPS
+
+### Article Body Fetch Endpoint (P2 — new capability)
+- Implemented: `/root/article-body-fetcher.py` — HTTP-only, requests library, BeautifulSoup optional
+- Extractors: cafef.vn (div[data-role=content] or div#mainContent) + vneconomy.vn (div.text-justify)
+- Endpoint: `GET VPS:8765/proxy/article-body?url=<https-url>` (X-API-Key required)
+- Whitelist: cafef.vn and vneconomy.vn only (open-proxy guard in both script and server)
+- No anti-bot needed — both sites return 200 from VPS with browser UA
+- Integration note: wiring to /api/push-news is NOT done (would change push payload schema); endpoint is available for on-demand pull by MCP server or new enrichment job — flagged as follow-up
+- Evidence: cafef title "SACOMBANK chính thức đổi tên...", body 5000ch, published_at 2026-06-01T15:12:00; vneconomy title "Ngân hàng Nhà nước và Bộ Tài chính Mỹ...", body 5000ch
 
 ## Key Findings — 2026-05-30T11:50Z FF-DIAG Field Drift Fix
 

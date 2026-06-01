@@ -36,6 +36,14 @@
  *     → Added: 1916a-vps-part (fixes bctcQueueEnricherJob Strategy 0 dead route)
  *     → Shape fix: 1944a-vps (bare string[] → envelope, matches extractVpsPlaywrightUrls() parser)
  *
+ *   GET /proxy/article-body?url=<article-url>
+ *     → shells out to /root/article-body-fetcher.py --url <url>
+ *     → allowed domains: cafef.vn, vneconomy.vn
+ *     → returns JSON: { status, url, source_domain, title, body_text, published_at, fetched_at }
+ *     → HTTP-only (no Chromium) — both sites return 200 from Vietnam IP with browser headers
+ *     → Auth: X-API-Key required
+ *     → Added: VPS-NEWS-CAFEF-VNECO (P2 article body feature)
+ *
  *   GET /bctc-files/:code/:filename
  *     → serves /root/bctc-cache/<code>/<filename> as application/pdf
  *     → PDFs are downloaded by mcp-server BCTC discovery (task 1822d-a);
@@ -120,6 +128,18 @@ const BCTC_DISCOVER_SCRIPT = process.env.BCTC_DISCOVER_SCRIPT || "/root/discover
 
 /** Prefix path for the bctc-discover endpoint. */
 const BCTC_DISCOVER_PREFIX = "/proxy/bctc-discover/";
+
+/**
+ * Path to the article body fetcher Python script.
+ * Supports cafef.vn and vneconomy.vn article pages (HTTP-only, no Playwright).
+ */
+const ARTICLE_BODY_SCRIPT = process.env.ARTICLE_BODY_SCRIPT || "/root/article-body-fetcher.py";
+
+/** Path for the article-body endpoint. */
+const ARTICLE_BODY_PATH = "/proxy/article-body";
+
+/** Domains allowed for article-body fetching (whitelist — prevents open proxy). */
+const ARTICLE_BODY_ALLOWED_DOMAINS = new Set(["cafef.vn", "vneconomy.vn"]);
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -265,6 +285,71 @@ function runDiscoverScript(ticker, year, quarter, timeoutMs) {
   });
 }
 
+/**
+ * Run the article body fetcher Python script for a given URL.
+ *
+ * The script is called as:
+ *   python3 /root/article-body-fetcher.py --url <article-url>
+ *
+ * It emits JSON to stdout: { status, url, source_domain, title, body_text, published_at, fetched_at }
+ * Returns parsed result object on success, or { status: "error", reason: "..." } on any failure.
+ *
+ * @param {string} articleUrl - Article URL (already validated by caller — allowed domain only)
+ * @param {number} timeoutMs - Kill script after this many ms (default 20_000)
+ * @returns {Promise<object>} Parsed JSON result from the script
+ */
+function runArticleBodyScript(articleUrl, timeoutMs = 20_000) {
+  return new Promise((resolve) => {
+    log("INFO", `article-body: spawning fetcher for ${articleUrl}`);
+
+    // spawn avoids shell interpolation — URL is passed as a separate argv element
+    const child = spawn("python3", [ARTICLE_BODY_SCRIPT, "--url", articleUrl], {
+      timeout: timeoutMs,
+      env: { ...process.env },
+    });
+
+    const stdoutChunks = [];
+    const stderrChunks = [];
+
+    child.stdout.on("data", (chunk) => stdoutChunks.push(chunk));
+    child.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+
+    child.on("close", (code) => {
+      const stdout = Buffer.concat(stdoutChunks).toString("utf8").trim();
+      const stderr = Buffer.concat(stderrChunks).toString("utf8").trim();
+
+      if (!stdout) {
+        log("WARN", `article-body: empty stdout for ${articleUrl}`, { code, stderr: stderr.slice(0, 200) });
+        resolve({ status: "error", reason: "Script produced no output", url: articleUrl });
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(stdout);
+      } catch (e) {
+        log("WARN", `article-body: JSON parse failed for ${articleUrl}`, { stdout: stdout.slice(0, 200) });
+        resolve({ status: "error", reason: "Invalid JSON from script", url: articleUrl });
+        return;
+      }
+
+      if (parsed.status !== "ok") {
+        log("WARN", `article-body: script returned error for ${articleUrl}`, { reason: parsed.reason });
+      } else {
+        const bodyLen = (parsed.body_text || "").length;
+        log("INFO", `article-body: OK for ${articleUrl} (title="${(parsed.title || "").slice(0, 60)}", body=${bodyLen}ch)`);
+      }
+
+      resolve(parsed);
+    });
+
+    child.on("error", (err) => {
+      log("ERROR", `article-body: spawn error for ${articleUrl}`, { error: err.message });
+      resolve({ status: "error", reason: `Spawn error: ${err.message}`, url: articleUrl });
+    });
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Request handler
 // ─────────────────────────────────────────────────────────────────────────────
@@ -291,6 +376,50 @@ async function handleRequest(req, res) {
       log("WARN", `401 Unauthorized from ${req.socket.remoteAddress}`);
       return jsonResponse(res, 401, { error: "Unauthorized" });
     }
+  }
+
+  // Article body fetch via article-body-fetcher.py
+  //   Incoming: GET /proxy/article-body?url=<percent-encoded-article-url>
+  //   Shells out to: python3 /root/article-body-fetcher.py --url <url>
+  //   Returns: { status, url, source_domain, title, body_text, published_at, fetched_at }
+  //   Allowed domains: cafef.vn, vneconomy.vn (whitelist enforced here AND in script)
+  //   Added: VPS-NEWS-CAFEF-VNECO (P2 article body feature)
+  if (url === ARTICLE_BODY_PATH || url.startsWith(ARTICLE_BODY_PATH + "?")) {
+    const qs = new URLSearchParams(url.includes("?") ? url.slice(url.indexOf("?") + 1) : "");
+    const rawUrl = qs.get("url") || "";
+
+    if (!rawUrl) {
+      return jsonResponse(res, 400, { error: "Missing required query param: url" });
+    }
+
+    // Validate URL is parseable
+    let parsedArticleUrl;
+    try {
+      parsedArticleUrl = new URL(rawUrl);
+    } catch (_e) {
+      return jsonResponse(res, 400, { error: "Invalid URL", url: rawUrl });
+    }
+
+    // Whitelist check — strip www. prefix
+    const articleDomain = parsedArticleUrl.hostname.replace(/^www\./, "");
+    if (!ARTICLE_BODY_ALLOWED_DOMAINS.has(articleDomain)) {
+      return jsonResponse(res, 400, {
+        error: "Domain not allowed",
+        domain: articleDomain,
+        allowed: [...ARTICLE_BODY_ALLOWED_DOMAINS],
+      });
+    }
+
+    // Must be HTTPS
+    if (parsedArticleUrl.protocol !== "https:") {
+      return jsonResponse(res, 400, { error: "URL must use HTTPS", url: rawUrl });
+    }
+
+    log("INFO", `article-body: request for ${rawUrl} from ${req.socket.remoteAddress}`);
+
+    const result = await runArticleBodyScript(rawUrl, 20_000);
+    const httpStatus = result.status === "ok" ? 200 : 502;
+    return jsonResponse(res, httpStatus, result);
   }
 
   // BCTC URL discovery via discover-bctc-urls-browser.py
@@ -493,6 +622,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
+  log("INFO", `Article body:     GET /proxy/article-body?url=<https://cafef.vn/...> (runs article-body-fetcher.py)`);
   log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker[?year=YYYY&quarter=Q] (runs discover-bctc-urls-browser.py)`);
   log("INFO", `SSC insider:      GET /proxy/ssc-insider (proxies congbothongtin.ssc.gov.vn insider table)`);
   log("INFO", `Muasamcong:       GET /proxy/muasamcong[?path=<path>] (proxies muasamcong.mpi.gov.vn)`);
@@ -501,6 +631,7 @@ server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `Health check:     GET /health`);
   log("INFO", `BCTC cache dir:   ${BCTC_CACHE_DIR}`);
   log("INFO", `BCTC discover script: ${BCTC_DISCOVER_SCRIPT}`);
+  log("INFO", `Article body script:  ${ARTICLE_BODY_SCRIPT}`);
   if (!API_KEY) {
     log("WARN", "VPS_API_KEY is not set — proxy accepts all requests (insecure)");
   }
