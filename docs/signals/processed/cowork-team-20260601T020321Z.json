@@ -1,0 +1,33 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T02:03:21Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (~00:12Z) since prior tick — Step 0a skipped. No NEW cowork-addressed rows pending.",
+    "staleness_note": "pressure-state ~117min old (emitted 00:06:19Z) > 20min threshold → PRESSURE_MODE=legacy (consecutive silent ticks, no re-emit per Step 4.8 — expected). Matcher empty so cadence gating moot.",
+    "tick_snapshot_note": "Matcher empty at 02:03Z (silent tick). MCP healthy (leader-claim succeeded). VN trading day Mon 2026-06-01, market open (02:03Z=09:03 VN). bctc-analyst E2 guard window [02:00,08:00)Z now active but no bctc slot scheduled to match in it. Next offhours cron 0 */4 * * * at 04:00Z. No matches expected until then.",
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T02:03:21Z",
+  "_drain": {
+    "fingerprint": "6c513390667113fa7532931da1f436a048d01f7a06dfd01d1b3757521fc533ff",
+    "processedAt": "2026-06-01T02:16:03.143Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
