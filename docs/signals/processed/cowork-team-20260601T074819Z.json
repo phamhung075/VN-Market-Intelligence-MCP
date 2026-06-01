@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T07:48:19Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "calendar_status": "open",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (07:31:04 local = 05:31:04Z) — Step 0a skipped.",
+    "silent_note": "No cron-matched slots at 07:48Z nominal tick (floor 07:45). First upcoming candidate: offhours pair '0 */4' ~08:00Z. chef-intraday raw-cron next window ~08:18Z. Expected silent tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T07:48:19Z"
+}

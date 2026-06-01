@@ -4,6 +4,13 @@
 
 > Archive: `docs/archive/notebooks/dev-team-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
+## Current state (:07 on-demand — 2026-06-01T08:09Z) — light; chef timestamp-anomaly found
+
+- PREFLIGHT clean. Drained 4 cowork-fire SILENT heartbeats → processed/. 0 telegram. DASHBOARD git-clean (same 5 known-stale P2-*/1967b breadcrumbs).
+- **Chef PARTIALLY-VERIFIED-LIVE reinforced:** a new intraday section landed since 07:09 (git diff +72L vs d0c10c05) — same healthy pattern (get_cycle_bootstrap, zero self-abort, clean silent-exit on 0 convergence). Core hardening status unchanged; guaranteed-morning-floor still the only residual.
+- **NEW low-pri bug found (verify-raw):** chef telemetry mis-stamps cycle timestamps — the section written AFTER my 07:09 commit self-labels **"intraday 02:13 UTC"** (chronologically impossible); AND every section repeats `Next: morning 05:23 UTC 2026-06-03 (Monday)` but 06-03 is a **Wednesday** (today 06-01 IS Monday). LOW severity — cron fires on its own schedule (unaffected), publish logic unaffected; only human-readable cycle-time + next-slot-date strings wrong. NOT acted (single instance, cosmetic, WIP/gateway discipline). FOLD into chef FU bucket (CHEF-FLOW-CAP-REFACTOR area / new CHEF-TS-STAMP FU); WATCH next tick for pattern (do the :13 rescans keep mis-stamping?). No spawn.
+- WIP 0/2. No code sprint.
+
 ## Current state (:07 on-demand — 2026-06-01T07:09Z) — CHEF-HARDENING PARTIALLY-VERIFIED-LIVE
 
 - PREFLIGHT clean. Drained 4 cowork-fire SILENT heartbeats → processed/ (no slots due). 0 telegram reports. DASHBOARD git-clean (5 `| NEW |` rows are the known-stale dev-mcp-server P2-* impl_done 2026-05-25 + ancient po 1967b breadcrumbs, not inbound). WIP 0/2.
@@ -15,16 +22,6 @@
 
 - PREFLIGHT clean. Drained 3 cowork-fire SILENT heartbeats → processed/ (no slots due, nothing spawned). 0 telegram reports. DASHBOARD git-clean — the 5 `| NEW |` rows are all known-stale breadcrumbs (dev-mcp-server P2-* impl_done 2026-05-25 + ancient po 1967b), not inbound.
 - No chef fire in these ticks → chef-hardening live-verify STILL PENDING next actual chef cron fire. WIP 0/2. IDLE exit (no new trigger; open backlog non-time-sensitive, next-pickable queued in pipeline-state).
-
-## Current state (:07 on-demand — 2026-06-01T05:09Z)
-
-- PREFLIGHT clean. Drained 3 signals → processed/ (2 cowork-fire heartbeats + 1 GENUINE `context_bloat_breach` news-scout.md 221L). DASHBOARD 0 NEW, telegram 0 NEW.
-- **Bloat remediation:** mutex-wrapped claude-manager-helper swept all 38 notebooks, pruned 5 over-cap to last-3-sections (news-scout 221→98 [trigger], bctc-analyst 218→124, qa 243→63, agents-architect 326→37, ops 5914→275). All git-safe (HEAD has dropped sections; ops HEAD=5914).
-- **Router caught the agent's false-green** ("all under cap"): raw `wc -l` shows 3 files STILL over cap — ops.md 275 (3-section floor), dev-alert-engine 389 & dev-rag-service 223 (single verbose section). last-3 prune physically can't reduce these → needs within-section trimming.
-- Root cause already tracked: Sprint NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE. Appended this tick's evidence + AC-widen note (TASKS.md L59, still 79L). No new sprint opened.
-- **Mid-tick: drained a NEW po-DASHBOARD row `cow-CHEF-MORNING-NOPUBLISH`** — guaranteed morning MARKET dish failed (spawned chef self-aborted with English-prose refusal, violating no_self_abort). cowork dispatcher had already triaged (2 of 3 cited blockers FALSE) + assigned agent-father lane. Spawned agent-father (mutex-wrapped) → hardened init.md + flow/chef.md: signals via get_cycle_bootstrap, macro/get_market_hexagram now non-blocking degradations, Step 5 hexagram source → get_portfolio_conviction, no_self_abort teeth + degraded-dish floor. **Router VERIFIED the Step-5 swap LIVE** (get_portfolio_conviction(FPT)=Kiển(39)/BAN — real hexagram source, confirms feedback_chef_kinhdich_confab). DONE-PENDING-LIVE-VERIFY next chef fire. FU: chef.md 258L>120L → architect extract.
-- **Lesson:** a cowork dispatcher CANNOT spawn agent-father/dev-team — it routes the incident to a `## po` DASHBOARD row; dev-team IS the pickup for agent-father-lane fixes. agent-father (file-editing, gateway-independent) executes fine when spawned even if gateway-dependent code agents are wedged — same lane-specificity as ops-vps-fetch.
-- WIP 0/2.
 
 ## Lessons / patterns
 

@@ -1,0 +1,23 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T07:33:21Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "calendar_status": "open",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (07:31:04 local = 05:31:04Z) since prior tick — Step 0a skipped. No NEW cowork-addressed rows.",
+    "silent_note": "No cron-matched slots at 07:33Z nominal tick (floor 07:30). chef-intraday fired 07:18Z (last_fired set); raw-cron '13 2-8' next window-matches ~08:18Z. Offhours pair '0 */4' next ~08:00Z. news-scout-sentiment/chef-morning are daily 05:xx. Expected silent tick.",
+    "verify_carryover": "chef-intraday acd58aee4f28f69be completed clean silent-exit (0 clusters) — criterion (1) PASS on 2nd hardened-flow live run; degraded-dish/hexagram/publish criteria (2)/(3)/(4) still pending a dish-producing run (next: chef-morning guaranteed 15 5 * * 1-5)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T07:33:21Z"
+}
