@@ -1,3 +1,56 @@
+# Sprint VPS-NEWS-CAFEF-VNECO — Route cafef.vn + vneconomy.vn Vietnamese info fetching through the Vinahost VPS (recon-first)
+
+**STATUS 2026-06-01T08:43Z — OPEN (PO self-initiated from operator feature request). Priority: MEDIUM.** Zone: VPS-crawler lane → recon `ops-vps-fetch` (`docs/vps-sources/`), impl `dev-vps-crawls` (`docs/vps-crawl-techniques/` + VPS scripts) and/or `apps/mcp-server/` (fetcher rewire to VPS proxy). WIP≤2. Brief → architect (TBD after recon).
+
+## CRITICAL SCOPE CORRECTION (PO raw-source verified — NOT a greenfield "add new source")
+The operator asked to "add cafef.vn and vneconomy.vn to fetch Vietnamese info pages on the VPS." Raw-source verification BEFORE planning revealed both sources ALREADY exist in the codebase — this is a ROUTING / COVERAGE sprint, not a new-integration one:
+- **`apps/mcp-server/src/infrastructure/fetchers/cafef.ts`** — fetches `https://cafef.vn/thi-truong-chung-khoan.rss` DIRECT via axios (browser-UA), wired into `fetch_and_analyze` (`news-analysis/analysis.ts:177`), tested (`021-rss-cafef.test.ts`). RSS = headline + summary/`description` (+ optional `content:encoded`), NOT full article body pages.
+- **`apps/mcp-server/src/infrastructure/fetchers/vneconomy.ts`** — fetches `vneconomy.vn/chung-khoan.rss` + `/tai-chinh.rss` DIRECT via axios, wired at `analysis.ts:214`.
+- **A separate VPS news pipeline ALREADY covers both** — source `news-vps` `/proxy/news` in `docs/data/system-map.json`, VPS-side `fetch-vn-news.sh` (NOT in repo, lives on VPS) pushed 14 RSS feeds incl cafef-market/cafef-biz + vneconomy-stocks/-finance → `/api/push-news` (body `{title,url,publishedAt,content,source}`). Recon `docs/vps-sources/vn-news-rss/recon.md` (2026-05-13) confirmed BOTH return 200 with no anti-bot from the VPS. `cafef-index` (`banggia.cafef.vn`) is a separate ACTIVE price source via VPS (`docs/vps-sources/cafef-index/recon.md`).
+
+So the codebase has TWO parallel paths for cafef/vneconomy news: (a) DIRECT axios from the France-based mcp-server host (geo-block-exposed; CafeF sits behind Cloudflare RP and could activate a managed challenge that breaks the direct path first — recon note line 80), and (b) VPS proxy (geo-safe). Per project policy ALL geo-blocked VN sources route through the Vinahost VPS (`project_bctc_vps_proxy`, `reference_vps_setup`).
+
+## Vision
+One sentence: **cafef.vn + vneconomy.vn Vietnamese market-news fetching is served reliably through the Vinahost VPS (geo-safe, anti-bot-resilient) into the existing news ingestion path — not via the France-based host's direct axios fetch that the geo-block / Cloudflare-challenge risk exposes — with the minimum-viable first slice being the news article list (headline + body/summary text) feeding the existing news-scout consumer, and the open question of FULL article-body "info pages" (beyond RSS summary) explicitly answered by recon before any dev build.**
+
+## Mandatory sequencing — RECON FIRST (non-negotiable, gateway-independent SSH lane)
+Per the VPS-crawler discipline (`docs/agents/ops-vps-fetch/`, `docs/agents/dev-vps-crawls/`): **`ops-vps-fetch` recon runs FIRST** and blocks all dev work. The 2026-05-13 recon exists but is 19 days stale AND predates the operator's "info pages" (full article body) framing. Recon must answer, with LIVE HTTP probes ON THE VPS (SSH lane — works even if the spawned-agent MCP gateway wedge is active):
+1. Is the existing DIRECT axios path (cafef.ts/vneconomy.ts from the host) actually geo-failing / Cloudflare-challenged TODAY, or working? (Determines whether a VPS rewire is even needed for the RSS slice, or only a resilience upgrade.)
+2. Does the VPS `fetch-vn-news.sh` / `/proxy/news` pipeline ALREADY serve cafef + vneconomy items end-to-end into `/api/push-news` right now (is the push 200, are items landing)? (Determines overlap — we must NOT rebuild an existing working pipeline.)
+3. The "info pages" question: does the operator's intent require FULL article BODY text (the article page, not the RSS summary)? Recon documents cafef.vn + vneconomy.vn ARTICLE PAGE structure (HTML body selectors, pagination, any JSON endpoints), anti-bot challenges on the article pages (vs the RSS feed), and a working HTTP-only request recipe (requests/httpx/curl_cffi/cloudscraper — NO Chromium/Playwright on the VPS).
+4. Output: refreshed `docs/vps-sources/cafef-news/recon.md` + `docs/vps-sources/vneconomy-news/recon.md` (or update `vn-news-rss/recon.md`) with the working recipe + the overlap verdict + a clear MINIMUM-VIABLE recommendation (RSS-via-VPS resilience-rewire vs full-article-body scrape). Do NOT let dev build against an unverified article-page source.
+
+## Overlap check (PO — fold-or-distinct decision deferred to architect post-recon)
+Open backlog **SSC-IBOARD-MIGRATE** (dev-vps-crawls, replacement-source recon for the globally-dead `iboard-query.ssc.vn` PRICE source) is DISTINCT — that is a price/financial-data source for a dead domain; this is news article content for two LIVE sources. Do NOT fold. Both are dev-vps-crawls zone so the router serializes them under WIP≤2.
+
+## Scope
+IN:
+- **CAFEF-VNECO-RECON (ops-vps-fetch) — runs FIRST, blocks dev.** The 3-question live-VPS probe + refreshed recon doc(s) + minimum-viable recommendation above. SSH lane, gateway-independent.
+- **(post-recon, GATED) architect brief** — name the integration point (existing `news-vps` VPS pipeline vs rewiring cafef.ts/vneconomy.ts to call the VPS proxy vs a new article-body scrape), the minimum-viable first slice, and whether the FULL-article-body request is in-scope-now or deferred. Decide fold-vs-distinct with the recon overlap verdict.
+- **(post-architect, GATED) ba spec → pm task → dev-vps-crawls impl → qa.** dev-vps-crawls (HTTP-only) implements the VPS-side scraper/recipe; if the mcp-server fetcher must be rewired to the VPS proxy that subtask is `apps/mcp-server/` zone (dev-mcp-server) — architect names the zone explicitly.
+
+OUT:
+- Any Chromium/Playwright/headless-browser on the VPS (HTTP-only lane: requests/httpx/curl_cffi/cloudscraper).
+- The `cafef-index` price source (`banggia.cafef.vn`) — already active, untouched.
+- SSC-IBOARD-MIGRATE (distinct dead-PRICE-source recon).
+- Rebuilding the existing working VPS news pipeline if recon proves cafef/vneconomy already land via `/proxy/news` (in that case the sprint collapses to a resilience-confirm + doc-refresh).
+- New MCP tools / new tables unless the architect's chosen integration strictly needs them.
+
+## Success Metric
+1. Refreshed recon doc(s) under `docs/vps-sources/` answer all 3 questions with LIVE-VPS evidence (status codes, anti-bot verdict, article-page structure, working HTTP-only recipe) + an explicit minimum-viable recommendation.
+2. cafef.vn + vneconomy.vn Vietnamese news content reaches the existing news ingestion path THROUGH THE VPS (geo-safe), proven by a live push/fetch with items landing — NOT via the France-host direct axios path (unless recon proves direct is fine and a VPS rewire is unnecessary, in which case the sprint EXITS at recon with that documented verdict).
+3. No duplicate/parallel pipeline created if one already works — overlap resolved in the architect brief.
+4. If full-article-body "info pages" are in scope, the dev scraper extracts real article body text (≥ a documented char threshold) for both sources, proven live; otherwise the deferral is documented.
+
+## Constraints (non-negotiable)
+- RECON FIRST — no dev build against an unverified source (`ops-vps-fetch` SSH lane is gateway-independent).
+- WIP≤2 · main branch only, NO branches · scoped `git add <file>` per file, NEVER `-A` (tree carries many unrelated notebook/handoff/signal changes) · MCP via `mcp__claude_ai_gateway__call_tool` gateway wrapper, bare tool names.
+- VPS scrapers HTTP-only (NO headless browser); all geo-blocked VN sources route through the Vinahost VPS.
+- ops REBUILDs mcp-server if cafef.ts/vneconomy.ts are rewired (`build --no-cache` + force-recreate, never restart-stale); QA verifies items land RAW (not a badge, `feedback_router_verify_raw_not_badges`).
+- All sprint artifacts + agent-to-agent comms in ENGLISH (the fetched VN news CONTENT stays Vietnamese — that is product data, not comms).
+
+---
+
 # Sprint TOOL-SURFACE-HYGIENE — Clean the vn-market MCP tool surface (no live-but-fake oracles, no silent dup writers, no stale tool count)
 
 **STATUS 2026-05-31T10:08Z — OPEN (PO self-initiated, operator-approved 2026-05-31). Priority: MEDIUM (one confirmed defect #1 ships first; rest are diff-before-merge).** Zone: `apps/mcp-server/` (dev-mcp-server) for #1-deregister/#2/#3/#4/#6; possibly kinh-dich-service zone if architect picks "wire" for #1. NOT BCTC. Brief → architect (TBD). Source-verified by PO (raw, not relayed): live registration count = **154** (`grep -ro 'server.tool(' apps/mcp-server/src/interface/mcp/tools/ | wc -l`), corroborated by HC-EXIT container probe `toolCount=154`.
