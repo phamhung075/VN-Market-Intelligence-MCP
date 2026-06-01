@@ -1,0 +1,25 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T05:33:20Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 4,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime CHANGED (05:31:04Z, AFTER dispatcher's own 05:18Z chef-nopublish write) -> Step 0a RAN. The 05:31Z write = dev-team/agent-father drain of cow-CHEF-MORNING-NOPUBLISH-20260601T0518 (flipped NEW->READ): unified-agent init.md+chef.md HARDENED (signals via get_cycle_bootstrap.agent_signals, hexagrams via get_portfolio_conviction, get_market_hexagram 501 + macro-down reclassified non-blocking, no_self_abort strengthened + degraded-dish floor; DONE-PENDING-LIVE-VERIFY next chef fire). Scanned po/tran-ngoc-bau/unified-agent/alert-commander: ZERO NEW cowork-addressed rows (5 file-wide NEW rows all in dev/maintenance sections, not cowork-drained). Proceeded.",
+    "staleness_note": "pressure-state emitted 05:18:21Z was ~15m old at tick start; empty match -> not re-emitted (Step 4.8 only on non-empty WON). pressure_mode reported legacy for telemetry consistency on empty tick (no adaptive gates exercised).",
+    "match_note": "No slots due at 05:33Z (nominal tick 05:30Z). chef-intraday (cron 13 2-8 * * 1-5) only enters the +/-2min match window at the :15-past nominal tick during hours 2-8 -> next eval 06:15Z, by then elapsed from last_fired 03:20:44Z >7200s cadence -> WILL fire 06:15Z = live-verify of the hardened chef flow. offhours pair next ~08:00Z. Silent exit, leader released.",
+    "chef_hardening_followup": "cow-CHEF-MORNING-NOPUBLISH-20260601T0518 RESOLVED by agent-father 05:30Z (row READ). Live-verify pending at next chef-intraday fire (~06:15Z). Dispatcher will confirm AC-6 (single publish, no self-abort) on that spawn's completion."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T05:33:20Z"
+}

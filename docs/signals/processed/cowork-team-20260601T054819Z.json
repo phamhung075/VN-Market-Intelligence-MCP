@@ -1,0 +1,24 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T05:48:19Z",
+    "matched_slots": [],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "mcp_outage": false,
+    "pressure_mode": "legacy",
+    "leader_claim": "won (uncontested)",
+    "dashboard_drain": "DASHBOARD mtime UNCHANGED (05:31:04Z) since prior tick — Step 0a skipped. No NEW cowork-addressed rows pending.",
+    "staleness_note": "pressure-state last emitted 05:18:21Z (~30m old) > 20min threshold -> legacy. Empty match -> not re-emitted (Step 4.8 only on non-empty WON).",
+    "match_note": "No slots due at 05:48Z (nominal 05:45Z). chef-intraday (cron 13 2-8 * * 1-5) next enters +/-2min window at the :15-past nominal tick -> 06:15Z, cadence-due then (elapsed from last_fired 03:20:44Z >7200s) -> WILL fire 06:15Z = live-verify of agent-father-hardened chef flow (cow-CHEF-MORNING-NOPUBLISH-20260601T0518 RESOLVED 05:30Z). offhours pair next ~08:00Z. Silent exit, leader released."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T05:48:19Z"
+}
