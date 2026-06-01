@@ -10,18 +10,20 @@ PO → BA → Architect → PM → Developer → QA → (Fixer if needed) → me
 
 | File | Owner | Cap | Purpose |
 |------|-------|-----|---------|
-| `docs/TASKS.md` | PM | 80 lines | Active sprint kanban only |
-| `docs/SPRINT_GOAL.md` | PO | 30 lines | Current sprint vision only |
+| `docs/data/orch/orch-state.json .task_board` | PM | 80 active tasks | Sprint kanban + archive |
+| `docs/data/orch/orch-state.json .sprint_goal` | PO | 15 entries | Sprint vision history |
+| `docs/data/orch/orch-state.json .head` | dev-team pipeline agents | — | Pipeline routing state |
+| `docs/data/orch/orch-state.json .signal_queue` | signal-dashboard SKILL | 200 rows | Cowork agent inbox |
 | `docs/handoffs/TASK_NNN.md` | PM→Architect→Developer→QA→Fixer | ~80 lines | Progressive task context — file paths, decisions, review results. Agents read this FIRST to avoid re-discovery. Delete when task archived. |
 
 ## Handoff Triggers
 
 | From → To | Trigger | Output | Handoff File |
 |-----------|---------|--------|-------------|
-| Human → PO | New idea | `docs/SPRINT_GOAL.md` | — |
+| Human → PO | New idea | `orch-state.json .sprint_goal` entry | — |
 | PO → BA | Vision approved | `docs/REQ_NNN.md` | — |
 | BA → Architect | Spec ready | `docs/TECH_NNN.md` | — |
-| Architect → PM | Design approved | Tasks in `docs/TASKS.md` | writes `[Architect]` block to `docs/handoffs/TASK_NNN.md` |
+| Architect → PM | Design approved | Tasks in `orch-state.json .task_board` | writes `[Architect]` block to `docs/handoffs/TASK_NNN.md` |
 | PM → Developer | Task In Progress | Code on `task/NNN-*` branch | creates `docs/handoffs/TASK_NNN.md` with `[PM]` block |
 | Developer → QA | Task in Review | `reports/TASK_REPORT_NNN.md` | appends `[Developer]` block |
 | QA APPROVED → PM | Merge done | Next task pulled | appends `[QA]` block, file archived |

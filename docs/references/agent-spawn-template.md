@@ -65,7 +65,7 @@ Agent return block received from architect:
 ```
 ## RETURN
 DONE: Architect completed design for Sprint 1409 with 6 tasks across 2 tiers.
-NEXT: pm | Create handoff files for all 6 tasks and update docs/TASKS.md.
+NEXT: pm | Create handoff files for all 6 tasks and update docs/data/orch/orch-state.json .task_board.
 HANDOFF: docs/handoffs/TASK_1409-arch.md
 PIPELINE: continue
 ```
@@ -73,7 +73,7 @@ PIPELINE: continue
 Main terminal builds the pm spawn prompt:
 
 ```
-Task 1409. Handoff: docs/handoffs/TASK_1409-arch.md. Architect completed design for Sprint 1409 with 6 tasks across 2 tiers. Create handoff files for all 6 tasks and update docs/TASKS.md.
+Task 1409. Handoff: docs/handoffs/TASK_1409-arch.md. Architect completed design for Sprint 1409 with 6 tasks across 2 tiers. Create handoff files for all 6 tasks and update docs/data/orch/orch-state.json .task_board.
 ```
 
 Why sequential: pm must read the architect handoff before it can create the 6 task files. The handoff does not exist until architect finishes.
@@ -105,7 +105,7 @@ Why parallel: each task writes to a different file (different knowledge files, d
 
 - Always source the previous agent's DONE sentence verbatim from its RETURN block.
 - The NEXT sentence is the NEXT line of the previous RETURN block, re-addressed to the new agent.
-- Include the handoff file path so the receiving agent has full context without re-reading docs/TASKS.md.
+- Include the handoff file path so the receiving agent has full context without re-reading `docs/data/orch/orch-state.json`.
 - **Before creating any file**: check `docs/policies/docs-organization.md` for canonical location.
   Wrong location = duplication debt. When in doubt: `reports/` for task reports, `docs/handoffs/` for handoffs, never at project root.
 

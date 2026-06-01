@@ -106,7 +106,7 @@ Use `date -u` exclusively — same UTC source as the session log guard (1865a).
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-**6.** Update docs/TASKS.md status → return:
+**6.** Update `docs/data/orch/orch-state.json` `.task_board` task status (atomic write per §2.3) → return:
 ```
 ## RETURN
 DONE: Technical design complete, brownfield findings written to docs/handoffs/TASK_NNN.md

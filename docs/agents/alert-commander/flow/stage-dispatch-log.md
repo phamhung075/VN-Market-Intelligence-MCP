@@ -50,7 +50,7 @@ After: `mark_alert_read()` + `record_signal_outcome(..., "fired")`
 ### Header update (required every cycle)
 Before appending the `### Alert Cycle` block, update line 3 of the notebook:
 ```bash
-SPRINT=$(jq -r '.currentSprint // "idle"' docs/pipeline-state.json 2>/dev/null || echo "idle")
+SPRINT=$(jq -r '.head.active_task_id // "idle"' docs/data/orch/orch-state.json 2>/dev/null || echo "idle")
 ```
 ```
 **Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** $SPRINT

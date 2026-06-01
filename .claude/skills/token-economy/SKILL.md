@@ -36,7 +36,7 @@ Governs how agents compress outputs when passing context to downstream agents. R
 | Task handoff file | FULL |
 | Architect design doc | FULL |
 | Knowledge file (permanent SSOT) | FULL |
-| docs/TASKS.md Done row | LITE |
+| `orch-state.json .task_board` Done task entry | LITE |
 | Sprint session log append | LITE |
 | Completed Sprints summary line | LITE |
 | User-facing status report | LITE |

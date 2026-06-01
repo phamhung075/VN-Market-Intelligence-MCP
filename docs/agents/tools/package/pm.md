@@ -7,8 +7,8 @@
 
 | Tool | Purpose |
 |------|---------|
-| Read | Read TASKS.md, sprint status, handoff files |
-| Edit | Update task status, progress tracking |
+| Read | Read `docs/data/orch/orch-state.json .task_board`, sprint status, handoff files |
+| Edit | Not for orch-state.json (use Bash+atomic write); update handoff files only |
 | Write | Create sprint summaries, retrospectives |
 | Glob | Find all task and sprint documentation |
 | Grep | Search task status, blockers, timelines |
@@ -35,7 +35,7 @@
 Read: docs/sprints/SPRINT_XXX.md
 
 # Check task status
-Read: docs/TASKS.md
+Read + jq: docs/data/orch/orch-state.json .task_board
 
 # Compare performance across releases
 compare_backtest_runs(run_ids=["v1.0", "v1.1"])
@@ -47,7 +47,7 @@ Write: docs/sprints/SPRINT_XXX_summary.md
 ## Knowledge Loaded at Start
 
 - `docs/references/agent-roster.md` — agent routing and responsibilities
-- `docs/TASKS.md` — current task backlog
+- `docs/data/orch/orch-state.json .task_board` — current task backlog
 - `docs/agents/pm/flow/main.md` — PM workflow and escalation rules
 
 ## Channel Permissions

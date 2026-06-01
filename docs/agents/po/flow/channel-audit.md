@@ -55,9 +55,9 @@ Each finding → task in TASKS.md with category `ux` or `bug`.
 
 Before opening a new bug task, verify the issue wasn't already fixed:
 
-**1. Check docs/TASKS.md** — search for the same module/ticker/tool name in Done tasks:
-```
-grep -i "<keyword>" docs/TASKS.md
+**1. Check `docs/data/orch/orch-state.json` `.task_board`** — search for the same module/ticker/tool name in Done tasks:
+```bash
+cat docs/data/orch/orch-state.json | jq '.task_board.active_sprints[].tasks[] | select(.status=="DONE" and (.title | test("<keyword>"; "i")))'
 ```
 If a matching Done task exists → the fix was merged. Suspect **deploy gap** (see below).
 
@@ -92,7 +92,7 @@ Required output: every emitted FIX/SPRINT entry carries `zone:` (one of `apps/<s
 
 ---
 
-**If 1+ issues found**: create bug/correction tasks in docs/TASKS.md (with correct root-cause label + zone) before proceeding to sprint planning.
+**If 1+ issues found**: create bug/correction tasks in `docs/data/orch/orch-state.json` `.task_board.backlog[]` (with correct root-cause label + zone) before proceeding to sprint planning.
 
 **If clean**: proceed to No-Task Guard (back in main.md).
 

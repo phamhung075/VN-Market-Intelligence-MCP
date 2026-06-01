@@ -9,7 +9,7 @@
 Telegram MARKET channel unreviewed messages + server live data
 
 ## Output
-Quality/anomaly tasks in docs/TASKS.md | ops handoff if VPS validation needed | messages reviewed
+Quality/anomaly tasks in `docs/data/orch/orch-state.json` `.task_board` | ops handoff if VPS validation needed | messages reviewed
 
 ---
 
@@ -51,26 +51,26 @@ For each unreviewed message (or cluster by ticker/topic):
 - Same alert fired twice?
 - Alert fired but condition not met per snapshot?
 - Message format broken/truncated?
-→ Create task directly:
-```
-| TASK-NNN | [BUG] <description> | pending | developer | market-group |
+→ Append to `.task_board.backlog[]` (atomic write):
+```json
+{"id": "TASK-NNN", "summary": "[BUG] <description> — market-group", "priority": "high"}
 ```
 
 ### 3c. Signal Quality (noisy, low conviction, unhelpful)
 - Alert fired but price moved <0.3%?
 - Signal not confirmed by any chain?
 - User would ignore this → UX friction
-→ Create task:
-```
-| TASK-NNN | [QUALITY] Improve signal threshold for <type> | pending | ba | market-group |
+→ Append to `.task_board.backlog[]`:
+```json
+{"id": "TASK-NNN", "summary": "[QUALITY] Improve signal threshold for <type> — market-group", "priority": "normal"}
 ```
 
 ### 3d. UX Improvement (presentation, wording, structure)
 - Message unclear, too long, missing context?
 - Format inconsistent across alert types?
-→ Create task:
-```
-| TASK-NNN | [UX] <description> | pending | ba | market-group |
+→ Append to `.task_board.backlog[]`:
+```json
+{"id": "TASK-NNN", "summary": "[UX] <description> — market-group", "priority": "normal"}
 ```
 
 ---
@@ -94,11 +94,11 @@ After ops returns findings → main terminal re-spawns `po/market-group.md` Step
 
 ## Step 5: Task Creation from Ops Findings (after ops returns)
 
-Read ops validation report. For each confirmed data issue:
+Read ops validation report. For each confirmed data issue, append to `.task_board.backlog[]`:
+```json
+{"id": "TASK-NNN", "summary": "[DATA] <ticker>: <stale|missing|wrong> data from <service> — ops-finding", "priority": "high"}
 ```
-| TASK-NNN | [DATA] <ticker>: <stale|missing|wrong> data from <service> | pending | ops | ops-finding |
-```
-Recurrent data issue (same service, same ticker in last 7d) → prefix `[ARCH REVIEW]`.
+Recurrent data issue (same service, same ticker in last 7d) → set summary prefix `[ARCH REVIEW]`.
 
 ---
 

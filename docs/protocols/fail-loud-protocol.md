@@ -31,7 +31,7 @@ If it succeeds → proceed normally.
 Session logs record PAST state. They do NOT predict current state. An agent that reads "MCP down" in a prior entry and skips the call without trying is **hallucinating a failure**. This produces:
 - Fake incident reports that pollute docs/
 - Cascading false failures across all agents reading the same session log
-- Corrupted pipeline-state.json
+- Corrupted `docs/data/orch/orch-state.json`
 
 **Violation of this rule is worse than a real outage** — it creates phantom incidents that waste human attention.
 
@@ -51,7 +51,7 @@ FORBIDDEN — NEVER create or modify:
   - Recovery procedures (docs/agent-memory/ops-*.md)
   - Alert files (docs/ops-alerts/*.md)
   - Session files of OTHER agents
-  - pipeline-state.json
+  - `docs/data/orch/orch-state.json` (cowork agents) — dev-team pipeline agents write `.head` only
   - Files in project root (*.md outside docs/)
   - Any file not listed in your flow's output steps
 ```

@@ -8,7 +8,7 @@ Check if `docs/handoffs/tnb-audit-latest.md` exists. If it does:
 2. Note Overall status, direction, findings table, persisting blockers, and positive signals
 3. Each finding with severity `high` → must become a sprint task (Step 1)
 4. Each finding with severity `med` → evaluate during sprint planning, include if capacity allows
-5. Persisting blockers → check against existing TASKS.md to avoid duplicates
+5. Persisting blockers → check against existing `docs/data/orch/orch-state.json` `.task_board` to avoid duplicates
 6. Positive signals → acknowledge in notebook (track what's working)
 7. **ACK the handoff** — append to the file:
    ```markdown

@@ -87,10 +87,10 @@ W20 BUG channel feedback loop
 |---|---|---|---|
 | **MAIN TERMINAL** | user input, cron tick, RETURN.NEXT | `.claude/skills/dispatch/SKILL.md`, RETURN block | spawns next agent only — no domain files |
 | `market-analyst` | user Q | MCP macro/BCTC/prices/news, top-down framework | notebook, RETURN to user |
-| `po` | cron, demand, signals drained | TASKS, handoffs/, telegram channels, project-stats | SPRINT_GOAL, BA-task in TASKS, BATCH return |
-| `ba` | po RETURN.NEXT | SPRINT_GOAL, TASKS | REQ_NNN.md, architect-task |
+| `po` | cron, demand, signals drained | `orch-state.json .task_board`, handoffs/, telegram channels, project-stats | `orch-state.json .sprint_goal`, BA-task in `.task_board`, BATCH return |
+| `ba` | po RETURN.NEXT | `orch-state.json .sprint_goal`, `.task_board` | REQ_NNN.md, architect-task |
 | `architect` | ba/po RETURN.NEXT | REQ_NNN, brownfield scan | handoffs/TASK_NNN [Architect] section |
-| `pm` | architect RETURN.NEXT | REQ_NNN, handoff, TASKS | handoffs/TASK_NNN, TASKS.md → Todo, dep map |
+| `pm` | architect RETURN.NEXT | REQ_NNN, handoff, `orch-state.json .task_board` | handoffs/TASK_NNN, `.task_board` → TODO, dep map |
 | `developer` | pm RETURN.NEXT (zone-routed to dev-*) | handoffs/TASK_NNN, code, tests | code commits, [Developer] section, → qa |
 | `qa` | developer RETURN.NEXT | branch diff, tests | [QA] section, merge or → fixer, sprint report |
 | `fixer` | qa CHANGES_REQUESTED | [QA] blocking lines | minimum-diff commits, [Fixer] section, → qa |
@@ -128,9 +128,9 @@ W20 BUG channel feedback loop
 ```
 MAIN TERMINAL (Do)                      ✗ NEVER
 ─────────────────────────────           ──────────────────────────
-✓ Read user prompt / cron prompt        ✗ Write docs/TASKS.md
+✓ Read user prompt / cron prompt        ✗ Write docs/data/orch/orch-state.json
 ✓ Look up intent in dispatch table SSOT ✗ Write docs/handoffs/*
-✓ Spawn 1 agent via Agent tool +        ✗ Write docs/pipeline-state.json
+✓ Spawn 1 agent via Agent tool +        ✗ Write directly (spawn po/pm/dev-team instead)
   prompt = `run docs/agents/<agent>/flow/main.md` ✗ Edit .claude/agents/*
 ✓ Read agent RETURN block               ✗ Execute MCP tool calls itself
 ✓ If PIPELINE:continue + NEXT → spawn   ✗ Decide investment / fix code / send alert

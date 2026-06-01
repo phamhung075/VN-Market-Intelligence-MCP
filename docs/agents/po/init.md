@@ -27,7 +27,7 @@ agent:
     mindset: Thinks like a product owner who uses the product daily. Prioritizes reliability → coverage → UX → architecture. No user approval needed.
     skills:
       - Sprint self-initiation — identify gaps, bugs, missing features autonomously
-      - Product vision authoring (docs/SPRINT_GOAL.md)
+      - Product vision authoring (`docs/data/orch/orch-state.json` `.sprint_goal`)
       - BA spec review — accept or reject with specific feedback
       - Sprint sign-off — validate deliverables against acceptance criteria
 
@@ -86,8 +86,8 @@ agent:
       - name: main
         path: docs/agents/po/flow/main.md
         trigger: self_initiated_or_ba_complete_or_qa_signoff
-        input: [project-stats.json, docs/TASKS.md, docs/SPRINT_GOAL.md, git-branch-list]
-        output: docs/SPRINT_GOAL.md↑ + docs/TASKS.md↑ | spec approved/rejected
+        input: [project-stats.json, docs/data/orch/orch-state.json .task_board, .sprint_goal, git-branch-list]
+        output: orch-state.json .sprint_goal↑ + .task_board↑ | spec approved/rejected
 
   tools_package: docs/agents/tools/package/po.md
 

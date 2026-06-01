@@ -3,7 +3,7 @@
  *
  * Aggregates daily operational data into docs/data/daily-dashboard.json:
  *   - Session logs from docs/agent-memory/sessions/YYYY-MM-DD-*.md
- *   - Task counts from docs/TASKS.md
+ *   - Task counts from docs/data/orch/orch-state.json .task_board (OSC-2)
  *   - System metrics from docs/data/project-stats.json
  *
  * Cron: daily 23:30 GMT+7 (after evening summary and periodic summary).
@@ -25,6 +25,10 @@ import {
   type AccuracyReport,
 } from "../../interface/mcp/tools/alerts/alertAccuracy.js";
 import { getProjectRoot } from "../../infrastructure/projectRoot.js";
+import {
+  countTasksFromTaskBoard,
+  type OrchStateTaskBoard,
+} from "../../infrastructure/orchStateStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Public types
@@ -128,7 +132,16 @@ export interface DashboardAggregateInput {
   stats: ProjectStats;
   /** Map of filename → file content for session log files. */
   sessionFiles: Record<string, string>;
+  /**
+   * Markdown TASKS.md string (legacy — kept for test backward compat).
+   * When taskBoard is also provided, taskBoard takes precedence.
+   */
   tasksMd: string;
+  /**
+   * OSC-2: structured task_board from orch-state.json (preferred over tasksMd).
+   * When provided, countTasksFromTaskBoard() is used instead of parseTaskCounts().
+   */
+  taskBoard?: OrchStateTaskBoard;
   /** Optional pre-loaded signal data. Omit to skip signals block (signals → null). */
   signalData?: DashboardSignalData;
 }
@@ -401,10 +414,11 @@ export function computeSignalMetrics(data: DashboardSignalData): SignalMetrics {
  * @returns DailyDashboard
  */
 export function aggregateDailyDashboard(input: DashboardAggregateInput): DailyDashboard {
-  const { date, stats, sessionFiles, tasksMd, signalData } = input;
+  const { date, stats, sessionFiles, tasksMd, taskBoard, signalData } = input;
 
   const sessions = parseSessionLogs(sessionFiles, date);
-  const tasks = parseTaskCounts(tasksMd);
+  // OSC-2: prefer JSON task_board when provided; fall back to markdown parser for tests
+  const tasks = taskBoard ? countTasksFromTaskBoard(taskBoard) : parseTaskCounts(tasksMd);
 
   const infra = stats.infrastructureStatus;
 
@@ -489,14 +503,24 @@ function loadProjectStats(): ProjectStats {
 }
 
 /**
- * Loads docs/TASKS.md from the filesystem.
+ * Loads docs/data/orch/orch-state.json .task_board section from the filesystem.
+ *
+ * OSC-2: replaces loadTasksMd() — reads structured JSON instead of TASKS.md markdown.
+ * Returns null on any read/parse failure (non-fatal for the job).
  */
-function loadTasksMd(): string {
-  const tasksPath = path.join(getProjectRoot(), "docs/TASKS.md");
+function loadTaskBoard(): import("../../infrastructure/orchStateStore.js").OrchStateTaskBoard | null {
+  const orchStatePath = path.join(
+    getProjectRoot(),
+    "docs/data/orch/orch-state.json",
+  );
   try {
-    return fs.readFileSync(tasksPath, "utf8");
+    const raw = fs.readFileSync(orchStatePath, "utf8");
+    const parsed = JSON.parse(raw) as {
+      task_board?: import("../../infrastructure/orchStateStore.js").OrchStateTaskBoard;
+    };
+    return parsed.task_board ?? null;
   } catch {
-    return "";
+    return null;
   }
 }
 
@@ -589,14 +613,16 @@ export async function runDailyDashboardJob(
 
   const stats = loadProjectStats();
   const sessionFiles = loadSessionFiles(date);
-  const tasksMd = loadTasksMd();
+  // OSC-2: use JSON task_board from orch-state.json (falls back to "" tasksMd if null)
+  const taskBoard = loadTaskBoard();
   const signalData = await loadSignalData(7);
 
   const dashboard = aggregateDailyDashboard({
     date,
     stats,
     sessionFiles,
-    tasksMd,
+    tasksMd: "",
+    ...(taskBoard != null ? { taskBoard } : {}),
     ...(signalData != null ? { signalData } : {}),
   });
 

@@ -202,7 +202,7 @@ Example: `[BCTC-EVAL] FPT Q4-2025: stage 3 green→yellow (vn_diacritic_ratio dr
 
 Status semantics: red = hard fail, yellow = soft warning, green = pass.
 
-Also update `docs/signals/DASHBOARD.md` per signal-dashboard skill for any report showing `overall_status = "red"` or any new `"yellow"`.
+Also append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard skill § WRITE for any report showing `overall_status = "red"` or any new `"yellow"` (atomic write).
 
 After sweep, overwrite the `BCTC-EVAL-SNAPSHOT:` block in the notebook with the current list response (compact: `{report_id, ticker, period, overall_status, stage_statuses, computed_at}` per entry). If endpoint returns non-200 → log `[D-BCTC-EVAL] endpoint unavailable — skipping sweep` and continue (non-fatal).
 
@@ -218,7 +218,7 @@ Before any write, list `docs/improvement-proposals/` for existing proposals whos
 
 **D-IMPROVE-1 — Collect candidates:**
 Query `improve_check_log` (inside mcp-server container) for entries with `dispatch_status IN ('shadow','worsened')` and `checked_at` within the last 24h. These are the signal-accuracy candidates.
-Also inspect the Tier-2 stale-source findings emitted above: any source with `severity=CRITICAL` and no open FIX task in `docs/TASKS.md` is a doc-level candidate.
+Also inspect the Tier-2 stale-source findings emitted above: any source with `severity=CRITICAL` and no open FIX task in `docs/data/orch/orch-state.json .task_board` is a doc-level candidate.
 
 **D-IMPROVE-2 — Per candidate (wrapped in try/catch; on any exception: release mutex if held, log "[D-IMPROVE] SKIP candidate {id}: {error}", continue to next candidate — DO NOT re-raise):**
 
@@ -271,11 +271,11 @@ Also inspect the Tier-2 stale-source findings emitted above: any source with `se
 
   c. Acquire commit-mutex (skill: `.claude/skills/commit-mutex/SKILL.md`).
      Write `docs/improvement-proposals/IMP-{YYYYMMDD}-{slug}.md` (path-explicit).
-     Append DASHBOARD.md row under `## po` section:
+     Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write):
+     ```json
+     {"id": "{id}", "ts": "{ts}", "from": "system-auditor", "to": "po", "type": "improvement_proposal", "summary": "{summary ≤120 chars}", "severity": "INFO", "status": "NEW", "payload_ref": "{proposal-path}"}
      ```
-     | {id} | {ts} | system-auditor | improvement_proposal | {summary ≤40 chars} | NEW | {proposal-path} |
-     ```
-     Commit: `git add docs/improvement-proposals/{id}.md docs/signals/DASHBOARD.md` (explicit paths only — never -A).
+     Commit: `git add docs/improvement-proposals/{id}.md docs/data/orch/orch-state.json` (explicit paths only — never -A).
      git commit -m `"chore(improve): D-IMPROVE emit {id}"`.
      Release commit-mutex regardless of commit outcome.
 
@@ -309,8 +309,8 @@ Last audit < 12h AND no new commits → skip steps 1–6 (not the new DB checks 
 
 ### 4. Size caps
 - `CLAUDE.md` > 120 lines → move bloat to knowledge files
-- `docs/TASKS.md` > 80 lines → archive Done to `docs/archive/`
-- `docs/SPRINT_GOAL.md` > 30 lines → delete old goals
+- `docs/data/orch/orch-state.json` `.task_board`: `jq '[.task_board.active_sprints[].tasks[]] | length'` > 80 → alert pm to run task-archive sub-flow
+- `docs/data/orch/orch-state.json` `.sprint_goal.entries[]`: count > 15 → alert po to close/archive old sprint entries
 
 ### 5. DB health (legacy WAL check — now complemented by Tier-3 full checks)
 ```bash
@@ -435,9 +435,9 @@ New:
 Severity: info | warn | critical | Date: YYYY-MM-DD
 Location: [service/table/source] | Details: [wrong] | Impact: [why] | Root cause: [guess]
 ```
-severity ≥ warn → `send_telegram(channel="bug")` AND append to `docs/signals/DASHBOARD.md`:
-```
-| check_id | severity | summary | zone_owner | status=OPEN |
+severity ≥ warn → `send_telegram(channel="bug")` AND append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE (atomic write):
+```json
+{"id": "sau-{ts}", "ts": "{ISO-UTC}", "from": "system-auditor", "to": "po", "type": "{check_type}", "summary": "{summary ≤120 chars}", "severity": "{CRITICAL|HIGH|MED}", "status": "NEW", "payload_ref": null}
 ```
 
 > Invariant: timestamp = current UTC, never future, never speculative.

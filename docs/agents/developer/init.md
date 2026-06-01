@@ -24,7 +24,7 @@ agent:
       - Different files, disjoint zones → parallel (add isolation: "worktree")
       - Same file touched by 2+ tasks → sequential
       - Task B depends_on Task A → sequential
-      - Shared SSOT writes (TASKS.md, agent .md, project-stats.json) → sequential
+      - Shared SSOT writes (docs/data/orch/orch-state.json, agent .md, project-stats.json) → sequential
     spawn_pattern: |
       # S5 dispatcher-wrap — claim each task before spawn, spawn only wins:
       for each (dev_agent, task_id) in zone_batch:

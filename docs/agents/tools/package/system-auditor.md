@@ -8,8 +8,8 @@
 | Tool | Purpose |
 |------|---------|
 | Read | Read configuration, logs, system state files |
-| Write | Write notebook (docs/agent-memory/notebooks/system-auditor.md) and DASHBOARD.md rows only |
-| Edit | Update notebook and DASHBOARD.md rows only |
+| Write | Write notebook (docs/agent-memory/notebooks/system-auditor.md) and `docs/data/orch/orch-state.json` `.signal_queue` rows only (atomic write per §2.3) |
+| Edit | Update notebook only; use Write for orch-state.json (atomic temp→rename required) |
 | Glob | Find config files, logs, state files across directories |
 | Grep | Search logs for errors, warnings, anomalies |
 | Bash | READ-ONLY health probes ONLY. Permitted: docker ps, docker inspect, docker stats --no-stream, docker logs --since, docker events (read), docker exec mcp-server <sqlite3/curl/ls/which/tesseract>, curl -sf (health endpoints), df -h, free -h. FORBIDDEN: docker stop, docker kill, docker rm, docker restart, docker compose down, docker compose up, kill, pkill, killall, rm -rf <any live dir>. Violation = abort cycle, send_telegram(bug, "PLAN-ONLY violation aborted: <command>"). |
@@ -136,8 +136,8 @@ docker exec mcp-server sqlite3 /app/data/market.db "PRAGMA integrity_check;"
 
 - **PLAN-ONLY (AUD-ND-1):** NEVER issue docker stop/kill/rm/restart, compose down/up, kill/pkill, or rm -rf of any live directory. Any anomaly — including CRITICAL — terminates with signal emission + DASHBOARD row + BUG alert. Remediation belongs to ops/developer.
 - **Detect-only:** Never modifies production code, container configs, DB rows, or cron schedules
-- **Write boundary:** Writes ONLY to `docs/agent-memory/notebooks/system-auditor.md` (cycle log, full overwrite) and appends rows to `docs/signals/DASHBOARD.md`. No other filesystem writes.
-- **DASHBOARD sink:** All WARN/CRITICAL findings appended to `docs/signals/DASHBOARD.md` with `check_id | severity | summary | zone_owner | status=OPEN`
+- **Write boundary:** Writes ONLY to `docs/agent-memory/notebooks/system-auditor.md` (cycle log, full overwrite) and appends rows to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` (atomic write per §2.3). No other filesystem writes.
+- **Signal queue sink:** All WARN/CRITICAL findings appended to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` with `id | ts | from | to | type | summary ≤120 chars | severity | status=NEW | payload_ref`
 - **Dedup:** BUG channel writes only when severity ≥ WARN AND dedup_key not seen in past 7 days
 - **Market channel:** write=false, never
 - **Work channel:** write=true, Tier-3 daily summary only

@@ -14,7 +14,7 @@ agent:
   responsibilities:
     - Duplication-only scan every 3 hours (cron) or on demand
     - Direct fix commit for single-file mechanical violations covered by tests
-    - Backlog task creation in docs/TASKS.md for multi-file violations
+    - Backlog task creation in `docs/data/orch/orch-state.json .task_board.backlog[]` for multi-file violations
     - Session log + notebook append every cycle
 
   not_my_job:
@@ -85,7 +85,7 @@ agent:
           - docs/data/code-janitor-known-findings.json
         output:
           - Direct fix committed (if single-file mechanical)
-          - OR backlog task added to docs/TASKS.md
+          - OR backlog task added to `docs/data/orch/orch-state.json .task_board.backlog[]`
           - Session log + state file updated
 
   tools_package: docs/agents/tools/package/code-janitor.md

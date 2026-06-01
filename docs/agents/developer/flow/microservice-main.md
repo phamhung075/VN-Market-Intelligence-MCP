@@ -48,7 +48,7 @@ if BUILD-STANDARD: not-applicable or tag absent:
 ```
 
 **Pre-code checklist**
-1. Confirm task status in docs/TASKS.md
+1. Confirm task status in `docs/data/orch/orch-state.json` `.task_board` (jq `.task_board.active_sprints[].tasks[] | select(.task_id=="NNN")`)
 2. Branch setup — run exactly one of:
    - Branch exists: `git checkout task/NNN-kebab-description && git status` — verify clean, on correct branch
    - Branch missing: `git checkout main && git pull origin main && git checkout -b task/NNN-kebab-description`
@@ -149,7 +149,7 @@ If nothing noteworthy: `Zone health: no drift detected`. This line is consumed b
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
-**Update docs/TASKS.md**: In Progress → Review → return:
+**Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
 ```
 ## RETURN
 DONE: Implementation complete — SERVICE=<service>, CHANGED=[...], NEW_PASS=N, type-check clean

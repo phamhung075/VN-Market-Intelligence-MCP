@@ -30,7 +30,7 @@ description: >
 | Flow file factory template | `docs/guides/guide-flows.md` | Canonical |
 | Knowledge file rules (no volatile counts) | `tree-map.md` §Rules + §Drift Detection | Canonical |
 | Volatile data location | `docs/data/*.json` (never `.claude/`, never inline) | Canonical |
-| Size caps | CLAUDE.md ≤120 · TASKS.md ≤80 · SPRINT_GOAL.md ≤30 · agent .md ≤200 | `claude-manager-helper/main.md` |
+| Size caps | CLAUDE.md ≤120 · `orch-state.json .task_board` task count ≤80 · `.sprint_goal.entries[]` count ≤15 · agent .md ≤200 | `claude-manager-helper/main.md` |
 
 If two SSOTs conflict, **tree-map.md wins** and the other is fixed to match.
 

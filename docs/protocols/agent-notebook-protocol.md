@@ -42,7 +42,7 @@ The notebook is for things the agent wants to remember **next time it runs**:
 Do NOT write:
 - Full task reports (→ session_log)
 - Code diffs (→ git)
-- Sprint decisions (→ docs/TASKS.md / SPRINT_GOAL.md)
+- Sprint decisions (→ `docs/data/orch/orch-state.json` `.task_board` / `.sprint_goal`)
 
 ---
 

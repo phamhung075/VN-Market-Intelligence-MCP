@@ -15,7 +15,7 @@ The gate is: ops rebuilt the container (`docker compose up -d --build <svc>`) + 
 
 Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent market output) to validate the merged work behaves end-to-end.
 
-- **Approve** → update `docs/TASKS.md` + `docs/SPRINT_GOAL.md` (mark sprint Done) → release umbrella lock → return:
+- **Approve** → update `docs/data/orch/orch-state.json` `.task_board` tasks to DONE + `.sprint_goal.entries[].status = "done"` (atomic write per §2.3) → release umbrella lock → return:
 
   **Release umbrella lock** → load skill: `.claude/skills/task-lock/SKILL.md`
   ```
@@ -29,7 +29,7 @@ Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent 
   PIPELINE: complete
   ```
 
-- **Reject** → open Backlog tasks for remaining issues → release umbrella lock → return:
+- **Reject** → open Backlog tasks for remaining issues in `docs/data/orch/orch-state.json` `.task_board.backlog[]` → release umbrella lock → return:
 
   **Release umbrella lock** → load skill: `.claude/skills/task-lock/SKILL.md`
   ```
@@ -38,9 +38,9 @@ Read `reports/SPRINT_REPORT_NNN.md` + run a smoke test (MCP tool call or recent 
   ```
   ```
   ## RETURN
-  DONE: Sprint NNN partial — backlog tasks created
+  DONE: Sprint NNN partial — backlog tasks created in orch-state.json .task_board.backlog[]
   NEXT: ba | new spec for remaining issues
-  HANDOFF: docs/TASKS.md (Backlog rows)
+  HANDOFF: docs/data/orch/orch-state.json
   PIPELINE: continue
   ```
 

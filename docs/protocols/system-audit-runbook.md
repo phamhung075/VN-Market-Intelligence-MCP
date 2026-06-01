@@ -144,9 +144,9 @@ docker exec mcp-server sqlite3 /app/data/<db>.db "<query>"
 system-auditor detects anomaly
   → emits typed signal (post_agent_signal)
   → BUG channel alert (severity ≥ WARN, dedup 7d)
-  → DASHBOARD.md row appended (status=OPEN)
-    → zone owner dev-* drains DASHBOARD on their own cadence
-      → if not fixed in 48h → PM creates sprint task
+  → `orch-state.json .signal_queue` row appended (status=NEW)
+    → zone owner dev-* drains `.signal_queue` on their own cadence
+      → if not fixed in 48h → PM creates task in `.task_board.backlog[]`
         → if recurring (≥2 fix commits same module) → PM blocks, calls Architect for root-cause rethink
 ```
 

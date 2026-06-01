@@ -154,7 +154,7 @@ git commit -m "chore(memory/dev-mcp-server): notebook YYYY-MM-DD"
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
-**Update docs/TASKS.md**: In Progress → Review → return:
+**Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
 ```
 ## RETURN
 DONE: Implementation complete — SERVICE=mcp-server, CHANGED=[...], NEW_PASS=N, tsc clean, tools=132, sched=68

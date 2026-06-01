@@ -92,7 +92,7 @@ agent:
       - name: main
         path: docs/agents/architect/flow/main.md
         trigger: after_ba_spec_approved
-        input: [TASK_NNN.md, docs/SPRINT_GOAL.md]
+        input: [TASK_NNN.md, docs/data/orch/orch-state.json .sprint_goal]
         output: handoff↑ (brownfield+design) | pm notified
 
   tools_package: docs/agents/tools/package/architect.md

@@ -63,21 +63,21 @@ Agent files → `.claude/agents/*.md` | Flows → `docs/agents/{agent}/flow/main
 
 | From | To | Mechanism | Action |
 |------|----|-----------|--------|
-| PO | BA | caveman | writes `docs/SPRINT_GOAL.md`, creates BA task in `docs/TASKS.md` |
-| BA | Architect | caveman | req spec in `docs/TASKS.md`, creates Architect task |
+| PO | BA | caveman | appends entry to `orch-state.json .sprint_goal.entries[]`, creates BA task in `.task_board.backlog[]` |
+| BA | Architect | caveman | req spec in `.task_board`, creates Architect task |
 | Architect | PM | caveman | `[Architect]` section in `docs/handoffs/TASK_NNN.md` |
-| PM | Developer | caveman | creates `docs/handoffs/TASK_NNN.md`, docs/TASKS.md → Todo |
-| Developer | QA | caveman | `[Developer]` section in handoff, docs/TASKS.md → Review |
-| QA | Developer/Fixer | caveman | `[QA] Review Record` in handoff, docs/TASKS.md → In Progress |
-| QA | PM | caveman | docs/TASKS.md → Done, branch merged |
-| Fixer | QA | caveman | `[Fixer] Fix Record` in handoff, docs/TASKS.md → Review |
+| PM | Developer | caveman | creates `docs/handoffs/TASK_NNN.md`, `.task_board` task status → TODO |
+| Developer | QA | caveman | `[Developer]` section in handoff, `.task_board` task status → REVIEW |
+| QA | Developer/Fixer | caveman | `[QA] Review Record` in handoff, `.task_board` task status → IN_PROGRESS |
+| QA | PM | caveman | `.task_board` task status → DONE, branch merged |
+| Fixer | QA | caveman | `[Fixer] Fix Record` in handoff, `.task_board` task status → REVIEW |
 
 **Ops — Infra Lane** (parallel to dev chain, triggered by any agent or user)
 
 | From | To | Mechanism | Action |
 |------|----|-----------|--------|
 | any agent / user | ops | bug channel / dispatch | infra anomaly, VPS failure, Docker issue |
-| ops | pm | caveman | infra fix requires new dev task → create docs/TASKS.md entry |
+| ops | pm | caveman | infra fix requires new dev task → create entry in `orch-state.json .task_board.backlog[]` |
 | ops | developer | caveman | fix needs code change → hand off with context |
 | ops | work channel | send_telegram | fix applied, service restored |
 
@@ -90,10 +90,10 @@ Caveman spec → `.claude/skills/caveman/SKILL.md` (ultra: agent-to-agent | lite
 | Concern | SSOT |
 |---|---|
 | Cowork signal bus (news→alert-commander, BCTC→alert-commander, price-anomaly→alert-commander, suppress→all cowork) | `docs/standards/mcp-tools.md` § Signal Bus |
-| Cowork inbox / read-unread tracking for po, tran-ngoc-bau, unified-agent, alert-commander | `docs/signals/DASHBOARD.md` + skill: `signal-dashboard` |
+| Cowork inbox / read-unread tracking for po, tran-ngoc-bau, unified-agent, alert-commander | `docs/data/orch/orch-state.json .signal_queue` + skill: `signal-dashboard` |
 | Telegram channels — market (alerts), work (dev/cycle), bug (errors, ALL agents) | `docs/policies/alert-policy.md` |
 | Fail-loud on any knowledge Read failure → `send_telegram(channel="bug")` + STOP | `docs/protocols/fail-loud-protocol.md` |
 | DDD (domain never imports infra), restart policy, WIP=2, parameterized SQL, VPS proxy for VN sources | `docs/policies/dev-standards.md` · `docs/policies/restart-policy.md` · `docs/ARCHITECTURE.md` |
-| Main terminal never writes `docs/TASKS.md` / `docs/handoffs/*` / `docs/pipeline-state.json` — spawn po/pm/dev-team | `docs/protocols/agent-chaining-protocol.md` |
+| Main terminal never writes `docs/data/orch/orch-state.json` / `docs/handoffs/*` — spawn po/pm/dev-team | `docs/protocols/agent-chaining-protocol.md` |
 | Never ask user to run code — spawn subagent (ops/developer/qa). User is config admin only | `CLAUDE.md § Interdiction` |
 | File placement — logic→`docs/{policies,protocols,standards,references}/`; volatile→`docs/data/*.json`; core arch→`docs/*.md` (≤6); agent memory→`docs/agent-memory/`; reports→`docs/archive/` | `docs/references/tree-map.md` |

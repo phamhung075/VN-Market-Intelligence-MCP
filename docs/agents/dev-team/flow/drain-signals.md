@@ -3,7 +3,7 @@
 **MANDATORY PERSIST GUARD:** Before Step 0a-D, check:
 1. `ls docs/signals/*.json | wc -l` → if count > 50: full drain (§0a-1 + DB INSERT + mv) is REQUIRED this tick.
 2. `stat -f "%Sm" docs/signals/signals.db` → if mtime > 24h ago: DB write is REQUIRED this tick.
-Neither is optional. Curate-and-route without persist+commit = incomplete drain. After drain, commit ONLY these paths: `docs/signals/processed/`, `docs/signals/*.json` (deletions), `docs/signals/signals.db`, `docs/signals/DASHBOARD.md`.
+Neither is optional. Curate-and-route without persist+commit = incomplete drain. After drain, commit ONLY these paths: `docs/signals/processed/`, `docs/signals/*.json` (deletions), `docs/signals/signals.db`, `docs/data/orch/orch-state.json` (signal_queue section only).
 
 **Parent flow:** `docs/agents/dev-team/flow/main.md` (Step 0a dispatcher)
 
@@ -13,15 +13,15 @@ Spec: `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md` | DB degradat
 
 ---
 
-**0a-D — Drain `docs/signals/DASHBOARD.md` (cross-team inbox):**
+**0a-D — Drain `docs/data/orch/orch-state.json` `.signal_queue` (cross-team inbox):**
 
-Read DASHBOARD.md per skill `.claude/skills/signal-dashboard/SKILL.md` § READ.
-Find `## po` section (or any dev-team-addressed section). Collect `status=NEW` rows.
+Read `.signal_queue.rows[]` per skill `.claude/skills/signal-dashboard/SKILL.md` § READ.
+Find rows where `to` matches `po` or any dev-team-addressed agent. Collect `status=NEW` rows.
 
 → Load skill: `.claude/skills/task-lock/SKILL.md`
 
 For each NEW row:
-  row_key = "dash:" + section_name + ":" + row.id
+  row_key = "dash:signal_queue:" + row.id
 
   result = call_tool(server="vn-market", tool="task_claim", arguments={
     task_id:     row_key,
@@ -40,26 +40,23 @@ For each NEW row:
   mark row NEW → READ
   call_tool(server="vn-market", tool="task_release", arguments={ task_id: row_key })   // release per-row claim immediately after row consumed
 
-If DASHBOARD.md missing or no dev-team section → log "[dev-team] dashboard skip" and continue. Never fail-loud.
+If `orch-state.json` missing or `.signal_queue.rows` absent → log "[dev-team] signal_queue skip" and continue. Never fail-loud.
 
-**0a-D-PRUNE — MANDATORY prune after DASHBOARD row consumption:**
+**0a-D-PRUNE — MANDATORY prune after signal_queue row consumption:**
 
-After all NEW rows from 0a-D are marked READ:
+After all NEW rows from 0a-D are marked READ, per skill `.claude/skills/signal-dashboard/SKILL.md` § PRUNE:
 ```
-1. Remove all rows where status = DONE (immediate)
-   Archive each pruned row to docs/signals/DASHBOARD_ARCHIVE.md:
-   | {id} | {ts} | {from} | {type} | pruned:{ISO-now} |
-2. Remove all rows where status = READ AND ts < now() - 48h
-   Archive each pruned row to DASHBOARD_ARCHIVE.md (same format)
-3. Cap _Updated: header to ONE line:
-   _Updated: {ISO-now} — dev-team {≤8-word tick summary}_
-4. Update dashboard_section_cache in docs/pipeline-state.json:
-   {section_name: "po", start_line: <current po section start>, last_mtime: <new mtime>, last_linecount: <new linecount>}
-5. Commit: git add docs/signals/DASHBOARD.md docs/signals/DASHBOARD_ARCHIVE.md
+1. Archive rows where status = RESOLVED or READ + ts < now() - 48h:
+   Move to orch-state.json .signal_queue.archive[] (atomic write per §2.3)
+2. Remove archived rows from .signal_queue.rows[]
+3. Update .signal_queue._updated_at + .signal_queue._updated_by
+4. Update dashboard_section_cache in docs/data/orch/orch-state.json .dashboard_section_cache:
+   {section_name: "po", last_mtime: <new mtime of orch-state.json>, last_linecount: <rows count>}
+5. Commit (atomic temp→rename): git add docs/data/orch/orch-state.json
            git commit -m "chore(signals): drain + prune {ts}"
 ```
-NEW rows are NEVER pruned. DASHBOARD_ARCHIVE.md is append-only (never read back for routing).
-Skip prune gracefully if DASHBOARD.md was missing/skipped in 0a-D.
+NEW rows are NEVER pruned.
+Skip prune gracefully if orch-state.json was missing/skipped in 0a-D.
 
 ---
 

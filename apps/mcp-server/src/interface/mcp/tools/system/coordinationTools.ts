@@ -68,7 +68,7 @@ export function registerCoordinationTools(server: McpServer): void {
     "Claim a coordination lock before starting exclusive work. Returns whether " +
       "the claim succeeded and, on failure, who currently holds the lock. " +
       "Use before any work that must not run concurrently across multiple Claude Code sessions: " +
-      "cowork-slot (15-min scheduler slots), sprint-task (TASKS.md rows), dashboard-row (DASHBOARD.md rows), " +
+      "cowork-slot (15-min scheduler slots), sprint-task (orch-state.json .task_board rows), dashboard-row (orch-state.json .signal_queue rows), " +
       "commit-mutex (fleet-wide git index critical section — task_id must be 'commit-mutex:main', ttl_seconds=60). " +
       "Call task_release when work completes. Call task_heartbeat every 5 min for long tasks.",
     {

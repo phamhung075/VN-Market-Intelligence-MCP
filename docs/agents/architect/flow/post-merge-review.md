@@ -10,7 +10,7 @@
 
 ## Output
 - Sign-off appended to architect notebook
-- OR cleanup tasks (type=CLEAN or FIX) appended to `docs/TASKS.md`
+- OR cleanup tasks (type=CLEAN or FIX) appended to `docs/data/orch/orch-state.json` `.task_board.backlog[]`
 
 ---
 
@@ -43,7 +43,7 @@
 ## Decision
 
 - All checks pass → SIGN-OFF (append entry to `docs/agent-memory/notebooks/architect.md`)
-- Issue found → append CLEAN or FIX task to `docs/TASKS.md`, hand back to pm
+- Issue found → append CLEAN or FIX task to `docs/data/orch/orch-state.json` `.task_board.backlog[]`, hand back to pm
 
 ## RETURN
 

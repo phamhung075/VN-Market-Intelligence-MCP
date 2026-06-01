@@ -66,7 +66,7 @@ finally:
 - Different files, disjoint scopes → parallel (`isolation: "worktree"`)
 - Same file modified by both → sequential (omit `isolation`)
 - Task B `depends_on` Task A → sequential
-- Shared SSOT write (TASKS.md, project-stats.json, any agent .md, pipeline-state.json) → sequential
+- Shared SSOT write (`docs/data/orch/orch-state.json`, project-stats.json, any agent .md) → sequential
 - Same test suite → parallel ok if different test files AND no shared SQLite DB
 
 ### Developer Spawn Constraint (Invariant)
@@ -87,5 +87,5 @@ Enter only after ALL tier agents returned.
 3. bash scripts/audits/c2-alert.sh <new-HEAD-sha>  (Control 4 — non-blocking, prints warning)
 4. If Control 1 or Control 3 fired: STOP tier, WORK alert, await human.
    Recovery: bash scripts/audits/recovery-snapshot.sh  (operator-explicit only — Control 5)
-5. All controls pass → spawn pm to update TASKS.md + unblock next tier
+5. All controls pass → spawn pm to update `docs/data/orch/orch-state.json` `.task_board` + unblock next tier
 ```

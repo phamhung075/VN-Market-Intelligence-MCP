@@ -19,7 +19,7 @@ Direct fixes committed | Backlog tasks created | `docs/data/code-janitor-known-f
 Finding found?
   YES → single-file, mechanical, covered by existing tests?
     YES → ship directly (fix + test + commit + log fix)
-    NO  → add to docs/TASKS.md backlog
+    NO  → add to `docs/data/orch/orch-state.json .task_board.backlog[]`
   NO  → write Clean Areas section
 ```
 
@@ -30,8 +30,9 @@ Finding found?
 4. Commit documenting what duplication removed
 
 ## Backlog Task
-```
-| JANITOR-NNN | DRY: [description] | pending | developer | — | — |
+Append to `docs/data/orch/orch-state.json .task_board.backlog[]` (atomic write per §2.3):
+```json
+{"id": "JANITOR-NNN", "summary": "DRY: [description]", "priority": "normal"}
 ```
 `send_telegram(channel="bug")`: "Found N DRY violations, proposed M backlog tasks"
 
@@ -44,16 +45,20 @@ If the sweep produced any escalation-class findings (doublons / DRY violations N
    ls docs/signals/code-janitor-<slug>-<YYYY-MM-DD>.json
    ```
 2. Append one DASHBOARD row per the WRITE protocol → skill: `.claude/skills/signal-dashboard/SKILL.md`
+   Append row to `docs/data/orch/orch-state.json .signal_queue.rows[]` per signal-dashboard SKILL § WRITE:
+   ```json
+   {
+     "id": "cj-{YYYYMMDDTHHmmss}",
+     "ts": "<ISO-UTC>",
+     "from": "code-janitor",
+     "to": "po",
+     "type": "system-issue",
+     "summary": "Doublon sweep: N escalations → docs/signals/code-janitor-<slug>-<date>.json",
+     "severity": "LOW",
+     "status": "NEW",
+     "payload_ref": "docs/signals/code-janitor-<slug>-<date>.json"
+   }
    ```
-   to:      ## po
-   id:      cj-{YYYYMMDDTHHmmss}
-   from:    code-janitor
-   type:    system-issue
-   summary: Doublon sweep: N escalations → docs/signals/code-janitor-<slug>-<date>.json  (≤80 chars)
-   status:  NEW
-   payload: docs/signals/code-janitor-<slug>-<date>.json
-   ```
-3. Update `_Updated:` timestamp in `docs/signals/DASHBOARD.md`.
 
 Skip this step entirely if all findings were auto-fixed (nothing escalated).
 

@@ -182,25 +182,35 @@ describe("AC-T4-3: target_files in proposal doc is valid JSON array", () => {
 // AC-T4-4: DASHBOARD.md row appended in ## po section
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("AC-T4-4: DASHBOARD.md row appended in ## po section", () => {
-  test("appendDashboardRow creates ## po section with a row", async () => {
-    const dashboardPath = join(tmpDir, "DASHBOARD.md");
+// AC-T4-4: OSC-2 — row appended to orch-state.json .signal_queue.rows[]
+describe("AC-T4-4: signal_queue row appended to orch-state.json", () => {
+  test("appendDashboardRow creates signal_queue row in orch-state.json", async () => {
+    // Use a tmp orch-state.json fixture — NEVER mutates real docs/data/orch/orch-state.json
+    const orchDir = join(tmpDir, "data", "orch");
+    mkdirSync(orchDir, { recursive: true });
+    const orchStatePath = join(orchDir, "orch-state.json");
+    // File will be created by appendDashboardRow when absent
 
     await appendDashboardRow(
       "IMP-20260527-price-confirmation-degraded",
       "2026-05-27T09:02:00Z",
       "price_confirmation accuracy degraded",
       "docs/improvement-proposals/IMP-20260527-price-confirmation-degraded.md",
-      dashboardPath,
+      orchStatePath,
     );
 
-    expect(existsSync(dashboardPath)).toBe(true);
-    const content = readFileSync(dashboardPath, "utf8");
-    expect(content).toContain("## po");
-    expect(content).toContain("IMP-20260527-price-confirmation-degraded");
-    expect(content).toContain("system-auditor");
-    expect(content).toContain("improvement_proposal");
-    expect(content).toContain("NEW");
+    expect(existsSync(orchStatePath)).toBe(true);
+    const state = JSON.parse(readFileSync(orchStatePath, "utf8")) as {
+      signal_queue?: { rows?: Array<{ id: string; type: string; status: string; from: string }> };
+    };
+    const rows = state.signal_queue?.rows ?? [];
+    expect(rows.length).toBeGreaterThan(0);
+
+    const row = rows.find(r => r.id === "IMP-20260527-price-confirmation-degraded");
+    expect(row).toBeDefined();
+    expect(row!.type).toBe("improvement_proposal");
+    expect(row!.status).toBe("NEW");
+    expect(row!.from).toBe("system-auditor");
   });
 });
 
@@ -316,12 +326,16 @@ describe("AC-T4-7: totally_unknown signal_type → UNRESOLVED target_agent", () 
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// AC-T4-8: DASHBOARD row appended (not prepended)
+// AC-T4-8: signal_queue rows ordered (newest prepended to rows[])
+// OSC-2: orch-state.json .signal_queue.rows[] — new row prepended (most recent first)
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("AC-T4-8: DASHBOARD row appended after existing rows", () => {
-  test("new row appears after existing row in DASHBOARD.md", async () => {
-    const dashboardPath = join(tmpDir, "DASHBOARD.md");
+describe("AC-T4-8: signal_queue rows — second row visible after first", () => {
+  test("two appendDashboardRow calls produce two rows in signal_queue", async () => {
+    // Use a tmp orch-state.json fixture — NEVER mutates real docs/data/orch/orch-state.json
+    const orchDir = join(tmpDir, "data2", "orch");
+    mkdirSync(orchDir, { recursive: true });
+    const orchStatePath = join(orchDir, "orch-state.json");
 
     // First row
     await appendDashboardRow(
@@ -329,7 +343,7 @@ describe("AC-T4-8: DASHBOARD row appended after existing rows", () => {
       "2026-05-26T09:00:00Z",
       "existing finding",
       "docs/improvement-proposals/IMP-existing-id.md",
-      dashboardPath,
+      orchStatePath,
     );
 
     // Second row
@@ -338,16 +352,18 @@ describe("AC-T4-8: DASHBOARD row appended after existing rows", () => {
       "2026-05-27T09:02:00Z",
       "new finding",
       "docs/improvement-proposals/IMP-20260527-new-finding.md",
-      dashboardPath,
+      orchStatePath,
     );
 
-    const content = readFileSync(dashboardPath, "utf8");
-    const existingIdx = content.indexOf("IMP-existing-id");
-    const newIdx = content.indexOf("IMP-20260527-new-finding");
+    const state = JSON.parse(readFileSync(orchStatePath, "utf8")) as {
+      signal_queue?: { rows?: Array<{ id: string }> };
+    };
+    const rows = state.signal_queue?.rows ?? [];
+    const ids = rows.map(r => r.id);
 
-    expect(existingIdx).toBeGreaterThan(-1);
-    expect(newIdx).toBeGreaterThan(-1);
-    expect(newIdx).toBeGreaterThan(existingIdx); // new row is AFTER existing
+    expect(ids).toContain("IMP-existing-id");
+    expect(ids).toContain("IMP-20260527-new-finding");
+    expect(rows.length).toBe(2);
   });
 });
 

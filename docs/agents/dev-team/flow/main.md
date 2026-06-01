@@ -15,7 +15,7 @@ This flow may spawn any INDIVIDUAL agent. Taxonomy:
 **NEVER spawn the `cowork-team` or `dev-team` dispatcher flows** — those are team dispatchers; spawning them here recurses infinitely. This guard is non-negotiable.
 <!-- spawn-guard: policy-only — no runtime assertion; enforced by convention, not code check. Individual agents are safe; dispatcher FLOWS are not. -->
 
-**Cross-team work** (cowork agent reports a code bug): write a signal row to `docs/signals/DASHBOARD.md` per skill `.claude/skills/signal-dashboard/SKILL.md`. This remains the primary channel. Direct on-demand cowork spawn is ADDITIONAL (for cases where dev-team needs immediate cowork output after a code change).
+**Cross-team work** (cowork agent reports a code bug): write a signal row to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` per skill `.claude/skills/signal-dashboard/SKILL.md`. This remains the primary channel. Direct on-demand cowork spawn is ADDITIONAL (for cases where dev-team needs immediate cowork output after a code change).
 
 **On-demand spawn of maintenance/cowork agents — mutex-wrap REQUIRED:**
 Before spawning any agent from the maintenance or cowork lanes, claim a lock keyed on the agent id to prevent double-running a concurrent cron instance:
@@ -41,10 +41,10 @@ else:
 Skill ref: `.claude/skills/task-lock/SKILL.md` § Dispatcher-Wrap Pattern.
 
 ## Input
-`read_telegram_reports(status="new")` | `list_unresolved_reports()` | docs/TASKS.md | git log (last 30 commits) | `git branch`
+`read_telegram_reports(status="new")` | `list_unresolved_reports()` | `docs/data/orch/orch-state.json` `.task_board` | git log (last 30 commits) | `git branch`
 
 ## Output
-Tasks executed → docs/TASKS.md updated → WORK notified
+Tasks executed → `docs/data/orch/orch-state.json` `.task_board` updated → WORK notified
 
 ---
 
@@ -141,29 +141,30 @@ else:
 
 Output: `pendingSignals[]` for Step 1, or empty.
 
-If empty AND TASKS.md empty AND no Telegram reports → JUMP TO `session-gate`.
+If empty AND `docs/data/orch/orch-state.json` `.task_board` empty AND no Telegram reports → JUMP TO `session-gate`.
 
 ---
 
 <!-- jump:pipeline-resume -->
 ## Step 0b — Pipeline Resume + Session Gate
 
-Read ONLY `head` block from `docs/pipeline-state.json` for routing (~150 tokens):
-```
-head.status       → routing enum: "idle" | "in_progress" | "blocked" | "stale"
-head.active_task_id → claim key for dispatcher-wrap mutex
-head.next_agent   → kebab-case agent id to resume
-head.next_action  → ≤20-word spawn prompt suffix (no prose parsing)
-head.updated_at   → staleness check
+Read ONLY `head` block from `docs/data/orch/orch-state.json` for routing (~150 tokens):
+```bash
+CURRENT=$(cat docs/data/orch/orch-state.json)
+head_status       = $(echo "$CURRENT" | jq -r '.head.status')
+head_active_task  = $(echo "$CURRENT" | jq -r '.head.active_task_id')
+head_next_agent   = $(echo "$CURRENT" | jq -r '.head.next_agent')
+head_next_action  = $(echo "$CURRENT" | jq -r '.head.next_action')
+head_updated_at   = $(echo "$CURRENT" | jq -r '.head.updated_at')
 ```
 `narrative.*` block is lazy-loaded only on explicit human-facing resume request — do NOT read at cold start.
 
-**v1 pipeline-state.json (no `head` key):** read `status`/`activeTaskId`/`nextAgent`/`updatedAt` fields directly (legacy prose fields). Self-heal to v2 on next write (first writer detects `_schema` absent and writes v2).
+**v1 legacy (no `head` key):** field names were `status`/`activeTaskId`/`nextAgent`/`updatedAt` directly at root. Self-heal to v3 on next write (first writer detects `_schema` absent or < "v3" and writes v3 envelope).
 
 - `head.status == "in_progress"` AND `head.next_agent` non-null AND `head.updated_at < 24h` → dispatcher-wrap then spawn `head.next_agent`. JUMP TO `execute`.
   ```
   # S2 dispatcher-wrap:
-  bare_task_id = head.active_task_id   # from docs/pipeline-state.json head block
+  bare_task_id = head.active_task_id   # from docs/data/orch/orch-state.json .head block
   resume_key   = "task:" + bare_task_id
   outer_claim  = call_tool(server="vn-market", tool="task_claim", arguments={
     task_id: resume_key, task_kind: "sprint-task",
@@ -185,7 +186,7 @@ head.updated_at   → staleness check
 - `head.status == "idle"` or `head` missing or v1 schema → fall through to Step 1.
 
 <!-- jump:session-gate -->
-**Session Gate:** TASKS.md empty AND no Telegram reports AND `pendingSignals` empty → `send_telegram(work, "Dev loop idle.")` → JUMP TO `end`.
+**Session Gate:** `docs/data/orch/orch-state.json` `.task_board` empty AND no Telegram reports AND `pendingSignals` empty → `send_telegram(work, "Dev loop idle.")` → JUMP TO `end`.
 
 ---
 
@@ -205,7 +206,7 @@ if not outer_claim.claimed:
   JUMP TO end   # do NOT spawn po
 # Claim succeeded — spawn PO:
 ```
-→ Spawn `po` with: `pendingSignals[]`, `read_telegram_reports(status="new")`, `list_unresolved_reports()`, `docs/TASKS.md`, `git log --oneline -30`, `git branch`
+→ Spawn `po` with: `pendingSignals[]`, `read_telegram_reports(status="new")`, `list_unresolved_reports()`, `docs/data/orch/orch-state.json .task_board`, `git log --oneline -30`, `git branch`
 → PO contract: `docs/agents/po/flow/main.md` § Role in dev-team flow
 → Return: `NOTHING` (→ idle EXIT) | `BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])`
 ```
@@ -286,7 +287,7 @@ Covers: post-execution checks (4.0–4.1), Compact Checkpoint (4.5), doc self-he
 
 ## Invariants
 
-- WIP ≤ 2 | docs/TASKS.md ≤ 80 lines | project-stats.json updated each sprint
+- WIP ≤ 2 | `docs/data/orch/orch-state.json` `.task_board.active_sprints[].tasks` count ≤ 80 per sprint | project-stats.json updated each sprint
 - Docker restart: after final sprint merge only
 - Branch deleted by QA post-merge
 - Notify WORK at: fix shipped | sprint complete | blocker resolved | idle

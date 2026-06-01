@@ -92,9 +92,9 @@ PIPELINE: continue
 
 > Three-lane rule + proposal schema SSOT: `docs/architecture-briefs/2026-05-27-gated-self-improvement-loop.md` §1 and §3.
 
-**Trigger:** invoked when `docs/signals/DASHBOARD.md` has `status=NEW` rows of `type=improvement_proposal`.
+**Trigger:** invoked when `docs/data/orch/orch-state.json` `.signal_queue.rows[]` has `status=NEW` rows of `type=improvement_proposal`.
 
-**Step IP-1 — Read each proposal doc** from the path in the DASHBOARD row payload.
+**Step IP-1 — Read each proposal doc** from the path in the signal_queue row `payload_ref` field.
 
 **Step IP-2 — Validate lane classification** by applying the THREE-LANE rule (first-match-wins, lane-C tested first) from the brief above §1.
 - If lane label is wrong → correct it in the `## Lane` section of the proposal doc. Note correction in the architect-review section.

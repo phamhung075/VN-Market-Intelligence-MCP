@@ -41,7 +41,9 @@ comm -13 /tmp/on_disk.txt /tmp/in_tree.txt    # tree-map points to missing files
 grep -rnE '\b(83|112|123|22|33|29) (tools|cron|agents|jobs)\b' .claude/ docs/
 
 # Size cap check
-wc -l CLAUDE.md docs/TASKS.md docs/SPRINT_GOAL.md
+wc -l CLAUDE.md
+jq '[.task_board.active_sprints[].tasks[]] | length' docs/data/orch/orch-state.json
+jq '.sprint_goal.entries | length' docs/data/orch/orch-state.json
 find .claude/agents .claude/skills -name "*.md" -exec wc -l {} \; | sort -rn | head
 ```
 

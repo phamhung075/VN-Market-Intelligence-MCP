@@ -49,7 +49,7 @@ Scan `docs/{policies,protocols,standards,references}/*.md` + `.claude/agents/*.m
 | Tool count number (`123 tools`, `83 tools`) | Pointer to `docs/data/tool-registry.json` |
 | Cron count (`29 cron jobs`) | Pointer to `docs/data/cron-registry.json` |
 | Agent count (`33 agents`, `22 agents`) | Pointer to `docs/data/project-stats.json` |
-| Sprint number inline | Pointer to `docs/SPRINT_GOAL.md` |
+| Sprint number inline | Pointer to `docs/data/orch/orch-state.json .sprint_goal` |
 | Ticker lists inline | Pointer to `docs/data/stock-classification.json` |
 | Mcp tool name list inline | Pointer to `docs/standards/mcp-tools.md` |
 | Telegram channel rule restated | Pointer to `.claude/skills/telegram-channel-routing/SKILL.md` |
@@ -64,8 +64,8 @@ Auto-fix rewrites the line. Originals saved in `reports/DOC_HEAL_<YYYY-MM-DD>.md
 | File | Cap | Action on overflow |
 |------|-----|--------------------|
 | `CLAUDE.md` | 120 lines | Move bloat to `docs/<bucket>/<topic>.md`; leave pointer |
-| `docs/TASKS.md` | 80 lines | Move Done section → `docs/TASKS_ARCHIVE.md` |
-| `docs/SPRINT_GOAL.md` | 30 lines | Delete sprint goals older than current |
+| `docs/data/orch/orch-state.json .task_board` active tasks | 80 tasks | PM runs task-archive sub-flow: move DONE tasks to `.task_board.archive[]` |
+| `docs/data/orch/orch-state.json .sprint_goal.entries[]` | 15 entries | PO closes/removes old sprint entries |
 | `docs/WORK.md` | unbounded but compact | Trim entries older than 14 days to `docs/agent-memory/sessions/` |
 | `.claude/agents/*.md` | 200 lines | Move repeated >3-line blocks to `docs/{policies,protocols,standards,references}/` or new skill |
 | `.claude/skills/*/SKILL.md` | 200 lines | Same — extract reusable rules to knowledge |

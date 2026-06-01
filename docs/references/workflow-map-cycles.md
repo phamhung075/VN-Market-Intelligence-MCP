@@ -74,7 +74,7 @@ W12 CRON system audit
     CRON → MAIN → system-auditor → memory/DB/logs scan → BUG (new anomalies only)
 
 W13 CRON code-janitor (3h)
-    CRON → MAIN → code-janitor → DRY/magic-number scan → docs/TASKS.md (or signal po)
+    CRON → MAIN → code-janitor → DRY/magic-number scan → `orch-state.json .task_board.backlog[]` (or signal po)
 
 W14 CRON context janitor
     CRON → MAIN → claude-manager-helper → CLAUDE.md slim + DAG check + memory hygiene

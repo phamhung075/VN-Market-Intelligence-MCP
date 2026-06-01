@@ -74,18 +74,28 @@ Fields: `Created by: <agent-id>`, `Status: DRAFT`, Weakness, Evidence (all fired
 Lane Rationale (include C-3 answer), Success Signal, Rollback.
 Write via Write tool — NEVER interpolate payload through a shell (S3 guard).
 
-### Step SC-4 — Write DASHBOARD row
+### Step SC-4 — Write signal_queue row
 
-Append to `docs/signals/DASHBOARD.md` `## po` section:
-```
-| <ID> | <ISO-UTC> | <agent-id> | improvement_proposal | <summary ≤40 chars> | NEW | docs/improvement-proposals/<ID>.md |
+Append row to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` per skill `.claude/skills/signal-dashboard/SKILL.md` § WRITE (atomic write):
+```json
+{
+  "id": "<agent-id[0:3]>-<YYYYMMDDTHHmmss>",
+  "ts": "<ISO-UTC>",
+  "from": "<agent-id>",
+  "to": "po",
+  "type": "improvement_proposal",
+  "summary": "<summary ≤120 chars>",
+  "severity": "INFO",
+  "status": "NEW",
+  "payload_ref": "docs/improvement-proposals/<ID>.md"
+}
 ```
 
 ### Step SC-5 — Commit (mutex-guarded, explicit paths only)
 
-Batch IMP doc + DASHBOARD row into the same commit as notebook-write if still open.
+Batch IMP doc + orch-state.json write into the same commit as notebook-write if still open.
 If notebook-write commit already closed → new commit via skill: `.claude/skills/commit-mutex/SKILL.md`
-- `own_paths`: [`docs/improvement-proposals/<ID>.md`, `docs/signals/DASHBOARD.md`]
+- `own_paths`: [`docs/improvement-proposals/<ID>.md`, `docs/data/orch/orch-state.json`]
 - `intent`: `"chore(improve): self-critique draft <ID>"`
 - NEVER `-A` or `.` — explicit paths only (C5 safety invariant).
 - On error: release mutex, EXIT — do not leave a half-staged index.

@@ -80,7 +80,7 @@ send_telegram(channel="work", message="Sprint XXX kickoff...")
 
 - `docs/references/agent-roster.md` — agent capabilities and autonomy
 - `docs/standards/mcp-tools.md` — MCP tools reference
-- `docs/TASKS.md` — current task backlog
+- `docs/data/orch/orch-state.json .task_board` — current task backlog
 - `project_sprint_XXX_status.md` — recent sprint completion summaries
 
 ## Channel Permissions
@@ -107,7 +107,7 @@ Protocol: `docs/protocols/task-lock-protocol.md`.
 ## Pipeline Resume Gate
 
 **Before any agent runs:**
-1. Check `docs/pipeline-state.json` status
-2. If `in_progress` AND `nextAgent` set AND `updatedAt < 24h` → spawn nextAgent immediately
-3. If `in_progress` AND `updatedAt >= 24h` → stale, reset to `idle`
-4. If PO initiating: verify TASKS.md not empty OR Telegram reports exist (else ask user for goal)
+1. Check `docs/data/orch/orch-state.json .head.status`
+2. If `.head.status == "in_progress"` AND `.head.next_agent` set AND `.head.updated_at < 24h` → spawn `.head.next_agent` immediately
+3. If `.head.status == "in_progress"` AND `.head.updated_at >= 24h` → stale, reset `.head.status` to `idle`
+4. If PO initiating: verify `.task_board` not empty OR Telegram reports exist (else ask user for goal)

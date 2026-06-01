@@ -12,7 +12,7 @@ description: >
 
 **forbidden_outputs:**
 - NEVER create incident docs, escalation files, recovery procedures
-- NEVER modify pipeline-state.json or other agents' files
+- NEVER modify `docs/data/orch/orch-state.json` or other agents' files (cowork agents: forbidden; dev-team pipeline agents only may write `.head` section via atomic write)
 - NEVER diagnose infrastructure — that is ops/developer's job
 - NEVER write files outside session log, notebook, analysis-briefs, and channel messages
 

@@ -211,5 +211,5 @@ All 5 pass = full recovery confirmed.
 ## 9. Preventing recurrence
 
 - **Always invoke `/cron-cowork-team` at session start.** Add it to personal workflow before any other CLI work during VN market hours.
-- **1951d cutover gate:** The 12 RemoteTriggers must NOT be deleted until 1957b is done (skill + runbook exist) AND the cron-cowork-team skill is proven stable across ≥2 session restarts. Task 1951d in `docs/TASKS.md` is blocked on `1957b-done`.
-- **System-auditor Tier-1 check:** The system-auditor agent (30-min cron) monitors cowork silence. If it detects no chef output in >6h during market hours, it drops a signal to `docs/signals/DASHBOARD.md § ops`. Ops reads this and invokes the recovery flow (Section 4 above).
+- **1951d cutover gate:** The 12 RemoteTriggers must NOT be deleted until 1957b is done (skill + runbook exist) AND the cron-cowork-team skill is proven stable across ≥2 session restarts. Task 1951d in `docs/data/orch/orch-state.json .task_board` is blocked on `1957b-done`.
+- **System-auditor Tier-1 check:** The system-auditor agent (30-min cron) monitors cowork silence. If it detects no chef output in >6h during market hours, it drops a signal row to `docs/data/orch/orch-state.json .signal_queue.rows[]` with `to: "ops"`. Ops reads this and invokes the recovery flow (Section 4 above).

@@ -38,7 +38,7 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 
 ---
 
-## D4: TASKS.md / task-lock Coherence
+## D4: orch-state.json task_board / task-lock Coherence
 
 **Tier:** 3 (daily 03:00Z — offset from D3 at 02:00Z to avoid I/O contention)
 **Check IDs:** D4-R1 through D4-R4 (see handler steps R-1 to R-4 in `docs/agents/system-auditor/handlers.md`)
@@ -49,20 +49,20 @@ This file is the canonical registry of what system-auditor checks and why. Each 
 
 | Check | Description | Pass condition |
 |-------|-------------|---------------|
-| D4-R1 | `task_list_held(kind="sprint-task")` MCP call | Tool responds (empty or populated); empty AND pipeline-state non-null → alert |
-| D4-R2 | pipeline-state.json cross-check | `pipeline-state.activeTaskId` matches the held lock task_id (or both null) |
-| D4-R3 | TASKS.md owner/status cross-check | For each held lock: TASKS.md row exists, Owner column matches `task_locks.owner_agent`, Status = `In Progress` |
-| D4-R4 | git log concurrent-commit detection | No two commits to `docs/TASKS.md` land within a 30-second window |
+| D4-R1 | `task_list_held(kind="sprint-task")` MCP call | Tool responds (empty or populated); empty AND `orch-state.json .head.active_task_id` non-null → alert |
+| D4-R2 | orch-state.json `.head` cross-check | `.head.active_task_id` matches the held lock task_id (or both null) |
+| D4-R3 | `.task_board` owner/status cross-check | For each held lock: task_board entry exists, owner matches `task_locks.owner_agent`, status = `IN_PROGRESS` |
+| D4-R4 | git log concurrent-commit detection | No two commits to `docs/data/orch/orch-state.json` land within a 30-second window |
 
 ### Acceptance criteria
 
 | AC | Check | Pass condition |
 |----|-------|---------------|
 | AC-1 | `task_list_held` fires at 03:00Z | Tool call appears in session log at 03:00Z ± 5min |
-| AC-2 | Divergence → DASHBOARD `## po` row | Row emitted within 24h of divergence event |
-| AC-3 | No divergence → no false-positive row | Clean day: zero rows in `## po` from D4 |
-| AC-4 | pipeline-state/lock mismatch detected | `task_list_held` empty + `activeTaskId` non-null → DASHBOARD alert emitted |
-| AC-5 | Concurrent TASKS.md commits detected | Two commits within 30s on `docs/TASKS.md` → DASHBOARD alert emitted |
+| AC-2 | Divergence → `orch-state.json .signal_queue` row `to: "po"` | Row emitted within 24h of divergence event |
+| AC-3 | No divergence → no false-positive row | Clean day: zero signal_queue rows from D4 with `to: "po"` |
+| AC-4 | orch-state/lock mismatch detected | `task_list_held` empty + `.head.active_task_id` non-null → signal_queue alert emitted |
+| AC-5 | Concurrent orch-state.json commits detected | Two commits within 30s on `docs/data/orch/orch-state.json` → signal_queue alert emitted |
 
 ### Failure modes
 
@@ -70,7 +70,7 @@ See `docs/agents/system-auditor/handlers.md` §TASKS.md Reconciliation Pass → 
 
 ### Signal bus
 
-- DASHBOARD row target: `## po` (po reads DASHBOARD at every cycle Step 0 per `docs/agents/po/flow/main.md`)
+- `orch-state.json` `.signal_queue` row `to: "po"` (po reads `.signal_queue` at every cycle Step 0 per `docs/agents/po/flow/main.md`)
 - BUG channel: new divergences only (dedup 7d, key pattern: `d4_tasksmd_lock_diverge:<task_id>`)
 - Signal type: `system_issue`
 
@@ -83,7 +83,7 @@ See `docs/agents/system-auditor/handlers.md` §TASKS.md Reconciliation Pass → 
 
 ---
 
-## D-N: Concurrent-Write mtime Detection (TASKS.md / pipeline-state.json)
+## D-N: Concurrent-Write mtime Detection (orch-state.json)
 
 **Tier:** 3 (daily 03:00Z — runs with D4)
 **Check IDs:** DN-W1, DN-W2
@@ -94,13 +94,12 @@ See `docs/agents/system-auditor/handlers.md` §TASKS.md Reconciliation Pass → 
 
 | Check | Description | Pass condition |
 |-------|-------------|---------------|
-| DN-W1 | mtime delta on `docs/TASKS.md` | No two distinct mtime stamps within the same 15-min window (i.e. mtime changes ≥ 2 times in any 15-min bucket detected via git log `--follow --diff-filter=M`) |
-| DN-W2 | mtime delta on `docs/pipeline-state.json` | Same 15-min window rule as DN-W1 |
+| DN-W1 | mtime delta on `docs/data/orch/orch-state.json` | No two distinct mtime stamps within the same 15-min window (i.e. mtime changes ≥ 2 times in any 15-min bucket detected via git log `--follow --diff-filter=M`) |
 
 ### Detection algorithm
 
 ```
-for each target_file in [docs/TASKS.md, docs/pipeline-state.json]:
+for each target_file in [docs/data/orch/orch-state.json]:
   commits = git log --oneline --follow --diff-filter=M --format="%H %ai" -- <target_file> | head -20
   bucket each commit timestamp into 15-min windows (floor to nearest :00/:15/:30/:45)
   for each window:
@@ -109,15 +108,15 @@ for each target_file in [docs/TASKS.md, docs/pipeline-state.json]:
         "[system-auditor] D-N: concurrent writes detected on <target_file> — " +
         len(commits_in_window) + " commits in 15-min window " + window_key +
         " (last-writer-wins risk). Escalate to po.")
-      write DASHBOARD row: {section: "## po", type: "concurrent-write-alert", file: target_file, window: window_key}
+      write signal_queue row: {to: "po", type: "concurrent-write-alert", summary: "concurrent writes on orch-state.json window:" + window_key}
 ```
 
 ### Acceptance criteria
 
 | AC | Check | Pass condition |
 |----|-------|---------------|
-| AC-1 | DN-W1/DN-W2 fire at 03:00Z | Git log call appears in session log at 03:00Z ± 5min |
-| AC-2 | Concurrent writes detected → WORK alert + DASHBOARD row | Alert emitted within 24h of concurrent-write event |
+| AC-1 | DN-W1 fires at 03:00Z | Git log call appears in session log at 03:00Z ± 5min |
+| AC-2 | Concurrent writes detected → WORK alert + signal_queue row | Alert emitted within 24h of concurrent-write event |
 | AC-3 | No concurrent writes → no false-positive alert | Clean day: zero D-N alerts |
 
 ### Failure modes
@@ -125,12 +124,12 @@ for each target_file in [docs/TASKS.md, docs/pipeline-state.json]:
 | Failure | Behavior |
 |---|---|
 | git log non-zero exit | Log WARN, skip D-N this cycle — do not block D4 |
-| TASKS.md or pipeline-state.json missing | Log WARN, skip file, continue other file |
+| `docs/data/orch/orch-state.json` missing | Log WARN, skip D-N this cycle |
 
 ### Not in scope for D-N
 
 - Auto-merging or serializing concurrent writes (detection only)
-- Monitoring DASHBOARD.md concurrent writes (lower risk tier — deferred)
+- Monitoring orch-state.json `.signal_queue` concurrent writes (lower risk tier — deferred)
 - Long-term fix: task_status_echo table (Option C, future sprint)
 
 ---

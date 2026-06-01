@@ -67,7 +67,7 @@ Step 2: Is tool name in my flow/cycle doc?
    payload="Tool <name> missing from package — cannot proceed")` → EXIT cycle.
 
 **Forbidden write targets (cowork agents):**
-- NO `docs/TASKS.md`, NO `docs/handoffs/` files
+- NO `docs/data/orch/orch-state.json`, NO `docs/handoffs/` files
 - NO `.claude/agents/*.md` or `docs/agents/*/flow/*.md`
 - NO `docs/data/system-map.json`, NO `docs/data/schedule.json`
 - ONLY permitted: `docs/agent-memory/notebooks/<own-id>.md` + `docs/signals/<signal-file>.json`

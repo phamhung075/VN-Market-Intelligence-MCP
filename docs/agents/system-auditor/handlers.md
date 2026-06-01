@@ -6,7 +6,7 @@
 
 ---
 
-## TASKS.md Reconciliation Pass
+## task_board / orch-state.json Reconciliation Pass
 
 **Brief source:** `docs/architecture-briefs/2026-05-21-tasks-md-hardening.md` §3 Option A + §8 Phase 1
 **Sprint:** 1965a (DESIGN) → 1965b (IMPLEMENT)
@@ -28,78 +28,77 @@ result = mcp__claude_ai_gateway__call_tool({
 })
 ```
 
-If `result` is empty list AND `docs/pipeline-state.json` `activeTaskId` is non-null → **emit DASHBOARD alert** (AC-4):
+If `result` is empty list AND `docs/data/orch/orch-state.json` `.head.active_task_id` is non-null → **emit signal_queue alert** (AC-4):
 ```
 type: system_issue
-summary: "task_list_held empty but pipeline-state.activeTaskId=<id>"
+summary: "task_list_held empty but orch-state.json .head.active_task_id=<id>"
 ```
-Then continue to Step R-2 (pipeline-state cross-check still needed).
+Then continue to Step R-2 (head cross-check still needed).
 
-If both empty and `activeTaskId` is null → log "D4 pass: no held locks, no active pipeline task — clean" → EXIT this handler.
+If both empty and `.head.active_task_id` is null → log "D4 pass: no held locks, no active pipeline task — clean" → EXIT this handler.
 
-**Step R-2 — pipeline-state.json cross-check (AC-4)**
+**Step R-2 — orch-state.json `.head` cross-check (AC-4)**
 
-Read `docs/pipeline-state.json`. Extract `activeTaskId` (may be null).
+Read `docs/data/orch/orch-state.json`. Extract `.head.active_task_id` (may be null).
 
 For each held lock from Step R-1:
 - Check `bare_task_id = held.task_id.startsWith("task:") ? held.task_id.slice(5) : held.task_id`
-- If `pipeline-state.activeTaskId != null` AND `pipeline-state.activeTaskId != bare_task_id` → record mismatch for DASHBOARD emit (type: `system_issue`, summary: `"pipeline-state/lock mismatch: active=<activeTaskId> held=<bare_task_id>"`)
+- If `.head.active_task_id != null` AND `.head.active_task_id != bare_task_id` → record mismatch for signal_queue emit (type: `system_issue`, summary: `"orch-state/lock mismatch: active=<active_task_id> held=<bare_task_id>"`)
 
-**Step R-3 — TASKS.md owner/status cross-check (AC-1, AC-2, AC-3)**
+**Step R-3 — `.task_board` owner/status cross-check (AC-1, AC-2, AC-3)**
 
-Read `$PROJECT_ROOT/docs/TASKS.md` (absolute path — NEVER use relative `docs/TASKS.md`; CWD may have drifted). For each held lock from Step R-1:
+Read `$PROJECT_ROOT/docs/data/orch/orch-state.json` (absolute path — NEVER use relative path; CWD may have drifted). Extract `.task_board.active_sprints[].tasks[]`. For each held lock from Step R-1:
 
 ```
 bare_task_id = held.task_id.startsWith("task:") ? held.task_id.slice(5) : held.task_id
 ```
 
-Find the TASKS.md row where `task_id` column matches `bare_task_id`.
+Find the task_board task entry where `task_id` matches `bare_task_id`.
 
-If row NOT found:
-- Log: `"D4 WARN: held lock <bare_task_id> has no TASKS.md row"`
-- Emit DASHBOARD row (see §Emit format below)
+If entry NOT found:
+- Log: `"D4 WARN: held lock <bare_task_id> has no task_board entry"`
+- Emit signal_queue row (see §Emit format below)
 
-If row found:
-- Compare `held.owner_agent` vs TASKS.md `Owner` column
-  - Diverge → emit DASHBOARD row: `summary: "Owner diverge: lock=<held.owner_agent> tasks=<tasks_owner> task=<bare_task_id>"`
-- Compare TASKS.md `Status` column:
-  - Status is `In Progress` → PASS (lock + status coherent)
-  - Status is `BACKLOG` or `Done` or `BLOCKED` → emit DASHBOARD row: `summary: "Status diverge: lock held but TASKS.md shows <status> for <bare_task_id>"`
+If entry found:
+- Compare `held.owner_agent` vs task entry `owner` field
+  - Diverge → emit signal_queue row: `summary: "Owner diverge: lock=<held.owner_agent> task_board=<task_owner> task=<bare_task_id>"`
+- Compare task entry `status` field:
+  - Status is `IN_PROGRESS` → PASS (lock + status coherent)
+  - Status is `BACKLOG` or `DONE` or `BLOCKED` → emit signal_queue row: `summary: "Status diverge: lock held but task_board shows <status> for <bare_task_id>"`
 
 **Step R-4 — Seam 3: concurrent-commit detection (AC-5)**
 
 ```bash
-git log --all --oneline --follow --format="%H %ai" -- docs/TASKS.md | head -20
+git log --all --oneline --follow --format="%H %ai" -- docs/data/orch/orch-state.json | head -20
 ```
 
-Parse commit timestamps. If any two commits to `docs/TASKS.md` land within a 30-second window:
+Parse commit timestamps. If any two commits to `docs/data/orch/orch-state.json` land within a 30-second window:
 - Record conflicting commit hashes + timestamps
-- Emit DASHBOARD row: `summary: "TASKS.md concurrent commits: <hash1> + <hash2> within 30s"`
+- Emit signal_queue row: `summary: "orch-state.json concurrent commits: <hash1> + <hash2> within 30s"`
 
-**Step R-5 — Emit DASHBOARD rows**
+**Step R-5 — Emit signal_queue rows**
 
-For each divergence found in Steps R-1 through R-4, append one row to `docs/signals/DASHBOARD.md` under `## po` section per `.claude/skills/signal-dashboard/SKILL.md`:
+For each divergence found in Steps R-1 through R-4, append one row to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` per `.claude/skills/signal-dashboard/SKILL.md` § WRITE (atomic temp→rename):
 
+```json
+{
+  "id": "sau-<YYYYMMDDTHHmmss>",
+  "ts": "<ISO-8601 UTC compact>",
+  "from": "system-auditor",
+  "to": "po",
+  "type": "system_issue",
+  "summary": "<summary ≤120 chars>",
+  "severity": "MED",
+  "status": "NEW",
+  "payload_ref": null
+}
 ```
-id     = sau-<YYYYMMDDTHHmmss>   # sau = system-auditor
-ts     = ISO-8601 UTC compact
-from   = system-auditor
-type   = system_issue
-status = NEW
-```
-
-Row format:
-```
-| {id} | {ts} | system-auditor | system_issue | {summary ≤40 chars} | NEW | - |
-```
-
-After appending: update `_Updated: {ISO}_` timestamp in DASHBOARD.md line 4.
 
 **Step R-6 — BUG channel (new divergences only)**
 
 If any divergence is new (dedup_key not seen in past 7 days):
 ```
-send_telegram(channel="bug", message="[system-auditor] D4 TASKS.md/lock diverge: <summary> — see DASHBOARD.md ## po")
+send_telegram(channel="bug", message="[system-auditor] D4 orch-state/lock diverge: <summary> — see orch-state.json .signal_queue")
 ```
 
 Dedup key pattern: `d4_tasksmd_lock_diverge:<bare_task_id>`
@@ -117,9 +116,9 @@ No DASHBOARD row, no BUG write.
 | Failure | Behavior |
 |---|---|
 | `task_list_held` MCP call fails | Log WARN, skip Steps R-3/R-4, proceed to R-4 git-log check independently |
-| `$PROJECT_ROOT/docs/TASKS.md` not found (CWD drift) | This is a path-resolution bug — Step 0a MUST have resolved `$PROJECT_ROOT` before this handler runs. Log BUG telegram: `"[system-auditor] D4 ABORT: TASKS.md not found at $PROJECT_ROOT/docs/TASKS.md — CWD drift; Step 0a project-root skill must run first"` → EXIT handler. Do NOT emit "Seam 3 corruption" for a missing file — that message is reserved for parse/encoding failures only. |
-| `$PROJECT_ROOT/docs/TASKS.md` exists but parse fails (corrupted) | Log BUG telegram: `"[system-auditor] D4 ABORT: TASKS.md unreadable — possible Seam 3 corruption: parse error at $PROJECT_ROOT/docs/TASKS.md"` → EXIT handler |
-| `docs/pipeline-state.json` missing | Log WARN, skip Step R-2 cross-check only |
+| `$PROJECT_ROOT/docs/data/orch/orch-state.json` not found (CWD drift) | This is a path-resolution bug — Step 0a MUST have resolved `$PROJECT_ROOT` before this handler runs. Log BUG telegram: `"[system-auditor] D4 ABORT: orch-state.json not found at $PROJECT_ROOT/docs/data/orch/orch-state.json — CWD drift; Step 0a project-root skill must run first"` → EXIT handler. |
+| `$PROJECT_ROOT/docs/data/orch/orch-state.json` exists but parse fails (invalid JSON) | Log BUG telegram: `"[system-auditor] D4 ABORT: orch-state.json invalid JSON at $PROJECT_ROOT/docs/data/orch/orch-state.json"` → EXIT handler |
+| `.head` section missing from orch-state.json | Log WARN, skip Step R-2 cross-check only |
 | git log command fails | Log WARN, skip Step R-4 only |
 
 ### Acceptance criteria
@@ -129,10 +128,10 @@ AC-1 through AC-5 per `docs/architecture-briefs/2026-05-21-tasks-md-hardening.md
 | AC | Check |
 |----|-------|
 | AC-1 | `task_list_held` appears in system-auditor session log at 03:00Z ± 5min |
-| AC-2 | Divergence → DASHBOARD row in `## po` section within 24h |
-| AC-3 | No divergence → zero false-positive rows in `## po` |
-| AC-4 | `task_list_held` empty but `pipeline-state.activeTaskId` non-null → DASHBOARD alert |
-| AC-5 | Two TASKS.md commits within 30s → detected via git log → DASHBOARD alert |
+| AC-2 | Divergence → signal_queue row `to: "po"` within 24h |
+| AC-3 | No divergence → zero false-positive signal_queue rows from D4 |
+| AC-4 | `task_list_held` empty but `orch-state.json .head.active_task_id` non-null → signal_queue alert |
+| AC-5 | Two orch-state.json commits within 30s → detected via git log → signal_queue alert |
 
 ---
 

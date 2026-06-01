@@ -12,7 +12,7 @@ Files with these patterns **automatically** go to `docs/archive/`:
 - `AUDIT_*.md`
 - `BCTC_*.md`
 - `DEPLOYMENT*.md`
-- `SPRINT_*` (except active docs/SPRINT_GOAL.md)
+- `SPRINT_*` (no active SPRINT_GOAL.md — sprint goal now in `docs/data/orch/orch-state.json .sprint_goal`)
 - `IMPLEMENTATION_*.md`
 - `SYSTEM_*.md`
 - `OPS_*.md`
@@ -45,16 +45,19 @@ Auto-filed categories:
 
 ## Docs Root Canonical Files
 
-**Exactly 8 files (no more):**
+**Exactly 5 files (no more):**
 
 1. `ARCHITECTURE.md` — folder tree, data flow, VPS proxies
 2. `AGENT_CREATION_GUIDE.md` — agent-father index (microservices DDD content lives in `docs/ARCHITECTURE.md`)
 3. `GLOSSARY_VI.md` — Vietnamese financial terms
 4. `SESSION_SUMMARY_*.md` — current session notes
-5. `TASKS_ARCHIVE.md` — done task index by sprint
-6. `SPRINT_GOAL.md` — current sprint vision (≤30 lines, PO-owned)
-7. `WORK.md` — agent work log (News Scout, PO, QA cycle summaries)
-8. `TASKS.md` — active sprint Kanban (≤80 lines, PM-owned)
+5. `WORK.md` — agent work log (News Scout, PO, QA cycle summaries)
+
+**Migrated to `docs/data/orch/orch-state.json`:**
+- Sprint task Kanban → `.task_board` (replaces `docs/TASKS.md`)
+- Done task archive → `.task_board.archive[]` (replaces `docs/TASKS_ARCHIVE.md`)
+- Sprint goal → `.sprint_goal` (replaces `docs/SPRINT_GOAL.md`)
+- Signal dashboard → `.signal_queue` (replaces `docs/signals/DASHBOARD.md` + `DASHBOARD_ARCHIVE.md`)
 
 Two-team architecture lives in `docs/references/agent-roster.md` (no separate root file).
 
@@ -71,10 +74,7 @@ find docs/*.md \
   -not -name "AGENT_CREATION_GUIDE.md" \
   -not -name "GLOSSARY_VI.md" \
   -not -name "SESSION_SUMMARY*" \
-  -not -name "TASKS_ARCHIVE.md" \
-  -not -name "SPRINT_GOAL.md" \
-  -not -name "WORK.md" \
-  -not -name "TASKS.md" | \
+  -not -name "WORK.md" | \
   xargs -I {} mv {} docs/archive/
 ```
 

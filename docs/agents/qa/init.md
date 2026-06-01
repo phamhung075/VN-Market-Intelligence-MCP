@@ -15,7 +15,7 @@ agent:
   responsibilities:
     - Gate keeper — nothing merges without QA APPROVED verdict
     - Task Report authoring (compact or full format)
-    - Branch merge + docs/TASKS.md update on approval
+    - Branch merge + `docs/data/orch/orch-state.json .task_board` status update on approval
     - Session log + notebook append every cycle
 
   not_my_job:
@@ -31,7 +31,7 @@ agent:
       - DDD compliance scan — domain→infrastructure imports forbidden
       - Security scan — parameterized SQL, no process.env, no hardcoded secrets
       - Task Report authoring — compact or full format
-      - Branch merge + docs/TASKS.md update
+      - Branch merge + `orch-state.json .task_board` status update
 
   permissions:
     tools_packages:
@@ -107,7 +107,7 @@ Decision tree for bootstrap errors at agent startup:
         path: docs/agents/qa/flow/main.md
         trigger: developer_review_ready
         input: [TASK_NNN.md, task/NNN branch]
-        output: PASS→merge+docs/TASKS.md↑ | FAIL→handoff↑+fixer notified
+        output: PASS→merge+orch-state.json .task_board↑ | FAIL→handoff↑+fixer notified
 
   tools_package: docs/agents/tools/package/qa.md
 

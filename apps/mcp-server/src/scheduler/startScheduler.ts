@@ -752,7 +752,7 @@ export function startScheduler() {
   }, { timezone: 'UTC' })
 
   // 23:30 GMT+7 daily — Daily dashboard aggregation — task 1854a
-  // Reads session logs + TASKS.md + project-stats.json and writes
+  // Reads session logs + orch-state.json .task_board + project-stats.json and writes
   // docs/data/daily-dashboard.json for observability and sprint tracking.
   // Fires after evening summary (22:30) and periodic summary (22:30) are done.
   cron.schedule(CRONS.dailyDashboard, async () => {
@@ -906,11 +906,11 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  // Daily 03:00 UTC — TASKS.md / task-lock coherence janitor — task 1965b
+  // Daily 03:00 UTC — orch-state.json / task-lock coherence janitor — task 1965b (OSC-2)
   // D4 audit dimension: calls task_list_held(kind="sprint-task"), cross-checks
-  // pipeline-state.json (AC-4), parses TASKS.md owner/status (AC-2/AC-3),
-  // detects concurrent git commits on docs/TASKS.md within 30s (AC-5).
-  // Emits DASHBOARD ## po row for each divergence. Clean day → log only (AC-3).
+  // orch-state.json .head.active_task_id (AC-4), parses .task_board tasks (AC-2/AC-3),
+  // detects concurrent git commits on docs/data/orch/orch-state.json within 30s (AC-5).
+  // Appends signal_queue row for each divergence. Clean day → log only (AC-3).
   // Off-peak: 03:00 UTC (after bctcReparseJob at 02:30 UTC). No new DB schema.
   cron.schedule(CRONS.tasksMdJanitor, async () => {
     await jobRunRepo.wrapRun('tasksMdJanitorJob', async () => {

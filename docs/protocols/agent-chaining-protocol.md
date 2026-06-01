@@ -39,12 +39,12 @@ UNBLOCK  {route_to} ──► done
 3. **Main terminal never exits** until it receives `PIPELINE: complete` or `PIPELINE: blocked`
 4. **Parallel by default**: spawn multiple agents in ONE message whenever tasks have no shared files/deps — Claude Code executes them concurrently
 5. **Fixer ceiling**: 2 rounds max → still failing → main terminal spawns `architect`, opens new task
-6. **Pipeline-state write is mandatory for dev-team pipeline agents**: Dev-team agents (developer, qa, fixer, pm, architect, ba, po) MUST write `docs/pipeline-state.json` before returning control to main terminal.
-   - If handing off to next agent: set `status: "in_progress"`, populate `nextAgent`, `nextPrompt` (full spawn prompt — verbatim), `activeTaskId`, `updatedAt` (ISO8601 now), `updatedBy` (your agent id).
-   - If sprint/pipeline is complete (PM or QA, no next agent): set `status: "idle"`, `nextAgent: null`, `nextPrompt: null`.
+6. **Pipeline-state write is mandatory for dev-team pipeline agents**: Dev-team agents (developer, qa, fixer, pm, architect, ba, po) MUST write `docs/data/orch/orch-state.json` `.head` section before returning control to main terminal. Use atomic temp-file-then-rename write (see `docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §2.3`). Read the full file, modify only the `.head` section, write atomically — never overwrite sibling sections.
+   - If handing off to next agent: set `.head.status: "in_progress"`, populate `.head.next_agent`, `.head.next_action` (≤20-word spawn prompt suffix), `.head.active_task_id`, `.head.updated_at` (ISO8601 now), `.head.updated_by` (your agent id).
+   - If sprint/pipeline is complete (PM or QA, no next agent): set `.head.status: "idle"`, `.head.next_agent: null`, `.head.next_action: null`.
    - The write is non-optional. An agent that returns without writing this file breaks post-compact resume for the entire session.
-   - **Stale-state recovery**: if `updatedAt` is >24h old AND `status` is `"in_progress"`, main terminal treats the state as crashed and resets to `idle`. Agents must write accurate timestamps.
-   - **Cowork agents** (tran-ngoc-bau, unified-agent, alert-commander, news-scout, market-watcher, financial-analyst, report-analyzer, digest-predict, qa-responder) must NOT write `pipeline-state.json`. Use `docs/signals/` instead to request dev-team action.
+   - **Stale-state recovery**: if `.head.updated_at` is >24h old AND `.head.status` is `"in_progress"`, main terminal treats the state as crashed and resets to `idle`. Agents must write accurate timestamps.
+   - **Cowork agents** (tran-ngoc-bau, unified-agent, alert-commander, news-scout, market-watcher, financial-analyst, report-analyzer, digest-predict, qa-responder) must NOT write `orch-state.json`. Use `docs/signals/` instead to request dev-team action.
 
 ## Parallel Spawn Rule
 
@@ -70,7 +70,7 @@ Parallel developer spawns MUST use the SDK-native `isolation: "worktree"` parame
 
 **When NOT to use (force sequential instead):**
 - Overlapping file scopes — any file written by both agents
-- Tasks that write shared SSOT files: `docs/TASKS.md`, `docs/data/project-stats.json`, any agent `.md` file, `docs/pipeline-state.json`
+- Tasks that write shared SSOT files: `docs/data/orch/orch-state.json`, `docs/data/project-stats.json`, any agent `.md` file
 
 **Invariant preserved:** Main terminal remains the only spawner — sub-agents cannot spawn each other. Worktree isolation does not change this constraint.
 
@@ -91,9 +91,10 @@ PIPELINE: continue | complete | blocked
 
 **Dev-team agents only** — append this block:
 ```
-PIPELINE_STATE_WRITE: Write docs/pipeline-state.json NOW before this response ends.
-  - If PIPELINE=continue: status="in_progress", nextAgent=<name>, nextPrompt=<full spawn prompt>, activeTaskId=<NNN>, updatedAt=<ISO8601>, updatedBy=<your-agent-id>
-  - If PIPELINE=complete: status="idle", nextAgent=null, nextPrompt=null, activeTaskId=<NNN>, updatedAt=<ISO8601>, updatedBy=<your-agent-id>
+PIPELINE_STATE_WRITE: Write docs/data/orch/orch-state.json .head NOW before this response ends (atomic temp→rename per §2.3).
+  - If PIPELINE=continue: .head.status="in_progress", .head.next_agent=<name>, .head.next_action=<≤20-word suffix>, .head.active_task_id=<NNN>, .head.updated_at=<ISO8601>, .head.updated_by=<your-agent-id>
+  - If PIPELINE=complete: .head.status="idle", .head.next_agent=null, .head.next_action=null, .head.active_task_id=<NNN>, .head.updated_at=<ISO8601>, .head.updated_by=<your-agent-id>
+  - Read full orch-state.json → modify only .head → write atomically. Never overwrite .task_board / .signal_queue / .narrative siblings.
 ```
 
 **Cowork agents only** — append this block if requesting dev-team action:
@@ -124,7 +125,7 @@ docs/agent-memory/notebooks/developer.md
 $PROJECT_ROOT/docs/agent-memory/notebooks/developer.md
 ```
 
-This applies to ALL file writes: session logs, handoffs, pipeline-state.json, task reports, notebooks, TASKS.md, etc.
+This applies to ALL file writes: session logs, handoffs, docs/data/orch/orch-state.json, task reports, notebooks, etc.
 
 ---
 
@@ -153,7 +154,7 @@ docs/signals/{agent}-{ISO-timestamp}.json
 - Dedup: `SELECT 1 FROM signals_processed WHERE fingerprint = ? LIMIT 1` in `docs/signals/signals.db` (O(log N)); replaces old O(N) `processed/` dir scan. Dual-record write on new signal: DB INSERT (SSOT index) + filesystem move to `docs/signals/processed/` (human audit copy). Spec: `docs/architecture-briefs/2026-05-11-signal-dedup-sqlite.md`
 - DB unavailable (ENOENT/locked after 3×200ms retry): log WARN, skip dedup, preserve inbox, retry next cycle
 - Processed files auto-pruned after 7 days (DB DELETE + parallel filesystem prune)
-- `pipeline-state.json` is dev-team internal only — cowork agents must NOT write it
+- `docs/data/orch/orch-state.json` `.head` section is dev-team internal only — cowork agents must NOT write it
 
 **Who can drop signals:** any agent that needs dev-team action (TNB audit findings, ops escalations, cowork bug reports).
 

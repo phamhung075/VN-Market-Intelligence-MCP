@@ -10,7 +10,7 @@ This dispatcher spawns ONLY cowork-team agents per `docs/data/cowork-schedule.js
 
 NEVER spawn dev-team agents (po, ba, architect, pm, developer, qa, fixer, dev-*, ops) from this dispatcher.
 
-Cross-team work (e.g. a cowork agent finds a code bug or needs a dev-team action): write a signal row to `docs/signals/DASHBOARD.md` per skill `.claude/skills/signal-dashboard/SKILL.md`. The dev-team flow drains the dashboard (Step 0a-D in `drain-signals.md`) at its next cycle.
+Cross-team work (e.g. a cowork agent finds a code bug or needs a dev-team action): write a signal row to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` per skill `.claude/skills/signal-dashboard/SKILL.md`. The dev-team flow drains the signal_queue (Step 0a-D in `drain-signals.md`) at its next cycle.
 
 Maintenance agents (agent-father, agents-architect, claude-manager-helper, code-janitor, system-auditor, cowork-refactory-expert, idea-forge) are invoked by main terminal or self-cron — NEVER spawned by this dispatcher.
 
@@ -25,12 +25,12 @@ Fires every 15 min via `*/15 * * * *` CronCreate (Claude Code CLI). Reads `docs/
 
 ---
 
-## Step 0a — Drain `docs/signals/DASHBOARD.md` (cross-team inbox)
+## Step 0a — Drain `docs/data/orch/orch-state.json .signal_queue` (cross-team inbox)
 
-Read DASHBOARD.md per skill `.claude/skills/signal-dashboard/SKILL.md` § READ.
-Find all cowork-addressed sections (po, tran-ngoc-bau, unified-agent, alert-commander).
-Collect `status=NEW` rows → load payloads → route to matching agent slot at Step 5 or log for PO.
-Mark each processed row `NEW → READ`. If DASHBOARD.md missing → log `"[cowork-team] dashboard skip"` and continue. Never fail-loud on this step.
+Read `.signal_queue.rows[]` per skill `.claude/skills/signal-dashboard/SKILL.md` § READ.
+Find all cowork-addressed rows (`to` ∈ {po, tran-ngoc-bau, unified-agent, alert-commander}).
+Collect `status=NEW` rows → load payload_ref → route to matching agent slot at Step 5 or log for PO.
+Mark each processed row `NEW → READ` (atomic write). If orch-state.json missing → log `"[cowork-team] signal_queue skip"` and continue. Never fail-loud on this step.
 
 ---
 
@@ -529,8 +529,8 @@ if [ -f "docs/data/cycle-snapshot-latest.json" ]; then
   LAST_VOLATILITY=$(jq -r '.volatility_level // "unknown"' docs/data/cycle-snapshot-latest.json 2>/dev/null || echo "unknown")
 fi
 
-# dev_queue_depth: approximate count of OPEN/IN_PROGRESS tasks in TASKS.md
-DEV_QUEUE_DEPTH=$(grep -cE '\|\s*(OPEN|IN_PROGRESS)\s*\|' docs/TASKS.md 2>/dev/null); DEV_QUEUE_DEPTH=${DEV_QUEUE_DEPTH:-0}
+# dev_queue_depth: approximate count of OPEN/IN_PROGRESS tasks in orch-state.json .task_board
+DEV_QUEUE_DEPTH=$(jq '[.task_board.active_sprints[].tasks[] | select(.status == "IN_PROGRESS" or .status == "TODO")] | length' docs/data/orch/orch-state.json 2>/dev/null); DEV_QUEUE_DEPTH=${DEV_QUEUE_DEPTH:-0}
 
 # host_headroom_mb: available RAM in MB (best-effort, null on failure)
 HOST_HEADROOM_MB="null"

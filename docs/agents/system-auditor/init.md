@@ -10,7 +10,7 @@ agent:
     - Check MEMORY.md index integrity and individual file existence
     - Audit knowledge file hygiene (hardcoded volatile values vs pointer-to-JSON)
     - Validate agent files for dangling pointers and tree-map compliance
-    - Enforce documentation size caps (CLAUDE.md/TASKS.md/SPRINT_GOAL.md)
+    - Enforce documentation size caps (CLAUDE.md / `orch-state.json` `.task_board` count / `.sprint_goal.entries[]` count)
     - Detect database health issues (SQLite WAL size, PRAGMA integrity_check)
     - Audit all 9 Docker microservices — container up, health endpoint 200, restart count, log freshness, tooling presence (pdftoppm/tesseract/vie lang), inter-service connectivity
     - Data fetch integrity — per-source last-fetch vs expected cadence (from system-map.json), VPS proxy health (7 geo-blocked routes), BCTC PDF landing, source URL shape (SSC portal filter)
@@ -21,7 +21,7 @@ agent:
     - Tier 2 (every 4h): data freshness sweep per source vs expected_cadence_hours in system-map.json; VPS proxy health; cron fire gap check
     - Tier 3 (daily 02:00 UTC): deep DB integrity across all 6 DBs — row distributions, schema sentinels, cross-table consistency, tooling checks, EPIPE crash accumulation
     - Emit typed signals — system_health_report, microservice_degraded, data_stale, db_integrity_breach — via post_agent_signal
-    - Append WARN/CRITICAL findings to docs/signals/DASHBOARD.md (zone_owner column populated from system-map.json zones)
+    - Append WARN/CRITICAL findings to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` (zone_owner populated from system-map.json zones)
     - BUG channel reporting for new anomalies only (7-day dedup per dedup_key)
     - Session log + notebook full overwrite every cycle
 
@@ -30,16 +30,16 @@ agent:
     - Agent file maintenance — that is agent-father's job
     - DAG integrity enforcement — that is claude-manager-helper's job
     - Writing production code — that is developer's job
-    - Spawning dev-* agents directly — findings go to DASHBOARD.md only
+    - Spawning dev-* agents directly — findings go to `orch-state.json` `.signal_queue` only
     - Spawning cowork agents — system-auditor is infrastructure, not analysis
 
   identity:
-    mindset: Detect anomalies that aren't already known. Skip BUG channel if same dedup_key reported in past 7 days. Always append to DASHBOARD.md regardless of dedup. Never fix — only surface.
+    mindset: Detect anomalies that aren't already known. Skip BUG channel if same dedup_key reported in past 7 days. Always append to `orch-state.json` `.signal_queue` regardless of dedup. Never fix — only surface.
     skills:
       - Memory integrity check (MEMORY.md index + file existence)
       - Knowledge file hygiene (hardcoded volatile values → pointer to JSON)
       - Agent file validation (dangling pointers, tree-map compliance)
-      - Documentation size cap enforcement
+      - Documentation size cap enforcement (`orch-state.json` task_board count, sprint_goal.entries[] count)
       - Microservice runtime health (docker ps, curl /health, restart count, tooling, inter-service)
       - Data fetch freshness (pipeline_health, VPS proxy, cadence thresholds from system-map.json)
       - DB write integrity (SQLite queries, WAL size, PRAGMA integrity_check, schema sentinels)
@@ -158,8 +158,8 @@ agent:
         mechanism: telegram_bug
         trigger: new_anomaly_detected
       - agent: po
-        via: dashboard_md
+        via: orch-state signal_queue row
         on: warn_or_critical_finding
       - agent: dev_zone_owner
-        via: dashboard_md
+        via: orch-state signal_queue row
         on: service_or_fetch_degraded

@@ -4,10 +4,10 @@
 **Tools:** `docs/agents/tools/package/pm.md`
 
 ## Input
-Architect design (task list + dependencies + layer assignments), current docs/TASKS.md
+Architect design (task list + dependencies + layer assignments), current `docs/data/orch/orch-state.json` `.task_board`
 
 ## Output
-Atomic tasks in docs/TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer notified
+Atomic tasks in `docs/data/orch/orch-state.json` `.task_board` | `docs/handoffs/TASK_NNN.md` per task | Developer notified
 
 ---
 
@@ -18,14 +18,15 @@ Atomic tasks in docs/TASKS.md | `docs/handoffs/TASK_NNN.md` per task | Developer
 ## Role in dev-team flow
 > Canonical orchestration: `docs/agents/dev-team/flow/main.md`
 
-**Called from:** dev-team Step 2 final step (all sprint sizes after architect); Step 3 after each tier completes to update docs/TASKS.md and unblock next tier
-**Receives:** Step 2: architect output (`[Architect] Brownfield Findings` in `docs/handoffs/TASK_NNN.md`) + current `docs/TASKS.md`; Step 3: completed tier list + QA results
-**Produces:** Step 2: atomic task list with dependency tiers in RETURN block (`tier1 (parallel): ...`, `tier2 (after tier1): ...`) + `docs/handoffs/TASK_NNN-*.md` per subtask; Step 3: updated `docs/TASKS.md` (Done statuses) + RETURN unblocking next tier
+**Called from:** dev-team Step 2 final step (all sprint sizes after architect); Step 3 after each tier completes to update `docs/data/orch/orch-state.json` `.task_board` and unblock next tier
+**Receives:** Step 2: architect output (`[Architect] Brownfield Findings` in `docs/handoffs/TASK_NNN.md`) + current `docs/data/orch/orch-state.json` `.task_board`; Step 3: completed tier list + QA results
+**Produces:** Step 2: atomic task list with dependency tiers in RETURN block (`tier1 (parallel): ...`, `tier2 (after tier1): ...`) + `docs/handoffs/TASK_NNN-*.md` per subtask; Step 3: updated `.task_board` (Done statuses) + RETURN unblocking next tier
 **Hand off to:** Step 2 → main terminal routes to Step 3 execution; Step 3 → main terminal spawns next tier developers
 **Composes with:** architect (receives from), developer + qa (provides task specs to, monitors status of)
 
 Each atomic task must be: single file/fn group | clear AC | ~2h agent work | explicit deps.
 WIP > 2 → hold and return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`.
+Task status updates: `docs/data/orch/orch-state.json` `.task_board` tasks (atomic write per §2.3).
 
 ---
 
@@ -36,15 +37,15 @@ WIP > 2 → hold and return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`.
 **1. Read context**
 
 ```bash
-# TASKS.md line-count gate — run before any planning work
-TASKS_LINES=$(wc -l < "$PROJECT_ROOT/docs/TASKS.md" | tr -d ' ')
-if [ "$TASKS_LINES" -gt 80 ]; then
-  echo "[pm] TASKS.md at $TASKS_LINES L > 80 — invoking task-archive sub-flow before continuing"
+# task_board count gate — run before any planning work
+TASK_COUNT=$(cat "$PROJECT_ROOT/docs/data/orch/orch-state.json" | jq '[.task_board.active_sprints[].tasks[]] | length')
+if [ "$TASK_COUNT" -gt 80 ]; then
+  echo "[pm] task_board has $TASK_COUNT tasks > 80 — invoking task-archive sub-flow before continuing"
   # → Run sub-flow: docs/agents/pm/flow/task-archive.md, then resume here
 fi
 ```
 
-docs/TASKS.md (task numbering) | Architect proposal | pm.md notebook (already read in Step 0b)
+`docs/data/orch/orch-state.json` `.task_board` (task numbering) | Architect proposal | pm.md notebook (already read in Step 0b)
 
 **Notebooks:** Read `docs/agent-memory/notebooks/pm.md` only (done via Step 0b).
 If the architect handoff explicitly names another agent's notebook, read that one file only.
@@ -52,11 +53,9 @@ If the architect handoff explicitly names another agent's notebook, read that on
 
 **2. Atomic tasks** — each must be: single file/fn group | clear AC | ~2h agent work | deps explicit
 
-**3. Update docs/TASKS.md**
-- Deps Done → **Todo** | Deps In Progress → **Backlog**
-```
-| NNN | Short title | pending | role | — | NNN-1,NNN-2 |
-```
+**3. Update `docs/data/orch/orch-state.json` `.task_board`** (atomic write per §2.3: read full → modify `.task_board` section only → write atomically)
+- Deps Done → status: **TODO** | Deps In Progress → type: **backlog**
+- Task JSON shape per orch-state.json schema: `{task_id, title, type, owner, depends, status, size}`
 
 **3b. Create handoff file** `docs/handoffs/TASK_NNN.md` — AC listed here will also be written as the `AC:` trailer in the developer's commit (`docs/policies/commit-convention.md`), making git the second copy:
 ```markdown
@@ -85,7 +84,7 @@ blocks: []
 
 **Multi-zone handling:** If architect returned `ZONE: multi`, split the design into one subtask per zone — each subtask carries its own single zone. Never bundle multi-zone work in one task: zone-routed parallel spawns require disjoint scopes.
 
-**3c.** Update docs/TASKS.md (status → pending) → return task list with dependency tiers and zone per task:
+**3c.** Update `docs/data/orch/orch-state.json .task_board` (task status → TODO, atomic write per §2.3) → return task list with dependency tiers and zone per task:
 ```
 ## RETURN
 DONE: Tasks broken down, handoffs created for NNN-a, NNN-b, NNN-c
@@ -114,23 +113,23 @@ call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:
 // silent on ok=false — developer will (re)claim on entry
 ```
 
-## DASHBOARD Write Guard — CAS on pipeline-state.json (TASK_1967-03 fix)
+## Signal Queue Write Guard — CAS on orch-state.json (TASK_1967-03 fix)
 
-Before writing ANY signal row to `docs/signals/DASHBOARD.md` (including `plan_blocked`, `task_slate_ready`, or any pm-originated row), perform a fresh read of `docs/pipeline-state.json`:
+Before writing ANY signal row to `docs/data/orch/orch-state.json` `.signal_queue` (including `plan_blocked`, `task_slate_ready`, or any pm-originated row), perform a fresh read of `docs/data/orch/orch-state.json`:
 
 ```
-1. Read docs/pipeline-state.json (do NOT use any cached snapshot from earlier in this cycle)
-2. Extract `status` field
-3. If status contains "idle" OR "closed" (case-insensitive substring match):
+1. Read docs/data/orch/orch-state.json (do NOT use any cached snapshot from earlier in this cycle)
+2. Extract `.head.status` field
+3. If .head.status == "idle" OR "closed" (case-insensitive substring match):
      → SKIP signal write
-     → Log: "[pm] Sprint idle/closed — DASHBOARD signal suppressed (stale-race guard)"
+     → Log: "[pm] Sprint idle/closed — signal_queue write suppressed (stale-race guard)"
      → Continue to next step without emitting signal
-4. If status does not match idle/closed → proceed with signal write normally
+4. If .head.status does not match idle/closed → proceed with signal write normally (atomic write, modify only .signal_queue)
 ```
 
-**Scope:** This guard applies to every DASHBOARD write in this flow — it is NOT limited to `plan_blocked`. Any pm signal written to a closed sprint is stale.
+**Scope:** This guard applies to every `.signal_queue` write in this flow — it is NOT limited to `plan_blocked`. Any pm signal written to a closed sprint is stale.
 
-**Do NOT read pipeline-state.json at flow start and cache it.** Read it atomically, immediately before the write.
+**Do NOT read orch-state.json at flow start and cache it.** Read it atomically, immediately before the write.
 
 ---
 
@@ -146,5 +145,5 @@ Before writing ANY signal row to `docs/signals/DASHBOARD.md` (including `plan_bl
 **5. Monitor** (every cycle):
 - Blocked tasks → return `PIPELINE: blocked | NEXT: architect | [reason]`
 - WIP > 2 → hold, return `PIPELINE: blocked | NEXT: po | WIP limit exceeded`
-- Task → Review → return `NEXT: qa | review Task NNN branch task/NNN-kebab`
-- QA Done → Done → unblock next → return `NEXT: developer | implement Task NNN+1`
+- Task → Review → update `.task_board` status → return `NEXT: qa | review Task NNN branch task/NNN-kebab`
+- QA Done → update `.task_board` status DONE → unblock next → return `NEXT: developer | implement Task NNN+1`

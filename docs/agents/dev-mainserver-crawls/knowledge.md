@@ -118,7 +118,7 @@ When adding a headless scraper:
 
 ## Signal Payload Spec — dev-mainserver-crawls → qa
 
-File: Written to `docs/TASKS.md` entry (standard dev chain) + caveman to work channel.
+File: `docs/data/orch/orch-state.json .task_board` task status updated (standard dev chain: atomic write per §2.3) + caveman to work channel.
 
 ```
 SCRAPER OPERATIONAL

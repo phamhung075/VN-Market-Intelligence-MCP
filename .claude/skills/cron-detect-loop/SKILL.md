@@ -22,7 +22,7 @@ exit regardless of `durable` flag (confirmed live, not a doc assumption).
 
 `anomaly-task-bridge` (commit 5d5097d5) wired the full detect→plan loop:
 system-auditor Tier-2/3 → anomaly-task-bridge → `repair_task_request` signal →
-dev-team drain-signals.md → PO triage-signals.md → TASKS.md BACKLOG.
+dev-team drain-signals.md → PO triage-signals.md → `orch-state.json .task_board.backlog[]`.
 
 The loop is only live when ALL 4 crons are registered. This skill eliminates
 the need for the operator to manually re-trigger them after every restart.

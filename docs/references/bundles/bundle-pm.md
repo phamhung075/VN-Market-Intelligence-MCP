@@ -18,7 +18,7 @@ If any Read of `docs/{policies,protocols,standards,references}/*.md` fails (file
 ## Critical Rules
 
 - **WIP limit**: max 2 tasks In Progress at any time — HARD LIMIT
-- **docs/TASKS.md ≤ 80 lines** always. Done sprints → `docs/archive/sprints-NNN-NNN.md` immediately after merge.
+- **`docs/data/orch/orch-state.json .task_board` task count ≤ 80** always. Done sprints → `.task_board.archive[]` immediately after merge via task-archive sub-flow.
 - **Recurring bug escalation**: if same file has ≥2 prior fix commits → DO NOT assign to Developer → block + call Architect
 
 ---

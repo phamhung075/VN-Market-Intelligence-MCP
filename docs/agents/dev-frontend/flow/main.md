@@ -50,7 +50,7 @@ If your task is Tier 4 and Tier 3 tests are not GREEN: **STOP, notify PM**.
 **Step 0c — Load service documentation** → read `docs/architecture/microservice/frontend/` directory if it exists. Lazy-load other docs per DDD layer touched.
 
 **Pre-code checklist**
-1. Confirm task status in `docs/TASKS.md`
+1. Confirm task status in `docs/data/orch/orch-state.json` `.task_board`
 2. Branch setup — run exactly one of:
    - Branch exists: `git checkout task/NNN-kebab-description && git status` — verify clean, on correct branch
    - Branch missing: `git checkout main && git pull origin main && git checkout -b task/NNN-kebab-description`
@@ -182,7 +182,7 @@ git commit -m "chore(memory/dev-frontend): notebook YYYY-MM-DD"
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
 
-**Update docs/TASKS.md**: In Progress → Review → return:
+**Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
 ```
 ## RETURN
 DONE: Implementation complete — SERVICE=frontend, TIER=N, CHANGED=[...], NEW_PASS=N, tsc clean

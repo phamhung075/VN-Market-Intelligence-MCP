@@ -38,7 +38,7 @@ Groups:
 - `GROUP_KNOWLEDGE` = `docs/{policies,protocols,standards,references}/*.md` | `docs/data/*.json` | `docs/*.md`
 - `GROUP_AGENTS` = `.claude/agents/*.md` | `docs/agents/*/flow/*.md`
 - `GROUP_TOOLS` = `apps/mcp-server/src/interface/mcp/tools/*.ts`
-- `GROUP_ROOT` = `CLAUDE.md` | `docs/TASKS.md` | `docs/SPRINT_GOAL.md`
+- `GROUP_ROOT` = `CLAUDE.md` | `docs/data/orch/orch-state.json`
 - `GROUP_MEMORY` = `memory/MEMORY.md`
 
 **Routing:**
@@ -80,8 +80,8 @@ All pointer targets exist | follow tree-map paths | summaries present.
 
 <!-- jump:pass-5 -->
 ## Pass 5: Size Caps
-**SKIP IF** `GROUP_ROOT` empty OR (docs/TASKS.md ≤ 80 AND docs/SPRINT_GOAL.md ≤ 30).
-docs/TASKS.md > 80 → archive Done. docs/SPRINT_GOAL.md > 30 → delete old goals.
+**SKIP IF** `GROUP_ROOT` empty OR (`orch-state.json .task_board` task count ≤ 80 AND `.sprint_goal.entries[]` count ≤ 15).
+`.task_board` task count > 80 → alert PM to run task-archive sub-flow. `.sprint_goal.entries[]` count > 15 → alert PO to close old sprint entries.
 
 <!-- jump:pass-5b -->
 ## Pass 5b: Context-Bloat Signal Consumer
@@ -93,7 +93,7 @@ For each breach signal:
 1. Read `payload.file`, `payload.class`, `payload.cap`, `payload.line_count`
 2. Apply prune action by class:
    - `agent-notebook` → trim to ≤200 L (keep recent entries, archive older to `## Archive` section)
-   - `sprint-task-index` → archive DONE rows to `docs/TASKS_ARCHIVE.md`, target ≤80 L
+   - `sprint-task-index` → move DONE tasks to `orch-state.json .task_board.archive[]`, target ≤80 active tasks
    - `flow-file` | `skill-file` | `agent-definition` → check for `<!-- size-justification:` comment; if absent AND still over cap → flag to architect via subagent spawn (cannot auto-split safely)
 3. Move processed signal: `mv <signal> docs/signals/processed/<signal-filename>`
    (create `docs/signals/processed/` if absent)

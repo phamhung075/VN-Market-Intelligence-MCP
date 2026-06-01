@@ -27,7 +27,7 @@ Count → `docs/data/project-stats.json#analysisAgentCount`. Files live in `.cla
 | PO | `po.md` | Vision, approves specs, final sign-off | Opus |
 | BA | `ba.md` | Requirements, edge cases, blockers | Sonnet |
 | Architect | `architect.md` | Brownfield analysis, technical design, risk | Sonnet |
-| PM | `pm.md` | Sprint planning, task breakdown, docs/TASKS.md | Sonnet |
+| PM | `pm.md` | Sprint planning, task breakdown, `orch-state.json .task_board` | Sonnet |
 | Developer | `developer.md` | TDD implementation, DDD compliance | Sonnet |
 | QA / CI-CD | `qa.md` | Test pipeline, merge gate, sprint report | Sonnet |
 | Fixer | `fixer.md` | Minimum fixes on changes-requested tasks | Sonnet |

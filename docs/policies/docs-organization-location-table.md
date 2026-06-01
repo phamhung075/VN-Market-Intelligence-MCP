@@ -8,8 +8,8 @@ File placement SSOT. Before creating any `.md` file, look it up here.
 |---|---|---|
 | `TASK_REPORT_*.md` | `reports/` | `apps/mcp-server/reports/`, `docs/reports/` |
 | `*-evening.json` | `reports/` | `apps/mcp-server/reports/` |
-| `SPRINT_GOAL.md` | `docs/SPRINT_GOAL.md` | root, `apps/` |
-| `TASKS.md` | `docs/TASKS.md` | root, `apps/` |
+| Sprint goal | `docs/data/orch/orch-state.json .sprint_goal.entries[]` | `docs/SPRINT_GOAL.md` (deleted), root, `apps/` |
+| Task board | `docs/data/orch/orch-state.json .task_board` | `docs/TASKS.md` (deleted), root, `apps/` |
 | `WORK.md` | `docs/WORK.md` | root, `apps/` |
 | `TASK_NNN.md` (handoff) | `docs/handoffs/` | root, `reports/` |
 | `REQ_NNN.md` | `docs/historical/` | root, `docs/` root |

@@ -3,10 +3,10 @@
 **Tools:** `docs/agents/tools/package/ba.md`
 
 ## Input
-`docs/SPRINT_GOAL.md` vision, current `docs/TASKS.md`, module memory
+`docs/data/orch/orch-state.json` `.sprint_goal` vision, current `.task_board`, module memory
 
 ## Output
-Requirement spec in docs/TASKS.md | Architect task created | PO notified
+Requirement spec in `docs/data/orch/orch-state.json .task_board` | Architect task created | PO notified
 
 ---
 
@@ -18,7 +18,7 @@ Requirement spec in docs/TASKS.md | Architect task created | PO notified
 > Canonical orchestration: `docs/agents/dev-team/flow/main.md`
 
 **Called from:** dev-team Step 2 — SPRINT-M/L only, first sub-step before architect
-**Receives:** `docs/SPRINT_GOAL.md` vision | `docs/TASKS.md` task numbering | module memory notebooks
+**Receives:** `docs/data/orch/orch-state.json` `.sprint_goal` vision | `.task_board` task numbering | module memory notebooks
 **Produces:** FR/NFR spec with DDD layer assignments, blockers, edge cases → written to `docs/handoffs/TASK_NNN.md`; RETURN block with `NEXT: architect`
 **Hand off to:** main terminal → spawns architect with BA spec as context
 **Composes with:** architect (next) and pm (two steps later) in the same SPRINT-M/L planning chain
@@ -33,7 +33,7 @@ Blockers (Q-only-PO-can-answer) must be resolved before returning — loop with 
 **Step 0b — Read notebook** → skill: `.claude/skills/notebook-read/SKILL.md` (replace `<agent-id>` with `ba`)
 
 **1. Read context**
-`docs/SPRINT_GOAL.md` vision | docs/TASKS.md task numbering | recent agent notebooks (`docs/agent-memory/notebooks/*.md`)
+`docs/data/orch/orch-state.json` `.sprint_goal` vision | `.task_board` task numbering | recent agent notebooks (`docs/agent-memory/notebooks/*.md`)
 
 **2. Per requirement, identify**:
 - FR (capability) | NFR (perf, data freshness, language)
@@ -57,16 +57,15 @@ feature priority | VN term translation | data source availability | historical v
 - Data quality: [Vietnamese-specific issue]
 ```
 
-**5.** Create Architect task in docs/TASKS.md → pointer to spec.
+**5.** Create Architect task in `docs/data/orch/orch-state.json` `.task_board.backlog[]` → pointer to spec.
 
-## Output to docs/TASKS.md
-```
-| BA-NNN | Requirement: [Feature Name] | pending | BA | — | — |
-  Context: [brief memo with FR list, blockers, edge cases, DDD layers]
+## Output to `docs/data/orch/orch-state.json .task_board`
+```json
+{"id": "BA-NNN", "summary": "Requirement: [Feature Name] — context: [brief memo with FR list, blockers, edge cases, DDD layers]", "priority": "high"}
 ```
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-PO approves → BA Done → update docs/TASKS.md status → return:
+PO approves → BA Done → update `.task_board` task status (atomic write per §2.3) → return:
 ```
 ## RETURN
 DONE: BA spec approved, requirements written to docs/handoffs/TASK_NNN.md

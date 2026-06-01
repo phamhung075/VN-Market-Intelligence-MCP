@@ -17,10 +17,10 @@ log: "[dev-team] Expired {result.expired} monitoring reports"
 bash scripts/audits/mock-guard.sh --full
 # Scopes to apps/*/src production paths; excludes tests/sandbox/scenarios/spike/.venv
 ```
-If exit 1 (HARD-FAIL): write signal row to `## po` section in `docs/signals/DASHBOARD.md`
-  (skill: `.claude/skills/signal-dashboard/SKILL.md`) with type `system-issue`,
-  summary `mock-guard HARD-FAIL: fabricated data in production source`, payload `-`.
-  Also route same signal row to `## agents-architect` section.
+If exit 1 (HARD-FAIL): write signal row to `docs/data/orch/orch-state.json` `.signal_queue.rows[]`
+  (skill: `.claude/skills/signal-dashboard/SKILL.md` § WRITE) with type `system-issue`,
+  `to: "po"`, summary `mock-guard HARD-FAIL: fabricated data in production source`, payload_ref `null`.
+  Also emit a second row with `to: "agents-architect"`.
   Do NOT block cycle exit — this is detective-only at the backstop level.
 If exit 2 (CAUTION): log `[dev-team] mock-guard CAUTION: ambiguous markers found` to WORK only.
 If exit 0: silent.

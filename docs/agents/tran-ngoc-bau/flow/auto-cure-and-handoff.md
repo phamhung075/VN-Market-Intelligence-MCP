@@ -85,7 +85,7 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
    ```
    - `priority: "high"` if Overall is NEEDS_ATTENTION or CRITICAL
    - `priority: "normal"` if Overall is GOOD
-   - **Do NOT write pipeline-state.json** — dev-team internal only
+   - **Do NOT write `docs/data/orch/orch-state.json`** — dev-team pipeline agents only; cowork agents use `docs/signals/` instead
 
 ## RETURN
 

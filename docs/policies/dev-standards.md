@@ -84,7 +84,7 @@ describe("Task NNN — Title", () => {
 | Tasks touching shared SSOT files | sequential | omit `isolation` |
 | Sequential (default / anti-c37) | sequential | omit `isolation` |
 
-**Shared SSOT files that hard-trigger sequential dispatch:** `docs/TASKS.md`, `docs/data/project-stats.json`, any agent `.md` file, `docs/pipeline-state.json`.
+**Shared SSOT files that hard-trigger sequential dispatch:** `docs/data/orch/orch-state.json`, `docs/data/project-stats.json`, any agent `.md` file.
 
 Sequential dispatch remains the DEFAULT until c44 verification passes (see Phase 3 roadmap).
 

@@ -23,7 +23,7 @@ When hooks fire during `docs/agents/dev-team/flow/main.md`, the **main terminal*
 |---|---|---|
 | `po` | BATCH decisions, idle/active signal | `log_agent_work` → notebook |
 | `architect` | Design decisions, ADRs, file targets | `append_session_record` → notebook |
-| `pm` | Task list JSON, dep map, WIP count | `log_agent_work` → docs/TASKS.md flush → notebook |
+| `pm` | Task list JSON, dep map, WIP count | `log_agent_work` → `orch-state.json .task_board` update → notebook |
 | `developer` | Branch name, changed files, test status | `log_agent_work(branch, files_changed, tests_pass)` → notebook |
 | `qa` | Test counts (pass/fail/skip), branch cleanup log | `log_agent_work` → notebook |
 | `fixer` | Patch description, file + line targets | `log_agent_work` → notebook |
@@ -49,7 +49,7 @@ After `/compact` fires, the main terminal resumes by:
 
 1. Read notebook: `docs/agent-memory/notebooks/main.md` (main terminal working memory)
 2. Call `get_agent_work_log(tag="dev-loop-tier-N")` to find last completed tier
-3. Re-read docs/TASKS.md for current task states
+3. Re-read `docs/data/orch/orch-state.json .task_board` for current task states
 4. Skip already-Done tasks — spawn only Pending/In-Progress tasks for the current tier
 5. Continue from Step 3 at the correct tier index — do not restart from Step 1
 

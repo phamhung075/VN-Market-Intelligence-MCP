@@ -7,7 +7,7 @@
  *
  * Responsibilities:
  *   - Write docs/improvement-proposals/{id}.md in DRAFT form
- *   - Append a row to docs/signals/DASHBOARD.md ## po section
+ *   - Append a row to docs/data/orch/orch-state.json .signal_queue.rows[] (OSC-2)
  *
  * Throws on file-write failure — caller (selfImproveOrchestratorJob.ts) wraps
  * in try/catch per C-5 isolation rule. Does NOT commit to git.
@@ -17,6 +17,11 @@
 import { resolve, dirname } from "node:path";
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import type { DegradationFinding } from "../../domain/services/degradationRules.js";
+import {
+  appendSignalQueueRow,
+  writeOrchStateAtomic,
+  type OrchStateSignalRow,
+} from "../orchStateStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -27,7 +32,8 @@ import type { DegradationFinding } from "../../domain/services/degradationRules.
 const REPO_ROOT = resolve(__dirname, "../../../../../../");
 
 const PROPOSALS_DIR = resolve(REPO_ROOT, "docs/improvement-proposals");
-const DASHBOARD_PATH = resolve(REPO_ROOT, "docs/signals/DASHBOARD.md");
+/** OSC-2: re-pointed from docs/signals/DASHBOARD.md → docs/data/orch/orch-state.json */
+const ORCH_STATE_PATH = resolve(REPO_ROOT, "docs/data/orch/orch-state.json");
 
 // ─────────────────────────────────────────────────────────────────────────────
 // FIX_AREA_TO_AGENT mapping (C-1 — typed derivation, no free-text parsing)
@@ -245,61 +251,72 @@ export async function writeImprovementProposal(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// appendDashboardRow
+// appendDashboardRow — OSC-2 migration
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Appends a row to docs/signals/DASHBOARD.md ## po section.
- * Creates file + section if absent. Throws on write failure.
- * New row is always appended AFTER existing rows (not prepended).
+ * Appends an improvement_proposal row to orch-state.json .signal_queue.rows[].
+ *
+ * OSC-2: replaces the old DASHBOARD.md append pattern.
+ * Uses appendSignalQueueRow() from orchStateStore (atomic temp-file-then-rename).
+ *
+ * For test isolation the caller passes orchStatePath explicitly — defaults to
+ * ORCH_STATE_PATH (docs/data/orch/orch-state.json).
+ *
+ * The function signature is intentionally kept close to the old one so that
+ * callers (selfImproveOrchestratorJob.ts) require minimal changes.
+ *
+ * @param id             - Signal / proposal id (e.g. IMP-20260527-price-confirmation-degraded)
+ * @param createdAt      - ISO-8601 timestamp
+ * @param summary        - Free-text summary (capped at 120 chars per HC-2)
+ * @param proposalPath   - Path to the proposal doc (payload_ref)
+ * @param orchStatePath  - Absolute path to orch-state.json (injectable for tests)
  */
 export async function appendDashboardRow(
   id: string,
   createdAt: string,
   summary: string,
   proposalPath: string,
-  dashboardPath: string = DASHBOARD_PATH,
+  orchStatePath: string = ORCH_STATE_PATH,
 ): Promise<void> {
-  // Ensure directory exists
-  mkdirSync(dirname(dashboardPath), { recursive: true });
+  // Ensure orch-state directory exists (may be absent in test fixtures)
+  mkdirSync(dirname(orchStatePath), { recursive: true });
 
-  const newRow = `| ${id} | ${createdAt} | system-auditor | improvement_proposal | ${summary.slice(0, 40)} | NEW | ${proposalPath} |`;
+  const row: OrchStateSignalRow = {
+    id,
+    ts: createdAt,
+    from: "system-auditor",
+    to: "po",
+    type: "improvement_proposal",
+    summary: summary.slice(0, 120),
+    severity: "INFO",
+    status: "NEW",
+    payload_ref: proposalPath || null,
+  };
 
-  let content = "";
-  if (existsSync(dashboardPath)) {
-    content = readFileSync(dashboardPath, "utf8");
+  // If the file doesn't exist yet (test fixture), create a minimal orch-state shell
+  if (!existsSync(orchStatePath)) {
+    const shell = {
+      _schema: "v3",
+      _ssot: true,
+      _updated_at: createdAt,
+      _updated_by: "system-auditor",
+      head: {},
+      task_board: { _updated_at: createdAt, _updated_by: "system-auditor", active_sprints: [], backlog: [], archive: [] },
+      signal_queue: { _updated_at: createdAt, _updated_by: "system-auditor", rows: [], archive: [] },
+    };
+    writeOrchStateAtomic(orchStatePath, shell);
   }
 
-  const SECTION_HEADER = "## po";
-  const TABLE_HEADER =
-    "| id | created_at | created_by | type | summary | status | path |";
-  const TABLE_SEP =
-    "|---|---|---|---|---|---|---|";
-
-  if (!content.includes(SECTION_HEADER)) {
-    // Create section from scratch
-    if (content && !content.endsWith("\n")) content += "\n";
-    content += `\n${SECTION_HEADER}\n\n${TABLE_HEADER}\n${TABLE_SEP}\n${newRow}\n`;
-  } else {
-    // Find the ## po section and append after existing rows
-    const sectionIdx = content.indexOf(SECTION_HEADER);
-    const afterSection = content.slice(sectionIdx);
-
-    if (!afterSection.includes(TABLE_HEADER)) {
-      // Section exists but has no table yet
-      const insertAt = content.indexOf(SECTION_HEADER) + SECTION_HEADER.length;
-      content =
-        content.slice(0, insertAt) +
-        `\n\n${TABLE_HEADER}\n${TABLE_SEP}\n${newRow}\n` +
-        content.slice(insertAt);
-    } else {
-      // Append row at the end of the file (rows are ordered by append time)
-      if (!content.endsWith("\n")) content += "\n";
-      content += newRow + "\n";
-    }
-  }
-
-  writeFileSync(dashboardPath, content, "utf8");
+  appendSignalQueueRow(
+    orchStatePath,
+    row,
+    createdAt,
+    "system-auditor",
+    (p) => readFileSync(p, "utf8"),
+    (p, d) => writeOrchStateAtomic(p, d),
+    existsSync,
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

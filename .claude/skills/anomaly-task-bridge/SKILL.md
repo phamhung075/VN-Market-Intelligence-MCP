@@ -1,8 +1,8 @@
 ---
 name: anomaly-task-bridge
 description: >
-  Turns persistent unacknowledged infrastructure anomalies (DASHBOARD.md rows
-  older than 2h) into repair_task_request signals for PO → TASKS.md planning.
+  Turns persistent unacknowledged infrastructure anomalies (signal_queue NEW rows
+  older than 2h) into repair_task_request signals for PO → .task_board planning.
   PLAN-ONLY. Invoked by system-auditor Tier-2 and Tier-3 only.
 ---
 
@@ -26,10 +26,10 @@ description: >
 
 **ATB-0 — Scope gate:** `AUDIT_TIER = 1` → log `"[ATB] Tier-1: skip"` → EXIT.
 
-**ATB-1 — Collect open anomalies:** Read `$PROJECT_ROOT/docs/signals/DASHBOARD.md`.
-If missing → log `"[ATB] WARN: DASHBOARD.md not found — skip ATB pass"` → EXIT.
-Collect `## po` rows where: `status = NEW`, `type ∈ {microservice_degraded, data_stale, db_integrity_breach, system_issue}`, `row.ts < now() - 2h`.
-Extract per row: `row.id`, `row.ts`, `row.from`, `row.type`, `row.summary`, `row.payload` (check_id + zone_owner if present).
+**ATB-1 — Collect open anomalies:** Read `$PROJECT_ROOT/docs/data/orch/orch-state.json` `.signal_queue.rows[]`.
+If missing → log `"[ATB] WARN: orch-state.json not found — skip ATB pass"` → EXIT.
+Collect rows where: `to == "po"`, `status == "NEW"`, `type ∈ {microservice_degraded, data_stale, db_integrity_breach, system_issue}`, `row.ts < now() - 2h`.
+Extract per row: `row.id`, `row.ts`, `row.from`, `row.type`, `row.summary`, `row.payload_ref` (check_id + zone_owner if present).
 
 **ATB-2 — Classify severity:**
 
@@ -44,7 +44,7 @@ Extract per row: `row.id`, `row.ts`, `row.from`, `row.type`, `row.summary`, `row
 
 For each row, before emitting:
 1. Query `signals_processed` via MCP `task_list_held` for matching `dedup_key` + `type=repair_task_created` within cooldown. Found → log dedup skip → SKIP row. Unavailable → log WARN, rely on step 2 only.
-2. Read `$PROJECT_ROOT/docs/TASKS.md` (missing → log WARN, skip this check). Scan for open row (Status ∈ BACKLOG/In Progress/OPEN) with matching `check_id` in title/taskId. Found → log dedup skip → SKIP row.
+2. Read `$PROJECT_ROOT/docs/data/orch/orch-state.json` `.task_board` (missing → log WARN, skip this check). Scan for open entry (status ∈ BACKLOG/IN_PROGRESS/OPEN) with matching `check_id` in title/task_id. Found → log dedup skip → SKIP row.
 3. Neither match → proceed to ATB-4.
 
 **ATB-4 — Build and emit signal:** Resolve `zone_owner` from `docs/data/system-map.json` zones[].
@@ -57,28 +57,38 @@ Signal payload shape (written to `docs/signals/atb-<YYYYMMDDTHHmmss>Z.json`):
   "priority": "<HIGH|MEDIUM>", "createdAt": "<UTC ISO-8601>",
   "payload": {
     "dedup_key": "atb_task:<type>:<slug>",
-    "check_id": "<from DASHBOARD row>",
+    "check_id": "<from signal_queue row>",
     "anomaly_type": "<row.type>",
     "severity_class": "<INFRA|DATA|PIPELINE|OPS>",
     "summary": "<row.summary ≤80 chars>",
     "zone_owner": "<from system-map.json zones[]>",
-    "dashboard_row_id": "<row.id>",
+    "signal_queue_row_id": "<row.id>",
     "suggested_sprint_class": "<FIX|CHORE>",
     "cooldown_hours": "<24|48>"
   }
 }
 ```
-Append to DASHBOARD.md `## po`:
-```
-| atb-<ts> | <ts> | system-auditor | repair_task_request | <summary ≤40 chars> | NEW | docs/signals/atb-<ts>Z.json |
+Append to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` per skill § WRITE (atomic write):
+```json
+{
+  "id": "atb-<ts>",
+  "ts": "<ts>",
+  "from": "system-auditor",
+  "to": "po",
+  "type": "repair_task_request",
+  "summary": "<summary ≤120 chars>",
+  "severity": "HIGH",
+  "status": "NEW",
+  "payload_ref": "docs/signals/atb-<ts>Z.json"
+}
 ```
 
-**ATB-5 — Mark source rows READ:** For each row from ATB-1 (emitted or skipped), mark `NEW → READ` per signal-dashboard ACK.
+**ATB-5 — Mark source rows READ:** For each row from ATB-1 (emitted or skipped), mark `status: "NEW"` → `"READ"` per signal-dashboard SKILL § ACK (atomic write).
 
 **ATB-6 — Commit (mutex-guarded):**
 → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```
-own_paths: [docs/signals/atb-<slug>-*.json, docs/signals/DASHBOARD.md]
+own_paths: [docs/signals/atb-<slug>-*.json, docs/data/orch/orch-state.json]
 intent:    "ATB emit {N} repair_task_request signals"
 ```
 Mutex unavailable after 1 retry → log `"[ATB] WARN: mutex unavailable — skip commit"` → EXIT.
@@ -94,8 +104,8 @@ Mutex unavailable after 1 retry → log `"[ATB] WARN: mutex unavailable — skip
 
 | Failure | Behavior |
 |---|---|
-| DASHBOARD.md missing | Log WARN → EXIT; never fail-loud |
-| TASKS.md missing | Log WARN; skip TASKS.md dedup; proceed with emit |
+| orch-state.json missing | Log WARN → EXIT; never fail-loud |
+| `.task_board` missing from orch-state.json | Log WARN; skip task_board dedup; proceed with emit |
 | signals.db unavailable | Skip DB dedup; rely on TASKS.md check; log WARN |
 | Mutex unavailable (1 retry) | Log WARN; skip commit; rows NOT marked READ |
 | Uncaught exception | Release mutex if held; log ERROR; rows NOT marked READ |

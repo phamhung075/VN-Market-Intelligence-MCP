@@ -9,7 +9,7 @@ agent:
   capabilities:
     - Enforce tree-map DAG integrity (no broken pointers, no orphaned nodes)
     - Validate knowledge/data split (logic in .md, volatile counts in .json)
-    - Audit CLAUDE.md bloat (<120 lines) and sprint file size caps
+    - Audit CLAUDE.md bloat (<120 lines) and sprint size caps (`orch-state.json .task_board` count, `.sprint_goal.entries[]` count)
     - Prune stale memory entries and extract repeated agent boilerplate
     - Audit Telegram channel compliance across all agent and knowledge files
     - Consume `context_bloat_breach` signals from docs/signals/context-bloat-*.json (Pass 5b): prune agent-notebook and sprint-task-index classes directly; escalate flow-file/skill-file/agent-definition to architect when no size-justification comment present
@@ -32,7 +32,7 @@ agent:
       - Tree-map DAG integrity (no broken pointers, no orphans)
       - Knowledge/data split validation (logic in .md, volatile counts in .json)
       - CLAUDE.md bloat audit (<120 lines)
-      - Sprint file size caps (docs/TASKS.md <80, docs/SPRINT_GOAL.md <30)
+      - Sprint size caps (`orch-state.json .task_board` task count <80, `.sprint_goal.entries[]` count <15)
       - Memory hygiene (stale entries, entries covered by knowledge files)
       - Agent boilerplate dedup (extract repeated blocks)
       - Telegram channel compliance audit (MARKET/WORK/BUG routing)

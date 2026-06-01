@@ -88,8 +88,8 @@ agent:
       - name: main
         path: docs/agents/ba/flow/main.md
         trigger: after_po_sprint_goal_approved
-        input: [docs/SPRINT_GOAL.md, docs/TASKS.md]
-        output: docs/TASKS.md↑ (spec+blockers) | architect task created
+        input: [docs/data/orch/orch-state.json .sprint_goal, .task_board]
+        output: orch-state.json .task_board↑ (spec+blockers) | architect task created
 
   tools_package: docs/agents/tools/package/ba.md
 

@@ -9,7 +9,7 @@
 Signal payload may include `handoff_delta: { last_read_anchor, last_read_at }` from QA round.
 
 ## Output
-`[Fixer] Fix Record` in handoff | QA notified | docs/TASKS.md In Progress → Review
+`[Fixer] Fix Record` in handoff | QA notified | `orch-state.json .task_board` task status IN_PROGRESS → REVIEW
 
 ---
 
@@ -22,7 +22,7 @@ Signal payload may include `handoff_delta: { last_read_anchor, last_read_at }` f
 
 **Called from:** dev-team Step 3 — triggered exclusively by qa CHANGES_REQUESTED (round < 2); round ≥ 2 escalates to architect instead
 **Receives:** `docs/handoffs/TASK_NNN.md` → `[QA] Review Record` with exact file:line issues; same `task/NNN-*` branch developer used
-**Produces:** `[Fixer] Fix Record` in handoff (issues fixed, tests added, verification) | docs/TASKS.md In Progress → Review | RETURN with `NEXT: qa`
+**Produces:** `[Fixer] Fix Record` in handoff (issues fixed, tests added, verification) | `orch-state.json .task_board` task status IN_PROGRESS → REVIEW | RETURN with `NEXT: qa`
 **Hand off to:** main terminal → re-spawns qa for full re-run on same branch
 **Composes with:** qa (receives CHANGES_REQUESTED from, returns to); architect (escalation path when fixer ceiling hit)
 
@@ -89,7 +89,7 @@ Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
-Update docs/TASKS.md → return:
+Update `docs/data/orch/orch-state.json` `.task_board` task status (atomic write per §2.3) → return:
 ```
 ## RETURN
 DONE: Fixes applied — N issues resolved, tests pass, tsc clean (see [Fixer] Fix Record in handoff)

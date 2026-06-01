@@ -9,7 +9,7 @@
 `read_telegram_reports(status="new")` — user requests, bug reports, feature ideas
 
 ## Output
-docs/TASKS.md updated | processed reports cleaned | architect flagged if recurrent
+`docs/data/orch/orch-state.json` `.task_board` updated | processed reports cleaned | architect flagged if recurrent
 
 ---
 
@@ -71,7 +71,7 @@ Classify: `bug` | `feature` | `ux` | `question` | `feedback`
 - `question` → do NOT create task; answer inline in WORK channel → `process_telegram_report(id=..., delete_telegram_message=true)` → next report
 
 ### 2c. Dedup Check
-Search docs/TASKS.md for keyword overlap (title + description):
+Search `docs/data/orch/orch-state.json` `.task_board` for keyword overlap (title + summary):
 - ≥80% keyword match → **duplicate** → skip task creation
 - Log: `"[PO] Report #ID skipped — duplicate of TASK-NNN"` in WORK channel
 - `process_telegram_report(id=..., delete_telegram_message=true)` → next report
@@ -79,7 +79,7 @@ Search docs/TASKS.md for keyword overlap (title + description):
 ### 2d. Recurrence Check
 For non-duplicate reports, check if this pattern has appeared before:
 ```bash
-grep -i "<keywords>" docs/TASKS.md
+cat docs/data/orch/orch-state.json | jq '.task_board | (.active_sprints[].tasks[], .backlog[], .archive[]) | select(.title | test("<keywords>"; "i"))'
 git log --oneline --all --grep="<keywords>" | head -10
 ```
 - ≥2 previous occurrences of same module/component → **recurrent issue**
@@ -88,9 +88,9 @@ git log --oneline --all --grep="<keywords>" | head -10
   - Set `priority: high`
 
 ### 2e. Create Task
-Add to docs/TASKS.md:
-```
-| TASK-NNN | [ARCH REVIEW?] <title from report> | pending | <ba|developer|ops> | telegram:#ID |
+Add to `docs/data/orch/orch-state.json` `.task_board.backlog[]` (atomic write per §2.3):
+```json
+{"id": "TASK-NNN", "summary": "[ARCH REVIEW?] <title from report> — telegram:#ID", "priority": "high"}
 ```
 
 Agent assignment:

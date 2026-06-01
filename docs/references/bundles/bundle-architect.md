@@ -75,7 +75,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/data/code-janitor-known-findings.json (dedup state: fingerprints of known code findings — volatile)
 │
-├── docs/TASKS_ARCHIVE.md (index of done tasks by sprint)
+├── docs/data/orch/orch-state.json .task_board.archive[] (index of done tasks by sprint — v3 schema)
 ├── docs/archive/sprints-*.md (archived sprint task blocks — read-only history)
 │
 └── docs/historical/ (read-only reference, no maintenance required)

@@ -28,7 +28,7 @@ CLAUDE.md (root — always loaded)
 │   └── docs/references/workflow-map-cycles.md (W5-W19: cron cowork, dev cycle, maintenance, demand-driven)
 │
 ├── docs/protocols/agent-chaining-protocol.md (chaining rules: pipeline maps, return templates, parallel spawn rules, fixer ceiling, cross-team signal directory)
-│   ├── docs/pipeline-state.json (pipeline status: current sprint, active task, next agent — volatile, dev-team internal only)
+│   ├── docs/data/orch/orch-state.json (orchestration SSOT v3: .head pipeline status, .task_board sprint tasks, .signal_queue cowork inbox, .sprint_goal — volatile, atomic-write-only)
 │   ├── docs/signals/*.json (cross-team signal files: cowork→dev-team, drained at Step 0a — volatile)
 │   ├── docs/signals/processed/*.json (treated signals with processedAt/result metadata — auto-pruned after 7 days)
 │   └── docs/signals/signals.db (dedup index: signals_processed table — SQLite SSOT, O(log N) fingerprint lookup — sole writer: dev-team Step 0a)
@@ -232,7 +232,7 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/data/code-janitor-known-findings.json (dedup state: fingerprints of known code findings — volatile)
 │
-└── docs/TASKS_ARCHIVE.md (index of done tasks by sprint)
+└── docs/data/orch/orch-state.json .task_board.archive[] (index of done tasks by sprint — v3 schema)
 ```
 
 ## Zone-Scan Flow (Zone Empowerment — 2026-05-12)

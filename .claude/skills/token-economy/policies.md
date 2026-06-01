@@ -4,7 +4,7 @@
 
 ## When to apply
 
-Writing or editing: docs, changelogs, task descriptions, progress notes, reports, docs/TASKS.md entries.
+Writing or editing: docs, changelogs, task descriptions, progress notes, reports, `orch-state.json .task_board` task entries.
 
 ## 15 Techniques
 

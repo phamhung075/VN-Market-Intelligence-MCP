@@ -6,10 +6,10 @@
 > Error boundary + MCP call pattern → skill: `.claude/skills/cowork-error-boundary/SKILL.md`
 
 ## Input
-docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md` | `pendingSignals[]` from dev-team
+`docs/data/orch/orch-state.json` `.task_board` blockers | `.sprint_goal` | `docs/data/project-stats.json` | latest `reports/TASK_REPORT_*.md` | `pendingSignals[]` from dev-team
 
 ## Output
-`docs/SPRINT_GOAL.md` vision | BA task in docs/TASKS.md | sprint sign-off | BATCH return to dev-team
+`docs/data/orch/orch-state.json` `.sprint_goal` vision | BA task in `.task_board` | sprint sign-off | BATCH return to dev-team
 
 ---
 
@@ -17,7 +17,7 @@ docs/TASKS.md blockers | `docs/data/project-stats.json` | latest `reports/TASK_R
 > Canonical orchestration: `docs/agents/dev-team/flow/main.md`
 
 **Called from:** dev-team Step 1 — triage all inputs and classify work
-**Receives:** `pendingSignals[]` from Step 0a | `read_telegram_reports(status="new")` | `list_unresolved_reports()` | `docs/TASKS.md` | `git log --oneline -30` | `git branch`
+**Receives:** `pendingSignals[]` from Step 0a | `read_telegram_reports(status="new")` | `list_unresolved_reports()` | `docs/data/orch/orch-state.json .task_board` | `git log --oneline -30` | `git branch`
 **Produces:** `NOTHING` (→ idle EXIT) or `BATCH([{type, id, title, desc, size?, files, baseline_pass, zone?}])` where type ∈ {FIX, SPIKE, SPRINT-S, SPRINT-M, SPRINT-L, UNBLOCK, CLEAN}
 **Hand off to:** main terminal — routes batch by type into Step 2 (planning) or Step 3 (direct FIX)
 **Composes with:** architect/ba/pm in Step 2 (never directly — main terminal is the router)
@@ -66,7 +66,7 @@ Never inline both pre-flight and a branch workflow — keep context lean. Pre-fl
 - Scan `## po` section for NEW rows. For each: read payload → add to triage context. Mark READ.
 - Log: `"[dashboard] {N} new signals"` or `"[dashboard] inbox empty"`. Never fail-loud.
 
-**Pre-check**: `$PROJECT_ROOT/docs/TASKS.md` blocked tasks waiting for PO → handle first
+**Pre-check**: `$PROJECT_ROOT/docs/data/orch/orch-state.json` `.task_board` blocked tasks waiting for PO → handle first
 
 <!-- jump:tnb-audit -->
 ## Step 0-TNB — Read TNB Audit Findings (MANDATORY)
@@ -95,7 +95,7 @@ Reads MARKET/WORK/BUG/market-group (10 msgs each), classifies issues by 9-row fa
 ## No-Task Guard
 
 After pre-flight runs, check:
-1. docs/TASKS.md — any pending/in-progress tasks? → handle first
+1. `docs/data/orch/orch-state.json` `.task_board` — any pending/in-progress tasks? → handle first
 2. `read_telegram_reports(status="new")` — any user requests? → handle first
 3. Step 0 found issues? → self-initiate sprint from those findings
 4. All empty AND channels clean → JUMP TO `end` and return:

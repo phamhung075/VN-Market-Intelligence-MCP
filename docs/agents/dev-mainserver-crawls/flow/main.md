@@ -146,7 +146,7 @@ Do NOT modify docker-compose.yml — flag only.
 
 ## Step 8 — Signal QA
 
-Write `docs/TASKS.md` entry for QA review (standard dev chain format).
+Update `docs/data/orch/orch-state.json .task_board` task status for QA review (standard dev chain: atomic write per §2.3).
 
 WORK channel notification:
 ```

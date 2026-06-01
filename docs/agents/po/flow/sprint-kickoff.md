@@ -12,22 +12,20 @@
 
 **2.** Highest-impact: reliability (failing tests, footguns) | coverage (missing signals) | UX (useless alerts) | architecture (DDD debt)
 
-**3.** Write `docs/SPRINT_GOAL.md`:
-```markdown
-# Sprint NNN Goal
-
-## Vision
-[one sentence: business outcome]
-
-## Scope
-IN: [what we're building]
-OUT: [what we're NOT doing]
-
-## Success Metric
-[how we know it's done]
+**3.** Append entry to `docs/data/orch/orch-state.json` `.sprint_goal.entries[]` (atomic write per §2.3, read full → modify only `.sprint_goal` → write atomically):
+```json
+{
+  "sprint_id": "NNN",
+  "status": "active",
+  "vision": "<one sentence: business outcome>",
+  "scope_in": "<what we're building>",
+  "scope_out": "<what we're NOT doing>",
+  "success_metric": "<how we know it's done>",
+  "created_at": "<ISO-8601 UTC>"
+}
 ```
 
-**4.** Create BA task: `| BA-NNN | Requirement Spec for Vision NNN | pending | BA | — |`
+**4.** Create BA task entry in `docs/data/orch/orch-state.json` `.task_board.backlog[]`: `{id: "BA-NNN", summary: "Requirement Spec for Vision NNN", priority: "high"}`
 
 **4b.** Claim sprint umbrella lock → load skill: `.claude/skills/task-lock/SKILL.md`
 ```
@@ -45,9 +43,9 @@ if not result.claimed:
 **5.** Return:
 ```
 ## RETURN
-DONE: Sprint NNN goal written, BA task created
-NEXT: ba | write requirement spec for docs/SPRINT_GOAL.md
-HANDOFF: docs/SPRINT_GOAL.md
+DONE: Sprint NNN goal written to orch-state.json .sprint_goal, BA task created
+NEXT: ba | write requirement spec for sprint NNN goal in docs/data/orch/orch-state.json .sprint_goal
+HANDOFF: docs/data/orch/orch-state.json
 PIPELINE: continue
 ```
 

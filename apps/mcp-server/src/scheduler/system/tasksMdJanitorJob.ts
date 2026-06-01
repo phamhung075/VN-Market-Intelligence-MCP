@@ -1,5 +1,5 @@
 /**
- * TASKS.md Janitor Job — Task 1965b
+ * Orch-State Janitor Job — Task 1965b (OSC-2 migration)
  *
  * Daily 03:00 UTC — off-peak after bctcReparseJob at 02:30 UTC.
  *
@@ -9,12 +9,16 @@
  * What it does:
  *   R-1: calls task_list_held(kind="sprint-task") via coordinationStore (same DB layer
  *        used by the MCP tool — no new schema, Option A zero-table constraint).
- *   R-2: reads pipeline-state.json, cross-checks activeTaskId vs held locks (AC-4).
- *   R-3: reads TASKS.md, parses rows by task_id, compares Owner + Status vs lock (AC-2, AC-3).
- *   R-4: git log concurrent-commit detection on docs/TASKS.md within 30s windows (AC-5).
- *   R-5: emits DASHBOARD.md ## po row per signal-dashboard SKILL for each divergence.
+ *   R-2: reads orch-state.json .head, cross-checks active_task_id vs held locks (AC-4).
+ *   R-3: reads orch-state.json .task_board.tasks[], compares Owner + Status vs lock (AC-2, AC-3).
+ *   R-4: git log concurrent-commit detection on docs/data/orch/orch-state.json within 30s (AC-5).
+ *   R-5: appends signal_queue row to orch-state.json for each divergence (atomic write).
  *   R-6: BUG telegram for new divergences (7d dedup key d4_tasksmd_lock_diverge:<task_id>).
  *   R-7: logs clean signal when zero divergences detected.
+ *
+ * OSC-2: All paths re-pointed from docs/TASKS.md + docs/pipeline-state.json +
+ *        docs/signals/DASHBOARD.md → docs/data/orch/orch-state.json.
+ *        Dashboard rows are now JSON signal_queue rows (appendSignalQueueRow, atomic write).
  *
  * Failure modes: logged as WARN; individual step failures do NOT abort the job.
  * Internal job failure (caught at top level): BUG telegram with 7d dedup.
@@ -30,6 +34,12 @@ import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { listHeldTasks, type LockRow } from "../../infrastructure/db/coordinationStore.js";
 import { getProjectRoot } from "../../infrastructure/projectRoot.js";
+import {
+  appendSignalQueueRow,
+  writeOrchStateAtomic,
+  type OrchStateSignalRow,
+  type OrchStateTaskBoardTask,
+} from "../../infrastructure/orchStateStore.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -49,9 +59,10 @@ export interface JanitorResult {
   errors: string[];
 }
 
-/** Shape of pipeline-state.json (only the fields we read) */
-interface PipelineState {
-  activeTaskId?: string | null;
+/** Shape of orch-state.json .head (only the fields we read) — v3 snake_case */
+interface OrchHead {
+  active_task_id?: string | null;
+  status?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -78,7 +89,7 @@ export interface JanitorDeps {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// TASKS.md parser
+// orch-state.json task_board parser (OSC-2 — replaces TASKS.md markdown parser)
 // ─────────────────────────────────────────────────────────────────────────────
 
 interface TasksRow {
@@ -90,65 +101,41 @@ interface TasksRow {
 }
 
 /**
- * Parse TASKS.md table rows. Looks for markdown table rows that contain a task_id
- * column matching the pattern of sprint task IDs (digits with optional suffix letter).
+ * Flatten all tasks from orch-state.json .task_board.active_sprints[].tasks[]
+ * into a list of TasksRow for lock cross-check (R-3).
  *
- * Expected table columns (from TASKS.md convention):
- *   | task_id | title | type | owner | depends | status | ... |
- *
- * We parse loosely — split on `|`, trim cells, match by position.
- * The header row position is detected dynamically.
+ * OSC-2 replacement for parseTasksMd() — reads structured JSON instead of
+ * Markdown table rows.
  */
-export function parseTasksMd(content: string): TasksRow[] {
-  const lines = content.split("\n");
+export function parseTasksFromOrchState(tasks: OrchStateTaskBoardTask[]): TasksRow[] {
+  return tasks.map(t => ({
+    taskId: t.task_id,
+    title: t.title ?? "",
+    status: t.status ?? "",
+    owner: t.owner ?? "",
+    raw: JSON.stringify(t),
+  }));
+}
+
+/**
+ * Extract all tasks from orch-state.json JSON (parsed).
+ * Flattens active_sprints[].tasks[] into a flat TasksRow array.
+ */
+export function parseTasksFromOrchStateJson(orchState: {
+  task_board?: { active_sprints?: Array<{ tasks?: OrchStateTaskBoardTask[] }> };
+}): TasksRow[] {
   const rows: TasksRow[] = [];
-
-  // Find the header row — it must contain "task" and "owner" and "status" columns
-  let headerIdx = -1;
-  let taskCol = -1;
-  let ownerCol = -1;
-  let statusCol = -1;
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line) continue;
-    if (!line.includes("|")) continue;
-    const cells = line.split("|").map(c => c.trim().toLowerCase());
-    const tIdx = cells.findIndex(c => c === "task" || c === "task_id" || c === "id");
-    const oIdx = cells.findIndex(c => c === "owner");
-    const sIdx = cells.findIndex(c => c === "status");
-    if (tIdx !== -1 && oIdx !== -1 && sIdx !== -1) {
-      headerIdx = i;
-      taskCol = tIdx;
-      ownerCol = oIdx;
-      statusCol = sIdx;
-      break;
+  for (const sprint of orchState.task_board?.active_sprints ?? []) {
+    for (const task of sprint.tasks ?? []) {
+      rows.push({
+        taskId: task.task_id,
+        title: task.title ?? "",
+        status: task.status ?? "",
+        owner: task.owner ?? "",
+        raw: JSON.stringify(task),
+      });
     }
   }
-
-  if (headerIdx === -1) return rows;
-
-  // Parse rows after header (skip separator line)
-  for (let i = headerIdx + 2; i < lines.length; i++) {
-    const line = lines[i];
-    if (!line) continue;
-    if (!line.includes("|")) continue;
-    // Stop at next section header
-    if (line.startsWith("#")) break;
-
-    const cells = line.split("|").map(c => c.trim());
-    if (cells.length <= Math.max(taskCol, ownerCol, statusCol)) continue;
-
-    const taskId = cells[taskCol] ?? "";
-    const owner = cells[ownerCol] ?? "";
-    const status = cells[statusCol] ?? "";
-
-    // Only include rows that look like task IDs (numbers + optional letter suffix)
-    if (!taskId || !/^\d+[a-z]?$/.test(taskId)) continue;
-
-    rows.push({ taskId, title: "", status: status.trim(), owner: owner.trim(), raw: line });
-  }
-
   return rows;
 }
 
@@ -207,56 +194,55 @@ export function findConcurrentCommits(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// DASHBOARD.md writer
+// orch-state.json signal_queue writer (OSC-2 — replaces DASHBOARD.md appendDashboardRow)
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Append a system_issue row to the ## po section of DASHBOARD.md.
- * Follows the signal-dashboard SKILL write pattern exactly.
+ * Append a system_issue row to orch-state.json .signal_queue.rows[] atomically.
  *
- * Row format: | {id} | {ts} | system-auditor | system_issue | {summary ≤40} | NEW | - |
+ * OSC-2 replacement for the old appendDashboardRow(DASHBOARD.md) pattern.
+ * Uses appendSignalQueueRow() from orchStateStore (temp-file-then-rename).
+ *
+ * Summary is capped at 120 chars (HC-2). Severity is always LOW for D4 divergences
+ * unless it is a concurrent_commit (MED).
  */
-export function appendDashboardRow(
-  dashboardPath: string,
+export function appendOrchStateSignalRow(
+  orchStatePath: string,
   summary: string,
   nowIso: string,
+  kind: DivergenceRow["kind"],
   readFile: (p: string) => string,
   writeFile: (p: string, s: string) => void,
   fileExists: (p: string) => boolean,
 ): void {
-  if (!fileExists(dashboardPath)) return;
-
-  let content = readFile(dashboardPath);
-
-  // Build the row
   const ts = nowIso.replace(/\.\d{3}Z$/, "Z").replace(/:\d{2}Z$/, "Z");
   const compact = ts.replace(/[-:TZ]/g, "").slice(0, 15);
-  const id = `sau-${compact}`;
-  const capped = summary.length > 40 ? summary.slice(0, 37) + "..." : summary;
-  const row = `| ${id} | ${ts} | system-auditor | system_issue | ${capped} | NEW | - |`;
+  const id = `sau-d4-${compact}`;
 
-  // Find ## po section and insert the row
-  const poHeader = "## po";
-  const poIdx = content.indexOf(poHeader);
-  if (poIdx === -1) return;
+  const severity: OrchStateSignalRow["severity"] =
+    kind === "concurrent_commit" ? "MED" : "LOW";
 
-  // Find the table header row after ## po
-  const afterPo = content.slice(poIdx);
-  const tableHeaderMatch = afterPo.match(/\n\|[^\n]+\|\n\|[-| ]+\|/);
-  if (!tableHeaderMatch) return;
+  const row: OrchStateSignalRow = {
+    id,
+    ts,
+    from: "system-auditor",
+    to: "po",
+    type: "system_issue",
+    summary,
+    severity,
+    status: "NEW",
+    payload_ref: null,
+  };
 
-  const separatorEndInAfterPo = afterPo.indexOf(tableHeaderMatch[0]) + tableHeaderMatch[0].length;
-  const insertionPoint = poIdx + separatorEndInAfterPo;
-
-  content = content.slice(0, insertionPoint) + "\n" + row + content.slice(insertionPoint);
-
-  // Update _Updated: line (line 4 per SKILL)
-  content = content.replace(
-    /_Updated: [^_]+_/,
-    `_Updated: ${nowIso}_`,
+  appendSignalQueueRow(
+    orchStatePath,
+    row,
+    nowIso,
+    "system-auditor",
+    readFile,
+    (p, d) => writeOrchStateAtomic(p, d),
+    fileExists,
   );
-
-  writeFile(dashboardPath, content);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -305,9 +291,8 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
     projectRoot,
   } = deps;
 
-  const tasksMdPath = resolve(projectRoot, "docs", "TASKS.md");
-  const pipelinePath = resolve(projectRoot, "docs", "pipeline-state.json");
-  const dashboardPath = resolve(projectRoot, "docs", "signals", "DASHBOARD.md");
+  // OSC-2: all paths re-pointed to orch-state.json
+  const orchStatePath = resolve(projectRoot, "docs", "data", "orch", "orch-state.json");
 
   const divergences: DivergenceRow[] = [];
   const errors: string[] = [];
@@ -324,22 +309,22 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
     // Log WARN but continue to R-4 git-log check independently (per failure modes)
   }
 
-  // ── Step R-2: pipeline-state.json cross-check (AC-4) ───────────────────────
+  // ── Step R-2: orch-state.json .head cross-check (AC-4) ─────────────────────
+  // OSC-2: reads orch-state.json .head.active_task_id (v3 schema, snake_case)
   try {
-    if (fileExists(pipelinePath)) {
-      const raw = readFile(pipelinePath);
-      const ps = JSON.parse(raw) as PipelineState;
-      pipelineState = { activeTaskId: ps.activeTaskId ?? null };
-
-      const activeTaskId = pipelineState.activeTaskId;
+    if (fileExists(orchStatePath)) {
+      const raw = readFile(orchStatePath);
+      const orchState = JSON.parse(raw) as { head?: OrchHead };
+      const activeTaskId = orchState.head?.active_task_id ?? null;
+      pipelineState = { activeTaskId };
 
       if (heldLocks.length === 0 && errors.length === 0) {
-        // R-1 succeeded but empty. Check pipeline-state (AC-4).
+        // R-1 succeeded but empty. Check orch-state head (AC-4).
         if (activeTaskId !== null) {
           divergences.push({
             kind: "pipeline_mismatch",
             taskId: activeTaskId,
-            summary: `task_list_held empty but pipeline-state.activeTaskId=${activeTaskId}`,
+            summary: `task_list_held empty but orch-state.head.active_task_id=${activeTaskId}`,
           });
         }
       } else if (heldLocks.length > 0 && activeTaskId !== null) {
@@ -350,27 +335,31 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
             divergences.push({
               kind: "pipeline_mismatch",
               taskId: bareId,
-              summary: `pipeline-state/lock mismatch: active=${activeTaskId} held=${bareId}`,
+              summary: `orch-state/lock mismatch: active=${activeTaskId} held=${bareId}`,
             });
           }
         }
       }
     } else {
-      errors.push("R-2 pipeline-state.json not found — skipping cross-check");
+      errors.push("R-2 orch-state.json not found — skipping cross-check");
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    errors.push(`R-2 pipeline-state parse failed: ${msg}`);
+    errors.push(`R-2 orch-state parse failed: ${msg}`);
   }
 
-  // ── Step R-3: TASKS.md owner/status cross-check (AC-1, AC-2, AC-3) ─────────
+  // ── Step R-3: orch-state.json .task_board owner/status cross-check (AC-1, AC-2, AC-3)
+  // OSC-2: reads task_board.active_sprints[].tasks[] instead of TASKS.md markdown
   if (heldLocks.length > 0) {
     try {
-      if (!fileExists(tasksMdPath)) {
-        throw new Error("TASKS.md not found");
+      if (!fileExists(orchStatePath)) {
+        throw new Error("orch-state.json not found");
       }
-      const tasksMdContent = readFile(tasksMdPath);
-      const taskRows = parseTasksMd(tasksMdContent);
+      const orchContent = readFile(orchStatePath);
+      const orchState = JSON.parse(orchContent) as {
+        task_board?: { active_sprints?: Array<{ tasks?: OrchStateTaskBoardTask[] }> };
+      };
+      const taskRows = parseTasksFromOrchStateJson(orchState);
 
       for (const lock of heldLocks) {
         const bareId = lock.task_id.startsWith("task:") ? lock.task_id.slice(5) : lock.task_id;
@@ -380,7 +369,7 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
           divergences.push({
             kind: "not_found",
             taskId: bareId,
-            summary: `held lock ${bareId} has no TASKS.md row`,
+            summary: `held lock ${bareId} has no orch-state task_board row`,
           });
           continue;
         }
@@ -390,35 +379,36 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
           divergences.push({
             kind: "owner",
             taskId: bareId,
-            summary: `Owner diverge: lock=${lock.owner_agent} tasks=${row.owner} task=${bareId}`,
+            summary: `Owner diverge: lock=${lock.owner_agent} task_board=${row.owner} task=${bareId}`,
           });
         }
 
-        // Status divergence check (AC-2: lock held but status != In Progress)
+        // Status divergence check (AC-2: lock held but status != IN_PROGRESS)
         const status = row.status.toLowerCase();
         const isInProgress = status === "in progress" || status === "in_progress" || status === "inprogress";
         if (!isInProgress) {
           divergences.push({
             kind: "status",
             taskId: bareId,
-            summary: `Status diverge: lock held but TASKS.md shows ${row.status} for ${bareId}`,
+            summary: `Status diverge: lock held but task_board shows ${row.status} for ${bareId}`,
           });
         }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      errors.push(`R-3 TASKS.md parse failed: ${msg}`);
-      // BUG telegram for TASKS.md unreadable (per failure modes)
+      errors.push(`R-3 orch-state task_board parse failed: ${msg}`);
+      // BUG telegram for orch-state unreadable (per failure modes)
       await sendBug(
-        `[system-auditor] D4 ABORT: TASKS.md unreadable — possible Seam 3 corruption: ${msg}`,
+        `[system-auditor] D4 ABORT: orch-state.json task_board unreadable — possible Seam 3 corruption: ${msg}`,
         "d4_tasksmd_abort_unreadable",
       );
     }
   }
 
   // ── Step R-4: Seam 3 concurrent-commit detection (AC-5) ─────────────────────
+  // OSC-2: git-log now targets docs/data/orch/orch-state.json (Decision A: 30s window)
   try {
-    const gitCmd = `git log --all --oneline --follow --format="%H %ai" -- docs/TASKS.md`;
+    const gitCmd = `git log --all --oneline --follow --format="%H %ai" -- docs/data/orch/orch-state.json`;
     const gitOutput = runShell(gitCmd);
     const commits = parseGitLog(gitOutput);
     const pairs = findConcurrentCommits(commits, 30);
@@ -427,8 +417,8 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
     for (const pair of pairs) {
       divergences.push({
         kind: "concurrent_commit",
-        taskId: "TASKS.md",
-        summary: `TASKS.md concurrent commits: ${pair.hash1.slice(0, 8)} + ${pair.hash2.slice(0, 8)} within ${pair.delta}s`,
+        taskId: "orch-state.json",
+        summary: `orch-state.json concurrent commits: ${pair.hash1.slice(0, 8)} + ${pair.hash2.slice(0, 8)} within ${pair.delta}s`,
       });
     }
   } catch (err) {
@@ -436,20 +426,22 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
     errors.push(`R-4 git log failed: ${msg}`);
   }
 
-  // ── Step R-5: emit DASHBOARD rows ──────────────────────────────────────────
+  // ── Step R-5: emit signal_queue rows to orch-state.json ────────────────────
+  // OSC-2: replaces DASHBOARD.md appendDashboardRow with JSON signal_queue append
   for (const div of divergences) {
     try {
-      appendDashboardRow(
-        dashboardPath,
+      appendOrchStateSignalRow(
+        orchStatePath,
         div.summary,
         nowIso(),
+        div.kind,
         readFile,
         writeFile,
         fileExists,
       );
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      errors.push(`R-5 DASHBOARD write failed for ${div.taskId}: ${msg}`);
+      errors.push(`R-5 orch-state signal_queue write failed for ${div.taskId}: ${msg}`);
     }
   }
 
@@ -461,7 +453,7 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
       markDedup(dedupKey);
       try {
         await sendBug(
-          `[system-auditor] D4 TASKS.md/lock diverge: ${div.summary} — see DASHBOARD.md ## po`,
+          `[system-auditor] D4 orch-state/lock diverge: ${div.summary} — see orch-state.json .signal_queue`,
           dedupKey,
         );
       } catch (err) {
@@ -474,7 +466,7 @@ export async function runTasksMdJanitor(deps: JanitorDeps): Promise<JanitorResul
   // ── Step R-7: clean signal ─────────────────────────────────────────────────
   if (divergences.length === 0) {
     const ts = nowIso();
-    console.log(`[system-auditor] D4 pass clean — no TASKS.md/lock divergence at ${ts}`);
+    console.log(`[system-auditor] D4 pass clean — no orch-state/lock divergence at ${ts}`);
   }
 
   return {
