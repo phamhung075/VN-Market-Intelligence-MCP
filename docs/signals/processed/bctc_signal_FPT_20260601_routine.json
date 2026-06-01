@@ -1,0 +1,43 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Dịch vụ CNTT & xuất khẩu phần mềm, viễn thông (FPT Telecom), giáo dục (FPT Edu)",
+  "customer": "Doanh nghiệp CNTT trong nước và offshore, thuê bao viễn thông SME",
+  "ops": "Revenue Q1 VND 12,480 ty (margin 19.8%); gross margin 34%; OCF/NI=-1.15 CẢNH BÁO — dòng tiền hoạt động âm trong khi lợi nhuận dương (ESC-3 ACTIVE lần thứ 5 liên tiếp)",
+  "mgmt": "ROE 28.3% >> sector median 10.6%; PB 3.6 ở mức premium +136% được biện hộ bởi ROE; Opus deep-dive PENDING cho phân tích accrual divergence",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pct": 2.55,
+  "pe": 13.8,
+  "pb": 3.6,
+  "roe_pct": 28.3,
+  "sector_pe_median": 17.3,
+  "sector_pb_median": 1.5,
+  "sector_roe_median": 10.6,
+  "bctc_confidence": 81,
+  "extraction_impaired": false,
+  "ocf_ni_ratio": -1.1498,
+  "esc_flags": {
+    "ESC1": false,
+    "ESC2": false,
+    "ESC3": true,
+    "ESC4": false,
+    "ESC5": false
+  },
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "signal_id": 4522,
+  "critic_score": 0.6,
+  "cycle_id": "20260601-0000",
+  "emitted_at": "2026-06-01T00:15Z",
+  "_drain": {
+    "fingerprint": "57549bfb3226b0c74fed7a47e8d1ee6eaa5c3141f9b7ce649d43098d12584935",
+    "processedAt": "2026-06-01T00:16:43.380Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

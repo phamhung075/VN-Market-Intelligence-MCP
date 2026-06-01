@@ -1,0 +1,34 @@
+{
+  "ticker": "DHG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Dược phẩm sản xuất trong nước (OTC + ETC), phân phối thuốc",
+  "customer": "Bệnh viện công và tư nhân, nhà thuốc bán lẻ, đấu thầu bảo hiểm y tế",
+  "ops": "DATA_INSUFFICIENT — Chưa có dữ liệu BCTC (5th consecutive cycle). PDF có trên disk nhưng get_bctc_full trả về rỗng.",
+  "mgmt": "DATA_INSUFFICIENT — Cần BCTC-TABLE sprint để sửa extraction pipeline",
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "bctc_confidence": 0,
+  "extraction_impaired": true,
+  "esc_flags": {
+    "ESC1": false,
+    "ESC2": false,
+    "ESC3": false,
+    "ESC4": false,
+    "ESC5": false
+  },
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "signal_id": null,
+  "cycle_id": "20260601-0000",
+  "emitted_at": "2026-06-01T00:15Z",
+  "_drain": {
+    "fingerprint": "11be7b4b082a1969066f2fbec952ace369ba1579d4313c8f9db015efdc002db3",
+    "processedAt": "2026-06-01T00:16:43.380Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}

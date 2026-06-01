@@ -1,0 +1,34 @@
+{
+  "ticker": "EIB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Ngân hàng thương mại — cho vay doanh nghiệp và cá nhân, ngoại tệ",
+  "customer": "Doanh nghiệp xuất nhập khẩu, khách hàng cá nhân",
+  "ops": "DATA_INSUFFICIENT — Chưa có dữ liệu BCTC (5th consecutive cycle). Peer group: PE 37.7 / ROE 4% anomaly đáng lo ngại khi có dữ liệu.",
+  "mgmt": "DATA_INSUFFICIENT — VPB audit Lạng Sơn (peer risk signal). EIB cần BCTC-TABLE sprint để sửa extraction.",
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "bctc_confidence": 0,
+  "extraction_impaired": true,
+  "esc_flags": {
+    "ESC1": false,
+    "ESC2": false,
+    "ESC3": false,
+    "ESC4": false,
+    "ESC5": false
+  },
+  "trick_summary": null,
+  "trick_confidence": "none",
+  "trick_pass_versions": [],
+  "signal_id": null,
+  "cycle_id": "20260601-0000",
+  "emitted_at": "2026-06-01T00:15Z",
+  "_drain": {
+    "fingerprint": "f391b61f49e1d052ce10e6e295dd478cfac4b9c8a55280efaa218403273a4cab",
+    "processedAt": "2026-06-01T00:16:43.380Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-po"
+  }
+}
