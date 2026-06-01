@@ -1,8 +1,32 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-01T20:45:42Z | **Sprint:** FRONTEND-BCTC-TAB
+**Last updated:** 2026-06-01T21:30Z | **Sprint:** DASHBOARD-STATE-SYNC
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-01T21:30Z — DASHBOARD-STATE-SYNC (analysis-only brief)
+
+**Brief:** `docs/architecture-briefs/2026-06-01-dashboard-state-sync.md`
+
+Brownfield recon: orchestration state (pipeline-state.json, TASKS.md, DASHBOARD.md,
+agent notebooks, analysis-briefs) lives ONLY in repo docs/ — no container reachable,
+no HTTP endpoint, zero frontend surface. mcp-server has docs/agent-memory mounted but
+NOT pipeline-state.json / TASKS.md / signals/DASHBOARD.md.
+
+Recommendation: Option A — new read-only mcp-server endpoints + new volume mounts +
+frontend Remix loader routes through api-gateway. REJECTED: Option B (frontend bind-mount
+violates gateway-only rule), Option C (sync-to-DB over-engineered for hourly cadence).
+
+Critical flag: NEVER parse TASKS.md/DASHBOARD.md markdown in an endpoint. Mandate JSON
+twins (tasks-state.json, signals-state.json) emitted by PO/signal-dashboard skill as
+machine-readable projections BEFORE dev impl.
+
+Phase 1: pipeline-state.json endpoint only (safe, no parsing risk, immediate value).
+Phase 2: tasks + signals after twins shipped.
+
+Scope: ~14–18 atomic tasks across 3 zones (agent-father, dev-mcp-server, dev-frontend).
+
+---
 
 ## 2026-06-01T20:45:42Z — FBT-ARCH (FRONTEND-BCTC-TAB)
 
