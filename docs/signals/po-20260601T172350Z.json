@@ -1,0 +1,20 @@
+{
+  "from": "po",
+  "to": "pm",
+  "ts": "2026-06-01T17:23:50Z",
+  "type": "task_ready",
+  "payload": {
+    "sprint": "TOOL-SURFACE-HYGIENE",
+    "tasks": ["TSH-6"],
+    "kind": "FIX",
+    "priority": "MEDIUM",
+    "zone": "apps/mcp-server/",
+    "owner": "dev-mcp-server",
+    "handoff": "docs/handoffs/TSH-6-kinhdich-honest-omit.md",
+    "architect_needed": false,
+    "architect_precedent": "docs/architecture-briefs/2026-05-31-tool-surface-hygiene.md ARCH-DECIDE-1 (FR-1=1b)",
+    "rebuild_required": true,
+    "qa": "live gateway call_tool(get_market_snapshot) raw-verify — no fallback line while :5005 down; not a badge",
+    "note": "Operator-reported. Approach C-omit. A/B pre-rejected (host-panic / G5-revert). Can batch rebuild with TSH-2/3/4. Backlog sibling TSH-7 (watchlist default) needs BA spec, not gating."
+  }
+}

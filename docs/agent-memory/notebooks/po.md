@@ -1,21 +1,20 @@
 # PO Notebook
 
-## 2026-06-01T15:25Z — EXIT sign-off PROSE-TEXT-LOSS (Task #18) → CLOSED
+## 2026-06-01T17:23Z — TRIAGE operator-bug → opened TSH-6 (FIX) + TSH-7 (backlog)
 
-Spawned for EXIT sign-off only (chain already complete: architect→dev→ops→qa).
+**Operator-reported product defect:** `get_market_snapshot` always shows misleading "Kinh Dịch: Chưa đủ dữ liệu để tính quẻ". Router raw-diagnosed (NOT relayed): kinh-dich-service:5005 not deployed (docker ps = only mcp-server + mcp-gateway, host-panic constraint / A-01-EXPECTED-SET) → fetch connection-refused → bare `catch {}` swallows → emits fallback that FALSELY implies data shortage. 3 sites: marketTools.ts appendMarketHexagram(62-69)/appendStockHexagram(72-80) + analysis.ts appendStockHexagramHttp(63-78). I confirmed docker ps + grep'd the 3 sites raw myself.
 
-**Verdict: APPROVED / DONE-CLOSED.** Display-only bug, no data ever lost.
-- Root cause (Layer C / display): `handleBctcInspectOcr` queried `bctc_layout_units WHERE page_type='table'`, so prose pages fell to the coverage-gap branch with `text_content:""` while `pdf_extracted_text` held valid OCR for EVERY page.
-- Fix a10448b0: gap-branch now `SELECT text_content,confidence FROM pdf_extracted_text WHERE filename=? AND page_number=?`; html renders `data.text_content`; `pek_coverage_gap:true` preserved (correct signal). +5 DV cases, DV-1 RED→GREEN with genuine pre-fix RED proof.
-- OPS rebuild img 33e4386c ≠ prior 4446a6e9, container healthy, both greps confirm fix in /app/src.
+**Verdict: Approach C-omit. FIX-class, NO new architect cycle.** Rationale: the architect ALREADY ruled the SAME dead-:5005 dep for the standalone tool (TSH-1, ARCH-DECIDE-1 FR-1=1b DEREGISTER in `…/2026-05-31-tool-surface-hygiene.md`): "absent is safer than lying"; wire :5005 later as feature sprint KINH-DICH-MARKET, "not squeezed into a hygiene sprint." That precedent governs the embedded path too.
+- (A) deploy :5005 — REJECTED (host-memory panic + intended-runtime).
+- (B) inline revert — REJECTED (re-introduces the P1-F G5 domain→infra violation; ARCH-DECIDE-1 already pre-decided against).
+- (C) honest-omit — CHOSEN. On connection-refused/non-200 → OMIT block entirely + logger.warn (kills silent-swallow `feedback_silent_swallow_serial_bugs`); on genuine 200-insufficient-data → keep honest VN line. Plain VN (`feedback_market_report_plain_vietnamese`).
 
-**ROUTER RAW-VERIFY (not relaying QA badge):** read live `/api/bctc-inspect/ocr` myself — FPT (e8ea3df5) p1=2081ch real OCR ("CÔNG TY CỔ PHẦN FPT…"), p2=134ch ("BÁO CÁO TÀI CHÍNH HỢP NHẤT… QUÝ I 2026"); table pp.22/25 unaffected. Lesson [[feedback_router_verify_raw_not_badges]] applied.
+**Opened:** TSH-6 under TOOL-SURFACE-HYGIENE (dev-mcp-server, MEDIUM, operator-reported). Handoff `docs/handoffs/TSH-6-kinhdich-honest-omit.md`. 5 ACs incl. live gateway raw-verify (not badge, RISK-2 / `feedback_router_verify_raw_not_badges`). Ops REBUILD required. Can batch rebuild with TSH-2/3/4/TSH-4 (same marketTools.ts).
+**Opened (backlog):** TSH-7 — secondary UX, default get_market_snapshot to watchlist when no `codes`. SPRINT-S, NOT gating. GOTCHA: watchlist NOT inline in system-map.json (only `_ssot` pointers) — tickers live in SQLite `watchlist` table. Needs BA spec.
 
-**Recorded:** TASKS.md closed-sprints + EXIT commit defd3fdd; TASKS pruned 82→80L (collapsed DONE TSH-2/3/4 into one line). commit-mutex claim→release clean round-trip.
+**Routing:** PM → dev-mcp-server → ops rebuild → qa live raw-verify → PO sign-off.
 
-**Out-of-scope (pre-existing, NOT regressions, NOT reopened):** pp.22/25 identical content (one PEK segment-window) · VCB refine_status=PENDING placeholder · FU-BANK-CODECOL backlog · FPT YoY 2025-Q4 GM-100% → FU-TRUST-REFRESH.
-
-**Carry-over / next queued (reported to router):**
-- **TSH-1 (dev-mcp-server, MEDIUM)** SHIPS FIRST — deregister `get_market_hexagram` (kinhDichTools.ts:510–546) + drop orphan import. Then ops rebuild #1.
-- **ENV-ISOLATION-P2 (#15, MEDIUM)** GATE-RELEASED/schedulable — EI-P2-1→2→3→QA. SERIALIZE the EI-P2-2 mcp-server rebuild against TSH-1 rebuild (same `apps/mcp-server/` zone) — never parallel.
-- HIGH backlog still ahead of these: VPS-DEPLOY-PLACEHOLDER-GUARD (T1 ops-recon HARD GATE) · NB-PRUNE-FIX (NB-BLOAT-FLOW-OVERWRITE active).
+**Carry-over / queued ahead/alongside:**
+- TSH-1 (dev-mcp-server) SHIPS FIRST in this sprint — deregister get_market_hexagram tool; getMarketHexagram export stays LIVE (still used by appendMarketHexagram) so TSH-6 safe.
+- ENV-ISOLATION-P2 schedulable — SERIALIZE EI-P2-2 mcp-server rebuild vs all TOOL-SURFACE-HYGIENE rebuilds (same zone, never parallel).
+- HIGH backlog ahead: VPS-DEPLOY-PLACEHOLDER-GUARD (T1 ops-recon HARD GATE) · NB-PRUNE-FIX.
