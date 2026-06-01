@@ -57,3 +57,19 @@ B4 Allowlist vs flow needs: all Bash in flow (docker ps/inspect/stats/logs/exec,
 flow/main.md: 494L actual vs 120L cap, stale size-justification comment claims 175L. Pre-existing violation (file was 469L before this commit per agent-father note). Do NOT fix in this dispatch — invariant block must stay in-flow. Follow-up required (separate hygiene task).
 
 LIVE-INJECTION PROVEN-RED: DEFERRED. Requires controlled off-hours ops-supervised run. NOT part of this gate.
+
+---
+
+## cycle-181 · 2026-06-01T21:05Z · FBT-QA APPROVED — FRONTEND-BCTC-TAB
+
+Sprint: FRONTEND-BCTC-TAB | Task: FBT-QA | Verdict: APPROVED | Report: reports/TASK_REPORT_FBT-QA.md
+
+Gate coverage (all 5 PASS):
+- G1 PDF: VCB Q1 2025, 16,601,060 bytes, magic=25504446, MD5 identical :3001/:3000.
+- G1 page-image: FPT Q1 2026 page 3, 273,384 bytes, magic=89504e47, MD5 identical.
+- G2: 7 sub-paths (docs/page-window/ocr/table/md/zones/flags) — status + body MD5 identical across origins. zones 404 relayed verbatim.
+- G3: /api/bctc-eval/{doc}/page/1 → 200, overall_status=yellow, MD5 identical on 2 docs.
+- G4: POST /correct via :3001 → HTTP 200, bctc_human_corrections row id=5 confirmed in bun:sqlite direct read, reset to original value. Content-Type relay proven via 400 Zod error on bad schema.
+- G5: zero mcp-server files in commit 80f2911b; mcp-server image sha256:098bb09e unchanged; :3000 viewer 200/103,876 bytes; const BASE="" confirmed.
+
+Key lesson: page-image returns 404 for all but FPT/ACB Q1 because PNGs are rasterized on-demand and only those two exist in /data/bctc-page-images volume. The 404 is correct behavior, not a proxy fault — both origins return identical 82-byte body.
