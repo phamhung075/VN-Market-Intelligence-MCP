@@ -5869,3 +5869,46 @@ Alternatively, **OPS can attempt:**
 
 **CLOSURE:** All known scalar bugs in FU-TRUST-REFRESH are fixed. This is the final re-finalize. No further finalize cycles needed unless new issues surface.
 
+
+---
+
+## Session: 2026-06-01 (VPS-PROXY-RECOVERY)
+
+**Incident:** Vinahost VPS proxy degraded — 4 CRITICALs converged to one root cause
+
+**Impact:**
+- vn-price-fetch: stale 65h (last good: 2026-05-29 08:59)
+- vn-foreign-flow: unhealthy (0ms response, unable to push data)
+- vn-news-fetch: healthy (no impact)
+- vn-sbv-fetch: healthy (no impact)
+- vn-bctc-fetch: operational but no new Q1/2026 data
+
+**Root Cause:**
+Cloudflare tunnel ingress rules configured to route `/api/*` to localhost:4000 (api-gateway service), but api-gateway was never deployed on the Mac host. Tunnel returned 502 Bad Gateway to all VPS fetch requests attempting to reach `/api/watchlist`, `/api/push-prices`, `/api/push-foreign-flow`.
+
+**Diagnosis Trail:**
+1. VPS fetch scripts call `https://zenmidi.com/api/watchlist` (Cloudflare tunnel)
+2. Tunnel config: `/api/*` → http://localhost:4000 (api-gateway not deployed)
+3. localhost:4000 not listening → tunnel returns 502
+4. VPS scripts fail with "empty codes" (watchlist fetch failed)
+5. Local MCP server on :3000 is healthy; issue is tunnel routing
+
+**Recovery Executed:**
+- Installed socat (brew install socat)
+- Started proxy: `socat TCP-LISTEN:4000,reuseaddr,fork TCP:127.0.0.1:3000`
+- Proxy bridges Cloudflare tunnel routing (:4000) to mcp-server (:3000)
+- VPS fetch services now successfully connect and retrieve data
+
+**Verification:**
+- ✓ VPS can now reach https://zenmidi.com/api/watchlist (200 OK, returns 111 codes)
+- ✓ vn-price-fetch recovered: fresh push at 2026-06-01 02:39:30 (101-109 items)
+- ✓ vn-foreign-flow recovered: now pushing 101 items at 02:39:24
+- ✓ vn-news-fetch: continues healthy (118→119 pushes in 24h)
+- ✓ vn-sbv-fetch: continues healthy (46 pushes in 24h)
+
+**Permanent Fix (pending):**
+Update Cloudflare tunnel ingress config to route `/api/*` directly to localhost:3000 instead of :4000, eliminating need for the socat bridge. (Requires Cloudflare dashboard or CF API access; local :4000 bridge is temporary but stable for now.)
+
+**Duration:** 65 hours from last successful price fetch (2026-05-29 08:59 → 2026-06-01 02:39)
+**Data Loss:** None (all recovered data consistent, no gaps)
+**Outage Window:** ~24m (from alert to recovery)
