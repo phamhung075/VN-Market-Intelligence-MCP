@@ -1,8 +1,18 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-01 14:12 UTC | **Sprint:** VPS-DEPLOY-PLACEHOLDER-GUARD
+**Last updated:** 2026-06-01T20:45:42Z | **Sprint:** FRONTEND-BCTC-TAB
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-01T20:45:42Z — FBT-ARCH (FRONTEND-BCTC-TAB)
+
+**Brief:** `docs/architecture-briefs/2026-06-01-frontend-bctc-inspect-tab.md`
+
+A2 server-side proxy design locked for surfacing the BCTC Inspect viewer as a new dashboard tab in apps/frontend; two Remix resource routes + one NAV_ITEMS entry, zero mcp-server edits, with full binary-stream passthrough contract for PDF and PNG sub-paths.
+
+**Signal dropped:** `docs/signals/frontend-bctc-inspect-tab.json` → agent-father → dev-frontend
+
+---
 
 ## VPS-DEPLOY-PLACEHOLDER-GUARD (2026-06-01T11:20 UTC) — DEPLOY GUARD DESIGN
 

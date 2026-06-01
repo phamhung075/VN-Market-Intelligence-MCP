@@ -1,0 +1,11 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-06-01-frontend-bctc-inspect-tab.md",
+  "priority": "normal",
+  "createdAt": "2026-06-01T20:45:42Z",
+  "summary": "FBT-ARCH: A2 proxy design locked for surfacing BCTC Inspect viewer as new tab in frontend dashboard. Two resource routes + one NAV_ITEMS line in apps/frontend/ only. Zero mcp-server edits.",
+  "target_agent": "dev-frontend",
+  "sprint": "FRONTEND-BCTC-TAB"
+}
