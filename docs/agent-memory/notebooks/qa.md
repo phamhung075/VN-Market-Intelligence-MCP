@@ -83,8 +83,15 @@ REPORT: reports/TASK_REPORT_BANK-QA-3.md
 
 ---
 
+## cycle-177 · 2026-06-01 · PROSE-TEXT-LOSS — Task #18 — APPROVED
+
+Sprint: PROSE-TEXT-LOSS | Task: #18 PROSE-DEV-1 | Verdict: APPROVED
+Commit: a10448b0 (fix) | 3 files changed
+
+G1 TSC: 0 errors (full bun tsc --noEmit clean). G2 DV suite 5/5 PASS; DV-1 genuinely RED before fix confirmed via git diff (pre-fix: text_content:"", confidence:0 hardcoded in coverage-gap branch; new SELECT from pdf_extracted_text was not present — not a tautology). G3 Neighboring suites: pek-render-seam 12/0, 1271-bctc-inspect-md + 1273-bctc-inspect-overlay 16/0 — all green. G4 LIVE-SERVE: FPT doc e8ea3df5 page 1 → text_content 2081ch (pek_coverage_gap:true), page 2 → 134ch confidence:0.8 — non-empty confirmed. G5 Image SHA 33e4386c confirmed (new vs prior 4446a6e9, built 2026-06-01T17:17Z). DDD: interface→application import pre-existing (correct layer); no new imports. Security: no process.env, no secrets, no hardcoded creds.
+
 ## cycle-173 · 2026-05-31 · NB-PRUNE-1 — NB-PRUNE-FIX — APPROVED
 
 Sprint: NB-PRUNE-FIX | Task: NB-PRUNE-1 | Verdict: APPROVED | Commit: 7166db01 (skill-only)
-Fixtures: Session 5871L/69s→344L/3s (AC-5 guard fires); ISO-ts 316L/30s→27L/3s ≤200L; c-fmt 166L/12s→58L/3s ≤200L.
+Fixtures: Session 5871L/69s→344L/3s (AC-5 guard fires); ISO-ts 316L/30s→27L/3s ≤200L; c-fmt 166L/12s→8L/3s ≤200L.
 Preamble preserved: ISO+c-format confirmed. Exactly-3 no-prune: confirmed. Fenced ## over-count: theoretical only (0 live). TODO po/developer contradiction: deferred (po.md=26L). Skill 104L ≤120L cap. NB-PRUNE-1 → DONE in TASKS.md.
