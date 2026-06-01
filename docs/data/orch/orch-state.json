@@ -1,0 +1,827 @@
+{
+  "_schema": "v3",
+  "_ssot": true,
+  "_updated_at": "2026-06-01T22:00Z",
+  "_updated_by": "agent-father",
+
+  "head": {
+    "status": "in_progress",
+    "active_task_id": "OSC-1",
+    "next_agent": "agent-father",
+    "next_action": "ORCH-STATE-CONSOLIDATE drive-to-DONE (operator fan-out). BA/ARCH/PM ALL DONE (brief 46632eb0; OSC-1..5 fully decomposed in TASKS.md w/ zones+AC+sequencing). EXECUTE: [A solo] agent-father OSC-1 ONLY: mkdir docs/data/orch/, write orch-state.json _schema:v3 = merge pipeline-state head/dashboard_section_cache/narrative/session_handoff_status VERBATIM + task_board from open TASKS.md sprints + signal_queue from DASHBOARD NEW rows (summary<=120, payload_ref, NO raw payload); DO NOT delete any old file. NO agent cycles between OSC-1->OSC-2 (RISK-2 phantom dual-write). [B atomic ONE-COMMIT by ONE committer] OSC-2+OSC-3: dev-mcp-server prepares §4.1 code (1837a path, tasksMdJanitorJob L308/L421, dailyDashboardJob L495, improvementSignalWriter L30/252-261 + 3 test fixtures, atomic temp->rename helper) in working tree; agent-father prepares all §1.1/§2.1 agent-file re-points + OSC-3 signal-dashboard SKILL/dashboard-protocol rewrite in working tree; committer runs 3 bun tests GREEN, THEN git rm the 5 md/json files (markdown deletion STRICTLY LAST), THEN ONE commit under commit-mutex (task_kind:commit-mutex, owner_agent set, ttl>=60). Two committers MUST NOT commit simultaneously (feedback_concurrent_commit_race). [C parallel fan-out, isolated zones] dev-mcp-server OSC-4a (GET /api/orchestration read-only, last_updated_iso, summary/severity/status only HC-2) || dev-frontend OSC-4c (dashboard route — REUSE shipped FRONTEND-BCTC-TAB A2 splat-proxy api.bctc-inspect.\\$.tsx precedent, NOT Go gateway:4000; stale amber badge) || ops OSC-4b (compose mount orch-state.json:rw + up -d --build mcp-server REBUILD not restart, single-service). [D] qa OSC-5 PLAN-ONLY: atomic-write PROVEN-RED (simulated 2-agent RETURN: no-clobber, no-sibling-overwrite, no-partial-corruption — inject failure to prove caught) + 3-test+grep reader regression + endpoint HC-1/HC-2 raw-verify (read VALUES not badges). CONSTRAINTS: zone-isolation, explicit-file staging (NO add -A, NO --force, .env never staged), all on main, single-service ops (16GB host-panic), detectors/qa PLAN-ONLY. Decision (A): D4-R4 alarm 30s on orch-state.json. ROUTER-REPORT at: (a) OSC-2 atomic commit lands, (b) qa proves atomic-write, (c) sprint COMPLETE.",
+    "wip": 0,
+    "wip_max": 2,
+    "updated_at": "2026-06-01T21:17Z",
+    "updated_by": "po"
+  },
+
+  "dashboard_section_cache": {
+    "section_name": "po",
+    "start_line": 8,
+    "last_mtime": "2026-06-01T08:09:00Z",
+    "last_linecount": 224
+  },
+
+  "narrative": {
+    "_cap": "≤30 lines total — prune oldest on overflow",
+    "current_sprint": "VPS-DEPLOY-PLACEHOLDER-GUARD (HIGH, 06-01T15:30Z T2+T3+T4 DONE): DECISION-A consolidate complete. T2 DONE: GUARD-1 in 8 render blocks of deploy-vinahost.sh (sections 1-8; section 9 no-render commented). T3 DONE: section 10 article-body-fetcher.py + idempotent pip3 bs4 + post-SCP ls verify. T4 DONE: VERIFYEOF post-deploy block appended, deploy-vps-proxy.sh DELETED, .env VULTR_IP/USERNAME/PASSWORD removed (comment left), .env.example decommission note added, fetch-foreign-flow.sh comment updated. bash -n SYNTAX OK. GUARD-1 deliberate-violation exit 1 confirmed. NEXT: T5 ops redeploy → T6 qa.",
+    "last_closed": "P0 mcp-server :3000 backend OUTAGE → RECOVERED (2026-06-01 ~14:30, ops `docker compose up -d mcp-server`): container vn-market-intelligence-mcp-mcp-server-1 SIGTERM-killed (signal=15, NOT OOM) while host HEALTHY (55% mem free) → full-fleet+mutex-system down; router caught it via failed call_tool, verified raw (curl :3000=000→200 toolCount154, socat :4000 200, gateway round-trip OK). CULPRIT UNIDENTIFIED — suspected AUD-ND-1 regression (detector docker-stopped backend on false signal; 4th fleet-host-danger candidate). Single-service relaunch (NOT fleet, NOT rebuild — clean-exit→relaunch lesson). Prior: VPS news-push outage RESTORED 10:09Z ops 53c3d888 (unrendered placeholders, http=200 received=242).",
+    "watch_items": [
+      "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 while host healthy, culprit unidentified — verify detectors are PLAN-ONLY; check system-auditor/cron logs for the docker-stop. 4th host-danger candidate.",
+      "CHEF morning-dish: verify guaranteed publish under macro-down on next fire",
+      "CHEF-TS-STAMP (LOW cosmetic): cycle-timestamp + next-slot-date mis-stamp; watch next tick",
+      "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion — endpoint live but no consumer yet",
+      "ops 275L / dev-alert-engine 389L / dev-rag-service 223L still >cap (NB-PRUNE-FIX scope)"
+    ],
+    "open_sprints": [
+      "VPS-DEPLOY-PLACEHOLDER-GUARD: live status in current_sprint (DECISION-A consolidate, →pm). Old GUARD-1/2/3 impl (96446b5d) on dead vps-proxy SUPERSEDED by consolidation; refs: ba spec TASK_VPS-PLACEHOLDER-GUARD.md + brief 2026-06-01-vps-deployer-consolidation.md. Root: cafef 814088b0 bypassed renderer + stale VULTR_IP in .env masked decommission.",
+      "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE: within-section trimming + per-flow prune-invocation audit",
+      "CHEF-FLOW-CAP-REFACTOR: chef.md 258L > 120L cap; extract Steps 6/6.5/7 to chef-write-dish.md",
+      "CHEF-TS-STAMP: cosmetic telemetry bug; confirm pattern before dispatch",
+      "SSC-IBOARD-MIGRATE: replacement-source recon for dead iboard financial source",
+      "TOOL-SURFACE-HYGIENE: TSH-1 deregister get_market_hexagram after gateway wedge cleared",
+      "BCTC-LAYOUT-FIRST: Phase 0 READY — LF-EXTRACT/LF-OVERLAY",
+      "SELF-IMPROVE-GATE: X-1 synthetic dry-run",
+      "CHEF-ATTN: READY",
+      "ENV-ISOLATION-P2: gate RELEASED, unscheduled"
+    ],
+    "backlogs": "FLEET-HOST-SAFETY (AUD-ND-1/DRAIN-INJECTION-SAFE/A-01-EXPECTED-SET/AUDITOR-SLA-CADENCE/VPS-SOCAT-PERSIST) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures"
+  },
+
+  "session_handoff_status": {
+    "cleared": "2026-05-31T00:33Z — prior parallel-session zone-ownership directive obsolete. Dispatch apps/mcp-server + apps/pdf-extractor normally, WIP<=2 + zone-isolation between concurrent tasks.",
+    "does_not_consume_wip": true
+  },
+
+  "task_board": {
+    "_updated_at": "2026-06-01T22:00Z",
+    "_updated_by": "agent-father",
+    "active_sprints": [
+      {
+        "id": "ORCH-STATE-CONSOLIDATE",
+        "label": "Single JSON SSOT, delete 4 orchestration markdown files",
+        "status": "active",
+        "opened_at": "2026-06-01",
+        "tasks": [
+          {
+            "task_id": "OSC-1",
+            "title": "Create orch-state.json, migrate pipeline-state + TASKS + DASHBOARD content",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "docs/"
+          },
+          {
+            "task_id": "OSC-2",
+            "title": "ATOMIC code + agent-file + deletion migration (ONE COMMIT)",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server+agent-father",
+            "depends": "OSC-1",
+            "status": "TODO",
+            "size": "L",
+            "zone": "apps/mcp-server/ + docs/"
+          },
+          {
+            "task_id": "OSC-3",
+            "title": "Rewrite signal-dashboard SKILL to target orch-state.json .signal_queue",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": "OSC-2",
+            "status": "TODO",
+            "size": "M",
+            "zone": ".claude/skills/"
+          },
+          {
+            "task_id": "OSC-4",
+            "title": "GET /api/orchestration endpoint + docker mount + frontend route",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server+ops+dev-frontend",
+            "depends": "OSC-2",
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/ + docker-compose.yml + apps/frontend/"
+          },
+          {
+            "task_id": "OSC-5",
+            "title": "QA: atomic-write PROVEN-RED + reader-migration regression + endpoint contract",
+            "type": "sprint-task",
+            "owner": "qa",
+            "depends": "OSC-4",
+            "status": "TODO",
+            "size": "M",
+            "zone": "qa"
+          }
+        ]
+      },
+      {
+        "id": "FLEET-HOST-SAFETY",
+        "label": "On 16GB host, fleet must NEVER be up",
+        "status": "active",
+        "opened_at": "2026-06-01",
+        "tasks": [
+          {
+            "task_id": "AUD-ND-1",
+            "title": "system-auditor PLAN-ONLY invariant (no destructive docker ops)",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "DONE",
+            "size": "M",
+            "zone": "docs/agents/system-auditor/",
+            "note": "IMPLEMENTED+QA-PASS 2026-06-01 :07 (d30f9221)"
+          },
+          {
+            "task_id": "DRAIN-INJECTION-SAFE",
+            "title": "dev-team drain-signals must not interpolate payload into shell cmd",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "TODO",
+            "size": "S",
+            "zone": "docs/agents/dev-team/flow/"
+          },
+          {
+            "task_id": "A-01-EXPECTED-SET",
+            "title": "system-auditor A-01 check against intended-runtime-set SSOT not full compose",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "TODO",
+            "size": "S",
+            "zone": "docs/agents/system-auditor/"
+          },
+          {
+            "task_id": "AUDITOR-SLA-CADENCE",
+            "title": "Per-source SLA SSOT for data_stale checks (quarterly cadence for BCTC)",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "TODO",
+            "size": "S",
+            "zone": "docs/agents/system-auditor/"
+          },
+          {
+            "task_id": "VPS-SOCAT-PERSIST",
+            "title": "Durable CF tunnel routing fix (socat launchd plist or CF re-point)",
+            "type": "sprint-task",
+            "owner": "ops",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "ops/VPS",
+            "note": "CLOSED 2026-06-01: launchd plist com.vn-market.socat-bridge installed"
+          }
+        ]
+      },
+      {
+        "id": "MCP-SURFACE-GAPS",
+        "label": "Router-found MCP defects (intake 2026-06-01)",
+        "status": "active",
+        "opened_at": "2026-06-01",
+        "tasks": [
+          {
+            "task_id": "MSG-1",
+            "title": "No market-wide foreign-flow aggregate tool",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": null,
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/"
+          },
+          {
+            "task_id": "MSG-2",
+            "title": "Per-code N+1 Kinh Dich fallback lines eliminated",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": null,
+            "status": "DONE",
+            "size": "XS",
+            "note": "RESOLVED by TSH-6 (9b895ffd) 2026-06-01"
+          },
+          {
+            "task_id": "MSG-3",
+            "title": "Phantom-tool discoverability gap (get_market_breadth, get_top_movers)",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": null,
+            "status": "TODO",
+            "size": "XS",
+            "zone": "docs/standards/mcp-tools.md"
+          }
+        ]
+      },
+      {
+        "id": "ENV-ISOLATION",
+        "label": "Fleet-wide test/prod data isolation",
+        "status": "active",
+        "opened_at": "2026-05-31",
+        "tasks": [
+          {
+            "task_id": "EI-P1-1",
+            "title": "APP_ENV=production explicit in all DB-using compose services",
+            "type": "sprint-task",
+            "owner": "ops",
+            "depends": null,
+            "status": "DONE"
+          },
+          {
+            "task_id": "EI-P1-2",
+            "title": "Harden maintenance scripts with APP_ENV + DB_PATH guards",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "DONE"
+          },
+          {
+            "task_id": "EI-P1-3",
+            "title": "Write docs/protocols/dev-environment.md SOP",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "DONE"
+          },
+          {
+            "task_id": "EI-P2-1",
+            "title": "Startup assertion APP_ENV vs DB_PATH mismatch",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": "EI-P1-3",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/"
+          },
+          {
+            "task_id": "EI-P2-2",
+            "title": "data_env column on 5 tables",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": "EI-P2-1",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/"
+          },
+          {
+            "task_id": "EI-P2-3",
+            "title": "docker-compose.dev.yml for dev stack on port 3099",
+            "type": "sprint-task",
+            "owner": "ops",
+            "depends": "EI-P2-2",
+            "status": "TODO",
+            "size": "S"
+          },
+          {
+            "task_id": "EI-P2-QA",
+            "title": "ENV-GUARD-1 sweep — startup assertion + data_env stamp",
+            "type": "sprint-task",
+            "owner": "qa",
+            "depends": "EI-P2-3",
+            "status": "TODO",
+            "size": "S"
+          }
+        ]
+      },
+      {
+        "id": "SELF-IMPROVE-GATE",
+        "label": "Gated Self-Improvement Loop Phase 2",
+        "status": "active",
+        "opened_at": "2026-05-28",
+        "tasks": [
+          {
+            "task_id": "SIG-FOLLOWUP-DRYRUN",
+            "title": "X-1 synthetic dry-run, D-IMPROVE emit path e2e",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/"
+          }
+        ]
+      },
+      {
+        "id": "NB-PRUNE-FIX",
+        "label": "Notebook prune anchor-format mismatch (fleet bloat)",
+        "status": "active",
+        "opened_at": "2026-05-31",
+        "tasks": [
+          {
+            "task_id": "NB-PRUNE-1",
+            "title": "Widen prune anchor to ^## in notebook-write SKILL",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "DONE",
+            "note": "DONE 2026-05-31 (7166db01)"
+          },
+          {
+            "task_id": "NB-BLOAT-FLOW-OVERWRITE",
+            "title": "system-auditor prepend drift — make overwrite unambiguous in flow",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "TODO",
+            "size": "S",
+            "zone": "docs/agents/system-auditor/flow/"
+          },
+          {
+            "task_id": "RE-CAP-1",
+            "title": "signal-dashboard SKILL.md 192L vs 120L cap — lazy-load refactor",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "TODO",
+            "size": "S",
+            "zone": ".claude/skills/signal-dashboard/"
+          }
+        ]
+      },
+      {
+        "id": "BCTC-LAYOUT-FIRST",
+        "label": "Phase 0 READY",
+        "status": "active",
+        "opened_at": "2026-05-26",
+        "tasks": [
+          {
+            "task_id": "LF-EXTRACT",
+            "title": "Layout-first extraction Phase 0",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "TODO",
+            "size": "M"
+          },
+          {
+            "task_id": "LF-OVERLAY",
+            "title": "Layout-first overlay Phase 0",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": "LF-EXTRACT",
+            "status": "TODO",
+            "size": "M"
+          }
+        ]
+      },
+      {
+        "id": "CHEF-ATTN",
+        "label": "Per-stock diversity cap",
+        "status": "active",
+        "opened_at": "2026-05-27",
+        "tasks": [
+          {
+            "task_id": "CHEF-ATTN-1",
+            "title": "BA → IMPL → DEPLOY → QA → EXIT",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": null,
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/"
+          }
+        ]
+      }
+    ],
+    "backlog": [
+      {
+        "id": "BCTC-CTG-ATTACHMENT-FETCH",
+        "summary": "CTG cover-letter-only PDF fetched; need real BCTC attachment (size/page sanity gate)",
+        "priority": "normal"
+      },
+      {
+        "id": "TNB-GATEWAY-PROBE",
+        "summary": "tnb bootstrap Step 0c should PROBE gateway not read .mcp.json",
+        "priority": "low"
+      },
+      {
+        "id": "CW-STEP47-HYGIENE",
+        "summary": "Teach cowork agents absent-by-design != degraded (macro-indicators not deployed)",
+        "priority": "low"
+      },
+      {
+        "id": "FU-BANK-CODECOL",
+        "summary": "Label text leaking into code column of bctc_table_rows (markdown column-alignment defect)",
+        "priority": "normal"
+      },
+      {
+        "id": "BCTC-TABLE-2",
+        "summary": "Multi-ticker BCTC-TABLE-2 sprint",
+        "priority": "normal"
+      },
+      {
+        "id": "KD-QREF-LANG",
+        "summary": "Kinh Dich Q-ref language issue",
+        "priority": "low"
+      },
+      {
+        "id": "SSC-IBOARD-MIGRATE",
+        "summary": "Replacement-source recon for dead iboard financial source",
+        "priority": "normal"
+      },
+      {
+        "id": "FU-EI-COMPOSE",
+        "summary": "alert-engine DB_PATH + run-bt7-backfill import path (pre-existing, not P2-gated)",
+        "priority": "low"
+      },
+      {
+        "id": "FU-FIXER-NO-FORCE",
+        "summary": "Harden fixer + dev agents against git add -f / force-add of gitignored paths",
+        "priority": "high"
+      },
+      {
+        "id": "TSH-7",
+        "summary": "watchlist default for no-codes get_market_snapshot (UX, optional, needs BA)",
+        "priority": "low"
+      },
+      {
+        "id": "FU-DEV-CAFEF-1",
+        "summary": "Wire /proxy/article-body into /api/push-news ingestion (awaiting USER greenlight)",
+        "priority": "normal"
+      },
+      {
+        "id": "SA-FLOW-CAP",
+        "summary": "system-auditor/flow/main.md 494L vs 120L cap — refactor to linked files",
+        "priority": "low"
+      },
+      {
+        "id": "AUD-ND-1-LIVE-PROVEN-RED",
+        "summary": "Synthetic false-positive injection proving auditor emits signal not docker stop (ops-supervised off-hours)",
+        "priority": "normal"
+      },
+      {
+        "id": "C-TIER1-CEILING",
+        "summary": "get_market_snapshot source_tier:2 permanent ceiling — decide-and-document",
+        "priority": "low"
+      },
+      {
+        "id": "CHEF-FLOW-CAP-REFACTOR",
+        "summary": "chef.md 258L > 120L cap — extract Steps 6/6.5/7 to chef-write-dish.md",
+        "priority": "normal"
+      },
+      {
+        "id": "CHEF-TS-STAMP",
+        "summary": "Cosmetic: cycle-timestamp + next-slot-date mis-stamp; confirm pattern before dispatch",
+        "priority": "low"
+      }
+    ],
+    "archive": []
+  },
+
+  "signal_queue": {
+    "_updated_at": "2026-06-01T22:00Z",
+    "_updated_by": "agent-father",
+    "rows": [
+      {
+        "id": "po-gate-self-critique-detect-20260601T2111",
+        "ts": "2026-06-01T21:11Z",
+        "from": "po",
+        "to": "po",
+        "type": "gate-verdict",
+        "summary": "SELF-CRITIQUE-DETECT brief APPROVE-WITH-CONDITIONS (5-field critique in brief §11). Blocked on operator final greenlight — agent-father MUST NOT implement on PO alone.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": "docs/architecture-briefs/2026-06-01-agent-self-critique-detect-source.md"
+      },
+      {
+        "id": "tnb-c85-20260601T2013",
+        "ts": "2026-06-01T20:13Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "HIGH. c85: morning dish FAILED (no_self_abort violation, agent-father fixed same tick DONE-PENDING-LIVE-VERIFY). pipeline_degraded=TRUE.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
+      {
+        "id": "CW-FLOW-STEP478-DEFECTS-20260601T1603Z",
+        "ts": "2026-06-01T16:03Z",
+        "from": "cowork-team",
+        "to": "agent-father",
+        "type": "flow-bug",
+        "summary": "Two defects in cowork-team flow/main.md: Step 4.8 grep-c produces malformed pressure-state.json; Step 4.7 enum reject on agent_name cowork-team.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260601T160319Z.json"
+      },
+      {
+        "id": "cow-CHEF-MORNING-NOPUBLISH-20260601T0518",
+        "ts": "2026-06-01T05:18Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "dispatcher-incident",
+        "summary": "MED. chef-morning GUARANTEED morning dish FAILED to publish — agent self-aborted violating no_self_abort. NO MARKET dish for 2026-06-01 morning.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260601T051821Z.json"
+      },
+      {
+        "id": "cow-MACRO-DOWN-20260601T0406",
+        "ts": "2026-06-01T04:06Z",
+        "from": "cowork-team",
+        "to": "ops",
+        "type": "microservice_degraded",
+        "summary": "macro-indicators service unavailable recurring >=3 cowork cycles. Absent BY DESIGN (not deployed) — DO NOT docker compose up macro-indicators.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "CW-NSCOUT-SPAWN-FRAMING-20260601T0003Z",
+        "ts": "2026-06-01T00:03Z",
+        "from": "cowork-team",
+        "to": "agent-father",
+        "type": "agent-def-bug",
+        "summary": "news-scout-offhours spawn NO-OP REFUSAL — missing self-execution framing in agent def. FIXED commit 7239b803.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260601T000318Z.json"
+      },
+      {
+        "id": "tnb-c84-blocked-20260531T2013",
+        "ts": "2026-05-31T20:13Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "bug-escalation",
+        "summary": "HIGH. c84 BLOCKED — MCP gateway absent in spawned-agent session (FALSE ALARM pattern). Structural gaps D/E/F/F9 persist from c82.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/tnb-2026-05-31T20:13:00Z-c84-mcp-blocked.json"
+      },
+      {
+        "id": "SYSAUDITOR-D4-TASKS-FALSERED-20260531T0327",
+        "ts": "2026-05-31T03:27Z",
+        "from": "po",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "LOW recurring meta-fix. system-auditor D4 emits TASKS.md unreadable false-RED (#3015); docs/TASKS.md intact. Probe-design false-positive (stale fs view).",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "NSCOUT-NB-BLOAT-20260531T0810Z",
+        "ts": "2026-05-31T08:10Z",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "summary": "news-scout.md notebook 1198L vs 200 cap. Append-not-overwrite defect family.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/agent-memory/notebooks/news-scout.md"
+      },
+      {
+        "id": "ARCH-NB-BLOAT-20260531T0926Z",
+        "ts": "2026-05-31T09:26Z",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "summary": "architect.md notebook 339-402L vs 200 cap. Append-not-overwrite family. Still 477L at 15:26Z.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/agent-memory/notebooks/architect.md"
+      },
+      {
+        "id": "CMH-STALL-20260531T1127Z",
+        "ts": "2026-05-31T11:27Z",
+        "from": "dev-team",
+        "to": "claude-manager-helper",
+        "type": "maintenance-escalation",
+        "summary": "CMH lane undrained. 4 notebook-bloat rows persisted 3+ ticks. architect.md 477L + news-scout.md 1198L still open.",
+        "severity": "MED",
+        "status": "PARTIAL",
+        "payload_ref": null
+      },
+      {
+        "id": "cow-20260531T2118",
+        "ts": "2026-05-31T21:18Z",
+        "from": "cowork-team",
+        "to": "ops",
+        "type": "microservice_degraded",
+        "summary": "CRITICAL FULL vn-market STACK OUTAGE — all 12 microservices gone. RESOLVED ~21:17:43Z self-recovered.",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/cowork-MCP-STACK-DOWN-20260531T2118Z.json"
+      },
+      {
+        "id": "1967b-RERUN",
+        "ts": "2026-05-21T19:19Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "DISPATCH READY. BA 1967a APPROVED. RE-RUN 1967b architect audit: REQ-1967 checklist (signal-naming / per-flow JUMP-TO / recursive-spawn guard / task-lock symmetry / 35-agent audit).",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": "docs/signals/po-1967b-rerun.json"
+      },
+      {
+        "id": "1965-COVERAGE-SWEEP",
+        "ts": "2026-05-21T04:30Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "User feedback: cowork agents concentration on few tickers only. Design ask: rotation/sweep for news-scout + market-watcher.",
+        "severity": "INFO",
+        "status": "OPEN",
+        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md"
+      },
+      {
+        "id": "B-05",
+        "ts": "2026-05-22T18:31:02Z",
+        "from": "system-auditor",
+        "to": "dev-mcp-server",
+        "type": "data_stale",
+        "summary": "ssc-iboard price data stale 9h 31m. Expected cadence 15 min. Recommend ops verify VPS prices push service.",
+        "severity": "CRITICAL",
+        "status": "OPEN",
+        "payload_ref": null
+      },
+      {
+        "id": "A-21c",
+        "ts": "2026-05-22T17:33:38Z",
+        "from": "system-auditor",
+        "to": "dev-mcp-server",
+        "type": "microservice_degraded",
+        "summary": "dailyDashboardJob NOT FIRED since 2026-05-17. Missing volume mount for project-stats.json. FAIL-VERDICT-RE-FIRE.",
+        "severity": "CRITICAL",
+        "status": "FAIL-VERDICT-RE-FIRE",
+        "payload_ref": null
+      },
+      {
+        "id": "P2-G-DONE",
+        "ts": "2026-05-25T22:04Z",
+        "from": "dev-mcp-server",
+        "to": "dev-mcp-server",
+        "type": "impl_done",
+        "summary": "P2-G COMPLETE — G9 dashboard live panels. commit 7520428b. modules.json 12 barrels; live toolCount from /health.",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": null
+      },
+      {
+        "id": "P1-MCP-QA-20260525T1726Z",
+        "ts": "2026-05-25T17:26Z",
+        "from": "po",
+        "to": "qa",
+        "type": "review_request",
+        "summary": "GATED on P1-MCP-REBUILD. Live full-tool-suite verify. Regression tripwires: bun test >=9408/<=348; toolCount=146; sched=68.",
+        "severity": "INFO",
+        "status": "NEW",
+        "payload_ref": "docs/data/pilot-status-mcp-server.json"
+      },
+      {
+        "id": "BRANCH-CLEANUP-1972",
+        "ts": "2026-05-22T06:20:45Z",
+        "from": "po",
+        "to": "maintenance",
+        "type": "branch_policy_violation",
+        "summary": "task/1972-vndirect-ohlcv-null-coercion stale branch present. Task 1972 DONE on main. code-janitor sweep to verify+delete.",
+        "severity": "LOW",
+        "status": "OPEN",
+        "payload_ref": null
+      },
+      {
+        "id": "PM-COMMIT-BOUNDARY-1974",
+        "ts": "2026-05-22T17:55:00Z",
+        "from": "dev-team",
+        "to": "maintenance",
+        "type": "commit_boundary_violation",
+        "summary": "PM commit 0a60fa1d swept 26 files incl 17 arch-briefs. RECURRING 3rd occurrence — recommend architect/agent-father audit PM commit step.",
+        "severity": "MED",
+        "status": "OPEN",
+        "payload_ref": null
+      }
+    ],
+    "archive": [
+      {
+        "id": "P2-F-DONE",
+        "ts": "2026-05-25T20:30Z",
+        "summary": "P2-F COMPLETE G5a kinhDichWrapper git mv to _deprecated/. RESOLVED.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "P2-E-DONE",
+        "ts": "2026-05-25T19:30Z",
+        "summary": "P2-E COMPLETE G3 composition-root extraction. RESOLVED.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "P2-A-B-C-DONE",
+        "ts": "2026-05-25T18:35Z",
+        "summary": "P2-A/B/C COMPLETE ESLint fence + pre-CI tag. RESOLVED.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "P2-D-MCP-G4-GATE-20260525T1935Z",
+        "ts": "2026-05-25T19:35Z",
+        "summary": "P2-D PASS G4 ESLint fence freeze-anchor confirmed. RESOLVED.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "QA-NB-BLOAT-20260531T0958Z",
+        "ts": "2026-05-31T09:58Z",
+        "summary": "qa.md notebook 596L overage. RESOLVED 15:26Z wc -l = 150L.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "DMS-NB-BLOAT-20260531T1133Z",
+        "ts": "2026-05-31T11:33Z",
+        "summary": "dev-mcp-server.md notebook 377L overage. RESOLVED 15:26Z wc -l = 100L.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "TASKS-CAP-BREACH-20260531T1006Z",
+        "ts": "2026-05-31T10:06Z",
+        "summary": "TASKS.md 94L vs 80 cap. RESOLVED PO pruned to 78L.",
+        "status": "RESOLVED"
+      }
+    ]
+  },
+
+  "sprint_goal": {
+    "_updated_at": "2026-06-01T22:00Z",
+    "_updated_by": "agent-father",
+    "_note": "Structured projection of docs/SPRINT_GOAL.md active sprint entries. Machine-shaped; free-form markdown in source.",
+    "entries": [
+      {
+        "sprint_id": "ORCH-STATE-CONSOLIDATE",
+        "vision": "Collapse all multi-agent orchestration state into ONE machine-readable SSOT docs/data/orch/orch-state.json, delete TASKS.md + TASKS_ARCHIVE.md + DASHBOARD.md + DASHBOARD_ARCHIVE.md, let humans read state via localhost:3001 dashboard / raw JSON.",
+        "scope_in": ["single SSOT JSON + atomic temp-file-then-rename write protocol", "re-point all 40+ readers (code + agent flows/skills/protocols)", "delete the 4 markdown files", "read-only GET /api/orchestration endpoint + docker mount + frontend route via api-gateway:4000", "QA atomic-write PROVEN-RED + reader-migration regression"],
+        "scope_out": ["agent-notebook / analysis-brief surfacing on dashboard", "any change to :07 RETURN write contract schema fields", "SSE/websocket live push"],
+        "success_metric": "orch-state.json sole orchestration SSOT (4 markdown files ENOENT); 3 bun tests green on new path; :3001 renders live orch-state via api-gateway:4000 with honest stale badge; QA proves atomic-write no-clobber; 0 raw signal payload in HTTP response.",
+        "open_decision": "D4-R4 concurrent-commit alarm: DEFAULTED to (A) — 30s window on orch-state.json (sensitivity over quiet).",
+        "status": "OPEN"
+      },
+      {
+        "sprint_id": "FLEET-HOST-SAFETY",
+        "vision": "On the 16GB host, the full fleet must NEVER be up. Intended runtime = minimal mcp-server + mcp-gateway only.",
+        "scope_in": ["AUD-ND-1 PLAN-ONLY invariant (SHIPS FIRST)", "DRAIN-INJECTION-SAFE no shell interpolation of signal payloads", "A-01-EXPECTED-SET intended-runtime-set SSOT", "AUDITOR-SLA-CADENCE per-source SLA", "VPS-SOCAT-PERSIST durable CF tunnel fix"],
+        "scope_out": ["any fleet start/restart (ops is sole remediation agent)", "detectors docker ops"],
+        "success_metric": "AUD-ND-1: simulated false-positive -> DASHBOARD/signal row + ZERO infra mutation. A-01: 0 CRITICAL for not-deployed svcs 7 days. DRAIN: payload with backticks drains DB correctly, docker ps unchanged.",
+        "status": "OPEN"
+      },
+      {
+        "sprint_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
+        "vision": "A VPS fetch-script can never again silently outage by shipping an unrendered __PLACEHOLDER__ — enforced by pre-deploy/post-deploy leak guard + env-fallback form + enforced render path.",
+        "scope_in": ["PLACEHOLDER-GUARD-1 leak guard in deploy-vps-proxy.sh", "PLACEHOLDER-GUARD-2 convert 6 hardcode-form scripts to ${VAR:-default}", "PLACEHOLDER-GUARD-3 bring article-body-fetcher.py under deploy-vps-proxy.sh", "VPS-BS4-INSTALL beautifulsoup4"],
+        "scope_out": ["any change to cafef-index price source", "new MCP tools"],
+        "success_metric": "Deliberate-violation deploy with unrendered template FAILS LOUD. Post-deploy SSH probe empty. 14 news feeds land for >=2 cycles after full redeploy.",
+        "status": "OPEN",
+        "note": "T2/T3/T4 DONE (ed967839). T5 ops live-deploy 5ba761c6 done. T6-QA APPROVED. CLOSED 2026-06-01."
+      },
+      {
+        "sprint_id": "TOOL-SURFACE-HYGIENE",
+        "vision": "Every registered vn-market MCP tool is either truly wired or absent — no live-but-501 oracle, no silent duplicate writers, no stale tool count.",
+        "scope_in": ["#1 get_market_hexagram deregister (SHIPS FIRST)", "#2 mark_alert_outcome vs write_alert_verdict diff", "#3 macro accuracy trio diff", "#4 get_patterns vs get_technical_indicators diff", "#5 optional trigger_*_vps_fetch consolidation", "#6 toolCount reconcile"],
+        "scope_out": ["any BCTC tool", "the 3 explicitly-cleared pairs"],
+        "success_metric": "get_market_hexagram absent from gateway registry. All pairs have written source diff. toolCount reconciled.",
+        "status": "CLOSED",
+        "note": "CLOSED 2026-06-01. TSH-1..6 all shipped. Live toolCount=154. TSH-7 BACKLOG."
+      },
+      {
+        "sprint_id": "ENV-ISOLATION",
+        "vision": "A developer can opt into a dev environment where every write lands in .dev-suffixed datastores while production runs byte-for-byte unchanged.",
+        "scope_in": ["P1: APP_ENV compose tags + maintenance script guards + dev-environment.md SOP", "P2: startup assertion + data_env 5 tables + docker-compose.dev.yml + ENV-GUARD-1"],
+        "scope_out": ["second simultaneous stack", "cloud migration"],
+        "success_metric": "P1 DONE. P2 gate RELEASED. ENV-GUARD-1 deliberate-violation proves startup assertion.",
+        "status": "OPEN",
+        "note": "P1 SIGNED OFF. P2 gate RELEASED 2026-05-31T11:30Z (FU-TRUST-REFRESH FU-4 data-trust satisfied)."
+      },
+      {
+        "sprint_id": "SELF-IMPROVE-GATE",
+        "vision": "Three-lane gated self-improvement loop (auto-md / proven-code-gate / human-escalate) with PO critique-before-approve.",
+        "scope_in": ["Phase 1 flows (5 flows) SHIPPED", "Phase 2 code gate (selfImproveOrchestratorJob) SHIPPED shadow-mode", "X-1 synthetic dry-run (D-IMPROVE emit path e2e) NEXT"],
+        "scope_out": ["X-2 1941c batch false-green"],
+        "success_metric": "X-1 synthetic dry-run proves emit seam end-to-end.",
+        "status": "OPEN"
+      },
+      {
+        "sprint_id": "NB-PRUNE-FIX",
+        "vision": "Fleet notebook prune fires correctly on all heading formats (## Session: / ## ISO-ts / ## cNNN).",
+        "scope_in": ["NB-PRUNE-1 anchor widen DONE", "NB-BLOAT-FLOW-OVERWRITE system-auditor prepend drift", "RE-CAP-1 signal-dashboard SKILL lazy-load"],
+        "scope_out": [],
+        "success_metric": "system-auditor.md <=50L after one audit cycle. SKILL.md <=120L. No context_bloat_breach for those files 14 days.",
+        "status": "OPEN"
+      },
+      {
+        "sprint_id": "BCTC-LAYOUT-FIRST",
+        "vision": "Layout-first BCTC extraction pipeline for accurate table extraction.",
+        "scope_in": ["LF-EXTRACT Phase 0", "LF-OVERLAY Phase 0"],
+        "scope_out": [],
+        "success_metric": "LF-EXTRACT/LF-OVERLAY Phase 0 shipped and QA-approved.",
+        "status": "OPEN",
+        "note": "Phase 0 READY 2026-05-26."
+      },
+      {
+        "sprint_id": "CHEF-ATTN",
+        "vision": "Per-stock diversity cap for chef cowork agent.",
+        "scope_in": ["BA spec", "IMPL", "DEPLOY", "QA", "EXIT"],
+        "scope_out": [],
+        "success_metric": "Diversity cap live, QA-approved.",
+        "status": "OPEN",
+        "note": "READY 2026-05-27."
+      }
+    ]
+  }
+}

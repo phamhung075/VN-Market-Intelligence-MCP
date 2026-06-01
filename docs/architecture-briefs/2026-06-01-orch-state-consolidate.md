@@ -113,9 +113,40 @@ docs/TASKS.md                    — deleted (replaced by orch-state.json .task_
 docs/TASKS_ARCHIVE.md            — deleted (replaced by .task_board.archive[])
 docs/signals/DASHBOARD.md        — deleted (replaced by orch-state.json .signal_queue)
 docs/signals/DASHBOARD_ARCHIVE.md — deleted (replaced by .signal_queue.archive[])
+docs/SPRINT_GOAL.md              — deleted (replaced by orch-state.json .sprint_goal) [OSC-1 operator extension]
 ```
 
 The PM TASKS.md write steps (creation, status update, archive) and the signal-dashboard SKILL write steps are the **writers** — they are replaced by JSON writes to `orch-state.json` in-place. This confirms deletion is safe: once writers are migrated, the files are never regenerated.
+
+---
+
+### 1.3 SPRINT_GOAL.md readers — OSC-2 migration inventory
+
+OSC-1 operator scope extension: `docs/SPRINT_GOAL.md` joins the consolidation. All readers below must be re-pointed to `orch-state.json .sprint_goal.entries[]` (jq) in OSC-2.
+
+| Reader | File | Line(s) | Read type | Migration | Clean? |
+|---|---|---|---|---|---|
+| SPRINT_GOAL.md regression test | `apps/mcp-server/src/__tests__/1338-sprint-goal-retrospective.test.ts` | L15–16, L24–25 | `readFileSync(join(ROOT, "docs/SPRINT_GOAL.md"))` + header-regex check | Replace `readFileSync` path + regex with `jq '.sprint_goal.entries[0].sprint_id'` assertion on `orch-state.json`; update the ">= 1338" check to verify the first active sprint_id; second test already `it.skip` (comment says no Retrospective section) — verify skip still valid | CLEAN — no behavioral dependency, path update + regex swap |
+| PO init.md — capability declaration | `docs/agents/po/init.md` | L30, L89, L90 | capability declarations | Replace `docs/SPRINT_GOAL.md` refs with `docs/data/orch/orch-state.json .sprint_goal` | CLEAN |
+| PO flow — sprint-kickoff | `docs/agents/po/flow/sprint-kickoff.md` | L15, L49, L50 | agent writes SPRINT_GOAL.md | Re-point write target to `orch-state.json .sprint_goal.entries[]`; append/upsert pattern per §2.3 atomic write | CLEAN |
+| PO flow — sprint-signoff | `docs/agents/po/flow/sprint-signoff.md` | L18 | agent reads/writes | Re-point `docs/SPRINT_GOAL.md` (mark sprint Done) to update `orch-state.json .sprint_goal.entries[].status` | CLEAN |
+| PO flow — main | `docs/agents/po/flow/main.md` | L12 | agent reads | Re-point vision source to `orch-state.json .sprint_goal` | CLEAN |
+| BA init.md | `docs/agents/ba/init.md` | L91 | capability declaration input | Re-point `docs/SPRINT_GOAL.md` → `docs/data/orch/orch-state.json` | CLEAN |
+| BA flow — main | `docs/agents/ba/flow/main.md` | L6, L21, L36 | agent reads vision | Re-point | CLEAN |
+| Architect init.md | `docs/agents/architect/init.md` | L95 | capability declaration input | Re-point | CLEAN |
+| System-auditor flow | `docs/agents/system-auditor/flow/main.md` | L313 | enforces ≤30 lines cap | Remove cap check (file deleted); no replacement (`.sprint_goal.entries[]` count replaces line-length cap: enforce `entries[] count ≤ 15` or remove entirely) | CLEAN — remove the cap enforcement step for SPRINT_GOAL.md |
+| System-auditor init.md | `docs/agents/system-auditor/init.md` | L13 | capability declaration | Remove `SPRINT_GOAL.md` from cap-enforcement list | CLEAN |
+| Claude-manager-helper flow | `docs/agents/claude-manager-helper/flow/main.md` | L41, L83, L84 | GROUP_ROOT member; cap check ≤30 | Remove from GROUP_ROOT; remove `SPRINT_GOAL.md > 30` cap check | CLEAN |
+| Claude-manager-helper init.md | `docs/agents/claude-manager-helper/init.md` | L35 | Sprint file size caps list | Remove `docs/SPRINT_GOAL.md <30` entry | CLEAN |
+| Doc-heal-system SKILL | `.claude/skills/doc-heal-system/SKILL.md` | L33 | Size cap table entry `SPRINT_GOAL.md ≤30` | Remove row; no replacement | CLEAN |
+| Doc-heal-system phases | `.claude/skills/doc-heal-system/phases.md` | L52, L68 | Pointer to SPRINT_GOAL.md + cap | Remove both rows | CLEAN |
+| Doc-heal-system reference | `.claude/skills/doc-heal-system/reference.md` | L44 | `wc -l … docs/SPRINT_GOAL.md` | Remove from wc command | CLEAN |
+| Dispatch skill | `.claude/skills/dispatch/SKILL.md` | L66 | references `docs/SPRINT_GOAL.md` as PO output | Re-point to `orch-state.json .sprint_goal` | CLEAN |
+| Docs-org-enforcement policy | `docs/policies/docs-organization-enforcement.md` | L15, L55, L75 | file registry + exclusion rule + find-exclusion | Remove `SPRINT_GOAL.md` from registry; add `orch-state.json .sprint_goal` entry | CLEAN |
+| Docs-org-location-table | `docs/policies/docs-organization-location-table.md` | L11 | location table row | Remove row; add `sprint_goal section` pointer row to orch-state.json | CLEAN |
+| Agent-notebook protocol | `docs/protocols/agent-notebook-protocol.md` | L45 | "→ docs/TASKS.md / SPRINT_GOAL.md" pointer | Re-point to `orch-state.json` | CLEAN |
+
+**No-blocker verdict:** All 19 reader sites have clean migration paths. The test at `1338-sprint-goal-retrospective.test.ts` is the only code reader — it does a simple `readFileSync` + regex check with no behavioral side effects; the migration is a path swap + assertion rewrite with no functional risk. `docs/SPRINT_GOAL.md` deletion is safe after all writers/readers migrated in OSC-2.
 
 ---
 
@@ -318,6 +349,7 @@ mkdir -p docs/data/orch/
 git rm docs/pipeline-state.json
 git rm docs/TASKS.md docs/TASKS_ARCHIVE.md 2>/dev/null || true
 git rm docs/signals/DASHBOARD.md docs/signals/DASHBOARD_ARCHIVE.md 2>/dev/null || true
+git rm docs/SPRINT_GOAL.md 2>/dev/null || true  # OSC-1 operator extension — sprint_goal now in orch-state.json .sprint_goal
 ```
 
 **Atomicity rule:** The initial `orch-state.json` creation + `pipeline-state.json` deletion + ALL code path updates MUST land in ONE commit. Any split leaves `1837a-pipeline-state.test.ts` broken.
@@ -364,15 +396,20 @@ action:
   - Update all agent/skill/protocol files (§4.2 — agent-father)
   - git rm docs/pipeline-state.json docs/TASKS.md docs/TASKS_ARCHIVE.md
     docs/signals/DASHBOARD.md docs/signals/DASHBOARD_ARCHIVE.md
+    docs/SPRINT_GOAL.md  # OSC-1 operator extension — 6th markdown file retired
   - Commit atomically: ALL changes in one commit
+  - Also migrate all §1.3 SPRINT_GOAL.md readers (19 sites) per the reader-migration table in §1.3
+  - 1338-sprint-goal-retrospective.test.ts: replace readFileSync path → orch-state.json; update assertion to jq .sprint_goal.entries[0].sprint_id
 ac:
   - OSC-2-AC1: bun test 1837a-pipeline-state exits 0
   - OSC-2-AC2: bun test 1854a-daily-dashboard exits 0
   - OSC-2-AC3: bun test 1948d-improvement-signal-writer exits 0
+  - OSC-2-AC3b: bun test 1338-sprint-goal-retrospective exits 0 (new AC — operator extension)
   - OSC-2-AC4: grep -r "docs/pipeline-state.json" . → 0 matches
   - OSC-2-AC5: grep -r '"docs/TASKS.md"' . → 0 functional matches
   - OSC-2-AC6: grep -r '"docs/signals/DASHBOARD.md"' . → 0 functional matches
-  - OSC-2-AC7: ls docs/pipeline-state.json docs/TASKS.md docs/signals/DASHBOARD.md → all ENOENT
+  - OSC-2-AC6b: grep -r '"docs/SPRINT_GOAL.md"' . → 0 functional matches (new AC — operator extension)
+  - OSC-2-AC7: ls docs/pipeline-state.json docs/TASKS.md docs/signals/DASHBOARD.md docs/SPRINT_GOAL.md → all ENOENT
 sequencing: After OSC-1. HIGHEST RISK — serialize, run all tests before committing.
 risk: HIGHEST. Split commit leaves test suite broken and pipeline write-wedged.
 ```
