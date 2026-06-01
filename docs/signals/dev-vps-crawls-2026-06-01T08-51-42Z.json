@@ -1,0 +1,40 @@
+{
+  "from": "ops-vps-fetch",
+  "to": "dev-vps-crawls",
+  "type": "recon-complete",
+  "sprint": "VPS-NEWS-CAFEF-VNECO",
+  "payload": {
+    "sources": [
+      {
+        "source_name": "cafef-article-body",
+        "recon_doc": "docs/vps-sources/cafef-article-body/recon.md",
+        "anti_bot_type": "none",
+        "suggested_technique": null,
+        "trigger": "new_source_needed",
+        "overlap_verdict": "RSS already covered by vn-news-fetch.service — DO NOT REBUILD RSS path",
+        "blocking_bug": "is_blocked() false-positive on word 'robot' in content — cafef feeds producing 0 items intermittently since 2026-04-22",
+        "article_body_selector": "div.detail-content[data-role='content'] or div#mainContent",
+        "article_body_feasible": true,
+        "requires_vps": false
+      },
+      {
+        "source_name": "vneconomy-article-body",
+        "recon_doc": "docs/vps-sources/vneconomy-article-body/recon.md",
+        "anti_bot_type": "none",
+        "suggested_technique": null,
+        "trigger": "new_source_needed",
+        "overlap_verdict": "RSS already covered by vn-news-fetch.service — DO NOT REBUILD RSS path",
+        "blocking_bug": "same is_blocked() 'robot' false-positive latent risk — not currently firing but intermittent",
+        "article_body_selector": "div.text-justify",
+        "article_body_feasible": true,
+        "requires_vps": false,
+        "compression_note": "vneconomy returns gzip — must use --compressed flag"
+      }
+    ],
+    "priority_action": "FIX fetch-vn-news.sh is_blocked() false-positive FIRST — scope 'robot' grep to header-only or use anchored CF patterns, not bare body keyword match",
+    "rss_path_verdict": "NO NEW CODE NEEDED for RSS — existing pipeline covers both sources end-to-end",
+    "article_body_verdict": "OPTIONAL new capability — HTTP-only curl + python3 parse, both sites 200 OK from VPS and France, no anti-bot"
+  },
+  "priority": "high",
+  "createdAt": "2026-06-01T08:51:42Z"
+}
