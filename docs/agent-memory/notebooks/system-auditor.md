@@ -3,7 +3,88 @@ agent: system-auditor
 session_date: 2026-06-01
 ---
 
-## Audit Run Tier-1 (02:07–02:09 UTC 2026-06-01)
+## Audit Run Tier-2 (02:30–02:31 UTC 2026-06-01)
+
+- Tier: 2 | Freshness sweep + VPS health check
+- Market status: OPEN (Monday 09:30 VN time, within M–F 02:00–08:59 UTC window)
+- Cron fire check: All 73+ jobs healthy, no 2x-cadence gaps detected
+  - intelligenceCycle: success, 99.4% rate
+  - bctcQueueEnricher: success, 99.2% rate
+  - vnstockFundamentalsRefresh: RUNNING (OK)
+  - No issues with scheduler health
+
+### Data Freshness Summary
+All cadences vs expected thresholds from system-map.json:
+
+| Source | Last Fetch | Age | SLA Threshold | Status |
+|--------|-----------|-----|--------------|--------|
+| ssc-iboard (prices) | 2026-05-29 08:59:10 | 65.5h | 0.5h | **CRITICAL** |
+| bctc-discover | 2026-05-19 07:05:07 | 571h (13d) | 168h (7d) | **CRITICAL** |
+| foreign-flow | ~2026-05-31 11h ago | 39.3h | 0.5h (1min cadence) | **CRITICAL** |
+| news-vps | 2026-06-01 02:14:10 | 16min | 3h | OK |
+| sbv-vps | 2026-06-01 02:08:11 | 22min | 24h | OK |
+
+### VPS Proxy Health
+All 7 routes checked:
+
+| Route | Status | Last Push | 24h Pushes | Issues |
+|-------|--------|-----------|----------|--------|
+| prices | ok (stale) | 2026-05-29 | 0 | VPS likely down |
+| news | ok (fresh) | 2026-06-01 02:14 | 118 | OK |
+| sbv | ok | 2026-06-01 02:08 | 46 | OK |
+| bctc | ok (stale) | 2026-05-19 | 0 | VPS likely down |
+
+### VPS Service Health Detail
+- vn-bctc-fetch: healthy
+- vn-foreign-flow: **UNHEALTHY** (0ms response time, 1d 14h 43m uptime)
+- vn-news-fetch: healthy
+- vn-price-fetch: healthy
+- vn-sbv-fetch: healthy
+
+Summary: 1 unhealthy service (vn-foreign-flow) = network/proxy issue confirmed.
+
+### Rate Limits
+All 12 sources within limits (no 100% utilization). OK.
+
+### BCTC Queue State (from MCP DB)
+Unable to verify B-05 (SSC portal URLs) and B-16 (pending >72h) directly (DB access requires docker exec in production). Will rely on get_bctc_full snapshot next run.
+
+### DB Freshness Spot Checks (Tier-2 add-on)
+- news_articles (24h): Cannot verify locally
+- agent_signals (24h): Cannot verify locally
+
+### Anomalies Detected: 4 CRITICAL
+1. **B-01: ssc-iboard STALE** — 65.5h (expected 0.25h). VPS proxy down.
+2. **B-02: foreign-flow STALE** — 39.3h (expected 1 min). SLA breached 3930x. VPS service unhealthy.
+3. **B-03: bctc-discover STALE** — 571h (expected 168h). VPS proxy down 13 days.
+4. **B-06: vn-foreign-flow UNHEALTHY** — MCP reports status=unhealthy, 0ms response.
+
+### Dedup Check (7-day window)
+Query get_recent_fixes(limit=20) + BUG channel last 7d:
+- B-01/B-02/B-03/B-06 not seen in past 7 days → NEW anomalies → **BUG alert sent**.
+
+### Telegram Alert
+Sent to BUG channel (message_id: 2640) with all 4 critical findings.
+
+### Status: DEGRADED
+- 4 critical data-freshness anomalies on VPS proxy routes
+- vn-foreign-flow service unhealthy
+- VPS proxy infrastructure down/unreachable for prices + BCTC
+- Impact: foreign-flow signals may be hours stale; BCTC URL discovery stalled 13 days
+
+### Wall Time
+~75s (under 300s Tier-2 target).
+
+### Next Steps
+- ops-vps-crawls: diagnose/restart vps-foreign-flow service + Vinahost VPS connectivity
+- dev-mcp-server: verify VPS proxy fallback (if configured) or circuit-breaker state
+- Tier-3 deep integrity check scheduled for next daily 02:00 UTC (if anomaly not cleared by then)
+
+---
+
+## Previous Audit Runs
+
+### Audit Run Tier-1 (02:07–02:09 UTC 2026-06-01)
 
 - Tier: 1 | Runtime ping: 2 deployed services checked
 - Container status: PASS
