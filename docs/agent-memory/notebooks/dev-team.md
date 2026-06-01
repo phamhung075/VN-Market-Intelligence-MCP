@@ -4,7 +4,14 @@
 
 > Archive: `docs/archive/notebooks/dev-team-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
-## Current state (:07 — 2026-06-01T16:09Z) — VPS T2+T3+T4 SHIPPED+raw-verified; Vultr removed from repo; head→ops T5
+## Current state (:07 — 2026-06-01T17:11Z) — cowork-flow 2 defects FIXED (agent-father); T5 deferred (ops live on VPS)
+
+- PREFLIGHT clean (HEAD.lock absent, worktree prune nil). Drained 5 signals → 0 inbox: 4× `cowork-fire` heartbeats (silent, archived-heartbeat, no PO action) + 1× `context_bloat_breach` market-watcher.md 208L>200 cap (routed-to-po; LEFT for NB-PRUNE-FIX backlog — 8-line overage, low urgency, WIP cap).
+- **DASHBOARD NEW row CW-FLOW-STEP478-DEFECTS** (cowork-team dispatcher, can't self-edit its flow) → claimed `dash:po:…`, NEW→READ, dispatched **agent-father** (mutex `task:on-demand:agent-father:20260601`) to fix 2 live defects in `docs/agents/cowork-team/flow/main.md`. Returned **c502b88b** (1 file, 3+/4−).
+- **ROUTER RAW-VERIFIED (grep, not relayed):** D1 L533 `DEV_QUEUE_DEPTH=` — `|| echo 0` GONE (was → "0\n0" → pressure-state.json MALFORMED every empty-queue WON tick → silently defeated DWF-PHASE1 adaptive cadence); now clean `grep -cE …; ${VAR:-0}`. D2 L467 `agent_name:"unified-agent"` (was non-enum "cowork-team" → get_cycle_bootstrap snapshot write always failed). Commit scope = flow file only. (size-justif says 783L vs actual 782 = off-by-1 cosmetic; flow uses comment-convention not `---`, correct.) **COWORK REFRESH NEEDED** — reload cowork-team/flow/main.md.
+- **T5 (VPS-DEPLOY-PLACEHOLDER-GUARD redeploy) DEFERRED — head UNTOUCHED** (status=in_progress, next_agent=ops). Reason: an operator-initiated **ops investigation is LIVE on the same VPS 125.212.251.27** (bctc fetch-worker dead ~13d — discovery+transport OK, fetch leg dormant, 50-item Q1 backlog attempts=0; raw-triaged then spawned ops). A 2nd ops LIVE-redeploying the same box concurrently = unsafe + muddies diagnosis. Next :07 tick resumes T5 after ops clears. WIP=2 (ops + agent-father).
+
+## (prior :07 — 2026-06-01T16:09Z) — VPS T2+T3+T4 SHIPPED+raw-verified; Vultr removed from repo; head→ops T5
 
 - PREFLIGHT clean, backend HEALTHY (:3000=200), no P0. Drained 4 routine (3 cowork-fire + 1 price_anomaly dup) → 0 inbox.
 - **Prior tick's VPS lock was STALE** (claimed 15:06Z, TTL 16:08Z expired; deploy-vinahost.sh untouched, .env still had VULTR_ = build never ran — the in-flight tick crashed/stalled). Confirmed via `task_claim` → `claimed:true, stolen:true`. The 15:25–16:02Z commits were claude-manager-helper file-location cleanup, NOT the VPS build. So the WATCH from 15:30Z resolved = stale lock, claimed fresh this tick.
