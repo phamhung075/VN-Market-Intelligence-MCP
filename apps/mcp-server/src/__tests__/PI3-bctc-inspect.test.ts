@@ -20,6 +20,8 @@
  *   AC-15 GET /api/bctc-inspect/ocr/ bad-id → 400
  *   AC-16 list excludes action_code containing "example" / "error" / "missing"
  *   AC-17 no write SQL verbs in handler (structural — enforced by grep)
+ *   BEQ-4a refine_status=PENDING → net_profit nulled in /docs listing (not garbage OCR value)
+ *   BEQ-4a refine_status=DONE/PARTIAL → net_profit passed through unchanged (no regression)
  */
 
 import { describe, test, expect, beforeEach } from "bun:test";
@@ -65,11 +67,27 @@ function setupTestDb(): Database {
       ocr_confidence        REAL,
       confidence_financial  REAL,
       extraction_confidence REAL,
+      refine_status         TEXT NOT NULL DEFAULT 'PENDING',
       balance_sheet_json    TEXT NOT NULL DEFAULT '{}',
       income_stmt_json      TEXT NOT NULL DEFAULT '{}',
       cash_flow_json        TEXT NOT NULL DEFAULT '{}',
       ratios_json           TEXT NOT NULL DEFAULT '{}',
       UNIQUE(action_code, sort_key)
+    )
+  `);
+
+  // bctc_layout_units — queried by handleBctcInspectOcr PEK check (must exist)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_layout_units (
+      id              INTEGER PRIMARY KEY AUTOINCREMENT,
+      report_id       TEXT    NOT NULL,
+      unit_id         TEXT    NOT NULL,
+      schema_page     INTEGER NOT NULL,
+      page_numbers_json TEXT  NOT NULL,
+      page_type       TEXT    NOT NULL DEFAULT 'table',
+      stitched_markdown TEXT  NOT NULL DEFAULT '',
+      quarantined     INTEGER NOT NULL DEFAULT 0,
+      UNIQUE(report_id, unit_id)
     )
   `);
 
@@ -108,6 +126,8 @@ interface InsertReportOpts {
   ocr_confidence?: number | null;
   confidence_financial?: number | null;
   extraction_confidence?: number | null;
+  /** BEQ-4a: refine lifecycle status — PENDING | DONE | PARTIAL; defaults to 'PENDING' */
+  refine_status?: string;
 }
 
 function insertReport(db: Database, opts: InsertReportOpts = {}): string {
@@ -116,8 +136,9 @@ function insertReport(db: Database, opts: InsertReportOpts = {}): string {
     INSERT INTO financial_reports
       (id, action_code, company_name, period_year, period_quarter, period_type, sort_key,
        pdf_path, parsed_at, net_profit, net_profit_api_bridge, net_revenue, gross_profit,
-       net_margin_pct, ocr_confidence, confidence_financial, extraction_confidence)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       net_margin_pct, ocr_confidence, confidence_financial, extraction_confidence,
+       refine_status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `).run(
     id,
     opts.action_code ?? "VCB",
@@ -136,6 +157,7 @@ function insertReport(db: Database, opts: InsertReportOpts = {}): string {
     opts.ocr_confidence ?? null,
     opts.confidence_financial ?? null,
     opts.extraction_confidence ?? null,
+    opts.refine_status ?? "PENDING",
   );
   return id;
 }
@@ -360,14 +382,18 @@ describe("PI-3 AC-1/2 — GET /api/bctc-inspect/docs — list shape", () => {
     expect(body.items[0]!.action_code).toBe("VCB");
   });
 
-  test("AC-4/5: anomaly_decimal_shift=true when ratio > 10", () => {
+  test("AC-4/5: anomaly_decimal_shift=true when ratio > 10 (DONE row, net_profit not nulled)", () => {
+    // BEQ-4a note: anomaly_decimal_shift uses the guarded net_profit from LIST_SQL.
+    // For PENDING rows net_profit=null → isDecimalShiftAnomaly(null, api)=false (no value to compare).
+    // To test the anomaly logic, use refine_status='DONE' so net_profit passes through.
     insertReport(db, {
       id: "e7e7e7e7-aaaa-4bbb-8ccc-777777777777",
       action_code: "VNM",
       pdf_path: "/app/data/pdfs/VNM_2024_Q4.pdf",
       sort_key: "2024-Q4",
-      net_profit: 0.000051,          // OCR: decimal-shift bug
+      net_profit: 0.000051,          // wrong OCR value (decimal-shift anomaly)
       net_profit_api_bridge: 51000,  // API: correct value (million VND)
+      refine_status: "DONE",         // DONE: net_profit passes through → anomaly detectable
     });
 
     const { res, getBody } = mockRes();
@@ -431,6 +457,7 @@ describe("PI-3 AC-1/2 — GET /api/bctc-inspect/docs — list shape", () => {
       net_profit_api_bridge: 5100,
       ocr_confidence: 0.92,
       confidence_financial: 0.85,
+      refine_status: "DONE",   // BEQ-4a: must be DONE for net_profit to pass through
     });
 
     const { res, getBody } = mockRes();
@@ -441,6 +468,126 @@ describe("PI-3 AC-1/2 — GET /api/bctc-inspect/docs — list shape", () => {
     expect(item.net_profit_api_bridge).toBe(5100);
     expect(item.ocr_confidence).toBe(0.92);
     expect(item.confidence_financial).toBe(0.85);
+  });
+});
+
+// ═════════════════════════════════════════════════════════════════════════════
+// BEQ-4a — refine_status guard in LIST_SQL
+// Anti-false-green: mock a PENDING row with net_profit=999.99; prove the
+// handler outputs null (not the garbage scalar). DONE/PARTIAL pass through.
+// Ref: docs/architecture-briefs/2026-06-02-bctc-extract-quality.md § Symptom C
+// ═════════════════════════════════════════════════════════════════════════════
+
+describe("BEQ-4a — PENDING net_profit nulled in /docs listing (CASE WHEN guard)", () => {
+  let db: Database;
+
+  beforeEach(() => {
+    db = setupTestDb();
+  });
+
+  test("BEQ-4a-1: refine_status=PENDING → net_profit is null in response (not garbage OCR value)", () => {
+    // Mimics CTG=5, EIB=1, VNM=5.1e-05, DIG=18 — broken OCR-parse values for PENDING rows
+    insertReport(db, {
+      id: "beq4a000-0000-4000-8000-000000000001",
+      action_code: "CTG",
+      sort_key: "2026-Q1",
+      net_profit: 999.99,          // garbage OCR-parse value — must NOT be served
+      net_profit_api_bridge: null,
+      refine_status: "PENDING",    // explicit PENDING — the guard should null net_profit
+    });
+
+    const { res, getBody } = mockRes();
+    handleBctcInspectDocs(mockReq("/api/bctc-inspect/docs"), res, db);
+
+    const body = getBody() as { items: DocListItem[] };
+    const item = body.items[0]!;
+    // CASE WHEN refine_status = 'PENDING' THEN NULL ELSE net_profit END
+    expect(item.net_profit).toBeNull();
+    // refine_status badge must be surfaced so UI can show the PENDING indicator
+    expect(item.refine_status).toBe("PENDING");
+    // row is NOT filtered out — analyst can still see the ticker exists
+    expect(item.action_code).toBe("CTG");
+  });
+
+  test("BEQ-4a-2: refine_status=DONE → net_profit passes through unchanged (no regression)", () => {
+    // FPT / ACB with correct refined values — must not be touched by the guard
+    insertReport(db, {
+      id: "beq4a000-0000-4000-8000-000000000002",
+      action_code: "FPT",
+      sort_key: "2026-Q1",
+      net_profit: 2476790,         // correct refined value (million VND)
+      net_profit_api_bridge: 2476800,
+      refine_status: "DONE",
+    });
+
+    const { res, getBody } = mockRes();
+    handleBctcInspectDocs(mockReq("/api/bctc-inspect/docs"), res, db);
+
+    const body = getBody() as { items: DocListItem[] };
+    const item = body.items[0]!;
+    expect(item.net_profit).toBe(2476790);
+    expect(item.refine_status).toBe("DONE");
+  });
+
+  test("BEQ-4a-3: refine_status=PARTIAL → net_profit passes through (PARTIAL is trustworthy)", () => {
+    insertReport(db, {
+      id: "beq4a000-0000-4000-8000-000000000003",
+      action_code: "ACB",
+      sort_key: "2026-Q1",
+      net_profit: 1850000,
+      net_profit_api_bridge: 1860000,
+      refine_status: "PARTIAL",
+    });
+
+    const { res, getBody } = mockRes();
+    handleBctcInspectDocs(mockReq("/api/bctc-inspect/docs"), res, db);
+
+    const body = getBody() as { items: DocListItem[] };
+    const item = body.items[0]!;
+    expect(item.net_profit).toBe(1850000);
+    expect(item.refine_status).toBe("PARTIAL");
+  });
+
+  test("BEQ-4a-4: mixed list — PENDING nulled, DONE preserved in same response", () => {
+    // Seed a PENDING ticker (VNM-like garbage) and a DONE ticker (FPT-like good value)
+    insertReport(db, {
+      id: "beq4a000-0000-4000-8000-000000000004",
+      action_code: "VNM",
+      sort_key: "2025-Q4",
+      net_profit: 0.000051,        // garbage OCR unit-shift (real case from brief)
+      net_profit_api_bridge: 51000,
+      refine_status: "PENDING",
+      parsed_at: "2026-01-01T00:00:00.000Z",
+    });
+    insertReport(db, {
+      id: "beq4a000-0000-4000-8000-000000000005",
+      action_code: "FPT",
+      sort_key: "2026-Q1",
+      net_profit: 2476790,
+      net_profit_api_bridge: 2476800,
+      refine_status: "DONE",
+      parsed_at: "2026-06-01T00:00:00.000Z",
+    });
+
+    const { res, getBody } = mockRes();
+    handleBctcInspectDocs(mockReq("/api/bctc-inspect/docs"), res, db);
+
+    const body = getBody() as { count: number; items: DocListItem[] };
+    expect(body.count).toBe(2);
+
+    const fpt = body.items.find((i) => i.action_code === "FPT")!;
+    const vnm = body.items.find((i) => i.action_code === "VNM")!;
+
+    // DONE ticker: net_profit intact
+    expect(fpt.net_profit).toBe(2476790);
+    expect(fpt.refine_status).toBe("DONE");
+
+    // PENDING ticker: net_profit nulled — no garbage served
+    expect(vnm.net_profit).toBeNull();
+    expect(vnm.refine_status).toBe("PENDING");
+    // Both rows present in the listing
+    expect(fpt.action_code).toBe("FPT");
+    expect(vnm.action_code).toBe("VNM");
   });
 });
 
