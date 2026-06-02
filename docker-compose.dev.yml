@@ -1,0 +1,46 @@
+# Dev stack override — ENV-ISOLATION EI-P2-3
+#
+# Usage (always via override merge, never standalone):
+#   docker compose down                                              # stop prod first
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+#
+# SOP: docs/protocols/dev-environment.md
+# Constraints:
+#   - Prod and dev NEVER run simultaneously (16 GB Mac / 8 GB Docker cap).
+#   - Dev session = off-market hours only.
+#   - Only mcp-server is overridden here — no full fleet.
+#
+# APP_ENV=dev + DB_PATH=/app/data/market.dev.db satisfies the EI-P2-1 assertion
+# in apps/mcp-server/src/infrastructure/envCheck.ts:
+#   isProductionEnv("dev") → false (non-prod)
+#   resolvedDb ("/app/data/market.dev.db") !== PROD_DB_PATH → assertion PASSES
+
+services:
+  mcp-server:
+    build:
+      context: .
+      dockerfile: apps/mcp-server/Dockerfile
+    container_name: vn-market-mcp-dev
+    ports:
+      - "3099:3000"
+    environment:
+      APP_ENV: dev
+      DB_PATH: /app/data/market.dev.db
+      LANCEDB_PATH: /app/data/lancedb.dev
+      NODE_ENV: development
+    deploy:
+      resources:
+        limits:
+          memory: 2g
+          cpus: '2.0'
+        reservations:
+          memory: 512m
+          cpus: '1.0'
+    labels:
+      app: vn-market-intelligence
+      service: mcp-server-dev
+      env: dev
+
+volumes:
+  market_data:
+    driver: local
