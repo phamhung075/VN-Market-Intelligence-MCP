@@ -5,12 +5,12 @@
   "_updated_by": "agent-father",
   "head": {
     "status": "in_progress",
-    "active_task_id": "BCTC-HIST-SEED",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BATCH-4 cont: spike DONE (root cause = forward-only seeding). Shipping BCTC-HIST-SEED (backfillBctcHistorical 8q seed, structural fix). Async fanout -> backlog: BCTC-HIST-FETCH-VERIFY (ops, gates live data) + BCTC-HIST-VCB-REFINE (analyst). After: B5 SIG-FOLLOWUP-DRYRUN, B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
+    "active_task_id": "SIG-FOLLOWUP-DRYRUN",
+    "next_agent": "developer",
+    "next_action": "BATCH-5: SIG-FOLLOWUP-DRYRUN X-1 synthetic dry-run prove D-IMPROVE lane-B emit seam e2e (developer). BCTC-HIST-SEED DONE-LIVE prior (queue 102->413). Then B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T17:56:12Z",
+    "updated_at": "2026-06-02T18:02:00Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T17:56:12Z",
+    "_updated_at": "2026-06-02T18:02:00Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -253,11 +253,11 @@
             "depends": [
               "FU-BCTC-HISTORY-COVERAGE"
             ],
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "spike Task1. Low-risk queue seed (no fetch storm — VPS cron drains ~10/6h). Code-completable now; DATA arrival async/multi-week gated on VPS fetch health."
+            "note": "spike Task1. Low-risk queue seed (no fetch storm — VPS cron drains ~10/6h). Code-completable now; DATA arrival async/multi-week gated on VPS fetch health. | DONE-LIVE-VERIFIED 2026-06-02T18:10Z commit 655e72b3, mcp rebuilt. ops verified: container healthy, assertion clean, bctc_vps_queue 102->413 rows, all 8 historical quarters seeded (Q3-2025..Q4-2023, 39 rows each). Idempotent seed at boot. DATA arrival async ~1-2wk via VPS fetch+refine, gated on BCTC-HIST-FETCH-VERIFY (ops backlog)."
           }
         ]
       },
@@ -750,7 +750,7 @@
             "type": "sprint-task",
             "owner": "developer",
             "depends": null,
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "S",
             "zone": "apps/mcp-server/"
           }
