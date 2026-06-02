@@ -1226,7 +1226,7 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T13:14:21Z",
+    "_updated_at": "2026-06-02T14:10:18Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -1363,42 +1363,6 @@
         "status": "OPEN",
         "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md",
         "note": " | 2026-06-02 dev-team PO-triage: KEEP-BACKLOG — valid live ask (cowork ticker-concentration rotation); architect busy on BCTC-ANALYTICS-LAYER; dispatch when freed."
-      },
-      {
-        "id": "B-05",
-        "ts": "2026-05-22T18:31:02Z",
-        "from": "system-auditor",
-        "to": "dev-mcp-server",
-        "type": "data_stale",
-        "summary": "ssc-iboard price data stale 9h 31m. Expected cadence 15 min. Recommend ops verify VPS prices push service.",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: superseded by SSC-IBOARD-MIGRATE sprint (source dead, live tracking is the migrate sprint; 11d-stale dup dead work)."
-      },
-      {
-        "id": "A-21c",
-        "ts": "2026-05-22T17:33:38Z",
-        "from": "system-auditor",
-        "to": "dev-mcp-server",
-        "type": "microservice_degraded",
-        "summary": "dailyDashboardJob NOT FIRED since 2026-05-17. Missing volume mount for project-stats.json. FAIL-VERDICT-RE-FIRE.",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: OBSOLETE — root cause (missing project-stats.json volume mount) already fixed (docker-compose.yml:17 mounts it ro). 11d-stale re-fire, condition no longer holds."
-      },
-      {
-        "id": "BRANCH-CLEANUP-1972",
-        "ts": "2026-05-22T06:20:45Z",
-        "from": "po",
-        "to": "maintenance",
-        "type": "branch_policy_violation",
-        "summary": "task/1972-vndirect-ohlcv-null-coercion stale branch present. Task 1972 DONE on main. code-janitor sweep to verify+delete.",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: OBSOLETE — git branch -a shows only main+origin/main; stale task/1972 branch gone, NO-BRANCHES policy holds."
       },
       {
         "id": "PM-COMMIT-BOUNDARY-1974",
@@ -1604,6 +1568,45 @@
         "status": "RESOLVED",
         "payload_ref": "docs/signals/cowork-MCP-STACK-DOWN-20260531T2118Z.json",
         "archived_at": "2026-06-02T13:11:38Z"
+      },
+      {
+        "id": "B-05",
+        "ts": "2026-05-22T18:31:02Z",
+        "from": "system-auditor",
+        "to": "dev-mcp-server",
+        "type": "data_stale",
+        "summary": "ssc-iboard price data stale 9h 31m. Expected cadence 15 min. Recommend ops verify VPS prices push service.",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: superseded by SSC-IBOARD-MIGRATE sprint (source dead, live tracking is the migrate sprint; 11d-stale dup dead work).",
+        "archived_at": "2026-06-02T14:10:18Z"
+      },
+      {
+        "id": "A-21c",
+        "ts": "2026-05-22T17:33:38Z",
+        "from": "system-auditor",
+        "to": "dev-mcp-server",
+        "type": "microservice_degraded",
+        "summary": "dailyDashboardJob NOT FIRED since 2026-05-17. Missing volume mount for project-stats.json. FAIL-VERDICT-RE-FIRE.",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: OBSOLETE — root cause (missing project-stats.json volume mount) already fixed (docker-compose.yml:17 mounts it ro). 11d-stale re-fire, condition no longer holds.",
+        "archived_at": "2026-06-02T14:10:18Z"
+      },
+      {
+        "id": "BRANCH-CLEANUP-1972",
+        "ts": "2026-05-22T06:20:45Z",
+        "from": "po",
+        "to": "maintenance",
+        "type": "branch_policy_violation",
+        "summary": "task/1972-vndirect-ohlcv-null-coercion stale branch present. Task 1972 DONE on main. code-janitor sweep to verify+delete.",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: OBSOLETE — git branch -a shows only main+origin/main; stale task/1972 branch gone, NO-BRANCHES policy holds.",
+        "archived_at": "2026-06-02T14:10:18Z"
       }
     ]
   },
