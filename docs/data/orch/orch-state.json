@@ -1291,8 +1291,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T17:03:02Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-02T17:04:57Z",
+    "_updated_by": "agents-architect",
     "rows": [
       {
         "id": "po-bctc-analytics-layer-20260602T1056Z",
@@ -1558,6 +1558,17 @@
           "fix_proposal": "self-identity guard at top of news-scout flow main.md; audit sibling cowork agent flows"
         },
         "note": "2026-06-02T17:05Z dev-team drain: RECURRENCE after fix 7239b803 (prior CW-NSCOUT-SPAWN-FRAMING claimed FIXED). Same failure: subagent reads router-scoped CLAUDE.md 'never run a flow yourself/always delegate' as self-binding -> NO-OP refusal. Post-fix recurrence triggers recurring-bug-escalation -> agents-architect root-cause (why framing fix did not hold; audit sibling cowork flows). Queued NSCOUT-FRAMING-RECUR."
+      },
+      {
+        "id": "aac-20260602T170457Z",
+        "ts": "2026-06-02T17:04:57Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "NSCOUT-FRAMING-RECUR: cowork self-identity guard brief ready — 9 flows missing L3 guard; news-scout P1, see brief",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-cowork-self-identity-guard.md"
       }
     ],
     "archive": [

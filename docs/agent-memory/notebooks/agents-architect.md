@@ -1,5 +1,15 @@
 # agents-architect — Notebook
 
+## 2026-06-02T17:04:57Z
+
+**Brief:** `docs/architecture-briefs/2026-06-02-cowork-self-identity-guard.md`
+
+Post-fix recurrence of news-scout CLAUDE.md router-rule mis-binding (NSCOUT-FRAMING-RECUR): root cause is that 7239b803 applied only the weakest enforcement layer (L1 description field) which is overridden by project CLAUDE.md's explicit override-semantics header; the load-bearing layer is L3 (flow-level explicit CLAUDE.md scope exception, as market-watcher has in Step -0). 9 cowork flows are missing the L3 guard; fix is a standard SELF-IDENTITY GUARD block prepended to each flow/main.md + init.md constraint addition, batched A/B/C by frequency.
+
+**Signal dropped:** `docs/data/orch/orch-state.json` `.signal_queue` row `aac-20260602T170457Z` → agent-father
+
+---
+
 ## 2026-05-21T19:09:09Z
 
 **Brief:** `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md`
