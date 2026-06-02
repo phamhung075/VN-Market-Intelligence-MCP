@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "Cycle DONE. COWORK-CHEF-ROLE shipped de5d6d1b (worker-role assertion in unified-agent agent-def; spawned chef no longer misreads CLAUDE.md router-only line — proven via standard-prompt re-spawn). Side-effect: dry-run published a likely-duplicate intraday dish (chef marker is dispatcher-injected, not flow-enforced) -> FU-CHEF-MARKER-INFLOW queued. BEQ-2/3/4a/4b + RE-CAP-1 still open for next PO.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "BEQ-4a",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Reconcile interrupted cycle: BEQ-4b code shipped (2c3f7529) but not live/QA. Implement BEQ-4a (1-line LIST_SQL refine_status guard in bctcInspectHandler.ts), then ONE mcp-server rebuild covering 4b+4a, then raw-verify both live (FPT YoY withheld + /docs CTG/VNM/DIG null), mark both DONE.",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-02T07:23:55Z",
+    "updated_at": "2026-06-02T08:14:38Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T07:23:55Z",
+    "_updated_at": "2026-06-02T08:14:38Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -100,10 +100,11 @@
             "depends": [
               "BEQ-1-SPIKE"
             ],
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "XS",
             "zone": "apps/mcp-server/",
-            "note": "BEQ-1 finding; zero-risk serve guard"
+            "note": "Symptom D — YoY contamination (FPT +12146%). Code SHIPPED 2c3f7529 (guard bctcFullTools.ts:278 refine_status==PENDING -> withhold; 382L RED-GREEN test). PENDING rebuild+QA to go live (container predates commit). Adopted from interrupted cycle.",
+            "commit": "2c3f7529"
           },
           {
             "task_id": "BEQ-4a",
@@ -113,10 +114,10 @@
             "depends": [
               "BEQ-1-SPIKE"
             ],
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "XS",
             "zone": "apps/mcp-server/",
-            "note": "BEQ-1 symptom c"
+            "note": "Symptom C — garbage scalars in /docs listing (CTG=5, VNM=5.1e-05, DIG=18). 1-line SQL WHERE clause. Handoff: docs/handoffs/BEQ-4a-handoff.md"
           },
           {
             "task_id": "BEQ-2",
@@ -129,7 +130,7 @@
             "status": "TODO",
             "size": "S",
             "zone": "apps/mcp-server/",
-            "note": "BEQ-1 symptom a REFINE-TRIGGER"
+            "note": "Symptom A — PENDING refine_status blocks EMPTY get_bctc_full for CTG/VCB. Audit bctcRefineJob eligibility criteria (why VCB/FPT-Q4/VNM/EIB/DIG skipped), execute backfill trigger. CTG excluded (BCTC-CTG-ATTACHMENT-FETCH blocker). Unblocks BEQ-3. Handoff: docs/handoffs/BEQ-2-handoff.md"
           },
           {
             "task_id": "BEQ-3",
@@ -137,12 +138,13 @@
             "type": "SPRINT-S",
             "owner": "dev-mcp-server",
             "depends": [
-              "BEQ-1-SPIKE"
+              "BEQ-1-SPIKE",
+              "BEQ-2"
             ],
             "status": "TODO",
             "size": "M",
             "zone": "apps/mcp-server/",
-            "note": "BEQ-1 symptom b; recurring-bug eligible, architect review projection contract"
+            "note": "Symptom B — zeroed secondary lines (OpProfit/EBITDA/Cash/EPS/CF). Full column audit (10→~20 fields), map BCTC codes, update ScalarAggregate + finalizeBctcRefineTool. Recurring-bug escalation (≥5 fix commits on bctcScalarAggregator.ts in 3 weeks) satisfied by full audit. Handoff: docs/handoffs/BEQ-3-handoff.md"
           }
         ]
       },
