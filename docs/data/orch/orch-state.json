@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "dev-team 13:09Z cycle DONE. SHIPPED+LIVE-IN-IMAGE: BAL-1a (ratio re-derive, a7270927) + BAL-1b (bank PUB-3 broaden, cbee25fe), mcp-server rebuilt 13:30:49Z, 118+ tests green. ROUTER LIVE-VERIFY caught both fixes are code-correct but NOT yet delivering live value: BAL-1a finalize-time-only -> existing corpus persisted-stale (VNM roe 2.75e-10 live vs 27.3%); BAL-1b masked by PUB-5 confidence on EIB(31%)/SHB(44%). NEXT PO TRIAGE: BAL-1a-BACKFILL (HIGH, recompute-on-read preferred, architect confirm) = the task that actually makes VNM serve 27.3% live. Also queued: BAL-1c-DEV/BAL-1d-DEV (period_basis/report_scope), BAL-1b effective once banks clear PUB-5 (re-refine kin BEQ-10). PO disposed 3 stale signals RESOLVED + 2 backlog this cycle.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "BAL-1c-DEV",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Executing BATCH(WIP=2): BAL-1a-BACKFILL (SPIKE/agents-architect — recurring-bug-escalation 4th touch of bctcFullTools serve-path family; bounded decision recompute-on-read vs backfill, output approach for dev FIX next cycle) + BAL-1c-DEV (FIX/dev-mcp-server — period_basis column migration + Q4 full_year_cumulative finalize backfill + comparison guard, makes PUB-7 structural). Disjoint files (architect=decision-only no code commit / 1c=finalizeBctcRefineTool.ts+migration). After 1c lands: ops rebuild mcp-server + router live-verify. BAL-1d deferred (file-contention w/ 1c).",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-02T13:34:45Z",
+    "updated_at": "2026-06-02T14:12:22Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T13:34:45Z",
+    "_updated_at": "2026-06-02T14:12:22Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -155,7 +155,7 @@
             "depends": [
               "BAL-0"
             ],
-            "status": "TODO",
+            "status": "in_progress",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "high",
@@ -193,15 +193,16 @@
             "task_id": "BAL-1a-BACKFILL",
             "title": "Make BAL-1a ratio fix deliver LIVE value on already-finalized corpus — PREFER recompute-on-read in get_bctc_full serve path (definitive: eliminates stale-ratio class forever, no migration) over one-shot UPDATE backfill of persisted ratio columns (symptom: leaves class alive for any future pre-refine report)",
             "type": "FIX",
-            "owner": "dev-mcp-server",
+            "owner": "agents-architect",
             "depends": [
               "BAL-1a-DEV"
             ],
-            "status": "TODO",
+            "status": "in_progress",
             "size": "S",
             "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
             "priority": "high",
-            "note": "ROOT: financial_reports persisted roe/roa/etc are stale (VNM roe=2.75e-10 vs correct 27.3%) because BAL-1a recomputes only at finalize-time. fix-root-cause-definitif => recompute ratios ON READ from correct persisted base scalars (np/equity/total_assets/debt/cash/ebitda already correct), serve the live value, never trust persisted ratio columns again. Architect to confirm read-vs-backfill before impl (touches serve path / same file family as BAL-0/BAL-1b - flag recurring-bug-escalation review). Closes the BAL-0 PUB-6 interim shield for real."
+            "note": "ROOT: financial_reports persisted roe/roa/etc are stale (VNM roe=2.75e-10 vs correct 27.3%) because BAL-1a recomputes only at finalize-time. fix-root-cause-definitif => recompute ratios ON READ from correct persisted base scalars (np/equity/total_assets/debt/cash/ebitda already correct), serve the live value, never trust persisted ratio columns again. Architect to confirm read-vs-backfill before impl (touches serve path / same file family as BAL-0/BAL-1b - flag recurring-bug-escalation review). Closes the BAL-0 PUB-6 interim shield for real.",
+            "route": "SPIKE architect-decision -> dev-mcp-server FIX next cycle"
           }
         ]
       },
