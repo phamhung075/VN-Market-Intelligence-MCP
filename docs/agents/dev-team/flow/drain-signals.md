@@ -105,7 +105,11 @@ Delete `docs/signals/processed/` files with `processedAt` older than 7 days.
 | `zone_missing_tier3` | `dev-team` | PO Step 0-SIG | payload = `{taskId, files, suggestedZone}` — PO opens zone-fix task next cycle |
 | `improvement_proposal_lane_b` | `po` | PO Step 0-SIG | payload = proposal doc path. PO triage-signals.md creates the SPRINT-S/M batch entry and routes through the standard po→ba→architect→pm→dev-*→qa chain. Scope field in proposal doc determines SPRINT-S vs SPRINT-M. `SELF_IMPROVE_AUTO_DISPATCH` is per-dispatch-path, default `false` per path until QA records GATE-PROOF-1..5 for that path (Phase 2 / SIG-IMPL-GATE — not implemented here). |
 | `repair_task_request` | `system-auditor` | PO Step 0-SIG | anomaly→task bridge; PO triage-signals.md is authoritative handler (creates {check_id}-FIX BACKLOG) |
+| `esc-deep-dive-request` | `bctc-analyst` | ESC-DISPATCH | dev-team dispatches model=opus bctc-analyst deep-dive; guard released after spawn |
 | any other | any | PO Step 0-SIG | PO decides; unknown types logged + WORK notified |
+
+**ESC-DISPATCH** (type=`esc-deep-dive-request`): handled before PO hand-off, inline this drain tick.
+→ Run sub-flow: `docs/agents/dev-team/flow/drain-esc-dispatch.md`
 
 All routed signals are appended to `pendingSignals[]` regardless of type — routing annotation is informational only; PO's `triage-signals.md` is the authoritative dispatch handler.
 

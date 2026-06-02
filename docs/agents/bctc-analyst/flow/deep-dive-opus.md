@@ -1,5 +1,5 @@
 ---
-# size-justification: 119L — 5 trigger handlers (ESC-1..ESC-5) + output contract; all load-bearing; cannot split without losing trigger→action traceability.
+# size-justification: 120L — 5 ESC handlers + output contract + Output Signal seam (ESC-OPUS-DISPATCH-SEAM); all load-bearing; cannot split without losing trigger→action traceability.
 agent:
   model: claude-opus-4
   id: bctc-analyst
@@ -91,3 +91,28 @@ Emit to session state key `deep_dive_result`; caller appends to bctc_signal outp
 - Tool call fails → log `[DEEP-DIVE-OPUS] tool_error: {tool} {error}` + `confidence=0.0` + `recommended_action=flag_for_human_review`.
 - Unknown trigger_id → log BUG + return `{ "escalation_trigger": "UNKNOWN", "confidence": 0.0, "recommended_action": "flag_for_human_review" }`.
 - Never throw. Always emit the output contract block.
+
+---
+
+## Output Signal (mandatory — emit after completing ANY ESC handler, including error path)
+
+After producing `deep_dive_result` session block, write to `orch-state.json` `.signal_queue.rows[]`
+(atomic temp→rename per signal-dashboard SKILL §WRITE). Shape:
+
+```
+id: "bca-ddres-{ts_compact}", ts: <ISO-8601 UTC>, from: "bctc-analyst", to: "po",
+type: "deep_dive_result", summary: "Deep dive: {ticker} {quarter} {trigger_id} → {recommended_action}",
+severity: "HIGH", status: "NEW", payload_ref: null,
+payload: { ticker, quarter, trigger_id,
+           escalation_trigger, trigger_value, threshold,
+           deep_dive_verdict, confidence, recommended_action }
+```
+
+PO receives on next drain tick → routes to market-watcher / alert-commander / human.
+
+Then release the idempotency guard (best-effort; dev-team dispatcher also releases; TTL=86400s safety net):
+```
+call_tool(server="vn-market", tool="task_release", arguments={
+  task_id: "esc-deepdive:" + ticker + ":" + quarter + ":" + trigger_id
+})
+```

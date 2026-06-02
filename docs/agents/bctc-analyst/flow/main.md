@@ -71,15 +71,45 @@ Each ESC check is independent. Any single TRUE fires Opus deep-dive. Gate does N
 ### Escalation Decision
 
 ```
-esc_flags = [ESC-1_result, ESC-2_result, ESC-3_result, ESC-4_result, ESC-5_result]
+esc_flags    = [ESC-1_result..ESC-5_result]
+all_fired_ids = fired ESC ids in ascending order
+
 IF any(esc_flags) == TRUE:
-  Invoke sub-flow: flow/deep-dive-opus.md
-  Input: { trigger_id: first TRUE ESC id, report_id, ticker, quarter, context, pass_results }
-  Await output: deep_dive_result JSON block
-  APPEND deep_dive_result to bctc_signal output (do NOT replace standard pass sections)
+  trigger_id = all_fired_ids[0]
+  LOG: "[ESC-GATE] fired: " + all_fired_ids.join(",")
+
+  # 1. Idempotency guard (TTL 24h — dedup across cycles while Opus is pending).
+  guard_key = "esc-deepdive:" + ticker + ":" + quarter + ":" + trigger_id
+  guard = call_tool(server="vn-market", tool="task_claim", arguments={
+    task_id: guard_key, task_kind: "sprint-task",
+    owner_agent: "bctc-analyst", ttl_seconds: 86400
+  })
+
+  IF guard.claimed == FALSE:
+    LOG: "[ESC-DISPATCH] GUARD-HELD " + guard_key + " — skip emit"
+    Append to bctc_signal: { "escalation_status": "GUARD-HELD", "guard_key": guard_key }
+
+  ELSE:
+    # 2. Emit esc-deep-dive-request to orch-state.json .signal_queue (SAFE-JSON — structured object).
+    # Per signal-dashboard SKILL.md §WRITE (atomic temp→rename).
+    signal_row = {
+      "id": "bca-{ts_compact}", "ts": "<ISO-8601 UTC>",
+      "from": "bctc-analyst", "to": "dev-team",
+      "type": "esc-deep-dive-request",
+      "summary": "ESC deep-dive: " + ticker + " " + quarter + " " + trigger_id,
+      "severity": "HIGH", "status": "NEW", "payload_ref": null,
+      "payload": { trigger_id, ticker, quarter, report_id, guard_key, context, all_esc_fired }
+    }
+    Append signal_row to orch-state.json .signal_queue.rows[] (atomic temp→rename).
+    LOG: "[ESC-DISPATCH] emitted for " + ticker + "/" + quarter + "/" + trigger_id
+    # deep_dive_result NOT emitted here — Sonnet cannot run model-pinned Opus sub-flow.
+    # dev-team dispatches bctc-analyst with model=claude-opus-4 on next drain tick.
+    # NOTE FU-BCTC-TOOL-PARAMS: tool param defects tracked; seam ships honest low-confidence first.
+    Append to bctc_signal: { "escalation_status": "PENDING", "guard_key": guard_key }
+
 ELSE:
   No escalation. Return standard passes output as-is.
 ```
 
-Note: if multiple ESC flags fire, pass the FIRST triggered ESC id (by ESC number, ascending). Log all fired flags.
-Sub-flow: `docs/agents/bctc-analyst/flow/deep-dive-opus.md` (model: claude-opus-4 declared there only).
+If multiple ESC flags fire, all logged; only FIRST (lowest ESC number) drives dispatch.
+deep-dive-opus.md (model: claude-opus-4) is ONLY spawned by dev-team — never invoked inline here.

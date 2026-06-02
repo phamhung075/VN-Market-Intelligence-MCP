@@ -355,6 +355,15 @@ docs/agents/po/flow/channel-audit.md (Steps 0/0-a2/0-b only — 103L)
 │   └── File Placement details → `docs/references/tree-map.md` (this file)
 ```
 
+## Flow File Splits (SPRINT-S ESC-OPUS-DISPATCH-SEAM — 2026-06-02)
+
+ESC→Opus dispatch seam — handler extracted from drain-signals.md to keep it under 120L cap:
+
+```
+docs/agents/dev-team/flow/drain-signals.md (parent — 116L)
+│   └── docs/agents/dev-team/flow/drain-esc-dispatch.md (ESC-DISPATCH handler: mutex-wrap + opus spawn + guard release — 74L)
+```
+
 ## Deleted Files (merged into parents)
 
 | Deleted | Content moved to |
