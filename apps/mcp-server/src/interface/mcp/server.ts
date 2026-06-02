@@ -76,6 +76,12 @@ import { handleBctcInspectCorrect } from "./routes/bctcCorrectHandler.js"; // HC
 import { handleBctcInspectConfirm, handleBctcInspectConfirmReset } from "./routes/bctcConfirmHandler.js"; // HC-DEV-3: POST /api/bctc-inspect/confirm/{doc_id}[/reset]
 import { handleGetOrchestration } from "./routes/orchestrationHandler.js"; // OSC-4a: GET /api/orchestration
 import { getOrchStatePath } from "../../infrastructure/orchStateStore.js";
+// FE-REROUTE Phase 1+2: new REST read endpoints for frontend pages (FE-RR-1..6 + FE-RR-13/14)
+import { handleKinhDichReading } from "./routes/kinhDichReadingHandler.js";
+import { handleKinhDichMarket } from "./routes/kinhDichMarketHandler.js";
+import { handlePriceHistory } from "./routes/priceHistoryHandler.js";
+import { handlePriceBatch } from "./routes/priceBatchHandler.js";
+import { handleNewsHeadlines } from "./routes/newsHeadlinesHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -1926,6 +1932,39 @@ export async function createBunServer(
     if (method === "GET" && pathname === "/api/orchestration") {
       const orchPath = getOrchStatePath(process.cwd());
       handleGetOrchestration(req, res, orchPath);
+      return;
+    }
+
+    // ── FE-REROUTE Phase 1: Kinh Dich REST endpoints (FE-RR-1/2/3) ─────────
+    // GET /mcp/api/kinh-dich/reading/:code — latest reading for a stock
+    // GET /mcp/api/kinh-dich/market        — derived aggregate market signal
+    // NOTE: /market MUST be checked before /:code to avoid shadowing.
+    if (method === "GET" && pathname === "/mcp/api/kinh-dich/market") {
+      handleKinhDichMarket(req, res, db);
+      return;
+    }
+    if (method === "GET" && pathname.startsWith("/mcp/api/kinh-dich/reading/")) {
+      const code = decodeURIComponent(pathname.slice("/mcp/api/kinh-dich/reading/".length).split("?")[0] ?? "");
+      handleKinhDichReading(req, res, db, code);
+      return;
+    }
+
+    // ── FE-REROUTE Phase 1: Price REST endpoints (FE-RR-4/5/6) ────────────
+    // GET /mcp/api/prices/history?code=X&days=N — OHLCV history
+    // GET /mcp/api/prices/batch?tickers=X,Y     — latest price batch
+    if (method === "GET" && pathname === "/mcp/api/prices/history") {
+      handlePriceHistory(req, res, db);
+      return;
+    }
+    if (method === "GET" && pathname === "/mcp/api/prices/batch") {
+      handlePriceBatch(req, res, db);
+      return;
+    }
+
+    // ── FE-REROUTE Phase 2: News headlines REST endpoint (FE-RR-13/14) ────
+    // GET /mcp/api/news/headlines?source=reuters&limit=15 — articles envelope
+    if (method === "GET" && pathname === "/mcp/api/news/headlines") {
+      handleNewsHeadlines(req, res, db);
       return;
     }
 
