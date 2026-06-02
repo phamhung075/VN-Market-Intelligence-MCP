@@ -39,6 +39,7 @@ import {
   groupBySector,
 } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
+import { QueName } from "~/components/QueName";
 import { StockChart } from "~/components/charts/StockChart";
 import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
 import { formatChangePct } from "~/domain/formatters/change-pct.js";
@@ -670,8 +671,11 @@ function KinhDichMarketPanel({ market }: { market: KinhDichMarket }) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-8">
       <div className="flex flex-col items-center gap-1 rounded-lg border border-slate-700 bg-slate-800 px-6 py-4 shrink-0">
-        <span className="text-4xl font-bold text-blue-400">#{market.hexagram}</span>
-        <span className="text-sm font-semibold text-slate-300">{market.name}</span>
+        <QueName
+          hexagram={market.hexagram}
+          name={market.name}
+          className="text-sm font-semibold text-slate-300"
+        />
       </div>
       <div className="flex-1 space-y-2 text-sm">
         <Row label="Xu hướng" value={<span className="font-medium text-slate-200">{market.trend}</span>} />
@@ -793,8 +797,11 @@ function StockTable({
                   {r.stock}
                 </td>
                 <td className="px-3 py-2 text-center">
-                  <span className="text-slate-300">#{r.hexagram}</span>
-                  <span className="ml-1 text-xs text-slate-600">{r.name}</span>
+                  <QueName
+                    hexagram={r.hexagram}
+                    name={r.name}
+                    className="text-xs text-slate-300"
+                  />
                 </td>
                 <td className="px-3 py-2 text-slate-300">{r.trend}</td>
                 <td className={`px-3 py-2 font-medium ${signalColor(r.signal)}`}>
@@ -999,7 +1006,7 @@ function InfoSourcePanel({
   snapshot: MacroSnapshot | null;
 }) {
   // Build rows from available data
-  const rows: { source: string; indicator: string; value: React.ReactNode }[] = [];
+  const rows: { source: string; indicator: React.ReactNode; value: React.ReactNode }[] = [];
 
   // Price row
   if (prices.length > 0) {
@@ -1063,7 +1070,13 @@ function InfoSourcePanel({
   // Kinh Dịch row
   rows.push({
     source: "Kinh Dịch",
-    indicator: `Quẻ #${reading.hexagram}`,
+    indicator: (
+      <QueName
+        hexagram={reading.hexagram}
+        name={reading.name}
+        className="text-xs text-slate-400"
+      />
+    ),
     value: (
       <span className="text-slate-200">
         <span className={`font-semibold ${signalColor(reading.signal)}`}>{reading.signal}</span>
@@ -1392,9 +1405,11 @@ function StockDetailPanel({
             <Row
               label="Quẻ"
               value={
-                <span className="text-slate-200">
-                  #{reading.hexagram} — {reading.name}
-                </span>
+                <QueName
+                  hexagram={reading.hexagram}
+                  name={reading.name}
+                  className="text-slate-200"
+                />
               }
             />
             <Row
