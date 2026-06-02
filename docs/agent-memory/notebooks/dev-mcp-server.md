@@ -1,5 +1,23 @@
 # dev-mcp-server -- Notebook
 
+## c349 · 2026-06-02 (BCTC-ANALYTICS-LAYER BAL-1a-BACKFILL) — COMMITTED b7329f54
+
+**Task:** BAL-1a-BACKFILL — Option R recompute-on-read in `get_bctc_full` serve path (architect-approved 2026-06-02T14:14Z)
+
+**Root cause addressed:** Persisted ratio columns (roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda) retain stale OCR-parse values after refine corrects base scalars. VNM roe=0 (incomeBroken at parse time); DHG roa=7891932 (unit-scale error). BAL-1a finalize BLOCK-3 only fixes newly re-finalized rows; historical rows still carry stale ratios.
+
+**Implementation (Option R):** In `bctcFullTools.ts` `get_bctc_full` handler, immediately after `latestRow` is read from DB and before `checkPublishability` is called: inline-recompute 5 ratios from correct base scalars, mutate `latestRow` in place. Same formulas and safeDivide contract as finalizeBctcRefineTool.ts BLOCK-3 (BAL-1a). `balance_sheet_json` added to `ReportRow` interface to support `current_ratio` recompute (currentLiabilities.total from blob — same source as BLOCK-3 L749-767).
+
+**SSOT proof:** Formulas mirror finalizeBctcRefineTool.ts BLOCK-3 exactly: same scalars, same guards (equity_total>0, total_assets>0, ebitda>0), same null-safety (denominator null/zero/negative → null). safeDivideRead = same contract as safeDivideLocal in BLOCK-3 = same contract as ratioComputer.ts safeDivide.
+
+**Files changed:** `bctcFullTools.ts` (+115 lines: ReportRow.balance_sheet_json, recompute block); `240-bctc-full.test.ts` (+101 lines: schema column + 2 BAL-1a tests TC-R1/R2); `BAL-0-pub5-8-gates.test.ts` (+4 lines: schema column + DV-BAL0-PUB6-2 assertion updated for Option R); `BANK-AWARE-1-consumer-audit.test.ts` (+1 line: balance_sheet_json: null in bankRow).
+
+**DV-BAL0-PUB6-2 update note:** With Option R, stale roa=7891932 is replaced by recomputed 3.0% before PUB-6 sees it — PUB-6 does not fire. Primary invariant ("7891932 not in output") still holds. "ROA=N/A" assertion replaced by "ROA present, no PUB-6 RATIO-SANITY note".
+
+**tsc:** EXIT 0. **Tests:** 81 pass / 0 fail (4 impacted files). Pre-existing TR-RED-5b (TRUST-RED-sanity-gate.test.ts: Expected DONE/Received PARTIAL) confirmed identical before/after. **ops_rebuild_required: true** (do NOT rebuild; router bundles with BAL-1c).
+
+---
+
 ## c348 · 2026-06-02 (BCTC-ANALYTICS-LAYER BAL-0) — COMMITTED 9093f385
 
 **Task:** BAL-0 — structural publish-integrity gate PUB-5..8 in `bctcFullTools.ts`
