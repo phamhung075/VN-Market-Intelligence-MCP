@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T18:26:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "ORCH-DASH-LIVE",
-    "next_agent": "dev-frontend",
-    "next_action": "User request: /dashboard/orchestration real-time, no manual refresh. dev-frontend add client-side useRevalidator 5s polling (pause on hidden tab) + LIVE indicator to dashboard.orchestration.tsx. Then ops REBUILD frontend container + router live-verify polling fires.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "ORCH-DASH-LIVE shipped+live-verified. Orchestration dashboard now auto-refreshes every 5s (visibility-gated) via useRevalidator — no manual reload. Remaining backlog = async/infra (VPS BCTC) + low FUs. Next PO triage owns residual.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T18:56:49Z",
+    "updated_at": "2026-06-02T19:02:34Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T18:56:49Z",
+    "_updated_at": "2026-06-02T19:02:34Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1125,11 +1125,11 @@
             "title": "Orchestration dashboard auto-refresh (no manual page reload) via Remix useRevalidator polling",
             "type": "NEW-FEATURE",
             "owner": "dev-frontend",
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "XS",
             "zone": "apps/frontend/",
             "priority": "high",
-            "note": "User request 2026-06-02T19:00Z: orchestration dashboard must update real-time without manual page refresh. Approach=client-side polling (useRevalidator, 5s, visibility-gated) re-runs existing loader -> refetch /api/orchestration proxy -> re-render. No SSE/WS infra (file-backed state changes on cron/task-transition cadence, polling sufficient). Single-file frontend change. Frontend is a CONTAINER -> ops rebuild after merge."
+            "note": "User request 2026-06-02T19:00Z: orchestration dashboard must update real-time without manual page refresh. Approach=client-side polling (useRevalidator, 5s, visibility-gated) re-runs existing loader -> refetch /api/orchestration proxy -> re-render. No SSE/WS infra (file-backed state changes on cron/task-transition cadence, polling sufficient). Single-file frontend change. Frontend is a CONTAINER -> ops rebuild after merge.| DONE-LIVE-VERIFIED 2026-06-02T19:02Z. dev-frontend 8c30334a (useRevalidator 5s polling, visibility-gated, in-flight guard, LIVE indicator) - 1 file 52+/1-, typecheck+vite build PASS. ops rebuilt frontend container single-service (build+up --no-deps frontend), 200 on /dashboard/orchestration + /api/orchestration. Router independent verify: served bundle dashboard.orchestration-RJMIuxp1.js (11.5KB) contains visibilitychange+revalidat+5000+LIVE tells = live code deployed. No SSE/WS infra (polling fits file-backed cadence)."
           }
         ],
         "_updated_at": "2026-06-02T04:58:02Z",
