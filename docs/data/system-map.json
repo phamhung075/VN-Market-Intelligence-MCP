@@ -655,7 +655,7 @@
         ],
         "host_runtime_set": {
           "_note": "Services INTENDED to run on this 16GB Mac host. Full fleet kernel-panics (project_host_memory_panic). Services absent from this set are defined-in-repo but NOT deployed by design — auditor must report them INFO/grey, never CRITICAL/WARN.",
-          "_ssot": "docs/data/system-map.json .infrastructure.docker.host_runtime_set",
+          "_ssot": "docs/data/system-map.json .project.infrastructure.docker.host_runtime_set",
           "_last_verified": "2026-06-02",
           "services": [
             "mcp-server",
@@ -672,6 +672,27 @@
             "pdf-extractor",
             "rag-service",
             "news-fetch"
+          ],
+          "_name_map_note": "Registry/frontend use short-keys (registry.go map keys + SERVICES[] in dashboard.services.tsx). Compose names differ. This map is the authoritative bridge — devs MUST use short_key form in code, never compose_name.",
+          "short_key_to_compose": {
+            "mcp":       "mcp-server",
+            "pdf":       "pdf-extractor",
+            "rag":       "rag-service",
+            "ta":        "technical-analysis",
+            "macro":     "macro-indicators",
+            "stock":     "stock-price",
+            "kinh-dich": "kinh-dich-service",
+            "alert":     "alert-engine",
+            "news":      "news-fetch"
+          },
+          "not_deployed_short_keys": [
+            "pdf",
+            "rag",
+            "ta",
+            "stock",
+            "kinh-dich",
+            "alert",
+            "news"
           ]
         }
       },

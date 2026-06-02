@@ -1,8 +1,57 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-01T21:30Z | **Sprint:** DASHBOARD-STATE-SYNC
+**Last updated:** 2026-06-02 08:30 UTC | **Sprint:** A-01b-DASHBOARD-NOT-DEPLOYED
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-02T08:30Z — A-01b-1 DASHBOARD FALSE-RED (not-deployed status)
+
+**Brief:** `docs/architecture-briefs/2026-06-02-dashboard-health-not-deployed.md`
+**SSOT edit:** `docs/data/system-map.json` — added `short_key_to_compose` map + `not_deployed_short_keys` array; fixed `_ssot` self-ref (was `.infrastructure.docker...`, now `.project.infrastructure.docker...`).
+
+Root cause confirmed: api-gateway probes all 9 services, 7 time-out → `StatusDown`, `ComputeOverallStatus` sees mixed → `degraded`. Not a real outage.
+
+**Decisions made (unambiguous for devs):**
+- Enum literal: `"not_deployed"` (Go const `StatusNotDeployed`, TS union extension).
+- Classify-before-probe in `AggregateHealthService.Aggregate`; inject `[]string` via constructor + `NOT_DEPLOYED_SERVICES` env default.
+- `ComputeOverallStatus`: filter `not_deployed` entries before OK/DEGRADED/DOWN loop; empty-after-filter → `"ok"` (not `"down"`).
+- Frontend: grey `NOT DEPLOYED` badge; latency guard `>= 0`; info sub-text when `ok` + any `not_deployed`.
+- Sequential dispatch: A-01b-2 (api-gateway) first, A-01b-3 (frontend) second.
+
+**QA DoD anti-false-green: two mandatory clauses (A=not-deployed-grey, B=real-docker-stop-still-fires-red).**
+
+---
+
+## 2026-06-02T05:04Z — BCTC-EXTRACT-QUALITY (BEQ-1 diagnostic spike)
+
+**Brief:** `docs/architecture-briefs/2026-06-02-bctc-extract-quality.md`
+
+4 symptoms, all root-caused to one structural gap: refine pipeline covers <50% of corpus.
+
+**A. EMPTY (CTG/VCB):** refine_status=PENDING, 0 bctc_refined_units, PUB-1 gate blocks
+get_bctc_full. CTG also has cover-letter-only PDF (2 pages, no tables). Not a parser
+failure — refine job was never dispatched for these tickers.
+
+**B. ZEROED SECONDARY LINES (FPT/ACB):** bctcScalarAggregator writes only 10/~20 columns.
+operating_profit/ebitda/cash/EPS are NOT in ScalarAggregate — they permanently hold the
+legacy OCR-parse placeholder (0 or 1). FPT code=30 value=2.75T IS in table_rows but
+is never read by the aggregator. Pure mapping scope gap. Recurring-bug flag: ≥5 fix
+commits on bctcScalarAggregator.ts — escalation warranted, full column audit needed.
+
+**C. GARBAGE /docs SCALARS:** /docs reads financial_reports.net_profit directly.
+Same column as get_bctc_full; no divergence. PENDING tickers retain OCR-parse garbage.
+VNM=5.1e-05: 143 table_rows all NULL value_current + no refine units. CTG=5, EIB=1:
+near-zero from failed regex on cover-letter/degraded OCR.
+
+**D. CONTAMINATION (FPT YoY):** FPT 2025-Q4 prior period has net_profit=20,225M =
+net_revenue÷1000 (legacy OCR unit-scale bug, pdf-parse path). buildComparisonSection
+has no refine_status guard on the prior row → uses garbage as baseline. 2-line fix.
+
+**Fix plan:** BEQ-4 (guard, XS) → BEQ-2 (refine trigger, S) → BEQ-3 (full column audit, M)
+→ BEQ-5 (CTG PDF fetch, existing BCTC-CTG-ATTACHMENT-FETCH backlog).
+All separable from BCTC-LAYOUT-FIRST.
+
+---
 
 ## 2026-06-01T21:30Z — DASHBOARD-STATE-SYNC (analysis-only brief)
 
