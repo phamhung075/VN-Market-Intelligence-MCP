@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T17:30:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "MSG-1+MSG-3",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BATCH-2 dispatched: MSG-1 (market-wide foreign-flow aggregate tool, apps/mcp-server) + MSG-3 (phantom-tool discoverability doc, docs/standards/mcp-tools.md) in ONE dev-mcp-server run (single commit boundary, no race). NSCOUT-FRAMING-RECUR DONE prior (3e0ee4f5). Remaining: B3 ENV-ISOLATION-P2 chain, B4 FU-BCTC-HISTORY-COVERAGE, B5 SIG-FOLLOWUP-DRYRUN, B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "BATCH-2 DONE: MSG-1 get_market_foreign_flow LIVE-VERIFIED (real watchlist foreign aggregate) + MSG-3 phantom-tools documented. toolCount SSOT bumped 154->158 (dev-measured registry; pre-existing drift reconciled). NEXT BATCH-3: ENV-ISOLATION P2 SERIAL chain EI-P2-1 (startup APP_ENV/DB_PATH assertion, dev-mcp-server) -> EI-P2-2 (data_env column 5 tables) -> EI-P2-3 (docker-compose.dev.yml port 3099, ops) -> EI-P2-QA. Then B4 FU-BCTC-HISTORY-COVERAGE, B5 SIG-FOLLOWUP-DRYRUN, B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T17:14:22Z",
+    "updated_at": "2026-06-02T17:29:47Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T17:14:22Z",
+    "_updated_at": "2026-06-02T17:29:47Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -622,9 +622,10 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": null,
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "M",
-            "zone": "apps/mcp-server/"
+            "zone": "apps/mcp-server/",
+            "note": " | DONE-LIVE-VERIFIED 2026-06-02T17:30Z (commit cd9540a4, mcp image 17:28:05Z). Router raw-called get_market_foreign_flow(days=5,top_n=5): returns real watchlist-wide foreign aggregate — 2026-06-02 net -3.01M NET SELL across 102 tickers, top buyers FPT+644k/SHB+210k, top sellers HPG-521k/HDB-484k/ACB-475k. Honest coverage_note (watchlist not full-exchange), sparse-day zeros shown truthfully, no mock. source_tier 2. Data: daily_ohlcv foreign_buy/sell/net_vol cols."
           },
           {
             "task_id": "MSG-2",
@@ -642,9 +643,10 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": null,
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "XS",
-            "zone": "docs/standards/mcp-tools.md"
+            "zone": "docs/standards/mcp-tools.md",
+            "note": " | DONE 2026-06-02T17:30Z (cd9540a4): get_market_breadth/get_top_movers confirmed PHANTOM (zero .ts, referenced only in fb-market-poster docs/notebook/handoff). Documented in docs/standards/mcp-tools.md Renamed/Removed table with watchlist+portfolio-conviction fallback. Definitif (removed dangling refs context), not symptom."
           }
         ]
       },
