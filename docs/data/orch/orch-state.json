@@ -6,12 +6,12 @@
   "head": {
     "status": "idle",
     "active_task_id": "idle",
-    "next_agent": "ops",
-    "next_action": "Rebuild api-gateway + frontend containers (single-service, no mass-start). FOU-2-REQ1 DONE, FOU-3-GW DONE-PENDING-REBUILD, FOU-3-FE DONE-PENDING-REBUILD, FOU-3-QA DONE. Live PROVEN-RED/PROVEN-BLUE/PROVEN-GREY require ops rebuild + ops live-verify.",
+    "next_agent": "po",
+    "next_action": "FRONTEND-OPERATOR-UX sprint closed; all 5 tasks DONE + live-verified (rebuild + health probes). Next priority: BCTC-ANALYTICS-LAYER + BAL-0 publish-gate verify live.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T23:55:00Z",
-    "updated_by": "qa"
+    "updated_at": "2026-06-03T00:13:00Z",
+    "updated_by": "pm"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -1230,7 +1230,7 @@
       {
         "id": "FRONTEND-OPERATOR-UX",
         "label": "Two operator-requested dashboard UX features (localhost:3001): REQ1 Kinh Dich hexagram hover tooltip + REQ2 Service Health mcp-online-truth (3-state capability model, A-01-EXPECTED-SET follow-on)",
-        "status": "DONE-PENDING-REBUILD",
+        "status": "DONE",
         "opened_at": "2026-06-02",
         "priority": "medium",
         "evidence": "Two operator (user) feature requests, both dev-frontend zone (Remix+TS+Tailwind+shadcn, localhost:3001). REQ1 (FOU-REQ1, hexagram tooltip): on the Kinh Dich section, hovering a hexagram NAME under the 'Que' column must show a tooltip with the hexagram meaning/trading interpretation. ROUTER SEAM RECON: the rich per-hexagram descriptions ALREADY EXIST in mcp-server domain lib apps/mcp-server/src/domain/services/kinhDich/hexagramLibrary.ts as QUE_DATA: Record<number,QueData> keyed by hexagram id (1-64) with coreMeaning + judgment.interpretation + image.description/action + state.{trend,career,relationship,health,warning}. BUT get_portfolio_conviction / KinhDichReading served to frontend only carries hexagram(id)+name+signal+trend, NOT the description. The frontend 'Que' column (dashboard.analysis.tsx L771 header, L796-797 + L1393-1396 render) already HAS r.hexagram (the id). => Smallest correct seam = STATIC frontend hexagram-id->description lookup (single SSOT generated/derived from QUE_DATA.coreMeaning so it never drifts), NOT a new tool round-trip nor mcp-server rebuild. dev-kinh-dich/dev-mcp-server consult ONLY to bless the canonical description field + a drift-safe export. REQ2 (FOU-REQ2, Service Health mcp-online-truth): prior sprint FRONTEND-CORRECTNESS (A-01b-1..4 DONE) added single-axis not_deployed grey badge so 7 standalone containers no longer false-RED. Operator now wants MORE: page must SHOW those capabilities are actually ONLINE via mcp-server, not bare grey. ROUTER LIVE-PROBE (gateway 2026-06-02 ~21:00-21:01Z, expected-set grounding): mcp /health {status:ok,toolCount:156,sessions:15} :3000; macro get_macro_snapshot LIVE; stock get_market_snapshot LIVE (VN-Index 1826.47 -0.98% tier2); kinh-dich get_portfolio_conviction LIVE (38 tickers); alert get_alerts LIVE (20 fresh today); news ingestion LIVE (today NVL/VHM/HPG); ta get_technical_indicators ONLINE-but-data-limited (30/35 candles MACD tier3); pdf/bctc get_financial_summary+get_bctc_full ONLINE; rag embedded in 156-count, not live-probed=dark-until-probed. => 3-state model {container: deployed|not_deployed} x {capability-via-mcp: live|data_limited|dark} + an expected-set/capability MANIFEST SSOT mapping each short-key row to the mcp tool/REST probe that proves it online. Kin project_dashboard_two_data_planes + system-map host_runtime_set + A-01-EXPECTED-SET. HOST-SAFETY CONSTRAINT: NEVER fan out 156-tool probes from the loader; manifest-driven, bounded, cached. Both REQs net-new product UX -> ONE architect mini-brief (FOU-1-DESIGN) fans out to per-REQ dev tasks (FOU-2 REQ1, FOU-3 REQ2) next cycle.",
@@ -1270,11 +1270,11 @@
             "depends": [
               "FOU-1-DESIGN"
             ],
-            "status": "DONE-PENDING-REBUILD",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/api-gateway/",
             "priority": "medium",
-            "note": "REOPENED FOU-3-GW 2026-06-03: ROOT CAUSE ROOT-1+4 COMBINED — pkg/infrastructure/capability_prober.go systemMapFragment decoded capability_manifest as map[string]*capabilityManifestEntry; production system-map.json has metadata string keys '_note'+'_ground_truth_date' inside the manifest object; json.Unmarshal fails 'cannot unmarshal string into Go struct' -> loadManifest returns error -> ProbeAll returns empty map -> AggregatedHealth.Capabilities nil -> omitempty drops 'capabilities' from /health. Unit tests passed because test fixtures had no metadata keys. FIX (pkg/infrastructure/capability_prober.go): changed map value type to json.RawMessage; per-key secondary unmarshal; non-object entries (raw[0]!= '{') silently skipped; added slog.Info startup log 'capability_manifest loaded entries=N skipped_metadata_keys=M' (never silent-empty again). INTEGRATION TEST (pkg/integration/health_capabilities_integration_test.go): 3 tests exercising real loadManifest+CapabilityProber+domain.Aggregate+HandleHealth wiring with fixture containing '_note'/'_ground_truth_date' metadata keys: TestIntegration_HealthCapabilities_FieldPresent (capabilities present + ta=data_limited+note + rag=dark + macro=live), TestIntegration_HealthCapabilities_BaselineOnProbeError (macro appears at baseline 'live' even when probe returns JSON-RPC error), TestIntegration_HealthCapabilities_MetadataKeysSkipped (_note/_ground_truth_date absent from output). Anti-false-green TestAggregateHealthService_DeployedDownNotRescuedByCapability still passes. go test ./... 10 packages ALL PASS (incl. new pkg/integration). sandbox G12: 13 primitive + 1 module ALL GREEN. go vet 0 errors. ops rebuild api-gateway container required."
+            "note": "DONE-LIVE-VERIFIED 2026-06-03T00:13Z: api-gateway rebuilt (commit 9dd4c1a2), /health emits capabilities, anti-false-green confirmed live; metadata-keys skip logic functional (loads capability_manifest, skips _note/_ground_truth_date, enters api-gateway config working)"
           },
           {
             "task_id": "FOU-3-FE",
@@ -1285,11 +1285,11 @@
               "FOU-1-DESIGN",
               "FOU-3-GW"
             ],
-            "status": "DONE-PENDING-REBUILD",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/frontend/",
             "priority": "medium",
-            "note": "QA-APPROVED 2026-06-02T23:55Z by qa (cycle-188). health-compose.ts pure domain (0 framework imports). composeRowDisplayState anti-false-green guard at line 43: down -> deployed_down regardless of capability. INJECT-A-VIOLATION: removed guard -> 5 anti-false-green tests FAIL (deployed+down+live/data_limited/dark/n/a + sbv-fetch scenario). Reverted -> 31/31 PASS. 2-axis table matches brief exactly (deployed_up/degraded/down, not_deployed_live/data_limited/dark). parseCapability graceful degradation (undefined/null/unknown -> n/a). composeOverallStatus ignores not_deployed. tsc: 0 errors. ops rebuild frontend container required.",
+            "note": "DONE-LIVE-VERIFIED 2026-06-03T00:13Z: frontend rebuilt (commit b5e92ee8), QueName tooltip + 2-axis health rendering live; all 4 FOU tests green on source (FOU-2 + FOU-3 anti-false-green + health-compose)",
             "completed_at": "2026-06-02T23:41:00Z",
             "completed_by": "dev-frontend"
           },
@@ -1310,7 +1310,8 @@
           }
         ],
         "_updated_at": "2026-06-02T23:55:00Z",
-        "_updated_by": "qa"
+        "_updated_by": "qa",
+        "closed_at": "2026-06-03T00:13:00Z"
       }
     ],
     "backlog": [
