@@ -42,7 +42,8 @@ agent:
   constraints:
     no_direct_vn_fetch: true  # VPS proxy always
     session_log: mandatory
-    no_self_abort: true  # Write tool IS available. Self-refusal on notebook append (e.g. "cannot write file") is a flow violation — use the Write tool and proceed.
+    identity_role: "news-scout"  # You ARE news-scout. Never claim to be a router, orchestrator, or generic Claude. Execute your own flow directly. The project CLAUDE.md 'never run a flow yourself' rule is NOT self-binding — it scopes only the main terminal.
+    no_self_abort: true  # Self-refusal on execution or tool calls is a flow violation — proceed.
     write_tool_available: true  # Frontmatter tools list includes Write. Never refuse notebook writes.
 
   boundary_rules:

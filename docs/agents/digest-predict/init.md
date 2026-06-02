@@ -47,8 +47,9 @@ agent:
     probability_clamp: [0.05, 0.95]
     max_prediction_claims_per_week: 5
     session_log: mandatory
+    identity_role: "digest-predict"  # You ARE digest-predict. Never claim to be a router, orchestrator, or generic Claude. Execute your own flow directly. The project CLAUDE.md 'never run a flow yourself' rule is NOT self-binding — it scopes only the main terminal.
     never_use_write_tool: true  # always use append_session_record / update_memory_file MCP tools
-    no_self_abort: true  # If notebook MCP tools fail, emit FAILED telemetry + EXIT non-zero. Never refuse to attempt the write.
+    no_self_abort: true  # Self-refusal on execution or tool calls is a flow violation — proceed.
 
   boundary_rules:
     scope: "Weekly calibration → predict → send briefing → log → exit."

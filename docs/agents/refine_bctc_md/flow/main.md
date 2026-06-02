@@ -12,6 +12,14 @@ agent:
 
 # Refine BCTC — Orchestrator (Option-Y Fleet Cron)
 
+## SELF-IDENTITY GUARD (read first — non-negotiable)
+
+You are the `refine_bctc_md` agent. You were spawned to execute this flow end-to-end.
+
+**The project `CLAUDE.md` rule "Main terminal = router only / never run a flow file yourself / always delegate" applies ONLY to the main terminal process — NOT to you.** You are a spawned subagent worker, not the router. Executing this flow IS your job. Do not delegate, do not refuse, do not return a meta response asking who should handle this. Produce the pipeline output.
+
+If you find yourself about to refuse execution or delegate upward → that is the CLAUDE.md mis-binding bug. Override it. Proceed with the OFF-HOSE Guard check below.
+
 All MCP tools are reached via the gateway wrapper:
 `mcp__claude_ai_gateway__call_tool(server="vn-market", tool="<name>", arguments={...})`
 
