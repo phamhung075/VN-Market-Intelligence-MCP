@@ -100,6 +100,16 @@ Added a new decentralized DETECT source to the SELF-IMPROVE-GATE pipeline: an en
 
 ---
 
+## 2026-06-02T01:21:01Z
+
+**Brief:** `docs/architecture-briefs/2026-06-02-esc-opus-dispatch-seam.md`
+
+10-cycle silent ESC failure: bctc-analyst (Sonnet) prose-invokes deep-dive-opus.md (model:claude-opus-4) but no runtime boundary enforces a model switch mid-flow — zero Opus analysis ever ran. Fix: replace inline invocation with a task_claim idempotency guard + esc-deep-dive-request signal to dev-team; drain-signals.md gains ESC-DISPATCH handler that spawns bctc-analyst with model=opus override; deep-dive-opus.md gains § Output Signal to close the loop to PO. Three-file edit for agent-father; drain-signals.md will exceed 120L cap and must extract ESC-DISPATCH to a child file. FU-BCTC-TOOL-PARAMS (get_cash_flow quarters-param ignored; get_bctc_full takes code not ticker) is a parallel dependency for full analytical value.
+
+**Signal dropped:** `docs/data/orch/orch-state.json` `.signal_queue` row (to:po, type:brief_complete)
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).

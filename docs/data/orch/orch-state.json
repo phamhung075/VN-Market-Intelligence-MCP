@@ -1,16 +1,16 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-01T23:14Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-02T01:21Z",
+  "_updated_by": "agents-architect",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "BATCH DONE (recurring nb-bloat family closed): NB-CLEAN-NEWSSCOUT (5082046d 219->92L) symptom relief + NB-BLOAT-FLOW-OVERWRITE (e2e37c39) root-cause — system-auditor init.md def aligned to SECTION-APPEND+PRUNE (flow was already fixed 8baed6d1). Logged NB-NOTEBOOK-WRITE-FLEET-ALIGN (4 sibling flows still OVERWRITE but skill SSOT contract is unresolved — needs decision before edit). NORMAL triage resumed; next candidates AUDITOR-SLA-CADENCE / A-01b / MSG-1. WIP 0/2.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "ESC-OPUS-DISPATCH-SEAM",
+    "next_agent": "agents-architect",
+    "next_action": "FPT-OPUS-DEEPDIVE DONE (a38e14ee, flag_for_human_review). Now dispatching ESC-OPUS-DISPATCH-SEAM->agents-architect: design the seam so ESC-* auto-dispatches a model=opus deep-dive (root-cause of 10-cycle silent no-op under Sonnet). Logged FU-BCTC-TOOL-PARAMS (get_cash_flow ignores quarters; get_bctc_full takes code not ticker). wip 1.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T00:22Z",
+    "updated_at": "2026-06-02T01:19Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -49,7 +49,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T00:22Z",
+    "_updated_at": "2026-06-02T01:19Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -387,6 +387,27 @@
             "depends": "LF-EXTRACT",
             "status": "TODO",
             "size": "M"
+          },
+          {
+            "task_id": "FPT-OPUS-DEEPDIVE",
+            "title": "Clear 10-cycle-overdue FPT ESC-3 via on-demand Opus deep-dive (OCF/NI divergence)",
+            "type": "sprint-task",
+            "owner": "bctc-analyst",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "read-only-analysis",
+            "note": "a38e14ee flag_for_human_review conf0.35 MIXED/partial-artifact; notebook note left for cowork (201L)"
+          },
+          {
+            "task_id": "ESC-OPUS-DISPATCH-SEAM",
+            "title": "Wire seam so ESC-* auto-dispatches model=opus deep-dive instead of silent no-op under Sonnet",
+            "type": "sprint-task",
+            "owner": "agents-architect",
+            "depends": null,
+            "status": "TODO",
+            "size": "S",
+            "zone": "docs/agents/bctc-analyst/ + docs/agents/dev-team/flow/"
           }
         ]
       },
@@ -514,13 +535,18 @@
         "id": "NB-NOTEBOOK-WRITE-FLEET-ALIGN",
         "summary": "agent-father (NB-BLOAT-FLOW-OVERWRITE) found 4 flows still say OVERWRITE in notebook-write step: po/flow/main.md L126 (OVERWRITE <=50L), market-watcher/flow/cycle.md L94 (OVERWRITE not append — L95 comment says INTENTIONAL per skill mandate), code-janitor/flow/main.md L68, fb-market-poster/flow/main.md L17+L433 (full overwrite). NOT a blind append+prune rewrite — the notebook-write SKILL itself has an UNRESOLVED TODO (L95) about the po/developer overwrite-vs-append contradiction. PO: resolve the skill SSOT contract FIRST (is overwrite intentional for small ≤50L notebooks?), then align flows per-agent. Needs agents-architect or skill-owner decision before agent-father edits.",
         "priority": "normal"
+      },
+      {
+        "id": "FU-BCTC-TOOL-PARAMS",
+        "summary": "Opus FPT deep-dive surfaced 2 real bctc tool defects blocking ESC-3 accrual analysis: (1) get_cash_flow IGNORES the quarters param — returns only current quarter, no 8q history, no WC subcomponents (AR/inventory/AP/D&A) -> accrual decomposition impossible; (2) get_bctc_full/get_bctc_refined take code/report_id NOT ticker (caller trap). Both block deep-dive quality + likely affect other consumers. Owner likely dev-mcp-server. Found 2026-06-02 FPT-OPUS-DEEPDIVE.",
+        "priority": "normal"
       }
     ],
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T00:15Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-06-02T01:21Z",
+    "_updated_by": "agents-architect",
     "rows": [
       {
         "id": "po-gate-self-critique-detect-20260601T2111",
@@ -754,8 +780,19 @@
         "type": "bug-escalation",
         "summary": "bctc-analyst c010 surfaced 3 persistent extraction/model blockers NEVER routed to queue (9-10 cycles, 0 prior rows): (1) FPT ESC-3 CRITICAL OVERDUE 10th cycle — OCF/NI=-1.15, needs Opus sub-agent for flow/deep-dive-opus.md (Sonnet cannot run it); (2) CTG 24h+ post-filing extraction lag, DATA_INSUFFICIENT 2nd cycle — abnormal vs normal 2-3h; (3) DHG+EIB DATA_INSUFFICIENT 9th consecutive cycle — BCTC-TABLE extraction-pipeline blocker unresolved. Dev-team/PO lane: model-dispatch + pipeline root-cause. Dispatcher cannot spawn PO/dev.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/agent-memory/notebooks/bctc-analyst.md"
+      },
+      {
+        "id": "arc-brief-esc-opus-20260602T0121Z",
+        "ts": "2026-06-02T01:21Z",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "brief_complete",
+        "summary": "ESC-OPUS-DISPATCH-SEAM brief ready — 3-file seam design (bctc-analyst+drain-signals+deep-dive-opus), task_claim guard, FU-BCTC-TOOL-PARAMS flagged",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-esc-opus-dispatch-seam.md"
       }
     ],
     "archive": [
