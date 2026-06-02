@@ -1,23 +1,25 @@
 # PO Notebook
 
-## c · 2026-06-01T23:14Z — TRIAGE (dev-team :09 fire) — dispatch DRAIN-INJECTION-SAFE; triage 12 loose signals
+## c · 2026-06-02T01:09Z — TRIAGE (dev-team :09 fire) — bctc-analyst 3-blocker escalation (FPT ESC-3 10cy / CTG / DHG+EIB)
 
-**Inputs:** orch-state head idle/WIP0 (A-01-EXPECTED-SET shipped fa02735e last cycle). 0 NEW signal_queue rows (all dispositioned). TNB handoff = SAME c85 already ACK'd 22:34Z — Step 0-TNB no-op. 12 loose docs/signals/ files for triage.
+**Inputs:** orch head idle/WIP0 (nb-bloat family CLOSED last cycle). Telegram: no new reports (verified RAW via gateway). 0 NEW signal_queue po rows. Primary = HIGH bug-escalation from cowork on behalf of bctc-analyst c010, payload_ref bctc-analyst.md. 3 distinct lanes, NEVER routed before (0 prior po rows confirmed via notebook+git grep).
 
-**12 loose files dispositioned → all to processed/:**
-- tnb-c85 (untracked): SAME c85 already disposed last cycle; loose file fed the queue row → plain move.
-- bctc_signal_{ACB,CTG,DHG,EIB,FPT} ×5 (untracked): routine/release BCTC outputs, cowork-consumed, NO-ACTION → plain move.
-- context-bloat self-critique-SKILL (untracked): SELF-CURED — now 118L ≤120 cap (was 147 at breach) → plain move, no task.
-- context-bloat signal-dashboard SKILL (133L,+13) + dashboard-protocol (180L,+60): STILL over cap → folded into FU-SIGNAL-DASHBOARD-CAP backlog (measured figures written in); overlaps RE-CAP-1. Route to claude-manager-helper/agent-father when scheduled. Plain move.
-- brief agent-self-critique-detect (TRACKED): Phase-1 COMPLETE + shadow LIVE (39639d2b/7818b4d4/92f52421), all 5 conditions closed — STALE → TRACKED MOVE (dev-team commits).
-- brief orch-state-consolidation (untracked): sprint CLOSED (OSC-1..5 DONE) — STALE → plain move.
-- brief frontend-bctc-inspect-tab (TRACKED): brief LOCKED (FBT-ARCH A2, dev-frontend, apps/frontend only) — REAL open work, NOT in task_board → added FRONTEND-BCTC-TAB to backlog; deferred behind host-safety (pairs with A-01b dev-frontend zone). TRACKED MOVE (dev-team commits).
+**RAW-VERIFY (router policy — not relaying analyst verdict):**
+- FPT `get_bctc_full`: REAL data, conf 81%, NI 2,476.8 ty. BUT OperatingProfit/EBITDA/Cash all =0 (extraction artifacts). OCF −2,847,813 (from cashflow pass, not in summary). OCF/NI=−1.15 ESC-3 is plausible-but-needs-Opus to confirm it's structural vs a cashflow-extraction artifact. Escalation REAL, 10 cycles (c001–c010).
+- DHG + CTG `get_bctc_full`: both "Chưa có dữ liệu BCTC" — no data in system. Real blockers.
+- `deep-dive-opus.md` EXISTS (frontmatter model: claude-opus-4, ESC-3 handler L57–65). bctc-analyst cron runs on Sonnet → CANNOT self-promote model mid-cycle. Flow SAYS "Invoke sub-flow deep-dive-opus" on ESC-3 (main.md L75) but the runtime has NO seam to spawn a model-pinned Opus sub-agent. grep dev-team/flow + dispatch SKILL = 0 opus-dispatch wiring → confirmed ARCHITECTURE gap, not a one-off.
 
-**PICK (single, highest-value, WIP 1/2): DRAIN-INJECTION-SAFE** (FLEET-HOST-SAFETY, FIX/agent-father, S, zone docs/agents/dev-team/flow/, PLAN-ONLY). Rationale: priority order = host-danger first. This is the LIVE injection-side trigger — drain string-concats signal/payload fields into /bin/sh (drain-signals.md L31, execute-tier.md L42, main.md L29/172/202); a backtick payload once command-substituted `docker compose up -d`, near host-panic (feedback_signal_payload_shell_injection). AUD-ND-1 (destructive-stop) + A-01-EXPECTED-SET both DONE → this is the still-open half of the same class. Outranks frontend-bctc-tab (UX) + A-01b (cosmetic false-RED, auditor-severity path already SSOT-gated) + 1967b (exploratory). AC: backtick/$() payload drains DB correctly + docker ps unchanged (no spawned container).
+**Backlog dedup:** CTG → BCTC-CTG-ATTACHMENT-FETCH (exists, cover-letter-only PDF). DHG/EIB → BCTC-TABLE-2 (exists, multi-ticker) + FU-BANK-CODECOL. NO new dup created — folded.
 
-**Wrote head atomically (Edit, fresh-read-my-section, WIP 1/2):** dispatched agent-father DRAIN-INJECTION-SAFE; task→in-progress; narrative.current_sprint refreshed; FU-SIGNAL-DASHBOARD-CAP + FRONTEND-BCTC-TAB backlog updated. JSON re-validated.
+**DECISION → BATCH (2/2) = 1 UNBLOCK now + open 1 SPRINT-S for the recurring gap. The 2 extraction lanes are SPRINT-sized → backlog, NOT half-fixed this cycle.**
+1. **FPT-OPUS-DEEPDIVE** (UNBLOCK, route_to=main-terminal direct spawn — NOT dev-team code, model=claude-opus-4, zone n/a/read-only). Clears the 10-cycle-overdue ESC-3 backlog NOW: spawn a bctc-analyst running flow/deep-dive-opus.md with trigger_id=ESC-3, ticker=FPT, quarter=2026-Q1, context={ocf_total:-2847813, net_profit_total:2476800, divergence_ratio:2.15}. AC: deep_dive_result JSON emitted (verdict + recommended_action), appended to FPT signal. Files: docs/agents/bctc-analyst/flow/deep-dive-opus.md (read), docs/signals/bctc_signal_FPT_*.json (append). baseline_pass: deep_dive_result block present w/ non-zero confidence.
+2. **ESC-OPUS-DISPATCH-SEAM** (SPRINT-S, route_to=agents-architect→agent-father, zone docs/agents/bctc-analyst/ + docs/agents/dev-team/flow/, PLAN-ONLY agent-def). Root-cause the recurring-bug (≥2 cy → root-cause policy; this is 10): wire a real seam so ESC-* auto-dispatches a model=opus sub-agent instead of silently no-op'ing under Sonnet. Needs architect (cross-agent dispatch design: who spawns Opus — cron self-spawn vs dev-team-mediated vs a queued signal PO drains). AC: an ESC-3 fire mechanically results in an Opus deep-dive without manual PO intervention; documented seam in dispatch SKILL. baseline_pass: design brief + 1 proven dry-run.
 
-**Carry-over (deferred, valid):** AUDITOR-SLA-CADENCE + A-01b-DASHBOARD-HEALTH-FILTER (FLEET-HOST-SAFETY remaining) · FRONTEND-BCTC-TAB (dev-frontend, brief ready) · FU-SIGNAL-DASHBOARD-CAP + RE-CAP-1 (collapse into one cap-fix) · 1967b architect audit · MSG-1 foreign-flow · AUD-ND-1-REGRESSION watch · housekeeping: 662 stale cowork-heartbeats in processed/ + tnb c85 cites deleted DASHBOARD.md (cowork evidence-gathering references retired surface — CW-STEP47-HYGIENE adjacent). Next live tick = agent-father DRAIN-INJECTION-SAFE.
+**Extraction lanes → BACKLOG (explicitly NOT dispatched — multi-ticker extraction root-cause is SPRINT-M, needs ba/architect, won't close in one dev cycle):**
+- CTG 24h+ lag → BCTC-CTG-ATTACHMENT-FETCH (priority bumped normal→ raise to address: real-attachment fetch + size/page sanity gate). Transport recovered (HNX `-k` e22427aa) but this is the attachment-selection defect downstream.
+- DHG+EIB 9cy DATA_INSUFFICIENT (PDFs on disk, get_bctc_full empty) → BCTC-TABLE-2 + FU-BANK-CODECOL. Note in backlog: 9-cycle persistence = promote BCTC-TABLE-2 to next-sprint candidate.
+
+**Carry-over (deferred, valid):** AUDITOR-SLA-CADENCE + A-01b-DASHBOARD-HEALTH-FILTER · FRONTEND-BCTC-TAB · BCTC-TABLE-2 (PROMOTE — 9cy DHG/EIB) + BCTC-CTG-ATTACHMENT-FETCH + FU-BANK-CODECOL · NB-NOTEBOOK-WRITE-FLEET-ALIGN (skill SSOT contract first) · FU-SIGNAL-DASHBOARD-CAP + RE-CAP-1 · FU-FIXER-NO-FORCE (HIGH) · MSG-1 · 662 stale cowork-heartbeats housekeeping. Next live tick = main-terminal FPT-OPUS-DEEPDIVE + agents-architect ESC-OPUS-DISPATCH-SEAM.
 
 ## c · 2026-06-02T00:13Z — TRIAGE (dev-team :09 fire) — recurring nb-bloat: PRUNE + root-cause pair
 
