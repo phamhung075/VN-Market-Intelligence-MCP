@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "ESC-OPUS-DISPATCH-SEAM",
-    "next_agent": "agents-architect",
-    "next_action": "FPT-OPUS-DEEPDIVE DONE (a38e14ee, flag_for_human_review). Now dispatching ESC-OPUS-DISPATCH-SEAM->agents-architect: design the seam so ESC-* auto-dispatches a model=opus deep-dive (root-cause of 10-cycle silent no-op under Sonnet). Logged FU-BCTC-TOOL-PARAMS (get_cash_flow ignores quarters; get_bctc_full takes code not ticker). wip 1.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "BATCH DONE (bctc 3-blocker escalation). (1) FPT-OPUS-DEEPDIVE a38e14ee: Opus deep-dive ran, FPT ESC-3 -> flag_for_human_review (MIXED/partial-artifact, conf0.35) — clears 10-cycle overdue at analyst layer. (2) ESC-OPUS-DISPATCH-SEAM c1c51a64: design brief delivered (formalizes the proven dev-team opus-dispatch pattern w/ TTL idempotency guard) + brief_complete->PO. NEXT-CYCLE: PO drains brief_complete arc-brief-esc-opus-20260602T0121Z -> route impl to agent-father (3-file seam, drain-signals.md needs 120L child-extraction). Backlog: FU-BCTC-TOOL-PARAMS (get_cash_flow ignores quarters; get_bctc_full takes code not ticker -> dev-mcp-server); CTG->BCTC-CTG-ATTACHMENT-FETCH, DHG/EIB->BCTC-TABLE-2 (promote). WIP 0/2.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T01:19Z",
+    "updated_at": "2026-06-02T01:25Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -49,7 +49,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T01:19Z",
+    "_updated_at": "2026-06-02T01:25Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -405,9 +405,10 @@
             "type": "sprint-task",
             "owner": "agents-architect",
             "depends": null,
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
-            "zone": "docs/agents/bctc-analyst/ + docs/agents/dev-team/flow/"
+            "zone": "docs/agents/bctc-analyst/ + docs/agents/dev-team/flow/",
+            "note": "DESIGN DONE c1c51a64 (brief 2026-06-02-esc-opus-dispatch-seam.md, 232L). Impl routes to agent-father via brief_complete signal arc-brief-esc-opus-20260602T0121Z -> next-cycle PO triage. agents-architect->agent-father split."
           }
         ]
       },
