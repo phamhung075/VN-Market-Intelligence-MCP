@@ -110,6 +110,16 @@ Added a new decentralized DETECT source to the SELF-IMPROVE-GATE pipeline: an en
 
 ---
 
+## 2026-06-02T04:09:04Z
+
+**Brief:** `docs/architecture-briefs/2026-06-02-fb-jargon-gate.md`
+
+fb-market-poster STEP 4 check 3 is pure model self-attestation — false-greened 3× in one session (thanh khoảy ×6, (FII) ×2, full hexagram paragraph), all caught only by router raw grep. Designed a deterministic gate: SHARED executable (`scripts/fb-jargon-gate.sh` + `.claude/skills/fb-jargon-gate/SKILL.md`) called from a new hard-fail STEP 4a in the flow; forbidden token SSOT lives exclusively in the script (32 English-jargon + 8 notation + anchored hexagram `vị thế <name>` + VN typos + calendar weekday check); 10 false-positive traps documented with safe anchored patterns; 3 smoke tests specified (Test A fires on `sentiment`, Test B passes clean, Test C proves `không` never triggers hexagram check).
+
+**Signal dropped:** `docs/data/orch/orch-state.json` signal_queue row `architects-fb-gate-brief-20260602T0409Z` → agent-father
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).

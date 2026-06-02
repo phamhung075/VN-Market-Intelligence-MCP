@@ -17,7 +17,12 @@
     "section_name": "po",
     "start_line": 8,
     "last_mtime": "2026-06-01T08:09:00Z",
-    "last_linecount": 224
+    "last_linecount": 224,
+    "po": {
+      "section_name": "po",
+      "last_mtime": "2026-06-02T04:11:40Z",
+      "last_linecount": 20
+    }
   },
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
@@ -31,6 +36,7 @@
       "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion."
     ],
     "open_sprints": [
+      "FB-GATE (HIGH, NEW 2026-06-02): replace fb-market-poster STEP4-check3 self-attestation with executable hard-fail pre-publish jargon/typo/hexagram/calendar gate; FB-GATE-1 design->agents-architect, FB-GATE-2 impl->agent-father. Sequence AFTER AUD-ND-1 (CRITICAL, DONE) and the live injection-half DRAIN-INJECTION-SAFE; BEFORE/parallel-with MSG-1 (different zone+owner, no contention). Rationale: 10pm cron ships jargon unattended TODAY — router is currently the only gate.",
       "FLEET-HOST-SAFETY: DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE open (AUD-ND-1 + VPS-SOCAT-PERSIST DONE)",
       "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE: within-section trimming + per-flow prune-invocation audit",
       "CHEF-FLOW-CAP-REFACTOR: chef.md 258L > 120L cap; extract Steps 6/6.5/7 to chef-write-dish.md",
@@ -186,6 +192,41 @@
             "size": "S",
             "zone": "apps/frontend/ + apps/api-gateway/",
             "note": "residual flagged by agent-father during A-01; closes the dashboard 7-false-RED plane (project_dashboard_two_data_planes)"
+          }
+        ]
+      },
+      {
+        "id": "FB-GATE",
+        "label": "Replace fb-market-poster self-attestation validation with deterministic executable pre-publish gate (HIGH — 10pm cron not trustworthy unattended)",
+        "status": "active",
+        "opened_at": "2026-06-02",
+        "priority": "high",
+        "evidence": "Session 2026-06-02: fb-market-poster STEP 4 check 3 is self-attestation ('Scan the entire post body... fix inline'). False-greened 3x in one session, each caught only by router raw grep: (1) 'thanh khoảy' typo present 6x while agent reported zero typos; (2) '(FII)' English jargon present 2x while agent reported FII:ZERO; (3) full Kinh Dịch hexagram paragraph ('vị thế Sư Giữ … Sư/Khôn/Kiển … vị thế Khôn') copied from CHEF/get_portfolio_conviction dish present while agent reported hexagram:ZERO. Root: validation is a model self-check, not an executable command; nothing hard-blocks the write. Memories: feedback_market_report_plain_vietnamese (the rule), feedback_router_verify_raw_not_badges + feedback_fence_false_green (need pasted command output, not a green claim).",
+        "tasks": [
+          {
+            "task_id": "FB-GATE-1",
+            "title": "DESIGN deterministic executable pre-publish gate for fb-market-poster flow (agents-architect)",
+            "type": "sprint-task",
+            "owner": "agents-architect",
+            "depends": null,
+            "status": "DONE",
+            "closed_at": "2026-06-02T04:09Z",
+            "size": "S",
+            "zone": "docs/agents/fb-market-poster/ + .claude/skills/",
+            "note": "DESIGN-DONE. Brief: docs/architecture-briefs/2026-06-02-fb-jargon-gate.md. Decision: SHARED — script scripts/fb-jargon-gate.sh + skill .claude/skills/fb-jargon-gate/SKILL.md; flow calls skill, skill calls script; zero inline token list in flow. Gate: grep -nEi across 5 groups (English jargon 32 tokens, unicode/notation 8, hexagram anchored via vị thế <name>, VN typos, calendar weekday check). Hard-fail on any hit, pasted output required in STEP 8. Smoke tests A/B/C spec'd. agent-father (FB-GATE-2) to implement."
+          },
+          {
+            "task_id": "FB-GATE-2",
+            "title": "IMPLEMENT the gate into fb-market-poster flow + reusable executable if specced (agent-father)",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": [
+              "FB-GATE-1"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "docs/agents/fb-market-poster/ + .claude/skills/ (+ cross-service/scripts if shared script)",
+            "note": "Apply architect brief. Replace STEP 4 check 3 self-attestation with the executable gate; wire hard-fail block before STEP 5 write; require pasted command output in STEP 8 cycle report / RETURN. MUST include a planted-violation smoke proof (insert a forbidden token → gate fires non-zero → blocks write → remove) so the gate is proven non-false-green, mirroring the existing FALSE-GREEN PROOF clause at flow L330. If FB-GATE-1 specs a shared fb-jargon-gate script/skill, create it in the architect-named zone and have the flow CALL it (single SSOT of the forbidden set — flow must not re-list tokens inline)."
           }
         ]
       },
@@ -587,9 +628,31 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T03:16:33Z",
-    "_updated_by": "agents-architect",
+    "_updated_at": "2026-06-02T04:11:40Z",
+    "_updated_by": "dev-team",
     "rows": [
+      {
+        "id": "architects-fb-gate-brief-20260602T0409Z",
+        "ts": "2026-06-02T04:09Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "FB-GATE-1 DESIGN-DONE. Brief docs/architecture-briefs/2026-06-02-fb-jargon-gate.md ready for implementation (FB-GATE-2). Decision: SHARED gate — scripts/fb-jargon-gate.sh (executable) + .claude/skills/fb-jargon-gate/SKILL.md (caller) + flow main.md check-3 replacement. Hard-fail on any grep hit. 3 smoke tests specified. See §10 acceptance criteria.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-fb-jargon-gate.md"
+      },
+      {
+        "id": "po-fb-gate-intake-20260602T0340Z",
+        "ts": "2026-06-02T03:40Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "HIGH. FB-GATE-1: design executable pre-publish gate to replace fb-market-poster STEP 4 check-3 self-attestation. Evidence: 3 false-greens in one session (thanh khoảy x6, (FII) x2, full hexagram paragraph copied from CHEF dish) — all reported ZERO by agent self-check, all caught only by router raw grep. Gate must be FIXED regex via actual command + HARD-FAIL block on any hit + pasted command output in cycle report. agent-md-factory route: architect designs → agent-father (FB-GATE-2) implements. Decide if a shared fb-jargon-gate script/skill is warranted (SSOT for forbidden set).",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/data/orch/orch-state.json#FB-GATE"
+      },
       {
         "id": "po-gate-self-critique-detect-20260601T2111",
         "ts": "2026-06-01T21:11Z",
@@ -669,17 +732,6 @@
         "payload_ref": "docs/signals/tnb-2026-05-31T20:13:00Z-c84-mcp-blocked.json"
       },
       {
-        "id": "SYSAUDITOR-D4-TASKS-FALSERED-20260531T0327",
-        "ts": "2026-05-31T03:27Z",
-        "from": "po",
-        "to": "po",
-        "type": "system-issue",
-        "summary": "LOW recurring meta-fix. system-auditor D4 emits TASKS.md unreadable false-RED (#3015); docs/TASKS.md intact. Probe-design false-positive (stale fs view).",
-        "severity": "LOW",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
         "id": "NSCOUT-NB-BLOAT-20260531T0810Z",
         "ts": "2026-05-31T08:10Z",
         "from": "context-bloat-backstop-hook",
@@ -724,18 +776,6 @@
         "payload_ref": "docs/signals/cowork-MCP-STACK-DOWN-20260531T2118Z.json"
       },
       {
-        "id": "1967b-RERUN",
-        "ts": "2026-05-21T19:19Z",
-        "from": "po",
-        "to": "agents-architect",
-        "type": "design_brief_request",
-        "summary": "DISPATCH READY. BA 1967a APPROVED. RE-RUN 1967b architect audit: REQ-1967 checklist (signal-naming / per-flow JUMP-TO / recursive-spawn guard / task-lock symmetry / 35-agent audit).",
-        "severity": "INFO",
-        "status": "READ",
-        "payload_ref": "docs/signals/po-1967b-rerun.json",
-        "po_disposition": "READ 2026-06-01T22:34Z PO: REQ_1967.md spec real+dispatch-ready (7 surfaces, 0 blockers). DEFERRED behind higher-priority FLEET-HOST-SAFETY FIX this cycle. Re-queue when host-safety closes. payload_ref po-1967b-rerun.json dangling (absent) — spec is the authoritative artifact."
-      },
-      {
         "id": "1965-COVERAGE-SWEEP",
         "ts": "2026-05-21T04:30Z",
         "from": "po",
@@ -767,30 +807,6 @@
         "severity": "CRITICAL",
         "status": "FAIL-VERDICT-RE-FIRE",
         "payload_ref": null
-      },
-      {
-        "id": "P2-G-DONE",
-        "ts": "2026-05-25T22:04Z",
-        "from": "dev-mcp-server",
-        "to": "dev-mcp-server",
-        "type": "impl_done",
-        "summary": "P2-G COMPLETE — G9 dashboard live panels. commit 7520428b. modules.json 12 barrels; live toolCount from /health.",
-        "severity": "INFO",
-        "status": "READ",
-        "payload_ref": null,
-        "po_disposition": "READ 2026-06-01T22:34Z PO: impl_done acknowledgment (G9 dashboard panels, 7520428b). No action."
-      },
-      {
-        "id": "P1-MCP-QA-20260525T1726Z",
-        "ts": "2026-05-25T17:26Z",
-        "from": "po",
-        "to": "qa",
-        "type": "review_request",
-        "summary": "GATED on P1-MCP-REBUILD. Live full-tool-suite verify. Regression tripwires: bun test >=9408/<=348; toolCount=146; sched=68.",
-        "severity": "INFO",
-        "status": "READ",
-        "payload_ref": "docs/data/pilot-status-mcp-server.json",
-        "po_disposition": "READ 2026-06-01T22:34Z PO: STALE (2026-05-25). toolCount=146 tripwire superseded by post-hygiene surface; P1-MCP-REBUILD gate moot. Skip."
       },
       {
         "id": "BRANCH-CLEANUP-1972",
@@ -844,7 +860,7 @@
         "type": "brief_complete",
         "summary": "NB-PRUNE-CONTRACT decided — 2-class write contract (OVERWRITE/APPEND) + AC-2b intra-section rule; 5 flow edits for agent-father → docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md",
         "severity": "MED",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md"
       }
     ],
@@ -890,6 +906,53 @@
         "ts": "2026-05-31T10:06Z",
         "summary": "TASKS.md 94L vs 80 cap. RESOLVED PO pruned to 78L.",
         "status": "RESOLVED"
+      },
+      {
+        "id": "SYSAUDITOR-D4-TASKS-FALSERED-20260531T0327",
+        "ts": "2026-05-31T03:27Z",
+        "from": "po",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "LOW recurring meta-fix. system-auditor D4 emits TASKS.md unreadable false-RED (#3015); docs/TASKS.md intact. Probe-design false-positive (stale fs view).",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "1967b-RERUN",
+        "ts": "2026-05-21T19:19Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "DISPATCH READY. BA 1967a APPROVED. RE-RUN 1967b architect audit: REQ-1967 checklist (signal-naming / per-flow JUMP-TO / recursive-spawn guard / task-lock symmetry / 35-agent audit).",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": "docs/signals/po-1967b-rerun.json",
+        "po_disposition": "READ 2026-06-01T22:34Z PO: REQ_1967.md spec real+dispatch-ready (7 surfaces, 0 blockers). DEFERRED behind higher-priority FLEET-HOST-SAFETY FIX this cycle. Re-queue when host-safety closes. payload_ref po-1967b-rerun.json dangling (absent) — spec is the authoritative artifact."
+      },
+      {
+        "id": "P2-G-DONE",
+        "ts": "2026-05-25T22:04Z",
+        "from": "dev-mcp-server",
+        "to": "dev-mcp-server",
+        "type": "impl_done",
+        "summary": "P2-G COMPLETE — G9 dashboard live panels. commit 7520428b. modules.json 12 barrels; live toolCount from /health.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null,
+        "po_disposition": "READ 2026-06-01T22:34Z PO: impl_done acknowledgment (G9 dashboard panels, 7520428b). No action."
+      },
+      {
+        "id": "P1-MCP-QA-20260525T1726Z",
+        "ts": "2026-05-25T17:26Z",
+        "from": "po",
+        "to": "qa",
+        "type": "review_request",
+        "summary": "GATED on P1-MCP-REBUILD. Live full-tool-suite verify. Regression tripwires: bun test >=9408/<=348; toolCount=146; sched=68.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": "docs/data/pilot-status-mcp-server.json",
+        "po_disposition": "READ 2026-06-01T22:34Z PO: STALE (2026-05-25). toolCount=146 tripwire superseded by post-hygiene surface; P1-MCP-REBUILD gate moot. Skip."
       }
     ]
   },
