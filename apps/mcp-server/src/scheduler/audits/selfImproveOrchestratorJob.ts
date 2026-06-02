@@ -127,6 +127,12 @@ export interface SelfImproveOrchestratorDeps {
   writeProposalFn?: (finding: DegradationFinding, runDate: string) => Promise<void>;
   /** Override the proposals directory (for testing). */
   proposalsDir?: string;
+  /**
+   * Override orch-state.json path for appendDashboardRow (for testing).
+   * Defaults to the real docs/data/orch/orch-state.json via appendDashboardRow default.
+   * X-1: injectable so the dry-run test sinks the signal_queue write to a temp file.
+   */
+  orchStatePath?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -385,6 +391,7 @@ export async function runSelfImproveOrchestrator(
     const runDate = todayUtc();
     const runDatetime = nowIso();
     const proposalsDir = deps?.proposalsDir;
+    const orchStatePath = deps?.orchStatePath; // undefined = use real path (production)
 
     for (const f of survivingDegradationFindings) {
       // C-5 isolation: doc-write failure must NOT abort the pipeline above
@@ -413,7 +420,8 @@ export async function runSelfImproveOrchestrator(
 
             const proposalPath = `docs/improvement-proposals/${fields.id}.md`;
             const summary = `${f.signal_type} accuracy ${f.detection_class.toLowerCase()}`;
-            await appendDashboardRow(fields.id, runDatetime, summary, proposalPath);
+            // orchStatePath: injectable for dry-run/test (X-1); undefined = real production path
+            await appendDashboardRow(fields.id, runDatetime, summary, proposalPath, orchStatePath);
 
             logger.info(
               `[selfImproveOrchestratorJob] proposal doc written: ${fields.id}`,
