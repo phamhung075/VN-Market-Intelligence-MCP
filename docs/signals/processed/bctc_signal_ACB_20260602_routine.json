@@ -1,0 +1,32 @@
+{
+  "ticker": "ACB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Retail and SME lending, bancassurance cross-sell",
+  "customer": "Urban middle-class borrowers, SME working-capital clients in Vietnam",
+  "ops": "NI=4,320ty VND; Net Revenue=6,989ty; Assets=1,031,000ty; Equity=98,751ty. EY=12.82% (+7.82pp vs deposit 5.00% — CHEAP). PB=1.3 (-18% vs sector median). ROE=17.6% above sector 16.7%. Rate-sensitive banking under TIGHTENING + FII_OUTFLOW_RISK headwind. OCF=0 (bank extraction artifact — ESC-3 E4 Block Rule applied). Confidence=38% (10th consecutive impaired cycle).",
+  "mgmt": "No QoQ/YoY comparison available (single period in system). Foreign flow +0 vs sector +3K (YEU HON nganh — persistent 10 cycles).",
+  "valuation_verdict": "CHEAP",
+  "ey_spread_pp": 7.82,
+  "pe": 7.8,
+  "pb": 1.3,
+  "roe_pct": 17.6,
+  "deposit_rate_pct": 5.0,
+  "rate_sensitive_headwind": true,
+  "regime": "TIGHTENING",
+  "carry_regime": "FII_OUTFLOW_RISK",
+  "extraction_confidence": 0.38,
+  "esc_flags": {
+    "ESC-1": false,
+    "ESC-2": false,
+    "ESC-3": "SKIPPED_BANK_E4",
+    "ESC-4": false,
+    "ESC-5": false
+  },
+  "signal_id": 4638,
+  "cycle_id": "20260602-0000",
+  "emitted_at": "2026-06-02T00:10:00Z"
+}

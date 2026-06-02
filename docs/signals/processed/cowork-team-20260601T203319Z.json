@@ -1,0 +1,22 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-01T20:30:00Z",
+    "tick_id": "2026-06-01T20:30:00Z",
+    "drift_min": 3,
+    "silent": true,
+    "pressure_mode": "adaptive-or-legacy(no-spawn)",
+    "dashboard_drain": {
+      "mtime_changed": true,
+      "mtime": "2026-06-01T22:24:03",
+      "cowork_spawnable_new_rows": 0,
+      "noted": "## po NEW tnb-c85-20260601T2013 (audit-handoff NEXT:po) = dev-team lane, left for dev-team drain; no cowork agent spawn requested"
+    },
+    "matched": [],
+    "won": []
+  },
+  "priority": "low",
+  "createdAt": "2026-06-01T20:33:19Z"
+}

@@ -1,0 +1,26 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "20260601T221819Z",
+  "payload": {
+    "tick_id": "22:15:00Z",
+    "drift_min": 3,
+    "mode": "legacy",
+    "silent": true,
+    "osc_cutover": {
+      "commit": "4fb46f68",
+      "note": "OSC-2/3 cutover landed this tick — DASHBOARD.md RETIRED, drain re-pointed to docs/data/orch/orch-state.json .signal_queue; flow already re-pointed (Step 0a line 28, dev_queue_depth line 533). Prior DASHBOARD mtime-gate mechanics now OBSOLETE."
+    },
+    "signal_queue_drain": {
+      "source": "orch-state.json .signal_queue",
+      "rows_total": 20,
+      "cowork_addressed_new": 1,
+      "cowork_spawnable_new": 0,
+      "noted": "tnb-c85-20260601T2013 (to:po, audit-handoff from tran-ngoc-bau) left NEW for PO/dev-team drain — dispatcher cannot spawn po, did not mark READ"
+    },
+    "matched": [],
+    "won": []
+  }
+}

@@ -1,0 +1,146 @@
+{
+  "schema": "price_anomaly_v1",
+  "generated_at": "2026-06-02T16:00:00Z",
+  "dish_window": "eod",
+  "cycle_id": "20260602-1600",
+  "tickers": [
+    {
+      "code": "NVL",
+      "price": 14.200,
+      "daily_change_pct": -6.89,
+      "yoy_change_pct": null,
+      "volume": 26810000,
+      "vs_avg_pct": 340,
+      "rsi": null,
+      "sentiment": "bearish — Cổ phiếu Novaland nằm sàn, chứng khoán giảm 6 phiên liên tiếp",
+      "insider_activity": "no activity",
+      "brief_action": "Reduce — sector distress",
+      "regime_flag": "FII_OUTFLOW_RISK",
+      "anomaly": true,
+      "anomaly_reason": "Real estate sector panic; -6.89% largest daily loss; 3.4x volume spike; news mentioning 6-session decline"
+    },
+    {
+      "code": "HSG",
+      "price": 12.100,
+      "daily_change_pct": -2.81,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "bearish — Ngành Thép giảm đồng loạt",
+      "insider_activity": "no activity",
+      "brief_action": "Watch — sector pressure",
+      "regime_flag": "FII_OUTFLOW_RISK",
+      "anomaly": true,
+      "anomaly_reason": "Steel sector decline -2.81%; multi-sector bearish regime; USD strengthening pressures materials"
+    },
+    {
+      "code": "CTG",
+      "price": 33.850,
+      "daily_change_pct": -2.03,
+      "yoy_change_pct": null,
+      "volume": 1686900,
+      "vs_avg_pct": 291,
+      "rsi": null,
+      "sentiment": "bearish — Ngành Ngân hàng giảm đồng loạt",
+      "insider_activity": "no activity",
+      "brief_action": "Hold — FII outflow pressure",
+      "regime_flag": "FII_OUTFLOW_RISK",
+      "anomaly": true,
+      "anomaly_reason": "Banking sector decline -1.53% avg; carry spread -0.33pp risk; 2.9x volume spike on CTG"
+    },
+    {
+      "code": "GAS",
+      "price": 82.200,
+      "daily_change_pct": -2.38,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "bearish — Oil price neutral, but sector rotation risk",
+      "insider_activity": "no activity",
+      "brief_action": "Watch — sector rotation",
+      "regime_flag": "FII_OUTFLOW_RISK",
+      "anomaly": true,
+      "anomaly_reason": "Oil & gas sector down -2.40%; USD strength pressures commodity prices; carry regime unfavorable"
+    },
+    {
+      "code": "FPT",
+      "price": 74.800,
+      "daily_change_pct": 2.61,
+      "yoy_change_pct": null,
+      "volume": 1736800,
+      "vs_avg_pct": 291,
+      "rsi": null,
+      "sentiment": "bullish — Tech sector resilience",
+      "insider_activity": "no activity",
+      "brief_action": "Buy on dip — tech resilience",
+      "regime_flag": "NEUTRAL",
+      "anomaly": true,
+      "anomaly_reason": "FPT +2.61% diverges from bearish sector; tech outperforms amid FII rotation; 2.9x volume; counter-trend strength"
+    },
+    {
+      "code": "VCB",
+      "price": 61.600,
+      "daily_change_pct": -0.96,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "bearish — Ngành Ngân hàng giảm đồng loạt",
+      "insider_activity": "no activity",
+      "brief_action": "Hold — watch FII flows",
+      "regime_flag": "FII_OUTFLOW_RISK",
+      "anomaly": false,
+      "anomaly_reason": null
+    },
+    {
+      "code": "BID",
+      "price": 41.700,
+      "daily_change_pct": -0.48,
+      "yoy_change_pct": null,
+      "volume": null,
+      "vs_avg_pct": null,
+      "rsi": null,
+      "sentiment": "bearish — Ngành Ngân hàng giảm đồng loạt",
+      "insider_activity": "no activity",
+      "brief_action": "Hold — sector pressure",
+      "regime_flag": "FII_OUTFLOW_RISK",
+      "anomaly": false,
+      "anomaly_reason": null
+    },
+    {
+      "code": "ACB",
+      "price": 25.100,
+      "daily_change_pct": 0.80,
+      "yoy_change_pct": null,
+      "volume": 3309710,
+      "vs_avg_pct": 207,
+      "rsi": null,
+      "sentiment": "neutral — Banking sector mixed",
+      "insider_activity": "no activity",
+      "brief_action": "Hold — watch for support",
+      "regime_flag": "FII_OUTFLOW_RISK",
+      "anomaly": false,
+      "anomaly_reason": null
+    }
+  ],
+  "market_regime": {
+    "carry_regime": "FII_OUTFLOW_RISK",
+    "dxy_signal": "USD_STRENGTHENING",
+    "yield_status": "FAIRLY_VALUED",
+    "investment_tier": "VN_DIRECT"
+  },
+  "sector_summary": {
+    "bearish": [
+      "real_estate (-1.89% avg, NVL -6.89% anomaly)",
+      "steel (-1.34% avg, HSG -2.81%)",
+      "banking (-1.25% avg, CTG -2.03%)",
+      "oil_gas (-2.40% avg, GAS -2.38%)"
+    ],
+    "neutral": [
+      "tech (+1.61% avg, FPT +2.61% counter-trend)"
+    ]
+  },
+  "notes": "EOD 2026-06-02: VN market closed 16:00 UTC. Banking sector decline driven by FII outflow risk (carry spread -0.33pp). Real estate panic (NVL -6.89%, 6-session losing streak). Tech outperformer (FPT +2.61%, counter-trend). Steel sector decline amid USD strength (DXY pressure). All major sectors except tech show negative sentiment under carry regime shift. Chef to consume this signal at 08:37 UTC EOD dish."
+}

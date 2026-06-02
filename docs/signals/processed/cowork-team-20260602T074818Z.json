@@ -1,0 +1,13 @@
+{
+  "tick_id": "2026-06-02T07:45:00Z",
+  "emitted_at": "2026-06-02T07:48:18Z",
+  "from": "cowork-team",
+  "silent": true,
+  "drift_min": 3,
+  "matched_slots": [],
+  "won_slots": [],
+  "exit_reason": "no_slots_matched",
+  "pressure_mode": "n/a_silent",
+  "signal_backlog": 0,
+  "notes": "SILENT tick — no cron-matched slots at nominal 07:45Z. Drain: 0 NEW rows. head=idle. chef-intraday last in-market window ~08:13Z."
+}

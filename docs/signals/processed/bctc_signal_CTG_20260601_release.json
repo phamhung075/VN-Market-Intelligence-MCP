@@ -1,0 +1,18 @@
+{
+  "ticker": "CTG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "release",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "extraction_confidence": null,
+  "product": "Corporate and retail banking, project finance, trade finance, public sector lending",
+  "customer": "State-owned enterprises, large corporates, retail borrowers, public sector",
+  "ops": "Filed 2026-06-01 (today) — extraction lag: get_bctc_full returns no data yet. Release analysis deferred to next cycle.",
+  "mgmt": "CTG PE 7.8, PB 1.5, ROE 21% from sector comparison; full BCTC analysis pending extraction",
+  "cycle_id": "20260601-2100",
+  "signal_id": null,
+  "note": "NEW ĐÃ NỘP detected this cycle. Extraction not yet available. Will re-process as release ticker in c010 (00:00 UTC slot).",
+  "emitted_at": "2026-06-01T21:05Z"
+}

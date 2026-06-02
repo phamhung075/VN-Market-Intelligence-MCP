@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "tick_id": "21:00:00Z",
+    "drift_min": 3,
+    "mode": "legacy",
+    "silent": false,
+    "dashboard_drain": {
+      "mtime_changed": false,
+      "mtime": "2026-06-01T22:24:03"
+    },
+    "matched": [
+      "bctc-analyst-slot-3"
+    ],
+    "won": [
+      "bctc-analyst-slot-3"
+    ],
+    "spawned": [
+      {
+        "slot": "bctc-analyst-slot-3",
+        "agent": "bctc-analyst",
+        "agentId": "acb4ce09d064f9413"
+      }
+    ]
+  },
+  "priority": "low",
+  "createdAt": "20260601T210320Z"
+}

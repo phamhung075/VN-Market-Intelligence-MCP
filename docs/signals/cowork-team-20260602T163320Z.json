@@ -1,0 +1,1 @@
+{"ts":"2026-06-02T16:33:20Z","tick_nominal":"2026-06-02T16:30:00Z","drift_min":3,"classification":"SILENT","reason":"no_cron_match","matcher_slots":[],"head_status":{"status":"in_progress","active":"BAL-1d-DEV"},"new_signal_rows":0,"new_noncowork_noted":["cwk-20260602T1610Z->agents-architect"],"dev_queue_depth":15,"signal_backlog":40,"spawns":0}

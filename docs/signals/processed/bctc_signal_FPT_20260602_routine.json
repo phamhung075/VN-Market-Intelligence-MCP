@@ -1,0 +1,41 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu), digital transformation",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers, university students (FPT Edu)",
+  "ops": "Revenue=12,480ty (-38.3% QoQ — seasonal Q1 dip; prior Q=20,226ty). NI=2,477ty. Gross margin=34.0%, Net margin=19.8%. CRITICAL: OCF=-2,847,814ty VND vs NI=+2,477ty — OCF/NI=-1.15 — divergence_ratio=2.15 — ESC-3 ACTIVE 10th consecutive cycle (c001-c010). Structural cash conversion failure persists.",
+  "mgmt": "FPT +1.8% session vs sector +0.8% (MANH HON nganh). ROE=28.3% vs sector 10.6% (significantly above). No Opus deep-dive possible in Sonnet model — PO must schedule Opus sub-agent for flow/deep-dive-opus.md.",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pp": 2.25,
+  "pe": 13.8,
+  "pb": 3.6,
+  "roe_pct": 28.3,
+  "deposit_rate_pct": 5.0,
+  "rate_sensitive_headwind": false,
+  "regime": "TIGHTENING",
+  "carry_regime": "FII_OUTFLOW_RISK",
+  "extraction_confidence": 0.81,
+  "esc_flags": {
+    "ESC-1": false,
+    "ESC-2": false,
+    "ESC-3": true,
+    "ESC-4": false,
+    "ESC-5": false
+  },
+  "esc_3_detail": {
+    "ocf_vnd_millions": -2847813.72,
+    "net_profit_vnd_millions": 2476800,
+    "ocf_ni_ratio": -1.15,
+    "divergence_ratio": 2.15,
+    "consecutive_cycles": 10,
+    "cycles_range": "c001-c010",
+    "status": "CRITICAL_OVERDUE"
+  },
+  "signal_id": 4639,
+  "cycle_id": "20260602-0000",
+  "emitted_at": "2026-06-02T00:10:00Z"
+}

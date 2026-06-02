@@ -1,0 +1,21 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "20260602T034839Z",
+  "payload": {
+    "tick_id": "03:45:00Z",
+    "drift_min": 3,
+    "mode": "legacy",
+    "silent": true,
+    "signal_queue_drain": {
+      "rows_total": 23,
+      "cw_addressed": 8,
+      "cw_new": 1,
+      "new_note": "arc-nb-prune-contract to:po — PO lane, left NEW, no dispatcher action"
+    },
+    "matched": [],
+    "won": []
+  }
+}

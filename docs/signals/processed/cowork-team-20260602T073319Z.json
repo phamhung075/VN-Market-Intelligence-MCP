@@ -1,0 +1,13 @@
+{
+  "tick_id": "2026-06-02T07:30:00Z",
+  "emitted_at": "2026-06-02T07:33:19Z",
+  "from": "cowork-team",
+  "silent": true,
+  "drift_min": 3,
+  "matched_slots": [],
+  "won_slots": [],
+  "exit_reason": "no_slots_matched",
+  "pressure_mode": "n/a_silent",
+  "signal_backlog": 0,
+  "notes": "SILENT tick — no cron-matched slots at nominal 07:30Z. Drain: 0 NEW rows. head=idle. No self-lockout shadow (LEADER-SELFLOCK fixed b5296672)."
+}

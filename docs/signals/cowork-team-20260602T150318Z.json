@@ -1,0 +1,22 @@
+{
+  "ts": "2026-06-02T15:03:18Z",
+  "tick_nominal": "15:00",
+  "drift_min": 3,
+  "classification": "WON",
+  "pressure_mode": "legacy",
+  "matched_slots": ["bctc-analyst-slot-1"],
+  "won_slots": ["bctc-analyst-slot-1"],
+  "leader_lock": {"claimed": true, "stolen": true},
+  "calendar_status": "closed",
+  "new_signal_rows": 0,
+  "head_status": "idle",
+  "dev_queue_depth": 14,
+  "vn_index": 1826.47,
+  "regime": "FII_OUTFLOW_RISK",
+  "agent_outcomes": {
+    "bctc-analyst-slot-1": "EXECUTED — STATUS COMPLETE, log 1209, mixed mode. 5 tickers (CTG release=DATA_INSUFFICIENT cover-letter-only 3rd cycle; ACB CHEAP; FPT FAIR; DHG/EIB DATA_INSUFFICIENT PUB-5 impairment). Signals #4708 ACB + #4709 FPT -> alert-commander; ESC-3 row bca-20260602T1506Z -> dev-team; 6 signal/orch files written. E2 guard PASSED (15:06 outside 02-08 window)."
+  },
+  "notes": "Legacy mode: pressure-state ~3h stale at match time. bctc-analyst self-appended ESC-3 (bca-20260602T1506Z, to dev-team) re BAL-1d-DEV impairment + FU-BCTC-TOOL-PARAMS — dev lane, not cowork-routed.",
+  "last_fired": "2026-06-02T15:06:30Z",
+  "spawns": 1
+}

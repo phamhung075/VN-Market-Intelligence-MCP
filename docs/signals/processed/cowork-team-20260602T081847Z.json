@@ -1,0 +1,16 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-02T08:18:47Z",
+  "tick_nominal": "08:15",
+  "drift_min": 3,
+  "classification": "SILENT",
+  "pressure_mode": "adaptive",
+  "matched_slots": ["chef-intraday"],
+  "won_slots": [],
+  "silent": true,
+  "exit_reason": "cron_matched_but_cadence_skipped",
+  "detail": "chef-intraday cron 13 2-8 matched (hour 8) but adaptive cadence skipped: elapsed 3531s (~59min) < 14400s (4h) since last_fired 2026-06-02T07:19:30Z. No leader lock, no spawn.",
+  "leader_lock": null,
+  "spawns": [],
+  "last_fired_advanced": false
+}

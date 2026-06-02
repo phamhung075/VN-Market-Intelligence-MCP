@@ -1,0 +1,12 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "audit-handoff",
+  "payload": "docs/handoffs/tnb-audit-latest.md",
+  "priority": "high",
+  "createdAt": "2026-06-01T20:13:00Z",
+  "cycle": "c85",
+  "overall": "NEEDS_ATTENTION",
+  "direction": "STABLE-WATCH",
+  "summary": "c85 audit: morning dish FAILED (no_self_abort violation, agent-father fixed same tick), EOD 2/6 (macro-down degraded), Evening 3.5/6. New finding F7 (HIGH, DONE-PENDING-LIVE-VERIFY). Structural gaps F1-F6 persist. 0 auto-cures by TNB. pipeline_degraded=TRUE (morning miss). Full handoff at payload."
+}

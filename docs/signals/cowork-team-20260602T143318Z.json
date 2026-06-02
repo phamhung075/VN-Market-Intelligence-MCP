@@ -1,0 +1,12 @@
+{
+  "ts": "2026-06-02T14:33:18Z",
+  "tick_nominal": "14:30",
+  "drift_min": 3,
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "matcher_slots": [],
+  "head_status": "in_progress:BAL-1c-DEV",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 14,
+  "spawns": 0
+}

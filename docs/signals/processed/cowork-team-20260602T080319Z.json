@@ -1,0 +1,16 @@
+{
+  "tick_id": "2026-06-02T08:00:00Z",
+  "emitted_at": "2026-06-02T08:08:30Z",
+  "from": "cowork-team",
+  "silent": false,
+  "drift_min": 3,
+  "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+  "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+  "exit_reason": "won_but_spawn_degraded",
+  "pressure_mode": "legacy",
+  "signal_backlog": 0,
+  "leader_lock": {"claimed": true, "stolen": true},
+  "agent_outcome": "SPAWN_FAILED_api_529_overloaded",
+  "last_fired_advanced": false,
+  "notes": "WON 2 gatherers (legacy mode) at nominal 08:00Z. Leader+both tokens won, heartbeat ok, snapshot+pressure-state written (VN-Index 1826.47 closing near lows, FII_OUTFLOW_RISK). Step 5 spawn FAILED: both news-scout + market-watcher returned API 529 Overloaded with 0 tokens / 0 tool_uses on BOTH initial AND retry (4 attempts total, ~200s each) — broad Anthropic server-side saturation, NOT a code/flow defect. Degraded gracefully: tokens released, last_fired NOT advanced (slots stay due so 12:00Z gatherer window re-runs them). No MARKET publish or stop-loss at stake (post-close offhours gatherers). No defect escalation (transient infra). Market data still captured in cycle-snapshot via dispatcher's own macro read."
+}

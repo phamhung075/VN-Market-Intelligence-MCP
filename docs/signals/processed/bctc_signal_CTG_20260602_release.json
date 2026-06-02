@@ -1,0 +1,23 @@
+{
+  "ticker": "CTG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "release",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "State-owned commercial banking — corporate, SME, and retail lending; government bond underwriting",
+  "customer": "State-owned enterprises, large corporates, SMEs, retail depositors; significant government-linked loan book",
+  "ops": "DATA_INSUFFICIENT — get_bctc_full returns no data (2nd consecutive cycle post-filing 2026-06-01). Extraction pipeline lag (filed same day as c009 slot-3 — ~2-3h lag expected, now >24h). Cash flow: all zeros (extraction artifact). Sector: PE=7.8 vs median 9.1 (NGANG BANG), PB=1.5 vs 1.6 (NGANG BANG), ROE=21.1% TREN MEDIAN. Price -0.72% vs sector -0.4% (YEU HON nganh). Release R3 comparison table: DEFERRED pending data.",
+  "mgmt": "CTG filed Q1-2026 on 2026-06-01. Extraction lag exceeds 24h — dev team must investigate pipeline blocker. Banking sector broad drop (-0.97% session). FII_OUTFLOW_RISK regime headwind.",
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "regime": "TIGHTENING",
+  "carry_regime": "FII_OUTFLOW_RISK",
+  "extraction_confidence": 0,
+  "sector_pe": 7.8,
+  "sector_pb": 1.5,
+  "sector_roe": 21.1,
+  "filing_date": "2026-06-01",
+  "deferred_to": "c011",
+  "cycle_id": "20260602-0000",
+  "emitted_at": "2026-06-02T00:10:00Z"
+}

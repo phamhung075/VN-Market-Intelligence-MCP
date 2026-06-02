@@ -1,0 +1,15 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-02T09:18:27Z",
+  "tick_nominal": "09:15",
+  "drift_min": 3,
+  "classification": "SILENT",
+  "pressure_mode": "adaptive",
+  "matched_slots": [],
+  "won_slots": [],
+  "silent": true,
+  "exit_reason": "no_cron_match",
+  "leader_lock": null,
+  "spawns": [],
+  "last_fired_advanced": false
+}

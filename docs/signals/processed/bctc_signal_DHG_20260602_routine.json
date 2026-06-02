@@ -1,0 +1,18 @@
+{
+  "ticker": "DHG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Pharmaceutical manufacturing, OTC and prescription drugs for Vietnamese market",
+  "customer": "Retail pharmacies, hospitals, clinics — domestic Vietnamese healthcare market",
+  "ops": "DATA_INSUFFICIENT — get_bctc_full returns no data (9th consecutive cycle). Filed 2026-05-24. PDF extraction pipeline blocker unresolved.",
+  "mgmt": "No data available. BCTC-TABLE sprint required to unblock DHG/EIB extraction.",
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "regime": "TIGHTENING",
+  "carry_regime": "FII_OUTFLOW_RISK",
+  "extraction_confidence": 0,
+  "cycle_id": "20260602-0000",
+  "emitted_at": "2026-06-02T00:10:00Z"
+}

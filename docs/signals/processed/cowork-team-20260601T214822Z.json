@@ -1,0 +1,21 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "20260601T214822Z",
+  "payload": {
+    "tick_id": "21:45:00Z",
+    "drift_min": 3,
+    "mode": "legacy",
+    "silent": true,
+    "dashboard_drain": {
+      "mtime_changed": true,
+      "mtime": "2026-06-01T23:39:54",
+      "cowork_spawnable_new_rows": 0,
+      "note": "mtime bump is dev-team/agent-father lane (CW-FLOW-STEP478 in-progress); cowork sections tnb/unified/alert all empty-or-terminal; left for owning team"
+    },
+    "matched": [],
+    "won": []
+  }
+}

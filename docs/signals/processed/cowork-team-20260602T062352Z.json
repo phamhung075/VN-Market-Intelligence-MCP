@@ -1,0 +1,31 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260602T062352Z",
+    "matched_slots": ["chef-intraday"],
+    "won_slots": ["chef-intraday"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {"chef-intraday": "cron"},
+    "cadence_minutes": {"chef-intraday": null},
+    "last_fired_timestamp": "2026-06-02T06:23:52Z",
+    "last_fired_slots": ["chef-intraday"],
+    "last_fired_write_errors": null,
+    "leader_lock": {"claimed": true, "stolen": true},
+    "spawn_note": "first spawn (agentId a4957b5a) misfired: unified-agent misread CLAUDE.md 'router only' as self, refused to run, asked questions (no external action). corrective re-spawn (a0777f49) executed chef.md -> SILENT (published-marker published:chef-intraday:2026-06-02 already claimed 02:21Z; 0 new convergence clusters). no duplicate MARKET post.",
+    "agent_outcome": "SILENT_already_published"
+  },
+  "priority": "low",
+  "createdAt": "20260602T062352Z"
+}

@@ -1,0 +1,18 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-02T08:53:08Z",
+  "tick_nominal": "08:45",
+  "drift_min": 3,
+  "classification": "WON",
+  "pressure_mode": "legacy_slot_null_policy",
+  "matched_slots": ["chef-eod"],
+  "won_slots": ["chef-eod"],
+  "silent": false,
+  "exit_reason": "won_published",
+  "leader_lock": {"claimed": true, "stolen": true},
+  "spawns": [{"slot": "chef-eod", "agent": "unified-agent", "outcome": "PUBLISHED_eod_dish", "subagent_tokens": 61213, "tool_uses": 27}],
+  "agent_outcome": "PUBLISHED",
+  "marker_defect": "worker released persistent published-marker at Step 8; dispatcher restored 28h ttl (signal cowork-team-20260602T085308Z to po)",
+  "last_fired_advanced": true,
+  "vn_index_close": 1826.47
+}

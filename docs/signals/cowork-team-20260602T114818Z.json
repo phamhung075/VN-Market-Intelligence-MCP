@@ -1,0 +1,14 @@
+{
+  "ts": "2026-06-02T11:48:18Z",
+  "tick_nominal": "11:45",
+  "drift_min": 3,
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "matcher_slots": [],
+  "head_status": "ready-for-rebuild",
+  "new_signal_rows": 1,
+  "noted_rows": [
+    {"id": "po-bctc-analytics-layer-20260602T1056Z", "to": "agents-architect", "lane": "maintenance", "action": "still NEW; maintenance flow owns it"}
+  ],
+  "spawns": 0
+}

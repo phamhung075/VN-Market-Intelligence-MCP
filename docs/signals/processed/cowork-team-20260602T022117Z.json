@@ -1,0 +1,45 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "20260602T022117Z",
+  "payload": {
+    "fire_time": "20260602T022117Z",
+    "tick_id": "02:15:00Z",
+    "drift_min": 3,
+    "silent": false,
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "errors": [],
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "last_fired_timestamp": "2026-06-02T02:21:07Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "signal_queue_drain": {
+      "rows_total": 22,
+      "cowork_addressed": 7,
+      "cowork_addressed_new": 1,
+      "cowork_spawnable_new": 0,
+      "note": "1 NEW to:po arc-brief-esc-opus left NEW for PO/dev lane"
+    }
+  }
+}

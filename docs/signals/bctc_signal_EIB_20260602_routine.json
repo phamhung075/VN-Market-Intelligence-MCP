@@ -1,0 +1,18 @@
+{
+  "ticker": "EIB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Corporate banking, trade finance, retail deposits (Eximbank — trade-oriented bank)",
+  "customer": "Import/export SMEs, corporate trade finance clients, retail deposit base",
+  "ops": "PUB-5 gate active (conf 31% < 50%) — data UNSERVABLE via get_bctc_full. BEQ-10 confirmed 37 rows committed (NII=1,380 ty, NP=269 ty, assets=269,958 ty, balance EXACT) but bank B02-TCTD serving path broken (BAL-1b-DEV fix live but PUB-5 still blocks). 10th consecutive DATA_INSUFFICIENT cycle.",
+  "mgmt": "EIB PE 37.7 (sector 9.1) — ROE 4% vs median 16.7% (heavily discounted). EIB -1.64% today (banking sector broad drop). Serving path fix requires confidence re-refine or BAL-1d-DEV PUB-5 threshold adjustment.",
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "data_quality": "PUB5_BLOCKED_31PCT",
+  "esc_flags": {"ESC1": false, "ESC2": false, "ESC3": false, "ESC4": false, "ESC5": false},
+  "e3_cache": "MISS",
+  "cycle_id": "20260602-1800",
+  "emitted_at": "2026-06-02T18:05:00Z"
+}

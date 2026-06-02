@@ -1,0 +1,68 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-02T12:03:25Z",
+    "tick_nominal": "12:00",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "leader_lock": {
+      "claimed": true,
+      "stolen": true
+    },
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null
+    },
+    "agent_outcomes": {
+      "news-scout-offhours": "EXECUTED — 3 signals fired (#4692 Minh Phu agri catalyst, #4693 FII carry-drain banking, #4694 NVL sell-off), notebook cycle 30, 62726 tokens / 27 tool_uses",
+      "market-watcher-offhours": "SPAWNED — thin narrative self-report, 6 tool_uses / 20745 tokens; likely outside-window probe->exit at 19:06 VN; no error returned"
+    },
+    "noted_signal_rows": [
+      {
+        "id": "po-bctc-analytics-layer-20260602T1056Z",
+        "to": "agents-architect",
+        "lane": "maintenance",
+        "action": "left NEW; not cowork-routable"
+      }
+    ],
+    "last_fired_timestamp": "2026-06-02T12:06:30Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "vn_index": 1826.47,
+    "regime": "FII_OUTFLOW_RISK"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-02T12:03:25Z",
+  "_processed": {
+    "fingerprint": "e0b360bb504a1ea52c01f24b3757483e0208966a3fab00698c782f43dcc611c3",
+    "processedAt": "2026-06-02T18:39:08Z",
+    "processedBy": "dev-team",
+    "result": "routed-to-maintenance"
+  }
+}

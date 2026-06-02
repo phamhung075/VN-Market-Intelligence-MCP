@@ -1,0 +1,13 @@
+{
+  "ts": "2026-06-02T15:18:27Z",
+  "tick_nominal": "15:15",
+  "drift_min": 3,
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "matcher_slots": [],
+  "head_status": "in_progress:FU-BCTC-TOOL-PARAMS (dev-mcp-server lane)",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 14,
+  "spawns": 0,
+  "note": "bctc-analyst ESC-3 absorbed by dev-team (FU-BCTC-TOOL-PARAMS get_cash_flow quarters fix); dev lane, not cowork"
+}

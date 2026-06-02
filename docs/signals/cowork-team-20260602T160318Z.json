@@ -1,0 +1,26 @@
+{
+  "ts": "2026-06-02T16:03:18Z",
+  "tick_nominal": "16:00",
+  "drift_min": 3,
+  "classification": "WON",
+  "pressure_mode": "legacy",
+  "matched_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
+  "won_slots": ["news-scout-offhours", "market-watcher-offhours", "market-watcher-eod"],
+  "leader_lock": {"claimed": true, "stolen": true, "heartbeat_expires_at": 1780418040},
+  "calendar_status": "open",
+  "head_status": "idle",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 15,
+  "vn_index": 1826.47,
+  "regime": "FII_OUTFLOW_RISK",
+  "spawns": 3,
+  "agent_outcomes": [
+    {"slot": "news-scout-offhours", "result": "RECOVERED", "detail": "first spawn (a78a9032) misfired — refused own flow via router-rule bleed, 0 pipeline work; retried with non-delegation preamble (a9d28df7) → COMPLETE, fired chain_catalyst #4716/#4717/#4718, session-log 1212"},
+    {"slot": "market-watcher-offhours", "result": "EXECUTED", "detail": "COMPLETE, 35 tickers, 5 anomalies, price_anomaly_20260602T160000Z.json, session-log 1211"},
+    {"slot": "market-watcher-eod", "result": "EXECUTED", "detail": "COMPLETE, EOD, 4 ledgers + price_anomaly_20260602T1600.json, session-log 1210"}
+  ],
+  "cross_team_routed": [
+    {"id": "cwk-20260602T1610Z", "to": "agents-architect", "type": "agent-flow-defect", "re": "news-scout self-identity guard"}
+  ],
+  "last_fired_advanced": "2026-06-02T16:09:30Z"
+}

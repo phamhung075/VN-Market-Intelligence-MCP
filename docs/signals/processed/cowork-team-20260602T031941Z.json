@@ -1,0 +1,30 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "normal",
+  "createdAt": "20260602T031941Z",
+  "payload": {
+    "tick_id": "03:15:00Z",
+    "drift_min": 3,
+    "mode": "legacy",
+    "silent": false,
+    "signal_queue_drain": {
+      "rows_total": 22,
+      "cw_addressed": 7,
+      "cw_new": 0
+    },
+    "matched": [
+      "chef-intraday"
+    ],
+    "won": [
+      "chef-intraday"
+    ],
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "due_reason": "cron",
+    "last_fired_timestamp": "2026-06-02T03:19:41Z",
+    "ac6_note": "published-marker already claimed at 02:21Z fire; agent expected to EXIT market-publish (single-publish/day)"
+  }
+}

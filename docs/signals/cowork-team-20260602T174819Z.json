@@ -1,0 +1,1 @@
+{"ts":"2026-06-02T17:48:19Z","tick_nominal":"2026-06-02T17:45:00Z","drift_min":3,"classification":"SILENT","reason":"no_cron_match","matcher_slots":[],"head_status":{"status":"in_progress","active":"FU-BCTC-HISTORY-COVERAGE"},"new_signal_rows":0,"dev_queue_depth":8,"signal_backlog":45,"spawns":0}

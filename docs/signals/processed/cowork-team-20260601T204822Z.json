@@ -1,0 +1,19 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "tick_id": "20:45:00Z",
+    "drift_min": 3,
+    "mode": "legacy",
+    "silent": true,
+    "dashboard_drain": {
+      "mtime_changed": false,
+      "mtime": "2026-06-01T22:24:03"
+    },
+    "matched": [],
+    "won": []
+  },
+  "priority": "low",
+  "createdAt": "20260601T204822Z"
+}

@@ -1,0 +1,21 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "20260602T023351Z",
+  "payload": {
+    "tick_id": "02:30:00Z",
+    "drift_min": 3,
+    "mode": "adaptive",
+    "silent": true,
+    "signal_queue_drain": {
+      "rows_total": 22,
+      "cw_addressed": 7,
+      "cw_new": 0,
+      "po_row_handled_by_dev_lane": true
+    },
+    "matched": [],
+    "won": []
+  }
+}

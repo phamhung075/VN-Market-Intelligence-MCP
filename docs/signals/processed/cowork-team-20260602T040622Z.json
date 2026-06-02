@@ -1,0 +1,50 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "20260602T040622Z",
+  "payload": {
+    "fire_time": "20260602T040622Z",
+    "tick_id": "04:00:00Z",
+    "drift_min": 3,
+    "silent": false,
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "errors": [],
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null
+    },
+    "last_fired_timestamp": "2026-06-02T04:06:10.000Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "signal_queue_drain": {
+      "rows_total": 23,
+      "cw_addressed": 8,
+      "cw_new": 1,
+      "new_note": "arc-nb-prune-contract to:po — PO lane, left NEW"
+    }
+  }
+}

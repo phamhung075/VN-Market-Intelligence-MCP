@@ -1,0 +1,11 @@
+{
+  "ts": "2026-06-02T10:33:18Z",
+  "tick_nominal": "10:30",
+  "drift_min": 3,
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "matcher_slots": [],
+  "head_status": "guard-phase-signed-off",
+  "new_signal_rows": 0,
+  "spawns": 0
+}

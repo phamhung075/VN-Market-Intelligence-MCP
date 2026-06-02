@@ -1,0 +1,109 @@
+{
+  "signal_id": "news_impact_2026_06_02_0505",
+  "agent": "news-scout",
+  "timestamp": "2026-06-02T05:05:15Z",
+  "signal_type": "news_impact",
+  "cycle": "news-scout-sentiment",
+  "market_phase": "OPEN",
+  "summary": "Sectoral divergence: real estate under heavy FII selling (-2.95% sector avg, HIGH alerts), banking weakening on carry drain (-0.97% avg), while tech strength (FPT +2.74%) offers rare bullish breadth.",
+  "macro_context": {
+    "regime": "FII_OUTFLOW_RISK",
+    "carry_spread_pct": -0.33,
+    "usdvnd": 26118,
+    "gold_usd_oz": 4542.9,
+    "brent_usd_bbl": 94.21,
+    "yield_premium_pp": 3.2
+  },
+  "findings": [
+    {
+      "category": "sector_weakness",
+      "headline": "Real Estate Sector Rout — FII Liquidation Signal",
+      "impact_score": 7.8,
+      "direction": "bearish",
+      "affected_tickers": ["VIC", "VRE", "KBC", "NVL", "TCH", "D2D", "VHM"],
+      "reasoning": "Ngành BĐS giảm -2.95% TB (VRE -3.26%, VIC -3.03%, VHM -2.56%) trên nền FII bán ròng >630 tỷ. Carry spread âm (-0.33pp) khuyến khích FII xả tài sản riskier → BĐS là nạn nhân hàng đầu.",
+      "confidence": 0.82,
+      "sources": ["price_drop_alert_HIGH", "fii_outflow_news", "carry_regime"],
+      "policy_gate": "urgent_news",
+      "note_vi": "Tập trung VIC + VRE; KBC có insider buy signal nhưng bị áp đảo bởi sector drift"
+    },
+    {
+      "category": "banking_sector",
+      "headline": "Banking Sector Soft — Carry Drain + Liquidity Withdrawal",
+      "impact_score": 6.0,
+      "direction": "bearish",
+      "affected_tickers": ["ACB", "BID", "CTG", "EIB", "MBB", "VCB", "VPB"],
+      "reasoning": "Ngành ngân hàng -0.97% TB (STB -1.47%, TPB -1.26%, TCB -1.22%). FII carry drain + USDVND cao (26118) làm áp lực lên NIM. CPI pressure từ commodity giữ SBV cứng → dòng tiền tội CPI khó có.",
+      "confidence": 0.75,
+      "sources": ["price_drop_alert_MEDIUM", "fii_outflow_news", "usdvnd_bearish"],
+      "policy_gate": "chain_catalyst",
+      "note_vi": "BID: lãi suất huy động trái chiều giữa banks → NIM squeeze lộ rõ; ACB: khối ngoại bán ròng"
+    },
+    {
+      "category": "commodity_chain",
+      "headline": "Gold Above $4,500/oz — Risk-Off Sentiment Sustained",
+      "impact_score": 6.0,
+      "direction": "bullish",
+      "affected_tickers": [],
+      "reasoning": "Vàng vượt $4,542.90/oz là tín hiệu safe-haven trên căng thẳng Mỹ-Iran. Với USDVND tăng + carry âm, dân cư VN có thêm lý do tìm nơi trú ẩn → áp lực vào ASSET. Không có watchlist precious-metal stock direct hit.",
+      "confidence": 0.79,
+      "sources": ["macro_gold_bullish", "global_news_iran"],
+      "policy_gate": "chain_catalyst",
+      "note_vi": "PNJ không có trong watchlist; vàng là tín hiệu macro không phải micro stock hit"
+    },
+    {
+      "category": "construction_positive",
+      "headline": "HPG: Industrial Park Expansion — Neutral Structural Play",
+      "impact_score": 5.0,
+      "direction": "neutral",
+      "affected_tickers": ["HPG", "HSG", "NKG", "DAG"],
+      "reasoning": "Hòa Phát khởi công KCN thứ ba Hưng Yên (mô hình công nghiệp hỗ trợ). Tích cực dài hạn nhưng thị trường hiện tại ghi neutral do sector steel trong chu kỳ down. USD/VND cao cũng là cản trở export.",
+      "confidence": 0.84,
+      "sources": ["hpg_action_news"],
+      "policy_gate": "none",
+      "note_vi": "Đây là tín hiệu micro tích cực nhưng bị che phủ bởi sentiment macro bearish thép"
+    },
+    {
+      "category": "tech_bright_spot",
+      "headline": "FPT Green — Rare Tech Strength Amid Sector Malaise",
+      "impact_score": 6.0,
+      "direction": "bullish",
+      "affected_tickers": ["FPT"],
+      "reasoning": "FPT +2.74% trong bối cảnh thị trường giảm. Tech sector đang tìm bottom; FPT dividend yield + AI upside (no direct news today) giữ bid. Capital rotation từ BĐS → defensive / growth tech là xu hướng.",
+      "confidence": 0.68,
+      "sources": ["price_strength_fpt"],
+      "policy_gate": "none",
+      "note_vi": "Không có breaking news FPT hôm nay, nhưng relative strength trong weakness là tín hiệu demand"
+    }
+  ],
+  "regime_applied": {
+    "base_regime": "FII_OUTFLOW_RISK",
+    "multipliers": {
+      "bullish_under_outflow": 0.8,
+      "bearish_under_outflow": 1.3,
+      "neutral_no_change": 1.0
+    },
+    "examples": [
+      "VIC 8/10 bullish × 0.8 = 6.4/10 (dampened by carry drain)",
+      "BĐS sector 6/10 bearish × 1.3 = 7.8/10 (amplified by FII)",
+      "HPG 5/10 neutral × 1.0 = 5/10 (no regime shift)"
+    ]
+  },
+  "pmi_check": {
+    "vietnam_mfg_pmi_status": "not_found_this_cycle",
+    "note": "PMI typically published 2-3 June. Will monitor for threshold breach (< 50 consecutive or > 52 recovery)."
+  },
+  "commodity_to_policy_chain": {
+    "brent_trend": "neutral_in_band",
+    "brent_pct_vs_prior_month": "n/a_need_prior_fetch",
+    "cpi_pressure_signal": false,
+    "note": "Brent $94.21 is neutral (within $60–$100 band). No >5% surge detected vs prior month; CPI pressure not elevated yet."
+  },
+  "hot_money_risk": false,
+  "signal_files_written": ["docs/signals/news_impact_2026_06_02_0505.json"],
+  "next_steps": [
+    "Monitor FII flows closely — if outflow continues >3 days, escalate to alert-commander as crisis_velocity",
+    "Track VIC insider buy vs sector sentiment divergence (human-confirm layer may flag)",
+    "Watch for PMI release 2-3 June; if < 50 + prior also < 50 → trigger macro chain_catalyst"
+  ]
+}

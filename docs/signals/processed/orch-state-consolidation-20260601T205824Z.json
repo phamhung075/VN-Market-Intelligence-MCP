@@ -1,0 +1,13 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "architecture_brief",
+  "status": "NEW",
+  "priority": "normal",
+  "payload": "docs/architecture-briefs/2026-06-01-orch-state-consolidation.md",
+  "summary": "ORCH-STATE-CONSOLIDATE: operator pushback on 5-surface model resolved. Recommend Option B: 3 canonical files + 1 machine projection (docs/data/orch-state.json). BLOCKING pre-req: Phase 0 schema gap fix (1837a test failing against v2 pipeline-state.json — silent latent bug). Full 6-phase plan in brief. AWAITING operator greenlight before implementation.",
+  "createdAt": "2026-06-01T20:58:24Z",
+  "blockedOn": "operator greenlight (Option B or Option C selection)",
+  "phase0_unblocked": true,
+  "phase0_description": "Fix 1837a test + tasksMdJanitorJob v2 read + smoke-task-lock + alert-commander flow — unblocked regardless of option chosen"
+}

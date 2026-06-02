@@ -1,0 +1,13 @@
+{
+  "ts": "2026-06-02T18:18:30Z",
+  "tick_nominal": "2026-06-02T18:15:00Z",
+  "drift_min": 3,
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "matcher_slots": [],
+  "head_status": "design-lane:1965+PM1974 (in_progress, next_agent=agents-architect, plan-only)",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 3,
+  "signal_backlog": 47,
+  "spawns": 0
+}

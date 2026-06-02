@@ -1,0 +1,39 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "20260602T051848Z",
+    "matched_slots": ["chef-morning"],
+    "won_slots": [],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [],
+    "silent": true,
+    "drift_min": 3,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": ["chef-intraday"],
+    "downgraded": [],
+    "due_reasons": {"chef-morning": "cron"},
+    "cadence_minutes": {"chef-morning": null},
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "exit_reason": "leader_lock_held",
+    "leader_lock": {
+      "claimed": false,
+      "holder_owner_agent": "cowork-dispatcher",
+      "holder_owner_session": "pid-1-ts-1780352133995",
+      "holder_claimed_at": "2026-06-02T05:03:42Z",
+      "holder_heartbeat_at": "2026-06-02T05:04:02Z",
+      "holder_expires_at": "2026-06-02T05:34:02Z"
+    },
+    "dropped_guaranteed_slot": "chef-morning",
+    "note": "Step 0b leader-lock held by own prior WON-tick remnant (heartbeat frozen 15min, no active peer). chef-morning guaranteed slot (cron 15 5 *) matches ONLY this window; silent-exit per flow drops today morning CHEF dish. Root-cause escalated to PO."
+  },
+  "priority": "high",
+  "createdAt": "20260602T051848Z"
+}

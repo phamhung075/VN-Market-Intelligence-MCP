@@ -1,8 +1,0 @@
-{
-  "from": "tran-ngoc-bau",
-  "to": "po",
-  "type": "bug-escalation",
-  "payload": "[tnb-audit] CRITICAL: unified-agent notebook frozen 72h+ (last entry 2026-05-22T13:13Z). 9+ expected dish slots absent (Evening 22/05 + full sets 23/05, 24/05, 25/05). Either notebook-write step broken or 9 consecutive silent-exits. Chef pipeline health unknown. Requires PO verification via get_agent_work_log(agent=unified-agent).",
-  "priority": "high",
-  "createdAt": "2026-05-25T20:13:00Z"
-}

@@ -1,0 +1,23 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "priority": "low",
+  "createdAt": "20260602T013350Z",
+  "payload": {
+    "tick_id": "01:30:00Z",
+    "drift_min": 3,
+    "mode": "legacy",
+    "silent": true,
+    "signal_queue_drain": {
+      "source": "orch-state.json .signal_queue",
+      "rows_total": 22,
+      "cowork_addressed": 7,
+      "cowork_addressed_new": 1,
+      "cowork_spawnable_new": 0,
+      "note": "NEW to:po arc-brief-esc-opus from agents-architect (ESC-OPUS-DISPATCH-SEAM brief, downstream of my 00:15Z bctc escalation) — PO/dev lane, left NEW, dispatcher does not act"
+    },
+    "matched": [],
+    "won": []
+  }
+}

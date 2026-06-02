@@ -1,8 +1,0 @@
-{
-  "from": "po",
-  "to": "ba",
-  "type": "sprint-kickoff",
-  "payload": "Sprint BCTC-LAYOUT-FIRST OPEN (user-co-authored design brainstorm, go-to-build). NEXT=ba write requirement spec (LF-BA) decomposing docs/SPRINT_GOAL.md § Sprint BCTC-LAYOUT-FIRST into docs/REQ_*.md, return to PO approval gate before architect LF-DESIGN. Two deliverables: (1) layout-first Tier 0-3 extraction replacing generic_md_table_extractor.py column-guessing; (2) geometric zone review overlay on /api/bctc-inspect (pdf-extractor emits JSON, mcp-server renders toggle). zone=multi (architect splits at pdf-extractor<->mcp-server boundary). AC-0 generic/grep-proof, privacy local-only, host sequential single-doc, DIRECT-DB arbiter, multi-doc corpus, no false-greens. Handoff: docs/handoffs/TASK_BCTC-LAYOUT-FIRST.md",
-  "priority": "high",
-  "createdAt": "2026-05-26T18:11:40Z"
-}

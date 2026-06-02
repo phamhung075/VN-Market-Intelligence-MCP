@@ -1,0 +1,15 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-01T21:15:29Z",
+  "payload": {
+    "file": ".claude/skills/self-critique/SKILL.md",
+    "line_count": 147,
+    "cap": 120,
+    "class": "skill-file",
+    "overage": 27,
+    "action_required": "prune_or_split"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "ticker": "EIB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Retail and corporate banking, international trade finance, foreign exchange",
+  "customer": "Import-export businesses, retail depositors, SME loan clients",
+  "ops": "DATA_INSUFFICIENT — get_bctc_full returns no data (9th consecutive cycle). Filed 2026-05-24. PE=37.7 in sector comparison (elevated vs sector median 9.1 — anomaly). ROE=4% significantly below sector 16.7%.",
+  "mgmt": "No BCTC data available. EIB PE=37.7 from sector comparison suggests very low earnings — requires full BCTC for confirmation. BCTC-TABLE sprint blocker.",
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "regime": "TIGHTENING",
+  "carry_regime": "FII_OUTFLOW_RISK",
+  "extraction_confidence": 0,
+  "cycle_id": "20260602-0000",
+  "emitted_at": "2026-06-02T00:10:00Z"
+}
