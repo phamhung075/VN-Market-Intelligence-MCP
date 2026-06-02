@@ -34,7 +34,7 @@ import { initBriefingsTables } from "./schema-briefings.js";
 import { initMacroTables } from "./schema-macro.js";
 import { initSystemTables } from "./schema-system.js";
 import { initBacktestingTables } from "./schema-backtesting.js";
-import { seedWatchlist, backfillBctcQ4, backfillBctcQ1_2026, migrateWatchlistThresholds } from "./seedWatchlist.js";
+import { seedWatchlist, backfillBctcQ4, backfillBctcQ1_2026, backfillBctcHistorical, migrateWatchlistThresholds } from "./seedWatchlist.js";
 
 /**
  * Default DB path — resolved to absolute path at module load time.
@@ -201,6 +201,10 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
     // Task 1782: seed Q1-2026 rows unconditionally — bypasses the month-1..4
     // gate in detectTargetQuarter() that keeps targeting Q4-2025 through April.
     backfillBctcQ1_2026(db);
+    // BCTC-HIST-SEED: seed last 8 quarters (Q3-2025 → Q4-2023) for all tickers.
+    // INSERT OR IGNORE makes this idempotent across restarts.
+    // Actual data arrives async as VPS fetch+refine pipeline drains the queue.
+    backfillBctcHistorical(db);
   }
 
   // ── Post-init migrations ───────────────────────────────────────────────────

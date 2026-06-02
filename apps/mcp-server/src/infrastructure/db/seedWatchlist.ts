@@ -187,6 +187,65 @@ export function backfillBctcQ1_2026(db: Database): void {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// backfillBctcHistorical — BCTC-HIST-SEED (Sprint BCTC-ANALYTICS-LAYER)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Walks `periodsBack` quarters backward from Q4-2025 (the established forward
+ * seed baseline) and INSERT OR IGNOREs a bctc_vps_queue row per
+ * (ticker × quarter) for every watchlist ticker.
+ *
+ * Quarter sequence produced (periodsBack=8, default):
+ *   Q3-2025, Q2-2025, Q1-2025, Q4-2024, Q3-2024, Q2-2024, Q1-2024, Q4-2023
+ *
+ * These periods were never seeded by the forward-only backfillBctcQ4 /
+ * backfillBctcQ1_2026 functions. The hsx.vn mediafiles source has PDFs back
+ * to at least Q1-2022 (confirmed live); HNX/UPCOM tickers use VPS Playwright
+ * on-demand discovery. Seeds only — does NOT trigger any fetch.
+ *
+ * Idempotency:
+ *   - INSERT OR IGNORE on the UNIQUE(action_code, period_year, period_quarter)
+ *     constraint means a second call inserts 0 rows.
+ *   - Rows already in any status (pending/done/failed/url_not_found) are left
+ *     completely untouched.
+ *
+ * IMPORTANT: this function seeds queue rows only. Actual BCTC data for these
+ * quarters arrives asynchronously as the VPS fetch+refine pipeline drains the
+ * queue (~10 rows/run at 6h cadence). Corpus depth improves over ~1-2 weeks
+ * after this seed is live — NOT immediately.
+ *
+ * @param db          Bun SQLite database instance.
+ * @param periodsBack Number of quarters to seed before Q4-2025. Default = 8.
+ */
+export function backfillBctcHistorical(
+  db: Database,
+  periodsBack = 8,
+): void {
+  // Baseline: the earliest quarter already covered by the forward seeds.
+  // Walk backward from the quarter before Q4-2025.
+  let year = 2025;
+  let quarter = 4; // numeric 1..4
+
+  const stmt = db.prepare(`
+    INSERT OR IGNORE INTO bctc_vps_queue
+      (action_code, period_year, period_quarter, status, attempts)
+    SELECT w.code, ?, ?, 'pending', 0
+    FROM watchlist w
+  `);
+
+  for (let i = 0; i < periodsBack; i++) {
+    // Step one quarter back
+    quarter -= 1;
+    if (quarter === 0) {
+      quarter = 4;
+      year -= 1;
+    }
+    const quarterLabel = `Q${quarter}` as const;
+    stmt.run(year, quarterLabel);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // migrateWatchlistThresholds — Task 1869b-seed
 // ─────────────────────────────────────────────────────────────────────────────
 
