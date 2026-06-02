@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "Cycle DONE. Reconciled interrupted BCTC cycle: BEQ-4b (2c3f7529) + BEQ-4a (0523b435+13dc04b9) both LIVE & raw-verified (FPT YoY withheld; CTG/VNM/EIB/DIG net_profit null; DONE tickers intact); mcp-server rebuilt 08:23Z; 84 tests green. BCTC-EXTRACT-QUALITY remaining: BEQ-2 (refine backfill, unblocks BEQ-3) + BEQ-3 (column audit, recurring-bug->architect). Also open: RE-CAP-1, FU-CHEF-MARKER-INFLOW. Next PO triage.",
-    "wip": 0,
+    "status": "blocked",
+    "active_task_id": "BCTC-EXTRACT-QUALITY/BEQ-QA",
+    "next_agent": "fixer",
+    "next_action": "QA CHANGES_REQUESTED on BEQ-5..8b gate (2026-06-02T10:10Z). BLOCKING: PI3-bctc-inspect-reopen2.test.ts 9 fail — setupTestDb() DDL missing refine_status column (added by BEQ-4a 0523b435, cbdad2d6 fixed PI3-bctc-inspect.test.ts but missed reopen2). Fix: add `refine_status TEXT NOT NULL DEFAULT 'PENDING'` to reopen2 setupTestDb() DDL. BEQ-specific 32/32 pass; tsc 0 errors; behavioral proof clean; live DB 12 PENDING (container NOT yet rebuilt). Sprint stays OPEN pending fixer fix + re-QA.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T08:26:16Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-02T10:10:00Z",
+    "updated_by": "qa"
   },
   "dashboard_section_cache": {
     "section_name": "po",

@@ -1,17 +1,6 @@
 # QA — Notebook
 
 
-## cycle-182 · 2026-06-01 · SELF-CRITIQUE-DETECT Phase-1 QA gate — PASS
-
-Sprint: SELF-CRITIQUE-DETECT | Gate: static read (PLAN-ONLY, no code run, no merges)
-Verdict: PASS — C1 and C5 both fully satisfied. Shadow pilot CLEARED TO ARM pending operator greenlight.
-Report: reports/TASK_REPORT_SELF-CRITIQUE-QA.md
-
-C1 (pilot-scope gate): allowlist exactly {news-scout, dev-team} confirmed at SKILL.md L18; gate is FIRST in SC-0 (L17-19) before daily-cap glob (L22); non-pilot cowork agents exit at SC-0 before SC-1; dev-team explicitly listed in allowlist.
-C5 (commit safety): SC-5 explicit paths only + "NEVER -A or ." text present; commit-mutex Step 4 release-on-every-exit-path enforced; invocation contract (own_paths + intent via wiring pattern) matches commit-mutex schema; owner_agent/ttl_seconds supplied by skill itself as designed.
-S1-S5 spot-check: all invariants present in both brief §5 and SKILL.md footer, consistent, no drift.
-
----
 
 ## cycle-183 · 2026-06-02T05:27Z · A-01b-4 not_deployed fix — PASS
 
@@ -60,3 +49,23 @@ Sprint: FE-REROUTE | Task: FE-RR-QA-1 | Verdict: PASS | Commits: mcp-server 1f27
 **Anti-mock**: priceBatchHandler.ts "placeholders" = SQL parameterized `?` markers — correct security practice, not fake data. Zero Math.random / fabricated values in all 5 new handler files.
 
 VERDICT: PASS — all 7 acceptance criteria met. Real DB-backed data via gateway re-route; TA honest-503; news honest-empty; 5 containers; SSR renders real values.
+
+---
+
+## cycle-185 · 2026-06-02T10:10Z · BCTC-EXTRACT-QUALITY BEQ-5..8b — CHANGES_REQUESTED
+
+Sprint: BCTC-EXTRACT-QUALITY Phase-2 | Gate: BEQ-5/6/7/8/8b/cbdad2d6 | Verdict: CHANGES_REQUESTED
+
+**Commits verified on main:** 1da34f8d(BEQ-5) a8cbe91d(BEQ-6) 6b2f72b2(BEQ-7) 1f726140(BEQ-8) 8845e5d6(BEQ-8b) cbdad2d6(PI3 stale-test fix) — all present.
+
+**BEQ-specific tests: 32/32 pass** (BEQ-SECTION-GUARD 10, BEQ-BANK-DISCRIM 3, BEQ-4a-extension 3, BEQ-4a-pending-docs-guard 4, BEQ-4b 4, BEQ-2 4, BEQ-3 4). 0 fail.
+
+**BLOCKING: PI3-bctc-inspect-reopen2.test.ts: 9 fail / 16 pass.** Root: LIST_SQL in bctcInspectHandler.ts selects `refine_status` (added in BEQ-4a commit 0523b435), but reopen2 test uses a hand-crafted minimal schema missing that column. Handler throws SQLite error -> 500 -> body.count/items undefined. cbdad2d6 fixed PI3-bctc-inspect.test.ts (uses initFinancialReportsTables full schema) but MISSED reopen2. Fix: add `refine_status TEXT DEFAULT 'PENDING'` to reopen2 setupTestDb() DDL.
+
+**tsc: 0 errors. DDD: clean. Security: clean.**
+
+**Behavioral proof (tests, not dry-run — container not rebuilt):** balance-sheet-only (VNM codes 100/280/300/400) -> status=SKIPPED refine_status=PARTIAL; BEQ-8 FPT codes -> notApplicable=[]; ACB Roman codes -> notApplicable includes gross_profit. All DB writes verified via in-test sqlite query.
+
+**Live DB:** 12 tickers PENDING (direct container bun query). Container NOT rebuilt — source-verified only. Live flip to PARTIAL pending ops rebuild.
+
+**Action:** fixer adds `refine_status TEXT NOT NULL DEFAULT 'PENDING'` to setupTestDb() DDL in PI3-bctc-inspect-reopen2.test.ts. Then re-run: expect 25/25 pass.
