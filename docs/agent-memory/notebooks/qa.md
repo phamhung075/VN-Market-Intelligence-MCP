@@ -1,68 +1,6 @@
 # QA — Notebook
 
 
-## cycle-173 · 2026-05-31 · NB-PRUNE-1 — NB-PRUNE-FIX — APPROVED
-
-Sprint: NB-PRUNE-FIX | Task: NB-PRUNE-1 | Verdict: APPROVED | Commit: 7166db01 (skill-only)
-Fixtures: Session 5871L/69s→344L/3s (AC-5 guard fires); ISO-ts 316L/30s→27L/3s ≤200L; c-fmt 166L/12s→8L/3s ≤200L.
-Preamble preserved: ISO+c-format confirmed. Exactly-3 no-prune: confirmed. Fenced ## over-count: theoretical only (0 live). TODO po/developer contradiction: deferred (po.md=26L). Skill 104L ≤120L cap. NB-PRUNE-1 → DONE in TASKS.md.
-
----
-
-## cycle-179 · 2026-06-01T19:35Z · TSH-6/TSH-1/TSH-5 LIVE RAW GATE
-
-Sprint: TSH (Tool-Surface-Hygiene) | Tasks: TSH-6, TSH-1 surface re-verify, TSH-5 stat reconcile | Date: 2026-06-01
-
-**TSH-6 (kinh-dich honest-omit) — PASS**
-AC1/AC5 live: `get_market_snapshot` (no codes) ends at "Generated: 2026-06-01T19:34:44Z" — NO trailing "Kinh Dịch: Chưa đủ dữ liệu" line. Stock path (codes:["FPT"]) same: clean output, no fallback. :5005 unreachable → omit block confirmed in production.
-AC3 code-review 3 sites all correct: marketTools.ts appendMarketHexagram/appendStockHexagram + analysis.ts appendStockHexagramHttp — each catch(error){logger.warn(real cause); return baseOutput;} — zero bare catch{}. 200-path data-short guard (!reading.hexagram||!reading.name) still emits honest VN line. No silent-swallow.
-AC4 tsc: 0 errors (bun tsc --noEmit exit 0, no output).
-
-**TSH-1 surface re-verify — PASS (get_market_hexagram ABSENT, count=154)**
-`tools/list` via node SSE client: LIVE_TOOL_COUNT=154, HAS_GET_MARKET_HEXAGRAM=false. KD tools present: explain_hexagram, get_hexagram_history, get_kinhdich_reading, run_hexagram_backtest (5th = get_transition_probabilities also present). /health toolCount=154 is NOT a stale cache — it IS the correct post-TSH-1 count (pre-TSH-1 was 155, TSH-1 removed 1 → 154). TSH-1 is genuinely done.
-
-**TSH-5 stat reconcile — PASS (already done, no edit needed)**
-project-stats.json already shows toolCount=154 (both top-level and infrastructureStatus) from commit 643d4619. Live count matches. No edit required.
-
-## cycle-180 · 2026-06-01T20:00Z · AUD-ND-1 PLAN-ONLY gate — PASS-STATIC+FLOWWALK
-
-Sprint: AUD-ND-1 | Commit verified: d30f9221 | Gate: static + flow-walk (read-only)
-
-**A. Static — 3 files**
-flow/main.md L4: `## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)` immediately after top heading (L2), before any capability/step text. 5 forbidden-ops lines L9-13 present. Positive contract (signal→DASHBOARD→BUG→EXIT) L15-19 present. Incident anchor L24-26 present (2 incidents). PASS.
-init.md L72-82: `plan_only_invariant:` under `constraints:` with `enforced: true`, `forbidden_ops:` 5 entries, `on_critical_or_warn:`, `violation_action:`, `anchor:`. Indentation consistent YAML. PASS.
-tools/package/system-auditor.md L15 Bash row: allowlist + forbidden list verbatim. L137 `## Constraints & Permissions` PLAN-ONLY line present. PASS.
-.claude/agents/system-auditor.md: line 1 = `---` (frontmatter intact). PASS.
-
-**B. Flow-walk**
-B1 Destructive authored steps: NONE found. All bash blocks in flow are read-only (docker ps, docker inspect, docker stats --no-stream, docker logs, docker exec sqlite3/curl/ls/which/tesseract, git log, date -u). No docker stop/kill/rm/restart/compose authored anywhere. Brief claim verified.
-B2 All CRITICAL/WARN paths: Tier-1 L107-121 `Emit per failure` → post_agent_signal + send_telegram(bug) + DASHBOARD.md. Tier-2 L173-189 `Emit per stale source` → same pattern. Tier-3 L387-403 `Emit per failing check` → same. L482-485 error cases: `report as CRITICAL anomaly → EXIT after Telegram BUG alert`. Zero mutation branch found.
-B3 Invariant positioning: L4 (immediately after L2 heading), BEFORE Step 0a at L46, BEFORE any tier dispatch at L58, BEFORE any check that could produce a CRITICAL finding. Unmissable — LLM reading the flow sees PLAN-ONLY before any decision point. PASS.
-B4 Allowlist vs flow needs: all Bash in flow (docker ps/inspect/stats/logs/exec, curl, git log, date -u, wc -l) are within the allowlist. No conflict found. Detection capability intact.
-
-**C. Caps/hygiene**
-flow/main.md: 494L actual vs 120L cap, stale size-justification comment claims 175L. Pre-existing violation (file was 469L before this commit per agent-father note). Do NOT fix in this dispatch — invariant block must stay in-flow. Follow-up required (separate hygiene task).
-
-LIVE-INJECTION PROVEN-RED: DEFERRED. Requires controlled off-hours ops-supervised run. NOT part of this gate.
-
----
-
-## cycle-181 · 2026-06-01T21:05Z · FBT-QA APPROVED — FRONTEND-BCTC-TAB
-
-Sprint: FRONTEND-BCTC-TAB | Task: FBT-QA | Verdict: APPROVED | Report: reports/TASK_REPORT_FBT-QA.md
-
-Gate coverage (all 5 PASS):
-- G1 PDF: VCB Q1 2025, 16,601,060 bytes, magic=25504446, MD5 identical :3001/:3000.
-- G1 page-image: FPT Q1 2026 page 3, 273,384 bytes, magic=89504e47, MD5 identical.
-- G2: 7 sub-paths (docs/page-window/ocr/table/md/zones/flags) — status + body MD5 identical across origins. zones 404 relayed verbatim.
-- G3: /api/bctc-eval/{doc}/page/1 → 200, overall_status=yellow, MD5 identical on 2 docs.
-- G4: POST /correct via :3001 → HTTP 200, bctc_human_corrections row id=5 confirmed in bun:sqlite direct read, reset to original value. Content-Type relay proven via 400 Zod error on bad schema.
-- G5: zero mcp-server files in commit 80f2911b; mcp-server image sha256:098bb09e unchanged; :3000 viewer 200/103,876 bytes; const BASE="" confirmed.
-
-Key lesson: page-image returns 404 for all but FPT/ACB Q1 because PNGs are rasterized on-demand and only those two exist in /data/bctc-page-images volume. The 404 is correct behavior, not a proxy fault — both origins return identical 82-byte body.
-
----
-
 ## cycle-182 · 2026-06-01 · SELF-CRITIQUE-DETECT Phase-1 QA gate — PASS
 
 Sprint: SELF-CRITIQUE-DETECT | Gate: static read (PLAN-ONLY, no code run, no merges)
@@ -90,3 +28,35 @@ Sprint: A-01 (Dashboard two data planes) | Task: A-01b-4 | Verdict: PASS
 - `docker start vn-market-intelligence-mcp-macro-indicators-1` → restored. POST-RESTORE health: `status:"ok"`, `macro:"ok"`. Final container count: 5 (all healthy). None of the 7 not_deployed services were started at any point.
 
 Both clauses PASS. No critical false-green detected. Fix correctly limits suppression to the known not_deployed set only.
+
+---
+
+## cycle-184 · 2026-06-02T08:10Z · FE-RR-QA-1 — FE-REROUTE Phase 1 — PASS
+
+Sprint: FE-REROUTE | Task: FE-RR-QA-1 | Verdict: PASS | Commits: mcp-server 1f27d188, api-gateway c7f19ea3
+
+**Container count: 5** (mcp-server, api-gateway, frontend, macro-indicators, mcp-gateway). Zero of the 7 not-deployed services started.
+
+**KD readings (per-ticker, not constant)**
+- FPT: `{"hexagram":39,"name":"Kiển","trend":"BẤT LỢI","signal":"BAN (tiêu cực)","confidence":0.475,"timestamp":"2026-06-02 05:47:03"}`
+- VCB: `{"hexagram":8,"name":"Tỷ","trend":"TRUNG TÍNH","signal":"THAN TRONG (tích cực)","confidence":0.475}`
+- Differ: hex 39 vs 8, signal negative vs positive. Per-ticker DB data confirmed.
+
+**DB spot-check (anti-mock)**
+- `kinhdich_readings WHERE stock_code='FPT' ORDER BY timestamp DESC LIMIT 1` → hexagram_number=39, trading_signal="BAN (tiêu cực)", confidence=0.475, timestamp="2026-06-02 05:47:03". Matches endpoint exactly. No Math.random, no placeholder data in handler files.
+
+**KD market aggregate**: `{"hexagram":29,"name":"Tập Khảm","derived":true}` — derived field present.
+
+**Price history VNINDEX**: 4 rows, dates 2026-05-28→2026-06-02, close range 1836.1–1863.67 (plausible VN-Index). FPT: 5 rows, 2026-05-28→2026-06-02, close 71200–74900.
+
+**Batch prices FPT/VCB/HPG**: FPT close=74900 changePct=+2.74 direction=up; VCB close=62100 changePct=-0.16 direction=down; HPG close=23850 changePct=-0.83 direction=down. Real per-ticker data.
+
+**News Reuters**: `{"source":"reuters","count":0,"articles":[]}` — honest empty (no reuters rows in DB yet), HTTP 200, not 502, not fabricated.
+
+**TA honest-503**: POST /ta/ta/indicators → HTTP 503 `{"error":"not_deployed","service":"ta","detail":"Service \"ta\" is not deployed..."}`. Not 502, not fabricated indicators.
+
+**Frontend SSR** (localhost:3001/dashboard/analysis?stock=FPT): stream contains hexagram 39 "Kiển" for FPT, hex 29 "Tập Khảm" for market, VNINDEX=1836.1, FPT close=74900, all 30 watchlist tiles with real prices. Zero "502" error string in loader data. TA field present but data from mcp agent_signals (not TA service). No "Không tải được" error banner found in stream data.
+
+**Anti-mock**: priceBatchHandler.ts "placeholders" = SQL parameterized `?` markers — correct security practice, not fake data. Zero Math.random / fabricated values in all 5 new handler files.
+
+VERDICT: PASS — all 7 acceptance criteria met. Real DB-backed data via gateway re-route; TA honest-503; news honest-empty; 5 containers; SSR renders real values.
