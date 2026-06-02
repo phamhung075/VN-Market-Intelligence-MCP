@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-02T17:30:00Z",
+  "_updated_at": "2026-06-02T18:26:00Z",
   "_updated_by": "agent-father",
   "head": {
     "status": "in_progress",
@@ -1658,7 +1658,7 @@
         "type": "brief_complete",
         "summary": "1965-COVERAGE-SWEEP: watchlist rotation brief ready — LRC sweep floor for news-scout+market-watcher; coverage-state.json SSOT + Step 0-sweep in 3 flow files",
         "severity": "MED",
-        "status": "NEW",
+        "status": "DONE",
         "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md"
       },
       {
@@ -1669,7 +1669,7 @@
         "type": "brief_complete",
         "summary": "PM-COMMIT-BOUNDARY-1974: commit-discipline class root-cause brief ready — commit-boundary skill + per-agent zone table + pm mutex step; absorbs FU-ARCHITECT-MUTEX-BINDING+FU-AGENT-FATHER-ORCH-SCOPE",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "DONE",
         "payload_ref": "docs/architecture-briefs/2026-06-02-commit-boundary-discipline.md"
       }
     ],
