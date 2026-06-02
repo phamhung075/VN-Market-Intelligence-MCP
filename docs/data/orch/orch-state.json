@@ -1525,6 +1525,27 @@
           ]
         },
         "note": " | 2026-06-02T15:10Z dev-team ROUTER: did NOT re-spawn opus (deep-dive already DONE a38e14ee conf0.35; re-run=symptom). Root cause CONFIRMED LIVE: get_cash_flow ticker=FPT quarters=8 returns ONLY Q1/2026 single period, quarters param silently ignored. Routed real fix FU-BCTC-TOOL-PARAMS to dev-mcp-server. guard_key left claimed (analyst wont re-fire until TTL). ESC-3 closes at analyst layer once fix lands."
+      },
+      {
+        "id": "cwk-20260602T1610Z",
+        "ts": "2026-06-02T16:10:00Z",
+        "from": "cowork-dispatcher",
+        "to": "agents-architect",
+        "type": "agent-flow-defect",
+        "summary": "news-scout subagent refused to execute its own flow on the standard trigger prompt (\"run docs/agents/news-scout/flow/main.md  slot=news-scout-offhours\") — it mis-read the ROUTER-scoped CLAUDE.md rule (\"never run a flow yourself / always delegate\") as binding on itself and returned a meta/refusal response with zero pipeline work (no fetch, no signals, no notebook). Recovered same tick by re-spawning WITH an explicit \"you ARE the agent, do not delegate\" preamble → ran cleanly, fired signals #4716/#4717/#4718. market-watcher handled the identical-form prompt fine, so the vulnerability is news-scout-specific (likely its flow/init lacks a self-identity guard at the top). Durable fix: add a self-identity guard line to news-scout flow main.md (and audit other cowork agent flows) so the standard trigger prompt never triggers router-refusal. Non-blocking — off-hours news cycle recovered this tick.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "agent": "news-scout",
+          "slot_id": "news-scout-offhours",
+          "tick": "2026-06-02T16:00:00Z",
+          "failed_first_attempt_agentId": "a78a90320e295e40c",
+          "recovered_agentId": "a9d28df7f3c18b660",
+          "recovery_method": "explicit non-delegation preamble",
+          "fix_proposal": "self-identity guard at top of news-scout flow main.md; audit sibling cowork agent flows"
+        },
+        "note": null
       }
     ],
     "archive": [
