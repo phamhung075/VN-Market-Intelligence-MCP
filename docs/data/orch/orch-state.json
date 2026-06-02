@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-02T01:21Z",
-  "_updated_by": "agents-architect",
+  "_updated_at": "2026-06-02T10:17:15Z",
+  "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "Cron 10:09Z DONE. Resumed peer-left ops handoff: rebuilt mcp-server (10:13Z SHA ea781a7a, host-safe 5→5), BEQ-5/6/7/8/8b LIVE+router-verified (38 tests green; 7 section-incomplete reports→PARTIAL, no garbage; /docs net_profit=null for PARTIAL). Board reconciled: BEQ-2/3/5/6/7/8/8b DONE. REMAINING: BEQ-9/10 (bctc-analyst re-refine PARTIAL reports→capture IS/CF, off-market gated). Backlog: FU-PARTIAL-SCALAR-SERVE (high), BCTC-ZERO-ROW-REFETCH. Also ready: FU-CHEF-MARKER-INFLOW (agent-father, brief 2026-06-02-chef-marker-inflow.md).",
+    "status": "guard-phase-signed-off",
+    "active_task_id": "BCTC-EXTRACT-QUALITY/BEQ-9",
+    "next_agent": "bctc-analyst",
+    "next_action": "GUARD PHASE BEQ-1..8b+BEQ-QA SIGNED OFF by PO 2026-06-02T10:17:15Z (PO-live-verified raw: false-DONE eliminated, banks discriminated, PARTIAL garbage suppressed live). Sprint stays OPEN for REMEDIATION: BEQ-9 (agentic refine VNM-Q4/FPT-Q4/HPG/SHB) + BEQ-10 (OCR-verify DHG/EIB/VEA/VCB then conditional refine) — BOTH OFF-HOSE-gated, owner bctc-analyst. Residual fetch: BCTC-CTG-ATTACHMENT-FETCH + BCTC-REFETCH-ZERO-ROW(DGC/DIG/VCB).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T10:18:31Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-02T10:17:15Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -56,8 +56,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T10:18:31Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-02T10:17:15Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-EXTRACT-QUALITY",
@@ -224,8 +224,9 @@
             ],
             "status": "TODO",
             "size": "S",
-            "zone": "apps/mcp-server/",
-            "note": "Rescope brief 2026-06-02-bctc-extract-quality.md. Re-run refine/OCR for the 7 PARTIAL reports to capture income_statement+cash_flow rows → promote PARTIAL→DONE with real scalars (overwrites residual misattributed values). bctc-analyst off-market gated."
+            "zone": "read-only-analysis",
+            "note": "REMEDIATION (real data recovery). PO-LIVE-CONFIRMED 2026-06-02T10:17:15Z: VNM-Q4/FPT-Q4/HPG/SHB are PARTIAL with table rows present (VNM 143/SHB 154/HPG 91/FPT-Q4 79) but garbage/zero scalars. They are NOT in any automated refine path — backfill_bctc_scalars only processes rows=0 PENDING and SKIPS rows-present reports; nothing re-runs agentic refine. Guards correctly hold them PARTIAL (net_profit suppressed live, no garbage served) so they are NOT silently stuck in the false-DONE sense, but recovery is UNOWNED until this task. Re-run refine_bctc_md per ticker to re-derive scalars from existing rows → promote PARTIAL→DONE. MUST run OFF-HOSE (HOSE-hours embargo, 16GB host). Verify post-refine via /api/bctc-inspect/docs net_profit non-null + balance check.",
+            "gate": "OFF-HOSE-ONLY"
           },
           {
             "task_id": "BEQ-10",
@@ -237,8 +238,9 @@
             ],
             "status": "TODO",
             "size": "S",
-            "zone": "apps/mcp-server/",
-            "note": "Rescope brief. Confirm whether missing IS/CF is OCR-extraction gap vs source-PDF gap; dispatch re-fetch (zero-row) or re-refine accordingly."
+            "zone": "read-only-analysis",
+            "note": "REMEDIATION tier-2. PO-LIVE-CONFIRMED 2026-06-02T10:17:15Z: DHG(PARTIAL 329 rows rev=0.000009 garbage), EIB(PARTIAL 64 rows np=1), VEA(PARTIAL 201 rows np=-0.000051) have rows but bad scalars — verify OCR quality first, then refine. VCB×2 are rows=0 PENDING (net_profit_api_bridge=8.6M present but ZERO table rows) → needs RE-EXTRACTION not refine; route VCB to BCTC-REFETCH-ZERO-ROW. OFF-HOSE only.",
+            "gate": "OFF-HOSE-ONLY"
           }
         ]
       },
@@ -1064,6 +1066,11 @@
         "id": "BCTC-ZERO-ROW-REFETCH",
         "summary": "5 reports have 0 table_rows (VCB-2025Q1, VCB-2025Q4, DGC-2025Q4, DIG-2025Q4) — cover-letter/empty PDFs, stay PENDING. Need VPS re-fetch/re-extraction. CTG-2026Q1 tracked separately (BCTC-CTG-ATTACHMENT-FETCH).",
         "priority": "normal"
+      },
+      {
+        "id": "BCTC-REFETCH-ZERO-ROW",
+        "summary": "Re-fetch + re-extract the zero-table-row PENDING BCTC reports — DGC(2025-Q4), DIG(2025-Q4), VCB(2025-Q1, 2025-Q4). backfill_bctc_scalars SKIPS these (0 parseable rows). VCB has net_profit_api_bridge but no extracted rows. CTG tracked separately (BCTC-CTG-ATTACHMENT-FETCH, cover-letter-only PDF). Zone dev-vps-crawls; owner ops/dev-vps. PO-live-confirmed 2026-06-02T10:17Z dry_run skipped:5.",
+        "priority": "normal"
       }
     ],
     "archive": []
@@ -1594,6 +1601,26 @@
         "success_metric": "All 13 routes: 200 + real data OR honest empty/stale/not-deployed; ZERO mock/placeholder/hardcoded data; dashboard.services top badge honest (OK with 7 grey not-deployed) AND a real killed deployed service still shows red.",
         "status": "OPEN",
         "note": "OPERATOR GOAL set 2026-06-02T04:58:02Z. Scoping via FE-AUDIT-1. A-01b plan preserved from PO triage (SSOT at project.infrastructure.docker.host_runtime_set; short-key<->compose-name map gotcha; enum gains not_deployed excluded from overall-status)."
+      },
+      {
+        "sprint_id": "BCTC-EXTRACT-QUALITY",
+        "vision": "BCTC data layer is analysis-grade: no report is ever marked refined-DONE without complete sections, banks are correctly discriminated from balance-sheet-only filings, and no garbage/zero scalar (false net_profit, mislabeled revenue) is ever served. Recoverable reports get real data via agentic refine; unrecoverable ones honestly say so.",
+        "scope_in": [
+          "BEQ-1 SPIKE root-cause (3 symptoms pinned to layers)",
+          "BEQ-4a/4b serving guards (null-on-PENDING /docs + withhold YoY)",
+          "BEQ-5/6/7 section-completeness guards (no false PENDING→DONE)",
+          "BEQ-8/8b bank discriminator fix + null-on-PARTIAL net_profit",
+          "BEQ-2/3 backfill tool + ScalarAggregate 20-field audit",
+          "BEQ-9/10 agentic data recovery for PARTIAL/zero-row reports (OFF-HOSE)"
+        ],
+        "scope_out": [
+          "BCTC-LAYOUT-FIRST re-architecture (separate sprint)",
+          "CTG attachment fetch (BCTC-CTG-ATTACHMENT-FETCH)",
+          "FU-BCTC-TOOL-PARAMS code-vs-ticker caller trap"
+        ],
+        "success_metric": "GUARD PHASE: no false-DONE possible (backfill dry_run balance_violations:0), banks discriminated, incomplete sections→PARTIAL, no garbage scalar served live. REMEDIATION PHASE: VNM/FPT-Q4/HPG/SHB recovered to DONE with real scalars; DHG/EIB/VEA/VCB OCR-verified then recovered or honestly re-fetched.",
+        "status": "OPEN",
+        "note": "GUARD PHASE (BEQ-1..8b + BEQ-QA) SIGNED OFF by PO 2026-06-02T10:17:15Z — all guards PO-live-verified raw (not relayed badges): backfill dry_run done:0/skipped:5/balance_violations:0; /api/bctc-inspect/docs net_profit=null for all 7 PARTIAL reports + 2 PENDING, real values only for DONE (FPT-Q1/ACB); 3 markers grep-confirmed in running container (ops 13f8c872, image sha256:ea781a7a4890). Sprint REMAINS OPEN for REMEDIATION PHASE (BEQ-9/10, OFF-HOSE-gated, bctc-analyst). Residual fetch backlog: BCTC-CTG-ATTACHMENT-FETCH + BCTC-REFETCH-ZERO-ROW (DGC/DIG/VCB)."
       }
     ]
   }
