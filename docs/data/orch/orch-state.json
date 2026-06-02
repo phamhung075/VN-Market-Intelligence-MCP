@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "FRONTEND-CORRECTNESS in progress. SHIPPED: FE-FIX-MOCKTEXT bcba080d (mock/stale text removed). NEXT (queued, ready): A-01b-1..4 (dashboard.services/vps false-RED — architect contract then dev-api-gateway+dev-frontend+qa, needs ops rebuild) + FE-REROUTE-DESIGN (real KD/price/news via new mcp-server REST endpoints + api-gateway re-route of not-deployed paths). PO drives next: recommend A-01b first (most-visible fix), then FE-REROUTE.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FE-REROUTE-DESIGN",
+    "next_agent": "architect",
+    "next_action": "A-01b DONE+verified live (dashboard false-RED fixed). Now FE-REROUTE: architect designs new mcp-server REST endpoints (kinh-dich reading/market, prices history/batch, news) + api-gateway re-route of not-deployed paths -> then dev-mcp-server + dev-api-gateway + dev-frontend -> ops rebuild -> qa.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T05:08:03Z",
+    "updated_at": "2026-06-02T05:29:48Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T05:08:03Z",
+    "_updated_at": "2026-06-02T05:29:48Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -213,10 +213,10 @@
             "type": "sprint-task",
             "owner": "dev-frontend",
             "depends": "A-01-EXPECTED-SET",
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/frontend/ + apps/api-gateway/",
-            "note": "residual flagged by agent-father during A-01; closes the dashboard 7-false-RED plane (project_dashboard_two_data_planes) | DECOMPOSED 2026-06-02 into FRONTEND-CORRECTNESS A-01b-1..4 (operator goal); see that sprint"
+            "note": "residual flagged by agent-father during A-01; closes the dashboard 7-false-RED plane (project_dashboard_two_data_planes) | DECOMPOSED 2026-06-02 into FRONTEND-CORRECTNESS A-01b-1..4 (operator goal); see that sprint | DONE 2026-06-02 via FRONTEND-CORRECTNESS A-01b-1..4; ops rebuilt api-gateway+frontend; QA live PROVEN-RED PASS"
           }
         ]
       },
@@ -578,10 +578,10 @@
             "type": "SPRINT-S",
             "owner": "architect",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "docs/architecture-briefs/ + docs/data/",
-            "note": "PO plan: enum gains not_deployed (Go+TS); name-map mcp<->mcp-server ta<->technical-analysis stock<->stock-price kinh-dich<->kinh-dich-service alert<->alert-engine pdf<->pdf-extractor rag<->rag-service news<->news-fetch macro<->macro-indicators; SSOT at project.infrastructure.docker.host_runtime_set; fix _ssot self-ref drift; not_deployed EXCLUDED from overall-status. Route via architect (dev-core code blueprint) NOT agents-architect."
+            "note": "PO plan: enum gains not_deployed (Go+TS); name-map mcp<->mcp-server ta<->technical-analysis stock<->stock-price kinh-dich<->kinh-dich-service alert<->alert-engine pdf<->pdf-extractor rag<->rag-service news<->news-fetch macro<->macro-indicators; SSOT at project.infrastructure.docker.host_runtime_set; fix _ssot self-ref drift; not_deployed EXCLUDED from overall-status. Route via architect (dev-core code blueprint) NOT agents-architect. | DONE f6cec28c"
           },
           {
             "task_id": "A-01b-2",
@@ -591,10 +591,10 @@
             "depends": [
               "A-01b-1"
             ],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/api-gateway/",
-            "note": "compute.go StatusNotDeployed neutral; registry.go/services.go classify from host_runtime_set; go test scenario host-minimal-stack=ok, 1 deployed down=NOT ok"
+            "note": "compute.go StatusNotDeployed neutral; registry.go/services.go classify from host_runtime_set; go test scenario host-minimal-stack=ok, 1 deployed down=NOT ok | DONE 803df875 — go test green, host-minimal-stack+real-outage scenarios pass"
           },
           {
             "task_id": "A-01b-3",
@@ -604,10 +604,10 @@
             "depends": [
               "A-01b-1"
             ],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/frontend/",
-            "note": "health.ts enum + dashboard.services.tsx badge; default-missing must map to gateway value not blanket down"
+            "note": "health.ts enum + dashboard.services.tsx badge; default-missing must map to gateway value not blanket down | DONE c779917f — 228 tests, anti-false-green A+B"
           },
           {
             "task_id": "A-01b-4",
@@ -618,10 +618,10 @@
               "A-01b-2",
               "A-01b-3"
             ],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "qa",
-            "note": "PROVEN-RED: docker stop mcp-server -> dashboard red + top non-ok; restart -> ok. Filter must not blanket-mute."
+            "note": "PROVEN-RED: docker stop mcp-server -> dashboard red + top non-ok; restart -> ok. Filter must not blanket-mute. | PASS 201f8a34 — LIVE PROVEN-RED: macro stop->degraded, restore->ok; 5 containers; /health overall ok + 7 not_deployed"
           },
           {
             "task_id": "FE-FIX-MOCKTEXT",
@@ -767,8 +767,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T04:59:16Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-02T05:18Z",
+    "_updated_by": "cowork-team",
     "rows": [
       {
         "id": "architects-fb-gate-brief-20260602T0409Z",
@@ -1013,6 +1013,17 @@
         "severity": "HIGH",
         "status": "NEW",
         "payload_ref": "docs/data/orch/orch-state.json#BCTC-EXTRACT-QUALITY"
+      },
+      {
+        "id": "cowork-team-20260602T051848Z",
+        "ts": "2026-06-02T05:18Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect_report",
+        "summary": "HIGH dispatcher defect: cowork flow Step 0b re-claims the leader-lock every tick, but a held+unexpired lock returns claimed:false even to its OWN prior owner (renewal is via task_heartbeat, NOT task_claim). So for the full 1800s TTL (~2 ticks) after any WON tick the same dispatcher is locked out and silent-exits. Guaranteed single-window slots falling in that shadow are silently DROPPED. TODAY: chef-morning (guaranteed, cron 15 5 * 1-5) dropped — 05:03Z WON tick (news-scout-sentiment) heartbeated leader to 05:34Z; chef-morning only matches the 05:15 nominal window (05:18Z tick) -> claimed:false -> silent-exit -> morning CHEF MARKET dish missed for 2026-06-02. Evidence: holder heartbeat frozen at 05:04Z (no active peer). FIX (root-cause, PLAN-ONLY via architect): Step 0b must detect own-held lock (current_holder.owner_agent==cowork-dispatcher) and task_heartbeat-then-proceed, instead of treating self as a peer; OR only re-claim when holder expired/differs. Published-marker gate already protects against double-publish, so heartbeat-and-proceed is safe.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260602T051848Z.json"
       }
     ],
     "archive": [
