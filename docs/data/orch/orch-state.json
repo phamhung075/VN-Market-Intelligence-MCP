@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T17:30:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "EI-P2-3",
-    "next_agent": "ops",
-    "next_action": "BATCH-3 cont: EI-P2-1+2 DONE-LIVE-VERIFIED (assertion boots clean, data_env on 5 tables). Dispatched EI-P2-3 docker-compose.dev.yml dev-stack port 3099 (ops, config-only NO prod rebuild). Then EI-P2-QA ENV-GUARD-1 sweep. toolCount corrected 158->156 (live boot-log authoritative). GOAL=complete all task.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "BATCH-3 ENV-ISOLATION-P2 COMPLETE: EI-P2-1+2 LIVE-VERIFIED (startup assertion boots clean + data_env 5 tables), EI-P2-3 docker-compose.dev.yml (port 3099, dev-isolated), EI-P2-QA PASS (all 5 checks, 30 tests). 3 non-blocking follow-ups -> backlog (FU-EI-P2-COV-1/COV-2/DEV-VOLUME). NEXT BATCH-4: FU-BCTC-HISTORY-COVERAGE SPIKE (dev-mcp-server — only 2q FPT cash-flow in corpus, investigate ingest depth). Then B5 SIG-FOLLOWUP-DRYRUN, B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. Design-lane (separate): 1965-COVERAGE-SWEEP + PM-COMMIT-BOUNDARY-1974. GOAL=complete all task.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T17:42:47Z",
+    "updated_at": "2026-06-02T17:48:02Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T17:42:47Z",
+    "_updated_at": "2026-06-02T17:48:02Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -708,8 +708,9 @@
             "type": "sprint-task",
             "owner": "ops",
             "depends": "EI-P2-2",
-            "status": "IN_PROGRESS",
-            "size": "S"
+            "status": "DONE",
+            "size": "S",
+            "note": " | DONE 2026-06-02T17:50Z commit ee09f359. docker-compose.dev.yml: APP_ENV=dev, DB_PATH=/app/data/market.dev.db, port 3099, container vn-market-mcp-dev, mem 2g. compose config VALID. NOT started (SOP: prod+dev never simultaneous). EI-P2-1 assertion passes for dev pair (verified)."
           },
           {
             "task_id": "EI-P2-QA",
@@ -717,8 +718,9 @@
             "type": "sprint-task",
             "owner": "qa",
             "depends": "EI-P2-3",
-            "status": "TODO",
-            "size": "S"
+            "status": "DONE",
+            "size": "S",
+            "note": " | PASS 2026-06-02T17:50Z (qa sweep, all 5 checks). Assertion matrix 30/30 tests incl key isolation guard (dev+prodDB->THROW); prod container Up healthy (no boot regression); data_env migration idempotent + live on 5 tables; stamping via currentDataEnv() not literal (3 sites spot-checked); dev-stack double-isolated (no volume mount + assertion). 3 non-blocking follow-ups queued."
           }
         ]
       },
@@ -1290,6 +1292,39 @@
         "id": "BCTC-REFETCH-ZERO-ROW",
         "summary": "Re-fetch + re-extract the zero-table-row PENDING BCTC reports — DGC(2025-Q4), DIG(2025-Q4), VCB(2025-Q1, 2025-Q4). backfill_bctc_scalars SKIPS these (0 parseable rows). VCB has net_profit_api_bridge but no extracted rows. CTG tracked separately (BCTC-CTG-ATTACHMENT-FETCH, cover-letter-only PDF). Zone dev-vps-crawls; owner ops/dev-vps. PO-live-confirmed 2026-06-02T10:17Z dry_run skipped:5.",
         "priority": "normal"
+      },
+      {
+        "task_id": "FU-EI-P2-COV-1",
+        "title": "envCheck.ts lines 129-185 (checkRequiredEnv/formatEnvWarning/runEnvCheck Task-1026 degraded-mode) zero test coverage",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "note": "EI-P2-QA gap, non-blocking, orthogonal to isolation"
+      },
+      {
+        "task_id": "FU-EI-P2-COV-2",
+        "title": "No explicit test for APP_ENV=testing (4th DEV_ENV_VALUES entry)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "note": "EI-P2-QA gap, low risk, in Set + isProductionEnv covers it"
+      },
+      {
+        "task_id": "FU-EI-P2-DEV-VOLUME",
+        "title": "docker-compose.dev.yml orphan top-level volumes:market_data: stanza never bound — remove or annotate to avoid misleading future editor",
+        "type": "CLEAN",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "root",
+        "priority": "low",
+        "note": "EI-P2-QA gap; isolation currently correct, cleanup only"
       }
     ],
     "archive": []
