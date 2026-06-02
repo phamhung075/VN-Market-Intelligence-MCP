@@ -1212,7 +1212,7 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T12:13:27Z",
+    "_updated_at": "2026-06-02T13:11:38Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -1328,28 +1328,6 @@
         "payload_ref": "docs/signals/tnb-2026-05-31T20:13:00Z-c84-mcp-blocked.json"
       },
       {
-        "id": "NSCOUT-NB-BLOAT-20260531T0810Z",
-        "ts": "2026-05-31T08:10Z",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "summary": "news-scout.md notebook 1198L vs 200 cap. Append-not-overwrite defect family.",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/agent-memory/notebooks/news-scout.md"
-      },
-      {
-        "id": "ARCH-NB-BLOAT-20260531T0926Z",
-        "ts": "2026-05-31T09:26Z",
-        "from": "context-bloat-backstop-hook",
-        "to": "claude-manager-helper",
-        "type": "context_bloat_breach",
-        "summary": "architect.md notebook 339-402L vs 200 cap. Append-not-overwrite family. Still 477L at 15:26Z.",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/agent-memory/notebooks/architect.md"
-      },
-      {
         "id": "CMH-STALL-20260531T1127Z",
         "ts": "2026-05-31T11:27Z",
         "from": "dev-team",
@@ -1359,17 +1337,6 @@
         "severity": "MED",
         "status": "PARTIAL",
         "payload_ref": null
-      },
-      {
-        "id": "cow-20260531T2118",
-        "ts": "2026-05-31T21:18Z",
-        "from": "cowork-team",
-        "to": "ops",
-        "type": "microservice_degraded",
-        "summary": "CRITICAL FULL vn-market STACK OUTAGE — all 12 microservices gone. RESOLVED ~21:17:43Z self-recovered.",
-        "severity": "CRITICAL",
-        "status": "RESOLVED",
-        "payload_ref": "docs/signals/cowork-MCP-STACK-DOWN-20260531T2118Z.json"
       },
       {
         "id": "1965-COVERAGE-SWEEP",
@@ -1582,6 +1549,42 @@
         "status": "READ",
         "payload_ref": "docs/data/pilot-status-mcp-server.json",
         "po_disposition": "READ 2026-06-01T22:34Z PO: STALE (2026-05-25). toolCount=146 tripwire superseded by post-hygiene surface; P1-MCP-REBUILD gate moot. Skip."
+      },
+      {
+        "id": "NSCOUT-NB-BLOAT-20260531T0810Z",
+        "ts": "2026-05-31T08:10Z",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "summary": "news-scout.md notebook 1198L vs 200 cap. Append-not-overwrite defect family.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/agent-memory/notebooks/news-scout.md",
+        "archived_at": "2026-06-02T13:11:38Z"
+      },
+      {
+        "id": "ARCH-NB-BLOAT-20260531T0926Z",
+        "ts": "2026-05-31T09:26Z",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "summary": "architect.md notebook 339-402L vs 200 cap. Append-not-overwrite family. Still 477L at 15:26Z.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/agent-memory/notebooks/architect.md",
+        "archived_at": "2026-06-02T13:11:38Z"
+      },
+      {
+        "id": "cow-20260531T2118",
+        "ts": "2026-05-31T21:18Z",
+        "from": "cowork-team",
+        "to": "ops",
+        "type": "microservice_degraded",
+        "summary": "CRITICAL FULL vn-market STACK OUTAGE — all 12 microservices gone. RESOLVED ~21:17:43Z self-recovered.",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/cowork-MCP-STACK-DOWN-20260531T2118Z.json",
+        "archived_at": "2026-06-02T13:11:38Z"
       }
     ]
   },
