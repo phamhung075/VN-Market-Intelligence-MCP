@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T18:26:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": ":07 cycle concluded — drained 47 signals (DB prune 1050->47), 1 XS FIX shipped (DRAIN-PRUNE-DATEFMT). news-scout notebook-bloat = watch-item (root cause already shipped e1e85886). Async/infra backlog (BCTC VPS HIGH) held for ops lane. Next PO triage owns residual + orch-state schema-hygiene (stale BCTC-HIST-FETCH-VERIFY dup + null-field tasks).",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "ORCH-ATOMIC-WRITE-GUARD",
+    "next_agent": "agents-architect",
+    "next_action": "Edit §2.3 (L188-216) of the orch-state-consolidate brief: add pre-mv structural-sentinel guard (abort if empty OR fails jq -e '.head and .task_board and .signal_queue'); printf+[ -s ] before mv; mirror guard in TS renameSync variant L205-212; pointer note that §2.3 is authoritative if any flow inlines the snippet. Commit behind commit-mutex (owner_agent agents-architect).",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T19:22:32Z",
+    "updated_at": "2026-06-02T20:13:21Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T19:22:32Z",
+    "_updated_at": "2026-06-02T20:13:21Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -596,6 +596,17 @@
             "zone": "docs/agents/dev-team/flow/",
             "priority": "low",
             "note": "PO triage :07 2026-06-02. Router raw-verified: DB held 1050 rows, newest processed_at=20260521 (12d), DELETE matched 0 for weeks because processed_at is compact-ISO YYYYMMDDTHHMMSSZ → SQLite datetime() returns NULL. Fix spec to lexicographic compact-cutoff compare (no row migration); document format invariant; decide canonical in-repo drain script vs TODO pointer (repo has none; /tmp drain is uncommitted + envelope-skip divergent). Spec-only flow edit, no rebuild. | DONE e30c6ec9 (agent-father): lexicographic compact-cutoff prune + portable date dual-form (GNU -d / BSD -v-7d, verified runs on macOS) + format-invariant comment + canonical-script TODO pointer. Router raw-verified: 1 file 6+/3-, 119L<=120 cap, clause mechanically matches >7d compact-ISO rows (old datetime() returned NULL = 0-match for weeks), tree clean. Spec=SSOT live for next drain; this tick pruned 1050->47 manually."
+          },
+          {
+            "task_id": "ORCH-ATOMIC-WRITE-GUARD",
+            "title": "Harden orch-state §2.3 atomic-write protocol against empty/errored-jq SSOT clobber",
+            "type": "FIX",
+            "owner": "agents-architect",
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "docs/architecture-briefs",
+            "priority": "high",
+            "note": "PO triage :07 2009Z 2026-06-02. Root-cause-definitif, fleet-wide. §2.3 (L188-216) of docs/architecture-briefs/2026-06-01-orch-state-consolidate.md prescribes echo $UPDATED > TMP; mv TMP orch-state with NO non-empty/structural guard between jq mutation (L195) and mv (L200). jq filter error -> empty $UPDATED -> 0-byte TMP -> mv clobbers SSOT. L216 post-write 'jq . > /dev/null' is blind (runs after mv; jq . of empty exits 0). Followed by ALL writers (PM/PO/signal-dashboard/dev-team/crons). Hit live 39f5ba66 (recovered 9e090a90). FIX: validate-before-mv with structural sentinel jq -e '.head and .task_board and .signal_queue'; printf not echo; [ -s TMP ] before mv; same for TS variant L205-212. Doc edit, no build. baseline_pass: printf '' | jq . ; echo $? == 0 proves the blind check."
           }
         ]
       },
