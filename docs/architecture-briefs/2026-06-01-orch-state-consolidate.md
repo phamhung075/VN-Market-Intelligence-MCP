@@ -185,7 +185,9 @@ A single merged JSON file `docs/data/orch/orch-state.json` is safe because:
 
 ### 2.3 Atomic write protocol (mandatory for all writers)
 
-Every writer of `orch-state.json` MUST use atomic temp-file-then-rename:
+**This section is the SSOT for the atomic-write protocol.** Any inline copy of this snippet in flows, skills, or cron scripts must exactly match what is prescribed here. When this section changes, inlined copies must be updated to match (tracked separately; do NOT hunt-and-replace during any single-file task).
+
+Every writer of `orch-state.json` MUST use atomic temp-file-then-rename **with a validate-before-mv structural sentinel**:
 
 ```bash
 # Read current state
@@ -194,26 +196,49 @@ CURRENT=$(cat docs/data/orch/orch-state.json)
 # Apply mutation (e.g., update head, append signal row, update task status)
 UPDATED=$(echo "$CURRENT" | jq '...')
 
+# GUARD (mandatory): a jq filter error writes NOTHING to stdout → $UPDATED empty.
+# Bare `jq .` does NOT catch this: `printf '' | jq . >/dev/null; echo $?` → 0
+# (empty input is vacuously valid; the post-write check is blind to this case).
+# Abort BEFORE mv with a STRUCTURAL sentinel proving all top-level sections
+# survived the mutation.  This is the load-bearing guard — the post-write jq
+# check (below) is secondary defense-in-depth only.
+if [ -z "$UPDATED" ] || ! printf '%s' "$UPDATED" | jq -e '.head and .task_board and .signal_queue' >/dev/null 2>&1; then
+  echo "[atomic-write] ABORT: jq produced empty/invalid output — SSOT left untouched" >&2
+  exit 1
+fi
+
 # Write atomically
 TMP=$(mktemp docs/data/orch/.orch-state-tmp-XXXXXX.json)
-echo "$UPDATED" > "$TMP"
-mv "$TMP" docs/data/orch/orch-state.json   # atomic on POSIX filesystems
+printf '%s\n' "$UPDATED" > "$TMP"           # printf, not echo (avoids backslash interpretation)
+[ -s "$TMP" ] || { echo "[atomic-write] ABORT: empty temp file" >&2; rm -f "$TMP"; exit 1; }
+mv "$TMP" docs/data/orch/orch-state.json    # atomic on POSIX filesystems
 ```
 
 For TypeScript code writers (`tasksMdJanitorJob.ts`, `improvementSignalWriter.ts`, `dailyDashboardJob.ts`):
 ```typescript
 import { writeFileSync, renameSync } from "fs";
-import { tmpdir } from "os";
-import { join } from "path";
 
 function writeOrchStateAtomic(path: string, data: object): void {
+  const serialized = JSON.stringify(data, null, 2);
+  // GUARD: never rename an empty/partial payload over the SSOT.
+  // Mirrors the bash sentinel — catches serialization failures and callers
+  // that pass a truncated object before any fs operation occurs.
+  if (!serialized || serialized.length < 2) {
+    throw new Error("[atomic-write] empty serialized payload — refusing to write");
+  }
+  const parsed = JSON.parse(serialized);  // must round-trip cleanly
+  if (!parsed.head || !parsed.task_board || !parsed.signal_queue) {
+    throw new Error("[atomic-write] missing required top-level section — refusing to write");
+  }
   const tmp = path + ".tmp." + Date.now();
-  writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
+  writeFileSync(tmp, serialized, "utf8");
   renameSync(tmp, path);  // atomic on POSIX
 }
 ```
 
-After every write: `jq . docs/data/orch/orch-state.json > /dev/null || ERROR` (fail-loud-protocol).
+**Post-write check (secondary, defense-in-depth only):**
+`jq . docs/data/orch/orch-state.json > /dev/null || ERROR` (fail-loud-protocol).
+This check runs AFTER `mv` and is NOT sufficient alone: `printf '' | jq . >/dev/null` exits 0, meaning a zero-byte clobber passes silently. The pre-mv structural sentinel above is the load-bearing guard.
 
 ---
 
