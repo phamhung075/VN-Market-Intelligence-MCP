@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FU-BCTC-TOOL-PARAMS",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Executing FU-BCTC-TOOL-PARAMS (FIX/dev-mcp-server, WIP1/2): get_cash_flow honor quarters param -> latest-N-quarter series (live-confirmed bug: quarters=8 returns single Q1/2026). Unblocks bctc-analyst ESC-3 11-cycle loop. After: ops rebuild mcp-server + router live-verify quarters=8 returns 8 periods. PO rejected VPS candidate (VPS-SOCAT-PERSIST already DONE, api-gateway occupies :4000, sbv-fetch staleness=post-close-normal not outage; operator frontend goal fully met - frontend honestly displays not-deployed plane).",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "dev-team 15:09Z cycle DONE. FU-BCTC-TOOL-PARAMS LIVE-VERIFIED (get_cash_flow honors quarters, returns N-period series, 7ed5b722, mcp rebuilt 15:35:02Z) — analyst ESC-3 loop root cause fixed. HONEST RESIDUAL: only 2q FPT cash-flow in corpus -> FU-BCTC-HISTORY-COVERAGE queued (data-coverage, not tool). ESC-3 now closable at analyst layer (QoQ w/ 2q; Q1-ocr vs Q4-api_bridge OCF discrepancy = decomposition lead). Operator frontend goal fully met (prior cycle). Open: BAL-1d (report_scope MEDIUM), BAL-1e (LOW), FU-ARCHITECT-MUTEX-BINDING, FU-BCTC-HISTORY-COVERAGE.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T15:14:26Z",
+    "updated_at": "2026-06-02T15:36:07Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T15:14:26Z",
+    "_updated_at": "2026-06-02T15:36:07Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -225,11 +225,25 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "in_progress",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "CONFIRMED LIVE 2026-06-02T15:10Z: get_cash_flow(ticker=FPT,quarters=8) -> single Q1/2026 object, quarters ignored. Fix: honor quarters param, return latest-N-quarters series incl WC subcomponents needed for accrual decomposition. Unblocks bctc-analyst ESC-3 (prior opus a38e14ee conf0.35 stuck without 8q history). Verify live: get_cash_flow quarters=8 returns 8 periods."
+            "note": "CONFIRMED LIVE 2026-06-02T15:10Z: get_cash_flow(ticker=FPT,quarters=8) -> single Q1/2026 object, quarters ignored. Fix: honor quarters param, return latest-N-quarters series incl WC subcomponents needed for accrual decomposition. Unblocks bctc-analyst ESC-3 (prior opus a38e14ee conf0.35 stuck without 8q history). Verify live: get_cash_flow quarters=8 returns 8 periods. | DONE+ROUTER-LIVE-VERIFIED 2026-06-02T15:35Z (raw get_cash_flow, image 15:35:02Z, commit 7ed5b722): quarters param now HONORED -> get_cash_flow(FPT,quarters=8) returns quarters_requested:8 quarters_returned:2 periods[] series (Q1/2026+Q4/2025) + WC subcomponents (wc_inventory/current_assets/cash); backward-compat top-level fields preserved. HONEST NUANCE: only 2 quarters of FPT cash-flow exist in financial_reports (not 8) -> full 8q accrual decomposition still DATA-COVERAGE-limited (tool correct, corpus thin). LEAD for analyst: Q1 OCF -2.8M is ocr-sourced vs Q4 +4.1M api_bridge (source/sign discrepancy may explain ESC-3 OCF/NI divergence)."
+          },
+          {
+            "task_id": "FU-BCTC-HISTORY-COVERAGE",
+            "title": "FPT (and peers) have only 2 quarters of cash-flow in financial_reports — 8q accrual decomposition needs deeper historical BCTC ingestion",
+            "type": "SPIKE",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "FU-BCTC-TOOL-PARAMS"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "medium",
+            "note": "Surfaced by FU-BCTC-TOOL-PARAMS live-verify: get_cash_flow now honors quarters but corpus only has 2q for FPT. Investigate ingest coverage; not a tool bug. bctc-analyst can attempt ESC-3 QoQ with 2q meanwhile (Q1 ocr vs Q4 api_bridge OCF source discrepancy is the decomposition lead)."
           }
         ]
       },
