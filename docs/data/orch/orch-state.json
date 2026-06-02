@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": "idle",
     "next_agent": "po",
-    "next_action": ":07(2009Z) cycle concluded — drained 4 hb; ROOT-CAUSE FIX shipped end-to-end (ORCH-ATOMIC-WRITE-GUARD spec §2.3 b7e374ce + FU-ORCH-ATOMIC-TS-IMPL code 6a8d35d8 + mcp-server rebuild, LIVE-verified): empty/errored payload can no longer clobber orch-state SSOT (the 39f5ba66 incident class is closed in both bash-agent and TS-cron write paths). HELD for next PO: ORCH-TASKBOARD-SCHEMA-HYGIENE (stale BCTC-HIST-FETCH-VERIFY dup + null-field tasks; now safe to mutate under hardened protocol) + async BCTC-VPS backlog (ops lane).",
+    "next_action": "tnb-c86 triaged (READ): F8 SELFLOCK already DONE b5296672 -> monitor next-Monday morning fire, no new task. ORCH-TASKBOARD-SCHEMA-HYGIENE executed: dropped 27 null placeholders + stale BCTC-HIST-FETCH-VERIFY dup (closed fa6d41ee); backlog 37->9 real entries.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T20:23:59Z",
+    "updated_at": "2026-06-02T20:55:28Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T20:23:59Z",
+    "_updated_at": "2026-06-02T20:55:28Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1230,126 +1230,6 @@
     ],
     "backlog": [
       {
-        "id": "FU-ORCH-HEAD-CAS",
-        "summary": "Add a version/CAS guard on .head writes to fully close the caller stale-read->sibling-clobber window QA flagged (helper is atomic; risk is a non-fresh-read caller; today mitigated by WIP=2 + fresh-read contract)",
-        "priority": "normal"
-      },
-      {
-        "id": "FU-SIGNAL-DASHBOARD-CAP",
-        "summary": "signal-dashboard bloat CONFIRMED still over cap (measured 2026-06-01T23:14Z): SKILL.md 133L (+13) + dashboard-protocol.md 180L (+60) vs 120 skill-file cap. 3 context-bloat-hook signals fed this (self-critique-SKILL already self-cured to 118L, dropped). Lazy-load split → claude-manager-helper/agent-father; overlaps RE-CAP-1 (NB-PRUNE-FIX) — collapse into one cap-fix task when scheduled.",
-        "priority": "normal"
-      },
-      {
-        "id": "FRONTEND-BCTC-TAB",
-        "summary": "agents-architect brief LOCKED (2026-06-01-frontend-bctc-inspect-tab.md, FBT-ARCH A2 proxy): surface BCTC Inspect viewer as new frontend dashboard tab — two resource routes + one NAV_ITEMS line, apps/frontend/ only, ZERO mcp-server edits. Target dev-frontend. Deferred behind FLEET-HOST-SAFETY; pairs naturally with A-01b (same dev-frontend zone) when host-safety closes.",
-        "priority": "normal"
-      },
-      {
-        "id": "BCTC-CTG-ATTACHMENT-FETCH",
-        "summary": "CTG cover-letter-only PDF fetched; need real BCTC attachment (size/page sanity gate)",
-        "priority": "normal"
-      },
-      {
-        "id": "TNB-GATEWAY-PROBE",
-        "summary": "tnb bootstrap Step 0c should PROBE gateway not read .mcp.json",
-        "priority": "low"
-      },
-      {
-        "id": "CW-STEP47-HYGIENE",
-        "summary": "Teach cowork agents absent-by-design != degraded (macro-indicators not deployed)",
-        "priority": "low"
-      },
-      {
-        "id": "FU-BANK-CODECOL",
-        "summary": "Label text leaking into code column of bctc_table_rows (markdown column-alignment defect)",
-        "priority": "normal"
-      },
-      {
-        "id": "BCTC-TABLE-2",
-        "summary": "Multi-ticker BCTC-TABLE-2 sprint",
-        "priority": "normal"
-      },
-      {
-        "id": "KD-QREF-LANG",
-        "summary": "Kinh Dich Q-ref language issue",
-        "priority": "low"
-      },
-      {
-        "id": "SSC-IBOARD-MIGRATE",
-        "summary": "Replacement-source recon for dead iboard financial source",
-        "priority": "normal"
-      },
-      {
-        "id": "FU-EI-COMPOSE",
-        "summary": "alert-engine DB_PATH + run-bt7-backfill import path (pre-existing, not P2-gated)",
-        "priority": "low"
-      },
-      {
-        "id": "FU-FIXER-NO-FORCE",
-        "summary": "Harden fixer + dev agents against git add -f / force-add of gitignored paths",
-        "priority": "high"
-      },
-      {
-        "id": "TSH-7",
-        "summary": "watchlist default for no-codes get_market_snapshot (UX, optional, needs BA)",
-        "priority": "low"
-      },
-      {
-        "id": "FU-DEV-CAFEF-1",
-        "summary": "Wire /proxy/article-body into /api/push-news ingestion (awaiting USER greenlight)",
-        "priority": "normal"
-      },
-      {
-        "id": "SA-FLOW-CAP",
-        "summary": "system-auditor/flow/main.md 494L vs 120L cap — refactor to linked files",
-        "priority": "low"
-      },
-      {
-        "id": "AUD-ND-1-LIVE-PROVEN-RED",
-        "summary": "Synthetic false-positive injection proving auditor emits signal not docker stop (ops-supervised off-hours)",
-        "priority": "normal"
-      },
-      {
-        "id": "C-TIER1-CEILING",
-        "summary": "get_market_snapshot source_tier:2 permanent ceiling — decide-and-document",
-        "priority": "low"
-      },
-      {
-        "id": "CHEF-FLOW-CAP-REFACTOR",
-        "summary": "chef.md 258L > 120L cap — extract Steps 6/6.5/7 to chef-write-dish.md",
-        "priority": "normal"
-      },
-      {
-        "id": "CHEF-TS-STAMP",
-        "summary": "Cosmetic: cycle-timestamp + next-slot-date mis-stamp; confirm pattern before dispatch",
-        "priority": "low"
-      },
-      {
-        "id": "DRAIN-INJECTION-SAFE-2",
-        "summary": "Apply the DRAIN-INJECTION-SAFE structured-payload fix to the 6 residual concat sites flagged by agent-father (OUT-OF-SCOPE of the dev-team-flow task): pm/init.md L122 (dev_agent), developer/init.md L34 (dev_agent), developer/flow/main.md L62 (task_title+branch_name), developer/flow/microservice-main.md L68 (task_title+branch_name), po/flow/sprint-kickoff.md L37 (sprint_id), agent-father/flow/edit-apply.md L12 (change_description+target_files). PO assess severity — these mostly feed call_tool JSON args (JSON-correctness risk) vs the dev-team dispatcher sites which the main terminal executes in a real shell (true injection). PLAN-ONLY agent-def edits.",
-        "priority": "normal"
-      },
-      {
-        "id": "FU-BCTC-TOOL-PARAMS",
-        "summary": "Opus FPT deep-dive surfaced 2 real bctc tool defects blocking ESC-3 accrual analysis: (1) get_cash_flow IGNORES the quarters param — returns only current quarter, no 8q history, no WC subcomponents (AR/inventory/AP/D&A) -> accrual decomposition impossible; (2) get_bctc_full/get_bctc_refined take code/report_id NOT ticker (caller trap). Both block deep-dive quality + likely affect other consumers. Owner likely dev-mcp-server. Found 2026-06-02 FPT-OPUS-DEEPDIVE.",
-        "priority": "normal"
-      },
-      {
-        "id": "FU-AGENT-FATHER-ORCH-SCOPE",
-        "priority": "normal",
-        "summary": "agent-father FB-GATE-2 commit 7be21e0a staged docs/data/orch/orch-state.json (router-owned, dev-team section) — marked own task DONE + disposed signal pre-verification. No clobber this time (my head+task edits survived) but exposes FU-ORCH-HEAD-CAS window + implementer-self-DONE process defect. Fix: reinforce agent-father contract — orch-state.json is router-owned, never stage it. Mitigated 2nd dispatch by explicit prohibition (e1e85886 honored it)."
-      },
-      {
-        "id": "FU-FE-NEWS-SOURCE",
-        "priority": "low",
-        "summary": "db/fetch pages: Reuters/Bloomberg headlines render honest-empty (200) because rag_analyses has no reuters/bloomberg rows — news-fetch microservice not deployed (host constraint). If real intl news wanted on-host, populate via mcp plane or a cached source. NOT mock (honest empty), so not blocking 'no mock data'."
-      },
-      {
-        "id": "FU-OHLCV-ZERO-ROW",
-        "priority": "low",
-        "summary": "daily_ohlcv has occasional all-zero OHLCV rows (e.g. FPT 2026-05-30) — likely holiday/missing-data stored as zeros. Data-quality, not fabrication. Filter zero rows or backfill."
-      },
-      {
         "task_id": "FU-CHEF-MARKER-INFLOW",
         "title": "chef.md self-enforces published-marker before send_telegram",
         "type": "FIX",
@@ -1361,21 +1241,6 @@
           "docs/agents/unified-agent/flow/chef.md"
         ],
         "note": "Harden: move the published-marker claim (published:<slot>:<YYYY-MM-DD>) INTO chef.md Step 7 immediately before send_telegram, so dedup survives ANY spawn path (currently the gate is only an instruction injected by the cowork dispatcher into the spawn prompt — a direct/refactored spawn bypasses it and can double-publish, as proven 2026-06-02 07:19Z). Architect review the marker contract (recurring-bug family: cowork dispatch reliability, kin of COWORK-LEADER-SELFLOCK)."
-      },
-      {
-        "id": "FU-PARTIAL-SCALAR-SERVE",
-        "summary": "PARTIAL serve guard covers net_profit (BEQ-8b) but NOT operating_cf/total_assets — get_bctc_full may still serve residual misattributed scalars for the 7 PARTIAL reports (e.g. FPT-Q4 ocf=10.1M, DHG TA=4 from a pre-guard backfill linger in columns). Fix: either null-clear non-balance-sheet scalars on PARTIAL transition, or extend the PARTIAL withhold to all IS/CF scalars in get_bctc_full + /docs. Interim until BEQ-9/10 re-refine overwrites them.",
-        "priority": "high"
-      },
-      {
-        "id": "BCTC-ZERO-ROW-REFETCH",
-        "summary": "5 reports have 0 table_rows (VCB-2025Q1, VCB-2025Q4, DGC-2025Q4, DIG-2025Q4) — cover-letter/empty PDFs, stay PENDING. Need VPS re-fetch/re-extraction. CTG-2026Q1 tracked separately (BCTC-CTG-ATTACHMENT-FETCH).",
-        "priority": "normal"
-      },
-      {
-        "id": "BCTC-REFETCH-ZERO-ROW",
-        "summary": "Re-fetch + re-extract the zero-table-row PENDING BCTC reports — DGC(2025-Q4), DIG(2025-Q4), VCB(2025-Q1, 2025-Q4). backfill_bctc_scalars SKIPS these (0 parseable rows). VCB has net_profit_api_bridge but no extracted rows. CTG tracked separately (BCTC-CTG-ATTACHMENT-FETCH, cover-letter-only PDF). Zone dev-vps-crawls; owner ops/dev-vps. PO-live-confirmed 2026-06-02T10:17Z dry_run skipped:5.",
-        "priority": "normal"
       },
       {
         "task_id": "FU-EI-P2-COV-1",
@@ -1409,17 +1274,6 @@
         "zone": "root",
         "priority": "low",
         "note": "EI-P2-QA gap; isolation currently correct, cleanup only"
-      },
-      {
-        "task_id": "BCTC-HIST-FETCH-VERIFY",
-        "title": "Verify VPS fetch loop drains older bctc_vps_queue rows (no period filter blocking historical); confirm VPS fetch pipeline alive",
-        "type": "SPIKE",
-        "owner": "ops",
-        "status": "BACKLOG",
-        "size": "XS",
-        "zone": "infra",
-        "priority": "high",
-        "note": "spike Task2 — BCTC-HIST-SEED is a no-op live until this confirms the fetch drains. Dep VPS-SOCAT-PERSIST (DONE) / api-gateway:4000."
       },
       {
         "task_id": "BCTC-HIST-VCB-REFINE",
@@ -1480,7 +1334,7 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T19:13:47Z",
+    "_updated_at": "2026-06-02T20:52:24Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -1745,6 +1599,18 @@
         "severity": "HIGH",
         "status": "DONE",
         "payload_ref": "docs/architecture-briefs/2026-06-02-commit-boundary-discipline.md"
+      },
+      {
+        "id": "tnb-c86-20260602T2013",
+        "ts": "2026-06-02T20:13Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c86 NEEDS_ATTENTION IMPROVING: Evening 4/6 best cycle; F8 COWORK-LEADER-SELFLOCK 2nd Monday miss; AutoCure chef.md Step 4 (cycle-phase); macro restored",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md",
+        "po_disposition": "READ 2026-06-02: NO new dev task. Sole dev-actionable item F8 COWORK-LEADER-SELFLOCK already DONE (design 55b66672 + impl b5296672, committed 62739278; cowork flows runtime-read, live next cron-fire, no rebuild). c86 audit text says 'fix in progress' because c86 was written from pre-fix evidence. WATCH-ITEM: verify next Monday 2026-06-03 05:1xZ chef-morning fire publishes (F8 live-verify). Rest of c86 is pre-existing/tracked/positive: F9 business-context-absent (13th cycle, c81-disposition tracked), F2/F3/F4 structural data/tool gaps (tracked), macro restored (positive), Evening 4/6 BEST CYCLE + FPT 4/4 STRONG (positive), AC-1 chef.md Step 4 cycle-phase auto-cure applied."
       }
     ],
     "archive": [
