@@ -7,7 +7,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { fetchGatewayHealth } from "~/lib/api/client";
-import type { ServiceRow } from "~/domain/health";
+import type { ServiceRow, ServiceStatus } from "~/domain/health";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 
 export const meta: MetaFunction = () => [
@@ -42,7 +42,7 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
       name,
       status: (health.services?.[name] as ServiceRow["status"]) ?? "down",
       latencyMs:
-        health.latencies?.[name] != null
+        health.latencies?.[name] != null && (health.latencies[name] as number) >= 0
           ? (health.latencies[name] as number)
           : null,
     }));
@@ -67,20 +67,22 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 // Components
 // --------------------------------------------------------------------------
 
-type StatusBadgeProps = { status: "ok" | "degraded" | "down" };
+type StatusBadgeProps = { status: ServiceStatus };
 
 function StatusBadge({ status }: StatusBadgeProps) {
-  const map = {
+  const map: Record<ServiceStatus, string> = {
     ok: "bg-green-900 text-green-300 border-green-700",
     degraded: "bg-yellow-900 text-yellow-300 border-yellow-700",
     down: "bg-red-900 text-red-300 border-red-700",
-  } as const;
+    not_deployed: "bg-slate-800 text-slate-400 border-slate-600",
+  };
 
-  const label = {
+  const label: Record<ServiceStatus, string> = {
     ok: "UP",
     degraded: "DEGRADED",
     down: "DOWN",
-  } as const;
+    not_deployed: "NOT DEPLOYED",
+  };
 
   return (
     <span
@@ -99,9 +101,17 @@ export default function ServerDashboard() {
     <div className="max-w-4xl">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">Service Health</h1>
-        {overallStatus && (
-          <StatusBadge status={overallStatus} />
-        )}
+        <div className="flex flex-col items-end">
+          {overallStatus && (
+            <StatusBadge status={overallStatus} />
+          )}
+          {overallStatus === "ok" && rows.some((r) => r.status === "not_deployed") && (
+            <p className="mt-1 text-xs text-slate-500">
+              {rows.filter((r) => r.status === "not_deployed").length} service(s) not deployed on
+              this host by design — see system-map.json host_runtime_set.
+            </p>
+          )}
+        </div>
       </div>
 
       {error && (

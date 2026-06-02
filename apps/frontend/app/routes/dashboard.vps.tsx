@@ -60,7 +60,7 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
 // Components
 // --------------------------------------------------------------------------
 
-type StatusVariant = "ok" | "degraded" | "down" | "unknown";
+type StatusVariant = "ok" | "degraded" | "down" | "unknown" | "not_deployed";
 
 function StatusPill({ status }: { status: StatusVariant }) {
   const styles: Record<StatusVariant, string> = {
@@ -68,12 +68,14 @@ function StatusPill({ status }: { status: StatusVariant }) {
     degraded: "bg-yellow-900 text-yellow-300 border-yellow-700",
     down: "bg-red-900 text-red-300 border-red-700",
     unknown: "bg-slate-700 text-slate-400 border-slate-600",
+    not_deployed: "bg-slate-800 text-slate-400 border-slate-600",
   };
   const labels: Record<StatusVariant, string> = {
     ok: "UP",
     degraded: "DEGRADED",
     down: "DOWN",
     unknown: "UNKNOWN",
+    not_deployed: "NOT DEPLOYED",
   };
   return (
     <span

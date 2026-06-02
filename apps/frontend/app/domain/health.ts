@@ -6,7 +6,7 @@
  */
 
 /** Status of a single microservice. */
-export type ServiceStatus = "ok" | "degraded" | "down";
+export type ServiceStatus = "ok" | "degraded" | "down" | "not_deployed";
 
 /** Full gateway health response from GET /health */
 export interface GatewayHealthResponse {
