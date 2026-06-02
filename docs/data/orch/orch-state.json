@@ -5,12 +5,12 @@
   "_updated_by": "agents-architect",
   "head": {
     "status": "in_progress",
-    "active_task_id": "FE-AUDIT-1",
+    "active_task_id": "FE-FIX-MOCKTEXT",
     "next_agent": "dev-frontend",
-    "next_action": "Operator goal: all frontend pages correct + real data + no mock. FE-AUDIT-1 read-only inventory of 13 routes running now; output feeds PO scoping of fixes + A-01b chain.",
+    "next_action": "Ship mock-text removal (DEF-1/6/7) now. Then PO scopes FE-REROUTE-DESIGN (real KD/price/news via mcp-server REST + api-gateway re-route) + A-01b false-RED chain.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T04:58:02Z",
+    "updated_at": "2026-06-02T05:04:31Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -56,8 +56,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T04:59:16Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-02T05:04:31Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-EXTRACT-QUALITY",
@@ -566,10 +566,10 @@
             "type": "SPIKE",
             "owner": "dev-frontend",
             "depends": [],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/frontend/",
-            "note": "Discovery for operator goal; output = per-route inventory + defect list -> PO scopes fixes"
+            "note": "Discovery for operator goal; output = per-route inventory + defect list -> PO scopes fixes | DONE 2026-06-02T05:04:31Z: 13 routes mapped. NO fabricated market data found (bar met). Defects: P1 mock-text (_index coming-soon headline+9-svc count; analysis stale seeding-date); 502-empty pages (analysis KD/price/TA, db price+news, fetch news) — real data only behind mcp TOOLS, NO REST surface on mcp-server; services/vps = A-01b false-RED."
           },
           {
             "task_id": "A-01b-1",
@@ -621,6 +621,30 @@
             "size": "S",
             "zone": "qa",
             "note": "PROVEN-RED: docker stop mcp-server -> dashboard red + top non-ok; restart -> ok. Filter must not blanket-mute."
+          },
+          {
+            "task_id": "FE-FIX-MOCKTEXT",
+            "title": "Remove stale placeholder/mock text rendered to user (DEF-1/6/7)",
+            "type": "FIX",
+            "owner": "dev-frontend",
+            "depends": [],
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "note": "_index.tsx: replace 'dashboard coming soon' H1 with real title + derive svc count not hardcode 9; dashboard.analysis.tsx: remove/neutralize stale ACCURACY_SEEDING_WINDOW_END=2026-05-25 UI copy. No behavior change, text only."
+          },
+          {
+            "task_id": "FE-REROUTE-DESIGN",
+            "title": "DESIGN: expose REAL kinh-dich/price(/news) data to frontend via mcp-server REST + api-gateway re-route (502 pages)",
+            "type": "SPRINT-S",
+            "owner": "architect",
+            "depends": [
+              "FE-AUDIT-1"
+            ],
+            "status": "TODO",
+            "size": "M",
+            "zone": "docs/architecture-briefs/ + apps/mcp-server + apps/api-gateway + apps/frontend",
+            "note": "Root: analysis/db/fetch call dead microservices (kinh-dich-service, stock-price, technical-analysis, news-fetch — not deployed). Data EXISTS in mcp-server plane via TOOLS (get_portfolio_conviction etc.) + market.db, but NO REST endpoint. Design: (1) mcp-server new REST read endpoints (/mcp/api/kinh-dich/reading/{t}, /mcp/api/prices/{history,batch}, reuse /api/news-fetch/live) sourcing the SAME data the cowork plane uses; (2) api-gateway re-route /kinh-dich,/stock,/ta,/news to mcp-server when target microservice in not_deployed_by_design (host_runtime_set); (3) frontend unchanged or path swap. Honest-unavailable only where data genuinely absent. Then ba/pm decompose to dev-mcp-server+dev-api-gateway+dev-frontend+qa."
           }
         ],
         "_updated_at": "2026-06-02T04:58:02Z",
