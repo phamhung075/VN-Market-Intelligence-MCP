@@ -259,6 +259,7 @@ function makeRow(overrides: Partial<ReportRow> = {}): ReportRow {
     yoy_delta_json: null,
     qoq_delta_json: null,
     refine_status: "DONE",
+    period_basis: null,
     ...overrides,
   };
 }

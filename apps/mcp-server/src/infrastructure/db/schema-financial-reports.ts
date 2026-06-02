@@ -473,6 +473,30 @@ export function initFinancialReportsTables(db: Database): void {
     // bctc_table_rows may not exist yet on fresh DB (handled by CREATE TABLE IF NOT EXISTS above)
   }
 
+  // ── BAL-1c: period_basis column on financial_reports ─────────────────────
+  // period_basis: 'standalone_quarter' | 'full_year_cumulative' | NULL (unknown)
+  //   Q4 under VAS standard = full-year cumulative (Jan–Dec).
+  //   Q1/Q2/Q3 = YTD cumulative but treated as 'standalone_quarter' for comparison
+  //   basis (the minimal conservative tagging sufficient to block the false Q4 vs
+  //   Q1/Q2/Q3 delta). NULL on existing rows until finalize_bctc_refine populates them.
+  //
+  // Migration mechanism: PRAGMA table_info check + guarded ALTER TABLE (idempotent).
+  // Pattern: same as refine_status / confirm_status migrations above.
+  try {
+    const pb_cols = db
+      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
+      .all();
+    const pb_col_names = new Set(pb_cols.map((c) => c.name));
+    if (!pb_col_names.has("period_basis")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN period_basis TEXT");
+      // NULL default: existing rows are unknown basis until finalize_bctc_refine
+      // backfills them on next run. NULL causes the comparison guard to pass-through
+      // (safe fail-open: no false-block on untagged data).
+    }
+  } catch {
+    // fresh DB — column included via SQLITE_DDL (will be added there in future)
+  }
+
   // ── BCTC-HUMAN-CONFIRM: Migration 2 — confirm_status on financial_reports ──
   // confirm_status: PENDING | CONFIRMED (separate dimension from refine_status)
   // final_confirmed_at: ISO8601 UTC timestamp; NULL when not yet confirmed

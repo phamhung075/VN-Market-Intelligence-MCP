@@ -79,6 +79,13 @@ export interface ReportRow {
   qoq_delta_json: string | null;
   /** BEQ-4b: PENDING | DONE | PARTIAL — used by buildComparisonSection guard */
   refine_status: string;
+  /**
+   * BAL-1c: period basis tag written by finalize_bctc_refine.
+   * 'standalone_quarter' — Q1/Q2/Q3 YTD figures (treated as standalone for comparison).
+   * 'full_year_cumulative' — Q4 FY figures (Jan–Dec cumulative; Q4 VAS standard).
+   * NULL — unknown / not yet tagged (guard passes through; safe fail-open).
+   */
+  period_basis: string | null;
 }
 
 interface RagRow {
@@ -304,25 +311,40 @@ function buildComparisonSection(
     ].join("\n");
   }
 
-  // PUB-7 (BAL-0): period basis mismatch guard.
-  // Q4 figures are FY-cumulative under VAS standard; comparing them against a
-  // standalone quarter produces a false delta (e.g. FPT YoY -82.2%).
-  // Heuristic (no period_basis column yet): Q4 ≡ FY-cumulative, Q1/Q2/Q3 ≡ standalone.
+  // PUB-7 (BAL-1c): period basis mismatch guard — STRUCTURAL column-based check.
+  // Uses the `period_basis` column written by finalize_bctc_refine (BAL-1c):
+  //   'full_year_cumulative' — Q4/FY figures (VAS standard: Jan–Dec cumulative)
+  //   'standalone_quarter'   — Q1/Q2/Q3 YTD figures (treated as standalone)
+  //   NULL                   — unknown / not yet tagged → guard passes through (fail-open)
   //
-  // Case A: latest is Q4 (FY-cumulative) vs prior is NOT Q4 → withhold
-  if (latest.period_type === "Q4" && priorRow.period_type !== "Q4") {
+  // Mismatch: one side is 'full_year_cumulative' and the other is 'standalone_quarter'.
+  // A NULL on either side means the period_basis has not been populated yet — we fall
+  // back to the legacy period_type heuristic so the guard still fires for known Q4 rows
+  // that pre-date the column backfill (graceful degradation, not silent skip).
+  //
+  // Case A: latest is full_year_cumulative vs prior is standalone_quarter → withhold
+  const latestBasis = latest.period_basis;
+  const priorBasis = priorRow.period_basis;
+
+  // Resolve effective basis: use column value when available; fall back to period_type heuristic.
+  const effectiveLatestBasis: string | null =
+    latestBasis ?? (latest.period_type === "Q4" ? "full_year_cumulative" : "standalone_quarter");
+  const effectivePriorBasis: string | null =
+    priorBasis ?? (priorRow.period_type === "Q4" ? "full_year_cumulative" : "standalone_quarter");
+
+  if (effectiveLatestBasis === "full_year_cumulative" && effectivePriorBasis === "standalone_quarter") {
     return [
       `=== QoQ/YoY COMPARISON ===`,
-      `PUB-7: Period basis mismatch — ${latest.sort_key} is Q4/FY-cumulative vs ${priorRow.sort_key} standalone-quarter. Comparison withheld to prevent false delta.`,
+      `PUB-7: Period basis mismatch — ${latest.sort_key} is FY-cumulative (period_basis=${latestBasis ?? "inferred"}) vs ${priorRow.sort_key} standalone-quarter. Comparison withheld to prevent false delta.`,
       `Standalone Q4 figure requires subtraction: Q4 = FY − Q1−Q2−Q3 (not yet implemented).`,
       `Use get_financial_summary for same-quarter YoY comparison.`,
     ].join("\n");
   }
-  // Case B: latest is NOT Q4 (standalone) vs prior is Q4 (FY-cumulative) → withhold
-  if (latest.period_type !== "Q4" && priorRow.period_type === "Q4") {
+  // Case B: latest is standalone_quarter vs prior is full_year_cumulative → withhold
+  if (effectiveLatestBasis === "standalone_quarter" && effectivePriorBasis === "full_year_cumulative") {
     return [
       `=== QoQ/YoY COMPARISON ===`,
-      `PUB-7: Period basis mismatch — ${latest.sort_key} standalone-quarter vs ${priorRow.sort_key} Q4/FY-cumulative. Comparison withheld to prevent false YoY delta (e.g. Q1-standalone vs FY gives misleading -80%+ swing).`,
+      `PUB-7: Period basis mismatch — ${latest.sort_key} standalone-quarter vs ${priorRow.sort_key} FY-cumulative (period_basis=${priorBasis ?? "inferred"}). Comparison withheld to prevent false YoY delta (e.g. Q1-standalone vs FY gives misleading -80%+ swing).`,
       `Use get_financial_summary for same-quarter YoY comparison.`,
     ].join("\n");
   }

@@ -623,6 +623,47 @@ export function buildFinalizeBctcRefineHandler(
         });
       }
 
+      // ── BAL-1c: Set period_basis from period_quarter ────────────────────────
+      //
+      // Root cause (brief 2026-06-02-bctc-analytics-layer-bal1 §4.3):
+      //   PUB-7 comparison guard previously used a period_type heuristic (no column).
+      //   BAL-1c adds a persisted `period_basis` column so the guard is structural.
+      //
+      // VAS standard:
+      //   period_quarter = 4  → 'full_year_cumulative'  (Q4 BCTC = FY Jan–Dec cumulative)
+      //   period_quarter IN (1,2,3) → 'standalone_quarter' (YTD but treated as standalone
+      //                               for comparison basis; Phase 2 will do true subtraction)
+      //   period_quarter IS NULL    → leave NULL (annual filing — no quarterly basis concept)
+      //
+      // Runs OUTSIDE the main transaction (additive, idempotent UPDATE).
+      // Non-fatal: error logged; scalar/ratio backfills already committed.
+      try {
+        interface PeriodQRow { period_quarter: number | null }
+        const pqRow = db
+          .prepare<PeriodQRow, [string]>(
+            "SELECT period_quarter FROM financial_reports WHERE id = ?",
+          )
+          .get(report_id);
+
+        if (pqRow && pqRow.period_quarter !== null) {
+          const periodBasis: string =
+            pqRow.period_quarter === 4 ? "full_year_cumulative" : "standalone_quarter";
+          db.prepare(
+            "UPDATE financial_reports SET period_basis = ? WHERE id = ?",
+          ).run(periodBasis, report_id);
+          logger.info("[finalize_bctc_refine] BAL-1c period_basis set", {
+            report_id,
+            period_quarter: pqRow.period_quarter,
+            period_basis: periodBasis,
+          });
+        }
+      } catch (pbErr) {
+        logger.warn("[finalize_bctc_refine] BAL-1c period_basis update error (non-fatal)", {
+          report_id,
+          error: pbErr instanceof Error ? pbErr.message : String(pbErr),
+        });
+      }
+
       // ── BLOCK-3: Re-derive ratio columns from corrected scalars (BAL-1a) ─────
       //
       // Root cause (brief 2026-06-02-bctc-analytics-layer-bal1 §2.2):
