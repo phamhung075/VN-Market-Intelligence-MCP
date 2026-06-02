@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "NB-PRUNE-UNIFIED-AGENT+NB-PRUNE-ROOTCAUSE-SPIKE",
-    "next_agent": "claude-manager-helper",
-    "next_action": "BATCH 2/2: NB-PRUNE-UNIFIED-AGENT (cmh, compress ## Prior cycles in-place 223->cap) + NB-PRUNE-ROOTCAUSE-SPIKE (agents-architect, timebox120, promotes NB-NOTEBOOK-WRITE-FLEET-ALIGN: prune-by-block cant reach intra-section bloat — decide SSOT contract).",
-    "wip": 2,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "BATCH 2/2 DONE. NB-PRUNE-UNIFIED-AGENT 30e8e27c (223->110L). NB-PRUNE-ROOTCAUSE-SPIKE 26f7caa0 (root cause: prune-by-block cant reach intra-section bloat; brief decides 2-class contract + AC-2b + AC-5). NEXT-CYCLE: PO drains brief_complete arc-nb-prune-contract-20260602T031633Z -> route 5-file impl (S1-S5) to agent-father. NB-NOTEBOOK-WRITE-FLEET-ALIGN promoted+resolved-as-spike.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T03:13Z",
+    "updated_at": "2026-06-02T03:20Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -49,7 +49,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T03:13Z",
+    "_updated_at": "2026-06-02T03:20Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -379,10 +379,10 @@
             "type": "CLEAN",
             "owner": "claude-manager-helper",
             "depends": [],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "docs/agent-memory/notebooks/",
-            "note": "bloat inside single ## Prior cycles block L28-172; compress in-place, keep last 2-3 cycles + carry-over + reference sections"
+            "note": "DONE 30e8e27c — 223->110L, compressed ## Prior cycles in-place, 6 reference headings + last-2 cycles + carry-over intact."
           },
           {
             "task_id": "NB-PRUNE-ROOTCAUSE-SPIKE",
@@ -390,10 +390,10 @@
             "type": "SPIKE",
             "owner": "agents-architect",
             "depends": [],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "cross-service/",
-            "note": "4th breach/3d despite NB-PRUNE-FIX done; intra-section accumulation + L95 overwrite-vs-append contradiction; output brief, agent-father impl after"
+            "note": "DONE 26f7caa0 — brief docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md. Contract: 2 classes (OVERWRITE po/market-watcher; APPEND chef/news-scout/bctc/etc) + AC-2b intra-accumulator sub-block prune + AC-5 inline wc-l guard; L95 TODO resolved. brief_complete->po (NEW, next-cycle agent-father impl S1-S5)."
           }
         ]
       },
