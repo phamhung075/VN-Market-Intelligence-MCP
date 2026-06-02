@@ -5,12 +5,12 @@
   "_updated_by": "agents-architect",
   "head": {
     "status": "in_progress",
-    "active_task_id": "FE-REROUTE-DESIGN",
-    "next_agent": "architect",
-    "next_action": "A-01b DONE+verified live (dashboard false-RED fixed). Now FE-REROUTE: architect designs new mcp-server REST endpoints (kinh-dich reading/market, prices history/batch, news) + api-gateway re-route of not-deployed paths -> then dev-mcp-server + dev-api-gateway + dev-frontend -> ops rebuild -> qa.",
+    "active_task_id": "FE-RR-MACRO-EXTERNAL",
+    "next_agent": "dev-macro-indicators",
+    "next_action": "FE-REROUTE Phase 1 DONE (KD/prices/news real via reroute, db clean, A-01b live). Last real defect: /macro/external 404 on fetch page -> dev-macro-indicators expose endpoint -> ops rebuild macro-indicators -> verify fetch page clean. Then goal met.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T05:29:48Z",
+    "updated_at": "2026-06-02T05:59:14Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T05:29:48Z",
+    "_updated_at": "2026-06-02T05:59:14Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -642,10 +642,73 @@
             "depends": [
               "FE-AUDIT-1"
             ],
-            "status": "TODO",
+            "status": "DONE",
             "size": "M",
             "zone": "docs/architecture-briefs/ + apps/mcp-server + apps/api-gateway + apps/frontend",
-            "note": "Root: analysis/db/fetch call dead microservices (kinh-dich-service, stock-price, technical-analysis, news-fetch — not deployed). Data EXISTS in mcp-server plane via TOOLS (get_portfolio_conviction etc.) + market.db, but NO REST endpoint. Design: (1) mcp-server new REST read endpoints (/mcp/api/kinh-dich/reading/{t}, /mcp/api/prices/{history,batch}, reuse /api/news-fetch/live) sourcing the SAME data the cowork plane uses; (2) api-gateway re-route /kinh-dich,/stock,/ta,/news to mcp-server when target microservice in not_deployed_by_design (host_runtime_set); (3) frontend unchanged or path swap. Honest-unavailable only where data genuinely absent. Then ba/pm decompose to dev-mcp-server+dev-api-gateway+dev-frontend+qa."
+            "note": "Root: analysis/db/fetch call dead microservices (kinh-dich-service, stock-price, technical-analysis, news-fetch — not deployed). Data EXISTS in mcp-server plane via TOOLS (get_portfolio_conviction etc.) + market.db, but NO REST endpoint. Design: (1) mcp-server new REST read endpoints (/mcp/api/kinh-dich/reading/{t}, /mcp/api/prices/{history,batch}, reuse /api/news-fetch/live) sourcing the SAME data the cowork plane uses; (2) api-gateway re-route /kinh-dich,/stock,/ta,/news to mcp-server when target microservice in not_deployed_by_design (host_runtime_set); (3) frontend unchanged or path swap. Honest-unavailable only where data genuinely absent. Then ba/pm decompose to dev-mcp-server+dev-api-gateway+dev-frontend+qa. | DONE e0fb2d52 — brief 569L, 5 endpoints + rerouter, phased"
+          },
+          {
+            "task_id": "FE-RR-mcp",
+            "title": "mcp-server 5 REST endpoints (KD reading/market, price history/batch, news)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "FE-REROUTE-DESIGN"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 1f27d188 — real data verified at DB; VNINDEX confirmed (no hyphen); shapes matched to loaders"
+          },
+          {
+            "task_id": "FE-RR-gw",
+            "title": "api-gateway not-deployed rerouter -> mcp-server",
+            "type": "SPRINT-S",
+            "owner": "dev-api-gateway",
+            "depends": [
+              "FE-RR-mcp"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/api-gateway/",
+            "note": "DONE c7f19ea3 — 15+34 tests, anti-regression (macro/mcp not rerouted), SSOT-driven"
+          },
+          {
+            "task_id": "FE-RR-rebuild",
+            "title": "ops rebuild mcp-server + api-gateway",
+            "type": "FIX",
+            "owner": "ops",
+            "depends": [
+              "FE-RR-gw"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "ops",
+            "note": "DONE — 5 containers, endpoints live"
+          },
+          {
+            "task_id": "FE-RR-QA-1",
+            "title": "QA Phase-1 live real-data proof",
+            "type": "FIX",
+            "owner": "qa",
+            "depends": [
+              "FE-RR-rebuild"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "qa",
+            "note": "PASS 65be99e5 — KD/prices real per-row (DB spot-check match), TA honest 503, news honest-empty, frontend SSR real data no 502; db page verified errors:[] clean. Non-blocking: 1 zero-OHLCV row FPT 2026-05-30 (DB data-quality)."
+          },
+          {
+            "task_id": "FE-RR-MACRO-EXTERNAL",
+            "title": "fetch page: /macro/external returns 404 (deployed macro-indicators missing the endpoint)",
+            "type": "FIX",
+            "owner": "dev-macro-indicators",
+            "depends": [],
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "apps/macro-indicators/",
+            "note": "Surfaced by router raw-verify: dashboard.fetch shows red 'Macro: data temporarily unavailable' because GET /macro/external -> 404 (macro-indicators serves POST /macro/snapshot 200 but no external route in current build; external-macro logic exists in src/_deprecated + scrapers present). Expose external macro (cached form) at the path the gateway forwards. NOT a not-deployed issue (macro IS deployed). Pre-existing, in-scope for 'all pages correct'."
           }
         ],
         "_updated_at": "2026-06-02T04:58:02Z",
