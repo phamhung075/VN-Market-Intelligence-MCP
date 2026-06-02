@@ -5,12 +5,12 @@
   "_updated_by": "agent-father",
   "head": {
     "status": "in_progress",
-    "active_task_id": "EI-P2-1+EI-P2-2",
-    "next_agent": "dev-mcp-server",
-    "next_action": "BATCH-3 ENV-ISOLATION-P2 (serial chain). Dispatched EI-P2-1 (startup APP_ENV/DB_PATH assertion) + EI-P2-2 (data_env column 5 tables) to dev-mcp-server in one run. MUST pass for prod (production->/app/data/market.db). Then EI-P2-3 (compose.dev port3099, ops) -> EI-P2-QA. GOAL=complete all task.",
+    "active_task_id": "EI-P2-3",
+    "next_agent": "ops",
+    "next_action": "BATCH-3 cont: EI-P2-1+2 DONE-LIVE-VERIFIED (assertion boots clean, data_env on 5 tables). Dispatched EI-P2-3 docker-compose.dev.yml dev-stack port 3099 (ops, config-only NO prod rebuild). Then EI-P2-QA ENV-GUARD-1 sweep. toolCount corrected 158->156 (live boot-log authoritative). GOAL=complete all task.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T17:30:47Z",
+    "updated_at": "2026-06-02T17:42:47Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T17:30:47Z",
+    "_updated_at": "2026-06-02T17:42:47Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -686,9 +686,10 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": "EI-P1-3",
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
-            "zone": "apps/mcp-server/"
+            "zone": "apps/mcp-server/",
+            "note": " | DONE-LIVE-VERIFIED 2026-06-02T17:40Z (commit 2daf2d47, mcp rebuilt). ops boot-verified: container Up healthy, EI-P2-1 startup assertion PASSED for prod (APP_ENV=production/DB_PATH=/app/data/market.db, no exit), unset->production safe-default + :memory: bypass; EI-P2-2 data_env column LIVE on all 5 tables (daily_ohlcv/financial_reports/rag_analyses/tracked_indicators/pdf_extracted_text), idempotent, existing rows NULL. tsc clean, 73 targeted tests pass (full bun test blocked by pre-existing Bun1.3.13 C++ crash)."
           },
           {
             "task_id": "EI-P2-2",
@@ -696,9 +697,10 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": "EI-P2-1",
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
-            "zone": "apps/mcp-server/"
+            "zone": "apps/mcp-server/",
+            "note": " | DONE-LIVE-VERIFIED 2026-06-02T17:40Z (commit 2daf2d47, mcp rebuilt). ops boot-verified: container Up healthy, EI-P2-1 startup assertion PASSED for prod (APP_ENV=production/DB_PATH=/app/data/market.db, no exit), unset->production safe-default + :memory: bypass; EI-P2-2 data_env column LIVE on all 5 tables (daily_ohlcv/financial_reports/rag_analyses/tracked_indicators/pdf_extracted_text), idempotent, existing rows NULL. tsc clean, 73 targeted tests pass (full bun test blocked by pre-existing Bun1.3.13 C++ crash)."
           },
           {
             "task_id": "EI-P2-3",
@@ -706,7 +708,7 @@
             "type": "sprint-task",
             "owner": "ops",
             "depends": "EI-P2-2",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "S"
           },
           {
