@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T18:26:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FU-ORCH-ATOMIC-TS-IMPL",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-mcp-server: add validate-before-rename guard to writeOrchStateAtomic (orchStateStore.ts:110) per §2.3 TS variant — non-empty + round-trip parse + .head/.task_board/.signal_queue sentinel, throw before renameSync. Add unit test. Then ops rebuilds mcp-server single-service.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": ":07(2009Z) cycle concluded — drained 4 hb; ROOT-CAUSE FIX shipped end-to-end (ORCH-ATOMIC-WRITE-GUARD spec §2.3 b7e374ce + FU-ORCH-ATOMIC-TS-IMPL code 6a8d35d8 + mcp-server rebuild, LIVE-verified): empty/errored payload can no longer clobber orch-state SSOT (the 39f5ba66 incident class is closed in both bash-agent and TS-cron write paths). HELD for next PO: ORCH-TASKBOARD-SCHEMA-HYGIENE (stale BCTC-HIST-FETCH-VERIFY dup + null-field tasks; now safe to mutate under hardened protocol) + async BCTC-VPS backlog (ops lane).",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T20:18:29Z",
+    "updated_at": "2026-06-02T20:23:59Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T20:18:29Z",
+    "_updated_at": "2026-06-02T20:23:59Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -613,11 +613,11 @@
             "title": "Propagate §2.3 atomic-write guard into the shared TS helper writeOrchStateAtomic (orchStateStore.ts:110) — spec-correct but runtime crons still unguarded",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "Discovered during ORCH-ATOMIC-WRITE-GUARD verify: the 3 TS cron writers (dailyDashboardJob, tasksMdJanitorJob, orchestrationHandler) all funnel through ONE shared helper writeOrchStateAtomic(path,data) at apps/mcp-server/src/infrastructure/orchStateStore.ts:110-115, currently UNGUARDED (writeFileSync(JSON.stringify(data)) -> renameSync, no non-empty/structural check). Implement the §2.3 TS guard there: assert serialized non-empty (length>=2) + JSON.parse round-trips + parsed has .head AND .task_board AND .signal_queue, THROW before renameSync otherwise. Add a unit test (empty/partial object throws, valid object writes). Needs ops rebuild of mcp-server to go live (container). Single-function fix, in-session."
+            "note": "Discovered during ORCH-ATOMIC-WRITE-GUARD verify: the 3 TS cron writers (dailyDashboardJob, tasksMdJanitorJob, orchestrationHandler) all funnel through ONE shared helper writeOrchStateAtomic(path,data) at apps/mcp-server/src/infrastructure/orchStateStore.ts:110-115, currently UNGUARDED (writeFileSync(JSON.stringify(data)) -> renameSync, no non-empty/structural check). Implement the §2.3 TS guard there: assert serialized non-empty (length>=2) + JSON.parse round-trips + parsed has .head AND .task_board AND .signal_queue, THROW before renameSync otherwise. Add a unit test (empty/partial object throws, valid object writes). Needs ops rebuild of mcp-server to go live (container). Single-function fix, in-session. | DONE-LIVE 6a8d35d8 (dev-mcp-server): writeOrchStateAtomic (orchStateStore.ts:110, shared by dailyDashboardJob/tasksMdJanitorJob/orchestrationHandler) now asserts serialized non-empty + round-trip parse + .head/.task_board/.signal_queue sentinel BEFORE writeFileSync/renameSync; throws (SSOT untouched) on empty/partial. 6/6 unit tests (router re-ran: 6 pass 0 fail), typecheck clean. ops rebuilt mcp-server single-service (host-safe); router independently verified LIVE: container Up healthy, /api/orchestration serving .head, guard string present in running /app/src image. Spec+code+deploy = full root-cause closure of the 39f5ba66 clobber class."
           }
         ]
       },
