@@ -89,10 +89,13 @@ For each file:
 3. Append to `pendingSignals[]`
 
 **0a-2 — Prune** (after batch, both stores):
-```sql
-DELETE FROM signals_processed WHERE processed_at < datetime('now', '-7 days');
+```sh
+# processed_at stored compact-ISO YYYYMMDDTHHMMSSZ — use lexicographic compare, NOT datetime()
+cutoff=$(date -u +%Y%m%dT%H%M%SZ -d '7 days ago' 2>/dev/null || date -u -v-7d +%Y%m%dT%H%M%SZ)
+sqlite3 docs/signals/signals.db "DELETE FROM signals_processed WHERE processed_at < '${cutoff}';"
 ```
-Delete `docs/signals/processed/` files with `processedAt` older than 7 days.
+Delete `docs/signals/processed/` files with `processedAt` (field value) older than 7 days — field compare, not mtime, correct as-is.
+**TODO (canonical script):** No committed drain helper exists; this spec is the SSOT. Any `scripts/drain-signals.sh` MUST match this spec verbatim.
 
 **Escape hatches:** Delete `processed/` copy + DB row → re-routes on next cycle. Or bump `createdAt` → new fingerprint.
 
