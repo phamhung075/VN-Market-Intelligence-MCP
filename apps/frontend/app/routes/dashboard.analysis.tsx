@@ -51,9 +51,6 @@ export const meta: MetaFunction = () => [
 // Active watchlist tickers only (VEA excluded)
 const ACTIVE_TICKERS = WATCHLIST_STOCKS.filter((s) => s.active).map((s) => s.ticker);
 
-// Seeding window end date — 1945b-signal-outcomes-seed-window AC.
-const ACCURACY_SEEDING_WINDOW_END = "2026-05-25";
-
 // Representative sample for the KD overview table (top 8 cross-sector picks)
 const KD_SAMPLE_TICKERS = ["FPT", "VNM", "HPG", "VCB", "MSN", "VIC", "SSI", "VJC"] as const;
 
@@ -234,10 +231,8 @@ function indicatorLabel(indicator: string): string {
  */
 function AccuracyDigestCard({
   data,
-  seedingWindowEnd,
 }: {
   data: AccuracyDigestStats | null;
-  seedingWindowEnd: string;
 }) {
   const state = deriveAccuracyDigestState(data);
 
@@ -257,7 +252,7 @@ function AccuracyDigestCard({
   if (state === "empty") {
     return (
       <p className="text-sm text-slate-400">
-        No accuracy data yet. Signal outcomes are being seeded — check back after {seedingWindowEnd}.
+        No accuracy data yet — signal outcomes are still seeding.
       </p>
     );
   }
@@ -1561,7 +1556,6 @@ export default function AnalysisDashboard() {
       <SectionCard title="Signal Accuracy" subtitle="30d · top-3 / bottom-3">
         <AccuracyDigestCard
           data={accuracyDigest}
-          seedingWindowEnd={ACCURACY_SEEDING_WINDOW_END}
         />
       </SectionCard>
     </div>

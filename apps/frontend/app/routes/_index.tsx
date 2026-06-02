@@ -32,7 +32,7 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
   }
 
   return json<LoaderData>({
-    message: "VN Market Intelligence — dashboard coming soon",
+    message: "Vietnam Stock Market Intelligence",
     timestamp: new Date().toISOString(),
     gateway,
     gatewayError,
@@ -49,7 +49,7 @@ const NAV_ITEMS = [
 
 const DASHBOARD_LINKS = [
   { to: "/dashboard/analysis", label: "Market Analysis", desc: "Kinh Dịch signals + macro indicators" },
-  { to: "/dashboard/services", label: "Service Health", desc: "9 microservice status + latency" },
+  { to: "/dashboard/services", label: "Service Health", desc: "Microservice status + latency" },
   { to: "/dashboard/fetch", label: "Fetch Operations", desc: "Reuters, Bloomberg, macro snapshot" },
   { to: "/dashboard/vps", label: "VPS Proxy", desc: "Vietnam proxy health per service" },
   { to: "/dashboard/db", label: "Database Report", desc: "Price history, alert engine, headlines" },
