@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T17:30:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "BAL-1d DONE-CODE-LIVE (611592be, mcp 16:57:41Z, router raw-verified: report_scope column live, VNM control un-regressed, HPG parent-only withheld; PUB-8 structural gate-shadowed by PUB-5 like BAL-1b, proven by 13 tests, NULL-fallback live). NEW SIGNAL to triage: cwk-20260602T1610Z news-scout self-refused its flow (agent-flow-defect MEDIUM) -> agents-architect/agent-father lane. NEXT BATCH-2: MSG-1 foreign-flow aggregate tool (dev-mcp-server M) + MSG-3 phantom-tool doc (XS doc-zone, parallel-safe). Then B3 ENV-ISOLATION-P2 chain, B4 FU-BCTC-HISTORY-COVERAGE, B5 SIG-FOLLOWUP-DRYRUN, B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "MSG-1+MSG-3",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BATCH-2 dispatched: MSG-1 (market-wide foreign-flow aggregate tool, apps/mcp-server) + MSG-3 (phantom-tool discoverability doc, docs/standards/mcp-tools.md) in ONE dev-mcp-server run (single commit boundary, no race). NSCOUT-FRAMING-RECUR DONE prior (3e0ee4f5). Remaining: B3 ENV-ISOLATION-P2 chain, B4 FU-BCTC-HISTORY-COVERAGE, B5 SIG-FOLLOWUP-DRYRUN, B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T17:01:18Z",
+    "updated_at": "2026-06-02T17:14:22Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T17:03:02Z",
+    "_updated_at": "2026-06-02T17:14:22Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -622,7 +622,7 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": null,
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "M",
             "zone": "apps/mcp-server/"
           },
@@ -642,7 +642,7 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": null,
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "XS",
             "zone": "docs/standards/mcp-tools.md"
           }
@@ -1129,11 +1129,11 @@
             "type": "SPIKE",
             "owner": "agents-architect",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "docs/agents/",
             "priority": "high",
-            "note": "Root-cause the recurring news-scout self-refusal. Fix 7239b803 added self-execution framing but bug recurred 2026-06-02T16:00Z (signal cwk-20260602T1610Z). Investigate: (1) why the framing fix did not hold (agent registration system-prompt vs flow main.md vs CLAUDE.md precedence); (2) does the subagent inherit project CLAUDE.md 'router-only/always-delegate' and mis-apply it to itself; (3) audit ALL cowork agent flows for the same self-identity vulnerability (market-watcher handled identical prompt fine -> compare). Output brief to docs/architecture-briefs/, signal agent-father to implement durable self-identity guard. PLAN-ONLY. recovered_agentId a9d28df7f3c18b660 ran cleanly with explicit non-delegation preamble."
+            "note": "Root-cause the recurring news-scout self-refusal. Fix 7239b803 added self-execution framing but bug recurred 2026-06-02T16:00Z (signal cwk-20260602T1610Z). Investigate: (1) why the framing fix did not hold (agent registration system-prompt vs flow main.md vs CLAUDE.md precedence); (2) does the subagent inherit project CLAUDE.md 'router-only/always-delegate' and mis-apply it to itself; (3) audit ALL cowork agent flows for the same self-identity vulnerability (market-watcher handled identical prompt fine -> compare). Output brief to docs/architecture-briefs/, signal agent-father to implement durable self-identity guard. PLAN-ONLY. recovered_agentId a9d28df7f3c18b660 ran cleanly with explicit non-delegation preamble. | DONE 3e0ee4f5 (agent-father, 18 files, 9 guards live; signal aac DONE c729bdaa). Durable L3 self-identity guard across 9 cowork flows, supersedes frontmatter-only 7239b803. No rebuild — flows read fresh on next spawn. Router raw-verified docs-only scope + guard present."
           }
         ]
       }
