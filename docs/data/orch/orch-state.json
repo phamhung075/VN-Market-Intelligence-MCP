@@ -5,12 +5,12 @@
   "_updated_by": "agent-father",
   "head": {
     "status": "in_progress",
-    "active_task_id": "SIG-FOLLOWUP-DRYRUN",
-    "next_agent": "developer",
-    "next_action": "BATCH-5: SIG-FOLLOWUP-DRYRUN X-1 synthetic dry-run prove D-IMPROVE lane-B emit seam e2e (developer). BCTC-HIST-SEED DONE-LIVE prior (queue 102->413). Then B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
+    "active_task_id": "RE-CAP-1",
+    "next_agent": "agent-father",
+    "next_action": "BATCH-6: RE-CAP-1 signal-dashboard SKILL.md >120 cap lazy-load refactor (agent-father, =FU-SIGNAL-DASHBOARD-CAP collapse, no rebuild). SIG-FOLLOWUP-DRYRUN DONE prior (emit seam PROVEN). Then B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T18:02:00Z",
+    "updated_at": "2026-06-02T18:07:21Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T18:02:00Z",
+    "_updated_at": "2026-06-02T18:07:21Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -750,9 +750,10 @@
             "type": "sprint-task",
             "owner": "developer",
             "depends": null,
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
-            "zone": "apps/mcp-server/"
+            "zone": "apps/mcp-server/",
+            "note": " | DONE 2026-06-02T18:20Z commit 6a8c87ac (PROVEN-WORKING, no rebuild — test-infra+injectable, production byte-identical). X-1 synthetic dry-run fires D-IMPROVE lane-B emit seam e2e: writeImprovementProposal->appendDashboardRow(signal_queue)->cooldown-dedup, all sinked (temp dirs, :memory:, no real Telegram/signal). Found+fixed gap: production emit path had ZERO test coverage (prior tests bypassed via writeProposalFn injection); added orchStatePath injectable. 3 dry-run + 65 regression tests pass, tsc clean."
           }
         ]
       },
@@ -788,7 +789,7 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": null,
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "S",
             "zone": ".claude/skills/signal-dashboard/"
           },
