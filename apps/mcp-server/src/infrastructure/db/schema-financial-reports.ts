@@ -497,6 +497,35 @@ export function initFinancialReportsTables(db: Database): void {
     // fresh DB — column included via SQLITE_DDL (will be added there in future)
   }
 
+  // ── BAL-1d: report_scope column on financial_reports ─────────────────────
+  // report_scope: 'consolidated' | 'parent_only' | NULL (unknown)
+  //   'consolidated' — the report covers the consolidated group (hợp nhất).
+  //   'parent_only'  — the report covers the parent entity only (riêng lẻ).
+  //   NULL           — not yet tagged; finalize_bctc_refine populates on next run.
+  //
+  // Detection heuristic (finalize time):
+  //   net_revenue ≈ 0 (or null) AND net_profit > 0 → 'parent_only'
+  //   else → 'consolidated'
+  //   Guard: false-positive protection — only stamp 'parent_only' when revenue is
+  //   genuinely zero/absent, not merely small. Full heuristic in finalizeBctcRefineTool.ts.
+  //
+  // Migration mechanism: PRAGMA table_info check + guarded ALTER TABLE (idempotent).
+  // Pattern: same as period_basis / refine_status / confirm_status migrations above.
+  try {
+    const rs_cols = db
+      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
+      .all();
+    const rs_col_names = new Set(rs_cols.map((c) => c.name));
+    if (!rs_col_names.has("report_scope")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN report_scope TEXT");
+      // NULL default: existing rows are unknown scope until finalize_bctc_refine
+      // backfills them on next run. NULL causes PUB-8 to fall back to the inline
+      // heuristic (graceful degradation — same pattern as period_basis/PUB-7).
+    }
+  } catch {
+    // fresh DB — column included via SQLITE_DDL (will be added there in future)
+  }
+
   // ── BCTC-HUMAN-CONFIRM: Migration 2 — confirm_status on financial_reports ──
   // confirm_status: PENDING | CONFIRMED (separate dimension from refine_status)
   // final_confirmed_at: ISO8601 UTC timestamp; NULL when not yet confirmed

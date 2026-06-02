@@ -514,6 +514,7 @@ describe("DV-BANK-2 — C-2: buildSummarySection gross_profit display for banks"
     refine_status: "DONE",
     period_basis: null,
     balance_sheet_json: null,
+    report_scope: null,
   };
 
   it("BANK form: summary does NOT contain 'Gross Profit     : 0.0 tỷ VND'", () => {

@@ -664,6 +664,68 @@ export function buildFinalizeBctcRefineHandler(
         });
       }
 
+      // ── BAL-1d: Set report_scope from revenue/profit heuristic ───────────────
+      //
+      // Root cause (brief 2026-06-02-bctc-analytics-layer-bal1 §5.2):
+      //   No structural column distinguishes consolidated from parent-only reports.
+      //   PUB-8 previously relied solely on an inline heuristic at serve time.
+      //   BAL-1d persists the heuristic result as a column so the publish gate
+      //   is structural (column-based) rather than repeated inference on every serve.
+      //
+      // Heuristic (SSOT — mirrors PUB-8 guard in bctcFullTools.ts):
+      //   net_revenue = 0 OR net_revenue IS NULL → revenue-absent
+      //   AND net_profit IS NOT NULL AND net_profit > 0 → profitable with no revenue
+      //   → 'parent_only'  (holding-company pattern: holding-co earns dividends, no ops revenue)
+      //   else → 'consolidated'
+      //
+      // False-positive guard: only stamp 'parent_only' when revenue is GENUINELY zero
+      // or absent, not merely small. Small positive revenue (e.g. 1–100 triệu) is a
+      // real ops line — keep as 'consolidated'. The threshold is zero (= 0 or NULL),
+      // not "less than some threshold". This is intentionally strict.
+      //
+      // NULL net_profit with zero revenue is stamped 'consolidated' (not enough signal
+      // to distinguish parent-only from a zero-revenue corp that lost money).
+      //
+      // Runs OUTSIDE the main transaction (additive, idempotent UPDATE).
+      // Non-fatal: error logged; scalar/ratio/period_basis backfills already committed.
+      try {
+        interface ScopeSourceRow {
+          net_revenue: number | null;
+          net_profit: number | null;
+        }
+        const scopeSrc = db
+          .prepare<ScopeSourceRow, [string]>(
+            "SELECT net_revenue, net_profit FROM financial_reports WHERE id = ?",
+          )
+          .get(report_id);
+
+        if (scopeSrc) {
+          const { net_revenue, net_profit } = scopeSrc;
+          // Heuristic: revenue-absent (null or exactly 0) AND profit positive → parent_only
+          const revenueAbsent = net_revenue === null || net_revenue === 0;
+          const profitPositive = net_profit !== null && net_profit > 0;
+
+          const reportScope: string = revenueAbsent && profitPositive
+            ? "parent_only"
+            : "consolidated";
+
+          db.prepare(
+            "UPDATE financial_reports SET report_scope = ? WHERE id = ?",
+          ).run(reportScope, report_id);
+          logger.info("[finalize_bctc_refine] BAL-1d report_scope set", {
+            report_id,
+            net_revenue,
+            net_profit,
+            report_scope: reportScope,
+          });
+        }
+      } catch (rsErr) {
+        logger.warn("[finalize_bctc_refine] BAL-1d report_scope update error (non-fatal)", {
+          report_id,
+          error: rsErr instanceof Error ? rsErr.message : String(rsErr),
+        });
+      }
+
       // ── BLOCK-3: Re-derive ratio columns from corrected scalars (BAL-1a) ─────
       //
       // Root cause (brief 2026-06-02-bctc-analytics-layer-bal1 §2.2):

@@ -93,6 +93,13 @@ export interface ReportRow {
    * Available via SELECT * (column exists in financial_reports schema).
    */
   balance_sheet_json: string | null;
+  /**
+   * BAL-1d: report scope structural column written by finalize_bctc_refine.
+   * 'consolidated' — consolidated group report (hợp nhất).
+   * 'parent_only'  — parent entity only (riêng lẻ); revenue=0, dividends as profit.
+   * NULL           — unknown / not yet tagged (PUB-8 falls back to inline heuristic).
+   */
+  report_scope: string | null;
 }
 
 interface RagRow {
@@ -629,21 +636,44 @@ export function checkPublishability(
     };
   }
 
-  // ── PUB-8 (BAL-0): parent-only heuristic ─────────────────────────────────
-  // If net_revenue = 0 AND net_profit > 0 AND confidence < 0.6 → suspect parent-only filing.
-  // PUB-5 catches the low-confidence case; PUB-8 catches slightly-higher-confidence
-  // parent-only where the structural signal (rev=0, np>0) is the primary tell.
-  const PARENT_ONLY_CONFIDENCE_THRESHOLD = 0.6;
-  if (
-    row != null &&
-    row.net_revenue === 0 &&
-    row.net_profit > 0 &&
-    row.extraction_confidence < PARENT_ONLY_CONFIDENCE_THRESHOLD
-  ) {
-    return {
-      publishable: false,
-      reason: `PUB-8: Parent-only filing suspected (Rev=0, NP=${row.net_profit.toFixed(1)}, confidence ${(row.extraction_confidence * 100).toFixed(0)}%) — consolidated report required for headline serving.`,
-    };
+  // ── PUB-8 (BAL-1d upgraded): parent-only structural column + NULL fallback ──
+  //
+  // BAL-1d: the `report_scope` column is now the STRUCTURAL signal for parent-only
+  // detection. finalize_bctc_refine writes 'parent_only' when net_revenue=0/NULL
+  // AND net_profit>0. For newly finalized reports the column is authoritative.
+  //
+  // For pre-BAL-1d records (report_scope IS NULL), fall back to the original inline
+  // heuristic (rev=0, np>0, conf<0.6) — same pattern as period_basis/PUB-7 fallback.
+  // This ensures live protection for the existing corpus until a corpus re-finalize runs.
+  //
+  // Structural path (report_scope set): block unconditionally when parent_only,
+  // regardless of confidence — the structural column is more authoritative than
+  // the confidence threshold (finalize-time heuristic was already guarded for FPs).
+  //
+  // Inline heuristic path (report_scope IS NULL — pre-finalize records):
+  //   Block when rev=0 AND np>0 AND conf<0.6 (original PUB-8 pre-BAL-1d).
+  if (row != null) {
+    if (row.report_scope === "parent_only") {
+      // STRUCTURAL path: column-based, authoritative
+      return {
+        publishable: false,
+        reason: `PUB-8: Parent-only filing (report_scope=parent_only, Rev=${row.net_revenue?.toFixed(1) ?? "NULL"}, NP=${row.net_profit?.toFixed(1) ?? "NULL"}) — consolidated report required for headline serving.`,
+      };
+    } else if (row.report_scope === null) {
+      // NULL FALLBACK path: pre-finalize records — inline heuristic (mirrors original PUB-8)
+      const PARENT_ONLY_CONFIDENCE_THRESHOLD = 0.6;
+      if (
+        row.net_revenue === 0 &&
+        row.net_profit > 0 &&
+        row.extraction_confidence < PARENT_ONLY_CONFIDENCE_THRESHOLD
+      ) {
+        return {
+          publishable: false,
+          reason: `PUB-8: Parent-only filing suspected (report_scope=NULL/untagged, Rev=0, NP=${row.net_profit.toFixed(1)}, confidence ${(row.extraction_confidence * 100).toFixed(0)}%) — consolidated report required for headline serving. Re-finalize to stamp report_scope structural column.`,
+        };
+      }
+    }
+    // report_scope='consolidated' → PUB-8 passes (structural confirmation, no further check)
   }
 
   // ── PUB-6 (BAL-0): ratio sanity bounds ───────────────────────────────────

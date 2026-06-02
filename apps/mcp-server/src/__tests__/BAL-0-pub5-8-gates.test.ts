@@ -86,7 +86,8 @@ function makeDb(): Database {
     qoq_delta_json TEXT,
     refine_status TEXT NOT NULL DEFAULT 'DONE',
     period_basis TEXT,
-    balance_sheet_json TEXT
+    balance_sheet_json TEXT,
+    report_scope TEXT
   )`);
 
   db.exec(`CREATE TABLE IF NOT EXISTS bctc_table_rows (
@@ -263,6 +264,7 @@ function makeRow(overrides: Partial<ReportRow> = {}): ReportRow {
     refine_status: "DONE",
     period_basis: null,
     balance_sheet_json: null,
+    report_scope: null,
     ...overrides,
   };
 }
