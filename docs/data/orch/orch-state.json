@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "BAL-1c-DEV",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Executing BATCH(WIP=2): BAL-1a-BACKFILL (SPIKE/agents-architect — recurring-bug-escalation 4th touch of bctcFullTools serve-path family; bounded decision recompute-on-read vs backfill, output approach for dev FIX next cycle) + BAL-1c-DEV (FIX/dev-mcp-server — period_basis column migration + Q4 full_year_cumulative finalize backfill + comparison guard, makes PUB-7 structural). Disjoint files (architect=decision-only no code commit / 1c=finalizeBctcRefineTool.ts+migration). After 1c lands: ops rebuild mcp-server + router live-verify. BAL-1d deferred (file-contention w/ 1c).",
-    "wip": 2,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "dev-team 14:09Z cycle DONE. BCTC LIVE PUBLISH-QUALITY CLOSED: BAL-1a-BACKFILL-IMPL recompute-on-read LIVE-VERIFIED (VNM ROE 27.3%/ROA 17.7% live, PUB-6 retired, b7329f54) + BAL-1c period_basis structural PUB-7 (691eae48), mcp-server rebuilt 14:44:06Z. Remaining BCTC: BAL-1d (report_scope, MEDIUM), BAL-1e (eps footnote, LOW), period_basis corpus re-flow (optional, graceful fallback covers it). >>> NEW OPERATOR GOAL 2026-06-02: reveal ALL frontend problems and fix all — dispatching frontend-correctness investigation + fixes next. Also latent: agents-architect lacks MCP gateway binding so it commits WITHOUT commit-mutex (FU-ARCHITECT-MUTEX-BINDING). VPS socat band-aid dead (not critical; VPS-SOCAT-PERSIST open).",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T14:12:22Z",
+    "updated_at": "2026-06-02T14:46:38Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T14:12:22Z",
+    "_updated_at": "2026-06-02T14:46:38Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -155,11 +155,11 @@
             "depends": [
               "BAL-0"
             ],
-            "status": "in_progress",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "brief Cluster(c): makes PUB-7 heuristic structural (column-based not period_type-guess)"
+            "note": "brief Cluster(c): makes PUB-7 heuristic structural (column-based not period_type-guess) | DONE+LIVE 2026-06-02T14:45Z (image 14:44:06Z): period_basis column migrated (confirmed in live DB), finalize backfill Q4->full_year_cumulative, PUB-7 structural guard with graceful fallback to period_type heuristic for NULL existing rows (no regression). Full structural benefit on corpus re-finalize. 165 tests, commit 691eae48."
           },
           {
             "task_id": "BAL-1d-DEV",
@@ -197,12 +197,27 @@
             "depends": [
               "BAL-1a-DEV"
             ],
-            "status": "in_progress",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
             "priority": "high",
-            "note": "ROOT: financial_reports persisted roe/roa/etc are stale (VNM roe=2.75e-10 vs correct 27.3%) because BAL-1a recomputes only at finalize-time. fix-root-cause-definitif => recompute ratios ON READ from correct persisted base scalars (np/equity/total_assets/debt/cash/ebitda already correct), serve the live value, never trust persisted ratio columns again. Architect to confirm read-vs-backfill before impl (touches serve path / same file family as BAL-0/BAL-1b - flag recurring-bug-escalation review). Closes the BAL-0 PUB-6 interim shield for real.",
+            "note": "ROOT: financial_reports persisted roe/roa/etc are stale (VNM roe=2.75e-10 vs correct 27.3%) because BAL-1a recomputes only at finalize-time. fix-root-cause-definitif => recompute ratios ON READ from correct persisted base scalars (np/equity/total_assets/debt/cash/ebitda already correct), serve the live value, never trust persisted ratio columns again. Architect to confirm read-vs-backfill before impl (touches serve path / same file family as BAL-0/BAL-1b - flag recurring-bug-escalation review). Closes the BAL-0 PUB-6 interim shield for real. | DONE 2026-06-02: architect chose Option R recompute-on-read (definitive), directive in brief 27119412. Implemented as BAL-1a-BACKFILL-IMPL below.",
             "route": "SPIKE architect-decision -> dev-mcp-server FIX next cycle"
+          },
+          {
+            "task_id": "BAL-1a-BACKFILL-IMPL",
+            "title": "Recompute-on-read ratios in get_bctc_full serve path (Option R)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-1a-BACKFILL",
+              "BAL-1a-DEV"
+            ],
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+            "priority": "high",
+            "note": "DONE+ROUTER-LIVE-VERIFIED 2026-06-02T14:45Z (raw get_bctc_full, image 14:44:06Z, commit b7329f54): VNM serves ROE 27.3% / ROA 17.7% / NetDebt-EBITDA -0.13x (was 0.0%/0.0%/withheld); PUB-6 interim shield NO LONGER fires. Reads through stale persisted ratio cols by recomputing from correct base scalars every call (mirrors BAL-1a/ratioComputer SSOT). Current Ratio N/A = honest (VNM balance_sheet_json lacks currentLiabilities breakdown). CLOSES the BCTC live publish-quality chase. Persisted ratio cols now deprecated-cache (future FU-BCTC-RATIO-COL-DEPRECATE)."
           }
         ]
       },
