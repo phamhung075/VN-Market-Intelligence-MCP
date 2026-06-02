@@ -1,0 +1,17 @@
+{
+  "from": "bctc-analyst",
+  "to": "po",
+  "type": "deep_dive_result",
+  "ticker": "FPT",
+  "trigger": "ESC-3",
+  "createdAt": "2026-06-02T00:00:00Z",
+  "payload": {
+    "escalation_trigger": "ESC-3",
+    "trigger_value": 2.15,
+    "threshold": 0.40,
+    "deep_dive_verdict": "VI: FPT Q1-2026 ghi nhận lợi nhuận sau thuế +2.476,8 tỷ VND nhưng dòng tiền hoạt động kinh doanh (OCF) âm -2.847,8 tỷ VND, cho tỷ lệ OCF/NI = -1,15 (divergence_ratio 2,15 so với ngưỡng 0,40). Dữ liệu nền là thật (độ tin cậy trích xuất 81%, source_tier 1): doanh thu 12.480 tỷ, lợi nhuận gộp 4.244,9 tỷ (biên 34%), tổng tài sản 68.586 tỷ. TUY NHIÊN báo cáo lưu chuyển tiền tệ trích xuất bị KHUYẾT các dòng đối chiếu then chốt: Lợi nhuận từ HĐKD = 0, EBITDA = 0, Tiền và tương đương tiền = 0 (get_bctc_full), và get_cash_flow KHÔNG trả về bất kỳ cấu phần vốn lưu động nào (phải thu, hàng tồn kho, phải trả, khấu hao). Vì thiếu chính các dòng cộng-trừ của phương pháp gián tiếp, KHÔNG THỂ phân rã động lực dồn tích để khẳng định OCF âm là do chất lượng lợi nhuận xấu đi thực sự hay do lỗ hổng trích xuất chồng lên nhau. Lưu ý get_cash_flow chỉ trả về đúng 1 quý (Q1/2026) dù yêu cầu 8 quý — không có chuỗi lịch sử để so sánh xu hướng. Khuyến nghị: chuyển soát xét thủ công (bctc-inspect) để hiệu chỉnh 3 dòng = 0 và tái dựng cấu phần vốn lưu động trước khi kết luận về chất lượng lợi nhuận. | EN: FPT Q1-2026 posts net profit +2,476.8 bn VND against operating cash flow of -2,847.8 bn VND, OCF/NI = -1.15 (divergence ratio 2.15 vs 0.40 threshold). The base data is genuine (81% extraction confidence, source_tier 1): revenue 12,480 bn, gross profit 4,244.9 bn (34% margin). HOWEVER the extracted cash-flow statement is MISSING its key reconciling lines — OperatingProfit=0, EBITDA=0, Cash=0 — and get_cash_flow returns NO working-capital subcomponents (AR/inventory/AP/D&A), so the indirect-method accrual decomposition that ESC-3 requires cannot be performed. A negative Q1 OCF is plausible on its face for an IT-services/telecom group (seasonal receivables build, bonus and supplier prepayments), but with three zero-valued anchor lines and no historical series (get_cash_flow returned only the single Q1/2026 quarter despite quarters=8), the -1.15 ratio cannot be cleanly attributed to genuine earnings-quality deterioration versus compounded extraction gaps. Route to human inspection to repair the zero lines and rebuild the working-capital bridge before any earnings-quality verdict.",
+    "confidence": 0.35,
+    "recommended_action": "flag_for_human_review",
+    "artifact_vs_real": "MIXED — leaning PARTIAL-ARTIFACT. The OCF magnitude itself appears real (units reconcile: OCF -2,847,813 and NI 2,476,800 are both VND millions; NI matches the 2,476.8 bn income-statement figure). But the ESC-3 ratio is NOT independently verifiable as a genuine accrual concern because the cash-flow extraction is incomplete: OperatingProfit, EBITDA, and Cash all extracted as 0, and get_cash_flow exposes no AR/inventory/AP/D&A line items — exactly the reconciling lines needed to prove or refute earnings quality. The divergence is therefore real in the headline numbers but its earnings-quality INTERPRETATION is unconfirmable from extracted data alone. Resolve via human inspect (repair the three zero lines + recover WC subcomponents); only then can artifact vs. real be settled. Per contract (profit > cash, drivers unconfirmable) the disposition is flag_for_human_review."
+  }
+}
