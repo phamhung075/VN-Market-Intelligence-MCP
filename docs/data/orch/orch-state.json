@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FB-GATE-2",
-    "next_agent": "agent-father",
-    "next_action": "Dispatch FB-GATE-2 (fb-jargon-gate skill+script+flow wiring) then NB-PRUNE-IMPL (2-class contract S1-S6), serialized (shared git index). Both per their committed briefs.",
-    "wip": 2,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "BATCH 2/2 DONE. FB-GATE-2 7be21e0a (executable fb-jargon-gate skill+script, router-verified A/B/C/D smoke incl. planted-violation fence). NB-PRUNE-IMPL e1e85886 (2-class notebook contract S1-S6, AC-2b intra-section prune + AC-5 inline wc-guard, root-cause fix for 4-notebook breach family). OPEN for next PO: RE-CAP-1 (signal-dashboard SKILL 192L cap — NOT absorbed by NB-PRUNE-IMPL, different file) + FU-AGENT-FATHER-ORCH-SCOPE.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T04:16:22Z",
+    "updated_at": "2026-06-02T04:26:37Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -55,7 +55,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T04:16:22Z",
+    "_updated_at": "2026-06-02T04:26:37Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -446,10 +446,10 @@
             "depends": [
               "NB-PRUNE-ROOTCAUSE-SPIKE"
             ],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "cross-service",
-            "note": "OVERWRITE/APPEND classes + AC-2b intra-### prune + AC-5 inline wc-gate; RE-CAP-1 NOT absorbed (different file: signal-dashboard SKILL)"
+            "note": "OVERWRITE/APPEND classes + AC-2b intra-### prune + AC-5 inline wc-gate; RE-CAP-1 NOT absorbed (different file: signal-dashboard SKILL) | DONE e1e85886 — 6 files S1-S6; 2-class table+AC-2b+AC-5 inline guards; verified raw (TODO gone, guards present in 4 flows)"
           }
         ]
       },
@@ -638,6 +638,11 @@
         "id": "FU-BCTC-TOOL-PARAMS",
         "summary": "Opus FPT deep-dive surfaced 2 real bctc tool defects blocking ESC-3 accrual analysis: (1) get_cash_flow IGNORES the quarters param — returns only current quarter, no 8q history, no WC subcomponents (AR/inventory/AP/D&A) -> accrual decomposition impossible; (2) get_bctc_full/get_bctc_refined take code/report_id NOT ticker (caller trap). Both block deep-dive quality + likely affect other consumers. Owner likely dev-mcp-server. Found 2026-06-02 FPT-OPUS-DEEPDIVE.",
         "priority": "normal"
+      },
+      {
+        "id": "FU-AGENT-FATHER-ORCH-SCOPE",
+        "priority": "normal",
+        "summary": "agent-father FB-GATE-2 commit 7be21e0a staged docs/data/orch/orch-state.json (router-owned, dev-team section) — marked own task DONE + disposed signal pre-verification. No clobber this time (my head+task edits survived) but exposes FU-ORCH-HEAD-CAS window + implementer-self-DONE process defect. Fix: reinforce agent-father contract — orch-state.json is router-owned, never stage it. Mitigated 2nd dispatch by explicit prohibition (e1e85886 honored it)."
       }
     ],
     "archive": []
