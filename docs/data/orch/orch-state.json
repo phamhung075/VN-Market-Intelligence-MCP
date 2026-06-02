@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "BEQ-4a",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Reconcile interrupted cycle: BEQ-4b code shipped (2c3f7529) but not live/QA. Implement BEQ-4a (1-line LIST_SQL refine_status guard in bctcInspectHandler.ts), then ONE mcp-server rebuild covering 4b+4a, then raw-verify both live (FPT YoY withheld + /docs CTG/VNM/DIG null), mark both DONE.",
-    "wip": 2,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "Cycle DONE. Reconciled interrupted BCTC cycle: BEQ-4b (2c3f7529) + BEQ-4a (0523b435+13dc04b9) both LIVE & raw-verified (FPT YoY withheld; CTG/VNM/EIB/DIG net_profit null; DONE tickers intact); mcp-server rebuilt 08:23Z; 84 tests green. BCTC-EXTRACT-QUALITY remaining: BEQ-2 (refine backfill, unblocks BEQ-3) + BEQ-3 (column audit, recurring-bug->architect). Also open: RE-CAP-1, FU-CHEF-MARKER-INFLOW. Next PO triage.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T08:14:38Z",
+    "updated_at": "2026-06-02T08:26:16Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T08:14:38Z",
+    "_updated_at": "2026-06-02T08:26:16Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -100,10 +100,10 @@
             "depends": [
               "BEQ-1-SPIKE"
             ],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "XS",
             "zone": "apps/mcp-server/",
-            "note": "Symptom D — YoY contamination (FPT +12146%). Code SHIPPED 2c3f7529 (guard bctcFullTools.ts:278 refine_status==PENDING -> withhold; 382L RED-GREEN test). PENDING rebuild+QA to go live (container predates commit). Adopted from interrupted cycle.",
+            "note": "DONE 2c3f7529 — live-verified: get_bctc_full FPT now shows 'Period prior (2025-Q4) not yet refined — comparison withheld', +12146% contamination gone. mcp-server rebuilt 08:23Z. 84 tests green (router re-ran).",
             "commit": "2c3f7529"
           },
           {
@@ -114,10 +114,11 @@
             "depends": [
               "BEQ-1-SPIKE"
             ],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "XS",
             "zone": "apps/mcp-server/",
-            "note": "Symptom C — garbage scalars in /docs listing (CTG=5, VNM=5.1e-05, DIG=18). 1-line SQL WHERE clause. Handoff: docs/handoffs/BEQ-4a-handoff.md"
+            "note": "DONE 0523b435 (CASE-WHEN guard, routes/bctcInspectHandler.ts) + 13dc04b9 (PI3 test-DDL regression fix + 4 tests) — live-verified: /api/bctc-inspect/docs CTG/VNM/EIB/DIG net_profit=null (was garbage), FPT/ACB DONE values intact, zero PENDING leak. NOTE: 0523b435 shipped 16 broken PI3 tests (refine_status col missing from test DDL) — fixed in 13dc04b9; commit-red gap.",
+            "commit": "0523b435,13dc04b9"
           },
           {
             "task_id": "BEQ-2",
