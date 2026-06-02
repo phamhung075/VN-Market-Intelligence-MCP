@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T17:01:18Z",
+    "_updated_at": "2026-06-02T17:03:02Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1122,6 +1122,18 @@
             "baseline_pass": false,
             "depends": [],
             "note": "DONE de5d6d1b — worker-role assertion added to .claude/agents/unified-agent.md body (SSOT, all slots). Raw-verified: 2 insertions, frontmatter line-1 intact, scope clean (no orch/signals). PROVEN: standard-prompt re-spawn executed chef.md directly (TNB 1-6 walked), no refusal/router-question. VERIFY SIDE-EFFECT: the dry-run spawn bypassed the dispatcher-injected published-marker gate (not enforced in chef.md) -> worker found 2 clusters and very likely published a duplicate intraday MARKET dish ~07:19Z (could not read back to confirm; no cascade, dispatcher marker still claimed). Lesson: chef.md publishes; never direct-spawn for dry-run. Follow-up FU-CHEF-MARKER-INFLOW."
+          },
+          {
+            "task_id": "NSCOUT-FRAMING-RECUR",
+            "title": "news-scout self-refuses flow on standard trigger — RECURRENCE after fix 7239b803 (router-scoped CLAUDE.md mis-read as self-binding)",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": [],
+            "status": "TODO",
+            "size": "S",
+            "zone": "docs/agents/",
+            "priority": "high",
+            "note": "Root-cause the recurring news-scout self-refusal. Fix 7239b803 added self-execution framing but bug recurred 2026-06-02T16:00Z (signal cwk-20260602T1610Z). Investigate: (1) why the framing fix did not hold (agent registration system-prompt vs flow main.md vs CLAUDE.md precedence); (2) does the subagent inherit project CLAUDE.md 'router-only/always-delegate' and mis-apply it to itself; (3) audit ALL cowork agent flows for the same self-identity vulnerability (market-watcher handled identical prompt fine -> compare). Output brief to docs/architecture-briefs/, signal agent-father to implement durable self-identity guard. PLAN-ONLY. recovered_agentId a9d28df7f3c18b660 ran cleanly with explicit non-delegation preamble."
           }
         ]
       }
@@ -1279,8 +1291,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T16:05:00Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-02T17:03:02Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "po-bctc-analytics-layer-20260602T1056Z",
@@ -1534,7 +1546,7 @@
         "type": "agent-flow-defect",
         "summary": "news-scout subagent refused to execute its own flow on the standard trigger prompt (\"run docs/agents/news-scout/flow/main.md  slot=news-scout-offhours\") — it mis-read the ROUTER-scoped CLAUDE.md rule (\"never run a flow yourself / always delegate\") as binding on itself and returned a meta/refusal response with zero pipeline work (no fetch, no signals, no notebook). Recovered same tick by re-spawning WITH an explicit \"you ARE the agent, do not delegate\" preamble → ran cleanly, fired signals #4716/#4717/#4718. market-watcher handled the identical-form prompt fine, so the vulnerability is news-scout-specific (likely its flow/init lacks a self-identity guard at the top). Durable fix: add a self-identity guard line to news-scout flow main.md (and audit other cowork agent flows) so the standard trigger prompt never triggers router-refusal. Non-blocking — off-hours news cycle recovered this tick.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": null,
         "payload": {
           "agent": "news-scout",
@@ -1545,7 +1557,7 @@
           "recovery_method": "explicit non-delegation preamble",
           "fix_proposal": "self-identity guard at top of news-scout flow main.md; audit sibling cowork agent flows"
         },
-        "note": null
+        "note": "2026-06-02T17:05Z dev-team drain: RECURRENCE after fix 7239b803 (prior CW-NSCOUT-SPAWN-FRAMING claimed FIXED). Same failure: subagent reads router-scoped CLAUDE.md 'never run a flow yourself/always delegate' as self-binding -> NO-OP refusal. Post-fix recurrence triggers recurring-bug-escalation -> agents-architect root-cause (why framing fix did not hold; audit sibling cowork flows). Queued NSCOUT-FRAMING-RECUR."
       }
     ],
     "archive": [
