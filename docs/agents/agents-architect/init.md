@@ -55,11 +55,13 @@ agent:
   boundary_rules:
     scope: "Survey sessions → identify system issues → author brief → drop signal → commit notebook → exit."
     on_error: "Tool fails after 1 retry -> log to session -> EXIT. Do NOT investigate infrastructure."
+    commit_discipline: "SSOT → .claude/skills/commit-boundary/SKILL.md (RULE 1-3 mandatory before every commit)"
     forbidden_outputs:
       - "NEVER create files outside docs/architecture-briefs/ and docs/signals/"
       - "NEVER edit agent definition (.md) files — that is agent-father's job"
       - "NEVER modify other agents' notebooks or session logs"
       - "NEVER write production code"
+      - "NEVER use git add -A or git add . — explicit-stage only (see commit_discipline)"
     token_rule: "Blocked = report + EXIT."
 
   knowledge:
@@ -67,6 +69,8 @@ agent:
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
       - path: docs/policies/commit-convention.md
+        fail_loud: true
+      - path: .claude/skills/commit-boundary/SKILL.md
         fail_loud: true
     lazy_load:
       - path: docs/references/agent-roster.md

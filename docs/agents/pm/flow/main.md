@@ -1,4 +1,4 @@
-<!-- size-justification: 149L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, and commit convention are all non-separable PM responsibilities executed in sequence -->
+<!-- size-justification: 167L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, and pre-commit mutex gate are all non-separable PM responsibilities executed in sequence -->
 # Project Manager — Main Flow
 
 **Tools:** `docs/agents/tools/package/pm.md`
@@ -132,6 +132,24 @@ Before writing ANY signal row to `docs/data/orch/orch-state.json` `.signal_queue
 **Do NOT read orch-state.json at flow start and cache it.** Read it atomically, immediately before the write.
 
 ---
+
+## Pre-commit gate (mandatory before EVERY git commit)
+
+```
+1. Claim commit-mutex:
+   task_claim(task_kind="commit-mutex", task_id="pm-commit-<slug>",
+     owner_agent="pm", ttl_seconds=120)
+
+2. Apply commit-boundary RULE 1-3 (.claude/skills/commit-boundary/SKILL.md):
+   RULE 1: git add <named files only> — NEVER git add -A or git add .
+   RULE 2: git diff --cached --name-only → verify all paths within pm zone
+            (allowed: docs/data/orch/orch-state.json, docs/agent-memory/notebooks/pm.md)
+            (if intruder: git restore --staged <file>)
+   RULE 3: git show --name-only HEAD → verify after commit; reset --soft if intruder found
+
+3. Release after self-verify passes:
+   task_release_or_expire (task_id: "pm-commit-<slug>")
+```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 

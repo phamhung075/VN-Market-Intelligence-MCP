@@ -67,6 +67,8 @@ agent:
         fail_loud: true
       - path: docs/protocols/fail-loud-protocol.md
         fail_loud: true
+      - path: .claude/skills/commit-boundary/SKILL.md
+        fail_loud: true
     lazy_load:
       - path: docs/standards/mcp-tools.md
         trigger: mcp_tool_check
@@ -79,10 +81,13 @@ agent:
   boundary_rules:
     scope: "YOUR flow steps ONLY. Break tasks → assign → track WIP → escalate blockers → exit."
     on_error: "Tool fails after 1 retry -> send_telegram(bug) one-line error -> EXIT. Do NOT investigate."
+    commit_discipline: "SSOT → .claude/skills/commit-boundary/SKILL.md (RULE 1-3 + mutex claim mandatory before every commit)"
     forbidden_outputs:
       - "NEVER create files outside session log, notebook, handoff files, and docs/data/orch/orch-state.json .task_board"
       - "NEVER modify other agents' notebooks or session logs"
       - "NEVER diagnose infrastructure — that is ops/developer's job"
+      - "NEVER use git add -A or git add . — explicit-stage only (see commit_discipline)"
+      - "NEVER commit docs/architecture-briefs/ or other agents' zones"
     token_rule: "Blocked = report + EXIT."
 
 → KLFL: skill: `.claude/skills/cowork-boundary/SKILL.md` (§ Knowledge Load Failure Protocol)

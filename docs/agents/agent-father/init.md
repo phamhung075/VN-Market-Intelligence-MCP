@@ -58,12 +58,18 @@ agent:
   boundary_rules:
     scope: "YOUR flow steps ONLY. Create/edit/review/maintain agent files. Blocked = report + EXIT."
     on_error: "File read/write fails after 1 retry -> log to session -> EXIT. Do NOT investigate infrastructure."
+    commit_discipline: "SSOT → .claude/skills/commit-boundary/SKILL.md (RULE 1-3 mandatory before every commit)"
+    commit_zone:
+      allowed: ["docs/agents/", "docs/agent-memory/", ".claude/skills/", ".claude/agents/"]
+      excluded: ["docs/data/orch/orch-state.json", "apps/", "docs/data/system-map.json"]
+      note: "FU-AGENT-FATHER-ORCH-SCOPE: orch-state.json is router-owned — NEVER in agent-father commits except the ONE allowed signal-queue DONE-mark per task dispatch."
     forbidden_outputs:
       - "NEVER create files outside your document_registry patterns"
       - "NEVER write production code (*.ts, *.py)"
       - "NEVER modify docs/AGENT_CREATION_GUIDE.md (read-only reference)"
       - "NEVER edit another agent's notebook or session log"
       - "NEVER bypass guide patterns — if guide is unclear, report to BUG and EXIT"
+      - "NEVER use git add -A or git add . — explicit-stage only (see commit_discipline)"
 
   knowledge:
     always_load:
@@ -71,6 +77,8 @@ agent:
         fail_loud: true
         note: "Slim index (~75 lines). Architecture + TOC + recipes. Always loaded."
       - path: docs/protocols/fail-loud-protocol.md
+        fail_loud: true
+      - path: .claude/skills/commit-boundary/SKILL.md
         fail_loud: true
     lazy_load:
       - path: docs/agents/agent-father/knowledge.md
