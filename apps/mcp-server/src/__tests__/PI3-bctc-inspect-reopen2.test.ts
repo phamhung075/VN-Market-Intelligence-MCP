@@ -58,6 +58,7 @@ function setupTestDb(): Database {
       period_end            TEXT NOT NULL DEFAULT '2025-03-31',
       sort_key              TEXT NOT NULL,
       pdf_path              TEXT,
+      refine_status         TEXT NOT NULL DEFAULT 'PENDING',
       parsed_at             TEXT NOT NULL DEFAULT (datetime('now')),
       net_revenue           REAL,
       gross_profit          REAL,
@@ -84,6 +85,17 @@ function setupTestDb(): Database {
       extracted_at TEXT    NOT NULL DEFAULT (datetime('now')),
       action_code  TEXT    NOT NULL DEFAULT '',
       UNIQUE(filename, page_number)
+    )
+  `);
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS bctc_layout_units (
+      unit_id            TEXT PRIMARY KEY,
+      report_id          TEXT NOT NULL,
+      page_type          TEXT NOT NULL,
+      schema_page        INTEGER,
+      page_numbers_json  TEXT NOT NULL DEFAULT '[]',
+      stitched_markdown  TEXT NOT NULL DEFAULT '',
+      quarantined        INTEGER NOT NULL DEFAULT 0
     )
   `);
   return db;
