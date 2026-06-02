@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T18:26:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "BCTC-HIST-FETCH-VERIFY",
-    "next_agent": "ops",
-    "next_action": "FINAL closure: ops verify VPS fetch loop drains the 311 historical bctc_vps_queue rows seeded by BCTC-HIST-SEED (else seed=no-op). All dev batches B1-B7 done+live-verified, B8 superseded, design-lane 1965+PM-1974 briefed+implemented. GOAL=complete all task.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "dev-team GOAL=complete-all-task cycle CONCLUDED. COMPLETED+LIVE-VERIFIED: BAL-1d (report_scope/PUB-8), MSG-1 get_market_foreign_flow, MSG-3 phantom-doc, EI-P2-1/2/3/QA (env-isolation), SIG-FOLLOWUP-DRYRUN (emit seam PROVEN), RE-CAP-1 (skill 92L), AUDITOR-SLA-CADENCE (per-source SLA SSOT), BCTC-HIST-SEED (code), FU-BCTC-HISTORY spike, NSCOUT-FRAMING-RECUR (9-flow self-identity guard), 1965-COVERAGE-SWEEP + PM-COMMIT-BOUNDARY-1974 (briefed+implemented: coverage-sweep + commit-boundary skill). SUPERSEDED/DEFERRED (evidence-based): CHEF-ATTN-1, BAL-1e, LF-EXTRACT/LF-OVERLAY. REMAINING = async/infra ONLY (not in-session completable): BCTC-HIST-VPS-BACKFILL + BCTC-ENRICHER-OLD-QUARTERS + BCTC-CURRENT-404-INVESTIGATE (VPS infra) + BCTC-HIST-VCB-REFINE (analyst) + low follow-ups FU-EI-P2-COV-1/2/DEV-VOLUME. Next PO triage owns these. Cowork refresh needed: news-scout+market-watcher (coverage-sweep) + 9 self-identity-guard flows.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T18:28:41Z",
+    "updated_at": "2026-06-02T18:32:51Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T18:28:41Z",
+    "_updated_at": "2026-06-02T18:32:51Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -253,11 +253,11 @@
             "depends": [
               "FU-BCTC-HISTORY-COVERAGE"
             ],
-            "status": "DONE-LIVE-VERIFIED",
+            "status": "DONE-CODE-DATA-BLOCKED-UPSTREAM",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "spike Task1. Low-risk queue seed (no fetch storm — VPS cron drains ~10/6h). Code-completable now; DATA arrival async/multi-week gated on VPS fetch health. | DONE-LIVE-VERIFIED 2026-06-02T18:10Z commit 655e72b3, mcp rebuilt. ops verified: container healthy, assertion clean, bctc_vps_queue 102->413 rows, all 8 historical quarters seeded (Q3-2025..Q4-2023, 39 rows each). Idempotent seed at boot. DATA arrival async ~1-2wk via VPS fetch+refine, gated on BCTC-HIST-FETCH-VERIFY (ops backlog)."
+            "note": "spike Task1. Low-risk queue seed (no fetch storm — VPS cron drains ~10/6h). Code-completable now; DATA arrival async/multi-week gated on VPS fetch health. | DONE-LIVE-VERIFIED 2026-06-02T18:10Z commit 655e72b3, mcp rebuilt. ops verified: container healthy, assertion clean, bctc_vps_queue 102->413 rows, all 8 historical quarters seeded (Q3-2025..Q4-2023, 39 rows each). Idempotent seed at boot. DATA arrival async ~1-2wk via VPS fetch+refine, gated on BCTC-HIST-FETCH-VERIFY (ops backlog). | UPDATE 2026-06-02T18:45Z BCTC-HIST-FETCH-VERIFY (ops) verdict BLOCKED: seed CODE effective (rows inserted, fetch loop bctcPdfPullJob is period-agnostic) BUT data-blocked UPSTREAM — VPS bctc-files endpoint lacks historical PDF cache pre-Q4-2025 + enricher returns 0 URLs for old quarters. Seed is a no-op at DATA layer until VPS backfill + enricher discovery land (queued BCTC-HIST-VPS-BACKFILL + BCTC-ENRICHER-OLD-QUARTERS). Also flagged: current Q1-2026 fetch 10/10 HTTP404 -> BCTC-CURRENT-404-INVESTIGATE. Honest: corpus depth NOT improving until upstream fixed; the structural seeding gap IS fixed."
           }
         ]
       },
@@ -1365,6 +1365,39 @@
         "zone": "corpus",
         "priority": "medium",
         "note": "spike Task3 — PDFs already stored, just re-trigger refine"
+      },
+      {
+        "task_id": "BCTC-HIST-VPS-BACKFILL",
+        "title": "VPS BCTC source lacks historical PDF cache (pre-Q4-2025) — backfill VPS /root/bctc-cache + 8765/bctc-files endpoint so seeded historical queue rows can drain",
+        "type": "SPIKE",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "size": "M",
+        "zone": "infra-vps",
+        "priority": "high",
+        "note": "ops BCTC-HIST-FETCH-VERIFY: fetch loop correct (no period filter), but VPS http://125.212.251.27:8765/bctc-files lacks pre-Q4-2025 PDFs (8 done were Q4-2025/Q1-2026 only; 333 historical rows NULL-url/url_not_found). Infra dependency. NOTE spike said hsx.vn has PDFs back to Q1-2022 -> pair with BCTC-ENRICHER-OLD-QUARTERS (pull from HSX into VPS cache)."
+      },
+      {
+        "task_id": "BCTC-ENRICHER-OLD-QUARTERS",
+        "title": "bctcQueueEnricherJob returns 0 URLs for pre-Q4-2025 quarters (valid tickers) — add fallback discovery (HSX mediafiles API has PDFs back to Q1-2022 per FU-BCTC-HISTORY spike)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "note": "enricher succeeds Q4-2025/Q1-2026 but empty for older; HSX source HAS the data (spike) -> discovery strategy gap not source gap"
+      },
+      {
+        "task_id": "BCTC-CURRENT-404-INVESTIGATE",
+        "title": "Current-season Q1-2026 bctcPdfPull 10/10 HTTP 404 at 18:30Z — verify VPS cache coverage for current season (may be thin/stale, distinct from SSL -k issue)",
+        "type": "SPIKE",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "size": "S",
+        "zone": "infra-vps",
+        "priority": "high",
+        "note": "ops BCTC-HIST-FETCH-VERIFY found 10/10 current-season 404s; prior 8 done so endpoint was reachable; investigate whether VPS cache went thin"
       }
     ],
     "archive": []
