@@ -921,9 +921,10 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": "LF-EXTRACT",
-            "status": "IN_PROGRESS",
+            "status": "DONE-PENDING-REBUILD",
             "size": "M",
-            "zone": "apps/mcp-server/"
+            "zone": "apps/mcp-server/",
+            "note": " | LF-OVERLAY DONE-PENDING-REBUILD 2026-06-03: all 6 files committed (2326ebb6). DDL, POST /api/push-bctc-layout, GET /api/bctc-inspect/zones, zone-overlay toggle + SVG renderer in bctc-inspector.html. 34 tests (1272+1273) pass. tsc clean. 128 BCTC regression pass/0 fail. Ops rebuild required for live endpoint. AC-LFO-0..6 met; AC-LFO-7 requires corpus re-extraction after LF-EXTRACT image rebuild."
           },
           {
             "task_id": "FPT-OPUS-DEEPDIVE",
