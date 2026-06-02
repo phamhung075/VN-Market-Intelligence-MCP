@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-02T21:30:00Z",
   "_updated_by": "dev-frontend",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "FRONTEND-OPERATOR-UX sprint closed; all 5 tasks DONE + live-verified (rebuild + health probes). Next priority: BCTC-ANALYTICS-LAYER + BAL-0 publish-gate verify live.",
-    "wip": 0,
+    "status": "active",
+    "active_task_id": "BCTC-LAYOUT-FIRST",
+    "next_agent": "pm",
+    "next_action": "BCTC-LAYOUT-FIRST Phase 0 dispatched: LF-EXTRACT (apps/pdf-extractor/, dev-pdf-extractor) + LF-OVERLAY (apps/mcp-server/, dev-mcp-server) in parallel per brief 2026-05-26 §8 (frozen JSON contract §3.2). LF-DEPLOY gated on BOTH done. BAL-0 publish-gate verified LIVE clean (VNM ROE 27.3%/ROA 17.7%, recompute-on-read serving correct).",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-03T00:13:00Z",
-    "updated_by": "pm"
+    "updated_at": "2026-06-02T22:21:59Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T23:55:00Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-02T22:21:59Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -908,19 +908,21 @@
             "task_id": "LF-EXTRACT",
             "title": "Layout-first extraction Phase 0",
             "type": "sprint-task",
-            "owner": "developer",
+            "owner": "dev-pdf-extractor",
             "depends": null,
-            "status": "TODO",
-            "size": "M"
+            "status": "IN_PROGRESS",
+            "size": "M",
+            "zone": "apps/pdf-extractor/"
           },
           {
             "task_id": "LF-OVERLAY",
             "title": "Layout-first overlay Phase 0",
             "type": "sprint-task",
-            "owner": "developer",
+            "owner": "dev-mcp-server",
             "depends": "LF-EXTRACT",
-            "status": "TODO",
-            "size": "M"
+            "status": "IN_PROGRESS",
+            "size": "M",
+            "zone": "apps/mcp-server/"
           },
           {
             "task_id": "FPT-OPUS-DEEPDIVE",
