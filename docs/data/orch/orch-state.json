@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "BAL-0 LIVE+router-verified (image bb1b1a31, PUB-5..8 firing: DHG block / VNM ratios withheld / FPT comparison withheld; publish-risk CLOSED). BAL-1 spike DONE (brief 47d64215). Next PO triage: BAL-1a-e ratio-recompute+bank-serve+period_basis+report_scope follow-ups (all dev-mcp-server, BAL-1a HIGH=real ratio fix). COORD NOTE: 11:09Z cron ceded BAL-0 to a concurrent peer that completed it — full-cycle dedup gap (two cron sessions grabbed BAL-0; mutex keys did not match). RE-CAP-1 still open.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "BAL-1a-DEV",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Executing BATCH(WIP=2): BAL-1a-DEV (ratio recompute in finalizeBctcRefineTool.ts — re-derive roe/roa/current_ratio/debt_to_equity/net_debt_to_ebitda post-refine, eps=NULL; closes BAL-0 PUB-6 interim shield) + BAL-1b-INV (read-only SHB/EIB statement_section census, disjoint zone). After BAL-1a-DEV lands: ops rebuild mcp-server then BAL-1a-QA verify VNM ROE~27% + PUB-6 no longer withholds. PO disposed 3 stale OPEN signals RESOLVED (B-05/A-21c/BRANCH-CLEANUP-1972 obsolete), 2 kept-backlog.",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-02T12:13:27Z",
+    "updated_at": "2026-06-02T13:14:21Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T12:13:27Z",
+    "_updated_at": "2026-06-02T13:14:21Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -101,7 +101,7 @@
             "depends": [
               "BAL-0"
             ],
-            "status": "TODO",
+            "status": "in_progress",
             "size": "S",
             "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
             "priority": "high",
@@ -127,7 +127,7 @@
             "type": "SPIKE",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "in_progress",
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "high",
@@ -1212,7 +1212,7 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T13:11:38Z",
+    "_updated_at": "2026-06-02T13:14:21Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -1347,7 +1347,8 @@
         "summary": "User feedback: cowork agents concentration on few tickers only. Design ask: rotation/sweep for news-scout + market-watcher.",
         "severity": "INFO",
         "status": "OPEN",
-        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md"
+        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md",
+        "note": " | 2026-06-02 dev-team PO-triage: KEEP-BACKLOG — valid live ask (cowork ticker-concentration rotation); architect busy on BCTC-ANALYTICS-LAYER; dispatch when freed."
       },
       {
         "id": "B-05",
@@ -1357,8 +1358,9 @@
         "type": "data_stale",
         "summary": "ssc-iboard price data stale 9h 31m. Expected cadence 15 min. Recommend ops verify VPS prices push service.",
         "severity": "CRITICAL",
-        "status": "OPEN",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: superseded by SSC-IBOARD-MIGRATE sprint (source dead, live tracking is the migrate sprint; 11d-stale dup dead work)."
       },
       {
         "id": "A-21c",
@@ -1368,8 +1370,9 @@
         "type": "microservice_degraded",
         "summary": "dailyDashboardJob NOT FIRED since 2026-05-17. Missing volume mount for project-stats.json. FAIL-VERDICT-RE-FIRE.",
         "severity": "CRITICAL",
-        "status": "FAIL-VERDICT-RE-FIRE",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: OBSOLETE — root cause (missing project-stats.json volume mount) already fixed (docker-compose.yml:17 mounts it ro). 11d-stale re-fire, condition no longer holds."
       },
       {
         "id": "BRANCH-CLEANUP-1972",
@@ -1379,8 +1382,9 @@
         "type": "branch_policy_violation",
         "summary": "task/1972-vndirect-ohlcv-null-coercion stale branch present. Task 1972 DONE on main. code-janitor sweep to verify+delete.",
         "severity": "LOW",
-        "status": "OPEN",
-        "payload_ref": null
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: OBSOLETE — git branch -a shows only main+origin/main; stale task/1972 branch gone, NO-BRANCHES policy holds."
       },
       {
         "id": "PM-COMMIT-BOUNDARY-1974",
@@ -1391,7 +1395,8 @@
         "summary": "PM commit 0a60fa1d swept 26 files incl 17 arch-briefs. RECURRING 3rd occurrence — recommend architect/agent-father audit PM commit step.",
         "severity": "MED",
         "status": "OPEN",
-        "payload_ref": null
+        "payload_ref": null,
+        "note": " | 2026-06-02 dev-team PO-triage: KEEP-BACKLOG — recurring governance audit ask (PM 26-file sweep); re-home for architect/agent-father commit-step audit, not this cycle."
       },
       {
         "id": "bctc-extraction-esc-20260602T0015Z",
