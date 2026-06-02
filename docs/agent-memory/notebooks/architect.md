@@ -1,8 +1,36 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-02 10:45 UTC | **Sprint:** FE-REROUTE
+**Last updated:** 2026-06-02 12:00 UTC | **Sprint:** COWORK-LEADER-SELFLOCK
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-02T12:00Z — COWORK-LEADER-SELFLOCK (leader-lock self-blocking fix)
+
+**Brief:** `docs/architecture-briefs/2026-06-02-cowork-leader-selflock.md`
+
+**Defect:** Step 0b re-claims a still-heartbeated leader lock. `task_claim` is not
+re-entrant → returns `claimed:false` even for own-held lock → Step 0b silently exits
+→ guaranteed slots dropped. Confirmed: chef-morning dropped 2026-06-02 (05:18Z tick
+hit lock heartbeated to 05:34Z by the 05:03Z WON tick).
+
+**Discriminator decision: `owner_session` via heartbeat probe, NOT `owner_agent` literal.**
+Rationale: `owner_agent="cowork-dispatcher"` is a shared string — both concurrent sessions
+would see own-held and both proceed, re-opening dup-spawn hole. `task_heartbeat` is
+guarded server-side with `AND owner_session=<pid-bound-token>` → only the holding OS
+process gets `ok=true`. The flow does not need to know its own session token.
+
+**Fix logic:** After `claimed=false`, call `task_heartbeat("cowork-leader")`. If `ok=true`
+→ own-held → renew and proceed. If `ok=false` → peer-held → silent-exit (unchanged).
+Step 4.6b heartbeat stays; peer-held silent-exit stays. One-file edit (Step 0b only).
+
+**Two-concurrent-session safety:** Session B's heartbeat hits owner_session mismatch
+→ `changes=0` → `ok=false` → peer-held path. Phase-2 dup-spawn protection intact.
+
+**Recurring-bug note:** Root cause = assumption that `task_claim` is re-entrant (wrong)
++ 1800s TTL > 900s inter-tick gap with no observability on silent-exit. Observability
+gap flagged in brief §8 for PO backlog.
+
+---
 
 ## 2026-06-02T10:45Z — FE-REROUTE-REAL-DATA (FE pages serving real data)
 
