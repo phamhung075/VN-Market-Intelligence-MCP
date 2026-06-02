@@ -36,6 +36,7 @@ import {
   detectCrossStatementRevenue,
 } from "../../../../domain/services/financial-reports/bctcMagnitudeValidator.js";
 import { isBankFormFromRows } from "../../../../domain/services/financial-reports/bctcFormType.js";
+import { checkSectionCompleteness } from "../../../../domain/services/financial-reports/bctcSectionCompleteness.js";
 import {
   aggregateScalars,
 } from "../../../../domain/services/financial-reports/bctcScalarAggregator.js";
@@ -124,7 +125,9 @@ export function buildFinalizeBctcRefineHandler(
       };
     }
 
-    const { report_id, report_status } = parsed.data;
+    const { report_id, report_status: callerReportStatus } = parsed.data;
+    // BEQ-7: effectiveStatus may be overridden to PARTIAL if section guard fires
+    let report_status: "DONE" | "PARTIAL" | "FAILED" = callerReportStatus;
     const db = dbOverride ?? getDb();
 
     try {
@@ -312,6 +315,26 @@ export function buildFinalizeBctcRefineHandler(
             report_id,
             refined_at: refinedAtValues[0]?.refined_at,
             unit_count: doneUnits.length,
+          });
+        }
+      }
+
+      // ── BEQ-7: Section completeness guard — server-side safety net ────────────
+      // If the caller supplies report_status='DONE' but the parsed rows are
+      // section-incomplete (e.g., agentic refine produced only income_statement rows),
+      // override to PARTIAL. The server is the SSOT for completeness invariant.
+      // Empty finalRows also triggers this guard (fail-safe: no evidence → PARTIAL).
+      if (report_status === "DONE") {
+        const completeness = checkSectionCompleteness(finalRows);
+        if (!completeness.isComplete) {
+          const reason = "section_incomplete after agentic refine — caller DONE overridden to PARTIAL";
+          report_status = "PARTIAL";
+          logger.info("[finalize_bctc_refine] BEQ-7 section guard: DONE overridden to PARTIAL", {
+            report_id,
+            hasBalanceSheet: completeness.hasBalanceSheet,
+            hasIncomeStatement: completeness.hasIncomeStatement,
+            hasCashFlow: completeness.hasCashFlow,
+            reason,
           });
         }
       }
