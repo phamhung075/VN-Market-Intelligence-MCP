@@ -1,3 +1,10 @@
+---
+name: fb-jargon-gate
+description: >
+  Deterministic pre-publish gate for fb-market-poster. Runs scripts/fb-jargon-gate.sh
+  against the composed post body; hard-blocks STEP 5 write on any violation.
+---
+
 # Skill: fb-jargon-gate
 
 ## Purpose
