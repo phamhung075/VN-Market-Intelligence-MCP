@@ -39,6 +39,7 @@ import { getDb } from "../../../../infrastructure/db/schema.js";
 import { logger } from "../../../../infrastructure/logger.js";
 import { aggregateScalars } from "../../../../domain/services/financial-reports/bctcScalarAggregator.js";
 import type { ScalarAggregateResult } from "../../../../domain/services/financial-reports/bctcScalarAggregator.js";
+import { checkSectionCompleteness } from "../../../../domain/services/financial-reports/bctcSectionCompleteness.js";
 
 // ── DB row types ──────────────────────────────────────────────────────────────
 
@@ -79,7 +80,10 @@ interface BackfillResult {
   sort_key: string;
   table_row_count: number;
   status: "DONE" | "SKIPPED" | "BALANCE_VIOLATION" | "ERROR";
+  /** BEQ-6: effective refine_status written to DB (DONE | PARTIAL) */
+  refine_status?: "DONE" | "PARTIAL";
   reason?: string;
+  section_breakdown?: { hasBalanceSheet: boolean; hasIncomeStatement: boolean; hasCashFlow: boolean };
   updated_cols?: string[];
   null_cleared_cols?: string[];
   balance_violation?: string;
@@ -172,7 +176,45 @@ export function buildBackfillBctcScalarsHandler(
           continue;
         }
 
-        // Run the scalar aggregator (pure domain function)
+        // BEQ-6: section completeness gate — never aggregate incomplete row sets
+        // (prevents false-DONE on balance-sheet-only fragments like VNM/FPT-Q4/DHG)
+        const completeness = checkSectionCompleteness(tableRows);
+        if (!completeness.isComplete) {
+          const sectionBreakdown = {
+            hasBalanceSheet: completeness.hasBalanceSheet,
+            hasIncomeStatement: completeness.hasIncomeStatement,
+            hasCashFlow: completeness.hasCashFlow,
+          };
+          const reason = completeness.hasBalanceSheet && !completeness.hasIncomeStatement && !completeness.hasCashFlow
+            ? "balance_sheet_only: section completeness violated — income_statement and cash_flow absent"
+            : "section_incomplete: cannot aggregate — missing one or more statement sections";
+
+          // Write PARTIAL status to DB (not DONE — corpus would be poisoned)
+          if (!dry_run) {
+            db.prepare("UPDATE financial_reports SET refine_status = 'PARTIAL' WHERE id = ?").run(report.id);
+            logger.info("[backfill_bctc_scalars] section-incomplete — set PARTIAL", {
+              report_id: report.id,
+              action_code: report.action_code,
+              ...sectionBreakdown,
+            });
+          }
+
+          results.push({
+            report_id: report.id,
+            action_code: report.action_code,
+            sort_key: report.sort_key,
+            table_row_count: tableRows.length,
+            status: "SKIPPED",
+            refine_status: "PARTIAL",
+            reason,
+            section_breakdown: sectionBreakdown,
+            updated_cols: [],
+            null_cleared_cols: [],
+          });
+          continue;
+        }
+
+        // Run the scalar aggregator (pure domain function — only reached when all 3 sections present)
         const aggResult: ScalarAggregateResult = aggregateScalars(tableRows);
 
         if (aggResult.balanceViolation !== null) {
@@ -256,6 +298,7 @@ export function buildBackfillBctcScalarsHandler(
           sort_key: report.sort_key,
           table_row_count: tableRows.length,
           status: "DONE",
+          refine_status: "DONE",
           updated_cols: updates.map((u) => u.col),
           null_cleared_cols: nullClearCols,
         });
