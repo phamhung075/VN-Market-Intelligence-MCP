@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "BAL-1a-DEV",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Executing BATCH(WIP=2): BAL-1a-DEV (ratio recompute in finalizeBctcRefineTool.ts — re-derive roe/roa/current_ratio/debt_to_equity/net_debt_to_ebitda post-refine, eps=NULL; closes BAL-0 PUB-6 interim shield) + BAL-1b-INV (read-only SHB/EIB statement_section census, disjoint zone). After BAL-1a-DEV lands: ops rebuild mcp-server then BAL-1a-QA verify VNM ROE~27% + PUB-6 no longer withholds. PO disposed 3 stale OPEN signals RESOLVED (B-05/A-21c/BRANCH-CLEANUP-1972 obsolete), 2 kept-backlog.",
-    "wip": 2,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "dev-team 13:09Z cycle DONE. SHIPPED+LIVE-IN-IMAGE: BAL-1a (ratio re-derive, a7270927) + BAL-1b (bank PUB-3 broaden, cbee25fe), mcp-server rebuilt 13:30:49Z, 118+ tests green. ROUTER LIVE-VERIFY caught both fixes are code-correct but NOT yet delivering live value: BAL-1a finalize-time-only -> existing corpus persisted-stale (VNM roe 2.75e-10 live vs 27.3%); BAL-1b masked by PUB-5 confidence on EIB(31%)/SHB(44%). NEXT PO TRIAGE: BAL-1a-BACKFILL (HIGH, recompute-on-read preferred, architect confirm) = the task that actually makes VNM serve 27.3% live. Also queued: BAL-1c-DEV/BAL-1d-DEV (period_basis/report_scope), BAL-1b effective once banks clear PUB-5 (re-refine kin BEQ-10). PO disposed 3 stale signals RESOLVED + 2 backlog this cycle.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T13:14:21Z",
+    "updated_at": "2026-06-02T13:34:45Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T13:14:21Z",
+    "_updated_at": "2026-06-02T13:34:45Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -101,11 +101,11 @@
             "depends": [
               "BAL-0"
             ],
-            "status": "in_progress",
+            "status": "DONE-CODE-LIVE-PENDING-BACKFILL",
             "size": "S",
             "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
             "priority": "high",
-            "note": "brief Cluster(a) root cause: refine corrects base scalars but ratio columns orphaned (stay at OCR-parse values). BAL-0 PUB-6 is interim shield (withholds); BAL-1a is the real fix. After lands: PUB-6 should pass for VNM (ROE~27%)."
+            "note": "brief Cluster(a) root cause: refine corrects base scalars but ratio columns orphaned (stay at OCR-parse values). BAL-0 PUB-6 is interim shield (withholds); BAL-1a is the real fix. After lands: PUB-6 should pass for VNM (ROE~27%). | 2026-06-02T13:35Z dev-team router LIVE-VERIFY (raw get_bctc_full + container DB, NOT badge): code CORRECT+in-image (commit a7270927, image 13:30:49Z, safeDivideLocal/re-derive markers live, 98+11 tests, tsc0, reuses ratioComputer.ts SSOT). BUT LIVE-INEFFECTIVE: recompute is FINALIZE-TIME only; existing finalized reports NOT backfilled. VNM(conf94%,refine DONE,parsed 2026-05-24) persisted roe=2.75e-10 (displays 0.0%) vs correct np/eq=27.3%; net_debt_to_ebitda=-7.5e10 (PUB-6 withholds). PUB-6 interim shield STILL firing live. => BAL-1a-BACKFILL opened to deliver live value."
           },
           {
             "task_id": "BAL-1a-QA",
@@ -115,11 +115,11 @@
             "depends": [
               "BAL-1a-DEV"
             ],
-            "status": "TODO",
+            "status": "DONE-FAIL-VERDICT",
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "off-rebuild: needs mcp-server rebuild after BAL-1a-DEV"
+            "note": "off-rebuild: needs mcp-server rebuild after BAL-1a-DEV | 2026-06-02T13:35Z router performed live QA itself: VNM ROE still 0.0% live (NOT ~27% as DoD required) + PUB-6 STILL withholds. FAIL not because code is wrong but because finalize-time fix needs corpus re-flow. Verdict -> BAL-1a-BACKFILL. QA-on-rebuild satisfied (live raw checked)."
           },
           {
             "task_id": "BAL-1b-INV",
@@ -127,11 +127,11 @@
             "type": "SPIKE",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "in_progress",
+            "status": "DONE",
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "brief Cluster(b): banks return 'no decomposition / forced-zero'. Kin BEQ-8 isBankFormFromRows + FU-BANK-CODECOL."
+            "note": "brief Cluster(b): banks return 'no decomposition / forced-zero'. Kin BEQ-8 isBankFormFromRows + FU-BANK-CODECOL. | DONE 2026-06-02: verdict B-1 (gate mismatch not data). EIB 18bs/12is/7cf, SHB 19/12/12 complete+correctly-labeled; PUB-3 bank path queried general-only (legacy ACB/VCB workaround) -> forced-zero. Scoped BAL-1b-DEV (1 SQL clause, shipped cbee25fe)."
           },
           {
             "task_id": "BAL-1b-DEV",
@@ -141,11 +141,11 @@
             "depends": [
               "BAL-1b-INV"
             ],
-            "status": "TODO",
+            "status": "DONE-CODE-LIVE-MOOT-PUB5",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
-            "note": "brief Cluster(b) fix"
+            "note": "brief Cluster(b) fix | 2026-06-02T13:35Z dev-team router LIVE-VERIFY: code CORRECT+in-image (commit cbee25fe, PUB-3 bank-path now (general OR balance_sheet), 20 publishabilityGuard tests, tsc0). BUT not live-observable: EIB(conf31%)+SHB(conf44%) are PUB-5 confidence-blocked (<50%) BEFORE PUB-3 is reached, so banks remain unservable for a DIFFERENT reason. BAL-1b fix is right but the current binding bank-serve blocker is extraction confidence (re-refine territory, kin BEQ-10), not the decomposition gate. Becomes effective once a bank report clears PUB-5."
           },
           {
             "task_id": "BAL-1c-DEV",
@@ -188,6 +188,20 @@
             "zone": "apps/mcp-server/",
             "priority": "low",
             "note": "brief BAL-1e: deferred; eps currently NULL after BAL-1a"
+          },
+          {
+            "task_id": "BAL-1a-BACKFILL",
+            "title": "Make BAL-1a ratio fix deliver LIVE value on already-finalized corpus — PREFER recompute-on-read in get_bctc_full serve path (definitive: eliminates stale-ratio class forever, no migration) over one-shot UPDATE backfill of persisted ratio columns (symptom: leaves class alive for any future pre-refine report)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-1a-DEV"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+            "priority": "high",
+            "note": "ROOT: financial_reports persisted roe/roa/etc are stale (VNM roe=2.75e-10 vs correct 27.3%) because BAL-1a recomputes only at finalize-time. fix-root-cause-definitif => recompute ratios ON READ from correct persisted base scalars (np/equity/total_assets/debt/cash/ebitda already correct), serve the live value, never trust persisted ratio columns again. Architect to confirm read-vs-backfill before impl (touches serve path / same file family as BAL-0/BAL-1b - flag recurring-bug-escalation review). Closes the BAL-0 PUB-6 interim shield for real."
           }
         ]
       },
