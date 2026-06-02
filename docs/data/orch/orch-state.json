@@ -5,12 +5,12 @@
   "_updated_by": "agent-father",
   "head": {
     "status": "in_progress",
-    "active_task_id": "FU-BCTC-HISTORY-COVERAGE",
+    "active_task_id": "BCTC-HIST-SEED",
     "next_agent": "dev-mcp-server",
-    "next_action": "BATCH-4 SPIKE: FU-BCTC-HISTORY-COVERAGE — investigate why only 2q cash-flow in financial_reports for FPT/peers; findings doc, no prod code. GOAL=complete all task.",
+    "next_action": "BATCH-4 cont: spike DONE (root cause = forward-only seeding). Shipping BCTC-HIST-SEED (backfillBctcHistorical 8q seed, structural fix). Async fanout -> backlog: BCTC-HIST-FETCH-VERIFY (ops, gates live data) + BCTC-HIST-VCB-REFINE (analyst). After: B5 SIG-FOLLOWUP-DRYRUN, B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T17:48:22Z",
+    "updated_at": "2026-06-02T17:56:12Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T17:48:22Z",
+    "_updated_at": "2026-06-02T17:56:12Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -239,11 +239,25 @@
             "depends": [
               "FU-BCTC-TOOL-PARAMS"
             ],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "medium",
-            "note": "Surfaced by FU-BCTC-TOOL-PARAMS live-verify: get_cash_flow now honors quarters but corpus only has 2q for FPT. Investigate ingest coverage; not a tool bug. bctc-analyst can attempt ESC-3 QoQ with 2q meanwhile (Q1 ocr vs Q4 api_bridge OCF source discrepancy is the decomposition lead)."
+            "note": "Surfaced by FU-BCTC-TOOL-PARAMS live-verify: get_cash_flow now honors quarters but corpus only has 2q for FPT. Investigate ingest coverage; not a tool bug. bctc-analyst can attempt ESC-3 QoQ with 2q meanwhile (Q1 ocr vs Q4 api_bridge OCF source discrepancy is the decomposition lead). | SPIKE DONE 2026-06-02T18:00Z commit f3bf4b61 (brief docs/architecture-briefs/2026-06-02-bctc-history-coverage-spike.md). ROOT CAUSE (A): ingest queue seeding is forward-only (one quarter/season), never seeds historical quarters; fleet max depth=2q, 11/13 tickers=1q. Source NOT blocker (D refuted: hsx.vn has 50 PDFs back to Q1-2022); CF extraction works (C); VCB 2 rows PENDING (B minor). Definitif fix = backfillBctcHistorical seed. Fanout -> BCTC-HIST-SEED (shipping now) + async backfill tasks below."
+          },
+          {
+            "task_id": "BCTC-HIST-SEED",
+            "title": "backfillBctcHistorical(periodsBack=8) in seedWatchlist.ts — seed last 8 quarters per ticker into bctc_vps_queue (INSERT OR IGNORE), structural fix for forward-only seeding",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "FU-BCTC-HISTORY-COVERAGE"
+            ],
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "spike Task1. Low-risk queue seed (no fetch storm — VPS cron drains ~10/6h). Code-completable now; DATA arrival async/multi-week gated on VPS fetch health."
           }
         ]
       },
@@ -1325,6 +1339,28 @@
         "zone": "root",
         "priority": "low",
         "note": "EI-P2-QA gap; isolation currently correct, cleanup only"
+      },
+      {
+        "task_id": "BCTC-HIST-FETCH-VERIFY",
+        "title": "Verify VPS fetch loop drains older bctc_vps_queue rows (no period filter blocking historical); confirm VPS fetch pipeline alive",
+        "type": "SPIKE",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "infra",
+        "priority": "high",
+        "note": "spike Task2 — BCTC-HIST-SEED is a no-op live until this confirms the fetch drains. Dep VPS-SOCAT-PERSIST (DONE) / api-gateway:4000."
+      },
+      {
+        "task_id": "BCTC-HIST-VCB-REFINE",
+        "title": "Re-refine VCB 2025-Q1 + 2025-Q4 (2 known PENDING rows, OCR-garbage CF scalars)",
+        "type": "FIX",
+        "owner": "bctc-analyst",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "corpus",
+        "priority": "medium",
+        "note": "spike Task3 — PDFs already stored, just re-trigger refine"
       }
     ],
     "archive": []
