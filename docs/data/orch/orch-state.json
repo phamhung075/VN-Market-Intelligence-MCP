@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": "idle",
     "next_agent": "po",
-    "next_action": "OPERATOR GOAL MET: all 13 frontend routes HTTP 200, zero 502/error-banner, real data where it exists, honest-unavailable (TA, intl-news) never faked, no mock data. Shipped: FE-FIX-MOCKTEXT bcba080d, A-01b f6cec28c/803df875/c779917f (false-RED, QA live PROVEN-RED), FE-REROUTE 1f27d188/c7f19ea3 (KD/prices/news real via reroute), 827c5483 (macro/external live), 2eff91c9 (orchestration 500 fix). All ops-rebuilt, router raw-verified live, 5 containers. Backlog FUs: FU-FE-NEWS-SOURCE, FU-OHLCV-ZERO-ROW (both low). RE-CAP-1 still open (separate).",
+    "next_action": "Cycle DONE. COWORK-LEADER-SELFLOCK shipped (55b66672 design + b5296672 impl), live next cowork tick (watch chef-morning). BEQ-1-SPIKE c00bb72f findings, BEQ-2/3/4a/4b queued TODO for next PO. RE-CAP-1 still open.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T06:16:28Z",
+    "updated_at": "2026-06-02T06:40:47Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T06:16:28Z",
+    "_updated_at": "2026-06-02T06:40:47Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -80,6 +80,69 @@
             "note": "DONE. Brief: docs/architecture-briefs/2026-06-02-bctc-extract-quality.md. A=refine-never-ran (PENDING/0 units, CTG also cover-letter-only PDF). B=ScalarAggregate scope gap (10/20 cols, operating_profit/ebitda/cash/EPS unmapped). C=same financial_reports.net_profit as get_bctc_full — no divergence, garbage from OCR-parse stale write. D=buildComparisonSection no refine_status guard on prior row. Fix plan: BEQ-4(guard XS) BEQ-2(refine trigger S) BEQ-3(full col audit M) BEQ-5->BCTC-CTG-ATTACHMENT-FETCH. All separable from BCTC-LAYOUT-FIRST.",
             "mode": "spike",
             "timebox": 120
+          },
+          {
+            "task_id": "BEQ-1-SPIKE",
+            "title": "Pin 3 net-new BCTC data-layer symptoms each to ONE pipeline layer (PLAN-ONLY findings doc)",
+            "type": "SPIKE",
+            "owner": "architect",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "multi",
+            "note": "empty refine CTG/VCB; zeroed secondary FPT+ACB; garbage /docs net_profit scalars. raw-trigger each leg. timebox 120. | DONE c00bb72f - 3/3 symptoms pinned (a REFINE-TRIGGER, b SCALAR-MAPPING, c OCR-ingest+no-serve-guard); raw DB evidence; follow-ups BEQ-2/3/4a/4b"
+          },
+          {
+            "task_id": "BEQ-4b",
+            "title": "refine_status guard in buildComparisonSection (withhold YoY when prior PENDING)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-1-SPIKE"
+            ],
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "BEQ-1 finding; zero-risk serve guard"
+          },
+          {
+            "task_id": "BEQ-4a",
+            "title": "null-on-PENDING guard in /docs LIST_SQL (stop serving legacy garbage net_profit)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-1-SPIKE"
+            ],
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "BEQ-1 symptom c"
+          },
+          {
+            "task_id": "BEQ-2",
+            "title": "Audit + trigger refine pipeline for PENDING BCTC corpus (exclude CTG)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-1-SPIKE"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": "BEQ-1 symptom a REFINE-TRIGGER"
+          },
+          {
+            "task_id": "BEQ-3",
+            "title": "ScalarAggregate column-audit 10 to ~20 (op_profit/ebitda/cash/eps/CF unprojected)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-1-SPIKE"
+            ],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "note": "BEQ-1 symptom b; recurring-bug eligible, architect review projection contract"
           }
         ]
       },
@@ -724,6 +787,25 @@
         ],
         "_updated_at": "2026-06-02T04:58:02Z",
         "_updated_by": "dev-team"
+      },
+      {
+        "id": "COWORK-RELIABILITY",
+        "status": "OPEN",
+        "_updated_at": "2026-06-02T06:22:26Z",
+        "_updated_by": "dev-team",
+        "tasks": [
+          {
+            "task_id": "COWORK-LEADER-SELFLOCK",
+            "title": "cowork dispatcher Step 0b self-lockout — own-held leader-lock returns claimed:false -> silent-exit -> guaranteed slots dropped (chef-morning missed 2026-06-02)",
+            "type": "SPRINT-S",
+            "owner": "architect",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/cowork-team/flow/",
+            "note": "PO raw-verified task_claim not re-entrant; current_holder.owner_agent present in false result. Fix: Step 0b detect own-held -> task_heartbeat-then-proceed. RECURRING (288e8888+c502b88b prior) -> architect MUST prove no duplicate-SPAWN regression. architect design -> agent-father impl. Cowork flows are runtime-read (no rebuild). | DONE design 55b66672 + impl b5296672 (Step 0b 3-outcome: own-held heartbeat-probe discriminator, dup-spawn-safe, raw-verified diff); live next cowork tick"
+          }
+        ]
       }
     ],
     "backlog": [
@@ -851,7 +933,7 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T05:18Z",
+    "_updated_at": "2026-06-02T06:23Z",
     "_updated_by": "cowork-team",
     "rows": [
       {
@@ -1095,7 +1177,7 @@
         "type": "spike_request",
         "summary": "HIGH BCTC-EXTRACT-QUALITY/BEQ-1 SPIKE: pin 3 net-new data-layer symptoms to one layer each — empty refine despite OCR (CTG/VCB), zeroed secondary lines (FPT+ACB OpProfit/EBITDA/Cash=0,EPS), garbage /docs net_profit scalars. Findings doc, PLAN-ONLY.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/orch/orch-state.json#BCTC-EXTRACT-QUALITY"
       },
       {
@@ -1106,8 +1188,19 @@
         "type": "defect_report",
         "summary": "HIGH dispatcher defect: cowork flow Step 0b re-claims the leader-lock every tick, but a held+unexpired lock returns claimed:false even to its OWN prior owner (renewal is via task_heartbeat, NOT task_claim). So for the full 1800s TTL (~2 ticks) after any WON tick the same dispatcher is locked out and silent-exits. Guaranteed single-window slots falling in that shadow are silently DROPPED. TODAY: chef-morning (guaranteed, cron 15 5 * 1-5) dropped — 05:03Z WON tick (news-scout-sentiment) heartbeated leader to 05:34Z; chef-morning only matches the 05:15 nominal window (05:18Z tick) -> claimed:false -> silent-exit -> morning CHEF MARKET dish missed for 2026-06-02. Evidence: holder heartbeat frozen at 05:04Z (no active peer). FIX (root-cause, PLAN-ONLY via architect): Step 0b must detect own-held lock (current_holder.owner_agent==cowork-dispatcher) and task_heartbeat-then-proceed, instead of treating self as a peer; OR only re-claim when holder expired/differs. Published-marker gate already protects against double-publish, so heartbeat-and-proceed is safe.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/cowork-team-20260602T051848Z.json"
+      },
+      {
+        "id": "cowork-team-20260602T062352Z",
+        "ts": "2026-06-02T06:23Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect_report",
+        "summary": "MEDIUM agent-config defect: when the cowork dispatcher spawns unified-agent (CHEF) with the STANDARD spawn prompt (run docs/agents/unified-agent/flow/chef.md  slot=chef-intraday), the spawned agent can misread the project CLAUDE.md line \"Main terminal = router only / never implement directly\" as applying to ITSELF, then refuses to execute chef.md, asks the dispatcher questions, and burns ~25k tokens with zero output. Observed 2026-06-02 06:18Z chef-intraday tick (agentId a4957b5a). A corrective re-spawn with an explicit \"you ARE the worker, not the router, ignore that CLAUDE.md line\" preamble (agentId a0777f49) executed correctly. Since the dispatcher ALWAYS uses the standard prompt, every chef spawn (morning/intraday/eod/evening) is at nondeterministic risk of this misfire -> wasted tokens and potential silently-dropped MARKET dishes when unattended. FIX (root-cause, agent-father via architect): assert worker-role at the TOP of docs/agents/unified-agent/flow/chef.md (and/or the unified-agent agent-def) so a spawned chef worker never reinterprets the main-terminal router boundary; OR add a one-line worker-role preamble to the dispatcher spawn prompt for unified-agent slots. PLAN-ONLY.",
+        "severity": "MEDIUM",
+        "status": "NEW",
+        "payload_ref": "docs/signals/cowork-team-20260602T062352Z.json"
       }
     ],
     "archive": [
