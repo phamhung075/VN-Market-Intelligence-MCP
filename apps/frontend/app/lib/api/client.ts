@@ -63,6 +63,12 @@ export interface GatewayHealth {
   timestamp: string;
   latencies?: Record<string, number>;
   checkedAt?: string;
+  /**
+   * Optional capability map from FOU-3-GW enrichment.
+   * Absent when the gateway has no capability prober configured (older payloads).
+   * keyed by service short_key (same keys as `services`).
+   */
+  capabilities?: Record<string, { capability: string; capabilityNote?: string }>;
 }
 
 export async function fetchGatewayHealth(): Promise<GatewayHealth> {

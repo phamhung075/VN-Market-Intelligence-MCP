@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T21:15:00Z",
-    "_updated_by": "pm",
+    "_updated_at": "2026-06-02T23:41:00Z",
+    "_updated_by": "dev-frontend",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -1285,11 +1285,13 @@
               "FOU-1-DESIGN",
               "FOU-3-GW"
             ],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/frontend/",
             "priority": "medium",
-            "note": "Handoff: docs/handoffs/FOU-3-FE.md. Render 2-axis rows (container status × capability-via-mcp). Not-deployed+live → blue LIVE badge. Anti-false-green: deployed+down → RED regardless of capability. Depends FOU-3-GW for capability field."
+            "note": "Handoff: docs/handoffs/FOU-3-FE.md. Render 2-axis rows (container status × capability-via-mcp). Not-deployed+live → blue LIVE badge. Anti-false-green: deployed+down → RED regardless of capability. Depends FOU-3-GW for capability field.",
+            "completed_at": "2026-06-02T23:41:00Z",
+            "completed_by": "dev-frontend"
           },
           {
             "task_id": "FOU-3-QA",
