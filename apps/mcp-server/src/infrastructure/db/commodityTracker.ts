@@ -18,6 +18,7 @@
 
 import { getDb } from "./schema.js";
 import { logger } from "../logger.js";
+import { currentDataEnv } from "../envCheck.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Schema note (Task 1039)
@@ -203,14 +204,15 @@ export function extractAndStoreIndicators(
     try {
       const db = getDb();
       const now = new Date().toISOString();
+      const dataEnv = currentDataEnv();
       const stmt = db.prepare(
-        `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
+         VALUES (?, ?, ?, ?, ?, ?)`,
       );
 
       const insertAll = db.transaction((items: ExtractedIndicator[]) => {
         for (const item of items) {
-          stmt.run(item.indicator, item.value, item.unit, source, now);
+          stmt.run(item.indicator, item.value, item.unit, source, now, dataEnv);
         }
       });
       insertAll(extracted);

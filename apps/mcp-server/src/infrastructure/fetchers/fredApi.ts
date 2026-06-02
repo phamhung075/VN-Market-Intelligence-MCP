@@ -30,6 +30,7 @@
 import type { Database } from "bun:sqlite";
 import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
+import { currentDataEnv } from "../envCheck.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -182,10 +183,10 @@ export async function fetchFedFundsRate(
   try {
     database
       .prepare(
-        `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-         VALUES (?, ?, ?, ?, ?)`,
+        `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
+         VALUES (?, ?, ?, ?, ?, ?)`,
       )
-      .run(INDICATOR_NAME, rate, "%", SOURCE, extractedAt);
+      .run(INDICATOR_NAME, rate, "%", SOURCE, extractedAt, currentDataEnv());
 
     logger.info("[macroRefresh] fed_funds_rate = " + rate + "%", {
       indicator: INDICATOR_NAME,

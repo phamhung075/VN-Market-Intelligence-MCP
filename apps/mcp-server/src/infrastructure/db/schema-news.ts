@@ -51,6 +51,11 @@ export function initNewsTables(db: Database): void {
       WHERE source_url IS NOT NULL AND source_url != '';
   `);
 
+  // ── EI-P2-2: data_env column on rag_analyses ─────────────────────────────
+  // Idempotent: guarded ALTER TABLE (try/catch on column-exists error).
+  // Existing rows get NULL. New rows stamped by pollNews / analysis write paths.
+  try { db.exec("ALTER TABLE rag_analyses ADD COLUMN data_env TEXT"); } catch { /* already exists */ }
+
   // ── Agent Signal Bus (Task 242) ────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS agent_signals (

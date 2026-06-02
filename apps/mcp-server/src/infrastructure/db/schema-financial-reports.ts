@@ -240,6 +240,11 @@ export function initFinancialReportsTables(db: Database): void {
     // Column already exists
   }
 
+  // ── EI-P2-2: data_env column on pdf_extracted_text ───────────────────────
+  // Idempotent: guarded ALTER TABLE (try/catch on column-exists error).
+  // Existing rows get NULL. New rows stamped by pdfOcrWorker write path.
+  try { db.exec("ALTER TABLE pdf_extracted_text ADD COLUMN data_env TEXT"); } catch { /* already exists */ }
+
   // ── BCTC VPS Queue (Task 1112) ────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS bctc_vps_queue (
@@ -524,6 +529,20 @@ export function initFinancialReportsTables(db: Database): void {
     }
   } catch {
     // fresh DB — column included via SQLITE_DDL (will be added there in future)
+  }
+
+  // ── EI-P2-2: data_env column on financial_reports ────────────────────────
+  // Idempotent: PRAGMA check + guarded ALTER TABLE.
+  // Existing rows get NULL. New rows stamped by bctcReparseJob write path.
+  try {
+    const de_cols = db
+      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
+      .all();
+    if (!de_cols.some((c) => c.name === "data_env")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN data_env TEXT");
+    }
+  } catch {
+    // fresh DB — column will be added by CREATE TABLE in SQLITE_DDL (future)
   }
 
   // ── BCTC-HUMAN-CONFIRM: Migration 2 — confirm_status on financial_reports ──

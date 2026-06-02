@@ -246,6 +246,11 @@ export function initMacroTables(db: Database): void {
       END;
   `);
 
+  // ── EI-P2-2: data_env column on tracked_indicators ───────────────────────
+  // Idempotent: guarded ALTER TABLE (try/catch on column-exists error).
+  // Existing rows get NULL. New rows stamped at each of the 4 ingest write sites.
+  try { db.exec("ALTER TABLE tracked_indicators ADD COLUMN data_env TEXT"); } catch { /* already exists */ }
+
   // ── Kinh Dich (Task 1047) ─────────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS kinhdich_readings (

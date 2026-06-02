@@ -28,6 +28,7 @@ import { generateAlerts } from "../../domain/services/alertGenerator.js";
 import { storeAlerts } from "../../infrastructure/db/alertStore.js";
 import { getDb } from "../../infrastructure/db/schema.js";
 import { logger } from "../../infrastructure/logger.js";
+import { currentDataEnv } from "../../infrastructure/envCheck.js";
 // eslint-disable-next-line boundaries/dependencies -- FENCE-LEGACY: pre-existing before G4 fence — reviewed: globalSourceTracker is shared state tied to interface layer; refactor to domain/application deferred
 import { globalSourceTracker, _resetGlobalSourceTracker } from "../../interface/mcp/tools/news-analysis/sourceHealthTools.js";
 
@@ -535,9 +536,9 @@ function tryInsertEntry(
       (id, created_at, level, source_url, source_title, source_type,
        published_at, sentiment, impact_score, impact_direction, confidence,
        time_horizon, summary, reasoning, affected_countries, affected_domains,
-       affected_actions, parent_ids, tags, embedding_text)
+       affected_actions, parent_ids, tags, embedding_text, data_env)
     VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?)
   `);
 
   const result = stmt.run(
@@ -560,6 +561,7 @@ function tryInsertEntry(
     JSON.stringify(entry.affectedActions),
     JSON.stringify(entry.parentIds),
     JSON.stringify(entry.tags),
+    currentDataEnv(),
   );
 
   // bun:sqlite RunResult.changes is 1 when a row was inserted, 0 when ignored

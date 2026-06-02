@@ -12,10 +12,13 @@ import { initDatabase } from "./infrastructure/db/index.js";
 import { createBunServer } from "./interface/mcp/server.js";
 import { startScheduler } from "./scheduler/jobs.js";
 import { registerWebhook } from "./infrastructure/notifiers/telegramWebhookSetup.js";
-import { runEnvCheck } from "./infrastructure/envCheck.js";
+import { runEnvCheck, assertEnvDbConsistency } from "./infrastructure/envCheck.js";
 
 export async function bootstrapMcpServer(cfg: AppConfig, log: Logger): Promise<void> {
   // ── 0. Env self-check ─────────────────────────────────────────────────────
+  // EI-P2-1: Hard assertion — kills process if APP_ENV/DB_PATH mismatch.
+  // Runs before DB opens so a misconfigured dev container never writes prod data.
+  assertEnvDbConsistency();
   await runEnvCheck(log);
 
   // ── 1. SQLite tables + WAL + vnstock migrations ───────────────────────────

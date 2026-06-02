@@ -33,6 +33,7 @@
 import type { Database } from "bun:sqlite";
 import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
+import { currentDataEnv } from "../envCheck.js";
 
 // Re-export HttpClient from ssc.ts so consumers have a single import point.
 export type { HttpClient } from "./ssc.js";
@@ -567,14 +568,15 @@ export function storeCommoditySnapshot(
     database.exec(`DELETE FROM tracked_indicators WHERE source = 'yahoo'
                    AND indicator IN ('brent_crude_usd', 'gold_usd_oz')`);
     const insertTrackedIndicator = database.prepare(`
-      INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-      VALUES (?, ?, ?, 'yahoo', ?)
+      INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
+      VALUES (?, ?, ?, 'yahoo', ?, ?)
     `);
+    const dataEnvYahoo = currentDataEnv();
     if (snapshot.brentCrudeUSD != null && snapshot.brentCrudeUSD > 0) {
-      insertTrackedIndicator.run("brent_crude_usd", snapshot.brentCrudeUSD, "$/bbl", snapshot.fetchedAt);
+      insertTrackedIndicator.run("brent_crude_usd", snapshot.brentCrudeUSD, "$/bbl", snapshot.fetchedAt, dataEnvYahoo);
     }
     if (snapshot.goldUSDPerOz != null && snapshot.goldUSDPerOz > 0) {
-      insertTrackedIndicator.run("gold_usd_oz", snapshot.goldUSDPerOz, "$/oz", snapshot.fetchedAt);
+      insertTrackedIndicator.run("gold_usd_oz", snapshot.goldUSDPerOz, "$/oz", snapshot.fetchedAt, dataEnvYahoo);
     }
   });
 

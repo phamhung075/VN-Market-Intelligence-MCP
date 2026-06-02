@@ -23,6 +23,7 @@
 
 import { logger } from "../logger.js";
 import { BROWSER_UA } from "./browserHeaders.js";
+import { currentDataEnv } from "../envCheck.js";
 
 // Re-use the HttpClient type from ssc.ts
 export type { HttpClient } from "./ssc.js";
@@ -260,15 +261,16 @@ export function storeShippingIndices(indices: ShippingIndex[]): void {
     // tracked_indicators is created by initDatabase() in schema.ts (task 1030).
 
     const now = new Date().toISOString();
+    const dataEnv = currentDataEnv();
     const stmt = db.prepare(
-      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-       VALUES (?, ?, ?, ?, ?)`,
+      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at, data_env)
+       VALUES (?, ?, ?, ?, ?, ?)`,
     );
 
     const insertAll = db.transaction((items: ShippingIndex[]) => {
       for (const item of items) {
         const indicatorName = `shipping_${item.name.toLowerCase()}`;
-        stmt.run(indicatorName, item.value, "points", "yahoo_shipping", now);
+        stmt.run(indicatorName, item.value, "points", "yahoo_shipping", now, dataEnv);
       }
     });
 

@@ -25,6 +25,7 @@ import { readFileSync, existsSync, readdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { logger } from "../../infrastructure/logger.js";
 import { getDb } from "../../infrastructure/db/schema.js";
+import { currentDataEnv } from "../../infrastructure/envCheck.js";
 import { recordJobRun } from "../../infrastructure/db/cronJobRunStore.js";
 import { extractPdfText } from "../../infrastructure/fetchers/pdf.js";
 import { getCachedPdfText } from "../../infrastructure/fetchers/pdfOcrWorker.js";
@@ -563,8 +564,9 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
         INSERT INTO financial_reports (
           id, action_code, company_name, exchange, domain,
           period_year, period_quarter, period_type,
-          period_start, period_end, sort_key, parsed_at, extraction_confidence
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          period_start, period_end, sort_key, parsed_at, extraction_confidence,
+          data_env
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `).run(
         fallbackId,
         payload.ticker,
@@ -579,6 +581,7 @@ async function makeProductionDeps(): Promise<ReparseDeps> {
         sortKey,
         now,
         0, // Low confidence marker
+        currentDataEnv(),
       );
     },
   };

@@ -17,6 +17,7 @@
 
 import type { Database } from "bun:sqlite";
 import { BROWSER_UA } from "./browserHeaders.js";
+import { currentDataEnv } from "../envCheck.js";
 
 const VNDIRECT_STOCK_PRICES_BASE = "https://api-finfo.vndirect.com.vn/v4";
 
@@ -141,9 +142,10 @@ export async function runOhlcvBackfill(
     "SELECT MIN(date) as min_date, MAX(date) as max_date, COUNT(*) as cnt FROM daily_ohlcv WHERE code = ?",
   );
 
-  const upsert = db.prepare<void, [string, string, number, number, number, number, number]>(
-    `INSERT OR IGNORE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+  const dataEnv = currentDataEnv();
+  const upsert = db.prepare<void, [string, string, number, number, number, number, number, string]>(
+    `INSERT OR IGNORE INTO daily_ohlcv (code, date, open, high, low, close, volume, updated_at, data_env)
+     VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)`,
   );
 
   for (let i = 0; i < tickers.length; i++) {
@@ -197,6 +199,7 @@ export async function runOhlcvBackfill(
             r.low,
             r.close,
             r.nmVolume ?? 0,
+            dataEnv,
           );
         }
       });

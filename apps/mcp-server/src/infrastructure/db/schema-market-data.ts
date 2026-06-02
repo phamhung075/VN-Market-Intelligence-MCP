@@ -106,6 +106,19 @@ export function initMarketDataTables(db: Database): void {
       ON daily_ohlcv(code, date DESC);
   `);
 
+  // ── EI-P2-2: data_env column on daily_ohlcv ──────────────────────────────
+  // Idempotent: PRAGMA check + guarded ALTER TABLE.
+  // Existing rows get NULL (unknown provenance). New rows stamped by write paths.
+  {
+    const cols = db
+      .prepare<{ name: string }, []>("PRAGMA table_info(daily_ohlcv)")
+      .all()
+      .map((r) => r.name);
+    if (!cols.includes("data_env")) {
+      db.exec("ALTER TABLE daily_ohlcv ADD COLUMN data_env TEXT");
+    }
+  }
+
   // ── OHLCV Backfill Queue (Task 1361 / Sprint 123) ─────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS ohlcv_backfill_queue (

@@ -33,6 +33,7 @@ import { readFileSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { logger } from "../logger.js";
 import { getDb } from "../db/schema.js";
+import { currentDataEnv } from "../envCheck.js";
 
 const execFileAsync = promisify(execFile);
 
@@ -237,9 +238,10 @@ export async function extractAndStorePdfPages(
   writeFileSync(tmpPdf, readFileSync(pdfPath));
 
   const insert = db.prepare(
-    "INSERT OR REPLACE INTO pdf_extracted_text (filename, page_number, text_content, confidence, action_code) VALUES (?, ?, ?, ?, ?)"
+    "INSERT OR REPLACE INTO pdf_extracted_text (filename, page_number, text_content, confidence, action_code, data_env) VALUES (?, ?, ?, ?, ?, ?)"
   );
   const ac = actionCode?.toUpperCase() ?? "";
+  const dataEnv = currentDataEnv();
 
   let extractedPages = 0;
   let totalChars = 0;
@@ -277,7 +279,7 @@ export async function extractAndStorePdfPages(
     } else {
       // Task 292 / FR-3: only insert rows for pages with >= 10 chars
       const confidence = pageText.length > 50 ? 0.8 : 0.5;
-      insert.run(filename, page, pageText, confidence, ac);
+      insert.run(filename, page, pageText, confidence, ac, dataEnv);
       extractedPages++;
       totalChars += pageText.length;
       pageConfidences.push(confidence);
