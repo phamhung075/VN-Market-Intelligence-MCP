@@ -1,4 +1,4 @@
-<!-- size-justification: 475L — single-flow cowork agent with no sub-flows; carries full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 4 calls, 3-section composition spec with full detail floor + hashtag block composition rule + diacritics strip rule, 16-check pre-write validation with hard-fail jargon grep + extended forbidden-English mapping table + false-green proof statement + hashtag block check, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching -->
+<!-- size-justification: 456L — single-flow cowork agent with no sub-flows; carries full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 4 calls, 3-section composition spec with full detail floor + hashtag block composition rule + diacritics strip rule, 16-check pre-write validation with executable hard-fail jargon gate call + mapping table + hashtag block check, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching -->
 # FB Market Poster — Main Flow
 
 Daily synthesis agent. Reads the day's published market intelligence and writes ONE plain-Vietnamese Facebook-ready post.
@@ -106,7 +106,7 @@ Hold all extracted forward signals in working memory under the label `$predictio
 
 **Language rule:** Plain, everyday Vietnamese. No analyst jargon. No citations (Layer #, σ, bp). No hexagram terms. No ticker codes without context. Use common names where helpful (e.g., "cổ phiếu Vingroup" alongside VHM/VIC if needed for clarity). Write as if explaining to a friend over coffee.
 
-**Forbidden English terms — use Vietnamese equivalents instead (this list is also the grep set for STEP 4 check 3):**
+**Forbidden English terms — use Vietnamese equivalents instead (gate enforced by STEP 4a — SSOT in `scripts/fb-jargon-gate.sh`):**
 
 | Forbidden English | Required Vietnamese |
 |---|---|
@@ -296,38 +296,18 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
 **Structural checks (must pass — fix inline if failing):**
 1. VN-Index appears with both level AND % change.
 2. Disclaimer block present verbatim at the end.
-3. **Hard-fail jargon grep (MUST be zero hits before file write):** Scan the entire post body for each of the following. Any hit = mandatory fix inline before proceeding to STEP 5.
+3. **STEP 4a — JARGON GATE (hard-fail, executable)**
 
-   **Quant / notation violations:**
-   - `σ` (sigma character)
-   - `sigma` (word)
-   - `bp` or `bps` (basis points)
-   - `±` (used as a statistical notation, not a plain plus-or-minus)
-   - `Layer #` or `Layer ` followed by a digit
-   - `standard deviation` or `độ lệch chuẩn` (in a quant context)
-   - z-score, z score
-   - hexagram, Kinh Dịch, quẻ
-   - `TNB`
-   - `convergence` (English)
-   - `signal #` or `signal ` followed by a digit
+   → skill: `.claude/skills/fb-jargon-gate/SKILL.md`
 
-   **Forbidden-English violations (from the mapping table in STEP 3):**
-   - `bullish`, `bearish`, `neutral` (standalone English)
-   - `breadth` (English)
-   - `broad-based` (English)
-   - `momentum` (English)
-   - `stasis` (English)
-   - `durable` (English)
-   - `outflow`, `inflow` (English)
-   - `risk-on`, `risk-off` (English)
-   - `rally`, `sell-off`, `breakout`, `rebound` (English)
-   - `consolidat` (matches consolidate/consolidation, English)
-   - `sentiment` (English)
-   - `volatility` (English)
-   - `catalyst` (English)
-   - `upside`, `downside` (English)
+   HARD-FAIL: gate exit non-zero = block STEP 5. Fix every [FAIL] line in the post body.
+   Re-run the gate. Proceed to STEP 5 ONLY when gate exits 0 with pasted output in hand.
+   If violations cannot be resolved after one fix round:
+   `send_telegram(channel="bug", message="[fb-market-poster] JARGON GATE: unresolvable — post NOT written")` and EXIT.
 
-   **FALSE-GREEN PROOF:** If this check were a no-op, inserting a deliberate `σ` or the word `bullish` into the draft would NOT be caught. This grep is proven non-false-green only if such an injection causes the check to fire and block file write. Any future change to this check must include a planted-violation smoke test (insert `σ` → verify check fires → remove).
+   **Smoke-test requirement (run whenever gate script is changed):** Insert a deliberate
+   forbidden token (e.g. `sentiment`) into a temp file → gate MUST exit 1 and print [FAIL].
+   A gate that exits 0 on a planted violation is a false-green and must be fixed before use.
 
 4. Post length: minimum 150 words, maximum 1300 words.
    - Count words in the post body (exclude the file header line and the disclaimer separator lines from the count).
@@ -360,7 +340,7 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
     - **No diacritics:** scan every hashtag token (word starting with `#`) for Vietnamese diacritics characters (à á â ã ä å è é ê ì í ò ó ô õ ù ú ý and their tone-marked variants: ă ắ ặ ằ ẳ ẵ â ấ ầ ẩ ẫ ậ đ ê ế ề ể ễ ệ ô ố ồ ổ ỗ ộ ơ ớ ờ ở ỡ ợ ư ứ ừ ử ữ ự). Any diacritic inside a hashtag token is a hard-fail — remove by stripping to plain ASCII equivalent.
 
 **On failure:**
-- Check 3 (jargon grep) fails: **mandatory fix inline — remove or replace every violating term before file write. Do NOT write the file with any jargon hit present.** Re-run the grep after fix; proceed only when zero hits confirmed.
+- Check 3 (STEP 4a jargon gate) fails: **block STEP 5 — fix every [FAIL] line, re-run the gate skill. Do NOT write the file while gate exits non-zero.**
 - Checks 1–2, 4–8 fail: fix inline, re-verify.
 - Checks 9–14 fail because data genuinely unavailable after live tools + notebook: log which field is missing in RETURN QUALITY field; proceed (do NOT pad).
 - Check 15 fails: mandatory fix inline before writing.
@@ -444,6 +424,7 @@ Notebook entry format:
 - VN-Index: {level} ({+/-delta}%)
 - Sources read: unified-agent={yes/no}, news-scout={yes/no}, market-watcher={yes/no}
 - Validation: passed {N}/16 checks (section-order: {pass/fail}, earned-prediction: {pass/fail}, recap-not-dominant: {pass/fail}, hashtag-block: {pass/fail}, detail-floor fields available: {list})
+- Jargon gate: PASS (0 violations) | BLOCKED (N violations, post not written)
 - Status: {published/failed}
 
 ## Lessons learned
@@ -463,6 +444,7 @@ DONE: FB post written for {DATE} → docs/social/fb-post-{DATE}.md
 NEXT: idle (user copy-pastes to Facebook Page manually)
 PIPELINE: complete
 QUALITY: full | partial
+JARGON GATE: [paste full stdout of fb-jargon-gate.sh here — zero-violations line required]
 ```
 
 If any step failed gracefully (skipped source, etc.):

@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "BATCH 2/2 DONE. NB-PRUNE-UNIFIED-AGENT 30e8e27c (223->110L). NB-PRUNE-ROOTCAUSE-SPIKE 26f7caa0 (root cause: prune-by-block cant reach intra-section bloat; brief decides 2-class contract + AC-2b + AC-5). NEXT-CYCLE: PO drains brief_complete arc-nb-prune-contract-20260602T031633Z -> route 5-file impl (S1-S5) to agent-father. NB-NOTEBOOK-WRITE-FLEET-ALIGN promoted+resolved-as-spike.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FB-GATE-2",
+    "next_agent": "agent-father",
+    "next_action": "Dispatch FB-GATE-2 (fb-jargon-gate skill+script+flow wiring) then NB-PRUNE-IMPL (2-class contract S1-S6), serialized (shared git index). Both per their committed briefs.",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-02T03:20Z",
+    "updated_at": "2026-06-02T04:16:22Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -55,7 +55,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T03:20Z",
+    "_updated_at": "2026-06-02T04:16:22Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -198,7 +198,8 @@
       {
         "id": "FB-GATE",
         "label": "Replace fb-market-poster self-attestation validation with deterministic executable pre-publish gate (HIGH — 10pm cron not trustworthy unattended)",
-        "status": "active",
+        "status": "DONE",
+        "closed_at": "2026-06-02",
         "opened_at": "2026-06-02",
         "priority": "high",
         "evidence": "Session 2026-06-02: fb-market-poster STEP 4 check 3 is self-attestation ('Scan the entire post body... fix inline'). False-greened 3x in one session, each caught only by router raw grep: (1) 'thanh khoảy' typo present 6x while agent reported zero typos; (2) '(FII)' English jargon present 2x while agent reported FII:ZERO; (3) full Kinh Dịch hexagram paragraph ('vị thế Sư Giữ … Sư/Khôn/Kiển … vị thế Khôn') copied from CHEF/get_portfolio_conviction dish present while agent reported hexagram:ZERO. Root: validation is a model self-check, not an executable command; nothing hard-blocks the write. Memories: feedback_market_report_plain_vietnamese (the rule), feedback_router_verify_raw_not_badges + feedback_fence_false_green (need pasted command output, not a green claim).",
@@ -223,10 +224,11 @@
             "depends": [
               "FB-GATE-1"
             ],
-            "status": "TODO",
+            "status": "DONE",
+            "closed_at": "2026-06-02",
             "size": "S",
-            "zone": "docs/agents/fb-market-poster/ + .claude/skills/ (+ cross-service/scripts if shared script)",
-            "note": "Apply architect brief. Replace STEP 4 check 3 self-attestation with the executable gate; wire hard-fail block before STEP 5 write; require pasted command output in STEP 8 cycle report / RETURN. MUST include a planted-violation smoke proof (insert a forbidden token → gate fires non-zero → blocks write → remove) so the gate is proven non-false-green, mirroring the existing FALSE-GREEN PROOF clause at flow L330. If FB-GATE-1 specs a shared fb-jargon-gate script/skill, create it in the architect-named zone and have the flow CALL it (single SSOT of the forbidden set — flow must not re-list tokens inline)."
+            "zone": "docs/agents/fb-market-poster/ + .claude/skills/ + scripts/",
+            "note": "IMPLEMENTED. scripts/fb-jargon-gate.sh (5 groups, 32+ tokens, hexagram anchored, calendar check, exits 0/1/2) + .claude/skills/fb-jargon-gate/SKILL.md (46L) + flow main.md check-3 replaced with STEP 4a hard-fail gate call. Smoke A (sentiment→exit1), B (clean post→exit0), C (không→exit0) proven. Hexagram anchor fires on vị thế Khôn + Kinh Dịch. Flow RETURN requires JARGON GATE pasted output. Inline token list removed (SSOT = script only)."
           }
         ]
       },
@@ -435,6 +437,19 @@
             "size": "S",
             "zone": "cross-service/",
             "note": "DONE 26f7caa0 — brief docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md. Contract: 2 classes (OVERWRITE po/market-watcher; APPEND chef/news-scout/bctc/etc) + AC-2b intra-accumulator sub-block prune + AC-5 inline wc-l guard; L95 TODO resolved. brief_complete->po (NEW, next-cycle agent-father impl S1-S5)."
+          },
+          {
+            "task_id": "NB-PRUNE-IMPL",
+            "title": "Implement notebook-write 2-class contract S-1..S-6 per 2026-06-02-notebook-write-prune-contract.md",
+            "type": "SPRINT-S",
+            "owner": "agent-father",
+            "depends": [
+              "NB-PRUNE-ROOTCAUSE-SPIKE"
+            ],
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "cross-service",
+            "note": "OVERWRITE/APPEND classes + AC-2b intra-### prune + AC-5 inline wc-gate; RE-CAP-1 NOT absorbed (different file: signal-dashboard SKILL)"
           }
         ]
       },
@@ -639,8 +654,9 @@
         "type": "brief_complete",
         "summary": "FB-GATE-1 DESIGN-DONE. Brief docs/architecture-briefs/2026-06-02-fb-jargon-gate.md ready for implementation (FB-GATE-2). Decision: SHARED gate — scripts/fb-jargon-gate.sh (executable) + .claude/skills/fb-jargon-gate/SKILL.md (caller) + flow main.md check-3 replacement. Hard-fail on any grep hit. 3 smoke tests specified. See §10 acceptance criteria.",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/architecture-briefs/2026-06-02-fb-jargon-gate.md"
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-fb-jargon-gate.md",
+        "agent_father_disposition": "IMPLEMENTED 2026-06-02. FB-GATE-2 DONE. All 3 smoke tests proven. See task note."
       },
       {
         "id": "po-fb-gate-intake-20260602T0340Z",
