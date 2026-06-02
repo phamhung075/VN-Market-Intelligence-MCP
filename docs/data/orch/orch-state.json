@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T18:26:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "NB-NSCOUT-PRUNE",
-    "next_agent": "claude-manager-helper",
-    "next_action": "T2 NB-NSCOUT-PRUNE (claude-manager-helper, maintenance-lane mutex-wrap): prune news-scout.md 222->=<200L per notebook-write AC-6. ROUTER MUST VERIFY (janitor false-green history feedback_janitor_false_green_verify): wc -l <=200 AND no section >60L AND git status clean after its run. Then post-cycle + head idle. GOAL=complete all task.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "dev-team :07 cron CONCLUDED. This cycle: 2 XS FIX shipped+live-verified — CW-BACKLOG-MISCOUNT (5fa449cf, cowork signal_backlog excludes own heartbeats -> unpins adaptive-cadence tier + restores deep-sleep guard) + NB-NSCOUT-PRUNE (de6b25fb, notebook 222->53L). Signals drained (5 envelope, 230 stale processed pruned). Queued FU-COWORK-HEARTBEAT-SCHEMA (LOW). REMAINING = async/infra ONLY (unchanged, not in-session): BCTC-HIST-VPS-BACKFILL + BCTC-CURRENT-404-INVESTIGATE (ops/VPS HIGH) + BCTC-ENRICHER-OLD-QUARTERS (dev MED) + BCTC-HIST-VCB-REFINE (analyst MED) + FU-EI-P2-COV/DEV-VOLUME + FU-COWORK-HEARTBEAT-SCHEMA (LOW). PO-deferred: BAL-1e/LF-EXTRACT/LF-OVERLAY/CHEF-ATTN-1. Next PO triage owns residual.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T18:49:59Z",
+    "updated_at": "2026-06-02T18:54:18Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T18:49:59Z",
+    "_updated_at": "2026-06-02T18:54:18Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -857,11 +857,11 @@
             "title": "Prune news-scout notebook 222L -> <=200L (APPEND-class cap breach, ctx-bloat x3)",
             "type": "FIX",
             "owner": "claude-manager-helper",
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "XS",
             "zone": "docs/agent-memory/notebooks/",
             "priority": "medium",
-            "note": "PO triage :07 2026-06-02. APPEND-class cap (<=200L file / <=60L section). No section >60L; total-file breach from accumulated stale cycle sections. Prune oldest COMPLETE cycles per notebook-write SKILL AC-6. VERIFY janitor output (history: false-green cap claims + dirty-tree): wc -l <=200 AND git status clean after."
+            "note": "PO triage :07 2026-06-02. APPEND-class cap (<=200L file / <=60L section). No section >60L; total-file breach from accumulated stale cycle sections. Prune oldest COMPLETE cycles per notebook-write SKILL AC-6. VERIFY janitor output (history: false-green cap claims + dirty-tree): wc -l <=200 AND git status clean after.| DONE-LIVE-VERIFIED 2026-06-02T18:55Z commit de6b25fb (claude-manager-helper). news-scout.md 222->53L. Router raw-verify: 1-file scope, tree CLEAN (no janitor false-green/partial-stage), max section 31L (c30) <=60, content intact (c30+c31 kept w/ full 5-item carry-over watch + FII-carry/regime context, not gutted). Notebook read live, no rebuild."
           }
         ]
       },
