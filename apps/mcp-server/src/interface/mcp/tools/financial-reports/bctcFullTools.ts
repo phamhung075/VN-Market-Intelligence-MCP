@@ -271,6 +271,18 @@ function buildComparisonSection(
     ].join("\n");
   }
 
+  // BEQ-4b: contamination guard — prior period not yet refined → withhold comparison
+  // to prevent OCR-parse garbage (e.g. FPT 2025-Q4 net_profit=net_revenue÷1000)
+  // from producing nonsense YoY deltas (e.g. +12146%).
+  // Once BEQ-2 refine backfill runs and refine_status → DONE, the guard auto-lifts.
+  if (priorRow.refine_status === "PENDING") {
+    return [
+      `=== QoQ/YoY COMPARISON ===`,
+      `Period prior (${priorRow.sort_key}) not yet refined — comparison withheld to avoid contamination.`,
+      `Run refine pipeline for ${code} ${priorRow.sort_key} to enable this comparison.`,
+    ].join("\n");
+  }
+
   const deltaType = latest.period_year !== priorRow.period_year ? "YoY" : "QoQ";
   const m1 = rowToMetrics(latest, bankForm);
   const m2 = rowToMetrics(priorRow, bankForm);
