@@ -165,7 +165,13 @@ describe("BEQ-4a — /docs LIST_SQL PENDING guard", () => {
     expect(fptItem.refine_status).toBe("DONE");
   });
 
-  it("PARTIAL row still shows net_profit (guard only fires for PENDING)", () => {
+  it("BEQ-8b: PARTIAL row net_profit is null (guard extended to PARTIAL in BEQ-8b)", () => {
+    /**
+     * BEQ-4a original: PARTIAL was pass-through (net_profit served).
+     * BEQ-8b update: PARTIAL also nulled — after BEQ-5/6/7, balance-sheet-only
+     * tickers transition to PARTIAL and their legacy net_profit is still garbage.
+     * The guard now covers IN ('PENDING', 'PARTIAL').
+     */
     const db = openTestDb();
 
     insertReport(db, {
@@ -185,8 +191,8 @@ describe("BEQ-4a — /docs LIST_SQL PENDING guard", () => {
     const acbItem = body.items.find((i: { action_code: string }) => i.action_code === "ACB");
     expect(acbItem).toBeDefined();
 
-    // PARTIAL: guard does NOT fire → net_profit served
-    expect(acbItem.net_profit).toBe(3_100_000);
+    // BEQ-8b: PARTIAL also nulled (legacy garbage value must not be served)
+    expect(acbItem.net_profit).toBeNull();
     expect(acbItem.refine_status).toBe("PARTIAL");
   });
 

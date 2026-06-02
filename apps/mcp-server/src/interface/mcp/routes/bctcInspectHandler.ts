@@ -127,7 +127,7 @@ const LIST_SQL = `
     id, action_code, company_name, period_type, period_year, period_quarter, sort_key,
     pdf_path, refine_status,
     net_revenue, gross_profit,
-    CASE WHEN refine_status = 'PENDING' THEN NULL ELSE net_profit END AS net_profit,
+    CASE WHEN refine_status IN ('PENDING', 'PARTIAL') THEN NULL ELSE net_profit END AS net_profit,
     net_profit_api_bridge,
     net_margin_pct, ocr_confidence, confidence_financial, extraction_confidence,
     parsed_at
