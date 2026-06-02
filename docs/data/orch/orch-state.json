@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "BATCH 2/2 DONE. ESC-OPUS-SEAM-IMPL bbcbefad (seam live: bctc-analyst emits esc-deep-dive-request->dev-team drain-esc-dispatch.md spawns opus->deep_dive_result->po, TTL86400 guard). NB-PRUNE-BCTC-ANALYST ab8532b1 (172L). FPT deep_dive disposed: WORK-notice human-review + curated. context_bloat breach resolved by prune. Backlog unchanged (FU-BCTC-TOOL-PARAMS normal — seam safe ahead of it).",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "NB-PRUNE-UNIFIED-AGENT+NB-PRUNE-ROOTCAUSE-SPIKE",
+    "next_agent": "claude-manager-helper",
+    "next_action": "BATCH 2/2: NB-PRUNE-UNIFIED-AGENT (cmh, compress ## Prior cycles in-place 223->cap) + NB-PRUNE-ROOTCAUSE-SPIKE (agents-architect, timebox120, promotes NB-NOTEBOOK-WRITE-FLEET-ALIGN: prune-by-block cant reach intra-section bloat — decide SSOT contract).",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-02T02:19Z",
+    "updated_at": "2026-06-02T03:13Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -49,7 +49,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T02:19Z",
+    "_updated_at": "2026-06-02T03:13Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -372,6 +372,28 @@
             "size": "XS",
             "zone": "docs/agent-memory/notebooks/",
             "note": "DONE ab8532b1 — 201->172L, dropped oldest c005 cycle, ESC-3/FPT dedup + cowork edits preserved."
+          },
+          {
+            "task_id": "NB-PRUNE-UNIFIED-AGENT",
+            "title": "Prune unified-agent.md (CHEF) 223L->cap",
+            "type": "CLEAN",
+            "owner": "claude-manager-helper",
+            "depends": [],
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "docs/agent-memory/notebooks/",
+            "note": "bloat inside single ## Prior cycles block L28-172; compress in-place, keep last 2-3 cycles + carry-over + reference sections"
+          },
+          {
+            "task_id": "NB-PRUNE-ROOTCAUSE-SPIKE",
+            "title": "SPIKE: why notebook-write prune fails fleet-wide (NB-NOTEBOOK-WRITE-FLEET-ALIGN promoted)",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": [],
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "cross-service/",
+            "note": "4th breach/3d despite NB-PRUNE-FIX done; intra-section accumulation + L95 overwrite-vs-append contradiction; output brief, agent-father impl after"
           }
         ]
       },
@@ -557,11 +579,6 @@
         "priority": "normal"
       },
       {
-        "id": "NB-NOTEBOOK-WRITE-FLEET-ALIGN",
-        "summary": "agent-father (NB-BLOAT-FLOW-OVERWRITE) found 4 flows still say OVERWRITE in notebook-write step: po/flow/main.md L126 (OVERWRITE <=50L), market-watcher/flow/cycle.md L94 (OVERWRITE not append — L95 comment says INTENTIONAL per skill mandate), code-janitor/flow/main.md L68, fb-market-poster/flow/main.md L17+L433 (full overwrite). NOT a blind append+prune rewrite — the notebook-write SKILL itself has an UNRESOLVED TODO (L95) about the po/developer overwrite-vs-append contradiction. PO: resolve the skill SSOT contract FIRST (is overwrite intentional for small ≤50L notebooks?), then align flows per-agent. Needs agents-architect or skill-owner decision before agent-father edits.",
-        "priority": "normal"
-      },
-      {
         "id": "FU-BCTC-TOOL-PARAMS",
         "summary": "Opus FPT deep-dive surfaced 2 real bctc tool defects blocking ESC-3 accrual analysis: (1) get_cash_flow IGNORES the quarters param — returns only current quarter, no 8q history, no WC subcomponents (AR/inventory/AP/D&A) -> accrual decomposition impossible; (2) get_bctc_full/get_bctc_refined take code/report_id NOT ticker (caller trap). Both block deep-dive quality + likely affect other consumers. Owner likely dev-mcp-server. Found 2026-06-02 FPT-OPUS-DEEPDIVE.",
         "priority": "normal"
@@ -570,8 +587,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T02:10Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-02T03:16:33Z",
+    "_updated_by": "agents-architect",
     "rows": [
       {
         "id": "po-gate-self-critique-detect-20260601T2111",
@@ -818,6 +835,17 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": "docs/architecture-briefs/2026-06-02-esc-opus-dispatch-seam.md"
+      },
+      {
+        "id": "arc-nb-prune-contract-20260602T031633Z",
+        "ts": "2026-06-02T03:16:33Z",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "brief_complete",
+        "summary": "NB-PRUNE-CONTRACT decided — 2-class write contract (OVERWRITE/APPEND) + AC-2b intra-section rule; 5 flow edits for agent-father → docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md"
       }
     ],
     "archive": [

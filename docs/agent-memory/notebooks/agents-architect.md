@@ -115,3 +115,13 @@ Added a new decentralized DETECT source to the SELF-IMPROVE-GATE pipeline: an en
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
 - OQ-1 through OQ-4 from §10 of 1951b brief remain open for agent-father to resolve before Phase 3 QA.
 - L-1 alert-commander: verify whether 1963-MW-IDENTITY fix (agent-father 2026-05-21) already promoted mcp-tools.md to always_load — if yes, L-1 for alert-commander is a no-op.
+
+---
+
+## 2026-06-02T03:16:33Z
+
+**Brief:** `docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md`
+
+4th notebook cap breach in 3 days root-caused to 4 distinct failure modes: (F-1) unified-agent `## Prior cycles` is a permanent accumulator section whose `###` sub-blocks are structurally invisible to block-level AC-2 prune; (F-2) bctc-analyst has a dead "Overwrite" instruction overridden by `cowork-end-cycle` → append path producing 6 live sections; (F-3) AC-5 write-time guard never reaches effective write path in any of the 3 breaching agents (all inline their writes before chaining cowork-end-cycle); (F-4) market-watcher OVERWRITE template itself exceeds the ≤80L cap it targets. DECIDED: two-class contract (OVERWRITE: po/market-watcher ≤50-80L; APPEND: CHEF/news-scout/bctc-analyst/agents-architect ≤200L with AC-2b intra-section prune for permanent accumulator headings); L95 TODO resolved. 5 flow/skill edits scoped for agent-father (S-1 chef.md Step 8, S-2 bctc-analyst stage-log-notify, S-3 news-scout stage-log-notify, S-4 market-watcher cycle.md Step 5, S-5 notebook-write SKILL).
+
+**Signal dropped:** `docs/data/orch/orch-state.json` `.signal_queue` row (from:agents-architect, to:po, type:brief_complete)
