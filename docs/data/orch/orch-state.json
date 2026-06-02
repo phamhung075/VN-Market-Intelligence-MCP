@@ -6,12 +6,12 @@
   "head": {
     "status": "idle",
     "active_task_id": "idle",
-    "next_agent": "agents-architect",
-    "next_action": "NEW sprint FRONTEND-OPERATOR-UX filed (2 operator dashboard UX REQs, dev-frontend zone): FOU-1-DESIGN dispatched to agents-architect (one brief covering REQ1 hexagram hover tooltip + REQ2 Service-Health mcp-online-truth 3-state capability model); FOU-2-REQ1 + FOU-3-REQ2 TODO blocked on design. WIP unchanged (design tasks do not consume dev WIP).",
-    "wip": 0,
+    "next_agent": "dev-frontend",
+    "next_action": "FOU-2-REQ1 (dev-frontend) + FOU-3-GW (dev-api-gateway) both unblocked (WIP=2). FOU-2 dispatch first. FOU-3-FE blocks on FOU-3-GW. FOU-3-QA blocks on FOU-3-FE. Handoffs created.",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-02T21:06:17Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-02T21:15:00Z",
+    "updated_by": "pm"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T21:06:17Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-02T21:15:00Z",
+    "_updated_by": "pm",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -1241,11 +1241,11 @@
             "type": "SPRINT-S",
             "owner": "agents-architect",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "docs/architecture-briefs/ + docs/data/",
             "priority": "medium",
-            "note": "REQ1 seam recon already done by router (see sprint.evidence). Architect decide: (A1) static frontend id->description map generated/derived from QUE_DATA.coreMeaning (single drift-safe SSOT export, zero mcp rebuild) — PREFERRED; OR (A2) extend KinhDichReading DTO / the existing /kinh-dich/reading/{t} REST endpoint (FE-RR-mcp) to carry description (heavier, rebuild). Name the dev-kinh-dich/dev-mcp-server consult subtask IF the canonical text must be exported from the domain lib. REQ2 design: (i) status axes (container_status: deployed|not_deployed ; capability: live|data_limited|dark) + how they compose into the row badge so operator reads 'kinh-dich: container off, LIVE via mcp-server'; (ii) the capability-manifest SSOT (extend system-map.json host_runtime_set OR sibling) mapping each short-key to the mcp tool/REST probe proving it online (macro->get_macro_snapshot, stock->get_market_snapshot, kinh-dich->get_portfolio_conviction, alert->get_alerts, news->ingestion-fresh, ta->get_technical_indicators[data_limited], pdf/bctc->get_financial_summary, rag->dark-until-probed); (iii) WHERE the probe runs (api-gateway /health enrichment vs frontend loader vs a cached mcp /capabilities endpoint) — MUST be bounded + cached, NEVER fan out 156 tools per page load (host-safety project_host_memory_panic). Reuse A-01b name-map + host_runtime_set. Output also = the per-REQ dev task split for FOU-2/FOU-3.",
+            "note": "REQ1 seam recon already done by router (see sprint.evidence). Architect decide: (A1) static frontend id->description map generated/derived from QUE_DATA.coreMeaning (single drift-safe SSOT export, zero mcp rebuild) — PREFERRED; OR (A2) extend KinhDichReading DTO / the existing /kinh-dich/reading/{t} REST endpoint (FE-RR-mcp) to carry description (heavier, rebuild). Name the dev-kinh-dich/dev-mcp-server consult subtask IF the canonical text must be exported from the domain lib. REQ2 design: (i) status axes (container_status: deployed|not_deployed ; capability: live|data_limited|dark) + how they compose into the row badge so operator reads 'kinh-dich: container off, LIVE via mcp-server'; (ii) the capability-manifest SSOT (extend system-map.json host_runtime_set OR sibling) mapping each short-key to the mcp tool/REST probe proving it online (macro->get_macro_snapshot, stock->get_market_snapshot, kinh-dich->get_portfolio_conviction, alert->get_alerts, news->ingestion-fresh, ta->get_technical_indicators[data_limited], pdf/bctc->get_financial_summary, rag->dark-until-probed); (iii) WHERE the probe runs (api-gateway /health enrichment vs frontend loader vs a cached mcp /capabilities endpoint) — MUST be bounded + cached, NEVER fan out 156 tools per page load (host-safety project_host_memory_panic). Reuse A-01b name-map + host_runtime_set. Output also = the per-REQ dev task split for FOU-2/FOU-3. | DONE 2026-06-02T21:11Z: brief docs/architecture-briefs/2026-06-02-frontend-operator-ux.md. Seam A1 chosen (codegen script gen-que-descriptions.ts -> que-descriptions.generated.ts, zero mcp rebuild). 4 render sites enumerated. REQ2: 2-axis model + capability_manifest in system-map.json + api-gateway probe (bounded max 7, TTL 60s). FOU-2-REQ1 unblocked. FOU-3-REQ2 needs pm split: FOU-3-GW+FOU-3-FE+FOU-3-QA.",
             "route": "DESIGN agents-architect -> ba/pm decompose -> dev-frontend(+dev-kinh-dich/dev-mcp-server/dev-api-gateway) + qa next cycle"
           },
           {
@@ -1263,21 +1263,51 @@
             "note": "Operator REQ1. Scope per FOU-1-DESIGN seam decision (default A1 static map). AC: (1) hovering the hexagram NAME (and/or '#id name') in the 'Que' column rows AND the detail-panel 'Que' Row (dashboard.analysis.tsx L796-797 + L1393-1396) shows a tooltip with that hexagram's description (coreMeaning + trading-relevant trend/action), keyed by r.hexagram id; (2) Vietnamese description text (operator-facing market UI = Vietnamese; the description source QUE_DATA.coreMeaning is already Vietnamese); (3) description SSOT does not drift from QUE_DATA — either generated from it or a single shared export, no hand-copied 64-entry table; (4) keyboard/focus accessible tooltip (shadcn Tooltip), no layout shift; (5) graceful no-op if a hexagram id has no description entry; (6) typecheck + frontend tests pass; (7) frontend is a CONTAINER -> ops rebuild after merge, router live-verifies tooltip text matches QUE_DATA for a spot hexagram. dev-kinh-dich/dev-mcp-server consult subtask only if FOU-1-DESIGN chose A2 (DTO/endpoint exposure)."
           },
           {
-            "task_id": "FOU-3-REQ2",
-            "title": "REQ2: Service Health page shows mcp-online truth — 3-state {container x capability-via-mcp} per row from the expected-set/capability manifest, so not-deployed containers whose logic is LIVE via mcp-server read 'container off, LIVE via mcp' not bare grey",
-            "type": "SPRINT-M",
-            "owner": "dev-frontend",
+            "task_id": "FOU-3-GW",
+            "title": "REQ2 (Gateway subtask): Capability manifest reading + bounded probe enrichment in api-gateway /health",
+            "type": "SPRINT-S",
+            "owner": "dev-api-gateway",
             "depends": [
               "FOU-1-DESIGN"
             ],
             "status": "TODO",
-            "size": "M",
+            "size": "S",
+            "zone": "apps/api-gateway/",
+            "priority": "medium",
+            "note": "Handoff: docs/handoffs/FOU-3-GW.md. Read capability_manifest from system-map.json, run max 7 probes per 60s (TTL cache), enrich /health response with capability+capabilityNote. Bounded cached probe, never 156-tool fan-out (host-safety). Parallel with FOU-3-FE, blocking for both."
+          },
+          {
+            "task_id": "FOU-3-FE",
+            "title": "REQ2 (Frontend subtask): 2-axis Service Health rendering (container × capability-via-mcp)",
+            "type": "SPRINT-S",
+            "owner": "dev-frontend",
+            "depends": [
+              "FOU-1-DESIGN",
+              "FOU-3-GW"
+            ],
+            "status": "TODO",
+            "size": "S",
             "zone": "apps/frontend/",
             "priority": "medium",
-            "note": "Operator REQ2 (A-01-EXPECTED-SET follow-on). Scope per FOU-1-DESIGN manifest contract. dashboard.services.tsx currently renders single-axis ServiceStatus (ok|degraded|down|not_deployed) from api-gateway /health (domain/health.ts L9). AC: (1) each of the 9 rows shows BOTH axes: container (deployed/not-deployed-by-design) AND capability-via-mcp (LIVE / DATA-LIMITED / DARK) per the manifest SSOT; (2) the 7 not_deployed_by_design short-keys (pdf,rag,ta,stock,kinh-dich,alert,news) whose capability is LIVE via mcp-server render a POSITIVE 'LIVE via mcp-server' indicator (not bare grey 'NOT DEPLOYED'); ta shows DATA-LIMITED, rag shows DARK until probed, per live-probe evidence in sprint.evidence; (3) overall top badge still IGNORES not_deployed containers AND must still go RED if a genuinely-deployed host_runtime_set service is actually DOWN (anti-false-green, preserve A-01b-4 guarantee); (4) capability status is manifest-driven + bounded + cached — NO unbounded 156-tool fan-out from the loader (host-safety); (5) honest: a capability that genuinely cannot be proven shows DARK, never fake-LIVE; (6) typecheck + frontend (+ api-gateway/mcp-server if backend probe endpoint added) tests pass; (7) ops rebuild affected containers; router live-verifies the page distinguishes container-down vs capability-live, AND a docker-stop of a real deployed service still shows RED (PROVEN-RED). If FOU-1-DESIGN puts the probe in api-gateway or a new mcp /capabilities endpoint, this task gains dev-api-gateway/dev-mcp-server sibling subtasks + a QA anti-false-green task — PM to split."
+            "note": "Handoff: docs/handoffs/FOU-3-FE.md. Render 2-axis rows (container status × capability-via-mcp). Not-deployed+live → blue LIVE badge. Anti-false-green: deployed+down → RED regardless of capability. Depends FOU-3-GW for capability field."
+          },
+          {
+            "task_id": "FOU-3-QA",
+            "title": "REQ2 (QA subtask): Anti-false-green PROVEN-RED test for 2-axis Service Health",
+            "type": "SPRINT-S",
+            "owner": "qa",
+            "depends": [
+              "FOU-3-FE",
+              "FOU-3-GW"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "qa/",
+            "priority": "medium",
+            "note": "Handoff: docs/handoffs/FOU-3-QA.md. PROVEN-RED: docker-stop deployed service → RED. PROVEN-BLUE: not-deployed+live → BLUE. PROVEN-GREY: not-deployed+dark → GREY. Anti-false-green invariant (deployed+down always RED)."
           }
         ],
-        "_updated_at": "2026-06-02T21:06:17Z",
+        "_updated_at": "2026-06-02T21:15:00Z",
         "_updated_by": "po"
       }
     ],
@@ -1673,7 +1703,7 @@
         "type": "design_brief_request",
         "summary": "MEDIUM. NEW sprint FRONTEND-OPERATOR-UX (orch-state active_sprints). TWO operator dashboard UX REQs, both dev-frontend zone. FOU-1-DESIGN (you): ONE brief docs/architecture-briefs/2026-06-02-frontend-operator-ux.md covering (REQ1) Kinh Dich hexagram hover-tooltip data seam — router recon found QUE_DATA in apps/mcp-server/src/domain/services/kinhDich/hexagramLibrary.ts (Record<number,QueData> id 1-64, has coreMeaning/judgment.interpretation/image/state) but the served KinhDichReading carries only hexagram(id)+name+signal, NOT description; frontend 'Que' column already has r.hexagram -> decide static frontend id->description map from QUE_DATA.coreMeaning (PREFERRED, no rebuild) vs DTO/REST exposure; name a dev-kinh-dich/dev-mcp-server consult only if domain-lib export needed. (REQ2) Service-Health mcp-online-truth — design 3-state {container: deployed|not_deployed} x {capability-via-mcp: live|data_limited|dark} + an expected-set/capability manifest SSOT mapping each short-key to the mcp tool/REST probe proving it online (live-probe evidence in sprint.evidence: macro/stock/kinh-dich/alert/news LIVE, ta DATA-LIMITED, pdf/bctc ONLINE, rag DARK). HARD CONSTRAINT: bounded+cached probe, NEVER fan out 156 tools per page load (host-safety). Reuse A-01b not_deployed enum + system-map host_runtime_set. Output the per-REQ dev split for FOU-2-REQ1 (dev-frontend) + FOU-3-REQ2 (dev-frontend +/- dev-api-gateway/dev-mcp-server + qa anti-false-green). Kin memory project_dashboard_two_data_planes, A-01-EXPECTED-SET.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/data/orch/orch-state.json#FRONTEND-OPERATOR-UX"
       }
     ],
