@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FE-FIX-MOCKTEXT",
-    "next_agent": "dev-frontend",
-    "next_action": "Ship mock-text removal (DEF-1/6/7) now. Then PO scopes FE-REROUTE-DESIGN (real KD/price/news via mcp-server REST + api-gateway re-route) + A-01b false-RED chain.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "FRONTEND-CORRECTNESS in progress. SHIPPED: FE-FIX-MOCKTEXT bcba080d (mock/stale text removed). NEXT (queued, ready): A-01b-1..4 (dashboard.services/vps false-RED — architect contract then dev-api-gateway+dev-frontend+qa, needs ops rebuild) + FE-REROUTE-DESIGN (real KD/price/news via new mcp-server REST endpoints + api-gateway re-route of not-deployed paths). PO drives next: recommend A-01b first (most-visible fix), then FE-REROUTE.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T05:04:31Z",
+    "updated_at": "2026-06-02T05:08:03Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T05:04:31Z",
+    "_updated_at": "2026-06-02T05:08:03Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -73,10 +73,11 @@
             "type": "SPIKE",
             "owner": "agents-architect",
             "depends": null,
-            "status": "TODO",
+            "status": "DONE",
+            "closed_at": "2026-06-02T05:04Z",
             "size": "S",
             "zone": "apps/mcp-server/",
-            "question": "Separate the legs honestly before any fix. (A) EMPTY refine (CTG/VCB): did refine never RUN (refine_status PENDING / job not triggered), or did it run and the markdown->rows parser produce 0 rows (parse failure), or is the statement absent from the markdown (OCR captured cover-letter only — cf BCTC-CTG-ATTACHMENT-FETCH)? Inspect refine_status + raw markdown + bctc_table_rows COUNT in-container per ticker. (B) ZEROED secondary lines (FPT+ACB headline OK but OpProfit/EBITDA/Cash=0, EPS nonsense): are those lines ABSENT from the markdown (never parsed), present-but-unmapped (mapping table misses them / defaults to 0), or computed-and-wrong? Pin to the layer: parser vs mapping vs scalar projection. (C) GARBAGE /docs net_profit scalars (VNM=5.1e-05 etc.): which projection writes the listing scalar, and is it reading a wrong cell / unit-scaling bug (5.1e-05 smells like a divide-by-billions on an empty/tiny field)? Deliverable: brief pinning each symptom to ONE layer (refine-trigger | markdown/OCR | parser | mapping | scalar-projection) + ordered fix plan. Decide explicitly whether the durable fix is subsumed by BCTC-LAYOUT-FIRST Phase-0 or is a separable pre-layout-first parser/mapping fix. PLAN-ONLY — findings doc, no code mutate.",
+            "note": "DONE. Brief: docs/architecture-briefs/2026-06-02-bctc-extract-quality.md. A=refine-never-ran (PENDING/0 units, CTG also cover-letter-only PDF). B=ScalarAggregate scope gap (10/20 cols, operating_profit/ebitda/cash/EPS unmapped). C=same financial_reports.net_profit as get_bctc_full — no divergence, garbage from OCR-parse stale write. D=buildComparisonSection no refine_status guard on prior row. Fix plan: BEQ-4(guard XS) BEQ-2(refine trigger S) BEQ-3(full col audit M) BEQ-5->BCTC-CTG-ATTACHMENT-FETCH. All separable from BCTC-LAYOUT-FIRST.",
             "mode": "spike",
             "timebox": 120
           }
@@ -628,10 +629,10 @@
             "type": "FIX",
             "owner": "dev-frontend",
             "depends": [],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/frontend/",
-            "note": "_index.tsx: replace 'dashboard coming soon' H1 with real title + derive svc count not hardcode 9; dashboard.analysis.tsx: remove/neutralize stale ACCURACY_SEEDING_WINDOW_END=2026-05-25 UI copy. No behavior change, text only."
+            "note": "_index.tsx: replace 'dashboard coming soon' H1 with real title + derive svc count not hardcode 9; dashboard.analysis.tsx: remove/neutralize stale ACCURACY_SEEDING_WINDOW_END=2026-05-25 UI copy. No behavior change, text only. | DONE bcba080d — _index title fixed, svc-count dropped, stale seeding-date removed; tsc clean, 204 tests pass; verified raw"
           },
           {
             "task_id": "FE-REROUTE-DESIGN",
