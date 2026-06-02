@@ -6,12 +6,12 @@
   "head": {
     "status": "active",
     "active_task_id": "BCTC-LAYOUT-FIRST",
-    "next_agent": "pm",
-    "next_action": "BCTC-LAYOUT-FIRST Phase 0 dispatched: LF-EXTRACT (apps/pdf-extractor/, dev-pdf-extractor) + LF-OVERLAY (apps/mcp-server/, dev-mcp-server) in parallel per brief 2026-05-26 §8 (frozen JSON contract §3.2). LF-DEPLOY gated on BOTH done. BAL-0 publish-gate verified LIVE clean (VNM ROE 27.3%/ROA 17.7%, recompute-on-read serving correct).",
+    "next_agent": "dev-pdf-extractor",
+    "next_action": "BCTC-LAYOUT-FIRST Phase 0 SETUP COMPLETE: LF-EXTRACT (dev-pdf-extractor) + LF-OVERLAY (dev-mcp-server) handoffs created. LF-DEPLOY gate task added (BLOCKED on both). Dispatch order: dev-pdf-extractor → dev-mcp-server → qa → LF-DEPLOY. Frozen JSON contract §3.2 decouples code paths; serialized commits (same git index).",
     "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-02T22:21:59Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-03T00:15:00Z",
+    "updated_by": "pm"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -958,6 +958,21 @@
             "size": "S",
             "zone": "docs/agents/",
             "note": "DONE bbcbefad — 3 flow edits + drain-esc-dispatch.md (74L child) extracted; drain-signals.md 116L under cap; deep-dive-opus emits deep_dive_result->po + releases guard. Seam ships ahead of FU-BCTC-TOOL-PARAMS (honest low-conf)."
+          },
+          {
+            "task_id": "LF-DEPLOY",
+            "title": "Gated verification: re-extract single FPT Q1 (page-5 scramble case) with both LF-EXTRACT + LF-OVERLAY live; verify AC-LFE-2/4 + overlay zone-inheritance rendering",
+            "type": "SPRINT-S",
+            "owner": "qa",
+            "depends": [
+              "LF-EXTRACT",
+              "LF-OVERLAY"
+            ],
+            "status": "BLOCKED",
+            "size": "S",
+            "zone": "qa",
+            "priority": "high",
+            "note": "Gated on BOTH LF-EXTRACT and LF-OVERLAY DONE. Single-doc verification (FPT Q1 2026, report_id=e8ea3df5-3f32-413d-a3eb-c71634c0438d) confirms page 5 inherits page 3 schema (AC-LFE-2: schema_inherited_from_page=3) + page 5 renders with identical column_gutters to page 3 in overlay (visual proof of schema-inheritance). Unblocks user G9 sign-off on layout-first solution to FPT Q1 page-5 continuation scramble root-cause."
           }
         ]
       },
