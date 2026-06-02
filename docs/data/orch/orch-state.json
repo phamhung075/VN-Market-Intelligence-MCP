@@ -5,12 +5,12 @@
   "_updated_by": "agent-father",
   "head": {
     "status": "in_progress",
-    "active_task_id": "RE-CAP-1",
+    "active_task_id": "AUDITOR-SLA-CADENCE",
     "next_agent": "agent-father",
-    "next_action": "BATCH-6: RE-CAP-1 signal-dashboard SKILL.md >120 cap lazy-load refactor (agent-father, =FU-SIGNAL-DASHBOARD-CAP collapse, no rebuild). SIG-FOLLOWUP-DRYRUN DONE prior (emit seam PROVEN). Then B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
+    "next_action": "BATCH-7: AUDITOR-SLA-CADENCE (agent-father) — make per-source SLA a machine-read SSOT for the auditor data_stale check (BCTC quarterly + earnings-window currently prose-only at flow L171 while machine reads uniform stale_threshold_hours -> root of BCTC false-stale alarms). RE-CAP-1 DONE prior (b675045f). B8 CHEF-ATTN-1 DEFERRED-SUPERSEDED (redesign drops the section). After B7: backlog drained to async/design-lane items only (1965-COVERAGE-SWEEP + PM-COMMIT-BOUNDARY-1974 = agents-architect plan-only; BCTC-HIST-FETCH-VERIFY/VCB-REFINE async; EI-P2 follow-ups low). GOAL=complete all task.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T18:07:21Z",
+    "updated_at": "2026-06-02T18:10:56Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T18:07:21Z",
+    "_updated_at": "2026-06-02T18:10:56Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -559,7 +559,7 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": null,
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "S",
             "zone": "docs/agents/system-auditor/"
           },
@@ -789,9 +789,10 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": null,
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
-            "zone": ".claude/skills/signal-dashboard/"
+            "zone": ".claude/skills/signal-dashboard/",
+            "note": " | DONE 2026-06-02T18:25Z commit b675045f (agent-father). signal-dashboard SKILL.md 133->92L (under 120 cap); cold content -> reference.md (51L) via pointers; no operational content lost (schema/atomic-write/drain/claim all hot or reachable). Collapses FU-SIGNAL-DASHBOARD-CAP. No rebuild (skills read live)."
           },
           {
             "task_id": "NB-CLEAN-NEWSSCOUT",
@@ -925,9 +926,10 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": null,
-            "status": "TODO",
+            "status": "DEFERRED-SUPERSEDED",
             "size": "M",
-            "zone": "apps/mcp-server/"
+            "zone": "apps/mcp-server/",
+            "note": " | DEFERRED-SUPERSEDED 2026-06-02T18:25Z by dev-team router (evidence-based, like PO BAL-1e/LF rejections). CHEF-ATTN-1 (diversity cap on buildAlertsSection 20-row alerts window) is (a) the pre-redesign cap ALREADY EXISTS, and (b) cowork-team-daily-document-redesign brief (docs/architecture-briefs/2026-05-27) explicitly tags CHEF-ATTN 'MED, not data-restoration — defer' AND Design Point K/Rule K1 says CHEF DROPS buildAlertsSection entirely post Phase-3 cutover -> building further CHEF-ATTN work now = work slated for removal. PO may override if a non-CHEF consumer need surfaces. Not built."
           }
         ]
       },
