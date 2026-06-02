@@ -1,8 +1,36 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-02 08:30 UTC | **Sprint:** A-01b-DASHBOARD-NOT-DEPLOYED
+**Last updated:** 2026-06-02 10:45 UTC | **Sprint:** FE-REROUTE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-02T10:45Z — FE-REROUTE-REAL-DATA (FE pages serving real data)
+
+**Brief:** `docs/architecture-briefs/2026-06-02-fe-reroute-real-data.md`
+
+**Per-dataset availability verdicts:**
+- Kinh Dich reading: REAL-REACHABLE — `kinhdich_readings` in DB, `getLatestReading()` exists
+- Kinh Dich market: REAL-REACHABLE (derived) — aggregate from watchlist readings, `derived:true` flag
+- Stock price history: REAL-REACHABLE — `daily_ohlcv` table, existing `priceQueries.ts` pattern
+- Stock price batch: REAL-REACHABLE — `market_prices` + `daily_ohlcv` fallback + `agent_signals` count
+- News (Reuters/Bloomberg): REAL-REACHABLE — `rag_analyses` table, reuse `newsFetchLiveHandler` query
+- TA indicators: HONEST UNAVAILABLE — no cache in mcp-server; frontend already handles `ta=null` gracefully
+
+**Key design decisions:**
+- 5 new REST endpoints on mcp-server under `/mcp/api/` namespace
+- api-gateway `HandleProxy` gains not-deployed branch: routes `kinh-dich`/`stock`/`news` to mcp-server with path rewrite
+- New primitive `not-deployed-rerouter/reroute.go` for path rewriting (pure, testable)
+- `NOT_DEPLOYED_SERVICES` env var drives the set — restoring a real service = env var edit, no code change
+- SSOT from `system-map.json .not_deployed_short_keys`; not hardcoded in Go
+
+**Critical risks flagged:**
+- R-1: VNINDEX actual code in `daily_ohlcv` must be verified before assuming `WHERE code='VNINDEX'`
+- R-6: DDD footgun — route handlers must NOT call domain `kinhDichReading.ts` live per request
+
+**Phase 1 (Kinh Dich + prices):** 12 tasks FE-RR-1..12 + QA-1. Sequential: mcp-server → api-gateway → rebuild → QA.
+**Phase 2 (News + DB page):** 5 tasks FE-RR-13..17 + QA-2. After Phase 1 green.
+
+---
 
 ## 2026-06-02T08:30Z — A-01b-1 DASHBOARD FALSE-RED (not-deployed status)
 
