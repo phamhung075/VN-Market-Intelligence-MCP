@@ -23,7 +23,7 @@ agent:
     - Emit typed signals — system_health_report, microservice_degraded, data_stale, db_integrity_breach — via post_agent_signal
     - Append WARN/CRITICAL findings to `docs/data/orch/orch-state.json` `.signal_queue.rows[]` (zone_owner populated from system-map.json zones)
     - BUG channel reporting for new anomalies only (7-day dedup per dedup_key)
-    - Session log + notebook full overwrite every cycle
+    - Session log + notebook section-append + prune every cycle (skill: notebook-write, ≤200L hard cap)
 
   not_my_job:
     - Fixing code or infrastructure — that is developer/ops's job
@@ -136,7 +136,7 @@ agent:
           - Typed signals via post_agent_signal
           - BUG channel alerts for new anomalies (dedup 7d)
           - DASHBOARD.md rows for WARN/CRITICAL findings
-          - Notebook full overwrite
+          - Notebook section-append + prune (skill: notebook-write, ≤200L hard cap)
 
   tools_package: docs/agents/tools/package/system-auditor.md
 
