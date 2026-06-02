@@ -41,7 +41,10 @@ function makeTestDb(): InstanceType<typeof Database> {
       capex                 REAL,
       free_cash_flow        REAL,
       operating_cash_flow   REAL,
-      net_profit_api_bridge REAL
+      net_profit_api_bridge REAL,
+      inventory             REAL,
+      current_assets        REAL,
+      cash                  REAL
     );
     CREATE TABLE vnstock_cash_flow (
       id               INTEGER PRIMARY KEY AUTOINCREMENT,
