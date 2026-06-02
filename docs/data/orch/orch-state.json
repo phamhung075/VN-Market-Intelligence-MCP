@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FE-RR-MACRO-EXTERNAL",
-    "next_agent": "dev-macro-indicators",
-    "next_action": "FE-REROUTE Phase 1 DONE (KD/prices/news real via reroute, db clean, A-01b live). Last real defect: /macro/external 404 on fetch page -> dev-macro-indicators expose endpoint -> ops rebuild macro-indicators -> verify fetch page clean. Then goal met.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "OPERATOR GOAL MET: all 13 frontend routes HTTP 200, zero 502/error-banner, real data where it exists, honest-unavailable (TA, intl-news) never faked, no mock data. Shipped: FE-FIX-MOCKTEXT bcba080d, A-01b f6cec28c/803df875/c779917f (false-RED, QA live PROVEN-RED), FE-REROUTE 1f27d188/c7f19ea3 (KD/prices/news real via reroute), 827c5483 (macro/external live), 2eff91c9 (orchestration 500 fix). All ops-rebuilt, router raw-verified live, 5 containers. Backlog FUs: FU-FE-NEWS-SOURCE, FU-OHLCV-ZERO-ROW (both low). RE-CAP-1 still open (separate).",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T05:59:14Z",
+    "updated_at": "2026-06-02T06:16:28Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T05:59:14Z",
+    "_updated_at": "2026-06-02T06:16:28Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -559,7 +559,7 @@
       },
       {
         "id": "FRONTEND-CORRECTNESS",
-        "status": "OPEN",
+        "status": "DONE",
         "tasks": [
           {
             "task_id": "FE-AUDIT-1",
@@ -705,10 +705,21 @@
             "type": "FIX",
             "owner": "dev-macro-indicators",
             "depends": [],
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/macro-indicators/",
-            "note": "Surfaced by router raw-verify: dashboard.fetch shows red 'Macro: data temporarily unavailable' because GET /macro/external -> 404 (macro-indicators serves POST /macro/snapshot 200 but no external route in current build; external-macro logic exists in src/_deprecated + scrapers present). Expose external macro (cached form) at the path the gateway forwards. NOT a not-deployed issue (macro IS deployed). Pre-existing, in-scope for 'all pages correct'."
+            "note": "Surfaced by router raw-verify: dashboard.fetch shows red 'Macro: data temporarily unavailable' because GET /macro/external -> 404 (macro-indicators serves POST /macro/snapshot 200 but no external route in current build; external-macro logic exists in src/_deprecated + scrapers present). Expose external macro (cached form) at the path the gateway forwards. NOT a not-deployed issue (macro IS deployed). Pre-existing, in-scope for 'all pages correct'. | DONE 827c5483 — GET /macro/external wired (mirrors snapshot prefix); ops rebuilt macro-indicators; LIVE dataSource=live (oil 94.13/gold 4553/usdVnd 26118/vnIndex 1830.7); fetch red banner gone (router-verified)"
+          },
+          {
+            "task_id": "FE-ORCH-RENDER",
+            "title": "Fix /dashboard/orchestration HTTP 500 (TaskBoardPanel flatMap on undefined — stale DTO shape)",
+            "type": "FIX",
+            "owner": "dev-frontend",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "note": "DONE 2eff91c9 — aligned TaskBoardPanel+sprint_goal+state to real /api/orchestration DTO (active_sprints->tasks flat, entries->flat, _updated_at->last_updated_iso, drop head.next_action) + ?? [] guards; 249 tests; ops rebuilt frontend; live 200 + real counts (router-verified). Pre-existing DTO/component drift from OSC-4 surfaced by full sweep."
           }
         ],
         "_updated_at": "2026-06-02T04:58:02Z",
@@ -825,6 +836,16 @@
         "id": "FU-AGENT-FATHER-ORCH-SCOPE",
         "priority": "normal",
         "summary": "agent-father FB-GATE-2 commit 7be21e0a staged docs/data/orch/orch-state.json (router-owned, dev-team section) — marked own task DONE + disposed signal pre-verification. No clobber this time (my head+task edits survived) but exposes FU-ORCH-HEAD-CAS window + implementer-self-DONE process defect. Fix: reinforce agent-father contract — orch-state.json is router-owned, never stage it. Mitigated 2nd dispatch by explicit prohibition (e1e85886 honored it)."
+      },
+      {
+        "id": "FU-FE-NEWS-SOURCE",
+        "priority": "low",
+        "summary": "db/fetch pages: Reuters/Bloomberg headlines render honest-empty (200) because rag_analyses has no reuters/bloomberg rows — news-fetch microservice not deployed (host constraint). If real intl news wanted on-host, populate via mcp plane or a cached source. NOT mock (honest empty), so not blocking 'no mock data'."
+      },
+      {
+        "id": "FU-OHLCV-ZERO-ROW",
+        "priority": "low",
+        "summary": "daily_ohlcv has occasional all-zero OHLCV rows (e.g. FPT 2026-05-30) — likely holiday/missing-data stored as zeros. Data-quality, not fabrication. Filter zero rows or backfill."
       }
     ],
     "archive": []
