@@ -1,6 +1,7 @@
 // Package http — smoke tests for the HTTP interface layer.
 // Validates that all routes return correct HTTP status + Content-Type.
 // Uses httptest.NewServer so no port binding is required.
+// FE-RR-MACRO-EXTERNAL: GET /external smoke test added.
 package http
 
 import (
@@ -83,6 +84,31 @@ func TestYieldSpreadSignalRoute(t *testing.T) {
 	}
 	if !strings.Contains(string(body), "CHEAP") {
 		t.Errorf("GET /yield-spread-signal: body missing 'CHEAP': %s", body)
+	}
+}
+
+func TestExternalRoute(t *testing.T) {
+	// GET /external with nil useCase → 503 honest-unavailable.
+	// The nil-useCase path proves the route is registered and the handler guards safely.
+	srv := httptest.NewServer(newTestRouter())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/external")
+	if err != nil {
+		t.Fatalf("GET /external failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// nil useCase → 503 (honest unavailable — no fabricated data).
+	if resp.StatusCode != http.StatusServiceUnavailable {
+		t.Errorf("GET /external (nil useCase): expected 503, got %d", resp.StatusCode)
+	}
+	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
+		t.Errorf("GET /external: Content-Type=%q, want application/json prefix", ct)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if !strings.Contains(string(body), "unavailable") {
+		t.Errorf("GET /external (nil useCase): body missing 'unavailable' field: %s", body)
 	}
 }
 

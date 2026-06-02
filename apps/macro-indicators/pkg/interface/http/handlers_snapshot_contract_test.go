@@ -193,6 +193,109 @@ func TestSnapshotBodyIsNotArray(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// TestExternalBodyContract — MacroData shape assertion for GET /external.
+//
+// Asserts that GET /external returns a JSON object whose shape satisfies
+// the MacroData type consumed by parseMacroSources() in the frontend:
+//   { fetchedAt, sources, summary, indicators, status }
+//
+// Uses the same fakeContract* adapters (zero credentials, zero live network).
+// ---------------------------------------------------------------------------
+
+func TestExternalBodyContract(t *testing.T) {
+	srv := httptest.NewServer(newContractRouter())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/external")
+	if err != nil {
+		t.Fatalf("GET /external failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// 1. HTTP status must be 200.
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("GET /external: expected HTTP 200, got %d", resp.StatusCode)
+	}
+
+	// 2. Content-Type must be application/json.
+	if ct := resp.Header.Get("Content-Type"); ct == "" {
+		t.Error("GET /external: Content-Type header is missing")
+	}
+
+	// 3. Body must decode as a JSON object.
+	var body map[string]json.RawMessage
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("GET /external: response body is not a JSON object: %v", err)
+	}
+
+	// 4. status must be "ok".
+	if raw, ok := body["status"]; !ok {
+		t.Error("GET /external: missing top-level 'status' key")
+	} else {
+		var statusVal string
+		if err := json.Unmarshal(raw, &statusVal); err != nil || statusVal != "ok" {
+			t.Errorf("GET /external: status=%q, want \"ok\"", statusVal)
+		}
+	}
+
+	// 5. fetchedAt must be present and non-empty.
+	if raw, ok := body["fetchedAt"]; !ok {
+		t.Error("GET /external: missing 'fetchedAt' key")
+	} else {
+		var fetchedAt string
+		if err := json.Unmarshal(raw, &fetchedAt); err != nil || fetchedAt == "" {
+			t.Errorf("GET /external: fetchedAt=%q, want non-empty RFC3339 string", fetchedAt)
+		}
+	}
+
+	// 6. sources must be a JSON object (parseMacroSources iterates Object.entries).
+	if raw, ok := body["sources"]; !ok {
+		t.Error("GET /external: missing 'sources' key")
+	} else {
+		var sources map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &sources); err != nil {
+			t.Errorf("GET /external: 'sources' is not a JSON object: %v", err)
+		}
+		wantSources := []string{"vn-market", "commodity-prices", "macro-signals"}
+		for _, k := range wantSources {
+			if _, present := sources[k]; !present {
+				t.Errorf("GET /external: sources missing key %q", k)
+			}
+		}
+	}
+
+	// 7. summary must contain ok, failed, totalLatencyMs.
+	if raw, ok := body["summary"]; !ok {
+		t.Error("GET /external: missing 'summary' key")
+	} else {
+		var summary map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &summary); err != nil {
+			t.Errorf("GET /external: 'summary' is not a JSON object: %v", err)
+		}
+		for _, k := range []string{"ok", "failed", "totalLatencyMs"} {
+			if _, present := summary[k]; !present {
+				t.Errorf("GET /external: summary missing key %q", k)
+			}
+		}
+	}
+
+	// 8. indicators must contain vnIndex and usdVnd (core FE display fields).
+	if raw, ok := body["indicators"]; !ok {
+		t.Error("GET /external: missing 'indicators' key")
+	} else {
+		var indicators map[string]json.RawMessage
+		if err := json.Unmarshal(raw, &indicators); err != nil {
+			t.Errorf("GET /external: 'indicators' is not a JSON object: %v", err)
+		}
+		for _, k := range []string{"vnIndex", "usdVnd"} {
+			if _, present := indicators[k]; !present {
+				t.Errorf("GET /external: indicators missing key %q", k)
+			}
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------
 // keySet returns the sorted slice of keys from a map for use in error messages.
 // ---------------------------------------------------------------------------
 

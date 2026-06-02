@@ -2,6 +2,7 @@
 //
 // P2-X3: real handlers wired for /snapshot, /carry-trade-signal, /yield-spread-signal.
 // /macro-calendar remains fixture-based (per OQ-10 resolution).
+// FE-RR-MACRO-EXTERNAL: GET /external added — serves cached MacroData from SQLite.
 //
 // Routes:
 //   GET  /health               — 200 ok + service JSON (unchanged from P2-B1)
@@ -9,6 +10,7 @@
 //   GET  /carry-trade-signal   — real carry primitive call (AC-3)
 //   GET  /yield-spread-signal  — real yield primitive call (AC-4)
 //   GET  /macro-calendar       — fixture response (OQ-10 deferred)
+//   GET  /external             — cached macro snapshot → MacroData shape (FE-RR-MACRO-EXTERNAL)
 package http
 
 import (
@@ -36,6 +38,7 @@ func NewRouter(useCase *application.ComputeMacroUseCase, logger *slog.Logger) ch
 	r.Get("/carry-trade-signal", handleCarryTradeSignal())
 	r.Get("/yield-spread-signal", handleYieldSpreadSignal())
 	r.Get("/macro-calendar", handleMacroCalendar())
+	r.Get("/external", handleExternal(useCase, logger))
 
 	return r
 }
