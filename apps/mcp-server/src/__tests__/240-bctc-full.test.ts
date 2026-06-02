@@ -301,7 +301,9 @@ function makeDb(): Database {
     published_at TEXT NOT NULL DEFAULT '',
     yoy_delta_json TEXT,
     qoq_delta_json TEXT,
-    refine_status TEXT DEFAULT 'DONE'
+    refine_status TEXT DEFAULT 'DONE',
+    period_basis TEXT,
+    balance_sheet_json TEXT
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS bctc_table_rows (
@@ -487,5 +489,130 @@ describe("Task 240 — get_bctc_full compound tool", () => {
     expect(text).toContain("2024");
     // Should not select the 2025 row as the latest
     expect(text).not.toContain("2025-Q4");
+  });
+});
+
+// ── BAL-1a-BACKFILL: read-time ratio recompute ────────────────────────────────
+//
+// Verifies Option R (architect-approved 2026-06-02T14:14Z):
+//   After the latestRow fetch, get_bctc_full recomputes the 5 ratio columns
+//   from correct base scalars, mutates latestRow, and serves recomputed values —
+//   ignoring whatever stale/garbage values are in the persisted ratio columns.
+//
+// Test scenario: VNM-like row.
+//   net_profit = 9,413,600 (million VND = 9,413.6 tỷ)
+//   equity_total = 34,483,000 (million VND = 34,483 tỷ)
+//   → expected ROE = 9413600 / 34483000 × 100 ≈ 27.30%
+//   Persisted roe column = 0 (stale OCR incomeBroken value)
+//   After recompute: served ROE ≈ 27.3% (not 0%)
+//
+// Formula SSOT: mirrors finalizeBctcRefineTool.ts BLOCK-3 (BAL-1a):
+//   roe = net_profit / equity_total × 100  (guard equity_total > 0)
+
+describe("BAL-1a-BACKFILL: read-time ratio recompute in get_bctc_full", () => {
+  it("TC-BAL-1a-R1: stale persisted roe=0 → served ROE recomputed ≈ 27.3% (VNM-like scalars)", async () => {
+    const db = makeDb();
+
+    // Insert with correct base scalars but stale roe=0 (simulates incomeBroken at OCR parse)
+    // net_profit=9413600 (million VND), equity_total=34483000 → ROE = 9413600/34483000×100 ≈ 27.30%
+    const reportId = "bal1a-vnm-test-001";
+    db.prepare(`
+      INSERT INTO financial_reports (
+        id, action_code, company_name, period_year, period_quarter, period_type, sort_key,
+        audit_status, extraction_confidence,
+        net_revenue, gross_profit, operating_profit, ebitda, profit_before_tax, net_profit,
+        eps, diluted_eps,
+        total_assets, current_assets, cash, inventory,
+        total_liabilities, short_term_debt, long_term_debt, equity_total,
+        operating_cf, investing_cf, financing_cf, capex, free_cash_flow,
+        gross_margin_pct, operating_margin_pct, net_margin_pct,
+        roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda, pe, pb,
+        published_at, refine_status,
+        balance_sheet_json
+      ) VALUES (
+        ?, 'VNM', 'Vinamilk', 2025, 4, 'Q4', '2025-Q4',
+        'audited', 0.92,
+        70112000, 20000000, 12000000, 14000000, 11000000, 9413600,
+        4200, 4100,
+        52000000, 18000000, 3000000, 4000000,
+        20000000, 2000000, 5000000, 34483000,
+        10000000, -2000000, -3000000, 1500000, 8500000,
+        28.5, 17.1, 13.4,
+        0, 0, NULL, NULL, NULL, NULL, NULL,
+        '2026-02-15', 'DONE',
+        ?
+      )`).run(
+      reportId,
+      JSON.stringify({ currentLiabilities: { total: 15000000 } }),
+    );
+
+    // Insert table row to pass PUB-2 and PUB-3 (corporate path — code='270')
+    db.prepare(`INSERT INTO bctc_table_rows
+      (report_id, page_number, statement_section, row_order, code, label,
+       period_current, value_current, is_summary_row)
+     VALUES (?, 1, 'balance_sheet', 1, '270', 'Total Assets', 'Q4-2025', 52000000, 0)`,
+    ).run(reportId);
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "VNM" });
+
+    // ROE must be recomputed from correct scalars, NOT the stale 0% column.
+    // 9413600 / 34483000 × 100 = 27.299...% → displayed as "27.3%"
+    expect(text).toContain("ROE");
+    expect(text).toContain("27.3%");
+    // Must NOT show 0.0% (which is the stale persisted value)
+    expect(text).not.toContain("ROE          : 0.0%");
+
+    // ROA must also be recomputed: 9413600 / 52000000 × 100 ≈ 18.1%
+    expect(text).toContain("ROA");
+    expect(text).not.toContain("ROA          : 0.0%");
+  });
+
+  it("TC-BAL-1a-R2: null denominator (equity_total=0) → served ROE is N/A (null), not Infinity", async () => {
+    const db = makeDb();
+
+    const reportId = "bal1a-null-denom-001";
+    db.prepare(`
+      INSERT INTO financial_reports (
+        id, action_code, company_name, period_year, period_quarter, period_type, sort_key,
+        audit_status, extraction_confidence,
+        net_revenue, gross_profit, operating_profit, ebitda, profit_before_tax, net_profit,
+        eps, diluted_eps,
+        total_assets, current_assets, cash, inventory,
+        total_liabilities, short_term_debt, long_term_debt, equity_total,
+        operating_cf, investing_cf, financing_cf, capex, free_cash_flow,
+        gross_margin_pct, operating_margin_pct, net_margin_pct,
+        roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda, pe, pb,
+        published_at, refine_status,
+        balance_sheet_json
+      ) VALUES (
+        ?, 'TST', 'Test Co', 2025, 1, 'Q1', '2025-Q1',
+        'audited', 0.92,
+        10000000, 3000000, 1500000, 2000000, 1200000, 900000,
+        300, 290,
+        20000000, 8000000, 1000000, 2000000,
+        19000000, 3000000, 7000000, 0,
+        1500000, -500000, -700000, 200000, 1300000,
+        30.0, 15.0, 9.0,
+        999.0, 999.0, NULL, NULL, NULL, NULL, NULL,
+        '2025-05-15', 'DONE',
+        NULL
+      )`).run(reportId);
+
+    db.prepare(`INSERT INTO bctc_table_rows
+      (report_id, page_number, statement_section, row_order, code, label,
+       period_current, value_current, is_summary_row)
+     VALUES (?, 1, 'balance_sheet', 1, '270', 'Total Assets', 'Q1-2025', 20000000, 0)`,
+    ).run(reportId);
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "TST" });
+
+    // equity_total=0 → recomputed roe must be null → rendered as "N/A"
+    // Must NOT contain the stale garbage "999.0%" value
+    expect(text).not.toContain("999.0%");
+    expect(text).toContain("ROE");
+    // When ROE is null, fmtPct renders "N/A"
+    expect(text).toContain("N/A");
   });
 });

@@ -86,6 +86,13 @@ export interface ReportRow {
    * NULL — unknown / not yet tagged (guard passes through; safe fail-open).
    */
   period_basis: string | null;
+  /**
+   * BAL-1a-BACKFILL: needed for read-time current_ratio recompute.
+   * Contains balance_sheet_json blob (JSON string) from which currentLiabilities.total
+   * is read — same source as BLOCK-3 in finalizeBctcRefineTool.ts.
+   * Available via SELECT * (column exists in financial_reports schema).
+   */
+  balance_sheet_json: string | null;
 }
 
 interface RagRow {
@@ -750,6 +757,119 @@ export function registerBctcFullTools(
               },
             ],
           };
+        }
+
+        // ── BAL-1a-BACKFILL: Recompute ratio columns from correct base scalars ──
+        //
+        // Root cause (brief 2026-06-02 §2.2, Option R approved 2026-06-02T14:14Z):
+        //   The persisted ratio columns (roe, roa, current_ratio, debt_to_equity,
+        //   net_debt_to_ebitda) retain OCR-parse values that may be stale, unit-scale
+        //   wrong, or zero (incomeBroken guard fired at parse time).
+        //   The refine pipeline corrects base scalars but BAL-1a finalize BLOCK-3 runs
+        //   only for newly re-finalized rows; historically finalized rows or rows
+        //   ingested before BAL-1a still carry stale ratio columns.
+        //
+        // Fix (Option R — recompute-on-read):
+        //   Inline-recompute the 5 ratios from the correct persisted base scalars,
+        //   then MUTATE latestRow in place so that checkPublishability (PUB-6) and
+        //   buildSummarySection both see correct values with no further changes.
+        //
+        // Formula SSOT: mirrors finalizeBctcRefineTool.ts BLOCK-3 (BAL-1a) exactly —
+        //   same scalars, same guards, same null-safety contract.
+        //   safeDivide: null when denominator ≤ 0 or result non-finite.
+        //
+        //   roe               = net_profit / equity_total × 100  (guard: equity_total > 0)
+        //   roa               = net_profit / total_assets  × 100 (guard: total_assets > 0)
+        //   current_ratio     = current_assets / currentLiabilities.total
+        //                       (source: balance_sheet_json.currentLiabilities.total;
+        //                        guard: denominator > 0 and not null)
+        //   debt_to_equity    = (short_term_debt + long_term_debt) / equity_total
+        //                       (guard: equity_total > 0, both debt values non-null)
+        //   net_debt_to_ebitda = (short_term_debt + long_term_debt - cash) / ebitda
+        //                       (guard: ebitda > 0)
+        //
+        // The persisted ratio columns are deprecated-cache after this change.
+        // get_bctc_full must never read them directly — the mutated latestRow values
+        // shadow them for all downstream paths (checkPublishability + buildSummarySection).
+        // No DB write, no schema migration required.
+        {
+          // Local safeDivide: mirrors ratioComputer.ts safeDivide — same contract.
+          const safeDivideRead = (num: number, denom: number): number | null => {
+            if (denom === 0) return null;
+            const r = num / denom;
+            if (!Number.isFinite(r)) return null;
+            return r;
+          };
+
+          const {
+            net_profit,
+            equity_total,
+            total_assets,
+            current_assets,
+            ebitda,
+            cash,
+            short_term_debt,
+            long_term_debt,
+            balance_sheet_json,
+          } = latestRow;
+
+          // roe: net_profit / equity_total × 100
+          latestRow.roe =
+            net_profit !== null && equity_total !== null && equity_total > 0
+              ? (safeDivideRead(net_profit, equity_total) !== null
+                  ? safeDivideRead(net_profit, equity_total)! * 100
+                  : null)
+              : null;
+
+          // roa: net_profit / total_assets × 100
+          latestRow.roa =
+            net_profit !== null && total_assets !== null && total_assets > 0
+              ? (safeDivideRead(net_profit, total_assets) !== null
+                  ? safeDivideRead(net_profit, total_assets)! * 100
+                  : null)
+              : null;
+
+          // current_ratio: current_assets / currentLiabilities.total
+          // currentLiabilities.total is NOT a scalar column — read from balance_sheet_json.
+          // Mirrors finalizeBctcRefineTool.ts BLOCK-3 L749-767.
+          let recomputedCurrentRatio: number | null = null;
+          if (current_assets !== null && balance_sheet_json) {
+            try {
+              const bs = JSON.parse(balance_sheet_json) as Record<string, unknown>;
+              const clTotal =
+                bs["currentLiabilities"] !== null &&
+                typeof bs["currentLiabilities"] === "object" &&
+                bs["currentLiabilities"] !== undefined
+                  ? (bs["currentLiabilities"] as Record<string, unknown>)["total"]
+                  : undefined;
+              if (typeof clTotal === "number" && clTotal > 0) {
+                recomputedCurrentRatio = safeDivideRead(current_assets, clTotal);
+              }
+            } catch {
+              // JSON parse error — leave recomputedCurrentRatio null (safe fallback)
+            }
+          }
+          latestRow.current_ratio = recomputedCurrentRatio;
+
+          // debt_to_equity: (short_term_debt + long_term_debt) / equity_total
+          latestRow.debt_to_equity =
+            short_term_debt !== null &&
+            long_term_debt !== null &&
+            equity_total !== null &&
+            equity_total > 0
+              ? safeDivideRead(short_term_debt + long_term_debt, equity_total)
+              : null;
+
+          // net_debt_to_ebitda: (short_term_debt + long_term_debt - cash) / ebitda
+          // Guard: ebitda > 0 (mirrors ratioComputer.ts L132)
+          latestRow.net_debt_to_ebitda =
+            short_term_debt !== null &&
+            long_term_debt !== null &&
+            cash !== null &&
+            ebitda !== null &&
+            ebitda > 0
+              ? safeDivideRead(short_term_debt + long_term_debt - cash, ebitda)
+              : null;
         }
 
         // ── Compute bank-form discriminator ──────────────────────────────
