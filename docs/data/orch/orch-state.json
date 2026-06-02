@@ -1370,8 +1370,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T18:15:21Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-02T18:18:56Z",
+    "_updated_by": "agents-architect",
     "rows": [
       {
         "id": "po-bctc-analytics-layer-20260602T1056Z",
@@ -1649,6 +1649,28 @@
         "status": "DONE",
         "payload_ref": "docs/architecture-briefs/2026-06-02-cowork-self-identity-guard.md",
         "agent_father_disposition": "IMPLEMENTED 2026-06-02T17:xx. L3 SELF-IDENTITY GUARD + identity_role added to 9 flows: news-scout, bctc-analyst, alert-commander, digest-predict, tran-ngoc-bau, fb-market-poster, qa-responder, market-analyst, refine_bctc_md. Commit 3e0ee4f5. NSCOUT-FRAMING-RECUR closed."
+      },
+      {
+        "id": "aac-coverage-sweep-20260602T181856Z",
+        "ts": "2026-06-02T18:18:56Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "1965-COVERAGE-SWEEP: watchlist rotation brief ready — LRC sweep floor for news-scout+market-watcher; coverage-state.json SSOT + Step 0-sweep in 3 flow files",
+        "severity": "MED",
+        "status": "NEW",
+        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md"
+      },
+      {
+        "id": "aac-commit-boundary-20260602T181856Z",
+        "ts": "2026-06-02T18:18:56Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "PM-COMMIT-BOUNDARY-1974: commit-discipline class root-cause brief ready — commit-boundary skill + per-agent zone table + pm mutex step; absorbs FU-ARCHITECT-MUTEX-BINDING+FU-AGENT-FATHER-ORCH-SCOPE",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-commit-boundary-discipline.md"
       }
     ],
     "archive": [

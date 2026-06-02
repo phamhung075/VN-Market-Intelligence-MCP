@@ -146,6 +146,26 @@ fb-market-poster STEP 4 check 3 is pure model self-attestation — false-greened
 
 ---
 
+## 2026-06-02T18:18:56Z
+
+**Brief:** `docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md`
+
+Designed deterministic LRC (Least-Recently-Covered) rotation for news-scout + market-watcher: coverage-state.json SSOT tracks per-ticker last-covered timestamps; each agent prepends a Step 0-sweep that appends ≤3 stale tickers (>48h uncovered) to the normal event-driven pass — guaranteeing full watchlist coverage within 48h without suppressing any high-signal events.
+
+**Signal dropped:** `docs/data/orch/orch-state.json` `.signal_queue` row `aac-coverage-sweep-20260602T181856Z` → agent-father
+
+---
+
+## 2026-06-02T18:18:56Z
+
+**Brief:** `docs/architecture-briefs/2026-06-02-commit-boundary-discipline.md`
+
+Recurring commit-boundary violations by maintenance-lane agents (pm 26-file sweep 3rd recurrence, agents-architect mutex-less commits, agent-father orch-state staging) root-caused to two structural gaps: no explicit-stage discipline in any maintenance-agent flow, and commit-mutex unreachable by agents-architect+agent-father (no gateway binding). Fix: new `.claude/skills/commit-boundary/SKILL.md` (3 rules + per-agent zone table) wired into init.md always_load for all three agents + pm mutex-claim pre-commit step. Supersedes FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE.
+
+**Signal dropped:** `docs/data/orch/orch-state.json` `.signal_queue` row `aac-commit-boundary-20260602T181856Z` → agent-father
+
+---
+
 ## 2026-06-02T14:14:14Z
 
 **Brief:** `docs/architecture-briefs/2026-06-02-bctc-analytics-layer-bal1.md` (addendum § BAL-1a-BACKFILL Decision)
