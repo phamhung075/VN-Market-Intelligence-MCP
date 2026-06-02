@@ -1,4 +1,4 @@
-<!-- size-justification: 124L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step. -->
+<!-- size-justification: 141L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL). -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -91,24 +91,21 @@ Schema: `PriceAnomalyFindingDataSchema` in `apps/mcp-server/src/domain/signals/s
 
 Note: `move_sigma = abs(price_change_pct) / (dailyStdDev * 100)` where `dailyStdDev` is the rolling 30-day standard deviation of daily returns (fraction, e.g. 0.015 for 1.5%) already computed in step 1 via `get_price_history`. Both `move_pct` and `price_change_pct` carry the same signed percentage value; `move_pct` is the canonical field consumed by downstream agents (financial-analyst, alert-commander), and `price_change_pct` is kept for legacy compatibility.
 
-**5. Notebook write** — **OVERWRITE** (not append) `docs/agent-memory/notebooks/market-watcher.md` per skill: `.claude/skills/notebook-write/SKILL.md`. Read existing notebook first to recover any `## Carry-over` items, then overwrite with fresh cycle body (target ≤50L, hard cap 80L):
-<!-- Fixes ITEM-05 (1967b/1968b2): APPEND→OVERWRITE per notebook-write skill mandate. -->
-<!-- L-7 (1968b2): per-cycle git commit REMOVED — deferred to eod.md batch commit at market close. -->
+**5. Notebook write** — **OVERWRITE class** (≤80L hard cap). Full-file replace each cycle; no section accumulation.
+<!-- Fixes ITEM-05 (1967b/1968b2): APPEND→OVERWRITE. L-7 (1968b2): commit deferred to eod.md. -->
 
-> Invariant: timestamp = current UTC, never future, never speculative. (UTC guard — Sprint 1865a pattern)
+> Invariant: timestamp = current UTC (`date -u`). NEVER speculate or round to future minute.
+> If unsure: call `get_cycle_bootstrap` to refresh time anchor.
 
-### Notebook timestamp guard
-- Use ONLY the actual current UTC time when stamping notebook entries
-- NEVER write entries for cycles that have not fired yet (no "02:38 UTC" entry if current UTC is 14:40)
-- If unsure of current time: call `get_cycle_bootstrap` to refresh time anchor before writing
-
-### Notebook header (include in overwrite body, line 3)
+Overwrite `docs/agent-memory/notebooks/market-watcher.md` with (≤80L total):
 ```
+# Market Watcher — Notebook
 **Last updated:** $(date -u +"%Y-%m-%d %H:%M UTC") | **Sprint:** <current_sprint>
-```
-Use `date -u` exclusively — same UTC source as the session log guard (1865a).
-```
-### Cycle (HH:MM–HH:MM)
+
+## Carry-over
+[recover any carry-over items from previous notebook before overwriting]
+
+## Cycle (HH:MM–HH:MM)
 - Stocks: N | Anomalies: M (>Xσ) | Volume spikes: K | Chain confirms: L
 - Regime: REGIME | DXY: DXY_SIGNAL | US10Y: US10Y_SIGNAL | fx_pressure: [tickers] | pe_risk: [tickers]
 
@@ -119,12 +116,19 @@ Use `date -u` exclusively — same UTC source as the session log guard (1865a).
 | items_fetched | N |
 | signals_emitted | N |
 | signals_suppressed | 0 |
-| market_alerts_fired | 0 |
 | exit_status | complete\|blocked\|empty |
-| token_estimate | N |
 ```
 
-> Notebook is written to disk every cycle. Git commit is deferred to eod.md (market close batch). Off-hours cycles retain their own per-cycle commit.
+**Post-write wc guard** (OVERWRITE class — fail-loud):
+```bash
+NB_LINES=$(wc -l < docs/agent-memory/notebooks/market-watcher.md | tr -d ' ')
+if [ "$NB_LINES" -gt 80 ]; then
+  echo "[market-watcher] FAIL: notebook ${NB_LINES}L > 80L cap — trim template before commit"
+  exit 1
+fi
+```
+
+> Notebook written to disk every cycle. Git commit deferred to eod.md (market close batch). Off-hours cycles retain per-cycle commit.
 > If EOD flow fails before commit → recovery: `docs/protocols/head-lock-self-cure.md`.
 
 **5b. WORK** — ULTRA tier per `.claude/skills/caveman/SKILL.md` (cycle-status ping = inter-agent state change):

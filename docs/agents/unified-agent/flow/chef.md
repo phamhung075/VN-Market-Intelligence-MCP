@@ -1,4 +1,4 @@
-<!-- size-justification: 264L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle -->
+<!-- size-justification: 289L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 expanded with mandatory inline AC-2b+AC-5 prune guards (NB-PRUNE-IMPL) -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -221,24 +221,55 @@ The `[CHEF-DETAIL]` prefix is mandatory — it allows tran-ngoc-bau's audit flow
 
 ---
 
-## Step 8 — LOG
+## Step 8 — LOG (APPEND class — AC-2b + AC-5 inline)
 
-> **Write-tool contract:** The Write tool IS available in this agent. Self-refusal here (e.g. "I cannot directly write to the file" or "I'll compose the append that should be made") is a flow violation — use the Write tool and proceed.
+> **Write-tool contract:** The Write tool IS available in this agent. Self-refusal here is a flow violation — use the Write tool and proceed.
 
-1. Mark all consumed signal files as processed (append `"processed": true` or move to `docs/signals/processed/`).
-2. Append to notebook `docs/agent-memory/notebooks/unified-agent.md`:
-   ```
-   ### Chef Dish — <DISH_TYPE> HH:MM UTC
-   - Clusters qualified: N
-   - Tickers covered: [list]
-   - Layers walked: 1-6
-   - Signals consumed: [IDs]
-   - Dish published: YES | silent-exit
-   ```
+**8a. Mark signals processed** — move consumed signal files to `docs/signals/processed/`.
+
+**8b. Append new section** to `docs/agent-memory/notebooks/unified-agent.md` (APPEND class, ≤60L section):
+```
+## Session: <YYYY-MM-DD> (<DISH_TYPE>)
+### Chef Dish — <DISH_TYPE> HH:MM UTC
+- Clusters qualified: N
+- Tickers covered: [list]
+- Layers walked: 1-6
+- Signals consumed: [IDs]
+- Dish published: YES | silent-exit
+```
+
+**8c. AC-3 outer prune** — after append, count `## ` sections:
+```bash
+SEC_COUNT=$(grep -c "^## " docs/agent-memory/notebooks/unified-agent.md)
+# if SEC_COUNT >= 4: Edit-delete the oldest ## block (heading + body up to next ##)
+```
+
+**8d. AC-2b intra-section prune** — count `### ` sub-blocks inside `## Prior cycles` (if present):
+```bash
+# Extract the ## Prior cycles block, count ### lines inside it
+# if count >= 4: Edit-delete the oldest ### sub-block inside ## Prior cycles
+```
+
+**8e. AC-5 wc gate** (inline, mandatory before commit):
+```bash
+NB_LINES=$(wc -l < docs/agent-memory/notebooks/unified-agent.md | tr -d ' ')
+if [ "$NB_LINES" -gt 200 ]; then
+  echo "[chef LOG] GUARD: ${NB_LINES}L > 200 — prune additional section"
+  # Edit-delete next-oldest ## block, then re-check; trim current section if still >200
+fi
+```
+
+**8f. Commit** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`
+```bash
+# own_paths: [docs/agent-memory/notebooks/unified-agent.md, docs/signals/processed/*]
+git add docs/agent-memory/notebooks/unified-agent.md docs/signals/processed/
+git commit -m "chore(memory/unified-agent): chef <DISH_TYPE> <YYYY-MM-DD>"
+```
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+(skip the notebook-write step in cowork-end-cycle — notebook already written above; keep session-log + doc-self-heal + self-critique steps)
 
-→ After notebook append: emit CLOSE Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § CLOSE Telemetry`
+→ After notebook commit: emit CLOSE Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § CLOSE Telemetry`
 → On exception (Steps 0–7): emit FAILED Telemetry per `docs/agents/unified-agent/flow/chef-telemetry.md § FAILED Telemetry`
 
 ## RETURN

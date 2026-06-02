@@ -27,11 +27,26 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 })
 ```
 
-Append to `docs/agent-memory/notebooks/news-scout.md`:
+Append section to `docs/agent-memory/notebooks/news-scout.md` (APPEND class, ≤60L section):
 ```
-### Cycle (HH:MM–HH:MM)
+## c<NNN> · <ISO-timestamp>
 - Items: N | Impacts: M | Signals: [types] | Regime: REGIME | Carry: CARRY_REGIME
 - Feedback: X accepted / Y rejected | Filter hints: [FILTER_HINT_urgent_news=<STRICT|LOOSE|default>, ...]
+```
+
+**AC-3 prune** — after append, count `## ` sections:
+```bash
+SEC_COUNT=$(grep -c "^## " docs/agent-memory/notebooks/news-scout.md)
+# if SEC_COUNT >= 4: Edit-delete the oldest ## block (heading + body up to next ##)
+```
+
+**AC-5 wc gate** (inline, mandatory before commit):
+```bash
+NB_LINES=$(wc -l < docs/agent-memory/notebooks/news-scout.md | tr -d ' ')
+if [ "$NB_LINES" -gt 200 ]; then
+  echo "[news-scout] GUARD: ${NB_LINES}L > 200 — prune additional section"
+  # Edit-delete next-oldest ## block; trim current section if still >200
+fi
 ```
 
 > Notebook is written (appended) to disk every cycle. Git commit is deferred to market-watcher eod.md batch commit at market close (L-7, 1968b2). Off-hours cycles retain their own per-cycle commit.
@@ -49,6 +64,7 @@ call_tool(server="vn-market", tool="send_telegram", arguments={
 > Tier: ULTRA. Cycle-status pings are inter-agent state changes — not user-facing. Drop articles, labels, full sentences. Arrows for causality. ≤80 chars target.
 
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
+(skip notebook-write step — already written above; keep session-log + doc-self-heal + self-critique)
 
 ---
 

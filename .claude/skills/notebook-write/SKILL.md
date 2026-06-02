@@ -92,7 +92,21 @@ fi
 Do NOT commit the notebook until `wc -l` returns ≤200.
 200L is the file-level cap (3 sections × ~50L each + header). Per-section discipline (≤60L) is the primary enforcement lever.
 
-<!-- TODO: po/main.md L126 says "OVERWRITE, target ≤50L"; developer/flow/main.md L125 says "append c<NNN>". These are contradictory — po uses full-overwrite, developer uses section-append. Reconciliation deferred (scope risk); QA should flag if po notebooks exceed 200L. -->
+### Two-class notebook contract (AC-6)
+
+| Class | Agents | Contract | Cap |
+|---|---|---|---|
+| OVERWRITE | po (≤50L), market-watcher (≤80L) | Full-file replace each cycle; no section accumulation; preamble + 1 section only | Template IS the cap; post-write `wc -l` guard fails-loud if exceeded |
+| APPEND | unified-agent/CHEF, news-scout, bctc-analyst, agents-architect, digest-predict, fb-market-poster | Section-append + AC-2/AC-3 retention (last 3 `##` sections) + AC-2b intra-section prune + AC-5 wc gate | ≤200L file; ≤60L per section |
+
+**AC-2b — intra-section prune for permanent accumulator headings**
+
+For APPEND-class agents that maintain a permanent named heading (e.g. `## Prior cycles`) whose body accumulates `### ` sub-blocks across cycles:
+1. After AC-3 (outer `## ` prune), count `### ` sub-blocks inside the permanent heading block.
+2. If count ≥ 4 → delete the **oldest** `### ` sub-block inside that heading (Edit: old_string = heading line through next `### ` or `## ` boundary, new_string = "").
+3. This fires BEFORE the AC-5 wc gate.
+
+**Note:** `po` uses OVERWRITE intentionally (single-session state, no historical accumulation). CHEF/developer use APPEND intentionally (rolling history). These are different classes — not a contradiction.
 
 ### Commit — retry on lock collision (F4)
 
