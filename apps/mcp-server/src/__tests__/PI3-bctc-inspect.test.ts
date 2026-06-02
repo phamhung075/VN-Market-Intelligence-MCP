@@ -529,7 +529,13 @@ describe("BEQ-4a — PENDING net_profit nulled in /docs listing (CASE WHEN guard
     expect(item.refine_status).toBe("DONE");
   });
 
-  test("BEQ-4a-3: refine_status=PARTIAL → net_profit passes through (PARTIAL is trustworthy)", () => {
+  test("BEQ-4a-3 / BEQ-8b: refine_status=PARTIAL → net_profit=null (BEQ-8b extended guard)", () => {
+    /**
+     * BEQ-4a original: PARTIAL was pass-through ("trustworthy").
+     * BEQ-8b: PARTIAL also nulled — after BEQ-5/6/7, balance-sheet-only tickers
+     * transition to PARTIAL and their legacy net_profit is still garbage.
+     * Guard now covers IN ('PENDING', 'PARTIAL').
+     */
     insertReport(db, {
       id: "beq4a000-0000-4000-8000-000000000003",
       action_code: "ACB",
@@ -544,7 +550,8 @@ describe("BEQ-4a — PENDING net_profit nulled in /docs listing (CASE WHEN guard
 
     const body = getBody() as { items: DocListItem[] };
     const item = body.items[0]!;
-    expect(item.net_profit).toBe(1850000);
+    // BEQ-8b: PARTIAL also nulled (legacy garbage must not be served)
+    expect(item.net_profit).toBeNull();
     expect(item.refine_status).toBe("PARTIAL");
   });
 
