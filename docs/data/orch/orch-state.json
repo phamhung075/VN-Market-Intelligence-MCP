@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "ready-for-rebuild",
-    "active_task_id": "BCTC-ANALYTICS-LAYER/BAL-0",
-    "next_agent": "ops",
-    "next_action": "QA APPROVED 9093f385. 25/25 BAL-0 + 16/16 bctcPublishabilityGuard + 5/5 240-bctc-full = 46 total, 0 fail. tsc EXIT 0. PUB-5/6/7/8 gates confirmed non-tautological (behavioral assertions on concrete output strings). Rebuild mcp-server to flip live container. docker compose build --no-cache mcp-server && up -d --no-deps --force-recreate mcp-server.",
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "BAL-0 LIVE+router-verified (image bb1b1a31, PUB-5..8 firing: DHG block / VNM ratios withheld / FPT comparison withheld; publish-risk CLOSED). BAL-1 spike DONE (brief 47d64215). Next PO triage: BAL-1a-e ratio-recompute+bank-serve+period_basis+report_scope follow-ups (all dev-mcp-server, BAL-1a HIGH=real ratio fix). COORD NOTE: 11:09Z cron ceded BAL-0 to a concurrent peer that completed it — full-cycle dedup gap (two cron sessions grabbed BAL-0; mutex keys did not match). RE-CAP-1 still open.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T11:35:00Z",
-    "updated_by": "qa"
+    "updated_at": "2026-06-02T12:13:27Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T10:56:45Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-02T12:13:27Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -74,11 +74,11 @@
             "type": "SPRINT-S",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "DONE-PENDING-OPS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
             "commit": "9093f385",
-            "note": "DONE-PENDING-QA 2026-06-02T13:24:57Z. PUB-5..8 implemented as tool-layer gates in checkPublishability + buildComparisonSection (bctcFullTools.ts). DV tests 25 pass (BAL-0-pub5-8-gates.test.ts). ops_rebuild_required=true. QA: verify PUB-5 blocks conf<0.5, PUB-6 shows N/A for roa=7891932, PUB-7 withholds Q1vsQ4 comparison, PUB-8 blocks rev=0+np>0+conf55%."
+            "note": "DONE-PENDING-QA 2026-06-02T13:24:57Z. PUB-5..8 implemented as tool-layer gates in checkPublishability + buildComparisonSection (bctcFullTools.ts). DV tests 25 pass (BAL-0-pub5-8-gates.test.ts). ops_rebuild_required=true. QA: verify PUB-5 blocks conf<0.5, PUB-6 shows N/A for roa=7891932, PUB-7 withholds Q1vsQ4 comparison, PUB-8 blocks rev=0+np>0+conf55%. | LIVE-VERIFIED 2026-06-02T12:11Z by dev-team router (raw get_bctc_full, not badge): image bb1b1a31 built 11:40:55Z ALREADY contains PUB-5..8 (markers 29/20/16/20) — head 'ready-for-rebuild' was STALE, rebuild already done. Behavioral proof: DHG->PUB-5 block(conf44%<50%); VNM->serves base figures but PUB-6 withholds bad ROE/ROA(N/A); FPT->PUB-7 withholds Q1-vs-Q4 comparison (kills false -82% YoY). Good reports NOT over-blocked. QA-approved 0b96742f (46 tests 0fail, tsc0). Publish-risk CLOSED."
           },
           {
             "task_id": "BAL-1",
@@ -86,12 +86,108 @@
             "type": "SPIKE",
             "owner": "agents-architect",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/",
             "mode": "spike",
             "timebox": 120,
-            "note": "recurring-bug-escalation -> architect root-cause before any point-patch. 4 clusters with router raw evidence (see sprint evidence). (a) ratio-compute emitting 0/astronomical — where (ScalarAggregate? a downstream ratio fn? divide-by-zero on cumulative vs quarter?); (b) bank B02-TCTD get_bctc_full 'no decomposition / forced-zero' serving path — likely the bank discriminator/decomposition serve path (kin BEQ-8 isBankFormFromRows + FU-BANK-CODECOL); (c) period cumulative-vs-quarter: refine stores FY cumulative under a Q4 label -> buildComparisonSection (BEQ-4b guarded refine_status but NOT cumulative-vs-quarter semantics) computes false YoY; (d) parent-only-vs-consolidated entity scope + low-conf-as-headline (HPG B01a). Output: findings doc + per-cluster owner split (likely dev-mcp-server FIXes) -> PO scopes BAL-2.. next cycle. Separate from BCTC-LAYOUT-FIRST (extraction) and BAL-0 (publish-side)."
+            "note": "recurring-bug-escalation -> architect root-cause before any point-patch. 4 clusters with router raw evidence (see sprint evidence). (a) ratio-compute emitting 0/astronomical — where (ScalarAggregate? a downstream ratio fn? divide-by-zero on cumulative vs quarter?); (b) bank B02-TCTD get_bctc_full 'no decomposition / forced-zero' serving path — likely the bank discriminator/decomposition serve path (kin BEQ-8 isBankFormFromRows + FU-BANK-CODECOL); (c) period cumulative-vs-quarter: refine stores FY cumulative under a Q4 label -> buildComparisonSection (BEQ-4b guarded refine_status but NOT cumulative-vs-quarter semantics) computes false YoY; (d) parent-only-vs-consolidated entity scope + low-conf-as-headline (HPG B01a). Output: findings doc + per-cluster owner split (likely dev-mcp-server FIXes) -> PO scopes BAL-2.. next cycle. Separate from BCTC-LAYOUT-FIRST (extraction) and BAL-0 (publish-side). | SPIKE DELIVERED: docs/architecture-briefs/2026-06-02-bctc-analytics-layer-bal1.md (commit 47d64215). 4 clusters root-caused (ratio-orphan-after-refine / bank-B02-serving / period-basis / entity-scope) -> fanout BAL-1a..e added below for PO triage."
+          },
+          {
+            "task_id": "BAL-1a-DEV",
+            "title": "Ratio recompute in finalizeBctcRefineTool.ts — re-derive roe/roa/current_ratio/debt_to_equity/net_debt_to_ebitda from corrected scalars after refine; SET eps=NULL (no VAS code)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-0"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+            "priority": "high",
+            "note": "brief Cluster(a) root cause: refine corrects base scalars but ratio columns orphaned (stay at OCR-parse values). BAL-0 PUB-6 is interim shield (withholds); BAL-1a is the real fix. After lands: PUB-6 should pass for VNM (ROE~27%)."
+          },
+          {
+            "task_id": "BAL-1a-QA",
+            "title": "Verify VNM post-re-finalize ROE~27% / ROA correct / NetDebt-EBITDA reasonable; PUB-6 no longer withholds",
+            "type": "QA",
+            "owner": "qa",
+            "depends": [
+              "BAL-1a-DEV"
+            ],
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "off-rebuild: needs mcp-server rebuild after BAL-1a-DEV"
+          },
+          {
+            "task_id": "BAL-1b-INV",
+            "title": "Investigate SHB+EIB bctc_table_rows (statement_section census in container) -> confirm bank-serving candidate B-1 or B-2",
+            "type": "SPIKE",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "brief Cluster(b): banks return 'no decomposition / forced-zero'. Kin BEQ-8 isBankFormFromRows + FU-BANK-CODECOL."
+          },
+          {
+            "task_id": "BAL-1b-DEV",
+            "title": "Fix bank B02-TCTD serving path per BAL-1b-INV verdict (BANKING_TICKERS set and/or PUB-3 relaxation)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-1b-INV"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "brief Cluster(b) fix"
+          },
+          {
+            "task_id": "BAL-1c-DEV",
+            "title": "Add period_basis column migration + set Q4->'full_year_cumulative' in finalize backfill + comparison guard in buildComparisonSection",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-0"
+            ],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "brief Cluster(c): makes PUB-7 heuristic structural (column-based not period_type-guess)"
+          },
+          {
+            "task_id": "BAL-1d-DEV",
+            "title": "Add report_scope column migration + heuristic (rev=0,np>0 -> parent_only) in finalize + PUB-5 confidence-gate upgrade",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-0"
+            ],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "medium",
+            "note": "brief Cluster(d): makes PUB-5/PUB-8 structural"
+          },
+          {
+            "task_id": "BAL-1e-DEV",
+            "title": "Future: EPS extraction from VAS BCTC footnote section (BCTC-EPS-FOOTNOTE)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-1a-DEV"
+            ],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "low",
+            "note": "brief BAL-1e: deferred; eps currently NULL after BAL-1a"
           }
         ]
       },
@@ -1116,8 +1212,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T10:56:45Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-02T12:13:27Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "po-bctc-analytics-layer-20260602T1056Z",
@@ -1127,7 +1223,7 @@
         "type": "design_brief_request",
         "summary": "HIGH. NEW sprint BCTC-ANALYTICS-LAYER (orch-state active_sprints[0]). BEQ-9/10 scalar recovery is GENUINE (balance EXACT VNM/FPT/HPG/DHG, router raw-verified) but exposed a SEPARATE pre-existing analytics/serving layer. TWO asks: (1) BAL-0 DISPATCH FIRST — design an executable hard-fail publish semantic-sanity gate for BCTC-derived MARKET/FB output (pattern = the proven fb-jargon-gate: script+skill+hard-fail+pasted output, NOT model self-attestation). Must block: ratio out-of-range (VNM ROE/ROA=0, DHG ROA 7.8M%, NetDebt/EBITDA -7.5e13x), cumulative-FY-labeled-as-quarter (FPT false YoY -82%), parent-only conf<0.5 as headline (HPG B01a rev=0 conf44%), forced-zero bank B02-TCTD decomposition (SHB/EIB unservable). Consumers = chef unified-agent/flow/market-analysis.md + market-analyst. (2) BAL-1 SPIKE — root-cause the 4 defect clusters as ONE layer, pin each to its module, return per-cluster owner split (likely dev-mcp-server FIXes) -> PO scopes BAL-2.. next cycle. recurring-bug-escalation: architect root-cause before any point-patch. Evidence in sprint.evidence + BEQ-9/BEQ-10 notes.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "DONE",
         "payload_ref": "docs/data/orch/orch-state.json#BCTC-ANALYTICS-LAYER"
       },
       {
