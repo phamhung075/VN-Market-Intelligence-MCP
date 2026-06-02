@@ -1,4 +1,4 @@
-<!-- size-justification: 141L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL). -->
+<!-- size-justification: 177L — atomic price-monitoring flow; sigma threshold logic + channel routing rules are operationally coupled step-by-step; Step 5 OVERWRITE class expanded with inline wc fail-loud guard (NB-PRUNE-IMPL); Step 0-sweep coverage-rotation floor added (coverage-state.json SSOT + atomic update). -->
 # Market Watcher — Cycle Flow
 
 **Tools:** `docs/agents/tools/package/market-watcher.md`
@@ -36,6 +36,28 @@ if mode=prepost:
   volume_multiplier  = max(volume_multiplier, 2.5x) # suppress illiquid-hour noise
 ```
 Rationale: pre/post-market liquidity is thin; regime thresholds as low as 1.5σ/1.5x would over-fire on unchanged EOD prices. The floor lifts both parameters to the EASING-equivalent level regardless of regime. Off-hours duplicate guard (Step 4, AutoCure 2026-05-14 TNB c47) continues to suppress same-closing-price re-emissions independently.
+
+## Step 0-sweep — load coverage state + build sweep list
+
+```
+COVERAGE_STATE = read docs/data/coverage-state.json
+  (fail-silent: if missing → treat all tickers as last_covered_market_watcher=null)
+
+now = current UTC timestamp
+
+STALE_TICKERS = [t for t in WATCHLIST where
+  COVERAGE_STATE.tickers[t].last_covered_market_watcher == null OR
+  (now - COVERAGE_STATE.tickers[t].last_covered_market_watcher) > 48h
+]
+→ sorted by last_covered_market_watcher ascending (null = oldest first)
+→ take ≤3 tickers (sweep_config.sweep_batch_size)
+
+For each ticker in STALE_TICKERS:
+  → include in Step 1 price analysis even if move < sigma_threshold
+  → set coverage_sweep_forced=true; log: "[SWEEP] <TICKER> forced (last_covered: <ts or never>)"
+  → do NOT emit price_anomaly signal for sweep-only tickers (no real anomaly detected)
+    (sweep-forced entries reach the notebook/log only — NOT the signal bus)
+```
 
 **1. Price analysis** (stocks with moves > adaptive sigma_threshold):
 `get_price_history(code)` 30d | `get_sector_comparison(code)` stock vs sector? | `get_patterns(stockCode, eventKeyword)` | `get_technical_indicators(code)` RSI/BB/MACD | `get_ticker_intelligence(code)` growth/quality
@@ -116,7 +138,21 @@ Overwrite `docs/agent-memory/notebooks/market-watcher.md` with (≤80L total):
 | items_fetched | N |
 | signals_emitted | N |
 | signals_suppressed | 0 |
+| sweep_tickers_forced | N |
+| coverage_state_updated | yes\|no |
 | exit_status | complete\|blocked\|empty |
+```
+
+**5c. Coverage-state update** (atomic write, after notebook overwrite):
+```
+for each ticker priced this cycle (both anomaly-driven AND sweep-forced):
+  set COVERAGE_STATE.tickers[ticker].last_covered_market_watcher = <current UTC ISO-8601>
+set COVERAGE_STATE._updated_by = "market-watcher"
+set COVERAGE_STATE._updated_at = <current UTC ISO-8601>
+
+Atomic write:
+  write updated JSON to docs/data/coverage-state.json.tmp
+  mv docs/data/coverage-state.json.tmp docs/data/coverage-state.json
 ```
 
 **Post-write wc guard** (OVERWRITE class — fail-loud):

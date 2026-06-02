@@ -2,6 +2,29 @@
 
 # News Scout — Stage 2: Sentiment + Impact Scoring
 
+## Step 0-sweep — load coverage state + build sweep list
+
+```
+COVERAGE_STATE = read docs/data/coverage-state.json
+  (fail-silent: if missing → treat all tickers as last_covered_news_scout=null)
+
+WATCHLIST = call_tool(server="vn-market", tool="get_watchlist", arguments={})
+  (reuse this call for Step 2 cross-referencing — do not call twice)
+
+now = current UTC timestamp
+
+STALE_TICKERS = [t for t in WATCHLIST.active where
+  COVERAGE_STATE.tickers[t].last_covered_news_scout == null OR
+  (now - COVERAGE_STATE.tickers[t].last_covered_news_scout) > 48h
+]
+→ sorted by last_covered_news_scout ascending (null = oldest first)
+→ take ≤3 tickers (sweep_config.sweep_batch_size)
+
+For each ticker in STALE_TICKERS that is NOT already in the article-impacted set:
+  → explicitly include it in sentiment/impact analysis this cycle even if impact_score < threshold
+  → set coverage_sweep_forced=true on the ticker context (used in Step 4 log)
+```
+
 **2. Sentiment + impact**
 
 Score each article: -1.0 (bearish) to +1.0 (bullish).

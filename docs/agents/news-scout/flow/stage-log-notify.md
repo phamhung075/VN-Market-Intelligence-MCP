@@ -52,6 +52,18 @@ fi
 > Notebook is written (appended) to disk every cycle. Git commit is deferred to market-watcher eod.md batch commit at market close (L-7, 1968b2). Off-hours cycles retain their own per-cycle commit.
 > Recovery if EOD missed: `docs/protocols/head-lock-self-cure.md`.
 
+**4b. Coverage-state update** (atomic write, after notebook append):
+```
+for each ticker analyzed this cycle (both event-driven AND sweep-forced):
+  set COVERAGE_STATE.tickers[ticker].last_covered_news_scout = <current UTC ISO-8601>
+set COVERAGE_STATE._updated_by = "news-scout"
+set COVERAGE_STATE._updated_at = <current UTC ISO-8601>
+
+Atomic write:
+  write updated JSON to docs/data/coverage-state.json.tmp
+  mv docs/data/coverage-state.json.tmp docs/data/coverage-state.json
+```
+
 **5. WORK channel** (ULTRA tier — inter-agent status ping per `.claude/skills/caveman/SKILL.md`)
 
 ```

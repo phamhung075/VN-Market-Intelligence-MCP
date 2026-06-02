@@ -1,0 +1,144 @@
+{
+  "_schema": "v1",
+  "_ssot": true,
+  "_updated_by": "agent-father",
+  "_updated_at": "2026-06-02T00:00:00Z",
+  "tickers": {
+    "VNM": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "FPT": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "VCB": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "HPG": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "BID": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "SHB": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "EIB": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "VHM": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "VIC": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "KBC": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "HUT": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "DIG": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "DXG": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "KDH": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "PDR": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "NVL": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "VRE": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "MSN": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "FRT": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "KDC": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "SAB": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "DPM": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "SSI": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "VIX": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "VND": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "VCI": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "DGC": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "VJC": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "GEX": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "BSR": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "PLX": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "DAG": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    },
+    "DBC": {
+      "last_covered_news_scout": null,
+      "last_covered_market_watcher": null
+    }
+  },
+  "sweep_config": {
+    "max_staleness_hours": 48,
+    "sweep_batch_size": 3
+  }
+}
