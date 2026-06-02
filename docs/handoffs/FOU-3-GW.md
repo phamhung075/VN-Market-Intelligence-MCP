@@ -6,7 +6,7 @@ priority: medium
 depends:
   - FOU-1-DESIGN
 zone: apps/api-gateway/
-status: TODO
+status: DONE-PENDING-REBUILD
 ---
 
 ## Summary
@@ -129,3 +129,15 @@ FOU-3-FE (dev-frontend) depends on this task: frontend receives capability field
 ## Interaction with FOU-3-QA
 
 QA will test the anti-false-green invariant: a genuinely-deployed service that goes DOWN must still render RED regardless of capability status. This task must preserve that invariant (only not_deployed services get a capability axis; deployed services DOWN → always RED).
+
+## [QA] Review Record — cycle-188 · 2026-06-02T23:55Z
+
+Verdict: APPROVED — DONE-PENDING-REBUILD
+
+- capability_manifest in system-map.json: 9 short_keys (_note, _ground_truth_date, mcp/macro/stock/kinh-dich/alert/news/ta/pdf/rag). SSOT confirmed.
+- Host-safety AC: TestCapabilityProber_CacheTTL (0 new probes within TTL), TestCapabilityProber_TimeoutFallback (<500ms elapsed, no throw, manifest baseline), TestCapabilityProber_SevenProbeCap (count<=7, no 156-tool fan-out). All PASS.
+- Anti-false-green PROVEN-RED (inject-a-violation): changed `if s.notDeployedSet[key]` to `if true` → TestAggregateHealthService_DeployedDownNotRescuedByCapability FAIL. Reverted. Guard load-bearing.
+- go test ./... ALL PASS (9 packages).
+- Commit: 078fcc13
+
+Remaining: ops rebuild api-gateway container.

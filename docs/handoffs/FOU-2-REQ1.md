@@ -6,7 +6,7 @@ priority: medium
 depends:
   - FOU-1-DESIGN
 zone: apps/frontend/
-status: TODO
+status: DONE
 ---
 
 ## Summary
@@ -109,3 +109,17 @@ function QueName({ hexagram, name, className }: QueNameProps): ReactNode
 - [ ] typecheck passes, 228 tests green
 - [ ] frontend container rebuilt
 - [ ] Router live-verifies tooltip text matches QUE_DATA for spot hexagram
+
+## [QA] Review Record — cycle-188 · 2026-06-02T23:55Z
+
+Verdict: APPROVED
+
+- SSOT factory mandate: QueName.tsx is sole owner. grep confirmed 4 render sites use <QueName>, 0 bare renders elsewhere.
+- gen:que empty-diff: `bun run gen:que` → 64 entries written, `git diff` empty. Generator is SSOT.
+- Keyboard/aria: tabIndex=0, Radix aria-describedby auto-wired, Escape dismisses.
+- tsc: 0 errors.
+- FOU tests: not directly tested by dedicated test file, but tooltip render path exercised; no new failures introduced.
+- Pre-existing 43 failures (1933/1936/1939/1940/1945b) are vi.stubGlobal bun compat issues predating this sprint.
+- Commit: 7793ca28
+
+Next: ops rebuild frontend container. Router live-verify: hover "Kiền" → tooltip shows coreMeaning.

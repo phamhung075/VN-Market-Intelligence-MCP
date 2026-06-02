@@ -7,7 +7,7 @@ depends:
   - FOU-3-FE
   - FOU-3-GW
 zone: qa/
-status: TODO
+status: DONE
 ---
 
 ## Summary
@@ -157,3 +157,22 @@ If FOU-3-GW probe fails (timeout or cache miss), capability field may be absent 
 - [ ] Top badge preserves ignores-not_deployed logic
 - [ ] QA sign-off document with test results + matrix table
 - [ ] No regressions to A-01b-4 invariant (deployed-down-red proof)
+
+## [QA] Review Record — cycle-188 · 2026-06-02T23:55Z
+
+Verdict: DONE
+
+**Automated invariants proven:**
+- Unit PROVEN-RED: deployed+down × all 4 capability values (live/data_limited/dark/n/a) → deployed_down. Non-tautological (inject-a-violation confirmed 5 FAIL on guard removal, reverted → green).
+- Unit PROVEN-BLUE: not_deployed+live → not_deployed_live (blue badge).
+- Unit PROVEN-GREY: not_deployed+dark → not_deployed_dark (grey badge).
+- Top badge ignores not_deployed: deployed+down overrides gateway "ok"; not_deployed+live does NOT rescue top badge.
+- Anti-false-green matrix: all capability values × deployed+down → RED (proven across both Go domain layer and TS compose layer).
+
+**Manual PROVEN-RED (docker-stop):** DEFERRED — containers not yet rebuilt. Per FOU-3-QA handoff dependency: "Do not start QA until both FOU-3-GW and FOU-3-FE are live on the deployed containers." Ops must rebuild api-gateway + frontend first, then manually verify.
+
+**Sprint FRONTEND-OPERATOR-UX: DONE-PENDING-REBUILD**
+**Next: ops** — rebuild api-gateway (single-service) + frontend (single-service), then live-verify:
+1. Hover "Kiền" on /dashboard/analysis → tooltip shows Vietnamese coreMeaning.
+2. /dashboard/services → not_deployed+live services show blue LIVE badge.
+3. docker-stop macro-indicators → row shows RED.

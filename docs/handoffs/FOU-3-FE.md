@@ -7,7 +7,7 @@ depends:
   - FOU-1-DESIGN
   - FOU-3-GW
 zone: apps/frontend/
-status: TODO
+status: DONE-PENDING-REBUILD
 ---
 
 ## Summary
@@ -144,3 +144,17 @@ Blocking dependency: FOU-3-GW must be DONE and deployed before FOU-3-FE renders 
 ## Interaction with FOU-3-QA
 
 QA will run PROVEN-RED test: docker-stop a deployed service (e.g. macro-indicators), verify it renders RED on the dashboard. This test validates the anti-false-green invariant is intact.
+
+## [QA] Review Record — cycle-188 · 2026-06-02T23:55Z
+
+Verdict: APPROVED — DONE-PENDING-REBUILD
+
+- health-compose.ts: pure domain layer (0 Remix/React imports). Anti-false-green guard at line 43: `if (status === "down") return "deployed_down"` — capability is never consulted for a down container.
+- INJECT-A-VIOLATION: commented out the guard line → 5 tests FAIL (deployed+down × live/data_limited/dark/n/a all received non-deployed_down states; sbv-fetch scenario also FAIL). Reverted → 31/31 PASS.
+- 2-axis compose table: all 6 states (deployed_up/degraded/down, not_deployed_live/data_limited/dark) match the brief table exactly.
+- parseCapability graceful degradation: undefined/null/unknown → "n/a" (no false positive LIVE badge on missing capability field).
+- composeOverallStatus: not_deployed rows excluded, deployed+down overrides gateway ok, not_deployed+live does NOT rescue top badge.
+- tsc: 0 errors. DDD: health-compose.ts imports ~/domain/health only. Security: no process.env/secrets.
+- Commit: b5e92ee8
+
+Remaining: ops rebuild frontend container; then ops manual PROVEN-RED (docker-stop deployed service → RED).
