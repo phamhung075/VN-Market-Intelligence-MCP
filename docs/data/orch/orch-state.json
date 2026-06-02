@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": "idle",
     "next_agent": "po",
-    "next_action": "DRAIN-INJECTION-SAFE DONE (4cd55d01 — dev-team flow payload strings → structured call_tool objects; injection-safe invariant added at main.md Invariants + inline). With AUD-ND-1 + A-01-EXPECTED-SET, all 3 dev-team-side fleet-host-danger triggers of the destructive+injection class are now closed. Residual logged: DRAIN-INJECTION-SAFE-2 (same concat pattern in pm/developer/po/agent-father flows — likely JSON-correctness not shell-injection since those run via call_tool not bash; PO to assess severity). NORMAL triage resumed — next pick: AUDITOR-SLA-CADENCE / A-01b / DRAIN-INJECTION-SAFE-2 or other sprint TODOs. WIP 0/2.",
+    "next_action": "BATCH DONE (recurring nb-bloat family closed): NB-CLEAN-NEWSSCOUT (5082046d 219->92L) symptom relief + NB-BLOAT-FLOW-OVERWRITE (e2e37c39) root-cause — system-auditor init.md def aligned to SECTION-APPEND+PRUNE (flow was already fixed 8baed6d1). Logged NB-NOTEBOOK-WRITE-FLEET-ALIGN (4 sibling flows still OVERWRITE but skill SSOT contract is unresolved — needs decision before edit). NORMAL triage resumed; next candidates AUDITOR-SLA-CADENCE / A-01b / MSG-1. WIP 0/2.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-01T23:22Z",
+    "updated_at": "2026-06-02T00:22Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -49,7 +49,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-01T23:22Z",
+    "_updated_at": "2026-06-02T00:22Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -336,9 +336,10 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": null,
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
-            "zone": "docs/agents/system-auditor/flow/"
+            "zone": "docs/agents/system-auditor/flow/",
+            "note": "e2e37c39 init.md def aligned; flow already fixed 8baed6d1"
           },
           {
             "task_id": "RE-CAP-1",
@@ -349,6 +350,17 @@
             "status": "TODO",
             "size": "S",
             "zone": ".claude/skills/signal-dashboard/"
+          },
+          {
+            "task_id": "NB-CLEAN-NEWSSCOUT",
+            "title": "Prune news-scout.md 219L -> <=200 (drop oldest cycle block, keep last 3)",
+            "type": "sprint-task",
+            "owner": "claude-manager-helper",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agent-memory/notebooks/",
+            "note": "5082046d 219->92L"
           }
         ]
       },
@@ -497,13 +509,18 @@
         "id": "DRAIN-INJECTION-SAFE-2",
         "summary": "Apply the DRAIN-INJECTION-SAFE structured-payload fix to the 6 residual concat sites flagged by agent-father (OUT-OF-SCOPE of the dev-team-flow task): pm/init.md L122 (dev_agent), developer/init.md L34 (dev_agent), developer/flow/main.md L62 (task_title+branch_name), developer/flow/microservice-main.md L68 (task_title+branch_name), po/flow/sprint-kickoff.md L37 (sprint_id), agent-father/flow/edit-apply.md L12 (change_description+target_files). PO assess severity — these mostly feed call_tool JSON args (JSON-correctness risk) vs the dev-team dispatcher sites which the main terminal executes in a real shell (true injection). PLAN-ONLY agent-def edits.",
         "priority": "normal"
+      },
+      {
+        "id": "NB-NOTEBOOK-WRITE-FLEET-ALIGN",
+        "summary": "agent-father (NB-BLOAT-FLOW-OVERWRITE) found 4 flows still say OVERWRITE in notebook-write step: po/flow/main.md L126 (OVERWRITE <=50L), market-watcher/flow/cycle.md L94 (OVERWRITE not append — L95 comment says INTENTIONAL per skill mandate), code-janitor/flow/main.md L68, fb-market-poster/flow/main.md L17+L433 (full overwrite). NOT a blind append+prune rewrite — the notebook-write SKILL itself has an UNRESOLVED TODO (L95) about the po/developer overwrite-vs-append contradiction. PO: resolve the skill SSOT contract FIRST (is overwrite intentional for small ≤50L notebooks?), then align flows per-agent. Needs agents-architect or skill-owner decision before agent-father edits.",
+        "priority": "normal"
       }
     ],
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-01T22:00Z",
-    "_updated_by": "agent-father",
+    "_updated_at": "2026-06-02T00:15Z",
+    "_updated_by": "cowork-team",
     "rows": [
       {
         "id": "po-gate-self-critique-detect-20260601T2111",
@@ -728,6 +745,17 @@
         "severity": "MED",
         "status": "OPEN",
         "payload_ref": null
+      },
+      {
+        "id": "bctc-extraction-esc-20260602T0015Z",
+        "ts": "2026-06-02T00:15Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "summary": "bctc-analyst c010 surfaced 3 persistent extraction/model blockers NEVER routed to queue (9-10 cycles, 0 prior rows): (1) FPT ESC-3 CRITICAL OVERDUE 10th cycle — OCF/NI=-1.15, needs Opus sub-agent for flow/deep-dive-opus.md (Sonnet cannot run it); (2) CTG 24h+ post-filing extraction lag, DATA_INSUFFICIENT 2nd cycle — abnormal vs normal 2-3h; (3) DHG+EIB DATA_INSUFFICIENT 9th consecutive cycle — BCTC-TABLE extraction-pipeline blocker unresolved. Dev-team/PO lane: model-dispatch + pipeline root-cause. Dispatcher cannot spawn PO/dev.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/agent-memory/notebooks/bctc-analyst.md"
       }
     ],
     "archive": [
