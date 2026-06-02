@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-02T10:17:15Z",
+  "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "guard-phase-signed-off",
-    "active_task_id": "BCTC-EXTRACT-QUALITY/BEQ-9",
-    "next_agent": "bctc-analyst",
-    "next_action": "GUARD PHASE BEQ-1..8b+BEQ-QA SIGNED OFF by PO 2026-06-02T10:17:15Z (PO-live-verified raw: false-DONE eliminated, banks discriminated, PARTIAL garbage suppressed live). Sprint stays OPEN for REMEDIATION: BEQ-9 (agentic refine VNM-Q4/FPT-Q4/HPG/SHB) + BEQ-10 (OCR-verify DHG/EIB/VEA/VCB then conditional refine) — BOTH OFF-HOSE-gated, owner bctc-analyst. Residual fetch: BCTC-CTG-ATTACHMENT-FETCH + BCTC-REFETCH-ZERO-ROW(DGC/DIG/VCB).",
+    "status": "BAL1-SPIKE-DONE-BAL0-DEV-URGENT",
+    "active_task_id": "BCTC-ANALYTICS-LAYER/BAL-1-SPIKE",
+    "next_agent": "agent-father",
+    "next_action": "BAL-1 SPIKE complete 2026-06-02T11:04:55Z. Brief: docs/architecture-briefs/2026-06-02-bctc-analytics-layer-bal1.md. Signal: docs/signals/bctc-analytics-layer-bal1-20260602T110455Z.json. BAL-0-DEV CRITICAL/IMMEDIATE (PUB-5..8 in bctcFullTools.ts). BAL-1a/b/c/d-DEV HIGH. Full task fanout in brief Section 7.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T10:17:15Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-02T11:04:55Z",
+    "updated_by": "agents-architect"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -27,8 +27,9 @@
   "narrative": {
     "_cap": "≤30 lines total — prune oldest on overflow",
     "current_sprint": "FLEET-HOST-SAFETY active — dispatched DRAIN-INJECTION-SAFE (agent-father, S, PLAN-ONLY flow edit): kill the LIVE injection-side host-danger trigger (signal/payload string-concatenated into /bin/sh — once command-substituted `docker compose up -d`, near host-panic). A-01-EXPECTED-SET + AUD-ND-1 DONE; this closes the still-open injection half of the same class. AUDITOR-SLA-CADENCE + A-01b remain TODO. Deferred: FRONTEND-BCTC-TAB (brief locked, dev-frontend) + 1967b architect audit (behind host-safety).",
-    "last_closed": "ORCH-STATE-CONSOLIDATE DONE (OSC-1..5, QA APPROVE) — single JSON SSOT docs/data/orch/orch-state.json shipped; 6 state files retired (TASKS/TASKS_ARCHIVE/DASHBOARD/DASHBOARD_ARCHIVE/SPRINT_GOAL/pipeline-state.json), ~100 readers re-pointed, signal-dashboard skill+protocol rewritten to .signal_queue, atomic temp->rename writes. GET /api/orchestration (HC-2 DTO) + /dashboard/orchestration route live 200; mcp-server+frontend rebuilt. QA: atomic-write proven-red, 47 pass/1 skip/0 fail, zero dangling readers.",
+    "last_closed": "BCTC-EXTRACT-QUALITY DONE-WITH-CAVEATS (BEQ-1..10, PO sign-off 2026-06-02T10:56Z) — core extraction incident RESOLVED (garbage-as-truth eliminated, no false-DONE, balance EXACT for VNM/FPT/HPG/DHG, router raw-verified post-rebuild). 4 residual analytics/serving defects escalated to NEW BCTC-ANALYTICS-LAYER (architect). Publish-integrity gap -> BAL-0 dispatched first. // prior: ORCH-STATE-CONSOLIDATE DONE (OSC-1..5, QA APPROVE) — single JSON SSOT docs/data/orch/orch-state.json shipped; 6 state files retired (TASKS/TASKS_ARCHIVE/DASHBOARD/DASHBOARD_ARCHIVE/SPRINT_GOAL/pipeline-state.json), ~100 readers re-pointed, signal-dashboard skill+protocol rewritten to .signal_queue, atomic temp->rename writes. GET /api/orchestration (HC-2 DTO) + /dashboard/orchestration route live 200; mcp-server+frontend rebuilt. QA: atomic-write proven-red, 47 pass/1 skip/0 fail, zero dangling readers.",
     "watch_items": [
+      "BCTC PUBLISH-INTEGRITY GAP OPEN until BAL-0 ships: BEQ-9/10 reports are DONE -> chef market-analysis.md + market-analyst can consume broken ratios (VNM ROE/ROA=0, DHG ROA 7.8M%, NetDebt/EBITDA -7.5e13x) or false YoY (FPT -82% from cumulative-vs-quarter) or parent-only HPG conf44% as headline -> MARKET. No semantic-sanity gate exists. Router/cron must NOT let a BCTC-derived dish ship before BAL-0 lands. HIGH.",
       "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 06-01 while host healthy, culprit unidentified — verify detectors PLAN-ONLY; check system-auditor/cron logs. 4th host-danger candidate.",
       "ORCH-HEAD-CAS WINDOW: atomic helper safe, but non-fresh-read caller can stale-read->sibling-clobber .head — FU-ORCH-HEAD-CAS backlog; mitigated by WIP<=2 + fresh-read.",
       "tnb-c85 morning-dish fix DONE-PENDING-LIVE-VERIFY — confirm next morning fire 05:23Z publishes.",
@@ -36,7 +37,7 @@
       "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion."
     ],
     "open_sprints": [
-      "BCTC-EXTRACT-QUALITY (HIGH, NEW 2026-06-02): infra GREEN but data layer not analysis-grade — empty refine despite OCR (CTG/VCB), zeroed secondary lines (FPT+ACB), garbage /docs net_profit scalars. BEQ-1 SPIKE->agents-architect (pin each symptom to one layer; decide vs BCTC-LAYOUT-FIRST). Re-homes orphaned FU-TRUST-REFRESH #16 contamination caveat.",
+      "BCTC-ANALYTICS-LAYER (HIGH, NEW 2026-06-02): BEQ-9 scalar recovery exposed a SEPARATE pre-existing analytics/serving layer (4 clusters: ratio-compute emitting 0/7.8M%, bank B02-TCTD 'forced-zero' serving path, FPT cumulative-FY-labeled-Q4 -> false YoY -82%, HPG parent-only conf44% as headline). BAL-0 (publish semantic-sanity hard-fail gate, dispatch FIRST — closes LIVE publish-integrity gap; chef/market-analyst can ship broken ratios to MARKET) + BAL-1 SPIKE (architect root-cause, recurring-bug-escalation). next_agent=agents-architect.",
       "FB-GATE (HIGH, NEW 2026-06-02): replace fb-market-poster STEP4-check3 self-attestation with executable hard-fail pre-publish jargon/typo/hexagram/calendar gate; FB-GATE-1 design->agents-architect, FB-GATE-2 impl->agent-father. Sequence AFTER AUD-ND-1 (CRITICAL, DONE) and the live injection-half DRAIN-INJECTION-SAFE; BEFORE/parallel-with MSG-1 (different zone+owner, no contention). Rationale: 10pm cron ships jargon unattended TODAY — router is currently the only gate.",
       "FLEET-HOST-SAFETY: DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE open (AUD-ND-1 + VPS-SOCAT-PERSIST DONE)",
       "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE: within-section trimming + per-flow prune-invocation audit",
@@ -56,15 +57,51 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T10:17:15Z",
+    "_updated_at": "2026-06-02T10:56:45Z",
     "_updated_by": "po",
     "active_sprints": [
       {
-        "id": "BCTC-EXTRACT-QUALITY",
-        "label": "BCTC data layer not analysis-grade across corpus (router raw-verify 2026-06-02) — infra GREEN, extraction/refine/scalar RED",
+        "id": "BCTC-ANALYTICS-LAYER",
+        "label": "BCTC analytics/serving layer defects exposed by BEQ-9 scalar recovery (router raw-verify 2026-06-02) — 4 clusters + publish-integrity gap",
         "status": "active",
         "opened_at": "2026-06-02",
         "priority": "high",
+        "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch.",
+        "tasks": [
+          {
+            "task_id": "BAL-0",
+            "title": "Publish semantic-sanity hard-fail gate for BCTC-derived MARKET/FB output (block ratio out-of-range / cumulative-vs-quarter / parent-only-as-headline / forced-zero-bank before send_telegram)",
+            "type": "SPRINT-S",
+            "owner": "agents-architect",
+            "depends": [],
+            "status": "TODO",
+            "size": "S",
+            "zone": "docs/agents/unified-agent/ + .claude/skills/",
+            "note": "DISPATCH FIRST — closes the LIVE publish-integrity gap NOW. fb-jargon-gate (FB-GATE) is the proven pattern: executable script + skill + hard-fail + pasted output, NOT model self-attestation. Range/sanity checks: ratio bounds (ROE/ROA within plausible %, EPS>0 and sane, NetDebt-EBITDA finite); reject cumulative-labeled-as-quarter (period semantics); reject parent-only conf<0.5 as headline; reject forced-zero bank balance-sheet decomposition. Consumers: chef market-analysis.md + market-analyst. DESIGN by agents-architect -> agent-father impl. Kin of fb-jargon-gate + feedback_router_verify_raw_not_badges."
+          },
+          {
+            "task_id": "BAL-1",
+            "title": "SPIKE: root-cause the 4 BCTC analytics/serving defect clusters as ONE layer (ratio-compute / bank-B02-TCTD-serving / period-cumulative-vs-quarter / parent-vs-consolidated-scope) — pin each to its module, decide grouping + owners",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": [],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "mode": "spike",
+            "timebox": 120,
+            "note": "recurring-bug-escalation -> architect root-cause before any point-patch. 4 clusters with router raw evidence (see sprint evidence). (a) ratio-compute emitting 0/astronomical — where (ScalarAggregate? a downstream ratio fn? divide-by-zero on cumulative vs quarter?); (b) bank B02-TCTD get_bctc_full 'no decomposition / forced-zero' serving path — likely the bank discriminator/decomposition serve path (kin BEQ-8 isBankFormFromRows + FU-BANK-CODECOL); (c) period cumulative-vs-quarter: refine stores FY cumulative under a Q4 label -> buildComparisonSection (BEQ-4b guarded refine_status but NOT cumulative-vs-quarter semantics) computes false YoY; (d) parent-only-vs-consolidated entity scope + low-conf-as-headline (HPG B01a). Output: findings doc + per-cluster owner split (likely dev-mcp-server FIXes) -> PO scopes BAL-2.. next cycle. Separate from BCTC-LAYOUT-FIRST (extraction) and BAL-0 (publish-side)."
+          }
+        ]
+      },
+      {
+        "id": "BCTC-EXTRACT-QUALITY",
+        "label": "BCTC data layer not analysis-grade across corpus (router raw-verify 2026-06-02) — infra GREEN, extraction/refine/scalar RED",
+        "status": "DONE-WITH-CAVEATS",
+        "opened_at": "2026-06-02",
+        "closed_at": "2026-06-02",
+        "priority": "high",
+        "signoff": "PO 2026-06-02T10:56Z: all BEQ-1..10 closed. CORE INCIDENT RESOLVED — garbage-as-truth eliminated, no false-DONE, balance-sheet scalars genuinely recovered + balance-EXACT for VNM/FPT/HPG/DHG (router raw-verify post-rebuild). Sprint was scoped to extraction/refine/scalar-serving guards + recoverable-ticker re-refine — all DONE. 4 residual analytics/serving defects (ratio-compute, bank-B02-TCTD-serving, period-semantics, parent-vs-consolidated-scope) are SEPARATE pre-existing layer the refine made visible -> escalated to NEW sprint BCTC-ANALYTICS-LAYER (architect root-cause). PUBLISH-RISK gap (no semantic-sanity guard) -> BAL-0 dispatched FIRST.",
         "evidence": "Router live raw-verify 2026-06-02 (BCTC-HEALTH-TRIAGE). INFRA GREEN (mcp /health 154 tools ~6.6h, viewer :3000 + :3001 dashboard tab, 6-gate eval 200, human-confirm write proven to DB, OCR 15/15, PDF 15/15). DATA RED across 3 distinct net-new failure modes NOT covered by any open item: (1) EMPTY refine despite OCR+PDF present — get_bctc_full(CTG) + get_bctc_full(VCB) = 'Chua co du lieu BCTC'; markdown->rows produced 0 usable rows so analyst flow gets nothing; (2) ZEROED secondary lines fleet-wide even where headline correct — FPT(conf0.81)+ACB(conf0.38) both show sane rev/NP/NII/assets/equity (bank-mapping OK) BUT OperatingProfit=0, EBITDA=0, Cash=0, EPS nonsense (FPT=1,ACB=0), most ratios N/A; (3) GARBAGE net_profit scalars in /docs listing — CTG=5, EIB=1, VNM=5.1e-05, VEA=-5.1e-05, SHB=0, BSR=0, DIG=18. Plus low extraction_confidence <0.2 on CTG(0.062)+BSR(0.125). Prior-period CONTAMINATION (FPT YoY '20.2 ty' NP = revenue mislabeled -> +12146% YoY, GM 100%->34%) = the orphaned FU-TRUST-REFRESH #16 caveat, NOT live-tracked anywhere — re-homed here. Overlaps (linked, NOT duplicated): BCTC-LAYOUT-FIRST (intended re-arch, Phase-0 not started), FU-BCTC-TOOL-PARAMS (ticker-vs-code trap), FU-BANK-CODECOL (code-col leak), BCTC-CTG-ATTACHMENT-FETCH (CTG cover-letter-only PDF), cowork signal bctc-extraction-esc-20260602T0015Z (DHG/EIB DATA_INSUFFICIENT 9 cycles + CTG lag — was dispositioned to FPT/ESC-OPUS only, pipeline root-cause never got a task).",
         "tasks": [
           {
@@ -222,10 +259,11 @@
             "depends": [
               "BEQ-8b"
             ],
-            "status": "TODO",
+            "status": "DONE-WITH-CAVEATS",
+            "closed_at": "2026-06-02T10:56Z",
             "size": "S",
             "zone": "read-only-analysis",
-            "note": "REMEDIATION (real data recovery). PO-LIVE-CONFIRMED 2026-06-02T10:17:15Z: VNM-Q4/FPT-Q4/HPG/SHB are PARTIAL with table rows present (VNM 143/SHB 154/HPG 91/FPT-Q4 79) but garbage/zero scalars. They are NOT in any automated refine path — backfill_bctc_scalars only processes rows=0 PENDING and SKIPS rows-present reports; nothing re-runs agentic refine. Guards correctly hold them PARTIAL (net_profit suppressed live, no garbage served) so they are NOT silently stuck in the false-DONE sense, but recovery is UNOWNED until this task. Re-run refine_bctc_md per ticker to re-derive scalars from existing rows → promote PARTIAL→DONE. MUST run OFF-HOSE (HOSE-hours embargo, 16GB host). Verify post-refine via /api/bctc-inspect/docs net_profit non-null + balance check.",
+            "note": "PO SIGN-OFF 2026-06-02T10:56Z DONE-WITH-CAVEATS (router raw-verified post-rebuild). SCALAR/BALANCE RECOVERY GENUINE: VNM-Q4 rev=63645.9/GP=26209.5/NP=9413.6/assets=53312.4=equity34483+liab18829.4 (balance EXACT). FPT-Q4 rev=70112.8/NP=11225.5 (balance✓). HPG-Q4-parent NP=5597.9 recovered from 5.6 garbage, assets=98670.8=equity94430.9+liab4239.9 (balance✓). SHB-Q4 NII=20217.3/NP=12009.9/assets=892570.6 (balance✓). CAVEATS (separate analytics/serving layer, NOT in BEQ-9 scope, escalated to BCTC-ANALYTICS-LAYER): ratio layer broken (VNM ROE=0/ROA=0/EPS=12/NetDebt-EBITDA=-7.5e13x); FPT scalars are FULL-YEAR cumulative mislabeled Q4 -> false YoY -82.2%; HPG parent-only (rev=0, conf44%) served as headline vs consolidated ~140k; SHB get_bctc_full returns 'balance sheet has no decomposition — forced-zero suspected' (bank serving path broken despite DONE). bctc-analyst self-report masked these. NOT a re-open — defects pre-date BEQ-9.",
             "gate": "OFF-HOSE-ONLY"
           },
           {
@@ -236,10 +274,11 @@
             "depends": [
               "BEQ-9"
             ],
-            "status": "TODO",
+            "status": "PARTIAL-DONE-ACCEPTED",
+            "closed_at": "2026-06-02T10:56Z",
             "size": "S",
             "zone": "read-only-analysis",
-            "note": "REMEDIATION tier-2. PO-LIVE-CONFIRMED 2026-06-02T10:17:15Z: DHG(PARTIAL 329 rows rev=0.000009 garbage), EIB(PARTIAL 64 rows np=1), VEA(PARTIAL 201 rows np=-0.000051) have rows but bad scalars — verify OCR quality first, then refine. VCB×2 are rows=0 PENDING (net_profit_api_bridge=8.6M present but ZERO table rows) → needs RE-EXTRACTION not refine; route VCB to BCTC-REFETCH-ZERO-ROW. OFF-HOSE only.",
+            "note": "PO SIGN-OFF 2026-06-02T10:56Z PARTIAL-DONE accepted (router raw-verified). DHG Q1-2026 GENUINE+CLEAN: rev=1198.1/GP=600.2/NP=315.7/EPS=4971/balance EXACT — BUT ROA=7,891,932.0% (analyst claimed fixed; NOT fixed — ratio layer, escalated to BCTC-ANALYTICS-LAYER). EIB Q1-2026: NII=1379.98/NP=269.16/assets=269958.4 committed BUT get_bctc_full returns 'no decomposition — forced-zero suspected' = bank B02-TCTD serving path UNSERVABLE despite DONE (escalated). VEA (PARTIAL 201 rows): deferred, needs separate dispatch when scheduled. VCB rows=0 PENDING -> BCTC-REFETCH-ZERO-ROW (backlog). Residual fetch backlog confirmed tracked: BCTC-CTG-ATTACHMENT-FETCH, BCTC-REFETCH-ZERO-ROW(DGC/DIG/VCB), VEA deferred.",
             "gate": "OFF-HOSE-ONLY"
           }
         ]
@@ -1076,9 +1115,20 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T07:12:59Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-02T10:56:45Z",
+    "_updated_by": "po",
     "rows": [
+      {
+        "id": "po-bctc-analytics-layer-20260602T1056Z",
+        "ts": "2026-06-02T10:56Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "HIGH. NEW sprint BCTC-ANALYTICS-LAYER (orch-state active_sprints[0]). BEQ-9/10 scalar recovery is GENUINE (balance EXACT VNM/FPT/HPG/DHG, router raw-verified) but exposed a SEPARATE pre-existing analytics/serving layer. TWO asks: (1) BAL-0 DISPATCH FIRST — design an executable hard-fail publish semantic-sanity gate for BCTC-derived MARKET/FB output (pattern = the proven fb-jargon-gate: script+skill+hard-fail+pasted output, NOT model self-attestation). Must block: ratio out-of-range (VNM ROE/ROA=0, DHG ROA 7.8M%, NetDebt/EBITDA -7.5e13x), cumulative-FY-labeled-as-quarter (FPT false YoY -82%), parent-only conf<0.5 as headline (HPG B01a rev=0 conf44%), forced-zero bank B02-TCTD decomposition (SHB/EIB unservable). Consumers = chef unified-agent/flow/market-analysis.md + market-analyst. (2) BAL-1 SPIKE — root-cause the 4 defect clusters as ONE layer, pin each to its module, return per-cluster owner split (likely dev-mcp-server FIXes) -> PO scopes BAL-2.. next cycle. recurring-bug-escalation: architect root-cause before any point-patch. Evidence in sprint.evidence + BEQ-9/BEQ-10 notes.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/data/orch/orch-state.json#BCTC-ANALYTICS-LAYER"
+      },
       {
         "id": "architects-fb-gate-brief-20260602T0409Z",
         "ts": "2026-06-02T04:09Z",

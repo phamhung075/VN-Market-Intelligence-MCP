@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-06-02-bctc-analytics-layer-bal1.md",
+  "priority": "critical",
+  "createdAt": "2026-06-02T11:04:55Z",
+  "summary": "BAL-1 SPIKE complete. 4 BCTC analytics/serving defect clusters root-caused. BAL-0 publish-gate spec (PUB-5..8 in bctcFullTools.ts) is URGENT/PROTECTIVE — must land before next chef cycle. Task fanout: BAL-0-DEV (CRITICAL/IMMEDIATE), BAL-1a-DEV (BLOCK-3 ratio recompute in finalize), BAL-1b-INV (SHB/EIB bank serving), BAL-1c-DEV (period_basis column), BAL-1d-DEV (report_scope + confidence gate). All in dev-mcp-server zone. See brief Section 7 for full task table."
+}

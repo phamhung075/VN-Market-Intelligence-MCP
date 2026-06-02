@@ -120,6 +120,14 @@ fb-market-poster STEP 4 check 3 is pure model self-attestation — false-greened
 
 ---
 
+## 2026-06-02T11:04:55Z
+
+**Brief:** `docs/architecture-briefs/2026-06-02-bctc-analytics-layer-bal1.md`
+
+4 BCTC analytics/serving defect clusters root-caused (BAL-1 SPIKE): (a) ratio columns (roe/roa/eps/net_debt_to_ebitda) are orphaned after refine — `finalizeBctcRefineTool` updates base scalars but never re-derives ratios; (b) SHB/EIB bank serving blocked by PUB-3 bank-path query mismatch (two candidates: isBankFormFromDb wrong classification vs is_summary_row=1 for all rows); (c) Q4 FY-cumulative vs Q1 standalone comparison produces false YoY — no `period_basis` column, no basis-mismatch guard; (d) HPG parent-only filing (rev=0, conf=44%) served as headline — no `report_scope` column, no confidence threshold in checkPublishability. BAL-0 publish-gate spec (PUB-5..8 inline in `bctcFullTools.ts`) is URGENT/PROTECTIVE — live publish risk until deployed.
+
+**Signal dropped:** `docs/signals/bctc-analytics-layer-bal1-20260602T110455Z.json` → agent-father
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
