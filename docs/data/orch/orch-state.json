@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "OPERATOR FRONTEND GOAL ADDRESSED 2026-06-02T14:58Z: 10-route client-side audit done, all frontend-zone problems fixed+live-verified (VPS not_deployed discrimination + news honest-empty; frontend rebuilt 14:58:44Z, commit 9372d7c0). Orchestration ErrorBoundary was transient (rebuild window), now 0 fallbacks. RESIDUAL infra (NOT frontend, ops-zone): VPS sbv-fetch genuinely DOWN + socat band-aid dead -> VPS-SOCAT-PERSIST (permanent fix open; not critical, VPS reachable + data flowing, post-close staleness normal). Earlier this session: BCTC live publish-quality CLOSED (BAL-1a-BACKFILL VNM ROE 27.3% live + BAL-1c). Latent: FU-ARCHITECT-MUTEX-BINDING (agents-architect commits without mutex).",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FU-BCTC-TOOL-PARAMS",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Executing FU-BCTC-TOOL-PARAMS (FIX/dev-mcp-server, WIP1/2): get_cash_flow honor quarters param -> latest-N-quarter series (live-confirmed bug: quarters=8 returns single Q1/2026). Unblocks bctc-analyst ESC-3 11-cycle loop. After: ops rebuild mcp-server + router live-verify quarters=8 returns 8 periods. PO rejected VPS candidate (VPS-SOCAT-PERSIST already DONE, api-gateway occupies :4000, sbv-fetch staleness=post-close-normal not outage; operator frontend goal fully met - frontend honestly displays not-deployed plane).",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T14:59:51Z",
+    "updated_at": "2026-06-02T15:14:26Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T15:12:27Z",
+    "_updated_at": "2026-06-02T15:14:26Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -225,7 +225,7 @@
             "type": "FIX",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "in_progress",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
