@@ -7,11 +7,14 @@ const defaultTimeoutMs = int64(2000)
 
 // StaticServiceRegistry is an in-memory registry of services loaded from env config.
 type StaticServiceRegistry struct {
-	services map[string]*domain.ServiceConfig
+	services       map[string]*domain.ServiceConfig
+	notDeployedSet map[string]bool
 }
 
 // NewStaticServiceRegistry creates a registry with URLs from the provided map.
 // Unknown keys fall back to default docker-compose service names.
+// The not-deployed set defaults to empty — use NewStaticServiceRegistryWithNotDeployed
+// to supply the set at construction time.
 func NewStaticServiceRegistry(urls map[string]string) *StaticServiceRegistry {
 	get := func(key, fallback string) string {
 		if v, ok := urls[key]; ok && v != "" {
@@ -37,7 +40,31 @@ func NewStaticServiceRegistry(urls map[string]string) *StaticServiceRegistry {
 		"api": {Name: "api", BaseURL: get("api", mcpURL), HealthPath: "/health", TimeoutMs: defaultTimeoutMs, NoProbe: true},
 	}
 
-	return &StaticServiceRegistry{services: services}
+	return &StaticServiceRegistry{services: services, notDeployedSet: map[string]bool{}}
+}
+
+// NewStaticServiceRegistryWithNotDeployed creates a registry exactly like
+// NewStaticServiceRegistry but also initialises the not-deployed set from the
+// provided slice.  Pass the same slice that was parsed from the
+// NOT_DEPLOYED_SERVICES environment variable so that both the health-aggregation
+// domain service and the proxy rerouter share one SSOT.
+func NewStaticServiceRegistryWithNotDeployed(urls map[string]string, notDeployed []string) *StaticServiceRegistry {
+	r := NewStaticServiceRegistry(urls)
+	ndSet := make(map[string]bool, len(notDeployed))
+	for _, key := range notDeployed {
+		ndSet[key] = true
+	}
+	r.notDeployedSet = ndSet
+	return r
+}
+
+// IsNotDeployed reports whether the named service is in the not-deployed set.
+// When true, HandleProxy will reroute to the mcp-server fallback instead of
+// forwarding to the dead microservice.
+// Deploying the real service and removing it from NOT_DEPLOYED_SERVICES env var
+// restores direct routing without a code change.
+func (r *StaticServiceRegistry) IsNotDeployed(name string) bool {
+	return r.notDeployedSet[name]
 }
 
 // GetAllServices returns services eligible for active health probing (NoProbe=false).

@@ -41,11 +41,14 @@ func main() {
 		"api": mcpURL,
 	}
 
-	registry := infrastructure.NewStaticServiceRegistry(serviceURLs)
-	checker := infrastructure.NewHTTPHealthChecker()
-
 	notDeployedRaw := getenv("NOT_DEPLOYED_SERVICES", "pdf,rag,ta,stock,kinh-dich,alert,news")
 	notDeployed := splitCSV(notDeployedRaw)
+
+	// Registry receives the same not-deployed set so that HandleProxy can
+	// reroute through mcp-server without a separate lookup.
+	registry := infrastructure.NewStaticServiceRegistryWithNotDeployed(serviceURLs, notDeployed)
+	checker := infrastructure.NewHTTPHealthChecker()
+
 	healthDomainService := domain.NewAggregateHealthService(checker, registry, notDeployed)
 	aggregateUC := application.NewAggregateHealthUseCase(healthDomainService)
 	serviceHealthUC := application.NewServiceHealthUseCase(registry, checker)

@@ -15,6 +15,7 @@ import (
 
 	"github.com/vn-market-intelligence/api-gateway/pkg/application"
 	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
+	ndr "github.com/vn-market-intelligence/api-gateway/pkg/primitive/not-deployed-rerouter"
 	ppr "github.com/vn-market-intelligence/api-gateway/pkg/primitive/proxy-path-resolver"
 	rsm "github.com/vn-market-intelligence/api-gateway/pkg/primitive/route-service-matcher"
 )
@@ -298,6 +299,81 @@ func (h *GatewayHandlers) HandleProxy(w http.ResponseWriter, r *http.Request) {
 	svc := h.registry.GetService(serviceName)
 	if svc == nil {
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": fmt.Sprintf("Unknown service: %s", serviceName)})
+		return
+	}
+
+	// NOT_DEPLOYED re-route: redirect to mcp-server with path rewrite.
+	// This branch is driven by the SSOT notDeployedSet in the registry so
+	// that deploying the real microservice (removing it from NOT_DEPLOYED_SERVICES)
+	// restores direct routing without a code change.
+	if h.registry.IsNotDeployed(serviceName) {
+		reroutedPath, hasMapping := ndr.Reroute(r.URL.Path, r.URL.RawQuery, serviceName)
+		if !hasMapping {
+			// No mcp-server fallback for this service — honest 503.
+			writeJSON(w, http.StatusServiceUnavailable, map[string]interface{}{
+				"error":   "not_deployed",
+				"service": serviceName,
+				"detail":  fmt.Sprintf("Service %q is not deployed on this host and has no mcp-server alternative", serviceName),
+			})
+			return
+		}
+
+		mcpSvc := h.registry.GetService("mcp")
+		if mcpSvc == nil {
+			writeJSON(w, http.StatusBadGateway, map[string]string{
+				"error": "mcp-server not configured — cannot reroute",
+			})
+			return
+		}
+
+		mcpBase, err := url.Parse(mcpSvc.BaseURL)
+		if err != nil {
+			writeJSON(w, http.StatusBadGateway, map[string]string{
+				"error": fmt.Sprintf("mcp-server URL invalid: %s", err.Error()),
+			})
+			return
+		}
+
+		h.logger.Info("not-deployed reroute",
+			"service", serviceName,
+			"original_path", r.URL.Path,
+			"rerouted_path", reroutedPath,
+		)
+
+		proxy := httputil.NewSingleHostReverseProxy(mcpBase)
+		proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			writeJSON(w, http.StatusBadGateway, map[string]string{
+				"error": fmt.Sprintf("mcp-server unreachable during reroute for %s: %s", serviceName, err.Error()),
+			})
+		}
+
+		r2 := r.Clone(r.Context())
+		r2.URL.Scheme = mcpBase.Scheme
+		r2.URL.Host = mcpBase.Host
+		// reroutedPath already contains the query string (e.g. ?source=reuters)
+		// so we must NOT append r.URL.RawQuery again — split them.
+		if idx := strings.IndexByte(reroutedPath, '?'); idx >= 0 {
+			r2.URL.Path = reroutedPath[:idx]
+			r2.URL.RawQuery = reroutedPath[idx+1:]
+		} else {
+			r2.URL.Path = reroutedPath
+			r2.URL.RawQuery = ""
+		}
+		r2.Host = mcpBase.Host
+
+		timeoutMs := mcpSvc.ProxyTimeoutMs
+		if timeoutMs == 0 {
+			timeoutMs = mcpSvc.TimeoutMs * 5
+		}
+		ctx := r2.Context()
+		cancel := func() {}
+		if timeoutMs > 0 {
+			ctx, cancel = context.WithTimeout(ctx, time.Duration(timeoutMs)*time.Millisecond)
+		}
+		defer cancel()
+		r2 = r2.WithContext(ctx)
+
+		proxy.ServeHTTP(w, r2)
 		return
 	}
 

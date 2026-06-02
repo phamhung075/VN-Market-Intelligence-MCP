@@ -519,6 +519,253 @@ func TestProxy_UpstreamError_502(t *testing.T) {
 	}
 }
 
+// ── Not-deployed reroute tests ────────────────────────────────────────────────
+
+// TestProxy_NotDeployed_KinhDich_ReroutesToMCP verifies that a request to a
+// not-deployed service (kinh-dich) is transparently proxied to mcp-server
+// at the rewritten path, NOT forwarded to the dead microservice.
+func TestProxy_NotDeployed_KinhDich_ReroutesToMCP(t *testing.T) {
+	var capturedPath string
+	mcpUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"hexagram":42}`))
+	}))
+	defer mcpUpstream.Close()
+
+	// mcp points at the test upstream; kinh-dich is NOT in the URL map,
+	// so it keeps its docker default (dead address) — but IsNotDeployed should
+	// redirect it to mcp before any dial to kinh-dich happens.
+	reg := infrastructure.NewStaticServiceRegistryWithNotDeployed(map[string]string{
+		"mcp": mcpUpstream.URL,
+	}, []string{"kinh-dich", "stock", "ta", "news", "pdf", "rag", "alert"})
+
+	mockSvc := &mockAggregateHealthService{health: fixedHealth}
+	aggrUC := application.NewAggregateHealthUseCaseFromService(mockSvc)
+	checker := &mockHealthCheckerForUC{}
+	serviceUC := application.NewServiceHealthUseCase(reg, checker)
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	handlers := httphandler.NewGatewayHandlers(aggrUC, serviceUC, reg, logger)
+	router := httphandler.NewRouter(handlers, logger)
+
+	req := httptest.NewRequest(http.MethodGet, "/kinh-dich/reading/FPT", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200 from mcp upstream, got %d", rec.Code)
+	}
+	if capturedPath != "/mcp/api/kinh-dich/reading/FPT" {
+		t.Errorf("expected mcp-server to receive /mcp/api/kinh-dich/reading/FPT, got %q", capturedPath)
+	}
+}
+
+// TestProxy_NotDeployed_Stock_PriceHistory_ReroutesToMCP verifies stock/price/history
+// is rerouted to /mcp/api/prices/history with query preserved.
+func TestProxy_NotDeployed_Stock_PriceHistory_ReroutesToMCP(t *testing.T) {
+	var capturedPath, capturedQuery string
+	mcpUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedPath = r.URL.Path
+		capturedQuery = r.URL.RawQuery
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"history":[]}`))
+	}))
+	defer mcpUpstream.Close()
+
+	reg := infrastructure.NewStaticServiceRegistryWithNotDeployed(map[string]string{
+		"mcp": mcpUpstream.URL,
+	}, []string{"stock", "kinh-dich", "ta", "news", "pdf", "rag", "alert"})
+
+	mockSvc := &mockAggregateHealthService{health: fixedHealth}
+	aggrUC := application.NewAggregateHealthUseCaseFromService(mockSvc)
+	checker := &mockHealthCheckerForUC{}
+	serviceUC := application.NewServiceHealthUseCase(reg, checker)
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	handlers := httphandler.NewGatewayHandlers(aggrUC, serviceUC, reg, logger)
+	router := httphandler.NewRouter(handlers, logger)
+
+	req := httptest.NewRequest(http.MethodGet, "/stock/price/history?code=VNINDEX&days=30", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+	if capturedPath != "/mcp/api/prices/history" {
+		t.Errorf("expected /mcp/api/prices/history, got %q", capturedPath)
+	}
+	if capturedQuery != "code=VNINDEX&days=30" {
+		t.Errorf("expected query code=VNINDEX&days=30, got %q", capturedQuery)
+	}
+}
+
+// TestProxy_NotDeployed_News_Reuters_ReroutesToMCP verifies news/reuters/headlines
+// is rerouted to /mcp/api/news/headlines?source=reuters.
+func TestProxy_NotDeployed_News_Reuters_ReroutesToMCP(t *testing.T) {
+	var capturedPath, capturedQuery string
+	mcpUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedPath = r.URL.Path
+		capturedQuery = r.URL.RawQuery
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"articles":[]}`))
+	}))
+	defer mcpUpstream.Close()
+
+	reg := infrastructure.NewStaticServiceRegistryWithNotDeployed(map[string]string{
+		"mcp": mcpUpstream.URL,
+	}, []string{"news", "stock", "kinh-dich", "ta", "pdf", "rag", "alert"})
+
+	mockSvc := &mockAggregateHealthService{health: fixedHealth}
+	aggrUC := application.NewAggregateHealthUseCaseFromService(mockSvc)
+	checker := &mockHealthCheckerForUC{}
+	serviceUC := application.NewServiceHealthUseCase(reg, checker)
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	handlers := httphandler.NewGatewayHandlers(aggrUC, serviceUC, reg, logger)
+	router := httphandler.NewRouter(handlers, logger)
+
+	req := httptest.NewRequest(http.MethodGet, "/news/reuters/headlines", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+	if capturedPath != "/mcp/api/news/headlines" {
+		t.Errorf("expected /mcp/api/news/headlines, got %q", capturedPath)
+	}
+	if capturedQuery != "source=reuters" {
+		t.Errorf("expected source=reuters query, got %q", capturedQuery)
+	}
+}
+
+// TestProxy_NotDeployed_TA_NoMapping_Returns503 verifies that a not-deployed service
+// with NO mcp fallback (ta) returns an honest 503, not a raw 502.
+func TestProxy_NotDeployed_TA_NoMapping_Returns503(t *testing.T) {
+	mcpUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Should never be reached for ta with no mapping.
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer mcpUpstream.Close()
+
+	reg := infrastructure.NewStaticServiceRegistryWithNotDeployed(map[string]string{
+		"mcp": mcpUpstream.URL,
+	}, []string{"ta", "kinh-dich", "stock", "news", "pdf", "rag", "alert"})
+
+	mockSvc := &mockAggregateHealthService{health: fixedHealth}
+	aggrUC := application.NewAggregateHealthUseCaseFromService(mockSvc)
+	checker := &mockHealthCheckerForUC{}
+	serviceUC := application.NewServiceHealthUseCase(reg, checker)
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	handlers := httphandler.NewGatewayHandlers(aggrUC, serviceUC, reg, logger)
+	router := httphandler.NewRouter(handlers, logger)
+
+	req := httptest.NewRequest(http.MethodPost, "/ta/ta/indicators", strings.NewReader(`{"code":"FPT"}`))
+	req.Header.Set("Content-Type", "application/json")
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("expected 503 for ta (no mcp fallback), got %d", rec.Code)
+	}
+	var body map[string]interface{}
+	if err := json.NewDecoder(rec.Body).Decode(&body); err != nil {
+		t.Fatalf("expected JSON body: %v", err)
+	}
+	if body["error"] != "not_deployed" {
+		t.Errorf("expected error=not_deployed, got %v", body["error"])
+	}
+	if body["service"] != "ta" {
+		t.Errorf("expected service=ta, got %v", body["service"])
+	}
+}
+
+// ── Anti-regression: deployed service paths must NOT be rerouted ──────────────
+
+// TestProxy_DeployedMacro_NotRerouted verifies that a DEPLOYED service (macro)
+// is proxied directly to its own upstream, NOT through the not-deployed rerouter.
+// This is the key anti-regression: rerouting must be SSOT-driven, not hardcoded.
+func TestProxy_DeployedMacro_NotRerouted(t *testing.T) {
+	var macroHit bool
+	macroUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		macroHit = true
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"macro":"snapshot"}`))
+	}))
+	defer macroUpstream.Close()
+
+	var mcpHit bool
+	mcpUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		mcpHit = true
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer mcpUpstream.Close()
+
+	// macro is NOT in the not-deployed list → it must be routed directly.
+	reg := infrastructure.NewStaticServiceRegistryWithNotDeployed(map[string]string{
+		"macro": macroUpstream.URL,
+		"mcp":   mcpUpstream.URL,
+	}, []string{"kinh-dich", "stock", "ta", "news", "pdf", "rag", "alert"})
+
+	mockSvc := &mockAggregateHealthService{health: fixedHealth}
+	aggrUC := application.NewAggregateHealthUseCaseFromService(mockSvc)
+	checker := &mockHealthCheckerForUC{}
+	serviceUC := application.NewServiceHealthUseCase(reg, checker)
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	handlers := httphandler.NewGatewayHandlers(aggrUC, serviceUC, reg, logger)
+	router := httphandler.NewRouter(handlers, logger)
+
+	req := httptest.NewRequest(http.MethodGet, "/macro/snapshot", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if !macroHit {
+		t.Error("macro upstream must be hit directly for deployed service")
+	}
+	if mcpHit {
+		t.Error("mcp-server must NOT be hit for a deployed service (macro)")
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+}
+
+// TestProxy_MCP_VirtualAlias_NotRerouted verifies that /mcp/* virtual alias
+// passes through normally (verbatim path, not intercepted by rerouter).
+func TestProxy_MCP_VirtualAlias_NotRerouted(t *testing.T) {
+	var capturedPath string
+	mcpUpstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		capturedPath = r.URL.Path
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer mcpUpstream.Close()
+
+	reg := infrastructure.NewStaticServiceRegistryWithNotDeployed(map[string]string{
+		"mcp": mcpUpstream.URL,
+		"api": mcpUpstream.URL,
+	}, []string{"kinh-dich", "stock", "ta", "news", "pdf", "rag", "alert"})
+
+	mockSvc := &mockAggregateHealthService{health: fixedHealth}
+	aggrUC := application.NewAggregateHealthUseCaseFromService(mockSvc)
+	checker := &mockHealthCheckerForUC{}
+	serviceUC := application.NewServiceHealthUseCase(reg, checker)
+	logger := slog.New(slog.NewJSONHandler(io.Discard, nil))
+	handlers := httphandler.NewGatewayHandlers(aggrUC, serviceUC, reg, logger)
+	router := httphandler.NewRouter(handlers, logger)
+
+	req := httptest.NewRequest(http.MethodGet, "/mcp/api/signals", nil)
+	rec := httptest.NewRecorder()
+	router.ServeHTTP(rec, req)
+
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
+	}
+	// /mcp is NOT in not-deployed set → handled via normal proxy (path stripped to /api/signals)
+	if capturedPath != "/api/signals" {
+		t.Errorf("expected mcp upstream to receive /api/signals (prefix stripped), got %q", capturedPath)
+	}
+}
+
 func TestProxy_AuthHeaderForwarded(t *testing.T) {
 	var capturedAuth string
 	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

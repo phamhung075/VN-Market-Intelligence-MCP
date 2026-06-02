@@ -13,4 +13,8 @@ type ServiceRegistryPort interface {
 	GetAllServices() []*ServiceConfig
 	// GetService returns a service by name, or nil if not found.
 	GetService(name string) *ServiceConfig
+	// IsNotDeployed reports whether the named service is intentionally not deployed
+	// on this host.  When true, HandleProxy will reroute through mcp-server rather
+	// than forwarding to the dead service (which would 502).
+	IsNotDeployed(name string) bool
 }

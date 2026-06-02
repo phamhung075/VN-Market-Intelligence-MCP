@@ -39,6 +39,7 @@ func (m *mockRegistry) GetService(name string) *domain.ServiceConfig {
 	}
 	return nil
 }
+func (m *mockRegistry) IsNotDeployed(_ string) bool { return false }
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
 
