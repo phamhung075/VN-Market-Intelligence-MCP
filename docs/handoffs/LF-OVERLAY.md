@@ -235,3 +235,43 @@ The overlay is a **read-only visualization layer** on top of the new tables. The
 **Date:** 2026-06-03  
 **Expected completion:** Within current sprint (BCTC-LAYOUT-FIRST Phase 0)  
 **Blocked by:** LF-EXTRACT must be DONE before code pushes
+
+---
+
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:**
+  - `apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts:157-197` — Added `bctc_layout_units` + `bctc_page_zones` DDL with indices per §3.1
+  - `apps/mcp-server/src/interface/mcp/routes/pushBctcLayoutHandler.ts` — NEW: POST /api/push-bctc-layout handler with DELETE-before-INSERT idempotency, UUID validation, zero cross-write
+  - `apps/mcp-server/src/interface/mcp/routes/bctcInspectHandler.ts:845-925` — EXTENDED: GET /api/bctc-inspect/zones/{doc_id}?page=N pure DB read handler
+  - `apps/mcp-server/src/interface/mcp/server.ts:426-517` — EXTENDED: registered POST /api/push-bctc-layout + GET /api/bctc-inspect/zones/ routes
+  - `apps/mcp-server/src/interface/bctc-inspector.html:457-464,874-877,2167-2340` — EXTENDED: zone-overlay toggle (id="zone-overlay-toggle") + SVG overlay renderer with 5 distinct color classes
+- **Tests written:**
+  - `apps/mcp-server/src/__tests__/1272-push-bctc-layout.test.ts` — 25 assertions, GREEN (AC-LFO-4, AC-LFO-5, idempotency, cross-write guard, prose persistence, write-wedge detection)
+  - `apps/mcp-server/src/__tests__/1273-bctc-inspect-overlay.test.ts` — 9 assertions, GREEN (AC-LFO-1, AC-LFO-2, positional col_id, 404 handling)
+  - **Total: 34 tests, 62 expect() calls, 0 fail**
+- **Git commits:** `2326ebb6 feat(mcp-server): LF-OVERLAY — bctc_layout_units+bctc_page_zones DDL, POST /api/push-bctc-layout, on/off geometric-zone overlay on /api/bctc-inspect (29 tests green)` + subsequent BTB-PERSIST-FIX additions
+- **Type check:** clean (bun tsc --noEmit, exit 0)
+- **bun test (BCTC regression battery):** 128 pass / 0 fail (9 test files: 042/043/044/045 BCTC + 1270/1271 MD-INSPECT + 1272/1273 LF-OVERLAY + PI3-bctc-inspect)
+- **Tool count:** 158 tools — pre-task baseline unchanged (LF-OVERLAY adds 0 tools, only HTTP routes)
+- **Scheduler count:** 70 cron.schedule entries — unchanged
+- **Docs updated:** NONE (no mcp-server architecture doc changes needed; additive routes)
+- **Graphify:** skipped (no docs impacted)
+- **Ops rebuild required:** YES — container must be rebuilt for POST /api/push-bctc-layout and GET /api/bctc-inspect/zones/ to be live
+
+## AC-LFO Checklist (0-7)
+
+| AC | Status | Evidence |
+|---|---|---|
+| AC-LFO-0 (toggle present) | MET | `id="zone-overlay-toggle" data-zone-toggle="true"` in bctc-inspector.html:877 |
+| AC-LFO-1 (zones endpoint returns data) | MET (code) | handleBctcInspectZones registered at GET /api/bctc-inspect/zones/; 1273 test confirms zones_json + col_id pattern; live verify requires LF-EXTRACT run + container rebuild |
+| AC-LFO-2 (no pdf-extractor import) | MET | grep returns 0 actual import lines; 3 comment-only matches; confirmed by import audit |
+| AC-LFO-3 (structured path non-regression) | MET | 128 BCTC regression tests pass 0 fail; bctc_table_rows read path + bctc_balance_checks untouched (frozen files 0-diff confirmed) |
+| AC-LFO-4 (zero cross-write) | MET | Test (f) in 1272: bctc_table_rows=0, bctc_balance_checks=0 after push; DELETE in handler only touches bctc_layout_units/bctc_page_zones |
+| AC-LFO-5 (idempotent push) | MET | Tests (c) + (h-DV): double-push with same UUIDs = count 2 not 4; re-push with new UUIDs = old rows removed, new rows present |
+| AC-LFO-6 (zone types visually distinct) | MET | 5 distinct color classes: headerBand/#ffc850, footerBand/#ff8c3c, gutterEven/#50a0ff, gutterOdd/#50dca0, rowBand/#c864dc, unitBoundary/red. Code-inspectable at bctc-inspector.html:2170-2174 |
+| AC-LFO-7 (corpus breadth = 18 report_ids) | OPEN | Requires LF-EXTRACT corpus re-extraction (18 docs); blocked on LF-EXTRACT image rebuild + LF-DEPLOY |
+
+**Status: DONE-PENDING-REBUILD** (ops must rebuild mcp-server image; LF-DEPLOY gates AC-LFO-1 live verify + AC-LFO-7)

@@ -1,5 +1,53 @@
 # dev-mcp-server -- Notebook
 
+## c352 · 2026-06-03 (LF-OVERLAY) — COMMITTED 2326ebb6 + b3c80e69 (orch-state flip)
+
+**Task:** LF-OVERLAY — Sprint BCTC-LAYOUT-FIRST Phase 0, persistence + viewer-overlay half
+
+**Changes:** DDL (bctc_layout_units + bctc_page_zones) already in schema-financial-reports.ts; POST /api/push-bctc-layout handler (pushBctcLayoutHandler.ts) with DELETE-before-INSERT idempotency; GET /api/bctc-inspect/zones/ pure-DB-read handler (bctcInspectHandler.ts); zone-overlay toggle + SVG renderer in bctc-inspector.html. Routes registered in server.ts.
+
+**Tests:** 34 pass / 0 fail (1272-push-bctc-layout: 25 tests, 1273-bctc-inspect-overlay: 9 tests). BCTC regression: 128 pass / 0 fail. tsc clean.
+
+**Zone health:** all frozen surfaces 0-diff (pushBctcMdTablesHandler/bctcInspectMdHandler); 158 tools, 70 cron.schedule — both unchanged. AC-LFO-0..6 MET; AC-LFO-7 OPEN (requires LF-EXTRACT corpus re-run after image rebuild). | HEALTHY
+
+---
+
+## c351 · 2026-06-02 (FU-BCTC-HISTORY-COVERAGE SPIKE) — COMMITTED f3bf4b61
+
+**Task:** FU-BCTC-HISTORY-COVERAGE — root-cause why get_cash_flow(FPT, quarters=8) returns only 2 quarters (SPIKE mode, no prod changes)
+
+**Census (live container queries):**
+- 13 tickers in financial_reports; max depth = 2 quarters; avg = 1.15; 11 tickers have only 1 quarter
+- FPT: 2025-Q4 + 2026-Q1 (DONE), CF sections present (33+34 rows). MWG: 0 rows in DB.
+- VCB: 2 rows (2025-Q1 + Q4) both PENDING — OCF scalars are OCR garbage (15-digit integers).
+
+**Root-cause verdict:**
+- (A) PRIMARY: Queue seeding is forward-only. `detectTargetQuarter()` + `backfillBctcQ4/Q1_2026` only ever seed 1 quarter at a time. No historical backfill seeder exists for Q2/Q3-2025 or 2024. bctc_vps_queue has NEVER contained any row for 2025-Q1, Q2, Q3 or 2024.
+- (B) SECONDARY: VCB 2 PENDING rows need re-refine (OCR garbage CF scalars).
+- (C) NOT a factor: CF section extraction is complete for all ingested reports.
+- (D) REFUTED: hsx.vn API live probe confirms 50+ PDFs for FPT going back to Q1-2022.
+
+**Remediation tasks proposed:** Task 1 `backfillBctcHistorical()` (S, dev-mcp-server), Task 2 VPS confirmation (XS, ops), Task 3 VCB re-refine (XS), Task 4 analyst ESC-3 gate.
+
+**Brief:** `docs/architecture-briefs/2026-06-02-bctc-history-coverage-spike.md`
+
+---
+
+## c350 · 2026-06-02 (FU-BCTC-TOOL-PARAMS) — COMMITTED 7ed5b722
+
+**Task:** FU-BCTC-TOOL-PARAMS — get_cash_flow honors `quarters` param (HIGH, S)
+
+**Bug fixed:** `quarters` param in schema was silently ignored; handler always returned LIMIT 1 single latest period regardless of requested N. Blocked analyst ESC-3 accrual decomposition FPT Q1-2026 (11-cycle loop).
+
+**Changes:**
+- `cashFlowTool.ts`: add `quarters` z.coerce.number().int().min(1).max(20).optional() to InputSchema + MCP tool registration. When effectiveQuarters ≥ 2: SQL `LIMIT 1 → LIMIT N`, `.get()→.all()`, builds `periods[]` array newest-first, attaches `quarters_requested`/`quarters_returned` to envelope. Top-level fields always = latest period (backward compat). period/year pin overrides quarters. WC scalars added: `wc_inventory`, `wc_current_assets`, `wc_cash` (financial_reports scalar columns); accounts_receivable/payable NOT exposed (balance_sheet_json only — noted in JSDoc). Both primary + fallback (vnstock) paths support series.
+- 6 existing test files: `inventory`/`current_assets`/`cash` columns added to in-memory DDL.
+- New test: `FU-BCTC-TOOL-PARAMS.test.ts` — 10 tests: series ordering, backward compat, period pin precedence, WC fields, vnstock fallback series, cold DB.
+
+**Results:** tsc EXIT 0. 50 pass / 0 fail (impacted suite: 7 files). 10 new tests pass. Pre-existing failures (Task 308 / get_technical_indicators / newsHeadlines = 9 total) confirmed identical before/after — unrelated to cash flow. ops_rebuild_required: mcp-server.
+
+---
+
 ## c349 · 2026-06-02 (BCTC-ANALYTICS-LAYER BAL-1a-BACKFILL) — COMMITTED b7329f54
 
 **Task:** BAL-1a-BACKFILL — Option R recompute-on-read in `get_bctc_full` serve path (architect-approved 2026-06-02T14:14Z)
@@ -145,15 +193,8 @@ Key sprints: MACRO-CMDTY-DELTA (c340), DYN-WF-FOUNDATION DWF-DEV-MCP-1 is_tradin
 
 ## Working Memory
 
-### Active Sprint: FU-TRUST-REFRESH
-- FU-6e DONE: committed b63d7988
-- FU-6f DONE: committed 9aa2b2eb (B-1 bank anchors, B-2 income_stmt_json sync, B-3 PUB-3 fix)
-- ops_rebuild_required: true (rebuild mcp-server → re-finalize ACB fea19bae + FPT e8ea3df5 → recompute eval both → QA re-gate)
-- B-3 note: no re-refine needed for PUB-3 fix; query change only
-
-### Baselines
-- tool=157, sched=70 (from c339)
-- Pre-existing: bctcRefineJob.ts 2 tsc errors + get_price_history test fail (cron_job_runs missing) — not caused by FU-TRUST-REFRESH changes
+### Baselines (c352)
+- tool=158, sched=70 | ops_rebuild_required: true (LF-OVERLAY live routes need image rebuild)
 
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`
