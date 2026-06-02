@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T17:30:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "BATCH-3 ENV-ISOLATION-P2 COMPLETE: EI-P2-1+2 LIVE-VERIFIED (startup assertion boots clean + data_env 5 tables), EI-P2-3 docker-compose.dev.yml (port 3099, dev-isolated), EI-P2-QA PASS (all 5 checks, 30 tests). 3 non-blocking follow-ups -> backlog (FU-EI-P2-COV-1/COV-2/DEV-VOLUME). NEXT BATCH-4: FU-BCTC-HISTORY-COVERAGE SPIKE (dev-mcp-server — only 2q FPT cash-flow in corpus, investigate ingest depth). Then B5 SIG-FOLLOWUP-DRYRUN, B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. Design-lane (separate): 1965-COVERAGE-SWEEP + PM-COMMIT-BOUNDARY-1974. GOAL=complete all task.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FU-BCTC-HISTORY-COVERAGE",
+    "next_agent": "dev-mcp-server",
+    "next_action": "BATCH-4 SPIKE: FU-BCTC-HISTORY-COVERAGE — investigate why only 2q cash-flow in financial_reports for FPT/peers; findings doc, no prod code. GOAL=complete all task.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T17:48:02Z",
+    "updated_at": "2026-06-02T17:48:22Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T17:48:02Z",
+    "_updated_at": "2026-06-02T17:48:22Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -239,7 +239,7 @@
             "depends": [
               "FU-BCTC-TOOL-PARAMS"
             ],
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "medium",
