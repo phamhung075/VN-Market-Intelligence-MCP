@@ -1,8 +1,37 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-02 12:00 UTC | **Sprint:** COWORK-LEADER-SELFLOCK
+**Last updated:** 2026-06-02 15:30 UTC | **Sprint:** BEQ-1-SPIKE
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-02T15:30Z — BEQ-1-SPIKE (BCTC extraction quality symptom-to-layer findings)
+
+**Brief:** `docs/architecture-briefs/2026-06-02-beq1-symptom-layer-findings.md`
+
+Three symptoms pinned, all to apps/mcp-server/ only, zero pdf-extractor changes needed.
+
+**Layer pins (one line each):**
+- (a) EMPTY CTG/VCB → **Refine-trigger**: OCR present (CTG 2 pages, VCB 72+54 pages),
+  `refined_units=0`, `refine_status=PENDING` for all three reports. Fleet cron never
+  dispatched. PUB-1 gate blocks get_bctc_full. CTG has extra blocker: cover-letter PDF.
+- (b) ZEROED secondary FPT/ACB → **Scalar-mapping**: `bctcScalarAggregator` ScalarAggregate
+  has 10 fields, missing operating_profit/cash/eps/ebitda/cf. Code-30=2.75T and code-110=
+  7.99T are in bctc_table_rows but never read by the aggregator. Garbage from initial
+  storeReport regex persists permanently.
+- (c) GARBAGE /docs scalars → **OCR-extractor + no serve guard**: LIST_SQL has no
+  refine_status filter; net_profit is read directly from financial_reports where PENDING
+  rows hold storeReport regex output (CTG=5, EIB=1, VNM=5.1e-05).
+
+**Raw values confirmed by direct DB query (bun /app/data/market.db via docker exec).**
+
+**Fix sequence for PM:** BEQ-4b (XS, no-risk YoY guard) → BEQ-4a (XS, /docs null guard)
+→ BEQ-2 (S, refine trigger audit) → BEQ-3 (M, full ScalarAggregate column audit).
+BEQ-5 (CTG PDF fetch) is prerequisite for CTG; separate backlog item.
+
+**Recurring-bug note:** bctcScalarAggregator.ts ≥5 fix commits → escalation-eligible.
+BEQ-3 must be full column audit pass, not another incremental patch.
+
+---
 
 ## 2026-06-02T12:00Z — COWORK-LEADER-SELFLOCK (leader-lock self-blocking fix)
 
@@ -57,156 +86,5 @@ gap flagged in brief §8 for PO backlog.
 
 **Phase 1 (Kinh Dich + prices):** 12 tasks FE-RR-1..12 + QA-1. Sequential: mcp-server → api-gateway → rebuild → QA.
 **Phase 2 (News + DB page):** 5 tasks FE-RR-13..17 + QA-2. After Phase 1 green.
-
----
-
-## 2026-06-02T08:30Z — A-01b-1 DASHBOARD FALSE-RED (not-deployed status)
-
-**Brief:** `docs/architecture-briefs/2026-06-02-dashboard-health-not-deployed.md`
-**SSOT edit:** `docs/data/system-map.json` — added `short_key_to_compose` map + `not_deployed_short_keys` array; fixed `_ssot` self-ref (was `.infrastructure.docker...`, now `.project.infrastructure.docker...`).
-
-Root cause confirmed: api-gateway probes all 9 services, 7 time-out → `StatusDown`, `ComputeOverallStatus` sees mixed → `degraded`. Not a real outage.
-
-**Decisions made (unambiguous for devs):**
-- Enum literal: `"not_deployed"` (Go const `StatusNotDeployed`, TS union extension).
-- Classify-before-probe in `AggregateHealthService.Aggregate`; inject `[]string` via constructor + `NOT_DEPLOYED_SERVICES` env default.
-- `ComputeOverallStatus`: filter `not_deployed` entries before OK/DEGRADED/DOWN loop; empty-after-filter → `"ok"` (not `"down"`).
-- Frontend: grey `NOT DEPLOYED` badge; latency guard `>= 0`; info sub-text when `ok` + any `not_deployed`.
-- Sequential dispatch: A-01b-2 (api-gateway) first, A-01b-3 (frontend) second.
-
-**QA DoD anti-false-green: two mandatory clauses (A=not-deployed-grey, B=real-docker-stop-still-fires-red).**
-
----
-
-## 2026-06-02T05:04Z — BCTC-EXTRACT-QUALITY (BEQ-1 diagnostic spike)
-
-**Brief:** `docs/architecture-briefs/2026-06-02-bctc-extract-quality.md`
-
-4 symptoms, all root-caused to one structural gap: refine pipeline covers <50% of corpus.
-
-**A. EMPTY (CTG/VCB):** refine_status=PENDING, 0 bctc_refined_units, PUB-1 gate blocks
-get_bctc_full. CTG also has cover-letter-only PDF (2 pages, no tables). Not a parser
-failure — refine job was never dispatched for these tickers.
-
-**B. ZEROED SECONDARY LINES (FPT/ACB):** bctcScalarAggregator writes only 10/~20 columns.
-operating_profit/ebitda/cash/EPS are NOT in ScalarAggregate — they permanently hold the
-legacy OCR-parse placeholder (0 or 1). FPT code=30 value=2.75T IS in table_rows but
-is never read by the aggregator. Pure mapping scope gap. Recurring-bug flag: ≥5 fix
-commits on bctcScalarAggregator.ts — escalation warranted, full column audit needed.
-
-**C. GARBAGE /docs SCALARS:** /docs reads financial_reports.net_profit directly.
-Same column as get_bctc_full; no divergence. PENDING tickers retain OCR-parse garbage.
-VNM=5.1e-05: 143 table_rows all NULL value_current + no refine units. CTG=5, EIB=1:
-near-zero from failed regex on cover-letter/degraded OCR.
-
-**D. CONTAMINATION (FPT YoY):** FPT 2025-Q4 prior period has net_profit=20,225M =
-net_revenue÷1000 (legacy OCR unit-scale bug, pdf-parse path). buildComparisonSection
-has no refine_status guard on the prior row → uses garbage as baseline. 2-line fix.
-
-**Fix plan:** BEQ-4 (guard, XS) → BEQ-2 (refine trigger, S) → BEQ-3 (full column audit, M)
-→ BEQ-5 (CTG PDF fetch, existing BCTC-CTG-ATTACHMENT-FETCH backlog).
-All separable from BCTC-LAYOUT-FIRST.
-
----
-
-## 2026-06-01T21:30Z — DASHBOARD-STATE-SYNC (analysis-only brief)
-
-**Brief:** `docs/architecture-briefs/2026-06-01-dashboard-state-sync.md`
-
-Brownfield recon: orchestration state (pipeline-state.json, TASKS.md, DASHBOARD.md,
-agent notebooks, analysis-briefs) lives ONLY in repo docs/ — no container reachable,
-no HTTP endpoint, zero frontend surface. mcp-server has docs/agent-memory mounted but
-NOT pipeline-state.json / TASKS.md / signals/DASHBOARD.md.
-
-Recommendation: Option A — new read-only mcp-server endpoints + new volume mounts +
-frontend Remix loader routes through api-gateway. REJECTED: Option B (frontend bind-mount
-violates gateway-only rule), Option C (sync-to-DB over-engineered for hourly cadence).
-
-Critical flag: NEVER parse TASKS.md/DASHBOARD.md markdown in an endpoint. Mandate JSON
-twins (tasks-state.json, signals-state.json) emitted by PO/signal-dashboard skill as
-machine-readable projections BEFORE dev impl.
-
-Phase 1: pipeline-state.json endpoint only (safe, no parsing risk, immediate value).
-Phase 2: tasks + signals after twins shipped.
-
-Scope: ~14–18 atomic tasks across 3 zones (agent-father, dev-mcp-server, dev-frontend).
-
----
-
-## 2026-06-01T20:45:42Z — FBT-ARCH (FRONTEND-BCTC-TAB)
-
-**Brief:** `docs/architecture-briefs/2026-06-01-frontend-bctc-inspect-tab.md`
-
-A2 server-side proxy design locked for surfacing the BCTC Inspect viewer as a new dashboard tab in apps/frontend; two Remix resource routes + one NAV_ITEMS entry, zero mcp-server edits, with full binary-stream passthrough contract for PDF and PNG sub-paths.
-
-**Signal dropped:** `docs/signals/frontend-bctc-inspect-tab.json` → agent-father → dev-frontend
-
----
-
-## VPS-DEPLOY-PLACEHOLDER-GUARD (2026-06-01T11:20 UTC) — DEPLOY GUARD DESIGN
-
-**Sprint:** VPS-DEPLOY-PLACEHOLDER-GUARD | Task: ARCH (a/b/c boundary design)
-
-**Root cause confirmed (raw-read):** `scripts/deploy-vps-proxy.sh` render step EXISTS (L108-110) but cafef sprint 814088b0 bypassed it via ad-hoc scp, clobbering `/root/fetch-vn-news.sh` with raw template. 6 hardcode-no-fallback scripts; 9 already safe.
-
-**Key brownfield findings:**
-- Deploy script deploys 5 services (prices/bctc/news/sbv/foreign-flow). NOT deployed: tradingeconomics, gso, enrich-bctc-urls, article-body-fetcher.py.
-- `article-body-fetcher.py` has ZERO `__PLACEHOLDER__` tokens (it takes `--url` as CLI arg, no MCP contact directly). Pre-scp assert trivially passes for it.
-- `fetch-tradingeconomics.sh` has a 3rd placeholder `__TE_API_KEY__`. Deploy script has no sed rule for it. GUARD-2 must use empty-string fallback for TE_API_KEY (not `__TE_API_KEY__`) to avoid GUARD-1 false-block.
-
-**Decisions:**
-- GUARD-2: ALL-6 scripts in one slice (symmetric blast radius, convert-all prevents future recurrence of same class)
-- GUARD-1 regex: `__[A-Za-z][A-Za-z0-9_]*__` (case-insensitive, broader than original brief)
-- GUARD-3 scope: article-body-fetcher.py + pip3 install bs4 only; tradingeconomics/gso/enrich deferred
-- Zone: dev-vps-crawls owns all three guards + scripts/deploy-vps-proxy.sh changes
-- DV test: inject `__GUARD_TEST_TOKEN__` into fixture → pre-scp assert must exit 1 before scp
-
-**Brief:** `docs/architecture-briefs/2026-06-01-vps-deploy-placeholder-guard.md`
-
----
-
-## PROSE-DEV-1 (2026-05-31T23:00 UTC) — PROSE TEXT LOSS ROOT CAUSE
-
-**Sprint:** PROSE-DEV-1 | Task: ARCH (operator defect — prose pages blank in Văn bản OCR tab)
-
-**Root cause: display layer only (Layer C). Zone: dev-mcp-server.**
-
-**Evidence (concrete, from live DB + code):**
-- Layer A (extraction): CLEAN. `pdf_extracted_text` has all 27 ACB pages, text_len 352-2327.
-- Layer B (storage/refine): CLEAN. `bctc_refined_units` has 27 DONE prose units, md_len 129-2431.
-- Layer C (viewer): ROOT CAUSE. `handleBctcInspectOcr` in `bctcInspectHandler.ts` queries `bctc_layout_units WHERE page_type='table'`. ACB has 5 prose-typed PEK units with `stitched_markdown=""`. When a prose page is requested: table filter returns null → coverage-gap path emits `text_content:""` → viewer shows "No PEK unit for page N". Raw OCR in `pdf_extracted_text` is never consulted.
-
-**Fix (PROSE-DEV-1):**
-1. `bctcInspectHandler.ts`: in coverage-gap branch, add `pdf_extracted_text` fallback query for the requested page. Serve `text_content: rawRow.text_content` (+ `confidence: rawRow.confidence`) while keeping `pek_coverage_gap:true`.
-2. `bctc-inspector.html`: render `text_content` when `pek_coverage_gap=true` (remove static "No PEK unit" message, replace with gap banner + raw text).
-
-**DV test:** `PROSE-DEV-1-prose-text-display.test.ts` — DV-1 RED (text_content="" before) / GREEN (text_content="Prose page one content" after). DV-2/DV-3 regressions green throughout.
-
-**Brief:** `docs/architecture-briefs/2026-05-31-prose-text-loss.md`
-
----
-
-## VPS-DEPLOY-PLACEHOLDER-GUARD — DEPLOYER CONSOLIDATION (2026-06-01T14:12 UTC)
-
-**Sprint:** VPS-DEPLOY-PLACEHOLDER-GUARD | Task: ARCH (wrong-deployer design decision)
-
-**Decision: OPTION A — Consolidate to deploy-vinahost.sh as single canonical deployer.**
-
-**Verification raw (independent read):**
-- `deploy-vinahost.sh` → Vinahost 125.212.251.27 (live), 9 services, 0 guards.
-- `deploy-vps-proxy.sh` → Vultr 139.180.185.18 (dead since 2026-04-13), 5 services, GUARD-1/2/3.
-- `deploy-vinahost.sh` ALREADY has `__TE_API_KEY__` sed rule at L232-234.
-- `fetch-tradingeconomics.sh` L15 VPS-side graceful-skip: correct defence-in-depth, retain as-is.
-- `enrich-bctc-urls.sh` fully covered by vinahost section 7; no extra guards needed.
-
-**Rationale (A over B):** B keeps Vultr deployer alive → future agents keep landing work on dead host.
-GUARD-1 post-deploy SSH verify in deploy-vps-proxy.sh would connect to dead server = false-green.
-deploy-vinahost.sh ships superset (9 vs 5 services); no service in deploy-vps-proxy.sh is absent.
-article-body-fetcher.py must reach Vinahost (cafef endpoint consumer is mcp-server on Vinahost).
-
-**Task map for PM:** T1=OPS-RECON(ops gate) → T2=GUARD-1 migrate 9 blocks → T3=GUARD-3 article-body
-block → T4=retire deploy-vps-proxy.sh + remove VULTR_IP/.env → T5=QA (DV-1..6).
-
-**Brief:** `docs/architecture-briefs/2026-06-01-vps-deployer-consolidation.md`
 
 ---
