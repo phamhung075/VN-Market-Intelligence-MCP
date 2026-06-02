@@ -1,4 +1,4 @@
-<!-- size-justification: 783L — single dispatcher flow; cron-match logic extracted to scripts/agents-flow/cowork-match-slots.js. Step 0b leader lock (DWF-DEV-CROSS-4 Phase 2) + Step 4.6 per-work-item token (R1/R3 blocking, suffix-free, ttl=180s) + Step 4.6b heartbeat (DWF-DEV-CROSS-4) + Step 4.7 tick-snapshot (1968c-P01) + Step 4.8 pressure-state emitter (DWF-DEV-CROSS-3) + §drift-min threshold table (1967-09) + Step 5 published-marker gate instruction text (DWF-DEV-CROSS-5 FR-P2-7) added inline for auditability. Error boundary + telemetry + collision guard remain inline. Split deferred until next architectural sprint. -->
+<!-- size-justification: 802L — single dispatcher flow; cron-match logic extracted to scripts/agents-flow/cowork-match-slots.js. Step 0b leader lock (DWF-DEV-CROSS-4 Phase 2 + COWORK-LEADER-SELFLOCK own-held fix) + Step 4.6 per-work-item token (R1/R3 blocking, suffix-free, ttl=180s) + Step 4.6b heartbeat (DWF-DEV-CROSS-4) + Step 4.7 tick-snapshot (1968c-P01) + Step 4.8 pressure-state emitter (DWF-DEV-CROSS-3) + §drift-min threshold table (1967-09) + Step 5 published-marker gate instruction text (DWF-DEV-CROSS-5 FR-P2-7) added inline for auditability. Error boundary + telemetry + collision guard remain inline. Split deferred until next architectural sprint. -->
 
 # cowork-team — Master Cron Dispatcher
 
@@ -36,9 +36,13 @@ Mark each processed row `NEW → READ` (atomic write). If orch-state.json missin
 
 ## Step 0b — Claim cowork-leader lock (DWF-DEV-CROSS-4 Phase 2 — FR-P2-5)
 
-<!-- Leader lock: ensures exactly one session leads each tick. Two+ concurrent CLI sessions
-     sharing the same mcp-server Docker process cannot both dispatch. WIN → proceed.
-     LOSE → silent exit, no dispatch, no WORK message.
+<!-- Leader lock: ensures exactly one session leads each tick.
+     WIN (claimed=true)            → proceed immediately.
+     OWN-HELD (claimed=false + heartbeat ok=true) → renew + proceed.
+       Own-held arises when Step 4.6b extended TTL beyond the next tick (1800s > 900s gap).
+       Heartbeat probe is the discriminator: only the holding OS process can renew it
+       (server-side owner_session = pid-<pid>-ts-<startupTs>; caller cannot spoof it).
+     PEER-HELD (claimed=false + heartbeat ok=false) → silent exit, no dispatch.
      TTL = 1800s (2 × 15-min heartbeat). MUST be explicit — never rely on default 3600s (AC-P2-5-3).
      Heartbeat: after dispatch body (Step 4.6b), extend TTL from current time.
      Dark window after force-recreate: max 1800s — see docs/protocols/dwf-ops-runbook.md. -->
@@ -53,13 +57,29 @@ LEADER_CLAIM=$(call_tool(server="vn-market", tool="task_claim", arguments={
 ```
 
 ```
-if LEADER_CLAIM.claimed != true:
-  # Another session holds the leader lock — silent exit
-  log "[cowork] leader lock held by peer — silent exit"
-  EXIT
-```
+if LEADER_CLAIM.claimed == true:
+  # Fresh claim — this session just won the lock; proceed
+  log "[cowork] leader lock claimed fresh — proceeding"
+  → PROCEED (continue to Step 1)
 
-Win → proceed with dispatch body.
+else:
+  # Lock held by someone. Disambiguate: own-held vs peer-held via heartbeat probe.
+  # task_heartbeat is guarded server-side by owner_session = pid-<pid>-ts-<startupTs>;
+  # only the holding OS process gets ok=true — a concurrent peer session gets ok=false.
+  LEADER_HB=$(call_tool(server="vn-market", tool="task_heartbeat", arguments={
+    task_id: "cowork-leader"
+  }))
+
+  if LEADER_HB.ok == true:
+    # Heartbeat succeeded — THIS process holds the lock (renewed +1800s from now)
+    log "[cowork] leader lock self-held — heartbeated to " + LEADER_HB.expires_at + ", proceeding"
+    → PROCEED (continue to Step 1)
+
+  else:
+    # Heartbeat rejected — a different process holds the lock
+    log "[cowork] leader lock held by peer — silent exit"
+    EXIT
+```
 
 ---
 
