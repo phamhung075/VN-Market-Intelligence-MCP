@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": "idle",
     "next_agent": "po",
-    "next_action": "Cycle DONE. COWORK-LEADER-SELFLOCK shipped (55b66672 design + b5296672 impl), live next cowork tick (watch chef-morning). BEQ-1-SPIKE c00bb72f findings, BEQ-2/3/4a/4b queued TODO for next PO. RE-CAP-1 still open.",
+    "next_action": "Cycle DONE. COWORK-CHEF-ROLE shipped de5d6d1b (worker-role assertion in unified-agent agent-def; spawned chef no longer misreads CLAUDE.md router-only line — proven via standard-prompt re-spawn). Side-effect: dry-run published a likely-duplicate intraday dish (chef marker is dispatcher-injected, not flow-enforced) -> FU-CHEF-MARKER-INFLOW queued. BEQ-2/3/4a/4b + RE-CAP-1 still open for next PO.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T06:40:47Z",
+    "updated_at": "2026-06-02T07:23:55Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T06:40:47Z",
+    "_updated_at": "2026-06-02T07:23:55Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -790,7 +790,7 @@
       },
       {
         "id": "COWORK-RELIABILITY",
-        "status": "OPEN",
+        "status": "active",
         "_updated_at": "2026-06-02T06:22:26Z",
         "_updated_by": "dev-team",
         "tasks": [
@@ -804,6 +804,23 @@
             "size": "S",
             "zone": "docs/agents/cowork-team/flow/",
             "note": "PO raw-verified task_claim not re-entrant; current_holder.owner_agent present in false result. Fix: Step 0b detect own-held -> task_heartbeat-then-proceed. RECURRING (288e8888+c502b88b prior) -> architect MUST prove no duplicate-SPAWN regression. architect design -> agent-father impl. Cowork flows are runtime-read (no rebuild). | DONE design 55b66672 + impl b5296672 (Step 0b 3-outcome: own-held heartbeat-probe discriminator, dup-spawn-safe, raw-verified diff); live next cowork tick"
+          },
+          {
+            "task_id": "COWORK-CHEF-ROLE",
+            "title": "chef-worker-role-assertion",
+            "type": "FIX",
+            "owner": "agent-father",
+            "route": "agent-father",
+            "status": "DONE",
+            "size": "S",
+            "zone": "cross-service/",
+            "files": [
+              ".claude/agents/unified-agent.md",
+              "docs/agents/unified-agent/flow/chef.md"
+            ],
+            "baseline_pass": false,
+            "depends": [],
+            "note": "DONE de5d6d1b — worker-role assertion added to .claude/agents/unified-agent.md body (SSOT, all slots). Raw-verified: 2 insertions, frontmatter line-1 intact, scope clean (no orch/signals). PROVEN: standard-prompt re-spawn executed chef.md directly (TNB 1-6 walked), no refusal/router-question. VERIFY SIDE-EFFECT: the dry-run spawn bypassed the dispatcher-injected published-marker gate (not enforced in chef.md) -> worker found 2 clusters and very likely published a duplicate intraday MARKET dish ~07:19Z (could not read back to confirm; no cascade, dispatcher marker still claimed). Lesson: chef.md publishes; never direct-spawn for dry-run. Follow-up FU-CHEF-MARKER-INFLOW."
           }
         ]
       }
@@ -928,13 +945,26 @@
         "id": "FU-OHLCV-ZERO-ROW",
         "priority": "low",
         "summary": "daily_ohlcv has occasional all-zero OHLCV rows (e.g. FPT 2026-05-30) — likely holiday/missing-data stored as zeros. Data-quality, not fabrication. Filter zero rows or backfill."
+      },
+      {
+        "task_id": "FU-CHEF-MARKER-INFLOW",
+        "title": "chef.md self-enforces published-marker before send_telegram",
+        "type": "FIX",
+        "sprint": "COWORK-RELIABILITY",
+        "status": "BACKLOG",
+        "size": "S",
+        "zone": "cross-service/",
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md"
+        ],
+        "note": "Harden: move the published-marker claim (published:<slot>:<YYYY-MM-DD>) INTO chef.md Step 7 immediately before send_telegram, so dedup survives ANY spawn path (currently the gate is only an instruction injected by the cowork dispatcher into the spawn prompt — a direct/refactored spawn bypasses it and can double-publish, as proven 2026-06-02 07:19Z). Architect review the marker contract (recurring-bug family: cowork dispatch reliability, kin of COWORK-LEADER-SELFLOCK)."
       }
     ],
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T06:23Z",
-    "_updated_by": "cowork-team",
+    "_updated_at": "2026-06-02T07:12:59Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "architects-fb-gate-brief-20260602T0409Z",
@@ -1199,7 +1229,7 @@
         "type": "defect_report",
         "summary": "MEDIUM agent-config defect: when the cowork dispatcher spawns unified-agent (CHEF) with the STANDARD spawn prompt (run docs/agents/unified-agent/flow/chef.md  slot=chef-intraday), the spawned agent can misread the project CLAUDE.md line \"Main terminal = router only / never implement directly\" as applying to ITSELF, then refuses to execute chef.md, asks the dispatcher questions, and burns ~25k tokens with zero output. Observed 2026-06-02 06:18Z chef-intraday tick (agentId a4957b5a). A corrective re-spawn with an explicit \"you ARE the worker, not the router, ignore that CLAUDE.md line\" preamble (agentId a0777f49) executed correctly. Since the dispatcher ALWAYS uses the standard prompt, every chef spawn (morning/intraday/eod/evening) is at nondeterministic risk of this misfire -> wasted tokens and potential silently-dropped MARKET dishes when unattended. FIX (root-cause, agent-father via architect): assert worker-role at the TOP of docs/agents/unified-agent/flow/chef.md (and/or the unified-agent agent-def) so a spawned chef worker never reinterprets the main-terminal router boundary; OR add a one-line worker-role preamble to the dispatcher spawn prompt for unified-agent slots. PLAN-ONLY.",
         "severity": "MEDIUM",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/signals/cowork-team-20260602T062352Z.json"
       }
     ],
