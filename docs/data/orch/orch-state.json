@@ -5,12 +5,12 @@
   "_updated_by": "agent-father",
   "head": {
     "status": "in_progress",
-    "active_task_id": "CW-BACKLOG-MISCOUNT",
-    "next_agent": "agent-father",
-    "next_action": "BATCH-EXEC :07 (2 XS FIX). T1 CW-BACKLOG-MISCOUNT (agent-father, maintenance-lane mutex-wrap): narrow cowork L534 backlog glob to exclude own heartbeats; raw-verify glob fix + L317/L330 deep-sleep reachable. T2 NB-NSCOUT-PRUNE (claude-manager-helper): prune news-scout.md 222->=<200; VERIFY wc+git-clean (janitor false-green history). Sequential (shared git index). GOAL=complete all task.",
-    "wip": 2,
+    "active_task_id": "NB-NSCOUT-PRUNE",
+    "next_agent": "claude-manager-helper",
+    "next_action": "T2 NB-NSCOUT-PRUNE (claude-manager-helper, maintenance-lane mutex-wrap): prune news-scout.md 222->=<200L per notebook-write AC-6. ROUTER MUST VERIFY (janitor false-green history feedback_janitor_false_green_verify): wc -l <=200 AND no section >60L AND git status clean after its run. Then post-cycle + head idle. GOAL=complete all task.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T18:45:40Z",
+    "updated_at": "2026-06-02T18:49:59Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T18:45:40Z",
+    "_updated_at": "2026-06-02T18:49:59Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -857,7 +857,7 @@
             "title": "Prune news-scout notebook 222L -> <=200L (APPEND-class cap breach, ctx-bloat x3)",
             "type": "FIX",
             "owner": "claude-manager-helper",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "XS",
             "zone": "docs/agent-memory/notebooks/",
             "priority": "medium",
@@ -1175,11 +1175,11 @@
             "title": "cowork signal_backlog count excludes its own heartbeats (self-telemetry poisons adaptive-cadence tier + blocks deep-sleep)",
             "type": "FIX",
             "owner": "agent-father",
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "XS",
             "zone": "docs/agents/cowork-team/",
             "priority": "high",
-            "note": "PO triage :07 2026-06-02 (router COWORK-HEARTBEAT-DRIFT finding, PO-corrected). DEFINITIF: cowork-team/flow/main.md L534 SIGNAL_BACKLOG=ls docs/signals/*.json counts cowork-team's OWN heartbeats (37/44) -> PRESSURE_STATE.signal_backlog (L574) -> computeTiers L271-272 pins signal_backlog_tier HIGH forever; ALSO deep-sleep guards L317/L330 (signal_backlog==0) unreachable. Fix=narrow L534 glob to exclude cowork-team-*.json (own heartbeat != inbox backlog). NOT prune-symptom. Router note to agent-father: also verify whether envelope-LESS {ts,classification} heartbeats are a 2nd writer vs cowork-tick-autosilent.sh enveloped ones; align if drift, but backlog-count is the binding fix."
+            "note": "PO triage :07 2026-06-02 (router COWORK-HEARTBEAT-DRIFT finding, PO-corrected). DEFINITIF: cowork-team/flow/main.md L534 SIGNAL_BACKLOG=ls docs/signals/*.json counts cowork-team's OWN heartbeats (37/44) -> PRESSURE_STATE.signal_backlog (L574) -> computeTiers L271-272 pins signal_backlog_tier HIGH forever; ALSO deep-sleep guards L317/L330 (signal_backlog==0) unreachable. Fix=narrow L534 glob to exclude cowork-team-*.json (own heartbeat != inbox backlog). NOT prune-symptom. Router note to agent-father: also verify whether envelope-LESS {ts,classification} heartbeats are a 2nd writer vs cowork-tick-autosilent.sh enveloped ones; align if drift, but backlog-count is the binding fix.| DONE-LIVE-VERIFIED 2026-06-02T18:50Z commit 5fa449cf (agent-father). L534 narrowed: SIGNAL_BACKLOG=ls docs/signals/*.json | {grep -v /cowork-team- || true} | wc -l. Router raw-verify: 1 file 7+/2-, no force-add; independent re-count all=45 excluded=7 cowork-team=38 (45-38=7); empty-inbox edge yields 0 (deep-sleep guard L330 reachable). Count grew 44->45 mid-task = accumulation live, fix needed. Flow read live, no rebuild."
           }
         ]
       }
@@ -1420,6 +1420,17 @@
         "zone": "infra-vps",
         "priority": "high",
         "note": "ops BCTC-HIST-FETCH-VERIFY found 10/10 current-season 404s; prior 8 done so endpoint was reachable; investigate whether VPS cache went thin"
+      },
+      {
+        "task_id": "FU-COWORK-HEARTBEAT-SCHEMA",
+        "title": "cowork-team heartbeat schema drift: live session emits flat {agent,ts,tick_nominal,classification,...} but Step 6 (L754) + cowork-tick-autosilent.sh document/write enveloped {from,to,type,createdAt}",
+        "type": "FIX",
+        "owner": "agents-architect",
+        "status": "BACKLOG",
+        "size": "S",
+        "zone": "docs/agents/cowork-team/",
+        "priority": "low",
+        "note": "agent-father secondary finding during CW-BACKLOG-MISCOUNT: TWO writers. (1) scripts/agents-flow/cowork-tick-autosilent.sh writes enveloped {from,to,type,payload,priority,createdAt} (matches Step 6 L754 spec); (2) live session main.md runtime writes flat {agent,ts,tick_nominal,drift_min,classification,...} (diverges). All 37 on-disk = flat. Both share cowork-team- prefix so both correctly excluded by CW-BACKLOG-MISCOUNT. Separate cleanup: reconcile Step 6 spec vs live runtime output (doc-or-impl). LOW — backlog-count already fixed."
       }
     ],
     "archive": []
