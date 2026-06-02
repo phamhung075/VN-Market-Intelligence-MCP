@@ -265,6 +265,7 @@ services:
     - KINH_DICH_URL=http://kinh-dich-service:5005
     - ALERT_URL=http://alert-engine:5006
     - NEWS_URL=http://news-fetch:5008
+    - SYSTEM_MAP_PATH=/etc/system-map/system-map.json
     restart: unless-stopped
     healthcheck:
       test:
@@ -284,6 +285,8 @@ services:
         reservations:
           memory: 256m
           cpus: '0.25'
+    volumes:
+    - ./docs/data/system-map.json:/etc/system-map/system-map.json:ro
   kinh-dich-service:
     build:
       context: apps/kinh-dich-service
