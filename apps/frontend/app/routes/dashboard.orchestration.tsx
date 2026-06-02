@@ -25,8 +25,13 @@
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData } from "@remix-run/react";
+import { useLoaderData, useRevalidator } from "@remix-run/react";
+import { useEffect } from "react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
+
+// Polling interval for live data refresh (ms). Pause-on-hidden keeps the tab
+// from hammering the proxy while backgrounded.
+const POLL_MS = 5000;
 
 export const meta: MetaFunction = () => [
   { title: "Orchestration State — VN Market Intelligence" },
@@ -550,6 +555,38 @@ function NarrativePanel({ narrative }: { narrative: Narrative | undefined }) {
 
 export default function OrchestrationDashboard() {
   const { state, error, fetchedAt, isStale } = useLoaderData<typeof loader>();
+  const revalidator = useRevalidator();
+
+  // Client-side auto-refresh: poll every POLL_MS while the tab is visible.
+  // Guards:
+  //   - skip tick if a revalidation is already in flight (revalidator.state !== "idle")
+  //   - pause when tab is hidden; trigger one immediate refresh on return to visible
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === "visible" && revalidator.state === "idle") {
+        revalidator.revalidate();
+      }
+    };
+
+    const intervalId = setInterval(tick, POLL_MS);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && revalidator.state === "idle") {
+        revalidator.revalidate();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [revalidator]);
+
+  const isLive = typeof document !== "undefined"
+    ? document.visibilityState === "visible"
+    : false;
 
   return (
     <div className="max-w-6xl space-y-6">
@@ -557,6 +594,20 @@ export default function OrchestrationDashboard() {
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="text-2xl font-bold text-slate-100">Orchestration State</h1>
         {isStale && <StaleBadge />}
+        {/* LIVE polling indicator — green dot + label; dims to "refreshing…" on in-flight revalidation */}
+        <span className="flex items-center gap-1.5 text-xs">
+          {isLive && (
+            <span
+              aria-hidden="true"
+              className="inline-block h-2 w-2 rounded-full bg-green-400 animate-pulse"
+            />
+          )}
+          {revalidator.state === "loading" ? (
+            <span className="text-slate-400">· refreshing…</span>
+          ) : (
+            <span className="text-green-500 font-medium">LIVE</span>
+          )}
+        </span>
         <span className="ml-auto text-xs text-slate-500">
           Page fetched: <ClientTimestamp iso={fetchedAt} />
         </span>
