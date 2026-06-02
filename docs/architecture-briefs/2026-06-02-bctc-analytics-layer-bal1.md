@@ -352,3 +352,23 @@ Written to `docs/signals/bctc-analytics-layer-bal1-20260602T110455Z.json` alongs
 ---
 
 *Brief authored by agents-architect 2026-06-02T11:04:55Z per recurring-bug-escalation policy. Root causes verified by direct source code read. All file paths are absolute.*
+
+---
+
+## BAL-1a-BACKFILL Decision (2026-06-02)
+
+**Chosen Option: R — Recompute-on-Read**
+
+**Rationale:**
+
+Option R is the definitive fix, not a symptom patch. Option B (one-shot UPDATE backfill) leaves the class alive for any row finalized before BAL-1a and requires a migration script that can fail silently; it also does not protect against future records ingested before a re-finalize step runs. Option R is superior on two structural grounds. First, the near-zero stale value case (VNM `roe=2.75e-10`) does not trigger PUB-6 because `|2.75e-10| < 300` — the bounds guard catches out-of-range ratios, not stale near-zero ones. This means PUB-6 alone cannot protect VNM even after BAL-0 ships; only reading correct values eliminates the display defect. Second, the base scalars (`net_profit`, `equity_total`, `total_assets`, `short_term_debt`, `long_term_debt`, `cash`, `ebitda`) are confirmed correct in every persisted row (the refine pipeline writes them); five floating-point divisions per `get_bctc_full` call is negligible overhead. On the double-source-of-truth question: once read-time recompute is the authority, the persisted ratio columns become a derived-cache with no consumer in the serve path. They should be treated as deprecated-cache: leave them in the schema to avoid a migration, but never read them in `get_bctc_full` (the recomputed values shadow them entirely). The finalize-time ratio write introduced by BAL-1a (`finalizeBctcRefineTool.ts` BLOCK-3) becomes redundant but harmless — it may be removed in a future cleanup sprint (FU-BCTC-RATIO-COL-DEPRECATE) once the recompute-on-read path is verified stable.
+
+**Implementation directive for dev-mcp-server:**
+
+In `apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts`, modify the `get_bctc_full` handler so that immediately after the persisted `latestRow` is read from the DB and before `checkPublishability` is called (around L751), recompute the five ratio values from the correct persisted base scalars using the `safeDivide` inline pattern already present in `ratioComputer.ts` (do NOT import `computeFinancialRatios` — that function requires a full structured parse object which is not available at serve time; instead inline the five scalar formulas directly in the handler): `roe = net_profit / equity_total × 100` (guard: `equity_total > 0 && equity_total != null`); `roa = net_profit / total_assets × 100` (guard: `total_assets > 0 && total_assets != null`); `current_ratio = current_assets / total_liabilities_current` (guard: `total_liabilities_current > 0 && total_liabilities_current != null`); `debt_to_equity = (short_term_debt + long_term_debt) / equity_total` (guard: `equity_total > 0 && equity_total != null`); `net_debt_to_ebitda = (short_term_debt + long_term_debt - cash) / ebitda` (guard: `ebitda > 0 && ebitda != null`). Any denominator that is null, zero, or negative must yield `null` (not 0, not Infinity). Assign the five recomputed values back onto `latestRow` (mutate in place: `latestRow.roe = recomputedRoe` etc.) so that `checkPublishability` (which receives `latestRow`) sees the correct values and PUB-6 bounds-checks operate on correct data. The persisted ratio columns in `financial_reports` are now treated as deprecated-cache — `get_bctc_full` must never use them directly again after this change; the `latestRow.roe` / `latestRow.roa` references in `buildSummarySection` (L194–195, L224–225) will automatically pick up the recomputed values because they operate on the same `latestRow` object. No DB write is required. No schema migration is required.
+
+**Live-verify acceptance test:**
+
+Call `get_bctc_full(code="VNM")` after container rebuild. Expected: `ROE` renders approximately `27.3%` (derived from `net_profit ≈ 9,413.6 tỷ / equity_total ≈ 34,483 tỷ`), `ROA` renders a plausible single-digit percentage, `Net Debt/EBITDA` renders a plausible value (not astronomical). Verify that PUB-6 no longer fires a `partialWarning` for VNM (i.e., the `[PUB-6] Some ratio(s) withheld` note is absent from the output, because the recomputed values are within bounds). PUB-6 should remain in the code as a backstop for corrupted base-scalar edge cases — it must not be removed.
+
+**Authored:** agents-architect 2026-06-02T14:14:14Z — BAL-1a-BACKFILL recurring-bug-escalation (4th touch of bctcFullTools.ts serve-path / publishability family).

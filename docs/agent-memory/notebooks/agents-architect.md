@@ -136,6 +136,16 @@ fb-market-poster STEP 4 check 3 is pure model self-attestation — false-greened
 
 ---
 
+## 2026-06-02T14:14:14Z
+
+**Brief:** `docs/architecture-briefs/2026-06-02-bctc-analytics-layer-bal1.md` (addendum § BAL-1a-BACKFILL Decision)
+
+BAL-1a-BACKFILL recurring-bug-escalation (4th touch): DECIDED Option R (recompute-on-read) over Option B (one-shot backfill). Key insight: PUB-6 bounds check does not catch near-zero stale values (VNM roe=2.75e-10 passes the |roe|>300 guard), so only computing from correct base scalars on every read eliminates the defect class. Implementation: in `bctcFullTools.ts` get_bctc_full handler, inline-recompute 5 ratios from persisted base scalars immediately after DB read, mutate latestRow in place before checkPublishability call; persisted ratio columns become deprecated-cache (never read in serve path). PUB-6 stays as backstop for bad-scalar edge cases.
+
+**Signal dropped:** none (addendum to existing brief — dev-mcp-server already signaled via BAL-0-DEV task)
+
+---
+
 ## 2026-06-02T03:16:33Z
 
 **Brief:** `docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md`
