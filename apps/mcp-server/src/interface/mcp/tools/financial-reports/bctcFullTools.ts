@@ -172,7 +172,12 @@ function rowToMetrics(row: ReportRow, bankForm = false): FinancialMetrics {
  *
  * Exported for testability (DV-BANK-2).
  */
-export function buildSummarySection(code: string, row: ReportRow, bankForm = false): string {
+export function buildSummarySection(
+  code: string,
+  row: ReportRow,
+  bankForm = false,
+  sanitizedRatios?: PublishabilityCheck["sanitizedRatios"],
+): string {
   // C-2: gross profit line — banks show net interest income proxy instead
   const grossProfitLine = bankForm
     ? `Net Interest Inc.: ${fmtBillions(row.net_revenue)}  (net interest income — maps to net_revenue)`
@@ -182,6 +187,19 @@ export function buildSummarySection(code: string, row: ReportRow, bankForm = fal
   const currentRatioLine = bankForm
     ? `Current Ratio    : N/A (bank — no current assets concept)`
     : `Current Ratio    : ${fmtX(row.current_ratio)}`;
+
+  // PUB-6: use sanitized ratio values when out-of-bounds ratios were detected.
+  // sanitizedRatios overrides the row value with null (→ "N/A") for each offending ratio.
+  // A trust note is appended to the ratios section to explain the N/A substitution.
+  const effectiveRoa = sanitizedRatios ? sanitizedRatios.roa : row.roa;
+  const effectiveRoe = sanitizedRatios ? sanitizedRatios.roe : row.roe;
+  const effectiveNetDebtToEbitda = sanitizedRatios
+    ? sanitizedRatios.net_debt_to_ebitda
+    : row.net_debt_to_ebitda;
+  const effectiveEps = sanitizedRatios ? sanitizedRatios.eps : row.eps;
+  const pub6Note = sanitizedRatios
+    ? `[PUB-6] Some ratio(s) withheld (N/A) — out-of-bounds value detected; likely unit scale or stale pre-refine ratio. (BAL-1a-DEV will fix ratio recompute.)`
+    : null;
 
   const lines: string[] = [
     `=== BCTC SUMMARY: ${code} ===`,
@@ -194,7 +212,7 @@ export function buildSummarySection(code: string, row: ReportRow, bankForm = fal
     `Operating Profit : ${fmtBillions(row.operating_profit)}  (${fmtPct(row.operating_margin_pct)})`,
     `EBITDA           : ${fmtBillions(row.ebitda)}`,
     `Net Profit       : ${fmtBillions(row.net_profit)}  (${fmtPct(row.net_margin_pct)})`,
-    `EPS              : ${fmtVnd(row.eps)}`,
+    `EPS              : ${fmtVnd(effectiveEps)}`,
     ``,
     `--- Balance Sheet ---`,
     `Total Assets     : ${fmtBillions(row.total_assets)}`,
@@ -203,13 +221,14 @@ export function buildSummarySection(code: string, row: ReportRow, bankForm = fal
     `Cash             : ${fmtBillions(row.cash)}`,
     ``,
     `--- Ratios ---`,
-    `ROE              : ${fmtPct(row.roe)}`,
-    `ROA              : ${fmtPct(row.roa)}`,
+    `ROE              : ${fmtPct(effectiveRoe)}`,
+    `ROA              : ${fmtPct(effectiveRoa)}`,
     currentRatioLine,
     `D/E Ratio        : ${fmtX(row.debt_to_equity)}`,
-    `Net Debt/EBITDA  : ${fmtX(row.net_debt_to_ebitda)}`,
+    `Net Debt/EBITDA  : ${fmtX(effectiveNetDebtToEbitda)}`,
     `P/E              : ${fmtX(row.pe)}`,
     `P/B              : ${fmtX(row.pb)}`,
+    ...(pub6Note ? [``, pub6Note] : []),
     ``,
     `Confidence       : ${(row.extraction_confidence * 100).toFixed(0)}%`,
     `Published        : ${row.published_at}`,
@@ -282,6 +301,29 @@ function buildComparisonSection(
       `=== QoQ/YoY COMPARISON ===`,
       `Period prior (${priorRow.sort_key}) not yet refined — comparison withheld to avoid contamination.`,
       `Run refine pipeline for ${code} ${priorRow.sort_key} to enable this comparison.`,
+    ].join("\n");
+  }
+
+  // PUB-7 (BAL-0): period basis mismatch guard.
+  // Q4 figures are FY-cumulative under VAS standard; comparing them against a
+  // standalone quarter produces a false delta (e.g. FPT YoY -82.2%).
+  // Heuristic (no period_basis column yet): Q4 ≡ FY-cumulative, Q1/Q2/Q3 ≡ standalone.
+  //
+  // Case A: latest is Q4 (FY-cumulative) vs prior is NOT Q4 → withhold
+  if (latest.period_type === "Q4" && priorRow.period_type !== "Q4") {
+    return [
+      `=== QoQ/YoY COMPARISON ===`,
+      `PUB-7: Period basis mismatch — ${latest.sort_key} is Q4/FY-cumulative vs ${priorRow.sort_key} standalone-quarter. Comparison withheld to prevent false delta.`,
+      `Standalone Q4 figure requires subtraction: Q4 = FY − Q1−Q2−Q3 (not yet implemented).`,
+      `Use get_financial_summary for same-quarter YoY comparison.`,
+    ].join("\n");
+  }
+  // Case B: latest is NOT Q4 (standalone) vs prior is Q4 (FY-cumulative) → withhold
+  if (latest.period_type !== "Q4" && priorRow.period_type === "Q4") {
+    return [
+      `=== QoQ/YoY COMPARISON ===`,
+      `PUB-7: Period basis mismatch — ${latest.sort_key} standalone-quarter vs ${priorRow.sort_key} Q4/FY-cumulative. Comparison withheld to prevent false YoY delta (e.g. Q1-standalone vs FY gives misleading -80%+ swing).`,
+      `Use get_financial_summary for same-quarter YoY comparison.`,
     ].join("\n");
   }
 
@@ -380,16 +422,23 @@ function buildSentimentSection(db: Database, code: string): string {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * PublishabilityCheck — result of the four-gate publish check.
+ * PublishabilityCheck — result of the PUB-1..8 publish check.
  */
 interface PublishabilityCheck {
   publishable: boolean;
   reason?: string;            // Human-readable refusal text when not publishable
-  partialWarning?: string;    // Warning text for partial REJECTED_SANITY (publishable=true)
+  partialWarning?: string;    // Warning text for partial REJECTED_SANITY or PUB-6 ratio-sanity (publishable=true)
+  /** PUB-6: sanitized ratio values — null means out-of-bounds (render as N/A). Only set when PUB-6 fires. */
+  sanitizedRatios?: {
+    roa: number | null;
+    roe: number | null;
+    net_debt_to_ebitda: number | null;
+    eps: number | null;
+  };
 }
 
 /**
- * checkPublishability — evaluates PUB-1 through PUB-4 binding conditions.
+ * checkPublishability — evaluates PUB-1 through PUB-8 binding conditions.
  *
  * Called immediately after `latestRow` query, before building any financial output.
  * Uses the injected `db` parameter directly (no HTTP calls — supports in-memory test DBs).
@@ -398,6 +447,10 @@ interface PublishabilityCheck {
  * PUB-2: ≥1 bctc_table_rows row with non-null value_current
  * PUB-3: ≥1 balance_sheet non-summary row (is_summary_row=0)
  * PUB-4: No REJECTED_SANITY units, or partial rejection with warning
+ * PUB-5 (BAL-0): extraction_confidence ≥ 0.5 (HPG parent-only is 44% → blocked)
+ * PUB-6 (BAL-0): ratio sanity bounds — |ROA|≤100%, |ROE|≤300%, |NetDebt/EBITDA|≤200x,
+ *                 EPS in [0, 100000] VND. Offending ratios marked N/A (partial, not full block).
+ * PUB-8 (BAL-0): parent-only heuristic — net_revenue=0 AND net_profit>0 AND conf<0.6 → BLOCK
  *
  * C-1 bank guard: banks (Mẫu B02-TCTD) have Roman-numeral codes (I, VIII, IX…) that
  * CAST to NULL, so the corporate `CAST(code AS INTEGER) BETWEEN 100 AND 440` predicate
@@ -407,10 +460,16 @@ interface PublishabilityCheck {
  * @param db          Database instance (injected for testability)
  * @param reportId    Financial report UUID
  * @param bankForm    True when the report follows Mẫu B02-TCTD (bank form).
- * @returns PublishabilityCheck with publishable flag and optional reason/warning
+ * @param row         Optional latest ReportRow (avoids second DB query; required for PUB-5/6/8).
+ * @returns PublishabilityCheck with publishable flag and optional reason/warning/sanitizedRow
  */
 /** Exported for testability (DV-BANK-1). */
-export function checkPublishability(db: Database, reportId: string, bankForm = false): PublishabilityCheck {
+export function checkPublishability(
+  db: Database,
+  reportId: string,
+  bankForm = false,
+  row?: ReportRow,
+): PublishabilityCheck {
   // PUB-1: refine_status must be DONE or PARTIAL
   const report = db
     .query<{ refine_status: string }, [string]>(
@@ -524,6 +583,71 @@ export function checkPublishability(db: Database, reportId: string, bankForm = f
     };
   }
 
+  // ── PUB-5 (BAL-0): extraction confidence gate ────────────────────────────
+  // Block reports with extraction_confidence < 0.5 (e.g. HPG parent-only at 44%).
+  // Row is passed from the call site; if absent, gate is silently skipped (safe fail-open
+  // because PUB-1..4 structural guards still apply).
+  const MIN_SERVE_CONFIDENCE = 0.5;
+  if (row != null && row.extraction_confidence < MIN_SERVE_CONFIDENCE) {
+    return {
+      publishable: false,
+      reason: `PUB-5: Extraction confidence too low (${(row.extraction_confidence * 100).toFixed(0)}%) — minimum ${MIN_SERVE_CONFIDENCE * 100}% required for serving as headline. Report may be parent-only or poorly extracted.`,
+    };
+  }
+
+  // ── PUB-8 (BAL-0): parent-only heuristic ─────────────────────────────────
+  // If net_revenue = 0 AND net_profit > 0 AND confidence < 0.6 → suspect parent-only filing.
+  // PUB-5 catches the low-confidence case; PUB-8 catches slightly-higher-confidence
+  // parent-only where the structural signal (rev=0, np>0) is the primary tell.
+  const PARENT_ONLY_CONFIDENCE_THRESHOLD = 0.6;
+  if (
+    row != null &&
+    row.net_revenue === 0 &&
+    row.net_profit > 0 &&
+    row.extraction_confidence < PARENT_ONLY_CONFIDENCE_THRESHOLD
+  ) {
+    return {
+      publishable: false,
+      reason: `PUB-8: Parent-only filing suspected (Rev=0, NP=${row.net_profit.toFixed(1)}, confidence ${(row.extraction_confidence * 100).toFixed(0)}%) — consolidated report required for headline serving.`,
+    };
+  }
+
+  // ── PUB-6 (BAL-0): ratio sanity bounds ───────────────────────────────────
+  // Ratios are NOT re-derived after refine (BAL-1a-DEV fixes this later).
+  // Stale/scaled-wrong ratios can be astronomically wrong (DHG ROA=7,891,932%).
+  // Rather than blocking the whole report, withhold offending ratios as N/A.
+  // The sanitizedRatios map is returned for callers to apply when rendering.
+  if (row != null) {
+    const badRatios: string[] = [];
+    if (row.roa != null && Math.abs(row.roa) > 100) {
+      badRatios.push(`ROA=${row.roa.toFixed(2)}%`);
+    }
+    if (row.roe != null && Math.abs(row.roe) > 300) {
+      badRatios.push(`ROE=${row.roe.toFixed(2)}%`);
+    }
+    if (row.net_debt_to_ebitda != null && Math.abs(row.net_debt_to_ebitda) > 200) {
+      badRatios.push(`NetDebt/EBITDA=${row.net_debt_to_ebitda.toFixed(2)}x`);
+    }
+    if (row.eps != null && (row.eps < 0 || row.eps > 100_000)) {
+      badRatios.push(`EPS=${row.eps.toFixed(0)} VND`);
+    }
+    if (badRatios.length > 0) {
+      return {
+        publishable: true,
+        partialWarning: `[PUB-6 RATIO-SANITY] Out-of-bounds ratio(s) withheld: ${badRatios.join(", ")} — unit scale or stale pre-refine value. Affected field(s) shown as N/A. (BAL-1a-DEV will fix ratio recompute after refine.)`,
+        sanitizedRatios: {
+          roa: row.roa != null && Math.abs(row.roa) > 100 ? null : row.roa,
+          roe: row.roe != null && Math.abs(row.roe) > 300 ? null : row.roe,
+          net_debt_to_ebitda:
+            row.net_debt_to_ebitda != null && Math.abs(row.net_debt_to_ebitda) > 200
+              ? null
+              : row.net_debt_to_ebitda,
+          eps: row.eps != null && (row.eps < 0 || row.eps > 100_000) ? null : row.eps,
+        },
+      };
+    }
+  }
+
   return { publishable: true };
 }
 
@@ -608,13 +732,18 @@ export function registerBctcFullTools(
         // and returns true when NO 3-digit numeric codes exist (bank Mẫu B02-TCTD).
         const bankForm = isBankFormFromDb(db, latestRow.id);
 
-        // ── PUB-1..4 Publishability guard ─────────────────────────────────
+        // ── PUB-1..8 Publishability guard ─────────────────────────────────
         // PUB-1: refine_status IN ('DONE', 'PARTIAL')
         // PUB-2: ≥1 extracted row with value_current IS NOT NULL
         // PUB-3: balance sheet has ≥1 non-summary child row (no forced-zero)
         // PUB-4: no REJECTED_SANITY units, or partial rejection warning
+        // PUB-5: extraction_confidence ≥ 0.5
+        // PUB-6: ratio bounds sanity (|ROA|≤100%, |ROE|≤300%, |NetDebt/EBITDA|≤200x, EPS∈[0,100000])
+        // PUB-7: period basis mismatch guard (in buildComparisonSection)
+        // PUB-8: parent-only heuristic (Rev=0, NP>0, conf<0.6)
         // If any gate fails, return human-readable refusal — no financial data served.
-        const pubCheck = checkPublishability(db, latestRow.id, bankForm);
+        // latestRow is passed to avoid a second DB query for PUB-5/6/8 scalar checks.
+        const pubCheck = checkPublishability(db, latestRow.id, bankForm, latestRow);
         if (!pubCheck.publishable) {
           return {
             content: [
@@ -636,7 +765,8 @@ export function registerBctcFullTools(
         }
 
         // ── 2. Build the three sections ──────────────────────────────────
-        const summarySection = buildSummarySection(upperCode, latestRow, bankForm);
+        // Pass sanitizedRatios from PUB-6 check (null when gate did not fire).
+        const summarySection = buildSummarySection(upperCode, latestRow, bankForm, pubCheck.sanitizedRatios);
         const comparisonSection = buildComparisonSection(db, upperCode, latestRow, bankForm);
         const sentimentSection = buildSentimentSection(db, upperCode);
 
