@@ -1,0 +1,14 @@
+{
+  "tick_utc": "20260602T211828Z",
+  "tick_nominal": "21:15",
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "drift_min": 3,
+  "matcher_slots": [],
+  "head_status": "idle",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 7,
+  "signal_backlog": 6,
+  "leader_lock": "not_acquired_silent",
+  "spawns": 0
+}

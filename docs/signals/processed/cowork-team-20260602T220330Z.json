@@ -1,0 +1,15 @@
+{
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "tick_nominal": "22:00",
+  "drift_min": 3,
+  "matcher_slots": [],
+  "head_status": "idle",
+  "head_next_agent": "ops",
+  "new_cowork_rows": 0,
+  "dev_queue_depth": 3,
+  "signal_backlog": 9,
+  "leader_lock": "not_acquired_silent",
+  "spawns": 0,
+  "emitted_at": "2026-06-02T22:03:30Z"
+}

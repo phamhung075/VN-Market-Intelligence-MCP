@@ -1,0 +1,17 @@
+{
+  "tick_utc": "20260602T211019Z",
+  "tick_nominal": "21:00",
+  "classification": "WON",
+  "pressure_mode": "legacy",
+  "drift_min": 3,
+  "won_slots": ["bctc-analyst-slot-3"],
+  "leader_lock": {"claimed": true, "stolen": true, "renewed": false},
+  "agent_outcomes": [
+    {"agent": "bctc-analyst", "slot": "bctc-analyst-slot-3", "status": "COMPLETED", "cycle": "c013", "tickers": 5, "signals_emitted": 2, "work_telegram": true, "e2_guard": "passed", "notebook_commit_pending": true}
+  ],
+  "new_signal_rows": 0,
+  "head_status": "idle",
+  "dev_queue_depth": 3,
+  "tokens_released": true,
+  "spawns": 1
+}
