@@ -910,9 +910,10 @@
             "type": "sprint-task",
             "owner": "dev-pdf-extractor",
             "depends": null,
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "M",
-            "zone": "apps/pdf-extractor/"
+            "zone": "apps/pdf-extractor/",
+            "note": "DONE af50d67a — 4-tier layout-first pipeline: build_document_map/zone_page/ocr_unit/gate_unit in generic_md_table_extractor.py + extract_layout_first_usecase.py + layout_first_push_client.py + domain/primitives/layout_invariants/primitive.py. 115 new tests pass (test_layout_invariants + test_document_map + test_schema_inheritance). 677 unit tests pass total. text_table_extractor.py 0-byte-diff confirmed. AC-LFE-0/2/6/7/8/9 code-verified. AC-LFE-1/3/4/5/10/11 gated on LF-DEPLOY (needs running container)."
           },
           {
             "task_id": "LF-OVERLAY",
