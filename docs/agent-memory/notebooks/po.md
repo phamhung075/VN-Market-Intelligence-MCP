@@ -1,23 +1,5 @@
 # PO Notebook
 
-## 2026-06-01T22:34Z — TRIAGE (dev-team :07 fire) — dispatch A-01-EXPECTED-SET; defer 1967b
-
-**Inputs:** orch-state.json head idle/WIP0 (RISK-2 freeze LIFTED, OSC closed 93b91205). 4 NEW signal_queue rows. Telegram: no new reports, 0 unresolved (verified raw via gateway, not relayed). TNB c85 read.
-
-**4 NEW signals disposed → all READ (with po_disposition written into each row):**
-- `tnb-c85` (HIGH audit-handoff): morning-dish F7 fix is DONE-PENDING-LIVE-VERIFY (agent-father same-tick init.md+chef.md). No new dev task — monitor next morning fire 05:23Z (watch_item). ACK appended to tnb-audit-latest.md.
-- `1967b-RERUN` (INFO): REQ_1967.md spec is REAL + dispatch-ready (7 surfaces, NFRs, 0 PO blockers) — verified raw on disk + git f7ef1b23. payload_ref po-1967b-rerun.json is DANGLING (absent) but spec is the authoritative artifact. DEFERRED behind higher-priority FLEET-HOST-SAFETY FIX; re-queue when host-safety closes.
-- `P2-G-DONE` (INFO): impl_done ack (7520428b), no action.
-- `P1-MCP-QA` (INFO): STALE 2026-05-25 — toolCount=146 tripwire superseded post-hygiene, P1-MCP-REBUILD gate moot. Skipped.
-
-**TNB c85 = NEEDS_ATTENTION / STABLE-WATCH.** F7 HIGH already cured; F1-F6 all MED/LOW pre-existing (macro absent-by-design, BCTC overdue, VIRA pending, F9 12th cycle, hexagram dark) — none new, all tracked/data-blocked. 0 new tasks from TNB.
-
-**PICK (single, highest-value, WIP 1/2): A-01-EXPECTED-SET** (FLEET-HOST-SAFETY, FIX-class, agent-father, S, zone docs/agents/system-auditor/). Rationale: priority order = recurring bugs/host-danger first. A-01 false-RED (not-deployed≠crashed) twice caused outages — auditor destructive ENOSPC stop + dashboard 7 false-DOWN. Fix = check vs intended-runtime-set SSOT (mcp-server+mcp-gateway only) NOT full compose. Pairs with shipped AUD-ND-1 PLAN-ONLY teeth as defense-in-depth (kills the trigger AUD-ND-1 neutralizes). Outranks 1967b (exploratory audit, no immediate risk reduction). PLAN-ONLY: agent-father agent-def edits only, NO docker ops. AC: 0 CRITICAL for not-deployed svcs 7d.
-
-**Wrote head atomically (temp→rename, fresh-read-only-my-section, WIP 1/2):** dispatched agent-father A-01-EXPECTED-SET. narrative.current_sprint + watch_items trimmed. JSON re-validated.
-
-**Carry-over (deferred, valid):** 1967b architect orchestration audit (SPIKE-L) · DRAIN-INJECTION-SAFE + AUDITOR-SLA-CADENCE (FLEET-HOST-SAFETY remaining) · MSG-1 foreign-flow aggregate · NB-PRUNE-FIX · AUD-ND-1-REGRESSION watch (mcp-server SIGTERM ~14:30 06-01, culprit unknown — verify detectors PLAN-ONLY). Next live tick = agent-father A-01-EXPECTED-SET.
-
 ## c · 2026-06-01T23:14Z — TRIAGE (dev-team :09 fire) — dispatch DRAIN-INJECTION-SAFE; triage 12 loose signals
 
 **Inputs:** orch-state head idle/WIP0 (A-01-EXPECTED-SET shipped fa02735e last cycle). 0 NEW signal_queue rows (all dispositioned). TNB handoff = SAME c85 already ACK'd 22:34Z — Step 0-TNB no-op. 12 loose docs/signals/ files for triage.
@@ -36,3 +18,20 @@
 **Wrote head atomically (Edit, fresh-read-my-section, WIP 1/2):** dispatched agent-father DRAIN-INJECTION-SAFE; task→in-progress; narrative.current_sprint refreshed; FU-SIGNAL-DASHBOARD-CAP + FRONTEND-BCTC-TAB backlog updated. JSON re-validated.
 
 **Carry-over (deferred, valid):** AUDITOR-SLA-CADENCE + A-01b-DASHBOARD-HEALTH-FILTER (FLEET-HOST-SAFETY remaining) · FRONTEND-BCTC-TAB (dev-frontend, brief ready) · FU-SIGNAL-DASHBOARD-CAP + RE-CAP-1 (collapse into one cap-fix) · 1967b architect audit · MSG-1 foreign-flow · AUD-ND-1-REGRESSION watch · housekeeping: 662 stale cowork-heartbeats in processed/ + tnb c85 cites deleted DASHBOARD.md (cowork evidence-gathering references retired surface — CW-STEP47-HYGIENE adjacent). Next live tick = agent-father DRAIN-INJECTION-SAFE.
+
+## c · 2026-06-02T00:13Z — TRIAGE (dev-team :09 fire) — recurring nb-bloat: PRUNE + root-cause pair
+
+**Inputs:** orch head idle/WIP0 (DRAIN-INJECTION-SAFE DONE 4cd55d01 — all 3 dev-team-side destructive+injection host-danger triggers now CLOSED). Telegram: no new reports, 0 unresolved (verified RAW via gateway, not relayed). 1 actionable signal + 9 informational (5 bctc cowork + 4 heartbeat, dispatcher-curated, no dev action).
+
+**Signal disposed (Step 0-SIG → context_bloat_breach):**
+- `context_bloat_breach` news-scout.md (HIGH, to=claude-manager-helper): VERIFIED RAW `wc -l`=219 vs cap 200 (+19). NOT a one-off — this is the LIVE symptom of the KNOWN recurring append-not-overwrite defect family (news-scout.md was 1198L before; "notebook-bloat rows persisted 3+ ticks"). Per priority order recurring bugs FIRST + recurring-bug-escalation (≥2 fixes same module → root-cause). Root cause already tracked = NB-BLOAT-FLOW-OVERWRITE (agent-father, "make overwrite unambiguous in flow"). Disposed as a PAIR (symptom + root cause).
+
+**DRAIN-INJECTION-SAFE-2:** assessed NORMAL/low, stays backlog. Dispatcher EMPIRICALLY confirmed the 6 residual sites feed call_tool JSON args (JSON-correctness, NOT a real shell) → NOT a host-danger trigger; the dangerous shell-concat half (dev-team dispatcher) is the one already closed by DRAIN-INJECTION-SAFE. No escalation.
+
+**PICK (BATCH 2/2, WIP→2/2):**
+1. **NB-CLEAN-NEWSSCOUT** (CLEAN, claude-manager-helper, zone docs/agent-memory/notebooks/) — prune news-scout.md 219→≤200 via notebook-write skill (delete oldest cycle block, keep last 3). Immediate symptom relief. AC: `wc -l` ≤200, last-3 cycles intact, preamble untouched. baseline_pass: wc -l ≤200.
+2. **NB-BLOAT-FLOW-OVERWRITE** (FIX/root-cause, agent-father, zone docs/agents/system-auditor/flow/) — make the overwrite/prune step mechanically unambiguous so notebooks stop re-breaching fleet-wide. PLAN-ONLY agent-def/flow edits. AC: news-scout (+ fleet) stays ≤200 across 7d, no new context_bloat_breach for agent-notebook class.
+
+Rationale: pairing cures the live breach AND stops the recurrence — outranks AUDITOR-SLA-CADENCE (SLA refinement, no active recurrence) + A-01b (cosmetic false-RED, severity path already SSOT-gated). Both S, both PLAN-ONLY-ish (no docker), fits WIP 2/2.
+
+**Carry-over (deferred, valid):** AUDITOR-SLA-CADENCE + A-01b-DASHBOARD-HEALTH-FILTER · FRONTEND-BCTC-TAB · RE-CAP-1 + FU-SIGNAL-DASHBOARD-CAP (collapse SKILL+protocol cap-fix) · MSG-1/MSG-3 · EI-P2-* env-guard chain · SIG-FOLLOWUP-DRYRUN · LF-EXTRACT/LF-OVERLAY · DRAIN-INJECTION-SAFE-2 (NORMAL) · FU-FIXER-NO-FORCE (HIGH) · 662 stale cowork-heartbeats housekeeping. Next live tick = claude-manager-helper NB-CLEAN-NEWSSCOUT + agent-father NB-BLOAT-FLOW-OVERWRITE.
