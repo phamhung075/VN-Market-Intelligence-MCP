@@ -1,4 +1,4 @@
-<!-- size-justification: 511L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
+<!-- size-justification: 532L — three-tier dispatcher with distinct scope gates per tier; Tier-1/2/3 checklists are tightly coupled to check IDs from the brief and cannot be split without losing traceability. A-01-EXPECTED-SET fix (2026-06-02) adds host_runtime_set SSOT gating. AUDITOR-SLA-CADENCE (2026-06-02) replaces prose-only BCTC staleness rule with machine-evaluated SLA resolver reading system-map.json sla blocks. Bloat reduction to <120L requires a flow-split sprint (Tier-1/Tier-2/Tier-3 separate files) — deferred per PO. -->
 # System Auditor — Main Flow
 
 ## PLAN-ONLY INVARIANT — NO DESTRUCTIVE OPS (AUD-ND-1)
@@ -163,12 +163,33 @@ mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_macro_snapsho
 mcp__claude_ai_gateway__call_tool({server: "vn-market", tool: "get_sla_status", arguments: {}})
 ```
 For each source in system-map.json data_sources:
-- Read `expected_cadence_hours` and `stale_threshold_hours` from system-map.json (never hardcode)
-- Compare `last_fetch_ts` from get_pipeline_health to `stale_threshold_hours`
+- Read `expected_cadence_hours` from system-map.json (never hardcode)
+- Resolve the effective `stale_threshold_hours` for this source using the **SLA resolver** below (never hardcode)
+- Compare `last_fetch_ts` from get_pipeline_health to the resolved effective threshold
 - Skip foreign-flow check outside VN market hours (09:00–15:30 VN = 02:00–08:30 UTC M-F)
 - VPS proxy: all 7 routes must return `status: ok` (B-06, B-07)
 - Rate limits: no source at 100% (B-12)
-- BCTC staleness: 7-day threshold outside earnings windows; 24h during Q1/Q2/Q3/Q4 +14d windows
+
+#### SLA Resolver — per-source effective threshold (SSOT: system-map.json .project.data_sources[].sla)
+
+For every source, resolve the effective stale threshold as follows (read ALL values from system-map.json — never hardcode):
+
+1. If the source has NO `sla` block → use `stale_threshold_hours` directly. Done.
+2. If `sla.mode == "earnings-window-dependent"`:
+   a. Read `sla.earnings_window.trigger_months[]` and `sla.earnings_window.window_days_after_quarter_end` from system-map.json.
+   b. Compute today's UTC month (M) and day (D).
+   c. **In-window test:** `M ∈ trigger_months AND D ≤ window_days_after_quarter_end` → use `sla.earnings_window.stale_threshold_hours`.
+   d. **Out-of-window:** use `sla.default_stale_threshold_hours`.
+   e. This replaces the flat `stale_threshold_hours` value for this source in this cycle.
+3. Any other `sla.mode` value not listed above → use `stale_threshold_hours` (safe fallback) and emit a WARN log: `"[SLA-RESOLVER] unknown sla.mode '<value>' for source <id> — falling back to stale_threshold_hours"`.
+
+Example evaluation for `bctc-discover` on 2026-04-10 (M=4, D=10, trigger_months=[1,4,7,10], window_days=14):
+- M=4 ∈ [1,4,7,10] AND D=10 ≤ 14 → IN window → effective threshold = 24h (earnings-window active).
+
+Example evaluation for `bctc-discover` on 2026-05-20 (M=5, D=20):
+- M=5 ∉ [1,4,7,10] → OUT of window → effective threshold = 168h (7d normal cadence).
+
+**No prose-only BCTC staleness rule exists. This resolver IS the rule.**
 
 ### DB Freshness Spot Checks (C-06, C-07)
 ```bash

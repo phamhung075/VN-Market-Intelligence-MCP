@@ -958,7 +958,18 @@
         "geo_blocked": true,
         "vps_path": "/proxy/bctc-discover/:ticker",
         "expected_cadence_hours": 168,
-        "stale_threshold_hours": 168
+        "stale_threshold_hours": 168,
+        "_stale_threshold_note": "default (normal/off-season); auditor MUST check sla block for earnings-window override",
+        "sla": {
+          "mode": "earnings-window-dependent",
+          "default_stale_threshold_hours": 168,
+          "earnings_window": {
+            "stale_threshold_hours": 24,
+            "trigger_months": [1, 4, 7, 10],
+            "window_days_after_quarter_end": 14,
+            "_note": "Q1 closes Mar→Apr, Q2 Jun→Jul, Q3 Sep→Oct, Q4 Dec→Jan; +14d window from month start"
+          }
+        }
       },
       {
         "id": "muasamcong",
@@ -977,7 +988,18 @@
         "vps_path": "/bctc-files/",
         "desc": "VPS fetches PDFs; mcp-server pulls on schedule",
         "expected_cadence_hours": 168,
-        "stale_threshold_hours": 168
+        "stale_threshold_hours": 168,
+        "_stale_threshold_note": "default (normal/off-season); auditor MUST check sla block for earnings-window override",
+        "sla": {
+          "mode": "earnings-window-dependent",
+          "default_stale_threshold_hours": 168,
+          "earnings_window": {
+            "stale_threshold_hours": 24,
+            "trigger_months": [1, 4, 7, 10],
+            "window_days_after_quarter_end": 14,
+            "_note": "Q1 closes Mar→Apr, Q2 Jun→Jul, Q3 Sep→Oct, Q4 Dec→Jan; +14d window from month start"
+          }
+        }
       },
       {
         "id": "foreign-flow",
