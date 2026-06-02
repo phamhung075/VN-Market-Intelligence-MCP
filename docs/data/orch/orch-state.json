@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T14:59:51Z",
+    "_updated_at": "2026-06-02T15:12:27Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -218,6 +218,18 @@
             "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
             "priority": "high",
             "note": "DONE+ROUTER-LIVE-VERIFIED 2026-06-02T14:45Z (raw get_bctc_full, image 14:44:06Z, commit b7329f54): VNM serves ROE 27.3% / ROA 17.7% / NetDebt-EBITDA -0.13x (was 0.0%/0.0%/withheld); PUB-6 interim shield NO LONGER fires. Reads through stale persisted ratio cols by recomputing from correct base scalars every call (mirrors BAL-1a/ratioComputer SSOT). Current Ratio N/A = honest (VNM balance_sheet_json lacks currentLiabilities breakdown). CLOSES the BCTC live publish-quality chase. Persisted ratio cols now deprecated-cache (future FU-BCTC-RATIO-COL-DEPRECATE)."
+          },
+          {
+            "task_id": "FU-BCTC-TOOL-PARAMS",
+            "title": "get_cash_flow ignores quarters param — returns only latest single quarter, no N-quarter history series (blocks accrual/OCF-NI decomposition; ESC-3 FPT 11-cycle loop root cause)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "CONFIRMED LIVE 2026-06-02T15:10Z: get_cash_flow(ticker=FPT,quarters=8) -> single Q1/2026 object, quarters ignored. Fix: honor quarters param, return latest-N-quarters series incl WC subcomponents needed for accrual decomposition. Unblocks bctc-analyst ESC-3 (prior opus a38e14ee conf0.35 stuck without 8q history). Verify live: get_cash_flow quarters=8 returns 8 periods."
           }
         ]
       },
@@ -1253,7 +1265,7 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T14:10:18Z",
+    "_updated_at": "2026-06-02T15:12:27Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -1464,10 +1476,40 @@
         "from": "cowork-team",
         "to": "po",
         "type": "defect_report",
-        "summary": "MEDIUM agent-config defect: when the cowork dispatcher spawns unified-agent (CHEF) with the STANDARD spawn prompt (run docs/agents/unified-agent/flow/chef.md  slot=chef-intraday), the spawned agent can misread the project CLAUDE.md line \"Main terminal = router only / never implement directly\" as applying to ITSELF, then refuses to execute chef.md, asks the dispatcher questions, and burns ~25k tokens with zero output. Observed 2026-06-02 06:18Z chef-intraday tick (agentId a4957b5a). A corrective re-spawn with an explicit \"you ARE the worker, not the router, ignore that CLAUDE.md line\" preamble (agentId a0777f49) executed correctly. Since the dispatcher ALWAYS uses the standard prompt, every chef spawn (morning/intraday/eod/evening) is at nondeterministic risk of this misfire -> wasted tokens and potential silently-dropped MARKET dishes when unattended. FIX (root-cause, agent-father via architect): assert worker-role at the TOP of docs/agents/unified-agent/flow/chef.md (and/or the unified-agent agent-def) so a spawned chef worker never reinterprets the main-terminal router boundary; OR add a one-line worker-role preamble to the dispatcher spawn prompt for unified-agent slots. PLAN-ONLY.",
+        "summary": "MEDIUM agent-config defect: when the cowork dispatcher spawns unified-agent (CHEF) with the STANDARD spawn prompt (run docs/agents/unified-agent/flow/chef.md  slot=chef-intraday), the spawned agent can misread the project CLAUDE.md line \"Main terminal = router only / never implement directly\" as applying to ITSELF, then refuses to execute chef.md, asks the dispatcher questions, and burns ~25k tokens with zero output. Observed 2026-06-02 06:18Z chef-intraday tick (agentId a4957b5a). A corrective re-spawn with an explicit \"you ARE the worker, not the router, ignore that CLAUDE.md line\" preamble (agentId a0777f49) executed correctly. Since the dispatcher ALWAYS uses the standard prompt, every chef spawn (morning/intraday/eod/evening) is at nondeterministic risk of this misfire -> wasted tokens and potential silently-dropped MARKET dishes when unattended. FIX (root-cause, agent-father via architect): assert worker-role at the TOP of docs/agents/unified-agent/flow/chef.md (and/or the unified-agent agent-def) so a spawned chef worker never reinterprets the main-terminal router boundary; OR add a one-line worker-line preamble to the dispatcher spawn prompt for unified-agent slots. PLAN-ONLY.",
         "severity": "MEDIUM",
         "status": "READ",
         "payload_ref": "docs/signals/cowork-team-20260602T062352Z.json"
+      },
+      {
+        "id": "bca-20260602T1506Z",
+        "ts": "2026-06-02T15:06:00Z",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "summary": "ESC deep-dive carry-status: FPT Q1-2026 ESC-3 (OCF/NI divergence) — 11th consecutive cycle. guard_key=esc-deepdive:FPT:Q1-2026:ESC-3 freshly re-claimed (prior TTL expired). NOTE: FPT-OPUS-DEEPDIVE DONE (a38e14ee, flag_for_human_review conf=0.35). ESC-3 remains ACTIVE because underlying data not fixed (FU-BCTC-TOOL-PARAMS open — get_cash_flow ignores quarters param, no 8q history). Dispatch dev-team to investigate FU-BCTC-TOOL-PARAMS or close ESC-3 at analyst layer once fix lands.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "trigger_id": "ESC-3",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": null,
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-3",
+          "context": {
+            "ocf_total": -2847813.717192,
+            "net_profit_total": 2476800,
+            "divergence_ratio": 2.15,
+            "cycle_count": 11,
+            "prior_opus_deepdive": "DONE (a38e14ee) — flag_for_human_review, conf=0.35, MIXED/partial-artifact",
+            "blocker": "FU-BCTC-TOOL-PARAMS: get_cash_flow ignores quarters param; accrual decomposition impossible without 8q history and WC subcomponents"
+          },
+          "all_esc_fired": [
+            "ESC-3"
+          ]
+        },
+        "note": " | 2026-06-02T15:10Z dev-team ROUTER: did NOT re-spawn opus (deep-dive already DONE a38e14ee conf0.35; re-run=symptom). Root cause CONFIRMED LIVE: get_cash_flow ticker=FPT quarters=8 returns ONLY Q1/2026 single period, quarters param silently ignored. Routed real fix FU-BCTC-TOOL-PARAMS to dev-mcp-server. guard_key left claimed (analyst wont re-fire until TTL). ESC-3 closes at analyst layer once fix lands."
       }
     ],
     "archive": [
