@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "BATCH 2/2 DONE. FB-GATE-2 7be21e0a (executable fb-jargon-gate skill+script, router-verified A/B/C/D smoke incl. planted-violation fence). NB-PRUNE-IMPL e1e85886 (2-class notebook contract S1-S6, AC-2b intra-section prune + AC-5 inline wc-guard, root-cause fix for 4-notebook breach family). OPEN for next PO: RE-CAP-1 (signal-dashboard SKILL 192L cap — NOT absorbed by NB-PRUNE-IMPL, different file) + FU-AGENT-FATHER-ORCH-SCOPE.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FE-AUDIT-1",
+    "next_agent": "dev-frontend",
+    "next_action": "Operator goal: all frontend pages correct + real data + no mock. FE-AUDIT-1 read-only inventory of 13 routes running now; output feeds PO scoping of fixes + A-01b chain.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T04:26:37Z",
+    "updated_at": "2026-06-02T04:58:02Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -36,6 +36,7 @@
       "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion."
     ],
     "open_sprints": [
+      "BCTC-EXTRACT-QUALITY (HIGH, NEW 2026-06-02): infra GREEN but data layer not analysis-grade — empty refine despite OCR (CTG/VCB), zeroed secondary lines (FPT+ACB), garbage /docs net_profit scalars. BEQ-1 SPIKE->agents-architect (pin each symptom to one layer; decide vs BCTC-LAYOUT-FIRST). Re-homes orphaned FU-TRUST-REFRESH #16 contamination caveat.",
       "FB-GATE (HIGH, NEW 2026-06-02): replace fb-market-poster STEP4-check3 self-attestation with executable hard-fail pre-publish jargon/typo/hexagram/calendar gate; FB-GATE-1 design->agents-architect, FB-GATE-2 impl->agent-father. Sequence AFTER AUD-ND-1 (CRITICAL, DONE) and the live injection-half DRAIN-INJECTION-SAFE; BEFORE/parallel-with MSG-1 (different zone+owner, no contention). Rationale: 10pm cron ships jargon unattended TODAY — router is currently the only gate.",
       "FLEET-HOST-SAFETY: DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE open (AUD-ND-1 + VPS-SOCAT-PERSIST DONE)",
       "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE: within-section trimming + per-flow prune-invocation audit",
@@ -55,9 +56,32 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T04:26:37Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-02T04:59:16Z",
+    "_updated_by": "po",
     "active_sprints": [
+      {
+        "id": "BCTC-EXTRACT-QUALITY",
+        "label": "BCTC data layer not analysis-grade across corpus (router raw-verify 2026-06-02) — infra GREEN, extraction/refine/scalar RED",
+        "status": "active",
+        "opened_at": "2026-06-02",
+        "priority": "high",
+        "evidence": "Router live raw-verify 2026-06-02 (BCTC-HEALTH-TRIAGE). INFRA GREEN (mcp /health 154 tools ~6.6h, viewer :3000 + :3001 dashboard tab, 6-gate eval 200, human-confirm write proven to DB, OCR 15/15, PDF 15/15). DATA RED across 3 distinct net-new failure modes NOT covered by any open item: (1) EMPTY refine despite OCR+PDF present — get_bctc_full(CTG) + get_bctc_full(VCB) = 'Chua co du lieu BCTC'; markdown->rows produced 0 usable rows so analyst flow gets nothing; (2) ZEROED secondary lines fleet-wide even where headline correct — FPT(conf0.81)+ACB(conf0.38) both show sane rev/NP/NII/assets/equity (bank-mapping OK) BUT OperatingProfit=0, EBITDA=0, Cash=0, EPS nonsense (FPT=1,ACB=0), most ratios N/A; (3) GARBAGE net_profit scalars in /docs listing — CTG=5, EIB=1, VNM=5.1e-05, VEA=-5.1e-05, SHB=0, BSR=0, DIG=18. Plus low extraction_confidence <0.2 on CTG(0.062)+BSR(0.125). Prior-period CONTAMINATION (FPT YoY '20.2 ty' NP = revenue mislabeled -> +12146% YoY, GM 100%->34%) = the orphaned FU-TRUST-REFRESH #16 caveat, NOT live-tracked anywhere — re-homed here. Overlaps (linked, NOT duplicated): BCTC-LAYOUT-FIRST (intended re-arch, Phase-0 not started), FU-BCTC-TOOL-PARAMS (ticker-vs-code trap), FU-BANK-CODECOL (code-col leak), BCTC-CTG-ATTACHMENT-FETCH (CTG cover-letter-only PDF), cowork signal bctc-extraction-esc-20260602T0015Z (DHG/EIB DATA_INSUFFICIENT 9 cycles + CTG lag — was dispositioned to FPT/ESC-OPUS only, pipeline root-cause never got a task).",
+        "tasks": [
+          {
+            "task_id": "BEQ-1",
+            "title": "SPIKE: root-cause WHY get_bctc_full returns empty for CTG/VCB despite OCR+PDF, WHY secondary lines (OpProfit/EBITDA/Cash/EPS) are systematically zero, WHY /docs net_profit scalars are garbage",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": null,
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "question": "Separate the legs honestly before any fix. (A) EMPTY refine (CTG/VCB): did refine never RUN (refine_status PENDING / job not triggered), or did it run and the markdown->rows parser produce 0 rows (parse failure), or is the statement absent from the markdown (OCR captured cover-letter only — cf BCTC-CTG-ATTACHMENT-FETCH)? Inspect refine_status + raw markdown + bctc_table_rows COUNT in-container per ticker. (B) ZEROED secondary lines (FPT+ACB headline OK but OpProfit/EBITDA/Cash=0, EPS nonsense): are those lines ABSENT from the markdown (never parsed), present-but-unmapped (mapping table misses them / defaults to 0), or computed-and-wrong? Pin to the layer: parser vs mapping vs scalar projection. (C) GARBAGE /docs net_profit scalars (VNM=5.1e-05 etc.): which projection writes the listing scalar, and is it reading a wrong cell / unit-scaling bug (5.1e-05 smells like a divide-by-billions on an empty/tiny field)? Deliverable: brief pinning each symptom to ONE layer (refine-trigger | markdown/OCR | parser | mapping | scalar-projection) + ordered fix plan. Decide explicitly whether the durable fix is subsumed by BCTC-LAYOUT-FIRST Phase-0 or is a separable pre-layout-first parser/mapping fix. PLAN-ONLY — findings doc, no code mutate.",
+            "mode": "spike",
+            "timebox": 120
+          }
+        ]
+      },
       {
         "id": "ORCH-STATE-CONSOLIDATE",
         "label": "Single JSON SSOT, delete 4 orchestration markdown files",
@@ -188,10 +212,10 @@
             "type": "sprint-task",
             "owner": "dev-frontend",
             "depends": "A-01-EXPECTED-SET",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "S",
             "zone": "apps/frontend/ + apps/api-gateway/",
-            "note": "residual flagged by agent-father during A-01; closes the dashboard 7-false-RED plane (project_dashboard_two_data_planes)"
+            "note": "residual flagged by agent-father during A-01; closes the dashboard 7-false-RED plane (project_dashboard_two_data_planes) | DECOMPOSED 2026-06-02 into FRONTEND-CORRECTNESS A-01b-1..4 (operator goal); see that sprint"
           }
         ]
       },
@@ -531,6 +555,76 @@
             "zone": "apps/mcp-server/"
           }
         ]
+      },
+      {
+        "id": "FRONTEND-CORRECTNESS",
+        "status": "OPEN",
+        "tasks": [
+          {
+            "task_id": "FE-AUDIT-1",
+            "title": "Read-only audit: all 13 frontend routes — data source, mock/placeholder/hardcoded, broken fetch",
+            "type": "SPIKE",
+            "owner": "dev-frontend",
+            "depends": [],
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "note": "Discovery for operator goal; output = per-route inventory + defect list -> PO scopes fixes"
+          },
+          {
+            "task_id": "A-01b-1",
+            "title": "DESIGN A-01b not_deployed enum + short-key<->compose-name map contract (architect)",
+            "type": "SPRINT-S",
+            "owner": "architect",
+            "depends": [],
+            "status": "TODO",
+            "size": "S",
+            "zone": "docs/architecture-briefs/ + docs/data/",
+            "note": "PO plan: enum gains not_deployed (Go+TS); name-map mcp<->mcp-server ta<->technical-analysis stock<->stock-price kinh-dich<->kinh-dich-service alert<->alert-engine pdf<->pdf-extractor rag<->rag-service news<->news-fetch macro<->macro-indicators; SSOT at project.infrastructure.docker.host_runtime_set; fix _ssot self-ref drift; not_deployed EXCLUDED from overall-status. Route via architect (dev-core code blueprint) NOT agents-architect."
+          },
+          {
+            "task_id": "A-01b-2",
+            "title": "api-gateway: classify not-deployed-by-design as not_deployed, exclude from overall status",
+            "type": "SPRINT-S",
+            "owner": "dev-api-gateway",
+            "depends": [
+              "A-01b-1"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/api-gateway/",
+            "note": "compute.go StatusNotDeployed neutral; registry.go/services.go classify from host_runtime_set; go test scenario host-minimal-stack=ok, 1 deployed down=NOT ok"
+          },
+          {
+            "task_id": "A-01b-3",
+            "title": "frontend: render not_deployed grey INFO + top badge ignores not_deployed",
+            "type": "SPRINT-S",
+            "owner": "dev-frontend",
+            "depends": [
+              "A-01b-1"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "note": "health.ts enum + dashboard.services.tsx badge; default-missing must map to gateway value not blanket down"
+          },
+          {
+            "task_id": "A-01b-4",
+            "title": "QA anti-false-green: not-deployed silent BUT real killed deployed svc still red",
+            "type": "SPRINT-S",
+            "owner": "qa",
+            "depends": [
+              "A-01b-2",
+              "A-01b-3"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "qa",
+            "note": "PROVEN-RED: docker stop mcp-server -> dashboard red + top non-ok; restart -> ok. Filter must not blanket-mute."
+          }
+        ],
+        "_updated_at": "2026-06-02T04:58:02Z",
+        "_updated_by": "dev-team"
       }
     ],
     "backlog": [
@@ -648,8 +742,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T04:11:40Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-02T04:59:16Z",
+    "_updated_by": "po",
     "rows": [
       {
         "id": "architects-fb-gate-brief-20260602T0409Z",
@@ -883,6 +977,17 @@
         "severity": "MED",
         "status": "READ",
         "payload_ref": "docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md"
+      },
+      {
+        "id": "po-20260602T045900",
+        "ts": "2026-06-02T04:59Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "spike_request",
+        "summary": "HIGH BCTC-EXTRACT-QUALITY/BEQ-1 SPIKE: pin 3 net-new data-layer symptoms to one layer each — empty refine despite OCR (CTG/VCB), zeroed secondary lines (FPT+ACB OpProfit/EBITDA/Cash=0,EPS), garbage /docs net_profit scalars. Findings doc, PLAN-ONLY.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/data/orch/orch-state.json#BCTC-EXTRACT-QUALITY"
       }
     ],
     "archive": [
@@ -1122,6 +1227,24 @@
         "success_metric": "Diversity cap live, QA-approved.",
         "status": "OPEN",
         "note": "READY 2026-05-27."
+      },
+      {
+        "sprint_id": "FRONTEND-CORRECTNESS",
+        "vision": "Every frontend page (localhost:3001) loads without error and renders REAL backend data via api-gateway:4000 — zero mock/placeholder/hardcoded data, honest empty/stale/not-deployed states instead of fake values or false-RED.",
+        "scope_in": [
+          "FE-AUDIT-1 read-only inventory of all 13 routes: data source per page, mock/placeholder/hardcoded detection, broken-fetch detection",
+          "A-01b dashboard.services not-deployed false-RED filter (host_runtime_set SSOT + not_deployed enum, api-gateway + frontend)",
+          "fix each page found loading mock/placeholder data to fetch real data",
+          "honest empty/stale states (no fabricated fallback values)"
+        ],
+        "scope_out": [
+          "new dashboard pages",
+          "SSE/live-push",
+          "starting any not-deployed microservice (host-panic)"
+        ],
+        "success_metric": "All 13 routes: 200 + real data OR honest empty/stale/not-deployed; ZERO mock/placeholder/hardcoded data; dashboard.services top badge honest (OK with 7 grey not-deployed) AND a real killed deployed service still shows red.",
+        "status": "OPEN",
+        "note": "OPERATOR GOAL set 2026-06-02T04:58:02Z. Scoping via FE-AUDIT-1. A-01b plan preserved from PO triage (SSOT at project.infrastructure.docker.host_runtime_set; short-key<->compose-name map gotcha; enum gains not_deployed excluded from overall-status)."
       }
     ]
   }
