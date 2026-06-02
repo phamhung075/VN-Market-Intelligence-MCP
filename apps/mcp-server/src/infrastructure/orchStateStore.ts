@@ -104,13 +104,37 @@ export interface OrchState {
  * Guarantees: if the process crashes mid-write the target is never half-written.
  * Safe on POSIX (Darwin/Linux): rename(2) is atomic within the same filesystem.
  *
+ * §2.3 STRUCTURAL SENTINEL (validate-before-rename):
+ *   All guard checks run BEFORE any fs write/rename. On throw, the SSOT is
+ *   left untouched — nothing is written or renamed.
+ *   Invariant: `data` MUST be a complete OrchState envelope with top-level
+ *   `.head`, `.task_board`, and `.signal_queue` sections. Partial/truncated
+ *   objects are rejected to prevent SSOT clobber (class of incident 39f5ba66).
+ *
  * @param path   - Absolute path to the target file
- * @param data   - Object to serialise as JSON (2-space indent)
+ * @param data   - Object to serialise as JSON (2-space indent); must include
+ *                 top-level .head, .task_board, and .signal_queue sections.
+ * @throws Error if the serialized payload is empty/too-short, fails round-trip
+ *         parse, or is missing any required top-level section.
  */
 export function writeOrchStateAtomic(path: string, data: object): void {
+  // ── §2.3 GUARD: all checks before any fs operation ───────────────────────
+  const serialized = JSON.stringify(data, null, 2);
+  if (!serialized || serialized.length < 2) {
+    throw new Error(
+      "[atomic-write] empty serialized payload — refusing to write",
+    );
+  }
+  const parsed = JSON.parse(serialized); // throws on malformed JSON
+  if (!parsed.head || !parsed.task_board || !parsed.signal_queue) {
+    throw new Error(
+      "[atomic-write] missing required top-level section — refusing to write",
+    );
+  }
+  // ── fs operations only after guards pass ─────────────────────────────────
   const tmp = path + ".tmp." + Date.now();
   mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(tmp, JSON.stringify(data, null, 2), "utf8");
+  writeFileSync(tmp, serialized, "utf8");
   renameSync(tmp, path);
 }
 
