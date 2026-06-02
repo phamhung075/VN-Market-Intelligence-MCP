@@ -157,6 +157,22 @@ Zone health: tsc clean, build green (1626 modules), single file changed | HEALTH
 - Key pattern: revalidator reference is stable between renders but the closure in useEffect captures the object ref; [revalidator] as dep is correct and does not thrash.
 - NEEDS REBUILD: frontend (ops to dispatch)
 
+## Cycle FOU-3-FE — 2026-06-02 (FRONTEND-OPERATOR-UX sprint — 2-axis Service Health)
+
+Zone health: 295/295 Vitest GREEN (+31 new), tsc clean | HEALTHY
+
+- Task: FOU-3-FE — 2-axis Service Health rendering (container × capability-via-mcp).
+- Contract: docs/handoffs/FOU-3-FE.md. Brief: docs/architecture-briefs/2026-06-02-frontend-operator-ux.md §2.
+- Files modified (apps/frontend/ ONLY):
+  - app/domain/health.ts: added `CapabilityStatus` type; extended `ServiceRow` with `capability` + optional `capabilityNote`; added `capabilities` optional field to `GatewayHealthResponse`.
+  - app/domain/health-compose.ts (NEW): pure compose logic — `composeRowDisplayState`, `composeOverallStatus`, `parseCapability`. Framework-free (no Remix/React imports) — importable by tests without runtime.
+  - app/lib/api/client.ts: `GatewayHealth` interface gains optional `capabilities` map.
+  - app/routes/dashboard.services.tsx: imports compose fns from health-compose.ts; loader merges capability from /health payload (graceful when absent → "n/a"); `StatusBadge` upgraded with optional `capability` prop; `CapabilityBadge` sub-component (private to route) renders blue/amber/grey; top-badge uses `composeOverallStatus` (ignores not_deployed); re-exports compose fns for test consumers.
+  - app/__tests__/fou-3-fe-2axis-health.test.ts (NEW): 31 tests — all 5 display states, 4× anti-false-green (deployed+down × all 4 capability values → deployed_down), graceful degradation (absent/unknown cap → n/a), top-badge-ignores-not_deployed, PROVEN-RED scenario.
+- Anti-false-green invariant: `composeRowDisplayState("down", any) === "deployed_down"` — verified by 4 explicit tests.
+- Verify: 295/295 Vitest GREEN. tsc --noEmit exit 0. Commit: b5e92ee8.
+- NEEDS REBUILD: frontend (ops) + api-gateway (ops, FOU-3-GW already done). Both rebuilds required before operator can see live capability badges.
+
 ## Carry-over (next session)
 
 - P2-D: QA gate — freeze anchor confirm (QA reads eslint.config.mjs git log, emits G4 evidence signal)
