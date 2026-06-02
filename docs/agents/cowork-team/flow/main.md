@@ -530,8 +530,13 @@ ACTUAL_M_PS=${ACTUAL_M_PS:-0}
 FLOOR_M_PS=$(( (ACTUAL_M_PS / 15) * 15 ))
 TICK_ID=$(date -u +"%Y-%m-%dT%H:")$(printf '%02d' $FLOOR_M_PS)":00Z"
 
-# signal_backlog: count of unprocessed signal JSON files
-SIGNAL_BACKLOG=$(ls docs/signals/*.json 2>/dev/null | wc -l | tr -d ' ')
+# signal_backlog: count of ACTIONABLE INBOUND signal JSON files.
+# Exclude cowork-team-*.json (own heartbeats/telemetry — not inbox backlog).
+# Without exclusion the count is permanently ≥37 (own files dominate), pinning
+# signal_backlog_tier HIGH and making signal_backlog==0 (deep-sleep guard) unreachable.
+# `{ grep -v ... || true; }` neutralises grep exit-1 when no non-self files exist,
+# so an empty inbox correctly yields 0 (not 1) under set -e.
+SIGNAL_BACKLOG=$(ls docs/signals/*.json 2>/dev/null | { grep -v '/cowork-team-' || true; } | wc -l | tr -d ' ')
 
 # calendar_status: call is_trading_day tool via gateway (fail-safe)
 CALENDAR_STATUS="unknown"
