@@ -5,12 +5,12 @@
   "_updated_by": "agent-father",
   "head": {
     "status": "in_progress",
-    "active_task_id": "AUDITOR-SLA-CADENCE",
-    "next_agent": "agent-father",
-    "next_action": "BATCH-7: AUDITOR-SLA-CADENCE (agent-father) — make per-source SLA a machine-read SSOT for the auditor data_stale check (BCTC quarterly + earnings-window currently prose-only at flow L171 while machine reads uniform stale_threshold_hours -> root of BCTC false-stale alarms). RE-CAP-1 DONE prior (b675045f). B8 CHEF-ATTN-1 DEFERRED-SUPERSEDED (redesign drops the section). After B7: backlog drained to async/design-lane items only (1965-COVERAGE-SWEEP + PM-COMMIT-BOUNDARY-1974 = agents-architect plan-only; BCTC-HIST-FETCH-VERIFY/VCB-REFINE async; EI-P2 follow-ups low). GOAL=complete all task.",
+    "active_task_id": "design-lane:1965+PM1974",
+    "next_agent": "agents-architect",
+    "next_action": "DESIGN-LANE (all 8 dev batches B1-B7 done, B8 superseded): agents-architect plan-only — (1) 1965-COVERAGE-SWEEP cowork ticker-rotation design (news-scout+market-watcher); (2) PM-COMMIT-BOUNDARY-1974 commit-discipline CLASS root-cause (PM 26-file sweep 3rd-recur + agent-father orch-staging + architect-no-mutex). Both -> briefs + route agent-father. Then backlog is async/low only. GOAL=complete all task.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T18:10:56Z",
+    "updated_at": "2026-06-02T18:15:21Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T18:10:56Z",
+    "_updated_at": "2026-06-02T18:15:21Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -559,9 +559,10 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": null,
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
-            "zone": "docs/agents/system-auditor/"
+            "zone": "docs/agents/system-auditor/",
+            "note": " | DONE 2026-06-02T18:30Z commit 7d8951c7 (agent-father). Per-source SLA now machine-read SSOT: system-map.json .project.data_sources[] bctc-discover/bctc-push gained sla block (mode=earnings-window-dependent, 168h normal / 24h during months 1/4/7/10 days 1-14); auditor flow SLA-Resolver replaces line-171 prose (prose removed, no divergence). system-map.json re-validated valid JSON. Kills BCTC false-stale alarm class. No rebuild (flow+json read live)."
           },
           {
             "task_id": "VPS-SOCAT-PERSIST",
@@ -1369,8 +1370,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T17:04:57Z",
-    "_updated_by": "agents-architect",
+    "_updated_at": "2026-06-02T18:15:21Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "po-bctc-analytics-layer-20260602T1056Z",
@@ -1504,9 +1505,9 @@
         "type": "design_brief_request",
         "summary": "User feedback: cowork agents concentration on few tickers only. Design ask: rotation/sweep for news-scout + market-watcher.",
         "severity": "INFO",
-        "status": "OPEN",
+        "status": "READ",
         "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md",
-        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN. Valid live ask (cowork ticker-concentration rotation, news-scout+market-watcher). PLAN-ONLY design, agents-architect zone — NOT in this dev-team batch (architect lane reserved for BCTC-ANALYTICS-LAYER residuals + design backlog). Re-dispatch to agents-architect when its lane frees. Brief stub exists docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md."
+        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN. Valid live ask (cowork ticker-concentration rotation, news-scout+market-watcher). PLAN-ONLY design, agents-architect zone — NOT in this dev-team batch (architect lane reserved for BCTC-ANALYTICS-LAYER residuals + design backlog). Re-dispatch to agents-architect when its lane frees. Brief stub exists docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md. | 2026-06-02T18:30Z dev-team: design-lane freed (all dev batches done) -> dispatched agents-architect (plan-only). PM-1974 scoped as whole commit-discipline CLASS root-cause (PM 26-file sweep + agent-father orch-staging + architect no-mutex), not PM-only."
       },
       {
         "id": "PM-COMMIT-BOUNDARY-1974",
@@ -1516,9 +1517,9 @@
         "type": "commit_boundary_violation",
         "summary": "PM commit 0a60fa1d swept 26 files incl 17 arch-briefs. RECURRING 3rd occurrence — recommend architect/agent-father audit PM commit step.",
         "severity": "MED",
-        "status": "OPEN",
+        "status": "READ",
         "payload_ref": null,
-        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN, promote-context. RECURRING governance defect (PM 26-file commit sweep, 3rd occurrence) — kin of FU-AGENT-FATHER-ORCH-SCOPE (agent-father staged router-owned orch-state.json) + commit-boundary memory. Owner = agents-architect (commit-step audit of pm/init.md + pm flow) -> agent-father impl. PLAN-ONLY agent-def edit, no rebuild. Sequenced AFTER current BCTC dev work; pairs with the architect commit-discipline cluster."
+        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN, promote-context. RECURRING governance defect (PM 26-file commit sweep, 3rd occurrence) — kin of FU-AGENT-FATHER-ORCH-SCOPE (agent-father staged router-owned orch-state.json) + commit-boundary memory. Owner = agents-architect (commit-step audit of pm/init.md + pm flow) -> agent-father impl. PLAN-ONLY agent-def edit, no rebuild. Sequenced AFTER current BCTC dev work; pairs with the architect commit-discipline cluster. | 2026-06-02T18:30Z dev-team: design-lane freed (all dev batches done) -> dispatched agents-architect (plan-only). PM-1974 scoped as whole commit-discipline CLASS root-cause (PM 26-file sweep + agent-father orch-staging + architect no-mutex), not PM-only."
       },
       {
         "id": "bctc-extraction-esc-20260602T0015Z",
