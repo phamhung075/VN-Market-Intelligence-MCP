@@ -36,7 +36,7 @@ func TestAggregateHealthUseCase_AllOk(t *testing.T) {
 		"stock": "http://localhost:5000",
 	})
 	checker := &mockChecker{status: domain.StatusOk}
-	svc := domain.NewAggregateHealthService(checker, reg)
+	svc := domain.NewAggregateHealthService(checker, reg, nil)
 	uc := application.NewAggregateHealthUseCase(svc)
 
 	result, err := uc.Execute(context.Background())
@@ -58,7 +58,7 @@ func TestAggregateHealthUseCase_Degraded(t *testing.T) {
 	reg := infrastructure.NewStaticServiceRegistry(map[string]string{})
 	callCount := 0
 	mixed := &mixedChecker{callCount: &callCount}
-	svc := domain.NewAggregateHealthService(mixed, reg)
+	svc := domain.NewAggregateHealthService(mixed, reg, nil)
 	uc := application.NewAggregateHealthUseCase(svc)
 
 	result, err := uc.Execute(context.Background())

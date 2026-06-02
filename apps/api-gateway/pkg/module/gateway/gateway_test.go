@@ -169,6 +169,9 @@ func TestAggregateHealth_AllDown(t *testing.T) {
 }
 
 // TestAggregateHealth_Empty verifies the empty-registry path.
+// With A-01b-2: empty map after not_deployed filtering → "ok"
+// (nothing deployed = nothing is down; fail-safe "down" only applies when
+// at least one non-not_deployed service is present).
 func TestAggregateHealth_Empty(t *testing.T) {
 	stub := &stubPorts{
 		services: map[string]struct {
@@ -180,7 +183,7 @@ func TestAggregateHealth_Empty(t *testing.T) {
 	mod := gateway.New(stub)
 	result := mod.AggregateHealth()
 
-	if result.Overall != "down" {
-		t.Errorf("Overall: got %q, want %q for empty registry", result.Overall, "down")
+	if result.Overall != "ok" {
+		t.Errorf("Overall: got %q, want %q for empty registry", result.Overall, "ok")
 	}
 }

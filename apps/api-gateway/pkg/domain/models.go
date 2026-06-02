@@ -6,9 +6,10 @@ package domain
 type HealthStatus string
 
 const (
-	StatusOk       HealthStatus = "ok"
-	StatusDegraded HealthStatus = "degraded"
-	StatusDown     HealthStatus = "down"
+	StatusOk          HealthStatus = "ok"
+	StatusDegraded    HealthStatus = "degraded"
+	StatusDown        HealthStatus = "down"
+	StatusNotDeployed HealthStatus = "not_deployed"
 )
 
 // ServiceHealthResult is the health result for a single downstream service.

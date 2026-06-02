@@ -33,10 +33,11 @@ func TestComputeOverallStatus(t *testing.T) {
 			want:     osc.StatusDegraded,
 		},
 		{
-			// empty map has no services — must fail safe to "down".
-			name:     "empty map yields down",
+			// empty map has no services — after filtering there is nothing deployed,
+			// so overall is "ok" (nothing is down).
+			name:     "empty map yields ok",
 			statuses: map[string]string{},
-			want:     osc.StatusDown,
+			want:     osc.StatusOk,
 		},
 		{
 			name:     "single ok",
@@ -53,6 +54,57 @@ func TestComputeOverallStatus(t *testing.T) {
 			name:     "degraded present yields degraded",
 			statuses: map[string]string{"a": "ok", "b": "degraded"},
 			want:     osc.StatusDegraded,
+		},
+		// ── not_deployed filtering scenarios (A-01b-2 DoD) ──────────────────
+		{
+			// host-minimal-stack: 5 deployed ok + 7 not_deployed → overall ok.
+			// Proves not_deployed entries are excluded before evaluation.
+			name: "host-minimal-stack: deployed ok + not_deployed → ok",
+			statuses: map[string]string{
+				"mcp":       "ok",
+				"macro":     "ok",
+				"pdf":       "not_deployed",
+				"rag":       "not_deployed",
+				"ta":        "not_deployed",
+				"stock":     "not_deployed",
+				"kinh-dich": "not_deployed",
+				"alert":     "not_deployed",
+				"news":      "not_deployed",
+			},
+			want: osc.StatusOk,
+		},
+		{
+			// real-outage-among-deployed: 4 ok + 1 deployed down + 7 not_deployed → NOT ok.
+			// Anti-false-green proof: a real outage must still register even with not_deployed present.
+			name: "real-outage-among-deployed: deployed down + not_deployed → degraded",
+			statuses: map[string]string{
+				"mcp":       "ok",
+				"macro":     "ok",
+				"pdf":       "not_deployed",
+				"rag":       "not_deployed",
+				"ta":        "not_deployed",
+				"stock":     "not_deployed",
+				"kinh-dich": "not_deployed",
+				"alert":     "not_deployed",
+				"news":      "down",
+			},
+			want: osc.StatusDegraded,
+		},
+		{
+			// all not_deployed → ok (nothing is down by design).
+			name:     "all not_deployed yields ok",
+			statuses: map[string]string{"a": "not_deployed", "b": "not_deployed"},
+			want:     osc.StatusOk,
+		},
+		{
+			// deployed all down + not_deployed → down (all non-skipped are down).
+			name: "deployed all down + not_deployed yields down",
+			statuses: map[string]string{
+				"mcp":   "down",
+				"macro": "down",
+				"pdf":   "not_deployed",
+			},
+			want: osc.StatusDown,
 		},
 	}
 

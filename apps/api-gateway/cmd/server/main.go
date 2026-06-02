@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/vn-market-intelligence/api-gateway/pkg/application"
 	"github.com/vn-market-intelligence/api-gateway/pkg/domain"
@@ -43,7 +44,9 @@ func main() {
 	registry := infrastructure.NewStaticServiceRegistry(serviceURLs)
 	checker := infrastructure.NewHTTPHealthChecker()
 
-	healthDomainService := domain.NewAggregateHealthService(checker, registry)
+	notDeployedRaw := getenv("NOT_DEPLOYED_SERVICES", "pdf,rag,ta,stock,kinh-dich,alert,news")
+	notDeployed := splitCSV(notDeployedRaw)
+	healthDomainService := domain.NewAggregateHealthService(checker, registry, notDeployed)
 	aggregateUC := application.NewAggregateHealthUseCase(healthDomainService)
 	serviceHealthUC := application.NewServiceHealthUseCase(registry, checker)
 
@@ -64,4 +67,16 @@ func getenv(key, fallback string) string {
 		return v
 	}
 	return fallback
+}
+
+// splitCSV splits a comma-separated string into trimmed non-empty tokens.
+func splitCSV(s string) []string {
+	parts := strings.Split(s, ",")
+	out := make([]string, 0, len(parts))
+	for _, p := range parts {
+		if t := strings.TrimSpace(p); t != "" {
+			out = append(out, t)
+		}
+	}
+	return out
 }

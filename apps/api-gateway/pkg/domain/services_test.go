@@ -72,7 +72,7 @@ func allDownResults() map[string]*domain.ServiceHealthResult {
 func TestAggregateHealthService_AllOk(t *testing.T) {
 	checker := &mockChecker{results: allOkResults()}
 	registry := &mockRegistry{services: mockServices}
-	svc := domain.NewAggregateHealthService(checker, registry)
+	svc := domain.NewAggregateHealthService(checker, registry, nil)
 
 	result, err := svc.Aggregate(context.Background())
 	if err != nil {
@@ -94,7 +94,7 @@ func TestAggregateHealthService_Degraded(t *testing.T) {
 	}
 	checker := &mockChecker{results: results}
 	registry := &mockRegistry{services: mockServices}
-	svc := domain.NewAggregateHealthService(checker, registry)
+	svc := domain.NewAggregateHealthService(checker, registry, nil)
 
 	result, err := svc.Aggregate(context.Background())
 	if err != nil {
@@ -108,7 +108,7 @@ func TestAggregateHealthService_Degraded(t *testing.T) {
 func TestAggregateHealthService_AllDown(t *testing.T) {
 	checker := &mockChecker{results: allDownResults()}
 	registry := &mockRegistry{services: mockServices}
-	svc := domain.NewAggregateHealthService(checker, registry)
+	svc := domain.NewAggregateHealthService(checker, registry, nil)
 
 	result, err := svc.Aggregate(context.Background())
 	if err != nil {
@@ -122,7 +122,7 @@ func TestAggregateHealthService_AllDown(t *testing.T) {
 func TestAggregateHealthService_AllServicesPresent(t *testing.T) {
 	checker := &mockChecker{results: allOkResults()}
 	registry := &mockRegistry{services: mockServices}
-	svc := domain.NewAggregateHealthService(checker, registry)
+	svc := domain.NewAggregateHealthService(checker, registry, nil)
 
 	result, err := svc.Aggregate(context.Background())
 	if err != nil {
@@ -141,7 +141,7 @@ func TestAggregateHealthService_AllServicesPresent(t *testing.T) {
 func TestAggregateHealthService_CheckedAtISO(t *testing.T) {
 	checker := &mockChecker{results: allOkResults()}
 	registry := &mockRegistry{services: mockServices}
-	svc := domain.NewAggregateHealthService(checker, registry)
+	svc := domain.NewAggregateHealthService(checker, registry, nil)
 
 	result, err := svc.Aggregate(context.Background())
 	if err != nil {
@@ -155,7 +155,7 @@ func TestAggregateHealthService_CheckedAtISO(t *testing.T) {
 func TestAggregateHealthService_CheckerException(t *testing.T) {
 	checker := &mockChecker{err: errors.New("connection refused")}
 	registry := &mockRegistry{services: mockServices}
-	svc := domain.NewAggregateHealthService(checker, registry)
+	svc := domain.NewAggregateHealthService(checker, registry, nil)
 
 	result, err := svc.Aggregate(context.Background())
 	if err != nil {
@@ -197,7 +197,7 @@ func TestComputeOverallStatus(t *testing.T) {
 			}
 			checker.results = results
 			registry := &mockRegistry{services: svcs}
-			svc := domain.NewAggregateHealthService(checker, registry)
+			svc := domain.NewAggregateHealthService(checker, registry, nil)
 			result, err := svc.Aggregate(context.Background())
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)

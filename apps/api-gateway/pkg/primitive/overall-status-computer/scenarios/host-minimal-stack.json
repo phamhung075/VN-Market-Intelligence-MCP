@@ -1,0 +1,23 @@
+{
+  "scenario": "host-minimal-stack",
+  "tier": "primitive",
+  "primitive": "overall-status-computer",
+  "description": "5 deployed ok + 7 not_deployed — overall must be ok. Proves not_deployed entries are excluded before evaluation and do not trigger a false DOWN/DEGRADED.",
+  "input": {
+    "statuses": {
+      "mcp":       "ok",
+      "macro":     "ok",
+      "pdf":       "not_deployed",
+      "rag":       "not_deployed",
+      "ta":        "not_deployed",
+      "stock":     "not_deployed",
+      "kinh-dich": "not_deployed",
+      "alert":     "not_deployed",
+      "news":      "not_deployed"
+    }
+  },
+  "expected": {
+    "overall": "ok"
+  },
+  "verdict": "PASS"
+}

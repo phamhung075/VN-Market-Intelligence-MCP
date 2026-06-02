@@ -11,19 +11,29 @@ import (
 // AggregateHealthService is the pure domain service for health aggregation.
 // Zero I/O — all HTTP calls delegated to injected HealthCheckerPort.
 type AggregateHealthService struct {
-	checker  HealthCheckerPort
-	registry ServiceRegistryPort
+	checker        HealthCheckerPort
+	registry       ServiceRegistryPort
+	notDeployedSet map[string]bool
 }
 
 // NewAggregateHealthService creates a new AggregateHealthService.
-func NewAggregateHealthService(checker HealthCheckerPort, registry ServiceRegistryPort) *AggregateHealthService {
+// notDeployedSet is a list of short-keys for services that are intentionally
+// not deployed on this host; they are classified as StatusNotDeployed and
+// skipped during HTTP health-check fan-out.
+func NewAggregateHealthService(checker HealthCheckerPort, registry ServiceRegistryPort, notDeployedSet []string) *AggregateHealthService {
+	ndSet := make(map[string]bool, len(notDeployedSet))
+	for _, key := range notDeployedSet {
+		ndSet[key] = true
+	}
 	return &AggregateHealthService{
-		checker:  checker,
-		registry: registry,
+		checker:        checker,
+		registry:       registry,
+		notDeployedSet: ndSet,
 	}
 }
 
 // Aggregate fans out health checks to all services in parallel and aggregates results.
+// Services in notDeployedSet are classified as StatusNotDeployed without probing.
 func (s *AggregateHealthService) Aggregate(ctx context.Context) (*AggregatedHealth, error) {
 	services := s.registry.GetAllServices()
 
@@ -33,25 +43,41 @@ func (s *AggregateHealthService) Aggregate(ctx context.Context) (*AggregatedHeal
 		err    error
 	}
 
-	results := make([]result, len(services))
-	var wg sync.WaitGroup
+	// Classify not-deployed services immediately; collect only deployable ones to probe.
+	statuses := make(map[string]HealthStatus, len(services))
+	latencies := make(map[string]int64, len(services))
+
+	type indexedSvc struct {
+		idx int
+		svc *ServiceConfig
+	}
+	var toProbe []indexedSvc
 
 	for i, svc := range services {
+		if s.notDeployedSet[svc.Name] {
+			statuses[svc.Name] = StatusNotDeployed
+			latencies[svc.Name] = -1
+		} else {
+			toProbe = append(toProbe, indexedSvc{idx: i, svc: svc})
+		}
+	}
+
+	results := make([]result, len(toProbe))
+	var wg sync.WaitGroup
+
+	for j, item := range toProbe {
 		wg.Add(1)
-		go func(idx int, service *ServiceConfig) {
+		go func(resIdx int, idx int, service *ServiceConfig) {
 			defer wg.Done()
 			h, err := s.checker.CheckHealth(ctx, service)
-			results[idx] = result{index: idx, health: h, err: err}
-		}(i, svc)
+			results[resIdx] = result{index: idx, health: h, err: err}
+		}(j, item.idx, item.svc)
 	}
 
 	wg.Wait()
 
-	statuses := make(map[string]HealthStatus, len(services))
-	latencies := make(map[string]int64, len(services))
-
-	for i, r := range results {
-		name := services[i].Name
+	for j, r := range results {
+		name := toProbe[j].svc.Name
 		if r.err != nil || r.health == nil {
 			statuses[name] = StatusDown
 			latencies[name] = -1
