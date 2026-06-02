@@ -1,4 +1,4 @@
-<!-- size-justification: ~120L — SSOT protocol skill for orch-state.json .signal_queue; §WRITE/§READ/§PRUNE condensed to summaries + pointers (full bodies in dashboard-protocol.md); §ACK/CLOSE, §Payload Pointer Discipline, §Signal types, §Docs to read kept inline (small lookup tables agents need without extra load) -->
+<!-- size-justification: ≤120L — hot-path only; Payload Pointer Discipline + Docs-to-read table moved to reference.md (load when writing large-payload signals or routing by type) -->
 ---
 name: signal-dashboard
 description: SSOT protocol for cowork agent signal communication via docs/data/orch/orch-state.json .signal_queue.rows[]. Covers write, read, ack, close, and prune operations. READ uses two-phase delta-read to eliminate full-file token cost.
@@ -43,7 +43,8 @@ Row shape: per orch-state.json schema `signal_queue.rows[]`:
 ```
 One row per signal. `summary` max 120 chars — strip to fit. `payload_ref` = file path or `null`.
 
-→ Full protocol: `.claude/skills/signal-dashboard/dashboard-protocol.md § WRITE`
+→ Full write procedure: `.claude/skills/signal-dashboard/dashboard-protocol.md § WRITE`
+→ Payload >120 chars or sprint-kickoff signals: `.claude/skills/signal-dashboard/reference.md § Payload Pointer Discipline`
 
 ---
 
@@ -54,7 +55,8 @@ Phase 2 = jq filter on `.signal_queue.rows[]` for rows matching `to == my-agent-
 Cache key: `dashboard_section_cache` in `docs/data/orch/orch-state.json` `.dashboard_section_cache` (dev-team) or spawn-prompt (cowork agents).
 No cache → skip Phase 1, go straight to Phase 2. Missing orch-state.json or absent `.signal_queue` → log + skip, never fail-loud.
 
-→ Full protocol: `.claude/skills/signal-dashboard/dashboard-protocol.md § READ`
+→ Full read procedure: `.claude/skills/signal-dashboard/dashboard-protocol.md § READ`
+→ Docs to load per signal type after READ: `.claude/skills/signal-dashboard/reference.md § Docs to read per signal type`
 
 ---
 
@@ -74,35 +76,7 @@ Update `.signal_queue._updated_at` + `._updated_by`.
 Max 200 rows in `.signal_queue.rows[]` — prune oldest resolved/read first if approaching limit.
 NEW rows are NEVER pruned. This step is mandatory, not optional.
 
-→ Full protocol: `.claude/skills/signal-dashboard/dashboard-protocol.md § PRUNE`
-
----
-
-## Payload Pointer Discipline
-
-Rules apply to NEW signals from cycle 2 of Sprint 1968 onward. No retroactive rewrite.
-
-**Rule 1 — summary field cap:**
-`summary` field max 120 chars. When the payload would exceed this, truncate to 80 chars and set `payload_ref` to a handoff file:
-```
-"summary": "<first 80 chars> → docs/handoffs/TASK_NNN.md",
-"payload_ref": "docs/handoffs/TASK_NNN.md"
-```
-Full details live in the handoff file, not the signal row.
-
-**Rule 2 — PM sprint-kickoff signal payload cap:**
-`pm sprint-kickoff` signal payload body must be ≤800 chars JSON. Format:
-```json
-{ "title": "...", "scope": "...", "tasks": ["1968a", "1968b"] }
-```
-Full plan lives in `docs/handoffs/SPRINT_NNN.md`. The signal is a pointer, not the plan.
-
-**Rule 3 — Pointer integrity check:**
-The writer of a truncated signal MUST verify the pointed file exists before emitting:
-```
-ls docs/handoffs/TASK_NNN.md  # must return the file, not ENOENT
-```
-No orphan pointers. If the file does not exist, create it first, then emit the signal.
+→ Full prune procedure: `.claude/skills/signal-dashboard/dashboard-protocol.md § PRUNE`
 
 ---
 
@@ -116,18 +90,3 @@ No orphan pointers. If the file does not exist, create it first, then emit the s
 | `news-impact` | News chain with market impact | `docs/signals/*.json` |
 | `system-issue` | Infrastructure problem | null (inline summary only) |
 | `methodology-flag` | Agent violated TNB methodology | notebook path |
-
----
-
-## Docs to read per signal type
-
-When READ finds a NEW row, load these docs:
-
-| type | Docs to read |
-|---|---|
-| `audit-handoff` | payload_ref + `docs/standards/tnb-methodology.md` |
-| `brief_complete` | payload_ref only |
-| `market-signal` | payload_ref + `docs/policies/alert-policy.md` |
-| `news-impact` | payload_ref + `docs/standards/alert-message-format.md` |
-| `system-issue` | `docs/protocols/fail-loud-protocol.md` |
-| `methodology-flag` | payload_ref + `docs/standards/tnb-methodology.md` |
