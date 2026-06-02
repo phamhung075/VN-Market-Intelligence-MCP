@@ -141,6 +141,22 @@ Zone health: 264/264 Vitest GREEN (+15 new), tsc clean, 3 files changed | HEALTH
 - tsc: exit 0. Vitest: 264/264. Mutex: acquired+released.
 - NEEDS REBUILD: frontend (ops to dispatch)
 
+## Cycle ORCH-DASH-LIVE — 2026-06-02 (live auto-refresh on orchestration dashboard)
+
+Zone health: tsc clean, build green (1626 modules), single file changed | HEALTHY
+
+- Task: ORCH-DASH-LIVE — add client-side polling to /dashboard/orchestration (no SSE/WebSocket).
+- Approach: Remix useRevalidator + useEffect interval at POLL_MS=5000ms.
+- Guards: skip tick if revalidator.state !== "idle" (no pile-up); pause when tab hidden; immediate refresh on visibilitychange back to visible.
+- UI: LIVE indicator added to header (pulsing green dot + "LIVE" label; dims to "· refreshing…" on in-flight revalidation). StaleBadge + ClientTimestamp untouched.
+- SSR safe: useEffect is client-only; typeof document check before reading visibilityState.
+- Files changed: apps/frontend/app/routes/dashboard.orchestration.tsx only (52 insertions, 1 deletion).
+- typecheck: tsc --noEmit → exit 0 (zero errors).
+- build: remix vite:build → ✓ 1626 modules (client) + 38 modules (SSR), exit 0.
+- Commit: 8c30334a feat(frontend): live auto-refresh on orchestration dashboard via useRevalidator polling (ORCH-DASH-LIVE)
+- Key pattern: revalidator reference is stable between renders but the closure in useEffect captures the object ref; [revalidator] as dep is correct and does not thrash.
+- NEEDS REBUILD: frontend (ops to dispatch)
+
 ## Carry-over (next session)
 
 - P2-D: QA gate — freeze anchor confirm (QA reads eslint.config.mjs git log, emits G4 evidence signal)
