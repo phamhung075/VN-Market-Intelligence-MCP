@@ -452,10 +452,11 @@ interface PublishabilityCheck {
  *                 EPS in [0, 100000] VND. Offending ratios marked N/A (partial, not full block).
  * PUB-8 (BAL-0): parent-only heuristic — net_revenue=0 AND net_profit>0 AND conf<0.6 → BLOCK
  *
- * C-1 bank guard: banks (Mẫu B02-TCTD) have Roman-numeral codes (I, VIII, IX…) that
- * CAST to NULL, so the corporate `CAST(code AS INTEGER) BETWEEN 100 AND 440` predicate
+ * C-1 bank guard (BAL-1b): banks (Mẫu B02-TCTD) have Roman-numeral codes (I, VIII, IX…)
+ * that CAST to NULL, so the corporate `CAST(code AS INTEGER) BETWEEN 100 AND 440` predicate
  * matches zero rows for ACB/VCB → publishable=false (false block). For banks, PUB-3
- * accepts any non-summary 'general' row with value_current IS NOT NULL instead.
+ * accepts any non-summary row where statement_section IN ('general', 'balance_sheet') —
+ * 'general' covers legacy ACB/VCB parsing; 'balance_sheet' covers EIB/SHB correctly parsed.
  *
  * @param db          Database instance (injected for testability)
  * @param reportId    Financial report UUID
@@ -508,22 +509,26 @@ export function checkPublishability(
   // also accept 'general' rows that carry standard Vietnamese balance-sheet codes (100-440):
   //   assets 100-299, liabilities 300-399, equity 400-440 (Mẫu B01-DN / B02-TCTD).
   //
-  // C-1 bank path (BANK-DEV-1): bank rows have Roman-numeral codes (I, VIII, IX…) that
-  // CAST to NULL, so CAST(code AS INTEGER) BETWEEN 100 AND 440 matches zero rows.
-  // ACB live data: 95 'general' rows, 0 'balance_sheet' rows, all codes Roman/null.
-  // For banks: accept any non-summary 'general' row with value_current IS NOT NULL.
-  // This preserves the "real data exists, not forced-zero" intent of PUB-3.
+  // C-1 bank path (BANK-DEV-1 → BAL-1b): bank rows have Roman-numeral codes (I, VIII, IX…)
+  // that CAST to NULL, so CAST(code AS INTEGER) BETWEEN 100 AND 440 matches zero rows.
+  // Legacy ACB/VCB: parser dumped all rows into statement_section='general' (0 'balance_sheet').
+  // Correctly-parsed EIB/SHB: rows labeled statement_section='balance_sheet' (0 'general').
+  // BAL-1b fix: the bank path must accept EITHER 'general' OR 'balance_sheet' to cover both
+  // parser generations. The original 'general'-only clause blocked EIB/SHB (B-1 gate mismatch).
+  // This preserves the "real data exists, not forced-zero" intent of PUB-3 for all bank parsings.
   //
   // This does NOT change statement_section labels — it only broadens the publishability
   // check to match current parser reality. BCTC-LAYOUT-FIRST will re-label correctly.
   const balanceChildren = bankForm
-    ? // C-1 bank path: any non-summary general row with real value
+    ? // C-1 bank path: accept legacy 'general' rows (ACB/VCB parser reality) OR
+      // correctly-labeled 'balance_sheet' rows (EIB/SHB and future banks parsed correctly).
+      // BAL-1b: broadened to cover both label conventions — do NOT restrict to one section.
       db
         .query<{ cnt: number }, [string]>(
           `SELECT COUNT(*) as cnt FROM bctc_table_rows
            WHERE report_id = ?
              AND is_summary_row = 0
-             AND statement_section = 'general'
+             AND (statement_section = 'general' OR statement_section = 'balance_sheet')
              AND value_current IS NOT NULL`,
         )
         .get(reportId)

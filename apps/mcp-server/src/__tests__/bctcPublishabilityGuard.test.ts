@@ -2,6 +2,7 @@
  * Unit tests — checkPublishability PUB-1..4 gates in bctcFullTools.ts
  *
  * Sprint BCTC-TRUST-RED (TR0-DEV-2)
+ * BAL-1b: PUB-3 bank-path broadened to accept 'balance_sheet' section (EIB/SHB fix).
  *
  * Tests the four publishability gates via the bctcFullTools handler using
  * an in-memory SQLite database (injected via _testDb parameter).
@@ -13,13 +14,19 @@
  *   - PUB-4: all bctc_refined_units REJECTED_SANITY → refusal
  *   - PUB-4 partial: some REJECTED_SANITY → publishable with warning
  *   - All gates pass → tool returns financial output (not refusal)
+ *   - BAL-1b PUB-3 bank path: 'balance_sheet' section → publishable (EIB/SHB case)
+ *   - BAL-1b PUB-3 bank path: 'general' section → publishable (ACB/VCB legacy, no regression)
+ *   - BAL-1b PUB-3 bank path: neither section → blocked (gate still enforced)
  */
 
 import { describe, it, expect, beforeEach } from "bun:test";
 import { Database } from "bun:sqlite";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { initFinancialReportsTables } from "../infrastructure/db/schema-financial-reports.js";
-import { registerBctcFullTools } from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
+import {
+  registerBctcFullTools,
+  checkPublishability,
+} from "../interface/mcp/tools/financial-reports/bctcFullTools.js";
 
 // ── Test DB setup ─────────────────────────────────────────────────────────────
 
@@ -316,5 +323,106 @@ describe("Refusal message content", () => {
       "SELECT COUNT(*) as cnt FROM bctc_table_rows WHERE report_id = ? AND statement_section = 'balance_sheet' AND is_summary_row = 0",
     ).get(REPORT_ID);
     expect(cnt?.cnt).toBe(0);
+  });
+});
+
+// ── BAL-1b: PUB-3 bank-path broadened to 'general' OR 'balance_sheet' ────────
+//
+// Root cause (BAL-1b-INV B-1): the original bank path queried ONLY
+// statement_section='general'. EIB/SHB rows are correctly labeled 'balance_sheet'
+// → count=0 → publishable=false (false block). Fix: accept either section.
+//
+// These tests call checkPublishability() directly (exported for DV-BANK-1)
+// with bankForm=true so we exercise the actual production C-1 query.
+
+function seedBankReport(db: Database, refineStatus: string): void {
+  db.prepare(
+    `INSERT INTO financial_reports
+       (id, action_code, company_name, exchange, domain,
+        period_year, period_type, period_start, period_end, sort_key,
+        parsed_at, balance_sheet_json, income_stmt_json, cash_flow_json, ratios_json,
+        refine_status)
+     VALUES (?, ?, 'Bank Test Co', 'HOSE', 'banking',
+             2026, 'Q1', '2026-01-01', '2026-03-31', '2026-Q1',
+             datetime('now'), '{}', '{}', '{}', '{}',
+             ?)`,
+  ).run(BANK_REPORT_ID, BANK_TICKER, refineStatus);
+}
+
+function seedBankRow(
+  db: Database,
+  section: string,
+  isSummary: boolean,
+  valueNull: boolean = false,
+): void {
+  db.prepare(
+    `INSERT INTO bctc_table_rows
+       (report_id, page_number, statement_section, row_order, label,
+        period_current, value_current, is_summary_row)
+     VALUES (?, 1, ?, 1, 'Roman code row', 'Q1-2026', ?, ?)`,
+  ).run(BANK_REPORT_ID, section, valueNull ? null : 5000000, isSummary ? 1 : 0);
+}
+
+const BANK_REPORT_ID = "bank-report-bal1b";
+const BANK_TICKER = "EIB";
+
+describe("BAL-1b: PUB-3 bank-path — accept 'balance_sheet' section (EIB/SHB fix)", () => {
+  it("TC-BAL-1b-1: bank report with rows in 'balance_sheet' section → publishable=true", () => {
+    // EIB/SHB case: correctly-labeled rows — was falsely blocked before BAL-1b
+    const db = openTestDb();
+    seedBankReport(db, "DONE");
+    // Seed an income_statement row to pass PUB-2
+    db.prepare(
+      `INSERT INTO bctc_table_rows
+         (report_id, page_number, statement_section, row_order, label,
+          period_current, value_current, is_summary_row)
+       VALUES (?, 1, 'income_statement', 2, 'Revenue', 'Q1-2026', 10000000, 0)`,
+    ).run(BANK_REPORT_ID);
+    // Seed balance_sheet child row (correctly labeled — EIB/SHB parser output)
+    seedBankRow(db, "balance_sheet", false);
+
+    const result = checkPublishability(db, BANK_REPORT_ID, true /* bankForm */);
+    expect(result.publishable).toBe(true);
+  });
+
+  it("TC-BAL-1b-2: bank report with rows in 'general' section → publishable=true (ACB/VCB legacy, no regression)", () => {
+    // ACB/VCB case: legacy parser dumps all rows into 'general' — must still pass
+    const db = openTestDb();
+    seedBankReport(db, "DONE");
+    // Seed a general row (also passes PUB-2)
+    seedBankRow(db, "general", false);
+
+    const result = checkPublishability(db, BANK_REPORT_ID, true /* bankForm */);
+    expect(result.publishable).toBe(true);
+  });
+
+  it("TC-BAL-1b-3: bank report with ONLY summary rows in 'balance_sheet' → publishable=false (gate enforced)", () => {
+    // All balance_sheet rows are summary → no children → gate must block
+    const db = openTestDb();
+    seedBankReport(db, "DONE");
+    // Seed income_statement row to pass PUB-2
+    db.prepare(
+      `INSERT INTO bctc_table_rows
+         (report_id, page_number, statement_section, row_order, label,
+          period_current, value_current, is_summary_row)
+       VALUES (?, 1, 'income_statement', 2, 'Revenue', 'Q1-2026', 10000000, 0)`,
+    ).run(BANK_REPORT_ID);
+    // Seed balance_sheet row but it is a SUMMARY row (is_summary_row=1)
+    seedBankRow(db, "balance_sheet", true /* isSummary */);
+
+    const result = checkPublishability(db, BANK_REPORT_ID, true /* bankForm */);
+    expect(result.publishable).toBe(false);
+    expect(result.reason).toContain("balance sheet has no decomposition");
+  });
+
+  it("TC-BAL-1b-4: bank report with rows in both 'general' and 'balance_sheet' → publishable=true", () => {
+    // Mixed: shouldn't happen in practice but gate should pass without issue
+    const db = openTestDb();
+    seedBankReport(db, "DONE");
+    seedBankRow(db, "general", false);
+    seedBankRow(db, "balance_sheet", false);
+
+    const result = checkPublishability(db, BANK_REPORT_ID, true /* bankForm */);
+    expect(result.publishable).toBe(true);
   });
 });
