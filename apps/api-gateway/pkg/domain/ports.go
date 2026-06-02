@@ -18,3 +18,13 @@ type ServiceRegistryPort interface {
 	// than forwarding to the dead service (which would 502).
 	IsNotDeployed(name string) bool
 }
+
+// CapabilityProberPort probes the mcp-server for the live capability status of
+// not-deployed services.  Results are cached with TTL 60s and the total number
+// of probe calls per window is bounded to 7 (one per not_deployed short_key).
+type CapabilityProberPort interface {
+	// ProbeAll returns a capability map (short_key → ServiceCapability) for all
+	// not-deployed services defined in the manifest.  Cached results are returned
+	// without a new probe when the TTL has not expired.
+	ProbeAll(ctx context.Context) map[string]*ServiceCapability
+}

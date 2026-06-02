@@ -14,6 +14,8 @@ type AggregateHealthService struct {
 	checker        HealthCheckerPort
 	registry       ServiceRegistryPort
 	notDeployedSet map[string]bool
+	// capabilityProber is optional; nil disables capability enrichment.
+	capabilityProber CapabilityProberPort
 }
 
 // NewAggregateHealthService creates a new AggregateHealthService.
@@ -30,6 +32,14 @@ func NewAggregateHealthService(checker HealthCheckerPort, registry ServiceRegist
 		registry:       registry,
 		notDeployedSet: ndSet,
 	}
+}
+
+// WithCapabilityProber attaches a capability prober to the service.
+// When set, every Aggregate call enriches the response with per-service
+// capability status (live/data_limited/dark/n/a) for not-deployed services.
+func (s *AggregateHealthService) WithCapabilityProber(p CapabilityProberPort) *AggregateHealthService {
+	s.capabilityProber = p
+	return s
 }
 
 // Aggregate fans out health checks to all services in parallel and aggregates results.
@@ -94,11 +104,32 @@ func (s *AggregateHealthService) Aggregate(ctx context.Context) (*AggregatedHeal
 	}
 	overall := HealthStatus(osc.ComputeOverallStatus(rawStatuses))
 
+	// Capability enrichment — additive axis for not-deployed services only.
+	// ANTI-FALSE-GREEN: a deployed service that is DOWN stays DOWN regardless
+	// of what the capability prober returns.  We only populate the capabilities
+	// map for services that are in notDeployedSet; deployed services are omitted.
+	var capabilities map[string]*ServiceCapability
+	if s.capabilityProber != nil {
+		probed := s.capabilityProber.ProbeAll(ctx)
+		if len(probed) > 0 {
+			capabilities = make(map[string]*ServiceCapability, len(probed))
+			for key, cap := range probed {
+				// Only include capability enrichment for services that are
+				// confirmed not-deployed.  Deployed services keep only their
+				// container-axis status (down = RED, no capability rescue).
+				if s.notDeployedSet[key] {
+					capabilities[key] = cap
+				}
+			}
+		}
+	}
+
 	return &AggregatedHealth{
-		Status:    overall,
-		Services:  statuses,
-		Latencies: latencies,
-		CheckedAt: time.Now().UTC().Format(time.RFC3339Nano),
+		Status:       overall,
+		Services:     statuses,
+		Latencies:    latencies,
+		Capabilities: capabilities,
+		CheckedAt:    time.Now().UTC().Format(time.RFC3339Nano),
 	}, nil
 }
 

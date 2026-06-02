@@ -693,7 +693,20 @@
             "kinh-dich",
             "alert",
             "news"
-          ]
+          ],
+          "capability_manifest": {
+            "_note": "Maps each short_key to the mcp-server probe that verifies its capability is LIVE. Probe runs server-side in api-gateway /health (bounded, cached TTL 60s). Never fan-out all 156 tools.",
+            "_ground_truth_date": "2026-06-02",
+            "mcp":       { "capability": "n/a",          "probe_type": "health_endpoint", "probe": "/health",                  "live_evidence": "toolCount:156 ok" },
+            "macro":     { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_macro_snapshot",       "live_evidence": "2026-06-02 21:00Z" },
+            "stock":     { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_market_snapshot",      "live_evidence": "VN-Index 1826.47 2026-06-02" },
+            "kinh-dich": { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_portfolio_conviction", "live_evidence": "38 tickers 2026-06-02" },
+            "alert":     { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_alerts",               "live_evidence": "20 alerts today 2026-06-02" },
+            "news":      { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_agent_signals",        "live_evidence": "NVL/VHM/HPG ingestion today" },
+            "ta":        { "capability": "data_limited",  "probe_type": "mcp_tool",        "probe": "get_technical_indicators", "live_evidence": "30/35 candles tier3 2026-06-02", "capability_note": "30/35 candles available" },
+            "pdf":       { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_financial_summary",    "live_evidence": "BCTC online 2026-06-02" },
+            "rag":       { "capability": "dark",          "probe_type": "none",            "probe": null,                       "live_evidence": "embedded in 156-count, not probed" }
+          }
         }
       },
       "databases": [

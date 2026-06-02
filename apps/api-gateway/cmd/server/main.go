@@ -49,7 +49,14 @@ func main() {
 	registry := infrastructure.NewStaticServiceRegistryWithNotDeployed(serviceURLs, notDeployed)
 	checker := infrastructure.NewHTTPHealthChecker()
 
-	healthDomainService := domain.NewAggregateHealthService(checker, registry, notDeployed)
+	// Capability prober: reads the manifest from system-map.json and runs
+	// bounded (max 7) probes per 60s window.  System-map is resolved relative
+	// to the repo root — either from SYSTEM_MAP_PATH env or the default path.
+	systemMapPath := getenv("SYSTEM_MAP_PATH", "docs/data/system-map.json")
+	capabilityProber := infrastructure.NewCapabilityProber(mcpURL, systemMapPath)
+
+	healthDomainService := domain.NewAggregateHealthService(checker, registry, notDeployed).
+		WithCapabilityProber(capabilityProber)
 	aggregateUC := application.NewAggregateHealthUseCase(healthDomainService)
 	serviceHealthUC := application.NewServiceHealthUseCase(registry, checker)
 

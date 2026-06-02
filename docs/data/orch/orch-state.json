@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-02T21:06:17Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-02T21:30:00Z",
+  "_updated_by": "dev-frontend",
   "head": {
     "status": "idle",
     "active_task_id": "idle",
@@ -1256,7 +1256,7 @@
             "depends": [
               "FOU-1-DESIGN"
             ],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/frontend/",
             "priority": "medium",
@@ -1270,11 +1270,11 @@
             "depends": [
               "FOU-1-DESIGN"
             ],
-            "status": "TODO",
+            "status": "DONE-PENDING-REBUILD",
             "size": "S",
             "zone": "apps/api-gateway/",
             "priority": "medium",
-            "note": "Handoff: docs/handoffs/FOU-3-GW.md. Read capability_manifest from system-map.json, run max 7 probes per 60s (TTL cache), enrich /health response with capability+capabilityNote. Bounded cached probe, never 156-tool fan-out (host-safety). Parallel with FOU-3-FE, blocking for both."
+            "note": "Implemented 2026-06-02: capability_manifest SSOT in system-map.json + CapabilityProber infra (TTL 60s cache, 7-probe max, 3000ms timeout, fallback to manifest baseline) + AggregatedHealth.capabilities field + domain CapabilityStatus type + ServiceCapability type. ANTI-FALSE-GREEN: only not_deployed services get capability enrichment. Tests: cache TTL, cache expiry, timeout fallback, 7-probe cap, none-probe, health-endpoint, capability-note, deployed-down-not-rescued. CGO_ENABLED=0 go test ./... ALL PASS. ops_rebuild_required=true (rebuild api-gateway container to serve capability field)."
           },
           {
             "task_id": "FOU-3-FE",
