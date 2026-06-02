@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": "idle",
     "next_agent": "po",
-    "next_action": "BATCH DONE (bctc 3-blocker escalation). (1) FPT-OPUS-DEEPDIVE a38e14ee: Opus deep-dive ran, FPT ESC-3 -> flag_for_human_review (MIXED/partial-artifact, conf0.35) — clears 10-cycle overdue at analyst layer. (2) ESC-OPUS-DISPATCH-SEAM c1c51a64: design brief delivered (formalizes the proven dev-team opus-dispatch pattern w/ TTL idempotency guard) + brief_complete->PO. NEXT-CYCLE: PO drains brief_complete arc-brief-esc-opus-20260602T0121Z -> route impl to agent-father (3-file seam, drain-signals.md needs 120L child-extraction). Backlog: FU-BCTC-TOOL-PARAMS (get_cash_flow ignores quarters; get_bctc_full takes code not ticker -> dev-mcp-server); CTG->BCTC-CTG-ATTACHMENT-FETCH, DHG/EIB->BCTC-TABLE-2 (promote). WIP 0/2.",
+    "next_action": "BATCH 2/2 DONE. ESC-OPUS-SEAM-IMPL bbcbefad (seam live: bctc-analyst emits esc-deep-dive-request->dev-team drain-esc-dispatch.md spawns opus->deep_dive_result->po, TTL86400 guard). NB-PRUNE-BCTC-ANALYST ab8532b1 (172L). FPT deep_dive disposed: WORK-notice human-review + curated. context_bloat breach resolved by prune. Backlog unchanged (FU-BCTC-TOOL-PARAMS normal — seam safe ahead of it).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T01:25Z",
+    "updated_at": "2026-06-02T02:19Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -49,7 +49,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T01:25Z",
+    "_updated_at": "2026-06-02T02:19Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -361,6 +361,17 @@
             "size": "S",
             "zone": "docs/agent-memory/notebooks/",
             "note": "5082046d 219->92L"
+          },
+          {
+            "task_id": "NB-PRUNE-BCTC-ANALYST",
+            "title": "Prune bctc-analyst.md 201L->cap (context_bloat_breach)",
+            "type": "FIX",
+            "owner": "claude-manager-helper",
+            "depends": [],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "docs/agent-memory/notebooks/",
+            "note": "DONE ab8532b1 — 201->172L, dropped oldest c005 cycle, ESC-3/FPT dedup + cowork edits preserved."
           }
         ]
       },
@@ -409,6 +420,19 @@
             "size": "S",
             "zone": "docs/agents/bctc-analyst/ + docs/agents/dev-team/flow/",
             "note": "DESIGN DONE c1c51a64 (brief 2026-06-02-esc-opus-dispatch-seam.md, 232L). Impl routes to agent-father via brief_complete signal arc-brief-esc-opus-20260602T0121Z -> next-cycle PO triage. agents-architect->agent-father split."
+          },
+          {
+            "task_id": "ESC-OPUS-SEAM-IMPL",
+            "title": "Implement ESC->Opus dispatch seam (3 flow edits + child-extraction)",
+            "type": "SPRINT-S",
+            "owner": "agent-father",
+            "depends": [
+              "ESC-OPUS-DISPATCH-SEAM"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/",
+            "note": "DONE bbcbefad — 3 flow edits + drain-esc-dispatch.md (74L child) extracted; drain-signals.md 116L under cap; deep-dive-opus emits deep_dive_result->po + releases guard. Seam ships ahead of FU-BCTC-TOOL-PARAMS (honest low-conf)."
           }
         ]
       },
@@ -546,8 +570,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T01:21Z",
-    "_updated_by": "agents-architect",
+    "_updated_at": "2026-06-02T02:10Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "po-gate-self-critique-detect-20260601T2111",
@@ -792,7 +816,7 @@
         "type": "brief_complete",
         "summary": "ESC-OPUS-DISPATCH-SEAM brief ready — 3-file seam design (bctc-analyst+drain-signals+deep-dive-opus), task_claim guard, FU-BCTC-TOOL-PARAMS flagged",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "READ",
         "payload_ref": "docs/architecture-briefs/2026-06-02-esc-opus-dispatch-seam.md"
       }
     ],
