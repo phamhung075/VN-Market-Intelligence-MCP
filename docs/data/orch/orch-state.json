@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T18:26:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "ORCH-DASH-LIVE shipped+live-verified. Orchestration dashboard now auto-refreshes every 5s (visibility-gated) via useRevalidator — no manual reload. Remaining backlog = async/infra (VPS BCTC) + low FUs. Next PO triage owns residual.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "DRAIN-PRUNE-DATEFMT",
+    "next_agent": "agent-father",
+    "next_action": "Fix drain-signals.md 0a-2 prune date-format no-op (spec-only). AC: prune clause actually matches >7d compact-ISO rows; format invariant documented; canonical-script decision recorded.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T19:02:34Z",
+    "updated_at": "2026-06-02T19:17:25Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T19:02:34Z",
+    "_updated_at": "2026-06-02T19:17:25Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -585,6 +585,17 @@
             "size": "S",
             "zone": "apps/frontend/ + apps/api-gateway/",
             "note": "residual flagged by agent-father during A-01; closes the dashboard 7-false-RED plane (project_dashboard_two_data_planes) | DECOMPOSED 2026-06-02 into FRONTEND-CORRECTNESS A-01b-1..4 (operator goal); see that sprint | DONE 2026-06-02 via FRONTEND-CORRECTNESS A-01b-1..4; ops rebuilt api-gateway+frontend; QA live PROVEN-RED PASS"
+          },
+          {
+            "task_id": "DRAIN-PRUNE-DATEFMT",
+            "title": "Fix silent no-op 7-day prune in drain-signals.md 0a-2 — datetime() cannot parse compact-ISO processed_at",
+            "type": "FIX",
+            "owner": "agent-father",
+            "status": "IN_PROGRESS",
+            "size": "XS",
+            "zone": "docs/agents/dev-team/flow/",
+            "priority": "low",
+            "note": "PO triage :07 2026-06-02. Router raw-verified: DB held 1050 rows, newest processed_at=20260521 (12d), DELETE matched 0 for weeks because processed_at is compact-ISO YYYYMMDDTHHMMSSZ → SQLite datetime() returns NULL. Fix spec to lexicographic compact-cutoff compare (no row migration); document format invariant; decide canonical in-repo drain script vs TODO pointer (repo has none; /tmp drain is uncommitted + envelope-skip divergent). Spec-only flow edit, no rebuild."
           }
         ]
       },
