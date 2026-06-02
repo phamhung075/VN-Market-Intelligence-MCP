@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "BAL-1d-DEV",
-    "next_agent": "dev-mcp-server",
-    "next_action": "PO dev-team TRIAGE 2026-06-02T16:05Z (GOAL=complete all task). SSOT raw-verified. BATCH-1 dispatched: BAL-1d-DEV (report_scope column + parent_only heuristic + PUB-5/8 structural, dev-mcp-server, M). SEQUENCED REMAINING (drive to done, WIP<=2, NO parallel mcp-server-BCTC commits): B2=MSG-1 foreign-flow aggregate tool (dev-mcp-server M) + MSG-3 phantom-tool doc (XS, doc-zone, parallel-safe). B3=ENV-ISOLATION P2 chain EI-P2-1->P2-2->P2-3->QA (serial, dep chain). B4=FU-BCTC-HISTORY-COVERAGE SPIKE (dev-mcp-server, AFTER BAL-1d — same mcp BCTC file family). B5=SIG-FOLLOWUP-DRYRUN X-1 (developer S). B6=RE-CAP-1 signal-dashboard SKILL 133L>120 cap lazy-load (agent-father, =FU-SIGNAL-DASHBOARD-CAP, collapse). B7=AUDITOR-SLA-CADENCE (agent-father S). B8=CHEF-ATTN-1 (dev-mcp-server M, needs BA). DESIGN-LANE (agents-architect, plan-only, separate WIP): 1965-COVERAGE-SWEEP + PM-COMMIT-BOUNDARY-1974 commit-step audit. NOT-DONE: BAL-1e-DEV (low, EPS-footnote, deferred per brief) + LF-EXTRACT/LF-OVERLAY (BCTC-LAYOUT-FIRST re-arch superseded by recompute-on-read + analytics-layer fixes already live; do not start a parallel extraction rewrite). Signals disposed: CMH-STALL=CLOSED-MOOT, 1965/PM-1974=KEEP-OPEN(design-lane).",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": "BAL-1d DONE-CODE-LIVE (611592be, mcp 16:57:41Z, router raw-verified: report_scope column live, VNM control un-regressed, HPG parent-only withheld; PUB-8 structural gate-shadowed by PUB-5 like BAL-1b, proven by 13 tests, NULL-fallback live). NEW SIGNAL to triage: cwk-20260602T1610Z news-scout self-refused its flow (agent-flow-defect MEDIUM) -> agents-architect/agent-father lane. NEXT BATCH-2: MSG-1 foreign-flow aggregate tool (dev-mcp-server M) + MSG-3 phantom-tool doc (XS doc-zone, parallel-safe). Then B3 ENV-ISOLATION-P2 chain, B4 FU-BCTC-HISTORY-COVERAGE, B5 SIG-FOLLOWUP-DRYRUN, B6 RE-CAP-1, B7 AUDITOR-SLA-CADENCE, B8 CHEF-ATTN-1. GOAL=complete all task.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T16:08:17Z",
+    "updated_at": "2026-06-02T17:01:18Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T15:36:07Z",
+    "_updated_at": "2026-06-02T17:01:18Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -169,11 +169,11 @@
             "depends": [
               "BAL-0"
             ],
-            "status": "IN_PROGRESS",
+            "status": "DONE-CODE-LIVE-MOOT-PUB5",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "medium",
-            "note": "brief Cluster(d): makes PUB-5/PUB-8 structural"
+            "note": "brief Cluster(d): makes PUB-5/PUB-8 structural | DONE 2026-06-02T17:00Z commit 611592be, mcp rebuilt image 16:57:41Z. ROUTER LIVE-VERIFIED (raw get_bctc_full, not badge): report_scope+period_basis columns present via PRAGMA on container boot; VNM consolidated control serves clean (ROE27.3/ROA17.7/NetDebt-EBITDA -0.13x), NOT over-blocked, correctly NOT flagged parent_only (rev=63645 ty); HPG parent-only still WITHHELD (safety intact). HONEST CAVEATS (derived-column-reflow + gate-ordering): report_scope finalize-time-stamped -> NULL on existing corpus until re-finalize; PUB-8 structural path GATE-SHADOWED by PUB-5 on HPG (conf44<50 fires first) so structural path proven by 13 unit tests but not live-demonstrable on current corpus (same as BAL-1b MOOT-PUB5); PUB-8 NULL-fallback inline heuristic covers pre-finalize records live. Tests 117 pass 0 new-fail. No parent-only-AND-conf>=50 subject in corpus -> structural PUB-8 load-bearing only after re-finalize + a confident parent-only report."
           },
           {
             "task_id": "BAL-1e-DEV",
