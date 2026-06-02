@@ -2,6 +2,36 @@
 
 
 
+## cycle-187 · 2026-06-02T11:35Z · BAL-0 PUB-5..8 gates — APPROVED
+
+Sprint: BCTC-ANALYTICS-LAYER | Task: BAL-0 | Commit: 9093f385 | Verdict: APPROVED
+
+**Gate 1 — BAL-0-pub5-8-gates.test.ts: 25/25 PASS** (0 fail, 62 expect() calls, 222ms).
+**Gate 2 — bctcPublishabilityGuard.test.ts: 16/16 PASS** (26 expect() calls).
+**Gate 3 — 240-bctc-full.test.ts: 5/5 PASS** (14 expect() calls).
+Total: 46/46 pass, 0 fail. tsc --noEmit: EXIT 0.
+
+**Scope — git show --stat 9093f385:** exactly 2 files (1 prod bctcFullTools.ts +143 lines, 1 test BAL-0-pub5-8-gates.test.ts +765 lines). DV test in same commit as prod. CONFIRMED.
+
+**DDD/Security scan:**
+- Infrastructure imports (getDb, logger) are pre-existing on lines 22/25 — NOT introduced by this commit. Pattern is standard for all interface-layer tool handlers in this codebase.
+- No new domain-rule logic leaked to interface layer: PUB-5/6/7/8 are serve-time guards (interface concern), not business rules (domain concern). Architecture is correct.
+- No hardcoded secrets, no process.env. mock-guard: EXIT 0 (PASS).
+
+**Behavioral spot-check — 4 gates confirmed non-tautological:**
+
+PUB-5: DV-BAL0-PUB5-5 seeds HPG conf=0.44, calls full tool via callToolDirect, asserts text does NOT contain "=== BCTC SUMMARY" AND DOES contain "PUB-5" + "44%". Not a mock — exercises the full checkPublishability→tool-return code path. Gate is at bctcFullTools.ts:591 (conf < 0.5 → return publishable=false, tool returns reason string). Verified non-tautological.
+
+PUB-6: DV-BAL0-PUB6-2 seeds DHG roa=7891932, calls full tool, asserts text does NOT contain "7891932" AND DOES contain "ROA              : N/A" AND DOES contain "PUB-6". Report is still served (publishable=true) — only the offending ratio is withheld. Valid scalars (net_revenue, net_profit, etc.) are not nuked. Architect spec confirmed: withhold ratio only, keep valid scalars. Gate is at bctcFullTools.ts:622-648 + buildSummarySection:194-201. Non-tautological.
+
+PUB-7: DV-BAL0-PUB7-1 seeds FPT latest=Q1-2026 + prior=Q4-2025, calls full tool, asserts comparison section contains "PUB-7" + "mismatch" + "withheld" AND does NOT match /[+-]\d+\.\d+%/ (no percentage delta emitted). Gate is Case B in buildComparisonSection:321-328. Non-tautological.
+
+PUB-8: DV-BAL0-PUB8-2 seeds rev=0, np=5597.9, conf=0.55 (above PUB-5 threshold of 0.5), calls checkPublishability, asserts publishable=false AND reason contains "PUB-8" + "Rev=0" + "55%". Threshold interaction confirmed: PUB-5 fires first for conf<0.5 (DV-BAL0-PUB8-1), PUB-8 fires at conf=0.55 (between 0.5..0.6). Gate is at bctcFullTools.ts:600-613. Non-tautological.
+
+**Live container status:** NOT yet rebuilt. Source-layer gate APPROVED. Live behavioral flip (garbage serving stopped) requires ops rebuild. orch-state head updated: status=ready-for-rebuild, next_agent=ops.
+
+---
+
 ## cycle-183 · 2026-06-02T05:27Z · A-01b-4 not_deployed fix — PASS
 
 Sprint: A-01 (Dashboard two data planes) | Task: A-01b-4 | Verdict: PASS
@@ -69,3 +99,19 @@ Sprint: BCTC-EXTRACT-QUALITY Phase-2 | Gate: BEQ-5/6/7/8/8b/cbdad2d6 | Verdict: 
 **Live DB:** 12 tickers PENDING (direct container bun query). Container NOT rebuilt — source-verified only. Live flip to PARTIAL pending ops rebuild.
 
 **Action:** fixer adds `refine_status TEXT NOT NULL DEFAULT 'PENDING'` to setupTestDb() DDL in PI3-bctc-inspect-reopen2.test.ts. Then re-run: expect 25/25 pass.
+
+---
+
+## cycle-186 · 2026-06-02T12:18Z · BCTC-EXTRACT-QUALITY BEQ-5..8b — RE-GATE APPROVE
+
+Sprint: BCTC-EXTRACT-QUALITY | Task: BEQ-QA re-gate | Verdict: APPROVE | Fixer commit: 61747444
+
+**Gate 1 — PI3-bctc-inspect-reopen2.test.ts: 25/25 PASS** (was 16/9). fixer commit 61747444 added `refine_status TEXT NOT NULL DEFAULT 'PENDING'` + `bctc_layout_units` table to setupTestDb(). All 9 prior SQLite "no such column" failures resolved. 77 expect() calls, 103ms.
+
+**Gate 2 — BEQ 7-file regression: 32/32 PASS.** Files: BEQ-2-backfill-eligibility, BEQ-3-scalar-aggregate-full-audit, BEQ-4a-extension, BEQ-4a-pending-docs-guard, BEQ-4b-pending-comparison-guard, BEQ-BANK-DISCRIM, BEQ-SECTION-GUARD. 169 expect() calls, 472ms. Zero regression from fixer commit.
+
+**Scope of fixer commit 61747444:** single test file (apps/mcp-server/src/__tests__/PI3-bctc-inspect-reopen2.test.ts), 12 insertions, zero production code changes. Gates 1/3/4 (tsc, DDD, security) confirmed passing in prior cycle — no production code touched.
+
+**orch-state head updated:** status=ready-for-rebuild, next_agent=ops. Sprint EXIT gated on post-rebuild live verification (po).
+
+**Next:** ops docker compose build --no-cache mcp-server && up -d --no-deps --force-recreate mcp-server. BEQ-6 PENDING->PARTIAL guard + 6 contained-report live suppression confirmed only post-rebuild.

@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "BAL0-DEV-DONE-PENDING-QA",
+    "status": "ready-for-rebuild",
     "active_task_id": "BCTC-ANALYTICS-LAYER/BAL-0",
-    "next_agent": "qa",
-    "next_action": "BAL-0 PUB-5..8 implemented + committed 9093f385 2026-06-02T13:24:57Z. DV tests 25 pass. ops_rebuild_required=true. QA gate: verify RED→GREEN evidence for PUB-5 (conf0.44 blocked), PUB-6 (roa=7891932 shows N/A not garbage), PUB-7 (Q1 vs Q4 comparison withheld), PUB-8 (rev=0 np>0 conf55% blocked). DIAGNOSTIC: SHB/EIB census below — Candidate B-1 confirmed (isBankForm=true but rows in balance_sheet not general → corporate PUB-3 path needed for banks with labeled sections).",
+    "next_agent": "ops",
+    "next_action": "QA APPROVED 9093f385. 25/25 BAL-0 + 16/16 bctcPublishabilityGuard + 5/5 240-bctc-full = 46 total, 0 fail. tsc EXIT 0. PUB-5/6/7/8 gates confirmed non-tautological (behavioral assertions on concrete output strings). Rebuild mcp-server to flip live container. docker compose build --no-cache mcp-server && up -d --no-deps --force-recreate mcp-server.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T13:24:57Z",
-    "updated_by": "dev-mcp-server"
+    "updated_at": "2026-06-02T11:35:00Z",
+    "updated_by": "qa"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -74,7 +74,7 @@
             "type": "SPRINT-S",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE-PENDING-OPS",
             "size": "S",
             "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
             "commit": "9093f385",
