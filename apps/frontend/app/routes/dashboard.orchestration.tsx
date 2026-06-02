@@ -7,11 +7,21 @@
  *
  * Sections rendered:
  *   - Head: current status / active task / next agent / WIP
- *   - Task Board: counts + task list grouped by status
+ *   - Task Board: counts + flat task list from task_board.tasks
  *   - Signal Queue: rows with severity colour-coding
  *   - Sprint Goal: vision / scope / metric per active sprint
  *   - Narrative: current_sprint, watch_items, open_sprints
  *   - STALE-AMBER BADGE: last_updated_iso > STALE_THRESHOLD_MS → amber indicator
+ *
+ * DTO contract (HC-2, docs/data/orch/orch-state.json via GET /api/orchestration):
+ *   {
+ *     last_updated_iso: string,
+ *     head: { status, active_task_id, next_agent, wip, wip_max, updated_at, updated_by },
+ *     task_board: { counts: { done, in_progress, backlog }, tasks: Task[] },
+ *     signal_queue: { rows: SignalRow[] },
+ *     sprint_goal: { sprint_id, vision, scope: string[], metric: string },
+ *     narrative: { current_sprint, last_closed, watch_items, open_sprints }
+ *   }
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
@@ -28,35 +38,30 @@ export const meta: MetaFunction = () => [
 const STALE_THRESHOLD_MS = 2 * 60 * 60 * 1000;
 
 // ---------------------------------------------------------------------------
-// Domain types (inline — no separate domain file required for this read-only view)
+// Domain types — matched to ACTUAL DTO shape from GET /api/orchestration
 // ---------------------------------------------------------------------------
 
 type TaskStatus = "TODO" | "IN_PROGRESS" | "DONE" | string;
 
 interface TaskRow {
-  task_id: string;
+  id: string;
   title: string;
-  type: string;
-  owner: string;
-  depends: string | null;
+  owner?: string;
   status: TaskStatus;
-  size?: string;
   zone?: string;
   note?: string;
 }
 
-interface SprintEntry {
-  id: string;
-  label: string;
-  status: string;
-  opened_at: string;
-  tasks: TaskRow[];
+interface TaskBoardCounts {
+  done: number;
+  in_progress: number;
+  backlog: number;
 }
 
+/** Actual DTO shape: flat tasks array + counts object */
 interface TaskBoard {
-  _updated_at: string;
-  active_sprints: SprintEntry[];
-  backlog: { id: string; summary: string; priority: string }[];
+  counts: TaskBoardCounts;
+  tasks: TaskRow[];
 }
 
 interface SignalRow {
@@ -72,49 +77,42 @@ interface SignalRow {
 }
 
 interface SignalQueue {
-  _updated_at: string;
   rows: SignalRow[];
 }
 
-interface SprintGoalEntry {
+/** Actual DTO shape: flat sprint_goal (not entries array) */
+interface SprintGoal {
   sprint_id: string;
   vision: string;
-  scope_in: string[];
-  scope_out: string[];
-  success_metric: string;
-  status: string;
-  note?: string;
-  open_decision?: string;
+  scope: string[];
+  metric: string;
 }
 
 interface Narrative {
-  current_sprint: string;
-  last_closed: string;
-  watch_items: string[];
-  open_sprints: string[];
-  backlogs?: string;
+  current_sprint?: string;
+  last_closed?: string;
+  watch_items?: string[];
+  open_sprints?: string[];
 }
 
 interface Head {
   status: string;
-  active_task_id: string;
-  next_agent: string;
-  next_action: string;
-  wip: number;
-  wip_max: number;
-  updated_at: string;
-  updated_by: string;
+  active_task_id?: string;
+  next_agent?: string;
+  wip?: number;
+  wip_max?: number;
+  updated_at?: string;
+  updated_by?: string;
 }
 
+/** Actual DTO top-level shape */
 interface OrchState {
-  _schema: string;
-  _updated_at: string;
-  _updated_by: string;
+  last_updated_iso?: string;
   head: Head;
-  narrative: Narrative;
+  narrative?: Narrative;
   task_board: TaskBoard;
-  signal_queue: SignalQueue;
-  sprint_goal: { entries: SprintGoalEntry[] };
+  signal_queue?: SignalQueue;
+  sprint_goal?: SprintGoal;
 }
 
 // ---------------------------------------------------------------------------
@@ -155,9 +153,8 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
       if (raw !== null && typeof raw === "object") {
         state = raw as OrchState;
 
-        // Staleness check against head.updated_at (prefer over _updated_at).
-        const tsField =
-          (state.head?.updated_at) ?? (state._updated_at);
+        // Staleness check — DTO uses last_updated_iso or head.updated_at.
+        const tsField = state.head?.updated_at ?? state.last_updated_iso;
         if (tsField) {
           const age = Date.now() - new Date(tsField).getTime();
           isStale = age > STALE_THRESHOLD_MS;
@@ -264,123 +261,139 @@ function HeadPanel({ head }: { head: Head }) {
       </div>
       <div>
         <dt className="text-xs text-slate-500">Active Task</dt>
-        <dd className="mt-0.5 font-mono text-slate-200">{head.active_task_id}</dd>
+        <dd className="mt-0.5 font-mono text-slate-200">{head.active_task_id ?? "—"}</dd>
       </div>
       <div>
         <dt className="text-xs text-slate-500">Next Agent</dt>
-        <dd className="mt-0.5 text-slate-200">{head.next_agent}</dd>
+        <dd className="mt-0.5 text-slate-200">{head.next_agent ?? "—"}</dd>
       </div>
       <div>
         <dt className="text-xs text-slate-500">WIP</dt>
         <dd className="mt-0.5 text-slate-200">
-          {head.wip} / {head.wip_max}
+          {head.wip ?? 0} / {head.wip_max ?? "?"}
         </dd>
       </div>
       <div>
         <dt className="text-xs text-slate-500">Updated By</dt>
-        <dd className="mt-0.5 text-slate-200">{head.updated_by}</dd>
+        <dd className="mt-0.5 text-slate-200">{head.updated_by ?? "—"}</dd>
       </div>
-      <div>
-        <dt className="text-xs text-slate-500">Updated At</dt>
-        <dd className="mt-0.5">
-          <ClientTimestamp iso={head.updated_at} className="text-slate-300" />
-        </dd>
-      </div>
-      <div className="col-span-2 sm:col-span-3">
-        <dt className="text-xs text-slate-500">Next Action</dt>
-        <dd className="mt-0.5 text-slate-300 text-xs leading-relaxed line-clamp-4">
-          {head.next_action}
-        </dd>
-      </div>
+      {head.updated_at && (
+        <div>
+          <dt className="text-xs text-slate-500">Updated At</dt>
+          <dd className="mt-0.5">
+            <ClientTimestamp iso={head.updated_at} className="text-slate-300" />
+          </dd>
+        </div>
+      )}
     </dl>
   );
 }
 
+/**
+ * TaskBoardPanel — reads the ACTUAL DTO shape:
+ *   task_board.tasks  — flat TaskRow[]
+ *   task_board.counts — { done, in_progress, backlog }
+ *
+ * Guards: tasks ?? [] so a missing/empty field renders empty state, no throw.
+ */
 function TaskBoardPanel({ board }: { board: TaskBoard }) {
-  // Flatten all tasks to compute counts.
-  const allTasks = board.active_sprints.flatMap((s) => s.tasks);
-  const counts = {
-    TODO: allTasks.filter((t) => t.status === "TODO").length,
-    IN_PROGRESS: allTasks.filter((t) => t.status === "IN_PROGRESS").length,
-    DONE: allTasks.filter((t) => t.status === "DONE").length,
-    OTHER: allTasks.filter(
-      (t) => !["TODO", "IN_PROGRESS", "DONE"].includes(t.status),
-    ).length,
-  };
+  const tasks = board.tasks ?? [];
+  const counts = board.counts ?? { done: 0, in_progress: 0, backlog: 0 };
+
+  const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS");
+  const todo = tasks.filter((t) => t.status === "TODO" || t.status === "BACKLOG");
+  const done = tasks.filter((t) => t.status === "DONE");
+
+  if (tasks.length === 0) {
+    return <p className="text-sm text-slate-500">No tasks in board.</p>;
+  }
 
   return (
     <div className="space-y-4">
-      {/* Counts */}
+      {/* Counts from DTO */}
       <div className="flex flex-wrap gap-4 text-sm">
         <span className="text-slate-400">
-          <span className="font-semibold text-blue-400">{counts.IN_PROGRESS}</span> in progress
+          <span className="font-semibold text-blue-400">{counts.in_progress}</span> in progress
         </span>
         <span className="text-slate-400">
-          <span className="font-semibold text-slate-300">{counts.TODO}</span> todo
+          <span className="font-semibold text-slate-300">{counts.backlog}</span> backlog
         </span>
         <span className="text-slate-400">
-          <span className="font-semibold text-green-400">{counts.DONE}</span> done
+          <span className="font-semibold text-green-400">{counts.done}</span> done
         </span>
-        {counts.OTHER > 0 && (
-          <span className="text-slate-400">
-            <span className="font-semibold text-amber-400">{counts.OTHER}</span> other
-          </span>
-        )}
         <span className="text-slate-400">
-          <span className="font-semibold text-slate-300">{board.backlog.length}</span> backlog
+          <span className="font-semibold text-slate-500">{tasks.length}</span> total
         </span>
       </div>
 
-      {/* Active sprints */}
-      {board.active_sprints.map((sprint) => (
-        <div key={sprint.id}>
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            {sprint.id} — {sprint.label}
-          </h3>
-          <div className="overflow-hidden rounded border border-slate-700">
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="border-b border-slate-700 bg-slate-900">
-                  <th className="px-3 py-2 text-left font-medium text-slate-400">ID</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-400">Title</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-400">Owner</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-400">Status</th>
-                  <th className="px-3 py-2 text-left font-medium text-slate-400">Size</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sprint.tasks.map((task, idx) => (
-                  <tr
-                    key={task.task_id}
-                    className={`border-b border-slate-700 last:border-0 ${
-                      idx % 2 === 0 ? "bg-slate-800" : "bg-slate-850"
-                    }`}
-                  >
-                    <td className="px-3 py-2 font-mono text-slate-300">{task.task_id}</td>
-                    <td className="px-3 py-2 text-slate-200">
-                      {task.title}
-                      {task.note && (
-                        <p className="mt-0.5 text-slate-500 italic">{task.note}</p>
-                      )}
-                    </td>
-                    <td className="px-3 py-2 text-slate-400">{task.owner}</td>
-                    <td className={`px-3 py-2 font-semibold ${taskStatusClasses(task.status)}`}>
-                      {task.status}
-                    </td>
-                    <td className="px-3 py-2 text-slate-500">{task.size ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ))}
+      {/* Active / In-progress tasks */}
+      {inProgress.length > 0 && (
+        <TaskGroup label="In Progress" tasks={inProgress} />
+      )}
+
+      {/* Backlog / TODO tasks */}
+      {todo.length > 0 && (
+        <TaskGroup label="Backlog / TODO" tasks={todo} />
+      )}
+
+      {/* Done tasks — collapsed by default, show last 10 */}
+      {done.length > 0 && (
+        <TaskGroup label={`Done (${done.length})`} tasks={done.slice(-10)} />
+      )}
     </div>
   );
 }
 
-function SignalQueuePanel({ queue }: { queue: SignalQueue }) {
-  if (queue.rows.length === 0) {
+function TaskGroup({ label, tasks }: { label: string; tasks: TaskRow[] }) {
+  return (
+    <div>
+      <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+        {label}
+      </h3>
+      <div className="overflow-hidden rounded border border-slate-700">
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-slate-700 bg-slate-900">
+              <th className="px-3 py-2 text-left font-medium text-slate-400">ID</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-400">Title</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-400">Owner</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-400">Status</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-400">Zone</th>
+            </tr>
+          </thead>
+          <tbody>
+            {tasks.map((task, idx) => (
+              <tr
+                key={task.id}
+                className={`border-b border-slate-700 last:border-0 ${
+                  idx % 2 === 0 ? "bg-slate-800" : "bg-slate-850"
+                }`}
+              >
+                <td className="px-3 py-2 font-mono text-slate-300">{task.id}</td>
+                <td className="px-3 py-2 text-slate-200">
+                  {task.title}
+                  {task.note && (
+                    <p className="mt-0.5 text-slate-500 italic">{task.note}</p>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-slate-400">{task.owner ?? "—"}</td>
+                <td className={`px-3 py-2 font-semibold ${taskStatusClasses(task.status)}`}>
+                  {task.status}
+                </td>
+                <td className="px-3 py-2 text-slate-500">{task.zone ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+function SignalQueuePanel({ queue }: { queue: SignalQueue | undefined }) {
+  const rows = queue?.rows ?? [];
+
+  if (rows.length === 0) {
     return <p className="text-sm text-slate-500">No signals in queue.</p>;
   }
 
@@ -397,7 +410,7 @@ function SignalQueuePanel({ queue }: { queue: SignalQueue }) {
           </tr>
         </thead>
         <tbody>
-          {queue.rows.map((row, idx) => (
+          {rows.map((row, idx) => (
             <tr
               key={row.id}
               className={`border-b border-slate-700 last:border-0 ${
@@ -425,53 +438,58 @@ function SignalQueuePanel({ queue }: { queue: SignalQueue }) {
   );
 }
 
-function SprintGoalPanel({ entries }: { entries: SprintGoalEntry[] }) {
-  const open = entries.filter((e) => e.status !== "CLOSED");
-  if (open.length === 0) {
-    return <p className="text-sm text-slate-500">No open sprint goals.</p>;
+/**
+ * SprintGoalPanel — reads the ACTUAL DTO shape:
+ *   sprint_goal: { sprint_id, vision, scope: string[], metric: string }
+ *   (NOT sprint_goal.entries[])
+ */
+function SprintGoalPanel({ goal }: { goal: SprintGoal | undefined }) {
+  if (!goal) {
+    return <p className="text-sm text-slate-500">No sprint goal available.</p>;
   }
 
   return (
-    <div className="space-y-5">
-      {open.map((entry) => (
-        <div key={entry.sprint_id} className="rounded border border-slate-700 p-3">
-          <div className="mb-2 flex items-center gap-2">
-            <span className="font-mono text-xs font-semibold text-slate-200">
-              {entry.sprint_id}
-            </span>
-            <span
-              className={`rounded px-1.5 py-0.5 text-xs font-medium ${
-                entry.status === "OPEN"
-                  ? "bg-blue-900 text-blue-300"
-                  : "bg-slate-700 text-slate-400"
-              }`}
-            >
-              {entry.status}
-            </span>
-          </div>
-          <p className="mb-2 text-xs text-slate-300 leading-relaxed">{entry.vision}</p>
-          {entry.success_metric && (
-            <p className="text-xs text-slate-500">
-              <span className="font-medium text-slate-400">Metric: </span>
-              {entry.success_metric}
-            </p>
-          )}
-          {entry.open_decision && (
-            <p className="mt-1 text-xs text-amber-400">
-              <span className="font-medium">Open decision: </span>
-              {entry.open_decision}
-            </p>
-          )}
-          {entry.note && (
-            <p className="mt-1 text-xs text-slate-500 italic">{entry.note}</p>
-          )}
+    <div className="rounded border border-slate-700 p-3">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="font-mono text-xs font-semibold text-slate-200">
+          {goal.sprint_id}
+        </span>
+        <span className="rounded px-1.5 py-0.5 text-xs font-medium bg-blue-900 text-blue-300">
+          ACTIVE
+        </span>
+      </div>
+      <p className="mb-2 text-xs text-slate-300 leading-relaxed">{goal.vision}</p>
+      {goal.scope && goal.scope.length > 0 && (
+        <div className="mb-2">
+          <p className="text-xs font-medium text-slate-400 mb-1">Scope:</p>
+          <ul className="space-y-0.5">
+            {goal.scope.map((item, idx) => (
+              <li key={idx} className="text-xs text-slate-400 flex gap-1.5">
+                <span className="text-slate-600 flex-shrink-0">•</span>
+                {item}
+              </li>
+            ))}
+          </ul>
         </div>
-      ))}
+      )}
+      {goal.metric && (
+        <p className="text-xs text-slate-500">
+          <span className="font-medium text-slate-400">Metric: </span>
+          {goal.metric}
+        </p>
+      )}
     </div>
   );
 }
 
-function NarrativePanel({ narrative }: { narrative: Narrative }) {
+function NarrativePanel({ narrative }: { narrative: Narrative | undefined }) {
+  if (!narrative) {
+    return <p className="text-sm text-slate-500">No narrative available.</p>;
+  }
+
+  const watchItems = narrative.watch_items ?? [];
+  const openSprints = narrative.open_sprints ?? [];
+
   return (
     <div className="space-y-4 text-sm">
       {narrative.current_sprint && (
@@ -483,13 +501,13 @@ function NarrativePanel({ narrative }: { narrative: Narrative }) {
         </div>
       )}
 
-      {narrative.watch_items && narrative.watch_items.length > 0 && (
+      {watchItems.length > 0 && (
         <div>
           <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Watch Items
           </h3>
           <ul className="space-y-1.5">
-            {narrative.watch_items.map((item, idx) => (
+            {watchItems.map((item, idx) => (
               <li key={idx} className="flex gap-2 text-xs text-slate-300">
                 <span className="mt-0.5 text-amber-500 flex-shrink-0">&#9654;</span>
                 {item}
@@ -499,13 +517,13 @@ function NarrativePanel({ narrative }: { narrative: Narrative }) {
         </div>
       )}
 
-      {narrative.open_sprints && narrative.open_sprints.length > 0 && (
+      {openSprints.length > 0 && (
         <div>
           <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
             Open Sprints
           </h3>
           <ul className="space-y-1">
-            {narrative.open_sprints.map((sprint, idx) => (
+            {openSprints.map((sprint, idx) => (
               <li key={idx} className="text-xs text-slate-400">
                 {sprint}
               </li>
@@ -514,12 +532,12 @@ function NarrativePanel({ narrative }: { narrative: Narrative }) {
         </div>
       )}
 
-      {narrative.backlogs && (
+      {narrative.last_closed && (
         <div>
           <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Backlogs
+            Last Closed
           </h3>
-          <p className="text-xs text-slate-500">{narrative.backlogs}</p>
+          <p className="text-xs text-slate-500">{narrative.last_closed}</p>
         </div>
       )}
     </div>
@@ -554,11 +572,11 @@ export default function OrchestrationDashboard() {
         </div>
       )}
 
-      {/* Schema / source info */}
-      {state && (
+      {/* Last updated info */}
+      {state?.last_updated_iso && (
         <p className="text-xs text-slate-600">
-          schema {state._schema} · updated by {state._updated_by} ·{" "}
-          <ClientTimestamp iso={state._updated_at} />
+          last updated: <ClientTimestamp iso={state.last_updated_iso} />
+          {state.head?.updated_by && ` · by ${state.head.updated_by}`}
         </p>
       )}
 
@@ -574,8 +592,8 @@ export default function OrchestrationDashboard() {
             <SignalQueuePanel queue={state.signal_queue} />
           </Section>
 
-          <Section title="Sprint Goals">
-            <SprintGoalPanel entries={state.sprint_goal.entries} />
+          <Section title="Sprint Goal">
+            <SprintGoalPanel goal={state.sprint_goal} />
           </Section>
 
           <Section title="Narrative">
