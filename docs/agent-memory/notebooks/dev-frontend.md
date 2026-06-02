@@ -118,6 +118,29 @@ Zone health: 20/20 test files GREEN (204 assertions), tsc clean, build ✓, new 
 - Key patterns: arrayBuffer pipe (never .text()/.json() on binary); relay upstream Content-Type + status; 4xx→4xx.
 - Zone health: tsc clean, 4 files changed (205 insertions), FRONTEND-BCTC-TAB SHIPPED | ops rebuild pending.
 
+## Cycle FE-AUDIT — 2026-06-02 (Full frontend audit + fix)
+
+Zone health: 264/264 Vitest GREEN (+15 new), tsc clean, 3 files changed | HEALTHY
+
+- Task: Reveal ALL frontend problems and fix all (operator directive).
+- Audit scope: all 9 routes (/, /dashboard, /dashboard/{analysis,bctc-eval,bctc-inspect,db,fetch,orchestration,services,vps}).
+- All routes SSR HTTP 200. No ErrorBoundary throws live (orchestration was transient at 14:44Z rebuild).
+
+**Fix 1: /dashboard/vps — VPS not_deployed discrimination (dashboard.vps.tsx)**
+- Problem: news/stock/pdf showed UNKNOWN + red error "GET /health/news failed: 503 Service Unavailable".
+- Root cause: api-gateway returns 503 with body {"error":"dial tcp: lookup news-fetch ... no such host"} for not-deployed containers; fetchServiceHealth throws ApiError on 503 → row.error set → "unknown" rendered.
+- Fix: fetchVpsServiceHealth (new loader-local fn) reads 503 body; "no such host" DNS error → status "not_deployed" → grey "NOT DEPLOYED" pill. VpsNote updated with NOT DEPLOYED vs DOWN explanation.
+- Test: vps-not-deployed-discrimination.test.ts (+15 assertions).
+
+**Fix 2: /dashboard/fetch — honest empty label (dashboard.fetch.tsx)**
+- Problem: Reuters (0) showed bare "No data available for Reuters." — reads as broken.
+- Fix: HeadlineList empty state → two-line label: "No headlines available / Source not deployed on this host (FU-FE-NEWS-SOURCE)".
+- No new tests needed (component logic, covered by audit).
+
+- Commit: 9372d7c0
+- tsc: exit 0. Vitest: 264/264. Mutex: acquired+released.
+- NEEDS REBUILD: frontend (ops to dispatch)
+
 ## Carry-over (next session)
 
 - P2-D: QA gate — freeze anchor confirm (QA reads eslint.config.mjs git log, emits G4 evidence signal)
