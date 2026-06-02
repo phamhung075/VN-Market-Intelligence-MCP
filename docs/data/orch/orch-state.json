@@ -1,0 +1,2117 @@
+{
+  "_schema": "v3",
+  "_ssot": true,
+  "_updated_at": "2026-06-02T18:26:00Z",
+  "_updated_by": "agent-father",
+  "head": {
+    "status": "idle",
+    "active_task_id": "idle",
+    "next_agent": "po",
+    "next_action": ":07 cycle concluded — drained 47 signals (DB prune 1050->47), 1 XS FIX shipped (DRAIN-PRUNE-DATEFMT). news-scout notebook-bloat = watch-item (root cause already shipped e1e85886). Async/infra backlog (BCTC VPS HIGH) held for ops lane. Next PO triage owns residual + orch-state schema-hygiene (stale BCTC-HIST-FETCH-VERIFY dup + null-field tasks).",
+    "wip": 0,
+    "wip_max": 2,
+    "updated_at": "2026-06-02T19:22:32Z",
+    "updated_by": "dev-team"
+  },
+  "dashboard_section_cache": {
+    "section_name": "po",
+    "start_line": 8,
+    "last_mtime": "2026-06-01T08:09:00Z",
+    "last_linecount": 224,
+    "po": {
+      "section_name": "po",
+      "last_mtime": "2026-06-02T04:11:40Z",
+      "last_linecount": 20
+    }
+  },
+  "narrative": {
+    "_cap": "≤30 lines total — prune oldest on overflow",
+    "current_sprint": "FLEET-HOST-SAFETY active — dispatched DRAIN-INJECTION-SAFE (agent-father, S, PLAN-ONLY flow edit): kill the LIVE injection-side host-danger trigger (signal/payload string-concatenated into /bin/sh — once command-substituted `docker compose up -d`, near host-panic). A-01-EXPECTED-SET + AUD-ND-1 DONE; this closes the still-open injection half of the same class. AUDITOR-SLA-CADENCE + A-01b remain TODO. Deferred: FRONTEND-BCTC-TAB (brief locked, dev-frontend) + 1967b architect audit (behind host-safety).",
+    "last_closed": "BCTC-EXTRACT-QUALITY DONE-WITH-CAVEATS (BEQ-1..10, PO sign-off 2026-06-02T10:56Z) — core extraction incident RESOLVED (garbage-as-truth eliminated, no false-DONE, balance EXACT for VNM/FPT/HPG/DHG, router raw-verified post-rebuild). 4 residual analytics/serving defects escalated to NEW BCTC-ANALYTICS-LAYER (architect). Publish-integrity gap -> BAL-0 dispatched first. // prior: ORCH-STATE-CONSOLIDATE DONE (OSC-1..5, QA APPROVE) — single JSON SSOT docs/data/orch/orch-state.json shipped; 6 state files retired (TASKS/TASKS_ARCHIVE/DASHBOARD/DASHBOARD_ARCHIVE/SPRINT_GOAL/pipeline-state.json), ~100 readers re-pointed, signal-dashboard skill+protocol rewritten to .signal_queue, atomic temp->rename writes. GET /api/orchestration (HC-2 DTO) + /dashboard/orchestration route live 200; mcp-server+frontend rebuilt. QA: atomic-write proven-red, 47 pass/1 skip/0 fail, zero dangling readers.",
+    "watch_items": [
+      "BCTC PUBLISH-INTEGRITY GAP OPEN until BAL-0 ships: BEQ-9/10 reports are DONE -> chef market-analysis.md + market-analyst can consume broken ratios (VNM ROE/ROA=0, DHG ROA 7.8M%, NetDebt/EBITDA -7.5e13x) or false YoY (FPT -82% from cumulative-vs-quarter) or parent-only HPG conf44% as headline -> MARKET. No semantic-sanity gate exists. Router/cron must NOT let a BCTC-derived dish ship before BAL-0 lands. HIGH.",
+      "AUD-ND-1 REGRESSION SUSPECTED: mcp-server-1 SIGTERM-stopped ~14:30 06-01 while host healthy, culprit unidentified — verify detectors PLAN-ONLY; check system-auditor/cron logs. 4th host-danger candidate.",
+      "ORCH-HEAD-CAS WINDOW: atomic helper safe, but non-fresh-read caller can stale-read->sibling-clobber .head — FU-ORCH-HEAD-CAS backlog; mitigated by WIP<=2 + fresh-read.",
+      "tnb-c85 morning-dish fix DONE-PENDING-LIVE-VERIFY — confirm next morning fire 05:23Z publishes.",
+      "1967b architect orchestration audit DEFERRED (REQ_1967 ready) — re-queue when FLEET-HOST-SAFETY closes.",
+      "FU-DEV-CAFEF-1 (awaiting USER greenlight): wire /proxy/article-body into push-news ingestion."
+    ],
+    "open_sprints": [
+      "BCTC-ANALYTICS-LAYER (HIGH, NEW 2026-06-02): BEQ-9 scalar recovery exposed a SEPARATE pre-existing analytics/serving layer (4 clusters: ratio-compute emitting 0/7.8M%, bank B02-TCTD 'forced-zero' serving path, FPT cumulative-FY-labeled-Q4 -> false YoY -82%, HPG parent-only conf44% as headline). BAL-0 (publish semantic-sanity hard-fail gate, dispatch FIRST — closes LIVE publish-integrity gap; chef/market-analyst can ship broken ratios to MARKET) + BAL-1 SPIKE (architect root-cause, recurring-bug-escalation). next_agent=agents-architect.",
+      "FB-GATE (HIGH, NEW 2026-06-02): replace fb-market-poster STEP4-check3 self-attestation with executable hard-fail pre-publish jargon/typo/hexagram/calendar gate; FB-GATE-1 design->agents-architect, FB-GATE-2 impl->agent-father. Sequence AFTER AUD-ND-1 (CRITICAL, DONE) and the live injection-half DRAIN-INJECTION-SAFE; BEFORE/parallel-with MSG-1 (different zone+owner, no contention). Rationale: 10pm cron ships jargon unattended TODAY — router is currently the only gate.",
+      "FLEET-HOST-SAFETY: DRAIN-INJECTION-SAFE / A-01-EXPECTED-SET / AUDITOR-SLA-CADENCE open (AUD-ND-1 + VPS-SOCAT-PERSIST DONE)",
+      "NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE: within-section trimming + per-flow prune-invocation audit",
+      "CHEF-FLOW-CAP-REFACTOR: chef.md 258L > 120L cap; extract Steps 6/6.5/7 to chef-write-dish.md",
+      "CHEF-TS-STAMP: cosmetic telemetry bug; confirm pattern before dispatch",
+      "SSC-IBOARD-MIGRATE: replacement-source recon for dead iboard financial source",
+      "MCP-SURFACE-GAPS: MSG-1 foreign-flow aggregate / MSG-3 phantom-tool discoverability (MSG-2 DONE)",
+      "BCTC-LAYOUT-FIRST: Phase 0 READY — LF-EXTRACT/LF-OVERLAY",
+      "SELF-IMPROVE-GATE: X-1 synthetic dry-run",
+      "ENV-ISOLATION: P2 gate RELEASED, unscheduled",
+      "CHEF-ATTN: READY"
+    ],
+    "backlogs": "FU-ORCH-HEAD-CAS · FU-SIGNAL-DASHBOARD-CAP · FLEET-HOST-SAFETY (AUD-ND-1-LIVE-PROVEN-RED/DRAIN-INJECTION-SAFE/A-01-EXPECTED-SET/AUDITOR-SLA-CADENCE) · TNB-GATEWAY-PROBE · CW-STEP47-HYGIENE · FU-BANK-CODECOL · BCTC-TABLE-2 · KD-QREF-LANG · code-janitor DOUBLON CLEAN · FU-DEBT 40 pdf-extractor test failures"
+  },
+  "session_handoff_status": {
+    "cleared": "2026-05-31T00:33Z — prior parallel-session zone-ownership directive obsolete. Dispatch apps/mcp-server + apps/pdf-extractor normally, WIP<=2 + zone-isolation between concurrent tasks.",
+    "does_not_consume_wip": true
+  },
+  "task_board": {
+    "_updated_at": "2026-06-02T19:22:32Z",
+    "_updated_by": "dev-team",
+    "active_sprints": [
+      {
+        "id": "BCTC-ANALYTICS-LAYER",
+        "label": "BCTC analytics/serving layer defects exposed by BEQ-9 scalar recovery (router raw-verify 2026-06-02) — 4 clusters + publish-integrity gap",
+        "status": "active",
+        "opened_at": "2026-06-02",
+        "priority": "high",
+        "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch.",
+        "tasks": [
+          {
+            "task_id": "BAL-0",
+            "title": "Publish semantic-sanity hard-fail gate for BCTC-derived MARKET/FB output (block ratio out-of-range / cumulative-vs-quarter / parent-only-as-headline / forced-zero-bank before send_telegram)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+            "commit": "9093f385",
+            "note": "DONE-PENDING-QA 2026-06-02T13:24:57Z. PUB-5..8 implemented as tool-layer gates in checkPublishability + buildComparisonSection (bctcFullTools.ts). DV tests 25 pass (BAL-0-pub5-8-gates.test.ts). ops_rebuild_required=true. QA: verify PUB-5 blocks conf<0.5, PUB-6 shows N/A for roa=7891932, PUB-7 withholds Q1vsQ4 comparison, PUB-8 blocks rev=0+np>0+conf55%. | LIVE-VERIFIED 2026-06-02T12:11Z by dev-team router (raw get_bctc_full, not badge): image bb1b1a31 built 11:40:55Z ALREADY contains PUB-5..8 (markers 29/20/16/20) — head 'ready-for-rebuild' was STALE, rebuild already done. Behavioral proof: DHG->PUB-5 block(conf44%<50%); VNM->serves base figures but PUB-6 withholds bad ROE/ROA(N/A); FPT->PUB-7 withholds Q1-vs-Q4 comparison (kills false -82% YoY). Good reports NOT over-blocked. QA-approved 0b96742f (46 tests 0fail, tsc0). Publish-risk CLOSED."
+          },
+          {
+            "task_id": "BAL-1",
+            "title": "SPIKE: root-cause the 4 BCTC analytics/serving defect clusters as ONE layer (ratio-compute / bank-B02-TCTD-serving / period-cumulative-vs-quarter / parent-vs-consolidated-scope) — pin each to its module, decide grouping + owners",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "mode": "spike",
+            "timebox": 120,
+            "note": "recurring-bug-escalation -> architect root-cause before any point-patch. 4 clusters with router raw evidence (see sprint evidence). (a) ratio-compute emitting 0/astronomical — where (ScalarAggregate? a downstream ratio fn? divide-by-zero on cumulative vs quarter?); (b) bank B02-TCTD get_bctc_full 'no decomposition / forced-zero' serving path — likely the bank discriminator/decomposition serve path (kin BEQ-8 isBankFormFromRows + FU-BANK-CODECOL); (c) period cumulative-vs-quarter: refine stores FY cumulative under a Q4 label -> buildComparisonSection (BEQ-4b guarded refine_status but NOT cumulative-vs-quarter semantics) computes false YoY; (d) parent-only-vs-consolidated entity scope + low-conf-as-headline (HPG B01a). Output: findings doc + per-cluster owner split (likely dev-mcp-server FIXes) -> PO scopes BAL-2.. next cycle. Separate from BCTC-LAYOUT-FIRST (extraction) and BAL-0 (publish-side). | SPIKE DELIVERED: docs/architecture-briefs/2026-06-02-bctc-analytics-layer-bal1.md (commit 47d64215). 4 clusters root-caused (ratio-orphan-after-refine / bank-B02-serving / period-basis / entity-scope) -> fanout BAL-1a..e added below for PO triage."
+          },
+          {
+            "task_id": "BAL-1a-DEV",
+            "title": "Ratio recompute in finalizeBctcRefineTool.ts — re-derive roe/roa/current_ratio/debt_to_equity/net_debt_to_ebitda from corrected scalars after refine; SET eps=NULL (no VAS code)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-0"
+            ],
+            "status": "DONE-CODE-LIVE-PENDING-BACKFILL",
+            "size": "S",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+            "priority": "high",
+            "note": "brief Cluster(a) root cause: refine corrects base scalars but ratio columns orphaned (stay at OCR-parse values). BAL-0 PUB-6 is interim shield (withholds); BAL-1a is the real fix. After lands: PUB-6 should pass for VNM (ROE~27%). | 2026-06-02T13:35Z dev-team router LIVE-VERIFY (raw get_bctc_full + container DB, NOT badge): code CORRECT+in-image (commit a7270927, image 13:30:49Z, safeDivideLocal/re-derive markers live, 98+11 tests, tsc0, reuses ratioComputer.ts SSOT). BUT LIVE-INEFFECTIVE: recompute is FINALIZE-TIME only; existing finalized reports NOT backfilled. VNM(conf94%,refine DONE,parsed 2026-05-24) persisted roe=2.75e-10 (displays 0.0%) vs correct np/eq=27.3%; net_debt_to_ebitda=-7.5e10 (PUB-6 withholds). PUB-6 interim shield STILL firing live. => BAL-1a-BACKFILL opened to deliver live value."
+          },
+          {
+            "task_id": "BAL-1a-QA",
+            "title": "Verify VNM post-re-finalize ROE~27% / ROA correct / NetDebt-EBITDA reasonable; PUB-6 no longer withholds",
+            "type": "QA",
+            "owner": "qa",
+            "depends": [
+              "BAL-1a-DEV"
+            ],
+            "status": "DONE-FAIL-VERDICT",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "off-rebuild: needs mcp-server rebuild after BAL-1a-DEV | 2026-06-02T13:35Z router performed live QA itself: VNM ROE still 0.0% live (NOT ~27% as DoD required) + PUB-6 STILL withholds. FAIL not because code is wrong but because finalize-time fix needs corpus re-flow. Verdict -> BAL-1a-BACKFILL. QA-on-rebuild satisfied (live raw checked)."
+          },
+          {
+            "task_id": "BAL-1b-INV",
+            "title": "Investigate SHB+EIB bctc_table_rows (statement_section census in container) -> confirm bank-serving candidate B-1 or B-2",
+            "type": "SPIKE",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "brief Cluster(b): banks return 'no decomposition / forced-zero'. Kin BEQ-8 isBankFormFromRows + FU-BANK-CODECOL. | DONE 2026-06-02: verdict B-1 (gate mismatch not data). EIB 18bs/12is/7cf, SHB 19/12/12 complete+correctly-labeled; PUB-3 bank path queried general-only (legacy ACB/VCB workaround) -> forced-zero. Scoped BAL-1b-DEV (1 SQL clause, shipped cbee25fe)."
+          },
+          {
+            "task_id": "BAL-1b-DEV",
+            "title": "Fix bank B02-TCTD serving path per BAL-1b-INV verdict (BANKING_TICKERS set and/or PUB-3 relaxation)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-1b-INV"
+            ],
+            "status": "DONE-CODE-LIVE-MOOT-PUB5",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "brief Cluster(b) fix | 2026-06-02T13:35Z dev-team router LIVE-VERIFY: code CORRECT+in-image (commit cbee25fe, PUB-3 bank-path now (general OR balance_sheet), 20 publishabilityGuard tests, tsc0). BUT not live-observable: EIB(conf31%)+SHB(conf44%) are PUB-5 confidence-blocked (<50%) BEFORE PUB-3 is reached, so banks remain unservable for a DIFFERENT reason. BAL-1b fix is right but the current binding bank-serve blocker is extraction confidence (re-refine territory, kin BEQ-10), not the decomposition gate. Becomes effective once a bank report clears PUB-5."
+          },
+          {
+            "task_id": "BAL-1c-DEV",
+            "title": "Add period_basis column migration + set Q4->'full_year_cumulative' in finalize backfill + comparison guard in buildComparisonSection",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-0"
+            ],
+            "status": "DONE",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "brief Cluster(c): makes PUB-7 heuristic structural (column-based not period_type-guess) | DONE+LIVE 2026-06-02T14:45Z (image 14:44:06Z): period_basis column migrated (confirmed in live DB), finalize backfill Q4->full_year_cumulative, PUB-7 structural guard with graceful fallback to period_type heuristic for NULL existing rows (no regression). Full structural benefit on corpus re-finalize. 165 tests, commit 691eae48."
+          },
+          {
+            "task_id": "BAL-1d-DEV",
+            "title": "Add report_scope column migration + heuristic (rev=0,np>0 -> parent_only) in finalize + PUB-5 confidence-gate upgrade",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-0"
+            ],
+            "status": "DONE-CODE-LIVE-MOOT-PUB5",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "medium",
+            "note": "brief Cluster(d): makes PUB-5/PUB-8 structural | DONE 2026-06-02T17:00Z commit 611592be, mcp rebuilt image 16:57:41Z. ROUTER LIVE-VERIFIED (raw get_bctc_full, not badge): report_scope+period_basis columns present via PRAGMA on container boot; VNM consolidated control serves clean (ROE27.3/ROA17.7/NetDebt-EBITDA -0.13x), NOT over-blocked, correctly NOT flagged parent_only (rev=63645 ty); HPG parent-only still WITHHELD (safety intact). HONEST CAVEATS (derived-column-reflow + gate-ordering): report_scope finalize-time-stamped -> NULL on existing corpus until re-finalize; PUB-8 structural path GATE-SHADOWED by PUB-5 on HPG (conf44<50 fires first) so structural path proven by 13 unit tests but not live-demonstrable on current corpus (same as BAL-1b MOOT-PUB5); PUB-8 NULL-fallback inline heuristic covers pre-finalize records live. Tests 117 pass 0 new-fail. No parent-only-AND-conf>=50 subject in corpus -> structural PUB-8 load-bearing only after re-finalize + a confident parent-only report."
+          },
+          {
+            "task_id": "BAL-1e-DEV",
+            "title": "Future: EPS extraction from VAS BCTC footnote section (BCTC-EPS-FOOTNOTE)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-1a-DEV"
+            ],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "low",
+            "note": "brief BAL-1e: deferred; eps currently NULL after BAL-1a"
+          },
+          {
+            "task_id": "BAL-1a-BACKFILL",
+            "title": "Make BAL-1a ratio fix deliver LIVE value on already-finalized corpus — PREFER recompute-on-read in get_bctc_full serve path (definitive: eliminates stale-ratio class forever, no migration) over one-shot UPDATE backfill of persisted ratio columns (symptom: leaves class alive for any future pre-refine report)",
+            "type": "FIX",
+            "owner": "agents-architect",
+            "depends": [
+              "BAL-1a-DEV"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+            "priority": "high",
+            "note": "ROOT: financial_reports persisted roe/roa/etc are stale (VNM roe=2.75e-10 vs correct 27.3%) because BAL-1a recomputes only at finalize-time. fix-root-cause-definitif => recompute ratios ON READ from correct persisted base scalars (np/equity/total_assets/debt/cash/ebitda already correct), serve the live value, never trust persisted ratio columns again. Architect to confirm read-vs-backfill before impl (touches serve path / same file family as BAL-0/BAL-1b - flag recurring-bug-escalation review). Closes the BAL-0 PUB-6 interim shield for real. | DONE 2026-06-02: architect chose Option R recompute-on-read (definitive), directive in brief 27119412. Implemented as BAL-1a-BACKFILL-IMPL below.",
+            "route": "SPIKE architect-decision -> dev-mcp-server FIX next cycle"
+          },
+          {
+            "task_id": "BAL-1a-BACKFILL-IMPL",
+            "title": "Recompute-on-read ratios in get_bctc_full serve path (Option R)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BAL-1a-BACKFILL",
+              "BAL-1a-DEV"
+            ],
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+            "priority": "high",
+            "note": "DONE+ROUTER-LIVE-VERIFIED 2026-06-02T14:45Z (raw get_bctc_full, image 14:44:06Z, commit b7329f54): VNM serves ROE 27.3% / ROA 17.7% / NetDebt-EBITDA -0.13x (was 0.0%/0.0%/withheld); PUB-6 interim shield NO LONGER fires. Reads through stale persisted ratio cols by recomputing from correct base scalars every call (mirrors BAL-1a/ratioComputer SSOT). Current Ratio N/A = honest (VNM balance_sheet_json lacks currentLiabilities breakdown). CLOSES the BCTC live publish-quality chase. Persisted ratio cols now deprecated-cache (future FU-BCTC-RATIO-COL-DEPRECATE)."
+          },
+          {
+            "task_id": "FU-BCTC-TOOL-PARAMS",
+            "title": "get_cash_flow ignores quarters param — returns only latest single quarter, no N-quarter history series (blocks accrual/OCF-NI decomposition; ESC-3 FPT 11-cycle loop root cause)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "CONFIRMED LIVE 2026-06-02T15:10Z: get_cash_flow(ticker=FPT,quarters=8) -> single Q1/2026 object, quarters ignored. Fix: honor quarters param, return latest-N-quarters series incl WC subcomponents needed for accrual decomposition. Unblocks bctc-analyst ESC-3 (prior opus a38e14ee conf0.35 stuck without 8q history). Verify live: get_cash_flow quarters=8 returns 8 periods. | DONE+ROUTER-LIVE-VERIFIED 2026-06-02T15:35Z (raw get_cash_flow, image 15:35:02Z, commit 7ed5b722): quarters param now HONORED -> get_cash_flow(FPT,quarters=8) returns quarters_requested:8 quarters_returned:2 periods[] series (Q1/2026+Q4/2025) + WC subcomponents (wc_inventory/current_assets/cash); backward-compat top-level fields preserved. HONEST NUANCE: only 2 quarters of FPT cash-flow exist in financial_reports (not 8) -> full 8q accrual decomposition still DATA-COVERAGE-limited (tool correct, corpus thin). LEAD for analyst: Q1 OCF -2.8M is ocr-sourced vs Q4 +4.1M api_bridge (source/sign discrepancy may explain ESC-3 OCF/NI divergence)."
+          },
+          {
+            "task_id": "FU-BCTC-HISTORY-COVERAGE",
+            "title": "FPT (and peers) have only 2 quarters of cash-flow in financial_reports — 8q accrual decomposition needs deeper historical BCTC ingestion",
+            "type": "SPIKE",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "FU-BCTC-TOOL-PARAMS"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "medium",
+            "note": "Surfaced by FU-BCTC-TOOL-PARAMS live-verify: get_cash_flow now honors quarters but corpus only has 2q for FPT. Investigate ingest coverage; not a tool bug. bctc-analyst can attempt ESC-3 QoQ with 2q meanwhile (Q1 ocr vs Q4 api_bridge OCF source discrepancy is the decomposition lead). | SPIKE DONE 2026-06-02T18:00Z commit f3bf4b61 (brief docs/architecture-briefs/2026-06-02-bctc-history-coverage-spike.md). ROOT CAUSE (A): ingest queue seeding is forward-only (one quarter/season), never seeds historical quarters; fleet max depth=2q, 11/13 tickers=1q. Source NOT blocker (D refuted: hsx.vn has 50 PDFs back to Q1-2022); CF extraction works (C); VCB 2 rows PENDING (B minor). Definitif fix = backfillBctcHistorical seed. Fanout -> BCTC-HIST-SEED (shipping now) + async backfill tasks below."
+          },
+          {
+            "task_id": "BCTC-HIST-SEED",
+            "title": "backfillBctcHistorical(periodsBack=8) in seedWatchlist.ts — seed last 8 quarters per ticker into bctc_vps_queue (INSERT OR IGNORE), structural fix for forward-only seeding",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "FU-BCTC-HISTORY-COVERAGE"
+            ],
+            "status": "DONE-CODE-DATA-BLOCKED-UPSTREAM",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "spike Task1. Low-risk queue seed (no fetch storm — VPS cron drains ~10/6h). Code-completable now; DATA arrival async/multi-week gated on VPS fetch health. | DONE-LIVE-VERIFIED 2026-06-02T18:10Z commit 655e72b3, mcp rebuilt. ops verified: container healthy, assertion clean, bctc_vps_queue 102->413 rows, all 8 historical quarters seeded (Q3-2025..Q4-2023, 39 rows each). Idempotent seed at boot. DATA arrival async ~1-2wk via VPS fetch+refine, gated on BCTC-HIST-FETCH-VERIFY (ops backlog). | UPDATE 2026-06-02T18:45Z BCTC-HIST-FETCH-VERIFY (ops) verdict BLOCKED: seed CODE effective (rows inserted, fetch loop bctcPdfPullJob is period-agnostic) BUT data-blocked UPSTREAM — VPS bctc-files endpoint lacks historical PDF cache pre-Q4-2025 + enricher returns 0 URLs for old quarters. Seed is a no-op at DATA layer until VPS backfill + enricher discovery land (queued BCTC-HIST-VPS-BACKFILL + BCTC-ENRICHER-OLD-QUARTERS). Also flagged: current Q1-2026 fetch 10/10 HTTP404 -> BCTC-CURRENT-404-INVESTIGATE. Honest: corpus depth NOT improving until upstream fixed; the structural seeding gap IS fixed."
+          }
+        ]
+      },
+      {
+        "id": "BCTC-EXTRACT-QUALITY",
+        "label": "BCTC data layer not analysis-grade across corpus (router raw-verify 2026-06-02) — infra GREEN, extraction/refine/scalar RED",
+        "status": "DONE-WITH-CAVEATS",
+        "opened_at": "2026-06-02",
+        "closed_at": "2026-06-02",
+        "priority": "high",
+        "signoff": "PO 2026-06-02T10:56Z: all BEQ-1..10 closed. CORE INCIDENT RESOLVED — garbage-as-truth eliminated, no false-DONE, balance-sheet scalars genuinely recovered + balance-EXACT for VNM/FPT/HPG/DHG (router raw-verify post-rebuild). Sprint was scoped to extraction/refine/scalar-serving guards + recoverable-ticker re-refine — all DONE. 4 residual analytics/serving defects (ratio-compute, bank-B02-TCTD-serving, period-semantics, parent-vs-consolidated-scope) are SEPARATE pre-existing layer the refine made visible -> escalated to NEW sprint BCTC-ANALYTICS-LAYER (architect root-cause). PUBLISH-RISK gap (no semantic-sanity guard) -> BAL-0 dispatched FIRST.",
+        "evidence": "Router live raw-verify 2026-06-02 (BCTC-HEALTH-TRIAGE). INFRA GREEN (mcp /health 154 tools ~6.6h, viewer :3000 + :3001 dashboard tab, 6-gate eval 200, human-confirm write proven to DB, OCR 15/15, PDF 15/15). DATA RED across 3 distinct net-new failure modes NOT covered by any open item: (1) EMPTY refine despite OCR+PDF present — get_bctc_full(CTG) + get_bctc_full(VCB) = 'Chua co du lieu BCTC'; markdown->rows produced 0 usable rows so analyst flow gets nothing; (2) ZEROED secondary lines fleet-wide even where headline correct — FPT(conf0.81)+ACB(conf0.38) both show sane rev/NP/NII/assets/equity (bank-mapping OK) BUT OperatingProfit=0, EBITDA=0, Cash=0, EPS nonsense (FPT=1,ACB=0), most ratios N/A; (3) GARBAGE net_profit scalars in /docs listing — CTG=5, EIB=1, VNM=5.1e-05, VEA=-5.1e-05, SHB=0, BSR=0, DIG=18. Plus low extraction_confidence <0.2 on CTG(0.062)+BSR(0.125). Prior-period CONTAMINATION (FPT YoY '20.2 ty' NP = revenue mislabeled -> +12146% YoY, GM 100%->34%) = the orphaned FU-TRUST-REFRESH #16 caveat, NOT live-tracked anywhere — re-homed here. Overlaps (linked, NOT duplicated): BCTC-LAYOUT-FIRST (intended re-arch, Phase-0 not started), FU-BCTC-TOOL-PARAMS (ticker-vs-code trap), FU-BANK-CODECOL (code-col leak), BCTC-CTG-ATTACHMENT-FETCH (CTG cover-letter-only PDF), cowork signal bctc-extraction-esc-20260602T0015Z (DHG/EIB DATA_INSUFFICIENT 9 cycles + CTG lag — was dispositioned to FPT/ESC-OPUS only, pipeline root-cause never got a task).",
+        "tasks": [
+          {
+            "task_id": "BEQ-1",
+            "title": "SPIKE: root-cause WHY get_bctc_full returns empty for CTG/VCB despite OCR+PDF, WHY secondary lines (OpProfit/EBITDA/Cash/EPS) are systematically zero, WHY /docs net_profit scalars are garbage",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": null,
+            "status": "DONE",
+            "closed_at": "2026-06-02T05:04Z",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": "DONE. Brief: docs/architecture-briefs/2026-06-02-bctc-extract-quality.md. A=refine-never-ran (PENDING/0 units, CTG also cover-letter-only PDF). B=ScalarAggregate scope gap (10/20 cols, operating_profit/ebitda/cash/EPS unmapped). C=same financial_reports.net_profit as get_bctc_full — no divergence, garbage from OCR-parse stale write. D=buildComparisonSection no refine_status guard on prior row. Fix plan: BEQ-4(guard XS) BEQ-2(refine trigger S) BEQ-3(full col audit M) BEQ-5->BCTC-CTG-ATTACHMENT-FETCH. All separable from BCTC-LAYOUT-FIRST.",
+            "mode": "spike",
+            "timebox": 120
+          },
+          {
+            "task_id": "BEQ-1-SPIKE",
+            "title": "Pin 3 net-new BCTC data-layer symptoms each to ONE pipeline layer (PLAN-ONLY findings doc)",
+            "type": "SPIKE",
+            "owner": "architect",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "multi",
+            "note": "empty refine CTG/VCB; zeroed secondary FPT+ACB; garbage /docs net_profit scalars. raw-trigger each leg. timebox 120. | DONE c00bb72f - 3/3 symptoms pinned (a REFINE-TRIGGER, b SCALAR-MAPPING, c OCR-ingest+no-serve-guard); raw DB evidence; follow-ups BEQ-2/3/4a/4b"
+          },
+          {
+            "task_id": "BEQ-4b",
+            "title": "refine_status guard in buildComparisonSection (withhold YoY when prior PENDING)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-1-SPIKE"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 2c3f7529 — live-verified: get_bctc_full FPT now shows 'Period prior (2025-Q4) not yet refined — comparison withheld', +12146% contamination gone. mcp-server rebuilt 08:23Z. 84 tests green (router re-ran).",
+            "commit": "2c3f7529"
+          },
+          {
+            "task_id": "BEQ-4a",
+            "title": "null-on-PENDING guard in /docs LIST_SQL (stop serving legacy garbage net_profit)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-1-SPIKE"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 0523b435 (CASE-WHEN guard, routes/bctcInspectHandler.ts) + 13dc04b9 (PI3 test-DDL regression fix + 4 tests) — live-verified: /api/bctc-inspect/docs CTG/VNM/EIB/DIG net_profit=null (was garbage), FPT/ACB DONE values intact, zero PENDING leak. NOTE: 0523b435 shipped 16 broken PI3 tests (refine_status col missing from test DDL) — fixed in 13dc04b9; commit-red gap.",
+            "commit": "0523b435,13dc04b9"
+          },
+          {
+            "task_id": "BEQ-2",
+            "title": "Audit + trigger refine pipeline for PENDING BCTC corpus (exclude CTG)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-1-SPIKE"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": "DONE. Audit + backfill trigger complete. Root cause = section-incomplete source rows (verified raw: 7 reports 100% balance_sheet, zero IS/CF). With BEQ-5..8b guards live, backfill now correctly classifies them PARTIAL (writes no garbage). Corpus: 3 DONE / 7 PARTIAL / 5 PENDING(zero-row)."
+          },
+          {
+            "task_id": "BEQ-3",
+            "title": "ScalarAggregate column-audit 10 to ~20 (op_profit/ebitda/cash/eps/CF unprojected)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-1-SPIKE",
+              "BEQ-2"
+            ],
+            "status": "DONE",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "note": "DONE: code c1f3c328 (20-field aggregator). Data-quality on section-incomplete reports handled by BEQ-5..8b section guards (mark PARTIAL, no misattributed scalars). Real values await BEQ-9/10 re-refine."
+          },
+          {
+            "task_id": "BEQ-5",
+            "title": "bctcSectionCompleteness domain fn + DV tests",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-3"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 1da34f8d, QA-approved, LIVE+verified 2026-06-02T10:18:31Z (mcp-server rebuilt 10:13Z SHA ea781a7a). 38 tests green re-run by router."
+          },
+          {
+            "task_id": "BEQ-6",
+            "title": "section guard in backfillBctcScalarsTool (incomplete→PARTIAL, write no garbage)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-5"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE a8cbe91d. LIVE-verified: dry+live backfill skip 7 incomplete reports → PARTIAL, updated_cols:[] (no misattributed scalars written)."
+          },
+          {
+            "task_id": "BEQ-7",
+            "title": "section guard in finalizeBctcRefineTool (incomplete→PARTIAL fail-safe)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-5"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 6b2f72b2. QA-approved + live."
+          },
+          {
+            "task_id": "BEQ-8",
+            "title": "replace isBankPath discriminator with isBankFormFromRows",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-5"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 1f726140. BEQ-BANK-DISCRIM tests green (FPT→false, ACB→true, empty→false)."
+          },
+          {
+            "task_id": "BEQ-8b",
+            "title": "extend BEQ-4a serve guard: null net_profit for PARTIAL too",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-5",
+              "BEQ-6",
+              "BEQ-7"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 8845e5d6 (+test fixes cbdad2d6,61747444). LIVE-verified 2026-06-02T10:18:31Z: /docs serves net_profit=null for all 7 PARTIAL reports."
+          },
+          {
+            "task_id": "BEQ-9",
+            "title": "Re-refine recoverable tickers to capture missing IS/CF sections (VNM/FPT-Q4/HPG/SHB)",
+            "type": "SPRINT-S",
+            "owner": "bctc-analyst",
+            "depends": [
+              "BEQ-8b"
+            ],
+            "status": "DONE-WITH-CAVEATS",
+            "closed_at": "2026-06-02T10:56Z",
+            "size": "S",
+            "zone": "read-only-analysis",
+            "note": "PO SIGN-OFF 2026-06-02T10:56Z DONE-WITH-CAVEATS (router raw-verified post-rebuild). SCALAR/BALANCE RECOVERY GENUINE: VNM-Q4 rev=63645.9/GP=26209.5/NP=9413.6/assets=53312.4=equity34483+liab18829.4 (balance EXACT). FPT-Q4 rev=70112.8/NP=11225.5 (balance✓). HPG-Q4-parent NP=5597.9 recovered from 5.6 garbage, assets=98670.8=equity94430.9+liab4239.9 (balance✓). SHB-Q4 NII=20217.3/NP=12009.9/assets=892570.6 (balance✓). CAVEATS (separate analytics/serving layer, NOT in BEQ-9 scope, escalated to BCTC-ANALYTICS-LAYER): ratio layer broken (VNM ROE=0/ROA=0/EPS=12/NetDebt-EBITDA=-7.5e13x); FPT scalars are FULL-YEAR cumulative mislabeled Q4 -> false YoY -82.2%; HPG parent-only (rev=0, conf44%) served as headline vs consolidated ~140k; SHB get_bctc_full returns 'balance sheet has no decomposition — forced-zero suspected' (bank serving path broken despite DONE). bctc-analyst self-report masked these. NOT a re-open — defects pre-date BEQ-9.",
+            "gate": "OFF-HOSE-ONLY"
+          },
+          {
+            "task_id": "BEQ-10",
+            "title": "Verify DHG/EIB/VEA/VCB OCR coverage, dispatch refine if confirmed",
+            "type": "SPRINT-S",
+            "owner": "bctc-analyst",
+            "depends": [
+              "BEQ-9"
+            ],
+            "status": "PARTIAL-DONE-ACCEPTED",
+            "closed_at": "2026-06-02T10:56Z",
+            "size": "S",
+            "zone": "read-only-analysis",
+            "note": "PO SIGN-OFF 2026-06-02T10:56Z PARTIAL-DONE accepted (router raw-verified). DHG Q1-2026 GENUINE+CLEAN: rev=1198.1/GP=600.2/NP=315.7/EPS=4971/balance EXACT — BUT ROA=7,891,932.0% (analyst claimed fixed; NOT fixed — ratio layer, escalated to BCTC-ANALYTICS-LAYER). EIB Q1-2026: NII=1379.98/NP=269.16/assets=269958.4 committed BUT get_bctc_full returns 'no decomposition — forced-zero suspected' = bank B02-TCTD serving path UNSERVABLE despite DONE (escalated). VEA (PARTIAL 201 rows): deferred, needs separate dispatch when scheduled. VCB rows=0 PENDING -> BCTC-REFETCH-ZERO-ROW (backlog). Residual fetch backlog confirmed tracked: BCTC-CTG-ATTACHMENT-FETCH, BCTC-REFETCH-ZERO-ROW(DGC/DIG/VCB), VEA deferred.",
+            "gate": "OFF-HOSE-ONLY"
+          }
+        ]
+      },
+      {
+        "id": "ORCH-STATE-CONSOLIDATE",
+        "label": "Single JSON SSOT, delete 4 orchestration markdown files",
+        "status": "DONE",
+        "opened_at": "2026-06-01",
+        "closed_at": "2026-06-02",
+        "tasks": [
+          {
+            "task_id": "OSC-1",
+            "title": "Create orch-state.json, migrate pipeline-state + TASKS + DASHBOARD content",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/",
+            "note": "2ed8b93f"
+          },
+          {
+            "task_id": "OSC-2",
+            "title": "ATOMIC code + agent-file + deletion migration (ONE COMMIT)",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server+agent-father",
+            "depends": "OSC-1",
+            "status": "DONE",
+            "size": "L",
+            "zone": "apps/mcp-server/ + docs/",
+            "note": "4fb46f68 + residual b8742fcb — 6 state files retired, ~100 readers re-pointed"
+          },
+          {
+            "task_id": "OSC-3",
+            "title": "Rewrite signal-dashboard SKILL to target orch-state.json .signal_queue",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": "OSC-2",
+            "status": "DONE",
+            "size": "M",
+            "zone": ".claude/skills/",
+            "note": "signal-dashboard skill + dashboard-protocol rewritten to .signal_queue (see FU-SIGNAL-DASHBOARD-CAP cap re-check)"
+          },
+          {
+            "task_id": "OSC-4",
+            "title": "GET /api/orchestration endpoint + docker mount + frontend route",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server+ops+dev-frontend",
+            "depends": "OSC-2",
+            "status": "DONE",
+            "size": "M",
+            "zone": "apps/mcp-server/ + docker-compose.yml + apps/frontend/",
+            "note": "c8a76a48 + 9dd53a21 — HC-2 DTO endpoint + /dashboard/orchestration route, orch dir bind-mounted rw, mcp-server+frontend rebuilt, live 200"
+          },
+          {
+            "task_id": "OSC-5",
+            "title": "QA: atomic-write PROVEN-RED + reader-migration regression + endpoint contract",
+            "type": "sprint-task",
+            "owner": "qa",
+            "depends": "OSC-4",
+            "status": "DONE",
+            "size": "M",
+            "zone": "qa",
+            "note": "QA APPROVE — atomic-write proven-red, 47 pass/1 skip/0 fail, zero dangling readers, HC-1/HC-2 pass"
+          }
+        ]
+      },
+      {
+        "id": "FLEET-HOST-SAFETY",
+        "label": "On 16GB host, fleet must NEVER be up",
+        "status": "active",
+        "opened_at": "2026-06-01",
+        "tasks": [
+          {
+            "task_id": "AUD-ND-1",
+            "title": "system-auditor PLAN-ONLY invariant (no destructive docker ops)",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "DONE",
+            "size": "M",
+            "zone": "docs/agents/system-auditor/",
+            "note": "IMPLEMENTED+QA-PASS 2026-06-01 :07 (d30f9221)"
+          },
+          {
+            "task_id": "DRAIN-INJECTION-SAFE",
+            "title": "dev-team drain-signals must not interpolate payload into shell cmd",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/dev-team/flow/",
+            "note": "4cd55d01"
+          },
+          {
+            "task_id": "A-01-EXPECTED-SET",
+            "title": "system-auditor A-01 check against intended-runtime-set SSOT not full compose",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/system-auditor/",
+            "note": "fa02735e DONE-PENDING-LIVE-VERIFY"
+          },
+          {
+            "task_id": "AUDITOR-SLA-CADENCE",
+            "title": "Per-source SLA SSOT for data_stale checks (quarterly cadence for BCTC)",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/system-auditor/",
+            "note": " | DONE 2026-06-02T18:30Z commit 7d8951c7 (agent-father). Per-source SLA now machine-read SSOT: system-map.json .project.data_sources[] bctc-discover/bctc-push gained sla block (mode=earnings-window-dependent, 168h normal / 24h during months 1/4/7/10 days 1-14); auditor flow SLA-Resolver replaces line-171 prose (prose removed, no divergence). system-map.json re-validated valid JSON. Kills BCTC false-stale alarm class. No rebuild (flow+json read live)."
+          },
+          {
+            "task_id": "VPS-SOCAT-PERSIST",
+            "title": "Durable CF tunnel routing fix (socat launchd plist or CF re-point)",
+            "type": "sprint-task",
+            "owner": "ops",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "ops/VPS",
+            "note": "CLOSED 2026-06-01: launchd plist com.vn-market.socat-bridge installed"
+          },
+          {
+            "task_id": "A-01b-DASHBOARD-HEALTH-FILTER",
+            "title": "frontend+api-gateway /health must read host_runtime_set SSOT; render not_deployed_by_design as INFO/grey not DOWN",
+            "type": "sprint-task",
+            "owner": "dev-frontend",
+            "depends": "A-01-EXPECTED-SET",
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/frontend/ + apps/api-gateway/",
+            "note": "residual flagged by agent-father during A-01; closes the dashboard 7-false-RED plane (project_dashboard_two_data_planes) | DECOMPOSED 2026-06-02 into FRONTEND-CORRECTNESS A-01b-1..4 (operator goal); see that sprint | DONE 2026-06-02 via FRONTEND-CORRECTNESS A-01b-1..4; ops rebuilt api-gateway+frontend; QA live PROVEN-RED PASS"
+          },
+          {
+            "task_id": "DRAIN-PRUNE-DATEFMT",
+            "title": "Fix silent no-op 7-day prune in drain-signals.md 0a-2 — datetime() cannot parse compact-ISO processed_at",
+            "type": "FIX",
+            "owner": "agent-father",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "XS",
+            "zone": "docs/agents/dev-team/flow/",
+            "priority": "low",
+            "note": "PO triage :07 2026-06-02. Router raw-verified: DB held 1050 rows, newest processed_at=20260521 (12d), DELETE matched 0 for weeks because processed_at is compact-ISO YYYYMMDDTHHMMSSZ → SQLite datetime() returns NULL. Fix spec to lexicographic compact-cutoff compare (no row migration); document format invariant; decide canonical in-repo drain script vs TODO pointer (repo has none; /tmp drain is uncommitted + envelope-skip divergent). Spec-only flow edit, no rebuild. | DONE e30c6ec9 (agent-father): lexicographic compact-cutoff prune + portable date dual-form (GNU -d / BSD -v-7d, verified runs on macOS) + format-invariant comment + canonical-script TODO pointer. Router raw-verified: 1 file 6+/3-, 119L<=120 cap, clause mechanically matches >7d compact-ISO rows (old datetime() returned NULL = 0-match for weeks), tree clean. Spec=SSOT live for next drain; this tick pruned 1050->47 manually."
+          }
+        ]
+      },
+      {
+        "id": "FB-GATE",
+        "label": "Replace fb-market-poster self-attestation validation with deterministic executable pre-publish gate (HIGH — 10pm cron not trustworthy unattended)",
+        "status": "DONE",
+        "closed_at": "2026-06-02",
+        "opened_at": "2026-06-02",
+        "priority": "high",
+        "evidence": "Session 2026-06-02: fb-market-poster STEP 4 check 3 is self-attestation ('Scan the entire post body... fix inline'). False-greened 3x in one session, each caught only by router raw grep: (1) 'thanh khoảy' typo present 6x while agent reported zero typos; (2) '(FII)' English jargon present 2x while agent reported FII:ZERO; (3) full Kinh Dịch hexagram paragraph ('vị thế Sư Giữ … Sư/Khôn/Kiển … vị thế Khôn') copied from CHEF/get_portfolio_conviction dish present while agent reported hexagram:ZERO. Root: validation is a model self-check, not an executable command; nothing hard-blocks the write. Memories: feedback_market_report_plain_vietnamese (the rule), feedback_router_verify_raw_not_badges + feedback_fence_false_green (need pasted command output, not a green claim).",
+        "tasks": [
+          {
+            "task_id": "FB-GATE-1",
+            "title": "DESIGN deterministic executable pre-publish gate for fb-market-poster flow (agents-architect)",
+            "type": "sprint-task",
+            "owner": "agents-architect",
+            "depends": null,
+            "status": "DONE",
+            "closed_at": "2026-06-02T04:09Z",
+            "size": "S",
+            "zone": "docs/agents/fb-market-poster/ + .claude/skills/",
+            "note": "DESIGN-DONE. Brief: docs/architecture-briefs/2026-06-02-fb-jargon-gate.md. Decision: SHARED — script scripts/fb-jargon-gate.sh + skill .claude/skills/fb-jargon-gate/SKILL.md; flow calls skill, skill calls script; zero inline token list in flow. Gate: grep -nEi across 5 groups (English jargon 32 tokens, unicode/notation 8, hexagram anchored via vị thế <name>, VN typos, calendar weekday check). Hard-fail on any hit, pasted output required in STEP 8. Smoke tests A/B/C spec'd. agent-father (FB-GATE-2) to implement."
+          },
+          {
+            "task_id": "FB-GATE-2",
+            "title": "IMPLEMENT the gate into fb-market-poster flow + reusable executable if specced (agent-father)",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": [
+              "FB-GATE-1"
+            ],
+            "status": "DONE",
+            "closed_at": "2026-06-02",
+            "size": "S",
+            "zone": "docs/agents/fb-market-poster/ + .claude/skills/ + scripts/",
+            "note": "IMPLEMENTED. scripts/fb-jargon-gate.sh (5 groups, 32+ tokens, hexagram anchored, calendar check, exits 0/1/2) + .claude/skills/fb-jargon-gate/SKILL.md (46L) + flow main.md check-3 replaced with STEP 4a hard-fail gate call. Smoke A (sentiment→exit1), B (clean post→exit0), C (không→exit0) proven. Hexagram anchor fires on vị thế Khôn + Kinh Dịch. Flow RETURN requires JARGON GATE pasted output. Inline token list removed (SSOT = script only)."
+          }
+        ]
+      },
+      {
+        "id": "MCP-SURFACE-GAPS",
+        "label": "Router-found MCP defects (intake 2026-06-01)",
+        "status": "active",
+        "opened_at": "2026-06-01",
+        "tasks": [
+          {
+            "task_id": "MSG-1",
+            "title": "No market-wide foreign-flow aggregate tool",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": null,
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "note": " | DONE-LIVE-VERIFIED 2026-06-02T17:30Z (commit cd9540a4, mcp image 17:28:05Z). Router raw-called get_market_foreign_flow(days=5,top_n=5): returns real watchlist-wide foreign aggregate — 2026-06-02 net -3.01M NET SELL across 102 tickers, top buyers FPT+644k/SHB+210k, top sellers HPG-521k/HDB-484k/ACB-475k. Honest coverage_note (watchlist not full-exchange), sparse-day zeros shown truthfully, no mock. source_tier 2. Data: daily_ohlcv foreign_buy/sell/net_vol cols."
+          },
+          {
+            "task_id": "MSG-2",
+            "title": "Per-code N+1 Kinh Dich fallback lines eliminated",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": null,
+            "status": "DONE",
+            "size": "XS",
+            "note": "RESOLVED by TSH-6 (9b895ffd) 2026-06-01"
+          },
+          {
+            "task_id": "MSG-3",
+            "title": "Phantom-tool discoverability gap (get_market_breadth, get_top_movers)",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": null,
+            "status": "DONE",
+            "size": "XS",
+            "zone": "docs/standards/mcp-tools.md",
+            "note": " | DONE 2026-06-02T17:30Z (cd9540a4): get_market_breadth/get_top_movers confirmed PHANTOM (zero .ts, referenced only in fb-market-poster docs/notebook/handoff). Documented in docs/standards/mcp-tools.md Renamed/Removed table with watchlist+portfolio-conviction fallback. Definitif (removed dangling refs context), not symptom."
+          }
+        ]
+      },
+      {
+        "id": "ENV-ISOLATION",
+        "label": "Fleet-wide test/prod data isolation",
+        "status": "active",
+        "opened_at": "2026-05-31",
+        "tasks": [
+          {
+            "task_id": "EI-P1-1",
+            "title": "APP_ENV=production explicit in all DB-using compose services",
+            "type": "sprint-task",
+            "owner": "ops",
+            "depends": null,
+            "status": "DONE"
+          },
+          {
+            "task_id": "EI-P1-2",
+            "title": "Harden maintenance scripts with APP_ENV + DB_PATH guards",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "DONE"
+          },
+          {
+            "task_id": "EI-P1-3",
+            "title": "Write docs/protocols/dev-environment.md SOP",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "DONE"
+          },
+          {
+            "task_id": "EI-P2-1",
+            "title": "Startup assertion APP_ENV vs DB_PATH mismatch",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": "EI-P1-3",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": " | DONE-LIVE-VERIFIED 2026-06-02T17:40Z (commit 2daf2d47, mcp rebuilt). ops boot-verified: container Up healthy, EI-P2-1 startup assertion PASSED for prod (APP_ENV=production/DB_PATH=/app/data/market.db, no exit), unset->production safe-default + :memory: bypass; EI-P2-2 data_env column LIVE on all 5 tables (daily_ohlcv/financial_reports/rag_analyses/tracked_indicators/pdf_extracted_text), idempotent, existing rows NULL. tsc clean, 73 targeted tests pass (full bun test blocked by pre-existing Bun1.3.13 C++ crash)."
+          },
+          {
+            "task_id": "EI-P2-2",
+            "title": "data_env column on 5 tables",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": "EI-P2-1",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": " | DONE-LIVE-VERIFIED 2026-06-02T17:40Z (commit 2daf2d47, mcp rebuilt). ops boot-verified: container Up healthy, EI-P2-1 startup assertion PASSED for prod (APP_ENV=production/DB_PATH=/app/data/market.db, no exit), unset->production safe-default + :memory: bypass; EI-P2-2 data_env column LIVE on all 5 tables (daily_ohlcv/financial_reports/rag_analyses/tracked_indicators/pdf_extracted_text), idempotent, existing rows NULL. tsc clean, 73 targeted tests pass (full bun test blocked by pre-existing Bun1.3.13 C++ crash)."
+          },
+          {
+            "task_id": "EI-P2-3",
+            "title": "docker-compose.dev.yml for dev stack on port 3099",
+            "type": "sprint-task",
+            "owner": "ops",
+            "depends": "EI-P2-2",
+            "status": "DONE",
+            "size": "S",
+            "note": " | DONE 2026-06-02T17:50Z commit ee09f359. docker-compose.dev.yml: APP_ENV=dev, DB_PATH=/app/data/market.dev.db, port 3099, container vn-market-mcp-dev, mem 2g. compose config VALID. NOT started (SOP: prod+dev never simultaneous). EI-P2-1 assertion passes for dev pair (verified)."
+          },
+          {
+            "task_id": "EI-P2-QA",
+            "title": "ENV-GUARD-1 sweep — startup assertion + data_env stamp",
+            "type": "sprint-task",
+            "owner": "qa",
+            "depends": "EI-P2-3",
+            "status": "DONE",
+            "size": "S",
+            "note": " | PASS 2026-06-02T17:50Z (qa sweep, all 5 checks). Assertion matrix 30/30 tests incl key isolation guard (dev+prodDB->THROW); prod container Up healthy (no boot regression); data_env migration idempotent + live on 5 tables; stamping via currentDataEnv() not literal (3 sites spot-checked); dev-stack double-isolated (no volume mount + assertion). 3 non-blocking follow-ups queued."
+          }
+        ]
+      },
+      {
+        "id": "SELF-IMPROVE-GATE",
+        "label": "Gated Self-Improvement Loop Phase 2",
+        "status": "active",
+        "opened_at": "2026-05-28",
+        "tasks": [
+          {
+            "task_id": "SIG-FOLLOWUP-DRYRUN",
+            "title": "X-1 synthetic dry-run, D-IMPROVE emit path e2e",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": " | DONE 2026-06-02T18:20Z commit 6a8c87ac (PROVEN-WORKING, no rebuild — test-infra+injectable, production byte-identical). X-1 synthetic dry-run fires D-IMPROVE lane-B emit seam e2e: writeImprovementProposal->appendDashboardRow(signal_queue)->cooldown-dedup, all sinked (temp dirs, :memory:, no real Telegram/signal). Found+fixed gap: production emit path had ZERO test coverage (prior tests bypassed via writeProposalFn injection); added orchStatePath injectable. 3 dry-run + 65 regression tests pass, tsc clean."
+          }
+        ]
+      },
+      {
+        "id": "NB-PRUNE-FIX",
+        "label": "Notebook prune anchor-format mismatch (fleet bloat)",
+        "status": "active",
+        "opened_at": "2026-05-31",
+        "tasks": [
+          {
+            "task_id": "NB-PRUNE-1",
+            "title": "Widen prune anchor to ^## in notebook-write SKILL",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "DONE",
+            "note": "DONE 2026-05-31 (7166db01)"
+          },
+          {
+            "task_id": "NB-BLOAT-FLOW-OVERWRITE",
+            "title": "system-auditor prepend drift — make overwrite unambiguous in flow",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/system-auditor/flow/",
+            "note": "e2e37c39 init.md def aligned; flow already fixed 8baed6d1"
+          },
+          {
+            "task_id": "RE-CAP-1",
+            "title": "signal-dashboard SKILL.md 192L vs 120L cap — lazy-load refactor",
+            "type": "sprint-task",
+            "owner": "agent-father",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": ".claude/skills/signal-dashboard/",
+            "note": " | DONE 2026-06-02T18:25Z commit b675045f (agent-father). signal-dashboard SKILL.md 133->92L (under 120 cap); cold content -> reference.md (51L) via pointers; no operational content lost (schema/atomic-write/drain/claim all hot or reachable). Collapses FU-SIGNAL-DASHBOARD-CAP. No rebuild (skills read live)."
+          },
+          {
+            "task_id": "NB-CLEAN-NEWSSCOUT",
+            "title": "Prune news-scout.md 219L -> <=200 (drop oldest cycle block, keep last 3)",
+            "type": "sprint-task",
+            "owner": "claude-manager-helper",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agent-memory/notebooks/",
+            "note": "5082046d 219->92L"
+          },
+          {
+            "task_id": "NB-PRUNE-BCTC-ANALYST",
+            "title": "Prune bctc-analyst.md 201L->cap (context_bloat_breach)",
+            "type": "FIX",
+            "owner": "claude-manager-helper",
+            "depends": [],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "docs/agent-memory/notebooks/",
+            "note": "DONE ab8532b1 — 201->172L, dropped oldest c005 cycle, ESC-3/FPT dedup + cowork edits preserved."
+          },
+          {
+            "task_id": "NB-PRUNE-UNIFIED-AGENT",
+            "title": "Prune unified-agent.md (CHEF) 223L->cap",
+            "type": "CLEAN",
+            "owner": "claude-manager-helper",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agent-memory/notebooks/",
+            "note": "DONE 30e8e27c — 223->110L, compressed ## Prior cycles in-place, 6 reference headings + last-2 cycles + carry-over intact."
+          },
+          {
+            "task_id": "NB-PRUNE-ROOTCAUSE-SPIKE",
+            "title": "SPIKE: why notebook-write prune fails fleet-wide (NB-NOTEBOOK-WRITE-FLEET-ALIGN promoted)",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "cross-service/",
+            "note": "DONE 26f7caa0 — brief docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md. Contract: 2 classes (OVERWRITE po/market-watcher; APPEND chef/news-scout/bctc/etc) + AC-2b intra-accumulator sub-block prune + AC-5 inline wc-l guard; L95 TODO resolved. brief_complete->po (NEW, next-cycle agent-father impl S1-S5)."
+          },
+          {
+            "task_id": "NB-PRUNE-IMPL",
+            "title": "Implement notebook-write 2-class contract S-1..S-6 per 2026-06-02-notebook-write-prune-contract.md",
+            "type": "SPRINT-S",
+            "owner": "agent-father",
+            "depends": [
+              "NB-PRUNE-ROOTCAUSE-SPIKE"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "cross-service",
+            "note": "OVERWRITE/APPEND classes + AC-2b intra-### prune + AC-5 inline wc-gate; RE-CAP-1 NOT absorbed (different file: signal-dashboard SKILL) | DONE e1e85886 — 6 files S1-S6; 2-class table+AC-2b+AC-5 inline guards; verified raw (TODO gone, guards present in 4 flows)"
+          },
+          {
+            "task_id": "NB-NSCOUT-PRUNE",
+            "title": "Prune news-scout notebook 222L -> <=200L (APPEND-class cap breach, ctx-bloat x3)",
+            "type": "FIX",
+            "owner": "claude-manager-helper",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "XS",
+            "zone": "docs/agent-memory/notebooks/",
+            "priority": "medium",
+            "note": "PO triage :07 2026-06-02. APPEND-class cap (<=200L file / <=60L section). No section >60L; total-file breach from accumulated stale cycle sections. Prune oldest COMPLETE cycles per notebook-write SKILL AC-6. VERIFY janitor output (history: false-green cap claims + dirty-tree): wc -l <=200 AND git status clean after.| DONE-LIVE-VERIFIED 2026-06-02T18:55Z commit de6b25fb (claude-manager-helper). news-scout.md 222->53L. Router raw-verify: 1-file scope, tree CLEAN (no janitor false-green/partial-stage), max section 31L (c30) <=60, content intact (c30+c31 kept w/ full 5-item carry-over watch + FII-carry/regime context, not gutted). Notebook read live, no rebuild."
+          }
+        ]
+      },
+      {
+        "id": "BCTC-LAYOUT-FIRST",
+        "label": "Phase 0 READY",
+        "status": "active",
+        "opened_at": "2026-05-26",
+        "tasks": [
+          {
+            "task_id": "LF-EXTRACT",
+            "title": "Layout-first extraction Phase 0",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": null,
+            "status": "TODO",
+            "size": "M"
+          },
+          {
+            "task_id": "LF-OVERLAY",
+            "title": "Layout-first overlay Phase 0",
+            "type": "sprint-task",
+            "owner": "developer",
+            "depends": "LF-EXTRACT",
+            "status": "TODO",
+            "size": "M"
+          },
+          {
+            "task_id": "FPT-OPUS-DEEPDIVE",
+            "title": "Clear 10-cycle-overdue FPT ESC-3 via on-demand Opus deep-dive (OCF/NI divergence)",
+            "type": "sprint-task",
+            "owner": "bctc-analyst",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "read-only-analysis",
+            "note": "a38e14ee flag_for_human_review conf0.35 MIXED/partial-artifact; notebook note left for cowork (201L)"
+          },
+          {
+            "task_id": "ESC-OPUS-DISPATCH-SEAM",
+            "title": "Wire seam so ESC-* auto-dispatches model=opus deep-dive instead of silent no-op under Sonnet",
+            "type": "sprint-task",
+            "owner": "agents-architect",
+            "depends": null,
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/bctc-analyst/ + docs/agents/dev-team/flow/",
+            "note": "DESIGN DONE c1c51a64 (brief 2026-06-02-esc-opus-dispatch-seam.md, 232L). Impl routes to agent-father via brief_complete signal arc-brief-esc-opus-20260602T0121Z -> next-cycle PO triage. agents-architect->agent-father split."
+          },
+          {
+            "task_id": "ESC-OPUS-SEAM-IMPL",
+            "title": "Implement ESC->Opus dispatch seam (3 flow edits + child-extraction)",
+            "type": "SPRINT-S",
+            "owner": "agent-father",
+            "depends": [
+              "ESC-OPUS-DISPATCH-SEAM"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/",
+            "note": "DONE bbcbefad — 3 flow edits + drain-esc-dispatch.md (74L child) extracted; drain-signals.md 116L under cap; deep-dive-opus emits deep_dive_result->po + releases guard. Seam ships ahead of FU-BCTC-TOOL-PARAMS (honest low-conf)."
+          }
+        ]
+      },
+      {
+        "id": "CHEF-ATTN",
+        "label": "Per-stock diversity cap",
+        "status": "active",
+        "opened_at": "2026-05-27",
+        "tasks": [
+          {
+            "task_id": "CHEF-ATTN-1",
+            "title": "BA → IMPL → DEPLOY → QA → EXIT",
+            "type": "sprint-task",
+            "owner": "dev-mcp-server",
+            "depends": null,
+            "status": "DEFERRED-SUPERSEDED",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "note": " | DEFERRED-SUPERSEDED 2026-06-02T18:25Z by dev-team router (evidence-based, like PO BAL-1e/LF rejections). CHEF-ATTN-1 (diversity cap on buildAlertsSection 20-row alerts window) is (a) the pre-redesign cap ALREADY EXISTS, and (b) cowork-team-daily-document-redesign brief (docs/architecture-briefs/2026-05-27) explicitly tags CHEF-ATTN 'MED, not data-restoration — defer' AND Design Point K/Rule K1 says CHEF DROPS buildAlertsSection entirely post Phase-3 cutover -> building further CHEF-ATTN work now = work slated for removal. PO may override if a non-CHEF consumer need surfaces. Not built."
+          }
+        ]
+      },
+      {
+        "id": "FRONTEND-CORRECTNESS",
+        "status": "DONE",
+        "tasks": [
+          {
+            "task_id": "FE-AUDIT-1",
+            "title": "Read-only audit: all 13 frontend routes — data source, mock/placeholder/hardcoded, broken fetch",
+            "type": "SPIKE",
+            "owner": "dev-frontend",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "note": "Discovery for operator goal; output = per-route inventory + defect list -> PO scopes fixes | DONE 2026-06-02T05:04:31Z: 13 routes mapped. NO fabricated market data found (bar met). Defects: P1 mock-text (_index coming-soon headline+9-svc count; analysis stale seeding-date); 502-empty pages (analysis KD/price/TA, db price+news, fetch news) — real data only behind mcp TOOLS, NO REST surface on mcp-server; services/vps = A-01b false-RED."
+          },
+          {
+            "task_id": "A-01b-1",
+            "title": "DESIGN A-01b not_deployed enum + short-key<->compose-name map contract (architect)",
+            "type": "SPRINT-S",
+            "owner": "architect",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/architecture-briefs/ + docs/data/",
+            "note": "PO plan: enum gains not_deployed (Go+TS); name-map mcp<->mcp-server ta<->technical-analysis stock<->stock-price kinh-dich<->kinh-dich-service alert<->alert-engine pdf<->pdf-extractor rag<->rag-service news<->news-fetch macro<->macro-indicators; SSOT at project.infrastructure.docker.host_runtime_set; fix _ssot self-ref drift; not_deployed EXCLUDED from overall-status. Route via architect (dev-core code blueprint) NOT agents-architect. | DONE f6cec28c"
+          },
+          {
+            "task_id": "A-01b-2",
+            "title": "api-gateway: classify not-deployed-by-design as not_deployed, exclude from overall status",
+            "type": "SPRINT-S",
+            "owner": "dev-api-gateway",
+            "depends": [
+              "A-01b-1"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/api-gateway/",
+            "note": "compute.go StatusNotDeployed neutral; registry.go/services.go classify from host_runtime_set; go test scenario host-minimal-stack=ok, 1 deployed down=NOT ok | DONE 803df875 — go test green, host-minimal-stack+real-outage scenarios pass"
+          },
+          {
+            "task_id": "A-01b-3",
+            "title": "frontend: render not_deployed grey INFO + top badge ignores not_deployed",
+            "type": "SPRINT-S",
+            "owner": "dev-frontend",
+            "depends": [
+              "A-01b-1"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "note": "health.ts enum + dashboard.services.tsx badge; default-missing must map to gateway value not blanket down | DONE c779917f — 228 tests, anti-false-green A+B"
+          },
+          {
+            "task_id": "A-01b-4",
+            "title": "QA anti-false-green: not-deployed silent BUT real killed deployed svc still red",
+            "type": "SPRINT-S",
+            "owner": "qa",
+            "depends": [
+              "A-01b-2",
+              "A-01b-3"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "qa",
+            "note": "PROVEN-RED: docker stop mcp-server -> dashboard red + top non-ok; restart -> ok. Filter must not blanket-mute. | PASS 201f8a34 — LIVE PROVEN-RED: macro stop->degraded, restore->ok; 5 containers; /health overall ok + 7 not_deployed"
+          },
+          {
+            "task_id": "FE-FIX-MOCKTEXT",
+            "title": "Remove stale placeholder/mock text rendered to user (DEF-1/6/7)",
+            "type": "FIX",
+            "owner": "dev-frontend",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "note": "_index.tsx: replace 'dashboard coming soon' H1 with real title + derive svc count not hardcode 9; dashboard.analysis.tsx: remove/neutralize stale ACCURACY_SEEDING_WINDOW_END=2026-05-25 UI copy. No behavior change, text only. | DONE bcba080d — _index title fixed, svc-count dropped, stale seeding-date removed; tsc clean, 204 tests pass; verified raw"
+          },
+          {
+            "task_id": "FE-REROUTE-DESIGN",
+            "title": "DESIGN: expose REAL kinh-dich/price(/news) data to frontend via mcp-server REST + api-gateway re-route (502 pages)",
+            "type": "SPRINT-S",
+            "owner": "architect",
+            "depends": [
+              "FE-AUDIT-1"
+            ],
+            "status": "DONE",
+            "size": "M",
+            "zone": "docs/architecture-briefs/ + apps/mcp-server + apps/api-gateway + apps/frontend",
+            "note": "Root: analysis/db/fetch call dead microservices (kinh-dich-service, stock-price, technical-analysis, news-fetch — not deployed). Data EXISTS in mcp-server plane via TOOLS (get_portfolio_conviction etc.) + market.db, but NO REST endpoint. Design: (1) mcp-server new REST read endpoints (/mcp/api/kinh-dich/reading/{t}, /mcp/api/prices/{history,batch}, reuse /api/news-fetch/live) sourcing the SAME data the cowork plane uses; (2) api-gateway re-route /kinh-dich,/stock,/ta,/news to mcp-server when target microservice in not_deployed_by_design (host_runtime_set); (3) frontend unchanged or path swap. Honest-unavailable only where data genuinely absent. Then ba/pm decompose to dev-mcp-server+dev-api-gateway+dev-frontend+qa. | DONE e0fb2d52 — brief 569L, 5 endpoints + rerouter, phased"
+          },
+          {
+            "task_id": "FE-RR-mcp",
+            "title": "mcp-server 5 REST endpoints (KD reading/market, price history/batch, news)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "FE-REROUTE-DESIGN"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 1f27d188 — real data verified at DB; VNINDEX confirmed (no hyphen); shapes matched to loaders"
+          },
+          {
+            "task_id": "FE-RR-gw",
+            "title": "api-gateway not-deployed rerouter -> mcp-server",
+            "type": "SPRINT-S",
+            "owner": "dev-api-gateway",
+            "depends": [
+              "FE-RR-mcp"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/api-gateway/",
+            "note": "DONE c7f19ea3 — 15+34 tests, anti-regression (macro/mcp not rerouted), SSOT-driven"
+          },
+          {
+            "task_id": "FE-RR-rebuild",
+            "title": "ops rebuild mcp-server + api-gateway",
+            "type": "FIX",
+            "owner": "ops",
+            "depends": [
+              "FE-RR-gw"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "ops",
+            "note": "DONE — 5 containers, endpoints live"
+          },
+          {
+            "task_id": "FE-RR-QA-1",
+            "title": "QA Phase-1 live real-data proof",
+            "type": "FIX",
+            "owner": "qa",
+            "depends": [
+              "FE-RR-rebuild"
+            ],
+            "status": "DONE",
+            "size": "S",
+            "zone": "qa",
+            "note": "PASS 65be99e5 — KD/prices real per-row (DB spot-check match), TA honest 503, news honest-empty, frontend SSR real data no 502; db page verified errors:[] clean. Non-blocking: 1 zero-OHLCV row FPT 2026-05-30 (DB data-quality)."
+          },
+          {
+            "task_id": "FE-RR-MACRO-EXTERNAL",
+            "title": "fetch page: /macro/external returns 404 (deployed macro-indicators missing the endpoint)",
+            "type": "FIX",
+            "owner": "dev-macro-indicators",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/macro-indicators/",
+            "note": "Surfaced by router raw-verify: dashboard.fetch shows red 'Macro: data temporarily unavailable' because GET /macro/external -> 404 (macro-indicators serves POST /macro/snapshot 200 but no external route in current build; external-macro logic exists in src/_deprecated + scrapers present). Expose external macro (cached form) at the path the gateway forwards. NOT a not-deployed issue (macro IS deployed). Pre-existing, in-scope for 'all pages correct'. | DONE 827c5483 — GET /macro/external wired (mirrors snapshot prefix); ops rebuilt macro-indicators; LIVE dataSource=live (oil 94.13/gold 4553/usdVnd 26118/vnIndex 1830.7); fetch red banner gone (router-verified)"
+          },
+          {
+            "task_id": "FE-ORCH-RENDER",
+            "title": "Fix /dashboard/orchestration HTTP 500 (TaskBoardPanel flatMap on undefined — stale DTO shape)",
+            "type": "FIX",
+            "owner": "dev-frontend",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "note": "DONE 2eff91c9 — aligned TaskBoardPanel+sprint_goal+state to real /api/orchestration DTO (active_sprints->tasks flat, entries->flat, _updated_at->last_updated_iso, drop head.next_action) + ?? [] guards; 249 tests; ops rebuilt frontend; live 200 + real counts (router-verified). Pre-existing DTO/component drift from OSC-4 surfaced by full sweep."
+          },
+          {
+            "task_id": "FE-AUDIT-2",
+            "title": "Operator goal: reveal+fix ALL frontend problems (10-route client-side audit)",
+            "type": "FIX",
+            "owner": "dev-frontend",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "M",
+            "zone": "apps/frontend/",
+            "priority": "high",
+            "note": "DONE+LIVE 2026-06-02T14:58Z (frontend image 14:58:44Z, commit 9372d7c0, 264 tests). All 10 dashboard routes audited. FIXED: (1) /dashboard/vps false-RED -> not_deployed discrimination (503+no-such-host -> grey NOT DEPLOYED; live: 4 NOT DEPLOYED/1 UP/1 genuine DOWN=sbv-fetch honestly shown/0 UNKNOWN); (2) /dashboard/fetch bare empty -> honest \"No headlines available / source not deployed\" label. CONFIRMED-NOT-BUG: orchestration ErrorBoundary was TRANSIENT (coincided w/ 14:44Z mcp rebuild; code fully guarded; live 0 fallbacks); /dashboard/services already correct (A-01b not_deployed grey). RESIDUAL (infra, not frontend): VPS sbv-fetch DOWN + dead socat band-aid -> VPS-SOCAT-PERSIST (ops)."
+          },
+          {
+            "task_id": "ORCH-DASH-LIVE",
+            "title": "Orchestration dashboard auto-refresh (no manual page reload) via Remix useRevalidator polling",
+            "type": "NEW-FEATURE",
+            "owner": "dev-frontend",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "XS",
+            "zone": "apps/frontend/",
+            "priority": "high",
+            "note": "User request 2026-06-02T19:00Z: orchestration dashboard must update real-time without manual page refresh. Approach=client-side polling (useRevalidator, 5s, visibility-gated) re-runs existing loader -> refetch /api/orchestration proxy -> re-render. No SSE/WS infra (file-backed state changes on cron/task-transition cadence, polling sufficient). Single-file frontend change. Frontend is a CONTAINER -> ops rebuild after merge.| DONE-LIVE-VERIFIED 2026-06-02T19:02Z. dev-frontend 8c30334a (useRevalidator 5s polling, visibility-gated, in-flight guard, LIVE indicator) - 1 file 52+/1-, typecheck+vite build PASS. ops rebuilt frontend container single-service (build+up --no-deps frontend), 200 on /dashboard/orchestration + /api/orchestration. Router independent verify: served bundle dashboard.orchestration-RJMIuxp1.js (11.5KB) contains visibilitychange+revalidat+5000+LIVE tells = live code deployed. No SSE/WS infra (polling fits file-backed cadence)."
+          }
+        ],
+        "_updated_at": "2026-06-02T04:58:02Z",
+        "_updated_by": "dev-team"
+      },
+      {
+        "id": "COWORK-RELIABILITY",
+        "status": "active",
+        "_updated_at": "2026-06-02T06:22:26Z",
+        "_updated_by": "dev-team",
+        "tasks": [
+          {
+            "task_id": "COWORK-LEADER-SELFLOCK",
+            "title": "cowork dispatcher Step 0b self-lockout — own-held leader-lock returns claimed:false -> silent-exit -> guaranteed slots dropped (chef-morning missed 2026-06-02)",
+            "type": "SPRINT-S",
+            "owner": "architect",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/cowork-team/flow/",
+            "note": "PO raw-verified task_claim not re-entrant; current_holder.owner_agent present in false result. Fix: Step 0b detect own-held -> task_heartbeat-then-proceed. RECURRING (288e8888+c502b88b prior) -> architect MUST prove no duplicate-SPAWN regression. architect design -> agent-father impl. Cowork flows are runtime-read (no rebuild). | DONE design 55b66672 + impl b5296672 (Step 0b 3-outcome: own-held heartbeat-probe discriminator, dup-spawn-safe, raw-verified diff); live next cowork tick"
+          },
+          {
+            "task_id": "COWORK-CHEF-ROLE",
+            "title": "chef-worker-role-assertion",
+            "type": "FIX",
+            "owner": "agent-father",
+            "route": "agent-father",
+            "status": "DONE",
+            "size": "S",
+            "zone": "cross-service/",
+            "files": [
+              ".claude/agents/unified-agent.md",
+              "docs/agents/unified-agent/flow/chef.md"
+            ],
+            "baseline_pass": false,
+            "depends": [],
+            "note": "DONE de5d6d1b — worker-role assertion added to .claude/agents/unified-agent.md body (SSOT, all slots). Raw-verified: 2 insertions, frontmatter line-1 intact, scope clean (no orch/signals). PROVEN: standard-prompt re-spawn executed chef.md directly (TNB 1-6 walked), no refusal/router-question. VERIFY SIDE-EFFECT: the dry-run spawn bypassed the dispatcher-injected published-marker gate (not enforced in chef.md) -> worker found 2 clusters and very likely published a duplicate intraday MARKET dish ~07:19Z (could not read back to confirm; no cascade, dispatcher marker still claimed). Lesson: chef.md publishes; never direct-spawn for dry-run. Follow-up FU-CHEF-MARKER-INFLOW."
+          },
+          {
+            "task_id": "NSCOUT-FRAMING-RECUR",
+            "title": "news-scout self-refuses flow on standard trigger — RECURRENCE after fix 7239b803 (router-scoped CLAUDE.md mis-read as self-binding)",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "depends": [],
+            "status": "DONE",
+            "size": "S",
+            "zone": "docs/agents/",
+            "priority": "high",
+            "note": "Root-cause the recurring news-scout self-refusal. Fix 7239b803 added self-execution framing but bug recurred 2026-06-02T16:00Z (signal cwk-20260602T1610Z). Investigate: (1) why the framing fix did not hold (agent registration system-prompt vs flow main.md vs CLAUDE.md precedence); (2) does the subagent inherit project CLAUDE.md 'router-only/always-delegate' and mis-apply it to itself; (3) audit ALL cowork agent flows for the same self-identity vulnerability (market-watcher handled identical prompt fine -> compare). Output brief to docs/architecture-briefs/, signal agent-father to implement durable self-identity guard. PLAN-ONLY. recovered_agentId a9d28df7f3c18b660 ran cleanly with explicit non-delegation preamble. | DONE 3e0ee4f5 (agent-father, 18 files, 9 guards live; signal aac DONE c729bdaa). Durable L3 self-identity guard across 9 cowork flows, supersedes frontmatter-only 7239b803. No rebuild — flows read fresh on next spawn. Router raw-verified docs-only scope + guard present."
+          },
+          {
+            "task_id": "CW-BACKLOG-MISCOUNT",
+            "title": "cowork signal_backlog count excludes its own heartbeats (self-telemetry poisons adaptive-cadence tier + blocks deep-sleep)",
+            "type": "FIX",
+            "owner": "agent-father",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "XS",
+            "zone": "docs/agents/cowork-team/",
+            "priority": "high",
+            "note": "PO triage :07 2026-06-02 (router COWORK-HEARTBEAT-DRIFT finding, PO-corrected). DEFINITIF: cowork-team/flow/main.md L534 SIGNAL_BACKLOG=ls docs/signals/*.json counts cowork-team's OWN heartbeats (37/44) -> PRESSURE_STATE.signal_backlog (L574) -> computeTiers L271-272 pins signal_backlog_tier HIGH forever; ALSO deep-sleep guards L317/L330 (signal_backlog==0) unreachable. Fix=narrow L534 glob to exclude cowork-team-*.json (own heartbeat != inbox backlog). NOT prune-symptom. Router note to agent-father: also verify whether envelope-LESS {ts,classification} heartbeats are a 2nd writer vs cowork-tick-autosilent.sh enveloped ones; align if drift, but backlog-count is the binding fix.| DONE-LIVE-VERIFIED 2026-06-02T18:50Z commit 5fa449cf (agent-father). L534 narrowed: SIGNAL_BACKLOG=ls docs/signals/*.json | {grep -v /cowork-team- || true} | wc -l. Router raw-verify: 1 file 7+/2-, no force-add; independent re-count all=45 excluded=7 cowork-team=38 (45-38=7); empty-inbox edge yields 0 (deep-sleep guard L330 reachable). Count grew 44->45 mid-task = accumulation live, fix needed. Flow read live, no rebuild."
+          }
+        ]
+      }
+    ],
+    "backlog": [
+      {
+        "id": "FU-ORCH-HEAD-CAS",
+        "summary": "Add a version/CAS guard on .head writes to fully close the caller stale-read->sibling-clobber window QA flagged (helper is atomic; risk is a non-fresh-read caller; today mitigated by WIP=2 + fresh-read contract)",
+        "priority": "normal"
+      },
+      {
+        "id": "FU-SIGNAL-DASHBOARD-CAP",
+        "summary": "signal-dashboard bloat CONFIRMED still over cap (measured 2026-06-01T23:14Z): SKILL.md 133L (+13) + dashboard-protocol.md 180L (+60) vs 120 skill-file cap. 3 context-bloat-hook signals fed this (self-critique-SKILL already self-cured to 118L, dropped). Lazy-load split → claude-manager-helper/agent-father; overlaps RE-CAP-1 (NB-PRUNE-FIX) — collapse into one cap-fix task when scheduled.",
+        "priority": "normal"
+      },
+      {
+        "id": "FRONTEND-BCTC-TAB",
+        "summary": "agents-architect brief LOCKED (2026-06-01-frontend-bctc-inspect-tab.md, FBT-ARCH A2 proxy): surface BCTC Inspect viewer as new frontend dashboard tab — two resource routes + one NAV_ITEMS line, apps/frontend/ only, ZERO mcp-server edits. Target dev-frontend. Deferred behind FLEET-HOST-SAFETY; pairs naturally with A-01b (same dev-frontend zone) when host-safety closes.",
+        "priority": "normal"
+      },
+      {
+        "id": "BCTC-CTG-ATTACHMENT-FETCH",
+        "summary": "CTG cover-letter-only PDF fetched; need real BCTC attachment (size/page sanity gate)",
+        "priority": "normal"
+      },
+      {
+        "id": "TNB-GATEWAY-PROBE",
+        "summary": "tnb bootstrap Step 0c should PROBE gateway not read .mcp.json",
+        "priority": "low"
+      },
+      {
+        "id": "CW-STEP47-HYGIENE",
+        "summary": "Teach cowork agents absent-by-design != degraded (macro-indicators not deployed)",
+        "priority": "low"
+      },
+      {
+        "id": "FU-BANK-CODECOL",
+        "summary": "Label text leaking into code column of bctc_table_rows (markdown column-alignment defect)",
+        "priority": "normal"
+      },
+      {
+        "id": "BCTC-TABLE-2",
+        "summary": "Multi-ticker BCTC-TABLE-2 sprint",
+        "priority": "normal"
+      },
+      {
+        "id": "KD-QREF-LANG",
+        "summary": "Kinh Dich Q-ref language issue",
+        "priority": "low"
+      },
+      {
+        "id": "SSC-IBOARD-MIGRATE",
+        "summary": "Replacement-source recon for dead iboard financial source",
+        "priority": "normal"
+      },
+      {
+        "id": "FU-EI-COMPOSE",
+        "summary": "alert-engine DB_PATH + run-bt7-backfill import path (pre-existing, not P2-gated)",
+        "priority": "low"
+      },
+      {
+        "id": "FU-FIXER-NO-FORCE",
+        "summary": "Harden fixer + dev agents against git add -f / force-add of gitignored paths",
+        "priority": "high"
+      },
+      {
+        "id": "TSH-7",
+        "summary": "watchlist default for no-codes get_market_snapshot (UX, optional, needs BA)",
+        "priority": "low"
+      },
+      {
+        "id": "FU-DEV-CAFEF-1",
+        "summary": "Wire /proxy/article-body into /api/push-news ingestion (awaiting USER greenlight)",
+        "priority": "normal"
+      },
+      {
+        "id": "SA-FLOW-CAP",
+        "summary": "system-auditor/flow/main.md 494L vs 120L cap — refactor to linked files",
+        "priority": "low"
+      },
+      {
+        "id": "AUD-ND-1-LIVE-PROVEN-RED",
+        "summary": "Synthetic false-positive injection proving auditor emits signal not docker stop (ops-supervised off-hours)",
+        "priority": "normal"
+      },
+      {
+        "id": "C-TIER1-CEILING",
+        "summary": "get_market_snapshot source_tier:2 permanent ceiling — decide-and-document",
+        "priority": "low"
+      },
+      {
+        "id": "CHEF-FLOW-CAP-REFACTOR",
+        "summary": "chef.md 258L > 120L cap — extract Steps 6/6.5/7 to chef-write-dish.md",
+        "priority": "normal"
+      },
+      {
+        "id": "CHEF-TS-STAMP",
+        "summary": "Cosmetic: cycle-timestamp + next-slot-date mis-stamp; confirm pattern before dispatch",
+        "priority": "low"
+      },
+      {
+        "id": "DRAIN-INJECTION-SAFE-2",
+        "summary": "Apply the DRAIN-INJECTION-SAFE structured-payload fix to the 6 residual concat sites flagged by agent-father (OUT-OF-SCOPE of the dev-team-flow task): pm/init.md L122 (dev_agent), developer/init.md L34 (dev_agent), developer/flow/main.md L62 (task_title+branch_name), developer/flow/microservice-main.md L68 (task_title+branch_name), po/flow/sprint-kickoff.md L37 (sprint_id), agent-father/flow/edit-apply.md L12 (change_description+target_files). PO assess severity — these mostly feed call_tool JSON args (JSON-correctness risk) vs the dev-team dispatcher sites which the main terminal executes in a real shell (true injection). PLAN-ONLY agent-def edits.",
+        "priority": "normal"
+      },
+      {
+        "id": "FU-BCTC-TOOL-PARAMS",
+        "summary": "Opus FPT deep-dive surfaced 2 real bctc tool defects blocking ESC-3 accrual analysis: (1) get_cash_flow IGNORES the quarters param — returns only current quarter, no 8q history, no WC subcomponents (AR/inventory/AP/D&A) -> accrual decomposition impossible; (2) get_bctc_full/get_bctc_refined take code/report_id NOT ticker (caller trap). Both block deep-dive quality + likely affect other consumers. Owner likely dev-mcp-server. Found 2026-06-02 FPT-OPUS-DEEPDIVE.",
+        "priority": "normal"
+      },
+      {
+        "id": "FU-AGENT-FATHER-ORCH-SCOPE",
+        "priority": "normal",
+        "summary": "agent-father FB-GATE-2 commit 7be21e0a staged docs/data/orch/orch-state.json (router-owned, dev-team section) — marked own task DONE + disposed signal pre-verification. No clobber this time (my head+task edits survived) but exposes FU-ORCH-HEAD-CAS window + implementer-self-DONE process defect. Fix: reinforce agent-father contract — orch-state.json is router-owned, never stage it. Mitigated 2nd dispatch by explicit prohibition (e1e85886 honored it)."
+      },
+      {
+        "id": "FU-FE-NEWS-SOURCE",
+        "priority": "low",
+        "summary": "db/fetch pages: Reuters/Bloomberg headlines render honest-empty (200) because rag_analyses has no reuters/bloomberg rows — news-fetch microservice not deployed (host constraint). If real intl news wanted on-host, populate via mcp plane or a cached source. NOT mock (honest empty), so not blocking 'no mock data'."
+      },
+      {
+        "id": "FU-OHLCV-ZERO-ROW",
+        "priority": "low",
+        "summary": "daily_ohlcv has occasional all-zero OHLCV rows (e.g. FPT 2026-05-30) — likely holiday/missing-data stored as zeros. Data-quality, not fabrication. Filter zero rows or backfill."
+      },
+      {
+        "task_id": "FU-CHEF-MARKER-INFLOW",
+        "title": "chef.md self-enforces published-marker before send_telegram",
+        "type": "FIX",
+        "sprint": "COWORK-RELIABILITY",
+        "status": "BACKLOG",
+        "size": "S",
+        "zone": "cross-service/",
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md"
+        ],
+        "note": "Harden: move the published-marker claim (published:<slot>:<YYYY-MM-DD>) INTO chef.md Step 7 immediately before send_telegram, so dedup survives ANY spawn path (currently the gate is only an instruction injected by the cowork dispatcher into the spawn prompt — a direct/refactored spawn bypasses it and can double-publish, as proven 2026-06-02 07:19Z). Architect review the marker contract (recurring-bug family: cowork dispatch reliability, kin of COWORK-LEADER-SELFLOCK)."
+      },
+      {
+        "id": "FU-PARTIAL-SCALAR-SERVE",
+        "summary": "PARTIAL serve guard covers net_profit (BEQ-8b) but NOT operating_cf/total_assets — get_bctc_full may still serve residual misattributed scalars for the 7 PARTIAL reports (e.g. FPT-Q4 ocf=10.1M, DHG TA=4 from a pre-guard backfill linger in columns). Fix: either null-clear non-balance-sheet scalars on PARTIAL transition, or extend the PARTIAL withhold to all IS/CF scalars in get_bctc_full + /docs. Interim until BEQ-9/10 re-refine overwrites them.",
+        "priority": "high"
+      },
+      {
+        "id": "BCTC-ZERO-ROW-REFETCH",
+        "summary": "5 reports have 0 table_rows (VCB-2025Q1, VCB-2025Q4, DGC-2025Q4, DIG-2025Q4) — cover-letter/empty PDFs, stay PENDING. Need VPS re-fetch/re-extraction. CTG-2026Q1 tracked separately (BCTC-CTG-ATTACHMENT-FETCH).",
+        "priority": "normal"
+      },
+      {
+        "id": "BCTC-REFETCH-ZERO-ROW",
+        "summary": "Re-fetch + re-extract the zero-table-row PENDING BCTC reports — DGC(2025-Q4), DIG(2025-Q4), VCB(2025-Q1, 2025-Q4). backfill_bctc_scalars SKIPS these (0 parseable rows). VCB has net_profit_api_bridge but no extracted rows. CTG tracked separately (BCTC-CTG-ATTACHMENT-FETCH, cover-letter-only PDF). Zone dev-vps-crawls; owner ops/dev-vps. PO-live-confirmed 2026-06-02T10:17Z dry_run skipped:5.",
+        "priority": "normal"
+      },
+      {
+        "task_id": "FU-EI-P2-COV-1",
+        "title": "envCheck.ts lines 129-185 (checkRequiredEnv/formatEnvWarning/runEnvCheck Task-1026 degraded-mode) zero test coverage",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "note": "EI-P2-QA gap, non-blocking, orthogonal to isolation"
+      },
+      {
+        "task_id": "FU-EI-P2-COV-2",
+        "title": "No explicit test for APP_ENV=testing (4th DEV_ENV_VALUES entry)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "note": "EI-P2-QA gap, low risk, in Set + isProductionEnv covers it"
+      },
+      {
+        "task_id": "FU-EI-P2-DEV-VOLUME",
+        "title": "docker-compose.dev.yml orphan top-level volumes:market_data: stanza never bound — remove or annotate to avoid misleading future editor",
+        "type": "CLEAN",
+        "owner": "developer",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "root",
+        "priority": "low",
+        "note": "EI-P2-QA gap; isolation currently correct, cleanup only"
+      },
+      {
+        "task_id": "BCTC-HIST-FETCH-VERIFY",
+        "title": "Verify VPS fetch loop drains older bctc_vps_queue rows (no period filter blocking historical); confirm VPS fetch pipeline alive",
+        "type": "SPIKE",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "infra",
+        "priority": "high",
+        "note": "spike Task2 — BCTC-HIST-SEED is a no-op live until this confirms the fetch drains. Dep VPS-SOCAT-PERSIST (DONE) / api-gateway:4000."
+      },
+      {
+        "task_id": "BCTC-HIST-VCB-REFINE",
+        "title": "Re-refine VCB 2025-Q1 + 2025-Q4 (2 known PENDING rows, OCR-garbage CF scalars)",
+        "type": "FIX",
+        "owner": "bctc-analyst",
+        "status": "BACKLOG",
+        "size": "XS",
+        "zone": "corpus",
+        "priority": "medium",
+        "note": "spike Task3 — PDFs already stored, just re-trigger refine"
+      },
+      {
+        "task_id": "BCTC-HIST-VPS-BACKFILL",
+        "title": "VPS BCTC source lacks historical PDF cache (pre-Q4-2025) — backfill VPS /root/bctc-cache + 8765/bctc-files endpoint so seeded historical queue rows can drain",
+        "type": "SPIKE",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "size": "M",
+        "zone": "infra-vps",
+        "priority": "high",
+        "note": "ops BCTC-HIST-FETCH-VERIFY: fetch loop correct (no period filter), but VPS http://125.212.251.27:8765/bctc-files lacks pre-Q4-2025 PDFs (8 done were Q4-2025/Q1-2026 only; 333 historical rows NULL-url/url_not_found). Infra dependency. NOTE spike said hsx.vn has PDFs back to Q1-2022 -> pair with BCTC-ENRICHER-OLD-QUARTERS (pull from HSX into VPS cache)."
+      },
+      {
+        "task_id": "BCTC-ENRICHER-OLD-QUARTERS",
+        "title": "bctcQueueEnricherJob returns 0 URLs for pre-Q4-2025 quarters (valid tickers) — add fallback discovery (HSX mediafiles API has PDFs back to Q1-2022 per FU-BCTC-HISTORY spike)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "BACKLOG",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "priority": "medium",
+        "note": "enricher succeeds Q4-2025/Q1-2026 but empty for older; HSX source HAS the data (spike) -> discovery strategy gap not source gap"
+      },
+      {
+        "task_id": "BCTC-CURRENT-404-INVESTIGATE",
+        "title": "Current-season Q1-2026 bctcPdfPull 10/10 HTTP 404 at 18:30Z — verify VPS cache coverage for current season (may be thin/stale, distinct from SSL -k issue)",
+        "type": "SPIKE",
+        "owner": "ops",
+        "status": "BACKLOG",
+        "size": "S",
+        "zone": "infra-vps",
+        "priority": "high",
+        "note": "ops BCTC-HIST-FETCH-VERIFY found 10/10 current-season 404s; prior 8 done so endpoint was reachable; investigate whether VPS cache went thin"
+      },
+      {
+        "task_id": "FU-COWORK-HEARTBEAT-SCHEMA",
+        "title": "cowork-team heartbeat schema drift: live session emits flat {agent,ts,tick_nominal,classification,...} but Step 6 (L754) + cowork-tick-autosilent.sh document/write enveloped {from,to,type,createdAt}",
+        "type": "FIX",
+        "owner": "agents-architect",
+        "status": "BACKLOG",
+        "size": "S",
+        "zone": "docs/agents/cowork-team/",
+        "priority": "low",
+        "note": "agent-father secondary finding during CW-BACKLOG-MISCOUNT: TWO writers. (1) scripts/agents-flow/cowork-tick-autosilent.sh writes enveloped {from,to,type,payload,priority,createdAt} (matches Step 6 L754 spec); (2) live session main.md runtime writes flat {agent,ts,tick_nominal,drift_min,classification,...} (diverges). All 37 on-disk = flat. Both share cowork-team- prefix so both correctly excluded by CW-BACKLOG-MISCOUNT. Separate cleanup: reconcile Step 6 spec vs live runtime output (doc-or-impl). LOW — backlog-count already fixed."
+      }
+    ],
+    "archive": []
+  },
+  "signal_queue": {
+    "_updated_at": "2026-06-02T19:13:47Z",
+    "_updated_by": "dev-team",
+    "rows": [
+      {
+        "id": "po-bctc-analytics-layer-20260602T1056Z",
+        "ts": "2026-06-02T10:56Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "HIGH. NEW sprint BCTC-ANALYTICS-LAYER (orch-state active_sprints[0]). BEQ-9/10 scalar recovery is GENUINE (balance EXACT VNM/FPT/HPG/DHG, router raw-verified) but exposed a SEPARATE pre-existing analytics/serving layer. TWO asks: (1) BAL-0 DISPATCH FIRST — design an executable hard-fail publish semantic-sanity gate for BCTC-derived MARKET/FB output (pattern = the proven fb-jargon-gate: script+skill+hard-fail+pasted output, NOT model self-attestation). Must block: ratio out-of-range (VNM ROE/ROA=0, DHG ROA 7.8M%, NetDebt/EBITDA -7.5e13x), cumulative-FY-labeled-as-quarter (FPT false YoY -82%), parent-only conf<0.5 as headline (HPG B01a rev=0 conf44%), forced-zero bank B02-TCTD decomposition (SHB/EIB unservable). Consumers = chef unified-agent/flow/market-analysis.md + market-analyst. (2) BAL-1 SPIKE — root-cause the 4 defect clusters as ONE layer, pin each to its module, return per-cluster owner split (likely dev-mcp-server FIXes) -> PO scopes BAL-2.. next cycle. recurring-bug-escalation: architect root-cause before any point-patch. Evidence in sprint.evidence + BEQ-9/BEQ-10 notes.",
+        "severity": "HIGH",
+        "status": "DONE",
+        "payload_ref": "docs/data/orch/orch-state.json#BCTC-ANALYTICS-LAYER"
+      },
+      {
+        "id": "architects-fb-gate-brief-20260602T0409Z",
+        "ts": "2026-06-02T04:09Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "FB-GATE-1 DESIGN-DONE. Brief docs/architecture-briefs/2026-06-02-fb-jargon-gate.md ready for implementation (FB-GATE-2). Decision: SHARED gate — scripts/fb-jargon-gate.sh (executable) + .claude/skills/fb-jargon-gate/SKILL.md (caller) + flow main.md check-3 replacement. Hard-fail on any grep hit. 3 smoke tests specified. See §10 acceptance criteria.",
+        "severity": "HIGH",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-fb-jargon-gate.md",
+        "agent_father_disposition": "IMPLEMENTED 2026-06-02. FB-GATE-2 DONE. All 3 smoke tests proven. See task note."
+      },
+      {
+        "id": "po-fb-gate-intake-20260602T0340Z",
+        "ts": "2026-06-02T03:40Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "HIGH. FB-GATE-1: design executable pre-publish gate to replace fb-market-poster STEP 4 check-3 self-attestation. Evidence: 3 false-greens in one session (thanh khoảy x6, (FII) x2, full hexagram paragraph copied from CHEF dish) — all reported ZERO by agent self-check, all caught only by router raw grep. Gate must be FIXED regex via actual command + HARD-FAIL block on any hit + pasted command output in cycle report. agent-md-factory route: architect designs → agent-father (FB-GATE-2) implements. Decide if a shared fb-jargon-gate script/skill is warranted (SSOT for forbidden set).",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/data/orch/orch-state.json#FB-GATE"
+      },
+      {
+        "id": "po-gate-self-critique-detect-20260601T2111",
+        "ts": "2026-06-01T21:11Z",
+        "from": "po",
+        "to": "po",
+        "type": "gate-verdict",
+        "summary": "SELF-CRITIQUE-DETECT brief APPROVE-WITH-CONDITIONS (5-field critique in brief §11). Blocked on operator final greenlight — agent-father MUST NOT implement on PO alone.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": "docs/architecture-briefs/2026-06-01-agent-self-critique-detect-source.md"
+      },
+      {
+        "id": "tnb-c85-20260601T2013",
+        "ts": "2026-06-01T20:13Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "HIGH. c85: morning dish FAILED (no_self_abort violation, agent-father fixed same tick DONE-PENDING-LIVE-VERIFY). pipeline_degraded=TRUE.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md",
+        "po_disposition": "READ 2026-06-01T22:34Z PO: morning-dish fix DONE-PENDING-LIVE-VERIFY (agent-father same-tick init.md+chef.md). No new dev task — monitor next morning fire 05:23Z (watch_item tracks). F1-F6 all pre-existing/tracked (macro absent-by-design, BCTC overdue, VIRA absent, F9, hexagram dark)."
+      },
+      {
+        "id": "CW-FLOW-STEP478-DEFECTS-20260601T1603Z",
+        "ts": "2026-06-01T16:03Z",
+        "from": "cowork-team",
+        "to": "agent-father",
+        "type": "flow-bug",
+        "summary": "Two defects in cowork-team flow/main.md: Step 4.8 grep-c produces malformed pressure-state.json; Step 4.7 enum reject on agent_name cowork-team.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260601T160319Z.json"
+      },
+      {
+        "id": "cow-CHEF-MORNING-NOPUBLISH-20260601T0518",
+        "ts": "2026-06-01T05:18Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "dispatcher-incident",
+        "summary": "MED. chef-morning GUARANTEED morning dish FAILED to publish — agent self-aborted violating no_self_abort. NO MARKET dish for 2026-06-01 morning.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260601T051821Z.json"
+      },
+      {
+        "id": "cow-MACRO-DOWN-20260601T0406",
+        "ts": "2026-06-01T04:06Z",
+        "from": "cowork-team",
+        "to": "ops",
+        "type": "microservice_degraded",
+        "summary": "macro-indicators service unavailable recurring >=3 cowork cycles. Absent BY DESIGN (not deployed) — DO NOT docker compose up macro-indicators.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "CW-NSCOUT-SPAWN-FRAMING-20260601T0003Z",
+        "ts": "2026-06-01T00:03Z",
+        "from": "cowork-team",
+        "to": "agent-father",
+        "type": "agent-def-bug",
+        "summary": "news-scout-offhours spawn NO-OP REFUSAL — missing self-execution framing in agent def. FIXED commit 7239b803.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260601T000318Z.json"
+      },
+      {
+        "id": "tnb-c84-blocked-20260531T2013",
+        "ts": "2026-05-31T20:13Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "bug-escalation",
+        "summary": "HIGH. c84 BLOCKED — MCP gateway absent in spawned-agent session (FALSE ALARM pattern). Structural gaps D/E/F/F9 persist from c82.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/tnb-2026-05-31T20:13:00Z-c84-mcp-blocked.json"
+      },
+      {
+        "id": "bctc-extraction-esc-20260602T0015Z",
+        "ts": "2026-06-02T00:15Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "summary": "bctc-analyst c010 surfaced 3 persistent extraction/model blockers NEVER routed to queue (9-10 cycles, 0 prior rows): (1) FPT ESC-3 CRITICAL OVERDUE 10th cycle — OCF/NI=-1.15, needs Opus sub-agent for flow/deep-dive-opus.md (Sonnet cannot run it); (2) CTG 24h+ post-filing extraction lag, DATA_INSUFFICIENT 2nd cycle — abnormal vs normal 2-3h; (3) DHG+EIB DATA_INSUFFICIENT 9th consecutive cycle — BCTC-TABLE extraction-pipeline blocker unresolved. Dev-team/PO lane: model-dispatch + pipeline root-cause. Dispatcher cannot spawn PO/dev.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/agent-memory/notebooks/bctc-analyst.md"
+      },
+      {
+        "id": "arc-brief-esc-opus-20260602T0121Z",
+        "ts": "2026-06-02T01:21Z",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "brief_complete",
+        "summary": "ESC-OPUS-DISPATCH-SEAM brief ready — 3-file seam design (bctc-analyst+drain-signals+deep-dive-opus), task_claim guard, FU-BCTC-TOOL-PARAMS flagged",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-esc-opus-dispatch-seam.md"
+      },
+      {
+        "id": "arc-nb-prune-contract-20260602T031633Z",
+        "ts": "2026-06-02T03:16:33Z",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "brief_complete",
+        "summary": "NB-PRUNE-CONTRACT decided — 2-class write contract (OVERWRITE/APPEND) + AC-2b intra-section rule; 5 flow edits for agent-father → docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md"
+      },
+      {
+        "id": "po-20260602T045900",
+        "ts": "2026-06-02T04:59Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "spike_request",
+        "summary": "HIGH BCTC-EXTRACT-QUALITY/BEQ-1 SPIKE: pin 3 net-new data-layer symptoms to one layer each — empty refine despite OCR (CTG/VCB), zeroed secondary lines (FPT+ACB OpProfit/EBITDA/Cash=0,EPS), garbage /docs net_profit scalars. Findings doc, PLAN-ONLY.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/data/orch/orch-state.json#BCTC-EXTRACT-QUALITY"
+      },
+      {
+        "id": "cowork-team-20260602T051848Z",
+        "ts": "2026-06-02T05:18Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect_report",
+        "summary": "HIGH dispatcher defect: cowork flow Step 0b re-claims the leader-lock every tick, but a held+unexpired lock returns claimed:false even to its OWN prior owner (renewal is via task_heartbeat, NOT task_claim). So for the full 1800s TTL (~2 ticks) after any WON tick the same dispatcher is locked out and silent-exits. Guaranteed single-window slots falling in that shadow are silently DROPPED. TODAY: chef-morning (guaranteed, cron 15 5 * 1-5) dropped — 05:03Z WON tick (news-scout-sentiment) heartbeated leader to 05:34Z; chef-morning only matches the 05:15 nominal window (05:18Z tick) -> claimed:false -> silent-exit -> morning CHEF MARKET dish missed for 2026-06-02. Evidence: holder heartbeat frozen at 05:04Z (no active peer). FIX (root-cause, PLAN-ONLY via architect): Step 0b must detect own-held lock (current_holder.owner_agent==cowork-dispatcher) and task_heartbeat-then-proceed, instead of treating self as a peer; OR only re-claim when holder expired/differs. Published-marker gate already protects against double-publish, so heartbeat-and-proceed is safe.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260602T051848Z.json"
+      },
+      {
+        "id": "cowork-team-20260602T062352Z",
+        "ts": "2026-06-02T06:23Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect_report",
+        "summary": "MEDIUM agent-config defect: when the cowork dispatcher spawns unified-agent (CHEF) with the STANDARD spawn prompt (run docs/agents/unified-agent/flow/chef.md  slot=chef-intraday), the spawned agent can misread the project CLAUDE.md line \"Main terminal = router only / never implement directly\" as applying to ITSELF, then refuses to execute chef.md, asks the dispatcher questions, and burns ~25k tokens with zero output. Observed 2026-06-02 06:18Z chef-intraday tick (agentId a4957b5a). A corrective re-spawn with an explicit \"you ARE the worker, not the router, ignore that CLAUDE.md line\" preamble (agentId a0777f49) executed correctly. Since the dispatcher ALWAYS uses the standard prompt, every chef spawn (morning/intraday/eod/evening) is at nondeterministic risk of this misfire -> wasted tokens and potential silently-dropped MARKET dishes when unattended. FIX (root-cause, agent-father via architect): assert worker-role at the TOP of docs/agents/unified-agent/flow/chef.md (and/or the unified-agent agent-def) so a spawned chef worker never reinterprets the main-terminal router boundary; OR add a one-line worker-line preamble to the dispatcher spawn prompt for unified-agent slots. PLAN-ONLY.",
+        "severity": "MEDIUM",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260602T062352Z.json"
+      },
+      {
+        "id": "bca-20260602T1506Z",
+        "ts": "2026-06-02T15:06:00Z",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "summary": "ESC deep-dive carry-status: FPT Q1-2026 ESC-3 (OCF/NI divergence) — 11th consecutive cycle. guard_key=esc-deepdive:FPT:Q1-2026:ESC-3 freshly re-claimed (prior TTL expired). NOTE: FPT-OPUS-DEEPDIVE DONE (a38e14ee, flag_for_human_review conf=0.35). ESC-3 remains ACTIVE because underlying data not fixed (FU-BCTC-TOOL-PARAMS open — get_cash_flow ignores quarters param, no 8q history). Dispatch dev-team to investigate FU-BCTC-TOOL-PARAMS or close ESC-3 at analyst layer once fix lands.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "trigger_id": "ESC-3",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": null,
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-3",
+          "context": {
+            "ocf_total": -2847813.717192,
+            "net_profit_total": 2476800,
+            "divergence_ratio": 2.15,
+            "cycle_count": 11,
+            "prior_opus_deepdive": "DONE (a38e14ee) — flag_for_human_review, conf=0.35, MIXED/partial-artifact",
+            "blocker": "FU-BCTC-TOOL-PARAMS: get_cash_flow ignores quarters param; accrual decomposition impossible without 8q history and WC subcomponents"
+          },
+          "all_esc_fired": [
+            "ESC-3"
+          ]
+        },
+        "note": " | 2026-06-02T15:10Z dev-team ROUTER: did NOT re-spawn opus (deep-dive already DONE a38e14ee conf0.35; re-run=symptom). Root cause CONFIRMED LIVE: get_cash_flow ticker=FPT quarters=8 returns ONLY Q1/2026 single period, quarters param silently ignored. Routed real fix FU-BCTC-TOOL-PARAMS to dev-mcp-server. guard_key left claimed (analyst wont re-fire until TTL). ESC-3 closes at analyst layer once fix lands."
+      },
+      {
+        "id": "cwk-20260602T1610Z",
+        "ts": "2026-06-02T16:10:00Z",
+        "from": "cowork-dispatcher",
+        "to": "agents-architect",
+        "type": "agent-flow-defect",
+        "summary": "news-scout subagent refused to execute its own flow on the standard trigger prompt (\"run docs/agents/news-scout/flow/main.md  slot=news-scout-offhours\") — it mis-read the ROUTER-scoped CLAUDE.md rule (\"never run a flow yourself / always delegate\") as binding on itself and returned a meta/refusal response with zero pipeline work (no fetch, no signals, no notebook). Recovered same tick by re-spawning WITH an explicit \"you ARE the agent, do not delegate\" preamble → ran cleanly, fired signals #4716/#4717/#4718. market-watcher handled the identical-form prompt fine, so the vulnerability is news-scout-specific (likely its flow/init lacks a self-identity guard at the top). Durable fix: add a self-identity guard line to news-scout flow main.md (and audit other cowork agent flows) so the standard trigger prompt never triggers router-refusal. Non-blocking — off-hours news cycle recovered this tick.",
+        "severity": "MEDIUM",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "agent": "news-scout",
+          "slot_id": "news-scout-offhours",
+          "tick": "2026-06-02T16:00:00Z",
+          "failed_first_attempt_agentId": "a78a90320e295e40c",
+          "recovered_agentId": "a9d28df7f3c18b660",
+          "recovery_method": "explicit non-delegation preamble",
+          "fix_proposal": "self-identity guard at top of news-scout flow main.md; audit sibling cowork agent flows"
+        },
+        "note": "2026-06-02T17:05Z dev-team drain: RECURRENCE after fix 7239b803 (prior CW-NSCOUT-SPAWN-FRAMING claimed FIXED). Same failure: subagent reads router-scoped CLAUDE.md 'never run a flow yourself/always delegate' as self-binding -> NO-OP refusal. Post-fix recurrence triggers recurring-bug-escalation -> agents-architect root-cause (why framing fix did not hold; audit sibling cowork flows). Queued NSCOUT-FRAMING-RECUR."
+      },
+      {
+        "id": "aac-20260602T170457Z",
+        "ts": "2026-06-02T17:04:57Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "NSCOUT-FRAMING-RECUR: cowork self-identity guard brief ready — 9 flows missing L3 guard; news-scout P1, see brief",
+        "severity": "HIGH",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-cowork-self-identity-guard.md",
+        "agent_father_disposition": "IMPLEMENTED 2026-06-02T17:xx. L3 SELF-IDENTITY GUARD + identity_role added to 9 flows: news-scout, bctc-analyst, alert-commander, digest-predict, tran-ngoc-bau, fb-market-poster, qa-responder, market-analyst, refine_bctc_md. Commit 3e0ee4f5. NSCOUT-FRAMING-RECUR closed."
+      },
+      {
+        "id": "aac-coverage-sweep-20260602T181856Z",
+        "ts": "2026-06-02T18:18:56Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "1965-COVERAGE-SWEEP: watchlist rotation brief ready — LRC sweep floor for news-scout+market-watcher; coverage-state.json SSOT + Step 0-sweep in 3 flow files",
+        "severity": "MED",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md"
+      },
+      {
+        "id": "aac-commit-boundary-20260602T181856Z",
+        "ts": "2026-06-02T18:18:56Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "PM-COMMIT-BOUNDARY-1974: commit-discipline class root-cause brief ready — commit-boundary skill + per-agent zone table + pm mutex step; absorbs FU-ARCHITECT-MUTEX-BINDING+FU-AGENT-FATHER-ORCH-SCOPE",
+        "severity": "HIGH",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-commit-boundary-discipline.md"
+      }
+    ],
+    "archive": [
+      {
+        "id": "P2-F-DONE",
+        "ts": "2026-05-25T20:30Z",
+        "summary": "P2-F COMPLETE G5a kinhDichWrapper git mv to _deprecated/. RESOLVED.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "P2-E-DONE",
+        "ts": "2026-05-25T19:30Z",
+        "summary": "P2-E COMPLETE G3 composition-root extraction. RESOLVED.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "P2-A-B-C-DONE",
+        "ts": "2026-05-25T18:35Z",
+        "summary": "P2-A/B/C COMPLETE ESLint fence + pre-CI tag. RESOLVED.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "P2-D-MCP-G4-GATE-20260525T1935Z",
+        "ts": "2026-05-25T19:35Z",
+        "summary": "P2-D PASS G4 ESLint fence freeze-anchor confirmed. RESOLVED.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "QA-NB-BLOAT-20260531T0958Z",
+        "ts": "2026-05-31T09:58Z",
+        "summary": "qa.md notebook 596L overage. RESOLVED 15:26Z wc -l = 150L.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "DMS-NB-BLOAT-20260531T1133Z",
+        "ts": "2026-05-31T11:33Z",
+        "summary": "dev-mcp-server.md notebook 377L overage. RESOLVED 15:26Z wc -l = 100L.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "TASKS-CAP-BREACH-20260531T1006Z",
+        "ts": "2026-05-31T10:06Z",
+        "summary": "TASKS.md 94L vs 80 cap. RESOLVED PO pruned to 78L.",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "SYSAUDITOR-D4-TASKS-FALSERED-20260531T0327",
+        "ts": "2026-05-31T03:27Z",
+        "from": "po",
+        "to": "po",
+        "type": "system-issue",
+        "summary": "LOW recurring meta-fix. system-auditor D4 emits TASKS.md unreadable false-RED (#3015); docs/TASKS.md intact. Probe-design false-positive (stale fs view).",
+        "severity": "LOW",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "1967b-RERUN",
+        "ts": "2026-05-21T19:19Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "DISPATCH READY. BA 1967a APPROVED. RE-RUN 1967b architect audit: REQ-1967 checklist (signal-naming / per-flow JUMP-TO / recursive-spawn guard / task-lock symmetry / 35-agent audit).",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": "docs/signals/po-1967b-rerun.json",
+        "po_disposition": "READ 2026-06-01T22:34Z PO: REQ_1967.md spec real+dispatch-ready (7 surfaces, 0 blockers). DEFERRED behind higher-priority FLEET-HOST-SAFETY FIX this cycle. Re-queue when host-safety closes. payload_ref po-1967b-rerun.json dangling (absent) — spec is the authoritative artifact."
+      },
+      {
+        "id": "P2-G-DONE",
+        "ts": "2026-05-25T22:04Z",
+        "from": "dev-mcp-server",
+        "to": "dev-mcp-server",
+        "type": "impl_done",
+        "summary": "P2-G COMPLETE — G9 dashboard live panels. commit 7520428b. modules.json 12 barrels; live toolCount from /health.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null,
+        "po_disposition": "READ 2026-06-01T22:34Z PO: impl_done acknowledgment (G9 dashboard panels, 7520428b). No action."
+      },
+      {
+        "id": "P1-MCP-QA-20260525T1726Z",
+        "ts": "2026-05-25T17:26Z",
+        "from": "po",
+        "to": "qa",
+        "type": "review_request",
+        "summary": "GATED on P1-MCP-REBUILD. Live full-tool-suite verify. Regression tripwires: bun test >=9408/<=348; toolCount=146; sched=68.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": "docs/data/pilot-status-mcp-server.json",
+        "po_disposition": "READ 2026-06-01T22:34Z PO: STALE (2026-05-25). toolCount=146 tripwire superseded by post-hygiene surface; P1-MCP-REBUILD gate moot. Skip."
+      },
+      {
+        "id": "NSCOUT-NB-BLOAT-20260531T0810Z",
+        "ts": "2026-05-31T08:10Z",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "summary": "news-scout.md notebook 1198L vs 200 cap. Append-not-overwrite defect family.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/agent-memory/notebooks/news-scout.md",
+        "archived_at": "2026-06-02T13:11:38Z"
+      },
+      {
+        "id": "ARCH-NB-BLOAT-20260531T0926Z",
+        "ts": "2026-05-31T09:26Z",
+        "from": "context-bloat-backstop-hook",
+        "to": "claude-manager-helper",
+        "type": "context_bloat_breach",
+        "summary": "architect.md notebook 339-402L vs 200 cap. Append-not-overwrite family. Still 477L at 15:26Z.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/agent-memory/notebooks/architect.md",
+        "archived_at": "2026-06-02T13:11:38Z"
+      },
+      {
+        "id": "cow-20260531T2118",
+        "ts": "2026-05-31T21:18Z",
+        "from": "cowork-team",
+        "to": "ops",
+        "type": "microservice_degraded",
+        "summary": "CRITICAL FULL vn-market STACK OUTAGE — all 12 microservices gone. RESOLVED ~21:17:43Z self-recovered.",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": "docs/signals/cowork-MCP-STACK-DOWN-20260531T2118Z.json",
+        "archived_at": "2026-06-02T13:11:38Z"
+      },
+      {
+        "id": "B-05",
+        "ts": "2026-05-22T18:31:02Z",
+        "from": "system-auditor",
+        "to": "dev-mcp-server",
+        "type": "data_stale",
+        "summary": "ssc-iboard price data stale 9h 31m. Expected cadence 15 min. Recommend ops verify VPS prices push service.",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: superseded by SSC-IBOARD-MIGRATE sprint (source dead, live tracking is the migrate sprint; 11d-stale dup dead work).",
+        "archived_at": "2026-06-02T14:10:18Z"
+      },
+      {
+        "id": "A-21c",
+        "ts": "2026-05-22T17:33:38Z",
+        "from": "system-auditor",
+        "to": "dev-mcp-server",
+        "type": "microservice_degraded",
+        "summary": "dailyDashboardJob NOT FIRED since 2026-05-17. Missing volume mount for project-stats.json. FAIL-VERDICT-RE-FIRE.",
+        "severity": "CRITICAL",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: OBSOLETE — root cause (missing project-stats.json volume mount) already fixed (docker-compose.yml:17 mounts it ro). 11d-stale re-fire, condition no longer holds.",
+        "archived_at": "2026-06-02T14:10:18Z"
+      },
+      {
+        "id": "BRANCH-CLEANUP-1972",
+        "ts": "2026-05-22T06:20:45Z",
+        "from": "po",
+        "to": "maintenance",
+        "type": "branch_policy_violation",
+        "summary": "task/1972-vndirect-ohlcv-null-coercion stale branch present. Task 1972 DONE on main. code-janitor sweep to verify+delete.",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "note": " | RESOLVED 2026-06-02 dev-team PO-triage: OBSOLETE — git branch -a shows only main+origin/main; stale task/1972 branch gone, NO-BRANCHES policy holds.",
+        "archived_at": "2026-06-02T14:10:18Z"
+      },
+      {
+        "id": "CMH-STALL-20260531T1127Z",
+        "ts": "2026-05-31T11:27Z",
+        "from": "dev-team",
+        "to": "claude-manager-helper",
+        "type": "maintenance-escalation",
+        "summary": "CMH lane undrained. 4 notebook-bloat rows persisted 3+ ticks. architect.md 477L + news-scout.md 1198L still open.",
+        "severity": "MED",
+        "status": "CLOSED-MOOT",
+        "payload_ref": null,
+        "note": " | 2026-06-02 dev-team PO-triage: CLOSE-MOOT. The two named bloat subjects are cured: architect.md=94L (was 477L), news-scout.md=205L (was 1198L) — both under/near cap. CMH lane drained via NB-PRUNE sprint (NB-CLEAN-NEWSSCOUT 5082046d, NB-PRUNE-* DONE) + notebook-write 2-class contract (e1e85886). Residual news-scout.md 205L vs 200 cap (5 over) self-heals on next overwrite cycle; not an escalation."
+      },
+      {
+        "id": "1965-COVERAGE-SWEEP",
+        "ts": "2026-05-21T04:30Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "User feedback: cowork agents concentration on few tickers only. Design ask: rotation/sweep for news-scout + market-watcher.",
+        "severity": "INFO",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md",
+        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN. Valid live ask (cowork ticker-concentration rotation, news-scout+market-watcher). PLAN-ONLY design, agents-architect zone — NOT in this dev-team batch (architect lane reserved for BCTC-ANALYTICS-LAYER residuals + design backlog). Re-dispatch to agents-architect when its lane frees. Brief stub exists docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md. | 2026-06-02T18:30Z dev-team: design-lane freed (all dev batches done) -> dispatched agents-architect (plan-only). PM-1974 scoped as whole commit-discipline CLASS root-cause (PM 26-file sweep + agent-father orch-staging + architect no-mutex), not PM-only. | DONE 2026-06-02T18:40Z: brief delivered (5a3fb649) + agent-father IMPLEMENTED. 1965=coverage-sweep LIVE in news-scout+market-watcher flows (f2e1baca, coverage-state.json 33 tickers, last_covered>48h rotation 3/cycle). PM-1974=commit-boundary skill+discipline across pm/architect/agent-father init+flow (5424c5b1, absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE)."
+      },
+      {
+        "id": "PM-COMMIT-BOUNDARY-1974",
+        "ts": "2026-05-22T17:55:00Z",
+        "from": "dev-team",
+        "to": "maintenance",
+        "type": "commit_boundary_violation",
+        "summary": "PM commit 0a60fa1d swept 26 files incl 17 arch-briefs. RECURRING 3rd occurrence — recommend architect/agent-father audit PM commit step.",
+        "severity": "MED",
+        "status": "DONE",
+        "payload_ref": null,
+        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN, promote-context. RECURRING governance defect (PM 26-file commit sweep, 3rd occurrence) — kin of FU-AGENT-FATHER-ORCH-SCOPE (agent-father staged router-owned orch-state.json) + commit-boundary memory. Owner = agents-architect (commit-step audit of pm/init.md + pm flow) -> agent-father impl. PLAN-ONLY agent-def edit, no rebuild. Sequenced AFTER current BCTC dev work; pairs with the architect commit-discipline cluster. | 2026-06-02T18:30Z dev-team: design-lane freed (all dev batches done) -> dispatched agents-architect (plan-only). PM-1974 scoped as whole commit-discipline CLASS root-cause (PM 26-file sweep + agent-father orch-staging + architect no-mutex), not PM-only. | DONE 2026-06-02T18:40Z: brief delivered (5a3fb649) + agent-father IMPLEMENTED. 1965=coverage-sweep LIVE in news-scout+market-watcher flows (f2e1baca, coverage-state.json 33 tickers, last_covered>48h rotation 3/cycle). PM-1974=commit-boundary skill+discipline across pm/architect/agent-father init+flow (5424c5b1, absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE)."
+      }
+    ]
+  },
+  "sprint_goal": {
+    "_updated_at": "2026-06-01T22:00Z",
+    "_updated_by": "agent-father",
+    "_note": "Structured projection of docs/SPRINT_GOAL.md active sprint entries. Machine-shaped; free-form markdown in source.",
+    "entries": [
+      {
+        "sprint_id": "ORCH-STATE-CONSOLIDATE",
+        "vision": "Collapse all multi-agent orchestration state into ONE machine-readable SSOT docs/data/orch/orch-state.json, delete TASKS.md + TASKS_ARCHIVE.md + DASHBOARD.md + DASHBOARD_ARCHIVE.md, let humans read state via localhost:3001 dashboard / raw JSON.",
+        "scope_in": [
+          "single SSOT JSON + atomic temp-file-then-rename write protocol",
+          "re-point all 40+ readers (code + agent flows/skills/protocols)",
+          "delete the 4 markdown files",
+          "read-only GET /api/orchestration endpoint + docker mount + frontend route via api-gateway:4000",
+          "QA atomic-write PROVEN-RED + reader-migration regression"
+        ],
+        "scope_out": [
+          "agent-notebook / analysis-brief surfacing on dashboard",
+          "any change to :07 RETURN write contract schema fields",
+          "SSE/websocket live push"
+        ],
+        "success_metric": "orch-state.json sole orchestration SSOT (4 markdown files ENOENT); 3 bun tests green on new path; :3001 renders live orch-state via api-gateway:4000 with honest stale badge; QA proves atomic-write no-clobber; 0 raw signal payload in HTTP response.",
+        "open_decision": "D4-R4 concurrent-commit alarm: DEFAULTED to (A) — 30s window on orch-state.json (sensitivity over quiet).",
+        "status": "CLOSED",
+        "note": "CLOSED 2026-06-02 SPRINT-SIGNOFF. OSC-1..5 DONE, QA APPROVE. 6 state files retired, ~100 readers re-pointed, endpoint+dashboard live 200. Follow-ups: FU-ORCH-HEAD-CAS, FU-SIGNAL-DASHBOARD-CAP."
+      },
+      {
+        "sprint_id": "FLEET-HOST-SAFETY",
+        "vision": "On the 16GB host, the full fleet must NEVER be up. Intended runtime = minimal mcp-server + mcp-gateway only.",
+        "scope_in": [
+          "AUD-ND-1 PLAN-ONLY invariant (SHIPS FIRST)",
+          "DRAIN-INJECTION-SAFE no shell interpolation of signal payloads",
+          "A-01-EXPECTED-SET intended-runtime-set SSOT",
+          "AUDITOR-SLA-CADENCE per-source SLA",
+          "VPS-SOCAT-PERSIST durable CF tunnel fix"
+        ],
+        "scope_out": [
+          "any fleet start/restart (ops is sole remediation agent)",
+          "detectors docker ops"
+        ],
+        "success_metric": "AUD-ND-1: simulated false-positive -> DASHBOARD/signal row + ZERO infra mutation. A-01: 0 CRITICAL for not-deployed svcs 7 days. DRAIN: payload with backticks drains DB correctly, docker ps unchanged.",
+        "status": "OPEN"
+      },
+      {
+        "sprint_id": "VPS-DEPLOY-PLACEHOLDER-GUARD",
+        "vision": "A VPS fetch-script can never again silently outage by shipping an unrendered __PLACEHOLDER__ — enforced by pre-deploy/post-deploy leak guard + env-fallback form + enforced render path.",
+        "scope_in": [
+          "PLACEHOLDER-GUARD-1 leak guard in deploy-vps-proxy.sh",
+          "PLACEHOLDER-GUARD-2 convert 6 hardcode-form scripts to ${VAR:-default}",
+          "PLACEHOLDER-GUARD-3 bring article-body-fetcher.py under deploy-vps-proxy.sh",
+          "VPS-BS4-INSTALL beautifulsoup4"
+        ],
+        "scope_out": [
+          "any change to cafef-index price source",
+          "new MCP tools"
+        ],
+        "success_metric": "Deliberate-violation deploy with unrendered template FAILS LOUD. Post-deploy SSH probe empty. 14 news feeds land for >=2 cycles after full redeploy.",
+        "status": "CLOSED",
+        "note": "T2/T3/T4 DONE (ed967839). T5 ops live-deploy 5ba761c6 done. T6-QA APPROVED. CLOSED 2026-06-01."
+      },
+      {
+        "sprint_id": "TOOL-SURFACE-HYGIENE",
+        "vision": "Every registered vn-market MCP tool is either truly wired or absent — no live-but-501 oracle, no silent duplicate writers, no stale tool count.",
+        "scope_in": [
+          "#1 get_market_hexagram deregister (SHIPS FIRST)",
+          "#2 mark_alert_outcome vs write_alert_verdict diff",
+          "#3 macro accuracy trio diff",
+          "#4 get_patterns vs get_technical_indicators diff",
+          "#5 optional trigger_*_vps_fetch consolidation",
+          "#6 toolCount reconcile"
+        ],
+        "scope_out": [
+          "any BCTC tool",
+          "the 3 explicitly-cleared pairs"
+        ],
+        "success_metric": "get_market_hexagram absent from gateway registry. All pairs have written source diff. toolCount reconciled.",
+        "status": "CLOSED",
+        "note": "CLOSED 2026-06-01. TSH-1..6 all shipped. Live toolCount=154. TSH-7 BACKLOG."
+      },
+      {
+        "sprint_id": "ENV-ISOLATION",
+        "vision": "A developer can opt into a dev environment where every write lands in .dev-suffixed datastores while production runs byte-for-byte unchanged.",
+        "scope_in": [
+          "P1: APP_ENV compose tags + maintenance script guards + dev-environment.md SOP",
+          "P2: startup assertion + data_env 5 tables + docker-compose.dev.yml + ENV-GUARD-1"
+        ],
+        "scope_out": [
+          "second simultaneous stack",
+          "cloud migration"
+        ],
+        "success_metric": "P1 DONE. P2 gate RELEASED. ENV-GUARD-1 deliberate-violation proves startup assertion.",
+        "status": "OPEN",
+        "note": "P1 SIGNED OFF. P2 gate RELEASED 2026-05-31T11:30Z (FU-TRUST-REFRESH FU-4 data-trust satisfied)."
+      },
+      {
+        "sprint_id": "SELF-IMPROVE-GATE",
+        "vision": "Three-lane gated self-improvement loop (auto-md / proven-code-gate / human-escalate) with PO critique-before-approve.",
+        "scope_in": [
+          "Phase 1 flows (5 flows) SHIPPED",
+          "Phase 2 code gate (selfImproveOrchestratorJob) SHIPPED shadow-mode",
+          "X-1 synthetic dry-run (D-IMPROVE emit path e2e) NEXT"
+        ],
+        "scope_out": [
+          "X-2 1941c batch false-green"
+        ],
+        "success_metric": "X-1 synthetic dry-run proves emit seam end-to-end.",
+        "status": "OPEN"
+      },
+      {
+        "sprint_id": "NB-PRUNE-FIX",
+        "vision": "Fleet notebook prune fires correctly on all heading formats (## Session: / ## ISO-ts / ## cNNN).",
+        "scope_in": [
+          "NB-PRUNE-1 anchor widen DONE",
+          "NB-BLOAT-FLOW-OVERWRITE system-auditor prepend drift",
+          "RE-CAP-1 signal-dashboard SKILL lazy-load"
+        ],
+        "scope_out": [],
+        "success_metric": "system-auditor.md <=50L after one audit cycle. SKILL.md <=120L. No context_bloat_breach for those files 14 days.",
+        "status": "OPEN"
+      },
+      {
+        "sprint_id": "BCTC-LAYOUT-FIRST",
+        "vision": "Layout-first BCTC extraction pipeline for accurate table extraction.",
+        "scope_in": [
+          "LF-EXTRACT Phase 0",
+          "LF-OVERLAY Phase 0"
+        ],
+        "scope_out": [],
+        "success_metric": "LF-EXTRACT/LF-OVERLAY Phase 0 shipped and QA-approved.",
+        "status": "OPEN",
+        "note": "Phase 0 READY 2026-05-26."
+      },
+      {
+        "sprint_id": "CHEF-ATTN",
+        "vision": "Per-stock diversity cap for chef cowork agent.",
+        "scope_in": [
+          "BA spec",
+          "IMPL",
+          "DEPLOY",
+          "QA",
+          "EXIT"
+        ],
+        "scope_out": [],
+        "success_metric": "Diversity cap live, QA-approved.",
+        "status": "OPEN",
+        "note": "READY 2026-05-27."
+      },
+      {
+        "sprint_id": "FRONTEND-CORRECTNESS",
+        "vision": "Every frontend page (localhost:3001) loads without error and renders REAL backend data via api-gateway:4000 — zero mock/placeholder/hardcoded data, honest empty/stale/not-deployed states instead of fake values or false-RED.",
+        "scope_in": [
+          "FE-AUDIT-1 read-only inventory of all 13 routes: data source per page, mock/placeholder/hardcoded detection, broken-fetch detection",
+          "A-01b dashboard.services not-deployed false-RED filter (host_runtime_set SSOT + not_deployed enum, api-gateway + frontend)",
+          "fix each page found loading mock/placeholder data to fetch real data",
+          "honest empty/stale states (no fabricated fallback values)"
+        ],
+        "scope_out": [
+          "new dashboard pages",
+          "SSE/live-push",
+          "starting any not-deployed microservice (host-panic)"
+        ],
+        "success_metric": "All 13 routes: 200 + real data OR honest empty/stale/not-deployed; ZERO mock/placeholder/hardcoded data; dashboard.services top badge honest (OK with 7 grey not-deployed) AND a real killed deployed service still shows red.",
+        "status": "OPEN",
+        "note": "OPERATOR GOAL set 2026-06-02T04:58:02Z. Scoping via FE-AUDIT-1. A-01b plan preserved from PO triage (SSOT at project.infrastructure.docker.host_runtime_set; short-key<->compose-name map gotcha; enum gains not_deployed excluded from overall-status)."
+      },
+      {
+        "sprint_id": "BCTC-EXTRACT-QUALITY",
+        "vision": "BCTC data layer is analysis-grade: no report is ever marked refined-DONE without complete sections, banks are correctly discriminated from balance-sheet-only filings, and no garbage/zero scalar (false net_profit, mislabeled revenue) is ever served. Recoverable reports get real data via agentic refine; unrecoverable ones honestly say so.",
+        "scope_in": [
+          "BEQ-1 SPIKE root-cause (3 symptoms pinned to layers)",
+          "BEQ-4a/4b serving guards (null-on-PENDING /docs + withhold YoY)",
+          "BEQ-5/6/7 section-completeness guards (no false PENDING→DONE)",
+          "BEQ-8/8b bank discriminator fix + null-on-PARTIAL net_profit",
+          "BEQ-2/3 backfill tool + ScalarAggregate 20-field audit",
+          "BEQ-9/10 agentic data recovery for PARTIAL/zero-row reports (OFF-HOSE)"
+        ],
+        "scope_out": [
+          "BCTC-LAYOUT-FIRST re-architecture (separate sprint)",
+          "CTG attachment fetch (BCTC-CTG-ATTACHMENT-FETCH)",
+          "FU-BCTC-TOOL-PARAMS code-vs-ticker caller trap"
+        ],
+        "success_metric": "GUARD PHASE: no false-DONE possible (backfill dry_run balance_violations:0), banks discriminated, incomplete sections→PARTIAL, no garbage scalar served live. REMEDIATION PHASE: VNM/FPT-Q4/HPG/SHB recovered to DONE with real scalars; DHG/EIB/VEA/VCB OCR-verified then recovered or honestly re-fetched.",
+        "status": "OPEN",
+        "note": "GUARD PHASE (BEQ-1..8b + BEQ-QA) SIGNED OFF by PO 2026-06-02T10:17:15Z — all guards PO-live-verified raw (not relayed badges): backfill dry_run done:0/skipped:5/balance_violations:0; /api/bctc-inspect/docs net_profit=null for all 7 PARTIAL reports + 2 PENDING, real values only for DONE (FPT-Q1/ACB); 3 markers grep-confirmed in running container (ops 13f8c872, image sha256:ea781a7a4890). Sprint REMAINS OPEN for REMEDIATION PHASE (BEQ-9/10, OFF-HOSE-gated, bctc-analyst). Residual fetch backlog: BCTC-CTG-ATTACHMENT-FETCH + BCTC-REFETCH-ZERO-ROW (DGC/DIG/VCB)."
+      }
+    ]
+  }
+}
