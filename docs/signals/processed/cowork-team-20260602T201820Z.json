@@ -1,0 +1,34 @@
+{
+  "ts": "2026-06-02T20:29:30Z",
+  "tick_nominal": "2026-06-02T20:15:00Z",
+  "drift_min": 3,
+  "classification": "WON",
+  "pressure_mode": "adaptive",
+  "matched_slots": ["tnb-audit"],
+  "won_slots": ["tnb-audit"],
+  "leader_lock": {"claimed": false, "self_held_heartbeat": true, "renewed": true},
+  "calendar_status": "open",
+  "head_status": "in_progress",
+  "head_active_task": "FU-ORCH-ATOMIC-TS-IMPL (dev-mcp-server lane — noted, not cowork)",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 4,
+  "signal_backlog": 0,
+  "vn_index": 1826.47,
+  "regime": "FII_OUTFLOW_RISK",
+  "agent_outcomes": {
+    "tnb-audit": {
+      "result": "COMPLETED",
+      "verdict": "NEEDS_ATTENTION",
+      "direction": "IMPROVING",
+      "dishes_audited": 4,
+      "auto_cures": 1,
+      "auto_cure_target": "docs/agents/unified-agent/flow/chef.md Step 4 (cycle-phase+pyramid-tier, +17 lines, raw-verified additive)",
+      "new_findings": ["F8=HIGH COWORK-LEADER-SELFLOCK (2nd Mon-morning chef miss; architect brief exists)", "F-REGIME=INFO TIGHTENING", "F-DEDUP=LOW MinhPhu re-analyzed"]
+    }
+  },
+  "token_released": false,
+  "token_note": "180s per-slot token auto-expired mid-run (agent ran ~10.6min); benign — leader lock serializes dispatch",
+  "last_fired_advanced": "2026-06-02T20:18:50Z",
+  "spawns": 1,
+  "working_tree_note": "tnb outputs (chef.md auto-cure, notebook, handoff, signal) left uncommitted for commit cron"
+}

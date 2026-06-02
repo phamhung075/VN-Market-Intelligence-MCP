@@ -1,0 +1,15 @@
+{
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "tick_utc": "20260602T204839Z",
+  "tick_nominal": "20:45",
+  "drift_min": 3,
+  "matcher_slots": [],
+  "head_status": "idle",
+  "head_active_task_id": "idle",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 3,
+  "signal_backlog": 3,
+  "leader_lock": "not_acquired_silent",
+  "spawns": 0
+}
