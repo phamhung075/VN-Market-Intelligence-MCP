@@ -47,7 +47,15 @@ export interface SectionCompletenessResult {
  * Pure function: zero I/O, zero side effects. Callers pass the full row set
  * for one report; this function checks for the presence of each section.
  *
- * Section detection: rows.some(r => r.statement_section === '<section>')
+ * Section detection:
+ *   hasBalanceSheet  — rows tagged `balance_sheet` OR `general` (legacy extractor
+ *                      produced `general` for balance-sheet rows; both are valid)
+ *   hasIncomeStatement — rows tagged `income_statement`
+ *   hasCashFlow       — rows tagged `cash_flow`
+ *
+ * The guarded failure mode: ALL rows are `balance_sheet` (or `general`) with
+ * zero `income_statement` and zero `cash_flow` rows.  Both income+CF absent
+ * simultaneously is the corpus-poison signal — not mere absence of one section.
  *
  * Fail-safe contract: empty rows → all false (no promotion to DONE without evidence).
  *
@@ -58,7 +66,8 @@ export function checkSectionCompleteness(rows: AggregatorRow[]): SectionComplete
   if (rows.length === 0) {
     return { hasBalanceSheet: false, hasIncomeStatement: false, hasCashFlow: false, isComplete: false };
   }
-  const hasBalanceSheet    = rows.some(r => r.statement_section === "balance_sheet");
+  // `general` is the legacy-extractor tag for balance-sheet rows; treat as equivalent
+  const hasBalanceSheet    = rows.some(r => r.statement_section === "balance_sheet" || r.statement_section === "general");
   const hasIncomeStatement = rows.some(r => r.statement_section === "income_statement");
   const hasCashFlow        = rows.some(r => r.statement_section === "cash_flow");
   const isComplete         = hasBalanceSheet && hasIncomeStatement && hasCashFlow;

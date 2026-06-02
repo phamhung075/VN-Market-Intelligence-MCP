@@ -56,6 +56,11 @@
  * @module domain/services/financial-reports/bctcScalarAggregator
  */
 
+// BEQ-8: import the proven BANK-AWARE-BCTC discriminator (DRY — single SSOT)
+// Domain→domain import is allowed; both are in domain/services/financial-reports/.
+// This replaces the local `findByCode(rows,"10")===null` false-positive proxy.
+import { isBankFormFromRows } from "./bctcFormType.js";
+
 // ── Lightweight row type (DDD-isolated, no application-layer dependency) ──────
 
 export interface AggregatorRow {
@@ -562,20 +567,24 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
 
   const divisor = detectDivisor(rows);
 
-  // ── Bank-path detection (DRY — same signal as the aggregator's fallback chain) ─
-  // When code "10" (corporate Doanh thu thuần) is absent, the aggregator falls
-  // through to code "I" + label-based bank path. We use the same absence test to
-  // classify the report type — no second independent detector.
+  // ── Bank-path detection (BEQ-8: use proven BANK-AWARE-BCTC discriminator) ────
+  // REPLACED: `findByCode(rows, "10") === null` was a false-positive trap for
+  // balance-sheet-only corporate rows (FPT/VNM/DHG). Code "10" is an income-stmt
+  // code — absent simply because the legacy extractor produced no income rows, NOT
+  // because the entity is a bank. This caused VNM/FPT/DHG to be mis-classified as
+  // banks, firing the notApplicable null-clear on gross_profit/current_assets.
+  //
+  // FIX: use isBankFormFromRows (BANK-AWARE-BCTC, BANK-DEV-4 hybrid signal):
+  //   bank ⟺ has anchored Roman/section codes AND no 3-digit corporate balance codes.
+  //   Balance-sheet-only corporates have codes "100","280","300","400" (3-digit) →
+  //   hasCorpBalance=true → isBankFormFromRows returns false → corporate path.
+  //   Empty rows → false (fail-safe: no evidence → assume corporate).
   //
   // NOT-APPLICABLE columns for each type (FU-6e):
   //   BANK: gross_profit (no COGS concept), current_assets (no code "100" concept),
   //         gross_margin_pct (derived from gross_profit — invalid without it).
   //   CORPORATE: [] (banks-have-that-corps-lack: none relevant at this time).
-  //
-  // "Absent code" means no row with that exact code trim-matches in the set.
-  // findByCode(rows, "10") returning null is the canonical check — it mirrors
-  // the aggregator's own first-attempt logic exactly.
-  const isBankPath = findByCode(rows, "10") === null;
+  const isBankPath = isBankFormFromRows(rows);
   const notApplicable: string[] = isBankPath
     ? ["gross_profit", "current_assets", "gross_margin_pct"]
     : [];
