@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T18:26:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "dev-team :07 cron CONCLUDED. This cycle: 2 XS FIX shipped+live-verified — CW-BACKLOG-MISCOUNT (5fa449cf, cowork signal_backlog excludes own heartbeats -> unpins adaptive-cadence tier + restores deep-sleep guard) + NB-NSCOUT-PRUNE (de6b25fb, notebook 222->53L). Signals drained (5 envelope, 230 stale processed pruned). Queued FU-COWORK-HEARTBEAT-SCHEMA (LOW). REMAINING = async/infra ONLY (unchanged, not in-session): BCTC-HIST-VPS-BACKFILL + BCTC-CURRENT-404-INVESTIGATE (ops/VPS HIGH) + BCTC-ENRICHER-OLD-QUARTERS (dev MED) + BCTC-HIST-VCB-REFINE (analyst MED) + FU-EI-P2-COV/DEV-VOLUME + FU-COWORK-HEARTBEAT-SCHEMA (LOW). PO-deferred: BAL-1e/LF-EXTRACT/LF-OVERLAY/CHEF-ATTN-1. Next PO triage owns residual.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "ORCH-DASH-LIVE",
+    "next_agent": "dev-frontend",
+    "next_action": "User request: /dashboard/orchestration real-time, no manual refresh. dev-frontend add client-side useRevalidator 5s polling (pause on hidden tab) + LIVE indicator to dashboard.orchestration.tsx. Then ops REBUILD frontend container + router live-verify polling fires.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T18:54:18Z",
+    "updated_at": "2026-06-02T18:56:49Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T18:54:18Z",
+    "_updated_at": "2026-06-02T18:56:49Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1119,6 +1119,17 @@
             "zone": "apps/frontend/",
             "priority": "high",
             "note": "DONE+LIVE 2026-06-02T14:58Z (frontend image 14:58:44Z, commit 9372d7c0, 264 tests). All 10 dashboard routes audited. FIXED: (1) /dashboard/vps false-RED -> not_deployed discrimination (503+no-such-host -> grey NOT DEPLOYED; live: 4 NOT DEPLOYED/1 UP/1 genuine DOWN=sbv-fetch honestly shown/0 UNKNOWN); (2) /dashboard/fetch bare empty -> honest \"No headlines available / source not deployed\" label. CONFIRMED-NOT-BUG: orchestration ErrorBoundary was TRANSIENT (coincided w/ 14:44Z mcp rebuild; code fully guarded; live 0 fallbacks); /dashboard/services already correct (A-01b not_deployed grey). RESIDUAL (infra, not frontend): VPS sbv-fetch DOWN + dead socat band-aid -> VPS-SOCAT-PERSIST (ops)."
+          },
+          {
+            "task_id": "ORCH-DASH-LIVE",
+            "title": "Orchestration dashboard auto-refresh (no manual page reload) via Remix useRevalidator polling",
+            "type": "NEW-FEATURE",
+            "owner": "dev-frontend",
+            "status": "IN_PROGRESS",
+            "size": "XS",
+            "zone": "apps/frontend/",
+            "priority": "high",
+            "note": "User request 2026-06-02T19:00Z: orchestration dashboard must update real-time without manual page refresh. Approach=client-side polling (useRevalidator, 5s, visibility-gated) re-runs existing loader -> refetch /api/orchestration proxy -> re-render. No SSE/WS infra (file-backed state changes on cron/task-transition cadence, polling sufficient). Single-file frontend change. Frontend is a CONTAINER -> ops rebuild after merge."
           }
         ],
         "_updated_at": "2026-06-02T04:58:02Z",
