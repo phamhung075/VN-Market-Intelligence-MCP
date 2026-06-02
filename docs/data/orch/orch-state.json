@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "rebuilt-live",
-    "active_task_id": "BCTC-EXTRACT-QUALITY/BEQ-QA",
+    "status": "idle",
+    "active_task_id": "idle",
     "next_agent": "po",
-    "next_action": "BEQ-6 guard + PENDING->PARTIAL flip LIVE-VERIFIED. New image SHA: sha256:ea781a7a4890bdb034160e5f6da075bc6ac2969610d5bb2012699491de50adf3 (2026-06-02 12:12:08 +0200 CEST). Marker verification: isBankFormFromRows found in bctcScalarAggregator.ts (BEQ-8), checkSectionCompleteness found in bctcSectionCompleteness.ts (BEQ-5), section guard present in backfillBctcScalarsTool.ts (BEQ-6). Container health: UP + healthy. Memory: 263.8 MiB / 2 GiB (safe). /health: 200 OK. PO: review results, then EXIT sprint.",
-    "wip": 1,
+    "next_action": "Cron 10:09Z DONE. Resumed peer-left ops handoff: rebuilt mcp-server (10:13Z SHA ea781a7a, host-safe 5→5), BEQ-5/6/7/8/8b LIVE+router-verified (38 tests green; 7 section-incomplete reports→PARTIAL, no garbage; /docs net_profit=null for PARTIAL). Board reconciled: BEQ-2/3/5/6/7/8/8b DONE. REMAINING: BEQ-9/10 (bctc-analyst re-refine PARTIAL reports→capture IS/CF, off-market gated). Backlog: FU-PARTIAL-SCALAR-SERVE (high), BCTC-ZERO-ROW-REFETCH. Also ready: FU-CHEF-MARKER-INFLOW (agent-father, brief 2026-06-02-chef-marker-inflow.md).",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T12:14:00Z",
-    "updated_by": "ops"
+    "updated_at": "2026-06-02T10:18:31Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -56,7 +56,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T08:26:16Z",
+    "_updated_at": "2026-06-02T10:18:31Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -128,10 +128,10 @@
             "depends": [
               "BEQ-1-SPIKE"
             ],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/",
-            "note": "Symptom A — PENDING refine_status blocks EMPTY get_bctc_full for CTG/VCB. Audit bctcRefineJob eligibility criteria (why VCB/FPT-Q4/VNM/EIB/DIG skipped), execute backfill trigger. CTG excluded (BCTC-CTG-ATTACHMENT-FETCH blocker). Unblocks BEQ-3. Handoff: docs/handoffs/BEQ-2-handoff.md"
+            "note": "DONE. Audit + backfill trigger complete. Root cause = section-incomplete source rows (verified raw: 7 reports 100% balance_sheet, zero IS/CF). With BEQ-5..8b guards live, backfill now correctly classifies them PARTIAL (writes no garbage). Corpus: 3 DONE / 7 PARTIAL / 5 PENDING(zero-row)."
           },
           {
             "task_id": "BEQ-3",
@@ -142,10 +142,103 @@
               "BEQ-1-SPIKE",
               "BEQ-2"
             ],
-            "status": "TODO",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/",
-            "note": "Symptom B — zeroed secondary lines (OpProfit/EBITDA/Cash/EPS/CF). Full column audit (10→~20 fields), map BCTC codes, update ScalarAggregate + finalizeBctcRefineTool. Recurring-bug escalation (≥5 fix commits on bctcScalarAggregator.ts in 3 weeks) satisfied by full audit. Handoff: docs/handoffs/BEQ-3-handoff.md"
+            "note": "DONE: code c1f3c328 (20-field aggregator). Data-quality on section-incomplete reports handled by BEQ-5..8b section guards (mark PARTIAL, no misattributed scalars). Real values await BEQ-9/10 re-refine."
+          },
+          {
+            "task_id": "BEQ-5",
+            "title": "bctcSectionCompleteness domain fn + DV tests",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-3"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 1da34f8d, QA-approved, LIVE+verified 2026-06-02T10:18:31Z (mcp-server rebuilt 10:13Z SHA ea781a7a). 38 tests green re-run by router."
+          },
+          {
+            "task_id": "BEQ-6",
+            "title": "section guard in backfillBctcScalarsTool (incomplete→PARTIAL, write no garbage)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-5"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE a8cbe91d. LIVE-verified: dry+live backfill skip 7 incomplete reports → PARTIAL, updated_cols:[] (no misattributed scalars written)."
+          },
+          {
+            "task_id": "BEQ-7",
+            "title": "section guard in finalizeBctcRefineTool (incomplete→PARTIAL fail-safe)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-5"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 6b2f72b2. QA-approved + live."
+          },
+          {
+            "task_id": "BEQ-8",
+            "title": "replace isBankPath discriminator with isBankFormFromRows",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-5"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 1f726140. BEQ-BANK-DISCRIM tests green (FPT→false, ACB→true, empty→false)."
+          },
+          {
+            "task_id": "BEQ-8b",
+            "title": "extend BEQ-4a serve guard: null net_profit for PARTIAL too",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "BEQ-5",
+              "BEQ-6",
+              "BEQ-7"
+            ],
+            "status": "DONE",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "note": "DONE 8845e5d6 (+test fixes cbdad2d6,61747444). LIVE-verified 2026-06-02T10:18:31Z: /docs serves net_profit=null for all 7 PARTIAL reports."
+          },
+          {
+            "task_id": "BEQ-9",
+            "title": "Re-refine recoverable tickers to capture missing IS/CF sections (VNM/FPT-Q4/HPG/SHB)",
+            "type": "SPRINT-S",
+            "owner": "bctc-analyst",
+            "depends": [
+              "BEQ-8b"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": "Rescope brief 2026-06-02-bctc-extract-quality.md. Re-run refine/OCR for the 7 PARTIAL reports to capture income_statement+cash_flow rows → promote PARTIAL→DONE with real scalars (overwrites residual misattributed values). bctc-analyst off-market gated."
+          },
+          {
+            "task_id": "BEQ-10",
+            "title": "Verify DHG/EIB/VEA/VCB OCR coverage, dispatch refine if confirmed",
+            "type": "SPRINT-S",
+            "owner": "bctc-analyst",
+            "depends": [
+              "BEQ-9"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "note": "Rescope brief. Confirm whether missing IS/CF is OCR-extraction gap vs source-PDF gap; dispatch re-fetch (zero-row) or re-refine accordingly."
           }
         ]
       },
@@ -961,6 +1054,16 @@
           "docs/agents/unified-agent/flow/chef.md"
         ],
         "note": "Harden: move the published-marker claim (published:<slot>:<YYYY-MM-DD>) INTO chef.md Step 7 immediately before send_telegram, so dedup survives ANY spawn path (currently the gate is only an instruction injected by the cowork dispatcher into the spawn prompt — a direct/refactored spawn bypasses it and can double-publish, as proven 2026-06-02 07:19Z). Architect review the marker contract (recurring-bug family: cowork dispatch reliability, kin of COWORK-LEADER-SELFLOCK)."
+      },
+      {
+        "id": "FU-PARTIAL-SCALAR-SERVE",
+        "summary": "PARTIAL serve guard covers net_profit (BEQ-8b) but NOT operating_cf/total_assets — get_bctc_full may still serve residual misattributed scalars for the 7 PARTIAL reports (e.g. FPT-Q4 ocf=10.1M, DHG TA=4 from a pre-guard backfill linger in columns). Fix: either null-clear non-balance-sheet scalars on PARTIAL transition, or extend the PARTIAL withhold to all IS/CF scalars in get_bctc_full + /docs. Interim until BEQ-9/10 re-refine overwrites them.",
+        "priority": "high"
+      },
+      {
+        "id": "BCTC-ZERO-ROW-REFETCH",
+        "summary": "5 reports have 0 table_rows (VCB-2025Q1, VCB-2025Q4, DGC-2025Q4, DIG-2025Q4) — cover-letter/empty PDFs, stay PENDING. Need VPS re-fetch/re-extraction. CTG-2026Q1 tracked separately (BCTC-CTG-ATTACHMENT-FETCH).",
+        "priority": "normal"
       }
     ],
     "archive": []
