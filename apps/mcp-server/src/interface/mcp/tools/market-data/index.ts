@@ -11,3 +11,4 @@ export { registerTickerIntelligenceTools } from "./tickerIntelligenceTools.js";
 export { registerPriceAlertTools } from "./priceAlertTools.js";
 export { registerMarketContextTools } from "./marketContextTools.js";
 export { registerInsiderTools } from "./insiderTools.js";
+export { registerMarketWideForeignFlowTool } from "./marketWideForeignFlowTool.js";

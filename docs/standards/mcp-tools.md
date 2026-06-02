@@ -1,6 +1,6 @@
 # MCP Tools — Logic & Mapping
 
-<!-- size-justification: 137L — atomic SSOT tool catalog: per-agent tool list + renamed tools table + mandatory patterns. Splitting fragments lookup surface; all agents read this file together to resolve tool availability. -->
+<!-- size-justification: 185L — atomic SSOT tool catalog: per-agent tool list + renamed tools table + phantom-tool resolution (MSG-3) + mandatory patterns. Splitting fragments lookup surface; all agents read this file together to resolve tool availability. -->
 
 **Load when:** tool selection, agent rewriting, or system capability review.
 
@@ -70,8 +70,27 @@ Live check: `curl -s http://127.0.0.1:3000/health | jq .toolCount`
 | `unmute_stock_alerts` | `manage_alert_mute(action="unmute")` |
 | `get_price_alerts` | `get_alerts(type="price")` |
 | `set_target_allocation` | removed — see `docs/data/tool-registry.json` → `removed` |
+| `get_market_breadth` | PHANTOM — never implemented (see note below) |
+| `get_top_movers` | PHANTOM — never implemented (see note below) |
 
 Full removed list → `docs/data/tool-registry.json` → `removed`
+
+### Phantom Tool Resolution — MSG-3 (2026-06-02)
+
+`get_market_breadth` and `get_top_movers` are **phantom tools**: they are referenced in
+`docs/agents/fb-market-poster/flow/main.md` and `docs/agents/tools/package/fb-market-poster.md`
+but have **no implementation** in any `.ts` file (confirmed by grep across the full codebase).
+
+**Resolution:** References are retained in the fb-market-poster agent docs as aspirational
+calls with a known-gap note. The fb-market-poster agent has already documented a working
+fallback (notebook 2026-06-01: use `get_watchlist` + portfolio-conviction cascade for movers
+extraction; advancers/decliners from watchlist call). These tools are NOT registered in the
+vn-market MCP server.
+
+**Do NOT call these tools** via the gateway — they will return a tool-not-found error.
+Use `get_market_snapshot` (codes=[watchlist]) + `get_market_foreign_flow` for coverage.
+If a full breadth/movers implementation is needed, file a sprint task (data source: SSC
+market stats API or VnDirect's stock screening endpoint).
 
 ## Tools Per Agent
 
