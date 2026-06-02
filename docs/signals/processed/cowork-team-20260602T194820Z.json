@@ -1,0 +1,31 @@
+{
+  "ts": "2026-06-02T19:48:18Z",
+  "tick_nominal": "2026-06-02T19:45:00Z",
+  "drift_min": 3,
+  "classification": "WON",
+  "pressure_mode": "legacy",
+  "matched_slots": ["chef-evening"],
+  "won_slots": ["chef-evening"],
+  "leader_lock": {"claimed": true, "stolen": true},
+  "calendar_status": "open",
+  "head_status": "idle",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 3,
+  "signal_backlog": 2,
+  "vn_index": 1826.47,
+  "regime": "FII_OUTFLOW_RISK",
+  "agent_outcomes": {
+    "chef-evening": {
+      "result": "PUBLISHED",
+      "clusters": 3,
+      "cluster_names": ["banking-carry-shock", "real-estate-bearish-consensus", "FPT-tech-contrarian"],
+      "published_marker": "claimed",
+      "market_dish": "sent",
+      "work_audit": "sent",
+      "quality": "full"
+    }
+  },
+  "tokens_released": true,
+  "last_fired_advanced": "2026-06-02T19:48:50Z",
+  "spawns": 1
+}

@@ -1,0 +1,24 @@
+{
+  "ts": "2026-06-02T20:05:50Z",
+  "tick_nominal": "2026-06-02T20:00:00Z",
+  "drift_min": 3,
+  "classification": "WON",
+  "pressure_mode": "adaptive",
+  "matched_slots": ["news-scout-offhours", "market-watcher-offhours"],
+  "won_slots": ["news-scout-offhours", "market-watcher-offhours"],
+  "leader_lock": {"claimed": false, "self_held_heartbeat": true, "renewed": true},
+  "calendar_status": "open",
+  "head_status": "idle",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 3,
+  "signal_backlog": 3,
+  "vn_index": 1826.47,
+  "regime": "FII_OUTFLOW_RISK",
+  "agent_outcomes": {
+    "news-scout-offhours": {"result": "COMPLETED", "signals_posted": 4, "dedup": "clear", "channel": "bus+WORK"},
+    "market-watcher-offhours": {"result": "EXIT", "reason": "outside-window", "signals_posted": 0}
+  },
+  "tokens_released": true,
+  "last_fired_advanced": "2026-06-02T20:05:40Z",
+  "spawns": 2
+}

@@ -1,0 +1,14 @@
+{
+  "ts": "2026-06-02T19:18:18Z",
+  "tick_nominal": "2026-06-02T19:15:00Z",
+  "drift_min": 3,
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "matcher_slots": [],
+  "head_status": "DRAIN-PRUNE-DATEFMT (in_progress, dev-lane — signals dir mid-prune)",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 4,
+  "signal_backlog": 0,
+  "signal_backlog_note": "read during concurrent dev DRAIN-PRUNE operation; transient",
+  "spawns": 0
+}
