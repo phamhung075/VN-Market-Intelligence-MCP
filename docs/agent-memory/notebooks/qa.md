@@ -1,5 +1,22 @@
 # QA — Notebook
 
+## cycle-188 · 2026-06-02T23:55Z · FRONTEND-OPERATOR-UX — APPROVED
+
+Sprint: FRONTEND-OPERATOR-UX | Tasks: FOU-2-REQ1 + FOU-3-GW + FOU-3-FE + FOU-3-QA | Verdict: APPROVED
+
+**FOU-2-REQ1 (7793ca28):** SSOT factory mandate PASS — QueName.tsx sole owner confirmed, 0 bare renders. gen:que empty-diff PROVEN (64 entries, git diff empty). Keyboard/aria: tabIndex=0 + Radix aria-describedby. tsc: 0 errors. Pre-existing 43 failures in 1933/36/39/40/45b predated by 2+ months (vi.stubGlobal bun compat), not FOU regressions. Task: DONE.
+
+**FOU-3-GW (078fcc13):** capability_manifest SSOT (9 short_keys system-map.json). 8 prober tests: cache-TTL (0 new probes in window), cache-expiry (probes after TTL), timeout-no-block (50ms probe, <500ms elapsed, manifest baseline), 7-probe-cap (count<=7), none-probe (0 HTTP), health-endpoint (GET confirmed), capability-note preserved, anti-false-green (deployed+DOWN macro not in capabilities map). INJECT-A-VIOLATION: bypassed notDeployedSet guard → TestAggregateHealthService_DeployedDownNotRescuedByCapability FAIL. Reverted → green. go test ./... ALL PASS (9 pkg). Task: DONE-PENDING-REBUILD.
+
+**FOU-3-FE (b5e92ee8):** health-compose.ts pure domain (0 framework imports). Anti-false-green guard line 43: `down → deployed_down` regardless of capability. INJECT-A-VIOLATION: removed guard → 5 tests FAIL (deployed+down+live/data_limited/dark/n/a + sbv-fetch). Reverted → 31/31 PASS. 2-axis table matches brief exactly. parseCapability graceful (undefined/null/unknown → n/a). tsc: 0. Task: DONE-PENDING-REBUILD.
+
+**FOU-3-QA:** Automated invariants proven (unit PROVEN-RED/BLUE/GREY, non-tautological). Manual docker-stop deferred to post-rebuild ops. Task: DONE.
+
+**Next:** ops rebuild api-gateway + frontend (single-service each). Ops live-verify: tooltip, LIVE badge, RED on deployed-down.
+
+---
+
+
 
 
 ## cycle-187 · 2026-06-02T11:35Z · BAL-0 PUB-5..8 gates — APPROVED
