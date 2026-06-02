@@ -176,6 +176,16 @@ BAL-1a-BACKFILL recurring-bug-escalation (4th touch): DECIDED Option R (recomput
 
 ---
 
+## 2026-06-02T21:11:11Z
+
+**Brief:** `docs/architecture-briefs/2026-06-02-frontend-operator-ux.md`
+
+Two operator dashboard UX requests: (REQ1) SSOT `<QueName>` factory component with hover tooltip — seam A1 (static map codegen from QUE_DATA, `scripts/gen-que-descriptions.ts` → committed generated file, zero mcp rebuild); 4 render sites enumerated in dashboard.analysis.tsx (L673, L796-797, L1066, L1393-1396), all must use the factory. (REQ2) Service Health 2-axis model {container: deployed|not_deployed} × {capability-via-mcp: live|data_limited|dark} + capability_manifest anchored in system-map.json; probe runs in api-gateway /health enrichment (bounded max 7 probes, TTL 60s), never fanned out from browser; anti-false-green: deployed service going DOWN always RED.
+
+**Signal dropped:** orch-state FOU-1-DESIGN → DONE; FOU-2-REQ1 (dev-frontend), FOU-3-REQ2 (pm splits: FOU-3-GW dev-api-gateway + FOU-3-FE dev-frontend + FOU-3-QA qa) → pm next.
+
+---
+
 ## 2026-06-02T03:16:33Z
 
 **Brief:** `docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md`
