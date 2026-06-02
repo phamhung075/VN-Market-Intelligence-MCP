@@ -5,12 +5,12 @@
   "_updated_by": "agent-father",
   "head": {
     "status": "in_progress",
-    "active_task_id": "ORCH-ATOMIC-WRITE-GUARD",
-    "next_agent": "agents-architect",
-    "next_action": "Edit §2.3 (L188-216) of the orch-state-consolidate brief: add pre-mv structural-sentinel guard (abort if empty OR fails jq -e '.head and .task_board and .signal_queue'); printf+[ -s ] before mv; mirror guard in TS renameSync variant L205-212; pointer note that §2.3 is authoritative if any flow inlines the snippet. Commit behind commit-mutex (owner_agent agents-architect).",
+    "active_task_id": "FU-ORCH-ATOMIC-TS-IMPL",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-mcp-server: add validate-before-rename guard to writeOrchStateAtomic (orchStateStore.ts:110) per §2.3 TS variant — non-empty + round-trip parse + .head/.task_board/.signal_queue sentinel, throw before renameSync. Add unit test. Then ops rebuilds mcp-server single-service.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T20:13:21Z",
+    "updated_at": "2026-06-02T20:18:29Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T20:13:21Z",
+    "_updated_at": "2026-06-02T20:18:29Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -602,11 +602,22 @@
             "title": "Harden orch-state §2.3 atomic-write protocol against empty/errored-jq SSOT clobber",
             "type": "FIX",
             "owner": "agents-architect",
-            "status": "IN_PROGRESS",
+            "status": "DONE-SPEC-VERIFIED",
             "size": "S",
             "zone": "docs/architecture-briefs",
             "priority": "high",
-            "note": "PO triage :07 2009Z 2026-06-02. Root-cause-definitif, fleet-wide. §2.3 (L188-216) of docs/architecture-briefs/2026-06-01-orch-state-consolidate.md prescribes echo $UPDATED > TMP; mv TMP orch-state with NO non-empty/structural guard between jq mutation (L195) and mv (L200). jq filter error -> empty $UPDATED -> 0-byte TMP -> mv clobbers SSOT. L216 post-write 'jq . > /dev/null' is blind (runs after mv; jq . of empty exits 0). Followed by ALL writers (PM/PO/signal-dashboard/dev-team/crons). Hit live 39f5ba66 (recovered 9e090a90). FIX: validate-before-mv with structural sentinel jq -e '.head and .task_board and .signal_queue'; printf not echo; [ -s TMP ] before mv; same for TS variant L205-212. Doc edit, no build. baseline_pass: printf '' | jq . ; echo $? == 0 proves the blind check."
+            "note": "PO triage :07 2009Z 2026-06-02. Root-cause-definitif, fleet-wide. §2.3 (L188-216) of docs/architecture-briefs/2026-06-01-orch-state-consolidate.md prescribes echo $UPDATED > TMP; mv TMP orch-state with NO non-empty/structural guard between jq mutation (L195) and mv (L200). jq filter error -> empty $UPDATED -> 0-byte TMP -> mv clobbers SSOT. L216 post-write 'jq . > /dev/null' is blind (runs after mv; jq . of empty exits 0). Followed by ALL writers (PM/PO/signal-dashboard/dev-team/crons). Hit live 39f5ba66 (recovered 9e090a90). FIX: validate-before-mv with structural sentinel jq -e '.head and .task_board and .signal_queue'; printf not echo; [ -s TMP ] before mv; same for TS variant L205-212. Doc edit, no build. baseline_pass: printf '' | jq . ; echo $? == 0 proves the blind check. | DONE-SPEC b7e374ce (agents-architect): §2.3 pre-mv structural-sentinel guard (.head and .task_board and .signal_queue), printf+[ -s ] before mv, TS variant mirrored, post-write jq . demoted w/ printf-empty-exit-0 proof cited, SSOT pointer note. Router raw-verified: 1 file 32+/7-, no interleave, content correct. SPEC + bash/agent writers protected NOW. BUT TS runtime path = separate FU-ORCH-ATOMIC-TS-IMPL (shared helper writeOrchStateAtomic orchStateStore.ts:110 still unguarded; spec edit does not reach compiled code)."
+          },
+          {
+            "task_id": "FU-ORCH-ATOMIC-TS-IMPL",
+            "title": "Propagate §2.3 atomic-write guard into the shared TS helper writeOrchStateAtomic (orchStateStore.ts:110) — spec-correct but runtime crons still unguarded",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "Discovered during ORCH-ATOMIC-WRITE-GUARD verify: the 3 TS cron writers (dailyDashboardJob, tasksMdJanitorJob, orchestrationHandler) all funnel through ONE shared helper writeOrchStateAtomic(path,data) at apps/mcp-server/src/infrastructure/orchStateStore.ts:110-115, currently UNGUARDED (writeFileSync(JSON.stringify(data)) -> renameSync, no non-empty/structural check). Implement the §2.3 TS guard there: assert serialized non-empty (length>=2) + JSON.parse round-trips + parsed has .head AND .task_board AND .signal_queue, THROW before renameSync otherwise. Add a unit test (empty/partial object throws, valid object writes). Needs ops rebuild of mcp-server to go live (container). Single-function fix, in-session."
           }
         ]
       },
