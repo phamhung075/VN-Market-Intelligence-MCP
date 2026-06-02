@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-02T10:56:45Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-02T17:30:00Z",
+  "_updated_by": "agent-father",
   "head": {
     "status": "idle",
     "active_task_id": "idle",
@@ -1567,8 +1567,9 @@
         "type": "brief_complete",
         "summary": "NSCOUT-FRAMING-RECUR: cowork self-identity guard brief ready — 9 flows missing L3 guard; news-scout P1, see brief",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/architecture-briefs/2026-06-02-cowork-self-identity-guard.md"
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-cowork-self-identity-guard.md",
+        "agent_father_disposition": "IMPLEMENTED 2026-06-02T17:xx. L3 SELF-IDENTITY GUARD + identity_role added to 9 flows: news-scout, bctc-analyst, alert-commander, digest-predict, tran-ngoc-bau, fb-market-poster, qa-responder, market-analyst, refine_bctc_md. Commit 3e0ee4f5. NSCOUT-FRAMING-RECUR closed."
       }
     ],
     "archive": [
