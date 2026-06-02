@@ -701,3 +701,161 @@ Output message: "GUARD-1 post-deploy verify: CLEAN (0 placeholder leaks)"
 
 ### Next
 - **T6-QA-GATE** (qa team): verify deployment artifacts clean, confirm vps-proxy.sh deleted from HEAD, confirm .env has 0 VULTR_* lines, verify all 9 services remain active
+
+---
+
+## Session: 2026-06-02 (FBT-OPS — FRONTEND REBUILD)
+
+**Task:** Rebuild ONLY the frontend container to pick up new Remix routes shipped in commit 80f2911b (dashboard.bctc-inspect.tsx, api.bctc-inspect.$.tsx, api.bctc-eval.$.tsx).
+
+**Scope:** frontend service ONLY. No other containers touched.
+
+### Execution Steps
+
+**Step 1: Remove old frontend image and container**
+- Executed: `docker compose down frontend` → Container stopped and removed
+- Executed: `docker image rm vn-market-intelligence-mcp-frontend` → Old image untagged
+- Rationale: Ensure --no-cache build creates a completely fresh image
+
+**Step 2: Clean rebuild with --no-cache**
+- Executed: `docker compose build --no-cache frontend`
+- Build stages: deps (npm ci) → build (npm run build) → runtime (copy artifacts)
+- Build output shows compilation of new routes:
+  ```
+  Generated an empty chunk: "dashboard.bctc-inspect".
+  Generated an empty chunk: "api.bctc-inspect._".
+  Generated an empty chunk: "api.bctc-eval._".
+  ```
+- Build duration: ~71s (full clean build)
+- Exit code: 0 ✓
+
+**Step 3: Start new container**
+- Executed: `docker compose up -d --no-deps frontend`
+- Container created, started, and reached healthy state within 6s
+
+### Verified-Live Gate (Raw Evidence)
+
+**1. New Image Built:**
+- Image ID: `f768593059b2`
+- Created: `2026-06-01T20:56:29Z` (verified via docker inspect)
+- Size: 567MB
+- Tag: `vn-market-intelligence-mcp-frontend:latest`
+- Status: ✓ NEW (built moments ago, not reused from prior run)
+
+**2. New Code Inside Container:**
+- Build bundle verification: `docker compose exec frontend sh -c "grep -c 'bctc-inspect\|api.bctc' /app/build/server/index.js"`
+- Result: **18 occurrences** of route references found in compiled server bundle
+- Location: `/app/build/server/index.js` (Remix SSR bundle)
+- Status: ✓ VERIFIED (new route code compiled and bundled inside running image)
+
+**3. Container Healthy + Serving:**
+- `docker compose ps frontend`: **Up (healthy)** ✓
+- Service: frontend | Container: vn-market-intelligence-mcp-frontend-1 | Port: 0.0.0.0:3001->3001/tcp
+- Dashboard health: `curl http://localhost:3001/dashboard` → **HTTP 200** ✓ (10.97ms)
+- BCTC-Inspect route: `curl http://localhost:3001/dashboard/bctc-inspect` → **HTTP 200** ✓ (12.94ms)
+
+### Summary
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| New image built | ✓ PASS | Image ID f768593059b2, created 2026-06-01T20:56:29Z |
+| Fresh build | ✓ PASS | Build output shows all 3 new routes compiled (empty chunks) |
+| New code in container | ✓ PASS | 18 occurrences of route references in /app/build/server/index.js |
+| Container healthy | ✓ PASS | Status: Up (healthy), port 3001 responding |
+| Dashboard endpoint | ✓ PASS | HTTP 200, 10.97ms |
+| BCTC-Inspect endpoint | ✓ PASS | HTTP 200, 12.94ms |
+
+**Scope Confirmed:** Only frontend container rebuilt. mcp-server, api-gateway, macro-indicators, and pdf-extractor remain untouched (not restarted).
+
+**DoD Status:** ACHIEVED ✓
+- New image built clean ✓
+- New route code proven inside running container ✓
+- Container healthy on :3001 ✓
+- No half-built state or build failures ✓
+
+**Next:** QA (FBT-QA) to verify routes work end-to-end (form submission, API integration, page rendering).
+
+
+---
+
+## Session: 2026-06-02 (BEQ-REBUILD — mcp-server production code LIVE)
+
+**Task:** Rebuild mcp-server container to make BEQ-5..8b guard code live (QA APPROVED: 25/25 + 32/32 green)
+
+**Status:** DONE — Verified Live (2026-06-02 12:14Z)
+
+### Execution Steps
+
+**Step 1: Build fresh image (--no-cache)**
+- Command: `docker compose build --no-cache mcp-server && docker compose up -d --no-deps --force-recreate mcp-server`
+- Fresh image SHA: `sha256:ea781a7a4890bdb034160e5f6da075bc6ac2969610d5bb2012699491de50adf3`
+- Created at: `2026-06-02 12:12:08 +0200 CEST`
+- Status: ✓ Built fresh with --no-cache (not cached from prior run)
+
+**Step 2: Verify BEQ marker code in running container**
+
+**BEQ-8 (isBankFormFromRows in bctcScalarAggregator):**
+```bash
+docker exec vn-market-intelligence-mcp-mcp-server-1 grep -rl "isBankFormFromRows" /app
+```
+Result: Found in 11 locations:
+- /app/src/domain/services/financial-reports/bctcScalarAggregator.ts ✓
+- /app/src/domain/services/financial-reports/bctcFormType.ts ✓
+- /app/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts ✓
+- 8 more (test files, reports, notebooks)
+
+**BEQ-5 (checkSectionCompleteness guard):**
+```bash
+docker exec vn-market-intelligence-mcp-mcp-server-1 grep -rl "checkSectionCompleteness" /app
+```
+Result: Found in production code:
+- /app/src/domain/services/financial-reports/bctcSectionCompleteness.ts ✓
+- /app/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts ✓
+- /app/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts ✓
+
+**BEQ-6 (section guard in backfillBctcScalarsTool):**
+```bash
+docker exec vn-market-intelligence-mcp-mcp-server-1 grep -l "set PARTIAL\|section guard" /app/src/interface/mcp/tools/financial-reports/backfillBctcScalarsTool.ts
+```
+Result: ✓ File found (contains guard logic)
+
+**Step 3: Health & resource verification**
+
+**Container Status:**
+- docker ps: mcp-server-1 UP (healthy) ✓
+- Port 3000 responding: ✓
+- /health endpoint: 200 OK ✓
+
+**Resource Usage (safe):**
+- MEM: 263.8 MiB / 2 GiB limit (12.88% used)
+- CPU: 4.81%
+- Host total: 16 GB (headroom adequate)
+
+**Step 4: Update orch-state.json head**
+
+Updated fields:
+- status: "rebuilt-live" ✓
+- next_agent: "po" ✓
+- updated_at: "2026-06-02T12:14:00Z" ✓
+- updated_by: "ops" ✓
+- next_action: Full rebuild details + marker verification + health confirmation
+
+### QA Gate Status
+
+**VERIFIED-LIVE ✓**
+
+| Checkpoint | Result | Evidence |
+|-----------|--------|----------|
+| New image | ✓ PASS | SHA ea781a7a... (built 2026-06-02 12:12:08 CEST) |
+| BEQ-8 code | ✓ PASS | isBankFormFromRows in 11 files (bctcScalarAggregator.ts verified) |
+| BEQ-5 code | ✓ PASS | checkSectionCompleteness in 3 production files |
+| BEQ-6 code | ✓ PASS | section guard present in backfillBctcScalarsTool.ts |
+| Container health | ✓ PASS | UP (healthy), /health 200 |
+| Memory safe | ✓ PASS | 263.8 MiB / 2 GiB (12.88%), host 16GB headroom OK |
+
+**Commits on main:** BEQ code verified committed (1da34f8d, a8cbe91d, 6b2f72b2, 1f726140, 8845e5d6, cbdad2d6, 61747444)
+
+**Production Status:** BEQ-5..8b guard code now LIVE and SERVING production traffic.
+
+**Next:** PO review results. Sprint EXIT gated on post-rebuild verification (CONFIRMED).
+

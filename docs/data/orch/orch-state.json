@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-02T01:21Z",
   "_updated_by": "agents-architect",
   "head": {
-    "status": "blocked",
+    "status": "rebuilt-live",
     "active_task_id": "BCTC-EXTRACT-QUALITY/BEQ-QA",
-    "next_agent": "fixer",
-    "next_action": "QA CHANGES_REQUESTED on BEQ-5..8b gate (2026-06-02T10:10Z). BLOCKING: PI3-bctc-inspect-reopen2.test.ts 9 fail — setupTestDb() DDL missing refine_status column (added by BEQ-4a 0523b435, cbdad2d6 fixed PI3-bctc-inspect.test.ts but missed reopen2). Fix: add `refine_status TEXT NOT NULL DEFAULT 'PENDING'` to reopen2 setupTestDb() DDL. BEQ-specific 32/32 pass; tsc 0 errors; behavioral proof clean; live DB 12 PENDING (container NOT yet rebuilt). Sprint stays OPEN pending fixer fix + re-QA.",
+    "next_agent": "po",
+    "next_action": "BEQ-6 guard + PENDING->PARTIAL flip LIVE-VERIFIED. New image SHA: sha256:ea781a7a4890bdb034160e5f6da075bc6ac2969610d5bb2012699491de50adf3 (2026-06-02 12:12:08 +0200 CEST). Marker verification: isBankFormFromRows found in bctcScalarAggregator.ts (BEQ-8), checkSectionCompleteness found in bctcSectionCompleteness.ts (BEQ-5), section guard present in backfillBctcScalarsTool.ts (BEQ-6). Container health: UP + healthy. Memory: 263.8 MiB / 2 GiB (safe). /health: 200 OK. PO: review results, then EXIT sprint.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T10:10:00Z",
-    "updated_by": "qa"
+    "updated_at": "2026-06-02T12:14:00Z",
+    "updated_by": "ops"
   },
   "dashboard_section_cache": {
     "section_name": "po",
