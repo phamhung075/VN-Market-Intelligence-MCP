@@ -1,5 +1,46 @@
 # dev-mcp-server -- Notebook
 
+## c348 · 2026-06-02 (BCTC-ANALYTICS-LAYER BAL-0) — COMMITTED 9093f385
+
+**Task:** BAL-0 — structural publish-integrity gate PUB-5..8 in `bctcFullTools.ts`
+
+**PUB-5:** `extraction_confidence < 0.5` → `publishable=false` (HPG parent-only at 44% blocked).
+**PUB-6:** `|ROA|>100%` or `|ROE|>300%` or `|NetDebt/EBITDA|>200x` or `EPS∉[0,100000]` → offending ratio(s) null in `sanitizedRatios`; report served with N/A + trust note (does NOT block full report). DHG ROA=7891932% → N/A, not served as garbage.
+**PUB-7:** `period_type=Q4` vs non-Q4 (or reverse) → `buildComparisonSection` returns mismatch message, no delta emitted. Kills false FPT YoY -82.2% from cumulative-vs-standalone.
+**PUB-8:** `net_revenue=0 AND net_profit>0 AND conf<0.6` → `publishable=false` (parent-only heuristic).
+
+**Signature change:** `checkPublishability(db, reportId, bankForm?, row?)` — 4th param is the `ReportRow` object to avoid a second DB query.
+**`buildSummarySection` extended:** 4th param `sanitizedRatios` from PUB-6; ROA/ROE/NetDebt/EPS rendered as N/A when sanitized.
+
+**DV tests:** 25 new tests in `BAL-0-pub5-8-gates.test.ts` RED→GREEN. 46 total pass (existing 21 + 25 new) / 0 fail. tsc EXIT 0. ops_rebuild_required: true.
+
+**SHB/EIB diagnostic (read-only container census — disambiguates B-1 vs B-2):**
+- EIB: `isBankFormFromDb=true`, rows in `balance_sheet` (18 non-summary, non-null) NOT in `general`. PUB-3 bank path (queries `statement_section='general'`) → 0 rows → blocked. Corporate path → 18 rows.
+- SHB: same pattern — `isBankFormFromDb=true`, 19 non-summary `balance_sheet` rows, 0 in `general`.
+- **Root cause CONFIRMED: Candidate B-1 variant** — NOT the expected discriminator failure. `isBankFormFromDb` correctly returns `true` (no 3-digit codes). But the bank PUB-3 path queries `statement_section='general'`, while the parser wrote rows to `statement_section='balance_sheet'`. The fix is in `checkPublishability` PUB-3 bank path: also accept `statement_section='balance_sheet'` for banks (or remove the section filter for the bank path). Tracked BAL-1b-DEV.
+
+**Zone health:** tsc 0 errors | 46 pass / 0 fail | tools count unchanged | sched unchanged | HEALTHY
+
+---
+
+## c347 · 2026-06-02 (BCTC-EXTRACT-QUALITY Phase-2 BEQ-5..8b) — COMMITTED 5 SHAs
+
+**Tasks:** BEQ-5 (1da34f8d) → BEQ-6 (a8cbe91d) → BEQ-7 (6b2f72b2) → BEQ-8 (1f726140) → BEQ-8b (8845e5d6)
+
+**BEQ-5:** `bctcSectionCompleteness.ts` (NEW domain fn) — `checkSectionCompleteness(rows)→{hasBalanceSheet,hasIncomeStatement,hasCashFlow,isComplete}`. Treats `general` ≡ `balance_sheet` (legacy extractor tag). 4 DV tests.
+
+**BEQ-6:** `backfillBctcScalarsTool.ts` — section completeness gate before `aggregateScalars`. Balance-sheet-only rows → `status=SKIPPED, refine_status=PARTIAL` (never DONE). Unconditional-DONE path structurally guarded. 3 DV tests.
+
+**BEQ-7:** `finalizeBctcRefineTool.ts` — server-side safety net: after agentic refine parses markdown, overrides caller-supplied DONE to PARTIAL if sections incomplete. Empty finalRows also → PARTIAL. 3 DV tests.
+
+**BEQ-8:** `bctcScalarAggregator.ts` line 578 — replaces `findByCode(rows,"10")===null` with `isBankFormFromRows(rows)`. Prevents false-bank classification of balance-sheet-only corporates (FPT/VNM/DHG). DRY: single SSOT discriminator. 3 DV tests.
+
+**BEQ-8b:** `bctcInspectHandler.ts` LIST_SQL — extends `IN ('PENDING')` to `IN ('PENDING','PARTIAL')`. After BEQ-5/6/7 tickers transition PENDING→PARTIAL; legacy net_profit still garbage → withhold. 3 DV tests.
+
+**Gates:** tsc EXIT 0 | 32/32 pass (BEQ-2..8b) | RED→GREEN proven all 5 tasks | **ops_rebuild_required: true** | Next: qa formal gate → ops rebuild mcp-server → BEQ-9 agentic refine
+
+---
+
 ## c346 · 2026-05-31 (FU-TRUST-REFRESH FU-6f) — COMMITTED 9aa2b2eb
 
 **Task:** FU-6f — fix B-1 bank eval anchors, B-2 income_stmt_json blob sync, B-3 PUB-3 balance section fix.

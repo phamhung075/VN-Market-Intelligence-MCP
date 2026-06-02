@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "BAL1-SPIKE-DONE-BAL0-DEV-URGENT",
-    "active_task_id": "BCTC-ANALYTICS-LAYER/BAL-1-SPIKE",
-    "next_agent": "agent-father",
-    "next_action": "BAL-1 SPIKE complete 2026-06-02T11:04:55Z. Brief: docs/architecture-briefs/2026-06-02-bctc-analytics-layer-bal1.md. Signal: docs/signals/bctc-analytics-layer-bal1-20260602T110455Z.json. BAL-0-DEV CRITICAL/IMMEDIATE (PUB-5..8 in bctcFullTools.ts). BAL-1a/b/c/d-DEV HIGH. Full task fanout in brief Section 7.",
+    "status": "BAL0-DEV-DONE-PENDING-QA",
+    "active_task_id": "BCTC-ANALYTICS-LAYER/BAL-0",
+    "next_agent": "qa",
+    "next_action": "BAL-0 PUB-5..8 implemented + committed 9093f385 2026-06-02T13:24:57Z. DV tests 25 pass. ops_rebuild_required=true. QA gate: verify RED→GREEN evidence for PUB-5 (conf0.44 blocked), PUB-6 (roa=7891932 shows N/A not garbage), PUB-7 (Q1 vs Q4 comparison withheld), PUB-8 (rev=0 np>0 conf55% blocked). DIAGNOSTIC: SHB/EIB census below — Candidate B-1 confirmed (isBankForm=true but rows in balance_sheet not general → corporate PUB-3 path needed for banks with labeled sections).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-02T11:04:55Z",
-    "updated_by": "agents-architect"
+    "updated_at": "2026-06-02T13:24:57Z",
+    "updated_by": "dev-mcp-server"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -72,12 +72,13 @@
             "task_id": "BAL-0",
             "title": "Publish semantic-sanity hard-fail gate for BCTC-derived MARKET/FB output (block ratio out-of-range / cumulative-vs-quarter / parent-only-as-headline / forced-zero-bank before send_telegram)",
             "type": "SPRINT-S",
-            "owner": "agents-architect",
+            "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
-            "zone": "docs/agents/unified-agent/ + .claude/skills/",
-            "note": "DISPATCH FIRST — closes the LIVE publish-integrity gap NOW. fb-jargon-gate (FB-GATE) is the proven pattern: executable script + skill + hard-fail + pasted output, NOT model self-attestation. Range/sanity checks: ratio bounds (ROE/ROA within plausible %, EPS>0 and sane, NetDebt-EBITDA finite); reject cumulative-labeled-as-quarter (period semantics); reject parent-only conf<0.5 as headline; reject forced-zero bank balance-sheet decomposition. Consumers: chef market-analysis.md + market-analyst. DESIGN by agents-architect -> agent-father impl. Kin of fb-jargon-gate + feedback_router_verify_raw_not_badges."
+            "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+            "commit": "9093f385",
+            "note": "DONE-PENDING-QA 2026-06-02T13:24:57Z. PUB-5..8 implemented as tool-layer gates in checkPublishability + buildComparisonSection (bctcFullTools.ts). DV tests 25 pass (BAL-0-pub5-8-gates.test.ts). ops_rebuild_required=true. QA: verify PUB-5 blocks conf<0.5, PUB-6 shows N/A for roa=7891932, PUB-7 withholds Q1vsQ4 comparison, PUB-8 blocks rev=0+np>0+conf55%."
           },
           {
             "task_id": "BAL-1",
