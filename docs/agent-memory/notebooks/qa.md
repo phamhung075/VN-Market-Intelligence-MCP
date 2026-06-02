@@ -1,18 +1,5 @@
 # QA — Notebook
 
-## Archive (cycles ≤159)
-
-Full detail available via `git log docs/agent-memory/notebooks/qa.md`.
-Key milestones: cycle-159 BCTC-TRUST-RED APPROVED | cycle-157 AIT-QA APPROVED | cycle-156 HC-QA-3 APPROVED | cycle-153 AR-QA bake-off APPROVED.
-
----
-
-**Binding:** Active cycle only (≤200L). Historical detail in git log.
-
----
-
-
-
 
 ## cycle-173 · 2026-05-31 · NB-PRUNE-1 — NB-PRUNE-FIX — APPROVED
 
@@ -73,3 +60,33 @@ Gate coverage (all 5 PASS):
 - G5: zero mcp-server files in commit 80f2911b; mcp-server image sha256:098bb09e unchanged; :3000 viewer 200/103,876 bytes; const BASE="" confirmed.
 
 Key lesson: page-image returns 404 for all but FPT/ACB Q1 because PNGs are rasterized on-demand and only those two exist in /data/bctc-page-images volume. The 404 is correct behavior, not a proxy fault — both origins return identical 82-byte body.
+
+---
+
+## cycle-182 · 2026-06-01 · SELF-CRITIQUE-DETECT Phase-1 QA gate — PASS
+
+Sprint: SELF-CRITIQUE-DETECT | Gate: static read (PLAN-ONLY, no code run, no merges)
+Verdict: PASS — C1 and C5 both fully satisfied. Shadow pilot CLEARED TO ARM pending operator greenlight.
+Report: reports/TASK_REPORT_SELF-CRITIQUE-QA.md
+
+C1 (pilot-scope gate): allowlist exactly {news-scout, dev-team} confirmed at SKILL.md L18; gate is FIRST in SC-0 (L17-19) before daily-cap glob (L22); non-pilot cowork agents exit at SC-0 before SC-1; dev-team explicitly listed in allowlist.
+C5 (commit safety): SC-5 explicit paths only + "NEVER -A or ." text present; commit-mutex Step 4 release-on-every-exit-path enforced; invocation contract (own_paths + intent via wiring pattern) matches commit-mutex schema; owner_agent/ttl_seconds supplied by skill itself as designed.
+S1-S5 spot-check: all invariants present in both brief §5 and SKILL.md footer, consistent, no drift.
+
+---
+
+## cycle-183 · 2026-06-02T05:27Z · A-01b-4 not_deployed fix — PASS
+
+Sprint: A-01 (Dashboard two data planes) | Task: A-01b-4 | Verdict: PASS
+
+**Clause A — false-RED resolved (read-only)**
+- `GET localhost:4000/health` → `status:"ok"`, exactly 7 services `not_deployed` (pdf/rag/ta/stock/kinh-dich/alert/news), mcp+macro both `ok`, latencies −1 for not_deployed set.
+- `docker ps` → exactly 5 containers running, all healthy. Zero of the 7 not_deployed services started.
+- Frontend `localhost:3001/dashboard/services` → top badge green `UP`, each of the 7 shows grey `NOT DEPLOYED` badge, loader stream confirms `overallStatus:"ok"` + `status:"not_deployed"` x7 in SSR JSON.
+
+**Clause B — anti-false-green PROVEN-RED (controlled live test)**
+- `docker stop vn-market-intelligence-mcp-macro-indicators-1` executed.
+- POST-STOP `GET localhost:4000/health` → `status:"degraded"`, `macro:"down"`. Overall is NOT `ok`. Not_deployed set unchanged (all 7 still `not_deployed`). PROVEN-RED: real deployed-service outage is NOT suppressed.
+- `docker start vn-market-intelligence-mcp-macro-indicators-1` → restored. POST-RESTORE health: `status:"ok"`, `macro:"ok"`. Final container count: 5 (all healthy). None of the 7 not_deployed services were started at any point.
+
+Both clauses PASS. No critical false-green detected. Fix correctly limits suppression to the known not_deployed set only.
