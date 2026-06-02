@@ -92,7 +92,13 @@ function HeadlineList({
 }) {
   if (headlines.length === 0) {
     return (
-      <p className="py-3 text-sm text-slate-500">No data available for {source}.</p>
+      <div className="py-3 space-y-1">
+        <p className="text-sm text-slate-500">No headlines available for {source}.</p>
+        <p className="text-xs text-slate-600">
+          Source not deployed on this host — news-fetch microservice is not running
+          (expected state, tracked FU-FE-NEWS-SOURCE).
+        </p>
+      </div>
     );
   }
   return (
