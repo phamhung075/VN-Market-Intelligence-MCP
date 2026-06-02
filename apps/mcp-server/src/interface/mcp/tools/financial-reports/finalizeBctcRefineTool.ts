@@ -444,6 +444,7 @@ export function buildFinalizeBctcRefineHandler(
 
           // Resolved non-null scalars → SET value (Case 3)
           const updates: Array<{ col: string; val: number }> = [];
+          // Original 10 columns:
           if (agg.net_revenue       !== null) updates.push({ col: "net_revenue",       val: agg.net_revenue });
           if (agg.gross_profit      !== null) updates.push({ col: "gross_profit",      val: agg.gross_profit });
           if (agg.profit_before_tax !== null) updates.push({ col: "profit_before_tax", val: agg.profit_before_tax });
@@ -454,6 +455,17 @@ export function buildFinalizeBctcRefineHandler(
           if (agg.equity_total      !== null) updates.push({ col: "equity_total",      val: agg.equity_total });
           if (agg.gross_margin_pct  !== null) updates.push({ col: "gross_margin_pct",  val: agg.gross_margin_pct });
           if (agg.net_margin_pct    !== null) updates.push({ col: "net_margin_pct",    val: agg.net_margin_pct });
+          // BEQ-3: new columns (10 additional scalars from full column audit)
+          if (agg.operating_profit  !== null) updates.push({ col: "operating_profit",  val: agg.operating_profit });
+          if (agg.ebitda            !== null) updates.push({ col: "ebitda",            val: agg.ebitda });
+          if (agg.cash              !== null) updates.push({ col: "cash",              val: agg.cash });
+          if (agg.eps               !== null) updates.push({ col: "eps",               val: agg.eps });
+          if (agg.diluted_eps       !== null) updates.push({ col: "diluted_eps",       val: agg.diluted_eps });
+          if (agg.operating_cf      !== null) updates.push({ col: "operating_cf",      val: agg.operating_cf });
+          if (agg.investing_cf      !== null) updates.push({ col: "investing_cf",      val: agg.investing_cf });
+          if (agg.financing_cf      !== null) updates.push({ col: "financing_cf",      val: agg.financing_cf });
+          if (agg.capex             !== null) updates.push({ col: "capex",             val: agg.capex });
+          if (agg.free_cash_flow    !== null) updates.push({ col: "free_cash_flow",    val: agg.free_cash_flow });
 
           // NOT-APPLICABLE columns → SET NULL (Case 1): clear stale legacy values
           const nullClearCols: string[] = [...naSet];

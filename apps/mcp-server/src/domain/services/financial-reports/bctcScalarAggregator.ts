@@ -72,8 +72,33 @@ export interface AggregatorRow {
 /**
  * ScalarAggregate — mirrors the scalar columns written by storeReport in parseBctcReport.
  * All values are in million VND, or null if the line item is absent.
+ *
+ * BEQ-3 FULL COLUMN AUDIT — added 10 previously unmapped fields.
+ * Section-filter is MANDATORY for codes shared across sections (see VAS-CODE-TABLE below):
+ *
+ * VAS-CODE-TABLE (confirmed from live FPT 2026-Q1 bctc_table_rows):
+ *   income_statement section:
+ *     code "10" → net_revenue         (Doanh thu thuần)
+ *     code "20" → gross_profit        (Lợi nhuận gộp)
+ *     code "30" → operating_profit    (Lợi nhuận thuần từ HĐKD) ← NEW
+ *     code "50" → profit_before_tax   (Tổng LN kế toán trước thuế)
+ *     code "60" → net_profit          (LN sau thuế TNDN)
+ *   cash_flow section:
+ *     code "20" → operating_cf        (Lưu chuyển tiền từ HĐKD) ← NEW; section filter req
+ *     code "21" → capex               (Tiền chi mua sắm TSCĐ) ← NEW; negative = outflow
+ *     code "02" → depreciation_amort  (Khấu hao TSCĐ) ← used for EBITDA derivation
+ *     code "30" → investing_cf        (Lưu chuyển tiền từ HĐ đầu tư) ← NEW; section filter
+ *     code "40" → financing_cf        (Lưu chuyển tiền từ HĐ tài chính) ← NEW; section filter
+ *   general/balance_sheet section:
+ *     code "110" → cash               (Tiền và các khoản tương đương tiền) ← NEW
+ *   Derived:
+ *     ebitda         = operating_profit + depreciation_amortization
+ *     free_cash_flow = operating_cf + capex_raw (capex_raw is negative, so result = OCF - |capex|)
+ *   Not mappable from standard BCTC codes:
+ *     eps / diluted_eps — absent from FPT corpus; kept null (no standard VAS code)
  */
 export interface ScalarAggregate {
+  // Original 10 fields (unchanged)
   net_revenue: number | null;
   gross_profit: number | null;
   profit_before_tax: number | null;
@@ -84,6 +109,27 @@ export interface ScalarAggregate {
   equity_total: number | null;
   gross_margin_pct: number | null;
   net_margin_pct: number | null;
+  // BEQ-3 NEW: previously unmapped scalar columns
+  /** Corporate code "30" in income_statement — Lợi nhuận thuần từ hoạt động kinh doanh */
+  operating_profit: number | null;
+  /** Derived: operating_profit + depreciation_amortization (CF code "02"). Null if either absent. */
+  ebitda: number | null;
+  /** Balance sheet code "110" — Tiền và các khoản tương đương tiền */
+  cash: number | null;
+  /** EPS — no standard VAS code in corpus; kept null (BCTC-EPS-FOOTNOTE future work) */
+  eps: number | null;
+  /** Diluted EPS — no standard VAS code; null */
+  diluted_eps: number | null;
+  /** Cash flow code "20" in cash_flow section — Lưu chuyển tiền từ hoạt động kinh doanh */
+  operating_cf: number | null;
+  /** Cash flow code "30" in cash_flow section — Lưu chuyển tiền từ hoạt động đầu tư */
+  investing_cf: number | null;
+  /** Cash flow code "40" in cash_flow section — Lưu chuyển tiền từ hoạt động tài chính */
+  financing_cf: number | null;
+  /** Cash flow code "21" in cash_flow section — Tiền chi mua sắm TSCĐ (negative = outflow) */
+  capex: number | null;
+  /** Derived: operating_cf + capex (capex is negative, so this = OCF - |capex|). Null if either absent. */
+  free_cash_flow: number | null;
 }
 
 /**
@@ -497,6 +543,17 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     equity_total: null,
     gross_margin_pct: null,
     net_margin_pct: null,
+    // BEQ-3: new fields
+    operating_profit: null,
+    ebitda: null,
+    cash: null,
+    eps: null,
+    diluted_eps: null,
+    operating_cf: null,
+    investing_cf: null,
+    financing_cf: null,
+    capex: null,
+    free_cash_flow: null,
   };
 
   if (rows.length === 0) {
@@ -627,6 +684,57 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     );
   }
 
+  // ── BEQ-3: New scalar mappings (section-filtered to avoid code collisions) ─────
+
+  // operating_profit: corporate code "30" in income_statement section ONLY.
+  // ⚠️  code "30" also appears in cash_flow section (= investing_cf) — section filter is mandatory.
+  const operating_profit = scale(findByCode(rows, "30", undefined, "income_statement"));
+
+  // cash: balance sheet code "110" — Tiền và các khoản tương đương tiền.
+  // Present in "general" section for FPT; try both "general" and "balance_sheet".
+  let cash = scale(findByCode(rows, "110", undefined, "general"));
+  if (cash === null) {
+    cash = scale(findByCode(rows, "110", undefined, "balance_sheet"));
+  }
+  if (cash === null) {
+    cash = scale(findByCode(rows, "110")); // broader search as last resort
+  }
+
+  // Cash flow scalars — all filtered to "cash_flow" section to avoid income statement collisions:
+  //   code "20" income_statement = gross_profit; code "20" cash_flow = operating_cf
+  //   code "30" income_statement = operating_profit; code "30" cash_flow = investing_cf
+  //   code "40" income_statement = other_profit; code "40" cash_flow = financing_cf
+  const operating_cf = scale(findByCode(rows, "20", undefined, "cash_flow"));
+  const investing_cf = scale(findByCode(rows, "30", undefined, "cash_flow"));
+  const financing_cf = scale(findByCode(rows, "40", undefined, "cash_flow"));
+
+  // capex: code "21" in cash_flow section — "Tiền chi mua sắm tài sản cố định..."
+  // This is a negative number (cash outflow). Stored as-is (negative million VND).
+  const capex = scale(findByCode(rows, "21", undefined, "cash_flow"));
+
+  // depreciation_amortization: code "02" in cash_flow — reconciliation item for EBITDA.
+  // Only used for EBITDA derivation; not stored as a standalone column.
+  const depreciation_amort = scale(findByCode(rows, "02", undefined, "cash_flow"));
+
+  // ebitda: operating_profit + depreciation_amortization.
+  // null when either component is absent (pure domain derivation — no partial EBITDA).
+  const ebitda: number | null =
+    operating_profit !== null && depreciation_amort !== null
+      ? operating_profit + depreciation_amort
+      : null;
+
+  // free_cash_flow: operating_cf + capex (capex is negative, so result = OCF - |capex|).
+  // null when either component is absent.
+  const free_cash_flow: number | null =
+    operating_cf !== null && capex !== null
+      ? operating_cf + capex
+      : null;
+
+  // EPS / diluted_eps: no standard VAS code present in FPT/ACB corpus.
+  // Kept null — future work BCTC-EPS-FOOTNOTE.
+  const eps: number | null = null;
+  const diluted_eps: number | null = null;
+
   // ── Derived ratios ─────────────────────────────────────────────────────────────
 
   // gross_margin_pct: only meaningful when both gross_profit and net_revenue present and non-zero
@@ -652,6 +760,17 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     equity_total,
     gross_margin_pct,
     net_margin_pct,
+    // BEQ-3: new fields
+    operating_profit,
+    ebitda,
+    cash,
+    eps,
+    diluted_eps,
+    operating_cf,
+    investing_cf,
+    financing_cf,
+    capex,
+    free_cash_flow,
   };
 
   // ── Balance-identity invariant (fail-loud gate) ───────────────────────────────
