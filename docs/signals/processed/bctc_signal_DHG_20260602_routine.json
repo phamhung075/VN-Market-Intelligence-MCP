@@ -5,14 +5,14 @@
   "mode": "routine",
   "beat_miss": null,
   "net_profit_delta_pct": null,
-  "product": "Pharmaceutical manufacturing, OTC and prescription drugs for Vietnamese market",
-  "customer": "Retail pharmacies, hospitals, clinics — domestic Vietnamese healthcare market",
-  "ops": "DATA_INSUFFICIENT — get_bctc_full returns no data (9th consecutive cycle). Filed 2026-05-24. PDF extraction pipeline blocker unresolved.",
-  "mgmt": "No data available. BCTC-TABLE sprint required to unblock DHG/EIB extraction.",
+  "product": "Branded generic pharmaceuticals (domestic Vietnamese market), OTC health products",
+  "customer": "Hospital procurement channels, retail pharmacy chains, VN domestic consumer health",
+  "ops": "PUB-5 gate active (conf 44% < 50%) — data UNSERVABLE via get_bctc_full. BEQ-10 confirmed 66 rows committed (rev=1,198 ty, GP=600 ty, NP=315 ty, balance EXACT) but serving gate blocks below 50% confidence. 10th consecutive DATA_INSUFFICIENT cycle.",
+  "mgmt": "DHG +0.21% today (sector context: pharma resilient vs broad market sell-off). Data impairment persists — BAL-1d-DEV (report_scope column + PUB-5 upgrade) required to unlock serving.",
   "valuation_verdict": "DATA_INSUFFICIENT",
-  "regime": "TIGHTENING",
-  "carry_regime": "FII_OUTFLOW_RISK",
-  "extraction_confidence": 0,
-  "cycle_id": "20260602-0000",
-  "emitted_at": "2026-06-02T00:10:00Z"
+  "data_quality": "PUB5_BLOCKED_44PCT",
+  "esc_flags": {"ESC1": false, "ESC2": false, "ESC3": false, "ESC4": false, "ESC5": false},
+  "e3_cache": "MISS",
+  "cycle_id": "20260602-1800",
+  "emitted_at": "2026-06-02T18:05:00Z"
 }

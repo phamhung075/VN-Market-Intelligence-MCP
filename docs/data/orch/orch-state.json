@@ -1447,7 +1447,7 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T18:28:41Z",
+    "_updated_at": "2026-06-02T19:13:47Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -1561,42 +1561,6 @@
         "severity": "HIGH",
         "status": "READ",
         "payload_ref": "docs/signals/tnb-2026-05-31T20:13:00Z-c84-mcp-blocked.json"
-      },
-      {
-        "id": "CMH-STALL-20260531T1127Z",
-        "ts": "2026-05-31T11:27Z",
-        "from": "dev-team",
-        "to": "claude-manager-helper",
-        "type": "maintenance-escalation",
-        "summary": "CMH lane undrained. 4 notebook-bloat rows persisted 3+ ticks. architect.md 477L + news-scout.md 1198L still open.",
-        "severity": "MED",
-        "status": "CLOSED-MOOT",
-        "payload_ref": null,
-        "note": " | 2026-06-02 dev-team PO-triage: CLOSE-MOOT. The two named bloat subjects are cured: architect.md=94L (was 477L), news-scout.md=205L (was 1198L) — both under/near cap. CMH lane drained via NB-PRUNE sprint (NB-CLEAN-NEWSSCOUT 5082046d, NB-PRUNE-* DONE) + notebook-write 2-class contract (e1e85886). Residual news-scout.md 205L vs 200 cap (5 over) self-heals on next overwrite cycle; not an escalation."
-      },
-      {
-        "id": "1965-COVERAGE-SWEEP",
-        "ts": "2026-05-21T04:30Z",
-        "from": "po",
-        "to": "agents-architect",
-        "type": "design_brief_request",
-        "summary": "User feedback: cowork agents concentration on few tickers only. Design ask: rotation/sweep for news-scout + market-watcher.",
-        "severity": "INFO",
-        "status": "DONE",
-        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md",
-        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN. Valid live ask (cowork ticker-concentration rotation, news-scout+market-watcher). PLAN-ONLY design, agents-architect zone — NOT in this dev-team batch (architect lane reserved for BCTC-ANALYTICS-LAYER residuals + design backlog). Re-dispatch to agents-architect when its lane frees. Brief stub exists docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md. | 2026-06-02T18:30Z dev-team: design-lane freed (all dev batches done) -> dispatched agents-architect (plan-only). PM-1974 scoped as whole commit-discipline CLASS root-cause (PM 26-file sweep + agent-father orch-staging + architect no-mutex), not PM-only. | DONE 2026-06-02T18:40Z: brief delivered (5a3fb649) + agent-father IMPLEMENTED. 1965=coverage-sweep LIVE in news-scout+market-watcher flows (f2e1baca, coverage-state.json 33 tickers, last_covered>48h rotation 3/cycle). PM-1974=commit-boundary skill+discipline across pm/architect/agent-father init+flow (5424c5b1, absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE)."
-      },
-      {
-        "id": "PM-COMMIT-BOUNDARY-1974",
-        "ts": "2026-05-22T17:55:00Z",
-        "from": "dev-team",
-        "to": "maintenance",
-        "type": "commit_boundary_violation",
-        "summary": "PM commit 0a60fa1d swept 26 files incl 17 arch-briefs. RECURRING 3rd occurrence — recommend architect/agent-father audit PM commit step.",
-        "severity": "MED",
-        "status": "DONE",
-        "payload_ref": null,
-        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN, promote-context. RECURRING governance defect (PM 26-file commit sweep, 3rd occurrence) — kin of FU-AGENT-FATHER-ORCH-SCOPE (agent-father staged router-owned orch-state.json) + commit-boundary memory. Owner = agents-architect (commit-step audit of pm/init.md + pm flow) -> agent-father impl. PLAN-ONLY agent-def edit, no rebuild. Sequenced AFTER current BCTC dev work; pairs with the architect commit-discipline cluster. | 2026-06-02T18:30Z dev-team: design-lane freed (all dev batches done) -> dispatched agents-architect (plan-only). PM-1974 scoped as whole commit-discipline CLASS root-cause (PM 26-file sweep + agent-father orch-staging + architect no-mutex), not PM-only. | DONE 2026-06-02T18:40Z: brief delivered (5a3fb649) + agent-father IMPLEMENTED. 1965=coverage-sweep LIVE in news-scout+market-watcher flows (f2e1baca, coverage-state.json 33 tickers, last_covered>48h rotation 3/cycle). PM-1974=commit-boundary skill+discipline across pm/architect/agent-father init+flow (5424c5b1, absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE)."
       },
       {
         "id": "bctc-extraction-esc-20260602T0015Z",
@@ -1914,6 +1878,42 @@
         "payload_ref": null,
         "note": " | RESOLVED 2026-06-02 dev-team PO-triage: OBSOLETE — git branch -a shows only main+origin/main; stale task/1972 branch gone, NO-BRANCHES policy holds.",
         "archived_at": "2026-06-02T14:10:18Z"
+      },
+      {
+        "id": "CMH-STALL-20260531T1127Z",
+        "ts": "2026-05-31T11:27Z",
+        "from": "dev-team",
+        "to": "claude-manager-helper",
+        "type": "maintenance-escalation",
+        "summary": "CMH lane undrained. 4 notebook-bloat rows persisted 3+ ticks. architect.md 477L + news-scout.md 1198L still open.",
+        "severity": "MED",
+        "status": "CLOSED-MOOT",
+        "payload_ref": null,
+        "note": " | 2026-06-02 dev-team PO-triage: CLOSE-MOOT. The two named bloat subjects are cured: architect.md=94L (was 477L), news-scout.md=205L (was 1198L) — both under/near cap. CMH lane drained via NB-PRUNE sprint (NB-CLEAN-NEWSSCOUT 5082046d, NB-PRUNE-* DONE) + notebook-write 2-class contract (e1e85886). Residual news-scout.md 205L vs 200 cap (5 over) self-heals on next overwrite cycle; not an escalation."
+      },
+      {
+        "id": "1965-COVERAGE-SWEEP",
+        "ts": "2026-05-21T04:30Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "User feedback: cowork agents concentration on few tickers only. Design ask: rotation/sweep for news-scout + market-watcher.",
+        "severity": "INFO",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md",
+        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN. Valid live ask (cowork ticker-concentration rotation, news-scout+market-watcher). PLAN-ONLY design, agents-architect zone — NOT in this dev-team batch (architect lane reserved for BCTC-ANALYTICS-LAYER residuals + design backlog). Re-dispatch to agents-architect when its lane frees. Brief stub exists docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md. | 2026-06-02T18:30Z dev-team: design-lane freed (all dev batches done) -> dispatched agents-architect (plan-only). PM-1974 scoped as whole commit-discipline CLASS root-cause (PM 26-file sweep + agent-father orch-staging + architect no-mutex), not PM-only. | DONE 2026-06-02T18:40Z: brief delivered (5a3fb649) + agent-father IMPLEMENTED. 1965=coverage-sweep LIVE in news-scout+market-watcher flows (f2e1baca, coverage-state.json 33 tickers, last_covered>48h rotation 3/cycle). PM-1974=commit-boundary skill+discipline across pm/architect/agent-father init+flow (5424c5b1, absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE)."
+      },
+      {
+        "id": "PM-COMMIT-BOUNDARY-1974",
+        "ts": "2026-05-22T17:55:00Z",
+        "from": "dev-team",
+        "to": "maintenance",
+        "type": "commit_boundary_violation",
+        "summary": "PM commit 0a60fa1d swept 26 files incl 17 arch-briefs. RECURRING 3rd occurrence — recommend architect/agent-father audit PM commit step.",
+        "severity": "MED",
+        "status": "DONE",
+        "payload_ref": null,
+        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN, promote-context. RECURRING governance defect (PM 26-file commit sweep, 3rd occurrence) — kin of FU-AGENT-FATHER-ORCH-SCOPE (agent-father staged router-owned orch-state.json) + commit-boundary memory. Owner = agents-architect (commit-step audit of pm/init.md + pm flow) -> agent-father impl. PLAN-ONLY agent-def edit, no rebuild. Sequenced AFTER current BCTC dev work; pairs with the architect commit-discipline cluster. | 2026-06-02T18:30Z dev-team: design-lane freed (all dev batches done) -> dispatched agents-architect (plan-only). PM-1974 scoped as whole commit-discipline CLASS root-cause (PM 26-file sweep + agent-father orch-staging + architect no-mutex), not PM-only. | DONE 2026-06-02T18:40Z: brief delivered (5a3fb649) + agent-father IMPLEMENTED. 1965=coverage-sweep LIVE in news-scout+market-watcher flows (f2e1baca, coverage-state.json 33 tickers, last_covered>48h rotation 3/cycle). PM-1974=commit-boundary skill+discipline across pm/architect/agent-father init+flow (5424c5b1, absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE)."
       }
     ]
   },

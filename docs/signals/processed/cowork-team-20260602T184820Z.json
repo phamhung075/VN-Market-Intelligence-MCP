@@ -1,0 +1,13 @@
+{
+  "ts": "2026-06-02T18:48:18Z",
+  "tick_nominal": "2026-06-02T18:45:00Z",
+  "drift_min": 3,
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "matcher_slots": [],
+  "head_status": "CW-BACKLOG-MISCOUNT (in_progress, dev-lane)",
+  "new_signal_rows": 0,
+  "dev_queue_depth": 5,
+  "signal_backlog": 44,
+  "spawns": 0
+}
