@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-02T10:56:45Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": "idle",
-    "next_agent": "po",
-    "next_action": "dev-team 15:09Z cycle DONE. FU-BCTC-TOOL-PARAMS LIVE-VERIFIED (get_cash_flow honors quarters, returns N-period series, 7ed5b722, mcp rebuilt 15:35:02Z) — analyst ESC-3 loop root cause fixed. HONEST RESIDUAL: only 2q FPT cash-flow in corpus -> FU-BCTC-HISTORY-COVERAGE queued (data-coverage, not tool). ESC-3 now closable at analyst layer (QoQ w/ 2q; Q1-ocr vs Q4-api_bridge OCF discrepancy = decomposition lead). Operator frontend goal fully met (prior cycle). Open: BAL-1d (report_scope MEDIUM), BAL-1e (LOW), FU-ARCHITECT-MUTEX-BINDING, FU-BCTC-HISTORY-COVERAGE.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "BAL-1d-DEV",
+    "next_agent": "dev-mcp-server",
+    "next_action": "PO dev-team TRIAGE 2026-06-02T16:05Z (GOAL=complete all task). SSOT raw-verified. BATCH-1 dispatched: BAL-1d-DEV (report_scope column + parent_only heuristic + PUB-5/8 structural, dev-mcp-server, M). SEQUENCED REMAINING (drive to done, WIP<=2, NO parallel mcp-server-BCTC commits): B2=MSG-1 foreign-flow aggregate tool (dev-mcp-server M) + MSG-3 phantom-tool doc (XS, doc-zone, parallel-safe). B3=ENV-ISOLATION P2 chain EI-P2-1->P2-2->P2-3->QA (serial, dep chain). B4=FU-BCTC-HISTORY-COVERAGE SPIKE (dev-mcp-server, AFTER BAL-1d — same mcp BCTC file family). B5=SIG-FOLLOWUP-DRYRUN X-1 (developer S). B6=RE-CAP-1 signal-dashboard SKILL 133L>120 cap lazy-load (agent-father, =FU-SIGNAL-DASHBOARD-CAP, collapse). B7=AUDITOR-SLA-CADENCE (agent-father S). B8=CHEF-ATTN-1 (dev-mcp-server M, needs BA). DESIGN-LANE (agents-architect, plan-only, separate WIP): 1965-COVERAGE-SWEEP + PM-COMMIT-BOUNDARY-1974 commit-step audit. NOT-DONE: BAL-1e-DEV (low, EPS-footnote, deferred per brief) + LF-EXTRACT/LF-OVERLAY (BCTC-LAYOUT-FIRST re-arch superseded by recompute-on-read + analytics-layer fixes already live; do not start a parallel extraction rewrite). Signals disposed: CMH-STALL=CLOSED-MOOT, 1965/PM-1974=KEEP-OPEN(design-lane).",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-02T15:36:07Z",
+    "updated_at": "2026-06-02T16:08:17Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -169,7 +169,7 @@
             "depends": [
               "BAL-0"
             ],
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "medium",
@@ -1279,8 +1279,8 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-02T15:12:27Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-02T16:05:00Z",
+    "_updated_by": "po",
     "rows": [
       {
         "id": "po-bctc-analytics-layer-20260602T1056Z",
@@ -1402,8 +1402,9 @@
         "type": "maintenance-escalation",
         "summary": "CMH lane undrained. 4 notebook-bloat rows persisted 3+ ticks. architect.md 477L + news-scout.md 1198L still open.",
         "severity": "MED",
-        "status": "PARTIAL",
-        "payload_ref": null
+        "status": "CLOSED-MOOT",
+        "payload_ref": null,
+        "note": " | 2026-06-02 dev-team PO-triage: CLOSE-MOOT. The two named bloat subjects are cured: architect.md=94L (was 477L), news-scout.md=205L (was 1198L) — both under/near cap. CMH lane drained via NB-PRUNE sprint (NB-CLEAN-NEWSSCOUT 5082046d, NB-PRUNE-* DONE) + notebook-write 2-class contract (e1e85886). Residual news-scout.md 205L vs 200 cap (5 over) self-heals on next overwrite cycle; not an escalation."
       },
       {
         "id": "1965-COVERAGE-SWEEP",
@@ -1415,7 +1416,7 @@
         "severity": "INFO",
         "status": "OPEN",
         "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md",
-        "note": " | 2026-06-02 dev-team PO-triage: KEEP-BACKLOG — valid live ask (cowork ticker-concentration rotation); architect busy on BCTC-ANALYTICS-LAYER; dispatch when freed."
+        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN. Valid live ask (cowork ticker-concentration rotation, news-scout+market-watcher). PLAN-ONLY design, agents-architect zone — NOT in this dev-team batch (architect lane reserved for BCTC-ANALYTICS-LAYER residuals + design backlog). Re-dispatch to agents-architect when its lane frees. Brief stub exists docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md."
       },
       {
         "id": "PM-COMMIT-BOUNDARY-1974",
@@ -1427,7 +1428,7 @@
         "severity": "MED",
         "status": "OPEN",
         "payload_ref": null,
-        "note": " | 2026-06-02 dev-team PO-triage: KEEP-BACKLOG — recurring governance audit ask (PM 26-file sweep); re-home for architect/agent-father commit-step audit, not this cycle."
+        "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN, promote-context. RECURRING governance defect (PM 26-file commit sweep, 3rd occurrence) — kin of FU-AGENT-FATHER-ORCH-SCOPE (agent-father staged router-owned orch-state.json) + commit-boundary memory. Owner = agents-architect (commit-step audit of pm/init.md + pm flow) -> agent-father impl. PLAN-ONLY agent-def edit, no rebuild. Sequenced AFTER current BCTC dev work; pairs with the architect commit-discipline cluster."
       },
       {
         "id": "bctc-extraction-esc-20260602T0015Z",
