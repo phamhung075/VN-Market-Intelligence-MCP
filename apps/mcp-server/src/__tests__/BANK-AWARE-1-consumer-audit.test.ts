@@ -511,6 +511,7 @@ describe("DV-BANK-2 — C-2: buildSummarySection gross_profit display for banks"
     published_at: "2025-05-01",
     yoy_delta_json: null,
     qoq_delta_json: null,
+    refine_status: "DONE",
   };
 
   it("BANK form: summary does NOT contain 'Gross Profit     : 0.0 tỷ VND'", () => {

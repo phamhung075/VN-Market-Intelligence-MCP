@@ -98,6 +98,7 @@ interface FinancialReportRow {
   confidence_financial: number | null;
   extraction_confidence: number | null;
   parsed_at: string;
+  refine_status: string;
 }
 
 interface FinancialReportPdfRow {
@@ -116,11 +117,18 @@ interface OcrPageRow {
 // has_pdf is computed at serve time via existsSync(pdf_path).
 // Rows with pdf_path IS NULL are still shown (has_pdf: false) so user can see
 // news-inference reports (data quality signal). Junk exclusion kept.
+//
+// BEQ-4a: PENDING rows are kept in the listing (has_pdf/has_ocr remain truthful),
+// but net_profit is surfaced as NULL instead of the legacy OCR-parse garbage value
+// (CTG=5, EIB=1, VNM=5.1e-05, DIG=18). The CASE WHEN guard auto-lifts once
+// BEQ-2 refine backfill moves those rows to DONE.
 const LIST_SQL = `
   SELECT
     id, action_code, company_name, period_type, period_year, period_quarter, sort_key,
-    pdf_path,
-    net_revenue, gross_profit, net_profit, net_profit_api_bridge,
+    pdf_path, refine_status,
+    net_revenue, gross_profit,
+    CASE WHEN refine_status = 'PENDING' THEN NULL ELSE net_profit END AS net_profit,
+    net_profit_api_bridge,
     net_margin_pct, ocr_confidence, confidence_financial, extraction_confidence,
     parsed_at
   FROM financial_reports
@@ -143,6 +151,7 @@ export interface DocListItem {
   has_pdf: boolean;
   /** True when pdf_extracted_text has rows for basename(pdf_path) */
   has_ocr: boolean;
+  /** BEQ-4a: null when refine_status=PENDING (guards OCR-parse garbage values) */
   net_profit: number | null;
   net_profit_api_bridge: number | null;
   /** True when |net_profit - net_profit_api_bridge| / |net_profit_api_bridge| > 10 */
@@ -151,6 +160,8 @@ export interface DocListItem {
   confidence_financial: number | null;
   extraction_confidence: number | null;
   parsed_at: string;
+  /** BEQ-4a: PENDING | DONE | PARTIAL — surfaced so UI can show refine status badge */
+  refine_status: string;
 }
 
 function buildLabel(row: FinancialReportRow): string {
@@ -218,6 +229,7 @@ export function handleBctcInspectDocs(
         sort_key: row.sort_key,
         has_pdf: hasPdf,
         has_ocr: hasOcr,
+        // BEQ-4a: net_profit is NULL when refine_status=PENDING (CASE WHEN in LIST_SQL)
         net_profit: row.net_profit,
         net_profit_api_bridge: row.net_profit_api_bridge,
         anomaly_decimal_shift: isDecimalShiftAnomaly(
@@ -228,6 +240,7 @@ export function handleBctcInspectDocs(
         confidence_financial: row.confidence_financial,
         extraction_confidence: row.extraction_confidence,
         parsed_at: row.parsed_at,
+        refine_status: row.refine_status,
       };
     });
 

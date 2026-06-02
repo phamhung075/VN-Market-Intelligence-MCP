@@ -77,6 +77,8 @@ export interface ReportRow {
   published_at: string;
   yoy_delta_json: string | null;
   qoq_delta_json: string | null;
+  /** BEQ-4b: PENDING | DONE | PARTIAL — used by buildComparisonSection guard */
+  refine_status: string;
 }
 
 interface RagRow {
