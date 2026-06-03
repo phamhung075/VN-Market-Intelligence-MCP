@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T20:09:29Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-03T20:18Z",
+    "_updated_by": "dev-mcp-server",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -1829,22 +1829,22 @@
         "title": "envCheck.ts lines 129-185 (checkRequiredEnv/formatEnvWarning/runEnvCheck Task-1026 degraded-mode) zero test coverage",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "BACKLOG",
+        "status": "DONE",
         "size": "XS",
         "zone": "apps/mcp-server/",
         "priority": "low",
-        "note": "EI-P2-QA gap, non-blocking, orthogonal to isolation"
+        "note": "DONE 2026-06-03 commit 5c498c2e. 5 tests for runEnvCheck (R1-R5): no-op path, warn-branch (honest-green pin), var name in message, degraded-mode no-throw, meta.missingVars. envCheck.ts funcs 88.89%->100%. test-only, no rebuild needed."
       },
       {
         "task_id": "FU-EI-P2-COV-2",
         "title": "No explicit test for APP_ENV=testing (4th DEV_ENV_VALUES entry)",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "BACKLOG",
+        "status": "DONE",
         "size": "XS",
         "zone": "apps/mcp-server/",
         "priority": "low",
-        "note": "EI-P2-QA gap, low risk, in Set + isProductionEnv covers it"
+        "note": "DONE 2026-06-03 commit 5c498c2e. 4 tests: T1 isProductionEnv('testing')->false (pins DEV_ENV_VALUES membership), T2 testing+prodDB->error, T3 testing+devDB->null, T4 currentDataEnv->'testing'. test-only, no rebuild needed."
       },
       {
         "task_id": "FU-EI-P2-DEV-VOLUME",
