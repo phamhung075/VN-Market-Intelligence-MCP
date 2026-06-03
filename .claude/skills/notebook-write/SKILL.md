@@ -36,28 +36,48 @@ Prune: all sections older than the 3rd-most-recent (delete heading + entire bloc
 Do NOT prune if the file has fewer than 3 `## ` sections (blank-state or fresh deploy).
 Preamble (any content before the first `## ` line) is NEVER pruned — preserve verbatim.
 
-### Write operation (AC-3)
+### Write operation (AC-3) — ATOMIC settled-write invariant
 
-**Step 1 — Prune oldest section** (only if ≥ 3 sections exist after counting via `grep -c "^## "`):
+**Invariant:** the file MUST be ≤ its line-cap after EVERY individual Edit/Write the skill
+performs. NEVER append-then-trim across two writes. Compose the final ≤200L body FIRST,
+then land it in ONE operation.
 
-Locate the oldest section block:
-- Find first `^## ` line (start of oldest section).
-- Find the second `^## ` line (start of next section = end boundary of oldest).
-- `old_string` = everything from first `^## ` line up to (but NOT including) second `^## ` line.
-- `new_string` = `""` (delete it).
+**Step 1 — Compose final body in memory (no file write yet):**
 
+a. Read the full current notebook content into memory.
+b. Identify all `^## ` section boundaries (preamble = everything before first `## `).
+c. If the file has ≥ 3 sections: drop the oldest `## ` section block from the in-memory
+   representation (heading + all content down to but NOT including the next `## `).
+d. Append the new section text (≤60L) to the end of the in-memory body.
+e. Apply AC-2b intra-section prune in memory if a permanent accumulator heading now has
+   ≥4 `### ` sub-blocks — drop the oldest sub-block in memory.
+f. Count lines of the resulting in-memory body.
+   - If still > 200L: drop the next-oldest `## ` section block from memory and recount.
+     Repeat until ≤200L or only preamble + 1 section remain.
+   - If the current-cycle section alone exceeds 60L: trim it to 60L before counting.
+g. The in-memory body is now the final settled content (≤200L guaranteed).
+
+**Step 2 — Single settled write:**
+
+Replace the ENTIRE current file content with the composed final body in ONE operation:
 ```
 Edit(file=<notebook_path>,
-     old_string=<full oldest ## heading + its content block>,
-     new_string="")
+     old_string=<entire current file content, verbatim>,
+     new_string=<final settled body from Step 1>)
 ```
 
-**Step 2 — Append new section** (append after last line of current content):
+This is ONE Edit call. The PostToolUse hook fires exactly once and sees a file ≤200L.
+
+**Alternative when old_string uniqueness is hard to guarantee (large unchanged preamble):**
+Use the Write tool instead of Edit — same single-operation guarantee:
 ```
-Edit(file=<notebook_path>,
-     old_string=<last line of existing file content>,
-     new_string=<last line>\n\n## c<N+1> · <ISO-timestamp>\n<new cycle content ≤60L>)
+Write(path=<notebook_path>, content=<final settled body from Step 1>)
 ```
+
+**What is NOT allowed:**
+- Edit to delete oldest section → then a SEPARATE Edit to append (two observed writes,
+  intermediate state is over-cap, fires spurious breach signals).
+- Any sequence of 2+ Edits where the file exceeds 200L after the first Edit.
 
 ### Blank-state fallback (AC-4)
 
@@ -68,29 +88,28 @@ Write(path=<notebook_path>, content="# <Agent> — Notebook\n\n## c<NNN> · <ISO
 ```
 This handles first-deploy and pre-existing plain-text notebooks gracefully (forward-only, no retro-write).
 
-### ≤200L bound (AC-5) — hard gate, non-optional
+### ≤200L bound (AC-5) — verification gate (post-write sanity check)
 
-After every write (AC-3 Step 2), run the line-count gate before any commit:
+After the single settled write (AC-3 Step 2), verify the line count as a sanity check:
 
 ```bash
 NB_LINES=$(wc -l < "$NOTEBOOK_PATH" | tr -d ' ')
 if [ "$NB_LINES" -gt 200 ]; then
-  echo "[notebook-write] GUARD: $NB_LINES L > 200 — prune additional section now"
-  # Prune the next-oldest section (whichever is now oldest remaining):
-  #   Edit(file=<notebook_path>, old_string=<full ## oldest block>, new_string="")
-  # Then re-check:
-  NB_LINES=$(wc -l < "$NOTEBOOK_PATH" | tr -d ' ')
-  if [ "$NB_LINES" -gt 200 ]; then
-    echo "[notebook-write] GUARD: still $NB_LINES L — trim current section to ≤60L"
-    # Shorten the current-cycle section content until file ≤200L.
-    # Do NOT skip this step. Do NOT commit until guard passes.
-  fi
+  echo "[notebook-write] BUG: $NB_LINES L > 200 after settled write — Step 1 compose logic failed"
+  # This should NOT happen if AC-3 Step 1 composed correctly.
+  # If it does: re-compose (trim current section further) and perform ONE more settled write.
+  # Do NOT commit until wc -l returns ≤200.
 fi
 ```
 
-**This gate is MANDATORY.** A notebook at >200 L after AC-3 = a blocking violation.
-Do NOT commit the notebook until `wc -l` returns ≤200.
-200L is the file-level cap (3 sections × ~50L each + header). Per-section discipline (≤60L) is the primary enforcement lever.
+**IMPORTANT — AC-5 is a verification step, NOT a remediation loop via extra Edits.**
+The AC-3 settled-write approach means the file should ALWAYS be ≤200L after the single
+write. If AC-5 fires, it means AC-3 Step 1 had a compose error — fix the compose, re-write
+once, not iterative small Edits. Each extra Edit fires the PostToolUse backstop; the goal
+is zero intermediate over-cap states.
+
+200L is the file-level cap (3 sections × ~50L each + header). Per-section discipline (≤60L)
+is the primary enforcement lever at compose time (Step 1f).
 
 ### Two-class notebook contract (AC-6)
 
@@ -102,9 +121,9 @@ Do NOT commit the notebook until `wc -l` returns ≤200.
 **AC-2b — intra-section prune for permanent accumulator headings**
 
 For APPEND-class agents that maintain a permanent named heading (e.g. `## Prior cycles`) whose body accumulates `### ` sub-blocks across cycles:
-1. After AC-3 (outer `## ` prune), count `### ` sub-blocks inside the permanent heading block.
-2. If count ≥ 4 → delete the **oldest** `### ` sub-block inside that heading (Edit: old_string = heading line through next `### ` or `## ` boundary, new_string = "").
-3. This fires BEFORE the AC-5 wc gate.
+1. During AC-3 Step 1e (in-memory, before any write): count `### ` sub-blocks inside the permanent heading block in the composed body.
+2. If count ≥ 4 → drop the **oldest** `### ` sub-block from the in-memory body (heading line through next `### ` or `## ` boundary).
+3. This is done IN MEMORY as part of the single compose-then-write sequence — NOT as a separate Edit call after the settled write.
 
 **Note:** `po` uses OVERWRITE intentionally (single-session state, no historical accumulation). CHEF/developer use APPEND intentionally (rolling history). These are different classes — not a contradiction.
 

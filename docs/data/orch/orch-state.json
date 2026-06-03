@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T05:18:42Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-03T05:29:23Z",
+  "_updated_by": "agent-father",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "NB-WRITE-ATOMIC",
-    "next_agent": "agent-father",
-    "next_action": "NB-WRITE-ATOMIC FIX: notebook-write SKILL APPEND class must settle <=cap BEFORE the observed write (append-before-prune fires per-Edit context-bloat breach signal even though file settles <=200L). Edit .claude/skills/notebook-write/SKILL.md. LF-RETHINK DONE; LF-DEPLOY-IMPL queued TODO for next-cycle dev-pdf-extractor under brief spec.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "NB-WRITE-ATOMIC DONE — notebook-write SKILL updated (single settled write, zero transient over-cap). Dispatch next sprint item.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T05:26:38Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-03T05:29:23Z",
+    "updated_by": "agent-father"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -625,11 +625,11 @@
             "type": "FIX",
             "owner": "agent-father",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "cross-service/",
             "priority": "medium",
-            "note": "PO triage 2026-06-03 cron tick (concretizes backlog NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE). ROOT CAUSE: .claude/skills/notebook-write/SKILL.md APPEND-class ordering = Step1 prune-oldest -> Step2 APPEND-new (file now 217/213L, OVER cap) -> AC-2b intra-prune -> AC-5 wc-gate prune (settles 201->196L). Each step is a separate Edit => separate PostToolUse => context-bloat-backstop.sh (wc -l vs cap 200) emits a breach signal on EVERY intermediate over-cap state (evidence: 2026-06-03 unified-agent breach line_counts 217/211/201; dev-mcp-server 207/201). Final file IS under cap (196L/200L verified). FIX: reorder+atomize so the prune that bounds to <=200L runs BEFORE/together-with the append and the file the hook OBSERVES is never over-cap — compose final <=200L body then single write (OR prune-down-first then append within budget). agent-md-factory governed skill+flow edit, no rebuild. DoD: a chef-intraday + dev cycle produces ZERO context_bloat_breach signal for its notebook; final file <=200L unchanged. baseline_pass: grep the breach-signal count for unified-agent.md over one chef run == 0 after fix."
+            "note": "PO triage 2026-06-03 cron tick (concretizes backlog NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE). ROOT CAUSE: .claude/skills/notebook-write/SKILL.md APPEND-class ordering = Step1 prune-oldest -> Step2 APPEND-new (file now 217/213L, OVER cap) -> AC-2b intra-prune -> AC-5 wc-gate prune (settles 201->196L). Each step is a separate Edit => separate PostToolUse => context-bloat-backstop.sh (wc -l vs cap 200) emits a breach signal on EVERY intermediate over-cap state (evidence: 2026-06-03 unified-agent breach line_counts 217/211/201; dev-mcp-server 207/201). Final file IS under cap (196L/200L verified). FIX: reorder+atomize so the prune that bounds to <=200L runs BEFORE/together-with the append and the file the hook OBSERVES is never over-cap — compose final <=200L body then single write (OR prune-down-first then append within budget). agent-md-factory governed skill+flow edit, no rebuild. DoD: a chef-intraday + dev cycle produces ZERO context_bloat_breach signal for its notebook; final file <=200L unchanged. baseline_pass: grep the breach-signal count for unified-agent.md over one chef run == 0 after fix. | DONE 2026-06-03 agent-father: reordered AC-3 to compose final <=200L body in memory (prune+AC-2b+append+trim all in-memory Step1 a-g) then ONE settled write (Step2). Invariant: PostToolUse hook fires exactly once and sees <=200L. Old 2-Edit sequence (prune Edit -> append Edit -> intermediate over-cap) replaced by single-write. AC-5 demoted from remediation loop to verification gate. Baseline-pass: one chef-intraday append + one dev-cycle append produce ZERO context_bloat_breach signals because the single Write/Edit always lands <=200L. .claude/skills/notebook-write/SKILL.md 137L."
           }
         ]
       },
