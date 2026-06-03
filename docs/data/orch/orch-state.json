@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-03T05:18:42Z",
   "_updated_by": "po",
   "head": {
-    "status": "active",
-    "active_task_id": "BCTC-LAYOUT-FIRST",
-    "next_agent": "agents-architect",
-    "next_action": "LF-DEPLOY ROOT-CAUSE ESCALATED (recurring-bug, 6+ fix commits on generic_md_table_extractor.py) -> LF-RETHINK SPIKE (agents-architect, Tier-0 build_document_map fingerprint rethink, timebox 120) BEFORE any 7th dev-pdf-extractor patch. Also dispatched NB-WRITE-ATOMIC FIX (agent-father) for transient notebook over-cap breach-signal noise. LF-OVERLAY DONE+live. WIP allows both (zone-isolated: pdf-extractor SPIKE vs cross-service skill FIX).",
+    "status": "in_progress",
+    "active_task_id": "NB-WRITE-ATOMIC",
+    "next_agent": "agent-father",
+    "next_action": "NB-WRITE-ATOMIC FIX: notebook-write SKILL APPEND class must settle <=cap BEFORE the observed write (append-before-prune fires per-Edit context-bloat breach signal even though file settles <=200L). Edit .claude/skills/notebook-write/SKILL.md. LF-RETHINK DONE; LF-DEPLOY-IMPL queued TODO for next-cycle dev-pdf-extractor under brief spec.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T05:18:42Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-03T05:26:38Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-02T22:21:59Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-03T05:26:38Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -994,13 +994,24 @@
             "type": "SPIKE",
             "owner": "agents-architect",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/pdf-extractor/",
             "mode": "spike",
             "timebox": 120,
             "question": "WHY does the Tier-0 fingerprint classify FPT Q1 page 3 (a balance-unit START page) as prose @50dpi via single-column detection, pushing schema_page to 4 and breaking AC-LFE-1/2/3/11? Is single-column-fingerprint the wrong discriminator for balance-unit boundaries? Pin the structural fix (fingerprint redesign / multi-signal classifier / unit-boundary anchor) and decide owner-split for the impl task. Block any 7th direct dev-pdf-extractor re-patch until this lands.",
-            "note": "PO triage 2026-06-03 cron tick. LF-DEPLOY CHANGES_REQUESTED (QA cycle-189, commit 39bffdf5). Defect is unit-GROUPING only (stitched liabilities DATA correct: 440=300+400). head.next_agent WAS dev-pdf-extractor — OVERRIDDEN to agents-architect per recurring-bug-escalation policy. Architect brief -> docs/architecture-briefs/. PO scopes LF-DEPLOY-IMPL from brief next cycle."
+            "note": "PO triage 2026-06-03 cron tick. LF-DEPLOY CHANGES_REQUESTED (QA cycle-189, commit 39bffdf5). Defect is unit-GROUPING only (stitched liabilities DATA correct: 440=300+400). head.next_agent WAS dev-pdf-extractor — OVERRIDDEN to agents-architect per recurring-bug-escalation policy. Architect brief -> docs/architecture-briefs/. PO scopes LF-DEPLOY-IMPL from brief next cycle. | DONE 2026-06-03 commit acb96fb5: structural root-cause delivered (brief docs/architecture-briefs/2026-06-03-lf-tier0-fingerprint-rethink.md). Discriminator fault = money-group-density-only page_type. Fix = 3-signal OR (money + account-code + date-header, AC-0 generic regex) + continuity-guard relax. NOT a 7th point-patch."
+          },
+          {
+            "task_id": "LF-DEPLOY-IMPL",
+            "title": "Implement Tier-0 3-signal OR page_type classifier per LF-RETHINK brief §5 (kills the recurring misclassification class)",
+            "type": "FIX",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/pdf-extractor/",
+            "priority": "high",
+            "note": "Spec: docs/architecture-briefs/2026-06-03-lf-tier0-fingerprint-rethink.md §5. Signal B account-code-density + Signal C date-header-presence as OR conditions in _compute_page_fingerprint_50dpi; relax page_type continuity guard for prose-in-table-unit when gutter geometry continuous (behind _ALLOW_PROSE_IN_TABLE_UNIT). AC-LFE-11: add PROVEN-RED synthetic quarantine test. AC-LFE-3 page-41: visually verify BEFORE coding (AC may be wrong not code). Then ops rebuild pdf-extractor → re-run LF-DEPLOY qa gate. Corpus: FPT Q1 p3/5/41 + 14 docs."
           }
         ]
       },
