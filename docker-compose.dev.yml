@@ -41,6 +41,3 @@ services:
       service: mcp-server-dev
       env: dev
 
-volumes:
-  market_data:
-    driver: local

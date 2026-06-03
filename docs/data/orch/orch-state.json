@@ -1853,11 +1853,11 @@
         "title": "docker-compose.dev.yml orphan top-level volumes:market_data: stanza never bound — remove or annotate to avoid misleading future editor",
         "type": "CLEAN",
         "owner": "developer",
-        "status": "BACKLOG",
+        "status": "DONE",
         "size": "XS",
         "zone": "root",
         "priority": "low",
-        "note": "EI-P2-QA gap; isolation currently correct, cleanup only"
+        "note": "EI-P2-QA gap; isolation currently correct, cleanup only. DONE: removed stanza (lines 44-46 `volumes:\\n  market_data:\\n    driver: local`). Verified zero service.volumes: references to market_data within docker-compose.dev.yml before removal. No rebuild needed (dev compose, not running prod stack)."
       },
       {
         "task_id": "BCTC-HIST-VCB-REFINE",
