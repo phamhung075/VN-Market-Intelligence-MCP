@@ -25,8 +25,10 @@ Algorithm (fetch_ocr_text):
     5. Returns empty string when total_pages == 0 or first request fails.
 
 Algorithm (fetch_ocr_pages — LF-EXTRACT Tier 0):
-    Same fetching strategy but returns a list of
-    [{"page_number": N, "text": "..."}, ...] for Tier 0 fingerprinting.
+    Same fetching strategy but uses _MAX_FETCH_PAGES_LF (200) instead of
+    _MAX_FETCH_PAGES (20). Layout-first has no page cap — it processes the
+    entire PDF (e.g. FPT Q1-2026 has 46 pages; fetch must cover all of them).
+    Returns [{"page_number": N, "text": "..."}, ...] for Tier 0 fingerprinting.
     No Tesseract calls added. Host-safe.
 
 DDD layer: infrastructure (makes outbound HTTP via aiohttp — impure).
@@ -47,10 +49,17 @@ from typing import Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
-# Re-use the same MAX_PAGES limit as the use case to avoid over-fetching
-# (the use case processes at most MAX_PAGES pages, so fetching more would
-# produce OCR text for pages whose tables were never extracted).
+# Hard cap for fetch_ocr_text() — matches ExtractMdTablesUseCase.MAX_PAGES (20).
+# Do NOT raise: that use case deliberately limits to 20 pages for host safety.
 _MAX_FETCH_PAGES = 20
+
+# Separate cap for fetch_ocr_pages() used by ExtractLayoutFirstUseCase (LF-EXTRACT).
+# Layout-first processes the ENTIRE PDF with no page limit — the Tier 0 fingerprint
+# loop iterates range(1, total_pages+1) so capping ocr-page fetch at 20 silently
+# truncates to 20 OCR pages and builds a 20-page document map even for 46-page PDFs.
+# Fix: FU-FPT-OCR-PAGES-20-46 — raise to 200 (covers any real BCTC report).
+# Host-safe: these calls are cheap HTTP fetches; no Tesseract involved.
+_MAX_FETCH_PAGES_LF = 200
 
 # Page-break marker inserted between concatenated pages (human-readable).
 _PAGE_SEPARATOR = "\n\n---\n\n"
@@ -235,8 +244,18 @@ class OcrTextFetchClient:
                 if total_pages == 0:
                     return []
 
-                pages_to_fetch = min(total_pages, _MAX_FETCH_PAGES)
+                # Use _MAX_FETCH_PAGES_LF (200) here — layout-first has no page
+                # cap so we must fetch ALL stored pages (fix FU-FPT-OCR-PAGES-20-46).
+                pages_to_fetch = min(total_pages, _MAX_FETCH_PAGES_LF)
                 result: List[Dict] = []
+
+                logger.info(
+                    "OcrTextFetchClient.fetch_ocr_pages: report_id=%s total_pages=%d "
+                    "fetching up to %d (LF cap)",
+                    report_id,
+                    total_pages,
+                    _MAX_FETCH_PAGES_LF,
+                )
 
                 # Include page 1
                 first_text = str(first_data.get("text_content", "")).strip()
