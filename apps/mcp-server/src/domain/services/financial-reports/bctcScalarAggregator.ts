@@ -96,6 +96,10 @@ export interface AggregatorRow {
  *     code "40" → financing_cf        (Lưu chuyển tiền từ HĐ tài chính) ← NEW; section filter
  *   general/balance_sheet section:
  *     code "110" → cash               (Tiền và các khoản tương đương tiền) ← NEW
+ *     code "321" → short_term_debt    (Vay và nợ thuê tài chính ngắn hạn) ← FIX-DE-1
+ *     code "319" → short_term_debt    (Vay ngắn hạn — older VAS layout; /vay/i label hint) ← FIX-DE-1
+ *     code "339" → long_term_debt     (Vay và nợ thuê tài chính dài hạn) ← FIX-DE-1
+ *     code "334" → long_term_debt     (Vay dài hạn — older layout; /vay/i label hint) ← FIX-DE-1
  *   Derived:
  *     ebitda         = operating_profit + depreciation_amortization
  *     free_cash_flow = operating_cf + capex_raw (capex_raw is negative, so result = OCF - |capex|)
@@ -135,6 +139,13 @@ export interface ScalarAggregate {
   capex: number | null;
   /** Derived: operating_cf + capex (capex is negative, so this = OCF - |capex|). Null if either absent. */
   free_cash_flow: number | null;
+  // FIX-DE-1: debt decomposition fields (missed in BEQ-3 column audit)
+  /** VAS code 321 (current standard) or 319 fallback (older layout, /vay/i label hint required).
+   *  Vay và nợ thuê tài chính ngắn hạn. Million VND. Null if absent. */
+  short_term_debt: number | null;
+  /** VAS code 339 (current standard) or 334 fallback (older layout, /vay/i label hint required).
+   *  Vay và nợ thuê tài chính dài hạn. Million VND. Null if absent. */
+  long_term_debt: number | null;
 }
 
 /**
@@ -152,6 +163,9 @@ export interface ScalarAggregate {
  *
  * FU-6e: bank report type → notApplicable = ["gross_profit", "current_assets",
  * "gross_margin_pct"]. Corporate → notApplicable = [].
+ * FIX-DE-1: bank path also adds "short_term_debt", "long_term_debt" to notApplicable —
+ * banks report borrowings in B02-TCTD form (different codes), never VAS 321/339.
+ * Ensures stale OCR-parse values are cleared on re-finalize for bank reports.
  *
  * Report-type detection: bank path is triggered when code "10" (corporate net_revenue)
  * is absent from the row set — the same branch the aggregator uses to fall through to
@@ -559,6 +573,9 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     financing_cf: null,
     capex: null,
     free_cash_flow: null,
+    // FIX-DE-1: debt decomposition fields
+    short_term_debt: null,
+    long_term_debt: null,
   };
 
   if (rows.length === 0) {
@@ -585,8 +602,12 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
   //         gross_margin_pct (derived from gross_profit — invalid without it).
   //   CORPORATE: [] (banks-have-that-corps-lack: none relevant at this time).
   const isBankPath = isBankFormFromRows(rows);
+  // FIX-DE-1: bank path adds short_term_debt/long_term_debt to notApplicable.
+  // Banks report borrowings via B02-TCTD form codes (not VAS 321/339).
+  // Adding to notApplicable ensures finalizeBctcRefineTool clears stale OCR values
+  // on re-finalize, preventing old garbage from persisting in bank reports.
   const notApplicable: string[] = isBankPath
-    ? ["gross_profit", "current_assets", "gross_margin_pct"]
+    ? ["gross_profit", "current_assets", "gross_margin_pct", "short_term_debt", "long_term_debt"]
     : [];
 
   // ── Helper: apply unit scale and return null for null inputs ─────────────────
@@ -739,6 +760,51 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
       ? operating_cf + capex
       : null;
 
+  // ── FIX-DE-1: Debt decomposition scalars ───────────────────────────────────────
+  // short_term_debt: VAS code 321 (current standard) — "Vay và nợ thuê tài chính ngắn hạn"
+  //   Fallback: code 319 (older VAS layout, still used by VNM) — "Vay ngắn hạn"
+  //   IMPORTANT: code 319 is used by SOME issuers as "Phải trả ngắn hạn khác" (other payables)
+  //   and by OTHERS as "Vay ngắn hạn" (short-term borrowings). The /vay/i labelHint is
+  //   MANDATORY for 319 to exclude the "Phải trả" row (which has no "vay" in its label).
+  //   Section filter: try 'general' first (FPT layout), then 'balance_sheet' (VNM layout).
+  //   Banks skip this entirely — short_term_debt is in notApplicable for bank path.
+  let short_term_debt: number | null = null;
+  if (!isBankPath) {
+    // Code 321: current standard (FPT pattern) — no label hint needed (unique enough)
+    short_term_debt =
+      scale(findByCode(rows, "321", undefined, "general")) ??
+      scale(findByCode(rows, "321", undefined, "balance_sheet")) ??
+      scale(findByCode(rows, "321")); // broad last-resort
+    if (short_term_debt === null) {
+      // Code 319 fallback: older VAS layout (VNM pattern).
+      // /vay/i label hint is MANDATORY — excludes "Phải trả ngắn hạn khác" rows
+      // where 319 maps to other short-term payables on some issuers.
+      short_term_debt =
+        scale(findByCode(rows, "319", /vay/i, "balance_sheet")) ??
+        scale(findByCode(rows, "319", /vay/i, "general"));
+    }
+  }
+
+  // long_term_debt: VAS code 339 (current standard) — "Vay và nợ thuê tài chính dài hạn"
+  //   Fallback: code 334 (older VAS layout) — "Vay dài hạn"
+  //   /vay/i label hint for 334 fallback to exclude non-borrowing long-term obligation rows.
+  //   Banks skip this entirely — long_term_debt is in notApplicable for bank path.
+  let long_term_debt: number | null = null;
+  if (!isBankPath) {
+    // Code 339: current standard (FPT pattern) — no label hint needed (unique enough)
+    long_term_debt =
+      scale(findByCode(rows, "339", undefined, "general")) ??
+      scale(findByCode(rows, "339", undefined, "balance_sheet")) ??
+      scale(findByCode(rows, "339")); // broad last-resort
+    if (long_term_debt === null) {
+      // Code 334 fallback: older VAS layout.
+      // /vay/i label hint excludes non-borrowing obligation rows (e.g. "Phải trả dài hạn").
+      long_term_debt =
+        scale(findByCode(rows, "334", /vay/i, "balance_sheet")) ??
+        scale(findByCode(rows, "334", /vay/i, "general"));
+    }
+  }
+
   // EPS / diluted_eps: no standard VAS code present in FPT/ACB corpus.
   // Kept null — future work BCTC-EPS-FOOTNOTE.
   const eps: number | null = null;
@@ -780,6 +846,9 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     financing_cf,
     capex,
     free_cash_flow,
+    // FIX-DE-1: debt decomposition
+    short_term_debt,
+    long_term_debt,
   };
 
   // ── Balance-identity invariant (fail-loud gate) ───────────────────────────────
