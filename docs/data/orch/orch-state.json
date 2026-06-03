@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-03T17:07:27Z",
   "_updated_by": "po",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-CTG-1",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-team tick 2026-06-03 ~18:0xZ: CTG escalation (8 cycles) triaged -> SPIKE-BCTC-CTG-ATTACHMENT-FETCH DONE (517a9056, verdict DEV-FIXABLE: full statement exists, cover-letter pulled). Promoted sprint BCTC-FETCH-CORRECTNESS (3 defects). Dispatching FIX-CTG-1 (Defects B+C, dev-mcp-server) now; FIX-CTG-2 (VPS, ops-vps) + FIX-CTG-3 (re-fetch materialization, async) queued. FPT ESC-3 + ACB deferred (self-managing).",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "dev-team tick 2026-06-03 ~18:3xZ: CTG escalation triaged -> spike DEV-FIXABLE -> sprint BCTC-FETCH-CORRECTNESS. FIX-CTG-1 (Defects B+C, discovery layer) DONE-LIVE-VERIFIED (ddf37a3b): deployed fetcher returns CTG correct-quarter hop-nhat full-statement URL live. OPEN next tick: FIX-CTG-2 (Defect A VPS Playwright cover-letter discrimination, dev-vps-crawls + ops-vps deploy) + FIX-CTG-3 (purge bad URL, re-enrich CTG + Defect-B-corrupted Q3/Q2-2025 rows, re-fetch+re-extract, verify get_bctc_full(CTG) real B02-TCTD data — async VPS). head idle.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T18:26:44Z",
+    "updated_at": "2026-06-03T18:36:45Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T18:26:44Z",
+    "_updated_at": "2026-06-03T18:36:45Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1709,7 +1709,7 @@
             "title": "mcp-server hsx.vn path: (Defect B) bctcQueueEnricherJob must SELECT + pass period_year/period_quarter to discoverHosePdfUrls (currently discards them -> defaults year=2026,Q4 -> writes wrong-quarter URLs into queue rows, observed corrupting Q3-2025+Q2-2025 rows); (Defect C) fetchHsxBctcUrls must filter by quarter via the 'time' field (01.2025=Q1) and prefer type='Quý' + fileName containing 'hop nhat' (full consolidated statement) over cover-letter/notice PDFs",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "high",
@@ -1717,7 +1717,7 @@
               "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts",
               "apps/mcp-server/src/infrastructure/fetchers/hsxBctcFetcher.ts"
             ],
-            "note": "[dev-team 2026-06-03T18:26:44Z] core fix dispatched IN_PROGRESS this tick. Defects B+C in apps/mcp-server (in-context single zone). DoD: enricher passes year/quarter; hsxBctcFetcher returns the correct-quarter 'hop nhat' full-statement URL for CTG (the 6.34MB Q1-2026 one), not a cover-letter/wrong-quarter URL; unit tests for quarter-filter + hop-nhat preference + enricher pass-through. ops rebuild + dispatcher verifies discovery returns the right URL. Does NOT itself re-fetch CTG (that is FIX-CTG-3, async VPS)."
+            "note": "[dev-team 2026-06-03T18:26:44Z] core fix dispatched IN_PROGRESS this tick. Defects B+C in apps/mcp-server (in-context single zone). DoD: enricher passes year/quarter; hsxBctcFetcher returns the correct-quarter 'hop nhat' full-statement URL for CTG (the 6.34MB Q1-2026 one), not a cover-letter/wrong-quarter URL; unit tests for quarter-filter + hop-nhat preference + enricher pass-through. ops rebuild + dispatcher verifies discovery returns the right URL. Does NOT itself re-fetch CTG (that is FIX-CTG-3, async VPS).[dev-team 2026-06-03T18:36:45Z] DONE-LIVE-VERIFIED commit ddf37a3b (9 new tests, 67/67, tsc clean). ops rebuilt mcp-server img 18:34:22Z (period_quarter SELECT + hop-nhat ranking live in-container). ROUTER LIVE-VERIFY (invoked deployed fetchHsxBctcUrls in-container): CTG 2026 Q1 -> rank[0]='BCTC hop nhat Quy I.2026 ...signed.pdf' (consolidated full statement, correct quarter, NOT the 524KB cover letter), rank[1]=rieng le; CTG Q4 -> rank[0]='BCTC hop nhat Quy IV.2025' (quarter filter Q4->IV correct). Defects B (enricher year/quarter pass-through) + C (fetcher quarter-filter + hop-nhat preference) fixed live at the DISCOVERY layer. NOTE: this fixes URL SELECTION only — CTG queue still holds the old owa.hnx.vn cover-letter source_url + the Defect-B-corrupted Q3/Q2-2025 rows; actual re-fetch+re-extract+get_bctc_full(CTG) real-data is FIX-CTG-3 (async VPS)."
           },
           {
             "task_id": "FIX-CTG-2",
