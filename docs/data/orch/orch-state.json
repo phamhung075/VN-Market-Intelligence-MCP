@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-03T15:11:24Z",
   "_updated_by": "po",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-DE-1",
-    "next_agent": "dev-mcp-server",
-    "next_action": "dev-team tick 2026-06-03 ~15:09Z: 9 signals drained, all non-dev-actionable (5 bctc-product routine + 4 cowork heartbeats), 0 NEW queue rows. PO triage: FIX-DE chain is top priority (restores corpus-wide D/E served N/A everywhere; architect DB-proven mapping gap in bctcScalarAggregator). Dispatched FIX-DE-1 (head, S, dev-mcp-server) IN_PROGRESS. NEXT: dev-mcp-server runs FIX-DE-1 (add short/long_term_debt to ScalarAggregate + VAS 321/319/339/334 mappings, /vay/i hint on 319, banks->notApplicable). Then FIX-DE-2 (finalize BLOCK-1 wire + blob sync) -> ops rebuild -> FIX-DE-3 (re-finalize 5 DONE reports, DoD FPT D/E ~0.40x). FIX-DE-4 (OCR-path code remap) parallel/independent. WIP 1/2.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "dev-team tick 2026-06-03 ~15:09Z DONE. FIX-DE chain (1 fdd2363a + 2 b5286dba + 4 5addfc37) shipped + ops-rebuilt + corpus re-finalized + ROUTER-LIVE-VERIFIED: FPT D/E now real 0.40x (was false N/A). HPG/DHG/SHB stay PUB-5 gated (pre-existing low conf, not this chain). head idle. NEXT: PO triage FU-BACKFILL-DE-SYNC(med, make reflow definitif via real tool) + backlog FU-FPT-OCR-PAGES-20-46(med), FU-ORPHAN-TOLERANCE(low), BAL-1e-DEV(low), FLEET-HOST-SAFETY 2 low.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T15:11:24Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-03T16:03:24Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T15:11:24Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-03T16:03:24Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -302,56 +302,67 @@
             "title": "bctcScalarAggregator.ts — add short_term_debt/long_term_debt to ScalarAggregate + VAS 321/319/339/334 mappings with section filters (319 needs /vay/i label hint — not all 319 are borrowings); banks add these to notApplicable so stale OCR cleared on re-finalize",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "depends": [
               "FU-DE-DECOMP-MAPPING"
             ],
-            "note": "[architect fanout] aggregator field+mapping. Section-filter + /vay/i hint on 319. | [PO 2026-06-03T15:11Z DISPATCHED] Binding head of FIX-DE chain (1->2->3 sequential same zone apps/mcp-server; FIX-DE-4 parallel-independent). Triage: top priority — restores corpus-wide D/E (currently N/A on every confident report, architect-DB-proven mapping gap not extraction). WIP<=2: only FIX-DE-1 dispatched IN_PROGRESS this tick; FIX-DE-2 unblocks on FIX-DE-1 commit, FIX-DE-3 follows after ops rebuild. Channels clean (BUG/WORK no new, list_unresolved_reports empty)."
+            "note": "[architect fanout] aggregator field+mapping. Section-filter + /vay/i hint on 319. | [PO 2026-06-03T15:11Z DISPATCHED] Binding head of FIX-DE chain (1->2->3 sequential same zone apps/mcp-server; FIX-DE-4 parallel-independent). Triage: top priority — restores corpus-wide D/E (currently N/A on every confident report, architect-DB-proven mapping gap not extraction). WIP<=2: only FIX-DE-1 dispatched IN_PROGRESS this tick; FIX-DE-2 unblocks on FIX-DE-1 commit, FIX-DE-3 follows after ops rebuild. Channels clean (BUG/WORK no new, list_unresolved_reports empty). | [dev-team 2026-06-03T15:2xZ DONE commit fdd2363a] ScalarAggregate +short_term_debt/long_term_debt; aggregateScalars maps VAS 321 (321 primary, 319 fallback ONLY if label /vay/i), 339 (339 primary, 334 fallback /vay/i); banks->notApplicable; 7 tests GREEN (39 scalar suite, 0 fail), tsc clean. AGGREGATOR-ONLY: live D/E UNCHANGED (no finalize wiring yet)."
           },
           {
             "task_id": "FIX-DE-2",
             "title": "finalizeBctcRefineTool.ts — wire debt scalars through BLOCK-1 UPDATE + balance_sheet_json nested-key blob sync (BLOCK-3 already reads short/long_term_debt for D/E but reads the zeros BLOCK-1 never replaced)",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "depends": [
               "FIX-DE-1"
             ],
-            "note": "[architect fanout] finalize BLOCK-1 wiring + blob sync."
+            "note": "[architect fanout] finalize BLOCK-1 wiring + blob sync. | [dev-team 2026-06-03T15:2xZ DISPATCHED] FIX-DE-1 committed -> dep satisfied. finalizeBctcRefineTool.ts BLOCK-1 UPDATE + balance_sheet_json blob sync for short/long_term_debt. Then ops rebuild -> FIX-DE-3 corpus re-finalize + live verify. | [dev-team 2026-06-03T15:3xZ DONE commit b5286dba] finalizeBctcRefineTool BLOCK-1 +short/long_term_debt UPDATE entries; balance_sheet_json blob sync (currentLiabilities.shortTermDebt + longTermLiabilities.longTermDebt); no migration (cols pre-existed bctc-schema L768-769); 7 tests GREEN (DE2-1 FPT D/E~0.401, bank null-clear); 2 pre-existing unrelated fails (TRUST-RED/HC) confirmed by stash. CODE correct; live still N/A until rebuild + FIX-DE-3 reflow."
           },
           {
             "task_id": "FIX-DE-3",
             "title": "Corpus re-finalize 5 DONE reports (FPT/VNM/HPG/DHG/SHB) post-rebuild so live D/E shows real values (FPT expect ~0.40x = (14,491+1,605)/40,122). DoD: get_bctc_full(FPT) D/E ~0.40x not N/A; VNM real D/E; bank reports stay clean",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "depends": [
               "FIX-DE-2"
             ],
-            "note": "[architect fanout] corpus re-finalize — LIVE D/E real values. needs ops rebuild first."
+            "note": "[architect fanout] corpus re-finalize — LIVE D/E real values. needs ops rebuild first. | [dev-team 2026-06-03T15:4xZ DISPATCHED] All 3 code fixes (DE-1 fdd2363a, DE-2 b5286dba, DE-4 5addfc37) committed. NEXT: ops rebuild mcp-server (single-service, named-volume safe, grep-confirm debt-mapping string present) -> then re-finalize FPT/VNM/HPG/DHG/SHB + dispatcher live-verify get_bctc_full D/E (FPT ~0.40x, HPG real ~code319, banks clean). | [dev-team 2026-06-03T16:0xZ DONE-LIVE-VERIFIED] ops rebuilt mcp-server (img 15:51Z, 3 fixes grep-confirmed live). Re-derived 5 reports. ROUTER RAW-VERIFIED (own get_bctc_full + direct DB read): FPT 2026Q1 D/E=0.401 served live 0.40x conf81% PUBLISHED (DoD ANCHOR MATCHED, was N/A); VNM D/E 0.003 (real 102 tỷ ST borrowings, honest); HPG std now code-319=38,532M not spurious code-311 (PUB-5 gated 44%, withheld); DHG no debt codes ->honest N/A (gated); SHB bank ->NULL (gated). Chain delivered real live value. Caveat: reflow used hand-rolled BLOCK-1 replica (backfill tool lacks debt cols) -> FU-BACKFILL-DE-SYNC queued."
           },
           {
             "task_id": "FIX-DE-4",
             "title": "balanceSheetExtractor.ts — fix OCR-path codes 311->321/319, 334->339/334 fallback. HPG short_term_debt=38,729 is a SPURIOUS code-311 (accounts payable 'Phai tra nguoi ban') match, NOT borrowings; real HPG short-term borrowings on code 319 (38,532 tỷ) never read",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "DONE",
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "medium",
             "depends": [
               "FU-DE-DECOMP-MAPPING"
             ],
-            "note": "[architect fanout] OCR-path code remap; corrects the spurious HPG positive-control."
+            "note": "[architect fanout] OCR-path code remap; corrects the spurious HPG positive-control. | [dev-team 2026-06-03T15:3xZ DISPATCHED before rebuild so ONE rebuild covers DE-1+2+4] balanceSheetExtractor.ts OCR-path code remap 311->321/319, 334->339/334 fallback (corrects spurious HPG code-311 accounts-payable match; real HPG ST borrowings on 319=38,532 tỷ). | [dev-team 2026-06-03T15:4xZ DONE commit 5addfc37] balanceSheetExtractor shortTermDebt 311->321 primary + 319 label-only /vay ngắn hạn/ fallback; longTermDebt 339 primary + 334 fallback; mirrors FIX-DE-1; 5 tests (1 RED->GREEN VNM-like 319-fallback), tsc clean, 75 extractor tests pass."
+          },
+          {
+            "task_id": "FU-BACKFILL-DE-SYNC",
+            "title": "backfill_bctc_scalars UPDATE list is missing short_term_debt/long_term_debt (FIX-DE-2 added them only to finalizeBctcRefineTool BLOCK-1) — so the force_reflow backfill path CANNOT re-derive debt scalars for already-DONE reports; FIX-DE-3 had to hand-roll a BLOCK-1-replica docker-exec script for the 5-report reflow. Mirror the FIX-DE-2 debt-column UPDATE entries (+ blob sync) into backfill_bctc_scalars so corpus reflow is definitif via a real tool, not a one-shot script. Then re-verify FPT D/E still ~0.40x via the tool path.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "medium",
+            "note": "[architect-gap surfaced by FIX-DE-3 2026-06-03] definitif-fix follow-up so corpus reflow doesn't need a hand script."
           }
         ]
       },
