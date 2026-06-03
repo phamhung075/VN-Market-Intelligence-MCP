@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T21:26:52Z",
+    "_updated_at": "2026-06-03T21:27:39Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1764,6 +1764,20 @@
               "FIX-CTG-2"
             ],
             "note": "Surfaced by router raw-verify of the VPS deploy run (ops mis-validated an office-relocation QĐ as a financial statement). [dev-vps-crawls 2026-06-03] DONE: rank>=2-only guard added to _parse_article_ids_and_titles; 27/27 tests pass (2 new: test_parse_rank2_only_returns_none + test_parse_rank1_non_consolidated_still_resolves). VPS deploy pending (ops-vps step)."
+          },
+          {
+            "task_id": "FIX-CTG-2b-DEPLOY",
+            "title": "ops-vps: scp the updated vps-scripts/discover-bctc-urls-browser.py (commit cc4ed657, rank>=2→NONE guard) to Vinahost VPS /root/discover-bctc-urls-browser.py so the residual fix goes live. Low pri — primary CTG path = hsx.vn (already live). Verify a CTG discover run no longer returns the office-relocation QĐ (returns NONE → falls through).",
+            "type": "DEPLOY",
+            "owner": "ops-vps-fetch",
+            "status": "TODO",
+            "size": "XS",
+            "zone": "vps-scripts/",
+            "priority": "low",
+            "depends": [
+              "FIX-CTG-2b"
+            ],
+            "note": "Queued 2026-06-03T21:27:39Z by dev-team — code+tests+commit DONE (cc4ed657, 27/27); only the VPS file copy remains."
           }
         ]
       },
