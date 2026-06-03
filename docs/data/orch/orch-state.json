@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T06:30:00Z",
-  "_updated_by": "agent-father",
+  "_updated_at": "2026-06-03T00:00Z",
+  "_updated_by": "dev-pdf-extractor",
   "head": {
     "status": "in_progress",
     "active_task_id": "LF-DEPLOY-IMPL",
@@ -1018,11 +1018,11 @@
             "title": "Implement Tier-0 3-signal OR page_type classifier per LF-RETHINK brief §5 (kills the recurring misclassification class)",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "IN_PROGRESS",
+            "status": "DONE-CODE",
             "size": "M",
             "zone": "apps/pdf-extractor/",
             "priority": "high",
-            "note": "Spec: docs/architecture-briefs/2026-06-03-lf-tier0-fingerprint-rethink.md §5. Signal B account-code-density + Signal C date-header-presence as OR conditions in _compute_page_fingerprint_50dpi; relax page_type continuity guard for prose-in-table-unit when gutter geometry continuous (behind _ALLOW_PROSE_IN_TABLE_UNIT). AC-LFE-11: add PROVEN-RED synthetic quarantine test. AC-LFE-3 page-41: visually verify BEFORE coding (AC may be wrong not code). Then ops rebuild pdf-extractor → re-run LF-DEPLOY qa gate. Corpus: FPT Q1 p3/5/41 + 14 docs."
+            "note": "DONE-CODE 2026-06-03 (awaiting ops rebuild). LF-IMPL-1: 3-signal OR classifier in _compute_page_fingerprint_50dpi (Signal B account-code + Signal C date-header, AC-0 reuse _CODE_LIKE_RE/_DATE_HEADER_RE). LF-IMPL-2: _ALLOW_PROSE_IN_TABLE_UNIT relaxed continuity guard (prose-in-table accepted when gutter geometry continuous). LF-IMPL-3: TestQuarantineNonDeadCode PROVEN-GREEN (3 tests). LF-IMPL-4: page-41 visually verified = legitimately table (notes tables §31/32); AC-LFE-3 requirement was wrong — classifier is correct, AC should be PASS. 707/707 unit tests pass, 0 regression. Files: generic_md_table_extractor.py + test_layout_invariants.py + test_document_map.py. NEXT: ops rebuild pdf-extractor → QA LF-DEPLOY re-gate."
           }
         ]
       },

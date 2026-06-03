@@ -1090,3 +1090,276 @@ class TestInvariant3DistinctLabelValueRequirement:
         ]
         ok, reason = check_no_orphan_rows(rows)
         assert ok, f"Correctly extracted row must pass Invariant 3, got: {reason}"
+
+
+# ===========================================================================
+# LF-IMPL-1 — Signal B / Signal C page classifier unit tests (AC-LFE-1/2)
+# ===========================================================================
+
+class TestMultiSignalPageClassifier:
+    """
+    LF-IMPL-1: tests for the three-signal OR page classifier introduced in
+    _compute_page_fingerprint_50dpi.
+
+    Signal A: money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS (existing)
+    Signal B: account_code_count >= _ACCOUNT_CODE_MIN_FOR_TABLE (NEW — AC-0)
+    Signal C: date_header_count >= _DATE_HEADER_MIN_FOR_TABLE (NEW — AC-0)
+
+    page_type = "table" if (signal_A OR signal_B OR signal_C) else "prose"
+
+    All tests are pure text-signal tests (no real PDF, no Tesseract, no PIL).
+    AC-0: test data uses generic financial patterns (no BCTC-specific strings).
+    """
+
+    def _classify(self, stored_text: str) -> str:
+        """
+        Simulate the three-signal page_type classification logic from
+        _compute_page_fingerprint_50dpi using the same regex constants.
+        """
+        from infrastructure.generic_md_table_extractor import (
+            _MONEY_GROUP_RE,
+            _CODE_LIKE_RE,
+            _DATE_HEADER_RE,
+            _TABLE_PAGE_MIN_MONEY_GROUPS,
+            _ACCOUNT_CODE_MIN_FOR_TABLE,
+            _DATE_HEADER_MIN_FOR_TABLE,
+        )
+        if not stored_text or stored_text.strip() == "":
+            return "blank"
+        money_group_count = len(_MONEY_GROUP_RE.findall(stored_text))
+        account_code_count = len(_CODE_LIKE_RE.findall(stored_text))
+        date_header_count = len(_DATE_HEADER_RE.findall(stored_text))
+        signal_a = money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS
+        signal_b = account_code_count >= _ACCOUNT_CODE_MIN_FOR_TABLE
+        signal_c = date_header_count >= _DATE_HEADER_MIN_FOR_TABLE
+        return "table" if (signal_a or signal_b or signal_c) else "prose"
+
+    # -----------------------------------------------------------------------
+    # Signal A: existing money-group density (regression guard — must not regress)
+    # -----------------------------------------------------------------------
+
+    def test_signal_a_dense_money_page_is_table(self):
+        """Signal A: page with 3+ money-group tokens → table."""
+        text = "100 58.102.970 41.527.873.060.120 30.024.547.484.655"
+        assert self._classify(text) == "table"
+
+    def test_signal_a_below_threshold_alone_is_prose(self):
+        """Signal A alone: only 2 money groups, no codes/dates → prose."""
+        text = "Some narrative 58.102.970 and 41.527 more text without codes"
+        # 2 money groups (58.102.970 and 41.527 — actually 41.527 is ≥1k → 1 token)
+        # Let's use a clear case
+        text = "Ordinary text with one value 1.234 and nothing else structured"
+        assert self._classify(text) == "prose"
+
+    # -----------------------------------------------------------------------
+    # Signal B: account-code density (NEW — core fix for balance-unit START)
+    # -----------------------------------------------------------------------
+
+    def test_signal_b_account_codes_classify_as_table(self):
+        """
+        Signal B: balance-unit START page with 3+ 3-digit account codes and
+        few money-group values → must be classified 'table'.
+
+        This is the FPT Q1 page-3 scenario: the heading block occupies the top
+        half; actual data rows may have zero or few money tokens in stored OCR text.
+        """
+        # Simulate a balance-unit START page: heading + column headers + 1 data row
+        text = (
+            "BAO CAO TINH HINH TAI CHINH HOP NHAT\n"
+            "Tai ngay 31 thang 03 nam 2026\n"
+            "Don vi: VND\n"
+            "TÀI SẢN     Mã số  Thuyết minh\n"
+            "A. TÀI SẢN NGẮN HẠN         100\n"
+            "I. Tiền và khoản tương đương  110\n"
+            "II. Đầu tư tài chính ngắn hạn 120\n"
+        )
+        result = self._classify(text)
+        assert result == "table", (
+            f"Balance-unit START page with 3 account codes (100/110/120) must be "
+            f"classified 'table' via Signal B. Got: {result!r}. "
+            f"This is the FPT Q1 page-3 regression — AC-LFE-1 depends on this."
+        )
+
+    def test_signal_b_exactly_at_threshold(self):
+        """Signal B: exactly _ACCOUNT_CODE_MIN_FOR_TABLE (3) codes → table."""
+        text = "Label 100 SubA 200 SubB 300 no numbers"
+        result = self._classify(text)
+        assert result == "table", (
+            f"Exactly 3 account codes must fire Signal B → table. Got: {result!r}"
+        )
+
+    def test_signal_b_below_threshold_prose(self):
+        """Signal B: only 2 3-digit codes and no money/date signals → prose."""
+        text = "Item 100 another 200 without dates or money groups"
+        # 2 codes only — below threshold of 3
+        result = self._classify(text)
+        assert result == "prose", (
+            f"Only 2 account codes should not fire Signal B alone. Got: {result!r}"
+        )
+
+    # -----------------------------------------------------------------------
+    # Signal C: date-header presence (NEW — cheapest and most reliable)
+    # -----------------------------------------------------------------------
+
+    def test_signal_c_date_header_classifies_as_table(self):
+        """
+        Signal C: a page containing at least one DD/MM/YYYY date header must be
+        classified as 'table' even without money groups or account codes.
+
+        This fires on balance-unit START pages that have date column headers
+        (e.g. '31/03/2026  31/12/2025') but whose OCR text has few money values.
+        """
+        text = (
+            "Report Title\n"
+            "31/03/2026  31/12/2025\n"
+            "Unit: VND\n"
+        )
+        result = self._classify(text)
+        assert result == "table", (
+            f"Page with a date header (31/03/2026) must be classified 'table' via "
+            f"Signal C. Got: {result!r}. AC-LFE-1 primary fix."
+        )
+
+    def test_signal_c_multiple_dates(self):
+        """Signal C: multiple dates → still table."""
+        text = "01/01/2025 and 31/12/2025 comparison"
+        assert self._classify(text) == "table"
+
+    def test_signal_c_no_date_prose(self):
+        """Signal C: no date header, no money, no codes → prose."""
+        text = "This is a cover page with no financial structure at all."
+        assert self._classify(text) == "prose"
+
+    # -----------------------------------------------------------------------
+    # Blank page
+    # -----------------------------------------------------------------------
+
+    def test_empty_text_is_blank(self):
+        """Empty stored text → blank (not prose/table)."""
+        assert self._classify("") == "blank"
+
+    def test_whitespace_only_is_blank(self):
+        """Whitespace-only text → blank."""
+        assert self._classify("   \n  \t  ") == "blank"
+
+    # -----------------------------------------------------------------------
+    # Signal OR combinations
+    # -----------------------------------------------------------------------
+
+    def test_all_three_signals_fire_table(self):
+        """All three signals present → table."""
+        text = (
+            "31/03/2026 31/12/2025\n"
+            "100 200 300\n"
+            "58.102.970 41.527.873.060 30.024.547.484\n"
+        )
+        assert self._classify(text) == "table"
+
+    def test_only_signal_b_fires_table(self):
+        """Only Signal B fires (3 codes, no date, no money groups) → table."""
+        text = "Code 100 SubA 200 SubB 300 SubC total not VND"
+        # 3 codes (100, 200, 300), no date pattern, no money-group pattern
+        assert self._classify(text) == "table"
+
+    def test_only_signal_c_fires_table(self):
+        """Only Signal C fires (1 date, <3 codes, <3 money groups) → table."""
+        text = "For period ending 31/03/2026 with no detailed data yet"
+        # 1 date, no 3-digit codes, no money groups
+        assert self._classify(text) == "table"
+
+
+# ===========================================================================
+# LF-IMPL-2 — Prose-in-table-unit continuity guard tests
+# ===========================================================================
+
+class TestProseInTableUnitGuard:
+    """
+    LF-IMPL-2: tests for the relaxed continuity guard (_ALLOW_PROSE_IN_TABLE_UNIT).
+
+    When _ALLOW_PROSE_IN_TABLE_UNIT=True, a "prose" page encountered inside an
+    ongoing "table" unit is NOT immediately treated as a unit break — instead
+    _fingerprints_continuous() is evaluated.  If gutter geometry is continuous,
+    the page is accepted as a continuation.
+
+    These tests use the _fingerprints_continuous function directly to verify
+    the geometry-continuity check that guards the prose-in-table acceptance.
+
+    AC-0: all inputs are geometric (gutter fractions, row pitch).
+    """
+
+    def _fp(self, page_type: str, gutter_count: int = 3,
+            gutter_x_fractions: list = None, row_pitch: float = 12.0) -> dict:
+        return {
+            "page_type": page_type,
+            "gutter_count": gutter_count,
+            "gutter_x_fractions": gutter_x_fractions or [0.35, 0.47, 0.75],
+            "row_pitch_px_at_50dpi": row_pitch,
+        }
+
+    def test_prose_page_with_continuous_gutter_would_continue(self):
+        """
+        LF-IMPL-2: when the build_document_map prose_in_table guard fires,
+        the prose page fingerprint is coerced to page_type='table' before
+        calling _fingerprints_continuous (to bypass the type-mismatch veto
+        in that function and evaluate only gutter geometry continuity).
+
+        This test verifies that a prose fingerprint with identical gutter
+        geometry to the preceding table page, once coerced to page_type='table',
+        passes _fingerprints_continuous — confirming the gutter geometry check
+        accepts the page as a continuation.
+        """
+        from infrastructure.generic_md_table_extractor import _ALLOW_PROSE_IN_TABLE_UNIT
+        fp_table = self._fp("table", gutter_x_fractions=[0.35, 0.47, 0.75])
+        fp_prose = self._fp("prose", gutter_x_fractions=[0.35, 0.47, 0.75])
+
+        # Verify the prose_in_table guard would activate
+        current_page_type = "table"
+        page_type = "prose"
+        prose_in_table = (
+            _ALLOW_PROSE_IN_TABLE_UNIT
+            and current_page_type == "table"
+            and page_type == "prose"
+        )
+        assert prose_in_table is True, "_ALLOW_PROSE_IN_TABLE_UNIT must be True and conditions met"
+
+        # Simulate the coercion: prose fp → page_type='table' for geometry check
+        fp_coerced = dict(fp_prose)
+        fp_coerced["page_type"] = "table"
+
+        # Coerced fingerprint with identical geometry must pass continuity check
+        assert _fingerprints_continuous(fp_table, fp_coerced) is True, (
+            "Prose page coerced to page_type='table' with same gutter geometry "
+            "must pass _fingerprints_continuous — this is the LF-IMPL-2 acceptance condition."
+        )
+
+    def test_prose_page_with_different_gutter_would_break(self):
+        """
+        A prose page with different gutter geometry from the table unit does NOT
+        pass _fingerprints_continuous.  LF-IMPL-2 should break the unit.
+        """
+        fp_table = self._fp("table", gutter_count=3,
+                            gutter_x_fractions=[0.35, 0.47, 0.75])
+        fp_prose = self._fp("prose", gutter_count=1,
+                            gutter_x_fractions=[0.50])
+        assert _fingerprints_continuous(fp_table, fp_prose) is False, (
+            "Prose page with different gutter geometry from table unit must NOT "
+            "pass _fingerprints_continuous — unit should break."
+        )
+
+    def test_blank_page_never_triggers_prose_in_table_guard(self):
+        """Blank pages are handled separately — the prose-in-table guard must not fire."""
+        from infrastructure.generic_md_table_extractor import (
+            _ALLOW_PROSE_IN_TABLE_UNIT,
+        )
+        # Validate the flag semantics: prose_in_table requires page_type == "prose",
+        # so a blank page (page_type == "blank") must never match.
+        current_page_type = "table"
+        page_type = "blank"
+        prose_in_table = (
+            _ALLOW_PROSE_IN_TABLE_UNIT
+            and current_page_type == "table"
+            and page_type == "prose"
+        )
+        assert prose_in_table is False, (
+            "Blank pages must not be accepted via the prose-in-table guard."
+        )

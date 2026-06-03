@@ -2540,6 +2540,26 @@ _ROW_BAND_DARKNESS_THRESHOLD: float = 0.20
 # at least this many money-group tokens in its stored OCR text.
 _TABLE_PAGE_MIN_MONEY_GROUPS: int = 3
 
+# LF-IMPL-1 — Signal B: minimum 3-digit account-code tokens to classify a page as
+# "table" even when money-group density is low (e.g. balance-unit START pages with a
+# full-width heading block occupying the top half).  Re-uses _CODE_LIKE_RE (AC-0).
+# Same threshold as _MIN_CODE_HITS used in _is_data_table().
+_ACCOUNT_CODE_MIN_FOR_TABLE: int = 3
+
+# LF-IMPL-1 — Signal C: minimum date-header tokens (DD/MM/YYYY) to classify a page
+# as "table".  Financial statement pages invariably open with a date column header;
+# prose/cover pages do not.  Re-uses _DATE_HEADER_RE (AC-0).
+_DATE_HEADER_MIN_FOR_TABLE: int = 1
+
+# LF-IMPL-2 — Relaxed continuity guard for prose pages inside a table unit.
+# When True, a page classified as "prose" that is encountered during an ongoing
+# table unit is NOT immediately treated as a unit break.  Instead,
+# _fingerprints_continuous() is evaluated: if gutter geometry is continuous
+# the page is accepted as a prose-in-table-unit continuation (its page_type
+# metadata remains "prose" but it stays in the current unit).
+# Set to False to restore strict page_type equality semantics.
+_ALLOW_PROSE_IN_TABLE_UNIT: bool = True
+
 # Minimum number of gutter columns to classify a page as a table (Tier 0).
 _TABLE_MIN_GUTTER_COUNT: int = 1
 
@@ -2679,14 +2699,44 @@ def build_document_map(pages: List[Dict], pdf_path: str) -> Dict:
             prev_text = stored_text
             continue
 
-        # Check if this page continues the current unit
+        # Check if this page continues the current unit.
+        # LF-IMPL-2: when _ALLOW_PROSE_IN_TABLE_UNIT is True, a "prose" page
+        # inside an ongoing "table" unit is tolerated if gutter geometry is
+        # continuous — avoiding false unit breaks at balance-unit START pages
+        # that are mis-classified as "prose" despite having tabular geometry.
+        same_type = page_type == current_page_type
+        prose_in_table = (
+            _ALLOW_PROSE_IN_TABLE_UNIT
+            and current_page_type == "table"
+            and page_type == "prose"
+        )
+
+        # For the prose_in_table case, _fingerprints_continuous rejects
+        # page_type mismatches unconditionally. To evaluate gutter geometry
+        # continuity alone (without the type-mismatch veto), pass the prose
+        # fingerprint with page_type coerced to "table" so only the gutter
+        # positions and row pitch are compared.
+        fp_for_continuity = fp
+        if prose_in_table:
+            fp_for_continuity = dict(fp)
+            fp_for_continuity["page_type"] = "table"
+
         if (
             prev_fp is not None
-            and page_type == current_page_type
             and page_type != "blank"
-            and _fingerprints_continuous(prev_fp, fp, stored_text_b=stored_text)
+            and (same_type or prose_in_table)
+            and _fingerprints_continuous(prev_fp, fp_for_continuity,
+                                         stored_text_b=stored_text)
         ):
             current_unit_pages.append(page_num)
+            if prose_in_table:
+                logger.info(
+                    "build_document_map: page %d classified prose, "
+                    "accepted as continuation of table unit starting at page %d "
+                    "(gutter-geometry continuous)",
+                    page_num,
+                    current_schema_page,
+                )
         else:
             # Close current unit
             units.append({
@@ -2861,23 +2911,50 @@ def _compute_page_fingerprint_50dpi(
         # Row pitch: estimate from vertical projection by finding peak-to-peak spacing
         row_pitch = _estimate_row_pitch(row_dark)
 
-        # Page type: "table" if stored text has enough money-group tokens.
-        # The gutter_count is NOT required for page_type — the 50-DPI projection
-        # profile is too noisy for dense BCTC pages to reliably produce gutter
-        # valleys. Money-group density (from pre-stored OCR text) is a more
-        # stable "tabular content" signal.
+        # LF-IMPL-1 — Multi-signal page classifier (3-signal OR).
+        #
         # "blank" → empty stored text.
-        # "table" → money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS.
-        # "prose" → everything else (cover, notes, headers).
-        money_group_count = len(_MONEY_GROUP_RE.findall(stored_text or ""))
+        # "table" → ANY of three generic signals fires:
+        #   Signal A: money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS
+        #             (existing — dense number pages)
+        #   Signal B: account_code_count >= _ACCOUNT_CODE_MIN_FOR_TABLE
+        #             (AC-0: reuses _CODE_LIKE_RE, catches balance-unit START pages
+        #             whose top half is a heading block with few money values)
+        #   Signal C: date_header_count >= _DATE_HEADER_MIN_FOR_TABLE
+        #             (AC-0: reuses _DATE_HEADER_RE, catches column-header rows on
+        #             any financial statement page — e.g. "31/03/2026 31/12/2025")
+        # "prose" → all three signals absent.
+        #
+        # Kills the recurrence class: balance-unit START pages (page 3 of FPT Q1)
+        # carry date headers and account codes but sparse money-group density due to
+        # the full-width title block at the top — Signal C (date) or B (code) reclassifies.
+        stored = stored_text or ""
+        money_group_count = len(_MONEY_GROUP_RE.findall(stored))
+        account_code_count = len(_CODE_LIKE_RE.findall(stored))
+        date_header_count = len(_DATE_HEADER_RE.findall(stored))
         gutter_count = len(gutter_x_positions)
 
-        if not stored_text or stored_text.strip() == "":
+        signal_a = money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS
+        signal_b = account_code_count >= _ACCOUNT_CODE_MIN_FOR_TABLE
+        signal_c = date_header_count >= _DATE_HEADER_MIN_FOR_TABLE
+
+        if not stored or stored.strip() == "":
             page_type = "blank"
-        elif money_group_count >= _TABLE_PAGE_MIN_MONEY_GROUPS:
+        elif signal_a or signal_b or signal_c:
             page_type = "table"
         else:
             page_type = "prose"
+
+        logger.debug(
+            "_compute_page_fingerprint_50dpi: page=%d "
+            "money_groups=%d(sig_A=%s) codes=%d(sig_B=%s) dates=%d(sig_C=%s) "
+            "-> page_type=%s",
+            page_num,
+            money_group_count, signal_a,
+            account_code_count, signal_b,
+            date_header_count, signal_c,
+            page_type,
+        )
 
         # Unit hints: lines from stored OCR text that contain unusual patterns.
         # These are attached as metadata ONLY — never used in grouping decisions (AC-0).

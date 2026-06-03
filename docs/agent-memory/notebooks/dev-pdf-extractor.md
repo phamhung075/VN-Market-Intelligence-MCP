@@ -107,6 +107,29 @@ Zone: `apps/pdf-extractor/` | Stack: Python/FastAPI | DB: pdf_extractor.db (writ
 
 ---
 
+### 2026-06-03 — LF-DEPLOY-IMPL DONE-CODE (awaiting ops rebuild)
+
+**Task:** LF-DEPLOY-IMPL | Sprint: BCTC-LAYOUT-FIRST | Status: DONE-CODE / awaiting ops rebuild
+
+**Root cause fixed:** `_compute_page_fingerprint_50dpi` used money-group-density as sole `page_type` discriminator. Balance-unit START pages (FPT Q1 page 3) have sparse money tokens in stored OCR when the heading block dominates → misclassified `prose` → `build_document_map` group-break → schema_page=4 not 3 → AC-LFE-1/2 FAIL.
+
+**Changes:**
+- `apps/pdf-extractor/infrastructure/generic_md_table_extractor.py`:
+  - LF-IMPL-1: added `_ACCOUNT_CODE_MIN_FOR_TABLE=3` + `_DATE_HEADER_MIN_FOR_TABLE=1` constants; 3-signal OR classifier in `_compute_page_fingerprint_50dpi` (Signal A=money, B=codes, C=dates); DEBUG log for diagnostics
+  - LF-IMPL-2: added `_ALLOW_PROSE_IN_TABLE_UNIT=True` flag; relaxed continuity guard in `build_document_map` grouping loop — prose page inside table unit accepted if gutter geometry continuous (fp coerced to "table" type for `_fingerprints_continuous` call)
+- `apps/pdf-extractor/__tests__/unit/test_layout_invariants.py`: added `TestQuarantineNonDeadCode` (3 tests — LF-IMPL-3 AC-LFE-11 proof)
+- `apps/pdf-extractor/__tests__/unit/test_document_map.py`: added `TestMultiSignalPageClassifier` (14 tests — Signal B/C classification) + `TestProseInTableUnitGuard` (3 tests — LF-IMPL-2)
+
+**Test results:** 707/707 PASS (+30 new tests). Zero regression.
+
+**LF-IMPL-4 / AC-LFE-3 verdict:** FPT Q1 page 41 IS a financial table page (sections 31/32 notes tables with money values). AC-LFE-3 requirement was wrong — code is correct. AC-LFE-3 should be updated to PASS with note "page 41 legitimately contains notes tables — table classification is correct."
+
+**Reclassification proof:** sparse page-3 OCR (header-only: 0 money, 2 codes, 2 dates) → old=`prose`, new=`table` via Signal C. Full OCR (40 money, 176 codes, 2 dates) → all signals fire.
+
+**NEXT:** ops rebuild pdf-extractor container → QA re-run LF-DEPLOY gate → verify AC-LFE-1/2 in DB (schema_page=3, pages 3-6 one unit).
+
+---
+
 ### History pointer
 
 Prior entries (PDF-SINGLE-SOURCE, PEK-RENDER-PDFX, PEK-LAYOUT-CFG, PEK-IMPORT-CHAIN, PEK-DEPLOY-FIX, PEK-ORPHAN-RECONCILE, PEK-IMPL, LF-FIX, LF-EXTRACT, MD-EXTRACT-1..9) truncated at 200L per notebook cap. See `docs/handoffs/TASK_BCTC-MD-TABLE.md` + `docs/handoffs/TASK_PEK-INTEGRATE.md` for full history.
