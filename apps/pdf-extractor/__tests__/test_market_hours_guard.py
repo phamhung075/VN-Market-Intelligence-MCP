@@ -3,12 +3,15 @@ Unit tests — domain/primitives/market_hours/primitive.py (PEK-INTEGRATE)
 
 Tests is_vn_market_open_utc() boundary cases per REQ-PEK-11 / AC-PEK-NEW-1.
 
-All 5 boundary cases from the brief (hard constraints, non-negotiable):
-    Mon 02:00 UTC → open  (True)
-    Mon 01:59 UTC → closed (False)
-    Sat 03:00 UTC → closed (False)
-    Fri 08:59 UTC → open  (True)
-    Fri 09:00 UTC → closed (False)
+VN HOSE block window: Mon–Fri 02:00–07:59 UTC (= 09:00–14:59 ICT).
+Guard LIFTS at 08:00 UTC = 15:00 ICT (HOSE close).
+
+Boundary cases (hard constraints):
+    Mon 02:00 UTC → open  (True)   — first blocked minute
+    Mon 01:59 UTC → closed (False) — one minute before open
+    Sat 03:00 UTC → closed (False) — weekend
+    Fri 07:59 UTC → open  (True)   — last blocked minute (FU-PEK-GUARD-RETRYAFTER-MISLEADING)
+    Fri 08:00 UTC → closed (False) — guard lifts at HOSE close (FU-PEK-GUARD-RETRYAFTER-MISLEADING)
 
 DDD: pure domain function — zero I/O, zero DB, zero network, zero creds.
 """
@@ -32,7 +35,9 @@ class TestIsVnMarketOpenUtc:
     """
     Boundary tests per architect brief §4.2 and REQ-PEK-11 AC-PEK-NEW-1.
 
-    VN HOSE UTC window: Mon–Fri 02:00–08:59 UTC (= 09:00–15:59 ICT/UTC+7).
+    VN HOSE UTC block window: Mon–Fri 02:00–07:59 UTC (= 09:00–14:59 ICT/UTC+7).
+    Guard lifts at 08:00 UTC = 15:00 ICT (HOSE close).
+    Fix: FU-PEK-GUARD-RETRYAFTER-MISLEADING — was 02:00-08:59, now 02:00-07:59.
     """
 
     def test_monday_0200_utc_is_open(self):
@@ -67,26 +72,28 @@ class TestIsVnMarketOpenUtc:
             "Sat 03:00 UTC should be market CLOSED (weekend)"
         )
 
-    def test_friday_0859_utc_is_open(self):
+    def test_friday_0759_utc_is_open(self):
         """
-        Fri 08:59 UTC = market OPEN.
-        Boundary: last minute of the open window.
+        Fri 07:59 UTC = market OPEN (blocked).
+        Boundary: last blocked minute; HOSE still trading at 14:59 ICT.
+        FU-PEK-GUARD-RETRYAFTER-MISLEADING: was 08:59, now 07:59.
         """
         # 2026-06-05 is a Friday
-        now = _utc(2026, 6, 5, 8, 59)
+        now = _utc(2026, 6, 5, 7, 59)
         assert is_vn_market_open_utc(now) is True, (
-            "Fri 08:59 UTC should be market OPEN (within window)"
+            "Fri 07:59 UTC should be market OPEN (last blocked minute, h=7)"
         )
 
-    def test_friday_0900_utc_is_closed(self):
+    def test_friday_0800_utc_is_closed(self):
         """
-        Fri 09:00 UTC = market CLOSED.
-        Boundary: exactly one hour after the close edge.
-        h=9 is outside the 02..08 inclusive range.
+        Fri 08:00 UTC = market CLOSED (guard lifts).
+        Boundary: exactly at HOSE close (15:00 ICT = 08:00 UTC).
+        h=8 is outside the 02..07 inclusive block range.
+        FU-PEK-GUARD-RETRYAFTER-MISLEADING: was 09:00, now 08:00.
         """
-        now = _utc(2026, 6, 5, 9, 0)
+        now = _utc(2026, 6, 5, 8, 0)
         assert is_vn_market_open_utc(now) is False, (
-            "Fri 09:00 UTC should be market CLOSED (after session)"
+            "Fri 08:00 UTC should be market CLOSED (guard lifts at HOSE close)"
         )
 
     # Additional coverage tests
@@ -114,10 +121,10 @@ class TestIsVnMarketOpenUtc:
         result = is_vn_market_open_utc()
         assert isinstance(result, bool)
 
-    def test_monday_0800_utc_is_open(self):
-        """Mon 08:00 UTC = last full hour inside the window."""
+    def test_monday_0800_utc_is_closed(self):
+        """Mon 08:00 UTC = guard has lifted (h=8 >= 8:00 UTC = 15:00 ICT HOSE close)."""
         now = _utc(2026, 6, 1, 8, 0)
-        assert is_vn_market_open_utc(now) is True
+        assert is_vn_market_open_utc(now) is False
 
     def test_friday_0100_utc_is_closed(self):
         """Fri 01:00 UTC = before open (deep overnight VN)."""

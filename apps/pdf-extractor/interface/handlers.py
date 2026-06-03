@@ -449,7 +449,7 @@ def register_routes(
 
         Accepts:  { report_id: str, pdf_path: str }
         Returns:  { status: "accepted", report_id: str }  (HTTP 202)
-                  { error: "market_open", retry_after: "after 15:00 ICT (08:00 UTC)" }  (HTTP 503)
+                  { error: "market_open", retry_after: "after 15:00 ICT (08:00 UTC)" }  (HTTP 503, during 02:00-07:59 UTC Mon-Fri)
 
         Requires: pek_engine_adapter + pek_push_client injected at composition root.
         Returns HTTP 503 if not wired (graceful degrade, same as other endpoints).
@@ -464,7 +464,7 @@ def register_routes(
                     "retry_after": "after 15:00 ICT (08:00 UTC)",
                     "message": (
                         "PEK extraction blocked during VN HOSE trading hours "
-                        "(Mon-Fri 02:00-08:59 UTC). No model loaded."
+                        "(Mon-Fri 02:00-07:59 UTC). No model loaded."
                     ),
                 },
             )

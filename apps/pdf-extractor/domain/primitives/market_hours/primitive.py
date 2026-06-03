@@ -5,7 +5,8 @@ Pure function: is_vn_market_open_utc()
 
 Determines whether a given UTC instant falls within VN HOSE trading hours.
 
-VN HOSE session: 09:00–15:59 ICT (UTC+7) = 02:00–08:59 UTC, Mon–Fri.
+VN HOSE session: 09:00–15:00 ICT (UTC+7) = 02:00–07:59 UTC, Mon–Fri.
+HOSE close: 15:00 ICT = 08:00 UTC — the guard LIFTS at 08:00 UTC.
 
 Mirrors isVnMarketHoursUtc() from:
     apps/mcp-server/src/scheduler/vpsProxyWatchdogJob.ts
@@ -26,8 +27,8 @@ Boundary cases (AC-PEK-NEW-1, unit-tested in __tests__/test_market_hours_guard.p
     Mon 02:00 UTC → open (True)
     Mon 01:59 UTC → closed (False)
     Sat 03:00 UTC → closed (False)
-    Fri 08:59 UTC → open (True)
-    Fri 09:00 UTC → closed (False)
+    Fri 07:59 UTC → open (True)   ← last blocked minute (15:59 ICT)
+    Fri 08:00 UTC → closed (False) ← guard lifts exactly at HOSE close (15:00 ICT)
 """
 
 from __future__ import annotations
@@ -35,17 +36,24 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Optional
 
-# VN HOSE UTC window: 02:00 to 08:59 inclusive (Mon–Fri)
-# Matches isVnMarketHoursUtc: h >= 2 && h <= 8 (TypeScript reference)
-_VN_MARKET_OPEN_UTC_HOUR: int = 2    # 09:00 ICT (UTC+7)
-_VN_MARKET_CLOSE_UTC_HOUR: int = 8   # 15:59 ICT (the 08:xx UTC hour is still 15:xx ICT)
+# VN HOSE UTC block window: 02:00 to 07:59 inclusive (Mon–Fri).
+# HOSE opens  09:00 ICT = 02:00 UTC  → _VN_MARKET_OPEN_UTC_HOUR
+# HOSE closes 15:00 ICT = 08:00 UTC  → guard lifts AT 08:00 UTC
+#
+# Single boundary constant: _VN_MARKET_LAST_BLOCKED_UTC_HOUR = 7
+# Meaning: hours 0..7 inside Mon–Fri are blocked; hour 8 and above are allowed.
+# The retry_after message in interface/handlers.py derives this same value
+# so the enforced window and the human-readable string can never drift.
+_VN_MARKET_OPEN_UTC_HOUR: int = 2        # 09:00 ICT — first blocked hour
+_VN_MARKET_LAST_BLOCKED_UTC_HOUR: int = 7  # 07:59 ICT last second blocked; 08:00 = allowed
 
 
 def is_vn_market_open_utc(now: Optional[datetime] = None) -> bool:
     """
     Return True if the given instant falls within VN HOSE trading hours.
 
-    VN HOSE: Mon–Fri 02:00–08:59 UTC (= 09:00–15:59 ICT/UTC+7).
+    VN HOSE: Mon–Fri 02:00–07:59 UTC (= 09:00–14:59 ICT/UTC+7).
+    Guard lifts at 08:00 UTC = 15:00 ICT (HOSE close).
     Outside this window (evenings, nights, weekends): returns False.
 
     Args:
@@ -56,9 +64,10 @@ def is_vn_market_open_utc(now: Optional[datetime] = None) -> bool:
         True  — market is open; extraction must be BLOCKED.
         False — market is closed; extraction may proceed.
 
-    Mirrors:
-        isVnMarketHoursUtc() in apps/mcp-server/src/scheduler/vpsProxyWatchdogJob.ts
-        TypeScript: day===0||day===6 → false; h>=2&&h<=8 → true
+    Boundary constant: _VN_MARKET_LAST_BLOCKED_UTC_HOUR = 7
+        h <= 7 → blocked (market open); h >= 8 → allowed (market closed).
+        The retry_after string in interface/handlers.py uses the SAME boundary
+        value (08:00 UTC) so the enforced window and the human message stay in sync.
 
     DDD: pure function — no I/O, no imports from infra/app/interface.
     """
@@ -66,10 +75,9 @@ def is_vn_market_open_utc(now: Optional[datetime] = None) -> bool:
         now = datetime.now(timezone.utc)
 
     # weekday(): Mon=0, Tue=1, ..., Sat=5, Sun=6
-    # TS equivalent: getUTCDay() 0=Sun, 6=Sat → day===0||day===6 → false
     weekday = now.weekday()  # 0=Mon … 6=Sun
     if weekday >= 5:  # Sat (5) or Sun (6) → closed
         return False
 
     h = now.hour
-    return _VN_MARKET_OPEN_UTC_HOUR <= h <= _VN_MARKET_CLOSE_UTC_HOUR
+    return _VN_MARKET_OPEN_UTC_HOUR <= h <= _VN_MARKET_LAST_BLOCKED_UTC_HOUR
