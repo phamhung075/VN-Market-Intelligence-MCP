@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "dev-team tick 2026-06-03 ~20:4xZ: drained 11 signals (10 cowork heartbeat + 1 resolved heartbeat-schema brief). FPT ESC-3 (16-cycle) root-caused = data coverage not tool bug; shipped loop-stop guard (BCTC-ESC-GUARD, 3 commits, flow files split back under 120L cap). head idle. Underlying data-coverage fix BCTC-HIST-VPS-BACKFILL still DEFERRED-INFRA (now ops gets ONE routed signal per guard).",
+    "next_action": "dev-team tick ~21:09Z: drained 5 disk signals (FPT guard-held-17th=prior ESC fix LIVE; ACB pub5 deferred; 2 cowork heartbeats; esc3 brief already-impl). Shipped 2 backlog items to DONE: FIX-CTG-2b (cc4ed657, rank>=2→None so HOSE tickers fall through to hsx.vn, 27/27 tests) + NB-COWORK-MAIN-SPLIT (ae4396e6, cowork main.md 820→109L + 10 sub-flows ≤120L). Consolidated a duplicate backlog entry from the split agent. head idle. Remaining open = DEFERRED-INFRA/PRODUCT (ops/bctc-analyst async deps) + FIX-CTG-2b VPS /root/ deploy (ops-vps follow-up).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T20:55:10Z",
+    "updated_at": "2026-06-03T21:26:52Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T21:23:04Z",
-    "_updated_by": "agent-father",
+    "_updated_at": "2026-06-03T21:26:52Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -1995,20 +1995,9 @@
         "title": "docs/agents/cowork-team/flow/main.md is 820L vs 120L cap (pre-existing, not caused by ee1d5e46). Split per agent-md-factory lazy-load/tree-DAG.",
         "type": "REFACTOR",
         "owner": "agent-father",
-        "status": "BACKLOG",
-        "priority": "low",
-        "note": "Surfaced by agent-father during FU-COWORK-HEARTBEAT-SCHEMA impl."
-      },
-      {
-        "task_id": "NB-COWORK-MAIN-SPLIT",
-        "title": "Split cowork-team/flow/main.md (820L) into thin dispatcher + sub-flows",
-        "type": "REFACTOR",
         "status": "DONE",
-        "size": "S",
-        "zone": "docs/agents/cowork-team/flow/",
         "priority": "low",
-        "note": "DONE 2026-06-03T21:23:04Z commit ae4396e6. main.md 820L→109L; 10 sub-flows created (leader-lock/match-slots/pressure-read/pressure-cadence/slot-claim/tick-snapshot/pressure-emit/spawn-fanout/last-fired/telemetry). All files ≤120L. Pure refactor, no logic change.",
-        "_updated_by": "agent-father"
+        "note": "Surfaced by agent-father during FU-COWORK-HEARTBEAT-SCHEMA impl. | DONE 2026-06-03T21:26:52Z commit ae4396e6 (orch-state 43a9999a): main.md 820L→109L; 10 sub-flows extracted, all ≤120L; pure refactor no logic change; pointers resolve; raw-verified in-zone by dev-team router."
       }
     ],
     "archive": []
