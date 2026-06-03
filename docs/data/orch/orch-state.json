@@ -6,11 +6,11 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "Idle. FRESH-EXTRACT-CONFIRM re-queued blocked_until 09:00:00Z (guard window actually 02:00-08:59 UTC, not 08:00) — the >=09:07 UTC tick triggers FPT Q1 re-extract + DB-confirm AC-LFE-1/2. New low-pri backlog FU-PEK-GUARD-RETRYAFTER-MISLEADING. BAL-1e-DEV (low) open.",
+    "next_agent": "po",
+    "next_action": "Idle. Tick3 done: NB-FLOW-SETTLED-WRITE DONE-PENDING-LIVE-VERIFY (commit 04b20c87, self-heals 219L unified-agent.md on next chef write). FRESH-EXTRACT-CONFIRM FAIL-NEEDS-TRIAGE: fresh FPT Q1 re-extract completed (09:36:20Z, 46pp) but AC-LFE-1/2 both FAILED (p3 still prose, no schema inheritance) -> PO re-open BCTC-LAYOUT-FIRST, route dev-pdf-extractor to verify container build + root-cause. FU-PEK-GUARD-RETRYAFTER-MISLEADING + BAL-1e-DEV (low) open.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T08:11:47Z",
+    "updated_at": "2026-06-03T09:42:00Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T08:11:47Z",
+    "_updated_at": "2026-06-03T09:42:00Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -664,6 +664,20 @@
             "zone": "apps/mcp-server/",
             "priority": "low",
             "note": "Surfaced by FRESH-EXTRACT-CONFIRM 2026-06-03T08:10Z. /api/trigger-pek-extract guard returns retry_after 'after 15:00 ICT (08:00 UTC)' but the same error message + enforced behavior block during 'Mon-Fri 02:00-08:59 UTC' (actually lifts 09:00 UTC). Two bugs: (1) retry_after string (08:00) inconsistent with enforced window (08:59 -> 09:00); (2) window 02:00-08:59 UTC is ~59min wider than real HOSE close (15:00 ICT = 08:00 UTC) -> blocks off-market extraction for an extra hour. Locate the guard (mcp-server pek-extract handler), align retry_after with the true window and/or tighten window to 02:00-08:00. Cosmetic+minor-correctness, low pri."
+          },
+          {
+            "task_id": "NB-FLOW-SETTLED-WRITE",
+            "title": "Migrate APPEND-class consumer FLOWS to the AC-3 settled-write invariant — the skill (NB-WRITE-ATOMIC) was fixed but chef.md Step 8 + 4 other consumers still did append-then-trim, so the recurring notebook breach reappeared (unified-agent.md 219L post-skill-fix)",
+            "type": "FIX",
+            "owner": "agent-father",
+            "depends": [
+              "NB-WRITE-ATOMIC"
+            ],
+            "status": "DONE-PENDING-LIVE-VERIFY",
+            "size": "S",
+            "zone": "cross-service/",
+            "priority": "medium",
+            "note": " | DONE-PENDING-LIVE-VERIFY 2026-06-03T09:42Z (commit 04b20c87) agent-father: NB-WRITE-ATOMIC fixed the notebook-write SKILL, but the breach reappeared (unified-agent.md 219L) because the consumer FLOWS were orphaned on the old append-then-trim recipe (the SSOT-fix-doesnt-reach-derived-copy pattern). Migrated 5 consumers to compose-in-memory single-settled-write: chef.md Step 8 (8b compose <=200L in memory / 8c single Write / 8d AC-5 sanity-only / 8e mutex commit), news-scout/stage-log-notify.md Stage 4, bctc-analyst/stage-log-notify.md 5a-5c, agents-architect/handlers.md Brief-Commit Step 2, digest-predict/monday.md P-6. Router-verified: 0 forbidden append-then-trim phrases remain in chef.md Step 8; fb-market-poster (OVERWRITE class -> delegates to skill) + dispatcher-only flows correctly left unchanged. LIVE-VERIFY pending: next chef write must produce a <=200L notebook with ZERO context_bloat_breach signal; the current 219L unified-agent.md self-heals on that write (no 4th hand-prune)."
           }
         ]
       },
@@ -1051,13 +1065,13 @@
             "task_id": "FRESH-EXTRACT-CONFIRM",
             "title": "Trigger fresh FPT Q1 layout-first re-extract post-08:00 UTC + DB-confirm AC-LFE-1/2 (page3→table, page5 schema_inherited_from_page=3)",
             "type": "FIX",
-            "owner": "ops",
-            "status": "TODO",
+            "owner": "po",
+            "status": "FAIL-NEEDS-TRIAGE",
             "size": "S",
             "zone": "ops/",
             "priority": "high",
             "blocked_until": "2026-06-03T09:00:00Z",
-            "note": "LF-DEPLOY APPROVED on code+container+unit+0-regression; only live DB re-extract pending. RE-QUEUED 2026-06-03T08:10Z: ops triggered /api/trigger-pek-extract -> still 503 market_open. DISCOVERY: enforced guard window is 02:00-08:59 UTC (lifts 09:00 UTC), NOT 08:00 — the endpoint retry_after string ('after 15:00 ICT (08:00 UTC)') is self-contradictory vs its own message ('Mon-Fri 02:00-08:59 UTC'). blocked_until corrected 08:00->09:00. Post-09:00: POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d}; then DB-verify bctc_page_zones page3 page_type=table + unit_id==page5, page5 schema_inherited_from_page=3. The >=09:07 UTC tick handles this. Confirm step, no rebuild."
+            "note": "LF-DEPLOY APPROVED on code+container+unit+0-regression; only live DB re-extract pending. RE-QUEUED 2026-06-03T08:10Z: ops triggered /api/trigger-pek-extract -> still 503 market_open. DISCOVERY: enforced guard window is 02:00-08:59 UTC (lifts 09:00 UTC), NOT 08:00 — the endpoint retry_after string ('after 15:00 ICT (08:00 UTC)') is self-contradictory vs its own message ('Mon-Fri 02:00-08:59 UTC'). blocked_until corrected 08:00->09:00. Post-09:00: POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d}; then DB-verify bctc_page_zones page3 page_type=table + unit_id==page5, page5 schema_inherited_from_page=3. The >=09:07 UTC tick handles this. Confirm step, no rebuild. | FAIL-NEEDS-TRIAGE 2026-06-03T09:42Z dev-team: post-09:00 re-extract DID complete (fresh bctc_page_zones extracted_at 2026-06-03 09:36:20, all 46 pages) but AC-LFE-1/2 BOTH FAILED on the fresh rows. AC-LFE-1 (page3 page_type=table): FAIL, page3 still 'prose'. AC-LFE-2 (page3.unit_id==page5.unit_id, page5 schema_inherited_from_page=3): FAIL, all unit_ids distinct (p3=88de48c6 / p5=7e6b7c6f), schema_inherited_from_page=null on every page. REGRESSED differently: fresh extract sets every page is_schema_page=1 / schema_inherited_from_page=null (NO grouping/inheritance at all; prior stale state at least had p5->p4 inherit). So the layout-first fix did not achieve grouping on a fresh run. Owner -> po for triage: re-open BCTC-LAYOUT-FIRST, route to dev-pdf-extractor to (a) confirm the live container actually carries the layout-first build, (b) root-cause why fresh extract still classifies p3 prose + emits no inheritance. Recurring-bug discipline: >=2nd LF attempt, route to root-cause not direct re-patch."
           }
         ]
       },
