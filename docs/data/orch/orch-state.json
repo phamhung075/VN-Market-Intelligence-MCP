@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Operator hotfixes (bctc-inspect nav + VPS panel truth) DONE-LIVE-VERIFIED. Resuming /goal backlog drive: actionable = FIX-CTG-2, FU-EI-P2-COV-1/2, FU-EI-P2-DEV-VOLUME, FU-COWORK-HEARTBEAT-SCHEMA; deferred set per PO triage.",
+    "next_action": "/goal complete-all-backlog-and-todo MET 2026-06-03: all actionable items DONE/DONE-LIVE-VERIFIED (2 operator hotfixes + COV-1/2 + DEV-VOLUME + FIX-CTG-2 deployed + heartbeat-schema); 6 items DEFERRED-with-evidence (async-VPS/product/infra/sequenced/out-of-scope); 2 low-pri follow-ups queued (FIX-CTG-2b, NB-COWORK-MAIN-SPLIT). head idle.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T20:09:29Z",
+    "updated_at": "2026-06-03T20:40:14Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T20:19:04Z",
+    "_updated_at": "2026-06-03T20:40:14Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1724,7 +1724,7 @@
             "title": "VPS Playwright discover-bctc-urls-browser.py (Defect A): add cover-letter content discrimination — skip articles whose title has cover-letter keywords ('cv cbtt','công văn cbtt') without full-statement keywords ('bctc','báo cáo tài chính'); HOSE-listed tickers (e.g. CTG) should resolve via the hsx.vn direct path not the HNX national portal. Needs ops-vps deploy after code.",
             "type": "FIX",
             "owner": "dev-vps-crawls",
-            "status": "DONE",
+            "status": "DONE-DEPLOYED",
             "size": "S",
             "zone": "vps-scripts/",
             "priority": "medium",
@@ -1734,7 +1734,7 @@
             "files": [
               "vps-scripts/discover-bctc-urls-browser.py"
             ],
-            "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — VPS script, needs ops-vps deploy after code; HOSE tickers should use hsx.vn path. Lower priority than FIX-CTG-1 because CTG's correct path is hsx.vn (B+C); A prevents HNX cover-letter mis-selection for HNX-listed tickers + as defense-in-depth. [dev-vps-crawls 2026-06-03T00:00Z] DONE: cover-letter discrimination added to _parse_article_ids_and_titles via is_cover_letter_title()/is_full_statement_title()/_title_rank() classifier (vps-scripts/discover-bctc-urls-browser.py); unit test 25/25 pass (vps-scripts/test_discover_bctc_title_classifier.py). NEEDS OPS-VPS DEPLOY (no SSH executed — repo commit only)."
+            "note": "Code bbf0f54b (25/25 tests, cover-letter discrimination + hop-nhat ranking; caught spike's 'giai trinh' false-keyword). Deployed to VPS /root/discover-bctc-urls-browser.py 03:30Z, verified no longer returns CV_CBTT cover letter. RESIDUAL (FIX-CTG-2b): for HOSE ticker w/ no HNX BCTC it now returns a generic non-BCTC doc instead of nothing — defence-in-depth gap, primary CTG path = hsx.vn (FIX-CTG-1 live)."
           },
           {
             "task_id": "FIX-CTG-3",
@@ -1750,6 +1750,20 @@
             ],
             "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — materialization/DoD, depends FIX-CTG-1 (+ ideally FIX-CTG-2). Involves async VPS re-fetch (~latency). Also remediates Defect-B queue corruption on non-CTG rows.",
             "disposition": "DEFERRED-ASYNC (PO triage 2026-06-03): discovery half DONE (FIX-CTG-1). This is materialization — purge bad owa.hnx.vn url, re-enrich, re-fetch+re-extract over async VPS PDF-pull cron; DoD get_bctc_full(CTG) conf>0.5 cannot be proven within a dev tick (VPS round-trip + refine latency). Resume when VPS materializes."
+          },
+          {
+            "task_id": "FIX-CTG-2b",
+            "title": "VPS classifier residual: discover-bctc-urls-browser.py still returns a generic non-BCTC doc (deployed CTG run returned an office-relocation QĐ TGĐ PDF) when HNX has no real BCTC for a HOSE ticker. Should return NONE for non-full-statement (rank>=2) matches so HOSE tickers fall through to hsx.vn cleanly. CAUTION: verify HNX-listed tickers whose BCTC has atypical titles still resolve (don't over-tighten). Low pri — primary CTG path = hsx.vn (FIX-CTG-1 live).",
+            "type": "FIX",
+            "owner": "dev-vps-crawls",
+            "status": "TODO",
+            "size": "S",
+            "zone": "vps-scripts/",
+            "priority": "low",
+            "depends": [
+              "FIX-CTG-2"
+            ],
+            "note": "Surfaced by router raw-verify of the VPS deploy run (ops mis-validated an office-relocation QĐ as a financial statement)."
           }
         ]
       },
@@ -1912,11 +1926,12 @@
         "title": "cowork-team heartbeat schema drift: live session emits flat {agent,ts,tick_nominal,classification,...} but Step 6 (L754) + cowork-tick-autosilent.sh document/write enveloped {from,to,type,createdAt}",
         "type": "FIX",
         "owner": "agents-architect",
-        "status": "BACKLOG",
+        "status": "DONE",
         "size": "S",
         "zone": "docs/agents/cowork-team/",
         "priority": "low",
-        "note": "agent-father secondary finding during CW-BACKLOG-MISCOUNT: TWO writers. (1) scripts/agents-flow/cowork-tick-autosilent.sh writes enveloped {from,to,type,payload,priority,createdAt} (matches Step 6 L754 spec); (2) live session main.md runtime writes flat {agent,ts,tick_nominal,drift_min,classification,...} (diverges). All 37 on-disk = flat. Both share cowork-team- prefix so both correctly excluded by CW-BACKLOG-MISCOUNT. Separate cleanup: reconcile Step 6 spec vs live runtime output (doc-or-impl). LOW — backlog-count already fixed."
+        "note": "agent-father secondary finding during CW-BACKLOG-MISCOUNT: TWO writers. (1) scripts/agents-flow/cowork-tick-autosilent.sh writes enveloped {from,to,type,payload,priority,createdAt} (matches Step 6 L754 spec); (2) live session main.md runtime writes flat {agent,ts,tick_nominal,drift_min,classification,...} (diverges). All 37 on-disk = flat. Both share cowork-team- prefix so both correctly excluded by CW-BACKLOG-MISCOUNT. Separate cleanup: reconcile Step 6 spec vs live runtime output (doc-or-impl). LOW — backlog-count already fixed.",
+        "resolution": "DESIGN 6004f361 (brief 2026-06-03-cowork-heartbeat-schema, canonical=enveloped matching drain fingerprint) + IMPL ee1d5e46 (cowork-team main.md Step 6 INVARIANT guard + payload folds the 8 flat telemetry fields). Shell writer already correct. Cowork refresh prompt issued."
       },
       {
         "id": "SPIKE-BCTC-CTG-ATTACHMENT-FETCH",
@@ -1940,6 +1955,15 @@
         "added_by": "po",
         "added_at": "2026-06-03T18:13:13Z",
         "resolution": "DONE 517a9056 (brief docs/architecture-briefs/2026-06-03-bctc-ctg-attachment-fetch-spike.md). VERDICT: FULL STATEMENT EXISTS — WRONG ATTACHMENT PULLED — DEV-FIXABLE. Live-probed hsx.vn API (CTG hsx id=2351, reachable from FR without VPS): 280-item catalog, full B02-TCTD 'BCTC hop nhat' PDFs exist every quarter (Q1-2026=6.34MB HTTP200). Pipeline instead pulled owa.hnx.vn cover letter 'CV CBTT BCTC Quy I.2026' 524KB -> conf 0.0625, zero financials. 3 defects -> sprint BCTC-FETCH-CORRECTNESS FIX-CTG-1..3. NOTE: discoverBctcPdfUrlDirectApi (PO hypothesis) is DEAD CODE (tests only); active path = VPS HNX script + enricher + hsxBctcFetcher."
+      },
+      {
+        "id": "NB-COWORK-MAIN-SPLIT",
+        "title": "docs/agents/cowork-team/flow/main.md is 820L vs 120L cap (pre-existing, not caused by ee1d5e46). Split per agent-md-factory lazy-load/tree-DAG.",
+        "type": "REFACTOR",
+        "owner": "agent-father",
+        "status": "BACKLOG",
+        "priority": "low",
+        "note": "Surfaced by agent-father during FU-COWORK-HEARTBEAT-SCHEMA impl."
       }
     ],
     "archive": []
