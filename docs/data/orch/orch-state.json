@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-03T06:30:00Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "agent-father",
-    "next_action": "NB-SKILL-CAP DONE. Next: LF-DEPLOY-IMPL (dev-pdf-extractor) per narrative open_sprints BCTC-LAYOUT-FIRST.",
+    "status": "in_progress",
+    "active_task_id": "LF-DEPLOY-IMPL",
+    "next_agent": "dev-pdf-extractor",
+    "next_action": "Implement Tier-0 3-signal OR page_type classifier per brief docs/architecture-briefs/2026-06-03-lf-tier0-fingerprint-rethink.md §5. Then ops rebuild pdf-extractor + qa re-run LF-DEPLOY gate.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T06:30:00Z",
-    "updated_by": "agent-father"
+    "updated_at": "2026-06-03T06:13:21Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T06:11:06Z",
+    "_updated_at": "2026-06-03T06:13:21Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1018,7 +1018,7 @@
             "title": "Implement Tier-0 3-signal OR page_type classifier per LF-RETHINK brief §5 (kills the recurring misclassification class)",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "M",
             "zone": "apps/pdf-extractor/",
             "priority": "high",
