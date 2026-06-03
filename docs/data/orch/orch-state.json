@@ -1724,7 +1724,7 @@
             "title": "VPS Playwright discover-bctc-urls-browser.py (Defect A): add cover-letter content discrimination — skip articles whose title has cover-letter keywords ('cv cbtt','công văn cbtt') without full-statement keywords ('bctc','báo cáo tài chính'); HOSE-listed tickers (e.g. CTG) should resolve via the hsx.vn direct path not the HNX national portal. Needs ops-vps deploy after code.",
             "type": "FIX",
             "owner": "dev-vps-crawls",
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "vps-scripts/",
             "priority": "medium",
@@ -1734,7 +1734,7 @@
             "files": [
               "vps-scripts/discover-bctc-urls-browser.py"
             ],
-            "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — VPS script, needs ops-vps deploy after code; HOSE tickers should use hsx.vn path. Lower priority than FIX-CTG-1 because CTG's correct path is hsx.vn (B+C); A prevents HNX cover-letter mis-selection for HNX-listed tickers + as defense-in-depth."
+            "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — VPS script, needs ops-vps deploy after code; HOSE tickers should use hsx.vn path. Lower priority than FIX-CTG-1 because CTG's correct path is hsx.vn (B+C); A prevents HNX cover-letter mis-selection for HNX-listed tickers + as defense-in-depth. [dev-vps-crawls 2026-06-03T00:00Z] DONE: cover-letter discrimination added to _parse_article_ids_and_titles via is_cover_letter_title()/is_full_statement_title()/_title_rank() classifier (vps-scripts/discover-bctc-urls-browser.py); unit test 25/25 pass (vps-scripts/test_discover_bctc_title_classifier.py). NEEDS OPS-VPS DEPLOY (no SSH executed — repo commit only)."
           },
           {
             "task_id": "FIX-CTG-3",

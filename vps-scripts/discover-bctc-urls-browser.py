@@ -115,6 +115,123 @@ def _http_post(url: str, data: Dict[str, str], referer: str, timeout: int = 15) 
 
 
 # ---------------------------------------------------------------------------
+# Cover-letter / full-statement content discrimination
+# ---------------------------------------------------------------------------
+#
+# FIX-CTG-2 (BCTC-FETCH-CORRECTNESS): The HNX national portal accepts
+# disclosures from ALL listed tickers, including HOSE-listed ones (e.g. CTG).
+# A cover-letter article (Công Văn Công Bố Thông Tin, ~2 pages, ~350–524 KB)
+# passes the quarter/year filter because its title contains the year and "quy N".
+# Without content discrimination the first matching article is returned — which
+# may be the cover letter rather than the actual B02-TCTD financial statement.
+#
+# HOSE-listed tickers should resolve via the hsx.vn Strategy-0 direct path
+# (fixed by FIX-CTG-1 in mcp-server).  This HNX-portal path is the fallback
+# for HNX/UPCOM-listed tickers; the discrimination below is defence-in-depth
+# that prevents cover-letter mis-selection whenever the fallback IS used.
+# ---------------------------------------------------------------------------
+
+# Keywords that indicate a cover-letter / notice document (not the statement).
+# These appear in titles like "CV CBTT BCTC Quy I.2026" or "Công văn CBTT ...".
+#
+# NOTE: "giai trinh" / "giải trình" is intentionally EXCLUDED here.
+# Real CTG statement filenames include "va giai trinh bien dong loi nhuan"
+# ("and explanation of profit variance") as a sub-clause appended to the BCTC
+# title — this is NOT a cover letter.  The proximate cover-letter signals are
+# always the "cv cbtt" / "công văn cbtt" / "cbtt link" prefixes.
+_COVER_LETTER_KEYWORDS = [
+    "cv cbtt",          # "Công Văn Công Bố Thông Tin" abbreviation (ASCII)
+    "cong van cbtt",    # same without diacritics
+    "công văn cbtt",    # same with diacritics
+    "công văn công bố thông tin",
+    "cong van cong bo thong tin",
+    "cbtt link bctc",   # "CBTT kèm link BCTC" — disclosure notice with a link
+    "cbtt kem link",
+]
+
+# Keywords that indicate an actual financial statement document.
+# A cover-letter title "CV CBTT BCTC Quy I.2026" DOES contain "bctc" — but it
+# also contains a cover-letter keyword, so the cover-letter test fires first.
+# A full-statement title "BCTC Hợp nhất Quy I.2026" contains only "bctc"/"báo
+# cáo tài chính" without any cover-letter keyword → classified as full statement.
+_FULL_STATEMENT_KEYWORDS = [
+    "báo cáo tài chính",
+    "bao cao tai chinh",
+    "bctc",
+]
+
+# Keywords that specifically indicate the consolidated (hợp nhất) full statement.
+# Used for ranking when multiple full-statement matches exist on the same page.
+_CONSOLIDATED_KEYWORDS = [
+    "hợp nhất",
+    "hop nhat",
+]
+
+
+def is_cover_letter_title(title: str) -> bool:
+    """
+    Return True when the title indicates a cover-letter / notice document
+    rather than the actual financial statement.
+
+    Logic:
+      A title is a cover letter when it contains at least one cover-letter keyword
+      WITHOUT ALSO containing a full-statement keyword that appears OUTSIDE the
+      cover-letter phrase.  The single exception: a title that is purely a
+      full-statement heading (e.g. "BCTC Hợp nhất Quy I.2026") is NOT a cover
+      letter even if "bctc" appears, because it has no cover-letter keyword.
+
+    In practice:
+      "CV CBTT BCTC Quy I.2026"              → cover_kw="cv cbtt"             → True
+      "Công văn CBTT Quy I.2026"             → cover_kw="công văn cbtt"        → True
+      "BCTC hop nhat Quy I.2026"             → no cover_kw                     → False
+      "BCTC hop nhat Quy I.2026 va giai trinh bien dong loi nhuan"
+                                             → no cover_kw ("giai trinh" alone
+                                               is NOT a cover-letter signal)   → False
+      "Báo cáo tài chính Quy I.2026"         → no cover_kw, has full_kw        → False
+      "CBTT link BCTC Quy I.2026"            → cover_kw="cbtt link bctc"       → True
+    """
+    t = title.lower()
+    has_cover_kw = any(kw in t for kw in _COVER_LETTER_KEYWORDS)
+    if not has_cover_kw:
+        return False
+    # If it has a full-statement keyword as well the title might genuinely name
+    # the financial statement.  But "CV CBTT BCTC ..." is still a cover letter
+    # (it references BCTC but is itself a notice document).  The deciding signal
+    # is the presence of a cover-letter keyword regardless of co-occurrence.
+    return True
+
+
+def is_full_statement_title(title: str) -> bool:
+    """
+    Return True when the title indicates an actual financial statement document.
+    A cover-letter title is NOT a full statement even when it mentions "bctc".
+    """
+    if is_cover_letter_title(title):
+        return False
+    t = title.lower()
+    return any(kw in t for kw in _FULL_STATEMENT_KEYWORDS)
+
+
+def is_consolidated_title(title: str) -> bool:
+    """Return True when the title indicates the consolidated (hợp nhất) statement."""
+    t = title.lower()
+    return any(kw in t for kw in _CONSOLIDATED_KEYWORDS)
+
+
+# Title rank for candidate selection (lower = better).
+# Full consolidated statement → 0 (best)
+# Full statement (non-consolidated) → 1
+# Unknown / undiscriminated → 2
+# Cover letter → 99 (skip)
+def _title_rank(title: str) -> int:
+    if is_cover_letter_title(title):
+        return 99
+    if is_full_statement_title(title):
+        return 0 if is_consolidated_title(title) else 1
+    return 2
+
+
+# ---------------------------------------------------------------------------
 # Quarter / year text matching
 # ---------------------------------------------------------------------------
 
@@ -207,7 +324,10 @@ def _parse_article_ids_and_titles(html: str, code: str, year: int, quarter: str)
       - File:   funcShowFileAttach(articleId, 1)
       - Title:  <a class="hrefViewDetail">title text</a>
 
-    Returns article ID on first match, None otherwise.
+    FIX-CTG-2: Collect ALL quarter/year-matching candidates on the page, then
+    return the best-ranked one (full consolidated statement > full statement >
+    generic match; cover letters are SKIPPED entirely).  Previously the function
+    returned the FIRST match, which could be a cover-letter PDF.
     """
     code_lower = code.lower()
     row_re = re.compile(
@@ -216,6 +336,10 @@ def _parse_article_ids_and_titles(html: str, code: str, year: int, quarter: str)
         r".*?hrefViewDetail[^>]+>(.*?)</a",
         re.DOTALL | re.IGNORECASE,
     )
+
+    # Collect (rank, article_id, title) for all passing rows.
+    candidates: List[tuple] = []
+
     for m in row_re.finditer(html):
         row_code = m.group(1).lower()
         article_id = int(m.group(2))
@@ -225,16 +349,42 @@ def _parse_article_ids_and_titles(html: str, code: str, year: int, quarter: str)
         if not (row_code == code_lower or row_code.startswith(code_lower)):
             continue
 
+        matched = False
         if matches_quarter_and_year(title, quarter, year):
-            print(f"    MATCH id={article_id} title={title[:80]}", file=sys.stderr)
-            return article_id
-
+            matched = True
         # Annual report counts for Q4
-        if quarter.upper() == "Q4" and matches_annual(title, year):
-            print(f"    MATCH annual id={article_id} title={title[:80]}", file=sys.stderr)
-            return article_id
+        elif quarter.upper() == "Q4" and matches_annual(title, year):
+            matched = True
 
-    return None
+        if not matched:
+            continue
+
+        # FIX-CTG-2: skip cover-letter articles (CV CBTT, Công văn CBTT, etc.)
+        if is_cover_letter_title(title):
+            print(
+                f"    SKIP cover-letter id={article_id} title={title[:80]}",
+                file=sys.stderr,
+            )
+            continue
+
+        rank = _title_rank(title)
+        candidates.append((rank, article_id, title))
+        print(
+            f"    CANDIDATE rank={rank} id={article_id} title={title[:80]}",
+            file=sys.stderr,
+        )
+
+    if not candidates:
+        return None
+
+    # Sort ascending by rank: 0=consolidated full-statement wins.
+    candidates.sort(key=lambda c: c[0])
+    best_rank, best_id, best_title = candidates[0]
+    print(
+        f"    BEST id={best_id} rank={best_rank} title={best_title[:80]}",
+        file=sys.stderr,
+    )
+    return best_id
 
 
 def _fetch_pdf_url(article_id: int) -> Optional[str]:

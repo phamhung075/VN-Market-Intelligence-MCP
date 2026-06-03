@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-06-01T13:45Z | **Sprint:** VPS-DEPLOY-PLACEHOLDER-GUARD
+**Last updated:** 2026-06-03T00:00Z | **Sprint:** BCTC-FETCH-CORRECTNESS
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
 
@@ -166,12 +166,19 @@ Commit: 96446b5d. No Docker rebuild required.
 
 ---
 
-## Key Findings — 2026-05-13T09:30Z Contract Fix
+## Key Findings — 2026-06-03T00:00Z FIX-CTG-2 Cover-Letter Discrimination
 
-### HNX Contract Changes Applied
-- Referer MUST include `/vi-vn/` language prefix — server 302s without it (change detected 2026-05-13)
-- `pNhomTin` MUST be empty string — `'FIN_REPORT'` wrapper no longer works (contract changed)
-- Ticker slugs in SYMBOL hrefs are `ticker+listingcode` (e.g. `shb125017`) — must use `startswith()` not equality
-- Homepage fallback guard added: `len(body) > 30_000 AND "Trang chủ" in body` → RuntimeError
-- SHB Q1/2026: PASS — PDF URL `https://owa.hnx.vn/ftp///cims/2026/4_W5/...Q1_2026.pdf`
-- ArticlesFileAttach CAN article 615286: 4 Q1/2026 PDFs confirmed
+### Defect A: HNX portal returns cover-letter PDF instead of full B02-TCTD statement
+- Root cause: `_parse_article_ids_and_titles` returned FIRST quarter/year match regardless of document type.
+  Cover-letter titles ("CV CBTT BCTC Quy 1.2026") pass `matches_quarter_and_year` → wrong 524 KB PDF selected.
+- Fix: added `is_cover_letter_title()` / `is_full_statement_title()` / `_title_rank()` classifier block.
+  Cover-letter keywords: "cv cbtt", "cong van cbtt", "công văn cbtt", "công văn công bố thông tin",
+  "cbtt link bctc", "cbtt kem link". NOTE: "giai trinh" excluded — real CTG filenames contain
+  "va giai trinh bien dong loi nhuan" as a sub-clause (not a cover-letter signal).
+- `_parse_article_ids_and_titles` now collects ALL matching candidates on a page, skips cover letters,
+  ranks remaining by: 0=consolidated-full-statement > 1=full-statement > 2=generic, returns best.
+- 25/25 unit tests pass: `vps-scripts/test_discover_bctc_title_classifier.py`
+- NEEDS OPS-VPS DEPLOY: commit is repo-only. No SSH executed. Deploy = scp updated script to VPS +
+  confirm next CTG discovery run returns BCTC hop nhat URL (not owa.hnx.vn cover letter).
+- HOSE-listed tickers (CTG) should ideally resolve via hsx.vn Strategy-0 (FIX-CTG-1, DONE-LIVE-VERIFIED).
+  This fix is defence-in-depth for the HNX-portal fallback path used by HNX/UPCOM-listed tickers.
