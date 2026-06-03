@@ -304,12 +304,28 @@ Before writing the file, verify ALL checks. Fix inline where possible; log and a
 **Structural checks (must pass — fix inline if failing):**
 1. VN-Index appears with both level AND % change.
 2. Disclaimer block present verbatim at the end.
-3. **STEP 4a — JARGON GATE (hard-fail, executable)**
+3. **STEP 4a — JARGON GATE (hard-fail, REAL EXECUTION MANDATORY)**
 
    → skill: `.claude/skills/fb-jargon-gate/SKILL.md`
 
+   **Bash is available in this agent. The gate MUST be run as a real shell command — no
+   manual scan, no "equivalent review", no paraphrased PASS. A PASS reported without
+   verbatim stdout from the script is a process violation.**
+
+   Required execution sequence (follow SKILL.md exactly):
+   ```bash
+   TMPFILE=$(mktemp /tmp/fb-post-gate-XXXXXX.txt)
+   printf '%s' "$POST_BODY" > "$TMPFILE"
+   bash scripts/fb-jargon-gate.sh "$TMPFILE" "$POST_DATE"
+   GATE_EXIT=$?
+   rm -f "$TMPFILE"
+   ```
+   Paste the VERBATIM one-line stdout into the RETURN block:
+   - Pass: `[PASS] fb-jargon-gate: 0 violations`
+   - Fail: `[FAIL] ...` lines followed by `[BLOCK] Post write suppressed`
+
    HARD-FAIL: gate exit non-zero = block STEP 5. Fix every [FAIL] line in the post body.
-   Re-run the gate. Proceed to STEP 5 ONLY when gate exits 0 with pasted output in hand.
+   Re-run the gate. Proceed to STEP 5 ONLY when gate exits 0 with pasted verbatim output in hand.
    If violations cannot be resolved after one fix round:
    `send_telegram(channel="bug", message="[fb-market-poster] JARGON GATE: unresolvable — post NOT written")` and EXIT.
 
