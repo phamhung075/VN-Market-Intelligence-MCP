@@ -5,12 +5,12 @@
   "_updated_by": "dev-team",
   "head": {
     "status": "in_progress",
-    "active_task_id": "LF-GRP-1",
-    "next_agent": "dev-pdf-extractor",
-    "next_action": "LF-GROUP-RETHINK DONE (brief 91ee482e, root cause = D-5 _is_title_band over-fire, code-confirmed L3217). Dispatching LF-GRP-1 to dev-pdf-extractor (remove D-5 / assess over-group risk). Then LF-GRP-2 test fix, LF-GRP-3 qa rebuild+re-extract+verify AC-LFE-1/2. FU-PDFX-HEALTHCHECK (ops,low) + NB-FLOW live-verify pending.",
+    "active_task_id": "LF-GRP-3",
+    "next_agent": "ops",
+    "next_action": "LF-GRP-1 DONE-PENDING-REBUILD + LF-GRP-2 DONE (5d224e0a, D-5 removed, 711 tests, raw-verified). LF-GRP-3 IN_PROGRESS: ops rebuilding pdf-extractor (single-service), then qa re-extract+verify AC-LFE-1/2 -> closes FRESH-EXTRACT-CONFIRM + LF-DEPLOY. NB-FLOW live-verify + FU-PDFX-HEALTHCHECK still open.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T10:24:00Z",
+    "updated_at": "2026-06-03T10:34:00Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T10:24:00Z",
+    "_updated_at": "2026-06-03T10:34:00Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1104,35 +1104,35 @@
             "title": "Remove the D-5 _is_title_band early-return inside _fingerprints_continuous (generic_md_table_extractor.py ~L3217) — it returns False for EVERY consecutive financial-page pair (account labels = 2+-word non-numeric top lines always trip _is_title_band), making build_document_map emit 1 singleton unit per page (46/46) so schema inheritance never runs. page_type-equality + gutter/pitch checks already bound genuine section boundaries (LF-IMPL-1 classifier live).",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "IN_PROGRESS",
+            "status": "DONE-PENDING-REBUILD",
             "size": "S",
             "zone": "apps/pdf-extractor/",
             "priority": "high",
             "depends": [
               "LF-GROUP-RETHINK"
             ],
-            "note": "Spec = brief 2026-06-03-lf-group-stage-rethink.md Option A. dev-team verified live code: apps/pdf-extractor/infrastructure/generic_md_table_extractor.py L3217 'if _is_title_band(stored_text_b): return False'; _is_title_band (L3061) returns True on any 2+-word non-numeric non-money top-region line w/o a continuation marker = every balance-sheet continuation page. Remove the 3-line D-5 block; KEEP _is_title_band as a standalone fn. IMPLEMENTER MUST assess over-grouping risk: confirm page_type-equality + gutter_count + gutter_x + row_pitch checks alone do not over-merge two genuinely distinct statements with identical fingerprints; if risk real, prefer tightening _is_title_band to fire only on TRUE new-section titles over blanket removal — document the choice. DoD: build_document_map on FPT Q1 fingerprints groups consecutive table pages into shared units."
+            "note": "Spec = brief 2026-06-03-lf-group-stage-rethink.md Option A. dev-team verified live code: apps/pdf-extractor/infrastructure/generic_md_table_extractor.py L3217 'if _is_title_band(stored_text_b): return False'; _is_title_band (L3061) returns True on any 2+-word non-numeric non-money top-region line w/o a continuation marker = every balance-sheet continuation page. Remove the 3-line D-5 block; KEEP _is_title_band as a standalone fn. IMPLEMENTER MUST assess over-grouping risk: confirm page_type-equality + gutter_count + gutter_x + row_pitch checks alone do not over-merge two genuinely distinct statements with identical fingerprints; if risk real, prefer tightening _is_title_band to fire only on TRUE new-section titles over blanket removal — document the choice. DoD: build_document_map on FPT Q1 fingerprints groups consecutive table pages into shared units. | DONE-PENDING-REBUILD 2026-06-03T10:34Z dev-pdf-extractor (commit 5d224e0a, router raw-verified: 3 Modified files, no force-add, D-5 block gone from _fingerprints_continuous, _is_title_band retained). Option A (blanket D-5 removal) chosen w/ documented over-group risk assessment — geometry gates (page_type eq + gutter_count + gutter_x + row_pitch) bound genuine boundaries now classifier is live; added 2 guard tests proving distinct statements still break via gutter_count/gutter_x. 711 unit tests pass. NOT live until container rebuild."
           },
           {
             "task_id": "LF-GRP-2",
             "title": "Fix grouping unit tests to exercise the LIVE path — test_document_map.py _simulate_grouping defaults stored_texts to ['']*N so D-5 never fires (false-green); pass REAL stored OCR text so the test reproduces the singleton bug pre-fix and proves multi-page grouping post-fix. Reconcile test_fpt_q1_scenario_page5_inherits_page3_schema (bypasses build_document_map).",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/pdf-extractor/",
             "priority": "high",
             "depends": [
               "LF-GRP-1"
             ],
-            "note": "test_document_map.py: pass real stored OCR text into _simulate_grouping so D-5 path is exercised; test must FAIL pre-fix (singletons) and PASS post-fix (multi-page unit). Also annotate test_fpt_q1_scenario_page5_inherits_page3_schema that it tests Tier-1 zone_page inheritance in isolation, NOT Tier-0 grouping. DoD: a test reproduces the live singleton bug."
+            "note": "test_document_map.py: pass real stored OCR text into _simulate_grouping so D-5 path is exercised; test must FAIL pre-fix (singletons) and PASS post-fix (multi-page unit). Also annotate test_fpt_q1_scenario_page5_inherits_page3_schema that it tests Tier-1 zone_page inheritance in isolation, NOT Tier-0 grouping. DoD: a test reproduces the live singleton bug. | DONE 2026-06-03T10:34Z dev-pdf-extractor (5d224e0a): test_document_map.py now passes real BCTC OCR text into grouping tests (test_d5_not_firing_after_fix_real_text + test_fpt_q1_page5_in_same_unit_as_page3_with_real_text — both would fail pre-fix, pass post-fix); test_schema_inheritance.py annotated as Tier-1 isolation (not Tier-0 grouping evidence). False-green closed."
           },
           {
             "task_id": "LF-GRP-3",
             "title": "Rebuild pdf-extractor + re-extract FPT Q1 + DB-verify AC-LFE-1/2 on FRESH rows (pages 3/4/5/6 share unit_id; page5 schema_inherited_from_page=3). This is FRESH-EXTRACT-CONFIRM round 2 — gated on LF-GRP-1 landing + ops rebuild (restart relaunches stale image).",
             "type": "FIX",
             "owner": "qa",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "S",
             "zone": "apps/pdf-extractor/",
             "priority": "high",
@@ -1140,7 +1140,7 @@
               "LF-GRP-1",
               "LF-GRP-2"
             ],
-            "note": "After LF-GRP-1+2 commit: ops rebuilds vn-market-intelligence-mcp-pdf-extractor-1 (NOT restart — relaunch = stale image), then qa POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d} (guard window lifts 09:00 UTC), then DB-verify bctc_page_zones: pages 3/4/5/6 share unit_id (AC-LFE-1 + grouping), page5 schema_inherited_from_page=3 (AC-LFE-2). Verify LIVE rows raw, not unit tests."
+            "note": "After LF-GRP-1+2 commit: ops rebuilds vn-market-intelligence-mcp-pdf-extractor-1 (NOT restart — relaunch = stale image), then qa POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d} (guard window lifts 09:00 UTC), then DB-verify bctc_page_zones: pages 3/4/5/6 share unit_id (AC-LFE-1 + grouping), page5 schema_inherited_from_page=3 (AC-LFE-2). Verify LIVE rows raw, not unit tests. | IN_PROGRESS 2026-06-03T10:34Z: code landed (5d224e0a), host mem healthy (6 containers, none near cap). Leg 1 = ops rebuild vn-market-intelligence-mcp-pdf-extractor-1 (single-service, NOT restart). Leg 2 = qa re-extract FPT Q1 + DB-verify AC-LFE-1/2 on FRESH rows."
           }
         ]
       },
