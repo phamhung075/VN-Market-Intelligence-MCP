@@ -1,5 +1,23 @@
 # QA — Notebook
 
+## cycle-189 · 2026-06-03T07:15Z · LF-DEPLOY gate — CHANGES_REQUESTED
+
+Sprint: BCTC-LAYOUT-FIRST Phase 0 | Task: LF-DEPLOY | Verdict: CHANGES_REQUESTED
+
+**Tests:** LF-OVERLAY 34/34 pass + LF-EXTRACT unit 115/115 pass + BCTC battery 69/69 pass. tsc EXIT 0. Full suite 10380 pass / 401 pre-existing fail (0 new regressions in BCTC/LF scope).
+
+**BLOCK-1+2 (AC-LFE-1/2): Tier 0 misclassifies FPT page 3 as prose.** Raw DB: page 3 unit_id=eea7d237, page_type=prose; pages 4-8 unit_id=6277fa2a, schema_page=4. Brief requires pages 3-6 in same unit with schema_page=3. page-5 schema_inherited_from_page=4 (not 3). AC-LFE-1 FAIL, AC-LFE-2 FAIL. Root: build_document_map() Tier 0 50-DPI projection on page 3 detects only col_0 (x_min=0, x_max=1654 = full width), gutter_count<2, tagged prose. Fix target: apps/pdf-extractor/infrastructure/generic_md_table_extractor.py build_document_map().
+
+**BLOCK-3 (AC-LFE-3): page 41 is table, not prose.** DB: page_type=table in unit af08a61a (pages 37-44). Brief requires prose/blank.
+
+**BLOCK-4 (AC-LFE-11): quarantine path dead.** All 177 units across 14 reports quarantined=0. Three invariant checkers not triggering on real corpus.
+
+**PASSING:** AC-LFE-4 (NGUON VON code-300 present in actual unit, data correct), AC-LFE-6/7/8/9/0, all 7 AC-LFO, 0-regression (bctc_table_rows=891 stable, balance_pass FPT Q4=1, get_bctc_full correct).
+
+**Next:** dev-pdf-extractor | fix build_document_map() Tier 0 for 3 blocks above.
+
+---
+
 ## cycle-188 · 2026-06-02T23:55Z · FRONTEND-OPERATOR-UX — APPROVED
 
 Sprint: FRONTEND-OPERATOR-UX | Tasks: FOU-2-REQ1 + FOU-3-GW + FOU-3-FE + FOU-3-QA | Verdict: APPROVED
