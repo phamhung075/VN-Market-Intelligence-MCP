@@ -1,16 +1,16 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T07:30Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-03T07:16:30Z",
+  "_updated_by": "dev-team",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "LF-DEPLOY APPROVED (code/container/unit/0-regression). Residual: FRESH-EXTRACT-CONFIRM (ops) blocked until 08:00 UTC market-hours guard — next tick >=08:07 UTC triggers FPT Q1 re-extract + DB-confirms AC-LFE-1/2. BAL-1e-DEV (low) still open.",
+    "next_action": "Idle. FRESH-EXTRACT-CONFIRM (ops) still blocked_until 2026-06-03T08:00:00Z (now ~07:11Z) — the >=08:07 UTC tick triggers FPT Q1 re-extract + DB-confirm AC-LFE-1/2. BAL-1e-DEV (low) open.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T06:42:40Z",
+    "updated_at": "2026-06-03T07:16:30Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T06:42:40Z",
-    "_updated_by": "qa",
+    "_updated_at": "2026-06-03T07:16:30Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -641,6 +641,18 @@
             "zone": "cross-service/",
             "priority": "medium",
             "note": "DONE 2026-06-03 agent-father: trimmed .claude/skills/notebook-write/SKILL.md from 137L to 94L (cap=120). AC-3 single-settled-write invariant retained verbatim. wc-l before=137, after=94."
+          },
+          {
+            "task_id": "NB-PRUNE-UNIFIED-207",
+            "title": "One-time prune unified-agent.md notebook 207L -> 186L (pre-fix context-bloat residue)",
+            "type": "FIX",
+            "owner": "claude-manager-helper",
+            "status": "DONE",
+            "size": "XS",
+            "zone": "agent-memory",
+            "priority": "medium",
+            "commit": "0e83fb82",
+            "note": "DONE+ROUTER-RAW-VERIFIED 2026-06-03T07:11Z (commit 0e83fb82). PO triage NB-PRUNE-UNIFIED-207. unified-agent.md was 207L (cap 200) = pre-fix residue (NB-WRITE-ATOMIC bounds next chef write, no retro-prune; chef spawns:0 since fix). claude-manager-helper EDIT-ONLY dropped oldest 02:21Z entry; router verified live: 186L, only that block removed, all newer entries + Convergence/System-state/Next trailers intact, staged ONLY the notebook (tree had unrelated churn). Clears repeated backstop re-fires."
           }
         ]
       },
