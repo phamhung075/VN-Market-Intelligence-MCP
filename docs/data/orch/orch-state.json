@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T16:11:00Z",
+  "_updated_at": "2026-06-03T17:07:27Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "dev-team tick 2026-06-03 ~16:09Z DONE. FU-BACKFILL-DE-SYNC DONE-LIVE-VERIFIED: backfill tool now re-derives debt scalars (tool-path proven, FPT D/E 0.40x via force_reflow not script). NEW finding queued FU-DE-321-VAY-GUARD (med, aggregator takes 321 unconditionally but 321 not always vay; FPT 2025Q4 real ST borrowing on 319-vay=19,169 tỷ). head idle. NEXT: PO triage FU-DE-321-VAY-GUARD(med) + FU-FPT-OCR-PAGES-20-46(med) + lows. Maintenance: news-scout.md 233L>200 prune handled on-demand this tick.",
-    "wip": 0,
+    "status": "active",
+    "active_task_id": "FU-DE-321-VAY-GUARD",
+    "next_agent": "dev-team",
+    "next_action": "PO triage 2026-06-03T17:07:27Z complete (operator goal: complete all backlog/TODO). 6 enumerated TODOs dispositioned: 2 parallel lane-heads IN_PROGRESS (Lane-A apps/mcp-server FU-DE-321-VAY-GUARD med; Lane-B apps/pdf-extractor FU-FPT-OCR-PAGES-20-46 med) under WIP<=2 — zones independent -> run concurrent. Lane tails BATCHED-TODO: FU-PEK-GUARD-RETRYAFTER (low, after Lane-A commit) + FU-ORPHAN-TOLERANCE (low, after Lane-B commit). BAL-1e-DEV ruled KEEP-DEFERRED (genuine future feature, eps=NULL is correct/honest, needs own SPRINT not a cleanup tick). FU-PDFX-HEALTHCHECK CLOSED-NOT-REPRO (container live healthy 7h, 0 health-fail events 24h). Channels clean, list_unresolved_reports empty. dev-team: dispatch the 2 lane-heads in parallel; serialize each lane's low-pri tail after its head commits + ops rebuild + live raw-verify.",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-03T16:30:22Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-03T17:07:27Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -183,11 +183,11 @@
             "depends": [
               "BAL-1a-DEV"
             ],
-            "status": "TODO",
+            "status": "DEFERRED",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "low",
-            "note": "brief BAL-1e: deferred; eps currently NULL after BAL-1a"
+            "note": "brief BAL-1e: deferred; eps currently NULL after BAL-1a | [PO 2026-06-03T17:07:27Z RULING = KEEP-DEFERRED] This is a genuine FUTURE FEATURE (full EPS extraction from VAS BCTC footnote section), not a defect or backlog-cleanup item. eps=NULL is the CORRECT honest serve state today (no VAS code -> no fabrication); nothing in the serving/publish path is blocked (PUB gates + recompute-on-read all operate without eps). Building a footnote-section EPS extractor is M-sized greenfield needing a BA spec + architect design (footnote OCR region detection + per-form EPS line mapping across VAS B02 variants) — NOT a point FIX, would pull a multi-step feature sprint into a cleanup tick. Not scheduled this session. Re-queue as its own SPRINT-S (BCTC-EPS-FOOTNOTE) when BCTC analytics layer stabilises and an operator/product driver exists for EPS specifically. Status DEFERRED (was TODO) to keep it out of the actionable WIP queue."
           },
           {
             "task_id": "BAL-1a-BACKFILL",
@@ -369,11 +369,11 @@
             "title": "aggregateScalars (FIX-DE-1) takes VAS code 321 UNCONDITIONALLY as short_term_debt, but code 321 is not always the borrowings row. Raw DB evidence (FPT report e8ea3df5 vs prior FY): FPT 2026Q1 has 321=14,491 tỷ marked (vay) [correct]; FPT 2025Q4 has 321=1,014 tỷ NOT-vay while the REAL short-term borrowing is 319=19,169 tỷ marked (vay) -> aggregator would write 1,014 tỷ (wrong row). Same class as the HPG code-311 issue (FIX-DE-4). Fix: apply a /vay/i label guard to the 321 primary mapping too (prefer the vay-labelled row among 321/319; if 321 present but non-vay AND 319-vay present, take 319). Verify on FPT 2025Q4 + re-confirm 2026Q1 unaffected. Currently served headlines (latest period) happen to be correct, so MEDIUM not high.",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "medium",
-            "note": "[router raw-row finding during FU-BACKFILL-DE-SYNC live-verify 2026-06-03] code-321 not always vay across periods."
+            "note": "[router raw-row finding during FU-BACKFILL-DE-SYNC live-verify 2026-06-03] code-321 not always vay across periods. | [PO 2026-06-03T17:07:27Z DISPATCHED] Lane-A (apps/mcp-server) batch head. Apply /vay/i label guard to the 321 primary mapping in aggregateScalars (mirror FIX-DE-1 319-fallback logic): prefer the vay-labelled row among 321/319; if 321 present-but-non-vay AND 319-vay present, take 319. DoD: re-finalize/reflow FPT 2025Q4 -> short_term_debt = 19,169 ty (code-319-vay) NOT 1,014 ty (code-321-non-vay); re-confirm FPT 2026Q1 unaffected (321-vay stays 14,491 ty); D/E recomputed on both periods live via get_bctc_full. Unit-green NOT sufficient — router live raw-verify required. ops rebuild + tool-path force_reflow (NOT hand script — FU-BACKFILL-DE-SYNC made backfill debt-aware). Same file family as FIX-DE-1/FU-BACKFILL-DE-SYNC -> recurring-bug-escalation watch (4th touch of debt-mapping): if this guard regresses a prior period, STOP and call architect. Channels clean (no new BUG/WORK, list_unresolved_reports empty)."
           }
         ]
       },
@@ -779,7 +779,7 @@
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "low",
-            "note": "Surfaced by FRESH-EXTRACT-CONFIRM 2026-06-03T08:10Z. /api/trigger-pek-extract guard returns retry_after 'after 15:00 ICT (08:00 UTC)' but the same error message + enforced behavior block during 'Mon-Fri 02:00-08:59 UTC' (actually lifts 09:00 UTC). Two bugs: (1) retry_after string (08:00) inconsistent with enforced window (08:59 -> 09:00); (2) window 02:00-08:59 UTC is ~59min wider than real HOSE close (15:00 ICT = 08:00 UTC) -> blocks off-market extraction for an extra hour. Locate the guard (mcp-server pek-extract handler), align retry_after with the true window and/or tighten window to 02:00-08:00. Cosmetic+minor-correctness, low pri."
+            "note": "Surfaced by FRESH-EXTRACT-CONFIRM 2026-06-03T08:10Z. /api/trigger-pek-extract guard returns retry_after 'after 15:00 ICT (08:00 UTC)' but the same error message + enforced behavior block during 'Mon-Fri 02:00-08:59 UTC' (actually lifts 09:00 UTC). Two bugs: (1) retry_after string (08:00) inconsistent with enforced window (08:59 -> 09:00); (2) window 02:00-08:59 UTC is ~59min wider than real HOSE close (15:00 ICT = 08:00 UTC) -> blocks off-market extraction for an extra hour. Locate the guard (mcp-server pek-extract handler), align retry_after with the true window and/or tighten window to 02:00-08:00. Cosmetic+minor-correctness, low pri. | [PO 2026-06-03T17:07:27Z BATCHED-LANE-A-TAIL] Sequence AFTER FU-DE-321-VAY-GUARD commit (same apps/mcp-server zone, serialize). XS cosmetic alignment, no rebuild contention with the debt-mapping head. Bundle into the same dev-mcp-server agent's tail or follow-on dispatch once Lane-A head commits."
           },
           {
             "task_id": "NB-FLOW-SETTLED-WRITE",
@@ -800,11 +800,11 @@
             "title": "pdf-extractor container 'Up (unhealthy)' while running correct code + producing output — healthcheck definition fails though service is functional; align/repair the Docker HEALTHCHECK so unhealthy reflects real failure (false-RED, non-blocking)",
             "type": "FIX",
             "owner": "ops",
-            "status": "TODO",
+            "status": "CLOSED-NOT-REPRO",
             "size": "S",
             "zone": "ops/",
             "priority": "low",
-            "note": "Flagged by PO 2026-06-03T10:12Z during LF triage. Container vn-market-intelligence-mcp-pdf-extractor-1 = 'Up 4 hours (unhealthy)' but running + producing fresh extracts (09:54:45); 0 die/health-failure events in 24h. Functional -> healthcheck-definition issue (false-RED), NOT an outage. Do NOT restart (would interrupt extraction). ops: inspect HEALTHCHECK cmd in compose/Dockerfile, align to a real liveness probe. Non-blocking, low-pri. | UPDATE 2026-06-03T10:46Z: container reported 'healthy' immediately after the LF-GRP-3 rebuild — the prior 'unhealthy' was a STALE/transient state cleared by recreate, not necessarily a definition bug. Keep low/monitor: if unhealthy recurs on a fresh container, then repair the HEALTHCHECK; otherwise closeable."
+            "note": "Flagged by PO 2026-06-03T10:12Z during LF triage; UPDATE 10:46Z container reported healthy immediately after the LF-GRP-3 rebuild — prior unhealthy was a stale/transient state cleared by recreate, closeable if not recurring. | [PO 2026-06-03T17:07:27Z CLOSED-NOT-REPRO] Router raw-verified live: docker ps -> vn-market-intelligence-mcp-pdf-extractor-1 = 'Up 7 hours (healthy)', ZERO health_status failure events in 24h. The false-RED has NOT recurred on the post-recreate container per the task's own close criterion. Not a dispatchable FIX — no defect to repair. Closing as not-reproducible. If 'Up (unhealthy)' recurs on a future fresh container, re-open with a HEALTHCHECK-definition audit."
           }
         ]
       },
@@ -1263,11 +1263,11 @@
             "title": "Fresh FPT Q1 layout-first extract covered only 20 OCR pages (pdf_extracted_text had 20/46 at fetch time) while the pre-fix stale run had 46 — investigate why pages 21-46 are missing from the OCR text store for this report; confirm full-document coverage",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "M",
             "zone": "apps/pdf-extractor/",
             "priority": "medium",
-            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: fresh extract Tier-0 logged '14 logical units from 20 OCR pages'; bctc_page_zones now 20 rows (was 46 stale). report has 46 physical pages -> pdf_extracted_text store only held 20 at fetch. Investigate the OCR-text population path for FPT Q1 (report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d); confirm whether pages 21-46 were never OCR'd or evicted. Does NOT affect the grouping-fix verdict (test region 3-6 fully covered). | PO TRIAGE 2026-06-03T11:12Z: kept medium, sequenced AFTER FU-LF-ORPHAN-ROWS. Coverage gap real (20/46 OCR pages) but pages 21-46 are the notes tail; core statements p3-9 ARE covered yet still quarantined (orphan-rows is the gate, not coverage). First-attempt FIX."
+            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: fresh extract Tier-0 logged '14 logical units from 20 OCR pages'; bctc_page_zones now 20 rows (was 46 stale). report has 46 physical pages -> pdf_extracted_text store only held 20 at fetch. Investigate the OCR-text population path for FPT Q1 (report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d); confirm whether pages 21-46 were never OCR'd or evicted. Does NOT affect the grouping-fix verdict (test region 3-6 fully covered). | PO TRIAGE 2026-06-03T11:12Z: kept medium, sequenced AFTER FU-LF-ORPHAN-ROWS (now DONE). | [PO 2026-06-03T17:07:27Z DISPATCHED] Lane-B (apps/pdf-extractor) batch head — independent of Lane-A apps/mcp-server (parallel under WIP<=2). Diagnose the OCR-text population path: were pages 21-46 never OCR'd (rasterise/OCR loop stopped at 20) or evicted from pdf_extracted_text after fetch? Pages 21-46 are the notes tail (core statements p3-9 already covered) so MEDIUM not high. DoD: re-extract FPT Q1 -> bctc_page_zones covers all 46 physical pages OR a documented honest reason pages 21-46 are unextractable (e.g. scanned-image-only notes). Report findings; ship the fix if in-zone. First-attempt FIX (no recurring escalation)."
           },
           {
             "task_id": "FU-LF-ORPHAN-ROWS",
@@ -1315,7 +1315,7 @@
             "size": "M",
             "zone": "apps/pdf-extractor/",
             "priority": "low",
-            "note": "Deferred non-blocker, in-zone. From 7aaa71a1 Issue 2."
+            "note": "Deferred non-blocker, in-zone. From 7aaa71a1 Issue 2. | [PO 2026-06-03T17:07:27Z BATCHED-LANE-B-TAIL] Sequence AFTER FU-FPT-OCR-PAGES-20-46 (same apps/pdf-extractor zone, serialize). Low-pri tolerance threshold (allow <=5% orphan ratio) + gutter detection improvement on dense statement pages. Does NOT affect served scalars (layout_units != table_rows derivation path) so safe to tail. Follow-on dispatch once Lane-B head commits."
           },
           {
             "task_id": "FU-LF-VALIDATION-STATUS-REFLOW",
