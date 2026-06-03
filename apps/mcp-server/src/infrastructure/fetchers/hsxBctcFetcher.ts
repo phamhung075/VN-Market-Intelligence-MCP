@@ -11,6 +11,10 @@
  *
  *   2. GET https://api.hsx.vn/m/api/v1/1/mediafiles/5/{numericId}?pageIndex=1&pageSize=100&year={year}
  *      → filter items where fileType === ".pdf" and filePath is non-empty
+ *      → if quarter is provided, filter to only items whose `time` field matches
+ *         that quarter (e.g. "01.2025"=Q1, "02.2025"=Q2, "03.2025"=Q3, "04.2025"=Q4)
+ *      → prefer type="Quý" (quarterly) entries; prefer fileName containing "hop nhat"
+ *         (consolidated B02-TCTD) over cover-letter/notice PDFs
  *      → construct URL: filePath.replace("~", "https://staticfile.hsx.vn")
  *
  * Required headers on every call:
@@ -26,6 +30,16 @@
  * If all HOSE tickers start returning empty, re-scrape main.d430e296.js for updated token.
  *
  * TASK-BCTC-3b (2026-05-15)
+ * FIX-CTG-1 (2026-06-03): Added quarter parameter to `fetchHsxBctcUrls` and
+ *   `fetchMediafileUrls`. When a quarter is supplied (e.g. "Q1", "Q3"):
+ *   - Items are filtered to only those whose `time` field's month prefix matches
+ *     the quarter: "01"→Q1, "02"→Q2, "03"→Q3, "04"→Q4. Time field format is
+ *     "MM.YYYY" (e.g. "01.2026", "03.2025").
+ *   - Items are ranked: type="Quý" preferred over "Năm"/"Bán niên"; within
+ *     type-equal items, fileName containing "hop nhat" (consolidated) is ranked
+ *     above cover-letter/notice PDFs (fileName containing "cv cbtt" or "cbtt").
+ *   This prevents the enricher from writing a wrong-quarter URL into a queue row
+ *   (observed: Q3-2025 and Q2-2025 CTG rows corrupted with Q1-2026 URL).
  *
  * @module infrastructure/fetchers/hsxBctcFetcher
  */
@@ -104,22 +118,31 @@ function buildHsxHeaders(): Record<string, string> {
  *   1. Resolve ticker → numeric securities ID via /l/api/v1/1/securities/stock
  *   2. Fetch BCTC PDF list via /m/api/v1/1/mediafiles/5/{id}
  *
+ * When `quarter` is supplied, filters to items whose `time` field matches that
+ * quarter (format "MM.YYYY": "01"=Q1, "02"=Q2, "03"=Q3, "04"=Q4), then ranks
+ * results: consolidated ("hop nhat") PDF first, then other Quý-type PDFs, then
+ * the rest. This ensures each queue row is enriched with its OWN quarter's URL.
+ *
  * Returns empty array when:
  *   - Ticker not found on hsx.vn (HNX/UPCOM tickers return empty data.list)
  *   - Any HTTP error or network timeout
  *   - Parse failure on either response
+ *   - quarter is supplied but no items match it
  *
  * Never throws. Silent fail → caller falls through to next strategy.
  *
  * @param ticker     Stock ticker symbol (e.g. "VNM", "HPG")
  * @param year       Report year filter (e.g. 2025). Pass 0 for all years.
  * @param timeoutMs  AbortController timeout in milliseconds
- * @returns Array of PDF download URLs (staticfile.hsx.vn) or []
+ * @param quarter    Optional report quarter (e.g. "Q1", "Q3"). When supplied,
+ *                   only items for that quarter are returned.
+ * @returns Array of PDF download URLs (staticfile.hsx.vn), ranked best-first, or []
  */
 export async function fetchHsxBctcUrls(
   ticker: string,
   year: number,
   timeoutMs: number,
+  quarter?: string,
 ): Promise<string[]> {
   // ── Env gate — set HSX_BCTC_ENABLED=false to skip Strategy 0 entirely ───
   if (Bun.env.HSX_BCTC_ENABLED === "false") return [];
@@ -132,7 +155,7 @@ export async function fetchHsxBctcUrls(
   }
 
   // ── Step 2: fetch BCTC PDF list ──────────────────────────────────────────
-  return fetchMediafileUrls(numericId, year, timeoutMs);
+  return fetchMediafileUrls(numericId, year, timeoutMs, quarter);
 }
 
 // ---------------------------------------------------------------------------
@@ -179,14 +202,80 @@ async function resolveNumericId(
   }
 }
 
+// ---------------------------------------------------------------------------
+// Quarter filtering and ranking helpers (FIX-CTG-1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Maps a quarter string (e.g. "Q1", "Q3") to its two-digit month prefix used
+ * in the hsx.vn `time` field (format "MM.YYYY", e.g. "01.2026").
+ *
+ * The hsx.vn API uses: "01"=Q1, "02"=Q2, "03"=Q3, "04"=Q4.
+ * Returns undefined for unrecognised quarter strings (no filtering applied).
+ */
+function quarterToMonthPrefix(quarter: string): string | undefined {
+  const upper = quarter.toUpperCase().replace(/\s/g, "");
+  switch (upper) {
+    case "Q1": return "01";
+    case "Q2": return "02";
+    case "Q3": return "03";
+    case "Q4": return "04";
+    default:   return undefined;
+  }
+}
+
+/**
+ * Returns true when the item's `time` field matches the requested quarter.
+ *
+ * `time` field examples from hsx.vn:
+ *   - "01.2026" → Q1 2026
+ *   - "03.2025" → Q3 2025
+ *   - "04.2025" → Q4 2025
+ *   - "2025"    → annual (no quarter prefix)
+ *
+ * Matching rule: time starts with "<monthPrefix>." (e.g. "01." for Q1).
+ */
+function itemMatchesQuarter(time: string | undefined, monthPrefix: string): boolean {
+  if (typeof time !== "string" || time.length === 0) return false;
+  return time.startsWith(`${monthPrefix}.`);
+}
+
+/**
+ * Ranks a PDF item for preference within a quarter.
+ *
+ * Lower score = higher preference (sorted ascending).
+ *
+ * Rank 0: type="Quý" (quarterly) AND fileName contains "hop nhat" (consolidated)
+ * Rank 1: type="Quý" (quarterly), other filenames
+ * Rank 2: everything else (annual, semi-annual, or unclear type)
+ *
+ * This ensures the full consolidated B02-TCTD statement is returned first,
+ * ahead of standalone (riêng lẻ) or cover-letter PDFs.
+ */
+function rankItem(item: HsxMediafileItem): number {
+  const typeIsQuy = item.type === "Quý" || item.type === "Quy";
+  const nameIsHopNhat = typeof item.fileName === "string" &&
+    item.fileName.toLowerCase().includes("hop nhat");
+  if (typeIsQuy && nameIsHopNhat) return 0;
+  if (typeIsQuy) return 1;
+  return 2;
+}
+
 /**
  * Fetches BCTC PDF items from the mediafiles endpoint and constructs download URLs.
- * Returns [] on any error.
+ *
+ * When `quarter` is supplied:
+ *   - Filters items to only those whose `time` field matches the quarter
+ *     (via `quarterToMonthPrefix` → "01."/"02."/"03."/"04." prefix matching).
+ *   - Sorts the remaining items by rank (consolidated "hop nhat" first).
+ *
+ * Returns [] on any error or when quarter filtering yields no results.
  */
 async function fetchMediafileUrls(
   numericId: number,
   year: number,
   timeoutMs: number,
+  quarter?: string,
 ): Promise<string[]> {
   const url =
     `${HSX_MEDIAFILES_API}/${numericId}` +
@@ -208,21 +297,32 @@ async function fetchMediafileUrls(
 
     if (!Array.isArray(list)) return [];
 
-    const urls: string[] = [];
+    // Resolve the month-prefix filter for quarter filtering (FIX-CTG-1)
+    const monthPrefix = quarter !== undefined ? quarterToMonthPrefix(quarter) : undefined;
+
+    // Collect valid PDF items, optionally filtered by quarter
+    const candidates: HsxMediafileItem[] = [];
     for (const item of list) {
       if (typeof item !== "object" || item === null) continue;
-      const { fileType, filePath } = item;
+      const { fileType, filePath, time } = item;
 
       // Filter: PDF file type and filePath present
       if (fileType !== ".pdf") continue;
       if (typeof filePath !== "string" || filePath.length === 0) continue;
 
-      // Construct download URL: replace tilde prefix with CDN base
-      const downloadUrl = filePath.replace("~", STATICFILE_BASE);
-      urls.push(downloadUrl);
+      // Quarter filter: when a month-prefix is resolved, skip non-matching items
+      if (monthPrefix !== undefined && !itemMatchesQuarter(time, monthPrefix)) continue;
+
+      candidates.push(item);
     }
 
-    return urls;
+    // Sort: consolidated quarterly PDFs first (FIX-CTG-1)
+    candidates.sort((a, b) => rankItem(a) - rankItem(b));
+
+    // Construct download URLs: replace tilde prefix with CDN base
+    return candidates.map(item =>
+      (item.filePath as string).replace("~", STATICFILE_BASE),
+    );
   } catch {
     // Network error, timeout, or parse failure
     return [];

@@ -118,12 +118,14 @@ export interface DiscoverOptions {
    */
   /**
    * Injectable for Strategy 0 (hsx.vn mediafiles).
-   * Different arity from HttpFetchFn — accepts (ticker, year, timeoutMs).
+   * Different arity from HttpFetchFn — accepts (ticker, year, timeoutMs, quarter?).
    * Optional: omitting it disables Strategy 0.
    * In production, wire fetchHsxBctcUrls from infrastructure/fetchers/hsxBctcFetcher.ts.
    * TASK-BCTC-3b (2026-05-15).
+   * FIX-CTG-1 (2026-06-03): quarter added so the fetcher can filter to the correct
+   *   quarter's PDF instead of returning all PDFs for the year.
    */
-  _fetchHsx?: (ticker: string, year: number, timeoutMs: number) => Promise<string[]>;
+  _fetchHsx?: (ticker: string, year: number, timeoutMs: number, quarter?: string) => Promise<string[]>;
   _fetchVpsPlaywright?: HttpFetchFn;
   /**
    * @deprecated TASK_1944b: Strategy 2 (SSC iboard) permanently removed 2026-05-18.
@@ -206,16 +208,19 @@ function getBctcDiscoverUrl(): string | undefined {
  * HNX/UPCOM tickers: ID lookup returns empty list → returns [] gracefully.
  *
  * TASK-BCTC-3b (2026-05-15)
+ * FIX-CTG-1 (2026-06-03): forwards quarter so the fetcher can filter to the
+ *   correct quarter's PDF rather than returning all PDFs for the year.
  */
 async function tryFetchHsx(
   ticker: string,
   year: number,
   timeout: number,
-  fetchFn: ((ticker: string, year: number, timeoutMs: number) => Promise<string[]>) | undefined,
+  fetchFn: ((ticker: string, year: number, timeoutMs: number, quarter?: string) => Promise<string[]>) | undefined,
+  quarter?: string,
 ): Promise<string[]> {
   if (!fetchFn) return [];
   try {
-    return await fetchFn(ticker, year, timeout);
+    return await fetchFn(ticker, year, timeout, quarter);
   } catch {
     return [];
   }
@@ -361,7 +366,8 @@ export async function discoverHosePdfUrls(
   // Strategy 0: hsx.vn mediafiles API (TASK-BCTC-3b, 2026-05-15)
   // Only runs when _fetchHsx is supplied in options.
   // HOSE-only: HNX/UPCOM tickers return [] (not an error), falls through to strategy 1.
-  const hsxUrls = await tryFetchHsx(ticker, year, timeout, fetchHsx);
+  // FIX-CTG-1: quarter forwarded so fetcher filters to correct-quarter PDF.
+  const hsxUrls = await tryFetchHsx(ticker, year, timeout, fetchHsx, quarter);
   if (hsxUrls.length > 0) {
     return {
       urls: hsxUrls,

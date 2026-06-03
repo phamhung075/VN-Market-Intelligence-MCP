@@ -115,12 +115,16 @@ export async function runBctcQueueEnricherJob(opts: {
   // more discovery pass. If still no URL → re-marked url_not_found (expected).
   // This prevents permanent calendar blindspots when SSC is slow to publish.
   //
-  let queueItems: Array<{ id: number; action_code: string; attempts: number }> = [];
+  // FIX-CTG-1 (2026-06-03): include period_year and period_quarter in SELECT so
+  // each row is enriched with its OWN quarter's PDF URL, not the current year/Q4 default.
+  // Previously the SELECT discarded these fields → discoverHosePdfUrls defaulted to
+  // year=currentYear, quarter="Q4" → Q3/Q2 rows were corrupted with a Q1-2026 URL.
+  let queueItems: Array<{ id: number; action_code: string; attempts: number; period_year: number; period_quarter: string }> = [];
 
   // Primary query includes both Arm 1 (normal pending) and Arm 2 (grace-period retry).
   // Falls back to Arm 1 only if last_attempt column is absent (e.g. older schema).
   const ARM1_ONLY_SQL = `
-    SELECT id, action_code, attempts
+    SELECT id, action_code, period_year, period_quarter, attempts
     FROM bctc_vps_queue
     WHERE (
       source_url IS NULL
@@ -133,7 +137,7 @@ export async function runBctcQueueEnricherJob(opts: {
     LIMIT ?`;
 
   const COMBINED_SQL = `
-    SELECT id, action_code, attempts
+    SELECT id, action_code, period_year, period_quarter, attempts
     FROM bctc_vps_queue
     WHERE (
       (
@@ -157,7 +161,7 @@ export async function runBctcQueueEnricherJob(opts: {
 
   try {
     queueItems = db
-      .query<{ id: number; action_code: string; attempts: number }, [number]>(
+      .query<{ id: number; action_code: string; attempts: number; period_year: number; period_quarter: string }, [number]>(
         COMBINED_SQL,
       )
       .all(batchSize);
@@ -169,7 +173,7 @@ export async function runBctcQueueEnricherJob(opts: {
       logger.debug("[bctcQueueEnricher] last_attempt column absent — grace-period arm disabled");
       try {
         queueItems = db
-          .query<{ id: number; action_code: string; attempts: number }, [number]>(
+          .query<{ id: number; action_code: string; attempts: number; period_year: number; period_quarter: string }, [number]>(
             ARM1_ONLY_SQL,
           )
           .all(batchSize);
@@ -217,8 +221,15 @@ export async function runBctcQueueEnricherJob(opts: {
       // _fetchHsx is only included if the caller explicitly sets it — preserving the
       // pre-BCTC-3b behaviour for all existing tests. Only pure production runs
       // (no discoverOptions override) wire the live hsxBctcFetcher.
+      //
+      // FIX-CTG-1 (2026-06-03): pass item.period_year and item.period_quarter so
+      // discoverHosePdfUrls calls the hsx.vn API for the correct year and the fetcher
+      // filters to the correct quarter's PDF. Previously these defaulted to
+      // year=currentYear / quarter="Q4", corrupting Q3/Q2 rows with a Q1-2026 URL.
       const discovery = await discoverHosePdfUrls(item.action_code, {
-        timeout: DISCOVERY_TIMEOUT_MS,
+        timeout:  DISCOVERY_TIMEOUT_MS,
+        year:     item.period_year,
+        quarter:  item.period_quarter,
         _fetchHsx:           fetchHsxBctcUrls,
         _fetchVpsPlaywright: bctcHttpFetch,
         // SSC (_fetchSsc), cafef (_fetchCafef), vietstock (_fetchVietstock) removed TASK_1944b/TASK_1916b.
