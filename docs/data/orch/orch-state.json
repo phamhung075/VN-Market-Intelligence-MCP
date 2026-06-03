@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-03T08:11:47Z",
   "_updated_by": "dev-team",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "Idle. Tick3 done: NB-FLOW-SETTLED-WRITE DONE-PENDING-LIVE-VERIFY (commit 04b20c87, self-heals 219L unified-agent.md on next chef write). FRESH-EXTRACT-CONFIRM FAIL-NEEDS-TRIAGE: fresh FPT Q1 re-extract completed (09:36:20Z, 46pp) but AC-LFE-1/2 both FAILED (p3 still prose, no schema inheritance) -> PO re-open BCTC-LAYOUT-FIRST, route dev-pdf-extractor to verify container build + root-cause. FU-PEK-GUARD-RETRYAFTER-MISLEADING + BAL-1e-DEV (low) open.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "LF-GROUP-RETHINK",
+    "next_agent": "agents-architect",
+    "next_action": "LF-GROUP-RETHINK SPIKE dispatched to agents-architect (plan-only, timebox 120). FRESH-EXTRACT-CONFIRM -> FAIL-TRIAGED: classifier fix IS live (32/46 table) but unit-grouping/schema-inheritance stage globally inert (46 singleton units, 0 inheritance) = real binding blocker; QA AC-LFE-2 green was unit-test-only false-green. Recurring-bug escalation -> architect root-cause, no 7th re-patch. ops backlog FU-PDFX-HEALTHCHECK (unhealthy-but-functional, false-RED). NB-FLOW-SETTLED-WRITE live-verify still pending next chef write.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T09:42:00Z",
+    "updated_at": "2026-06-03T10:12:00Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T09:42:00Z",
+    "_updated_at": "2026-06-03T10:12:00Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -678,6 +678,17 @@
             "zone": "cross-service/",
             "priority": "medium",
             "note": " | DONE-PENDING-LIVE-VERIFY 2026-06-03T09:42Z (commit 04b20c87) agent-father: NB-WRITE-ATOMIC fixed the notebook-write SKILL, but the breach reappeared (unified-agent.md 219L) because the consumer FLOWS were orphaned on the old append-then-trim recipe (the SSOT-fix-doesnt-reach-derived-copy pattern). Migrated 5 consumers to compose-in-memory single-settled-write: chef.md Step 8 (8b compose <=200L in memory / 8c single Write / 8d AC-5 sanity-only / 8e mutex commit), news-scout/stage-log-notify.md Stage 4, bctc-analyst/stage-log-notify.md 5a-5c, agents-architect/handlers.md Brief-Commit Step 2, digest-predict/monday.md P-6. Router-verified: 0 forbidden append-then-trim phrases remain in chef.md Step 8; fb-market-poster (OVERWRITE class -> delegates to skill) + dispatcher-only flows correctly left unchanged. LIVE-VERIFY pending: next chef write must produce a <=200L notebook with ZERO context_bloat_breach signal; the current 219L unified-agent.md self-heals on that write (no 4th hand-prune)."
+          },
+          {
+            "task_id": "FU-PDFX-HEALTHCHECK",
+            "title": "pdf-extractor container 'Up (unhealthy)' while running correct code + producing output — healthcheck definition fails though service is functional; align/repair the Docker HEALTHCHECK so unhealthy reflects real failure (false-RED, non-blocking)",
+            "type": "FIX",
+            "owner": "ops",
+            "status": "TODO",
+            "size": "S",
+            "zone": "ops/",
+            "priority": "low",
+            "note": "Flagged by PO 2026-06-03T10:12Z during LF triage. Container vn-market-intelligence-mcp-pdf-extractor-1 = 'Up 4 hours (unhealthy)' but running + producing fresh extracts (09:54:45); 0 die/health-failure events in 24h. Functional -> healthcheck-definition issue (false-RED), NOT an outage. Do NOT restart (would interrupt extraction). ops: inspect HEALTHCHECK cmd in compose/Dockerfile, align to a real liveness probe. Non-blocking, low-pri."
           }
         ]
       },
@@ -1065,13 +1076,28 @@
             "task_id": "FRESH-EXTRACT-CONFIRM",
             "title": "Trigger fresh FPT Q1 layout-first re-extract post-08:00 UTC + DB-confirm AC-LFE-1/2 (page3→table, page5 schema_inherited_from_page=3)",
             "type": "FIX",
-            "owner": "po",
-            "status": "FAIL-NEEDS-TRIAGE",
+            "owner": "agents-architect",
+            "status": "FAIL-TRIAGED",
             "size": "S",
             "zone": "ops/",
             "priority": "high",
             "blocked_until": "2026-06-03T09:00:00Z",
-            "note": "LF-DEPLOY APPROVED on code+container+unit+0-regression; only live DB re-extract pending. RE-QUEUED 2026-06-03T08:10Z: ops triggered /api/trigger-pek-extract -> still 503 market_open. DISCOVERY: enforced guard window is 02:00-08:59 UTC (lifts 09:00 UTC), NOT 08:00 — the endpoint retry_after string ('after 15:00 ICT (08:00 UTC)') is self-contradictory vs its own message ('Mon-Fri 02:00-08:59 UTC'). blocked_until corrected 08:00->09:00. Post-09:00: POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d}; then DB-verify bctc_page_zones page3 page_type=table + unit_id==page5, page5 schema_inherited_from_page=3. The >=09:07 UTC tick handles this. Confirm step, no rebuild. | FAIL-NEEDS-TRIAGE 2026-06-03T09:42Z dev-team: post-09:00 re-extract DID complete (fresh bctc_page_zones extracted_at 2026-06-03 09:36:20, all 46 pages) but AC-LFE-1/2 BOTH FAILED on the fresh rows. AC-LFE-1 (page3 page_type=table): FAIL, page3 still 'prose'. AC-LFE-2 (page3.unit_id==page5.unit_id, page5 schema_inherited_from_page=3): FAIL, all unit_ids distinct (p3=88de48c6 / p5=7e6b7c6f), schema_inherited_from_page=null on every page. REGRESSED differently: fresh extract sets every page is_schema_page=1 / schema_inherited_from_page=null (NO grouping/inheritance at all; prior stale state at least had p5->p4 inherit). So the layout-first fix did not achieve grouping on a fresh run. Owner -> po for triage: re-open BCTC-LAYOUT-FIRST, route to dev-pdf-extractor to (a) confirm the live container actually carries the layout-first build, (b) root-cause why fresh extract still classifies p3 prose + emits no inheritance. Recurring-bug discipline: >=2nd LF attempt, route to root-cause not direct re-patch."
+            "note": "LF-DEPLOY APPROVED on code+container+unit+0-regression; only live DB re-extract pending. RE-QUEUED 2026-06-03T08:10Z: ops triggered /api/trigger-pek-extract -> still 503 market_open. DISCOVERY: enforced guard window is 02:00-08:59 UTC (lifts 09:00 UTC), NOT 08:00 — the endpoint retry_after string ('after 15:00 ICT (08:00 UTC)') is self-contradictory vs its own message ('Mon-Fri 02:00-08:59 UTC'). blocked_until corrected 08:00->09:00. Post-09:00: POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d}; then DB-verify bctc_page_zones page3 page_type=table + unit_id==page5, page5 schema_inherited_from_page=3. The >=09:07 UTC tick handles this. Confirm step, no rebuild. | FAIL-NEEDS-TRIAGE 2026-06-03T09:42Z dev-team: post-09:00 re-extract DID complete (fresh bctc_page_zones extracted_at 2026-06-03 09:36:20, all 46 pages) but AC-LFE-1/2 BOTH FAILED on the fresh rows. AC-LFE-1 (page3 page_type=table): FAIL, page3 still 'prose'. AC-LFE-2 (page3.unit_id==page5.unit_id, page5 schema_inherited_from_page=3): FAIL, all unit_ids distinct (p3=88de48c6 / p5=7e6b7c6f), schema_inherited_from_page=null on every page. REGRESSED differently: fresh extract sets every page is_schema_page=1 / schema_inherited_from_page=null (NO grouping/inheritance at all; prior stale state at least had p5->p4 inherit). So the layout-first fix did not achieve grouping on a fresh run. Owner -> po for triage: re-open BCTC-LAYOUT-FIRST, route to dev-pdf-extractor to (a) confirm the live container actually carries the layout-first build, (b) root-cause why fresh extract still classifies p3 prose + emits no inheritance. Recurring-bug discipline: >=2nd LF attempt, route to root-cause not direct re-patch. | FAIL-TRIAGED 2026-06-03T10:12Z (PO router-raw-verified, owner->agents-architect via LF-GROUP-RETHINK SPIKE). Fix-not-live REFUTED: running container 693fa612c365 (img 33569fbf, /app/infrastructure/generic_md_table_extractor.py mtime Jun-3 06:23) carries the 3-signal classifier (16 markers) — and it WORKS (fresher extract extracted_at 09:54:45 shows 32/46 pages now table, all-prose problem gone -> LF-IMPL-1 landed). REAL binding blocker = a SEPARATE stage: unit-grouping/schema-inheritance is globally inert (live census 46 pages -> 46 distinct unit_id, 46 is_schema_page=1, 0 schema_inherited_from_page). AC-LFE-2 cannot pass because grouping never runs. AC-LFE-1 (p3 prose) is a secondary START-page threshold miss, independent. QA AC-LFE-2 green was unit-test-only (test_fpt_q1_scenario_page5_inherits_page3_schema PASS) but live extract path inherits nothing = false-green (test-vs-live gap). Recurring-bug-escalation: 2nd LF-DEPLOY fail + 7+ commits on module family -> architect root-cause, NO 7th direct re-patch."
+          },
+          {
+            "task_id": "LF-GROUP-RETHINK",
+            "title": "SPIKE (architect root-cause): live layout-first extract emits ZERO unit-grouping/schema-inheritance (46 pages -> 46 singleton units, all is_schema_page=1, schema_inherited_from_page=null) although the 3-signal page_type classifier IS live (32/46 now table). Pin the structural fault in the unit-boundary/zone_page stitching + schema-inheritance stage; reconcile test_fpt_q1_scenario_page5_inherits_page3_schema PASS vs live-path zero-inheritance (test-vs-live gap); pin secondary p3-still-prose START-page miss. Output findings brief, no code mutation.",
+            "type": "SPIKE",
+            "owner": "agents-architect",
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "apps/pdf-extractor/",
+            "priority": "high",
+            "timebox_min": 120,
+            "depends": [
+              "FRESH-EXTRACT-CONFIRM"
+            ],
+            "note": "PO BATCH 2026-06-03T10:12Z. Router raw evidence (live container 693fa612c365, market.db, fresh extract 09:54:45, report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d): 46 pages / 46 distinct unit_id / 32 table / 14 prose / 46 is_schema_page=1 / 0 schema_inherited_from_page. Suspect modules: extract_layout_first_usecase.py (grouping orchestration), generic_md_table_extractor.py build_document_map/zone_page (unit-boundary stitching + schema propagation), layout_invariants primitive. DoD: brief in docs/architecture-briefs/ pinning the grouping-stage structural fault + test-vs-live gap + p3-prose START miss + fix owner-split; plan-only timebox 120; NO code mutation; agent-father implements from brief next cycle. BLOCK any 7th dev-pdf-extractor re-patch until brief lands."
           }
         ]
       },
