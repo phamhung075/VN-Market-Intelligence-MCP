@@ -26,6 +26,18 @@
  *   CTG in particular is a cover-letter-only PDF: its real financial tables need
  *   BCTC-CTG-ATTACHMENT-FETCH before any aggregation can succeed.
  *
+ * LF-SERVE-REFLOW (force_reflow):
+ *   BEQ-3 added new scalar mappings (operating_profit, cash, CF columns) to
+ *   aggregateScalars AFTER finalize_bctc_refine last ran on several reports.
+ *   Those reports transitioned to refine_status='DONE' before BEQ-3 shipped,
+ *   so they were never re-derived — and the old PENDING-only eligibility
+ *   predicate silently excluded them from the standard backfill sweep.
+ *
+ *   The durable fix: force_reflow=true extends eligibility to refine_status='DONE'
+ *   reports (in addition to PENDING). This one-command sweep is safe to re-run
+ *   whenever the aggregator's column mapping set changes — it re-derives from
+ *   existing table_rows without touching the parse layer.
+ *
  * OFF-HOSE guard:
  *   This tool modifies financial_reports rows. Callers MUST check the off-hose
  *   window (02:00–08:59 UTC Mon–Fri) before executing.
@@ -69,7 +81,16 @@ const InputSchema = z.object({
   report_id: z
     .string()
     .optional()
-    .describe("Target a single report by ID. If omitted, backfills ALL eligible PENDING reports."),
+    .describe("Target a single report by ID. If omitted, backfills ALL eligible reports."),
+  force_reflow: z
+    .boolean()
+    .optional()
+    .describe(
+      "If true, also re-derive scalar columns for reports with refine_status='DONE' " +
+      "(not just PENDING). Use after any aggregator mapping change (e.g. BEQ-3 new columns) " +
+      "to reflow stale DONE reports whose scalars were derived before the new mappings shipped. " +
+      "CONFIRMED reports are always excluded regardless of this flag.",
+    ),
 });
 
 // ── Result type ───────────────────────────────────────────────────────────────
@@ -107,12 +128,18 @@ export function buildBackfillBctcScalarsHandler(
       };
     }
 
-    const { dry_run = false, report_id } = parsed.data;
+    const { dry_run = false, report_id, force_reflow = false } = parsed.data;
     const db = dbOverride ?? getDb();
 
     try {
-      // ── 1. Find eligible PENDING reports ───────────────────────────────────
-      // Eligible = PENDING + not CONFIRMED + at least 1 bctc_table_row
+      // ── 1. Find eligible reports ────────────────────────────────────────────
+      // Default: PENDING + not CONFIRMED + at least 1 bctc_table_row
+      // force_reflow=true: also include refine_status='DONE' (re-derive stale scalars
+      //   whose aggregator mappings have changed since finalize last ran, e.g. BEQ-3).
+      const statusClause = force_reflow
+        ? `refine_status IN ('PENDING', 'DONE')`
+        : `refine_status = 'PENDING'`;
+
       let targetReports: PendingReportRow[];
 
       if (report_id) {
@@ -120,7 +147,7 @@ export function buildBackfillBctcScalarsHandler(
           .prepare<PendingReportRow, [string]>(
             `SELECT id, action_code, sort_key, confirm_status
              FROM financial_reports
-             WHERE id = ? AND refine_status = 'PENDING'`,
+             WHERE id = ? AND ${statusClause}`,
           )
           .all(report_id);
       } else {
@@ -128,7 +155,7 @@ export function buildBackfillBctcScalarsHandler(
           .prepare<PendingReportRow, []>(
             `SELECT id, action_code, sort_key, confirm_status
              FROM financial_reports
-             WHERE refine_status = 'PENDING'
+             WHERE ${statusClause}
                AND (confirm_status IS NULL OR confirm_status != 'CONFIRMED')
              ORDER BY sort_key ASC`,
           )
@@ -343,12 +370,15 @@ export function registerBackfillBctcScalarsTool(server: McpServer): void {
 
   server.tool(
     "backfill_bctc_scalars",
-    "BEQ-2: Backfill scalar columns for PENDING BCTC reports that already have bctc_table_rows " +
-      "(from legacy pdf-parse ingest) but were never processed by the agentic refine pipeline. " +
+    "BEQ-2 + LF-SERVE-REFLOW: Backfill (or re-derive) scalar columns for BCTC reports that have " +
+      "bctc_table_rows but whose financial_reports scalar columns are missing or stale. " +
+      "Default: targets PENDING reports only (legacy pdf-parse ingest with no prior aggregation). " +
+      "force_reflow=true: also re-derives DONE reports — use after any aggregator mapping change " +
+      "(e.g. BEQ-3 new columns) to sweep stale DONE reports without rebuilding the parse layer. " +
       "Runs aggregateScalars on existing table_rows and writes the result to financial_reports, " +
       "then sets refine_status='DONE'. " +
-      "Reports with 0 table_rows are SKIPPED (CTG, DGC, VCB etc. — need re-fetch or BCTC-CTG-ATTACHMENT-FETCH). " +
-      "CONFIRMED reports are never overwritten. " +
+      "Reports with 0 table_rows are SKIPPED (CTG, DGC, VCB etc.). " +
+      "CONFIRMED reports are NEVER overwritten (regardless of force_reflow). " +
       "OFF-HOSE: do NOT call during 02:00–08:59 UTC Mon–Fri (live extraction window). " +
       "Use dry_run=true first to preview what would be written.",
     {
@@ -359,7 +389,14 @@ export function registerBackfillBctcScalarsTool(server: McpServer): void {
       report_id: z
         .string()
         .optional()
-        .describe("Target a single report ID. If omitted, backfills all eligible PENDING reports."),
+        .describe("Target a single report ID. If omitted, processes all eligible reports."),
+      force_reflow: z
+        .boolean()
+        .optional()
+        .describe(
+          "If true, also re-derive DONE reports (stale after aggregator mapping changes). " +
+          "CONFIRMED reports always excluded.",
+        ),
     },
     async (input) => {
       return handler(input);
