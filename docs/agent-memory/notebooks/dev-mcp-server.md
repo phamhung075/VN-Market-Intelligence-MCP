@@ -1,5 +1,21 @@
 # dev-mcp-server -- Notebook
 
+## c354 · 2026-06-03T15:25Z (FIX-DE-1) — COMMITTED fdd2363a
+
+**Task:** FIX-DE-1 — Add short_term_debt/long_term_debt to ScalarAggregate + aggregateScalars (BCTC-ANALYTICS-LAYER, HIGH)
+
+**Root cause (architect DB-proven):** bctc_table_rows has code 321 (short_term_debt=14,491B) and 339 (long_term_debt=1,605B) for FPT 2026-Q1, but ScalarAggregate had no fields for them — missed in BEQ-3 audit. finalizeBctcRefineTool never wrote them → DB zeros corpus-wide → D/E=N/A.
+
+**Changes:** bctcScalarAggregator.ts — ScalarAggregate interface +2 fields (short_term_debt/long_term_debt); emptyScalars +2 nulls; aggregateScalars: code 321 primary → 319+/vay/i fallback for short_term_debt; code 339 primary → 334+/vay/i fallback for long_term_debt; isBankPath guard (both fields null, added to notApplicable); VAS-CODE-TABLE doc updated.
+
+**Tests (FIX-DE-1-debt-decomposition.test.ts):** 7 new RED→GREEN: FPT-pattern (321+339 values), VNM-pattern (319+/vay/), 319 non-borrowing exclusion, bank notApplicable, corporate not-in-na, empty corpus, 22-field regression. Total suite: 39 pass / 0 fail across 5 scalar test files.
+
+**Boundary (honest):** Live D/E UNCHANGED — aggregator returns correct scalars but finalizeBctcRefineTool (FIX-DE-2) not yet wired to write them.
+
+**Gate:** tsc clean | tools=158 (unchanged) | sched=70 (unchanged)
+
+---
+
 ## c353 · 2026-06-03 (BAL-1f) — COMMITTED 3b210204
 
 **Task:** BAL-1f — current_ratio micro-residual guard + operating_margin recompute (BCTC-ANALYTICS-LAYER, HIGH)
@@ -47,12 +63,6 @@
 **Remediation tasks proposed:** Task 1 `backfillBctcHistorical()` (S, dev-mcp-server), Task 2 VPS confirmation (XS, ops), Task 3 VCB re-refine (XS), Task 4 analyst ESC-3 gate.
 
 **Brief:** `docs/architecture-briefs/2026-06-02-bctc-history-coverage-spike.md`
-
----
-
-## c349–c351 (pruned) — see git log for details
-
-Key: BAL-1a-BACKFILL (b7329f54 recompute-on-read 5 ratios), FU-BCTC-TOOL-PARAMS (7ed5b722 quarters param), FU-BCTC-HISTORY-COVERAGE spike (f3bf4b61 root-cause: queue forward-only, no backfill seeder).
 
 ---
 
