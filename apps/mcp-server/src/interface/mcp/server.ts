@@ -82,6 +82,7 @@ import { handleKinhDichMarket } from "./routes/kinhDichMarketHandler.js";
 import { handlePriceHistory } from "./routes/priceHistoryHandler.js";
 import { handlePriceBatch } from "./routes/priceBatchHandler.js";
 import { handleNewsHeadlines } from "./routes/newsHeadlinesHandler.js";
+import { handleVpsProxyHealth } from "./routes/vpsProxyHealthHandler.js";
 
 /**
  * Cloudflare Routing — Path Prefix Stripping Middleware
@@ -1932,6 +1933,16 @@ export async function createBunServer(
     if (method === "GET" && pathname === "/api/orchestration") {
       const orchPath = getOrchStatePath(process.cwd());
       handleGetOrchestration(req, res, orchPath);
+      return;
+    }
+
+    // ── VPT-1: GET /api/vps-proxy-health — machine-readable VPS health for dashboard ──
+    // Returns per-service push freshness (stale boolean, pushes_24h, errors_24h, last_push)
+    // so the /dashboard/vps panel can display UP/STALE/DOWN truthfully.
+    // Data source: vpsPushLogStore.getVpsProxyHealth() — same store as get_vps_proxy_health MCP tool.
+    // No authentication required — read-only, no sensitive data.
+    if (method === "GET" && pathname === "/api/vps-proxy-health") {
+      handleVpsProxyHealth(req, res, db);
       return;
     }
 
