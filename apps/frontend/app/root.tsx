@@ -1,4 +1,5 @@
 // Tier 2: Router skeleton — must type-check before any page is built.
+import { useEffect } from "react";
 import {
   Links,
   Meta,
@@ -6,6 +7,7 @@ import {
   Scripts,
   ScrollRestoration,
   Link,
+  useRouteError,
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
 
@@ -37,7 +39,45 @@ export default function App() {
   return <Outlet />;
 }
 
+// ---------------------------------------------------------------------------
+// Chunk-load error detection helpers (mirrors entry.client.tsx guard)
+// ---------------------------------------------------------------------------
+const CHUNK_RELOAD_FLAG_PREFIX = "chunk_reload_attempted:";
+
+/** Patterns that identify a stale-bundle / missing-chunk load error. */
+const CHUNK_ERROR_RE =
+  /Failed to fetch dynamically imported module|Importing a module script failed|error loading dynamically imported module|ChunkLoadError/i;
+
+function isChunkError(err: unknown): boolean {
+  if (err instanceof Error) {
+    return CHUNK_ERROR_RE.test(err.message) || CHUNK_ERROR_RE.test(err.name);
+  }
+  return false;
+}
+
+function getChunkReloadFlag(pathname: string): string {
+  return CHUNK_RELOAD_FLAG_PREFIX + pathname;
+}
+
+// ---------------------------------------------------------------------------
+// Root ErrorBoundary — chunk-aware auto-reload, non-chunk errors unchanged
+// ---------------------------------------------------------------------------
 export function ErrorBoundary() {
+  const error = useRouteError();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!isChunkError(error)) return;
+
+    const flag = getChunkReloadFlag(window.location.pathname);
+    if (sessionStorage.getItem(flag)) {
+      // One reload already attempted — do not loop; fall through to UI.
+      return;
+    }
+    sessionStorage.setItem(flag, "1");
+    window.location.reload();
+  }, [error]);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
       <div className="text-center">
