@@ -183,3 +183,13 @@ LF-GROUP-RETHINK SPIKE: unit-grouping globally inert (46 singleton units) despit
 FU-COWORK-HEARTBEAT-SCHEMA: cowork-team main.md LLM runtime drifts from its own Step 6 spec — 37+ on-disk files use flat {classification,reason,tick_nominal,...} with no envelope. autosilent.sh and Step 6 spec are both enveloped {from,to,type,payload,createdAt} — already correct. Canonical = enveloped (drain-signals.md Step 0a-1 fingerprints on from+type+payload+createdAt). Fix = INVARIANT guard block inserted at Step 6 header + flat-unique telemetry fields (classification/reason/leader_lock/dev_head/devq/signal_backlog/note) added inside payload. agent-father to edit main.md only; autosilent.sh untouched.
 
 **Signal dropped:** `docs/signals/cowork-heartbeat-schema-20260603T203508Z.json` → agent-father
+
+---
+
+## 2026-06-03T20:45:01Z
+
+**Brief:** `docs/architecture-briefs/2026-06-03-esc3-data-coverage-guard.md`
+
+ESC-3 false-escalation loop (16 cycles, FPT Q1-2026): bctc-analyst fired Opus deep-dive for OCF/NI divergence every cycle because the 24h guard TTL matches cycle cadence and deep-dive-opus.md releases the guard unconditionally. Root cause is ESC-3 gate has zero quarters-coverage awareness — fires on divergence_ratio>0.40 alone regardless of whether historical data exists. Fix: add `quarters_returned<4` coverage pre-flight to ESC-3 in main.md; insert DATA-COVERAGE-LIMITED handler (guard_key=esc-datacov:..., ttl_seconds=2592000/30d, route ops once); update deep-dive-opus.md ESC-3 step 1 to early-exit + no task_release when coverage-limited. 2-file edit for agent-father.
+
+**Signal dropped:** `docs/signals/esc3-data-coverage-guard-20260603T204501Z.json` → agent-father

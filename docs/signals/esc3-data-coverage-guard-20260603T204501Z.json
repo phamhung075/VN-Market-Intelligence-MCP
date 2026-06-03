@@ -1,0 +1,20 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "summary": "ESC-3 false-escalation loop (16 cycles, FPT Q1-2026) — PLAN-ONLY brief ready. 4-point edit to main.md + deep-dive-opus.md: coverage pre-flight check, DATA-COVERAGE-LIMITED handler with 30d guard TTL, ops routing (not dev-team), stale comment update.",
+  "priority": "high",
+  "status": "NEW",
+  "createdAt": "2026-06-03T20:45:01Z",
+  "payload_ref": "docs/architecture-briefs/2026-06-03-esc3-data-coverage-guard.md",
+  "payload": {
+    "target_files": [
+      "docs/agents/bctc-analyst/flow/main.md",
+      "docs/agents/bctc-analyst/flow/deep-dive-opus.md"
+    ],
+    "change_summary": "2-file edit: (1) main.md ESC-3 block: add quarters_returned<4 coverage pre-flight → set ESC-3_result=DATA-COVERAGE-LIMITED; (2) main.md Escalation Decision: insert DATA-COVERAGE-LIMITED handler (guard_key=esc-datacov:..., ttl_seconds=2592000, route to ops once); (3) main.md NOTE: update stale FU-BCTC-TOOL-PARAMS comment; (4) deep-dive-opus.md ESC-3 step 1: add coverage check + early-exit + no task_release when coverage-limited.",
+    "commit_message": "fix(bctc-analyst): ESC-3 data-coverage-limited guard — suppress 30d, route ops once",
+    "urgency": "high — 16 wasted Opus deep-dives ongoing every cycle",
+    "resolution_scope": "fully resolves false-escalation loop; does not resolve underlying BCTC-HIST-VPS-BACKFILL (deferred-infra)"
+  }
+}
