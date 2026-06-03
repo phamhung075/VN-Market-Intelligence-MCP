@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T11:12:00Z",
+  "_updated_at": "2026-06-03T15:11:24Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "dev-team tick 2026-06-03 ~14:09Z DONE. SPIKE FU-DE-DECOMP-MAPPING closed — root-caused the corpus-wide empty-debt-decomposition gap to a MAPPING omission in bctcScalarAggregator (DB-proven, rows present). Queued 4 FIX (FIX-DE-1..4, all dev-mcp-server, S/XS) per architect brief. head idle. NEXT: PO triage FIX-DE-1..4 (chain 1->2->3 + 4 parallel; needs ops rebuild + corpus re-finalize + live-verify D/E shows real values e.g. FPT ~0.40x). Other open: FU-FPT-OCR-PAGES-20-46(med), FU-ORPHAN-TOLERANCE(low), BAL-1e-DEV(low), FLEET-HOST-SAFETY 2 low, NB-FLOW-SETTLED-WRITE.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FIX-DE-1",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-team tick 2026-06-03 ~15:09Z: 9 signals drained, all non-dev-actionable (5 bctc-product routine + 4 cowork heartbeats), 0 NEW queue rows. PO triage: FIX-DE chain is top priority (restores corpus-wide D/E served N/A everywhere; architect DB-proven mapping gap in bctcScalarAggregator). Dispatched FIX-DE-1 (head, S, dev-mcp-server) IN_PROGRESS. NEXT: dev-mcp-server runs FIX-DE-1 (add short/long_term_debt to ScalarAggregate + VAS 321/319/339/334 mappings, /vay/i hint on 319, banks->notApplicable). Then FIX-DE-2 (finalize BLOCK-1 wire + blob sync) -> ops rebuild -> FIX-DE-3 (re-finalize 5 DONE reports, DoD FPT D/E ~0.40x). FIX-DE-4 (OCR-path code remap) parallel/independent. WIP 1/2.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T14:19:11Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-03T15:11:24Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T14:19:11Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-03T15:11:24Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -302,14 +302,14 @@
             "title": "bctcScalarAggregator.ts — add short_term_debt/long_term_debt to ScalarAggregate + VAS 321/319/339/334 mappings with section filters (319 needs /vay/i label hint — not all 319 are borrowings); banks add these to notApplicable so stale OCR cleared on re-finalize",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "depends": [
               "FU-DE-DECOMP-MAPPING"
             ],
-            "note": "[architect fanout] aggregator field+mapping. Section-filter + /vay/i hint on 319."
+            "note": "[architect fanout] aggregator field+mapping. Section-filter + /vay/i hint on 319. | [PO 2026-06-03T15:11Z DISPATCHED] Binding head of FIX-DE chain (1->2->3 sequential same zone apps/mcp-server; FIX-DE-4 parallel-independent). Triage: top priority — restores corpus-wide D/E (currently N/A on every confident report, architect-DB-proven mapping gap not extraction). WIP<=2: only FIX-DE-1 dispatched IN_PROGRESS this tick; FIX-DE-2 unblocks on FIX-DE-1 commit, FIX-DE-3 follows after ops rebuild. Channels clean (BUG/WORK no new, list_unresolved_reports empty)."
           },
           {
             "task_id": "FIX-DE-2",
