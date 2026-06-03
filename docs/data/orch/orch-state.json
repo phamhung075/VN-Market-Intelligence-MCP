@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "dev-team tick 2026-06-03 ~18:3xZ: CTG escalation triaged -> spike DEV-FIXABLE -> sprint BCTC-FETCH-CORRECTNESS. FIX-CTG-1 (Defects B+C, discovery layer) DONE-LIVE-VERIFIED (ddf37a3b): deployed fetcher returns CTG correct-quarter hop-nhat full-statement URL live. OPEN next tick: FIX-CTG-2 (Defect A VPS Playwright cover-letter discrimination, dev-vps-crawls + ops-vps deploy) + FIX-CTG-3 (purge bad URL, re-enrich CTG + Defect-B-corrupted Q3/Q2-2025 rows, re-fetch+re-extract, verify get_bctc_full(CTG) real B02-TCTD data — async VPS). head idle.",
+    "next_action": "Operator hotfixes (bctc-inspect nav + VPS panel truth) DONE-LIVE-VERIFIED. Resuming /goal backlog drive: actionable = FIX-CTG-2, FU-EI-P2-COV-1/2, FU-EI-P2-DEV-VOLUME, FU-COWORK-HEARTBEAT-SCHEMA; deferred set per PO triage.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T18:36:45Z",
+    "updated_at": "2026-06-03T20:09:29Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T18:36:45Z",
+    "_updated_at": "2026-06-03T20:09:29Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1749,6 +1749,63 @@
               "FIX-CTG-1"
             ],
             "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — materialization/DoD, depends FIX-CTG-1 (+ ideally FIX-CTG-2). Involves async VPS re-fetch (~latency). Also remediates Defect-B queue corruption on non-CTG rows."
+          }
+        ]
+      },
+      {
+        "id": "OPS-DASHBOARD-TRUTH",
+        "label": "Operator-reported dashboard hotfixes 2026-06-03: bctc-inspect nav blank-on-click + VPS Proxy Health panel measured wrong plane (microservice presence) instead of real VPS push freshness",
+        "status": "active",
+        "opened_at": "2026-06-03",
+        "priority": "high",
+        "origin": "operator",
+        "tasks": [
+          {
+            "task_id": "FIX-INSPECT-NAV-RELOAD",
+            "title": "dashboard.bctc-inspect is a loader-only resource route (no React component); NavLink client-side SPA nav rendered a blank pane. Fix: reloadDocument on that nav item only.",
+            "type": "FIX",
+            "owner": "dev-frontend",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "XS",
+            "zone": "apps/frontend/",
+            "priority": "high",
+            "commit": "5db201dd",
+            "note": "Resource route (raw HTML passthrough) is correct; bug was the layout NavLink doing SPA nav to a componentless route. reloadDocument forces full doc load. Live: reloadDocument present in /app/build/server/index.js; /dashboard/bctc-inspect 200."
+          },
+          {
+            "task_id": "VPT-1",
+            "title": "mcp-server GET /api/vps-proxy-health endpoint exposing vpsPushLogStore.getVpsProxyHealth() as JSON (DRY shared fn), so the dashboard can read real VPS push freshness.",
+            "type": "FEAT",
+            "owner": "dev-mcp-server",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "commit": "d67448ad",
+            "note": "GET /api/vps-proxy-health live 200; JSON services[prices,news,sbv,bctc] with stale flags. DRY over getVpsProxyHealth(); handler avoids the tool's isStale Z-append NaN bug. 15 VPS tests green."
+          },
+          {
+            "task_id": "VPT-2",
+            "title": "Repoint /dashboard/vps panel from api-gateway microservice /health (wrong plane) to /api/vps-proxy-health real push health (prices/news/sbv/bctc); truthful UP/STALE/DEGRADED/DOWN/NO-DATA pills; removed NOT-DEPLOYED framing.",
+            "type": "FIX",
+            "owner": "dev-frontend",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "priority": "high",
+            "commit": "da07d524",
+            "note": "Panel now reads real VPS push freshness. Live: news=UP(fresh) sbv=UP prices=STALE bctc=STALE. STALE precedence over ok in resolveVariant (honest-green, no forced UP). New proxy route api.vps-proxy-health.tsx."
+          },
+          {
+            "task_id": "VPT-3",
+            "title": "ops rebuild mcp-server (VPT-1) + frontend (VPT-2 + FIX-INSPECT-NAV-RELOAD), sequential single-service; live-verify both endpoints + pages.",
+            "type": "OPS",
+            "owner": "ops",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "infra",
+            "priority": "high",
+            "note": "mcp-server rebuilt img live (endpoint 200), frontend rebuilt (panel+nav). All 5 active containers healthy, volumes preserved, no mass-start. 22:08Z."
           }
         ]
       }
