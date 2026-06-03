@@ -1,5 +1,5 @@
 ---
-# size-justification: 120L — 5 ESC handlers + output contract + Output Signal seam (ESC-OPUS-DISPATCH-SEAM); all load-bearing; cannot split without losing trigger→action traceability.
+# size-justification: ~128L — 5 ESC handlers + output contract + Output Signal seam (ESC-OPUS-DISPATCH-SEAM); ESC-3 coverage-check early-exit added 2026-06-03 (brief 2026-06-03-esc3-data-coverage-guard.md). FLAG: flow-file cap=120L; exceeds by ~8L. All load-bearing; cannot split without losing trigger→action traceability.
 agent:
   model: claude-opus-4
   id: bctc-analyst
@@ -59,7 +59,13 @@ Emit to session state key `deep_dive_result`; caller appends to bctc_signal outp
 **Context:** `ocf_total`, `net_profit_total`, `divergence_ratio` (decimal).
 
 1. `get_cash_flow(ticker, quarters=8)` — full cash flow history.
-2. Decompose accrual drivers: working capital changes (AR, inventory, AP), D&A, deferred items.
+   COVERAGE CHECK: if `quarters_returned < 4` in the response:
+   - Log: `[ESC-3 OPUS] DATA-COVERAGE-LIMITED — only {quarters_returned} quarters available. Accrual decomposition impossible. Emitting coverage-gap verdict.`
+   - Set `deep_dive_verdict = "DATA-COVERAGE-LIMITED: insufficient historical cash-flow data ({quarters_returned} quarters available, 4 required for multi-period accrual decomposition). Analysis deferred until BCTC-HIST-VPS-BACKFILL delivers historical corpus."`
+   - Set `confidence = 0.0`, `recommended_action = "data_coverage_gap"`.
+   - SKIP steps 2–5. Go directly to Output Contract emit + Output Signal emit.
+   - **Do NOT call task_release** for the deep-dive guard when coverage-limited — allow natural TTL expiry (86400s) to prevent immediate re-spawn.
+2. If `quarters_returned >= 4`: decompose accrual drivers: working capital changes (AR, inventory, AP), D&A, deferred items.
 3. Assess earnings quality: high accrual → low quality; cash-generative → high quality.
 4. `trigger_value = divergence_ratio`, `threshold = 0.40`.
 5. Action: OCF > profit (quality) → `buy|hold`; profit > cash (accrual concern) → `flag_for_human_review|hold`.

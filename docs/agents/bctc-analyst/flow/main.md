@@ -1,4 +1,4 @@
-<!-- size-justification: 124L — dispatcher + SELF-IDENTITY GUARD (L3 durable fix NSCOUT-FRAMING-RECUR) + BCTC Citation Trust Protocol (cross-cutting, all downstream consumers) + Escalation Gate (5 ESC checks, deterministic thresholds, idempotency guard, signal emit spec); all sections load-bearing; guard cannot be extracted without losing the mis-binding fix contract -->
+<!-- size-justification: CAP-EXCEEDED ~168L (was 124L) — ESC-3 DATA-COVERAGE-LIMITED guard handler added 2026-06-03 per brief 2026-06-03-esc3-data-coverage-guard.md (agents-architect, commit 2a40d47e). Handler is load-bearing: coverage pre-flight + 30d guard claim + ops signal emit + esc_flags pruning. Cannot extract without losing guard/dispatch contract. FLAG: flow-file cap=120L; exceeds by ~48L due to spec-mandated verbatim handler block. Architecture brief explicitly required verbatim implementation. Raise cap or refactor in follow-up. -->
 # BCTC Analyst — Main Dispatcher
 
 ## SELF-IDENTITY GUARD (read first — non-negotiable)
@@ -63,7 +63,14 @@ Each ESC check is independent. Any single TRUE fires Opus deep-dive. Gate does N
 - Extract `ocf_total` from `pass_3_result` (cashflow-v1); `net_profit_total` from `pass_2_result` (pl-v1).
 - Compute: `divergence_ratio = |ocf_total / net_profit_total - 1|`
 - Guard: if `net_profit_total == 0` → skip ESC-3 (undefined ratio, no escalation).
-- If `divergence_ratio > 0.40` → escalate. Context: `{ ocf_total, net_profit_total, divergence_ratio }`.
+- **Coverage pre-flight:** call `get_cash_flow(ticker, quarters=4)`. Read `quarters_returned` from response.
+  - If `quarters_returned < 4`:
+    Set `ESC-3_result = DATA-COVERAGE-LIMITED` (distinct — not TRUE, not FALSE).
+    Log: `[ESC-3] DATA-COVERAGE-LIMITED: {ticker}/{quarter} — {quarters_returned}/4 quarters available. Multi-period accrual decomposition impossible. Blocking escalation to dev-team.`
+    (See DATA-COVERAGE-LIMITED handler in § Escalation Decision below.)
+  - If `quarters_returned >= 4`:
+    Evaluate divergence_ratio as before. If `divergence_ratio > 0.40` → `ESC-3_result = TRUE`.
+    Context: `{ ocf_total, net_profit_total, divergence_ratio, quarters_returned }`.
 
 ### ESC-4: Unusual Related-Party or One-Off Item
 - Check: does ANY pass output contain `related_party_pct > 0.10` (of revenue) OR `one_off_pct > 0.15` (of net profit)?
@@ -82,6 +89,41 @@ Each ESC check is independent. Any single TRUE fires Opus deep-dive. Gate does N
 ```
 esc_flags    = [ESC-1_result..ESC-5_result]
 all_fired_ids = fired ESC ids in ascending order
+
+# --- DATA-COVERAGE-LIMITED handler (runs before normal ESC dispatch) ---
+coverage_limited_ids = [esc_id for esc_id in ["ESC-3"] if esc_id_result == "DATA-COVERAGE-LIMITED"]
+IF coverage_limited_ids is non-empty:
+  For each limited_id in coverage_limited_ids:
+    cov_guard_key = "esc-datacov:" + ticker + ":" + quarter + ":" + limited_id
+    cov_guard = call_tool(server="vn-market", tool="task_claim", arguments={
+      task_id: cov_guard_key, task_kind: "sprint-task",
+      owner_agent: "bctc-analyst", ttl_seconds: 2592000   # 30 days
+    })
+    IF cov_guard.claimed == FALSE:
+      LOG: "[ESC-DISPATCH] COVERAGE-GUARD-HELD " + cov_guard_key + " — no re-emit"
+      Append to bctc_signal: { "esc3_status": "DATA-COVERAGE-LIMITED", "coverage_guard_key": cov_guard_key, "coverage_guard_held": true }
+    ELSE:
+      cov_signal_row = {
+        "id": "bca-datacov-{ts_compact}", "ts": "<ISO-8601 UTC>",
+        "from": "bctc-analyst", "to": "ops",
+        "type": "data-coverage-gap",
+        "summary": "ESC-3 DATA-COVERAGE-LIMITED: " + ticker + " " + quarter + " — {quarters_returned}/4 quarters available",
+        "severity": "LOW", "status": "NEW", "payload_ref": null,
+        "payload": {
+          "trigger_id": limited_id, "ticker": ticker, "quarter": quarter,
+          "quarters_returned": quarters_returned, "quarters_required": 4,
+          "root_task": "BCTC-HIST-VPS-BACKFILL",
+          "note": "Multi-period accrual decomposition blocked by data coverage, not tool bug. No Opus deep-dive warranted. Re-check when quarters_returned >= 4.",
+          "guard_key": cov_guard_key, "guard_ttl_days": 30
+        }
+      }
+      Append cov_signal_row to orch-state.json .signal_queue.rows[] (atomic temp→rename).
+      LOG: "[ESC-DISPATCH] DATA-COVERAGE-LIMITED emitted (ops, once per 30d): " + ticker + "/" + quarter + "/" + limited_id
+      Append to bctc_signal: { "esc3_status": "DATA-COVERAGE-LIMITED", "coverage_guard_key": cov_guard_key, "quarters_returned": quarters_returned }
+  esc_flags_for_dispatch = {id: result for id, result in esc_flags if result not in ["DATA-COVERAGE-LIMITED"]}
+  IF all(v != TRUE for v in esc_flags_for_dispatch.values()):
+    GOTO no_escalation
+# --- end DATA-COVERAGE-LIMITED handler ---
 
 IF any(esc_flags) == TRUE:
   trigger_id = all_fired_ids[0]
@@ -113,7 +155,8 @@ IF any(esc_flags) == TRUE:
     LOG: "[ESC-DISPATCH] emitted for " + ticker + "/" + quarter + "/" + trigger_id
     # deep_dive_result NOT emitted here — Sonnet cannot run model-pinned Opus sub-flow.
     # dev-team dispatches bctc-analyst with model=claude-opus-4 on next drain tick.
-    # NOTE FU-BCTC-TOOL-PARAMS: tool param defects tracked; seam ships honest low-confidence first.
+    # NOTE FU-BCTC-TOOL-PARAMS: DONE-LIVE-VERIFIED (2026-06-03). quarters param IS honored by get_cash_flow.
+    # quarters_returned < quarters_requested = DATA COVERAGE GAP, not tool bug. Guard above handles this.
     Append to bctc_signal: { "escalation_status": "PENDING", "guard_key": guard_key }
 
 ELSE:
