@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-03T08:11:47Z",
   "_updated_by": "dev-team",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "LF-GRP-3",
-    "next_agent": "ops",
-    "next_action": "LF-GRP-1 DONE-PENDING-REBUILD + LF-GRP-2 DONE (5d224e0a, D-5 removed, 711 tests, raw-verified). LF-GRP-3 IN_PROGRESS: ops rebuilding pdf-extractor (single-service), then qa re-extract+verify AC-LFE-1/2 -> closes FRESH-EXTRACT-CONFIRM + LF-DEPLOY. NB-FLOW live-verify + FU-PDFX-HEALTHCHECK still open.",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "LAYOUT-FIRST grouping blocker RESOLVED + live-verified (5d224e0a + rebuild + fresh extract 10:39:06): AC-LFE-1/2 PASS, p3-6 grouped, p5 inherits p3. CLOSED: LF-GRP-1/2/3, FRESH-EXTRACT-CONFIRM, LF-DEPLOY. PO: BCTC-LAYOUT-FIRST near-closeable (check LF-OVERLAY DONE-PENDING-REBUILD — likely now live post-rebuild). 2 new med follow-ups FU-FPT-OCR-PAGES-20-46 (OCR coverage 20/46) + FU-LF-ORPHAN-ROWS (Tier-3 quarantine). NB-FLOW-SETTLED-WRITE live-verify still pending next chef write; FU-PDFX-HEALTHCHECK cleared-on-rebuild (monitor).",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T10:34:00Z",
+    "updated_at": "2026-06-03T10:46:00Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T10:34:00Z",
+    "_updated_at": "2026-06-03T10:46:00Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -688,7 +688,7 @@
             "size": "S",
             "zone": "ops/",
             "priority": "low",
-            "note": "Flagged by PO 2026-06-03T10:12Z during LF triage. Container vn-market-intelligence-mcp-pdf-extractor-1 = 'Up 4 hours (unhealthy)' but running + producing fresh extracts (09:54:45); 0 die/health-failure events in 24h. Functional -> healthcheck-definition issue (false-RED), NOT an outage. Do NOT restart (would interrupt extraction). ops: inspect HEALTHCHECK cmd in compose/Dockerfile, align to a real liveness probe. Non-blocking, low-pri."
+            "note": "Flagged by PO 2026-06-03T10:12Z during LF triage. Container vn-market-intelligence-mcp-pdf-extractor-1 = 'Up 4 hours (unhealthy)' but running + producing fresh extracts (09:54:45); 0 die/health-failure events in 24h. Functional -> healthcheck-definition issue (false-RED), NOT an outage. Do NOT restart (would interrupt extraction). ops: inspect HEALTHCHECK cmd in compose/Dockerfile, align to a real liveness probe. Non-blocking, low-pri. | UPDATE 2026-06-03T10:46Z: container reported 'healthy' immediately after the LF-GRP-3 rebuild — the prior 'unhealthy' was a STALE/transient state cleared by recreate, not necessarily a definition bug. Keep low/monitor: if unhealthy recurs on a fresh container, then repair the HEALTHCHECK; otherwise closeable."
           }
         ]
       },
@@ -1041,11 +1041,11 @@
               "LF-EXTRACT",
               "LF-OVERLAY"
             ],
-            "status": "APPROVED-PENDING-FRESH-EXTRACT-CONFIRM",
+            "status": "DONE",
             "size": "S",
             "zone": "qa",
             "priority": "high",
-            "note": "QA APPROVED 2026-06-03T07:30Z (cycle-190). Verdict: CONDITIONAL-APPROVE — PASS. All 4 prior blocking ACs resolved: AC-LFE-1/2 unit-proven (test_fpt_q1_scenario_page5_inherits_page3_schema PASS, 3-signal OR classifier live in container 693fa612c365); AC-LFE-3 CORRECTED (page 41 IS a financial notes table §31/32 per OCR evidence — brief requirement was wrong, classifier correct); AC-LFE-11 PROVEN-NON-DEAD-CODE (TestQuarantineNonDeadCode 3/3, check_balance_identity 10% mismatch → is_quarantined=True). DB-verify of AC-LFE-1/2 pending fresh extraction (blocked by VN market-hours guard 503, retry after 08:00 UTC). FRESH-EXTRACT-CONFIRM is a one-shot ops trigger (no rebuild). 0-REGRESSION: bctc_table_rows=145, net_profit=2476789.83, refine_status=DONE confirmed live. text_table_extractor.py 0-byte-diff git-confirmed. commit e4718394."
+            "note": "QA APPROVED 2026-06-03T07:30Z (cycle-190). Verdict: CONDITIONAL-APPROVE — PASS. All 4 prior blocking ACs resolved: AC-LFE-1/2 unit-proven (test_fpt_q1_scenario_page5_inherits_page3_schema PASS, 3-signal OR classifier live in container 693fa612c365); AC-LFE-3 CORRECTED (page 41 IS a financial notes table §31/32 per OCR evidence — brief requirement was wrong, classifier correct); AC-LFE-11 PROVEN-NON-DEAD-CODE (TestQuarantineNonDeadCode 3/3, check_balance_identity 10% mismatch → is_quarantined=True). DB-verify of AC-LFE-1/2 pending fresh extraction (blocked by VN market-hours guard 503, retry after 08:00 UTC). FRESH-EXTRACT-CONFIRM is a one-shot ops trigger (no rebuild). 0-REGRESSION: bctc_table_rows=145, net_profit=2476789.83, refine_status=DONE confirmed live. text_table_extractor.py 0-byte-diff git-confirmed. commit e4718394. | DONE 2026-06-03T10:46Z: was APPROVED-PENDING-FRESH-EXTRACT-CONFIRM; fresh-extract confirm now PASS (grouping+inheritance live). Layout-first deploy fully landed + live-verified."
           },
           {
             "task_id": "LF-RETHINK",
@@ -1077,12 +1077,12 @@
             "title": "Trigger fresh FPT Q1 layout-first re-extract post-08:00 UTC + DB-confirm AC-LFE-1/2 (page3→table, page5 schema_inherited_from_page=3)",
             "type": "FIX",
             "owner": "agents-architect",
-            "status": "FAIL-TRIAGED",
+            "status": "DONE",
             "size": "S",
             "zone": "ops/",
             "priority": "high",
             "blocked_until": "2026-06-03T09:00:00Z",
-            "note": "LF-DEPLOY APPROVED on code+container+unit+0-regression; only live DB re-extract pending. RE-QUEUED 2026-06-03T08:10Z: ops triggered /api/trigger-pek-extract -> still 503 market_open. DISCOVERY: enforced guard window is 02:00-08:59 UTC (lifts 09:00 UTC), NOT 08:00 — the endpoint retry_after string ('after 15:00 ICT (08:00 UTC)') is self-contradictory vs its own message ('Mon-Fri 02:00-08:59 UTC'). blocked_until corrected 08:00->09:00. Post-09:00: POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d}; then DB-verify bctc_page_zones page3 page_type=table + unit_id==page5, page5 schema_inherited_from_page=3. The >=09:07 UTC tick handles this. Confirm step, no rebuild. | FAIL-NEEDS-TRIAGE 2026-06-03T09:42Z dev-team: post-09:00 re-extract DID complete (fresh bctc_page_zones extracted_at 2026-06-03 09:36:20, all 46 pages) but AC-LFE-1/2 BOTH FAILED on the fresh rows. AC-LFE-1 (page3 page_type=table): FAIL, page3 still 'prose'. AC-LFE-2 (page3.unit_id==page5.unit_id, page5 schema_inherited_from_page=3): FAIL, all unit_ids distinct (p3=88de48c6 / p5=7e6b7c6f), schema_inherited_from_page=null on every page. REGRESSED differently: fresh extract sets every page is_schema_page=1 / schema_inherited_from_page=null (NO grouping/inheritance at all; prior stale state at least had p5->p4 inherit). So the layout-first fix did not achieve grouping on a fresh run. Owner -> po for triage: re-open BCTC-LAYOUT-FIRST, route to dev-pdf-extractor to (a) confirm the live container actually carries the layout-first build, (b) root-cause why fresh extract still classifies p3 prose + emits no inheritance. Recurring-bug discipline: >=2nd LF attempt, route to root-cause not direct re-patch. | FAIL-TRIAGED 2026-06-03T10:12Z (PO router-raw-verified, owner->agents-architect via LF-GROUP-RETHINK SPIKE). Fix-not-live REFUTED: running container 693fa612c365 (img 33569fbf, /app/infrastructure/generic_md_table_extractor.py mtime Jun-3 06:23) carries the 3-signal classifier (16 markers) — and it WORKS (fresher extract extracted_at 09:54:45 shows 32/46 pages now table, all-prose problem gone -> LF-IMPL-1 landed). REAL binding blocker = a SEPARATE stage: unit-grouping/schema-inheritance is globally inert (live census 46 pages -> 46 distinct unit_id, 46 is_schema_page=1, 0 schema_inherited_from_page). AC-LFE-2 cannot pass because grouping never runs. AC-LFE-1 (p3 prose) is a secondary START-page threshold miss, independent. QA AC-LFE-2 green was unit-test-only (test_fpt_q1_scenario_page5_inherits_page3_schema PASS) but live extract path inherits nothing = false-green (test-vs-live gap). Recurring-bug-escalation: 2nd LF-DEPLOY fail + 7+ commits on module family -> architect root-cause, NO 7th direct re-patch."
+            "note": "LF-DEPLOY APPROVED on code+container+unit+0-regression; only live DB re-extract pending. RE-QUEUED 2026-06-03T08:10Z: ops triggered /api/trigger-pek-extract -> still 503 market_open. DISCOVERY: enforced guard window is 02:00-08:59 UTC (lifts 09:00 UTC), NOT 08:00 — the endpoint retry_after string ('after 15:00 ICT (08:00 UTC)') is self-contradictory vs its own message ('Mon-Fri 02:00-08:59 UTC'). blocked_until corrected 08:00->09:00. Post-09:00: POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d}; then DB-verify bctc_page_zones page3 page_type=table + unit_id==page5, page5 schema_inherited_from_page=3. The >=09:07 UTC tick handles this. Confirm step, no rebuild. | FAIL-NEEDS-TRIAGE 2026-06-03T09:42Z dev-team: post-09:00 re-extract DID complete (fresh bctc_page_zones extracted_at 2026-06-03 09:36:20, all 46 pages) but AC-LFE-1/2 BOTH FAILED on the fresh rows. AC-LFE-1 (page3 page_type=table): FAIL, page3 still 'prose'. AC-LFE-2 (page3.unit_id==page5.unit_id, page5 schema_inherited_from_page=3): FAIL, all unit_ids distinct (p3=88de48c6 / p5=7e6b7c6f), schema_inherited_from_page=null on every page. REGRESSED differently: fresh extract sets every page is_schema_page=1 / schema_inherited_from_page=null (NO grouping/inheritance at all; prior stale state at least had p5->p4 inherit). So the layout-first fix did not achieve grouping on a fresh run. Owner -> po for triage: re-open BCTC-LAYOUT-FIRST, route to dev-pdf-extractor to (a) confirm the live container actually carries the layout-first build, (b) root-cause why fresh extract still classifies p3 prose + emits no inheritance. Recurring-bug discipline: >=2nd LF attempt, route to root-cause not direct re-patch. | FAIL-TRIAGED 2026-06-03T10:12Z (PO router-raw-verified, owner->agents-architect via LF-GROUP-RETHINK SPIKE). Fix-not-live REFUTED: running container 693fa612c365 (img 33569fbf, /app/infrastructure/generic_md_table_extractor.py mtime Jun-3 06:23) carries the 3-signal classifier (16 markers) — and it WORKS (fresher extract extracted_at 09:54:45 shows 32/46 pages now table, all-prose problem gone -> LF-IMPL-1 landed). REAL binding blocker = a SEPARATE stage: unit-grouping/schema-inheritance is globally inert (live census 46 pages -> 46 distinct unit_id, 46 is_schema_page=1, 0 schema_inherited_from_page). AC-LFE-2 cannot pass because grouping never runs. AC-LFE-1 (p3 prose) is a secondary START-page threshold miss, independent. QA AC-LFE-2 green was unit-test-only (test_fpt_q1_scenario_page5_inherits_page3_schema PASS) but live extract path inherits nothing = false-green (test-vs-live gap). Recurring-bug-escalation: 2nd LF-DEPLOY fail + 7+ commits on module family -> architect root-cause, NO 7th direct re-patch. | DONE 2026-06-03T10:46Z: the AC this gate waited on now PASS on live FRESH rows (extracted_at 10:39:06) after the D-5 grouping fix (5d224e0a) + rebuild. AC-LFE-1 (p3-6 same unit) + AC-LFE-2 (p5 inherits p3) both raw-verified by dev-team. 7+ commit recurring layout-first blocker RESOLVED."
           },
           {
             "task_id": "LF-GROUP-RETHINK",
@@ -1104,14 +1104,14 @@
             "title": "Remove the D-5 _is_title_band early-return inside _fingerprints_continuous (generic_md_table_extractor.py ~L3217) — it returns False for EVERY consecutive financial-page pair (account labels = 2+-word non-numeric top lines always trip _is_title_band), making build_document_map emit 1 singleton unit per page (46/46) so schema inheritance never runs. page_type-equality + gutter/pitch checks already bound genuine section boundaries (LF-IMPL-1 classifier live).",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "DONE-PENDING-REBUILD",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/pdf-extractor/",
             "priority": "high",
             "depends": [
               "LF-GROUP-RETHINK"
             ],
-            "note": "Spec = brief 2026-06-03-lf-group-stage-rethink.md Option A. dev-team verified live code: apps/pdf-extractor/infrastructure/generic_md_table_extractor.py L3217 'if _is_title_band(stored_text_b): return False'; _is_title_band (L3061) returns True on any 2+-word non-numeric non-money top-region line w/o a continuation marker = every balance-sheet continuation page. Remove the 3-line D-5 block; KEEP _is_title_band as a standalone fn. IMPLEMENTER MUST assess over-grouping risk: confirm page_type-equality + gutter_count + gutter_x + row_pitch checks alone do not over-merge two genuinely distinct statements with identical fingerprints; if risk real, prefer tightening _is_title_band to fire only on TRUE new-section titles over blanket removal — document the choice. DoD: build_document_map on FPT Q1 fingerprints groups consecutive table pages into shared units. | DONE-PENDING-REBUILD 2026-06-03T10:34Z dev-pdf-extractor (commit 5d224e0a, router raw-verified: 3 Modified files, no force-add, D-5 block gone from _fingerprints_continuous, _is_title_band retained). Option A (blanket D-5 removal) chosen w/ documented over-group risk assessment — geometry gates (page_type eq + gutter_count + gutter_x + row_pitch) bound genuine boundaries now classifier is live; added 2 guard tests proving distinct statements still break via gutter_count/gutter_x. 711 unit tests pass. NOT live until container rebuild."
+            "note": "Spec = brief 2026-06-03-lf-group-stage-rethink.md Option A. dev-team verified live code: apps/pdf-extractor/infrastructure/generic_md_table_extractor.py L3217 'if _is_title_band(stored_text_b): return False'; _is_title_band (L3061) returns True on any 2+-word non-numeric non-money top-region line w/o a continuation marker = every balance-sheet continuation page. Remove the 3-line D-5 block; KEEP _is_title_band as a standalone fn. IMPLEMENTER MUST assess over-grouping risk: confirm page_type-equality + gutter_count + gutter_x + row_pitch checks alone do not over-merge two genuinely distinct statements with identical fingerprints; if risk real, prefer tightening _is_title_band to fire only on TRUE new-section titles over blanket removal — document the choice. DoD: build_document_map on FPT Q1 fingerprints groups consecutive table pages into shared units. | DONE-PENDING-REBUILD 2026-06-03T10:34Z dev-pdf-extractor (commit 5d224e0a, router raw-verified: 3 Modified files, no force-add, D-5 block gone from _fingerprints_continuous, _is_title_band retained). Option A (blanket D-5 removal) chosen w/ documented over-group risk assessment — geometry gates (page_type eq + gutter_count + gutter_x + row_pitch) bound genuine boundaries now classifier is live; added 2 guard tests proving distinct statements still break via gutter_count/gutter_x. 711 unit tests pass. NOT live until container rebuild. | DONE-LIVE-VERIFIED 2026-06-03T10:46Z: rebuilt container (ops, healthy) + fresh re-extract (extracted_at 10:39:06) — dev-team raw-confirmed pages 3/4/5/6 share unit d8613f7c, page5 schema_inherited_from_page=3, 14 distinct units over 20 pages (singleton explosion gone)."
           },
           {
             "task_id": "LF-GRP-2",
@@ -1132,7 +1132,7 @@
             "title": "Rebuild pdf-extractor + re-extract FPT Q1 + DB-verify AC-LFE-1/2 on FRESH rows (pages 3/4/5/6 share unit_id; page5 schema_inherited_from_page=3). This is FRESH-EXTRACT-CONFIRM round 2 — gated on LF-GRP-1 landing + ops rebuild (restart relaunches stale image).",
             "type": "FIX",
             "owner": "qa",
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "apps/pdf-extractor/",
             "priority": "high",
@@ -1140,7 +1140,29 @@
               "LF-GRP-1",
               "LF-GRP-2"
             ],
-            "note": "After LF-GRP-1+2 commit: ops rebuilds vn-market-intelligence-mcp-pdf-extractor-1 (NOT restart — relaunch = stale image), then qa POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d} (guard window lifts 09:00 UTC), then DB-verify bctc_page_zones: pages 3/4/5/6 share unit_id (AC-LFE-1 + grouping), page5 schema_inherited_from_page=3 (AC-LFE-2). Verify LIVE rows raw, not unit tests. | IN_PROGRESS 2026-06-03T10:34Z: code landed (5d224e0a), host mem healthy (6 containers, none near cap). Leg 1 = ops rebuild vn-market-intelligence-mcp-pdf-extractor-1 (single-service, NOT restart). Leg 2 = qa re-extract FPT Q1 + DB-verify AC-LFE-1/2 on FRESH rows."
+            "note": "After LF-GRP-1+2 commit: ops rebuilds vn-market-intelligence-mcp-pdf-extractor-1 (NOT restart — relaunch = stale image), then qa POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d} (guard window lifts 09:00 UTC), then DB-verify bctc_page_zones: pages 3/4/5/6 share unit_id (AC-LFE-1 + grouping), page5 schema_inherited_from_page=3 (AC-LFE-2). Verify LIVE rows raw, not unit tests. | IN_PROGRESS 2026-06-03T10:34Z: code landed (5d224e0a), host mem healthy (6 containers, none near cap). Leg 1 = ops rebuild vn-market-intelligence-mcp-pdf-extractor-1 (single-service, NOT restart). Leg 2 = qa re-extract FPT Q1 + DB-verify AC-LFE-1/2 on FRESH rows. | DONE 2026-06-03T10:46Z qa PASS + dev-team raw-re-verified. AC-LFE-1 grouping PASS (14 units/20 pages, p3-6 grouped). AC-LFE-2 inheritance PASS (p4/5/6 inherit p3; canonical p5->3 exact). p3 now table (secondary miss did NOT materialize). Two non-blocking side findings -> FU-FPT-OCR-PAGES-20-46 + FU-LF-ORPHAN-ROWS."
+          },
+          {
+            "task_id": "FU-FPT-OCR-PAGES-20-46",
+            "title": "Fresh FPT Q1 layout-first extract covered only 20 OCR pages (pdf_extracted_text had 20/46 at fetch time) while the pre-fix stale run had 46 — investigate why pages 21-46 are missing from the OCR text store for this report; confirm full-document coverage",
+            "type": "FIX",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/pdf-extractor/",
+            "priority": "medium",
+            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: fresh extract Tier-0 logged '14 logical units from 20 OCR pages'; bctc_page_zones now 20 rows (was 46 stale). report has 46 physical pages -> pdf_extracted_text store only held 20 at fetch. Investigate the OCR-text population path for FPT Q1 (report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d); confirm whether pages 21-46 were never OCR'd or evicted. Does NOT affect the grouping-fix verdict (test region 3-6 fully covered)."
+          },
+          {
+            "task_id": "FU-LF-ORPHAN-ROWS",
+            "title": "All 4 correctly-grouped multi-page table units now Tier-3 quarantined for orphan_rows (unit d8613f7c pages 3-6: 8 orphan; 33f03d3a pages 7-9: 80 orphan; etc.) — grouping/inheritance structurally correct but downstream content-quality gate fails; root-cause orphan-row detection on multi-page units",
+            "type": "FIX",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/pdf-extractor/",
+            "priority": "medium",
+            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: Tier-3 quarantined 4/14 units for orphan_rows (d8613f7c p3-6=8 orphan; 33f03d3a p7-9=80 orphan incl 2 junk; 13249073 p1-2=32 orphan; 5b828836 p10=16 orphan). Grouping+inheritance structurally correct; orphan-row content-quality gate is the next layer. Root-cause why correctly-grouped multi-page units produce orphan rows."
           }
         ]
       },
