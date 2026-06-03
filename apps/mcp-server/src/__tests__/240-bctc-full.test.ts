@@ -616,3 +616,213 @@ describe("BAL-1a-BACKFILL: read-time ratio recompute in get_bctc_full", () => {
     expect(text).toContain("N/A");
   });
 });
+
+// ── BAL-1f: current_ratio micro-residual guard + operating_margin recompute ──────
+//
+// Verifies three defects reported 2026-06-03:
+//
+//   DEFECT-1: FPT current_ratio = 41,527,873,060,120x
+//     Root: clTotal = 1e-6 (parse artifact from component rounding:
+//     shortTermDebt=0 + accountsPayable=1e-6 + ... = 1e-6).
+//     1e-6 > 0 is true → safeDivideRead(41527873.06, 1e-6) ≈ 4.15e13.
+//     Fix: clTotal must be ≥ 0.1% of current_assets AND ≥ 1.0 million VND.
+//
+//   DEFECT-2: FPT operating_margin_pct = 0.0% (stale persisted column)
+//     Root: recompute block omitted operating_margin_pct.
+//     operating_profit=2,747,763.83, net_revenue=12,479,997.21 → true margin=22.02%.
+//     Fix: recompute gross/operating/net margin from base scalars in recompute block.
+//
+//   DEFECT-3 (regression guard): VNM-shape (missing currentLiabilities) → must still N/A.
+//   DEFECT-4 (no over-suppression): healthy normal clTotal → correct finite current_ratio.
+
+describe("BAL-1f: current_ratio guard + operating_margin recompute", () => {
+  /** Helper: insert a report with the given scalars and balance_sheet_json. */
+  function insertFptLikeRow(
+    db: Database,
+    overrides: {
+      action_code: string;
+      balance_sheet_json: string | null;
+      current_assets: number;
+      operating_profit: number;
+      net_revenue: number;
+      gross_profit: number;
+      net_profit: number;
+      operating_margin_pct_stale?: number;
+    },
+  ): string {
+    const id = `bal1f-${overrides.action_code.toLowerCase()}-001`;
+    db.prepare(`
+      INSERT INTO financial_reports (
+        id, action_code, company_name, period_year, period_quarter, period_type, sort_key,
+        audit_status, extraction_confidence,
+        net_revenue, gross_profit, operating_profit, ebitda, profit_before_tax, net_profit,
+        eps, diluted_eps,
+        total_assets, current_assets, cash, inventory,
+        total_liabilities, short_term_debt, long_term_debt, equity_total,
+        operating_cf, investing_cf, financing_cf, capex, free_cash_flow,
+        gross_margin_pct, operating_margin_pct, net_margin_pct,
+        roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda, pe, pb,
+        published_at, refine_status,
+        balance_sheet_json
+      ) VALUES (
+        ?, ?, 'Test Corp', 2025, 1, 'Q1', '2025-Q1',
+        'audited', 0.92,
+        ?, ?, ?, 3000000, 2000000, ?,
+        1200, 1180,
+        120000000, ?, 5000000, 2000000,
+        80000000, 10000000, 20000000, 40000000,
+        5000000, -2000000, -1000000, 500000, 4500000,
+        NULL, ?, NULL,
+        NULL, NULL, 1, NULL, NULL, NULL, NULL,
+        '2025-05-15', 'DONE',
+        ?
+      )`).run(
+      id,
+      overrides.action_code,
+      overrides.net_revenue,
+      overrides.gross_profit,
+      overrides.operating_profit,
+      overrides.net_profit,
+      overrides.current_assets,
+      overrides.operating_margin_pct_stale ?? 0,
+      overrides.balance_sheet_json,
+    );
+    return id;
+  }
+
+  it("TC-BAL-1f-1 (RED→GREEN): FPT-shape clTotal=1e-6 → current_ratio N/A, NOT 4.15e13", async () => {
+    // DEFECT-1: before fix, current_assets=41527873 / clTotal=1e-6 = ~4.15e13 (garbage).
+    // After fix: clTotal=1e-6 fails plausibility check → recomputedCurrentRatio=null → N/A.
+    const db = makeDb();
+    const balJson = JSON.stringify({
+      currentLiabilities: {
+        shortTermDebt: 0,
+        accountsPayable: 1e-6,
+        taxPayable: 4e-6,
+        payablesToEmployees: 5e-6,
+        total: 1e-6,
+      },
+    });
+    const id = insertFptLikeRow(db, {
+      action_code: "FPT",
+      balance_sheet_json: balJson,
+      current_assets: 41_527_873.06,
+      operating_profit: 2_747_763.83,
+      net_revenue: 12_479_997.21,
+      gross_profit: 5_000_000,
+      net_profit: 2_200_000,
+      operating_margin_pct_stale: 0,  // stale persisted value — the bug
+    });
+    db.prepare(`INSERT INTO bctc_table_rows
+      (report_id, page_number, statement_section, row_order, code, label,
+       period_current, value_current, is_summary_row)
+     VALUES (?, 1, 'balance_sheet', 1, '270', 'Total Assets', 'Q1-2025', 120000000, 0)`,
+    ).run(id);
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "FPT" });
+
+    // Must NOT show the garbage value 4.15e13 in any form
+    expect(text).not.toMatch(/41[,\d]*527[,\d]*873/);  // raw number
+    expect(text).not.toMatch(/4\.1\d+e\+?13/i);         // scientific notation
+
+    // Current Ratio must be N/A (parse artifact denominator withheld)
+    expect(text).toContain("Current Ratio    : N/A");
+  });
+
+  it("TC-BAL-1f-2 (RED→GREEN): FPT-shape operating_margin_pct stale=0 → recomputed ≈ 22.0%", async () => {
+    // DEFECT-2: before fix, operating_margin_pct persisted=0, recompute block didn't touch it.
+    // buildSummarySection read stale 0 → "0.0%". After fix: recomputed from base scalars.
+    // operating_profit=2747763.83, net_revenue=12479997.21 → margin = 22.018...% ≈ 22.0%.
+    const db = makeDb();
+    const balJson = JSON.stringify({
+      currentLiabilities: {
+        shortTermDebt: 0,
+        accountsPayable: 1e-6,
+        total: 1e-6,
+      },
+    });
+    const id = insertFptLikeRow(db, {
+      action_code: "FP2",
+      balance_sheet_json: balJson,
+      current_assets: 41_527_873.06,
+      operating_profit: 2_747_763.83,
+      net_revenue: 12_479_997.21,
+      gross_profit: 5_000_000,
+      net_profit: 2_200_000,
+      operating_margin_pct_stale: 0,  // the bug: stale 0% persisted
+    });
+    db.prepare(`INSERT INTO bctc_table_rows
+      (report_id, page_number, statement_section, row_order, code, label,
+       period_current, value_current, is_summary_row)
+     VALUES (?, 1, 'balance_sheet', 1, '270', 'Total Assets', 'Q1-2025', 120000000, 0)`,
+    ).run(id);
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "FP2" });
+
+    // operating_margin_pct must be recomputed: 2747763.83 / 12479997.21 × 100 ≈ 22.0%
+    // buildSummarySection line: "Operating Profit : ... (22.0%)"
+    expect(text).toContain("22.0%");
+    // Must NOT show stale 0.0% on the Operating Profit line
+    // (check the Operating Profit line specifically, not other lines that may have 0.0%)
+    expect(text).not.toMatch(/Operating Profit.*0\.0%/);
+  });
+
+  it("TC-BAL-1f-3 (VNM-shape regression): missing currentLiabilities → current_ratio still N/A", async () => {
+    // VNM has no currentLiabilities breakdown in balance_sheet_json.
+    // After BAL-1f: must still serve N/A (no regression from new guard).
+    const db = makeDb();
+    const id = insertFptLikeRow(db, {
+      action_code: "VN3",
+      balance_sheet_json: null,   // VNM-shape: no balance_sheet_json
+      current_assets: 18_000_000,
+      operating_profit: 12_000_000,
+      net_revenue: 70_000_000,
+      gross_profit: 20_000_000,
+      net_profit: 9_413_600,
+    });
+    db.prepare(`INSERT INTO bctc_table_rows
+      (report_id, page_number, statement_section, row_order, code, label,
+       period_current, value_current, is_summary_row)
+     VALUES (?, 1, 'balance_sheet', 1, '270', 'Total Assets', 'Q1-2025', 120000000, 0)`,
+    ).run(id);
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "VN3" });
+
+    // No currentLiabilities → recomputedCurrentRatio = null → N/A
+    expect(text).toContain("Current Ratio    : N/A");
+  });
+
+  it("TC-BAL-1f-4 (no over-suppression): healthy normal clTotal → correct finite current_ratio", async () => {
+    // Guard must NOT suppress valid current_ratios.
+    // current_assets=10,000,000, clTotal=5,000,000 → ratio = 2.00x (healthy).
+    // clTotal=5,000,000 >> MIN_CL_ABSOLUTE=1.0 and >> 0.1% of current_assets (10,000) → passes.
+    const db = makeDb();
+    const balJson = JSON.stringify({
+      currentLiabilities: { total: 5_000_000 },
+    });
+    const id = insertFptLikeRow(db, {
+      action_code: "HLT",
+      balance_sheet_json: balJson,
+      current_assets: 10_000_000,
+      operating_profit: 2_000_000,
+      net_revenue: 15_000_000,
+      gross_profit: 5_000_000,
+      net_profit: 1_500_000,
+    });
+    db.prepare(`INSERT INTO bctc_table_rows
+      (report_id, page_number, statement_section, row_order, code, label,
+       period_current, value_current, is_summary_row)
+     VALUES (?, 1, 'balance_sheet', 1, '270', 'Total Assets', 'Q1-2025', 120000000, 0)`,
+    ).run(id);
+
+    const server = makeServer(db);
+    const text = await callTool(server, "get_bctc_full", { code: "HLT" });
+
+    // current_ratio = 10,000,000 / 5,000,000 = 2.00x — must be shown, not suppressed
+    expect(text).toContain("2.00x");
+    expect(text).not.toContain("Current Ratio    : N/A");
+  });
+});

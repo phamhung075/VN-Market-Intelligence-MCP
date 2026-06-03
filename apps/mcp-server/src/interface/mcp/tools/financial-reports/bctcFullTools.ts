@@ -204,11 +204,6 @@ export function buildSummarySection(
     ? `Net Interest Inc.: ${fmtBillions(row.net_revenue)}  (net interest income — maps to net_revenue)`
     : `Gross Profit     : ${fmtBillions(row.gross_profit)}  (${fmtPct(row.gross_margin_pct)})`;
 
-  // C-2: current ratio — N/A for banks (no current_assets concept in Mẫu B02-TCTD)
-  const currentRatioLine = bankForm
-    ? `Current Ratio    : N/A (bank — no current assets concept)`
-    : `Current Ratio    : ${fmtX(row.current_ratio)}`;
-
   // PUB-6: use sanitized ratio values when out-of-bounds ratios were detected.
   // sanitizedRatios overrides the row value with null (→ "N/A") for each offending ratio.
   // A trust note is appended to the ratios section to explain the N/A substitution.
@@ -218,9 +213,20 @@ export function buildSummarySection(
     ? sanitizedRatios.net_debt_to_ebitda
     : row.net_debt_to_ebitda;
   const effectiveEps = sanitizedRatios ? sanitizedRatios.eps : row.eps;
+  // BAL-1f: current_ratio may be withheld by PUB-6 sanitization (> 1000x band).
+  // Use sanitizedRatios.current_ratio when set; otherwise use row.current_ratio
+  // (which is already null for parse-artifact denominators after recompute-on-read).
+  const effectiveCurrentRatio = sanitizedRatios
+    ? sanitizedRatios.current_ratio
+    : row.current_ratio;
   const pub6Note = sanitizedRatios
-    ? `[PUB-6] Some ratio(s) withheld (N/A) — out-of-bounds value detected; likely unit scale or stale pre-refine ratio. (BAL-1a-DEV will fix ratio recompute.)`
+    ? `[PUB-6] Some ratio(s) withheld (N/A) — out-of-bounds value detected; likely unit scale or stale pre-refine ratio.`
     : null;
+
+  // C-2: current ratio — N/A for banks (no current_assets concept in Mẫu B02-TCTD)
+  const currentRatioLine = bankForm
+    ? `Current Ratio    : N/A (bank — no current assets concept)`
+    : `Current Ratio    : ${fmtX(effectiveCurrentRatio)}`;
 
   const lines: string[] = [
     `=== BCTC SUMMARY: ${code} ===`,
@@ -470,6 +476,8 @@ interface PublishabilityCheck {
     roe: number | null;
     net_debt_to_ebitda: number | null;
     eps: number | null;
+    /** BAL-1f: current_ratio plausibility band — null when > 1000x (parse artifact). */
+    current_ratio: number | null;
   };
 }
 
@@ -676,11 +684,16 @@ export function checkPublishability(
     // report_scope='consolidated' → PUB-8 passes (structural confirmation, no further check)
   }
 
-  // ── PUB-6 (BAL-0): ratio sanity bounds ───────────────────────────────────
-  // Ratios are NOT re-derived after refine (BAL-1a-DEV fixes this later).
-  // Stale/scaled-wrong ratios can be astronomically wrong (DHG ROA=7,891,932%).
+  // ── PUB-6 (BAL-0 + BAL-1f): ratio sanity bounds ─────────────────────────
+  // Ratios are re-derived read-time (BAL-1a / BAL-1f recompute block above).
+  // Stale/scaled-wrong values can still reach here via paths that skip recompute.
   // Rather than blocking the whole report, withhold offending ratios as N/A.
   // The sanitizedRatios map is returned for callers to apply when rendering.
+  //
+  // BAL-1f: adds current_ratio plausibility band (> 1000x → N/A).
+  // The recompute-on-read block already guards at denominator level; this gate
+  // is defense-in-depth for any path where current_ratio escapes that guard
+  // (e.g. persisted value pre-dates BAL-1f, or a future code path bypasses it).
   if (row != null) {
     const badRatios: string[] = [];
     if (row.roa != null && Math.abs(row.roa) > 100) {
@@ -695,10 +708,14 @@ export function checkPublishability(
     if (row.eps != null && (row.eps < 0 || row.eps > 100_000)) {
       badRatios.push(`EPS=${row.eps.toFixed(0)} VND`);
     }
+    // BAL-1f: current_ratio > 1000x is physically impossible — parse artifact.
+    if (row.current_ratio != null && row.current_ratio > 1000) {
+      badRatios.push(`CurrentRatio=${row.current_ratio.toFixed(0)}x`);
+    }
     if (badRatios.length > 0) {
       return {
         publishable: true,
-        partialWarning: `[PUB-6 RATIO-SANITY] Out-of-bounds ratio(s) withheld: ${badRatios.join(", ")} — unit scale or stale pre-refine value. Affected field(s) shown as N/A. (BAL-1a-DEV will fix ratio recompute after refine.)`,
+        partialWarning: `[PUB-6 RATIO-SANITY] Out-of-bounds ratio(s) withheld: ${badRatios.join(", ")} — unit scale or stale pre-refine value. Affected field(s) shown as N/A.`,
         sanitizedRatios: {
           roa: row.roa != null && Math.abs(row.roa) > 100 ? null : row.roa,
           roe: row.roe != null && Math.abs(row.roe) > 300 ? null : row.roe,
@@ -707,6 +724,9 @@ export function checkPublishability(
               ? null
               : row.net_debt_to_ebitda,
           eps: row.eps != null && (row.eps < 0 || row.eps > 100_000) ? null : row.eps,
+          // BAL-1f: current_ratio plausibility band — > 1000x → null (rendered as N/A).
+          current_ratio:
+            row.current_ratio != null && row.current_ratio > 1000 ? null : row.current_ratio,
         },
       };
     }
@@ -862,6 +882,19 @@ export function registerBctcFullTools(
           // current_ratio: current_assets / currentLiabilities.total
           // currentLiabilities.total is NOT a scalar column — read from balance_sheet_json.
           // Mirrors finalizeBctcRefineTool.ts BLOCK-3 L749-767.
+          //
+          // BAL-1f: guard against parse artifacts — a clTotal > 0 guard alone is
+          // insufficient when the parser emits micro-residuals (e.g. FPT had
+          // currentLiabilities.total = 1e-6 from component rounding:
+          // shortTermDebt=0 + accountsPayable=1e-6 + ... = 1e-6).
+          // 1e-6 > 0 is true → current_assets / 1e-6 ≈ 4.15e13 (garbage).
+          //
+          // Principled threshold: clTotal must be ≥ 0.1% of current_assets
+          // (meaningful fraction check) AND ≥ 1.0 million VND absolute floor.
+          // Both conditions must hold; otherwise treat denominator as N/A.
+          // A result > 1000x is also clamped to null (implausible band).
+          // This mirrors VNM's honest N/A behaviour (missing currentLiabilities
+          // breakdown → null → served as N/A correctly).
           let recomputedCurrentRatio: number | null = null;
           if (current_assets !== null && balance_sheet_json) {
             try {
@@ -872,14 +905,75 @@ export function registerBctcFullTools(
                 bs["currentLiabilities"] !== undefined
                   ? (bs["currentLiabilities"] as Record<string, unknown>)["total"]
                   : undefined;
-              if (typeof clTotal === "number" && clTotal > 0) {
-                recomputedCurrentRatio = safeDivideRead(current_assets, clTotal);
+              // BAL-1f: principled floor — clTotal must be a meaningful fraction of
+              // current_assets (≥ 0.1%) AND above an absolute minimum (1.0 million VND).
+              // Micro-residuals from component rounding (e.g. 1e-6) fail both checks → N/A.
+              const MIN_CL_FRACTION = 0.001; // 0.1% of current_assets
+              const MIN_CL_ABSOLUTE = 1.0;   // 1 million VND minimum
+              const clIsPlausible =
+                typeof clTotal === "number" &&
+                clTotal >= MIN_CL_ABSOLUTE &&
+                (current_assets === 0 || clTotal >= current_assets * MIN_CL_FRACTION);
+              if (clIsPlausible) {
+                const ratio = safeDivideRead(current_assets, clTotal as number);
+                // BAL-1f: implausible result band — current_ratio > 1000x is physically
+                // impossible for any real company; treat as N/A (defense-in-depth).
+                recomputedCurrentRatio = ratio !== null && ratio <= 1000 ? ratio : null;
               }
             } catch {
               // JSON parse error — leave recomputedCurrentRatio null (safe fallback)
             }
           }
           latestRow.current_ratio = recomputedCurrentRatio;
+
+          // operating_margin_pct / gross_margin_pct / net_margin_pct recompute
+          // BAL-1f: the recompute block previously omitted these three margin columns.
+          // buildSummarySection reads row.operating_margin_pct directly — if left as
+          // the stale persisted value (= 0 for FPT despite op_profit=2,747,763 and
+          // net_revenue=12,479,997), the display shows 0.0% instead of the true 22.02%.
+          //
+          // Formula SSOT: mirrors ratioComputer.ts operatingMarginPct ~L81-85.
+          //   gross_margin    = gross_profit   / net_revenue × 100
+          //   operating_margin = operating_profit / net_revenue × 100
+          //   net_margin      = net_profit     / net_revenue × 100
+          //
+          // Income-broken guard (mirrors ratioComputer.ts L71-72):
+          //   when ALL of [net_revenue, gross_profit, operating_profit] are 0,
+          //   the income statement extraction failed — set all margin ratios to null.
+          {
+            const incomeKeyFields = [
+              latestRow.net_revenue,
+              latestRow.gross_profit,
+              latestRow.operating_profit,
+            ];
+            const incomeBroken = incomeKeyFields.every((v) => v === 0);
+            const nr = latestRow.net_revenue;
+            if (!incomeBroken && nr !== null && nr !== 0) {
+              latestRow.gross_margin_pct =
+                latestRow.gross_profit !== null
+                  ? (safeDivideRead(latestRow.gross_profit, nr) ?? null) !== null
+                    ? safeDivideRead(latestRow.gross_profit, nr)! * 100
+                    : null
+                  : null;
+              latestRow.operating_margin_pct =
+                latestRow.operating_profit !== null
+                  ? (safeDivideRead(latestRow.operating_profit, nr) ?? null) !== null
+                    ? safeDivideRead(latestRow.operating_profit, nr)! * 100
+                    : null
+                  : null;
+              latestRow.net_margin_pct =
+                latestRow.net_profit !== null
+                  ? (safeDivideRead(latestRow.net_profit, nr) ?? null) !== null
+                    ? safeDivideRead(latestRow.net_profit, nr)! * 100
+                    : null
+                  : null;
+            } else {
+              // Income broken or net_revenue = 0 → margins are meaningless
+              latestRow.gross_margin_pct = null;
+              latestRow.operating_margin_pct = null;
+              latestRow.net_margin_pct = null;
+            }
+          }
 
           // debt_to_equity: (short_term_debt + long_term_debt) / equity_total
           latestRow.debt_to_equity =
