@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "po",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-06-03-lf-tier0-fingerprint-rethink.md",
+  "summary": "LF-RETHINK SPIKE delivered. Root cause: money-group-density-only discriminator in _compute_page_fingerprint_50dpi classifies balance-unit START pages (FPT Q1 p3) as prose when header occupies top half of page. Structural fix: add Signal B (account-code density) + Signal C (date-header presence) as OR conditions — both AC-0 compliant, reuse existing patterns. Secondary fix: relax page_type continuity guard to allow prose-in-table-unit when gutter geometry is continuous. LF-DEPLOY-IMPL task spec ready for PO triage → dev-pdf-extractor dispatch. No code change from agent-father needed.",
+  "priority": "high",
+  "createdAt": "2026-06-03T05:21:48Z"
+}

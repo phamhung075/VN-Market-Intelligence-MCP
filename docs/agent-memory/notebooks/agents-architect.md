@@ -138,6 +138,16 @@ fb-market-poster STEP 4 check 3 is pure model self-attestation — false-greened
 
 **Signal dropped:** `docs/signals/bctc-analytics-layer-bal1-20260602T110455Z.json` → agent-father
 
+## 2026-06-03T05:21:48Z
+
+**Brief:** `docs/architecture-briefs/2026-06-03-lf-tier0-fingerprint-rethink.md`
+
+LF-RETHINK SPIKE (120min timebox): Tier-0 `build_document_map()` recurring defect class root-caused to the money-group-density-only `page_type` discriminator (introduced in commit 08644675) falsely classifying balance-unit START pages (FPT Q1 p3) as `prose` when a section header occupies the page top. Structural fix: add two AC-0-compliant OR signals — Signal B (account-code count ≥ 3 via `_CODE_LIKE_RE`) + Signal C (date-header count ≥ 1 via `_DATE_HEADER_RE`) — to the classifier; secondary fix: relax `page_type` continuity guard (prose-in-table-unit tolerance when gutter geometry is continuous). LF-DEPLOY-IMPL task spec ready for PO → dev-pdf-extractor.
+
+**Signal dropped:** `docs/signals/lf-rethink-brief-20260603T052148Z.json` → po
+
+---
+
 ## Carry-over
 
 - market-watcher/cycle.md Step 5 append/overwrite drift: confirm agent-father applies fix in same pass as frontmatter edit (§12c market-watcher row).
