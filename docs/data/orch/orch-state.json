@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T17:38:35Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-03T18:13:13Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -1798,6 +1798,28 @@
         "zone": "docs/agents/cowork-team/",
         "priority": "low",
         "note": "agent-father secondary finding during CW-BACKLOG-MISCOUNT: TWO writers. (1) scripts/agents-flow/cowork-tick-autosilent.sh writes enveloped {from,to,type,payload,priority,createdAt} (matches Step 6 L754 spec); (2) live session main.md runtime writes flat {agent,ts,tick_nominal,drift_min,classification,...} (diverges). All 37 on-disk = flat. Both share cowork-team- prefix so both correctly excluded by CW-BACKLOG-MISCOUNT. Separate cleanup: reconcile Step 6 spec vs live runtime output (doc-or-impl). LOW — backlog-count already fixed."
+      },
+      {
+        "id": "SPIKE-BCTC-CTG-ATTACHMENT-FETCH",
+        "type": "SPIKE",
+        "title": "Prove CTG full-BCTC attachment fetchability (cover-letter-only blocker, 8 cycles)",
+        "question": "Does a fetchable full financial-statement BCTC attachment for CTG exist at HOSE/HNX/UPCOM disclosure APIs, or is only a cover-letter/notice PDF published? If full exists -> spec attachment-selection FIX in discoverBctcPdfUrlDirectApi; if not -> upstream-data-blocked, NOT dev-fixable.",
+        "mode": "spike",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "size": "S",
+        "priority": "high",
+        "timebox": 120,
+        "status": "BACKLOG",
+        "files": [
+          "apps/mcp-server/src/application/usecases/discoverBctcPdfUrlDirectApi.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts"
+        ],
+        "origin": "po-triage CTG bctc_signal consecutive_cycles_blocked=8 (5th+ emission, latest 2026-06-03T00:07Z); BCTC-CTG-ATTACHMENT-FETCH referenced only inside CLOSED-task notes (BEQ-10/BEQ-5) but never an actionable item — root gap promoted",
+        "context": "get_bctc_full(CTG)='Chua co du lieu BCTC' live-verified by PO 2026-06-03T18:11Z. Root: CTG disclosure PDF fetched is cover-letter-only (no statements). discoverBctcPdfUrlDirectApi matches attachments by quarter+year title ONLY (matchesQuarterAndYear) — no content/financial-statement-vs-notice discrimination. SPIKE-FIRST because data-availability is uncertain: must PROVE a fetchable full BCTC attachment for CTG exists at HOSE/HNX/UPCOM source before any code FIX. If only the cover letter is published -> upstream-data-blocked (kin FU-BCTC-HISTORY-COVERAGE / BCTC-HIST-SEED done-code-data-blocked-upstream), close NOT-DEV-FIXABLE. If a full-statement attachment IS listed -> follow-up FIX adds attachment-selection (skip cover-letter, prefer full BCTC) to discovery.",
+        "added_by": "po",
+        "added_at": "2026-06-03T18:13:13Z"
       }
     ],
     "archive": []
@@ -2115,6 +2137,36 @@
         "status": "READ",
         "payload_ref": "docs/architecture-briefs/2026-06-03-lf-group-stage-rethink.md",
         "po_disposition": "READ 2026-06-03T10:24Z dev-team: brief routed to agent-father by architect default, but apps/ Python impl belongs to dev-pdf-extractor zone (agent-father zone = agent .md/system files). Code-impl re-routed -> LF-GRP-1/2 dev-pdf-extractor, LF-GRP-3 qa. agent-father no action."
+      },
+      {
+        "id": "bca-20260603T1815Z",
+        "ts": "2026-06-03T18:15:00Z",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "summary": "ESC deep-dive: FPT Q1-2026 ESC-3 (OCF/NI divergence) — 16th consecutive cycle. guard_key=esc-deepdive:FPT:Q1-2026:ESC-3 re-claimed (prior 24h TTL expired). OCF=-2,847,813 VND mn vs NI=+2,476,800 VND mn, divergence_ratio=2.15. Prior Opus deep-dive DONE (a38e14ee, conf=0.35 MIXED/partial-artifact). FU-BCTC-TOOL-PARAMS (get_cash_flow quarters param silently ignored) may be the root blocker for multi-quarter accrual decomposition.",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": null,
+        "payload": {
+          "trigger_id": "ESC-3",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": "FPT-Q1-2026",
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-3",
+          "context": {
+            "ocf_total": -2847813.717192,
+            "net_profit_total": 2476800,
+            "divergence_ratio": 2.15,
+            "cycle_count": 16,
+            "prior_opus_deepdive": "DONE (a38e14ee) — flag_for_human_review, conf=0.35, MIXED/partial-artifact",
+            "blocker": "FU-BCTC-TOOL-PARAMS: get_cash_flow ignores quarters param; only Q1/2026 returned (quarters_returned=2 of 8 requested); multi-quarter accrual decomposition impossible",
+            "q4_2025_context": "OCF Q4/2025=+4,108,450 VND mn (ratio=+1.64 healthy) — strong seasonal contrast; Q1 negative OCF may be seasonal working-capital phenomenon"
+          },
+          "all_esc_fired": [
+            "ESC-3"
+          ]
+        }
       }
     ],
     "archive": [
