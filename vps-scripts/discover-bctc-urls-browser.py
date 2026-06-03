@@ -380,6 +380,20 @@ def _parse_article_ids_and_titles(html: str, code: str, year: int, quarter: str)
     # Sort ascending by rank: 0=consolidated full-statement wins.
     candidates.sort(key=lambda c: c[0])
     best_rank, best_id, best_title = candidates[0]
+
+    # FIX-CTG-2b: Only accept rank 0 (consolidated) or rank 1 (full statement).
+    # Rank >= 2 means the only candidates are generic/undiscriminated documents
+    # (e.g. "QĐ TGĐ thay đổi địa điểm" — a CEO decision, not a BCTC).
+    # Return None so HOSE-listed tickers fall through cleanly to the hsx.vn
+    # direct path (FIX-CTG-1) instead of returning a non-BCTC document.
+    if best_rank >= 2:
+        print(
+            f"    SKIP all-generic rank={best_rank} best_id={best_id} "
+            f"title={best_title[:80]} — no acceptable BCTC found on this page",
+            file=sys.stderr,
+        )
+        return None
+
     print(
         f"    BEST id={best_id} rank={best_rank} title={best_title[:80]}",
         file=sys.stderr,

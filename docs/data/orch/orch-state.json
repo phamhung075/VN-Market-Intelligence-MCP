@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T17:07:27Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-03T00:00:00Z",
+  "_updated_by": "po,dev-vps-crawls",
   "head": {
     "status": "idle",
     "active_task_id": null,
@@ -1756,14 +1756,14 @@
             "title": "VPS classifier residual: discover-bctc-urls-browser.py still returns a generic non-BCTC doc (deployed CTG run returned an office-relocation QĐ TGĐ PDF) when HNX has no real BCTC for a HOSE ticker. Should return NONE for non-full-statement (rank>=2) matches so HOSE tickers fall through to hsx.vn cleanly. CAUTION: verify HNX-listed tickers whose BCTC has atypical titles still resolve (don't over-tighten). Low pri — primary CTG path = hsx.vn (FIX-CTG-1 live).",
             "type": "FIX",
             "owner": "dev-vps-crawls",
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "vps-scripts/",
             "priority": "low",
             "depends": [
               "FIX-CTG-2"
             ],
-            "note": "Surfaced by router raw-verify of the VPS deploy run (ops mis-validated an office-relocation QĐ as a financial statement)."
+            "note": "Surfaced by router raw-verify of the VPS deploy run (ops mis-validated an office-relocation QĐ as a financial statement). [dev-vps-crawls 2026-06-03] DONE: rank>=2-only guard added to _parse_article_ids_and_titles; 27/27 tests pass (2 new: test_parse_rank2_only_returns_none + test_parse_rank1_non_consolidated_still_resolves). VPS deploy pending (ops-vps step)."
           }
         ]
       },

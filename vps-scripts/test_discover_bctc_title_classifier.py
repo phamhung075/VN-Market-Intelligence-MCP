@@ -231,6 +231,49 @@ def test_parse_wrong_quarter_ignored():
 
 
 # ---------------------------------------------------------------------------
+# FIX-CTG-2b: rank>=2-only candidate set must return None
+# ---------------------------------------------------------------------------
+
+def test_parse_rank2_only_returns_none():
+    """
+    FIX-CTG-2b: when the only quarter/year-matching candidates are rank>=2
+    (generic / undiscriminated — e.g. a CEO decision document whose title
+    happens to contain the year and a quarter marker), _parse_article_ids_and_titles
+    must return None instead of the generic article.
+
+    Simulates the CTG residual defect: a 'QD TGD thay doi dia diem' CEO-decision
+    PDF passes the quarter/year filter (its title contains '2026' and 'q1') but
+    has no financial-statement keyword → rank=2.  Expected: None.
+    """
+    html = _make_hnx_html([
+        (
+            "ctg12345",
+            5001,
+            "QD TGD thay doi dia diem dat tru so CN Hong Bang Q1 2026",
+        ),
+    ])
+    result = _parse_article_ids_and_titles(html, "CTG", 2026, "Q1")
+    assert result is None, (
+        f"Expected None (rank=2 generic skipped by FIX-CTG-2b), got {result}"
+    )
+
+
+def test_parse_rank1_non_consolidated_still_resolves():
+    """
+    FIX-CTG-2b hard-caution: a legitimate HNX BCTC whose title is a full
+    statement but NOT consolidated (rank=1 — e.g. 'BCTC rieng le') must
+    still resolve.  rank=1 < 2, so the guard must NOT block it.
+    """
+    html = _make_hnx_html([
+        ("acb99999", 6001, "BCTC rieng le Quy 1.2026 signed"),
+    ])
+    result = _parse_article_ids_and_titles(html, "ACB", 2026, "Q1")
+    assert result == 6001, (
+        f"Expected 6001 (rank=1 full-statement resolves), got {result}"
+    )
+
+
+# ---------------------------------------------------------------------------
 # Self-runner (no pytest dependency required on VPS)
 # ---------------------------------------------------------------------------
 
@@ -263,6 +306,8 @@ if __name__ == "__main__":
         test_parse_cover_letter_then_consolidated_then_standalone,
         test_parse_wrong_ticker_ignored,
         test_parse_wrong_quarter_ignored,
+        test_parse_rank2_only_returns_none,
+        test_parse_rank1_non_consolidated_still_resolves,
     ]
 
     passed = 0
