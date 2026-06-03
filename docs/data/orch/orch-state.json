@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "dev-team tick 2026-06-03 ~13:14Z DONE. 2 serve-honesty FIX shipped+live: FU-LF-VALIDATION-STATUS-REFLOW (stale validation_status recompute-on-read; FPT/VNM 'failed'->'passed' live) + FU-DE-SERVE-HONEST (false '0.00x debt-free' -> honest N/A; FPT/VNM live). head idle. Open (PO): FU-DE-DECOMP-MAPPING(architect SPIKE — upstream debt decomposition empty on balance-complete reports, BAL-1 premise was wrong); FU-FPT-OCR-PAGES-20-46(med); FU-ORPHAN-TOLERANCE(low); BAL-1e-DEV(low EPS); FLEET-HOST-SAFETY 2 low; NB-FLOW-SETTLED-WRITE pending next chef write.",
+    "next_action": "dev-team tick 2026-06-03 ~14:09Z DONE. SPIKE FU-DE-DECOMP-MAPPING closed — root-caused the corpus-wide empty-debt-decomposition gap to a MAPPING omission in bctcScalarAggregator (DB-proven, rows present). Queued 4 FIX (FIX-DE-1..4, all dev-mcp-server, S/XS) per architect brief. head idle. NEXT: PO triage FIX-DE-1..4 (chain 1->2->3 + 4 parallel; needs ops rebuild + corpus re-finalize + live-verify D/E shows real values e.g. FPT ~0.40x). Other open: FU-FPT-OCR-PAGES-20-46(med), FU-ORPHAN-TOLERANCE(low), BAL-1e-DEV(low), FLEET-HOST-SAFETY 2 low, NB-FLOW-SETTLED-WRITE.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T13:29:55Z",
+    "updated_at": "2026-06-03T14:19:11Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T13:29:55Z",
+    "_updated_at": "2026-06-03T14:19:11Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -286,14 +286,72 @@
             "title": "SPIKE (architect): why does refine leave liabilities decomposition + interest-bearing-debt scalars (short/long_term_debt) empty on balance-COMPLETE reports? BAL-1 spike premise 'base scalars correct' was FALSE for this path. Upstream data-gap, multi-week class — root-cause the decomposition mapping, do NOT band-aid at serve.",
             "type": "SPIKE",
             "owner": "architect",
-            "status": "TODO",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "medium",
+            "mode": "spike",
+            "timebox": 120,
             "depends": [
               "FU-DE-SERVE-HONEST"
             ],
-            "note": "[dev-team 2026-06-03T13:14:46Z] backlog — upstream data-gap split off per recurring-bug rule; NOT in this tick's batch."
+            "note": "[dev-team 2026-06-03T13:14:46Z] backlog — upstream data-gap split off per recurring-bug rule; NOT in this tick's batch. | [PO 2026-06-03T14:09Z DISPATCHED] PO router raw-verified live (get_bctc_full FPT+VNM): D/E=N/A served on both despite real total_liab (FPT 28.5T 2026-Q1 conf81% / VNM 18.8T 2025-Q4 conf94%), assets=equity+liab balances EXACT => these are genuinely balance-COMPLETE yet short/long_term_debt decomposition is EMPTY. Corpus-wide: D/E unservable on every confident report. HPG (real short_term_debt per FU-DE note) is PUB-5-gated conf44% so a real-debt D/E is NOT live-observable this tick — spike must reason from FPT/VNM empty-decomp samples + the unit-proven HPG-has-debt case. REAL FAILING SAMPLES IN HAND: FPT 2026-Q1, VNM 2025-Q4. ARCHITECT: build on docs/architecture-briefs/2026-06-02-bctc-analytics-layer-bal1.md; pin WHERE the liabilities decomposition / interest-bearing-debt mapping is dropped between OCR-rows -> refine -> scalar persist (B01 balance-sheet line mapping? short_term_debt/long_term_debt VAS code mapping in ScalarAggregate? refine never projecting decomposition rows?). OUTPUT = findings doc + per-cluster FIX fanout for PO triage next tick (NO shipped code this tick). recurring-bug rule applies (BCTC ratio/serve area has >2 fix cycles). | [dev-team 2026-06-03T14:19:11Z] SPIKE DONE (architect, brief docs/architecture-briefs/2026-06-03-bctc-debt-decomposition-gap.md). VERDICT: MAPPING GAP not extraction — DB-proven: FPT-Q1 bctc_table_rows code 321=14,491.4 tỷ + code 339=1,605.1 tỷ PRESENT+correct, but bctcScalarAggregator ScalarAggregate has no short/long_term_debt field (omitted from BEQ-3 audit) → financial_reports debt scalars=0. 2ndary: HPG short_term_debt=38,729 is SPURIOUS (OCR code 311=accounts payable, real borrowings on 319). Owner: dev-mcp-server only. Fanout FIX-DE-1..4 queued TODO."
+          },
+          {
+            "task_id": "FIX-DE-1",
+            "title": "bctcScalarAggregator.ts — add short_term_debt/long_term_debt to ScalarAggregate + VAS 321/319/339/334 mappings with section filters (319 needs /vay/i label hint — not all 319 are borrowings); banks add these to notApplicable so stale OCR cleared on re-finalize",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "depends": [
+              "FU-DE-DECOMP-MAPPING"
+            ],
+            "note": "[architect fanout] aggregator field+mapping. Section-filter + /vay/i hint on 319."
+          },
+          {
+            "task_id": "FIX-DE-2",
+            "title": "finalizeBctcRefineTool.ts — wire debt scalars through BLOCK-1 UPDATE + balance_sheet_json nested-key blob sync (BLOCK-3 already reads short/long_term_debt for D/E but reads the zeros BLOCK-1 never replaced)",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "depends": [
+              "FIX-DE-1"
+            ],
+            "note": "[architect fanout] finalize BLOCK-1 wiring + blob sync."
+          },
+          {
+            "task_id": "FIX-DE-3",
+            "title": "Corpus re-finalize 5 DONE reports (FPT/VNM/HPG/DHG/SHB) post-rebuild so live D/E shows real values (FPT expect ~0.40x = (14,491+1,605)/40,122). DoD: get_bctc_full(FPT) D/E ~0.40x not N/A; VNM real D/E; bank reports stay clean",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "depends": [
+              "FIX-DE-2"
+            ],
+            "note": "[architect fanout] corpus re-finalize — LIVE D/E real values. needs ops rebuild first."
+          },
+          {
+            "task_id": "FIX-DE-4",
+            "title": "balanceSheetExtractor.ts — fix OCR-path codes 311->321/319, 334->339/334 fallback. HPG short_term_debt=38,729 is a SPURIOUS code-311 (accounts payable 'Phai tra nguoi ban') match, NOT borrowings; real HPG short-term borrowings on code 319 (38,532 tỷ) never read",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "medium",
+            "depends": [
+              "FU-DE-DECOMP-MAPPING"
+            ],
+            "note": "[architect fanout] OCR-path code remap; corrects the spurious HPG positive-control."
           }
         ]
       },
