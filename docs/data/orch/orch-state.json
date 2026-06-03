@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T20:55:10Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-03T21:23:04Z",
+    "_updated_by": "agent-father",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -1998,6 +1998,17 @@
         "status": "BACKLOG",
         "priority": "low",
         "note": "Surfaced by agent-father during FU-COWORK-HEARTBEAT-SCHEMA impl."
+      },
+      {
+        "task_id": "NB-COWORK-MAIN-SPLIT",
+        "title": "Split cowork-team/flow/main.md (820L) into thin dispatcher + sub-flows",
+        "type": "REFACTOR",
+        "status": "DONE",
+        "size": "S",
+        "zone": "docs/agents/cowork-team/flow/",
+        "priority": "low",
+        "note": "DONE 2026-06-03T21:23:04Z commit ae4396e6. main.md 820L→109L; 10 sub-flows created (leader-lock/match-slots/pressure-read/pressure-cadence/slot-claim/tick-snapshot/pressure-emit/spawn-fanout/last-fired/telemetry). All files ≤120L. Pure refactor, no logic change.",
+        "_updated_by": "agent-father"
       }
     ],
     "archive": []
