@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-03T05:29:23Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "router",
-    "next_action": "NB-WRITE-ATOMIC DONE — notebook-write SKILL updated (single settled write, zero transient over-cap). Dispatch next sprint item.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "NB-SKILL-CAP",
+    "next_agent": "agent-father",
+    "next_action": "Trim .claude/skills/notebook-write/SKILL.md from 137L to <=120L (over its own governed cap). Then LF-DEPLOY-IMPL (dev-pdf-extractor) is the priority-high main work this tick.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T05:29:23Z",
-    "updated_by": "agent-father"
+    "updated_at": "2026-06-03T06:11:06Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T05:26:38Z",
+    "_updated_at": "2026-06-03T06:11:06Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -630,6 +630,17 @@
             "zone": "cross-service/",
             "priority": "medium",
             "note": "PO triage 2026-06-03 cron tick (concretizes backlog NB-PRUNE-FIX / NB-BLOAT-FLOW-OVERWRITE). ROOT CAUSE: .claude/skills/notebook-write/SKILL.md APPEND-class ordering = Step1 prune-oldest -> Step2 APPEND-new (file now 217/213L, OVER cap) -> AC-2b intra-prune -> AC-5 wc-gate prune (settles 201->196L). Each step is a separate Edit => separate PostToolUse => context-bloat-backstop.sh (wc -l vs cap 200) emits a breach signal on EVERY intermediate over-cap state (evidence: 2026-06-03 unified-agent breach line_counts 217/211/201; dev-mcp-server 207/201). Final file IS under cap (196L/200L verified). FIX: reorder+atomize so the prune that bounds to <=200L runs BEFORE/together-with the append and the file the hook OBSERVES is never over-cap — compose final <=200L body then single write (OR prune-down-first then append within budget). agent-md-factory governed skill+flow edit, no rebuild. DoD: a chef-intraday + dev cycle produces ZERO context_bloat_breach signal for its notebook; final file <=200L unchanged. baseline_pass: grep the breach-signal count for unified-agent.md over one chef run == 0 after fix. | DONE 2026-06-03 agent-father: reordered AC-3 to compose final <=200L body in memory (prune+AC-2b+append+trim all in-memory Step1 a-g) then ONE settled write (Step2). Invariant: PostToolUse hook fires exactly once and sees <=200L. Old 2-Edit sequence (prune Edit -> append Edit -> intermediate over-cap) replaced by single-write. AC-5 demoted from remediation loop to verification gate. Baseline-pass: one chef-intraday append + one dev-cycle append produce ZERO context_bloat_breach signals because the single Write/Edit always lands <=200L. .claude/skills/notebook-write/SKILL.md 137L."
+          },
+          {
+            "task_id": "NB-SKILL-CAP",
+            "title": "Trim notebook-write/SKILL.md back <=120L (NB-WRITE-ATOMIC commit 948b6ed0 overshot the .claude/skills/**/*.md cap=120 to 137L, 3 persistent breach signals)",
+            "type": "FIX",
+            "owner": "agent-father",
+            "status": "IN_PROGRESS",
+            "size": "S",
+            "zone": "cross-service/",
+            "priority": "medium",
+            "note": "Self-inflicted regression by 948b6ed0. Trim/lazy-load the AC-3 atomic-write prose to <=120L WITHOUT losing the single-settled-write invariant. Cap SSOT docs/data/file-size-caps.json .caps[] pattern .claude/skills/**/*.md."
           }
         ]
       },
