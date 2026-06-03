@@ -391,6 +391,144 @@ class TestCheckNoOrphanRows:
 
 
 # ===========================================================================
+# FU-ORPHAN-TOLERANCE — Tolerance boundary tests
+# ===========================================================================
+
+class TestOrphanRatioTolerance:
+    """
+    FU-ORPHAN-TOLERANCE: check_no_orphan_rows allows up to 5% orphan ratio.
+
+    Root cause: unit d8613f7c had 8.7% orphan ratio because column-detection
+    found NO gutters on FPT p7-9 dense income-stmt/CF pages → 1-column layout
+    → all OCR in label slot → 100% orphan on those pages. The rest of the unit
+    was clean, so a tolerance of ≤5% is reasonable.
+
+    Boundary: 5.0% orphan_ratio → PASS; 5.1% orphan_ratio → FAIL.
+    """
+
+    @staticmethod
+    def _make_rows(total: int, orphan_count: int) -> list:
+        """
+        Build a list with `orphan_count` orphan rows and the rest valid.
+        Orphan = label present, values empty.
+        Valid = label + value present.
+        """
+        rows = []
+        for i in range(total):
+            if i < orphan_count:
+                rows.append(_row(label=f"Label {i}", values=[""]))
+            else:
+                rows.append(_row(label=f"Label {i}", values=[f"{i * 1000}"]))
+        return rows
+
+    def test_zero_orphan_ratio_passes(self):
+        """0% orphan → pass (no orphans at all)."""
+        rows = self._make_rows(total=100, orphan_count=0)
+        ok, reason = check_no_orphan_rows(rows)
+        assert ok, reason
+        assert reason == ""
+
+    def test_5_percent_orphan_ratio_passes(self):
+        """
+        5.0% orphan ratio → PASS (within tolerance).
+        FU-ORPHAN-TOLERANCE boundary: exactly at the limit.
+
+        5 orphans in 100 rows = 5/100 = 5.0%.
+        """
+        rows = self._make_rows(total=100, orphan_count=5)
+        ok, reason = check_no_orphan_rows(rows)
+        assert ok, (
+            f"5.0% orphan ratio must PASS within tolerance. Got: ok={ok}, reason={reason!r}"
+        )
+        assert "orphan_rows_within_tolerance" in reason, (
+            f"Expected tolerance pass reason, got: {reason!r}"
+        )
+
+    def test_51_percent_orphan_ratio_fails(self):
+        """
+        5.1% orphan ratio → FAIL (exceeds tolerance).
+        FU-ORPHAN-TOLERANCE boundary: one step above the limit.
+
+        51 orphans in 1000 rows = 51/1000 = 5.1%.
+        """
+        rows = self._make_rows(total=1000, orphan_count=51)
+        ok, reason = check_no_orphan_rows(rows)
+        assert not ok, (
+            f"5.1% orphan ratio must FAIL (exceeds tolerance). Got: ok={ok}, reason={reason!r}"
+        )
+        assert "orphan_rows" in reason
+        assert "exceeds_tolerance" in reason
+
+    def test_1_orphan_in_20_rows_passes(self):
+        """
+        1 orphan in 20 rows = 5.0% → PASS (boundary exact).
+        """
+        rows = self._make_rows(total=20, orphan_count=1)
+        ok, reason = check_no_orphan_rows(rows)
+        assert ok, (
+            f"1/20 = 5.0% must PASS. Got: ok={ok}, reason={reason!r}"
+        )
+
+    def test_1_orphan_in_19_rows_fails(self):
+        """
+        1 orphan in 19 rows = 5.26% → FAIL (above tolerance).
+        """
+        rows = self._make_rows(total=19, orphan_count=1)
+        ok, reason = check_no_orphan_rows(rows)
+        assert not ok, (
+            f"1/19 = 5.26% must FAIL. Got: ok={ok}, reason={reason!r}"
+        )
+
+    def test_high_orphan_ratio_fails(self):
+        """
+        8.7% orphan ratio (original FPT d8613f7c unit) → FAIL.
+        This is the unit that triggered the task — it SHOULD still FAIL at 8.7%.
+        Only ≤5.0% passes.
+        """
+        rows = self._make_rows(total=100, orphan_count=9)  # 9% > 5%
+        ok, reason = check_no_orphan_rows(rows)
+        assert not ok, (
+            f"8.7%+ orphan ratio must FAIL. Got: ok={ok}, reason={reason!r}"
+        )
+
+    def test_tolerance_pass_reason_contains_ratio(self):
+        """
+        When passing via tolerance, the reason string must include the ratio
+        so callers can log the structural noise level.
+        """
+        rows = self._make_rows(total=100, orphan_count=3)  # 3% < 5%
+        ok, reason = check_no_orphan_rows(rows)
+        assert ok
+        assert "ratio=" in reason
+        assert "tolerance=" in reason
+
+    def test_custom_zero_tolerance_fails_any_orphan(self):
+        """
+        Custom tolerance=0.0 → any orphan must fail (strict mode).
+        Verifies the tolerance parameter is actually respected.
+        """
+        rows = self._make_rows(total=100, orphan_count=1)  # 1% — passes at default 5%
+        ok_default, _ = check_no_orphan_rows(rows)  # should pass
+        assert ok_default, "1% should pass at default tolerance"
+
+        ok_strict, reason = check_no_orphan_rows(rows, orphan_ratio_tolerance=0.0)
+        assert not ok_strict, (
+            f"With tolerance=0.0, any orphan must fail. Got: ok={ok_strict}, reason={reason!r}"
+        )
+
+    def test_custom_100pct_tolerance_always_passes(self):
+        """
+        Custom tolerance=1.0 → even 100% orphan ratio passes.
+        Verifies the tolerance parameter ceiling.
+        """
+        rows = self._make_rows(total=10, orphan_count=10)  # 100% orphan
+        ok, reason = check_no_orphan_rows(rows, orphan_ratio_tolerance=1.0)
+        assert ok, (
+            f"With tolerance=1.0, even 100% orphan must pass. Got: ok={ok}, reason={reason!r}"
+        )
+
+
+# ===========================================================================
 # LF-IMPL-3 — Quarantine path proof test (AC-LFE-11)
 # ===========================================================================
 

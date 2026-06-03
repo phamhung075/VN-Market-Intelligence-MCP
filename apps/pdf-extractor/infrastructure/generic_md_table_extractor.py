@@ -2511,6 +2511,15 @@ _MIN_TEXT_COL_WIDTH_PX: int = 80
 # without merging genuine adjacent columns (which are at least 200px+ apart).
 _MAX_INTER_GUTTER_GAP_PX: int = 60
 
+# FU-ORPHAN-TOLERANCE: Dense-page fallback gutter detection.
+# On dense statement pages (income-stmt / cash-flow, FPT p7-9) the gutter between
+# the label column and value columns has residual ink (tightly-packed rows spill
+# ink into what should be the gutter). The standard _GUTTER_DARK_FRACTION=0.15 is
+# too strict — the gutter dark count can be 20-30% of the peak, not below 15%.
+# When the standard pass returns a single 1-column layout (no gutters), retry with
+# a more permissive threshold fraction.
+_GUTTER_DARK_FRACTION_DENSE: float = 0.35
+
 # LF-FIX: same threshold scaled to 50 DPI (Tier 0 fingerprint).
 # 80px at 200 DPI → 80 * 50/200 = 20px at 50 DPI.
 # Raised to 30px to suppress noise gutters (1-px whitespace gaps within dense
@@ -3359,6 +3368,120 @@ def zone_page(
     }
 
 
+def _scan_gutter_ranges(
+    ink_region: List[int],
+    x_left: int,
+    x_right: int,
+    gutter_threshold: float,
+) -> List[Tuple[int, int]]:
+    """
+    Scan ink_region for raw gutter candidates using a given threshold.
+
+    Returns a list of (gutter_start_x, gutter_end_x) tuples for runs of columns
+    whose dark-pixel count is <= gutter_threshold AND whose gap width >= _MIN_GUTTER_WIDTH_PX.
+    Open gutters at the right ink-boundary are dropped.
+
+    Helper extracted so _detect_column_gutters_200dpi can retry with a
+    different threshold on dense pages (FU-ORPHAN-TOLERANCE dense-page fallback).
+    """
+    raw_gutter_ranges: List[Tuple[int, int]] = []
+    in_gutter = False
+    gutter_start = 0
+    for i, dark in enumerate(ink_region):
+        x = x_left + i
+        if dark <= gutter_threshold:
+            if not in_gutter:
+                in_gutter = True
+                gutter_start = x
+        else:
+            if in_gutter:
+                gutter_end = x - 1
+                gap_width = gutter_end - gutter_start + 1
+                if gap_width >= _MIN_GUTTER_WIDTH_PX:
+                    raw_gutter_ranges.append((gutter_start, gutter_end))
+                in_gutter = False
+    # Open gutter at ink-right is DROPPED (trailing content whitespace).
+    return raw_gutter_ranges
+
+
+def _build_column_regions(
+    raw_gutter_ranges: List[Tuple[int, int]],
+    x_left: int,
+    x_right: int,
+) -> List[Dict]:
+    """
+    Merge, filter, and build column-region dicts from raw gutter ranges.
+
+    Returns None if no valid gutter remains after merge+filter (caller falls back
+    to single-column result). Returns column list on success.
+
+    Extracted so _detect_column_gutters_200dpi can share this logic between the
+    standard and dense-page-fallback passes.
+    """
+    # Merge consecutive raw gutters that are close together (OCR ink artifacts).
+    merged_gutter_ranges: List[Tuple[int, int]] = [raw_gutter_ranges[0]]
+    for cur_start, cur_end in raw_gutter_ranges[1:]:
+        prev_start, prev_end = merged_gutter_ranges[-1]
+        inter_gap = cur_start - prev_end - 1
+        if inter_gap <= _MAX_INTER_GUTTER_GAP_PX:
+            merged_gutter_ranges[-1] = (prev_start, cur_end)
+        else:
+            merged_gutter_ranges.append((cur_start, cur_end))
+
+    # Filter: a gutter is valid only if both adjacent text columns are wide enough.
+    gutter_ranges: List[Tuple[int, int]] = []
+    prev_col_start = x_left
+    for gi, (g_start, g_end) in enumerate(merged_gutter_ranges):
+        left_col_width = g_start - prev_col_start
+        if gi + 1 < len(merged_gutter_ranges):
+            right_col_end = merged_gutter_ranges[gi + 1][0] - 1
+        else:
+            right_col_end = x_right
+        right_col_width = right_col_end - g_end
+        if (left_col_width >= _MIN_TEXT_COL_WIDTH_PX
+                and right_col_width >= _MIN_TEXT_COL_WIDTH_PX):
+            gutter_ranges.append((g_start, g_end))
+        prev_col_start = g_end + 1
+
+    if not gutter_ranges:
+        return []  # caller returns single-column
+
+    # Build column-region dicts (alternating text and gutter columns).
+    columns: List[Dict] = []
+    col_idx = 0
+
+    first_gutter_start = gutter_ranges[0][0]
+    if first_gutter_start > x_left:
+        columns.append({
+            "col_id": f"col_{col_idx}",
+            "x_min": x_left,
+            "x_max": first_gutter_start - 1,
+            "is_gutter": False,
+        })
+        col_idx += 1
+
+    for i, (g_start, g_end) in enumerate(gutter_ranges):
+        columns.append({
+            "col_id": f"col_{col_idx}",
+            "x_min": g_start,
+            "x_max": g_end,
+            "is_gutter": True,
+        })
+        col_idx += 1
+
+        next_start = gutter_ranges[i + 1][0] if i + 1 < len(gutter_ranges) else x_right + 1
+        if next_start > g_end + 1:
+            columns.append({
+                "col_id": f"col_{col_idx}",
+                "x_min": g_end + 1,
+                "x_max": next_start - 1,
+                "is_gutter": False,
+            })
+            col_idx += 1
+
+    return columns
+
+
 def _detect_column_gutters_200dpi(
     col_dark: List[int],
     width: int,
@@ -3374,6 +3497,13 @@ def _detect_column_gutters_200dpi(
 
     Output format matches brief §3.2: each dict has col_id, x_min, x_max.
     Column IDs are positional: col_0, col_1, col_2, ... (AC-0 compliant).
+
+    Dense-page fallback (FU-ORPHAN-TOLERANCE):
+        On dense statement pages (income-stmt / cash-flow), the gutter between
+        label and value columns has residual ink that exceeds the standard
+        _GUTTER_DARK_FRACTION threshold. If the standard pass finds no gutters,
+        a second pass uses _GUTTER_DARK_FRACTION_DENSE (0.35) — a more permissive
+        threshold that detects gutters in dense text regions.
 
     AC-0: positional column IDs only. No BCTC semantic labels.
     """
@@ -3397,122 +3527,36 @@ def _detect_column_gutters_200dpi(
     if not ink_region:
         return [{"col_id": "col_0", "x_min": 0, "x_max": width, "is_gutter": False}]
 
-    # Threshold relative to the max within the ink region (not global median).
-    # Valleys inside the ink bbox that drop below this level are real gutters.
     max_dark_in_region = max(ink_region) or 1
-    gutter_threshold = max_dark_in_region * _GUTTER_DARK_FRACTION
 
-    # LF-FIX: Collect raw gutter candidates — contiguous runs of low-ink columns
-    # WITHIN the ink bbox only.
-    # Do NOT flush an open gutter at the ink-right boundary: trailing whitespace
-    # after the last text column is NOT a column separator. Only closed runs
-    # (gutter immediately followed by more ink content) count as real gutters.
-    # This prevents the 20-30px edge slivers from being accepted as columns.
-    raw_gutter_ranges: List[Tuple[int, int]] = []
-    in_gutter = False
-    gutter_start = 0
-    for i, dark in enumerate(ink_region):
-        x = x_left + i
-        if dark <= gutter_threshold:
-            if not in_gutter:
-                in_gutter = True
-                gutter_start = x
-        else:
-            if in_gutter:
-                gutter_end = x - 1
-                gap_width = gutter_end - gutter_start + 1
-                if gap_width >= _MIN_GUTTER_WIDTH_PX:
-                    raw_gutter_ranges.append((gutter_start, gutter_end))
-                in_gutter = False
-    # Open gutter at ink-right is DROPPED (trailing content whitespace).
+    # ------------------------------------------------------------------
+    # Standard pass (threshold = 15% of peak ink)
+    # ------------------------------------------------------------------
+    gutter_threshold = max_dark_in_region * _GUTTER_DARK_FRACTION
+    raw_gutter_ranges = _scan_gutter_ranges(ink_region, x_left, x_right, gutter_threshold)
 
     if not raw_gutter_ranges:
-        # No inter-column gutters found within the ink bbox.
-        # Return a single column spanning the ink bounding box.
+        # No gutters at standard threshold — try dense-page fallback.
+        # FU-ORPHAN-TOLERANCE: dense statement pages have residual ink in the
+        # gutter (20-30% of peak), which the standard 15% threshold misses.
+        dense_threshold = max_dark_in_region * _GUTTER_DARK_FRACTION_DENSE
+        raw_gutter_ranges = _scan_gutter_ranges(ink_region, x_left, x_right, dense_threshold)
+        if raw_gutter_ranges:
+            logger.debug(
+                "_detect_column_gutters_200dpi: dense-page fallback found %d raw gutter(s) "
+                "at threshold=%.2f (standard threshold found none)",
+                len(raw_gutter_ranges),
+                _GUTTER_DARK_FRACTION_DENSE,
+            )
+
+    if not raw_gutter_ranges:
+        # No inter-column gutters found even with dense fallback.
         return [{"col_id": "col_0", "x_min": x_left, "x_max": x_right, "is_gutter": False}]
 
-    # LF-FIX: Merge consecutive raw gutters that are close together.
-    # The whitespace between BCTC table columns may contain light OCR artifacts
-    # (descending character tails, faint ink) that break one structural column
-    # separator into several sub-gaps. Merging gaps separated by ≤ _MAX_INTER_GUTTER_GAP_PX
-    # reconstructs the correct compound column separator.
-    merged_gutter_ranges: List[Tuple[int, int]] = [raw_gutter_ranges[0]]
-    for cur_start, cur_end in raw_gutter_ranges[1:]:
-        prev_start, prev_end = merged_gutter_ranges[-1]
-        inter_gap = cur_start - prev_end - 1  # ink-bearing pixels between the two gutters
-        if inter_gap <= _MAX_INTER_GUTTER_GAP_PX:
-            # Extend the previous gutter to absorb the inter-gap and current gutter
-            merged_gutter_ranges[-1] = (prev_start, cur_end)
-        else:
-            merged_gutter_ranges.append((cur_start, cur_end))
-
-    # LF-FIX: Filter out gutters that would produce sub-threshold text columns.
-    # A gutter at position G is valid only if the text column on BOTH sides of G
-    # is at least _MIN_TEXT_COL_WIDTH_PX wide. This rejects the 20-30px edge
-    # slivers (e.g. page 3 col_2=1630-1653 with 23px width, page 4 col_0=0-25
-    # with 25px width) that caused the schema-inheritance cascade failure.
-    gutter_ranges: List[Tuple[int, int]] = []
-    prev_col_start = x_left
-    for gi, (g_start, g_end) in enumerate(merged_gutter_ranges):
-        left_col_width = g_start - prev_col_start
-        # Right column ends at the next gutter start or at ink right
-        if gi + 1 < len(merged_gutter_ranges):
-            right_col_end = merged_gutter_ranges[gi + 1][0] - 1
-        else:
-            right_col_end = x_right
-        right_col_width = right_col_end - g_end
-        if (left_col_width >= _MIN_TEXT_COL_WIDTH_PX
-                and right_col_width >= _MIN_TEXT_COL_WIDTH_PX):
-            gutter_ranges.append((g_start, g_end))
-        prev_col_start = g_end + 1
-
-    if not gutter_ranges:
-        # All candidate gutters were adjacent to sub-threshold columns (edge noise).
-        # Return a single column spanning the ink bounding box.
+    columns = _build_column_regions(raw_gutter_ranges, x_left, x_right)
+    if not columns:
+        # All candidate gutters rejected by column-width filter.
         return [{"col_id": "col_0", "x_min": x_left, "x_max": x_right, "is_gutter": False}]
-
-    # Build text column regions from the ink-bbox edges and the validated gutters.
-    # The first column starts at x_left (ink left edge), the last ends at x_right.
-    # Encoding: alternate text columns and gutter-whitespace columns so the OCR
-    # layer can identify which regions contain text vs. whitespace.
-    # Each dict includes "is_gutter": True/False so callers can distinguish text
-    # cells from whitespace separators when building row-gate entries.
-    columns: List[Dict] = []
-    col_idx = 0
-
-    # Column from ink-left to the first gutter
-    first_gutter_start = gutter_ranges[0][0]
-    if first_gutter_start > x_left:
-        columns.append({
-            "col_id": f"col_{col_idx}",
-            "x_min": x_left,
-            "x_max": first_gutter_start - 1,
-            "is_gutter": False,
-        })
-        col_idx += 1
-
-    # Gutter as column boundary + text region after it
-    for i, (g_start, g_end) in enumerate(gutter_ranges):
-        # Add the gutter as a (narrow whitespace) boundary column
-        columns.append({
-            "col_id": f"col_{col_idx}",
-            "x_min": g_start,
-            "x_max": g_end,
-            "is_gutter": True,
-        })
-        col_idx += 1
-
-        # Text region from this gutter's right edge to next gutter's start
-        # (or to ink-right if this is the last gutter)
-        next_start = gutter_ranges[i + 1][0] if i + 1 < len(gutter_ranges) else x_right + 1
-        if next_start > g_end + 1:
-            columns.append({
-                "col_id": f"col_{col_idx}",
-                "x_min": g_end + 1,
-                "x_max": next_start - 1,
-                "is_gutter": False,
-            })
-            col_idx += 1
 
     return columns
 

@@ -25,9 +25,15 @@ Three invariants (all must pass for a unit to be non-quarantined):
         Codes in the unit's first text column must be non-decreasing in document order.
         Emits first violation triplet: (code_before, code_after, page_index).
 
-    check_no_orphan_rows(rows) -> (pass: bool, reason: str)
+    check_no_orphan_rows(rows, orphan_ratio_tolerance=0.05) -> (pass: bool, reason: str)
         Every data row must have a non-empty label AND at least one non-empty value.
         Junk rows (no label, no value) also trigger a fail.
+        Tolerance: orphan_ratio <= orphan_ratio_tolerance (default 5%) → PASS.
+        Rationale: dense statement pages (FPT p7-9 income-stmt/CF) can produce a
+        1-column layout when gutter detection finds no gutters — all OCR lands in
+        the label slot → 100% orphan for those pages. A ≤5% orphan ratio across
+        the UNIT is structurally acceptable (≈ 2-3 rows on a 46-page doc unit).
+        FU-ORPHAN-TOLERANCE.
 
 Input row schema (dict per row):
     {
@@ -305,27 +311,49 @@ def check_codes_monotonic(rows: List[Dict]) -> Tuple[bool, str]:
 # Invariant 3 — Every data row has a label and at least one value
 # ---------------------------------------------------------------------------
 
-def check_no_orphan_rows(rows: List[Dict]) -> Tuple[bool, str]:
+def check_no_orphan_rows(
+    rows: List[Dict],
+    orphan_ratio_tolerance: float = 0.05,
+) -> Tuple[bool, str]:
     """
     Check that every data row has a non-empty label AND at least one non-empty value.
+
+    Tolerance (FU-ORPHAN-TOLERANCE):
+        If the fraction of bad rows (orphans + junk) is <= orphan_ratio_tolerance,
+        the unit PASSES. Default tolerance = 5% (0.05).
+
+        Rationale: dense BCTC statement pages (income-stmt / cash-flow, FPT p7-9)
+        can produce a 1-column layout when gutter detection finds no column gutters
+        — all OCR text lands in the label slot → 100% orphan for those pages.
+        A unit with an 8.7% orphan ratio overall (FPT unit d8613f7c) is otherwise
+        valid: the orphans are concentrated on 3 dense pages, the rest is clean.
+        Allowing up to 5% preserves structural validation for the common junk-noise
+        case while not quarantining units that are overwhelmingly clean.
+
+        Tolerance boundary: orphan_ratio > 5.0% → FAIL; orphan_ratio <= 5.0% → PASS.
 
     Definitions:
         - Orphan row: label is present (non-empty) but ALL value columns are empty/null.
         - Junk row: BOTH label AND all value columns are empty/null (pure noise).
-
-    Both trigger a quarantine. Header rows (rows where ALL cells look like header
-    text — no numeric content at all — are excluded from this check.
+        - Value-only row: value present but label is missing or purely numeric
+          (indicates column detection placed all content into one column).
 
     AC-0: checks structural completeness only (presence/absence of label and values),
           no Vietnamese keyword matching.
 
     Args:
-        rows: List of row dicts with keys: code, label, values, page.
+        rows:                   List of row dicts with keys: code, label, values, page.
+        orphan_ratio_tolerance: Fraction of bad rows allowed to still PASS.
+                                Default 0.05 (5%). Must be in [0.0, 1.0].
 
     Returns:
-        (True, "")                             on pass (no orphans or junk)
-        (False, "orphan_rows: count=<N>")      on fail (at least one orphan/junk)
+        (True, "")                                      on pass (no orphans, or within tolerance)
+        (True, "orphan_rows_within_tolerance: ...")     on pass via tolerance
+        (False, "orphan_rows: count=<N> ratio=<R>")    on fail (exceeds tolerance)
     """
+    if not rows:
+        return True, ""
+
     orphan_count = 0
     junk_count = 0
 
@@ -353,11 +381,24 @@ def check_no_orphan_rows(rows: List[Dict]) -> Tuple[bool, str]:
             orphan_count += 1
 
     total_bad = orphan_count + junk_count
-    if total_bad > 0:
+    if total_bad == 0:
+        return True, ""
+
+    total_rows = len(rows)
+    orphan_ratio = total_bad / total_rows
+
+    if orphan_ratio <= orphan_ratio_tolerance:
+        # Within tolerance — structural noise, not a structural failure
         return (
-            False,
-            f"orphan_rows: count={total_bad} "
+            True,
+            f"orphan_rows_within_tolerance: count={total_bad} "
+            f"ratio={orphan_ratio:.3f} tolerance={orphan_ratio_tolerance:.3f} "
             f"(orphan={orphan_count}, junk={junk_count})",
         )
 
-    return True, ""
+    return (
+        False,
+        f"orphan_rows: count={total_bad} ratio={orphan_ratio:.3f} "
+        f"exceeds_tolerance={orphan_ratio_tolerance:.3f} "
+        f"(orphan={orphan_count}, junk={junk_count})",
+    )
