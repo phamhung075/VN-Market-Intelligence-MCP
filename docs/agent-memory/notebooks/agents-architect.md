@@ -1,25 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-02T17:04:57Z
-
-**Brief:** `docs/architecture-briefs/2026-06-02-cowork-self-identity-guard.md`
-
-Post-fix recurrence of news-scout CLAUDE.md router-rule mis-binding (NSCOUT-FRAMING-RECUR): root cause is that 7239b803 applied only the weakest enforcement layer (L1 description field) which is overridden by project CLAUDE.md's explicit override-semantics header; the load-bearing layer is L3 (flow-level explicit CLAUDE.md scope exception, as market-watcher has in Step -0). 9 cowork flows are missing the L3 guard; fix is a standard SELF-IDENTITY GUARD block prepended to each flow/main.md + init.md constraint addition, batched A/B/C by frequency.
-
-**Signal dropped:** `docs/data/orch/orch-state.json` `.signal_queue` row `aac-20260602T170457Z` → agent-father
-
----
-
-## 2026-05-21T19:09:09Z
-
-**Brief:** `docs/architecture-briefs/2026-05-21-token-toolcall-economy.md`
-
-9 optimization levers across 3 phases targeting per-cycle token waste and excess MCP calls. Key findings: 3 concurrent market-hours agents (news-scout/market-watcher/alert-commander) each independently call get_cycle_bootstrap + get_macro_snapshot per 15-min tick (~168 redundant calls/trading-day); 4 agents use `trigger: startup` lazy-loads that violate the waterfall-lazy-load ban; qa notebook is 1149L (5.7× over cap); news-scout calls get_agent_signals 3× per cycle with overlapping windows. Phase 1 (agent-father only): startup-trigger fixes, notebook trim, signal payload pointers, ULTRA caveman on status pings — est. 25–35% context reduction. Phase 3 (dev-team): tick-snapshot dedup for bootstrap triplicate.
-
-**Signal dropped:** `docs/signals/token-toolcall-economy-20260521T190909Z.json` → po
-
----
-
 ## 2026-05-21T19:08:39Z
 
 **Brief:** `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md`
@@ -203,3 +183,13 @@ Two operator dashboard UX requests: (REQ1) SSOT `<QueName>` factory component wi
 4th notebook cap breach in 3 days root-caused to 4 distinct failure modes: (F-1) unified-agent `## Prior cycles` is a permanent accumulator section whose `###` sub-blocks are structurally invisible to block-level AC-2 prune; (F-2) bctc-analyst has a dead "Overwrite" instruction overridden by `cowork-end-cycle` → append path producing 6 live sections; (F-3) AC-5 write-time guard never reaches effective write path in any of the 3 breaching agents (all inline their writes before chaining cowork-end-cycle); (F-4) market-watcher OVERWRITE template itself exceeds the ≤80L cap it targets. DECIDED: two-class contract (OVERWRITE: po/market-watcher ≤50-80L; APPEND: CHEF/news-scout/bctc-analyst/agents-architect ≤200L with AC-2b intra-section prune for permanent accumulator headings); L95 TODO resolved. 5 flow/skill edits scoped for agent-father (S-1 chef.md Step 8, S-2 bctc-analyst stage-log-notify, S-3 news-scout stage-log-notify, S-4 market-watcher cycle.md Step 5, S-5 notebook-write SKILL).
 
 **Signal dropped:** `docs/data/orch/orch-state.json` `.signal_queue` row (from:agents-architect, to:po, type:brief_complete)
+
+---
+
+## 2026-06-03T10:19:25Z
+
+**Brief:** `docs/architecture-briefs/2026-06-03-lf-group-stage-rethink.md`
+
+LF-GROUP-RETHINK SPIKE: unit-grouping globally inert (46 singleton units) despite LF-IMPL-1/2 live. Root cause: `_is_title_band` (D-5 guard) fires on EVERY financial statement page text (any non-numeric 2+-word line in first 8 lines) → `_fingerprints_continuous` returns False for ALL consecutive page pairs → build_document_map creates one unit per page. Fix: remove D-5 call from `_fingerprints_continuous` (Option A — 3-line removal); LF-IMPL-1 page_type equality check is the correct structural boundary gate. Test gap: tests used empty stored_texts, D-5 never fires in test suite. Owner: dev-pdf-extractor (LF-GRP-1 code + LF-GRP-2 test fix) + qa (LF-GRP-3 re-extract verify).
+
+**Signal dropped:** `docs/data/orch/orch-state.json` `.signal_queue` row `lf-group-rethink-brief-20260603T101925Z` → agent-father
