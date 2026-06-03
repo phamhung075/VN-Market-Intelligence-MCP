@@ -1,250 +1,308 @@
 /**
- * /dashboard/vps — VPS proxy health dashboard.
- * Shows VPS proxy status per VPS-routed service.
- * Data sources: GET /health/news, GET /health/macro (per-service health from api-gateway).
+ * /dashboard/vps — VPS Data-Push Health
+ *
+ * Shows REAL VPS push-route freshness per source (prices / news / sbv / bctc).
+ * Data source: GET /api/vps-proxy-health on the mcp-server, proxied via
+ * the local resource route api.vps-proxy-health.tsx.
+ *
+ * Status mapping (TRUTHFUL):
+ *   status "ok" && !stale  → UP     (green)
+ *   stale === true          → STALE  (amber)   — actionable: investigate VPS/source
+ *   errors_24h > 0 / error  → DOWN   (red)
+ *   no_data / null last_push→ NO DATA (slate)
  */
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import { fetchServiceHealth } from "~/lib/api/client";
-import type { ServiceHealth } from "~/domain/health";
-import { ClientTimestamp, ClientTimeString } from "~/components/ClientTimestamp";
+import { ClientTimestamp } from "~/components/ClientTimestamp";
 
 export const meta: MetaFunction = () => [
   { title: "VPS Proxy Health — VN Market Intelligence" },
 ];
 
-// Services that route through the Vietnam VPS proxy.
-const VPS_SERVICES = ["news", "macro", "stock", "pdf"] as const;
+// --------------------------------------------------------------------------
+// Types — mirror the /api/vps-proxy-health response shape
+// --------------------------------------------------------------------------
 
-type VpsService = (typeof VPS_SERVICES)[number];
-
-interface VpsServiceRow {
-  name: VpsService;
-  health: ServiceHealth | null;
-  error: string | null;
+interface VpsSourceRow {
+  name: string;
+  last_push: string | null;
+  items: number | null;
+  status: string;
+  pushes_24h: number;
+  errors_24h: number;
+  stale: boolean;
 }
 
-interface LoaderData {
-  rows: VpsServiceRow[];
+interface RecentPush {
+  service: string;
+  pushed_at: string;
+  status: string;
+  items_count: number | null;
+  duration_ms: number | null;
+  error_msg: string | null;
+}
+
+interface VpsProxyHealthResponse {
+  ok: boolean;
+  services: VpsSourceRow[];
+  recent_pushes: RecentPush[];
   fetchedAt: string;
 }
 
-/**
- * Fetch health for a VPS-routed service, with not_deployed discrimination.
- *
- * The api-gateway returns HTTP 503 with body {"status":"down","error":"dial tcp:
- * lookup <service> ... no such host"} when the downstream container is not
- * deployed on this host. That is a known, expected state — NOT a real outage.
- *
- * Rules:
- *   - 2xx + body.status     → use fetchServiceHealth() result (normal path)
- *   - 503 + body has "no such host" DNS error → ServiceHealth{ status: "not_deployed" }
- *   - 503 + other body      → ServiceHealth{ status: "down", error: body.error }
- *   - network throw / other → row.error = message (unknown)
- */
-const API_GATEWAY_URL_VPS =
-  typeof process !== "undefined" && process.env["API_GATEWAY_URL"]
-    ? process.env["API_GATEWAY_URL"]
-    : "http://localhost:4000";
-
-async function fetchVpsServiceHealth(service: string): Promise<ServiceHealth> {
-  const url = `${API_GATEWAY_URL_VPS}/health/${service}`;
-  const response = await fetch(url, { headers: { Accept: "application/json" } });
-
-  if (response.ok) {
-    // Normal 2xx path — delegate to the standard parser
-    return fetchServiceHealth(service);
-  }
-
-  // Non-2xx: read body to discriminate not_deployed vs real failure
-  let body: Record<string, unknown> = {};
-  try {
-    body = (await response.json()) as Record<string, unknown>;
-  } catch {
-    // body not JSON — treat as unknown failure
-  }
-
-  const bodyError = typeof body["error"] === "string" ? body["error"] : "";
-
-  // "no such host" = Docker DNS can't resolve the container → service not deployed
-  if (response.status === 503 && bodyError.includes("no such host")) {
-    return { service, status: "not_deployed" };
-  }
-
-  // Any other non-2xx with a body.status field → relay it
-  if (typeof body["status"] === "string") {
-    const status =
-      body["status"] === "not_deployed"
-        ? "not_deployed"
-        : body["status"] === "ok"
-          ? "ok"
-          : body["status"] === "degraded"
-            ? "degraded"
-            : "down";
-    return {
-      service,
-      status,
-      error: bodyError || undefined,
-    };
-  }
-
-  // Fallback: treat as down
-  return {
-    service,
-    status: "down",
-    error: bodyError || `HTTP ${response.status}`,
-  };
+interface LoaderData {
+  health: VpsProxyHealthResponse | null;
+  proxyError: string | null;
+  fetchedAt: string;
 }
 
-export async function loader({ request: _request }: LoaderFunctionArgs) {
-  const results = await Promise.allSettled(
-    VPS_SERVICES.map((svc) => fetchVpsServiceHealth(svc)),
-  );
+// --------------------------------------------------------------------------
+// Loader
+// --------------------------------------------------------------------------
 
-  const rows: VpsServiceRow[] = VPS_SERVICES.map((name, idx) => {
-    const result = results[idx];
-    if (result.status === "fulfilled") {
-      return { name, health: result.value, error: null };
+const MCP_SERVER_BASE_URL =
+  typeof process !== "undefined" && process.env["MCP_SERVER_BASE_URL"]
+    ? process.env["MCP_SERVER_BASE_URL"]
+    : "http://localhost:3000";
+
+export async function loader({ request: _request }: LoaderFunctionArgs) {
+  const upstream = `${MCP_SERVER_BASE_URL}/api/vps-proxy-health`;
+  let health: VpsProxyHealthResponse | null = null;
+  let proxyError: string | null = null;
+
+  try {
+    const res = await fetch(upstream, { headers: { Accept: "application/json" } });
+    if (res.ok) {
+      health = (await res.json()) as VpsProxyHealthResponse;
+    } else {
+      proxyError = `Upstream returned HTTP ${res.status}`;
     }
-    return {
-      name,
-      health: null,
-      error:
-        result.reason instanceof Error
-          ? result.reason.message
-          : "Unreachable",
-    };
-  });
+  } catch (err) {
+    proxyError = err instanceof Error ? err.message : "Fetch failed";
+  }
 
   return json<LoaderData>({
-    rows,
+    health,
+    proxyError,
     fetchedAt: new Date().toISOString(),
   });
 }
 
 // --------------------------------------------------------------------------
-// Components
+// StatusPill — includes STALE variant
 // --------------------------------------------------------------------------
 
-type StatusVariant = "ok" | "degraded" | "down" | "unknown" | "not_deployed";
+type StatusVariant = "up" | "stale" | "down" | "degraded" | "no_data" | "unknown";
 
-function StatusPill({ status }: { status: StatusVariant }) {
+function resolveVariant(row: VpsSourceRow): StatusVariant {
+  if (!row.last_push) return "no_data";
+  if (row.stale) return "stale";
+  if (row.errors_24h > 0) return "degraded";
+  if (row.status === "ok") return "up";
+  if (row.status === "error") return "down";
+  return "unknown";
+}
+
+function StatusPill({ variant }: { variant: StatusVariant }) {
   const styles: Record<StatusVariant, string> = {
-    ok: "bg-green-900 text-green-300 border-green-700",
-    degraded: "bg-yellow-900 text-yellow-300 border-yellow-700",
-    down: "bg-red-900 text-red-300 border-red-700",
-    unknown: "bg-slate-700 text-slate-400 border-slate-600",
-    not_deployed: "bg-slate-800 text-slate-400 border-slate-600",
+    up:       "bg-green-900 text-green-300 border-green-700",
+    stale:    "bg-yellow-900 text-yellow-300 border-yellow-700",
+    down:     "bg-red-900 text-red-300 border-red-700",
+    degraded: "bg-orange-900 text-orange-300 border-orange-700",
+    no_data:  "bg-slate-800 text-slate-400 border-slate-600",
+    unknown:  "bg-slate-700 text-slate-400 border-slate-600",
   };
   const labels: Record<StatusVariant, string> = {
-    ok: "UP",
+    up:       "UP",
+    stale:    "STALE",
+    down:     "DOWN",
     degraded: "DEGRADED",
-    down: "DOWN",
-    unknown: "UNKNOWN",
-    not_deployed: "NOT DEPLOYED",
+    no_data:  "NO DATA",
+    unknown:  "UNKNOWN",
   };
   return (
     <span
-      className={`rounded border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${styles[status]}`}
+      className={`rounded border px-2 py-0.5 text-xs font-bold uppercase tracking-wide ${styles[variant]}`}
     >
-      {labels[status]}
+      {labels[variant]}
     </span>
   );
 }
 
+// --------------------------------------------------------------------------
+// Legend / explainer
+// --------------------------------------------------------------------------
+
 function VpsNote() {
   return (
     <div className="rounded border border-slate-700 bg-slate-800 p-4 text-sm text-slate-400">
-      <p className="font-medium text-slate-300">VPS Proxy Architecture</p>
+      <p className="font-medium text-slate-300">VPS Data-Push Health</p>
       <p className="mt-1">
-        The following services route through the Vietnam VPS proxy (Vinahost) to bypass
-        geo-blocking on VN financial data sources.
+        This panel shows freshness of VPS-routed data pushes into the mcp-server per
+        source (prices · news · sbv · bctc). Each row reflects the last successful push
+        from the Vietnam VPS proxy (Vinahost).
       </p>
-      <p className="mt-1 text-xs">
-        <span className="rounded border border-slate-600 bg-slate-700 px-1.5 py-0.5 text-slate-400 font-semibold">NOT DEPLOYED</span>
-        {" "}= microservice not running on this host by design (expected on 16 GB dev host).{" "}
-        <span className="rounded border border-red-700 bg-red-950 px-1.5 py-0.5 text-red-300 font-semibold">DOWN</span>
-        {" "}= deployed but unreachable — investigate.
+      <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
+        <span>
+          <span className="rounded border border-green-700 bg-green-900 px-1.5 py-0.5 font-semibold text-green-300">UP</span>
+          {" "}data flowing, push fresh
+        </span>
+        <span>
+          <span className="rounded border border-yellow-700 bg-yellow-900 px-1.5 py-0.5 font-semibold text-yellow-300">STALE</span>
+          {" "}no fresh push within expected interval — investigate VPS / source
+        </span>
+        <span>
+          <span className="rounded border border-orange-700 bg-orange-900 px-1.5 py-0.5 font-semibold text-orange-300">DEGRADED</span>
+          {" "}push errors detected in last 24 h
+        </span>
+        <span>
+          <span className="rounded border border-red-700 bg-red-900 px-1.5 py-0.5 font-semibold text-red-300">DOWN</span>
+          {" "}push reporting error
+        </span>
+        <span>
+          <span className="rounded border border-slate-600 bg-slate-800 px-1.5 py-0.5 font-semibold text-slate-400">NO DATA</span>
+          {" "}no push recorded yet
+        </span>
       </p>
     </div>
   );
 }
 
+// --------------------------------------------------------------------------
+// Main component
+// --------------------------------------------------------------------------
+
 export default function VpsDashboard() {
-  const { rows, fetchedAt } = useLoaderData<typeof loader>();
+  const { health, proxyError, fetchedAt } = useLoaderData<typeof loader>();
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-4xl space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-slate-100">VPS Proxy Health</h1>
         <span className="text-xs text-slate-500">
-          Last updated:{" "}
-          <ClientTimestamp iso={fetchedAt} />
+          Last updated: <ClientTimestamp iso={fetchedAt} />
         </span>
       </div>
 
       <VpsNote />
 
+      {proxyError && (
+        <div className="rounded border border-red-700 bg-red-950 px-4 py-3 text-sm text-red-300">
+          <span className="font-semibold">Endpoint error:</span> {proxyError}
+        </div>
+      )}
+
+      {/* Source health table */}
       <div className="overflow-hidden rounded-lg border border-slate-700">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-slate-700 bg-slate-800">
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">
-                Service
-              </th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">
-                Status
-              </th>
-              <th className="px-4 py-3 text-right font-semibold text-slate-300">
-                Latency
-              </th>
-              <th className="px-4 py-3 text-left font-semibold text-slate-300">
-                Note
-              </th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-300">Source</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-300">Status</th>
+              <th className="px-4 py-3 text-left font-semibold text-slate-300">Last Push</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-300">Items</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-300">24h Pushes</th>
+              <th className="px-4 py-3 text-right font-semibold text-slate-300">24h Errors</th>
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, idx) => {
-              const status: StatusVariant = row.error
-                ? "unknown"
-                : row.health
-                  ? (row.health.status as StatusVariant)
-                  : "unknown";
-
-              return (
-                <tr
-                  key={row.name}
-                  className={`border-b border-slate-700 last:border-0 ${
-                    idx % 2 === 0 ? "bg-slate-900" : "bg-slate-800"
-                  }`}
-                >
-                  <td className="px-4 py-3 font-mono text-slate-200">
-                    {row.name}
-                  </td>
-                  <td className="px-4 py-3">
-                    <StatusPill status={status} />
-                  </td>
-                  <td className="px-4 py-3 text-right text-slate-400">
-                    {row.health?.latency != null
-                      ? `${row.health.latency} ms`
-                      : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500">
-                    {row.error ? (
-                      <span className="text-red-400">{row.error}</span>
-                    ) : row.health?.checkedAt ? (
-                      <ClientTimeString iso={row.health.checkedAt} />
-                    ) : (
-                      "—"
-                    )}
-                  </td>
-                </tr>
-              );
-            })}
+            {health?.services && health.services.length > 0 ? (
+              health.services.map((row, idx) => {
+                const variant = resolveVariant(row);
+                return (
+                  <tr
+                    key={row.name}
+                    className={`border-b border-slate-700 last:border-0 ${
+                      idx % 2 === 0 ? "bg-slate-900" : "bg-slate-800"
+                    }`}
+                  >
+                    <td className="px-4 py-3 font-mono text-slate-200">{row.name}</td>
+                    <td className="px-4 py-3">
+                      <StatusPill variant={variant} />
+                    </td>
+                    <td className="px-4 py-3 text-slate-400">
+                      {row.last_push ? (
+                        <ClientTimestamp iso={row.last_push} />
+                      ) : (
+                        <span className="text-slate-600">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-400">
+                      {row.items != null ? row.items.toLocaleString() : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-right text-slate-400">
+                      {row.pushes_24h}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {row.errors_24h > 0 ? (
+                        <span className="font-semibold text-red-400">{row.errors_24h}</span>
+                      ) : (
+                        <span className="text-slate-500">0</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })
+            ) : (
+              <tr>
+                <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
+                  {proxyError ? "Could not load data." : "No source data available."}
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
+
+      {/* Recent push log */}
+      {health?.recent_pushes && health.recent_pushes.length > 0 && (
+        <div>
+          <h2 className="mb-2 text-sm font-semibold text-slate-400">
+            Recent Pushes (last {health.recent_pushes.length})
+          </h2>
+          <div className="overflow-hidden rounded-lg border border-slate-700">
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="border-b border-slate-700 bg-slate-800">
+                  <th className="px-3 py-2 text-left font-semibold text-slate-300">Service</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-300">Pushed At</th>
+                  <th className="px-3 py-2 text-right font-semibold text-slate-300">Items</th>
+                  <th className="px-3 py-2 text-right font-semibold text-slate-300">Duration</th>
+                  <th className="px-3 py-2 text-left font-semibold text-slate-300">Result</th>
+                </tr>
+              </thead>
+              <tbody>
+                {health.recent_pushes.map((push, idx) => (
+                  <tr
+                    key={`${push.service}-${push.pushed_at}-${idx}`}
+                    className={`border-b border-slate-700 last:border-0 ${
+                      idx % 2 === 0 ? "bg-slate-900" : "bg-slate-800"
+                    }`}
+                  >
+                    <td className="px-3 py-2 font-mono text-slate-300">{push.service}</td>
+                    <td className="px-3 py-2 text-slate-400">
+                      <ClientTimestamp iso={push.pushed_at} />
+                    </td>
+                    <td className="px-3 py-2 text-right text-slate-400">
+                      {push.items_count != null ? push.items_count.toLocaleString() : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-right text-slate-400">
+                      {push.duration_ms != null ? `${push.duration_ms} ms` : "—"}
+                    </td>
+                    <td className="px-3 py-2">
+                      {push.error_msg ? (
+                        <span className="text-red-400">{push.error_msg}</span>
+                      ) : (
+                        <span className="text-green-400">{push.status}</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
