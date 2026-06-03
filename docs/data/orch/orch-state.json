@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-03T17:07:27Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "GOAL DRIVE COMPLETE — all actionable backlog DONE-LIVE-VERIFIED. Lane A: FU-DE-321-VAY-GUARD (bc1d7e55). Lane B: FU-FPT-OCR-PAGES-20-46 (606ac360) + FU-ORPHAN-TOLERANCE (510008b8) + FU-PEK-GUARD (02b7b32f, re-routed). PO ruled BAL-1e-DEV DEFERRED (future feature -> own sprint BCTC-EPS-FOOTNOTE) + FU-PDFX-HEALTHCHECK CLOSED-NOT-REPRO (container healthy live). Spun off: FU-PEK-MIRROR-WATCHDOG-WINDOW (low, review). 2 ops rebuilds (mcp-server 17:15Z, pdf-extractor 17:34Z). head idle.",
-    "wip": 0,
+    "status": "in_progress",
+    "active_task_id": "FIX-CTG-1",
+    "next_agent": "dev-mcp-server",
+    "next_action": "dev-team tick 2026-06-03 ~18:0xZ: CTG escalation (8 cycles) triaged -> SPIKE-BCTC-CTG-ATTACHMENT-FETCH DONE (517a9056, verdict DEV-FIXABLE: full statement exists, cover-letter pulled). Promoted sprint BCTC-FETCH-CORRECTNESS (3 defects). Dispatching FIX-CTG-1 (Defects B+C, dev-mcp-server) now; FIX-CTG-2 (VPS, ops-vps) + FIX-CTG-3 (re-fetch materialization, async) queued. FPT ESC-3 + ACB deferred (self-managing).",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T17:38:35Z",
+    "updated_at": "2026-06-03T18:26:44Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T18:13:13Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-03T18:26:44Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -1695,6 +1695,62 @@
         "_updated_at": "2026-06-02T23:55:00Z",
         "_updated_by": "qa",
         "closed_at": "2026-06-03T00:13:00Z"
+      },
+      {
+        "id": "BCTC-FETCH-CORRECTNESS",
+        "label": "CTG (and HOSE-ticker) BCTC fetch pulls cover-letter not full statement — 3 compounding defects (spike 517a9056, brief 2026-06-03)",
+        "status": "active",
+        "opened_at": "2026-06-03",
+        "priority": "high",
+        "evidence": "Spike 517a9056 live-probed. CTG full B02-TCTD statement IS published+fetchable (hsx.vn id 2351, Q1-2026 'hop nhat' 6.34MB); pipeline pulled a 524KB HNX cover letter instead. 3 compounding defects: A=VPS Playwright script no cover-letter discrimination (matched 'CV CBTT BCTC' notice); B=bctcQueueEnricherJob discards period_year/period_quarter -> discoverHosePdfUrls defaults year=2026,Q4 -> wrong-quarter URLs written to MULTIPLE queue rows (observed Q3-2025+Q2-2025 corrupted with a Q1-2026 URL) = systemic, not CTG-only; C=fetchHsxBctcUrls no quarter filter -> returns newest-first. recurring-bug-escalation: BCTC fetch area touched repeatedly — fix all 3 as one layer, not point-patch.",
+        "tasks": [
+          {
+            "task_id": "FIX-CTG-1",
+            "title": "mcp-server hsx.vn path: (Defect B) bctcQueueEnricherJob must SELECT + pass period_year/period_quarter to discoverHosePdfUrls (currently discards them -> defaults year=2026,Q4 -> writes wrong-quarter URLs into queue rows, observed corrupting Q3-2025+Q2-2025 rows); (Defect C) fetchHsxBctcUrls must filter by quarter via the 'time' field (01.2025=Q1) and prefer type='Quý' + fileName containing 'hop nhat' (full consolidated statement) over cover-letter/notice PDFs",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "IN_PROGRESS",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "files": [
+              "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts",
+              "apps/mcp-server/src/infrastructure/fetchers/hsxBctcFetcher.ts"
+            ],
+            "note": "[dev-team 2026-06-03T18:26:44Z] core fix dispatched IN_PROGRESS this tick. Defects B+C in apps/mcp-server (in-context single zone). DoD: enricher passes year/quarter; hsxBctcFetcher returns the correct-quarter 'hop nhat' full-statement URL for CTG (the 6.34MB Q1-2026 one), not a cover-letter/wrong-quarter URL; unit tests for quarter-filter + hop-nhat preference + enricher pass-through. ops rebuild + dispatcher verifies discovery returns the right URL. Does NOT itself re-fetch CTG (that is FIX-CTG-3, async VPS)."
+          },
+          {
+            "task_id": "FIX-CTG-2",
+            "title": "VPS Playwright discover-bctc-urls-browser.py (Defect A): add cover-letter content discrimination — skip articles whose title has cover-letter keywords ('cv cbtt','công văn cbtt') without full-statement keywords ('bctc','báo cáo tài chính'); HOSE-listed tickers (e.g. CTG) should resolve via the hsx.vn direct path not the HNX national portal. Needs ops-vps deploy after code.",
+            "type": "FIX",
+            "owner": "dev-vps-crawls",
+            "status": "TODO",
+            "size": "S",
+            "zone": "vps-scripts/",
+            "priority": "medium",
+            "depends": [
+              "FIX-CTG-1"
+            ],
+            "files": [
+              "vps-scripts/discover-bctc-urls-browser.py"
+            ],
+            "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — VPS script, needs ops-vps deploy after code; HOSE tickers should use hsx.vn path. Lower priority than FIX-CTG-1 because CTG's correct path is hsx.vn (B+C); A prevents HNX cover-letter mis-selection for HNX-listed tickers + as defense-in-depth."
+          },
+          {
+            "task_id": "FIX-CTG-3",
+            "title": "Materialize+verify: purge the bad cover-letter source_url from bctc_vps_queue for CTG (and re-enrich the Defect-B-corrupted Q3-2025/Q2-2025 rows), re-enrich CTG to the correct hsx.vn 'hop nhat' URL, re-fetch + re-extract, DoD: get_bctc_full(CTG) serves real B02-TCTD bank financials (not 'Chưa có dữ liệu BCTC', conf>0.5). Involves async VPS fetch.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "depends": [
+              "FIX-CTG-1"
+            ],
+            "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — materialization/DoD, depends FIX-CTG-1 (+ ideally FIX-CTG-2). Involves async VPS re-fetch (~latency). Also remediates Defect-B queue corruption on non-CTG rows."
+          }
+        ]
       }
     ],
     "backlog": [
@@ -1810,7 +1866,7 @@
         "size": "S",
         "priority": "high",
         "timebox": 120,
-        "status": "BACKLOG",
+        "status": "DONE",
         "files": [
           "apps/mcp-server/src/application/usecases/discoverBctcPdfUrlDirectApi.ts",
           "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts",
@@ -1819,7 +1875,8 @@
         "origin": "po-triage CTG bctc_signal consecutive_cycles_blocked=8 (5th+ emission, latest 2026-06-03T00:07Z); BCTC-CTG-ATTACHMENT-FETCH referenced only inside CLOSED-task notes (BEQ-10/BEQ-5) but never an actionable item — root gap promoted",
         "context": "get_bctc_full(CTG)='Chua co du lieu BCTC' live-verified by PO 2026-06-03T18:11Z. Root: CTG disclosure PDF fetched is cover-letter-only (no statements). discoverBctcPdfUrlDirectApi matches attachments by quarter+year title ONLY (matchesQuarterAndYear) — no content/financial-statement-vs-notice discrimination. SPIKE-FIRST because data-availability is uncertain: must PROVE a fetchable full BCTC attachment for CTG exists at HOSE/HNX/UPCOM source before any code FIX. If only the cover letter is published -> upstream-data-blocked (kin FU-BCTC-HISTORY-COVERAGE / BCTC-HIST-SEED done-code-data-blocked-upstream), close NOT-DEV-FIXABLE. If a full-statement attachment IS listed -> follow-up FIX adds attachment-selection (skip cover-letter, prefer full BCTC) to discovery.",
         "added_by": "po",
-        "added_at": "2026-06-03T18:13:13Z"
+        "added_at": "2026-06-03T18:13:13Z",
+        "resolution": "DONE 517a9056 (brief docs/architecture-briefs/2026-06-03-bctc-ctg-attachment-fetch-spike.md). VERDICT: FULL STATEMENT EXISTS — WRONG ATTACHMENT PULLED — DEV-FIXABLE. Live-probed hsx.vn API (CTG hsx id=2351, reachable from FR without VPS): 280-item catalog, full B02-TCTD 'BCTC hop nhat' PDFs exist every quarter (Q1-2026=6.34MB HTTP200). Pipeline instead pulled owa.hnx.vn cover letter 'CV CBTT BCTC Quy I.2026' 524KB -> conf 0.0625, zero financials. 3 defects -> sprint BCTC-FETCH-CORRECTNESS FIX-CTG-1..3. NOTE: discoverBctcPdfUrlDirectApi (PO hypothesis) is DEAD CODE (tests only); active path = VPS HNX script + enricher + hsxBctcFetcher."
       }
     ],
     "archive": []

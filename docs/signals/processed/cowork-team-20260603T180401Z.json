@@ -1,0 +1,18 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "tick_nominal": "18:04",
+  "drift_min": 3,
+  "matcher_slots": [
+    "bctc-analyst-slot-2"
+  ],
+  "leader_lock": "claimed_stolen",
+  "spawns": 1,
+  "agents_spawned": [
+    "bctc-analyst"
+  ],
+  "dev_head": "idle",
+  "devq": 0,
+  "signal_backlog": 1,
+  "written_at": "20260603T180401Z"
+}
