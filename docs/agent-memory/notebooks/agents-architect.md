@@ -1,25 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-05-21T19:08:39Z
-
-**Brief:** `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md`
-
-Sprint 1967a read-only orchestration audit: 13 findings across 6 surfaces. 5 HIGH (alertSource enum missing `legal_risk` in write_alert_verdict, verified_decision not in post_agent_signal schema, DASHBOARD stale-race on sprint close, market-watcher identity recurrence post-fix, weekly cron jobs have no retry on crash), 7 MED (cowork lock release timing, DASHBOARD unbounded growth, coverage claim drift, fire-drift guard missing, dead API_MIN_INTERVAL slots, alert-commander mcp-tools.md lazy, recurring-bug freeze no timeout). Gate: post-1965c-soak dispatch except ITEM-01/09/04 priority batch.
-
-**Signal dropped:** `docs/signals/agents-architect-1967a-brief-done.json` → po (1967c sign-off) → pm (1967b TASK conversion)
-
----
-
-## 2026-05-21T19:29:19Z
-
-**Brief:** `docs/architecture-briefs/2026-05-21-orchestration-bug-conflict-audit.md`
-
-Sprint 1967b canonical re-run: 22 findings across 7 surfaces (13 ratified from v1, 9 new). 6 HIGH: alertSource enum gap, verified_decision schema absent, DASHBOARD stale-race, market-watcher identity recurrence, cowork lock release timing, weekly cron no retry. 13 MED cover signal naming, DASHBOARD prune, execute-tier try/finally gaps, isRunning in finally, TASKS.md LWW, identity stanzas missing (8 agents), fire-drift guard, API_MIN_INTERVAL dead slots. 1 BCTC-gated (ITEM-13 freeze policy). 2 deferred to Sprint 1968 L-1/L-2. PM to slate 1967c.
-
-**Signal dropped:** `docs/signals/architect-1967b-brief-done.json` → pm (1967c slate decomposition)
-
----
-
 ## 2026-06-01T08:34:55Z
 
 **Brief:** `docs/architecture-briefs/2026-06-01-context-resume-economy.md`
@@ -193,3 +173,13 @@ Two operator dashboard UX requests: (REQ1) SSOT `<QueName>` factory component wi
 LF-GROUP-RETHINK SPIKE: unit-grouping globally inert (46 singleton units) despite LF-IMPL-1/2 live. Root cause: `_is_title_band` (D-5 guard) fires on EVERY financial statement page text (any non-numeric 2+-word line in first 8 lines) → `_fingerprints_continuous` returns False for ALL consecutive page pairs → build_document_map creates one unit per page. Fix: remove D-5 call from `_fingerprints_continuous` (Option A — 3-line removal); LF-IMPL-1 page_type equality check is the correct structural boundary gate. Test gap: tests used empty stored_texts, D-5 never fires in test suite. Owner: dev-pdf-extractor (LF-GRP-1 code + LF-GRP-2 test fix) + qa (LF-GRP-3 re-extract verify).
 
 **Signal dropped:** `docs/data/orch/orch-state.json` `.signal_queue` row `lf-group-rethink-brief-20260603T101925Z` → agent-father
+
+---
+
+## 2026-06-03T20:35:08Z
+
+**Brief:** `docs/architecture-briefs/2026-06-03-cowork-heartbeat-schema.md`
+
+FU-COWORK-HEARTBEAT-SCHEMA: cowork-team main.md LLM runtime drifts from its own Step 6 spec — 37+ on-disk files use flat {classification,reason,tick_nominal,...} with no envelope. autosilent.sh and Step 6 spec are both enveloped {from,to,type,payload,createdAt} — already correct. Canonical = enveloped (drain-signals.md Step 0a-1 fingerprints on from+type+payload+createdAt). Fix = INVARIANT guard block inserted at Step 6 header + flat-unique telemetry fields (classification/reason/leader_lock/dev_head/devq/signal_backlog/note) added inside payload. agent-father to edit main.md only; autosilent.sh untouched.
+
+**Signal dropped:** `docs/signals/cowork-heartbeat-schema-20260603T203508Z.json` → agent-father
