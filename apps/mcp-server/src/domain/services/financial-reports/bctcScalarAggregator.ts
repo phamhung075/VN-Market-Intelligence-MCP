@@ -96,9 +96,9 @@ export interface AggregatorRow {
  *     code "40" → financing_cf        (Lưu chuyển tiền từ HĐ tài chính) ← NEW; section filter
  *   general/balance_sheet section:
  *     code "110" → cash               (Tiền và các khoản tương đương tiền) ← NEW
- *     code "321" → short_term_debt    (Vay và nợ thuê tài chính ngắn hạn) ← FIX-DE-1
- *     code "319" → short_term_debt    (Vay ngắn hạn — older VAS layout; /vay/i label hint) ← FIX-DE-1
- *     code "339" → long_term_debt     (Vay và nợ thuê tài chính dài hạn) ← FIX-DE-1
+ *     code "321" → short_term_debt    (Vay; /vay/i hint — period-flip guard) ← FIX-DE-1 / FU-DE-321-VAY-GUARD
+ *     code "319" → short_term_debt    (Vay ngắn hạn — older layout or period-flip; /vay/i hint) ← FIX-DE-1
+ *     code "339" → long_term_debt     (Vay; /vay/i hint — period-flip symmetry) ← FU-DE-321-VAY-GUARD
  *     code "334" → long_term_debt     (Vay dài hạn — older layout; /vay/i label hint) ← FIX-DE-1
  *   Derived:
  *     ebitda         = operating_profit + depreciation_amortization
@@ -140,10 +140,11 @@ export interface ScalarAggregate {
   /** Derived: operating_cf + capex (capex is negative, so this = OCF - |capex|). Null if either absent. */
   free_cash_flow: number | null;
   // FIX-DE-1: debt decomposition fields (missed in BEQ-3 column audit)
-  /** VAS code 321 (current standard) or 319 fallback (older layout, /vay/i label hint required).
-   *  Vay và nợ thuê tài chính ngắn hạn. Million VND. Null if absent. */
+  /** VAS code 321 (/vay/i label hint required — period-flip guard) or 319 fallback (/vay/i).
+   *  Vay và nợ thuê tài chính ngắn hạn. Million VND. Null if absent.
+   *  FU-DE-321-VAY-GUARD: 321 may map to "Dự phòng phải trả" in some periods (FPT 2025Q4) — hint prevents wrong pick. */
   short_term_debt: number | null;
-  /** VAS code 339 (current standard) or 334 fallback (older layout, /vay/i label hint required).
+  /** VAS code 339 (/vay/i label hint for symmetry) or 334 fallback (/vay/i label hint required).
    *  Vay và nợ thuê tài chính dài hạn. Million VND. Null if absent. */
   long_term_debt: number | null;
 }
@@ -760,9 +761,17 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
       ? operating_cf + capex
       : null;
 
-  // ── FIX-DE-1: Debt decomposition scalars ───────────────────────────────────────
+  // ── FIX-DE-1 / FU-DE-321-VAY-GUARD: Debt decomposition scalars ──────────────────
   // short_term_debt: VAS code 321 (current standard) — "Vay và nợ thuê tài chính ngắn hạn"
   //   Fallback: code 319 (older VAS layout, still used by VNM) — "Vay ngắn hạn"
+  //
+  //   PERIOD-FLIP BUG (FU-DE-321-VAY-GUARD): code 321 is NOT always "vay" across periods.
+  //   FPT 2025Q4: code 321 = "Dự phòng phải trả ngắn hạn" (1,014 tỷ) — NOT a borrowing row.
+  //               code 319 = "Vay và nợ thuê tài chính ngắn hạn" (19,169 tỷ) — CORRECT.
+  //   FPT 2026Q1: code 321 = "Vay và nợ thuê tài chính ngắn hạn" (14,491 tỷ) — correct.
+  //   Fix: /vay/i labelHint on code 321 (STRICT — no hint match → null → fall through to 319).
+  //   Same class as HPG code-311 issue (FIX-DE-4).
+  //
   //   IMPORTANT: code 319 is used by SOME issuers as "Phải trả ngắn hạn khác" (other payables)
   //   and by OTHERS as "Vay ngắn hạn" (short-term borrowings). The /vay/i labelHint is
   //   MANDATORY for 319 to exclude the "Phải trả" row (which has no "vay" in its label).
@@ -770,13 +779,16 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
   //   Banks skip this entirely — short_term_debt is in notApplicable for bank path.
   let short_term_debt: number | null = null;
   if (!isBankPath) {
-    // Code 321: current standard (FPT pattern) — no label hint needed (unique enough)
+    // Code 321 with /vay/i labelHint (FU-DE-321-VAY-GUARD):
+    // STRICT hint — if 321 exists but label is NOT /vay/i (e.g. "Dự phòng phải trả"),
+    // findByCode returns null, allowing the 319 fallback to fire.
+    // If 321 IS /vay/i (e.g. "Vay và nợ thuê tài chính ngắn hạn"), it wins correctly.
     short_term_debt =
-      scale(findByCode(rows, "321", undefined, "general")) ??
-      scale(findByCode(rows, "321", undefined, "balance_sheet")) ??
-      scale(findByCode(rows, "321")); // broad last-resort
+      scale(findByCode(rows, "321", /vay/i, "general")) ??
+      scale(findByCode(rows, "321", /vay/i, "balance_sheet")) ??
+      scale(findByCode(rows, "321", /vay/i)); // broad last-resort, still guarded
     if (short_term_debt === null) {
-      // Code 319 fallback: older VAS layout (VNM pattern).
+      // Code 319 fallback: older VAS layout (VNM pattern) OR period where 321 is not-vay.
       // /vay/i label hint is MANDATORY — excludes "Phải trả ngắn hạn khác" rows
       // where 319 maps to other short-term payables on some issuers.
       short_term_debt =
@@ -787,15 +799,20 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
 
   // long_term_debt: VAS code 339 (current standard) — "Vay và nợ thuê tài chính dài hạn"
   //   Fallback: code 334 (older VAS layout) — "Vay dài hạn"
+  //
+  //   SYMMETRY (FU-DE-321-VAY-GUARD): same period-flip risk applies to 339.
+  //   In some issuers/periods code 339 may map to a non-borrowing long-term obligation row
+  //   (e.g. "Dự phòng phải trả dài hạn"). The /vay/i hint ensures we only pick it when
+  //   the row is genuinely a borrowing. If 339 is not-vay → null → fall through to 334 fallback.
   //   /vay/i label hint for 334 fallback to exclude non-borrowing long-term obligation rows.
   //   Banks skip this entirely — long_term_debt is in notApplicable for bank path.
   let long_term_debt: number | null = null;
   if (!isBankPath) {
-    // Code 339: current standard (FPT pattern) — no label hint needed (unique enough)
+    // Code 339 with /vay/i labelHint (symmetry with 321 guard):
     long_term_debt =
-      scale(findByCode(rows, "339", undefined, "general")) ??
-      scale(findByCode(rows, "339", undefined, "balance_sheet")) ??
-      scale(findByCode(rows, "339")); // broad last-resort
+      scale(findByCode(rows, "339", /vay/i, "general")) ??
+      scale(findByCode(rows, "339", /vay/i, "balance_sheet")) ??
+      scale(findByCode(rows, "339", /vay/i)); // broad last-resort, still guarded
     if (long_term_debt === null) {
       // Code 334 fallback: older VAS layout.
       // /vay/i label hint excludes non-borrowing obligation rows (e.g. "Phải trả dài hạn").
