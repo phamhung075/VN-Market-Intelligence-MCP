@@ -1,16 +1,16 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T07:16:30Z",
+  "_updated_at": "2026-06-03T08:11:47Z",
   "_updated_by": "dev-team",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": "router",
-    "next_action": "Idle. FRESH-EXTRACT-CONFIRM (ops) still blocked_until 2026-06-03T08:00:00Z (now ~07:11Z) — the >=08:07 UTC tick triggers FPT Q1 re-extract + DB-confirm AC-LFE-1/2. BAL-1e-DEV (low) open.",
+    "next_action": "Idle. FRESH-EXTRACT-CONFIRM re-queued blocked_until 09:00:00Z (guard window actually 02:00-08:59 UTC, not 08:00) — the >=09:07 UTC tick triggers FPT Q1 re-extract + DB-confirm AC-LFE-1/2. New low-pri backlog FU-PEK-GUARD-RETRYAFTER-MISLEADING. BAL-1e-DEV (low) open.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T07:16:30Z",
+    "updated_at": "2026-06-03T08:11:47Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T07:16:30Z",
+    "_updated_at": "2026-06-03T08:11:47Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -653,6 +653,17 @@
             "priority": "medium",
             "commit": "0e83fb82",
             "note": "DONE+ROUTER-RAW-VERIFIED 2026-06-03T07:11Z (commit 0e83fb82). PO triage NB-PRUNE-UNIFIED-207. unified-agent.md was 207L (cap 200) = pre-fix residue (NB-WRITE-ATOMIC bounds next chef write, no retro-prune; chef spawns:0 since fix). claude-manager-helper EDIT-ONLY dropped oldest 02:21Z entry; router verified live: 186L, only that block removed, all newer entries + Convergence/System-state/Next trailers intact, staged ONLY the notebook (tree had unrelated churn). Clears repeated backstop re-fires."
+          },
+          {
+            "task_id": "FU-PEK-GUARD-RETRYAFTER-MISLEADING",
+            "title": "pek-extract market-hours guard: retry_after string says 08:00 UTC but enforced window is 02:00-08:59 UTC (blocks until 09:00); also ~59min wider than actual HOSE close 15:00 ICT/08:00 UTC",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "low",
+            "note": "Surfaced by FRESH-EXTRACT-CONFIRM 2026-06-03T08:10Z. /api/trigger-pek-extract guard returns retry_after 'after 15:00 ICT (08:00 UTC)' but the same error message + enforced behavior block during 'Mon-Fri 02:00-08:59 UTC' (actually lifts 09:00 UTC). Two bugs: (1) retry_after string (08:00) inconsistent with enforced window (08:59 -> 09:00); (2) window 02:00-08:59 UTC is ~59min wider than real HOSE close (15:00 ICT = 08:00 UTC) -> blocks off-market extraction for an extra hour. Locate the guard (mcp-server pek-extract handler), align retry_after with the true window and/or tighten window to 02:00-08:00. Cosmetic+minor-correctness, low pri."
           }
         ]
       },
@@ -1045,8 +1056,8 @@
             "size": "S",
             "zone": "ops/",
             "priority": "high",
-            "blocked_until": "2026-06-03T08:00:00Z",
-            "note": "LF-DEPLOY gate APPROVED on code+container+unit+0-regression; only live DB re-extract pending (blocked by VN market-hours guard, /api/trigger-pek-extract → 503 market_open until 08:00 UTC). Post-08:00: POST http://localhost:3000/api/trigger-pek-extract {\"report_id\":\"e8ea3df5-3f32-413d-a3eb-c71634c0438d\"}. Then verify bctc_page_zones: page 3 page_type=table + same unit_id as page 5; page 5 schema_inherited_from_page=3. Confirm step, NOT a new gate. Next cron tick at/after 08:07 UTC handles this."
+            "blocked_until": "2026-06-03T09:00:00Z",
+            "note": "LF-DEPLOY APPROVED on code+container+unit+0-regression; only live DB re-extract pending. RE-QUEUED 2026-06-03T08:10Z: ops triggered /api/trigger-pek-extract -> still 503 market_open. DISCOVERY: enforced guard window is 02:00-08:59 UTC (lifts 09:00 UTC), NOT 08:00 — the endpoint retry_after string ('after 15:00 ICT (08:00 UTC)') is self-contradictory vs its own message ('Mon-Fri 02:00-08:59 UTC'). blocked_until corrected 08:00->09:00. Post-09:00: POST /api/trigger-pek-extract {report_id:e8ea3df5-3f32-413d-a3eb-c71634c0438d}; then DB-verify bctc_page_zones page3 page_type=table + unit_id==page5, page5 schema_inherited_from_page=3. The >=09:07 UTC tick handles this. Confirm step, no rebuild."
           }
         ]
       },
