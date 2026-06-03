@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T20:18Z",
-    "_updated_by": "dev-mcp-server",
+    "_updated_at": "2026-06-03T20:19:04Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -1741,14 +1741,15 @@
             "title": "Materialize+verify: purge the bad cover-letter source_url from bctc_vps_queue for CTG (and re-enrich the Defect-B-corrupted Q3-2025/Q2-2025 rows), re-enrich CTG to the correct hsx.vn 'hop nhat' URL, re-fetch + re-extract, DoD: get_bctc_full(CTG) serves real B02-TCTD bank financials (not 'Chưa có dữ liệu BCTC', conf>0.5). Involves async VPS fetch.",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "DEFERRED-ASYNC",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "high",
             "depends": [
               "FIX-CTG-1"
             ],
-            "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — materialization/DoD, depends FIX-CTG-1 (+ ideally FIX-CTG-2). Involves async VPS re-fetch (~latency). Also remediates Defect-B queue corruption on non-CTG rows."
+            "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — materialization/DoD, depends FIX-CTG-1 (+ ideally FIX-CTG-2). Involves async VPS re-fetch (~latency). Also remediates Defect-B queue corruption on non-CTG rows.",
+            "disposition": "DEFERRED-ASYNC (PO triage 2026-06-03): discovery half DONE (FIX-CTG-1). This is materialization — purge bad owa.hnx.vn url, re-enrich, re-fetch+re-extract over async VPS PDF-pull cron; DoD get_bctc_full(CTG) conf>0.5 cannot be proven within a dev tick (VPS round-trip + refine latency). Resume when VPS materializes."
           }
         ]
       },
@@ -1816,13 +1817,14 @@
         "title": "chef.md self-enforces published-marker before send_telegram",
         "type": "FIX",
         "sprint": "COWORK-RELIABILITY",
-        "status": "BACKLOG",
+        "status": "DEFERRED-OUT-OF-DEV-SCOPE",
         "size": "S",
         "zone": "cross-service/",
         "files": [
           "docs/agents/unified-agent/flow/chef.md"
         ],
-        "note": "Harden: move the published-marker claim (published:<slot>:<YYYY-MM-DD>) INTO chef.md Step 7 immediately before send_telegram, so dedup survives ANY spawn path (currently the gate is only an instruction injected by the cowork dispatcher into the spawn prompt — a direct/refactored spawn bypasses it and can double-publish, as proven 2026-06-02 07:19Z). Architect review the marker contract (recurring-bug family: cowork dispatch reliability, kin of COWORK-LEADER-SELFLOCK)."
+        "note": "Harden: move the published-marker claim (published:<slot>:<YYYY-MM-DD>) INTO chef.md Step 7 immediately before send_telegram, so dedup survives ANY spawn path (currently the gate is only an instruction injected by the cowork dispatcher into the spawn prompt — a direct/refactored spawn bypasses it and can double-publish, as proven 2026-06-02 07:19Z). Architect review the marker contract (recurring-bug family: cowork dispatch reliability, kin of COWORK-LEADER-SELFLOCK).",
+        "disposition": "DEFERRED-OUT-OF-DEV-SCOPE: marker-contract hardening is a cowork flow .md edit (docs/agents/unified-agent/flow/chef.md) → agents-architect (contract) + agent-father (flow edit via agent-md-factory), NOT dev-team (owns apps/ code only). Route via cowork-reliability dispatch."
       },
       {
         "task_id": "FU-EI-P2-COV-1",
@@ -1862,44 +1864,48 @@
         "title": "Re-refine VCB 2025-Q1 + 2025-Q4 (2 known PENDING rows, OCR-garbage CF scalars)",
         "type": "FIX",
         "owner": "bctc-analyst",
-        "status": "BACKLOG",
+        "status": "DEFERRED-PRODUCT",
         "size": "XS",
         "zone": "corpus",
         "priority": "medium",
-        "note": "spike Task3 — PDFs already stored, just re-trigger refine"
+        "note": "spike Task3 — PDFs already stored, just re-trigger refine",
+        "disposition": "DEFERRED-PRODUCT: re-refine of stored VCB PDFs is a bctc-analyst (product agent) action, out of dev-team dispatcher lane. Route to bctc-analyst separately."
       },
       {
         "task_id": "BCTC-HIST-VPS-BACKFILL",
         "title": "VPS BCTC source lacks historical PDF cache (pre-Q4-2025) — backfill VPS /root/bctc-cache + 8765/bctc-files endpoint so seeded historical queue rows can drain",
         "type": "SPIKE",
         "owner": "ops",
-        "status": "BACKLOG",
+        "status": "DEFERRED-INFRA",
         "size": "M",
         "zone": "infra-vps",
         "priority": "high",
-        "note": "ops BCTC-HIST-FETCH-VERIFY: fetch loop correct (no period filter), but VPS http://125.212.251.27:8765/bctc-files lacks pre-Q4-2025 PDFs (8 done were Q4-2025/Q1-2026 only; 333 historical rows NULL-url/url_not_found). Infra dependency. NOTE spike said hsx.vn has PDFs back to Q1-2022 -> pair with BCTC-ENRICHER-OLD-QUARTERS (pull from HSX into VPS cache)."
+        "note": "ops BCTC-HIST-FETCH-VERIFY: fetch loop correct (no period filter), but VPS http://125.212.251.27:8765/bctc-files lacks pre-Q4-2025 PDFs (8 done were Q4-2025/Q1-2026 only; 333 historical rows NULL-url/url_not_found). Infra dependency. NOTE spike said hsx.vn has PDFs back to Q1-2022 -> pair with BCTC-ENRICHER-OLD-QUARTERS (pull from HSX into VPS cache).",
+        "disposition": "DEFERRED-INFRA: VPS http://125.212.251.27:8765/bctc-files lacks pre-Q4-2025 PDFs (333 rows null-url). Backfilling VPS PDF cache = M-sized remote-host infra, materializes over ~1-2wk. Not dev-shippable."
       },
       {
         "task_id": "BCTC-ENRICHER-OLD-QUARTERS",
         "title": "bctcQueueEnricherJob returns 0 URLs for pre-Q4-2025 quarters (valid tickers) — add fallback discovery (HSX mediafiles API has PDFs back to Q1-2022 per FU-BCTC-HISTORY spike)",
         "type": "FIX",
         "owner": "dev-mcp-server",
-        "status": "BACKLOG",
+        "status": "DEFERRED-SEQUENCED",
         "size": "M",
         "zone": "apps/mcp-server/",
         "priority": "medium",
-        "note": "enricher succeeds Q4-2025/Q1-2026 but empty for older; HSX source HAS the data (spike) -> discovery strategy gap not source gap"
+        "note": "enricher succeeds Q4-2025/Q1-2026 but empty for older; HSX source HAS the data (spike) -> discovery strategy gap not source gap",
+        "disposition": "DEFERRED-SEQUENCED: enricher HSX mediafiles fallback IS dev-shippable, but delivers zero live corpus depth until BCTC-HIST-VPS-BACKFILL caches the PDFs (downstream-fix-needs-upstream-reflow). Re-scope as paired dev+ops sprint after BCTC-CURRENT-404 + VPS-BACKFILL diagnostics return."
       },
       {
         "task_id": "BCTC-CURRENT-404-INVESTIGATE",
         "title": "Current-season Q1-2026 bctcPdfPull 10/10 HTTP 404 at 18:30Z — verify VPS cache coverage for current season (may be thin/stale, distinct from SSL -k issue)",
         "type": "SPIKE",
         "owner": "ops",
-        "status": "BACKLOG",
+        "status": "DEFERRED-INFRA",
         "size": "S",
         "zone": "infra-vps",
         "priority": "high",
-        "note": "ops BCTC-HIST-FETCH-VERIFY found 10/10 current-season 404s; prior 8 done so endpoint was reachable; investigate whether VPS cache went thin"
+        "note": "ops BCTC-HIST-FETCH-VERIFY found 10/10 current-season 404s; prior 8 done so endpoint was reachable; investigate whether VPS cache went thin",
+        "disposition": "DEFERRED-INFRA: Q1-2026 bctcPdfPull 10/10 HTTP 404 needs live VPS cache inspection (ops, cross-machine). Diagnostic/infra, not dev code. Recommend ops takes this ahead of historical backfill (live current-season blocker)."
       },
       {
         "task_id": "FU-COWORK-HEARTBEAT-SCHEMA",
