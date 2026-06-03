@@ -1,5 +1,76 @@
 # dev-mcp-server -- Notebook
 
+## c358 · 2026-06-03T19:30Z (VPT-1) — COMMITTED d67448ad
+
+**Task:** VPT-1 — Add GET /api/vps-proxy-health HTTP endpoint so /dashboard/vps renders UP/STALE/DOWN truthfully.
+
+**Root cause (operator-confirmed):** /dashboard/vps checked api-gateway microservice /health/{news,stock} (NOT deployed). Real VPS health lives in vpsPushLogStore.getVpsProxyHealth() (MCP tool plane). Dashboard cannot call MCP tools — needs HTTP endpoint.
+
+**Changes:**
+1. `apps/mcp-server/src/interface/mcp/routes/vpsProxyHealthHandler.ts` (NEW) — handler calling getVpsProxyHealth() directly; computeStale() mirrors EXPECTED_INTERVALS from vpsProxyTools.ts; coerces SQLite SUM null→0 for errors_24h.
+2. `apps/mcp-server/src/interface/mcp/server.ts` — import + route `GET /api/vps-proxy-health` registered before FE-REROUTE block.
+3. `apps/mcp-server/src/__tests__/VPT-1-vps-proxy-health-endpoint.test.ts` (NEW) — 7 tests: shape, fresh/stale/error/recent_pushes/fetchedAt/25h-stale.
+
+**Key fix:** `new Date(lastPushAt + "Z")` → `new Date(lastPushAt)` — ISO timestamps already end with Z; appending a second Z gives NaN.
+
+**Gate results:** tsc clean, tools=158 (unchanged), sched=70 (unchanged), 7 new pass / 0 fail. Pre-existing suite failures all pre-date this task.
+
+**Ops required:** rebuild mcp-server container to go live.
+
+---
+
+## c357 · 2026-06-03T17:13Z (FU-DE-321-VAY-GUARD) — COMMITTED bc1d7e55
+
+**Task:** FU-DE-321-VAY-GUARD — Add /vay/i label guard to VAS code 321 primary in aggregateScalars.
+
+**Root cause:** Code 321 period-flips: FPT 2025Q4 code 321 = "Dự phòng phải trả ngắn hạn" (1,014 tỷ, NOT vay); code 319 = "Vay và nợ thuê tài chính ngắn hạn" (19,169 tỷ, correct). Aggregator wrote 1,014 instead of 19,169. Report_id=e71f845d.
+
+**Changes (bctcScalarAggregator.ts only):**
+1. All three code-321 lookups (general/balance_sheet/broad) now pass `/vay/i` labelHint (strict). Non-vay 321 → null → 319-vay fallback fires.
+2. Symmetric `/vay/i` guard on all three code-339 long_term_debt lookups.
+3. JSDoc updated (VAS-CODE-TABLE, ScalarAggregate field comments).
+
+**Tests (FU-DE-321-vay-guard.test.ts):** 8 tests: DV-VAY-1 (period-flip FPT-2025Q4 pattern RED→GREEN), DV-VAY-2..3 (321-vay stays, 321-non-vay+no-319=null), DV-VAY-4..5 (339 symmetry), DV-VAY-6..8 (regression FIX-DE-1 FPT/VNM/bank). All 8 pass. FIX-DE-1+FU-6+FU-6d+BEQ-3 regression: 31/31. tsc clean.
+
+**IS-NOT-live yet:** ops must rebuild + run `backfill_bctc_scalars(force_reflow, report_id=e71f845d)` to flow fix into FPT 2025Q4.
+
+---
+
+## c356 · 2026-06-03T16:18Z (FU-BACKFILL-DE-SYNC) — COMMITTED 98c47103
+
+**Task:** FU-BACKFILL-DE-SYNC — Add short_term_debt + long_term_debt to backfillBctcScalarsTool updates array + mirror FIX-DE-2 B-2 blob-sync.
+
+**Root cause:** FIX-DE-2 (b5286dba) patched finalizeBctcRefineTool BLOCK-1 for debt scalars but NOT backfillBctcScalarsTool. force_reflow on DONE reports could never re-derive debt → FIX-DE-3 required a hand-rolled docker-exec one-shot workaround.
+
+**Changes (backfillBctcScalarsTool.ts only):**
+1. `agg.short_term_debt` + `agg.long_term_debt` added to updates array with null-guard (bank path: in notApplicable → null-cleared via existing nullClearCols path, not double-written).
+2. FU-BACKFILL-DE-SYNC B-2: blob-sync block after scalar UPDATE — writes balance_sheet_json.currentLiabilities.shortTermDebt + .longTermLiabilities.longTermDebt (non-fatal, mirrors finalize FIX-DE-2 B-2 exactly).
+
+**Tests (FU-BACKFILL-DE-SYNC.test.ts):** 5 RED→GREEN: BDS-1 corp debt populated + D/E ~0.40x, BDS-2 blob nested paths updated, BDS-3 bank null-cleared, BDS-4 missing blob non-fatal, BDS-5 dry_run safe. 32 pass / 0 fail across 5 backfill files. tsc exit 0.
+
+**IS/IS-NOT-live:** backfill CODE corrected; live DB values change only after ops rebuild + actual force_reflow run (dispatcher will rebuild + run force_reflow to replace FIX-DE-3 hand-script proof).
+
+---
+
+## c355 · 2026-06-03T~15:09Z (FIX-DE-3) — DATA REFLOW (no code commit)
+
+**Task:** FIX-DE-3 — Re-derive debt scalars for 5 DONE corpus reports (FPT/VNM/HPG/DHG/SHB) so FIX-DE-1+2 code changes actually flow into persisted DB columns.
+
+**Tool used:** NOT backfill_bctc_scalars (missing FIX-DE-2 debt columns — gap identified). Used direct docker exec Bun script invoking aggregateScalars on existing bctc_table_rows, then writing short_term_debt/long_term_debt (BLOCK-1) + recomputing debt_to_equity (BLOCK-3) per finalizeBctcRefineTool logic. No code edits. No commits.
+
+**Results (5 reports):**
+- FPT 2026-Q1 [e8ea3df5]: short_term_debt=14,491,358M, long_term_debt=1,605,069M → D/E=0.4012x PUBLISHED (conf=81%)
+- VNM 2025-Q4 [4316f6d1]: short_term_debt=102,363M, long_term_debt=0 → D/E=0.0030x PUBLISHED (conf=94%)
+- HPG 2025-Q4 [d6f1885f]: short_term_debt=38,533M (code 319 correct), long_term_debt=0 (no code 339/334 in data) → D/E=0.0004x DB-written but PUB-5 GATED (conf=44%)
+- DHG 2026-Q1 [620a9d00]: no debt codes → short_term_debt=0, long_term_debt=0, D/E=0 → PUB-5 GATED (conf=44%)
+- SHB 2025-Q4 [59212e0d]: bank path → short_term_debt=NULL, long_term_debt=NULL, D/E=NULL (correct) → PUB-5 GATED (conf=44%)
+
+**Discovery (backfill_bctc_scalars gap):** Tool missing short_term_debt/long_term_debt in its UPDATE list (added in finalizeBctcRefineTool FIX-DE-2 but NOT mirrored to backfill tool). Track FU-BACKFILL-DE-SYNC.
+
+**DoD check:** FPT D/E=0.4012x matches brief anchor ~0.40x. HPG uses code 319=38,532 tỷ (correct, not spurious 311=38,729). SHB=NULL (correct for bank). VNM/DHG serve real corporate values.
+
+---
+
 ## c354 · 2026-06-03T15:25Z (FIX-DE-1) — COMMITTED fdd2363a
 
 **Task:** FIX-DE-1 — Add short_term_debt/long_term_debt to ScalarAggregate + aggregateScalars (BCTC-ANALYTICS-LAYER, HIGH)
