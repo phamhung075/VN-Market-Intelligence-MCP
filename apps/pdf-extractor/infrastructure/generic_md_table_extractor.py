@@ -3213,10 +3213,13 @@ def _fingerprints_continuous(
         if change > _ROW_PITCH_CHANGE_TOLERANCE:
             return False
 
-    # D-5: title-band check — page B must not announce a new table section
-    if _is_title_band(stored_text_b):
-        return False
-
+    # D-5 removed: _is_title_band fires on ALL financial text (every account-label
+    # line has 2+ words and is non-numeric), blocking every continuation on real
+    # BCTC corpus → 46 singleton units. Section breaks are now correctly gated by
+    # the page_type equality check above (LF-IMPL-1 classifies genuine section-start
+    # pages as "table", so prose→table and table→prose transitions already break
+    # units; table→table with different gutter geometry also breaks units).
+    # _is_title_band is retained as a standalone function for other callers.
     return True
 
 

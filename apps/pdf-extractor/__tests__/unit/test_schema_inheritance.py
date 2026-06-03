@@ -354,6 +354,16 @@ class TestSchemaInheritance:
         """
         Direct regression test for the FPT Q1 2026 page-5 scramble fix.
 
+        SCOPE NOTE (LF-GRP-2, 2026-06-03): This test exercises Tier-1 zone_page
+        inheritance IN ISOLATION by injecting a pre-built page3_schema directly.
+        It calls zone_page() directly — it NEVER calls build_document_map() and
+        therefore has ZERO bearing on whether Tier-0 grouping (build_document_map /
+        _fingerprints_continuous) produces a multi-page unit. It is NOT evidence
+        that grouping works end-to-end. Tier-0 grouping is tested separately in
+        test_document_map.py::TestFingerprintGroupingLogic, specifically in
+        test_fpt_q1_page5_in_same_unit_as_page3_with_real_text which exercises
+        the D-5 path with real BCTC OCR text.
+
         Simulates: page 3 (schema-page, 5 columns) produces a schema that page 5
         (continuation, no column header) inherits. Confirms pages 3 and 5 share
         identical column_gutters — the visual inheritance proof from brief §3.2.

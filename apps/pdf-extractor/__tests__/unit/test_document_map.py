@@ -120,6 +120,82 @@ class TestFingerprintsContinuous:
         # If pitch_a == 0, skip pitch check → continuous if gutters match
         assert _fingerprints_continuous(fp_a, fp_b) is True
 
+    def test_d5_not_firing_after_fix_real_text(self):
+        """
+        LF-GRP-2 regression gate: after D-5 removal, two consecutive table pages
+        with realistic BCTC account-label OCR text must return True.
+
+        Pre-fix: _is_title_band("I. Phai tra ngan han\\n111\\n200") == True →
+                 _fingerprints_continuous returned False → 46 singleton units.
+        Post-fix: D-5 block removed → returns True.
+
+        This test would have FAILED before the LF-GRP-1 fix (it would have returned
+        False when D-5 was present), confirming the fix resolves the 46-singleton bug.
+        """
+        fp = self._fp()
+        # Typical BCTC balance-sheet continuation-page OCR text:
+        # - account section header (2+ words, non-numeric) — exactly what triggered D-5
+        # - account codes and values follow
+        typical_bctc_page_text = (
+            "I. Phai tra ngan han\n"
+            "Phai tra nguoi ban ngan han\n"
+            "311    28.464.058.214.856    44.393.950.887.086\n"
+            "Nguoi mua tra tien truoc ngan han\n"
+            "312    1.234.567.890    2.345.678.901\n"
+        )
+        result = _fingerprints_continuous(fp, fp, stored_text_b=typical_bctc_page_text)
+        assert result is True, (
+            "LF-GRP-1 D-5 removal: consecutive table pages with real BCTC account-label "
+            "text must be continuous. If this fails, D-5 is still present and the "
+            "46-singleton bug is not fixed."
+        )
+
+    def test_genuine_section_start_still_breaks_unit_via_gutter_change(self):
+        """
+        LF-GRP-2 regression gate: after D-5 removal, genuine section boundaries
+        (balance-sheet last page → income-statement first page) that have DIFFERENT
+        gutter geometry still break units correctly via the gutter-count check.
+
+        This confirms Option A (remove D-5) does NOT cause over-grouping when two
+        genuinely distinct statements differ in column layout — which is the common
+        case in real BCTC documents (balance sheet has 4 columns, income statement
+        has 3 columns).
+        """
+        # Balance-sheet layout: 4 gutters (label | code | note | current | prior)
+        fp_balance_sheet = self._fp(
+            gutter_count=4,
+            gutter_x_fractions=[0.20, 0.32, 0.55, 0.78],
+        )
+        # Income-statement layout: 3 gutters (label | note | current | prior)
+        fp_income_statement = self._fp(
+            gutter_count=3,
+            gutter_x_fractions=[0.30, 0.55, 0.78],
+        )
+        # Different gutter_count → unit break (geometry gate holds without D-5)
+        assert _fingerprints_continuous(
+            fp_balance_sheet, fp_income_statement
+        ) is False, (
+            "Different gutter_count must still break units after D-5 removal. "
+            "Option A does not regress genuine section boundaries guarded by geometry."
+        )
+
+    def test_genuine_section_start_breaks_via_gutter_position_shift(self):
+        """
+        LF-GRP-2 regression: two table pages with same gutter count but gutter
+        x-fractions shifted beyond 5% tolerance still break units, even without D-5.
+        """
+        fp_a = self._fp(
+            gutter_count=3,
+            gutter_x_fractions=[0.20, 0.45, 0.70],
+        )
+        fp_b = self._fp(
+            gutter_count=3,
+            gutter_x_fractions=[0.27, 0.52, 0.77],  # all shift by 0.07 > 0.05 tolerance
+        )
+        assert _fingerprints_continuous(fp_a, fp_b) is False, (
+            "Gutter position shift > 5% tolerance must break units after D-5 removal."
+        )
+
 
 # ===========================================================================
 # Tests for _estimate_row_pitch
@@ -416,6 +492,72 @@ class TestFingerprintGroupingLogic:
         # All 4 pages form one unit
         assert len(groups) == 1
         assert set(groups[0]) == {1, 2, 3, 4}
+
+    def test_fpt_q1_page5_in_same_unit_as_page3_with_real_text(self):
+        """
+        LF-GRP-2 regression gate: same scenario as test_fpt_q1_page5_in_same_unit_as_page3
+        BUT with REAL BCTC account-label stored_texts.
+
+        Pre-fix: D-5 fired on account-label text → _fingerprints_continuous returned
+                 False for every consecutive pair → 4 singleton units (the 46-singleton
+                 bug in miniature). This test would have FAILED pre-fix.
+        Post-fix (D-5 removed): all 4 pages group into one unit → passes.
+
+        Distinct from the original test (which uses stored_texts=["", "", "", ""] and
+        therefore never exercised the D-5 path — that is the false-green gap this test
+        closes per the architect brief §3.1).
+        """
+        fp_balance_sheet = {
+            "page_type": "table",
+            "gutter_count": 4,
+            "gutter_x_fractions": [0.20, 0.45, 0.65, 0.80],
+            "row_pitch_px_at_50dpi": 12.0,
+        }
+        # Realistic stored OCR text for BCTC balance-sheet continuation pages.
+        # Each page opens with account labels that have 2+ words and are non-numeric
+        # — exactly the pattern that triggered _is_title_band=True (D-5) and caused
+        # the 46-singleton bug.
+        page3_text = (
+            "BANG CAN DOI KE TOAN HOP NHAT\n"
+            "Tai ngay 31 thang 03 nam 2026\n"
+            "31/03/2026    31/12/2025\n"
+            "A. TAI SAN NGAN HAN    100\n"
+        )
+        page4_text = (
+            "I. Tien va cac khoan tuong duong tien\n"
+            "110    58.102.970.000    41.527.873.000\n"
+            "II. Dau tu tai chinh ngan han\n"
+            "120    1.234.567.000    2.345.678.000\n"
+        )
+        page5_text = (
+            "B. TAI SAN DAI HAN    200\n"
+            "I. Cac khoan phai thu dai han\n"
+            "210    3.456.789.000    4.567.890.000\n"
+            "II. Tai san co dinh\n"
+            "220    5.678.901.000    6.789.012.000\n"
+        )
+        page6_text = (
+            "III. Bat dong san dau tu\n"
+            "230    7.890.123.000    8.901.234.000\n"
+            "IV. Tai san do dai han khac\n"
+            "240    9.012.345.000    1.023.456.000\n"
+            "TONG CONG TAI SAN\n"
+            "270    41.527.873.000    58.102.970.000\n"
+        )
+        stored_texts = [page3_text, page4_text, page5_text, page6_text]
+
+        groups = self._simulate_grouping(
+            [fp_balance_sheet, fp_balance_sheet, fp_balance_sheet, fp_balance_sheet],
+            stored_texts=stored_texts,
+        )
+        assert len(groups) == 1, (
+            f"LF-GRP-1 D-5 removal: pages 3/4/5/6 with real BCTC text must form ONE unit. "
+            f"Got {len(groups)} units: {groups}. "
+            f"If this fails, D-5 is still present (pre-fix: would produce 4 singleton units)."
+        )
+        assert set(groups[0]) == {1, 2, 3, 4}, (
+            f"All 4 pages must be in the same unit. Got: {groups[0]}"
+        )
 
     def test_page41_different_fingerprint_is_prose_unit(self):
         """
