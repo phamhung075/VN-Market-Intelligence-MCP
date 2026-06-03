@@ -859,3 +859,48 @@ Updated fields:
 
 **Next:** PO review results. Sprint EXIT gated on post-rebuild verification (CONFIRMED).
 
+
+---
+
+## Session: 2026-06-03 (BCTC-LAYOUT-FIRST Phase 0 LIVE DEPLOY)
+
+**Task:** Deploy pdf-extractor + mcp-server with new layout-first BCTC extraction endpoints. Unblock LF-DEPLOY QA gate.
+
+**Commits to Live:**
+- pdf-extractor: 5d753970 (LF-EXTRACT 4-tier pipeline: build_document_map/zone_page/ocr_unit/gate_unit)
+- mcp-server: 2326ebb6 (LF-OVERLAY: bctc_layout_units+bctc_page_zones DDL, POST /api/push-bctc-layout, GET /api/bctc-inspect/zones)
+
+**Deployment Model Analysis:**
+- **pdf-extractor (Python/FastAPI)**: Source code COPIED into image at `COPY . .` (Dockerfile line 58). REQUIRES full rebuild when source changes.
+- **mcp-server (Bun/TypeScript)**: Source code COPIED into image at `COPY apps/mcp-server/src/ ./src/` (Dockerfile line 55). REQUIRES full rebuild when source changes.
+
+Both services have source baked at build time (NOT bind-mounted) → both need `--build`.
+
+**Execution:**
+
+1. **pdf-extractor rebuild + start**: `docker-compose up -d --no-deps --build pdf-extractor`
+   - Build completed successfully
+   - Container Up (healthy) at 0.0.0.0:5001
+   - Endpoint verification: POST /extract-layout-first returns 422 on missing required fields (route exists, not 404)
+
+2. **mcp-server rebuild + verify**: `docker-compose up -d --no-deps --build mcp-server`
+   - Build completed successfully
+   - Container Up (healthy) at 0.0.0.0:3000
+   - Health check: `curl http://localhost:3000/health` → status ok, toolCount=156 (critical plane intact)
+
+3. **Endpoint verification:**
+   - POST /api/push-bctc-layout: returns 400 "invalid_report_id: must be UUID" on empty body (route exists) ✓
+   - GET /api/bctc-inspect/zones/{doc_id}/{page_num}: returns 400 "invalid_doc_id" on test input (route exists) ✓
+   - POST /extract-layout-first: returns 422 validation error on missing fields (route exists) ✓
+
+**Health Status After Deploy:**
+- pdf-extractor: Up (healthy), 0.0.0.0:5001 ✓
+- mcp-server: Up (healthy), 0.0.0.0:3000, toolCount=156 ✓
+- All other services unchanged (no cascade rebuilds) ✓
+
+**QA Gate Status:** LF-DEPLOY now unblockable. Both services LIVE + endpoints verified. QA can proceed with single-doc FPT Q1 2026 verification (report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d, page-5 schema inheritance + overlay rendering).
+
+**Incident Notes:** None. Single-service, one-at-time rebuild + health validation per FLEET-HOST-SAFETY protocol. No errors. No outages.
+
+**Duration:** ~12 minutes (from build-start to both services healthy + endpoint verification)
+
