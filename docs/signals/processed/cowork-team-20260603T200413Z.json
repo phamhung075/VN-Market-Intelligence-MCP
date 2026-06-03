@@ -1,0 +1,22 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "tick_nominal": "20:04",
+  "drift_min": 3,
+  "matcher_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "leader_lock": "self_held_heartbeat",
+  "spawns": 2,
+  "agents_spawned": [
+    "news-scout",
+    "market-watcher"
+  ],
+  "dedup_gate": "none_gatherers",
+  "dev_head": "idle",
+  "devq": 1,
+  "signal_backlog": 7,
+  "notes": "20:00 gatherer tick; distinct agents no collision; 1 NEW dev-team row left status=NEW",
+  "written_at": "20260603T200413Z"
+}
