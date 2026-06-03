@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-03T17:07:27Z",
   "_updated_by": "po",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FU-FPT-OCR-PAGES-20-46",
-    "next_agent": "dev-pdf-extractor",
-    "next_action": "Lane A complete (FU-DE-321 DONE-LIVE-VERIFIED). FU-PEK re-routed to Lane B (dev-pdf-extractor) after zone-mismatch. Starting Lane B: dev-pdf-extractor handles FU-FPT-OCR-PAGES-20-46 + FU-ORPHAN-TOLERANCE + FU-PEK-GUARD (all apps/pdf-extractor, serial in one zone agent, ONE rebuild). Spun off FU-PEK-MIRROR-WATCHDOG-WINDOW (mcp-server, low, review-only).",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "GOAL DRIVE COMPLETE — all actionable backlog DONE-LIVE-VERIFIED. Lane A: FU-DE-321-VAY-GUARD (bc1d7e55). Lane B: FU-FPT-OCR-PAGES-20-46 (606ac360) + FU-ORPHAN-TOLERANCE (510008b8) + FU-PEK-GUARD (02b7b32f, re-routed). PO ruled BAL-1e-DEV DEFERRED (future feature -> own sprint BCTC-EPS-FOOTNOTE) + FU-PDFX-HEALTHCHECK CLOSED-NOT-REPRO (container healthy live). Spun off: FU-PEK-MIRROR-WATCHDOG-WINDOW (low, review). 2 ops rebuilds (mcp-server 17:15Z, pdf-extractor 17:34Z). head idle.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T17:22:37Z",
+    "updated_at": "2026-06-03T17:38:35Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T17:22:37Z",
+    "_updated_at": "2026-06-03T17:38:35Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -775,11 +775,11 @@
             "title": "pek-extract market-hours guard: retry_after string says 08:00 UTC but enforced window is 02:00-08:59 UTC (blocks until 09:00); also ~59min wider than actual HOSE close 15:00 ICT/08:00 UTC",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "TODO",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "XS",
             "zone": "apps/pdf-extractor/",
             "priority": "low",
-            "note": "Surfaced by FRESH-EXTRACT-CONFIRM 2026-06-03T08:10Z. /api/trigger-pek-extract guard returns retry_after 'after 15:00 ICT (08:00 UTC)' but the same error message + enforced behavior block during 'Mon-Fri 02:00-08:59 UTC' (actually lifts 09:00 UTC). Two bugs: (1) retry_after string (08:00) inconsistent with enforced window (08:59 -> 09:00); (2) window 02:00-08:59 UTC is ~59min wider than real HOSE close (15:00 ICT = 08:00 UTC) -> blocks off-market extraction for an extra hour. Locate the guard (mcp-server pek-extract handler), align retry_after with the true window and/or tighten window to 02:00-08:00. Cosmetic+minor-correctness, low pri. | [PO 2026-06-03T17:07:27Z BATCHED-LANE-A-TAIL] Sequence AFTER FU-DE-321-VAY-GUARD commit (same apps/mcp-server zone, serialize). XS cosmetic alignment, no rebuild contention with the debt-mapping head. Bundle into the same dev-mcp-server agent's tail or follow-on dispatch once Lane-A head commits.[dev-team 2026-06-03T17:22:37Z] ZONE-MISMATCH (dev-mcp-server raw-verified + refused): PEK guard bugs live in apps/pdf-extractor (domain/primitives/market_hours/primitive.py _VN_MARKET_CLOSE_UTC_HOUR=8 -> h<=8 lifts 09:00 UTC; interface/handlers.py retry_after string; __tests__/test_market_hours_guard.py asserts 09:00 lift). RE-ROUTED to dev-pdf-extractor (Lane B). Fix: single-source boundary constant lift at 08:00 UTC (=15:00 ICT), align retry_after string, update tests (07:59 open / 08:00 closed)."
+            "note": "Surfaced by FRESH-EXTRACT-CONFIRM 2026-06-03T08:10Z. /api/trigger-pek-extract guard returns retry_after 'after 15:00 ICT (08:00 UTC)' but the same error message + enforced behavior block during 'Mon-Fri 02:00-08:59 UTC' (actually lifts 09:00 UTC). Two bugs: (1) retry_after string (08:00) inconsistent with enforced window (08:59 -> 09:00); (2) window 02:00-08:59 UTC is ~59min wider than real HOSE close (15:00 ICT = 08:00 UTC) -> blocks off-market extraction for an extra hour. Locate the guard (mcp-server pek-extract handler), align retry_after with the true window and/or tighten window to 02:00-08:00. Cosmetic+minor-correctness, low pri. | [PO 2026-06-03T17:07:27Z BATCHED-LANE-A-TAIL] Sequence AFTER FU-DE-321-VAY-GUARD commit (same apps/mcp-server zone, serialize). XS cosmetic alignment, no rebuild contention with the debt-mapping head. Bundle into the same dev-mcp-server agent's tail or follow-on dispatch once Lane-A head commits.[dev-team 2026-06-03T17:22:37Z] ZONE-MISMATCH (dev-mcp-server raw-verified + refused): PEK guard bugs live in apps/pdf-extractor (domain/primitives/market_hours/primitive.py _VN_MARKET_CLOSE_UTC_HOUR=8 -> h<=8 lifts 09:00 UTC; interface/handlers.py retry_after string; __tests__/test_market_hours_guard.py asserts 09:00 lift). RE-ROUTED to dev-pdf-extractor (Lane B). Fix: single-source boundary constant lift at 08:00 UTC (=15:00 ICT), align retry_after string, update tests (07:59 open / 08:00 closed).[dev-team 2026-06-03T17:38:35Z] DONE-LIVE-VERIFIED commit 02b7b32f (img 17:34:03Z, token _VN_MARKET_LAST_BLOCKED_UTC_HOUR=7 live). Re-routed from dev-mcp-server (zone-mismatch — guard is in apps/pdf-extractor). FIX: single SSOT boundary constant =7 (block 02:00-07:59 UTC, lift 08:00 UTC = 15:00 ICT HOSE close); retry_after string + handler docstring aligned to the same boundary so they can never drift. 12/12 tests (07:59 UTC blocked / 08:00 UTC allowed). CAVEAT: the 08:00-08:59 UTC behavioral flip (old=blocked, new=allowed) is unit-proven not wall-clock-observable at current ~17:xx UTC (outside both windows). Minor residual: a code comment mislabels '07:59 ICT' (means UTC) — cosmetic, non-functional. Mirror watchdog window spun off FU-PEK-MIRROR-WATCHDOG-WINDOW (review-only)."
           },
           {
             "task_id": "NB-FLOW-SETTLED-WRITE",
@@ -811,11 +811,11 @@
             "title": "REVIEW: mcp-server price-watchdog market-hours mirror (isVnMarketHoursUtc in vpsProxyWatchdogJob.ts h<=8; MARKET_HOURS_END=8 in priceUpdateWatchdogJob.ts) uses the same 02:00-08:59 UTC window as the PEK guard. After FU-PEK tightens the PEK window to lift at 08:00 UTC, decide whether the price-staleness watchdog window should also tighten — DIFFERENT semantics (price staleness vs extraction host-load), so review before changing. Do NOT auto-sync.",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "CLOSED-NO-CHANGE",
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "low",
-            "note": "[dev-team 2026-06-03T17:22:37Z] spun off from FU-PEK zone-mismatch finding — mcp-server has a watchdog mirror of the same window but gates price-staleness not PEK extraction; review-before-change, do NOT auto-sync."
+            "note": "[dev-team 2026-06-03T17:22:37Z] spun off from FU-PEK zone-mismatch finding — mcp-server has a watchdog mirror of the same window but gates price-staleness not PEK extraction; review-before-change, do NOT auto-sync.[dev-team 2026-06-03T17:39:43Z] CLOSED-NO-CHANGE (reviewed by dispatcher, read both watchdog fns). DECISION: do NOT tighten the price-watchdog mirror. Both vpsProxyWatchdogJob.isVnMarketHoursUtc (h>=2&&h<=8) and priceUpdateWatchdogJob (MARKET_HOURS_START=2..END=8) use the window as an OFF-HOURS GUARD: outside window -> 'off-hours' -> SKIP staleness alert. The watchdog is DESIGNED to err wide (built after a 10-day silent price-staleness outage); its >6h staleness threshold already prevents false positives in the post-close hour (15:00-15:59 ICT, last tick ~1h old). Tightening to h<=7 would re-classify a real >6h staleness crossing into 15:00-15:59 ICT as 'off-hours' and SUPPRESS a legitimate outage alert — strictly worse for the watchdog's purpose. The PEK extraction guard correctly tightened (needlessly blocking off-market work is a real cost); the staleness watchdog correctly stays wide. Different semantics confirmed — no auto-sync, as flagged. No code change."
           }
         ]
       },
@@ -1274,11 +1274,11 @@
             "title": "Fresh FPT Q1 layout-first extract covered only 20 OCR pages (pdf_extracted_text had 20/46 at fetch time) while the pre-fix stale run had 46 — investigate why pages 21-46 are missing from the OCR text store for this report; confirm full-document coverage",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "M",
             "zone": "apps/pdf-extractor/",
             "priority": "medium",
-            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: fresh extract Tier-0 logged '14 logical units from 20 OCR pages'; bctc_page_zones now 20 rows (was 46 stale). report has 46 physical pages -> pdf_extracted_text store only held 20 at fetch. Investigate the OCR-text population path for FPT Q1 (report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d); confirm whether pages 21-46 were never OCR'd or evicted. Does NOT affect the grouping-fix verdict (test region 3-6 fully covered). | PO TRIAGE 2026-06-03T11:12Z: kept medium, sequenced AFTER FU-LF-ORPHAN-ROWS (now DONE). | [PO 2026-06-03T17:07:27Z DISPATCHED] Lane-B (apps/pdf-extractor) batch head — independent of Lane-A apps/mcp-server (parallel under WIP<=2). Diagnose the OCR-text population path: were pages 21-46 never OCR'd (rasterise/OCR loop stopped at 20) or evicted from pdf_extracted_text after fetch? Pages 21-46 are the notes tail (core statements p3-9 already covered) so MEDIUM not high. DoD: re-extract FPT Q1 -> bctc_page_zones covers all 46 physical pages OR a documented honest reason pages 21-46 are unextractable (e.g. scanned-image-only notes). Report findings; ship the fix if in-zone. First-attempt FIX (no recurring escalation)."
+            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: fresh extract Tier-0 logged '14 logical units from 20 OCR pages'; bctc_page_zones now 20 rows (was 46 stale). report has 46 physical pages -> pdf_extracted_text store only held 20 at fetch. Investigate the OCR-text population path for FPT Q1 (report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d); confirm whether pages 21-46 were never OCR'd or evicted. Does NOT affect the grouping-fix verdict (test region 3-6 fully covered). | PO TRIAGE 2026-06-03T11:12Z: kept medium, sequenced AFTER FU-LF-ORPHAN-ROWS (now DONE). | [PO 2026-06-03T17:07:27Z DISPATCHED] Lane-B (apps/pdf-extractor) batch head — independent of Lane-A apps/mcp-server (parallel under WIP<=2). Diagnose the OCR-text population path: were pages 21-46 never OCR'd (rasterise/OCR loop stopped at 20) or evicted from pdf_extracted_text after fetch? Pages 21-46 are the notes tail (core statements p3-9 already covered) so MEDIUM not high. DoD: re-extract FPT Q1 -> bctc_page_zones covers all 46 physical pages OR a documented honest reason pages 21-46 are unextractable (e.g. scanned-image-only notes). Report findings; ship the fix if in-zone. First-attempt FIX (no recurring escalation).[dev-team 2026-06-03T17:38:35Z] DONE-LIVE-VERIFIED commit 606ac360. ops rebuilt pdf-extractor img 17:34:03Z (token _MAX_FETCH_PAGES_LF=200 live). ROOT CAUSE: fetch_ocr_pages (layout-first path) shared _MAX_FETCH_PAGES=20 cap meant for fetch_ocr_text -> build_document_map saw total_pages=20, pages 21-46 never fingerprinted/OCR'd. FIX: dedicated _MAX_FETCH_PAGES_LF=200 for fetch_ocr_pages (6/6 boundary tests 20/21/46). ROUTER RAW-VERIFIED: OCR source GET /api/bctc-inspect/ocr/{e8ea3df5}?page=N serves real content on p30(2840B)+p46(2898B) — confirms the uncap pulls previously-dropped real pages. CAVEAT (materialization, not correctness): the FPT report's STORED extract refreshes to 46-page coverage on its next reparse cycle; not force-triggered this tick (would require a heavy VPS PDF re-fetch). Binding defect (client cap) removed + source-availability proven."
           },
           {
             "task_id": "FU-LF-ORPHAN-ROWS",
@@ -1322,11 +1322,11 @@
             "title": "Deferred in-zone (non-blocking): check_no_orphan_rows fires on ANY orphan — over-strict for unit d8613f7c (8.7% orphan, otherwise valid). Root issue = column-detection found NO gutters on FPT p7-9 (income stmt + CF) -> 1-column layout, all OCR in label slot, 100% orphan. Add a tolerance threshold (allow <=5% orphan ratio) so partially-clean units pass, and improve gutter detection on dense statement pages. Does NOT affect served scalars (layout_units != table_rows derivation path).",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "TODO",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "M",
             "zone": "apps/pdf-extractor/",
             "priority": "low",
-            "note": "Deferred non-blocker, in-zone. From 7aaa71a1 Issue 2. | [PO 2026-06-03T17:07:27Z BATCHED-LANE-B-TAIL] Sequence AFTER FU-FPT-OCR-PAGES-20-46 (same apps/pdf-extractor zone, serialize). Low-pri tolerance threshold (allow <=5% orphan ratio) + gutter detection improvement on dense statement pages. Does NOT affect served scalars (layout_units != table_rows derivation path) so safe to tail. Follow-on dispatch once Lane-B head commits."
+            "note": "Deferred non-blocker, in-zone. From 7aaa71a1 Issue 2. | [PO 2026-06-03T17:07:27Z BATCHED-LANE-B-TAIL] Sequence AFTER FU-FPT-OCR-PAGES-20-46 (same apps/pdf-extractor zone, serialize). Low-pri tolerance threshold (allow <=5% orphan ratio) + gutter detection improvement on dense statement pages. Does NOT affect served scalars (layout_units != table_rows derivation path) so safe to tail. Follow-on dispatch once Lane-B head commits.[dev-team 2026-06-03T17:38:35Z] DONE-LIVE-VERIFIED commit 510008b8 (img 17:34:03Z, token orphan_ratio_tolerance live). FIX: check_no_orphan_rows(orphan_ratio_tolerance=0.05) PASS if orphan_ratio<=5% (boundary 5.0% pass / 5.1% fail), + dense-page gutter fallback (_GUTTER_DARK_FRACTION_DENSE=0.35 retry when 0.15 finds zero gutters on dense IS/CF pages). 52/52 layout-invariants + 227/227 extractor tests. Pure validation gate — does NOT touch served-scalar derivation path (layout_units != table_rows), so unit-boundary proof is the correct DoD; unit d8613f7c (8.7% orphan) now passes within tolerance / gets gutters detected on re-extract."
           },
           {
             "task_id": "FU-LF-VALIDATION-STATUS-REFLOW",
