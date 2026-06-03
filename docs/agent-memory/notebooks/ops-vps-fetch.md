@@ -115,6 +115,20 @@ Trigger: dev-team :07 tick — verify VPS-NEWS-CAFEF-VNECO sprint (b99bf783) in 
 
 **Follow-up required:** Install beautifulsoup4 on VPS to activate the primary extraction path. `pip3 install beautifulsoup4` is sufficient (requests already installed — article-body-fetcher.py imported it successfully). Track as VPS-BS4-INSTALL.
 
+## c004 · 2026-06-04 · FIX-CTG-2b-DEPLOY
+
+Trigger: operator task — deploy FIX-CTG-2b (rank>=2-only guard) to VPS.
+
+**DEPLOYED:** `/root/discover-bctc-urls-browser.py` overwritten with repo cc4ed657.
+- Backup created: `/root/discover-bctc-urls-browser.py.bak-20260604`
+- VPS sha256: `3d844094f474d5ba310542a86d0cb238f55e0256f8779aa14448a5bacbd5ef89` — MATCH
+- `grep -c "SKIP all-generic rank"` on VPS = 1 — guard line confirmed present
+- Runtime CTG smoke test SKIPPED: script requires full Playwright/Chromium browser launch; primary CTG path (FIX-CTG-1, hsx.vn) is already live; low-risk hardening not time-critical. sha+grep integrity checks are the binding DoD per task spec.
+
+Status: DONE-VERIFIED
+
+---
+
 ## c001 · 2026-06-01T11:38Z
 
 Trigger: operator-directed safe-recovery fixes (3 scoped items). Market hours active (~04:4xZ Mon).
