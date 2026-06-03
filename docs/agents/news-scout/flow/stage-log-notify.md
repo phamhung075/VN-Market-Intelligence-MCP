@@ -27,26 +27,27 @@ call_tool(server="vn-market", tool="log_agent_work", arguments={
 })
 ```
 
-Append section to `docs/agent-memory/notebooks/news-scout.md` (APPEND class, ≤60L section):
+**Settled-write invariant (AC-3): compose ≤200L body entirely in memory, then land in ONE Write/Edit. Never append-then-trim.**
+
+Step 1 — Read full `docs/agent-memory/notebooks/news-scout.md` into memory.
+Step 2 — Identify preamble (before first `^## `) and all `^## ` section boundaries.
+Step 3 — If ≥ 3 sections: drop oldest `## ` block (heading + body to next `## `) from in-memory body.
+Step 4 — Build new section (≤60L) in memory:
 ```
 ## c<NNN> · <ISO-timestamp>
 - Items: N | Impacts: M | Signals: [types] | Regime: REGIME | Carry: CARRY_REGIME
 - Feedback: X accepted / Y rejected | Filter hints: [FILTER_HINT_urgent_news=<STRICT|LOOSE|default>, ...]
 ```
-
-**AC-3 prune** — after append, count `## ` sections:
-```bash
-SEC_COUNT=$(grep -c "^## " docs/agent-memory/notebooks/news-scout.md)
-# if SEC_COUNT >= 4: Edit-delete the oldest ## block (heading + body up to next ##)
+Append new section to end of in-memory body.
+Step 5 — Count in-memory lines. If > 200L: drop next-oldest `## ` block, recount; repeat until ≤200L. If new section > 60L: trim to 60L first.
+Step 6 — Single settled write:
 ```
-
-**AC-5 wc gate** (inline, mandatory before commit):
+Write(path="docs/agent-memory/notebooks/news-scout.md", content=<final settled body>)
+```
+Step 7 — AC-5 sanity check (verification only, NOT a remediation loop):
 ```bash
 NB_LINES=$(wc -l < docs/agent-memory/notebooks/news-scout.md | tr -d ' ')
-if [ "$NB_LINES" -gt 200 ]; then
-  echo "[news-scout] GUARD: ${NB_LINES}L > 200 — prune additional section"
-  # Edit-delete next-oldest ## block; trim current section if still >200
-fi
+[ "$NB_LINES" -gt 200 ] && echo "[news-scout] BUG: compose logic failed — fix Step 1-5 and re-write once"
 ```
 
 > Notebook is written (appended) to disk every cycle. Git commit is deferred to market-watcher eod.md batch commit at market close (L-7, 1968b2). Off-hours cycles retain their own per-cycle commit.

@@ -64,11 +64,23 @@ Horizon:
 ```
 `create_prediction_claim(stock, claim_text, probability, horizon_days, resolution_criteria)`
 
-**P-6. Notebook commit** — append to `docs/agent-memory/notebooks/digest-predict.md`:
+**P-6. Notebook commit** — settled-write invariant (AC-3: compose in memory, one Write only):
+
+Step 1 — Read full `docs/agent-memory/notebooks/digest-predict.md` into memory.
+Step 2 — Identify preamble (before first `^## `) and all `^## ` section boundaries.
+Step 3 — If ≥ 3 sections: drop oldest `## ` block from in-memory body.
+Step 4 — Build new section (≤60L) in memory:
 ```
 ### Monday Predictions (HH:MM UTC)
 - Calibration: [status], delta: [value] | Claims: N | Dampening: [yes/no]
 ```
+Append new section to end of in-memory body.
+Step 5 — Count in-memory lines. If > 200L: drop next-oldest `## ` block, recount; repeat until ≤200L.
+Step 6 — Single settled write:
+```
+Write(path="docs/agent-memory/notebooks/digest-predict.md", content=<final settled body>)
+```
+
 **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
 # own_paths: [docs/agent-memory/notebooks/digest-predict.md]

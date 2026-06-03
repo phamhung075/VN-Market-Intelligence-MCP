@@ -2,9 +2,10 @@
 
 # BCTC Analyst — Stage 5: Notebook + Notify + Deadline
 
-**5. Notebook commit (APPEND class — AC-3 + AC-5 inline)**
+**5. Notebook commit (APPEND class — settled-write invariant)**
 
 > Invariant: timestamp = current UTC, never future, never speculative.
+> **AC-3: compose ≤200L body entirely in memory, then land in ONE Write/Edit. Never append-then-trim.**
 
 ### Notebook timestamp guard
 - Before writing `docs/agent-memory/notebooks/bctc-analyst.md`, ALWAYS get current UTC via:
@@ -13,7 +14,12 @@
   ```
 - Use the returned value verbatim — NEVER speculate, NEVER round to a future minute
 
-**5a. Append new section** (≤60L) to `docs/agent-memory/notebooks/bctc-analyst.md`:
+**5a. Compose in memory (NO file write yet):**
+
+Step 1 — Read full `docs/agent-memory/notebooks/bctc-analyst.md` into memory.
+Step 2 — Identify preamble (before first `^## `) and all `^## ` section boundaries.
+Step 3 — If ≥ 3 sections: drop oldest `## ` block (heading + body to next `## `) from in-memory body.
+Step 4 — Build new section (≤60L) in memory:
 ```
 ## c<NNN> · <ISO-timestamp>
 ### Analysis Cycle (HH:MM–HH:MM UTC) — mode: routine | release | mixed
@@ -22,20 +28,17 @@
 - Regime: REGIME | Max Deposit Rate: X.XX% | Valuation flags: [TICKER=verdict,...]
 - [if release or mixed] Earnings: K tickers processed | Beat: X | Miss: Y | In-line: Z
 ```
-
-**5b. AC-3 prune** — after append, count `## ` sections:
-```bash
-SEC_COUNT=$(grep -c "^## " docs/agent-memory/notebooks/bctc-analyst.md)
-# if SEC_COUNT >= 4: Edit-delete the oldest ## block (heading + body up to next ##)
+Append new section to end of in-memory body.
+Step 5 — Count in-memory lines. If > 200L: drop next-oldest `## ` block, recount; repeat until ≤200L. If new section > 60L: trim to 60L first.
+Step 6 — Single settled write:
+```
+Write(path="docs/agent-memory/notebooks/bctc-analyst.md", content=<final settled body>)
 ```
 
-**5c. AC-5 wc gate** (inline, mandatory before commit):
+**5b. AC-5 sanity check** (after the single write — verification only, NOT a remediation loop):
 ```bash
 NB_LINES=$(wc -l < docs/agent-memory/notebooks/bctc-analyst.md | tr -d ' ')
-if [ "$NB_LINES" -gt 200 ]; then
-  echo "[bctc-analyst] GUARD: ${NB_LINES}L > 200 — prune additional section"
-  # Edit-delete next-oldest ## block; trim current section if still >200
-fi
+[ "$NB_LINES" -gt 200 ] && echo "[bctc-analyst] BUG: compose logic failed — fix Step 5a and re-write once"
 ```
 
 **5d. Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`

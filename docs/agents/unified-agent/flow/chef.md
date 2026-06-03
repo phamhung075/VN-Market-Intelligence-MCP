@@ -1,4 +1,4 @@
-<!-- size-justification: 289L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 expanded with mandatory inline AC-2b+AC-5 prune guards (NB-PRUNE-IMPL) -->
+<!-- size-justification: 308L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class) -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -120,6 +120,23 @@ Confidence scoring:
 - 2-3 aligned → medium conviction
 - <2 aligned → low conviction (flag in dish, do not recommend action)
 
+**Cycle phase declaration (MANDATORY — TNB Step H):**
+After scoring pillars, declare the investment-clock phase and matching pyramid tier:
+
+| Phase | Signal pattern | Pyramid tier |
+|---|---|---|
+| Expansion | M2 ↑, COC low, EPS ↑, POL neutral/easing | Equity (growth + cyclical) |
+| Slowdown | M2 flat/↓, COC rising, EPS mixed, POL tightening | Fixed income / quality equity |
+| Contraction | M2 ↓, COC high, EPS ↓, POL tightening | Cash / defensive |
+| Recovery | M2 ↑, COC falling, EPS bottoming, POL easing | Equity (value + recovery) |
+
+Write one line per cluster in session state:
+```
+[phase: <expansion|slowdown|contraction|recovery>] [tier: <equity|fixed_income|cash|defensive>] — rationale: <one sentence citing the pillar evidence>
+```
+If phase is ambiguous (mixed pillar signals), declare `[phase: transition]` and cap conviction at MEDIUM regardless of pillar score.
+Include this line verbatim in Block B (Step 7 WORK detail) inside the Layer 4 section.
+
 ---
 
 ## Step 5 — LAYER 5 (Kinh Dịch overlay)
@@ -221,13 +238,19 @@ The `[CHEF-DETAIL]` prefix is mandatory — it allows tran-ngoc-bau's audit flow
 
 ---
 
-## Step 8 — LOG (APPEND class — AC-2b + AC-5 inline)
+## Step 8 — LOG (APPEND class — settled-write invariant)
 
 > **Write-tool contract:** The Write tool IS available in this agent. Self-refusal here is a flow violation — use the Write tool and proceed.
+> **Invariant (AC-3):** Compose the final ≤200L body ENTIRELY IN MEMORY, then land it in ONE Write/Edit. NEVER append-then-trim across two writes — PostToolUse must NEVER observe a file >200L.
 
 **8a. Mark signals processed** — move consumed signal files to `docs/signals/processed/`.
 
-**8b. Append new section** to `docs/agent-memory/notebooks/unified-agent.md` (APPEND class, ≤60L section):
+**8b. Compose in memory (NO file write yet):**
+
+Step 1a — Read full `docs/agent-memory/notebooks/unified-agent.md` into memory.
+Step 1b — Identify preamble (before first `^## `) and all `^## ` section boundaries.
+Step 1c — If ≥ 3 sections exist in memory: drop the oldest `## ` block (heading + content to next `## ` or EOF) from the in-memory body.
+Step 1d — Build the new section (≤60L) in memory:
 ```
 ## Session: <YYYY-MM-DD> (<DISH_TYPE>)
 ### Chef Dish — <DISH_TYPE> HH:MM UTC
@@ -237,29 +260,25 @@ The `[CHEF-DETAIL]` prefix is mandatory — it allows tran-ngoc-bau's audit flow
 - Signals consumed: [IDs]
 - Dish published: YES | silent-exit
 ```
+Append this new section to the end of the in-memory body.
+Step 1e — AC-2b: if any `## Prior cycles` heading is present and has ≥ 4 `### ` sub-blocks inside it, drop the oldest sub-block in memory.
+Step 1f — Count in-memory lines. If > 200L: drop next-oldest `## ` block in memory, recount; repeat until ≤200L or only preamble + 1 section remain. If the new section itself exceeds 60L: trim to 60L first.
+Step 1g — In-memory body is now the final settled content (≤200L guaranteed).
 
-**8c. AC-3 outer prune** — after append, count `## ` sections:
-```bash
-SEC_COUNT=$(grep -c "^## " docs/agent-memory/notebooks/unified-agent.md)
-# if SEC_COUNT >= 4: Edit-delete the oldest ## block (heading + body up to next ##)
+**8c. Single settled write:**
 ```
-
-**8d. AC-2b intra-section prune** — count `### ` sub-blocks inside `## Prior cycles` (if present):
-```bash
-# Extract the ## Prior cycles block, count ### lines inside it
-# if count >= 4: Edit-delete the oldest ### sub-block inside ## Prior cycles
+Write(path="docs/agent-memory/notebooks/unified-agent.md",
+      content=<final settled body from Step 8b>)
 ```
+One Write call only. PostToolUse fires exactly once and sees ≤200L.
 
-**8e. AC-5 wc gate** (inline, mandatory before commit):
+**8d. AC-5 sanity check** (after the single write — verification only, NOT a remediation loop):
 ```bash
 NB_LINES=$(wc -l < docs/agent-memory/notebooks/unified-agent.md | tr -d ' ')
-if [ "$NB_LINES" -gt 200 ]; then
-  echo "[chef LOG] GUARD: ${NB_LINES}L > 200 — prune additional section"
-  # Edit-delete next-oldest ## block, then re-check; trim current section if still >200
-fi
+[ "$NB_LINES" -gt 200 ] && echo "[chef LOG] BUG: compose logic failed — fix Step 8b and re-write once"
 ```
 
-**8f. Commit** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`
+**8e. Commit** (mutex-guarded) → skill: `.claude/skills/commit-mutex/SKILL.md`
 ```bash
 # own_paths: [docs/agent-memory/notebooks/unified-agent.md, docs/signals/processed/*]
 git add docs/agent-memory/notebooks/unified-agent.md docs/signals/processed/

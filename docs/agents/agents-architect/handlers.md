@@ -12,8 +12,14 @@ date -u +"%Y-%m-%dT%H:%M:%SZ"
 ```
 Capture output as `UTC_STAMP`.
 
-### Step 2 — Append to notebook
-Append to `docs/agent-memory/notebooks/agents-architect.md`:
+### Step 2 — Settled-write to notebook (AC-3 invariant)
+
+**Compose ≤200L body in memory, then land in ONE Write/Edit. Never append-then-trim.**
+
+Step 2a — Read full `docs/agent-memory/notebooks/agents-architect.md` into memory.
+Step 2b — Identify preamble (before first `^## `) and all `^## ` section boundaries.
+Step 2c — If ≥ 3 sections: drop oldest `## ` block (heading + body to next `## `) from in-memory body.
+Step 2d — Build new section (≤60L) in memory:
 ```markdown
 ## <UTC_STAMP>
 
@@ -22,6 +28,12 @@ Append to `docs/agent-memory/notebooks/agents-architect.md`:
 <1-2 sentence summary of the architecture problem identified and the recommended action>
 
 **Signal dropped:** `docs/signals/<signal-file>.json` → <target-agent>
+```
+Append new section to end of in-memory body.
+Step 2e — Count in-memory lines. If > 200L: drop next-oldest `## ` block, recount; repeat until ≤200L. If new section > 60L: trim to 60L first.
+Step 2f — Single settled write:
+```
+Write(path="docs/agent-memory/notebooks/agents-architect.md", content=<final settled body>)
 ```
 
 ### Step 3 — Commit both files atomically (commit-boundary RULE 1-3)
