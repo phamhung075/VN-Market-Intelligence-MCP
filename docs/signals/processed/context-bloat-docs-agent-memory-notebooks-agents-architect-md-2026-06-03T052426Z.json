@@ -3,13 +3,13 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-05-27T05:55:21Z",
+  "createdAt": "2026-06-03T05:24:26Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/dev-pdf-extractor.md",
-    "line_count": 332,
+    "file": "docs/agent-memory/notebooks/agents-architect.md",
+    "line_count": 205,
     "cap": 200,
     "class": "agent-notebook",
-    "overage": 132,
+    "overage": 5,
     "action_required": "prune_or_split"
   }
 }

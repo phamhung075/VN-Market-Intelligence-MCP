@@ -3,13 +3,13 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-05-27T05:38:31Z",
+  "createdAt": "2026-06-03T05:23:08Z",
   "payload": {
-    "file": "docs/agent-memory/notebooks/qa.md",
-    "line_count": 3998,
+    "file": "docs/agent-memory/notebooks/unified-agent.md",
+    "line_count": 223,
     "cap": 200,
     "class": "agent-notebook",
-    "overage": 3798,
+    "overage": 23,
     "action_required": "prune_or_split"
   }
 }

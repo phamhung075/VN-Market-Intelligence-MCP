@@ -1,8 +1,0 @@
-{
-  "from": "dev-pdf-extractor",
-  "to": "qa",
-  "type": "impl-done",
-  "payload": "PEK-LAYOUT-CFG DONE commit e6b84ca5. Three parity bugs fixed vs original LayoutDetectionTask: (1) config-path bug layout_cfg.tasks.layout_detection.model_config; (2) relative model_path resolved against PEK root via pek_root arg; (3) fail-loud RuntimeError when YAML exists but model fails to load. 22/22 PEK adapter tests PASS. 636 total unit tests PASS. PEK subtree pristine. ops must docker compose build --no-cache pdf-extractor + force-recreate before qa runs live verification.",
-  "priority": "high",
-  "createdAt": "2026-05-27T07:55:01Z"
-}
