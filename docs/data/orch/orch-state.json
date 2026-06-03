@@ -1,16 +1,16 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T15:11:24Z",
+  "_updated_at": "2026-06-03T16:11:00Z",
   "_updated_by": "po",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "dev-team tick 2026-06-03 ~15:09Z DONE. FIX-DE chain (1 fdd2363a + 2 b5286dba + 4 5addfc37) shipped + ops-rebuilt + corpus re-finalized + ROUTER-LIVE-VERIFIED: FPT D/E now real 0.40x (was false N/A). HPG/DHG/SHB stay PUB-5 gated (pre-existing low conf, not this chain). head idle. NEXT: PO triage FU-BACKFILL-DE-SYNC(med, make reflow definitif via real tool) + backlog FU-FPT-OCR-PAGES-20-46(med), FU-ORPHAN-TOLERANCE(low), BAL-1e-DEV(low), FLEET-HOST-SAFETY 2 low.",
+    "next_action": "dev-team tick 2026-06-03 ~16:09Z DONE. FU-BACKFILL-DE-SYNC DONE-LIVE-VERIFIED: backfill tool now re-derives debt scalars (tool-path proven, FPT D/E 0.40x via force_reflow not script). NEW finding queued FU-DE-321-VAY-GUARD (med, aggregator takes 321 unconditionally but 321 not always vay; FPT 2025Q4 real ST borrowing on 319-vay=19,169 tỷ). head idle. NEXT: PO triage FU-DE-321-VAY-GUARD(med) + FU-FPT-OCR-PAGES-20-46(med) + lows. Maintenance: news-scout.md 233L>200 prune handled on-demand this tick.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T16:03:24Z",
+    "updated_at": "2026-06-03T16:30:22Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T16:03:24Z",
+    "_updated_at": "2026-06-03T16:30:22Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -358,11 +358,22 @@
             "title": "backfill_bctc_scalars UPDATE list is missing short_term_debt/long_term_debt (FIX-DE-2 added them only to finalizeBctcRefineTool BLOCK-1) — so the force_reflow backfill path CANNOT re-derive debt scalars for already-DONE reports; FIX-DE-3 had to hand-roll a BLOCK-1-replica docker-exec script for the 5-report reflow. Mirror the FIX-DE-2 debt-column UPDATE entries (+ blob sync) into backfill_bctc_scalars so corpus reflow is definitif via a real tool, not a one-shot script. Then re-verify FPT D/E still ~0.40x via the tool path.",
             "type": "FIX",
             "owner": "dev-mcp-server",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "medium",
+            "note": "[architect-gap surfaced by FIX-DE-3 2026-06-03] definitif-fix follow-up so corpus reflow doesn't need a hand script. | [PO 2026-06-03T16:11Z DISPATCHED] Definitif closure of the FIX-DE chain. FIX-DE-3 reflow had to hand-roll a BLOCK-1-replica docker-exec script because backfill_bctc_scalars UPDATE list omits short_term_debt/long_term_debt (FIX-DE-2 added them only to finalizeBctcRefineTool BLOCK-1) — leaves a recurrent-symptom: any future reflow of already-DONE reports silently drops debt scalars. FIX: mirror the FIX-DE-2 debt-column UPDATE entries (+ balance_sheet_json currentLiabilities.shortTermDebt / longTermLiabilities.longTermDebt blob sync) into backfill_bctc_scalars. Then ops rebuild + force_reflow FPT via the TOOL (not a script) and router raw-verify get_bctc_full(FPT) D/E still ~0.40x. Channels clean, list_unresolved_reports empty. WIP<=2: only this task IN_PROGRESS this tick. | [dev-team 2026-06-03T16:3xZ DONE-LIVE-VERIFIED commit 98c47103] backfillBctcScalarsTool +short/long_term_debt UPDATE entries + balance_sheet_json blob sync (mirrors FIX-DE-2); 5 tests RED->GREEN (BDS-1 populate+D/E 0.40x, bank null-clear, dry_run, no-blob). ops rebuilt mcp-server img 16:25Z (grep-confirmed live). ROUTER TOOL-PATH VERIFY: backfill_bctc_scalars(force_reflow,FPT-2026Q1) updated_cols now INCLUDES short_term_debt+long_term_debt (was absent pre-fix), 0 balance_violations; post-run DB std=14,491,358 D/E=0.4012, served live 0.40x, Validation passed. Reflow now definitif via real tool (hand-script obsolete)."
+          },
+          {
+            "task_id": "FU-DE-321-VAY-GUARD",
+            "title": "aggregateScalars (FIX-DE-1) takes VAS code 321 UNCONDITIONALLY as short_term_debt, but code 321 is not always the borrowings row. Raw DB evidence (FPT report e8ea3df5 vs prior FY): FPT 2026Q1 has 321=14,491 tỷ marked (vay) [correct]; FPT 2025Q4 has 321=1,014 tỷ NOT-vay while the REAL short-term borrowing is 319=19,169 tỷ marked (vay) -> aggregator would write 1,014 tỷ (wrong row). Same class as the HPG code-311 issue (FIX-DE-4). Fix: apply a /vay/i label guard to the 321 primary mapping too (prefer the vay-labelled row among 321/319; if 321 present but non-vay AND 319-vay present, take 319). Verify on FPT 2025Q4 + re-confirm 2026Q1 unaffected. Currently served headlines (latest period) happen to be correct, so MEDIUM not high.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
             "status": "TODO",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "medium",
-            "note": "[architect-gap surfaced by FIX-DE-3 2026-06-03] definitif-fix follow-up so corpus reflow doesn't need a hand script."
+            "note": "[router raw-row finding during FU-BACKFILL-DE-SYNC live-verify 2026-06-03] code-321 not always vay across periods."
           }
         ]
       },
