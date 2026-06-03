@@ -288,6 +288,13 @@ export function buildBackfillBctcScalarsHandler(
         if (agg.financing_cf      !== null) updates.push({ col: "financing_cf",      val: agg.financing_cf });
         if (agg.capex             !== null) updates.push({ col: "capex",             val: agg.capex });
         if (agg.free_cash_flow    !== null) updates.push({ col: "free_cash_flow",    val: agg.free_cash_flow });
+        // FU-BACKFILL-DE-SYNC: debt decomposition scalars (missed in BEQ-3 column audit)
+        // finalizeBctcRefineTool BLOCK-1 added these (FIX-DE-2/b5286dba) but the backfill
+        // path was never updated — so force_reflow could not re-derive debt scalars for
+        // already-DONE reports. Bank path: both columns are in notApplicable → they land
+        // in nullClearCols below, not here (the null-guard prevents double-write).
+        if (agg.short_term_debt   !== null) updates.push({ col: "short_term_debt",   val: agg.short_term_debt });
+        if (agg.long_term_debt    !== null) updates.push({ col: "long_term_debt",     val: agg.long_term_debt });
 
         // NOT-APPLICABLE columns → SET NULL (clear stale legacy values)
         const nullClearCols: string[] = [...naSet];
@@ -313,6 +320,72 @@ export function buildBackfillBctcScalarsHandler(
               updated_cols: updates.map((u) => u.col),
               null_cleared_cols: nullClearCols,
             });
+
+            // FU-BACKFILL-DE-SYNC B-2: sync resolved debt scalars into balance_sheet_json blob.
+            //
+            // Mirrors finalizeBctcRefineTool FIX-DE-2 B-2 exactly.
+            // The blob was written at OCR-parse time with wrong VAS codes and was never
+            // updated by the backfill path (only the scalar columns were updated by the
+            // UPDATE above). This leaves stale zeros in the blob even when the scalar
+            // columns are now correctly populated.
+            //
+            // Blob path mapping (mirrors balanceSheetExtractor.ts output structure):
+            //   short_term_debt → balance_sheet_json.currentLiabilities.shortTermDebt
+            //   long_term_debt  → balance_sheet_json.longTermLiabilities.longTermDebt
+            //
+            // Non-fatal: if the blob is missing, malformed, or the nested key is absent,
+            // skip silently. Scalar columns are already committed above.
+            if (agg.short_term_debt !== null || agg.long_term_debt !== null) {
+              try {
+                const bsDebtRow = db
+                  .prepare<{ balance_sheet_json: string | null }, [string]>(
+                    "SELECT balance_sheet_json FROM financial_reports WHERE id = ?",
+                  )
+                  .get(report.id);
+
+                if (bsDebtRow?.balance_sheet_json) {
+                  const blob = JSON.parse(bsDebtRow.balance_sheet_json) as Record<string, unknown>;
+                  let blobChanged = false;
+
+                  // short_term_debt → currentLiabilities.shortTermDebt
+                  if (agg.short_term_debt !== null) {
+                    const cl = blob["currentLiabilities"];
+                    if (cl !== null && cl !== undefined && typeof cl === "object") {
+                      (cl as Record<string, unknown>)["shortTermDebt"] = agg.short_term_debt;
+                      blobChanged = true;
+                    }
+                  }
+
+                  // long_term_debt → longTermLiabilities.longTermDebt
+                  if (agg.long_term_debt !== null) {
+                    const ltl = blob["longTermLiabilities"];
+                    if (ltl !== null && ltl !== undefined && typeof ltl === "object") {
+                      (ltl as Record<string, unknown>)["longTermDebt"] = agg.long_term_debt;
+                      blobChanged = true;
+                    }
+                  }
+
+                  if (blobChanged) {
+                    db.prepare(
+                      "UPDATE financial_reports SET balance_sheet_json = ? WHERE id = ?",
+                    ).run(JSON.stringify(blob), report.id);
+                    logger.info("[backfill_bctc_scalars] FU-BACKFILL-DE-SYNC balance_sheet_json debt blob synced", {
+                      report_id: report.id,
+                      action_code: report.action_code,
+                      short_term_debt: agg.short_term_debt,
+                      long_term_debt: agg.long_term_debt,
+                    });
+                  }
+                }
+              } catch (bsDebtErr) {
+                // Non-fatal: scalar columns already committed; blob sync failure is logged only.
+                logger.warn("[backfill_bctc_scalars] FU-BACKFILL-DE-SYNC debt blob sync failed (non-fatal)", {
+                  report_id: report.id,
+                  action_code: report.action_code,
+                  error: bsDebtErr instanceof Error ? bsDebtErr.message : String(bsDebtErr),
+                });
+              }
+            }
           } else {
             // No scalars resolved — still mark DONE (table rows exist, nothing to set)
             db.prepare("UPDATE financial_reports SET refine_status = 'DONE' WHERE id = ?").run(report.id);
