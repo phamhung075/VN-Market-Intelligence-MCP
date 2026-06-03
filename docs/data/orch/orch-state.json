@@ -5,12 +5,12 @@
   "_updated_by": "po",
   "head": {
     "status": "in_progress",
-    "active_task_id": "FU-PEK-GUARD-RETRYAFTER-MISLEADING",
-    "next_agent": "dev-mcp-server",
-    "next_action": "Lane A head FU-DE-321-VAY-GUARD DONE-LIVE-VERIFIED. Advancing Lane A tail FU-PEK-GUARD-RETRYAFTER-MISLEADING (XS cosmetic). Lane B (pdf-extractor FU-FPT-OCR-PAGES-20-46 + FU-ORPHAN-TOLERANCE) pending after Lane A.",
+    "active_task_id": "FU-FPT-OCR-PAGES-20-46",
+    "next_agent": "dev-pdf-extractor",
+    "next_action": "Lane A complete (FU-DE-321 DONE-LIVE-VERIFIED). FU-PEK re-routed to Lane B (dev-pdf-extractor) after zone-mismatch. Starting Lane B: dev-pdf-extractor handles FU-FPT-OCR-PAGES-20-46 + FU-ORPHAN-TOLERANCE + FU-PEK-GUARD (all apps/pdf-extractor, serial in one zone agent, ONE rebuild). Spun off FU-PEK-MIRROR-WATCHDOG-WINDOW (mcp-server, low, review-only).",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T17:17:49Z",
+    "updated_at": "2026-06-03T17:22:37Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T17:17:49Z",
+    "_updated_at": "2026-06-03T17:22:37Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -774,12 +774,12 @@
             "task_id": "FU-PEK-GUARD-RETRYAFTER-MISLEADING",
             "title": "pek-extract market-hours guard: retry_after string says 08:00 UTC but enforced window is 02:00-08:59 UTC (blocks until 09:00); also ~59min wider than actual HOSE close 15:00 ICT/08:00 UTC",
             "type": "FIX",
-            "owner": "dev-mcp-server",
-            "status": "IN_PROGRESS",
+            "owner": "dev-pdf-extractor",
+            "status": "TODO",
             "size": "XS",
-            "zone": "apps/mcp-server/",
+            "zone": "apps/pdf-extractor/",
             "priority": "low",
-            "note": "Surfaced by FRESH-EXTRACT-CONFIRM 2026-06-03T08:10Z. /api/trigger-pek-extract guard returns retry_after 'after 15:00 ICT (08:00 UTC)' but the same error message + enforced behavior block during 'Mon-Fri 02:00-08:59 UTC' (actually lifts 09:00 UTC). Two bugs: (1) retry_after string (08:00) inconsistent with enforced window (08:59 -> 09:00); (2) window 02:00-08:59 UTC is ~59min wider than real HOSE close (15:00 ICT = 08:00 UTC) -> blocks off-market extraction for an extra hour. Locate the guard (mcp-server pek-extract handler), align retry_after with the true window and/or tighten window to 02:00-08:00. Cosmetic+minor-correctness, low pri. | [PO 2026-06-03T17:07:27Z BATCHED-LANE-A-TAIL] Sequence AFTER FU-DE-321-VAY-GUARD commit (same apps/mcp-server zone, serialize). XS cosmetic alignment, no rebuild contention with the debt-mapping head. Bundle into the same dev-mcp-server agent's tail or follow-on dispatch once Lane-A head commits."
+            "note": "Surfaced by FRESH-EXTRACT-CONFIRM 2026-06-03T08:10Z. /api/trigger-pek-extract guard returns retry_after 'after 15:00 ICT (08:00 UTC)' but the same error message + enforced behavior block during 'Mon-Fri 02:00-08:59 UTC' (actually lifts 09:00 UTC). Two bugs: (1) retry_after string (08:00) inconsistent with enforced window (08:59 -> 09:00); (2) window 02:00-08:59 UTC is ~59min wider than real HOSE close (15:00 ICT = 08:00 UTC) -> blocks off-market extraction for an extra hour. Locate the guard (mcp-server pek-extract handler), align retry_after with the true window and/or tighten window to 02:00-08:00. Cosmetic+minor-correctness, low pri. | [PO 2026-06-03T17:07:27Z BATCHED-LANE-A-TAIL] Sequence AFTER FU-DE-321-VAY-GUARD commit (same apps/mcp-server zone, serialize). XS cosmetic alignment, no rebuild contention with the debt-mapping head. Bundle into the same dev-mcp-server agent's tail or follow-on dispatch once Lane-A head commits.[dev-team 2026-06-03T17:22:37Z] ZONE-MISMATCH (dev-mcp-server raw-verified + refused): PEK guard bugs live in apps/pdf-extractor (domain/primitives/market_hours/primitive.py _VN_MARKET_CLOSE_UTC_HOUR=8 -> h<=8 lifts 09:00 UTC; interface/handlers.py retry_after string; __tests__/test_market_hours_guard.py asserts 09:00 lift). RE-ROUTED to dev-pdf-extractor (Lane B). Fix: single-source boundary constant lift at 08:00 UTC (=15:00 ICT), align retry_after string, update tests (07:59 open / 08:00 closed)."
           },
           {
             "task_id": "NB-FLOW-SETTLED-WRITE",
@@ -805,6 +805,17 @@
             "zone": "ops/",
             "priority": "low",
             "note": "Flagged by PO 2026-06-03T10:12Z during LF triage; UPDATE 10:46Z container reported healthy immediately after the LF-GRP-3 rebuild — prior unhealthy was a stale/transient state cleared by recreate, closeable if not recurring. | [PO 2026-06-03T17:07:27Z CLOSED-NOT-REPRO] Router raw-verified live: docker ps -> vn-market-intelligence-mcp-pdf-extractor-1 = 'Up 7 hours (healthy)', ZERO health_status failure events in 24h. The false-RED has NOT recurred on the post-recreate container per the task's own close criterion. Not a dispatchable FIX — no defect to repair. Closing as not-reproducible. If 'Up (unhealthy)' recurs on a future fresh container, re-open with a HEALTHCHECK-definition audit."
+          },
+          {
+            "task_id": "FU-PEK-MIRROR-WATCHDOG-WINDOW",
+            "title": "REVIEW: mcp-server price-watchdog market-hours mirror (isVnMarketHoursUtc in vpsProxyWatchdogJob.ts h<=8; MARKET_HOURS_END=8 in priceUpdateWatchdogJob.ts) uses the same 02:00-08:59 UTC window as the PEK guard. After FU-PEK tightens the PEK window to lift at 08:00 UTC, decide whether the price-staleness watchdog window should also tighten — DIFFERENT semantics (price staleness vs extraction host-load), so review before changing. Do NOT auto-sync.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "low",
+            "note": "[dev-team 2026-06-03T17:22:37Z] spun off from FU-PEK zone-mismatch finding — mcp-server has a watchdog mirror of the same window but gates price-staleness not PEK extraction; review-before-change, do NOT auto-sync."
           }
         ]
       },
