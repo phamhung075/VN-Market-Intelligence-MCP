@@ -1,16 +1,28 @@
-<!-- size-justification: 72L — Step 6 + Error Guard: telemetry signal write + unhandled error boundary. Child of main.md. -->
+<!-- size-justification: 83L — Step 6 + Error Guard: conditional telemetry signal write (skip SILENT/non-actionable ticks) + unhandled error boundary. Child of main.md. -->
 
-## Step 6 — Write telemetry signal
+## Step 6 — Write telemetry signal (conditional)
 
 > **INVARIANT:** output MUST use enveloped schema `{from, to, type, payload, priority, createdAt}`.
 > NEVER write flat root-level fields (`classification`, `reason`, `tick_nominal`, `written_at`).
 > All observability fields (`classification`, `reason`, `tick_nominal`, `drift_min`, `matched_slots`,
 > `leader_lock`, `spawned`, `dev_head`, `devq`, `signal_backlog`, `note`) MUST be nested inside `payload:{}`.
 
-After each fire cycle (whether spawns happened or silent exit):
+**Conditional write logic:**
+- **SKIP** `docs/signals/` write if the tick is SILENT and non-actionable: `silent == true` AND `spawned[]` is empty AND `errors[]` is empty.
+  Liveness of the cowork dispatcher is already captured in the notebook written by the main flow; silent heartbeats do not require dev-team action.
+- **WRITE** to `docs/signals/` if spawns occurred (`silent == false`) OR errors exist (`errors[]` non-empty).
+
+Only emit the signal when actionable:
 
 ```bash
 ISO=${NOW_ISO}
+
+# Skip silent non-actionable ticks; keep Error Guard (line 64) UNCHANGED
+if [[ "$SILENT" == "true" ]] && [[ -z "$SPAWNED" ]] && [[ -z "$ERRORS" ]]; then
+  # Silent, no spawns, no errors → skip docs/signals/ write; liveness is in notebook
+  exit 0
+fi
+
 mkdir -p docs/signals
 cat > docs/signals/cowork-team-${ISO}.json <<EOF
 {
