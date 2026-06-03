@@ -1,0 +1,19 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "tick_nominal": "21:03",
+  "drift_min": 3,
+  "matcher_slots": [
+    "bctc-analyst-slot-3"
+  ],
+  "leader_lock": "acquired_stolen",
+  "spawns": 1,
+  "spawned": [
+    "bctc-analyst:a3541bf4f2c590392"
+  ],
+  "dev_head": "idle",
+  "devq": 0,
+  "signal_backlog": 2,
+  "notes": "bctc-analyst-slot-3 off-market deep analysis; no MARKET publish (notebook+signals+conditional briefs); signal_queue drained empty (FPT ESC-3 picked up by dev lane)",
+  "written_at": "20260603T210359Z"
+}
