@@ -490,6 +490,13 @@ export function buildFinalizeBctcRefineHandler(
           if (agg.financing_cf      !== null) updates.push({ col: "financing_cf",      val: agg.financing_cf });
           if (agg.capex             !== null) updates.push({ col: "capex",             val: agg.capex });
           if (agg.free_cash_flow    !== null) updates.push({ col: "free_cash_flow",    val: agg.free_cash_flow });
+          // FIX-DE-2: debt decomposition scalars (missed in BEQ-3 column audit)
+          // BLOCK-3 already reads short_term_debt/long_term_debt from DB to compute
+          // debt_to_equity and net_debt_to_ebitda — but was reading the zeros/garbage
+          // that BLOCK-1 never replaced. Now BLOCK-1 writes the real values, so BLOCK-3
+          // auto-computes the correct D/E ratio on the same finalize run.
+          if (agg.short_term_debt   !== null) updates.push({ col: "short_term_debt",   val: agg.short_term_debt });
+          if (agg.long_term_debt    !== null) updates.push({ col: "long_term_debt",     val: agg.long_term_debt });
 
           // NOT-APPLICABLE columns → SET NULL (Case 1): clear stale legacy values
           const nullClearCols: string[] = [...naSet];
@@ -606,6 +613,79 @@ export function buildFinalizeBctcRefineHandler(
                       error: blobErr instanceof Error ? blobErr.message : String(blobErr),
                     });
                   }
+                }
+              }
+            }
+
+            // FIX-DE-2 B-2: sync resolved debt scalars into balance_sheet_json blob.
+            //
+            // The balance_sheet_json blob was written at OCR-parse time (balanceSheetExtractor)
+            // with wrong VAS codes (311 for shortTermDebt, 334 for longTermDebt) and was never
+            // updated by the refined path (only the top-level scalar columns were updated by
+            // BLOCK-1 before FIX-DE-2). This leaves stale zeros in the blob even when the
+            // scalar columns are now correctly populated.
+            //
+            // Fix: for each newly resolved debt scalar, write the correct value into the
+            // nested blob path using a safe nested-key descent. The intermediate objects
+            // (currentLiabilities, longTermLiabilities) must exist — if absent, skip
+            // silently (non-fatal: the blob path structure depends on the original OCR extract).
+            //
+            // Blob path mapping (mirrors balanceSheetExtractor.ts output structure):
+            //   short_term_debt → balance_sheet_json.currentLiabilities.shortTermDebt
+            //   long_term_debt  → balance_sheet_json.longTermLiabilities.longTermDebt
+            //
+            // Note: this syncs ONLY the two fields we know are wrong (debt scalars).
+            // Other blob fields (accounts payable, etc.) are not touched — only the
+            // fields that BLOCK-1 just updated from the refined truth.
+            if (
+              (agg.short_term_debt !== null || agg.long_term_debt !== null)
+            ) {
+              const bsDebtRow = db
+                .prepare<{ balance_sheet_json: string | null }, [string]>(
+                  "SELECT balance_sheet_json FROM financial_reports WHERE id = ?",
+                )
+                .get(report_id);
+
+              if (bsDebtRow?.balance_sheet_json) {
+                try {
+                  const blob = JSON.parse(bsDebtRow.balance_sheet_json) as Record<string, unknown>;
+                  let blobChanged = false;
+
+                  // short_term_debt → currentLiabilities.shortTermDebt
+                  if (agg.short_term_debt !== null) {
+                    const cl = blob["currentLiabilities"];
+                    if (cl !== null && cl !== undefined && typeof cl === "object") {
+                      (cl as Record<string, unknown>)["shortTermDebt"] = agg.short_term_debt;
+                      blobChanged = true;
+                    }
+                    // If currentLiabilities is absent/null, skip silently — blob structure
+                    // may be minimal for some extractors; we do not create the nested object.
+                  }
+
+                  // long_term_debt → longTermLiabilities.longTermDebt
+                  if (agg.long_term_debt !== null) {
+                    const ltl = blob["longTermLiabilities"];
+                    if (ltl !== null && ltl !== undefined && typeof ltl === "object") {
+                      (ltl as Record<string, unknown>)["longTermDebt"] = agg.long_term_debt;
+                      blobChanged = true;
+                    }
+                  }
+
+                  if (blobChanged) {
+                    db.prepare(
+                      "UPDATE financial_reports SET balance_sheet_json = ? WHERE id = ?",
+                    ).run(JSON.stringify(blob), report_id);
+                    logger.info("[finalize_bctc_refine] FIX-DE-2 balance_sheet_json debt blob synced", {
+                      report_id,
+                      short_term_debt: agg.short_term_debt,
+                      long_term_debt: agg.long_term_debt,
+                    });
+                  }
+                } catch (bsDebtErr) {
+                  logger.warn("[finalize_bctc_refine] FIX-DE-2 debt blob sync failed (non-fatal)", {
+                    report_id,
+                    error: bsDebtErr instanceof Error ? bsDebtErr.message : String(bsDebtErr),
+                  });
                 }
               }
             }
