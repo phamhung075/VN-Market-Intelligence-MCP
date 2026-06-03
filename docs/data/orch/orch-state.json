@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "dev-team tick ~21:09Z: drained 5 disk signals (FPT guard-held-17th=prior ESC fix LIVE; ACB pub5 deferred; 2 cowork heartbeats; esc3 brief already-impl). Shipped 2 backlog items to DONE: FIX-CTG-2b (cc4ed657, rank>=2→None so HOSE tickers fall through to hsx.vn, 27/27 tests) + NB-COWORK-MAIN-SPLIT (ae4396e6, cowork main.md 820→109L + 10 sub-flows ≤120L). Consolidated a duplicate backlog entry from the split agent. head idle. Remaining open = DEFERRED-INFRA/PRODUCT (ops/bctc-analyst async deps) + FIX-CTG-2b VPS /root/ deploy (ops-vps follow-up).",
+    "next_action": "Operator dashboard fix shipped: FE-CHUNK-RECOVER DONE-LIVE-VERIFIED. /dashboard/vps + /dashboard/bctc-inspect errors were a stale cached client bundle after the 20:07Z rebuild (server+build were healthy throughout). Durable chunk-load auto-recovery committed (c4cc7ae1) + ops frontend rebuild live (verified the preloadError code is in the served bundle). head idle.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T21:26:52Z",
+    "updated_at": "2026-06-03T21:52:44Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T21:27:39Z",
+    "_updated_at": "2026-06-03T21:52:44Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1546,6 +1546,17 @@
             "zone": "apps/frontend/",
             "priority": "high",
             "note": "User request 2026-06-02T19:00Z: orchestration dashboard must update real-time without manual page refresh. Approach=client-side polling (useRevalidator, 5s, visibility-gated) re-runs existing loader -> refetch /api/orchestration proxy -> re-render. No SSE/WS infra (file-backed state changes on cron/task-transition cadence, polling sufficient). Single-file frontend change. Frontend is a CONTAINER -> ops rebuild after merge.| DONE-LIVE-VERIFIED 2026-06-02T19:02Z. dev-frontend 8c30334a (useRevalidator 5s polling, visibility-gated, in-flight guard, LIVE indicator) - 1 file 52+/1-, typecheck+vite build PASS. ops rebuilt frontend container single-service (build+up --no-deps frontend), 200 on /dashboard/orchestration + /api/orchestration. Router independent verify: served bundle dashboard.orchestration-RJMIuxp1.js (11.5KB) contains visibilitychange+revalidat+5000+LIVE tells = live code deployed. No SSE/WS infra (polling fits file-backed cadence)."
+          },
+          {
+            "task_id": "FE-CHUNK-RECOVER",
+            "title": "Operator-reported: /dashboard/vps root ErrorBoundary + /dashboard/bctc-inspect white page after the 20:07Z frontend rebuild. Root cause = STALE CLIENT BUNDLE (open tab holds pre-rebuild chunk hashes that 404 on client-nav → root crash / blank resource route). Durable fix: chunk-load auto-recovery — vite:preloadError listener (entry.client.tsx) + chunk-aware root ErrorBoundary (root.tsx) reload ONCE per pathname (sessionStorage one-shot guard), non-chunk errors unchanged.",
+            "type": "FIX",
+            "owner": "dev-frontend",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "priority": "high",
+            "note": "Code c4cc7ae1 (entry.client.tsx NEW + root.tsx, tsc 0 errors). ops frontend-only rebuild 2026-06-03T21:52:44Z (new img, container restarted 21:51Z, mcp-server/api-gateway untouched). Router live-verified: served entry.client-CQ22YxN3.js bundle CONTAINS vite:preloadError + chunk_reload_attempted; /dashboard/vps + /dashboard/bctc-inspect both 200. Immediate operator remedy was hard-refresh (Cmd+Shift+R); fix now auto-recovers future redeploys."
           }
         ],
         "_updated_at": "2026-06-02T04:58:02Z",
@@ -1835,6 +1846,29 @@
             "zone": "infra",
             "priority": "high",
             "note": "mcp-server rebuilt img live (endpoint 200), frontend rebuilt (panel+nav). All 5 active containers healthy, volumes preserved, no mass-start. 22:08Z."
+          }
+        ]
+      },
+      {
+        "id": "FE-CHUNK-RECOVER",
+        "label": "Operator-reported stale-bundle crash (chunk hash mismatch after redeploy → root ErrorBoundary)",
+        "status": "DONE",
+        "opened_at": "2026-06-03",
+        "closed_at": "2026-06-03",
+        "priority": "high",
+        "origin": "operator",
+        "tasks": [
+          {
+            "task_id": "FE-CHUNK-RECOVER",
+            "title": "Add vite:preloadError auto-reload guard + chunk-aware ErrorBoundary so stale-bundle clients self-heal after redeploy instead of crashing to the root error boundary",
+            "type": "FIX",
+            "owner": "dev-frontend",
+            "status": "DONE",
+            "size": "S",
+            "zone": "apps/frontend/",
+            "priority": "high",
+            "commit": "c4cc7ae1",
+            "note": "DONE 2026-06-03T22:00Z (dev-frontend). entry.client.tsx CREATED (explicit Remix client entry): window.addEventListener('vite:preloadError') fires window.location.reload() once, guarded by sessionStorage flag keyed 'chunk_reload_attempted:<pathname>' to prevent infinite loop. root.tsx ErrorBoundary upgraded: useRouteError() + isChunkError() regex detects stale-chunk errors by message, triggers same one-shot reload via same sessionStorage flag; non-chunk errors unchanged. tsc --noEmit: 0 errors. ops frontend rebuild required for fix to go live; immediate operator remedy = Cmd+Shift+R."
           }
         ]
       },
