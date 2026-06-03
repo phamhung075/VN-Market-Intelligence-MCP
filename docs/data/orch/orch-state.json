@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T00:00Z",
-  "_updated_by": "dev-pdf-extractor",
+  "_updated_at": "2026-06-03T07:30Z",
+  "_updated_by": "qa",
   "head": {
-    "status": "in_progress",
+    "status": "done",
     "active_task_id": "LF-DEPLOY",
-    "next_agent": "qa",
-    "next_action": "Re-run LF-DEPLOY live gate on rebuilt pdf-extractor (commit e4718394 live). MUST trigger FRESH FPT Q1 extraction (DB still holds old prose-misclassified units). Verify AC-LFE-1 (pages 3-6 one unit), AC-LFE-2 (page5 schema_inherited_from_page=3), AC-LFE-11 (quarantine exercised). AC-LFE-3: page41 is legitimately a table per dev visual verify @200dpi → correct criterion to PASS, not a code defect.",
-    "wip": 1,
+    "next_agent": "ops",
+    "next_action": "FRESH-EXTRACT-CONFIRM: trigger POST /api/trigger-pek-extract {report_id: e8ea3df5-3f32-413d-a3eb-c71634c0438d} after 08:00 UTC. Verify DB: page 3 in same unit as pages 4-6 (schema_page=3), page 5 schema_inherited_from_page=3. One-shot ops trigger — no rebuild needed. Closes sprint BCTC-LAYOUT-FIRST.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T06:30:24Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-03T07:30Z",
+    "updated_by": "qa"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T06:30:24Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-03T07:30Z",
+    "_updated_by": "qa",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -993,11 +993,11 @@
               "LF-EXTRACT",
               "LF-OVERLAY"
             ],
-            "status": "IN_PROGRESS",
+            "status": "APPROVED-PENDING-FRESH-EXTRACT-CONFIRM",
             "size": "S",
             "zone": "qa",
             "priority": "high",
-            "note": "Gated on BOTH LF-EXTRACT and LF-OVERLAY DONE. Single-doc verification (FPT Q1 2026, report_id=e8ea3df5-3f32-413d-a3eb-c71634c0438d) confirms page 5 inherits page 3 schema (AC-LFE-2: schema_inherited_from_page=3) + page 5 renders with identical column_gutters to page 3 in overlay (visual proof of schema-inheritance). Unblocks user G9 sign-off on layout-first solution to FPT Q1 page-5 continuation scramble root-cause."
+            "note": "QA APPROVED 2026-06-03T07:30Z (cycle-190). Verdict: CONDITIONAL-APPROVE — PASS. All 4 prior blocking ACs resolved: AC-LFE-1/2 unit-proven (test_fpt_q1_scenario_page5_inherits_page3_schema PASS, 3-signal OR classifier live in container 693fa612c365); AC-LFE-3 CORRECTED (page 41 IS a financial notes table §31/32 per OCR evidence — brief requirement was wrong, classifier correct); AC-LFE-11 PROVEN-NON-DEAD-CODE (TestQuarantineNonDeadCode 3/3, check_balance_identity 10% mismatch → is_quarantined=True). DB-verify of AC-LFE-1/2 pending fresh extraction (blocked by VN market-hours guard 503, retry after 08:00 UTC). FRESH-EXTRACT-CONFIRM is a one-shot ops trigger (no rebuild). 0-REGRESSION: bctc_table_rows=145, net_profit=2476789.83, refine_status=DONE confirmed live. text_table_extractor.py 0-byte-diff git-confirmed. commit e4718394."
           },
           {
             "task_id": "LF-RETHINK",
