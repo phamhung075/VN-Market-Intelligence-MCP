@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-03T07:30Z",
   "_updated_by": "qa",
   "head": {
-    "status": "done",
-    "active_task_id": "LF-DEPLOY",
-    "next_agent": "ops",
-    "next_action": "FRESH-EXTRACT-CONFIRM: trigger POST /api/trigger-pek-extract {report_id: e8ea3df5-3f32-413d-a3eb-c71634c0438d} after 08:00 UTC. Verify DB: page 3 in same unit as pages 4-6 (schema_page=3), page 5 schema_inherited_from_page=3. One-shot ops trigger — no rebuild needed. Closes sprint BCTC-LAYOUT-FIRST.",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "router",
+    "next_action": "LF-DEPLOY APPROVED (code/container/unit/0-regression). Residual: FRESH-EXTRACT-CONFIRM (ops) blocked until 08:00 UTC market-hours guard — next tick >=08:07 UTC triggers FPT Q1 re-extract + DB-confirms AC-LFE-1/2. BAL-1e-DEV (low) still open.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T07:30Z",
-    "updated_by": "qa"
+    "updated_at": "2026-06-03T06:42:40Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T07:30Z",
+    "_updated_at": "2026-06-03T06:42:40Z",
     "_updated_by": "qa",
     "active_sprints": [
       {
@@ -1023,6 +1023,18 @@
             "zone": "apps/pdf-extractor/",
             "priority": "high",
             "note": "DONE-CODE 2026-06-03 (awaiting ops rebuild). LF-IMPL-1: 3-signal OR classifier in _compute_page_fingerprint_50dpi (Signal B account-code + Signal C date-header, AC-0 reuse _CODE_LIKE_RE/_DATE_HEADER_RE). LF-IMPL-2: _ALLOW_PROSE_IN_TABLE_UNIT relaxed continuity guard (prose-in-table accepted when gutter geometry continuous). LF-IMPL-3: TestQuarantineNonDeadCode PROVEN-GREEN (3 tests). LF-IMPL-4: page-41 visually verified = legitimately table (notes tables §31/32); AC-LFE-3 requirement was wrong — classifier is correct, AC should be PASS. 707/707 unit tests pass, 0 regression. Files: generic_md_table_extractor.py + test_layout_invariants.py + test_document_map.py. NEXT: ops rebuild pdf-extractor → QA LF-DEPLOY re-gate. | LIVE 2026-06-03: ops rebuilt pdf-extractor (container 693fa612c365, 9 grep matches for new constants, health ok). Commit e4718394, 707/707 tests, 0-regression. Page-41 verdict: legitimately a table → AC-LFE-3 was wrong criterion."
+          },
+          {
+            "task_id": "FRESH-EXTRACT-CONFIRM",
+            "title": "Trigger fresh FPT Q1 layout-first re-extract post-08:00 UTC + DB-confirm AC-LFE-1/2 (page3→table, page5 schema_inherited_from_page=3)",
+            "type": "FIX",
+            "owner": "ops",
+            "status": "TODO",
+            "size": "S",
+            "zone": "ops/",
+            "priority": "high",
+            "blocked_until": "2026-06-03T08:00:00Z",
+            "note": "LF-DEPLOY gate APPROVED on code+container+unit+0-regression; only live DB re-extract pending (blocked by VN market-hours guard, /api/trigger-pek-extract → 503 market_open until 08:00 UTC). Post-08:00: POST http://localhost:3000/api/trigger-pek-extract {\"report_id\":\"e8ea3df5-3f32-413d-a3eb-c71634c0438d\"}. Then verify bctc_page_zones: page 3 page_type=table + same unit_id as page 5; page 5 schema_inherited_from_page=3. Confirm step, NOT a new gate. Next cron tick at/after 08:07 UTC handles this."
           }
         ]
       },
