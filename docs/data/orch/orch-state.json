@@ -5,12 +5,12 @@
   "_updated_by": "dev-pdf-extractor",
   "head": {
     "status": "in_progress",
-    "active_task_id": "LF-DEPLOY-IMPL",
-    "next_agent": "dev-pdf-extractor",
-    "next_action": "Implement Tier-0 3-signal OR page_type classifier per brief docs/architecture-briefs/2026-06-03-lf-tier0-fingerprint-rethink.md §5. Then ops rebuild pdf-extractor + qa re-run LF-DEPLOY gate.",
+    "active_task_id": "LF-DEPLOY",
+    "next_agent": "qa",
+    "next_action": "Re-run LF-DEPLOY live gate on rebuilt pdf-extractor (commit e4718394 live). MUST trigger FRESH FPT Q1 extraction (DB still holds old prose-misclassified units). Verify AC-LFE-1 (pages 3-6 one unit), AC-LFE-2 (page5 schema_inherited_from_page=3), AC-LFE-11 (quarantine exercised). AC-LFE-3: page41 is legitimately a table per dev visual verify @200dpi → correct criterion to PASS, not a code defect.",
     "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T06:13:21Z",
+    "updated_at": "2026-06-03T06:30:24Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T06:13:21Z",
+    "_updated_at": "2026-06-03T06:30:24Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -993,7 +993,7 @@
               "LF-EXTRACT",
               "LF-OVERLAY"
             ],
-            "status": "BLOCKED",
+            "status": "IN_PROGRESS",
             "size": "S",
             "zone": "qa",
             "priority": "high",
@@ -1018,11 +1018,11 @@
             "title": "Implement Tier-0 3-signal OR page_type classifier per LF-RETHINK brief §5 (kills the recurring misclassification class)",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
-            "status": "DONE-CODE",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "M",
             "zone": "apps/pdf-extractor/",
             "priority": "high",
-            "note": "DONE-CODE 2026-06-03 (awaiting ops rebuild). LF-IMPL-1: 3-signal OR classifier in _compute_page_fingerprint_50dpi (Signal B account-code + Signal C date-header, AC-0 reuse _CODE_LIKE_RE/_DATE_HEADER_RE). LF-IMPL-2: _ALLOW_PROSE_IN_TABLE_UNIT relaxed continuity guard (prose-in-table accepted when gutter geometry continuous). LF-IMPL-3: TestQuarantineNonDeadCode PROVEN-GREEN (3 tests). LF-IMPL-4: page-41 visually verified = legitimately table (notes tables §31/32); AC-LFE-3 requirement was wrong — classifier is correct, AC should be PASS. 707/707 unit tests pass, 0 regression. Files: generic_md_table_extractor.py + test_layout_invariants.py + test_document_map.py. NEXT: ops rebuild pdf-extractor → QA LF-DEPLOY re-gate."
+            "note": "DONE-CODE 2026-06-03 (awaiting ops rebuild). LF-IMPL-1: 3-signal OR classifier in _compute_page_fingerprint_50dpi (Signal B account-code + Signal C date-header, AC-0 reuse _CODE_LIKE_RE/_DATE_HEADER_RE). LF-IMPL-2: _ALLOW_PROSE_IN_TABLE_UNIT relaxed continuity guard (prose-in-table accepted when gutter geometry continuous). LF-IMPL-3: TestQuarantineNonDeadCode PROVEN-GREEN (3 tests). LF-IMPL-4: page-41 visually verified = legitimately table (notes tables §31/32); AC-LFE-3 requirement was wrong — classifier is correct, AC should be PASS. 707/707 unit tests pass, 0 regression. Files: generic_md_table_extractor.py + test_layout_invariants.py + test_document_map.py. NEXT: ops rebuild pdf-extractor → QA LF-DEPLOY re-gate. | LIVE 2026-06-03: ops rebuilt pdf-extractor (container 693fa612c365, 9 grep matches for new constants, health ok). Commit e4718394, 707/707 tests, 0-regression. Page-41 verdict: legitimately a table → AC-LFE-3 was wrong criterion."
           }
         ]
       },
