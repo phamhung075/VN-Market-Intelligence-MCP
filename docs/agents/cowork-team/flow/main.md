@@ -751,6 +751,11 @@ catch (e):
 
 ## Step 6 — Write telemetry signal
 
+> **INVARIANT:** output MUST use enveloped schema `{from, to, type, payload, priority, createdAt}`.
+> NEVER write flat root-level fields (`classification`, `reason`, `tick_nominal`, `written_at`).
+> All observability fields (`classification`, `reason`, `tick_nominal`, `drift_min`, `matched_slots`,
+> `leader_lock`, `spawned`, `dev_head`, `devq`, `signal_backlog`, `note`) MUST be nested inside `payload:{}`.
+
 After each fire cycle (whether spawns happened or silent exit):
 
 ```bash
@@ -780,7 +785,15 @@ cat > docs/signals/cowork-team-${ISO}.json <<EOF
     "cadence_minutes": { "<slot_id>": "<N|null>" },
     "last_fired_timestamp": "<ISO8601 or null>",
     "last_fired_slots": ["<slot_ids updated>"],
-    "last_fired_write_errors": "<null or error message>"
+    "last_fired_write_errors": "<null or error message>",
+    "classification": "<SILENT|FIRE|HELD|ERROR>",
+    "reason": "<no_cron_match|suppressed|held|spawned|...>",
+    "nominal_tick": "<HH:MM of scheduled tick>",
+    "leader_lock": "<acquired|not_acquired_silent|not_acquired_held|...>",
+    "dev_head": "<idle|active|unknown>",
+    "devq": <pending task count in dev queue>,
+    "signal_backlog": <unprocessed signal count in docs/signals/>,
+    "note": "<free-text observation for this cycle>"
   },
   "priority": "low",
   "createdAt": "${ISO}"
