@@ -3,13 +3,13 @@
   "to": "claude-manager-helper",
   "type": "context_bloat_breach",
   "priority": "high",
-  "createdAt": "2026-05-27T08:23:52Z",
+  "createdAt": "2026-06-03T06:19:25Z",
   "payload": {
-    "file": ".claude/flows/unified-agent/chef.md",
-    "line_count": 254,
-    "cap": 120,
-    "class": "flow-file",
-    "overage": 134,
+    "file": "docs/agent-memory/notebooks/unified-agent.md",
+    "line_count": 207,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 7,
     "action_required": "prune_or_split"
   }
 }

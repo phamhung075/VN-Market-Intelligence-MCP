@@ -1,16 +1,16 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T08:11:47Z",
-  "_updated_by": "dev-team",
+  "_updated_at": "2026-06-03T11:12:00Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "LAYOUT-FIRST grouping blocker RESOLVED + live-verified (5d224e0a + rebuild + fresh extract 10:39:06): AC-LFE-1/2 PASS, p3-6 grouped, p5 inherits p3. CLOSED: LF-GRP-1/2/3, FRESH-EXTRACT-CONFIRM, LF-DEPLOY. PO: BCTC-LAYOUT-FIRST near-closeable (check LF-OVERLAY DONE-PENDING-REBUILD — likely now live post-rebuild). 2 new med follow-ups FU-FPT-OCR-PAGES-20-46 (OCR coverage 20/46) + FU-LF-ORPHAN-ROWS (Tier-3 quarantine). NB-FLOW-SETTLED-WRITE live-verify still pending next chef write; FU-PDFX-HEALTHCHECK cleared-on-rebuild (monitor).",
+    "next_action": "dev-team tick 2026-06-03 ~11:44Z DONE. LF-SERVE-REFLOW closed DONE-LIVE-VERIFIED — BCTC scalar serve-layer recovered across 7-report corpus (force_reflow a353d705 + rebuild e3ddc3f9 + live sweep), FPT Q1 serves correct op_profit/ebitda/cash. LF-OVERLAY confirmed live (router), LF-OVERLAY-REBUILD cancelled (false neg), FU-LF-ORPHAN-ROWS diagnosed+split. BCTC-LAYOUT-FIRST still open: FU-FPT-OCR-PAGES-20-46 (med), FU-LF-VALIDATION-STATUS-REFLOW (med, new), FU-ORPHAN-TOLERANCE (low). PO next: derived-ratio garbage (current_ratio 41e12x, op_margin 0%) on serve path -> prioritize BCTC-ANALYTICS-LAYER/BAL-0 publish gate (evidence appended). NB-FLOW-SETTLED-WRITE still pending next chef write.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T10:46:00Z",
+    "updated_at": "2026-06-03T11:44:00Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T10:46:00Z",
+    "_updated_at": "2026-06-03T11:44:00Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -66,7 +66,7 @@
         "status": "active",
         "opened_at": "2026-06-02",
         "priority": "high",
-        "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch.",
+        "evidence": "Router raw-verified (get_bctc_full live, post-rebuild) after BEQ-9/10 refine. Core extraction incident RESOLVED, but populating real scalars exposed a SEPARATE pre-existing analytics/serving layer with 4 defect clusters: (a) RATIO-COMPUTE — VNM ROE=0/ROA=0/EPS=12VND/NetDebt-EBITDA=-7.5e13x; DHG ROA=7,891,932.0% (analyst falsely claimed fixed). Ratios emit 0 or astronomically wrong. (b) BANK-B02-TCTD-SERVING — SHB + EIB get_bctc_full returns 'balance sheet has no decomposition — forced-zero pass suspected'; banks UNSERVABLE despite DONE + committed scalars. (c) PERIOD-SEMANTICS — FPT 2025-Q4 rev=70112.8/NP=11225.5 are FULL-YEAR cumulative labeled 'Q4'; buildComparisonSection then compares cumulative-FY vs next-quarter -> false -82.2% mislabeled 'YoY'. (d) ENTITY-SCOPE — HPG 2025-Q4 is parent-only B01a (rev=0, conf44%) served as the canonical/headline HPG vs consolidated ~140k rev; misleading. PUBLISH-INTEGRITY GAP: NO semantic-sanity publish guard exists in orch-state (the triage-referenced 'Task #13' is NOT present). The BEQ-9/10 reports are now DONE -> flow into chef docs/agents/unified-agent/flow/market-analysis.md + market-analyst -> ROA 7.8M% / false YoY -82% / parent-only-headline CAN reach MARKET unattended. recurring-bug-escalation: BCTC area has >2 fix cycles -> architect root-cause SPIKE, not point-patch. | [dev-team 2026-06-03T11:44Z observation feeding BAL-0/BAL-1] After LF-SERVE-REFLOW recovered FPT Q1 absolute scalars (op_profit/ebitda/cash live-correct), get_bctc_full(FPT) STILL serves garbage DERIVED ratios: current_ratio=41527873060120x (denominator ~0), operating_margin_pct=0.0% (not recomputed from now-correct operating_profit). Confirms the analytics/serving derived-ratio layer is a distinct defect from scalar extraction. BAL-0 publish semantic-sanity gate MUST block current_ratio out-of-range before MARKET/FB; BAL-1 spike should pin the ratio recompute module. Repro: get_bctc_full(code=FPT).",
         "tasks": [
           {
             "task_id": "BAL-0",
@@ -992,10 +992,10 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": "LF-EXTRACT",
-            "status": "DONE-PENDING-REBUILD",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/",
-            "note": " | LF-OVERLAY DONE-PENDING-REBUILD 2026-06-03: all 6 files committed (2326ebb6). DDL, POST /api/push-bctc-layout, GET /api/bctc-inspect/zones, zone-overlay toggle + SVG renderer in bctc-inspector.html. 34 tests (1272+1273) pass. tsc clean. 128 BCTC regression pass/0 fail. Ops rebuild required for live endpoint. AC-LFO-0..6 met; AC-LFO-7 requires corpus re-extraction after LF-EXTRACT image rebuild."
+            "note": " | LF-OVERLAY DONE-PENDING-REBUILD 2026-06-03: all 6 files committed (2326ebb6). DDL, POST /api/push-bctc-layout, GET /api/bctc-inspect/zones, zone-overlay toggle + SVG renderer in bctc-inspector.html. 34 tests (1272+1273) pass. tsc clean. 128 BCTC regression pass/0 fail. Ops rebuild required for live endpoint. AC-LFO-0..6 met; AC-LFO-7 requires corpus re-extraction after LF-EXTRACT image rebuild. | ROUTER LIVE-VERIFIED 2026-06-03T11:18Z: LF-OVERLAY IS LIVE in container built 04:54Z (commit 2326ebb6 dated 2026-05-26 predates build). GET /api/bctc-inspect/zones/{doc_id}?page=1 -> HTTP 200 (full zone JSON); POST /api/push-bctc-layout -> HTTP 400 (route registered, rejects empty body). No rebuild needed."
           },
           {
             "task_id": "FPT-OPUS-DEEPDIVE",
@@ -1151,20 +1151,69 @@
             "size": "M",
             "zone": "apps/pdf-extractor/",
             "priority": "medium",
-            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: fresh extract Tier-0 logged '14 logical units from 20 OCR pages'; bctc_page_zones now 20 rows (was 46 stale). report has 46 physical pages -> pdf_extracted_text store only held 20 at fetch. Investigate the OCR-text population path for FPT Q1 (report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d); confirm whether pages 21-46 were never OCR'd or evicted. Does NOT affect the grouping-fix verdict (test region 3-6 fully covered)."
+            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: fresh extract Tier-0 logged '14 logical units from 20 OCR pages'; bctc_page_zones now 20 rows (was 46 stale). report has 46 physical pages -> pdf_extracted_text store only held 20 at fetch. Investigate the OCR-text population path for FPT Q1 (report_id e8ea3df5-3f32-413d-a3eb-c71634c0438d); confirm whether pages 21-46 were never OCR'd or evicted. Does NOT affect the grouping-fix verdict (test region 3-6 fully covered). | PO TRIAGE 2026-06-03T11:12Z: kept medium, sequenced AFTER FU-LF-ORPHAN-ROWS. Coverage gap real (20/46 OCR pages) but pages 21-46 are the notes tail; core statements p3-9 ARE covered yet still quarantined (orphan-rows is the gate, not coverage). First-attempt FIX."
           },
           {
             "task_id": "FU-LF-ORPHAN-ROWS",
             "title": "All 4 correctly-grouped multi-page table units now Tier-3 quarantined for orphan_rows (unit d8613f7c pages 3-6: 8 orphan; 33f03d3a pages 7-9: 80 orphan; etc.) — grouping/inheritance structurally correct but downstream content-quality gate fails; root-cause orphan-row detection on multi-page units",
             "type": "FIX",
             "owner": "dev-pdf-extractor",
+            "status": "DONE",
+            "size": "M",
+            "zone": "apps/pdf-extractor/",
+            "priority": "high",
+            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: Tier-3 quarantined 4/14 units for orphan_rows (d8613f7c p3-6=8 orphan; 33f03d3a p7-9=80 orphan incl 2 junk; 13249073 p1-2=32 orphan; 5b828836 p10=16 orphan). Grouping+inheritance structurally correct; orphan-row content-quality gate is the next layer. Root-cause why correctly-grouped multi-page units produce orphan rows. | PO TRIAGE 2026-06-03T11:12Z: ELEVATED med->high + LEADS next batch. Router raw-verified the BINDING blocker: get_bctc_full(FPT) still serves the PRE-FIX persisted Q1-2026 record (Published 2026-05-24: OpProfit=0/EBITDA=0/Cash=0/EPS=1/CurrentRatio=41e12x garbage) because the correctly-grouped fresh layout-first units (report e8ea3df5) are 100% Tier-3 quarantined for orphan_rows -> the entire LAYOUT-FIRST re-arch delivers ZERO live serve-value until this gate is root-caused. This is the kin of the derived-column/Tier-3-quarantine lesson: structurally-correct grouping != served data. First-attempt FIX (no recurring-bug escalation). | ROUTER RAW-CONFIRMED 2026-06-03T11:18Z: zones grouping correct (report e8ea3df5 = 20 pages/14 units, fresh 10:39:06) BUT served financial_reports row STILL 2026-05-24 pdf-parse garbage (operating_profit=0, ebitda=0, cash=1e-6, eps=1, current_ratio=1, validation_status=failed). 145 table_rows + 15 refined_units + 0 md_tables exist for e8ea3df5 yet never derive into served scalar cols. NOTE: bctc_table_rows has NO tier/orphan column — 'Tier-3 orphan_rows quarantine' is a pipeline-stage concept; root-cause WHERE grouped/refined units fail to flow into the served financial_reports row. Gap may span pdf-extractor->mcp-server boundary: diagnose first, fix if in-zone, else report cross-zone. | DONE 2026-06-03T11:32Z (dev-pdf-extractor diag 7aaa71a1, router raw-verified): split into TWO issues. (1) SERVE BUG = the binding blocker, OUT-OF-ZONE in apps/mcp-server finalize_bctc_refine/aggregateScalars — BEQ-3 (c1f3c328) added op_profit(code30)/cash(code110)/financing_cf(code40) mappings AFTER finalize last ran for e8ea3df5, Case2 skip-on-null preserved legacy garbage; bctc_table_rows ALREADY hold correct values (op_profit 2747763M, cash 7993578M verified) -> needs re-derivation -> NEW LF-SERVE-REFLOW (dev-mcp-server). (2) orphan-quarantine = in-zone, NON-blocking (layout_units != served-scalar path): 4/14 units quarantined, root = gutter detection found 0 columns on p7-9 -> 1-col layout 100% orphan; d8613f7c 8.7% over-strict -> deferred FU-ORPHAN-TOLERANCE (low)."
+          },
+          {
+            "task_id": "LF-OVERLAY-REBUILD",
+            "title": "ops rebuild mcp-server to make LF-OVERLAY live — POST /api/push-bctc-layout + GET /api/bctc-inspect/zones + zone-overlay SVG (committed 2326ebb6, mcp-server NOT rebuilt since)",
+            "type": "OPS",
+            "owner": "ops",
+            "depends": [],
+            "status": "CANCELLED",
+            "size": "XS",
+            "zone": "ops/mcp-server",
+            "priority": "medium",
+            "note": "PO TRIAGE 2026-06-03T11:12Z. Router raw-verified LF-OVERLAY NOT live: GET /api/bctc-inspect/zones -> HTTP 404; mcp-server-1 container built 06:54 CEST (~04:54 UTC) PREDATES the LF-OVERLAY code (commit 2326ebb6 touches apps/mcp-server/src/interface/mcp/server.ts + bctc-inspector.html). LF-GRP-3 rebuilt ONLY pdf-extractor (37min). Closes LF-OVERLAY DONE-PENDING-REBUILD. Single-service rebuild (host-safe, 16GB). DoD: GET /api/bctc-inspect/zones returns 200 (not 404). No dev change. | CANCELLED 2026-06-03T11:18Z by router raw-verify: FALSE NEGATIVE. PO curled bare /api/bctc-inspect/zones (no {doc_id}) -> 404; correct route is /api/bctc-inspect/zones/{doc_id}?page=N (server.ts:513) -> HTTP 200 live. mcp-server already contains 2326ebb6 (May 26 commit, today 04:54Z build). Nothing to rebuild."
+          },
+          {
+            "task_id": "LF-SERVE-REFLOW",
+            "title": "Re-derive served financial_reports scalars from already-correct bctc_table_rows for FPT Q1-2026 (report e8ea3df5) + the pre-BEQ-3 corpus — BEQ-3 (c1f3c328, 2026-06-02) added operating_profit/cash/financing_cf/capex/FCF mappings to aggregateScalars but finalize_bctc_refine never re-ran for already-DONE reports, so served scalars keep legacy pdf-parse garbage (validation_status=failed). Root-cause why backfill_bctc_scalars eligibility predicate skips e8ea3df5; run the re-derivation; verify served values live; close the reflow-on-mapping-add gap so future scalar additions auto-reflow.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "depends": [
+              "FU-LF-ORPHAN-ROWS"
+            ],
+            "note": "Cross-zone handoff from FU-LF-ORPHAN-ROWS (dev-pdf-extractor diag 7aaa71a1). Router raw-confirmed: financial_reports e8ea3df5 served op_profit=0/ebitda=0/cash=1e-6/eps=1 (2026-05-24 pdf-parse, validation_status=failed) WHILE bctc_table_rows holds code30=2747763827050, code110=7993577611642, code40=2586191593366, code02=409926454508. backfill_bctc_scalars tool exists (BEQ-2/3, c1f3c328) + BEQ-2-backfill-eligibility.test — pin why e8ea3df5 is skipped. NOT a code-formula bug (BEQ-3 fixed formula) — derived-column-needs-reflow. eps has no VAS code in aggregator by design (separate FU-FPT-OCR/EPS-FOOTNOTE territory). | DONE-LIVE-VERIFIED 2026-06-03T11:44Z: force_reflow fix committed a353d705 (5 tests pass), ops rebuilt mcp-server (e3ddc3f9, healthy, force_reflow live), ran backfill_bctc_scalars(force_reflow=true) -> 7 reports re-derived (SHB/FPT-Q4/VNM-Q4/HPG-Q4/EIB/FPT-Q1/DHG), 0 balance_violations, 7 correctly skipped (0-table-row VCB/BSR/DGC/DIG/CTG + ACB PARTIAL-missing-income-stmt). LIVE PROOF get_bctc_full(FPT): OperatingProfit 2747.8 ty / EBITDA 3157.7 ty / Cash 7993.6 ty / TotalAssets 68586.1 ty (was 0/0/1e-6). Definitif: force_reflow is the durable reflow-after-mapping-change lever. RESIDUALS (out of scope, routed): (a) derived ratios still wrong on serve path — current_ratio=41e12x, operating_margin=0% — NOT recomputed by scalar aggregator -> BCTC-ANALYTICS-LAYER/BAL territory; (b) validation_status stays 'failed' stale -> FU-LF-VALIDATION-STATUS-REFLOW; (c) eps=1 no-VAS-code -> footnote territory."
+          },
+          {
+            "task_id": "FU-ORPHAN-TOLERANCE",
+            "title": "Deferred in-zone (non-blocking): check_no_orphan_rows fires on ANY orphan — over-strict for unit d8613f7c (8.7% orphan, otherwise valid). Root issue = column-detection found NO gutters on FPT p7-9 (income stmt + CF) -> 1-column layout, all OCR in label slot, 100% orphan. Add a tolerance threshold (allow <=5% orphan ratio) so partially-clean units pass, and improve gutter detection on dense statement pages. Does NOT affect served scalars (layout_units != table_rows derivation path).",
+            "type": "FIX",
+            "owner": "dev-pdf-extractor",
             "status": "TODO",
             "size": "M",
             "zone": "apps/pdf-extractor/",
+            "priority": "low",
+            "note": "Deferred non-blocker, in-zone. From 7aaa71a1 Issue 2."
+          },
+          {
+            "task_id": "FU-LF-VALIDATION-STATUS-REFLOW",
+            "title": "backfill_bctc_scalars force_reflow updates scalar columns but leaves validation_status + parsed_at stale — FPT Q1 e8ea3df5 now serves correct scalars yet validation_status still 'failed' (from the old garbage state), so a consumer filtering on validation_status would wrongly skip now-correct data. Re-run validation (or clear stale fail when balance_violations=0) as part of the reflow path so good data is not stranded.",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
             "priority": "medium",
-            "note": "qa LF-GRP-3 finding 2026-06-03T10:39Z: Tier-3 quarantined 4/14 units for orphan_rows (d8613f7c p3-6=8 orphan; 33f03d3a p7-9=80 orphan incl 2 junk; 13249073 p1-2=32 orphan; 5b828836 p10=16 orphan). Grouping+inheritance structurally correct; orphan-row content-quality gate is the next layer. Root-cause why correctly-grouped multi-page units produce orphan rows."
+            "note": "Surfaced by LF-SERVE-REFLOW live-verify 2026-06-03. Reflow fixes scalars but not validation flag."
           }
-        ]
+        ],
+        "priority": "high"
       },
       {
         "id": "CHEF-ATTN",

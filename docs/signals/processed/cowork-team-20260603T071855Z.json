@@ -1,0 +1,18 @@
+{
+  "classification": "WON",
+  "tick_nominal": "07:15",
+  "drift_min": 3,
+  "matcher_slots": [
+    "chef-intraday"
+  ],
+  "leader_lock": "acquired_stolen",
+  "per_item_token": "claimed_released",
+  "dedup_gate": "injected_chef-published:chef-intraday:2026-06-03",
+  "spawns": 1,
+  "spawned_agent": "unified-agent/a3a7c3a16e0dadbb6",
+  "expected": "silent_exit_marker_held",
+  "dev_head": "idle/router/null",
+  "devq": 0,
+  "signal_backlog": 0,
+  "written_at": "20260603T071855Z"
+}

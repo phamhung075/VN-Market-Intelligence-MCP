@@ -1,0 +1,19 @@
+{
+  "classification": "WON",
+  "tick_nominal": "08:45",
+  "drift_min": 3,
+  "matcher_slots": [
+    "chef-eod"
+  ],
+  "leader_lock": "self_held_heartbeat",
+  "per_item_token": "claimed_released",
+  "dedup_gate": "injected_chef-published:chef-eod:2026-06-03",
+  "spawns": 1,
+  "spawned_agent": "unified-agent/adb0e198d05760dd1",
+  "guaranteed": true,
+  "expected": "genuine_MARKET_publish_first_eod_today",
+  "dev_head": "idle/router/null",
+  "devq": 0,
+  "signal_backlog": 2,
+  "written_at": "20260603T084902Z"
+}
