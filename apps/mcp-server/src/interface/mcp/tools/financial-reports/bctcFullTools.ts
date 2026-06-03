@@ -25,6 +25,7 @@ import { computeSentimentTrend } from "../../../../domain/services/sentimentTren
 import { logger } from "../../../../infrastructure/logger.js";
 import type { FinancialMetrics } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
 import { isBankFormFromDb } from "../../../../domain/services/financial-reports/bctcFormType.js";
+import { validateFinancialReport } from "../../../../domain/services/financial-reports/bctcValidator.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -100,6 +101,20 @@ export interface ReportRow {
    * NULL           — unknown / not yet tagged (PUB-8 falls back to inline heuristic).
    */
   report_scope: string | null;
+  /**
+   * FU-LF-VALIDATION-STATUS-REFLOW: persisted validation status (from parseBctcReport).
+   * May be stale for reports refined after 2026-05-24. The serve path recomputes
+   * this on-read from corrected scalars — the persisted column is only a fallback.
+   * Values: 'passed' | 'passed_with_warnings' | 'failed' | 'low_confidence' | 'pending'
+   * Optional: column may not be present in legacy test fixtures (added as nullable migration).
+   */
+  validation_status?: string | null;
+  /**
+   * FU-LF-VALIDATION-STATUS-REFLOW: human-readable notes from the original validation.
+   * May be stale. The computed notes are preferred at serve time.
+   * Optional: column may not be present in legacy test fixtures.
+   */
+  validation_notes?: string | null;
 }
 
 interface RagRow {
@@ -198,6 +213,7 @@ export function buildSummarySection(
   row: ReportRow,
   bankForm = false,
   sanitizedRatios?: PublishabilityCheck["sanitizedRatios"],
+  computedValidationStatus?: { status: string; note: string | null },
 ): string {
   // C-2: gross profit line — banks show net interest income proxy instead
   const grossProfitLine = bankForm
@@ -219,6 +235,11 @@ export function buildSummarySection(
   const effectiveCurrentRatio = sanitizedRatios
     ? sanitizedRatios.current_ratio
     : row.current_ratio;
+  // FU-DE-SERVE-HONEST: debt_to_equity from recompute-on-read is already null for
+  // empty-decomposition case. PUB-6 sanitizedRatios may further null it (defense-in-depth).
+  const effectiveDebtToEquity = sanitizedRatios
+    ? sanitizedRatios.debt_to_equity
+    : row.debt_to_equity;
   const pub6Note = sanitizedRatios
     ? `[PUB-6] Some ratio(s) withheld (N/A) — out-of-bounds value detected; likely unit scale or stale pre-refine ratio.`
     : null;
@@ -251,7 +272,7 @@ export function buildSummarySection(
     `ROE              : ${fmtPct(effectiveRoe)}`,
     `ROA              : ${fmtPct(effectiveRoa)}`,
     currentRatioLine,
-    `D/E Ratio        : ${fmtX(row.debt_to_equity)}`,
+    `D/E Ratio        : ${fmtX(effectiveDebtToEquity)}`,
     `Net Debt/EBITDA  : ${fmtX(effectiveNetDebtToEbitda)}`,
     `P/E              : ${fmtX(row.pe)}`,
     `P/B              : ${fmtX(row.pb)}`,
@@ -259,6 +280,13 @@ export function buildSummarySection(
     ``,
     `Confidence       : ${(row.extraction_confidence * 100).toFixed(0)}%`,
     `Published        : ${row.published_at}`,
+    // FU-LF-VALIDATION-STATUS-REFLOW: show recomputed validation status (not stale persisted value)
+    ...(computedValidationStatus
+      ? [
+          ``,
+          `Validation       : ${computedValidationStatus.status}${computedValidationStatus.note ? ` — ${computedValidationStatus.note}` : ""}`,
+        ]
+      : []),
   ];
   return lines.join("\n");
 }
@@ -478,6 +506,8 @@ interface PublishabilityCheck {
     eps: number | null;
     /** BAL-1f: current_ratio plausibility band — null when > 1000x (parse artifact). */
     current_ratio: number | null;
+    /** FU-DE-SERVE-HONEST: debt_to_equity — null when decomposition absent (micro-residual + liabilities present). */
+    debt_to_equity: number | null;
   };
 }
 
@@ -712,6 +742,22 @@ export function checkPublishability(
     if (row.current_ratio != null && row.current_ratio > 1000) {
       badRatios.push(`CurrentRatio=${row.current_ratio.toFixed(0)}x`);
     }
+    // FU-DE-SERVE-HONEST PUB-6 defense-in-depth: D/E = 0.00x while total_liabilities > 0
+    // → debt decomposition absent; false 'debt-free' must not reach MARKET/FB.
+    // The recompute-on-read block above already sets debt_to_equity=null for this case,
+    // so this PUB-6 branch is defense-in-depth for any path that bypasses recompute
+    // (e.g. persisted pre-fix value escaping the guard, or a future code path).
+    // Trigger: debt_to_equity=0 (exact zero from null debt scalars) AND total_liabilities > 0.
+    // Also catches micro-residuals (e.g. 2.7e-13) via the implausibly-small threshold.
+    const DE_MICRO_THRESHOLD = 1e-6;  // below this value is a floating-point artifact, not real
+    if (
+      row.debt_to_equity !== null &&
+      row.debt_to_equity <= DE_MICRO_THRESHOLD &&
+      row.total_liabilities !== null &&
+      row.total_liabilities > 0
+    ) {
+      badRatios.push(`D/E=${row.debt_to_equity.toExponential(2)} (decomp absent, total_liab=${row.total_liabilities.toFixed(0)})`);
+    }
     if (badRatios.length > 0) {
       return {
         publishable: true,
@@ -727,6 +773,14 @@ export function checkPublishability(
           // BAL-1f: current_ratio plausibility band — > 1000x → null (rendered as N/A).
           current_ratio:
             row.current_ratio != null && row.current_ratio > 1000 ? null : row.current_ratio,
+          // FU-DE-SERVE-HONEST: D/E micro-residual + liabilities present → null (decomp absent).
+          debt_to_equity:
+            row.debt_to_equity !== null &&
+            row.debt_to_equity <= DE_MICRO_THRESHOLD &&
+            row.total_liabilities !== null &&
+            row.total_liabilities > 0
+              ? null
+              : row.debt_to_equity,
         },
       };
     }
@@ -976,13 +1030,55 @@ export function registerBctcFullTools(
           }
 
           // debt_to_equity: (short_term_debt + long_term_debt) / equity_total
-          latestRow.debt_to_equity =
-            short_term_debt !== null &&
-            long_term_debt !== null &&
-            equity_total !== null &&
-            equity_total > 0
-              ? safeDivideRead(short_term_debt + long_term_debt, equity_total)
-              : null;
+          //
+          // FU-DE-SERVE-HONEST: guard against false 'debt-free 0.00x' when debt
+          // decomposition is absent from the refined data.
+          // Root cause: refine pipeline leaves short_term_debt + long_term_debt ≈ 0
+          // for reports where the liabilities decomposition was not extracted
+          // (FPT-Q1/VNM/EIB/SHB/DHG are affected). The arithmetic debt/equity = ~0
+          // is correct given the data but materially false as a published signal
+          // (total_liabilities carries the real value, just not decomposed).
+          //
+          // Guard: if (short_term_debt + long_term_debt) is implausibly tiny
+          // AND total_liabilities > 0, the decomposition is absent — serve N/A.
+          //
+          // Threshold: debt sum must be ≥ 0.1% of total_liabilities to be meaningful.
+          // Absolute floor: ≥ 1.0 million VND (mirrors BAL-1f current_ratio floor).
+          // Micro-residuals (e.g. 2.7e-13 from FPT-2025Q4) and zeros both fail.
+          //
+          // SCOPE BOUNDARY: FU-DE-DECOMP-MAPPING (upstream data gap, architect spike)
+          // is NOT in scope here — this is the serve-honesty half only.
+          {
+            const debtSum =
+              short_term_debt !== null && long_term_debt !== null
+                ? short_term_debt + long_term_debt
+                : null;
+            const totalLiab = latestRow.total_liabilities;
+
+            const MIN_DEBT_FRACTION = 0.001;  // 0.1% of total_liabilities
+            const MIN_DEBT_ABSOLUTE = 1.0;    // 1 million VND floor
+
+            // Check if decomposition is plausibly present:
+            //   debtSum must exist, ≥ MIN_DEBT_ABSOLUTE, and ≥ MIN_DEBT_FRACTION of total_liab
+            const debtDecompPlausible =
+              debtSum !== null &&
+              debtSum >= MIN_DEBT_ABSOLUTE &&
+              (totalLiab === null || totalLiab === 0 || debtSum >= totalLiab * MIN_DEBT_FRACTION);
+
+            if (debtDecompPlausible && equity_total !== null && equity_total > 0) {
+              latestRow.debt_to_equity = safeDivideRead(debtSum!, equity_total);
+            } else if (!debtDecompPlausible && totalLiab !== null && totalLiab > 0) {
+              // Decomposition absent (micro-residual or zero) while real liabilities exist.
+              // Serve N/A — false 'debt-free' is a publishable misrepresentation.
+              latestRow.debt_to_equity = null;
+            } else {
+              // Standard null path: debtSum null or equity ≤ 0
+              latestRow.debt_to_equity =
+                debtSum !== null && equity_total !== null && equity_total > 0
+                  ? safeDivideRead(debtSum, equity_total)
+                  : null;
+            }
+          }
 
           // net_debt_to_ebitda: (short_term_debt + long_term_debt - cash) / ebitda
           // Guard: ebitda > 0 (mirrors ratioComputer.ts L132)
@@ -994,6 +1090,67 @@ export function registerBctcFullTools(
             ebitda > 0
               ? safeDivideRead(short_term_debt + long_term_debt - cash, ebitda)
               : null;
+        }
+
+        // ── FU-LF-VALIDATION-STATUS-REFLOW: Recompute validation_status on read ──
+        //
+        // Root cause: validation_status is set at OCR-parse time and frozen there.
+        // After refine corrects the balance scalars, the persisted validation_status
+        // remains 'failed' with stale notes (e.g. 'Liabilities (0) + Equity (0)')
+        // even for balance-EXACT reports like FPT-2026Q1.
+        //
+        // Fix (recompute-on-read, mirrors BAL-1a Option R pattern):
+        //   Call validateFinancialReport with the NOW-CORRECT latestRow scalars
+        //   (after the BAL-1a recompute block above has mutated latestRow).
+        //   This kills the stale class corpus-wide without requiring a re-finalize pass.
+        //
+        // The computed status is used only for OUTPUT (Validation line in summary).
+        // It is NOT written back to the DB here — finalizeBctcRefineTool BLOCK-4
+        // handles the write-back for future-finalized reports (prong a of the fix).
+        //
+        // Note: isBankForm is needed for bctcValidator C-5/C-7 guards.
+        // We compute bankFormForValidation inline here (before the main bankForm
+        // discriminator below) using the same isBankFormFromDb call.
+        let computedValidationStatus: { status: string; note: string | null } | undefined;
+        {
+          const bankFormForValidation = isBankFormFromDb(db, latestRow.id);
+          const valResult = validateFinancialReport({
+            balanceSheet: {
+              totalAssets: latestRow.total_assets,
+              totalLiabilities: latestRow.total_liabilities,
+              equityTotal: latestRow.equity_total,
+              currentAssets: latestRow.current_assets,
+              nonCurrentAssets:
+                latestRow.total_assets > 0 && latestRow.current_assets > 0
+                  ? latestRow.total_assets - latestRow.current_assets
+                  : 0,
+            },
+            incomeStatement: {
+              netRevenue: latestRow.net_revenue,
+              grossProfit: latestRow.gross_profit,
+              netProfit: latestRow.net_profit,
+            },
+            extractionConfidence: latestRow.extraction_confidence,
+            isBankForm: bankFormForValidation,
+          });
+
+          let computedStatus: string;
+          if (!valResult.isValid) {
+            computedStatus = "failed";
+          } else if (valResult.warnings.length > 0) {
+            computedStatus = "passed_with_warnings";
+          } else {
+            computedStatus = "passed";
+          }
+
+          const note: string | null =
+            valResult.errors.length > 0
+              ? valResult.errors.slice(0, 2).join("; ")
+              : valResult.warnings.length > 0
+                ? valResult.warnings.slice(0, 2).join("; ")
+                : null;
+
+          computedValidationStatus = { status: computedStatus, note };
         }
 
         // ── Compute bank-form discriminator ──────────────────────────────
@@ -1037,7 +1194,8 @@ export function registerBctcFullTools(
 
         // ── 2. Build the three sections ──────────────────────────────────
         // Pass sanitizedRatios from PUB-6 check (null when gate did not fire).
-        const summarySection = buildSummarySection(upperCode, latestRow, bankForm, pubCheck.sanitizedRatios);
+        // Pass computedValidationStatus (recomputed on-read from corrected scalars).
+        const summarySection = buildSummarySection(upperCode, latestRow, bankForm, pubCheck.sanitizedRatios, computedValidationStatus);
         const comparisonSection = buildComparisonSection(db, upperCode, latestRow, bankForm);
         const sentimentSection = buildSentimentSection(db, upperCode);
 

@@ -480,7 +480,7 @@ describe("PUB-6 (BAL-0): ratio sanity bounds gate", () => {
   it("DV-BAL0-PUB6-9: buildSummarySection renders N/A for sanitized ROA", () => {
     const row = makeRow({ roa: 7891932 });
     // Sanitized: roa=null
-    const sanitized = { roa: null, roe: null, net_debt_to_ebitda: null, eps: null, current_ratio: null };
+    const sanitized = { roa: null, roe: null, net_debt_to_ebitda: null, eps: null, current_ratio: null, debt_to_equity: null };
     const output = buildSummarySection("DHG", row, false, sanitized);
     // GREEN: 7891932 must not appear anywhere in summary output
     expect(output).not.toContain("7891932");

@@ -45,6 +45,7 @@ import {
   computeBctcEval,
   loadBctcEvalThresholds,
 } from "../../../../application/usecases/computeBctcEval.js";
+import { validateFinancialReport } from "../../../../domain/services/financial-reports/bctcValidator.js";
 
 // ── DB row types ──────────────────────────────────────────────────────────────
 
@@ -891,6 +892,102 @@ export function buildFinalizeBctcRefineHandler(
         logger.warn("[finalize_bctc_refine] BLOCK-3 ratio re-derive error (non-fatal)", {
           report_id,
           error: ratioErr instanceof Error ? ratioErr.message : String(ratioErr),
+        });
+      }
+
+      // ── BLOCK-4: Re-run balance/identity validation from corrected scalars ──────
+      //
+      // Root cause (FU-LF-VALIDATION-STATUS-REFLOW):
+      //   validation_status is frozen at OCR-parse time (parseBctcReport.ts).
+      //   BLOCK-1 corrects base scalars, BLOCK-3 re-derives ratios, but
+      //   validation_status stays 'failed' with stale notes (e.g. 'Liabilities (0) +
+      //   Equity (0)') even for balance-EXACT reports after refine.
+      //   A consumer filtering validation_status='passed' wrongly skips correct data.
+      //
+      // Fix (finalize prong): after BLOCK-1+BLOCK-3 commit the corrected scalars,
+      //   re-run validateFinancialReport from the freshly committed values, then
+      //   UPDATE validation_status + validation_notes to reflect the CURRENT state.
+      //   Future finalizes will write a fresh validation_status (not the frozen parse one).
+      //
+      // Non-fatal: error logged; scalar/ratio backfills already committed.
+      // isBankFormFromRows uses the already-computed finalRows (same source as C-4 above).
+      try {
+        interface ValidationSourceRow {
+          net_revenue: number | null;
+          gross_profit: number | null;
+          net_profit: number | null;
+          total_assets: number | null;
+          total_liabilities: number | null;
+          equity_total: number | null;
+          current_assets: number | null;
+          extraction_confidence: number | null;
+        }
+        const valSrc = db
+          .prepare<ValidationSourceRow, [string]>(
+            `SELECT net_revenue, gross_profit, net_profit,
+                    total_assets, total_liabilities, equity_total,
+                    current_assets, extraction_confidence
+             FROM financial_reports WHERE id = ?`,
+          )
+          .get(report_id);
+
+        if (valSrc) {
+          const isBankForValidation = isBankFormFromRows(finalRows);
+
+          const valResult = validateFinancialReport({
+            balanceSheet: {
+              totalAssets:      valSrc.total_assets      ?? 0,
+              totalLiabilities: valSrc.total_liabilities ?? 0,
+              equityTotal:      valSrc.equity_total      ?? 0,
+              currentAssets:    valSrc.current_assets    ?? 0,
+              nonCurrentAssets:
+                (valSrc.total_assets ?? 0) > 0 && (valSrc.current_assets ?? 0) > 0
+                  ? (valSrc.total_assets ?? 0) - (valSrc.current_assets ?? 0)
+                  : 0,
+            },
+            incomeStatement: {
+              netRevenue:  valSrc.net_revenue  ?? 0,
+              grossProfit: valSrc.gross_profit ?? 0,
+              netProfit:   valSrc.net_profit   ?? 0,
+            },
+            extractionConfidence: valSrc.extraction_confidence ?? 1,
+            isBankForm: isBankForValidation,
+          });
+
+          let newValidationStatus: string;
+          if (!valResult.isValid) {
+            newValidationStatus = "failed";
+          } else if (valResult.warnings.length > 0) {
+            newValidationStatus = "passed_with_warnings";
+          } else {
+            newValidationStatus = "passed";
+          }
+
+          const newValidationNotes: string | null =
+            valResult.errors.length > 0
+              ? valResult.errors.join("; ")
+              : valResult.warnings.length > 0
+                ? valResult.warnings.join("; ")
+                : null;
+
+          db.prepare(
+            "UPDATE financial_reports SET validation_status = ?, validation_notes = ? WHERE id = ?",
+          ).run(newValidationStatus, newValidationNotes, report_id);
+
+          logger.info("[finalize_bctc_refine] BLOCK-4 validation_status refreshed (FU-LF-VALIDATION-STATUS-REFLOW)", {
+            report_id,
+            new_status: newValidationStatus,
+            is_valid: valResult.isValid,
+            error_count: valResult.errors.length,
+            warning_count: valResult.warnings.length,
+          });
+        }
+      } catch (valErr) {
+        // Non-fatal: scalar/ratio backfills already committed.
+        // Stale validation_status remains; bctcFullTools recompute-on-read handles it.
+        logger.warn("[finalize_bctc_refine] BLOCK-4 validation refresh error (non-fatal)", {
+          report_id,
+          error: valErr instanceof Error ? valErr.message : String(valErr),
         });
       }
 
