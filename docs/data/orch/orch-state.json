@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "/goal complete-all-backlog-and-todo MET 2026-06-03: all actionable items DONE/DONE-LIVE-VERIFIED (2 operator hotfixes + COV-1/2 + DEV-VOLUME + FIX-CTG-2 deployed + heartbeat-schema); 6 items DEFERRED-with-evidence (async-VPS/product/infra/sequenced/out-of-scope); 2 low-pri follow-ups queued (FIX-CTG-2b, NB-COWORK-MAIN-SPLIT). head idle.",
+    "next_action": "dev-team tick 2026-06-03 ~20:4xZ: drained 11 signals (10 cowork heartbeat + 1 resolved heartbeat-schema brief). FPT ESC-3 (16-cycle) root-caused = data coverage not tool bug; shipped loop-stop guard (BCTC-ESC-GUARD, 3 commits, flow files split back under 120L cap). head idle. Underlying data-coverage fix BCTC-HIST-VPS-BACKFILL still DEFERRED-INFRA (now ops gets ONE routed signal per guard).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T20:40:14Z",
+    "updated_at": "2026-06-03T20:55:10Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T20:40:14Z",
+    "_updated_at": "2026-06-03T20:55:10Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1823,6 +1823,40 @@
             "note": "mcp-server rebuilt img live (endpoint 200), frontend rebuilt (panel+nav). All 5 active containers healthy, volumes preserved, no mass-start. 22:08Z."
           }
         ]
+      },
+      {
+        "id": "BCTC-ESC-GUARD",
+        "label": "Stop bctc-analyst FPT ESC-3 false-escalation loop (16 cycles): get_cash_flow honors quarters (DONE), real blocker = data coverage (2 of 8 quarters). Guard classifies DATA-COVERAGE-LIMITED, claims 30d guard, routes ONE signal to ops, stops re-escalation.",
+        "status": "DONE",
+        "opened_at": "2026-06-03",
+        "priority": "medium",
+        "origin": "cron-drain",
+        "tasks": [
+          {
+            "task_id": "ESC-GUARD-DESIGN",
+            "title": "agents-architect brief: ESC-3 data-coverage guard (reuse TTL mechanism, esc-datacov: 30d, route to ops)",
+            "type": "DESIGN",
+            "owner": "agents-architect",
+            "status": "DONE",
+            "commit": "2a40d47e"
+          },
+          {
+            "task_id": "ESC-GUARD-IMPL",
+            "title": "agent-father impl 4 edits in bctc-analyst flow (coverage pre-flight + handler + stale-NOTE fix + deep-dive early-exit)",
+            "type": "FIX",
+            "owner": "agent-father",
+            "status": "DONE",
+            "commit": "061ce406"
+          },
+          {
+            "task_id": "ESC-GUARD-SPLIT",
+            "title": "agent-father lazy-load split: extract guard to flow/esc-coverage-guard.md; main.md 167->118L, deep-dive 124->120L, all <=120 cap",
+            "type": "REFACTOR",
+            "owner": "agent-father",
+            "status": "DONE",
+            "commit": "0b00e15d"
+          }
+        ]
       }
     ],
     "backlog": [
@@ -2290,7 +2324,7 @@
         "type": "esc-deep-dive-request",
         "summary": "ESC deep-dive: FPT Q1-2026 ESC-3 (OCF/NI divergence) — 16th consecutive cycle. guard_key=esc-deepdive:FPT:Q1-2026:ESC-3 re-claimed (prior 24h TTL expired). OCF=-2,847,813 VND mn vs NI=+2,476,800 VND mn, divergence_ratio=2.15. Prior Opus deep-dive DONE (a38e14ee, conf=0.35 MIXED/partial-artifact). FU-BCTC-TOOL-PARAMS (get_cash_flow quarters param silently ignored) may be the root blocker for multi-quarter accrual decomposition.",
         "severity": "HIGH",
-        "status": "NEW",
+        "status": "DONE",
         "payload_ref": null,
         "payload": {
           "trigger_id": "ESC-3",
@@ -2310,7 +2344,8 @@
           "all_esc_fired": [
             "ESC-3"
           ]
-        }
+        },
+        "disposition": "Router live-verified get_cash_flow(FPT,quarters=8): quarters_requested=8 honored, periods[] returned, only 2 quarters of FPT data in corpus. FU-BCTC-TOOL-PARAMS genuinely DONE. Root=data coverage (BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA). Loop-stop guard shipped (BCTC-ESC-GUARD design 2a40d47e/impl 061ce406/split 0b00e15d). Next cycle the analyst will self-classify DATA-COVERAGE-LIMITED, claim 30d guard, route ONE signal to ops, stop re-escalating to dev-team."
       }
     ],
     "archive": [
