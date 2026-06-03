@@ -4,16 +4,22 @@
  */
 import { Outlet, NavLink, Link } from "@remix-run/react";
 
-const NAV_ITEMS = [
+type NavItem = { to: string; label: string; reload?: boolean };
+
+const NAV_ITEMS: NavItem[] = [
   { to: "/dashboard/analysis", label: "Analysis" },
   { to: "/dashboard/services", label: "Services" },
   { to: "/dashboard/fetch", label: "Fetch Ops" },
   { to: "/dashboard/vps", label: "VPS Proxy" },
   { to: "/dashboard/db", label: "Database" },
   { to: "/dashboard/bctc-eval", label: "BCTC Eval" },
-  { to: "/dashboard/bctc-inspect", label: "BCTC Inspect" },
+  // bctc-inspect is a resource route (loader-only, no default-export component).
+  // Client-side SPA navigation would try to mount a component inside <Outlet />
+  // and render a blank pane. reloadDocument forces a full browser navigation so
+  // the raw HTML response loads as a real document and its scripts execute.
+  { to: "/dashboard/bctc-inspect", label: "BCTC Inspect", reload: true },
   { to: "/dashboard/orchestration", label: "Orchestration" },
-] as const;
+];
 
 export default function DashboardLayout() {
   return (
@@ -42,10 +48,11 @@ export default function DashboardLayout() {
             >
               Home
             </NavLink>
-            {NAV_ITEMS.map(({ to, label }) => (
+            {NAV_ITEMS.map(({ to, label, reload }) => (
               <NavLink
                 key={to}
                 to={to}
+                reloadDocument={reload ?? false}
                 className={({ isActive }) =>
                   [
                     "rounded px-3 py-1.5 text-sm font-medium transition-colors",
