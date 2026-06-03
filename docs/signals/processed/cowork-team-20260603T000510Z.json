@@ -1,0 +1,30 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "pressure_mode": "legacy",
+  "tick_nominal": "00:00",
+  "drift_min": 3,
+  "won_slots": [
+    "bctc-analyst-slot-4",
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "leader_lock": {
+    "claimed": true,
+    "stolen": true,
+    "renewed": false
+  },
+  "slot_tokens_claimed": 3,
+  "tokens_released": true,
+  "e2_guard": "passed_offmarket_00:03Z",
+  "cycle_snapshot": "cycle-snapshot-00:00.json",
+  "calendar_status": "open",
+  "spawns": 3,
+  "spawn_mode": "background_parallel",
+  "agents": [
+    "bctc-analyst",
+    "news-scout",
+    "market-watcher"
+  ],
+  "emitted_at": "2026-06-03T00:05:10Z"
+}

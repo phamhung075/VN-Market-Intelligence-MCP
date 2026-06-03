@@ -1,0 +1,19 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "tick_nominal": "02:13",
+  "drift_min": 3,
+  "matcher_slots": [
+    "chef-intraday"
+  ],
+  "leader_lock": "acquired_stolen",
+  "spawns": 1,
+  "spawned_agents": [
+    "unified-agent:chef-intraday"
+  ],
+  "dedup_gate": "injected",
+  "dev_head": "active/dev-pdf-extractor/BCTC-LAYOUT-FIRST",
+  "devq": 1,
+  "signal_backlog": 22,
+  "written_at": "20260603T021943Z"
+}

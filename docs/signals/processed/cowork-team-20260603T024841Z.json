@@ -1,0 +1,15 @@
+{
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "tick_nominal": "02:45",
+  "drift_min": 3,
+  "matcher_slots": [],
+  "leader_lock": "not_acquired_silent",
+  "spawns": 0,
+  "dev_head": "active/dev-pdf-extractor/BCTC-LAYOUT-FIRST",
+  "devq": 1,
+  "signal_backlog": 28,
+  "new_queue_rows": 1,
+  "new_rows_note": "1 NEW = own cowork-drainlag row to po (non-cowork lane), left NEW",
+  "written_at": "20260603T024841Z"
+}

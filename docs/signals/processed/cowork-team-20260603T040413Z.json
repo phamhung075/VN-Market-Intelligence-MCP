@@ -1,0 +1,24 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "tick_nominal": "04:00",
+  "drift_min": 3,
+  "matcher_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "slot_mode": "legacy_gatherer",
+  "leader_lock": "acquired_stolen",
+  "per_item_token": "claimed_released_x2",
+  "spawns": 2,
+  "spawned_agents": [
+    "news-scout:news-scout-offhours",
+    "market-watcher:market-watcher-offhours"
+  ],
+  "dedup_gate": "n/a_gatherers_no_market_publish",
+  "dev_head": "active/dev-pdf-extractor/BCTC-LAYOUT-FIRST",
+  "devq": 1,
+  "signal_backlog": 34,
+  "prior_tick_note": "~03:48 SILENT tick dropped on malformed call, no slot lost",
+  "written_at": "20260603T040413Z"
+}

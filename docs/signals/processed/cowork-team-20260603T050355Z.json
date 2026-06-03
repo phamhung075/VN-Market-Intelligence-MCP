@@ -1,0 +1,21 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "tick_nominal": "05:00",
+  "drift_min": 3,
+  "matcher_slots": [
+    "news-scout-sentiment"
+  ],
+  "slot_mode": "legacy",
+  "leader_lock": "acquired_stolen",
+  "per_item_token": "claimed_released",
+  "dedup_gate": "n/a_gatherer",
+  "spawns": 1,
+  "spawned": [
+    "news-scout"
+  ],
+  "dev_head": "active/dev-pdf-extractor/BCTC-LAYOUT-FIRST",
+  "devq": 1,
+  "signal_backlog": 38,
+  "written_at": "20260603T050355Z"
+}

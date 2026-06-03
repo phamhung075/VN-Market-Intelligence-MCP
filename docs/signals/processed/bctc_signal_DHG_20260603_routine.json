@@ -1,0 +1,20 @@
+{
+  "ticker": "DHG",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "cycle_id": "20260603-0000",
+  "generated_at": "2026-06-03T00:07Z",
+  "valuation_verdict": "DATA_INSUFFICIENT",
+  "status": "PUB-5_BLOCKED",
+  "extraction_confidence_pct": 44,
+  "consecutive_cycles_blocked": 10,
+  "blocker": "PUB-5: extraction confidence 44% < 50% minimum",
+  "note": "DHG extraction blocked 10th consecutive cycle. BAL-1d-DEV fix needed (report_scope + PUB-5 upgrade).",
+  "product": "Branded pharmaceuticals, OTC drugs, prescription drugs (DHG Pharma)",
+  "customer": "Hospital formularies, retail pharmacy chains, OTC consumers",
+  "ops": "DATA_INSUFFICIENT — confidence too low for reliable analysis",
+  "mgmt": "Established pharma company; requires full extraction to assess current quarter"
+}

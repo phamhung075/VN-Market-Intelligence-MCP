@@ -1,0 +1,22 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "tick_nominal": "03:13",
+  "drift_min": 3,
+  "matcher_slots": [
+    "chef-intraday"
+  ],
+  "slot_mode": "legacy",
+  "leader_lock": "acquired_stolen",
+  "per_item_token": "claimed_released",
+  "spawns": 1,
+  "spawned_agents": [
+    "unified-agent:chef-intraday"
+  ],
+  "dedup_gate": "injected",
+  "dedup_marker": "chef-published:chef-intraday:2026-06-03",
+  "dev_head": "active/dev-pdf-extractor/BCTC-LAYOUT-FIRST",
+  "devq": 1,
+  "signal_backlog": 30,
+  "written_at": "20260603T031907Z"
+}

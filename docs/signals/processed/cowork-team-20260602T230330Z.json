@@ -1,0 +1,15 @@
+{
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "tick_nominal": "23:00",
+  "drift_min": 3,
+  "matcher_slots": [],
+  "head_status": "active",
+  "head_next_agent": "dev-pdf-extractor",
+  "new_cowork_rows": 0,
+  "dev_queue_depth": 1,
+  "signal_backlog": 4,
+  "leader_lock": "not_acquired_silent",
+  "spawns": 0,
+  "emitted_at": "2026-06-02T23:03:30Z"
+}
