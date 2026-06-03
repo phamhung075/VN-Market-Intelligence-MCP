@@ -235,7 +235,12 @@ const P_TOTAL_ASSETS = /t[ổo]ng\s+(?:c[ộo]ng\s+)?t[àa]i\s+s[ảa]n/i;
 // Liabilities
 const P_TOTAL_LIABILITIES = /n[ợo]\s+ph[ảa]i\s+tr[ảa]/i;
 const P_CURRENT_LIABILITIES = /n[ợo]\s+ng[ắa]n\s+h[ạa]n/i;
+// P_SHORT_TERM_DEBT: matches code 321 "Vay và nợ thuê tài chính ngắn hạn" (current VAS standard)
 const P_SHORT_TERM_DEBT = /vay\s+v[àa]\s+n[ợo]\s+thu[êe]\s+t[àa]i\s+ch[ía]nh\s+ng[ắa]n\s+h[ạa]n/i;
+// P_SHORT_TERM_DEBT_ALT: matches code 319 "Vay ngắn hạn" (older VAS layout, still used by some issuers).
+// This label hint ensures we only pick up borrowings rows, NOT "Phải trả ngắn hạn khác" rows
+// that also use code 319 on some issuers. (FIX-DE-4)
+const P_SHORT_TERM_DEBT_ALT = /vay\s+ng[ắa]n\s+h[ạa]n/i;
 const P_ACCOUNTS_PAYABLE = /ph[ảa]i\s+tr[ảa]\s+ng[ưu][ờo]i\s+b[áa]n\s+ng[ắa]n\s+h[ạa]n/i;
 const P_ADVANCES_FROM_CUSTOMERS = /ng[ưu][ờo]i\s+mua\s+tr[ảa]\s+ti[ềe]n\s+tr[ưu][ớo]c/i;
 const P_TAX_PAYABLE = /thu[ếe]\s+v[àa]\s+c[áa]c\s+kho[ảa]n\s+ph[ảa]i\s+n[ộo]p/i;
@@ -725,8 +730,23 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   }
 
   // --- Current liabilities ---
+  // FIX-DE-4: shortTermDebt — use code 321 (current VAS standard: "Vay và nợ thuê tài chính ngắn hạn")
+  // as the primary lookup. Fall back to code 319 label-only via P_SHORT_TERM_DEBT_ALT ("Vay ngắn hạn")
+  // for older VAS layouts (e.g. VNM).
+  //
+  // IMPORTANT: the code-319 fallback is label-only (no code number passed to fv). This is intentional —
+  // code 319 is mapped to "Phải trả ngắn hạn khác" (other payables, NOT borrowings) on some issuers.
+  // The label pattern P_SHORT_TERM_DEBT_ALT only matches lines containing "vay ngắn hạn", which excludes
+  // those payables rows. Passing codeNum=319 to fv would defeat this guard (findValueByCode has no label
+  // filter). Mirror of FIX-DE-1 /vay/i label-hint logic in bctcScalarAggregator.ts.
+  //
+  // Code 311 ("Phải trả người bán" — accounts payable) MUST NOT map to shortTermDebt.
+  const shortTermDebt =
+    fv(P_SHORT_TERM_DEBT, "321", 321) ||
+    fv(P_SHORT_TERM_DEBT_ALT); // label-only fallback — no code number (safety: see note above)
+
   const currentLiabilities: CurrentLiabilities = {
-    shortTermDebt: fv(P_SHORT_TERM_DEBT, "311", 311),
+    shortTermDebt,
     accountsPayable: fv(P_ACCOUNTS_PAYABLE, "311", 311),
     advancesFromCustomers: fv(P_ADVANCES_FROM_CUSTOMERS, "312", 312),
     taxPayable: fv(P_TAX_PAYABLE, "313", 313),
@@ -736,8 +756,15 @@ export function extractBalanceSheet(rawText: string): BalanceSheet {
   };
 
   // --- Long-term liabilities ---
+  // FIX-DE-4: longTermDebt — use code 339 (current VAS standard: "Vay và nợ thuê tài chính dài hạn")
+  // as primary lookup. Fall back to code 334 ("Vay dài hạn") for older VAS layouts.
+  // Mirror of FIX-DE-1 logic in bctcScalarAggregator.ts.
+  const longTermDebt =
+    fv(P_LONG_TERM_DEBT, "339", 339) ||
+    fv(P_LONG_TERM_DEBT, "334", 334);
+
   const longTermLiabilities: LongTermLiabilities = {
-    longTermDebt: fv(P_LONG_TERM_DEBT, "334", 334),
+    longTermDebt,
     deferredTaxLiabilities: fv(P_DEFERRED_TAX_LIABILITIES, "337", 337),
     otherLongTermLiabilities: fv(P_OTHER_LONG_TERM_LIABILITIES, "338", 338),
     total: fv(P_LONG_TERM_LIABILITIES, "330", 330),
