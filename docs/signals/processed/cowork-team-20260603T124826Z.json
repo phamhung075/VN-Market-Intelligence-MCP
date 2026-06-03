@@ -1,0 +1,13 @@
+{
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "tick_nominal": "12:45",
+  "drift_min": 3,
+  "matcher_slots": [],
+  "leader_lock": "not_acquired_silent",
+  "spawns": 0,
+  "dev_head": "idle/router/null",
+  "devq": 0,
+  "signal_backlog": 3,
+  "written_at": "20260603T124826Z"
+}

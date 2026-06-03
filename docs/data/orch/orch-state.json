@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "dev-team tick 2026-06-03 ~12:36Z DONE. BAL-1f closed DONE-LIVE-VERIFIED — derived-ratio serve garbage fixed (FPT current_ratio 41e12x->N/A, op_margin 0%->22%; VNM no-regression). Re-opened a 'DONE' analytics layer after router caught board-vs-live contradiction (BAL-1a marked done but serve still broken). head idle. Open backlog (PO): BCTC-LAYOUT-FIRST FU-FPT-OCR-PAGES-20-46(med)+FU-LF-VALIDATION-STATUS-REFLOW(med)+FU-ORPHAN-TOLERANCE(low); BAL-1e-DEV(low EPS); FLEET-HOST-SAFETY 2 low. WATCH: D/E 0.00x both FPT+VNM — possible unpopulated debt scalars, verify. NB-FLOW-SETTLED-WRITE pending next chef write.",
+    "next_action": "dev-team tick 2026-06-03 ~13:14Z DONE. 2 serve-honesty FIX shipped+live: FU-LF-VALIDATION-STATUS-REFLOW (stale validation_status recompute-on-read; FPT/VNM 'failed'->'passed' live) + FU-DE-SERVE-HONEST (false '0.00x debt-free' -> honest N/A; FPT/VNM live). head idle. Open (PO): FU-DE-DECOMP-MAPPING(architect SPIKE — upstream debt decomposition empty on balance-complete reports, BAL-1 premise was wrong); FU-FPT-OCR-PAGES-20-46(med); FU-ORPHAN-TOLERANCE(low); BAL-1e-DEV(low EPS); FLEET-HOST-SAFETY 2 low; NB-FLOW-SETTLED-WRITE pending next chef write.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T12:36:00Z",
+    "updated_at": "2026-06-03T13:29:55Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T12:36:00Z",
+    "_updated_at": "2026-06-03T13:29:55Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -269,6 +269,31 @@
             "zone": "apps/mcp-server/",
             "priority": "high",
             "note": "PO triage 2026-06-03T12:12Z + router raw-confirmed (live get_bctc_full FPT + DB + code read bctcFullTools.ts). Re-opens the derived-ratio layer: BAL-1a-BACKFILL-IMPL (b7329f54) recompute-on-read ships 2 LIVE garbage values for FPT e8ea3df5. (1) Current Ratio 41527873060120x — recompute L865-882 guards clTotal>0 only, but balance_sheet_json.currentLiabilities.total=0.000001 (parse artifact; all components ~0) passes -> current_assets 41527873.06 / 0.000001 = 4.15e13 (overrides persisted=1). Guard must treat implausibly-tiny/zero denominator as N/A (mirror VNM honest N/A). (2) Operating margin 0.0% — recompute block OMITS operating_margin_pct; buildSummarySection L233 reads stale persisted col=0 while op_profit 2747763.83 / rev 12479997.21 = TRUE 22.02%. Recompute operating_margin_pct (+gross/net for completeness). (3) Defense-in-depth: add current_ratio plausibility band to PUB-6 so out-of-range never reaches MARKET/FB (no such gate today). Mirror ratioComputer.ts SSOT (operatingMarginPct L81-85, currentRatio L122). Direct FIX (not spike): recompute block has 1 prior commit, narrow edge. DoD: LIVE raw get_bctc_full(FPT) post-rebuild -> Current Ratio N/A + op_margin ~22%; VNM no-regression (ROE27.3/ROA17.7/CR N/A). Unit-green NOT sufficient (BAL-1a-QA prior DONE-FAIL-VERDICT). ops rebuild required. | DONE-LIVE-VERIFIED 2026-06-03T12:36Z: commit 3b210204 (36 tests pass, tsc clean), ops rebuilt mcp-server (healthy, BAL-1f live), router live get_bctc_full raw-verify. FPT: Operating margin 22.0% (was 0.0%) + Current Ratio N/A (was 41527873060120x) + ROE6.2/ROA3.6 unchanged. VNM no-regression: ROE27.3/ROA17.7/CR N/A + op-margin 18.3% recomputed. Fix: (a) current_ratio guard clTotal>=1.0M VND AND >=0.1% current_assets + result>1000x->null; (b) recompute operating/gross/net margin in serve block; (c) PUB-6 current_ratio>1000x band. WATCH (unconfirmed, for PO): D/E shows 0.00x FPT+VNM — interest-bearing debt scalars (short/long_term_debt) may be unpopulated, same class as LF-SERVE-REFLOW; verify before scoping."
+          },
+          {
+            "task_id": "FU-DE-SERVE-HONEST",
+            "title": "D/E must serve N/A (not 0.00x) when debt-scalars empty but total_liabilities>0; add D/E plausibility band to PUB-6",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "note": "[dev-team 2026-06-03T13:14:46Z] NEW from PO — D/E WATCH verified raw = real serve defect: FPT+VNM serve 'D/E 0.00x' while carrying real liabilities (debt-scalars empty). False 'debt-free'. Serve-honesty half (N/A guard mirroring BAL-1f current_ratio) + PUB-6 band. Batched with FU-LF-VALIDATION-STATUS-REFLOW (same file family bctcFullTools.ts → serialized in ONE dev-mcp-server agent). | [dev-team 2026-06-03T13:29:55Z] DONE-LIVE-VERIFIED (commit e74dd0e1). LIVE: FPT D/E N/A (was false '0.00x' w/ liab 28.5T); VNM D/E N/A (was 0.00x w/ liab 18.8T) — debtDecompPlausible guard (debt-sum >=1.0M AND >=0.1% total_liab) serves honest N/A on empty decomposition + PUB-6 micro-residual band. no-over-suppress (HPG real short_term_debt=38,729 keeps true D/E) is UNIT-proven only — HPG/EIB PUB-5-gated live so real-debt D/E not live-showable this tick (honest caveat). Upstream decomposition data-gap → FU-DE-DECOMP-MAPPING architect SPIKE (backlog, not this tick)."
+          },
+          {
+            "task_id": "FU-DE-DECOMP-MAPPING",
+            "title": "SPIKE (architect): why does refine leave liabilities decomposition + interest-bearing-debt scalars (short/long_term_debt) empty on balance-COMPLETE reports? BAL-1 spike premise 'base scalars correct' was FALSE for this path. Upstream data-gap, multi-week class — root-cause the decomposition mapping, do NOT band-aid at serve.",
+            "type": "SPIKE",
+            "owner": "architect",
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "medium",
+            "depends": [
+              "FU-DE-SERVE-HONEST"
+            ],
+            "note": "[dev-team 2026-06-03T13:14:46Z] backlog — upstream data-gap split off per recurring-bug rule; NOT in this tick's batch."
           }
         ]
       },
@@ -1217,11 +1242,11 @@
             "title": "backfill_bctc_scalars force_reflow updates scalar columns but leaves validation_status + parsed_at stale — FPT Q1 e8ea3df5 now serves correct scalars yet validation_status still 'failed' (from the old garbage state), so a consumer filtering on validation_status would wrongly skip now-correct data. Re-run validation (or clear stale fail when balance_violations=0) as part of the reflow path so good data is not stranded.",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "medium",
-            "note": "Surfaced by LF-SERVE-REFLOW live-verify 2026-06-03. Reflow fixes scalars but not validation flag."
+            "note": "Surfaced by LF-SERVE-REFLOW live-verify 2026-06-03. Reflow fixes scalars but not validation flag. | [dev-team 2026-06-03T13:14:46Z] IN_PROGRESS — PO re-triaged: validation_status stale-failed on now-correct corpus (FPT-Q1 balance-EXACT live yet validation_status='failed'). Fix at finalize + recompute-on-read serve path. Live-verify required (BAL-1a-QA carried DONE-FAIL-VERDICT here). | [dev-team 2026-06-03T13:29:55Z] DONE-LIVE-VERIFIED (commit e74dd0e1, ops rebuild img 13:27Z). LIVE: get_bctc_full(FPT) Validation=passed (was stale 'failed'; identity 68,586.1=40,122+28,464.1 holds); get_bctc_full(VNM) Validation=passed (53,312.4=34,483+18,829.4). recompute-on-read in serve path = corpus-wide, no re-finalize needed. Low-quality reports (HPG 44%/EIB 31% PUB-5-gated, BSR no-rows) gated BEFORE validation_status matters → none served as false 'passed'."
           }
         ],
         "priority": "high"
