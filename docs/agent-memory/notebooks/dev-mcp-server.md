@@ -1,5 +1,22 @@
 # dev-mcp-server -- Notebook
 
+## c353 · 2026-06-03 (BAL-1f) — COMMITTED 3b210204
+
+**Task:** BAL-1f — current_ratio micro-residual guard + operating_margin recompute (BCTC-ANALYTICS-LAYER, HIGH)
+
+**Defects fixed:**
+- DEFECT-1: FPT current_ratio=4.15e13x — clTotal=1e-6 (parse artifact) passed `clTotal>0` guard. Fix: clTotal must be ≥ 0.1% of current_assets AND ≥ 1.0 million VND absolute floor. Result band: >1000x → null. FPT → N/A.
+- DEFECT-2: FPT operating_margin_pct=0.0% (stale persisted column, recompute block omitted it). Fix: recompute gross/operating/net margin in recompute-on-read block; income-broken guard mirrors ratioComputer.ts L71-72. FPT → 22.0%.
+- DEFECT-3: PUB-6 defense-in-depth: current_ratio>1000x band added to sanitizedRatios; buildSummarySection uses effectiveCurrentRatio.
+
+**Files:** bctcFullTools.ts (+60L recompute guard + margin recompute + PUB-6 band + sanitizedRatios.current_ratio); 240-bctc-full.test.ts (+4 BAL-1f tests TC-1..4); BAL-0-pub5-8-gates.test.ts (type fix: sanitizedRatios.current_ratio added to literal).
+
+**Tests:** 11 pass / 0 fail (240-bctc-full); 25 pass / 0 fail (BAL-0-pub5-8-gates); tsc EXIT 0. RED→GREEN: TC-1 (4.15e13→N/A), TC-2 (0%→22%), TC-3 (VNM N/A no regression), TC-4 (healthy 2.00x not suppressed).
+
+**ops_rebuild_required: true** (live verify: get_bctc_full(FPT) → Current Ratio=N/A, Operating Profit margin≈22.0%)
+
+---
+
 ## c352 · 2026-06-03 (LF-OVERLAY) — COMMITTED 2326ebb6 + b3c80e69 (orch-state flip)
 
 **Task:** LF-OVERLAY — Sprint BCTC-LAYOUT-FIRST Phase 0, persistence + viewer-overlay half
@@ -33,161 +50,9 @@
 
 ---
 
-## c350 · 2026-06-02 (FU-BCTC-TOOL-PARAMS) — COMMITTED 7ed5b722
+## c349–c351 (pruned) — see git log for details
 
-**Task:** FU-BCTC-TOOL-PARAMS — get_cash_flow honors `quarters` param (HIGH, S)
-
-**Bug fixed:** `quarters` param in schema was silently ignored; handler always returned LIMIT 1 single latest period regardless of requested N. Blocked analyst ESC-3 accrual decomposition FPT Q1-2026 (11-cycle loop).
-
-**Changes:**
-- `cashFlowTool.ts`: add `quarters` z.coerce.number().int().min(1).max(20).optional() to InputSchema + MCP tool registration. When effectiveQuarters ≥ 2: SQL `LIMIT 1 → LIMIT N`, `.get()→.all()`, builds `periods[]` array newest-first, attaches `quarters_requested`/`quarters_returned` to envelope. Top-level fields always = latest period (backward compat). period/year pin overrides quarters. WC scalars added: `wc_inventory`, `wc_current_assets`, `wc_cash` (financial_reports scalar columns); accounts_receivable/payable NOT exposed (balance_sheet_json only — noted in JSDoc). Both primary + fallback (vnstock) paths support series.
-- 6 existing test files: `inventory`/`current_assets`/`cash` columns added to in-memory DDL.
-- New test: `FU-BCTC-TOOL-PARAMS.test.ts` — 10 tests: series ordering, backward compat, period pin precedence, WC fields, vnstock fallback series, cold DB.
-
-**Results:** tsc EXIT 0. 50 pass / 0 fail (impacted suite: 7 files). 10 new tests pass. Pre-existing failures (Task 308 / get_technical_indicators / newsHeadlines = 9 total) confirmed identical before/after — unrelated to cash flow. ops_rebuild_required: mcp-server.
-
----
-
-## c349 · 2026-06-02 (BCTC-ANALYTICS-LAYER BAL-1a-BACKFILL) — COMMITTED b7329f54
-
-**Task:** BAL-1a-BACKFILL — Option R recompute-on-read in `get_bctc_full` serve path (architect-approved 2026-06-02T14:14Z)
-
-**Root cause addressed:** Persisted ratio columns (roe, roa, current_ratio, debt_to_equity, net_debt_to_ebitda) retain stale OCR-parse values after refine corrects base scalars. VNM roe=0 (incomeBroken at parse time); DHG roa=7891932 (unit-scale error). BAL-1a finalize BLOCK-3 only fixes newly re-finalized rows; historical rows still carry stale ratios.
-
-**Implementation (Option R):** In `bctcFullTools.ts` `get_bctc_full` handler, immediately after `latestRow` is read from DB and before `checkPublishability` is called: inline-recompute 5 ratios from correct base scalars, mutate `latestRow` in place. Same formulas and safeDivide contract as finalizeBctcRefineTool.ts BLOCK-3 (BAL-1a). `balance_sheet_json` added to `ReportRow` interface to support `current_ratio` recompute (currentLiabilities.total from blob — same source as BLOCK-3 L749-767).
-
-**SSOT proof:** Formulas mirror finalizeBctcRefineTool.ts BLOCK-3 exactly: same scalars, same guards (equity_total>0, total_assets>0, ebitda>0), same null-safety (denominator null/zero/negative → null). safeDivideRead = same contract as safeDivideLocal in BLOCK-3 = same contract as ratioComputer.ts safeDivide.
-
-**Files changed:** `bctcFullTools.ts` (+115 lines: ReportRow.balance_sheet_json, recompute block); `240-bctc-full.test.ts` (+101 lines: schema column + 2 BAL-1a tests TC-R1/R2); `BAL-0-pub5-8-gates.test.ts` (+4 lines: schema column + DV-BAL0-PUB6-2 assertion updated for Option R); `BANK-AWARE-1-consumer-audit.test.ts` (+1 line: balance_sheet_json: null in bankRow).
-
-**DV-BAL0-PUB6-2 update note:** With Option R, stale roa=7891932 is replaced by recomputed 3.0% before PUB-6 sees it — PUB-6 does not fire. Primary invariant ("7891932 not in output") still holds. "ROA=N/A" assertion replaced by "ROA present, no PUB-6 RATIO-SANITY note".
-
-**tsc:** EXIT 0. **Tests:** 81 pass / 0 fail (4 impacted files). Pre-existing TR-RED-5b (TRUST-RED-sanity-gate.test.ts: Expected DONE/Received PARTIAL) confirmed identical before/after. **ops_rebuild_required: true** (do NOT rebuild; router bundles with BAL-1c).
-
----
-
-## c348 · 2026-06-02 (BCTC-ANALYTICS-LAYER BAL-0) — COMMITTED 9093f385
-
-**Task:** BAL-0 — structural publish-integrity gate PUB-5..8 in `bctcFullTools.ts`
-
-**PUB-5:** `extraction_confidence < 0.5` → `publishable=false` (HPG parent-only at 44% blocked).
-**PUB-6:** `|ROA|>100%` or `|ROE|>300%` or `|NetDebt/EBITDA|>200x` or `EPS∉[0,100000]` → offending ratio(s) null in `sanitizedRatios`; report served with N/A + trust note (does NOT block full report). DHG ROA=7891932% → N/A, not served as garbage.
-**PUB-7:** `period_type=Q4` vs non-Q4 (or reverse) → `buildComparisonSection` returns mismatch message, no delta emitted. Kills false FPT YoY -82.2% from cumulative-vs-standalone.
-**PUB-8:** `net_revenue=0 AND net_profit>0 AND conf<0.6` → `publishable=false` (parent-only heuristic).
-
-**Signature change:** `checkPublishability(db, reportId, bankForm?, row?)` — 4th param is the `ReportRow` object to avoid a second DB query.
-**`buildSummarySection` extended:** 4th param `sanitizedRatios` from PUB-6; ROA/ROE/NetDebt/EPS rendered as N/A when sanitized.
-
-**DV tests:** 25 new tests in `BAL-0-pub5-8-gates.test.ts` RED→GREEN. 46 total pass (existing 21 + 25 new) / 0 fail. tsc EXIT 0. ops_rebuild_required: true.
-
-**SHB/EIB diagnostic (read-only container census — disambiguates B-1 vs B-2):**
-- EIB: `isBankFormFromDb=true`, rows in `balance_sheet` (18 non-summary, non-null) NOT in `general`. PUB-3 bank path (queries `statement_section='general'`) → 0 rows → blocked. Corporate path → 18 rows.
-- SHB: same pattern — `isBankFormFromDb=true`, 19 non-summary `balance_sheet` rows, 0 in `general`.
-- **Root cause CONFIRMED: Candidate B-1 variant** — NOT the expected discriminator failure. `isBankFormFromDb` correctly returns `true` (no 3-digit codes). But the bank PUB-3 path queries `statement_section='general'`, while the parser wrote rows to `statement_section='balance_sheet'`. The fix is in `checkPublishability` PUB-3 bank path: also accept `statement_section='balance_sheet'` for banks (or remove the section filter for the bank path). Tracked BAL-1b-DEV.
-
-**Zone health:** tsc 0 errors | 46 pass / 0 fail | tools count unchanged | sched unchanged | HEALTHY
-
----
-
-## c347 · 2026-06-02 (BCTC-EXTRACT-QUALITY Phase-2 BEQ-5..8b) — COMMITTED 5 SHAs
-
-**Tasks:** BEQ-5 (1da34f8d) → BEQ-6 (a8cbe91d) → BEQ-7 (6b2f72b2) → BEQ-8 (1f726140) → BEQ-8b (8845e5d6)
-
-**BEQ-5:** `bctcSectionCompleteness.ts` (NEW domain fn) — `checkSectionCompleteness(rows)→{hasBalanceSheet,hasIncomeStatement,hasCashFlow,isComplete}`. Treats `general` ≡ `balance_sheet` (legacy extractor tag). 4 DV tests.
-
-**BEQ-6:** `backfillBctcScalarsTool.ts` — section completeness gate before `aggregateScalars`. Balance-sheet-only rows → `status=SKIPPED, refine_status=PARTIAL` (never DONE). Unconditional-DONE path structurally guarded. 3 DV tests.
-
-**BEQ-7:** `finalizeBctcRefineTool.ts` — server-side safety net: after agentic refine parses markdown, overrides caller-supplied DONE to PARTIAL if sections incomplete. Empty finalRows also → PARTIAL. 3 DV tests.
-
-**BEQ-8:** `bctcScalarAggregator.ts` line 578 — replaces `findByCode(rows,"10")===null` with `isBankFormFromRows(rows)`. Prevents false-bank classification of balance-sheet-only corporates (FPT/VNM/DHG). DRY: single SSOT discriminator. 3 DV tests.
-
-**BEQ-8b:** `bctcInspectHandler.ts` LIST_SQL — extends `IN ('PENDING')` to `IN ('PENDING','PARTIAL')`. After BEQ-5/6/7 tickers transition PENDING→PARTIAL; legacy net_profit still garbage → withhold. 3 DV tests.
-
-**Gates:** tsc EXIT 0 | 32/32 pass (BEQ-2..8b) | RED→GREEN proven all 5 tasks | **ops_rebuild_required: true** | Next: qa formal gate → ops rebuild mcp-server → BEQ-9 agentic refine
-
----
-
-## c346 · 2026-05-31 (FU-TRUST-REFRESH FU-6f) — COMMITTED 9aa2b2eb
-
-**Task:** FU-6f — fix B-1 bank eval anchors, B-2 income_stmt_json blob sync, B-3 PUB-3 balance section fix.
-
-**B-1 (BLOCKING):** `computeBctcEval.ts` — reads `domain` from `financial_reports`. When domain matches /bank/i, goldenAnchors=["net_revenue","net_profit"] (excludes gross_profit). Corporate unchanged (3 anchors). Fixes ACB eval false-red: 2/3=0.667 < 0.9 → stage-6 red. bctc-eval-routes.test.ts schema updated with `domain TEXT` column (missing → 500 error).
-
-**B-2 (BLOCKING):** `finalizeBctcRefineTool.ts` — after scalar null-clear (FU-6e), also syncs JSON blobs. Mapping: gross_profit→grossProfit in income_stmt_json; current_assets→currentAssets in balance_sheet_json. Non-fatal blob sync errors logged. ACB income_stmt_json.grossProfit: 6,989,162 → null.
-
-**B-3 (scope-contained fix):** `bctcFullTools.ts` checkPublishability PUB-3 — OR clause: also accepts 'general' rows with CAST(code AS INTEGER) BETWEEN 100 AND 440. Fixes "balance sheet has no decomposition — forced-zero pass suspected" for FPT+ACB where parser lands balance rows in 'general'. Full section-label rework deferred to BCTC-LAYOUT-FIRST. B-3 does NOT need re-refine (no re-parse required; query change only).
-
-**Tests:** 8 new DV-FU6F-* tests RED→GREEN. 134 pass / 0 fail across 11 files. tsc: 0 errors.
-
-**ops_rebuild_required:** rebuild mcp-server → re-finalize ACB (fea19bae) + FPT (e8ea3df5) → recompute eval both → QA re-gate. B-3 does NOT require re-refine (no new parse step).
-
----
-
-## c345 · 2026-05-31 (FU-TRUST-REFRESH FU-6e) — COMMITTED b63d7988
-
-**Task:** FU-6e — not-applicable null-clear for bank scalars (last QA blocker)
-
-**Root cause:** ACB gross_profit=6,989,162=net_revenue (100% margin) because old finalize null-skip (`if (agg.gross_profit !== null)`) never cleared stale legacy pdf-parse value when aggregator correctly returned null for bank (no code "20").
-
-**3-case update logic (generalized):**
-- Case 1 NOT-APPLICABLE: `notApplicable[]` from aggregator → SET NULL explicitly → clears stale legacy values (bank gross_profit, current_assets, gross_margin_pct).
-- Case 2 EXPECTED-BUT-NULL: corporate gross_profit miss → SKIP → preserves prior value (FU-5 intent intact).
-- Case 3 RESOLVED non-null: SET value (unchanged).
-
-**notApplicable enum:**
-- BANK (isBankPath = code "10" absent): gross_profit, current_assets, gross_margin_pct.
-- CORPORATE: [] (symmetric audit — nothing bank-has-that-corps-lack at this time).
-- isBankPath detection: same branch aggregator already uses for fallthrough to code "I" path — DRY, no second detector.
-
-**Changes:** `bctcScalarAggregator.ts` (add `notApplicable: string[]` to `ScalarAggregateResult`, populate on bank path); `finalizeBctcRefineTool.ts` (3-case update, single combined UPDATE statement).
-
-**Anti-false-green tests:** FU-6e-not-applicable-clear.test.ts — 6 pass / 45 expect() calls. Log confirms: ACB null_cleared_cols=["gross_profit","current_assets","gross_margin_pct"], FPT null_cleared_cols=[]. All prior 50 tests (FU-5/5b/6c/6d) still green. tsc --noEmit EXIT 0.
-
-**ops_rebuild_required: true** — rebuild mcp-server + re-finalize ACB (fea19bae) [expected: gross_profit=NULL, gross_margin_pct=NULL] + re-finalize FPT (e8ea3df5) regression-confirm [gross must stay 4,244,890 NOT nulled] + recompute eval, QA final re-gate.
-
----
-
-## c344 · 2026-05-31 (FU-TRUST-REFRESH FU-6d) — COMMITTED 88a07bb4
-
-**Task:** FU-6d — generalize all 3 bank-path scalar resolution bugs (BLOCK-A/B/C from QA TASK_REPORT_FU-4-REGATE)
-
-BLOCK-A: null-valued section header wins equity pick → `findByLabel`/`findByLabelExcluding` now prefer non-null candidates globally.
-BLOCK-B: Roman code VIII/IX collision → `P_BANK_CODE_VIII_PBT_HINT` + `P_BANK_CODE_IX_NET_PROFIT_HINT` labelHints added; labelHint made STRICT (no match → null); P_PBT regex fixed for two-codepoint "ướ".
-BLOCK-C: `enforceBalanceIdentity` fails open on null equity → now returns "REQUIRED SCALARS UNRESOLVED" when any of {total_assets, total_liabilities, equity_total} is null but not all.
-
-**Gates:** tsc EXIT 0 | 27 pass / 0 fail | RED→GREEN proven | ops_rebuild_required: true (ACB+FPT re-finalize)
-
----
-
-## c343 · 2026-05-31 (FU-TRUST-REFRESH FU-6c) — COMMITTED 736cac22
-
-**Task:** FU-6c — bctcScalarAggregator root-cause fix: label-canonical + balance-identity invariant
-
-Fixed: FPT code-280 total assets (not code-270), ACB equity exclusion, ACB code "I" collision. Introduced `balanceViolation` field in `ScalarAggregateResult`. 7 DV tests RED→GREEN. All FU-5/FU-5b still green.
-
-**Gates:** tsc EXIT 0 | 38 pass / 0 fail | ops_rebuild_required: true
-
----
-
-## c342 · 2026-05-31 (FU-TRUST-REFRESH FU-5b) — COMMITTED bfd25762
-
-**Task:** FU-5b — parseVnNumber parens-negative fix + fail-loud one-pass audit
-
-Fixed: parens-negative rows (COGS, some equity lines) silently dropped → retained with value_current=null + [UNPARSEABLE] log. 23 DV tests. ops_rebuild_required: true.
-
----
-
-## c341 · 2026-05-31 (FU-TRUST-REFRESH FU-5) — COMMITTED 6cc75437
-
-**Task:** FU-5 — BLOCK-1 scalar backfill + BLOCK-2 eval recompute in finalizeBctcRefineTool
-
-New: bctcScalarAggregator.ts (domain pure). Modified finalizeBctcRefineTool.ts: dynamic SET UPDATE + computeBctcEval inline. 8 DV tests. ops_rebuild_required: true.
-
----
-
-## c325–c340 (pruned) — see git log for details
-
-Key sprints: MACRO-CMDTY-DELTA (c340), DYN-WF-FOUNDATION DWF-DEV-MCP-1 is_trading_day (c339), BCTC-TRUST-RED (c338 — DT-1/2/3/4 validators), BCTC-AI-INPUT-TAB (c335–c336), BCTC-HUMAN-CONFIRM HC-DEV-1→7 (c330–c335), BTB-PERSIST-FIX (c327), DPI-FU-A/B (c328), TOOL-SURFACE-HYGIENE TSH-2/3/4 (c341).
+Key: BAL-1a-BACKFILL (b7329f54 recompute-on-read 5 ratios), FU-BCTC-TOOL-PARAMS (7ed5b722 quarters param), FU-BCTC-HISTORY-COVERAGE spike (f3bf4b61 root-cause: queue forward-only, no backfill seeder).
 
 ---
 
