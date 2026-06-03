@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-03T17:07:27Z",
   "_updated_by": "po",
   "head": {
-    "status": "active",
-    "active_task_id": "FU-DE-321-VAY-GUARD",
-    "next_agent": "dev-team",
-    "next_action": "PO triage 2026-06-03T17:07:27Z complete (operator goal: complete all backlog/TODO). 6 enumerated TODOs dispositioned: 2 parallel lane-heads IN_PROGRESS (Lane-A apps/mcp-server FU-DE-321-VAY-GUARD med; Lane-B apps/pdf-extractor FU-FPT-OCR-PAGES-20-46 med) under WIP<=2 — zones independent -> run concurrent. Lane tails BATCHED-TODO: FU-PEK-GUARD-RETRYAFTER (low, after Lane-A commit) + FU-ORPHAN-TOLERANCE (low, after Lane-B commit). BAL-1e-DEV ruled KEEP-DEFERRED (genuine future feature, eps=NULL is correct/honest, needs own SPRINT not a cleanup tick). FU-PDFX-HEALTHCHECK CLOSED-NOT-REPRO (container live healthy 7h, 0 health-fail events 24h). Channels clean, list_unresolved_reports empty. dev-team: dispatch the 2 lane-heads in parallel; serialize each lane's low-pri tail after its head commits + ops rebuild + live raw-verify.",
-    "wip": 2,
+    "status": "in_progress",
+    "active_task_id": "FU-PEK-GUARD-RETRYAFTER-MISLEADING",
+    "next_agent": "dev-mcp-server",
+    "next_action": "Lane A head FU-DE-321-VAY-GUARD DONE-LIVE-VERIFIED. Advancing Lane A tail FU-PEK-GUARD-RETRYAFTER-MISLEADING (XS cosmetic). Lane B (pdf-extractor FU-FPT-OCR-PAGES-20-46 + FU-ORPHAN-TOLERANCE) pending after Lane A.",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-03T17:07:27Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-03T17:17:49Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T16:30:22Z",
+    "_updated_at": "2026-06-03T17:17:49Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -369,11 +369,11 @@
             "title": "aggregateScalars (FIX-DE-1) takes VAS code 321 UNCONDITIONALLY as short_term_debt, but code 321 is not always the borrowings row. Raw DB evidence (FPT report e8ea3df5 vs prior FY): FPT 2026Q1 has 321=14,491 tỷ marked (vay) [correct]; FPT 2025Q4 has 321=1,014 tỷ NOT-vay while the REAL short-term borrowing is 319=19,169 tỷ marked (vay) -> aggregator would write 1,014 tỷ (wrong row). Same class as the HPG code-311 issue (FIX-DE-4). Fix: apply a /vay/i label guard to the 321 primary mapping too (prefer the vay-labelled row among 321/319; if 321 present but non-vay AND 319-vay present, take 319). Verify on FPT 2025Q4 + re-confirm 2026Q1 unaffected. Currently served headlines (latest period) happen to be correct, so MEDIUM not high.",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "IN_PROGRESS",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "medium",
-            "note": "[router raw-row finding during FU-BACKFILL-DE-SYNC live-verify 2026-06-03] code-321 not always vay across periods. | [PO 2026-06-03T17:07:27Z DISPATCHED] Lane-A (apps/mcp-server) batch head. Apply /vay/i label guard to the 321 primary mapping in aggregateScalars (mirror FIX-DE-1 319-fallback logic): prefer the vay-labelled row among 321/319; if 321 present-but-non-vay AND 319-vay present, take 319. DoD: re-finalize/reflow FPT 2025Q4 -> short_term_debt = 19,169 ty (code-319-vay) NOT 1,014 ty (code-321-non-vay); re-confirm FPT 2026Q1 unaffected (321-vay stays 14,491 ty); D/E recomputed on both periods live via get_bctc_full. Unit-green NOT sufficient — router live raw-verify required. ops rebuild + tool-path force_reflow (NOT hand script — FU-BACKFILL-DE-SYNC made backfill debt-aware). Same file family as FIX-DE-1/FU-BACKFILL-DE-SYNC -> recurring-bug-escalation watch (4th touch of debt-mapping): if this guard regresses a prior period, STOP and call architect. Channels clean (no new BUG/WORK, list_unresolved_reports empty)."
+            "note": "[router raw-row finding during FU-BACKFILL-DE-SYNC live-verify 2026-06-03] code-321 not always vay across periods. | [PO 2026-06-03T17:07:27Z DISPATCHED] Lane-A (apps/mcp-server) batch head. Apply /vay/i label guard to the 321 primary mapping in aggregateScalars (mirror FIX-DE-1 319-fallback logic): prefer the vay-labelled row among 321/319; if 321 present-but-non-vay AND 319-vay present, take 319. DoD: re-finalize/reflow FPT 2025Q4 -> short_term_debt = 19,169 ty (code-319-vay) NOT 1,014 ty (code-321-non-vay); re-confirm FPT 2026Q1 unaffected (321-vay stays 14,491 ty); D/E recomputed on both periods live via get_bctc_full. Unit-green NOT sufficient — router live raw-verify required. ops rebuild + tool-path force_reflow (NOT hand script — FU-BACKFILL-DE-SYNC made backfill debt-aware). Same file family as FIX-DE-1/FU-BACKFILL-DE-SYNC -> recurring-bug-escalation watch (4th touch of debt-mapping): if this guard regresses a prior period, STOP and call architect. Channels clean (no new BUG/WORK, list_unresolved_reports empty).[dev-team 2026-06-03T17:17:49Z] DONE-LIVE-VERIFIED commit bc1d7e55 (8 new tests, 39/39, tsc clean). ops rebuilt mcp-server img 17:15:15Z (/vay/i guard live in-container). force_reflow(FPT 2025Q4 e71f845d) via TOOL path, 0 balance_violations. ROUTER RAW-VERIFIED (DB + get_bctc_full): FPT 2025Q4 short_term_debt now=19,169,697M (code-319-vay 'Vay và nợ thuê tài chính ngắn hạn') NOT 1,014,674M (code-321 'Dự phòng phải trả'=provisions); FPT 2026Q1 unaffected=14,491,358M (321-vay). Headline D/E 0.40x, Validation passed, no regression. Guard prefers /vay/i-labelled row among 321/319 (+339 symmetry). RESIDUAL (cosmetic, already tracked FU-BCTC-RATIO-COL-DEPRECATE): FPT 2025Q4 persisted debt_to_equity col stale 2.7e-13 but serve recomputes-on-read."
           }
         ]
       },
@@ -775,7 +775,7 @@
             "title": "pek-extract market-hours guard: retry_after string says 08:00 UTC but enforced window is 02:00-08:59 UTC (blocks until 09:00); also ~59min wider than actual HOSE close 15:00 ICT/08:00 UTC",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "TODO",
+            "status": "IN_PROGRESS",
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "low",
