@@ -2928,6 +2928,60 @@ export function detectPolicyInterventionCombo(textLower: string): {
 // ═══════════════════════════════════════════════════════════════════════════
 
 /**
+ * FIX NER-PLACE-1 — Vietnamese place-prefix detector for direct-code ticker NER.
+ *
+ * An all-caps token can collide with a watchlist ticker while actually being a
+ * geographic reference: "TP HCM" / "TP.HCM" / "Thành phố HCM" all denote Ho Chi
+ * Minh City, not the broker ticker HCM. Returns true when the token ending just
+ * before `idx` (the start of the matched ticker) is a Vietnamese place prefix.
+ *
+ * Data-light + generalized (covers any ticker that follows a place prefix, not a
+ * hardcoded HCM case). Diacritic-tolerant and case-insensitive: we strip
+ * Unicode combining marks before comparing, so "Thành phố" → "thanh pho".
+ *
+ * Recognised prefixes (after stripping trailing punctuation `.`):
+ *   - "tp"        → TP, TP., Tp., and the joined form "TP.HCM" (the "tp." token)
+ *   - "t.p"       → T.P
+ *   - "thanh pho" → Thành phố / thanh pho (two-word prefix)
+ *   - "tinh"      → tỉnh (province)
+ */
+const PLACE_PREFIX_SINGLE = new Set(["tp", "t.p", "tinh"]);
+
+function stripDiacriticsLower(s: string): string {
+  return s
+    .normalize("NFD")
+    .replace(/\p{M}/gu, "")
+    .toLowerCase();
+}
+
+export function isPrecededByPlacePrefix(text: string, idx: number): boolean {
+  // Slice everything before the match, drop a trailing run of separators
+  // (spaces / "." that glue the joined "TP.HCM" form), then inspect the
+  // immediately-preceding token(s).
+  const before = text.slice(0, idx).replace(/[\s.]+$/u, "");
+  if (before.length === 0) return false;
+
+  // Tokenise the tail on whitespace; keep the last up-to-two tokens so we can
+  // match the two-word "thành phố" prefix as well as single-word prefixes.
+  const tokens = before.split(/\s+/u);
+  const last = stripDiacriticsLower(tokens[tokens.length - 1] ?? "");
+
+  // Single-token prefixes: "tp", "tp." (→ "tp" after trailing-dot strip on the
+  // glue above leaves "...tp"), "t.p", "tinh". Strip a trailing dot on the token
+  // itself too (e.g. "Tp." → "tp.").
+  const lastNoDot = last.replace(/\.+$/u, "");
+  if (PLACE_PREFIX_SINGLE.has(lastNoDot)) return true;
+
+  // Two-token prefix: "thanh pho".
+  if (tokens.length >= 2) {
+    const prev = stripDiacriticsLower(tokens[tokens.length - 2] ?? "");
+    if (prev === "thanh" && lastNoDot === "pho") return true;
+  }
+
+  return false;
+}
+
+/**
  * Build a causal chain from a seed AnalysisEntry.
  *
  * Traces global/country macro events down to specific Vietnamese stocks
@@ -3279,7 +3333,14 @@ export function buildCausalChain(
       const afterIdx = idx + upperCode.length;
       const afterOk = afterIdx >= text.length || !/[A-Za-z0-9]/.test(text[afterIdx]!);
 
-      if (beforeOk && afterOk) return true;
+      // FIX NER-PLACE-1: place-name preceding-token guard. An all-caps token
+      // collides with a watchlist ticker when it is actually a geographic
+      // reference (e.g. "TP HCM" / "TP.HCM" / "Thành phố HCM" = Ho Chi Minh
+      // City, not the broker ticker HCM). Reject this occurrence when the
+      // immediately-preceding token is a Vietnamese place prefix, and keep
+      // scanning for another (genuine) all-caps occurrence. Generalized to the
+      // whole place-prefix + all-caps-ticker collision class (not HCM-specific).
+      if (beforeOk && afterOk && !isPrecededByPlacePrefix(text, idx)) return true;
       startIdx = idx + 1;
     }
   }
