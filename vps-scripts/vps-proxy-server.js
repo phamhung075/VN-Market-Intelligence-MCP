@@ -36,6 +36,15 @@
  *     → Added: 1916a-vps-part (fixes bctcQueueEnricherJob Strategy 0 dead route)
  *     → Shape fix: 1944a-vps (bare string[] → envelope, matches extractVpsPlaywrightUrls() parser)
  *
+ *   GET /proxy/agm-plan?ticker=<TICKER>
+ *     → shells out to /root/vietstock-agm-plan.py --ticker <TICKER>
+ *     → returns JSON: { status, tickers_ok, tickers_fallback, tickers_error, data, fetched_at }
+ *     → data.<TICKER>.planned = [{stock_code, ptid, pt_name, year, value_raw, value_ty}]
+ *     → data.<TICKER>.actuals = [{stock_code, year, report_term_id, report_norm_id, ptid, value_raw, value_ty}]
+ *     → Auth: X-API-Key required
+ *     → Batch: /proxy/agm-plan?batch=FPT,VIC,ACB (comma-separated, max 30)
+ *     → Added: RAPID-DATA-LAYER / FIX-G (2026-06-04)
+ *
  *   GET /proxy/article-body?url=<article-url>
  *     → shells out to /root/article-body-fetcher.py --url <url>
  *     → allowed domains: cafef.vn, vneconomy.vn
@@ -140,6 +149,19 @@ const ARTICLE_BODY_PATH = "/proxy/article-body";
 
 /** Domains allowed for article-body fetching (whitelist — prevents open proxy). */
 const ARTICLE_BODY_ALLOWED_DOMAINS = new Set(["cafef.vn", "vneconomy.vn"]);
+
+/**
+ * Path to the Vietstock AGM plan scraper Python script.
+ * Fetches planned targets + actuals from finance.vietstock.vn.
+ * Added: RAPID-DATA-LAYER / FIX-G (2026-06-04)
+ */
+const AGM_PLAN_SCRIPT = process.env.AGM_PLAN_SCRIPT || "/root/vietstock-agm-plan.py";
+
+/** Path prefix for the agm-plan endpoint. */
+const AGM_PLAN_PATH = "/proxy/agm-plan";
+
+/** Maximum tickers per batch request. */
+const AGM_PLAN_MAX_BATCH = 30;
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -286,6 +308,70 @@ function runDiscoverScript(ticker, year, quarter, timeoutMs) {
 }
 
 /**
+ * Run the Vietstock AGM plan scraper for a single ticker or batch.
+ *
+ * The script is called as:
+ *   python3 /root/vietstock-agm-plan.py --ticker <TICKER>
+ *   python3 /root/vietstock-agm-plan.py --batch <T1,T2,...>
+ *
+ * It emits JSON to stdout: { status, tickers_ok, tickers_fallback, tickers_error, data, fetched_at }
+ * Returns parsed result object on success, or { status: "error", reason: "..." } on failure.
+ *
+ * @param {string[]} tickers - Validated ticker list (max AGM_PLAN_MAX_BATCH)
+ * @param {number} timeoutMs - Kill script after this many ms (default 60_000 for batch)
+ * @returns {Promise<object>} Parsed JSON result from the script
+ */
+function runAgmPlanScript(tickers, timeoutMs = 60_000) {
+  return new Promise((resolve) => {
+    const isBatch = tickers.length > 1;
+    const args = isBatch
+      ? [AGM_PLAN_SCRIPT, "--batch", tickers.join(",")]
+      : [AGM_PLAN_SCRIPT, "--ticker", tickers[0]];
+
+    log("INFO", `agm-plan: spawning scraper for [${tickers.join(",")}]`);
+
+    const child = spawn("python3", args, {
+      timeout: timeoutMs,
+      env: { ...process.env },
+    });
+
+    const stdoutChunks = [];
+    const stderrChunks = [];
+
+    child.stdout.on("data", (chunk) => stdoutChunks.push(chunk));
+    child.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+
+    child.on("close", (code) => {
+      const stdout = Buffer.concat(stdoutChunks).toString("utf8").trim();
+      const stderr = Buffer.concat(stderrChunks).toString("utf8").trim();
+
+      if (!stdout) {
+        log("WARN", `agm-plan: empty stdout`, { code, stderr: stderr.slice(0, 300) });
+        resolve({ status: "error", reason: "Script produced no output", tickers });
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(stdout);
+      } catch (e) {
+        log("WARN", `agm-plan: JSON parse failed`, { stdout: stdout.slice(0, 200) });
+        resolve({ status: "error", reason: "Invalid JSON from script", tickers });
+        return;
+      }
+
+      log("INFO", `agm-plan: done — ok=${(parsed.tickers_ok || []).length} fallback=${(parsed.tickers_fallback || []).length} error=${(parsed.tickers_error || []).length}`);
+      resolve(parsed);
+    });
+
+    child.on("error", (err) => {
+      log("ERROR", `agm-plan: spawn error`, { error: err.message });
+      resolve({ status: "error", reason: `Spawn error: ${err.message}`, tickers });
+    });
+  });
+}
+
+/**
  * Run the article body fetcher Python script for a given URL.
  *
  * The script is called as:
@@ -376,6 +462,50 @@ async function handleRequest(req, res) {
       log("WARN", `401 Unauthorized from ${req.socket.remoteAddress}`);
       return jsonResponse(res, 401, { error: "Unauthorized" });
     }
+  }
+
+  // AGM business plan fetch via vietstock-agm-plan.py
+  //   Incoming: GET /proxy/agm-plan?ticker=FPT  OR  /proxy/agm-plan?batch=FPT,VIC,ACB
+  //   Shells out to: python3 /root/vietstock-agm-plan.py --ticker <T> | --batch <T1,T2,...>
+  //   Returns: { status, tickers_ok, tickers_fallback, tickers_error, data, fetched_at }
+  //   Added: RAPID-DATA-LAYER / FIX-G (2026-06-04)
+  if (url === AGM_PLAN_PATH || url.startsWith(AGM_PLAN_PATH + "?")) {
+    const qs = new URLSearchParams(url.includes("?") ? url.slice(url.indexOf("?") + 1) : "");
+    const rawTicker = qs.get("ticker") || "";
+    const rawBatch = qs.get("batch") || "";
+
+    if (!rawTicker && !rawBatch) {
+      return jsonResponse(res, 400, { error: "Missing required query param: ticker or batch" });
+    }
+
+    // Validate and build ticker list
+    const TICKER_RE = /^[A-Z0-9]{1,10}$/;
+    let tickers;
+    if (rawBatch) {
+      tickers = rawBatch.split(",").map((t) => t.trim().toUpperCase()).filter(Boolean);
+    } else {
+      tickers = [rawTicker.trim().toUpperCase()];
+    }
+
+    if (tickers.length === 0) {
+      return jsonResponse(res, 400, { error: "No valid tickers provided" });
+    }
+    if (tickers.length > AGM_PLAN_MAX_BATCH) {
+      return jsonResponse(res, 400, { error: `Batch size exceeds maximum (${AGM_PLAN_MAX_BATCH})`, got: tickers.length });
+    }
+
+    const invalid = tickers.filter((t) => !TICKER_RE.test(t));
+    if (invalid.length > 0) {
+      return jsonResponse(res, 400, { error: "Invalid ticker(s)", invalid });
+    }
+
+    log("INFO", `agm-plan: request for [${tickers.join(",")}] from ${req.socket.remoteAddress}`);
+
+    // Allow 2s per ticker + 10s base (CSRF warmup per session, ~0.35s pacing between tickers)
+    const timeoutMs = Math.min(10_000 + tickers.length * 4_000, 120_000);
+    const result = await runAgmPlanScript(tickers, timeoutMs);
+    const httpStatus = result.status === "ok" ? 200 : 502;
+    return jsonResponse(res, httpStatus, result);
   }
 
   // Article body fetch via article-body-fetcher.py
@@ -622,6 +752,7 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
+  log("INFO", `AGM plan:         GET /proxy/agm-plan?ticker=FPT | ?batch=FPT,VIC,ACB (runs vietstock-agm-plan.py)`);
   log("INFO", `Article body:     GET /proxy/article-body?url=<https://cafef.vn/...> (runs article-body-fetcher.py)`);
   log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker[?year=YYYY&quarter=Q] (runs discover-bctc-urls-browser.py)`);
   log("INFO", `SSC insider:      GET /proxy/ssc-insider (proxies congbothongtin.ssc.gov.vn insider table)`);
@@ -632,6 +763,7 @@ server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `BCTC cache dir:   ${BCTC_CACHE_DIR}`);
   log("INFO", `BCTC discover script: ${BCTC_DISCOVER_SCRIPT}`);
   log("INFO", `Article body script:  ${ARTICLE_BODY_SCRIPT}`);
+  log("INFO", `AGM plan script:      ${AGM_PLAN_SCRIPT}`);
   if (!API_KEY) {
     log("WARN", "VPS_API_KEY is not set — proxy accepts all requests (insecure)");
   }

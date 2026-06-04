@@ -642,6 +642,11 @@
             "path": "/proxy/news",
             "source_id": "news-vps",
             "desc": "VN news sources (geo-blocked)"
+          },
+          {
+            "path": "/proxy/agm-plan",
+            "source_id": "vietstock-agm-plan",
+            "desc": "Vietstock AGM business plan + actuals — ?ticker=X or ?batch=X,Y,Z. Planned targets (PTID 5=revenue/8=PBT/9=PAT) + quarterly actuals for plan-vs-actual (management track record)"
           }
         ]
       },
@@ -1041,6 +1046,17 @@
         "vps_path": "/proxy/news",
         "expected_cadence_hours": 1,
         "stale_threshold_hours": 3
+      },
+      {
+        "id": "vietstock-agm-plan",
+        "proxy": "vps",
+        "category": "fundamental",
+        "geo_blocked": true,
+        "vps_path": "/proxy/agm-plan",
+        "desc": "AGM business plan (planned revenue/profit per ticker/year) + quarterly actuals via GetData_PlannedTarget + GetData_PlannedTarget_ImplementStatus. ASP.NET CSRF double-submit, no Cloudflare.",
+        "expected_cadence_hours": 168,
+        "stale_threshold_hours": 720,
+        "_note": "Annual data (AGM season Feb-May); weekly refresh sufficient outside AGM season"
       },
       {
         "id": "fred",

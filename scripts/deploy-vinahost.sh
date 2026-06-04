@@ -16,6 +16,7 @@
 #   vn-tradingeconomics-fetch.service — Trading Economics macro indicators every 1h
 #   vn-vps-proxy.service            — HTTP proxy server (BCTC Playwright + SSC iboard, :8765)
 #   article-body-fetcher.py         — cafef/vneconomy article body extractor (CLI, :8765/proxy/article-body)
+#   vietstock-agm-plan.py           — AGM business plan + actuals scraper (CLI, :8765/proxy/agm-plan)
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -350,6 +351,20 @@ else
   echo "beautifulsoup4 already installed: $(pip3 show beautifulsoup4 | grep Version)"
 fi
 ARTEOF
+
+# ── 11. Vietstock AGM plan scraper (RAPID-DATA-LAYER / FIX-G) ───────────────
+# No sed render needed — all args passed via CLI flags, no __TOKEN__ sentinels.
+echo ""
+echo "Deploying Vietstock AGM plan scraper..."
+$SCP vps-scripts/vietstock-agm-plan.py ${VH_USER}@${VH_IP}:/root/vietstock-agm-plan.py
+
+$SSH ls -la /root/vietstock-agm-plan.py
+
+$SSH << 'AGMEOF'
+set -e
+chmod +x /root/vietstock-agm-plan.py
+echo "vietstock-agm-plan.py deployed OK"
+AGMEOF
 
 # ── GUARD-1: Post-deploy SSH placeholder verify ───────────────────────────
 $SSH << 'VERIFYEOF'

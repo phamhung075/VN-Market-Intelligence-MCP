@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-06-03T00:00Z | **Sprint:** BCTC-FETCH-CORRECTNESS
+**Last updated:** 2026-06-04T12:15Z | **Sprint:** RAPID-DATA-LAYER
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
 
@@ -18,6 +18,7 @@ Zone: dev-zone (VPS scraper code)
 
 | Source | Script | Technique | Status | Last verified |
 |--------|--------|-----------|--------|--------------|
+| vietstock-agm-plan | /root/vietstock-agm-plan.py | aspnet-csrf-double-submit | OPERATIONAL — FPT 10 plan + 63 actual rows. VIC/ACB/NVL confirmed. Endpoint: VPS:8765/proxy/agm-plan | 2026-06-04 |
 | vps-prices | /root/fetch-prices.sh | plain-requests-open-api | healthy end-to-end (112 items 200 OK) | 2026-05-13 |
 | cafef-index | /root/fetch-prices.sh (Step 3) | plain-requests-open-api | healthy | 2026-05-13 |
 | sbv-rates | /root/fetch-sbv.sh | plain-requests-open-api | healthy end-to-end | 2026-05-13 |
@@ -33,6 +34,7 @@ Zone: dev-zone (VPS scraper code)
 
 | Technique | Doc | First used for | RAM/req | Notes |
 |-----------|-----|---------------|---------|-------|
+| aspnet-csrf-double-submit | docs/vps-crawl-techniques/aspnet-csrf-double-submit.md | vietstock-agm-plan | 3–8 MB | Stdlib urllib only. Session warmup + CSRF token parse (unquoted minified HTML). Gzip safety-net. |
 | plain-requests-open-api | docs/vps-crawl-techniques/plain-requests-open-api.md | vps-prices, cafef-index, sbv-rates | 3–8 MB | Lightest path. 3 sources. No bypass needed. |
 | ua-rotation-rss | docs/vps-crawl-techniques/ua-rotation-rss.md | vn-news-rss | 3–8 MB | 5-UA pool, 3 retries, human delay. 14 RSS sources. |
 | hnx-ajax-post | docs/vps-crawl-techniques/hnx-ajax-post.md | hsx-bctc | 5–10 MB | SSL CERT_NONE + pAction=1 required. HNX/UPCOM tickers only. |
@@ -163,6 +165,30 @@ Commit: 96446b5d. No Docker rebuild required.
 - discover-bctc-urls-browser.py was VPS-only before this sprint
 - Now in vps-scripts/discover-bctc-urls-browser.py — tracked in repo
 - deploy-vinahost.sh section 2 now scp's it to /root/ on next deploy
+
+---
+
+## Key Findings — 2026-06-04T12:15Z RAPID-DATA-LAYER FIX-G Vietstock AGM Plan
+
+### Scraper: vietstock-agm-plan.py — OPERATIONAL
+- Source: finance.vietstock.vn — structured JSON API, no Cloudflare, no PDF needed
+- Technique: aspnet-csrf-double-submit (stdlib urllib only, no pip install)
+- Endpoints: GetData_PlannedTarget (plan) + GetData_PlannedTarget_ImplementStatus (actuals)
+- Router: /proxy/agm-plan?ticker=X or ?batch=X,Y,Z added to vps-proxy-server.js
+- Verified live: FPT 10 plan rows + 63 actuals; VIC/ACB/NVL all tickers_ok
+
+### Critical Bugs Fixed During Implementation
+1. CSRF unquoted attribute: Vietstock minified HTML has `value=TOKEN>` (no quotes). Fixed regex to handle `value=TOKEN[\s>]` (group 2 alternation) in addition to quoted form.
+2. urllib gzip silent failure: If `Accept-Encoding: gzip` is included in headers, urllib receives compressed body but does NOT auto-decompress. `body.decode('utf-8')` returns garbage, CSRF extraction finds nothing. Fix: omit `Accept-Encoding` from both HTML and JSON headers. Added gzip safety-net (`\x1f\x8b` magic byte check → `gzip.decompress()`).
+
+### Storage Shape for get_agm_plan MCP tool
+VPS endpoint returns: `{ status, tickers_ok, tickers_fallback, tickers_error, data, fetched_at }`
+`data.<TICKER>.planned[]` = `{ stock_code, ptid, pt_name, year, value_raw, value_ty }`
+`data.<TICKER>.actuals[]` = `{ stock_code, year, report_term_id, report_norm_id, ptid, value_raw, value_ty }`
+`value_ty` = value_raw / 1e9 (tỷ đồng). Plan-vs-actual deviation = `(actual - plan) / plan * 100`.
+
+### Coverage
+30 watchlist tickers expected; no fallback seen in FPT/VIC/ACB/NVL/SHB test set. PDF fallback path not needed (API covers all tested sectors: tech, conglomerate, bank, real estate).
 
 ---
 

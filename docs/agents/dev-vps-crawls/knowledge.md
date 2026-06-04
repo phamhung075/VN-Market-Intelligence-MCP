@@ -47,6 +47,7 @@ Full technique docs: `docs/vps-crawl-techniques/<technique-name>.md`
 
 | Technique name | File | Anti-bot target | Key library |
 |---------------|------|----------------|------------|
+| aspnet-csrf-double-submit | `docs/vps-crawl-techniques/aspnet-csrf-double-submit.md` | ASP.NET anti-forgery CSRF | urllib stdlib |
 | cloudflare-js-bypass | `docs/vps-crawl-techniques/cloudflare-js-bypass.md` | CF JS challenge | curl_cffi |
 | cloudflare-managed-bypass | `docs/vps-crawl-techniques/cloudflare-managed-bypass.md` | CF managed challenge | cloudscraper |
 | tls-fingerprint-spoof | `docs/vps-crawl-techniques/tls-fingerprint-spoof.md` | JA3/JA4 fingerprint | curl_cffi |
