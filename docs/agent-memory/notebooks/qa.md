@@ -1,5 +1,21 @@
 # QA — Notebook
 
+## cycle-193 · 2026-06-04T19:58Z · DATA-SERVE-INTEGRITY live-verify gate
+
+Sprint: DATA-SERVE-INTEGRITY | Commits: a6b86ed0/fb7e16d0/45a35641/b16d6a89/2873b6c3 | Verdict: CONDITIONALLY COMPLETE
+
+**Part A (carry/regime — user complaint):** PASS. Live: `POST :5004/snapshot` → carry.regime="UNKNOWN", carrySpread=null, is_estimate=true, source_tier=4, fetched_at_source="2026-05-28T00:00:00Z". Root: EFFR row 188h old >96h bound → GetFedFundsRate()=0 → fixture 5.33 → fedFundsLive=false → buildCarryDTO suppresses. dataSource="estimate". No FII_OUTFLOW_RISK emitted. Complaint resolved.
+
+**Part B (DSI-S3 sector/fin):** All PASS. creditFlow: is_estimate=true+static_seed present in live response. bondMaturity: [SEED DATA] label present live. energyGrid: is_estimate=true on signal objects (code line 76). extractionConfidence: `?? 0` confirmed (not `?? 1`). bctcFullTools: roe/netMarginPct/debtToEquity `?? null`; buildComparisonSection NaN-sentinel guard emits "N/A" not false delta.
+
+**Part C-1 (macro-indicators HOT):** Container IS running (Up+healthy :5004). Carry suppression DSI-INV-1 fix IS in the running Go code — no immediate integrity risk. But container is not in system-map.json intended runtime set (R-4 was supposed to be latent). PO must decide: keep+document or stop. Follow-up: DSI-MACRO-INDICATORS-RUNTIME-DECISION → PO.
+
+**Part C-2 (stock-price NOT running):** DSI-S2-PRICE Go code correct but inactive. Live price path = mcp-server yahooFinance.ts (no staleness/is_estimate per-symbol, cnyVndRate=0 permanent, no provenance label). DSI-INV-1 violation in live path unaddressed. Follow-up: DSI-S2-PRICE-TS-GAP → dev-mcp-server P2.
+
+**Serve path:** get_macro_snapshot → Go :5004 (NOT TS buildCarryProvenance — those helpers exist for test compat only, not called in handler). macroIndicatorSla.ts MACRO_COUNTRY_KEY="vietnam" confirmed. server.ts push-gso defaults = "vietnam" confirmed. frontend MacroSnapshot type has provenance fields confirmed.
+
+---
+
 ## cycle-192 · 2026-06-04T14:55Z · RAPID-DATA-LAYER FIX-G gate
 
 Sprint: RAPID-DATA-LAYER | Task: FIX-G (get_agm_plan tool #162, commits 56c7e2ad+ffa24c63) | Verdict: DONE-LIVE-VERIFIED

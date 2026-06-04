@@ -6,11 +6,11 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "qa",
-    "next_action": "DSI DEPLOY COMPLETE: ops pushed vps-scripts/fetch-tradingeconomics.sh (COUNTRY=vietnam) to VPS and restarted service; rebuilt mcp-server (SLA+macro+sector/fin), stock-price (staleness+nullable), frontend (provenance types). All 3 containers healthy. QA: run DSI live-verify per prior checklist — get_credit_flow_signal (is_estimate flag), get_bond_maturity_calendar ([SEED DATA] label), get_energy_grid_signals ([ƯỚC TÍNH] label), finalize_bctc_refine conf=null (extractionConfidence=0), get_bctc_full pre-period null values (N/A in comparison).",
+    "next_agent": "po",
+    "next_action": "DSI QA COMPLETE: Parts A+B PASS. 2 follow-up tasks for PO: DSI-MACRO-INDICATORS-RUNTIME-DECISION + DSI-S2-PRICE-TS-GAP. Sprint DATA-SERVE-INTEGRITY DONE pending PO sign-off. Report: reports/TASK_REPORT_DSI-QA.md",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T19:46:17Z",
+    "updated_at": "2026-06-04T19:58:00Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
