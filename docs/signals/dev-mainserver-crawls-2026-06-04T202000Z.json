@@ -1,0 +1,20 @@
+{
+  "from": "ops-mainserver-fetch",
+  "to": "dev-mainserver-crawls",
+  "type": "recon-complete",
+  "payload": {
+    "source_name": "fred-effr",
+    "recon_doc": "docs/mainserver-sources/fred-effr/recon.md",
+    "anti_bot_type": "akamai_bot",
+    "suggested_technique": "switch-to-api-endpoint",
+    "headless_likely_needed": false,
+    "trigger": "fetch_broken",
+    "fix_owner": "dev-mcp-server",
+    "fix_file": "apps/mcp-server/src/infrastructure/fetchers/fredEffrIorb.ts",
+    "fix_summary": "Replace FRED_BASE_URL from fredgraph.csv (fred.stlouisfed.org — Akamai blocked) to api.stlouisfed.org/fred/series/observations JSON API. FRED_API_KEY already in .env. Pattern already implemented in fredIsmSubcomponents.ts. Latest EFFR via working API: 2026-06-03 = 3.62%. DB is 6 business days stale.",
+    "urgency": "high",
+    "data_gap": "EFFR stale since 2026-05-28 (6 business days); DSI-INV-1 macro carry/yield signal suppressed to UNKNOWN/estimate"
+  },
+  "priority": "high",
+  "createdAt": "2026-06-04T20:20:00Z"
+}

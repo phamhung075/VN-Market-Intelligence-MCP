@@ -1,6 +1,6 @@
 # ops-mainserver-fetch — Notebook
 
-**Last updated:** 2026-05-13 05:07 UTC | **Sprint:** bootstrap cycle 1
+**Last updated:** 2026-06-04 20:20 UTC | **Sprint:** fred-effr fetch broken recon
 
 ---
 
@@ -25,6 +25,7 @@ Zone: ops-zone (local probe, no VPS)
 | adb-kidb | 2026-05-13 | SPA, API unknown | none | confirmed no |
 | investing-economic-calendar | 2026-05-13 | CF managed passive | cloudflare_managed | confirmed no |
 | fred-macro | 2026-05-13 | API key required | login_required | confirmed no |
+| fred-effr | 2026-06-04 | fredgraph.csv BROKEN (Akamai) — api.stlouisfed.org WORKING | akamai_bot (web) / none (api) | confirmed no |
 | marketwatch-indices | 2026-05-13 | clean 200 (VN N/A) | none | confirmed no |
 | cnbc-world-markets | 2026-05-13 | open + quote API | none | confirmed no |
 
@@ -43,6 +44,7 @@ Zone: ops-zone (local probe, no VPS)
 | 2026-05-13 | adb-kidb | new_source_needed | SPA — Playwright needed for API discovery | no |
 | 2026-05-13 | investing-economic-calendar | new_source_needed | CF managed passive, POST API exists | no |
 | 2026-05-13 | fred-macro | new_source_needed | recon complete, free API key required | no |
+| 2026-06-04 | fred-effr | fetch_broken (EFFR stale 7d) | fredgraph.csv blocked by Akamai; api.stlouisfed.org WORKING — fix = change URL in fredEffrIorb.ts | no |
 | 2026-05-13 | marketwatch-indices | new_source_needed | VN Index not available on MW | no |
 | 2026-05-13 | cnbc-world-markets | new_source_needed | recon complete, quote API open | no |
 
@@ -59,6 +61,10 @@ No geo-blocks detected in this cycle. All 11 sources are accessible from main se
 ---
 
 ## Lessons Learned
+
+### 2026-06-04 — fred-effr Fetch Broken Recon
+
+11. **fredEffrIorb.ts targets the wrong FRED URL** — `fredgraph.csv` on `fred.stlouisfed.org` (Akamai-blocked) instead of `api.stlouisfed.org` (Apache, no bot protection). The 2026-05-13 recon already documented this block; the fetcher was implemented AFTER without checking recon docs. Fix: swap URL to api.stlouisfed.org JSON endpoint; FRED_API_KEY already in .env. Latest EFFR via API: 2026-06-03 = 3.62%.
 
 ### 2026-05-13 — Bootstrap Cycle
 
@@ -89,6 +95,7 @@ No geo-blocks detected in this cycle. All 11 sources are accessible from main se
 | Signal file | Source | Dropped at | Status |
 |------------|--------|-----------|--------|
 | docs/signals/dev-mainserver-crawls-2026-05-13T05-06-40Z.json | 11 sources (batch) | 2026-05-13T05:06:40Z | pending dev-mainserver-crawls |
+| docs/signals/dev-mainserver-crawls-2026-06-04T202000Z.json | fred-effr | 2026-06-04T20:20:00Z | pending dev-mcp-server (fix fredEffrIorb.ts URL) |
 
 ---
 
