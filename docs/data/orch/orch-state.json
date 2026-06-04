@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Idle — tick 01:09Z drained 4/4 SILENT cowork heartbeats. COWORK-HEARTBEAT-NOISE fix (7464b43f) confirmed NOT live: live cowork session runs STALE pre-ae4396e6 flow (flat-schema + unconditional SILENT write). Filed FU-COWORK-SESSION-RELOAD (BLOCKED-OPERATOR: restart cowork session + re-arm /cron-cowork-team). No dev code task. All other board items DEFERRED.",
+    "next_action": "Idle — tick 02:09Z drained 4/4 SILENT cowork heartbeats. FU-COWORK-SESSION-RELOAD still BLOCKED-OPERATOR (cowork session not yet restarted; ~04:09 CEST operator asleep). No dev-actionable work; all board items DEFERRED/blocked-operator.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T01:12:17Z",
+    "updated_at": "2026-06-04T02:10:24Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
