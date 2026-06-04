@@ -115,6 +115,7 @@ import { registerMarketWideForeignFlowTool } from "./market-data/marketWideForei
 import { registerMarketCapTools } from "./market-data/marketCapTools.js"; // FIX-B-2: get_market_cap (#149)
 import { registerCompanyProfileTools } from "./market-data/companyProfileTools.js"; // FIX-A: get_company_profile (#150)
 import { registerBctcSeriesTools } from "./financial-reports/bctcSeriesTools.js"; // FIX-C: get_bctc_series (#151)
+import { registerAgmPlanTools } from "./financial-reports/agmPlanTools.js"; // FIX-G: get_agm_plan (#162)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -234,4 +235,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerMarketCapTools,                // FIX-B-2: get_market_cap (#149)
   registerCompanyProfileTools,           // FIX-A: get_company_profile (#150)
   registerBctcSeriesTools,               // FIX-C: get_bctc_series (#151)
+  registerAgmPlanTools,                  // FIX-G: get_agm_plan (#162)
 ];

@@ -67,6 +67,7 @@ import { runBondMaturityPollerJob } from './macro/bondMaturityPollerJob.js'
 import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
 import { runSelfImproveOrchestrator } from './audits/selfImproveOrchestratorJob.js'
 import { runBctcEvalRecomputeJob } from './financial-reports/bctcEvalRecomputeJob.js'
+import { runAgmPlanJob } from './financial-reports/agmPlanJob.js'
 import { runDiskUsageAlertJob } from './diskUsageAlertJob.js'
 import { runTasksMdJanitorJob } from './system/tasksMdJanitorJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
@@ -954,5 +955,18 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute active`)
+  // Daily 20:30 UTC (03:30 VN next day) — AGM plan + actuals ingest — RAPID-DATA-LAYER FIX-G
+  // Pulls planned targets + actuals for all watchlist tickers from Vinahost VPS proxy.
+  // Off-market: 20:30 UTC = after VN market close + ohlcvDailyAggregator (20:00 UTC).
+  cron.schedule(CRONS.agmPlanRefresh, async () => {
+    await jobRunRepo.wrapRun('agmPlanRefreshJob', async () => {
+      const result = await runAgmPlanJob()
+      if (result.plan_rows_written > 0 || result.actual_rows_written > 0) {
+        log(`[agm-plan] plan_rows=${result.plan_rows_written} actual_rows=${result.actual_rows_written} tickers_ok=${result.tickers_ok.length} errors=${result.tickers_error.length}`)
+      }
+      return { rowsWritten: result.plan_rows_written + result.actual_rows_written }
+    })
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan active`)
 }

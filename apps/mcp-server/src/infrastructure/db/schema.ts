@@ -34,6 +34,7 @@ import { initBriefingsTables } from "./schema-briefings.js";
 import { initMacroTables } from "./schema-macro.js";
 import { initSystemTables } from "./schema-system.js";
 import { initBacktestingTables } from "./schema-backtesting.js";
+import { initAgmPlanTables } from "./agmPlanStore.js";
 import { seedWatchlist, backfillBctcQ4, backfillBctcQ1_2026, backfillBctcHistorical, migrateWatchlistThresholds } from "./seedWatchlist.js";
 
 /**
@@ -157,6 +158,8 @@ export async function initDatabase(dbArg?: import("bun:sqlite").Database): Promi
   initMacroTables(db);
   initSystemTables(db);
   initBacktestingTables(db);
+  // FIX-G: AGM plan + actuals tables
+  initAgmPlanTables(db);
 
   // ── Seed default watchlist from mcp.config.json (skip in tests) ────────────
   // Sprint 053 / 1021: the previous version used `return` to skip the

@@ -175,4 +175,8 @@ export const CRONS = {
    *  22:02 UTC = 05:02 GMT+7 next day, well outside HOSE market hours (02:00-08:59 UTC Mon-Fri).
    *  Collision check: 22:00 UTC = eveningSummary slot — offset by 2 min to avoid pile-up. */
   bctcEvalRecompute:          Bun.env.CRON_BCTC_EVAL_RECOMPUTE                     ?? '2 22 * * *',
+  /** agmPlanRefresh — AGM plan + actuals ingest: daily 20:00 UTC (03:00 VN next day) — RAPID-DATA-LAYER FIX-G
+   *  Off-market: 20:00 UTC = after VN market close (08:30 UTC) and before US open.
+   *  Collision check: 20:00 UTC = ohlcvDailyAggregator — offset by 30 min to avoid pile-up. */
+  agmPlanRefresh:             Bun.env.CRON_AGM_PLAN_REFRESH                         ?? '30 20 * * *',
 }
