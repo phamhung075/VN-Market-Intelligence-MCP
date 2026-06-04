@@ -1,0 +1,12 @@
+{
+  "classification": "SILENT",
+  "reason": "no_slot_match",
+  "drift_min": 3,
+  "matcher_slots": [],
+  "spawns": 0,
+  "dev_head": "active",
+  "new_queue_rows": 1,
+  "queue_note": "1 NEW row to:pm — cross-team dev inbox, left NEW for dev-team drain (no cowork route)",
+  "signal_backlog": 2,
+  "written_at": "2026-06-04T07:48:37Z"
+}

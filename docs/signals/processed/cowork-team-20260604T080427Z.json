@@ -1,0 +1,21 @@
+{
+  "classification": "WON",
+  "reason": "cron_match:news-scout-offhours,market-watcher-offhours",
+  "drift_min": 3,
+  "matcher_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "leader_lock": "stolen_won",
+  "spawns": 2,
+  "spawned": [
+    "news-scout:news-scout-offhours",
+    "market-watcher:market-watcher-offhours"
+  ],
+  "dev_head": "active",
+  "new_queue_rows": 1,
+  "queue_note": "1 NEW row to:pm — cross-team dev inbox, left NEW for dev-team drain",
+  "signal_backlog": 3,
+  "notes": "gatherers; no MARKET publish",
+  "written_at": "2026-06-04T08:04:27Z"
+}

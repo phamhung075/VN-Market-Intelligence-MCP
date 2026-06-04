@@ -1,0 +1,24 @@
+{
+  "from": "architect",
+  "to": "po",
+  "type": "design_complete",
+  "priority": "high",
+  "createdAt": "2026-06-04T06:00:00Z",
+  "payload": {
+    "brief": "docs/architecture-briefs/2026-06-04-rapid-analysis-data-layer-gaps.md",
+    "summary": "Brownfield data-layer gap analysis for 6 rapid-analysis skills (SKILL-1..6). All 6 skills BLOCKED. 37 fields assessed: COVERED 3 / PARTIAL 12 / GAP 22. 10 remediations prescribed (FIX-A..I + RECON-AGM-1). All remediations target apps/mcp-server (lean BUILD-STANDARD) except RECON-AGM-1 (ops-vps-fetch spike) and FIX-G (dev-vps-crawls + dev-mcp-server). Earliest partial live path: FIX-B + FIX-A + FIX-H in parallel (~1 sprint) → SKILL-1 size-gate + SKILL-4 ownership/insider partial.",
+    "next_action": "pm to sequence 10 fix tasks into sprint; ops-vps-fetch to start RECON-AGM-1 immediately (P0 recon spike, no dev work); all FIX-* tasks route to dev-mcp-server except FIX-G",
+    "tasks": [
+      { "id": "RECON-AGM-1", "priority": "P0", "zone": "ops-vps-fetch", "description": "Probe HSX/HNX/SSC AGM portal fetch recipe — 3 sample tickers, confirm URL structure + response format (PDF or HTML)" },
+      { "id": "FIX-B", "priority": "P1", "zone": "dev-mcp-server", "description": "Persist VnstockRatioSummary.marketCap to DB; new get_market_cap MCP tool returning {code, market_cap_billion, shares_outstanding_approx, fetched_at}" },
+      { "id": "FIX-A", "priority": "P1", "zone": "dev-mcp-server", "description": "New get_company_profile MCP tool: vnstock_shareholders + vnstock_officers + foreign % from vnstock_trading_stats; structured JSON output" },
+      { "id": "FIX-D", "priority": "P1", "zone": "dev-mcp-server", "description": "Extend get_bctc_full to emit structured_data JSON block + add receivables from vnstock_balance_sheet JOIN" },
+      { "id": "FIX-H", "priority": "P1", "zone": "dev-mcp-server", "description": "Extend get_insider_transactions max lookback from 90 to 180 days (1-line change insiderTools.ts:108)" },
+      { "id": "FIX-C", "priority": "P2", "zone": "dev-mcp-server", "description": "New get_bctc_series tool: {code, fields[], periods} → JSON array of N most recent DONE-refined periods" },
+      { "id": "FIX-E", "priority": "P2", "zone": "dev-mcp-server", "description": "Extend get_price_history hard cap from 90 to 730 days; add JSON array output (priceHistoryTools.ts:191)" },
+      { "id": "FIX-F", "priority": "P3", "zone": "dev-mcp-server", "description": "Add charter_capital + investment_property + reward_fund to BCTC scalar extraction (bctcScalarAggregator + finalize + DB migration); bank-form guard required" },
+      { "id": "FIX-G", "priority": "P4", "zone": "dev-vps-crawls + dev-mcp-server", "description": "AGM revenue plans: VPS fetcher for HSX/HNX/SSC disclosures + agm_revenue_plans table + get_agm_plans MCP tool; depends on RECON-AGM-1" },
+      { "id": "FIX-I", "priority": "P5", "zone": "dev-mcp-server", "description": "Extend vnstock_officers with start_date if available in vnstock source data (CEO tenure for SKILL-5)" }
+    ]
+  }
+}
