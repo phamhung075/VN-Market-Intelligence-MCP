@@ -7,11 +7,11 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "qa",
-    "next_action": "DSI-S3-SECTOR-FIN DONE (commit pending). DSI sprint all tasks complete. QA: run DSI live-verify — call get_credit_flow_signal (verify is_estimate flag), get_bond_maturity_calendar (verify [SEED DATA] label), get_energy_grid_signals (verify [ƯỚC TÍNH] label), finalize_bctc_refine with conf=null (verify extractionConfidence=0 not 1 in DB), get_bctc_full for ticker with null roe/netMarginPct prior period (verify N/A in comparison). ops rebuild mcp-server required.",
+    "next_action": "DSI live-verify split: (1) MACRO live-path FIXED+ROUTER-VERIFIED via 09e93d76 (macro-indicators rebuilt, get_macro_snapshot regime UNKNOWN/dataSource estimate). (2) DSI-S3-SECTOR-FIN (2873b6c3) + DSI-S1-MACRO-TS (fb7e16d0) need mcp-server REBUILD (my earlier rebuild predated DSI-S3) then QA live-verify credit_flow/bond_maturity/energy/bctc per prior next_action. (3) FU-FRED-EFFR-STALE = deeper root (FRED 6d stale). (4) DSI-S1-SLA vps-scripts VPS deploy pending (ops-vps).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T19:40:00Z",
-    "updated_by": "dev-mcp-server"
+    "updated_at": "2026-06-04T19:46:17Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T18:45:34Z",
+    "_updated_at": "2026-06-04T19:46:17Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2094,7 +2094,7 @@
             "size": "XS",
             "done_at": "2026-06-04T18:50:00Z",
             "done_by": "dev-mcp-server",
-            "note": "MACRO_COUNTRY_KEY='vietnam' constant; both .get('VN') sites fixed; server.ts push-gso+push-te defaults fixed; deprecated comment added; 6/6 tests pass. DEPLOY GATE: vps-scripts COUNTRY='VN' explicit send must update to 'vietnam' before deploy."
+            "note": "MACRO_COUNTRY_KEY='vietnam' constant; both .get('VN') sites fixed; server.ts push-gso+push-te defaults fixed; deprecated comment added; 6/6 tests pass. DEPLOY GATE: vps-scripts COUNTRY='VN' explicit send must update to 'vietnam' before deploy. || ROUTER NOTE: repo committed (a6b86ed0 reader + bab7fb8b vps-scripts COUNTRY VN->vietnam). mcp-server REBUILT this tick (reader live). VPS DEPLOY STILL PENDING: ops-vps must scp fetch-tradingeconomics.sh + fetch-gso.sh to VPS /root/ (live cron still POSTs country:VN until then). Tracked for ops-vps."
           },
           {
             "id": "DSI-S1-MACRO",
@@ -2105,7 +2105,7 @@
             "done_at": "2026-06-04T19:15:00Z",
             "done_by": "dev-mcp-server",
             "commit": "fb7e16d0",
-            "note": "DONE 2026-06-04T19:15Z commit fb7e16d0. FR-MAC-1: formatThienThoi gates on fedFundsRateIsEstimate (not just ===0); isEstimate=true suppresses carry spread+regime as \"unavailable — est. rate\"; FII_OUTFLOW_RISK no longer emitted from fixture arithmetic. FR-MAC-2: sbv_rates schema migration is_estimate INTEGER DEFAULT 1; fetchSbvRates sets isEstimate=true; storeSbvSnapshot writes is_estimate to DB. FR-MAC-3/4: buildCarryProvenance() exported with CarryProvenance type (is_estimate/source_tier/fedFundsFetchedAt from MAX EFFR date). FR-MAC-5: killed ?? 0 commodity zero-writes in macroIndicatorRefreshJob; CASE guard in ON CONFLICT DO UPDATE preserves prior good values. FR-MAC-6: computeMacroDataSource() exported. Tests: 16 new (DSI-S1-MACRO.test.ts), tsc clean, 58 pass/4 pre-existing fail. ops_rebuild_required=true."
+            "note": "DONE 2026-06-04T19:15Z commit fb7e16d0. FR-MAC-1: formatThienThoi gates on fedFundsRateIsEstimate (not just ===0); isEstimate=true suppresses carry spread+regime as \"unavailable — est. rate\"; FII_OUTFLOW_RISK no longer emitted from fixture arithmetic. FR-MAC-2: sbv_rates schema migration is_estimate INTEGER DEFAULT 1; fetchSbvRates sets isEstimate=true; storeSbvSnapshot writes is_estimate to DB. FR-MAC-3/4: buildCarryProvenance() exported with CarryProvenance type (is_estimate/source_tier/fedFundsFetchedAt from MAX EFFR date). FR-MAC-5: killed ?? 0 commodity zero-writes in macroIndicatorRefreshJob; CASE guard in ON CONFLICT DO UPDATE preserves prior good values. FR-MAC-6: computeMacroDataSource() exported. Tests: 16 new (DSI-S1-MACRO.test.ts), tsc clean, 58 pass/4 pre-existing fail. ops_rebuild_required=true. || ROUTER NOTE: TS commit fb7e16d0 hardened the [Thien Thoi] TEXT-BLOCK path + helpers only; it is NOT the live get_macro_snapshot.signals.carry serving path (that is the Go macro-indicators service via clients.ts). Live regression fixed by 09e93d76 (see DSI-MACRO-INDICATORS-LATENT). DSI-S1-MACRO TS = DONE-CODE (text path), not the live-serving fix."
           },
           {
             "id": "DSI-S1-FE-TYPE",
@@ -2135,9 +2135,10 @@
           {
             "id": "DSI-MACRO-INDICATORS-LATENT",
             "label": "LATENT BACKLOG ONLY: macro-indicators Go plane per-field provenance (gate on container entering runtime)",
-            "status": "BACKLOG",
+            "status": "DONE-LIVE-VERIFIED",
             "zone": "apps/macro-indicators",
-            "size": "M"
+            "size": "M",
+            "note": "DONE-LIVE-VERIFIED 2026-06-04 (commit 09e93d76, dev-macro-indicators). R-4 assumption FALSE: container Up 45h healthy + IS live serving path. Per-input liveness gate; carry suppressed regime=UNKNOWN+is_estimate+source_tier4 when fedFunds estimate; dataSource gate extended to all 5 inputs; true FRED fetched_at_source (never time.Now). go test 12pkg green, lint 0, sandbox 20/20. ROUTER LIVE-VERIFIED get_macro_snapshot via gateway: regime UNKNOWN (was FII_OUTFLOW_RISK), dataSource estimate (was live), carrySpread null, fetched_at_source 2026-05-28. THIS was the real FIX-MACRO-FEDFUNDS-REGRESS fix."
           }
         ]
       }
@@ -2728,6 +2729,30 @@
         "owner": "ba",
         "depends": "DSI-ARCH",
         "note": "Decompose the architect DATA-SERVE-INTEGRITY invariant brief into per-zone acceptance specs for DSI-S1-SLA/S1-MACRO/S1-FE-TYPE (apps/mcp-server), DSI-S2-PRICE (apps/stock-price), DSI-S3-SECTOR-FIN (apps/mcp-server). Carry the 6 structural acceptance criteria + router-confirmed file:line findings verbatim — evidence, not to be re-discovered. | DONE 2026-06-04: docs/handoffs/DSI-BA-spec.md. 6 tasks (S1-SLA/S1-MACRO/S1-FE-TYPE/S2-PRICE/S3-SECTOR-FIN/LATENT-BACKLOG). No PO blockers. next: dev-mcp-server DSI-S1-SLA."
+      },
+      {
+        "task_id": "FU-FRED-EFFR-STALE",
+        "title": "FRED EFFR stale since 2026-05-28 (>96h bound) → macro-indicators fixture fallback (5.33) triggers; earnYield also stale (>26h). Investigate FRED/fred_series_daily ingest pipeline — this is the WHY behind the carry suppression now showing UNKNOWN.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server+vps",
+        "note": "FRED EFFR last row 2026-05-28 (187h old > 96h effrStaleBound) so macro-indicators correctly rejects->fixture. Carry now honestly suppressed (UNKNOWN/estimate) per DSI-INV-1 but the macro carry/yield signal is UNAVAILABLE until FRED refreshes. Root: investigate fred_series_daily ingest / VPS FRED fetch staleness.",
+        "depends_on": null
+      },
+      {
+        "task_id": "FU-MACRO-INDICATORS-MISSCOPE",
+        "title": "Architecture correction: macro-indicators Go container is DEPLOYED (Up 45h) + IS the live serving path for get_macro_snapshot.signals (clients.ts->:5004). PO zone_correction (route to dev-mcp-server, 'macro-indicators not-deployed Go plane') was FALSE. DSI-S1-MACRO TS fix hit the text-block path only; live regression fixed by Go commit 09e93d76.",
+        "type": "DOC",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/architecture-briefs",
+        "note": "Record in a brief: macro-indicators IS deployed+serving; correct future macro serving-path fixes to dev-macro-indicators (Go) not dev-mcp-server (TS). Recurring-bug-escalation: architect DSI brief mis-located the layer.",
+        "depends_on": null
       }
     ],
     "archive": []
