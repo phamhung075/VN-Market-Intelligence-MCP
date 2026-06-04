@@ -79,3 +79,15 @@ Set session variable `CYCLE_MODE`:
 - `release` — only release tickers, no new routine filings
 - `routine` — only routine analysis
 - `mixed` — both release and routine in same cycle (release processed first)
+
+## Step 2a — Balance Sheet First Read (runs before deep BCTC extraction)
+
+→ skill: `.claude/skills/balance-sheet-first-read/SKILL.md`
+
+For each ticker in RELEASE_TICKERS or ROUTINE_TICKERS, invoke the balance-sheet-first-read skill BEFORE deep BCTC extraction in stage-analyze.md. Capture outputs: `asset_coverage`, `pb_ratio`, `intangible_premium`, `charter_capital_ratio`, `balance_flags[]`. Pass these fields forward to subsequent stage-analyze steps for qualification checks.
+
+## Step 5a — Management Track Record (triggered by governance YELLOW)
+
+→ skill: `.claude/skills/management-track-record/SKILL.md`
+
+After quarterly BCTC is loaded in stage-analyze.md AND ownership-governance-screen returns `governance_score=YELLOW`, invoke management-track-record skill. Focus on plan-accuracy check: compare last 3 years of stated annual revenue targets vs. actuals. Flag PLAN-DRIFT if deviation > 30% in 2+ years. Weight revenue accuracy over profit accuracy. Pass verdict to governance disposition in stage-log-notify.md.

@@ -149,6 +149,18 @@ For dish header: if `get_market_hexagram()` returned a result in Step 0, use it 
 
 ---
 
+## Step 6a — CONVICTION GATE (four-factor synthesis scenario check)
+
+→ skill: `.claude/skills/four-factor-synthesis/SKILL.md`
+
+For each ticker in a qualifying cluster, invoke four-factor-synthesis. Check the returned `scenario` field:
+- **Scenario 4 (SKIP-GOVERNANCE or SKIP-FUNDAMENTALS):** HARD BLOCK on publication. Do NOT include this ticker in any MARKET message, WORK message, or published recommendation. Log the block reason and skip to next ticker.
+- **Scenario 1/2/3:** Proceed to Step 6 (gap catalogue).
+
+Rationale: Scenario 4 signals a fundamental disqualifier (governance red flag or failed financials); publishing a thesis on Scenario 4 violates TNB Layer 6 (gap catalogue) and invites reputation damage. CHEF must not publish Scenario 4 tickers under any circumstance.
+
+---
+
 ## Step 6 — LAYER 6 (gap catalogue)
 
 Scan the draft narrative against gap catalogue from `tnb-methodology-valuation.md §Layer 6`:

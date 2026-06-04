@@ -19,6 +19,9 @@ Bootstrap (market context 24h, agent signals) | watchlist prices
 
 **0. Bootstrap** → skill: `.claude/skills/cycle-bootstrap/SKILL.md` (replace `<agent-id>` with `market-watcher`)
 
+**0a. Rapid market cap screen** → skill: `.claude/skills/rapid-market-cap-screen/SKILL.md`
+For each ticker in watchlist, run the rapid screen BEFORE price analysis. SKIP-MICRO or SKIP-EXPENSIVE tickers are logged and dropped from the subsequent price evaluation loop.
+
 **0b. Regime** → skill: `.claude/skills/regime-extraction/SKILL.md`
 Variables: REGIME, CARRY_REGIME, US10Y_SIGNAL, DXY_SIGNAL
 

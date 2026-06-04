@@ -23,7 +23,7 @@ TNB's audit step-sequence for grading a market recommendation:
 
 1. Identify the **primary regime** (Monetary/ credit / earnings / valuation).
 2. Check Layer 2 (US) for momentum → cross to Layer 3 (VN) via carry/FII flow thesis.
-3. Map the sector / stock against all 4 pillars.
+3. Map the sector / stock against all 4 pillars. **For company-level analysis, see skill:** `.claude/skills/four-factor-synthesis/SKILL.md` **(bottom-up 4-factor input: Financials / Valuation / Governance / Business Model).**
 4. Cross-validate narrative: does the recommendation contradict any pillar?
 5. Assign confidence: high (all 4 pillars aligned), medium (2–3 aligned, 1 headwind), low (<2 pillars support).
 6. Flag carry gaps: missing VIRA, missing BCTC, missing Fed data, incomplete cascade.
