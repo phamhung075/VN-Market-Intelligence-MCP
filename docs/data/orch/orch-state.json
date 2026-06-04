@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-04T18:50:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "DSI-S1-MACRO",
+    "status": "idle",
+    "active_task_id": null,
     "next_agent": "dev-mcp-server",
-    "next_action": "DSI-S1-MACRO (P0,M) per DSI-BA-spec FR-MAC-1..6 + vps-scripts country VN->vietnam (DSI-S1-SLA deploy gate FR-SLA-4). One mcp rebuild bakes SLA+MACRO. WIP=2.",
+    "next_action": "DSI-S1-MACRO DONE (commit fb7e16d0). Next: DSI-S1-FE-TYPE (P1, S) — extend MacroSnapshot/MacroSignalEntry TS types with dataSource/is_estimate/source_tier in apps/frontend/app/domain/market.ts. Can parallel with DSI-S2-PRICE (stock-price, diff zone).",
     "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-04T18:54:33Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-04T19:15:00Z",
+    "updated_by": "dev-mcp-server"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2099,9 +2099,13 @@
           {
             "id": "DSI-S1-MACRO",
             "label": "Per-field is_estimate on carry/yield; true-source fetched_at",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/mcp-server",
-            "size": "M"
+            "size": "M",
+            "done_at": "2026-06-04T19:15:00Z",
+            "done_by": "dev-mcp-server",
+            "commit": "fb7e16d0",
+            "note": "DONE 2026-06-04T19:15Z commit fb7e16d0. FR-MAC-1: formatThienThoi gates on fedFundsRateIsEstimate (not just ===0); isEstimate=true suppresses carry spread+regime as \"unavailable — est. rate\"; FII_OUTFLOW_RISK no longer emitted from fixture arithmetic. FR-MAC-2: sbv_rates schema migration is_estimate INTEGER DEFAULT 1; fetchSbvRates sets isEstimate=true; storeSbvSnapshot writes is_estimate to DB. FR-MAC-3/4: buildCarryProvenance() exported with CarryProvenance type (is_estimate/source_tier/fedFundsFetchedAt from MAX EFFR date). FR-MAC-5: killed ?? 0 commodity zero-writes in macroIndicatorRefreshJob; CASE guard in ON CONFLICT DO UPDATE preserves prior good values. FR-MAC-6: computeMacroDataSource() exported. Tests: 16 new (DSI-S1-MACRO.test.ts), tsc clean, 58 pass/4 pre-existing fail. ops_rebuild_required=true."
           },
           {
             "id": "DSI-S1-FE-TYPE",
