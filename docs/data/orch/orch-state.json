@@ -6,12 +6,12 @@
   "head": {
     "status": "active",
     "active_task_id": null,
-    "next_agent": "architect",
-    "next_action": "DATA-SERVE-INTEGRITY sprint OPENED (architect-led, cross-zone, P0 recurring). Absorbs FIX-MACRO-FEDFUNDS-REGRESS as DSI-S1. SYSTEMIC anti-pattern: fail-soft to hardcoded fixture/zero/last-value + stamp fetched_at=now + drop staleness flag => fabricated served as live (regression of DPI; recurring-bug policy => architect root-cause BEFORE point fixes). ARCHITECT: run DSI-ARCH -> write brief docs/architecture-briefs/2026-06-04-data-serve-integrity.md formalizing 6 structural ACs into ONE fleet-wide invariant + per-zone split, hand to BA-DSI. Detection-net DSI-S1-SLA (VN/vietnam key) FIRST. Zones: mcp-server=dev-mcp-server, stock-price=dev-stock-price; macro-indicators Go plane code-only (not deployed). Then ops REBUILD touched containers, QA raw-verify live snapshot regime flip.",
+    "next_agent": "ba",
+    "next_action": "DSI-ARCH design complete. Brief: docs/architecture-briefs/2026-06-04-data-serve-integrity.md. Handoff: docs/handoffs/DSI-ARCH.md. BA-DSI: decompose into per-zone atomic tasks per §4 sequence. Zones: dev-mcp-server (S1-SLA XS first) + dev-stock-price (S2-PRICE) + dev-macro-indicators (latent backlog only).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T18:23:25Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-04T19:30:00Z",
+    "updated_by": "architect"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2059,6 +2059,73 @@
             "priority": "p1",
             "handoff": "docs/handoffs/TASK_FIX-I-B.md",
             "note": "New fetcher + store + job; extend vnstock_officers with appointment_year column; update get_company_profile to expose appointment_year + derive ceo_tenure_years. Unit/replay tests parallel; live-verify waits for FIX-I-A proxy deployment."
+          }
+        ]
+      },
+      {
+        "id": "DATA-SERVE-INTEGRITY",
+        "label": "Fleet-wide: eradicate fail-soft-fixture-stamped-fresh anti-pattern (DSI-INV-1 invariant). Absorbs FIX-MACRO-FEDFUNDS-REGRESS.",
+        "status": "active",
+        "opened_at": "2026-06-04",
+        "priority": "P0",
+        "lead": "architect",
+        "evidence": "macroIndicatorSla.ts queries country='VN' but all active writers use 'vietnam' (dead since commit 7a0adfdc 2026-05-17). FIX-MACRO-FEDFUNDS-REGRESS: fixtureFedFundsRate=5.33 served as live when FRED unreachable. Fleet-wide pattern: fail-soft -> hardcode -> stamp now -> drop is_estimate -> served as live. Brief: docs/architecture-briefs/2026-06-04-data-serve-integrity.md.",
+        "tasks": [
+          {
+            "id": "DSI-ARCH",
+            "label": "Architect: brownfield + brief + per-zone split",
+            "status": "DONE",
+            "zone": "multi",
+            "size": "S"
+          },
+          {
+            "id": "DSI-BA",
+            "label": "BA: decompose architect brief into per-zone atomic tasks",
+            "status": "TODO",
+            "zone": "multi",
+            "size": "S"
+          },
+          {
+            "id": "DSI-S1-SLA",
+            "label": "Fix country key mismatch in macroIndicatorSla.ts + push-gso default",
+            "status": "TODO",
+            "zone": "apps/mcp-server",
+            "size": "XS"
+          },
+          {
+            "id": "DSI-S1-MACRO",
+            "label": "Per-field is_estimate on carry/yield; true-source fetched_at",
+            "status": "TODO",
+            "zone": "apps/mcp-server",
+            "size": "M"
+          },
+          {
+            "id": "DSI-S1-FE-TYPE",
+            "label": "Extend MacroSnapshot + MacroSignalEntry TS types with dataSource/is_estimate/source_tier",
+            "status": "TODO",
+            "zone": "apps/mcp-server",
+            "size": "S"
+          },
+          {
+            "id": "DSI-S2-PRICE",
+            "label": "stock-price Staleness propagation + Change nullability + Tier-3 no-restamp",
+            "status": "TODO",
+            "zone": "apps/stock-price",
+            "size": "M"
+          },
+          {
+            "id": "DSI-S3-SECTOR-FIN",
+            "label": "Sector/fin fixture clusters -> null + is_estimate (P2)",
+            "status": "TODO",
+            "zone": "apps/mcp-server",
+            "size": "L"
+          },
+          {
+            "id": "DSI-MACRO-INDICATORS-LATENT",
+            "label": "LATENT BACKLOG ONLY: macro-indicators Go plane per-field provenance (gate on container entering runtime)",
+            "status": "BACKLOG",
+            "zone": "apps/macro-indicators",
+            "size": "M"
           }
         ]
       }
