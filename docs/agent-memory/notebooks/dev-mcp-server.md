@@ -1,5 +1,21 @@
 # dev-mcp-server -- Notebook
 
+## c362 · 2026-06-04T11:55Z (FIX-B root-cause fix — market_cap_bn) — COMMITTED 21838d1b
+
+**Task:** FIX-B cycle re-open — QA live-verify failure (cycle 190): get_market_cap(FPT) null, 0 of 2856 DB rows non-null.
+
+**Root cause (definitif):** TRADING_STATS_SCRIPT in vnstockBridge.ts had 2 compounding failures:
+1. vnstock schema change (silent, ~2025+): all column keys renamed. Old: foreign_room/foreign_volume/current_holding_ratio/max_holding_ratio/avg_match_volume_2w/high_price_1y/low_price_1y/pct_high_change_1y/pct_low_change_1y — ALL MISSING. New: free_float/foreigner_percentage/maximum_foreign_percentage/average_match_volume1_month/highest_price1_year/lowest_price1_year. Prices already in VND (no *1000 needed).
+2. market_cap AVAILABLE in trading_stats() directly as raw VND — ratio() call was unnecessary AND broken (VCI Company API returns no 'data' key → KeyError). `except: pass` swallowed all failures silently = recurrence vector.
+3. New fix: market_cap_bn = r.get('market_cap') / 1e9; all keys corrected; pct_from_high/low computed from current_price; stderr logging on null.
+
+**Gate results:** 17 pass / 0 fail (RAPID-B1+B2 tests), tsc clean, tools=161 (probe)/159 (server unchanged), sched=70.
+**Live verify:** FPT Python probe → marketCapBn=130318.29 Bn VND; DB updated; queryMarketCap(db, 'FPT') → market_cap_billion=130318.29, fetched_at non-null. Rate-limited during full watchlist re-sync; will auto-populate at next 08:30 UTC cron.
+**Commit:** 21838d1b | Container rebuilt + healthy.
+**Orch-state:** FIX-B-1 → REVIEW.
+
+---
+
 ## c361 · 2026-06-04T13:30Z (FIX-A + FIX-D verify+handoff) — CONFIRMED LIVE
 
 **Tasks:** FIX-A (get_company_profile) + FIX-D (get_bctc_full structured_data+receivables) — RAPID-DATA-LAYER Phase 1 P1
@@ -40,37 +56,6 @@
 **Gate results:** tsc clean (EXIT 0), 38 pass / 0 fail (4 files: FIX-C × 8, FIX-E × 6, 178 × 7, 240 × 17), tools=161 (+1 get_bctc_series), sched=69 (unchanged). Fence: bites exit 1 on deliberate domain→infra import, passes on new files (exit 0). commit-mutex: gateway unavailable → proceeded solo (single agent confirmed, no race).
 
 **Honest-absent:** `pe`, `pb`, `roe`, `debt_to_equity` return null when DB null — not fabricated.
-
----
-
-## c359 · 2026-06-03T20:15Z (FU-EI-P2-COV-1 + COV-2) — COMMITTED 5c498c2e
-
-**Task:** FU-EI-P2-COV-1 + FU-EI-P2-COV-2 — env-check test coverage gaps (test-only, no runtime change, no ops rebuild needed).
-
-**COV-1 (runEnvCheck 0% → covered):** 5 tests: R1 no-op when vars present, R2 warn called on missing (honest-green pin: inverted condition → 0 calls → assertion fails), R3 message includes var name, R4 no-throw on missing token (degraded-mode early-return path), R5 meta.missingVars array complete.
-
-**COV-2 (APP_ENV=testing untested → covered):** 4 tests: T1 isProductionEnv("testing")→false (pins DEV_ENV_VALUES.has("testing")), T2 testing+prodDB→error, T3 testing+devDB→null, T4 currentDataEnv returns "testing".
-
-**envCheck.ts coverage:** funcs 88.89%→100%, lines 66.67%→83.56%. Remaining uncovered: lines 174/176-186 (fetch try/catch inside token+workId guard — live network, not testable without real creds, correctly guarded by R4).
-
-**Gate results:** 11 new tests pass / 0 fail; 48 total across 3 env-check files; tsc EXIT 0. test-only commit, no ops rebuild needed.
-
----
-
-## c358 · 2026-06-03T19:30Z (VPT-1) — COMMITTED d67448ad
-
-**Task:** VPT-1 — Add GET /api/vps-proxy-health HTTP endpoint so /dashboard/vps renders UP/STALE/DOWN truthfully.
-
-**Root cause (operator-confirmed):** /dashboard/vps checked api-gateway microservice /health/{news,stock} (NOT deployed). Real VPS health lives in vpsPushLogStore.getVpsProxyHealth() (MCP tool plane). Dashboard cannot call MCP tools — needs HTTP endpoint.
-
-**Changes:**
-1. `apps/mcp-server/src/interface/mcp/routes/vpsProxyHealthHandler.ts` (NEW) — handler calling getVpsProxyHealth() directly.
-2. `apps/mcp-server/src/interface/mcp/server.ts` — import + route `GET /api/vps-proxy-health` registered.
-3. `apps/mcp-server/src/__tests__/VPT-1-vps-proxy-health-endpoint.test.ts` (NEW) — 7 tests.
-
-**Gate results:** tsc clean, tools=158 (unchanged), sched=70 (unchanged), 7 new pass / 0 fail.
-
-**Ops required:** rebuild mcp-server container to go live.
 
 ---
 

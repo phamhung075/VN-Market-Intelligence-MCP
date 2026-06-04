@@ -1,7 +1,7 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T13:30:00Z",
+  "_updated_at": "2026-06-04T11:55:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
@@ -1968,11 +1968,11 @@
             "type": "SPRINT-S",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "DONE-CODE-DATA-PENDING-UPSTREAM",
+            "status": "REVIEW",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "p1",
-            "note": "FIX-B-1 persist+fetch shipped b275239d, deployed live (mcp-server rebuilt, healthy, tool count 156->157). Code path correct (schema market_cap_bn col + idempotent migration + storeTradingStats persist + TRADING_STATS_SCRIPT ratio() fetch). DATA PENDING: market_cap_bn null for all rows until a successful vnstock sync; live-verify blocked by transient vnstock RATE_LIMIT (all FPT endpoints, 0848Z). Verify hook: FU-FIXB-COLUMNKEY-VERIFY."
+            "note": "FIX-B root-cause fixed 2026-06-04 (21838d1b): TRADING_STATS_SCRIPT column keys updated to match vnstock schema change (free_float/foreigner_percentage/maximum_foreign_percentage/average_match_volume1_month/highest_price1_year/lowest_price1_year; prices in VND no *1000). ratio() call removed (VCI Company API broken). market_cap_bn now from trading_stats().market_cap/1e9. Silent except:pass replaced with stderr logging. Live verify: FPT market_cap_bn=130318.29 (DB updated from probe). get_market_cap(FPT) returns non-null. Rate limits blocked full watchlist re-sync; will auto-sync next cron 08:30 UTC. AWAITING QA: confirm get_market_cap(FPT) non-null via gateway."
           },
           {
             "task_id": "FIX-B-2",

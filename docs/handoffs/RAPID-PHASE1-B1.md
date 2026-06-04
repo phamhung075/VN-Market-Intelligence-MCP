@@ -109,3 +109,24 @@ feat(rapid-phase1/FIX-B-1): persist vnstock marketCap to vnstock_trading_stats.m
 
 Task: FIX-B-1 (RAPID-DATA-LAYER Phase 1, unblocks get_market_cap tool)
 ```
+
+---
+
+## [Developer] Implementation Record — FIX-B Root-Cause Fix (2026-06-04)
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files modified:** apps/mcp-server/src/infrastructure/fetchers/vnstockBridge.ts — TRADING_STATS_SCRIPT column key fix + remove broken ratio() call
+- **Root cause found:** vnstock trading_stats() schema changed silently. Old keys (foreign_room, foreign_volume, current_holding_ratio, max_holding_ratio, avg_match_volume_2w, high_price_1y, low_price_1y, pct_high_change_1y, pct_low_change_1y) no longer exist. New keys: free_float, foreigner_percentage, maximum_foreign_percentage, average_match_volume1_month, highest_price1_year, lowest_price1_year. Prices in new schema are already VND (no *1000). market_cap is directly in trading_stats() as raw VND — ratio() approach was redundant AND broken (VCI Company API returns no 'data' key). The except:pass masked ALL failures silently.
+- **Fix:** Updated all .get() keys; removed ratio() call; market_cap_bn = r.get('market_cap') / 1e9; added stderr logging on null; computed pct_from_high/low from current_price vs 52w range.
+- **Tests written:** RAPID-B1 + RAPID-B2 — 17 pass / 0 fail (pre-existing tests GREEN)
+- **Git commits:** 21838d1b fix(rapid-data-layer/FIX-B): FIX-B root-cause fix — update TRADING_STATS_SCRIPT column keys to match vnstock schema
+- **Type check:** clean (bun tsc --noEmit)
+- **bun test (FIX-B):** 17 pass / 0 fail
+- **Tool count:** 161 tools (probe) / 159 server (unchanged)
+- **Scheduler count:** 70 cron.schedule entries
+- **Live raw verify:** FPT market_cap_bn=130318.29 Bn VND (direct Python probe + DB update); get_market_cap(FPT) DB query returns non-null
+- **Container:** rebuilt + restarted; server health OK (159 tools, uptime 787s)
+- **Rate-limit note:** Full watchlist re-sync blocked by VCI rate limits during this cycle. FPT verified via direct DB update with probe-confirmed value. Remaining watchlist will auto-sync at next scheduled cron (08:30 UTC)
+- **Docs updated:** RAPID-PHASE1-B1.md — Developer section added
+- **Graphify:** skipped (no architecture docs impacted)
