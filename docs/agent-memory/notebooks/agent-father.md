@@ -1,5 +1,14 @@
 # Agent Father — Notebook
 
+## c284 · 2026-06-04 — DSI-CONSUMER-HONORS-ISESTIMATE: carry provenance guard in chef + fb-market-poster
+
+- Task: DSI-CONSUMER-HONORS-ISESTIMATE (P1). Root: consumers recomputed spread from raw fedFundsRate/vndDepositRate even after serve layer suppressed carrySpread=null + is_estimate=true.
+- chef.md Step 6.5 L193: replaced hardcoded `FII_OUTFLOW_RISK`/`carry -33bp` example with neutral gap example. Added carry provenance rule: carry/FII narrative ONLY when `carry.is_estimate=false AND carrySpread!=null`; else insert `[gap: carry regime unavailable]`, never recompute from raw rate fields.
+- fb-market-poster/flow/main.md STEP 1b: added `get_macro_snapshot` call + `$carry_usable` flag derivation. STEP 3 hard rules: added carry/FII provenance rule keyed on `$carry_usable`; blocks rate-differential + FII-outflow thesis when flag false.
+- Size-justifications updated: chef.md 308→321L, fb-market-poster 465→489L.
+- orch-state DSI-CONSUMER-HONORS-ISESTIMATE → DONE. head updated.
+- Commits: see main commit.
+
 ## c283 · 2026-06-03 — NB-FLOW-SETTLED-WRITE: migrate APPEND-class consumers to AC-3 settled-write invariant
 
 - Task: NB-FLOW-SETTLED-WRITE (HIGH, root-cause fix). Closes notebook-bloat class.

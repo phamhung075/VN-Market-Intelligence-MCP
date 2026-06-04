@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T20:05:28Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-04T20:30:00Z",
+  "_updated_by": "agent-father",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "DSI SIGNED-OFF-PARTIAL by PO 2026-06-04 (serve layer fixed live, router raw-verified). NOT a clean win: operator FB-carry symptom HALF-closed. 3 follow-ups queued: DSI-CONSUMER-HONORS-ISESTIMATE (P1, highest operator value, owner agent-father) | DSI-S2-PRICE-TS-GAP (P2, dev-mcp-server) | FU-RUNTIME-SET-TRUTH-RECONCILE (P3 doc, ops). macro-indicators runtime: BLESSED (already in host_runtime_set). NOT starting a follow-up sprint this tick — queued to backlog; next cron triage picks up P1.",
+    "next_action": "DSI-CONSUMER-HONORS-ISESTIMATE DONE (agent-father 2026-06-04): chef.md + fb-market-poster flow carry provenance rules added. Remaining: DSI-S2-PRICE-TS-GAP (P2, dev-mcp-server) | FU-RUNTIME-SET-TRUTH-RECONCILE (P3 doc, ops). Cowork agents must reload flows (paste refresh prompt from agent-father report).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T20:05:28Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-04T20:30:00Z",
+    "updated_by": "agent-father"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2761,15 +2761,17 @@
         "title": "Consumers (chef/unified-agent + fb-market-poster) must READ the served carry/yield field (now null/is_estimate) and NEVER recompute a spread/regime from raw fedFundsRate/vndDepositRate. FB posts 06-02/06-04 narrated false 5.0-5.33=-0.33 FII-outflow despite serve-layer suppression. This is the ACTUAL fix for the operator's 'FB macro was wrong' complaint.",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE",
         "priority": "P1",
         "size": "M",
         "zone": "docs/agents (flow .md) + verify no code recompute",
         "owner": "agent-father (flow edits) + dev-mcp-server (if any tool-side recompute)",
-        "note": "ROOT of operator symptom. Serve layer correctly suppresses carrySpread->null + is_estimate=true (router live-verified), but the response STILL exposes raw fedFundsRate=5.33 + vndDepositRate=5, and consumers recompute. Evidence: fb-post-2026-06-02 L11/L23/L27 (chenh lech am 0,33 / rui ro dong ngoai) + fb-post-2026-06-04 L19/L31 (-0,33 diem phan tram). chef.md L188/L193 carry example prose hardcodes FII_OUTFLOW_RISK + carry -33bp as template. FIX: (1) chef.md + market-analysis.md + fb-market-poster flow MUST consume served carry.regime/carrySpread verbatim; when is_estimate=true OR carrySpread=null -> OMIT the carry narrative entirely (no recompute, no template FII-outflow). (2) Scrub chef.md L188/L193 example prose of literal FII_OUTFLOW_RISK/-33bp so it can't leak as a template. (3) Consider serve-side: when is_estimate=true, null out the raw fedFundsRate/vndDepositRate in the carry object too (defence-in-depth so a naive consumer can't recompute). Verify by raw-reading next FB post macro paragraph + grep chef render for recompute.",
+        "note": "ROOT of operator symptom. Serve layer correctly suppresses carrySpread->null + is_estimate=true (router live-verified), but the response STILL exposes raw fedFundsRate=5.33 + vndDepositRate=5, and consumers recompute. Evidence: fb-post-2026-06-02 L11/L23/L27 (chenh lech am 0,33 / rui ro dong ngoai) + fb-post-2026-06-04 L19/L31 (-0,33 diem phan tram). chef.md L188/L193 carry example prose hardcodes FII_OUTFLOW_RISK + carry -33bp as template. FIX: (1) chef.md + market-analysis.md + fb-market-poster flow MUST consume served carry.regime/carrySpread verbatim; when is_estimate=true OR carrySpread=null -> OMIT the carry narrative entirely (no recompute, no template FII-outflow). (2) Scrub chef.md L188/L193 example prose of literal FII_OUTFLOW_RISK/-33bp so it can't leak as a template. (3) Consider serve-side: when is_estimate=true, null out the raw fedFundsRate/vndDepositRate in the carry object too (defence-in-depth so a naive consumer can't recompute). Verify by raw-reading next FB post macro paragraph + grep chef render for recompute. | DONE 2026-06-04 agent-father: (1) chef.md Step 6.5 hardcoded FII_OUTFLOW_RISK/-33bp example replaced with neutral gap example; carry provenance rule added (is_estimate=false AND carrySpread!=null required before carry narrative); (2) fb-market-poster/flow/main.md STEP 1b adds get_macro_snapshot call + $carry_usable flag; STEP 3 hard rule added blocking rate-differential/FII narrative when $carry_usable=false.",
         "depends_on": null,
         "triaged_by": "po",
-        "triaged_at": "2026-06-04T20:05:28Z"
+        "triaged_at": "2026-06-04T20:05:28Z",
+        "completed_at": "2026-06-04T20:30:00Z",
+        "completed_by": "agent-father"
       },
       {
         "task_id": "DSI-S2-PRICE-TS-GAP",

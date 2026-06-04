@@ -1,4 +1,4 @@
-<!-- size-justification: 465L — single-flow cowork agent with no sub-flows; carries SELF-IDENTITY GUARD (L3 durable fix NSCOUT-FRAMING-RECUR) + full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 4 calls, 3-section composition spec with full detail floor + hashtag block composition rule + diacritics strip rule, 16-check pre-write validation with executable hard-fail jargon gate call + mapping table + hashtag block check, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching -->
+<!-- size-justification: 489L — single-flow cowork agent with no sub-flows; carries SELF-IDENTITY GUARD (L3 durable fix NSCOUT-FRAMING-RECUR) + full 8-step cycle (bootstrap, dual-layer notebook reads, forward-looking source reads, live-tool enrichment block with 5 calls + carry provenance guard, 3-section composition spec with full detail floor + hashtag block composition rule + diacritics strip rule, 16-check pre-write validation with executable hard-fail jargon gate call + mapping table + hashtag block check, write, feedback-sink, notification, session log); splitting into sub-flows would fragment context across a simple linear cycle with no branching; DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule added -->
 # FB Market Poster — Main Flow
 
 ## SELF-IDENTITY GUARD (read first — non-negotiable)
@@ -89,6 +89,14 @@ From results, extract and hold in working memory:
 - Top movers: winners and losers with ticker, price, `pct_change`, sector.
 
 **Merge rule:** Live tool data is authoritative over notebook data for quantitative fields. If a live tool errors → fall back to notebook value. Log which source was used for each field.
+
+**Macro snapshot + carry provenance (DSI-CONSUMER-HONORS-ISESTIMATE):**
+```
+macro = call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
+```
+From the result, read `macro.carry` and store `$carry_usable = (macro.carry.is_estimate == false AND macro.carry.carrySpread != null)`.
+If the call errors or `macro` is unavailable, set `$carry_usable = false`.
+This flag governs carry/FII narrative eligibility throughout STEP 3 (see carry hard rule below).
 
 ---
 
@@ -226,6 +234,7 @@ Do NOT pad with generic vague sentences where data is missing — if a field is 
 ### Hard rules
 
 - ALWAYS include direction + delta% for VN-Index and any named ticker (memory: feedback_market_data_direction). Never write a bare price without change.
+- **Carry/FII provenance rule (DSI-CONSUMER-HONORS-ISESTIMATE):** Use `$carry_usable` from STEP 1b. If `$carry_usable=false` (macro is_estimate=true or carrySpread=null): the Phân tích and Dự đoán sections MUST NOT state a US-VN rate differential, a carry spread number, or any "khối ngoại rút / FII outflow do chênh lệch lãi suất" thesis. Do NOT compute a spread from the raw `fedFundsRate` / `vndDepositRate` fields — those are stale fixtures. The USD/VND rate and commodity prices (vàng/dầu) may still be reported if their own `is_estimate` flags are false. If `$carry_usable=true`, the served `carry.carrySpread` value may be cited verbatim.
 - Total post length: 150–1300 words. The 3-section structure naturally requires more space — do NOT truncate the Dự đoán section to meet a word target. Trim the recap if needed. Long-form is fine; the ceiling is generous by design.
 - No markdown formatting in the post body (no `**bold**`, no `#headers`). Plain prose + the disclaimer separator. Section headings may be written as plain Vietnamese labels if helpful for readability (e.g., "Tóm tắt:" or "Dự đoán:") but no markdown.
 - The disclaimer block MUST appear verbatim at the end, inside `---` separators.

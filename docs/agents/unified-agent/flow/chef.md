@@ -1,4 +1,4 @@
-<!-- size-justification: 308L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class) -->
+<!-- size-justification: 321L — telemetry extracted to chef-telemetry.md (S1 split); dual-output Step 7 splits MARKET (plain-VI) from WORK (TNB-auditable) — atomic responsibility, cannot split without breaking recipe coherence; Steps 0–7 are a sequential decision framework that must be read end-to-end per dish cycle; Step 8 rewritten NB-FLOW-SETTLED-WRITE: compose-in-memory then single-Write (AC-3 invariant, closes notebook-bloat class); DSI-CONSUMER-HONORS-ISESTIMATE carry provenance rule in Step 6.5 -->
 > Parent: [./main.md](./main.md)
 
 # Unified Agent — Chef Flow (TNB 6-Layer Recipe)
@@ -190,8 +190,9 @@ Example: "Fed hawkish hold → VND carry pressure +0.4σ → banking sector net-
 Rules:
 - One sentence per qualifying cluster. No exceptions — if no global event is identifiable, start from VN macro.
 - If any link in the chain is missing (no data for that level), write the chain with an explicit gap marker: `[gap: <what is missing>]` at the missing position AND set conviction to LOW for that cluster regardless of pillar score.
-- Example with gap: "[gap: no US macro signal in cycle] → VND carry -33bp FII_OUTFLOW_RISK → banking sector under pressure → [gap: no news_impact for VCB] — conviction LOW."
+- Example with gap: "[gap: no US macro signal in cycle] → [gap: carry regime unavailable — macro is_estimate=true] → banking sector under foreign pressure → [gap: no news_impact for VCB] — conviction LOW."
 - If conf=0.50 on all signals for a cluster (uncertain source baseline), label: `[uncertain-source baseline]` after the ticker state and treat as LOW conviction.
+- **Carry/FII provenance rule (DSI-CONSUMER-HONORS-ISESTIMATE):** The carry spread, carry regime, and any FII-flow thesis derived from the US-VN rate differential MAY ONLY appear in the causal chain when `get_macro_snapshot` returns `carry.is_estimate=false` AND `carry.carrySpread != null`. If `is_estimate=true` OR `carrySpread=null`, insert `[gap: carry regime unavailable — macro is_estimate=true]` at that chain position and do NOT compute a spread from the raw `fedFundsRate` / `vndDepositRate` fields. Never recompute deposit−fed manually from raw rate fields.
 - Store all chain sentences in session state — they become the mandatory spine of paragraph 2 in Step 7.
 
 ---
