@@ -1,0 +1,9 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-04T09:18:24Z",
+  "classification": "SILENT",
+  "slots": [],
+  "drift_min": 3,
+  "backlog": 0,
+  "note": "off-session; no slots until gatherers 12:00Z"
+}

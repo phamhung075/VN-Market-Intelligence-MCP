@@ -2761,10 +2761,11 @@
         "from": "po",
         "to": "pm",
         "type": "sprint_sequenced",
-        "status": "NEW",
+        "status": "READ",
         "createdAt": "2026-06-04T07:45:26Z",
         "payload": "docs/data/orch/orch-state.json#sprint_goal.RAPID-DATA-LAYER",
-        "note": "RAPID-DATA-LAYER ready. 10 backlog tasks w/ deps+zones set. Route P1 dev-mcp-server FIX-B(gate-first)/FIX-A/FIX-D/FIX-H to ba->dev-team. WIP=2. RECON-AGM-1 already in-progress (ops-vps-fetch). FIX-G stays BLOCKED until RECON-AGM-1 DONE w/ positive fetch recipe."
+        "note": "RAPID-DATA-LAYER ready. 10 backlog tasks w/ deps+zones set. Route P1 dev-mcp-server FIX-B(gate-first)/FIX-A/FIX-D/FIX-H to ba->dev-team. WIP=2. RECON-AGM-1 already in-progress (ops-vps-fetch). FIX-G stays BLOCKED until RECON-AGM-1 DONE w/ positive fetch recipe. || READ 2026-06-04T10:10:30Z by dev-team: P1 batch (FIX-B/A/D/H) all SHIPPED+verified across ticks 06:09-09:07Z; row consumed. P2 (FIX-C/FIX-E) proceeds via head.next_action.",
+        "readAt": "2026-06-04T10:10:30Z"
       }
     ],
     "archive": [
