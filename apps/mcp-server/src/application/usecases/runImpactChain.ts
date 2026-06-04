@@ -51,7 +51,8 @@ export interface CommoditySnapshot {
   shanghaiComp: number;
   hangSeng: number;
   dxy: number;
-  cnyVndRate: number;
+  /** Always null — CNHVND=X ticker is unavailable on Yahoo Finance. DSI-INV-1. */
+  cnyVndRate: null;
   copperUSD: number;
   silverUSDPerOz: number;
   jpyVndRate: number;

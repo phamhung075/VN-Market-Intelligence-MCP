@@ -279,14 +279,14 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     const snap1: CommoditySnapshot = {
       brentCrudeUSD: 80.0, goldUSDPerOz: 2300.0, usdVndRate: 25000.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
+      cnyVndRate: null, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-03-28T08:00:00.000Z",
     };
 
     const snap2: CommoditySnapshot = {
       brentCrudeUSD: 85.0, goldUSDPerOz: 2400.0, usdVndRate: 25200.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
+      cnyVndRate: null, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-03-28T09:00:00.000Z",
     };
 
@@ -372,14 +372,14 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     const snap1: CommoditySnapshot = {
       brentCrudeUSD: 80.0, goldUSDPerOz: 2300.0, usdVndRate: 25000.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
+      cnyVndRate: null, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-03-28T08:00:00.000Z",
     };
 
     const snap2: CommoditySnapshot = {
       brentCrudeUSD: 85.0, goldUSDPerOz: 2400.0, usdVndRate: 25200.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
+      cnyVndRate: null, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-03-28T09:00:00.000Z",
     };
 
@@ -446,7 +446,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
     storeCommoditySnapshot({
       brentCrudeUSD: 96.51, goldUSDPerOz: 4793.5, usdVndRate: 26320.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
+      cnyVndRate: null, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-04-10T08:00:00.000Z",
     }, db);
 
@@ -588,7 +588,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
       goldUSDPerOz: 4593.0,
       usdVndRate: 25100.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
+      cnyVndRate: null, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-05-31T00:15:00.000Z",
     };
 
@@ -700,7 +700,7 @@ describe("Task 025 — Yahoo Finance Commodity Fetcher", () => {
       goldUSDPerOz: 4593.0,
       usdVndRate: 25100.0,
       vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-      cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
+      cnyVndRate: null, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0, us10yYield: 0,
       fetchedAt: "2026-05-31T00:15:00.000Z",
     };
 

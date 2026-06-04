@@ -444,7 +444,7 @@ describe("Task 126 — Macro Cascade Integration", () => {
         return {
           brentCrudeUSD: 95, goldUSDPerOz: 1950, usdVndRate: 24500,
           vix: 0, sp500: 0, shanghaiComp: 0, hangSeng: 0, dxy: 0,
-          cnyVndRate: 0, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0,
+          cnyVndRate: null, copperUSD: 0, silverUSDPerOz: 0, jpyVndRate: 0,
           fetchedAt: new Date().toISOString(),
         };
       },

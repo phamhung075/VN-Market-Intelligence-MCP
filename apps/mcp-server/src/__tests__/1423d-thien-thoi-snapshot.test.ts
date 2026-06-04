@@ -86,7 +86,7 @@ const COMMODITY_FULL = {
   shanghaiComp: 3200.0,
   hangSeng: 18000.0,
   dxy: 104.2,
-  cnyVndRate: 3600.0,
+  cnyVndRate: null, // DSI-INV-1: unavailable, not a live rate
   copperUSD: 4.5,
   silverUSDPerOz: 28.0,
   jpyVndRate: 170.0,

@@ -154,7 +154,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
     expect(result!.shanghaiComp).toBeCloseTo(3320.0, 0);
     expect(result!.hangSeng).toBeCloseTo(17800.0, 0);
     expect(result!.dxy).toBeCloseTo(104.2, 1);
-    expect(result!.cnyVndRate).toBe(0); // CNHVND=X removed — always 0
+    expect(result!.cnyVndRate).toBeNull(); // DSI-INV-1: CNHVND=X unavailable — null not 0
     expect(result!.copperUSD).toBeCloseTo(4.65, 2);
     expect(result!.silverUSDPerOz).toBeCloseTo(29.1, 1);
     expect(result!.jpyVndRate).toBeCloseTo(165.0, 0);
@@ -166,7 +166,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
     const snap: CommoditySnapshot = {
       brentCrudeUSD: 82.5, goldUSDPerOz: 2341.8, usdVndRate: 25100.0,
       vix: 18.5, sp500: 5300.0, shanghaiComp: 3320.0, hangSeng: 17800.0,
-      dxy: 104.2, cnyVndRate: 0, copperUSD: 4.65, silverUSDPerOz: 29.1,
+      dxy: 104.2, cnyVndRate: null, copperUSD: 4.65, silverUSDPerOz: 29.1,
       jpyVndRate: 165.0, us10yYield: 0, fetchedAt: "2026-04-19T08:00:00.000Z",
     };
 
@@ -182,7 +182,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
     expect(row!["shanghai_comp"]).toBeCloseTo(3320.0, 0);
     expect(row!["hang_seng"]).toBeCloseTo(17800.0, 0);
     expect(row!["dxy"]).toBeCloseTo(104.2, 1);
-    expect(row!["cny_vnd_rate"]).toBe(0); // CNHVND=X removed — always 0
+    expect(row!["cny_vnd_rate"]).toBe(0); // DB writes 0 (NOT NULL constraint); TS type is null
     expect(row!["copper_usd"]).toBeCloseTo(4.65, 2);
     expect(row!["silver_usd_per_oz"]).toBeCloseTo(29.1, 1);
     expect(row!["jpy_vnd_rate"]).toBeCloseTo(165.0, 0);
@@ -248,7 +248,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
     expect(typeof snap.shanghaiComp).toBe("number");
     expect(typeof snap.hangSeng).toBe("number");
     expect(typeof snap.dxy).toBe("number");
-    expect(typeof snap.cnyVndRate).toBe("number");
+    expect(snap.cnyVndRate).toBeNull(); // DSI-INV-1: cnyVndRate is null (unavailable), not a number
     expect(typeof snap.copperUSD).toBe("number");
     expect(typeof snap.silverUSDPerOz).toBe("number");
     expect(typeof snap.jpyVndRate).toBe("number");
@@ -260,7 +260,7 @@ describe("Task 1487 — Yahoo Finance Extended 12-symbol (RED)", () => {
     const mockSnap: CommoditySnapshot = {
       brentCrudeUSD: 82.5, goldUSDPerOz: 2341.8, usdVndRate: 25100.0,
       vix: 18.5, sp500: 5300.0, shanghaiComp: 3320.0, hangSeng: 17800.0,
-      dxy: 104.2, cnyVndRate: 3510.0, copperUSD: 4.65, silverUSDPerOz: 29.1,
+      dxy: 104.2, cnyVndRate: null, copperUSD: 4.65, silverUSDPerOz: 29.1,
       jpyVndRate: 165.0, us10yYield: 0, fetchedAt: "2026-04-19T08:00:00.000Z",
     };
 

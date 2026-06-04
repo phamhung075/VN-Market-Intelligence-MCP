@@ -29,7 +29,7 @@ import { initDatabase, closeDb } from "../infrastructure/db/index.js";
 
 function makeOpts(overrides: Partial<CommodityTrackerRefreshOptions> = {}): CommodityTrackerRefreshOptions {
   return {
-    fetchCommodityFn: async () => ({ brentCrudeUSD: 80, goldUSDPerOz: 2300, usdVndRate: 25000, fetchedAt: "2026-05-16T06:00:00.000Z", vix: 15, sp500: 5000, shanghaiComp: 3000, hangSeng: 18000, dxy: 104, cnyVndRate: 0, copperUSD: 4.5, silverUSDPerOz: 28, jpyVndRate: 0.006, us10yYield: 4.2 }),
+    fetchCommodityFn: async () => ({ brentCrudeUSD: 80, goldUSDPerOz: 2300, usdVndRate: 25000, fetchedAt: "2026-05-16T06:00:00.000Z", vix: 15, sp500: 5000, shanghaiComp: 3000, hangSeng: 18000, dxy: 104, cnyVndRate: null, copperUSD: 4.5, silverUSDPerOz: 28, jpyVndRate: 0.006, us10yYield: 4.2 }),
     storeCommodityFn: async () => {},
     fetchShippingFn: async () => [{ name: "BDI", value: 1500, change: 10, changePct: 0.67, date: "2026-05-16" }],
     storeShippingFn: async () => {},
@@ -56,7 +56,7 @@ describe("Task 1920c — commodityTrackerRefreshJob", () => {
     const result = await runCommodityTrackerRefreshJob(makeOpts({
       fetchCommodityFn: async () => {
         fetchCalled = true;
-        return { brentCrudeUSD: 80, goldUSDPerOz: 2300, usdVndRate: 25000, fetchedAt: "2026-05-16T06:00:00.000Z", vix: 15, sp500: 5000, shanghaiComp: 3000, hangSeng: 18000, dxy: 104, cnyVndRate: 0, copperUSD: 4.5, silverUSDPerOz: 28, jpyVndRate: 0.006, us10yYield: 4.2 };
+        return { brentCrudeUSD: 80, goldUSDPerOz: 2300, usdVndRate: 25000, fetchedAt: "2026-05-16T06:00:00.000Z", vix: 15, sp500: 5000, shanghaiComp: 3000, hangSeng: 18000, dxy: 104, cnyVndRate: null, copperUSD: 4.5, silverUSDPerOz: 28, jpyVndRate: 0.006, us10yYield: 4.2 };
       },
       storeCommodityFn: async () => { storeCalled = true; },
     }));

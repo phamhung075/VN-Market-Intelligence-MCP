@@ -105,8 +105,14 @@ export interface CommoditySnapshot {
   hangSeng: number;
   /** US Dollar Index (DXY) level. 0 if unavailable (DX-Y.NYB venue). */
   dxy: number;
-  /** CNH to VND offshore exchange rate. 0 if unavailable. */
-  cnyVndRate: number;
+  /**
+   * CNH to VND offshore exchange rate.
+   * Always null — CNHVND=X is not a valid Yahoo Finance ticker (404 every sync).
+   * Kept in the type for schema compatibility; consumers MUST treat null as
+   * "data not available" and MUST NOT compute derived values from this field.
+   * DSI-INV-1: null here prevents a fabricated 0 from being misread as a live rate.
+   */
+  cnyVndRate: null;
   /** Copper futures price in USD per lb. 0 if unavailable. */
   copperUSD: number;
   /** Silver futures price in USD per troy oz. 0 if unavailable. */
@@ -311,8 +317,9 @@ export async function fetchYahooFinancePrices(
   const dxy =
     dxyResult.status === "fulfilled" && dxyResult.value !== null ? dxyResult.value : 0;
   // cnyVndRate: CNHVND=X is not a valid Yahoo ticker (404 on every sync).
-  // Field kept in CommoditySnapshot and DB schema for compatibility; always 0.
-  const cnyVndRate = 0;
+  // DSI-INV-1: field is null (not 0) so consumers cannot mistake "unavailable"
+  // for "live rate is zero". DB write uses ?? 0 to satisfy NOT NULL constraint.
+  const cnyVndRate = null;
   const copperUSD =
     copperResult.status === "fulfilled" && copperResult.value !== null ? copperResult.value : 0;
   const silverUSDPerOz =
@@ -519,7 +526,9 @@ export function storeCommoditySnapshot(
       snapshot.shanghaiComp,
       snapshot.hangSeng,
       snapshot.dxy,
-      snapshot.cnyVndRate,
+      // cnyVndRate is null (unavailable) — write 0 to satisfy NOT NULL DB constraint.
+      // Readers should consult the TypeScript type (null) not the DB column.
+      snapshot.cnyVndRate ?? 0,
       snapshot.copperUSD,
       snapshot.silverUSDPerOz,
       snapshot.jpyVndRate,
@@ -536,7 +545,8 @@ export function storeCommoditySnapshot(
       snapshot.shanghaiComp,
       snapshot.hangSeng,
       snapshot.dxy,
-      snapshot.cnyVndRate,
+      // cnyVndRate is null (unavailable) — write 0 to satisfy NOT NULL DB constraint.
+      snapshot.cnyVndRate ?? 0,
       snapshot.copperUSD,
       snapshot.silverUSDPerOz,
       snapshot.jpyVndRate,

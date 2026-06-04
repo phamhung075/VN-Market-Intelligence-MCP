@@ -31,7 +31,7 @@ function makeSnapshot(overrides: Partial<CommoditySnapshot> = {}): CommoditySnap
     shanghaiComp: 3200,
     hangSeng: 17000,
     dxy: 104.5,
-    cnyVndRate: 3450,
+    cnyVndRate: null, // DSI-INV-1: unavailable, not a live rate
     copperUSD: 4.2,
     silverUSDPerOz: 28,
     jpyVndRate: 165,

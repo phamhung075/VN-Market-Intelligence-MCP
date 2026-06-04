@@ -152,7 +152,7 @@ describe("Task 1423a — US10Y yield symbol (^TNX)", () => {
     const snap: CommoditySnapshot = {
       brentCrudeUSD: 82.5, goldUSDPerOz: 2341.8, usdVndRate: 25100.0,
       vix: 18.5, sp500: 5300.0, shanghaiComp: 3320.0, hangSeng: 17800.0,
-      dxy: 104.2, cnyVndRate: 0, copperUSD: 4.65, silverUSDPerOz: 29.1,
+      dxy: 104.2, cnyVndRate: null, copperUSD: 4.65, silverUSDPerOz: 29.1,
       jpyVndRate: 165.0, us10yYield: 4.35,
       fetchedAt: "2026-04-29T08:00:00.000Z",
     };
