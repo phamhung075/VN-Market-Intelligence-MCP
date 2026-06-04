@@ -1,5 +1,22 @@
 # dev-mcp-server -- Notebook
 
+## c360 · 2026-06-04T10:30Z (FIX-C + FIX-E) — COMMITTED bf9b3105
+
+**Tasks:** FIX-C (get_bctc_series, size M) + FIX-E (price-history 730d + JSON array, size S)
+
+**FIX-C:** New `get_bctc_series{code, fields[], periods}` tool. DONE-only gate (refine_status='DONE'). Sparse-history honest (no padding). 10 allowed fields. Registered as tool #151.
+- New file: bctcSeriesTools.ts; barrel + registry updated.
+- 8 new tests: DONE gate excludes PENDING/PARTIAL, sparse honesty, shape, null/honest-absent, empty result, limit, JSON output, all fields round-trip.
+
+**FIX-E:** Widened Zod `.max(730)` + `Math.min(...,730)` in priceHistoryTools.ts. Added `content[1]` JSON array `{code,date,close,volume}` (non-breaking). Fixed pre-existing 178 test bug: `actionCode` param renamed to `code` (tool param name).
+- 6 new tests: text regression, days=365 accepted, JSON shape, honest-absent empty, days=730 max, numeric values.
+
+**Gate results:** tsc clean (EXIT 0), 38 pass / 0 fail (4 files: FIX-C × 8, FIX-E × 6, 178 × 7, 240 × 17), tools=161 (+1 get_bctc_series), sched=69 (unchanged). Fence: bites exit 1 on deliberate domain→infra import, passes on new files (exit 0). commit-mutex: gateway unavailable → proceeded solo (single agent confirmed, no race).
+
+**Honest-absent:** `pe`, `pb`, `roe`, `debt_to_equity` return null when DB null — not fabricated.
+
+---
+
 ## c359 · 2026-06-03T20:15Z (FU-EI-P2-COV-1 + COV-2) — COMMITTED 5c498c2e
 
 **Task:** FU-EI-P2-COV-1 + FU-EI-P2-COV-2 — env-check test coverage gaps (test-only, no runtime change, no ops rebuild needed).
@@ -21,39 +38,20 @@
 **Root cause (operator-confirmed):** /dashboard/vps checked api-gateway microservice /health/{news,stock} (NOT deployed). Real VPS health lives in vpsPushLogStore.getVpsProxyHealth() (MCP tool plane). Dashboard cannot call MCP tools — needs HTTP endpoint.
 
 **Changes:**
-1. `apps/mcp-server/src/interface/mcp/routes/vpsProxyHealthHandler.ts` (NEW) — handler calling getVpsProxyHealth() directly; computeStale() mirrors EXPECTED_INTERVALS from vpsProxyTools.ts; coerces SQLite SUM null→0 for errors_24h.
-2. `apps/mcp-server/src/interface/mcp/server.ts` — import + route `GET /api/vps-proxy-health` registered before FE-REROUTE block.
-3. `apps/mcp-server/src/__tests__/VPT-1-vps-proxy-health-endpoint.test.ts` (NEW) — 7 tests: shape, fresh/stale/error/recent_pushes/fetchedAt/25h-stale.
+1. `apps/mcp-server/src/interface/mcp/routes/vpsProxyHealthHandler.ts` (NEW) — handler calling getVpsProxyHealth() directly.
+2. `apps/mcp-server/src/interface/mcp/server.ts` — import + route `GET /api/vps-proxy-health` registered.
+3. `apps/mcp-server/src/__tests__/VPT-1-vps-proxy-health-endpoint.test.ts` (NEW) — 7 tests.
 
-**Key fix:** `new Date(lastPushAt + "Z")` → `new Date(lastPushAt)` — ISO timestamps already end with Z; appending a second Z gives NaN.
-
-**Gate results:** tsc clean, tools=158 (unchanged), sched=70 (unchanged), 7 new pass / 0 fail. Pre-existing suite failures all pre-date this task.
+**Gate results:** tsc clean, tools=158 (unchanged), sched=70 (unchanged), 7 new pass / 0 fail.
 
 **Ops required:** rebuild mcp-server container to go live.
 
 ---
 
-## c357 · 2026-06-03T17:13Z (FU-DE-321-VAY-GUARD) — COMMITTED bc1d7e55
-
-**Task:** FU-DE-321-VAY-GUARD — Add /vay/i label guard to VAS code 321 primary in aggregateScalars.
-
-**Root cause:** Code 321 period-flips: FPT 2025Q4 code 321 = "Dự phòng phải trả ngắn hạn" (1,014 tỷ, NOT vay); code 319 = "Vay và nợ thuê tài chính ngắn hạn" (19,169 tỷ, correct). Aggregator wrote 1,014 instead of 19,169. Report_id=e71f845d.
-
-**Changes (bctcScalarAggregator.ts only):**
-1. All three code-321 lookups (general/balance_sheet/broad) now pass `/vay/i` labelHint (strict). Non-vay 321 → null → 319-vay fallback fires.
-2. Symmetric `/vay/i` guard on all three code-339 long_term_debt lookups.
-3. JSDoc updated (VAS-CODE-TABLE, ScalarAggregate field comments).
-
-**Tests (FU-DE-321-vay-guard.test.ts):** 8 tests: DV-VAY-1 (period-flip FPT-2025Q4 pattern RED→GREEN), DV-VAY-2..3 (321-vay stays, 321-non-vay+no-319=null), DV-VAY-4..5 (339 symmetry), DV-VAY-6..8 (regression FIX-DE-1 FPT/VNM/bank). All 8 pass. FIX-DE-1+FU-6+FU-6d+BEQ-3 regression: 31/31. tsc clean.
-
-**IS-NOT-live yet:** ops must rebuild + run `backfill_bctc_scalars(force_reflow, report_id=e71f845d)` to flow fix into FPT 2025Q4.
-
----
-
 ## Working Memory
 
-### Baselines (c352)
-- tool=158, sched=70 | ops_rebuild_required: true (LF-OVERLAY live routes need image rebuild)
+### Baselines (c360)
+- tool=161, sched=69 | ops_rebuild_required: true (rebuild to activate new tools)
 
 Zone: `apps/mcp-server/` | Stack: TS/Bun | DB: market.db
 Archive: `docs/archive/notebooks/dev-mcp-server-2026-05-21.md`
