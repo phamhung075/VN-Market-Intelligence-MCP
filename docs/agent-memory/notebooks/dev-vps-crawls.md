@@ -61,8 +61,7 @@ Zone: dev-zone (VPS scraper code)
 | 2026-05-13 | hsx-bctc | live probe + triage | HNX endpoint confirmed working for HNX tickers; HOSE path blocked; triage doc at docs/vps-sources/hsx-bctc/triage.md |
 | 2026-05-13 | hsx-bctc (TASK-BCTC-2) | live verification | NVB Q1/2026: PASS — 1 PDF URL returned (confidence 0.9). VEA Q1/2026: empty (UPCOM, not yet filed or SSC needed). HNX endpoint fully operational. |
 | 2026-05-13 | technique catalog | bootstrap + research | 7 new technique docs written (tls-fingerprint-spoof, cloudflare-js-bypass, cloudflare-managed-bypass, header-rotation, cookie-warmup, js-mini-challenge, captcha-workaround). README updated with RAM rankings. |
-| 2026-05-13 | TASK-PUSH-FINAL | MCP_BASE fix + redeploy | Changed MCP_BASE from bare zenmidi.com to zenmidi.com/vn-market. Fixed fetch-bctc.sh template (hardcoded URLs → __MCP_BASE__ tokens). Deployed all 8 scripts. Prices: 112 items pushed 200 OK. News: 245 items pushed 200 OK. All 4 fetch services active. |
-| 2026-05-13T09:30Z | hsx-bctc | hnx-ajax-post contract fix | Signal dev-vps-crawls-2026-05-13T09-17-00Z drained. 5 patches applied to discover-bctc-urls-browser.py: Referer /vi-vn/ prefix, pNhomTin empty, homepage fallback guard, ticker slug startswith fix. All 4 integration tests PASS. SHB Q1/2026 e2e PASS — PDF URL confirmed. QA signaled. |
+| 2026-05-13 | hsx-bctc | hnx-ajax-post contract fix | 5 patches: Referer /vi-vn/, pNhomTin empty, homepage fallback, ticker slug fix. SHB Q1/2026 e2e PASS. |
 
 ---
 
@@ -107,64 +106,17 @@ Commit: 96446b5d. No Docker rebuild required.
 
 ---
 
-## Key Findings — 2026-06-01T09:10Z VPS-NEWS-CAFEF-VNECO
+## Key Findings — 2026-06-01 (News/FF Fixes)
 
-### is_blocked() False-Positive on "robot" (P1 — production data loss since 2026-04-22)
-- Root cause: `grep -qi "robot"` on the full RSS response body matched legitimate Vietnamese article titles ("robot hình người" = humanoid robot) — triggered on cafef, vnexpress, tuoitre, nhandan
-- Impact: cafef-market and cafef-biz stuck at 0 items every cycle for ~40 days; vnexpress/tuoitre/nhandan intermittently 0
-- Fix: replaced the bare keyword grep with anchored CF challenge-page structural patterns: `just a moment...`, `checking your browser`, `cf-browser-verification`, `challenge-platform`, `_cf_chl_`, `<title>.*captcha`
-- Also fixed LOG_ROTATE_BYTES unset bug (same pattern as FF-DIAG fix — vps-lib.sh lacks the constant, grep returns empty, unary operator expected in -gt)
-- Evidence: cafef-market 0→20 items, cafef-biz 0→20 items, vnexpress 0→20 items, tuoitre 0→20 items, nhandan 0→20+10 items in first post-fix cycle (2026-06-01T08:58Z)
-- Repo copy: `vps-scripts/fetch-vn-news.sh` updated to match VPS
+**VPS-NEWS**: is_blocked() false-positive on "robot" keyword → cafef-market restored 0→20 items. article-body-fetcher.py endpoint deployed.
+**FF-DIAG**: API field drift (fBVol/fSVolume vs fBuyVol/fSellVol) fixed. Foreign flow now live.
+**LOG_ROTATE_BYTES**: Unset var unary operator fixed (set default first, then override).
 
-### Article Body Fetch Endpoint (P2 — new capability)
-- Implemented: `/root/article-body-fetcher.py` — HTTP-only, requests library, BeautifulSoup optional
-- Extractors: cafef.vn (div[data-role=content] or div#mainContent) + vneconomy.vn (div.text-justify)
-- Endpoint: `GET VPS:8765/proxy/article-body?url=<https-url>` (X-API-Key required)
-- Whitelist: cafef.vn and vneconomy.vn only (open-proxy guard in both script and server)
-- No anti-bot needed — both sites return 200 from VPS with browser UA
-- Integration note: wiring to /api/push-news is NOT done (would change push payload schema); endpoint is available for on-demand pull by MCP server or new enrichment job — flagged as follow-up
-- Evidence: cafef title "SACOMBANK chính thức đổi tên...", body 5000ch, published_at 2026-06-01T15:12:00; vneconomy title "Ngân hàng Nhà nước và Bộ Tài chính Mỹ...", body 5000ch
+## Key Findings — 2026-05-19 (1953a BCTC Patterns)
 
-## Key Findings — 2026-05-30T11:50Z FF-DIAG Field Drift Fix
-
-### Foreign Flow Field Name Drift (bgapidatafeed.vps.com.vn)
-- API fields: `fBVol` (buy vol), `fSVolume` (sell vol), `fRoom` (remaining room)
-- Script was defaulting to `fBuyVol` / `fSellVol` — NEITHER exists in the API
-- jq `(.["fBuyVol"] // 0)` resolves to 0 for absent keys → all items pushed with foreignBuyVol=0, foreignSellVol=0
-- Handler's `foreign_volume = buyVol - sellVol = 0 - 0 = 0` → DB rows written but with zero volume
-- `get_foreign_flow` zero-detection guard fires (`history.every(r => r.foreignVolume === 0)`) → "never collected" for every ticker
-- fRoom was correct (field name unchanged) — that's why 102–103 items passed the jq filter (fRoom > 0)
-- Fix: `FBUY_FIELD` default `fBuyVol`→`fBVol`, `FSELL_FIELD` default `fSellVol`→`fSVolume`
-- Also fixed: LOG_ROTATE_BYTES one-liner left var empty when vps-lib.sh lacks the constant → "unary operator expected" stderr every run
-
-### LOG_ROTATE_BYTES Bug
-- Old: `[ -f /root/vps-lib.sh ] && LOG_ROTATE_BYTES=$(grep '^LOG_ROTATE_BYTES=' /root/vps-lib.sh | cut -d= -f2) || LOG_ROTATE_BYTES=10485760`
-- vps-lib.sh does NOT define `LOG_ROTATE_BYTES=` at top level → grep returns empty → `$LOG_ROTATE_BYTES` is empty string
-- `[ "$LOG_SIZE" -gt $LOG_ROTATE_BYTES ]` = `[ 8306911 -gt ]` → bash: unary operator expected
-- Fix: set default first, then conditionally override if vps-lib.sh provides a value
-
----
-
-## Key Findings — 2026-05-19T07:15Z Sprint 1953a Pattern Fix
-
-### SSC Zero-Padded Quarter Format
-- SSC NewsSearch returns titles in format "quý 01 năm 2026" (zero-padded month, e.g. 01, 02, 03, 04)
-- Old matches_quarter_and_year() only had "quý 1" — no leading zero — so ALL Q1/2026 matches failed
-- Fix: added q0 = q.zfill(2) and full set of zero-padded patterns alongside existing ones
-- Tested: ACB Q1/2026 — row 0 "Báo cáo tài chính Hợp nhất quý 01 năm 2026" now matches
-- PDF confirmed: 8,061,984 bytes, pushed HTTP 200
-
-### fetch-bctc.sh jq Parse Error (Fix B)
-- Cause: if QUEUE API returns malformed JSON, `echo "$QUEUE" | jq -c '.queue[]'` exits with parse error
-- set -euo pipefail causes script to exit silently — no log line written
-- Fix: validate JSON with `jq -e '.queue'` before the while loop
-- Now logs "FAIL: queue response is not valid JSON" if API returns bad response
-
-### Repo Sync (1953d collapsed into 1953a)
-- discover-bctc-urls-browser.py was VPS-only before this sprint
-- Now in vps-scripts/discover-bctc-urls-browser.py — tracked in repo
-- deploy-vinahost.sh section 2 now scp's it to /root/ on next deploy
+**SSC zero-padded quarters**: matches_quarter_and_year() now handles "quý 01..04" format. ACB Q1/2026 PASS.
+**fetch-bctc.sh jq error**: Added JSON validation before while loop (silent exit fixed).
+**Repo sync**: discover-bctc-urls-browser.py now tracked in vps-scripts/.
 
 ---
 
@@ -223,19 +175,3 @@ VPS endpoint returns: `{ status, tickers_ok, tickers_fallback, tickers_error, da
 
 ---
 
-## Key Findings — 2026-06-03T00:00Z FIX-CTG-2 Cover-Letter Discrimination
-
-### Defect A: HNX portal returns cover-letter PDF instead of full B02-TCTD statement
-- Root cause: `_parse_article_ids_and_titles` returned FIRST quarter/year match regardless of document type.
-  Cover-letter titles ("CV CBTT BCTC Quy 1.2026") pass `matches_quarter_and_year` → wrong 524 KB PDF selected.
-- Fix: added `is_cover_letter_title()` / `is_full_statement_title()` / `_title_rank()` classifier block.
-  Cover-letter keywords: "cv cbtt", "cong van cbtt", "công văn cbtt", "công văn công bố thông tin",
-  "cbtt link bctc", "cbtt kem link". NOTE: "giai trinh" excluded — real CTG filenames contain
-  "va giai trinh bien dong loi nhuan" as a sub-clause (not a cover-letter signal).
-- `_parse_article_ids_and_titles` now collects ALL matching candidates on a page, skips cover letters,
-  ranks remaining by: 0=consolidated-full-statement > 1=full-statement > 2=generic, returns best.
-- 25/25 unit tests pass: `vps-scripts/test_discover_bctc_title_classifier.py`
-- NEEDS OPS-VPS DEPLOY: commit is repo-only. No SSH executed. Deploy = scp updated script to VPS +
-  confirm next CTG discovery run returns BCTC hop nhat URL (not owa.hnx.vn cover letter).
-- HOSE-listed tickers (CTG) should ideally resolve via hsx.vn Strategy-0 (FIX-CTG-1, DONE-LIVE-VERIFIED).
-  This fix is defence-in-depth for the HNX-portal fallback path used by HNX/UPCOM-listed tickers.
