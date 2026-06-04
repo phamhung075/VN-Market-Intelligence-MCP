@@ -7,11 +7,11 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "RAPID-DATA-LAYER sprint closed 2026-06-04: all 8 FIX tasks DONE-LIVE-VERIFIED (FIX-C/E/F/G/H in backlog, FIX-A/B/D in active sprint now marked DONE). FIX-I BLOCKED-SOURCE (CEO start_date unavailable in vnstock) moved to backlog. Follow-ups recorded: FU-PROFILE-DATA-VERIFY (data-pending on vnstock sync), pe/pb still N/A in get_bctc_full, ACB AGM coverage (Vietstock batch 0 rows), FIX-I needs source recon. 6 rapid-analysis skills now DATA-SERVED and live. NEXT: po reviews closure, pipeline reset.",
+    "next_action": "FIX-G DONE-LIVE-VERIFIED both sides (router raw-verify cycle-192 confirmed): VPS fetcher 2d0c38b8 + mcp get_agm_plan tool #160 live, agm_plan 323 / agm_actuals 2084 rows / 33 tickers, bank-honest planned:[]. RAPID-DATA-LAYER core COMPLETE: FIX-A/B/C/D/E/F/G/H all DONE-LIVE-VERIFIED. REMAINING: FIX-I (BLOCKED - officers start_date needs source); FU-ACB-AGM-COVERAGE (ACB 0 AGM rows, bank logic proven via BID, re-check); FU-PROFILE-DATA-VERIFY (foreign_holding_ratio still null - vnstock data-gap); FU-BACKFILL-SCOPE-VEA. NEW INFRA: FU-RAG-DEPLOY-MEMORY (rag-service deploy-gap + frontend-down memory tradeoff -> PO/architect decision; frontend DOWN, rag UP). NEW PROCESS: FU-DEDUP-CROSS-DISPATCHER (parallel cycle bypassed task:FIX-G-1 lock -> duplicate FIX-G work, harmless this time but a real dedup gap). Next tick: PO triage -> likely FU-RAG-DEPLOY-MEMORY decision or FU-ACB-AGM-COVERAGE; RAPID-DATA-LAYER ready to close pending FIX-I source.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T14:55:00Z",
-    "updated_by": "pm"
+    "updated_at": "2026-06-04T16:47:43Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T11:46:46Z",
+    "_updated_at": "2026-06-04T16:47:43Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2418,7 +2418,7 @@
           "56c7e2ad",
           "ffa24c63"
         ],
-        "note": "DONE-LIVE-VERIFIED 2026-06-04T14:55Z by QA (cycle-192). FIX-G-1 (VPS fetcher) + FIX-G-2 (MCP tool) shipped consolidated in commits 56c7e2ad+ffa24c63. get_agm_plan tool #162. agmPlanJob cron 20:30 UTC. DB direct: agm_plan=323 rows, agm_actuals=2084 rows, 33 distinct tickers. Live raw gateway verify: FPT 2025 revenue.planned_ty=75400 actual_ty=70207.689 drift=-6.886 pbt.planned=13395 actual=13043.633 drift=-2.623 (all AC met). Bank logic: BID 2022/2023 revenue.planned=null pbt.planned present (correct pattern: banks no revenue target). ACB 0 rows in DB (data coverage gap — Vietstock did not return ACB in batch, NOT a tool defect). toolCount=160 (+1 from FIX-F 159). FIX-G-1+FIX-G-2 sub-tasks SUPERSEDED by this consolidated entry.",
+        "note": "DONE-LIVE-VERIFIED 2026-06-04T14:55Z by QA (cycle-192). FIX-G-1 (VPS fetcher) + FIX-G-2 (MCP tool) shipped consolidated in commits 56c7e2ad+ffa24c63. get_agm_plan tool #162. agmPlanJob cron 20:30 UTC. DB direct: agm_plan=323 rows, agm_actuals=2084 rows, 33 distinct tickers. Live raw gateway verify: FPT 2025 revenue.planned_ty=75400 actual_ty=70207.689 drift=-6.886 pbt.planned=13395 actual=13043.633 drift=-2.623 (all AC met). Bank logic: BID 2022/2023 revenue.planned=null pbt.planned present (correct pattern: banks no revenue target). ACB 0 rows in DB (data coverage gap — Vietstock did not return ACB in batch, NOT a tool defect). toolCount=160 (+1 from FIX-F 159). FIX-G-1+FIX-G-2 sub-tasks SUPERSEDED by this consolidated entry. || dev-team tick 12:07Z (real-elapsed ~4.5h, ops ran 16ks on memory-starved rag startup): CONCURRENCY-COLLISION RECONCILE — two flows worked FIX-G in parallel. (A) dev-team dispatched dev-vps-crawls FIX-G-1 -> VPS-side scheduled fetcher commit 2d0c38b8 (vps-scripts/fetch-agm-plan{,-loop}.sh + vn-agm-plan.service, systemd active, daily 01:00Z, file-drop /root/data/agm-plan-latest.json behind VPS:8765/proxy/agm-plan). (B) a concurrent dev-mcp-server+qa cycle (cycle-192) built the mcp-side consolidated G-1+G-2 commits 56c7e2ad+ffa24c63 (agmPlanStore tables + agmPlanFetcher pull-from-VPS X-API-Key + agmPlanJob cron 20:30Z + get_agm_plan tool). COMPLEMENTARY not duplicate: mcp-side PULLS from the VPS proxy that (A) keeps fresh. Live RAW-VERIFY by router (not qa badge): get_agm_plan(FPT)=revenue 58580 + PBT 11629 (matches recon+VPS fetch exactly) + Q1 actuals + plan_drift struct; get_agm_plan(VCB bank)=planned:[] (bank-honest, no AGM revenue plan) w/ actuals present; FPT planned=2 rows (no double-ingest). Live /health toolCount=160 (159+get_agm_plan; qa/dev 'tools=162' = registry-index, NOT live count — recurring discrepancy). FIX-G DONE confirmed real. PROCESS GAP: task:FIX-G-1 lock did NOT prevent the parallel cycle (separate dispatcher/session claimed a different key or none) -> FU-DEDUP-CROSS-DISPATCHER.",
         "_split_from_superseded": [
           "FIX-G-1",
           "FIX-G-2"
@@ -2447,6 +2447,17 @@
           "FIX-I"
         ],
         "note": "vnstock does not expose start_date field. Requires alternate data source investigation."
+      },
+      {
+        "task_id": "FU-RAG-DEPLOY-MEMORY",
+        "title": "rag-service deploy-gap + 16GB host memory tradeoff (RAG vs frontend) — codify deploy + decide resident set",
+        "type": "INFRA",
+        "sprint": "RAPID-DATA-LAYER",
+        "status": "BACKLOG",
+        "size": "M",
+        "zone": "ops/infra",
+        "note": "From OPS-LANCEDB-OFFLINE resolution. rag-service was never in the active deploy set (same class as [[project_dashboard_two_data_planes]] not-deployed services). ops recovered it 2026-06-04 but had to STOP the frontend container because the 16GB host had only 3.6MB free ([[project_host_memory_panic]]). Two decisions for PO/architect: (1) CODIFY rag-service into the deploy manifest + add mcp-server depends_on rag-service so it launches together (prevents silent 25h RAG outages degrading news-scout). (2) DECIDE the resident container set on the 16GB host — RAG and frontend cannot both run alongside the rest; either keep frontend down (operator dashboard offline, lower impact, user monitors via Telegram), or lazy-load rag-service only during news-scout cycles, or move one off-box. Until decided, frontend stays DOWN and rag stays UP (RAG outage was the higher-impact degradation). Do NOT blindly restart frontend (re-OOMs rag).",
+        "depends_on": null
       }
     ],
     "archive": []
@@ -2836,11 +2847,12 @@
         "type": "infra_anomaly",
         "summary": "MEDIUM. LanceDB offline ~25h / 12 consecutive news-scout cycles — search_similar_context returns error every cycle. NON-FATAL (gatherers degrade gracefully, signals still emit) but semantic dedup + historical-context retrieval disabled fleet-wide (news-scout, rag-service consumers). Crossed the 24h watch threshold. ACTION: restart/inspect LanceDB service + verify embeddings store integrity. news-scout own escalation fires at 30h.",
         "severity": "MEDIUM",
-        "status": "READ",
+        "status": "RESOLVED",
         "payload_ref": null,
         "triaged_by": "po",
         "triaged_at": "2026-06-04T12:13:09Z",
-        "disposition": "routed-to-ops repair_task_request OPS-LANCEDB-OFFLINE (docs/signals/repair_task_request_ops_lancedb_offline_20260604T121309Z.json); PLAN-ONLY, not a dev FIX"
+        "disposition": "routed-to-ops repair_task_request OPS-LANCEDB-OFFLINE (docs/signals/repair_task_request_ops_lancedb_offline_20260604T121309Z.json); PLAN-ONLY, not a dev FIX",
+        "resolution": "RESOLVED 2026-06-04 by ops (16ks diag). ROOT CAUSE: rag-service container NOT DEPLOYED (defined in docker-compose, never started) -> search_similar_context POST localhost:5002 conn-refused. NOT LanceDB corruption/bloat (store healthy 13536 rows, disk 38% / 22GB free). ops started rag-service; it OOM-hung (host 3.6MB free) -> ops STOPPED frontend to free memory -> rag up healthy, search_similar_context re-verified working (2 live queries OK). SIDE EFFECT: frontend container now DOWN (memory tradeoff). Durable fix -> FU-RAG-DEPLOY-MEMORY."
       }
     ],
     "archive": [
