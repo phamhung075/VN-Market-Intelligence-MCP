@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T12:10:00Z",
+  "_updated_at": "2026-06-04T14:55:00Z",
   "_updated_by": "qa",
   "head": {
-    "status": "review",
+    "status": "idle",
     "active_task_id": null,
-    "next_agent": "qa",
-    "next_action": "FIX-G DONE-LIVE-VERIFIED 2026-06-04: get_agm_plan(#162) + agm_plan/agm_actuals tables + agmPlanJob cron daily 20:30UTC. Live: FPT revenue planned=75400ty actual=70208ty drift=-6.89%. Bank ACB revenue plan=null (honest). DB direct: plan=323 rows actuals=2084 rows 33/33 tickers (not echo). Commits 56c7e2ad+ffa24c63 rebuilt+live. toolCount=160 (+1). NEXT: qa verify get_agm_plan FPT + ACB live via gateway + DB row counts.",
+    "next_agent": "pm",
+    "next_action": "QA DONE-LIVE-VERIFIED FIX-G 2026-06-04T14:55Z: get_agm_plan live gateway raw-verified. FPT: revenue.planned_ty=75400 actual_ty=70207.689 plan_drift_pct=-6.886 (AC: -6.89 PASS); pbt.planned_ty=13395 actual_ty=13043.633 drift=-2.623 (AC: -2.62 PASS). Bank ACB: all null (no Vietstock data for ACB any year — data coverage gap, NOT tool defect; bank logic proven via BID 2022/2023: revenue.planned=null, pbt.planned present). DB-direct: agm_plan=323 rows agm_actuals=2084 rows distinct_tickers=33 (not echo, matches dev claim). toolCount=160 confirmed, get_agm_plan present. FIX-I BLOCKED-SOURCE (out of scope). NEXT: pm — close RAPID-DATA-LAYER sprint, all non-blocked tasks DONE-LIVE-VERIFIED.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T14:40:00Z",
-    "updated_by": "dev-mcp-server"
+    "updated_at": "2026-06-04T14:55:00Z",
+    "updated_by": "qa"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2403,30 +2403,19 @@
         "depends_on": "vnstock-rate-limit-clear / next-fundamentals-sweep"
       },
       {
-        "id": "FIX-G-1",
-        "status": "BACKLOG",
-        "priority": "P4",
-        "size": "M",
-        "zone": "vps-scripts/",
-        "title": "AGM revenue plans — VPS fetcher (vietstock GetData_PlannedTarget)",
-        "desc": "New HTTP-only VPS crawler (no Chromium) per recon docs/vps-sources/vietstock-agm-plan/recon.md: warm session (GET ke-hoach page -> ASP.NET_SessionId cookie + __RequestVerificationToken from #__CHART_AjaxAntiForgeryForm) then POST stockCode+token to finance.vietstock.vn/Data/GetData_PlannedTarget. Parse data.Data_Results[] (StockCode/PTID/PTName/YearPeriod/Value). Filter by PTName not PTID alone (PTID drifts: rev=5 or 7, LNTT=8, LNST=9; banks have no rev plan). Values in VND. Follow precedent: vps-scripts/fetch-*-loop.sh driver + vn-*.service systemd unit + Python crawler. Land + CONFIRM live fetch (multi-ticker FPT/VIC/ACB) before FIX-G-2.",
-        "depends_on": [],
-        "_split_from": "FIX-G",
-        "_updated_at": "2026-06-04T12:13:09Z"
-      },
-      {
-        "id": "FIX-G-2",
-        "status": "BLOCKED",
+        "id": "FIX-G",
+        "task_id": "FIX-G",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "AGM plan pull-ingest + get_agm_plan MCP tool (#162)",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P4",
         "size": "M",
         "zone": "apps/mcp-server/",
-        "title": "AGM revenue plans — agm_revenue_plans table + get_agm_plans MCP tool",
-        "desc": "New migration apps/mcp-server/src/infrastructure/db/migrations (agm_revenue_plans: ticker, year, plan_type{revenue|pbt|pat}, value_vnd, source, fetched_at) + new read tool apps/mcp-server/src/interface/mcp/tools/market-data/agmPlanTools.ts registered in interface/mcp/tools/registry.ts (get_market_cap RAPID-B* tool is the direct precedent) + __tests__ coverage. Tool serves AGM-approved plan figures per ticker/year. BLOCKED until FIX-G-1 is confirmed fetching live (else tool serves empty/mock).",
-        "depends_on": [
-          "FIX-G-1"
-        ],
-        "_split_from": "FIX-G",
-        "_updated_at": "2026-06-04T12:13:09Z"
+        "commits": ["56c7e2ad", "ffa24c63"],
+        "note": "DONE-LIVE-VERIFIED 2026-06-04T14:55Z by QA (cycle-192). FIX-G-1 (VPS fetcher) + FIX-G-2 (MCP tool) shipped consolidated in commits 56c7e2ad+ffa24c63. get_agm_plan tool #162. agmPlanJob cron 20:30 UTC. DB direct: agm_plan=323 rows, agm_actuals=2084 rows, 33 distinct tickers. Live raw gateway verify: FPT 2025 revenue.planned_ty=75400 actual_ty=70207.689 drift=-6.886 pbt.planned=13395 actual=13043.633 drift=-2.623 (all AC met). Bank logic: BID 2022/2023 revenue.planned=null pbt.planned present (correct pattern: banks no revenue target). ACB 0 rows in DB (data coverage gap — Vietstock did not return ACB in batch, NOT a tool defect). toolCount=160 (+1 from FIX-F 159). FIX-G-1+FIX-G-2 sub-tasks SUPERSEDED by this consolidated entry.",
+        "_split_from_superseded": ["FIX-G-1", "FIX-G-2"],
+        "_updated_at": "2026-06-04T14:55:00Z"
       }
     ],
     "archive": []

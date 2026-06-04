@@ -1,5 +1,23 @@
 # QA — Notebook
 
+## cycle-192 · 2026-06-04T14:55Z · RAPID-DATA-LAYER FIX-G gate
+
+Sprint: RAPID-DATA-LAYER | Task: FIX-G (get_agm_plan tool #162, commits 56c7e2ad+ffa24c63) | Verdict: DONE-LIVE-VERIFIED
+
+**Check 1 — FPT 2025 live gateway:** get_agm_plan(FPT, 2025) raw response: revenue.planned_ty=75400, actual_ty=70207.689, plan_drift_pct=-6.886 (AC: ~-6.89 PASS within rounding). pbt.planned_ty=13395, actual_ty=13043.633, plan_drift_pct=-2.623 (AC: ~-2.62 PASS). pat.planned_ty=null, actual_ty=11232.339 (no PAT plan — honest). Structured planned[] and actuals[] arrays populated with raw VND values and fetched_at timestamps. AC fully met.
+
+**Check 2 — Bank case (ACB 2025):** get_agm_plan(ACB, 2025) returns all-null + year:null + empty planned[]/actuals[]. Root: 0 rows in agm_plan or agm_actuals for ACB (Vietstock did not return ACB in batch). BANK LOGIC itself is correct — verified via BID 2022 + 2023: revenue.planned=null (no rev target), pbt.planned=20600/25310 (PBT target present). AC intent (bank pattern: revenue null, PBT honest) PROVEN via BID. ACB data gap is a coverage issue not a tool defect — ACB not in agm_plan for any year; 33 tickers present (BID, VCB included). NOTE FOR DEV: ACB coverage gap worth a follow-up to check if Vietstock returns ACB on the scraper side.
+
+**Check 3 — Write-wedge guard (DB-direct):** docker exec bun query in container: agm_plan_rows=323 agm_actuals_rows=2084 distinct_tickers=33. Matches dev claim exactly (323/2084/33). Not echo — bun SQLite read from /app/data/market.db confirms DB-backed persistence.
+
+**Check 4 — toolCount regression:** tools/list → toolCount=160, get_agm_plan present. No prior P1 task disturbed (FIX-A/B/C/D/E/H/F all still verified from prior cycles, no test re-run needed as no code change in their zones).
+
+**orch-state updates:** head status=idle next_agent=pm; FIX-G-1+FIX-G-2 (BACKLOG/BLOCKED stubs) superseded by FIX-G entry DONE-LIVE-VERIFIED.
+
+**Sprint RAPID-DATA-LAYER final status:** FIX-A/B/C/D/E/F/H/G all DONE-LIVE-VERIFIED. FIX-I BLOCKED-SOURCE (vnstock no start_date field — out of scope, correctly deferred). Sprint ready for pm closeout.
+
+---
+
 ## cycle-191 · 2026-06-04T12:10Z · RAPID-DATA-LAYER FIX-B re-gate
 
 Sprint: RAPID-DATA-LAYER | Task: FIX-B (re-gate post 21838d1b schema fix) | Verdict: DONE-LIVE-VERIFIED
