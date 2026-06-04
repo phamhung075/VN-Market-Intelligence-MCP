@@ -18,12 +18,20 @@ export interface StockQuote {
   exchange: "HOSE" | "HNX" | "UPCOM";
   price: number;         // VND
   priceRef: number;      // reference price (previous close)
-  change: number;        // absolute change in VND
+  /** Absolute change in VND. null = unavailable (Tier-3 cache), 0 = genuine flat day (DSI-S2-PRICE). */
+  change: number | null;
   changePct: number;     // percent change, e.g. 2.5 means +2.5%
+  /** Nullable change percent mirroring Go *float64 — null = unavailable, 0 = genuine flat (DSI-S2-PRICE). */
+  changePercent: number | null;
   direction: PriceDirection;
   colour: MarketColour;
   volume: number;        // shares
   timestamp: string;     // ISO 8601
+  // DSI: staleness + provenance fields (DSI-S2-PRICE)
+  staleness?: "FRESH" | "STALE" | "EXPIRED" | null;
+  isEstimate?: boolean;
+  /** True DB timestamp of the underlying fetch — never serve-time (DSI-INV-1). */
+  fetchedAt?: string;
 }
 
 /** Health summary for a single downstream service. */
@@ -132,11 +140,15 @@ export interface MacroSignalEntry {
   rateVND?: number;
   reasoning?: string;
   // carry fields
-  regime?: string;
-  carrySpread?: number;
+  regime?: string | null;
+  carrySpread?: number | null;
   // yield fields
   label?: string;
   spread?: number;
+  // DSI: per-signal provenance fields (DSI-S1-MACRO / DSI-INV-1)
+  is_estimate?: boolean;
+  source_tier?: 1 | 2 | 3 | 4;
+  fetched_at?: string;
   // forward-compat catch-all
   [key: string]: unknown;
 }
@@ -156,6 +168,18 @@ export interface MacroSnapshot {
   usdVnd: number | null;
   signals: MacroSignals;
   fetchedAt: string;
+  // DSI: response-level provenance (DSI-S1-MACRO / DSI-INV-1)
+  /** "live" only when ALL component fields are fresh within SLA window and is_estimate=false. */
+  dataSource?: "live" | "fixture" | "stale" | "estimate";
+  /** true when any component field (fedFunds, vndDeposit, oil, gold, usdVnd) is estimate/stale. */
+  is_estimate?: boolean;
+  source_tier?: 1 | 2 | 3 | 4;
+  /** true when fedFunds rate is from FRED fixture fallback, not a live EFFR fetch. */
+  fedFundsRateIsEstimate?: boolean;
+  /** Carry spread (VND deposit rate − fedFunds). null when is_estimate=true for either input. */
+  carrySpread?: number | null;
+  /** Carry/yield regime label. null or "unavailable — est. rate" when computed from estimates. */
+  carryRegime?: string | null;
 }
 
 // --------------------------------------------------------------------------
