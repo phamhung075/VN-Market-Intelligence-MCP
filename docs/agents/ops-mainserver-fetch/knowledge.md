@@ -140,7 +140,8 @@ File: `docs/signals/ops-vps-fetch-<ISO-timestamp>.json`
 
 | Source name | URL pattern | Data type | Anti-bot | Geo-blocked |
 |-------------|------------|-----------|---------|------------|
-| (none yet) | — | — | — | — |
+| fred-macro | api.stlouisfed.org/fred/series/observations | macro JSON | login_required (free key) | no |
+| fred-effr | fred.stlouisfed.org/graph/fredgraph.csv (BLOCKED) → use api.stlouisfed.org | macro JSON | akamai_bot (web), none (api) | no |
 
 > Update this table when a new source recon doc is written.
 
