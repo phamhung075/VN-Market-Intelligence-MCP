@@ -1,5 +1,29 @@
 # dev-mcp-server -- Notebook
 
+## c363 · 2026-06-04T14:40Z (FIX-G AGM plan pull-ingest + get_agm_plan MCP tool) — COMMITTED ffa24c63
+
+**Task:** RAPID-DATA-LAYER FIX-G — pull-based AGM plan ingest + MCP tool get_agm_plan (#162).
+
+**What shipped:**
+- New tables: agm_plan UNIQUE(stock_code, ptid, year) + agm_actuals UNIQUE(stock_code, year, report_term_id, report_norm_id). Both in schema.ts initDatabase via initAgmPlanTables.
+- agmPlanFetcher.ts: VPS GET /proxy/agm-plan?batch=T1,..., X-API-Key auth, chunked (10/chunk to stay under 30-ticker VPS limit + within 120s timeout).
+- agmPlanJob.ts: daily 20:30 UTC cron (CRON_AGM_PLAN_REFRESH). Reads watchlist from stock-classification.json (not hardcoded).
+- agmPlanTools.ts: get_agm_plan(ticker, year?) → planned[] + actuals[] + plan_drift_pct per metric. Honest null for banks (no revenue plan).
+- registry.ts: tool #162 registered.
+- cronConfig.ts + startScheduler.ts: agmPlanRefresh cron wired.
+
+**Live verify:**
+- FPT 2025: revenue planned=75400 tỷ, actual=70207.7 tỷ, drift=-6.89% ✓
+- FPT 2025: PBT planned=13395 tỷ, actual=13043.6 tỷ, drift=-2.62%
+- ACB: revenue.planned_ty=null, plan_drift_pct=null (bank — honest ✓)
+- DB direct COUNT: agm_plan=323 rows, agm_actuals=2084 rows (33/33 tickers, NOT echo) ✓
+
+**Gate results:** 15 pass / 0 fail (FIX-G-agm-plan.test.ts), tsc clean, tools=160 (server, +1 from pre-task 159), sched=71 (+1 agmPlanRefresh).
+**Commits:** 56c7e2ad (core impl), ffa24c63 (auth+chunking fix). Container rebuilt + healthy.
+**Rebuild required:** done — container live at 14:36Z.
+
+---
+
 ## c362 · 2026-06-04T11:55Z (FIX-B root-cause fix — market_cap_bn) — COMMITTED 21838d1b
 
 **Task:** FIX-B cycle re-open — QA live-verify failure (cycle 190): get_market_cap(FPT) null, 0 of 2856 DB rows non-null.

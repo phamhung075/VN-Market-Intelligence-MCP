@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-04T12:10:00Z",
   "_updated_by": "qa",
   "head": {
-    "status": "idle",
+    "status": "review",
     "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "FIX-B QA-VERIFIED 2026-06-04 cycle-191: get_market_cap(FPT) -> market_cap_billion=130318.29 PASS. FIX-B-1 DONE-LIVE-VERIFIED, FU-FIXB-COLUMNKEY-VERIFY DONE. All P1 RAPID-DATA-LAYER tasks now DONE (A/B/C/D/E/F/H). KNOCK-ON: foreign_holding_ratio still null (vnstock sync data-gap, honest, expected per FU-PROFILE-DATA-VERIFY — tools correct); pe/pb still N/A (depends on market_cap_bn which now populates; will show on next get_bctc_full after pe/pb formula uses the new market_cap). toolCount=159 confirmed, no regression. NEXT P4 (WIP<=2): FIX-G AGM revenue plans [L] — dev-vps-crawls (VPS fetcher, recon recipe docs/vps-sources/vietstock-agm-plan/recon.md, endpoint finance.vietstock.vn/Data/GetData_PlannedTarget ptid 5/8/9=DT/LNTT/LNST) -> agm_revenue_plans table + get_agm_plans tool (dev-mcp-server). Two-zone chain. Then P5 FIX-I officers start_date (BLOCKED - needs source). DATA-PENDING: FU-PROFILE-DATA-VERIFY (foreign_holding_ratio + receivables). LIGHT FU: FU-BACKFILL-SCOPE-VEA.",
+    "next_agent": "qa",
+    "next_action": "FIX-G DONE-LIVE-VERIFIED 2026-06-04: get_agm_plan(#162) + agm_plan/agm_actuals tables + agmPlanJob cron daily 20:30UTC. Live: FPT revenue planned=75400ty actual=70208ty drift=-6.89%. Bank ACB revenue plan=null (honest). DB direct: plan=323 rows actuals=2084 rows 33/33 tickers (not echo). Commits 56c7e2ad+ffa24c63 rebuilt+live. toolCount=160 (+1). NEXT: qa verify get_agm_plan FPT + ACB live via gateway + DB row counts.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T12:10:00Z",
-    "updated_by": "qa"
+    "updated_at": "2026-06-04T14:40:00Z",
+    "updated_by": "dev-mcp-server"
   },
   "dashboard_section_cache": {
     "section_name": "po",
