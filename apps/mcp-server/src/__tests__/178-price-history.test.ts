@@ -98,11 +98,12 @@ describe("Task 178 — get_price_history MCP tool", () => {
     ]);
 
     const result = await callTool(server, "get_price_history", {
-      actionCode: "VCB",
+      code: "VCB",
       days: 7,
     });
 
-    expect(result.content).toHaveLength(1);
+    // FIX-E: content now has 2 items (text summary + JSON array); content[0] is still the text
+    expect(result.content.length).toBeGreaterThanOrEqual(1);
     const text = result.content[0]!.text;
 
     // Header mentions the stock code
@@ -126,7 +127,7 @@ describe("Task 178 — get_price_history MCP tool", () => {
     ]);
 
     const result = await callTool(server, "get_price_history", {
-      actionCode: "VNM",
+      code: "VNM",
       days: 14,
     });
 
@@ -137,7 +138,7 @@ describe("Task 178 — get_price_history MCP tool", () => {
 
   it("shows 'Khong co du lieu' when stock has no history rows", async () => {
     const result = await callTool(server, "get_price_history", {
-      actionCode: "UNKNOWN",
+      code: "UNKNOWN",
       days: 7,
     });
 
@@ -159,7 +160,7 @@ describe("Task 178 — get_price_history MCP tool", () => {
     seedHistory(db, "FPT", rows);
 
     const result = await callTool(server, "get_price_history", {
-      actionCode: "FPT",
+      code: "FPT",
       days: 3,
     });
 
@@ -179,7 +180,7 @@ describe("Task 178 — get_price_history MCP tool", () => {
 
     // Omit `days` — should not throw
     const result = await callTool(server, "get_price_history", {
-      actionCode: "VCB",
+      code: "VCB",
     });
 
     expect(result.content[0]!.text).toContain("VCB");
@@ -194,7 +195,7 @@ describe("Task 178 — get_price_history MCP tool", () => {
     ]);
 
     const result = await callTool(server, "get_price_history", {
-      actionCode: "HPG",
+      code: "HPG",
       days: 7,
     });
 
@@ -205,7 +206,7 @@ describe("Task 178 — get_price_history MCP tool", () => {
 
   it("returns content array with type 'text'", async () => {
     const result = await callTool(server, "get_price_history", {
-      actionCode: "VCB",
+      code: "VCB",
       days: 1,
     });
     expect(result.content[0]!.type).toBe("text");

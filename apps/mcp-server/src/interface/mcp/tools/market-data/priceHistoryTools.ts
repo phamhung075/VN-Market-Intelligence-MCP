@@ -183,12 +183,13 @@ export function registerPriceHistoryTools(
         .describe("Stock ticker code (e.g. 'VCB', 'FPT', 'VNM')"),
       days: z.coerce
         .number()
+        .max(730)
         .optional()
         .default(7)
-        .describe("Number of days to look back (default 7, max 90)"),
+        .describe("Number of days to look back (default 7, max 730)"),
     },
     async ({ code: rawCode, days }) => {
-      const lookbackDays = Math.min(Math.max(1, days ?? 7), 90);
+      const lookbackDays = Math.min(Math.max(1, days ?? 7), 730); // FIX-E: widened 90→730
       const code = rawCode.toUpperCase().trim();
 
       try {
@@ -216,8 +217,29 @@ export function registerPriceHistoryTools(
         // ── Format ──────────────────────────────────────────────────────────
         const text = formatPriceHistory(code, lookbackDays, rows);
 
+        // FIX-E: structured JSON array output {code, date, close, volume}
+        // Added ALONGSIDE existing text output (non-breaking — content[0] is unchanged).
+        // Consumers that read content[1] get machine-readable candles.
+        // Honest-absent: empty array when no rows exist (no padding/fabrication).
+        const structuredArray = rows.map((r) => ({
+          code: r.code,
+          date: toDateStr(r.date),
+          close: r.close,
+          volume: r.volume,
+        }));
+
         return {
-          content: [{ type: "text" as const, text }],
+          content: [
+            { type: "text" as const, text },
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                code,
+                days: lookbackDays,
+                data: structuredArray,
+              }),
+            },
+          ],
         };
       } catch (err) {
         logger.error("[get_price_history] Query failed", {
