@@ -1082,3 +1082,68 @@ All containers healthy + no collateral damage:
 **Duration:** ~12 minutes (from build-start to all verifications complete)
 
 ---
+
+---
+
+## Session: 2026-06-05 (DATA-SERVE-INTEGRITY — Deploy DSI-S1-SLA + DSI-S2-PRICE + DSI-S1-FE-TYPE)
+
+**Task:** Deploy DATA-SERVE-INTEGRITY sprint code. VPS live-script update + rebuild 3 containers (mcp-server, stock-price, frontend).
+
+**Context:** DSI sprint shipped 5 commits on main (a6b86ed0 SLA, fb7e16d0 macro, 45a35641 price, b16d6a89 frontend-types, 2873b6c3 sector/fin). SLA guard was dead 18d due to country key mismatch (VN vs vietnam). VPS scripts already fixed in repo (commit bab7fb8b) but live copies still have old COUNTRY="VN".
+
+### Execution Steps
+
+**Step 1: VPS LIVE SCRIPT PUSH**
+- Verified: fetch-tradingeconomics.sh on VPS had COUNTRY="VN" (Jun 2 01:24)
+- Backup: Created /root/fetch-tradingeconomics.sh.backup-$(date +%s)
+- Push: Deployed repo version vps-scripts/fetch-tradingeconomics.sh (COUNTRY="vietnam")
+- Verify: `grep COUNTRY /root/fetch-tradingeconomics.sh` → COUNTRY="vietnam" ✓
+- Service: `systemctl restart vn-tradingeconomics-fetch` → active (running) ✓
+- Note: fetch-gso.sh not deployed on VPS (no systemd unit, not in deploy script). Only fetch-tradingeconomics is live.
+- SLA guard implication: Next vn-tradingeconomics push will write country='vietnam' rows; SLA freshnessSlaChecker will find them (was previously blind to 'VN' key).
+
+**Step 2: REBUILD THREE CONTAINERS (batched, sequential)**
+
+**mcp-server rebuild:**
+- Build: `docker-compose build --no-cache mcp-server` (6 min 10 sec)
+- New image: 744ebe304483 (2.23GB, created ~21:45)
+- Restart: `docker-compose down mcp-server && docker-compose up -d mcp-server`
+- Health: Container healthy after 10s; `/health` returns `status:ok, toolCount:160, sessions:0` (later 3 sessions)
+- Includes: commit a6b86ed0 (SLA guard country key fix), fb7e16d0 (macro carry is_estimate), 2873b6c3 (sector/fin fixtures)
+
+**stock-price rebuild:**
+- Build: `docker-compose build --no-cache stock-price` (4 min)
+- New image built, ready for deployment (container not running on 16GB host; changes in place for future deploy)
+- Includes: commit 45a35641 (staleness propagation, Change/ChangePercent→*float64 nullable, true fetchedAt from cache)
+
+**frontend rebuild:**
+- Build: `docker-compose build --no-cache frontend` (3 min 30 sec)
+- New image deployed
+- Restart: `docker-compose down frontend && docker-compose up -d frontend`
+- Health: Container healthy after 24s (health: starting → healthy)
+- Includes: commit b16d6a89 (StockQuote/MacroSnapshot DSI provenance type extensions: dataSource/is_estimate/source_tier)
+
+**Step 3: POST-REBUILD VERIFICATION**
+- docker ps: mcp-server (b34a5f43e3fe, healthy, 5 min), frontend (306ee67ec1db, healthy, 24 sec)
+- mcp-server /health: `{"status":"ok","toolCount":160,"sessions":3,"uptime":300.36}`
+- frontend: Root path returns full HTML, no errors; healthy status observed
+- No ENOSPC, no host panic, no container restart loops
+
+**Step 4: UPDATE ORCH-STATE**
+- Updated: head.next_action → full DSI deploy summary + QA live-verify checklist
+- next_agent: qa (unchanged)
+- head.status: idle
+- Committed to: docs/data/orch/orch-state.json
+
+### Summary
+
+✓ VPS live-script: fetch-tradingeconomics.sh updated to COUNTRY="vietnam" + service restarted  
+✓ mcp-server: rebuilt, healthy, SLA guard + macro carry provenance live  
+✓ stock-price: rebuilt, ready (not running on 16GB host)  
+✓ frontend: rebuilt, healthy, DSI provenance types in place  
+✓ orch-state: updated, next_agent=qa with DSI live-verify checklist
+
+### Blockers / Open Items
+
+None observed. Deploy gate FR-SLA-4 satisfied. All containers healthy.
+

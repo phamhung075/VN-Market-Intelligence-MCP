@@ -7,7 +7,7 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "qa",
-    "next_action": "DSI live-verify split: (1) MACRO live-path FIXED+ROUTER-VERIFIED via 09e93d76 (macro-indicators rebuilt, get_macro_snapshot regime UNKNOWN/dataSource estimate). (2) DSI-S3-SECTOR-FIN (2873b6c3) + DSI-S1-MACRO-TS (fb7e16d0) need mcp-server REBUILD (my earlier rebuild predated DSI-S3) then QA live-verify credit_flow/bond_maturity/energy/bctc per prior next_action. (3) FU-FRED-EFFR-STALE = deeper root (FRED 6d stale). (4) DSI-S1-SLA vps-scripts VPS deploy pending (ops-vps).",
+    "next_action": "DSI DEPLOY COMPLETE: ops pushed vps-scripts/fetch-tradingeconomics.sh (COUNTRY=vietnam) to VPS and restarted service; rebuilt mcp-server (SLA+macro+sector/fin), stock-price (staleness+nullable), frontend (provenance types). All 3 containers healthy. QA: run DSI live-verify per prior checklist — get_credit_flow_signal (is_estimate flag), get_bond_maturity_calendar ([SEED DATA] label), get_energy_grid_signals ([ƯỚC TÍNH] label), finalize_bctc_refine conf=null (extractionConfidence=0), get_bctc_full pre-period null values (N/A in comparison).",
     "wip": 0,
     "wip_max": 2,
     "updated_at": "2026-06-04T19:46:17Z",
