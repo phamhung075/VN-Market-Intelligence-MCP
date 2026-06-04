@@ -33,10 +33,20 @@ export interface BondMaturityEvent {
   couponRate: number;
   /** Lifecycle status */
   status: "upcoming" | "due" | "defaulted" | "extended";
+  /**
+   * DSI-S3 C3: true when this event comes from the static SEED_BONDS fallback
+   * (DB is empty). Consumers MUST surface this flag — seed data is not
+   * live-verified market data (coupons/amounts/dates are illustrative estimates).
+   */
+  static_seed?: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Static seed data
+// Static seed data (DSI-S3 C3)
+//
+// These are illustrative estimates — coupons/amounts/dates are NOT live-verified.
+// All entries carry static_seed: true. When the bond_maturity table is populated
+// from a live source, this fallback should not be used (see bondMaturityTools.ts).
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SEED_BONDS: BondMaturityEvent[] = [
@@ -47,6 +57,7 @@ const SEED_BONDS: BondMaturityEvent[] = [
     maturityDate: "2027-12-31",
     couponRate: 10.0,
     status: "upcoming",
+    static_seed: true,
   },
   {
     issuer: "Novaland JSC",
@@ -55,6 +66,7 @@ const SEED_BONDS: BondMaturityEvent[] = [
     maturityDate: "2026-09-15",
     couponRate: 10.5,
     status: "extended",
+    static_seed: true,
   },
   {
     issuer: "Novaland JSC",
@@ -63,6 +75,7 @@ const SEED_BONDS: BondMaturityEvent[] = [
     maturityDate: "2027-09-30",
     couponRate: 11.0,
     status: "upcoming",
+    static_seed: true,
   },
   {
     issuer: "Khang Dien House",
@@ -71,6 +84,7 @@ const SEED_BONDS: BondMaturityEvent[] = [
     maturityDate: "2027-06-30",
     couponRate: 9.0,
     status: "upcoming",
+    static_seed: true,
   },
   {
     issuer: "Phat Dat Real Estate",
@@ -79,6 +93,7 @@ const SEED_BONDS: BondMaturityEvent[] = [
     maturityDate: "2027-08-15",
     couponRate: 11.5,
     status: "upcoming",
+    static_seed: true,
   },
   {
     issuer: "DIC Corp",
@@ -87,6 +102,7 @@ const SEED_BONDS: BondMaturityEvent[] = [
     maturityDate: "2028-01-31",
     couponRate: 10.0,
     status: "upcoming",
+    static_seed: true,
   },
 ];
 
@@ -157,12 +173,16 @@ export function checkMaturityAlerts(events: BondMaturityEvent[]): Signal[] {
 
     if (!severity) continue;
 
+    // DSI-S3 C3: append seed-data disclaimer when event comes from static fallback.
+    const seedLabel = event.static_seed
+      ? " [SEED DATA — không xác minh thị trường thực]"
+      : "";
     signals.push({
       type: "bond_maturity" as Signal["type"],
       severity,
       actionCode: event.issuerCode,
-      message: `[TPDN] ${event.issuer} (${event.issuerCode}) — ${event.amount.toLocaleString()} tỷ VND đáo hạn trong ${daysUntilMaturity} ngày (${event.maturityDate}), lãi ${event.couponRate}%/năm`,
-      confidence: 0.95,
+      message: `[TPDN] ${event.issuer} (${event.issuerCode}) — ${event.amount.toLocaleString()} tỷ VND đáo hạn trong ${daysUntilMaturity} ngày (${event.maturityDate}), lãi ${event.couponRate}%/năm${seedLabel}`,
+      confidence: event.static_seed ? 0.3 : 0.95,
       detectedAt: nowIso,
     });
   }

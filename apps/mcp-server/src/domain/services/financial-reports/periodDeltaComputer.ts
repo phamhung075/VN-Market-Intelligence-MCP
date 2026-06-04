@@ -57,12 +57,24 @@ export interface FinancialMetrics {
   // ── Ratios ────────────────────────────────────────────────────────────────
   /** Gross margin in percent (e.g. 25.0 for 25%) */
   grossMarginPct: number;
-  /** Net margin in percent */
-  netMarginPct: number;
-  /** Return on equity in percent */
-  roe: number;
-  /** Debt-to-equity ratio */
-  debtToEquity: number;
+  /**
+   * Net margin in percent.
+   * DSI-S3 C4: null when DB column is NULL (not yet computed) — a missing ratio
+   * must not become a synthetic 0 that produces false QoQ/YoY deltas.
+   * Callers set null; ratioChange propagates NaN so buildComparisonSection
+   * can render "N/A" (same guard pattern as grossMarginPct for banks).
+   */
+  netMarginPct: number | null;
+  /**
+   * Return on equity in percent.
+   * DSI-S3 C4: null when DB column is NULL.
+   */
+  roe: number | null;
+  /**
+   * Debt-to-equity ratio.
+   * DSI-S3 C4: null when DB column is NULL.
+   */
+  debtToEquity: number | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -88,8 +100,15 @@ function valueChange(current: number, previous: number): ValueChange {
 
 /**
  * Build a RatioChange struct (percentage-point difference).
+ *
+ * DSI-S3 C4: if either input is null (DB column not yet computed), propagate
+ * NaN so buildComparisonSection can detect and render "N/A" instead of a
+ * fabricated delta against a synthetic 0.
  */
-function ratioChange(current: number, previous: number): RatioChange {
+function ratioChange(current: number | null, previous: number | null): RatioChange {
+  if (current == null || previous == null) {
+    return { current: NaN, previous: NaN, changePP: NaN };
+  }
   return { current, previous, changePP: current - previous };
 }
 

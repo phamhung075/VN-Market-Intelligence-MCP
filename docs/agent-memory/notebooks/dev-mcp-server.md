@@ -1,5 +1,22 @@
 # dev-mcp-server -- Notebook
 
+## c366 · 2026-06-04T19:30Z (DSI-S3-SECTOR-FIN — 5 fixture clusters → null/estimate/seed flags) — COMMITTED pending
+
+**Task:** DSI-S3-SECTOR-FIN (L, P2) — DATA-SERVE-INTEGRITY sector/financial fixture clusters.
+
+**Root causes fixed (5 clusters):**
+- C5 (HIGHEST): `finalizeBctcRefineTool.ts:1037` `?? 1` → `?? 0`. Missing extractionConfidence MUST NOT grant max-confidence. Also fixed same bug in `bctcValidator.ts:121`. PUB-5 gate now correctly catches zero-confidence reports.
+- C4: `bctcFullTools.ts` + `reports.ts` `rowToMetrics`: `netMarginPct/roe/debtToEquity ?? 0` → `?? null`. `periodDeltaComputer.ts`: nullable FinancialMetrics fields; `ratioChange()` propagates NaN for null inputs. `buildComparisonSection`: `isNaN(delta.roePP.changePP)` → "N/A — ratio unavailable" instead of fake -27pp.
+- C3: `bondMaturityTracker.ts`: `BondMaturityEvent.static_seed?: boolean` field; all SEED_BONDS tagged `static_seed: true`; `checkMaturityAlerts` appends "[SEED DATA — không xác minh thị trường thực]" + confidence=0.3 for seed events. `bondMaturityTools.ts`: header banner when any event is seed.
+- C2: `energyMarketAnalyzer.ts`: `EnergySignal.is_estimate?/source_tier?` fields. `energyTools.ts`: `rawSignals.map(s => ({...s, is_estimate: true, source_tier: 4}))` post-hardcoded-energyData; text output labels signals [ƯỚC TÍNH].
+- C1: `creditFlowTools.ts`: `mortgageIsEstimate`/`yoyIsEstimate` flags track hardcoded fallback usage; provenance section appended to response text with `is_estimate=true/source_tier=4`; `reCreditRatioPct` labeled `static_seed`.
+
+**Files (9 changed + 1 new test):** finalizeBctcRefineTool.ts / bctcValidator.ts / bctcFullTools.ts / reports.ts / periodDeltaComputer.ts / bondMaturityTracker.ts / bondMaturityTools.ts / energyMarketAnalyzer.ts / energyTools.ts / creditFlowTools.ts + DSI-S3-sector-fin.test.ts (17 tests, 0 fail).
+
+**Gate results:** tsc clean (exit 0), 80 pass / 0 fail (targeted suite: DSI-S3 + BAL-0 + BAL-1a + BAL-1c + 246-credit-flow). ops_rebuild_required=true.
+
+---
+
 ## c365 · 2026-06-04T19:15Z (DSI-S1-MACRO — carry gate + SBV is_estimate + commodity zero-write) — COMMITTED fb7e16d0
 
 **Task:** DSI-S1-MACRO (M, P0) — DATA-SERVE-INTEGRITY macro layer fixes.

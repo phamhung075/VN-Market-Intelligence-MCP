@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T18:50:00Z",
+  "_updated_at": "2026-06-04T19:40:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "dev-mcp-server",
-    "next_action": "DSI-S1-FE-TYPE DONE. Remaining TODO: DSI-S3-SECTOR-FIN (P2, L, apps/mcp-server). All P0+P1 tasks DONE.",
-    "wip": 2,
+    "next_agent": "qa",
+    "next_action": "DSI-S3-SECTOR-FIN DONE (commit pending). DSI sprint all tasks complete. QA: run DSI live-verify — call get_credit_flow_signal (verify is_estimate flag), get_bond_maturity_calendar (verify [SEED DATA] label), get_energy_grid_signals (verify [ƯỚC TÍNH] label), finalize_bctc_refine with conf=null (verify extractionConfidence=0 not 1 in DB), get_bctc_full for ticker with null roe/netMarginPct prior period (verify N/A in comparison). ops rebuild mcp-server required.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T21:20:00Z",
-    "updated_by": "dev-frontend"
+    "updated_at": "2026-06-04T19:40:00Z",
+    "updated_by": "dev-mcp-server"
   },
   "dashboard_section_cache": {
     "section_name": "po",

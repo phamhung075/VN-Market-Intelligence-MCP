@@ -1034,7 +1034,9 @@ export function buildFinalizeBctcRefineHandler(
               grossProfit: valSrc.gross_profit ?? 0,
               netProfit:   valSrc.net_profit   ?? 0,
             },
-            extractionConfidence: valSrc.extraction_confidence ?? 1,
+            // DSI-S3 C5: missing confidence MUST NOT grant max-confidence (1).
+            // A report with no confidence measurement → 0, which PUB-5 gates.
+            extractionConfidence: valSrc.extraction_confidence ?? 0,
             isBankForm: isBankForValidation,
           });
 

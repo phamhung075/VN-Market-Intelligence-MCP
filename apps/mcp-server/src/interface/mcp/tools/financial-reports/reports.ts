@@ -197,9 +197,10 @@ function rowToMetrics(row: ReportRow): FinancialMetrics {
     operatingCF: row.operating_cf,
     freeCashFlow: row.free_cash_flow,
     grossMarginPct: row.gross_margin_pct ?? 0,
-    netMarginPct: row.net_margin_pct ?? 0,
-    roe: row.roe ?? 0,
-    debtToEquity: row.debt_to_equity ?? 0,
+    // DSI-S3 C4: null when DB column not yet computed — must NOT default to 0.
+    netMarginPct: row.net_margin_pct ?? null,
+    roe: row.roe ?? null,
+    debtToEquity: row.debt_to_equity ?? null,
   };
 }
 

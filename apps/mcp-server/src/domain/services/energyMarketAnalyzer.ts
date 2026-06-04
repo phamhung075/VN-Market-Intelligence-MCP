@@ -51,6 +51,14 @@ export interface EnergySignal {
   severity: EnergySeverity;
   affectedStocks: EnergyAffectedStock[];
   confidence: number;
+  /**
+   * DSI-S3 C2: true when signal is derived from hardcoded/estimated grid figures
+   * (thermalDispatchPct/renewableDispatchPct/peakDemandGW/installedCapacityGW).
+   * Absent or false only when all input values come from a live EVN API fetch.
+   */
+  is_estimate?: boolean;
+  /** DSI-S3 C2: provenance tier — 4 = fixture/estimate. */
+  source_tier?: 1 | 2 | 3 | 4;
 }
 
 // ---------------------------------------------------------------------------

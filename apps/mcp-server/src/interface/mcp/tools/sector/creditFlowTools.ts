@@ -108,16 +108,29 @@ export async function getCreditFlowSignalHandler(
   let resolvedCurrentMortgage = input.currentMortgageRatePct;
   let resolvedPreviousMortgage = input.previousMortgageRatePct;
 
+  // DSI-S3 C1: track whether any field uses a hardcoded fallback (no live source).
+  let mortgageIsEstimate = false;
+  let yoyIsEstimate = false;
+
   if (resolvedCurrentMortgage === undefined || resolvedPreviousMortgage === undefined) {
     const sbv = await readSbvRefinancingRate();
     if (sbv) {
       resolvedCurrentMortgage ??= deriveMortgageRateFromSbv(sbv.current);
       resolvedPreviousMortgage ??= deriveMortgageRateFromSbv(sbv.previous);
     } else {
-      // Final fallback: use VN typical mortgage rates (2024 avg ~10.5%)
+      // Final fallback: use VN typical mortgage rates (2024 avg ~10.5%).
+      // DSI-S3 C1: these are estimates — flag response so consumers know.
       resolvedCurrentMortgage ??= 10.5;
       resolvedPreviousMortgage ??= 11.0;
+      mortgageIsEstimate = true;
     }
+  }
+
+  // DSI-S3 C1: flag when yoyGrowthPct is missing — defaults are fabricated ±15%.
+  const currentYoyResolved = input.currentYoyGrowthPct;
+  const previousYoyResolved = input.previousYoyGrowthPct;
+  if (currentYoyResolved === undefined || previousYoyResolved === undefined) {
+    yoyIsEstimate = true;
   }
 
   // ── Default RE credit outstanding when not provided ──────────────────────
@@ -127,8 +140,9 @@ export async function getCreditFlowSignalHandler(
   const current: CreditData = {
     totalCreditTrillion: resolvedCurrentCredit * 5, // rough estimate
     reCreditTrillion: resolvedCurrentCredit,
+    // DSI-S3 C1: reCreditRatioPct 20/19 are static constants, not live data.
     reCreditRatioPct: 20,
-    yoyGrowthPct: input.currentYoyGrowthPct ?? 15,
+    yoyGrowthPct: currentYoyResolved ?? 15,
     avgMortgageRatePct: resolvedCurrentMortgage,
     date: new Date().toISOString().slice(0, 10),
   };
@@ -137,7 +151,7 @@ export async function getCreditFlowSignalHandler(
     totalCreditTrillion: resolvedPreviousCredit * 5,
     reCreditTrillion: resolvedPreviousCredit,
     reCreditRatioPct: 19,
-    yoyGrowthPct: input.previousYoyGrowthPct ?? -15,
+    yoyGrowthPct: previousYoyResolved ?? -15,
     avgMortgageRatePct: resolvedPreviousMortgage,
     date: new Date(Date.now() - 30 * 86400 * 1000).toISOString().slice(0, 10),
   };
@@ -151,8 +165,20 @@ export async function getCreditFlowSignalHandler(
         ? "TIÊU CỰC"
         : "TRUNG TÍNH";
 
+  // DSI-S3 C1: build provenance disclaimer lines for any estimate inputs.
+  const isEstimate = mortgageIsEstimate || yoyIsEstimate;
+  const provenanceLines: string[] = [];
+  if (mortgageIsEstimate) {
+    provenanceLines.push(`[ƯỚC TÍNH] Lãi suất vay mua nhà: dùng mặc định VN 2024 (~10.5%/11.0%) — không có dữ liệu SBV DB. is_estimate=true, source_tier=4`);
+  }
+  if (yoyIsEstimate) {
+    provenanceLines.push(`[ƯỚC TÍNH] Tăng trưởng tín dụng YoY: dùng mặc định ±15% — không có dữ liệu NHNN thực. is_estimate=true, source_tier=4`);
+  }
+  // reCreditRatioPct 20/19 is always a static constant
+  provenanceLines.push(`[static_seed] Tỷ lệ tín dụng BĐS: 20%/19% là hằng số ước tính (không từ nguồn NHNN trực tiếp)`);
+
   const lines: string[] = [
-    `TÍN DỤNG BẤT ĐỘNG SẢN — PHÂN TÍCH TÁC ĐỘNG`,
+    `TÍN DỤNG BẤT ĐỘNG SẢN — PHÂN TÍCH TÁC ĐỘNG${isEstimate ? " [ƯỚC TÍNH]" : ""}`,
     `Mức độ: ${SEVERITY_VI[signal.severity] ?? signal.severity}`,
     `Xu hướng: ${dirLabel}`,
     `Độ tin cậy: ${(signal.confidence * 100).toFixed(0)}%`,
@@ -164,6 +190,12 @@ export async function getCreditFlowSignalHandler(
 
   for (const s of signal.affectedStocks) {
     lines.push(`  ${s.code}: ${s.impact}`);
+  }
+
+  // DSI-S3 C1: append provenance disclaimer section
+  if (provenanceLines.length > 0) {
+    lines.push("", "--- Nguồn dữ liệu ---");
+    lines.push(...provenanceLines);
   }
 
   return {

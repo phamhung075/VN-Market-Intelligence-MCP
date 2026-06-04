@@ -224,9 +224,12 @@ function rowToMetrics(row: ReportRow, bankForm = false): FinancialMetrics {
     freeCashFlow: row.free_cash_flow,
     // C-3: gross_margin_pct is null/0 for banks — use NaN as sentinel
     grossMarginPct: bankForm ? NaN : (row.gross_margin_pct ?? 0),
-    netMarginPct: row.net_margin_pct ?? 0,
-    roe: row.roe ?? 0,
-    debtToEquity: row.debt_to_equity ?? 0,
+    // DSI-S3 C4: null when DB column not yet computed — must NOT default to 0,
+    // which would fabricate a false QoQ/YoY delta against a synthetic zero.
+    // ratioChange() propagates null→NaN; buildComparisonSection renders "N/A".
+    netMarginPct: row.net_margin_pct ?? null,
+    roe: row.roe ?? null,
+    debtToEquity: row.debt_to_equity ?? null,
   };
 }
 
@@ -455,8 +458,14 @@ function buildComparisonSection(
       : [
           `Gross Margin : ${fmtPct(m2.grossMarginPct)} -> ${fmtPct(m1.grossMarginPct)}  (${delta.grossMarginPP.changePP >= 0 ? "+" : ""}${delta.grossMarginPP.changePP.toFixed(1)} pp)`,
         ]),
-    `Net Margin   : ${fmtPct(m2.netMarginPct)} -> ${fmtPct(m1.netMarginPct)}  (${delta.netMarginPP.changePP >= 0 ? "+" : ""}${delta.netMarginPP.changePP.toFixed(1)} pp)`,
-    `ROE          : ${fmtPct(m2.roe)} -> ${fmtPct(m1.roe)}  (${delta.roePP.changePP >= 0 ? "+" : ""}${delta.roePP.changePP.toFixed(1)} pp)`,
+    // DSI-S3 C4: if either period's ratio is null (NaN sentinel from ratioChange),
+    // suppress the pp-delta to avoid fabricating a false delta vs synthetic 0.
+    isNaN(delta.netMarginPP.changePP)
+      ? `Net Margin   : ${fmtPct(m2.netMarginPct)} -> ${fmtPct(m1.netMarginPct)}  (N/A — ratio unavailable)`
+      : `Net Margin   : ${fmtPct(m2.netMarginPct)} -> ${fmtPct(m1.netMarginPct)}  (${delta.netMarginPP.changePP >= 0 ? "+" : ""}${delta.netMarginPP.changePP.toFixed(1)} pp)`,
+    isNaN(delta.roePP.changePP)
+      ? `ROE          : ${fmtPct(m2.roe)} -> ${fmtPct(m1.roe)}  (N/A — ratio unavailable)`
+      : `ROE          : ${fmtPct(m2.roe)} -> ${fmtPct(m1.roe)}  (${delta.roePP.changePP >= 0 ? "+" : ""}${delta.roePP.changePP.toFixed(1)} pp)`,
   ];
 
   return lines.join("\n");

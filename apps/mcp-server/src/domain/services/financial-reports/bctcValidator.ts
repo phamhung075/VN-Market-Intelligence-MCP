@@ -118,7 +118,8 @@ export function validateFinancialReport(report: ValidatableReport): ValidationRe
 
   const bs = report.balanceSheet;
   const is = report.incomeStatement;
-  const extractionConfidence = report.extractionConfidence ?? 1;
+  // DSI-S3 C5: missing confidence → 0 (unknown ≠ max-confidence).
+  const extractionConfidence = report.extractionConfidence ?? 0;
 
   // ── Extraction confidence check ───────────────────────────────────────────
   if (extractionConfidence < MIN_EXTRACTION_CONFIDENCE) {

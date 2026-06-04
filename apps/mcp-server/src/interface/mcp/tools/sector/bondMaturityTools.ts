@@ -32,7 +32,12 @@ function formatBondCalendar(events: BondMaturityEvent[], alerts: import("../../.
     }
   }
 
-  const lines: string[] = [`Lịch đáo hạn TPDN BĐS (${events.length} đợt):\n`];
+  // DSI-S3 C3: warn at header level when any event is from static seed fallback.
+  const hasSeedData = events.some((e) => e.static_seed === true);
+  const lines: string[] = [
+    `Lịch đáo hạn TPDN BĐS (${events.length} đợt):\n`,
+    ...(hasSeedData ? [`[SEED DATA — không xác minh thị trường thực] Dữ liệu minh họa; cơ sở dữ liệu trái phiếu chưa được cập nhật từ nguồn thực.\n`] : []),
+  ];
 
   for (const evt of events) {
     const alertSeverity = alertByCode.get(evt.issuerCode);

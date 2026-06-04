@@ -69,7 +69,11 @@ export async function getEnergyGridStatus(
   };
 
   // ── Analyze market ───────────────────────────────────────────────────────
-  const signals = analyzeEnergyMarket(energyData);
+  // DSI-S3 C2: thermalDispatchPct/renewableDispatchPct/peakDemandGW/installedCapacityGW
+  // are hardcoded approximations (no live EVN API). Tag all derived signals as
+  // is_estimate: true / source_tier: 4 so downstream consumers know the provenance.
+  const rawSignals = analyzeEnergyMarket(energyData);
+  const signals = rawSignals.map((s) => ({ ...s, is_estimate: true, source_tier: 4 as const }));
 
   // ── Format output ─────────────────────────────────────────────────────────
   let text = `=== TRẠNG THÁI ĐIỆN LỰC VIỆT NAM ===\n\n`;
@@ -96,9 +100,11 @@ export async function getEnergyGridStatus(
     text += `Tình trạng điện lượng: BÌNH THƯỜNG\n`;
     text += `Không có tín hiệu báo động điện lực hiện tại.\n`;
   } else {
-    text += `=== TÍN HIỆU BÁO ĐỘNG ===\n\n`;
+    text += `=== TÍN HIỆU BÁO ĐỘNG (ƯỚC TÍNH — dữ liệu lưới điện chưa từ EVN API) ===\n\n`;
     for (const signal of signals) {
-      text += `[${signal.severity.toUpperCase()}] ${signal.type.replace(/_/g, " ").toUpperCase()}\n`;
+      // DSI-S3 C2: mark each signal derived from hardcoded grid figures
+      const estimateTag = signal.is_estimate ? " [ƯỚC TÍNH]" : "";
+      text += `[${signal.severity.toUpperCase()}]${estimateTag} ${signal.type.replace(/_/g, " ").toUpperCase()}\n`;
       text += `  Độ tin cậy: ${(signal.confidence * 100).toFixed(0)}%\n`;
       for (const stock of signal.affectedStocks) {
         const dir = stock.direction === "up" ? "TĂNG" : stock.direction === "down" ? "GIẢM" : "TRUNG LẬP";
