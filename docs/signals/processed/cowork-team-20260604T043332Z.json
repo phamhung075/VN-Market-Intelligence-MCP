@@ -1,0 +1,15 @@
+{
+  "classification": "SILENT",
+  "reason": "no_cron_match",
+  "tick_nominal": "04:33",
+  "drift_min": 3,
+  "matcher_slots": [],
+  "leader_lock": "not_acquired_silent",
+  "spawns": 0,
+  "dev_head": "idle",
+  "devq": 0,
+  "signal_backlog": 1,
+  "new_queue_rows": 0,
+  "notes": "post chef-intraday 04:13 dedup-blocked. next chef-intraday 05:13Z, chef-morning publishes 05:23Z (next guaranteed MARKET dish).",
+  "written_at": "20260604T043332Z"
+}

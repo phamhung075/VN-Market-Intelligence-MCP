@@ -1,0 +1,20 @@
+{
+  "classification": "WON",
+  "reason": "cron_match:news-scout-sentiment",
+  "tick_nominal": "05:03",
+  "drift_min": 3,
+  "matcher_slots": [
+    "news-scout-sentiment"
+  ],
+  "leader_lock": "stolen_won",
+  "spawns": 1,
+  "spawned": [
+    "news-scout/main.md slot=news-scout-sentiment (a43c0eb6)"
+  ],
+  "dev_head": "idle",
+  "devq": 0,
+  "signal_backlog": 3,
+  "new_queue_rows": 0,
+  "notes": "WON news-scout-sentiment 05:03Z gatherer non-publisher no-dedup. next chef-intraday 05:13Z, chef-morning guaranteed publish 05:23Z.",
+  "written_at": "20260604T050358Z"
+}

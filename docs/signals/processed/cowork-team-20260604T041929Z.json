@@ -1,0 +1,21 @@
+{
+  "classification": "WON",
+  "reason": "cron_match:chef-intraday",
+  "tick_nominal": "04:19",
+  "drift_min": 3,
+  "matcher_slots": [
+    "chef-intraday"
+  ],
+  "leader_lock": "self_held_renewed",
+  "spawns": 1,
+  "spawned": [
+    "unified-agent/chef.md slot=chef-intraday (ae4dcbe9)"
+  ],
+  "dedup_note": "per-day marker held from 02:13 claim -> chef expected dedup-blocked silent-exit, no MARKET publish",
+  "dev_head": "idle",
+  "devq": 0,
+  "signal_backlog": 0,
+  "new_queue_rows": 0,
+  "notes": "WON chef-intraday 04:13Z. own PO flow_defect row drained by dev-team since 04:00 (NEW->gone). gatherers 04:00 both completed clean: market-watcher PLX +6.90% anomaly id4920; news-scout 4 chain_catalyst 4918/4919/4921/4922. LanceDB offline 10th cycle. carry -0.33pp 17bp to lock.",
+  "written_at": "20260604T041929Z"
+}
