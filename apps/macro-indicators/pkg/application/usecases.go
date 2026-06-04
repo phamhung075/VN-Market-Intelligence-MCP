@@ -223,7 +223,7 @@ func buildCarryDTO(
 	isEstimate bool,
 	fetchedAtSource *time.Time,
 ) CarrySignalDTO {
-	sourceTier := 1 // live
+	sourceTier := 2 // administered SBV deposit rate folds in → tier:2 (administered-published, not exchange-direct) per DSI-INV-1 / FU-SBV-DEPOSIT-PROVENANCE-GO
 	if isEstimate {
 		sourceTier = 4 // fixture
 	}
@@ -265,7 +265,7 @@ func buildYieldDTO(
 	pOut yld.YieldSpreadOutput,
 	isEstimate bool,
 ) YieldSignalDTO {
-	sourceTier := 1
+	sourceTier := 2 // administered SBV deposit rate folds in → tier:2 (administered-published, not exchange-direct) per DSI-INV-1 / FU-SBV-DEPOSIT-PROVENANCE-GO
 	if isEstimate {
 		sourceTier = 4
 	}

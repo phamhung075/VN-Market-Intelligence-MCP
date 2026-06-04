@@ -900,6 +900,160 @@ func TestDSIINV1_CarryFetchedAtSourceNeverTimeNow(t *testing.T) {
 	}
 }
 
+// ---------------------------------------------------------------------------
+// FU-SBV-DEPOSIT-PROVENANCE-GO: source_tier=2 for live carry/yield
+// ---------------------------------------------------------------------------
+
+// extractSourceTierCarry extracts source_tier from resp.Signals.Carry via JSON.
+func extractSourceTierCarry(t *testing.T, resp MacroSnapshotResponse) int {
+	t.Helper()
+	type carryMeta struct {
+		SourceTier int `json:"source_tier"`
+	}
+	b, err := json.Marshal(resp.Signals.Carry)
+	if err != nil {
+		t.Fatalf("FU-SBV: marshal carry signal: %v", err)
+	}
+	var m carryMeta
+	if err = json.Unmarshal(b, &m); err != nil {
+		t.Fatalf("FU-SBV: unmarshal carry source_tier: %v", err)
+	}
+	return m.SourceTier
+}
+
+// extractSourceTierYield extracts source_tier from resp.Signals.Yield via JSON.
+func extractSourceTierYield(t *testing.T, resp MacroSnapshotResponse) int {
+	t.Helper()
+	type yieldMeta struct {
+		SourceTier int `json:"source_tier"`
+	}
+	b, err := json.Marshal(resp.Signals.Yield)
+	if err != nil {
+		t.Fatalf("FU-SBV: marshal yield signal: %v", err)
+	}
+	var m yieldMeta
+	if err = json.Unmarshal(b, &m); err != nil {
+		t.Fatalf("FU-SBV: unmarshal yield source_tier: %v", err)
+	}
+	return m.SourceTier
+}
+
+// TestDSIINV1_CarrySourceTierAdministeredRate verifies FU-SBV-DEPOSIT-PROVENANCE-GO:
+//
+//   - live (is_estimate=false) carry → SourceTier==2, NEVER 1, Regime preserved, CarrySpread non-nil.
+//   - live yield → SourceTier==2, NEVER 1.
+//   - fixture (is_estimate=true) carry → SourceTier==4, Regime=="UNKNOWN", CarrySpread==nil (unchanged).
+//
+// The SBV max deposit rate is an administered-published rate (tier:2), not exchange-direct (tier:1).
+// Folding it into carry or yield computations caps the DTO source_tier at 2.
+func TestDSIINV1_CarrySourceTierAdministeredRate(t *testing.T) {
+	type tc struct {
+		name           string
+		vndDeposit     float64
+		fedFunds       float64
+		earnYield      float64
+		wantCarryTier  int
+		wantYieldTier  int
+		wantEstimate   bool
+		wantRegime     string // "" = don't check specific regime, just that it's not UNKNOWN
+		wantSpreadNil  bool   // true = CarrySpread must be nil (suppressed)
+	}
+
+	tests := []tc{
+		{
+			name:          "live_inputs_tier2",
+			vndDeposit:    5.0,
+			fedFunds:      3.62,
+			earnYield:     6.83,
+			wantCarryTier: 2,
+			wantYieldTier: 2,
+			wantEstimate:  false,
+			wantRegime:    "NEUTRAL", // spread=1.38 in NEUTRAL band
+			wantSpreadNil: false,
+		},
+		{
+			name:          "fixture_fallback_tier4",
+			vndDeposit:    0, // zero → fixture fallback → is_estimate=true
+			fedFunds:      0,
+			earnYield:     0,
+			wantCarryTier: 4,
+			wantYieldTier: 4,
+			wantEstimate:  true,
+			wantRegime:    "UNKNOWN",
+			wantSpreadNil: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uc := NewComputeMacroUseCase(
+				newStubCommodity(),
+				&stubSBVRate{},
+				&stubMarketIndex{vnIndex: 1880.0},
+				&stubCarryYieldInputs{
+					vndDeposit: tt.vndDeposit,
+					fedFunds:   tt.fedFunds,
+					earnYield:  tt.earnYield,
+				},
+			)
+
+			resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+			if err != nil {
+				t.Fatalf("Execute() error: %v", err)
+			}
+
+			// --- carry tier assertions ---
+			carryTier := extractSourceTierCarry(t, resp)
+			if carryTier == 1 {
+				t.Errorf("FU-SBV carry: source_tier=1 (exchange-direct over-claim) — SBV deposit rate is administered (tier:2); must NEVER be 1")
+			}
+			if carryTier != tt.wantCarryTier {
+				t.Errorf("FU-SBV carry: source_tier=%d, want %d", carryTier, tt.wantCarryTier)
+			}
+
+			// --- yield tier assertions ---
+			yieldTier := extractSourceTierYield(t, resp)
+			if yieldTier == 1 {
+				t.Errorf("FU-SBV yield: source_tier=1 (exchange-direct over-claim) — SBV deposit rate folds into yield spread (EarningYield−DepositRate); must NEVER be 1")
+			}
+			if yieldTier != tt.wantYieldTier {
+				t.Errorf("FU-SBV yield: source_tier=%d, want %d", yieldTier, tt.wantYieldTier)
+			}
+
+			// --- carry content assertions ---
+			carrySpreadVal, carryRegime, isEstimate := extractCarrySignal(t, resp)
+
+			if isEstimate != tt.wantEstimate {
+				t.Errorf("FU-SBV carry: is_estimate=%v, want %v", isEstimate, tt.wantEstimate)
+			}
+
+			if tt.wantSpreadNil {
+				// extractCarrySignal returns 0 when JSON is null (nil pointer).
+				if carrySpreadVal != 0 {
+					t.Errorf("FU-SBV carry: spread=%.4f, want null/nil (fixture path must suppress spread)", carrySpreadVal)
+				}
+			} else {
+				if carrySpreadVal == 0 {
+					t.Errorf("FU-SBV carry: spread=0/nil, want non-nil (live path must populate spread)")
+				}
+			}
+
+			if tt.wantRegime == "UNKNOWN" {
+				if carryRegime != "UNKNOWN" {
+					t.Errorf("FU-SBV carry: regime=%q, want UNKNOWN (fixture fallback must suppress regime)", carryRegime)
+				}
+			} else if tt.wantRegime != "" {
+				if carryRegime == "UNKNOWN" {
+					t.Errorf("FU-SBV carry: regime=UNKNOWN but inputs are live — regime must not be suppressed")
+				}
+				if carryRegime != tt.wantRegime {
+					t.Errorf("FU-SBV carry: regime=%q, want %q", carryRegime, tt.wantRegime)
+				}
+			}
+		})
+	}
+}
+
 // abs returns the absolute value of a float64.
 // Defined locally (math.Abs exists but this avoids an import for a trivial helper).
 func abs(x float64) float64 {
