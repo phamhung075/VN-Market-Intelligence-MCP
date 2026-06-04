@@ -19,6 +19,7 @@ import {
   updateBondStatus,
 } from "../infrastructure/db/bondMaturityStore.js";
 import { initDatabase, getDb, closeDb } from "../infrastructure/db/index.js";
+import { formatBondCalendar } from "../interface/mcp/tools/sector/bondMaturityTools.js";
 
 function daysFromNow(days: number): string {
   const d = new Date();
@@ -180,5 +181,93 @@ describe("Task 243 — Bond Maturity Store (infrastructure)", () => {
     const notFound = result.find((r) => r.issuerCode === "DIG");
     expect(found).toBeDefined();
     expect(notFound).toBeUndefined();
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DSI-S3 C3 — DB-backed seed-data banner (the QA blocker this task fixes)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("DSI-S3 C3 — DB-backed path surfaces static_seed flag and banner", () => {
+  let db: Database;
+
+  beforeEach(async () => {
+    closeDb();
+    await initDatabase();
+    db = getDb();
+  });
+
+  it("TC-1: upsertBond with static_seed=true → listUpcomingBonds returns static_seed:true", () => {
+    upsertBond(db, {
+      issuer: "VinHomes JSC",
+      issuerCode: "VHM",
+      amount: 10000,
+      maturityDate: daysFromNow(180),
+      couponRate: 10.0,
+      status: "upcoming",
+      static_seed: true,
+    });
+
+    const events = listUpcomingBonds(db, 12);
+    const vhm = events.find((e) => e.issuerCode === "VHM");
+
+    expect(vhm).toBeDefined();
+    expect(vhm!.static_seed).toBe(true);
+  });
+
+  it("TC-2: upsertBond with static_seed=false → listUpcomingBonds returns static_seed:false", () => {
+    upsertBond(db, {
+      issuer: "VinHomes JSC",
+      issuerCode: "VHM",
+      amount: 10000,
+      maturityDate: daysFromNow(180),
+      couponRate: 10.0,
+      status: "upcoming",
+      static_seed: false,
+    });
+
+    const events = listUpcomingBonds(db, 12);
+    const vhm = events.find((e) => e.issuerCode === "VHM");
+
+    expect(vhm).toBeDefined();
+    expect(vhm!.static_seed).toBe(false);
+  });
+
+  it("TC-3: formatBondCalendar emits banner when DB-backed event has static_seed:true", () => {
+    // This is the exact QA blocker: DB-served events (not empty-DB fallback) must
+    // also surface the [SEED DATA] banner.
+    upsertBond(db, {
+      issuer: "Novaland JSC",
+      issuerCode: "NVL",
+      amount: 5000,
+      maturityDate: daysFromNow(120),
+      couponRate: 10.5,
+      status: "upcoming",
+      static_seed: true,
+    });
+
+    const events = listUpcomingBonds(db, 12);
+    expect(events.some((e) => e.static_seed === true)).toBe(true);
+
+    const output = formatBondCalendar(events, []);
+    expect(output).toContain("[SEED DATA — không xác minh thị trường thực]");
+  });
+
+  it("TC-4: formatBondCalendar does NOT emit banner when event has static_seed:false", () => {
+    upsertBond(db, {
+      issuer: "Novaland JSC",
+      issuerCode: "NVL",
+      amount: 5000,
+      maturityDate: daysFromNow(120),
+      couponRate: 10.5,
+      status: "upcoming",
+      static_seed: false,
+    });
+
+    const events = listUpcomingBonds(db, 12);
+    expect(events.every((e) => e.static_seed === false)).toBe(true);
+
+    const output = formatBondCalendar(events, []);
+    expect(output).not.toContain("[SEED DATA — không xác minh thị trường thực]");
   });
 });

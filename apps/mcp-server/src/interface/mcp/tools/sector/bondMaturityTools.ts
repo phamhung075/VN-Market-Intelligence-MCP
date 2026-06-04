@@ -19,7 +19,8 @@ import { listUpcomingBonds } from "../../../../infrastructure/db/bondMaturitySto
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-function formatBondCalendar(events: BondMaturityEvent[], alerts: import("../../../../domain/services/signalDetector.js").Signal[]): string {
+/** @internal exported for unit tests (DSI-S3 C3) */
+export function formatBondCalendar(events: BondMaturityEvent[], alerts: import("../../../../domain/services/signalDetector.js").Signal[]): string {
   if (events.length === 0) {
     return "Không có trái phiếu doanh nghiệp BĐS nào đáo hạn trong khoảng thời gian này.";
   }

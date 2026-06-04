@@ -320,6 +320,15 @@ export function initMacroTables(db: Database): void {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bond_maturity_date ON bond_maturity(maturity_date)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_bond_maturity_code ON bond_maturity(issuer_code)`);
 
+  // DSI-S3 C3: add is_seed_data column to bond_maturity.
+  // DEFAULT 1 — on ADD COLUMN SQLite fills existing rows with the DEFAULT value,
+  // so all 5 seed rows written on 2026-05-31 are automatically backfilled to 1.
+  // Future genuine (non-seed) bonds written by a live fetcher MUST call upsertBond
+  // with static_seed=false which writes is_seed_data=0 — see bondMaturityStore.ts.
+  // NOTE: while all writer paths remain seed-only (no live fetcher yet), DEFAULT 1
+  // is intentionally conservative; it will be revisited once a real fetcher lands.
+  try { db.exec(`ALTER TABLE bond_maturity ADD COLUMN is_seed_data INTEGER NOT NULL DEFAULT 1`); } catch { /* already exists */ }
+
   // ── Pharma Events (Task 1046) ─────────────────────────────────────────────
   db.exec(`
     CREATE TABLE IF NOT EXISTS pharma_events (
