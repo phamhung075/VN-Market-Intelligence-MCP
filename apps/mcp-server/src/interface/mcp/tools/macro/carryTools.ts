@@ -1,16 +1,19 @@
 /**
- * Task P2-B1 — MCP Tool Handler HTTP Rewire (R-3 Unblock)
+ * CARRY-YIELD-SINGLE-SIGNAL-FIXTURE B-2 — MCP Tool Handler Rewire
  *
  * Interface layer: registers `get_carry_trade_signal` and `get_macro_calendar`.
- * Previously called domain services directly; now routes through HTTP to
- * the macro-indicators microservice (port 5004).
  *
- * Tool: get_carry_trade_signal → HTTP GET /carry-trade-signal
- * Tool: get_macro_calendar     → HTTP GET /macro-calendar?days={days}
+ * Tool: get_carry_trade_signal → HTTP POST /snapshot (body "{}"),
+ *       projects snapshot.signals.carry sub-object.
+ *       Surfaces source_tier, is_estimate, fetched_at_source, reasoning
+ *       directly from the CarrySignalDTO — no fixture values possible.
+ *
+ * Tool: get_macro_calendar → HTTP GET /macro-calendar?days={days} (unchanged).
  *
  * HTTP base URL: read from env var MACRO_INDICATORS_URL (see macroHttpClient.ts).
  * Graceful failure: returns { error: "macro-indicators service unavailable" } on any
- * HTTP error or network failure.
+ * HTTP error or network failure, or { error: "carry signal not available in snapshot" }
+ * when signals.carry is absent from the snapshot response.
  *
  * @module interface/mcp/tools/macro/carryTools
  */
@@ -39,21 +42,26 @@ export function registerCarryTools(server: McpServer): void {
     "get_carry_trade_signal",
     "Computes the VND carry trade signal for the Thien Thoi (global liquidity) layer " +
       "of the Trần Ngọc Báu macro framework. " +
-      "Routes through HTTP GET to the macro-indicators microservice (port 5004). " +
-      "Returns regime, carrySpread, vndDepositRate, fedFundsRate, and computedAt. " +
-      "Source tier: 3 (derived — computed by macro-indicators service).",
+      "Routes through HTTP POST /snapshot to the macro-indicators microservice (port 5004) " +
+      "and projects the carry sub-object. " +
+      "Returns regime, carrySpread (null when inputs are estimated), vndDepositRate, " +
+      "fedFundsRate, computedAt, source_tier (2=administered-published, 4=fixture/estimate), " +
+      "is_estimate (true when any carry input fell back to fixture), and fetched_at_source " +
+      "(FRED source date for fedFunds; null when unavailable). " +
+      "Source tier: reflects live carry inputs — tier:2 when live, tier:4 when fixture fallback.",
     {},
     async () => {
-      const url = `${baseUrl}/carry-trade-signal`;
+      const url = `${baseUrl}/snapshot`;
 
       try {
         const response = await fetch(url, {
-          method: "GET",
-          headers: { "Accept": "application/json" },
+          method: "POST",
+          headers: { "Accept": "application/json", "Content-Type": "application/json" },
+          body: "{}",
         });
 
         if (!response.ok) {
-          logger.warn("[get_carry_trade_signal] HTTP error from macro-indicators", {
+          logger.warn("[get_carry_trade_signal] HTTP error from macro-indicators /snapshot", {
             status: response.status,
             url,
           });
@@ -67,9 +75,27 @@ export function registerCarryTools(server: McpServer): void {
           };
         }
 
-        const data: unknown = await response.json();
+        const snapshot = await response.json() as {
+          signals?: {
+            carry?: unknown;
+          };
+        };
+
+        const carrySignal = snapshot?.signals?.carry;
+        if (carrySignal == null) {
+          logger.warn("[get_carry_trade_signal] /snapshot response missing signals.carry", { url });
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: "carry signal not available in snapshot" }, null, 2),
+              },
+            ],
+          };
+        }
+
         return {
-          content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+          content: [{ type: "text" as const, text: JSON.stringify(carrySignal, null, 2) }],
         };
       } catch (err) {
         logger.warn("[get_carry_trade_signal] fetch failed", {

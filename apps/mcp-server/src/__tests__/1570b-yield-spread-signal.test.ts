@@ -2,7 +2,7 @@
  * Tests for Task 1426b — Yield Spread Signal
  *
  * Covers:
- *   Unit tests — pure domain function computeYieldSpreadSignal():
+ *   Suite 1. Unit tests — pure domain function computeYieldSpreadSignal():
  *     - CHEAP branch (spread > 2pp)
  *     - FAIRLY_VALUED branch (0 < spread ≤ 2pp)
  *     - EXPENSIVE branch (spread ≤ 0)
@@ -11,20 +11,23 @@
  *     - Boundary: earningYield === depositRate → EXPENSIVE
  *     - Boundary: earningYield === depositRate + 2 → FAIRLY_VALUED (threshold is strictly >)
  *
- *   MCP tool integration tests — get_yield_spread_signal via _test injection params:
- *     - CHEAP via injection
- *     - FAIRLY_VALUED via injection
- *     - EXPENSIVE via injection
- *     - UNKNOWN via injection (earningYield = 0)
+ *   Suite 2. MCP tool integration tests — get_yield_spread_signal via mocked POST /snapshot
+ *     (CARRY-YIELD-SINGLE-SIGNAL-FIXTURE B-2: rewired to POST /snapshot)
+ *     - Projects signals.yield from /snapshot
+ *     - Surfaces source_tier + is_estimate (is_estimate=true/tier:4 is expected and honest)
+ *     - ANTI-FIXTURE: fixture earningYield=8.2 and depositRate=4.7 not served when live
+ *     - Null-guard: missing signals.yield returns error
+ *     - HTTP error / network error returns error envelope
  *
  * @module __tests__/1570b-yield-spread-signal
  */
 
-import { describe, it, expect } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach } from "bun:test";
 import {
   computeYieldSpreadSignal,
   type YieldSpreadSignal,
 } from "../domain/services/macro/yieldSpreadSignal.js";
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { registerDinhGiaTools } from "../interface/mcp/tools/macro/dinhGiaTools.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -36,8 +39,90 @@ function r2(n: number): number {
   return Math.round(n * 100) / 100;
 }
 
+/** Invoke a registered MCP tool via _registeredTools internal map. */
+async function callTool(
+  server: McpServer,
+  toolName: string,
+  args: Record<string, unknown> = {},
+): Promise<{ content: Array<{ type: string; text: string }> }> {
+  const tools = (server as unknown as {
+    _registeredTools: Record<string, {
+      callback?: (args: Record<string, unknown>) => unknown;
+      handler?: (args: Record<string, unknown>) => unknown;
+    }>;
+  })._registeredTools;
+
+  const tool = tools[toolName];
+  if (!tool) throw new Error(`Tool not registered: ${toolName}`);
+  const fn = tool.callback ?? tool.handler;
+  if (!fn) throw new Error(`No callable found for tool: ${toolName}`);
+  return fn(args) as Promise<{ content: Array<{ type: string; text: string }> }>;
+}
+
+/** Build a /snapshot response shape containing a yield sub-object. */
+function makeSnapshotWithYield(yieldObj: Record<string, unknown>): object {
+  return {
+    status: "ok",
+    dataSource: "macro-indicators",
+    fetchedAt: "2026-06-05T00:00:00Z",
+    signals: {
+      carry: {},
+      yield: yieldObj,
+      oil: {},
+      gold: {},
+      usdvnd: {},
+      "investment-clock": {},
+    },
+  };
+}
+
+/** Mock globalThis.fetch to return the given snapshot body for POST /snapshot. */
+function mockSnapshotFetch(snapshot: object): () => void {
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/snapshot")) {
+      return new Response(JSON.stringify(snapshot), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return original(input, _init);
+  };
+  return () => { globalThis.fetch = original; };
+}
+
+/** Mock fetch to return HTTP 500 for /snapshot. */
+function mockSnapshotError(): () => void {
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/snapshot")) {
+      return new Response("Internal Server Error", { status: 500 });
+    }
+    return original(input, _init);
+  };
+  return () => { globalThis.fetch = original; };
+}
+
+/** Mock fetch to throw a network error for /snapshot. */
+function mockSnapshotNetworkError(): () => void {
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/snapshot")) {
+      throw new Error("ECONNREFUSED");
+    }
+    return original(input, _init);
+  };
+  return () => { globalThis.fetch = original; };
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// Unit tests — pure domain function
+// Suite 1 — Unit tests: pure domain function
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("computeYieldSpreadSignal — pure domain fn", () => {
@@ -108,98 +193,193 @@ describe("computeYieldSpreadSignal — pure domain fn", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// MCP tool integration tests — using _test injection params
+// Suite 2 — MCP tool: get_yield_spread_signal via mocked POST /snapshot
+// CARRY-YIELD-SINGLE-SIGNAL-FIXTURE B-2: rewired to POST /snapshot
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("get_yield_spread_signal MCP tool — injection params", () => {
-  /** Minimal McpServer mock that captures tool registrations. */
-  function makeMockServer() {
-    const handlers: Record<
-      string,
-      (args: Record<string, unknown>) => { content: Array<{ type: string; text: string }> }
-    > = {};
+describe("get_yield_spread_signal MCP tool — POST /snapshot projection", () => {
+  let server: McpServer;
+  let restore: (() => void) | undefined;
 
-    const server = {
-      tool: (
-        name: string,
-        _description: string,
-        _schema: unknown,
-        handler: (args: Record<string, unknown>) => { content: Array<{ type: string; text: string }> },
-      ) => {
-        handlers[name] = handler;
+  beforeEach(() => {
+    server = new McpServer({ name: "test", version: "0.0.0" });
+    registerDinhGiaTools(server);
+  });
+
+  afterEach(() => {
+    restore?.();
+    restore = undefined;
+  });
+
+  it("projects signals.yield from /snapshot — live CHEAP regime", async () => {
+    const yieldPayload = {
+      label: "CHEAP",
+      spread: 3.2,
+      earningYield: 8.2,
+      depositRate: 5.0,
+      reasoning: "Equity is cheap relative to deposit rates.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: true,
+      source_tier: 4,
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithYield(yieldPayload));
+
+    const response = await callTool(server, "get_yield_spread_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    expect(result.label).toBe("CHEAP");
+    expect(result.spread).toBe(3.2);
+    expect(result.earningYield).toBe(8.2);
+    expect(result.depositRate).toBe(5.0);
+    // is_estimate=true surfaced (earningYield is fixture — honest)
+    expect(result.is_estimate).toBe(true);
+    expect(result.source_tier).toBe(4);
+    expect(typeof result.reasoning).toBe("string");
+  });
+
+  it("surfaces source_tier and is_estimate from YieldSignalDTO", async () => {
+    const yieldPayload = {
+      label: "FAIRLY_VALUED",
+      spread: 1.5,
+      earningYield: 6.5,
+      depositRate: 5.0,
+      reasoning: "Moderate valuation.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: false,
+      source_tier: 2,
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithYield(yieldPayload));
+
+    const response = await callTool(server, "get_yield_spread_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    expect(result.source_tier).toBeDefined();
+    expect(result.is_estimate).toBeDefined();
+    expect(result.reasoning).toBeDefined();
+  });
+
+  it("ANTI-FIXTURE: fixture earningYield=8.2 + depositRate=4.7 are NOT hardcoded — tool passes through /snapshot values", async () => {
+    // Inject non-fixture values; tool must pass them through unchanged
+    const yieldPayload = {
+      label: "CHEAP",
+      spread: 2.73,
+      earningYield: 7.23,
+      depositRate: 4.5,
+      reasoning: "Live computation.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: false,
+      source_tier: 2,
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithYield(yieldPayload));
+
+    const response = await callTool(server, "get_yield_spread_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    // The tool must project what /snapshot returned — no hardcoded 8.2 possible
+    expect(result.earningYield).toBe(7.23);
+    expect(result.depositRate).toBe(4.5);
+    expect(result.earningYield).not.toBe(8.2);
+    expect(result.depositRate).not.toBe(4.7);
+  });
+
+  it("is_estimate=true is surfaced honestly (fixture fallback active) — not hidden", async () => {
+    const yieldPayload = {
+      label: "CHEAP",
+      spread: 3.2,
+      earningYield: 8.2,
+      depositRate: 5.0,
+      reasoning: "Fixture fallback for earningYield.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: true,
+      source_tier: 4,
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithYield(yieldPayload));
+
+    const response = await callTool(server, "get_yield_spread_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    // is_estimate=true/tier:4 is correct and honest, not a bug
+    expect(result.is_estimate).toBe(true);
+    expect(result.source_tier).toBe(4);
+  });
+
+  it("returns error JSON when /snapshot responds with HTTP 500", async () => {
+    restore = mockSnapshotError();
+
+    const response = await callTool(server, "get_yield_spread_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    expect(result.error).toBe("macro-indicators service unavailable");
+  });
+
+  it("returns error JSON when fetch throws (network error)", async () => {
+    restore = mockSnapshotNetworkError();
+
+    const response = await callTool(server, "get_yield_spread_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    expect(result.error).toBe("macro-indicators service unavailable");
+  });
+
+  it("returns error JSON when /snapshot response is missing signals.yield", async () => {
+    const snapshotWithoutYield = {
+      status: "ok",
+      fetchedAt: "2026-06-05T00:00:00Z",
+      signals: {
+        carry: {},
+        oil: {},
       },
-    } as unknown as import("@modelcontextprotocol/sdk/server/mcp.js").McpServer;
+    };
+    restore = mockSnapshotFetch(snapshotWithoutYield);
 
-    return { server, handlers };
-  }
+    const response = await callTool(server, "get_yield_spread_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
 
-  function callTool(
-    handlers: Record<string, (args: Record<string, unknown>) => { content: Array<{ type: string; text: string }> }>,
-    toolName: string,
-    args: Record<string, unknown>,
-  ): YieldSpreadSignal {
-    const handler = handlers[toolName];
-    if (!handler) throw new Error(`Tool "${toolName}" not registered`);
-    const result = handler(args);
-    return JSON.parse(result.content[0]!.text) as YieldSpreadSignal;
-  }
-
-  it("CHEAP via injection: earningYield=9.0, depositRate=5.0 → label=CHEAP", () => {
-    const { server, handlers } = makeMockServer();
-    registerDinhGiaTools(server);
-    const signal = callTool(handlers, "get_yield_spread_signal", {
-      _testEarningYield: 9.0,
-      _testDepositRate: 5.0,
-    });
-    expect(signal.label).toBe("CHEAP");
-    expect(signal.spread).toBe(4.0);
+    expect(result.error).toBe("yield signal not available in snapshot");
   });
 
-  it("FAIRLY_VALUED via injection: earningYield=6.5, depositRate=5.5 → label=FAIRLY_VALUED", () => {
-    const { server, handlers } = makeMockServer();
-    registerDinhGiaTools(server);
-    const signal = callTool(handlers, "get_yield_spread_signal", {
-      _testEarningYield: 6.5,
-      _testDepositRate: 5.5,
-    });
-    expect(signal.label).toBe("FAIRLY_VALUED");
-    expect(signal.spread).toBe(1.0);
+  it("MCP response is valid JSON wrapped in content array", async () => {
+    const yieldPayload = {
+      label: "CHEAP",
+      spread: 3.2,
+      earningYield: 8.2,
+      depositRate: 5.0,
+      reasoning: "Cheap valuation.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: true,
+      source_tier: 4,
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithYield(yieldPayload));
+
+    const response = await callTool(server, "get_yield_spread_signal");
+    expect(Array.isArray(response.content)).toBe(true);
+    expect(response.content[0]?.type).toBe("text");
+    expect(() => JSON.parse(response.content[0]?.text ?? "")).not.toThrow();
   });
 
-  it("EXPENSIVE via injection: earningYield=4.0, depositRate=6.0 → label=EXPENSIVE", () => {
-    const { server, handlers } = makeMockServer();
-    registerDinhGiaTools(server);
-    const signal = callTool(handlers, "get_yield_spread_signal", {
-      _testEarningYield: 4.0,
-      _testDepositRate: 6.0,
-    });
-    expect(signal.label).toBe("EXPENSIVE");
-    expect(signal.spread).toBe(-2.0);
-  });
+  it("Tool returns all required YieldSignalDTO fields", async () => {
+    const yieldPayload = {
+      label: "CHEAP",
+      spread: 3.2,
+      earningYield: 8.2,
+      depositRate: 5.0,
+      reasoning: "Market is cheap.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: true,
+      source_tier: 4,
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithYield(yieldPayload));
 
-  it("UNKNOWN via injection: earningYield=0 → label=UNKNOWN", () => {
-    const { server, handlers } = makeMockServer();
-    registerDinhGiaTools(server);
-    const signal = callTool(handlers, "get_yield_spread_signal", {
-      _testEarningYield: 0,
-      _testDepositRate: 5.5,
-    });
-    expect(signal.label).toBe("UNKNOWN");
-    expect(signal.spread).toBe(0);
-  });
+    const response = await callTool(server, "get_yield_spread_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
 
-  it("Tool returns valid JSON with all required fields", () => {
-    const { server, handlers } = makeMockServer();
-    registerDinhGiaTools(server);
-    const signal = callTool(handlers, "get_yield_spread_signal", {
-      _testEarningYield: 7.0,
-      _testDepositRate: 5.0,
-    });
-    expect(signal).toHaveProperty("label");
-    expect(signal).toHaveProperty("spread");
-    expect(signal).toHaveProperty("earningYield");
-    expect(signal).toHaveProperty("depositRate");
-    expect(signal).toHaveProperty("reasoning");
-    expect(signal).toHaveProperty("computedAt");
+    expect(result).toHaveProperty("label");
+    expect(result).toHaveProperty("spread");
+    expect(result).toHaveProperty("earningYield");
+    expect(result).toHaveProperty("depositRate");
+    expect(result).toHaveProperty("reasoning");
+    expect(result).toHaveProperty("computedAt");
+    expect(result).toHaveProperty("source_tier");
+    expect(result).toHaveProperty("is_estimate");
   });
 });

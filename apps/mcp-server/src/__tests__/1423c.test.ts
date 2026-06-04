@@ -1,16 +1,20 @@
 /**
- * Task 1423c — Carry Trade Signal MCP Tool
+ * Task 1423c — Carry Trade Signal
  *
  * Tests cover:
- *   1. Domain pure function — all 3 regime branches + zero-rate edge case
- *   2. MCP tool handler — via _testVndRate / _testFedRate injection
- *   3. DB integration — tool reads sbv_rates + tracked_indicators when no
- *      test injectors are provided
+ *   Suite 1. Domain pure function — computeCarryTradeSignal(): all 3 regime branches + edge cases
+ *   Suite 2. MCP tool handler — get_carry_trade_signal via mocked POST /snapshot
+ *            Asserts: projects signals.carry, surfaces source_tier + is_estimate +
+ *            fetched_at_source + reasoning. Asserts fixture values NOT special-cased.
  *
- * Note: DB_PATH is set to :memory: by setup.ts preload.
+ * NOTE: The old Suite 2 (injection params _testVndRate/_testFedRate) and Suite 3
+ * (DB reads) have been removed — get_carry_trade_signal now calls POST /snapshot
+ * on the macro-indicators service (CARRY-YIELD-SINGLE-SIGNAL-FIXTURE B-2).
+ * Provenance fields (source_tier, is_estimate, fetched_at_source) are projected
+ * directly from the CarrySignalDTO returned by /snapshot.
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "bun:test";
+import { describe, it, expect, beforeEach, afterEach, mock } from "bun:test";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 
 import {
@@ -18,17 +22,15 @@ import {
   type CarryTradeSignal,
 } from "../domain/services/macro/carryTradeSignal.js";
 import { registerCarryTools } from "../interface/mcp/tools/macro/carryTools.js";
-import { initDatabase, closeDb, getDb } from "../infrastructure/db/schema.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Helpers
+// Helper — invoke a registered MCP tool via _registeredTools
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Invoke a registered MCP tool by name using the internal _registeredTools map. */
 async function callTool(
   server: McpServer,
   toolName: string,
-  args: Record<string, unknown>,
+  args: Record<string, unknown> = {},
 ): Promise<{ content: Array<{ type: string; text: string }> }> {
   const tools = (server as unknown as {
     _registeredTools: Record<string, {
@@ -46,23 +48,77 @@ async function callTool(
   return fn(args) as Promise<{ content: Array<{ type: string; text: string }> }>;
 }
 
-/** Call get_carry_trade_signal via the registered MCP server with injected rates. */
-async function callCarryTool(
-  server: McpServer,
-  vndRate?: number,
-  fedRate?: number,
-): Promise<CarryTradeSignal> {
-  const args: Record<string, unknown> = {};
-  if (vndRate !== undefined) args["_testVndRate"] = vndRate;
-  if (fedRate !== undefined) args["_testFedRate"] = fedRate;
+// ─────────────────────────────────────────────────────────────────────────────
+// Snapshot mock helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
-  const response = await callTool(server, "get_carry_trade_signal", args);
-  const text = response.content[0]?.text ?? "{}";
-  return JSON.parse(text) as CarryTradeSignal;
+/** Build a /snapshot response shape containing a carry sub-object. */
+function makeSnapshotWithCarry(carry: Record<string, unknown>): object {
+  return {
+    status: "ok",
+    dataSource: "macro-indicators",
+    fetchedAt: "2026-06-05T00:00:00Z",
+    signals: {
+      carry,
+      yield: {},
+      oil: {},
+      gold: {},
+      usdvnd: {},
+      "investment-clock": {},
+    },
+  };
+}
+
+/**
+ * Mock globalThis.fetch to return the given snapshot body for POST /snapshot.
+ * Returns a restore function (call in afterEach).
+ */
+function mockSnapshotFetch(snapshot: object): () => void {
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/snapshot")) {
+      return new Response(JSON.stringify(snapshot), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+    return original(input, _init);
+  };
+  return () => { globalThis.fetch = original; };
+}
+
+/** Mock fetch to return HTTP 500 for /snapshot. */
+function mockSnapshotError(): () => void {
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/snapshot")) {
+      return new Response("Internal Server Error", { status: 500 });
+    }
+    return original(input, _init);
+  };
+  return () => { globalThis.fetch = original; };
+}
+
+/** Mock fetch to throw a network error for /snapshot. */
+function mockSnapshotNetworkError(): () => void {
+  const original = globalThis.fetch;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (globalThis as any).fetch = async (input: RequestInfo | URL, _init?: RequestInit) => {
+    const url = typeof input === "string" ? input : input.toString();
+    if (url.includes("/snapshot")) {
+      throw new Error("ECONNREFUSED");
+    }
+    return original(input, _init);
+  };
+  return () => { globalThis.fetch = original; };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Suite 1 — Domain pure function (no MCP, no DB)
+// Suite 1 — Domain pure function (no MCP, no DB, no HTTP)
 // ─────────────────────────────────────────────────────────────────────────────
 
 describe("Task 1423c — computeCarryTradeSignal (domain)", () => {
@@ -147,157 +203,193 @@ describe("Task 1423c — computeCarryTradeSignal (domain)", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Suite 2 — MCP tool handler (rate injection via _testVndRate / _testFedRate)
+// Suite 2 — MCP tool: get_carry_trade_signal via mocked POST /snapshot
+// CARRY-YIELD-SINGLE-SIGNAL-FIXTURE B-2: rewired to POST /snapshot
 // ─────────────────────────────────────────────────────────────────────────────
 
-describe("Task 1423c — get_carry_trade_signal MCP tool (injected rates)", () => {
+describe("Task 1423c — get_carry_trade_signal MCP tool (POST /snapshot projection)", () => {
   let server: McpServer;
+  let restore: (() => void) | undefined;
 
   beforeEach(() => {
-    initDatabase();
     server = new McpServer({ name: "test", version: "0.0.0" });
     registerCarryTools(server);
   });
 
   afterEach(() => {
-    closeDb();
+    restore?.();
+    restore = undefined;
   });
 
-  it("returns HOT_MONEY_INFLOW regime via injected rates", async () => {
-    const result = await callCarryTool(server, 7.0, 3.0);
-    expect(result.regime).toBe("HOT_MONEY_INFLOW");
-    expect(result.carrySpread).toBe(4.0);
-  });
+  it("projects signals.carry from /snapshot — live NEUTRAL regime (fed=3.62, vnd=5.0)", async () => {
+    const carryPayload = {
+      regime: "NEUTRAL",
+      carrySpread: 1.38,
+      vndDepositRate: 5.0,
+      fedFundsRate: 3.62,
+      reasoning: "VND carry spread is moderate (NEUTRAL zone).",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: false,
+      source_tier: 2,
+      fetched_at_source: "2026-06-03T00:00:00Z",
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithCarry(carryPayload));
 
-  it("returns NEUTRAL regime via injected rates", async () => {
-    const result = await callCarryTool(server, 5.5, 4.33);
+    const response = await callTool(server, "get_carry_trade_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
     expect(result.regime).toBe("NEUTRAL");
-    expect(result.carrySpread).toBeCloseTo(1.17, 2);
+    expect(result.carrySpread).toBe(1.38);
+    expect(result.fedFundsRate).toBe(3.62);
+    expect(result.vndDepositRate).toBe(5.0);
+    expect(result.source_tier).toBe(2);
+    expect(result.is_estimate).toBe(false);
+    expect(result.fetched_at_source).toBe("2026-06-03T00:00:00Z");
+    expect(typeof result.reasoning).toBe("string");
   });
 
-  it("returns FII_OUTFLOW_RISK regime via injected rates", async () => {
-    const result = await callCarryTool(server, 4.5, 4.33);
-    expect(result.regime).toBe("FII_OUTFLOW_RISK");
+  it("surfaces source_tier and is_estimate fields from CarrySignalDTO", async () => {
+    const carryPayload = {
+      regime: "HOT_MONEY_INFLOW",
+      carrySpread: 3.0,
+      vndDepositRate: 6.5,
+      fedFundsRate: 3.5,
+      reasoning: "Strong VND carry advantage.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: false,
+      source_tier: 2,
+      fetched_at_source: "2026-06-04T00:00:00Z",
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithCarry(carryPayload));
+
+    const response = await callTool(server, "get_carry_trade_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    expect(result.source_tier).toBeDefined();
+    expect(result.is_estimate).toBeDefined();
+    expect(result.fetched_at_source).toBeDefined();
+    expect(result.reasoning).toBeDefined();
   });
 
-  it("returns NEUTRAL with unavailable reasoning when vndRate injected as 0", async () => {
-    const result = await callCarryTool(server, 0, 5.33);
-    expect(result.regime).toBe("NEUTRAL");
-    expect(result.reasoning).toContain("unavailable");
+  it("ANTI-FIXTURE: fixture fedFundsRate=5.33 is NOT served when live /snapshot returns 3.62", async () => {
+    const carryPayload = {
+      regime: "NEUTRAL",
+      carrySpread: 1.38,
+      vndDepositRate: 5.0,
+      fedFundsRate: 3.62,
+      reasoning: "Live data: EFFR=3.62.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: false,
+      source_tier: 2,
+      fetched_at_source: "2026-06-03T00:00:00Z",
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithCarry(carryPayload));
+
+    const response = await callTool(server, "get_carry_trade_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    // DSI-INV-1 guard: the old fixture value 5.33 must NOT appear
+    expect(result.fedFundsRate).not.toBe(5.33);
+    expect(result.fedFundsRate).toBe(3.62);
   });
 
-  it("result contains all required CarryTradeSignal fields", async () => {
-    const result = await callCarryTool(server, 5.5, 4.33);
-    expect(result).toHaveProperty("vndDepositRate");
-    expect(result).toHaveProperty("fedFundsRate");
-    expect(result).toHaveProperty("carrySpread");
-    expect(result).toHaveProperty("regime");
-    expect(result).toHaveProperty("reasoning");
-    expect(result).toHaveProperty("computedAt");
+  it("ANTI-FIXTURE: fixture vndDepositRate=4.7 is NOT served when live /snapshot returns 5.0", async () => {
+    const carryPayload = {
+      regime: "NEUTRAL",
+      carrySpread: 1.38,
+      vndDepositRate: 5.0,
+      fedFundsRate: 3.62,
+      reasoning: "Live data.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: false,
+      source_tier: 2,
+      fetched_at_source: "2026-06-03T00:00:00Z",
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithCarry(carryPayload));
+
+    const response = await callTool(server, "get_carry_trade_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    // DSI-INV-1 guard: the old fixture value 4.7 must NOT appear
+    expect(result.vndDepositRate).not.toBe(4.7);
+    expect(result.vndDepositRate).toBe(5.0);
+  });
+
+  it("returns error JSON when /snapshot responds with HTTP 500", async () => {
+    restore = mockSnapshotError();
+
+    const response = await callTool(server, "get_carry_trade_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    expect(result.error).toBe("macro-indicators service unavailable");
+  });
+
+  it("returns error JSON when fetch throws (network error)", async () => {
+    restore = mockSnapshotNetworkError();
+
+    const response = await callTool(server, "get_carry_trade_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    expect(result.error).toBe("macro-indicators service unavailable");
+  });
+
+  it("returns error JSON when /snapshot response is missing signals.carry", async () => {
+    const snapshotWithoutCarry = {
+      status: "ok",
+      fetchedAt: "2026-06-05T00:00:00Z",
+      signals: {
+        oil: {},
+        gold: {},
+      },
+    };
+    restore = mockSnapshotFetch(snapshotWithoutCarry);
+
+    const response = await callTool(server, "get_carry_trade_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
+
+    expect(result.error).toBe("carry signal not available in snapshot");
   });
 
   it("MCP response is valid JSON wrapped in content array", async () => {
-    const response = await callTool(server, "get_carry_trade_signal", {
-      _testVndRate: 5.5,
-      _testFedRate: 4.33,
-    });
-    const content = response.content;
-    expect(Array.isArray(content)).toBe(true);
-    expect(content[0]?.type).toBe("text");
-    expect(() => JSON.parse(content[0]?.text ?? "")).not.toThrow();
-  });
-});
+    const carryPayload = {
+      regime: "NEUTRAL",
+      carrySpread: 1.38,
+      vndDepositRate: 5.0,
+      fedFundsRate: 3.62,
+      reasoning: "Moderate carry spread.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: false,
+      source_tier: 2,
+      fetched_at_source: "2026-06-03T00:00:00Z",
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithCarry(carryPayload));
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Suite 3 — DB integration (tool reads from sbv_rates + tracked_indicators)
-// ─────────────────────────────────────────────────────────────────────────────
-
-describe("Task 1423c — get_carry_trade_signal DB reads", () => {
-  let server: McpServer;
-
-  beforeEach(() => {
-    initDatabase();
-    server = new McpServer({ name: "test", version: "0.0.0" });
-    registerCarryTools(server);
+    const response = await callTool(server, "get_carry_trade_signal");
+    expect(Array.isArray(response.content)).toBe(true);
+    expect(response.content[0]?.type).toBe("text");
+    expect(() => JSON.parse(response.content[0]?.text ?? "")).not.toThrow();
   });
 
-  afterEach(() => {
-    closeDb();
-  });
+  it("is_estimate=true is surfaced honestly (fixture fallback active)", async () => {
+    const carryPayload = {
+      regime: "UNKNOWN",
+      carrySpread: null,
+      vndDepositRate: 4.7,
+      fedFundsRate: 5.33,
+      reasoning: "Fixture fallback — live data unavailable.",
+      computedAt: "2026-06-05T00:00:00Z",
+      is_estimate: true,
+      source_tier: 4,
+      fetched_at_source: null,
+    };
+    restore = mockSnapshotFetch(makeSnapshotWithCarry(carryPayload));
 
-  it("returns NEUTRAL/unavailable when DB tables are empty (no data)", async () => {
-    // No rows in sbv_rates or tracked_indicators → both rates are 0
-    const result = await callCarryTool(server);
-    expect(result.regime).toBe("NEUTRAL");
-    expect(result.reasoning).toContain("unavailable");
-    expect(result.carrySpread).toBe(0);
-  });
+    const response = await callTool(server, "get_carry_trade_signal");
+    const result = JSON.parse(response.content[0]!.text) as Record<string, unknown>;
 
-  it("reads vnd deposit rate from sbv_rates when no injector provided", async () => {
-    const db = getDb();
-    db.prepare(
-      `INSERT INTO sbv_rates (source, max_deposit_rate_pct, fetched_at)
-       VALUES ('sbv', 6.5, '2026-04-29T10:00:00.000Z')`,
-    ).run();
-
-    // Fed rate still missing → unavailable path
-    const result = await callCarryTool(server);
-    expect(result.vndDepositRate).toBe(6.5);
-    expect(result.regime).toBe("NEUTRAL");
-    expect(result.reasoning).toContain("unavailable");
-  });
-
-  it("reads fed funds rate from tracked_indicators when no injector provided", async () => {
-    const db = getDb();
-    db.prepare(
-      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-       VALUES ('fed_funds_rate', 5.33, '%', 'fred', '2026-04-29T10:00:00.000Z')`,
-    ).run();
-
-    // VND rate still missing → unavailable path
-    const result = await callCarryTool(server);
-    expect(result.fedFundsRate).toBe(5.33);
-    expect(result.regime).toBe("NEUTRAL");
-    expect(result.reasoning).toContain("unavailable");
-  });
-
-  it("computes real regime when both DB rows are present", async () => {
-    const db = getDb();
-    db.prepare(
-      `INSERT INTO sbv_rates (source, max_deposit_rate_pct, fetched_at)
-       VALUES ('sbv', 7.0, '2026-04-29T10:00:00.000Z')`,
-    ).run();
-    db.prepare(
-      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-       VALUES ('fed_funds_rate', 4.33, '%', 'fred', '2026-04-29T10:00:00.000Z')`,
-    ).run();
-
-    const result = await callCarryTool(server);
-    // spread = 7.0 - 4.33 = 2.67 → HOT_MONEY_INFLOW
-    expect(result.vndDepositRate).toBe(7.0);
-    expect(result.fedFundsRate).toBe(4.33);
-    expect(result.carrySpread).toBeCloseTo(2.67, 2);
-    expect(result.regime).toBe("HOT_MONEY_INFLOW");
-  });
-
-  it("uses the most recent sbv_rates row when multiple rows exist", async () => {
-    const db = getDb();
-    // Insert older row with lower rate
-    db.prepare(
-      `INSERT INTO sbv_rates (source, max_deposit_rate_pct, fetched_at)
-       VALUES ('sbv_old', 4.0, '2026-01-01T00:00:00.000Z')`,
-    ).run();
-    // Insert newer row with higher rate
-    db.prepare(
-      `INSERT INTO sbv_rates (source, max_deposit_rate_pct, fetched_at)
-       VALUES ('sbv_new', 7.5, '2026-04-29T10:00:00.000Z')`,
-    ).run();
-    db.prepare(
-      `INSERT INTO tracked_indicators (indicator, value, unit, source, extracted_at)
-       VALUES ('fed_funds_rate', 4.33, '%', 'fred', '2026-04-29T10:00:00.000Z')`,
-    ).run();
-
-    const result = await callCarryTool(server);
-    expect(result.vndDepositRate).toBe(7.5);
+    // is_estimate=true is surfaced, not hidden
+    expect(result.is_estimate).toBe(true);
+    expect(result.source_tier).toBe(4);
+    expect(result.carrySpread).toBeNull();
   });
 });

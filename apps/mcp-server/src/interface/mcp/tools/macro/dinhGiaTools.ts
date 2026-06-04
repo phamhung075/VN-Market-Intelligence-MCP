@@ -1,17 +1,21 @@
 /**
- * Task P2-B1 — MCP Tool Handler HTTP Rewire (R-3 Unblock)
+ * CARRY-YIELD-SINGLE-SIGNAL-FIXTURE B-2 — MCP Tool Handler Rewire
  *
  * Interface layer: registers `get_yield_spread_signal`.
- * Previously called domain services directly; now routes through HTTP to
- * the macro-indicators microservice (port 5004).
  *
- * Tool: get_yield_spread_signal → HTTP GET /yield-spread-signal
+ * Tool: get_yield_spread_signal → HTTP POST /snapshot (body "{}"),
+ *       projects snapshot.signals.yield sub-object.
+ *       Surfaces source_tier + is_estimate from the YieldSignalDTO.
+ *       NOTE: is_estimate=true / source_tier=4 is expected and correct — the
+ *       earningYield input is still a fixture estimate; surfacing this flag is
+ *       honest provenance, not a bug.
  *
  * HTTP base URL: read from env var MACRO_INDICATORS_URL (see macroHttpClient.ts).
  * Graceful failure: returns { error: "macro-indicators service unavailable" } on any
- * HTTP error or network failure.
+ * HTTP error or network failure, or { error: "yield signal not available in snapshot" }
+ * when signals.yield is absent from the snapshot response.
  *
- * Sprint: P2-B1 — Báu Phase 2 Micro-service Rewire
+ * Sprint: CARRY-YIELD-SINGLE-SIGNAL-FIXTURE B-2
  *
  * @module interface/mcp/tools/macro/dinhGiaTools
  */
@@ -38,21 +42,25 @@ export function registerDinhGiaTools(server: McpServer): void {
     "get_yield_spread_signal",
     "Computes the yield spread signal for the Dinh Gia (valuation) layer of the " +
       "Trần Ngọc Báu macro framework (Phase 2). " +
-      "Routes through HTTP GET to the macro-indicators microservice (port 5004). " +
-      "Returns label, spread, earningYield, depositRate, and computedAt. " +
-      "Source tier: 3 (derived — computed by macro-indicators service).",
+      "Routes through HTTP POST /snapshot to the macro-indicators microservice (port 5004) " +
+      "and projects the yield sub-object. " +
+      "Returns label, spread, earningYield, depositRate, computedAt, " +
+      "source_tier (2=administered-published, 4=fixture/estimate), " +
+      "and is_estimate (true when any yield input fell back to fixture). " +
+      "Source tier: tier:2 when both earningYield and depositRate are live; tier:4 on fixture fallback.",
     {},
     async () => {
-      const url = `${baseUrl}/yield-spread-signal`;
+      const url = `${baseUrl}/snapshot`;
 
       try {
         const response = await fetch(url, {
-          method: "GET",
-          headers: { "Accept": "application/json" },
+          method: "POST",
+          headers: { "Accept": "application/json", "Content-Type": "application/json" },
+          body: "{}",
         });
 
         if (!response.ok) {
-          logger.warn("[get_yield_spread_signal] HTTP error from macro-indicators", {
+          logger.warn("[get_yield_spread_signal] HTTP error from macro-indicators /snapshot", {
             status: response.status,
             url,
           });
@@ -66,9 +74,27 @@ export function registerDinhGiaTools(server: McpServer): void {
           };
         }
 
-        const data: unknown = await response.json();
+        const snapshot = await response.json() as {
+          signals?: {
+            yield?: unknown;
+          };
+        };
+
+        const yieldSignal = snapshot?.signals?.yield;
+        if (yieldSignal == null) {
+          logger.warn("[get_yield_spread_signal] /snapshot response missing signals.yield", { url });
+          return {
+            content: [
+              {
+                type: "text" as const,
+                text: JSON.stringify({ error: "yield signal not available in snapshot" }, null, 2),
+              },
+            ],
+          };
+        }
+
         return {
-          content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }],
+          content: [{ type: "text" as const, text: JSON.stringify(yieldSignal, null, 2) }],
         };
       } catch (err) {
         logger.warn("[get_yield_spread_signal] fetch failed", {
