@@ -2128,7 +2128,7 @@
           {
             "id": "DSI-S3-SECTOR-FIN",
             "label": "Sector/fin fixture clusters -> null + is_estimate (P2)",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/mcp-server",
             "size": "L"
           },
