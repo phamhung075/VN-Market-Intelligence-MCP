@@ -5,13 +5,13 @@
   "_updated_by": "po",
   "head": {
     "status": "active",
-    "active_task_id": "FIX-B",
-    "next_agent": "pm",
-    "next_action": "RAPID-DATA-LAYER sprint sequenced by PO (10 tasks). pm to break P1 tasks into atomic dev-mcp-server sprint-tasks via ba->dev-team chain. FIRST IN FLIGHT (WIP=2): FIX-B (get_market_cap — SKILL-1 mandatory gate, ships FIRST, no deps) + one of {FIX-A | FIX-D | FIX-H} in parallel (all P1 no-deps). RECON-AGM-1 already IN-PROGRESS (router-launched ops-vps-fetch, parallel, gates FIX-G). FIX-C BLOCKED on FIX-B; FIX-G BLOCKED on RECON-AGM-1; FIX-I BLOCKED on FIX-A. Brief docs/architecture-briefs/2026-06-04-rapid-analysis-data-layer-gaps.md (READY-FOR-PM-SEQUENCING, atomic per-zone tasks pre-specified w/ file:line + RC mapping).",
-    "wip": 1,
+    "active_task_id": "FIX-B-1",
+    "next_agent": "dev-mcp-server",
+    "next_action": "RAPID-DATA-LAYER Phase 1 P1 parallel dispatch: FIX-B-1 (persist marketCap from vnstock) + FIX-H (extend insider lookback 90->180d) both IN-PROGRESS. FIX-B-2 (new get_market_cap tool) BLOCKED on FIX-B-1. PM atomic tasks: docs/handoffs/RAPID-PHASE1-B1.md + RAPID-PHASE1-B2.md + RAPID-PHASE1-H.md. Zone: apps/mcp-server/. DoD: fence+sandbox/replay (lean standard). WIP=2.",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-04T07:45:26Z",
-    "updated_by": "po"
+    "updated_at": "2026-06-04T08:15:00Z",
+    "updated_by": "pm"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -1951,6 +1951,54 @@
             ],
             "note": "DoD: (1) New/extended cascadeEngine NER unit test (apps/mcp-server/src/__tests__/, follow FIX-1298-bsr-false-cascade.test.ts pattern: buildCausalChain + watchlistImpacts/entries filter on actionCode==\"HCM\"): \"'Ông lớn' bất động sản TP HCM đề xuất giảm sở hữu nhà nước\" → NO HCM action entry; ADD a \"TP.HCM\" joined-form case → also NO HCM; REGRESSION genuine \"HCM tăng trần\" / \"Chứng khoán HCM ...\" → STILL tags HCM (true positive preserved). (2) bun test green for cascadeEngine NER tests. (3) ops rebuilds mcp-server container AFTER code change (restart relaunches stale image — feedback_rebuild_after_dev_change), then LIVE-verify: re-run cascade on the offending headline via live tool, confirm NO HCM tag. CONSTRAINTS: dev-mcp-server sole committer of this zone; NO branches (main); data-light guard (no big place gazetteer); generalize the place-prefix+ALL-CAPS-token-collides-with-watchlist-ticker class. Guard goes inside isDirectTickerMention (~L3287) — when an all-caps word-boundary hit's immediately-preceding token (in seedText, case-insensitive, diacritic-tolerant) matches the place-prefix set, reject that occurrence (continue scanning for another valid hit before returning true). English commit + WORK note; internal code (no MARKET-facing string). | DONE-LIVE-VERIFIED 2026-06-04T04:31:40Z by PO (router raw-verify, NOT badge). Fix: module-level isPrecededByPlacePrefix() (diacritic-tolerant, data-light set tp/t.p/tinh + two-word 'thanh pho') called from hasUppercaseWordBoundary — rejects the place-preceded occurrence and keeps scanning. 5 new NER tests + 376 cascade tests green, tsc0, commit afbc63a2 (raw git show: exactly 2 files, no force-add). ops rebuilt+recreated mcp-server (image healthy, marker x2 in /app/src). LIVE run_impact_chain via gateway: (a) offending '...TP HCM...' headline → [DirectCodeNER: HCM] tag GONE (HCM now only generic securities sector tác-động-gián-tiếp 44%, same as VCI/SSI/VDC — correct, headline truly mentions securities domain); (b) regression 'HCM tăng trần ...' → [DirectCodeNER+DomainRule: HCM] STILL fires (true positive preserved). Class generalized (any place-prefix+all-caps-ticker), not HCM special-case.",
             "commit": "afbc63a2"
+          }
+        ]
+      },
+      {
+        "id": "RAPID-DATA-LAYER",
+        "label": "Six rapid-analysis skills unblock via 9 MCP tool gaps — data-layer remediation (architect brief 2026-06-04)",
+        "status": "active",
+        "opened_at": "2026-06-04",
+        "priority": "high",
+        "evidence": "Architect brief docs/architecture-briefs/2026-06-04-rapid-analysis-data-layer-gaps.md: 6 skills (market-cap-screen, balance-sheet-first-read, four-factor-synthesis, ownership-governance-screen, management-track-record, value-trap-avoidance) BLOCKED on 9 MCP tool gaps (RC-1..6 root-cause clusters: no market-cap tool, no multi-period BCTC series, no company_info phantom, BCTC-notes fields missing, 24-month price history capped at 90d, no AGM data source, insider lookback 90d vs 6m needed, EPS not extracted, BCTC sparse history). Remediation ordered Phase 0-5 by leverage (unblock most skills per fix). Phase 0 = ops-vps-fetch RECON-AGM-1 (done 0fad275e). Handoff: PM to decompose Phase 1 P1 tasks (FIX-B/FIX-A/FIX-D/FIX-H) into atomic sprint-tasks with file:line + AC + lean DoD.",
+        "tasks": [
+          {
+            "task_id": "FIX-B-1",
+            "title": "Persist marketCap from vnstock ratio summary into new vnstock_ratio_summary table column (syncVnstockData + schema migration)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "p1",
+            "note": "Part of FIX-B (market-cap tool + storage). Phase 1 mandatory (unblocks SKILL-1 size gate). Atomic: persist vnstock ratio summary marketCap field to persistent table (currently only in-memory via vnstockBridge.ts:82 VnstockRatioSummary.marketCap dead export). Files: apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts (add vnstock_ratio_summary table or market_cap_bn column to vnstock_trading_stats), apps/mcp-server/src/infrastructure/fetchers/vnstockBridge.ts (wire marketCap persist to syncVnstockData.ts), apps/mcp-server/src/application/usecases/syncVnstockData.ts (write persist hook). DoD: (1) schema migration clean, (2) syncVnstockData persists marketCap on each vnstock fetch, (3) SELECT market_cap from DB for 1 ticker returns non-zero value, (4) unit tests green, (5) tsc clean."
+          },
+          {
+            "task_id": "FIX-B-2",
+            "title": "New MCP tool get_market_cap returning {code, market_cap_billion, shares_outstanding_approx, fetched_at}",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [
+              "FIX-B-1"
+            ],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "p1",
+            "note": "Unblocks SKILL-1 rapid-market-cap-screen (mandatory entry gate per arch brief §8). New tool file: apps/mcp-server/src/interface/mcp/tools/market-data/marketCapTools.ts (query vnstock_ratio_summary or vnstock_trading_stats.market_cap_bn per FIX-B-1 schema choice, return structured JSON: {code, market_cap_billion, shares_outstanding_approx, fetched_at}). Register in mcp-tools factory. DoD: (1) tool callable, (2) returns structured JSON not text, (3) safe-divide for shares_outstanding_approx = market_cap / current_price (or 0 if missing), (4) fetched_at timestamp, (5) 5+ unit tests (happy path / missing market_cap / missing shares / sparse data), (6) tsc clean, (7) mcp-server rebuild integrates tool live."
+          },
+          {
+            "task_id": "FIX-H",
+            "title": "Extend get_insider_transactions max lookback from 90 days to 180 days (insiderTools.ts:108 .max(90) -> .max(180))",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "XS",
+            "zone": "apps/mcp-server/",
+            "priority": "p1",
+            "note": "Unblocks SKILL-4 ownership-governance-screen Step 2 full 6-month insider-exit detection (currently capped 90d/3mo). Single-line change: apps/mcp-server/src/interface/mcp/tools/market-data/insiderTools.ts line 108 Math.min(days, 90) -> Math.min(days, 180). Underlying insiderStore SQLite date query already parameter-driven. Data availability depends on insiderCheckJob population depth (may be sparse beyond 90d for early-added watchlist tickers, but tool correct). DoD: (1) edit verified in source, (2) insiderTools unit tests pass (3 new tests: 91d, 180d, 365d requests return honest coverage up to available data), (3) get_insider_transactions(ticker=FPT, days=180) live on rebuild returns 180d window or sparse-honest lesser coverage, (4) tsc clean, (5) mcp-server rebuild integrates live."
           }
         ]
       }
