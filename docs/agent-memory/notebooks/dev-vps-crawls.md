@@ -1,6 +1,6 @@
 # dev-vps-crawls — Notebook
 
-**Last updated:** 2026-06-04T12:15Z | **Sprint:** RAPID-DATA-LAYER
+**Last updated:** 2026-06-04T12:30Z | **Sprint:** RAPID-DATA-LAYER / FIX-G-1
 
 > Archive: docs/archive/notebooks/dev-vps-crawls-2026-05-21.md (pre-trim history)
 
@@ -165,6 +165,37 @@ Commit: 96446b5d. No Docker rebuild required.
 - discover-bctc-urls-browser.py was VPS-only before this sprint
 - Now in vps-scripts/discover-bctc-urls-browser.py — tracked in repo
 - deploy-vinahost.sh section 2 now scp's it to /root/ on next deploy
+
+---
+
+## Cycle Record — 2026-06-04T12:30Z FIX-G-1 DONE
+
+Task: RAPID-DATA-LAYER FIX-G-1 — build HTTP-only AGM plan fetcher.
+Outcome: DONE. Commit 2d0c38b8.
+
+New files committed:
+- vps-scripts/vietstock-agm-plan.py (was already in repo; Python scraper)
+- vps-scripts/fetch-agm-plan.sh (one-shot fetcher — calls Python, writes file drop + push)
+- vps-scripts/fetch-agm-plan-loop.sh (daily loop driver, runs under systemd)
+- vps-scripts/vn-agm-plan.service (systemd unit, enabled + active)
+
+VPS state:
+- /root/vietstock-agm-plan.py deployed, /root/fetch-agm-plan.sh + /root/fetch-agm-plan-loop.sh deployed
+- vn-agm-plan.service: active (running) since 2026-06-04 19:21:21 +07
+- /root/data/agm-plan-latest.json: 349173 bytes, fetched_at=2026-06-04T12:21:31Z
+- VPS:8765/proxy/agm-plan?ticker=FPT: HTTP 200 OK, live
+
+Live fetched values (batch run all 33 watchlist tickers — ok=33, fallback=0, error=0):
+- FPT 2026: Revenue=58580 tỷ, PBT=11629 tỷ
+- VIC 2026: Revenue=485000 tỷ, PAT=35000 tỷ
+- VCB/BID/SHB (banks): 0 revenue plan rows (correct), PBT/PAT only
+- ACB 2026 (separate run): PBT=22338 tỷ, PAT=17870 tỷ, 0 revenue plan (correct bank behavior)
+
+Data contract for FIX-G-2:
+- File drop: /root/data/agm-plan-latest.json (atomic mv; JSON shape in fetch-agm-plan.sh header)
+- Push: POST /api/push-agm-plan (returns 404 until FIX-G-2 deploys — logged non-fatal)
+- On-demand pull: VPS:8765/proxy/agm-plan?ticker=X (live in vps-proxy-server.js)
+- value_ty = value_raw / 1e9 (tỷ đồng); filter PTName not PTID (PTID drifts: FPT uses ptid=5, ptid=8)
 
 ---
 
