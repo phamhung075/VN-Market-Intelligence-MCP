@@ -139,3 +139,33 @@ None identified. All required source tables exist:
 - Current tool: apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts:806
 - Schema: apps/mcp-server/src/infrastructure/database/schema-financial-reports.ts (financial_reports L35, vnstock_balance_sheet L379)
 - FIX-B (market cap): docs/handoffs/FIX-B-GET-MARKET-CAP.md (market_cap_bn persistence source)
+
+---
+
+## [Developer] — dev-mcp-server
+
+**Status:** DONE — LIVE-VERIFIED  
+**Commit:** 0e8c2be0 (feat(rapid-phase2/FIX-D): extend get_bctc_full with structured_data + receivables)  
+**File modified:** `apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts` (structured_data block at ~L1094+)  
+**Tests:** `src/__tests__/240-bctc-full.test.ts` — FIX-D suite: 6 pass, 0 fail (FIX-D-1..FIX-D-5 + replay)  
+**TSC:** clean (bun tsc --noEmit)
+
+**Live verification 2026-06-04 via HTTP MCP:**
+- `get_bctc_full(FPT)` returns 2 content items (text + JSON)
+- content[1] contains `structured_data` with all required numeric fields
+- `structured_data.roe = 6.17` (number, not text) — recomputed-on-read via BAL-1a helper
+- `structured_data.debt_to_equity = 0.401`
+- `structured_data.net_revenue = 12479997.206775` (million VND)
+- `structured_data.receivables = null` (honest — vnstock_balance_sheet period mismatch acceptable)
+- `summary_text` (content[0]) unchanged — backward compat confirmed
+- pe/pb both null (market-cap data pending FU-FIXB-COLUMNKEY-VERIFY — expected)
+
+**AC coverage:**
+1. structured_data section present alongside existing text ✓
+2. All numeric fields as machine-readable JSON ✓
+3. receivables field present (null when absent) ✓
+4. Text output unchanged ✓
+5. Unit tests: happy path + partial + missing receivables + market_cap null ✓
+6. Live pe/pb fields present (null pending FIX-B data refresh — known gap, documented) ✓
+
+**Status for QA:** REVIEW — ops must confirm container rebuilt after 0e8c2be0 (mcp /health shows toolCount=159)

@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T07:45:26Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-04T13:30:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
-    "status": "dispatching",
-    "active_task_id": "FIX-A",
-    "next_agent": "dev-mcp-server",
-    "next_action": "RAPID-DATA-LAYER Phase 1 P1 DISPATCH: 3 parallel atomic tasks (FIX-A / FIX-D / FIX-H) for dev-mcp-server. SEQUENCING RATIONALE: FIX-B (market-cap tool) DONE-CODE (deployed b275239d), waiting data-refresh via FU-FIXB-COLUMNKEY-VERIFY (vnstock sync). Phase 1 P1 unblocks SKILL-1/2/3/4 for immediate live-trial (market-cap + ownership + receivables + insider-window). Phase 1 P2 deferred (FIX-C/E already DONE 2b). NEXT: P3 FIX-F (charter_capital + investment_property, BANK-FORM guard per brief). Handoffs created: docs/handoffs/FIX-A-GET-COMPANY-PROFILE.md (shareholders+officers+foreign%), FIX-D-BCTC-FULL-STRUCTURED-JSON.md (structured output+receivables join), FIX-H-INSIDER-LOOKBACK-180D.md (90->180d cap lift). WIP enforced: 2 max; FIX-A + FIX-D parallel (independent files); FIX-H XS solo; QA rebuild + live-verify all 3 before DONE. Route: dev-mcp-server.",
+    "status": "review",
+    "active_task_id": "FIX-A,FIX-D",
+    "next_agent": "qa",
+    "next_action": "QA live-verify FIX-A get_company_profile + FIX-D get_bctc_full structured_data. Both tools LIVE (toolCount=159). Commits: FIX-A 7a44a291, FIX-D 0e8c2be0. Tests pass (8+6). FIX-H still pending dev-mcp-server.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T11:14:32Z",
-    "updated_by": "pm"
+    "updated_at": "2026-06-04T13:30:00Z",
+    "updated_by": "dev-mcp-server"
   },
   "dashboard_section_cache": {
     "section_name": "po",

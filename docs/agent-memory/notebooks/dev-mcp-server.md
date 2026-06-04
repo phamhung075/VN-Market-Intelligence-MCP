@@ -1,5 +1,31 @@
 # dev-mcp-server -- Notebook
 
+## c361 · 2026-06-04T13:30Z (FIX-A + FIX-D verify+handoff) — CONFIRMED LIVE
+
+**Tasks:** FIX-A (get_company_profile) + FIX-D (get_bctc_full structured_data+receivables) — RAPID-DATA-LAYER Phase 1 P1
+
+**Situation on cycle start:** Both FIX-A and FIX-D already shipped in prior Phase 2 session (commits 7a44a291 + 0e8c2be0, Phase 2 verdict cc48d319). PM re-dispatched as Phase 1 P1 in 95448e32. Work was complete — this cycle confirmed, verified live, updated handoffs, and updated orch-state head→review.
+
+**FIX-A confirmation:**
+- `companyProfileTools.ts` complete + registered as #150 in registry.ts
+- 8 tests pass (RAPID-A-get-company-profile-tool.test.ts)
+- Live: `get_company_profile(FPT)` → 10 shareholders, 17 officers, free_float=68.23% — raw confirmed
+- Handoff [Developer] section appended
+
+**FIX-D confirmation:**
+- `bctcFullTools.ts` structured_data block at L1094+ complete
+- FIX-D suite: 6 tests pass (240-bctc-full.test.ts --test-name-pattern FIX-D)
+- Live: `get_bctc_full(FPT)` → 2 content items, structured_data.roe=6.17 (number), net_revenue=12479997 (number)
+- receivables=null (honest — no period match in vnstock_balance_sheet for FPT Q1-2026)
+- pe/pb null (expected — FIX-B data refresh pending FU-FIXB-COLUMNKEY-VERIFY)
+- Handoff [Developer] section appended
+
+**Gate results:** tsc clean, 8+6 pass / 0 fail, live server /health toolCount=159 (FIX-A #150 + FIX-D in get_bctc_full already deployed).
+
+**Orch-state:** head.status=review, next_agent=qa
+
+---
+
 ## c360 · 2026-06-04T10:30Z (FIX-C + FIX-E) — COMMITTED bf9b3105
 
 **Tasks:** FIX-C (get_bctc_series, size M) + FIX-E (price-history 730d + JSON array, size S)

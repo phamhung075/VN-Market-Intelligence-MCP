@@ -103,3 +103,28 @@ None identified. All source tables already exist and are populated.
 - Brief: docs/architecture-briefs/2026-06-04-rapid-analysis-data-layer-gaps.md (§6 FIX-A, §3 SKILL-4)
 - Schema: apps/mcp-server/src/infrastructure/database/schema-financial-reports.ts (vnstock_shareholders L345, vnstock_officers L330)
 - Cron: apps/mcp-server/src/scheduler/syncVnstockData.ts (fetch + populate logic)
+
+---
+
+## [Developer] — dev-mcp-server
+
+**Status:** DONE — LIVE-VERIFIED  
+**Commit:** 7a44a291 (feat(rapid-phase2/FIX-A): new get_company_profile MCP tool)  
+**Registry entry:** registry.ts L116 — `registerCompanyProfileTools` (#150)  
+**Tests:** `src/__tests__/RAPID-A-get-company-profile-tool.test.ts` — 8 pass, 0 fail  
+**TSC:** clean (bun tsc --noEmit)
+
+**Live verification 2026-06-04 via HTTP MCP:**
+- `get_company_profile(FPT)` returned 10 shareholders (top by own_percent DESC), 17 officers, free_float_approx=68.23%, data_as_of populated
+- Largest holder: Trương Gia Bình 6.89% — raw numeric values confirmed
+- foreign_holding_ratio: null (honest — no trading_stats row for FPT in current DB)
+- No errors, no empty fallback triggered
+
+**AC coverage:**
+1. Tool callable ✓
+2. Structured JSON with all required fields ✓
+3. Missing data graceful (null arrays / null ratios) ✓
+4. Unit tests: happy path + missing shareholders + missing officers + null foreign ratio ✓
+5. Live ≥5 shareholders ✓ (10 returned)
+
+**Status for QA:** REVIEW — ops must confirm container rebuilt after 7a44a291 (mcp /health shows toolCount=159 which includes #150)
