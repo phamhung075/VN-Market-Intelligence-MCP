@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-04T13:30:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
-    "status": "review",
-    "active_task_id": "FIX-A,FIX-D",
-    "next_agent": "qa",
-    "next_action": "QA live-verify FIX-A get_company_profile + FIX-D get_bctc_full structured_data. Both tools LIVE (toolCount=159). Commits: FIX-A 7a44a291, FIX-D 0e8c2be0. Tests pass (8+6). FIX-H still pending dev-mcp-server.",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "FIX-F DONE-LIVE-VERIFIED this tick (11:07Z): charter_capital+investment_property+reward_fund scalars, bank-form guarded, commit a04edbe9, 159 tools. Live-proven on 5 corporates (real charter-capital values) + 3 banks null-cleared. NEXT P4 (WIP<=2): FIX-G AGM revenue plans [L] — dev-vps-crawls (VPS fetcher, recon recipe docs/vps-sources/vietstock-agm-plan/recon.md, endpoint finance.vietstock.vn/Data/GetData_PlannedTarget ptid 5/8/9=DT/LNTT/LNST) -> agm_revenue_plans table + get_agm_plans tool (dev-mcp-server). Two-zone chain. Then P5 FIX-I officers start_date (BLOCKED - needs source). DATA-PENDING (BLOCKED-UPSTREAM, batch next vnstock sweep): FU-FIXB-COLUMNKEY-VERIFY (market_cap_bn), FU-PROFILE-DATA-VERIFY (foreign_holding_ratio + receivables -- NOTE receivables now serves non-null on VNM=6027 via this reflow, re-confirm). LIGHT FU: FU-BACKFILL-SCOPE-VEA -- VEA+non-candidate corporate reports never enter backfill_bctc_scalars scope so all scalars stay null; investigate scope filter (pre-existing, low pri).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T13:30:00Z",
-    "updated_by": "dev-mcp-server"
+    "updated_at": "2026-06-04T11:46:46Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T10:50:07Z",
+    "_updated_at": "2026-06-04T11:46:46Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2336,7 +2336,7 @@
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "BCTC scalar extraction: charter_capital + investment_property + reward_fund (bank-form guarded)",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P3",
         "size": "M",
         "zone": "apps/mcp-server/",
@@ -2350,7 +2350,7 @@
           "apps/mcp-server/src/infrastructure/bctc/bctcScalarAggregator",
           "apps/mcp-server/src/interface/mcp/tools/financial-reports/"
         ],
-        "note": "RC-4. 3 new scalars: charter_capital (~code 411), investment_property (~code 217), reward_fund (~code 418) -> bctcScalarAggregator ScalarAggregate + finalize BLOCK-1 + DB migration. Precedent FIX-DE-1 (short/long_term_debt). Risk-3: VAS code varies by form (B01 vs B02-TCTD); banks have no standalone charter_capital line -> bank-form guard via isBankFormFromDb pattern REQUIRED."
+        "note": "RC-4. 3 new scalars: charter_capital (~code 411), investment_property (~code 217), reward_fund (~code 418) -> bctcScalarAggregator ScalarAggregate + finalize BLOCK-1 + DB migration. Precedent FIX-DE-1 (short/long_term_debt). Risk-3: VAS code varies by form (B01 vs B02-TCTD); banks have no standalone charter_capital line -> bank-form guard via isBankFormFromDb pattern REQUIRED. || DONE-LIVE-VERIFIED tick 11:07Z 2026-06-04 (commit a04edbe9, mcp-server rebuilt 159 tools unchanged — domain-layer only, no new MCP tool). VAS codes: charter_capital=411 (label-hinted vốn góp/cổ phần/điều lệ), investment_property=230 (bất động sản đầu tư), reward_fund=322/323/320 (khen thưởng/phúc lợi label-hint MANDATORY — code 322 flips to vay/dự phòng on some forms, same class as FU-DE-321-VAY-GUARD). BANK-FORM guard = existing isBankFormFromRows SSOT (not re-derived); 3 fields added to notApplicable[] → null-cleared on bank reports. LIVE-VERIFIED via backfill_bctc_scalars force_reflow + raw market.db read: CORPORATE values accurate vs reality — VNM charter=20899.5bn (real ~20899), HPG=76755bn (real ~76755), DHG=1307bn (real ~1307), FPT~17000bn; investment_property correctly discriminates (VNM/HPG non-null, FPT/DHG null=they hold none); reward_fund VNM~953bn/FPT~1.6bn plausible. BANK guard proven on persist+serve: SHB+EIB null_cleared all 3, ACB already null — all banks NULL. get_bctc_full(VNM) serve path returns the values; EIB withheld by PUB-5 confidence gate (31%) but DB-confirmed null. Tests 46 green incl. bank-guard + period-flip + label-hint. RESIDUAL (not a FIX-F defect): VEA (corporate, 201 rows) stays NULL — it is outside backfill_bctc_scalars candidate set (13 of 15 reports processed; affects ALL scalars for VEA not just these 3) → tracked as FU-BACKFILL-SCOPE-VEA observation, pre-existing scope gap."
       },
       {
         "task_id": "FIX-G",
