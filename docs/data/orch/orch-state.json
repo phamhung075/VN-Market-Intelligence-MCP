@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "FIX-G DONE-LIVE-VERIFIED both sides (router raw-verify cycle-192 confirmed): VPS fetcher 2d0c38b8 + mcp get_agm_plan tool #160 live, agm_plan 323 / agm_actuals 2084 rows / 33 tickers, bank-honest planned:[]. RAPID-DATA-LAYER core COMPLETE: FIX-A/B/C/D/E/F/G/H all DONE-LIVE-VERIFIED. REMAINING: FIX-I (BLOCKED - officers start_date needs source); FU-ACB-AGM-COVERAGE (ACB 0 AGM rows, bank logic proven via BID, re-check); FU-PROFILE-DATA-VERIFY (foreign_holding_ratio still null - vnstock data-gap); FU-BACKFILL-SCOPE-VEA. NEW INFRA: FU-RAG-DEPLOY-MEMORY (rag-service deploy-gap + frontend-down memory tradeoff -> PO/architect decision; frontend DOWN, rag UP). NEW PROCESS: FU-DEDUP-CROSS-DISPATCHER (parallel cycle bypassed task:FIX-G-1 lock -> duplicate FIX-G work, harmless this time but a real dedup gap). Next tick: PO triage -> likely FU-RAG-DEPLOY-MEMORY decision or FU-ACB-AGM-COVERAGE; RAPID-DATA-LAYER ready to close pending FIX-I source.",
+    "next_action": "RAPID-DATA-LAYER: FIX-I UNBLOCKED this tick (FU-FIX-I-SOURCE-RECON verdict: vietstock data/boarddetails FromDate = appointment YEAR, VNM/FPT/VCB confirmed; recipe in docs/vps-sources/officer-start-date/recon.md). NEXT TICK PO: spec-decision on FIX-I - accept year-precision tenure (low impl cost, reuse AGM-plan CSRF) and spec it, OR honestly kill FIX-I if month/day precision required (not fetchable). Either path lets RAPID-DATA-LAYER CLOSE. Also done this tick: FU-NB-PRUNE-DEV-VPS (nb 242->177L). REMAINING backlog: FU-ACB-AGM-COVERAGE, FU-BCTC-RATIOS-N-A (lower pri), FU-RAG-DEPLOY-MEMORY (M, needs architect/ops resident-container decision; frontend DOWN/rag UP), FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM, clears on next vnstock sync), FU-DEDUP-CROSS-DISPATCHER (process). Drained 27 signals + pruned signal_queue 30->12.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T16:47:43Z",
+    "updated_at": "2026-06-04T17:20:30Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T16:47:43Z",
+    "_updated_at": "2026-06-04T17:20:30Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2359,7 +2359,7 @@
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "vnstock_officers start_date for CEO tenure",
-        "status": "BLOCKED-SOURCE",
+        "status": "READY-TO-SPEC",
         "priority": "P5",
         "size": "S",
         "zone": "apps/mcp-server/",
@@ -2373,7 +2373,7 @@
           "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts",
           "apps/mcp-server/src/jobs/syncVnstockData.ts"
         ],
-        "note": "CEO start_date field not exposed in vnstock API; source recon needed (ops-vps-fetch, alternative sources). Moved to backlog 2026-06-04."
+        "note": "UNBLOCKED 2026-06-04 by FU-FIX-I-SOURCE-RECON. Source FOUND at year-precision: vietstock data/boarddetails FromDate. Spec decision for PO/po-spec next tick: year-precision tenure-in-years adequate for CEO-tenure feature? (month/day precision NOT fetchable from any structured source - only CBTT PDF, high-effort, not recommended). Impl cost LOW (reuse VPS AGM-plan CSRF warmup). If year-precision accepted -> spec FIX-I (dev-mcp-server + dev-vps-crawls); if rejected -> honestly kill FIX-I -> RAPID-DATA-LAYER closes."
       },
       {
         "task_id": "FU-FIXB-COLUMNKEY-VERIFY",
@@ -2442,11 +2442,11 @@
       {
         "task_id": "FU-FIX-I-SOURCE-RECON",
         "title": "FIX-I CEO start_date: needs source recon (ops-vps-fetch) or alternative sources before spec",
-        "status": "BACKLOG",
+        "status": "DONE-VERIFIED",
         "depends": [
           "FIX-I"
         ],
-        "note": "vnstock does not expose start_date field. Requires alternate data source investigation."
+        "note": "DONE 2026-06-04: VERDICT PARTIALLY FETCHABLE. Source = finance.vietstock.vn/data/boarddetails (same server as AGM-plan fetcher, ASP.NET double-submit CSRF, VPS-reachable, ~0.3s, no bot challenge). Field FromDate = appointment YEAR (zero-padded string). Confirmed VNM(2022)/FPT(1988)/VCB(2021). vnstock officers has NO start_date (only updateDate); HOSE/HNX/SSC/TCBS/CafeF all 404/auth-walled. Recipe: docs/vps-sources/officer-start-date/recon.md."
       },
       {
         "task_id": "FU-RAG-DEPLOY-MEMORY",
@@ -2457,6 +2457,17 @@
         "size": "M",
         "zone": "ops/infra",
         "note": "From OPS-LANCEDB-OFFLINE resolution. rag-service was never in the active deploy set (same class as [[project_dashboard_two_data_planes]] not-deployed services). ops recovered it 2026-06-04 but had to STOP the frontend container because the 16GB host had only 3.6MB free ([[project_host_memory_panic]]). Two decisions for PO/architect: (1) CODIFY rag-service into the deploy manifest + add mcp-server depends_on rag-service so it launches together (prevents silent 25h RAG outages degrading news-scout). (2) DECIDE the resident container set on the 16GB host — RAG and frontend cannot both run alongside the rest; either keep frontend down (operator dashboard offline, lower impact, user monitors via Telegram), or lazy-load rag-service only during news-scout cycles, or move one off-box. Until decided, frontend stays DOWN and rag stays UP (RAG outage was the higher-impact degradation). Do NOT blindly restart frontend (re-OOMs rag).",
+        "depends_on": null
+      },
+      {
+        "task_id": "FU-NB-PRUNE-DEV-VPS",
+        "title": "prune dev-vps-crawls notebook 242L->177L (under 200 cap)",
+        "type": "CLEAN",
+        "sprint": "RAPID-DATA-LAYER",
+        "status": "DONE-VERIFIED",
+        "size": "S",
+        "zone": "cross-service/",
+        "note": "DONE-VERIFIED 2026-06-04: claude-manager-helper pruned 242->177L (router raw-verified wc -l=177, frontmatter intact, only target file touched). Dropped FIX-CTG-2 cover-letter section + compressed 2026-05-13 bootstrap + verbose Key-Findings; kept FIX-G-1 + deploy guards. Committed f206b2a8.",
         "depends_on": null
       }
     ],
