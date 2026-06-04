@@ -121,9 +121,17 @@ function projectHead(raw: Record<string, unknown>): OrchHeadDto {
 }
 
 function projectTask(task: OrchStateTaskBoardTask): OrchTaskDto {
+  // Prefer canonical task_id; fall back to legacy `id` key (schema-drift tolerance).
+  // task_id+id are both typed in OrchStateTaskBoardTask — no magic strings.
+  const resolvedId = str(task.task_id, "") || str(task.id, "");
+
+  // Title fallback: if title is blank, show the resolved id so the dashboard
+  // row is never silently empty — operator can at least identify the task.
+  const resolvedTitle = str(task.title, "") || resolvedId;
+
   return {
-    id:     str(task.task_id, ""),
-    title:  str(task.title, ""),
+    id:     resolvedId,
+    title:  resolvedTitle,
     status: str(task.status, ""),
     owner:  str(task.owner, ""),
     zone:   str(task.zone, ""),

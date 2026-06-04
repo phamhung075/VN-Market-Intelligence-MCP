@@ -47,7 +47,14 @@ export interface OrchStateSignalQueue {
 }
 
 export interface OrchStateTaskBoardTask {
+  /** Canonical key — SSOT uses task_id. */
   task_id: string;
+  /**
+   * Legacy/drift fallback key — some hand-authored sprints used `id` instead of
+   * `task_id`. Canonical is task_id; id is tolerated at the serve layer only.
+   * Do NOT write new data with `id` — write task_id.
+   */
+  id?: string;
   title: string;
   type: string;
   owner: string;
@@ -215,6 +222,18 @@ export function appendSignalQueueRow(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Canonical task status values (SSOT for countTasksFromTaskBoard)
+// These match the schema defined in docs/architecture-briefs/2026-06-01-orch-state-consolidate.md §3.
+// All status comparisons MUST reference these constants to prevent silent drift.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Canonical task status: work is complete. */
+export const TASK_STATUS_DONE = "DONE" as const;
+/** Canonical task status: actively being worked on. */
+export const TASK_STATUS_IN_PROGRESS = "IN_PROGRESS" as const;
+// "TODO" | "BLOCKED" | "DEFERRED" fall through to backlog in the counter.
+
+// ─────────────────────────────────────────────────────────────────────────────
 // task_board task-count helper
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -222,8 +241,8 @@ export function appendSignalQueueRow(
  * Count tasks across all active_sprints by status.
  *
  * Maps orch-state.json task_board task statuses:
- *   - "DONE"        → done
- *   - "IN_PROGRESS" → inProgress
+ *   - TASK_STATUS_DONE        → done
+ *   - TASK_STATUS_IN_PROGRESS → inProgress
  *   - "TODO" | "BLOCKED" | "DEFERRED" → backlog
  *
  * @param taskBoard  - OrchStateTaskBoard parsed from orch-state.json
@@ -239,9 +258,9 @@ export function countTasksFromTaskBoard(
   for (const sprint of taskBoard.active_sprints ?? []) {
     for (const task of sprint.tasks ?? []) {
       const s = (task.status ?? "").toUpperCase();
-      if (s === "DONE") {
+      if (s === TASK_STATUS_DONE) {
         done++;
-      } else if (s === "IN_PROGRESS") {
+      } else if (s === TASK_STATUS_IN_PROGRESS) {
         inProgress++;
       } else {
         // TODO, BLOCKED, DEFERRED → backlog

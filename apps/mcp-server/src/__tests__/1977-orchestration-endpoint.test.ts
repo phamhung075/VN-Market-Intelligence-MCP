@@ -263,6 +263,114 @@ describe("OSC-4a buildOrchestrationDto (pure projection)", () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// B1 schema-drift normalization tests (pure — no HTTP)
+// ─────────────────────────────────────────────────────────────────────────────
+
+describe("B1 projectTask schema-drift normalization (pure projection)", () => {
+
+  it("B1-a — legacy `id` key used when task_id is absent/empty", () => {
+    const legacyState: OrchState = {
+      ...FIXTURE_STATE,
+      task_board: {
+        ...FIXTURE_STATE.task_board,
+        active_sprints: [
+          {
+            id: "DSI-SPRINT",
+            status: "active",
+            tasks: [
+              {
+                task_id: "",   // absent / empty — simulates hand-authored DSI rows
+                id: "DSI-1",  // legacy key
+                title: "Data serve integrity audit",
+                type: "sprint-task",
+                owner: "dev-mcp-server",
+                depends: null,
+                status: "TODO",
+                zone: "apps/mcp-server/",
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const dto = buildOrchestrationDto(legacyState);
+    const task = dto.task_board.tasks[0];
+    expect(task).toBeDefined();
+    // Falls back to legacy `id`
+    expect(task!.id).toBe("DSI-1");
+    // Title remains the authored title
+    expect(task!.title).toBe("Data serve integrity audit");
+  });
+
+  it("B1-b — title blank → falls back to resolved id (never blank cell)", () => {
+    const blankTitleState: OrchState = {
+      ...FIXTURE_STATE,
+      task_board: {
+        ...FIXTURE_STATE.task_board,
+        active_sprints: [
+          {
+            id: "DSI-SPRINT",
+            status: "active",
+            tasks: [
+              {
+                task_id: "DSI-2",
+                // title intentionally absent/empty
+                title: "",
+                type: "sprint-task",
+                owner: "dev-mcp-server",
+                depends: null,
+                status: "BACKLOG",
+                zone: "apps/mcp-server/",
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const dto = buildOrchestrationDto(blankTitleState);
+    const task = dto.task_board.tasks[0];
+    expect(task).toBeDefined();
+    expect(task!.id).toBe("DSI-2");
+    // Title falls back to resolved id — never blank
+    expect(task!.title).toBe("DSI-2");
+  });
+
+  it("B1-c — canonical task_id takes precedence over legacy id", () => {
+    const bothKeysState: OrchState = {
+      ...FIXTURE_STATE,
+      task_board: {
+        ...FIXTURE_STATE.task_board,
+        active_sprints: [
+          {
+            id: "DSI-SPRINT",
+            status: "active",
+            tasks: [
+              {
+                task_id: "CANONICAL-ID",
+                id: "LEGACY-ID",  // should be ignored when task_id present
+                title: "Both keys present",
+                type: "sprint-task",
+                owner: "dev-mcp-server",
+                depends: null,
+                status: "TODO",
+                zone: "apps/mcp-server/",
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const dto = buildOrchestrationDto(bothKeysState);
+    const task = dto.task_board.tasks[0];
+    expect(task).toBeDefined();
+    // Canonical wins
+    expect(task!.id).toBe("CANONICAL-ID");
+    expect(task!.title).toBe("Both keys present");
+  });
+
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Tier-3 HTTP service tests — real Bun server, fixture file
 // ─────────────────────────────────────────────────────────────────────────────
 
