@@ -1,15 +1,5 @@
 # agents-architect — Notebook
 
-## 2026-06-01T08:34:55Z
-
-**Brief:** `docs/architecture-briefs/2026-06-01-context-resume-economy.md`
-
-Fleet-wide context-resume wastes ~410k tokens/day: DASHBOARD.md (153 KB, 63 dead non-NEW rows, unbounded `_Updated:` header) is read in full every cron tick by 10+ agents; pipeline-state.json resume fields are freeform prose; the existing handoff-delta-read skill is not wired into DASHBOARD. Designed three-phase fix: (1) signal-dashboard SKILL upgraded to mtime/linecount Phase-1 skip + section-only Phase-2 read + mandatory PRUNE enforced in drain-signals.md; (2) pipeline-state.json v2 schema with machine-readable `head` block for routing and capped `narrative`; (3) optional cowork equivalents audit. Target: ~38k→~0–400 tokens/DASHBOARD read, ~1750→~150 tokens/pipeline-state routing read, ~95% fleet resume token reduction.
-
-**Signal dropped:** `docs/signals/context-resume-economy-20260601T083455Z.json` → agent-father
-
----
-
 ## 2026-06-01T09:21:33Z
 
 **Brief:** `docs/architecture-briefs/2026-06-01-signal-dashboard-cap-extract.md`
@@ -193,3 +183,13 @@ FU-COWORK-HEARTBEAT-SCHEMA: cowork-team main.md LLM runtime drifts from its own 
 ESC-3 false-escalation loop (16 cycles, FPT Q1-2026): bctc-analyst fired Opus deep-dive for OCF/NI divergence every cycle because the 24h guard TTL matches cycle cadence and deep-dive-opus.md releases the guard unconditionally. Root cause is ESC-3 gate has zero quarters-coverage awareness — fires on divergence_ratio>0.40 alone regardless of whether historical data exists. Fix: add `quarters_returned<4` coverage pre-flight to ESC-3 in main.md; insert DATA-COVERAGE-LIMITED handler (guard_key=esc-datacov:..., ttl_seconds=2592000/30d, route ops once); update deep-dive-opus.md ESC-3 step 1 to early-exit + no task_release when coverage-limited. 2-file edit for agent-father.
 
 **Signal dropped:** `docs/signals/esc3-data-coverage-guard-20260603T204501Z.json` → agent-father
+
+---
+
+## 2026-06-04T05:03:42Z
+
+**Brief:** `docs/architecture-briefs/2026-06-04-expert-rapid-analysis-skills.md`
+
+Extracted 6 reusable rapid-analysis skills from Bàn tròn kinh tế 31 transcript (Trung/Thành/Báu): T-1 market-cap-first entry, T-2 balance-sheet-first read, T-3 valuation vs. own 10yr history, T-4 four-factor synthesis (tài chính/định giá/quản trị/mô hình kinh doanh) + 4-scenario matrix, T-5 price-earnings sync type, T-6 ownership structure screen, T-7 management track record, T-8 insider transaction signal, T-9 abnormal turnover ratio, T-10 corporate history pattern, T-11 IR transparency quality, T-12 method self-alignment, T-13 scuttlebutt, T-14 exec compensation ratio. Mapped to 6 skill files (rapid-market-cap-screen, balance-sheet-first-read, four-factor-synthesis, ownership-governance-screen, management-track-record, value-trap-avoidance) and 6 flow-file edits across market-watcher/bctc-analyst/chef/news-scout/tnb-methodology. Reconciled with existing TNB 6-layer: 4 new skills, 2 TNB enhancements; no duplication. Skills are pre-TNB rapid screen gate (Scenario 4 = hard skip before deep analysis).
+
+**Signal dropped:** `docs/signals/expert-rapid-analysis-skills-20260604T050342Z.json` → agent-father
