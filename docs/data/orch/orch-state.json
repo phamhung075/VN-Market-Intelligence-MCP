@@ -2463,238 +2463,9 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-04T07:45:26Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-04T16:54:48Z",
+    "_updated_by": "dev-team",
     "rows": [
-      {
-        "id": "po-bctc-analytics-layer-20260602T1056Z",
-        "ts": "2026-06-02T10:56Z",
-        "from": "po",
-        "to": "agents-architect",
-        "type": "design_brief_request",
-        "summary": "HIGH. NEW sprint BCTC-ANALYTICS-LAYER (orch-state active_sprints[0]). BEQ-9/10 scalar recovery is GENUINE (balance EXACT VNM/FPT/HPG/DHG, router raw-verified) but exposed a SEPARATE pre-existing analytics/serving layer. TWO asks: (1) BAL-0 DISPATCH FIRST — design an executable hard-fail publish semantic-sanity gate for BCTC-derived MARKET/FB output (pattern = the proven fb-jargon-gate: script+skill+hard-fail+pasted output, NOT model self-attestation). Must block: ratio out-of-range (VNM ROE/ROA=0, DHG ROA 7.8M%, NetDebt/EBITDA -7.5e13x), cumulative-FY-labeled-as-quarter (FPT false YoY -82%), parent-only conf<0.5 as headline (HPG B01a rev=0 conf44%), forced-zero bank B02-TCTD decomposition (SHB/EIB unservable). Consumers = chef unified-agent/flow/market-analysis.md + market-analyst. (2) BAL-1 SPIKE — root-cause the 4 defect clusters as ONE layer, pin each to its module, return per-cluster owner split (likely dev-mcp-server FIXes) -> PO scopes BAL-2.. next cycle. recurring-bug-escalation: architect root-cause before any point-patch. Evidence in sprint.evidence + BEQ-9/BEQ-10 notes.",
-        "severity": "HIGH",
-        "status": "DONE",
-        "payload_ref": "docs/data/orch/orch-state.json#BCTC-ANALYTICS-LAYER"
-      },
-      {
-        "id": "architects-fb-gate-brief-20260602T0409Z",
-        "ts": "2026-06-02T04:09Z",
-        "from": "agents-architect",
-        "to": "agent-father",
-        "type": "brief_complete",
-        "summary": "FB-GATE-1 DESIGN-DONE. Brief docs/architecture-briefs/2026-06-02-fb-jargon-gate.md ready for implementation (FB-GATE-2). Decision: SHARED gate — scripts/fb-jargon-gate.sh (executable) + .claude/skills/fb-jargon-gate/SKILL.md (caller) + flow main.md check-3 replacement. Hard-fail on any grep hit. 3 smoke tests specified. See §10 acceptance criteria.",
-        "severity": "HIGH",
-        "status": "DONE",
-        "payload_ref": "docs/architecture-briefs/2026-06-02-fb-jargon-gate.md",
-        "agent_father_disposition": "IMPLEMENTED 2026-06-02. FB-GATE-2 DONE. All 3 smoke tests proven. See task note."
-      },
-      {
-        "id": "po-fb-gate-intake-20260602T0340Z",
-        "ts": "2026-06-02T03:40Z",
-        "from": "po",
-        "to": "agents-architect",
-        "type": "design_brief_request",
-        "summary": "HIGH. FB-GATE-1: design executable pre-publish gate to replace fb-market-poster STEP 4 check-3 self-attestation. Evidence: 3 false-greens in one session (thanh khoảy x6, (FII) x2, full hexagram paragraph copied from CHEF dish) — all reported ZERO by agent self-check, all caught only by router raw grep. Gate must be FIXED regex via actual command + HARD-FAIL block on any hit + pasted command output in cycle report. agent-md-factory route: architect designs → agent-father (FB-GATE-2) implements. Decide if a shared fb-jargon-gate script/skill is warranted (SSOT for forbidden set).",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/data/orch/orch-state.json#FB-GATE"
-      },
-      {
-        "id": "po-gate-self-critique-detect-20260601T2111",
-        "ts": "2026-06-01T21:11Z",
-        "from": "po",
-        "to": "po",
-        "type": "gate-verdict",
-        "summary": "SELF-CRITIQUE-DETECT brief APPROVE-WITH-CONDITIONS (5-field critique in brief §11). Blocked on operator final greenlight — agent-father MUST NOT implement on PO alone.",
-        "severity": "INFO",
-        "status": "READ",
-        "payload_ref": "docs/architecture-briefs/2026-06-01-agent-self-critique-detect-source.md"
-      },
-      {
-        "id": "tnb-c85-20260601T2013",
-        "ts": "2026-06-01T20:13Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "audit-handoff",
-        "summary": "HIGH. c85: morning dish FAILED (no_self_abort violation, agent-father fixed same tick DONE-PENDING-LIVE-VERIFY). pipeline_degraded=TRUE.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/handoffs/tnb-audit-latest.md",
-        "po_disposition": "READ 2026-06-01T22:34Z PO: morning-dish fix DONE-PENDING-LIVE-VERIFY (agent-father same-tick init.md+chef.md). No new dev task — monitor next morning fire 05:23Z (watch_item tracks). F1-F6 all pre-existing/tracked (macro absent-by-design, BCTC overdue, VIRA absent, F9, hexagram dark)."
-      },
-      {
-        "id": "CW-FLOW-STEP478-DEFECTS-20260601T1603Z",
-        "ts": "2026-06-01T16:03Z",
-        "from": "cowork-team",
-        "to": "agent-father",
-        "type": "flow-bug",
-        "summary": "Two defects in cowork-team flow/main.md: Step 4.8 grep-c produces malformed pressure-state.json; Step 4.7 enum reject on agent_name cowork-team.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/signals/cowork-team-20260601T160319Z.json"
-      },
-      {
-        "id": "cow-CHEF-MORNING-NOPUBLISH-20260601T0518",
-        "ts": "2026-06-01T05:18Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "dispatcher-incident",
-        "summary": "MED. chef-morning GUARANTEED morning dish FAILED to publish — agent self-aborted violating no_self_abort. NO MARKET dish for 2026-06-01 morning.",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/signals/cowork-team-20260601T051821Z.json"
-      },
-      {
-        "id": "cow-MACRO-DOWN-20260601T0406",
-        "ts": "2026-06-01T04:06Z",
-        "from": "cowork-team",
-        "to": "ops",
-        "type": "microservice_degraded",
-        "summary": "macro-indicators service unavailable recurring >=3 cowork cycles. Absent BY DESIGN (not deployed) — DO NOT docker compose up macro-indicators.",
-        "severity": "INFO",
-        "status": "READ",
-        "payload_ref": null
-      },
-      {
-        "id": "CW-NSCOUT-SPAWN-FRAMING-20260601T0003Z",
-        "ts": "2026-06-01T00:03Z",
-        "from": "cowork-team",
-        "to": "agent-father",
-        "type": "agent-def-bug",
-        "summary": "news-scout-offhours spawn NO-OP REFUSAL — missing self-execution framing in agent def. FIXED commit 7239b803.",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/signals/cowork-team-20260601T000318Z.json"
-      },
-      {
-        "id": "tnb-c84-blocked-20260531T2013",
-        "ts": "2026-05-31T20:13Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "bug-escalation",
-        "summary": "HIGH. c84 BLOCKED — MCP gateway absent in spawned-agent session (FALSE ALARM pattern). Structural gaps D/E/F/F9 persist from c82.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/signals/tnb-2026-05-31T20:13:00Z-c84-mcp-blocked.json"
-      },
-      {
-        "id": "bctc-extraction-esc-20260602T0015Z",
-        "ts": "2026-06-02T00:15Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "bug-escalation",
-        "summary": "bctc-analyst c010 surfaced 3 persistent extraction/model blockers NEVER routed to queue (9-10 cycles, 0 prior rows): (1) FPT ESC-3 CRITICAL OVERDUE 10th cycle — OCF/NI=-1.15, needs Opus sub-agent for flow/deep-dive-opus.md (Sonnet cannot run it); (2) CTG 24h+ post-filing extraction lag, DATA_INSUFFICIENT 2nd cycle — abnormal vs normal 2-3h; (3) DHG+EIB DATA_INSUFFICIENT 9th consecutive cycle — BCTC-TABLE extraction-pipeline blocker unresolved. Dev-team/PO lane: model-dispatch + pipeline root-cause. Dispatcher cannot spawn PO/dev.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/agent-memory/notebooks/bctc-analyst.md"
-      },
-      {
-        "id": "arc-brief-esc-opus-20260602T0121Z",
-        "ts": "2026-06-02T01:21Z",
-        "from": "agents-architect",
-        "to": "po",
-        "type": "brief_complete",
-        "summary": "ESC-OPUS-DISPATCH-SEAM brief ready — 3-file seam design (bctc-analyst+drain-signals+deep-dive-opus), task_claim guard, FU-BCTC-TOOL-PARAMS flagged",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/architecture-briefs/2026-06-02-esc-opus-dispatch-seam.md"
-      },
-      {
-        "id": "arc-nb-prune-contract-20260602T031633Z",
-        "ts": "2026-06-02T03:16:33Z",
-        "from": "agents-architect",
-        "to": "po",
-        "type": "brief_complete",
-        "summary": "NB-PRUNE-CONTRACT decided — 2-class write contract (OVERWRITE/APPEND) + AC-2b intra-section rule; 5 flow edits for agent-father → docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md",
-        "severity": "MED",
-        "status": "READ",
-        "payload_ref": "docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md"
-      },
-      {
-        "id": "po-20260602T045900",
-        "ts": "2026-06-02T04:59Z",
-        "from": "po",
-        "to": "agents-architect",
-        "type": "spike_request",
-        "summary": "HIGH BCTC-EXTRACT-QUALITY/BEQ-1 SPIKE: pin 3 net-new data-layer symptoms to one layer each — empty refine despite OCR (CTG/VCB), zeroed secondary lines (FPT+ACB OpProfit/EBITDA/Cash=0,EPS), garbage /docs net_profit scalars. Findings doc, PLAN-ONLY.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/data/orch/orch-state.json#BCTC-EXTRACT-QUALITY"
-      },
-      {
-        "id": "cowork-team-20260602T051848Z",
-        "ts": "2026-06-02T05:18Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "defect_report",
-        "summary": "HIGH dispatcher defect: cowork flow Step 0b re-claims the leader-lock every tick, but a held+unexpired lock returns claimed:false even to its OWN prior owner (renewal is via task_heartbeat, NOT task_claim). So for the full 1800s TTL (~2 ticks) after any WON tick the same dispatcher is locked out and silent-exits. Guaranteed single-window slots falling in that shadow are silently DROPPED. TODAY: chef-morning (guaranteed, cron 15 5 * 1-5) dropped — 05:03Z WON tick (news-scout-sentiment) heartbeated leader to 05:34Z; chef-morning only matches the 05:15 nominal window (05:18Z tick) -> claimed:false -> silent-exit -> morning CHEF MARKET dish missed for 2026-06-02. Evidence: holder heartbeat frozen at 05:04Z (no active peer). FIX (root-cause, PLAN-ONLY via architect): Step 0b must detect own-held lock (current_holder.owner_agent==cowork-dispatcher) and task_heartbeat-then-proceed, instead of treating self as a peer; OR only re-claim when holder expired/differs. Published-marker gate already protects against double-publish, so heartbeat-and-proceed is safe.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/signals/cowork-team-20260602T051848Z.json"
-      },
-      {
-        "id": "cowork-team-20260602T062352Z",
-        "ts": "2026-06-02T06:23Z",
-        "from": "cowork-team",
-        "to": "po",
-        "type": "defect_report",
-        "summary": "MEDIUM agent-config defect: when the cowork dispatcher spawns unified-agent (CHEF) with the STANDARD spawn prompt (run docs/agents/unified-agent/flow/chef.md  slot=chef-intraday), the spawned agent can misread the project CLAUDE.md line \"Main terminal = router only / never implement directly\" as applying to ITSELF, then refuses to execute chef.md, asks the dispatcher questions, and burns ~25k tokens with zero output. Observed 2026-06-02 06:18Z chef-intraday tick (agentId a4957b5a). A corrective re-spawn with an explicit \"you ARE the worker, not the router, ignore that CLAUDE.md line\" preamble (agentId a0777f49) executed correctly. Since the dispatcher ALWAYS uses the standard prompt, every chef spawn (morning/intraday/eod/evening) is at nondeterministic risk of this misfire -> wasted tokens and potential silently-dropped MARKET dishes when unattended. FIX (root-cause, agent-father via architect): assert worker-role at the TOP of docs/agents/unified-agent/flow/chef.md (and/or the unified-agent agent-def) so a spawned chef worker never reinterprets the main-terminal router boundary; OR add a one-line worker-line preamble to the dispatcher spawn prompt for unified-agent slots. PLAN-ONLY.",
-        "severity": "MEDIUM",
-        "status": "READ",
-        "payload_ref": "docs/signals/cowork-team-20260602T062352Z.json"
-      },
-      {
-        "id": "bca-20260602T1506Z",
-        "ts": "2026-06-02T15:06:00Z",
-        "from": "bctc-analyst",
-        "to": "dev-team",
-        "type": "esc-deep-dive-request",
-        "summary": "ESC deep-dive carry-status: FPT Q1-2026 ESC-3 (OCF/NI divergence) — 11th consecutive cycle. guard_key=esc-deepdive:FPT:Q1-2026:ESC-3 freshly re-claimed (prior TTL expired). NOTE: FPT-OPUS-DEEPDIVE DONE (a38e14ee, flag_for_human_review conf=0.35). ESC-3 remains ACTIVE because underlying data not fixed (FU-BCTC-TOOL-PARAMS open — get_cash_flow ignores quarters param, no 8q history). Dispatch dev-team to investigate FU-BCTC-TOOL-PARAMS or close ESC-3 at analyst layer once fix lands.",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "trigger_id": "ESC-3",
-          "ticker": "FPT",
-          "quarter": "Q1-2026",
-          "report_id": null,
-          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-3",
-          "context": {
-            "ocf_total": -2847813.717192,
-            "net_profit_total": 2476800,
-            "divergence_ratio": 2.15,
-            "cycle_count": 11,
-            "prior_opus_deepdive": "DONE (a38e14ee) — flag_for_human_review, conf=0.35, MIXED/partial-artifact",
-            "blocker": "FU-BCTC-TOOL-PARAMS: get_cash_flow ignores quarters param; accrual decomposition impossible without 8q history and WC subcomponents"
-          },
-          "all_esc_fired": [
-            "ESC-3"
-          ]
-        },
-        "note": " | 2026-06-02T15:10Z dev-team ROUTER: did NOT re-spawn opus (deep-dive already DONE a38e14ee conf0.35; re-run=symptom). Root cause CONFIRMED LIVE: get_cash_flow ticker=FPT quarters=8 returns ONLY Q1/2026 single period, quarters param silently ignored. Routed real fix FU-BCTC-TOOL-PARAMS to dev-mcp-server. guard_key left claimed (analyst wont re-fire until TTL). ESC-3 closes at analyst layer once fix lands."
-      },
-      {
-        "id": "cwk-20260602T1610Z",
-        "ts": "2026-06-02T16:10:00Z",
-        "from": "cowork-dispatcher",
-        "to": "agents-architect",
-        "type": "agent-flow-defect",
-        "summary": "news-scout subagent refused to execute its own flow on the standard trigger prompt (\"run docs/agents/news-scout/flow/main.md  slot=news-scout-offhours\") — it mis-read the ROUTER-scoped CLAUDE.md rule (\"never run a flow yourself / always delegate\") as binding on itself and returned a meta/refusal response with zero pipeline work (no fetch, no signals, no notebook). Recovered same tick by re-spawning WITH an explicit \"you ARE the agent, do not delegate\" preamble → ran cleanly, fired signals #4716/#4717/#4718. market-watcher handled the identical-form prompt fine, so the vulnerability is news-scout-specific (likely its flow/init lacks a self-identity guard at the top). Durable fix: add a self-identity guard line to news-scout flow main.md (and audit other cowork agent flows) so the standard trigger prompt never triggers router-refusal. Non-blocking — off-hours news cycle recovered this tick.",
-        "severity": "MEDIUM",
-        "status": "READ",
-        "payload_ref": null,
-        "payload": {
-          "agent": "news-scout",
-          "slot_id": "news-scout-offhours",
-          "tick": "2026-06-02T16:00:00Z",
-          "failed_first_attempt_agentId": "a78a90320e295e40c",
-          "recovered_agentId": "a9d28df7f3c18b660",
-          "recovery_method": "explicit non-delegation preamble",
-          "fix_proposal": "self-identity guard at top of news-scout flow main.md; audit sibling cowork agent flows"
-        },
-        "note": "2026-06-02T17:05Z dev-team drain: RECURRENCE after fix 7239b803 (prior CW-NSCOUT-SPAWN-FRAMING claimed FIXED). Same failure: subagent reads router-scoped CLAUDE.md 'never run a flow yourself/always delegate' as self-binding -> NO-OP refusal. Post-fix recurrence triggers recurring-bug-escalation -> agents-architect root-cause (why framing fix did not hold; audit sibling cowork flows). Queued NSCOUT-FRAMING-RECUR."
-      },
       {
         "id": "aac-20260602T170457Z",
         "ts": "2026-06-02T17:04:57Z",
@@ -3055,6 +2826,235 @@
         "status": "DONE",
         "payload_ref": null,
         "note": " | 2026-06-02 dev-team PO-triage (re-confirm): KEEP-OPEN, promote-context. RECURRING governance defect (PM 26-file commit sweep, 3rd occurrence) — kin of FU-AGENT-FATHER-ORCH-SCOPE (agent-father staged router-owned orch-state.json) + commit-boundary memory. Owner = agents-architect (commit-step audit of pm/init.md + pm flow) -> agent-father impl. PLAN-ONLY agent-def edit, no rebuild. Sequenced AFTER current BCTC dev work; pairs with the architect commit-discipline cluster. | 2026-06-02T18:30Z dev-team: design-lane freed (all dev batches done) -> dispatched agents-architect (plan-only). PM-1974 scoped as whole commit-discipline CLASS root-cause (PM 26-file sweep + agent-father orch-staging + architect no-mutex), not PM-only. | DONE 2026-06-02T18:40Z: brief delivered (5a3fb649) + agent-father IMPLEMENTED. 1965=coverage-sweep LIVE in news-scout+market-watcher flows (f2e1baca, coverage-state.json 33 tickers, last_covered>48h rotation 3/cycle). PM-1974=commit-boundary skill+discipline across pm/architect/agent-father init+flow (5424c5b1, absorbs FU-ARCHITECT-MUTEX-BINDING + FU-AGENT-FATHER-ORCH-SCOPE)."
+      },
+      {
+        "id": "po-bctc-analytics-layer-20260602T1056Z",
+        "ts": "2026-06-02T10:56Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "HIGH. NEW sprint BCTC-ANALYTICS-LAYER (orch-state active_sprints[0]). BEQ-9/10 scalar recovery is GENUINE (balance EXACT VNM/FPT/HPG/DHG, router raw-verified) but exposed a SEPARATE pre-existing analytics/serving layer. TWO asks: (1) BAL-0 DISPATCH FIRST — design an executable hard-fail publish semantic-sanity gate for BCTC-derived MARKET/FB output (pattern = the proven fb-jargon-gate: script+skill+hard-fail+pasted output, NOT model self-attestation). Must block: ratio out-of-range (VNM ROE/ROA=0, DHG ROA 7.8M%, NetDebt/EBITDA -7.5e13x), cumulative-FY-labeled-as-quarter (FPT false YoY -82%), parent-only conf<0.5 as headline (HPG B01a rev=0 conf44%), forced-zero bank B02-TCTD decomposition (SHB/EIB unservable). Consumers = chef unified-agent/flow/market-analysis.md + market-analyst. (2) BAL-1 SPIKE — root-cause the 4 defect clusters as ONE layer, pin each to its module, return per-cluster owner split (likely dev-mcp-server FIXes) -> PO scopes BAL-2.. next cycle. recurring-bug-escalation: architect root-cause before any point-patch. Evidence in sprint.evidence + BEQ-9/BEQ-10 notes.",
+        "severity": "HIGH",
+        "status": "DONE",
+        "payload_ref": "docs/data/orch/orch-state.json#BCTC-ANALYTICS-LAYER"
+      },
+      {
+        "id": "architects-fb-gate-brief-20260602T0409Z",
+        "ts": "2026-06-02T04:09Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "FB-GATE-1 DESIGN-DONE. Brief docs/architecture-briefs/2026-06-02-fb-jargon-gate.md ready for implementation (FB-GATE-2). Decision: SHARED gate — scripts/fb-jargon-gate.sh (executable) + .claude/skills/fb-jargon-gate/SKILL.md (caller) + flow main.md check-3 replacement. Hard-fail on any grep hit. 3 smoke tests specified. See §10 acceptance criteria.",
+        "severity": "HIGH",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-fb-jargon-gate.md",
+        "agent_father_disposition": "IMPLEMENTED 2026-06-02. FB-GATE-2 DONE. All 3 smoke tests proven. See task note."
+      },
+      {
+        "id": "po-fb-gate-intake-20260602T0340Z",
+        "ts": "2026-06-02T03:40Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "design_brief_request",
+        "summary": "HIGH. FB-GATE-1: design executable pre-publish gate to replace fb-market-poster STEP 4 check-3 self-attestation. Evidence: 3 false-greens in one session (thanh khoảy x6, (FII) x2, full hexagram paragraph copied from CHEF dish) — all reported ZERO by agent self-check, all caught only by router raw grep. Gate must be FIXED regex via actual command + HARD-FAIL block on any hit + pasted command output in cycle report. agent-md-factory route: architect designs → agent-father (FB-GATE-2) implements. Decide if a shared fb-jargon-gate script/skill is warranted (SSOT for forbidden set).",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/data/orch/orch-state.json#FB-GATE"
+      },
+      {
+        "id": "po-gate-self-critique-detect-20260601T2111",
+        "ts": "2026-06-01T21:11Z",
+        "from": "po",
+        "to": "po",
+        "type": "gate-verdict",
+        "summary": "SELF-CRITIQUE-DETECT brief APPROVE-WITH-CONDITIONS (5-field critique in brief §11). Blocked on operator final greenlight — agent-father MUST NOT implement on PO alone.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": "docs/architecture-briefs/2026-06-01-agent-self-critique-detect-source.md"
+      },
+      {
+        "id": "tnb-c85-20260601T2013",
+        "ts": "2026-06-01T20:13Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "HIGH. c85: morning dish FAILED (no_self_abort violation, agent-father fixed same tick DONE-PENDING-LIVE-VERIFY). pipeline_degraded=TRUE.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md",
+        "po_disposition": "READ 2026-06-01T22:34Z PO: morning-dish fix DONE-PENDING-LIVE-VERIFY (agent-father same-tick init.md+chef.md). No new dev task — monitor next morning fire 05:23Z (watch_item tracks). F1-F6 all pre-existing/tracked (macro absent-by-design, BCTC overdue, VIRA absent, F9, hexagram dark)."
+      },
+      {
+        "id": "CW-FLOW-STEP478-DEFECTS-20260601T1603Z",
+        "ts": "2026-06-01T16:03Z",
+        "from": "cowork-team",
+        "to": "agent-father",
+        "type": "flow-bug",
+        "summary": "Two defects in cowork-team flow/main.md: Step 4.8 grep-c produces malformed pressure-state.json; Step 4.7 enum reject on agent_name cowork-team.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260601T160319Z.json"
+      },
+      {
+        "id": "cow-CHEF-MORNING-NOPUBLISH-20260601T0518",
+        "ts": "2026-06-01T05:18Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "dispatcher-incident",
+        "summary": "MED. chef-morning GUARANTEED morning dish FAILED to publish — agent self-aborted violating no_self_abort. NO MARKET dish for 2026-06-01 morning.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260601T051821Z.json"
+      },
+      {
+        "id": "cow-MACRO-DOWN-20260601T0406",
+        "ts": "2026-06-01T04:06Z",
+        "from": "cowork-team",
+        "to": "ops",
+        "type": "microservice_degraded",
+        "summary": "macro-indicators service unavailable recurring >=3 cowork cycles. Absent BY DESIGN (not deployed) — DO NOT docker compose up macro-indicators.",
+        "severity": "INFO",
+        "status": "READ",
+        "payload_ref": null
+      },
+      {
+        "id": "CW-NSCOUT-SPAWN-FRAMING-20260601T0003Z",
+        "ts": "2026-06-01T00:03Z",
+        "from": "cowork-team",
+        "to": "agent-father",
+        "type": "agent-def-bug",
+        "summary": "news-scout-offhours spawn NO-OP REFUSAL — missing self-execution framing in agent def. FIXED commit 7239b803.",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260601T000318Z.json"
+      },
+      {
+        "id": "tnb-c84-blocked-20260531T2013",
+        "ts": "2026-05-31T20:13Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "bug-escalation",
+        "summary": "HIGH. c84 BLOCKED — MCP gateway absent in spawned-agent session (FALSE ALARM pattern). Structural gaps D/E/F/F9 persist from c82.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/tnb-2026-05-31T20:13:00Z-c84-mcp-blocked.json"
+      },
+      {
+        "id": "bctc-extraction-esc-20260602T0015Z",
+        "ts": "2026-06-02T00:15Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "bug-escalation",
+        "summary": "bctc-analyst c010 surfaced 3 persistent extraction/model blockers NEVER routed to queue (9-10 cycles, 0 prior rows): (1) FPT ESC-3 CRITICAL OVERDUE 10th cycle — OCF/NI=-1.15, needs Opus sub-agent for flow/deep-dive-opus.md (Sonnet cannot run it); (2) CTG 24h+ post-filing extraction lag, DATA_INSUFFICIENT 2nd cycle — abnormal vs normal 2-3h; (3) DHG+EIB DATA_INSUFFICIENT 9th consecutive cycle — BCTC-TABLE extraction-pipeline blocker unresolved. Dev-team/PO lane: model-dispatch + pipeline root-cause. Dispatcher cannot spawn PO/dev.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/agent-memory/notebooks/bctc-analyst.md"
+      },
+      {
+        "id": "arc-brief-esc-opus-20260602T0121Z",
+        "ts": "2026-06-02T01:21Z",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "brief_complete",
+        "summary": "ESC-OPUS-DISPATCH-SEAM brief ready — 3-file seam design (bctc-analyst+drain-signals+deep-dive-opus), task_claim guard, FU-BCTC-TOOL-PARAMS flagged",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-esc-opus-dispatch-seam.md"
+      },
+      {
+        "id": "arc-nb-prune-contract-20260602T031633Z",
+        "ts": "2026-06-02T03:16:33Z",
+        "from": "agents-architect",
+        "to": "po",
+        "type": "brief_complete",
+        "summary": "NB-PRUNE-CONTRACT decided — 2-class write contract (OVERWRITE/APPEND) + AC-2b intra-section rule; 5 flow edits for agent-father → docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md",
+        "severity": "MED",
+        "status": "READ",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-notebook-write-prune-contract.md"
+      },
+      {
+        "id": "po-20260602T045900",
+        "ts": "2026-06-02T04:59Z",
+        "from": "po",
+        "to": "agents-architect",
+        "type": "spike_request",
+        "summary": "HIGH BCTC-EXTRACT-QUALITY/BEQ-1 SPIKE: pin 3 net-new data-layer symptoms to one layer each — empty refine despite OCR (CTG/VCB), zeroed secondary lines (FPT+ACB OpProfit/EBITDA/Cash=0,EPS), garbage /docs net_profit scalars. Findings doc, PLAN-ONLY.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/data/orch/orch-state.json#BCTC-EXTRACT-QUALITY"
+      },
+      {
+        "id": "cowork-team-20260602T051848Z",
+        "ts": "2026-06-02T05:18Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect_report",
+        "summary": "HIGH dispatcher defect: cowork flow Step 0b re-claims the leader-lock every tick, but a held+unexpired lock returns claimed:false even to its OWN prior owner (renewal is via task_heartbeat, NOT task_claim). So for the full 1800s TTL (~2 ticks) after any WON tick the same dispatcher is locked out and silent-exits. Guaranteed single-window slots falling in that shadow are silently DROPPED. TODAY: chef-morning (guaranteed, cron 15 5 * 1-5) dropped — 05:03Z WON tick (news-scout-sentiment) heartbeated leader to 05:34Z; chef-morning only matches the 05:15 nominal window (05:18Z tick) -> claimed:false -> silent-exit -> morning CHEF MARKET dish missed for 2026-06-02. Evidence: holder heartbeat frozen at 05:04Z (no active peer). FIX (root-cause, PLAN-ONLY via architect): Step 0b must detect own-held lock (current_holder.owner_agent==cowork-dispatcher) and task_heartbeat-then-proceed, instead of treating self as a peer; OR only re-claim when holder expired/differs. Published-marker gate already protects against double-publish, so heartbeat-and-proceed is safe.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260602T051848Z.json"
+      },
+      {
+        "id": "cowork-team-20260602T062352Z",
+        "ts": "2026-06-02T06:23Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "defect_report",
+        "summary": "MEDIUM agent-config defect: when the cowork dispatcher spawns unified-agent (CHEF) with the STANDARD spawn prompt (run docs/agents/unified-agent/flow/chef.md  slot=chef-intraday), the spawned agent can misread the project CLAUDE.md line \"Main terminal = router only / never implement directly\" as applying to ITSELF, then refuses to execute chef.md, asks the dispatcher questions, and burns ~25k tokens with zero output. Observed 2026-06-02 06:18Z chef-intraday tick (agentId a4957b5a). A corrective re-spawn with an explicit \"you ARE the worker, not the router, ignore that CLAUDE.md line\" preamble (agentId a0777f49) executed correctly. Since the dispatcher ALWAYS uses the standard prompt, every chef spawn (morning/intraday/eod/evening) is at nondeterministic risk of this misfire -> wasted tokens and potential silently-dropped MARKET dishes when unattended. FIX (root-cause, agent-father via architect): assert worker-role at the TOP of docs/agents/unified-agent/flow/chef.md (and/or the unified-agent agent-def) so a spawned chef worker never reinterprets the main-terminal router boundary; OR add a one-line worker-line preamble to the dispatcher spawn prompt for unified-agent slots. PLAN-ONLY.",
+        "severity": "MEDIUM",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260602T062352Z.json"
+      },
+      {
+        "id": "bca-20260602T1506Z",
+        "ts": "2026-06-02T15:06:00Z",
+        "from": "bctc-analyst",
+        "to": "dev-team",
+        "type": "esc-deep-dive-request",
+        "summary": "ESC deep-dive carry-status: FPT Q1-2026 ESC-3 (OCF/NI divergence) — 11th consecutive cycle. guard_key=esc-deepdive:FPT:Q1-2026:ESC-3 freshly re-claimed (prior TTL expired). NOTE: FPT-OPUS-DEEPDIVE DONE (a38e14ee, flag_for_human_review conf=0.35). ESC-3 remains ACTIVE because underlying data not fixed (FU-BCTC-TOOL-PARAMS open — get_cash_flow ignores quarters param, no 8q history). Dispatch dev-team to investigate FU-BCTC-TOOL-PARAMS or close ESC-3 at analyst layer once fix lands.",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "trigger_id": "ESC-3",
+          "ticker": "FPT",
+          "quarter": "Q1-2026",
+          "report_id": null,
+          "guard_key": "esc-deepdive:FPT:Q1-2026:ESC-3",
+          "context": {
+            "ocf_total": -2847813.717192,
+            "net_profit_total": 2476800,
+            "divergence_ratio": 2.15,
+            "cycle_count": 11,
+            "prior_opus_deepdive": "DONE (a38e14ee) — flag_for_human_review, conf=0.35, MIXED/partial-artifact",
+            "blocker": "FU-BCTC-TOOL-PARAMS: get_cash_flow ignores quarters param; accrual decomposition impossible without 8q history and WC subcomponents"
+          },
+          "all_esc_fired": [
+            "ESC-3"
+          ]
+        },
+        "note": " | 2026-06-02T15:10Z dev-team ROUTER: did NOT re-spawn opus (deep-dive already DONE a38e14ee conf0.35; re-run=symptom). Root cause CONFIRMED LIVE: get_cash_flow ticker=FPT quarters=8 returns ONLY Q1/2026 single period, quarters param silently ignored. Routed real fix FU-BCTC-TOOL-PARAMS to dev-mcp-server. guard_key left claimed (analyst wont re-fire until TTL). ESC-3 closes at analyst layer once fix lands."
+      },
+      {
+        "id": "cwk-20260602T1610Z",
+        "ts": "2026-06-02T16:10:00Z",
+        "from": "cowork-dispatcher",
+        "to": "agents-architect",
+        "type": "agent-flow-defect",
+        "summary": "news-scout subagent refused to execute its own flow on the standard trigger prompt (\"run docs/agents/news-scout/flow/main.md  slot=news-scout-offhours\") — it mis-read the ROUTER-scoped CLAUDE.md rule (\"never run a flow yourself / always delegate\") as binding on itself and returned a meta/refusal response with zero pipeline work (no fetch, no signals, no notebook). Recovered same tick by re-spawning WITH an explicit \"you ARE the agent, do not delegate\" preamble → ran cleanly, fired signals #4716/#4717/#4718. market-watcher handled the identical-form prompt fine, so the vulnerability is news-scout-specific (likely its flow/init lacks a self-identity guard at the top). Durable fix: add a self-identity guard line to news-scout flow main.md (and audit other cowork agent flows) so the standard trigger prompt never triggers router-refusal. Non-blocking — off-hours news cycle recovered this tick.",
+        "severity": "MEDIUM",
+        "status": "READ",
+        "payload_ref": null,
+        "payload": {
+          "agent": "news-scout",
+          "slot_id": "news-scout-offhours",
+          "tick": "2026-06-02T16:00:00Z",
+          "failed_first_attempt_agentId": "a78a90320e295e40c",
+          "recovered_agentId": "a9d28df7f3c18b660",
+          "recovery_method": "explicit non-delegation preamble",
+          "fix_proposal": "self-identity guard at top of news-scout flow main.md; audit sibling cowork agent flows"
+        },
+        "note": "2026-06-02T17:05Z dev-team drain: RECURRENCE after fix 7239b803 (prior CW-NSCOUT-SPAWN-FRAMING claimed FIXED). Same failure: subagent reads router-scoped CLAUDE.md 'never run a flow yourself/always delegate' as self-binding -> NO-OP refusal. Post-fix recurrence triggers recurring-bug-escalation -> agents-architect root-cause (why framing fix did not hold; audit sibling cowork flows). Queued NSCOUT-FRAMING-RECUR."
       }
     ]
   },

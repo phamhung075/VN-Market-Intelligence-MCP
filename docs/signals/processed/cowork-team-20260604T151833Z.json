@@ -1,0 +1,11 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-04T15:18:33Z",
+  "classification": "SILENT",
+  "slots": [],
+  "drift_min": 3,
+  "leader": "n/a",
+  "action": "drain_only",
+  "backlog": 0,
+  "note": "VN session closed; queue NEW-empty (30 processed); next slots gatherers offhours + market-watcher-eod at 16:00Z"
+}

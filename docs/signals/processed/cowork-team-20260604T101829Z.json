@@ -1,0 +1,11 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-04T10:18:29Z",
+  "classification": "SILENT",
+  "slots": [],
+  "drift_min": 3,
+  "leader": "n/a",
+  "action": "drain_only",
+  "backlog": 0,
+  "note": "empty slots; VN closed; queue clean (to:pm row drained by dev-team); next slots gatherers 12:00Z"
+}

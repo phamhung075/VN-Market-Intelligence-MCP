@@ -1,0 +1,14 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-04T12:04:21Z",
+  "classification": "WON",
+  "slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "drift_min": 3,
+  "leader": "won_stolen",
+  "action": "spawned_2_gatherers",
+  "backlog": 0,
+  "note": "0 */4 gatherers fan-out; both legacy slots; no MARKET publish (gatherers signal-only); tokens claimed+released; last_fired updated"
+}

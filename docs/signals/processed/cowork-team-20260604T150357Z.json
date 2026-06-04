@@ -1,0 +1,13 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-04T15:03:57Z",
+  "classification": "WON",
+  "slots": [
+    "bctc-analyst-slot-1"
+  ],
+  "drift_min": 3,
+  "leader": "won_stolen",
+  "action": "spawn",
+  "backlog": 0,
+  "note": "bctc-analyst-slot-1 (0 15) spawned a098d3d5; legacy slot; no MARKET publish (bctc signal/ledger only); queue NEW-empty"
+}

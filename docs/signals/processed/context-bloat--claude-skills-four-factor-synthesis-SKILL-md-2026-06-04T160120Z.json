@@ -1,0 +1,15 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-04T16:01:20Z",
+  "payload": {
+    "file": ".claude/skills/four-factor-synthesis/SKILL.md",
+    "line_count": 126,
+    "cap": 120,
+    "class": "skill-file",
+    "overage": 6,
+    "action_required": "prune_or_split"
+  }
+}
