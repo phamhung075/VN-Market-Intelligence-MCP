@@ -2033,6 +2033,32 @@
             "zone": "apps/mcp-server/",
             "priority": "p1",
             "note": "FIX-H DONE-LIVE-VERIFIED b275239d: get_insider_transactions(FPT, days=180) accepted live, lookbackDays=180 echoed (was capped 90). z.max(90)->z.max(180) + Math.min(90->180). 4 tests green."
+          },
+          {
+            "task_id": "FIX-I-A",
+            "title": "VPS board-details scraper + fetch drivers (vietstock-board-details.py + shell drivers + systemd)",
+            "type": "SPRINT-S",
+            "owner": "dev-vps-crawls",
+            "depends": [],
+            "status": "TODO",
+            "size": "M",
+            "zone": "vps-scripts/",
+            "priority": "p1",
+            "handoff": "docs/handoffs/TASK_FIX-I-A.md",
+            "note": "Mirror FIX-G (AGM-plan) pattern: Python scraper with CSRF warmup + POST to /data/boarddetails + officer parse + atomic shell driver + systemd loop. Blocks FIX-I-B live-verify gate."
+          },
+          {
+            "task_id": "FIX-I-B",
+            "title": "MCP-server board-details fetcher + store + get_company_profile tool extension (appointment_year + ceo_tenure_years)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/",
+            "priority": "p1",
+            "handoff": "docs/handoffs/TASK_FIX-I-B.md",
+            "note": "New fetcher + store + job; extend vnstock_officers with appointment_year column; update get_company_profile to expose appointment_year + derive ceo_tenure_years. Unit/replay tests parallel; live-verify waits for FIX-I-A proxy deployment."
           }
         ]
       }
@@ -2359,10 +2385,10 @@
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "vnstock_officers start_date for CEO tenure",
-        "status": "READY-TO-SPEC",
+        "status": "IN_PROGRESS",
         "priority": "P5",
         "size": "S",
-        "zone": "apps/mcp-server/",
+        "zone": "multi: vps-scripts/ (dev-vps-crawls) + apps/mcp-server/ (dev-mcp-server)",
         "deps": [
           "FIX-A"
         ],
@@ -2370,10 +2396,18 @@
           "SKILL-5 CEO tenure (pre/post ROE)"
         ],
         "files": [
+          "vps-scripts/vietstock-board-details.py",
+          "vps-scripts/fetch-board-details.sh",
+          "vps-scripts/fetch-board-details-loop.sh",
+          "vps-scripts/vn-board-details.service",
           "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts",
-          "apps/mcp-server/src/jobs/syncVnstockData.ts"
+          "apps/mcp-server/src/infrastructure/fetchers/boardDetailsFetcher.ts",
+          "apps/mcp-server/src/infrastructure/db/boardDetailsStore.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/boardDetailsJob.ts",
+          "apps/mcp-server/src/scheduler/startScheduler.ts",
+          "apps/mcp-server/src/interface/mcp/tools/market-data/companyProfileTools.ts"
         ],
-        "note": "UNBLOCKED 2026-06-04 by FU-FIX-I-SOURCE-RECON. Source FOUND at year-precision: vietstock data/boarddetails FromDate. Spec decision for PO/po-spec next tick: year-precision tenure-in-years adequate for CEO-tenure feature? (month/day precision NOT fetchable from any structured source - only CBTT PDF, high-effort, not recommended). Impl cost LOW (reuse VPS AGM-plan CSRF warmup). If year-precision accepted -> spec FIX-I (dev-mcp-server + dev-vps-crawls); if rejected -> honestly kill FIX-I -> RAPID-DATA-LAYER closes."
+        "note": "ARCHITECT DONE 2026-06-04T10:30Z. Handoff: docs/handoffs/TASK_FIX-I.md. Design: extend vnstock_officers with appointment_year INTEGER nullable (ALTER TABLE migration) + UPDATE-only boardDetailsStore (preserves VCI own_percent/quantity) + new boardDetailsFetcher/Job mirroring agmPlan pattern + extend get_company_profile OfficerEntry with appointment_year + ceo_tenure_years. Zone A (dev-vps-crawls): Python scraper + shell loop + systemd at 02:00 UTC. Zone B (dev-mcp-server): migration + fetcher + store + job + tool extension. Live-verify gate: get_company_profile(FPT).officers[0].appointment_year=1988. RAPID-DATA-LAYER closes on ship+verify."
       },
       {
         "task_id": "FU-FIXB-COLUMNKEY-VERIFY",
