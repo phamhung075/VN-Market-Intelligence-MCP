@@ -17,16 +17,20 @@ import (
 // Parameters:
 //   - rawPrice     — close / matchPrice / price field from the exchange response
 //   - rawVolume    — volume / totalVolume field
-//   - rawChange    — change / priceChange field (absolute price delta)
-//   - rawChangePct — pctChange / pctPriceChange field (percentage delta)
+//   - rawChange    — pointer to change / priceChange field (nil = unavailable)
+//   - rawChangePct — pointer to pctChange / pctPriceChange field (nil = unavailable)
 //   - code         — ticker symbol (e.g. "VCB", "FPT"); empty string is passed through
 //   - source       — domain.PriceSource (SourceHOSE, SourceHNX, SourceUPCOM, SourceCache)
 //   - fetchedAt    — RFC3339 timestamp captured by the caller (no time.Now() here)
 //   - latencyMs    — round-trip milliseconds measured by the caller
 //
+// DSI-INV-1: Change/ChangePercent are pointers. nil = unavailable (serializes as JSON null),
+// distinguishable from a genuine 0 (flat day).
+//
 // Returns a value (not pointer) — PriceQuote is a plain value object.
 func NormalizeQuote(
-	rawPrice, rawVolume, rawChange, rawChangePct float64,
+	rawPrice, rawVolume float64,
+	rawChange, rawChangePct *float64,
 	code string,
 	source domain.PriceSource,
 	fetchedAt string,

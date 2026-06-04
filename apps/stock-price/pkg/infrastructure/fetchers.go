@@ -68,12 +68,15 @@ func (f *Tier1VnDirectFetcher) FetchPrice(code string) (*domain.PriceQuote, erro
 		return nil, nil
 	}
 	item := payload.Data[0]
+	// DSI-INV-1: use pointers so 0 is distinguishable from nil (unavailable)
+	change := item.Change
+	pctChange := item.PctChange
 	return &domain.PriceQuote{
 		Code:          item.Code,
 		Price:         item.Close,
 		Volume:        item.Volume,
-		Change:        item.Change,
-		ChangePercent: item.PctChange,
+		Change:        &change,
+		ChangePercent: &pctChange,
 		Source:        domain.SourceHOSE,
 		LatencyMs:     time.Since(start).Milliseconds(),
 		FetchedAt:     time.Now().UTC().Format(time.RFC3339),
@@ -133,12 +136,15 @@ func (f *Tier2VnDirectLegacyFetcher) FetchPrice(code string) (*domain.PriceQuote
 		return nil, nil
 	}
 	item := payload.Data[0]
+	// DSI-INV-1: use pointers so 0 is distinguishable from nil (unavailable)
+	change := item.PriceChange
+	pctChange := item.PctPriceChange
 	return &domain.PriceQuote{
 		Code:          item.Code,
 		Price:         item.MatchPrice,
 		Volume:        item.TotalVolume,
-		Change:        item.PriceChange,
-		ChangePercent: item.PctPriceChange,
+		Change:        &change,
+		ChangePercent: &pctChange,
 		Source:        domain.SourceHNX,
 		LatencyMs:     time.Since(start).Milliseconds(),
 		FetchedAt:     time.Now().UTC().Format(time.RFC3339),
@@ -169,10 +175,12 @@ func (f *Tier3CacheFetcher) FetchPrice(code string) (*domain.PriceQuote, error) 
 	defer db.Close()
 
 	var price, volume float64
+	var fetchedAt string
+	// DSI-INV-1 FR-PRICE-2: read actual fetched_at from DB, never re-stamp with time.Now()
 	err = db.QueryRow(
-		`SELECT price, volume FROM market_prices WHERE code = ? ORDER BY fetched_at DESC LIMIT 1`,
+		`SELECT price, volume, fetched_at FROM market_prices WHERE code = ? ORDER BY fetched_at DESC LIMIT 1`,
 		code,
-	).Scan(&price, &volume)
+	).Scan(&price, &volume, &fetchedAt)
 	if err == sql.ErrNoRows {
 		return nil, nil
 	}
@@ -180,15 +188,17 @@ func (f *Tier3CacheFetcher) FetchPrice(code string) (*domain.PriceQuote, error) 
 		slog.Warn("tier3: query failed", "error", err)
 		return nil, nil //nolint:nilerr
 	}
+	// DSI-INV-1 FR-PRICE-3: Change/ChangePercent are nil (unavailable) for cached data,
+	// not 0 which is ambiguous with a genuine flat day. Nil serializes as JSON null.
 	return &domain.PriceQuote{
 		Code:          code,
 		Price:         price,
 		Volume:        volume,
-		Change:        0,
-		ChangePercent: 0,
+		Change:        nil, // unavailable — cache does not store change data
+		ChangePercent: nil, // unavailable — cache does not store change data
 		Source:        domain.SourceCache,
 		LatencyMs:     time.Since(start).Milliseconds(),
-		FetchedAt:     time.Now().UTC().Format(time.RFC3339),
+		FetchedAt:     fetchedAt, // true source timestamp from DB, not time.Now()
 	}, nil
 }
 

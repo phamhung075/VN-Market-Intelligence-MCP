@@ -44,13 +44,16 @@ func (h *mockHistory) SaveQuote(_ *domain.PriceQuote) error { return nil }
 
 // ── test fixtures ─────────────────────────────────────────────────────────────
 
+// ptr returns a pointer to v. Helper to create *float64 values inline.
+func ptr(v float64) *float64 { return &v }
+
 func makeVCBQuote() *domain.PriceQuote {
 	return &domain.PriceQuote{
 		Code:          "VCB",
 		Price:         88000,
 		Volume:        2000000,
-		Change:        -1000,
-		ChangePercent: -1.12,
+		Change:        ptr(-1000), // DSI-INV-1: pointer for nullable change
+		ChangePercent: ptr(-1.12), // DSI-INV-1: pointer for nullable change
 		Source:        domain.SourceHOSE,
 		LatencyMs:     45,
 		FetchedAt:     time.Now().UTC().Format(time.RFC3339),

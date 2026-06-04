@@ -144,30 +144,34 @@ type priceQuoteNormalizerScenario struct {
 		LatencyMs    int64   `json:"latencyMs"`
 	} `json:"input"`
 	ExpectedOutput struct {
-		Code          string  `json:"code"`
-		Price         float64 `json:"price"`
-		Volume        float64 `json:"volume"`
-		Change        float64 `json:"change"`
-		ChangePercent float64 `json:"changePercent"`
-		Source        string  `json:"source"`
-		FetchedAt     string  `json:"fetchedAt"`
-		LatencyMs     int64   `json:"latencyMs"`
+		Code          string   `json:"code"`
+		Price         float64  `json:"price"`
+		Volume        float64  `json:"volume"`
+		Change        *float64 `json:"change"`        // DSI-INV-1: pointer for null-aware comparison
+		ChangePercent *float64 `json:"changePercent"` // DSI-INV-1: pointer for null-aware comparison
+		Source        string   `json:"source"`
+		FetchedAt     string   `json:"fetchedAt"`
+		LatencyMs     int64    `json:"latencyMs"`
 	} `json:"expectedOutput"`
 }
 
 // executePriceQuoteNormalizer runs a price_quote_normalizer scenario.
 // It calls the pure NormalizeQuote function and compares output field-by-field.
+// DSI-INV-1: Change/ChangePercent are now pointers (nil = unavailable).
 func executePriceQuoteNormalizer(data []byte) (bool, error) {
 	var s priceQuoteNormalizerScenario
 	if err := json.Unmarshal(data, &s); err != nil {
 		return false, fmt.Errorf("unmarshal price_quote_normalizer scenario: %w", err)
 	}
 
+	// DSI-INV-1: build pointers for change values from raw input
+	rawChange := s.Input.RawChange
+	rawChangePct := s.Input.RawChangePct
 	got := pricequotenormalizer.NormalizeQuote(
 		s.Input.RawPrice,
 		s.Input.RawVolume,
-		s.Input.RawChange,
-		s.Input.RawChangePct,
+		&rawChange,
+		&rawChangePct,
 		s.Input.Code,
 		domain.PriceSource(s.Input.Source),
 		s.Input.FetchedAt,
@@ -185,11 +189,12 @@ func executePriceQuoteNormalizer(data []byte) (bool, error) {
 	if got.Volume != exp.Volume {
 		failures = append(failures, fmt.Sprintf("Volume: got=%v want=%v", got.Volume, exp.Volume))
 	}
-	if got.Change != exp.Change {
-		failures = append(failures, fmt.Sprintf("Change: got=%v want=%v", got.Change, exp.Change))
+	// DSI-INV-1: compare pointers — both nil OR both non-nil with equal values
+	if !floatPtrEqual(got.Change, exp.Change) {
+		failures = append(failures, fmt.Sprintf("Change: got=%v want=%v", ptrVal(got.Change), ptrVal(exp.Change)))
 	}
-	if got.ChangePercent != exp.ChangePercent {
-		failures = append(failures, fmt.Sprintf("ChangePercent: got=%v want=%v", got.ChangePercent, exp.ChangePercent))
+	if !floatPtrEqual(got.ChangePercent, exp.ChangePercent) {
+		failures = append(failures, fmt.Sprintf("ChangePercent: got=%v want=%v", ptrVal(got.ChangePercent), ptrVal(exp.ChangePercent)))
 	}
 	if string(got.Source) != exp.Source {
 		failures = append(failures, fmt.Sprintf("Source: got=%q want=%q", got.Source, exp.Source))
@@ -207,21 +212,41 @@ func executePriceQuoteNormalizer(data []byte) (bool, error) {
 	return true, nil
 }
 
+// floatPtrEqual compares two *float64 pointers — true if both nil or both non-nil with equal values.
+func floatPtrEqual(a, b *float64) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+	return *a == *b
+}
+
+// ptrVal formats a *float64 as string for error messages.
+func ptrVal(p *float64) string {
+	if p == nil {
+		return "nil"
+	}
+	return fmt.Sprintf("%v", *p)
+}
+
 // ---------------------------------------------------------------------------
 // Execution — tier_fallback_selector executor (P1-B2)
 // ---------------------------------------------------------------------------
 
 // tierFallbackSelectorQuote is the JSON shape of a quote inside a
 // tier_fallback_selector scenario (quote may be null).
+// DSI-INV-1: Change/ChangePercent are pointers for null-aware JSON handling.
 type tierFallbackSelectorQuote struct {
-	Code          string  `json:"code"`
-	Price         float64 `json:"price"`
-	Volume        float64 `json:"volume"`
-	Change        float64 `json:"change"`
-	ChangePercent float64 `json:"changePercent"`
-	Source        string  `json:"source"`
-	FetchedAt     string  `json:"fetchedAt"`
-	LatencyMs     int64   `json:"latencyMs"`
+	Code          string   `json:"code"`
+	Price         float64  `json:"price"`
+	Volume        float64  `json:"volume"`
+	Change        *float64 `json:"change"`
+	ChangePercent *float64 `json:"changePercent"`
+	Source        string   `json:"source"`
+	FetchedAt     string   `json:"fetchedAt"`
+	LatencyMs     int64    `json:"latencyMs"`
 }
 
 // tierFallbackSelectorResult is one entry in the input results array.
@@ -254,6 +279,7 @@ func executeTierFallbackSelector(data []byte) (bool, error) {
 	}
 
 	// Build []TierResult from JSON input.
+	// DSI-INV-1: Change/ChangePercent are now pointers.
 	results := make([]tierfallbackselector.TierResult, len(s.Input.Results))
 	for i, r := range s.Input.Results {
 		var tr tierfallbackselector.TierResult
@@ -262,8 +288,8 @@ func executeTierFallbackSelector(data []byte) (bool, error) {
 				Code:          r.Quote.Code,
 				Price:         r.Quote.Price,
 				Volume:        r.Quote.Volume,
-				Change:        r.Quote.Change,
-				ChangePercent: r.Quote.ChangePercent,
+				Change:        r.Quote.Change,        // already a pointer from JSON
+				ChangePercent: r.Quote.ChangePercent, // already a pointer from JSON
 				Source:        domain.PriceSource(r.Quote.Source),
 				FetchedAt:     r.Quote.FetchedAt,
 				LatencyMs:     r.Quote.LatencyMs,
@@ -313,11 +339,12 @@ func executeTierFallbackSelector(data []byte) (bool, error) {
 	if gotQuote.Volume != exp.Volume {
 		failures = append(failures, fmt.Sprintf("Volume: got=%v want=%v", gotQuote.Volume, exp.Volume))
 	}
-	if gotQuote.Change != exp.Change {
-		failures = append(failures, fmt.Sprintf("Change: got=%v want=%v", gotQuote.Change, exp.Change))
+	// DSI-INV-1: compare pointers for Change/ChangePercent
+	if !floatPtrEqual(gotQuote.Change, exp.Change) {
+		failures = append(failures, fmt.Sprintf("Change: got=%v want=%v", ptrVal(gotQuote.Change), ptrVal(exp.Change)))
 	}
-	if gotQuote.ChangePercent != exp.ChangePercent {
-		failures = append(failures, fmt.Sprintf("ChangePercent: got=%v want=%v", gotQuote.ChangePercent, exp.ChangePercent))
+	if !floatPtrEqual(gotQuote.ChangePercent, exp.ChangePercent) {
+		failures = append(failures, fmt.Sprintf("ChangePercent: got=%v want=%v", ptrVal(gotQuote.ChangePercent), ptrVal(exp.ChangePercent)))
 	}
 	if string(gotQuote.Source) != exp.Source {
 		failures = append(failures, fmt.Sprintf("Source: got=%q want=%q", gotQuote.Source, exp.Source))
@@ -445,14 +472,15 @@ func executePrimitive(s Scenario) (bool, error) {
 
 // priceResolutionTierInput is the JSON shape for one tier input inside a
 // price_resolution scenario. Pointer so it can be null.
+// DSI-INV-1: Change/ChangePct are pointers for null-aware JSON handling.
 type priceResolutionTierInput struct {
-	Price     float64 `json:"price"`
-	Volume    float64 `json:"volume"`
-	Change    float64 `json:"change_pct"`
-	ChangePct float64 `json:"change_pct"`
-	Source    string  `json:"source"`
-	FetchedAt string  `json:"fetched_at"`
-	LatencyMs int64   `json:"latency_ms"`
+	Price     float64  `json:"price"`
+	Volume    float64  `json:"volume"`
+	Change    *float64 `json:"change"`     // DSI-INV-1: pointer for null handling
+	ChangePct *float64 `json:"change_pct"` // DSI-INV-1: pointer for null handling
+	Source    string   `json:"source"`
+	FetchedAt string   `json:"fetched_at"`
+	LatencyMs int64    `json:"latency_ms"`
 }
 
 // priceResolutionScenario is the full JSON shape for price_resolution module scenarios.
@@ -489,6 +517,7 @@ func (s *staticTierFetcher) FetchPrice(_ string) (*domain.PriceQuote, error) {
 
 // buildStaticFetcher converts a nullable priceResolutionTierInput into a
 // staticTierFetcher. When inp is nil the fetcher returns nil (tier absent).
+// DSI-INV-1: Change/ChangePercent are now pointers.
 func buildStaticFetcher(code string, inp *priceResolutionTierInput) *staticTierFetcher {
 	if inp == nil {
 		return &staticTierFetcher{quote: nil}
@@ -498,8 +527,8 @@ func buildStaticFetcher(code string, inp *priceResolutionTierInput) *staticTierF
 			Code:          code,
 			Price:         inp.Price,
 			Volume:        inp.Volume,
-			Change:        inp.Change,
-			ChangePercent: inp.ChangePct,
+			Change:        inp.Change,    // already a pointer from JSON
+			ChangePercent: inp.ChangePct, // already a pointer from JSON
 			Source:        domain.PriceSource(inp.Source),
 			FetchedAt:     inp.FetchedAt,
 			LatencyMs:     inp.LatencyMs,

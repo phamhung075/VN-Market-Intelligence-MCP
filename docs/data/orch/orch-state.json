@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-04T18:50:00Z",
   "_updated_by": "dev-mcp-server",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
+    "status": "in_progress",
+    "active_task_id": "DSI-S1-MACRO",
     "next_agent": "dev-mcp-server",
-    "next_action": "DSI-S1-SLA DONE. Next: DSI-S1-MACRO (P0, M) — per-field is_estimate on carry/yield; true-source fetched_at. DSI-S1-SLA commit on main, ops rebuild needed.",
-    "wip": 0,
+    "next_action": "DSI-S1-MACRO (P0,M) per DSI-BA-spec FR-MAC-1..6 + vps-scripts country VN->vietnam (DSI-S1-SLA deploy gate FR-SLA-4). One mcp rebuild bakes SLA+MACRO. WIP=2.",
+    "wip": 2,
     "wip_max": 2,
-    "updated_at": "2026-06-04T18:50:00Z",
-    "updated_by": "dev-mcp-server"
+    "updated_at": "2026-06-04T18:54:33Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2113,7 +2113,7 @@
           {
             "id": "DSI-S2-PRICE",
             "label": "stock-price Staleness propagation + Change nullability + Tier-3 no-restamp",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/stock-price",
             "size": "M"
           },
@@ -2672,7 +2672,7 @@
         "title": "S2 stock-price: propagate Staleness through FetchPriceResponse; Tier3 stop re-stamping FetchedAt + mark change fields unavailable not 0",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE",
         "size": "M",
         "priority": "P1",
         "zone": "apps/stock-price/",
@@ -2683,7 +2683,7 @@
           "apps/stock-price/pkg/application/usecases.go",
           "apps/stock-price/pkg/.../price_resolution.go"
         ],
-        "note": "ROUTER-CONFIRMED: fetchers.go:183-193 Tier3 cache fallback hardcodes Change:0/ChangePercent:0 + FetchedAt=time.Now() (re-stamped fresh). Source:'cache' IS set BUT Staleness (FRESH/STALE/EXPIRED) computed in price_resolution.go:113-122 is DROPPED at FetchPriceResponse DTO (usecases.go:24-33,64-74) => caller never sees age. FIX: add Staleness to FetchPriceResponse DTO + wire through; Tier3 must NOT re-stamp FetchedAt to now (keep true source time) + mark change fields unavailable not 0 (AC5). This task = the Go stock-price service ONLY; the mcp-server yahoo/commodity 0-fallback piece is DSI-S1-FE-TYPE/DSI-S1-MACRO (apps/mcp-server zone)."
+        "note": "ROUTER-CONFIRMED: fetchers.go:183-193 Tier3 cache fallback hardcodes Change:0/ChangePercent:0 + FetchedAt=time.Now() (re-stamped fresh). Source:'cache' IS set BUT Staleness (FRESH/STALE/EXPIRED) computed in price_resolution.go:113-122 is DROPPED at FetchPriceResponse DTO (usecases.go:24-33,64-74) => caller never sees age. FIX: add Staleness to FetchPriceResponse DTO + wire through; Tier3 must NOT re-stamp FetchedAt to now (keep true source time) + mark change fields unavailable not 0 (AC5). This task = the Go stock-price service ONLY; the mcp-server yahoo/commodity 0-fallback piece is DSI-S1-FE-TYPE/DSI-S1-MACRO (apps/mcp-server zone). | DONE 2026-06-04T18:55:23Z: Go service fixes shipped. FetchPriceResponse extended with Staleness/IsEstimate fields. Change/ChangePercent changed to *float64 (nil=unavailable, serializes as JSON null). Tier-3 cache now reads true fetched_at from DB row instead of re-stamping with time.Now(). domain/models.go, application/usecases.go, infrastructure/fetchers.go, primitive/normalizer.go, sandbox/main.go updated. 8 DSI tests added (usecases_dsi_test.go), all pass. go build ./... pass. ops_rebuild_required=true. JSON shape: {change:null|number, changePercent:null|number, staleness:FRESH|STALE|EXPIRED, isEstimate:true|false}. Coordinate with DSI-S1-FE-TYPE for StockQuote type update."
       },
       {
         "task_id": "DSI-S3-SECTOR-FIN",

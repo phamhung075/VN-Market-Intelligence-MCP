@@ -2,6 +2,52 @@
 
 Zone: `apps/stock-price/` | Stack: Go 1.22 (CGO — mattn/go-sqlite3) | DB: stock_price.db (write WAL) + market.db (read-only WAL)
 
+## Session 2026-06-04 — DSI-S2-PRICE (Data Serve Integrity) DONE
+
+### Problem
+Tier-3 cache fallback re-stamped stale data fresh (FetchedAt: time.Now()). Change/ChangePercent=0 was ambiguous with genuine flat day. Staleness annotation computed in price_resolution.go was dropped at FetchPriceResponse DTO boundary.
+
+### What shipped
+- **domain/models.go**: Change/ChangePercent `float64` -> `*float64` (nil = unavailable, serializes as JSON null)
+- **application/usecases.go**: Added `Staleness string` + `IsEstimate bool` to FetchPriceResponse; propagate from ResolvedQuote
+- **infrastructure/fetchers.go**: Tier-3 reads actual `fetched_at` from DB (not time.Now()), sets Change/ChangePercent=nil
+- **infrastructure/fetchers.go**: Tier-1/Tier-2 use pointer for Change (real 0 preserved)
+- **primitive/normalizer.go**: Signature updated for *float64 change params
+- **cmd/sandbox/main.go**: Updated scenario types for pointer Change fields
+
+### Tests added (usecases_dsi_test.go)
+- TestFetchPriceUseCase_StalenessPropagated (AC-PRICE-1)
+- TestFetchPriceUseCase_IsEstimateTrueForExpired
+- TestFetchPriceUseCase_FreshNotEstimate
+- TestFetchPriceUseCase_ChangeNilForCachePath (AC-PRICE-3)
+- TestFetchPriceUseCase_RealZeroPreserved (AC-PRICE-4)
+- TestFetchPriceResponse_JSONNullSerialization (AC-PRICE-5)
+- TestFetchPriceResponse_JSONZeroSerialization
+- TestFetchPriceUseCase_FetchedAtFromSource (AC-PRICE-2)
+
+### JSON shape for FE-type coordination (DSI-S1-FE-TYPE)
+```json
+{
+  "code": "VCB",
+  "price": 88000,
+  "volume": 2000000,
+  "change": null,           // null = unavailable, 0 = genuine flat day
+  "changePercent": null,    // null = unavailable, 0 = genuine flat day
+  "source": "cache",
+  "latencyMs": 5,
+  "fetchedAt": "2026-06-01T10:00:00Z",  // true DB timestamp, NOT time.Now()
+  "staleness": "STALE",     // "FRESH" | "STALE" | "EXPIRED" | ""
+  "isEstimate": true        // true when staleness is STALE or EXPIRED
+}
+```
+
+### Verification
+- `go build ./...` PASS
+- `go test ./...` 8/8 DSI tests PASS (existing unrelated infra test failure pre-existing)
+
+### Next
+ops_rebuild_required=true. Coordinate with DSI-S1-FE-TYPE for StockQuote type update in apps/frontend.
+
 ## Session 2026-05-24 — P2-F G5a git mv _deprecated + FetchPriceUseCase rewire DONE
 
 ### What shipped (P2-F)

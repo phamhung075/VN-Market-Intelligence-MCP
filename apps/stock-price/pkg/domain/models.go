@@ -13,12 +13,14 @@ const (
 )
 
 // PriceQuote is a single price snapshot from any tier.
+// DSI-INV-1: Change/ChangePercent are pointers — nil = unavailable (serializes as JSON null),
+// not 0 which is ambiguous with a genuine flat day.
 type PriceQuote struct {
 	Code          string      `json:"code"`
 	Price         float64     `json:"price"`
 	Volume        float64     `json:"volume"`
-	Change        float64     `json:"change"`
-	ChangePercent float64     `json:"changePercent"`
+	Change        *float64    `json:"change"`        // nil = unavailable, 0 = genuine flat day
+	ChangePercent *float64    `json:"changePercent"` // nil = unavailable, 0 = genuine flat day
 	Source        PriceSource `json:"source"`
 	LatencyMs     int64       `json:"latencyMs"`
 	FetchedAt     string      `json:"fetchedAt"`

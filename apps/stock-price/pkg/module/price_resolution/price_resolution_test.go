@@ -41,13 +41,16 @@ func (e *errFetcher) FetchPrice(_ string) (*domain.PriceQuote, error) {
 // Helper — build a PriceQuote with a known FetchedAt offset from a base time.
 // ---------------------------------------------------------------------------
 
+// ptr returns a pointer to v. Helper to create *float64 values inline.
+func ptr(v float64) *float64 { return &v }
+
 func quoteAt(source domain.PriceSource, fetchedAt string) *domain.PriceQuote {
 	return &domain.PriceQuote{
 		Code:          "VCB",
 		Price:         85000,
 		Volume:        1_000_000,
-		Change:        500,
-		ChangePercent: 0.59,
+		Change:        ptr(500),  // DSI-INV-1: pointer for nullable change
+		ChangePercent: ptr(0.59), // DSI-INV-1: pointer for nullable change
 		Source:        source,
 		FetchedAt:     fetchedAt,
 		LatencyMs:     15,
