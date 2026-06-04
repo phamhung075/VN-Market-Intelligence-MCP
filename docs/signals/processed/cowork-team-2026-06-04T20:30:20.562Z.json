@@ -1,0 +1,37 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-04T20:30:20.562Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "legacy-skip",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:13",
+    "leader_lock": "own_held_heartbeat",
+    "last_fired_timestamp": "2026-06-04T20:30:11.504Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "signal_backlog": 4,
+    "note": "tnb-audit (guaranteed daily, 2d stale) fired. Supervisor raised NEW CRITICAL F-CARRY-CORRUPT (fedFundsRate=5.33 stale vs ~3.58, carry sign inverted -> wrong FII_OUTFLOW_RISK in all 3 c87 dishes; routed to PO via signal_queue) + closed F8. Agent could not git-commit its 4 output files (no Bash in toolset) -> notebook/handoff/signal uncommitted in worktree."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-04T20:30:20.562Z"
+}

@@ -7,11 +7,11 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "DSI-CONSUMER-HONORS-ISESTIMATE DONE (agent-father 2026-06-04): chef.md + fb-market-poster flow carry provenance rules added. Remaining: DSI-S2-PRICE-TS-GAP (P2, dev-mcp-server) | FU-RUNTIME-SET-TRUTH-RECONCILE (P3 doc, ops). Cowork agents must reload flows (paste refresh prompt from agent-father report).",
+    "next_action": "DSI-S2-PRICE-TS-GAP DONE (cnyVndRate type-honesty, zero-reader; commit 54634eb2). DSI sprint code work complete. Remaining open: FU-CNYVND-DEAD-FIELD-REMOVE (P3 CLEAN, dead-data removal) | FU-SBV-DEPOSIT-PROVENANCE-GO (P2, architect judgment call) | FU-MACRO-INDICATORS-MISSCOPE (P2 doc) | DSI-S1-SLA VPS deploy (ops-vps, scp fetch-tradingeconomics.sh+fetch-gso.sh COUNTRY=vietnam) | FU-RUNTIME-SET-TRUTH-RECONCILE (P3 doc).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T20:30:00Z",
-    "updated_by": "agent-father"
+    "updated_at": "2026-06-04T21:35:21Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T21:07:04Z",
+    "_updated_at": "2026-06-04T21:35:21Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2592,7 +2592,7 @@
         "title": "RECURRING: get_macro_snapshot fedFundsRate regressed to stale 5.33 fixture (masquerades as live) — inverts carry regime to FII_OUTFLOW_RISK; per-field freshness + no live-masking fallback",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "ABSORBED-INTO-SPRINT",
+        "status": "DONE-RECONCILED",
         "size": "M",
         "priority": "P0",
         "zone": "apps/mcp-server/",
@@ -2606,7 +2606,8 @@
           "apps/mcp-server/src/infrastructure/fetchers/fredApi.ts"
         ],
         "note": "ROUTER-VERIFIED REGRESSION (sev-HIGH, recurring) 2026-06-04T17:40Z raw get_macro_snapshot cross-checked vs ground truth. RECURRING: this is the 2nd+ regression of the SAME defect — DPI-2/DPI-FU-A fixed it 2026-05-30 (ff9a64ce, PO-signoff: fedFundsRate went 5.33 fixture -> 3.62 FRED-live, regime flipped FII_OUTFLOW_RISK->NEUTRAL). It has now FALLEN BACK to the 5.33 fixture exactly as the FU-A forward-dependency warned (requires macroIndicatorRefreshJob 19:13 UTC + FRED reachable from container; the 96h checkAndAlertEffrStaleness guard either did not fire or was not acted on). Per recurring-bug-escalation policy (>=2 fix cycles same module) ARCHITECT MUST root-cause-rethink BEFORE another point-fix — do NOT just re-run the fetch. RAW EVIDENCE: carry.fedFundsRate=5.33 (real Fed target 3.50-3.75 / EFFR ~3.58 web-verified) => carrySpread = vndDeposit 5.00 - 5.33 = -0.33pp => regime FII_OUTFLOW_RISK (SIGN FLIPPED; real ~3.58 gives +1.42pp carry-favorable). This single stale constant has CORRUPTED the central thesis of fb-market-poster 06-01..06-04 (all claim 'khoi ngoai rut vi chenh lech lai suat am' = backwards) + likely CHEF/unified-agent + tran-ngoc-bau Layer-4 carry/regime walks. oilUsd=95.06 sig -2.11% (real 96.97 -0.86%, ~2% off + WRONG direction); goldUsd=4509.6 sig +0.97% BULLISH (real ~4475 falling, ~0.8% high + WRONG direction; 4509.6~=7d avg 4505 => suspect averaged/stale tick); usdVnd=26122 plausible-verify. DISHONEST FLAG: top-level dataSource:live + fresh top-level fetchedAt while oil/gold/usdVnd carry NO per-field timestamp; serve path HAS fedFundsRateIsEstimate flag (macroTools.ts L55-58: '5.33 fallback' + (est.) vs (FRED) label) but the top-level dataSource does NOT downgrade to stale when a field falls back. ZONE CORRECTION: brief said route dev-macro-indicators, but that agent is zone-locked to apps/macro-indicators/ (separate not-deployed Go microservice plane). The ENTIRE get_macro_snapshot serving stack (FRED fetch, fixture fallback, carry/regime compute, staleness guard) lives in apps/mcp-server/ => correct zone dev-mcp-server. ACCEPTANCE: (1) fedFundsRate reflects real current Fed target (~3.50-3.75 as of 2026-06-04) sourced live w/ freshness check, NO hardcoded fallback constant that can masquerade as live; on stale/fetch-fail surface honest stale (not silent 5.33). (2) carrySpread+regime recompute POSITIVE (not FII_OUTFLOW_RISK) once rate fixed. (3) oil&gold value+direction match reputable live source within tolerance; on fetch-fail field marked stale not silently live. (4) per-field timestamps exposed in get_macro_snapshot; dataSource='live' ONLY when ALL fields fresh. (5) post-fix ops REBUILDS mcp-server container (restart relaunches stale image), QA verifies LIVE snapshot via call_tool shows corrected values+regime. DEDUPE: supersedes processed signal po-20260530T081716Z.json (EFFR staleness) + DPI-FU-A re-staleness forward-dependency; do NOT open a 2nd task.",
-        "absorbed_note": "ABSORBED 2026-06-04T18:23:25Z into DATA-SERVE-INTEGRITY as DSI-S1 (macro carry regime). The single-tool point-fix is now the S1 cluster of an architect-led cross-zone systemic sprint covering the same fail-soft-fixture anti-pattern across mcp-server + stock-price + macro-indicators. Do NOT work standalone — execute via DSI tasks. Acceptance criteria carried into DSI-S1."
+        "absorbed_note": "ABSORBED 2026-06-04T18:23:25Z into DATA-SERVE-INTEGRITY as DSI-S1 (macro carry regime). The single-tool point-fix is now the S1 cluster of an architect-led cross-zone systemic sprint covering the same fail-soft-fixture anti-pattern across mcp-server + stock-price + macro-indicators. Do NOT work standalone — execute via DSI tasks. Acceptance criteria carried into DSI-S1.",
+        "reconcile_note": "F-CARRY-CORRUPT cured+live-verified 2026-06-04T21:21Z: get_macro_snapshot carry NEUTRAL fed=3.62 spread=+1.38 is_estimate=false tier=1. Commits 09e93d76+3f1fbddb (verified 78527f58). Was ABSORBED-INTO-SPRINT; DSI sprint closed, mirror reconciled by po."
       },
       {
         "task_id": "DSI-ARCH",
@@ -2628,7 +2629,7 @@
         "title": "S1a DETECTION NET FIRST: reconcile macroIndicatorSla country key VN vs writer vietnam so freshness guard + detectStartupStaleData fire + alert WORK",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "size": "S",
         "priority": "P0",
         "zone": "apps/mcp-server/",
@@ -2639,14 +2640,15 @@
           "apps/mcp-server/src/domain/services/macroIndicatorSla.ts",
           "apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts"
         ],
-        "note": "ROUTER-CONFIRMED (PO re-verified raw): macroIndicatorSla.ts:36,73 .get('VN') on SELECT fetched_at FROM macro_indicators WHERE country=?; macroIndicatorRefreshJob.ts:242 writes 'vietnam' (Task-1923a comment). => guard never matches a row, never fires, regression silent. Pick ONE canonical country key (confirm DB SSOT — check if ANY writer populates 'VN' before deciding), reconcile both sides, ensure checkAndAlertEffrStaleness + detectStartupStaleData fire and send WORK alert. FIX FIRST so subsequent regressions surface (AC4)."
+        "note": "ROUTER-CONFIRMED (PO re-verified raw): macroIndicatorSla.ts:36,73 .get('VN') on SELECT fetched_at FROM macro_indicators WHERE country=?; macroIndicatorRefreshJob.ts:242 writes 'vietnam' (Task-1923a comment). => guard never matches a row, never fires, regression silent. Pick ONE canonical country key (confirm DB SSOT — check if ANY writer populates 'VN' before deciding), reconcile both sides, ensure checkAndAlertEffrStaleness + detectStartupStaleData fire and send WORK alert. FIX FIRST so subsequent regressions surface (AC4).",
+        "reconcile_note": "S1a macroIndicatorSla VN->vietnam key fixed bab7fb8b (code DONE+live). Residual = VPS cron deploy (scp fetch-tradingeconomics.sh+fetch-gso.sh) tracked separately as DSI-S1-SLA ops-vps PENDING."
       },
       {
         "task_id": "DSI-S1-MACRO",
         "title": "S1b macro carry regime: kill fedFunds fixture + SBV deposit defaults masquerading as live; live FRED/SBV fail-loud; per-field freshness; dataSource=live only when all fresh",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "size": "M",
         "priority": "P0",
         "zone": "apps/mcp-server/",
@@ -2661,14 +2663,15 @@
           "apps/mcp-server/src/infrastructure/fetchers/fredApi.ts",
           "apps/mcp-server/src/infrastructure/fetchers/sbv.ts"
         ],
-        "note": "ABSORBS FIX-MACRO-FEDFUNDS-REGRESS. ROUTER-CONFIRMED: (a) macroTools.ts:55-58,236 fedFundsRate '...or 5.33 fallback'; fedFundsRateIsEstimate flag EXISTS but formatThienThoi suppresses only on ==0 NOT on isEstimate => estimated 5.33 still drives carry spread/regime => FII_OUTFLOW_RISK (real ~3.58 EFFR gives +1.42pp favorable). (b) sbv.ts:53-70,230-263 six SBV policy rates hardcoded (overnight3.0/refi4.5/discount1.5/MAX_DEPOSIT5.0/MAX_LENDING12.0/interbank4.0); SBV portal permanently 404 => served ALWAYS, written sbv_rates fetched_at=now, no is_estimate column. vndDepositRate=5.0 is the DEPOSIT side of carry => BOTH carry inputs are constants. (c) macroIndicatorRefreshJob.ts:273-276 oil/gold/usdVnd ??0 written commodity_prices fetched_at=now (zeros served live). FIX: fedFunds + SBV deposit live fail-loud on miss; carry/regime gate on isEstimate not just ==0; add is_estimate to sbv_rates; stop ??0 zero-writes; expect POSITIVE carry ~+1.4pp (AC3)."
+        "note": "ABSORBS FIX-MACRO-FEDFUNDS-REGRESS. ROUTER-CONFIRMED: (a) macroTools.ts:55-58,236 fedFundsRate '...or 5.33 fallback'; fedFundsRateIsEstimate flag EXISTS but formatThienThoi suppresses only on ==0 NOT on isEstimate => estimated 5.33 still drives carry spread/regime => FII_OUTFLOW_RISK (real ~3.58 EFFR gives +1.42pp favorable). (b) sbv.ts:53-70,230-263 six SBV policy rates hardcoded (overnight3.0/refi4.5/discount1.5/MAX_DEPOSIT5.0/MAX_LENDING12.0/interbank4.0); SBV portal permanently 404 => served ALWAYS, written sbv_rates fetched_at=now, no is_estimate column. vndDepositRate=5.0 is the DEPOSIT side of carry => BOTH carry inputs are constants. (c) macroIndicatorRefreshJob.ts:273-276 oil/gold/usdVnd ??0 written commodity_prices fetched_at=now (zeros served live). FIX: fedFunds + SBV deposit live fail-loud on miss; carry/regime gate on isEstimate not just ==0; add is_estimate to sbv_rates; stop ??0 zero-writes; expect POSITIVE carry ~+1.4pp (AC3).",
+        "reconcile_note": "S1b macro carry regime fix: fb7e16d0 (TS gate) + 09e93d76 (Go live serve path). Live-verified 21:21Z. Residual SBV-deposit-tier judgment call tracked as FU-SBV-DEPOSIT-PROVENANCE-GO."
       },
       {
         "task_id": "DSI-S1-FE-TYPE",
         "title": "S1c frontend MacroSnapshot/CommoditySnapshot TS types must NOT drop dataSource/per-field freshness/isEstimate — propagate to render",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE",
         "size": "S",
         "priority": "P1",
         "zone": "apps/mcp-server/",
@@ -2677,7 +2680,8 @@
         "files": [
           "apps/mcp-server frontend/shared types market.ts (MacroSnapshot ~152-159) + CommoditySnapshot type"
         ],
-        "note": "ROUTER-CONFIRMED: MacroSnapshot TS type (market.ts ~152-159) OMITS dataSource => live/fixture flag DROPPED at type boundary, never rendered. Also mcp-server yahooFinance.ts:288-323 11 live commodity prices 0-fallback per-symbol (cnyVndRate=0 permanent dead ticker) + CommoditySnapshot lacks isEstimate/failedSymbols, 0s persisted fetched_at=now. Add dataSource + per-field freshness/is_estimate + failedSymbols to the TS types so the honest flag survives to render (AC1/AC2). Confirm exact path during impl."
+        "note": "ROUTER-CONFIRMED: MacroSnapshot TS type (market.ts ~152-159) OMITS dataSource => live/fixture flag DROPPED at type boundary, never rendered. Also mcp-server yahooFinance.ts:288-323 11 live commodity prices 0-fallback per-symbol (cnyVndRate=0 permanent dead ticker) + CommoditySnapshot lacks isEstimate/failedSymbols, 0s persisted fetched_at=now. Add dataSource + per-field freshness/is_estimate + failedSymbols to the TS types so the honest flag survives to render (AC1/AC2). Confirm exact path during impl.",
+        "reconcile_note": "S1c frontend MacroSnapshot/CommoditySnapshot TS provenance fields: b16d6a89 DSI-S1-FE-TYPE DONE."
       },
       {
         "task_id": "DSI-S2-PRICE",
@@ -2702,7 +2706,7 @@
         "title": "S3 sector/financial signals on fabricated inputs: credit/energy/bond-seed + bctc ??0 false deltas + extractionConfidence ??1 max-confidence — flag or fail-loud",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE",
         "size": "M",
         "priority": "P2",
         "zone": "apps/mcp-server/",
@@ -2717,7 +2721,8 @@
           "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
           "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts"
         ],
-        "note": "ROUTER-CONFIRMED: creditFlowTools.ts:118-119 mortgage ??=10.5/11.0, :130-131,139-140 yoyGrowthPct ??15/??-15 reCreditRatioPct 20/19 (fabricated NHNN credit macro, no flag); energyTools.ts:65-68 grid dispatch 40/22/45/85 table labeled '(uoc tinh)' but derived stock-impact signal block carries NO caveat; bondMaturityTools.ts:91-93 + bondMaturityTracker.ts:42-91 SEED_BONDS coupons 10.0/10.5/11.0/9.0/11.5 + amounts/dates served silently when DB empty, no static_seed label; bctcFullTools.ts:226-229 + reports.ts:199-202 netMarginPct/roe/debtToEquity ??0 => false QoQ/YoY deltas vs synthetic 0 (NaN guard only grossMargin/bank form); finalizeBctcRefineTool.ts:1037 extractionConfidence ??1 => missing confidence becomes MAX at validator. FIX per architect invariant: fabricated defaults carry static_seed/estimate label propagated to derived signal OR fail-loud; ??0 deltas suppress (not emit false delta); extractionConfidence missing => low/0 not max (AC1)."
+        "note": "ROUTER-CONFIRMED: creditFlowTools.ts:118-119 mortgage ??=10.5/11.0, :130-131,139-140 yoyGrowthPct ??15/??-15 reCreditRatioPct 20/19 (fabricated NHNN credit macro, no flag); energyTools.ts:65-68 grid dispatch 40/22/45/85 table labeled '(uoc tinh)' but derived stock-impact signal block carries NO caveat; bondMaturityTools.ts:91-93 + bondMaturityTracker.ts:42-91 SEED_BONDS coupons 10.0/10.5/11.0/9.0/11.5 + amounts/dates served silently when DB empty, no static_seed label; bctcFullTools.ts:226-229 + reports.ts:199-202 netMarginPct/roe/debtToEquity ??0 => false QoQ/YoY deltas vs synthetic 0 (NaN guard only grossMargin/bank form); finalizeBctcRefineTool.ts:1037 extractionConfidence ??1 => missing confidence becomes MAX at validator. FIX per architect invariant: fabricated defaults carry static_seed/estimate label propagated to derived signal OR fail-loud; ??0 deltas suppress (not emit false delta); extractionConfidence missing => low/0 not max (AC1).",
+        "reconcile_note": "S3 sector/financial fabricated-input flags: 2873b6c3 (null/estimate/seed flags) + 1473f812 (bond-seed banner). DONE."
       },
       {
         "id": "BA-DSI",
@@ -2779,7 +2784,7 @@
         "title": "yahooFinance.ts is the LIVE price serve path (Go stock-price container NOT running). It emits no per-symbol is_estimate/staleness and hardcodes cnyVndRate=0 with no provenance — DSI-INV-1 violation on the live path. The shipped DSI-S2-PRICE Go code is correct but LATENT.",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE",
         "priority": "P2",
         "size": "M",
         "zone": "apps/mcp-server",
@@ -2787,7 +2792,8 @@
         "note": "QA C-2. get_market_snapshot (active price tool) routes via mcp-server yahooFinance.ts, NOT the Go stock-price service (port 5000 = AirTunes, container absent + not in host_runtime_set). yahooFinance.ts:315 cnyVndRate=0 always, no is_estimate; response source_tier:2 but no per-symbol staleness/is_estimate. FIX: add is_estimate+staleness to yahooFinance.ts commodity snapshot output; label cnyVndRate=0 as source_tier:4/is_estimate:true. SECONDARY decision (defer): leave Go stock-price latent (TS is the accepted live path) vs deploy it — recommend ACCEPT TS as path (host-safety, do not deploy more Go services). Do NOT start the Go container.",
         "depends_on": null,
         "triaged_by": "po",
-        "triaged_at": "2026-06-04T20:05:28Z"
+        "triaged_at": "2026-06-04T20:05:28Z",
+        "done_note": "DONE 2026-06-04 (54634eb2, dev-mcp-server). DSI-INV-1 type-honesty: CommoditySnapshot.cnyVndRate number→null; CNHVND=X 404s permanently so serving 0-as-live was the violation. SCOPE TRUTH (verify-raw): ZERO live readers found — no runtime/DB behavior change (DB column still gets 0 via ?? 0 NOT-NULL guard); fix is compile-time type-safety + future-consumer honesty only, no container rebuild needed. Deeper dead-data root-cause (remove field+column) → FU-CNYVND-DEAD-FIELD-REMOVE. tsc clean, 0 new test failures."
       },
       {
         "task_id": "FU-RUNTIME-SET-TRUTH-RECONCILE",
@@ -2815,13 +2821,24 @@
         "zone": "apps/macro-indicators",
         "note": "Discovered during FRED live-verify: with EFFR fresh, carry.is_estimate flipped to false but vndDeposit (SBV 5.0) is a permanent hardcoded fixture.",
         "depends_on": null
+      },
+      {
+        "task_id": "FU-CNYVND-DEAD-FIELD-REMOVE",
+        "title": "cny_vnd_rate is DEAD DATA — definitif cleanup (follow-up to DSI-S2-PRICE-TS-GAP type-honesty fix 54634eb2). CNHVND=X 404s permanently on Yahoo; dev-mcp-server confirmed ZERO live readers (MACRO_CODES excludes it, runImpactChain drops it, no get_* tool surfaces it). The 54634eb2 fix made the TS type null but the DB write still re-fabricates 0 via `?? 0` and the NOT NULL column + field remain wired through fetcher+usecase+8 test fixtures. Definitif fix = REMOVE the field + the cny_vnd_rate column (SQLite migration) + the `?? 0` re-fabrication entirely, OR repoint to a real CNY/VND source if a consumer is ever needed. Low consumer-break risk (zero readers) but needs a schema migration → P3.",
+        "type": "CLEAN",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/mcp-server",
+        "depends_on": null
       }
     ],
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-04T20:13:00Z",
-    "_updated_by": "tran-ngoc-bau",
+    "_updated_at": "2026-06-04T21:19:07Z",
+    "_updated_by": "dev-team",
     "rows": [
       {
         "id": "tnb-c87-20260604T2013",
@@ -2831,31 +2848,10 @@
         "type": "audit-handoff",
         "summary": "c87 NEEDS_ATTENTION STABLE: F8 CLOSED (morning verified); F-CARRY-CORRUPT CRITICAL (fedFundsRate stale, regime wrong); AC-1 live; Brent −3.18σ L1; MCP partial",
         "severity": "HIGH",
-        "status": "NEW",
-        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
-      },
-      {
-        "id": "tnb-c86-20260602T2013",
-        "ts": "2026-06-02T20:13Z",
-        "from": "tran-ngoc-bau",
-        "to": "po",
-        "type": "audit-handoff",
-        "summary": "c86 NEEDS_ATTENTION IMPROVING: Evening 4/6 best cycle; F8 COWORK-LEADER-SELFLOCK 2nd Monday miss; AutoCure chef.md Step 4 (cycle-phase); macro restored",
-        "severity": "HIGH",
         "status": "READ",
         "payload_ref": "docs/handoffs/tnb-audit-latest.md",
-        "po_disposition": "READ 2026-06-02: NO new dev task. Sole dev-actionable item F8 COWORK-LEADER-SELFLOCK already DONE (design 55b66672 + impl b5296672, committed 62739278; cowork flows runtime-read, live next cron-fire, no rebuild). c86 audit text says 'fix in progress' because c86 was written from pre-fix evidence. WATCH-ITEM: verify next Monday 2026-06-03 05:1xZ chef-morning fire publishes (F8 live-verify). Rest of c86 is pre-existing/tracked/positive: F9 business-context-absent (13th cycle, c81-disposition tracked), F2/F3/F4 structural data/tool gaps (tracked), macro restored (positive), Evening 4/6 BEST CYCLE + FPT 4/4 STRONG (positive), AC-1 chef.md Step 4 cycle-phase auto-cure applied."
-      },
-      {
-        "id": "po-frontend-operator-ux-20260602T2106Z",
-        "ts": "2026-06-02T21:06Z",
-        "from": "po",
-        "to": "agents-architect",
-        "type": "design_brief_request",
-        "summary": "MEDIUM. NEW sprint FRONTEND-OPERATOR-UX (orch-state active_sprints). TWO operator dashboard UX REQs, both dev-frontend zone. FOU-1-DESIGN (you): ONE brief docs/architecture-briefs/2026-06-02-frontend-operator-ux.md covering (REQ1) Kinh Dich hexagram hover-tooltip data seam — router recon found QUE_DATA in apps/mcp-server/src/domain/services/kinhDich/hexagramLibrary.ts (Record<number,QueData> id 1-64, has coreMeaning/judgment.interpretation/image/state) but the served KinhDichReading carries only hexagram(id)+name+signal, NOT description; frontend 'Que' column already has r.hexagram -> decide static frontend id->description map from QUE_DATA.coreMeaning (PREFERRED, no rebuild) vs DTO/REST exposure; name a dev-kinh-dich/dev-mcp-server consult only if domain-lib export needed. (REQ2) Service-Health mcp-online-truth — design 3-state {container: deployed|not_deployed} x {capability-via-mcp: live|data_limited|dark} + an expected-set/capability manifest SSOT mapping each short-key to the mcp tool/REST probe proving it online (live-probe evidence in sprint.evidence: macro/stock/kinh-dich/alert/news LIVE, ta DATA-LIMITED, pdf/bctc ONLINE, rag DARK). HARD CONSTRAINT: bounded+cached probe, NEVER fan out 156 tools per page load (host-safety). Reuse A-01b not_deployed enum + system-map host_runtime_set. Output the per-REQ dev split for FOU-2-REQ1 (dev-frontend) + FOU-3-REQ2 (dev-frontend +/- dev-api-gateway/dev-mcp-server + qa anti-false-green). Kin memory project_dashboard_two_data_planes, A-01-EXPECTED-SET.",
-        "severity": "MEDIUM",
-        "status": "READ",
-        "payload_ref": "docs/data/orch/orch-state.json#FRONTEND-OPERATOR-UX"
+        "read_at": "2026-06-04T21:19:07Z",
+        "read_note": "F-CARRY-CORRUPT verified FIXED LIVE (carry 3.62/NEUTRAL/+1.38pp, is_estimate:false, tier:1). Structural findings F3/F4/F6/BCTC tracked. To PO for narrative disposition."
       },
       {
         "id": "cowork-drainlag-20260603T0233Z",

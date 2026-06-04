@@ -1,0 +1,35 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-04T21:06:47.797Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "last_fired_timestamp": "2026-06-04T21:06:36.231Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired_fresh_stolen",
+    "note": "bctc-analyst-slot-3 daily off-market pass (cron 0 21 UTC=04:00 VN). agentId a9aa9f2dbc3e190a7. Agent applies its own E2 market-window guard + published-marker internally. signal_queue row tnb-c87-20260604T2013 (to=po) left NEW — dev-team-bound audit-handoff. Standing: push 0ea2e83f, cowork re-arm, pressure-state ~42h stale (legacy mode)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-04T21:06:47.797Z"
+}

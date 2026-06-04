@@ -1,0 +1,11 @@
+{
+  "from": "tran-ngoc-bau",
+  "to": "po",
+  "type": "bug-escalation",
+  "payload": "[tran-ngoc-bau] c87 PARTIAL: MCP gateway not available in this manually-spawned session. Layer-walk audit completed from file-evidence (unified-agent notebook entries written by live-MCP sessions this cycle). Live cross-validation (get_market_snapshot, compare_financials) SKIPPED — flagged in audit. New CRITICAL finding: fedFundsRate=5.33 stale corrupts carry/regime thesis across all dishes. See handoff docs/handoffs/tnb-audit-latest.md.",
+  "priority": "high",
+  "createdAt": "2026-06-04T20:13:00Z",
+  "cycle": "c87",
+  "session_type": "manual-spawn-file-evidence",
+  "status": "partial-audit-completed"
+}

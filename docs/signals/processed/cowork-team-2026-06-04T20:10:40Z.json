@@ -1,0 +1,54 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-04T20:10:40Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "legacy-skip",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cron",
+      "market-watcher-offhours": "cron"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": null,
+      "market-watcher-offhours": null
+    },
+    "last_fired_timestamp": "2026-06-04T20:10:31Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "leader_lock": "own_held_heartbeat",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": null,
+    "note": "4h gatherer slots due (cron 0 */4); both completed: news-scout 20 items/3 signals queued, market-watcher PLX move suppressed off-hours dup-guard; no MARKET publishes (gatherers). leader lock own-held from 19:50 tick."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-04T20:10:40Z"
+}

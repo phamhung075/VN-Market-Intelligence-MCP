@@ -1,0 +1,35 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-04T19:54:21Z",
+    "matched_slots": [
+      "chef-evening"
+    ],
+    "won_slots": [
+      "chef-evening"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "19:45",
+    "leader_lock": "acquired",
+    "last_fired_timestamp": "2026-06-04T19:54:21Z",
+    "last_fired_slots": [
+      "chef-evening"
+    ],
+    "last_fired_write_errors": null,
+    "note": "chef-evening published MARKET+WORK; pressure-state stale → legacy mode"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-04T19:54:21Z"
+}
