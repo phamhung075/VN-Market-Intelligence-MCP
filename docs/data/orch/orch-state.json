@@ -2725,43 +2725,9 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-04T16:54:48Z",
+    "_updated_at": "2026-06-04T18:51:56Z",
     "_updated_by": "dev-team",
     "rows": [
-      {
-        "id": "aac-20260602T170457Z",
-        "ts": "2026-06-02T17:04:57Z",
-        "from": "agents-architect",
-        "to": "agent-father",
-        "type": "brief_complete",
-        "summary": "NSCOUT-FRAMING-RECUR: cowork self-identity guard brief ready — 9 flows missing L3 guard; news-scout P1, see brief",
-        "severity": "HIGH",
-        "status": "DONE",
-        "payload_ref": "docs/architecture-briefs/2026-06-02-cowork-self-identity-guard.md",
-        "agent_father_disposition": "IMPLEMENTED 2026-06-02T17:xx. L3 SELF-IDENTITY GUARD + identity_role added to 9 flows: news-scout, bctc-analyst, alert-commander, digest-predict, tran-ngoc-bau, fb-market-poster, qa-responder, market-analyst, refine_bctc_md. Commit 3e0ee4f5. NSCOUT-FRAMING-RECUR closed."
-      },
-      {
-        "id": "aac-coverage-sweep-20260602T181856Z",
-        "ts": "2026-06-02T18:18:56Z",
-        "from": "agents-architect",
-        "to": "agent-father",
-        "type": "brief_complete",
-        "summary": "1965-COVERAGE-SWEEP: watchlist rotation brief ready — LRC sweep floor for news-scout+market-watcher; coverage-state.json SSOT + Step 0-sweep in 3 flow files",
-        "severity": "MED",
-        "status": "DONE",
-        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md"
-      },
-      {
-        "id": "aac-commit-boundary-20260602T181856Z",
-        "ts": "2026-06-02T18:18:56Z",
-        "from": "agents-architect",
-        "to": "agent-father",
-        "type": "brief_complete",
-        "summary": "PM-COMMIT-BOUNDARY-1974: commit-discipline class root-cause brief ready — commit-boundary skill + per-agent zone table + pm mutex step; absorbs FU-ARCHITECT-MUTEX-BINDING+FU-AGENT-FATHER-ORCH-SCOPE",
-        "severity": "HIGH",
-        "status": "DONE",
-        "payload_ref": "docs/architecture-briefs/2026-06-02-commit-boundary-discipline.md"
-      },
       {
         "id": "tnb-c86-20260602T2013",
         "ts": "2026-06-02T20:13Z",
@@ -3317,6 +3283,40 @@
           "fix_proposal": "self-identity guard at top of news-scout flow main.md; audit sibling cowork agent flows"
         },
         "note": "2026-06-02T17:05Z dev-team drain: RECURRENCE after fix 7239b803 (prior CW-NSCOUT-SPAWN-FRAMING claimed FIXED). Same failure: subagent reads router-scoped CLAUDE.md 'never run a flow yourself/always delegate' as self-binding -> NO-OP refusal. Post-fix recurrence triggers recurring-bug-escalation -> agents-architect root-cause (why framing fix did not hold; audit sibling cowork flows). Queued NSCOUT-FRAMING-RECUR."
+      },
+      {
+        "id": "aac-20260602T170457Z",
+        "ts": "2026-06-02T17:04:57Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "NSCOUT-FRAMING-RECUR: cowork self-identity guard brief ready — 9 flows missing L3 guard; news-scout P1, see brief",
+        "severity": "HIGH",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-cowork-self-identity-guard.md",
+        "agent_father_disposition": "IMPLEMENTED 2026-06-02T17:xx. L3 SELF-IDENTITY GUARD + identity_role added to 9 flows: news-scout, bctc-analyst, alert-commander, digest-predict, tran-ngoc-bau, fb-market-poster, qa-responder, market-analyst, refine_bctc_md. Commit 3e0ee4f5. NSCOUT-FRAMING-RECUR closed."
+      },
+      {
+        "id": "aac-coverage-sweep-20260602T181856Z",
+        "ts": "2026-06-02T18:18:56Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "1965-COVERAGE-SWEEP: watchlist rotation brief ready — LRC sweep floor for news-scout+market-watcher; coverage-state.json SSOT + Step 0-sweep in 3 flow files",
+        "severity": "MED",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-05-21-cowork-coverage-sweep.md"
+      },
+      {
+        "id": "aac-commit-boundary-20260602T181856Z",
+        "ts": "2026-06-02T18:18:56Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "PM-COMMIT-BOUNDARY-1974: commit-discipline class root-cause brief ready — commit-boundary skill + per-agent zone table + pm mutex step; absorbs FU-ARCHITECT-MUTEX-BINDING+FU-AGENT-FATHER-ORCH-SCOPE",
+        "severity": "HIGH",
+        "status": "DONE",
+        "payload_ref": "docs/architecture-briefs/2026-06-02-commit-boundary-discipline.md"
       }
     ]
   },
