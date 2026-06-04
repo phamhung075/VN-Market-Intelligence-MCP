@@ -1,13 +1,17 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-05-28 | **Sprint:** BCTC-EVAL-SUBSTRATE
+**Last updated:** 2026-06-04 | **Sprint:** DATA-SERVE-INTEGRITY
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
 
-2026-05-28 — BCTC-EVAL-FE COMPLETE (unstaged). 2 routes + 3 helper components + domain types + API client. 204/204 Vitest GREEN (+21 new). tsc clean. Build ✓. shadcn components installed (table, badge, collapsible). No commits (main terminal scoped-commit).
-2026-05-26 — P2-H macro contract fix COMPLETE. MacroSnapshot.signals: MacroSignal[] → MacroSignals (keyed-object). 3 files. 183/183 Vitest GREEN. tsc exit 0. lint:fence exit 0. Build ✓. Architect ruling 1d277bc7.
+2026-06-04 — DSI-S1-FE-TYPE DONE commit b16d6a89. StockQuote.change→number|null; added changePercent:number|null, staleness/isEstimate/fetchedAt. MacroSnapshot+MacroSignalEntry provenance fields. 303/303 Vitest GREEN (+8 new). tsc exit 0. NEEDS REBUILD: frontend.
+2026-06-02 — FOU-3-FE DONE commit b5e92ee8. 2-axis Service Health (container × capability). 295/295 GREEN (+31). NEEDS REBUILD.
+2026-06-02 — ORCH-DASH-LIVE DONE commit 8c30334a. Live auto-refresh /dashboard/orchestration. tsc clean. NEEDS REBUILD.
+2026-06-02 — FE-AUDIT DONE commit 9372d7c0. VPS not-deployed discrimination + fetch empty label. 264/264 GREEN (+15). NEEDS REBUILD.
+2026-06-01 — FBT-DEV DONE commit 80f2911b. BCTC-inspect + bctc-eval splat proxies. tsc clean.
+2026-05-28 — BCTC-EVAL-FE COMPLETE. 204/204 Vitest GREEN (+21). tsc clean. Build ✓.
 2026-05-26 — P2-F G10 blind-fix COMPLETE. direction-arrow.ts "↑↑" → "↑" fix (G10-injected bug). 179/179 Vitest GREEN. tsc clean. lint:fence 0. 1 cycle used.
 2026-05-26 — Phase 2 P2-A + P2-B + P2-C COMPLETE. ESLint fence (G4) installed and proven. 179/179 Vitest GREEN. tsc clean. Stopping before P2-D (QA gate).
 2026-05-25 — Phase 1 MVR COMPLETE. P1-A + P1-B1..B4 + P1-C + P1-E all DONE. 179/179 Vitest GREEN. 4/4 Playwright GREEN. G12 streak 3/3 COMPLETE. tsc clean.
@@ -38,12 +42,6 @@ Phase 2 P2-A/B/C DONE. ESLint fence (G4) installed: eslint.config.mjs + eslint-p
 - Commits: 3ef797d0 (P1-A) + eeb4d2f8 (P1-B1..B4) + 9b55a086 (P1-C)
 - G12 streak: P1-B1 ✓ P1-B2 ✓ P1-C ✓ — 3/3 COMPLETE
 - Key insight: Docker holds port 3001 even when container is stopped (TCP LISTEN). Use PORT=3099 env var for host-side Playwright runs.
-
-## Cycle 1956 — 2026-05-19 (emergency route rename — Remix .server suffix violation)
-
-- `dashboard.server.tsx` → `dashboard.services.tsx` (git mv). Nav links updated in 2 files.
-- Signal: docs/signals/dev-frontend-1956-route-rename.json
-- Commit: d4fa8648
 
 ## Key patterns
 
@@ -175,10 +173,16 @@ Zone health: 295/295 Vitest GREEN (+31 new), tsc clean | HEALTHY
 
 ## Carry-over (next session)
 
-- P2-D: QA gate — freeze anchor confirm (QA reads eslint.config.mjs git log, emits G4 evidence signal)
-- P2-E: QA gate — frontend-pre-inject tag + G10 bug injection (QA task)
-- P2-G: G11 2-trial regression alarm coupling proof (QA+dev task)
-- P2-H: Ops must REBUILD frontend container then RE-RUN Playwright 4/4 against :3001
-- FBT: ops rebuilds frontend container; qa verifies /dashboard/bctc-inspect live + eval tab.
-- Dev note: always use PORT=3099 (or similar) for host-side Playwright; Docker holds 3001 even when container stopped
-- Dev note: `lint:fence` script requires ESLINT_USE_FLAT_CONFIG=true (already baked into script)
+- P2-D/E/G/H: QA gates (pending P2-H ops rebuild + Playwright).
+- Dev note: always use PORT=3099 for host-side Playwright; Docker holds 3001 even when stopped.
+- Dev note: `lint:fence` requires ESLINT_USE_FLAT_CONFIG=true (baked into script).
+
+## Cycle DSI-S1-FE-TYPE — 2026-06-04 (DATA-SERVE-INTEGRITY sprint)
+
+- Task: extend domain types with DSI provenance fields — additive only, tsc gate.
+- Files changed (apps/frontend/ only):
+  - app/domain/market.ts: StockQuote.change→number|null; added changePercent:number|null, staleness/isEstimate/fetchedAt optional. MacroSnapshot: added dataSource/is_estimate/source_tier/fedFundsRateIsEstimate/carrySpread(null)/carryRegime(null). MacroSignalEntry: added is_estimate/source_tier/fetched_at; regime+carrySpread nullable.
+  - app/__tests__/dsi-s1-fe-type.test.ts (NEW): 8 tests covering AC-FE-2/4, backward-compat, null vs 0 semantics.
+- Verify: 303/303 Vitest GREEN (+8). tsc --noEmit exit 0. Commit b16d6a89.
+- Key pattern: change:null = unavailable (Tier-3 cache); change:0 = genuine flat day. changePercent is new nullable alias of Go *float64; changePct (existing WatchlistTileData field) is unaffected.
+- NEEDS REBUILD: frontend container (ops to dispatch).
