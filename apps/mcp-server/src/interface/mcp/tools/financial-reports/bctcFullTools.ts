@@ -66,6 +66,14 @@ export interface ReportRow {
   financing_cf: number;
   capex: number;
   free_cash_flow: number;
+  /**
+   * FIX-F: new equity/asset scalars — null for bank-form reports (notApplicable)
+   * and for corporate records not yet re-finalized after FIX-F ships (data-pending).
+   * Optional: column absent from legacy test fixtures + pre-migration DB rows.
+   */
+  charter_capital?: number | null;
+  investment_property?: number | null;
+  reward_fund?: number | null;
   gross_margin_pct: number | null;
   operating_margin_pct: number | null;
   net_margin_pct: number | null;
@@ -145,6 +153,10 @@ export interface BctcStructuredData {
   eps: number | null;
   net_revenue: number | null;
   receivables: number | null;
+  // FIX-F: new equity/asset scalars (null for banks + pre-FIX-F corpus until re-finalize)
+  charter_capital: number | null;
+  investment_property: number | null;
+  reward_fund: number | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1139,6 +1151,12 @@ export function registerBctcFullTools(
           net_revenue: latestRow.net_revenue !== undefined ? latestRow.net_revenue : null,
           // Live queried from vnstock_balance_sheet (not persisted in financial_reports)
           receivables,
+          // FIX-F: new equity/asset scalars (null for bank-form reports and pre-FIX-F corpus)
+          // Bank guard: bankForm=true → these are in notApplicable → finalize sets them NULL in DB.
+          // For not-yet-reflowed corporate records: latestRow column is NULL (data-pending).
+          charter_capital: latestRow.charter_capital ?? null,
+          investment_property: latestRow.investment_property ?? null,
+          reward_fund: latestRow.reward_fund ?? null,
         };
 
         // FIX-D: emit two content items:

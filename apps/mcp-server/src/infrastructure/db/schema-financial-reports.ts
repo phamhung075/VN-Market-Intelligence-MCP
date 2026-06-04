@@ -560,6 +560,29 @@ export function initFinancialReportsTables(db: Database): void {
     // fresh DB — column will be added by CREATE TABLE in SQLITE_DDL (future)
   }
 
+  // ── FIX-F: charter_capital / investment_property / reward_fund ────────────
+  // Three new scalar columns from the ScalarAggregate pipeline (FIX-F task).
+  // All three are corporate B01-DN only — bank path adds them to notApplicable
+  // (finalize/backfill will null-clear them for bank reports on re-run).
+  // NULL default: existing rows are data-pending until re-finalize/backfill runs.
+  try {
+    const fixf_cols = db
+      .query<{ name: string }, []>("PRAGMA table_info(financial_reports)")
+      .all();
+    const fixf_col_names = new Set(fixf_cols.map((c) => c.name));
+    if (!fixf_col_names.has("charter_capital")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN charter_capital REAL");
+    }
+    if (!fixf_col_names.has("investment_property")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN investment_property REAL");
+    }
+    if (!fixf_col_names.has("reward_fund")) {
+      db.exec("ALTER TABLE financial_reports ADD COLUMN reward_fund REAL");
+    }
+  } catch {
+    // fresh DB — columns included via SQLITE_DDL (future addition)
+  }
+
   // ── BCTC-HUMAN-CONFIRM: Migration 2 — confirm_status on financial_reports ──
   // confirm_status: PENDING | CONFIRMED (separate dimension from refine_status)
   // final_confirmed_at: ISO8601 UTC timestamp; NULL when not yet confirmed

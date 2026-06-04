@@ -295,6 +295,10 @@ export function buildBackfillBctcScalarsHandler(
         // in nullClearCols below, not here (the null-guard prevents double-write).
         if (agg.short_term_debt   !== null) updates.push({ col: "short_term_debt",   val: agg.short_term_debt });
         if (agg.long_term_debt    !== null) updates.push({ col: "long_term_debt",     val: agg.long_term_debt });
+        // FIX-F: new equity/asset scalar fields (corporate B01-DN only; bank path uses notApplicable)
+        if (agg.charter_capital      !== null) updates.push({ col: "charter_capital",      val: agg.charter_capital });
+        if (agg.investment_property  !== null) updates.push({ col: "investment_property",  val: agg.investment_property });
+        if (agg.reward_fund          !== null) updates.push({ col: "reward_fund",          val: agg.reward_fund });
 
         // NOT-APPLICABLE columns → SET NULL (clear stale legacy values)
         const nullClearCols: string[] = [...naSet];

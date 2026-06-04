@@ -100,6 +100,11 @@ export interface AggregatorRow {
  *     code "319" → short_term_debt    (Vay ngắn hạn — older layout or period-flip; /vay/i hint) ← FIX-DE-1
  *     code "339" → long_term_debt     (Vay; /vay/i hint — period-flip symmetry) ← FU-DE-321-VAY-GUARD
  *     code "334" → long_term_debt     (Vay dài hạn — older layout; /vay/i label hint) ← FIX-DE-1
+ *     code "411" → charter_capital    (Vốn góp/cổ phần/điều lệ; /vốn góp|vốn cổ phần|vốn điều lệ/ hint) ← FIX-F
+ *     code "230" → investment_property (Bất động sản đầu tư; /bất động sản đầu tư/ hint) ← FIX-F
+ *     code "322" → reward_fund        (Quỹ khen thưởng phúc lợi; /khen thưởng|phúc lợi/ hint) ← FIX-F
+ *     code "323" → reward_fund        (Fallback: FPT 2026Q1 layout) ← FIX-F
+ *     code "320" → reward_fund        (Fallback: HPG layout) ← FIX-F
  *   Derived:
  *     ebitda         = operating_profit + depreciation_amortization
  *     free_cash_flow = operating_cf + capex_raw (capex_raw is negative, so result = OCF - |capex|)
@@ -147,6 +152,33 @@ export interface ScalarAggregate {
   /** VAS code 339 (/vay/i label hint for symmetry) or 334 fallback (/vay/i label hint required).
    *  Vay và nợ thuê tài chính dài hạn. Million VND. Null if absent. */
   long_term_debt: number | null;
+  // FIX-F: 3 new equity/asset scalar fields (corporate B01-DN only; bank-guarded)
+  /**
+   * charter_capital — Vốn góp của chủ sở hữu / Vốn cổ phần / Vốn điều lệ.
+   * VAS code 411 in equity section (corporate Mẫu B01-DN).
+   * Bank Mẫu B02-TCTD uses Roman codes (III.1, VIII.1.a etc.) for charter capital —
+   * those codes differ structurally and are NOT mapped here (bank path → null/notApplicable).
+   * Label hint: /vốn góp|vốn cổ phần|vốn điều lệ|contributed capital/i.
+   * Million VND. Null if absent.
+   */
+  charter_capital: number | null;
+  /**
+   * investment_property — Bất động sản đầu tư.
+   * VAS code 230 on corporate Mẫu B01-DN (balance sheet, long-term assets section).
+   * Bank path: bank Mẫu B02-TCTD uses code XI (Roman) → bank guard → null/notApplicable.
+   * Label hint: /bất động sản đầu tư/i (highly specific — low collision risk).
+   * Million VND. Null if company holds no investment property (correct — not forced-zero).
+   */
+  investment_property: number | null;
+  /**
+   * reward_fund — Quỹ khen thưởng, phúc lợi.
+   * VAS codes vary across periods/issuers: 322 (VNM, DHG, FPT 2025Q4), 323 (FPT 2026Q1),
+   * 320 (HPG). Period-flip risk: same codes map to "Dự phòng phải trả" or borrowings on other
+   * issuers/periods (e.g. code 322 = long_term_debt for HPG, code 320 = "Phải trả" for FPT).
+   * Label hint /khen thưởng|phúc lợi/i is MANDATORY to avoid collision with debt/provision rows.
+   * Million VND. Null if absent.
+   */
+  reward_fund: number | null;
 }
 
 /**
@@ -167,6 +199,10 @@ export interface ScalarAggregate {
  * FIX-DE-1: bank path also adds "short_term_debt", "long_term_debt" to notApplicable —
  * banks report borrowings in B02-TCTD form (different codes), never VAS 321/339.
  * Ensures stale OCR-parse values are cleared on re-finalize for bank reports.
+ * FIX-F: bank path also adds "charter_capital", "investment_property", "reward_fund" —
+ * banks use B02-TCTD Roman codes for these concepts (different code numbering);
+ * mapping VAS 411/230/322 on a bank report produces garbage values or null.
+ * notApplicable ensures finalize/backfill null-clears any stale legacy value.
  *
  * Report-type detection: bank path is triggered when code "10" (corporate net_revenue)
  * is absent from the row set — the same branch the aggregator uses to fall through to
@@ -530,6 +566,33 @@ const P_BANK_CODE_IX_NET_PROFIT_HINT = /l[oợ]i\s+nhu[aậ]n\s+sau\s+thu[eế]/
 //   Code "XIII"→ not used for income: no collision risk (aggregator uses IX for net_profit)
 // All mapped bank income codes (I, VIII, IX) now have labelHints. No further rounds needed.
 
+// ── FIX-F label hint patterns ─────────────────────────────────────────────────
+
+/**
+ * charter_capital (Vốn điều lệ / Vốn góp của chủ sở hữu / Vốn cổ phần):
+ * VAS code 411 in corporate equity section.
+ * Label hint is STRICT to avoid picking "Thặng dư vốn cổ phần" (code 412) or
+ * other equity sub-items whose label does not include "vốn góp", "vốn cổ phần",
+ * "vốn điều lệ", or "contributed capital".
+ */
+const P_CHARTER_CAPITAL = /v[oố]n\s+g[oó]p|v[oố]n\s+c[oổ]\s+ph[aầ]n|v[oố]n\s+đi[eề]u\s+l[eệ]|contributed\s+capital/i;
+
+/**
+ * investment_property (Bất động sản đầu tư):
+ * VAS code 230 in corporate balance sheet.
+ * Highly specific pattern — low collision risk. Excludes "mua sắm bất động sản đầu tư"
+ * (cash-flow line) and "khấu hao…bất động sản đầu tư" (depreciation line) via section filter.
+ */
+const P_INVESTMENT_PROPERTY = /b[aấ]t\s+đ[oộ]ng\s+s[aả]n\s+đ[aầ]u\s+t[uư]/i;
+
+/**
+ * reward_fund (Quỹ khen thưởng, phúc lợi):
+ * VAS codes vary: 322 (VNM/DHG/FPT-Q4), 323 (FPT-2026Q1), 320 (HPG).
+ * Period-flip risk: code 322 = "Vay dài hạn" on HPG; code 320 = "Phải trả" on FPT.
+ * Label hint is MANDATORY — /khen thưởng|phúc lợi/i is unique to this fund row.
+ */
+const P_REWARD_FUND = /khen\s+th[uưử][oở]ng|ph[uú]c\s+l[oợ]i/i;
+
 // ── Main aggregator ───────────────────────────────────────────────────────────
 
 /**
@@ -577,6 +640,10 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     // FIX-DE-1: debt decomposition fields
     short_term_debt: null,
     long_term_debt: null,
+    // FIX-F: new equity/asset scalar fields
+    charter_capital: null,
+    investment_property: null,
+    reward_fund: null,
   };
 
   if (rows.length === 0) {
@@ -607,8 +674,15 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
   // Banks report borrowings via B02-TCTD form codes (not VAS 321/339).
   // Adding to notApplicable ensures finalizeBctcRefineTool clears stale OCR values
   // on re-finalize, preventing old garbage from persisting in bank reports.
+  // FIX-F: bank path also adds charter_capital/investment_property/reward_fund —
+  // bank B02-TCTD uses Roman codes for these concepts; VAS 411/230/322 extraction
+  // on a bank report is meaningless. notApplicable → null-clear on re-finalize.
   const notApplicable: string[] = isBankPath
-    ? ["gross_profit", "current_assets", "gross_margin_pct", "short_term_debt", "long_term_debt"]
+    ? [
+        "gross_profit", "current_assets", "gross_margin_pct",
+        "short_term_debt", "long_term_debt",
+        "charter_capital", "investment_property", "reward_fund",
+      ]
     : [];
 
   // ── Helper: apply unit scale and return null for null inputs ─────────────────
@@ -822,6 +896,64 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     }
   }
 
+  // ── FIX-F: charter_capital / investment_property / reward_fund ───────────────
+  // All three are corporate-only (B01-DN). Bank path skips them (notApplicable).
+  // MANDATORY label hints on all three — code collisions are well-documented above.
+
+  // charter_capital: VAS code 411 — "Vốn góp của chủ sở hữu" / "Vốn cổ phần"
+  //   Label hint /vốn góp|vốn cổ phần|vốn điều lệ|contributed capital/i prevents
+  //   picking sub-items (411a = "Cổ phiếu phổ thông" in some layouts).
+  //   Section: try 'general' (FPT 2026Q1 layout), then 'balance_sheet' (HPG/VNM layout).
+  let charter_capital: number | null = null;
+  if (!isBankPath) {
+    charter_capital =
+      scale(findByCode(rows, "411", P_CHARTER_CAPITAL, "general")) ??
+      scale(findByCode(rows, "411", P_CHARTER_CAPITAL, "balance_sheet")) ??
+      scale(findByCode(rows, "411", P_CHARTER_CAPITAL)); // broad last-resort, still guarded
+  }
+
+  // investment_property: VAS code 230 — "Bất động sản đầu tư"
+  //   Label hint prevents picking cash-flow "mua sắm bất động sản đầu tư" (code 04/05 in banks)
+  //   or depreciation lines (code 02 which includes "bất động sản đầu tư" in some reports).
+  //   Section: try 'balance_sheet' first (HPG/VNM layout), then 'general' (legacy layout).
+  let investment_property: number | null = null;
+  if (!isBankPath) {
+    investment_property =
+      scale(findByCode(rows, "230", P_INVESTMENT_PROPERTY, "balance_sheet")) ??
+      scale(findByCode(rows, "230", P_INVESTMENT_PROPERTY, "general")) ??
+      scale(findByCode(rows, "230", P_INVESTMENT_PROPERTY)); // broad last-resort, guarded
+  }
+
+  // reward_fund: VAS codes 322 (primary), 323 (FPT 2026Q1), 320 (HPG) — ALL with label hint.
+  //   /khen thưởng|phúc lợi/i is unique to this fund row — mandatory guard against:
+  //     code 322 = "Vay và nợ thuê tài chính dài hạn" (HPG)
+  //     code 320 = "Dự phòng phải trả" or "Phải trả ngắn hạn khác" (FPT)
+  //     code 322 = "Dự phòng phải trả ngắn hạn" (FPT 2026Q1 — collision with wrong row)
+  //   Try all 3 codes with hint; first match wins.
+  //   Section: try 'balance_sheet' (most issuers), then 'general' (legacy layout).
+  let reward_fund: number | null = null;
+  if (!isBankPath) {
+    // Code 322 (VNM, DHG, FPT 2025Q4 layout)
+    reward_fund =
+      scale(findByCode(rows, "322", P_REWARD_FUND, "balance_sheet")) ??
+      scale(findByCode(rows, "322", P_REWARD_FUND, "general")) ??
+      scale(findByCode(rows, "322", P_REWARD_FUND));
+    if (reward_fund === null) {
+      // Code 323 (FPT 2026Q1 layout)
+      reward_fund =
+        scale(findByCode(rows, "323", P_REWARD_FUND, "balance_sheet")) ??
+        scale(findByCode(rows, "323", P_REWARD_FUND, "general")) ??
+        scale(findByCode(rows, "323", P_REWARD_FUND));
+    }
+    if (reward_fund === null) {
+      // Code 320 (HPG layout) — last-resort fallback; same hint protection
+      reward_fund =
+        scale(findByCode(rows, "320", P_REWARD_FUND, "balance_sheet")) ??
+        scale(findByCode(rows, "320", P_REWARD_FUND, "general")) ??
+        scale(findByCode(rows, "320", P_REWARD_FUND));
+    }
+  }
+
   // EPS / diluted_eps: no standard VAS code present in FPT/ACB corpus.
   // Kept null — future work BCTC-EPS-FOOTNOTE.
   const eps: number | null = null;
@@ -866,6 +998,10 @@ export function aggregateScalars(rows: AggregatorRow[]): ScalarAggregateResult {
     // FIX-DE-1: debt decomposition
     short_term_debt,
     long_term_debt,
+    // FIX-F: new equity/asset scalar fields
+    charter_capital,
+    investment_property,
+    reward_fund,
   };
 
   // ── Balance-identity invariant (fail-loud gate) ───────────────────────────────
