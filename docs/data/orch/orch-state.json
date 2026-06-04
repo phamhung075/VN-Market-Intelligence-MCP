@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Dashboard blank-rows FIXED+LIVE (operator-reported): root cause = DATA-SERVE-INTEGRITY sprint tasks alone used id/no-title vs canonical task_id+title (8 of 155 rows blank). Part A data repair 5e050e5c (live, no rebuild). Part B DTO drift-tolerance + status-literal const extraction 2c8b03f7 (ops-rebuilt mcp-server, live). Raw-verified: 0 blank rows across 155 tasks. No backend hardcode added; duplicated DONE/IN_PROGRESS literals removed. Open backlog unchanged (FU-CNYVND-DEAD-FIELD-REMOVE P3, FU-SBV-DEPOSIT-PROVENANCE-GO P2, DSI-S1-SLA VPS deploy).",
+    "next_action": "DATA-SERVE-INTEGRITY single-signal fixture corruption closed live. Remaining backlog: FU-CNYVND-DEAD-FIELD-REMOVE(P3), FU-RUNTIME-SET-TRUTH-RECONCILE(P3), FU-SBV-EFFECTIVE-DATE-COLUMN(P3), FU-MACRO-SNAPSHOT-TEST-1881A(P3), plus P? unscoped + DEFERRED-INFRA.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T22:08:44Z",
+    "updated_at": "2026-06-04T22:51:44Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T22:01:56Z",
+    "_updated_at": "2026-06-04T22:51:44Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2763,12 +2763,15 @@
         "title": "Architecture correction: macro-indicators Go container is DEPLOYED (Up 45h) + IS the live serving path for get_macro_snapshot.signals (clients.ts->:5004). PO zone_correction (route to dev-mcp-server, 'macro-indicators not-deployed Go plane') was FALSE. DSI-S1-MACRO TS fix hit the text-block path only; live regression fixed by Go commit 09e93d76.",
         "type": "DOC",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE",
         "priority": "P2",
         "size": "S",
         "zone": "docs/architecture-briefs",
         "note": "Record in a brief: macro-indicators IS deployed+serving; correct future macro serving-path fixes to dev-macro-indicators (Go) not dev-mcp-server (TS). Recurring-bug-escalation: architect DSI brief mis-located the layer.",
-        "depends_on": null
+        "depends_on": null,
+        "claimed_by": "dev-team",
+        "claimed_at": "2026-06-04T22:15:50Z",
+        "done_note": "doc correction committed 1f8628a0; macro-indicators reclassified LIVE (R-4 HOT), §2 SBV tier:2 ruling final."
       },
       {
         "task_id": "DSI-CONSUMER-HONORS-ISESTIMATE",
@@ -2823,17 +2826,56 @@
         "title": "macro-indicators Go carry treats SBV vndDepositRate (5.0, hardcoded — SBV portal dead) as live (is_estimate:false, source_tier:1) because the daily sbv write stamps fetched_at=now. carry.is_estimate:false + dataSource:live slightly over-claim vs DSI-INV-1 / BA-spec FR-MAC-2 (SBV fallback => is_estimate). Judgment call: administered policy rate (tier-2) vs fixture (tier-4) — architect/PO to rule. yield already correctly flags is_estimate:true.",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P2",
         "size": "S",
         "zone": "apps/macro-indicators",
         "note": "Discovered during FRED live-verify: with EFFR fresh, carry.is_estimate flipped to false but vndDeposit (SBV 5.0) is a permanent hardcoded fixture.",
-        "depends_on": null
+        "depends_on": null,
+        "claimed_by": "dev-team",
+        "claimed_at": "2026-06-04T22:15:50Z",
+        "done_note": "code fb1439a6 (carry+yield source_tier 1→2); ops-rebuilt macro-indicators; LIVE-VERIFIED /snapshot carry source_tier=2 is_estimate=false regime=NEUTRAL spread=+1.38."
       },
       {
         "task_id": "FU-CNYVND-DEAD-FIELD-REMOVE",
         "title": "cny_vnd_rate is DEAD DATA — definitif cleanup (follow-up to DSI-S2-PRICE-TS-GAP type-honesty fix 54634eb2). CNHVND=X 404s permanently on Yahoo; dev-mcp-server confirmed ZERO live readers (MACRO_CODES excludes it, runImpactChain drops it, no get_* tool surfaces it). The 54634eb2 fix made the TS type null but the DB write still re-fabricates 0 via `?? 0` and the NOT NULL column + field remain wired through fetcher+usecase+8 test fixtures. Definitif fix = REMOVE the field + the cny_vnd_rate column (SQLite migration) + the `?? 0` re-fabrication entirely, OR repoint to a real CNY/VND source if a consumer is ever needed. Low consumer-break risk (zero readers) but needs a schema migration → P3.",
         "type": "CLEAN",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/mcp-server",
+        "depends_on": null
+      },
+      {
+        "task_id": "FU-SBV-EFFECTIVE-DATE-COLUMN",
+        "title": "Add effective_date TEXT column to sbv_rates + populate via SBV VPS fetcher with the known decree date; lets carry/yield upgrade administered SBV input from tier:2 to a date-stamped tier:2 (provenance completeness, not correctness).",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/macro-indicators",
+        "depends_on": null
+      },
+      {
+        "task_id": "CARRY-YIELD-SINGLE-SIGNAL-FIXTURE",
+        "title": "LIVE DSI-INV-1 VIOLATION + true F-CARRY-CORRUPT root on single-signal path: GET /carry-trade-signal (get_carry_trade_signal tool) and GET /yield-spread-signal (get_yield_spread_signal tool) serve HARDCODED fixture consts (handlers_carry.go carryFixtureFedFundsRate=5.33/VNDDeposit=4.7/computedAt=2026-05-23; handlers_yield.go earningYield=8.2/deposit=4.7) bypassing the live CarryYieldInputsPort+market.db that /snapshot uses, with NO source_tier and NO is_estimate. Consumers calling these registered MCP tools get the stale 5.33 FII_OUTFLOW_RISK carry that contradicts /snapshot's live 3.62/NEUTRAL/tier:2. Fix = rewire both handlers to the live usecase/port + buildCarryDTO/buildYieldDTO provenance (source_tier, is_estimate, fixture-suppression), OR consolidate onto the /snapshot computation. Found by router raw-verify this tick (2026-06-05); the prior 'F-CARRY-CORRUPT fixed' claim verified /snapshot only.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/macro-indicators",
+        "claimed_by": "dev-team",
+        "claimed_at": "2026-06-04T22:33:53Z",
+        "depends_on": null,
+        "done_note": "Option B consolidate: B-1 3d4384e3 (Go: deleted handlers_carry/yield.go fixture consts + endpoints, 404 guard test), B-2 02498635 (TS: get_carry_trade_signal+get_yield_spread_signal POST /snapshot, surface provenance). ops rebuilt macro-indicators(cff9799a)+mcp-server(c6bd90d9). LIVE-VERIFIED via gateway: get_carry_trade_signal=NEUTRAL/fed3.62(not5.33)/tier2/is_estimate:false; get_yield_spread_signal=CHEAP/tier4/is_estimate:true(honest); /carry-trade-signal+/yield-spread-signal=404. True F-CARRY-CORRUPT root on single-signal path eliminated."
+      },
+      {
+        "task_id": "FU-MACRO-SNAPSHOT-TEST-1881A",
+        "title": "1881a-source-tier.test.ts: 2 pre-existing get_macro_snapshot failures (AC-3 source_tier=2/text-field/fetchedAt + AC-8 source_tier-first-key-in-wrapper). NOT caused by CARRY-YIELD-SINGLE-SIGNAL-FIXTURE (failed identically at parent 02498635^: 5 fail pre, 2 fail post — B-2 fixed the 3 carry/yield ones). get_macro_snapshot wrapper test needs the /snapshot mock or live container; isolate + fix the macroTools.ts get_macro_snapshot wrapper test setup.",
+        "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
         "status": "BACKLOG",
         "priority": "P3",
