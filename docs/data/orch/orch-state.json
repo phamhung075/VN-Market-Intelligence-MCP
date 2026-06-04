@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "DSI-S2-PRICE-TS-GAP DONE (cnyVndRate type-honesty, zero-reader; commit 54634eb2). DSI sprint code work complete. Remaining open: FU-CNYVND-DEAD-FIELD-REMOVE (P3 CLEAN, dead-data removal) | FU-SBV-DEPOSIT-PROVENANCE-GO (P2, architect judgment call) | FU-MACRO-INDICATORS-MISSCOPE (P2 doc) | DSI-S1-SLA VPS deploy (ops-vps, scp fetch-tradingeconomics.sh+fetch-gso.sh COUNTRY=vietnam) | FU-RUNTIME-SET-TRUTH-RECONCILE (P3 doc).",
+    "next_action": "Dashboard blank-rows FIXED+LIVE (operator-reported): root cause = DATA-SERVE-INTEGRITY sprint tasks alone used id/no-title vs canonical task_id+title (8 of 155 rows blank). Part A data repair 5e050e5c (live, no rebuild). Part B DTO drift-tolerance + status-literal const extraction 2c8b03f7 (ops-rebuilt mcp-server, live). Raw-verified: 0 blank rows across 155 tasks. No backend hardcode added; duplicated DONE/IN_PROGRESS literals removed. Open backlog unchanged (FU-CNYVND-DEAD-FIELD-REMOVE P3, FU-SBV-DEPOSIT-PROVENANCE-GO P2, DSI-S1-SLA VPS deploy).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T21:35:21Z",
+    "updated_at": "2026-06-04T22:08:44Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
