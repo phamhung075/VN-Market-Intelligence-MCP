@@ -8,7 +8,7 @@ API_URL="${TE_PUSH_URL:-__MCP_BASE__/api/push-tradingeconomics}"
 API_KEY="${API_KEY:-__API_KEY__}"
 TE_API_KEY="${TRADING_ECONOMICS_API_KEY:-}"
 LOG="/var/log/vn-tradingeconomics-fetch.log"
-COUNTRY="VN"
+COUNTRY="vietnam"
 
 # Guard: exit gracefully when TE_API_KEY was never substituted by deploy script.
 # Prevents 401 flood and misleading "consecutive failures" in health monitor.

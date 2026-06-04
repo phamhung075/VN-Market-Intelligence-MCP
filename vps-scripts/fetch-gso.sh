@@ -8,7 +8,7 @@
 API_URL="${GSO_API_URL:-__MCP_BASE__/api/push-gso}"
 API_KEY="${API_KEY:-__API_KEY__}"
 LOG="/var/log/vn-gso-fetch.log"
-COUNTRY="VN"
+COUNTRY="vietnam"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Log rotation (10 MB cap)
