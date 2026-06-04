@@ -52,6 +52,14 @@ export function runVnstockMigrations(injectedDb?: ReturnType<typeof getDb>): voi
       logger.info("[vnstock-store] migrated vnstock_trading_stats: added date column");
       _tradingStatsHasDateColumn = null;
     }
+    // FIX-B-1: idempotent migration for market_cap_bn on existing production DBs
+    const hasMarketCap = cols.some((c) => c.name === "market_cap_bn");
+    if (!hasMarketCap && cols.length > 0) {
+      db.exec(
+        `ALTER TABLE vnstock_trading_stats ADD COLUMN market_cap_bn REAL`,
+      );
+      logger.info("[vnstock-store] migrated vnstock_trading_stats: added market_cap_bn column");
+    }
   } catch (err) {
     logger.warn("[vnstock-store] trading_stats date-column migration skipped", {
       error: err instanceof Error ? err.message : String(err),
@@ -123,6 +131,7 @@ export function runVnstockMigrations(injectedDb?: ReturnType<typeof getDb>): voi
           "low_52w",
           "pct_from_high_52w",
           "pct_from_low_52w",
+          "market_cap_bn",
           "fetched_at",
           "created_at",
           "date",
@@ -146,6 +155,7 @@ export function runVnstockMigrations(injectedDb?: ReturnType<typeof getDb>): voi
             low_52w               REAL,
             pct_from_high_52w     REAL,
             pct_from_low_52w      REAL,
+            market_cap_bn         REAL,
             fetched_at            TEXT NOT NULL DEFAULT (datetime('now')),
             created_at            TEXT NOT NULL DEFAULT (datetime('now')),
             date                  TEXT NOT NULL DEFAULT '1970-01-01',
@@ -372,22 +382,22 @@ export function storeTradingStats(s: VnstockTradingStats, date?: string): void {
     db.prepare(
       `INSERT OR REPLACE INTO vnstock_trading_stats
        (code, date, foreign_room, foreign_volume, current_holding_ratio, max_holding_ratio,
-        avg_volume_2w, high_52w, low_52w, pct_from_high_52w, pct_from_low_52w, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        avg_volume_2w, high_52w, low_52w, pct_from_high_52w, pct_from_low_52w, market_cap_bn, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       s.code, today, s.foreignRoom, s.foreignVolume, s.currentHoldingRatio, s.maxHoldingRatio,
-      s.avgVolume2w, s.high52w, s.low52w, s.pctFromHigh52w, s.pctFromLow52w, s.fetchedAt,
+      s.avgVolume2w, s.high52w, s.low52w, s.pctFromHigh52w, s.pctFromLow52w, s.marketCapBn ?? null, s.fetchedAt,
     );
   } else {
     // Production schema without `date` column — UNIQUE(code) replaces UNIQUE(code, date)
     db.prepare(
       `INSERT OR REPLACE INTO vnstock_trading_stats
        (code, foreign_room, foreign_volume, current_holding_ratio, max_holding_ratio,
-        avg_volume_2w, high_52w, low_52w, pct_from_high_52w, pct_from_low_52w, fetched_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        avg_volume_2w, high_52w, low_52w, pct_from_high_52w, pct_from_low_52w, market_cap_bn, fetched_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       s.code, s.foreignRoom, s.foreignVolume, s.currentHoldingRatio, s.maxHoldingRatio,
-      s.avgVolume2w, s.high52w, s.low52w, s.pctFromHigh52w, s.pctFromLow52w, s.fetchedAt,
+      s.avgVolume2w, s.high52w, s.low52w, s.pctFromHigh52w, s.pctFromLow52w, s.marketCapBn ?? null, s.fetchedAt,
     );
   }
   markFetched(s.code, "trading_stats");
@@ -514,6 +524,7 @@ export function getTradingStats(code: string): VnstockTradingStats | null {
     low52w: row.low_52w,
     pctFromHigh52w: row.pct_from_high_52w,
     pctFromLow52w: row.pct_from_low_52w,
+    marketCapBn: row.market_cap_bn ?? null,
     fetchedAt: row.fetched_at,
   };
 }

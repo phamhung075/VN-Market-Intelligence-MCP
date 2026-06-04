@@ -45,6 +45,8 @@ export interface VnstockTradingStats {
   low52w: number;
   pctFromHigh52w: number;
   pctFromLow52w: number;
+  /** Market capitalisation in billion VND (null when vnstock ratio API unavailable). FIX-B-1. */
+  marketCapBn: number | null;
   fetchedAt: string;
 }
 

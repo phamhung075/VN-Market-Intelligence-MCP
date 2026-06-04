@@ -112,6 +112,7 @@ import { registerListFlaggedBctcCellsTool } from "./financial-reports/listFlagge
 import { registerSubmitBctcCorrectionTool } from "./financial-reports/submitBctcCorrectionTool.js"; // HC-DEV-4: submit_bctc_correction (#146)
 import { registerIsTradingDayTool } from "./system/isTradingDayTool.js"; // DWF-DEV-MCP-1: is_trading_day (#147)
 import { registerMarketWideForeignFlowTool } from "./market-data/marketWideForeignFlowTool.js"; // MSG-1: get_market_foreign_flow (#148)
+import { registerMarketCapTools } from "./market-data/marketCapTools.js"; // FIX-B-2: get_market_cap (#149)
 
 /**
  * Flat array of all MCP tool registration functions.
@@ -228,4 +229,5 @@ export const toolRegistry: Array<(server: McpServer) => void> = [
   registerSubmitBctcCorrectionTool,      // HC-DEV-4: submit_bctc_correction (#146)
   registerIsTradingDayTool,              // DWF-DEV-MCP-1: is_trading_day (#147)
   registerMarketWideForeignFlowTool,     // MSG-1: get_market_foreign_flow (#148)
+  registerMarketCapTools,                // FIX-B-2: get_market_cap (#149)
 ];

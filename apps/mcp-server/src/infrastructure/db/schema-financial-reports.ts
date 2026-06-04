@@ -306,11 +306,26 @@ export function initFinancialReportsTables(db: Database): void {
       low_52w REAL,
       pct_from_high_52w REAL,
       pct_from_low_52w REAL,
+      market_cap_bn REAL,
       fetched_at TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(code, date)
     )
   `);
+
+  // FIX-B-1: idempotent migration — add market_cap_bn to existing production DBs
+  // NULLABLE: vnstock ratio API may be unavailable; null is the honest "not fetched" sentinel.
+  try {
+    const vntsCols = db
+      .query<{ name: string }, []>("PRAGMA table_info(vnstock_trading_stats)")
+      .all();
+    if (vntsCols.length > 0 && !vntsCols.some((c) => c.name === "market_cap_bn")) {
+      db.exec("ALTER TABLE vnstock_trading_stats ADD COLUMN market_cap_bn REAL");
+      logger.info("[schema] migrated vnstock_trading_stats: added market_cap_bn column");
+    }
+  } catch {
+    // fresh DB — CREATE TABLE already included the column
+  }
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS vnstock_events (

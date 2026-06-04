@@ -102,10 +102,10 @@ export function registerInsiderTools(
         .number()
         .int()
         .min(1)
-        .max(90)
+        .max(180)
         .optional()
         .default(30)
-        .describe("Lookback window in days (1–90). Default 30."),
+        .describe("Lookback window in days (1–180). Default 30. FIX-H: extended from 90d to 180d."),
       type: z
         .enum(["buy", "sell", "all"])
         .optional()
@@ -115,7 +115,7 @@ export function registerInsiderTools(
     async ({ code, days = 30, type = "all" }) => {
       try {
         const db = resolveDb();
-        const lookback = Math.max(1, Math.min(90, days));
+        const lookback = Math.max(1, Math.min(180, days)); // FIX-H: extended from 90d to 180d
         const sinceDate = new Date(Date.now() - lookback * 86_400_000)
           .toISOString()
           .slice(0, 10);

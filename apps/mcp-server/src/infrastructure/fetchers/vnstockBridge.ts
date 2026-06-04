@@ -464,6 +464,19 @@ try:
         print('null')
         sys.exit(0)
     r = df.iloc[0]
+    # FIX-B-1: also fetch market cap from ratio API (best-effort; null on failure)
+    market_cap_bn = None
+    try:
+        ratio_df = stock.finance.ratio(period='quarter')
+        if ratio_df is not None and len(ratio_df) > 0:
+            rr = ratio_df.iloc[0]
+            mc_raw = rr.get(('Chỉ tiêu định giá', 'Market Cap (Bn. VND)'), None)
+            if mc_raw is None:
+                mc_raw = rr.get('market_cap', None)
+            if mc_raw is not None:
+                market_cap_bn = round(float(mc_raw), 2)
+    except Exception:
+        pass
     result = {
         'code': '${symbol}',
         'foreignRoom': int(r.get('foreign_room', 0) or 0),
@@ -475,6 +488,7 @@ try:
         'low52w': float(r.get('low_price_1y', 0) or 0) * 1000,
         'pctFromHigh52w': round(float(r.get('pct_high_change_1y', 0) or 0) * 100, 2),
         'pctFromLow52w': round(float(r.get('pct_low_change_1y', 0) or 0) * 100, 2),
+        'marketCapBn': market_cap_bn,
         'fetchedAt': __import__('datetime').datetime.now().isoformat()
     }
     print(json.dumps(result))
@@ -487,7 +501,7 @@ export async function fetchVnstockTradingStats(code: string): Promise<VnstockTra
   const result = await runPythonWithBackoff<VnstockTradingStats>(TRADING_STATS_SCRIPT(code), `stats:${code}`);
   if (result) {
     logger.info("[vnstock] fetched trading stats", {
-      code, foreignRoom: result.foreignRoom, high52w: result.high52w,
+      code, foreignRoom: result.foreignRoom, high52w: result.high52w, marketCapBn: result.marketCapBn,
     });
   }
   return result;
