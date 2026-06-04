@@ -2,6 +2,8 @@
 // Validates that all routes return correct HTTP status + Content-Type.
 // Uses httptest.NewServer so no port binding is required.
 // FE-RR-MACRO-EXTERNAL: GET /external smoke test added.
+// CARRY-YIELD-SINGLE-SIGNAL-FIXTURE: TestCarryYieldEndpointsRetired guards against
+// accidental re-addition of the retired fixture handlers (Option B consolidation).
 package http
 
 import (
@@ -37,53 +39,23 @@ func TestHealthRoute(t *testing.T) {
 	}
 }
 
-func TestCarryTradeSignalRoute(t *testing.T) {
+// TestCarryYieldEndpointsRetired asserts that GET /carry-trade-signal and
+// GET /yield-spread-signal return 404 after the single-signal handlers were
+// retired (Option B consolidation, CARRY-YIELD-SINGLE-SIGNAL-FIXTURE brief).
+// If these return 200, a fixture handler was accidentally re-added.
+func TestCarryYieldEndpointsRetired(t *testing.T) {
 	srv := httptest.NewServer(newTestRouter())
 	defer srv.Close()
 
-	resp, err := http.Get(srv.URL + "/carry-trade-signal")
-	if err != nil {
-		t.Fatalf("GET /carry-trade-signal failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("GET /carry-trade-signal: expected 200, got %d", resp.StatusCode)
-	}
-	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
-		t.Errorf("GET /carry-trade-signal: Content-Type=%q, want application/json prefix", ct)
-	}
-	body, _ := io.ReadAll(resp.Body)
-	if !strings.Contains(string(body), "regime") {
-		t.Errorf("GET /carry-trade-signal: body missing 'regime' field: %s", body)
-	}
-	if !strings.Contains(string(body), "FII_OUTFLOW_RISK") {
-		t.Errorf("GET /carry-trade-signal: body missing 'FII_OUTFLOW_RISK': %s", body)
-	}
-}
-
-func TestYieldSpreadSignalRoute(t *testing.T) {
-	srv := httptest.NewServer(newTestRouter())
-	defer srv.Close()
-
-	resp, err := http.Get(srv.URL + "/yield-spread-signal")
-	if err != nil {
-		t.Fatalf("GET /yield-spread-signal failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("GET /yield-spread-signal: expected 200, got %d", resp.StatusCode)
-	}
-	if ct := resp.Header.Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
-		t.Errorf("GET /yield-spread-signal: Content-Type=%q, want application/json prefix", ct)
-	}
-	body, _ := io.ReadAll(resp.Body)
-	if !strings.Contains(string(body), "label") {
-		t.Errorf("GET /yield-spread-signal: body missing 'label' field: %s", body)
-	}
-	if !strings.Contains(string(body), "CHEAP") {
-		t.Errorf("GET /yield-spread-signal: body missing 'CHEAP': %s", body)
+	for _, path := range []string{"/carry-trade-signal", "/yield-spread-signal"} {
+		resp, err := http.Get(srv.URL + path)
+		if err != nil {
+			t.Fatalf("GET %s failed: %v", path, err)
+		}
+		resp.Body.Close()
+		if resp.StatusCode != http.StatusNotFound {
+			t.Errorf("GET %s: expected 404 (endpoint retired), got %d — fixture handler must have been re-added", path, resp.StatusCode)
+		}
 	}
 }
 

@@ -1,14 +1,18 @@
 // Package http — HTTP interface layer for the macro-indicators service.
 //
-// P2-X3: real handlers wired for /snapshot, /carry-trade-signal, /yield-spread-signal.
+// CARRY-YIELD-SINGLE-SIGNAL-FIXTURE (Option B consolidation): the standalone
+// /carry-trade-signal and /yield-spread-signal endpoints served hardcoded fixture
+// consts (fed=5.33, deposit=4.7, earningYield=8.2) with no DI — a DSI-INV-1
+// violation. They are RETIRED. TS MCP tools now call POST /snapshot and project
+// signals.carry / signals.yield (the only live path). handlers_carry.go and
+// handlers_yield.go are deleted.
+//
 // /macro-calendar remains fixture-based (per OQ-10 resolution).
 // FE-RR-MACRO-EXTERNAL: GET /external added — serves cached MacroData from SQLite.
 //
 // Routes:
 //   GET  /health               — 200 ok + service JSON (unchanged from P2-B1)
-//   POST /snapshot             — real ComputeMacroUseCase.Execute() (AC-2)
-//   GET  /carry-trade-signal   — real carry primitive call (AC-3)
-//   GET  /yield-spread-signal  — real yield primitive call (AC-4)
+//   POST /snapshot             — real ComputeMacroUseCase.Execute() (AC-2, canonical carry/yield source)
 //   GET  /macro-calendar       — fixture response (OQ-10 deferred)
 //   GET  /external             — cached macro snapshot → MacroData shape (FE-RR-MACRO-EXTERNAL)
 package http
@@ -35,8 +39,6 @@ func NewRouter(useCase *application.ComputeMacroUseCase, logger *slog.Logger) ch
 
 	r.Get("/health", handleHealth())
 	r.Post("/snapshot", handleSnapshot(useCase, logger))
-	r.Get("/carry-trade-signal", handleCarryTradeSignal())
-	r.Get("/yield-spread-signal", handleYieldSpreadSignal())
 	r.Get("/macro-calendar", handleMacroCalendar())
 	r.Get("/external", handleExternal(useCase, logger))
 

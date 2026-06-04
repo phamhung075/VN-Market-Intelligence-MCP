@@ -1062,3 +1062,77 @@ func abs(x float64) float64 {
 	}
 	return x
 }
+
+// ---------------------------------------------------------------------------
+// CARRY-YIELD-SINGLE-SIGNAL-FIXTURE: anti-fixture-value regression guard
+// ---------------------------------------------------------------------------
+
+// TestSingleSignalNoFixtureLeak is the explicit DSI-INV-1 regression guard for
+// CARRY-YIELD-SINGLE-SIGNAL-FIXTURE: ensures that no live computation path
+// produces the known fixture values (5.33/4.7 carry; 8.2/4.7 yield) when live
+// port inputs are available. This test proves the fixture consts in the deleted
+// handlers_carry.go/handlers_yield.go are permanently dead.
+//
+// If this test ever fails, the fixture values somehow re-entered a live path.
+func TestSingleSignalNoFixtureLeak(t *testing.T) {
+	// Inject live inputs distinct from all fixture values.
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{vndDeposit: 5.0, fedFunds: 3.62, earnYield: 6.83},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+
+	// Extract carry fields via JSON round-trip.
+	type carryFields struct {
+		FedFundsRate   float64  `json:"fedFundsRate"`
+		VNDDepositRate float64  `json:"vndDepositRate"`
+		CarrySpread    *float64 `json:"carrySpread"`
+		IsEstimate     bool     `json:"is_estimate"`
+		SourceTier     int      `json:"source_tier"`
+	}
+	b, _ := json.Marshal(resp.Signals.Carry)
+	var cf carryFields
+	if err := json.Unmarshal(b, &cf); err != nil {
+		t.Fatalf("unmarshal carry: %v", err)
+	}
+
+	// DSI-INV-1: fixture rate 5.33 must NOT be served on live path.
+	if abs(cf.FedFundsRate-5.33) < 0.001 {
+		t.Errorf("ANTI-FIXTURE: carry fedFundsRate=5.33 — handlers_carry.go fixture const re-entered live path; must be 3.62 (live EFFR)")
+	}
+	// source_tier must not be 0 (absent/unset).
+	if cf.SourceTier == 0 {
+		t.Errorf("ANTI-FIXTURE: carry source_tier=0 (absent) — provenance field missing from carry DTO")
+	}
+	// is_estimate must be false for live inputs.
+	if cf.IsEstimate {
+		t.Errorf("ANTI-FIXTURE: carry is_estimate=true on live-input path — suppression fired incorrectly (vndDeposit=5.0, fedFunds=3.62 both live)")
+	}
+
+	// Extract yield fields via JSON round-trip.
+	type yieldFields struct {
+		EarningYield float64 `json:"earningYield"`
+		DepositRate  float64 `json:"depositRate"`
+		IsEstimate   bool    `json:"is_estimate"`
+		SourceTier   int     `json:"source_tier"`
+	}
+	yb, _ := json.Marshal(resp.Signals.Yield)
+	var yf yieldFields
+	if err := json.Unmarshal(yb, &yf); err != nil {
+		t.Fatalf("unmarshal yield: %v", err)
+	}
+
+	// DSI-INV-1: fixture earningYield 8.2 must NOT be served when live port returns 6.83.
+	if abs(yf.EarningYield-8.2) < 0.001 {
+		t.Errorf("ANTI-FIXTURE: yield earningYield=8.2 — handlers_yield.go fixture const re-entered live path; must be 6.83 (live port)")
+	}
+	if yf.SourceTier == 0 {
+		t.Errorf("ANTI-FIXTURE: yield source_tier=0 (absent) — provenance field missing from yield DTO")
+	}
+}
