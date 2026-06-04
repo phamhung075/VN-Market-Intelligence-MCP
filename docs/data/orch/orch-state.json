@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T04:31:40Z",
+  "_updated_at": "2026-06-04T07:45:26Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "Idle heartbeat tick (:07). Drained 4 cowork heartbeats (1 WON chef-intraday 06:18, 3 SILENT no_slot_match) — nothing dev-actionable. No code bugs, no briefs, no context-bloat. STILL BLOCKED-OPERATOR: cowork session stale (SILENT heartbeats still landing => operator has not restarted cowork; FU-COWORK-SESSION-RELOAD + FU-COWORK-HEARTBEAT-SCHEMA). Open backlog unchanged (12 items, all DEFERRED/BLOCKED — see FU-RAPID-SKILLS-RESIDUAL, FU-CHEF-MARKER-INFLOW, BCTC-HIST-* etc). Next tick: drain + watch for cowork heartbeat schema flip (DONE-trigger for the reload FUs).",
-    "wip": 0,
+    "status": "active",
+    "active_task_id": "FIX-B",
+    "next_agent": "pm",
+    "next_action": "RAPID-DATA-LAYER sprint sequenced by PO (10 tasks). pm to break P1 tasks into atomic dev-mcp-server sprint-tasks via ba->dev-team chain. FIRST IN FLIGHT (WIP=2): FIX-B (get_market_cap — SKILL-1 mandatory gate, ships FIRST, no deps) + one of {FIX-A | FIX-D | FIX-H} in parallel (all P1 no-deps). RECON-AGM-1 already IN-PROGRESS (router-launched ops-vps-fetch, parallel, gates FIX-G). FIX-C BLOCKED on FIX-B; FIX-G BLOCKED on RECON-AGM-1; FIX-I BLOCKED on FIX-A. Brief docs/architecture-briefs/2026-06-04-rapid-analysis-data-layer-gaps.md (READY-FOR-PM-SEQUENCING, atomic per-zone tasks pre-specified w/ file:line + RC mapping).",
+    "wip": 1,
     "wip_max": 2,
-    "updated_at": "2026-06-04T07:10:24Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-04T07:45:26Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T06:13:23Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-04T07:45:02Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2113,13 +2113,209 @@
         ],
         "note": "Two low-sev residuals after agent-father shipped Phase A 6129c970 + Phase B 0fac75a4 (raw-verified DONE this tick 2026-06-04T06:13:23Z). (1) COSMETIC: Phase B added steps to two already-justified flow files but left their size-justification line-1 counts STALE — chef.md declares 308L now 320L (+12 from Step 6a conviction gate), market-watcher/flow/cycle.md declares 177L now 180L (+3 from Step 0a market-cap screen). Both legitimately exempt (justified, backstop did not fire); only the declared count needs bumping. agent-father edit via agent-md-factory. (2) GOVERNANCE: brief carried 3 open_questions_for_po — SKILL-1 market-cap floor 500B VND, SKILL-4 foreign-holder 5%, TNB 5th-pillar-vs-parallel — agent-father baked the brief's PROPOSED defaults and shipped; PO never explicitly confirmed. The skills are INERT until cowork session reload (FU-COWORK-SESSION-RELOAD BLOCKED-OPERATOR), so zero live risk, but PO should confirm/override the 3 thresholds BEFORE cowork reactivates. Route: agents-architect (threshold decision) + agent-father (count bump). NOT dev-team (apps/ code only).",
         "disposition": "DEFERRED-OUT-OF-DEV-SCOPE filed 2026-06-04T06:13:23Z by dev-team next-tick reconcile of expert-rapid-analysis-skills. Both residuals are .md / governance — cowork/maintenance lane (agents-architect + agent-father), not dev-team apps/ code. Activation-gated on cowork reload so no live risk."
+      },
+      {
+        "task_id": "RECON-AGM-1",
+        "type": "SPIKE",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "Probe HSX/HNX/SSC AGM portal fetch recipe (3 sample tickers VNM/FPT/VCB)",
+        "status": "IN-PROGRESS",
+        "priority": "P0",
+        "size": "S",
+        "zone": "ops-vps-fetch",
+        "deps": [],
+        "blocks": [
+          "FIX-G"
+        ],
+        "timebox": 480,
+        "note": "Router-launched in PARALLEL NOW (ops-vps-fetch spike, no dev work). Confirm: (1) doc availability for VNM/FPT/VCB, (2) URL structure/pagination, (3) response format PDF (->PDF-Extract-Kit pipeline, Risk-4) or HTML (->scrape). MUST land before FIX-G dev work starts. Brief §6 FIX-G + §11 Risk-4."
+      },
+      {
+        "task_id": "FIX-B",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_market_cap MCP tool + persist VnstockRatioSummary.marketCap",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-1 size gate (MANDATORY entry gate — ships FIRST)",
+          "SKILL-4 turnover ratio",
+          "SKILL-6 inherited"
+        ],
+        "files": [
+          "apps/mcp-server/src/infrastructure/vnstock/vnstockBridge.ts",
+          "apps/mcp-server/src/jobs/syncVnstockData.ts",
+          "apps/mcp-server/src/interface/mcp/tools/market-data/"
+        ],
+        "note": "RC-1. (1) Wire marketCap storage (vnstock_ratio_summary table or market_cap_bn col on vnstock_trading_stats); vnstockBridge.ts:82 already defines the struct (dead export). (2) New get_market_cap returning {code, market_cap_billion, shares_outstanding_approx, fetched_at}. Source stock.trading.price_board() already returns marketCap — just not persisted. NO skill can go live without this (brief §8). Risk-2 staleness -> emit data_as_of."
+      },
+      {
+        "task_id": "FIX-A",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_company_profile MCP tool (shareholders + officers + foreign %)",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-4 ownership/free-float/skin-game",
+          "SKILL-5 CEO name"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/",
+          "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts"
+        ],
+        "note": "RC-3. get_company_info is a PHANTOM (never existed). New get_company_profile from existing tables: vnstock_shareholders (name,quantity,own_percent DESC limit 10) + vnstock_officers (name,position,own_percent,quantity) + vnstock_trading_stats.current_holding_ratio (aggregate foreign %). Compute free-float approx = 100% - sum(non-free-float own_percent). STRUCTURED JSON output. CEO tenure stays PARTIAL until FIX-I. Risk-2 24h TTL staleness -> data_as_of."
+      },
+      {
+        "task_id": "FIX-D",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_bctc_full structured_data JSON block + receivables join",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-1/2/3/4 text-only PARTIAL fields -> parseable JSON",
+          "SKILL-2 receivables"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts"
+        ],
+        "note": "RC-2 (format). (1) Add structured_data:{...} section ALONGSIDE existing text (non-breaking) — all ReportRow numeric cols as machine-readable JSON. (2) Add receivables from vnstock_balance_sheet.receivables_bn (JOIN on code+latest period). Unblocks pe/pb/total_assets/equity/total_liabilities/cash/long_term_debt/profit_before_tax/operating_cf without text parsing."
+      },
+      {
+        "task_id": "FIX-H",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_insider_transactions lookback 90 -> 180 days",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-4 Step 2 full 6-month insider-exit detection"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/market-data/insiderTools.ts"
+        ],
+        "note": "RC (lookback). 1-line: insiderTools.ts:108 .max(90) -> .max(180). insiderStore queries SQLite by date, no schema change. Data may be sparse beyond 90d for early-added tickers (honest)."
+      },
+      {
+        "task_id": "FIX-C",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_bctc_series multi-period BCTC tool",
+        "status": "BLOCKED",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "deps": [
+          "FIX-B"
+        ],
+        "unblocks_skill": [
+          "SKILL-1 10yr P/E-P/B",
+          "SKILL-3 4yr CFO",
+          "SKILL-4 YoY assets",
+          "SKILL-5 multi-yr revenue",
+          "SKILL-6 2yr EPS"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/"
+        ],
+        "note": "RC-2 (scope). New get_bctc_series {code, fields[], periods} -> JSON array, financial_reports ORDER BY sort_key DESC LIMIT periods. Subset fields (pe,pb,roe,debt_to_equity,operating_cf,net_profit,eps,total_assets,net_revenue,equity_total). GUARD: refine_status='DONE' only (PUB-1 gate) — no OCR garbage. Risk-1: sparse <10yr history common -> skill degrades gracefully (median of present). Dep FIX-B per architect §9."
+      },
+      {
+        "task_id": "FIX-E",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_price_history 90 -> 730 days + JSON array output",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-6 Signal A 18-month chronic-cheap price history"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/market-data/priceHistoryTools.ts"
+        ],
+        "note": "RC-5. (1) priceHistoryTools.ts:191 Math.min(...,90)->Math.min(...,730). daily_ohlcv holds permanent candles (Task 1804c no pruning); query line 210 already param-driven, no schema change. (2) Structured JSON array (code,date,close,volume) + text. Signal B EPS overlay = FIX-C cross-ref by date."
+      },
+      {
+        "task_id": "FIX-F",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "BCTC scalar extraction: charter_capital + investment_property + reward_fund (bank-form guarded)",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "prereq": "VAS code audit for new fields (same pattern as FIX-DE-1)",
+        "unblocks_skill": [
+          "SKILL-2 charter_capital_ratio + INV-PROPERTY-STALE",
+          "SKILL-4 COMP-EXTRACTION (partial, no reward_fund elsewhere)"
+        ],
+        "files": [
+          "apps/mcp-server/src/infrastructure/bctc/bctcScalarAggregator",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/"
+        ],
+        "note": "RC-4. 3 new scalars: charter_capital (~code 411), investment_property (~code 217), reward_fund (~code 418) -> bctcScalarAggregator ScalarAggregate + finalize BLOCK-1 + DB migration. Precedent FIX-DE-1 (short/long_term_debt). Risk-3: VAS code varies by form (B01 vs B02-TCTD); banks have no standalone charter_capital line -> bank-form guard via isBankFormFromDb pattern REQUIRED."
+      },
+      {
+        "task_id": "FIX-G",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "AGM revenue plans: VPS fetcher + agm_revenue_plans table + get_agm_plans tool",
+        "status": "BLOCKED",
+        "priority": "P4",
+        "size": "L",
+        "zone": "dev-vps-crawls + apps/mcp-server/",
+        "deps": [
+          "RECON-AGM-1"
+        ],
+        "unblocks_skill": [
+          "SKILL-5 Step 1 plan-accuracy (the signature management check)"
+        ],
+        "note": "RC-6 NEW DATA SOURCE. BLOCKED until RECON-AGM-1 proves the AGM source is fetchable + confirms format. Chain: ops-vps-fetch recon recipe -> dev-vps-crawls AGM fetcher (HSX/HNX/SSC, geo-blocked->Vinahost VPS) -> dev-mcp-server store agm_revenue_plans table + get_agm_plans tool. Risk-4: if PDF-only, requires PDF-Extract-Kit pipeline (higher effort). Effort/path FINALIZED by recon outcome. DO NOT start dev work until RECON-AGM-1 = DONE with positive recipe."
+      },
+      {
+        "task_id": "FIX-I",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "vnstock_officers start_date for CEO tenure",
+        "status": "BLOCKED",
+        "priority": "P5",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "deps": [
+          "FIX-A"
+        ],
+        "unblocks_skill": [
+          "SKILL-5 CEO tenure (pre/post ROE)"
+        ],
+        "files": [
+          "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts",
+          "apps/mcp-server/src/jobs/syncVnstockData.ts"
+        ],
+        "note": "Extend vnstock_officers with start_date IF available in vnstock source data. CEO tenure (SKILL-5 Step 2). Best-effort: vnstock may not expose start_date -> document gap honestly. Dep FIX-A (officers tool exists first)."
       }
     ],
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-03T10:24:00Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-04T07:45:26Z",
+    "_updated_by": "po",
     "rows": [
       {
         "id": "po-bctc-analytics-layer-20260602T1056Z",
@@ -2473,6 +2669,25 @@
         "status": "READ",
         "payload_ref": "docs/signals/cowork-team-20260604T031929Z.json",
         "disposition": "READ 2026-06-04T04:15:22Z by dev-team: PO-triaged (NOTHING for dev-zone), folded into backlog FU-CHEF-MARKER-INFLOW (granularity facet); routed agents-architect+agent-father, cowork agent-md lane."
+      },
+      {
+        "from": "architect",
+        "to": "po",
+        "type": "design_complete",
+        "status": "READ",
+        "createdAt": "2026-06-04T06:00:00Z",
+        "readAt": "2026-06-04T07:45:26Z",
+        "payload": "docs/signals/architect-20260604T060000Z.json",
+        "note": "Rapid-analysis data-layer gap brief. PO triaged -> RAPID-DATA-LAYER sprint (10 tasks) sequenced into task_board."
+      },
+      {
+        "from": "po",
+        "to": "pm",
+        "type": "sprint_sequenced",
+        "status": "NEW",
+        "createdAt": "2026-06-04T07:45:26Z",
+        "payload": "docs/data/orch/orch-state.json#sprint_goal.RAPID-DATA-LAYER",
+        "note": "RAPID-DATA-LAYER ready. 10 backlog tasks w/ deps+zones set. Route P1 dev-mcp-server FIX-B(gate-first)/FIX-A/FIX-D/FIX-H to ba->dev-team. WIP=2. RECON-AGM-1 already in-progress (ops-vps-fetch). FIX-G stays BLOCKED until RECON-AGM-1 DONE w/ positive fetch recipe."
       }
     ],
     "archive": [
@@ -2861,6 +3076,35 @@
         "success_metric": "GUARD PHASE: no false-DONE possible (backfill dry_run balance_violations:0), banks discriminated, incomplete sections→PARTIAL, no garbage scalar served live. REMEDIATION PHASE: VNM/FPT-Q4/HPG/SHB recovered to DONE with real scalars; DHG/EIB/VEA/VCB OCR-verified then recovered or honestly re-fetched.",
         "status": "OPEN",
         "note": "GUARD PHASE (BEQ-1..8b + BEQ-QA) SIGNED OFF by PO 2026-06-02T10:17:15Z — all guards PO-live-verified raw (not relayed badges): backfill dry_run done:0/skipped:5/balance_violations:0; /api/bctc-inspect/docs net_profit=null for all 7 PARTIAL reports + 2 PENDING, real values only for DONE (FPT-Q1/ACB); 3 markers grep-confirmed in running container (ops 13f8c872, image sha256:ea781a7a4890). Sprint REMAINS OPEN for REMEDIATION PHASE (BEQ-9/10, OFF-HOSE-gated, bctc-analyst). Residual fetch backlog: BCTC-CTG-ATTACHMENT-FETCH + BCTC-REFETCH-ZERO-ROW (DGC/DIG/VCB)."
+      },
+      {
+        "sprint_id": "RAPID-DATA-LAYER",
+        "status": "active",
+        "vision": "The 6 shipped rapid-analysis cowork skills (SKILL-1..6, the pre-TNB gate) go live by serving their data inputs — market cap, multi-period BCTC series, charter capital, ownership/insider, AGM revenue plans, long price history — through the mcp-server tool surface, currently 100% BLOCKED.",
+        "scope_in": [
+          "FIX-B get_market_cap tool + marketCap persistence (unblocks SKILL-1 mandatory size gate FIRST)",
+          "FIX-A get_company_profile tool (shareholders+officers+foreign %)",
+          "FIX-D get_bctc_full structured_data JSON block + receivables join",
+          "FIX-H insider lookback 90->180d",
+          "FIX-C get_bctc_series multi-period tool (dep FIX-B)",
+          "FIX-E get_price_history 90->730d + JSON output",
+          "FIX-F charter_capital+investment_property+reward_fund BCTC scalar extraction (bank-form guarded)",
+          "FIX-G AGM revenue-plan VPS fetcher + agm_revenue_plans table + get_agm_plans tool (dep RECON-AGM-1)",
+          "FIX-I vnstock_officers start_date for CEO tenure (dep FIX-A)",
+          "RECON-AGM-1 ops-vps-fetch probe of HSX/HNX/SSC AGM portal (P0 spike, gates FIX-G)"
+        ],
+        "scope_out": [
+          "the skill .md authoring (already shipped)",
+          "BCTC-LAYOUT-FIRST re-architecture",
+          "IR-frequency tracking + founder-legal public-record search (SKILL-5 deep gaps, unscoped)",
+          "per-institution foreign-holder breakdown (only aggregate foreign %)"
+        ],
+        "success_metric": "SKILL-1 size-gate goes LIVE after FIX-B (live get_market_cap returns market_cap_billion for a watchlist ticker, raw-verified not relayed). Earliest partial path: FIX-B+FIX-A+FIX-H -> SKILL-1 size gate + SKILL-4 ownership/insider partial within ~1 sprint. Each FIX delivers a raw-verified live tool/field. FIX-G gated on RECON-AGM-1 fetch-recipe proof.",
+        "created_at": "2026-06-04T07:45:02Z",
+        "created_by": "po",
+        "source_signal": "docs/signals/architect-20260604T060000Z.json",
+        "source_brief": "docs/architecture-briefs/2026-06-04-rapid-analysis-data-layer-gaps.md",
+        "note": "WIP_max=2. Dependency order: RECON-AGM-1(P0,parallel-now) | FIX-B(P1,gate-first) -> then FIX-A/FIX-D/FIX-H parallel | FIX-C(dep FIX-B)/FIX-E | FIX-F(VAS-audit) | FIX-G(dep RECON-AGM-1, BLOCKED until recon proves source fetchable) | FIX-I(dep FIX-A). All zone dev-mcp-server except RECON-AGM-1=ops-vps-fetch and FIX-G=dev-vps-crawls+dev-mcp-server."
       }
     ]
   }

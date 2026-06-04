@@ -1,172 +1,174 @@
-# TNB Audit — Cycle 85 — 2026-06-01T20:13Z (slot=tnb-audit, file-evidence + MCP-probe attempted)
+# TNB Audit — Cycle 86 — 2026-06-02T20:13Z (slot=tnb-audit, file-evidence + MCP)
 
 ## Overall: NEEDS_ATTENTION
-Direction: **STABLE-WATCH** (new finding F7: morning dish guarantee miss; structural gaps D/E/F/F9 persist; evening dish 3.5/6; EOD degraded due to macro-down-by-design; agent-father applied fix same cycle — monitor live)
+Direction: **IMPROVING** (Evening dish 4/6 up from c85 3.5/6; macro service restored; FPT 4/4 aligned pillars = strongest single-ticker thesis in audited period; but F8 COWORK-LEADER-SELFLOCK = 2nd consecutive Monday morning miss with different root cause)
 
 ---
 
 ## Previous Handoff ACK
 
-c82 handoff ACK'd by PO at 2026-05-29T02:23Z (see PO ACK block in tnb-audit-latest.md). c83 BLOCKED (gateway unavailable). c84 BLOCKED (gateway unavailable). c85 = first full-evidence cycle since c82. c83+c84 structural gap now confirmed fixed (this audit ran in main-terminal session, not spawned sub-agent — call_tool wrapper probed, evidence gathered successfully).
+c85 handoff ACK'd by PO at 2026-06-01T22:34Z. c83+c84 structural BLOCKED gap CLOSED (c85). c86 = normal full-evidence cycle. Log: "Previous handoff ACK'd by PO."
 
 ---
 
-## MCP Gateway Status (c85)
+## Chef Pipeline Coverage (Step 0.5) — 2026-06-02 — PIPELINE DEGRADED
 
-Session: main-terminal (not spawned sub-agent). File-evidence used as primary audit source per authoritative notebook-as-SSOT pattern. MCP call attempts were made but gateway returned infrastructure-level response not available in this tool execution context. Audit conducted via file-evidence (notebooks, dashboard, handoffs). Evidence quality: HIGH — unified-agent notebook written by the chef itself at 19:37Z is the strongest available evidence for the dish audit.
-
----
-
-## Chef Pipeline Coverage (Step 0.5) — 2026-06-01 — PIPELINE DEGRADED
-
-Evidence source: `docs/agent-memory/notebooks/unified-agent.md` (2026-06-01T19:37Z) + `docs/signals/DASHBOARD.md` ## po row `cow-CHEF-MORNING-NOPUBLISH-20260601T0518`
+Evidence: `docs/agent-memory/notebooks/unified-agent.md` (2026-06-02T19:37Z) + `docs/agent-memory/notebooks/architect.md` (2026-06-02T12:00Z COWORK-LEADER-SELFLOCK brief) + `docs/data/cowork-schedule.json` (last_fired timestamps)
 
 | Slot | Expected | Status | Evidence |
 |------|----------|--------|---------|
-| Morning 05:23Z | YES | **FAILED — no MARKET publish** | Dashboard: spawned unified-agent a7f507ce self-aborted (no_self_abort violation). 2/3 cited blockers FALSE (get_agent_signals works via get_cycle_bootstrap; hexagram 501 EXPECTED). 1 real but non-blocking (macro-down). Agent-father fix applied same tick (hardened init.md + chef.md). DONE-PENDING-LIVE-VERIFY. |
-| Intraday 02:13Z | OPTIONAL | SILENT EXIT | 0 clusters, convergence gate CLOSED (0 agent_signals) |
-| Intraday 02:17Z | OPTIONAL | SILENT EXIT | 0 clusters, macro-snapshot error |
-| Intraday 03:22Z | OPTIONAL | SILENT EXIT | 1 macro extreme qualified BUT watchlist transmission absent, conviction LOW |
-| Intraday 06:18Z | OPTIONAL | SILENT EXIT | 0 watchlist clusters (CRITICAL macro extremes lack watchlist propagation) |
-| EOD 08:37Z | YES | **PUBLISHED (degraded-dish floor)** | Macro service unavailable (absent-by-design); 1 extreme macro qualified; guaranteed-publish mandate applied |
-| Evening 19:37Z | YES | **PUBLISHED** | 2 clusters: real estate sector convergence + oil sector convergence |
+| Morning 05:15Z | YES | **FAILED — NOT PUBLISHED** | architect.md: "chef-morning dropped 2026-06-02 (05:18Z tick hit lock heartbeated to 05:34Z by 05:03Z WON tick)". Root: COWORK-LEADER-SELFLOCK — task_claim not re-entrant, returns claimed=false on own-held lock → silent exit. Brief: `docs/architecture-briefs/2026-06-02-cowork-leader-selflock.md`. Fix in progress. **2nd consecutive Monday morning miss — different root from c85 F7 (no_self_abort).** |
+| Intraday 02:21Z | OPTIONAL | PUBLISHED (carry-forward dish) | 2 clusters: banking + RES convergence |
+| Intraday 03:13Z | OPTIONAL | SILENT EXIT | 0 clusters, 0 agent_signals |
+| Intraday 07:19Z | OPTIONAL | PUBLISHED (qualified) | 2 clusters: banking+RES convergence; TNB L1-L6 walked |
+| EOD 08:37Z | YES | **PUBLISHED** | 3 clusters: banking, steel, FPT contrarian. Macro RESTORED (macro-snapshot healthy after 16h outage). TNB L1-L6 walked. |
+| Evening 19:37Z | YES | **PUBLISHED** | 3 clusters: banking carry shock, RES bearish, FPT tech contrarian. TNB L1-L6 walked. |
 
-`start_count=3 | close_count=2 (EOD+Evening) | stuck_count=0 | failed_count=1 (Morning self-abort) | guaranteed_ok=FALSE | pipeline_degraded=TRUE`
+`start_count=5 | close_count=4 | stuck_count=0 | failed_count=1 (morning) | guaranteed_ok=FALSE | pipeline_degraded=TRUE`
 
-Note: agent-father hardened the root cause same cycle. NOT a persistent defect pattern — first guaranteed-dish miss in audited period (c75–c85).
+Note: c85 F7 agent-father fix (no_self_abort hardening) was LIVE-VERIFIED as fixing its specific root. COWORK-LEADER-SELFLOCK is a SEPARATE underlying defect now surfacing on Monday morning slot (05:03Z session holds leader lock → 05:18Z dispatched session sees own lock as claimed). Architect brief delivered; fix in progress.
 
 ---
 
-## Primary Audit: 2026-06-01 Three Guaranteed Dishes
+## Primary Audit: 2026-06-02 Published Dishes
 
 ### Morning Dish — NOT PUBLISHED (pipeline failure)
+Root: COWORK-LEADER-SELFLOCK. TNB layer walk: NOT APPLICABLE.
 
-Root: `no_self_abort` violation — unified-agent emitted English-prose "BLOCKERS / would you like me to…" refusal. Per dashboard anti-hollow-run triage: 2/3 blockers FALSE (get_agent_signals accessible via get_cycle_bootstrap.agent_signals; get_market_hexagram 501 EXPECTED per memory feedback_chef_kinhdich_confab). 1 real but NON-BLOCKING (macro-down → degrade-not-abort). Agent-father hardened init.md + chef.md: signals now via get_cycle_bootstrap.agent_signals; hexagram 501 reclassified expected; macro-down reclassified non-blocking; no_self_abort teeth strengthened; degraded-dish floor added. Fix commit applied; DONE-PENDING-LIVE-VERIFY at next cron.
+### Intraday Dish (07:19Z) — Layer Walk
 
-TNB layer walk: NOT APPLICABLE (dish not produced).
+| Layer | Score | Notes |
+|-------|-------|-------|
+| L1 | PASS | USD/VND 26,118 carry threshold crossing VERIFIED (above 25,500). Price/volume distribution confirmed across banking+RES sectors. State transition syntax correct. |
+| L2 | PARTIAL | Fed 5.33% > SBV 5% carry cited via Deutsche Bank 2026-06-01 baseline (tier-2, not real-time EFFR). FII net-sell "630 tỷ bán ròng ngân hàng/BĐS" cited. PMI sub-components absent. US10Y absent. Consumer sentiment absent. |
+| L3 | PARTIAL | USD/VND 26,118 live (above 25,500 threshold) cited. Carry -0.33pp cited. VIRA absent. CPI absent. SBV stale. |
+| L4 | PARTIAL | Banking 2.5/4 (M2 ✓, COC ✓, earnings/credit missing). RES 2/4 (carry+momentum ✓; earnings/credit missing). Pillar mismatch: yield cheap 8.2pp vs carry panic → contradiction resolved as LAGGED sentiment (correct). |
+| L5 | PARTIAL | Market hexagram 501 (expected). Per-ticker: banking Sư 100%+Khôn 74%, VRE Tập Khảm 100% BAN (confirmed by -3.26%). Conviction MEDIUM floor (macro available, hexagram unavailable). |
+| L6 | PASS | All 5 gap types: single-pillar, earnings stale (>12h BCTC), source risk (VIC news single-source), lagged indicator (yield pre-carry), regime drift (26,118 < 26,500 containable). Causal chains Step 6.5 explicit. |
+| Business context | ABSENT | F9 persistent — 13th consecutive cycle. |
+
+**Intraday score: 3.5/6 NEEDS_ATTENTION** | 9-step: 5/9
 
 ### EOD Dish (08:37Z) — Layer Walk
 
 | Layer | Score | Notes |
 |-------|-------|-------|
-| L1 | FAIL | State transitions NOT VERIFIED — macro service down, USD/VND threshold crossing unverifiable |
-| L2 | FAIL | US macro NOT AVAILABLE — macro service error |
-| L3 | FAIL | VN macro NOT AVAILABLE — macro service error |
-| L4 | PARTIAL | <2 pillars visible: P/E (tier-3) only. M2/COC/earnings all blocked by macro-down + BCTC 3d+ overdue. Conviction avg 0.48 MODERATE. |
-| L5 | PARTIAL | Market hexagram 404 (B-bucket expected). Per-ticker from get_portfolio_conviction: banking Sư GIU 100%, real-estate mixed Sư/Khôn/Kiển, oil_gas Khôn THAN TRONG 48%. No Lão Dương/Lão Âm. |
-| L6 | PASS | All 5 gap types named: single-pillar (3 pillars missing), source risk (1 tool per-ticker), lagged indicator (5-7d trend), regime drift (macro unknown), inverted causality (NONE detected). Honest degraded-dish annotation. |
-| Business context | ABSENT | Persistent F9 (12th cycle). |
+| L1 | PASS | USD/VND 26,118 state transition VERIFIED ("above 25,500 import threshold"). 15 watchlist tickers confirmed direction+delta. |
+| L2 | PARTIAL | Fed 5.33% > SBV 5% (-0.33pp carry) cited. Deutsche Bank tier-2 baseline (not real-time EFFR). PMI sub-components absent. US10Y absent. Consumer sentiment absent. |
+| L3 | PARTIAL | USD/VND 26,118 (above 25,500) cited. FII_OUTFLOW_RISK regime cited. VIRA absent. CPI absent. |
+| L4 | MIXED | Banking 2.5/4 (valuation cheap 8.2pp vs carry headwind = REGIME SHOCK, correctly resolved). Steel 2/4 (import cost lagged, FX margin squeeze). **FPT 4/4 ALIGNED** (earnings ROI USD-denominated, valuation moderate, momentum +2.61%, Kinh Dịch Khiêm MUA 100% reversal). Conviction: Banking MEDIUM, Steel MEDIUM-LOW, FPT STRONG 0.60. |
+| L5 | PARTIAL | Market hexagram NOT_FOUND (expected). Per-ticker: Banking Sư/Khôn mixed, Steel Sư consensus 100%, FPT Khiêm MUA 100%. Conviction MEDIUM floor. |
+| L6 | PASS | 5/5 gap types: single-pillar (banking carry alone insufficient), earnings missing (BCTC stale >24h Q2), source risk (live API, no news-scout 24h validation), regime drift (26,118 < 26,500 containable), lagged indicator (yield signal 24h lag). 3 causal chains Step 6.5 explicit. Macro-micro contradiction resolved as REGIME SHOCK (correct). |
+| Business context | ABSENT | F9 persistent. |
 
-**EOD dish score: 2/6 — CRITICAL-FORCED** (macro-down L1/L2/L3 structural failure; correctly handled via degraded-dish floor, not a methodology error; L6 PASS shows honest gap-catalogue application)
-
-Note: macro-indicators service absent-by-design on this host (minimal runtime: mcp-server + mcp-gateway only). Per dashboard cow-MACRO-DOWN-20260601T0406 verdict: EXPECTED-NO-ACTION. Chef degraded-dish floor is the correct response.
+**EOD score: 3.5/6 NEEDS_ATTENTION** (IMPROVEMENT vs c85 2/6 — macro service restored) | 9-step: 5/9
 
 ### Evening Dish (19:37Z) — Layer Walk
 
 | Layer | Score | Notes |
 |-------|-------|-------|
-| L1 | PASS | State transition VERIFIED: "USD/VND at 26114 (above 25K threshold = carry risk)" explicitly named. Threshold crossing flagged. |
-| L2 | PARTIAL | Fed hawkish via Deutsche Bank T-5h baseline (not real-time EFFR). PMI sub-components absent. US10Y absent. Consumer sentiment absent. Carry -0.33pp cited (EFFR-IORB proxy). |
-| L3 | PARTIAL | USD/VND 26114 live ✓ (above 25K threshold). Carry spread -0.33pp cited. VIRA absent. CPI absent. SBV stale. |
-| L4 | PARTIAL | Real estate: M2 carry ✓, COC expensive ✓, BCTC absent ✗, P/E unknown ✗ → 2/4. Oil_gas: same pattern 2/4. "Valuation CONFLICT: earnings yield 8.2pp (cheap) vs carry -0.33pp (FII risk)" — contradiction correctly noted, conviction capped MEDIUM. |
-| L5 | PARTIAL | Market hexagram 404 (B-bucket expected). Per-ticker hexagrams 0.41–0.59 stable MODERATE. No Lão Dương/Lão Âm reversal detected. Stable regime (no reversal warning needed). |
-| L6 | PASS | Gap annotation: "no live Fed rate update (Deutsche Bank T-5h baseline), macro confidence MEDIUM." Causal chain: "Fed hawkish → USD/VND 26114 → FII exit (-0.33pp) → real estate sector sells (VIC -3.03%, VRE -3.26%, VHM -2.56%, avg -2.95%) + oil-gas decline (GAS -3.66%, PLX -3.05%)" — direction correct (not inverted). Source tiers cited. 5/5 gap types addressed. |
-| Business context | ABSENT | Persistent F9 (12th cycle). |
+| L1 | PASS | **TWO state transitions VERIFIED:** (1) USD/VND 26,118 carry threshold crossed (above 25,500). (2) Yield state transition EOD 3.2pp CHEAP → evening 1.83pp FAIRLY_VALUED (sentiment repricing explicitly captured — best L1 in recent cycles). Gold $4,516.50 BULLISH. Oil $96.03 NEUTRAL. |
+| L2 | PARTIAL | Fed 5.33% > SBV 5% (-0.33pp carry spread) cited. FII_OUTFLOW_RISK confirmed. PMI sub-components absent. US10Y absent. EFFR-IORB spread not directly derived (Fed 5.33% used as proxy). |
+| L3 | PARTIAL | USD/VND 26,118 (above 25K threshold) ✓. Carry -0.33pp ✓. [gap: SBV CPI/FX absent evening window] noted. VIRA absent. |
+| L4 | PARTIAL-HIGH | Banking: 2/4 (yield premium vs carry panic mismatch; BCTC stale >24h). RES: 1.5/4 (carry pressure confirmed; BCTC stale; Kinh Dịch Tập Khảm BAN 100% unanimous validates bear thesis). **FPT: 4/4 ALIGNED** (earnings ROI USD-denominated structural hedge + valuation moderate + momentum +2.61% divergence + Kinh Dịch Khiêm MUA 100% reversal). FPT conviction STRONG 0.63 — strongest thesis in c82–c86 period. |
+| L5 | PARTIAL | Market hexagram NOT_FOUND (expected). Per-ticker: Banking Sư/Khôn mixed, RES Tập Khảm (29) BAN 100% unanimous (5 majors = strong consensus), FPT Khiêm (15) MUA 100% reversal. No Lão Dương/Âm flagged (regime stable, no reversal warning needed). |
+| L6 | PASS | Yield state transition contradiction resolved explicitly ("EOD CHEAP repriced to evening FAIRLY_VALUED — FX panic now overrides valuation thesis"). FPT source-risk flagged (no news catalyst, purely technical). BCTC stale >24h. USD/VND import lag 1-2 sessions. Carry -0.33pp containable <26,500. All 5 gap types covered. |
+| Business context | ABSENT | F9 persistent — 13th consecutive cycle. |
 
-**Evening dish score: 3.5/6 — NEEDS_ATTENTION** (L1 PASS, L2/L3 PARTIAL, L4 PARTIAL 2/4, L5 PARTIAL, L6 PASS; business context ABSENT)
+**Evening score: 4/6 NEEDS_ATTENTION — BEST CYCLE** (up from c85 3.5/6) | 9-step: 5.5/9
 
 ### 9-Step Methodology Score (Evening Dish)
 
-| Step | Result | Evidence |
-|------|--------|---------|
-| A | ✓ | High-frequency opens: USD/VND (live), carry -0.33pp, watchlist prices 18:27Z. Not quarterly. |
-| B | PARTIAL | USD/VND 26114 >> 25K threshold ✓. EFFR threshold not explicitly stated (Deutsche Bank cited, not direct EFFR-IORB level). |
-| C | ✓ | "Fed hawkish → VND depreciation → FII exit → sector sells." Causal chain coherent, not inverted. |
-| D | PARTIAL | Deutsche Bank T-5h (not real-time EFFR); PMI sub-components absent; US10Y absent; consumer sentiment absent. |
-| E | PARTIAL | USD/VND 26114 ✓. VIRA absent. CPI absent. No WiData (correct). SBV stale. |
-| F | PARTIAL | Real estate 2/4, oil_gas 2/4. Below 3-pillar floor. |
-| G | n/a | No BCTC forensics (data unavailable; not a methodology skip). |
-| H | PARTIAL | Earnings yield 8.2% vs SBV 5% cited (phase anchor). Investment-clock phase not explicitly declared by name. |
-| I | ✓ | Source tiers cited: Deutsche Bank T-5h tier-2, carry -0.33pp tier-3, USD/VND tier-2, prices 18:27Z tier-3. No social-media-as-primary. |
+| Step | Result | Notes |
+|------|--------|-------|
+| A | ✓ | High-frequency: watchlist prices EOD, macro snapshot 19:49Z fresh. |
+| B | ✓ | USD/VND 26,118 vs 25,500 named. Yield CHEAP→FAIRLY_VALUED state transition named. |
+| C | ✓ | 3 causal chains present. Direction correct (not inverted). FPT contrarian correctly identified as earnings-ROI structural, not macro-driven. |
+| D | PARTIAL | Fed 5.33% cited; EFFR-IORB spread not explicitly derived. PMI sub-components absent. |
+| E | PARTIAL | USD/VND ✓. [gap: SBV CPI/FX absent evening window] noted. VIRA absent. |
+| F | PARTIAL | Banking 2/4; RES 1.5/4; FPT 4/4. Average 2.5/4. FPT alone meets ≥3 floor. |
+| G | n/a | No BCTC forensics applicable. |
+| H | PARTIAL | Yield CHEAP→FAIRLY_VALUED = phase signal cited. Investment-clock phase name NOT declared. (Auto-cure applied to chef.md Step 4 — this gap will close next cycle.) |
+| I | ✓ | Source tiers: API tier-2, macro tier-2, alerts tier-3. No social-media-as-primary. |
 
-**9-step score: 5/9 NEEDS_ATTENTION** (A✓ C✓ I✓ = 3/9 definite; B/D/E/F/H PARTIAL = weighted ~2/5; G n/a out of denominator)
+**Evening 9-step: 5.5/9 NEEDS_ATTENTION**
 
 ---
 
-## Findings (c85)
+## Findings (c86)
 
 | # | Issue | Agent/Module | Severity | Category | Evidence |
 |---|-------|-------------|----------|----------|---------|
-| F7 | **Morning dish guarantee miss** — unified-agent self-aborted with English-prose refusal (no_self_abort violation); 2/3 cited blockers FALSE; morning MARKET dish not produced 2026-06-01 | unified-agent / chef | HIGH | pipeline | Dashboard cow-CHEF-MORNING-NOPUBLISH-20260601T0518; agent-father fix applied same tick (hardened init.md+chef.md). DONE-PENDING-LIVE-VERIFY next cron. |
-| F1 | **Macro-snapshot absent-by-design** — macro-indicators service not deployed on this host; 7+ consecutive outage affecting L1/L2/L3 in EOD dish | macro-indicators (not deployed) | MED | infrastructure | Dashboard cow-MACRO-DOWN-20260601T0406 verdict: EXPECTED-NO-ACTION. EOD degraded-dish floor correctly applied. Affects L1/L2/L3 whenever macro unavailable. |
-| F2 | **L4 partial (real estate 2/4; oil_gas 2/4)** — BCTC Q1 overdue 3d+ blocks earnings pillar for VHM/GAS/PLX/KBC/NVL/TCH/D2D | unified-agent / chef | MED | methodology | Unified-agent notebook: "BCTC overdue 3d+, Q1 BCTC overdue." Same gap as c82 F2 — still structural. |
-| F3 | **D-gap: PMI sub-components absent (L2 PARTIAL)** — ISM PMI sub-components, US10Y, consumer sentiment not available | unified-agent / chef | MED | methodology | Structural tool gap; same as c82 F3. |
-| F4 | **E-gap: VIRA absent (L3 PARTIAL)** — vira.org.vn scraper not built | unified-agent / chef | MED | methodology | Structural sprint task; same as c82 F4. |
-| F5 | **F9 business context absent — 12th consecutive cycle** | unified-agent / chef | MED | methodology | No bctc_signal_* or fundamental_* product/customer/ops/mgmt. PO ACK'd c81 disposition: cowork-lane + data-blocked. |
-| F6 | **L5 PARTIAL: market-wide hexagram dark (B-bucket)** | kinh-dich-service | LOW | infrastructure | 501/404 expected. Per-ticker inline working (get_portfolio_conviction). Not a chef methodology failure. |
+| F8 | **COWORK-LEADER-SELFLOCK: morning dish dropped 2nd consecutive Monday** — 05:18Z dispatcher tick found leader lock heartbeated to 05:34Z by 05:03Z WON session; task_claim not re-entrant → claimed=false → silent exit | cowork-dispatcher / agent-father | HIGH | pipeline | `docs/agent-memory/notebooks/architect.md` 12:00Z entry; `docs/architecture-briefs/2026-06-02-cowork-leader-selflock.md`. Fix in progress. |
+| F5 | **F9 business context absent — 13th consecutive cycle** | unified-agent / chef | MED | methodology | No bctc_signal_* or fundamental_* product/customer/ops/mgmt cited in any dish. PO ACK'd c81 disposition: cowork-lane + data-blocked. |
+| F2 | **L4 partial (BCTC Q1 overdue)** — earnings pillar blocked for banking/RES/steel tickers; blocks confidence above MEDIUM for those clusters | unified-agent / chef | MED | methodology | Notebook: "BCTC stale >24h Q2." Structural data-source gap. |
+| F3 | **D-gap: PMI sub-components absent (L2 PARTIAL)** — ISM PMI sub-components, US10Y, consumer sentiment structurally unavailable | unified-agent / chef | MED | methodology | Structural tool gap — same as c82–c85. |
+| F4 | **E-gap: VIRA absent (L3 PARTIAL)** — vira.org.vn scraper not built | unified-agent / chef | MED | methodology | Structural sprint task — same as c82–c85. |
+| F1 | **Macro absent-by-design (recurrence risk)** — restored today after 16h outage; macro-indicators not in intended runtime; if down again, EOD L1/L2/L3 fail | macro-indicators | MED | infrastructure | news-scout c30 confirms macro RESTORED 12:06Z. Baseline risk: macro is NOT deployed permanently — down events recur. |
+| F6 | **L5 PARTIAL: market-wide hexagram dark (B-bucket)** | kinh-dich-service | LOW | infrastructure | 501/404 expected. Per-ticker inline working (get_portfolio_conviction). |
+| F-REGIME | **Regime shift to TIGHTENING confirmed** — news-scout c32 (20:05Z): carry -0.33pp gold risk-off → TIGHTENING lock applied (×1.3 bearish, ×0.7 bullish multipliers). First TIGHTENING lock in audited period. Watch 26,500 VND/USD. | system | INFO | macro | news-scout c32 notebook entry 20:05Z. |
+| F-DEDUP | **News-scout c30+c31 same Minh Phu agriculture article** — both cycles cover +83% earnings growth (4h apart; clears 180-min dedup window but same article). Mild concern. | news-scout | LOW | signal-quality | c30 #4692, c31 #4716 — same story, 4h interval. |
 
 ---
 
-## Positive Signals (c85)
+## Positive Signals (c86)
 
-- **Agent-father rapid response on morning dish failure.** Root cause correctly diagnosed (2 FALSE blockers + 1 real non-blocking) and flow hardened same tick. DONE-PENDING-LIVE-VERIFY — fastest turnaround in audited period.
-- **Evening dish L1 PASS.** State transition explicitly named: "USD/VND at 26114 (above 25K threshold = carry risk)." TNB L1 discipline maintained.
-- **2 genuine clusters in Evening.** Real estate sector convergence (7 tickers, VIC -3.03%/VRE -3.26%/VHM -2.56% sector avg -2.95%) + oil sector convergence (GAS -3.66%, PLX -3.05% avg -2.21%). Multi-source convergence on both clusters.
-- **Valuation contradiction disclosed (L4).** "Earnings yield 8.2pp (cheap) vs carry -0.33pp (FII risk)" — contradiction noted, conviction capped MEDIUM. Honest handling, not suppressed.
-- **L6 gap catalogue PASS on Evening dish.** All 5 gap types named. Causal chain direction correct (not inverted). Source tiers cited.
-- **news-scout TIGHTENING regime correctly estimated** from news-sentiment fallback (7th consecutive macro-down cycle). FII outflow #4593 (conf 75%) + CPI pressure #4594 (conf 70%) — above 50% confidence, no default-bias.
-- **Intraday silent exits correctly gated.** All 4 intraday cycles that lacked genuine watchlist convergence exited silently (no false-positive MARKET publish). EOD degraded-dish floor correctly applied (1 macro extreme qualified per rule, guaranteed-publish mandate applied).
-- **news-scout self-framing defect FIXED.** commit 7239b803 applied 2026-06-01T02:14Z — news-scout now executes its own cycle when dispatched (no longer misreads `run <flow> slot=` as a re-dispatch request).
+- **Evening dish 4/6 BEST CYCLE.** TWO simultaneous state transitions in L1 (USD/VND threshold + yield CHEAP→FAIRLY_VALUED repricing). Best L1 in c82–c86 period.
+- **FPT 4/4 aligned pillars — STRONG 0.63 conviction.** First 4/4 single-ticker thesis in audited period (c82–c86). Earnings ROI USD-denominated structural hedge + valuation + momentum divergence + Kinh Dịch reversal all aligned. Correctly identified as contrarian, not macro-driven.
+- **Macro service RESTORED after 16h outage.** EOD dish benefited: L1/L2/L3 all PARTIAL or PASS vs c85 EOD ALL FAIL. Direct quality improvement attributed to macro restoration.
+- **RES Tập Khảm BAN 100% unanimous (5 majors) confirmed by price action** (-2.16% sector avg). Hexagram consensus correctly predicted direction.
+- **TIGHTENING regime correctly detected by news-scout c32.** Carry -0.33pp + gold risk-off → multipliers applied. Regime-source=macro_snapshot (confirmed, not fallback).
+- **L6 PASS on all three published dishes.** All 5 gap types cited in each dish. Causal chains present and direction-correct. Source tiers cited.
+- **Macro-micro contradiction (yield cheap vs carry panic) correctly resolved as REGIME SHOCK in EOD dish.** Pre-carry valuation thesis overridden by real-time FX dynamics — honest resolution, not suppressed.
+- **COWORK-LEADER-SELFLOCK root-caused same cycle.** Architect diagnosed and briefed within hours of the morning miss. Not waiting for next cron.
 
 ---
 
-## Auto-Cures Applied
+## Auto-Cures Applied (c86)
 
-**None by TNB this cycle.** Agent-father already cured F7 (unified-agent init.md + chef.md hardened). Structural gaps F1/F2/F3/F4/F5/F6 are data-blocked or sprint-tracked — no flow-file edit can address them.
+| Cure | File | Change | Trigger |
+|------|------|--------|---------|
+| AC-1: Investment-clock cycle-phase + pyramid-tier declaration | `docs/agents/unified-agent/flow/chef.md` Step 4 | Added mandatory cycle-phase table + per-cluster `[phase: X] [tier: Y]` declaration in Layer 4. Includes transition-phase cap at MEDIUM conviction. | TNB Step H gap 3+ consecutive cycles (c84, c85, c86). Auto-cure threshold met. |
 
 ---
 
 ## Persisting Blockers
 
-1. **Morning dish hardening (HIGH, DONE-PENDING-LIVE-VERIFY):** Fix applied by agent-father. Verify live at next chef morning cron fire (2026-06-03 02:00 UTC Monday market open, 05:23Z morning dish).
-2. **Macro-indicators absent-by-design (MED):** EOD dish L1/L2/L3 will remain FAIL whenever macro-down. Chef correctly applies degraded-dish floor. Dashboard verdict: EXPECTED-NO-ACTION. No sprint needed.
-3. **BCTC Q1 overdue (MED):** Blocks L4 earnings pillar for all watchlist tickers. Data-source-blocked, not code-blocked.
-4. **VIRA VPS scraper pending (MED):** E-gap structural.
-5. **PMI sub-components ISM tool absent (MED):** D-gap structural.
-6. **F9 business context absent — 12th cycle (MED):** PO ACK'd c81 disposition: cowork-lane + data-blocked.
+1. **COWORK-LEADER-SELFLOCK (HIGH, OPEN):** Morning dish dropped 2nd consecutive Monday. Architect brief delivered (`docs/architecture-briefs/2026-06-02-cowork-leader-selflock.md`). Fix = `owner_session` heartbeat probe (not `owner_agent` string match). Agent: agent-father. Verify live next morning fire 2026-06-03 05:15Z.
+2. **BCTC Q1 overdue (MED):** Blocks L4 earnings pillar for all watchlist tickers. Data-source-blocked, not code-blocked.
+3. **VIRA VPS scraper pending (MED):** E-gap structural.
+4. **PMI sub-components ISM tool absent (MED):** D-gap structural.
+5. **F9 business context absent — 13th cycle (MED):** PO ACK'd c81 disposition: cowork-lane + data-blocked. No change.
+6. **Macro absent-by-design risk (MED):** Restored today; but not permanently deployed. EOD dish will degrade again if macro goes down. Chef correctly applies degraded-dish floor.
+7. **TIGHTENING regime watch:** Carry -0.33pp approaching -0.5pp lock. If news-scout detects spread widening next 2 cycles, multipliers tighten further (×1.3 bearish, ×0.7 bullish). Watch 26,500 VND/USD trigger.
 
 ---
 
-## Closed Findings (c85 vs c82)
+## Closed Findings (c86 vs c85)
 
-| Finding | c82 | c85 | Reason |
+| Finding | c85 | c86 | Reason |
 |---------|-----|-----|--------|
-| c83/c84 gateway-blocked audit cycles | OPEN | CLOSED | c85 executed in main-terminal session with full file-evidence access |
-| news-scout self-framing defect | — | NEW→CLOSED | Agent-father fix 7239b803 applied 2026-06-01T02:14Z; news-scout correctly executes own cycle now |
+| c83/c84 gateway-blocked cycles | CLOSED (c85) | CLOSED | Carried-forward confirmation |
+| news-scout self-framing defect | CLOSED (c85) | CLOSED | 7239b803 live; news-scout c30+c31+c32 all self-executed correctly |
+| F7 morning dish (no_self_abort) | DONE-PENDING-LIVE-VERIFY | VERIFIED: different root (COWORK-LEADER-SELFLOCK, not no_self_abort) | F7 no_self_abort fix is live; new F8 COWORK-LEADER-SELFLOCK opened |
+
+---
+
+## Next Cycle Priorities (c87 — 2026-06-03T20:13Z)
+
+1. **F8 live verify:** Did Tuesday 2026-06-03 morning dish (05:15Z) publish successfully? COWORK-LEADER-SELFLOCK fix live?
+2. **Step H verification:** Did chef.md auto-cure take effect? Evening dish should now declare `[phase: slowdown] [tier: fixed_income/equity]` in Block B Layer 4.
+3. **Carry -0.33pp → -0.5pp watch:** If FII selling persists, TIGHTENING multipliers amplify signals. Monitor news-scout regime reads.
+4. **FPT tech persistence:** +2.61% Monday. Tuesday open: does tech/FPT hold or reverse with TIGHTENING regime?
+5. **NVL floor watch:** news-scout c31 #4717 bearish 10/10 (6-session losing streak). VIC/VHM quality flight vs NVL capitulation — bifurcation thesis validation.
+6. **BCTC Q1 filings:** VHM/ACB/VCB/GAS — any Q1 filing would unlock L4 earnings pillar.
 
 ---
 
 ## PO ACK
-
 - Read by: po
-- At: 2026-06-01T22:34Z
-- Tasks created: none — F7 already cured by agent-father (DONE-PENDING-LIVE-VERIFY); no new dev task. Disposition = monitor next morning fire 05:23Z (orch-state watch_item tracks).
-- Skipped findings: F1 (macro absent-by-design, EXPECTED-NO-ACTION), F2 (BCTC Q1 overdue — data-blocked not code-blocked), F3 (PMI/ISM tool absent — structural gap), F4 (VIRA scraper pending — structural, SSC backlog), F5 (F9 business context — cowork-lane + data-blocked, prior ACK), F6 (hexagram dark — 501/404 expected, per-ticker inline works). All MED/LOW, all pre-existing, none new this cycle.
-- This cycle's dev pick: A-01-EXPECTED-SET (FLEET-HOST-SAFETY) — unrelated to TNB findings; higher-priority host-danger FIX.
+- At: 2026-06-04T07:45:26Z
+- Tasks created: none — all c86 findings are pre-existing persisting-blockers (F8 COWORK-LEADER-SELFLOCK already briefed/in-progress; F2/F3/F4/F5/F6/F1 structural methodology/data-gaps already tracked). This cycle was a signal-driven kickoff (architect RAPID-DATA-LAYER) — TNB findings folded into context, no NEW high-sev task surfaced from the audit itself.
+- Skipped findings: F8 (already OPEN w/ architect brief + agent-father fix in progress — no dup); F2/F3/F4 (structural data-source/tool gaps, separately tracked); F5/F6/F1 (MED/LOW, ACK'd dispositions unchanged).
 
----
-
-## Next Cycle Priorities (c86)
-
-1. **F7 live verify:** Did Monday 2026-06-03 morning dish (05:23Z) publish successfully? Evidence of hardened init.md taking effect.
-2. **Macro service status Monday open:** If macro-indicators still absent-by-design at 02:00Z Monday, EOD dish will degrade again. Acceptable if degraded-dish floor applied correctly.
-3. **FII outflow arbitration (news-scout c85 carry-over):** Monday VN open (02:00Z) price action arbitrates bullish (VCBS/LPBS domestic) vs bearish (FII/-630B outflow). Check banking/securities sector direction.
-4. **Oil contradiction watch:** Brent +4.54% vs GAS -3.66% — if GAS/PLX Monday open reversal to +2%+, supply constraint confirmed. If flat/down, currency headwind wins.
-5. **BCTC Q1 filings:** Did any real-estate/banking filings land? VHM/ACB/VCB/GAS would unlock L4 earnings pillar.
-6. **Macro-service restart (news-scout critical carry-over):** ops must verify `docker ps` macro-indicators state before Monday open. Per dashboard: EXPECTED-NO-ACTION (not deployed by design), but news-scout escalation logged. TNB notes this for monitoring.
-
----
-
-## PO ACK (leave blank for PO to fill)
-
-<!-- PO: sign off by adding: "ACK: {date} {initials}" -->
+<!-- PO: sign off by adding: "ACK: {date} {initials}" + tasks created if any -->
