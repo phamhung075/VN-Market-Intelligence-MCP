@@ -1,0 +1,30 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "tick_nominal": "04:04",
+  "drift_min": 3,
+  "matcher_slots": [
+    "news-scout-offhours",
+    "market-watcher-offhours"
+  ],
+  "leader_lock": "acquired_stolen",
+  "spawns": 2,
+  "spawned": [
+    {
+      "slot": "news-scout-offhours",
+      "agent": "news-scout",
+      "publisher": false
+    },
+    {
+      "slot": "market-watcher-offhours",
+      "agent": "market-watcher",
+      "publisher": false
+    }
+  ],
+  "dev_head": "idle",
+  "devq": 0,
+  "signal_backlog": 3,
+  "new_queue_rows": 1,
+  "notes": "0 */4 gatherers WON; 2 non-publishers spawned (no dedup gate); 1 NEW row = own outbound po flow_defect still pending dev drain",
+  "written_at": "20260604T040416Z"
+}

@@ -1,0 +1,26 @@
+{
+  "classification": "WON",
+  "reason": "cron_match",
+  "tick_nominal": "03:19",
+  "drift_min": 3,
+  "matcher_slots": [
+    "chef-intraday"
+  ],
+  "leader_lock": "acquired_stolen",
+  "spawns": 1,
+  "spawned": [
+    {
+      "slot": "chef-intraday",
+      "agent": "unified-agent",
+      "publisher": true,
+      "dedup_gate": true,
+      "result": "dedup_blocked_silent_exit"
+    }
+  ],
+  "dev_head": "idle",
+  "devq": 0,
+  "signal_backlog": 0,
+  "new_queue_rows": 0,
+  "notes": "chef-intraday 2nd daily fire; dedup marker held from 02:13 fire -> silent exit, NO publish. FLOW-DEFECT WATCH: per-DAY dedup marker over-suppresses hourly intraday (only 1 intraday publish/day possible). Errs safe. Routing signal to PO.",
+  "written_at": "20260604T031929Z"
+}

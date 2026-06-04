@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Idle — tick 03:09Z drained 4 cowork heartbeats (1 WON FIRE chef-intraday + 3 SILENT). Schema still flat-root → live cowork session STILL stale; FU-COWORK-SESSION-RELOAD still BLOCKED-OPERATOR (operator not yet restarted cowork dispatcher). No dev-actionable work; all board items DEFERRED/blocked-operator.",
+    "next_action": "Idle — tick 04:09Z: drained 4 cowork (2 WON FIRE + 2 SILENT). Actioned 1 NEW signal_queue flow_defect_report (chef-intraday dedup granularity, MEDIUM errs-safe): PO-triaged → out of dev-zone scope → folded into existing backlog FU-CHEF-MARKER-INFLOW (granularity facet, both fix options), signal row→READ, routed agents-architect+agent-father. FU-COWORK-SESSION-RELOAD still BLOCKED-OPERATOR. No dev-actionable code work.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T03:10:34Z",
+    "updated_at": "2026-06-04T04:15:22Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T01:12:17Z",
+    "_updated_at": "2026-06-04T04:15:22Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1932,7 +1932,7 @@
     "backlog": [
       {
         "task_id": "FU-CHEF-MARKER-INFLOW",
-        "title": "chef.md self-enforces published-marker before send_telegram",
+        "title": "chef.md self-enforces published-marker before send_telegram, with per-cadence key granularity",
         "type": "FIX",
         "sprint": "COWORK-RELIABILITY",
         "status": "DEFERRED-OUT-OF-DEV-SCOPE",
@@ -1941,8 +1941,11 @@
         "files": [
           "docs/agents/unified-agent/flow/chef.md"
         ],
-        "note": "Harden: move the published-marker claim (published:<slot>:<YYYY-MM-DD>) INTO chef.md Step 7 immediately before send_telegram, so dedup survives ANY spawn path (currently the gate is only an instruction injected by the cowork dispatcher into the spawn prompt — a direct/refactored spawn bypasses it and can double-publish, as proven 2026-06-02 07:19Z). Architect review the marker contract (recurring-bug family: cowork dispatch reliability, kin of COWORK-LEADER-SELFLOCK).",
-        "disposition": "DEFERRED-OUT-OF-DEV-SCOPE: marker-contract hardening is a cowork flow .md edit (docs/agents/unified-agent/flow/chef.md) → agents-architect (contract) + agent-father (flow edit via agent-md-factory), NOT dev-team (owns apps/ code only). Route via cowork-reliability dispatch."
+        "note": "Harden: move the published-marker claim (published:<slot>:<YYYY-MM-DD>) INTO chef.md Step 7 immediately before send_telegram, so dedup survives ANY spawn path (currently the gate is only an instruction injected by the cowork dispatcher into the spawn prompt — a direct/refactored spawn bypasses it and can double-publish, as proven 2026-06-02 07:19Z). Architect review the marker contract (recurring-bug family: cowork dispatch reliability, kin of COWORK-LEADER-SELFLOCK).  || GRANULARITY FACET (added 2026-06-04T04:15:22Z from cowork flow_defect_report po-chef-intraday-dedup-granularity-20260604T0320Z, MEDIUM, errs-SAFE): per-DAY marker key (published:<slot>:YYYY-MM-DD) is correct ONLY for once-daily slots; chef-intraday cron `13 2-8 * * 1-5` fires hourly 7x/weekday sharing ONE per-day key, so the first fire's 0-cluster SILENT exit burns the day's only key (gate claims BEFORE convergence) => <=1 intraday publish/day, later legit intraday dishes silently lost. LIVE 2026-06-04: 02:13 silent+claimed; 03:13 dedup-blocked. DEFINITIVE FIX = both facets together: (b) claim marker only AFTER cluster qualifies, co-located w/ send_telegram in chef.md Step 7 (already what spawn-fanout.md L66 mandates; runtime dispatcher injection violates it at gate-entry) AND (a) for sub-daily slots use published:<slot>:YYYY-MM-DDTHH (per-cadence granularity declared in spawn-fanout.md contract); keep per-day for morning/eod/evening. Files: docs/agents/unified-agent/flow/chef.md + docs/agents/cowork-team/flow/spawn-fanout.md. CAUTION: cross-cutting publish-dedup safety contract (irreversible MARKET double-publish risk per feedback_chef_dryrun_publishes) — agents-architect contract review REQUIRED before agent-father edit. Activation also gated on cowork session reload (kin FU-COWORK-SESSION-RELOAD).",
+        "disposition": "DEFERRED-OUT-OF-DEV-SCOPE: marker-contract hardening is a cowork flow .md edit (docs/agents/unified-agent/flow/chef.md) → agents-architect (contract) + agent-father (flow edit via agent-md-factory), NOT dev-team (owns apps/ code only). Route via cowork-reliability dispatch.",
+        "subsumes": [
+          "po-chef-intraday-dedup-granularity-20260604T0320Z"
+        ]
       },
       {
         "task_id": "FU-EI-P2-COV-1",
@@ -2416,6 +2419,18 @@
           ]
         },
         "disposition": "Router live-verified get_cash_flow(FPT,quarters=8): quarters_requested=8 honored, periods[] returned, only 2 quarters of FPT data in corpus. FU-BCTC-TOOL-PARAMS genuinely DONE. Root=data coverage (BCTC-HIST-VPS-BACKFILL DEFERRED-INFRA). Loop-stop guard shipped (BCTC-ESC-GUARD design 2a40d47e/impl 061ce406/split 0b00e15d). Next cycle the analyst will self-classify DATA-COVERAGE-LIMITED, claim 30d guard, route ONE signal to ops, stop re-escalating to dev-team."
+      },
+      {
+        "id": "po-chef-intraday-dedup-granularity-20260604T0320Z",
+        "ts": "2026-06-04T03:20:17Z",
+        "from": "cowork-team",
+        "to": "po",
+        "type": "flow_defect_report",
+        "summary": "MEDIUM. chef-intraday dedup marker has wrong granularity. Marker task_id is per-DAY (chef-published:chef-intraday:YYYY-MM-DD) but slot cron is 13 2-8 * * 1-5 (fires hourly, 7x/weekday). The FIRST fire claims the marker even on a 0-cluster SILENT no-publish exit (gate claims BEFORE convergence check), so all 6 later intraday fires that day get claimed=false -> dedup-blocked -> silent-exit, even if NEW convergence appears at 04:13+. Net: at most ONE intraday publish/day; legitimate later intraday dishes silently lost. Errs SAFE for AC-6 (under-publishes, never double) so not urgent, but degrades intraday product. Observed live 2026-06-04: 02:13 fire silent(0 clusters)+claimed marker; 03:13 fire dedup-blocked. FIX options for dev: (a) include fire-hour in marker key (chef-published:chef-intraday:YYYY-MM-DDTHH) so each hourly fire dedups only its own concurrent peers; and/or (b) claim marker only AFTER convergence qualifies + immediately before send_telegram, not at gate entry. Per-day marker is correct only for once-daily slots (chef-morning/eod/evening). Affects: cowork dispatcher dedup-gate contract + unified-agent/flow/chef.md.",
+        "severity": "MEDIUM",
+        "status": "READ",
+        "payload_ref": "docs/signals/cowork-team-20260604T031929Z.json",
+        "disposition": "READ 2026-06-04T04:15:22Z by dev-team: PO-triaged (NOTHING for dev-zone), folded into backlog FU-CHEF-MARKER-INFLOW (granularity facet); routed agents-architect+agent-father, cowork agent-md lane."
       }
     ],
     "archive": [
