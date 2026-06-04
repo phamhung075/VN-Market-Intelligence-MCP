@@ -1,0 +1,12 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-04T08:19:06Z",
+  "classification": "WON",
+  "slots": [
+    "chef-intraday"
+  ],
+  "drift_min": 3,
+  "leader": "self_held",
+  "backlog": 0,
+  "note": "chef-intraday last daily fire; dedup-gate expected silent-exit (per-day marker held)"
+}

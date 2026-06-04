@@ -1,0 +1,13 @@
+{
+  "agent": "cowork-team",
+  "ts": "2026-06-04T08:48:47Z",
+  "classification": "WON_PEER_HELD",
+  "slots": [
+    "chef-eod"
+  ],
+  "drift_min": 3,
+  "leader": "peer_held",
+  "action": "silent_exit",
+  "backlog": 2,
+  "note": "matcher matched chef-eod but leader lock heartbeat ok:false (peer dispatcher owns tick); no spawn to avoid double-dispatch; peer handles chef-eod publish (dedup marker protects AC-6 regardless)"
+}
