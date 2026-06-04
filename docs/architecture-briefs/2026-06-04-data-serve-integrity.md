@@ -51,6 +51,40 @@ The Go macro-indicators `usecases.go` comments the fixture fallbacks as "safe-de
 
 The correct pattern is: per-field provenance, not response-level provenance. When `fedFunds` falls back to fixture, that field is individually marked `is_estimate:true` with `source_tier:4` and the `fetched_at` is the last time FRED actually returned a row (from `fred_series_daily MAX(date)`), not `time.Now()`.
 
+### DSI-INV-1 Taxonomy Addendum — SBV Administered Rate Tier Ruling (FINAL, 2026-06-05, FU-SBV-DEPOSIT-PROVENANCE-GO)
+
+**Context:** With macro-indicators confirmed LIVE (container healthy :5004), the `resolveVNDDepositRate` path in `usecases.go` (L309-316) returns 5.0 from `CarryYieldInputsPort.GetVNDDepositRate()` and the carry DTO emits `is_estimate:false, source_tier:1`. `source_tier:1` is wrong — it is reserved for exchange-direct data (FRED EFFR qualifies; quarterly SBV decree rate does not).
+
+**Live schema probe result (2026-06-05):** `sbv_rates` columns: `source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official, discount_rate_pct, max_deposit_rate_pct, max_lending_rate_pct, interbank_overnight_pct, fetched_at`. **No `effective_date` column.** Latest row: `source=sbv, max_deposit_rate_pct=5.0, fetched_at=2026-05-16T13:25:52Z`.
+
+**Final ruling: `source_tier:2` / `is_estimate:false` — unconditional.**
+
+Rationale: The tier taxonomy classifies the epistemological status of the VALUE, not the completeness of our schema's provenance record. The SBV deposit rate of 5.0% is a real administered rate set by SBV decree, fetched from the SBV-maintained source, and written to the DB by the SBV cron with `source='sbv'`. It is not estimated, interpolated, or hardcoded. The absence of an `effective_date` column is a **provenance-completeness gap in our schema** — it does not reclassify a correct, real, authoritative value as a fixture estimate. Suppressing the carry regime (fed=3.62, SBV=5.0, spread=+1.38pp, NEUTRAL) because our DB lacks a decree-date column would destroy a correct live signal to honour a schema formalism. That violates DSI-INV-1's purpose, which targets fabricated provenance, not missing audit fields on real data.
+
+The `source_tier:4` / `is_estimate:true` path remains correct only for the fixture fallback constant (4.7) — a hardcoded value with no external source linkage at all.
+
+**EFFR (fedFunds) is unaffected** — FRED EFFR is tier:1 (published daily series, exchange-grade). Unchanged.
+
+**Impact on carry DTO:** Minimal — one constant in `buildCarryDTO`. When both carry inputs are live-resolved (no fixture fallback), set `SourceTier` to 2 (the LOWER of fedFunds=tier:1 and vndDeposit=tier:2). This prevents the carry signal from claiming tier:1 when one component is only tier:2. `is_estimate` stays false; regime and carrySpread are not suppressed.
+
+**`FetchedAtSource` on carry DTO:** Remains the FRED `MAX(date)` for the fedFunds input via `GetFedFundsSourceDate`. No SBV-side `effective_date` to stamp — the SBV carry input uses `fetched_at` (row write time) as the best available provenance timestamp. A separate follow-up adds a proper `effective_date` column to `sbv_rates`.
+
+**Minimal code change for dev-macro-indicators:**
+
+In `apps/macro-indicators/pkg/application/usecases.go`, `buildCarryDTO`:
+```go
+// Replace:
+sourceTier := 1 // live
+
+// With:
+sourceTier := 2 // SBV administered rate (tier:2) caps the carry DTO; EFFR alone is tier:1
+```
+No new port methods. No new DB columns. No `GetVNDDepositEffectiveDate` — that method would be dead code against the live schema; do not implement it.
+
+**Test addition:** `TestDSIINV1_CarrySourceTierAdministeredRate` in `usecases_test.go` — table-driven, asserts live path emits `source_tier:2` (not 1, not 4); fixture fallback path emits `source_tier:4` (unchanged).
+
+**Follow-up (separate, non-blocking):** `FU-SBV-EFFECTIVE-DATE-COLUMN` (P3/backlog) — add `effective_date TEXT` to `sbv_rates` and populate it in the SBV VPS fetcher with the known decree date. Provenance-completeness improvement, not a correctness fix.
+
 ---
 
 ## 3. Regression Root-Cause: The VN/vietnam Key Mismatch
@@ -119,6 +153,8 @@ Three code paths examined:
 **Expected outcome:** With FRED reachable and `fred_series_daily` populated, `fedFunds` resolves from the live DB row (~5.33% EFFR as of H1 2026 → carry spread = VND_deposit(4.7%) - fedFunds(5.33%) = -0.63pp, i.e. FII_OUTFLOW_RISK). With `fixtureSBVDepositRate=4.7` and `fixtureFedFundsRate=5.33` this is exactly the fixture regime. The task note says "expect ~+1.4pp positive spread, not FII_OUTFLOW_RISK" — this implies the live SBV max deposit rate that should be read is closer to 6.7%+ (current SBV rate 2026), not the 4.7% fixture. The DPI-FU-D fix (`d7ee43d7`) added a zero-write guard for SBV deposit, but if the DB row for `max_deposit_rate_pct` is stale or missing, the adapter returns 0 and the fixture 4.7% is served. Verify live `sbv_rates.max_deposit_rate_pct` is populated before attributing the regime error solely to FRED.
 
 **Important note on the Go plane deploy status:** `apps/macro-indicators/` is NOT currently deployed as the live serve path on this host (16GB cap, Docker fleet restriction, this service is not in the intended runtime set per `docs/data/system-map.json`). The `get_macro_snapshot` MCP tool proxies through the micro-service only when the container is running. When it is not running, `getMacroSnapshot()` in `clients.ts` receives a 502/ECONNREFUSED and the calling agent falls through to `get_market_snapshot` or returns an error. **The fixture values in `usecases.go` are only in-play when the macro-indicators container IS running.** This must be confirmed before prescribing Go-plane changes as blocking fixes for the running system.
+
+> **CORRECTION 2026-06-05 (R-4 resolved HOT via `docker ps`):** The above deploy-status note is WRONG as of 2026-06-05. `docker ps` confirms `vn-market-intelligence-mcp-macro-indicators-1` is Up 3 hours (healthy) on port 0.0.0.0:5004→5004/tcp. macro-indicators IS the live carry/yield serve path. The DSI-INV-1 producer-side fix in `usecases.go` (resolveFedFundsRate/resolveVNDDepositRate → (value,isLive); buildCarryDTO suppression on fixture fallback) is the LIVE fix, not a latent one. Live-verified: carry fed=3.62/NEUTRAL/+1.38pp/is_estimate=false/tier=1 this tick. See §7 R-4 correction.
 
 ### DSI-S1-FE-TYPE (P1, S — stop dropping dataSource/staleness at TypeScript boundary)
 
@@ -191,18 +227,22 @@ Go plane. Currently deployed (stock-price container is in the intended runtime s
 |------|-------|-------|------|
 | DSI-S2-PRICE (service side) | application + interface/http + domain | `usecases.go` FetchPriceResponse add Staleness+IsEstimate; `models.go` Change nullable; `router.go` propagate; `fetchers.go` Tier-3 restamp audit | M |
 
-### Zone C: `apps/macro-indicators/` → `dev-macro-indicators` — LATENT LANDMINE, NOT HOT
+### Zone C: `apps/macro-indicators/` → `dev-macro-indicators` — ~~LATENT LANDMINE, NOT HOT~~ LIVE (CORRECTED 2026-06-05)
 
-**CRITICAL flag for BA and PM:** This Go service is NOT in the intended deploy set for this host. Its fixture fallbacks are only in-play when the container is running. DO NOT schedule `dev-macro-indicators` work as blocking for the S1/S2 fixes.
+> **CORRECTION 2026-06-05:** The "LATENT LANDMINE / NOT HOT" and "not in deploy set" classification is WRONG. `docker ps` (2026-06-05 tick) confirms the container is Up and healthy on :5004. This zone is LIVE and HOT. See §7 R-4 correction below.
 
-However, the code is a **latent landmine**: if the container is ever started (e.g., during a host memory investigation, ops experiment, or future scale-up), it will silently serve fixture carry/yield signals as `dataSource:"fixture"` at the response level but with no per-field `is_estimate`. The fix is low-risk and well-scoped.
+~~**CRITICAL flag for BA and PM:** This Go service is NOT in the intended deploy set for this host. Its fixture fallbacks are only in-play when the container is running. DO NOT schedule `dev-macro-indicators` work as blocking for the S1/S2 fixes.~~
 
-If/when this zone is activated, the changes are:
-- `usecases.go`: add `IsEstimate bool` and true-source `FetchedAt` to `MacroSnapshotResponse` and per-signal DTO.
-- `dtos.go`: extend `SignalResult` carry/yield entries with `IsEstimate bool` and `FetchedAtSource string`.
-- Fixture fallback path: set `IsEstimate=true`, set `FetchedAt` to last FRED `MAX(date)` (query at call time), not `time.Now()`.
+~~However, the code is a **latent landmine**: if the container is ever started (e.g., during a host memory investigation, ops experiment, or future scale-up), it will silently serve fixture carry/yield signals as `dataSource:"fixture"` at the response level but with no per-field `is_estimate`. The fix is low-risk and well-scoped.~~
 
-BA should create a separate backlog item `DSI-MACRO-INDICATORS-LATENT` rather than including this in the active sprint. Gate on: container enters intended runtime set.
+~~If/when this zone is activated, the changes are:~~
+~~- `usecases.go`: add `IsEstimate bool` and true-source `FetchedAt` to `MacroSnapshotResponse` and per-signal DTO.~~
+~~- `dtos.go`: extend `SignalResult` carry/yield entries with `IsEstimate bool` and `FetchedAtSource string`.~~
+~~- Fixture fallback path: set `IsEstimate=true`, set `FetchedAt` to last FRED `MAX(date)` (query at call time), not `time.Now()`.~~
+
+~~BA should create a separate backlog item `DSI-MACRO-INDICATORS-LATENT` rather than including this in the active sprint. Gate on: container enters intended runtime set.~~
+
+**LIVE STATUS — dev-macro-indicators is now an active zone.** The DSI-INV-1 producer-side fix (`resolveFedFundsRate`/`resolveVNDDepositRate` returning (value, isLive); `buildCarryDTO` suppressing to regime=UNKNOWN/carrySpread=null/is_estimate=true/tier=4 on fixture) has already shipped in this sprint and is serving live. `DSI-MACRO-INDICATORS-LATENT` is reclassified from "deferred backlog" to "live fix, already shipped." Residual open item is the SBV administered-rate tier ruling — see §2 addendum and §7 R-4.
 
 ---
 
@@ -231,8 +271,10 @@ The dead `fetchAndStoreMacroIndicators` path (application usecase, production pa
 **R-3 (LOW): stock-price Change/ChangePercent nullability is a breaking API change.**
 Changing `Change float64` to `*float64` in the Go DTO changes the JSON serialization from `0` to `null` for unavailable values. Verify all TS callers of `change` / `changePercent` handle `null` before deploying. The frontend `StockQuote` interface (market.ts line 18) has `change: number` — this must be updated to `change: number | null` in the same PR.
 
-**R-4 (LOW): macro-indicators Go plane not deployed — no deploy step required for DSI-S1/S2.**
-Confirm with ops: `docker ps -a` shows no macro-indicators container. If it is running, the latent landmine is HOT and `dev-macro-indicators` must be scheduled immediately.
+**R-4 ~~(LOW): macro-indicators Go plane not deployed — no deploy step required for DSI-S1/S2.~~**
+~~Confirm with ops: `docker ps -a` shows no macro-indicators container. If it is running, the latent landmine is HOT and `dev-macro-indicators` must be scheduled immediately.~~
+
+> **RESOLVED HOT 2026-06-05:** `docker ps` confirmed `vn-market-intelligence-mcp-macro-indicators-1` Up 3 hours (healthy) :5004. The "not deployed" premise was incorrect. The producer-side DSI-INV-1 fix has shipped and is live. Residual item: SBV administered-rate tier ruling (FU-SBV-DEPOSIT-PROVENANCE-GO) — see §2 addendum below. dev-macro-indicators must apply the tier correction before this sprint closes.
 
 ---
 
@@ -265,7 +307,8 @@ DSI-S2-PRICE → stock-price Staleness propagation + Change nullability (M)
   ↓
 DSI-S3-SECTOR-FIN → sector/fin fixture clusters → null+is_estimate (L, P2)
   ↓
-DSI-MACRO-INDICATORS-LATENT → backlog only; gate on container enter runtime
+FU-SBV-DEPOSIT-PROVENANCE-GO → LIVE (container up); tier correction for administered rate
+  [DSI-MACRO-INDICATORS-LATENT was WRONG label — container is deployed, fix already shipped]
 ```
 
 ---
@@ -278,7 +321,7 @@ DSI-MACRO-INDICATORS-LATENT → backlog only; gate on container enter runtime
 - **Zone:** multi-zone
   - apps/mcp-server/    → dev-mcp-server   (S1-SLA, S1-FE-TYPE, S3-SECTOR-FIN, S2-PRICE client side)
   - apps/stock-price/   → dev-stock-price  (S2-PRICE service side)
-  - apps/macro-indicators/ → dev-macro-indicators — LATENT LANDMINE, not-hot, backlog only
+  - apps/macro-indicators/ → dev-macro-indicators — ~~LATENT LANDMINE, not-hot, backlog only~~ LIVE (CORRECTED 2026-06-05); fix already shipped; FU-SBV-DEPOSIT-PROVENANCE-GO open
 
 - **Verified paths:** see §8 above
 
@@ -293,7 +336,7 @@ DSI-MACRO-INDICATORS-LATENT → backlog only; gate on container enter runtime
   - DSI-INV-1 compliance: per-field provenance, not response-level. Each computed value carries
     its own source_tier + fetched_at + is_estimate.
   - Nullable Change/ChangePercent: pointer types in Go (*float64), number | null in TS.
-  - macro-indicators Go plane: fix is scoped to latent backlog item only.
+  - macro-indicators Go plane: ~~fix is scoped to latent backlog item only~~ LIVE; DSI-INV-1 producer fix shipped; FU-SBV-DEPOSIT-PROVENANCE-GO tier correction still open (CORRECTED 2026-06-05).
 
 - **Scan clean:** true ✓
 - **BUILD-STANDARD:** lean

@@ -1,8 +1,21 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-04 19:30 UTC | **Sprint:** DATA-SERVE-INTEGRITY (DSI-ARCH)
+**Last updated:** 2026-06-05 00:00 UTC | **Sprint:** DATA-SERVE-INTEGRITY (FU-MACRO-INDICATORS-MISSCOPE + FU-SBV-DEPOSIT-PROVENANCE-GO)
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-05T00:00Z — FU-MACRO-INDICATORS-MISSCOPE + FU-SBV-DEPOSIT-PROVENANCE-GO
+
+**Items:** Two WIP batched corrections to DSI-ARCH brief + handoff.
+
+**Item 1 — FU-MACRO-INDICATORS-MISSCOPE (DONE):**
+Deploy-scope error corrected in both docs. `docker ps` confirms macro-indicators:5004 Up+healthy. "LATENT LANDMINE / not in deploy set" annotations struck through and annotated RESOLVED. DSI-INV-1 producer fix (resolveFedFundsRate/resolveVNDDepositRate → (value,isLive); buildCarryDTO suppression) reclassified from "latent backlog" to "live fix, already shipped." R-4 annotated RESOLVED HOT. No silent rewrites — original text preserved with strikethrough + dated correction notes.
+
+**Item 2 — FU-SBV-DEPOSIT-PROVENANCE-GO (RULING ISSUED):**
+Tier ruling for SBV administered max deposit rate: `tier:2 / is_estimate:false` — IF `sbv_rates` row carries a real SBV decree `effective_date` (not a DB insert timestamp). `tier:4 / is_estimate:true` if no effective_date column/value exists (bare constant). EFFR unaffected (tier:1 correct). `buildCarryDTO` must use min(tier:1, tier:2) = tier:2 for the overall carry DTO `SourceTier` when vndDeposit resolves live but is only tier:2. Full spec in brief §2 addendum. Go code change = dev-macro-indicators's job.
+
+**Files changed:** `docs/architecture-briefs/2026-06-04-data-serve-integrity.md`, `docs/handoffs/DSI-ARCH.md`.
+**Next:** dev-macro-indicators implements Go code change per §2 addendum spec.
 
 ## 2026-06-04T19:30Z — DSI-ARCH: DATA-SERVE-INTEGRITY brief + per-zone split
 
@@ -184,5 +197,3 @@ Step 4.6b heartbeat stays; peer-held silent-exit stays. One-file edit (Step 0b o
 **Recurring-bug note:** Root cause = assumption that `task_claim` is re-entrant (wrong)
 + 1800s TTL > 900s inter-tick gap with no observability on silent-exit. Observability
 gap flagged in brief §8 for PO backlog.
-
----
