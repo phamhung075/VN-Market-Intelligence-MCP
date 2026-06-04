@@ -2353,23 +2353,6 @@
         "note": "RC-4. 3 new scalars: charter_capital (~code 411), investment_property (~code 217), reward_fund (~code 418) -> bctcScalarAggregator ScalarAggregate + finalize BLOCK-1 + DB migration. Precedent FIX-DE-1 (short/long_term_debt). Risk-3: VAS code varies by form (B01 vs B02-TCTD); banks have no standalone charter_capital line -> bank-form guard via isBankFormFromDb pattern REQUIRED. || DONE-LIVE-VERIFIED tick 11:07Z 2026-06-04 (commit a04edbe9, mcp-server rebuilt 159 tools unchanged — domain-layer only, no new MCP tool). VAS codes: charter_capital=411 (label-hinted vốn góp/cổ phần/điều lệ), investment_property=230 (bất động sản đầu tư), reward_fund=322/323/320 (khen thưởng/phúc lợi label-hint MANDATORY — code 322 flips to vay/dự phòng on some forms, same class as FU-DE-321-VAY-GUARD). BANK-FORM guard = existing isBankFormFromRows SSOT (not re-derived); 3 fields added to notApplicable[] → null-cleared on bank reports. LIVE-VERIFIED via backfill_bctc_scalars force_reflow + raw market.db read: CORPORATE values accurate vs reality — VNM charter=20899.5bn (real ~20899), HPG=76755bn (real ~76755), DHG=1307bn (real ~1307), FPT~17000bn; investment_property correctly discriminates (VNM/HPG non-null, FPT/DHG null=they hold none); reward_fund VNM~953bn/FPT~1.6bn plausible. BANK guard proven on persist+serve: SHB+EIB null_cleared all 3, ACB already null — all banks NULL. get_bctc_full(VNM) serve path returns the values; EIB withheld by PUB-5 confidence gate (31%) but DB-confirmed null. Tests 46 green incl. bank-guard + period-flip + label-hint. RESIDUAL (not a FIX-F defect): VEA (corporate, 201 rows) stays NULL — it is outside backfill_bctc_scalars candidate set (13 of 15 reports processed; affects ALL scalars for VEA not just these 3) → tracked as FU-BACKFILL-SCOPE-VEA observation, pre-existing scope gap."
       },
       {
-        "task_id": "FIX-G",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "AGM revenue plans: VPS fetcher + agm_revenue_plans table + get_agm_plans tool",
-        "status": "BACKLOG",
-        "priority": "P4",
-        "size": "L",
-        "zone": "dev-vps-crawls + apps/mcp-server/",
-        "deps": [
-          "RECON-AGM-1"
-        ],
-        "unblocks_skill": [
-          "SKILL-5 Step 1 plan-accuracy (the signature management check)"
-        ],
-        "note": "RC-6 NEW DATA SOURCE. BLOCKED until RECON-AGM-1 proves the AGM source is fetchable + confirms format. Chain: ops-vps-fetch recon recipe -> dev-vps-crawls AGM fetcher (HSX/HNX/SSC, geo-blocked->Vinahost VPS) -> dev-mcp-server store agm_revenue_plans table + get_agm_plans tool. Risk-4: if PDF-only, requires PDF-Extract-Kit pipeline (higher effort). Effort/path FINALIZED by recon outcome. DO NOT start dev work until RECON-AGM-1 = DONE with positive recipe. || UNBLOCKED 2026-06-04: RECON-AGM-1 DONE (dep cleared); P4, sequence after P1/P2."
-      },
-      {
         "task_id": "FIX-I",
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
@@ -2418,6 +2401,32 @@
         ],
         "note": "VERIFICATION HOOK for FIX-A + FIX-D (shipped 7a44a291 + 0e8c2be0, live-deployed 158 tools, both DONE-LIVE-VERIFIED on structure). Two facets serve honest-null on FPT: get_company_profile.foreign_holding_ratio=null and get_bctc_full.structured_data.receivables=null. SAME reflow-vs-wrong-key ambiguity as FIX-B (FU-FIXB-COLUMNKEY-VERIFY): FPT HAS a vnstock_trading_stats row (FIX-B confirmed) so foreign_holding_ratio=null means either the foreign column is unpopulated (reflow — clears on next sync) OR the read column-key is wrong; receivables reads vnstock_balance_sheet.receivables_bn (table may be empty/unsynced). WHEN the scheduled vnstockFundamentalsJob next completes a successful sweep (rate-limit cleared per FU-FIXB-COLUMNKEY-VERIFY), re-call get_company_profile(FPT) + get_bctc_full(FPT): EXPECT non-null foreign_holding_ratio + receivables for a ticker that has the source data. IF still null after a CONFIRMED-good sync => the read key/table is wrong => fix in companyProfileTools.ts / bctcFullTools.ts. Until verified, the foreign% + receivables FACETS stay data-pending (tool CODE is correct + live; shareholders/officers/free_float/structured-numerics all VERIFIED real). Owner dev-mcp-server. Sibling of FU-FIXB-COLUMNKEY-VERIFY — batch both checks on the same post-sync verify.",
         "depends_on": "vnstock-rate-limit-clear / next-fundamentals-sweep"
+      },
+      {
+        "id": "FIX-G-1",
+        "status": "BACKLOG",
+        "priority": "P4",
+        "size": "M",
+        "zone": "vps-scripts/",
+        "title": "AGM revenue plans — VPS fetcher (vietstock GetData_PlannedTarget)",
+        "desc": "New HTTP-only VPS crawler (no Chromium) per recon docs/vps-sources/vietstock-agm-plan/recon.md: warm session (GET ke-hoach page -> ASP.NET_SessionId cookie + __RequestVerificationToken from #__CHART_AjaxAntiForgeryForm) then POST stockCode+token to finance.vietstock.vn/Data/GetData_PlannedTarget. Parse data.Data_Results[] (StockCode/PTID/PTName/YearPeriod/Value). Filter by PTName not PTID alone (PTID drifts: rev=5 or 7, LNTT=8, LNST=9; banks have no rev plan). Values in VND. Follow precedent: vps-scripts/fetch-*-loop.sh driver + vn-*.service systemd unit + Python crawler. Land + CONFIRM live fetch (multi-ticker FPT/VIC/ACB) before FIX-G-2.",
+        "depends_on": [],
+        "_split_from": "FIX-G",
+        "_updated_at": "2026-06-04T12:13:09Z"
+      },
+      {
+        "id": "FIX-G-2",
+        "status": "BLOCKED",
+        "priority": "P4",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "title": "AGM revenue plans — agm_revenue_plans table + get_agm_plans MCP tool",
+        "desc": "New migration apps/mcp-server/src/infrastructure/db/migrations (agm_revenue_plans: ticker, year, plan_type{revenue|pbt|pat}, value_vnd, source, fetched_at) + new read tool apps/mcp-server/src/interface/mcp/tools/market-data/agmPlanTools.ts registered in interface/mcp/tools/registry.ts (get_market_cap RAPID-B* tool is the direct precedent) + __tests__ coverage. Tool serves AGM-approved plan figures per ticker/year. BLOCKED until FIX-G-1 is confirmed fetching live (else tool serves empty/mock).",
+        "depends_on": [
+          "FIX-G-1"
+        ],
+        "_split_from": "FIX-G",
+        "_updated_at": "2026-06-04T12:13:09Z"
       }
     ],
     "archive": []
@@ -2798,6 +2807,20 @@
         "payload": "docs/data/orch/orch-state.json#sprint_goal.RAPID-DATA-LAYER",
         "note": "RAPID-DATA-LAYER ready. 10 backlog tasks w/ deps+zones set. Route P1 dev-mcp-server FIX-B(gate-first)/FIX-A/FIX-D/FIX-H to ba->dev-team. WIP=2. RECON-AGM-1 already in-progress (ops-vps-fetch). FIX-G stays BLOCKED until RECON-AGM-1 DONE w/ positive fetch recipe. || READ 2026-06-04T10:10:30Z by dev-team: P1 batch (FIX-B/A/D/H) all SHIPPED+verified across ticks 06:09-09:07Z; row consumed. P2 (FIX-C/FIX-E) proceeds via head.next_action.",
         "readAt": "2026-06-04T10:10:30Z"
+      },
+      {
+        "id": "ops-lancedb-offline-20260604T1204Z",
+        "ts": "2026-06-04T12:06Z",
+        "from": "cowork-team",
+        "to": "ops",
+        "type": "infra_anomaly",
+        "summary": "MEDIUM. LanceDB offline ~25h / 12 consecutive news-scout cycles — search_similar_context returns error every cycle. NON-FATAL (gatherers degrade gracefully, signals still emit) but semantic dedup + historical-context retrieval disabled fleet-wide (news-scout, rag-service consumers). Crossed the 24h watch threshold. ACTION: restart/inspect LanceDB service + verify embeddings store integrity. news-scout own escalation fires at 30h.",
+        "severity": "MEDIUM",
+        "status": "READ",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-06-04T12:13:09Z",
+        "disposition": "routed-to-ops repair_task_request OPS-LANCEDB-OFFLINE (docs/signals/repair_task_request_ops_lancedb_offline_20260604T121309Z.json); PLAN-ONLY, not a dev FIX"
       }
     ],
     "archive": [
