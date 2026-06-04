@@ -1,0 +1,19 @@
+[Unit]
+Description=VN Market AGM business plan fetcher — Vietstock planned revenue/profit targets
+Documentation=https://github.com/phamhung075/VN-Market-Intelligence-MCP
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/root/fetch-agm-plan-loop.sh
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/vn-agm-plan.log
+StandardError=append:/var/log/vn-agm-plan.log
+# Python scraper + 33 tickers × ~2 HTTP calls each — allow up to 512M
+MemoryMax=512M
+TasksMax=32
+
+[Install]
+WantedBy=multi-user.target
