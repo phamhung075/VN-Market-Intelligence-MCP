@@ -24,6 +24,7 @@ import { z } from "zod";
 import { Database } from "bun:sqlite";
 
 import { getDb } from "../../../../infrastructure/db/schema.js";
+import { recomputeRatios } from "../../../../domain/services/financial-reports/bctcRatioRecompute.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Constants
@@ -55,16 +56,27 @@ interface SeriesRow {
   period_quarter: number | null;
   period_type: string;
   refine_status: string;
+  // Market valuation ratios (persisted from market data — served as-is, no recompute)
   pe: number | null;
   pb: number | null;
+  // Derived ratio columns — stale/null in DB; recomputed at read time via recomputeRatios()
   roe: number | null;
   debt_to_equity: number | null;
+  // Raw scalar columns — served as-is (not derived)
   operating_cf: number;
   net_profit: number;
   eps: number;
   total_assets: number;
   net_revenue: number;
   equity_total: number;
+  // Additional scalars required by recomputeRatios() — selected but not exposed directly
+  short_term_debt: number;
+  long_term_debt: number;
+  cash: number;
+  ebitda: number;
+  current_assets: number;
+  total_liabilities: number;
+  balance_sheet_json: string | null;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -110,7 +122,9 @@ export function buildSeriesData(
     .query<SeriesRow, [string, number]>(
       `SELECT sort_key, period_year, period_quarter, period_type, refine_status,
               pe, pb, roe, debt_to_equity, operating_cf, net_profit, eps,
-              total_assets, net_revenue, equity_total
+              total_assets, net_revenue, equity_total,
+              short_term_debt, long_term_debt, cash, ebitda,
+              current_assets, total_liabilities, balance_sheet_json
          FROM financial_reports
         WHERE action_code = ?
           AND refine_status = 'DONE'
@@ -120,6 +134,34 @@ export function buildSeriesData(
     .all(upperCode, limit);
 
   return rows.map((row) => {
+    // ── Recompute derived ratio fields from base scalars (FIX-C consistency fix) ──
+    //
+    // The persisted roe / debt_to_equity columns in financial_reports are stale-cache:
+    //   - roe is null for Q1/Q2/Q3 rows (recompute path only ran at finalize time)
+    //   - scale may differ (ratio vs percent) for rows finalized before BAL-1a
+    //
+    // Fix: call the shared recomputeRatios helper (SSOT: bctcRatioRecompute.ts).
+    // This is the SAME helper used by get_bctc_full (bctcFullTools.ts BAL-1a block)
+    // → the two tools cannot drift apart (DRY, divergence class killed permanently).
+    //
+    // Scale contract (from recomputeRatios SSOT):
+    //   roe / roa  → percent scale (e.g. 6.17 means 6.17%)
+    //   debt_to_equity / net_debt_to_ebitda / current_ratio → ratio scale
+    //
+    // Honest-null: if inputs are null/zero the ratio is null — never fabricated.
+    const recomputed = recomputeRatios({
+      net_profit: row.net_profit,
+      equity_total: row.equity_total,
+      total_assets: row.total_assets,
+      current_assets: row.current_assets,
+      short_term_debt: row.short_term_debt,
+      long_term_debt: row.long_term_debt,
+      cash: row.cash,
+      ebitda: row.ebitda,
+      total_liabilities: row.total_liabilities,
+      balance_sheet_json: row.balance_sheet_json,
+    });
+
     const point: SeriesDataPoint = {
       sort_key: row.sort_key,
       period_year: row.period_year,
@@ -130,16 +172,19 @@ export function buildSeriesData(
     for (const field of requestedFields) {
       switch (field) {
         case "pe":
+          // pe / pb are market valuation ratios — sourced from market data, not recomputed
           point[field] = row.pe ?? null;
           break;
         case "pb":
           point[field] = row.pb ?? null;
           break;
         case "roe":
-          point[field] = row.roe ?? null;
+          // Recomputed from base scalars — consistent with get_bctc_full structured_data
+          point[field] = recomputed.roe;
           break;
         case "debt_to_equity":
-          point[field] = row.debt_to_equity ?? null;
+          // Recomputed from base scalars — consistent with get_bctc_full structured_data
+          point[field] = recomputed.debt_to_equity;
           break;
         case "operating_cf":
           point[field] = row.operating_cf;

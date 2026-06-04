@@ -26,6 +26,7 @@ import { logger } from "../../../../infrastructure/logger.js";
 import type { FinancialMetrics } from "../../../../domain/services/financial-reports/periodDeltaComputer.js";
 import { isBankFormFromDb } from "../../../../domain/services/financial-reports/bctcFormType.js";
 import { validateFinancialReport } from "../../../../domain/services/financial-reports/bctcValidator.js";
+import { recomputeRatios } from "../../../../domain/services/financial-reports/bctcRatioRecompute.js";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SQLite row types
@@ -898,111 +899,32 @@ export function registerBctcFullTools(
         //   ingested before BAL-1a still carry stale ratio columns.
         //
         // Fix (Option R — recompute-on-read):
-        //   Inline-recompute the 5 ratios from the correct persisted base scalars,
+        //   Call the shared recomputeRatios helper (bctcRatioRecompute.ts — SSOT),
         //   then MUTATE latestRow in place so that checkPublishability (PUB-6) and
         //   buildSummarySection both see correct values with no further changes.
         //
-        // Formula SSOT: mirrors finalizeBctcRefineTool.ts BLOCK-3 (BAL-1a) exactly —
-        //   same scalars, same guards, same null-safety contract.
-        //   safeDivide: null when denominator ≤ 0 or result non-finite.
-        //
-        //   roe               = net_profit / equity_total × 100  (guard: equity_total > 0)
-        //   roa               = net_profit / total_assets  × 100 (guard: total_assets > 0)
-        //   current_ratio     = current_assets / currentLiabilities.total
-        //                       (source: balance_sheet_json.currentLiabilities.total;
-        //                        guard: denominator > 0 and not null)
-        //   debt_to_equity    = (short_term_debt + long_term_debt) / equity_total
-        //                       (guard: equity_total > 0, both debt values non-null)
-        //   net_debt_to_ebitda = (short_term_debt + long_term_debt - cash) / ebitda
-        //                       (guard: ebitda > 0)
-        //
-        // The persisted ratio columns are deprecated-cache after this change.
-        // get_bctc_full must never read them directly — the mutated latestRow values
-        // shadow them for all downstream paths (checkPublishability + buildSummarySection).
-        // No DB write, no schema migration required.
+        //   SSOT: domain/services/financial-reports/bctcRatioRecompute.ts
+        //   get_bctc_series uses the SAME helper → the two tools cannot drift apart.
+        //   No DB write, no schema migration required.
         {
-          // Local safeDivide: mirrors ratioComputer.ts safeDivide — same contract.
-          const safeDivideRead = (num: number, denom: number): number | null => {
-            if (denom === 0) return null;
-            const r = num / denom;
-            if (!Number.isFinite(r)) return null;
-            return r;
-          };
+          const recomputed = recomputeRatios({
+            net_profit: latestRow.net_profit,
+            equity_total: latestRow.equity_total,
+            total_assets: latestRow.total_assets,
+            current_assets: latestRow.current_assets,
+            short_term_debt: latestRow.short_term_debt,
+            long_term_debt: latestRow.long_term_debt,
+            cash: latestRow.cash,
+            ebitda: latestRow.ebitda,
+            total_liabilities: latestRow.total_liabilities,
+            balance_sheet_json: latestRow.balance_sheet_json,
+          });
 
-          const {
-            net_profit,
-            equity_total,
-            total_assets,
-            current_assets,
-            ebitda,
-            cash,
-            short_term_debt,
-            long_term_debt,
-            balance_sheet_json,
-          } = latestRow;
-
-          // roe: net_profit / equity_total × 100
-          latestRow.roe =
-            net_profit !== null && equity_total !== null && equity_total > 0
-              ? (safeDivideRead(net_profit, equity_total) !== null
-                  ? safeDivideRead(net_profit, equity_total)! * 100
-                  : null)
-              : null;
-
-          // roa: net_profit / total_assets × 100
-          latestRow.roa =
-            net_profit !== null && total_assets !== null && total_assets > 0
-              ? (safeDivideRead(net_profit, total_assets) !== null
-                  ? safeDivideRead(net_profit, total_assets)! * 100
-                  : null)
-              : null;
-
-          // current_ratio: current_assets / currentLiabilities.total
-          // currentLiabilities.total is NOT a scalar column — read from balance_sheet_json.
-          // Mirrors finalizeBctcRefineTool.ts BLOCK-3 L749-767.
-          //
-          // BAL-1f: guard against parse artifacts — a clTotal > 0 guard alone is
-          // insufficient when the parser emits micro-residuals (e.g. FPT had
-          // currentLiabilities.total = 1e-6 from component rounding:
-          // shortTermDebt=0 + accountsPayable=1e-6 + ... = 1e-6).
-          // 1e-6 > 0 is true → current_assets / 1e-6 ≈ 4.15e13 (garbage).
-          //
-          // Principled threshold: clTotal must be ≥ 0.1% of current_assets
-          // (meaningful fraction check) AND ≥ 1.0 million VND absolute floor.
-          // Both conditions must hold; otherwise treat denominator as N/A.
-          // A result > 1000x is also clamped to null (implausible band).
-          // This mirrors VNM's honest N/A behaviour (missing currentLiabilities
-          // breakdown → null → served as N/A correctly).
-          let recomputedCurrentRatio: number | null = null;
-          if (current_assets !== null && balance_sheet_json) {
-            try {
-              const bs = JSON.parse(balance_sheet_json) as Record<string, unknown>;
-              const clTotal =
-                bs["currentLiabilities"] !== null &&
-                typeof bs["currentLiabilities"] === "object" &&
-                bs["currentLiabilities"] !== undefined
-                  ? (bs["currentLiabilities"] as Record<string, unknown>)["total"]
-                  : undefined;
-              // BAL-1f: principled floor — clTotal must be a meaningful fraction of
-              // current_assets (≥ 0.1%) AND above an absolute minimum (1.0 million VND).
-              // Micro-residuals from component rounding (e.g. 1e-6) fail both checks → N/A.
-              const MIN_CL_FRACTION = 0.001; // 0.1% of current_assets
-              const MIN_CL_ABSOLUTE = 1.0;   // 1 million VND minimum
-              const clIsPlausible =
-                typeof clTotal === "number" &&
-                clTotal >= MIN_CL_ABSOLUTE &&
-                (current_assets === 0 || clTotal >= current_assets * MIN_CL_FRACTION);
-              if (clIsPlausible) {
-                const ratio = safeDivideRead(current_assets, clTotal as number);
-                // BAL-1f: implausible result band — current_ratio > 1000x is physically
-                // impossible for any real company; treat as N/A (defense-in-depth).
-                recomputedCurrentRatio = ratio !== null && ratio <= 1000 ? ratio : null;
-              }
-            } catch {
-              // JSON parse error — leave recomputedCurrentRatio null (safe fallback)
-            }
-          }
-          latestRow.current_ratio = recomputedCurrentRatio;
+          latestRow.roe = recomputed.roe;
+          latestRow.roa = recomputed.roa;
+          latestRow.current_ratio = recomputed.current_ratio;
+          latestRow.debt_to_equity = recomputed.debt_to_equity;
+          latestRow.net_debt_to_ebitda = recomputed.net_debt_to_ebitda;
 
           // operating_margin_pct / gross_margin_pct / net_margin_pct recompute
           // BAL-1f: the recompute block previously omitted these three margin columns.
@@ -1026,24 +948,30 @@ export function registerBctcFullTools(
             ];
             const incomeBroken = incomeKeyFields.every((v) => v === 0);
             const nr = latestRow.net_revenue;
+            // Local helper for margin computation (used only here, not a derived ratio)
+            const safeDiv = (num: number, denom: number): number | null => {
+              if (denom === 0) return null;
+              const r = num / denom;
+              return Number.isFinite(r) ? r : null;
+            };
             if (!incomeBroken && nr !== null && nr !== 0) {
               latestRow.gross_margin_pct =
                 latestRow.gross_profit !== null
-                  ? (safeDivideRead(latestRow.gross_profit, nr) ?? null) !== null
-                    ? safeDivideRead(latestRow.gross_profit, nr)! * 100
-                    : null
+                  ? (safeDiv(latestRow.gross_profit, nr) !== null
+                    ? safeDiv(latestRow.gross_profit, nr)! * 100
+                    : null)
                   : null;
               latestRow.operating_margin_pct =
                 latestRow.operating_profit !== null
-                  ? (safeDivideRead(latestRow.operating_profit, nr) ?? null) !== null
-                    ? safeDivideRead(latestRow.operating_profit, nr)! * 100
-                    : null
+                  ? (safeDiv(latestRow.operating_profit, nr) !== null
+                    ? safeDiv(latestRow.operating_profit, nr)! * 100
+                    : null)
                   : null;
               latestRow.net_margin_pct =
                 latestRow.net_profit !== null
-                  ? (safeDivideRead(latestRow.net_profit, nr) ?? null) !== null
-                    ? safeDivideRead(latestRow.net_profit, nr)! * 100
-                    : null
+                  ? (safeDiv(latestRow.net_profit, nr) !== null
+                    ? safeDiv(latestRow.net_profit, nr)! * 100
+                    : null)
                   : null;
             } else {
               // Income broken or net_revenue = 0 → margins are meaningless
@@ -1052,68 +980,6 @@ export function registerBctcFullTools(
               latestRow.net_margin_pct = null;
             }
           }
-
-          // debt_to_equity: (short_term_debt + long_term_debt) / equity_total
-          //
-          // FU-DE-SERVE-HONEST: guard against false 'debt-free 0.00x' when debt
-          // decomposition is absent from the refined data.
-          // Root cause: refine pipeline leaves short_term_debt + long_term_debt ≈ 0
-          // for reports where the liabilities decomposition was not extracted
-          // (FPT-Q1/VNM/EIB/SHB/DHG are affected). The arithmetic debt/equity = ~0
-          // is correct given the data but materially false as a published signal
-          // (total_liabilities carries the real value, just not decomposed).
-          //
-          // Guard: if (short_term_debt + long_term_debt) is implausibly tiny
-          // AND total_liabilities > 0, the decomposition is absent — serve N/A.
-          //
-          // Threshold: debt sum must be ≥ 0.1% of total_liabilities to be meaningful.
-          // Absolute floor: ≥ 1.0 million VND (mirrors BAL-1f current_ratio floor).
-          // Micro-residuals (e.g. 2.7e-13 from FPT-2025Q4) and zeros both fail.
-          //
-          // SCOPE BOUNDARY: FU-DE-DECOMP-MAPPING (upstream data gap, architect spike)
-          // is NOT in scope here — this is the serve-honesty half only.
-          {
-            const debtSum =
-              short_term_debt !== null && long_term_debt !== null
-                ? short_term_debt + long_term_debt
-                : null;
-            const totalLiab = latestRow.total_liabilities;
-
-            const MIN_DEBT_FRACTION = 0.001;  // 0.1% of total_liabilities
-            const MIN_DEBT_ABSOLUTE = 1.0;    // 1 million VND floor
-
-            // Check if decomposition is plausibly present:
-            //   debtSum must exist, ≥ MIN_DEBT_ABSOLUTE, and ≥ MIN_DEBT_FRACTION of total_liab
-            const debtDecompPlausible =
-              debtSum !== null &&
-              debtSum >= MIN_DEBT_ABSOLUTE &&
-              (totalLiab === null || totalLiab === 0 || debtSum >= totalLiab * MIN_DEBT_FRACTION);
-
-            if (debtDecompPlausible && equity_total !== null && equity_total > 0) {
-              latestRow.debt_to_equity = safeDivideRead(debtSum!, equity_total);
-            } else if (!debtDecompPlausible && totalLiab !== null && totalLiab > 0) {
-              // Decomposition absent (micro-residual or zero) while real liabilities exist.
-              // Serve N/A — false 'debt-free' is a publishable misrepresentation.
-              latestRow.debt_to_equity = null;
-            } else {
-              // Standard null path: debtSum null or equity ≤ 0
-              latestRow.debt_to_equity =
-                debtSum !== null && equity_total !== null && equity_total > 0
-                  ? safeDivideRead(debtSum, equity_total)
-                  : null;
-            }
-          }
-
-          // net_debt_to_ebitda: (short_term_debt + long_term_debt - cash) / ebitda
-          // Guard: ebitda > 0 (mirrors ratioComputer.ts L132)
-          latestRow.net_debt_to_ebitda =
-            short_term_debt !== null &&
-            long_term_debt !== null &&
-            cash !== null &&
-            ebitda !== null &&
-            ebitda > 0
-              ? safeDivideRead(short_term_debt + long_term_debt - cash, ebitda)
-              : null;
         }
 
         // ── FU-LF-VALIDATION-STATUS-REFLOW: Recompute validation_status on read ──
