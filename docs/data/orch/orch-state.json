@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Idle — tick 02:09Z drained 4/4 SILENT cowork heartbeats. FU-COWORK-SESSION-RELOAD still BLOCKED-OPERATOR (cowork session not yet restarted; ~04:09 CEST operator asleep). No dev-actionable work; all board items DEFERRED/blocked-operator.",
+    "next_action": "Idle — tick 03:09Z drained 4 cowork heartbeats (1 WON FIRE chef-intraday + 3 SILENT). Schema still flat-root → live cowork session STILL stale; FU-COWORK-SESSION-RELOAD still BLOCKED-OPERATOR (operator not yet restarted cowork dispatcher). No dev-actionable work; all board items DEFERRED/blocked-operator.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T02:10:24Z",
+    "updated_at": "2026-06-04T03:10:34Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
