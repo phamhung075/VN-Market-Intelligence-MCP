@@ -1,0 +1,18 @@
+{
+  "classification": "WON",
+  "reason": "cron_match:chef-intraday",
+  "drift_min": 3,
+  "matcher_slots": [
+    "chef-intraday"
+  ],
+  "leader_lock": "stolen_won",
+  "spawns": 1,
+  "spawned": [
+    "unified-agent:chef-intraday"
+  ],
+  "dev_head": "idle",
+  "new_queue_rows": 0,
+  "signal_backlog": 0,
+  "notes": "publisher; per-day dedup marker likely held → expect silent-exit no double-publish",
+  "written_at": "2026-06-04T06:18:57Z"
+}
