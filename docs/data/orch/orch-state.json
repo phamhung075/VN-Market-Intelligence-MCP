@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T19:40:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-04T20:05:28Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "DSI QA COMPLETE: Parts A+B PASS. 2 follow-up tasks for PO: DSI-MACRO-INDICATORS-RUNTIME-DECISION + DSI-S2-PRICE-TS-GAP. Sprint DATA-SERVE-INTEGRITY DONE pending PO sign-off. Report: reports/TASK_REPORT_DSI-QA.md",
+    "next_action": "DSI SIGNED-OFF-PARTIAL by PO 2026-06-04 (serve layer fixed live, router raw-verified). NOT a clean win: operator FB-carry symptom HALF-closed. 3 follow-ups queued: DSI-CONSUMER-HONORS-ISESTIMATE (P1, highest operator value, owner agent-father) | DSI-S2-PRICE-TS-GAP (P2, dev-mcp-server) | FU-RUNTIME-SET-TRUTH-RECONCILE (P3 doc, ops). macro-indicators runtime: BLESSED (already in host_runtime_set). NOT starting a follow-up sprint this tick — queued to backlog; next cron triage picks up P1.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T19:58:00Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-04T20:05:28Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2065,7 +2065,7 @@
       {
         "id": "DATA-SERVE-INTEGRITY",
         "label": "Fleet-wide: eradicate fail-soft-fixture-stamped-fresh anti-pattern (DSI-INV-1 invariant). Absorbs FIX-MACRO-FEDFUNDS-REGRESS.",
-        "status": "active",
+        "status": "SIGNED-OFF-PARTIAL",
         "opened_at": "2026-06-04",
         "priority": "P0",
         "lead": "architect",
@@ -2140,7 +2140,9 @@
             "size": "M",
             "note": "DONE-LIVE-VERIFIED 2026-06-04 (commit 09e93d76, dev-macro-indicators). R-4 assumption FALSE: container Up 45h healthy + IS live serving path. Per-input liveness gate; carry suppressed regime=UNKNOWN+is_estimate+source_tier4 when fedFunds estimate; dataSource gate extended to all 5 inputs; true FRED fetched_at_source (never time.Now). go test 12pkg green, lint 0, sandbox 20/20. ROUTER LIVE-VERIFIED get_macro_snapshot via gateway: regime UNKNOWN (was FII_OUTFLOW_RISK), dataSource estimate (was live), carrySpread null, fetched_at_source 2026-05-28. THIS was the real FIX-MACRO-FEDFUNDS-REGRESS fix."
           }
-        ]
+        ],
+        "signoff_at": "2026-06-04T20:05:28Z",
+        "signoff_note": "Serve layer FIXED LIVE (router raw-verified). Real fix = Go 09e93d76 (macro-indicators :5004 in runtime set). Off-path TS DSI-S1-MACRO = defensive only. OPEN: operator FB-carry symptom half-closed (consumer recomputes from raw rates) + yahooFinance.ts live price gap (S2 Go latent). 3 follow-ups in backlog."
       }
     ],
     "backlog": [
@@ -2753,6 +2755,51 @@
         "zone": "docs/architecture-briefs",
         "note": "Record in a brief: macro-indicators IS deployed+serving; correct future macro serving-path fixes to dev-macro-indicators (Go) not dev-mcp-server (TS). Recurring-bug-escalation: architect DSI brief mis-located the layer.",
         "depends_on": null
+      },
+      {
+        "task_id": "DSI-CONSUMER-HONORS-ISESTIMATE",
+        "title": "Consumers (chef/unified-agent + fb-market-poster) must READ the served carry/yield field (now null/is_estimate) and NEVER recompute a spread/regime from raw fedFundsRate/vndDepositRate. FB posts 06-02/06-04 narrated false 5.0-5.33=-0.33 FII-outflow despite serve-layer suppression. This is the ACTUAL fix for the operator's 'FB macro was wrong' complaint.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "priority": "P1",
+        "size": "M",
+        "zone": "docs/agents (flow .md) + verify no code recompute",
+        "owner": "agent-father (flow edits) + dev-mcp-server (if any tool-side recompute)",
+        "note": "ROOT of operator symptom. Serve layer correctly suppresses carrySpread->null + is_estimate=true (router live-verified), but the response STILL exposes raw fedFundsRate=5.33 + vndDepositRate=5, and consumers recompute. Evidence: fb-post-2026-06-02 L11/L23/L27 (chenh lech am 0,33 / rui ro dong ngoai) + fb-post-2026-06-04 L19/L31 (-0,33 diem phan tram). chef.md L188/L193 carry example prose hardcodes FII_OUTFLOW_RISK + carry -33bp as template. FIX: (1) chef.md + market-analysis.md + fb-market-poster flow MUST consume served carry.regime/carrySpread verbatim; when is_estimate=true OR carrySpread=null -> OMIT the carry narrative entirely (no recompute, no template FII-outflow). (2) Scrub chef.md L188/L193 example prose of literal FII_OUTFLOW_RISK/-33bp so it can't leak as a template. (3) Consider serve-side: when is_estimate=true, null out the raw fedFundsRate/vndDepositRate in the carry object too (defence-in-depth so a naive consumer can't recompute). Verify by raw-reading next FB post macro paragraph + grep chef render for recompute.",
+        "depends_on": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-06-04T20:05:28Z"
+      },
+      {
+        "task_id": "DSI-S2-PRICE-TS-GAP",
+        "title": "yahooFinance.ts is the LIVE price serve path (Go stock-price container NOT running). It emits no per-symbol is_estimate/staleness and hardcodes cnyVndRate=0 with no provenance — DSI-INV-1 violation on the live path. The shipped DSI-S2-PRICE Go code is correct but LATENT.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/mcp-server",
+        "owner": "dev-mcp-server",
+        "note": "QA C-2. get_market_snapshot (active price tool) routes via mcp-server yahooFinance.ts, NOT the Go stock-price service (port 5000 = AirTunes, container absent + not in host_runtime_set). yahooFinance.ts:315 cnyVndRate=0 always, no is_estimate; response source_tier:2 but no per-symbol staleness/is_estimate. FIX: add is_estimate+staleness to yahooFinance.ts commodity snapshot output; label cnyVndRate=0 as source_tier:4/is_estimate:true. SECONDARY decision (defer): leave Go stock-price latent (TS is the accepted live path) vs deploy it — recommend ACCEPT TS as path (host-safety, do not deploy more Go services). Do NOT start the Go container.",
+        "depends_on": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-06-04T20:05:28Z"
+      },
+      {
+        "task_id": "FU-RUNTIME-SET-TRUTH-RECONCILE",
+        "title": "Config-truth drift: docker ps shows pdf-extractor + rag-service + api-gateway UP, but host_runtime_set.not_deployed_by_design still lists pdf+rag as not-deployed. macro-indicators is ALREADY correctly in services[]. Reconcile system-map host_runtime_set to observed runtime so auditor false-RED/INFO logic stays honest. Also retire stale project_dashboard_two_data_planes belief.",
+        "type": "DOC",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "docs/data/system-map.json + docs/architecture-briefs",
+        "owner": "ops (verify runtime intent) + system-auditor (consume)",
+        "note": "macro-indicators C-1 question RESOLVED-BY-FACT: it is already in host_runtime_set.services (mcp-server/api-gateway/frontend/macro-indicators/mcp-gateway). No change needed for macro. REAL drift = pdf-extractor(Up 26h)+rag-service(Up 3h) running but marked not_deployed_by_design; capability_manifest already probes them live. DECIDE per service: intended-permanent (move to services[]) vs transient-experiment (stop). Owner ops decides intent; do NOT mass-stop (host-panic risk). This is FLEET-HOST-SAFETY sprint scope, not DSI. Supersedes the architect-brief R-4 'macro latent' assumption (already corrected by FU-MACRO-INDICATORS-MISSCOPE).",
+        "depends_on": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-06-04T20:05:28Z"
       }
     ],
     "archive": []
@@ -3568,14 +3615,17 @@
       },
       {
         "sprint_id": "DATA-SERVE-INTEGRITY",
-        "status": "active",
+        "status": "SIGNED-OFF-PARTIAL",
         "vision": "No fabricated value is ever served as live: every macro/price/financial datum either fails loud or carries a source-tier + true-source fetched_at + is_estimate/staleness label that propagates fetcher->DB->tool->frontend-type->render.",
         "scope_in": "Cross-zone structural eradication of the fail-soft-fixture-stamped-fresh anti-pattern: (S1) macro carry regime computed from 2 hardcoded constants (fedFunds fixture + SBV deposit defaults) + broken SLA detection net; (S2) stock-price Tier3 re-stamp + dropped staleness DTO field + yahoo 0-fallbacks; (S3) sector/financial signals on fabricated inputs (credit/energy/bond-seed/bctc ??0/conf??1). Architect formalizes a fleet-wide DATA-SERVE-INTEGRITY invariant first.",
         "scope_out": "Query-knob defaults, algorithm params (RSI/MACD), deterministic lookup tables (investment-clock, kinh-dich corpus), honestly tier-3-labeled values, config hostnames, test fixtures. Math.random() in macro-indicators _deprecated/domain/services.ts:73 -> SEPARATE ticket. Deploying the not-deployed Go microservice plane is out (host-safety) — fix code so it is correct WHEN deployed; live serve path is apps/mcp-server.",
         "success_metric": "QA raw-verifies via call_tool: get_macro_snapshot fedFundsRate ~3.50-3.75 live fail-loud-on-miss, carrySpread POSITIVE ~+1.4pp (regime NOT FII_OUTFLOW_RISK); per-field timestamps present; dataSource=live only when all fresh; macroIndicatorSla fires+alerts WORK (VN/vietnam key reconciled); stock-price FetchPriceResponse carries Staleness, Tier3 marks change unavailable not 0 + keeps true FetchedAt; touched containers rebuilt; injected-stale negative test proves guard non-silent.",
         "lead": "architect",
         "anti_pattern": "fail-soft to hardcoded fixture/zero/last-value + stamp fetched_at=now + drop/never-wire staleness/estimate flag => fabricated served as live. Regression of DPI (DPI-2b introduced safe-degrade fixtures; DPI-FU-A ff9a64ce added FRED-live+fail-loud, system reverted). Recurring-bug policy: architect root-cause BEFORE point fixes.",
-        "created_at": "2026-06-04T18:23:25Z"
+        "created_at": "2026-06-04T18:23:25Z",
+        "signoff_at": "2026-06-04T20:05:28Z",
+        "signoff_by": "po",
+        "signoff_note": "PO SIGN-OFF 2026-06-04 (router raw-verified live get_macro_snapshot myself, not relayed). SERVE LAYER: GENUINELY FIXED LIVE. carry.regime=UNKNOWN, carrySpread=null, is_estimate=true, source_tier=4, fetched_at_source=2026-05-28 (NOT now), dataSource=estimate. NO FII_OUTFLOW_RISK from fixture arithmetic. PART B provenance labels (credit/energy/bond/BCTC/conf??0/roe??null) all live-PASS. HONEST SCOPE: (a) live serve path is the Go macro-indicators :5004 service (in host_runtime_set already) — REAL fix was Go commit 09e93d76, NOT the off-path TS macroTools.ts (DSI-S1-MACRO TS = correct defensive code, off live path). (b) DSI-S2-PRICE Go stock-price service is LATENT (container not running); live prices served by mcp-server yahooFinance.ts which STILL has price-0/cnyVndRate=0/no-staleness gap — UNFIXED on live path. (c) ROOT operator symptom (false FB carry story) is only HALF-CLOSED: serve layer suppressed carrySpread BUT still exposes raw fedFundsRate=5.33+vndDepositRate=5, and FB posts 06-02/06-04 + chef.md examples still narrate 5.0-5.33=-0.33 FII outflow from raw recompute. NOT A CLEAN WIN. 3 follow-ups queued: DSI-CONSUMER-HONORS-ISESTIMATE (P1, highest operator value), DSI-S2-PRICE-TS-GAP (P2), RUNTIME-SET-TRUTH-RECONCILE (P3 doc)."
       }
     ]
   }
