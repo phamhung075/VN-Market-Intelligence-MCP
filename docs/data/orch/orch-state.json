@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T11:55:00Z",
-  "_updated_by": "dev-mcp-server",
+  "_updated_at": "2026-06-04T12:10:00Z",
+  "_updated_by": "qa",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "FIX-F DONE-LIVE-VERIFIED this tick (11:07Z): charter_capital+investment_property+reward_fund scalars, bank-form guarded, commit a04edbe9, 159 tools. Live-proven on 5 corporates (real charter-capital values) + 3 banks null-cleared. NEXT P4 (WIP<=2): FIX-G AGM revenue plans [L] — dev-vps-crawls (VPS fetcher, recon recipe docs/vps-sources/vietstock-agm-plan/recon.md, endpoint finance.vietstock.vn/Data/GetData_PlannedTarget ptid 5/8/9=DT/LNTT/LNST) -> agm_revenue_plans table + get_agm_plans tool (dev-mcp-server). Two-zone chain. Then P5 FIX-I officers start_date (BLOCKED - needs source). DATA-PENDING (BLOCKED-UPSTREAM, batch next vnstock sweep): FU-FIXB-COLUMNKEY-VERIFY (market_cap_bn), FU-PROFILE-DATA-VERIFY (foreign_holding_ratio + receivables -- NOTE receivables now serves non-null on VNM=6027 via this reflow, re-confirm). LIGHT FU: FU-BACKFILL-SCOPE-VEA -- VEA+non-candidate corporate reports never enter backfill_bctc_scalars scope so all scalars stay null; investigate scope filter (pre-existing, low pri).",
+    "next_action": "FIX-B QA-VERIFIED 2026-06-04 cycle-191: get_market_cap(FPT) -> market_cap_billion=130318.29 PASS. FIX-B-1 DONE-LIVE-VERIFIED, FU-FIXB-COLUMNKEY-VERIFY DONE. All P1 RAPID-DATA-LAYER tasks now DONE (A/B/C/D/E/F/H). KNOCK-ON: foreign_holding_ratio still null (vnstock sync data-gap, honest, expected per FU-PROFILE-DATA-VERIFY — tools correct); pe/pb still N/A (depends on market_cap_bn which now populates; will show on next get_bctc_full after pe/pb formula uses the new market_cap). toolCount=159 confirmed, no regression. NEXT P4 (WIP<=2): FIX-G AGM revenue plans [L] — dev-vps-crawls (VPS fetcher, recon recipe docs/vps-sources/vietstock-agm-plan/recon.md, endpoint finance.vietstock.vn/Data/GetData_PlannedTarget ptid 5/8/9=DT/LNTT/LNST) -> agm_revenue_plans table + get_agm_plans tool (dev-mcp-server). Two-zone chain. Then P5 FIX-I officers start_date (BLOCKED - needs source). DATA-PENDING: FU-PROFILE-DATA-VERIFY (foreign_holding_ratio + receivables). LIGHT FU: FU-BACKFILL-SCOPE-VEA.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T11:46:46Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-04T12:10:00Z",
+    "updated_by": "qa"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -1968,11 +1968,11 @@
             "type": "SPRINT-S",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "REVIEW",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "p1",
-            "note": "FIX-B root-cause fixed 2026-06-04 (21838d1b): TRADING_STATS_SCRIPT column keys updated to match vnstock schema change (free_float/foreigner_percentage/maximum_foreign_percentage/average_match_volume1_month/highest_price1_year/lowest_price1_year; prices in VND no *1000). ratio() call removed (VCI Company API broken). market_cap_bn now from trading_stats().market_cap/1e9. Silent except:pass replaced with stderr logging. Live verify: FPT market_cap_bn=130318.29 (DB updated from probe). get_market_cap(FPT) returns non-null. Rate limits blocked full watchlist re-sync; will auto-sync next cron 08:30 UTC. AWAITING QA: confirm get_market_cap(FPT) non-null via gateway."
+            "note": "FIX-B root-cause fixed 2026-06-04 (21838d1b): TRADING_STATS_SCRIPT column keys updated to match vnstock schema change (free_float/foreigner_percentage/maximum_foreign_percentage/average_match_volume1_month/highest_price1_year/lowest_price1_year; prices in VND no *1000). ratio() call removed (VCI Company API broken). market_cap_bn now from trading_stats().market_cap/1e9. Silent except:pass replaced with stderr logging. Live verify: FPT market_cap_bn=130318.29 (DB updated from probe). get_market_cap(FPT) returns non-null. Rate limits blocked full watchlist re-sync; will auto-sync next cron 08:30 UTC. QA-LIVE-VERIFIED 2026-06-04 cycle-191: get_market_cap(FPT) via gateway -> market_cap_billion=130318.29 (non-null numeric, matches dev probe exactly). shares_outstanding_approx=1712461104, fetched_at=2026-06-04 08:59:42. AC met. FIX-B DONE."
           },
           {
             "task_id": "FIX-B-2",
@@ -2215,7 +2215,7 @@
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "get_market_cap MCP tool + persist VnstockRatioSummary.marketCap",
-        "status": "DONE-CODE-DEPLOYED-DATA-PENDING",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P1",
         "size": "M",
         "zone": "apps/mcp-server/",
@@ -2395,7 +2395,7 @@
         "title": "Verify get_market_cap serves non-null market_cap_billion after a successful vnstock sync; fix ratio() column-key if it stays null",
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
-        "status": "BLOCKED-UPSTREAM",
+        "status": "DONE",
         "size": "XS",
         "zone": "apps/mcp-server/",
         "files": [
