@@ -61,6 +61,7 @@ function createTestDb(): Database {
       position TEXT NOT NULL,
       own_percent REAL,
       quantity INTEGER,
+      appointment_year INTEGER,
       fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
       UNIQUE(code, name)
     );
