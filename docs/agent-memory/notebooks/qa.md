@@ -1,5 +1,25 @@
 # QA — Notebook
 
+## cycle-194 · 2026-06-04T20:55Z · DSI-INV-1 fixture-label live-verify (2873b6c3 + fb7e16d0)
+
+Sprint: DATA-SERVE-INTEGRITY | Commits: 2873b6c3 (DSI-S3-SECTOR-FIN) + fb7e16d0 (DSI-S1-MACRO) | Verdict: CHANGES_REQUESTED
+
+**C1 creditFlow — PASS.** Live `get_credit_flow_signal({})` via :3000/mcp. Output text contains `[ƯỚC TÍNH]` in header + `is_estimate=true, source_tier=4` in provenance footer (yoy fallback ±15%). `[static_seed]` present for reCreditRatioPct 20/19. SBV DB had mortgage data so mortgageIsEstimate=false (correct). AC-SEC-1 criteria met. Test AC-SEC-1a passes.
+
+**C2 energyGrid — PASS.** Live `get_energy_grid_signals({})` → text contains `(ước tính)` label on grid section header. No signals emitted (BÌNH THƯỜNG state), but `signals.map(s => ({...s, is_estimate:true, source_tier:4}))` at code line 76 is correct; when signals fire they carry the flag. Unit test 17/17 pass confirms the `[ƯỚC TÍNH]` tag appears on signal lines when alerts exist. AC-SEC-2a/2b criteria met.
+
+**C3 bondMaturity — FAIL.** Live `get_bond_maturity_calendar({months:24})` returns 5 events WITHOUT `[SEED DATA — không xác minh thị trường thực]` header. Root: DB `bond_maturity` has 5 rows (created_at=2026-05-31, same values as SEED_BONDS, no `static_seed` column). `listUpcomingBonds` returns these via `rowToEvent` which does NOT set `static_seed`. `hasSeedData=false` → banner suppressed. The fix in 2873b6c3 handles `getUpcomingMaturities()` (in-memory empty-DB path) correctly, but the prod DB was pre-seeded and the DB path loses the marker. FR-SEC-3 + AC-SEC-3 FAIL live. Unit tests pass (test only in-memory path). Blocker: `bondMaturityStore.ts:rowToEvent` must set `static_seed: true` for rows that originated from the seed (no live source column to distinguish — must add `is_seed_data` column to `bond_maturity` schema, or compare created_at sentinel, or always flag DB rows as seed until a live import occurs).
+
+**C4 BCTC ??null — PASS (code-verified + unit-test).** `periodDeltaComputer.ts:ratioChange(null, prev)` returns `{current:NaN,previous:NaN,changePP:NaN}`. `bctcFullTools.ts:buildComparisonSection` line 466-468: `isNaN(delta.roePP.changePP)` → emits `ROE: ... (N/A — ratio unavailable)`. No live ticker produces a visible comparison (FPT=PUB-7 withheld, others=PUB-5 blocked), but code path + 17/17 DSI-S3 unit tests confirm. AC-SEC-4 criteria met by code read + test.
+
+**C5 extractionConfidence — PASS.** `finalizeBctcRefineTool.ts:1039` confirmed `?? 0` (not `?? 1`). DSI-S3 unit tests AC-SEC-5a/5b/5c all pass. 17/17. PUB-5 gate now fires for missing-confidence reports. AC-SEC-5 met.
+
+**DSI-S1-MACRO TS text path — PASS (no regression).** Live `get_macro_snapshot({})` → Go :5004: carry.regime="NEUTRAL", carrySpread=1.38, fedFundsRate=3.62 (live EFFR 2026-06-03), is_estimate=false, source_tier=1. yield: is_estimate=true, source_tier=4 (SBV fallback labelled). dataSource="live". No FII_OUTFLOW_RISK. No `[Thien Thoi]` text block (TS formatThienThoi not called in handler — confirmed text-path-only). DSI-S1-MACRO 16/16 tests pass. Pre-existing TT-07..10 failures: 4 fail (unchanged, router-confirmed pre-existing — NOT a regression).
+
+**BLOCKER: C3 `[SEED DATA]` banner absent live.** `bondMaturityStore.ts rowToEvent` (line 34-43) does not set `static_seed`. Fix requires schema migration (`bond_maturity` add `is_seed_data INTEGER DEFAULT 1`, update `rowToEvent` to read it, `upsertBond` must propagate from `BondMaturityEvent.static_seed`). Send to fixer.
+
+---
+
 ## cycle-193 · 2026-06-04T19:58Z · DATA-SERVE-INTEGRITY live-verify gate
 
 Sprint: DATA-SERVE-INTEGRITY | Commits: a6b86ed0/fb7e16d0/45a35641/b16d6a89/2873b6c3 | Verdict: CONDITIONALLY COMPLETE
