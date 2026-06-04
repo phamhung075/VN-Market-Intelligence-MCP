@@ -56,12 +56,15 @@ function seedOfficers(
 /**
  * Minimal VPS mock response builder.
  * Returns `as unknown as typeof fetch` to satisfy Bun's preconnect requirement.
+ *
+ * VPS response shape: data[ticker] is an ARRAY of officers (not nested under .officers).
+ * Each officer has snake_case fields; appointment_year is already parsed (number | null).
  */
 function mockFetch(responseData: {
   status?: string;
   tickers_ok?: string[];
   tickers_error?: string[];
-  data?: Record<string, { officers?: Array<{ Name?: string; Title?: string; FromDate?: string | null }> }>;
+  data?: Record<string, Array<{ name: string; position_text?: string; appointment_year: number | null; closed_date?: string; year_of_birth?: number; independence?: number; total_shares?: number }>>;
   fetched_at?: string;
 }): typeof fetch {
   const fn = async () => {
@@ -90,11 +93,9 @@ describe("FIX-I-B boardDetailsFetcher", () => {
     const mockF = mockFetch({
       tickers_ok: ["FPT"],
       data: {
-        FPT: {
-          officers: [
-            { Name: "Trương Gia Bình", Title: "Chủ tịch HĐQT", FromDate: "01/01/1988" },
-          ],
-        },
+        FPT: [
+          { name: "Trương Gia Bình", position_text: "Chủ tịch HĐQT", appointment_year: 1988 },
+        ],
       },
     });
 
@@ -107,18 +108,16 @@ describe("FIX-I-B boardDetailsFetcher", () => {
     expect(result!.tickers_ok).toContain("FPT");
   });
 
-  it("null/N/A FromDate → appointment_year null (never 0, never string)", async () => {
+  it("null appointment_year from VPS → appointment_year null (never 0, never string)", async () => {
     const mockF = mockFetch({
       tickers_ok: ["VCB"],
       data: {
-        VCB: {
-          officers: [
-            { Name: "Officer A", Title: "CEO", FromDate: "N/A" },
-            { Name: "Officer B", Title: "CFO", FromDate: null },
-            { Name: "Officer C", Title: "COO" }, // no FromDate key
-            { Name: "Officer D", Title: "CTO", FromDate: "" },
-          ],
-        },
+        VCB: [
+          { name: "Officer A", position_text: "CEO", appointment_year: null },
+          { name: "Officer B", position_text: "CFO", appointment_year: null },
+          { name: "Officer C", position_text: "COO", appointment_year: null },
+          { name: "Officer D", position_text: "CTO", appointment_year: null },
+        ],
       },
     });
 
@@ -130,15 +129,13 @@ describe("FIX-I-B boardDetailsFetcher", () => {
     }
   });
 
-  it("YYYY-MM-DD format is parsed correctly", async () => {
+  it("appointment_year already parsed on VPS side (direct integer)", async () => {
     const mockF = mockFetch({
       tickers_ok: ["HPG"],
       data: {
-        HPG: {
-          officers: [
-            { Name: "Trần Đình Long", Title: "Chủ tịch", FromDate: "2007-04-15" },
-          ],
-        },
+        HPG: [
+          { name: "Trần Đình Long", position_text: "Chủ tịch", appointment_year: 2007 },
+        ],
       },
     });
 

@@ -31,24 +31,24 @@ const VPS_MAX_BATCH = 10;
 // VPS response types
 // ─────────────────────────────────────────────────────────────────────────────
 
-interface VpsBoardMember {
+interface VpsOfficer {
   /** Officer full name (diacritics may differ from VCI Vietstock) */
-  Name?: string;
+  name: string;
   /** Position title */
-  Title?: string;
-  /** Appointment date string — e.g. "01/01/1988" or "N/A" or absent */
-  FromDate?: string | null;
-}
-
-interface VpsTickerBoardData {
-  officers?: VpsBoardMember[];
+  position_text?: string;
+  /** Appointment year — already parsed on VPS side, integer or null for N/A */
+  appointment_year: number | null;
+  closed_date?: string;
+  year_of_birth?: number;
+  independence?: number;
+  total_shares?: number;
 }
 
 interface VpsResponse {
   status: string;
   tickers_ok?: string[];
   tickers_error?: string[];
-  data?: Record<string, VpsTickerBoardData>;
+  data?: Record<string, VpsOfficer[]>;
   fetched_at?: string;
 }
 
@@ -77,43 +77,9 @@ export interface BoardDetailsFetchResult {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Parse a FromDate string into a calendar year integer, or return null.
- * Accepts formats: DD/MM/YYYY, YYYY-MM-DD, YYYY (bare 4-digit year).
- * Returns null for null / undefined / empty / "N/A" / unparseable strings.
- */
-function parseAppointmentYear(fromDate: string | null | undefined): number | null {
-  if (!fromDate || fromDate.trim() === "" || fromDate.trim().toUpperCase() === "N/A") {
-    return null;
-  }
-
-  const s = fromDate.trim();
-
-  // DD/MM/YYYY
-  const ddmmyyyy = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-  if (ddmmyyyy) {
-    const year = parseInt(ddmmyyyy[3]!, 10);
-    return isNaN(year) ? null : year;
-  }
-
-  // YYYY-MM-DD
-  const yyyymmdd = s.match(/^(\d{4})-\d{2}-\d{2}/);
-  if (yyyymmdd) {
-    const year = parseInt(yyyymmdd[1]!, 10);
-    return isNaN(year) ? null : year;
-  }
-
-  // Bare 4-digit year
-  const yearOnly = s.match(/^(\d{4})$/);
-  if (yearOnly) {
-    const year = parseInt(yearOnly[1]!, 10);
-    return isNaN(year) ? null : year;
-  }
-
-  return null;
-}
-
-/**
  * Merge a single VPS JSON response into the accumulator arrays.
+ * VPS returns data[ticker] as an array of officers (not nested under .officers).
+ * Each officer has snake_case fields; appointment_year is already parsed (number | null).
  */
 function parseVpsResponse(
   json: VpsResponse,
@@ -126,15 +92,16 @@ function parseVpsResponse(
   for (const [ticker, tickerData] of Object.entries(json.data ?? {})) {
     const code = ticker.toUpperCase();
 
-    for (const member of tickerData.officers ?? []) {
-      const name = (member.Name ?? "").trim();
+    // tickerData is the array directly, not an object with .officers
+    for (const member of (tickerData ?? [])) {
+      const name = (member.name ?? "").trim();
       if (!name) continue; // skip nameless rows
 
       officers.push({
         code,
         name,
-        position: (member.Title ?? "").trim(),
-        appointment_year: parseAppointmentYear(member.FromDate),
+        position: (member.position_text ?? "").trim(),
+        appointment_year: member.appointment_year, // already parsed on VPS side
         fetched_at: fetchedAt,
       });
     }
