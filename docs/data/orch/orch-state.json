@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "BACK-OFF tick ~05:09Z: a LIVE concurrent agent-father is implementing brief docs/architecture-briefs/2026-06-04-expert-rapid-analysis-skills.md. State observed CHANGING in real time: 6/6 Phase A skills present UNCOMMITTED (.claude/skills/{rapid-market-cap-screen,balance-sheet-first-read,four-factor-synthesis,ownership-governance-screen,management-track-record,value-trap-avoidance}), agent-father actively trimming to 120L cap (value-trap-avoidance 130L OVER, management-track-record cap-bouncing). Phase B 6 cowork flow edits + final commit PENDING. dev-team did NOT spawn anything (maintenance-lane double-run collision guard). LEFT IN INBOX for next-tick reconcile: expert-rapid-analysis-skills brief_complete signal + the context-bloat-*.json signals for the 3 newest skills. NEXT TICK MUST: verify peer COMMITTED; all 6 skills <=120L (verify wc -l raw, not badges); 6 Phase B edits applied incl chef.md B-5 four-factor Scenario-4 publication-block (publication-sensitive + activation gated on cowork session reload); 3 open_questions_for_po resolved -> THEN drain held signals as DONE-BY-PEER, else trim over-cap skills / file FU for missed Phase B. Cowork session STILL stale: FU-COWORK-SESSION-RELOAD BLOCKED-OPERATOR (SILENT heartbeats still landing).",
+    "next_action": "Reconcile of expert-rapid-analysis-skills COMPLETE (this tick). Peer agent-father shipped Phase A 6129c970 (6 skills, raw-verified all <=120L: 92/110/119/116/120/120) + Phase B 0fac75a4 (6 flow edits; brief main.md->cycle.md retarget for bctc-analyst/news-scout is SOUND — main.md 118L would blow 120 cap). B-5 chef.md Step 6a = defensive HARD publication block on four-factor Scenario-4 (publication-safe). 16 held signals drained (11 context-bloat cap-bounce RESOLVED-BY-PEER, 4 cowork heartbeats, 1 brief_complete DONE-BY-PEER). Residuals -> FU-RAPID-SKILLS-RESIDUAL (stale size-justification counts chef.md 308->320 + mw cycle.md 177->180; 3 open_questions_for_po confirm-before-cowork-reactivation; inert until cowork reload, no live risk). STILL OPEN: cowork session stale (SILENT heartbeats still landing => operator has not restarted cowork; FU-COWORK-SESSION-RELOAD + FU-COWORK-HEARTBEAT-SCHEMA BLOCKED-OPERATOR).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T05:15:10Z",
+    "updated_at": "2026-06-04T06:13:23Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T04:15:22Z",
+    "_updated_at": "2026-06-04T06:13:23Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2097,6 +2097,22 @@
         "status": "DONE",
         "priority": "low",
         "note": "Surfaced by agent-father during FU-COWORK-HEARTBEAT-SCHEMA impl. | DONE 2026-06-03T21:26:52Z commit ae4396e6 (orch-state 43a9999a): main.md 820L→109L; 10 sub-flows extracted, all ≤120L; pure refactor no logic change; pointers resolve; raw-verified in-zone by dev-team router."
+      },
+      {
+        "task_id": "FU-RAPID-SKILLS-RESIDUAL",
+        "title": "Tidy residuals from expert-rapid-analysis-skills brief (size-justification counts + PO confirm of 3 default thresholds)",
+        "type": "FIX",
+        "sprint": "COWORK-RELIABILITY",
+        "status": "DEFERRED-OUT-OF-DEV-SCOPE",
+        "size": "S",
+        "zone": "cross-service/",
+        "files": [
+          "docs/agents/unified-agent/flow/chef.md",
+          "docs/agents/market-watcher/flow/cycle.md",
+          "docs/architecture-briefs/2026-06-04-expert-rapid-analysis-skills.md"
+        ],
+        "note": "Two low-sev residuals after agent-father shipped Phase A 6129c970 + Phase B 0fac75a4 (raw-verified DONE this tick 2026-06-04T06:13:23Z). (1) COSMETIC: Phase B added steps to two already-justified flow files but left their size-justification line-1 counts STALE — chef.md declares 308L now 320L (+12 from Step 6a conviction gate), market-watcher/flow/cycle.md declares 177L now 180L (+3 from Step 0a market-cap screen). Both legitimately exempt (justified, backstop did not fire); only the declared count needs bumping. agent-father edit via agent-md-factory. (2) GOVERNANCE: brief carried 3 open_questions_for_po — SKILL-1 market-cap floor 500B VND, SKILL-4 foreign-holder 5%, TNB 5th-pillar-vs-parallel — agent-father baked the brief's PROPOSED defaults and shipped; PO never explicitly confirmed. The skills are INERT until cowork session reload (FU-COWORK-SESSION-RELOAD BLOCKED-OPERATOR), so zero live risk, but PO should confirm/override the 3 thresholds BEFORE cowork reactivates. Route: agents-architect (threshold decision) + agent-father (count bump). NOT dev-team (apps/ code only).",
+        "disposition": "DEFERRED-OUT-OF-DEV-SCOPE filed 2026-06-04T06:13:23Z by dev-team next-tick reconcile of expert-rapid-analysis-skills. Both residuals are .md / governance — cowork/maintenance lane (agents-architect + agent-father), not dev-team apps/ code. Activation-gated on cowork reload so no live risk."
       }
     ],
     "archive": []

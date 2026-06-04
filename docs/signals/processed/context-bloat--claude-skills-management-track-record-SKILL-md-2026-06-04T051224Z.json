@@ -1,0 +1,15 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-04T05:12:24Z",
+  "payload": {
+    "file": ".claude/skills/management-track-record/SKILL.md",
+    "line_count": 132,
+    "cap": 120,
+    "class": "skill-file",
+    "overage": 12,
+    "action_required": "prune_or_split"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "classification": "WON",
+  "reason": "cron_match:chef-morning+chef-intraday",
+  "tick_nominal": "05:19",
+  "drift_min": 3,
+  "matcher_slots": [
+    "chef-morning",
+    "chef-intraday"
+  ],
+  "leader_lock": "self_held_renewed",
+  "spawns": 2,
+  "spawned": [
+    "unified-agent/chef.md slot=chef-morning (a28a910c) guaranteed-publisher",
+    "unified-agent/chef.md slot=chef-intraday (a59628bf) per-day-marker-held expect-dedup-block"
+  ],
+  "dev_head": "idle",
+  "devq": 0,
+  "signal_backlog": 12,
+  "new_queue_rows": 0,
+  "notes": "WON 05:18Z. chef-morning=first guaranteed MARKET dish of session (distinct per-day marker chef-morning:2026-06-04, should publish). chef-intraday marker held from 02:13 -> expect dedup-block silent. AC-6 watch: exactly ONE morning publish expected.",
+  "written_at": "20260604T051922Z"
+}

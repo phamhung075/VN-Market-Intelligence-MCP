@@ -1,0 +1,11 @@
+{
+  "classification": "SILENT",
+  "reason": "no_slot_match",
+  "drift_min": 3,
+  "matcher_slots": [],
+  "spawns": 0,
+  "dev_head": "idle",
+  "new_queue_rows": 0,
+  "signal_backlog": 1,
+  "written_at": "2026-06-04T05:33:32Z"
+}
