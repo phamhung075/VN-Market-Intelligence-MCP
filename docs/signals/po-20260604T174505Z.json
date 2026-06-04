@@ -1,0 +1,17 @@
+{
+  "from": "po",
+  "to": "architect",
+  "type": "task_triaged",
+  "createdAt": "2026-06-04T17:45:05Z",
+  "payload": {
+    "task_id": "FIX-MACRO-FEDFUNDS-REGRESS",
+    "priority": "P0",
+    "recurring": true,
+    "escalate_architect": true,
+    "zone": "apps/mcp-server/",
+    "sprint": "DATA-PIPELINE-INTEGRITY",
+    "summary": "Router-verified recurring regression: get_macro_snapshot fedFundsRate fell back to stale 5.33 fixture (DPI-FU-A regressed), inverting carry regime to FII_OUTFLOW_RISK. Architect root-cause rethink BEFORE point-fix (recurring-bug policy). Durable fix: live FRED rate w/ freshness check + no live-masquerading fixture + per-field timestamps + dataSource=live only when all fields fresh. Then dev-mcp-server impl -> ops REBUILD mcp-server -> QA raw-verify live snapshot regime flip.",
+    "zone_correction": "Brief proposed dev-macro-indicators but that agent is locked to apps/macro-indicators/ (separate not-deployed Go plane). Serving stack is 100% apps/mcp-server/ -> dev-mcp-server.",
+    "orch_state_ref": "docs/data/orch/orch-state.json .task_board.backlog[].task_id=FIX-MACRO-FEDFUNDS-REGRESS"
+  }
+}

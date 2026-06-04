@@ -6,12 +6,12 @@
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "RAPID-DATA-LAYER: FIX-I UNBLOCKED this tick (FU-FIX-I-SOURCE-RECON verdict: vietstock data/boarddetails FromDate = appointment YEAR, VNM/FPT/VCB confirmed; recipe in docs/vps-sources/officer-start-date/recon.md). NEXT TICK PO: spec-decision on FIX-I - accept year-precision tenure (low impl cost, reuse AGM-plan CSRF) and spec it, OR honestly kill FIX-I if month/day precision required (not fetchable). Either path lets RAPID-DATA-LAYER CLOSE. Also done this tick: FU-NB-PRUNE-DEV-VPS (nb 242->177L). REMAINING backlog: FU-ACB-AGM-COVERAGE, FU-BCTC-RATIOS-N-A (lower pri), FU-RAG-DEPLOY-MEMORY (M, needs architect/ops resident-container decision; frontend DOWN/rag UP), FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM, clears on next vnstock sync), FU-DEDUP-CROSS-DISPATCHER (process). Drained 27 signals + pruned signal_queue 30->12.",
+    "next_agent": "architect",
+    "next_action": "FIX-MACRO-FEDFUNDS-REGRESS created (P0, recurring, zone apps/mcp-server, escalate_architect). RECURRING macro fedFundsRate regression to 5.33 fixture (DPI-FU-A regressed) => ARCHITECT root-cause rethink BEFORE point-fix (durable: no live-masquerading fixture, per-field freshness, dataSource=live only when all fields fresh). Then dev-mcp-server impl -> ops REBUILD mcp-server -> QA raw-verify live snapshot regime flip.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T17:20:30Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-04T17:44:00Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2503,6 +2503,26 @@
         "zone": "cross-service/",
         "note": "DONE-VERIFIED 2026-06-04: claude-manager-helper pruned 242->177L (router raw-verified wc -l=177, frontmatter intact, only target file touched). Dropped FIX-CTG-2 cover-letter section + compressed 2026-05-13 bootstrap + verbose Key-Findings; kept FIX-G-1 + deploy guards. Committed f206b2a8.",
         "depends_on": null
+      },
+      {
+        "task_id": "FIX-MACRO-FEDFUNDS-REGRESS",
+        "title": "RECURRING: get_macro_snapshot fedFundsRate regressed to stale 5.33 fixture (masquerades as live) — inverts carry regime to FII_OUTFLOW_RISK; per-field freshness + no live-masking fallback",
+        "type": "FIX",
+        "sprint": "DATA-PIPELINE-INTEGRITY",
+        "status": "BACKLOG",
+        "size": "M",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "recurring": true,
+        "escalate_architect": true,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
+          "apps/mcp-server/src/domain/services/macro/carryTradeSignal.ts",
+          "apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/fredApi.ts"
+        ],
+        "note": "ROUTER-VERIFIED REGRESSION (sev-HIGH, recurring) 2026-06-04T17:40Z raw get_macro_snapshot cross-checked vs ground truth. RECURRING: this is the 2nd+ regression of the SAME defect — DPI-2/DPI-FU-A fixed it 2026-05-30 (ff9a64ce, PO-signoff: fedFundsRate went 5.33 fixture -> 3.62 FRED-live, regime flipped FII_OUTFLOW_RISK->NEUTRAL). It has now FALLEN BACK to the 5.33 fixture exactly as the FU-A forward-dependency warned (requires macroIndicatorRefreshJob 19:13 UTC + FRED reachable from container; the 96h checkAndAlertEffrStaleness guard either did not fire or was not acted on). Per recurring-bug-escalation policy (>=2 fix cycles same module) ARCHITECT MUST root-cause-rethink BEFORE another point-fix — do NOT just re-run the fetch. RAW EVIDENCE: carry.fedFundsRate=5.33 (real Fed target 3.50-3.75 / EFFR ~3.58 web-verified) => carrySpread = vndDeposit 5.00 - 5.33 = -0.33pp => regime FII_OUTFLOW_RISK (SIGN FLIPPED; real ~3.58 gives +1.42pp carry-favorable). This single stale constant has CORRUPTED the central thesis of fb-market-poster 06-01..06-04 (all claim 'khoi ngoai rut vi chenh lech lai suat am' = backwards) + likely CHEF/unified-agent + tran-ngoc-bau Layer-4 carry/regime walks. oilUsd=95.06 sig -2.11% (real 96.97 -0.86%, ~2% off + WRONG direction); goldUsd=4509.6 sig +0.97% BULLISH (real ~4475 falling, ~0.8% high + WRONG direction; 4509.6~=7d avg 4505 => suspect averaged/stale tick); usdVnd=26122 plausible-verify. DISHONEST FLAG: top-level dataSource:live + fresh top-level fetchedAt while oil/gold/usdVnd carry NO per-field timestamp; serve path HAS fedFundsRateIsEstimate flag (macroTools.ts L55-58: '5.33 fallback' + (est.) vs (FRED) label) but the top-level dataSource does NOT downgrade to stale when a field falls back. ZONE CORRECTION: brief said route dev-macro-indicators, but that agent is zone-locked to apps/macro-indicators/ (separate not-deployed Go microservice plane). The ENTIRE get_macro_snapshot serving stack (FRED fetch, fixture fallback, carry/regime compute, staleness guard) lives in apps/mcp-server/ => correct zone dev-mcp-server. ACCEPTANCE: (1) fedFundsRate reflects real current Fed target (~3.50-3.75 as of 2026-06-04) sourced live w/ freshness check, NO hardcoded fallback constant that can masquerade as live; on stale/fetch-fail surface honest stale (not silent 5.33). (2) carrySpread+regime recompute POSITIVE (not FII_OUTFLOW_RISK) once rate fixed. (3) oil&gold value+direction match reputable live source within tolerance; on fetch-fail field marked stale not silently live. (4) per-field timestamps exposed in get_macro_snapshot; dataSource='live' ONLY when ALL fields fresh. (5) post-fix ops REBUILDS mcp-server container (restart relaunches stale image), QA verifies LIVE snapshot via call_tool shows corrected values+regime. DEDUPE: supersedes processed signal po-20260530T081716Z.json (EFFR staleness) + DPI-FU-A re-staleness forward-dependency; do NOT open a 2nd task."
       }
     ],
     "archive": []

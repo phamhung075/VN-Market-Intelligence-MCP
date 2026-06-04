@@ -1,5 +1,17 @@
 # PO Notebook
 
+## c · 2026-06-04T17:44Z — triage CONFIRMED macro fedFundsRate REGRESSION → FIX-MACRO-FEDFUNDS-REGRESS (P0, recurring → architect)
+
+**Input:** router-verified raw `get_macro_snapshot` 17:40Z vs ground truth. carry.fedFundsRate=5.33 (real Fed 3.50–3.75 / EFFR ~3.58) → carrySpread −0.33pp → regime FII_OUTFLOW_RISK; real ~3.58 → +1.42pp carry-favorable. SIGN FLIPPED. oil 95.06 −2.11% (real 96.97 −0.86%, wrong dir); gold 4509.6 +0.97% BULLISH (real ~4475 falling, wrong dir, ≈7d-avg 4505=stale tick). dataSource:"live" dishonest (no per-field ts on oil/gold/usdVnd).
+
+**Key finding — RECURRING, not new:** this is the SAME defect DPI-2/DPI-FU-A fixed 2026-05-30 (ff9a64ce: 5.33 fixture→3.62 FRED-live, regime→NEUTRAL). It REGRESSED back to the 5.33 fixture exactly as FU-A's forward-dependency warned (needs macroIndicatorRefreshJob 19:13Z + FRED reachable; 96h checkAndAlertEffrStaleness guard didn't fire/wasn't acted on). Per recurring-bug-escalation (≥2 cycles same module) → set `escalate_architect:true`, next_agent=architect for root-cause rethink BEFORE another point-fix. Do NOT just re-run the fetch.
+
+**Zone CORRECTION (brief was wrong):** request said route dev-macro-indicators — but that agent is zone-locked to `apps/macro-indicators/` (separate not-deployed Go microservice plane). The ENTIRE serving stack (FRED fetch fredApi.ts, fixture fallback macroTools.ts L55-58 '5.33 fallback'+fedFundsRateIsEstimate, carry/regime carryTradeSignal.ts, staleness guard macroIndicatorRefreshJob.ts) lives in `apps/mcp-server/` → correct zone = **dev-mcp-server**. Verified by grep, not guessed.
+
+**Disposition:** 1 FIX task `FIX-MACRO-FEDFUNDS-REGRESS` (P0, size M, zone apps/mcp-server/, sprint DATA-PIPELINE-INTEGRITY) → orch-state .task_board.backlog (atomic jq -f, hardened [[feedback_jq_empty_guard_clobbers_ssot]]). DEDUPED: grep confirmed no pre-existing macro/fedfunds task (count=1 after insert); supersedes processed signal po-20260530T081716Z.json. head.next_agent=architect. Signal po-20260604T174505Z.json emitted. AC encodes: live rate+freshness (no live-masking fixture), regime recompute positive, oil/gold dir match source, per-field ts, dataSource=live only when ALL fresh, then ops REBUILD mcp-server → QA raw-verify.
+
+**LESSON:** a "DONE+PO-signed-off" fix whose freshness depends on an external cron+egress (FRED) is a regression-prone class — the fix shipped a fail-loud ALERT but kept a fixture FALLBACK that masquerades as live (top-level dataSource stayed "live" even though fedFundsRateIsEstimate flipped). Durable fix must kill the masquerade (per-field freshness gate), not re-pull. Router raw-verify of LIVE serving tool (not badges) caught the regime sign-flip that corrupted 4 days of fb-poster theses. Always verify the brief's proposed zone against the agent's zone-lock + where the code actually lives — the obvious-named zone (macro-indicators) was the wrong plane.
+
 ## c · 2026-06-04T07:45Z — triage architect HIGH signal → sequence RAPID-DATA-LAYER sprint (10 fixes)
 
 **Signal:** `docs/signals/architect-20260604T060000Z.json` (design_complete, HIGH). Brief SSOT `docs/architecture-briefs/2026-06-04-rapid-analysis-data-layer-gaps.md` (READY-FOR-PM-SEQUENCING). 6 rapid-analysis cowork skills (SKILL-1..6, the pre-TNB gate) ALL BLOCKED: their data inputs aren't on the 156-tool surface. 37 fields assessed (COVERED 3 / PARTIAL 12 / GAP 22), 4 root-cause clusters, 10 remediations.
