@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T14:55:00Z",
-  "_updated_by": "qa",
+  "_updated_at": "2026-06-04T20:00:00Z",
+  "_updated_by": "ba",
   "head": {
-    "status": "active",
+    "status": "idle",
     "active_task_id": null,
-    "next_agent": "ba",
-    "next_action": "DSI-ARCH design complete. Brief: docs/architecture-briefs/2026-06-04-data-serve-integrity.md. Handoff: docs/handoffs/DSI-ARCH.md. BA-DSI: decompose into per-zone atomic tasks per §4 sequence. Zones: dev-mcp-server (S1-SLA XS first) + dev-stock-price (S2-PRICE) + dev-macro-indicators (latent backlog only).",
+    "next_agent": "po",
+    "next_action": "RAPID-DATA-LAYER COMPLETE & CLOSED: FIX-A..H + FIX-I all DONE-LIVE-VERIFIED. FIX-I shipped this tick (officer appointment_year/ceo_tenure_years via vietstock board-details, year-precision; FIX-I-A VPS 5bca5280 + FIX-I-B mcp 5ded1373/fix 4beb24d3/test-fix ab827411; baked 2x rebuild; get_company_profile(FPT)=1988/t38 CEO Khoa 2019/t7, VCB 2021/t5, N/A->null; QA 17/0, RAPID-A regression cleared 8/0; daily cron 21:00Z). ALSO this tick: restored frontend dashboard (:3001 was down from LanceDB memory-tradeoff; frontend+rag now coexist, ~7GB headroom -> FU-RAG-DEPLOY-MEMORY = NOT a hard either/or). REMAINING backlog (next PO): FU-ACB-AGM-COVERAGE, FU-BCTC-RATIOS-N-A (lower pri), FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM foreign_holding_ratio null, clears on vnstock sync), FU-DEDUP-CROSS-DISPATCHER (process), and a NEW P0 FIX-MACRO-FEDFUNDS-REGRESS triaged by a concurrent cycle (4398e4c2 - macro fedFundsRate regressed to 5.33 fixture) -> verify + likely next priority.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T19:30:00Z",
-    "updated_by": "architect"
+    "updated_at": "2026-06-04T18:45:34Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T17:20:30Z",
+    "_updated_at": "2026-06-04T18:45:34Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2040,12 +2040,12 @@
             "type": "SPRINT-S",
             "owner": "dev-vps-crawls",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "M",
             "zone": "vps-scripts/",
             "priority": "p1",
             "handoff": "docs/handoffs/TASK_FIX-I-A.md",
-            "note": "Mirror FIX-G (AGM-plan) pattern: Python scraper with CSRF warmup + POST to /data/boarddetails + officer parse + atomic shell driver + systemd loop. Blocks FIX-I-B live-verify gate."
+            "note": "Mirror FIX-G (AGM-plan) pattern: Python scraper with CSRF warmup + POST to /data/boarddetails + officer parse + atomic shell driver + systemd loop. Blocks FIX-I-B live-verify gate. || DONE-LIVE-VERIFIED 2026-06-04: VPS scraper 5bca5280, /proxy/board-details live on :8765 Node proxy, systemd active. Smoke FPT2022... wait FPT1988/VCB2021/VNM2022 confirmed on VPS."
           },
           {
             "task_id": "FIX-I-B",
@@ -2053,12 +2053,12 @@
             "type": "SPRINT-S",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "M",
             "zone": "apps/mcp-server/",
             "priority": "p1",
             "handoff": "docs/handoffs/TASK_FIX-I-B.md",
-            "note": "New fetcher + store + job; extend vnstock_officers with appointment_year column; update get_company_profile to expose appointment_year + derive ceo_tenure_years. Unit/replay tests parallel; live-verify waits for FIX-I-A proxy deployment."
+            "note": "New fetcher + store + job; extend vnstock_officers with appointment_year column; update get_company_profile to expose appointment_year + derive ceo_tenure_years. Unit/replay tests parallel; live-verify waits for FIX-I-A proxy deployment. || DONE-LIVE-VERIFIED 2026-06-04: 5ded1373 + integration fix 4beb24d3 (parseVpsResponse shape: data[ticker] array + snake_case + pre-parsed year) + test-DDL fix ab827411. Baked (2x rebuild). Ingest rows_updated=246/33 tickers. get_company_profile(FPT)=Bình1988/t38, CEO Khoa2019/t7; VCB Tùng2021/t5; N/A->null honest. QA 17/0 + RAPID-A regression cleared 8/0. toolCount 160."
           }
         ]
       },
@@ -2081,9 +2081,10 @@
           {
             "id": "DSI-BA",
             "label": "BA: decompose architect brief into per-zone atomic tasks",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "multi",
-            "size": "S"
+            "size": "S",
+            "note": "BA spec complete 2026-06-04. Handoff: docs/handoffs/DSI-BA-spec.md. 6 tasks spec-d with AC + file:line targets + zone owners + dep DAG. No PO blockers."
           },
           {
             "id": "DSI-S1-SLA",
@@ -2452,7 +2453,7 @@
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "vnstock_officers start_date for CEO tenure",
-        "status": "IN_PROGRESS",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P5",
         "size": "S",
         "zone": "multi: vps-scripts/ (dev-vps-crawls) + apps/mcp-server/ (dev-mcp-server)",
@@ -2474,7 +2475,7 @@
           "apps/mcp-server/src/scheduler/startScheduler.ts",
           "apps/mcp-server/src/interface/mcp/tools/market-data/companyProfileTools.ts"
         ],
-        "note": "ARCHITECT DONE 2026-06-04T10:30Z. Handoff: docs/handoffs/TASK_FIX-I.md. Design: extend vnstock_officers with appointment_year INTEGER nullable (ALTER TABLE migration) + UPDATE-only boardDetailsStore (preserves VCI own_percent/quantity) + new boardDetailsFetcher/Job mirroring agmPlan pattern + extend get_company_profile OfficerEntry with appointment_year + ceo_tenure_years. Zone A (dev-vps-crawls): Python scraper + shell loop + systemd at 02:00 UTC. Zone B (dev-mcp-server): migration + fetcher + store + job + tool extension. Live-verify gate: get_company_profile(FPT).officers[0].appointment_year=1988. RAPID-DATA-LAYER closes on ship+verify."
+        "note": "ARCHITECT DONE 2026-06-04T10:30Z. Handoff: docs/handoffs/TASK_FIX-I.md. Design: extend vnstock_officers with appointment_year INTEGER nullable (ALTER TABLE migration) + UPDATE-only boardDetailsStore (preserves VCI own_percent/quantity) + new boardDetailsFetcher/Job mirroring agmPlan pattern + extend get_company_profile OfficerEntry with appointment_year + ceo_tenure_years. Zone A (dev-vps-crawls): Python scraper + shell loop + systemd at 02:00 UTC. Zone B (dev-mcp-server): migration + fetcher + store + job + tool extension. Live-verify gate: get_company_profile(FPT).officers[0].appointment_year=1988. RAPID-DATA-LAYER closes on ship+verify. || DONE-LIVE-VERIFIED 2026-06-04: officer appointment_year + ceo_tenure_years live on get_company_profile (year-precision, accepted product bar). Both zones shipped+baked+QA-verified. LAST open core item of RAPID-DATA-LAYER -> sprint COMPLETE."
       },
       {
         "task_id": "FU-FIXB-COLUMNKEY-VERIFY",
@@ -2710,12 +2711,12 @@
         "summary": "Requirement Spec for DATA-SERVE-INTEGRITY sprint",
         "type": "SPRINT-L",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE",
         "priority": "high",
         "zone": "multi",
         "owner": "ba",
         "depends": "DSI-ARCH",
-        "note": "Decompose the architect DATA-SERVE-INTEGRITY invariant brief into per-zone acceptance specs for DSI-S1-SLA/S1-MACRO/S1-FE-TYPE (apps/mcp-server), DSI-S2-PRICE (apps/stock-price), DSI-S3-SECTOR-FIN (apps/mcp-server). Carry the 6 structural acceptance criteria + router-confirmed file:line findings verbatim — evidence, not to be re-discovered."
+        "note": "Decompose the architect DATA-SERVE-INTEGRITY invariant brief into per-zone acceptance specs for DSI-S1-SLA/S1-MACRO/S1-FE-TYPE (apps/mcp-server), DSI-S2-PRICE (apps/stock-price), DSI-S3-SECTOR-FIN (apps/mcp-server). Carry the 6 structural acceptance criteria + router-confirmed file:line findings verbatim — evidence, not to be re-discovered. | DONE 2026-06-04: docs/handoffs/DSI-BA-spec.md. 6 tasks (S1-SLA/S1-MACRO/S1-FE-TYPE/S2-PRICE/S3-SECTOR-FIN/LATENT-BACKLOG). No PO blockers. next: dev-mcp-server DSI-S1-SLA."
       }
     ],
     "archive": []
