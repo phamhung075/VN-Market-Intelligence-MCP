@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-04T07:45:26Z",
   "_updated_by": "po",
   "head": {
-    "status": "active",
-    "active_task_id": "FIX-B-1",
-    "next_agent": "dev-mcp-server",
-    "next_action": "RAPID-DATA-LAYER Phase 1 P1 parallel dispatch: FIX-B-1 (persist marketCap from vnstock) + FIX-H (extend insider lookback 90->180d) both IN-PROGRESS. FIX-B-2 (new get_market_cap tool) BLOCKED on FIX-B-1. PM atomic tasks: docs/handoffs/RAPID-PHASE1-B1.md + RAPID-PHASE1-B2.md + RAPID-PHASE1-H.md. Zone: apps/mcp-server/. DoD: fence+sandbox/replay (lean standard). WIP=2.",
-    "wip": 2,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "RAPID-DATA-LAYER Phase 1 shipped (b275239d, mcp-server rebuilt 156->157 tools). FIX-H DONE-LIVE-VERIFIED (insider 180d live). FIX-B (get_market_cap): tool DONE-LIVE-VERIFIED (null-path), persist/fetch DONE-CODE-DEPLOYED-DATA-PENDING — market_cap_bn null until a successful vnstock sync; live-verify blocked NOW by transient vnstock RATE_LIMIT on all FPT endpoints (NOT a code defect). Hook=FU-FIXB-COLUMNKEY-VERIFY (re-call get_market_cap after next successful fundamentals sweep; if still null after a confirmed-good finance fetch -> fix ratio() MultiIndex key). RECON-AGM-1 DONE; FIX-C + FIX-G UNBLOCKED. NEXT-IN-FLIGHT P1 (next tick, WIP<=2): FIX-A get_company_profile + FIX-D get_bctc_full structured_data (both no-deps, dev-mcp-server). Then P2 FIX-C/FIX-E, P3 FIX-F, P4 FIX-G, P5 FIX-I. Cowork session STILL stale (BLOCKED-OPERATOR).",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T08:15:00Z",
-    "updated_by": "pm"
+    "updated_at": "2026-06-04T08:48:52Z",
+    "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T07:45:02Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-04T08:48:52Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -1968,11 +1968,11 @@
             "type": "SPRINT-S",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE-CODE-DATA-PENDING-UPSTREAM",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "p1",
-            "note": "Part of FIX-B (market-cap tool + storage). Phase 1 mandatory (unblocks SKILL-1 size gate). Atomic: persist vnstock ratio summary marketCap field to persistent table (currently only in-memory via vnstockBridge.ts:82 VnstockRatioSummary.marketCap dead export). Files: apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts (add vnstock_ratio_summary table or market_cap_bn column to vnstock_trading_stats), apps/mcp-server/src/infrastructure/fetchers/vnstockBridge.ts (wire marketCap persist to syncVnstockData.ts), apps/mcp-server/src/application/usecases/syncVnstockData.ts (write persist hook). DoD: (1) schema migration clean, (2) syncVnstockData persists marketCap on each vnstock fetch, (3) SELECT market_cap from DB for 1 ticker returns non-zero value, (4) unit tests green, (5) tsc clean."
+            "note": "FIX-B-1 persist+fetch shipped b275239d, deployed live (mcp-server rebuilt, healthy, tool count 156->157). Code path correct (schema market_cap_bn col + idempotent migration + storeTradingStats persist + TRADING_STATS_SCRIPT ratio() fetch). DATA PENDING: market_cap_bn null for all rows until a successful vnstock sync; live-verify blocked by transient vnstock RATE_LIMIT (all FPT endpoints, 0848Z). Verify hook: FU-FIXB-COLUMNKEY-VERIFY."
           },
           {
             "task_id": "FIX-B-2",
@@ -1982,11 +1982,11 @@
             "depends": [
               "FIX-B-1"
             ],
-            "status": "TODO",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "S",
             "zone": "apps/mcp-server/",
             "priority": "p1",
-            "note": "Unblocks SKILL-1 rapid-market-cap-screen (mandatory entry gate per arch brief §8). New tool file: apps/mcp-server/src/interface/mcp/tools/market-data/marketCapTools.ts (query vnstock_ratio_summary or vnstock_trading_stats.market_cap_bn per FIX-B-1 schema choice, return structured JSON: {code, market_cap_billion, shares_outstanding_approx, fetched_at}). Register in mcp-tools factory. DoD: (1) tool callable, (2) returns structured JSON not text, (3) safe-divide for shares_outstanding_approx = market_cap / current_price (or 0 if missing), (4) fetched_at timestamp, (5) 5+ unit tests (happy path / missing market_cap / missing shares / sparse data), (6) tsc clean, (7) mcp-server rebuild integrates tool live."
+            "note": "FIX-B-2 get_market_cap MCP tool LIVE-VERIFIED b275239d: callable, returns {code, market_cap_billion, shares_outstanding_approx, fetched_at}, safe-divide null-path confirmed live (get_market_cap(FPT) -> nulls, correct degrade). Populated happy-path inherits FIX-B-1 data-pending (FU-FIXB-COLUMNKEY-VERIFY). 10 unit tests green, tsc clean, sandbox/replay."
           },
           {
             "task_id": "FIX-H",
@@ -1994,11 +1994,11 @@
             "type": "SPRINT-S",
             "owner": "dev-mcp-server",
             "depends": [],
-            "status": "TODO",
+            "status": "DONE-LIVE-VERIFIED",
             "size": "XS",
             "zone": "apps/mcp-server/",
             "priority": "p1",
-            "note": "Unblocks SKILL-4 ownership-governance-screen Step 2 full 6-month insider-exit detection (currently capped 90d/3mo). Single-line change: apps/mcp-server/src/interface/mcp/tools/market-data/insiderTools.ts line 108 Math.min(days, 90) -> Math.min(days, 180). Underlying insiderStore SQLite date query already parameter-driven. Data availability depends on insiderCheckJob population depth (may be sparse beyond 90d for early-added watchlist tickers, but tool correct). DoD: (1) edit verified in source, (2) insiderTools unit tests pass (3 new tests: 91d, 180d, 365d requests return honest coverage up to available data), (3) get_insider_transactions(ticker=FPT, days=180) live on rebuild returns 180d window or sparse-honest lesser coverage, (4) tsc clean, (5) mcp-server rebuild integrates live."
+            "note": "FIX-H DONE-LIVE-VERIFIED b275239d: get_insider_transactions(FPT, days=180) accepted live, lookbackDays=180 echoed (was capped 90). z.max(90)->z.max(180) + Math.min(90->180). 4 tests green."
           }
         ]
       }
@@ -2167,7 +2167,7 @@
         "type": "SPIKE",
         "sprint": "RAPID-DATA-LAYER",
         "title": "Probe HSX/HNX/SSC AGM portal fetch recipe (3 sample tickers VNM/FPT/VCB)",
-        "status": "IN-PROGRESS",
+        "status": "DONE",
         "priority": "P0",
         "size": "S",
         "zone": "ops-vps-fetch",
@@ -2176,14 +2176,14 @@
           "FIX-G"
         ],
         "timebox": 480,
-        "note": "Router-launched in PARALLEL NOW (ops-vps-fetch spike, no dev work). Confirm: (1) doc availability for VNM/FPT/VCB, (2) URL structure/pagination, (3) response format PDF (->PDF-Extract-Kit pipeline, Risk-4) or HTML (->scrape). MUST land before FIX-G dev work starts. Brief §6 FIX-G + §11 Risk-4."
+        "note": "Router-launched in PARALLEL NOW (ops-vps-fetch spike, no dev work). Confirm: (1) doc availability for VNM/FPT/VCB, (2) URL structure/pagination, (3) response format PDF (->PDF-Extract-Kit pipeline, Risk-4) or HTML (->scrape). MUST land before FIX-G dev work starts. Brief §6 FIX-G + §11 Risk-4. || DONE 0fad275e: vietstock-agm-plan FETCHABLE, recipe in docs/vps-sources/vietstock-agm-plan/recon.md. Unblocks FIX-G."
       },
       {
         "task_id": "FIX-B",
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "get_market_cap MCP tool + persist VnstockRatioSummary.marketCap",
-        "status": "BACKLOG",
+        "status": "DONE-CODE-DEPLOYED-DATA-PENDING",
         "priority": "P1",
         "size": "M",
         "zone": "apps/mcp-server/",
@@ -2198,7 +2198,7 @@
           "apps/mcp-server/src/jobs/syncVnstockData.ts",
           "apps/mcp-server/src/interface/mcp/tools/market-data/"
         ],
-        "note": "RC-1. (1) Wire marketCap storage (vnstock_ratio_summary table or market_cap_bn col on vnstock_trading_stats); vnstockBridge.ts:82 already defines the struct (dead export). (2) New get_market_cap returning {code, market_cap_billion, shares_outstanding_approx, fetched_at}. Source stock.trading.price_board() already returns marketCap — just not persisted. NO skill can go live without this (brief §8). Risk-2 staleness -> emit data_as_of."
+        "note": "RC-1. (1) Wire marketCap storage (vnstock_ratio_summary table or market_cap_bn col on vnstock_trading_stats); vnstockBridge.ts:82 already defines the struct (dead export). (2) New get_market_cap returning {code, market_cap_billion, shares_outstanding_approx, fetched_at}. Source stock.trading.price_board() already returns marketCap — just not persisted. NO skill can go live without this (brief §8). Risk-2 staleness -> emit data_as_of. || FIX-B-1 persist+fetch shipped b275239d, deployed live (mcp-server rebuilt, healthy, tool count 156->157). Code path correct (schema market_cap_bn col + idempotent migration + storeTradingStats persist + TRADING_STATS_SCRIPT ratio() fetch). DATA PENDING: market_cap_bn null for all rows until a successful vnstock sync; live-verify blocked by transient vnstock RATE_LIMIT (all FPT endpoints, 0848Z). Verify hook: FU-FIXB-COLUMNKEY-VERIFY."
       },
       {
         "task_id": "FIX-A",
@@ -2244,7 +2244,7 @@
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "get_insider_transactions lookback 90 -> 180 days",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P1",
         "size": "S",
         "zone": "apps/mcp-server/",
@@ -2255,14 +2255,14 @@
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/market-data/insiderTools.ts"
         ],
-        "note": "RC (lookback). 1-line: insiderTools.ts:108 .max(90) -> .max(180). insiderStore queries SQLite by date, no schema change. Data may be sparse beyond 90d for early-added tickers (honest)."
+        "note": "RC (lookback). 1-line: insiderTools.ts:108 .max(90) -> .max(180). insiderStore queries SQLite by date, no schema change. Data may be sparse beyond 90d for early-added tickers (honest). || FIX-H DONE-LIVE-VERIFIED b275239d: get_insider_transactions(FPT, days=180) accepted live, lookbackDays=180 echoed (was capped 90). z.max(90)->z.max(180) + Math.min(90->180). 4 tests green."
       },
       {
         "task_id": "FIX-C",
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "get_bctc_series multi-period BCTC tool",
-        "status": "BLOCKED",
+        "status": "BACKLOG",
         "priority": "P2",
         "size": "M",
         "zone": "apps/mcp-server/",
@@ -2279,7 +2279,7 @@
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/financial-reports/"
         ],
-        "note": "RC-2 (scope). New get_bctc_series {code, fields[], periods} -> JSON array, financial_reports ORDER BY sort_key DESC LIMIT periods. Subset fields (pe,pb,roe,debt_to_equity,operating_cf,net_profit,eps,total_assets,net_revenue,equity_total). GUARD: refine_status='DONE' only (PUB-1 gate) — no OCR garbage. Risk-1: sparse <10yr history common -> skill degrades gracefully (median of present). Dep FIX-B per architect §9."
+        "note": "RC-2 (scope). New get_bctc_series {code, fields[], periods} -> JSON array, financial_reports ORDER BY sort_key DESC LIMIT periods. Subset fields (pe,pb,roe,debt_to_equity,operating_cf,net_profit,eps,total_assets,net_revenue,equity_total). GUARD: refine_status='DONE' only (PUB-1 gate) — no OCR garbage. Risk-1: sparse <10yr history common -> skill degrades gracefully (median of present). Dep FIX-B per architect §9. || UNBLOCKED 2026-06-04: FIX-B code shipped b275239d (dep cleared)."
       },
       {
         "task_id": "FIX-E",
@@ -2325,7 +2325,7 @@
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "AGM revenue plans: VPS fetcher + agm_revenue_plans table + get_agm_plans tool",
-        "status": "BLOCKED",
+        "status": "BACKLOG",
         "priority": "P4",
         "size": "L",
         "zone": "dev-vps-crawls + apps/mcp-server/",
@@ -2335,7 +2335,7 @@
         "unblocks_skill": [
           "SKILL-5 Step 1 plan-accuracy (the signature management check)"
         ],
-        "note": "RC-6 NEW DATA SOURCE. BLOCKED until RECON-AGM-1 proves the AGM source is fetchable + confirms format. Chain: ops-vps-fetch recon recipe -> dev-vps-crawls AGM fetcher (HSX/HNX/SSC, geo-blocked->Vinahost VPS) -> dev-mcp-server store agm_revenue_plans table + get_agm_plans tool. Risk-4: if PDF-only, requires PDF-Extract-Kit pipeline (higher effort). Effort/path FINALIZED by recon outcome. DO NOT start dev work until RECON-AGM-1 = DONE with positive recipe."
+        "note": "RC-6 NEW DATA SOURCE. BLOCKED until RECON-AGM-1 proves the AGM source is fetchable + confirms format. Chain: ops-vps-fetch recon recipe -> dev-vps-crawls AGM fetcher (HSX/HNX/SSC, geo-blocked->Vinahost VPS) -> dev-mcp-server store agm_revenue_plans table + get_agm_plans tool. Risk-4: if PDF-only, requires PDF-Extract-Kit pipeline (higher effort). Effort/path FINALIZED by recon outcome. DO NOT start dev work until RECON-AGM-1 = DONE with positive recipe. || UNBLOCKED 2026-06-04: RECON-AGM-1 DONE (dep cleared); P4, sequence after P1/P2."
       },
       {
         "task_id": "FIX-I",
@@ -2357,6 +2357,20 @@
           "apps/mcp-server/src/jobs/syncVnstockData.ts"
         ],
         "note": "Extend vnstock_officers with start_date IF available in vnstock source data. CEO tenure (SKILL-5 Step 2). Best-effort: vnstock may not expose start_date -> document gap honestly. Dep FIX-A (officers tool exists first)."
+      },
+      {
+        "task_id": "FU-FIXB-COLUMNKEY-VERIFY",
+        "title": "Verify get_market_cap serves non-null market_cap_billion after a successful vnstock sync; fix ratio() column-key if it stays null",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "status": "BLOCKED-UPSTREAM",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/vnstockBridge.ts"
+        ],
+        "note": "VERIFICATION HOOK for FIX-B (shipped b275239d, live-deployed). get_market_cap is LIVE + returns correct structured shape + safe-divide null-path verified, but market_cap_billion=null for all 2856 vnstock_trading_stats rows (column just added; populated only on a fresh sync). Live-verify attempt 2026-06-04T08:48:52Z triggered syncVnstockData([FPT]) inside the container: vnstock RATE_LIMITED on EVERY endpoint (finance/balance_sheet/cash_flow, max retries exhausted) => fetch never succeeded, market_cap_bn stayed null, fetched_at stale 2026-04-29. Transient EXTERNAL throttle, NOT a code defect. WHEN the scheduled vnstockFundamentalsJob next completes a successful finance:<ticker> sweep (rate-limit cleared), re-call get_market_cap(FPT): EXPECT non-null market_cap_billion. IF still null after a CONFIRMED-successful finance fetch => the python ratio() MultiIndex key ('Chỉ tiêu định giá','Market Cap (Bn. VND)') is wrong for the live vnstock version => fix TRADING_STATS_SCRIPT key in vnstockBridge.ts (a fallback 'market_cap' is already attempted). Owner dev-mcp-server. Until verified, FIX-B stays DONE-CODE-DEPLOYED-DATA-PENDING (do NOT claim DONE-LIVE-VERIFIED).",
+        "depends_on": "vnstock-rate-limit-clear / next-fundamentals-sweep"
       }
     ],
     "archive": []
