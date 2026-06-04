@@ -122,6 +122,30 @@ interface RagRow {
   created_at: string;
 }
 
+// FIX-D: vnstock_balance_sheet row for receivables query
+interface BalanceSheetVnstockRow {
+  receivables_bn: number | null;
+}
+
+// FIX-D: structured_data output type (exported for test consumers)
+export interface BctcStructuredData {
+  pe: number | null;
+  pb: number | null;
+  roe: number | null;
+  debt_to_equity: number | null;
+  equity_total: number | null;
+  total_assets: number | null;
+  total_liabilities: number | null;
+  cash: number | null;
+  long_term_debt: number | null;
+  profit_before_tax: number | null;
+  operating_cf: number | null;
+  net_profit: number | null;
+  eps: number | null;
+  net_revenue: number | null;
+  receivables: number | null;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Formatting helpers (mirrored from reports.ts to keep tool self-contained)
 // ─────────────────────────────────────────────────────────────────────────────
@@ -1199,10 +1223,78 @@ export function registerBctcFullTools(
         const comparisonSection = buildComparisonSection(db, upperCode, latestRow, bankForm);
         const sentimentSection = buildSentimentSection(db, upperCode);
 
-        const output = [summarySection, "", comparisonSection, "", sentimentSection].join("\n");
+        const textOutput = [summarySection, "", comparisonSection, "", sentimentSection].join("\n");
 
+        // ── FIX-D: structured_data block ─────────────────────────────────
+        // All numeric values are recomputed on read (latestRow has already been
+        // mutated by the BAL-1a recompute block above — no stale persisted columns).
+        // receivables is queried live from vnstock_balance_sheet.receivables_bn
+        // matching the same period (year_report + quarter). Null when absent (honest).
+        //
+        // Per derived-column-reflow lesson: NEVER serve stale persisted ratios.
+        // latestRow.roe / .debt_to_equity are already recomputed-on-read above.
+        let receivables: number | null = null;
+        try {
+          const bsRow = db
+            .prepare<BalanceSheetVnstockRow, [string, number, number]>(
+              `SELECT receivables_bn
+               FROM vnstock_balance_sheet
+               WHERE code = ? AND year_report = ? AND quarter = ?
+               ORDER BY fetched_at DESC
+               LIMIT 1`,
+            )
+            .get(upperCode, latestRow.period_year, latestRow.period_quarter ?? 0);
+          receivables = bsRow != null && bsRow.receivables_bn != null
+            ? bsRow.receivables_bn
+            : null;
+        } catch {
+          // vnstock_balance_sheet may not exist in legacy test DBs — safe-degrade to null
+          receivables = null;
+        }
+
+        const structuredData: BctcStructuredData = {
+          // Market valuation ratios (persisted, not recomputed — sourced from market data)
+          pe: latestRow.pe ?? null,
+          pb: latestRow.pb ?? null,
+          // Recomputed-on-read ratios (latestRow mutated by BAL-1a block above)
+          roe: latestRow.roe ?? null,
+          debt_to_equity: latestRow.debt_to_equity ?? null,
+          // Balance sheet scalars (in million VND as stored)
+          equity_total: latestRow.equity_total !== undefined ? latestRow.equity_total : null,
+          total_assets: latestRow.total_assets !== undefined ? latestRow.total_assets : null,
+          total_liabilities: latestRow.total_liabilities !== undefined ? latestRow.total_liabilities : null,
+          cash: latestRow.cash !== undefined ? latestRow.cash : null,
+          long_term_debt: latestRow.long_term_debt !== undefined ? latestRow.long_term_debt : null,
+          // Income statement scalars
+          profit_before_tax: latestRow.profit_before_tax !== undefined ? latestRow.profit_before_tax : null,
+          operating_cf: latestRow.operating_cf !== undefined ? latestRow.operating_cf : null,
+          net_profit: latestRow.net_profit !== undefined ? latestRow.net_profit : null,
+          eps: latestRow.eps !== undefined ? latestRow.eps : null,
+          net_revenue: latestRow.net_revenue !== undefined ? latestRow.net_revenue : null,
+          // Live queried from vnstock_balance_sheet (not persisted in financial_reports)
+          receivables,
+        };
+
+        // FIX-D: emit two content items:
+        //   [0] plain-text summary (UNCHANGED — preserves backwards compat with all consumers)
+        //   [1] JSON structured block { structured_data, refine_status, source_tier, fetchedAt }
+        //       Machine-readable; downstream skills consume content[1] directly.
         return {
-          content: [{ type: "text" as const, text: output }],
+          content: [
+            {
+              type: "text" as const,
+              text: textOutput,
+            },
+            {
+              type: "text" as const,
+              text: JSON.stringify({
+                structured_data: structuredData,
+                refine_status: latestRow.refine_status,
+                source_tier: 2,
+                fetchedAt: latestRow.published_at,
+              }),
+            },
+          ],
         };
       } catch (err) {
         // HOTFIX 1288c: Suppress query errors (main server just queries local DB)

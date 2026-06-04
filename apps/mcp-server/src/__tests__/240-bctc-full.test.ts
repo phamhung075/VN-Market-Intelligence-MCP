@@ -353,28 +353,68 @@ function makeDb(): Database {
     causal_chain TEXT
   )`);
 
+  // FIX-D: vnstock_balance_sheet needed for receivables query
+  db.run(`CREATE TABLE IF NOT EXISTS vnstock_balance_sheet (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    code TEXT NOT NULL,
+    year_report INTEGER NOT NULL,
+    quarter INTEGER NOT NULL,
+    total_assets_bn REAL,
+    total_liabilities_bn REAL,
+    total_equity_bn REAL,
+    cash_bn REAL,
+    short_term_debt_bn REAL,
+    long_term_debt_bn REAL,
+    receivables_bn REAL,
+    inventory_bn REAL,
+    source TEXT NOT NULL DEFAULT 'vnstock',
+    fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(code, year_report, quarter, source)
+  )`);
+
   return db;
 }
 
-// ─── call helper ────────────────────────────────────────────────────────────
+// ─── call helpers ────────────────────────────────────────────────────────────
 
-async function callTool(
+type ToolResult = { content: Array<{ type: string; text: string }> };
+
+function getRegisteredToolFn(
   server: McpServer,
   name: string,
-  args: Record<string, unknown>,
-): Promise<string> {
+): (args: Record<string, unknown>) => Promise<ToolResult> {
   const tools = (server as unknown as {
     _registeredTools: Record<string, {
-      callback?: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
-      handler?: (args: Record<string, unknown>) => Promise<{ content: Array<{ type: string; text: string }> }>;
+      callback?: (args: Record<string, unknown>) => Promise<ToolResult>;
+      handler?: (args: Record<string, unknown>) => Promise<ToolResult>;
     }>;
   })._registeredTools;
   const tool = tools[name];
   if (!tool) throw new Error(`Tool ${name} not registered`);
   const fn = tool.callback ?? tool.handler;
   if (!fn) throw new Error(`No callable found for tool: ${name}`);
+  return fn;
+}
+
+/** Returns content[0].text (plain-text summary — used by all pre-FIX-D tests). */
+async function callTool(
+  server: McpServer,
+  name: string,
+  args: Record<string, unknown>,
+): Promise<string> {
+  const fn = getRegisteredToolFn(server, name);
   const result = await fn(args);
   return result.content[0]?.text ?? "";
+}
+
+/** FIX-D: Returns full content array (for structured_data tests that need content[1]). */
+async function callToolFull(
+  server: McpServer,
+  name: string,
+  args: Record<string, unknown>,
+): Promise<ToolResult> {
+  const fn = getRegisteredToolFn(server, name);
+  return fn(args);
 }
 
 // ─── Tests ───────────────────────────────────────────────────────────────────
@@ -824,5 +864,173 @@ describe("BAL-1f: current_ratio guard + operating_margin recompute", () => {
     // current_ratio = 10,000,000 / 5,000,000 = 2.00x — must be shown, not suppressed
     expect(text).toContain("2.00x");
     expect(text).not.toContain("Current Ratio    : N/A");
+  });
+});
+
+// ── FIX-D: structured_data block + receivables ────────────────────────────────
+//
+// Non-breaking extension to get_bctc_full:
+//   - Adds structured_data JSON block alongside existing text output.
+//   - All numeric cols recomputed on read (not stale persisted values).
+//   - receivables from vnstock_balance_sheet.receivables_bn (live query).
+//   - Existing text output UNCHANGED (regression guard via text_summary key).
+//
+// AC covered:
+//   FIX-D-1: structured_data keys present for DONE record
+//   FIX-D-2: receivables populated from vnstock_balance_sheet
+//   FIX-D-3: receivables honest-null on missing period
+//   FIX-D-4: pe and pb in structured_data match text output (regression/spot-check)
+//   FIX-D-5: replay — two calls return identical structured_data
+//   (regression) existing text content is preserved in text_summary key
+
+describe("FIX-D — structured_data block in get_bctc_full", () => {
+  let db: Database;
+
+  beforeEach(() => {
+    db = makeDb();
+  });
+
+  /** Helper: insert a DONE report with pe=12.5, pb=2.3, net_profit=8_100_000, equity_total=180_000_000 */
+  function insertDoneReport(overrideCode = "FPT"): string {
+    const id = insertFinancialRow(db, {
+      action_code: overrideCode,
+      period_year: 2025,
+      period_quarter: 4,
+      period_type: "Q4",
+      sort_key: "2025-Q4",
+      net_revenue: 45_200_000,
+      net_profit: 8_100_000,
+      equity_total: 180_000_000,
+      total_assets: 1_800_000_000,
+      pe: 12.5,
+      pb: 2.3,
+      short_term_debt: 200_000_000,
+      long_term_debt: 900_000_000,
+      total_liabilities: 1_620_000_000,
+      cash: 80_000_000,
+      operating_cf: 10_000_000,
+      eps: 4200,
+    });
+    insertTableRow(db, id, "balance_sheet", 0);
+    insertRefinedUnit(db, id);
+    return id;
+  }
+
+  // FIX-D-1 (RED→GREEN): structured_data keys present in response for DONE record
+  // Uses callToolFull to access content[1] (structured JSON block).
+  it("FIX-D-1: structured_data block present with all required keys for DONE record", async () => {
+    insertDoneReport("FPT");
+
+    const server = makeServer(db);
+    const result = await callToolFull(server, "get_bctc_full", { code: "FPT" });
+
+    // content[1] must exist and be parseable JSON containing structured_data
+    expect(result.content[1]).toBeDefined();
+    let parsed: Record<string, unknown>;
+    expect(() => { parsed = JSON.parse(result.content[1]!.text); }).not.toThrow();
+    parsed = JSON.parse(result.content[1]!.text);
+
+    // structured_data must exist
+    expect(parsed["structured_data"]).toBeDefined();
+    const sd = parsed["structured_data"] as Record<string, unknown>;
+
+    // All required keys must be present
+    const requiredKeys = [
+      "pe", "pb", "roe", "debt_to_equity", "equity_total",
+      "total_assets", "total_liabilities", "cash", "long_term_debt",
+      "profit_before_tax", "operating_cf", "net_profit", "eps",
+      "net_revenue", "receivables",
+    ];
+    for (const key of requiredKeys) {
+      expect(Object.prototype.hasOwnProperty.call(sd, key), `missing key: ${key}`).toBe(true);
+    }
+  });
+
+  // FIX-D-2: receivables populated from vnstock_balance_sheet
+  it("FIX-D-2: receivables populated from vnstock_balance_sheet when row exists", async () => {
+    insertDoneReport("VCB");
+
+    // Seed vnstock_balance_sheet row matching period Q4-2025 (year=2025, quarter=4)
+    db.prepare(
+      `INSERT OR REPLACE INTO vnstock_balance_sheet
+       (code, year_report, quarter, receivables_bn, fetched_at)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run("VCB", 2025, 4, 125.7, "2026-06-04T08:00:00Z");
+
+    const server = makeServer(db);
+    const result = await callToolFull(server, "get_bctc_full", { code: "VCB" });
+
+    const parsed = JSON.parse(result.content[1]!.text) as Record<string, unknown>;
+    const sd = parsed["structured_data"] as Record<string, unknown>;
+
+    // receivables must be 125.7 (from vnstock_balance_sheet)
+    expect(sd["receivables"]).toBe(125.7);
+  });
+
+  // FIX-D-3: receivables honest-null when no matching vnstock_balance_sheet row
+  it("FIX-D-3: receivables is null when no vnstock_balance_sheet row for this period", async () => {
+    insertDoneReport("MWG");
+    // No vnstock_balance_sheet row seeded
+
+    const server = makeServer(db);
+    const result = await callToolFull(server, "get_bctc_full", { code: "MWG" });
+
+    const parsed = JSON.parse(result.content[1]!.text) as Record<string, unknown>;
+    const sd = parsed["structured_data"] as Record<string, unknown>;
+
+    // receivables must be null (honest sparse)
+    expect(sd["receivables"]).toBeNull();
+  });
+
+  // FIX-D-4: pe and pb in structured_data match numeric values from text output
+  it("FIX-D-4: structured_data.pe and .pb match text output values (regression spot-check)", async () => {
+    insertDoneReport("HPG");
+
+    const server = makeServer(db);
+    const result = await callToolFull(server, "get_bctc_full", { code: "HPG" });
+
+    const textSummary = result.content[0]!.text;
+    const parsed = JSON.parse(result.content[1]!.text) as Record<string, unknown>;
+    const sd = parsed["structured_data"] as Record<string, unknown>;
+
+    // pe=12.5 → text shows "12.50x", structured_data.pe = 12.5
+    expect(sd["pe"]).toBe(12.5);
+    expect(textSummary).toContain("12.50x");
+
+    // pb=2.3 → text shows "2.30x", structured_data.pb = 2.3
+    expect(sd["pb"]).toBe(2.3);
+    expect(textSummary).toContain("2.30x");
+  });
+
+  // FIX-D-5: replay — two calls return identical structured_data
+  it("FIX-D-5: replay — two calls return identical structured_data JSON", async () => {
+    insertDoneReport("GAS");
+
+    const server = makeServer(db);
+
+    const result1 = await callToolFull(server, "get_bctc_full", { code: "GAS" });
+    const result2 = await callToolFull(server, "get_bctc_full", { code: "GAS" });
+
+    // Both content[0] (text) and content[1] (structured) must match
+    expect(result1.content[0]!.text).toBe(result2.content[0]!.text);
+    expect(result1.content[1]!.text).toBe(result2.content[1]!.text);
+
+    const sd1 = (JSON.parse(result1.content[1]!.text) as Record<string, unknown>)["structured_data"];
+    const sd2 = (JSON.parse(result2.content[1]!.text) as Record<string, unknown>)["structured_data"];
+    expect(JSON.stringify(sd1)).toBe(JSON.stringify(sd2));
+  });
+
+  // Regression: existing text output preserved in content[0] (text output UNCHANGED)
+  it("regression: content[0] text preserved — existing content intact after FIX-D", async () => {
+    insertDoneReport("VNM");
+
+    const server = makeServer(db);
+    const result = await callToolFull(server, "get_bctc_full", { code: "VNM" });
+
+    // content[0] must contain the original plain-text sections
+    const textSummary = result.content[0]!.text;
+    expect(textSummary).toContain("=== BCTC SUMMARY: VNM ===");
+    expect(textSummary).toContain("Net Revenue");
+    expect(textSummary).toContain("ROE");
   });
 });
