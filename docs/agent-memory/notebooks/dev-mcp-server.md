@@ -1,5 +1,25 @@
 # dev-mcp-server -- Notebook
 
+## c364 · 2026-06-04T18:50Z (DSI-S1-SLA — country key SSOT fix) — COMMITTED pending
+
+**Task:** DSI-S1-SLA (XS, P0) — macroIndicatorSla.ts key mismatch fix.
+
+**Root cause:** `macroIndicatorSla.ts` queried `country='VN'` at both guard sites (lines 35, 73) while the active writer (`macroIndicatorRefreshJob.ts:242`) writes `country='vietnam'` since commit 7a0adfdc (2026-05-17). 18-day dead SLA guard.
+
+**Files changed:**
+- `apps/mcp-server/src/domain/services/macroIndicatorSla.ts` — added `MACRO_COUNTRY_KEY = "vietnam"` constant; replaced both `.get("VN")` with `.get(MACRO_COUNTRY_KEY)`
+- `apps/mcp-server/src/interface/mcp/server.ts` — lines 1435+1520 push-gso/push-te defaults changed from `"VN"` to `"vietnam"` (with DSI-S1-SLA comment)
+- `apps/mcp-server/src/domain/services/macro/macroIndicatorFetcher.ts` — `@deprecated` comment added above line 266 (`country='VN'` dead-code write)
+- `apps/mcp-server/src/__tests__/DSI-1-SLA-country-key.test.ts` — 6 tests (AC-SLA-1a/b/c, AC-SLA-2a/b, AC-SLA-3); 6 pass / 0 fail, tsc clean
+
+**DEPLOY GATE (FR-SLA-4):** vps-scripts `fetch-gso.sh` and `fetch-tradingeconomics.sh` both set `COUNTRY="VN"` explicitly (line 11 each) — they will bypass the server.ts default fix and continue writing `country='VN'` rows. VPS scripts must also update `COUNTRY="vietnam"` before this deploy goes live. Do NOT deploy server.ts change without coordinating with ops on VPS script update.
+
+**AC-SLA-3 verified:** zero `.get("VN")` in macroIndicatorSla.ts; `MACRO_COUNTRY_KEY` appears 3× (declaration + 2 query sites).
+
+**Next:** DSI-S1-MACRO (P0, M) — per-field is_estimate on carry/yield; true-source fetched_at. Owner: dev-mcp-server.
+
+---
+
 ## c363 · 2026-06-04T14:40Z (FIX-G AGM plan pull-ingest + get_agm_plan MCP tool) — COMMITTED ffa24c63
 
 **Task:** RAPID-DATA-LAYER FIX-G — pull-based AGM plan ingest + MCP tool get_agm_plan (#162).

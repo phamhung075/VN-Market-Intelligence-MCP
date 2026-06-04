@@ -12,6 +12,16 @@
 import type { Database } from "bun:sqlite";
 
 /**
+ * Single SSOT country key for macro_indicators rows written by the active
+ * refresh job (macroIndicatorRefreshJob.ts:242).
+ *
+ * DSI-S1-SLA: Previously this file queried 'VN' while the writer wrote 'vietnam',
+ * making the SLA guard permanently blind since commit 7a0adfdc (2026-05-17).
+ * ALL query sites in this file MUST use this constant — never the bare literal 'VN'.
+ */
+const MACRO_COUNTRY_KEY = "vietnam";
+
+/**
  * Result of checking macro data freshness SLA.
  */
 export interface MacroSlaCheckResult {
@@ -33,7 +43,7 @@ export async function freshnessSlaChecker(
 ): Promise<boolean> {
   const row = db
     .prepare("SELECT fetched_at FROM macro_indicators WHERE country = ?")
-    .get("VN") as { fetched_at: string } | undefined;
+    .get(MACRO_COUNTRY_KEY) as { fetched_at: string } | undefined;
 
   if (!row || !row.fetched_at) {
     return false; // No data at all
@@ -70,7 +80,7 @@ export async function detectStartupStaleData(
 ): Promise<void> {
   const row = db
     .prepare("SELECT fetched_at FROM macro_indicators WHERE country = ?")
-    .get("VN") as { fetched_at: string } | undefined;
+    .get(MACRO_COUNTRY_KEY) as { fetched_at: string } | undefined;
 
   if (!row || !row.fetched_at) {
     return; // No data to check

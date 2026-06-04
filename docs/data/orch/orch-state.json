@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T20:00:00Z",
-  "_updated_by": "ba",
+  "_updated_at": "2026-06-04T18:50:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "RAPID-DATA-LAYER COMPLETE & CLOSED: FIX-A..H + FIX-I all DONE-LIVE-VERIFIED. FIX-I shipped this tick (officer appointment_year/ceo_tenure_years via vietstock board-details, year-precision; FIX-I-A VPS 5bca5280 + FIX-I-B mcp 5ded1373/fix 4beb24d3/test-fix ab827411; baked 2x rebuild; get_company_profile(FPT)=1988/t38 CEO Khoa 2019/t7, VCB 2021/t5, N/A->null; QA 17/0, RAPID-A regression cleared 8/0; daily cron 21:00Z). ALSO this tick: restored frontend dashboard (:3001 was down from LanceDB memory-tradeoff; frontend+rag now coexist, ~7GB headroom -> FU-RAG-DEPLOY-MEMORY = NOT a hard either/or). REMAINING backlog (next PO): FU-ACB-AGM-COVERAGE, FU-BCTC-RATIOS-N-A (lower pri), FU-PROFILE-DATA-VERIFY (BLOCKED-UPSTREAM foreign_holding_ratio null, clears on vnstock sync), FU-DEDUP-CROSS-DISPATCHER (process), and a NEW P0 FIX-MACRO-FEDFUNDS-REGRESS triaged by a concurrent cycle (4398e4c2 - macro fedFundsRate regressed to 5.33 fixture) -> verify + likely next priority.",
+    "next_agent": "dev-mcp-server",
+    "next_action": "DSI-S1-SLA DONE. Next: DSI-S1-MACRO (P0, M) — per-field is_estimate on carry/yield; true-source fetched_at. DSI-S1-SLA commit on main, ops rebuild needed.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T18:45:34Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-04T18:50:00Z",
+    "updated_by": "dev-mcp-server"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -2089,9 +2089,12 @@
           {
             "id": "DSI-S1-SLA",
             "label": "Fix country key mismatch in macroIndicatorSla.ts + push-gso default",
-            "status": "TODO",
+            "status": "DONE",
             "zone": "apps/mcp-server",
-            "size": "XS"
+            "size": "XS",
+            "done_at": "2026-06-04T18:50:00Z",
+            "done_by": "dev-mcp-server",
+            "note": "MACRO_COUNTRY_KEY='vietnam' constant; both .get('VN') sites fixed; server.ts push-gso+push-te defaults fixed; deprecated comment added; 6/6 tests pass. DEPLOY GATE: vps-scripts COUNTRY='VN' explicit send must update to 'vietnam' before deploy."
           },
           {
             "id": "DSI-S1-MACRO",

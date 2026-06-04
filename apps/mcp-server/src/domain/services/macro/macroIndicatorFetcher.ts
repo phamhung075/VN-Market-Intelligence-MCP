@@ -262,6 +262,8 @@ function storeIndicators(db: Database, data: MacroData, fetchedAt: string): void
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
+  // @deprecated DSI: dead code — production path returns success:false (task 239c not wired)
+  // Writes country='VN' — do not activate without updating to 'vietnam'
   stmt.run(
     "VN",
     data.cpi ?? null,

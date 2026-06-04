@@ -1432,7 +1432,8 @@ export async function createBunServer(
           country?: string;
           indicators?: Array<{ name: string; value: number; unit?: string; fetched_at?: string }>;
         };
-        const country = typeof payload.country === "string" ? payload.country : "VN";
+        // DSI-S1-SLA: default to 'vietnam' (SSOT key) — not 'VN'
+        const country = typeof payload.country === "string" ? payload.country : "vietnam";
         const rawIndicators = Array.isArray(payload.indicators) ? payload.indicators : [];
 
         // Allowlist: maps TE indicator name → macro_indicators column
@@ -1517,7 +1518,8 @@ export async function createBunServer(
         res.end(JSON.stringify({ error: "indicators must be an array" }));
         return;
       }
-      const country = typeof payload.country === "string" ? payload.country : "VN";
+      // DSI-S1-SLA: default to 'vietnam' (SSOT key) — not 'VN'
+      const country = typeof payload.country === "string" ? payload.country : "vietnam";
       const rawIndicators = payload.indicators as Array<{ name: string; value: number; unit?: string; fetched_at?: string }>;
 
       // Allowlist: GSO indicator name → macro_indicators column
