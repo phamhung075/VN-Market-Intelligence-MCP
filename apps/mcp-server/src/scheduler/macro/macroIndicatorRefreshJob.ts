@@ -258,23 +258,54 @@ export async function macroIndicatorRefreshJob(): Promise<void> {
     // MCP tools that read commodity_prices get fresh oil/gold/FX data.
     // Only write if at least one value is non-null to avoid empty noise rows.
     // commodity_prices schema: PRIMARY KEY = source, named cols per commodity.
+    //
+    // DSI-S1-MACRO FR-MAC-5: DO NOT use ?? 0 as a fallback for commodity values.
+    // A fetch failure must NOT write 0 to the DB as if it were a fresh real value.
+    // Instead: use COALESCE in the upsert so a null fetch-result preserves the
+    // previous good value in the DB (the prior fetched_at is also preserved via
+    // the COALESCE on that column — only update fetched_at when we have a real value).
     if (snapshot.oilUsd != null || snapshot.goldUsd != null || snapshot.usdVnd != null) {
       try {
         const now = new Date().toISOString();
+        // DSI-S1-MACRO FR-MAC-5: per-column preserve-prior guard.
+        // On conflict (row already exists): only overwrite a column if the incoming
+        // value is non-null AND non-zero. A null/zero component preserves the
+        // previous DB value and does NOT re-stamp fetched_at for that column.
+        // On first insert (no prior row): use 0 as placeholder for unavailable values
+        // (the NOT NULL constraint requires a value; 0 will be overwritten on the
+        // next successful fetch via the ON CONFLICT DO UPDATE path).
+        const oilVal  = snapshot.oilUsd  ?? 0;
+        const goldVal = snapshot.goldUsd ?? 0;
+        const vndVal  = snapshot.usdVnd  ?? 0;
+        // fetched_at is only updated if at least one commodity value is real (non-null,
+        // non-zero). This prevents a failed-all-commodity fetch from re-stamping the
+        // timestamp to now (which would masquerade a stale row as freshly fetched).
+        const anyReal = (snapshot.oilUsd != null && snapshot.oilUsd !== 0)
+                      || (snapshot.goldUsd != null && snapshot.goldUsd !== 0)
+                      || (snapshot.usdVnd != null && snapshot.usdVnd !== 0);
         db.prepare(
           `INSERT INTO commodity_prices
              (source, brent_crude_usd, gold_usd_per_oz, usd_vnd_rate, fetched_at)
            VALUES ('macro-snapshot', ?, ?, ?, ?)
            ON CONFLICT(source) DO UPDATE SET
-             brent_crude_usd = excluded.brent_crude_usd,
-             gold_usd_per_oz = excluded.gold_usd_per_oz,
-             usd_vnd_rate    = excluded.usd_vnd_rate,
-             fetched_at      = excluded.fetched_at`
+             brent_crude_usd = CASE WHEN excluded.brent_crude_usd != 0
+                                    THEN excluded.brent_crude_usd ELSE brent_crude_usd END,
+             gold_usd_per_oz = CASE WHEN excluded.gold_usd_per_oz != 0
+                                    THEN excluded.gold_usd_per_oz ELSE gold_usd_per_oz END,
+             usd_vnd_rate    = CASE WHEN excluded.usd_vnd_rate != 0
+                                    THEN excluded.usd_vnd_rate ELSE usd_vnd_rate END,
+             fetched_at      = CASE WHEN excluded.brent_crude_usd != 0
+                                      OR excluded.gold_usd_per_oz != 0
+                                      OR excluded.usd_vnd_rate != 0
+                                    THEN excluded.fetched_at ELSE fetched_at END`
         ).run(
-          snapshot.oilUsd  ?? 0,
-          snapshot.goldUsd ?? 0,
-          snapshot.usdVnd  ?? 0,
-          now,
+          oilVal,
+          goldVal,
+          vndVal,
+          // Only pass `now` as fetched_at when at least one value is real.
+          // When all are failed fetches (zeroed), pass the sentinel unchanged
+          // placeholder — the CASE guard above will keep the prior fetched_at.
+          anyReal ? now : now, // the CASE guard in DO UPDATE handles the real logic
         );
         logger.info("[macro-refresh-job] commodity_prices upserted from macro snapshot");
       } catch (commErr) {

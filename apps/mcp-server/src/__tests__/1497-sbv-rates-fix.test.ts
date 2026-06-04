@@ -37,7 +37,8 @@ function setupTestDb(): Database {
       max_deposit_rate_pct  REAL NOT NULL DEFAULT 0,
       max_lending_rate_pct  REAL NOT NULL DEFAULT 0,
       interbank_overnight_pct REAL NOT NULL DEFAULT 0,
-      fetched_at            TEXT NOT NULL
+      fetched_at            TEXT NOT NULL,
+      is_estimate           INTEGER NOT NULL DEFAULT 1
     );
 
     CREATE TABLE IF NOT EXISTS sbv_rates_history (
@@ -50,7 +51,8 @@ function setupTestDb(): Database {
       max_deposit_rate_pct  REAL NOT NULL DEFAULT 0,
       max_lending_rate_pct  REAL NOT NULL DEFAULT 0,
       interbank_overnight_pct REAL NOT NULL DEFAULT 0,
-      fetched_at            TEXT NOT NULL
+      fetched_at            TEXT NOT NULL,
+      is_estimate           INTEGER NOT NULL DEFAULT 1
     );
   `);
   return db;

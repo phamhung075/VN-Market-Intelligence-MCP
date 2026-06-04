@@ -169,6 +169,11 @@ export function initMacroTables(db: Database): void {
     try { db.exec(`ALTER TABLE sbv_rates ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}
     try { db.exec(`ALTER TABLE sbv_rates_history ADD COLUMN ${col} REAL NOT NULL DEFAULT 0`); } catch {}
   }
+  // DSI-S1-MACRO FR-MAC-2: add is_estimate column to sbv_rates and sbv_rates_history.
+  // DEFAULT 1 = estimate (conservative: existing rows without this column are hardcoded defaults).
+  // Set to 0 only when a real SBV portal response is received.
+  try { db.exec(`ALTER TABLE sbv_rates ADD COLUMN is_estimate INTEGER NOT NULL DEFAULT 1`); } catch {}
+  try { db.exec(`ALTER TABLE sbv_rates_history ADD COLUMN is_estimate INTEGER NOT NULL DEFAULT 1`); } catch {}
 
   // ── Prediction Markets (Task 163) ─────────────────────────────────────────
   db.exec(`

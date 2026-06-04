@@ -157,6 +157,111 @@ function computeCarryInline(vndRate: number, fedRate: number): InlineCarryResult
   return { carrySpread, regime };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// DSI-S1-MACRO: Carry provenance — FR-MAC-3 / FR-MAC-4
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Structured carry provenance metadata (DSI-INV-1 compliant).
+ * Returned by buildCarryProvenance() alongside the inline carry result.
+ */
+export interface CarryProvenance {
+  /** Carry spread in pp, or null when inputs are estimated. */
+  carrySpread: number | null;
+  /** Regime label, or null when inputs are estimated. */
+  regime: "HOT_MONEY_INFLOW" | "NEUTRAL" | "FII_OUTFLOW_RISK" | null;
+  /** True when either fedFunds or vndDeposit is from a hardcoded estimate. */
+  is_estimate: boolean;
+  /** Source tier — 4 (fixture/estimate) when is_estimate=true, 2 (aggregator) otherwise. */
+  source_tier: 1 | 2 | 3 | 4;
+  /** True timestamp of the last real EFFR fetch from fred_series_daily MAX(date).
+   *  Null if no EFFR row exists in the DB. */
+  fedFundsFetchedAt: string | null;
+}
+
+/**
+ * Build carry provenance metadata for DSI-INV-1 compliance.
+ *
+ * FR-MAC-3: when fedFundsRateIsEstimate=true, carry result is null + is_estimate=true.
+ * FR-MAC-4: fedFundsFetchedAt comes from MAX(date) in fred_series_daily, never time.Now().
+ *
+ * @param vndRate            SBV max deposit rate (%)
+ * @param fedRate            Fed Funds rate (%)
+ * @param fedFundsIsEstimate True when fedRate is from hardcoded fixture
+ * @param vndDepositIsEstimate True when vndRate is from hardcoded SBV fallback
+ * @param effrMaxDate        MAX(date) from fred_series_daily WHERE series='EFFR' — null if absent
+ */
+export function buildCarryProvenance(
+  vndRate: number,
+  fedRate: number,
+  fedFundsIsEstimate: boolean,
+  vndDepositIsEstimate: boolean,
+  effrMaxDate: string | null,
+): CarryProvenance {
+  const anyEstimate = fedFundsIsEstimate || vndDepositIsEstimate;
+
+  if (anyEstimate) {
+    return {
+      carrySpread: null,
+      regime: null,
+      is_estimate: true,
+      source_tier: 4,
+      fedFundsFetchedAt: effrMaxDate,
+    };
+  }
+
+  const carry = computeCarryInline(vndRate, fedRate);
+  return {
+    carrySpread: carry.carrySpread,
+    regime: carry.regime,
+    is_estimate: false,
+    source_tier: 2,
+    fedFundsFetchedAt: effrMaxDate,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DSI-S1-MACRO: dataSource downgrade — FR-MAC-6
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Component fields that can each have an estimate/stale state.
+ * Used to compute the overall dataSource for the macro snapshot.
+ */
+export interface MacroDataSourceInputs {
+  fedFundsIsEstimate: boolean;
+  vndDepositIsEstimate: boolean;
+  oilIsEstimate?: boolean;
+  goldIsEstimate?: boolean;
+  usdVndIsEstimate?: boolean;
+}
+
+/**
+ * Compute the top-level dataSource for a macro snapshot response.
+ * FR-MAC-6: `dataSource` MUST be "live" ONLY when ALL component fields are
+ * fresh within their SLA window AND is_estimate=false. Otherwise: "estimate"
+ * (either input is a fixture), "stale" (data is old), or "fixture" (hardcoded).
+ *
+ * Conservative: any estimate component → "estimate". All live → "live".
+ */
+export function computeMacroDataSource(
+  inputs: MacroDataSourceInputs,
+): "live" | "fixture" | "stale" | "estimate" {
+  const anyEstimate = inputs.fedFundsIsEstimate
+    || inputs.vndDepositIsEstimate
+    || (inputs.oilIsEstimate ?? false)
+    || (inputs.goldIsEstimate ?? false)
+    || (inputs.usdVndIsEstimate ?? false);
+
+  if (anyEstimate) {
+    // Both carry inputs are from hardcoded constants → "estimate"
+    // (could be "fixture" if ALL are hardcoded, but "estimate" is the correct DSI term
+    //  per the spec: source_tier:4 + is_estimate:true → "estimate")
+    return "estimate";
+  }
+  return "live";
+}
+
 function globalLiquidityLabel(
   dxySig: string,
   yield10y: number,
@@ -242,6 +347,16 @@ export function formatThienThoi(inputs: ThienThoiInputs): string[] {
     );
   }
 
+  // FR-MAC-1 (DSI-S1-MACRO): gate carry on fedFundsRateIsEstimate.
+  // When isEstimate=true, the fedFunds value is a hardcoded fixture (e.g. 5.33).
+  // We MUST NOT compute or emit a carry spread or FII_OUTFLOW_RISK regime from
+  // fixture arithmetic — doing so produces false regime signals (cf. FB posts 06-01..06-04).
+  if (inputs.fedFundsRateIsEstimate) {
+    lines.push("  VND Carry Spread: unavailable — est. rate");
+    lines.push("  Global Liquidity: NEUTRAL");
+    return lines;
+  }
+
   if (inputs.vndDepositRate === 0 || inputs.fedFundsRate === 0) {
     lines.push("  VND Carry Spread: unavailable");
     lines.push("  Global Liquidity: NEUTRAL");
@@ -292,6 +407,10 @@ export function formatDinhGia(inputs: DinhGiaInputs): string[] {
 
   return lines;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DSI-S1-MACRO: FR-MAC-6 — dataSource honest downgrade
+// ─────────────────────────────────────────────────────────────────────────────
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Tool registration

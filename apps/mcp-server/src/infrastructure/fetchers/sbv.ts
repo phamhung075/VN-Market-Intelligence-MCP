@@ -84,6 +84,9 @@ const DEFAULT_INTERBANK_OVERNIGHT = parseFloat(
  * @property maxLendingRatePct      - SBV max lending rate cap (trần lãi suất cho vay, % per year). 0 if unavailable.
  * @property interbankOvernightPct  - Interbank overnight rate (lãi suất liên ngân hàng qua đêm, % per year). 0 if unavailable.
  * @property fetchedAt              - ISO 8601 timestamp when this snapshot was captured.
+ * @property isEstimate             - DSI-S1-MACRO FR-MAC-2: true when any rate value comes from a
+ *                                    hardcoded fallback (env var / config default), not a live SBV portal
+ *                                    response. Set to false only when a real portal response is received.
  */
 export interface SbvMacroSnapshot {
   /** Overnight interest rate in percent per year (e.g. 4.5 means 4.5%/year). */
@@ -102,6 +105,14 @@ export interface SbvMacroSnapshot {
   interbankOvernightPct: number;
   /** ISO 8601 timestamp when this data was fetched. */
   fetchedAt: string;
+  /**
+   * DSI-S1-MACRO FR-MAC-2: true when ANY rate value comes from a hardcoded fallback
+   * (env var / config default), not a live SBV portal response.
+   * The SBV portal has been permanently 404 since at least 2026. All current writes
+   * are from hardcoded defaults → isEstimate defaults to true.
+   * Optional for backward compat; absent = true (conservative: treat as estimate).
+   */
+  isEstimate?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -262,6 +273,9 @@ export async function fetchSbvRates(
   const maxLendingRatePct = Number.isNaN(DEFAULT_MAX_LENDING_RATE) ? 0 : DEFAULT_MAX_LENDING_RATE;
   const interbankOvernightPct = Number.isNaN(DEFAULT_INTERBANK_OVERNIGHT) ? 0 : DEFAULT_INTERBANK_OVERNIGHT;
 
+  // DSI-S1-MACRO FR-MAC-2: All interest rate values come from hardcoded env-var fallbacks
+  // (SBV portal is permanently 404). Mark isEstimate=true to indicate these are NOT live.
+  // If/when a real SBV portal response is received, set isEstimate=false at that site.
   const snapshot: SbvMacroSnapshot = {
     overnightRatePct,
     refinancingRatePct,
@@ -271,6 +285,7 @@ export async function fetchSbvRates(
     maxLendingRatePct,
     interbankOvernightPct,
     fetchedAt,
+    isEstimate: true, // always true: SBV portal dead, all rates are env-var constants
   };
 
   logger.info("[sbv] macro snapshot fetched", {
@@ -386,12 +401,16 @@ export function storeSbvSnapshot(
     return { skipped: true, zeroColumns };
   }
 
+  // DSI-S1-MACRO FR-MAC-2: include is_estimate column (1=estimate/fallback, 0=live portal).
+  // Default to true (1) when the field is absent — conservative: treat as estimate.
+  const isEstimateInt = (snapshot.isEstimate ?? true) ? 1 : 0;
+
   const upsertLatest = database.prepare(`
     INSERT OR REPLACE INTO sbv_rates
       (source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official,
        discount_rate_pct, max_deposit_rate_pct, max_lending_rate_pct, interbank_overnight_pct,
-       fetched_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+       fetched_at, is_estimate)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   // Dedup: only append history if no row exists for the same hour
@@ -399,8 +418,8 @@ export function storeSbvSnapshot(
     INSERT INTO sbv_rates_history
       (source, overnight_rate_pct, refinancing_rate_pct, usd_vnd_official,
        discount_rate_pct, max_deposit_rate_pct, max_lending_rate_pct, interbank_overnight_pct,
-       fetched_at)
-    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?
+       fetched_at, is_estimate)
+    SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
     WHERE NOT EXISTS (
       SELECT 1 FROM sbv_rates_history
       WHERE source = ? AND strftime('%Y-%m-%d %H', fetched_at) = strftime('%Y-%m-%d %H', ?)
@@ -418,6 +437,7 @@ export function storeSbvSnapshot(
       snapshot.maxLendingRatePct,
       snapshot.interbankOvernightPct,
       snapshot.fetchedAt,
+      isEstimateInt,
     );
     insertHistory.run(
       source,
@@ -429,6 +449,7 @@ export function storeSbvSnapshot(
       snapshot.maxLendingRatePct,
       snapshot.interbankOvernightPct,
       snapshot.fetchedAt,
+      isEstimateInt,
       source,
       snapshot.fetchedAt,
     );
