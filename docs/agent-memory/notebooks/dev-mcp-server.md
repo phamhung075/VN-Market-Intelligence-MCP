@@ -1,5 +1,23 @@
 # dev-mcp-server -- Notebook
 
+## c369 · 2026-06-04T21:31Z (DSI-S2-PRICE-TS-GAP — cnyVndRate null honesty DSI-INV-1) — COMMITTED 54634eb2
+
+**Task:** DSI-S2-PRICE-TS-GAP (FIX, P2) — live macro-price path fabricated cnyVndRate=0 as a live rate (DSI-INV-1 violation). CNHVND=X is not a valid Yahoo ticker; storing 0 is indistinguishable from "live rate is zero" to any consumer.
+
+**Consumer audit:** ZERO live readers of cny_vnd_rate on the consumer path. MACRO_CODES excludes it; runImpactChain.ts drops it when building macroContext; no get_* tool surfaces it from DB; schema-macro.ts NOT NULL DEFAULT 0 means DB still writes 0 (via ?? 0) for storage compatibility.
+
+**Fix:** `CommoditySnapshot.cnyVndRate` type changed from `number` to `null` (literal null type, not `number|null`). `const cnyVndRate = null` in fetchYahooFinancePrices. DB writes use `snapshot.cnyVndRate ?? 0` to satisfy NOT NULL constraint. Same change in runImpactChain.ts local interface. 10 test fixture files updated: `cnyVndRate: 0 → null` (or numeric → null where applicable).
+
+**Gate results:** bun tsc --noEmit clean (exit 0). 025/1487/DPI-3/1423a/1489/1920c tests: 0 new failures — all 5 failures in 025 and 1 each in 1487/1423a/1489 were pre-existing (`tracked_indicators has no column data_env` in test-local in-memory DBs).
+
+**Live BEFORE/AFTER:** Before: data/market.db cny_vnd_rate=0.0 (fabricated live). After fix: next fetch writes 0 via ?? 0 (DB unchanged), but TypeScript consumer sees null — honest unavailable signal.
+
+**Files (10):** yahooFinance.ts / runImpactChain.ts / 025/126/1423a/1423d/1487/1489/1920c/DPI-3 test files.
+
+Zone health: yahooFinance.ts type-corrected, tsc clean, 0 new test failures | HEALTHY
+
+---
+
 ## c368 · 2026-06-04T20:51Z (DSI-S3 C3 P2 FIX — DB-backed path now surfaces static_seed + banner) — COMMITTED 1473f812
 
 **Task:** DSI-S3 C3 QA blocker (CHANGES_REQUESTED) — get_bond_maturity_calendar missing `[SEED DATA]` banner when DB has rows.
