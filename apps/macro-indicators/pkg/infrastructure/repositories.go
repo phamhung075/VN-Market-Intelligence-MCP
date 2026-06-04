@@ -509,6 +509,21 @@ func (a *CarryYieldInputsSQLiteAdapter) GetFedFundsRate(ctx context.Context) (fl
 	return fetchFedFundsRateFromDB(ctx, db, effrStaleBound)
 }
 
+// GetFedFundsSourceDate returns the FRED source date for the most recent EFFR row,
+// regardless of staleness. Returns nil when the table is absent, no rows exist,
+// or the date string is unparseable.
+//
+// DSI-INV-1: callers use this to stamp carry DTO fetched_at with the true FRED
+// date rather than time.Now() on the fallback path.
+func (a *CarryYieldInputsSQLiteAdapter) GetFedFundsSourceDate(ctx context.Context) (*time.Time, error) {
+	db, _ := a.openReadOnly()
+	if db == nil {
+		return nil, nil
+	}
+	defer db.Close()
+	return fetchFedFundsSourceDateFromDB(ctx, db)
+}
+
 // GetEarningYield returns the latest VN equity earnings yield (%) from
 // tracked_indicators WHERE indicator='market_earning_yield' ORDER BY extracted_at DESC.
 // Returns (0, nil) on absent/stale rows (safe-degrade — Execute() keeps fixtureEarningYield).
@@ -618,6 +633,35 @@ func fetchFedFundsRateFromDB(
 	}
 
 	return value.Float64, nil
+}
+
+// fetchFedFundsSourceDateFromDB returns the FRED date for the most recent EFFR row.
+// It does NOT apply the staleness gate — it returns the raw date so the caller
+// can stamp fetched_at on the carry DTO without using time.Now().
+// Returns nil on missing table, no rows, or unparseable date.
+func fetchFedFundsSourceDateFromDB(ctx context.Context, db *sql.DB) (*time.Time, error) {
+	const query = `
+		SELECT date
+		FROM fred_series_daily
+		WHERE series = 'EFFR' AND date IS NOT NULL
+		ORDER BY date DESC
+		LIMIT 1`
+
+	var dateStr sql.NullString
+	if err := db.QueryRowContext(ctx, query).Scan(&dateStr); err != nil {
+		return nil, nil //nolint:nilerr // intentional: caller stamps nil
+	}
+	if !dateStr.Valid {
+		return nil, nil
+	}
+
+	// FRED date is YYYY-MM-DD; parse as midnight UTC so it is a meaningful timestamp.
+	ts, err := time.Parse(time.DateOnly, dateStr.String)
+	if err != nil {
+		return nil, nil
+	}
+	tsUTC := ts.UTC()
+	return &tsUTC, nil
 }
 
 // fetchEarningYieldFromDB reads tracked_indicators WHERE indicator='market_earning_yield'

@@ -11,6 +11,12 @@
 // below are NOW the documented safe-degrade fallbacks only (NOT primary values).
 // They are kept explicitly — deleting + inlining a literal would re-create the hardcode.
 //
+// DSI-INV-1: Execute() now tracks per-input liveness (live vs fixture/estimate).
+// When fedFunds or vndDeposit falls back to fixture, the carry signal is suppressed
+// to regime="UNKNOWN" with carrySpread=null and is_estimate=true/source_tier=4.
+// dataSource="live" is only set when ALL five inputs (oil, gold, usdVnd, fedFunds,
+// vndDeposit) are live. fetched_at_source on carry = FRED MAX(date), never time.Now().
+//
 // Fence-C note: only cmd/server/main.go imports pkg/infrastructure.
 // This package imports only pkg/module and pkg/primitive (via module types).
 package application
@@ -99,6 +105,11 @@ func NewComputeMacroUseCase(
 // USDVND is then overridden by SBVRatePort if it returns a positive value (DPI-1).
 // carry.computedAt and yield.computedAt reflect the actual Execute() call time (DPI-2).
 //
+// DSI-INV-1: per-input liveness is tracked. Carry signal is suppressed to
+// regime="UNKNOWN"/carrySpread=null/is_estimate=true when fedFunds or vndDeposit
+// falls back to fixture. dataSource="live" requires all five inputs to be live.
+// fetched_at_source on carry is the FRED MAX(date), never time.Now().
+//
 // R-1 compliant: no random seeding. time.Now() is used only for the computedAt
 // timestamp label (not as input to any primitive classifier decision).
 // Fence-B compliant: module imports only primitives (BuildMacroSignals satisfies this).
@@ -113,7 +124,7 @@ func (uc *ComputeMacroUseCase) Execute(
 	vnIndex := resolveVNIndex(ctx, uc)
 
 	// Resolve commodity prices via port; fall back to fixture defaults on zero/error.
-	oilPrice, goldPrice, usdVnd, allLive := resolveMarketPrices(ctx, uc)
+	oilPrice, goldPrice, usdVnd, allCommodityLive := resolveMarketPrices(ctx, uc)
 
 	// DPI-1: SBV official USDVND takes priority over Yahoo Finance value.
 	// If sbvRate port returns a positive value, replace usdVnd (preserves OIL/GOLD).
@@ -125,12 +136,18 @@ func (uc *ComputeMacroUseCase) Execute(
 		}
 	}
 
-	// DPI-2b: Resolve carry/yield regime inputs from live market.db via port.
-	// Each resolver calls the port; if port returns >0 (fresh row), use it;
-	// else fall back to the fixture constant (safe-degrade, not hardcode).
-	vndDeposit := resolveVNDDepositRate(ctx, uc)
-	fedFunds := resolveFedFundsRate(ctx, uc)
-	earnYield := resolveEarningYield(ctx, uc)
+	// DSI-INV-1: Resolve carry/yield regime inputs with per-input liveness tracking.
+	// isLive=true means the port returned a fresh DB value; false means fixture fallback.
+	vndDeposit, vndDepositLive := resolveVNDDepositRate(ctx, uc)
+	fedFunds, fedFundsLive := resolveFedFundsRate(ctx, uc)
+	earnYield, earnYieldLive := resolveEarningYield(ctx, uc)
+
+	// DSI-INV-1: Fetch the FRED source date for carry DTO provenance.
+	// NEVER use time.Now() on the fallback path — use the actual FRED MAX(date).
+	var fedFundsSourceDate *time.Time
+	if uc.carryYieldInputs != nil {
+		fedFundsSourceDate, _ = uc.carryYieldInputs.GetFedFundsSourceDate(ctx)
+	}
 
 	// Build module input.
 	input := ms.MacroSignalsInput{
@@ -156,12 +173,24 @@ func (uc *ComputeMacroUseCase) Execute(
 
 	fetchedAt := time.Now().UTC()
 
-	// DataSource: "live" when all three commodity values came from the port (>0),
-	// "fixture" when any value fell back to fixture defaults.
-	dataSource := "fixture"
-	if allLive {
+	// DSI-INV-1: dataSource="live" ONLY when all five inputs are live.
+	// Commodity (oil+gold+usdVnd) AND fedFunds AND vndDeposit must all be non-fixture.
+	carryInputsLive := fedFundsLive && vndDepositLive
+	dataSource := "estimate"
+	if allCommodityLive && carryInputsLive {
 		dataSource = "live"
 	}
+
+	// DSI-INV-1: Build carry DTO with provenance metadata.
+	// When any carry input is a fixture fallback, suppress the actionable regime:
+	// emit regime="UNKNOWN", carrySpread=null, is_estimate=true, source_tier=4.
+	carryEstimate := !carryInputsLive
+	carryDTO := buildCarryDTO(out.CarryTrade, carryEstimate, fedFundsSourceDate)
+
+	// DSI-INV-1: Build yield DTO with provenance metadata.
+	// earnYield and vndDeposit are both needed for a live yield signal.
+	yieldEstimate := !earnYieldLive || !vndDepositLive
+	yieldDTO := buildYieldDTO(out.YieldSpread, yieldEstimate)
 
 	return MacroSnapshotResponse{
 		Status:     "ok",
@@ -175,11 +204,82 @@ func (uc *ComputeMacroUseCase) Execute(
 			Oil:             out.OilImpact,
 			Gold:            out.GoldDirection,
 			UsdVnd:          out.UsdVndDirection,
-			Carry:           out.CarryTrade,
-			Yield:           out.YieldSpread,
+			Carry:           carryDTO,
+			Yield:           yieldDTO,
 		},
 		FetchedAt: fetchedAt,
 	}, nil
+}
+
+// buildCarryDTO wraps a carry.CarryTradeOutput with DSI-INV-1 provenance metadata.
+//
+// When isEstimate=true (any carry input fell back to fixture), the regime is
+// suppressed to "UNKNOWN" and carrySpread is nil (omitted from JSON), preventing
+// fixture arithmetic from being served as actionable "FII_OUTFLOW_RISK".
+//
+// fetchedAtSource is the FRED MAX(date) — nil when unavailable. Never time.Now().
+func buildCarryDTO(
+	pOut carry.CarryTradeOutput,
+	isEstimate bool,
+	fetchedAtSource *time.Time,
+) CarrySignalDTO {
+	sourceTier := 1 // live
+	if isEstimate {
+		sourceTier = 4 // fixture
+	}
+
+	if isEstimate {
+		return CarrySignalDTO{
+			Regime:          "UNKNOWN",
+			CarrySpread:     nil, // suppressed — do not emit fixture arithmetic as actionable regime
+			VNDDepositRate:  pOut.VNDDepositRate,
+			FedFundsRate:    pOut.FedFundsRate,
+			Reasoning:       "Carry inputs unavailable — one or more rates are estimated from fixture fallback; regime suppressed per DSI-INV-1",
+			ComputedAt:      pOut.ComputedAt,
+			IsEstimate:      true,
+			SourceTier:      sourceTier,
+			FetchedAtSource: fetchedAtSource,
+		}
+	}
+
+	spread := pOut.CarrySpread
+	return CarrySignalDTO{
+		Regime:          pOut.Regime,
+		CarrySpread:     &spread,
+		VNDDepositRate:  pOut.VNDDepositRate,
+		FedFundsRate:    pOut.FedFundsRate,
+		Reasoning:       pOut.Reasoning,
+		ComputedAt:      pOut.ComputedAt,
+		IsEstimate:      false,
+		SourceTier:      sourceTier,
+		FetchedAtSource: fetchedAtSource,
+	}
+}
+
+// buildYieldDTO wraps a yld.YieldSpreadOutput with DSI-INV-1 provenance metadata.
+//
+// Unlike carry, yield is not suppressed when inputs are estimated — the label
+// (CHEAP/FAIRLY_VALUED/EXPENSIVE) is still surfaced, but is_estimate=true and
+// source_tier=4 signal to callers that the result is based on fixture inputs.
+func buildYieldDTO(
+	pOut yld.YieldSpreadOutput,
+	isEstimate bool,
+) YieldSignalDTO {
+	sourceTier := 1
+	if isEstimate {
+		sourceTier = 4
+	}
+
+	return YieldSignalDTO{
+		Label:        pOut.Label,
+		Spread:       pOut.Spread,
+		EarningYield: pOut.EarningYield,
+		DepositRate:  pOut.DepositRate,
+		Reasoning:    pOut.Reasoning,
+		ComputedAt:   pOut.ComputedAt,
+		IsEstimate:   isEstimate,
+		SourceTier:   sourceTier,
+	}
 }
 
 // resolveVNIndex fetches the VN-Index level from MarketIndexPort.
@@ -197,43 +297,48 @@ func resolveVNIndex(ctx context.Context, uc *ComputeMacroUseCase) float64 {
 }
 
 // ---------------------------------------------------------------------------
-// DPI-2b resolvers — live carry/yield inputs from CarryYieldInputsPort
+// DSI-INV-1 resolvers — live carry/yield inputs from CarryYieldInputsPort
+// Each resolver returns (value, isLive) where isLive=true means the port
+// returned a fresh DB value. isLive=false means fixture fallback fired.
 // ---------------------------------------------------------------------------
 
 // resolveVNDDepositRate fetches the SBV max deposit rate from CarryYieldInputsPort.
-// Falls back to fixtureVNDDepositRate (4.7) when the port is nil, returns 0, or errors.
+// Returns (value, isLive). Falls back to fixtureVNDDepositRate (4.7) with isLive=false
+// when the port is nil, returns 0, or errors.
 // Safe-degrade: port contract guarantees (0, nil) on absent/stale rows.
-func resolveVNDDepositRate(ctx context.Context, uc *ComputeMacroUseCase) float64 {
+func resolveVNDDepositRate(ctx context.Context, uc *ComputeMacroUseCase) (float64, bool) {
 	if uc.carryYieldInputs != nil {
 		if v, err := uc.carryYieldInputs.GetVNDDepositRate(ctx); err == nil && v > 0 {
-			return v
+			return v, true
 		}
 	}
-	return fixtureVNDDepositRate
+	return fixtureVNDDepositRate, false
 }
 
 // resolveFedFundsRate fetches the EFFR from CarryYieldInputsPort.
-// Falls back to fixtureFedFundsRate (5.33) when the port is nil, returns 0, or errors.
+// Returns (value, isLive). Falls back to fixtureFedFundsRate (5.33) with isLive=false
+// when the port is nil, returns 0, or errors (including staleness rejection).
 // Safe-degrade: port contract guarantees (0, nil) on absent/stale rows.
-func resolveFedFundsRate(ctx context.Context, uc *ComputeMacroUseCase) float64 {
+func resolveFedFundsRate(ctx context.Context, uc *ComputeMacroUseCase) (float64, bool) {
 	if uc.carryYieldInputs != nil {
 		if v, err := uc.carryYieldInputs.GetFedFundsRate(ctx); err == nil && v > 0 {
-			return v
+			return v, true
 		}
 	}
-	return fixtureFedFundsRate
+	return fixtureFedFundsRate, false
 }
 
 // resolveEarningYield fetches the VN equity earnings yield from CarryYieldInputsPort.
-// Falls back to fixtureEarningYield (8.2) when the port is nil, returns 0, or errors.
+// Returns (value, isLive). Falls back to fixtureEarningYield (8.2) with isLive=false
+// when the port is nil, returns 0, or errors.
 // Safe-degrade: port contract guarantees (0, nil) on absent/stale rows.
-func resolveEarningYield(ctx context.Context, uc *ComputeMacroUseCase) float64 {
+func resolveEarningYield(ctx context.Context, uc *ComputeMacroUseCase) (float64, bool) {
 	if uc.carryYieldInputs != nil {
 		if v, err := uc.carryYieldInputs.GetEarningYield(ctx); err == nil && v > 0 {
-			return v
+			return v, true
 		}
 	}
-	return fixtureEarningYield
+	return fixtureEarningYield, false
 }
 
 // ---------------------------------------------------------------------------

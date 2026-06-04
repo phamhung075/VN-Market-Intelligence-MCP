@@ -48,10 +48,13 @@ func (s *stubSBVRate) GetRate(_ context.Context, _, _ string) (float64, error) {
 
 // stubCarryYieldInputs returns configurable carry/yield input values.
 // Zero values signal "no data" (port safe-degrade → Execute() uses fixtures).
+// fedFundsSourceDate is the FRED source date returned by GetFedFundsSourceDate;
+// nil simulates absent/unparseable FRED date.
 type stubCarryYieldInputs struct {
-	vndDeposit float64
-	fedFunds   float64
-	earnYield  float64
+	vndDeposit          float64
+	fedFunds            float64
+	earnYield           float64
+	fedFundsSourceDate  *time.Time
 }
 
 func (s *stubCarryYieldInputs) GetVNDDepositRate(_ context.Context) (float64, error) {
@@ -59,6 +62,9 @@ func (s *stubCarryYieldInputs) GetVNDDepositRate(_ context.Context) (float64, er
 }
 func (s *stubCarryYieldInputs) GetFedFundsRate(_ context.Context) (float64, error) {
 	return s.fedFunds, nil
+}
+func (s *stubCarryYieldInputs) GetFedFundsSourceDate(_ context.Context) (*time.Time, error) {
+	return s.fedFundsSourceDate, nil
 }
 func (s *stubCarryYieldInputs) GetEarningYield(_ context.Context) (float64, error) {
 	return s.earnYield, nil
@@ -439,22 +445,28 @@ func newStubCommodity() *stubCommodityFetcher {
 }
 
 // extractCarrySignal extracts carry signal fields via JSON round-trip.
-// Returns (carrySpread, regime) from resp.Signals.Carry.
-func extractCarrySignal(t *testing.T, resp MacroSnapshotResponse) (float64, string) {
+// Returns (carrySpread, regime, isEstimate) from resp.Signals.Carry.
+// carrySpread is 0 when the JSON field is null (suppressed by DSI-INV-1).
+func extractCarrySignal(t *testing.T, resp MacroSnapshotResponse) (float64, string, bool) {
 	t.Helper()
 	type carryFields struct {
-		CarrySpread float64 `json:"carrySpread"`
-		Regime      string  `json:"regime"`
+		CarrySpread *float64 `json:"carrySpread"` // pointer: null when suppressed
+		Regime      string   `json:"regime"`
+		IsEstimate  bool     `json:"is_estimate"`
 	}
 	b, err := json.Marshal(resp.Signals.Carry)
 	if err != nil {
-		t.Fatalf("DPI-2b: marshal carry signal: %v", err)
+		t.Fatalf("DSI-INV-1: marshal carry signal: %v", err)
 	}
 	var f carryFields
 	if err = json.Unmarshal(b, &f); err != nil {
-		t.Fatalf("DPI-2b: unmarshal carry signal: %v", err)
+		t.Fatalf("DSI-INV-1: unmarshal carry signal: %v", err)
 	}
-	return f.CarrySpread, f.Regime
+	spread := 0.0
+	if f.CarrySpread != nil {
+		spread = *f.CarrySpread
+	}
+	return spread, f.Regime, f.IsEstimate
 }
 
 // extractYieldSignal extracts yield signal fields via JSON round-trip.
@@ -485,6 +497,8 @@ func TestDPI2b_DepositLive(t *testing.T) {
 		newStubCommodity(),
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
+		// fedFunds=5.33 is also "live" (non-zero from port) even though it equals the fixture.
+		// Both inputs live → carry is NOT suppressed; we get the real spread.
 		&stubCarryYieldInputs{vndDeposit: liveDeposit, fedFunds: 5.33, earnYield: 8.2},
 	)
 
@@ -493,8 +507,11 @@ func TestDPI2b_DepositLive(t *testing.T) {
 		t.Fatalf("Execute() error: %v", err)
 	}
 
-	// carrySpread = liveDeposit − fedFunds = 6.0 − 5.33 = 0.67 (NEUTRAL, not frozen −0.63)
-	carrySpread, _ := extractCarrySignal(t, resp)
+	// Both inputs live → not suppressed → carrySpread = liveDeposit − fedFunds = 6.0 − 5.33 = 0.67
+	carrySpread, _, isEstimate := extractCarrySignal(t, resp)
+	if isEstimate {
+		t.Errorf("DPI-2b AC-1: is_estimate=true but both inputs are live (non-zero from port)")
+	}
 	const wantSpread = 0.67
 	if carrySpread == -0.63 {
 		t.Errorf("DPI-2b AC-1: carrySpread = frozen −0.63 — deposit live input not wired (still using fixture 4.7)")
@@ -513,6 +530,7 @@ func TestDPI2b_FedFundsLive(t *testing.T) {
 		newStubCommodity(),
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
+		// vndDeposit=4.7 is "live" (non-zero from port). Both inputs live → not suppressed.
 		&stubCarryYieldInputs{vndDeposit: 4.7, fedFunds: liveFed, earnYield: 8.2},
 	)
 
@@ -521,8 +539,11 @@ func TestDPI2b_FedFundsLive(t *testing.T) {
 		t.Fatalf("Execute() error: %v", err)
 	}
 
-	// carrySpread = 4.7 − 4.0 = 0.70 (NEUTRAL); frozen would give 4.7 − 5.33 = −0.63
-	carrySpread, _ := extractCarrySignal(t, resp)
+	// Both inputs live → not suppressed → carrySpread = 4.7 − 4.0 = 0.70
+	carrySpread, _, isEstimate := extractCarrySignal(t, resp)
+	if isEstimate {
+		t.Errorf("DPI-2b AC-2: is_estimate=true but both inputs are live (non-zero from port)")
+	}
 	if carrySpread == -0.63 {
 		t.Errorf("DPI-2b AC-2: carrySpread = frozen −0.63 — fed funds live input not wired (still using fixture 5.33)")
 	}
@@ -564,11 +585,12 @@ func TestDPI2b_EarningYieldLive(t *testing.T) {
 
 // TestDPI2b_SafeDegrade_EmptyPort (AC-4) verifies that when CarryYieldInputsPort
 // returns zero for all three inputs (empty DB), Execute() falls back to fixture
-// constants and does not error or panic.
+// constants without panicking, AND suppresses the carry regime per DSI-INV-1.
 //
-// Behavior: port returns 0 → resolvers detect v==0 → fixtures (4.7/5.33/8.2) apply.
-// carrySpread = fixtureVNDDepositRate − fixtureFedFundsRate = 4.7 − 5.33 = −0.63.
-// This is CORRECT safe-degrade: fixture values propagate, not panic, not zero.
+// DSI-INV-1 behavior: port returns 0 → resolvers detect v==0 → fixture values
+// used for computation but isLive=false → carry regime suppressed to "UNKNOWN",
+// carrySpread=null, is_estimate=true, source_tier=4.
+// This prevents fixture arithmetic from being served as actionable "FII_OUTFLOW_RISK".
 func TestDPI2b_SafeDegrade_EmptyPort(t *testing.T) {
 	uc := NewComputeMacroUseCase(
 		newStubCommodity(),
@@ -582,28 +604,28 @@ func TestDPI2b_SafeDegrade_EmptyPort(t *testing.T) {
 		t.Fatalf("Execute() error on empty port: %v", err)
 	}
 
-	// Zero port values → resolvers return fixture constants (4.7/5.33/8.2).
-	// carrySpread = fixture 4.7 − fixture 5.33 = −0.63 (FII_OUTFLOW_RISK).
-	// This verifies safe-degrade fires exactly (no panic, fixture used as fallback).
-	carrySpread, carryRegime := extractCarrySignal(t, resp)
-	const frozenSpread = -0.63
-	if abs(carrySpread-frozenSpread) > 0.01 {
-		t.Errorf("DPI-2b AC-4: carrySpread = %.4f, want %.2f (zero port → fixtures 4.7−5.33=−0.63 must apply)", carrySpread, frozenSpread)
+	// DSI-INV-1: zero port → fixture fallback → carry SUPPRESSED (is_estimate=true, regime=UNKNOWN).
+	_, carryRegime, isEstimate := extractCarrySignal(t, resp)
+	if !isEstimate {
+		t.Errorf("DSI-INV-1 AC-4: is_estimate=false — carry must be marked estimate when port returns zero")
 	}
-	// Regime must be FII_OUTFLOW_RISK (spread −0.63 < OutflowRiskThreshold 0.5).
-	if carryRegime != "FII_OUTFLOW_RISK" {
-		t.Errorf("DPI-2b AC-4: regime = %q, want FII_OUTFLOW_RISK (fixture safe-degrade path)", carryRegime)
+	if carryRegime != "UNKNOWN" {
+		t.Errorf("DSI-INV-1 AC-4: regime = %q, want UNKNOWN (fixture fallback → suppressed per DSI-INV-1)", carryRegime)
+	}
+	// dataSource must NOT be "live" when carry inputs are fixture.
+	if resp.DataSource == "live" {
+		t.Errorf("DSI-INV-1 AC-4: dataSource=%q, must not be 'live' when carry inputs are fixture", resp.DataSource)
 	}
 }
 
 // TestDPI2b_SafeDegrade_NilPort (AC-4 nil) verifies that a nil CarryYieldInputsPort
-// causes Execute() to use fixture constants — no panic.
+// causes Execute() to use fixture constants — no panic — and suppresses carry regime.
 func TestDPI2b_SafeDegrade_NilPort(t *testing.T) {
 	uc := NewComputeMacroUseCase(
 		newStubCommodity(),
 		&stubSBVRate{},
 		&stubMarketIndex{vnIndex: 1880.0},
-		nil, // nil port → resolvers return fixture constants
+		nil, // nil port → resolvers return fixture constants, isLive=false
 	)
 
 	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
@@ -611,15 +633,13 @@ func TestDPI2b_SafeDegrade_NilPort(t *testing.T) {
 		t.Fatalf("Execute() error on nil port: %v", err)
 	}
 
-	// With nil port, fixtures (4.7/5.33/8.2) are used.
-	// carrySpread = 4.7 − 5.33 = −0.63 → FII_OUTFLOW_RISK (the "frozen" regime).
-	// This confirms the fixture fallback path activates exactly when expected.
-	carrySpread, carryRegime := extractCarrySignal(t, resp)
-	if abs(carrySpread-(-0.63)) > 0.01 {
-		t.Errorf("DPI-2b AC-4 nil: carrySpread = %.4f, want −0.63 (fixture fallback 4.7−5.33)", carrySpread)
+	// DSI-INV-1: nil port → fixture fallback → carry SUPPRESSED.
+	_, carryRegime, isEstimate := extractCarrySignal(t, resp)
+	if !isEstimate {
+		t.Errorf("DSI-INV-1 AC-4 nil: is_estimate=false — carry must be marked estimate when port is nil")
 	}
-	if carryRegime != "FII_OUTFLOW_RISK" {
-		t.Errorf("DPI-2b AC-4 nil: carryRegime = %q, want FII_OUTFLOW_RISK (fixture path)", carryRegime)
+	if carryRegime != "UNKNOWN" {
+		t.Errorf("DSI-INV-1 AC-4 nil: carryRegime = %q, want UNKNOWN (nil port → suppressed per DSI-INV-1)", carryRegime)
 	}
 }
 
@@ -650,9 +670,14 @@ func TestDPI2b_RegimeFlip_LiveInputs(t *testing.T) {
 		t.Fatalf("Execute() error: %v", err)
 	}
 
-	carrySpread, carryRegime := extractCarrySignal(t, resp)
+	carrySpread, carryRegime, isEstimate := extractCarrySignal(t, resp)
 
 	// --- anti-false-green assertions ---
+
+	// 0. Not suppressed: both inputs are live (non-zero from port).
+	if isEstimate {
+		t.Errorf("DPI-2b AC-6: is_estimate=true — carry is suppressed when it should be live (deposit=6.0, fed=4.0 both non-zero)")
+	}
 
 	// 1. Spread must NOT be the frozen fixture value (−0.63).
 	if abs(carrySpread-(-0.63)) < 0.01 {
@@ -678,6 +703,201 @@ func TestDPI2b_RegimeFlip_LiveInputs(t *testing.T) {
 	}
 
 	t.Logf("DPI-2b AC-6 REGIME-FLIP PROVEN: carrySpread %.2f (was frozen −0.63), regime %s (was FII_OUTFLOW_RISK)", carrySpread, carryRegime)
+}
+
+// ---------------------------------------------------------------------------
+// DSI-INV-1 table-driven tests — liveness gate for carry/regime suppression
+// ---------------------------------------------------------------------------
+
+// TestDSIINV1_CarryLivenessGate is the table-driven proof of DSI-INV-1:
+// carry is suppressed (regime=UNKNOWN, is_estimate=true) when fedFunds OR vndDeposit
+// is zero (fixture fallback); real regime is emitted only when BOTH are live.
+func TestDSIINV1_CarryLivenessGate(t *testing.T) {
+	type tc struct {
+		name             string
+		vndDeposit       float64 // 0 = fixture fallback
+		fedFunds         float64 // 0 = fixture fallback
+		wantSuppressed   bool    // true = regime must be UNKNOWN, is_estimate=true
+		wantRegimeNotFII bool    // when not suppressed, regime must not be FII_OUTFLOW_RISK from fixture arithmetic
+	}
+
+	tests := []tc{
+		{
+			name:           "both_live_NEUTRAL",
+			vndDeposit:     6.0, // live > fixture 4.7
+			fedFunds:       4.0, // live, distinct from fixture 5.33
+			wantSuppressed: false,
+		},
+		{
+			name:           "fedFunds_zero_suppressed",
+			vndDeposit:     6.0, // live
+			fedFunds:       0,   // zero = fixture fallback → suppress
+			wantSuppressed: true,
+		},
+		{
+			name:           "vndDeposit_zero_suppressed",
+			vndDeposit:     0,   // zero = fixture fallback → suppress
+			fedFunds:       4.0, // live
+			wantSuppressed: true,
+		},
+		{
+			name:           "both_zero_suppressed",
+			vndDeposit:     0, // fixture fallback
+			fedFunds:       0, // fixture fallback
+			wantSuppressed: true,
+		},
+		{
+			name:           "live_effr_3.62_suppressed_no_FII_OUTFLOW",
+			vndDeposit:     5.0, // live (matches production sbv_rates)
+			fedFunds:       3.62, // live EFFR (the stale-but-present FRED value)
+			wantSuppressed: false,
+			// carrySpread = 5.0 - 3.62 = 1.38 → NEUTRAL (not FII_OUTFLOW_RISK)
+			wantRegimeNotFII: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			uc := NewComputeMacroUseCase(
+				newStubCommodity(),
+				&stubSBVRate{},
+				&stubMarketIndex{vnIndex: 1880.0},
+				&stubCarryYieldInputs{vndDeposit: tt.vndDeposit, fedFunds: tt.fedFunds, earnYield: 8.2},
+			)
+
+			resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+			if err != nil {
+				t.Fatalf("Execute() error: %v", err)
+			}
+
+			carrySpread, carryRegime, isEstimate := extractCarrySignal(t, resp)
+
+			if tt.wantSuppressed {
+				// DSI-INV-1: any zero input → suppress carry.
+				if !isEstimate {
+					t.Errorf("is_estimate=false, want true (any zero carry input must suppress)")
+				}
+				if carryRegime != "UNKNOWN" {
+					t.Errorf("regime = %q, want UNKNOWN (suppressed per DSI-INV-1)", carryRegime)
+				}
+				if carrySpread != 0 {
+					// extractCarrySignal returns 0 when carrySpread JSON is null.
+					t.Errorf("carrySpread = %.4f, want 0 (null when suppressed)", carrySpread)
+				}
+				if resp.DataSource == "live" {
+					t.Errorf("dataSource=%q, must not be 'live' when carry is suppressed", resp.DataSource)
+				}
+			} else {
+				// Live inputs: carry must NOT be suppressed.
+				if isEstimate {
+					t.Errorf("is_estimate=true, want false (both inputs are live non-zero)")
+				}
+				if carryRegime == "UNKNOWN" {
+					t.Errorf("regime = UNKNOWN but both inputs are live — must not be suppressed")
+				}
+				if tt.wantRegimeNotFII && carryRegime == "FII_OUTFLOW_RISK" {
+					t.Errorf("regime = FII_OUTFLOW_RISK — want non-FII (spread = %.4f, inputs: vnd=%.2f fed=%.2f)",
+						carrySpread, tt.vndDeposit, tt.fedFunds)
+				}
+			}
+		})
+	}
+}
+
+// TestDSIINV1_DataSourceLivenessGate verifies that dataSource="live" requires
+// all five inputs (oil+gold+usdVnd+fedFunds+vndDeposit) to be live.
+//
+// When commodity sources are live but carry inputs are fixture, dataSource
+// must be "estimate" (not "live").
+func TestDSIINV1_DataSourceLivenessGate(t *testing.T) {
+	// Commodities live, carry inputs zero (fixture) → dataSource must NOT be "live".
+	ucEstimate := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    96.0,   // live
+			"GOLD":   4480.0, // live
+			"USDVND": 26150.0, // live
+		}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{vndDeposit: 0, fedFunds: 0, earnYield: 8.2}, // carry fixture
+	)
+	resp, err := ucEstimate.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	if resp.DataSource == "live" {
+		t.Errorf("DSI-INV-1: dataSource=%q — must not be 'live' when carry inputs are fixture (fedFunds=0, vndDeposit=0)", resp.DataSource)
+	}
+
+	// All five inputs live → dataSource must be "live".
+	ucLive := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    96.0,
+			"GOLD":   4480.0,
+			"USDVND": 26150.0,
+		}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{vndDeposit: 5.0, fedFunds: 3.62, earnYield: 6.83}, // all live
+	)
+	respLive, err := ucLive.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	if respLive.DataSource != "live" {
+		t.Errorf("DSI-INV-1: dataSource=%q, want 'live' when all five inputs are live", respLive.DataSource)
+	}
+}
+
+// TestDSIINV1_CarryFetchedAtSourceNeverTimeNow verifies that fetched_at_source
+// on the carry DTO comes from the port (FRED source date), not time.Now().
+//
+// When the port returns a known source date, it must appear on the DTO.
+// When the port returns nil, fetched_at_source must be null (not a current timestamp).
+func TestDSIINV1_CarryFetchedAtSourceNeverTimeNow(t *testing.T) {
+	fredDate, _ := time.Parse(time.DateOnly, "2026-05-28")
+	fredDateUTC := fredDate.UTC()
+
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{
+			vndDeposit:         5.0,
+			fedFunds:           3.62,
+			earnYield:          6.83,
+			fedFundsSourceDate: &fredDateUTC, // simulate port returning FRED date
+		},
+	)
+
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+
+	// Extract fetched_at_source from carry DTO via JSON round-trip.
+	type carryWithMeta struct {
+		FetchedAtSource *time.Time `json:"fetched_at_source"`
+	}
+	b, _ := json.Marshal(resp.Signals.Carry)
+	var m carryWithMeta
+	if err := json.Unmarshal(b, &m); err != nil {
+		t.Fatalf("unmarshal carry fetched_at_source: %v", err)
+	}
+
+	if m.FetchedAtSource == nil {
+		t.Errorf("DSI-INV-1: fetched_at_source=nil but port returned %v — must propagate FRED source date", fredDateUTC)
+	} else {
+		if !m.FetchedAtSource.Equal(fredDateUTC) {
+			t.Errorf("DSI-INV-1: fetched_at_source=%v, want %v (FRED date from port)", m.FetchedAtSource, fredDateUTC)
+		}
+	}
+
+	// Verify it is NOT time.Now() (i.e. not within 1 second of current time if port returned a past date).
+	now := time.Now().UTC()
+	if m.FetchedAtSource != nil && m.FetchedAtSource.After(now.Add(-time.Second)) {
+		t.Errorf("DSI-INV-1: fetched_at_source=%v looks like time.Now() — must use FRED source date, never time.Now()", m.FetchedAtSource)
+	}
 }
 
 // abs returns the absolute value of a float64.

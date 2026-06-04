@@ -3,7 +3,10 @@
 // Zero imports from application, infrastructure, or interface layers (DDD Fence-A).
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // CommodityFetcherPort is the port for commodity price retrieval (oil, gold, etc.).
 // Implemented in pkg/infrastructure; never referenced from pkg/domain implementation code.
@@ -38,6 +41,9 @@ type MarketIndexPort interface {
 // Implemented in pkg/infrastructure (CarryYieldInputsSQLiteAdapter).
 // Only cmd/server/main.go imports pkg/infrastructure (Fence-C preserved).
 // DPI-2b: replaces frozen fixture constants in usecases.go Execute() with live DB reads.
+//
+// DSI-INV-1: GetFedFundsSourceDate is added so the application layer can stamp
+// the true FRED source date on the carry DTO (never time.Now() on fallback path).
 type CarryYieldInputsPort interface {
 	// GetVNDDepositRate returns the latest SBV max deposit rate (%) from
 	// sbv_rates.max_deposit_rate_pct WHERE source='sbv'. Returns (0, nil) on absent/stale.
@@ -47,6 +53,13 @@ type CarryYieldInputsPort interface {
 	// fred_series_daily WHERE series='EFFR' ORDER BY date DESC LIMIT 1.
 	// Returns (0, nil) on absent/stale (staleness bound: 96h — FRED business-day lag).
 	GetFedFundsRate(ctx context.Context) (float64, error)
+
+	// GetFedFundsSourceDate returns the FRED source date (YYYY-MM-DD parsed as
+	// midnight UTC) for the most recent EFFR row regardless of staleness.
+	// Returns nil if the table is absent, the row has no date, or the date is
+	// unparseable. Used by Execute() to stamp fetched_at on the carry DTO
+	// (DSI-INV-1: never use time.Now() as the fallback source date).
+	GetFedFundsSourceDate(ctx context.Context) (*time.Time, error)
 
 	// GetEarningYield returns the latest VN equity earnings yield (%) from
 	// tracked_indicators WHERE indicator='market_earning_yield' ORDER BY extracted_at DESC LIMIT 1.

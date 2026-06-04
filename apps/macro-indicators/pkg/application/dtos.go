@@ -31,6 +31,42 @@ type SignalResult struct {
 	Yield interface{} `json:"yield"`
 }
 
+// CarrySignalDTO wraps a carry-trade primitive output with provenance metadata.
+//
+// DSI-INV-1: when any carry input (fedFunds or vndDeposit) is estimated from a
+// fixture fallback, IsEstimate=true, SourceTier=4 (fixture), Regime="UNKNOWN",
+// and CarrySpread is omitted (null in JSON). This prevents fixture arithmetic from
+// being served as actionable "FII_OUTFLOW_RISK".
+//
+// FetchedAtSource is the FRED MAX(date) timestamp for fedFunds (nil when absent).
+// It is NEVER time.Now() on the fallback path.
+type CarrySignalDTO struct {
+	Regime         string     `json:"regime"`
+	CarrySpread    *float64   `json:"carrySpread"`           // null when IsEstimate=true
+	VNDDepositRate float64    `json:"vndDepositRate"`
+	FedFundsRate   float64    `json:"fedFundsRate"`
+	Reasoning      string     `json:"reasoning"`
+	ComputedAt     string     `json:"computedAt"`
+	IsEstimate     bool       `json:"is_estimate"`
+	SourceTier     int        `json:"source_tier"`
+	FetchedAtSource *time.Time `json:"fetched_at_source"` // FRED source date; nil when unavailable
+}
+
+// YieldSignalDTO wraps a yield-spread primitive output with provenance metadata.
+//
+// DSI-INV-1: when any yield input (earnYield or depositRate) is estimated from a
+// fixture fallback, IsEstimate=true and SourceTier=4.
+type YieldSignalDTO struct {
+	Label        string   `json:"label"`
+	Spread       float64  `json:"spread"`
+	EarningYield float64  `json:"earningYield"`
+	DepositRate  float64  `json:"depositRate"`
+	Reasoning    string   `json:"reasoning"`
+	ComputedAt   string   `json:"computedAt"`
+	IsEstimate   bool     `json:"is_estimate"`
+	SourceTier   int      `json:"source_tier"`
+}
+
 // MacroSnapshotResponse is the output DTO returned by ComputeMacroUseCase.Execute.
 // Mirrors domain.MacroSnapshot but adds HTTP-level metadata (Status, FetchedAt)
 // and the 6-primitive signals block required by AC-2 (P2-X3).
@@ -38,6 +74,9 @@ type SignalResult struct {
 // MACRO-LIVE-PRICES: DataSource field added to indicate whether commodity values
 // came from live DB ("live") or fixture defaults ("fixture"). Set by Execute()
 // after resolveMarketPrices() runs; callers can detect degraded mode via this field.
+//
+// DSI-INV-1: DataSource is now "live" ONLY when oil+gold+usdVnd AND fedFunds AND
+// vndDeposit are all live. Otherwise "estimate" (any fixture component present).
 type MacroSnapshotResponse struct {
 	Status     string       `json:"status"`
 	VNIndex    float64      `json:"vnIndex"`
