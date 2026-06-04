@@ -2115,7 +2115,7 @@
             "size": "S",
             "done_at": "2026-06-04T21:20:00Z",
             "done_by": "dev-frontend",
-            "commit": "TBD",
+            "commit": "b16d6a89",
             "note": "DONE 2026-06-04T21:20Z. StockQuote.change->number|null, added changePercent:number|null, staleness/isEstimate/fetchedAt optional. MacroSnapshot: dataSource/is_estimate/source_tier/fedFundsRateIsEstimate/carrySpread/carryRegime all optional. MacroSignalEntry: is_estimate/source_tier/fetched_at optional; regime+carrySpread nullable. +8 tests (dsi-s1-fe-type.test.ts). 303/303 Vitest GREEN. tsc exit 0. ops_rebuild_required=true (frontend)."
           },
           {
