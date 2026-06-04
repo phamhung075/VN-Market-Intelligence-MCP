@@ -179,4 +179,8 @@ export const CRONS = {
    *  Off-market: 20:00 UTC = after VN market close (08:30 UTC) and before US open.
    *  Collision check: 20:00 UTC = ohlcvDailyAggregator — offset by 30 min to avoid pile-up. */
   agmPlanRefresh:             Bun.env.CRON_AGM_PLAN_REFRESH                         ?? '30 20 * * *',
+  /** boardDetailsRefresh — board appointment_year ingest: daily 21:00 UTC (04:00 VN next day) — RAPID-DATA-LAYER FIX-I-B
+   *  Off-market: 21:00 UTC = after AGM plan refresh (20:30 UTC) and VN market close.
+   *  Collision check: 21:00 UTC = alertDigest VN slot (14:00 UTC) — no clash UTC-side. */
+  boardDetailsRefresh:        Bun.env.CRON_BOARD_DETAILS_REFRESH                    ?? '0 21 * * *',
 }

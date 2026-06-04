@@ -356,6 +356,22 @@ export function initFinancialReportsTables(db: Database): void {
   `);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_vnofficers_code ON vnstock_officers(code)`);
 
+  // ── FIX-I-B: appointment_year on vnstock_officers ─────────────────────────
+  // Nullable INTEGER: null = not yet fetched or N/A from VPS.
+  // Populated by boardDetailsJob (daily cron, UPDATE-only via boardDetailsStore).
+  // Idempotent: guarded by PRAGMA table_info check (same pattern as FIX-F).
+  try {
+    const officerCols = db
+      .query<{ name: string }, []>("PRAGMA table_info(vnstock_officers)")
+      .all();
+    if (!officerCols.some((c) => c.name === "appointment_year")) {
+      db.exec("ALTER TABLE vnstock_officers ADD COLUMN appointment_year INTEGER");
+      logger.info("[schema] migrated vnstock_officers: added appointment_year column");
+    }
+  } catch {
+    // fresh DB — column already present via CREATE TABLE (future DDL update)
+  }
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS vnstock_shareholders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

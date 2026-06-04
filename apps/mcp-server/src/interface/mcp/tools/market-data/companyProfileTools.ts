@@ -1,15 +1,15 @@
 /**
- * FIX-A — get_company_profile MCP Tool
+ * FIX-A + FIX-I-B — get_company_profile MCP Tool
  *
  * Returns structured ownership + officers JSON for a single stock ticker.
  * Reads from EXISTING tables: vnstock_shareholders, vnstock_officers, vnstock_trading_stats.
- * No new fetch, no new DB tables, no migration.
+ * No new fetch, no new DB tables, no migration (migration in schema-financial-reports.ts).
  *
  * Output contract:
  *   {
  *     code: string,
  *     shareholders: [{ name, quantity, own_percent }],  top-10 by own_percent DESC
- *     officers: [{ name, position, own_percent, quantity }],
+ *     officers: [{ name, position, own_percent, quantity, appointment_year, ceo_tenure_years }],
  *     foreign_holding_ratio: number | null,             null when not fetched
  *     free_float_approx: number,                        100 - sum(top-10 own_percent)
  *     data_as_of: string | null                         from shareholders fetched_at
@@ -19,7 +19,8 @@
  *   - foreign_holding_ratio: null when no trading_stats row for code
  *   - data_as_of: null when no shareholders synced yet
  *   - free_float_approx: 0 when no shareholders (no fake negatives)
- *   - CEO start_date: intentionally ABSENT (FIX-I scope)
+ *   - appointment_year: null when not yet fetched or VPS returned N/A
+ *   - ceo_tenure_years: null when appointment_year is null (no fabrication)
  *
  * Layer: interface/mcp/tools — may import infrastructure and domain.
  *
@@ -47,6 +48,7 @@ interface OfficerRow {
   position: string;
   own_percent: number | null;
   quantity: number | null;
+  appointment_year: number | null;
 }
 
 interface TradingStatsRow {
@@ -68,6 +70,10 @@ export interface OfficerEntry {
   position: string;
   own_percent: number | null;
   quantity: number | null;
+  /** Year the officer was appointed; null when not yet fetched or VPS returned N/A */
+  appointment_year: number | null;
+  /** Years in current role = currentYear - appointment_year; null when appointment_year is null */
+  ceo_tenure_years: number | null;
 }
 
 export interface CompanyProfileResult {
@@ -109,10 +115,10 @@ export function queryCompanyProfile(db: Database, code: string): CompanyProfileR
     )
     .all(upperCode);
 
-  // 2. All officers for this code
+  // 2. All officers for this code (FIX-I-B: include appointment_year)
   const officerRows = db
     .prepare<OfficerRow, [string]>(
-      `SELECT name, position, own_percent, quantity
+      `SELECT name, position, own_percent, quantity, appointment_year
        FROM vnstock_officers
        WHERE code = ?`,
     )
@@ -142,12 +148,18 @@ export function queryCompanyProfile(db: Database, code: string): CompanyProfileR
   const freeFloatApprox = shareholders.length > 0 ? Math.max(0, 100 - sumTop10) : 0;
 
   // ── Build officers array ──────────────────────────────────────────────────
-  // CEO start_date intentionally absent (FIX-I scope — do NOT fabricate)
+  // FIX-I-B: appointment_year + ceo_tenure_years derived inline.
+  // ceo_tenure_years = currentYear - appointment_year (null when appointment_year null).
+  // No fabrication: null propagates honestly.
+  const currentYear = new Date().getFullYear();
   const officers: OfficerEntry[] = officerRows.map((r) => ({
     name: r.name,
     position: r.position,
     own_percent: r.own_percent,
     quantity: r.quantity,
+    appointment_year: r.appointment_year ?? null,
+    ceo_tenure_years:
+      r.appointment_year != null ? currentYear - r.appointment_year : null,
   }));
 
   // ── data_as_of: from most-recently-fetched shareholder row ───────────────
@@ -191,12 +203,14 @@ export function registerCompanyProfileTools(
     "Return structured ownership and officers data for a single Vietnamese stock ticker. " +
       "Returns { code, shareholders[], officers[], foreign_holding_ratio, free_float_approx, data_as_of }. " +
       "shareholders: top-10 by own_percent DESC (from vnstock_shareholders). " +
-      "officers: all officers (name, position, own_percent, quantity) — CEO start_date absent (FIX-I scope). " +
+      "officers: all officers (name, position, own_percent, quantity, appointment_year, ceo_tenure_years). " +
+      "appointment_year: calendar year the officer was appointed (null if not yet fetched or VPS returned N/A). " +
+      "ceo_tenure_years: currentYear - appointment_year (null when appointment_year is null — no fabrication). " +
       "foreign_holding_ratio: aggregate foreign holding % from vnstock_trading_stats.current_holding_ratio (null if not yet fetched). " +
       "free_float_approx: 100 - sum(top-10 shareholders own_percent) — simple approximation, not institutional-filtered. " +
       "data_as_of: ISO timestamp of most recent shareholders fetch (null if never synced). " +
-      "Source: vnstock_shareholders, vnstock_officers, vnstock_trading_stats (populated by syncVnstockData). " +
-      "Unblocks SKILL-4 ownership-governance-screen (free-float, controlling-stake, skin-in-the-game).",
+      "Source: vnstock_shareholders, vnstock_officers (appointment_year from boardDetailsJob), vnstock_trading_stats. " +
+      "Unblocks SKILL-4 ownership-governance-screen (free-float, controlling-stake, skin-in-the-game, tenure).",
     {
       code: z
         .string()

@@ -68,6 +68,7 @@ import { runAccuracyDigest } from './digest/accuracyDigestJob.js'
 import { runSelfImproveOrchestrator } from './audits/selfImproveOrchestratorJob.js'
 import { runBctcEvalRecomputeJob } from './financial-reports/bctcEvalRecomputeJob.js'
 import { runAgmPlanJob } from './financial-reports/agmPlanJob.js'
+import { runBoardDetailsJob } from './financial-reports/boardDetailsJob.js'
 import { runDiskUsageAlertJob } from './diskUsageAlertJob.js'
 import { runTasksMdJanitorJob } from './system/tasksMdJanitorJob.js'
 import { runVnstockFundamentalsJobCron, runVnstockTradingStatsJobCron, runVnstockFundamentalsJob } from './financial-reports/vnstockFundamentalsJob.js'
@@ -968,5 +969,18 @@ export function startScheduler() {
     })
   }, { timezone: 'UTC' })
 
-  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan active`)
+  // Daily 21:00 UTC (04:00 VN next day) — Board appointment_year ingest — RAPID-DATA-LAYER FIX-I-B
+  // Pulls officer appointment dates for all watchlist tickers from Vinahost VPS proxy.
+  // Off-market: 21:00 UTC = after AGM plan refresh (20:30 UTC). UPDATE-only (no INSERT).
+  cron.schedule(CRONS.boardDetailsRefresh, async () => {
+    await jobRunRepo.wrapRun('boardDetailsRefreshJob', async () => {
+      const result = await runBoardDetailsJob()
+      if (result.rows_updated > 0) {
+        log(`[board-details] rows_updated=${result.rows_updated} tickers_ok=${result.tickers_ok.length} errors=${result.tickers_error.length}`)
+      }
+      return { rowsWritten: result.rows_updated }
+    })
+  }, { timezone: 'UTC' })
+
+  log(`[scheduler] jobs registered — ${Object.keys(CRONS).length} cron keys in CRONS map (incl. WAL checkpoint + 5 summary) + vps-watchdog + VPS health + SLA monitor + macro-refresh + imf-poller + session-tool-usage + tasks-md-janitor + bctc-eval-recompute + agm-plan + board-details active`)
 }
