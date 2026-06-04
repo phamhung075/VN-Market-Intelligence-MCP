@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T19:46:17Z",
+    "_updated_at": "2026-06-04T21:07:04Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2130,7 +2130,8 @@
             "label": "Sector/fin fixture clusters -> null + is_estimate (P2)",
             "status": "DONE",
             "zone": "apps/mcp-server",
-            "size": "L"
+            "size": "L",
+            "note": " || C3 bondMaturity QA-blocker CLOSED 2026-06-04 (commit 1473f812 + rebuild): bond_maturity.is_seed_data column (ADD COLUMN DEFAULT 1 backfilled 5 rows) + DB-path rowToEvent static_seed. ROUTER LIVE-VERIFIED get_bond_maturity_calendar now emits [SEED DATA] banner. QA all 5 clusters (C1-C5)+macro PASS."
           },
           {
             "id": "DSI-MACRO-INDICATORS-LATENT",
@@ -2737,11 +2738,11 @@
         "title": "FRED EFFR stale since 2026-05-28 (>96h bound) → macro-indicators fixture fallback (5.33) triggers; earnYield also stale (>26h). Investigate FRED/fred_series_daily ingest pipeline — this is the WHY behind the carry suppression now showing UNKNOWN.",
         "type": "FIX",
         "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P1",
         "size": "M",
         "zone": "apps/mcp-server+vps",
-        "note": "FRED EFFR last row 2026-05-28 (187h old > 96h effrStaleBound) so macro-indicators correctly rejects->fixture. Carry now honestly suppressed (UNKNOWN/estimate) per DSI-INV-1 but the macro carry/yield signal is UNAVAILABLE until FRED refreshes. Root: investigate fred_series_daily ingest / VPS FRED fetch staleness.",
+        "note": "DONE-LIVE-VERIFIED 2026-06-04 (commit 3f1fbddb, dev-mcp-server). Root: fredEffrIorb.ts used Akamai-WAF-blocked fred.stlouisfed.org/graph (504/socket-closed at this IP; documented 2026-05-13 recon, fetcher built w/ wrong URL). Fix: api.stlouisfed.org/fred/series/observations JSON + FRED_API_KEY(env,fail-loud) + incremental MAX(date). ops rebuilt+triggered: EFFR 2026-05-28->2026-06-03 live. ROUTER LIVE-VERIFIED get_macro_snapshot: fedFundsRate 3.62 (was 5.33 fixture), carrySpread +1.38, regime NEUTRAL (was FII_OUTFLOW_RISK then UNKNOWN), is_estimate:false source_tier:1. Macro carry signal RESTORED. Recon doc docs/mainserver-sources/fred-effr/recon.md.",
         "depends_on": null
       },
       {
@@ -2802,14 +2803,37 @@
         "depends_on": null,
         "triaged_by": "po",
         "triaged_at": "2026-06-04T20:05:28Z"
+      },
+      {
+        "task_id": "FU-SBV-DEPOSIT-PROVENANCE-GO",
+        "title": "macro-indicators Go carry treats SBV vndDepositRate (5.0, hardcoded — SBV portal dead) as live (is_estimate:false, source_tier:1) because the daily sbv write stamps fetched_at=now. carry.is_estimate:false + dataSource:live slightly over-claim vs DSI-INV-1 / BA-spec FR-MAC-2 (SBV fallback => is_estimate). Judgment call: administered policy rate (tier-2) vs fixture (tier-4) — architect/PO to rule. yield already correctly flags is_estimate:true.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/macro-indicators",
+        "note": "Discovered during FRED live-verify: with EFFR fresh, carry.is_estimate flipped to false but vndDeposit (SBV 5.0) is a permanent hardcoded fixture.",
+        "depends_on": null
       }
     ],
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-04T18:51:56Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-04T20:13:00Z",
+    "_updated_by": "tran-ngoc-bau",
     "rows": [
+      {
+        "id": "tnb-c87-20260604T2013",
+        "ts": "2026-06-04T20:13Z",
+        "from": "tran-ngoc-bau",
+        "to": "po",
+        "type": "audit-handoff",
+        "summary": "c87 NEEDS_ATTENTION STABLE: F8 CLOSED (morning verified); F-CARRY-CORRUPT CRITICAL (fedFundsRate stale, regime wrong); AC-1 live; Brent −3.18σ L1; MCP partial",
+        "severity": "HIGH",
+        "status": "NEW",
+        "payload_ref": "docs/handoffs/tnb-audit-latest.md"
+      },
       {
         "id": "tnb-c86-20260602T2013",
         "ts": "2026-06-02T20:13Z",
