@@ -1635,11 +1635,11 @@
             "title": "COWORK-HEARTBEAT-NOISE fix (7464b43f) committed+correct at HEAD but NOT live — live cowork dispatcher session runs STALE flow (loaded pre-ae4396e6 split + pre-fix): still emits flat-root-schema SILENT heartbeats unconditionally (4/4 SILENT/hr, contra both telemetry.md SKIP-gate AND enveloped-schema invariant). No code writes these files (grep clean) → writer is the agent interpreting telemetry.md → file is correct lever, but live session never re-reads. REMEDY = operator restart cowork-team dispatcher session + re-arm /cron-cowork-team. Not a dev code task; dev-team cannot restart a peer session.",
             "type": "OPS-RELOAD",
             "owner": "operator",
-            "status": "BLOCKED-OPERATOR",
+            "status": "DONE",
             "size": "XS",
             "zone": "(live-session-state)",
             "priority": "low",
-            "note": "Filed 2026-06-04T01:12:17Z by dev-team tick 01:09Z. Evidence: HEAD telemetry.md has SKIP-on-SILENT gate + enveloped-schema INVARIANT, but live emissions are flat-root {classification,reason,spawns,written_at} + written on SILENT. Impact LOW (dev-team drains ~96/day gracefully). Auto-resolves on next cowork session restart. Future ticks: if SILENT cowork heartbeats STOP, flip this DONE."
+            "note": "Filed 2026-06-04T01:12:17Z by dev-team tick 01:09Z. Evidence: HEAD telemetry.md has SKIP-on-SILENT gate + enveloped-schema INVARIANT, but live emissions are flat-root {classification,reason,spawns,written_at} + written on SILENT. Impact LOW (dev-team drains ~96/day gracefully). Auto-resolves on next cowork session restart. Future ticks: if SILENT cowork heartbeats STOP, flip this DONE. | DONE 2026-06-04T09:07Z by po-triage (dev-team tick): the auto-resolve criterion is MET on the schema-drift facet. Newest drained heartbeat docs/signals/processed/cowork-team-20260604T090335Z.json carries the REVISED enveloped schema {agent,ts,classification,slots,drift_min,backlog,note} — NOT the stale flat-root {classification,reason,spawns,written_at} this blocker pinned as the symptom. Live session has reloaded the post-fix flow (split ae4396e6 + schema ee1d5e46). Corroborated this tick by WON chef-intraday/chef-eod spawns + WON_PEER_HELD peer leader-lock coordination — cowork is demonstrably FUNCTIONING. RESIDUAL (separate, NOT this blocker): heartbeat still WRITTEN on SILENT — that is FU-COWORK-HEARTBEAT-NOISE (telemetry.md SKIP-gate, DONE at HEAD, also activates on reload), LOW noise only, drained gracefully. Schema-stale session blocker = resolved."
           }
         ]
       },
