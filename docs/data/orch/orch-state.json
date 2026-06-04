@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "RAPID-DATA-LAYER Phase 1 shipped (b275239d, mcp-server rebuilt 156->157 tools). FIX-H DONE-LIVE-VERIFIED (insider 180d live). FIX-B (get_market_cap): tool DONE-LIVE-VERIFIED (null-path), persist/fetch DONE-CODE-DEPLOYED-DATA-PENDING — market_cap_bn null until a successful vnstock sync; live-verify blocked NOW by transient vnstock RATE_LIMIT on all FPT endpoints (NOT a code defect). Hook=FU-FIXB-COLUMNKEY-VERIFY (re-call get_market_cap after next successful fundamentals sweep; if still null after a confirmed-good finance fetch -> fix ratio() MultiIndex key). RECON-AGM-1 DONE; FIX-C + FIX-G UNBLOCKED. NEXT-IN-FLIGHT P1 (next tick, WIP<=2): FIX-A get_company_profile + FIX-D get_bctc_full structured_data (both no-deps, dev-mcp-server). Then P2 FIX-C/FIX-E, P3 FIX-F, P4 FIX-G, P5 FIX-I. Cowork session STILL stale (BLOCKED-OPERATOR).",
+    "next_action": "RAPID-DATA-LAYER Phase 2 shipped this tick (FIX-A get_company_profile + FIX-D get_bctc_full structured_data, commits 7a44a291 + 0e8c2be0, mcp-server rebuilt 157->158). Both DONE-LIVE-VERIFIED (shareholders/officers/free_float real; structured_data matches text on DONE record). Residual honest-nulls foreign_holding_ratio + receivables (FPT HAS trading_stats row => same column-key/reflow ambiguity as FIX-B; FU-PROFILE-DATA-VERIFY filed, BLOCKED-UPSTREAM). NEXT P2 (WIP<=2): FIX-C get_bctc_series + FIX-E price_history 90->730d (both unblocked, dev-mcp-server). Then P3 FIX-F (bank-form guard), P4 FIX-G (AGM recon done), P5 FIX-I. FU-FIXB-COLUMNKEY-VERIFY + FU-PROFILE-DATA-VERIFY batch on next successful vnstock sweep. Cowork reloaded (FU-COWORK-SESSION-RELOAD DONE this tick).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T08:48:52Z",
+    "updated_at": "2026-06-04T09:32:34Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T08:48:52Z",
+    "_updated_at": "2026-06-04T09:32:34Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2205,7 +2205,7 @@
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "get_company_profile MCP tool (shareholders + officers + foreign %)",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P1",
         "size": "M",
         "zone": "apps/mcp-server/",
@@ -2218,14 +2218,14 @@
           "apps/mcp-server/src/interface/mcp/tools/",
           "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts"
         ],
-        "note": "RC-3. get_company_info is a PHANTOM (never existed). New get_company_profile from existing tables: vnstock_shareholders (name,quantity,own_percent DESC limit 10) + vnstock_officers (name,position,own_percent,quantity) + vnstock_trading_stats.current_holding_ratio (aggregate foreign %). Compute free-float approx = 100% - sum(non-free-float own_percent). STRUCTURED JSON output. CEO tenure stays PARTIAL until FIX-I. Risk-2 24h TTL staleness -> data_as_of."
+        "note": "RC-3. get_company_info is a PHANTOM (never existed). New get_company_profile from existing tables: vnstock_shareholders (name,quantity,own_percent DESC limit 10) + vnstock_officers (name,position,own_percent,quantity) + vnstock_trading_stats.current_holding_ratio (aggregate foreign %). Compute free-float approx = 100% - sum(non-free-float own_percent). STRUCTURED JSON output. CEO tenure stays PARTIAL until FIX-I. Risk-2 24h TTL staleness -> data_as_of. || DONE-LIVE-VERIFIED 2026-06-04T09:32:34Z (commit 7a44a291, live 158 tools). get_company_profile(FPT) raw-verified by router: 10 REAL shareholders (Truong Gia Binh 6.89%, SCIC 5.67%, Red River 4.58%...), 17 officers with real positions (Chu tich HDQT, TGD Nguyen Van Khoa...), free_float_approx=68.23%, data_as_of=2026-04-14 present. CEO start_date correctly ABSENT (no fabrication, FIX-I scope). foreign_holding_ratio=null = honest data-absence facet -> FU-PROFILE-DATA-VERIFY. Structure + real data CONFIRMED, not placeholders."
       },
       {
         "task_id": "FIX-D",
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "get_bctc_full structured_data JSON block + receivables join",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P1",
         "size": "S",
         "zone": "apps/mcp-server/",
@@ -2237,7 +2237,7 @@
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts"
         ],
-        "note": "RC-2 (format). (1) Add structured_data:{...} section ALONGSIDE existing text (non-breaking) — all ReportRow numeric cols as machine-readable JSON. (2) Add receivables from vnstock_balance_sheet.receivables_bn (JOIN on code+latest period). Unblocks pe/pb/total_assets/equity/total_liabilities/cash/long_term_debt/profit_before_tax/operating_cf without text parsing."
+        "note": "RC-2 (format). (1) Add structured_data:{...} section ALONGSIDE existing text (non-breaking) — all ReportRow numeric cols as machine-readable JSON. (2) Add receivables from vnstock_balance_sheet.receivables_bn (JOIN on code+latest period). Unblocks pe/pb/total_assets/equity/total_liabilities/cash/long_term_debt/profit_before_tax/operating_cf without text parsing. || DONE-LIVE-VERIFIED 2026-06-04T09:32:34Z (commit 0e8c2be0, live). get_bctc_full(FPT 2026-05-31) raw-verified by router: text output UNCHANGED (non-breaking confirmed); structured_data block values MATCH rendered text on a pre-existing DONE record (roe 6.17<->6.2%, d/e 0.401<->0.40x, equity 40122036<->40.122ty, total_assets 68586094<->68.586,1ty, net_revenue 12479997<->12.480ty, pe/pb null<->N/A) = recompute-on-read serving correctly, NOT stale column (derived-column-reflow lesson satisfied). receivables=null honest data-absence -> FU-PROFILE-DATA-VERIFY. PUB-7 period-basis guard still firing. 138 tests green, tsc clean, fence proven to bite."
       },
       {
         "task_id": "FIX-H",
@@ -2370,6 +2370,21 @@
           "apps/mcp-server/src/infrastructure/fetchers/vnstockBridge.ts"
         ],
         "note": "VERIFICATION HOOK for FIX-B (shipped b275239d, live-deployed). get_market_cap is LIVE + returns correct structured shape + safe-divide null-path verified, but market_cap_billion=null for all 2856 vnstock_trading_stats rows (column just added; populated only on a fresh sync). Live-verify attempt 2026-06-04T08:48:52Z triggered syncVnstockData([FPT]) inside the container: vnstock RATE_LIMITED on EVERY endpoint (finance/balance_sheet/cash_flow, max retries exhausted) => fetch never succeeded, market_cap_bn stayed null, fetched_at stale 2026-04-29. Transient EXTERNAL throttle, NOT a code defect. WHEN the scheduled vnstockFundamentalsJob next completes a successful finance:<ticker> sweep (rate-limit cleared), re-call get_market_cap(FPT): EXPECT non-null market_cap_billion. IF still null after a CONFIRMED-successful finance fetch => the python ratio() MultiIndex key ('Chỉ tiêu định giá','Market Cap (Bn. VND)') is wrong for the live vnstock version => fix TRADING_STATS_SCRIPT key in vnstockBridge.ts (a fallback 'market_cap' is already attempted). Owner dev-mcp-server. Until verified, FIX-B stays DONE-CODE-DEPLOYED-DATA-PENDING (do NOT claim DONE-LIVE-VERIFIED).",
+        "depends_on": "vnstock-rate-limit-clear / next-fundamentals-sweep"
+      },
+      {
+        "task_id": "FU-PROFILE-DATA-VERIFY",
+        "title": "Verify get_company_profile.foreign_holding_ratio + get_bctc_full.structured_data.receivables serve non-null after a successful vnstock sync; fix read-key if they stay null",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "status": "BLOCKED-UPSTREAM",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/market-data/companyProfileTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts"
+        ],
+        "note": "VERIFICATION HOOK for FIX-A + FIX-D (shipped 7a44a291 + 0e8c2be0, live-deployed 158 tools, both DONE-LIVE-VERIFIED on structure). Two facets serve honest-null on FPT: get_company_profile.foreign_holding_ratio=null and get_bctc_full.structured_data.receivables=null. SAME reflow-vs-wrong-key ambiguity as FIX-B (FU-FIXB-COLUMNKEY-VERIFY): FPT HAS a vnstock_trading_stats row (FIX-B confirmed) so foreign_holding_ratio=null means either the foreign column is unpopulated (reflow — clears on next sync) OR the read column-key is wrong; receivables reads vnstock_balance_sheet.receivables_bn (table may be empty/unsynced). WHEN the scheduled vnstockFundamentalsJob next completes a successful sweep (rate-limit cleared per FU-FIXB-COLUMNKEY-VERIFY), re-call get_company_profile(FPT) + get_bctc_full(FPT): EXPECT non-null foreign_holding_ratio + receivables for a ticker that has the source data. IF still null after a CONFIRMED-good sync => the read key/table is wrong => fix in companyProfileTools.ts / bctcFullTools.ts. Until verified, the foreign% + receivables FACETS stay data-pending (tool CODE is correct + live; shareholders/officers/free_float/structured-numerics all VERIFIED real). Owner dev-mcp-server. Sibling of FU-FIXB-COLUMNKEY-VERIFY — batch both checks on the same post-sync verify.",
         "depends_on": "vnstock-rate-limit-clear / next-fundamentals-sweep"
       }
     ],
