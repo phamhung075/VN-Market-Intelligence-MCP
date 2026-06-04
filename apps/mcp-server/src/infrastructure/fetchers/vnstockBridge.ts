@@ -464,30 +464,37 @@ try:
         print('null')
         sys.exit(0)
     r = df.iloc[0]
-    # FIX-B-1: also fetch market cap from ratio API (best-effort; null on failure)
-    market_cap_bn = None
-    try:
-        ratio_df = stock.finance.ratio(period='quarter')
-        if ratio_df is not None and len(ratio_df) > 0:
-            rr = ratio_df.iloc[0]
-            mc_raw = rr.get(('Chỉ tiêu định giá', 'Market Cap (Bn. VND)'), None)
-            if mc_raw is None:
-                mc_raw = rr.get('market_cap', None)
-            if mc_raw is not None:
-                market_cap_bn = round(float(mc_raw), 2)
-    except Exception:
-        pass
+    # --- Column mapping updated for vnstock schema (2026-06-04 FIX-B) ---
+    # New schema: free_float, foreigner_percentage, maximum_foreign_percentage,
+    #             average_match_volume1_month, highest_price1_year, lowest_price1_year,
+    #             current_price, market_cap (raw VND), number_of_shares_mkt_cap
+    # Prices in new schema are already in VND (no *1000 needed).
+    # market_cap is available directly here — ratio() call removed (was broken).
+    mc_raw = r.get('market_cap', None)
+    market_cap_bn = round(float(mc_raw) / 1e9, 2) if mc_raw is not None else None
+    if market_cap_bn is None:
+        sys.stderr.write(f'vnstock trading_stats: market_cap missing for ${symbol}\\n')
+    hp = float(r.get('highest_price1_year', 0) or 0)
+    lp = float(r.get('lowest_price1_year', 0) or 0)
+    cp = float(r.get('current_price', 0) or 0)
+    pct_from_high = round((cp - hp) / hp * 100, 2) if hp else 0.0
+    pct_from_low = round((cp - lp) / lp * 100, 2) if lp else 0.0
+    # foreignVolume: derived as foreigner_percentage * shares (cumulative foreign holding)
+    # foreignRoom: free_float (shares available for foreign purchase)
+    foreigner_pct = float(r.get('foreigner_percentage', 0) or 0)
+    shares = float(r.get('number_of_shares_mkt_cap', 0) or 0)
+    foreign_vol_derived = int(foreigner_pct * shares)
     result = {
         'code': '${symbol}',
-        'foreignRoom': int(r.get('foreign_room', 0) or 0),
-        'foreignVolume': int(r.get('foreign_volume', 0) or 0),
-        'currentHoldingRatio': round(float(r.get('current_holding_ratio', 0) or 0), 4),
-        'maxHoldingRatio': round(float(r.get('max_holding_ratio', 0) or 0), 4),
-        'avgVolume2w': int(r.get('avg_match_volume_2w', 0) or 0),
-        'high52w': float(r.get('high_price_1y', 0) or 0) * 1000,
-        'low52w': float(r.get('low_price_1y', 0) or 0) * 1000,
-        'pctFromHigh52w': round(float(r.get('pct_high_change_1y', 0) or 0) * 100, 2),
-        'pctFromLow52w': round(float(r.get('pct_low_change_1y', 0) or 0) * 100, 2),
+        'foreignRoom': int(r.get('free_float', 0) or 0),
+        'foreignVolume': foreign_vol_derived,
+        'currentHoldingRatio': round(foreigner_pct, 4),
+        'maxHoldingRatio': round(float(r.get('maximum_foreign_percentage', 0) or 0), 4),
+        'avgVolume2w': int(r.get('average_match_volume1_month', 0) or 0),
+        'high52w': hp,
+        'low52w': lp,
+        'pctFromHigh52w': pct_from_high,
+        'pctFromLow52w': pct_from_low,
         'marketCapBn': market_cap_bn,
         'fetchedAt': __import__('datetime').datetime.now().isoformat()
     }
