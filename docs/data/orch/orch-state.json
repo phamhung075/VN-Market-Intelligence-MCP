@@ -1,17 +1,17 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-03T00:00:00Z",
-  "_updated_by": "po,dev-vps-crawls",
+  "_updated_at": "2026-06-04T04:31:40Z",
+  "_updated_by": "po",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Idle — tick 04:09Z: drained 4 cowork (2 WON FIRE + 2 SILENT). Actioned 1 NEW signal_queue flow_defect_report (chef-intraday dedup granularity, MEDIUM errs-safe): PO-triaged → out of dev-zone scope → folded into existing backlog FU-CHEF-MARKER-INFLOW (granularity facet, both fix options), signal row→READ, routed agents-architect+agent-father. FU-COWORK-SESSION-RELOAD still BLOCKED-OPERATOR. No dev-actionable code work.",
+    "next_action": "NER-PLACE-1 DONE-LIVE-VERIFIED 2026-06-04T04:31:40Z (commit afbc63a2). Cascade direct-code ticker NER no longer mis-tags city abbreviations (TP HCM ≠ broker HCM); place-prefix guard generalized to the class. ops rebuilt mcp-server, LIVE-verified both directions via run_impact_chain. WIP back to 0.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T04:15:22Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-04T04:31:40Z",
+    "updated_by": "po"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -1925,6 +1925,32 @@
             "owner": "agent-father",
             "status": "DONE",
             "commit": "0b00e15d"
+          }
+        ]
+      },
+      {
+        "id": "NER-PLACE-TICKER-GUARD",
+        "label": "Direct-code ticker NER mis-tags city abbreviations as tickers (TP HCM = Ho Chi Minh City, not broker HCM) — place-prefix preceding-token guard",
+        "status": "done",
+        "opened_at": "2026-06-04",
+        "priority": "high",
+        "evidence": "Operator bug report + router raw root-cause, PO raw-verified 2026-06-04T04:25:03Z. Headline \"'Ông lớn' bất động sản TP HCM đề xuất giảm sở hữu nhà nước\" mis-tagged [DirectCodeNER+DomainRule: HCM] (broker CTCP Chứng khoán TP.HCM). Root cause confirmed raw in apps/mcp-server/src/domain/services/cascadeEngine.ts: isDirectTickerMention(code) (~L3287) accepts all-caps word-boundary hit (hasUppercaseWordBoundary ~L3272 + lowercased word-boundary recheck). \"HCM\" in \"TP HCM\" is all-caps, space-bounded both sides → passes both checks → mis-tagged at the resolvedViaDirectCode path (tag emitted ~L3360). Matcher has NO preceding-token place-name context guard. HCM is the salient collision (city abbrev == HOSE broker ticker). seedText = sourceTitle + summary (L3247); seedTextNorm = seedText.toLowerCase() (L3249).",
+        "tasks": [
+          {
+            "task_id": "NER-PLACE-1",
+            "title": "Place-name preceding-token guard in cascadeEngine direct-code ticker matcher — reject all-caps ticker hit when immediately preceded by a VN place prefix (TP / TP. / Tp. / T.P / Thành phố / tỉnh, diacritic-tolerant); generalize to the whole place-prefix+ticker-collision CLASS, not a hardcoded HCM case",
+            "type": "FIX",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "DONE-LIVE-VERIFIED",
+            "size": "S",
+            "zone": "apps/mcp-server/",
+            "priority": "high",
+            "files": [
+              "apps/mcp-server/src/domain/services/cascadeEngine.ts"
+            ],
+            "note": "DoD: (1) New/extended cascadeEngine NER unit test (apps/mcp-server/src/__tests__/, follow FIX-1298-bsr-false-cascade.test.ts pattern: buildCausalChain + watchlistImpacts/entries filter on actionCode==\"HCM\"): \"'Ông lớn' bất động sản TP HCM đề xuất giảm sở hữu nhà nước\" → NO HCM action entry; ADD a \"TP.HCM\" joined-form case → also NO HCM; REGRESSION genuine \"HCM tăng trần\" / \"Chứng khoán HCM ...\" → STILL tags HCM (true positive preserved). (2) bun test green for cascadeEngine NER tests. (3) ops rebuilds mcp-server container AFTER code change (restart relaunches stale image — feedback_rebuild_after_dev_change), then LIVE-verify: re-run cascade on the offending headline via live tool, confirm NO HCM tag. CONSTRAINTS: dev-mcp-server sole committer of this zone; NO branches (main); data-light guard (no big place gazetteer); generalize the place-prefix+ALL-CAPS-token-collides-with-watchlist-ticker class. Guard goes inside isDirectTickerMention (~L3287) — when an all-caps word-boundary hit's immediately-preceding token (in seedText, case-insensitive, diacritic-tolerant) matches the place-prefix set, reject that occurrence (continue scanning for another valid hit before returning true). English commit + WORK note; internal code (no MARKET-facing string). | DONE-LIVE-VERIFIED 2026-06-04T04:31:40Z by PO (router raw-verify, NOT badge). Fix: module-level isPrecededByPlacePrefix() (diacritic-tolerant, data-light set tp/t.p/tinh + two-word 'thanh pho') called from hasUppercaseWordBoundary — rejects the place-preceded occurrence and keeps scanning. 5 new NER tests + 376 cascade tests green, tsc0, commit afbc63a2 (raw git show: exactly 2 files, no force-add). ops rebuilt+recreated mcp-server (image healthy, marker x2 in /app/src). LIVE run_impact_chain via gateway: (a) offending '...TP HCM...' headline → [DirectCodeNER: HCM] tag GONE (HCM now only generic securities sector tác-động-gián-tiếp 44%, same as VCI/SSI/VDC — correct, headline truly mentions securities domain); (b) regression 'HCM tăng trần ...' → [DirectCodeNER+DomainRule: HCM] STILL fires (true positive preserved). Class generalized (any place-prefix+all-caps-ticker), not HCM special-case.",
+            "commit": "afbc63a2"
           }
         ]
       }
