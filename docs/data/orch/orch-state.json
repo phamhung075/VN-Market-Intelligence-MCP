@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Idle — tick 00:09Z drained 4 signals (2 cowork [1 SILENT noise + 1 FIRE liveness], 2 routine bctc FYI ACB/FPT routed-to-po). No NEW dev task: ACB conf-0.38/pub5-blocked is known low-confidence state already tracked by DEFERRED corpus-reflow/current-404 backlog (symptom, not new bug). COWORK-HEARTBEAT-NOISE confirmed taking effect (SILENT noise 4->1/hr). All open board items DEFERRED-ASYNC/INFRA/PRODUCT/out-of-dev-scope.",
+    "next_action": "Idle — tick 01:09Z drained 4/4 SILENT cowork heartbeats. COWORK-HEARTBEAT-NOISE fix (7464b43f) confirmed NOT live: live cowork session runs STALE pre-ae4396e6 flow (flat-schema + unconditional SILENT write). Filed FU-COWORK-SESSION-RELOAD (BLOCKED-OPERATOR: restart cowork session + re-arm /cron-cowork-team). No dev code task. All other board items DEFERRED.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T00:13:16Z",
+    "updated_at": "2026-06-04T01:12:17Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-03T23:15:30Z",
+    "_updated_at": "2026-06-04T01:12:17Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1629,6 +1629,17 @@
             "zone": "docs/agents/cowork-team/flow/",
             "priority": "medium",
             "note": "Filed 2026-06-03T23:12:18Z by dev-team tick — 2nd consecutive tick draining exactly 4 SILENT heartbeats; grep confirms zero automated reader of docs/signals/cowork-team-*.json (only telemetry.md writes, dev-team drain discards). Kin of CW-BACKLOG-MISCOUNT/FU-COWORK-HEARTBEAT-SCHEMA (count+schema fixed; write-on-SILENT not yet addressed). | DONE 2026-06-03T23:15:30Z: cowork-refactory-expert gated telemetry.md Step 6 — added bash guard (if SILENT && spawned[] empty && errors[] empty → exit 0, skip docs/signals/ write; liveness stays in notebook). FIRE writes + Error Guard (-error.json→po) unchanged; enveloped schema preserved. telemetry.md 72L→83L (cap 120). Router raw-verified: only telemetry.md touched, +15/-3, error-guard intact, size-comment corrected 87→83. Goes live on cowork dispatcher next flow reload (no rebuild). Eliminates ~96 trash files/day + hourly drain/commit burden."
+          },
+          {
+            "task_id": "FU-COWORK-SESSION-RELOAD",
+            "title": "COWORK-HEARTBEAT-NOISE fix (7464b43f) committed+correct at HEAD but NOT live — live cowork dispatcher session runs STALE flow (loaded pre-ae4396e6 split + pre-fix): still emits flat-root-schema SILENT heartbeats unconditionally (4/4 SILENT/hr, contra both telemetry.md SKIP-gate AND enveloped-schema invariant). No code writes these files (grep clean) → writer is the agent interpreting telemetry.md → file is correct lever, but live session never re-reads. REMEDY = operator restart cowork-team dispatcher session + re-arm /cron-cowork-team. Not a dev code task; dev-team cannot restart a peer session.",
+            "type": "OPS-RELOAD",
+            "owner": "operator",
+            "status": "BLOCKED-OPERATOR",
+            "size": "XS",
+            "zone": "(live-session-state)",
+            "priority": "low",
+            "note": "Filed 2026-06-04T01:12:17Z by dev-team tick 01:09Z. Evidence: HEAD telemetry.md has SKIP-on-SILENT gate + enveloped-schema INVARIANT, but live emissions are flat-root {classification,reason,spawns,written_at} + written on SILENT. Impact LOW (dev-team drains ~96/day gracefully). Auto-resolves on next cowork session restart. Future ticks: if SILENT cowork heartbeats STOP, flip this DONE."
           }
         ]
       },
