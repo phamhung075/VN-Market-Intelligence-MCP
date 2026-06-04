@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T21:35:21Z",
+    "_updated_at": "2026-06-04T22:01:56Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2072,32 +2072,34 @@
         "evidence": "macroIndicatorSla.ts queries country='VN' but all active writers use 'vietnam' (dead since commit 7a0adfdc 2026-05-17). FIX-MACRO-FEDFUNDS-REGRESS: fixtureFedFundsRate=5.33 served as live when FRED unreachable. Fleet-wide pattern: fail-soft -> hardcode -> stamp now -> drop is_estimate -> served as live. Brief: docs/architecture-briefs/2026-06-04-data-serve-integrity.md.",
         "tasks": [
           {
-            "id": "DSI-ARCH",
             "label": "Architect: brownfield + brief + per-zone split",
             "status": "DONE",
             "zone": "multi",
-            "size": "S"
+            "size": "S",
+            "task_id": "DSI-ARCH",
+            "title": "ARCHITECT root-cause + formal DATA-SERVE-INTEGRITY invariant (cross-zone structural rule)"
           },
           {
-            "id": "DSI-BA",
             "label": "BA: decompose architect brief into per-zone atomic tasks",
             "status": "DONE",
             "zone": "multi",
             "size": "S",
-            "note": "BA spec complete 2026-06-04. Handoff: docs/handoffs/DSI-BA-spec.md. 6 tasks spec-d with AC + file:line targets + zone owners + dep DAG. No PO blockers."
+            "note": "BA spec complete 2026-06-04. Handoff: docs/handoffs/DSI-BA-spec.md. 6 tasks spec-d with AC + file:line targets + zone owners + dep DAG. No PO blockers.",
+            "task_id": "DSI-BA",
+            "title": "BA spec: decompose DATA-SERVE-INTEGRITY into FR-MAC / price / sector tasks + DSI-INV-1 acceptance criteria"
           },
           {
-            "id": "DSI-S1-SLA",
             "label": "Fix country key mismatch in macroIndicatorSla.ts + push-gso default",
             "status": "DONE",
             "zone": "apps/mcp-server",
             "size": "XS",
             "done_at": "2026-06-04T18:50:00Z",
             "done_by": "dev-mcp-server",
-            "note": "MACRO_COUNTRY_KEY='vietnam' constant; both .get('VN') sites fixed; server.ts push-gso+push-te defaults fixed; deprecated comment added; 6/6 tests pass. DEPLOY GATE: vps-scripts COUNTRY='VN' explicit send must update to 'vietnam' before deploy. || ROUTER NOTE: repo committed (a6b86ed0 reader + bab7fb8b vps-scripts COUNTRY VN->vietnam). mcp-server REBUILT this tick (reader live). VPS DEPLOY STILL PENDING: ops-vps must scp fetch-tradingeconomics.sh + fetch-gso.sh to VPS /root/ (live cron still POSTs country:VN until then). Tracked for ops-vps."
+            "note": "MACRO_COUNTRY_KEY='vietnam' constant; both .get('VN') sites fixed; server.ts push-gso+push-te defaults fixed; deprecated comment added; 6/6 tests pass. DEPLOY GATE: vps-scripts COUNTRY='VN' explicit send must update to 'vietnam' before deploy. || ROUTER NOTE: repo committed (a6b86ed0 reader + bab7fb8b vps-scripts COUNTRY VN->vietnam). mcp-server REBUILT this tick (reader live). VPS DEPLOY STILL PENDING: ops-vps must scp fetch-tradingeconomics.sh + fetch-gso.sh to VPS /root/ (live cron still POSTs country:VN until then). Tracked for ops-vps.",
+            "task_id": "DSI-S1-SLA",
+            "title": "S1a DETECTION NET FIRST: reconcile macroIndicatorSla country key VN vs writer vietnam so freshness guard + detectStartupStaleData fire + alert WORK"
           },
           {
-            "id": "DSI-S1-MACRO",
             "label": "Per-field is_estimate on carry/yield; true-source fetched_at",
             "status": "DONE",
             "zone": "apps/mcp-server",
@@ -2105,10 +2107,11 @@
             "done_at": "2026-06-04T19:15:00Z",
             "done_by": "dev-mcp-server",
             "commit": "fb7e16d0",
-            "note": "DONE 2026-06-04T19:15Z commit fb7e16d0. FR-MAC-1: formatThienThoi gates on fedFundsRateIsEstimate (not just ===0); isEstimate=true suppresses carry spread+regime as \"unavailable — est. rate\"; FII_OUTFLOW_RISK no longer emitted from fixture arithmetic. FR-MAC-2: sbv_rates schema migration is_estimate INTEGER DEFAULT 1; fetchSbvRates sets isEstimate=true; storeSbvSnapshot writes is_estimate to DB. FR-MAC-3/4: buildCarryProvenance() exported with CarryProvenance type (is_estimate/source_tier/fedFundsFetchedAt from MAX EFFR date). FR-MAC-5: killed ?? 0 commodity zero-writes in macroIndicatorRefreshJob; CASE guard in ON CONFLICT DO UPDATE preserves prior good values. FR-MAC-6: computeMacroDataSource() exported. Tests: 16 new (DSI-S1-MACRO.test.ts), tsc clean, 58 pass/4 pre-existing fail. ops_rebuild_required=true. || ROUTER NOTE: TS commit fb7e16d0 hardened the [Thien Thoi] TEXT-BLOCK path + helpers only; it is NOT the live get_macro_snapshot.signals.carry serving path (that is the Go macro-indicators service via clients.ts). Live regression fixed by 09e93d76 (see DSI-MACRO-INDICATORS-LATENT). DSI-S1-MACRO TS = DONE-CODE (text path), not the live-serving fix."
+            "note": "DONE 2026-06-04T19:15Z commit fb7e16d0. FR-MAC-1: formatThienThoi gates on fedFundsRateIsEstimate (not just ===0); isEstimate=true suppresses carry spread+regime as \"unavailable — est. rate\"; FII_OUTFLOW_RISK no longer emitted from fixture arithmetic. FR-MAC-2: sbv_rates schema migration is_estimate INTEGER DEFAULT 1; fetchSbvRates sets isEstimate=true; storeSbvSnapshot writes is_estimate to DB. FR-MAC-3/4: buildCarryProvenance() exported with CarryProvenance type (is_estimate/source_tier/fedFundsFetchedAt from MAX EFFR date). FR-MAC-5: killed ?? 0 commodity zero-writes in macroIndicatorRefreshJob; CASE guard in ON CONFLICT DO UPDATE preserves prior good values. FR-MAC-6: computeMacroDataSource() exported. Tests: 16 new (DSI-S1-MACRO.test.ts), tsc clean, 58 pass/4 pre-existing fail. ops_rebuild_required=true. || ROUTER NOTE: TS commit fb7e16d0 hardened the [Thien Thoi] TEXT-BLOCK path + helpers only; it is NOT the live get_macro_snapshot.signals.carry serving path (that is the Go macro-indicators service via clients.ts). Live regression fixed by 09e93d76 (see DSI-MACRO-INDICATORS-LATENT). DSI-S1-MACRO TS = DONE-CODE (text path), not the live-serving fix.",
+            "task_id": "DSI-S1-MACRO",
+            "title": "S1b macro carry regime: kill fedFunds fixture + SBV deposit defaults masquerading as live; live FRED/SBV fail-loud; per-field freshness; dataSource=live only when all fresh"
           },
           {
-            "id": "DSI-S1-FE-TYPE",
             "label": "Extend MacroSnapshot + MacroSignalEntry TS types with dataSource/is_estimate/source_tier",
             "status": "DONE",
             "zone": "apps/frontend",
@@ -2116,30 +2119,35 @@
             "done_at": "2026-06-04T21:20:00Z",
             "done_by": "dev-frontend",
             "commit": "b16d6a89",
-            "note": "DONE 2026-06-04T21:20Z. StockQuote.change->number|null, added changePercent:number|null, staleness/isEstimate/fetchedAt optional. MacroSnapshot: dataSource/is_estimate/source_tier/fedFundsRateIsEstimate/carrySpread/carryRegime all optional. MacroSignalEntry: is_estimate/source_tier/fetched_at optional; regime+carrySpread nullable. +8 tests (dsi-s1-fe-type.test.ts). 303/303 Vitest GREEN. tsc exit 0. ops_rebuild_required=true (frontend)."
+            "note": "DONE 2026-06-04T21:20Z. StockQuote.change->number|null, added changePercent:number|null, staleness/isEstimate/fetchedAt optional. MacroSnapshot: dataSource/is_estimate/source_tier/fedFundsRateIsEstimate/carrySpread/carryRegime all optional. MacroSignalEntry: is_estimate/source_tier/fetched_at optional; regime+carrySpread nullable. +8 tests (dsi-s1-fe-type.test.ts). 303/303 Vitest GREEN. tsc exit 0. ops_rebuild_required=true (frontend).",
+            "task_id": "DSI-S1-FE-TYPE",
+            "title": "S1c frontend MacroSnapshot/CommoditySnapshot TS types must NOT drop dataSource/per-field freshness/isEstimate — propagate to render"
           },
           {
-            "id": "DSI-S2-PRICE",
             "label": "stock-price Staleness propagation + Change nullability + Tier-3 no-restamp",
             "status": "DONE",
             "zone": "apps/stock-price",
-            "size": "M"
+            "size": "M",
+            "task_id": "DSI-S2-PRICE",
+            "title": "S2 stock-price: propagate Staleness through FetchPriceResponse; Tier3 stop re-stamping FetchedAt + mark change fields unavailable not 0"
           },
           {
-            "id": "DSI-S3-SECTOR-FIN",
             "label": "Sector/fin fixture clusters -> null + is_estimate (P2)",
             "status": "DONE",
             "zone": "apps/mcp-server",
             "size": "L",
-            "note": " || C3 bondMaturity QA-blocker CLOSED 2026-06-04 (commit 1473f812 + rebuild): bond_maturity.is_seed_data column (ADD COLUMN DEFAULT 1 backfilled 5 rows) + DB-path rowToEvent static_seed. ROUTER LIVE-VERIFIED get_bond_maturity_calendar now emits [SEED DATA] banner. QA all 5 clusters (C1-C5)+macro PASS."
+            "note": " || C3 bondMaturity QA-blocker CLOSED 2026-06-04 (commit 1473f812 + rebuild): bond_maturity.is_seed_data column (ADD COLUMN DEFAULT 1 backfilled 5 rows) + DB-path rowToEvent static_seed. ROUTER LIVE-VERIFIED get_bond_maturity_calendar now emits [SEED DATA] banner. QA all 5 clusters (C1-C5)+macro PASS.",
+            "task_id": "DSI-S3-SECTOR-FIN",
+            "title": "S3 sector/financial signals on fabricated inputs: credit/energy/bond-seed + bctc ??0 false deltas + extractionConfidence ??1 max-confidence — flag or fail-loud"
           },
           {
-            "id": "DSI-MACRO-INDICATORS-LATENT",
             "label": "LATENT BACKLOG ONLY: macro-indicators Go plane per-field provenance (gate on container entering runtime)",
             "status": "DONE-LIVE-VERIFIED",
             "zone": "apps/macro-indicators",
             "size": "M",
-            "note": "DONE-LIVE-VERIFIED 2026-06-04 (commit 09e93d76, dev-macro-indicators). R-4 assumption FALSE: container Up 45h healthy + IS live serving path. Per-input liveness gate; carry suppressed regime=UNKNOWN+is_estimate+source_tier4 when fedFunds estimate; dataSource gate extended to all 5 inputs; true FRED fetched_at_source (never time.Now). go test 12pkg green, lint 0, sandbox 20/20. ROUTER LIVE-VERIFIED get_macro_snapshot via gateway: regime UNKNOWN (was FII_OUTFLOW_RISK), dataSource estimate (was live), carrySpread null, fetched_at_source 2026-05-28. THIS was the real FIX-MACRO-FEDFUNDS-REGRESS fix."
+            "note": "DONE-LIVE-VERIFIED 2026-06-04 (commit 09e93d76, dev-macro-indicators). R-4 assumption FALSE: container Up 45h healthy + IS live serving path. Per-input liveness gate; carry suppressed regime=UNKNOWN+is_estimate+source_tier4 when fedFunds estimate; dataSource gate extended to all 5 inputs; true FRED fetched_at_source (never time.Now). go test 12pkg green, lint 0, sandbox 20/20. ROUTER LIVE-VERIFIED get_macro_snapshot via gateway: regime UNKNOWN (was FII_OUTFLOW_RISK), dataSource estimate (was live), carrySpread null, fetched_at_source 2026-05-28. THIS was the real FIX-MACRO-FEDFUNDS-REGRESS fix.",
+            "task_id": "DSI-MACRO-INDICATORS-LATENT",
+            "title": "macro-indicators Go usecases.go fixture fallback (fedFunds 5.33 / VND deposit 4.7) masquerading as live — per-input liveness gate + carrySpread null when estimate"
           }
         ],
         "signoff_at": "2026-06-04T20:05:28Z",
