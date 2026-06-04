@@ -1,5 +1,27 @@
 # QA — Notebook
 
+## cycle-190 · 2026-06-04T11:30Z · RAPID-DATA-LAYER Phase 1 P1 batch gate
+
+Sprint: RAPID-DATA-LAYER | Tasks: FIX-A, FIX-B, FIX-C, FIX-D, FIX-E, FIX-H | Verdict: MIXED — 5 PASS / 1 FAIL (FIX-B data gap)
+
+**FIX-A (get_company_profile):** PASS. Live: 10 shareholders (top: Trương Gia Bình 6.89%), 17 officers (CEO: Nguyễn Văn Khoa), foreign_holding_ratio=null (honest, no current_holding_ratio in DB). Unit tests 8/8. Structured JSON confirmed. AC-1..5 all met.
+
+**FIX-B (market_cap wired):** FAIL-DATA. Column wired + persisted correctly in vnstockStore.ts:385/389. Live: `get_market_cap(FPT)` returns `market_cap_billion:null`. DB: 0 of 2856 vnstock_trading_stats rows have non-null market_cap_bn — today's syncs (08:59Z) all null. Root: vnstock Python ratio() API call silently failing (try/except pass in TRADING_STATS_SCRIPT). AC requires non-null value from a real watchlist ticker. Code is correct; data pipeline is not filling the column. FU-FIXB-COLUMNKEY-VERIFY remains unresolved.
+
+**FIX-C (get_bctc_series):** PASS. Live: `get_bctc_series(FPT, fields=[roe,net_revenue,debt_to_equity])` returned 2 DONE periods (2026-Q1, 2025-Q4) with numeric values. Unit tests 9/9. Multi-period structured JSON confirmed.
+
+**FIX-D (structured_data in get_bctc_full):** PASS. Live: content[1].structured_data.roe=6.173 (float, recomputed-on-read), debt_to_equity=0.401 (float), net_revenue=12479997.2 (float). pe/pb null (market-cap data gap — known, documented). Unit tests 17/17. Backward-compat text in content[0] confirmed.
+
+**FIX-E (price history 90d cap lifted):** PASS. Live: `get_price_history(FPT, days=180)` accepted + returns data. days=731 rejected (schema max=730). priceHistoryTools.ts:192 cap widened 90→730. FIX-E confirmed operational.
+
+**FIX-H (insider lookback 180d):** PASS. Source ground-truth: insiderTools.ts:105 `.max(180)`, L118 `Math.min(180, days)` — both confirm 180d. Live: `get_insider_transactions(FPT, days=180)` returns `lookbackDays:180`, 0 transactions (honest — no FPT data in insider_transactions table, all 0 rows). days=181 correctly rejected by schema. Schema + runtime both confirmed 180d cap.
+
+**Tests run:** RAPID-A (8/8), FIX-C (9/9), 240-bctc-full (17/17). tsc: not re-run (no source changes in this QA cycle). DDD: no new infra imports in FIX-A/C/D/H. Security: no new process.env or secrets.
+
+**Next:** FIX-B → developer/fixer: diagnose vnstock ratio() column key mismatch (FU-FIXB-COLUMNKEY-VERIFY — check 'Chỉ tiêu định giá'/'Market Cap (Bn. VND)' key against live vnstock output; may need key normalization). All other P1 tasks: DONE.
+
+---
+
 ## cycle-189 · 2026-06-03T07:15Z · LF-DEPLOY gate — CHANGES_REQUESTED
 
 Sprint: BCTC-LAYOUT-FIRST Phase 0 | Task: LF-DEPLOY | Verdict: CHANGES_REQUESTED
