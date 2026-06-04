@@ -1,0 +1,25 @@
+{
+  "from": "ops-vps-fetch",
+  "to": "dev-vps-crawls",
+  "type": "recon-complete",
+  "payload": {
+    "source_name": "vietstock-agm-plan",
+    "recon_doc": "docs/vps-sources/vietstock-agm-plan/recon.md",
+    "anti_bot_type": "none",
+    "suggested_technique": "session-csrf-warmup",
+    "trigger": "new_source_needed",
+    "task_ref": "RECON-AGM-1",
+    "verdict": "FETCHABLE",
+    "primary_endpoint": "https://finance.vietstock.vn/Data/GetData_PlannedTarget",
+    "secondary_endpoint": "https://finance.vietstock.vn/Data/GetData_PlannedTarget_ImplementStatus",
+    "pdf_fallback_endpoint": "https://finance.vietstock.vn/data/getrptfile",
+    "dev_pdf_extractor_needed": false,
+    "data_shape": "JSON: {data: {Data_Results: [{StockCode, PTID, PTName, YearPeriod, Value}], Year_Results: [{Year}]}}",
+    "ptid_map": {"5": "Doanh thu ke hoach", "8": "LNTT ke hoach", "9": "LNST ke hoach"},
+    "history_depth": "5 years (2022-2026) confirmed for VIC/FPT/ACB/NVL",
+    "feature_gate": "FIX-G (management-track-record plan-accuracy feature)",
+    "notes": "Session warm: GET /VIC/ke-hoach-kinh-doanh.htm -> extract CSRF from #__CHART_AjaxAntiForgeryForm input. Then POST with stockCode + token. CookieJar required. No Cloudflare. VPS accessible 200 OK ~0.25s."
+  },
+  "priority": "high",
+  "createdAt": "2026-06-04T08:10:00Z"
+}

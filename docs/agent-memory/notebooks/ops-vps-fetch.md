@@ -115,6 +115,28 @@ Trigger: dev-team :07 tick — verify VPS-NEWS-CAFEF-VNECO sprint (b99bf783) in 
 
 **Follow-up required:** Install beautifulsoup4 on VPS to activate the primary extraction path. `pip3 install beautifulsoup4` is sufficient (requests already installed — article-body-fetcher.py imported it successfully). Track as VPS-BS4-INSTALL.
 
+## c005 · 2026-06-04T08:10Z · RECON-AGM-1
+
+Trigger: operator P0 spike — find fetchable source for AGM business plan figures (planned revenue/profit per ticker per year) for management-track-record / plan-vs-actual feature (FIX-G gate).
+
+**VERDICT: FETCHABLE — structured JSON, no OCR needed**
+
+Primary source confirmed: `https://finance.vietstock.vn/Data/GetData_PlannedTarget`
+- POST with `stockCode=<TICKER>` + `__RequestVerificationToken` (from `#__CHART_AjaxAntiForgeryForm` on ke-hoach page)
+- Returns `Data_Results[]` with PTID/PTName/YearPeriod/Value for 5 years (2022–2026)
+- PTID 5=revenue plan, 8=pre-tax profit plan, 9=after-tax profit plan
+- Verified for VIC, FPT, ACB, NVL. No Cloudflare. No geo-block. VPS 200 OK ~0.25s.
+- Anti-bot: session CSRF warmup only (ASP.NET double-submit pattern, CookieJar required)
+
+Also confirmed: `GetData_PlannedTarget_ImplementStatus` = plan vs actual quarterly actuals inline (FIX-G gets both plan AND actuals from one source).
+
+PDF path (not needed for figures): `getrptfile` API returns direct PDF URLs per ticker+year (documentTypeID=4 for Nghị quyết ĐHĐCĐ). PDFs are image-based (iLovePDF/PdfTools SDK, 1 Font object, no text layer) — dev-pdf-extractor would be needed for raw PDF parse, but this is the fallback only.
+
+Discarded candidates: SSC UBCK (Oracle ADF JSF, no REST API), HNX CBTT AJAX (ticker filter broken on pAction=0; no structured plan figures), CafeF (404 on DHCD pages), FireAnt (401 auth required).
+
+Signal dropped: docs/signals/dev-vps-crawls-2026-06-04T08-10-00Z.json
+Recon doc: docs/vps-sources/vietstock-agm-plan/recon.md
+
 ## c004 · 2026-06-04 · FIX-CTG-2b-DEPLOY
 
 Trigger: operator task — deploy FIX-CTG-2b (rank>=2-only guard) to VPS.
