@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "RAPID-DATA-LAYER Phase 2 shipped this tick (FIX-A get_company_profile + FIX-D get_bctc_full structured_data, commits 7a44a291 + 0e8c2be0, mcp-server rebuilt 157->158). Both DONE-LIVE-VERIFIED (shareholders/officers/free_float real; structured_data matches text on DONE record). Residual honest-nulls foreign_holding_ratio + receivables (FPT HAS trading_stats row => same column-key/reflow ambiguity as FIX-B; FU-PROFILE-DATA-VERIFY filed, BLOCKED-UPSTREAM). NEXT P2 (WIP<=2): FIX-C get_bctc_series + FIX-E price_history 90->730d (both unblocked, dev-mcp-server). Then P3 FIX-F (bank-form guard), P4 FIX-G (AGM recon done), P5 FIX-I. FU-FIXB-COLUMNKEY-VERIFY + FU-PROFILE-DATA-VERIFY batch on next successful vnstock sweep. Cowork reloaded (FU-COWORK-SESSION-RELOAD DONE this tick).",
+    "next_action": "RAPID-DATA-LAYER Phase 2b shipped this tick (10:07Z): FIX-C get_bctc_series + FIX-E price_history 90->730d, commits bf9b3105 + 46749207 (consistency root-cause fix), mcp-server rebuilt to 159 tools. Both DONE-LIVE-VERIFIED. FIX-C: shared bctcRatioRecompute.ts helper makes series/full derived ratios byte-identical (live-confirmed roe 6.173 match); T9 regression guard. NEXT P3 (WIP<=2): FIX-F charter_capital + investment_property (BANK-FORM guard REQUIRED per brief — bctc discriminator); then P4 FIX-G AGM plans (dev-vps-crawls+dev-mcp-server, recon recipe docs/vps-sources/vietstock-agm-plan/recon.md); P5 FIX-I officers start_date (BLOCKED - needs source). DATA-PENDING (BLOCKED-UPSTREAM, batch on next successful vnstock sweep): FU-FIXB-COLUMNKEY-VERIFY (market_cap_bn), FU-PROFILE-DATA-VERIFY (foreign_holding_ratio + receivables). Cowork reloaded (FU-COWORK-SESSION-RELOAD DONE).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T09:32:34Z",
+    "updated_at": "2026-06-04T10:50:07Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-04T09:32:34Z",
+    "_updated_at": "2026-06-04T10:50:07Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2262,7 +2262,7 @@
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "get_bctc_series multi-period BCTC tool",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P2",
         "size": "M",
         "zone": "apps/mcp-server/",
@@ -2279,14 +2279,14 @@
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/financial-reports/"
         ],
-        "note": "RC-2 (scope). New get_bctc_series {code, fields[], periods} -> JSON array, financial_reports ORDER BY sort_key DESC LIMIT periods. Subset fields (pe,pb,roe,debt_to_equity,operating_cf,net_profit,eps,total_assets,net_revenue,equity_total). GUARD: refine_status='DONE' only (PUB-1 gate) — no OCR garbage. Risk-1: sparse <10yr history common -> skill degrades gracefully (median of present). Dep FIX-B per architect §9. || UNBLOCKED 2026-06-04: FIX-B code shipped b275239d (dep cleared)."
+        "note": "RC-2 (scope). New get_bctc_series {code, fields[], periods} -> JSON array, financial_reports ORDER BY sort_key DESC LIMIT periods. Subset fields (pe,pb,roe,debt_to_equity,operating_cf,net_profit,eps,total_assets,net_revenue,equity_total). GUARD: refine_status='DONE' only (PUB-1 gate) — no OCR garbage. Risk-1: sparse <10yr history common -> skill degrades gracefully (median of present). Dep FIX-B per architect §9. || UNBLOCKED 2026-06-04: FIX-B code shipped b275239d (dep cleared). || DONE-LIVE-VERIFIED 2026-06-04T10:50:07Z (commits bf9b3105 + consistency-fix 46749207, live 159 tools). get_bctc_series raw-verified by router: structured JSON array, DONE-only guard working (FPT 2 DONE periods served of 4 requested = honest sparse history), unit_note present. CONSISTENCY FIX (root-cause): extracted shared domain helper bctcRatioRecompute.ts (SSOT, DRY) imported by BOTH get_bctc_series + get_bctc_full -> derived ratios can no longer drift. Live cross-tool check CONFIRMED: get_bctc_series(FPT) 2026-Q1 roe=6.173140860229057 + debt_to_equity=0.4011866910919166 are BYTE-IDENTICAL to get_bctc_full structured_data (same percent scale) -- the prior null/0.0462-ratio-scale divergence is gone. T9 cross-tool consistency regression test added. Bonus debt reduction: FIX-D inline recompute block de-duplicated into the helper."
       },
       {
         "task_id": "FIX-E",
         "type": "FIX",
         "sprint": "RAPID-DATA-LAYER",
         "title": "get_price_history 90 -> 730 days + JSON array output",
-        "status": "BACKLOG",
+        "status": "DONE-LIVE-VERIFIED",
         "priority": "P2",
         "size": "S",
         "zone": "apps/mcp-server/",
@@ -2297,7 +2297,7 @@
         "files": [
           "apps/mcp-server/src/interface/mcp/tools/market-data/priceHistoryTools.ts"
         ],
-        "note": "RC-5. (1) priceHistoryTools.ts:191 Math.min(...,90)->Math.min(...,730). daily_ohlcv holds permanent candles (Task 1804c no pruning); query line 210 already param-driven, no schema change. (2) Structured JSON array (code,date,close,volume) + text. Signal B EPS overlay = FIX-C cross-ref by date."
+        "note": "RC-5. (1) priceHistoryTools.ts:191 Math.min(...,90)->Math.min(...,730). daily_ohlcv holds permanent candles (Task 1804c no pruning); query line 210 already param-driven, no schema change. (2) Structured JSON array (code,date,close,volume) + text. Signal B EPS overlay = FIX-C cross-ref by date. || DONE-LIVE-VERIFIED 2026-06-04T10:50:07Z (commit bf9b3105, live). get_price_history raw-verified by router: days=365 ACCEPTED (was hard-capped 90; zod .max(730) + Math.min(...,730) both widened); 32 candles served across the window; NEW structured JSON array {code,date,close,volume} present ALONGSIDE unchanged Vietnamese text (non-breaking confirmed). 2026-05-30 close=0 is a pre-existing daily_ohlcv data quirk (honest passthrough, not FIX-E scope). Bonus debt reduction: dev fixed a pre-existing 178-price-history test bug (actionCode->code param, 0->7 pass)."
       },
       {
         "task_id": "FIX-F",
