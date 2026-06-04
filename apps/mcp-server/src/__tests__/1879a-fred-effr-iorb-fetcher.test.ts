@@ -1,15 +1,20 @@
 /**
- * Task 1879a — FRED EFFR/IORB Fetcher Tests
+ * Task 1879a — FRED EFFR/IORB Fetcher Tests (updated FU-FRED-EFFR-STALE)
  *
- * TDD RED phase — 6 tests covering all ACs from spec §3.7.
+ * Tests the rewritten fetcher which uses api.stlouisfed.org JSON endpoint
+ * instead of the legacy Akamai-blocked fredgraph.csv URL.
  *
  * Tests:
- *   T1 — fetch happy-path: mock CSV for both EFFR + IORB → N rows inserted
- *   T2 — idempotency: re-run same CSV → count unchanged (INSERT OR IGNORE)
- *   T3 — backfill: 365-row CSV → all 365 rows inserted per series
+ *   T1 — fetch happy-path: mock JSON for both EFFR + IORB → N rows inserted
+ *   T2 — idempotency: re-run same JSON → count unchanged (INSERT OR IGNORE)
+ *   T3 — backfill: 45-row JSON → all 45 rows inserted per series
  *   T4 — schema guard: fred_series_daily has correct columns + UNIQUE constraint
  *   T5 — HTTP 500 → 3 retries → null returned, 0 rows written
  *   T6 — cron integration: macroIndicatorRefreshJob calls fetchFredEffrIorb
+ *   T7 — missing FRED_API_KEY → ERROR logged + null returned (fail-loud)
+ *   T8 — "." values in JSON observations → skipped, only numeric rows inserted
+ *   T9 — incremental URL uses MAX(date) from DB as observation_start
+ *  T10 — cold-start URL falls back to today-45d window when DB empty
  *
  * DB: in-memory via setup.ts preload (Bun.env["DB_PATH"] = ":memory:").
  *
@@ -23,36 +28,41 @@ Bun.env["DB_PATH"] = ":memory:";
 
 import { closeDb, initDatabase, getDb } from "../infrastructure/db/schema.js";
 import type { FredHttpClient } from "../infrastructure/fetchers/fredApi.js";
-import { fetchFredEffrIorb } from "../infrastructure/fetchers/fredEffrIorb.js";
+import {
+  fetchFredEffrIorb,
+  parseFredEffrIorbJson,
+  buildFredEffrIorbUrl,
+} from "../infrastructure/fetchers/fredEffrIorb.js";
 
-// ── CSV fixtures ────────────────────────────────────────────────────────────
+// ── JSON fixtures ────────────────────────────────────────────────────────────
 
-function makeCsv(rows: Array<{ date: string; value: number }>): string {
-  return ["DATE,VALUE", ...rows.map((r) => `${r.date},${r.value}`)].join("\n");
+function makeJson(
+  rows: Array<{ date: string; value: string | number }>,
+): string {
+  return JSON.stringify({
+    observations: rows.map((r) => ({ date: r.date, value: String(r.value) })),
+  });
 }
 
-const EFFR_CSV_SMALL = makeCsv([
+const EFFR_JSON_SMALL = makeJson([
   { date: "2026-05-07", value: 4.33 },
   { date: "2026-05-08", value: 4.33 },
   { date: "2026-05-09", value: 4.33 },
 ]);
 
-const IORB_CSV_SMALL = makeCsv([
+const IORB_JSON_SMALL = makeJson([
   { date: "2026-05-07", value: 4.4 },
   { date: "2026-05-08", value: 4.4 },
   { date: "2026-05-09", value: 4.4 },
 ]);
 
-function make365Rows(baseValue: number): Array<{ date: string; value: number }> {
+function make45Rows(baseValue: number): Array<{ date: string; value: number }> {
   const rows: Array<{ date: string; value: number }> = [];
-  const start = new Date("2025-05-12");
-  for (let i = 0; i < 365; i++) {
+  const start = new Date("2026-04-20");
+  for (let i = 0; i < 45; i++) {
     const d = new Date(start);
     d.setDate(start.getDate() + i);
-    rows.push({
-      date: d.toISOString().slice(0, 10),
-      value: baseValue,
-    });
+    rows.push({ date: d.toISOString().slice(0, 10), value: baseValue });
   }
   return rows;
 }
@@ -62,10 +72,14 @@ function make365Rows(baseValue: number): Array<{ date: string; value: number }> 
 beforeEach(async () => {
   closeDb();
   await initDatabase();
+  // Ensure FRED_API_KEY is set for tests that need it
+  Bun.env["FRED_API_KEY"] = "test-api-key-32charxxxxxxxxxxxxxxx";
 });
 
 afterEach(() => {
   closeDb();
+  // Clean up key override
+  delete Bun.env["FRED_API_KEY"];
 });
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
@@ -82,14 +96,13 @@ function countRows(series: string): number {
 
 // ── T1: Happy-path fetch inserts rows ───────────────────────────────────────
 
-describe("Task 1879a — FRED EFFR/IORB Fetcher", () => {
-  it("T1: fetches EFFR + IORB CSV and inserts parsed rows into fred_series_daily", async () => {
+describe("Task 1879a — FRED EFFR/IORB Fetcher (JSON endpoint)", () => {
+  it("T1: fetches EFFR + IORB JSON and inserts parsed rows into fred_series_daily", async () => {
     let callCount = 0;
     const mockClient: FredHttpClient = {
       async get(_url: string): Promise<string> {
         callCount++;
-        // Alternate: first call = EFFR, second = IORB
-        return callCount === 1 ? EFFR_CSV_SMALL : IORB_CSV_SMALL;
+        return callCount === 1 ? EFFR_JSON_SMALL : IORB_JSON_SMALL;
       },
     };
 
@@ -104,12 +117,12 @@ describe("Task 1879a — FRED EFFR/IORB Fetcher", () => {
 
   // ── T2: Idempotency ────────────────────────────────────────────────────────
 
-  it("T2: re-run with same CSV produces 0 net new rows (INSERT OR IGNORE)", async () => {
+  it("T2: re-run with same JSON produces 0 net new rows (INSERT OR IGNORE)", async () => {
     let callCount = 0;
     const mockClient: FredHttpClient = {
       async get(_url: string): Promise<string> {
         callCount++;
-        return callCount % 2 === 1 ? EFFR_CSV_SMALL : IORB_CSV_SMALL;
+        return callCount % 2 === 1 ? EFFR_JSON_SMALL : IORB_JSON_SMALL;
       },
     };
 
@@ -131,17 +144,17 @@ describe("Task 1879a — FRED EFFR/IORB Fetcher", () => {
     expect(iorbAfterSecond).toBe(iorbAfterFirst); // no new rows
   });
 
-  // ── T3: Backfill 365 rows ─────────────────────────────────────────────────
+  // ── T3: Backfill 45 rows ─────────────────────────────────────────────────
 
-  it("T3: backfill: 365-row CSV inserts all 365 rows per series", async () => {
-    const effr365 = make365Rows(4.33);
-    const iorb365 = make365Rows(4.4);
+  it("T3: 45-row JSON inserts all 45 rows per series", async () => {
+    const effr45 = make45Rows(4.33);
+    const iorb45 = make45Rows(4.4);
 
     let callCount = 0;
     const mockClient: FredHttpClient = {
       async get(_url: string): Promise<string> {
         callCount++;
-        return callCount === 1 ? makeCsv(effr365) : makeCsv(iorb365);
+        return callCount === 1 ? makeJson(effr45) : makeJson(iorb45);
       },
     };
 
@@ -149,8 +162,8 @@ describe("Task 1879a — FRED EFFR/IORB Fetcher", () => {
     const result = await fetchFredEffrIorb(mockClient, db);
 
     expect(result).not.toBeNull();
-    expect(countRows("EFFR")).toBe(365);
-    expect(countRows("IORB")).toBe(365);
+    expect(countRows("EFFR")).toBe(45);
+    expect(countRows("IORB")).toBe(45);
   });
 
   // ── T4: Schema guard ──────────────────────────────────────────────────────
@@ -158,14 +171,6 @@ describe("Task 1879a — FRED EFFR/IORB Fetcher", () => {
   it("T4: fred_series_daily has columns {id, series, date, value, fetched_at} with UNIQUE(series, date)", async () => {
     const db = getDb();
 
-    // Table must exist (created by initDatabase)
-    const tableInfo = db
-      .prepare<{ name: string; type: string; notnull: number }, [string]>(
-        `PRAGMA table_info(fred_series_daily)`,
-      )
-      .all("") as Array<{ name: string; type: string; notnull: number }>;
-
-    // Actually PRAGMA table_info doesn't need a parameter — fix:
     const cols = db
       .prepare(`PRAGMA table_info(fred_series_daily)`)
       .all() as Array<{ name: string; type: string; notnull: number }>;
@@ -194,7 +199,7 @@ describe("Task 1879a — FRED EFFR/IORB Fetcher", () => {
 
   // ── T5: HTTP 500 → 3 retries → null, 0 rows ──────────────────────────────
 
-  it("T5: HTTP 500 for EFFR triggers 3 retries then returns null, 0 rows written", async () => {
+  it("T5: HTTP 500 for both series triggers 3 retries each then returns null, 0 rows written", async () => {
     let attemptCount = 0;
     const mockClient: FredHttpClient = {
       async get(_url: string): Promise<string> {
@@ -223,10 +228,6 @@ describe("Task 1879a — FRED EFFR/IORB Fetcher", () => {
   // ── T6: Cron integration ──────────────────────────────────────────────────
 
   it("T6: macroIndicatorRefreshJob invokes fetchFredEffrIorb (integration check)", async () => {
-    // We verify by checking that the module can be imported and that
-    // the function is exported (structural test — avoids network in CI).
-    // Full integration is confirmed by T1 passing against the same DB schema
-    // that macroIndicatorRefreshJob uses.
     const fetcher = await import("../infrastructure/fetchers/fredEffrIorb.js");
     expect(typeof fetcher.fetchFredEffrIorb).toBe("function");
 
@@ -234,25 +235,135 @@ describe("Task 1879a — FRED EFFR/IORB Fetcher", () => {
     const job = await import("../scheduler/macro/macroIndicatorRefreshJob.js");
     expect(typeof job.macroIndicatorRefreshJob).toBe("function");
 
-    // Confirm the job file references fetchFredEffrIorb by running it with mocked deps
-    // Use a mock client that returns empty CSV (no rows) — just confirming no crash
-    let effrCalled = false;
-    let iorbCalled = false;
+    // Confirm the fetcher works with a mock client (no network call)
     let callCount = 0;
     const mockClient: FredHttpClient = {
-      async get(url: string): Promise<string> {
+      async get(_url: string): Promise<string> {
         callCount++;
-        if (url.includes("EFFR")) effrCalled = true;
-        if (url.includes("IORB")) iorbCalled = true;
-        return "DATE,VALUE\n2026-05-09,4.33";
+        return makeJson([{ date: "2026-06-03", value: 3.62 }]);
       },
     };
 
     const db = getDb();
     const noopSleep = (_ms: number): Promise<void> => Promise.resolve();
-    // Direct call to fetcher (same code path the job uses)
-    await fetcher.fetchFredEffrIorb(mockClient, db, noopSleep);
+    const r = await fetcher.fetchFredEffrIorb(mockClient, db, noopSleep);
 
-    expect(effrCalled || iorbCalled || callCount >= 1).toBe(true);
+    expect(r).not.toBeNull();
+    expect(callCount).toBeGreaterThanOrEqual(1);
+  });
+
+  // ── T7: Missing FRED_API_KEY → fail-loud ─────────────────────────────────
+
+  it("T7: missing FRED_API_KEY returns null immediately (fail-loud)", async () => {
+    // Remove the key for this test
+    const savedKey = Bun.env["FRED_API_KEY"];
+    delete Bun.env["FRED_API_KEY"];
+
+    let callCount = 0;
+    const mockClient: FredHttpClient = {
+      async get(_url: string): Promise<string> {
+        callCount++;
+        return EFFR_JSON_SMALL;
+      },
+    };
+
+    const db = getDb();
+    const result = await fetchFredEffrIorb(mockClient, db);
+
+    // Must return null when key is missing
+    expect(result).toBeNull();
+    // Must NOT have made any HTTP calls
+    expect(callCount).toBe(0);
+    // Must NOT have inserted any rows
+    expect(countRows("EFFR")).toBe(0);
+    expect(countRows("IORB")).toBe(0);
+
+    // Restore key for afterEach cleanup
+    if (savedKey) Bun.env["FRED_API_KEY"] = savedKey;
+  });
+
+  // ── T8: "." values skipped ────────────────────────────────────────────────
+
+  it('T8: observations with value "." are skipped; numeric rows are inserted', async () => {
+    const jsonWithDots = makeJson([
+      { date: "2026-05-07", value: 4.33 },
+      { date: "2026-05-08", value: "." },   // missing — must be skipped
+      { date: "2026-05-09", value: 4.33 },
+      { date: "2026-05-10", value: "." },   // missing — must be skipped
+      { date: "2026-05-12", value: 4.33 },
+    ]);
+
+    // parseFredEffrIorbJson unit test
+    const rows = parseFredEffrIorbJson(jsonWithDots, "EFFR");
+    expect(rows).not.toBeNull();
+    expect(rows!.length).toBe(3);              // only 3 numeric rows
+    expect(rows!.every((r) => r.value === 4.33)).toBe(true);
+
+    // Integration: only 3 rows inserted (dots not in DB)
+    let effrCalled = false;
+    const mockClient: FredHttpClient = {
+      async get(url: string): Promise<string> {
+        if (url.includes("EFFR")) {
+          effrCalled = true;
+          return jsonWithDots;
+        }
+        return makeJson([{ date: "2026-05-07", value: 4.4 }]);
+      },
+    };
+
+    const db = getDb();
+    const result = await fetchFredEffrIorb(mockClient, db);
+
+    expect(result).not.toBeNull();
+    expect(effrCalled).toBe(true);
+    expect(countRows("EFFR")).toBe(3);  // only numeric rows
+  });
+
+  // ── T9: Incremental URL uses MAX(date) from DB ────────────────────────────
+
+  it("T9: buildFredEffrIorbUrl uses MAX(date) from DB as observation_start when rows exist", async () => {
+    const db = getDb();
+
+    // Seed a row so MAX(date) = '2026-05-28'
+    db.exec(`INSERT OR IGNORE INTO fred_series_daily (series, date, value) VALUES ('EFFR', '2026-05-28', 4.33)`);
+
+    const url = buildFredEffrIorbUrl("EFFR", "test-key", db);
+
+    // URL must contain the last-known date as observation_start
+    expect(url).toContain("observation_start=2026-05-28");
+    // Must contain series_id=EFFR
+    expect(url).toContain("series_id=EFFR");
+    // Must use the api subdomain (not fredgraph.csv)
+    expect(url).toContain("api.stlouisfed.org");
+    expect(url).not.toContain("fredgraph.csv");
+    // Must mask-safely contain the key
+    expect(url).toContain("api_key=test-key");
+  });
+
+  // ── T10: Cold-start falls back to today-45d ───────────────────────────────
+
+  it("T10: buildFredEffrIorbUrl falls back to today-45d window when DB has no rows for series", async () => {
+    const db = getDb();
+    // No rows in DB for EFFR
+
+    const beforeDate = new Date();
+    beforeDate.setDate(beforeDate.getDate() - 46); // slightly before window
+    const afterDate = new Date();
+    afterDate.setDate(afterDate.getDate() - 44);   // slightly after window
+
+    const url = buildFredEffrIorbUrl("EFFR", "test-key", db);
+
+    // Extract observation_start from URL
+    const match = url.match(/observation_start=(\d{4}-\d{2}-\d{2})/);
+    expect(match).not.toBeNull();
+    const startDate = new Date(match![1]!);
+
+    // Must be within the 44–46 day window (i.e., today-45d ± 1d tolerance)
+    expect(startDate.getTime()).toBeGreaterThan(beforeDate.getTime());
+    expect(startDate.getTime()).toBeLessThan(afterDate.getTime());
+
+    // Must still use api subdomain
+    expect(url).toContain("api.stlouisfed.org");
+    expect(url).not.toContain("fredgraph.csv");
   });
 });
