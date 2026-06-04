@@ -4,14 +4,14 @@
   "_updated_at": "2026-06-04T07:45:26Z",
   "_updated_by": "po",
   "head": {
-    "status": "idle",
-    "active_task_id": null,
-    "next_agent": "po",
-    "next_action": "RAPID-DATA-LAYER Phase 2b shipped this tick (10:07Z): FIX-C get_bctc_series + FIX-E price_history 90->730d, commits bf9b3105 + 46749207 (consistency root-cause fix), mcp-server rebuilt to 159 tools. Both DONE-LIVE-VERIFIED. FIX-C: shared bctcRatioRecompute.ts helper makes series/full derived ratios byte-identical (live-confirmed roe 6.173 match); T9 regression guard. NEXT P3 (WIP<=2): FIX-F charter_capital + investment_property (BANK-FORM guard REQUIRED per brief — bctc discriminator); then P4 FIX-G AGM plans (dev-vps-crawls+dev-mcp-server, recon recipe docs/vps-sources/vietstock-agm-plan/recon.md); P5 FIX-I officers start_date (BLOCKED - needs source). DATA-PENDING (BLOCKED-UPSTREAM, batch on next successful vnstock sweep): FU-FIXB-COLUMNKEY-VERIFY (market_cap_bn), FU-PROFILE-DATA-VERIFY (foreign_holding_ratio + receivables). Cowork reloaded (FU-COWORK-SESSION-RELOAD DONE).",
+    "status": "dispatching",
+    "active_task_id": "FIX-A",
+    "next_agent": "dev-mcp-server",
+    "next_action": "RAPID-DATA-LAYER Phase 1 P1 DISPATCH: 3 parallel atomic tasks (FIX-A / FIX-D / FIX-H) for dev-mcp-server. SEQUENCING RATIONALE: FIX-B (market-cap tool) DONE-CODE (deployed b275239d), waiting data-refresh via FU-FIXB-COLUMNKEY-VERIFY (vnstock sync). Phase 1 P1 unblocks SKILL-1/2/3/4 for immediate live-trial (market-cap + ownership + receivables + insider-window). Phase 1 P2 deferred (FIX-C/E already DONE 2b). NEXT: P3 FIX-F (charter_capital + investment_property, BANK-FORM guard per brief). Handoffs created: docs/handoffs/FIX-A-GET-COMPANY-PROFILE.md (shareholders+officers+foreign%), FIX-D-BCTC-FULL-STRUCTURED-JSON.md (structured output+receivables join), FIX-H-INSIDER-LOOKBACK-180D.md (90->180d cap lift). WIP enforced: 2 max; FIX-A + FIX-D parallel (independent files); FIX-H XS solo; QA rebuild + live-verify all 3 before DONE. Route: dev-mcp-server.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-04T10:50:07Z",
-    "updated_by": "dev-team"
+    "updated_at": "2026-06-04T11:14:32Z",
+    "updated_by": "pm"
   },
   "dashboard_section_cache": {
     "section_name": "po",
@@ -1987,6 +1987,38 @@
             "zone": "apps/mcp-server/",
             "priority": "p1",
             "note": "FIX-B-2 get_market_cap MCP tool LIVE-VERIFIED b275239d: callable, returns {code, market_cap_billion, shares_outstanding_approx, fetched_at}, safe-divide null-path confirmed live (get_market_cap(FPT) -> nulls, correct degrade). Populated happy-path inherits FIX-B-1 data-pending (FU-FIXB-COLUMNKEY-VERIFY). 10 unit tests green, tsc clean, sandbox/replay."
+          },
+          {
+            "task_id": "FIX-A",
+            "title": "New MCP tool get_company_profile (shareholders + officers + foreign_holding_ratio from existing vnstock tables)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "S",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/market-data/",
+            "priority": "p1",
+            "unblocks": [
+              "SKILL-4 ownership screening (top 10 shareholders, foreign %, free-float)",
+              "SKILL-5 CEO name for tenure lookup"
+            ],
+            "handoff": "docs/handoffs/FIX-A-GET-COMPANY-PROFILE.md"
+          },
+          {
+            "task_id": "FIX-D",
+            "title": "Extend get_bctc_full to emit structured_data JSON block + add receivables field (JOIN vnstock_balance_sheet)",
+            "type": "SPRINT-S",
+            "owner": "dev-mcp-server",
+            "depends": [],
+            "status": "TODO",
+            "size": "M",
+            "zone": "apps/mcp-server/src/interface/mcp/tools/financial-reports/",
+            "priority": "p1",
+            "unblocks": [
+              "SKILL-1/2/3/4 (text-only → structured JSON, no text parsing needed)",
+              "Agent-readable pe, pb, total_assets, receivables, ratios"
+            ],
+            "handoff": "docs/handoffs/FIX-D-BCTC-FULL-STRUCTURED-JSON.md"
           },
           {
             "task_id": "FIX-H",
