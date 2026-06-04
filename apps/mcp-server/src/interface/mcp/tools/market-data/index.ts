@@ -12,3 +12,4 @@ export { registerPriceAlertTools } from "./priceAlertTools.js";
 export { registerMarketContextTools } from "./marketContextTools.js";
 export { registerInsiderTools } from "./insiderTools.js";
 export { registerMarketWideForeignFlowTool } from "./marketWideForeignFlowTool.js";
+export { registerCompanyProfileTools } from "./companyProfileTools.js";
