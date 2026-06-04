@@ -17,10 +17,10 @@ description: >
 ### Step 1 — Revenue-plan accuracy (T-7)
 
 ```
-call_tool(server="vn-market", tool="get_bctc_full", arguments={"code": "<ticker>", "years": 4})
+call_tool(server="vn-market", tool="get_agm_plan", arguments={"ticker": "<ticker>"})
 ```
 
-Fetch last 3 years of stated revenue targets (AGM resolutions or disclosed plans) vs. actuals.
+Returns AGM plan rev/PBT targets + actuals across reported years. Extract `revenue_target`, `revenue_actual` per year.
 
 ```
 accuracy_score_yr = |actual_revenue - target_revenue| / target_revenue
@@ -33,7 +33,7 @@ Cyclical caveat: look for directional accuracy, not exact match.
 
 ### Step 2 — ROE trend under CEO tenure
 
-Identify current CEO start date from public filings or get_company_info.
+Identify current CEO start date from public filings or `get_company_profile` officers[] (arg `code`).
 
 ```
 roe_pre_tenure_avg  = avg(ROE, 3 years before CEO start)

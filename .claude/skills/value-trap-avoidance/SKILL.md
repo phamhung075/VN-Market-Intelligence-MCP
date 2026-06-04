@@ -20,9 +20,10 @@ description: >
 Fetch price history and earnings history (last 24 months minimum):
 
 ```
-call_tool(server="vn-market", tool="get_market_snapshot", arguments={"code": "<ticker>", "period": "24m"})
+call_tool(server="vn-market", tool="get_price_history", arguments={"code": "<ticker>", "days": 730})
 call_tool(server="vn-market", tool="get_bctc_full", arguments={"code": "<ticker>", "years": 3})
 ```
+`get_price_history` → OHLCV array (730d ≈ 24m). Use closing prices for trend.
 
 **Signal A — Chronically cheap (T-3):**
 ```
@@ -42,7 +43,6 @@ SIGNAL-B fires if:
 ```
 LIKELY-TRAP if SIGNAL-A AND SIGNAL-B both fire
 ```
-
 Thành: "khó quá thì bỏ qua" — cannot explain price/earnings divergence → do NOT invest.
 
 VN-specific Type B mechanics: (a) price pumped for pledged-share refinancing LTV; (b) price raised to 10,000 VND floor for new share issuance; (c) convertible bond requiring price support.

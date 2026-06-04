@@ -15,10 +15,11 @@ description: >
 ### Step 1 — Ownership structure (T-6)
 
 ```
-call_tool(server="vn-market", tool="get_company_info", arguments={"code": "<ticker>"})
+call_tool(server="vn-market", tool="get_company_profile", arguments={"code": "<ticker>"})
 ```
 
-Extract top shareholders list. Apply flags:
+Extract top shareholders list (`shareholders[]`) and officers list (`officers[]`). Apply flags:
+Note: `foreign_holding_ratio` may be null (FU-PROFILE-DATA-VERIFY pending — use FOREIGN-CW-ABSENT flag from shareholders[] instead).
 
 ```
 OWNERLESS         if no single shareholder ≥ 20% AND top holders are all fragmented individuals
@@ -33,7 +34,7 @@ Legal-trouble magnitude rule: impact ∝ founder's ownership stake. Hired-manage
 
 ### Step 2 — Insider transaction check (T-8)
 
-Fetch last 6 months of disclosed insider trades (from get_company_info or insider-disclosure data):
+Fetch last 6 months of disclosed insider trades (from get_company_profile officers[] or insider-disclosure data):
 
 ```
 HIGH-FREQUENCY    if > 3 insider buy/sell events in any single quarter

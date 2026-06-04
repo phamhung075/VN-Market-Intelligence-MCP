@@ -14,10 +14,10 @@ description: >
 ### Step 1 — Fetch market cap
 
 ```
-call_tool(server="vn-market", tool="get_market_snapshot", arguments={"code": "<ticker>"})
+call_tool(server="vn-market", tool="get_market_cap", arguments={"code": "<ticker>"})
 ```
 
-Extract: `market_cap_billion` (VND billions). If not present, derive: price × shares_outstanding / 1e9.
+Extract: `market_cap_billion` (VND billions). Also available: `shares_outstanding`.
 
 ### Step 2 — Size gate (T-1)
 

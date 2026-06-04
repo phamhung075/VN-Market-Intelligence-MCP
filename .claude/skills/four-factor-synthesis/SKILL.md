@@ -19,18 +19,25 @@ description: >
 | `rapid_screen_verdict`, `pe_band`, `pb_band` | SKILL-1 output |
 | `asset_coverage`, `pb_ratio`, `balance_verdict`, `balance_flags` | SKILL-2 output |
 | `governance_score`, `red_flags` | SKILL-4 output |
-| `get_bctc_full` ratios | MCP tool call |
+| `get_bctc_series` + `get_bctc_full` ratios | MCP tool calls |
 
 ### Factor F — Financials (Quantitative)
 
 ```
-call_tool(server="vn-market", tool="get_bctc_full", arguments={"code": "<ticker>", "years": 4})
+call_tool(server="vn-market", tool="get_bctc_series", arguments={
+  "code": "<ticker>",
+  "fields": ["roe", "debt_to_equity", "operating_cf", "net_profit", "eps"]
+})
+call_tool(server="vn-market", tool="get_bctc_full", arguments={"code": "<ticker>"})
 ```
 
+Use series arrays (roe/debt_to_equity/operating_cf) for multi-period trend.
+`get_bctc_full` fills charter_capital + any field absent from series enum (pe/pb may be N/A).
+
 Score STRONG if ALL three hold:
-1. ROE ≥ 12% (latest year)
-2. Debt-to-equity ≤ 1.5 (latest year)
-3. Positive operating cash flow (CFO > 0) in ≥ 3 of the last 4 years
+1. ROE ≥ 12% (latest year — series roe[])
+2. Debt-to-equity ≤ 1.5 (latest year — series debt_to_equity[])
+3. CFO > 0 in ≥ 3 of last 4 years (series operating_cf[])
 
 Score WEAK if any condition fails.
 Also inherit `balance_verdict` from SKILL-2: INSOLVENT or WEAK → force Factor F = WEAK.
@@ -60,14 +67,11 @@ Any SKILL-4 red_flags present AND governance_score ≠ GREEN → log flags in fa
 ### Factor B — Business Model / Moat (Qualitative)
 
 Agent qualitative judgment (upstream market-watcher moat assessment if available):
-
 ```
-STRONG  — stable/growing addressable market + defensible position (pricing power, switching costs,
-           regulatory moat, brand)
-WEAK    — commoditised industry, no pricing power, declining market share, easy substitution
+STRONG  — stable/growing market + defensible position (pricing power, switching costs, moat, brand)
+WEAK    — commoditised, no pricing power, declining share, easy substitution
 ```
-
-If no upstream moat signal: agent must make explicit judgment; document reasoning in output.
+If no upstream moat signal: make explicit judgment; document reasoning.
 
 ### Scenario mapping (2×2)
 
@@ -80,8 +84,7 @@ If no upstream moat signal: agent must make explicit judgment; document reasonin
 | 4b | F=WEAK + V=DEMANDING | **SKIP-FUNDAMENTALS** | Hard stop; do not publish |
 
 Scenario 4 (either 4a or 4b) = `conviction_gate = SKIP`. Non-negotiable.
-
-Trung explicit warning: investors using only F+V (quantitative only) will fall into value traps because G and B are broken. DGC/PC/GVC: beautiful financials, severe governance defects → Scenario 4a retrospectively.
+Trung: F+V-only → value traps. DGC/PC/GVC: beautiful financials, severe governance → Scenario 4a.
 
 ### Output
 
@@ -103,9 +106,7 @@ Trung explicit warning: investors using only F+V (quantitative only) will fall i
 
 ### TNB integration note
 
-SKILL-3 output is a bottom-up company-level input to **TNB Layer 5 Step 3** (map stock against 4 pillars).
-TNB operates at macro/sector level; SKILL-3 operates at company level. Call in sequence:
-macro regime (TNB) → sector filter → SKILL-1/2/3/4 → TNB Layer 5 deep audit.
+SKILL-3 → bottom-up input to TNB Layer 5 Step 3. Sequence: macro (TNB) → sector → SKILL-1/2/3/4 → Layer 5 audit.
 
 ### Usage in flow files
 
