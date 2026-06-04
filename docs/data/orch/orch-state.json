@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "COWORK-HEARTBEAT-NOISE shipped: cowork SILENT-tick heartbeats no longer write to docs/signals/ (goes live on cowork dispatcher next flow reload). Drained 4 SILENT heartbeats this tick. No other actionable dev work — remaining board items DEFERRED-ASYNC/INFRA/PRODUCT or out-of-dev-scope.",
+    "next_action": "Idle — tick 00:09Z drained 4 signals (2 cowork [1 SILENT noise + 1 FIRE liveness], 2 routine bctc FYI ACB/FPT routed-to-po). No NEW dev task: ACB conf-0.38/pub5-blocked is known low-confidence state already tracked by DEFERRED corpus-reflow/current-404 backlog (symptom, not new bug). COWORK-HEARTBEAT-NOISE confirmed taking effect (SILENT noise 4->1/hr). All open board items DEFERRED-ASYNC/INFRA/PRODUCT/out-of-dev-scope.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-03T23:15:30Z",
+    "updated_at": "2026-06-04T00:13:16Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {

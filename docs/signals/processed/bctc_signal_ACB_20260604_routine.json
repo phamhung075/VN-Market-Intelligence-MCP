@@ -1,0 +1,23 @@
+{
+  "ticker": "ACB",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "Retail and SME lending, bancassurance cross-sell, trade finance — Vietnam domestic bank",
+  "customer": "Urban middle-class borrowers, SME working-capital clients, retail depositors",
+  "ops": "PUB-5 BLOCKED (conf 38%); sector data: PE 7.8 vs median 9.1; PB 1.3 (-18% discount); ROE 17.6% vs sector 16.7%; EY implied 12.82% (CHEAP vs deposit 5%)",
+  "mgmt": "Consistent EPS delivery historically; rate_sensitive_headwind in TIGHTENING regime; foreign net sell -1.5M cp (5d) — FII outflow pressure; BAL-1d-DEV corpus reflow pending",
+  "valuation_verdict": "CHEAP",
+  "ey_spread_pct": 7.82,
+  "regime": "TIGHTENING/FII_OUTFLOW_RISK",
+  "rate_sensitive_headwind": true,
+  "bullish_signal_suppressed": false,
+  "pub5_blocked": true,
+  "bctc_confidence": 0.38,
+  "low_confidence": true,
+  "signal_id": 4901,
+  "cycle_id": "20260604-0000",
+  "emitted_at": "2026-06-04T00:10:00Z"
+}

@@ -1,0 +1,23 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "IT services, software exports, telecom (FPT Telecom), education (FPT Edu) — domestic and offshore",
+  "customer": "Enterprise IT buyers (VN + offshore), SME telecom subscribers, university students (FPT Edu)",
+  "ops": "Net Revenue 12,480ty VND; Net Profit 2,477ty VND (margin 19.8%); OCF NEGATIVE -2,848ty VND (18th cycle divergence); PE 13.8 at -20% sector discount; ROE 28.3% vs sector 10.6%",
+  "mgmt": "Conf 81%; sentiment trend improving (slope +0.06); foreign net buy stronger than sector; no insider trades; FPT FY-guidance track record historically consistent",
+  "valuation_verdict": "FAIR",
+  "ey_spread_pct": 2.25,
+  "regime": "TIGHTENING/FII_OUTFLOW_RISK",
+  "rate_sensitive_headwind": false,
+  "bullish_signal_suppressed": false,
+  "esc3_active": true,
+  "esc3_guard": "HELD",
+  "ocf_ni_ratio": -1.15,
+  "signal_id": 4900,
+  "cycle_id": "20260604-0000",
+  "emitted_at": "2026-06-04T00:10:00Z"
+}
