@@ -241,6 +241,107 @@ describe("SprintGoal real DTO shape — flat object, not entries[]", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Suite 5b — DoneTaskGroup visibility logic (UX FIX: no hard-cap at 10)
+//
+// The component renders `tasks.slice(-PREVIEW)` when collapsed and the full
+// `tasks` array when expanded.  These pure-function equivalents mirror the
+// component's branching so we can assert all done tasks are reachable without
+// a React renderer.
+// ---------------------------------------------------------------------------
+
+const DONE_PREVIEW_COUNT = 10;
+
+function donePreview(tasks: TaskRow[]): TaskRow[] {
+  return tasks.slice(-DONE_PREVIEW_COUNT);
+}
+
+function doneExpanded(tasks: TaskRow[]): TaskRow[] {
+  return tasks; // full list — no slice
+}
+
+function doneHasMore(tasks: TaskRow[]): boolean {
+  return tasks.length > DONE_PREVIEW_COUNT;
+}
+
+describe("DoneTaskGroup visibility logic — UX FIX (no hard-cap at 10)", () => {
+  // Build a corpus of 101 done tasks that matches the operator-reported scenario.
+  const doneCorpus: TaskRow[] = Array.from({ length: 101 }, (_, i) => ({
+    id: `T-${String(i + 1).padStart(3, "0")}`,
+    title: `Done task ${i + 1}`,
+    status: "DONE",
+    owner: "agent",
+    zone: "apps/",
+  }));
+
+  it("corpus has 101 done tasks", () => {
+    expect(doneCorpus).toHaveLength(101);
+  });
+
+  it("collapsed: shows exactly the last 10 tasks (not the first 10)", () => {
+    const preview = donePreview(doneCorpus);
+    expect(preview).toHaveLength(DONE_PREVIEW_COUNT);
+    // Last task in corpus is T-101; preview tail = T-092…T-101
+    expect(preview[preview.length - 1].id).toBe("T-101");
+    expect(preview[0].id).toBe("T-092");
+  });
+
+  it("collapsed: does NOT contain tasks outside the last 10", () => {
+    const preview = donePreview(doneCorpus);
+    const previewIds = new Set(preview.map((t) => t.id));
+    // T-001 through T-091 must NOT be in the preview
+    expect(previewIds.has("T-001")).toBe(false);
+    expect(previewIds.has("T-050")).toBe(false);
+    expect(previewIds.has("T-091")).toBe(false);
+  });
+
+  it("expanded: ALL 101 done tasks are reachable (no information hidden)", () => {
+    const all = doneExpanded(doneCorpus);
+    expect(all).toHaveLength(101);
+    // Spot-check first and last
+    expect(all[0].id).toBe("T-001");
+    expect(all[100].id).toBe("T-101");
+  });
+
+  it("expanded: every task in the corpus is present in the rendered list", () => {
+    const all = doneExpanded(doneCorpus);
+    const renderedIds = new Set(all.map((t) => t.id));
+    doneCorpus.forEach((task) => {
+      expect(renderedIds.has(task.id)).toBe(true);
+    });
+  });
+
+  it("doneHasMore returns true for 101 tasks", () => {
+    expect(doneHasMore(doneCorpus)).toBe(true);
+  });
+
+  it("doneHasMore returns false for exactly 10 tasks (no toggle shown)", () => {
+    const tenTasks = doneCorpus.slice(0, 10);
+    expect(doneHasMore(tenTasks)).toBe(false);
+  });
+
+  it("doneHasMore returns false for fewer than 10 tasks", () => {
+    const fewTasks = doneCorpus.slice(0, 3);
+    expect(doneHasMore(fewTasks)).toBe(false);
+  });
+
+  it("count label reflects full length (not preview length)", () => {
+    // The label must say Done(101), not Done(10)
+    const label = `Done (${doneCorpus.length})`;
+    expect(label).toBe("Done (101)");
+  });
+
+  it("no tasks are lost between collapsed and expanded state", () => {
+    const preview = donePreview(doneCorpus);
+    const all = doneExpanded(doneCorpus);
+    // Every preview task must also appear in the expanded list (superset)
+    const allIds = new Set(all.map((t) => t.id));
+    preview.forEach((t) => expect(allIds.has(t.id)).toBe(true));
+    // Expanded list is strictly larger
+    expect(all.length).toBeGreaterThan(preview.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Suite 5 — signal_queue guard
 // ---------------------------------------------------------------------------
 

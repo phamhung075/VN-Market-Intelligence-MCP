@@ -26,7 +26,7 @@
 import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, useRevalidator } from "@remix-run/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 
 // Polling interval for live data refresh (ms). Pause-on-hidden keeps the tab
@@ -341,9 +341,9 @@ function TaskBoardPanel({ board }: { board: TaskBoard }) {
         <TaskGroup label="Backlog / TODO" tasks={todo} />
       )}
 
-      {/* Done tasks — collapsed by default, show last 10 */}
+      {/* Done tasks — collapsible; shows last 10 by default, full list on expand */}
       {done.length > 0 && (
-        <TaskGroup label={`Done (${done.length})`} tasks={done.slice(-10)} />
+        <DoneTaskGroup tasks={done} />
       )}
     </div>
   );
@@ -391,6 +391,95 @@ function TaskGroup({ label, tasks }: { label: string; tasks: TaskRow[] }) {
           </tbody>
         </table>
       </div>
+    </div>
+  );
+}
+
+/**
+ * DoneTaskGroup — collapsible Done section.
+ *
+ * Default: collapsed, showing the PREVIEW_COUNT most-recent done tasks (last N).
+ * Toggle: "Show all N" / "Show less" expands/collapses the full list inside a
+ * max-height scroll container so 100+ rows don't blow out the page.
+ */
+const DONE_PREVIEW_COUNT = 10;
+
+function DoneTaskGroup({ tasks }: { tasks: TaskRow[] }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const previewTasks = tasks.slice(-DONE_PREVIEW_COUNT);
+  const visibleTasks = expanded ? tasks : previewTasks;
+  const hasMore = tasks.length > DONE_PREVIEW_COUNT;
+
+  return (
+    <div>
+      <div className="mb-2 flex items-center gap-3">
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+          Done ({tasks.length})
+        </h3>
+        {hasMore && (
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-colors"
+            aria-expanded={expanded}
+            aria-label={expanded ? "Show less done tasks" : `Show all ${tasks.length} done tasks`}
+          >
+            <span>{expanded ? "Show less" : `Show all ${tasks.length}`}</span>
+            <span
+              aria-hidden="true"
+              className={`inline-block transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+            >
+              ▾
+            </span>
+          </button>
+        )}
+      </div>
+      <div
+        className={`overflow-hidden rounded border border-slate-700 ${
+          expanded ? "overflow-y-auto max-h-[32rem]" : ""
+        }`}
+      >
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-slate-700 bg-slate-900">
+              <th className="px-3 py-2 text-left font-medium text-slate-400">ID</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-400">Title</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-400">Owner</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-400">Status</th>
+              <th className="px-3 py-2 text-left font-medium text-slate-400">Zone</th>
+            </tr>
+          </thead>
+          <tbody data-testid="done-task-rows">
+            {visibleTasks.map((task, idx) => (
+              <tr
+                key={task.id}
+                className={`border-b border-slate-700 last:border-0 ${
+                  idx % 2 === 0 ? "bg-slate-800" : "bg-slate-850"
+                }`}
+              >
+                <td className="px-3 py-2 font-mono text-slate-300">{task.id}</td>
+                <td className="px-3 py-2 text-slate-200">
+                  {task.title}
+                  {task.note && (
+                    <p className="mt-0.5 text-slate-500 italic">{task.note}</p>
+                  )}
+                </td>
+                <td className="px-3 py-2 text-slate-400">{task.owner ?? "—"}</td>
+                <td className={`px-3 py-2 font-semibold ${taskStatusClasses(task.status)}`}>
+                  {task.status}
+                </td>
+                <td className="px-3 py-2 text-slate-500">{task.zone ?? "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {!expanded && hasMore && (
+        <p className="mt-1 text-xs text-slate-600">
+          Showing last {DONE_PREVIEW_COUNT} of {tasks.length} — click &ldquo;Show all&rdquo; to see all.
+        </p>
+      )}
     </div>
   );
 }
