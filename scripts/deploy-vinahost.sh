@@ -17,6 +17,8 @@
 #   vn-vps-proxy.service            — HTTP proxy server (BCTC Playwright + SSC iboard, :8765)
 #   article-body-fetcher.py         — cafef/vneconomy article body extractor (CLI, :8765/proxy/article-body)
 #   vietstock-agm-plan.py           — AGM business plan + actuals scraper (CLI, :8765/proxy/agm-plan)
+#   vn-board-details.service        — board-of-management officer appointment years (daily 02:00 UTC)
+#   vietstock-board-details.py      — board details scraper (CLI, :8765/proxy/board-details)
 # ═══════════════════════════════════════════════════════════════════════════
 
 set -e
@@ -366,6 +368,37 @@ chmod +x /root/vietstock-agm-plan.py
 echo "vietstock-agm-plan.py deployed OK"
 AGMEOF
 
+# ── 12. Vietstock board-details scraper (RAPID-DATA-LAYER / FIX-I-A) ────────
+# No sed render needed for vietstock-board-details.py (CLI args, no __TOKEN__ sentinels).
+# fetch-board-details.sh uses env-fallback form — sed render required for __MCP_BASE__/__API_KEY__.
+echo ""
+echo "Deploying Vietstock board details scraper (FIX-I-A)..."
+TMP=$(mktemp)
+sed -e "s|__MCP_BASE__|${MCP_BASE}|g" \
+    -e "s|__API_KEY__|${VPS_PUSH_API_KEY}|g" \
+    vps-scripts/fetch-board-details.sh > "$TMP"
+if grep -q '__[A-Za-z][A-Za-z0-9_]*__' "$TMP"; then
+  echo "GUARD-1 FAIL: placeholder leak in fetch-board-details.sh — deploy aborted" >&2
+  rm -f "$TMP"
+  exit 1
+fi
+$SCP "$TMP" ${VH_USER}@${VH_IP}:/root/fetch-board-details.sh
+$SCP vps-scripts/fetch-board-details-loop.sh ${VH_USER}@${VH_IP}:/root/fetch-board-details-loop.sh
+$SCP vps-scripts/vietstock-board-details.py  ${VH_USER}@${VH_IP}:/root/vietstock-board-details.py
+$SCP vps-scripts/vn-board-details.service    ${VH_USER}@${VH_IP}:/etc/systemd/system/vn-board-details.service
+rm "$TMP"
+
+$SSH << 'BOARDEOF'
+set -e
+chmod +x /root/fetch-board-details.sh /root/fetch-board-details-loop.sh /root/vietstock-board-details.py
+systemctl daemon-reload
+systemctl enable vn-board-details.service
+systemctl restart vn-board-details.service
+sleep 2
+echo "=== vn-board-details status ==="
+systemctl --no-pager -l status vn-board-details.service | head -12
+BOARDEOF
+
 # ── GUARD-1: Post-deploy SSH placeholder verify ───────────────────────────
 $SSH << 'VERIFYEOF'
 set -e
@@ -379,7 +412,7 @@ VERIFYEOF
 
 echo ""
 echo "══════════════════════════════════════════"
-echo " Deploy complete — Vinahost Vietnam owns all 9 services"
+echo " Deploy complete — Vinahost Vietnam owns all 10 services"
 echo ""
 echo " Price proxy:        systemctl status vn-price-fetch"
 echo " BCTC proxy:         systemctl status vn-bctc-fetch"
@@ -389,7 +422,8 @@ echo " SBV/FX proxy:       systemctl status vn-sbv-fetch"
 echo " Foreign flow proxy: systemctl status vn-foreign-flow"
 echo " OHLCV backfill:     systemctl status vn-ohlcv-backfill.timer"
 echo " Trading Economics:  systemctl status vn-tradingeconomics-fetch"
-echo " VPS HTTP proxy:     systemctl status vn-vps-proxy (BCTC Playwright + SSC iboard, :8765)"
+echo " VPS HTTP proxy:     systemctl status vn-vps-proxy (:8765 — agm-plan, board-details, bctc, ssc)"
+echo " Board details:      systemctl status vn-board-details (daily 02:00 UTC)"
 echo ""
-echo " Logs: /var/log/vn-{price,bctc,bctc-enrich,news,sbv,foreign-flow,ohlcv-backfill,tradingeconomics-fetch,vps-proxy}.log"
+echo " Logs: /var/log/vn-{price,bctc,bctc-enrich,news,sbv,foreign-flow,ohlcv-backfill,tradingeconomics-fetch,vps-proxy,board-details}.log"
 echo "══════════════════════════════════════════"

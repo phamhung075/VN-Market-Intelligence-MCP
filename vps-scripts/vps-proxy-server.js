@@ -45,6 +45,16 @@
  *     → Batch: /proxy/agm-plan?batch=FPT,VIC,ACB (comma-separated, max 30)
  *     → Added: RAPID-DATA-LAYER / FIX-G (2026-06-04)
  *
+ *   GET /proxy/board-details?ticker=<TICKER>
+ *     → shells out to /root/vietstock-board-details.py --ticker <TICKER>
+ *     → returns JSON: { status, tickers_ok, tickers_error, data, fetched_at }
+ *     → data.<TICKER> = [{name, position_text, appointment_year, closed_date,
+ *                          year_of_birth, independence, total_shares}]
+ *     → appointment_year: integer year or null (N/A → null, never fabricated)
+ *     → Auth: X-API-Key required
+ *     → Batch: /proxy/board-details?batch=FPT,VCB,VNM (comma-separated, max 33)
+ *     → Added: RAPID-DATA-LAYER / FIX-I-A (2026-06-04)
+ *
  *   GET /proxy/article-body?url=<article-url>
  *     → shells out to /root/article-body-fetcher.py --url <url>
  *     → allowed domains: cafef.vn, vneconomy.vn
@@ -162,6 +172,19 @@ const AGM_PLAN_PATH = "/proxy/agm-plan";
 
 /** Maximum tickers per batch request. */
 const AGM_PLAN_MAX_BATCH = 30;
+
+/**
+ * Path to the Vietstock board-details scraper Python script.
+ * Fetches current-term officer appointment years from finance.vietstock.vn/data/boarddetails.
+ * Added: RAPID-DATA-LAYER / FIX-I-A (2026-06-04)
+ */
+const BOARD_DETAILS_SCRIPT = process.env.BOARD_DETAILS_SCRIPT || "/root/vietstock-board-details.py";
+
+/** Path prefix for the board-details endpoint. */
+const BOARD_DETAILS_PATH = "/proxy/board-details";
+
+/** Maximum tickers per batch request for board-details. */
+const BOARD_DETAILS_MAX_BATCH = 33;
 
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36";
@@ -372,6 +395,77 @@ function runAgmPlanScript(tickers, timeoutMs = 60_000) {
 }
 
 /**
+ * Run the Vietstock board-details scraper for a single ticker or batch.
+ *
+ * The script is called as:
+ *   python3 /root/vietstock-board-details.py --ticker <TICKER>
+ *   python3 /root/vietstock-board-details.py --batch <T1,T2,...>
+ *
+ * It emits JSON to stdout:
+ *   { status, tickers_ok, tickers_error, data, fetched_at }
+ *   data.<TICKER> = [{name, position_text, appointment_year, closed_date,
+ *                     year_of_birth, independence, total_shares}]
+ *
+ * Returns parsed result object on success, or { status: "error", reason: "..." } on failure.
+ *
+ * @param {string[]} tickers - Validated ticker list (max BOARD_DETAILS_MAX_BATCH)
+ * @param {number} timeoutMs - Kill script after this many ms
+ * @returns {Promise<object>} Parsed JSON result from the script
+ */
+function runBoardDetailsScript(tickers, timeoutMs = 120_000) {
+  return new Promise((resolve) => {
+    const isBatch = tickers.length > 1;
+    const args = isBatch
+      ? [BOARD_DETAILS_SCRIPT, "--batch", tickers.join(",")]
+      : [BOARD_DETAILS_SCRIPT, "--ticker", tickers[0]];
+
+    log("INFO", `board-details: spawning scraper for [${tickers.join(",")}]`);
+
+    const child = spawn("python3", args, {
+      timeout: timeoutMs,
+      env: { ...process.env },
+    });
+
+    const stdoutChunks = [];
+    const stderrChunks = [];
+
+    child.stdout.on("data", (chunk) => stdoutChunks.push(chunk));
+    child.stderr.on("data", (chunk) => stderrChunks.push(chunk));
+
+    child.on("close", (code) => {
+      const stdout = Buffer.concat(stdoutChunks).toString("utf8").trim();
+      const stderr = Buffer.concat(stderrChunks).toString("utf8").trim();
+
+      if (!stdout) {
+        log("WARN", `board-details: empty stdout`, { code, stderr: stderr.slice(0, 300) });
+        resolve({ status: "error", reason: "Script produced no output", tickers });
+        return;
+      }
+
+      let parsed;
+      try {
+        parsed = JSON.parse(stdout);
+      } catch (e) {
+        log("WARN", `board-details: JSON parse failed`, { stdout: stdout.slice(0, 200) });
+        resolve({ status: "error", reason: "Invalid JSON from script", tickers });
+        return;
+      }
+
+      log(
+        "INFO",
+        `board-details: done — ok=${(parsed.tickers_ok || []).length} error=${(parsed.tickers_error || []).length}`,
+      );
+      resolve(parsed);
+    });
+
+    child.on("error", (err) => {
+      log("ERROR", `board-details: spawn error`, { error: err.message });
+      resolve({ status: "error", reason: `Spawn error: ${err.message}`, tickers });
+    });
+  });
+}
+
+/**
  * Run the article body fetcher Python script for a given URL.
  *
  * The script is called as:
@@ -504,6 +598,54 @@ async function handleRequest(req, res) {
     // Allow 2s per ticker + 10s base (CSRF warmup per session, ~0.35s pacing between tickers)
     const timeoutMs = Math.min(10_000 + tickers.length * 4_000, 120_000);
     const result = await runAgmPlanScript(tickers, timeoutMs);
+    const httpStatus = result.status === "ok" ? 200 : 502;
+    return jsonResponse(res, httpStatus, result);
+  }
+
+  // Board-of-management officer details via vietstock-board-details.py
+  //   Incoming: GET /proxy/board-details?ticker=FPT  OR  /proxy/board-details?batch=FPT,VCB,VNM
+  //   Shells out to: python3 /root/vietstock-board-details.py --ticker <T> | --batch <T1,T2,...>
+  //   Returns: { status, tickers_ok, tickers_error, data, fetched_at }
+  //   data.<TICKER> = [{name, position_text, appointment_year, closed_date, year_of_birth, independence, total_shares}]
+  //   appointment_year: integer year or null (N/A entries → null, NEVER fabricated)
+  //   Added: RAPID-DATA-LAYER / FIX-I-A (2026-06-04)
+  if (url === BOARD_DETAILS_PATH || url.startsWith(BOARD_DETAILS_PATH + "?")) {
+    const qs = new URLSearchParams(url.includes("?") ? url.slice(url.indexOf("?") + 1) : "");
+    const rawTicker = qs.get("ticker") || "";
+    const rawBatch = qs.get("batch") || "";
+
+    if (!rawTicker && !rawBatch) {
+      return jsonResponse(res, 400, { error: "Missing required query param: ticker or batch" });
+    }
+
+    const TICKER_RE = /^[A-Z0-9]{1,10}$/;
+    let tickers;
+    if (rawBatch) {
+      tickers = rawBatch.split(",").map((t) => t.trim().toUpperCase()).filter(Boolean);
+    } else {
+      tickers = [rawTicker.trim().toUpperCase()];
+    }
+
+    if (tickers.length === 0) {
+      return jsonResponse(res, 400, { error: "No valid tickers provided" });
+    }
+    if (tickers.length > BOARD_DETAILS_MAX_BATCH) {
+      return jsonResponse(res, 400, {
+        error: `Batch size exceeds maximum (${BOARD_DETAILS_MAX_BATCH})`,
+        got: tickers.length,
+      });
+    }
+
+    const invalid = tickers.filter((t) => !TICKER_RE.test(t));
+    if (invalid.length > 0) {
+      return jsonResponse(res, 400, { error: "Invalid ticker(s)", invalid });
+    }
+
+    log("INFO", `board-details: request for [${tickers.join(",")}] from ${req.socket.remoteAddress}`);
+
+    // Allow 4s per ticker + 10s base (CSRF warmup per session)
+    const timeoutMs = Math.min(10_000 + tickers.length * 4_000, 180_000);
+    const result = await runBoardDetailsScript(tickers, timeoutMs);
     const httpStatus = result.status === "ok" ? 200 : 502;
     return jsonResponse(res, httpStatus, result);
   }
@@ -753,6 +895,7 @@ const server = http.createServer((req, res) => {
 server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `VPS proxy server listening on 0.0.0.0:${PORT}`);
   log("INFO", `AGM plan:         GET /proxy/agm-plan?ticker=FPT | ?batch=FPT,VIC,ACB (runs vietstock-agm-plan.py)`);
+  log("INFO", `Board details:    GET /proxy/board-details?ticker=FPT | ?batch=FPT,VCB,VNM (runs vietstock-board-details.py)`);
   log("INFO", `Article body:     GET /proxy/article-body?url=<https://cafef.vn/...> (runs article-body-fetcher.py)`);
   log("INFO", `BCTC discover:    GET /proxy/bctc-discover/:ticker[?year=YYYY&quarter=Q] (runs discover-bctc-urls-browser.py)`);
   log("INFO", `SSC insider:      GET /proxy/ssc-insider (proxies congbothongtin.ssc.gov.vn insider table)`);
@@ -764,6 +907,7 @@ server.listen(PORT, "0.0.0.0", () => {
   log("INFO", `BCTC discover script: ${BCTC_DISCOVER_SCRIPT}`);
   log("INFO", `Article body script:  ${ARTICLE_BODY_SCRIPT}`);
   log("INFO", `AGM plan script:      ${AGM_PLAN_SCRIPT}`);
+  log("INFO", `Board details script: ${BOARD_DETAILS_SCRIPT}`);
   if (!API_KEY) {
     log("WARN", "VPS_API_KEY is not set — proxy accepts all requests (insecure)");
   }

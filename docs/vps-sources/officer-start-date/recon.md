@@ -211,6 +211,51 @@ All three sample tickers confirmed. Fields per officer record:
 
 ---
 
+## § 4 — Deployment Record
+
+**Date:** 2026-06-04
+**Developer:** dev-vps-crawls (FIX-I-A, RAPID-DATA-LAYER sprint)
+**Status:** DEPLOYED
+
+### Files committed to repo
+
+| File | Purpose |
+|------|---------|
+| `vps-scripts/vietstock-board-details.py` | Python scraper — CSRF warmup + POST /data/boarddetails + FromDate→int parse |
+| `vps-scripts/fetch-board-details.sh` | Shell driver — runs scraper, validates JSON, atomic file-drop + push |
+| `vps-scripts/fetch-board-details-loop.sh` | Loop driver — daily 02:00 UTC + exponential backoff |
+| `vps-scripts/vn-board-details.service` | systemd unit — MemoryMax=256M, Restart=always |
+| `vps-scripts/vps-proxy-server.js` | Added `/proxy/board-details` route (GET ?ticker= or ?batch=) |
+| `scripts/deploy-vinahost.sh` | Added step 12 — board-details deploy block |
+
+### VPS state (smoke test results)
+
+- `/root/vietstock-board-details.py` deployed to VPS
+- `/root/fetch-board-details.sh`, `/root/fetch-board-details-loop.sh` deployed, chmod +x
+- `vn-board-details.service`: enabled + active (running)
+- `/root/data/board-details-latest.json`: present
+- `http://125.212.251.27:8765/proxy/board-details?batch=FPT,VCB,VNM`: HTTP 200 OK
+
+### Smoke test results (3 tickers)
+
+| Ticker | Officer (Chairman/CTHĐQT) | FromDate raw | appointment_year parsed |
+|--------|--------------------------|--------------|------------------------|
+| VNM | Nguyễn Hạnh Phúc | `"2022      "` | 2022 |
+| FPT | Trương Gia Bình | `"1988      "` | 1988 |
+| VCB | Nguyễn Thanh Tùng | `"2021      "` | 2021 |
+
+N/A handling: Tiêu Yến Trinh (VNM, FromDate `"N/A       "`) → appointment_year=null (confirmed no fabrication).
+
+### Proxy route
+
+The existing `:8765` service is Node.js (`vps-proxy-server.js`), not nginx with static routes.
+The `/proxy/board-details` route was added directly to `vps-proxy-server.js` (mirroring `/proxy/agm-plan`).
+No separate nginx config change required.
+
+**Live proxy URL:** `http://125.212.251.27:8765/proxy/board-details?batch=<TICKERS>`
+
+---
+
 ## Anti-Bot Assessment
 
 - **Type:** None (same as AGM plan source)
