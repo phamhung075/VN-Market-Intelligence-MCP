@@ -143,6 +143,55 @@ On each `getDecisionsForSprints(sprintIds, decisionsDir)` call:
 
 ---
 
+## [Developer] Implementation Record
+
+- **Service:** mcp-server
+- **Zone:** apps/mcp-server/
+- **Files created:**
+  - `apps/mcp-server/src/infrastructure/journalStore.ts` — 215L (StepDto/DecisionsDto types, parseJournalFile, buildDecisionsDto, getDecisionsForSprints, mtime cache, _clearCacheForTesting)
+  - `apps/mcp-server/src/__tests__/1978-journal-store.test.ts` — 26 tests GREEN
+  - `apps/mcp-server/src/__tests__/1979-orchestration-decisions.test.ts` — 13 tests GREEN
+- **Files modified:**
+  - `apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts` — added decisions: DecisionsDto to OrchestrationDto; extended buildOrchestrationDto with decisionsDir param + sprint-ID union
+  - `apps/mcp-server/src/__tests__/1977-orchestration-endpoint.test.ts` — +1 T1h assertion (decisions field schema)
+- **Tests written:** 1978 (26 tests), 1979 (13 tests), 1977 extended (+1 test) = 40 new assertions
+- **Git commits:** `da37602f feat(mcp-server): ARCH-ORCH-F2 — journalStore + orchestrationHandler decisions extension`
+- **Type check:** clean (`bun tsc --noEmit` 0 errors)
+- **bun test (F2 files):** 59 pass / 0 fail (1977+1978+1979 together)
+- **Live verify:** `curl localhost:3000/api/orchestration` → `decisions.by_task["ARCH-ORCH-F1"]` (agent-father-S1 present), `decisions.sprint_bucket["ORCH-DASH-DECISION-DRILLDOWN"]` (9 untagged entries); decisions is object not markdown string.
+- **Container:** mcp-server rebuilt and restarted (`docker compose build + up -d`)
+- **Docs updated:** `docs/agent-memory/decisions/sprint-ORCH-DASH-DECISION-DRILLDOWN.md` (dev-mcp-server-S1 STEP), `docs/agent-memory/notebooks/dev-mcp-server.md` (c374), `docs/data/orch/orch-state.json` (ARCH-ORCH-F2 → REVIEW)
+
+**Live DTO shape (F3 contract — load-bearing):**
+```json
+{
+  "decisions": {
+    "by_task": {
+      "ARCH-ORCH-F1": [
+        {
+          "step_id": "agent-father-S1",
+          "agent_id": "agent-father",
+          "timestamp": "2026-06-05T00:00:00Z",
+          "task_id": "ARCH-ORCH-F1",
+          "what_done": "...",
+          "what_considered": ["..."],
+          "why_decision": "...",
+          "why_change": "...",
+          "sprint_id": "ORCH-DASH-DECISION-DRILLDOWN"
+        }
+      ]
+    },
+    "sprint_bucket": {
+      "ORCH-DASH-DECISION-DRILLDOWN": [
+        { "step_id": "po-S1", "agent_id": "po", "task_id": null, ... }
+      ]
+    }
+  }
+}
+```
+
+---
+
 ## Sign-off Criteria
 
 - `journalStore.ts` has module-level mtime cache; parser matches pseudocode exactly
