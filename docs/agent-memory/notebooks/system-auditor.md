@@ -3,6 +3,49 @@ agent: system-auditor
 session_date: 2026-06-06
 ---
 
+## c013 · 2026-06-05T23:38Z
+### Audit Run Tier-1 (23:38–23:40 UTC 2026-06-05)
+- Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 95+
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY
+
+### Container Status (Intended Runtime Set)
+- mcp-server: Up 1h 38m, restart_count=0 ✓, memory=24.80% ✓
+- api-gateway: Up 3d ✓
+- frontend: Up ~1h 38m ✓
+- macro-indicators: Up 12h ✓
+- pdf-extractor: Up 2d ✓
+- mcp-gateway: Up 9d ✓
+
+### Health Endpoints — All PASS
+- mcp-server :3000 → 200 ✓ (toolCount:162, uptime 5918s)
+- api-gateway :4000 → 200 ✓ (macro:ok, mcp:ok)
+- macro-indicators :5004 → 200 ✓
+- pdf-extractor :5001 → 200 ✓
+- frontend :3001 → no endpoint (UI-only, INFO-grey, no impact)
+- mcp-gateway → healthy (MCP-mode) ✓
+
+### Cron Health (95+ jobs)
+- ~100% firing, 7-day baseline success_rate: 97.3%+
+- intelligenceCycleJob: 99.1% (566 runs)
+- bctcQueueEnricherJob: 97.4% (500 runs)
+- bctcReparseJob: 97.7% (218 runs)
+- All others ≥97% or 100%; no gaps detected
+
+### Circuit Breaker Status
+- All 16 sources [OK] (0 open, 0 half-open circuits) ✓
+
+### FIX-MW Watch Item (market-watcher offhours 00:00Z UTC 2026-06-06)
+- Status: NOT-YET-FIRED (now 23:38Z UTC, window fires in ~22 minutes)
+- Last fire: 2026-06-05T20:05:47Z (20:00 UTC window) — PASS previous cycle baseline
+- Will verify post-window closure; no duplicate signals on EOD-unchanged prices expected
+
+### Notes
+- Tier-1 pass clean. All intended-runtime services UP + healthy.
+- mcp-server memory stable (24.80%, well under 85% threshold).
+- VN market closed at 23:38Z UTC (outside 02:00–08:59 UTC M-F window).
+- No new anomalies detected.
+
 ## c012 · 2026-06-05T23:09Z
 ### Audit Run Tier-1 (23:09–23:13 UTC 2026-06-05)
 - Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 95+
@@ -136,50 +179,3 @@ session_date: 2026-06-06
 - vn-news-fetch unhealthy: expected when market closed; next market hours will validate recovery.
 - Foreign flow 7.5h stale: expected outside hours; will refresh during 09:00–15:30 VN (02:00–08:30 UTC).
 - WATCH: FU-CTG-REFINE-PICKUP due ~09:00Z (06:06 morning refine cycle).
-
-## c009 · 2026-06-05T22:08Z
-### Audit Run Tier-1 (22:08–22:10 UTC 2026-06-05)
-- Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 95+
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### Container Status (Intended Runtime Set)
-- mcp-server: Up 23m, restart_count=0 ✓, memory=30.39% ✓
-- api-gateway: Up 3d ✓
-- frontend: Up 11m ✓
-- macro-indicators: Up 11h ✓
-- pdf-extractor: Up 2d ✓
-- mcp-gateway: Up 9d ✓
-
-### Health Endpoints — All PASS except frontend
-- mcp-server :3000 → 200 (toolCount:162, uptime 1409s, 8 sessions) ✓
-- api-gateway :4000 → 200 (macro:ok, mcp:ok) ✓
-- macro-indicators :5004 → 200 ✓
-- pdf-extractor :5001 → 200 (ocr_source_ok:true) ✓
-- frontend :3001 → no endpoint (UI-only, INFO-grey, no impact)
-- mcp-gateway → healthy (MCP-mode) ✓
-
-### Cron Health (95+ jobs monitored)
-- 100% firing across all monitored crons, 7-day min success_rate: 97.3%
-- bctcQueueEnricherJob: 97.4% (498 runs)
-- bctcReparseJob: 97.3% (225 runs)
-- intelligenceCycleJob: 99.1% (566 runs)
-- All others: ≥98% or 100%; no gaps detected
-
-### Circuit Breaker Status
-- All 16 sources: [OK] (cafef, vnexpress, reuters, vneconomy, hose, hnx, ssc, tradingEconomics, yahooFinance, sbv, polymarket, congbao, sbvCircular, foreignFlow, newsapi, marketwatch)
-- 0 open, 0 half-open circuits
-
-### VPS Status
-- prices: STALE (last 08:59Z, outside market hours, expected) ✓
-- news: STALE (last 21:53Z, outside market hours, expected) ✓
-- sbv: OK (last 21:58Z) ✓
-- bctc: OK (last 14:48Z) ✓
-- vn-news-fetch service: unhealthy (but expected VN market closed 22:08 UTC)
-
-### Notes
-- Tier-1 pass clean. All intended-runtime services UP + healthy.
-- mcp-server memory post-rebuild stable (30.39%, well under 85% threshold).
-- VPS prices/news stale outside market hours (22:08 UTC = VN market closed) — expected, not flagged.
-- Cron health solid; no anomalies detected.
-- No new signals emitted.
