@@ -74,16 +74,28 @@ function gammaNum(v: unknown): number {
   return 0;
 }
 
-/** Parse the Gamma outcomePrices field (may be JSON-encoded string). */
-function parseOutcomePrices(v: unknown): { yes: number; no: number } {
+/**
+ * Parse the Gamma outcomePrices field (may be JSON-encoded string).
+ *
+ * Returns null when the field is absent, unparseable, or yields fewer than
+ * two numeric entries. A null result means the market has no real price and
+ * MUST be skipped by the caller — never fabricate a 0.5 coin-flip. (FDA-1)
+ */
+function parseOutcomePrices(v: unknown): { yes: number; no: number } | null {
   let arr: unknown = v;
+  if (v === undefined || v === null) return null;
   if (typeof v === "string") {
-    try { arr = JSON.parse(v); } catch { return { yes: 0.5, no: 0.5 }; }
+    try { arr = JSON.parse(v); } catch { return null; }
   }
   if (Array.isArray(arr) && arr.length >= 2) {
-    return { yes: gammaNum(arr[0]), no: gammaNum(arr[1]) };
+    const yes = gammaNum(arr[0]);
+    const no = gammaNum(arr[1]);
+    // gammaNum returns 0 for non-numeric input; a [0,0] price pair is also
+    // unparseable (both tokens would sum to 0 — not a valid probability).
+    if (yes === 0 && no === 0) return null;
+    return { yes, no };
   }
-  return { yes: 0.5, no: 0.5 };
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -146,18 +158,22 @@ function normaliseTags(raw: unknown): string[] {
 
 /**
  * Extracts the Yes and No prices from a CLOB market tokens array.
- * Defaults to 0.5 / 0.5 when the tokens array is empty or malformed.
+ *
+ * Returns null when the tokens array is absent/empty or when either the Yes
+ * or No token is missing. A null result means the market has no real price
+ * and MUST be skipped by the caller — never fabricate a 0.5 coin-flip. (FDA-1)
  */
 function extractPrices(tokens: Array<{ outcome: string; price: number }> | undefined): {
   yesPrice: number;
   noPrice: number;
-} {
-  if (!tokens || tokens.length === 0) return { yesPrice: 0.5, noPrice: 0.5 };
+} | null {
+  if (!tokens || tokens.length === 0) return null;
   const yes = tokens.find((t) => t.outcome === "Yes");
   const no = tokens.find((t) => t.outcome === "No");
+  if (yes === undefined || no === undefined) return null;
   return {
-    yesPrice: yes?.price ?? 0.5,
-    noPrice: no?.price ?? 0.5,
+    yesPrice: yes.price,
+    noPrice: no.price,
   };
 }
 
@@ -289,7 +305,16 @@ export async function fetchPolymarkets(
     // Skip zero-volume markets (no activity = stale/dead)
     if ((clob.volume_24h ?? 0) === 0 && (clob.volume ?? 0) === 0) continue;
 
-    const { yesPrice, noPrice } = extractPrices(clob.tokens);
+    // FDA-1: skip markets whose price is unparseable — never serve a fabricated 0.5.
+    const prices = extractPrices(clob.tokens);
+    if (prices === null) {
+      logger.debug("[polymarket] CLOB market skipped — unparseable prices", {
+        id: clob.condition_id,
+      });
+      continue;
+    }
+
+    const { yesPrice, noPrice } = prices;
     const gamma = gammaMap.get(clob.condition_id);
 
     results.push({
@@ -338,7 +363,16 @@ export async function fetchPolymarkets(
       const volTotal = gammaNum(g.volume);
       if (vol24 === 0 && volTotal === 0) continue;
 
-      const { yes, no } = parseOutcomePrices(g.outcomePrices);
+      // FDA-1: skip markets whose outcomePrices is unparseable — never serve a fabricated 0.5.
+      const gammaPrices = parseOutcomePrices(g.outcomePrices);
+      if (gammaPrices === null) {
+        logger.debug("[polymarket] Gamma market skipped — unparseable outcomePrices", {
+          id: g.conditionId ?? g.id,
+        });
+        continue;
+      }
+
+      const { yes, no } = gammaPrices;
 
       results.push({
         id: g.conditionId ?? g.id,
