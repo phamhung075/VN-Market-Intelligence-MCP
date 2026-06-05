@@ -1,16 +1,16 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-05T04:47:45Z",
+  "_updated_at": "2026-06-05T05:06:56Z",
   "_updated_by": "agent-father",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FE-HEADER-SSOT",
-    "next_agent": "dev-frontend",
-    "next_action": "dev-frontend implementing shared PageHeader + centered full-viewport layout across all dashboard pages",
-    "wip": 1,
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": "po",
+    "next_action": "FE-HEADER-SSOT DONE+LIVE. Next operator request queued: deep file-by-file hardcode/fake-data contamination audit across all services (fan-out max 3), log each finding as dev-team backlog task. User requested /compact first.",
+    "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T04:47:45Z",
+    "updated_at": "2026-06-05T05:06:56Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -2935,12 +2935,13 @@
         "title": "Frontend: per-page title headers diverge across dashboard.* pages (each hand-rolls its own <h1>+wrapper). Extract ONE shared PageHeader component (SSOT/factory: title + optional subtitle + optional right actions slot), replace every page ad-hoc header with it. ALSO: pages must be centered + 100% width/height (consistent full-viewport centered content container in the dashboard layout). Operator-requested.",
         "type": "FIX",
         "sprint": "FRONTEND-OPERATOR-UX",
-        "status": "IN_PROGRESS",
+        "status": "DONE",
         "priority": "P2",
         "size": "M",
         "zone": "apps/frontend",
         "depends_on": null,
-        "owner": "dev-frontend"
+        "owner": "dev-frontend",
+        "done_note": "SHIPPED+LIVE 2026-06-05. PageHeader SSOT (619093e1) + TopNav SSOT (5f660fb1, fixed / showing stale 5-item vs canonical 8-item nav) + centered full-viewport layout. 327 tests pass, tsc 0. ops rebuilt frontend (image b18f8ee7, healthy); / serves 8-item nav incl BCTC Eval/Inspect/Orchestration verified live."
       }
     ],
     "archive": []
