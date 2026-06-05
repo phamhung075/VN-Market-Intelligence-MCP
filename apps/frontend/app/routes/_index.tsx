@@ -1,9 +1,10 @@
 // Tier 2/3: Router skeleton — wired to api-gateway health via fetchGatewayHealth().
 import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, Link, NavLink } from "@remix-run/react";
+import { useLoaderData, Link } from "@remix-run/react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
 import { PageHeader } from "~/components/PageHeader";
+import { TopNav } from "~/components/TopNav";
 import { fetchGatewayHealth, type GatewayHealth } from "~/lib/api/client";
 
 export const meta: MetaFunction = () => {
@@ -40,14 +41,6 @@ export async function loader({ request: _request }: LoaderFunctionArgs) {
   });
 }
 
-const NAV_ITEMS = [
-  { to: "/dashboard/analysis", label: "Analysis" },
-  { to: "/dashboard/services", label: "Services" },
-  { to: "/dashboard/fetch", label: "Fetch Ops" },
-  { to: "/dashboard/vps", label: "VPS Proxy" },
-  { to: "/dashboard/db", label: "Database" },
-] as const;
-
 const DASHBOARD_LINKS = [
   { to: "/dashboard/analysis", label: "Market Analysis", desc: "Kinh Dịch signals + macro indicators" },
   { to: "/dashboard/services", label: "Service Health", desc: "Microservice status + latency" },
@@ -62,49 +55,7 @@ export default function Index() {
 
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200">
-      {/* Top nav — same as dashboard layout */}
-      <nav className="border-b border-slate-700 bg-slate-800 px-6 py-3">
-        <div className="flex items-center gap-6">
-          <Link
-            to="/"
-            className="font-bold tracking-tight text-slate-100 hover:text-slate-300"
-          >
-            VN Market Intelligence
-          </Link>
-          <div className="flex gap-1">
-            <NavLink
-              to="/"
-              end
-              className={({ isActive }) =>
-                [
-                  "rounded px-3 py-1.5 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-slate-700 text-slate-100"
-                    : "text-slate-400 hover:bg-slate-700 hover:text-slate-200",
-                ].join(" ")
-              }
-            >
-              Home
-            </NavLink>
-            {NAV_ITEMS.map(({ to, label }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  [
-                    "rounded px-3 py-1.5 text-sm font-medium transition-colors",
-                    isActive
-                      ? "bg-slate-700 text-slate-100"
-                      : "text-slate-400 hover:bg-slate-700 hover:text-slate-200",
-                  ].join(" ")
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
-          </div>
-        </div>
-      </nav>
+      <TopNav />
       <main className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col items-center justify-center gap-6 p-8">
         <PageHeader
           title={message}
