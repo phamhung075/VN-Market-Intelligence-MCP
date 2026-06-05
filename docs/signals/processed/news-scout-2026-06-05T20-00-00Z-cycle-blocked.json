@@ -7,5 +7,9 @@
   "timestamp": "2026-06-05T20:00:00Z",
   "cycle_attempt": "offhours",
   "error_code": "DIAL_REFUSED",
-  "error_detail": "dial tcp 192.168.65.254:3000: connect: connection refused"
+  "error_detail": "dial tcp 192.168.65.254:3000: connect: connection refused",
+  "fingerprint": "6e2f660c085a136b5aa990ddd6c37899aeb4a17afd285ac910fe80ab5e8abfcd",
+  "processedAt": "20260605T202223Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
 }

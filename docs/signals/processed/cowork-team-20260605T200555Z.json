@@ -1,0 +1,67 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T20:05:55Z",
+    "matched_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "won_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/news-scout/flow/main.md",
+      "docs/agents/market-watcher/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 3,
+    "errors": [
+      {
+        "slot_id": "news-scout-offhours",
+        "error": "cycle BLOCKED at bootstrap — mcp-server clean-exit (0) 20:06:12Z mid-tick; agent wrote bug-escalation signal"
+      },
+      {
+        "slot_id": "_dispatcher",
+        "error": "emit_pressure_state EOF then connection refused; mcp-server relaunched by dispatcher 20:06:42Z (docker start, plain relaunch); emit retried OK 20:07:55Z"
+      }
+    ],
+    "pressure_mode": "adaptive",
+    "calendar_status": "off_market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "news-scout-offhours": "cadence",
+      "market-watcher-offhours": "cadence"
+    },
+    "cadence_minutes": {
+      "news-scout-offhours": 240,
+      "market-watcher-offhours": 240
+    },
+    "last_fired_timestamp": "2026-06-05T20:05:47Z",
+    "last_fired_slots": [
+      "news-scout-offhours",
+      "market-watcher-offhours"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:00",
+    "leader_lock": "acquired_after_orphan_recovery",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "leader lock orphan-recovered (heartbeat_age=898s, prior owner_session stale); market-watcher no-op'd off-window by design (flow gap: knowledge.md documents off_hours schedule but main.md has no offhours branch — slot spawn wasted every 4h); news-scout cycle lost to mcp-server outage; snapshot cycle-snapshot-20:05.json written pre-outage"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T20:05:55Z",
+  "fingerprint": "7e22227776923c948b0f99a766f303ffed56c317153b0283ac37f365d0f909f7",
+  "processedAt": "20260605T202223Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}

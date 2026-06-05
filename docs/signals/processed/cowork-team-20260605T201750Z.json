@@ -1,0 +1,52 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T20:17:50Z",
+    "matched_slots": [
+      "tnb-audit"
+    ],
+    "won_slots": [
+      "tnb-audit"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/tran-ngoc-bau/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "off_market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "tnb-audit": "cron"
+    },
+    "cadence_minutes": {
+      "tnb-audit": null
+    },
+    "last_fired_timestamp": "2026-06-05T20:19:06Z",
+    "last_fired_slots": [
+      "tnb-audit"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "20:15",
+    "leader_lock": "acquired_after_orphan_recovery",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 2,
+    "note": "leader lock orphan-recovered 2nd consecutive tick (expected: 20:06:42Z mcp-server restart invalidated owner_session; age=849s). Snapshot re-fetch skipped: tnb is file-auditor (no MCP binding), latest snapshot 13min old stands. 2 NEW po-rows left untouched for dev-team drain. emit_pressure_state succeeded post-restart (20:06 mid-emit death not reproduced this tick)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T20:17:50Z",
+  "fingerprint": "30788c0c389f9930a20958cc858ed4f73653eee9825e0f58859c006307088979",
+  "processedAt": "20260605T202223Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}
