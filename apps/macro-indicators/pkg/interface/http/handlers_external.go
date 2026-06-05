@@ -64,27 +64,73 @@ func handleExternal(useCase *application.ComputeMacroUseCase, logger *slog.Logge
 			return
 		}
 
+		// FDA-3: derive per-source status + summary from per-field provenance (FDA-2).
+		// A source whose primary value is a fixture fallback reports status "estimate"
+		// rather than "ok". summary.failed counts sources not serving live data.
+		//
+		// Source grouping:
+		//   "vn-market"       → VNIndex (VNIndexIsEstimate)
+		//   "commodity-prices" → OIL+GOLD+USDVND (any of OilIsEstimate/GoldIsEstimate/USDVndIsEstimate)
+		//   "macro-signals"   → carry/yield (resp.DataSource reflects all-input liveness)
+		//
+		// Rule: status="ok" only when ALL fields in the source group are live (!IsEstimate).
+		//       status="estimate" when any field in the group is a fixture fallback.
+		vnMarketStatus := "ok"
+		if resp.VNIndexIsEstimate {
+			vnMarketStatus = "estimate"
+		}
+
+		commodityEstimate := resp.OilIsEstimate || resp.GoldIsEstimate || resp.USDVndIsEstimate
+		commodityStatus := "ok"
+		if commodityEstimate {
+			commodityStatus = "estimate"
+		}
+
+		// macro-signals status tracks carry/yield liveness via DataSource.
+		// DataSource="live" → all five inputs live → signals are live.
+		// DataSource="estimate" → at least one fixture input → signals degraded.
+		signalsStatus := "ok"
+		if resp.DataSource != "live" {
+			signalsStatus = "estimate"
+		}
+
+		// Count failed (degraded) sources.
+		failedCount := 0
+		okCount := 0
+		for _, st := range []string{vnMarketStatus, commodityStatus, signalsStatus} {
+			if st == "ok" {
+				okCount++
+			} else {
+				failedCount++
+			}
+		}
+
 		// Map snapshot to MacroData shape expected by the frontend.
 		// sources: each named data origin → { status, data }
 		// indicators: flat convenience map for dashboard key-value display
 		sources := map[string]map[string]interface{}{
 			"vn-market": {
-				"status": "ok",
+				"status": vnMarketStatus,
 				"data": map[string]interface{}{
-					"vnIndex":    resp.VNIndex,
-					"dataSource": resp.DataSource,
+					"vnIndex":        resp.VNIndex,
+					"dataSource":     resp.DataSource,
+					"is_estimate":    resp.VNIndexIsEstimate,
+					"source_tier":    resp.VNIndexSourceTier,
 				},
 			},
 			"commodity-prices": {
-				"status": "ok",
+				"status": commodityStatus,
 				"data": map[string]interface{}{
-					"oilUsd":  resp.OilUSD,
-					"goldUsd": resp.GoldUSD,
-					"usdVnd":  resp.USDVnd,
+					"oilUsd":           resp.OilUSD,
+					"goldUsd":          resp.GoldUSD,
+					"usdVnd":           resp.USDVnd,
+					"oil_is_estimate":  resp.OilIsEstimate,
+					"gold_is_estimate": resp.GoldIsEstimate,
+					"usdVnd_is_estimate": resp.USDVndIsEstimate,
 				},
 			},
 			"macro-signals": {
-				"status": "ok",
+				"status": signalsStatus,
 				"data":   resp.Signals,
 			},
 		}
@@ -97,11 +143,22 @@ func handleExternal(useCase *application.ComputeMacroUseCase, logger *slog.Logge
 			"dataSource": resp.DataSource,
 		}
 
+		// FDA-3: honest fetchedAt — use zero value when data is all-fixture (resp.FetchedAt.IsZero()).
+		// Do NOT fresh-stamp fixture data as "just fetched".
+		var fetchedAtStr string
+		if !resp.FetchedAt.IsZero() {
+			fetchedAtStr = resp.FetchedAt.Format(time.RFC3339)
+		} else {
+			// All-fixture path: emit an explicit empty string so the frontend
+			// knows no live fetch occurred. The frontend must handle "" gracefully.
+			fetchedAtStr = ""
+		}
+
 		body := map[string]interface{}{
 			"status":     "ok",
-			"fetchedAt":  resp.FetchedAt.Format(time.RFC3339),
+			"fetchedAt":  fetchedAtStr,
 			"sources":    sources,
-			"summary":    map[string]interface{}{"ok": 3, "failed": 0, "totalLatencyMs": 0},
+			"summary":    map[string]interface{}{"ok": okCount, "failed": failedCount, "totalLatencyMs": 0},
 			"indicators": indicators,
 		}
 

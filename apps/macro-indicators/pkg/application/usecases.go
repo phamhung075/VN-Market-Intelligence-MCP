@@ -121,10 +121,13 @@ func (uc *ComputeMacroUseCase) Execute(
 	computedAt := time.Now().UTC().Format(time.RFC3339)
 
 	// Resolve VN-Index from port; fall back to fixture default if port returns zero.
-	vnIndex := resolveVNIndex(ctx, uc)
+	// FDA-2: track liveness for per-field provenance (VNIndexIsEstimate / VNIndexSourceTier).
+	vnIndex, vnIndexLive := resolveVNIndex(ctx, uc)
 
 	// Resolve commodity prices via port; fall back to fixture defaults on zero/error.
-	oilPrice, goldPrice, usdVnd, allCommodityLive := resolveMarketPrices(ctx, uc)
+	// FDA-2: per-field liveness flags for OilIsEstimate/GoldIsEstimate/USDVndIsEstimate.
+	oilPrice, goldPrice, usdVnd, oilLive, goldLive, usdVndLive := resolveMarketPrices(ctx, uc)
+	allCommodityLive := oilLive && goldLive && usdVndLive
 
 	// DPI-1: SBV official USDVND takes priority over Yahoo Finance value.
 	// If sbvRate port returns a positive value, replace usdVnd (preserves OIL/GOLD).
@@ -171,14 +174,21 @@ func (uc *ComputeMacroUseCase) Execute(
 	sigs := ms.New(&concreteClock{})
 	out := sigs.BuildMacroSignals(input)
 
-	fetchedAt := time.Now().UTC()
-
 	// DSI-INV-1: dataSource="live" ONLY when all five inputs are live.
 	// Commodity (oil+gold+usdVnd) AND fedFunds AND vndDeposit must all be non-fixture.
 	carryInputsLive := fedFundsLive && vndDepositLive
 	dataSource := "estimate"
 	if allCommodityLive && carryInputsLive {
 		dataSource = "live"
+	}
+
+	// FDA-3: honest FetchedAt — only stamp time.Now() when at least one live source
+	// contributed. On all-fixture path (no live port data), use zero time to avoid
+	// fresh-stamping non-fresh data.
+	anyLive := vnIndexLive || oilLive || goldLive || usdVndLive || carryInputsLive
+	var fetchedAt time.Time
+	if anyLive {
+		fetchedAt = time.Now().UTC()
 	}
 
 	// DSI-INV-1: Build carry DTO with provenance metadata.
@@ -191,6 +201,30 @@ func (uc *ComputeMacroUseCase) Execute(
 	// earnYield and vndDeposit are both needed for a live yield signal.
 	yieldEstimate := !earnYieldLive || !vndDepositLive
 	yieldDTO := buildYieldDTO(out.YieldSpread, yieldEstimate)
+
+	// FDA-2: per-field source tiers.
+	// Live commodity sources are exchange-direct (tier:1); SBV USDVND override is tier:2
+	// but we track the commodity path here (SBV override is post-resolve, not tracked
+	// per-field). Fixture fallback is always tier:4.
+	const tierLive = 1
+	const tierFixture = 4
+
+	vnIndexTier := tierFixture
+	if vnIndexLive {
+		vnIndexTier = tierLive
+	}
+	oilTier := tierFixture
+	if oilLive {
+		oilTier = tierLive
+	}
+	goldTier := tierFixture
+	if goldLive {
+		goldTier = tierLive
+	}
+	usdVndTier := tierFixture
+	if usdVndLive {
+		usdVndTier = tierLive
+	}
 
 	return MacroSnapshotResponse{
 		Status:     "ok",
@@ -207,7 +241,15 @@ func (uc *ComputeMacroUseCase) Execute(
 			Carry:           carryDTO,
 			Yield:           yieldDTO,
 		},
-		FetchedAt: fetchedAt,
+		FetchedAt:         fetchedAt,
+		VNIndexIsEstimate: !vnIndexLive,
+		VNIndexSourceTier: vnIndexTier,
+		OilIsEstimate:     !oilLive,
+		OilSourceTier:     oilTier,
+		GoldIsEstimate:    !goldLive,
+		GoldSourceTier:    goldTier,
+		USDVndIsEstimate:  !usdVndLive,
+		USDVndSourceTier:  usdVndTier,
 	}, nil
 }
 
@@ -284,16 +326,17 @@ func buildYieldDTO(
 
 // resolveVNIndex fetches the VN-Index level from MarketIndexPort.
 // Falls back to fixtureVNIndex when the port is nil, returns 0, or errors.
-// This ensures live data is used when the DB is populated while keeping the
-// sandbox deterministic when no market data is available.
-func resolveVNIndex(ctx context.Context, uc *ComputeMacroUseCase) float64 {
+// Returns (value, isLive) where isLive=true means the port returned a live value.
+//
+// FDA-2: returns liveness flag so Execute() can populate VNIndexIsEstimate / VNIndexSourceTier.
+func resolveVNIndex(ctx context.Context, uc *ComputeMacroUseCase) (float64, bool) {
 	if uc.marketIndex != nil {
 		v, err := uc.marketIndex.FetchVNIndex(ctx)
 		if err == nil && v > 0 {
-			return v
+			return v, true
 		}
 	}
-	return fixtureVNIndex
+	return fixtureVNIndex, false
 }
 
 // ---------------------------------------------------------------------------
@@ -346,15 +389,16 @@ func resolveEarningYield(ctx context.Context, uc *ComputeMacroUseCase) (float64,
 // ---------------------------------------------------------------------------
 
 // resolveMarketPrices fetches commodity prices from the port; uses fixture defaults on failure.
-// Returns (oilPrice, goldPrice, usdVnd, allLive) where allLive is true when all three
-// values came from the live port (non-zero), enabling the DataSource field to be set.
+// Returns (oilPrice, goldPrice, usdVnd, oilLive, goldLive, usdVndLive) where each *Live flag
+// is true when the corresponding value came from the live port (non-zero), enabling per-field
+// provenance tracking (FDA-2).
+//
+// allCommodityLive (used for DataSource logic) is oilLive && goldLive && usdVndLive.
 // This function is a pure helper — no side effects beyond the port call.
-func resolveMarketPrices(ctx context.Context, uc *ComputeMacroUseCase) (oilPrice, goldPrice, usdVnd float64, allLive bool) {
+func resolveMarketPrices(ctx context.Context, uc *ComputeMacroUseCase) (oilPrice, goldPrice, usdVnd float64, oilLive, goldLive, usdVndLive bool) {
 	oilPrice = fixtureOilUSD
 	goldPrice = fixtureGoldUSD
 	usdVnd = fixtureUSDVnd
-
-	oilLive, goldLive, usdVndLive := false, false, false
 
 	if uc.commodityFetcher != nil {
 		prices, err := uc.commodityFetcher.FetchPrices(ctx, []string{"OIL", "GOLD", "USDVND"})
@@ -373,6 +417,5 @@ func resolveMarketPrices(ctx context.Context, uc *ComputeMacroUseCase) (oilPrice
 			}
 		}
 	}
-	allLive = oilLive && goldLive && usdVndLive
 	return
 }

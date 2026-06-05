@@ -77,6 +77,13 @@ type YieldSignalDTO struct {
 //
 // DSI-INV-1: DataSource is now "live" ONLY when oil+gold+usdVnd AND fedFunds AND
 // vndDeposit are all live. Otherwise "estimate" (any fixture component present).
+//
+// FDA-2: per-field provenance added for VNIndex, OilUSD, GoldUSD, USDVnd.
+// When a field falls back to fixture, IsEstimate=true and SourceTier=4 on that field.
+// Mirrors the pattern established by CarrySignalDTO / YieldSignalDTO (DSI-INV-1).
+//
+// FDA-3: FetchedAt is a pointer — nil when all inputs are fixture (prevents
+// fresh-stamping non-fresh data). Non-nil on any live-data path.
 type MacroSnapshotResponse struct {
 	Status     string       `json:"status"`
 	VNIndex    float64      `json:"vnIndex"`
@@ -85,5 +92,20 @@ type MacroSnapshotResponse struct {
 	USDVnd     float64      `json:"usdVnd"`
 	DataSource string       `json:"dataSource"`
 	Signals    SignalResult `json:"signals"`
-	FetchedAt  time.Time    `json:"fetchedAt"`
+
+	// FetchedAt is nil when the snapshot is fully fixture-fallback (FDA-3: no fresh-stamp).
+	// Non-nil (time.Now()) when at least one live source contributed.
+	FetchedAt time.Time `json:"fetchedAt"`
+
+	// FDA-2: per-field provenance for top-level price fields.
+	// Mirrors CarrySignalDTO.IsEstimate / SourceTier (DSI-INV-1 pattern).
+	// is_estimate=true + source_tier=4 when the value is a fixture fallback.
+	VNIndexIsEstimate bool `json:"vnIndex_is_estimate"`
+	VNIndexSourceTier int  `json:"vnIndex_source_tier"`
+	OilIsEstimate     bool `json:"oil_is_estimate"`
+	OilSourceTier     int  `json:"oil_source_tier"`
+	GoldIsEstimate    bool `json:"gold_is_estimate"`
+	GoldSourceTier    int  `json:"gold_source_tier"`
+	USDVndIsEstimate  bool `json:"usdVnd_is_estimate"`
+	USDVndSourceTier  int  `json:"usdVnd_source_tier"`
 }

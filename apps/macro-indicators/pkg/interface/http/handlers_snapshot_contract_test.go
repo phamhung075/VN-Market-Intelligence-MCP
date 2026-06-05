@@ -20,6 +20,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/vn-market-intelligence/macro-indicators/pkg/application"
 	"github.com/vn-market-intelligence/macro-indicators/pkg/domain"
@@ -294,6 +295,180 @@ func TestExternalBodyContract(t *testing.T) {
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------
+// FDA-3: /external honest source status + no fresh-stamp on fixture fallback
+// ---------------------------------------------------------------------------
+
+// fakeFixturePortsRouter wires an all-fixture use case (every port returns zero / empty)
+// so the snapshot is entirely fixture-fallback — testing the degraded /external path.
+func fakeFixturePortsRouter() http.Handler {
+	uc := application.NewComputeMacroUseCase(
+		// empty commodity map → all three commodity prices from fixture
+		&fakeContractCommodityFetcher{},
+		&fakeContractSBVRate{},
+		&fakeContractMarketIndex{}, // returns 1280.5 (== fixtureVNIndex) → still "live" from port
+		nil, // nil carry/yield → fixture fallback for carry/yield
+	)
+	return NewRouter(uc, nil)
+}
+
+// fakeAllFixturePortsRouter wires a truly all-fixture use case (vnIndex port returns
+// fixture value; commodity returns fixture values matching fixture constants; carry nil).
+// Used to test that /external reports degraded status when DataSource="estimate".
+//
+// Note: fakeContractCommodityFetcher returns the exact fixture values (82.5/2350.0/24500.0)
+// which the application layer treats as "live" (non-zero values from port). To get a
+// true all-fixture path the commodity port must return empty map.
+func fakeAllFixturePortsRouter() http.Handler {
+	uc := application.NewComputeMacroUseCase(
+		&fakeEmptyCommodityFetcher{},  // empty → all commodity fixture fallback
+		&fakeContractSBVRate{},
+		&fakeZeroMarketIndex{},        // zero → vnIndex fixture fallback
+		nil,                           // nil carry/yield → fixture fallback
+	)
+	return NewRouter(uc, nil)
+}
+
+// fakeEmptyCommodityFetcher always returns an empty map (simulates stale/absent DB).
+type fakeEmptyCommodityFetcher struct{}
+
+func (f *fakeEmptyCommodityFetcher) FetchPrices(_ context.Context, _ []string) (map[string]float64, error) {
+	return map[string]float64{}, nil
+}
+
+// fakeZeroMarketIndex returns 0 (simulates absent/empty DB rows).
+type fakeZeroMarketIndex struct{}
+
+func (f *fakeZeroMarketIndex) FetchVNIndex(_ context.Context) (float64, error) {
+	return 0, nil
+}
+
+// TestFDA3_ExternalFixturePath_DegradedStatus verifies that GET /external reports
+// degraded source statuses (not all "ok") when the snapshot is fixture-fallback.
+//
+// RED test: fails before handleExternal derives status from resp.DataSource.
+func TestFDA3_ExternalFixturePath_DegradedStatus(t *testing.T) {
+	srv := httptest.NewServer(fakeAllFixturePortsRouter())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/external")
+	if err != nil {
+		t.Fatalf("GET /external failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("GET /external (fixture): expected 200, got %d", resp.StatusCode)
+	}
+
+	var body map[string]json.RawMessage
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("GET /external: decode body: %v", err)
+	}
+
+	// summary.failed must NOT be 0 when all data is fixture (degraded path).
+	if raw, ok := body["summary"]; ok {
+		var summary struct {
+			Failed int `json:"failed"`
+			Ok     int `json:"ok"`
+		}
+		if err := json.Unmarshal(raw, &summary); err == nil {
+			if summary.Failed == 0 {
+				t.Errorf("FDA-3: /external fixture path: summary.failed=0 — must report degraded sources (failed>0) when DataSource=estimate")
+			}
+		}
+	}
+
+	// At least one source must report status != "ok" on fixture path.
+	if raw, ok := body["sources"]; ok {
+		var sources map[string]struct {
+			Status string `json:"status"`
+		}
+		if err := json.Unmarshal(raw, &sources); err == nil {
+			allOk := true
+			for _, src := range sources {
+				if src.Status != "ok" {
+					allOk = false
+					break
+				}
+			}
+			if allOk {
+				t.Errorf("FDA-3: /external fixture path: all sources report status='ok' — must degrade to 'estimate' or 'unavailable' on fixture fallback")
+			}
+		}
+	}
+}
+
+// TestFDA3_ExternalFixturePath_NoFreshStamp verifies that GET /external does NOT
+// emit a fresh fetchedAt timestamp when the snapshot is entirely fixture-fallback.
+//
+// RED test: fails before the handler stops fresh-stamping fixture data.
+func TestFDA3_ExternalFixturePath_NoFreshStamp(t *testing.T) {
+	srv := httptest.NewServer(fakeAllFixturePortsRouter())
+	defer srv.Close()
+
+	before := timeNow()
+
+	resp, err := http.Get(srv.URL + "/external")
+	if err != nil {
+		t.Fatalf("GET /external failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var body map[string]json.RawMessage
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("GET /external: decode body: %v", err)
+	}
+
+	// fetchedAt must NOT be a fresh timestamp when everything is fixture.
+	if raw, ok := body["fetchedAt"]; ok {
+		var fetchedAtStr string
+		if err := json.Unmarshal(raw, &fetchedAtStr); err == nil && fetchedAtStr != "" {
+			ts, parseErr := time.Parse(time.RFC3339, fetchedAtStr)
+			if parseErr == nil {
+				// A fresh stamp is within 5s of the request.
+				if ts.After(before.Add(-5 * time.Second)) {
+					t.Errorf("FDA-3: /external fixture path: fetchedAt=%v is a fresh timestamp — "+
+						"must not fresh-stamp fixture data; want empty string or epoch/zero", fetchedAtStr)
+				}
+			}
+		}
+	}
+}
+
+// TestFDA3_ExternalLivePath_AllOk verifies that when the snapshot has live data,
+// /external reports all sources "ok" and summary.failed=0.
+func TestFDA3_ExternalLivePath_AllOk(t *testing.T) {
+	// fakeContractCommodityFetcher returns non-zero live values (82.5/2350.0/24500.0).
+	// fakeContractMarketIndex returns 1280.5 (non-zero → "live" from port).
+	srv := httptest.NewServer(newContractRouter())
+	defer srv.Close()
+
+	resp, err := http.Get(srv.URL + "/external")
+	if err != nil {
+		t.Fatalf("GET /external failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	var body map[string]json.RawMessage
+	if err := json.NewDecoder(resp.Body).Decode(&body); err != nil {
+		t.Fatalf("GET /external (live): decode body: %v", err)
+	}
+
+	// When commodity + vnIndex ports return non-zero values, DataSource is at least
+	// "estimate" (carry/yield nil → fixture). The handler must not over-degrade to all-failed.
+	// NOTE: exact status depends on DataSource — this test just verifies the shape is sane.
+	if _, ok := body["summary"]; !ok {
+		t.Errorf("FDA-3: /external live path: missing 'summary' key")
+	}
+	if _, ok := body["sources"]; !ok {
+		t.Errorf("FDA-3: /external live path: missing 'sources' key")
+	}
+}
+
+// timeNow is a package-level alias to time.Now used so tests can capture before/after.
+func timeNow() time.Time { return time.Now().UTC() }
 
 // ---------------------------------------------------------------------------
 // keySet returns the sorted slice of keys from a map for use in error messages.

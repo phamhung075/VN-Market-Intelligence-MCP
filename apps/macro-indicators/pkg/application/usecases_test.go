@@ -1064,6 +1064,204 @@ func abs(x float64) float64 {
 }
 
 // ---------------------------------------------------------------------------
+// FDA-2: per-field provenance on snapshot price fields
+// ---------------------------------------------------------------------------
+
+// TestFDA2_VNIndexFixturePath_IsEstimate verifies that when MarketIndexPort returns
+// zero (fixture fallback), resp.VNIndex carries IsEstimate=true and SourceTier=4.
+//
+// RED test: fails before VNIndexIsEstimate / VNIndexSourceTier fields are added to
+// MacroSnapshotResponse and populated in Execute().
+func TestFDA2_VNIndexFixturePath_IsEstimate(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 0}, // zero → fixture fallback
+		nil,
+	)
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	if !resp.VNIndexIsEstimate {
+		t.Errorf("FDA-2: VNIndex fixture path: VNIndexIsEstimate=false, want true (port returned 0 → fixture)")
+	}
+	if resp.VNIndexSourceTier != 4 {
+		t.Errorf("FDA-2: VNIndex fixture path: VNIndexSourceTier=%d, want 4 (fixture tier)", resp.VNIndexSourceTier)
+	}
+}
+
+// TestFDA2_VNIndexLivePath_NotEstimate verifies that when MarketIndexPort returns
+// a live value, resp.VNIndex carries IsEstimate=false and SourceTier!=4.
+func TestFDA2_VNIndexLivePath_NotEstimate(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		newStubCommodity(),
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0}, // live value
+		nil,
+	)
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	if resp.VNIndexIsEstimate {
+		t.Errorf("FDA-2: VNIndex live path: VNIndexIsEstimate=true, want false (port returned live value)")
+	}
+	if resp.VNIndexSourceTier == 4 {
+		t.Errorf("FDA-2: VNIndex live path: VNIndexSourceTier=4 (fixture tier) on live path — must not be 4")
+	}
+}
+
+// TestFDA2_OilFixturePath_IsEstimate verifies that when CommodityFetcher returns no OIL
+// (empty map / fixture fallback), resp.OilIsEstimate=true and resp.OilSourceTier=4.
+func TestFDA2_OilFixturePath_IsEstimate(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{}}, // empty → fixture fallback
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		nil,
+	)
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	if !resp.OilIsEstimate {
+		t.Errorf("FDA-2: Oil fixture path: OilIsEstimate=false, want true (empty port → fixture)")
+	}
+	if resp.OilSourceTier != 4 {
+		t.Errorf("FDA-2: Oil fixture path: OilSourceTier=%d, want 4", resp.OilSourceTier)
+	}
+}
+
+// TestFDA2_GoldFixturePath_IsEstimate verifies per-field provenance for Gold fixture path.
+func TestFDA2_GoldFixturePath_IsEstimate(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		nil,
+	)
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	if !resp.GoldIsEstimate {
+		t.Errorf("FDA-2: Gold fixture path: GoldIsEstimate=false, want true")
+	}
+	if resp.GoldSourceTier != 4 {
+		t.Errorf("FDA-2: Gold fixture path: GoldSourceTier=%d, want 4", resp.GoldSourceTier)
+	}
+}
+
+// TestFDA2_USDVndFixturePath_IsEstimate verifies per-field provenance for USDVnd fixture path.
+func TestFDA2_USDVndFixturePath_IsEstimate(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		nil,
+	)
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	if !resp.USDVndIsEstimate {
+		t.Errorf("FDA-2: USDVnd fixture path: USDVndIsEstimate=false, want true")
+	}
+	if resp.USDVndSourceTier != 4 {
+		t.Errorf("FDA-2: USDVnd fixture path: USDVndSourceTier=%d, want 4", resp.USDVndSourceTier)
+	}
+}
+
+// TestFDA2_LivePrices_NotEstimate verifies that live commodity port values produce
+// IsEstimate=false and SourceTier!=4 on all three commodity fields.
+func TestFDA2_LivePrices_NotEstimate(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    96.0,
+			"GOLD":   4480.0,
+			"USDVND": 26150.0,
+		}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		nil,
+	)
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	if resp.OilIsEstimate {
+		t.Errorf("FDA-2: Oil live path: OilIsEstimate=true, want false")
+	}
+	if resp.OilSourceTier == 4 {
+		t.Errorf("FDA-2: Oil live path: OilSourceTier=4 (fixture tier) on live path")
+	}
+	if resp.GoldIsEstimate {
+		t.Errorf("FDA-2: Gold live path: GoldIsEstimate=true, want false")
+	}
+	if resp.GoldSourceTier == 4 {
+		t.Errorf("FDA-2: Gold live path: GoldSourceTier=4 (fixture tier) on live path")
+	}
+	if resp.USDVndIsEstimate {
+		t.Errorf("FDA-2: USDVnd live path: USDVndIsEstimate=true, want false")
+	}
+	if resp.USDVndSourceTier == 4 {
+		t.Errorf("FDA-2: USDVnd live path: USDVndSourceTier=4 (fixture tier) on live path")
+	}
+}
+
+// ---------------------------------------------------------------------------
+// FDA-3: honest /external source status — tested via usecases layer
+// ---------------------------------------------------------------------------
+
+// TestFDA3_FetchedAtIsNilOnFixturePath verifies that on fixture fallback (all
+// commodity + vnIndex ports return zero), FetchedAt in the response is zero/nil
+// — NOT a fresh time.Now() stamp that would misrepresent fixture data as current.
+//
+// RED test: fails before FetchedAt is made honest (pointer or zero on fixture path).
+func TestFDA3_FetchedAtIsNilOnFixturePath(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{}}, // all fixture
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 0}, // fixture
+		nil,
+	)
+	before := time.Now().UTC()
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	// FetchedAt must NOT be a fresh timestamp when everything is fixture.
+	// It must be zero (time.Time{}) to signal that the data is not freshly-fetched.
+	if !resp.FetchedAt.IsZero() && resp.FetchedAt.After(before.Add(-time.Second)) {
+		t.Errorf("FDA-3: FetchedAt=%v is a fresh timestamp on all-fixture path — "+
+			"fixture data must not be fresh-stamped; want zero time", resp.FetchedAt)
+	}
+}
+
+// TestFDA3_FetchedAtIsSetOnLivePath verifies that when at least some data is live,
+// FetchedAt is a meaningful (non-zero) timestamp.
+func TestFDA3_FetchedAtIsSetOnLivePath(t *testing.T) {
+	uc := NewComputeMacroUseCase(
+		&stubCommodityFetcher{prices: map[string]float64{
+			"OIL":    96.0,
+			"GOLD":   4480.0,
+			"USDVND": 26150.0,
+		}},
+		&stubSBVRate{},
+		&stubMarketIndex{vnIndex: 1880.0},
+		&stubCarryYieldInputs{vndDeposit: 5.0, fedFunds: 3.62, earnYield: 6.83},
+	)
+	resp, err := uc.Execute(context.Background(), MacroSnapshotRequest{})
+	if err != nil {
+		t.Fatalf("Execute() error: %v", err)
+	}
+	if resp.FetchedAt.IsZero() {
+		t.Errorf("FDA-3: FetchedAt is zero on live path — must be a valid timestamp when data is live")
+	}
+}
+
+// ---------------------------------------------------------------------------
 // CARRY-YIELD-SINGLE-SIGNAL-FIXTURE: anti-fixture-value regression guard
 // ---------------------------------------------------------------------------
 
