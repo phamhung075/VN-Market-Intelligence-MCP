@@ -1,5 +1,15 @@
 # Agent Father — Notebook
 
+## c285 · 2026-06-05T21:56Z — REFINE-CRON-ARM: add refine_bctc_md to cowork schedule
+
+- Task: REFINE-CRON-ARM (UNBLOCK, S). 7 BCTC reports stuck PENDING/PARTIAL — no schedule slot.
+- Root: refine_bctc_md/init.md declared "fleet cron orchestrator (NOT auto-cron)" but cowork-schedule.json had zero refine entries. dev-team listed it on-demand-only. Nothing ever picked up reports.
+- Fix: added 2 slots to docs/data/cowork-schedule.json: refine-bctc-slot-1 (09:00 UTC) + refine-bctc-slot-2 (14:00 UTC). Both off-market, outside OFF-HOSE window, clear of bctc-analyst (15/18/21/00h) and chef-evening (19:45h). Each slot calls get_bctc_pending_refine limit:1, picks OLDEST row, includes CV_CBTT/page_count<=4 skip guard per CTG sequencing requirement.
+- Updated refine_bctc_md/init.md: added trigger.schedule_slots block pointing at both slots, updated inter_agent.recv to show cowork-dispatcher as caller entry-point, killed "NOT auto-cron" ambiguity in not_my_job.
+- Wired cowork-team/flow/main.md boundary list: added refine_bctc_md to scheduled set.
+- Commit: aec3a3d8 (3 files; solo — wip=0)
+- Cowork refresh REQUIRED (flow file cowork-team/flow/main.md changed).
+
 ## c284 · 2026-06-04 — DSI-CONSUMER-HONORS-ISESTIMATE: carry provenance guard in chef + fb-market-poster
 
 - Task: DSI-CONSUMER-HONORS-ISESTIMATE (P1). Root: consumers recomputed spread from raw fedFundsRate/vndDepositRate even after serve layer suppressed carrySpread=null + is_estimate=true.
@@ -22,17 +32,3 @@
   - `docs/agents/digest-predict/flow/monday.md` — P-6 notebook commit migrated
 - Audit verdict (6 agents): fb-market-poster=CORRECT (OVERWRITE class, defers to skill); digest-predict daily/weekly/monthly=CORRECT (defer to cowork-end-cycle→skill); all 5 above=FLOW-ORPHAN now fixed.
 - Commit: 04b20c87
-
-## c282 · 2026-05-31 — Create cron-detect-loop skill (durability layer for anomaly-task-bridge)
-
-- Change: Created `.claude/skills/cron-detect-loop/SKILL.md` (120L at cap) — session-start re-arm skill that idempotently registers 4 crons (dev-team `7 * * * *` + system-auditor Tier-1/2/3). Updated `CLAUDE.md` Skills section (+1 bullet for /cron-detect-loop). Added explicit `repair_task_request` routing row to `docs/agents/dev-team/flow/drain-signals.md` routing table (before "any other" fallback) — self-documenting the detect→plan bridge.
-- Files modified: 3 (new skill + CLAUDE.md + drain-signals.md)
-- Validation: 5/5 passed; Commit: 5b1b5574
-
-## c281 · 2026-05-30 — Create refine_bctc_md (AR-AGENT-A, BCTC-AGENTIC-REFINE)
-
-- Type: leaf subagent (Haiku runtime, Opus-authored one-time)
-- Files created: 7 (.claude/agents/refine_bctc_md.md + init.md + 5 flow files)
-- Registration: .claude/agents/refine_bctc_md.md created (CC registration); docs/ tree only
-- Validation: 7/7 passed; Commit: d854e8ff
-- Blocks: AR-AGENT-B (bctc-analyst retier + ESC-5 confidence column)
