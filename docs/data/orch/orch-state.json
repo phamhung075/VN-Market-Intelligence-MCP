@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-05T21:30:00Z",
-  "_updated_by": "architect",
+  "_updated_at": "2026-06-05T23:46:00Z",
+  "_updated_by": "dev-mcp-server",
   "head": {
     "status": "idle",
     "active_task_id": null,
@@ -2206,7 +2206,7 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": "ARCH-ORCH-F1",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "M",
             "zone": "apps/mcp-server/"
           },

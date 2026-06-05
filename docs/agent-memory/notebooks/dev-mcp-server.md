@@ -1,5 +1,22 @@
 # dev-mcp-server -- Notebook
 
+## c374 · 2026-06-05T23:46Z (ARCH-ORCH-F2) — COMMITTED da37602f
+
+**Task:** ARCH-ORCH-F2 — journalStore.ts + orchestrationHandler.ts decisions extension (ORCH-DASH-DECISION-DRILLDOWN sprint).
+
+**Implemented:**
+- `apps/mcp-server/src/infrastructure/journalStore.ts`: StepDto/DecisionsDto types, parseJournalFile (pure, CRLF-safe, CAP-REACHED guard, task-id routing), buildDecisionsDto, getDecisionsForSprints with module-level mtime cache, _clearCacheForTesting export.
+- Extended `orchestrationHandler.ts`: decisions: DecisionsDto added to OrchestrationDto; buildOrchestrationDto now accepts optional decisionsDir; sprint-ID union from sprint_goal.entries (all statuses) + active_sprints; zero-value on no-files (AC-F2-8).
+- Created `1978-journal-store.test.ts` (26 tests, T1–T6 + real fixture + CRLF).
+- Created `1979-orchestration-decisions.test.ts` (13 tests, T1–T3).
+- Extended `1977-orchestration-endpoint.test.ts` (+1 T1h assertion).
+
+**Results:** tsc 0 errors. 59 tests green (1977+1978+1979), 0 fail. Live curl: decisions.by_task[ARCH-ORCH-F1] (agent-father-S1) + sprint_bucket[ORCH-DASH-DECISION-DRILLDOWN] (9 entries) populated from real fixture. Container rebuilt.
+
+Zone health: F2 DONE, decisions field live, ARCH-ORCH-F2 → REVIEW | HEALTHY
+
+---
+
 ## c373 · 2026-06-05T21:50Z (FIX-CTG-PDF-MISLINK) — COMMITTED 77092007
 
 **Task:** FIX-CTG-PDF-MISLINK (FIX, P1) — CTG 2026-Q1 row 69fa303f linked to 2-page cover letter CTG_2026_Q1.pdf instead of 62-page consolidated hop-nhat PDF.

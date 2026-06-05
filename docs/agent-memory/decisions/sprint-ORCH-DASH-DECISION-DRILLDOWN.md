@@ -106,6 +106,17 @@
 **why-decision:** Architect output named four logical legs; PM's job is to map each leg to exactly one task with dependencies respected, atomicity preserved, and developer acceptance criteria explicit. Four sequential tasks with explicit zone+blocks metadata enable the dev-team Step 3 zone-routed parallel dispatch and keep WIP=2 discipline clean.
 **why-change:** No deviation from architect blueprint (which named F1/F2/F3/QA explicitly); PM added structure (TASK_NNN.md per task) and explicit AC/file lists per dev-standards handoff template, not a design change.
 
+### STEP dev-mcp-server-S1 · dev-mcp-server · 2026-06-05T23:45:00Z
+**task-id:** ARCH-ORCH-F2
+**what-done:** Implemented journalStore.ts (pure parser + mtime cache), extended orchestrationHandler.ts with decisions: DecisionsDto field, and wrote 3 new test files (1978/1979 new, 1977 extended); rebuilt mcp-server container; live curl confirmed decisions.by_task[ARCH-ORCH-F1] + sprint_bucket[ORCH-DASH-DECISION-DRILLDOWN] populated from real fixture.
+**what-considered:**
+- Parser inWhatConsidered state: exiting on any non-bullet, non-blank line starting with `**` vs only on named field regex matches — chose the `**` prefix check so prose bullets don't accidentally terminate early on missing fields
+- Cache bleed between tests (R-2): unique tmpdir per test vs _clearCacheForTesting export — chose BOTH: unique tmpdir paths as primary guard, _clearCacheForTesting() in beforeEach as belt-and-suspenders
+- decisionsDir default in buildOrchestrationDto: process.cwd() + relative path vs injected mandatory param — chose optional param with process.cwd() default to keep handleGetOrchestration call site unchanged (backward-compat, minimal diff)
+- Sprint-ID dedup: Array.from(new Set) before iterating — prevents double-parse when same sprint-id appears in both sprint_goal.entries and active_sprints (RULING-3)
+**why-decision:** Blueprint parse contract was exact — implemented it line-for-line; the optional decisionsDir param is the minimum change to satisfy R-1 (testability) without touching the HTTP handler signature; mtime cache singleton eliminates redundant re-parses on the 5-second polling loop (RULING-4).
+**why-change:** No design deviation from architect blueprint or PM AC; all 14 AC met; tsc 0 errors, 59 tests green, live-verify raw JSON confirmed.
+
 ### STEP agent-father-S1 · agent-father · 2026-06-05T00:00:00Z
 **task-id:** ARCH-ORCH-F1
 **what-done:** Added optional `**task-id:**` field to decision-journal SKILL.md § Write Entry template and § Rules; injected task_id parameter at all journal-write call sites in developer/flow/main.md, developer/flow/microservice-main.md, architect/flow/main.md, qa/flow/main.md, and cowork-end-cycle/SKILL.md.
