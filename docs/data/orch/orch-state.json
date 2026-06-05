@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Tick 2026-06-05T06:13Z: FAKE-DATA-AUDIT complete (FDA-1..10 logged, deferred per operator 'take it later'). Bookkeeping: drained 4 signals (3 cowork heartbeats + 1 context-bloat), pruned dev-frontend.md 205->194 (cap breach), logged FU-PRESSURE-EMIT-DARK (pressure-state dark ~2.25d, fail-safe legacy fallback). No non-deferred ready P1/P2 dev task -> idle. Next tick may start FDA-1 (polymarket 0.5-fab) if no higher-priority work. Live-pending mcp-server rebuild batch (off-market): 1881a + FDA fixes when shipped.",
+    "next_action": "FDA-1 DONE (cc4dbcba, raw-verified) — code on main, PENDING off-market mcp-server rebuild (batch: 1881a + FDA-1; market open until 08:00 UTC). Next tick: FDA-2/3 (macro-indicators pair, one Go rebuild) per PO plan; then trigger off-market rebuild via ops when >08:00 UTC.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T06:14:05.167625+00:00",
+    "updated_at": "2026-06-05T07:23:00.717627+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T06:14:05.167625+00:00",
+    "_updated_at": "2026-06-05T07:23:00.717627+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2948,7 +2948,7 @@
         "title": "polymarket fetcher fabricates 50% probability (0.5/0.5) on malformed prices — served as live with no is_estimate",
         "type": "FIX",
         "sprint": "FAKE-DATA-AUDIT",
-        "status": "BACKLOG",
+        "status": "DONE-PENDING-REBUILD",
         "priority": "P2",
         "size": "S",
         "zone": "apps/mcp-server",
@@ -2958,7 +2958,11 @@
         "severity": "MED",
         "note": "polymarket.ts:86 parseOutcomePrices() (LIVE Gamma-primary path) returns {yes:0.5,no:0.5} when outcomePrices is unparseable; polymarket.ts:155/159 extractPrices() (CLOB branch) returns 0.5 / `yes?.price ?? 0.5`. The fabricated coin-flip flows into the PredictionMarket record (yesPrice ~line 347), is persisted by storePolymarketSnapshot with fetched_at, then served by get_prediction_markets (predictionTools.ts:86 reads row.yes_price) and the predictionMarketJob telegram dish as 'Xác suất YES: 50.0%' with NO is_estimate/source_tier. A fabricated 50% is indistinguishable from a genuine 50% market. FIX: return null and skip the market on parse failure, OR carry is_estimate=true+source_tier=4 through the record and surface it in predictionTools/predictionMarketJob output. Never default a probability to 0.5. Verified raw 2026-06-05.",
         "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
-        "depends_on": null
+        "depends_on": null,
+        "started_at": "2026-06-05T07:12:51.166809+00:00",
+        "commit": "cc4dbcba",
+        "done_at": "2026-06-05T07:23:00.717627+00:00",
+        "deploy_note": "Code on main (skip-at-source: parseOutcomePrices/extractPrices return null on unparseable, callers continue; 21/21 + suites green, tsc clean, router raw-verified). NOT LIVE — needs OFF-MARKET mcp-server rebuild batch (with 1881a + FDA-2/3 when shipped)."
       },
       {
         "task_id": "FDA-2",
