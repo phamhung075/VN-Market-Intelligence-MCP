@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Tick 2026-06-05T09:10Z (off-market, UTC09): drained 2 cowork-fire heartbeats -> CONFIRMED false-peer leader-lock root cause, filed FU-LEADER-LOCK-OWNER-SESSION (P2 FIX, owner_session not stable across gateway-proxied per-tick calls -> own-held heartbeat path unreachable -> legitimate FIRE within 1800s falsely suppressed; benign now, latent). Groomed 2 stranded DONE rows (id-keyed) out of backlog -> done lane (SPIKE-BCTC-CTG-ATTACHMENT-FETCH 517a9056, NB-COWORK-MAIN-SPLIT ae4396e6). signal_queue.rows all terminal (READ/DONE/RESOLVED), none dev-actionable, left intact. No non-deferred ready P1/P2 dev code task -> idle. OPEN backlog highlights: FU-LEADER-LOCK-OWNER-SESSION (P2, new), FU-PRESSURE-EMIT-DARK (P3), FDA-4..10 (P3, FAKE-DATA-AUDIT tail). Next tick: PO disposition on FU-LEADER-LOCK-OWNER-SESSION owner (dev-mcp-server task-lock vs cowork-flow) or pick next ready P1/P2.",
+    "next_action": "Tick 2026-06-05T10:09Z (off-market): FU-LEADER-LOCK-OWNER-SESSION DONE+LIVE end-to-end. PO raw-disposition re-typed the filed P2 FIX -> SPIKE (its stated mechanism contradicted code; SERVER_SESSION_ID is process-stable) under recurring-bug escalation (4th leader-lock touch). Architect spike PROVED VERDICT A: mcp-server restart (FDA-1 deploy 08:11:38Z) orphaned the 08:00:44Z cowork-leader lock -> new SERVER_SESSION_ID can't heartbeat old row -> false PEER-HELD. Shipped BOTH layers live: mcp-server 1b058f40 (task_force_release_orphan, heartbeat_age>600 gate, dup-spawn-safe; rebuilt 10:30Z, probe-confirmed) + cowork-flow d88045c1 (leader-lock.md Step 0b orphan-recovery). OPERATOR ACTION PENDING: paste the Cowork-refresh prompt so running cowork agents adopt the new Step 0b. Remaining backlog: FU-PRESSURE-EMIT-DARK (P3), FDA-4..10 (P3), FU-LOCKSTORE-EXPIRED-GC (P3, kin — tombstone GC). Next tick: PO pick next ready, or P3 grooming batch.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T09:11:50.501014+00:00",
+    "updated_at": "2026-06-05T10:35:31.373260+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T09:11:50.501014+00:00",
+    "_updated_at": "2026-06-05T10:35:31.373260+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -3047,21 +3047,6 @@
         "note": "3 consecutive cowork-team heartbeats (2026-06-05 04:21/05:03/05:18Z) report 'pressure-state STALE ~2d -> legacy-mode fallback, cadence bypassed, cron governs' and 'pressure-emit dark >2d -> system-auditor candidate if not self-healed'. pressure-state.json last tick_id=2026-06-03T00:00:00Z (updated_at 2026-06-03T00:04:30Z). FAIL-SAFE: cowork still fires on legacy fixed cron (no outage), but the adaptive-cadence governor (project_dynamic_workflow_cadence Phase 1, SHIPPED 2026-05-31) is inert — suppression/downgrade logic never runs. Find the emitter that writes pressure-state.json (cadence-policy.json consumer / a cron or the cowork dispatcher) and restore the periodic write, OR if Phase-1 emit was never wired to a live cron, that is the root gap. ROUTE: PO to confirm owner (cowork-plane vs dev cron) — may be agent-father/cowork lane, not apps/ code. Detected by dev-team tick 2026-06-05T06:13Z from drained heartbeats.",
         "source": "dev-team tick 2026-06-05T06:13Z (drained cowork-team heartbeats)",
         "depends_on": null
-      },
-      {
-        "task_id": "FU-LEADER-LOCK-OWNER-SESSION",
-        "title": "Cowork leader-lock falsely suppresses legitimate FIRE ticks — owner_session (pid+startupTs) not stable across gateway-proxied per-tick calls, so the own-held heartbeat re-claim path is structurally unreachable",
-        "type": "FIX",
-        "sprint": "FLEET-HOST-SAFETY",
-        "status": "BACKLOG",
-        "priority": "P2",
-        "size": "M",
-        "zone": "cross-service/",
-        "files": [],
-        "severity": "MED",
-        "note": "CONFIRMED (was 'suspected' 08:15Z, CONFIRMED 08:46Z same window). Mechanism: leader-lock owner_session token = pid-<pid>-ts-<startupTs>, regenerated per process. Cowork FIRE ticks run as separate gateway-proxied calls -> each tick sees a different owner_session -> when it re-reads an ALIVE lock it claimed on a PRIOR tick, the own-held heartbeat branch (which matches on owner_session equality) never matches -> falls through to the peer-held branch -> silent suppression of a legitimate FIRE. Evidence: 08:15Z chef-intraday MATCHED but re-claim returned claimed=false (lock alive from 08:00:44Z, ttl 1800s) -> PEER-HELD -> silent exit, YET slot token cowork-slot:chef-intraday claimed=true (no real peer) = contradiction. 08:45Z chef-eod fired clean precisely BECAUSE the 08:00Z lock had expired >1800s (stolen:true) = clean fresh claim. So: alive-lock => false peer-held suppression; expired-lock => correct fire. Benign 2026-06-05 (08:15Z intraday already fired 07:16Z) but LATENT product risk: any FIRE landing within 1800s of a prior leader claim by the same logical leader is dropped. FIX DIRECTION: make leader identity STABLE across per-tick gateway calls (durable leader id persisted in the lock store / coordination.db, not a per-process pid+startupTs), OR have the heartbeat/re-claim path treat 'lock held by my own logical leader key' as own-held regardless of session token. ROUTE: PO to confirm owner — leader-lock lives in the cowork dispatcher + mcp-server task-lock tool (coordination.db); likely dev-mcp-server (task_claim/leader-lock) + cowork-flow skill. Kin FU-LOCKSTORE-EXPIRED-GC, FU-CHEF-MARKER-INFLOW. Detected by dev-team tick 2026-06-05T09:10Z from drained cowork heartbeats.",
-        "source": "dev-team tick 2026-06-05T09:10Z (drained cowork-team heartbeats 08:18Z + 08:46Z)",
-        "depends_on": null
       }
     ],
     "archive": [],
@@ -3170,6 +3155,30 @@
         "task_id": "NB-COWORK-MAIN-SPLIT",
         "relocated_by": "dev-team",
         "relocated_at": "2026-06-05T09:11:50.501014+00:00"
+      },
+      {
+        "task_id": "FU-LEADER-LOCK-OWNER-SESSION",
+        "title": "Cowork leader-lock falsely suppresses legitimate FIRE ticks — owner_session (pid+startupTs) not stable across gateway-proxied per-tick calls, so the own-held heartbeat re-claim path is structurally unreachable",
+        "type": "FIX",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "DONE",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "files": [],
+        "severity": "MED",
+        "note": "CONFIRMED (was 'suspected' 08:15Z, CONFIRMED 08:46Z same window). Mechanism: leader-lock owner_session token = pid-<pid>-ts-<startupTs>, regenerated per process. Cowork FIRE ticks run as separate gateway-proxied calls -> each tick sees a different owner_session -> when it re-reads an ALIVE lock it claimed on a PRIOR tick, the own-held heartbeat branch (which matches on owner_session equality) never matches -> falls through to the peer-held branch -> silent suppression of a legitimate FIRE. Evidence: 08:15Z chef-intraday MATCHED but re-claim returned claimed=false (lock alive from 08:00:44Z, ttl 1800s) -> PEER-HELD -> silent exit, YET slot token cowork-slot:chef-intraday claimed=true (no real peer) = contradiction. 08:45Z chef-eod fired clean precisely BECAUSE the 08:00Z lock had expired >1800s (stolen:true) = clean fresh claim. So: alive-lock => false peer-held suppression; expired-lock => correct fire. Benign 2026-06-05 (08:15Z intraday already fired 07:16Z) but LATENT product risk: any FIRE landing within 1800s of a prior leader claim by the same logical leader is dropped. FIX DIRECTION: make leader identity STABLE across per-tick gateway calls (durable leader id persisted in the lock store / coordination.db, not a per-process pid+startupTs), OR have the heartbeat/re-claim path treat 'lock held by my own logical leader key' as own-held regardless of session token. ROUTE: PO to confirm owner — leader-lock lives in the cowork dispatcher + mcp-server task-lock tool (coordination.db); likely dev-mcp-server (task_claim/leader-lock) + cowork-flow skill. Kin FU-LOCKSTORE-EXPIRED-GC, FU-CHEF-MARKER-INFLOW. Detected by dev-team tick 2026-06-05T09:10Z from drained cowork heartbeats.",
+        "source": "dev-team tick 2026-06-05T09:10Z (drained cowork-team heartbeats 08:18Z + 08:46Z)",
+        "depends_on": null,
+        "resolution": "DONE+LIVE 2026-06-05T10:xxZ. Root cause PROVEN by architect spike (VERDICT A, brief docs/architecture-briefs/2026-06-05-leader-lock-false-peer-held-spike.md): NOT 'owner_session regenerated per gateway call' (that theory was false — SERVER_SESSION_ID is process-stable) but owner_session NOT DURABLE ACROSS PROCESS RESTART. mcp-server restarted 08:11:38Z (FDA-1 deploy) 654s after cowork-leader claimed 08:00:44Z (owner_session pid-1-ts-1780613414482); new process minted a new SERVER_SESSION_ID -> 08:15Z heartbeat UPDATE WHERE owner_session=<new> matched 0 rows -> ok=false -> false PEER-HELD silent suppression. So EVERY deploy/restart silently orphaned the cowork-leader lock for up to its 1800s TTL. FIX (both layers, live): (1) mcp-server 1b058f40 — releaseOrphanTask + new MCP tool task_force_release_orphan(task_id,owner_agent,orphan_threshold_seconds=600,min120): force-releases a held lock ONLY when heartbeat_age>threshold (stale/dead holder); a FRESH heartbeat (live peer) is NOT released -> preserves the 2026-06-02 dup-spawn discriminator (no double-leader window). 8 new tests RED->GREEN (AC-SL-6/7), tsc clean, mcp-server rebuilt 10:30:50Z (tool count 160->161), raw-probe confirmed callable {released:false,lock_not_found}. (2) cowork-flow d88045c1 — leader-lock.md Step 0b now: claimed=false -> heartbeat probe ok=false -> task_force_release_orphan; released=true -> re-claim & proceed (restart-orphan); released=false -> live peer, silent exit. 80L<120L cap. Recurring-bug escalation honored (4th touch -> architect root-cause before any blind fix per feedback_recurring_bug_escalation). Operator Cowork-refresh paste required to propagate to running cowork agents.",
+        "deployed_at": "2026-06-05T10:35:31.373260+00:00",
+        "deploy_commits": [
+          "1b058f40 (mcp-server tool)",
+          "d88045c1 (cowork-flow)"
+        ],
+        "spike": "SPIKE-LEADER-LOCK-OWNER-SESSION DONE (architect, brief 2026-06-05-leader-lock-false-peer-held-spike.md)",
+        "resolved_by": "dev-team",
+        "resolved_at": "2026-06-05T10:35:31.373260+00:00"
       }
     ],
     "in_progress": []
