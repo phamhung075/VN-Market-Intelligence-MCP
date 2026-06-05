@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Idle 2026-06-05T01:09Z tick: 0 signals, head idle. Diagnosed FU-RUNTIME-SET-TRUTH-RECONCILE (pdf-extractor safe-reconcile; rag-service blocked on FU-RAG-DEPLOY-MEMORY host-mem decision — NOT auto-flipped, host-safety). Open P3: FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-CNYVND-DEAD-FIELD-REMOVE (migration/gated), FU-SBV-EFFECTIVE-DATE-COLUMN, FU-RUNTIME-SET-TRUTH-RECONCILE(P3a pdf safe). 1881a (260655e3) live-pending next mcp-server rebuild (container StartedAt 22:50Z < commit 00:19Z).",
+    "next_action": "Idle 2026-06-05T03:09Z tick: drained 1 cowork-fire; root-caused + FIXED the system-auditor D4 75-false-positive/run divergence class (task_list_held missing expired:false -> read ~111 expired tombstones as held). Fix aa00a1e2 LIVE next 03:00Z auditor run (flow-doc, no rebuild). Disposed 75 stale signal_queue rows (83->7). Logged P3 FU-LOCKSTORE-EXPIRED-GC + FU-AUDITOR-D4-SIGNAL-ID (defence-in-depth). Open P3 unchanged: FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-CNYVND-DEAD-FIELD-REMOVE, FU-SBV-EFFECTIVE-DATE-COLUMN, FU-RUNTIME-SET-TRUTH-RECONCILE(P3b rag blocked). 1881a still live-pending next mcp-server rebuild.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T01:11:44Z",
+    "updated_at": "2026-06-05T03:16:44Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T02:11:54Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-05T03:16:44Z",
+    "_updated_by": "dev-team",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2906,6 +2906,28 @@
         "priority": "P3",
         "size": "XS",
         "zone": "apps/mcp-server",
+        "depends_on": null
+      },
+      {
+        "task_id": "FU-LOCKSTORE-EXPIRED-GC",
+        "title": "Lock store (coordination.db) accumulates TTL-expired tombstone locks — task_list_held default returned 114 rows of which only 3 genuinely held (~111 dead). Defence-in-depth for the D4 false-positive fix (aa00a1e2 added expired:false at the consumer): purge/GC expired rows from coordination.db on a cadence (e.g. on each task_claim, DELETE WHERE expires_at < now-grace, or a periodic sweep), so task_list_held storage stays bounded and no consumer can ever read tombstones-as-held. Code: apps/mcp-server coordination.db task tools. Low risk (expired rows are by definition free to reclaim).",
+        "type": "CLEAN",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/mcp-server",
+        "depends_on": null
+      },
+      {
+        "task_id": "FU-AUDITOR-D4-SIGNAL-ID",
+        "title": "system-auditor D4 emits one signal_queue row PER divergence but all share a single run-scoped id (sau-d4-<YYYYMMDDHHMM>) — this defeats id-based dedup at drain (collapsing distinct findings) and inflates the queue (75 rows under one id on 2026-06-05). Harden: either emit ONE rollup signal with a findings[] array (matches anomaly-task-bridge 'one deduped entry' philosophy), or give each finding a unique id (append a stable hash of the summary). Flow doc: docs/agents/system-auditor/handlers.md Emit format. Now low-urgency since expired:false fix removes the false-positive volume, but the id-collision is still a latent correctness gap if multiple REAL divergences ever co-occur.",
+        "type": "FIX",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "docs/agents/system-auditor",
         "depends_on": null
       }
     ],
