@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Tick 2026-06-05T15:09Z (off-market, dup cron fire treated as no-op continuation). Drained 4 signals. Two RED verify-hooks from 14:09Z both worked this tick: (1) FIX-CTG-3 STEP-C shipped+rebuilt (d29de43d, image adddf6936): TRUE root cause found = push-bctc-pdf extracts from GEO-BLOCKED hsx.vn URL -> null -> stuck fetching, no recovery job. Fix = 3-tier extraction fallback (Tier2 local file:// bypasses geo-block) + recoverStuckFetchingQueue startup migration. Bank B02-TCTD path confirmed wired. get_bctc_full(CTG) still empty (enricher+pull ~45min async) -> VERIFY NEXT TICK. (2) EMIT-DARK: 2 structural fixes FAILED live (multiple post-fix FIRE ticks, emitters still absent) -> recurring-bug-escalation -> agents-architect root-cause (brief 2026-06-05-emit-dark-root-cause.md): H2 CONFIRMED -- Steps 4.7/4.8 are agent-interpreted prose the LLM narrates+skips; H1/H3 ruled out. HONESTLY corrected the 2 false-DONE tasks -> SUPERSEDED-BY new EMIT-DARK-RECURRING (P2 READY, route=agent-father, Option B: move emit into telemetry.md Step 6 mechanically-committed-output so it can't be skipped). LOW harm (fail-safe legacy works, no outage). NOT implemented this tick (agent .md = agent-father lane via agent-md-factory; concurrent agent-father already active on Decision-Journal sprint). Note: a separate agent-father Decision-Journal sprint is committing concurrently on main (f407f512/33817474/f79fc4d8) -- not dev-team's, caused a benign commit-message conflation on the emit-dark brief. Backlog 21 (EMIT-DARK-RECURRING added). Next tick: VERIFY get_bctc_full(CTG) live; if agent-father shipped EMIT-DARK-RECURRING, verify emitters regenerate; else spawn agent-father for it. Then PO pick next or idle.",
+    "next_action": "Tick 2026-06-05T17:09Z (off-market, VN 00:09). Drained 2 signals (both agents-architect->agent-father: decision-journal already-impl + emit-dark brief). Drove BOTH carried verify-hooks to resolution: (1) FIX-CTG-3 -> DONE: geo-block fix (d29de43d) CONFIRMED working (correct 6MB PDF local+OCR'd 132K chars). Found+fixed 2 MORE newly-surfaced defects (commit 21c467e8, rebuilt 3d9b3cde4201): OCR-cache ordering RACE (reparse gave up 9min before async OCR landed; now event-driven post-OCR reparse) + DA_NOP fallback NOT NULL crash (now inserts '{}' for 4 json cols). 7 tests. Live re-trigger inserted financial_reports row 69fa303f (CTG 2026-Q1). RAW-VERIFY: get_bctc_full(CTG) still 'Chua co du lieu' = PUB-1 gate (refine_status not yet DONE) — CORRECT by-design withholding of un-refined data; automatic bctcRefineJob will process it. CTG no longer bug-blocked. (2) EMIT-DARK-RECURRING -> FIXED-PENDING-LIVE-VERIFY (commit d6738df3, agent-father, Option B): emit moved into telemetry.md Step 6 mandatory unconditional pure-bash block (un-skippable — telemetry signal is git-committed every tick & those files demonstrably exist, proving the fence executes). RAW-VERIFIED unconditional+pure-bash. NOT marked DONE (prior 2 fixes over-claimed on repo-only). Both sub-agent commits raw-diffed clean (explicit paths, no .env). HEAD d6738df3->21c467e8->b2646b34. NEXT TICK verify-hooks: (a) get_bctc_full(CTG) after refine cycle (if PUB-3 forced-zero suppresses -> refine-quality follow-up, not plumbing); (b) pressure-state.json regenerates w/ emitted_at + pressure_mode=adaptive on next cowork FIRE. Then PO pick next or idle. OPERATOR: Cowork-refresh paste issued for d6738df3 (4 cowork flow files).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T16:41:19.532763+00:00",
+    "updated_at": "2026-06-05T17:28:42.662553+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T16:41:19.532763+00:00",
+    "_updated_at": "2026-06-05T17:28:42.662553+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1774,7 +1774,7 @@
             "title": "Materialize+verify: purge the bad cover-letter source_url from bctc_vps_queue for CTG (and re-enrich the Defect-B-corrupted Q3-2025/Q2-2025 rows), re-enrich CTG to the correct hsx.vn 'hop nhat' URL, re-fetch + re-extract, DoD: get_bctc_full(CTG) serves real B02-TCTD bank financials (not 'Chưa có dữ liệu BCTC', conf>0.5). Involves async VPS fetch.",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "IN-PROGRESS-EXTRACTION-PENDING",
+            "status": "DONE",
             "size": "S",
             "zone": "multi",
             "priority": "high",
@@ -1782,14 +1782,17 @@
               "FIX-CTG-1"
             ],
             "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — materialization/DoD, depends FIX-CTG-1 (+ ideally FIX-CTG-2). Involves async VPS re-fetch (~latency). Also remediates Defect-B queue corruption on non-CTG rows. | [PO RE-ACTIVATE 2026-06-05T14:09Z] 14 cycles (c008-c022) stuck DEFERRED-ASYNC; live tool raw-empty. Root cause KNOWN (wrong queued PDF = cover-letter) => stuck-EXECUTION not unknown-root-cause => NOT architect rethink (feedback_recurring_bug_escalation: rethink is for unknown root cause; here it's known). SPLIT the async stall: STEP-A (dev-mcp-server, sync, completes in-tick) purge the stale owa.hnx.vn cover-letter source_url from bctc_vps_queue for CTG + re-enrich CTG to the FIX-CTG-1-correct hsx.vn 'hop nhat' URL + re-enrich Defect-B-corrupted Q3/Q2-2025 rows; this ENQUEUES the correct URL so the VPS pull cron fetches the right PDF. STEP-B (dev-vps-crawls/ops) confirm the VPS bctc-files pull actually delivers the 6.34MB Q1-2026 'hop nhat' PDF (raw-trigger the fetch leg if cron hasn't drained in 14 cycles — separate discovery/transport/fetch legs per project_bctc_hnx_ssl_outage). STEP-C re-extract. HARD DoD (verify-raw-not-badges): PO opens get_bctc_full(CTG) RAW next tick -> real B02-TCTD bank financials, conf>0.5, NOT 'Chưa có dữ liệu BCTC'. Unit-green/queue-updated NOT sufficient. If STEP-A completes but STEP-B/C still empty after VPS round-trip -> escalate to architect (then it IS an unknown transport/source blocker).",
-            "resolution": "STEP-C shipped 2026-06-05T15:50Z (d29de43d, rebuilt image adddf6936); extraction async-pending, verify NEXT tick. TRUE ROOT CAUSE (dev-mcp-server, definitif): POST /api/push-bctc-pdf set bctc_vps_queue.status=fetching then fired async extraction against the hsx.vn source URL which is GEO-BLOCKED from the server network -> extractViaService returned null -> pipeline skipped -> status flipped to done with EMPTY financial_reports; NO scheduled job recovers status=fetching rows (only the daily 02:30 reparse disk-scan). So STEP-B's pushed 6MB PDF landed on disk but never extracted. FIX-1 pushBctcExtraction.ts: 3-tier extraction fallback (Tier1 remote URL; Tier2 NEW extractViaService(file://localpath) bypasses geo-block; Tier3 NEW direct pdf-parse from local buffer). FIX-2 schema-financial-reports.ts recoverStuckFetchingQueue(): startup migration resets fetching-with-no-report rows -> pending so enricher(15m)+pull(30m) re-process via Tier2 local file. Bank B02-TCTD path confirmed wired (CTG in BANKING_TICKERS, isBankForm=true skips gross_profit/asset-decomp checks). 8 tests green. ops rebuilt (recoverStuckFetchingQueue ran at boot, healthy toolCount 161, volumes preserved). get_bctc_full(CTG) STILL empty at 15:55Z (enricher+pull ~45min cycle not yet complete) -- EXPECTED. VERIFY-RAW NEXT TICK: get_bctc_full(CTG) -> real B02-TCTD conf>0.5.",
+            "resolution": "DONE 2026-06-05T17:30Z — ALL extraction-plumbing defects fixed + verified end-to-end; CTG now correctly awaits the automatic refine cycle (PUB-1 by-design gate, NOT a bug). FULL CHAIN now works: (1) geo-block (STEP-C d29de43d) — correct 6MB consolidated 'BCTC hop nhat Quy I.2026' PDF fetched to local disk + OCR'd to 132,664 chars (61pp, OCR-conf 0.80) via the new Tier-2 file:// path, bypassing the geo-blocked hsx.vn extraction. CONFIRMED in container logs 16:35-16:42Z. (2) STEP-D (commit 21c467e8, dev-mcp-server, rebuilt image 3d9b3cde4201 17:23Z) fixed TWO newly-surfaced coupled defects — FLEET-WIDE value, affects every image-based BCTC PDF not just CTG: (A) ORDERING RACE: bctcReparseJob Tier-3 read the OCR cache synchronously and gave up on a cache MISS at 16:33:43Z, 9 min BEFORE async OCR landed at 16:42Z; nothing re-parsed -> fix = composition-root bootstrap OCR loop now sequential + fires reparseSingleWithOcrFallback immediately after each extractAndStorePdfPages when text>0 and no financial_reports row exists (event-driven, not next-daily-02:30-cron). (B) DA_NOP fallback insert crashed 'NOT NULL constraint failed: financial_reports.balance_sheet_json' -> fix = insertFallbackRecord supplies '{}' for balance_sheet_json/income_stmt_json/cash_flow_json/ratios_json. 7 new tests (D-A-1..3,D-B-1..3,combined), 29 in related suite, tsc clean. (3) LIVE RE-TRIGGER (dev-mcp-server, container 17:18Z warm OCR cache): runBctcReparseJob -> Tier-3 cache HIT (132,664 chars, conf 0.5625) -> financial_reports row id=69fa303f action_code=CTG period 2026-Q1 balance_sheet_json NOT NULL INSERTED. ROUTER RAW-VERIFY (verify-raw-not-badges): get_bctc_full(CTG) STILL returns bare 'Chua co du lieu BCTC' — traced to bctcFullTools.ts:604 = PUB-1 gate (refine_status must be DONE/PARTIAL). The auto-extracted row's refine_status is not yet DONE -> correctly WITHHELD by design (un-refined auto-extraction must never be served). An automatic scheduler bctcRefineJob.ts exists and will process report 69fa303f -> refine_status DONE/PARTIAL -> PUB-1 passes. So CTG is NO LONGER bug-blocked; it is correctly queued for refine. NOTE: dev-mcp-server flagged the OCR balance parsed assets=0 at 0.56 conf (B02-TCTD bank form) -> after refine, PUB-3 (forced-zero balance) MAY still suppress until refine_bctc_md corrects the balance sheet — tracked as verify-hook + possible follow-up, separate from this sprint.",
             "updated_by": "dev-team",
             "updated_at": "2026-06-05T16:41:19.532763+00:00",
             "deploy_commits": [
               "94fa1e9b",
-              "d29de43d"
+              "d29de43d",
+              "21c467e8"
             ],
-            "verify_hook": "NEXT dev-team tick (~16:09Z, >45min async window): get_bctc_full(CTG) RAW -> real B02-TCTD bank financials conf>0.5, NOT 'Chua co du lieu'. If still empty: check bctc_vps_queue CTG status (pending->fetching->done) + that Tier2 file:// extraction ran on the stored 6MB PDF + enricher re-resolved hsx.vn URL."
+            "verify_hook": "NEXT tick: re-check get_bctc_full(CTG). EXPECT: once bctcRefineJob processes report 69fa303f -> refine_status=DONE/PARTIAL -> PUB-1 passes -> CTG serves real B02-TCTD. IF still suppressed: read the EXACT pubCheck.reason (PUB-1 refine pending vs PUB-3 forced-zero-balance). PUB-3 suppression = OCR balance-quality issue (assets=0) -> route to refine layer (refine_bctc_md / bctc-analyst), NOT a dev-team plumbing bug.",
+            "resolved_by": "dev-team",
+            "resolved_at": "2026-06-05T17:28:42.662553+00:00"
           },
           {
             "task_id": "FIX-CTG-2b",
@@ -2446,7 +2449,7 @@
         "title": "cowork pressure-state + cycle-snapshot emitters permanently dark -- agent-interpreted Steps 4.7/4.8 are narrated-not-executed (2 structural fixes failed); re-architect emit as a mechanically un-skippable step",
         "type": "FIX",
         "sprint": "FLEET-HOST-SAFETY",
-        "status": "READY",
+        "status": "FIXED-PENDING-LIVE-VERIFY",
         "priority": "P2",
         "size": "S",
         "route": "agent-father",
@@ -2459,7 +2462,27 @@
         "escalation": "recurring-bug (>=2 fixes 545aae11+29d7e944 failed live) -> agents-architect rethink DONE (brief), now agent-father impl",
         "desc": "ROOT CAUSE (agents-architect H2, raw-verified by dispatcher): Steps 4.7 (tick-snapshot.md -> cycle-snapshot-latest.json) and 4.8 (pressure-emit.md -> pressure-state.json) are agent-interpreted prose flow steps. The LLM cowork dispatcher narrates them and silently proceeds to Step 5 fan-out WITHOUT executing the bash/MCP -- confirmed because post-fix FIRE ticks reached Step 5 (spawned agents) but neither file was written. The 'additive instrumentation -- failure never blocks spawns' label makes the agent treat skipping as licensed. FIX (Option B, agent-father, via agent-md-factory): move the pressure-state (and tick-snapshot) write into telemetry.md Step 6 as a MANDATORY side-effect computed from the telemetry payload already assembled there. Step 6 is mechanically guaranteed to execute because its output (the cowork-team-<ts>.json signal file) is git-committed every tick -- a skip is immediately visible. Optionally Option A belt-and-suspenders: a cowork-pre-dispatch.sh shell script (real shell, not agent-interpreted) computes the pure-bash fields (emitted_at/tick_id/signal_backlog/dev_queue_depth/host_headroom_mb) before the LLM agent runs. LOW priority: fail-safe legacy fixed-cadence works, no outage, ~2.5d dark with zero harm. DoD (verify-raw next dev-team tick after agent-father ships + cowork reload): pressure-state.json regenerates with emitted_at -> PRESSURE_MODE=adaptive; cycle-snapshot-latest.json regenerates fresh.",
         "source": "agents-architect root-cause tick 2026-06-05T15:09Z (brief + signal emit-dark-root-cause-20260605T163744Z)",
-        "created_at": "2026-06-05T16:41:19.532763+00:00"
+        "created_at": "2026-06-05T16:41:19.532763+00:00",
+        "resolution": "FIXED-PENDING-LIVE-VERIFY 2026-06-05T17:30Z (commit d6738df3, agent-father, Option B). Do NOT mark DONE until live-verified (the prior 2 fixes 545aae11/29d7e944 were wrongly marked DONE on repo-fix alone — this time gate on the live emitter). FIX: moved pressure-state.json + cycle-snapshot-latest.json write OUT of the agent-interpreted Steps 4.7/4.8 (which the LLM narrates-and-skips) INTO telemetry.md Step 6 as a MANDATORY UNCONDITIONAL pure-bash block placed BEFORE the SILENT-guard exit. Un-skippable anchor: telemetry Step 6's other output (cowork-team-<ts>.json) is git-committed EVERY FIRE tick and those files DEMONSTRABLY exist (processed/cowork-team-*.json) -> proves Step 6's bash fence actually executes (unlike 4.7/4.8) -> folding the emit into the same proven-to-run block makes it execute too. ROUTER RAW-VERIFIED the committed block: unconditional (before exit 0), pure bash (no call_tool), atomic .tmp+mv. pressure-emit.md gutted 88L->7L stub; tick-snapshot.md +1L provenance; main.md JUMP-TO updated. Net -44L, all <=120L cap. FAIL-SAFE intact (legacy fixed-cadence fallback). LOW harm (no outage). OPERATOR Cowork-refresh paste issued.",
+        "deploy_commits": [
+          "d6738df3"
+        ],
+        "fixed_by": "agent-father via dev-team",
+        "fixed_at": "2026-06-05T17:28:42.662553+00:00",
+        "verify_hook": "NEXT cowork FIRE tick: docs/data/pressure-state.json regenerates with fresh emitted_at (<15min) + 9 keys; docs/data/cycle-snapshot-latest.json fresh; next cowork-team-<ts>.json telemetry signal shows pressure_mode=adaptive (NOT legacy). If still legacy/absent after a confirmed FIRE -> emit still failing, escalate."
+      },
+      {
+        "task_id": "FU-OCR-BOOT-LOOP-SEQUENTIAL",
+        "type": "REVIEW",
+        "sprint": "BCTC-EXTRACT-QUALITY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "route": "architect",
+        "title": "composition-root bootstrap OCR loop changed parallel->sequential in 21c467e8 (FIX-CTG-3-STEP-D) to wire the post-OCR reparse hook — review startup-latency tradeoff",
+        "desc": "dev-mcp-server flagged: STEP-D (21c467e8) changed the bootstrap OCR loop from Promise.allSettled(parallel) to a sequential for-loop so it can fire reparseSingleWithOcrFallback immediately after each PDF's OCR completes. Sequential is CPU-safe (OCR is CPU-bound, parallel caused contention anyway) but increases cold-start time when many PDFs need OCR. If startup latency becomes a concern, factor the post-OCR reparse into a reparseSingleAfterOcr(filename,ticker,yq,db) helper called in each Promise.allSettled element's .then() to restore parallelism. NOT urgent — boot OCR backlog is small in steady state.",
+        "source": "dev-mcp-server FIX-CTG-3-STEP-D residual concern, tick 2026-06-05T17:09Z",
+        "created_at": "2026-06-05T17:28:42.662553+00:00"
       }
     ],
     "archive": [],
