@@ -117,6 +117,17 @@
 **why-decision:** Blueprint parse contract was exact — implemented it line-for-line; the optional decisionsDir param is the minimum change to satisfy R-1 (testability) without touching the HTTP handler signature; mtime cache singleton eliminates redundant re-parses on the 5-second polling loop (RULING-4).
 **why-change:** No design deviation from architect blueprint or PM AC; all 14 AC met; tsc 0 errors, 59 tests green, live-verify raw JSON confirmed.
 
+### STEP dev-frontend-S1 · dev-frontend · 2026-06-05T23:54:00Z
+**task-id:** ARCH-ORCH-F3
+**what-done:** Implemented F3 decision accordion on /dashboard/orchestration: StepDto + DecisionsDto types, DoneTaskGroup multi-open accordion (Set<string> state), DecisionAccordion + StepCard inline components, sprintId threading through TaskBoardPanel; rebuilt frontend container.
+**what-considered:**
+- Table vs div-based row layout for DONE tasks: table rows cannot contain accordion panels as children; switched to CSS-grid div layout to allow accordion div between row items while preserving the column alignment
+- sprintId sourcing: sprint_goal.sprint_id is the current active sprint; tasks in the board are flat (no per-task sprint association in DTO); threading sprint_goal.sprint_id is the correct sprint context for the sprint_bucket fallback
+- Chevron rotation convention: ▾ unrotated = open (pointing down), -rotate-180 = closed (pointing up); consistent with existing show/hide chevron in DoneTaskGroup header button
+- Empty state wording: "No decisions recorded for this task." (matches TASK_ARCH-ORCH-F3 AC-F3-8 exactly)
+**why-decision:** Div-grid layout is the minimum change to make accordion rows work inline; threading sprint_goal.sprint_id satisfies AC-F3-13 without restructuring the DTO; the existing pattern for chevrons in the component (rotate-180 = collapsed) is reused for visual consistency.
+**why-change:** No design deviation from architect blueprint (RULING-5 multi-open Set, F3 type additions, component signatures); AC-F3-14 (non-DONE rows inert) is satisfied automatically because only DONE tasks appear in DoneTaskGroup; all 16 AC verified: tsc 0 errors, 353/353 tests, SSR HTML confirms aria-expanded + cursor-pointer + data-testid live.
+
 ### STEP agent-father-S1 · agent-father · 2026-06-05T00:00:00Z
 **task-id:** ARCH-ORCH-F1
 **what-done:** Added optional `**task-id:**` field to decision-journal SKILL.md § Write Entry template and § Rules; injected task_id parameter at all journal-write call sites in developer/flow/main.md, developer/flow/microservice-main.md, architect/flow/main.md, qa/flow/main.md, and cowork-end-cycle/SKILL.md.

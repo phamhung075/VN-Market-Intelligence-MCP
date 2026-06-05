@@ -1,11 +1,12 @@
 # dev-frontend notebook
 
-**Last updated:** 2026-06-05 | **Sprint:** FE-HEADER-SSOT
+**Last updated:** 2026-06-05 | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
 
 > Archive: `docs/archive/notebooks/dev-frontend-2026-05-21.md` (full session history prior to 2026-05-21 trim)
 
 ## Status
 
+2026-06-05 — ARCH-ORCH-F3 REVIEW commit 1b71198a. Decision accordion on /dashboard/orchestration. StepDto+DecisionsDto types; DoneTaskGroup multi-open Set<string>; DecisionAccordion + StepCard inline; sprintId threaded from sprint_goal.sprint_id. 26 new tests. 353/353 GREEN. tsc 0 errors. Container rebuilt.
 2026-06-05 — FE-HEADER-SSOT DONE commit 619093e1. PageHeader SSOT component; 8 pages migrated (0 raw h1 in routes); dashboard layout w-full centering. 320/320 Vitest GREEN (+7). tsc clean. NEEDS REBUILD: frontend.
 2026-06-04 — DSI-S1-FE-TYPE DONE commit b16d6a89. StockQuote.change→number|null; added changePercent:number|null, staleness/isEstimate/fetchedAt. MacroSnapshot+MacroSignalEntry provenance fields. 303/303 Vitest GREEN (+8 new). tsc exit 0. NEEDS REBUILD: frontend.
 2026-06-02 — FOU-3-FE DONE commit b5e92ee8. 2-axis Service Health (container × capability). 295/295 GREEN (+31). NEEDS REBUILD.
