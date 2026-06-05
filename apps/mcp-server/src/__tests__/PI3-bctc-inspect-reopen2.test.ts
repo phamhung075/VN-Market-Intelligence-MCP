@@ -274,21 +274,25 @@ describe("REOPEN-2 AC-R6..R9 — backfillBctcPdfPaths()", () => {
     } finally { cleanup(); }
   });
 
-  test("AC-R7: ambiguous (2 files same ticker/year/quarter) → leaves pdf_path NULL", () => {
+  test("AC-R7: cover-letter + consolidated → picks consolidated (not ambiguous)", () => {
+    // VCB_2025_Q1.pdf is a short-form cover-letter candidate; the dated long-form is
+    // the consolidated report. With the cover-letter filter, this is no longer ambiguous —
+    // the consolidated file is linked directly.
     const id = insertReport(db, { action_code: "VCB", period_year: 2025, period_quarter: 1, pdf_path: null });
 
-    // Two files that both parse to VCB/2025/Q1
     const { dir, cleanup } = createTempPdfDir([
       "VCB_2025_Q1.pdf",
       "20250429-VCB-Bao-cao-tai-chinh-hop-nhat-Quy-1-nam-2025_signed.pdf",
     ]);
     try {
       const result: BackfillResult = backfillBctcPdfPaths(db, dir);
-      expect(result.ambiguous).toBe(1);
-      expect(result.updated).toBe(0);
+      // cover-letter filter: VCB_2025_Q1 is filtered → consolidated wins
+      expect(result.ambiguous).toBe(0);
+      expect(result.updated).toBe(1);
 
       const row = db.prepare("SELECT pdf_path FROM financial_reports WHERE id = ?").get(id) as { pdf_path: string | null };
-      expect(row.pdf_path).toBeNull();
+      expect(row.pdf_path).not.toBeNull();
+      expect(row.pdf_path).toContain("20250429-VCB-Bao-cao-tai-chinh-hop-nhat");
     } finally { cleanup(); }
   });
 

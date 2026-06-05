@@ -37,6 +37,11 @@ export interface BackfillResult {
   ambiguous: number;
   /** Rows skipped because pdf_path was already set (idempotency confirmation) */
   already_set: number;
+  /**
+   * Rows where pdf_path was set but pointed at a cover-letter file, and a
+   * consolidated candidate was found — re-linked to the consolidated PDF.
+   */
+  healed: number;
 }
 
 /** A parsed token set extracted from a PDF filename */
@@ -96,9 +101,14 @@ function extractYear(tokens: string[]): number | null {
  *   Q1 / Q2 / Q3 / Q4
  *   QUY 1 / QUY 2 / QUY 3 / QUY 4   (consecutive tokens)
  *   QUY1 / QUY2 / QUY3 / QUY4        (joined token)
+ *   QUY I / QUY II / QUY III / QUY IV (Vietnamese "quý" + Roman numeral)
  *   Month 12 / 31 12 / date like "31 12 2025" → month=12 → Q4
  *   Month tokens: JAN-MAR=Q1, APR-JUN=Q2, JUL-SEP=Q3, OCT-DEC=Q4
  */
+
+/** Map Roman numeral (I-IV) to quarter number */
+const ROMAN_QUARTER: Record<string, number> = { I: 1, II: 2, III: 3, IV: 4 };
+
 function extractQuarter(tokens: string[]): number | null {
   // Pass 1a: direct Q1..Q4 token
   for (const t of tokens) {
@@ -118,7 +128,15 @@ function extractQuarter(tokens: string[]): number | null {
       const next = tokens[i + 1]!;
       const m = next.match(/^([1-4])$/);
       if (m) return parseInt(m[1]!, 10);
-      // Also handle "QUY 1 NAM YYYY" — already covered by the above
+    }
+  }
+
+  // Pass 1d: "QUY" followed by Roman numeral (I / II / III / IV)
+  // Handles Vietnamese quarterly filenames like "Quy I.2026" → normalised "QUY I 2026"
+  for (let i = 0; i < tokens.length - 1; i++) {
+    if (tokens[i] === "QUY") {
+      const next = tokens[i + 1]!;
+      if (next in ROMAN_QUARTER) return ROMAN_QUARTER[next]!;
     }
   }
 
@@ -192,6 +210,54 @@ function extractTicker(tokens: string[]): string | null {
   return null;
 }
 
+// ─── Cover-letter filename filter ────────────────────────────────────────────
+
+/**
+ * Returns true if the filename matches known cover-letter patterns and should
+ * be excluded when a consolidated/longer candidate exists for the same
+ * (ticker, year, quarter).
+ *
+ * Patterns detected:
+ *   1. Filename contains "CV_CBTT" or "CV CBTT" (case-insensitive, after normalisation)
+ *      — explicit CBTT cover-letter marker used by HSX/HNX filings
+ *   2. Short canonical form: exactly TICKER_YEAR_Qn.pdf (3 underscore-segments after
+ *      stripping extension, matching /^[A-Z]{2,5}_\d{4}_Q[1-4]$/i) — these are typically
+ *      2–4 page transmittal letters, NOT the full financial statements.
+ *
+ * The heuristic is intentionally conservative: filtering is applied only when at
+ * least one non-cover-letter (consolidated) candidate also exists for the same
+ * (ticker, year, quarter). When a cover-letter file is the only candidate, it is
+ * still linked — it is the best available PDF. The caller is responsible for this
+ * "better-candidate-exists" guard.
+ *
+ * @param filename  Basename of the PDF file (not the full path)
+ */
+export function isCoverLetterFilename(filename: string): boolean {
+  const upper = filename.toUpperCase();
+
+  // Pattern 1: explicit CV_CBTT / CV CBTT marker
+  if (upper.includes("CV_CBTT") || upper.includes("CV CBTT")) {
+    return true;
+  }
+
+  // Pattern 2: short canonical form TICKER_YEAR_Qn.pdf — exactly 3 segments
+  // after stripping extension and splitting on underscores.
+  // Examples that match:   CTG_2026_Q1.pdf, VCB_2025_Q4.pdf
+  // Examples that DON'T:   CTG_2026_Q1_hop_nhat.pdf (4 segments), CTG_2026_Q1_HN.pdf (4 segments)
+  const noExt = filename.replace(/\.[^.]+$/, "");
+  const segments = noExt.split("_");
+  if (
+    segments.length === 3 &&
+    /^[A-Z]{2,5}$/i.test(segments[0]!) &&
+    /^\d{4}$/.test(segments[1]!) &&
+    /^Q[1-4]$/i.test(segments[2]!)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 /**
  * Parse a PDF filename into (ticker, year, quarter).
  * Returns null if any token cannot be extracted.
@@ -223,7 +289,7 @@ export function parsePdfFilenameTokens(filename: string, absPath: string): Filen
  * @param pdfDir Absolute path to the directory containing PDF files (e.g. /app/data/pdfs)
  */
 export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResult {
-  const result: BackfillResult = { updated: 0, no_match: 0, ambiguous: 0, already_set: 0 };
+  const result: BackfillResult = { updated: 0, no_match: 0, ambiguous: 0, already_set: 0, healed: 0 };
 
   // Guard: pdfDir must exist
   if (!existsSync(pdfDir)) {
@@ -260,9 +326,14 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
        AND action_code NOT LIKE '%missing%'`,
   ).all() as ReportRow[];
 
-  // Prepare update statement
+  // Prepare update statements
+  // updateStmt: for NULL rows — the IS NULL guard makes it idempotent
   const updateStmt = db.prepare(
     `UPDATE financial_reports SET pdf_path = ? WHERE id = ? AND pdf_path IS NULL`,
+  );
+  // healStmt: for rows already linked to a cover letter — unconditional overwrite
+  const healStmt = db.prepare(
+    `UPDATE financial_reports SET pdf_path = ? WHERE id = ?`,
   );
 
   // Step 3: for each NULL row, find matching PDFs
@@ -290,21 +361,118 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
         `[backfillBctcPdfPaths] no match: ${actionCode} Q${quarter} ${year}`,
       );
       result.no_match++;
-    } else if (matches.length === 1) {
-      const match = matches[0]!;
-      updateStmt.run(match.absPath, row.id);
-      console.info(
-        `[backfillBctcPdfPaths] linked: ${actionCode} Q${quarter} ${year} → ${match.filename}`,
-      );
-      result.updated++;
     } else {
-      // Ambiguous — 2+ files match the same (ticker, year, quarter)
-      const names = matches.map((m) => m.filename).join(", ");
-      console.warn(
-        `[backfillBctcPdfPaths] ambiguous (${matches.length} files): ${actionCode} Q${quarter} ${year} — [${names}] — leaving pdf_path NULL`,
-      );
-      result.ambiguous++;
+      // Apply cover-letter filter: prefer consolidated files over cover-letter transmittals.
+      // Cover letters (CV_CBTT / short canonical form TICKER_YEAR_Qn.pdf) are skipped
+      // when at least one consolidated candidate exists. If ALL candidates are cover letters,
+      // leave pdf_path NULL — the consolidated PDF has not arrived yet.
+      const consolidated = matches.filter((m) => !isCoverLetterFilename(m.filename));
+      const coverLetters = matches.filter((m) => isCoverLetterFilename(m.filename));
+
+      if (consolidated.length === 0) {
+        if (coverLetters.length === 1) {
+          // Single candidate that looks like a cover letter but no consolidated PDF
+          // has arrived yet — link it as the best available option.
+          const match = coverLetters[0]!;
+          updateStmt.run(match.absPath, row.id);
+          console.info(
+            `[backfillBctcPdfPaths] linked (sole candidate, cover-letter form): ${actionCode} Q${quarter} ${year} → ${match.filename}`,
+          );
+          result.updated++;
+        } else {
+          // Multiple cover-letter candidates, no consolidated — ambiguous among cover letters.
+          const names = coverLetters.map((m) => m.filename).join(", ");
+          console.info(
+            `[backfillBctcPdfPaths] no consolidated match (all cover-letters): ${actionCode} Q${quarter} ${year} — [${names}] — leaving pdf_path NULL`,
+          );
+          result.no_match++;
+        }
+      } else if (consolidated.length === 1) {
+        // Exactly one consolidated candidate — link it.
+        const match = consolidated[0]!;
+        updateStmt.run(match.absPath, row.id);
+        if (coverLetters.length > 0) {
+          console.info(
+            `[backfillBctcPdfPaths] linked (cover-letter filtered): ${actionCode} Q${quarter} ${year} → ${match.filename} (skipped cover-letters: [${coverLetters.map((m) => m.filename).join(", ")}])`,
+          );
+        } else {
+          console.info(
+            `[backfillBctcPdfPaths] linked: ${actionCode} Q${quarter} ${year} → ${match.filename}`,
+          );
+        }
+        result.updated++;
+      } else {
+        // 2+ consolidated candidates — ambiguous, leave pdf_path NULL.
+        const names = consolidated.map((m) => m.filename).join(", ");
+        console.warn(
+          `[backfillBctcPdfPaths] ambiguous (${consolidated.length} consolidated files): ${actionCode} Q${quarter} ${year} — [${names}] — leaving pdf_path NULL`,
+        );
+        result.ambiguous++;
+      }
     }
+  }
+
+  // ── Heal-mislinked pass ───────────────────────────────────────────────────
+  // Problem: rows that already have a pdf_path set (non-NULL) are skipped by the
+  // NULL-only pass above. If that pdf_path points at a cover-letter file (e.g.
+  // CTG_2026_Q1.pdf), the mislink is never corrected — the row stays broken even
+  // after the consolidated PDF arrives. This pass corrects that class of errors.
+  //
+  // Safety: only re-links when ALL of:
+  //   1. existing pdf_path basename isCoverLetterFilename()
+  //   2. at least one consolidated (non-cover-letter) candidate exists on disk
+  //   3. exactly one consolidated candidate (ambiguous → leave as-is)
+  interface MislinkedRow {
+    id: string;
+    action_code: string;
+    period_year: number;
+    period_quarter: number | null;
+    pdf_path: string;
+  }
+  const mislinkedRows = db.prepare(
+    `SELECT id, action_code, period_year, period_quarter, pdf_path
+     FROM financial_reports
+     WHERE pdf_path IS NOT NULL
+       AND pdf_path != ''
+       AND action_code NOT LIKE '%example%'
+       AND action_code NOT LIKE '%error%'
+       AND action_code NOT LIKE '%missing%'`,
+  ).all() as MislinkedRow[];
+
+  for (const row of mislinkedRows) {
+    // Only re-check rows whose current pdf_path is a cover-letter filename
+    const currentBasename = basename(row.pdf_path);
+    if (!isCoverLetterFilename(currentBasename)) continue;
+
+    const actionCode = row.action_code.toUpperCase().trim();
+    const year = row.period_year;
+    const quarter = row.period_quarter;
+    if (!quarter) continue;
+
+    // Find consolidated candidates for this row
+    const candidates = parsedFiles.filter(
+      (f) =>
+        f.ticker === actionCode &&
+        f.year === year &&
+        f.quarter === quarter &&
+        !isCoverLetterFilename(f.filename),
+    );
+
+    if (candidates.length === 1) {
+      const best = candidates[0]!;
+      healStmt.run(best.absPath, row.id);
+      console.warn(
+        `[backfillBctcPdfPaths] HEALED mislink: ${actionCode} Q${quarter} ${year} — was ${currentBasename} (cover-letter) → ${best.filename} (consolidated)`,
+      );
+      result.healed++;
+    } else if (candidates.length > 1) {
+      // Multiple consolidated — ambiguous; leave the existing cover-letter link in place
+      // rather than making it worse.
+      console.warn(
+        `[backfillBctcPdfPaths] mislink AMBIGUOUS heal: ${actionCode} Q${quarter} ${year} — current=${currentBasename} but ${candidates.length} consolidated candidates — leaving unchanged`,
+      );
+    }
+    // candidates.length === 0: no consolidated on disk yet — nothing to do
   }
 
   // Count already-set rows for transparency (informational only — not touched)
@@ -314,7 +482,7 @@ export function backfillBctcPdfPaths(db: Database, pdfDir: string): BackfillResu
   result.already_set = alreadySet.cnt;
 
   console.info(
-    `[backfillBctcPdfPaths] done: updated=${result.updated} no_match=${result.no_match} ambiguous=${result.ambiguous} already_set=${result.already_set}`,
+    `[backfillBctcPdfPaths] done: updated=${result.updated} no_match=${result.no_match} ambiguous=${result.ambiguous} healed=${result.healed} already_set=${result.already_set}`,
   );
 
   return result;
