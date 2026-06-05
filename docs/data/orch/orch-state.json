@@ -9,9 +9,9 @@
     "next_agent": null,
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T22:28:38+00:00",
+    "updated_at": "2026-06-05T23:22:27+00:00",
     "updated_by": "dev-team",
-    "next_action": "IDLE. Tick 20260605T222036Z complete: drained 4 context_bloat signals (2 clusters, both LIVE breaches); claude-manager-helper remediated both — system-auditor notebook 239→142L (c009/c008/c007 retained, prune-skip in c009 noted), decision-journal SKILL 129→70L (peer aefc3dc1 mandatory-per-task contract preserved verbatim semantics, router raw-verified). WATCH: (a) auditor notebook prune-skip is 2nd non-pruning run today — if next T1 breaches cap again, open FIX-AUDITOR-NB-PRUNE via PO (harden AC-5 wc gate fail-loud in auditor flow); (b) FIX-MW baseline verify at first offhours fire 00:00Z/04:00Z; (c) after 2026-06-06 09:00Z verify refine slot fired + pending<7 + CTG refined -> close FU-CTG-REFINE-PICKUP; (d) operator owes cowork refresh /cron-cowork-team for aec3a3d8+240dc1f1. Peer session shipped aefc3dc1 (decision-journal mandatory sweep) mid-tick — coexisted cleanly, no index conflation."
+    "next_action": "IDLE. Tick 20260605T232040Z complete: drained 1 context_bloat signal (system-auditor notebook 222L transient — SELF-RESOLVED, c012 pruned to 185L within 60s; hook fired between append and prune writes). 0 NEW queue rows, 0 TG reports, no PO input. Auditor prune discipline VERIFIED WORKING (c012 pruned c008, restored newest-first order); prune-skip counter stays 2, FIX-AUDITOR-NB-PRUNE not opened. WATCH: (a) FIX-MW baseline verify at first offhours fire 00:00Z/04:00Z (not yet fired as of 23:20Z; last_fired 20:05Z); (b) after 2026-06-06 09:00Z verify refine slot + CTG refined -> close FU-CTG-REFINE-PICKUP; (c) operator owes cowork refresh /cron-cowork-team for aec3a3d8+240dc1f1; (d) cosmetic: auditor notebook-write does append-then-prune as 2 writes -> transient hook fires; only escalate if it becomes noisy."
   },
   "dashboard_section_cache": {
     "section_name": "po",

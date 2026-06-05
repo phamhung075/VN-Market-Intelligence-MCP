@@ -1,0 +1,19 @@
+{
+  "from": "context-bloat-backstop-hook",
+  "to": "claude-manager-helper",
+  "type": "context_bloat_breach",
+  "priority": "high",
+  "createdAt": "2026-06-05T23:09:19Z",
+  "payload": {
+    "file": "docs/agent-memory/notebooks/system-auditor.md",
+    "line_count": 222,
+    "cap": 200,
+    "class": "agent-notebook",
+    "overage": 22,
+    "action_required": "prune_or_split"
+  },
+  "fingerprint": "884ce80b72247f6b22094be7fc4612ba5cac858ca025d3add415a4b06a2e648a",
+  "processedAt": "20260605T232126Z",
+  "processedBy": "dev-team",
+  "result": "skipped-stale"
+}
