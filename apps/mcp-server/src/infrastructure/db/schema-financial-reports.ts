@@ -690,6 +690,17 @@ export function initFinancialReportsTables(db: Database): void {
   // write the right URL on next cycle.
   // Idempotent: WHERE conditions only match rows with the bad URLs.
   resetCtgWrongSourceUrls(db);
+
+  // ── FIX-CTG-3 STEP-C: recover stuck status='fetching' queue rows ──────────
+  // When push-bctc-pdf extraction fails (geo-blocked source URL, service down),
+  // the queue row stays at status='fetching'. No scheduled job queries 'fetching',
+  // leaving the PDF stranded until the next daily bctcReparseJob (02:30 UTC).
+  // This migration resets those rows to 'pending' on startup so the 15-min
+  // enricher + 30-min pull cycle can retry within ~45 min.
+  // Also: pushBctcExtraction.ts now has a three-tier local-file fallback so
+  // future pushes succeed even when the remote source URL is geo-blocked.
+  // Idempotent: no-op after first run (rows already pending). Safe on startup.
+  recoverStuckFetchingQueue(db);
 }
 
 // ---------------------------------------------------------------------------
@@ -1002,4 +1013,62 @@ export function resetCtgWrongSourceUrls(db: Database): number {
   }
 
   return total;
+}
+
+// ---------------------------------------------------------------------------
+// FIX-CTG-3 STEP-C — Recover stuck status='fetching' queue rows
+// ---------------------------------------------------------------------------
+
+/**
+ * recoverStuckFetchingQueue — reset bctc_vps_queue rows stuck at status='fetching'
+ * that have no corresponding financial_reports entry.
+ *
+ * When POST /api/push-bctc-pdf receives a PDF, it immediately sets the queue row
+ * to status='fetching', then fires setImmediate→triggerPushBctcExtraction. If the
+ * extraction silently fails (geo-blocked source URL, service unavailable, process
+ * restart mid-flight), the row can remain at 'fetching' indefinitely. No scheduled
+ * job queries status='fetching', so the PDF sits on disk with no financial_reports
+ * entry and no re-attempt path until the next daily bctcReparseJob (02:30 UTC).
+ *
+ * Fix: on every startup, find 'fetching' rows with no matching financial_reports
+ * row and reset them to status='pending'. This allows bctcQueueEnricherJob (15-min
+ * cron) to re-discover the PDF URL and bctcPdfPullJob (30-min cron) to re-download
+ * and re-extract. The bctcReparseJob disk scan also picks up on-disk PDFs
+ * independently, providing a second recovery path.
+ *
+ * Only CTG-class failures (geo-blocked push URL → service null → stuck 'fetching')
+ * are addressed. Rows where extraction succeeded (financial_reports row exists) are
+ * left at 'fetching' to avoid infinite retry loops.
+ *
+ * Idempotent: a second call on already-pending rows returns 0 (WHERE status='fetching'
+ * matches nothing).
+ *
+ * @param db - SQLite database instance.
+ * @returns Number of rows reset from 'fetching' to 'pending'.
+ */
+export function recoverStuckFetchingQueue(db: Database): number {
+  try {
+    const result = db.prepare(`
+      UPDATE bctc_vps_queue
+      SET status = 'pending'
+      WHERE status = 'fetching'
+        AND NOT EXISTS (
+          SELECT 1 FROM financial_reports fr
+          WHERE fr.action_code = bctc_vps_queue.action_code
+            AND fr.period_year  = bctc_vps_queue.period_year
+            AND fr.period_type  = bctc_vps_queue.period_quarter
+        )
+    `).run();
+    const count = result.changes;
+    if (count > 0) {
+      logger.info(
+        `[FIX-CTG-3 STEP-C] Recovered ${count} stuck-fetching bctc_vps_queue rows → pending`,
+        { count },
+      );
+    }
+    return count;
+  } catch {
+    // bctc_vps_queue or financial_reports may not exist on fresh DB — silently skip
+    return 0;
+  }
 }
