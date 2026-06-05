@@ -14,13 +14,16 @@
  *                              payload_ref — NEVER raw payload blobs)
  *   - sprint_goal             (current sprint entry: sprint_id, vision, scope, metric)
  *   - narrative               (current_sprint, last_closed, watch_items, open_sprints)
+ *   - decisions               (by_task: {[task_id]: StepDto[]}, sprint_bucket: {[sprint_id]: StepDto[]})
  *
  * Returns 200 JSON on success, 503 JSON {error} when file is missing or unreadable.
  *
- * DDD Layer: interface — no domain or infrastructure imports beyond orchStateStore.
+ * DDD Layer: interface — no domain or infrastructure imports beyond orchStateStore
+ * and journalStore.
  */
 
 import type { IncomingMessage, ServerResponse } from "node:http";
+import { resolve } from "node:path";
 import {
   readOrchState,
   countTasksFromTaskBoard,
@@ -28,6 +31,17 @@ import {
   type OrchStateTaskBoardTask,
   type OrchStateSignalRow,
 } from "../../../infrastructure/orchStateStore.js";
+import {
+  getDecisionsForSprints,
+  type DecisionsDto,
+  type StepDto,
+} from "../../../infrastructure/journalStore.js";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Re-export journal types for consumers (F3 frontend, tests)
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type { DecisionsDto, StepDto };
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Safe projection types
@@ -93,6 +107,12 @@ export interface OrchestrationDto {
   signal_queue: { rows: OrchSignalRowDto[] };
   sprint_goal: OrchSprintGoalDto | null;
   narrative: OrchNarrativeDto;
+  /**
+   * Decision-journal entries keyed by task_id (by_task) and sprint fallback
+   * bucket (sprint_bucket). Always present — never null.
+   * ORCH-DASH-DECISION-DRILLDOWN F2.
+   */
+  decisions: DecisionsDto;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -203,9 +223,16 @@ function newestUpdated(state: OrchState): string {
 
 /**
  * Build the safe OrchestrationDto from a raw OrchState.
- * Pure function — no IO. Tested directly in unit tests.
+ *
+ * @param state        - Raw OrchState parsed from orch-state.json
+ * @param decisionsDir - Absolute path to the directory holding sprint-*.md journal
+ *                       files. Defaults to `<cwd>/docs/agent-memory/decisions`.
+ *                       Injected as a parameter for testability (R-1 mitigation).
  */
-export function buildOrchestrationDto(state: OrchState): OrchestrationDto {
+export function buildOrchestrationDto(
+  state: OrchState,
+  decisionsDir?: string,
+): OrchestrationDto {
   const taskBoard = state.task_board;
   const counts = countTasksFromTaskBoard(taskBoard);
 
@@ -217,6 +244,43 @@ export function buildOrchestrationDto(state: OrchState): OrchestrationDto {
   // Signal rows — safe projection
   const signalRows: OrchSignalRowDto[] = (state.signal_queue?.rows ?? []).map(projectSignalRow);
 
+  // ── ORCH-DASH-DECISION-DRILLDOWN F2: decision journal ───────────────────
+  // RULING-3: union of sprint_goal.entries[*].sprint_id (all statuses) +
+  //           task_board.active_sprints[*].id, deduplicated via Set.
+  const sprintIdSet = new Set<string>();
+
+  // From sprint_goal.entries (all statuses, including CLOSED)
+  const sprintGoalEntries = (state.sprint_goal as Record<string, unknown> | undefined)?.["entries"];
+  if (Array.isArray(sprintGoalEntries)) {
+    for (const entry of sprintGoalEntries as Record<string, unknown>[]) {
+      const id = typeof entry["sprint_id"] === "string" ? entry["sprint_id"] : null;
+      if (id) sprintIdSet.add(id);
+    }
+  }
+
+  // From task_board.active_sprints
+  for (const sprint of taskBoard.active_sprints ?? []) {
+    if (sprint.id) sprintIdSet.add(sprint.id);
+  }
+
+  // Resolve decisions directory (default: <process.cwd()>/docs/agent-memory/decisions)
+  const resolvedDecisionsDir =
+    decisionsDir ?? resolve(process.cwd(), "docs", "agent-memory", "decisions");
+
+  // Zero-value when no sprint IDs found or no journal files exist (AC-F2-8)
+  const EMPTY_DECISIONS: DecisionsDto = { by_task: {}, sprint_bucket: {} };
+
+  let decisions: DecisionsDto;
+  try {
+    decisions =
+      sprintIdSet.size > 0
+        ? getDecisionsForSprints(Array.from(sprintIdSet), resolvedDecisionsDir)
+        : EMPTY_DECISIONS;
+  } catch {
+    // Defensive: any unexpected error → serve zero-value (never crash the endpoint)
+    decisions = EMPTY_DECISIONS;
+  }
+
   return {
     last_updated_iso: newestUpdated(state),
     head:             projectHead(state.head as Record<string, unknown>),
@@ -227,6 +291,7 @@ export function buildOrchestrationDto(state: OrchState): OrchestrationDto {
     signal_queue: { rows: signalRows },
     sprint_goal:  projectSprintGoal(state.sprint_goal as Record<string, unknown> | undefined),
     narrative:    projectNarrative(state.narrative as Record<string, unknown> | undefined),
+    decisions,
   };
 }
 

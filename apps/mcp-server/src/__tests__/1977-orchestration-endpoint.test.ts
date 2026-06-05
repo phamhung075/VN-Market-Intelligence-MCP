@@ -222,6 +222,25 @@ describe("OSC-4a buildOrchestrationDto (pure projection)", () => {
     expect(Array.isArray(dto.narrative.open_sprints)).toBe(true);
   });
 
+  // ── T1h: ORCH-DASH-DECISION-DRILLDOWN F2 — decisions field ───────────────
+
+  it("T1h — decisions field is present and is an object (not markdown string)", () => {
+    const dto = buildOrchestrationDto(FIXTURE_STATE);
+    // decisions must always be present (AC-F2-8)
+    expect(dto.decisions).not.toBeNull();
+    expect(dto.decisions).not.toBeUndefined();
+    // Must be a structured object, NOT a raw markdown string
+    expect(typeof dto.decisions).toBe("object");
+    // Must have by_task and sprint_bucket keys (DecisionsDto schema)
+    expect("by_task" in dto.decisions).toBe(true);
+    expect("sprint_bucket" in dto.decisions).toBe(true);
+    // Both sub-fields must be plain objects (never arrays or primitives)
+    expect(typeof dto.decisions.by_task).toBe("object");
+    expect(typeof dto.decisions.sprint_bucket).toBe("object");
+    expect(Array.isArray(dto.decisions.by_task)).toBe(false);
+    expect(Array.isArray(dto.decisions.sprint_bucket)).toBe(false);
+  });
+
   // ── T2: HC-2 — no raw payload field leaks ──────────────────────────────────
 
   it("T2a — HC-2: signal_queue rows NEVER contain a 'payload' key", () => {
@@ -436,6 +455,15 @@ describe("OSC-4a GET /api/orchestration — HTTP tier-3 service tests", () => {
     expect("signal_queue" in body).toBe(true);
     expect("sprint_goal" in body).toBe(true);
     expect("narrative" in body).toBe(true);
+    // ORCH-DASH-DECISION-DRILLDOWN F2: decisions field must be present (AC-F2-11)
+    expect("decisions" in body).toBe(true);
+    const decisions = body["decisions"];
+    // Must be a structured object, NOT a markdown string
+    expect(typeof decisions).toBe("object");
+    expect(decisions).not.toBeNull();
+    expect(Array.isArray(decisions)).toBe(false);
+    expect(typeof (decisions as Record<string, unknown>)["by_task"]).toBe("object");
+    expect(typeof (decisions as Record<string, unknown>)["sprint_bucket"]).toBe("object");
   }, { timeout: 10000 });
 
   // ── T2: HC-2 — no raw payload leaks in HTTP response ──────────────────────
