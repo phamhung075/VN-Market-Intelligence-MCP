@@ -1,0 +1,52 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T21:02:48Z",
+    "matched_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "won_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/bctc-analyst/flow/main.md"
+    ],
+    "silent": false,
+    "drift_min": 2,
+    "errors": [],
+    "pressure_mode": "adaptive",
+    "calendar_status": "off_market",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "bctc-analyst-slot-3": "cadence"
+    },
+    "cadence_minutes": {
+      "bctc-analyst-slot-3": 240
+    },
+    "last_fired_timestamp": "2026-06-05T21:03:30Z",
+    "last_fired_slots": [
+      "bctc-analyst-slot-3"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "21:00",
+    "leader_lock": "acquired",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 2,
+    "note": "bctc-analyst-slot-3 cadence-due (24h since last); skipped tick-snapshot (agent does not consume cycle-bootstrap); E2 guard clear at 21:02"
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T21:03:30Z",
+  "fingerprint": "fad9e6f431bd46b561de288f8e528df72bf1f60bc05d489bdbeed81e7f8c44d5",
+  "processedAt": "20260605T212143Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
+}

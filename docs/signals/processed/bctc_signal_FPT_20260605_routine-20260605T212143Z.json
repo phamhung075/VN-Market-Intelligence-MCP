@@ -11,7 +11,9 @@
   "mgmt": "FY guidance track record consistent; no insider selling this cycle; foreign net +168K shares in 5 sessions (outperforming sector); NVIDIA AI partnership catalyst active (LOW alert 2026-06-05)",
   "cycle": "c025",
   "cycle_ts": "2026-06-05T21:02Z",
-  "signal_ids": [5125],
+  "signal_ids": [
+    5125
+  ],
   "regime": "NEUTRAL",
   "max_deposit_rate": 5.0,
   "ey_spread_pp": 2.25,
@@ -19,5 +21,9 @@
   "esc2": "PASS",
   "esc3": "DATA-COVERAGE-LIMITED",
   "trick_confidence": "none",
-  "escalation_status": "NO_ESCALATION"
+  "escalation_status": "NO_ESCALATION",
+  "fingerprint": "f0d21c8903d307c41874f7220039e8aef5e566498ae3cb80a5bc371f5417c1ff",
+  "processedAt": "20260605T212143Z",
+  "processedBy": "dev-team",
+  "result": "routed-to-po"
 }

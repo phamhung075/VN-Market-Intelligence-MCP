@@ -4,13 +4,13 @@
   "_updated_at": "2026-06-05T21:30:00Z",
   "_updated_by": "architect",
   "head": {
-    "status": "in_progress",
-    "active_task_id": "FIX-MW-OFFHOURS-DISPATCH",
-    "next_agent": "agent-father",
-    "next_action": "RESUME FIX-MW-OFFHOURS-DISPATCH (PO batch 2026-06-05 20:30Z, route agent-father, zone cross-service/): market-watcher main.md dispatch table EXITs on \"any other time\" so market-watcher-offhours slot (cron 0 */4, adaptive 240min) no-ops every fire; knowledge.md documents off_hours schedule + cycle.md already has off-hours machinery (AutoCure c47 dup guard, off-hours commit retention). FIX: replace \"Any other time -> EXIT\" row with route to cycle.md mode=offhours (weekends + Mon-Fri outside market/prepost/EOD); cycle.md maps mode=offhours to prepost-equivalent EASING threshold floor; Step 4 off-hours duplicate guard MUST stay binding (unchanged EOD prices emit nothing). Files: docs/agents/market-watcher/flow/{main.md,cycle.md}. baseline_pass: next offhours fire returns real cycle RETURN not outside-window; zero dup price_anomaly on unchanged prices; market/prepost/EOD rows byte-identical. agent-md-factory skill MANDATORY (agent .md edit). After ship: operator cowork-refresh prompt. DEFERRED from 20:20Z tick: on-demand agent-father daily lock orphaned by prior tick (expires 20:52:54Z, release owner-scoped refused). S2 resume-wrap claim task:FIX-MW-OFFHOURS-DISPATCH then spawn agent-father. CONTEXT this tick: EMIT-DARK CLOSED (3x FIRE adaptive telemetry, PO flipped DONE 7014c9bf); infra-anomaly 20:06Z = own deploy window FALSE-ALARM resolved; 2 backfill FUs queued BACKLOG (BCTC-EXTRACT-QUALITY); 4 signals drained DB 337->169. STILL PENDING NEXT TICKS: (a) after 09:00 UTC verify refine slot fired + pending<7 + CTG refined -> close FU-CTG-REFINE-PICKUP; (b) verify FIX-MW baseline at first offhours fire post-ship.",
+    "status": "idle",
+    "active_task_id": null,
+    "next_agent": null,
+    "next_action": "IDLE. Tick 20260605T212039Z complete: FIX-MW-OFFHOURS-DISPATCH SHIPPED 240dc1f1 (agent-father retry after malformed-tool-call abort on attempt 1; router raw-verified diff: main.md offhours dispatch row replaces EXIT, cycle.md prepost-equivalent floor sigma>=2.5/vol>=2.5x, c47 dup guard primary, market/prepost/EOD rows byte-identical). 5 signals drained DB->174 (2 bloat breaches self-resolved 191L<200cap, FPT c025 NO_ESCALATION, tnb c88 pre-ACKed, cowork telemetry healthy adaptive). PEER SESSION ACTIVE: ORCH-DASH-DECISION-DRILLDOWN pipeline (po 4009d10d, architect 477bf0af, pm 1c27aea9, F1 094358dc) — do not touch its task_board rows. PENDING NEXT TICKS: (a) operator owes cowork refresh /cron-cowork-team for aec3a3d8 + market-watcher flow change; (b) verify FIX-MW baseline at first offhours fire 00:00Z/04:00Z (real cycle RETURN, zero dup price_anomaly); (c) after 2026-06-06 09:00Z verify refine slot fired + pending<7 + CTG refined -> close FU-CTG-REFINE-PICKUP.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T20:29:49+00:00",
+    "updated_at": "2026-06-05T21:29:29+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
