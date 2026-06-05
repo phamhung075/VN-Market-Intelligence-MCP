@@ -1,16 +1,16 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-04T20:30:00Z",
+  "_updated_at": "2026-06-05T04:11:46Z",
   "_updated_by": "agent-father",
   "head": {
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Idle 2026-06-05T03:09Z tick: drained 1 cowork-fire; root-caused + FIXED the system-auditor D4 75-false-positive/run divergence class (task_list_held missing expired:false -> read ~111 expired tombstones as held). Fix aa00a1e2 LIVE next 03:00Z auditor run (flow-doc, no rebuild). Disposed 75 stale signal_queue rows (83->7). Logged P3 FU-LOCKSTORE-EXPIRED-GC + FU-AUDITOR-D4-SIGNAL-ID (defence-in-depth). Open P3 unchanged: FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-CNYVND-DEAD-FIELD-REMOVE, FU-SBV-EFFECTIVE-DATE-COLUMN, FU-RUNTIME-SET-TRUTH-RECONCILE(P3b rag blocked). 1881a still live-pending next mcp-server rebuild.",
+    "next_action": "Idle 2026-06-05T04:10Z tick: drained 2 cowork-fire heartbeats, 0 actionable, head idle. NO ship: VN market OPEN (04:10Z in 02:00-08:00Z window) -> no mcp-server rebuild now. Remaining P3 all gated/blocked/batch: TIER-WORSTOF+LOCKSTORE-GC (mcp-server code, BATCH for next OFF-MARKET rebuild >08:00Z together with live-pending 260655e3/1881a), CNYVND (irreversible migration, gated), SBV-EFFECTIVE-DATE (VPS multi-step), RUNTIME-SET-P3b (blocked FU-RAG-DEPLOY-MEMORY architect), AUDITOR-D4-SIGNAL-ID (design fork -> PO). TRIGGER: next tick after 08:00Z UTC = batch mcp-server P3s + ops rebuild.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T03:16:44Z",
+    "updated_at": "2026-06-05T04:11:46Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
