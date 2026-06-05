@@ -28,6 +28,7 @@ import { json } from "@remix-run/node";
 import { useLoaderData, useRevalidator } from "@remix-run/react";
 import { useEffect, useState } from "react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
+import { PageHeader } from "~/components/PageHeader";
 
 // Polling interval for live data refresh (ms). Pause-on-hidden keeps the tab
 // from hammering the proxy while backgrounded.
@@ -678,29 +679,33 @@ export default function OrchestrationDashboard() {
     : false;
 
   return (
-    <div className="max-w-6xl space-y-6">
-      {/* Header */}
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-bold text-slate-100">Orchestration State</h1>
-        {isStale && <StaleBadge />}
-        {/* LIVE polling indicator — green dot + label; dims to "refreshing…" on in-flight revalidation */}
-        <span className="flex items-center gap-1.5 text-xs">
-          {isLive && (
-            <span
-              aria-hidden="true"
-              className="inline-block h-2 w-2 rounded-full bg-green-400 animate-pulse"
-            />
-          )}
-          {revalidator.state === "loading" ? (
-            <span className="text-slate-400">· refreshing…</span>
-          ) : (
-            <span className="text-green-500 font-medium">LIVE</span>
-          )}
-        </span>
-        <span className="ml-auto text-xs text-slate-500">
-          Page fetched: <ClientTimestamp iso={fetchedAt} />
-        </span>
-      </div>
+    <div className="w-full space-y-6">
+      <PageHeader
+        title="Orchestration State"
+        subtitle="Live polling every 5s — auto-refreshes while tab is visible"
+        actions={
+          <div className="flex items-center gap-3">
+            {isStale && <StaleBadge />}
+            {/* LIVE polling indicator — green dot + label; dims to "refreshing…" on in-flight revalidation */}
+            <span className="flex items-center gap-1.5 text-xs">
+              {isLive && (
+                <span
+                  aria-hidden="true"
+                  className="inline-block h-2 w-2 rounded-full bg-green-400 animate-pulse"
+                />
+              )}
+              {revalidator.state === "loading" ? (
+                <span className="text-slate-400">refreshing…</span>
+              ) : (
+                <span className="text-green-500 font-medium">LIVE</span>
+              )}
+            </span>
+            <span className="text-xs text-slate-500">
+              <ClientTimestamp iso={fetchedAt} />
+            </span>
+          </div>
+        }
+      />
 
       {/* Error banner */}
       {error && (

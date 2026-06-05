@@ -15,6 +15,7 @@ import type { LoaderFunctionArgs, MetaFunction } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
+import { PageHeader } from "~/components/PageHeader";
 
 export const meta: MetaFunction = () => [
   { title: "VPS Proxy Health — VN Market Intelligence" },
@@ -176,13 +177,15 @@ export default function VpsDashboard() {
   const { health, proxyError, fetchedAt } = useLoaderData<typeof loader>();
 
   return (
-    <div className="max-w-4xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-100">VPS Proxy Health</h1>
-        <span className="text-xs text-slate-500">
-          Last updated: <ClientTimestamp iso={fetchedAt} />
-        </span>
-      </div>
+    <div className="w-full space-y-6">
+      <PageHeader
+        title="VPS Proxy Health"
+        actions={
+          <span className="text-xs text-slate-500">
+            Last updated: <ClientTimestamp iso={fetchedAt} />
+          </span>
+        }
+      />
 
       <VpsNote />
 

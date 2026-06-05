@@ -15,6 +15,7 @@ import type { Headline } from "~/domain/news";
 import type { MacroData } from "~/domain/market";
 import { parseMacroSources } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
+import { PageHeader } from "~/components/PageHeader";
 
 export const meta: MetaFunction = () => [
   { title: "Fetch Operations — VN Market Intelligence" },
@@ -215,14 +216,15 @@ export default function FetchDashboard() {
     useLoaderData<typeof loader>();
 
   return (
-    <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-100">Fetch Operations</h1>
-        <span className="text-xs text-slate-500">
-          Last updated:{" "}
-          <ClientTimestamp iso={fetchedAt} />
-        </span>
-      </div>
+    <div className="w-full space-y-6">
+      <PageHeader
+        title="Fetch Operations"
+        actions={
+          <span className="text-xs text-slate-500">
+            Last updated: <ClientTimestamp iso={fetchedAt} />
+          </span>
+        }
+      />
 
       {errors.length > 0 && (
         <div

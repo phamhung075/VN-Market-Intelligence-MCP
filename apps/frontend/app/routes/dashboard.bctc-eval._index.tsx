@@ -14,6 +14,7 @@ import { fetchBctcEvalList, BctcEvalApiError } from "~/lib/api/bctc-eval-client"
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 import { EvalTable } from "~/components/bctc-eval/EvalTable";
 import type { EvalReportSummary } from "~/domain/bctc-eval";
+import { PageHeader } from "~/components/PageHeader";
 
 export const meta: MetaFunction = () => [
   { title: "BCTC Eval — VN Market Intelligence" },
@@ -84,13 +85,15 @@ export default function BctcEvalListPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-slate-100">BCTC Eval Scorecard</h1>
-        <span className="text-xs text-slate-400">
-          Thresholds: {data.thresholds_version} &middot; Sort: {data.sort}
-        </span>
-      </div>
+    <div className="w-full space-y-4">
+      <PageHeader
+        title="BCTC Eval Scorecard"
+        actions={
+          <span className="text-xs text-slate-400">
+            Thresholds: {data.thresholds_version} &middot; Sort: {data.sort}
+          </span>
+        }
+      />
       <EvalTable reports={data.reports} />
     </div>
   );

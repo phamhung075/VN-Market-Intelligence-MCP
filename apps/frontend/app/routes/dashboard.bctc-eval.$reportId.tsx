@@ -17,6 +17,7 @@ import { StatusBadge } from "~/components/bctc-eval/StatusBadge";
 import { StageCard } from "~/components/bctc-eval/StageCard";
 import { Button } from "~/components/ui/button";
 import type { EvalDetailResponse } from "~/domain/bctc-eval";
+import { PageHeader } from "~/components/PageHeader";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => {
   if (!data || data.state === "not_computed" || data.state === "error") {
@@ -152,31 +153,24 @@ export default function BctcEvalDetailPage() {
   const { detail } = data;
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <h1 className="text-xl font-semibold text-slate-100">
-            {detail.ticker} {detail.period}
-          </h1>
-          <StatusBadge status={detail.overall_status} />
-        </div>
-        <div className="flex items-center gap-3">
-          {detail.has_pek && (
-            <span className="rounded bg-blue-900 px-2 py-0.5 text-xs text-blue-300">
-              PEK
-            </span>
-          )}
-          {detail.is_stale && (
-            <RecomputeHeader reportId={detail.report_id} />
-          )}
-        </div>
-      </div>
-
-      <div className="text-xs text-slate-400">
-        Detector: {detail.detector_version} &middot; Report ID:{" "}
-        <span className="font-mono">{detail.report_id}</span>
-      </div>
+    <div className="w-full space-y-4">
+      <PageHeader
+        title={`${detail.ticker} ${detail.period}`}
+        subtitle={`Detector: ${detail.detector_version} · Report ID: ${detail.report_id}`}
+        actions={
+          <div className="flex items-center gap-3">
+            <StatusBadge status={detail.overall_status} />
+            {detail.has_pek && (
+              <span className="rounded bg-blue-900 px-2 py-0.5 text-xs text-blue-300">
+                PEK
+              </span>
+            )}
+            {detail.is_stale && (
+              <RecomputeHeader reportId={detail.report_id} />
+            )}
+          </div>
+        }
+      />
 
       {/* 6 stage cards */}
       <div className="space-y-3">

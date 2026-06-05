@@ -69,9 +69,11 @@ export default function DashboardLayout() {
         </div>
       </nav>
 
-      {/* Child page */}
-      <main className="p-6">
-        <Outlet />
+      {/* Child page — full viewport width, horizontally centered content */}
+      <main className="min-h-[calc(100vh-3.5rem)] w-full p-6">
+        <div className="mx-auto w-full max-w-screen-xl">
+          <Outlet />
+        </div>
       </main>
     </div>
   );

@@ -29,6 +29,7 @@ import {
   parseCapability,
 } from "~/domain/health-compose";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
+import { PageHeader } from "~/components/PageHeader";
 
 // Re-export pure compose functions so test files can import from either location.
 export type { RowDisplayState } from "~/domain/health-compose";
@@ -194,20 +195,24 @@ export default function ServerDashboard() {
   ).length;
 
   return (
-    <div className="max-w-4xl">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-100">Service Health</h1>
-        <div className="flex flex-col items-end">
-          {topStatus && <StatusBadge status={topStatus} />}
-          {notDeployedCount > 0 && (
-            <p className="mt-1 text-xs text-slate-500">
-              {notDeployedCount} service(s) not deployed on this host by design
-              {notDeployedLiveCount > 0 && (
-                <> — {notDeployedLiveCount} LIVE via mcp-server</>
+    <div className="w-full">
+      <div className="mb-6">
+        <PageHeader
+          title="Service Health"
+          actions={
+            <div className="flex flex-col items-end">
+              {topStatus && <StatusBadge status={topStatus} />}
+              {notDeployedCount > 0 && (
+                <p className="mt-1 text-xs text-slate-500">
+                  {notDeployedCount} service(s) not deployed on this host by design
+                  {notDeployedLiveCount > 0 && (
+                    <> — {notDeployedLiveCount} LIVE via mcp-server</>
+                  )}
+                </p>
               )}
-            </p>
-          )}
-        </div>
+            </div>
+          }
+        />
       </div>
 
       {error && (

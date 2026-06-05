@@ -3,6 +3,7 @@ import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
 import { useLoaderData, Link, NavLink } from "@remix-run/react";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
+import { PageHeader } from "~/components/PageHeader";
 import { fetchGatewayHealth, type GatewayHealth } from "~/lib/api/client";
 
 export const meta: MetaFunction = () => {
@@ -104,12 +105,16 @@ export default function Index() {
           </div>
         </div>
       </nav>
-      <main className="flex flex-col items-center justify-center gap-6 p-8">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-100">{message}</h1>
-        <p className="text-sm text-slate-500">
-          Last updated:{" "}
-          <ClientTimestamp iso={timestamp} />
-        </p>
+      <main className="flex min-h-[calc(100vh-3.5rem)] w-full flex-col items-center justify-center gap-6 p-8">
+        <PageHeader
+          title={message}
+          subtitle="Vietnam Stock Market Intelligence Dashboard"
+          actions={
+            <span className="text-xs text-slate-500">
+              <ClientTimestamp iso={timestamp} />
+            </span>
+          }
+        />
         {gateway && (
           <p className="text-sm text-slate-400">
             Gateway:{" "}

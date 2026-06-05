@@ -39,6 +39,7 @@ import {
   groupBySector,
 } from "~/domain/market";
 import { ClientTimestamp } from "~/components/ClientTimestamp";
+import { PageHeader } from "~/components/PageHeader";
 import { QueName } from "~/components/QueName";
 import { StockChart } from "~/components/charts/StockChart";
 import { formatDirectionArrow } from "~/domain/formatters/direction-arrow.js";
@@ -1474,14 +1475,15 @@ export default function AnalysisDashboard() {
   const hasWatchlistPrices = Object.keys(watchlistTiles).length > 0;
 
   return (
-    <div className="max-w-6xl space-y-6">
-      {/* Page header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-100">Market Analysis</h1>
-        <span className="text-xs text-slate-500">
-          <ClientTimestamp iso={fetchedAt} />
-        </span>
-      </div>
+    <div className="w-full space-y-6">
+      <PageHeader
+        title="Market Analysis"
+        actions={
+          <span className="text-xs text-slate-500">
+            <ClientTimestamp iso={fetchedAt} />
+          </span>
+        }
+      />
 
       {errors.length > 0 && (
         <div
