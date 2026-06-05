@@ -1,0 +1,9 @@
+{
+  "from": "agents-architect",
+  "to": "agent-father",
+  "type": "brief_complete",
+  "payload": "docs/architecture-briefs/2026-06-05-agent-decision-journal.md",
+  "priority": "normal",
+  "createdAt": "2026-06-05T16:31:02Z",
+  "summary": "Decision Journal (sprint footprint) protocol: per-sprint accumulator at docs/agent-memory/decisions/sprint-<id>.md, shared decision-journal skill, terminal-only status rule, cowork-end-cycle injection. 7 files to create/edit — no greenlight needed."
+}
