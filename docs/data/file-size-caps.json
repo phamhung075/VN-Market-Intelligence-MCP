@@ -34,6 +34,12 @@
       "cap": 200,
       "class": "daily-agent-section",
       "_note": "Per-agent section file in docs/daily/<YYYY-MM-DD>/. 200L soft cap per section file. Older entries archived to _archive/ by CHEF at EOD. See docs/standards/daily-document-spec.md."
+    },
+    {
+      "pattern": "docs/agent-memory/decisions/sprint-*.md",
+      "cap": 600,
+      "class": "sprint-decision-journal",
+      "_note": "Per-sprint decision footprint. APPEND-only multi-agent accumulator. 600L cap — 2.5x headroom for typical sprint (5 agents × 4 steps × 10L). At cap: append CAP-REACHED sentinel, stop. Never prune mid-sprint. Archived → docs/archive/decisions/ at sprint close by pm."
     }
   ]
 }

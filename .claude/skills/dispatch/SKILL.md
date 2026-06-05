@@ -97,3 +97,4 @@ Caveman spec → `.claude/skills/caveman/SKILL.md` (ultra: agent-to-agent | lite
 | Main terminal never writes `docs/data/orch/orch-state.json` / `docs/handoffs/*` — spawn po/pm/dev-team | `docs/protocols/agent-chaining-protocol.md` |
 | Never ask user to run code — spawn subagent (ops/developer/qa). User is config admin only | `CLAUDE.md § Interdiction` |
 | File placement — logic→`docs/{policies,protocols,standards,references}/`; volatile→`docs/data/*.json`; core arch→`docs/*.md` (≤6); agent memory→`docs/agent-memory/`; reports→`docs/archive/` | `docs/references/tree-map.md` |
+| **Terminal = status-only (RETURN + caveman). All reasoning → decision journal** (`docs/agent-memory/decisions/sprint-<id>.md` via skill `.claude/skills/decision-journal/SKILL.md`) | Architecture brief 2026-06-05 |

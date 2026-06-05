@@ -15,6 +15,7 @@ File placement SSOT. Before creating any `.md` file, look it up here.
 | `REQ_NNN.md` | `docs/historical/` | root, `docs/` root |
 | `TECH_NNN.md` | `docs/historical/` | root, `docs/` root |
 | Agent notebooks | `docs/agent-memory/notebooks/` | root |
+| Decision journal `sprint-*.md` | `docs/agent-memory/decisions/` | root, `docs/handoffs/` |
 | Analysis briefs | `docs/analysis-briefs/` | root, `reports/` |
 | Facebook post drafts `fb-post-*.md` | `docs/social/` | root, `reports/`, `docs/archive/` |
 | Facebook feedback log | `docs/social/fb-feedback.md` | root |

@@ -62,6 +62,9 @@ CLAUDE.md (root — always loaded)
 │
 ├── docs/references/agent-roster.md (team structure: analysis + dev + microservices, two-team architecture, three-channel rules, agent routing reference, cooperation flow, handoff protocol — counts in `docs/data/project-stats.json`)
 │
+├── docs/agent-memory/decisions/ (per-sprint decision journals — APPEND-only multi-agent accumulator; archived at sprint close by pm)
+│   └── docs/agent-memory/decisions/sprint-<id>.md (decision rationale trail for ONE sprint — WHY each step, 600L cap, archived → docs/archive/decisions/ at sprint close)
+│
 ├── docs/social/ (fb-market-poster deliverables: dated Facebook draft posts + feedback log)
 │   ├── docs/social/fb-post-YYYY-MM-DD.md (daily Facebook draft — one per day, written by fb-market-poster at 20:07 VN M-F)
 │   └── docs/social/fb-feedback.md (feedback sink — user appends corrections; Phase 2: auto-read via Graph API)
@@ -376,6 +379,7 @@ docs/agents/dev-team/flow/drain-signals.md (parent — 116L)
 
 | File | Maintained by | Trigger |
 |------|--------------|---------|
+| `docs/agent-memory/decisions/sprint-*.md` | All task-executing agents | Per step, accumulated during sprint; pm archives at sprint close |
 | `docs/signals/signals.db` | dev-team flow (Step 0a) — sole writer; all other agents read-only | Each drain cycle (INSERT + DELETE prune) |
 | `docs/data/system-map.json` | Developer / PM / System-Auditor | Service/agent/zone/channel/source/watchlist change — primary SSOT |
 | `docs/data/tool-registry.json` | Developer | After adding/removing MCP tool — also update system-map.json |

@@ -7,8 +7,9 @@ description: >
 
 ## End of Cycle
 
-Execute these 4 steps in order:
+Execute these 5 steps in order:
 
+0. **Decision journal flush** → skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry (flush any pending step-rationale entries for this cycle before session log)
 1. **Session log** → skill: `.claude/skills/session-log-cowork/SKILL.md`
 2. **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md`
 3. **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
