@@ -3384,7 +3384,7 @@
     "in_progress": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-05T03:14:26Z",
+    "_updated_at": "2026-06-05T19:21:57Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -3399,30 +3399,6 @@
         "payload_ref": "docs/handoffs/tnb-audit-latest.md",
         "read_at": "2026-06-04T21:19:07Z",
         "read_note": "F-CARRY-CORRUPT verified FIXED LIVE (carry 3.62/NEUTRAL/+1.38pp, is_estimate:false, tier:1). Structural findings F3/F4/F6/BCTC tracked. To PO for narrative disposition."
-      },
-      {
-        "id": "cowork-drainlag-20260603T0233Z",
-        "ts": "2026-06-03T02:33Z",
-        "from": "cowork-dispatcher",
-        "to": "po",
-        "type": "infra_watch",
-        "summary": "docs/signals/ file-backlog=27 (16 cowork-team telemetry + 6 context-bloat + 5 bctc). dev-team signal-drain cron last swept 00:18Z (66c212f3), ~135min ago. NOT infra-critical: backlog dominated by benign cowork telemetry, self-resolves on next sweep. KEY ITEM: 4 context-bloat signals on docs/agent-memory/notebooks/unified-agent.md fired 02:21-02:22Z during chef-intraday run -> chef notebook over byte size-cap, AC-5 line-prune (<200 lines) not bringing it under cap. DEV-LANE ACTIONS: (1) verify/kick signal-drain cron cadence; (2) janitor pass on unified-agent.md (over cap despite prune). No cowork action available (dispatcher/cowork agents have no git authority). Emitted by dispatcher self-watch at backlog>25.",
-        "severity": "MEDIUM",
-        "status": "READ",
-        "payload_ref": "docs/signals/context-bloat-docs-agent-memory-notebooks-unified-agent-md-2026-06-03T022217Z.json",
-        "disposition": "TRIAGED 2026-06-03 PO: line-based transient breach NOT byte/persistent. unified-agent.md=196L, dev-mcp-server.md=200L — both UNDER 200 cap NOW. Breach signals fire at write-time during multi-Edit append+prune (217->211->201) because notebook-write APPEND class appends BEFORE size-bounding prune, so every intermediate Edit is over-cap and the PostToolUse backstop emits a breach each one. False-positive infra noise, self-resolves. Root-cause fix dispatched NB-WRITE-ATOMIC (agent-father). Signal-drain confirmed swept (0 backlog). No janitor action needed (files already under cap)."
-      },
-      {
-        "id": "lf-group-rethink-brief-20260603T101925Z",
-        "ts": "2026-06-03T10:19Z",
-        "from": "agents-architect",
-        "to": "agent-father",
-        "type": "brief_complete",
-        "summary": "LF-GROUP-RETHINK SPIKE DONE. Root cause: _is_title_band (D-5) fires on every BCTC financial text line -> _fingerprints_continuous returns False for ALL consecutive page pairs -> 46 singleton units. Fix: remove D-5 from _fingerprints_continuous (generic_md_table_extractor.py ~L3216). Test gap: tests used empty stored_texts bypassing D-5. LF-GRP-IMPL task spec in brief. Brief: docs/architecture-briefs/2026-06-03-lf-group-stage-rethink.md",
-        "severity": "HIGH",
-        "status": "READ",
-        "payload_ref": "docs/architecture-briefs/2026-06-03-lf-group-stage-rethink.md",
-        "po_disposition": "READ 2026-06-03T10:24Z dev-team: brief routed to agent-father by architect default, but apps/ Python impl belongs to dev-pdf-extractor zone (agent-father zone = agent .md/system files). Code-impl re-routed -> LF-GRP-1/2 dev-pdf-extractor, LF-GRP-3 qa. agent-father no action."
       },
       {
         "id": "bca-20260603T1815Z",
@@ -3466,34 +3442,6 @@
         "status": "READ",
         "payload_ref": "docs/signals/cowork-team-20260604T031929Z.json",
         "disposition": "READ 2026-06-04T04:15:22Z by dev-team: PO-triaged (NOTHING for dev-zone), folded into backlog FU-CHEF-MARKER-INFLOW (granularity facet); routed agents-architect+agent-father, cowork agent-md lane."
-      },
-      {
-        "id": "ops-lancedb-offline-20260604T1204Z",
-        "ts": "2026-06-04T12:06Z",
-        "from": "cowork-team",
-        "to": "ops",
-        "type": "infra_anomaly",
-        "summary": "MEDIUM. LanceDB offline ~25h / 12 consecutive news-scout cycles — search_similar_context returns error every cycle. NON-FATAL (gatherers degrade gracefully, signals still emit) but semantic dedup + historical-context retrieval disabled fleet-wide (news-scout, rag-service consumers). Crossed the 24h watch threshold. ACTION: restart/inspect LanceDB service + verify embeddings store integrity. news-scout own escalation fires at 30h.",
-        "severity": "MEDIUM",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "triaged_by": "po",
-        "triaged_at": "2026-06-04T12:13:09Z",
-        "disposition": "routed-to-ops repair_task_request OPS-LANCEDB-OFFLINE (docs/signals/repair_task_request_ops_lancedb_offline_20260604T121309Z.json); PLAN-ONLY, not a dev FIX",
-        "resolution": "RESOLVED 2026-06-04 by ops (16ks diag). ROOT CAUSE: rag-service container NOT DEPLOYED (defined in docker-compose, never started) -> search_similar_context POST localhost:5002 conn-refused. NOT LanceDB corruption/bloat (store healthy 13536 rows, disk 38% / 22GB free). ops started rag-service; it OOM-hung (host 3.6MB free) -> ops STOPPED frontend to free memory -> rag up healthy, search_similar_context re-verified working (2 live queries OK). SIDE EFFECT: frontend container now DOWN (memory tradeoff). Durable fix -> FU-RAG-DEPLOY-MEMORY."
-      },
-      {
-        "id": "sau-d4-202606050300",
-        "ts": "2026-06-05T03:00Z",
-        "from": "system-auditor",
-        "to": "po",
-        "type": "system_issue",
-        "summary": "D4 false-positive batch (75 rows, run sau-d4-202606050300): all from task_list_held returning EXPIRED tombstone locks as held. Verified live: task_list_held default=114 vs {expired:false}=3 genuinely-held (zero divergence). RESOLVED — no PO action.",
-        "severity": "LOW",
-        "status": "RESOLVED",
-        "payload_ref": null,
-        "read_at": "2026-06-05T03:14:26Z",
-        "read_note": "Root cause: system-auditor D4 R-1 (handlers.md:27) calls task_list_held without expired:false → reads ~111 expired tombstones. Definitif fix dispatched to agent-father (add expired:false). Defence-in-depth GC + shared-id hardening logged P3 backlog."
       }
     ],
     "archive": [
@@ -3959,6 +3907,58 @@
         "severity": "HIGH",
         "status": "DONE",
         "payload_ref": "docs/architecture-briefs/2026-06-02-commit-boundary-discipline.md"
+      },
+      {
+        "id": "cowork-drainlag-20260603T0233Z",
+        "ts": "2026-06-03T02:33Z",
+        "from": "cowork-dispatcher",
+        "to": "po",
+        "type": "infra_watch",
+        "summary": "docs/signals/ file-backlog=27 (16 cowork-team telemetry + 6 context-bloat + 5 bctc). dev-team signal-drain cron last swept 00:18Z (66c212f3), ~135min ago. NOT infra-critical: backlog dominated by benign cowork telemetry, self-resolves on next sweep. KEY ITEM: 4 context-bloat signals on docs/agent-memory/notebooks/unified-agent.md fired 02:21-02:22Z during chef-intraday run -> chef notebook over byte size-cap, AC-5 line-prune (<200 lines) not bringing it under cap. DEV-LANE ACTIONS: (1) verify/kick signal-drain cron cadence; (2) janitor pass on unified-agent.md (over cap despite prune). No cowork action available (dispatcher/cowork agents have no git authority). Emitted by dispatcher self-watch at backlog>25.",
+        "severity": "MEDIUM",
+        "status": "READ",
+        "payload_ref": "docs/signals/context-bloat-docs-agent-memory-notebooks-unified-agent-md-2026-06-03T022217Z.json",
+        "disposition": "TRIAGED 2026-06-03 PO: line-based transient breach NOT byte/persistent. unified-agent.md=196L, dev-mcp-server.md=200L — both UNDER 200 cap NOW. Breach signals fire at write-time during multi-Edit append+prune (217->211->201) because notebook-write APPEND class appends BEFORE size-bounding prune, so every intermediate Edit is over-cap and the PostToolUse backstop emits a breach each one. False-positive infra noise, self-resolves. Root-cause fix dispatched NB-WRITE-ATOMIC (agent-father). Signal-drain confirmed swept (0 backlog). No janitor action needed (files already under cap)."
+      },
+      {
+        "id": "lf-group-rethink-brief-20260603T101925Z",
+        "ts": "2026-06-03T10:19Z",
+        "from": "agents-architect",
+        "to": "agent-father",
+        "type": "brief_complete",
+        "summary": "LF-GROUP-RETHINK SPIKE DONE. Root cause: _is_title_band (D-5) fires on every BCTC financial text line -> _fingerprints_continuous returns False for ALL consecutive page pairs -> 46 singleton units. Fix: remove D-5 from _fingerprints_continuous (generic_md_table_extractor.py ~L3216). Test gap: tests used empty stored_texts bypassing D-5. LF-GRP-IMPL task spec in brief. Brief: docs/architecture-briefs/2026-06-03-lf-group-stage-rethink.md",
+        "severity": "HIGH",
+        "status": "READ",
+        "payload_ref": "docs/architecture-briefs/2026-06-03-lf-group-stage-rethink.md",
+        "po_disposition": "READ 2026-06-03T10:24Z dev-team: brief routed to agent-father by architect default, but apps/ Python impl belongs to dev-pdf-extractor zone (agent-father zone = agent .md/system files). Code-impl re-routed -> LF-GRP-1/2 dev-pdf-extractor, LF-GRP-3 qa. agent-father no action."
+      },
+      {
+        "id": "ops-lancedb-offline-20260604T1204Z",
+        "ts": "2026-06-04T12:06Z",
+        "from": "cowork-team",
+        "to": "ops",
+        "type": "infra_anomaly",
+        "summary": "MEDIUM. LanceDB offline ~25h / 12 consecutive news-scout cycles — search_similar_context returns error every cycle. NON-FATAL (gatherers degrade gracefully, signals still emit) but semantic dedup + historical-context retrieval disabled fleet-wide (news-scout, rag-service consumers). Crossed the 24h watch threshold. ACTION: restart/inspect LanceDB service + verify embeddings store integrity. news-scout own escalation fires at 30h.",
+        "severity": "MEDIUM",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-06-04T12:13:09Z",
+        "disposition": "routed-to-ops repair_task_request OPS-LANCEDB-OFFLINE (docs/signals/repair_task_request_ops_lancedb_offline_20260604T121309Z.json); PLAN-ONLY, not a dev FIX",
+        "resolution": "RESOLVED 2026-06-04 by ops (16ks diag). ROOT CAUSE: rag-service container NOT DEPLOYED (defined in docker-compose, never started) -> search_similar_context POST localhost:5002 conn-refused. NOT LanceDB corruption/bloat (store healthy 13536 rows, disk 38% / 22GB free). ops started rag-service; it OOM-hung (host 3.6MB free) -> ops STOPPED frontend to free memory -> rag up healthy, search_similar_context re-verified working (2 live queries OK). SIDE EFFECT: frontend container now DOWN (memory tradeoff). Durable fix -> FU-RAG-DEPLOY-MEMORY."
+      },
+      {
+        "id": "sau-d4-202606050300",
+        "ts": "2026-06-05T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "D4 false-positive batch (75 rows, run sau-d4-202606050300): all from task_list_held returning EXPIRED tombstone locks as held. Verified live: task_list_held default=114 vs {expired:false}=3 genuinely-held (zero divergence). RESOLVED — no PO action.",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "read_at": "2026-06-05T03:14:26Z",
+        "read_note": "Root cause: system-auditor D4 R-1 (handlers.md:27) calls task_list_held without expired:false → reads ~111 expired tombstones. Definitif fix dispatched to agent-father (add expired:false). Defence-in-depth GC + shared-id hardening logged P3 backlog."
       }
     ]
   },
