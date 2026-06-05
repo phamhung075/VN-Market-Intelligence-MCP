@@ -56,7 +56,7 @@ Use Edit tool append pattern OR read-full + Write. Entry format:
 
 ```markdown
 ### STEP <agent-id>-S<N> · <agent-id> · <ISO-timestamp>
-
+**task-id:** <task_id if a sprint task is in scope, e.g. ARCH-ORCH-F1 — omit this line entirely if no task in scope>
 **what-done:** <one sentence — the concrete action taken>
 **what-considered:**
 - <option/data point 1>
@@ -68,10 +68,24 @@ Use Edit tool append pattern OR read-full + Write. Entry format:
 **Rules:**
 - `step-id`: `<agent-id>-S<N>` — N increments per agent per sprint.
 - `ISO-timestamp`: `date -u +"%Y-%m-%dT%H:%M:%SZ"` at moment of writing.
-- Hard cap: 12 lines per STEP block.
+- `task-id`: OPTIONAL. Include the line `**task-id:** <TASK_ID>` between the
+  `### STEP` header and `**what-done:**` when the agent is working a specific
+  sprint task (e.g. `ARCH-ORCH-F1`). Omit the line entirely when no task is in
+  scope (cowork cycle with no claimed task, ambient maintenance, etc.) — entries
+  without `task-id` land in the sprint fallback bucket. Parser must not throw
+  on absent `task-id`.
+- Hard cap: 12 lines per STEP block (task-id line counts toward this cap when present).
 - Triggering condition: any step carrying a non-trivial decision (option choice,
   failure adaptation, confidence judgment, plan deviation). Skip mechanical
   bootstrap sub-steps (project-root resolution, notebook read).
+
+**Injection pattern for calling flows:**
+When calling this skill's § Write Entry, pass the active task_id:
+```
+Run skill: .claude/skills/decision-journal/SKILL.md § Write Entry
+[task_id: "<TASK_ID>" if a sprint task is in scope, else omit]
+```
+The skill writes the `**task-id:**` line only when task_id is provided and non-empty.
 
 ---
 

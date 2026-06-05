@@ -98,7 +98,7 @@ Classification is architect's decision. If scope is ambiguous, default to `lean`
 ambiguity in the handoff for PM visibility. Append the emitted tag to `[Architect] Brownfield
 Findings` so PM can propagate it verbatim into the dev-* task spec.
 
-→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry (record WHY this design approach — pattern reuse vs new service, DDD layer choices, BUILD-STANDARD classification rationale — not on terminal)
+→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from orch-state task_board — the architect task number, e.g. ARCH-ORCH-F1; omit if ambient/no task>"] (record WHY this design approach — pattern reuse vs new service, DDD layer choices, BUILD-STANDARD classification rationale — not on terminal)
 
 ### Header update (required every cycle)
 Before the end-of-cycle skill writes the notebook, update line 3 of `docs/agent-memory/notebooks/architect.md`:

@@ -105,3 +105,13 @@
 - Handoff size: granular (6+ sub-steps per task) vs coarse (one big handoff per zone) — chose granular within each task (AC per sub-step, file-by-file modify list) to match the PM flow template and give developer explicit guidance per file
 **why-decision:** Architect output named four logical legs; PM's job is to map each leg to exactly one task with dependencies respected, atomicity preserved, and developer acceptance criteria explicit. Four sequential tasks with explicit zone+blocks metadata enable the dev-team Step 3 zone-routed parallel dispatch and keep WIP=2 discipline clean.
 **why-change:** No deviation from architect blueprint (which named F1/F2/F3/QA explicitly); PM added structure (TASK_NNN.md per task) and explicit AC/file lists per dev-standards handoff template, not a design change.
+
+### STEP agent-father-S1 · agent-father · 2026-06-05T00:00:00Z
+**task-id:** ARCH-ORCH-F1
+**what-done:** Added optional `**task-id:**` field to decision-journal SKILL.md § Write Entry template and § Rules; injected task_id parameter at all journal-write call sites in developer/flow/main.md, developer/flow/microservice-main.md, architect/flow/main.md, qa/flow/main.md, and cowork-end-cycle/SKILL.md.
+**what-considered:**
+- Placement: between `### STEP` header and `**what-done:**` — matches architect blueprint parse contract and the existing field ordering; F2 parser regex `/^\*\*task-id:\*\* (.+)/` keyed off this exact position
+- Omit vs empty string when no task in scope — chose omit entirely (no `**task-id:**` line written) so F2 parser's absent-line branch routes correctly to sprint_bucket with zero ambiguity
+- Inline flow param vs env var injection — chose inline bracket annotation `[task_id: "<...>"]` after each journal-write call, keeping skill as SSOT and flows as callers that pass value (DRY: skill owns format, flows own value sourcing)
+**why-decision:** Architect blueprint parse contract is exact (`/^\*\*task-id:\*\* (.+)/`); omitting the line when empty is the only way to guarantee parser routes to sprint_bucket without a trim-empty-string edge case in F2; inline annotation in flows is the lightest wiring that keeps the skill SSOT while giving each flow context for where to source the task_id value.
+**why-change:** No change from architect blueprint or PM task spec; agent-father added the injection-pattern prose in SKILL.md § Write Entry to make the calling convention explicit for all future consumers.

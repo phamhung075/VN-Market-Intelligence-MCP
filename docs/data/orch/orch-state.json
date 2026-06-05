@@ -2196,7 +2196,7 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": "PM-ORCH-DASH-DECISION-DRILLDOWN",
-            "status": "TODO",
+            "status": "REVIEW",
             "size": "S",
             "zone": "docs/agents/"
           },

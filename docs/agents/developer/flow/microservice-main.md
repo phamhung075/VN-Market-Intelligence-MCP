@@ -83,7 +83,7 @@ GREEN  → minimum code to pass → must PASS
 REFACTOR → clean → still PASS
 REPEAT per acceptance criterion
 ```
-→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry (after implementation approach is chosen — WHY this option, not on terminal)
+→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Pre-code checklist step 1 / task_board claim>"] (after implementation approach is chosen — WHY this option, not on terminal)
 
 **TDD workflow — Python/FastAPI services (pdf-extractor, rag-service)**
 ```
@@ -99,7 +99,7 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 ```
 
 **After code — TypeScript/Bun**
-→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry (if failure adaptation or approach change occurred — WHY)
+→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Pre-code checklist step 1 / task_board claim>"] (if failure adaptation or approach change occurred — WHY)
 1. `cd apps/<service> && bun test` — service tests pass
 2. `bun tsc --noEmit` — 0 errors
 3. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`

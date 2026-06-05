@@ -79,7 +79,7 @@ GREEN  → minimum code to pass → must PASS
 REFACTOR → clean → still PASS
 REPEAT per acceptance criterion
 ```
-→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry (after implementation approach is chosen — record WHY this option, not on terminal)
+→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Step 0c / task_board claim>"] (after implementation approach is chosen — record WHY this option, not on terminal)
 - **After each TDD loop** → heartbeat:
 ```
 call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
@@ -87,7 +87,7 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 ```
 
 **After code**
-→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry (if any failure adaptation or approach change occurred during TDD — WHY the adaptation)
+→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Step 0c / task_board claim>"] (if any failure adaptation or approach change occurred during TDD — WHY the adaptation)
 1. `bun test src/__tests__/NNN-*.test.ts` — task tests pass
 2. `bun test` — no regressions
 3. `bun tsc --noEmit` — 0 errors

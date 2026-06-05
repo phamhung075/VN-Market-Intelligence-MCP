@@ -9,7 +9,7 @@ description: >
 
 Execute these 5 steps in order:
 
-0. **Decision journal flush** → skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry (flush any pending step-rationale entries for this cycle before session log)
+0. **Decision journal flush** → skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active task_id if the agent claimed a sprint task this cycle; omit if cowork cycle with no specific task in scope>"] (flush any pending step-rationale entries for this cycle before session log)
 1. **Session log** → skill: `.claude/skills/session-log-cowork/SKILL.md`
 2. **Notebook write** → skill: `.claude/skills/notebook-write/SKILL.md`
 3. **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
