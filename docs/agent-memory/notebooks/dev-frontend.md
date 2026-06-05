@@ -31,18 +31,7 @@
 
 Phase 2 P2-A/B/C DONE. ESLint fence (G4) installed: eslint.config.mjs + eslint-plugin-boundaries@6.0.2 + TS resolver. Fence-A/B/C proven via deliberate-violation (exit 1, "Fence-A" in output), clean run exits 0. 179/179 Vitest, tsc clean. Stopped at P2-D (QA gate). | HEALTHY
 
-## Cycle P1-FE — 2026-05-25 (Phase 1 MVR — formatter extraction + render-gate)
-
-- P1-A: render-check.spec.ts (3 Playwright tests), playwright.config.ts PORT env, vite.config.ts PORT env
-- P1-B1: domain/formatters/direction-arrow.ts + test (5 tests). Route: local directionArrow removed.
-- P1-B2: domain/formatters/change-pct.ts + test (6 tests). Market-data policy "never bare number" test PRESENT. Route: WatchlistTile + SectorPeersBar updated.
-- P1-B3: domain/formatters/signal-type-label.ts + test (10 tests). Route: local signalTypeLabel removed.
-- P1-B4: domain/formatters/stale-badge.ts + test (8 tests). now: Date injection — deterministic.
-- P1-C: lib/view-models/analysis-vm.ts + test (6 tests). buildWatchlistTileVM composes formatChangePct + formatDirectionArrow.
-- P1-E: G7 (fixture edit RED→GREEN proof) + G8 (Playwright deliberate-fail RED→GREEN proof) + zero-creds audit.
-- Commits: 3ef797d0 (P1-A) + eeb4d2f8 (P1-B1..B4) + 9b55a086 (P1-C)
-- G12 streak: P1-B1 ✓ P1-B2 ✓ P1-C ✓ — 3/3 COMPLETE
-- Key insight: Docker holds port 3001 even when container is stopped (TCP LISTEN). Use PORT=3099 env var for host-side Playwright runs.
+<!-- Pruned 2026-06-05 (cap-compliance 205→192): oldest cycle P1-FE (2026-05-25, formatter extraction, commits 3ef797d0/eeb4d2f8/9b55a086) — superseded by Status summary; full detail in git history. Carried insight: Docker holds port 3001 (TCP LISTEN) even when container stopped → use PORT=3099 env for host-side Playwright runs. -->
 
 ## Key patterns
 

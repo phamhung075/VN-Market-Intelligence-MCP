@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "FE-HEADER-SSOT DONE+LIVE. Next operator request queued: deep file-by-file hardcode/fake-data contamination audit across all services (fan-out max 3), log each finding as dev-team backlog task. User requested /compact first.",
+    "next_action": "Tick 2026-06-05T06:13Z: FAKE-DATA-AUDIT complete (FDA-1..10 logged, deferred per operator 'take it later'). Bookkeeping: drained 4 signals (3 cowork heartbeats + 1 context-bloat), pruned dev-frontend.md 205->194 (cap breach), logged FU-PRESSURE-EMIT-DARK (pressure-state dark ~2.25d, fail-safe legacy fallback). No non-deferred ready P1/P2 dev task -> idle. Next tick may start FDA-1 (polymarket 0.5-fab) if no higher-priority work. Live-pending mcp-server rebuild batch (off-market): 1881a + FDA fixes when shipped.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T05:06:56Z",
+    "updated_at": "2026-06-05T06:14:05.167625+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T05:17:46.225823+00:00",
+    "_updated_at": "2026-06-05T06:14:05.167625+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -3113,6 +3113,23 @@
         "severity": "LOW",
         "note": "shippingIndex.ts:76 doc-comment claims an SCFI->BDI placeholder, but SHIPPING_SYMBOLS (lines 79-82) contains only ^BDI and ^BFIY — no SCFI placeholder is emitted. NOT a contamination (verified by Slice-A agent). Cleanup only: delete the stale/misleading comment to avoid future confusion. No data fix required.",
         "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
+        "depends_on": null
+      },
+      {
+        "task_id": "FU-PRESSURE-EMIT-DARK",
+        "title": "pressure-state.json emitter dark ~2.25 days (tick_id 2026-06-03T00:00Z, stale at 2026-06-05T06:09Z) — whole cowork fleet fell back to legacy fixed-cron cadence",
+        "type": "FIX",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "cross-service/",
+        "files": [
+          "docs/data/pressure-state.json"
+        ],
+        "severity": "MED",
+        "note": "3 consecutive cowork-team heartbeats (2026-06-05 04:21/05:03/05:18Z) report 'pressure-state STALE ~2d -> legacy-mode fallback, cadence bypassed, cron governs' and 'pressure-emit dark >2d -> system-auditor candidate if not self-healed'. pressure-state.json last tick_id=2026-06-03T00:00:00Z (updated_at 2026-06-03T00:04:30Z). FAIL-SAFE: cowork still fires on legacy fixed cron (no outage), but the adaptive-cadence governor (project_dynamic_workflow_cadence Phase 1, SHIPPED 2026-05-31) is inert — suppression/downgrade logic never runs. Find the emitter that writes pressure-state.json (cadence-policy.json consumer / a cron or the cowork dispatcher) and restore the periodic write, OR if Phase-1 emit was never wired to a live cron, that is the root gap. ROUTE: PO to confirm owner (cowork-plane vs dev cron) — may be agent-father/cowork lane, not apps/ code. Detected by dev-team tick 2026-06-05T06:13Z from drained heartbeats.",
+        "source": "dev-team tick 2026-06-05T06:13Z (drained cowork-team heartbeats)",
         "depends_on": null
       }
     ],

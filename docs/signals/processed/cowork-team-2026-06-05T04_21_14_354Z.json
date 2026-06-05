@@ -1,0 +1,48 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T04:21:14.354Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [
+      "chef-intraday"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "legacy-fallback-pressure-stale",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "last_fired_timestamp": "2026-06-05T04:21:02.489Z",
+    "last_fired_slots": [
+      "chef-intraday"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "04:13",
+    "leader_lock": "own_held_renewed",
+    "dev_head": "unknown",
+    "devq": null,
+    "signal_backlog": null,
+    "note": "04:20 UTC chef-intraday (3rd intraday of session). Leader claim returned claimed=false but current_holder was own session (pid-1-ts-1780613414482, my 04:05 leader still alive); heartbeat ok=true confirmed own-held, renewed+proceeded. Fresh fleet inputs this cycle: news-scout #5038 MWG-bullish/#5039 VIC-RE-bullish/#5040 VinaCapital valuation-compression-bearish; market-watcher 0 anomalies, VNH #5041 data-quality-flagged. KNOWN-GAP: chef.md still lacks published-marker gate (FU-CHEF-MARKER-INFLOW open) — per-work-item token is sole dup-spawn guard, held. pressure-state still stale (legacy)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T04:21:14.354Z"
+}
