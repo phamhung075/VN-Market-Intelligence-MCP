@@ -661,37 +661,36 @@
         "host_runtime_set": {
           "_note": "Services INTENDED to run on this 16GB Mac host. Full fleet kernel-panics (project_host_memory_panic). Services absent from this set are defined-in-repo but NOT deployed by design — auditor must report them INFO/grey, never CRITICAL/WARN.",
           "_ssot": "docs/data/system-map.json .project.infrastructure.docker.host_runtime_set",
-          "_last_verified": "2026-06-02",
+          "_last_verified": "2026-06-05",
           "services": [
             "mcp-server",
             "api-gateway",
             "frontend",
             "macro-indicators",
-            "mcp-gateway"
+            "mcp-gateway",
+            "pdf-extractor"
           ],
           "not_deployed_by_design": [
             "stock-price",
             "technical-analysis",
             "kinh-dich-service",
             "alert-engine",
-            "pdf-extractor",
             "rag-service",
             "news-fetch"
           ],
           "_name_map_note": "Registry/frontend use short-keys (registry.go map keys + SERVICES[] in dashboard.services.tsx). Compose names differ. This map is the authoritative bridge — devs MUST use short_key form in code, never compose_name.",
           "short_key_to_compose": {
-            "mcp":       "mcp-server",
-            "pdf":       "pdf-extractor",
-            "rag":       "rag-service",
-            "ta":        "technical-analysis",
-            "macro":     "macro-indicators",
-            "stock":     "stock-price",
+            "mcp": "mcp-server",
+            "pdf": "pdf-extractor",
+            "rag": "rag-service",
+            "ta": "technical-analysis",
+            "macro": "macro-indicators",
+            "stock": "stock-price",
             "kinh-dich": "kinh-dich-service",
-            "alert":     "alert-engine",
-            "news":      "news-fetch"
+            "alert": "alert-engine",
+            "news": "news-fetch"
           },
           "not_deployed_short_keys": [
-            "pdf",
             "rag",
             "ta",
             "stock",
@@ -702,15 +701,61 @@
           "capability_manifest": {
             "_note": "Maps each short_key to the mcp-server probe that verifies its capability is LIVE. Probe runs server-side in api-gateway /health (bounded, cached TTL 60s). Never fan-out all 156 tools.",
             "_ground_truth_date": "2026-06-02",
-            "mcp":       { "capability": "n/a",          "probe_type": "health_endpoint", "probe": "/health",                  "live_evidence": "toolCount:156 ok" },
-            "macro":     { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_macro_snapshot",       "live_evidence": "2026-06-02 21:00Z" },
-            "stock":     { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_market_snapshot",      "live_evidence": "VN-Index 1826.47 2026-06-02" },
-            "kinh-dich": { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_portfolio_conviction", "live_evidence": "38 tickers 2026-06-02" },
-            "alert":     { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_alerts",               "live_evidence": "20 alerts today 2026-06-02" },
-            "news":      { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_agent_signals",        "live_evidence": "NVL/VHM/HPG ingestion today" },
-            "ta":        { "capability": "data_limited",  "probe_type": "mcp_tool",        "probe": "get_technical_indicators", "live_evidence": "30/35 candles tier3 2026-06-02", "capability_note": "30/35 candles available" },
-            "pdf":       { "capability": "live",          "probe_type": "mcp_tool",        "probe": "get_financial_summary",    "live_evidence": "BCTC online 2026-06-02" },
-            "rag":       { "capability": "dark",          "probe_type": "none",            "probe": null,                       "live_evidence": "embedded in 156-count, not probed" }
+            "mcp": {
+              "capability": "n/a",
+              "probe_type": "health_endpoint",
+              "probe": "/health",
+              "live_evidence": "toolCount:156 ok"
+            },
+            "macro": {
+              "capability": "live",
+              "probe_type": "mcp_tool",
+              "probe": "get_macro_snapshot",
+              "live_evidence": "2026-06-02 21:00Z"
+            },
+            "stock": {
+              "capability": "live",
+              "probe_type": "mcp_tool",
+              "probe": "get_market_snapshot",
+              "live_evidence": "VN-Index 1826.47 2026-06-02"
+            },
+            "kinh-dich": {
+              "capability": "live",
+              "probe_type": "mcp_tool",
+              "probe": "get_portfolio_conviction",
+              "live_evidence": "38 tickers 2026-06-02"
+            },
+            "alert": {
+              "capability": "live",
+              "probe_type": "mcp_tool",
+              "probe": "get_alerts",
+              "live_evidence": "20 alerts today 2026-06-02"
+            },
+            "news": {
+              "capability": "live",
+              "probe_type": "mcp_tool",
+              "probe": "get_agent_signals",
+              "live_evidence": "NVL/VHM/HPG ingestion today"
+            },
+            "ta": {
+              "capability": "data_limited",
+              "probe_type": "mcp_tool",
+              "probe": "get_technical_indicators",
+              "live_evidence": "30/35 candles tier3 2026-06-02",
+              "capability_note": "30/35 candles available"
+            },
+            "pdf": {
+              "capability": "live",
+              "probe_type": "mcp_tool",
+              "probe": "get_financial_summary",
+              "live_evidence": "BCTC online 2026-06-02"
+            },
+            "rag": {
+              "capability": "dark",
+              "probe_type": "none",
+              "probe": null,
+              "live_evidence": "embedded in 156-count, not probed"
+            }
           }
         }
       },
@@ -983,7 +1028,12 @@
           "default_stale_threshold_hours": 168,
           "earnings_window": {
             "stale_threshold_hours": 24,
-            "trigger_months": [1, 4, 7, 10],
+            "trigger_months": [
+              1,
+              4,
+              7,
+              10
+            ],
             "window_days_after_quarter_end": 14,
             "_note": "Q1 closes Mar→Apr, Q2 Jun→Jul, Q3 Sep→Oct, Q4 Dec→Jan; +14d window from month start"
           }
@@ -1013,7 +1063,12 @@
           "default_stale_threshold_hours": 168,
           "earnings_window": {
             "stale_threshold_hours": 24,
-            "trigger_months": [1, 4, 7, 10],
+            "trigger_months": [
+              1,
+              4,
+              7,
+              10
+            ],
             "window_days_after_quarter_end": 14,
             "_note": "Q1 closes Mar→Apr, Q2 Jun→Jul, Q3 Sep→Oct, Q4 Dec→Jan; +14d window from month start"
           }

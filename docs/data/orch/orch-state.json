@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T01:11:44Z",
-    "_updated_by": "dev-team",
+    "_updated_at": "2026-06-05T02:11:54Z",
+    "_updated_by": "po",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2809,12 +2809,12 @@
       },
       {
         "task_id": "FU-RUNTIME-SET-TRUTH-RECONCILE",
-        "title": "Config-truth drift: docker ps shows pdf-extractor + rag-service + api-gateway UP, but host_runtime_set.not_deployed_by_design still lists pdf+rag as not-deployed. macro-indicators is ALREADY correctly in services[]. Reconcile system-map host_runtime_set to observed runtime so auditor false-RED/INFO logic stays honest. Also retire stale project_dashboard_two_data_planes belief.",
+        "title": "Config-truth drift (P3a pdf-extractor DONE 2026-06-05): pdf-extractor reconciled into host_runtime_set.services. REMAINING (P3b): rag-service running but its deploy-vs-16GB-host-memory tradeoff is an OPEN architect decision — folded into FU-RAG-DEPLOY-MEMORY; do NOT auto-flip rag into runtime_set.",
         "type": "DOC",
         "sprint": "FLEET-HOST-SAFETY",
         "status": "BACKLOG",
         "priority": "P3",
-        "size": "S",
+        "size": "XS",
         "zone": "docs/data/system-map.json + docs/architecture-briefs",
         "owner": "ops (verify runtime intent) + system-auditor (consume)",
         "note": "macro-indicators C-1 question RESOLVED-BY-FACT: it is already in host_runtime_set.services (mcp-server/api-gateway/frontend/macro-indicators/mcp-gateway). No change needed for macro. REAL drift = pdf-extractor(Up 26h)+rag-service(Up 3h) running but marked not_deployed_by_design; capability_manifest already probes them live. DECIDE per service: intended-permanent (move to services[]) vs transient-experiment (stop). Owner ops decides intent; do NOT mass-stop (host-panic risk). This is FLEET-HOST-SAFETY sprint scope, not DSI. Supersedes the architect-brief R-4 'macro latent' assumption (already corrected by FU-MACRO-INDICATORS-MISSCOPE).",
@@ -2822,7 +2822,16 @@
         "triaged_by": "po",
         "triaged_at": "2026-06-04T20:05:28Z",
         "desc": "Config-truth drift, ROUTER-DIAGNOSED 2026-06-05T01:09Z (docker ps vs system-map host_runtime_set, _last_verified stale 2026-06-02). EXACT drift: pdf-extractor (Up 32h) + rag-service (Up 8h) are RUNNING but listed not_deployed_by_design; the other 5 (stock-price/technical-analysis/kinh-dich/news-fetch/alert-engine) are genuinely absent (correct); all 5 host_runtime_set.services are Up (correct). NOT a clean flip: (a) pdf-extractor = unambiguously deployed+working (BCTC depends on it, capability_manifest pdf=live) -> SAFE to add to host_runtime_set.services + remove from not_deployed lists (also makes auditor treat its downtime as CRITICAL, which is correct). (b) rag-service = running but its deploy-vs-16GB-host-memory tradeoff is an OPEN architectural decision (FU-RAG-DEPLOY-MEMORY); blessing it into runtime_set pre-empts that + touches the kernel-panic safety constraint -> needs architect/PO call, do NOT auto-flip. Recommended split: P3a pdf-extractor reconcile (doc-only, safe, dev or doc-self-heal); P3b rag-service decision folded into FU-RAG-DEPLOY-MEMORY (architect). Also bump host_runtime_set._last_verified after the edit. Zone: docs/data/system-map.json + docs/architecture-briefs.",
-        "diagnostic_ts": "2026-06-05T01:11:44Z"
+        "diagnostic_ts": "2026-06-05T01:11:44Z",
+        "scope_remaining": "rag-service only (P3b) — blocked on FU-RAG-DEPLOY-MEMORY architect call",
+        "progress": [
+          {
+            "ts": "2026-06-05T02:11:54Z",
+            "by": "po",
+            "done": "P3a pdf-extractor reconcile shipped: system-map host_runtime_set.services += pdf-extractor; not_deployed_by_design/-short_keys -= pdf; _last_verified=2026-06-05. Router-verified pdf-extractor Up 33h healthy + BCTC dep + capability_manifest.pdf=live. Fixes latent monitoring gap (auditor now treats pdf-extractor downtime as CRITICAL not INFO/grey). Doc-only, no rebuild. rag-service deliberately untouched (P3b stays open under FU-RAG-DEPLOY-MEMORY).",
+            "commit": "32d63d67"
+          }
+        ]
       },
       {
         "task_id": "FU-SBV-DEPOSIT-PROVENANCE-GO",
