@@ -1,0 +1,29 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T02:21:57.602Z",
+    "matched_slots": ["chef-intraday"],
+    "won_slots": ["chef-intraday"],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": ["docs/agents/unified-agent/flow/chef.md"],
+    "silent": false,
+    "drift_min": 5,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "skipped_legacy",
+    "last_fired_timestamp": "2026-06-05T02:21:46.115Z",
+    "last_fired_slots": ["chef-intraday"],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "02:13",
+    "leader_lock": "acquired_fresh_stolen",
+    "signal_backlog": 8,
+    "note": "02:20Z FIRE: chef-intraday (unified-agent, agentId a55d9f23a379b5580) — first intraday dish of VN session (market open 09:00 VN). Per-work-item token (cowork-slot:chef-intraday TTL180s) is the dup-spawn guard. KNOWN-GAP: chef.md still has NO published-marker gate (FU-CHEF-MARKER-INFLOW open) — only internal silent-exit on no-convergence; intraday slot publishes once/market-hour so today's 02:13 dish is genuinely new content, single-tick token guard sufficient. Standing items unactioned: push 0ea2e83f, Cowork re-arm, fix stale pressure-state.json."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T02:21:57.602Z"
+}

@@ -2912,7 +2912,7 @@
     "archive": []
   },
   "signal_queue": {
-    "_updated_at": "2026-06-04T21:19:07Z",
+    "_updated_at": "2026-06-05T03:14:26Z",
     "_updated_by": "dev-team",
     "rows": [
       {
@@ -2996,26 +2996,6 @@
         "disposition": "READ 2026-06-04T04:15:22Z by dev-team: PO-triaged (NOTHING for dev-zone), folded into backlog FU-CHEF-MARKER-INFLOW (granularity facet); routed agents-architect+agent-father, cowork agent-md lane."
       },
       {
-        "from": "architect",
-        "to": "po",
-        "type": "design_complete",
-        "status": "READ",
-        "createdAt": "2026-06-04T06:00:00Z",
-        "readAt": "2026-06-04T07:45:26Z",
-        "payload": "docs/signals/architect-20260604T060000Z.json",
-        "note": "Rapid-analysis data-layer gap brief. PO triaged -> RAPID-DATA-LAYER sprint (10 tasks) sequenced into task_board."
-      },
-      {
-        "from": "po",
-        "to": "pm",
-        "type": "sprint_sequenced",
-        "status": "READ",
-        "createdAt": "2026-06-04T07:45:26Z",
-        "payload": "docs/data/orch/orch-state.json#sprint_goal.RAPID-DATA-LAYER",
-        "note": "RAPID-DATA-LAYER ready. 10 backlog tasks w/ deps+zones set. Route P1 dev-mcp-server FIX-B(gate-first)/FIX-A/FIX-D/FIX-H to ba->dev-team. WIP=2. RECON-AGM-1 already in-progress (ops-vps-fetch). FIX-G stays BLOCKED until RECON-AGM-1 DONE w/ positive fetch recipe. || READ 2026-06-04T10:10:30Z by dev-team: P1 batch (FIX-B/A/D/H) all SHIPPED+verified across ticks 06:09-09:07Z; row consumed. P2 (FIX-C/FIX-E) proceeds via head.next_action.",
-        "readAt": "2026-06-04T10:10:30Z"
-      },
-      {
         "id": "ops-lancedb-offline-20260604T1204Z",
         "ts": "2026-06-04T12:06Z",
         "from": "cowork-team",
@@ -3029,6 +3009,19 @@
         "triaged_at": "2026-06-04T12:13:09Z",
         "disposition": "routed-to-ops repair_task_request OPS-LANCEDB-OFFLINE (docs/signals/repair_task_request_ops_lancedb_offline_20260604T121309Z.json); PLAN-ONLY, not a dev FIX",
         "resolution": "RESOLVED 2026-06-04 by ops (16ks diag). ROOT CAUSE: rag-service container NOT DEPLOYED (defined in docker-compose, never started) -> search_similar_context POST localhost:5002 conn-refused. NOT LanceDB corruption/bloat (store healthy 13536 rows, disk 38% / 22GB free). ops started rag-service; it OOM-hung (host 3.6MB free) -> ops STOPPED frontend to free memory -> rag up healthy, search_similar_context re-verified working (2 live queries OK). SIDE EFFECT: frontend container now DOWN (memory tradeoff). Durable fix -> FU-RAG-DEPLOY-MEMORY."
+      },
+      {
+        "id": "sau-d4-202606050300",
+        "ts": "2026-06-05T03:00Z",
+        "from": "system-auditor",
+        "to": "po",
+        "type": "system_issue",
+        "summary": "D4 false-positive batch (75 rows, run sau-d4-202606050300): all from task_list_held returning EXPIRED tombstone locks as held. Verified live: task_list_held default=114 vs {expired:false}=3 genuinely-held (zero divergence). RESOLVED — no PO action.",
+        "severity": "LOW",
+        "status": "RESOLVED",
+        "payload_ref": null,
+        "read_at": "2026-06-05T03:14:26Z",
+        "read_note": "Root cause: system-auditor D4 R-1 (handlers.md:27) calls task_list_held without expired:false → reads ~111 expired tombstones. Definitif fix dispatched to agent-father (add expired:false). Defence-in-depth GC + shared-id hardening logged P3 backlog."
       }
     ],
     "archive": [
