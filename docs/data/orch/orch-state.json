@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T10:35:31.373260+00:00",
+    "_updated_at": "2026-06-05T11:11:51.348078+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2173,39 +2173,6 @@
         ]
       },
       {
-        "task_id": "FU-EI-P2-COV-1",
-        "title": "envCheck.ts lines 129-185 (checkRequiredEnv/formatEnvWarning/runEnvCheck Task-1026 degraded-mode) zero test coverage",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "DONE",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "priority": "low",
-        "note": "DONE 2026-06-03 commit 5c498c2e. 5 tests for runEnvCheck (R1-R5): no-op path, warn-branch (honest-green pin), var name in message, degraded-mode no-throw, meta.missingVars. envCheck.ts funcs 88.89%->100%. test-only, no rebuild needed."
-      },
-      {
-        "task_id": "FU-EI-P2-COV-2",
-        "title": "No explicit test for APP_ENV=testing (4th DEV_ENV_VALUES entry)",
-        "type": "FIX",
-        "owner": "dev-mcp-server",
-        "status": "DONE",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "priority": "low",
-        "note": "DONE 2026-06-03 commit 5c498c2e. 4 tests: T1 isProductionEnv('testing')->false (pins DEV_ENV_VALUES membership), T2 testing+prodDB->error, T3 testing+devDB->null, T4 currentDataEnv->'testing'. test-only, no rebuild needed."
-      },
-      {
-        "task_id": "FU-EI-P2-DEV-VOLUME",
-        "title": "docker-compose.dev.yml orphan top-level volumes:market_data: stanza never bound — remove or annotate to avoid misleading future editor",
-        "type": "CLEAN",
-        "owner": "developer",
-        "status": "DONE",
-        "size": "XS",
-        "zone": "root",
-        "priority": "low",
-        "note": "EI-P2-QA gap; isolation currently correct, cleanup only. DONE: removed stanza (lines 44-46 `volumes:\\n  market_data:\\n    driver: local`). Verified zero service.volumes: references to market_data within docker-compose.dev.yml before removal. No rebuild needed (dev compose, not running prod stack)."
-      },
-      {
         "task_id": "BCTC-HIST-VCB-REFINE",
         "title": "Re-refine VCB 2025-Q1 + 2025-Q4 (2 known PENDING rows, OCR-garbage CF scalars)",
         "type": "FIX",
@@ -2242,30 +2209,6 @@
         "disposition": "DEFERRED-SEQUENCED: enricher HSX mediafiles fallback IS dev-shippable, but delivers zero live corpus depth until BCTC-HIST-VPS-BACKFILL caches the PDFs (downstream-fix-needs-upstream-reflow). Re-scope as paired dev+ops sprint after BCTC-CURRENT-404 + VPS-BACKFILL diagnostics return."
       },
       {
-        "task_id": "BCTC-CURRENT-404-INVESTIGATE",
-        "title": "Current-season Q1-2026 bctcPdfPull 10/10 HTTP 404 at 18:30Z — verify VPS cache coverage for current season (may be thin/stale, distinct from SSL -k issue)",
-        "type": "SPIKE",
-        "owner": "ops",
-        "status": "DEFERRED-INFRA",
-        "size": "S",
-        "zone": "infra-vps",
-        "priority": "high",
-        "note": "ops BCTC-HIST-FETCH-VERIFY found 10/10 current-season 404s; prior 8 done so endpoint was reachable; investigate whether VPS cache went thin",
-        "disposition": "DEFERRED-INFRA: Q1-2026 bctcPdfPull 10/10 HTTP 404 needs live VPS cache inspection (ops, cross-machine). Diagnostic/infra, not dev code. Recommend ops takes this ahead of historical backfill (live current-season blocker)."
-      },
-      {
-        "task_id": "FU-COWORK-HEARTBEAT-SCHEMA",
-        "title": "cowork-team heartbeat schema drift: live session emits flat {agent,ts,tick_nominal,classification,...} but Step 6 (L754) + cowork-tick-autosilent.sh document/write enveloped {from,to,type,createdAt}",
-        "type": "FIX",
-        "owner": "agents-architect",
-        "status": "DONE",
-        "size": "S",
-        "zone": "docs/agents/cowork-team/",
-        "priority": "low",
-        "note": "agent-father secondary finding during CW-BACKLOG-MISCOUNT: TWO writers. (1) scripts/agents-flow/cowork-tick-autosilent.sh writes enveloped {from,to,type,payload,priority,createdAt} (matches Step 6 L754 spec); (2) live session main.md runtime writes flat {agent,ts,tick_nominal,drift_min,classification,...} (diverges). All 37 on-disk = flat. Both share cowork-team- prefix so both correctly excluded by CW-BACKLOG-MISCOUNT. Separate cleanup: reconcile Step 6 spec vs live runtime output (doc-or-impl). LOW — backlog-count already fixed.",
-        "resolution": "DESIGN 6004f361 (brief 2026-06-03-cowork-heartbeat-schema, canonical=enveloped matching drain fingerprint) + IMPL ee1d5e46 (cowork-team main.md Step 6 INVARIANT guard + payload folds the 8 flat telemetry fields). Shell writer already correct. Cowork refresh prompt issued."
-      },
-      {
         "task_id": "FU-RAPID-SKILLS-RESIDUAL",
         "title": "Tidy residuals from expert-rapid-analysis-skills brief (size-justification counts + PO confirm of 3 default thresholds)",
         "type": "FIX",
@@ -2280,207 +2223,6 @@
         ],
         "note": "Two low-sev residuals after agent-father shipped Phase A 6129c970 + Phase B 0fac75a4 (raw-verified DONE this tick 2026-06-04T06:13:23Z). (1) COSMETIC: Phase B added steps to two already-justified flow files but left their size-justification line-1 counts STALE — chef.md declares 308L now 320L (+12 from Step 6a conviction gate), market-watcher/flow/cycle.md declares 177L now 180L (+3 from Step 0a market-cap screen). Both legitimately exempt (justified, backstop did not fire); only the declared count needs bumping. agent-father edit via agent-md-factory. (2) GOVERNANCE: brief carried 3 open_questions_for_po — SKILL-1 market-cap floor 500B VND, SKILL-4 foreign-holder 5%, TNB 5th-pillar-vs-parallel — agent-father baked the brief's PROPOSED defaults and shipped; PO never explicitly confirmed. The skills are INERT until cowork session reload (FU-COWORK-SESSION-RELOAD BLOCKED-OPERATOR), so zero live risk, but PO should confirm/override the 3 thresholds BEFORE cowork reactivates. Route: agents-architect (threshold decision) + agent-father (count bump). NOT dev-team (apps/ code only).",
         "disposition": "DEFERRED-OUT-OF-DEV-SCOPE filed 2026-06-04T06:13:23Z by dev-team next-tick reconcile of expert-rapid-analysis-skills. Both residuals are .md / governance — cowork/maintenance lane (agents-architect + agent-father), not dev-team apps/ code. Activation-gated on cowork reload so no live risk."
-      },
-      {
-        "task_id": "RECON-AGM-1",
-        "type": "SPIKE",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "Probe HSX/HNX/SSC AGM portal fetch recipe (3 sample tickers VNM/FPT/VCB)",
-        "status": "DONE",
-        "priority": "P0",
-        "size": "S",
-        "zone": "ops-vps-fetch",
-        "deps": [],
-        "blocks": [
-          "FIX-G"
-        ],
-        "timebox": 480,
-        "note": "Router-launched in PARALLEL NOW (ops-vps-fetch spike, no dev work). Confirm: (1) doc availability for VNM/FPT/VCB, (2) URL structure/pagination, (3) response format PDF (->PDF-Extract-Kit pipeline, Risk-4) or HTML (->scrape). MUST land before FIX-G dev work starts. Brief §6 FIX-G + §11 Risk-4. || DONE 0fad275e: vietstock-agm-plan FETCHABLE, recipe in docs/vps-sources/vietstock-agm-plan/recon.md. Unblocks FIX-G."
-      },
-      {
-        "task_id": "FIX-B",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "get_market_cap MCP tool + persist VnstockRatioSummary.marketCap",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "deps": [],
-        "unblocks_skill": [
-          "SKILL-1 size gate (MANDATORY entry gate — ships FIRST)",
-          "SKILL-4 turnover ratio",
-          "SKILL-6 inherited"
-        ],
-        "files": [
-          "apps/mcp-server/src/infrastructure/vnstock/vnstockBridge.ts",
-          "apps/mcp-server/src/jobs/syncVnstockData.ts",
-          "apps/mcp-server/src/interface/mcp/tools/market-data/"
-        ],
-        "note": "RC-1. (1) Wire marketCap storage (vnstock_ratio_summary table or market_cap_bn col on vnstock_trading_stats); vnstockBridge.ts:82 already defines the struct (dead export). (2) New get_market_cap returning {code, market_cap_billion, shares_outstanding_approx, fetched_at}. Source stock.trading.price_board() already returns marketCap — just not persisted. NO skill can go live without this (brief §8). Risk-2 staleness -> emit data_as_of. || FIX-B-1 persist+fetch shipped b275239d, deployed live (mcp-server rebuilt, healthy, tool count 156->157). Code path correct (schema market_cap_bn col + idempotent migration + storeTradingStats persist + TRADING_STATS_SCRIPT ratio() fetch). DATA PENDING: market_cap_bn null for all rows until a successful vnstock sync; live-verify blocked by transient vnstock RATE_LIMIT (all FPT endpoints, 0848Z). Verify hook: FU-FIXB-COLUMNKEY-VERIFY."
-      },
-      {
-        "task_id": "FIX-A",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "get_company_profile MCP tool (shareholders + officers + foreign %)",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "deps": [],
-        "unblocks_skill": [
-          "SKILL-4 ownership/free-float/skin-game",
-          "SKILL-5 CEO name"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/",
-          "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts"
-        ],
-        "note": "RC-3. get_company_info is a PHANTOM (never existed). New get_company_profile from existing tables: vnstock_shareholders (name,quantity,own_percent DESC limit 10) + vnstock_officers (name,position,own_percent,quantity) + vnstock_trading_stats.current_holding_ratio (aggregate foreign %). Compute free-float approx = 100% - sum(non-free-float own_percent). STRUCTURED JSON output. CEO tenure stays PARTIAL until FIX-I. Risk-2 24h TTL staleness -> data_as_of. || DONE-LIVE-VERIFIED 2026-06-04T09:32:34Z (commit 7a44a291, live 158 tools). get_company_profile(FPT) raw-verified by router: 10 REAL shareholders (Truong Gia Binh 6.89%, SCIC 5.67%, Red River 4.58%...), 17 officers with real positions (Chu tich HDQT, TGD Nguyen Van Khoa...), free_float_approx=68.23%, data_as_of=2026-04-14 present. CEO start_date correctly ABSENT (no fabrication, FIX-I scope). foreign_holding_ratio=null = honest data-absence facet -> FU-PROFILE-DATA-VERIFY. Structure + real data CONFIRMED, not placeholders."
-      },
-      {
-        "task_id": "FIX-D",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "get_bctc_full structured_data JSON block + receivables join",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "deps": [],
-        "unblocks_skill": [
-          "SKILL-1/2/3/4 text-only PARTIAL fields -> parseable JSON",
-          "SKILL-2 receivables"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts"
-        ],
-        "note": "RC-2 (format). (1) Add structured_data:{...} section ALONGSIDE existing text (non-breaking) — all ReportRow numeric cols as machine-readable JSON. (2) Add receivables from vnstock_balance_sheet.receivables_bn (JOIN on code+latest period). Unblocks pe/pb/total_assets/equity/total_liabilities/cash/long_term_debt/profit_before_tax/operating_cf without text parsing. || DONE-LIVE-VERIFIED 2026-06-04T09:32:34Z (commit 0e8c2be0, live). get_bctc_full(FPT 2026-05-31) raw-verified by router: text output UNCHANGED (non-breaking confirmed); structured_data block values MATCH rendered text on a pre-existing DONE record (roe 6.17<->6.2%, d/e 0.401<->0.40x, equity 40122036<->40.122ty, total_assets 68586094<->68.586,1ty, net_revenue 12479997<->12.480ty, pe/pb null<->N/A) = recompute-on-read serving correctly, NOT stale column (derived-column-reflow lesson satisfied). receivables=null honest data-absence -> FU-PROFILE-DATA-VERIFY. PUB-7 period-basis guard still firing. 138 tests green, tsc clean, fence proven to bite."
-      },
-      {
-        "task_id": "FIX-H",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "get_insider_transactions lookback 90 -> 180 days",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P1",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "deps": [],
-        "unblocks_skill": [
-          "SKILL-4 Step 2 full 6-month insider-exit detection"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/market-data/insiderTools.ts"
-        ],
-        "note": "RC (lookback). 1-line: insiderTools.ts:108 .max(90) -> .max(180). insiderStore queries SQLite by date, no schema change. Data may be sparse beyond 90d for early-added tickers (honest). || FIX-H DONE-LIVE-VERIFIED b275239d: get_insider_transactions(FPT, days=180) accepted live, lookbackDays=180 echoed (was capped 90). z.max(90)->z.max(180) + Math.min(90->180). 4 tests green."
-      },
-      {
-        "task_id": "FIX-C",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "get_bctc_series multi-period BCTC tool",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P2",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "deps": [
-          "FIX-B"
-        ],
-        "unblocks_skill": [
-          "SKILL-1 10yr P/E-P/B",
-          "SKILL-3 4yr CFO",
-          "SKILL-4 YoY assets",
-          "SKILL-5 multi-yr revenue",
-          "SKILL-6 2yr EPS"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/"
-        ],
-        "note": "RC-2 (scope). New get_bctc_series {code, fields[], periods} -> JSON array, financial_reports ORDER BY sort_key DESC LIMIT periods. Subset fields (pe,pb,roe,debt_to_equity,operating_cf,net_profit,eps,total_assets,net_revenue,equity_total). GUARD: refine_status='DONE' only (PUB-1 gate) — no OCR garbage. Risk-1: sparse <10yr history common -> skill degrades gracefully (median of present). Dep FIX-B per architect §9. || UNBLOCKED 2026-06-04: FIX-B code shipped b275239d (dep cleared). || DONE-LIVE-VERIFIED 2026-06-04T10:50:07Z (commits bf9b3105 + consistency-fix 46749207, live 159 tools). get_bctc_series raw-verified by router: structured JSON array, DONE-only guard working (FPT 2 DONE periods served of 4 requested = honest sparse history), unit_note present. CONSISTENCY FIX (root-cause): extracted shared domain helper bctcRatioRecompute.ts (SSOT, DRY) imported by BOTH get_bctc_series + get_bctc_full -> derived ratios can no longer drift. Live cross-tool check CONFIRMED: get_bctc_series(FPT) 2026-Q1 roe=6.173140860229057 + debt_to_equity=0.4011866910919166 are BYTE-IDENTICAL to get_bctc_full structured_data (same percent scale) -- the prior null/0.0462-ratio-scale divergence is gone. T9 cross-tool consistency regression test added. Bonus debt reduction: FIX-D inline recompute block de-duplicated into the helper."
-      },
-      {
-        "task_id": "FIX-E",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "get_price_history 90 -> 730 days + JSON array output",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/mcp-server/",
-        "deps": [],
-        "unblocks_skill": [
-          "SKILL-6 Signal A 18-month chronic-cheap price history"
-        ],
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/market-data/priceHistoryTools.ts"
-        ],
-        "note": "RC-5. (1) priceHistoryTools.ts:191 Math.min(...,90)->Math.min(...,730). daily_ohlcv holds permanent candles (Task 1804c no pruning); query line 210 already param-driven, no schema change. (2) Structured JSON array (code,date,close,volume) + text. Signal B EPS overlay = FIX-C cross-ref by date. || DONE-LIVE-VERIFIED 2026-06-04T10:50:07Z (commit bf9b3105, live). get_price_history raw-verified by router: days=365 ACCEPTED (was hard-capped 90; zod .max(730) + Math.min(...,730) both widened); 32 candles served across the window; NEW structured JSON array {code,date,close,volume} present ALONGSIDE unchanged Vietnamese text (non-breaking confirmed). 2026-05-30 close=0 is a pre-existing daily_ohlcv data quirk (honest passthrough, not FIX-E scope). Bonus debt reduction: dev fixed a pre-existing 178-price-history test bug (actionCode->code param, 0->7 pass)."
-      },
-      {
-        "task_id": "FIX-F",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "BCTC scalar extraction: charter_capital + investment_property + reward_fund (bank-form guarded)",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P3",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "deps": [],
-        "prereq": "VAS code audit for new fields (same pattern as FIX-DE-1)",
-        "unblocks_skill": [
-          "SKILL-2 charter_capital_ratio + INV-PROPERTY-STALE",
-          "SKILL-4 COMP-EXTRACTION (partial, no reward_fund elsewhere)"
-        ],
-        "files": [
-          "apps/mcp-server/src/infrastructure/bctc/bctcScalarAggregator",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/"
-        ],
-        "note": "RC-4. 3 new scalars: charter_capital (~code 411), investment_property (~code 217), reward_fund (~code 418) -> bctcScalarAggregator ScalarAggregate + finalize BLOCK-1 + DB migration. Precedent FIX-DE-1 (short/long_term_debt). Risk-3: VAS code varies by form (B01 vs B02-TCTD); banks have no standalone charter_capital line -> bank-form guard via isBankFormFromDb pattern REQUIRED. || DONE-LIVE-VERIFIED tick 11:07Z 2026-06-04 (commit a04edbe9, mcp-server rebuilt 159 tools unchanged — domain-layer only, no new MCP tool). VAS codes: charter_capital=411 (label-hinted vốn góp/cổ phần/điều lệ), investment_property=230 (bất động sản đầu tư), reward_fund=322/323/320 (khen thưởng/phúc lợi label-hint MANDATORY — code 322 flips to vay/dự phòng on some forms, same class as FU-DE-321-VAY-GUARD). BANK-FORM guard = existing isBankFormFromRows SSOT (not re-derived); 3 fields added to notApplicable[] → null-cleared on bank reports. LIVE-VERIFIED via backfill_bctc_scalars force_reflow + raw market.db read: CORPORATE values accurate vs reality — VNM charter=20899.5bn (real ~20899), HPG=76755bn (real ~76755), DHG=1307bn (real ~1307), FPT~17000bn; investment_property correctly discriminates (VNM/HPG non-null, FPT/DHG null=they hold none); reward_fund VNM~953bn/FPT~1.6bn plausible. BANK guard proven on persist+serve: SHB+EIB null_cleared all 3, ACB already null — all banks NULL. get_bctc_full(VNM) serve path returns the values; EIB withheld by PUB-5 confidence gate (31%) but DB-confirmed null. Tests 46 green incl. bank-guard + period-flip + label-hint. RESIDUAL (not a FIX-F defect): VEA (corporate, 201 rows) stays NULL — it is outside backfill_bctc_scalars candidate set (13 of 15 reports processed; affects ALL scalars for VEA not just these 3) → tracked as FU-BACKFILL-SCOPE-VEA observation, pre-existing scope gap."
-      },
-      {
-        "task_id": "FIX-I",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "vnstock_officers start_date for CEO tenure",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P5",
-        "size": "S",
-        "zone": "multi: vps-scripts/ (dev-vps-crawls) + apps/mcp-server/ (dev-mcp-server)",
-        "deps": [
-          "FIX-A"
-        ],
-        "unblocks_skill": [
-          "SKILL-5 CEO tenure (pre/post ROE)"
-        ],
-        "files": [
-          "vps-scripts/vietstock-board-details.py",
-          "vps-scripts/fetch-board-details.sh",
-          "vps-scripts/fetch-board-details-loop.sh",
-          "vps-scripts/vn-board-details.service",
-          "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts",
-          "apps/mcp-server/src/infrastructure/fetchers/boardDetailsFetcher.ts",
-          "apps/mcp-server/src/infrastructure/db/boardDetailsStore.ts",
-          "apps/mcp-server/src/scheduler/financial-reports/boardDetailsJob.ts",
-          "apps/mcp-server/src/scheduler/startScheduler.ts",
-          "apps/mcp-server/src/interface/mcp/tools/market-data/companyProfileTools.ts"
-        ],
-        "note": "ARCHITECT DONE 2026-06-04T10:30Z. Handoff: docs/handoffs/TASK_FIX-I.md. Design: extend vnstock_officers with appointment_year INTEGER nullable (ALTER TABLE migration) + UPDATE-only boardDetailsStore (preserves VCI own_percent/quantity) + new boardDetailsFetcher/Job mirroring agmPlan pattern + extend get_company_profile OfficerEntry with appointment_year + ceo_tenure_years. Zone A (dev-vps-crawls): Python scraper + shell loop + systemd at 02:00 UTC. Zone B (dev-mcp-server): migration + fetcher + store + job + tool extension. Live-verify gate: get_company_profile(FPT).officers[0].appointment_year=1988. RAPID-DATA-LAYER closes on ship+verify. || DONE-LIVE-VERIFIED 2026-06-04: officer appointment_year + ceo_tenure_years live on get_company_profile (year-precision, accepted product bar). Both zones shipped+baked+QA-verified. LAST open core item of RAPID-DATA-LAYER -> sprint COMPLETE."
-      },
-      {
-        "task_id": "FU-FIXB-COLUMNKEY-VERIFY",
-        "title": "Verify get_market_cap serves non-null market_cap_billion after a successful vnstock sync; fix ratio() column-key if it stays null",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "status": "DONE",
-        "size": "XS",
-        "zone": "apps/mcp-server/",
-        "files": [
-          "apps/mcp-server/src/infrastructure/fetchers/vnstockBridge.ts"
-        ],
-        "note": "VERIFICATION HOOK for FIX-B (shipped b275239d, live-deployed). get_market_cap is LIVE + returns correct structured shape + safe-divide null-path verified, but market_cap_billion=null for all 2856 vnstock_trading_stats rows (column just added; populated only on a fresh sync). Live-verify attempt 2026-06-04T08:48:52Z triggered syncVnstockData([FPT]) inside the container: vnstock RATE_LIMITED on EVERY endpoint (finance/balance_sheet/cash_flow, max retries exhausted) => fetch never succeeded, market_cap_bn stayed null, fetched_at stale 2026-04-29. Transient EXTERNAL throttle, NOT a code defect. WHEN the scheduled vnstockFundamentalsJob next completes a successful finance:<ticker> sweep (rate-limit cleared), re-call get_market_cap(FPT): EXPECT non-null market_cap_billion. IF still null after a CONFIRMED-successful finance fetch => the python ratio() MultiIndex key ('Chỉ tiêu định giá','Market Cap (Bn. VND)') is wrong for the live vnstock version => fix TRADING_STATS_SCRIPT key in vnstockBridge.ts (a fallback 'market_cap' is already attempted). Owner dev-mcp-server. Until verified, FIX-B stays DONE-CODE-DEPLOYED-DATA-PENDING (do NOT claim DONE-LIVE-VERIFIED).",
-        "depends_on": "vnstock-rate-limit-clear / next-fundamentals-sweep"
       },
       {
         "task_id": "FU-PROFILE-DATA-VERIFY",
@@ -2498,27 +2240,6 @@
         "depends_on": "vnstock-rate-limit-clear / next-fundamentals-sweep"
       },
       {
-        "id": "FIX-G",
-        "task_id": "FIX-G",
-        "type": "FIX",
-        "sprint": "RAPID-DATA-LAYER",
-        "title": "AGM plan pull-ingest + get_agm_plan MCP tool (#162)",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P4",
-        "size": "M",
-        "zone": "apps/mcp-server/",
-        "commits": [
-          "56c7e2ad",
-          "ffa24c63"
-        ],
-        "note": "DONE-LIVE-VERIFIED 2026-06-04T14:55Z by QA (cycle-192). FIX-G-1 (VPS fetcher) + FIX-G-2 (MCP tool) shipped consolidated in commits 56c7e2ad+ffa24c63. get_agm_plan tool #162. agmPlanJob cron 20:30 UTC. DB direct: agm_plan=323 rows, agm_actuals=2084 rows, 33 distinct tickers. Live raw gateway verify: FPT 2025 revenue.planned_ty=75400 actual_ty=70207.689 drift=-6.886 pbt.planned=13395 actual=13043.633 drift=-2.623 (all AC met). Bank logic: BID 2022/2023 revenue.planned=null pbt.planned present (correct pattern: banks no revenue target). ACB 0 rows in DB (data coverage gap — Vietstock did not return ACB in batch, NOT a tool defect). toolCount=160 (+1 from FIX-F 159). FIX-G-1+FIX-G-2 sub-tasks SUPERSEDED by this consolidated entry. || dev-team tick 12:07Z (real-elapsed ~4.5h, ops ran 16ks on memory-starved rag startup): CONCURRENCY-COLLISION RECONCILE — two flows worked FIX-G in parallel. (A) dev-team dispatched dev-vps-crawls FIX-G-1 -> VPS-side scheduled fetcher commit 2d0c38b8 (vps-scripts/fetch-agm-plan{,-loop}.sh + vn-agm-plan.service, systemd active, daily 01:00Z, file-drop /root/data/agm-plan-latest.json behind VPS:8765/proxy/agm-plan). (B) a concurrent dev-mcp-server+qa cycle (cycle-192) built the mcp-side consolidated G-1+G-2 commits 56c7e2ad+ffa24c63 (agmPlanStore tables + agmPlanFetcher pull-from-VPS X-API-Key + agmPlanJob cron 20:30Z + get_agm_plan tool). COMPLEMENTARY not duplicate: mcp-side PULLS from the VPS proxy that (A) keeps fresh. Live RAW-VERIFY by router (not qa badge): get_agm_plan(FPT)=revenue 58580 + PBT 11629 (matches recon+VPS fetch exactly) + Q1 actuals + plan_drift struct; get_agm_plan(VCB bank)=planned:[] (bank-honest, no AGM revenue plan) w/ actuals present; FPT planned=2 rows (no double-ingest). Live /health toolCount=160 (159+get_agm_plan; qa/dev 'tools=162' = registry-index, NOT live count — recurring discrepancy). FIX-G DONE confirmed real. PROCESS GAP: task:FIX-G-1 lock did NOT prevent the parallel cycle (separate dispatcher/session claimed a different key or none) -> FU-DEDUP-CROSS-DISPATCHER.",
-        "_split_from_superseded": [
-          "FIX-G-1",
-          "FIX-G-2"
-        ],
-        "_updated_at": "2026-06-04T14:55:00Z"
-      },
-      {
         "task_id": "FU-BCTC-RATIOS-N-A",
         "title": "pe/pb in get_bctc_full.structured_data read a separate vnstock ratios path — still N/A",
         "status": "BACKLOG",
@@ -2533,15 +2254,6 @@
         "note": "FIX-G AGM ingest works; ACB-specific Vietstock data coverage issue."
       },
       {
-        "task_id": "FU-FIX-I-SOURCE-RECON",
-        "title": "FIX-I CEO start_date: needs source recon (ops-vps-fetch) or alternative sources before spec",
-        "status": "DONE-VERIFIED",
-        "depends": [
-          "FIX-I"
-        ],
-        "note": "DONE 2026-06-04: VERDICT PARTIALLY FETCHABLE. Source = finance.vietstock.vn/data/boarddetails (same server as AGM-plan fetcher, ASP.NET double-submit CSRF, VPS-reachable, ~0.3s, no bot challenge). Field FromDate = appointment YEAR (zero-padded string). Confirmed VNM(2022)/FPT(1988)/VCB(2021). vnstock officers has NO start_date (only updateDate); HOSE/HNX/SSC/TCBS/CafeF all 404/auth-walled. Recipe: docs/vps-sources/officer-start-date/recon.md."
-      },
-      {
         "task_id": "FU-RAG-DEPLOY-MEMORY",
         "title": "rag-service deploy-gap + 16GB host memory tradeoff (RAG vs frontend) — codify deploy + decide resident set",
         "type": "INFRA",
@@ -2551,229 +2263,6 @@
         "zone": "ops/infra",
         "note": "From OPS-LANCEDB-OFFLINE resolution. rag-service was never in the active deploy set (same class as [[project_dashboard_two_data_planes]] not-deployed services). ops recovered it 2026-06-04 but had to STOP the frontend container because the 16GB host had only 3.6MB free ([[project_host_memory_panic]]). Two decisions for PO/architect: (1) CODIFY rag-service into the deploy manifest + add mcp-server depends_on rag-service so it launches together (prevents silent 25h RAG outages degrading news-scout). (2) DECIDE the resident container set on the 16GB host — RAG and frontend cannot both run alongside the rest; either keep frontend down (operator dashboard offline, lower impact, user monitors via Telegram), or lazy-load rag-service only during news-scout cycles, or move one off-box. Until decided, frontend stays DOWN and rag stays UP (RAG outage was the higher-impact degradation). Do NOT blindly restart frontend (re-OOMs rag).",
         "depends_on": null
-      },
-      {
-        "task_id": "FU-NB-PRUNE-DEV-VPS",
-        "title": "prune dev-vps-crawls notebook 242L->177L (under 200 cap)",
-        "type": "CLEAN",
-        "sprint": "RAPID-DATA-LAYER",
-        "status": "DONE-VERIFIED",
-        "size": "S",
-        "zone": "cross-service/",
-        "note": "DONE-VERIFIED 2026-06-04: claude-manager-helper pruned 242->177L (router raw-verified wc -l=177, frontmatter intact, only target file touched). Dropped FIX-CTG-2 cover-letter section + compressed 2026-05-13 bootstrap + verbose Key-Findings; kept FIX-G-1 + deploy guards. Committed f206b2a8.",
-        "depends_on": null
-      },
-      {
-        "task_id": "FIX-MACRO-FEDFUNDS-REGRESS",
-        "title": "RECURRING: get_macro_snapshot fedFundsRate regressed to stale 5.33 fixture (masquerades as live) — inverts carry regime to FII_OUTFLOW_RISK; per-field freshness + no live-masking fallback",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE-RECONCILED",
-        "size": "M",
-        "priority": "P0",
-        "zone": "apps/mcp-server/",
-        "recurring": true,
-        "escalate_architect": true,
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
-          "apps/mcp-server/src/domain/services/macro/carryTradeSignal.ts",
-          "apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts",
-          "apps/mcp-server/src/infrastructure/fetchers/fredApi.ts"
-        ],
-        "note": "ROUTER-VERIFIED REGRESSION (sev-HIGH, recurring) 2026-06-04T17:40Z raw get_macro_snapshot cross-checked vs ground truth. RECURRING: this is the 2nd+ regression of the SAME defect — DPI-2/DPI-FU-A fixed it 2026-05-30 (ff9a64ce, PO-signoff: fedFundsRate went 5.33 fixture -> 3.62 FRED-live, regime flipped FII_OUTFLOW_RISK->NEUTRAL). It has now FALLEN BACK to the 5.33 fixture exactly as the FU-A forward-dependency warned (requires macroIndicatorRefreshJob 19:13 UTC + FRED reachable from container; the 96h checkAndAlertEffrStaleness guard either did not fire or was not acted on). Per recurring-bug-escalation policy (>=2 fix cycles same module) ARCHITECT MUST root-cause-rethink BEFORE another point-fix — do NOT just re-run the fetch. RAW EVIDENCE: carry.fedFundsRate=5.33 (real Fed target 3.50-3.75 / EFFR ~3.58 web-verified) => carrySpread = vndDeposit 5.00 - 5.33 = -0.33pp => regime FII_OUTFLOW_RISK (SIGN FLIPPED; real ~3.58 gives +1.42pp carry-favorable). This single stale constant has CORRUPTED the central thesis of fb-market-poster 06-01..06-04 (all claim 'khoi ngoai rut vi chenh lech lai suat am' = backwards) + likely CHEF/unified-agent + tran-ngoc-bau Layer-4 carry/regime walks. oilUsd=95.06 sig -2.11% (real 96.97 -0.86%, ~2% off + WRONG direction); goldUsd=4509.6 sig +0.97% BULLISH (real ~4475 falling, ~0.8% high + WRONG direction; 4509.6~=7d avg 4505 => suspect averaged/stale tick); usdVnd=26122 plausible-verify. DISHONEST FLAG: top-level dataSource:live + fresh top-level fetchedAt while oil/gold/usdVnd carry NO per-field timestamp; serve path HAS fedFundsRateIsEstimate flag (macroTools.ts L55-58: '5.33 fallback' + (est.) vs (FRED) label) but the top-level dataSource does NOT downgrade to stale when a field falls back. ZONE CORRECTION: brief said route dev-macro-indicators, but that agent is zone-locked to apps/macro-indicators/ (separate not-deployed Go microservice plane). The ENTIRE get_macro_snapshot serving stack (FRED fetch, fixture fallback, carry/regime compute, staleness guard) lives in apps/mcp-server/ => correct zone dev-mcp-server. ACCEPTANCE: (1) fedFundsRate reflects real current Fed target (~3.50-3.75 as of 2026-06-04) sourced live w/ freshness check, NO hardcoded fallback constant that can masquerade as live; on stale/fetch-fail surface honest stale (not silent 5.33). (2) carrySpread+regime recompute POSITIVE (not FII_OUTFLOW_RISK) once rate fixed. (3) oil&gold value+direction match reputable live source within tolerance; on fetch-fail field marked stale not silently live. (4) per-field timestamps exposed in get_macro_snapshot; dataSource='live' ONLY when ALL fields fresh. (5) post-fix ops REBUILDS mcp-server container (restart relaunches stale image), QA verifies LIVE snapshot via call_tool shows corrected values+regime. DEDUPE: supersedes processed signal po-20260530T081716Z.json (EFFR staleness) + DPI-FU-A re-staleness forward-dependency; do NOT open a 2nd task.",
-        "absorbed_note": "ABSORBED 2026-06-04T18:23:25Z into DATA-SERVE-INTEGRITY as DSI-S1 (macro carry regime). The single-tool point-fix is now the S1 cluster of an architect-led cross-zone systemic sprint covering the same fail-soft-fixture anti-pattern across mcp-server + stock-price + macro-indicators. Do NOT work standalone — execute via DSI tasks. Acceptance criteria carried into DSI-S1.",
-        "reconcile_note": "F-CARRY-CORRUPT cured+live-verified 2026-06-04T21:21Z: get_macro_snapshot carry NEUTRAL fed=3.62 spread=+1.38 is_estimate=false tier=1. Commits 09e93d76+3f1fbddb (verified 78527f58). Was ABSORBED-INTO-SPRINT; DSI sprint closed, mirror reconciled by po."
-      },
-      {
-        "task_id": "DSI-ARCH",
-        "title": "ARCHITECT root-cause + formal DATA-SERVE-INTEGRITY invariant (cross-zone structural rule)",
-        "type": "SPRINT-L",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE",
-        "size": "L",
-        "priority": "P0",
-        "zone": "multi",
-        "owner": "architect",
-        "recurring": true,
-        "escalate_architect": true,
-        "depends": null,
-        "note": "ARCHITECT LEADS. Recurring-bug policy (>=2 fix cycles DPI-2b->DPI-FU-A->this) => root-cause rethink BEFORE point fixes. Produce brief docs/architecture-briefs/2026-06-04-data-serve-integrity.md formalizing the 6 STRUCTURAL acceptance criteria into ONE fleet-wide invariant + per-zone split. ROUTER-VERIFIED audit (3 Explore agents + router sed/grep) — do NOT re-discover. ANTI-PATTERN: code fails-soft to a hardcoded fixture/zero/last-value, stamps fetched_at=now, drops the staleness/estimate flag => fabricated served as live. INVARIANT: (AC1) no served value may be a hardcoded substitute presented as live — fallback EITHER fail-loud OR carry a source/freshness label propagating fetcher->DB->tool->frontend-type->render; (AC2) every macro/price/financial value exposes per-field source_tier + true-source fetched_at (NOT re-stamped now) + is_estimate/staleness, dataSource=live ONLY when ALL fresh, frontend TS types must NOT drop these fields; (AC3) fedFunds + SBV deposit live (FRED/real SBV) fail-loud on miss, carry/regime => POSITIVE ~+1.4pp not FII_OUTFLOW_RISK; (AC4) fix macroIndicatorSla VN/vietnam key mismatch so guard fires + alerts WORK (detection net — FIRST); (AC5) stock-price propagate Staleness through FetchPriceResponse, Tier3 no re-stamp + mark change unavailable not 0; (AC6) ops REBUILDS each touched container, QA raw-verifies live. Split & hand to BA-DSI, then zone devs.",
-        "disposition": "STALE-CLOSE: duplicate orphan of active_sprints DSI-ARCH (status DONE). Deliverable verified live by PO: docs/architecture-briefs/2026-06-04-data-serve-integrity.md (28KB, §2 DSI-INV-1, §4 6-AC seq, §5 BA-DSI per-zone split, §10 handoff) + docs/handoffs/DSI-ARCH.md. Whole DSI seq shipped (a6b86ed0/fb1439a6/1f8628a0/3d4384e3/02498635) + CARRY-YIELD-SINGLE-SIGNAL-FIXTURE root fix; sprint SIGNED-OFF-PARTIAL. False-open-P0 cleared 2026-06-05T00:13:00Z."
-      },
-      {
-        "task_id": "DSI-S1-SLA",
-        "title": "S1a DETECTION NET FIRST: reconcile macroIndicatorSla country key VN vs writer vietnam so freshness guard + detectStartupStaleData fire + alert WORK",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE-LIVE-VERIFIED",
-        "size": "S",
-        "priority": "P0",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "depends": "DSI-ARCH",
-        "do_first": true,
-        "files": [
-          "apps/mcp-server/src/domain/services/macroIndicatorSla.ts",
-          "apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts"
-        ],
-        "note": "ROUTER-CONFIRMED (PO re-verified raw): macroIndicatorSla.ts:36,73 .get('VN') on SELECT fetched_at FROM macro_indicators WHERE country=?; macroIndicatorRefreshJob.ts:242 writes 'vietnam' (Task-1923a comment). => guard never matches a row, never fires, regression silent. Pick ONE canonical country key (confirm DB SSOT — check if ANY writer populates 'VN' before deciding), reconcile both sides, ensure checkAndAlertEffrStaleness + detectStartupStaleData fire and send WORK alert. FIX FIRST so subsequent regressions surface (AC4).",
-        "reconcile_note": "S1a macroIndicatorSla VN->vietnam key fixed bab7fb8b (code DONE+live). Residual = VPS cron deploy (scp fetch-tradingeconomics.sh+fetch-gso.sh) tracked separately as DSI-S1-SLA ops-vps PENDING."
-      },
-      {
-        "task_id": "DSI-S1-MACRO",
-        "title": "S1b macro carry regime: kill fedFunds fixture + SBV deposit defaults masquerading as live; live FRED/SBV fail-loud; per-field freshness; dataSource=live only when all fresh",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE-LIVE-VERIFIED",
-        "size": "M",
-        "priority": "P0",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "depends": "DSI-S1-SLA",
-        "recurring": true,
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
-          "apps/mcp-server/src/domain/services/macro/carryTradeSignal.ts",
-          "apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts",
-          "apps/mcp-server/src/infrastructure/fetchers/fredApi.ts",
-          "apps/mcp-server/src/infrastructure/fetchers/sbv.ts"
-        ],
-        "note": "ABSORBS FIX-MACRO-FEDFUNDS-REGRESS. ROUTER-CONFIRMED: (a) macroTools.ts:55-58,236 fedFundsRate '...or 5.33 fallback'; fedFundsRateIsEstimate flag EXISTS but formatThienThoi suppresses only on ==0 NOT on isEstimate => estimated 5.33 still drives carry spread/regime => FII_OUTFLOW_RISK (real ~3.58 EFFR gives +1.42pp favorable). (b) sbv.ts:53-70,230-263 six SBV policy rates hardcoded (overnight3.0/refi4.5/discount1.5/MAX_DEPOSIT5.0/MAX_LENDING12.0/interbank4.0); SBV portal permanently 404 => served ALWAYS, written sbv_rates fetched_at=now, no is_estimate column. vndDepositRate=5.0 is the DEPOSIT side of carry => BOTH carry inputs are constants. (c) macroIndicatorRefreshJob.ts:273-276 oil/gold/usdVnd ??0 written commodity_prices fetched_at=now (zeros served live). FIX: fedFunds + SBV deposit live fail-loud on miss; carry/regime gate on isEstimate not just ==0; add is_estimate to sbv_rates; stop ??0 zero-writes; expect POSITIVE carry ~+1.4pp (AC3).",
-        "reconcile_note": "S1b macro carry regime fix: fb7e16d0 (TS gate) + 09e93d76 (Go live serve path). Live-verified 21:21Z. Residual SBV-deposit-tier judgment call tracked as FU-SBV-DEPOSIT-PROVENANCE-GO."
-      },
-      {
-        "task_id": "DSI-S1-FE-TYPE",
-        "title": "S1c frontend MacroSnapshot/CommoditySnapshot TS types must NOT drop dataSource/per-field freshness/isEstimate — propagate to render",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE",
-        "size": "S",
-        "priority": "P1",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "depends": "DSI-S1-MACRO",
-        "files": [
-          "apps/mcp-server frontend/shared types market.ts (MacroSnapshot ~152-159) + CommoditySnapshot type"
-        ],
-        "note": "ROUTER-CONFIRMED: MacroSnapshot TS type (market.ts ~152-159) OMITS dataSource => live/fixture flag DROPPED at type boundary, never rendered. Also mcp-server yahooFinance.ts:288-323 11 live commodity prices 0-fallback per-symbol (cnyVndRate=0 permanent dead ticker) + CommoditySnapshot lacks isEstimate/failedSymbols, 0s persisted fetched_at=now. Add dataSource + per-field freshness/is_estimate + failedSymbols to the TS types so the honest flag survives to render (AC1/AC2). Confirm exact path during impl.",
-        "reconcile_note": "S1c frontend MacroSnapshot/CommoditySnapshot TS provenance fields: b16d6a89 DSI-S1-FE-TYPE DONE."
-      },
-      {
-        "task_id": "DSI-S2-PRICE",
-        "title": "S2 stock-price: propagate Staleness through FetchPriceResponse; Tier3 stop re-stamping FetchedAt + mark change fields unavailable not 0",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE",
-        "size": "M",
-        "priority": "P1",
-        "zone": "apps/stock-price/",
-        "owner": "dev-stock-price",
-        "depends": "DSI-ARCH",
-        "files": [
-          "apps/stock-price/pkg/infrastructure/fetchers.go",
-          "apps/stock-price/pkg/application/usecases.go",
-          "apps/stock-price/pkg/.../price_resolution.go"
-        ],
-        "note": "ROUTER-CONFIRMED: fetchers.go:183-193 Tier3 cache fallback hardcodes Change:0/ChangePercent:0 + FetchedAt=time.Now() (re-stamped fresh). Source:'cache' IS set BUT Staleness (FRESH/STALE/EXPIRED) computed in price_resolution.go:113-122 is DROPPED at FetchPriceResponse DTO (usecases.go:24-33,64-74) => caller never sees age. FIX: add Staleness to FetchPriceResponse DTO + wire through; Tier3 must NOT re-stamp FetchedAt to now (keep true source time) + mark change fields unavailable not 0 (AC5). This task = the Go stock-price service ONLY; the mcp-server yahoo/commodity 0-fallback piece is DSI-S1-FE-TYPE/DSI-S1-MACRO (apps/mcp-server zone). | DONE 2026-06-04T18:55:23Z: Go service fixes shipped. FetchPriceResponse extended with Staleness/IsEstimate fields. Change/ChangePercent changed to *float64 (nil=unavailable, serializes as JSON null). Tier-3 cache now reads true fetched_at from DB row instead of re-stamping with time.Now(). domain/models.go, application/usecases.go, infrastructure/fetchers.go, primitive/normalizer.go, sandbox/main.go updated. 8 DSI tests added (usecases_dsi_test.go), all pass. go build ./... pass. ops_rebuild_required=true. JSON shape: {change:null|number, changePercent:null|number, staleness:FRESH|STALE|EXPIRED, isEstimate:true|false}. Coordinate with DSI-S1-FE-TYPE for StockQuote type update."
-      },
-      {
-        "task_id": "DSI-S3-SECTOR-FIN",
-        "title": "S3 sector/financial signals on fabricated inputs: credit/energy/bond-seed + bctc ??0 false deltas + extractionConfidence ??1 max-confidence — flag or fail-loud",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE",
-        "size": "M",
-        "priority": "P2",
-        "zone": "apps/mcp-server/",
-        "owner": "dev-mcp-server",
-        "depends": "DSI-ARCH",
-        "files": [
-          "apps/mcp-server/src/interface/mcp/tools/sector/creditFlowTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/sector/bondMaturityTools.ts",
-          "apps/mcp-server/src/domain/services/bondMaturityTracker.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
-          "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts"
-        ],
-        "note": "ROUTER-CONFIRMED: creditFlowTools.ts:118-119 mortgage ??=10.5/11.0, :130-131,139-140 yoyGrowthPct ??15/??-15 reCreditRatioPct 20/19 (fabricated NHNN credit macro, no flag); energyTools.ts:65-68 grid dispatch 40/22/45/85 table labeled '(uoc tinh)' but derived stock-impact signal block carries NO caveat; bondMaturityTools.ts:91-93 + bondMaturityTracker.ts:42-91 SEED_BONDS coupons 10.0/10.5/11.0/9.0/11.5 + amounts/dates served silently when DB empty, no static_seed label; bctcFullTools.ts:226-229 + reports.ts:199-202 netMarginPct/roe/debtToEquity ??0 => false QoQ/YoY deltas vs synthetic 0 (NaN guard only grossMargin/bank form); finalizeBctcRefineTool.ts:1037 extractionConfidence ??1 => missing confidence becomes MAX at validator. FIX per architect invariant: fabricated defaults carry static_seed/estimate label propagated to derived signal OR fail-loud; ??0 deltas suppress (not emit false delta); extractionConfidence missing => low/0 not max (AC1).",
-        "reconcile_note": "S3 sector/financial fabricated-input flags: 2873b6c3 (null/estimate/seed flags) + 1473f812 (bond-seed banner). DONE."
-      },
-      {
-        "id": "BA-DSI",
-        "task_id": "BA-DSI",
-        "title": "Requirement spec for DATA-SERVE-INTEGRITY (per-zone, after architect brief)",
-        "summary": "Requirement Spec for DATA-SERVE-INTEGRITY sprint",
-        "type": "SPRINT-L",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE",
-        "priority": "high",
-        "zone": "multi",
-        "owner": "ba",
-        "depends": "DSI-ARCH",
-        "note": "Decompose the architect DATA-SERVE-INTEGRITY invariant brief into per-zone acceptance specs for DSI-S1-SLA/S1-MACRO/S1-FE-TYPE (apps/mcp-server), DSI-S2-PRICE (apps/stock-price), DSI-S3-SECTOR-FIN (apps/mcp-server). Carry the 6 structural acceptance criteria + router-confirmed file:line findings verbatim — evidence, not to be re-discovered. | DONE 2026-06-04: docs/handoffs/DSI-BA-spec.md. 6 tasks (S1-SLA/S1-MACRO/S1-FE-TYPE/S2-PRICE/S3-SECTOR-FIN/LATENT-BACKLOG). No PO blockers. next: dev-mcp-server DSI-S1-SLA."
-      },
-      {
-        "task_id": "FU-FRED-EFFR-STALE",
-        "title": "FRED EFFR stale since 2026-05-28 (>96h bound) → macro-indicators fixture fallback (5.33) triggers; earnYield also stale (>26h). Investigate FRED/fred_series_daily ingest pipeline — this is the WHY behind the carry suppression now showing UNKNOWN.",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/mcp-server+vps",
-        "note": "DONE-LIVE-VERIFIED 2026-06-04 (commit 3f1fbddb, dev-mcp-server). Root: fredEffrIorb.ts used Akamai-WAF-blocked fred.stlouisfed.org/graph (504/socket-closed at this IP; documented 2026-05-13 recon, fetcher built w/ wrong URL). Fix: api.stlouisfed.org/fred/series/observations JSON + FRED_API_KEY(env,fail-loud) + incremental MAX(date). ops rebuilt+triggered: EFFR 2026-05-28->2026-06-03 live. ROUTER LIVE-VERIFIED get_macro_snapshot: fedFundsRate 3.62 (was 5.33 fixture), carrySpread +1.38, regime NEUTRAL (was FII_OUTFLOW_RISK then UNKNOWN), is_estimate:false source_tier:1. Macro carry signal RESTORED. Recon doc docs/mainserver-sources/fred-effr/recon.md.",
-        "depends_on": null
-      },
-      {
-        "task_id": "FU-MACRO-INDICATORS-MISSCOPE",
-        "title": "Architecture correction: macro-indicators Go container is DEPLOYED (Up 45h) + IS the live serving path for get_macro_snapshot.signals (clients.ts->:5004). PO zone_correction (route to dev-mcp-server, 'macro-indicators not-deployed Go plane') was FALSE. DSI-S1-MACRO TS fix hit the text-block path only; live regression fixed by Go commit 09e93d76.",
-        "type": "DOC",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE",
-        "priority": "P2",
-        "size": "S",
-        "zone": "docs/architecture-briefs",
-        "note": "Record in a brief: macro-indicators IS deployed+serving; correct future macro serving-path fixes to dev-macro-indicators (Go) not dev-mcp-server (TS). Recurring-bug-escalation: architect DSI brief mis-located the layer.",
-        "depends_on": null,
-        "claimed_by": "dev-team",
-        "claimed_at": "2026-06-04T22:15:50Z",
-        "done_note": "doc correction committed 1f8628a0; macro-indicators reclassified LIVE (R-4 HOT), §2 SBV tier:2 ruling final."
-      },
-      {
-        "task_id": "DSI-CONSUMER-HONORS-ISESTIMATE",
-        "title": "Consumers (chef/unified-agent + fb-market-poster) must READ the served carry/yield field (now null/is_estimate) and NEVER recompute a spread/regime from raw fedFundsRate/vndDepositRate. FB posts 06-02/06-04 narrated false 5.0-5.33=-0.33 FII-outflow despite serve-layer suppression. This is the ACTUAL fix for the operator's 'FB macro was wrong' complaint.",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE",
-        "priority": "P1",
-        "size": "M",
-        "zone": "docs/agents (flow .md) + verify no code recompute",
-        "owner": "agent-father (flow edits) + dev-mcp-server (if any tool-side recompute)",
-        "note": "ROOT of operator symptom. Serve layer correctly suppresses carrySpread->null + is_estimate=true (router live-verified), but the response STILL exposes raw fedFundsRate=5.33 + vndDepositRate=5, and consumers recompute. Evidence: fb-post-2026-06-02 L11/L23/L27 (chenh lech am 0,33 / rui ro dong ngoai) + fb-post-2026-06-04 L19/L31 (-0,33 diem phan tram). chef.md L188/L193 carry example prose hardcodes FII_OUTFLOW_RISK + carry -33bp as template. FIX: (1) chef.md + market-analysis.md + fb-market-poster flow MUST consume served carry.regime/carrySpread verbatim; when is_estimate=true OR carrySpread=null -> OMIT the carry narrative entirely (no recompute, no template FII-outflow). (2) Scrub chef.md L188/L193 example prose of literal FII_OUTFLOW_RISK/-33bp so it can't leak as a template. (3) Consider serve-side: when is_estimate=true, null out the raw fedFundsRate/vndDepositRate in the carry object too (defence-in-depth so a naive consumer can't recompute). Verify by raw-reading next FB post macro paragraph + grep chef render for recompute. | DONE 2026-06-04 agent-father: (1) chef.md Step 6.5 hardcoded FII_OUTFLOW_RISK/-33bp example replaced with neutral gap example; carry provenance rule added (is_estimate=false AND carrySpread!=null required before carry narrative); (2) fb-market-poster/flow/main.md STEP 1b adds get_macro_snapshot call + $carry_usable flag; STEP 3 hard rule added blocking rate-differential/FII narrative when $carry_usable=false.",
-        "depends_on": null,
-        "triaged_by": "po",
-        "triaged_at": "2026-06-04T20:05:28Z",
-        "completed_at": "2026-06-04T20:30:00Z",
-        "completed_by": "agent-father"
-      },
-      {
-        "task_id": "DSI-S2-PRICE-TS-GAP",
-        "title": "yahooFinance.ts is the LIVE price serve path (Go stock-price container NOT running). It emits no per-symbol is_estimate/staleness and hardcodes cnyVndRate=0 with no provenance — DSI-INV-1 violation on the live path. The shipped DSI-S2-PRICE Go code is correct but LATENT.",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE",
-        "priority": "P2",
-        "size": "M",
-        "zone": "apps/mcp-server",
-        "owner": "dev-mcp-server",
-        "note": "QA C-2. get_market_snapshot (active price tool) routes via mcp-server yahooFinance.ts, NOT the Go stock-price service (port 5000 = AirTunes, container absent + not in host_runtime_set). yahooFinance.ts:315 cnyVndRate=0 always, no is_estimate; response source_tier:2 but no per-symbol staleness/is_estimate. FIX: add is_estimate+staleness to yahooFinance.ts commodity snapshot output; label cnyVndRate=0 as source_tier:4/is_estimate:true. SECONDARY decision (defer): leave Go stock-price latent (TS is the accepted live path) vs deploy it — recommend ACCEPT TS as path (host-safety, do not deploy more Go services). Do NOT start the Go container.",
-        "depends_on": null,
-        "triaged_by": "po",
-        "triaged_at": "2026-06-04T20:05:28Z",
-        "done_note": "DONE 2026-06-04 (54634eb2, dev-mcp-server). DSI-INV-1 type-honesty: CommoditySnapshot.cnyVndRate number→null; CNHVND=X 404s permanently so serving 0-as-live was the violation. SCOPE TRUTH (verify-raw): ZERO live readers found — no runtime/DB behavior change (DB column still gets 0 via ?? 0 NOT-NULL guard); fix is compile-time type-safety + future-consumer honesty only, no container rebuild needed. Deeper dead-data root-cause (remove field+column) → FU-CNYVND-DEAD-FIELD-REMOVE. tsc clean, 0 new test failures."
       },
       {
         "task_id": "FU-RUNTIME-SET-TRUTH-RECONCILE",
@@ -2802,21 +2291,6 @@
         ]
       },
       {
-        "task_id": "FU-SBV-DEPOSIT-PROVENANCE-GO",
-        "title": "macro-indicators Go carry treats SBV vndDepositRate (5.0, hardcoded — SBV portal dead) as live (is_estimate:false, source_tier:1) because the daily sbv write stamps fetched_at=now. carry.is_estimate:false + dataSource:live slightly over-claim vs DSI-INV-1 / BA-spec FR-MAC-2 (SBV fallback => is_estimate). Judgment call: administered policy rate (tier-2) vs fixture (tier-4) — architect/PO to rule. yield already correctly flags is_estimate:true.",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P2",
-        "size": "S",
-        "zone": "apps/macro-indicators",
-        "note": "Discovered during FRED live-verify: with EFFR fresh, carry.is_estimate flipped to false but vndDeposit (SBV 5.0) is a permanent hardcoded fixture.",
-        "depends_on": null,
-        "claimed_by": "dev-team",
-        "claimed_at": "2026-06-04T22:15:50Z",
-        "done_note": "code fb1439a6 (carry+yield source_tier 1→2); ops-rebuilt macro-indicators; LIVE-VERIFIED /snapshot carry source_tier=2 is_estimate=false regime=NEUTRAL spread=+1.38."
-      },
-      {
         "task_id": "FU-CNYVND-DEAD-FIELD-REMOVE",
         "title": "cny_vnd_rate is DEAD DATA — definitif cleanup (follow-up to DSI-S2-PRICE-TS-GAP type-honesty fix 54634eb2). CNHVND=X 404s permanently on Yahoo; dev-mcp-server confirmed ZERO live readers (MACRO_CODES excludes it, runImpactChain drops it, no get_* tool surfaces it). The 54634eb2 fix made the TS type null but the DB write still re-fabricates 0 via `?? 0` and the NOT NULL column + field remain wired through fetcher+usecase+8 test fixtures. Definitif fix = REMOVE the field + the cny_vnd_rate column (SQLite migration) + the `?? 0` re-fabrication entirely, OR repoint to a real CNY/VND source if a consumer is ever needed. Low consumer-break risk (zero readers) but needs a schema migration → P3.",
         "type": "CLEAN",
@@ -2837,32 +2311,6 @@
         "size": "S",
         "zone": "apps/macro-indicators",
         "depends_on": null
-      },
-      {
-        "task_id": "CARRY-YIELD-SINGLE-SIGNAL-FIXTURE",
-        "title": "LIVE DSI-INV-1 VIOLATION + true F-CARRY-CORRUPT root on single-signal path: GET /carry-trade-signal (get_carry_trade_signal tool) and GET /yield-spread-signal (get_yield_spread_signal tool) serve HARDCODED fixture consts (handlers_carry.go carryFixtureFedFundsRate=5.33/VNDDeposit=4.7/computedAt=2026-05-23; handlers_yield.go earningYield=8.2/deposit=4.7) bypassing the live CarryYieldInputsPort+market.db that /snapshot uses, with NO source_tier and NO is_estimate. Consumers calling these registered MCP tools get the stale 5.33 FII_OUTFLOW_RISK carry that contradicts /snapshot's live 3.62/NEUTRAL/tier:2. Fix = rewire both handlers to the live usecase/port + buildCarryDTO/buildYieldDTO provenance (source_tier, is_estimate, fixture-suppression), OR consolidate onto the /snapshot computation. Found by router raw-verify this tick (2026-06-05); the prior 'F-CARRY-CORRUPT fixed' claim verified /snapshot only.",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE-LIVE-VERIFIED",
-        "priority": "P1",
-        "size": "M",
-        "zone": "apps/macro-indicators",
-        "claimed_by": "dev-team",
-        "claimed_at": "2026-06-04T22:33:53Z",
-        "depends_on": null,
-        "done_note": "Option B consolidate: B-1 3d4384e3 (Go: deleted handlers_carry/yield.go fixture consts + endpoints, 404 guard test), B-2 02498635 (TS: get_carry_trade_signal+get_yield_spread_signal POST /snapshot, surface provenance). ops rebuilt macro-indicators(cff9799a)+mcp-server(c6bd90d9). LIVE-VERIFIED via gateway: get_carry_trade_signal=NEUTRAL/fed3.62(not5.33)/tier2/is_estimate:false; get_yield_spread_signal=CHEAP/tier4/is_estimate:true(honest); /carry-trade-signal+/yield-spread-signal=404. True F-CARRY-CORRUPT root on single-signal path eliminated."
-      },
-      {
-        "task_id": "FU-MACRO-SNAPSHOT-TEST-1881A",
-        "title": "1881a-source-tier.test.ts: 2 pre-existing get_macro_snapshot failures (AC-3 source_tier=2/text-field/fetchedAt + AC-8 source_tier-first-key-in-wrapper). NOT caused by CARRY-YIELD-SINGLE-SIGNAL-FIXTURE (failed identically at parent 02498635^: 5 fail pre, 2 fail post — B-2 fixed the 3 carry/yield ones). get_macro_snapshot wrapper test needs the /snapshot mock or live container; isolate + fix the macroTools.ts get_macro_snapshot wrapper test setup.",
-        "type": "FIX",
-        "sprint": "DATA-SERVE-INTEGRITY",
-        "status": "DONE",
-        "priority": "P3",
-        "size": "S",
-        "zone": "apps/mcp-server",
-        "depends_on": null,
-        "done_note": "DONE (commit 260655e3, 2026-06-05). get_macro_snapshot adopted the AC-3 JSON wrapper {source_tier first, text, fetchedAt}; source_tier derived from signals.carry.source_tier (honest passthrough, not hardcoded). Router-verified: 1881a 20/0 (was 18/2), siblings 1423c+1570b 38/0 no-regress, tsc exit 0, test file untouched, commit clean (no .env/no force-add). LIVE-PENDING: mcp-server serves old shape until next rebuild (no dedicated rebuild for a P3 provenance-wrapper at unattended tick). Worst-of-tier refinement → FU-MACRO-SNAPSHOT-TIER-WORSTOF P3."
       },
       {
         "task_id": "FU-MACRO-SNAPSHOT-TIER-WORSTOF",
@@ -2897,19 +2345,6 @@
         "size": "S",
         "zone": "docs/agents/system-auditor",
         "depends_on": null
-      },
-      {
-        "task_id": "FE-HEADER-SSOT",
-        "title": "Frontend: per-page title headers diverge across dashboard.* pages (each hand-rolls its own <h1>+wrapper). Extract ONE shared PageHeader component (SSOT/factory: title + optional subtitle + optional right actions slot), replace every page ad-hoc header with it. ALSO: pages must be centered + 100% width/height (consistent full-viewport centered content container in the dashboard layout). Operator-requested.",
-        "type": "FIX",
-        "sprint": "FRONTEND-OPERATOR-UX",
-        "status": "DONE",
-        "priority": "P2",
-        "size": "M",
-        "zone": "apps/frontend",
-        "depends_on": null,
-        "owner": "dev-frontend",
-        "done_note": "SHIPPED+LIVE 2026-06-05. PageHeader SSOT (619093e1) + TopNav SSOT (5f660fb1, fixed / showing stale 5-item vs canonical 8-item nav) + centered full-viewport layout. 327 tests pass, tsc 0. ops rebuilt frontend (image b18f8ee7, healthy); / serves 8-item nav incl BCTC Eval/Inspect/Orchestration verified live."
       },
       {
         "task_id": "FDA-4",
@@ -3179,6 +2614,638 @@
         "spike": "SPIKE-LEADER-LOCK-OWNER-SESSION DONE (architect, brief 2026-06-05-leader-lock-false-peer-held-spike.md)",
         "resolved_by": "dev-team",
         "resolved_at": "2026-06-05T10:35:31.373260+00:00"
+      },
+      {
+        "task_id": "FU-EI-P2-COV-1",
+        "title": "envCheck.ts lines 129-185 (checkRequiredEnv/formatEnvWarning/runEnvCheck Task-1026 degraded-mode) zero test coverage",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "note": "DONE 2026-06-03 commit 5c498c2e. 5 tests for runEnvCheck (R1-R5): no-op path, warn-branch (honest-green pin), var name in message, degraded-mode no-throw, meta.missingVars. envCheck.ts funcs 88.89%->100%. test-only, no rebuild needed.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-EI-P2-COV-2",
+        "title": "No explicit test for APP_ENV=testing (4th DEV_ENV_VALUES entry)",
+        "type": "FIX",
+        "owner": "dev-mcp-server",
+        "status": "DONE",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "priority": "low",
+        "note": "DONE 2026-06-03 commit 5c498c2e. 4 tests: T1 isProductionEnv('testing')->false (pins DEV_ENV_VALUES membership), T2 testing+prodDB->error, T3 testing+devDB->null, T4 currentDataEnv->'testing'. test-only, no rebuild needed.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-EI-P2-DEV-VOLUME",
+        "title": "docker-compose.dev.yml orphan top-level volumes:market_data: stanza never bound — remove or annotate to avoid misleading future editor",
+        "type": "CLEAN",
+        "owner": "developer",
+        "status": "DONE",
+        "size": "XS",
+        "zone": "root",
+        "priority": "low",
+        "note": "EI-P2-QA gap; isolation currently correct, cleanup only. DONE: removed stanza (lines 44-46 `volumes:\\n  market_data:\\n    driver: local`). Verified zero service.volumes: references to market_data within docker-compose.dev.yml before removal. No rebuild needed (dev compose, not running prod stack).",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-COWORK-HEARTBEAT-SCHEMA",
+        "title": "cowork-team heartbeat schema drift: live session emits flat {agent,ts,tick_nominal,classification,...} but Step 6 (L754) + cowork-tick-autosilent.sh document/write enveloped {from,to,type,createdAt}",
+        "type": "FIX",
+        "owner": "agents-architect",
+        "status": "DONE",
+        "size": "S",
+        "zone": "docs/agents/cowork-team/",
+        "priority": "low",
+        "note": "agent-father secondary finding during CW-BACKLOG-MISCOUNT: TWO writers. (1) scripts/agents-flow/cowork-tick-autosilent.sh writes enveloped {from,to,type,payload,priority,createdAt} (matches Step 6 L754 spec); (2) live session main.md runtime writes flat {agent,ts,tick_nominal,drift_min,classification,...} (diverges). All 37 on-disk = flat. Both share cowork-team- prefix so both correctly excluded by CW-BACKLOG-MISCOUNT. Separate cleanup: reconcile Step 6 spec vs live runtime output (doc-or-impl). LOW — backlog-count already fixed.",
+        "resolution": "DESIGN 6004f361 (brief 2026-06-03-cowork-heartbeat-schema, canonical=enveloped matching drain fingerprint) + IMPL ee1d5e46 (cowork-team main.md Step 6 INVARIANT guard + payload folds the 8 flat telemetry fields). Shell writer already correct. Cowork refresh prompt issued.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "RECON-AGM-1",
+        "type": "SPIKE",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "Probe HSX/HNX/SSC AGM portal fetch recipe (3 sample tickers VNM/FPT/VCB)",
+        "status": "DONE",
+        "priority": "P0",
+        "size": "S",
+        "zone": "ops-vps-fetch",
+        "deps": [],
+        "blocks": [
+          "FIX-G"
+        ],
+        "timebox": 480,
+        "note": "Router-launched in PARALLEL NOW (ops-vps-fetch spike, no dev work). Confirm: (1) doc availability for VNM/FPT/VCB, (2) URL structure/pagination, (3) response format PDF (->PDF-Extract-Kit pipeline, Risk-4) or HTML (->scrape). MUST land before FIX-G dev work starts. Brief §6 FIX-G + §11 Risk-4. || DONE 0fad275e: vietstock-agm-plan FETCHABLE, recipe in docs/vps-sources/vietstock-agm-plan/recon.md. Unblocks FIX-G.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FIX-B",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_market_cap MCP tool + persist VnstockRatioSummary.marketCap",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-1 size gate (MANDATORY entry gate — ships FIRST)",
+          "SKILL-4 turnover ratio",
+          "SKILL-6 inherited"
+        ],
+        "files": [
+          "apps/mcp-server/src/infrastructure/vnstock/vnstockBridge.ts",
+          "apps/mcp-server/src/jobs/syncVnstockData.ts",
+          "apps/mcp-server/src/interface/mcp/tools/market-data/"
+        ],
+        "note": "RC-1. (1) Wire marketCap storage (vnstock_ratio_summary table or market_cap_bn col on vnstock_trading_stats); vnstockBridge.ts:82 already defines the struct (dead export). (2) New get_market_cap returning {code, market_cap_billion, shares_outstanding_approx, fetched_at}. Source stock.trading.price_board() already returns marketCap — just not persisted. NO skill can go live without this (brief §8). Risk-2 staleness -> emit data_as_of. || FIX-B-1 persist+fetch shipped b275239d, deployed live (mcp-server rebuilt, healthy, tool count 156->157). Code path correct (schema market_cap_bn col + idempotent migration + storeTradingStats persist + TRADING_STATS_SCRIPT ratio() fetch). DATA PENDING: market_cap_bn null for all rows until a successful vnstock sync; live-verify blocked by transient vnstock RATE_LIMIT (all FPT endpoints, 0848Z). Verify hook: FU-FIXB-COLUMNKEY-VERIFY.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FIX-A",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_company_profile MCP tool (shareholders + officers + foreign %)",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-4 ownership/free-float/skin-game",
+          "SKILL-5 CEO name"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/",
+          "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts"
+        ],
+        "note": "RC-3. get_company_info is a PHANTOM (never existed). New get_company_profile from existing tables: vnstock_shareholders (name,quantity,own_percent DESC limit 10) + vnstock_officers (name,position,own_percent,quantity) + vnstock_trading_stats.current_holding_ratio (aggregate foreign %). Compute free-float approx = 100% - sum(non-free-float own_percent). STRUCTURED JSON output. CEO tenure stays PARTIAL until FIX-I. Risk-2 24h TTL staleness -> data_as_of. || DONE-LIVE-VERIFIED 2026-06-04T09:32:34Z (commit 7a44a291, live 158 tools). get_company_profile(FPT) raw-verified by router: 10 REAL shareholders (Truong Gia Binh 6.89%, SCIC 5.67%, Red River 4.58%...), 17 officers with real positions (Chu tich HDQT, TGD Nguyen Van Khoa...), free_float_approx=68.23%, data_as_of=2026-04-14 present. CEO start_date correctly ABSENT (no fabrication, FIX-I scope). foreign_holding_ratio=null = honest data-absence facet -> FU-PROFILE-DATA-VERIFY. Structure + real data CONFIRMED, not placeholders.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FIX-D",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_bctc_full structured_data JSON block + receivables join",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-1/2/3/4 text-only PARTIAL fields -> parseable JSON",
+          "SKILL-2 receivables"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts"
+        ],
+        "note": "RC-2 (format). (1) Add structured_data:{...} section ALONGSIDE existing text (non-breaking) — all ReportRow numeric cols as machine-readable JSON. (2) Add receivables from vnstock_balance_sheet.receivables_bn (JOIN on code+latest period). Unblocks pe/pb/total_assets/equity/total_liabilities/cash/long_term_debt/profit_before_tax/operating_cf without text parsing. || DONE-LIVE-VERIFIED 2026-06-04T09:32:34Z (commit 0e8c2be0, live). get_bctc_full(FPT 2026-05-31) raw-verified by router: text output UNCHANGED (non-breaking confirmed); structured_data block values MATCH rendered text on a pre-existing DONE record (roe 6.17<->6.2%, d/e 0.401<->0.40x, equity 40122036<->40.122ty, total_assets 68586094<->68.586,1ty, net_revenue 12479997<->12.480ty, pe/pb null<->N/A) = recompute-on-read serving correctly, NOT stale column (derived-column-reflow lesson satisfied). receivables=null honest data-absence -> FU-PROFILE-DATA-VERIFY. PUB-7 period-basis guard still firing. 138 tests green, tsc clean, fence proven to bite.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FIX-H",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_insider_transactions lookback 90 -> 180 days",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P1",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-4 Step 2 full 6-month insider-exit detection"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/market-data/insiderTools.ts"
+        ],
+        "note": "RC (lookback). 1-line: insiderTools.ts:108 .max(90) -> .max(180). insiderStore queries SQLite by date, no schema change. Data may be sparse beyond 90d for early-added tickers (honest). || FIX-H DONE-LIVE-VERIFIED b275239d: get_insider_transactions(FPT, days=180) accepted live, lookbackDays=180 echoed (was capped 90). z.max(90)->z.max(180) + Math.min(90->180). 4 tests green.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FIX-C",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_bctc_series multi-period BCTC tool",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "deps": [
+          "FIX-B"
+        ],
+        "unblocks_skill": [
+          "SKILL-1 10yr P/E-P/B",
+          "SKILL-3 4yr CFO",
+          "SKILL-4 YoY assets",
+          "SKILL-5 multi-yr revenue",
+          "SKILL-6 2yr EPS"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/"
+        ],
+        "note": "RC-2 (scope). New get_bctc_series {code, fields[], periods} -> JSON array, financial_reports ORDER BY sort_key DESC LIMIT periods. Subset fields (pe,pb,roe,debt_to_equity,operating_cf,net_profit,eps,total_assets,net_revenue,equity_total). GUARD: refine_status='DONE' only (PUB-1 gate) — no OCR garbage. Risk-1: sparse <10yr history common -> skill degrades gracefully (median of present). Dep FIX-B per architect §9. || UNBLOCKED 2026-06-04: FIX-B code shipped b275239d (dep cleared). || DONE-LIVE-VERIFIED 2026-06-04T10:50:07Z (commits bf9b3105 + consistency-fix 46749207, live 159 tools). get_bctc_series raw-verified by router: structured JSON array, DONE-only guard working (FPT 2 DONE periods served of 4 requested = honest sparse history), unit_note present. CONSISTENCY FIX (root-cause): extracted shared domain helper bctcRatioRecompute.ts (SSOT, DRY) imported by BOTH get_bctc_series + get_bctc_full -> derived ratios can no longer drift. Live cross-tool check CONFIRMED: get_bctc_series(FPT) 2026-Q1 roe=6.173140860229057 + debt_to_equity=0.4011866910919166 are BYTE-IDENTICAL to get_bctc_full structured_data (same percent scale) -- the prior null/0.0462-ratio-scale divergence is gone. T9 cross-tool consistency regression test added. Bonus debt reduction: FIX-D inline recompute block de-duplicated into the helper.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FIX-E",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "get_price_history 90 -> 730 days + JSON array output",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "unblocks_skill": [
+          "SKILL-6 Signal A 18-month chronic-cheap price history"
+        ],
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/market-data/priceHistoryTools.ts"
+        ],
+        "note": "RC-5. (1) priceHistoryTools.ts:191 Math.min(...,90)->Math.min(...,730). daily_ohlcv holds permanent candles (Task 1804c no pruning); query line 210 already param-driven, no schema change. (2) Structured JSON array (code,date,close,volume) + text. Signal B EPS overlay = FIX-C cross-ref by date. || DONE-LIVE-VERIFIED 2026-06-04T10:50:07Z (commit bf9b3105, live). get_price_history raw-verified by router: days=365 ACCEPTED (was hard-capped 90; zod .max(730) + Math.min(...,730) both widened); 32 candles served across the window; NEW structured JSON array {code,date,close,volume} present ALONGSIDE unchanged Vietnamese text (non-breaking confirmed). 2026-05-30 close=0 is a pre-existing daily_ohlcv data quirk (honest passthrough, not FIX-E scope). Bonus debt reduction: dev fixed a pre-existing 178-price-history test bug (actionCode->code param, 0->7 pass).",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FIX-F",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "BCTC scalar extraction: charter_capital + investment_property + reward_fund (bank-form guarded)",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P3",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "deps": [],
+        "prereq": "VAS code audit for new fields (same pattern as FIX-DE-1)",
+        "unblocks_skill": [
+          "SKILL-2 charter_capital_ratio + INV-PROPERTY-STALE",
+          "SKILL-4 COMP-EXTRACTION (partial, no reward_fund elsewhere)"
+        ],
+        "files": [
+          "apps/mcp-server/src/infrastructure/bctc/bctcScalarAggregator",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/"
+        ],
+        "note": "RC-4. 3 new scalars: charter_capital (~code 411), investment_property (~code 217), reward_fund (~code 418) -> bctcScalarAggregator ScalarAggregate + finalize BLOCK-1 + DB migration. Precedent FIX-DE-1 (short/long_term_debt). Risk-3: VAS code varies by form (B01 vs B02-TCTD); banks have no standalone charter_capital line -> bank-form guard via isBankFormFromDb pattern REQUIRED. || DONE-LIVE-VERIFIED tick 11:07Z 2026-06-04 (commit a04edbe9, mcp-server rebuilt 159 tools unchanged — domain-layer only, no new MCP tool). VAS codes: charter_capital=411 (label-hinted vốn góp/cổ phần/điều lệ), investment_property=230 (bất động sản đầu tư), reward_fund=322/323/320 (khen thưởng/phúc lợi label-hint MANDATORY — code 322 flips to vay/dự phòng on some forms, same class as FU-DE-321-VAY-GUARD). BANK-FORM guard = existing isBankFormFromRows SSOT (not re-derived); 3 fields added to notApplicable[] → null-cleared on bank reports. LIVE-VERIFIED via backfill_bctc_scalars force_reflow + raw market.db read: CORPORATE values accurate vs reality — VNM charter=20899.5bn (real ~20899), HPG=76755bn (real ~76755), DHG=1307bn (real ~1307), FPT~17000bn; investment_property correctly discriminates (VNM/HPG non-null, FPT/DHG null=they hold none); reward_fund VNM~953bn/FPT~1.6bn plausible. BANK guard proven on persist+serve: SHB+EIB null_cleared all 3, ACB already null — all banks NULL. get_bctc_full(VNM) serve path returns the values; EIB withheld by PUB-5 confidence gate (31%) but DB-confirmed null. Tests 46 green incl. bank-guard + period-flip + label-hint. RESIDUAL (not a FIX-F defect): VEA (corporate, 201 rows) stays NULL — it is outside backfill_bctc_scalars candidate set (13 of 15 reports processed; affects ALL scalars for VEA not just these 3) → tracked as FU-BACKFILL-SCOPE-VEA observation, pre-existing scope gap.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FIX-I",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "vnstock_officers start_date for CEO tenure",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P5",
+        "size": "S",
+        "zone": "multi: vps-scripts/ (dev-vps-crawls) + apps/mcp-server/ (dev-mcp-server)",
+        "deps": [
+          "FIX-A"
+        ],
+        "unblocks_skill": [
+          "SKILL-5 CEO tenure (pre/post ROE)"
+        ],
+        "files": [
+          "vps-scripts/vietstock-board-details.py",
+          "vps-scripts/fetch-board-details.sh",
+          "vps-scripts/fetch-board-details-loop.sh",
+          "vps-scripts/vn-board-details.service",
+          "apps/mcp-server/src/infrastructure/db/schema-financial-reports.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/boardDetailsFetcher.ts",
+          "apps/mcp-server/src/infrastructure/db/boardDetailsStore.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/boardDetailsJob.ts",
+          "apps/mcp-server/src/scheduler/startScheduler.ts",
+          "apps/mcp-server/src/interface/mcp/tools/market-data/companyProfileTools.ts"
+        ],
+        "note": "ARCHITECT DONE 2026-06-04T10:30Z. Handoff: docs/handoffs/TASK_FIX-I.md. Design: extend vnstock_officers with appointment_year INTEGER nullable (ALTER TABLE migration) + UPDATE-only boardDetailsStore (preserves VCI own_percent/quantity) + new boardDetailsFetcher/Job mirroring agmPlan pattern + extend get_company_profile OfficerEntry with appointment_year + ceo_tenure_years. Zone A (dev-vps-crawls): Python scraper + shell loop + systemd at 02:00 UTC. Zone B (dev-mcp-server): migration + fetcher + store + job + tool extension. Live-verify gate: get_company_profile(FPT).officers[0].appointment_year=1988. RAPID-DATA-LAYER closes on ship+verify. || DONE-LIVE-VERIFIED 2026-06-04: officer appointment_year + ceo_tenure_years live on get_company_profile (year-precision, accepted product bar). Both zones shipped+baked+QA-verified. LAST open core item of RAPID-DATA-LAYER -> sprint COMPLETE.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-FIXB-COLUMNKEY-VERIFY",
+        "title": "Verify get_market_cap serves non-null market_cap_billion after a successful vnstock sync; fix ratio() column-key if it stays null",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "status": "DONE",
+        "size": "XS",
+        "zone": "apps/mcp-server/",
+        "files": [
+          "apps/mcp-server/src/infrastructure/fetchers/vnstockBridge.ts"
+        ],
+        "note": "VERIFICATION HOOK for FIX-B (shipped b275239d, live-deployed). get_market_cap is LIVE + returns correct structured shape + safe-divide null-path verified, but market_cap_billion=null for all 2856 vnstock_trading_stats rows (column just added; populated only on a fresh sync). Live-verify attempt 2026-06-04T08:48:52Z triggered syncVnstockData([FPT]) inside the container: vnstock RATE_LIMITED on EVERY endpoint (finance/balance_sheet/cash_flow, max retries exhausted) => fetch never succeeded, market_cap_bn stayed null, fetched_at stale 2026-04-29. Transient EXTERNAL throttle, NOT a code defect. WHEN the scheduled vnstockFundamentalsJob next completes a successful finance:<ticker> sweep (rate-limit cleared), re-call get_market_cap(FPT): EXPECT non-null market_cap_billion. IF still null after a CONFIRMED-successful finance fetch => the python ratio() MultiIndex key ('Chỉ tiêu định giá','Market Cap (Bn. VND)') is wrong for the live vnstock version => fix TRADING_STATS_SCRIPT key in vnstockBridge.ts (a fallback 'market_cap' is already attempted). Owner dev-mcp-server. Until verified, FIX-B stays DONE-CODE-DEPLOYED-DATA-PENDING (do NOT claim DONE-LIVE-VERIFIED).",
+        "depends_on": "vnstock-rate-limit-clear / next-fundamentals-sweep",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "id": "FIX-G",
+        "task_id": "FIX-G",
+        "type": "FIX",
+        "sprint": "RAPID-DATA-LAYER",
+        "title": "AGM plan pull-ingest + get_agm_plan MCP tool (#162)",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P4",
+        "size": "M",
+        "zone": "apps/mcp-server/",
+        "commits": [
+          "56c7e2ad",
+          "ffa24c63"
+        ],
+        "note": "DONE-LIVE-VERIFIED 2026-06-04T14:55Z by QA (cycle-192). FIX-G-1 (VPS fetcher) + FIX-G-2 (MCP tool) shipped consolidated in commits 56c7e2ad+ffa24c63. get_agm_plan tool #162. agmPlanJob cron 20:30 UTC. DB direct: agm_plan=323 rows, agm_actuals=2084 rows, 33 distinct tickers. Live raw gateway verify: FPT 2025 revenue.planned_ty=75400 actual_ty=70207.689 drift=-6.886 pbt.planned=13395 actual=13043.633 drift=-2.623 (all AC met). Bank logic: BID 2022/2023 revenue.planned=null pbt.planned present (correct pattern: banks no revenue target). ACB 0 rows in DB (data coverage gap — Vietstock did not return ACB in batch, NOT a tool defect). toolCount=160 (+1 from FIX-F 159). FIX-G-1+FIX-G-2 sub-tasks SUPERSEDED by this consolidated entry. || dev-team tick 12:07Z (real-elapsed ~4.5h, ops ran 16ks on memory-starved rag startup): CONCURRENCY-COLLISION RECONCILE — two flows worked FIX-G in parallel. (A) dev-team dispatched dev-vps-crawls FIX-G-1 -> VPS-side scheduled fetcher commit 2d0c38b8 (vps-scripts/fetch-agm-plan{,-loop}.sh + vn-agm-plan.service, systemd active, daily 01:00Z, file-drop /root/data/agm-plan-latest.json behind VPS:8765/proxy/agm-plan). (B) a concurrent dev-mcp-server+qa cycle (cycle-192) built the mcp-side consolidated G-1+G-2 commits 56c7e2ad+ffa24c63 (agmPlanStore tables + agmPlanFetcher pull-from-VPS X-API-Key + agmPlanJob cron 20:30Z + get_agm_plan tool). COMPLEMENTARY not duplicate: mcp-side PULLS from the VPS proxy that (A) keeps fresh. Live RAW-VERIFY by router (not qa badge): get_agm_plan(FPT)=revenue 58580 + PBT 11629 (matches recon+VPS fetch exactly) + Q1 actuals + plan_drift struct; get_agm_plan(VCB bank)=planned:[] (bank-honest, no AGM revenue plan) w/ actuals present; FPT planned=2 rows (no double-ingest). Live /health toolCount=160 (159+get_agm_plan; qa/dev 'tools=162' = registry-index, NOT live count — recurring discrepancy). FIX-G DONE confirmed real. PROCESS GAP: task:FIX-G-1 lock did NOT prevent the parallel cycle (separate dispatcher/session claimed a different key or none) -> FU-DEDUP-CROSS-DISPATCHER.",
+        "_split_from_superseded": [
+          "FIX-G-1",
+          "FIX-G-2"
+        ],
+        "_updated_at": "2026-06-04T14:55:00Z",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-FIX-I-SOURCE-RECON",
+        "title": "FIX-I CEO start_date: needs source recon (ops-vps-fetch) or alternative sources before spec",
+        "status": "DONE-VERIFIED",
+        "depends": [
+          "FIX-I"
+        ],
+        "note": "DONE 2026-06-04: VERDICT PARTIALLY FETCHABLE. Source = finance.vietstock.vn/data/boarddetails (same server as AGM-plan fetcher, ASP.NET double-submit CSRF, VPS-reachable, ~0.3s, no bot challenge). Field FromDate = appointment YEAR (zero-padded string). Confirmed VNM(2022)/FPT(1988)/VCB(2021). vnstock officers has NO start_date (only updateDate); HOSE/HNX/SSC/TCBS/CafeF all 404/auth-walled. Recipe: docs/vps-sources/officer-start-date/recon.md.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-NB-PRUNE-DEV-VPS",
+        "title": "prune dev-vps-crawls notebook 242L->177L (under 200 cap)",
+        "type": "CLEAN",
+        "sprint": "RAPID-DATA-LAYER",
+        "status": "DONE-VERIFIED",
+        "size": "S",
+        "zone": "cross-service/",
+        "note": "DONE-VERIFIED 2026-06-04: claude-manager-helper pruned 242->177L (router raw-verified wc -l=177, frontmatter intact, only target file touched). Dropped FIX-CTG-2 cover-letter section + compressed 2026-05-13 bootstrap + verbose Key-Findings; kept FIX-G-1 + deploy guards. Committed f206b2a8.",
+        "depends_on": null,
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FIX-MACRO-FEDFUNDS-REGRESS",
+        "title": "RECURRING: get_macro_snapshot fedFundsRate regressed to stale 5.33 fixture (masquerades as live) — inverts carry regime to FII_OUTFLOW_RISK; per-field freshness + no live-masking fallback",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE-RECONCILED",
+        "size": "M",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "recurring": true,
+        "escalate_architect": true,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
+          "apps/mcp-server/src/domain/services/macro/carryTradeSignal.ts",
+          "apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/fredApi.ts"
+        ],
+        "note": "ROUTER-VERIFIED REGRESSION (sev-HIGH, recurring) 2026-06-04T17:40Z raw get_macro_snapshot cross-checked vs ground truth. RECURRING: this is the 2nd+ regression of the SAME defect — DPI-2/DPI-FU-A fixed it 2026-05-30 (ff9a64ce, PO-signoff: fedFundsRate went 5.33 fixture -> 3.62 FRED-live, regime flipped FII_OUTFLOW_RISK->NEUTRAL). It has now FALLEN BACK to the 5.33 fixture exactly as the FU-A forward-dependency warned (requires macroIndicatorRefreshJob 19:13 UTC + FRED reachable from container; the 96h checkAndAlertEffrStaleness guard either did not fire or was not acted on). Per recurring-bug-escalation policy (>=2 fix cycles same module) ARCHITECT MUST root-cause-rethink BEFORE another point-fix — do NOT just re-run the fetch. RAW EVIDENCE: carry.fedFundsRate=5.33 (real Fed target 3.50-3.75 / EFFR ~3.58 web-verified) => carrySpread = vndDeposit 5.00 - 5.33 = -0.33pp => regime FII_OUTFLOW_RISK (SIGN FLIPPED; real ~3.58 gives +1.42pp carry-favorable). This single stale constant has CORRUPTED the central thesis of fb-market-poster 06-01..06-04 (all claim 'khoi ngoai rut vi chenh lech lai suat am' = backwards) + likely CHEF/unified-agent + tran-ngoc-bau Layer-4 carry/regime walks. oilUsd=95.06 sig -2.11% (real 96.97 -0.86%, ~2% off + WRONG direction); goldUsd=4509.6 sig +0.97% BULLISH (real ~4475 falling, ~0.8% high + WRONG direction; 4509.6~=7d avg 4505 => suspect averaged/stale tick); usdVnd=26122 plausible-verify. DISHONEST FLAG: top-level dataSource:live + fresh top-level fetchedAt while oil/gold/usdVnd carry NO per-field timestamp; serve path HAS fedFundsRateIsEstimate flag (macroTools.ts L55-58: '5.33 fallback' + (est.) vs (FRED) label) but the top-level dataSource does NOT downgrade to stale when a field falls back. ZONE CORRECTION: brief said route dev-macro-indicators, but that agent is zone-locked to apps/macro-indicators/ (separate not-deployed Go microservice plane). The ENTIRE get_macro_snapshot serving stack (FRED fetch, fixture fallback, carry/regime compute, staleness guard) lives in apps/mcp-server/ => correct zone dev-mcp-server. ACCEPTANCE: (1) fedFundsRate reflects real current Fed target (~3.50-3.75 as of 2026-06-04) sourced live w/ freshness check, NO hardcoded fallback constant that can masquerade as live; on stale/fetch-fail surface honest stale (not silent 5.33). (2) carrySpread+regime recompute POSITIVE (not FII_OUTFLOW_RISK) once rate fixed. (3) oil&gold value+direction match reputable live source within tolerance; on fetch-fail field marked stale not silently live. (4) per-field timestamps exposed in get_macro_snapshot; dataSource='live' ONLY when ALL fields fresh. (5) post-fix ops REBUILDS mcp-server container (restart relaunches stale image), QA verifies LIVE snapshot via call_tool shows corrected values+regime. DEDUPE: supersedes processed signal po-20260530T081716Z.json (EFFR staleness) + DPI-FU-A re-staleness forward-dependency; do NOT open a 2nd task.",
+        "absorbed_note": "ABSORBED 2026-06-04T18:23:25Z into DATA-SERVE-INTEGRITY as DSI-S1 (macro carry regime). The single-tool point-fix is now the S1 cluster of an architect-led cross-zone systemic sprint covering the same fail-soft-fixture anti-pattern across mcp-server + stock-price + macro-indicators. Do NOT work standalone — execute via DSI tasks. Acceptance criteria carried into DSI-S1.",
+        "reconcile_note": "F-CARRY-CORRUPT cured+live-verified 2026-06-04T21:21Z: get_macro_snapshot carry NEUTRAL fed=3.62 spread=+1.38 is_estimate=false tier=1. Commits 09e93d76+3f1fbddb (verified 78527f58). Was ABSORBED-INTO-SPRINT; DSI sprint closed, mirror reconciled by po.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "DSI-ARCH",
+        "title": "ARCHITECT root-cause + formal DATA-SERVE-INTEGRITY invariant (cross-zone structural rule)",
+        "type": "SPRINT-L",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE",
+        "size": "L",
+        "priority": "P0",
+        "zone": "multi",
+        "owner": "architect",
+        "recurring": true,
+        "escalate_architect": true,
+        "depends": null,
+        "note": "ARCHITECT LEADS. Recurring-bug policy (>=2 fix cycles DPI-2b->DPI-FU-A->this) => root-cause rethink BEFORE point fixes. Produce brief docs/architecture-briefs/2026-06-04-data-serve-integrity.md formalizing the 6 STRUCTURAL acceptance criteria into ONE fleet-wide invariant + per-zone split. ROUTER-VERIFIED audit (3 Explore agents + router sed/grep) — do NOT re-discover. ANTI-PATTERN: code fails-soft to a hardcoded fixture/zero/last-value, stamps fetched_at=now, drops the staleness/estimate flag => fabricated served as live. INVARIANT: (AC1) no served value may be a hardcoded substitute presented as live — fallback EITHER fail-loud OR carry a source/freshness label propagating fetcher->DB->tool->frontend-type->render; (AC2) every macro/price/financial value exposes per-field source_tier + true-source fetched_at (NOT re-stamped now) + is_estimate/staleness, dataSource=live ONLY when ALL fresh, frontend TS types must NOT drop these fields; (AC3) fedFunds + SBV deposit live (FRED/real SBV) fail-loud on miss, carry/regime => POSITIVE ~+1.4pp not FII_OUTFLOW_RISK; (AC4) fix macroIndicatorSla VN/vietnam key mismatch so guard fires + alerts WORK (detection net — FIRST); (AC5) stock-price propagate Staleness through FetchPriceResponse, Tier3 no re-stamp + mark change unavailable not 0; (AC6) ops REBUILDS each touched container, QA raw-verifies live. Split & hand to BA-DSI, then zone devs.",
+        "disposition": "STALE-CLOSE: duplicate orphan of active_sprints DSI-ARCH (status DONE). Deliverable verified live by PO: docs/architecture-briefs/2026-06-04-data-serve-integrity.md (28KB, §2 DSI-INV-1, §4 6-AC seq, §5 BA-DSI per-zone split, §10 handoff) + docs/handoffs/DSI-ARCH.md. Whole DSI seq shipped (a6b86ed0/fb1439a6/1f8628a0/3d4384e3/02498635) + CARRY-YIELD-SINGLE-SIGNAL-FIXTURE root fix; sprint SIGNED-OFF-PARTIAL. False-open-P0 cleared 2026-06-05T00:13:00Z.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "DSI-S1-SLA",
+        "title": "S1a DETECTION NET FIRST: reconcile macroIndicatorSla country key VN vs writer vietnam so freshness guard + detectStartupStaleData fire + alert WORK",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE-LIVE-VERIFIED",
+        "size": "S",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "depends": "DSI-ARCH",
+        "do_first": true,
+        "files": [
+          "apps/mcp-server/src/domain/services/macroIndicatorSla.ts",
+          "apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts"
+        ],
+        "note": "ROUTER-CONFIRMED (PO re-verified raw): macroIndicatorSla.ts:36,73 .get('VN') on SELECT fetched_at FROM macro_indicators WHERE country=?; macroIndicatorRefreshJob.ts:242 writes 'vietnam' (Task-1923a comment). => guard never matches a row, never fires, regression silent. Pick ONE canonical country key (confirm DB SSOT — check if ANY writer populates 'VN' before deciding), reconcile both sides, ensure checkAndAlertEffrStaleness + detectStartupStaleData fire and send WORK alert. FIX FIRST so subsequent regressions surface (AC4).",
+        "reconcile_note": "S1a macroIndicatorSla VN->vietnam key fixed bab7fb8b (code DONE+live). Residual = VPS cron deploy (scp fetch-tradingeconomics.sh+fetch-gso.sh) tracked separately as DSI-S1-SLA ops-vps PENDING.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "DSI-S1-MACRO",
+        "title": "S1b macro carry regime: kill fedFunds fixture + SBV deposit defaults masquerading as live; live FRED/SBV fail-loud; per-field freshness; dataSource=live only when all fresh",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE-LIVE-VERIFIED",
+        "size": "M",
+        "priority": "P0",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "depends": "DSI-S1-SLA",
+        "recurring": true,
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/macro/macroTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/macro/carryTools.ts",
+          "apps/mcp-server/src/domain/services/macro/carryTradeSignal.ts",
+          "apps/mcp-server/src/scheduler/macro/macroIndicatorRefreshJob.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/fredApi.ts",
+          "apps/mcp-server/src/infrastructure/fetchers/sbv.ts"
+        ],
+        "note": "ABSORBS FIX-MACRO-FEDFUNDS-REGRESS. ROUTER-CONFIRMED: (a) macroTools.ts:55-58,236 fedFundsRate '...or 5.33 fallback'; fedFundsRateIsEstimate flag EXISTS but formatThienThoi suppresses only on ==0 NOT on isEstimate => estimated 5.33 still drives carry spread/regime => FII_OUTFLOW_RISK (real ~3.58 EFFR gives +1.42pp favorable). (b) sbv.ts:53-70,230-263 six SBV policy rates hardcoded (overnight3.0/refi4.5/discount1.5/MAX_DEPOSIT5.0/MAX_LENDING12.0/interbank4.0); SBV portal permanently 404 => served ALWAYS, written sbv_rates fetched_at=now, no is_estimate column. vndDepositRate=5.0 is the DEPOSIT side of carry => BOTH carry inputs are constants. (c) macroIndicatorRefreshJob.ts:273-276 oil/gold/usdVnd ??0 written commodity_prices fetched_at=now (zeros served live). FIX: fedFunds + SBV deposit live fail-loud on miss; carry/regime gate on isEstimate not just ==0; add is_estimate to sbv_rates; stop ??0 zero-writes; expect POSITIVE carry ~+1.4pp (AC3).",
+        "reconcile_note": "S1b macro carry regime fix: fb7e16d0 (TS gate) + 09e93d76 (Go live serve path). Live-verified 21:21Z. Residual SBV-deposit-tier judgment call tracked as FU-SBV-DEPOSIT-PROVENANCE-GO.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "DSI-S1-FE-TYPE",
+        "title": "S1c frontend MacroSnapshot/CommoditySnapshot TS types must NOT drop dataSource/per-field freshness/isEstimate — propagate to render",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE",
+        "size": "S",
+        "priority": "P1",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "depends": "DSI-S1-MACRO",
+        "files": [
+          "apps/mcp-server frontend/shared types market.ts (MacroSnapshot ~152-159) + CommoditySnapshot type"
+        ],
+        "note": "ROUTER-CONFIRMED: MacroSnapshot TS type (market.ts ~152-159) OMITS dataSource => live/fixture flag DROPPED at type boundary, never rendered. Also mcp-server yahooFinance.ts:288-323 11 live commodity prices 0-fallback per-symbol (cnyVndRate=0 permanent dead ticker) + CommoditySnapshot lacks isEstimate/failedSymbols, 0s persisted fetched_at=now. Add dataSource + per-field freshness/is_estimate + failedSymbols to the TS types so the honest flag survives to render (AC1/AC2). Confirm exact path during impl.",
+        "reconcile_note": "S1c frontend MacroSnapshot/CommoditySnapshot TS provenance fields: b16d6a89 DSI-S1-FE-TYPE DONE.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "DSI-S2-PRICE",
+        "title": "S2 stock-price: propagate Staleness through FetchPriceResponse; Tier3 stop re-stamping FetchedAt + mark change fields unavailable not 0",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE",
+        "size": "M",
+        "priority": "P1",
+        "zone": "apps/stock-price/",
+        "owner": "dev-stock-price",
+        "depends": "DSI-ARCH",
+        "files": [
+          "apps/stock-price/pkg/infrastructure/fetchers.go",
+          "apps/stock-price/pkg/application/usecases.go",
+          "apps/stock-price/pkg/.../price_resolution.go"
+        ],
+        "note": "ROUTER-CONFIRMED: fetchers.go:183-193 Tier3 cache fallback hardcodes Change:0/ChangePercent:0 + FetchedAt=time.Now() (re-stamped fresh). Source:'cache' IS set BUT Staleness (FRESH/STALE/EXPIRED) computed in price_resolution.go:113-122 is DROPPED at FetchPriceResponse DTO (usecases.go:24-33,64-74) => caller never sees age. FIX: add Staleness to FetchPriceResponse DTO + wire through; Tier3 must NOT re-stamp FetchedAt to now (keep true source time) + mark change fields unavailable not 0 (AC5). This task = the Go stock-price service ONLY; the mcp-server yahoo/commodity 0-fallback piece is DSI-S1-FE-TYPE/DSI-S1-MACRO (apps/mcp-server zone). | DONE 2026-06-04T18:55:23Z: Go service fixes shipped. FetchPriceResponse extended with Staleness/IsEstimate fields. Change/ChangePercent changed to *float64 (nil=unavailable, serializes as JSON null). Tier-3 cache now reads true fetched_at from DB row instead of re-stamping with time.Now(). domain/models.go, application/usecases.go, infrastructure/fetchers.go, primitive/normalizer.go, sandbox/main.go updated. 8 DSI tests added (usecases_dsi_test.go), all pass. go build ./... pass. ops_rebuild_required=true. JSON shape: {change:null|number, changePercent:null|number, staleness:FRESH|STALE|EXPIRED, isEstimate:true|false}. Coordinate with DSI-S1-FE-TYPE for StockQuote type update.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "DSI-S3-SECTOR-FIN",
+        "title": "S3 sector/financial signals on fabricated inputs: credit/energy/bond-seed + bctc ??0 false deltas + extractionConfidence ??1 max-confidence — flag or fail-loud",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE",
+        "size": "M",
+        "priority": "P2",
+        "zone": "apps/mcp-server/",
+        "owner": "dev-mcp-server",
+        "depends": "DSI-ARCH",
+        "files": [
+          "apps/mcp-server/src/interface/mcp/tools/sector/creditFlowTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/sector/energyTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/sector/bondMaturityTools.ts",
+          "apps/mcp-server/src/domain/services/bondMaturityTracker.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/bctcFullTools.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/reports.ts",
+          "apps/mcp-server/src/interface/mcp/tools/financial-reports/finalizeBctcRefineTool.ts"
+        ],
+        "note": "ROUTER-CONFIRMED: creditFlowTools.ts:118-119 mortgage ??=10.5/11.0, :130-131,139-140 yoyGrowthPct ??15/??-15 reCreditRatioPct 20/19 (fabricated NHNN credit macro, no flag); energyTools.ts:65-68 grid dispatch 40/22/45/85 table labeled '(uoc tinh)' but derived stock-impact signal block carries NO caveat; bondMaturityTools.ts:91-93 + bondMaturityTracker.ts:42-91 SEED_BONDS coupons 10.0/10.5/11.0/9.0/11.5 + amounts/dates served silently when DB empty, no static_seed label; bctcFullTools.ts:226-229 + reports.ts:199-202 netMarginPct/roe/debtToEquity ??0 => false QoQ/YoY deltas vs synthetic 0 (NaN guard only grossMargin/bank form); finalizeBctcRefineTool.ts:1037 extractionConfidence ??1 => missing confidence becomes MAX at validator. FIX per architect invariant: fabricated defaults carry static_seed/estimate label propagated to derived signal OR fail-loud; ??0 deltas suppress (not emit false delta); extractionConfidence missing => low/0 not max (AC1).",
+        "reconcile_note": "S3 sector/financial fabricated-input flags: 2873b6c3 (null/estimate/seed flags) + 1473f812 (bond-seed banner). DONE.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "id": "BA-DSI",
+        "task_id": "BA-DSI",
+        "title": "Requirement spec for DATA-SERVE-INTEGRITY (per-zone, after architect brief)",
+        "summary": "Requirement Spec for DATA-SERVE-INTEGRITY sprint",
+        "type": "SPRINT-L",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE",
+        "priority": "high",
+        "zone": "multi",
+        "owner": "ba",
+        "depends": "DSI-ARCH",
+        "note": "Decompose the architect DATA-SERVE-INTEGRITY invariant brief into per-zone acceptance specs for DSI-S1-SLA/S1-MACRO/S1-FE-TYPE (apps/mcp-server), DSI-S2-PRICE (apps/stock-price), DSI-S3-SECTOR-FIN (apps/mcp-server). Carry the 6 structural acceptance criteria + router-confirmed file:line findings verbatim — evidence, not to be re-discovered. | DONE 2026-06-04: docs/handoffs/DSI-BA-spec.md. 6 tasks (S1-SLA/S1-MACRO/S1-FE-TYPE/S2-PRICE/S3-SECTOR-FIN/LATENT-BACKLOG). No PO blockers. next: dev-mcp-server DSI-S1-SLA.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-FRED-EFFR-STALE",
+        "title": "FRED EFFR stale since 2026-05-28 (>96h bound) → macro-indicators fixture fallback (5.33) triggers; earnYield also stale (>26h). Investigate FRED/fred_series_daily ingest pipeline — this is the WHY behind the carry suppression now showing UNKNOWN.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/mcp-server+vps",
+        "note": "DONE-LIVE-VERIFIED 2026-06-04 (commit 3f1fbddb, dev-mcp-server). Root: fredEffrIorb.ts used Akamai-WAF-blocked fred.stlouisfed.org/graph (504/socket-closed at this IP; documented 2026-05-13 recon, fetcher built w/ wrong URL). Fix: api.stlouisfed.org/fred/series/observations JSON + FRED_API_KEY(env,fail-loud) + incremental MAX(date). ops rebuilt+triggered: EFFR 2026-05-28->2026-06-03 live. ROUTER LIVE-VERIFIED get_macro_snapshot: fedFundsRate 3.62 (was 5.33 fixture), carrySpread +1.38, regime NEUTRAL (was FII_OUTFLOW_RISK then UNKNOWN), is_estimate:false source_tier:1. Macro carry signal RESTORED. Recon doc docs/mainserver-sources/fred-effr/recon.md.",
+        "depends_on": null,
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-MACRO-INDICATORS-MISSCOPE",
+        "title": "Architecture correction: macro-indicators Go container is DEPLOYED (Up 45h) + IS the live serving path for get_macro_snapshot.signals (clients.ts->:5004). PO zone_correction (route to dev-mcp-server, 'macro-indicators not-deployed Go plane') was FALSE. DSI-S1-MACRO TS fix hit the text-block path only; live regression fixed by Go commit 09e93d76.",
+        "type": "DOC",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE",
+        "priority": "P2",
+        "size": "S",
+        "zone": "docs/architecture-briefs",
+        "note": "Record in a brief: macro-indicators IS deployed+serving; correct future macro serving-path fixes to dev-macro-indicators (Go) not dev-mcp-server (TS). Recurring-bug-escalation: architect DSI brief mis-located the layer.",
+        "depends_on": null,
+        "claimed_by": "dev-team",
+        "claimed_at": "2026-06-04T22:15:50Z",
+        "done_note": "doc correction committed 1f8628a0; macro-indicators reclassified LIVE (R-4 HOT), §2 SBV tier:2 ruling final.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "DSI-CONSUMER-HONORS-ISESTIMATE",
+        "title": "Consumers (chef/unified-agent + fb-market-poster) must READ the served carry/yield field (now null/is_estimate) and NEVER recompute a spread/regime from raw fedFundsRate/vndDepositRate. FB posts 06-02/06-04 narrated false 5.0-5.33=-0.33 FII-outflow despite serve-layer suppression. This is the ACTUAL fix for the operator's 'FB macro was wrong' complaint.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE",
+        "priority": "P1",
+        "size": "M",
+        "zone": "docs/agents (flow .md) + verify no code recompute",
+        "owner": "agent-father (flow edits) + dev-mcp-server (if any tool-side recompute)",
+        "note": "ROOT of operator symptom. Serve layer correctly suppresses carrySpread->null + is_estimate=true (router live-verified), but the response STILL exposes raw fedFundsRate=5.33 + vndDepositRate=5, and consumers recompute. Evidence: fb-post-2026-06-02 L11/L23/L27 (chenh lech am 0,33 / rui ro dong ngoai) + fb-post-2026-06-04 L19/L31 (-0,33 diem phan tram). chef.md L188/L193 carry example prose hardcodes FII_OUTFLOW_RISK + carry -33bp as template. FIX: (1) chef.md + market-analysis.md + fb-market-poster flow MUST consume served carry.regime/carrySpread verbatim; when is_estimate=true OR carrySpread=null -> OMIT the carry narrative entirely (no recompute, no template FII-outflow). (2) Scrub chef.md L188/L193 example prose of literal FII_OUTFLOW_RISK/-33bp so it can't leak as a template. (3) Consider serve-side: when is_estimate=true, null out the raw fedFundsRate/vndDepositRate in the carry object too (defence-in-depth so a naive consumer can't recompute). Verify by raw-reading next FB post macro paragraph + grep chef render for recompute. | DONE 2026-06-04 agent-father: (1) chef.md Step 6.5 hardcoded FII_OUTFLOW_RISK/-33bp example replaced with neutral gap example; carry provenance rule added (is_estimate=false AND carrySpread!=null required before carry narrative); (2) fb-market-poster/flow/main.md STEP 1b adds get_macro_snapshot call + $carry_usable flag; STEP 3 hard rule added blocking rate-differential/FII narrative when $carry_usable=false.",
+        "depends_on": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-06-04T20:05:28Z",
+        "completed_at": "2026-06-04T20:30:00Z",
+        "completed_by": "agent-father",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "DSI-S2-PRICE-TS-GAP",
+        "title": "yahooFinance.ts is the LIVE price serve path (Go stock-price container NOT running). It emits no per-symbol is_estimate/staleness and hardcodes cnyVndRate=0 with no provenance — DSI-INV-1 violation on the live path. The shipped DSI-S2-PRICE Go code is correct but LATENT.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/mcp-server",
+        "owner": "dev-mcp-server",
+        "note": "QA C-2. get_market_snapshot (active price tool) routes via mcp-server yahooFinance.ts, NOT the Go stock-price service (port 5000 = AirTunes, container absent + not in host_runtime_set). yahooFinance.ts:315 cnyVndRate=0 always, no is_estimate; response source_tier:2 but no per-symbol staleness/is_estimate. FIX: add is_estimate+staleness to yahooFinance.ts commodity snapshot output; label cnyVndRate=0 as source_tier:4/is_estimate:true. SECONDARY decision (defer): leave Go stock-price latent (TS is the accepted live path) vs deploy it — recommend ACCEPT TS as path (host-safety, do not deploy more Go services). Do NOT start the Go container.",
+        "depends_on": null,
+        "triaged_by": "po",
+        "triaged_at": "2026-06-04T20:05:28Z",
+        "done_note": "DONE 2026-06-04 (54634eb2, dev-mcp-server). DSI-INV-1 type-honesty: CommoditySnapshot.cnyVndRate number→null; CNHVND=X 404s permanently so serving 0-as-live was the violation. SCOPE TRUTH (verify-raw): ZERO live readers found — no runtime/DB behavior change (DB column still gets 0 via ?? 0 NOT-NULL guard); fix is compile-time type-safety + future-consumer honesty only, no container rebuild needed. Deeper dead-data root-cause (remove field+column) → FU-CNYVND-DEAD-FIELD-REMOVE. tsc clean, 0 new test failures.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-SBV-DEPOSIT-PROVENANCE-GO",
+        "title": "macro-indicators Go carry treats SBV vndDepositRate (5.0, hardcoded — SBV portal dead) as live (is_estimate:false, source_tier:1) because the daily sbv write stamps fetched_at=now. carry.is_estimate:false + dataSource:live slightly over-claim vs DSI-INV-1 / BA-spec FR-MAC-2 (SBV fallback => is_estimate). Judgment call: administered policy rate (tier-2) vs fixture (tier-4) — architect/PO to rule. yield already correctly flags is_estimate:true.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/macro-indicators",
+        "note": "Discovered during FRED live-verify: with EFFR fresh, carry.is_estimate flipped to false but vndDeposit (SBV 5.0) is a permanent hardcoded fixture.",
+        "depends_on": null,
+        "claimed_by": "dev-team",
+        "claimed_at": "2026-06-04T22:15:50Z",
+        "done_note": "code fb1439a6 (carry+yield source_tier 1→2); ops-rebuilt macro-indicators; LIVE-VERIFIED /snapshot carry source_tier=2 is_estimate=false regime=NEUTRAL spread=+1.38.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "CARRY-YIELD-SINGLE-SIGNAL-FIXTURE",
+        "title": "LIVE DSI-INV-1 VIOLATION + true F-CARRY-CORRUPT root on single-signal path: GET /carry-trade-signal (get_carry_trade_signal tool) and GET /yield-spread-signal (get_yield_spread_signal tool) serve HARDCODED fixture consts (handlers_carry.go carryFixtureFedFundsRate=5.33/VNDDeposit=4.7/computedAt=2026-05-23; handlers_yield.go earningYield=8.2/deposit=4.7) bypassing the live CarryYieldInputsPort+market.db that /snapshot uses, with NO source_tier and NO is_estimate. Consumers calling these registered MCP tools get the stale 5.33 FII_OUTFLOW_RISK carry that contradicts /snapshot's live 3.62/NEUTRAL/tier:2. Fix = rewire both handlers to the live usecase/port + buildCarryDTO/buildYieldDTO provenance (source_tier, is_estimate, fixture-suppression), OR consolidate onto the /snapshot computation. Found by router raw-verify this tick (2026-06-05); the prior 'F-CARRY-CORRUPT fixed' claim verified /snapshot only.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE-LIVE-VERIFIED",
+        "priority": "P1",
+        "size": "M",
+        "zone": "apps/macro-indicators",
+        "claimed_by": "dev-team",
+        "claimed_at": "2026-06-04T22:33:53Z",
+        "depends_on": null,
+        "done_note": "Option B consolidate: B-1 3d4384e3 (Go: deleted handlers_carry/yield.go fixture consts + endpoints, 404 guard test), B-2 02498635 (TS: get_carry_trade_signal+get_yield_spread_signal POST /snapshot, surface provenance). ops rebuilt macro-indicators(cff9799a)+mcp-server(c6bd90d9). LIVE-VERIFIED via gateway: get_carry_trade_signal=NEUTRAL/fed3.62(not5.33)/tier2/is_estimate:false; get_yield_spread_signal=CHEAP/tier4/is_estimate:true(honest); /carry-trade-signal+/yield-spread-signal=404. True F-CARRY-CORRUPT root on single-signal path eliminated.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FU-MACRO-SNAPSHOT-TEST-1881A",
+        "title": "1881a-source-tier.test.ts: 2 pre-existing get_macro_snapshot failures (AC-3 source_tier=2/text-field/fetchedAt + AC-8 source_tier-first-key-in-wrapper). NOT caused by CARRY-YIELD-SINGLE-SIGNAL-FIXTURE (failed identically at parent 02498635^: 5 fail pre, 2 fail post — B-2 fixed the 3 carry/yield ones). get_macro_snapshot wrapper test needs the /snapshot mock or live container; isolate + fix the macroTools.ts get_macro_snapshot wrapper test setup.",
+        "type": "FIX",
+        "sprint": "DATA-SERVE-INTEGRITY",
+        "status": "DONE",
+        "priority": "P3",
+        "size": "S",
+        "zone": "apps/mcp-server",
+        "depends_on": null,
+        "done_note": "DONE (commit 260655e3, 2026-06-05). get_macro_snapshot adopted the AC-3 JSON wrapper {source_tier first, text, fetchedAt}; source_tier derived from signals.carry.source_tier (honest passthrough, not hardcoded). Router-verified: 1881a 20/0 (was 18/2), siblings 1423c+1570b 38/0 no-regress, tsc exit 0, test file untouched, commit clean (no .env/no force-add). LIVE-PENDING: mcp-server serves old shape until next rebuild (no dedicated rebuild for a P3 provenance-wrapper at unattended tick). Worst-of-tier refinement → FU-MACRO-SNAPSHOT-TIER-WORSTOF P3.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "FE-HEADER-SSOT",
+        "title": "Frontend: per-page title headers diverge across dashboard.* pages (each hand-rolls its own <h1>+wrapper). Extract ONE shared PageHeader component (SSOT/factory: title + optional subtitle + optional right actions slot), replace every page ad-hoc header with it. ALSO: pages must be centered + 100% width/height (consistent full-viewport centered content container in the dashboard layout). Operator-requested.",
+        "type": "FIX",
+        "sprint": "FRONTEND-OPERATOR-UX",
+        "status": "DONE",
+        "priority": "P2",
+        "size": "M",
+        "zone": "apps/frontend",
+        "depends_on": null,
+        "owner": "dev-frontend",
+        "done_note": "SHIPPED+LIVE 2026-06-05. PageHeader SSOT (619093e1) + TopNav SSOT (5f660fb1, fixed / showing stale 5-item vs canonical 8-item nav) + centered full-viewport layout. 327 tests pass, tsc 0. ops rebuilt frontend (image b18f8ee7, healthy); / serves 8-item nav incl BCTC Eval/Inspect/Orchestration verified live.",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T11:11:51.348078+00:00"
+      },
+      {
+        "task_id": "BCTC-CURRENT-404-INVESTIGATE",
+        "title": "Current-season Q1-2026 bctcPdfPull 10/10 HTTP 404 at 18:30Z — verify VPS cache coverage for current season (may be thin/stale, distinct from SSL -k issue)",
+        "type": "SPIKE",
+        "owner": "ops",
+        "status": "RESOLVED-BY-SSL-FIX",
+        "size": "S",
+        "zone": "infra-vps",
+        "priority": "high",
+        "note": "ops BCTC-HIST-FETCH-VERIFY found 10/10 current-season 404s; prior 8 done so endpoint was reachable; investigate whether VPS cache went thin",
+        "disposition": "RESOLVED-BY-SSL-FIX (PO router raw-verify 2026-06-05T11:15Z): the 10/10 current-season Q1-2026 bctcPdfPull 404 storm was the owa.hnx.vn incomplete-TLS-chain bug (curl exit 60 -> http 000/404), fixed by e22427aa (-k on HNX curl) 2026-06-01. LIVE PROOF: list_stored_pdfs most-recent = 2026-06-01 CTG_2026_Q1.pdf (a Q1-2026 PDF landed ON the fix date); Q1-2026 PDFs present for ACB/GAS/EIB/DHG/FPT/CTG; get_bctc_full FPT serves 2026-Q1 refined. Current-season fetch self-healed. Distinct from BCTC-HIST-VPS-BACKFILL (pre-Q4-2025 cache gap, stays DEFERRED-INFRA/ops).",
+        "resolved_at": "2026-06-05T11:16:27Z"
       }
     ],
     "in_progress": []
