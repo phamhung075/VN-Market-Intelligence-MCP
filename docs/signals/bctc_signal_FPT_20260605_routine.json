@@ -1,0 +1,23 @@
+{
+  "ticker": "FPT",
+  "signal_type": "bctc_signal",
+  "quarter": "Q1-2026",
+  "mode": "routine",
+  "beat_miss": null,
+  "net_profit_delta_pct": null,
+  "product": "IT services, software exports (FPT Software), telecom (FPT Telecom), education (FPT Edu), retail IT (FPT Retail)",
+  "customer": "Enterprise IT buyers domestically and offshore (Japan/US), SME telecom subscribers, retail consumers",
+  "ops": "Net revenue 12,480ty VND; net margin 19.8%; OCF -2,847ty vs NI +2,477ty (Q1 seasonal working capital build, 4Q divergence check DATA-COVERAGE-LIMITED); PE 13.8 at -20% sector discount, ROE 28.3% vs sector 10.6%",
+  "mgmt": "FY guidance track record consistent; no insider selling this cycle; foreign net +168K shares in 5 sessions (outperforming sector); NVIDIA AI partnership catalyst active (LOW alert 2026-06-05)",
+  "cycle": "c025",
+  "cycle_ts": "2026-06-05T21:02Z",
+  "signal_ids": [5125],
+  "regime": "NEUTRAL",
+  "max_deposit_rate": 5.0,
+  "ey_spread_pp": 2.25,
+  "valuation_verdict": "FAIR",
+  "esc2": "PASS",
+  "esc3": "DATA-COVERAGE-LIMITED",
+  "trick_confidence": "none",
+  "escalation_status": "NO_ESCALATION"
+}
