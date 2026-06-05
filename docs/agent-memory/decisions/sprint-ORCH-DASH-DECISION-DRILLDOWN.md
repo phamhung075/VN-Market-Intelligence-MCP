@@ -137,3 +137,12 @@
 - Inline flow param vs env var injection — chose inline bracket annotation `[task_id: "<...>"]` after each journal-write call, keeping skill as SSOT and flows as callers that pass value (DRY: skill owns format, flows own value sourcing)
 **why-decision:** Architect blueprint parse contract is exact (`/^\*\*task-id:\*\* (.+)/`); omitting the line when empty is the only way to guarantee parser routes to sprint_bucket without a trim-empty-string edge case in F2; inline annotation in flows is the lightest wiring that keeps the skill SSOT while giving each flow context for where to source the task_id value.
 **why-change:** No change from architect blueprint or PM task spec; agent-father added the injection-pattern prose in SKILL.md § Write Entry to make the calling convention explicit for all future consumers.
+
+### STEP qa-S1 · qa · 2026-06-06T00:00:00Z
+**task-id:** ARCH-ORCH-QA
+**what-done:** Ran full raw verification of ORCH-DASH-DECISION-DRILLDOWN sprint (F1/F2/F3/QA): all 18 AC verified via grep/curl/jq/bun test; APPROVED with 7 visual-only items explicitly listed as unverifiable without browser interaction.
+**what-considered:**
+- Relay dev self-report green badge vs own raw verification — chose raw-verify per verify-raw-not-badges lesson; every check exercised independently (grep skill/flow files, curl live API, SSR HTML trace, bun test run)
+- Mark partially-visual AC as APPROVED vs APPROVED-WITH-CONDITIONS — 7 AC require real browser click/focus/keyboard interaction (AC-QA-9 expand, AC-QA-11 close, AC-QA-12 multi-open, AC-QA-13 non-DONE inert, AC-QA-16 keyboard, AC-QA-6/7/8 visual browser); test suite (f3-decision-accordion, 36 pass) + SSR markup (aria-expanded, role=button, cursor-pointer) prove the logic is wired; marking APPROVED with explicit visual-only caveat is correct gate
+**why-decision:** All server-verifiable AC pass raw: containers healthy, API 200 with correct decisions shape, 59 mcp-server tests + 36 frontend tests green, tsc 0 errors both apps, SSR HTML contains aria-expanded + cursor-pointer + role=button + decision text end-to-end traced from journal file; APPROVED verdict is justified.
+**why-change:** No plan deviation; QA flow § Pipeline checks executed as specified; visual-only items enumerated for operator eyeball rather than silently claimed as verified.

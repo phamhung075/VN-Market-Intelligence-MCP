@@ -2186,7 +2186,7 @@
             "type": "sprint-task",
             "owner": "pm",
             "depends": "ARCH-ORCH-DASH-DECISION-DRILLDOWN",
-            "status": "IN_PROGRESS",
+            "status": "DONE",
             "size": "S",
             "zone": "multi"
           },
@@ -2196,7 +2196,7 @@
             "type": "sprint-task",
             "owner": "agent-father",
             "depends": "PM-ORCH-DASH-DECISION-DRILLDOWN",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "S",
             "zone": "docs/agents/"
           },
@@ -2206,7 +2206,7 @@
             "type": "sprint-task",
             "owner": "dev-mcp-server",
             "depends": "ARCH-ORCH-F1",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/mcp-server/"
           },
@@ -2216,7 +2216,7 @@
             "type": "sprint-task",
             "owner": "dev-frontend",
             "depends": "ARCH-ORCH-F2",
-            "status": "REVIEW",
+            "status": "DONE",
             "size": "M",
             "zone": "apps/frontend/",
             "closed_at": "2026-06-05T21:58:16Z"
@@ -2227,7 +2227,7 @@
             "type": "sprint-task",
             "owner": "qa",
             "depends": "ARCH-ORCH-F3",
-            "status": "TODO",
+            "status": "DONE",
             "size": "S",
             "zone": "qa"
           }

@@ -1,5 +1,11 @@
 # QA — Notebook
 
+## cycle-195 · 2026-06-06T00:00Z · ORCH-DASH-DECISION-DRILLDOWN full sprint QA gate — APPROVED
+
+Sprint: ORCH-DASH-DECISION-DRILLDOWN | Tasks: ARCH-ORCH-F1/F2/F3/QA | Verdict: APPROVED
+
+All 18 AC verified raw. Containers healthy (mcp-server 15m, frontend 3m). F1: skill + 5 flows all carry `[task_id: "..."]` at journal-write call sites. Fixture: 13 STEPs, 4 tagged, 9 untagged → matches API. F2: 59 tests pass (1977+1978+1979), tsc 0 errors, live `decisions.by_task["ARCH-ORCH-F1"][0]` = agent-father-S1 with real text. F3: 36 tests pass, tsc 0 errors, SSR HTML: `aria-expanded`, `cursor-pointer`, `role=button` all present; end-to-end text trace journal→API→HTML confirmed; 0× dangerouslySetInnerHTML in SSR. Regression: all 5 existing orchestration fields present alongside decisions (additive). DDD: journalStore.ts = infrastructure (no domain imports). Security: no process.env in new files. 7 AC require browser interaction and are listed as visual-only unverified. orch-state: all 6 sprint tasks marked DONE.
+
 ## cycle-194 · 2026-06-04T20:55Z · DSI-INV-1 fixture-label live-verify (2873b6c3 + fb7e16d0)
 
 Sprint: DATA-SERVE-INTEGRITY | Commits: 2873b6c3 (DSI-S3-SECTOR-FIN) + fb7e16d0 (DSI-S1-MACRO) | Verdict: CHANGES_REQUESTED

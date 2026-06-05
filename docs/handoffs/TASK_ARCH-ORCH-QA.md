@@ -190,3 +190,94 @@ jq '.head | keys | sort' /tmp/orch_existing.json
 - Existing orchestration fields unchanged
 - Write result to `docs/agent-memory/decisions/sprint-ORCH-DASH-DECISION-DRILLDOWN.md` with QA sign-off (optional document, not required; passed criteria suffice)
 - Return status block: APPROVED or APPROVED-WITH-CONDITIONS + any cosmetic/perf notes
+
+---
+
+## [QA] Review Record — 2026-06-06
+
+**Verdict: APPROVED**
+**Reviewer:** qa
+**Sprint:** ORCH-DASH-DECISION-DRILLDOWN
+**Tasks reviewed:** ARCH-ORCH-F1, ARCH-ORCH-F2, ARCH-ORCH-F3, ARCH-ORCH-QA
+
+### Per-AC Results
+
+| AC | Description | Result | Method |
+|---|---|---|---|
+| AC-QA-1 | mcp-server container running | PASS | `docker ps` → Up 15m healthy |
+| AC-QA-2 | frontend container running | PASS | `docker ps` → Up 3m healthy |
+| AC-QA-3 | `/api/orchestration` returns 200 JSON | PASS | `curl localhost:3000/api/orchestration` → 200 |
+| AC-QA-4 | `decisions` field present, is object | PASS | `jq '.decisions | type'` → "object" |
+| AC-QA-5 | `by_task`/`sprint_bucket` keys match journal | PASS | by_task has ARCH-ORCH-F1/F2/F3/PM-ORCH-DASH; sprint_bucket has 9 untagged entries matching journal file |
+| AC-QA-6 | Page loads without errors | VISUAL-ONLY | SSR HTML returns 200; no error markup visible in HTML; browser console not verifiable |
+| AC-QA-7 | ORCH-DASH sprint + tasks displayed | VISUAL-ONLY | SSR HTML contains task IDs and sprint references; visual rendering requires browser |
+| AC-QA-8 | DONE rows: cursor-pointer + chevron | PASS (partial) | SSR HTML: 11× `cursor-pointer`, 10× `role="button"`, `▾` chevron in component code; click affordance is visual-only |
+| AC-QA-9 | Click DONE row → accordion expands | VISUAL-ONLY | Client-side toggle; f3 unit tests (36 pass) prove toggle logic; SSR can't exercise click |
+| AC-QA-10 | STEP entries display all 6 fields | PASS | `curl localhost:3000/api/orchestration` → ARCH-ORCH-F1 entry has all 8 DTO fields; SSR HTML contains decision text end-to-end traced from journal |
+| AC-QA-11 | Click same row again → closes | VISUAL-ONLY | f3 test "toggle removes task ID" passes; browser interaction required |
+| AC-QA-12 | Multi-open: both rows stay open | VISUAL-ONLY | f3 test "both remain open — multi-open pattern" passes; browser interaction required |
+| AC-QA-13 | Non-DONE rows: no accordion | VISUAL-ONLY | Only DONE tasks in DoneTaskGroup (code path verified); visual inertness requires browser hover |
+| AC-QA-14 | DONE task with no decisions → empty state | PASS | SSR HTML contains "No decisions recorded for this task." (1× present) |
+| AC-QA-15 | Sprint-level entries → fallback label | PASS | f3 test "resolves to sprint-steps when by_task empty but sprint_bucket has entries" passes; component renders "Sprint-level decisions" label |
+| AC-QA-16 | Keyboard Tab+Enter/Space navigation | VISUAL-ONLY | tabIndex={0} + onKeyDown handler in component source; keyboard behavior requires browser |
+| AC-QA-17 | All text renders plain (no HTML/markdown) | PASS | `grep dangerouslySetInnerHTML` → 0 in SSR HTML; `**` chars in SSR are inside embedded JSON payload (window.__remixContext script), not DOM display nodes |
+| AC-QA-18 | Existing fields unchanged, `decisions` additive | PASS | `jq '{has_head, has_task_board, has_signal_queue, has_sprint_goal, has_decisions}'` all true; decisions alongside existing fields |
+
+### F1 Wiring Verification
+- `.claude/skills/decision-journal/SKILL.md` — `**task-id:**` field present in § Write Entry template and § Rules: PASS
+- `docs/agents/developer/flow/main.md` — `[task_id: "..."]` injection at journal-write step: PASS
+- `docs/agents/developer/flow/microservice-main.md` — same injection: PASS
+- `docs/agents/architect/flow/main.md` — same injection: PASS
+- `docs/agents/qa/flow/main.md` — same injection: PASS
+- `.claude/skills/cowork-end-cycle/SKILL.md` — task_id injection at journal flush: PASS
+- Fixture `sprint-ORCH-DASH-DECISION-DRILLDOWN.md` — 13 STEP blocks, 4 with task-id (ARCH-ORCH-F1, ARCH-ORCH-F2, ARCH-ORCH-F3, PM-ORCH-DASH-DECISION-DRILLDOWN), 9 untagged: PASS
+
+### F2 API Verification
+- `journalStore.ts` exists, 301L, infrastructure layer, zero domain/application imports, zero process.env: PASS
+- `getDecisionsForSprints` with module-level mtime cache: PASS
+- `by_task["ARCH-ORCH-F1"][0]` → agent-father-S1 with real what_done/why_decision text: PASS
+- `sprint_bucket["ORCH-DASH-DECISION-DRILLDOWN"][0]` → po-S1 with null task_id: PASS
+- Test 1977: extended, passes; Test 1978: 26 tests pass; Test 1979: 13 tests pass → 59 pass / 0 fail total
+- mcp-server tsc: 0 errors
+
+### F3 Frontend Verification
+- `dashboard.orchestration.tsx` — StepDto/DecisionsDto types, DoneTaskGroup multi-open Set state, DecisionAccordion, StepCard, sprintId threading: PASS (code read)
+- SSR HTML: `aria-expanded="false"` (12×), `role="button"` (10×), `cursor-pointer` (11×), `data-testid="done-task-rows"` (1×): PASS
+- End-to-end text trace: agent-father-S1 `what_done` → journal file → API JSON → SSR HTML: PASS
+- `dangerouslySetInnerHTML` in SSR HTML: 0 occurrences: PASS
+- f3-decision-accordion.test.ts: 36 pass / 0 fail; 1937-decision-logic.test.ts included: PASS
+- frontend tsc: 0 errors
+
+### Test Suite Summary
+- mcp-server `bun test` (full suite): exit 0 — PASS
+- mcp-server 1977+1978+1979: **59 pass / 0 fail**
+- frontend f3+1937: **36 pass / 0 fail**
+- mcp-server `bun tsc --noEmit`: **0 errors**
+- frontend `bun tsc --noEmit`: **0 errors**
+
+### DDD Compliance
+- `journalStore.ts` → infrastructure layer (file I/O only, no domain/application imports): PASS
+- `orchestrationHandler.ts` → interface layer (imports from infrastructure only): PASS
+
+### Security
+- No `process.env` in new files (`process.cwd()` is permitted — different rule): PASS
+- No `dangerouslySetInnerHTML` in accordion render path: PASS
+- No hardcoded secrets or credentials: PASS
+
+### Regression
+- All 5 existing orchestration fields (`head`, `task_board`, `signal_queue`, `sprint_goal`, `narrative`) present alongside `decisions`: PASS
+- `decisions` is purely additive: PASS
+
+### Visual-Only Unverified Items (require operator browser eyeball)
+The following AC cannot be mechanically verified without a browser session. Logic is proven via unit tests and SSR markup, but the rendered interaction requires visual confirmation:
+
+1. **AC-QA-6** — Page loads in browser without console errors
+2. **AC-QA-7** — Sprint name + task list visually renders correctly
+3. **AC-QA-8 (partial)** — Chevron icon visible on hover (cursor-pointer is in HTML; chevron rotation visual)
+4. **AC-QA-9** — Click on DONE task row expands accordion (toggle wired; expansion animation/rendering visual)
+5. **AC-QA-11** — Click same row again closes accordion
+6. **AC-QA-12** — Multi-open: two DONE rows independently expanded simultaneously
+7. **AC-QA-13** — Non-DONE rows visually inert (no pointer cursor, no chevron on hover)
+8. **AC-QA-16** — Keyboard Tab+Enter/Space opens/closes accordion
+
+**Recommendation to operator:** open `http://localhost:3001/dashboard/orchestration`, find a DONE task row (e.g. ARCH-ORCH-DASH-DECISION-DRILLDOWN), click it, confirm accordion expands with decision text. All logic and data are verified mechanically — this is purely visual confirmation.
