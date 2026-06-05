@@ -1,20 +1,18 @@
 # PO Notebook
 
-## c · 2026-06-05T20:26Z — late tick: EMIT-DARK CLOSED-LIVE-VERIFIED; BATCH(1) market-watcher offhours dispatch gap; 2 backfill FUs queued
+## c · 2026-06-05T21:06Z — KICKOFF sprint ORCH-DASH-DECISION-DRILLDOWN (user feature request)
 
-**Tick.** dev-team 20:20Z, late. 4 pendingSignals. Telegram clean, 0 unresolved reports, TNB c88 ACKed (no new dev task — CTG c025 21:00Z is the proof point).
+**Trigger.** Operator request (2 msgs): make DONE tasks on http://localhost:3001/dashboard/orchestration clickable → dropdown showing that task's Decision Journal detail. Router pre-scouted format/zones/design.
 
-**EMIT-DARK-RECURRING → DONE.** All 3 cowork FIREs tonight (19:47/20:05/20:17Z) carry pressure_mode:adaptive + full Phase-1 fields, incl. retry-after-outage through the 20:06Z mcp-server deploy-restart window. Saga closed: 3 false-fix generations (bash-unconditional ×3) → root cause = dispatcher narrates fenced bash, only call_tool executes → emit_pressure_state MCP tool was the definitif fix. Orch-state row closed with evidence.
+**Sprint goal written.** ORCH-DASH-DECISION-DRILLDOWN, lead=architect, status=active. Three legs: F1 join-key design, F2 server-side parse of sprint-*.md → structured JSON on GET /api/orchestration, F3 Remix accordion UI on DONE rows. First task BA-ORCH-DASH-DECISION-DRILLDOWN (SPRINT-S, zone:multi) appended to backlog (23→26 incl. 2 prior FUs). Sprint umbrella lock claimed (task:ORCH-DASH-DECISION-DRILLDOWN, claimed:true).
 
-**BATCH(1): FIX-MW-OFFHOURS-DISPATCH.** Cowork flow-gap signal: market-watcher-offhours slot fires every 4h but main.md dispatch table EXITs on "any other time" → no-op spawn at 20:00/00:00 UTC + weekends. DECIDED FIX (not slot-suppress): cycle.md already carries designed off-hours infra (AutoCure c47 duplicate guard explicitly for "off-hours crons re-scan every N hours", off-hours per-cycle commit note) and knowledge.md documents the off_hours 0-*/4 schedule — main.md "any other time → EXIT" is the drift. Suppressing would orphan the contract and lose overnight macro coverage (Brent/USD-VND/gold/BDI move during VN night; tonight's gold -2.88σ is exactly this window). Route agent-father (agent .md zone, agent-md-factory applies).
+**CENTRAL DESIGN DECISION handed to architect (confirm, not PO-decide).** Journal STEP blocks are tagged `<agent-id>-S<N>` — NO task-id today, so no join key from a decision to a task_board task. Options: (a) add optional task-id to STEP format + re-inject at journal-write step in dev/qa/architect/cowork flows (precise, forward-only, needs agent-father) vs (b) sprint-group-only (coarse, works with existing data). Forwarded router rec = BOTH (optional task-id for forward precision + sprint fallback bucket for legacy back-compat).
 
-**Backfill FUs queued (head carry-over from FIX-CTG-PDF-MISLINK 77092007):** FU-BACKFILL-REAL-FILENAMES + FU-BACKFILL-MULTIPLE-COVER-LETTERS → BACKLOG P3, sprint BCTC-EXTRACT-QUALITY (kin FU-CTG-DISCOVERY-FILENAME-FILTER). No new sprint at a late tick; fold candidates if a BCTC-FETCH-CORRECTNESS sprint ever opens.
+**Scope fenced tight (one feature).** scope_out: UI editing, non-DONE expansion, journal backfill, new storage backend, auth. Anti-patterns flagged in goal: no raw-markdown-to-browser (parse server-side — data-serve-integrity lesson: verify WHICH layer serves /api/orchestration before dispatch, likely apps/mcp-server not the not-deployed Go plane); no DONE-off-a-green-badge; new task-id field delivers ZERO live join until agents re-flow it (derived-needs-reflow lesson) → fallback bucket is mandatory back-compat.
 
-**FYI signals (no action):** mcp-server clean-exit 20:06Z = deploy recreate window, router-resolved. news-scout c54 DIAL_REFUSED cycle covered by c55. Leader-lock orphan-recovery worked 2× tonight — positive.
+**Orch-state write.** read-full → jq → `[ -s tmp ]` + 3-key sentinel (new sprint_id AND exactly-one BA task AND head still==FIX-MW-OFFHOURS-DISPATCH) → atomic mv. Did NOT touch .head — dev-team's in-flight FIX-MW pointer left intact. Rationale in journal sprint-ORCH-DASH-DECISION-DRILLDOWN.md (po-S1/po-S2).
 
-**Orch-state writes (atomic, sentinel-guarded temp→rename):** EMIT-DARK-RECURRING status DONE + verified_at + resolution append; 2 new backlog rows; backlog 23→25.
-
-**Carry-over (next tick verify-raw):**
-- After FIX-MW-OFFHOURS-DISPATCH ships + cowork refresh: next market-watcher-offhours fire (00:00Z or 04:00Z) returns a real cycle.md RETURN block, NOT "outside-window"; no duplicate price_anomaly on unchanged closing prices (guard cycle.md Step 4 must hold).
-- bctc-analyst c025 (21:00Z): CTG extraction proof point — get_bctc_full(CTG) should serve real B02-TCTD after refine. If still DATA_INSUFFICIENT → escalate.
-- FU-CTG-REFINE-PICKUP (BATCHED): pending-refine list should shrink from 7 as refine_bctc_md slots fire.
+**Carry-over (next tick / on BA return):**
+- Review BA spec when it returns (→ po/review-ba-spec.md). Verify it names the LIVE serving layer for /api/orchestration and pins the BOTH join-key decision (or architect's confirmed alternative).
+- At QA signoff: raw-verify the LIVE dashboard myself (click a DONE task, confirm dropdown renders STEP fields, confirm empty state on a no-entry task, confirm loader payload is JSON not markdown) — not a green badge. Confirm touched container rebuilt.
+- Prior tick still open: FIX-MW-OFFHOURS-DISPATCH (dev-team, head); CTG refine pickup (FU-CTG-REFINE-PICKUP); bctc-analyst CTG proof point.

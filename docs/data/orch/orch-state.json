@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-05T05:06:56Z",
-  "_updated_by": "agent-father",
+  "_updated_at": "2026-06-05T21:06:28Z",
+  "_updated_by": "po",
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-MW-OFFHOURS-DISPATCH",
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T20:26:03Z",
+    "_updated_at": "2026-06-05T21:06:28Z",
     "_updated_by": "po",
     "active_sprints": [
       {
@@ -2542,6 +2542,22 @@
         "desc": "Residual weakness #2 from FIX-CTG-PDF-MISLINK (77092007): cover-letter skip + prefer-consolidated logic handles the single-cover-letter case; when a ticker-quarter has MULTIPLE cover-letter/non-report PDFs the heuristic can still pick a wrong one. Harden selection to exclude every cover-letter candidate and require a consolidated-report positive match (else leave row PENDING loudly). AC: synthetic fixture with 2+ cover letters + 1 consolidated PDF heals to the consolidated PDF; 0 mislinks on corpus re-scan.",
         "source": "head-narrative carry-over FU from FIX-CTG-PDF-MISLINK, PO triage 2026-06-05T20:26Z",
         "created_at": "2026-06-05T20:26:03Z"
+      },
+      {
+        "task_id": "BA-ORCH-DASH-DECISION-DRILLDOWN",
+        "title": "Requirement spec: clickable DONE-task Decision-Journal drill-down on /dashboard/orchestration",
+        "type": "SPRINT-S",
+        "sprint": "ORCH-DASH-DECISION-DRILLDOWN",
+        "status": "TODO",
+        "size": "S",
+        "priority": "high",
+        "zone": "multi",
+        "files": [
+          "docs/data/orch/orch-state.json",
+          ".claude/skills/decision-journal/SKILL.md",
+          "docs/agent-memory/decisions/"
+        ],
+        "note": "USER REQUEST (verbatim): (1) 'i want add this decisions to task done on frontend http://localhost:3001/dashboard/orchestration' (2) 'decision appear click to task done for drop down detail'. MEANING: each DONE task on the orchestration dashboard becomes clickable; click expands a dropdown/accordion showing that task's Decision Journal STEP entries (what-done/what-considered/why-decision/why-change). BA: decompose into a REQ spec then hand to architect. THREE feature legs: (F1) JOURNAL JOIN KEY design, (F2) API parses sprint-*.md server-side -> structured JSON keyed to task-id (+ sprint fallback bucket) on GET /api/orchestration, (F3) Remix accordion UI. CENTRAL DESIGN DECISION FOR ARCHITECT: decision-journal STEP blocks are tagged '<agent-id>-S<N>' and carry NO task-id today (no join key to attach a decision to a task_board task). Architect MUST choose: (a) add OPTIONAL task-id field to STEP format + re-inject at journal-write step in developer/qa/architect/cowork flows (precise, forward-only) OR (b) group-by-sprint only (coarse, works with existing data). ROUTER RECOMMENDATION = do BOTH (add optional task-id for precise forward mapping AND keep sprint-level fallback bucket for legacy/back-compat) — architect confirms. DATA SOURCE: dashboard reads docs/data/orch/orch-state.json .task_board via GET /api/orchestration; journal entries live in docs/agent-memory/decisions/sprint-<id>.md, format SSOT .claude/skills/decision-journal/SKILL.md. ZONES: architect must LOCATE the layer serving /api/orchestration (verify WHICH layer before dispatch — data-serve-integrity lesson; likely apps/mcp-server, NOT the not-deployed Go plane) = API leg owner; dev-frontend = Remix orchestration accordion; agent-father = decision-journal skill + flow edits IF task-id field adopted. UX ACCEPTANCE (caveman-precise): only DONE tasks expand (else 'no decisions recorded'); click row -> dropdown shows STEP entries per step readably; legacy entries with no task-id still show via sprint fallback or clean empty state, no crash on missing data; markdown parsed SERVER-SIDE -> structured JSON to Remix loader (NEVER ship raw markdown to browser to regex). KEEP SCOPE TIGHT — one feature. Recent decision-journal protocol commits: f407f512, f79fc4d8, b2646b34. Sample journal: docs/agent-memory/decisions/sprint-2026-06-05.md."
       }
     ],
     "archive": [],
@@ -4031,10 +4047,21 @@
     ]
   },
   "sprint_goal": {
-    "_updated_at": "2026-06-01T22:00Z",
-    "_updated_by": "agent-father",
+    "_updated_at": "2026-06-05T21:06:28Z",
+    "_updated_by": "po",
     "_note": "Structured projection of docs/SPRINT_GOAL.md active sprint entries. Machine-shaped; free-form markdown in source.",
     "entries": [
+      {
+        "sprint_id": "ORCH-DASH-DECISION-DRILLDOWN",
+        "status": "active",
+        "vision": "From the orchestration dashboard a human can click any DONE task and read WHY it was decided that way — the task's Decision Journal trail (what-done / what-considered / why-decision / why-change) expands inline, turning the decision-journal protocol into a browsable audit surface instead of buried markdown.",
+        "scope_in": "(F1) JOURNAL JOIN KEY — architect confirms the task-id linkage design (router rec: BOTH — add an OPTIONAL task-id field to the decision-journal STEP block format for precise per-task mapping going forward, AND keep a sprint-level fallback bucket for legacy entries with no task-id). If task-id field is adopted: agent-father edits decision-journal SKILL + re-injects task-id at the journal-write step in developer/qa/architect/cowork flows. (F2) API — the layer serving GET /api/orchestration ALSO parses docs/agent-memory/decisions/sprint-*.md server-side and returns decisions as STRUCTURED JSON keyed to task-id (and/or sprint bucket) alongside .task_board; NO raw markdown shipped to browser. (F3) UI — Remix orchestration page renders each DONE task row as an expandable accordion: click reveals that task's STEP entries (what-done/what-considered/why-decision/why-change, per step, readable); empty/legacy state is clean, never crashes.",
+        "scope_out": "Editing decisions from the UI (read-only surface). Non-DONE task expansion (only DONE rows expand; non-DONE may stay inert). Backfilling task-id into existing journal entries (forward-only; legacy served via sprint fallback bucket). New journal storage backend (stays per-sprint markdown SSOT). Auth/permissions. Any change to the decision-journal WRITE discipline beyond the single optional task-id field.",
+        "success_metric": "On http://localhost:3001/dashboard/orchestration a DONE task with journal entries is clickable -> dropdown shows its STEP fields rendered readably; a DONE task with no entries shows a clean 'no decisions recorded' empty state (no crash, no raw markdown); API returns structured decision JSON (QA verifies the loader payload is JSON not markdown); if task-id field adopted, a fresh agent journal write stamps task-id and that entry maps to the correct task row; legacy no-task-id entries still surface under their sprint fallback bucket; touched serving container rebuilt; verified live by QA against the running dashboard, not a green badge.",
+        "lead": "architect",
+        "anti_pattern": "Shipping raw markdown to the browser to regex client-side (parse server-side -> structured JSON, per data-serve-integrity lesson: verify WHICH layer serves /api/orchestration before dispatching). Claiming DONE off a green badge without raw-verifying the live dashboard. Forgetting that a derived/format change (new task-id field) delivers ZERO live join value until agents actually re-flow it through the write step (derived-column-needs-reflow lesson) — hence the mandatory sprint fallback bucket for backward compat.",
+        "created_at": "2026-06-05T21:06:28Z"
+      },
       {
         "sprint_id": "ORCH-STATE-CONSOLIDATE",
         "vision": "Collapse all multi-agent orchestration state into ONE machine-readable SSOT docs/data/orch/orch-state.json, delete TASKS.md + TASKS_ARCHIVE.md + DASHBOARD.md + DASHBOARD_ARCHIVE.md, let humans read state via localhost:3001 dashboard / raw JSON.",
