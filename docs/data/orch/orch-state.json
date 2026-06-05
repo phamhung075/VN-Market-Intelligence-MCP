@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "FU-MACRO-SNAPSHOT-TEST-1881A DONE (260655e3, commit+test-verified, live-pending next mcp-server rebuild). Open P3: FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-CNYVND-DEAD-FIELD-REMOVE (needs SQLite migration — gated cycle), FU-SBV-EFFECTIVE-DATE-COLUMN, FU-RUNTIME-SET-TRUTH-RECONCILE.",
+    "next_action": "Idle 2026-06-05T01:09Z tick: 0 signals, head idle. Diagnosed FU-RUNTIME-SET-TRUTH-RECONCILE (pdf-extractor safe-reconcile; rag-service blocked on FU-RAG-DEPLOY-MEMORY host-mem decision — NOT auto-flipped, host-safety). Open P3: FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-CNYVND-DEAD-FIELD-REMOVE (migration/gated), FU-SBV-EFFECTIVE-DATE-COLUMN, FU-RUNTIME-SET-TRUTH-RECONCILE(P3a pdf safe). 1881a (260655e3) live-pending next mcp-server rebuild (container StartedAt 22:50Z < commit 00:19Z).",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T00:21:18Z",
+    "updated_at": "2026-06-05T01:11:44Z",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T00:21:18Z",
+    "_updated_at": "2026-06-05T01:11:44Z",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2818,9 +2818,11 @@
         "zone": "docs/data/system-map.json + docs/architecture-briefs",
         "owner": "ops (verify runtime intent) + system-auditor (consume)",
         "note": "macro-indicators C-1 question RESOLVED-BY-FACT: it is already in host_runtime_set.services (mcp-server/api-gateway/frontend/macro-indicators/mcp-gateway). No change needed for macro. REAL drift = pdf-extractor(Up 26h)+rag-service(Up 3h) running but marked not_deployed_by_design; capability_manifest already probes them live. DECIDE per service: intended-permanent (move to services[]) vs transient-experiment (stop). Owner ops decides intent; do NOT mass-stop (host-panic risk). This is FLEET-HOST-SAFETY sprint scope, not DSI. Supersedes the architect-brief R-4 'macro latent' assumption (already corrected by FU-MACRO-INDICATORS-MISSCOPE).",
-        "depends_on": null,
+        "depends_on": "FU-RAG-DEPLOY-MEMORY",
         "triaged_by": "po",
-        "triaged_at": "2026-06-04T20:05:28Z"
+        "triaged_at": "2026-06-04T20:05:28Z",
+        "desc": "Config-truth drift, ROUTER-DIAGNOSED 2026-06-05T01:09Z (docker ps vs system-map host_runtime_set, _last_verified stale 2026-06-02). EXACT drift: pdf-extractor (Up 32h) + rag-service (Up 8h) are RUNNING but listed not_deployed_by_design; the other 5 (stock-price/technical-analysis/kinh-dich/news-fetch/alert-engine) are genuinely absent (correct); all 5 host_runtime_set.services are Up (correct). NOT a clean flip: (a) pdf-extractor = unambiguously deployed+working (BCTC depends on it, capability_manifest pdf=live) -> SAFE to add to host_runtime_set.services + remove from not_deployed lists (also makes auditor treat its downtime as CRITICAL, which is correct). (b) rag-service = running but its deploy-vs-16GB-host-memory tradeoff is an OPEN architectural decision (FU-RAG-DEPLOY-MEMORY); blessing it into runtime_set pre-empts that + touches the kernel-panic safety constraint -> needs architect/PO call, do NOT auto-flip. Recommended split: P3a pdf-extractor reconcile (doc-only, safe, dev or doc-self-heal); P3b rag-service decision folded into FU-RAG-DEPLOY-MEMORY (architect). Also bump host_runtime_set._last_verified after the edit. Zone: docs/data/system-map.json + docs/architecture-briefs.",
+        "diagnostic_ts": "2026-06-05T01:11:44Z"
       },
       {
         "task_id": "FU-SBV-DEPOSIT-PROVENANCE-GO",
