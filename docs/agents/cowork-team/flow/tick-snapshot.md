@@ -1,4 +1,6 @@
-<!-- size-justification: 55L — Step 4.7: shared tick snapshot write. Child of main.md. -->
+<!-- size-justification: 59L — Step 4.7: shared tick snapshot write. Child of main.md.
+     FU-TICK-SNAPSHOT-EMIT-DARK hardening: both gateway calls lifted OUT of bash fence (pure bash cannot call MCP).
+     Agent pre-computes BOOTSTRAP_RESULT + MACRO_RESULT then writes stage files; bash block is pure bash. -->
 
 ## Step 4.7 — Write shared tick snapshot (L-6, 1968c-P01)
 
@@ -13,11 +15,28 @@ Only execute if WON_SLOTS is non-empty (skip on silent-exit path).
 
 **STAGING FILE LOCATIONS (critical hardening):** All scratch must land under `docs/data/`. Never use `/tmp` or paths outside the repo.
 
-```bash
-# Resolve tick key (floor-15min, same math as nominal_tick above)
-FILE_TICK=$(date -u +%H:%M)
+**Pre-step (agent-interpreted, before bash):** call the gateway to get both payloads, then write stage files:
 
-# Staging file paths — project-local only, never /tmp
+```
+FILE_TICK_PRE = shell: date -u +%H:%M
+MC_STAGE_PRE  = "docs/data/.cycle-snapshot-" + FILE_TICK_PRE + ".mc.stage"
+MACRO_STAGE_PRE = "docs/data/.cycle-snapshot-" + FILE_TICK_PRE + ".macro.stage"
+
+BOOTSTRAP_RESULT = call_tool(server="vn-market", tool="get_cycle_bootstrap",
+  arguments={"agent_name": "unified-agent"})
+# Write raw JSON string to MC_STAGE_PRE (agent writes file directly)
+write_file(MC_STAGE_PRE, BOOTSTRAP_RESULT)
+
+MACRO_RESULT = call_tool(server="vn-market", tool="get_macro_snapshot", arguments={})
+# Write raw JSON string to MACRO_STAGE_PRE (agent writes file directly)
+write_file(MACRO_STAGE_PRE, MACRO_RESULT)
+# On any tool failure or write failure: log "[cowork-team] tick-snapshot pre-step failed: <error>" and skip bash block entirely → continue to Step 4.8.
+```
+
+```bash
+# Step 4.7 — Assemble cycle snapshot from pre-staged files
+# MC_STAGE and MACRO_STAGE were written by the agent pre-step above (never inline MCP call)
+FILE_TICK=$(date -u +%H:%M)
 MC_STAGE="docs/data/.cycle-snapshot-${FILE_TICK}.mc.stage"
 MACRO_STAGE="docs/data/.cycle-snapshot-${FILE_TICK}.macro.stage"
 SNAPSHOT_FILE="docs/data/cycle-snapshot-${FILE_TICK}.json"
@@ -25,17 +44,6 @@ TMPFILE="${SNAPSHOT_FILE}.tmp"
 
 # Clean up any stale staging files (success or failure)
 trap "rm -f \"$MC_STAGE\" \"$MACRO_STAGE\"" EXIT
-
-# Call get_cycle_bootstrap once for the snapshot payload
-# Executor receives as conversation text; stage to MC_STAGE for jq --rawfile
-BOOTSTRAP_RESULT=$(call_tool(server="vn-market", tool="get_cycle_bootstrap",
-  arguments={"agent_name": "unified-agent"}))
-echo "$BOOTSTRAP_RESULT" > "$MC_STAGE"
-
-# Call get_macro_snapshot once for the macro payload
-# Executor receives as conversation text; stage to MACRO_STAGE for jq --slurpfile
-MACRO_RESULT=$(call_tool(server="vn-market", tool="get_macro_snapshot", arguments={}))
-echo "$MACRO_RESULT" > "$MACRO_STAGE"
 
 # Assemble final snapshot from staged files
 # jq --rawfile reads MC_STAGE as a raw string, --slurpfile reads MACRO_STAGE as JSON array
