@@ -1,8 +1,29 @@
 # Architect — Notebook
 
-**Last updated:** 2026-06-04 22:35 UTC | **Sprint:** DSI-EXTENSION (CARRY-YIELD-SINGLE-SIGNAL-FIXTURE)
+**Last updated:** 2026-06-05 21:30 UTC | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
 
 [3 most recent cycles retained below. Archive in git history.]
+
+## 2026-06-05T21:30Z — ORCH-DASH-DECISION-DRILLDOWN blueprint
+
+**Sprint:** ORCH-DASH-DECISION-DRILLDOWN — clickable DONE-task decision trail on /dashboard/orchestration.
+
+**Serving layer confirmed (raw read):** `apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts` exclusively. Go api-gateway :4000 not deployed. Zone F2 = dev-mcp-server.
+
+**Key rulings:**
+- JOIN-KEY: BOTH (optional `**task-id:**` line in STEP format + sprint_bucket fallback for legacy entries). Parser: task-id present → `by_task[task_id]`; absent → `sprint_bucket[sprint_id]`.
+- SPRINT-ID DISCOVERY: union of ALL sprint_goal.entries[*].sprint_id (all statuses, not just active) + task_board.active_sprints[*].id — covers just-closed sprints whose DONE tasks still show on dashboard.
+- LATENCY: per-sprint mtime cache (singleton Map in journalStore.ts); invalidated on mtime change; zero re-parse cost on 5s polling loop when no agent is writing.
+- ACCORDION UX: multi-open (Set<string> of open task IDs) — audit surface requires comparing multiple task decisions simultaneously; single-open is destructive for that workflow.
+
+**Files produced:**
+- `docs/handoffs/ORCH-DASH-DECISION-DRILLDOWN-ARCH.md` — full blueprint (file map, parser pseudocode, risk flags, PM subtask spec)
+- `docs/agent-memory/decisions/sprint-ORCH-DASH-DECISION-DRILLDOWN.md` — 4 architect STEP entries (rationale for all rulings)
+- `docs/data/orch/orch-state.json` — ORCH-DASH sprint added to active_sprints; ARCH task DONE; PM-ORCH + F1/F2/F3/QA tasks TODO
+
+**NEXT:** pm → create ARCH-ORCH-F1/F2/F3/QA subtask handoffs per PM-ORCH-DASH-DECISION-DRILLDOWN; dispatch agent-father (F1) first.
+
+**Risk to flag for PM:** R-2 (mtime cache test bleed — journalStore.ts must export `_clearCacheForTesting()`); R-1 (buildOrchestrationDto impure after F2 — inject decisionsDir path parameter for testability).
 
 ## 2026-06-04T22:35Z — CARRY-YIELD-SINGLE-SIGNAL-FIXTURE (DSI-INV-1 gap on single-signal path)
 

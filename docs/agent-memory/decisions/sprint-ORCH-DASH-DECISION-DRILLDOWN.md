@@ -53,3 +53,44 @@
 - Blocking F3 hard on F1 merge — chosen because the Remix loader type must match the new DTO field; a partial F2 deploy without the decisions key would cause a TypeScript type error in the loader
 **why-decision:** Each leg has a distinct zone owner and a clear data dependency: F1 produces the STEP format contract, F2 consumes it server-side and extends the API contract, F3 consumes the API contract client-side; this ordering eliminates ambiguity about who unblocks whom.
 **why-change:** No deviation from the intent given by the router; decomposition granularity is finer than the three rough legs in the PO task note (adds explicit acceptance criteria and DDD layer tagging per BA flow step 2).
+
+### STEP architect-S1 · architect · 2026-06-05T21:30:00Z
+
+**what-done:** Confirmed serving layer = apps/mcp-server orchestrationHandler.ts by direct code read; confirmed BOTH join-key strategies (F1 task-id field + F2 sprint fallback bucket).
+**what-considered:**
+- BA had already read orchestrationHandler.ts directly (OSC-4a, proxy chain :3001→:3000→mcp-server confirmed); re-read the live file to satisfy data-serve-integrity lesson (architect must verify, not relay BA report)
+- Go api-gateway :4000 plane — ruled out: `docker ps` context + prior sprint notes confirm it is never deployed on the 16GB host; the mcp-server path is the only live path
+- BOTH vs only-task-id vs only-sprint-bucket — BOTH is mandatory: task-id covers forward precision, sprint-bucket covers existing corpus with zero crash
+**why-decision:** Data-serve-integrity lesson mandates own raw-read of the serving file; code confirms handler + import chain match BA report exactly; BOTH join-key strategies satisfy the PO success_metric and impose zero backfill obligation.
+**why-change:** No change from BA recommendation; architect sign-off is the formal clearance for F1/F2/F3 dispatch.
+
+### STEP architect-S2 · architect · 2026-06-05T21:30:00Z
+
+**what-done:** Ruled on BLOCKER-2 (sprint-id discovery): union of sprint_goal.entries[*].sprint_id + task_board.active_sprints[*].id; expand to include recently-CLOSED sprint_goal entries (status != "active") so DONE tasks from freshly-closed sprints retain their decisions visible on the dashboard.
+**what-considered:**
+- Only task_board.active_sprints — misses sprints closed mid-session (their tasks are still DONE in the board but sprint removed from active_sprints)
+- Only sprint_goal.entries with status=="active" — same gap as above; a sprint may be closed the same day its last task is marked DONE
+- Union of sprint_goal.entries (all statuses) + task_board.active_sprints (authoritative dedup) — chosen; the superset catches the edge case; a closed sprint journal file is O(KB), negligible cost
+**why-decision:** DONE tasks are the primary feature surface; if their sprint has just been closed, they must still show decisions; union is the only strategy that has no gap; it adds at most ~5 extra journal files on a typical install.
+**why-change:** BA recommended "both" (sprint_goal + active_sprints) without specifying how to treat closed sprints; architect extends to all sprint_goal entries regardless of status, capped by file-existence guard (missing file = empty decisions, no crash).
+
+### STEP architect-S3 · architect · 2026-06-05T21:30:00Z
+
+**what-done:** Ruled on BLOCKER-3 latency / EC-6 cache: adopt per-sprint mtime cache (singleton Map keyed by absolute path + mtime) in a new journalStore.ts; synchronous parse is acceptable only if under 100ms for <600 lines; mtime cache eliminates redundant re-parses on the 5-second polling loop.
+**what-considered:**
+- Synchronous parse every GET: simple, no state; but 5-second polling x multiple journal files = repeated fs.readFileSync + string parse on every tick; unacceptable at scale even if each file is fast individually
+- Per-request async parse: adds complexity, no meaningful benefit vs sync for files <1MB
+- Singleton mtime cache (chosen): Map<path, {mtime: number, result: StepDto[]}> as a module-level constant in journalStore.ts; revalidated by fs.statSync(path).mtimeMs before serving; invalidated only when file changes; typical hit rate ~100% on 5s poll with no agent writing
+- LRU or TTL cache: over-engineered for <10 files; mtime is the natural invalidation signal
+**why-decision:** Mtime cache is the idiomatic solution for file-backed data on a polling endpoint; it caps parse overhead to one per file change rather than one per poll tick; the singleton Map pattern is already used in orchStateStore for atomic writes (consistent idiom).
+**why-change:** BA flagged EC-6 as a known risk and explicitly recommended mtime cache if architect judged parse latency unacceptable; architect judges it unacceptable at 5s poll frequency with >1 journal file loaded.
+
+### STEP architect-S4 · architect · 2026-06-05T21:30:00Z
+
+**what-done:** Decided on accordion UX: multi-open (independent per-task toggles) rather than single-open (accordion group where opening one closes others).
+**what-considered:**
+- Single-open: simpler state (one activeTaskId string), conventional accordion UX; but closing the previous entry when opening a new one is destructive for an audit use-case where operator wants to compare two decisions
+- Multi-open (chosen): each DONE task row has its own boolean `expanded` state in a Map or Set; operator can keep multiple decision trails visible simultaneously for comparison; implementation cost is essentially the same (Map vs string)
+- Modal navigation: rejected (violates FR-3-2 inline expansion requirement)
+**why-decision:** The decision-journal is an audit surface, not a menu navigation; the core operator action is "compare what two tasks decided"; single-open makes that impossible without toggling back and forth; multi-open is the only UX that serves the audit use-case natively.
+**why-change:** BA left this to architect/dev-frontend; architect decides multi-open and documents it in the handoff so dev-frontend has a clear directive rather than another open question.
