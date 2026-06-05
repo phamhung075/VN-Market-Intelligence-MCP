@@ -1,0 +1,48 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T08:46:12Z",
+    "matched_slots": [
+      "chef-eod"
+    ],
+    "won_slots": [
+      "chef-eod"
+    ],
+    "held_by_other": [],
+    "all_held": false,
+    "spawned": [
+      "docs/agents/unified-agent/flow/chef.md"
+    ],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-eod": "cron"
+    },
+    "cadence_minutes": {
+      "chef-eod": null
+    },
+    "last_fired_timestamp": "2026-06-05T08:45:59Z",
+    "last_fired_slots": [
+      "chef-eod"
+    ],
+    "last_fired_write_errors": null,
+    "classification": "FIRE",
+    "reason": "spawned",
+    "nominal_tick": "08:45",
+    "leader_lock": "claimed_fresh_stolen_expired_ttl",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 1,
+    "note": "chef-eod (guaranteed, cron 45 8) fired at 08:45Z — EOD dish, last fired 06-03 (2d gap). Leader claimed stolen:true (08:00Z lock had expired >1800s), CONFIRMING the 08:15Z false-peer theory: expired lock=clean fresh claim, alive lock=false peer-held suppression. pressure-state stale 06-03 -> legacy-mode. Flag-only carry-forwards unchanged (false-peer leader-lock, chef content-novelty, FU-CHEF-MARKER-INFLOW, pressure-emit dark)."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T08:46:12Z"
+}

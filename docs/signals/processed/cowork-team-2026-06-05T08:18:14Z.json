@@ -1,0 +1,44 @@
+{
+  "from": "cowork-team",
+  "to": "dev-team",
+  "type": "cowork-fire",
+  "payload": {
+    "fire_time": "2026-06-05T08:18:14Z",
+    "matched_slots": [
+      "chef-intraday"
+    ],
+    "won_slots": [],
+    "held_by_other": [
+      "chef-intraday"
+    ],
+    "all_held": true,
+    "spawned": [],
+    "silent": false,
+    "drift_min": 0,
+    "errors": [],
+    "pressure_mode": "legacy",
+    "calendar_status": "open",
+    "suppressed_calendar": [],
+    "suppressed_cadence": [],
+    "downgraded": [],
+    "due_reasons": {
+      "chef-intraday": "cron"
+    },
+    "cadence_minutes": {
+      "chef-intraday": null
+    },
+    "last_fired_timestamp": null,
+    "last_fired_slots": [],
+    "last_fired_write_errors": null,
+    "classification": "HELD",
+    "reason": "leader_held_peer_heartbeat_rejected",
+    "nominal_tick": "08:15",
+    "leader_lock": "held_by_peer_heartbeat_rejected_suspect_false_peer",
+    "dev_head": "unknown",
+    "devq": 0,
+    "signal_backlog": 0,
+    "note": "08:15Z chef-intraday MATCHED but NOT dispatched: leader-lock re-claim returned claimed=false (alive from 08:00:44Z claim, ttl 1800s), heartbeat ok=false expires_at=0 -> protocol PEER-HELD -> silent exit. NOTE: slot token cowork-slot:chef-intraday claimed=true (no peer mid-spawn), contradicting peer-held verdict. Suspected root cause: owner_session (pid-<pid>-ts-<startupTs>) not stable across gateway-proxied per-tick calls -> own-held heartbeat path structurally unreachable -> any FIRE tick within 1800s of a prior leader claim gets FALSELY suppressed as peer-held. chef-intraday 08:15Z (tail of 02-08 window) skipped as a result; benign this time (fired 07:16Z). DEV/AUDITOR CANDIDATE (root cause). Slot token released. last_fired NOT updated."
+  },
+  "priority": "low",
+  "createdAt": "2026-06-05T08:18:14Z"
+}

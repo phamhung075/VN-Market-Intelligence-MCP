@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "FDA-2+FDA-3 DONE+LIVE (0712c3a7 deployed 2026-06-05T08:24Z; raw-verified get_macro_snapshot per-field provenance present). FAKE-DATA-AUDIT P2 tier CLEARED (FDA-1/2/3 all live). Remaining: FDA-4..FDA-10 are P3 (below cut line) — FDA-4 macro-calendar fixture, FDA-5 energy grid (banner-guarded), FDA-6 creditFlow (flagged), FDA-7 macroTools proxy re-stamp, FDA-8 kinh-dich stub (501/unwired), FDA-9 rag-service _distance default, FDA-10 shippingIndex stale comment. Also open: FU-PRESSURE-EMIT-DARK (pressure dark, fail-safe legacy). Next tick: PO grooming pass on P3 batch or pick next ready P1/P2.",
+    "next_action": "Tick 2026-06-05T09:10Z (off-market, UTC09): drained 2 cowork-fire heartbeats -> CONFIRMED false-peer leader-lock root cause, filed FU-LEADER-LOCK-OWNER-SESSION (P2 FIX, owner_session not stable across gateway-proxied per-tick calls -> own-held heartbeat path unreachable -> legitimate FIRE within 1800s falsely suppressed; benign now, latent). Groomed 2 stranded DONE rows (id-keyed) out of backlog -> done lane (SPIKE-BCTC-CTG-ATTACHMENT-FETCH 517a9056, NB-COWORK-MAIN-SPLIT ae4396e6). signal_queue.rows all terminal (READ/DONE/RESOLVED), none dev-actionable, left intact. No non-deferred ready P1/P2 dev code task -> idle. OPEN backlog highlights: FU-LEADER-LOCK-OWNER-SESSION (P2, new), FU-PRESSURE-EMIT-DARK (P3), FDA-4..10 (P3, FAKE-DATA-AUDIT tail). Next tick: PO disposition on FU-LEADER-LOCK-OWNER-SESSION owner (dev-mcp-server task-lock vs cowork-flow) or pick next ready P1/P2.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T08:27:14.041151+00:00",
+    "updated_at": "2026-06-05T09:11:50.501014+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T08:27:14.041151+00:00",
+    "_updated_at": "2026-06-05T09:11:50.501014+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -2266,38 +2266,6 @@
         "resolution": "DESIGN 6004f361 (brief 2026-06-03-cowork-heartbeat-schema, canonical=enveloped matching drain fingerprint) + IMPL ee1d5e46 (cowork-team main.md Step 6 INVARIANT guard + payload folds the 8 flat telemetry fields). Shell writer already correct. Cowork refresh prompt issued."
       },
       {
-        "id": "SPIKE-BCTC-CTG-ATTACHMENT-FETCH",
-        "type": "SPIKE",
-        "title": "Prove CTG full-BCTC attachment fetchability (cover-letter-only blocker, 8 cycles)",
-        "question": "Does a fetchable full financial-statement BCTC attachment for CTG exist at HOSE/HNX/UPCOM disclosure APIs, or is only a cover-letter/notice PDF published? If full exists -> spec attachment-selection FIX in discoverBctcPdfUrlDirectApi; if not -> upstream-data-blocked, NOT dev-fixable.",
-        "mode": "spike",
-        "zone": "apps/mcp-server/",
-        "owner": "developer",
-        "size": "S",
-        "priority": "high",
-        "timebox": 120,
-        "status": "DONE",
-        "files": [
-          "apps/mcp-server/src/application/usecases/discoverBctcPdfUrlDirectApi.ts",
-          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts",
-          "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts"
-        ],
-        "origin": "po-triage CTG bctc_signal consecutive_cycles_blocked=8 (5th+ emission, latest 2026-06-03T00:07Z); BCTC-CTG-ATTACHMENT-FETCH referenced only inside CLOSED-task notes (BEQ-10/BEQ-5) but never an actionable item — root gap promoted",
-        "context": "get_bctc_full(CTG)='Chua co du lieu BCTC' live-verified by PO 2026-06-03T18:11Z. Root: CTG disclosure PDF fetched is cover-letter-only (no statements). discoverBctcPdfUrlDirectApi matches attachments by quarter+year title ONLY (matchesQuarterAndYear) — no content/financial-statement-vs-notice discrimination. SPIKE-FIRST because data-availability is uncertain: must PROVE a fetchable full BCTC attachment for CTG exists at HOSE/HNX/UPCOM source before any code FIX. If only the cover letter is published -> upstream-data-blocked (kin FU-BCTC-HISTORY-COVERAGE / BCTC-HIST-SEED done-code-data-blocked-upstream), close NOT-DEV-FIXABLE. If a full-statement attachment IS listed -> follow-up FIX adds attachment-selection (skip cover-letter, prefer full BCTC) to discovery.",
-        "added_by": "po",
-        "added_at": "2026-06-03T18:13:13Z",
-        "resolution": "DONE 517a9056 (brief docs/architecture-briefs/2026-06-03-bctc-ctg-attachment-fetch-spike.md). VERDICT: FULL STATEMENT EXISTS — WRONG ATTACHMENT PULLED — DEV-FIXABLE. Live-probed hsx.vn API (CTG hsx id=2351, reachable from FR without VPS): 280-item catalog, full B02-TCTD 'BCTC hop nhat' PDFs exist every quarter (Q1-2026=6.34MB HTTP200). Pipeline instead pulled owa.hnx.vn cover letter 'CV CBTT BCTC Quy I.2026' 524KB -> conf 0.0625, zero financials. 3 defects -> sprint BCTC-FETCH-CORRECTNESS FIX-CTG-1..3. NOTE: discoverBctcPdfUrlDirectApi (PO hypothesis) is DEAD CODE (tests only); active path = VPS HNX script + enricher + hsxBctcFetcher."
-      },
-      {
-        "id": "NB-COWORK-MAIN-SPLIT",
-        "title": "docs/agents/cowork-team/flow/main.md is 820L vs 120L cap (pre-existing, not caused by ee1d5e46). Split per agent-md-factory lazy-load/tree-DAG.",
-        "type": "REFACTOR",
-        "owner": "agent-father",
-        "status": "DONE",
-        "priority": "low",
-        "note": "Surfaced by agent-father during FU-COWORK-HEARTBEAT-SCHEMA impl. | DONE 2026-06-03T21:26:52Z commit ae4396e6 (orch-state 43a9999a): main.md 820L→109L; 10 sub-flows extracted, all ≤120L; pure refactor no logic change; pointers resolve; raw-verified in-zone by dev-team router."
-      },
-      {
         "task_id": "FU-RAPID-SKILLS-RESIDUAL",
         "title": "Tidy residuals from expert-rapid-analysis-skills brief (size-justification counts + PO confirm of 3 default thresholds)",
         "type": "FIX",
@@ -3079,6 +3047,21 @@
         "note": "3 consecutive cowork-team heartbeats (2026-06-05 04:21/05:03/05:18Z) report 'pressure-state STALE ~2d -> legacy-mode fallback, cadence bypassed, cron governs' and 'pressure-emit dark >2d -> system-auditor candidate if not self-healed'. pressure-state.json last tick_id=2026-06-03T00:00:00Z (updated_at 2026-06-03T00:04:30Z). FAIL-SAFE: cowork still fires on legacy fixed cron (no outage), but the adaptive-cadence governor (project_dynamic_workflow_cadence Phase 1, SHIPPED 2026-05-31) is inert — suppression/downgrade logic never runs. Find the emitter that writes pressure-state.json (cadence-policy.json consumer / a cron or the cowork dispatcher) and restore the periodic write, OR if Phase-1 emit was never wired to a live cron, that is the root gap. ROUTE: PO to confirm owner (cowork-plane vs dev cron) — may be agent-father/cowork lane, not apps/ code. Detected by dev-team tick 2026-06-05T06:13Z from drained heartbeats.",
         "source": "dev-team tick 2026-06-05T06:13Z (drained cowork-team heartbeats)",
         "depends_on": null
+      },
+      {
+        "task_id": "FU-LEADER-LOCK-OWNER-SESSION",
+        "title": "Cowork leader-lock falsely suppresses legitimate FIRE ticks — owner_session (pid+startupTs) not stable across gateway-proxied per-tick calls, so the own-held heartbeat re-claim path is structurally unreachable",
+        "type": "FIX",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "BACKLOG",
+        "priority": "P2",
+        "size": "M",
+        "zone": "cross-service/",
+        "files": [],
+        "severity": "MED",
+        "note": "CONFIRMED (was 'suspected' 08:15Z, CONFIRMED 08:46Z same window). Mechanism: leader-lock owner_session token = pid-<pid>-ts-<startupTs>, regenerated per process. Cowork FIRE ticks run as separate gateway-proxied calls -> each tick sees a different owner_session -> when it re-reads an ALIVE lock it claimed on a PRIOR tick, the own-held heartbeat branch (which matches on owner_session equality) never matches -> falls through to the peer-held branch -> silent suppression of a legitimate FIRE. Evidence: 08:15Z chef-intraday MATCHED but re-claim returned claimed=false (lock alive from 08:00:44Z, ttl 1800s) -> PEER-HELD -> silent exit, YET slot token cowork-slot:chef-intraday claimed=true (no real peer) = contradiction. 08:45Z chef-eod fired clean precisely BECAUSE the 08:00Z lock had expired >1800s (stolen:true) = clean fresh claim. So: alive-lock => false peer-held suppression; expired-lock => correct fire. Benign 2026-06-05 (08:15Z intraday already fired 07:16Z) but LATENT product risk: any FIRE landing within 1800s of a prior leader claim by the same logical leader is dropped. FIX DIRECTION: make leader identity STABLE across per-tick gateway calls (durable leader id persisted in the lock store / coordination.db, not a per-process pid+startupTs), OR have the heartbeat/re-claim path treat 'lock held by my own logical leader key' as own-held regardless of session token. ROUTE: PO to confirm owner — leader-lock lives in the cowork dispatcher + mcp-server task-lock tool (coordination.db); likely dev-mcp-server (task_claim/leader-lock) + cowork-flow skill. Kin FU-LOCKSTORE-EXPIRED-GC, FU-CHEF-MARKER-INFLOW. Detected by dev-team tick 2026-06-05T09:10Z from drained cowork heartbeats.",
+        "source": "dev-team tick 2026-06-05T09:10Z (drained cowork-team heartbeats 08:18Z + 08:46Z)",
+        "depends_on": null
       }
     ],
     "archive": [],
@@ -3149,6 +3132,44 @@
         "commit": "0712c3a7",
         "deployed_at": "2026-06-05T08:27:14.041151+00:00",
         "deploy_note": "LIVE 2026-06-05T08:24Z — operator immediate macro-indicators rebuild (image 08:24:30Z, healthy, 0 die-events). Router raw-verified get_macro_snapshot: per-field vnIndex_is_estimate/oil_/gold_/usdVnd_ + *_source_tier now present (live: false/tier1; fixture-fallback→true/tier4 proven by 11 RED->GREEN unit tests). /external now derives source status from provenance + no fresh-stamp on all-fixture (anyLive-gated fetchedAt)."
+      },
+      {
+        "id": "SPIKE-BCTC-CTG-ATTACHMENT-FETCH",
+        "type": "SPIKE",
+        "title": "Prove CTG full-BCTC attachment fetchability (cover-letter-only blocker, 8 cycles)",
+        "question": "Does a fetchable full financial-statement BCTC attachment for CTG exist at HOSE/HNX/UPCOM disclosure APIs, or is only a cover-letter/notice PDF published? If full exists -> spec attachment-selection FIX in discoverBctcPdfUrlDirectApi; if not -> upstream-data-blocked, NOT dev-fixable.",
+        "mode": "spike",
+        "zone": "apps/mcp-server/",
+        "owner": "developer",
+        "size": "S",
+        "priority": "high",
+        "timebox": 120,
+        "status": "DONE",
+        "files": [
+          "apps/mcp-server/src/application/usecases/discoverBctcPdfUrlDirectApi.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/bctcPdfPullJob.ts",
+          "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts"
+        ],
+        "origin": "po-triage CTG bctc_signal consecutive_cycles_blocked=8 (5th+ emission, latest 2026-06-03T00:07Z); BCTC-CTG-ATTACHMENT-FETCH referenced only inside CLOSED-task notes (BEQ-10/BEQ-5) but never an actionable item — root gap promoted",
+        "context": "get_bctc_full(CTG)='Chua co du lieu BCTC' live-verified by PO 2026-06-03T18:11Z. Root: CTG disclosure PDF fetched is cover-letter-only (no statements). discoverBctcPdfUrlDirectApi matches attachments by quarter+year title ONLY (matchesQuarterAndYear) — no content/financial-statement-vs-notice discrimination. SPIKE-FIRST because data-availability is uncertain: must PROVE a fetchable full BCTC attachment for CTG exists at HOSE/HNX/UPCOM source before any code FIX. If only the cover letter is published -> upstream-data-blocked (kin FU-BCTC-HISTORY-COVERAGE / BCTC-HIST-SEED done-code-data-blocked-upstream), close NOT-DEV-FIXABLE. If a full-statement attachment IS listed -> follow-up FIX adds attachment-selection (skip cover-letter, prefer full BCTC) to discovery.",
+        "added_by": "po",
+        "added_at": "2026-06-03T18:13:13Z",
+        "resolution": "DONE 517a9056 (brief docs/architecture-briefs/2026-06-03-bctc-ctg-attachment-fetch-spike.md). VERDICT: FULL STATEMENT EXISTS — WRONG ATTACHMENT PULLED — DEV-FIXABLE. Live-probed hsx.vn API (CTG hsx id=2351, reachable from FR without VPS): 280-item catalog, full B02-TCTD 'BCTC hop nhat' PDFs exist every quarter (Q1-2026=6.34MB HTTP200). Pipeline instead pulled owa.hnx.vn cover letter 'CV CBTT BCTC Quy I.2026' 524KB -> conf 0.0625, zero financials. 3 defects -> sprint BCTC-FETCH-CORRECTNESS FIX-CTG-1..3. NOTE: discoverBctcPdfUrlDirectApi (PO hypothesis) is DEAD CODE (tests only); active path = VPS HNX script + enricher + hsxBctcFetcher.",
+        "task_id": "SPIKE-BCTC-CTG-ATTACHMENT-FETCH",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T09:11:50.501014+00:00"
+      },
+      {
+        "id": "NB-COWORK-MAIN-SPLIT",
+        "title": "docs/agents/cowork-team/flow/main.md is 820L vs 120L cap (pre-existing, not caused by ee1d5e46). Split per agent-md-factory lazy-load/tree-DAG.",
+        "type": "REFACTOR",
+        "owner": "agent-father",
+        "status": "DONE",
+        "priority": "low",
+        "note": "Surfaced by agent-father during FU-COWORK-HEARTBEAT-SCHEMA impl. | DONE 2026-06-03T21:26:52Z commit ae4396e6 (orch-state 43a9999a): main.md 820L→109L; 10 sub-flows extracted, all ≤120L; pure refactor no logic change; pointers resolve; raw-verified in-zone by dev-team router.",
+        "task_id": "NB-COWORK-MAIN-SPLIT",
+        "relocated_by": "dev-team",
+        "relocated_at": "2026-06-05T09:11:50.501014+00:00"
       }
     ],
     "in_progress": []
