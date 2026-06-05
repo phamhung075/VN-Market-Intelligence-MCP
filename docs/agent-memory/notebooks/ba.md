@@ -1,5 +1,50 @@
 # BA — Notebook
 
+**Last updated:** 2026-06-05 | **Sprint:** ORCH-DASH-DECISION-DRILLDOWN
+
+## ORCH-DASH-DECISION-DRILLDOWN-BA · 2026-06-05
+
+Spec complete. REQ file: `docs/handoffs/ORCH-DASH-DECISION-DRILLDOWN-BA-spec.md`. Three architect-level blockers (not PO blockers). NEXT: architect.
+
+Key BA findings (raw-read source files, not relayed):
+- Serving layer: `apps/mcp-server/src/interface/mcp/routes/orchestrationHandler.ts` — confirmed live via `api.orchestration.tsx` proxy chain (`:3001 → :3000/api/orchestration`). NOT the undeployed Go api-gateway.
+- `buildOrchestrationDto` is a pure function (injectable, testable) — F2 extension goes here + a new `journalStore.ts` infra module for file discovery + markdown parse.
+- `OrchTaskDto` currently has `id/title/status/owner/zone` only — no `task_id` field separate from `id`. F2 DTO extension adds `decisions: DecisionsDto` at top level; `OrchTaskDto` itself is unchanged.
+- Dashboard route `TaskBoardPanel` → `DoneTaskGroup` already has `expanded` state and a show-all toggle — F3 accordion is additive inside `DoneTaskGroup` rows, not a new panel.
+- F1 format change is purely additive (one optional line in STEP block); backward-compat guaranteed if parser uses `null` fallback on missing field.
+- Dependency chain: F1 SKILL.md format finalize → F2 parser fixtures → F3 TypeScript types. F1+F2 can deploy independently of F3 (F3 reads `decisions?` optional field).
+- BLOCKER-1: architect must formally confirm BOTH join-key strategies before F1 dispatch.
+- BLOCKER-2: architect must specify sprint-id discovery scope for F2 journal file loader.
+- BLOCKER-3: architect must decide EC-6 latency risk (per-sprint mtime cache vs synchronous parse).
+
+---
+
+**Last updated:** 2026-06-04 | **Sprint:** DATA-SERVE-INTEGRITY
+
+## DATA-SERVE-INTEGRITY-BA · 2026-06-04
+
+Spec complete. REQ file: `docs/handoffs/DSI-BA-spec.md`. Zero PO blockers. NEXT: dev-mcp-server (DSI-S1-SLA, XS, do_first).
+
+Key BA findings (raw-read source files, not relayed):
+- `macroIndicatorSla.ts:35,73` both `.get("VN")` — literal string, no constant. Fix = `MACRO_COUNTRY_KEY = "vietnam"` used at both sites.
+- `server.ts:1435,1520` push-gso defaults `"VN"` — normalize to `"vietnam"`; R-1: audit `vps-scripts/` before deploy.
+- `macroIndicatorFetcher.ts:266,296` dead code writes `'VN'` — comment only (`@deprecated DSI`), do NOT remove.
+- `macroTools.ts:245` carry suppress only on `=== 0`, not on `fedFundsRateIsEstimate` — fix gate condition.
+- `sbv.ts:53-70` six rates hardcoded with no `is_estimate` column — FR-MAC-2 adds migration + column.
+- `macroIndicatorRefreshJob.ts:273-276` commodity `?? 0` — zero-write on fetch failure; fix = skip or mark is_estimate.
+- `fetchers.go:183-193` Tier-3 `time.Now()` re-stamp + `Change: 0/ChangePercent: 0` — fix = true DB timestamp + `*float64` nil.
+- `usecases.go:19-33` `FetchPriceResponse` no Staleness field — add `Staleness string` + `IsEstimate bool`, wire from `ResolvedQuote`.
+- `market.ts:152-159` `MacroSnapshot` no dataSource/is_estimate/source_tier — all new fields optional (additive, no regression).
+- `market.ts:~18` `StockQuote.change: number` — must become `number | null` coordinated with DSI-S2-PRICE deploy.
+- `bctcFullTools.ts:226-229` `roe/netMarginPct/debtToEquity ?? 0` — change to `?? null`; suppress delta when null.
+- `finalizeBctcRefineTool.ts:1037` `extractionConfidence ?? 1` — change to `?? 0` (missing = unknown = low, not max).
+- `bondMaturityTracker.ts:42-91` SEED_BONDS — add `static_seed: true` + alert message suffix when DB empty.
+- `creditFlowTools.ts:117-131` mortgage/yoyGrowth fabricated defaults — replace with `null + is_estimate:true`.
+- `energyTools.ts:65-68` grid dispatch hardcoded — derived signal block must carry `is_estimate:true`.
+- DSI-MACRO-INDICATORS-LATENT: Go macro-indicators NOT deployed — backlog only, gate on container entering runtime.
+- ProvenanceFields shared interface: define once in `domain/models/provenance.ts`, extend all response types.
+- R-3: Change/ChangePercent nullable is a BREAKING API change — Go + TS must deploy together.
+
 **Last updated:** 2026-06-01 | **Sprint:** VPS-DEPLOY-PLACEHOLDER-GUARD
 
 ## VPS-DEPLOY-PLACEHOLDER-GUARD-BA · 2026-06-01

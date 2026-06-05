@@ -1,8 +1,8 @@
 {
   "_schema": "v3",
   "_ssot": true,
-  "_updated_at": "2026-06-05T21:06:28Z",
-  "_updated_by": "po",
+  "_updated_at": "2026-06-05T21:12:26Z",
+  "_updated_by": "ba",
   "head": {
     "status": "in_progress",
     "active_task_id": "FIX-MW-OFFHOURS-DISPATCH",
@@ -57,8 +57,8 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T21:06:28Z",
-    "_updated_by": "po",
+    "_updated_at": "2026-06-05T21:12:26Z",
+    "_updated_by": "ba",
     "active_sprints": [
       {
         "id": "BCTC-ANALYTICS-LAYER",
@@ -2548,7 +2548,7 @@
         "title": "Requirement spec: clickable DONE-task Decision-Journal drill-down on /dashboard/orchestration",
         "type": "SPRINT-S",
         "sprint": "ORCH-DASH-DECISION-DRILLDOWN",
-        "status": "TODO",
+        "status": "DONE",
         "size": "S",
         "priority": "high",
         "zone": "multi",
@@ -2557,7 +2557,21 @@
           ".claude/skills/decision-journal/SKILL.md",
           "docs/agent-memory/decisions/"
         ],
-        "note": "USER REQUEST (verbatim): (1) 'i want add this decisions to task done on frontend http://localhost:3001/dashboard/orchestration' (2) 'decision appear click to task done for drop down detail'. MEANING: each DONE task on the orchestration dashboard becomes clickable; click expands a dropdown/accordion showing that task's Decision Journal STEP entries (what-done/what-considered/why-decision/why-change). BA: decompose into a REQ spec then hand to architect. THREE feature legs: (F1) JOURNAL JOIN KEY design, (F2) API parses sprint-*.md server-side -> structured JSON keyed to task-id (+ sprint fallback bucket) on GET /api/orchestration, (F3) Remix accordion UI. CENTRAL DESIGN DECISION FOR ARCHITECT: decision-journal STEP blocks are tagged '<agent-id>-S<N>' and carry NO task-id today (no join key to attach a decision to a task_board task). Architect MUST choose: (a) add OPTIONAL task-id field to STEP format + re-inject at journal-write step in developer/qa/architect/cowork flows (precise, forward-only) OR (b) group-by-sprint only (coarse, works with existing data). ROUTER RECOMMENDATION = do BOTH (add optional task-id for precise forward mapping AND keep sprint-level fallback bucket for legacy/back-compat) — architect confirms. DATA SOURCE: dashboard reads docs/data/orch/orch-state.json .task_board via GET /api/orchestration; journal entries live in docs/agent-memory/decisions/sprint-<id>.md, format SSOT .claude/skills/decision-journal/SKILL.md. ZONES: architect must LOCATE the layer serving /api/orchestration (verify WHICH layer before dispatch — data-serve-integrity lesson; likely apps/mcp-server, NOT the not-deployed Go plane) = API leg owner; dev-frontend = Remix orchestration accordion; agent-father = decision-journal skill + flow edits IF task-id field adopted. UX ACCEPTANCE (caveman-precise): only DONE tasks expand (else 'no decisions recorded'); click row -> dropdown shows STEP entries per step readably; legacy entries with no task-id still show via sprint fallback or clean empty state, no crash on missing data; markdown parsed SERVER-SIDE -> structured JSON to Remix loader (NEVER ship raw markdown to browser to regex). KEEP SCOPE TIGHT — one feature. Recent decision-journal protocol commits: f407f512, f79fc4d8, b2646b34. Sample journal: docs/agent-memory/decisions/sprint-2026-06-05.md."
+        "note": "Spec written: docs/handoffs/ORCH-DASH-DECISION-DRILLDOWN-BA-spec.md. Serving layer confirmed = apps/mcp-server orchestrationHandler.ts. Join-key strategy = BOTH (optional task-id field + sprint fallback bucket). Three legs: F1 agent-father / F2 dev-mcp-server / F3 dev-frontend. Three blockers for architect (confirm join-key, sprint-id discovery scope, latency risk). NEXT: architect."
+      },
+      {
+        "task_id": "ARCH-ORCH-DASH-DECISION-DRILLDOWN",
+        "title": "Architect: confirm join-key design + serving layer, design F1/F2/F3 technical implementation for decision-journal drill-down on /dashboard/orchestration",
+        "type": "SPRINT-S",
+        "sprint": "ORCH-DASH-DECISION-DRILLDOWN",
+        "status": "TODO",
+        "size": "S",
+        "priority": "high",
+        "zone": "multi",
+        "depends": [
+          "BA-ORCH-DASH-DECISION-DRILLDOWN"
+        ],
+        "note": "BA spec: docs/handoffs/ORCH-DASH-DECISION-DRILLDOWN-BA-spec.md. Confirm: (1) BOTH join-key strategies (optional task-id in STEP format + sprint fallback bucket); (2) serving layer = apps/mcp-server orchestrationHandler.ts; (3) sprint-id discovery scope for F2 journal loader; (4) EC-6 latency risk / per-sprint mtime cache decision; (5) single-open vs multi-open accordion UX. Dispatch: F1 (agent-father) → F2 (dev-mcp-server) → F3 (dev-frontend)."
       }
     ],
     "archive": [],

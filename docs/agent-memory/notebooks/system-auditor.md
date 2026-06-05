@@ -3,6 +3,60 @@ agent: system-auditor
 session_date: 2026-06-05
 ---
 
+## c007 · 2026-06-05T21:11Z
+### Audit Run Tier-1 (21:11–21:12 UTC 2026-06-05)
+- Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 90
+- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
+- Status: HEALTHY
+
+### Container Status (Intended Runtime Set)
+- mcp-server: Up 56m (healthy), restart_count=1 ✓, memory=27.64% ✓ [stable post-FIX-CTG-PDF-MISLINK rebuild]
+- api-gateway: Up 2d (healthy) ✓
+- frontend: Up 16h (healthy) ✓
+- macro-indicators: Up 10h (healthy) ✓
+- pdf-extractor: Up 2d (healthy) ✓
+- mcp-gateway: Up 9d (healthy) ✓
+
+### Health Endpoints — All PASS
+- mcp-server :3000 → 200 ✓ (uptime 56m, toolCount:162, sessions:102)
+- api-gateway :4000 → 200 ✓ (macro:ok, mcp:ok)
+- macro-indicators :5004 → 200 ✓
+- pdf-extractor :5001 → 200 ✓
+- frontend :3001 → 404 (UI-only, INFO-grey, no impact)
+
+### Cron Health (90 jobs polled)
+- 100% firing, 7-day min success_rate: 97.3% (bctcReparseJob)
+- intelligenceCycleJob: 99.3% (566 runs 7d)
+- bctcQueueEnricherJob: 97.6% (498 runs) — transient ok
+- All others: ≥97.3% or 100%; no gaps detected
+
+### Data Freshness (Live Snapshot)
+- HOSE prices: 42m (market closed 21:11Z Thu, normal) ✓
+- News: 70m ✓
+- Commodities: 42m ✓
+- SBV FX: 42m ✓
+- Polymarket: 42m ✓
+- BCTC: 3.9h (no earnings window, normal) ✓
+- Circuit breakers: all 16 sources [OK], 0 failures
+
+### VPS Proxy Status
+- prices: stale (last 08:59Z) — market hours irrelevant (window closed), not an anomaly
+- news: ok (last 21:05Z)
+- sbv: ok (last 20:58Z)
+- bctc: ok (last 14:48Z)
+
+### System Status (MCP Probe)
+- DB: market.db 240.45 MB, WAL 15.58 MB ✓
+- Uptime: 56m 43s (stable post-rebuild)
+- Pending feedback: 39 items
+- Open warnings: 37 high/critical (existing, tracked)
+
+### Notes
+- Tier-1 pass clean. All intended-runtime services UP + healthy. No new anomalies.
+- frontend /health 404 is informational (UI-only). No component impact.
+- mcp-server memory post-rebuild stable (27.64%, well under 85% threshold).
+- VPS prices stale outside market hours (21:11Z Thu = VN market closed) — expected, not flagged.
+
 ## c006 · 2026-06-05T20:39Z
 ### Audit Run Tier-1 (20:39–20:40 UTC 2026-06-05)
 - Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 88
@@ -135,39 +189,3 @@ session_date: 2026-06-05
 - mcp-server briefly restarted (<1min uptime) per ops REBUILD deployment (FIX-CTG-PDF-MISLINK). This is EXPECTED maintenance; not a system fault. Memory pressure at 11% post-restart (normal).
 - All intended-runtime services HEALTHY. No anomalies detected.
 
-## c003 · 2026-06-01T04:07Z
-### Audit Run Tier-1 (04:07–04:08 UTC 2026-06-01)
-- Tier: 1 | Services checked: 2 (intended runtime) | Crons polled: 82
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### Container Status (Intended Runtime Only)
-- mcp-server: Up 7h, healthy, restart_count=1 ✓, memory=77.95% ✓
-- mcp-gateway: Up 5d (no direct check in Tier-1)
-
-### Cron Health
-- 82 jobs polled, 100% firing; min success_rate=98.4% (bctcQueueEnricherJob) past 7d
-- intelligenceCycleJob: 99.4% | bctcReparseJob: 98.4%
-- All others ≥99% or 100% success_rate
-
-### Data Freshness (Real-time Snapshot)
-- Prices (HOSE): 3 min old ✓
-- News (RSS): 2 min old ✓
-- Foreign-flow: 0 min old (last 2026-06-01 04:06:47) ✓
-- Commodities: 52 min old ✓
-- SBV FX rates: 52 min old ✓
-- Polymarket: 38 min old ✓
-- BCTC: 80.7h old — KNOWN-IN-PROGRESS (VPS-SOCAT-PERSIST tracked)
-
-### VPS Proxy Status (Push Pipeline)
-- Prices: ok, 74 pushes/24h, 0 errors, last 2026-06-01 04:04:26 ✓
-- News: last 2026-06-01 03:53:31 (stale flag) — KNOWN-IN-PROGRESS
-- SBV: ok, 45 pushes/24h, 0 errors ✓
-- BCTC: last 2026-05-19 07:05 — KNOWN-IN-PROGRESS
-
-### API Rate Limits
-- 14 sources checked, all ready, 0% utilization ✓
-
-### Notes
-- Tier-1 pass clean. All known stale items (news, BCTC via VPS-SOCAT-PERSIST) already tracked; not raised as new.
-- mcp-server memory 77.95% is healthy (< 85% threshold per brief); restart_count=1 OK.
