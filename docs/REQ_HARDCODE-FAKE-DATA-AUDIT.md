@@ -46,8 +46,28 @@ Severity: HIGH = served to a live consumer (MARKET/FB/dashboard/tool output) as 
 ## Output → dev-team tasks
 Router collects all 3 finding arrays, dedups, and creates backlog tasks under a new sprint `FAKE-DATA-AUDIT` (or appends FU-* items), each with file:line + value + fix_direction + severity. NO fixes applied in this pass — "take it later." HIGH-severity items flagged for priority.
 
-## Status
-- [ ] Awaiting /compact (operator: "compact first").
-- [ ] After compact: launch 3 parallel read-only audit agents (Slices A/B/C).
-- [ ] Collect findings → create dev-team backlog tasks.
-- [ ] Report summary (counts by severity/service) to operator + WORK.
+## Status — DONE 2026-06-05
+- [x] Awaiting /compact (operator: "compact first").
+- [x] After compact: launched 3 parallel read-only audit agents (Slices A/B/C).
+- [x] Collect findings → created 10 dev-team backlog tasks FDA-1..FDA-10 (sprint FAKE-DATA-AUDIT).
+- [x] Report summary (counts by severity/service) to operator + WORK.
+
+### Result (12 raw findings → 10 deferred tasks; 0 HIGH)
+Router verified the top claims raw (polymarket.ts:86/155, usecases.go:296/353, handlers_calendar.go:25) — all accurate.
+
+| Task | Sev | Pri | Service | What |
+|---|---|---|---|---|
+| FDA-1 | MED | P2 | mcp-server | polymarket fabricates 50% prob (0.5/0.5) on malformed price, served via get_prediction_markets + telegram dish, no is_estimate |
+| FDA-2 | MED | P2 | macro-indicators | snapshot top-level vnIndex/oil/gold/usdVnd fixture fallback, no PER-FIELD provenance |
+| FDA-3 | MED | P2 | macro-indicators | /external hardcodes source status 'ok'x3 + fresh fetchedAt on fixture-fallback |
+| FDA-4 | MED | P3 | macro-indicators | /macro-calendar 2 hardcoded events + frozen fetchedAt, no provenance (no live consumer yet) |
+| FDA-5 | MED | P3 | mcp-server | energyTools 4 hardcoded grid figures (guarded by banner, but in unstructured VN text) |
+| FDA-6 | LOW | P3 | mcp-server | creditFlowTools fabricated mortgage/credit + date=now stamp (already flagged) |
+| FDA-7 | LOW | P3 | mcp-server | macroTools proxy re-stamps fetchedAt=now + source_tier ?? 2 fallback |
+| FDA-8 | LOW | P3 | kinh-dich-service | ReadingUseCase stub fabricated reading — unwired (501), latent landmine |
+| FDA-9 | LOW | P3 | rag-service | repositories.py _distance default 0.0 → fabricated perfect similarity (inconsistent w/ module.py) |
+| FDA-10 | LOW | P3 | mcp-server | shippingIndex stale SCFI-placeholder comment (non-contamination cleanup) |
+
+**Verified CLEAN** (looked smelly, read-confirmed safe): macro carry/yield (DSI-hardened: UNKNOWN/null/is_estimate/tier4, known 5.33/4.7/8.2 fixtures correctly retired from handlers_carry/yield); stock-price (3-tier, nil not 0); technical-analysis; frontend (`?? 0` not `?? 1`, error JSON not fixtures); api-gateway (honest 'N/A' banners); alert-engine; news-fetch (null on unparseable date); pdf-extractor our-glue (0.0 on fail, mock_ports tests-only; PEK vendor excluded).
+
+No fixes applied — "take it later." Fixes batched for dev-team under sprint FAKE-DATA-AUDIT.
