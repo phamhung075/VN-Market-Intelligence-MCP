@@ -136,7 +136,7 @@
       "depends_on": null,
       "enabled": true,
       "policy_id": null,
-      "last_fired": "2026-06-04T20:30:11.504Z",
+      "last_fired": "2026-06-05T20:19:06Z",
       "trigger_id": null,
       "_superseded_by": "cowork-dispatcher",
       "trigger_status": "deleted",
