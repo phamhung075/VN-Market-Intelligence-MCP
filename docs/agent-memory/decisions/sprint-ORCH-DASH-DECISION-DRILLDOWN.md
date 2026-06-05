@@ -94,3 +94,14 @@
 - Modal navigation: rejected (violates FR-3-2 inline expansion requirement)
 **why-decision:** The decision-journal is an audit surface, not a menu navigation; the core operator action is "compare what two tasks decided"; single-open makes that impossible without toggling back and forth; multi-open is the only UX that serves the audit use-case natively.
 **why-change:** BA left this to architect/dev-frontend; architect decides multi-open and documents it in the handoff so dev-frontend has a clear directive rather than another open question.
+
+### STEP pm-S1 · pm · 2026-06-05T21:39:15Z
+
+**task-id:** PM-ORCH-DASH-DECISION-DRILLDOWN
+**what-done:** Broke the architect blueprint into 4 sequential atomic tasks (F1 / F2 / F3 / QA); created TASK_ARCH-ORCH-F1.md through TASK_ARCH-ORCH-QA.md handoff files with full AC, zone, dependencies, and knowledge pointers; updated orch-state.json to mark PM task IN_PROGRESS and set F1/F2/F3/QA tasks to TODO; prepared for agent-father dispatch.
+**what-considered:**
+- Four tasks (F1/F2/F3/QA) vs three (fold QA into F3) — architect blueprint explicitly names QA as a dependent gate; keeping it separate preserves the audit trail and explicit sign-off boundary
+- Ordering: sequential (F1→F2→F3→QA) vs parallel-ready (F1 parallel with F2 skeleton) — architect blueprint rules "sequential dispatch" due to shared SSOT files (SKILL.md, flow .md files, orch-state.json); parallel-prep without commit would hide risk
+- Handoff size: granular (6+ sub-steps per task) vs coarse (one big handoff per zone) — chose granular within each task (AC per sub-step, file-by-file modify list) to match the PM flow template and give developer explicit guidance per file
+**why-decision:** Architect output named four logical legs; PM's job is to map each leg to exactly one task with dependencies respected, atomicity preserved, and developer acceptance criteria explicit. Four sequential tasks with explicit zone+blocks metadata enable the dev-team Step 3 zone-routed parallel dispatch and keep WIP=2 discipline clean.
+**why-change:** No deviation from architect blueprint (which named F1/F2/F3/QA explicitly); PM added structure (TASK_NNN.md per task) and explicit AC/file lists per dev-standards handoff template, not a design change.
