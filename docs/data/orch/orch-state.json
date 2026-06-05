@@ -7,10 +7,10 @@
     "status": "idle",
     "active_task_id": null,
     "next_agent": "po",
-    "next_action": "Tick 2026-06-05T13:09Z (off-market). Drove FU-PRESSURE-EMIT-DARK to repo-DONE + found & fixed its sibling FU-TICK-SNAPSHOT-EMIT-DARK (same call_tool-in-```bash-fence abort class). PO verified root cause (corrected my recon: no persistent writer #2; one-off 06-03 corruption from OLD main.md bash-abort). Routed PO->agent-father (maintenance lane, mutex-wrapped). Shipped: pressure-emit.md 545aae11 + tick-snapshot.md 29d7e944 (both lift gateway calls OUT of bash fence -> pure-bash emit cannot abort); both stale on-disk files purged; class-wide sweep = 0 call_tool trapped in any cowork ```bash fence. FAIL-SAFE throughout (legacy cron baseline, no outage). LIVE-VERIFY PENDING next cowork WON tick: pressure-state.json should regen w/ emitted_at (->adaptive mode), cycle-snapshot-latest.json should regen fresh. OPERATOR ACTION: ONE bundled Cowork-refresh paste covers 3 cowork flow files now — leader-lock.md d88045c1 + pressure-emit.md 545aae11 + tick-snapshot.md 29d7e944. Remaining backlog ~20: P3 tail (FU-LOCKSTORE-EXPIRED-GC, FU-CNYVND-DEAD-FIELD-REMOVE gated, FU-MACRO-SNAPSHOT-TIER-WORSTOF, FU-AUDITOR-D4-SIGNAL-ID, FU-RUNTIME-SET-TRUTH-RECONCILE doc, FU-SBV-EFFECTIVE-DATE-COLUMN, FDA-5/6/7/9/10) + DEFERRED-INFRA (BCTC-HIST-VPS-BACKFILL, FU-RAG-DEPLOY-MEMORY). Next tick: verify the 2 emitters regenerated, then PO pick next or idle.",
+    "next_action": "Tick 2026-06-05T14:09Z (off-market, VN 21:09). NOT idle -- 21 NEW telegram reports drained -> 2 actionable clusters shipped. (1) FU-LOCKSTORE-EXPIRED-GC DONE+LIVE-VERIFIED: coordination.db tombstone GC on task_claim (b600c3ba, dev-mcp-server), rebuilt (ops, image 80de1c86060b, healthy), RAW-VERIFIED task_list_held 117->4 -- killed the system-auditor D4 divergence class (18 alerts ids 3028-3045) at ROOT not symptom. (2) FIX-CTG-3 STEP-A+B DONE, STEP-C extraction IN-FLIGHT: root cause = CTG queue source_url = 524KB cover-letter PDF not 6MB 'hop nhat' B02-TCTD financials (14 cycles empty). STEP-A reset poisoned rows (94fa1e9b, rebuilt) -> enricher re-resolved correct hsx.vn URL -> STEP-B dev-vps-crawls raw-triggered fetch of the correct 6.05MB PDF + pushed (HTTP 200, status=fetching). get_bctc_full(CTG) STILL empty at 14:55Z (bctcReparseJob async not yet cycled). VERIFY-HOOK NEXT TICK: get_bctc_full(CTG) RAW -> real B02-TCTD conf>0.5 before closing FIX-CTG-3 (verify-raw-not-badges; 3 prior CTG fixes, do NOT badge-close). NEW latent defect filed FU-CTG-DISCOVERY-FILENAME-FILTER (P3): VPS HNX discovery resolves good-title article 613699 to a CV_CBTT cover-letter attachment -> re-poison risk; add filename-based filter. ALSO STILL PENDING from tick 13:09Z: cowork emitter live-verify (pressure-state.json + cycle-snapshot-latest.json both ABSENT -- no cowork tick has WON since the 13:32Z fix 545aae11/29d7e944; fix structurally verified in repo + class-sweep clean; cowork last fired 12:03Z, multi-hour off-market gaps are normal cadence; regenerates on next cowork WON tick). Backlog 20 (FU-LOCKSTORE out, FU-CTG-DISCOVERY-FILENAME-FILTER in). Next tick: VERIFY get_bctc_full(CTG) + the 2 emitters, then PO pick next or idle.",
     "wip": 0,
     "wip_max": 2,
-    "updated_at": "2026-06-05T13:32:02.992410+00:00",
+    "updated_at": "2026-06-05T14:50:59.399172+00:00",
     "updated_by": "dev-team"
   },
   "dashboard_section_cache": {
@@ -57,7 +57,7 @@
     "does_not_consume_wip": true
   },
   "task_board": {
-    "_updated_at": "2026-06-05T13:32:02.992410+00:00",
+    "_updated_at": "2026-06-05T14:50:59.399172+00:00",
     "_updated_by": "dev-team",
     "active_sprints": [
       {
@@ -1750,7 +1750,7 @@
               "apps/mcp-server/src/scheduler/financial-reports/bctcQueueEnricherJob.ts",
               "apps/mcp-server/src/infrastructure/fetchers/hsxBctcFetcher.ts"
             ],
-            "note": "[dev-team 2026-06-03T18:26:44Z] core fix dispatched IN_PROGRESS this tick. Defects B+C in apps/mcp-server (in-context single zone). DoD: enricher passes year/quarter; hsxBctcFetcher returns the correct-quarter 'hop nhat' full-statement URL for CTG (the 6.34MB Q1-2026 one), not a cover-letter/wrong-quarter URL; unit tests for quarter-filter + hop-nhat preference + enricher pass-through. ops rebuild + dispatcher verifies discovery returns the right URL. Does NOT itself re-fetch CTG (that is FIX-CTG-3, async VPS).[dev-team 2026-06-03T18:36:45Z] DONE-LIVE-VERIFIED commit ddf37a3b (9 new tests, 67/67, tsc clean). ops rebuilt mcp-server img 18:34:22Z (period_quarter SELECT + hop-nhat ranking live in-container). ROUTER LIVE-VERIFY (invoked deployed fetchHsxBctcUrls in-container): CTG 2026 Q1 -> rank[0]='BCTC hop nhat Quy I.2026 ...signed.pdf' (consolidated full statement, correct quarter, NOT the 524KB cover letter), rank[1]=rieng le; CTG Q4 -> rank[0]='BCTC hop nhat Quy IV.2025' (quarter filter Q4->IV correct). Defects B (enricher year/quarter pass-through) + C (fetcher quarter-filter + hop-nhat preference) fixed live at the DISCOVERY layer. NOTE: this fixes URL SELECTION only — CTG queue still holds the old owa.hnx.vn cover-letter source_url + the Defect-B-corrupted Q3/Q2-2025 rows; actual re-fetch+re-extract+get_bctc_full(CTG) real-data is FIX-CTG-3 (async VPS)."
+            "note": "[dev-team 2026-06-03T18:26:44Z] core fix dispatched IN_PROGRESS this tick. Defects B+C in apps/mcp-server (in-context single zone). DoD: enricher passes year/quarter; hsxBctcFetcher returns the correct-quarter 'hop nhat' full-statement URL for CTG (the 6.34MB Q1-2026 one), not a cover-letter/wrong-quarter URL; unit tests for quarter-filter + hop-nhat preference + enricher pass-through. ops rebuild + dispatcher verifies discovery returns the right URL. Does NOT itself re-fetch CTG (that is FIX-CTG-3, async VPS).[dev-team 2026-06-03T18:36:45Z] DONE-LIVE-VERIFIED commit ddf37a3b (9 new tests, 67/67, tsc clean). ops rebuilt mcp-server img 18:34:22Z (period_quarter SELECT + hop-nhat ranking live in-container). ROUTER LIVE-VERIFY (invoked deployed fetchHsxBctcUrls in-container): CTG 2026 Q1 -> rank[0]='BCTC hop nhat Quy I.2026 ...signed.pdf' (consolidated full statement, correct quarter, NOT the 524KB cover letter), rank[1]=rieng le; CTG Q4 -> rank[0]='BCTC hop nhat Quy IV.2025' (quarter filter Q4->IV correct). Defects B (enricher year/quarter pass-through) + C (fetcher quarter-filter + hop-nhat preference) fixed live at the DISCOVERY layer. NOTE: this fixes URL SELECTION only — CTG queue still holds the old owa.hnx.vn cover-letter source_url + the Defect-B-corrupted Q3/Q2-2025 rows; actual re-fetch+re-extract+get_bctc_full(CTG) real-data is FIX-CTG-3 (async VPS). | [PO triage 2026-06-05T14:09Z] Badge VERIFIED-HONEST + correctly scoped (discovery layer only; note already disclaims live serve = FIX-CTG-3). PO raw-verified get_bctc_full(CTG) STILL empty ('Chưa có dữ liệu BCTC') this tick — that is the FIX-CTG-3 materialize gap, NOT a FIX-CTG-1 regression. No badge change."
           },
           {
             "task_id": "FIX-CTG-2",
@@ -1774,15 +1774,21 @@
             "title": "Materialize+verify: purge the bad cover-letter source_url from bctc_vps_queue for CTG (and re-enrich the Defect-B-corrupted Q3-2025/Q2-2025 rows), re-enrich CTG to the correct hsx.vn 'hop nhat' URL, re-fetch + re-extract, DoD: get_bctc_full(CTG) serves real B02-TCTD bank financials (not 'Chưa có dữ liệu BCTC', conf>0.5). Involves async VPS fetch.",
             "type": "FIX",
             "owner": "dev-mcp-server",
-            "status": "DEFERRED-ASYNC",
+            "status": "IN-PROGRESS-EXTRACTION-PENDING",
             "size": "S",
-            "zone": "apps/mcp-server/",
+            "zone": "multi",
             "priority": "high",
             "depends": [
               "FIX-CTG-1"
             ],
-            "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — materialization/DoD, depends FIX-CTG-1 (+ ideally FIX-CTG-2). Involves async VPS re-fetch (~latency). Also remediates Defect-B queue corruption on non-CTG rows.",
-            "disposition": "DEFERRED-ASYNC (PO triage 2026-06-03): discovery half DONE (FIX-CTG-1). This is materialization — purge bad owa.hnx.vn url, re-enrich, re-fetch+re-extract over async VPS PDF-pull cron; DoD get_bctc_full(CTG) conf>0.5 cannot be proven within a dev tick (VPS round-trip + refine latency). Resume when VPS materializes."
+            "note": "[dev-team 2026-06-03T18:26:44Z] queued TODO — materialization/DoD, depends FIX-CTG-1 (+ ideally FIX-CTG-2). Involves async VPS re-fetch (~latency). Also remediates Defect-B queue corruption on non-CTG rows. | [PO RE-ACTIVATE 2026-06-05T14:09Z] 14 cycles (c008-c022) stuck DEFERRED-ASYNC; live tool raw-empty. Root cause KNOWN (wrong queued PDF = cover-letter) => stuck-EXECUTION not unknown-root-cause => NOT architect rethink (feedback_recurring_bug_escalation: rethink is for unknown root cause; here it's known). SPLIT the async stall: STEP-A (dev-mcp-server, sync, completes in-tick) purge the stale owa.hnx.vn cover-letter source_url from bctc_vps_queue for CTG + re-enrich CTG to the FIX-CTG-1-correct hsx.vn 'hop nhat' URL + re-enrich Defect-B-corrupted Q3/Q2-2025 rows; this ENQUEUES the correct URL so the VPS pull cron fetches the right PDF. STEP-B (dev-vps-crawls/ops) confirm the VPS bctc-files pull actually delivers the 6.34MB Q1-2026 'hop nhat' PDF (raw-trigger the fetch leg if cron hasn't drained in 14 cycles — separate discovery/transport/fetch legs per project_bctc_hnx_ssl_outage). STEP-C re-extract. HARD DoD (verify-raw-not-badges): PO opens get_bctc_full(CTG) RAW next tick -> real B02-TCTD bank financials, conf>0.5, NOT 'Chưa có dữ liệu BCTC'. Unit-green/queue-updated NOT sufficient. If STEP-A completes but STEP-B/C still empty after VPS round-trip -> escalate to architect (then it IS an unknown transport/source blocker).",
+            "resolution": "STEP-A+STEP-B DONE 2026-06-05T14:55Z; STEP-C (extraction) IN-FLIGHT async, live-verify NEXT tick. Root cause (known): CTG bctc_vps_queue source_url pointed at the WRONG doc -- a 524KB owa.hnx.vn cover-letter PDF (CV_CBTT_BCTC_Quy_I.2026) instead of the consolidated 'hop nhat' B02-TCTD financials -> extraction correctly yielded 'Chua co du lieu BCTC' for 14 cowork cycles (c008-c022). STEP-A (commit 94fa1e9b, dev-mcp-server): resetCtgWrongSourceUrls() in schema-financial-reports.ts initFinancialReportsTables() -> on startup resets CTG Q1-2026 (CV_CBTT cover-letter) + Q3/Q2-2025 (Defect-B Q1-2026-poisoned) rows to status=pending/source_url=NULL/attempts=0 (idempotent). 11 unit tests green. Rebuilt 14:4xZ (image 80de1c86060b). LIVE-CONFIRMED: enricher (FIX-CTG-1 logic) re-resolved CTG to the CORRECT hsx.vn 'hop nhat' URL post-reset. STEP-B (dev-vps-crawls raw-trigger, separating discovery/transport/fetch): fetched the correct 6,340,703-byte (~6.05MB) hsx.vn 'BCTC hop nhat Quy I.2026' PDF (valid PDF magic, NOT the 524KB cover letter) + pushed to mcp-server /api/push-bctc-pdf -> HTTP 200 {ok:true,queued:CTG-2026-Q1}; DB status=fetching, attempts=1, last_attempt 14:48:47. STEP-C: bctcReparseJob extraction async-pending (get_bctc_full(CTG) STILL 'Chua co du lieu' at 14:55Z -- reparse cron not yet cycled). VERIFY-RAW NOT BADGES: do NOT close FIX-CTG-3 until get_bctc_full(CTG) serves real B02-TCTD bank financials conf>0.5 -- checked NEXT dev-team tick.",
+            "updated_by": "dev-team",
+            "updated_at": "2026-06-05T14:50:59.399172+00:00",
+            "deploy_commits": [
+              "94fa1e9b"
+            ],
+            "verify_hook": "NEXT dev-team tick: get_bctc_full(CTG) RAW -> real B02-TCTD bank financials, extraction_confidence>0.5, NOT 'Chua co du lieu BCTC'. If still empty: check bctcReparseJob ran + bctc_vps_queue CTG row status (fetching->extracted)."
           },
           {
             "task_id": "FIX-CTG-2b",
@@ -2325,17 +2331,6 @@
         "depends_on": null
       },
       {
-        "task_id": "FU-LOCKSTORE-EXPIRED-GC",
-        "title": "Lock store (coordination.db) accumulates TTL-expired tombstone locks — task_list_held default returned 114 rows of which only 3 genuinely held (~111 dead). Defence-in-depth for the D4 false-positive fix (aa00a1e2 added expired:false at the consumer): purge/GC expired rows from coordination.db on a cadence (e.g. on each task_claim, DELETE WHERE expires_at < now-grace, or a periodic sweep), so task_list_held storage stays bounded and no consumer can ever read tombstones-as-held. Code: apps/mcp-server coordination.db task tools. Low risk (expired rows are by definition free to reclaim).",
-        "type": "CLEAN",
-        "sprint": "FLEET-HOST-SAFETY",
-        "status": "BACKLOG",
-        "priority": "P3",
-        "size": "S",
-        "zone": "apps/mcp-server",
-        "depends_on": null
-      },
-      {
         "task_id": "FU-AUDITOR-D4-SIGNAL-ID",
         "title": "system-auditor D4 emits one signal_queue row PER divergence but all share a single run-scoped id (sau-d4-<YYYYMMDDHHMM>) — this defeats id-based dedup at drain (collapsing distinct findings) and inflates the queue (75 rows under one id on 2026-06-05). Harden: either emit ONE rollup signal with a findings[] array (matches anomaly-task-bridge 'one deduped entry' philosophy), or give each finding a unique id (append a stable hash of the summary). Flow doc: docs/agents/system-auditor/handlers.md Emit format. Now low-urgency since expired:false fix removes the false-positive volume, but the id-collision is still a latent correctness gap if multiple REAL divergences ever co-occur.",
         "type": "FIX",
@@ -2431,6 +2426,19 @@
         "note": "shippingIndex.ts:76 doc-comment claims an SCFI->BDI placeholder, but SHIPPING_SYMBOLS (lines 79-82) contains only ^BDI and ^BFIY — no SCFI placeholder is emitted. NOT a contamination (verified by Slice-A agent). Cleanup only: delete the stale/misleading comment to avoid future confusion. No data fix required.",
         "source": "FAKE-DATA-AUDIT 2026-06-05 (3 read-only sub-agents, router verified raw)",
         "depends_on": null
+      },
+      {
+        "task_id": "FU-CTG-DISCOVERY-FILENAME-FILTER",
+        "title": "VPS HNX BCTC discovery (discover-bctc-urls-browser.py) resolves a legit-titled article to a cover-letter PDF attachment -> re-poison risk; add filename-based CV_CBTT detection",
+        "type": "FIX",
+        "sprint": "BCTC-EXTRACT-QUALITY",
+        "status": "BACKLOG",
+        "priority": "P3",
+        "size": "S",
+        "zone": "vps-scripts + apps/mcp-server (fetch-pipeline design)",
+        "desc": "Latent defect surfaced by dev-vps-crawls during FIX-CTG-3 STEP-B (2026-06-05T14:48Z). The HNX discovery path: article ID 613699 has a NON-cover-letter title ('Bao cao tai chinh quy 1/2026') but its ArticlesFileAttach-resolved PDF is the cover letter CV_CBTT_BCTC_Quy_I.2026_VI.pdf. FIX-CTG-2's title-based cover-letter filter correctly skips cover-letter-TITLED articles but MISSES this good-title/bad-attachment case -> CTG keeps getting re-poisoned via the HNX path. Mitigated for now because the enricher (FIX-CTG-1) prefers the hsx.vn 'hop nhat' URL, but the HNX path remains a latent re-poison source. FIX: after ArticlesFileAttach resolution, add filename-based cover-letter detection (resolved PDF filename contains CV_CBTT / cong_van_cbtt -> reject). dev-vps-crawls flags the script is VPS-resident but the architectural fix belongs to the fetch-pipeline design (coordinate dev-mcp-server).",
+        "source": "dev-vps-crawls FIX-CTG-3 STEP-B side finding, tick 2026-06-05T14:09Z",
+        "created_at": "2026-06-05T14:50:59.399172+00:00"
       }
     ],
     "archive": [],
@@ -3283,6 +3291,25 @@
         ],
         "source": "dev-team tick 2026-06-05T13:09Z regression-sweep off FU-PRESSURE-EMIT-DARK",
         "verify_hook": "Next dev-team tick: confirm cycle-snapshot-latest.json regenerated (fresh created_at, real market_context/macro_snapshot not unknown)."
+      },
+      {
+        "task_id": "FU-LOCKSTORE-EXPIRED-GC",
+        "title": "Lock store (coordination.db) accumulates TTL-expired tombstone locks — task_list_held default returned 114 rows of which only 3 genuinely held (~111 dead). Defence-in-depth for the D4 false-positive fix (aa00a1e2 added expired:false at the consumer): purge/GC expired rows from coordination.db on a cadence (e.g. on each task_claim, DELETE WHERE expires_at < now-grace, or a periodic sweep), so task_list_held storage stays bounded and no consumer can ever read tombstones-as-held. Code: apps/mcp-server coordination.db task tools. Low risk (expired rows are by definition free to reclaim).",
+        "type": "FIX",
+        "sprint": "FLEET-HOST-SAFETY",
+        "status": "DONE",
+        "priority": "P2",
+        "size": "S",
+        "zone": "apps/mcp-server",
+        "depends_on": null,
+        "note": "[PO PROMOTE P3->P2 2026-06-05T14:09Z] task_list_held raw-verified = 117 locks, only ~3 genuinely live (~114 dead TTL-expired tombstones, oldest 2026-05-22). These tombstones are the ROOT of the system-auditor D4 alert class: 20 D4 'held lock X has no task_board row' reports drained this tick alone (ids 3028-3047), recurring every audit cycle. expired:false consumer fix (aa00a1e2) is in but STORAGE GC missing => coordination.db keeps growing + auditor keeps flagging. EXECUTE: add expired-tombstone GC to coordination.db task tools (DELETE WHERE expires_at < now - grace, on each task_claim and/or periodic sweep). Low-risk: expired rows are by definition free to reclaim. DoD (verify-raw): after deploy, task_list_held count drops to ~live-only (single digits); next system-auditor D4 run emits 0 tombstone divergences. Single zone apps/mcp-server. NOTE: FU-AUDITOR-D4-SIGNAL-ID (P3, separate) hardens the auditor's id-dedup but this GC removes the underlying volume at root.",
+        "resolution": "DONE+LIVE-VERIFIED 2026-06-05T14:55Z. coordination.db accumulated TTL-expired tombstone locks never reclaimed -> task_list_held returned 117 rows (~3 genuinely live, ~114 dead, oldest 2026-05-22) -> system-auditor D4 audit flagged ~18-20 'held lock X has no task_board row' divergences EVERY cycle (the 18 reports drained this tick, ids 3028-3045). The consumer-side mask (expired:false, aa00a1e2) was symptom-only. DEFINITIF FIX (commit b600c3ba, dev-mcp-server): gcExpiredLocks(db,grace=300,excludeTaskId) in coordinationStore.ts, wired into claimTask -> DELETE FROM task_locks WHERE expires_at < unixepoch('now')-300 AND task_id!=<claimed> on every task_claim (excludeTaskId preserves Step-2 stale-steal for the row being claimed). 10 unit tests green, 49 coordination tests no-regression. ops rebuilt mcp-server 14:4xZ (image 80de1c86060b, healthy toolCount 161, 4 volumes preserved, 0 die-events, 6 services untouched). ROUTER RAW-VERIFIED LIVE: fresh post-rebuild task_claim fired the GC -> task_list_held count 117->4 (4 survivors all future-expires_at: 2 dispatcher locks + bctc-ctg-attachment-fetch-escalation + esc-datacov:FPT). D4 tombstone-divergence class killed at root; next system-auditor D4 -> 0 tombstone divergences. No always-on timer added (16GB host safe).",
+        "resolved_by": "dev-team",
+        "resolved_at": "2026-06-05T14:50:59.399172+00:00",
+        "deploy_commits": [
+          "b600c3ba"
+        ],
+        "verify_hook": "LIVE-VERIFIED this tick (117->4). Next system-auditor D4 run should report 0 tombstone divergences."
       }
     ],
     "in_progress": []
