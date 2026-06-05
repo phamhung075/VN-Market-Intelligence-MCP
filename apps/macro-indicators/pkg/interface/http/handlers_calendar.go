@@ -1,6 +1,9 @@
 // Package http — HTTP interface layer for the macro-indicators service.
-// handlers_calendar.go: GET /macro-calendar stub handler.
-// Per OQ-10: fixture only — no live data source wired at this stage.
+// handlers_calendar.go: GET /macro-calendar handler.
+// FDA-4: no live macro-calendar source is wired. Returns honest-unavailable response
+// (empty events, status:"unavailable", source_tier:4, is_estimate:true) so consumers
+// can distinguish "no data yet" from live data. fetchedAt is omitted — stamping now()
+// on empty data repeats the DSI fixture-as-live anti-pattern.
 package http
 
 import (
@@ -9,9 +12,10 @@ import (
 	"strconv"
 )
 
-// handleMacroCalendar returns a fixture macro calendar response.
+// handleMacroCalendar returns an honest-unavailable macro calendar response.
 // Accepts optional ?days=N query parameter (default 60).
 // Shape matches the domain MacroCalendarResult for forward-compatibility.
+// events is always empty until a real macro-calendar source is wired.
 func handleMacroCalendar() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		daysStr := r.URL.Query().Get("days")
@@ -23,12 +27,11 @@ func handleMacroCalendar() http.HandlerFunc {
 		}
 
 		resp := map[string]interface{}{
-			"events": []map[string]interface{}{
-				{"date": "2026-05-24", "event": "US Core PCE", "impact": "HIGH"},
-				{"date": "2026-05-27", "event": "VN Industrial Output", "impact": "MEDIUM"},
-			},
+			"events":        []map[string]interface{}{},
 			"daysRequested": days,
-			"fetchedAt":     "2026-05-23T18:52:00Z",
+			"status":        "unavailable",
+			"is_estimate":   true,
+			"source_tier":   4,
 		}
 		w.Header().Set("Content-Type", "application/json")
 		if err := json.NewEncoder(w).Encode(resp); err != nil {

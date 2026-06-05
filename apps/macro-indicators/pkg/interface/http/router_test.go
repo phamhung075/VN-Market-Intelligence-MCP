@@ -84,6 +84,9 @@ func TestExternalRoute(t *testing.T) {
 	}
 }
 
+// TestMacroCalendarRoute asserts the honest-unavailable contract (FDA-4).
+// No fabricated event rows must appear; status must be "unavailable";
+// envelope fields (events, daysRequested, status, is_estimate, source_tier) must be present.
 func TestMacroCalendarRoute(t *testing.T) {
 	srv := httptest.NewServer(newTestRouter())
 	defer srv.Close()
@@ -101,10 +104,19 @@ func TestMacroCalendarRoute(t *testing.T) {
 		t.Errorf("GET /macro-calendar: Content-Type=%q, want application/json prefix", ct)
 	}
 	body, _ := io.ReadAll(resp.Body)
-	if !strings.Contains(string(body), "events") {
-		t.Errorf("GET /macro-calendar: body missing 'events' field: %s", body)
+	bodyStr := string(body)
+
+	// Honest-unavailable envelope fields must be present.
+	for _, field := range []string{"events", "daysRequested", "unavailable", "is_estimate", "source_tier"} {
+		if !strings.Contains(bodyStr, field) {
+			t.Errorf("GET /macro-calendar: body missing %q field: %s", field, bodyStr)
+		}
 	}
-	if !strings.Contains(string(body), "daysRequested") {
-		t.Errorf("GET /macro-calendar: body missing 'daysRequested' field: %s", body)
+
+	// Fabricated event rows must NOT appear (FDA-4 definitif removal).
+	for _, fabricated := range []string{"US Core PCE", "VN Industrial Output", "2026-05-23T18:52:00Z"} {
+		if strings.Contains(bodyStr, fabricated) {
+			t.Errorf("GET /macro-calendar: body contains fabricated data %q — hardcoded events must not be served: %s", fabricated, bodyStr)
+		}
 	}
 }
