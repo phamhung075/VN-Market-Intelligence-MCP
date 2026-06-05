@@ -87,6 +87,10 @@ git commit -m "chore(memory/fixer): notebook YYYY-MM-DD"
 ```
 Convention: `docs/policies/commit-convention.md` § Notebook Commits
 
+**Decision journal** (mandatory — before marking task REVIEW):
+→ skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active task_id from the handoff — e.g. TASK-NNN>"]
+Write at minimum ONE entry per task stamped with its task-id (record WHY this fix approach — which issue was targeted, why this minimum change was the chosen path). Routine fix: `what-considered: "only path: minimum targeted change per QA file:line"`, `why-change: "no change from plan"`.
+
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 Update `docs/data/orch/orch-state.json` `.task_board` task status (atomic write per §2.3) → return:

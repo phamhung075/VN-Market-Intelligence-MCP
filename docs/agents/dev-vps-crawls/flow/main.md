@@ -1,3 +1,4 @@
+<!-- size-justification: 217L — 7-step VPS scraper orchestration (signal drain, recon, technique select+research, implement, wire, verify, signal QA) plus mandatory decision-journal step; Steps 3b/4/5 carry inline scaffolding that cannot be extracted without losing the self-contained VPS-only pattern -->
 # dev-vps-crawls — Main Flow
 
 **Tools:** `docs/agents/tools/package/developer.md`
@@ -161,6 +162,10 @@ If endpoint returns error: debug scraper → Step 4d.
 ---
 
 ## Step 7 — Signal QA
+
+**Decision journal** (mandatory — before REVIEW):
+→ skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active task_id from task_board>"]
+Write at minimum ONE entry per task stamped with its task-id (record WHY this technique was chosen, not on terminal). Routine: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.
 
 Update `docs/data/orch/orch-state.json .task_board` task status for QA review (standard dev chain: atomic write per §2.3).
 

@@ -1,4 +1,4 @@
-<!-- size-justification: 192L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, G12 DoD Gate (MVR render-gate + streak rule, blocking from Day 0), ESLint fence Phase-2 note, implementation record template, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
+<!-- size-justification: 196L — zone-specialist flow; 4-tier build-order constraint table, TDD entry points per tier (3 variants), DDD layer rules table, gateway contract, G12 DoD Gate (MVR render-gate + streak rule, blocking from Day 0), ESLint fence Phase-2 note, implementation record template, mandatory decision-journal step, and doc-self-heal chain are all zone-specific mandatory content with no factoring seam -->
 # dev-frontend — Main Flow
 
 **Zone:** `apps/frontend/`
@@ -181,6 +181,10 @@ git commit -m "chore(memory/dev-frontend): notebook YYYY-MM-DD"
 ```
 
 **Doc self-heal** → skill: `.claude/skills/doc-self-heal/SKILL.md`
+
+**Decision journal** (mandatory — before REVIEW):
+→ skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active task_id from task_board — e.g. TASK-NNN>"]
+Write at minimum ONE entry per task stamped with its task-id (record WHY implementation choices — build tier, approach). Routine: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.
 
 **Update `docs/data/orch/orch-state.json` `.task_board`**: task status IN_PROGRESS → REVIEW (atomic write per §2.3) → return:
 ```

@@ -1,4 +1,4 @@
-<!-- size-justification: 202L — technique research (Step 3b) and inline code scaffolding extracted to technique-research.md; remaining content is the 8-step scraper orchestration (drain signal, recon check, technique select, implement, wire, verify, RAM check, signal QA) which is atomic sequential flow with no further factoring seam -->
+<!-- size-justification: 209L — technique research (Step 3b) and inline code scaffolding extracted to technique-research.md; remaining content is the 8-step scraper orchestration (drain signal, recon check, technique select, implement, wire, verify, RAM check, signal QA) plus mandatory decision-journal step at QA signal gate; all are atomic sequential flow with no further factoring seam -->
 # dev-mainserver-crawls — Main Flow
 
 **Tools:** `docs/agents/tools/package/developer.md`
@@ -145,6 +145,10 @@ Do NOT modify docker-compose.yml — flag only.
 ---
 
 ## Step 8 — Signal QA
+
+**Decision journal** (mandatory — before REVIEW):
+→ skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active task_id from task_board>"]
+Write at minimum ONE entry per task stamped with its task-id (record WHY this technique was chosen, not on terminal). Routine: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.
 
 Update `docs/data/orch/orch-state.json .task_board` task status for QA review (standard dev chain: atomic write per §2.3).
 

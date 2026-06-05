@@ -1,4 +1,4 @@
-<!-- size-justification: 135L — shared base flow for all 9 dev-* zone agents; carries both TS/Bun and Python/FastAPI TDD workflows, zone-restriction rule, task-lock claim, doc-review chain, implementation record template, and RETURN schema; splitting would degrade usability for all 9 consumers -->
+<!-- size-justification: 164L — shared base flow for all 9 dev-* zone agents; carries both TS/Bun and Python/FastAPI TDD workflows, zone-restriction rule, task-lock claim, doc-review chain, implementation record template, mandatory decision-journal steps, and RETURN schema; splitting would degrade usability for all 9 consumers -->
 # Microservice Developer — Main Flow
 
 **Scope:** Any `apps/<service>/` zone (TypeScript/Bun or Python/FastAPI). All 9 dev-* zone agents share this flow. The `apps/mcp-server/` root uses [`main.md`](./main.md) instead.
@@ -83,7 +83,7 @@ GREEN  → minimum code to pass → must PASS
 REFACTOR → clean → still PASS
 REPEAT per acceptance criterion
 ```
-→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Pre-code checklist step 1 / task_board claim>"] (after implementation approach is chosen — WHY this option, not on terminal)
+→ journal (MANDATORY per task): skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Pre-code checklist step 1 / task_board claim>"] (after implementation approach is chosen — WHY this option, not on terminal; routine work: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`)
 
 **TDD workflow — Python/FastAPI services (pdf-extractor, rag-service)**
 ```
@@ -99,7 +99,7 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 ```
 
 **After code — TypeScript/Bun**
-→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Pre-code checklist step 1 / task_board claim>"] (if failure adaptation or approach change occurred — WHY)
+→ journal (MANDATORY — pre-REVIEW gate): skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Pre-code checklist step 1 / task_board claim>"] (if no earlier entry was written yet for this task, write it now — minimum one entry per task before REVIEW; include any failure adaptation or approach change WHY)
 1. `cd apps/<service> && bun test` — service tests pass
 2. `bun tsc --noEmit` — 0 errors
 3. **Commit (mutex-guarded)** → skill: `.claude/skills/commit-mutex/SKILL.md`

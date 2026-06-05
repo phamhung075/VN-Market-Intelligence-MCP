@@ -1,4 +1,4 @@
-<!-- size-justification: 167L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, and pre-commit mutex gate are all non-separable PM responsibilities executed in sequence -->
+<!-- size-justification: 170L — single PM orchestration flow; TASKS.md gate, handoff template, multi-zone handling, DASHBOARD CAS guard, heartbeat lock protocol, commit convention, pre-commit mutex gate, and mandatory decision-journal step are all non-separable PM responsibilities executed in sequence -->
 # Project Manager — Main Flow
 
 **Tools:** `docs/agents/tools/package/pm.md`
@@ -83,6 +83,9 @@ blocks: []
 ```
 
 **Multi-zone handling:** If architect returned `ZONE: multi`, split the design into one subtask per zone — each subtask carries its own single zone. Never bundle multi-zone work in one task: zone-routed parallel spawns require disjoint scopes.
+
+**3c-journal** (mandatory — before returning): skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<the sprint planning task_id from task_board — e.g. SPRINT-NNN or the PM task id>"]
+Write at minimum ONE entry per task you complete stamped with its task-id. Routine work: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.
 
 **3c.** Update `docs/data/orch/orch-state.json .task_board` (task status → TODO, atomic write per §2.3) → return task list with dependency tiers and zone per task:
 ```

@@ -63,6 +63,10 @@ feature priority | VN term translation | data source availability | historical v
 ```json
 {"id": "BA-NNN", "summary": "Requirement: [Feature Name] — context: [brief memo with FR list, blockers, edge cases, DDD layers]", "priority": "high"}
 ```
+**Decision journal** (mandatory — before marking task DONE):
+→ skill: `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<active BA task_id, e.g. BA-NNN>"]
+Write at minimum ONE entry stamped with the task-id. Routine work: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`.
+
 **End of cycle** → skill: `.claude/skills/cowork-end-cycle/SKILL.md`
 
 PO approves → BA Done → update `.task_board` task status (atomic write per §2.3) → return:

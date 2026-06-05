@@ -2,8 +2,11 @@
 name: decision-journal
 description: >
   Sprint footprint writer. Appends a structured STEP block (WHY a decision was
-  made) to the per-sprint decision journal file. Called by all task-executing
-  agents after any non-trivial decision step. NEVER narrate reasoning on terminal.
+  made) to the per-sprint decision journal file. MANDATORY: every task-executing
+  agent writes at minimum one entry per task it completes, stamped with that
+  task's task-id, written before marking the task REVIEW/DONE. Additional
+  entries for extra in-task decisions are still encouraged. NEVER narrate
+  reasoning on terminal.
 ---
 
 ## DECISION JOURNAL RULE
@@ -68,16 +71,22 @@ Use Edit tool append pattern OR read-full + Write. Entry format:
 **Rules:**
 - `step-id`: `<agent-id>-S<N>` — N increments per agent per sprint.
 - `ISO-timestamp`: `date -u +"%Y-%m-%dT%H:%M:%SZ"` at moment of writing.
-- `task-id`: OPTIONAL. Include the line `**task-id:** <TASK_ID>` between the
-  `### STEP` header and `**what-done:**` when the agent is working a specific
-  sprint task (e.g. `ARCH-ORCH-F1`). Omit the line entirely when no task is in
-  scope (cowork cycle with no claimed task, ambient maintenance, etc.) — entries
-  without `task-id` land in the sprint fallback bucket. Parser must not throw
-  on absent `task-id`.
+- `task-id`: MANDATORY when the agent is completing a task_board task. Include
+  the line `**task-id:** <TASK_ID>` between the `### STEP` header and
+  `**what-done:**` (e.g. `ARCH-ORCH-F1`). Omit the line entirely only when no
+  task is in scope (cowork cycle with no claimed task, ambient maintenance,
+  etc.) — entries without `task-id` land in the sprint fallback bucket. Parser
+  must not throw on absent `task-id`.
 - Hard cap: 12 lines per STEP block (task-id line counts toward this cap when present).
-- Triggering condition: any step carrying a non-trivial decision (option choice,
-  failure adaptation, confidence judgment, plan deviation). Skip mechanical
-  bootstrap sub-steps (project-root resolution, notebook read).
+- Triggering condition (task_board tasks): MANDATORY — write at minimum ONE
+  entry per task you complete, stamped with that task's task-id, immediately
+  before marking the task REVIEW/DONE. If the work was routine, use
+  `what-considered: "only path: <reason>"` and `why-change: "no change from
+  plan"`. Additional entries for in-task decisions (option choice, failure
+  adaptation, confidence judgment, plan deviation) are still encouraged.
+- Triggering condition (non-task steps): any non-trivial decision (option
+  choice, failure adaptation, confidence judgment). Skip mechanical bootstrap
+  sub-steps (project-root resolution, notebook read).
 
 **Injection pattern for calling flows:**
 When calling this skill's § Write Entry, pass the active task_id:

@@ -1,4 +1,4 @@
-<!-- size-justification: 141L — mcp-server root developer flow; pre-code checklist, TDD loop with heartbeat, task-lock claim, doc-update+graphify protocol, implementation record template, and RETURN schema are all tightly coupled sequential steps that must be read in one pass -->
+<!-- size-justification: 149L — mcp-server root developer flow; pre-code checklist, TDD loop with heartbeat, task-lock claim, doc-update+graphify protocol, implementation record template, mandatory decision-journal steps, and RETURN schema are all tightly coupled sequential steps that must be read in one pass -->
 # Developer — Main Flow
 
 **Scope:** `apps/mcp-server/` root only (TypeScript/Bun). Dev-* zone agents use [`microservice-main.md`](./microservice-main.md) for `apps/<service>/` zone work.
@@ -79,7 +79,7 @@ GREEN  → minimum code to pass → must PASS
 REFACTOR → clean → still PASS
 REPEAT per acceptance criterion
 ```
-→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Step 0c / task_board claim>"] (after implementation approach is chosen — record WHY this option, not on terminal)
+→ journal (MANDATORY per task): skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Step 0c / task_board claim>"] (after implementation approach is chosen — record WHY this option, not on terminal; routine work: `what-considered: "only path: <reason>"`, `why-change: "no change from plan"`)
 - **After each TDD loop** → heartbeat:
 ```
 call_tool(server="vn-market", tool="task_heartbeat", arguments={ task_id: "task:" + task_id })
@@ -87,7 +87,7 @@ if hb.ok == false: → stolen-lock protocol per skill § Heartbeat (commit parti
 ```
 
 **After code**
-→ journal: skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Step 0c / task_board claim>"] (if any failure adaptation or approach change occurred during TDD — WHY the adaptation)
+→ journal (MANDATORY — pre-REVIEW gate): skill `.claude/skills/decision-journal/SKILL.md` § Write Entry [task_id: "<task_id from Step 0c / task_board claim>"] (if no earlier entry was written yet for this task, write it now — minimum one entry per task before REVIEW; include any failure adaptation or approach change WHY)
 1. `bun test src/__tests__/NNN-*.test.ts` — task tests pass
 2. `bun test` — no regressions
 3. `bun tsc --noEmit` — 0 errors

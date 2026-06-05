@@ -157,3 +157,15 @@
 - Follow-ups: FU-ORCH-DASH-VISUAL-VERIFY if router's browser check surfaces regressions; task-id mapping is forward-only (legacy DONE tasks show via sprint_bucket fallback by design, not a bug)
 **why-decision:** All task_board 6/6 DONE + commits real → sprint is complete per DONE criteria. Atomic retirement (active→done) is the PM's closeout responsibility per flow step. Head reset confirms the sprint is closed and main terminal can accept next sprint dispatch without collision.
 **why-change:** No variance from PM flow closeout spec; all steps executed: git reconcile + sprint move + head reset + metadata update + decision journal entry.
+
+### STEP agent-father-S2 · agent-father · 2026-06-05T22:20:36Z
+**task-id:** FU-DECISION-PER-TASK
+**what-done:** Made decision-journal entries mandatory per task across all 11 task_board-owning flows (po, ba, architect, pm, developer, microservice-main, qa, fixer, dev-frontend, dev-mainserver-crawls, dev-vps-crawls) and updated the skill SSOT to reflect mandatory-per-task triggering rule.
+**what-considered:**
+- Only update the skill SSOT vs also update each flow — chose both: skill is the canonical rule owner; flows need the explicit injection call so agents reading the flow see the mandate without loading the skill separately
+- Add journal step to dev-* pure-pointer flows vs cover them via microservice-main.md — pure pointers (dev-alert-engine, dev-api-gateway, dev-kinh-dich, dev-macro-indicators, dev-news-fetch, dev-pdf-extractor, dev-rag-service, dev-stock-price, dev-technical-analysis, dev-mcp-server) delegate 100% to microservice-main.md; fix in microservice-main covers all; dev-kinh-dich redirects to microservice-main too despite having its own DoD gates
+- dev-mainserver-crawls and dev-vps-crawls have their own full flows (signal→implement→QA signal) with no shared base; needed individual edits
+- dev-frontend has its own RETURN/task_board update; needed individual edit
+- Cowork cycle agents (cowork-team, news-scout, market-watcher, etc.) run cycles not tasks → excluded per spec
+**why-decision:** DRY: skill stays SSOT for the rule text and format; flows stay the execution context that supplies the task_id value. Adding the mandatory call at the correct pre-REVIEW gate point in each flow is the only way to guarantee every task has at least one entry without relying on agents reading the skill proactively.
+**why-change:** Prior approach (commit 094358dc) was conditional ("after any non-trivial decision") leaving routine tasks with zero entries and empty dashboard dropdowns. Mandatory-per-task closes that gap permanently.
