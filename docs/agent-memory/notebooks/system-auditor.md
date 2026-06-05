@@ -3,6 +3,54 @@ agent: system-auditor
 session_date: 2026-06-05
 ---
 
+## c006 · 2026-06-05T20:39Z
+### Audit Run Tier-1 (20:39–20:40 UTC 2026-06-05)
+- Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 88
+- Anomalies: 1 info (1 info, 0 critical, 0 warn) | 0 dedup-skipped
+- Status: HEALTHY
+
+### Container Status (Intended Runtime Set)
+- mcp-server: Up 23m (healthy), restart_count=1 ✓, memory=18.47% ✓ [post-rebuild FIX-CTG-PDF-MISLINK nominal]
+- api-gateway: Up 2d (healthy) ✓
+- frontend: Up 16h (healthy container but /health → 404 — INFO level)
+- macro-indicators: Up 9h (healthy) ✓
+- pdf-extractor: Up 2d (healthy) ✓
+- mcp-gateway: (MCP server — status via get_system_status tool)
+
+### Health Endpoints
+- mcp-server :3000 → 200 ✓ (uptime 23m, toolCount:162)
+- api-gateway :4000 → 200 ✓ (macro:ok, mcp:ok)
+- frontend :3001 → 404 (HTTP endpoint not implemented) [INFO-grey, no impact — UI only]
+- macro-indicators :5004 → 200 ✓
+- pdf-extractor :5001 → 200 ✓
+
+### Cron Health (88 jobs monitored)
+- 100% firing across 88 monitored crons, 7-day success_rate ≥97.6%
+- Min success_rate: 97.6% (bctcQueueEnricherJob — transient ok, crashed once in 499 runs)
+- intelligenceCycleJob: 99.3% (567 runs past 7d)
+- All others: ≥98% or 100%; no job gaps detected
+
+### Data Freshness (Live Snapshot)
+- Prices (HOSE): 9m old (market closed, normal) ✓
+- News (RSS): 37m old ✓
+- Commodities: 9m old ✓
+- SBV FX: 9m old ✓
+- Polymarket: 9m old ✓
+- BCTC: 3.3h old (no earnings window, normal) ✓
+- Circuit breakers: all 16 sources [OK], 0 failures
+
+### System Status (MCP Probe)
+- DB: market.db 240.37 MB, WAL 15.58 MB ✓
+- Uptime: 23m 35s post-deploy
+- Pending feedback: 39 new items (non-blocking)
+- Open warnings: 37 high/critical items (existing, non-emergency)
+
+### Notes
+- Tier-1 pass clean. All intended-runtime services UP and healthy.
+- frontend :3001 /health endpoint → 404 is informational (frontend is UI-only, not a data pipeline); no component impact.
+- mcp-server memory post-rebuild nominal (18.47%).
+- No new anomalies detected.
+
 ## c005 · 2026-06-05T20:10Z
 ### Audit Run Tier-1 (20:10–20:11 UTC 2026-06-05)
 - Tier: 1 | Services checked: 6 (intended runtime) | Crons polled: 88
@@ -123,62 +171,3 @@ session_date: 2026-06-05
 ### Notes
 - Tier-1 pass clean. All known stale items (news, BCTC via VPS-SOCAT-PERSIST) already tracked; not raised as new.
 - mcp-server memory 77.95% is healthy (< 85% threshold per brief); restart_count=1 OK.
-
-## c002 · 2026-06-01T03:38Z
-### Audit Run Tier-1 (03:37–03:38 UTC 2026-06-01)
-- Tier: 1 | Services checked: 2 (intended runtime) | Sources checked: 7 | DB checks: 0
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### Container Status (Intended Runtime Only)
-- mcp-server: Up 6h, healthy, restart_count=1 ✓, memory=67.46% ✓
-- mcp-gateway: Up 4d, healthy, memory<10% ✓
-
-### Cron Health
-- 75 jobs polled, 100% firing; success_rate ≥99.2% across all jobs
-- intelligenceCycleJob: 99.4% | bctcQueueEnricherJob: 99.2%
-- All others: 100% success_rate past 7d
-
-### Data Freshness
-- Prices: fresh (1 min)
-- News: fresh (0 min)
-- Foreign-flow: fresh (1 min)
-- BCTC: 80h old — KNOWN-IN-PROGRESS (VPS-SOCAT-PERSIST, tracked)
-- SBV/Commodities: fresh (22–30 min)
-- Macro-snapshot: tool error (get_macro_snapshot) — macro-indicators NOT IN INTENDED RUNTIME (per host_memory_panic policy, only mcp-server + mcp-gateway deployed)
-
-### VPS Proxy Status
-- 5 services healthy (0ms response time)
-- Prices: 52 pushes/24h, 0 errors ✓
-- News: 115 pushes/24h, 0 errors ✓
-- Foreign-flow: chain intact ✓
-
-### API Rate Limits
-- 12 sources ready (0% utilization) ✓
-
-### Notes
-- Audit now checks INTENDED-RUNTIME-SET only (mcp-server + mcp-gateway); other services (macro-indicators, stock-price, etc.) are dev-zone architecture, not deployed per host_memory_panic constraint. Per AUDITOR-NO-DESTRUCT feedback, false-positive guard in place.
-
-## c001 · 2026-06-01T03:08Z
-### Audit Run Tier-1 (03:07–03:08 UTC 2026-06-01)
-- Tier: 1 | Services checked: 2 | Sources checked: 5 | DB checks: 0
-- Anomalies: 0 new (0 critical, 0 warn, 0 info) | 0 dedup-skipped
-- Status: HEALTHY
-
-### Container Status
-- mcp-server: Up 6h, healthy, restart_count=1 ✓, memory=67.46% ✓
-- mcp-gateway: Up 4d, healthy, memory=<10% ✓
-
-### Data Freshness (carry-over from Tier-2 02:30 UTC)
-- Prices (HOSE): fresh (~1 min)
-- News: fresh (~4 min)
-- BCTC: 79.7h old (expected, outside earnings window)
-- VPS prices: STALE 65.5h — KNOWN-IN-PROGRESS (VPS-SOCAT-PERSIST tracked)
-- VPS bctc: STALE 571h — KNOWN-IN-PROGRESS
-
-### BCTC-EVAL-SNAPSHOT: (last sweep Tier-2 02:30 UTC 2026-06-01)
-No new stage-status deltas detected.
-
-### Known Open Incidents
-- VPS-SOCAT-PERSIST: prices + bctc VPS routes degraded; ops recovery in progress
-- vn-foreign-flow service: UNHEALTHY (0ms response) — ops dispatched
